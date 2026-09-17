@@ -17,6 +17,7 @@ const { RECENT_THREE_PACK_IDENTITY, createBundledPdfPackReader } = require("./bu
 const { createBatchOutputService } = require("./batch-output-service.cjs");
 const { createImageExportService } = require("./image-export-service.cjs");
 const { createFullscreenCoordinator } = require("./fullscreen-state.cjs");
+const { routeFullscreenEscape } = require("./fullscreen-escape.cjs");
 const { createProjectCloseGuard } = require("./project-close-guard.cjs");
 
 const APP_ID = "com.5e.editor";
@@ -711,6 +712,7 @@ function createWindow() {
   const shortcutWebContents = win.webContents;
   const shortcutWebContentsId = shortcutWebContents.id;
   shortcutWebContents.on("before-input-event", (event, input) => {
+    if (routeFullscreenEscape(event, input, shortcutWindow)) return;
     if (!isWindowCloseShortcut(input)) return;
     event.preventDefault();
     if (aiTaskShortcutWebContents.has(shortcutWebContentsId)) shortcutWebContents.send("ai:close-task-shortcut");

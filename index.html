@@ -217,12 +217,11 @@
         <span class="tb-sep" aria-hidden="true"></span>
         <!-- 파일 dropdown: project I/O (JSON) + image export (PNG/SVG) -->
         <div class="file-menu">
-          <button id="file-menu-btn" class="topbar-btn shell-icon-button shell-icon-button-menu" type="button"
+          <button id="file-menu-btn" class="topbar-btn shell-icon-button" type="button"
                   aria-haspopup="true" aria-expanded="false" aria-label="파일" data-shell-tip="파일">
             <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
               <path d="M2.75 5.75h5.1l1.55 1.7h7.85v7.8H2.75z"/><path d="M2.75 5.75V4.1h4.2l1.55 1.65"/>
             </svg>
-            <span class="shell-menu-chevron" aria-hidden="true">⌄</span>
           </button>
           <div id="file-menu-list" class="file-menu-list" role="menu" hidden>
             <button id="project-save" class="file-menu-item" type="button" role="menuitem"
@@ -239,12 +238,11 @@
         </div>
         <!-- 설정 dropdown: 기본값 설정 (localStorage) + 단축키 설정 (준비 중) -->
         <div class="file-menu">
-          <button id="settings-menu-btn" class="topbar-btn shell-icon-button shell-icon-button-menu" type="button"
+          <button id="settings-menu-btn" class="topbar-btn shell-icon-button" type="button"
                   aria-haspopup="true" aria-expanded="false" aria-label="설정" data-shell-tip="설정">
             <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" aria-hidden="true">
               <path d="M3 5h14M3 10h14M3 15h14"/><circle cx="7" cy="5" r="1.7" fill="var(--bg-panel)"/><circle cx="13" cy="10" r="1.7" fill="var(--bg-panel)"/><circle cx="8.5" cy="15" r="1.7" fill="var(--bg-panel)"/>
             </svg>
-            <span class="shell-menu-chevron" aria-hidden="true">⌄</span>
           </button>
           <div id="settings-menu-list" class="file-menu-list" role="menu" hidden>
             <button id="open-defaults" class="file-menu-item" type="button" role="menuitem"
@@ -396,16 +394,15 @@
   <div id="ai-image-panel" class="modal-overlay" aria-label="AI 과학 도식 작업실" hidden>
     <section class="modal modal-ai ai-workbench" role="dialog" aria-modal="true" aria-labelledby="ai-image-title">
       <header class="ai-head">
-        <button class="ai-close" type="button" data-ai-close aria-label="AI 작업실을 닫고 캔버스로 돌아가기">
-          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m11.5 5-5 5 5 5"/><path d="M7 10h7"/></svg>
-          <span>캔버스로 돌아가기</span>
-        </button>
         <div class="ai-title-line">
           <h2 class="modal-title" id="ai-image-title">AI 이미지 변환</h2>
         </div>
         <div class="ai-head-status">
           <button type="button" class="ai-project-transfer" data-ai-project-transfer hidden>웹 프로젝트 열기</button>
           <span class="ai-status" data-ai-status>상태 확인 중…</span>
+          <button class="ai-close" type="button" data-ai-close aria-label="AI 이미지 변환 닫기" title="닫기 (Esc)">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="m5 5 10 10M15 5 5 15"/></svg>
+          </button>
         </div>
       </header>
 
@@ -629,7 +626,7 @@
             </section>
           </div>
           <details class="ai-advanced-settings">
-            <summary title="계정 및 고급 설정">설정</summary>
+            <summary title="계정 및 고급 설정"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 5h14M3 10h14M3 15h14"/><circle cx="7" cy="5" r="2"/><circle cx="13" cy="10" r="2"/><circle cx="8" cy="15" r="2"/></svg>설정</summary>
             <div class="ai-mode-row ai-quality-row" role="group" aria-label="그림 복잡도">
               <span>복잡도</span>
               <button type="button" data-ai-quality="simple" title="물체 1~2개, 연결이 거의 없는 그림 · 형태 보존 고품질 1회 AI 변환">단순<small>정밀 1회</small></button>
