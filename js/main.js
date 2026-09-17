@@ -86,18 +86,17 @@ const zoomReadout = document.getElementById("zoom-readout");
   const btn = document.getElementById("fullscreen-toggle");
   if (!btn) return;
 
-  // 전체화면 대상은 .app이 아니라 "문서 전체"(documentElement)여야 한다.
-  // 모든 모달·오버레이·컨텍스트 메뉴는 document.body에 append되는데, .app만
-  // 전체화면으로 만들면 이 위젯들이 전체화면 요소(top layer) 뒤에 깔려 안 보인다
-  // (z-index로도 못 이긴다). 문서 전체를 전체화면으로 하면 body의 위젯이 전부
-  // 전체화면 안에 포함돼 정상적으로 뜬다.
-  const target = document.documentElement;
+  const nativeFullscreen = window.fiveEDesktop?.fullscreen;
+  let workspaceMaximized = false;
 
   const syncButton = (active) => {
-    document.documentElement.classList.toggle("is-native-fullscreen", Boolean(active));
+    if (nativeFullscreen) document.documentElement.classList.toggle("is-native-fullscreen", Boolean(active));
+    else document.documentElement.classList.toggle("is-workspace-maximized", Boolean(active));
     btn.setAttribute("aria-pressed", String(active));
-    btn.setAttribute("aria-label", active ? "전체화면 해제" : "전체화면");
-    btn.title = active ? "전체화면 해제 (Alt+Enter)" : "전체화면 (Alt+Enter)";
+    const label = nativeFullscreen ? (active ? "전체화면 해제" : "전체화면")
+      : (active ? "작업영역 최대화 해제" : "작업영역 최대화");
+    btn.setAttribute("aria-label", label);
+    btn.title = `${label} (Alt+Enter)`;
   };
   const toggleFullscreen = async () => {
     try {
@@ -105,8 +104,8 @@ const zoomReadout = document.getElementById("zoom-readout");
         await window.fiveEDesktop.fullscreen.toggle();
         return;
       }
-      if (document.fullscreenElement) await document.exitFullscreen();
-      else await target.requestFullscreen();
+      workspaceMaximized = !workspaceMaximized;
+      syncButton(workspaceMaximized);
     } catch (error) {
       console.error("Unable to toggle fullscreen", error);
     }
@@ -118,15 +117,13 @@ const zoomReadout = document.getElementById("zoom-readout");
     window.fiveEDesktop.fullscreen.get().then(syncButton).catch((error) => {
       console.error("Unable to read fullscreen state", error);
     });
-  } else {
-    document.addEventListener("fullscreenchange", () => syncButton(document.fullscreenElement === target));
   }
   window.addEventListener("keydown", (e) => {
     if (!e.altKey || e.key !== "Enter" || e.repeat) return;
     e.preventDefault();
     toggleFullscreen();
   });
-  if (!window.fiveEDesktop?.fullscreen) syncButton(document.fullscreenElement === target);
+  if (!nativeFullscreen) syncButton(workspaceMaximized);
 })();
 
 (function initGraphLauncherState() {

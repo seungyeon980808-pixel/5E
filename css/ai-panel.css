@@ -2391,12 +2391,23 @@
 #ai-image-panel .ai-workbench-comment textarea:disabled { opacity:.55; cursor:not-allowed; }
 
 /* Keep source and pending output in the same visual frame. */
-#ai-image-panel .ai-head { min-height: 44px; }
+#ai-image-panel .ai-head { min-height: 44px; grid-template-columns: minmax(0, 1fr) auto; }
+#ai-image-panel .ai-head-status { grid-column: 2; }
 .desktop-shell:not(.is-native-fullscreen) #ai-image-panel { top: 30px; }
 .desktop-shell:not(.is-native-fullscreen) #ai-image-panel .modal-ai.ai-workbench {
   height: calc((100vh - 12px) / var(--ui-zoom, 1) - 30px);
 }
-#ai-image-panel .ai-close { color: var(--text-primary); border-color: var(--border); }
+#ai-image-panel .ai-close {
+  width: 36px;
+  height: 36px;
+  min-width: 36px;
+  padding: 0;
+  justify-content: center;
+  flex: none;
+  border-radius: 6px;
+  color: var(--text-primary);
+  border-color: var(--border-strong);
+}
 #ai-image-panel .ai-generating {
   position: absolute;
   inset: 4px;
@@ -2416,8 +2427,14 @@
 #ai-image-panel [data-ai-selected-output-note],
 #ai-image-panel [data-ai-comment-status],
 #ai-image-panel .ai-separated-mode small { display: none; }
-#ai-image-panel .ai-advanced-settings { align-self: flex-end; max-width: 100%; border: 0; }
-#ai-image-panel .ai-advanced-settings > summary { min-height: 24px; padding: 4px 10px; }
+#ai-image-panel .ai-advanced-settings { align-self: stretch; max-width: 100%; margin: 8px; border: 1px solid var(--border-strong); border-radius: 6px; }
+#ai-image-panel .ai-advanced-settings > summary { min-height: 36px; padding: 8px 10px; color: var(--text-primary); background: var(--bg-input); font-size: 12px; font-weight: 650; list-style: none; }
+#ai-image-panel .ai-advanced-settings > summary::-webkit-details-marker { display: none; }
+#ai-image-panel .ai-advanced-settings > summary svg { width: 16px; height: 16px; flex: none; }
+#ai-image-panel .ai-advanced-settings > summary::after { content: ""; width: 6px; height: 6px; margin-left: auto; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: rotate(45deg); }
+#ai-image-panel .ai-advanced-settings[open] > summary::after { transform: rotate(225deg); }
+#ai-image-panel .ai-advanced-settings > summary:hover { background: var(--bg-panel-hover); }
+#ai-image-panel .ai-advanced-settings > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 #ai-image-panel .ai-advanced-settings[open] { align-self: stretch; }
 
 #ai-image-panel .ai-chat-heading p,
