@@ -29,6 +29,7 @@ export function initWebLoginUi({ openAi }) {
   let connected = false, userCode = '', phase = 'idle', wasFullscreen = false, toastTimer;
   function render(next, text) {
     phase = next; badge.dataset.state = next;
+    if (next !== 'waiting') dialog.classList.remove('web-login-paired');
     label.textContent = next === 'connected' ? 'ChatGPT 연결됨' : ['waiting', 'starting'].includes(next) ? '로그인 중…' : next === 'error' ? '연결 확인' : 'ChatGPT 연결';
     badge.title = label.textContent;
     if (aiButton) {
@@ -64,7 +65,7 @@ export function initWebLoginUi({ openAi }) {
   badge.addEventListener('click', () => show());
   function dismiss() {
     if (['starting', 'waiting'].includes(phase)) window.fiveEWebCancelLogin?.();
-    dialog.close();
+    dialog.close(); dialog.classList.remove('web-login-paired');
     if (wasFullscreen && !document.fullscreenElement) notify('편집 화면으로 돌아왔습니다.');
   }
   dialog.querySelector('.web-login-close').addEventListener('click', dismiss);
@@ -81,12 +82,16 @@ export function initWebLoginUi({ openAi }) {
     if (connected) { dialog.close(); openAi(); return; }
     if (phase === 'waiting') { window.fiveEWebContinueLogin?.(); return; }
     userCode = ''; copy.textContent = '복사';
-    render('starting', '이 화면에서 인증 코드를 준비하고 있습니다. 편집 내용은 그대로 유지됩니다.');
+    render('starting', '코드와 인증 창을 나란히 볼 수 있도록 준비하고 있습니다. 편집 내용은 그대로 유지됩니다.');
     try { window.fiveEWebLogin(); } catch (error) { render('error', error.message); }
   });
   window.addEventListener('5e:web-login-progress', event => {
     const data = event.detail;
-    if (data.state === 'ready') {
+    if (data.state === 'layout') {
+      dialog.classList.toggle('web-login-paired', data.paired);
+      dialog.style.setProperty('--login-code-left', `${data.codeLeft}px`);
+      dialog.style.setProperty('--login-code-width', `${data.codeWidth}px`);
+    } else if (data.state === 'ready') {
       userCode = data.userCode || '';
       render('waiting', '코드를 복사한 뒤 아래 OpenAI 인증하기를 누르세요. 인증 팝업 하나가 열립니다.');
     } else if (data.state === 'authenticating') render('waiting', '인증이 완료되면 팝업이 닫히고 이 화면의 AI 버튼이 활성화됩니다.');
