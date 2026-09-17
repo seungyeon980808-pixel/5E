@@ -60,7 +60,9 @@
       loginTimer = setTimeout(() => void pollLogin(current), 1500);
     } catch (error) {
       if (current !== attempt) return;
-      loginTicket = ''; closeLoginWindows(); progress({ state: 'error', message: error.message });
+      loginTicket = ''; authUrl = ''; closeLoginWindows();
+      void loginRequest('cancel', ticket).catch(() => {});
+      progress({ state: 'error', message: error.message });
     }
   }
   window.fiveEWebCancelLogin = () => {
