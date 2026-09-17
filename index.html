@@ -451,7 +451,7 @@
           </header>
           <div class="ai-comparison-grid">
             <section class="ai-image-pane ai-original-pane" aria-label="원본 이미지">
-              <header class="ai-pane-head"><div class="ai-pane-head-controls">
+              <header class="ai-pane-head"><div class="ai-pane-head-controls"><div class="ai-pane-metadata">
                 <strong>원본</strong>
                 <label data-ai-source-picker hidden><select data-ai-source-select aria-label="살펴볼 원본 선택"></select></label>
                 <div class="ai-composition-toolbar" data-ai-composition-controls hidden>
@@ -463,7 +463,7 @@
                 <button type="button" class="ai-replace-source" data-ai-replace-source hidden>원본 교체</button>
                 <input class="ai-source-file-input" type="file" accept="image/*" data-ai-replace-source-input aria-label="선택한 원본을 파일로 교체">
 
-                <div class="ai-pane-zoom" data-ai-pane-zoom="source" role="group" aria-label="원본 이미지 배율">
+                </div><div class="ai-pane-zoom" data-ai-pane-zoom="source" role="group" aria-label="원본 이미지 배율">
                   <button type="button" data-ai-zoom-action="out" aria-label="원본 축소">−</button>
                   <output data-ai-zoom-value>100%</output>
                   <button type="button" data-ai-zoom-action="in" aria-label="원본 확대">＋</button>
@@ -482,14 +482,14 @@
             </section>
 
             <section class="ai-image-pane ai-result-pane" aria-label="생성 결과">
-              <header class="ai-pane-head"><div class="ai-pane-head-controls">
+              <header class="ai-pane-head"><div class="ai-pane-head-controls"><div class="ai-pane-metadata">
                 <strong>수정본</strong>
                 <div class="ai-version-picker">
                   <span>버전</span>
                   <button type="button" data-ai-version-button aria-haspopup="listbox" aria-expanded="false" aria-controls="ai-version-list" disabled>생성 결과 없음</button>
                   <div id="ai-version-list" class="ai-version-list" data-ai-version-list role="listbox" aria-label="생성 결과 버전" tabindex="-1" hidden></div>
                 </div>
-                <div class="ai-pane-zoom" data-ai-pane-zoom="result" role="group" aria-label="결과 이미지 배율">
+                </div><div class="ai-pane-zoom" data-ai-pane-zoom="result" role="group" aria-label="결과 이미지 배율">
                   <button type="button" data-ai-zoom-action="out" aria-label="결과 축소">−</button>
                   <output data-ai-zoom-value>100%</output>
                   <button type="button" data-ai-zoom-action="in" aria-label="결과 확대">＋</button>

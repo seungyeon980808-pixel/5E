@@ -2369,7 +2369,13 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     const taskActions = {
       canUseActiveTask: () => Boolean(activeTaskTabId) && attachments.length === 0 && generatedImages.length === 0,
       createTask: () => createTaskTab(),
-      addSource: reference => addReferenceData(reference),
+      addSource: reference => {
+        const freshLibraryTask = attachments.length === 0 && generatedImages.length === 0
+          && ["unified-library", "pdf-library", "pdf-crop"].includes(reference.sourceKind);
+        if (freshLibraryTask) referenceComposition = normalizeReferenceComposition({ orientation: "free" }, []);
+        addReferenceData(reference);
+        if (freshLibraryTask) panel.aiWorkbench?.restoreViewState?.({ layout: "side-by-side" });
+      },
       applyPrompt: nextPrompt => { if (nextPrompt) input.value = nextPrompt; },
       captureTask: captureActiveTaskTab,
       activeTaskId: () => activeTaskTabId,
