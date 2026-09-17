@@ -4,8 +4,9 @@
   const origin = 'https://five-e-ai-runtime-probe.onrender.com';
   const key = '5e:web-ai-session';
   let popup, token = '', loginTicket = '', loginTimer, attempt = 0;
-  let authUrl = '', preparing = false;
+  let authUrl = '', preparing = false, positioning = false, positionTimer, positionDeadline;
   const closeLoginWindows = () => {
+    positioning = false; clearTimeout(positionTimer); clearTimeout(positionDeadline);
     try { if (popup && !popup.closed) popup.close(); } catch {}
     popup = null;
   };
@@ -71,23 +72,57 @@
     if (ticket) void loginRequest('cancel', ticket).catch(() => {});
     progress({ state: 'cancelled' });
   };
-  window.fiveEWebContinueLogin = () => {
-    if (!loginTicket || !authUrl) return false;
-    if (popup && !popup.closed) { popup.focus(); return true; }
+  function loginLayout() {
     const availableWidth = screen.availWidth || screen.width || 1280;
     const availableHeight = screen.availHeight || screen.height || 800;
-    const width = Math.min(560, availableWidth), height = Math.min(700, availableHeight);
-    const left = (screen.availLeft || 0) + Math.max(0, Math.round((availableWidth - width) / 2));
-    const top = (screen.availTop || 0) + Math.max(0, Math.round((availableHeight - height) / 2));
+    const viewport = Math.min(window.innerWidth || availableWidth, availableWidth);
+    const paired = viewport >= 840;
+    const width = paired ? Math.min(560, Math.floor((viewport - 48) * .56)) : Math.min(560, availableWidth);
+    const codeWidth = Math.min(420, viewport - width - 48);
+    const codeLeft = Math.max(16, Math.round((viewport - codeWidth - width - 16) / 2));
+    const height = Math.min(700, availableHeight);
+    const screenLeft = screen.availLeft || 0, screenTop = screen.availTop || 0;
+    const left = paired ? Math.min(screenLeft + availableWidth - width, Math.max(screenLeft, (window.screenX || 0) + codeLeft + codeWidth + 16))
+      : screenLeft + Math.round((availableWidth - width) / 2);
+    const top = screenTop + Math.max(0, Math.round((availableHeight - height) / 2));
+    return { paired, codeLeft, codeWidth, width, height, left, top };
+  }
+  function positionLogin() {
+    const layout = loginLayout();
+    progress({ state: 'layout', ...layout });
+    try { popup.resizeTo(layout.width, layout.height); popup.moveTo(layout.left, layout.top); } catch {}
+  }
+  function navigateLogin() {
+    if (!positioning || !popup || popup.closed) return;
+    positionLogin();
+    positioning = false; clearTimeout(positionTimer); clearTimeout(positionDeadline);
+    popup.location.replace(authUrl);
+  }
+  window.addEventListener('resize', () => {
+    if (!positioning) return;
+    clearTimeout(positionTimer);
+    positionTimer = setTimeout(navigateLogin, 350);
+  });
+  window.fiveEWebContinueLogin = async () => {
+    if (!loginTicket || !authUrl) return false;
+    if (popup && !popup.closed) { popup.focus(); return true; }
+    if (document.fullscreenElement) {
+      try { await document.exitFullscreen(); } catch {}
+      if (!loginTicket || !authUrl) return false;
+      progress({ state: 'blocked', message: '나란히 볼 준비가 되었습니다. OpenAI 인증하기를 눌러 주세요.' });
+      return false;
+    }
+    const { width, height, left, top } = loginLayout();
     const name = `fivee-openai-auth-${window.crypto?.randomUUID?.() || `${Date.now()}-${attempt}`}`;
     popup = window.open('about:blank', name, `popup=yes,width=${width},height=${height},left=${left},top=${top}`);
     if (!popup) {
       progress({ state: 'blocked', message: '인증 팝업이 차단되었습니다. 팝업을 허용하고 인증하기를 다시 눌러 주세요.' });
       return false;
     }
-    try { popup.resizeTo(width, height); } catch {}
-    try { popup.moveTo(left, top); } catch {}
-    popup.location.replace(authUrl);
+    positioning = true;
+    positionLogin();
+    positionTimer = setTimeout(navigateLogin, 350);
+    positionDeadline = setTimeout(navigateLogin, 1500);
     progress({ state: 'authenticating' });
     return true;
   };
@@ -98,6 +133,8 @@
     preparing = true;
     clearTimeout(loginTimer);
     try {
+      if (document.fullscreenElement) await document.exitFullscreen();
+      if (current !== attempt) return;
       const result = await loginRequest('start');
       if (!/^[a-f0-9]{64}$/.test(result.ticket)) throw new Error('인증 연결 정보를 확인할 수 없습니다.');
       if (current !== attempt) { void loginRequest('cancel', result.ticket).catch(() => {}); return; }

@@ -27,3 +27,6 @@
 .web-login-actions [data-login-logo] { width:20px; height:20px; flex:none; }
 .web-login-dialog #web-login-title:focus { outline:none; }
 .web-login-dialog button:focus:not(:focus-visible) { outline:none; }
+
+.web-login-dialog.web-login-paired { margin-left:var(--login-code-left); margin-right:0; width:var(--login-code-width); }
+@media (max-width:839px) { .web-login-dialog.web-login-paired { margin-left:auto; margin-right:auto; width:min(420px,calc(100vw - 32px)); } }
