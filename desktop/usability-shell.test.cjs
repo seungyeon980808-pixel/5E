@@ -59,7 +59,7 @@ test('native fullscreen removes the custom title strip while retaining the windo
   assert.match(css, /\.desktop-shell\s+\.desktop-titlebar\s*\{[^}]*-webkit-app-region:\s*drag/s);
 });
 
-test('fullscreen and graph launcher derive their active state from real dialog or fullscreen events', async () => {
+test('web maximization avoids browser fullscreen and survives Escape; graph follows dialog state', async () => {
   const source = read('js/main.js');
   const fullscreen = source.slice(source.indexOf('/* ===== APP FULLSCREEN'), source.indexOf('(function initGraphLauncherState()'));
   const graphLauncher = source.slice(source.indexOf('(function initGraphLauncherState()'), source.indexOf('/* ===== THEME TOGGLE'));
@@ -75,25 +75,35 @@ test('fullscreen and graph launcher derive their active state from real dialog o
   };
   const root = {
     classList: { toggle: (name, active) => active ? classes.add(name) : classes.delete(name) },
-    requestFullscreen: async () => { document.fullscreenElement = root; },
+    requestFullscreen: async () => { assert.fail('web must not enter browser fullscreen'); },
   };
   const document = {
     documentElement: root,
     fullscreenElement: null,
     getElementById: (id) => id === 'fullscreen-toggle' ? fullscreenButton : null,
     addEventListener: (name, listener) => listeners.set(name, listener),
-    exitFullscreen: async () => { document.fullscreenElement = null; },
+    exitFullscreen: async () => { assert.fail('web must not exit browser fullscreen'); },
   };
-  const context = vm.createContext({ document, window: { addEventListener: () => {} }, console, Boolean });
+  const keyboardCalls = [];
+  const navigator = { keyboard: {
+    async lock(keys) { keyboardCalls.push([...keys]); },
+    unlock() { keyboardCalls.push('unlock'); },
+  } };
+  const context = vm.createContext({ document, navigator, window: { addEventListener: (name, fn) => listeners.set(name, fn) }, console, Boolean });
   vm.runInContext(fullscreen, context);
   await buttonListeners.get('click')();
-  listeners.get('fullscreenchange')();
+  assert.deepEqual(keyboardCalls, []);
   assert.equal(attrs.get('aria-pressed'), 'true');
-  assert.equal(classes.has('is-native-fullscreen'), true);
+  assert.equal(classes.has('is-workspace-maximized'), true);
+  assert.equal(attrs.get('aria-label'), '작업영역 최대화 해제');
+  listeners.get('keydown')({ key: 'Escape', preventDefault() { assert.fail('maximize handler must ignore Escape'); } });
+  assert.equal(classes.has('is-workspace-maximized'), true);
   await buttonListeners.get('click')();
-  listeners.get('fullscreenchange')();
+  assert.deepEqual(keyboardCalls, []);
   assert.equal(attrs.get('aria-pressed'), 'false');
-  assert.equal(classes.has('is-native-fullscreen'), false);
+  assert.equal(classes.has('is-workspace-maximized'), false);
+  listeners.get('keydown')({ key: 'Enter', altKey: true, preventDefault() {} });
+  assert.equal(classes.has('is-workspace-maximized'), true);
 
   const graphAttrs = new Map();
   const graphClasses = new Set();
@@ -148,8 +158,10 @@ test('file, settings, and tutorial controls are accessible icon-only SVG buttons
     assert.match(markup, /<svg[^>]*aria-hidden="true"/);
     assert.doesNotMatch(markup.replace(/<svg[\s\S]*?<\/svg>/, '').replace(/<span[^>]*aria-hidden="true"[\s\S]*?<\/span>/, ''), new RegExp(`>${name}[^<]*<`));
   }
-  assert.match(file, /class="shell-menu-chevron"[^>]*>⌄<\/span>/);
-  assert.match(settings, /class="shell-menu-chevron"[^>]*>⌄<\/span>/);
+  for (const markup of [file, settings]) {
+    assert.doesNotMatch(markup, /shell-menu-chevron|shell-icon-button-menu/);
+    assert.match(markup, /aria-haspopup="true" aria-expanded="false"/);
+  }
   assert.doesNotMatch(tutorial, /shell-menu-chevron/);
 
   const css = read('css/style.css');

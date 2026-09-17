@@ -72,6 +72,11 @@ const HINTS = {
     action: "글자를 넣을 위치를 클릭한 뒤 내용을 입력하세요.",
     keys: "Enter: 입력 완료 · Esc: 취소", activeKeys: ["Enter"],
   },
+  LABELER: {
+    title: "라벨러",
+    action: "시작점 → 꺾임점 → 라벨 위치를 클릭하세요.",
+    keys: "직선: Enter/Space · Esc: 취소", activeKeys: ["Enter", "Space"],
+  },
 };
 
 let _panel, _title, _action, _keys;

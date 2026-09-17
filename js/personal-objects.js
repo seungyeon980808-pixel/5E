@@ -12,7 +12,7 @@
 import { instantiateObjectsAt } from "./transform.js?v=1.4.0";
 import { showAlert, showConfirm } from "./ui-dialogs.js?v=1.4.0";
 import { renderObject } from "./render.js?v=1.4.0";
-import { getObjectBBox } from "./pick.js?v=1.4.0";
+import { getObjectBBox } from "./pick.js?v=1.4.2";
 import { idbGet, idbSet, idbAvailable } from "./idb-store.js?v=1.4.0";
 
 const KEY = "5e.personalObjects";

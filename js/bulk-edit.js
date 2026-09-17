@@ -14,7 +14,7 @@
 import { ptToMm, MIN_TEXT_PT, TEXT_FONTS, DEFAULT_TEXT_FONT } from "./state.js?v=1.4.0";
 import { SHAPE_TYPES } from "./object-types.js?v=1.4.0";
 import { showAlert } from "./ui-dialogs.js?v=1.4.0";
-import { getObjectBBox } from "./pick.js?v=1.4.0";
+import { getObjectBBox } from "./pick.js?v=1.4.2";
 import { translateObject } from "./transform.js?v=1.4.0";
 
 let _state = null;

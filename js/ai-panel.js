@@ -771,6 +771,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     const enabled = sourceMenuActions.filter((button) => !button.disabled);
     (focus === "last" ? enabled.at(-1) : enabled[0])?.focus();
   };
+  if (sourceMenu) registerEscapeLayer(sourceMenu, () => closeSourceMenu({ restoreFocus: true }));
   const imageOutputSummary = () => {
     const background = {
       preserve: '흰 배경과 투명도를 원본대로 유지',
