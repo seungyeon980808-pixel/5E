@@ -67,7 +67,7 @@
         window.qaPreviewCalls.push({ pageNumber, options: { ...options } });
         window.qaPreviewStarted = performance.now();
         await new Promise((resolve) => setTimeout(resolve, window.qaPreviewDelay ?? 30));
-        if (window.qaFailPageOnce === pageNumber) {
+        if (window.qaFailPageOnce === pageNumber && (!qaParams.has("failPreviewOnly") || !options.thumbnail)) {
           window.qaFailPageOnce = null;
           throw new Error(`QA ${pageNumber}쪽 실패`);
         }
@@ -79,6 +79,9 @@
         };
       },
     };
+    const qaParams = new URLSearchParams(location.search);
+    window.qaPreviewDelay = Number(qaParams.get("previewDelay")) || 30;
+    window.qaFailPageOnce = Number(qaParams.get("failPage")) || null;
     window.qaPreviewCalls = [];
     window.qaRequests = [];
     window.qaOriginalGate = null;

@@ -1407,6 +1407,24 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     stage.scrollTop = (initialPage - 1) * session.pageExtent;
   }
 
+  function showPreviewError(error) {
+    stage.removeAttribute("aria-busy");
+    const message = document.createElement("div");
+    message.className = "unilib-preview-error";
+    const text = document.createElement("p");
+    text.textContent = `미리보기 실패: ${error instanceof Error ? error.message : error}`;
+    const retryButton = document.createElement("button");
+    retryButton.type = "button";
+    retryButton.className = "unilib-button";
+    retryButton.textContent = "다시 시도";
+    retryButton.addEventListener("click", () => {
+      previewCache.clear();
+      void renderPreview();
+    });
+    message.append(text, retryButton);
+    stage.replaceChildren(message);
+  }
+
   async function renderPreview(retry = 0) {
     const ownEpoch = ++previewEpoch;
     let result = selectedResult();
@@ -1418,7 +1436,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       const loading = document.createElement("div");
       loading.className = "unilib-preview-loading";
       loading.setAttribute("role", "status");
-      loading.textContent = "불러오는 중…";
+      loading.textContent = "미리보기 불러오는 중…";
       stage.append(loading);
       stage.setAttribute("aria-busy", "true");
     }
@@ -1463,9 +1481,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       );
       if (resolution.status === "stale") return;
       if (resolution.status === "failed") {
-        stage.removeAttribute("aria-busy");
-        stage.replaceChildren();
-        stage.textContent = `미리보기 실패: ${resolution.error instanceof Error ? resolution.error.message : resolution.error}`;
+        showPreviewError(resolution.error);
         return;
       }
       invalidateAction();
@@ -1594,8 +1610,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
         await renderPreview(retry + 1);
         return;
       }
-      stage.removeAttribute("aria-busy");
-      stage.textContent = `미리보기 실패: ${error instanceof Error ? error.message : error}`;
+      showPreviewError(error);
     }
   }
 
@@ -1924,27 +1939,17 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       ? () => openIndependentReferences({ references, startGeneration: false, placement, groups: assignment?.groups })
       : () => openAi?.({ references });
     setStatus("AI 작업실을 여는 중…");
-    const opening = Promise.resolve().then(openDestination);
-    const aiPanel = document.getElementById("ai-image-panel");
-    if (aiPanel?.hidden) {
-      await new Promise((resolve, reject) => {
-        const observer = new MutationObserver(() => {
-          if (!aiPanel.hidden) { observer.disconnect(); resolve(); }
-        });
-        observer.observe(aiPanel, { attributes: true, attributeFilter: ["hidden"] });
-        opening.then(() => { observer.disconnect(); resolve(); }, (error) => { observer.disconnect(); reject(error); });
-      });
-    }
-    if (closeCropSurface) closeCrop(false);
-    close({ restoreFocus: false });
     try {
-      await opening;
+      await openDestination();
+      if (overlay.hidden) return;
+      if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        const fade = overlay.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 140, easing: "ease-out" });
+        await fade.finished;
+      }
+      if (closeCropSurface) closeCrop(false);
+      close({ restoreFocus: false });
     } catch (error) {
-      overlay.hidden = false;
-      await pdfUi?.activate?.();
       setStatus(`AI 작업실을 열지 못했습니다: ${error instanceof Error ? error.message : error}`, true);
-      await renderPreview();
-      focusResultCard(selectedId);
     }
   };
   overlay.querySelector("[data-unilib-insert]").addEventListener("click", async () => {

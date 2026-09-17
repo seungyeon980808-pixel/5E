@@ -2620,3 +2620,17 @@
 #ai-image-panel .ai-side-tabs > .panel-dock-toggle { width: 26px; height: 26px; min-height: 26px; padding: 3px; }
 #ai-image-panel .ai-side-tabs > .panel-dock-toggle { margin-left: auto; order: 1; flex: 0 0 26px; }
 #ai-image-panel .ai-head > .panel-toggles { display: flex; gap: 4px; }
+
+/* Shared viewport controls leave each pane header for source and version selection. */
+#ai-image-panel .ai-compare-heading { justify-content: flex-start; gap: 8px; }
+#ai-image-panel .ai-compare-heading > .ai-pane-zoom { flex-direction: row; margin-left: auto; gap: 4px; }
+#ai-image-panel .ai-compare-heading > .ai-annotation-toolbar { margin-left: auto; }
+#ai-image-panel .ai-pane-metadata { overflow: visible; }
+#ai-image-panel .ai-pane-metadata [data-ai-source-picker] { flex: 1 1 160px; min-width: 100px; max-width: none; }
+#ai-image-panel .ai-replace-source { display: none; }
+#ai-image-panel .ai-view-options { position: relative; }
+#ai-image-panel .ai-view-options > summary { list-style: none; cursor: pointer; padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; }
+#ai-image-panel .ai-view-options > summary::-webkit-details-marker { display: none; }
+#ai-image-panel .ai-view-options-menu { position: absolute; top: 100%; right: 0; z-index: 30; min-width: 210px; padding: 12px; background: var(--bg-panel); border: 1px solid var(--border); border-radius: 8px; }
+#ai-image-panel .ai-view-options-menu label { display: flex; align-items: center; gap: 8px; white-space: nowrap; font-size: 12px; }
+#ai-image-panel .ai-view-options-menu [hidden] { display: none; }
