@@ -2599,8 +2599,8 @@
 #ai-image-panel .ai-pane-head-controls > strong { flex: 0 0 auto; }
 #ai-image-panel .ai-pane-head > .ai-pane-head-controls { min-height: 32px; }
 
-/* Keep selection controls and zoom on matching rows in both comparison panes. */
-#ai-image-panel .ai-pane-head > .ai-pane-head-controls { display: grid; grid-template-rows: 32px 32px; gap: 8px; }
+/* Keep both pane toolbars on one compact row. */
+#ai-image-panel .ai-pane-head > .ai-pane-head-controls { display: flex; flex-wrap: nowrap; gap: 6px; }
 #ai-image-panel .ai-pane-metadata { display: flex; align-items: center; gap: 8px; min-width: 0; overflow-x: auto; overflow-y: hidden; }
 #ai-image-panel .ai-pane-metadata > strong,
 #ai-image-panel .ai-pane-metadata > .ai-replace-source { flex: 0 0 auto; white-space: nowrap; }
@@ -2610,3 +2610,13 @@
 #ai-image-panel .ai-pane-head-controls > .ai-pane-zoom { justify-self: end; margin: 0; }
 #ai-image-panel .ai-result-pane .ai-pane-metadata { overflow: visible; }
 #ai-image-panel .ai-pane-metadata .ai-version-picker > button { min-width: 0; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+#ai-image-panel .ai-media-toolbar { display: none; }
+#ai-image-panel .ai-pane-head-controls > .ai-pane-metadata { flex: 1 1 auto; gap: 5px; }
+#ai-image-panel .ai-pane-metadata [data-ai-source-picker] { flex: 1 1 90px; min-width: 48px; max-width: 140px; }
+#ai-image-panel .ai-pane-head-controls > .ai-pane-zoom { flex: 0 0 auto; margin-left: auto; }
+#ai-image-panel .ai-rail-heading { flex-wrap: wrap; gap: 5px; }
+#ai-image-panel .ai-rail-heading > .panel-dock-toggle,
+#ai-image-panel .ai-side-tabs > .panel-dock-toggle { width: 26px; height: 26px; min-height: 26px; padding: 3px; }
+#ai-image-panel .ai-side-tabs > .panel-dock-toggle { margin-left: auto; order: 1; flex: 0 0 26px; }
+#ai-image-panel .ai-head > .panel-toggles { display: flex; gap: 4px; }
