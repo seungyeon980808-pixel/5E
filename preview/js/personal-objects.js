@@ -1,4 +1,4 @@
-import { previewStorage as localStorage } from './preview-storage.js';
+import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-preview-labeler-0917-1111';
 /* ===== 퍼스널 오브젝트: 내가 만든 오브젝트를 도구로 저장/재사용 =====
  *
  * · 저장: 캔버스에서 선택 → 고급 기능 [오브젝트 저장] → 이름·분류 입력.
@@ -10,11 +10,11 @@ import { previewStorage as localStorage } from './preview-storage.js';
  * · 백업: settings.js PERSONAL_KEYS에 포함 — '설정 저장하기/불러오기'로 왕복.
  */
 
-import { instantiateObjectsAt } from "./transform.js?v=1.4.0";
-import { showAlert, showConfirm } from "./ui-dialogs.js?v=1.4.0";
-import { renderObject } from "./render.js?v=1.4.0";
-import { getObjectBBox } from "./pick.js?v=1.4.0";
-import { idbGet, idbSet, idbAvailable } from "./idb-store.js?v=1.4.0";
+import { instantiateObjectsAt } from "./transform.js?v=1.6.0-preview-labeler-0917-1111";
+import { showAlert, showConfirm } from "./ui-dialogs.js?v=1.6.0-preview-labeler-0917-1111";
+import { renderObject } from "./render.js?v=1.6.0-preview-labeler-0917-1111";
+import { getObjectBBox } from "./pick.js?v=1.6.0-preview-labeler-0917-1111";
+import { idbGet, idbSet, idbAvailable } from "./idb-store.js?v=1.6.0-preview-labeler-0917-1111";
 
 const KEY = "5e.personalObjects";
 const DEFAULT_CATEGORY = "기본";

@@ -1,4 +1,4 @@
-import { keyLabel, SNAP_LABEL } from "./platform.js?v=1.4.0";
+import { keyLabel, SNAP_LABEL } from "./platform.js?v=1.6.0-preview-labeler-0917-1111";
 
 /* ===== TOOL HINT: 캔버스 하단 바의 도구별 조작 안내 =====
  *
@@ -71,6 +71,11 @@ const HINTS = {
     title: "텍스트",
     action: "글자를 넣을 위치를 클릭한 뒤 내용을 입력하세요.",
     keys: "Enter: 입력 완료 · Esc: 취소", activeKeys: ["Enter"],
+  },
+  LABELER: {
+    title: "라벨러",
+    action: "시작점 → 꺾임점 → 라벨 위치를 클릭하세요.",
+    keys: "직선: Enter/Space · Esc: 취소", activeKeys: ["Enter", "Space"],
   },
 };
 

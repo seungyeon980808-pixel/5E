@@ -1,5 +1,5 @@
-import {normalizeReferenceComposition} from "./ai-source-tasking.js";
-import {planReferenceLayout} from "./ai-reference-composite.js";
+import {normalizeReferenceComposition} from "./ai-source-tasking.js?v=1.6.0-preview-labeler-0917-1111";
+import {planReferenceLayout} from "./ai-reference-composite.js?v=1.6.0-preview-labeler-0917-1111";
 
 function imageFor(source) {
   return new Promise((resolve, reject) => {

@@ -4,7 +4,7 @@ import {
   createExactOutputCacheEntry,
   evaluateExactOutputCacheEntry,
   pruneExactOutputCacheEntries,
-} from "./ai-remote-input-plan.js";
+} from "./ai-remote-input-plan.js?v=1.6.0-preview-labeler-0917-1111";
 
 export class MemoryOutputCacheBackend {
   constructor() {

@@ -1,4 +1,4 @@
-import { previewStorage as localStorage } from './preview-storage.js';
+import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-preview-labeler-0917-1111';
 /* ===== REFERENCE WINDOW (참고 문항 창) =====
  * 기출 문항을 최대 4개까지 별도 브라우저 창에 띄워 두고 보면서 문제를 만든다.
  *
@@ -20,8 +20,8 @@ import { previewStorage as localStorage } from './preview-storage.js';
  *   삭제        → 확인을 거쳐 칩까지 없앤다.
  */
 
-import { showConfirm } from "./ui-dialogs.js?v=1.4.0";
-import { makeModalDraggable } from "./modal-drag.js?v=1.4.0";
+import { showConfirm } from "./ui-dialogs.js?v=1.6.0-preview-labeler-0917-1111";
+import { makeModalDraggable } from "./modal-drag.js?v=1.6.0-preview-labeler-0917-1111";
 
 const IMG_BASE = "assets/exam-library/images/";
 

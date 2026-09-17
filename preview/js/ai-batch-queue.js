@@ -1,4 +1,4 @@
-import { isBatchRecord, parseBatchSource } from './ai-batch-source.js';
+import { isBatchRecord, parseBatchSource } from './ai-batch-source.js?v=1.6.0-preview-labeler-0917-1111';
 
 const STATES = new Set(['queued', 'running', 'completed', 'failed', 'cancelled']);
 const TERMINAL_STATES = new Set(['completed', 'failed', 'cancelled']);

@@ -1,4 +1,4 @@
-import { previewStorage as localStorage } from './preview-storage.js';
+import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-preview-labeler-0917-1111';
 /* ===== idb-store: 아주 작은 IndexedDB 키-값 저장소 =====
  *
  * localStorage(~5MB 상한)로는 퍼스널 라이브러리(이미지 base64 포함)가 금방 넘친다.

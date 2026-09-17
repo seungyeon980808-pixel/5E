@@ -1,5 +1,5 @@
-import { FAST_SCENE_SCHEMA_ID } from "./ai-scene-fastpath.js?v=1.5.3";
-import { AI_MOTIF_PROMPT_REFERENCE } from "./ai-motif-catalog.js?v=1.5.3";
+import { FAST_SCENE_SCHEMA_ID } from "./ai-scene-fastpath.js?v=1.6.0-preview-labeler-0917-1111";
+import { AI_MOTIF_PROMPT_REFERENCE } from "./ai-motif-catalog.js?v=1.6.0-preview-labeler-0917-1111";
 
 export const FAST_SCENE_PROMPT_VERSION = "5e-fast-scene-prompt@7";
 

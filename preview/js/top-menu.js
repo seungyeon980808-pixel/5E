@@ -6,6 +6,8 @@
 // toggles it; opening one closes the other; outside-click and Escape close
 // whichever is open.
 
+import { registerEscapeLayer } from './escape-layers.js?v=1.6.0-preview-labeler-0917-1111';
+
 const menus = new Map();      // name -> { btn, list, onOpen, onClose }
 let activeTopMenu = null;     // null | "file" | "settings"
 
@@ -32,6 +34,7 @@ function openMenu(name) {
 export function registerTopMenu(name, btn, list, opts = {}) {
   if (!btn || !list) return;
   menus.set(name, { btn, list, onOpen: opts.onOpen, onClose: opts.onClose });
+  registerEscapeLayer(list, () => { closeMenu(name); btn.focus(); });
 
   btn.addEventListener("click", (e) => {
     e.stopPropagation();

@@ -1,4 +1,4 @@
-import { analyzeImageData } from "./image-analysis.js";
+import { analyzeImageData } from "./image-analysis.js?v=1.6.0-preview-labeler-0917-1111";
 
 self.postMessage({ type: "ready" });
 

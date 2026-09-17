@@ -1,4 +1,4 @@
-import { normalizedRect } from "./contract.js";
+import { normalizedRect } from "./contract.js?v=1.6.0-preview-labeler-0917-1111";
 
 const FOOTER_MIN_Y = 0.85;
 const FOOTER_MARKERS = ["문제지에", "저작권", "한국교육과정평가원"];

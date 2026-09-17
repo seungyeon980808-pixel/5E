@@ -1,7 +1,7 @@
-import { registerEscapeLayer } from "./escape-layers.js?v=1";
-import { safeExternalSourceUrl } from "./library-import-policy.js";
-import { queryHighlightTerms } from "./pdf-library/search.js";
-import { chooseWorkbenchAssignment } from "./library/workbench-assignment.js";
+import { registerEscapeLayer } from "./escape-layers.js?v=1.6.0-preview-labeler-0917-1111";
+import { safeExternalSourceUrl } from "./library-import-policy.js?v=1.6.0-preview-labeler-0917-1111";
+import { queryHighlightTerms } from "./pdf-library/search.js?v=1.6.0-preview-labeler-0917-1111";
+import { chooseWorkbenchAssignment } from "./library/workbench-assignment.js?v=1.6.0-preview-labeler-0917-1111";
 
 const SOURCE_STORAGE_KEY = "5e.unified-library.sources.v1";
 const TREE_STORAGE_KEY = "5e.unified-library.tree-expanded.v1";
@@ -1171,7 +1171,33 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     renderSelectedTray();
     const pendingThumbnails = [];
     const thumbnailPdfMode = activeTypes.length === 1 && activeTypes[0] === "pdf" ? pdfDisplayMode : "file";
+    const thumbnailStatus = (media, failed = false) => {
+      media.dataset.thumbnailState = failed ? "error" : "loading";
+      media.setAttribute("aria-busy", String(!failed));
+      const status = document.createElement("span");
+      status.className = "unilib-thumbnail-status";
+      status.textContent = failed ? "미리보기를 불러오지 못했습니다" : "미리보기 불러오는 중…";
+      media.replaceChildren(status);
+    };
+    const showThumbnail = (media, src, result) => {
+      const image = new Image();
+      image.loading = "lazy";
+      image.alt = "";
+      image.onload = () => {
+        if (ownThumbnailEpoch !== thumbnailEpoch || !media.isConnected) return;
+        delete media.dataset.thumbnailState;
+        media.setAttribute("aria-busy", "false");
+        media.querySelector(".unilib-thumbnail-status")?.remove();
+        paintHighlightLayer(media, image, result, result.provenance?.rect ?? [0, 0, 1, 1]);
+      };
+      image.onerror = () => {
+        if (ownThumbnailEpoch === thumbnailEpoch && media.isConnected) thumbnailStatus(media, true);
+      };
+      image.src = src;
+      media.append(image);
+    };
     const loadThumbnail = (result, media) => {
+      thumbnailStatus(media);
       thumbnailQueue = thumbnailQueue.then(async () => {
         if (ownThumbnailEpoch !== thumbnailEpoch || !media.isConnected) return;
         const activeProvider = await provider();
@@ -1186,14 +1212,11 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
         const materialized = await pending;
         if (ownThumbnailEpoch !== thumbnailEpoch || !media.isConnected) return;
         const src = resultImage(result, materialized);
-        if (!src) return;
-        const image = new Image();
-        image.loading = "lazy";
-        image.alt = "";
-        image.src = src;
-        media.replaceChildren(image);
-        paintHighlightLayer(media, image, result, result.provenance?.rect ?? [0, 0, 1, 1]);
-      }).catch(() => {});
+        if (!src) { thumbnailStatus(media, true); return; }
+        showThumbnail(media, src, result);
+      }).catch(() => {
+        if (ownThumbnailEpoch === thumbnailEpoch && media.isConnected) thumbnailStatus(media, true);
+      });
     };
     list.replaceChildren(...visibleResults.map((result) => {
       const item = document.createElement("li");
@@ -1209,12 +1232,8 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       const media = document.createElement("span");
       media.className = "unilib-thumb library-card-thumb";
       if (typeof preview === "string" && preview) {
-        const image = new Image();
-        image.loading = "lazy";
-        image.alt = "";
-        image.src = preview;
-        media.append(image);
-        paintHighlightLayer(media, image, result, result.provenance?.rect ?? [0, 0, 1, 1]);
+        thumbnailStatus(media);
+        showThumbnail(media, preview, result);
       } else {
         media.textContent = result.kind === "page" ? "PDF" : "5E";
         if (result.provenance?.provider === "pdf") pendingThumbnails.push({ result, media });

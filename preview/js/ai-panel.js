@@ -1,77 +1,77 @@
-import { previewStorage as localStorage } from './preview-storage.js';
-import { openAiCompositionEditor } from './ai-composition-editor.js';
-import { registerEscapeLayer } from './escape-layers.js?v=1';
-import { clearTaskWorkspaces, createTaskPersistence, createTaskWorkspaces, recoverTaskWorkspaceSnapshot } from './ai-task-workspaces.js?v=1.6.0-preview-fast-login-0916';
+import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-preview-labeler-0917-1111';
+import { openAiCompositionEditor } from './ai-composition-editor.js?v=1.6.0-preview-labeler-0917-1111';
+import { registerEscapeLayer } from './escape-layers.js?v=1.6.0-preview-labeler-0917-1111';
+import { clearTaskWorkspaces, createTaskPersistence, createTaskWorkspaces, recoverTaskWorkspaceSnapshot } from './ai-task-workspaces.js?v=1.6.0-preview-labeler-0917-1111';
 import {
   advanceGenerationTiming,
   restoreGenerationTiming,
   sampleGenerationTiming,
   serializeGenerationTiming,
   startGenerationTiming,
-} from './ai-generation-timing.js';
-import { taskExportSelection } from './ai-task-export.js';
-import { keyLabel, modKey } from './platform.js?v=1.4.0';
+} from './ai-generation-timing.js?v=1.6.0-preview-labeler-0917-1111';
+import { taskExportSelection } from './ai-task-export.js?v=1.6.0-preview-labeler-0917-1111';
+import { keyLabel, modKey } from './platform.js?v=1.6.0-preview-labeler-0917-1111';
 import {
   distributeSourcesToTaskTabs,
   groupSourcesInTaskTab,
   moveReferenceInComposition,
   normalizeReferenceComposition,
-} from './ai-source-tasking.js?v=1';
-import { setupAiWorkbench } from './ai-workbench.js';
-import { mountDurableBatchUi } from './ai-batch-ui.js';
-import { createScopedEditSession, confirmScopedEditSession, prepareScopedEditProposal, acceptScopedEditProposal, invalidateScopedEditSession } from './ai-scoped-edit-session.js';
-import { decodeScopedPng } from './ai-scoped-edit-png.js';
-import { createScopedEditComparison } from './ai-scoped-edit-comparison.js';
-import { createImageCommentController, buildCommentRequest, PRESERVE_UNREQUESTED } from "./ai-image-comments.js?v=1";
-import { IndexedDBOutputCacheBackend } from "./ai-output-cache-store.js?v=1.5.3";
-import { insertImageFromSrc } from "./image-paste.js?v=1.4.0";
-import { openEditableAssetsDialog } from "./ai-editable-assets-dialog.js";
-import { insertEditableAssets } from "./ai-editable-assets.js";
-import { prepareSeparatedAssets, SEPARATED_ASSETS_PROMPT } from "./ai-separated-assets.js";
-import { buildDiscussionPrompt, buildImagePrompt } from "./ai-prompt.js?v=1.5.5";
-import { IMAGE_BACKGROUND_VERSION, transparentizeGeneratedImage } from "./image-background.js?v=1.5.4";
-import { parseAiEvent } from "./ai-events.js?v=1.5.3";
+} from './ai-source-tasking.js?v=1.6.0-preview-labeler-0917-1111';
+import { setupAiWorkbench } from './ai-workbench.js?v=1.6.0-preview-labeler-0917-1111';
+import { mountDurableBatchUi } from './ai-batch-ui.js?v=1.6.0-preview-labeler-0917-1111';
+import { createScopedEditSession, confirmScopedEditSession, prepareScopedEditProposal, acceptScopedEditProposal, invalidateScopedEditSession } from './ai-scoped-edit-session.js?v=1.6.0-preview-labeler-0917-1111';
+import { decodeScopedPng } from './ai-scoped-edit-png.js?v=1.6.0-preview-labeler-0917-1111';
+import { createScopedEditComparison } from './ai-scoped-edit-comparison.js?v=1.6.0-preview-labeler-0917-1111';
+import { createImageCommentController, buildCommentRequest, PRESERVE_UNREQUESTED } from "./ai-image-comments.js?v=1.6.0-preview-labeler-0917-1111";
+import { IndexedDBOutputCacheBackend } from "./ai-output-cache-store.js?v=1.6.0-preview-labeler-0917-1111";
+import { insertImageFromSrc } from "./image-paste.js?v=1.6.0-preview-labeler-0917-1111";
+import { openEditableAssetsDialog } from "./ai-editable-assets-dialog.js?v=1.6.0-preview-labeler-0917-1111";
+import { insertEditableAssets } from "./ai-editable-assets.js?v=1.6.0-preview-labeler-0917-1111";
+import { prepareSeparatedAssets, SEPARATED_ASSETS_PROMPT } from "./ai-separated-assets.js?v=1.6.0-preview-labeler-0917-1111";
+import { buildDiscussionPrompt, buildImagePrompt } from "./ai-prompt.js?v=1.6.0-preview-labeler-0917-1111";
+import { IMAGE_BACKGROUND_VERSION, transparentizeGeneratedImage } from "./image-background.js?v=1.6.0-preview-labeler-0917-1111";
+import { parseAiEvent } from "./ai-events.js?v=1.6.0-preview-labeler-0917-1111";
 import {
   AI_IMAGE_TRANSPORT_VERSION,
   createCheapImageSignature,
   prepareAIImageForTransport,
-} from "./ai-image-transport.js?v=1.5.3";
+} from "./ai-image-transport.js?v=1.6.0-preview-labeler-0917-1111";
 import {
   compactConversation,
   markImagesSent,
   selectOutgoingImageItems,
-} from "./ai-request-plan.js?v=1.5.3";
-import { buildFastScenePrompt, FAST_SCENE_PROMPT_VERSION } from "./ai-scene-prompt.js?v=1.5.3";
-import { chooseImageEngine, IMAGE_ENGINE_IDS } from "./ai-engine-router.js?v=1.5.3";
-import { compileFastScene } from "./ai-scene-fastpath.js?v=1.5.3";
+} from "./ai-request-plan.js?v=1.6.0-preview-labeler-0917-1111";
+import { buildFastScenePrompt, FAST_SCENE_PROMPT_VERSION } from "./ai-scene-prompt.js?v=1.6.0-preview-labeler-0917-1111";
+import { chooseImageEngine, IMAGE_ENGINE_IDS } from "./ai-engine-router.js?v=1.6.0-preview-labeler-0917-1111";
+import { compileFastScene } from "./ai-scene-fastpath.js?v=1.6.0-preview-labeler-0917-1111";
 import {
   compileFastSceneWithMotifs,
   expandAiMotifScene,
   MOTIF_CATALOG_VERSION,
-} from "./ai-motif-catalog.js?v=1.5.3";
+} from "./ai-motif-catalog.js?v=1.6.0-preview-labeler-0917-1111";
 import {
   LOCAL_ASSET_ROUTER_VERSION,
   matchLocalAssetRequest,
-} from "./ai-local-asset-router.js?v=1.5.3";
-import { fastSceneToSvgDataUrl, insertFastSceneIntoState } from "./ai-scene-preview.js?v=1.5.3";
+} from "./ai-local-asset-router.js?v=1.6.0-preview-labeler-0917-1111";
+import { fastSceneToSvgDataUrl, insertFastSceneIntoState } from "./ai-scene-preview.js?v=1.6.0-preview-labeler-0917-1111";
 import {
   buildExactOutputCacheDescriptor,
   createExactOutputCacheKey,
   createRemoteImageInputPlan,
   REMOTE_INPUT_PLAN_VERSION,
-} from "./ai-remote-input-plan.js?v=1.5.3";
-import { composeReferenceImages } from './ai-reference-composite.js';
+} from "./ai-remote-input-plan.js?v=1.6.0-preview-labeler-0917-1111";
+import { composeReferenceImages } from './ai-reference-composite.js?v=1.6.0-preview-labeler-0917-1111';
 import {
   composeRemoteImageInputPlan,
   REMOTE_COMPOSITOR_VERSION,
-} from "./ai-remote-compositor.js?v=1.5.3";
-import { createExactOutputCacheStore } from "./ai-output-cache-store.js?v=1.5.3";
-import { openPdfReferencePicker } from "./pdf-library/reference-picker.js";
-import { getReferenceRole, partitionReferenceItems, planImageReferences } from "./ai-reference-roles.js";
-import { normalizeMarkPolicy, buildMarkPolicyContract } from "./ai-mark-policy.js?v=1";
-import { createStructureAnalysisController, formatStructureContract, STRUCTURE_SPEC_VERSION } from "./ai-structure-spec.js?v=1";
-import { APPROVED_FIRST_PROMPT, APPROVED_FIRST_REQUEST, approvedFirstRun, prepareApprovedFirstAttachment } from './ai-approved-first-png.js';
-import { WHITE_PNG_VERSION, isWhitePngWorkflow, buildWhitePngPrompt } from "./ai-white-png.js?v=1";
+} from "./ai-remote-compositor.js?v=1.6.0-preview-labeler-0917-1111";
+import { createExactOutputCacheStore } from "./ai-output-cache-store.js?v=1.6.0-preview-labeler-0917-1111";
+import { openPdfReferencePicker } from "./pdf-library/reference-picker.js?v=1.6.0-preview-labeler-0917-1111";
+import { getReferenceRole, partitionReferenceItems, planImageReferences } from "./ai-reference-roles.js?v=1.6.0-preview-labeler-0917-1111";
+import { normalizeMarkPolicy, buildMarkPolicyContract } from "./ai-mark-policy.js?v=1.6.0-preview-labeler-0917-1111";
+import { createStructureAnalysisController, formatStructureContract, STRUCTURE_SPEC_VERSION } from "./ai-structure-spec.js?v=1.6.0-preview-labeler-0917-1111";
+import { APPROVED_FIRST_PROMPT, APPROVED_FIRST_REQUEST, approvedFirstRun, prepareApprovedFirstAttachment } from './ai-approved-first-png.js?v=1.6.0-preview-labeler-0917-1111';
+import { WHITE_PNG_VERSION, isWhitePngWorkflow, buildWhitePngPrompt } from "./ai-white-png.js?v=1.6.0-preview-labeler-0917-1111";
 import {
   AI_IMAGE_GENERATION_EFFORT,
   AI_IMAGE_REVIEW_EFFORT,
@@ -80,27 +80,27 @@ import {
   buildImageCorrectionRequest,
   buildStructuralInventory,
   createAiImageReviewController,
-} from "./ai-image-review.js?v=1";
-import { resolveGeneratedRaster } from "./ai-raster-output.js?v=1";
+} from "./ai-image-review.js?v=1.6.0-preview-labeler-0917-1111";
+import { resolveGeneratedRaster } from "./ai-raster-output.js?v=1.6.0-preview-labeler-0917-1111";
 import {
   imageOutputOptionsKey,
   normalizeImageOutputOptions,
   resolveImageOutput,
-} from "./ai-output-processing.js?v=1";
-import { inspectPngDataUrl, enforcePngAcceptance } from "./ai-png-inspection.js?v=1";
+} from "./ai-output-processing.js?v=1.6.0-preview-labeler-0917-1111";
+import { inspectPngDataUrl, enforcePngAcceptance } from "./ai-png-inspection.js?v=1.6.0-preview-labeler-0917-1111";
 import {
   enforceKiceImageRunInput,
   KICE_IMAGE_MODE,
   KICE_IMAGE_OUTPUT_ENGINE,
   kiceImageRequest,
-} from "./kice-image-workflow.js?v=1.0.0";
+} from "./kice-image-workflow.js?v=1.6.0-preview-labeler-0917-1111";
 import {
   AI_OUTPUT_ENGINES,
   AI_QUALITY_MODES,
   normalizeOutputEngine,
   normalizeQualityMode,
   qualityModeCacheVersion,
-} from "./ai-quality-mode.js?v=1.5.5";
+} from "./ai-quality-mode.js?v=1.6.0-preview-labeler-0917-1111";
 
 // This path never redraws a PNG through Canvas or registers a pending proposal.
 export function scopedPngBytes(data) {
@@ -772,6 +772,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     const enabled = sourceMenuActions.filter((button) => !button.disabled);
     (focus === "last" ? enabled.at(-1) : enabled[0])?.focus();
   };
+  if (sourceMenu) registerEscapeLayer(sourceMenu, () => closeSourceMenu({ restoreFocus: true }));
   const imageOutputSummary = () => {
     const background = {
       preserve: '흰 배경과 투명도를 원본대로 유지',

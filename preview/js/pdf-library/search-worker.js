@@ -1,5 +1,5 @@
-import { buildSearchIndex, searchIndex } from "./search.js";
-import { createCropSource } from "./contract.js";
+import { buildSearchIndex, searchIndex } from "./search.js?v=1.6.0-preview-labeler-0917-1111";
+import { createCropSource } from "./contract.js?v=1.6.0-preview-labeler-0917-1111";
 
 const MAX_PREBUILT_ENTRIES = 100_000;
 const MAX_ENTRY_TEXT = 500_000;

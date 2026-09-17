@@ -7,10 +7,10 @@
 // the projection stays anchored in world space through zoom/pan (the viewBox
 // alone changes what slice of that space is shown).
 
-import { getZoom, getRenderScale } from "../viewport.js?v=1.4.0";
-import { SVG_NS, rotPt, catmullRomPath } from "./core.js?v=1.4.0";
-import { renderText } from "./labels.js?v=1.4.0";
-import { makeFillPattern } from "./fill.js?v=1.4.0";
+import { getZoom, getRenderScale } from "../viewport.js?v=1.6.0-preview-labeler-0917-1111";
+import { SVG_NS, rotPt, catmullRomPath } from "./core.js?v=1.6.0-preview-labeler-0917-1111";
+import { renderText } from "./labels.js?v=1.6.0-preview-labeler-0917-1111";
+import { makeFillPattern } from "./fill.js?v=1.6.0-preview-labeler-0917-1111";
 import {
   renderRect,
   renderEllipse,
@@ -20,44 +20,44 @@ import {
   renderCurve,
   renderImage,
   renderSvgAsset,
-} from "./shapes.js?v=1.4.2";
-import { renderAxes, renderAngleArc, renderRightAngle, renderLabeler } from "./annotations.js?v=1.4.0";
-import { renderCoordplane, renderFuncgraph } from "./coordplane.js?v=1.4.0";
-import { renderCircuit } from "./circuit.js?v=1.4.0";
-import { renderOptics, renderApparatus } from "./optics-apparatus.js?v=1.4.0";
-import { renderPendulum, pendulumBBox } from "./pendulum.js?v=1.4.0";
-import { renderSpring, springBBox } from "./spring.js?v=1.4.0";
-import { renderChargeField, chargeFieldBBox, renderFieldLines, fieldLinesBBox } from "./field.js?v=1.4.0";
-import { renderStandingWave, standingWaveBBox } from "./standing-wave.js?v=1.4.0";
-import { renderGauge } from "./gauge.js?v=1.4.0";
-import { renderSolid3d } from "./solid3d.js?v=1.4.0";
-import { renderParabola, parabolaBBox } from "./parabola.js?v=1.4.0";
-import { renderGroundArc, groundArcBBox } from "./groundarc.js?v=1.4.0";
+} from "./shapes.js?v=1.6.0-preview-labeler-0917-1111";
+import { renderAxes, renderAngleArc, renderRightAngle, renderLabeler } from "./annotations.js?v=1.6.0-preview-labeler-0917-1111";
+import { renderCoordplane, renderFuncgraph } from "./coordplane.js?v=1.6.0-preview-labeler-0917-1111";
+import { renderCircuit } from "./circuit.js?v=1.6.0-preview-labeler-0917-1111";
+import { renderOptics, renderApparatus } from "./optics-apparatus.js?v=1.6.0-preview-labeler-0917-1111";
+import { renderPendulum, pendulumBBox } from "./pendulum.js?v=1.6.0-preview-labeler-0917-1111";
+import { renderSpring, springBBox } from "./spring.js?v=1.6.0-preview-labeler-0917-1111";
+import { renderChargeField, chargeFieldBBox, renderFieldLines, fieldLinesBBox } from "./field.js?v=1.6.0-preview-labeler-0917-1111";
+import { renderStandingWave, standingWaveBBox } from "./standing-wave.js?v=1.6.0-preview-labeler-0917-1111";
+import { renderGauge } from "./gauge.js?v=1.6.0-preview-labeler-0917-1111";
+import { renderSolid3d } from "./solid3d.js?v=1.6.0-preview-labeler-0917-1111";
+import { renderParabola, parabolaBBox } from "./parabola.js?v=1.6.0-preview-labeler-0917-1111";
+import { renderGroundArc, groundArcBBox } from "./groundarc.js?v=1.6.0-preview-labeler-0917-1111";
 // 생명과학 부품 6종 (2026-07-31) — 규격은 docs/BIO_PARTS_SPEC.md
-import { renderBrace, braceBBox } from "./brace.js?v=1.4.0";
-import { renderChromosome, chromosomeBBox } from "./chromosome.js?v=1.4.0";
-import { renderBilayer, bilayerBBox } from "./bilayer.js?v=1.4.0";
-import { renderNeuron, neuronBBox } from "./neuron.js?v=1.4.0";
-import { renderLegend, legendBBox } from "./legend.js?v=1.4.0";
-import { renderPedigree, pedigreeBBox } from "./pedigree.js?v=1.4.0";
+import { renderBrace, braceBBox } from "./brace.js?v=1.6.0-preview-labeler-0917-1111";
+import { renderChromosome, chromosomeBBox } from "./chromosome.js?v=1.6.0-preview-labeler-0917-1111";
+import { renderBilayer, bilayerBBox } from "./bilayer.js?v=1.6.0-preview-labeler-0917-1111";
+import { renderNeuron, neuronBBox } from "./neuron.js?v=1.6.0-preview-labeler-0917-1111";
+import { renderLegend, legendBBox } from "./legend.js?v=1.6.0-preview-labeler-0917-1111";
+import { renderPedigree, pedigreeBBox } from "./pedigree.js?v=1.6.0-preview-labeler-0917-1111";
 // 화학 부품 10종 (2026-07-31) — 규격은 docs/CHEM_PARTS_SPEC.md
 // 전부 크기박스 계열이라 bbox 는 SIZE_TYPES 경로가 자동 처리한다 → 렌더 함수만 가져온다.
-import { renderVessel } from "./vessel.js?v=1.4.0";
-import { renderChemModel } from "./chemmodel.js?v=1.4.0";
-import { renderParticleBox } from "./particlebox.js?v=1.4.0";
-import { renderOrbital } from "./orbital.js?v=1.4.0";
-import { renderBondGroup } from "./bondgroup.js?v=1.4.0";
-import { renderChemChart } from "./chemchart.js?v=1.4.0";
-import { renderAxisBreak } from "./axisbreak.js?v=1.4.0";
-import { renderChemGraph } from "./chemgraph.js?v=1.4.0";
-import { renderElectrode } from "./electrode.js?v=1.4.0";
-import { renderPeriodic } from "./periodic.js?v=1.4.0";
-import { DEFAULT_TEXT_SIZE_MM, scaleBBoxForWidth } from "../state.js?v=1.4.0";
+import { renderVessel } from "./vessel.js?v=1.6.0-preview-labeler-0917-1111";
+import { renderChemModel } from "./chemmodel.js?v=1.6.0-preview-labeler-0917-1111";
+import { renderParticleBox } from "./particlebox.js?v=1.6.0-preview-labeler-0917-1111";
+import { renderOrbital } from "./orbital.js?v=1.6.0-preview-labeler-0917-1111";
+import { renderBondGroup } from "./bondgroup.js?v=1.6.0-preview-labeler-0917-1111";
+import { renderChemChart } from "./chemchart.js?v=1.6.0-preview-labeler-0917-1111";
+import { renderAxisBreak } from "./axisbreak.js?v=1.6.0-preview-labeler-0917-1111";
+import { renderChemGraph } from "./chemgraph.js?v=1.6.0-preview-labeler-0917-1111";
+import { renderElectrode } from "./electrode.js?v=1.6.0-preview-labeler-0917-1111";
+import { renderPeriodic } from "./periodic.js?v=1.6.0-preview-labeler-0917-1111";
+import { DEFAULT_TEXT_SIZE_MM, scaleBBoxForWidth } from "../state.js?v=1.6.0-preview-labeler-0917-1111";
 import { SIZE_TYPES, TEXT_MEASURED_TYPES, POINT_ARRAY_TYPES, ENDPOINT_HANDLE_TYPES,
-         zOrderObjects } from "../object-types.js?v=1.4.0";
-import { resolveObjectStyle } from "../style-mode.js?v=1.4.0";
-import { renderFormula } from "../formula.js?v=1.4.0";
-import { IMAGE_EDIT_SESSION_ID } from "../image-cutout.js?v=1.4.0";
+         zOrderObjects } from "../object-types.js?v=1.6.0-preview-labeler-0917-1111";
+import { resolveObjectStyle } from "../style-mode.js?v=1.6.0-preview-labeler-0917-1111";
+import { renderFormula } from "../formula.js?v=1.6.0-preview-labeler-0917-1111";
+import { IMAGE_EDIT_SESSION_ID } from "../image-cutout.js?v=1.6.0-preview-labeler-0917-1111";
 import {
   SELECTION_COLOR,
   SELECTION_DASH_PX,
@@ -65,7 +65,7 @@ import {
   SELECTION_STROKE_PX,
   selectionScaleForSvg,
   selectionVisualMetrics,
-} from "../selection-visuals.js?v=1.0.0";
+} from "../selection-visuals.js?v=1.6.0-preview-labeler-0917-1111";
 
 function renderObjectById(state, id) {
   if (id === IMAGE_EDIT_SESSION_ID) return state.imageEditSession || null;
@@ -587,6 +587,18 @@ export function render(state) {
     if (el) {
       scene.appendChild(el);
     }
+    if (d.type === "labeler") {
+      for (const point of [d.p1, d.elbow].filter(Boolean)) {
+        const dot = document.createElementNS(SVG_NS, "circle");
+        dot.setAttribute("cx", point.x);
+        dot.setAttribute("cy", point.y);
+        dot.setAttribute("r", 4 / selectionScale);
+        dot.style.fill = "var(--c-main, #0969da)";
+        dot.setAttribute("pointer-events", "none");
+        dot.dataset.ui = "labeler-draft-point";
+        scene.appendChild(dot);
+      }
+    }
   }
 
   // Optional non-native preview. Normal editing uses the textarea overlay so
@@ -787,13 +799,15 @@ function makeHitTwin(obj) {
     twin.setAttribute("width", r * 2);
     twin.setAttribute("height", r * 2);
   } else if (obj.type === "labeler") {
-    // Hover band along the leader (p1→p2); the label glyph grabs via its own fill.
     const a = obj.p1 || { x: 0, y: 0 }, b = obj.p2 || a;
-    twin = document.createElementNS(SVG_NS, "line");
-    twin.setAttribute("x1", a.x);
-    twin.setAttribute("y1", a.y);
-    twin.setAttribute("x2", b.x);
-    twin.setAttribute("y2", b.y);
+    const joint = obj.elbow || b;
+    twin = document.createElementNS(SVG_NS, "path");
+    let d = `M ${a.x} ${a.y} L ${joint.x} ${joint.y}`;
+    if (obj.elbow) d += ` L ${b.x} ${b.y}`;
+    for (const point of [obj.p3, ...(obj.extraAnchors || [])].filter(Boolean)) {
+      d += ` M ${point.x} ${point.y} L ${joint.x} ${joint.y}`;
+    }
+    twin.setAttribute("d", d);
   } else {
     return null; // not an open path → no twin (closed shapes grab via fill)
   }
@@ -955,8 +969,9 @@ export function singleObjBBox(o, scene) {
   if (o.type === "labeler") {
     const a = o.p1 || { x: 0, y: 0 }, b = o.p2 || a;
     const sz = (o.labelSize || DEFAULT_TEXT_SIZE_MM) * 0.7; // pad for the label glyph
-    const minX = Math.min(a.x, b.x - sz), minY = Math.min(a.y, b.y - sz);
-    const maxX = Math.max(a.x, b.x + sz), maxY = Math.max(a.y, b.y + sz);
+    const points = [a, o.elbow, o.p3, ...(o.extraAnchors || [])].filter(Boolean);
+    const minX = Math.min(...points.map(p => p.x), b.x - sz), minY = Math.min(...points.map(p => p.y), b.y - sz);
+    const maxX = Math.max(...points.map(p => p.x), b.x + sz), maxY = Math.max(...points.map(p => p.y), b.y + sz);
     return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
   }
   if (o.type === "pendulum") {
@@ -1183,6 +1198,10 @@ function renderHandles(sel, scene, zoom, activeTool) {
     makeHandle(sel.p2.x, sel.p2.y, "p1", true);
     // 라벨러의 두 번째 지시선: 세 번째 핸들.
     if (sel.type === "labeler" && sel.p3) makeHandle(sel.p3.x, sel.p3.y, "p2", true);
+    if (sel.type === "labeler" && sel.elbow) makeHandle(sel.elbow.x, sel.elbow.y, "elbow", true);
+    if (sel.type === "labeler") {
+      (sel.extraAnchors || []).forEach((point, index) => makeHandle(point.x, point.y, `anchor-${index}`, true));
+    }
   } else if ((sel.type === "polyline" || sel.type === "curve") && !sel.closed) {
     sel.points.forEach((p, i) => makeHandle(p.x, p.y, `p${i}`, true));
   }

@@ -5,30 +5,30 @@
 // LIVE rendered SVG element (getBBox), so this module keeps its own _svg
 // reference, assigned by initPick(svg) from initTools.
 
-import { screenToWorld, getRenderScale } from "./viewport.js?v=1.4.0";
-import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, scaleBBoxForWidth } from "./state.js?v=1.4.0";
+import { screenToWorld, getRenderScale } from "./viewport.js?v=1.6.0-preview-labeler-0917-1111";
+import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, scaleBBoxForWidth } from "./state.js?v=1.6.0-preview-labeler-0917-1111";
 // Single-source circuit body geometry: hit-testing reuses the SAME polygon the
 // renderer draws, so the clickable box and the visible box can never diverge.
 import { circuitBodyPolygon, pendulumGeometry, pendulumBBox, springGeometry, springBBox,
          chargeFieldBBox, fieldLinesBBox, standingWaveGeometry, standingWaveBBox,
          parabolaPoints, parabolaBBox, groundArcPoints, groundArcBBox,
          bracePathPoints, braceBBox, chromosomeBBox, bilayerBBox, neuronBBox,
-         legendBBox, pedigreeBBox } from "./render.js?v=1.4.0";
+         legendBBox, pedigreeBBox } from "./render.js?v=1.6.0-preview-labeler-0917-1111";
 // Labeler hit-test reuses the SAME label block the renderer trims the leader to
 // (render/annotations.js:renderLabeler): estimateLabelBlock for plain-text labels,
 // measureFormula for formula labels (확정 항목 ①) — so the clickable label area
 // always matches the visible glyphs instead of a fixed one-glyph box.
-import { estimateLabelBlock } from "./render/labels.js?v=1.4.0";
-import { measureFormula } from "./formula.js?v=1.4.0";
+import { estimateLabelBlock } from "./render/labels.js?v=1.6.0-preview-labeler-0917-1111";
+import { measureFormula } from "./formula.js?v=1.6.0-preview-labeler-0917-1111";
 import {
   segDist, pointInPolygon, pointInTriangle, triangleVertices,
   localPointForSizeObject, curveBezierSeg, curveBezierSegClosed, evalBezier,
   bboxIntersects,
-} from "./geometry.js?v=1.4.0";
+} from "./geometry.js?v=1.6.0-preview-labeler-0917-1111";
 import {
   OBJECT_TYPES, SIZE_TYPES, BOX_FACE_TYPES, LINE_TOL_TYPES,
   POINT_ARRAY_TYPES, TEXT_MEASURED_TYPES, zOrderObjects,
-} from "./object-types.js?v=1.4.0";
+} from "./object-types.js?v=1.6.0-preview-labeler-0917-1111";
 
 const HIT_TOL_PX = 6; // CSS px of slop around an edge so thin strokes are clickable
 const LINE_HIT_TOL_PX = 20; // existing screen-space slop for line-family segments
@@ -403,10 +403,11 @@ function hitTest(objects, p, tol = 0, lineTol = tol) {
     }
 
     if (o.type === "labeler") {
-      // Hit on the leader segment (p1→p2) OR inside the label block centered at p2.
       const a = o.p1, b = o.p2;
       if (a && b) {
-        if (segDist(p.x, p.y, a.x, a.y, b.x, b.y) <= margin) return o.id;
+        const joint = o.elbow || b;
+        const segments = [[a, joint], ...(o.elbow ? [[joint, b]] : []), ...[o.p3, ...(o.extraAnchors || [])].filter(Boolean).map(point => [point, joint])];
+        if (segments.some(([from, to]) => segDist(p.x, p.y, from.x, from.y, to.x, to.y) <= margin)) return o.id;
         // Label area = the SAME block the renderer measures (labelerBlockHalf:
         // formula box or multiline text estimate), centered on p2, grown by the
         // click margin. The old fixed sz*0.7 box only covered ~one glyph, so
@@ -486,8 +487,9 @@ function getObjectBBox(o) {
     // covers the full label (text or formula), not just a one-glyph pad around p2.
     const a = o.p1 || { x: 0, y: 0 }, b = o.p2 || a;
     const { hw, hh } = labelerBlockHalf(o);
-    const minX = Math.min(a.x, b.x - hw), minY = Math.min(a.y, b.y - hh);
-    const maxX = Math.max(a.x, b.x + hw), maxY = Math.max(a.y, b.y + hh);
+    const points = [a, o.elbow, o.p3, ...(o.extraAnchors || [])].filter(Boolean);
+    const minX = Math.min(...points.map(p => p.x), b.x - hw), minY = Math.min(...points.map(p => p.y), b.y - hh);
+    const maxX = Math.max(...points.map(p => p.x), b.x + hw), maxY = Math.max(...points.map(p => p.y), b.y + hh);
     return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
   }
   if (POINT_ARRAY_TYPES.has(o.type)) { // was: polyline|curve|funcgraph

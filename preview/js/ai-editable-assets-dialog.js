@@ -1,8 +1,8 @@
-import { prepareEditableAssets, effectiveAssetLabelMode } from './ai-editable-assets.js';
-import { refinePreparedAssets } from './ai-editable-assets-refinement.js';
-import { decodeScopedPng } from './ai-scoped-edit-png.js';
-import { renderLabeler } from './render/annotations.js?v=1.4.0';
-import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM } from './state.js?v=1.4.0';
+import { prepareEditableAssets, effectiveAssetLabelMode } from './ai-editable-assets.js?v=1.6.0-preview-labeler-0917-1111';
+import { refinePreparedAssets } from './ai-editable-assets-refinement.js?v=1.6.0-preview-labeler-0917-1111';
+import { decodeScopedPng } from './ai-scoped-edit-png.js?v=1.6.0-preview-labeler-0917-1111';
+import { renderLabeler } from './render/annotations.js?v=1.6.0-preview-labeler-0917-1111';
+import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM } from './state.js?v=1.6.0-preview-labeler-0917-1111';
 export { refinePreparedAssets };
 
 const NS = 'http://www.w3.org/2000/svg';

@@ -2,7 +2,7 @@ import {
   validateChangeMask,
   validatePreserveMask,
   validateRgbaImage,
-} from "./image-background-core.js";
+} from "./image-background-core.js?v=1.6.0-preview-labeler-0917-1111";
 
 export const IMAGE_LINE_THICKNESS_LEVELS = Object.freeze([0, 1, 2]);
 

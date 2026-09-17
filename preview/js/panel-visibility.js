@@ -1,4 +1,4 @@
-import { createPanelMotion, cycleFocusIndex } from './panel-motion.js';
+import { createPanelMotion, cycleFocusIndex } from './panel-motion.js?v=1.6.0-preview-labeler-0917-1111';
 
 const narrow = window.matchMedia('(max-width: 767px)');
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
@@ -92,7 +92,7 @@ function setup(root, kind) {
   const panels = kind === 'editor'
     ? [root.querySelector('#panel-left'), root.querySelector('#panel-right')]
     : [root.querySelector('.ai-task-rail'), root.querySelector('.ai-conversation')];
-  const toolbar = root.querySelector(kind === 'editor' ? '.canvas-toolbar' : '.ai-head-status');
+  const toolbar = root.querySelector(kind === 'editor' ? '.canvas-toolbar' : '.ai-media-toolbar');
   if (!panels.every(Boolean) || !toolbar) return;
   root.dataset.panelLayout = kind;
   const group = kind === 'image'
@@ -131,7 +131,19 @@ function setup(root, kind) {
     label.className = 'panel-toggle-label';
     label.textContent = name;
     button.replaceChildren(panelIcon(side), label);
-    if (kind === 'image') group.append(button);
+    if (kind === 'image') {
+      group.append(button);
+      const bar = document.createElement('div');
+      bar.className = `panel-utility-bar panel-utility-bar-${side}`;
+      const dock = document.createElement('button');
+      dock.type = 'button';
+      dock.className = 'panel-dock-toggle';
+      dock.dataset.panelInternalToggle = side;
+      dock.setAttribute('aria-controls', panel.id);
+      dock.append(panelIcon(side));
+      bar.append(dock);
+      panel.prepend(bar);
+    }
     const close = panel.querySelector('.panel-collapse-close') || document.createElement('button');
     close.type = 'button';
     close.className = 'panel-collapse-close';

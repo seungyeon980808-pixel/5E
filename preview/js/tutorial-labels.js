@@ -1,4 +1,4 @@
-import { IS_MAC } from './platform.js?v=1.4.0';
+import { IS_MAC } from './platform.js?v=1.6.0-preview-labeler-0917-1111';
 
 // 단축키의 Ctrl+는 Command, 마우스 각도 스냅의 단독 Ctrl은 Option입니다.
 // 표시 필드에만 적용합니다. 판정 함수·선택자·입력 데이터는 바꾸지 않습니다.

@@ -1,4 +1,4 @@
-import { AI_QUALITY_MODES, normalizeQualityMode, qualityModeRule } from "./ai-quality-mode.js?v=1.5.5";
+import { AI_QUALITY_MODES, normalizeQualityMode, qualityModeRule } from "./ai-quality-mode.js?v=1.6.0-preview-labeler-0917-1111";
 
 export const EXAM_STYLE_PROMPT = `평가원식 과학 도식 제작 규칙:
 - 명시적 변경 대상 밖의 핵심 구조, 객체·부품 수, 연결·접촉 관계, 상대 비율·배치와 패널 순서를 보존하고 과학적으로 정확하게 표현한다. 원본이나 설명에 없는 장치·부품·구조는 추가하지 않는다.

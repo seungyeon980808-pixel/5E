@@ -1,6 +1,6 @@
 /** Review-only, byte-preserving comparison for a scoped-edit proposal. */
-import { deriveRgbaChangeMask } from './ai-scoped-edit.js';
-import { decodeScopedPng } from './ai-scoped-edit-png.js';
+import { deriveRgbaChangeMask } from './ai-scoped-edit.js?v=1.6.0-preview-labeler-0917-1111';
+import { decodeScopedPng } from './ai-scoped-edit-png.js?v=1.6.0-preview-labeler-0917-1111';
 
 function copyPng(value, label) {
   if (!(value instanceof Uint8Array) || !value.length

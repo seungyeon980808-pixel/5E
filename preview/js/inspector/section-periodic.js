@@ -11,7 +11,7 @@
  * 구조(selected/commit/sync 3함수)는 section-legend.js 와 동일하다.
  */
 
-import { makeSection } from "./widgets.js?v=1.4.0";
+import { makeSection } from "./widgets.js?v=1.6.0-preview-labeler-0917-1111";
 
 const PERIOD_OPTIONS = [
   ["2", "1~2주기"],

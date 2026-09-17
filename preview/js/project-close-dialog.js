@@ -1,4 +1,4 @@
-import { registerEscapeLayer } from "./escape-layers.js?v=1";
+import { registerEscapeLayer } from "./escape-layers.js?v=1.6.0-preview-labeler-0917-1111";
 
 export function showProjectCloseDialog({ aiHasWork = false } = {}) {
   return new Promise((resolve) => {

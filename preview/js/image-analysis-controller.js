@@ -1,4 +1,4 @@
-import { analyzeImageData } from "./image-analysis.js";
+import { analyzeImageData } from "./image-analysis.js?v=1.6.0-preview-labeler-0917-1111";
 
 function controllerError(code, message) {
   const error = new Error(message);
@@ -17,7 +17,7 @@ function workerError(payload) {
 
 export function createImageAnalysisController({
   WorkerClass = typeof Worker === "function" ? Worker : null,
-  workerUrl = new URL("./image-analysis-worker.js", import.meta.url),
+  workerUrl = new URL("./image-analysis-worker.js?v=1.6.0-preview-labeler-0917-1111", import.meta.url),
   fallbackAnalyze = analyzeImageData,
   scheduleFallback = (callback) => setTimeout(callback, 0),
   cancelFallback = (timer) => clearTimeout(timer),

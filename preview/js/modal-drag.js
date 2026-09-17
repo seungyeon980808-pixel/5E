@@ -1,4 +1,4 @@
-import { initEscapeLayers } from "./escape-layers.js?v=1";
+import { initEscapeLayers } from "./escape-layers.js?v=1.6.0-preview-labeler-0917-1111";
 
 /* ===== MODAL DRAG =====
  * 모달(그래프 만들기, 함수 입력, 내보내기 …)을 화면 안에서 자유롭게 옮긴다.

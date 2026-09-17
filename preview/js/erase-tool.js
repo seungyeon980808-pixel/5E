@@ -12,10 +12,10 @@
 // 구조·규약(포인터 처리·오버레이 미리보기·Undo 1스텝)은 js/cut-tool.js 를 그대로 따랐다.
 // 가위(CUT)와는 완전히 독립이며 가위 코드는 전혀 건드리지 않는다. */
 
-import { screenToWorld } from "./viewport.js?v=1.4.0";
-import { simplifyRDP } from "./geometry.js?v=1.4.0";
-import { getObjectBBox } from "./pick.js?v=1.4.0";
-import { tightenBoxObject } from "./cut-geometry.js?v=1.4.0";
+import { screenToWorld } from "./viewport.js?v=1.6.0-preview-labeler-0917-1111";
+import { simplifyRDP } from "./geometry.js?v=1.6.0-preview-labeler-0917-1111";
+import { getObjectBBox } from "./pick.js?v=1.6.0-preview-labeler-0917-1111";
+import { tightenBoxObject } from "./cut-geometry.js?v=1.6.0-preview-labeler-0917-1111";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const ERASE_CURSOR = "crosshair";

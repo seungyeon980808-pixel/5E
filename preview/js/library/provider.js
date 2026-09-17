@@ -1,10 +1,10 @@
-import { cropPrebuiltPreview } from "./prebuilt-preview-crop.js?v=1.6.0-preview-fast-login-0916";
-import { providedPagePreviews } from "../../assets/pdf-library/previews/manifest.js";
-import { deriveExamMetadata, examMetadataMatches, parseCompactExamCode } from "./exam-code.js";
-import { createHierarchicalSourceNodes, normalizeSourceCategory } from "./source-tree.js?v=1.6.0-preview-fast-login-0916";
-import { createCropSource } from "../pdf-library/contract.js";
-import { isAnswerChoiceBoxCandidate, textBeforeFooter, trimImageCandidateAtExternalCaption, trimQuestionRectAtFooter } from "../pdf-library/page-geometry.js";
-import { mapQueryHighlights, queryHighlightTerms } from "../pdf-library/search.js";
+import { cropPrebuiltPreview } from "./prebuilt-preview-crop.js?v=1.6.0-preview-labeler-0917-1111";
+import { providedPagePreviews } from "../../assets/pdf-library/previews/manifest.js?v=1.6.0-preview-labeler-0917-1111";
+import { deriveExamMetadata, examMetadataMatches, parseCompactExamCode } from "./exam-code.js?v=1.6.0-preview-labeler-0917-1111";
+import { createHierarchicalSourceNodes, normalizeSourceCategory } from "./source-tree.js?v=1.6.0-preview-labeler-0917-1111";
+import { createCropSource } from "../pdf-library/contract.js?v=1.6.0-preview-labeler-0917-1111";
+import { isAnswerChoiceBoxCandidate, textBeforeFooter, trimImageCandidateAtExternalCaption, trimQuestionRectAtFooter } from "../pdf-library/page-geometry.js?v=1.6.0-preview-labeler-0917-1111";
+import { mapQueryHighlights, queryHighlightTerms } from "../pdf-library/search.js?v=1.6.0-preview-labeler-0917-1111";
 
 async function providedPagePreview(document, source, result, options = {}) {
   if ((options.original && !options.continuous) || !document?.source?.locator?.startsWith("5e.shared.drive/")) return null;

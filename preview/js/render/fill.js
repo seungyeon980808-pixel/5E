@@ -1,7 +1,7 @@
 /* ===== RENDER/FILL: fill resolution + grayscale fill patterns ===== */
 
-import { SVG_NS, grayHex } from "./core.js?v=1.4.0";
-import { resolveObjectStyle } from "../style-mode.js?v=1.4.0";
+import { SVG_NS, grayHex } from "./core.js?v=1.6.0-preview-labeler-0917-1111";
+import { resolveObjectStyle } from "../style-mode.js?v=1.6.0-preview-labeler-0917-1111";
 
 /* ===== FILL PATTERNS (grayscale only ??mark color = grayHex(obj.fillLevel)) ===== */
 // Tile size / dot radius / mark stroke are fixed world-unit (mm) values, cheap to

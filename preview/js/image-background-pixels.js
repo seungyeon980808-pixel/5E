@@ -1,5 +1,5 @@
-import { EXAM_GRAY_PALETTE, IMAGE_BACKGROUND_POLICY_OPTIONS } from "./image-background-options.js";
-import { validateChangeMask, validatePreserveMask } from "./image-background-core.js";
+import { EXAM_GRAY_PALETTE, IMAGE_BACKGROUND_POLICY_OPTIONS } from "./image-background-options.js?v=1.6.0-preview-labeler-0917-1111";
+import { validateChangeMask, validatePreserveMask } from "./image-background-core.js?v=1.6.0-preview-labeler-0917-1111";
 
 export function quantizeExamLineart(rgba, {
   palette = EXAM_GRAY_PALETTE,

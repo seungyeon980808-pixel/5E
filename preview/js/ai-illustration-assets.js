@@ -16,7 +16,7 @@ import {
   FAST_SCENE_SCHEMA_ID,
   auditDiagramObjects,
   compileFastScene,
-} from "./ai-scene-fastpath.js";
+} from "./ai-scene-fastpath.js?v=1.6.0-preview-labeler-0917-1111";
 
 export const ILLUSTRATION_ASSET_CATALOG_VERSION = "5e-strict-illustration-assets@1";
 

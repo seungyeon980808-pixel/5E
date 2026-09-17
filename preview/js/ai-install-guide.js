@@ -1,5 +1,5 @@
-import { previewStorage as localStorage } from './preview-storage.js';
-import { showConfirm } from "./ui-dialogs.js?v=1.4.0";
+import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-preview-labeler-0917-1111';
+import { showConfirm } from "./ui-dialogs.js?v=1.6.0-preview-labeler-0917-1111";
 
 export const DESKTOP_RELEASE_URL = "https://github.com/seungyeon980808-pixel/5E/releases/latest";
 const STORAGE_KEY = "5e.desktopHandoff.v1";

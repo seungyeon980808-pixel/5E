@@ -1,4 +1,4 @@
-import { composeReferenceImages } from './ai-reference-composite.js';
+import { composeReferenceImages } from './ai-reference-composite.js?v=1.6.0-preview-labeler-0917-1111';
 const REVIEW_STATES = new Set([
   "idle", "generating", "reviewing", "correcting", "passed",
   "first-generated", "scoped-applied", "needs-attention", "failed", "cancelled",

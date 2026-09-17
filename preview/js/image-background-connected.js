@@ -1,5 +1,5 @@
-import { IMAGE_BACKGROUND_POLICY_OPTIONS } from "./image-background-options.js";
-import { checkerboardAnalysis } from "./image-background-checkerboard.js";
+import { IMAGE_BACKGROUND_POLICY_OPTIONS } from "./image-background-options.js?v=1.6.0-preview-labeler-0917-1111";
+import { checkerboardAnalysis } from "./image-background-checkerboard.js?v=1.6.0-preview-labeler-0917-1111";
 import {
   applyChangeScope,
   applyTransparencyMask,
@@ -13,7 +13,7 @@ import {
   validatePreserveMask,
   validateRgbaImage,
   frameHasTransparency,
-} from "./image-background-core.js";
+} from "./image-background-core.js?v=1.6.0-preview-labeler-0917-1111";
 
 function labelStructuralComponents(structural, width, height) {
   const count = width * height;

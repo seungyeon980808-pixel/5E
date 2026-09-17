@@ -11,14 +11,14 @@
 //  - 삽입물 전체를 groupId 하나로 묶음 (Shift+G로 해제 가능; undo는 rebuildGroups로 안전)
 // 삽입은 반드시 state.update() 경유 — 스냅샷 1개 = Undo 1스텝. */
 
-import { applyNewObjectStyleDefaults } from "./style-mode.js?v=1.4.0";
-import { DEFAULT_TEXT_FONT } from "./state.js?v=1.4.0";
-import { MAX_PROCESS_DIMENSION } from "./image-analysis.js";
-import { createImageAnalysisController } from "./image-analysis-controller.js";
-import { measureFormula } from "./formula.js?v=1.4.0";
-import { modKey, shortcutKey, keyLabel, isComposingKey } from "./platform.js?v=1.4.0";
-import { selectedObjectifyImage, objectifyImageFile } from "./image-objectify-source.js";
-import { renderSessionToDataUrl } from "./image-cutout.js?v=1.4.0";
+import { applyNewObjectStyleDefaults } from "./style-mode.js?v=1.6.0-preview-labeler-0917-1111";
+import { DEFAULT_TEXT_FONT } from "./state.js?v=1.6.0-preview-labeler-0917-1111";
+import { MAX_PROCESS_DIMENSION } from "./image-analysis.js?v=1.6.0-preview-labeler-0917-1111";
+import { createImageAnalysisController } from "./image-analysis-controller.js?v=1.6.0-preview-labeler-0917-1111";
+import { measureFormula } from "./formula.js?v=1.6.0-preview-labeler-0917-1111";
+import { modKey, shortcutKey, keyLabel, isComposingKey } from "./platform.js?v=1.6.0-preview-labeler-0917-1111";
+import { selectedObjectifyImage, objectifyImageFile } from "./image-objectify-source.js?v=1.6.0-preview-labeler-0917-1111";
+import { renderSessionToDataUrl } from "./image-cutout.js?v=1.6.0-preview-labeler-0917-1111";
 
 const ACCEPTED_TYPES = new Set(["image/png", "image/jpeg", "image/webp"]);
 const MAX_SOURCE_FILE_BYTES = 64 * 1024 * 1024;

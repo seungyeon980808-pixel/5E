@@ -13,7 +13,7 @@
  * 기능이 사라지지는 않는다.
  */
 
-import { idbAvailable, idbGet, idbSet, idbDel } from "./idb-store.js?v=1.4.0";
+import { idbAvailable, idbGet, idbSet, idbDel } from "./idb-store.js?v=1.6.0-preview-labeler-0917-1111";
 
 const DIR_KEY = "export-dir-handle";
 

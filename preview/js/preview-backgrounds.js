@@ -1,4 +1,4 @@
-import { previewStorage as localStorage } from './preview-storage.js';
+import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-preview-labeler-0917-1111';
 /* ===== 인쇄 비교 배경 이미지 (사용자 등록) =====
  *
  * 사용자가 '기본값 설정' 모달에서 등록한 배경 이미지(실제 인쇄해 본 시험지 스캔 등)를

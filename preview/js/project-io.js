@@ -9,18 +9,18 @@
 // derived from it when a page is loaded or switched. groupId is the single
 // source of truth, and the saved file never supplies a separate groups list.
 
-import { screenToWorld } from "./viewport.js?v=1.4.0";
-import { applyNewObjectStyleDefaults, migrateObjectStyleMode } from "./style-mode.js?v=1.4.0";
-import { showProjectCloseDialog } from "./project-close-dialog.js?v=1";
-import { showConfirm } from "./ui-dialogs.js?v=1.4.0";
-import { downscaleIfNeeded } from "./image-paste.js?v=1.4.0";
-import { DEFAULT_TEXT_SIZE_MM, DEFAULT_TEXT_FONT, normalizeTextRuns, textRunsToText } from "./state.js?v=1.4.0";
-import { LABEL_CAPABLE_TYPES } from "./object-types.js?v=1.4.0";
-import { insertImageFromSrc } from "./image-paste.js?v=1.4.0";
-import { addPage } from "./pages.js?v=1.4.0";
+import { screenToWorld } from "./viewport.js?v=1.6.0-preview-labeler-0917-1111";
+import { applyNewObjectStyleDefaults, migrateObjectStyleMode } from "./style-mode.js?v=1.6.0-preview-labeler-0917-1111";
+import { showProjectCloseDialog } from "./project-close-dialog.js?v=1.6.0-preview-labeler-0917-1111";
+import { showConfirm } from "./ui-dialogs.js?v=1.6.0-preview-labeler-0917-1111";
+import { downscaleIfNeeded } from "./image-paste.js?v=1.6.0-preview-labeler-0917-1111";
+import { DEFAULT_TEXT_SIZE_MM, DEFAULT_TEXT_FONT, normalizeTextRuns, textRunsToText } from "./state.js?v=1.6.0-preview-labeler-0917-1111";
+import { LABEL_CAPABLE_TYPES } from "./object-types.js?v=1.6.0-preview-labeler-0917-1111";
+import { insertImageFromSrc } from "./image-paste.js?v=1.6.0-preview-labeler-0917-1111";
+import { addPage } from "./pages.js?v=1.6.0-preview-labeler-0917-1111";
 
-import { initProjectStatus, captureProjectStatus, markProjectStatus } from "./project-status.js?v=1.4.0";
-import { modKey, shortcutKey, isEditingTarget, isComposingKey } from "./platform.js?v=1.4.0";
+import { initProjectStatus, captureProjectStatus, markProjectStatus } from "./project-status.js?v=1.6.0-preview-labeler-0917-1111";
+import { modKey, shortcutKey, isEditingTarget, isComposingKey } from "./platform.js?v=1.6.0-preview-labeler-0917-1111";
 
 // Schema version of the saved file. Distinct from the app UI version.
 // 0.15 adds editing guides; older files without them load with an empty guide list.

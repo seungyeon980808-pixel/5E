@@ -15,12 +15,12 @@
  * 쓴다. 페이지별로 그 페이지의 4필드를 담은 스냅샷 상태를 만들어 넘긴다.
  */
 
-import { rasterizeExportCanvas } from "./svg-export.js?v=1.4.0";
-import { commitActivePage } from "./pages.js?v=1.4.0";
-import { showAlert } from "./ui-dialogs.js?v=1.4.0";
+import { rasterizeExportCanvas } from "./svg-export.js?v=1.6.0-preview-labeler-0917-1111";
+import { commitActivePage } from "./pages.js?v=1.6.0-preview-labeler-0917-1111";
+import { showAlert } from "./ui-dialogs.js?v=1.6.0-preview-labeler-0917-1111";
 import {
   FS_DIR_SUPPORTED, loadSavedDir, currentDir, ensureDirPermission, pickDir, clearDir,
-} from "./export-dir.js?v=1.4.0";
+} from "./export-dir.js?v=1.6.0-preview-labeler-0917-1111";
 
 /* 저장 폴더는 js/export-dir.js 가 관리한다(단일 내보내기와 같은 폴더를 쓰기 위해).
  * 예전에는 이 파일 안에 있었는데, 단일 내보내기에서도 같은 폴더를 써야 해서 옮겼다. */

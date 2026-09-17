@@ -1,4 +1,4 @@
-import { previewStorage as localStorage } from './preview-storage.js';
+import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-preview-labeler-0917-1111';
 /* ===== MCP BRIDGE — 열려 있는 앱에 외부(Claude/MCP)에서 객체를 넣는 통로 =====
  *
  * 무엇을 하나: `tools/mcp-5e` MCP 서버가 로컬(127.0.0.1)에 열어 둔 통로에 붙어서,
@@ -19,17 +19,17 @@ import { previewStorage as localStorage } from './preview-storage.js';
  * 들어오는 모든 변경은 undoStack에 스냅샷을 남긴다. 마음에 안 들면 Ctrl+Z로 되돌린다.
  */
 
-import { state } from "./state.js?v=1.4.0";
+import { state } from "./state.js?v=1.6.0-preview-labeler-0917-1111";
 import {
   serialize as serializeProject, migrate as migrateProject, applyLoaded as applyLoadedProject,
-} from "./project-io.js?v=1.4.1-exampool";
-import { showAlert, showConfirm, showPrompt } from "./ui-dialogs.js?v=1.4.0";
-import { switchPage, addPage } from "./pages.js?v=1.4.0";
+} from "./project-io.js?v=1.6.0-preview-labeler-0917-1111";
+import { showAlert, showConfirm, showPrompt } from "./ui-dialogs.js?v=1.6.0-preview-labeler-0917-1111";
+import { switchPage, addPage } from "./pages.js?v=1.6.0-preview-labeler-0917-1111";
 import { rasterizeExportCanvas, ensureEmbeddedFonts, insertPngPhys,
-         getContentBounds } from "./svg-export.js?v=1.4.0";
-import { translateObject } from "./transform.js?v=1.4.0";
-import { captureDocumentSnapshot, commitDocumentHistory } from "./document-history.js?v=1.5.3";
-import { MCP_BRIDGE_PORTS, parseMcpPairingRecord } from "./mcp-pairing.js?v=1.5.3";
+         getContentBounds } from "./svg-export.js?v=1.6.0-preview-labeler-0917-1111";
+import { translateObject } from "./transform.js?v=1.6.0-preview-labeler-0917-1111";
+import { captureDocumentSnapshot, commitDocumentHistory } from "./document-history.js?v=1.6.0-preview-labeler-0917-1111";
+import { MCP_BRIDGE_PORTS, parseMcpPairingRecord } from "./mcp-pairing.js?v=1.6.0-preview-labeler-0917-1111";
 
 const MM_PER_INCH = 25.4;   // exportImage 에서 "가로 몇 px" 요청을 dpi 로 환산할 때 쓴다
 // 이 창을 다른 5E 창과 구별하는 표식. 새로고침하면 새로 생긴다(그게 맞다 — 새 연결이므로).

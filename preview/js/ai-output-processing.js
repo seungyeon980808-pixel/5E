@@ -1,4 +1,4 @@
-import { BACKGROUND_POLICIES } from "./image-background-options.js";
+import { BACKGROUND_POLICIES } from "./image-background-options.js?v=1.6.0-preview-labeler-0917-1111";
 
 export const DEFAULT_IMAGE_OUTPUT_OPTIONS = Object.freeze({
   backgroundPolicy: "preserve",

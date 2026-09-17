@@ -1,9 +1,9 @@
-import { createDocumentRecord, createPageRecord } from "./contract.js";
-import { detectPageItems } from "./pdf-runtime.js?v=1.6.0-preview-fast-login-0916";
+import { createDocumentRecord, createPageRecord } from "./contract.js?v=1.6.0-preview-labeler-0917-1111";
+import { detectPageItems } from "./pdf-runtime.js?v=1.6.0-preview-labeler-0917-1111";
 
-const TESSERACT_MODULE_URL = new URL("../../vendor/ocr/tesseract.esm.min.js", import.meta.url);
-const TESSERACT_WORKER_URL = new URL("../../vendor/ocr/worker.min.js", import.meta.url);
-const TESSERACT_CORE_URL = new URL("../../vendor/ocr/tesseract-core-simd-lstm.wasm.js", import.meta.url);
+const TESSERACT_MODULE_URL = new URL("../../vendor/ocr/tesseract.esm.min.js?v=1.6.0-preview-labeler-0917-1111", import.meta.url);
+const TESSERACT_WORKER_URL = new URL("../../vendor/ocr/worker.min.js?v=1.6.0-preview-labeler-0917-1111", import.meta.url);
+const TESSERACT_CORE_URL = new URL("../../vendor/ocr/tesseract-core-simd-lstm.wasm.js?v=1.6.0-preview-labeler-0917-1111", import.meta.url);
 const TESSERACT_LANGUAGE_URL = new URL("../../vendor/ocr/lang/", import.meta.url);
 const SUPPORTED_LANGUAGES = new Set(["eng", "kor", "kor+eng"]);
 const DEFAULT_DPI = 240;

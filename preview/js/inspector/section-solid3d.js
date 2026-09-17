@@ -1,4 +1,4 @@
-import { previewStorage as localStorage } from '../preview-storage.js';
+import { previewStorage as localStorage } from '../preview-storage.js?v=1.6.0-preview-labeler-0917-1111';
 /* ===== INSPECTOR SECTION — 입체(solid3d) =====
  *
  * section-gauge.js와 같은 자체 구독형(self-subscribing) 섹션이다:
@@ -18,7 +18,7 @@ import { previewStorage as localStorage } from '../preview-storage.js';
  * 만들 입체의 기본값"(localStorage)을 함께 제공한다. 실사용상 전역과 같고 비용은 0.
  */
 
-import { makeSection } from "./widgets.js?v=1.4.0";
+import { makeSection } from "./widgets.js?v=1.6.0-preview-labeler-0917-1111";
 
 const DEFAULTS_KEY = "phyDraw.defaults";
 const SHADE_LABELS = [["0", "없음(흰 면)"], ["1", "옅게"], ["2", "기본"]];

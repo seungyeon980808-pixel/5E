@@ -1,4 +1,4 @@
-import { BACKGROUND_POLICIES } from "./image-background-options.js";
+import { BACKGROUND_POLICIES } from "./image-background-options.js?v=1.6.0-preview-labeler-0917-1111";
 import {
   applyChangeScope,
   applyTransparencyMask,
@@ -12,11 +12,11 @@ import {
   validateOnReview,
   validatePreserveMask,
   validateRgbaImage,
-} from "./image-background-core.js";
-import { checkerboardAnalysis } from "./image-background-checkerboard.js";
-import { connectedBackgroundAnalysis } from "./image-background-connected.js";
-import { thickenDarkLines } from "./image-line-thickness.js";
-import { makeNearWhiteTransparent, quantizeExamLineart } from "./image-background-pixels.js";
+} from "./image-background-core.js?v=1.6.0-preview-labeler-0917-1111";
+import { checkerboardAnalysis } from "./image-background-checkerboard.js?v=1.6.0-preview-labeler-0917-1111";
+import { connectedBackgroundAnalysis } from "./image-background-connected.js?v=1.6.0-preview-labeler-0917-1111";
+import { thickenDarkLines } from "./image-line-thickness.js?v=1.6.0-preview-labeler-0917-1111";
+import { makeNearWhiteTransparent, quantizeExamLineart } from "./image-background-pixels.js?v=1.6.0-preview-labeler-0917-1111";
 
 /* 순수 픽셀 API: 입력은 절대 수정하지 않고 source에 원본 바이트를 보관한다. reviewMask의 1은
  * 자동 삭제하지 않은 보호/수동 검토 후보다. changeMask의 1 안에서만 제거와 팔레트를 적용하고

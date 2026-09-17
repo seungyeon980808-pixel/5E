@@ -1,5 +1,5 @@
-import { createBatchQueue } from "./ai-batch-queue.js";
-import { createBatchStore } from "./ai-batch-store.js";
+import { createBatchQueue } from "./ai-batch-queue.js?v=1.6.0-preview-labeler-0917-1111";
+import { createBatchStore } from "./ai-batch-store.js?v=1.6.0-preview-labeler-0917-1111";
 
 const LABELS = Object.freeze({ queued: "대기 중", running: "변환 중", completed: "완료", failed: "실패", cancelled: "취소" });
 const DB_NAME = "5e-ai-batch-v1";

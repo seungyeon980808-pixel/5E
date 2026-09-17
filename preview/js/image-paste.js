@@ -1,8 +1,8 @@
-import { blocksCanvasShortcut } from "./platform.js?v=1.4.0";
-import { showAlert } from "./ui-dialogs.js?v=1.4.0";
+import { blocksCanvasShortcut } from "./platform.js?v=1.6.0-preview-labeler-0917-1111";
+import { showAlert } from "./ui-dialogs.js?v=1.6.0-preview-labeler-0917-1111";
 /* ===== IMAGE PASTE (Ctrl+V system-clipboard image -> normal image object) ===== */
 
-import { getLastMouseWorld } from "./transform.js?v=1.4.0";
+import { getLastMouseWorld } from "./transform.js?v=1.6.0-preview-labeler-0917-1111";
 
 // 왜: png/jpeg만 허용하면 webp/gif/bmp를 클립보드로 붙여넣을 때 조용히 무시된다.
 const ACCEPTED_TYPES = new Set(["image/png", "image/jpeg", "image/webp", "image/gif", "image/bmp"]);

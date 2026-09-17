@@ -1,4 +1,4 @@
-import { registerEscapeLayer } from "./escape-layers.js?v=1";
+import { registerEscapeLayer } from "./escape-layers.js?v=1.6.0-preview-labeler-0917-1111";
 
 /* ===== OBJECT SEARCH (registry filtering + modal interaction only) ===== */
 
@@ -7,8 +7,8 @@ import {
   activateTemplate,
   buildSymbolIcon,
   sizeIconViewBox,
-} from "./templates.js?v=1.4.0";
-import { listPersonalItems, insertPersonalItem } from "./personal-objects.js?v=1.4.0";
+} from "./templates.js?v=1.6.0-preview-labeler-0917-1111";
+import { listPersonalItems, insertPersonalItem } from "./personal-objects.js?v=1.6.0-preview-labeler-0917-1111";
 
 const CATEGORY_ORDER = ["공통", "광학", "회로", "역학"];
 

@@ -1,10 +1,10 @@
-import { previewStorage as localStorage } from './preview-storage.js';
+import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-preview-labeler-0917-1111';
 import {
   chooseTaskExportDestination,
   normalizeTaskExportMode,
   writeTaskExports,
-} from './ai-task-export.js';
-import { restoreGenerationTiming } from './ai-generation-timing.js';
+} from './ai-task-export.js?v=1.6.0-preview-labeler-0917-1111';
+import { restoreGenerationTiming } from './ai-generation-timing.js?v=1.6.0-preview-labeler-0917-1111';
 
 const CANCELLABLE_TASK_STATES = new Set(['busy', 'running']);
 

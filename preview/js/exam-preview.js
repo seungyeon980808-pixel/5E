@@ -1,4 +1,4 @@
-import { previewStorage as localStorage } from './preview-storage.js';
+import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-preview-labeler-0917-1111';
 /* ===== EXAM PREVIEW (내보낼 그림을 실제 시험지 위에 실제 크기로 미리보기) =====
  *
  * 목적: 이미지로 내보내기 전에, 그림을 실제 시험지(수능 8절 272×394mm) 위 "실제 인쇄 크기"로
@@ -18,8 +18,8 @@ import { previewStorage as localStorage } from './preview-storage.js';
  * 포함될 수 있어 .gitignore 처리 — 공개 배포 전 자작 목업으로 교체할 것.
  */
 
-import { rasterizeExportCanvas, ensureEmbeddedFonts } from "./svg-export.js?v=1.4.0";
-import { loadPreviewBackgrounds } from "./preview-backgrounds.js?v=1.4.0";
+import { rasterizeExportCanvas, ensureEmbeddedFonts } from "./svg-export.js?v=1.6.0-preview-labeler-0917-1111";
+import { loadPreviewBackgrounds } from "./preview-backgrounds.js?v=1.6.0-preview-labeler-0917-1111";
 
 /* ----- 배경 양식 목록 -----
  * 각 항목은 실제 인쇄 물리 크기(mm)를 가진다. 이 값으로 그림을 정확한 배율로

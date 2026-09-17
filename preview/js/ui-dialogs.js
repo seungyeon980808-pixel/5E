@@ -1,4 +1,4 @@
-import { registerEscapeLayer } from "./escape-layers.js?v=1";
+import { registerEscapeLayer } from "./escape-layers.js?v=1.6.0-preview-labeler-0917-1111";
 
 /* ===== 공용 다이얼로그: 프로그램 양식의 알림/확인 창 =====
  * 브라우저 기본 alert()/confirm() 대신 앱 모달과 같은 모양을 쓴다.

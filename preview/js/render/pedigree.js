@@ -25,8 +25,8 @@
  * 타입이어야 하고, ellipse가 이미 원에 패턴을 붙이는 검증된 경로다(shapes.js:62).
  */
 
-import { SVG_NS, grayHex, cText } from "./core.js?v=1.4.0";
-import { makeFillPattern } from "./fill.js?v=1.4.0";
+import { SVG_NS, grayHex, cText } from "./core.js?v=1.6.0-preview-labeler-0917-1111";
+import { makeFillPattern } from "./fill.js?v=1.6.0-preview-labeler-0917-1111";
 
 const DEFAULT_SYMBOL_RADIUS = 2.6;
 const GRAY_FILL = grayHex(217);   // #d9d9d9 — "gray" 채우기 (bilayer 단백질과 같은 값)

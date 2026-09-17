@@ -1,4 +1,4 @@
-import { openPdfReferencePicker } from "./pdf-library/reference-picker.js";
+import { openPdfReferencePicker } from "./pdf-library/reference-picker.js?v=1.6.0-preview-labeler-0917-1111";
 
 const SOURCES = Object.freeze({ PARTS: "parts", EXAM: "exam", LOCAL: "local" });
 const MAX_RESULTS = 60;

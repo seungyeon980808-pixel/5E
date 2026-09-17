@@ -2,23 +2,23 @@
  * 바깥 배경 제거와 모든 흰색 제거는 의미가 다르다. 자동 판정이 애매하면 원본 RGBA를
  * 남기고 reviewMask로 알리며, 명시적인 all-near-white 경로에서만 내부 흰색도 제거한다. */
 
-import { BACKGROUND_POLICIES } from "./image-background-options.js";
+import { BACKGROUND_POLICIES } from "./image-background-options.js?v=1.6.0-preview-labeler-0917-1111";
 import {
   validateChangeMask,
   validateOnReview,
   validatePreserveMask,
-} from "./image-background-core.js";
-import { processImageBackgroundPixels } from "./image-background-process.js";
+} from "./image-background-core.js?v=1.6.0-preview-labeler-0917-1111";
+import { processImageBackgroundPixels } from "./image-background-process.js?v=1.6.0-preview-labeler-0917-1111";
 
 export {
   EXAM_GRAY_PALETTE,
   IMAGE_BACKGROUND_POLICY_OPTIONS,
   IMAGE_BACKGROUND_SCOPE_OPTIONS,
   IMAGE_BACKGROUND_VERSION,
-} from "./image-background-options.js";
-export { makeNearWhiteTransparent, quantizeExamLineart } from "./image-background-pixels.js";
-export { analyzeEmbeddedCheckerboard, removeEmbeddedCheckerboard } from "./image-background-checkerboard.js";
-export { analyzeConnectedLightBackground, removeConnectedLightBackground } from "./image-background-connected.js";
+} from "./image-background-options.js?v=1.6.0-preview-labeler-0917-1111";
+export { makeNearWhiteTransparent, quantizeExamLineart } from "./image-background-pixels.js?v=1.6.0-preview-labeler-0917-1111";
+export { analyzeEmbeddedCheckerboard, removeEmbeddedCheckerboard } from "./image-background-checkerboard.js?v=1.6.0-preview-labeler-0917-1111";
+export { analyzeConnectedLightBackground, removeConnectedLightBackground } from "./image-background-connected.js?v=1.6.0-preview-labeler-0917-1111";
 export { processImageBackgroundPixels };
 
 function loadImage(src) {

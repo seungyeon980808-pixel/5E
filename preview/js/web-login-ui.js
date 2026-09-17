@@ -1,4 +1,4 @@
-import { DESKTOP_RELEASE_URL } from './ai-install-guide.js';
+import { DESKTOP_RELEASE_URL } from './ai-install-guide.js?v=1.6.0-preview-labeler-0917-1111';
 
 export function initWebLoginUi({ openAi }) {
   if (!window.fiveEWebAI) return null;

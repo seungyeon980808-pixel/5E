@@ -1,4 +1,4 @@
-const DIALOGS = '[role="dialog"], [role="alertdialog"], .modal-overlay';
+const DIALOGS = 'dialog[open], [role="dialog"], [role="alertdialog"], [role="menu"], .modal-overlay, .tool-chooser';
 const callbacks = new WeakMap();
 const openers = new WeakMap();
 let installed = false;
@@ -16,6 +16,16 @@ function visible(element) {
 
 function closeAction(element) {
   if (callbacks.has(element)) return callbacks.get(element);
+  if (element.matches('dialog[open]')) return () => {
+    if (typeof element.requestClose === 'function') element.requestClose();
+    else if (element.dispatchEvent(new Event('cancel', { cancelable: true }))) element.close();
+  };
+  if (element.matches('.tool-chooser')) return () => {
+    element.hidden = true;
+    document.querySelectorAll('[aria-controls]').forEach(button => {
+      if (button.getAttribute('aria-controls') === element.id) button.setAttribute('aria-expanded', 'false');
+    });
+  };
   const buttons = [...element.querySelectorAll('button')].filter(button =>
     visible(button) && !button.disabled && button.closest(DIALOGS) === element);
   const cancel = buttons.find(button => /(?:^|[-_])(cancel|close)$/.test(button.id)
@@ -30,6 +40,7 @@ function closeAction(element) {
 function layerRank(element) {
   let rank = 0;
   for (let node = element; node instanceof HTMLElement; node = node.parentElement) {
+    if (node.matches('dialog[open]')) rank += 1e12;
     const value = Number.parseInt(getComputedStyle(node).zIndex, 10);
     if (Number.isFinite(value)) rank += value;
   }
@@ -39,6 +50,14 @@ function layerRank(element) {
 export function initEscapeLayers() {
   if (installed) return;
   installed = true;
+  window.fiveEDesktop?.fullscreen?.onEscape?.(() => {
+    const hadPopup = [...document.querySelectorAll(DIALOGS)].some(visible);
+    const event = new KeyboardEvent('keydown', { key: 'Escape', code: 'Escape', bubbles: true, cancelable: true });
+    (document.activeElement || document.body).dispatchEvent(event);
+    if (!hadPopup && !event.defaultPrevented) {
+      window.fiveEDesktop.fullscreen.toggle().catch(error => console.error('Unable to exit fullscreen', error));
+    }
+  });
   previousFocus = document.activeElement;
   document.addEventListener('focusin', event => {
     for (const layer of document.querySelectorAll(DIALOGS)) {

@@ -1,6 +1,6 @@
-import { createCropSource } from "./contract.js";
-import { deriveExamMetadata } from "../library/exam-code.js";
-export { applyItemCorrections, resolveItemOrPageResult } from "./corrections.js";
+import { createCropSource } from "./contract.js?v=1.6.0-preview-labeler-0917-1111";
+import { deriveExamMetadata } from "../library/exam-code.js?v=1.6.0-preview-labeler-0917-1111";
+export { applyItemCorrections, resolveItemOrPageResult } from "./corrections.js?v=1.6.0-preview-labeler-0917-1111";
 
 function normalizedText(value) {
   return String(value ?? "").normalize("NFKC").toLocaleLowerCase().replace(/\s+/gu, " ").trim();

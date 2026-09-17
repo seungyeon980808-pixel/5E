@@ -1,4 +1,4 @@
-import { vectorizeImage } from "./image-vectorize.js?v=1.4.0";
+import { vectorizeImage } from "./image-vectorize.js?v=1.6.0-preview-labeler-0917-1111";
 
 export const MAX_PROCESS_DIMENSION = 2000;
 export const MAX_DENSE_INK_RATIO = 0.55;

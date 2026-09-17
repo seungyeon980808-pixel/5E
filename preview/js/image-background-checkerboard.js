@@ -1,4 +1,4 @@
-import { IMAGE_BACKGROUND_POLICY_OPTIONS } from "./image-background-options.js";
+import { IMAGE_BACKGROUND_POLICY_OPTIONS } from "./image-background-options.js?v=1.6.0-preview-labeler-0917-1111";
 import {
   applyChangeScope,
   applyTransparencyMask,
@@ -13,7 +13,7 @@ import {
   validateOnReview,
   validatePreserveMask,
   validateRgbaImage,
-} from "./image-background-core.js";
+} from "./image-background-core.js?v=1.6.0-preview-labeler-0917-1111";
 
 export function checkerboardAnalysis(rgba, width, height, {
   threshold = IMAGE_BACKGROUND_POLICY_OPTIONS.checkerboard.threshold,

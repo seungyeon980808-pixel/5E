@@ -13,10 +13,10 @@
 // 코드 레지스트리에 등록하지 않아도 그려지고, 저장 파일이 라이브러리 폴더 없이도
 // 자기완결된다(기출 라이브러리가 dataURL로 넣는 것과 같은 이유). */
 
-import { toLineArt, LINEART_LEVELS } from "./lineart.js?v=1.4.0";
+import { toLineArt, LINEART_LEVELS } from "./lineart.js?v=1.6.0-preview-labeler-0917-1111";
 // 넣는 방식은 둘이다: 선화로 바꿔 넣기(프리셋 세밀/표준/단순)와 원본 그대로 넣기(원본).
 // 세포 그림처럼 색·음영이 뜻을 갖는 그림은 선만 남기면 못 알아보므로 원본 경로가 필요하다.
-import { setOpenOrigin } from "./modal-motion.js?v=1.4.0";
+import { setOpenOrigin } from "./modal-motion.js?v=1.6.0-preview-labeler-0917-1111";
 
 const LIB_BASE = "assets/parts-library/";
 const MAX_RENDER = 60;      // 그리드에 한 번에 그리는 카드 수 (초과분은 안내문으로 표시)

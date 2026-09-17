@@ -1,4 +1,4 @@
-import { previewStorage as localStorage } from './preview-storage.js';
+import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-preview-labeler-0917-1111';
 /* ===== TUTORIAL ENGINE (따라하기) — 실제 화면 위에서 한 곳씩 짚어 주는 안내 =====
  *
  * 레퍼런스: 31_hwp_palette/tutorial.py (같은 사용자가 만든 데스크톱 판의 웹 이식).
@@ -20,11 +20,11 @@ import { previewStorage as localStorage } from './preview-storage.js';
  *   새로 시작해 흐림 패널이 겹쳐 남는 문제가 실제로 있었다(tutorial.py 주석).
  */
 
-import { state } from "./state.js?v=1.4.0";
-import { addPage, switchPage } from "./pages.js?v=1.4.0";
-import { showConfirm } from "./ui-dialogs.js?v=1.4.0";
-import { buildExportSvg } from "./svg-export.js?v=1.4.0";
-import { COURSES, getCourse } from "./tutorial-courses.js?v=1.4.0";
+import { state } from "./state.js?v=1.6.0-preview-labeler-0917-1111";
+import { addPage, switchPage } from "./pages.js?v=1.6.0-preview-labeler-0917-1111";
+import { showConfirm } from "./ui-dialogs.js?v=1.6.0-preview-labeler-0917-1111";
+import { buildExportSvg } from "./svg-export.js?v=1.6.0-preview-labeler-0917-1111";
+import { COURSES, getCourse } from "./tutorial-courses.js?v=1.6.0-preview-labeler-0917-1111";
 
 /* ===== 저장 (localStorage) ===== */
 

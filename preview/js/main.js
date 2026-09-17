@@ -1,5 +1,5 @@
-import { initWebLoginUi } from './web-login-ui.js?v=1.6.0-preview-paired-login-0917-1027';
-import { previewStorage as localStorage } from './preview-storage.js';
+import { initWebLoginUi } from './web-login-ui.js?v=1.6.0-preview-labeler-0917-1111';
+import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-preview-labeler-0917-1111';
 /* ===== MAIN (wire modules; data-as-truth + viewBox zoom/pan) ===== */
 //
 // Responsibilities:
@@ -9,66 +9,66 @@ import { previewStorage as localStorage } from './preview-storage.js';
 //   4. init tools (tool selection + the rectangle draw pipeline).
 
 // ?v= matches index.html so a version bump reloads every module, not just main.
-import { state } from "./state.js?v=1.4.0";
-import { render } from "./render.js?v=1.4.3";
-import { initViewport, getZoom, screenToWorld, centerView, setCenterLocked } from "./viewport.js?v=1.4.0";
-import { initTools } from "./tools.js?v=1.5.4";
-import { initCutTool } from "./cut-tool.js?v=1.5.3";
-import { initEraseTool } from "./erase-tool.js?v=1.4.0";
-import { initTransform, undo, redo } from "./transform.js?v=1.4.0";
-import { initArtboardResize } from "./artboard-resize.js?v=1.4.3";
-import { initInspector } from "./inspector.js?v=1.4.3";
-import { initDesktopProjectCloseGuard, initProjectIO, saveProject } from "./project-io.js?v=1.4.0";
-import { initExportDialog } from "./export-dialog.js?v=1.4.11";
-import { initRuler, setRulerVisible } from "./ruler.js?v=1.4.0";
-import { initSettings } from "./settings.js?v=1.4.0";
-import { initImageObjectify } from "./image-objectify.js?v=1.4.0";
-import { initImagePaste } from "./image-paste.js?v=1.4.0";
-import { initImageCutout } from "./image-cutout.js?v=1.4.0";
-import { renderSessionToDataUrl } from "./image-cutout.js?v=1.4.0";
-import { handSelectedCanvasImageToAi } from "./ai-canvas-handoff.js?v=1";
-import { initExamLibrary } from "./exam-library.js?v=1.6.0-preview-fixes-0917-0842";
-import { initTemplates } from "./templates.js?v=1.4.0";
-import { initObjectSearch } from "./search.js?v=1.4.0";
-import { initCommandPalette } from "./command-palette.js?v=1.4.0";
-import { initSubjectObjects } from "./subject-objects.js?v=1.4.0";
-import { initToolHint } from "./tool-hint.js?v=1.5.2";
-import { initTooltips } from "./tooltip.js?v=1.4.0";
-import { initViewMode } from "./view-mode.js?v=1.4.0";
-import { initPersonalObjects } from "./personal-objects.js?v=1.4.0";
-import { initBulkEdit } from "./bulk-edit.js?v=1.4.0";
-import { initDataPlot } from "./data-plot.js?v=1.4.0";
-import { initGaugeSection } from "./inspector/section-gauge.js?v=1.4.0";
-import { initSolid3dSection } from "./inspector/section-solid3d.js?v=1.4.0";
-import { initParabolaSection } from "./inspector/section-parabola.js?v=1.4.0";
-import { initGroundArcSection } from "./inspector/section-groundarc.js?v=1.4.0";
+import { state } from "./state.js?v=1.6.0-preview-labeler-0917-1111";
+import { render } from "./render.js?v=1.6.0-preview-labeler-0917-1111";
+import { initViewport, getZoom, screenToWorld, centerView, setCenterLocked } from "./viewport.js?v=1.6.0-preview-labeler-0917-1111";
+import { initTools } from "./tools.js?v=1.6.0-preview-labeler-0917-1111";
+import { initCutTool } from "./cut-tool.js?v=1.6.0-preview-labeler-0917-1111";
+import { initEraseTool } from "./erase-tool.js?v=1.6.0-preview-labeler-0917-1111";
+import { initTransform, undo, redo } from "./transform.js?v=1.6.0-preview-labeler-0917-1111";
+import { initArtboardResize } from "./artboard-resize.js?v=1.6.0-preview-labeler-0917-1111";
+import { initInspector } from "./inspector.js?v=1.6.0-preview-labeler-0917-1111";
+import { initDesktopProjectCloseGuard, initProjectIO, saveProject } from "./project-io.js?v=1.6.0-preview-labeler-0917-1111";
+import { initExportDialog } from "./export-dialog.js?v=1.6.0-preview-labeler-0917-1111";
+import { initRuler, setRulerVisible } from "./ruler.js?v=1.6.0-preview-labeler-0917-1111";
+import { initSettings } from "./settings.js?v=1.6.0-preview-labeler-0917-1111";
+import { initImageObjectify } from "./image-objectify.js?v=1.6.0-preview-labeler-0917-1111";
+import { initImagePaste } from "./image-paste.js?v=1.6.0-preview-labeler-0917-1111";
+import { initImageCutout } from "./image-cutout.js?v=1.6.0-preview-labeler-0917-1111";
+import { renderSessionToDataUrl } from "./image-cutout.js?v=1.6.0-preview-labeler-0917-1111";
+import { handSelectedCanvasImageToAi } from "./ai-canvas-handoff.js?v=1.6.0-preview-labeler-0917-1111";
+import { initExamLibrary } from "./exam-library.js?v=1.6.0-preview-labeler-0917-1111";
+import { initTemplates } from "./templates.js?v=1.6.0-preview-labeler-0917-1111";
+import { initObjectSearch } from "./search.js?v=1.6.0-preview-labeler-0917-1111";
+import { initCommandPalette } from "./command-palette.js?v=1.6.0-preview-labeler-0917-1111";
+import { initSubjectObjects } from "./subject-objects.js?v=1.6.0-preview-labeler-0917-1111";
+import { initToolHint } from "./tool-hint.js?v=1.6.0-preview-labeler-0917-1111";
+import { initTooltips } from "./tooltip.js?v=1.6.0-preview-labeler-0917-1111";
+import { initViewMode } from "./view-mode.js?v=1.6.0-preview-labeler-0917-1111";
+import { initPersonalObjects } from "./personal-objects.js?v=1.6.0-preview-labeler-0917-1111";
+import { initBulkEdit } from "./bulk-edit.js?v=1.6.0-preview-labeler-0917-1111";
+import { initDataPlot } from "./data-plot.js?v=1.6.0-preview-labeler-0917-1111";
+import { initGaugeSection } from "./inspector/section-gauge.js?v=1.6.0-preview-labeler-0917-1111";
+import { initSolid3dSection } from "./inspector/section-solid3d.js?v=1.6.0-preview-labeler-0917-1111";
+import { initParabolaSection } from "./inspector/section-parabola.js?v=1.6.0-preview-labeler-0917-1111";
+import { initGroundArcSection } from "./inspector/section-groundarc.js?v=1.6.0-preview-labeler-0917-1111";
 // 생명과학 부품 6종 (2026-07-31) — 규격은 docs/BIO_PARTS_SPEC.md
-import { initBraceSection } from "./inspector/section-brace.js?v=1.4.0";
-import { initChromosomeSection } from "./inspector/section-chromosome.js?v=1.4.0";
-import { initBilayerSection } from "./inspector/section-bilayer.js?v=1.4.0";
-import { initNeuronSection } from "./inspector/section-neuron.js?v=1.4.0";
-import { initLegendSection } from "./inspector/section-legend.js?v=1.4.0";
-import { initPedigreeSection } from "./inspector/section-pedigree.js?v=1.4.0";
+import { initBraceSection } from "./inspector/section-brace.js?v=1.6.0-preview-labeler-0917-1111";
+import { initChromosomeSection } from "./inspector/section-chromosome.js?v=1.6.0-preview-labeler-0917-1111";
+import { initBilayerSection } from "./inspector/section-bilayer.js?v=1.6.0-preview-labeler-0917-1111";
+import { initNeuronSection } from "./inspector/section-neuron.js?v=1.6.0-preview-labeler-0917-1111";
+import { initLegendSection } from "./inspector/section-legend.js?v=1.6.0-preview-labeler-0917-1111";
+import { initPedigreeSection } from "./inspector/section-pedigree.js?v=1.6.0-preview-labeler-0917-1111";
 // 화학 부품 10종 (2026-07-31) — 규격은 docs/CHEM_PARTS_SPEC.md
-import { initVesselSection } from "./inspector/section-vessel.js?v=1.4.0";
-import { initChemModelSection } from "./inspector/section-chemmodel.js?v=1.4.0";
-import { initParticleBoxSection } from "./inspector/section-particlebox.js?v=1.4.0";
-import { initOrbitalSection } from "./inspector/section-orbital.js?v=1.4.0";
-import { initBondGroupSection } from "./inspector/section-bondgroup.js?v=1.4.0";
-import { initChemChartSection } from "./inspector/section-chemchart.js?v=1.4.0";
-import { initAxisBreakSection } from "./inspector/section-axisbreak.js?v=1.4.0";
-import { initChemGraphSection } from "./inspector/section-chemgraph.js?v=1.4.0";
-import { initElectrodeSection } from "./inspector/section-electrode.js?v=1.4.0";
-import { initPeriodicSection } from "./inspector/section-periodic.js?v=1.4.0";
-import { initAutosave } from "./autosave.js?v=1.4.0";
-import { initPages } from "./pages.js?v=1.4.0";
-import { localizeShortcutLabels } from "./platform.js?v=1.4.0";
-import { initModalDrag } from "./modal-drag.js?v=1.4.0";
-import { initSteppers } from "./stepper.js?v=1.4.0";
-import { initReferenceWindows } from "./reference-window.js?v=1.4.0";
-import { initTutorial } from "./tutorial.js?v=1.5.2";
-import { initAiInstallGuide } from "./ai-install-guide.js?v=1.4.11";
-import { initAiPanel } from "./ai-panel.js?v=1.6.0-preview-fast-login-0916";
+import { initVesselSection } from "./inspector/section-vessel.js?v=1.6.0-preview-labeler-0917-1111";
+import { initChemModelSection } from "./inspector/section-chemmodel.js?v=1.6.0-preview-labeler-0917-1111";
+import { initParticleBoxSection } from "./inspector/section-particlebox.js?v=1.6.0-preview-labeler-0917-1111";
+import { initOrbitalSection } from "./inspector/section-orbital.js?v=1.6.0-preview-labeler-0917-1111";
+import { initBondGroupSection } from "./inspector/section-bondgroup.js?v=1.6.0-preview-labeler-0917-1111";
+import { initChemChartSection } from "./inspector/section-chemchart.js?v=1.6.0-preview-labeler-0917-1111";
+import { initAxisBreakSection } from "./inspector/section-axisbreak.js?v=1.6.0-preview-labeler-0917-1111";
+import { initChemGraphSection } from "./inspector/section-chemgraph.js?v=1.6.0-preview-labeler-0917-1111";
+import { initElectrodeSection } from "./inspector/section-electrode.js?v=1.6.0-preview-labeler-0917-1111";
+import { initPeriodicSection } from "./inspector/section-periodic.js?v=1.6.0-preview-labeler-0917-1111";
+import { initAutosave } from "./autosave.js?v=1.6.0-preview-labeler-0917-1111";
+import { initPages } from "./pages.js?v=1.6.0-preview-labeler-0917-1111";
+import { localizeShortcutLabels } from "./platform.js?v=1.6.0-preview-labeler-0917-1111";
+import { initModalDrag } from "./modal-drag.js?v=1.6.0-preview-labeler-0917-1111";
+import { initSteppers } from "./stepper.js?v=1.6.0-preview-labeler-0917-1111";
+import { initReferenceWindows } from "./reference-window.js?v=1.6.0-preview-labeler-0917-1111";
+import { initTutorial } from "./tutorial.js?v=1.6.0-preview-labeler-0917-1111";
+import { initAiInstallGuide } from "./ai-install-guide.js?v=1.6.0-preview-labeler-0917-1111";
+import { initAiPanel } from "./ai-panel.js?v=1.6.0-preview-labeler-0917-1111";
 
 const svg = document.getElementById("canvas");
 // Canvas interaction transfers keyboard ownership away from the last toolbar button.
@@ -88,18 +88,17 @@ const zoomReadout = document.getElementById("zoom-readout");
   const btn = document.getElementById("fullscreen-toggle");
   if (!btn) return;
 
-  // 전체화면 대상은 .app이 아니라 "문서 전체"(documentElement)여야 한다.
-  // 모든 모달·오버레이·컨텍스트 메뉴는 document.body에 append되는데, .app만
-  // 전체화면으로 만들면 이 위젯들이 전체화면 요소(top layer) 뒤에 깔려 안 보인다
-  // (z-index로도 못 이긴다). 문서 전체를 전체화면으로 하면 body의 위젯이 전부
-  // 전체화면 안에 포함돼 정상적으로 뜬다.
-  const target = document.documentElement;
+  const nativeFullscreen = window.fiveEDesktop?.fullscreen;
+  let workspaceMaximized = false;
 
   const syncButton = (active) => {
-    document.documentElement.classList.toggle("is-native-fullscreen", Boolean(active));
+    if (nativeFullscreen) document.documentElement.classList.toggle("is-native-fullscreen", Boolean(active));
+    else document.documentElement.classList.toggle("is-workspace-maximized", Boolean(active));
     btn.setAttribute("aria-pressed", String(active));
-    btn.setAttribute("aria-label", active ? "전체화면 해제" : "전체화면");
-    btn.title = active ? "전체화면 해제 (Alt+Enter)" : "전체화면 (Alt+Enter)";
+    const label = nativeFullscreen ? (active ? "전체화면 해제" : "전체화면")
+      : (active ? "작업영역 최대화 해제" : "작업영역 최대화");
+    btn.setAttribute("aria-label", label);
+    btn.title = `${label} (Alt+Enter)`;
   };
   const toggleFullscreen = async () => {
     try {
@@ -107,8 +106,8 @@ const zoomReadout = document.getElementById("zoom-readout");
         await window.fiveEDesktop.fullscreen.toggle();
         return;
       }
-      if (document.fullscreenElement) await document.exitFullscreen();
-      else await target.requestFullscreen();
+      workspaceMaximized = !workspaceMaximized;
+      syncButton(workspaceMaximized);
     } catch (error) {
       console.error("Unable to toggle fullscreen", error);
     }
@@ -120,15 +119,13 @@ const zoomReadout = document.getElementById("zoom-readout");
     window.fiveEDesktop.fullscreen.get().then(syncButton).catch((error) => {
       console.error("Unable to read fullscreen state", error);
     });
-  } else {
-    document.addEventListener("fullscreenchange", () => syncButton(document.fullscreenElement === target));
   }
   window.addEventListener("keydown", (e) => {
     if (!e.altKey || e.key !== "Enter" || e.repeat) return;
     e.preventDefault();
     toggleFullscreen();
   });
-  if (!window.fiveEDesktop?.fullscreen) syncButton(document.fullscreenElement === target);
+  if (!nativeFullscreen) syncButton(workspaceMaximized);
 })();
 
 (function initGraphLauncherState() {

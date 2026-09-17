@@ -1,7 +1,7 @@
-import { createCropOverrideStore } from "./crop-overrides.js";
-import { createRenderScheduler } from "./render-scheduler.js";
-import { partitionLibraryImports } from "../library-import-policy.js";
-import { createCropSource } from "./contract.js";
+import { createCropOverrideStore } from "./crop-overrides.js?v=1.6.0-preview-labeler-0917-1111";
+import { createRenderScheduler } from "./render-scheduler.js?v=1.6.0-preview-labeler-0917-1111";
+import { partitionLibraryImports } from "../library-import-policy.js?v=1.6.0-preview-labeler-0917-1111";
+import { createCropSource } from "./contract.js?v=1.6.0-preview-labeler-0917-1111";
 
 const MAX_SELECTIONS = 10;
 const THUMBNAIL_DPI = 96;
@@ -806,7 +806,7 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
     ocrController = operation.controller;
     refreshOcrControls();
     try {
-      const { createPdfOcrService } = await import("./ocr.js");
+      const { createPdfOcrService } = await import("./ocr.js?v=1.6.0-preview-labeler-0917-1111");
       const ocr = createPdfOcrService({ runtime });
       for (const document of targets) {
         const expectedSource = JSON.stringify(document.source);

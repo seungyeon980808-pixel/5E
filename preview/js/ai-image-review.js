@@ -1,4 +1,4 @@
-import { planImageReferences } from "./ai-reference-roles.js";
+import { planImageReferences } from "./ai-reference-roles.js?v=1.6.0-preview-labeler-0917-1111";
 
 export const AI_IMAGE_REVIEW_VERSION = "1.6.0";
 export const AI_IMAGE_REVIEW_MODEL = "gpt-5.6-sol";

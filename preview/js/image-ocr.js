@@ -2,7 +2,7 @@ import {
   IMAGE_OCR_LIMITS,
   copyImageForEngine,
   engineDeadline,
-} from "./image-ocr-boundary.js";
+} from "./image-ocr-boundary.js?v=1.6.0-preview-labeler-0917-1111";
 
 /**
  * Isolated OCR suggestion boundary. It has no engine dependency and never

@@ -13,18 +13,18 @@
 // we can distinguish "click on already-selected ??move allowed" from "click
 // selects a new object ??just select, no move this press."
 
-import { screenToWorld, getRenderScale } from "./viewport.js?v=1.4.0";
-import { resolveSnap, resolveEndpointSnap, resolveRadialCenterSnap } from "./snap.js?v=1.4.0";
-import { setSnapPreview, setSmartGuides, pendulumBBox } from "./render.js?v=1.4.0";
-import { pickSelectableObjectFromEvent } from "./tools.js?v=1.5.4";
-import { isObjectSelectable } from "./pick.js?v=1.4.0";
-import { IMAGE_EDIT_SESSION_ID } from "./image-cutout.js?v=1.4.0";
+import { screenToWorld, getRenderScale } from "./viewport.js?v=1.6.0-preview-labeler-0917-1111";
+import { resolveSnap, resolveEndpointSnap, resolveRadialCenterSnap } from "./snap.js?v=1.6.0-preview-labeler-0917-1111";
+import { setSnapPreview, setSmartGuides, pendulumBBox } from "./render.js?v=1.6.0-preview-labeler-0917-1111";
+import { pickSelectableObjectFromEvent } from "./tools.js?v=1.6.0-preview-labeler-0917-1111";
+import { isObjectSelectable } from "./pick.js?v=1.6.0-preview-labeler-0917-1111";
+import { IMAGE_EDIT_SESSION_ID } from "./image-cutout.js?v=1.6.0-preview-labeler-0917-1111";
 import { SHAPE_TYPES, SIZE_TYPES, FLIP_TYPES, POINT_ARRAY_TYPES,
-         ENDPOINT_HANDLE_TYPES, TEXT_MEASURED_TYPES } from "./object-types.js?v=1.4.0";
+         ENDPOINT_HANDLE_TYPES, TEXT_MEASURED_TYPES } from "./object-types.js?v=1.6.0-preview-labeler-0917-1111";
 
-import { isPageHistoryEntry, inversePageHistoryEntry, restorePageHistoryEntry } from "./page-history.js?v=1.4.0";
-import { initObjectClipboard, cloneClipboardObjects } from "./editor-clipboard.js?v=1.4.0";
-import { snapKey, modKey, IS_MAC, shortcutKey, blocksCanvasShortcut } from "./platform.js?v=1.4.0";
+import { isPageHistoryEntry, inversePageHistoryEntry, restorePageHistoryEntry } from "./page-history.js?v=1.6.0-preview-labeler-0917-1111";
+import { initObjectClipboard, cloneClipboardObjects } from "./editor-clipboard.js?v=1.6.0-preview-labeler-0917-1111";
+import { snapKey, modKey, IS_MAC, shortcutKey, blocksCanvasShortcut } from "./platform.js?v=1.6.0-preview-labeler-0917-1111";
 /* ----- shared lock guard: locked objects are excluded from mutating ops ----- */
 function isMutable(o) { return o && !o.locked; }
 function isPositionMovable(o) { return isMutable(o) && !o.positionLocked; }
@@ -417,6 +417,11 @@ function clipboardBBox(objs) {
       acc(o.x, o.y);
     } else if (ENDPOINT_HANDLE_TYPES.has(o.type)) {
       acc(o.p1.x, o.p1.y); acc(o.p2.x, o.p2.y);
+      if (o.type === "labeler") {
+        if (o.elbow) acc(o.elbow.x, o.elbow.y);
+        if (o.p3) acc(o.p3.x, o.p3.y);
+        (o.extraAnchors || []).forEach(point => acc(point.x, point.y));
+      }
     } else if (o.type === "polyline" || o.type === "curve" || o.type === "funcgraph") {
       (o.points || []).forEach((p) => acc(p.x, p.y));
     }
@@ -479,6 +484,11 @@ function applyDelta(obj, orig, dx, dy) {
     // pivot + bob; ghosts follow because they're derived from these at render).
     obj.p1 = { x: orig.p1.x + dx, y: orig.p1.y + dy };
     obj.p2 = { x: orig.p2.x + dx, y: orig.p2.y + dy };
+    if (obj.type === "labeler") {
+      if (orig.elbow) obj.elbow = { x: orig.elbow.x + dx, y: orig.elbow.y + dy };
+      if (orig.p3) obj.p3 = { x: orig.p3.x + dx, y: orig.p3.y + dy };
+      if (orig.extraAnchors) obj.extraAnchors = orig.extraAnchors.map(point => ({ x: point.x + dx, y: point.y + dy }));
+    }
   } else if (obj.type === "polyline" || obj.type === "curve" || obj.type === "funcgraph") {
     const tr = (p) => ({ x: p.x + dx, y: p.y + dy });
     obj.points = orig.points.map(tr);
@@ -488,6 +498,9 @@ function applyDelta(obj, orig, dx, dy) {
 
 /* ----- line-like endpoint handle <-> point bridge (for endpoint-priority snap) ----- */
 function handleEndpointPoint(obj, handle) {
+  if (obj.type === "labeler" && handle?.startsWith("anchor-")) return obj.extraAnchors?.[Number(handle.slice(7))];
+  if (obj.type === "labeler" && handle === "elbow") return obj.elbow;
+  if (obj.type === "labeler" && handle === "p2") return obj.p3;
   if (ENDPOINT_HANDLE_TYPES.has(obj.type)) {   // was: line|circuit|labeler|pendulum
     return handle === "p0" ? obj.p1 : obj.p2;
   }
@@ -501,6 +514,9 @@ function handleEndpointPoint(obj, handle) {
 
 function setHandleEndpointPoint(obj, handle, pt) {
   const next = { x: pt.x, y: pt.y };
+  if (obj.type === "labeler" && handle?.startsWith("anchor-")) { obj.extraAnchors[Number(handle.slice(7))] = next; return; }
+  if (obj.type === "labeler" && handle === "elbow") { obj.elbow = next; return; }
+  if (obj.type === "labeler" && handle === "p2") { obj.p3 = next; return; }
   if (ENDPOINT_HANDLE_TYPES.has(obj.type)) {   // was: line|circuit|labeler|pendulum
     if (handle === "p0") obj.p1 = next; else obj.p2 = next;
     return;
@@ -623,19 +639,31 @@ function applyHandleDeltaBase(obj, orig, handle, dx, dy, shiftKey, ctrlKey) {
   // 목록은 object-types.js의 endpointHandles가 정본이다(용수철·장 그림·정상파·포물선·
   // 원호까지 전부 그 표에서 온다). 예전엔 이 리터럴 목록이 네 벌 복사돼 있었다.
   if (ENDPOINT_HANDLE_TYPES.has(obj.type)) {
+    if (obj.type === "labeler" && handle?.startsWith("anchor-")) {
+      const index = Number(handle.slice(7));
+      const base = orig.extraAnchors[index];
+      const dragged = { x: base.x + dx, y: base.y + dy };
+      obj.extraAnchors[index] = ctrlKey ? snapLineEndpoint(orig.elbow || orig.p2, dragged) : dragged;
+      return;
+    }
     // 라벨러의 두 번째 지시선 끝점(p3)은 별도 핸들.
+    if (handle === "elbow" && obj.type === "labeler" && orig.elbow) {
+      const dragged = { x: orig.elbow.x + dx, y: orig.elbow.y + dy };
+      obj.elbow = ctrlKey ? snapLineEndpoint(orig.p1, dragged) : dragged;
+      return;
+    }
     if (handle === "p2" && obj.type === "labeler") {
       const base = orig.p3 || orig.p1;
       const dragged = { x: base.x + dx, y: base.y + dy };
-      obj.p3 = ctrlKey ? snapLineEndpoint(orig.p2, dragged) : dragged;
+      obj.p3 = ctrlKey ? snapLineEndpoint(orig.elbow || orig.p2, dragged) : dragged;
       return;
     }
     if (handle === "p0") {
       const dragged = { x: orig.p1.x + dx, y: orig.p1.y + dy };
-      obj.p1 = ctrlKey ? snapLineEndpoint(orig.p2, dragged) : dragged;
+      obj.p1 = ctrlKey ? snapLineEndpoint(orig.elbow || orig.p2, dragged) : dragged;
     } else {
       const dragged = { x: orig.p2.x + dx, y: orig.p2.y + dy };
-      obj.p2 = ctrlKey ? snapLineEndpoint(orig.p1, dragged) : dragged;
+      obj.p2 = ctrlKey ? snapLineEndpoint(orig.elbow || orig.p1, dragged) : dragged;
     }
     return;
   }
@@ -956,6 +984,11 @@ function applyGroupResize(objs, origObjs, box0, handle, dx, dy) {
     } else if (orig.type === "line" || orig.type === "circuit" || orig.type === "labeler") {
       obj.p1 = mapPt(orig.p1.x, orig.p1.y);
       obj.p2 = mapPt(orig.p2.x, orig.p2.y);
+      if (orig.type === "labeler") {
+        if (orig.elbow) obj.elbow = mapPt(orig.elbow.x, orig.elbow.y);
+        if (orig.p3) obj.p3 = mapPt(orig.p3.x, orig.p3.y);
+        if (orig.extraAnchors) obj.extraAnchors = orig.extraAnchors.map(point => mapPt(point.x, point.y));
+      }
     } else if (orig.type === "pendulum") {
       obj.p1 = mapPt(orig.p1.x, orig.p1.y);
       obj.p2 = mapPt(orig.p2.x, orig.p2.y);
@@ -1202,6 +1235,11 @@ export function initTransform(svg, state) {
                 if (ENDPOINT_HANDLE_TYPES.has(obj.type)) {   // was: line|circuit|labeler|pendulum
                   obj.p1 = rot(obj.p1.x, obj.p1.y);
                   obj.p2 = rot(obj.p2.x, obj.p2.y);
+                  if (obj.type === "labeler") {
+                    if (obj.elbow) obj.elbow = rot(obj.elbow.x, obj.elbow.y);
+                    if (obj.p3) obj.p3 = rot(obj.p3.x, obj.p3.y);
+                    if (obj.extraAnchors) obj.extraAnchors = obj.extraAnchors.map(point => rot(point.x, point.y));
+                  }
                 } else if (POINT_ARRAY_TYPES.has(obj.type)) {
                   // polyline/curve/funcgraph는 x/y/w/h가 없는 points 기반 객체라, 아래
                   // else의 박스 회전(obj.x+obj.w/2 등)을 타면 funcgraph에 NaN이 기록되고
@@ -1302,6 +1340,11 @@ export function initTransform(svg, state) {
                 if (ENDPOINT_HANDLE_TYPES.has(obj.type)) {   // was: line|circuit|labeler|pendulum
                   obj.p1 = rot(obj.p1.x, obj.p1.y);
                   obj.p2 = rot(obj.p2.x, obj.p2.y);
+                  if (obj.type === "labeler") {
+                    if (obj.elbow) obj.elbow = rot(obj.elbow.x, obj.elbow.y);
+                    if (obj.p3) obj.p3 = rot(obj.p3.x, obj.p3.y);
+                    if (obj.extraAnchors) obj.extraAnchors = obj.extraAnchors.map(point => rot(point.x, point.y));
+                  }
                 } else if (POINT_ARRAY_TYPES.has(obj.type)) {
                   // polyline/curve/funcgraph는 x/y/w/h가 없는 points 기반 객체라, 아래
                   // else의 박스 회전(obj.x+obj.w/2 등)을 타면 funcgraph에 NaN이 기록되고
@@ -1663,6 +1706,9 @@ export function initTransform(svg, state) {
           if (!obj) return;
           obj.p1 = rp(_rotOrigObj.p1);
           obj.p2 = rp(_rotOrigObj.p2);
+          if (_rotOrigObj.elbow) obj.elbow = rp(_rotOrigObj.elbow);
+          if (_rotOrigObj.p3) obj.p3 = rp(_rotOrigObj.p3);
+          if (_rotOrigObj.extraAnchors) obj.extraAnchors = _rotOrigObj.extraAnchors.map(rp);
         });
         if (!_rotDidMove && Math.abs(deltaDeg) > 0.1) _rotDidMove = true;
         return;
@@ -1741,6 +1787,11 @@ export function initTransform(svg, state) {
           if (orig.type === "line" || orig.type === "circuit" || orig.type === "labeler" || orig.type === "pendulum") {
             obj.p1 = memberRot(orig.p1.x, orig.p1.y);
             obj.p2 = memberRot(orig.p2.x, orig.p2.y);
+            if (orig.type === "labeler") {
+              if (orig.elbow) obj.elbow = memberRot(orig.elbow.x, orig.elbow.y);
+              if (orig.p3) obj.p3 = memberRot(orig.p3.x, orig.p3.y);
+              if (orig.extraAnchors) obj.extraAnchors = orig.extraAnchors.map(point => memberRot(point.x, point.y));
+            }
           } else if (POINT_ARRAY_TYPES.has(orig.type)) { // polyline / curve / funcgraph
             obj.points = orig.points.map((p) => memberRot(p.x, p.y));
             mapFgElements(obj, orig, (p) => memberRot(p.x, p.y)); // 그래프 요소도 함께 회전(분리 방지)

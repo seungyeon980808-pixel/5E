@@ -3,10 +3,11 @@
  * split). Builds the section DOM and wires its events; mounting into the
  * inspector panel happens in js/inspector.js (the orchestrator). */
 
-import { openAngleArcLabelEditor } from "../tools.js?v=1.5.4";
-import { boxLabelSlots } from "../render.js?v=1.4.0";
-import { makeSection } from "./widgets.js?v=1.4.0";
-import { nodeBoxFromDiameter, nodeDiameterFromBox } from "../tools/node-placement.js?v=1.4.0";
+import { openAngleArcLabelEditor } from "../tools.js?v=1.6.0-preview-labeler-0917-1111";
+import { boxLabelSlots } from "../render.js?v=1.6.0-preview-labeler-0917-1111";
+import { makeSection } from "./widgets.js?v=1.6.0-preview-labeler-0917-1111";
+import { nodeBoxFromDiameter, nodeDiameterFromBox } from "../tools/node-placement.js?v=1.6.0-preview-labeler-0917-1111";
+import { beginLabelerBranches, labelerAnchorCount, labelerBranchStatus } from "../tools/labeler-branches.js?v=1.6.0-preview-labeler-0917-1111";
 
 export function buildGeometrySection(ctx) {
   const { state, makeLabelSizeRow, makeLabelTypeRow, commitSelectedObject } = ctx;
@@ -129,7 +130,7 @@ export function buildGeometrySection(ctx) {
   trimRow.appendChild(trimBtn);
   sec3Body.appendChild(trimRow);
   trimBtn.addEventListener("click", async () => {
-    const mod = await import("../erase-tool.js?v=1.4.0");
+    const mod = await import("../erase-tool.js?v=1.6.0-preview-labeler-0917-1111");
     const n = mod.trimSelectedBoxMargins();
     const orig = trimBtn.textContent;
     trimBtn.textContent = n > 0 ? "정리했습니다" : "좁힐 여백 없음";
@@ -397,39 +398,94 @@ export function buildGeometrySection(ctx) {
     }
   }
 
-  /* 라벨선 추가(요구 2026-07-26): 지시선을 하나 더 뽑아 두 영역을 하나의 라벨로 가리킨다.
-   * 켜면 p3(두 번째 지시선 끝점)가 생기고, 캔버스에 세 번째 핸들이 나와 끌 수 있다. */
   const labelerLine2Row = document.createElement("div");
   labelerLine2Row.className = "insp-row";
+  labelerLine2Row.style.flexWrap = "wrap";
   const labelerLine2Lbl = document.createElement("label");
   labelerLine2Lbl.className = "insp-field-label";
   labelerLine2Lbl.textContent = "라벨선";
   const labelerLine2Btn = document.createElement("button");
   labelerLine2Btn.type = "button";
   labelerLine2Btn.className = "insp-input";
-  labelerLine2Btn.title = "지시선을 하나 더 만들어 두 곳을 한 라벨로 가리킵니다";
+  labelerLine2Btn.title = "시작점을 최대 5개까지 지정하고 Enter로 확정합니다";
   labelerLine2Row.appendChild(labelerLine2Lbl);
   labelerLine2Row.appendChild(labelerLine2Btn);
-  sec3Body.appendChild(labelerLine2Row);
-  labelerLine2Btn.addEventListener("click", () => {
-    const s = state.get();
-    const ids = s.selectedIds || [];
-    if (ids.length !== 1) return;
-    const snap = JSON.parse(JSON.stringify(s.objects));
-    state.update((s2) => {
-      const o = s2.objects.find((it) => it.id === ids[0]);
-      if (!o || o.type !== "labeler" || o.locked) return;
-      s2.undoStack.push(snap); s2.redoStack = [];
-      if (o.p3) { delete o.p3; return; }
-      // 첫 지시선을 라벨 기준으로 반대편에 복사해 둔다 — 바로 눈에 띄고 끌어 옮기기 쉽다.
-      o.p3 = { x: o.p2.x + (o.p2.x - o.p1.x), y: o.p2.y + (o.p2.y - o.p1.y) };
+  const removeBranchBtn = document.createElement("button");
+  removeBranchBtn.type = "button";
+  removeBranchBtn.className = "insp-input";
+  removeBranchBtn.textContent = "제거";
+  removeBranchBtn.title = "마지막으로 추가한 시작점을 제거합니다";
+  removeBranchBtn.addEventListener("click", () => {
+    commitSelectedObject((o) => {
+      if (o.type !== "labeler" || o.locked || labelerAnchorCount(o) <= 1) return;
+      if (o.extraAnchors?.length) o.extraAnchors.pop();
+      else delete o.p3;
+      return true;
     });
+  });
+  labelerLine2Row.appendChild(removeBranchBtn);
+  sec3Body.appendChild(labelerLine2Row);
+  const branchHint = document.createElement("span");
+  Object.assign(branchHint.style, { flexBasis: "100%", fontSize: "11px", color: "var(--text-secondary)" });
+  labelerLine2Row.appendChild(branchHint);
+  const labelerGapRow = document.createElement("div");
+  labelerGapRow.className = "insp-row";
+  labelerGapRow.style.flexBasis = "100%";
+  const gapLabel = document.createElement("label");
+  gapLabel.className = "insp-field-label";
+  gapLabel.textContent = "선–글자 간격";
+  const gapInput = document.createElement("input");
+  gapInput.type = "number";
+  gapInput.min = "0";
+  gapInput.step = "0.1";
+  gapInput.className = "insp-input";
+  gapInput.setAttribute("aria-label", "선–글자 간격");
+  const gapUnit = document.createElement("span");
+  gapUnit.className = "insp-unit";
+  gapUnit.textContent = "mm";
+  labelerGapRow.append(gapLabel, gapInput, gapUnit);
+  labelerLine2Row.appendChild(labelerGapRow);
+  let gapUndoRecorded = false;
+  let gapEditedId = null;
+  gapInput.addEventListener("focus", () => {
+    gapUndoRecorded = false;
+    gapEditedId = (state.get().selectedIds || [])[0];
+  });
+  gapInput.addEventListener("input", () => {
+    const value = Number.parseFloat(gapInput.value);
+    if (!Number.isFinite(value) || value < 0) return;
+    state.update((s) => {
+      const o = s.objects.find((item) => item.id === gapEditedId);
+      if (!o || o.id !== (s.selectedIds || [])[0] || o.type !== "labeler" || o.locked || o.labelGap === value) return;
+      if (!gapUndoRecorded) {
+        s.undoStack.push(JSON.parse(JSON.stringify(s.objects)));
+        s.redoStack = [];
+        gapUndoRecorded = true;
+      }
+      o.labelGap = value;
+    });
+  });
+  gapInput.addEventListener("blur", () => { gapUndoRecorded = false; gapEditedId = null; syncLabelerLine2(); });
+  gapInput.addEventListener("keydown", (event) => { if (event.key === "Enter") gapInput.blur(); });
+  labelerLine2Btn.addEventListener("click", () => {
+    const ids = state.get().selectedIds || [];
+    if (ids.length !== 1) return;
+    beginLabelerBranches(ids[0]);
     syncLabelerLine2();
   });
   function syncLabelerLine2() {
     const s = state.get();
     const o = (s.objects || []).find((it) => it.id === (s.selectedIds || [])[0]);
-    labelerLine2Btn.textContent = (o && o.p3) ? "제거" : "추가";
+    const pending = labelerBranchStatus();
+    const count = o ? labelerAnchorCount(o) : 0;
+    labelerLine2Btn.textContent = pending ? "확정" : "추가";
+    labelerLine2Btn.disabled = !o || o.locked || (!pending && count >= 5);
+    removeBranchBtn.disabled = !o || o.locked || !!pending || count <= 1;
+    branchHint.textContent = pending
+      ? (pending.needsElbow ? "먼저 합류점을 클릭하세요 · Esc 취소" : `${pending.count}/5개 · 시작점 클릭 · Enter 확정 · Esc 취소`)
+      : `${count}/5개 시작점`;
+    gapInput.disabled = !o || o.locked || !!pending;
+    if (o && document.activeElement !== gapInput) gapInput.value = String(Number((o.labelGap ?? 0).toFixed(2)));
   }
 
   function commitLabelerLength() {

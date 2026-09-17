@@ -1,4 +1,6 @@
 .unified-library-overlay {
+  -webkit-backdrop-filter: blur(6px);
+  backdrop-filter: blur(6px);
   z-index: 10050;
   --unilib-bg: var(--bg-app, #0d1117);
   --unilib-panel: var(--bg-panel, #161b22);
@@ -131,6 +133,38 @@
   font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Noto Sans KR", "Segoe UI", sans-serif;
   font-size: var(--unilib-type-body);
   line-height: var(--unilib-line-height-body);
+}
+
+.unilib-thumb[data-thumbnail-state] { position: relative; }
+.unilib-thumbnail-status {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  background: var(--unilib-input);
+  color: var(--unilib-muted);
+  font-size: 12px;
+  line-height: 1.5;
+  word-break: keep-all;
+  text-align: center;
+  z-index: 1;
+}
+[data-thumbnail-state="loading"] > .unilib-thumbnail-status::before {
+  content: "";
+  width: 16px;
+  height: 16px;
+  border: 2px solid var(--unilib-border-muted);
+  border-top-color: var(--unilib-accent);
+  border-radius: 50%;
+  animation: unilib-thumbnail-spin .8s linear infinite;
+}
+@keyframes unilib-thumbnail-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  [data-thumbnail-state="loading"] > .unilib-thumbnail-status::before { animation: none; }
 }
 
 .unified-library-overlay *,

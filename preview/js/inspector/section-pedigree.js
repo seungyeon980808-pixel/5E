@@ -12,7 +12,7 @@
  * selected() / commit() / sync() 3함수 패턴은 section-groundarc.js를 그대로 따른다.
  */
 
-import { makeSection } from "./widgets.js?v=1.4.0";
+import { makeSection } from "./widgets.js?v=1.6.0-preview-labeler-0917-1111";
 
 const FILL_OPTIONS = [
   ["hatch", "빗금"],

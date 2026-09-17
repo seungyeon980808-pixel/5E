@@ -1,4 +1,4 @@
-import { previewStorage as localStorage } from './preview-storage.js';
+import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-preview-labeler-0917-1111';
 /* ===== PLATFORM =====
  * Mac과 Windows는 수식키 규칙이 다르다. 이 파일이 그 차이를 한곳에 모은다.
  *

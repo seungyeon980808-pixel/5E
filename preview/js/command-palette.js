@@ -1,6 +1,6 @@
-import { registerEscapeLayer } from "./escape-layers.js?v=1";
+import { registerEscapeLayer } from "./escape-layers.js?v=1.6.0-preview-labeler-0917-1111";
 
-import { modKey, shortcutKey, isEditingTarget, isComposingKey, keyLabel } from "./platform.js?v=1.4.0";
+import { modKey, shortcutKey, isEditingTarget, isComposingKey, keyLabel } from "./platform.js?v=1.6.0-preview-labeler-0917-1111";
 /* ===== COMMAND PALETTE (Ctrl+K unified runner: 명령 + 오브젝트 검색) =====
  *
  * Ctrl+F는 오브젝트만 찾는다. 이 팔레트는 같은 창에서 "명령"(실행취소·그룹묶기·
@@ -16,10 +16,10 @@ import { modKey, shortcutKey, isEditingTarget, isComposingKey, keyLabel } from "
  *   - 오브젝트는 search.js와 동일한 데이터(TEMPLATES/퍼스널)를 재사용해 생성한다.
  */
 
-import { TEMPLATES, activateTemplate, buildSymbolIcon, sizeIconViewBox } from "./templates.js?v=1.4.0";
-import { listPersonalItems, insertPersonalItem } from "./personal-objects.js?v=1.4.0";
-import { state } from "./state.js?v=1.4.0";
-import { trimSelectedBoxMargins } from "./erase-tool.js?v=1.4.0";
+import { TEMPLATES, activateTemplate, buildSymbolIcon, sizeIconViewBox } from "./templates.js?v=1.6.0-preview-labeler-0917-1111";
+import { listPersonalItems, insertPersonalItem } from "./personal-objects.js?v=1.6.0-preview-labeler-0917-1111";
+import { state } from "./state.js?v=1.6.0-preview-labeler-0917-1111";
+import { trimSelectedBoxMargins } from "./erase-tool.js?v=1.6.0-preview-labeler-0917-1111";
 
 const CATEGORY_ORDER = ["공통", "광학", "회로", "역학"];
 

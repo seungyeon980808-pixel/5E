@@ -1,8 +1,8 @@
 /* ===== RENDER/PENDULUM: simple pendulum symbol + geometry/bbox helpers ===== */
 
-import { SVG_NS, grayHex } from "./core.js?v=1.4.0";
-import { makeLabelEl } from "./labels.js?v=1.4.0";
-import { DEFAULT_TEXT_SIZE_MM } from "../state.js?v=1.4.0";
+import { SVG_NS, grayHex } from "./core.js?v=1.6.0-preview-labeler-0917-1111";
+import { makeLabelEl } from "./labels.js?v=1.6.0-preview-labeler-0917-1111";
+import { DEFAULT_TEXT_SIZE_MM } from "../state.js?v=1.6.0-preview-labeler-0917-1111";
 
 /* ===== SIMPLE PENDULUM (native object; pivot = p1, bob center = p2) =====
  * Data (see tools.js makePendulum): p1 (pivot/support), p2 (bob center),
