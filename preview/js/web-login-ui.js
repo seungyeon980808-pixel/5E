@@ -6,7 +6,8 @@ export function initWebLoginUi({ openAi }) {
   const badge = document.createElement('button');
   badge.className = 'topbar-btn web-account-status'; badge.type = 'button';
   badge.innerHTML = '<span class="web-account-dot" aria-hidden="true"></span><span data-account-label>ChatGPT 연결</span>';
-  document.querySelector('.canvas-global-controls')?.prepend(badge);
+  const badgeHost = document.querySelector('.panel-utility-bar-right') || document.querySelector('.canvas-global-controls');
+  badgeHost?.prepend(badge);
   const dialog = document.createElement('dialog');
   dialog.className = 'web-login-dialog'; dialog.setAttribute('aria-labelledby', 'web-login-title');
   dialog.innerHTML = `<button type="button" class="web-login-close" aria-label="연결 안내 닫기">×</button>
@@ -63,7 +64,8 @@ export function initWebLoginUi({ openAi }) {
     phase = next; badge.dataset.state = next;
     if (next !== 'waiting') resetPairedLayout();
     label.textContent = next === 'connected' ? 'ChatGPT 연결됨' : ['waiting', 'starting'].includes(next) ? '로그인 중…' : next === 'error' ? '연결 확인' : 'ChatGPT 연결';
-    badge.title = label.textContent;
+    badge.title = connected ? 'ChatGPT 연결됨 · AI 이미지 변환을 사용할 수 있습니다' : label.textContent;
+    badge.setAttribute('aria-label', badge.title);
     if (aiButton) {
       aiButton.dataset.loginState = next;
       aiButton.title = connected ? 'AI 이미지 변환 · 사용 가능' : 'AI 이미지 변환 · ChatGPT 연결 필요';
@@ -95,7 +97,9 @@ export function initWebLoginUi({ openAi }) {
     if (connected) render('connected', '메인 화면의 AI 버튼을 눌러 작업을 시작하세요.');
     title.focus({ preventScroll: true });
   }
-  badge.addEventListener('click', () => show());
+  badge.addEventListener('click', () => {
+    if (!connected) show();
+  });
   function dismiss() {
     clearTimeout(completionTimer);
     if (['starting', 'waiting'].includes(phase)) window.fiveEWebCancelLogin?.();

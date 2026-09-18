@@ -1,5 +1,6 @@
-import { initWebLoginUi } from './web-login-ui.js?v=1.6.0-preview-common-year-login-0918-1302';
 import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-preview-labeler-0917-1111';
+import { initWebLoginUi } from './web-login-ui.js?v=1.6.0-preview-runtime-bundle-0918-1356';
+import { showAlert } from "./ui-dialogs.js";
 /* ===== MAIN (wire modules; data-as-truth + viewBox zoom/pan) ===== */
 //
 // Responsibilities:
@@ -27,7 +28,7 @@ import { initImagePaste } from "./image-paste.js?v=1.6.0-preview-labeler-0917-11
 import { initImageCutout } from "./image-cutout.js?v=1.6.0-preview-labeler-0917-1111";
 import { renderSessionToDataUrl } from "./image-cutout.js?v=1.6.0-preview-labeler-0917-1111";
 import { handSelectedCanvasImageToAi } from "./ai-canvas-handoff.js?v=1.6.0-preview-labeler-0917-1111";
-import { initExamLibrary } from "./exam-library.js?v=1.6.0-preview-common-year-provider-0918-1316";
+import { initExamLibrary } from "./exam-library.js?v=1.6.0-preview-runtime-bundle-0918-1356";
 import { initTemplates } from "./templates.js?v=1.6.0-preview-labeler-0917-1111";
 import { initObjectSearch } from "./search.js?v=1.6.0-preview-labeler-0917-1111";
 import { initCommandPalette } from "./command-palette.js?v=1.6.0-preview-labeler-0917-1111";
@@ -60,7 +61,7 @@ import { initAxisBreakSection } from "./inspector/section-axisbreak.js?v=1.6.0-p
 import { initChemGraphSection } from "./inspector/section-chemgraph.js?v=1.6.0-preview-labeler-0917-1111";
 import { initElectrodeSection } from "./inspector/section-electrode.js?v=1.6.0-preview-labeler-0917-1111";
 import { initPeriodicSection } from "./inspector/section-periodic.js?v=1.6.0-preview-labeler-0917-1111";
-import { initAutosave } from "./autosave.js?v=1.6.0-preview-labeler-0917-1111";
+import { initAutosave } from "./autosave.js?v=1.6.0-preview-runtime-bundle-0918-1356";
 import { initPages } from "./pages.js?v=1.6.0-preview-labeler-0917-1111";
 import { localizeShortcutLabels } from "./platform.js?v=1.6.0-preview-labeler-0917-1111";
 import { initModalDrag } from "./modal-drag.js?v=1.6.0-preview-common-year-login-0918-1302";
@@ -68,7 +69,7 @@ import { initSteppers } from "./stepper.js?v=1.6.0-preview-labeler-0917-1111";
 import { initReferenceWindows } from "./reference-window.js?v=1.6.0-preview-common-year-login-0918-1302";
 import { initTutorial } from "./tutorial.js?v=1.6.0-preview-labeler-0917-1111";
 import { initAiInstallGuide } from "./ai-install-guide.js?v=1.6.0-preview-labeler-0917-1111";
-import { initAiPanel } from "./ai-panel.js?v=1.6.0-preview-shared-zoom-0917-1415a";
+import { initAiPanel } from "./ai-panel.js?v=1.6.0-preview-runtime-bundle-0918-1356";
 
 const svg = document.getElementById("canvas");
 // Canvas interaction transfers keyboard ownership away from the last toolbar button.
@@ -83,49 +84,68 @@ svg.addEventListener("blur", () => svg.classList.remove("pointer-focused"));
 window.addEventListener("keydown", () => svg.classList.remove("pointer-focused"), { capture: true });
 const zoomReadout = document.getElementById("zoom-readout");
 
-/* ===== APP FULLSCREEN (workspace only; artboard state remains unchanged) ===== */
+/* ===== APP FULLSCREEN (native browser or desktop window; artboard state remains unchanged) ===== */
 (function initFullscreen() {
   const btn = document.getElementById("fullscreen-toggle");
   if (!btn) return;
 
   const nativeFullscreen = window.fiveEDesktop?.fullscreen;
-  let workspaceMaximized = false;
+  const browserFullscreenElement = () => document.fullscreenElement || document.webkitFullscreenElement || null;
 
   const syncButton = (active) => {
     if (nativeFullscreen) document.documentElement.classList.toggle("is-native-fullscreen", Boolean(active));
-    else document.documentElement.classList.toggle("is-workspace-maximized", Boolean(active));
     btn.setAttribute("aria-pressed", String(active));
-    const label = nativeFullscreen ? (active ? "전체화면 해제" : "전체화면")
-      : (active ? "작업영역 최대화 해제" : "작업영역 최대화");
+    const label = active ? "전체화면 해제" : "전체화면";
     btn.setAttribute("aria-label", label);
     btn.title = `${label} (Alt+Enter)`;
   };
+  const syncBrowserFullscreen = () => syncButton(Boolean(browserFullscreenElement()));
+  const showBrowserFullscreenError = (operation) => {
+    syncBrowserFullscreen();
+    const message = operation === "exit" ? "전체화면을 해제하지 못했습니다. 다시 시도해 주세요." : "전체화면을 시작하지 못했습니다. 다시 시도해 주세요.";
+    btn.setAttribute("aria-label", message);
+    btn.title = message;
+    void showAlert(message, { title: "전체화면" });
+  };
   const toggleFullscreen = async () => {
+    let browserOperation = "enter";
     try {
-      if (window.fiveEDesktop?.fullscreen) {
-        await window.fiveEDesktop.fullscreen.toggle();
+      if (nativeFullscreen) {
+        await nativeFullscreen.toggle();
         return;
       }
-      workspaceMaximized = !workspaceMaximized;
-      syncButton(workspaceMaximized);
+      if (browserFullscreenElement()) {
+        browserOperation = "exit";
+        const exit = document.exitFullscreen || document.webkitExitFullscreen;
+        if (!exit) throw new Error("Fullscreen exit is unavailable");
+        await exit.call(document);
+        return;
+      }
+      const request = document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen;
+      if (!request) throw new Error("Fullscreen is unavailable");
+      await request.call(document.documentElement);
     } catch (error) {
       console.error("Unable to toggle fullscreen", error);
+      if (!nativeFullscreen) showBrowserFullscreenError(browserOperation);
     }
   };
 
   btn.addEventListener("click", toggleFullscreen);
-  if (window.fiveEDesktop?.fullscreen) {
-    window.fiveEDesktop.fullscreen.onChange(syncButton);
-    window.fiveEDesktop.fullscreen.get().then(syncButton).catch((error) => {
+  if (nativeFullscreen) {
+    nativeFullscreen.onChange(syncButton);
+    nativeFullscreen.get().then(syncButton).catch((error) => {
       console.error("Unable to read fullscreen state", error);
     });
+  } else {
+    document.addEventListener("fullscreenchange", syncBrowserFullscreen);
+    document.addEventListener("webkitfullscreenchange", syncBrowserFullscreen);
+    syncBrowserFullscreen();
   }
   window.addEventListener("keydown", (e) => {
     if (!e.altKey || e.key !== "Enter" || e.repeat) return;
     e.preventDefault();
     toggleFullscreen();
   });
-  if (!nativeFullscreen) syncButton(workspaceMaximized);
 })();
 
 (function initGraphLauncherState() {
@@ -289,8 +309,8 @@ initPages(state);
 
 /* ----- autosave: 2.5초 디바운스로 IndexedDB에 자동 저장 + 부팅 시 크래시 복구 -----
  * pages[] 채운 뒤에 초기화해야 첫 저장부터 유효한 다중 페이지 스냅샷이 된다. */
-initAutosave(state);
-const aiPanel = initAiPanel(state);
+const recoveryChoice = await initAutosave(state);
+const aiPanel = initAiPanel(state, { freshStart: recoveryChoice === "fresh" });
 initDesktopProjectCloseGuard(state, () => aiPanel?.checkpointForClose());
 const aiEntryButton = document.getElementById("ai-image-install-open");
 if (aiEntryButton) {

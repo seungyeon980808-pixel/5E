@@ -1,7 +1,7 @@
 import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-preview-labeler-0917-1111';
 import { openAiCompositionEditor } from './ai-composition-editor.js?v=1.6.0-preview-labeler-0917-1111';
 import { registerEscapeLayer } from './escape-layers.js?v=1.6.0-preview-labeler-0917-1111';
-import { clearTaskWorkspaces, createTaskPersistence, createTaskWorkspaces, recoverTaskWorkspaceSnapshot } from './ai-task-workspaces.js?v=1.6.0-preview-labeler-0917-1111';
+import { clearTaskWorkspaces, createTaskPersistence, createTaskWorkspaces, recoverTaskWorkspaceSnapshot } from './ai-task-workspaces.js?v=1.6.0-preview-runtime-bundle-0918-1356';
 import {
   advanceGenerationTiming,
   restoreGenerationTiming,
@@ -445,8 +445,8 @@ function findNumber(value, keys) {
   return null;
 }
 
-export function initAiPanel(state) {
-  return createTaskWorkspaces(state, initAiTaskPanel, setupAiWorkbench);
+export function initAiPanel(state, options) {
+  return createTaskWorkspaces(state, initAiTaskPanel, setupAiWorkbench, options);
 }
 
 export function createUnifiedAiSourceConsumer({ addReferencesAsTasks, setStatus }) {
@@ -1175,11 +1175,11 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       if (!modelSelect.options.length) modelSelect.add(new Option("기본 모델", ""));
       if (isWhitePngWorkflow({ mode: selectedMode, outputEngine: selectedOutputEngine })
         && localStorage.getItem("5e.aiReviewDefaultsVersion") !== "1") {
-        sessionStorage.setItem("5e.preview:" + "5e.aiModelExplicit", AI_IMAGE_REVIEW_MODEL);
+        sessionStorage.setItem("5e.aiModelExplicit", AI_IMAGE_REVIEW_MODEL);
         localStorage.setItem("5e.aiEffort", AI_IMAGE_GENERATION_EFFORT);
         localStorage.setItem("5e.aiReviewDefaultsVersion", "1");
       }
-      const sessionChoice = sessionStorage.getItem("5e.preview:" + "5e.aiModelExplicit");
+      const sessionChoice = sessionStorage.getItem("5e.aiModelExplicit");
       const preferred = availableModels.find((item) => (item.model || item.id) === sessionChoice)
         || availableModels.find((item) => (item.model || item.id) === AI_IMAGE_REVIEW_MODEL)
         || availableModels.find((item) => item.isDefault) || availableModels[0];
@@ -3686,7 +3686,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   };
   modelSelect.addEventListener("change", () => {
     localStorage.setItem("5e.aiModel", modelSelect.value);
-    sessionStorage.setItem("5e.preview:" + "5e.aiModelExplicit", modelSelect.value);
+    sessionStorage.setItem("5e.aiModelExplicit", modelSelect.value);
     syncModelWarning();
     populateEfforts();
     populateSpeeds();

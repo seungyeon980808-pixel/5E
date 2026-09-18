@@ -1,7 +1,7 @@
 import { registerEscapeLayer } from "./escape-layers.js?v=1.6.0-preview-labeler-0917-1111";
 import { safeExternalSourceUrl } from "./library-import-policy.js?v=1.6.0-preview-labeler-0917-1111";
 import { queryHighlightTerms } from "./pdf-library/search.js?v=1.6.0-preview-common-year-login-0918-1302";
-import { chooseWorkbenchAssignment } from "./library/workbench-assignment.js?v=1.6.0-preview-labeler-0917-1111";
+import { chooseWorkbenchAssignment } from "./library/workbench-assignment.js?v=1.6.0-preview-runtime-bundle-0918-1356";
 
 const SOURCE_STORAGE_KEY = "5e.unified-library.sources.v1";
 const TREE_STORAGE_KEY = "5e.unified-library.tree-expanded.v1";
@@ -2370,7 +2370,9 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     cropTitle.textContent = title;
     cropDialog.dataset.pdfPage = String(session.pageNumber);
     cropGesture = null;
-    draftCrop = emptyDraft ? null : clampRect(result.variants?.manual?.source?.rect || pdfUi?.cropForResult?.(result) || result.variants?.content?.source?.rect || result.provenance.rect);
+    const existingCrop = result.variants?.manual?.source?.rect || pdfUi?.cropForResult?.(result)
+      || (result.kind === "crop" ? result.variants?.content?.source?.rect || result.provenance.rect : null);
+    draftCrop = emptyDraft || !existingCrop ? null : clampRect(existingCrop);
     cropPreviewExact = false;
     cropExact = null;
     cropDialog.hidden = false;

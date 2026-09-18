@@ -139,7 +139,7 @@ export function createTaskPersistence({
   };
 }
 
-export function createTaskWorkspaces(state, initialize, setupWorkbench) {
+export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshStart = false } = {}) {
   const original = document.getElementById('ai-image-panel');
   if (!original) return;
   const template = original.cloneNode(true);
@@ -277,8 +277,8 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench) {
     }
   }
   function add(scope, show = true) {
-    const panel = scope ? template.cloneNode(true) : original;
-    if (scope) {
+    const panel = entries.length ? template.cloneNode(true) : original;
+    if (panel !== original) {
       panel.id = `ai-workspace-${scope}`;
       for (const element of panel.querySelectorAll('[id]')) {
         const oldId = element.id; element.id = `${oldId}-${scope}`;
@@ -308,10 +308,22 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench) {
     entry.controller.ready.then(() => { entry.ready = true; if (show) activate(entry); else renderNavigation(); });
     return entry;
   }
-  active = add('', false);
+  const primaryKey = '5e.aiPrimaryWorkspace.v1';
+  let primaryScope = '';
+  if (freshStart) {
+    primaryScope = crypto.randomUUID();
+    store(primaryKey, primaryScope);
+    store(selectionKey, null);
+  } else {
+    try {
+      const savedPrimary = JSON.parse(localStorage.getItem(primaryKey) || 'null');
+      if (typeof savedPrimary === 'string' && /^[a-f0-9-]{36}$/.test(savedPrimary)) primaryScope = savedPrimary;
+    } catch { /* Existing installations use the legacy workspace. */ }
+  }
+  active = add(primaryScope, false);
   try {
-    const saved = JSON.parse(localStorage.getItem(registryKey) || '[]');
-    for (const scope of saved) if (typeof scope === 'string' && /^[a-f0-9-]{36}$/.test(scope)) add(scope, false);
+    const saved = freshStart ? [] : JSON.parse(localStorage.getItem(registryKey) || '[]');
+    for (const scope of saved) if (typeof scope === 'string' && /^[a-f0-9-]{36}$/.test(scope) && scope !== primaryScope) add(scope, false);
   } catch { /* The original workspace remains available if the registry is unreadable. */ }
   const ready = Promise.all(entries.map(e => e.controller.ready)).then(() => {
     let saved;

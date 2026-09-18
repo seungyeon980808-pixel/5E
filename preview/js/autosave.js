@@ -32,7 +32,7 @@ function openDB() {
   return new Promise((resolve, reject) => {
     let req;
     try {
-      req = indexedDB.open("5e.preview:" + DB_NAME, DB_VERSION);
+      req = indexedDB.open(DB_NAME, DB_VERSION);
     } catch (err) {
       reject(err);
       return;
@@ -114,6 +114,8 @@ export async function initAutosave(state) {
     return;
   }
 
+  let recoveryChoice = "none";
+
   // (1) 부팅 복구: 남아 있는 스냅샷이 있으면 복원 여부를 묻는다. 아직 자동 저장
   //     구독을 걸기 전이라, 사용자가 결정하는 동안 빈 초기 상태가 스냅샷을
   //     덮어쓰지 않는다.
@@ -124,6 +126,7 @@ export async function initAutosave(state) {
         `이전에 작업하던 도해가 남아 있습니다.\n(${formatTime(latest.ts)})\n\n이전 작업을 복구할까요?`,
         { title: "작업 복구", okText: "복구", cancelText: "새로 시작" }
       );
+      recoveryChoice = ok ? "restore" : "fresh";
       if (ok) {
         applyLoaded(state, migrate(latest.data));
         markProjectStatus(state, captureProjectStatus(state), "recovery");
@@ -199,4 +202,5 @@ export async function initAutosave(state) {
     if (document.visibilityState === "hidden") flush();
   });
   window.addEventListener("pagehide", flush);
+  return recoveryChoice;
 }
