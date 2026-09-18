@@ -36,8 +36,14 @@ export function humanExamName(metadata = {}, itemNumber = null) {
 
 function matchesFilters(result, filters = {}) {
   const metadata = result.metadata ?? {};
+  const startYear = Number(filters.startYear);
+  const endYear = Number(filters.endYear);
+  const hasStartYear = filters.startYear != null && filters.startYear !== "" && Number.isFinite(startYear);
+  const hasEndYear = filters.endYear != null && filters.endYear !== "" && Number.isFinite(endYear);
   return (!filters.subject || metadata.subject === filters.subject)
     && (!filters.academicYear || metadata.academicYear === Number(filters.academicYear))
+    && (!hasStartYear || metadata.academicYear >= startYear)
+    && (!hasEndYear || metadata.academicYear <= endYear)
     && (!filters.administration || metadata.administration === filters.administration);
 }
 

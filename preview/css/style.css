@@ -2285,6 +2285,10 @@ textarea.unified-text-input {
   outline: none;
   box-shadow: none;
 }
+.object-search-trigger.library-return-focus:focus {
+  outline: none;
+  box-shadow: none;
+}
 .tool-btn:focus-visible,
 .advanced-tool-btn:focus-visible,
 .topbar-btn:focus-visible,
