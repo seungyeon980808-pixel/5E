@@ -30,7 +30,7 @@ import {
 // 전체 백업(요구 3): 개인 설정·라이브러리와 함께 '현재 프로젝트(그림·페이지)'도 한 파일에
 // 담기 위해 프로젝트 직렬화/복원 함수를 재사용한다(project-io는 settings를 import하지 않아
 // 순환 없음).
-import { serialize as serializeProject, applyLoaded, migrate as migrateProject } from "./project-io.js?v=1.6.0-preview-labeler-0917-1111";
+import { serialize as serializeProject, applyLoaded, migrate as migrateProject } from "./project-io.js?v=1.6.0-preview-project-launcher-0918-1508";
 // 퍼스널 라이브러리는 이제 IndexedDB에 산다(localStorage 아님). 백업은 이 함수들로 왕복하고,
 // hasLibraryItems는 "덮어쓰기 전 확인"(감사 finding 1)의 판단 근거로 쓴다 —
 // localStorage를 봐서는 IDB에 든 실제 항목 유무를 알 수 없기 때문이다.

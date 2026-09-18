@@ -19,8 +19,10 @@ import { LABEL_CAPABLE_TYPES } from "./object-types.js?v=1.6.0-preview-labeler-0
 import { insertImageFromSrc } from "./image-paste.js?v=1.6.0-preview-labeler-0917-1111";
 import { addPage } from "./pages.js?v=1.6.0-preview-labeler-0917-1111";
 
-import { initProjectStatus, captureProjectStatus, markProjectStatus } from "./project-status.js?v=1.6.0-preview-labeler-0917-1111";
+import { initProjectStatus, captureProjectStatus, markProjectStatus } from "./project-status.js?v=1.6.0-preview-project-launcher-0918-1508";
 import { modKey, shortcutKey, isEditingTarget, isComposingKey } from "./platform.js?v=1.6.0-preview-labeler-0917-1111";
+import { nativeProjectTarget, saveNativeProjectPackage, initProjectLaunch } from './project-launch.js?v=1.6.0-preview-project-launcher-0918-1508';
+import { extractWindowsProjectSource } from './windows-project-source.mjs?v=1.6.0-preview-project-launcher-0918-1508';
 
 // Schema version of the saved file. Distinct from the app UI version.
 // 0.15 adds editing guides; older files without them load with an empty guide list.
@@ -384,6 +386,19 @@ export async function saveProject(state) {
     return outcome;
   }
 
+  const target = nativeProjectTarget();
+  if (window.FIVE_E_PROJECT_PACKAGE_API_URL && (window.FIVE_E_PROJECT_PACKAGE_TARGETS || ['darwin']).includes(target)) {
+    try {
+      const outcome = await saveNativeProjectPackage(json, target);
+      if (outcome.kind === 'saved') markProjectStatus(state, statusToken, 'file');
+      if (outcome.kind === 'download-requested') markProjectStatus(state, statusToken, 'download');
+      return outcome;
+    } catch (error) {
+      alert('실행형 프로젝트를 저장하지 못했습니다. 작업은 그대로 유지됩니다.\n' + error.message);
+      return { kind: 'failed' };
+    }
+  }
+
   if (window.showSaveFilePicker) {
     try {
       const handle = await window.showSaveFilePicker({
@@ -604,10 +619,13 @@ export function applyLoaded(state, data) {
 
 /* ----- openProject: read a .5e (or legacy .json) file and load it into state ----- */
 function openProject(state, file) {
+  const executable = /\.exe$/i.test(file.name);
+  if (executable && file.size > 64 * 1024 * 1024) { alert('프로젝트 실행 파일이 너무 큽니다.'); return; }
   const reader = new FileReader();
   reader.onload = async () => {
     try {
-      const data = prepareLoadedProject(JSON.parse(reader.result));
+      const json = executable ? await extractWindowsProjectSource(reader.result) : reader.result;
+      const data = prepareLoadedProject(JSON.parse(json));
 
       // 파일이 유효하다고 확인된 뒤에만 묻는다(깨진 파일은 확인창 없이 바로 에러).
       // applyLoaded는 undoStack까지 비워 되돌릴 수 없는 '대체'다 — 폴더에 섞여 있던
@@ -627,7 +645,8 @@ function openProject(state, file) {
     }
   };
   reader.onerror = () => alert("파일을 읽는 중 오류가 발생했습니다.");
-  reader.readAsText(file);
+  if (executable) reader.readAsArrayBuffer(file);
+  else reader.readAsText(file);
 }
 
 /* ----- image import: file-picker + drag-and-drop helper ----- */
@@ -741,6 +760,12 @@ function initProjectShortcuts(state, fileInput) {
 }
 
 /* ----- initProjectIO: wire the top-bar buttons + hidden file input ----- */
+export function initProjectFileOpening(state, ready) {
+  initProjectLaunch({ state, ready, prepare: prepareLoadedProject, apply: applyLoaded,
+    needsConfirm: () => initProjectStatus(state, serialize).hasUnsavedWork(),
+    mark: () => markProjectStatus(state, captureProjectStatus(state), 'file') });
+}
+
 export function initProjectIO(state, svg) {
   // initPages wraps the initial drawing later in the same boot task.
   queueMicrotask(() => initProjectStatus(state, serialize));
@@ -773,7 +798,7 @@ export function initProjectIO(state, svg) {
   // Hidden file input for 5E projects. Legacy .json files remain supported.
   const fileInput = document.createElement("input");
   fileInput.type = "file";
-  fileInput.accept = PROJECT_FILE_ACCEPT;
+  fileInput.accept = PROJECT_FILE_ACCEPT + ',.exe';
   fileInput.style.display = "none";
   document.body.appendChild(fileInput);
 
@@ -897,7 +922,7 @@ export function initProjectIO(state, svg) {
       if (!file) return;
       // 5E 프로젝트 파일과 기존 JSON 프로젝트 파일도 드래그앤드랍 지원.
       // 일부 OS에서 사용자 정의 확장자의 MIME이 비어 있으므로 확장자도 함께 본다.
-      if (file.type === "application/json" || /\.(?:5e|json)$/i.test(file.name)) {
+      if (file.type === "application/json" || /\.(?:5e|json)$/i.test(file.name) || /\.exe$/i.test(file.name)) {
         openProject(state, file);
         return;
       }

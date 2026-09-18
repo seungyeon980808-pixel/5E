@@ -19,10 +19,10 @@ import { initEraseTool } from "./erase-tool.js?v=1.6.0-preview-labeler-0917-1111
 import { initTransform, undo, redo } from "./transform.js?v=1.6.0-preview-labeler-0917-1111";
 import { initArtboardResize } from "./artboard-resize.js?v=1.6.0-preview-labeler-0917-1111";
 import { initInspector } from "./inspector.js?v=1.6.0-preview-labeler-0917-1111";
-import { initDesktopProjectCloseGuard, initProjectIO, saveProject } from "./project-io.js?v=1.6.0-preview-labeler-0917-1111";
+import { initDesktopProjectCloseGuard, initProjectIO, initProjectFileOpening, saveProject } from "./project-io.js?v=1.6.0-preview-project-launcher-0918-1508";
 import { initExportDialog } from "./export-dialog.js?v=1.6.0-preview-labeler-0917-1111";
 import { initRuler, setRulerVisible } from "./ruler.js?v=1.6.0-preview-labeler-0917-1111";
-import { initSettings } from "./settings.js?v=1.6.0-preview-labeler-0917-1111";
+import { initSettings } from "./settings.js?v=1.6.0-preview-project-launcher-0918-1508";
 import { initImageObjectify } from "./image-objectify.js?v=1.6.0-preview-labeler-0917-1111";
 import { initImagePaste } from "./image-paste.js?v=1.6.0-preview-labeler-0917-1111";
 import { initImageCutout } from "./image-cutout.js?v=1.6.0-preview-labeler-0917-1111";
@@ -61,7 +61,7 @@ import { initAxisBreakSection } from "./inspector/section-axisbreak.js?v=1.6.0-p
 import { initChemGraphSection } from "./inspector/section-chemgraph.js?v=1.6.0-preview-labeler-0917-1111";
 import { initElectrodeSection } from "./inspector/section-electrode.js?v=1.6.0-preview-labeler-0917-1111";
 import { initPeriodicSection } from "./inspector/section-periodic.js?v=1.6.0-preview-labeler-0917-1111";
-import { initAutosave } from "./autosave.js?v=1.6.0-preview-runtime-bundle-0918-1356";
+import { initAutosave } from "./autosave.js?v=1.6.0-preview-project-launcher-0918-1508";
 import { initPages } from "./pages.js?v=1.6.0-preview-labeler-0917-1111";
 import { localizeShortcutLabels } from "./platform.js?v=1.6.0-preview-labeler-0917-1111";
 import { initModalDrag } from "./modal-drag.js?v=1.6.0-preview-common-year-login-0918-1302";
@@ -309,7 +309,9 @@ initPages(state);
 
 /* ----- autosave: 2.5초 디바운스로 IndexedDB에 자동 저장 + 부팅 시 크래시 복구 -----
  * pages[] 채운 뒤에 초기화해야 첫 저장부터 유효한 다중 페이지 스냅샷이 된다. */
-const recoveryChoice = await initAutosave(state);
+const autosaveReady = initAutosave(state);
+initProjectFileOpening(state, autosaveReady);
+const recoveryChoice = await autosaveReady;
 const aiPanel = initAiPanel(state, { freshStart: recoveryChoice === "fresh" });
 initDesktopProjectCloseGuard(state, () => aiPanel?.checkpointForClose());
 const aiEntryButton = document.getElementById("ai-image-install-open");
