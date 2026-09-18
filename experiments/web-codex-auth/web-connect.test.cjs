@@ -6,7 +6,7 @@ const vm = require('node:vm');
 const ticket = 'b'.repeat(64), token = 'a'.repeat(64);
 const authUrl = 'https://auth.openai.com/codex/device';
 const flush = () => new Promise(resolve => setImmediate(resolve));
-function boot({ start, status, store = new Map(), blocked = false, document = { fullscreenElement: null } } = {}) {
+function boot({ start, status, store = new Map(), blocked = false, document = { fullscreenElement: null }, display = {} } = {}) {
   const requests = [], openings = [], children = [], events = [], geometry = [], timers = new Map(), listeners = {};
   let timerId = 0;
   const window = {
@@ -23,7 +23,7 @@ function boot({ start, status, store = new Map(), blocked = false, document = { 
     },
   };
   vm.runInNewContext(readFileSync(require.resolve('../../js/web-ai-connection.js'), 'utf8'), {
-    window, document, location: { origin: 'https://www.5e.ai.kr' }, screen: { availWidth: 1440, availHeight: 900 },
+    window, document, location: { origin: 'https://www.5e.ai.kr' }, screen: { availWidth: 1440, availHeight: 900, ...display },
     sessionStorage: { getItem: key => store.get(key), setItem: (key, value) => store.set(key, value), removeItem: key => store.delete(key) },
     URL, Event, CustomEvent, AbortSignal,
     setTimeout(fn) { timers.set(++timerId, fn); return timerId; }, clearTimeout(id) { timers.delete(id); },
@@ -55,7 +55,7 @@ test('login prepares a scoped code without opening any window; authentication op
   assert.equal(await f.window.fiveEWebContinueLogin(), true);
   assert.equal(f.openings.length, 1);
   assert.equal(f.openings[0][0], 'about:blank');
-  assert.match(f.openings[0][2], /width=560,height=700/);
+  assert.match(f.openings[0][2], /width=560,height=868/);
   assert.deepEqual(f.geometry.map(call => call[0]), ['resize', 'move']);
   [...f.timers.values()].at(-1)();
   assert.equal(f.geometry.at(-1)[1], authUrl);
@@ -158,7 +158,7 @@ test('public web connection is opt-in and leaves the private editor gate intact'
   await new Promise(resolve => upstream.close(resolve));
 });
 
- test('authentication popup sits to the right of the code dialog and follows the fullscreen exit geometry', async () => {
+test('authentication popup sits to the right of the code dialog and follows the fullscreen exit geometry', async () => {
   const f = boot();
   await f.window.fiveEWebLogin(); await flush();
   await f.window.fiveEWebContinueLogin();
@@ -174,6 +174,15 @@ test('public web connection is opt-in and leaves the private editor gate intact'
   assert.ok(f.geometry.filter(call => call[0] === 'move').at(-1)[1] >= 120 + after.codeLeft + after.codeWidth + 16);
   assert.equal(f.geometry.at(-1)[1], authUrl);
  });
+
+test('authentication geometry reserves a screen edge while using the available popup height', async () => {
+  // Given: a short display that still has enough room for the authentication window.
+  const f = boot({ display: { availHeight: 400 } });
+  // When: login creates its positioned authentication popup.
+  await f.window.fiveEWebLogin(); await flush(); await f.window.fiveEWebContinueLogin();
+  // Then: the native popup height leaves a 16px edge above and below instead of a fixed 700px cap.
+  assert.equal(f.geometry.find(call => call[0] === 'resize')[2], 368);
+});
 
 test('fullscreen settles during code preparation so authentication still opens from a direct user click', async () => {
   let finishExit;

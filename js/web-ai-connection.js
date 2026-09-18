@@ -80,7 +80,7 @@
     const width = paired ? Math.min(560, Math.floor((viewport - 48) * .56)) : Math.min(560, availableWidth);
     const codeWidth = Math.min(420, viewport - width - 48);
     const codeLeft = Math.max(16, Math.round((viewport - codeWidth - width - 16) / 2));
-    const height = Math.min(700, availableHeight);
+    const height = Math.max(1, availableHeight - 32);
     const screenLeft = screen.availLeft || 0, screenTop = screen.availTop || 0;
     const left = paired ? Math.min(screenLeft + availableWidth - width, Math.max(screenLeft, (window.screenX || 0) + codeLeft + codeWidth + 16))
       : screenLeft + Math.round((availableWidth - width) / 2);

@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="/css/web-login.css">
+  <style>
+    :root { --accent:#4c84ff; --bg-panel:#1f232b; --bg-input:#151820; --border:#404854; --text-primary:#f7f9fc; --text-secondary:#aeb7c5; }
+    body { margin:0; min-height:100vh; background:#11151b; color:var(--text-primary); font:14px system-ui,sans-serif; }
+    .canvas-global-controls { display:flex; gap:8px; padding:16px; }
+    #ai-image-install-open { margin:80px; padding:10px 16px; border:1px solid var(--border); border-radius:8px; background:var(--bg-panel); color:var(--text-primary); }
+  </style>
+</head>
+<body>
+  <div class="canvas-global-controls"></div>
+  <button id="ai-image-install-open" type="button">AI 이미지 변환</button>
+  <script>
+    window.qaStatus = { login: { loggedIn: false } };
+    window.qaEvents = [];
+    window.fiveEWebAI = { status: async () => window.qaStatus };
+    window.fiveEWebLogin = () => window.qaEvents.push('login');
+    window.fiveEWebContinueLogin = () => window.qaEvents.push('continue');
+    window.fiveEWebCancelLogin = () => window.qaEvents.push('cancel');
+    window.qaClipboardFails = false;
+    Object.defineProperty(navigator, 'clipboard', { configurable:true, value:{ writeText: async code => {
+      if (window.qaClipboardFails) throw new Error('clipboard denied');
+      window.qaClipboard = code;
+    } } });
+    window.qaReady = code => window.dispatchEvent(new CustomEvent('5e:web-login-progress', { detail:{ state:'ready', userCode:code } }));
+    window.qaLayout = () => window.dispatchEvent(new CustomEvent('5e:web-login-progress', { detail:{ state:'layout', paired:true, codeLeft:108, codeWidth:420 } }));
+    window.qaAuthenticating = () => window.dispatchEvent(new CustomEvent('5e:web-login-progress', { detail:{ state:'authenticating' } }));
+    window.qaComplete = () => { window.qaStatus = { login:{ loggedIn:true } }; window.dispatchEvent(new Event('5e:web-ai-status')); };
+  </script>
+  <script type="module">
+    import { initWebLoginUi } from '/js/web-login-ui.js';
+    window.qaLoginUi = initWebLoginUi({ openAi: () => window.qaEvents.push('open-ai') });
+    document.getElementById('ai-image-install-open').addEventListener('click', () => window.qaLoginUi.openAi());
+  </script>
+</body>
+</html>
