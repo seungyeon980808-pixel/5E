@@ -23,7 +23,7 @@ const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
 const scenarios = [];
 try {
   await page.goto(`${baseUrl}/tests/fixtures/library-year-catalog-qa.html`);
-  await page.waitForSelector('.unilib-result-card');
+  await page.waitForFunction(() => window.qaCatalog && window.qaSearches.length >= 1);
   await page.locator('[data-unilib-type="question"]').click();
   await page.waitForFunction(() => window.qaSearches.length >= 2);
   const catalog = await page.evaluate(() => window.qaCatalog);

@@ -6,14 +6,31 @@ import { createUnifiedLibraryUi } from './js/unified-library-ui.js';
 import { createUnifiedLibraryProvider } from './js/library/provider.js';
 import { materializePackDocument, materializePackSearchEntry } from './js/pdf-library/pack-identities.js';
 const [catalog, index] = await Promise.all(['catalog', 'search-index'].map(async name => (await fetch(`/qa-data/${name}.json`)).json()));
+const documents = catalog.documents.map(document => materializePackDocument('5e.shared.drive', catalog, document));
+const searchIndex = { ...index, entries: index.entries.map(entry => materializePackSearchEntry('5e.shared.drive', entry)) };
+const worker = new Worker('./js/pdf-library/search-worker.js', { type: 'module' });
+let sequence = 0;
+const pending = new Map();
+worker.onmessage = ({ data }) => {
+  const call = pending.get(data.id);
+  pending.delete(data.id);
+  if (data.ok) call.resolve(data.result); else call.reject(new Error(data.error.message));
+};
+const request = message => new Promise((resolve, reject) => {
+  const id = ++sequence;
+  pending.set(id, { resolve, reject });
+  worker.postMessage({ ...message, id });
+});
+await request({ type: 'replace', documents: [], prebuilt: [{ documents: documents.map(({ id, pageCount }) => ({ id, pageCount })), index: searchIndex }] });
 const provider = createUnifiedLibraryProvider({
-  pdfDocuments: catalog.documents.map(document => materializePackDocument('5e.shared.drive', catalog, document)),
-  pdfSearchIndex: { ...index, entries: index.entries.map(entry => materializePackSearchEntry('5e.shared.drive', entry)) },
+  pdfDocuments: documents,
+  pdfSearchIndex: searchIndex,
+  searchPdf: options => request({ type: 'search', options }),
 });
 window.qaCatalog = { documents: catalog.documents.length, entries: index.entries.length, options: provider.getExamFilterOptions() };
 window.qaSearches = [];
 const observed = { ...provider, searchAsync: async options => {
-  const results = provider.search(options);
+  const results = await provider.searchAsync(options);
   window.qaSearches.push({ filters: options.filters, query: options.query, years: [...new Set(results.map(result => result.metadata.academicYear))], subjects: [...new Set(results.map(result => result.metadata.subject))], count: results.length });
   return results;
 } };
