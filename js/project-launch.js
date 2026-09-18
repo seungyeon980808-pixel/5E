@@ -58,7 +58,9 @@ export function initProjectLaunch({ state, ready, prepare, apply, mark, needsCon
   window.fiveEDesktop?.project?.onOpen(receive);
   const match = /^#project=([a-f0-9]{48})$/.exec(location.hash);
   if (match) {
-    fetch(`/api/project-launch/${match[1]}`, { credentials: 'omit', cache: 'no-store' }).then(async response => {
+    const api = new URL(window.FIVE_E_PROJECT_PACKAGE_API_URL || '/api/project-package', location.href);
+    const launchUrl = new URL(`/api/project-launch/${match[1]}`, api);
+    fetch(launchUrl, { credentials: 'omit', cache: 'no-store' }).then(async response => {
       if (!response.ok) throw new Error('열기 요청이 만료되었거나 서버에 연결하지 못했습니다. 저장한 파일을 다시 더블클릭해 주세요.');
       receive({ json: await response.text() });
     }).catch(error => receive({ error: error.message }));

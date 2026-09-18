@@ -91,3 +91,15 @@ test('Windows project overhead stays below 512KiB while retaining its original s
     assert.equal(parseWindowsProjectBytes(bytes).json, json);
   } finally { await pkg.close(); }
 });
+
+test('Windows package separates preview editor path from its allowed origin', async t => {
+  const { createWindowsProjectPackage, parseWindowsProjectBytes } = require('../desktop/windows-project-package.cjs');
+  const previous = process.env.FIVE_E_PROJECT_EDITOR_URL;
+  process.env.FIVE_E_PROJECT_EDITOR_URL = 'https://www.5e.ai.kr/preview/';
+  t.after(() => { if (previous === undefined) delete process.env.FIVE_E_PROJECT_EDITOR_URL; else process.env.FIVE_E_PROJECT_EDITOR_URL = previous; });
+  const pkg = await createWindowsProjectPackage({ json: JSON.stringify({ pages: [] }), server: 'https://projects.example' });
+  t.after(() => pkg.close());
+  const result = parseWindowsProjectBytes(await fs.readFile(pkg.bundle));
+  assert.equal(result.settings.editorOrigin, 'https://www.5e.ai.kr');
+  assert.equal(result.settings.server, 'https://projects.example');
+});
