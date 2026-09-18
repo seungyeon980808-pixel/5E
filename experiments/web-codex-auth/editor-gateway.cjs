@@ -1,4 +1,7 @@
 const { editorResultsSource, panelResultsSource } = require('./editor-results-source.cjs');
+const { createSharingStore } = require('./sharing-store.cjs');
+const { handleSharing } = require('./sharing-routes.cjs');
+const { createProjectRoutes } = require('./project-routes.cjs');
 const { editorCutSource, editorImagePasteSource } = require('./editor-cut-source.cjs');
 const http = require('node:http');
 const { editorCommentsSource } = require('./editor-comments-source.cjs');
@@ -12,7 +15,8 @@ const authActions = new Set(['web-login-start', 'web-login-status', 'web-login-c
 function scriptJson(value) {
   return JSON.stringify(value).replace(/[<>&\u2028\u2029]/g, character => `\\u${character.charCodeAt(0).toString(16).padStart(4, '0')}`);
 }
-function createGateway({ authPort = 19383, allowAnonymousEditor = false, pdfPackBaseUrl = process.env.FIVE_E_PDF_PACK_BASE_URL ?? '' } = {}) {
+function createGateway({ authPort = 19383, allowAnonymousEditor = false, pdfPackBaseUrl = process.env.FIVE_E_PDF_PACK_BASE_URL ?? '', sharingStore = createSharingStore() } = {}) {
+  const projects = createProjectRoutes();
   const upstream = `http://127.0.0.1:${authPort}`;
   async function auth(req, action) {
     const cookieName = `fivee_auth_${authPort}=`;
@@ -29,7 +33,7 @@ function createGateway({ authPort = 19383, allowAnonymousEditor = false, pdfPack
     }
     return fetch(`${upstream}/api/${action}`, { method: 'POST', headers: { Origin: upstream, 'X-5E-Request': '1', Cookie: cookie, ...(req.headers.authorization ? { Authorization: req.headers.authorization } : {}), 'Content-Type': 'application/json' }, body, signal: AbortSignal.timeout(35000) });
   }
-  return http.createServer(async (req, res) => {
+  const server = http.createServer(async (req, res) => {
     const origin = `http://127.0.0.1:${req.socket.localPort}`;
     res.setHeader('Cache-Control', 'no-store');
     res.setHeader('X-Content-Type-Options', 'nosniff');
@@ -43,6 +47,8 @@ function createGateway({ authPort = 19383, allowAnonymousEditor = false, pdfPack
     if (req.headers.host !== new URL(origin).host || (req.headers.origin && req.headers.origin !== origin) || req.headers['sec-fetch-site'] === 'cross-site') return reply(403, '{"error":"Origin rejected"}');
     try {
       const url = new URL(req.url, origin);
+      if (await projects.handle(req, reply, origin)) return;
+      if (await handleSharing(req, reply, sharingStore, origin)) return;
       if (url.pathname.startsWith('/api/')) {
         const action = url.pathname.slice(5);
         if (req.method !== 'POST' || req.headers.origin !== origin || req.headers['x-5e-request'] !== '1') return reply(403, '{"error":"Request rejected"}');
@@ -62,6 +68,7 @@ function createGateway({ authPort = 19383, allowAnonymousEditor = false, pdfPack
         if (!response.ok && !(allowAnonymousEditor && response.status === 401)) return reply(503, '인증 서버에 연결할 수 없습니다. 잠시 후 새로고침해 주세요.', 'text/plain');
         if (url.pathname !== '/editor/') return redirect('/editor/');
         let html = fs.readFileSync(path.join(projectRoot, 'index.html'), 'utf8');
+        html = html.replace('</head>', `<script>window.FIVE_E_PROJECT_PACKAGE_API_URL="/api/project-package";window.FIVE_E_PROJECT_PACKAGE_TARGETS=${JSON.stringify(process.platform === 'darwin' ? ['win32', 'darwin'] : ['win32'])};</script></head>`);
         const packBase = typeof pdfPackBaseUrl === 'string' ? pdfPackBaseUrl : '';
         html = html.replace('</head>', `<script>window.FIVE_E_PDF_PACK_BASE_URL=${scriptJson(packBase)};</script><link rel="stylesheet" href="/editor-session.css"><link rel="stylesheet" href="/editor-background.css"><link rel="stylesheet" href="/editor-results.css"><script src="/editor-bridge.js"></script><script src="/editor-session.js" type="module"></script></head>`);
         html = html.replace('<body>', '<body><nav class="web-session" aria-label="계정 연결"><span id="web-session-status" role="status">계정 확인 중</span><span>AI 이미지 생성</span><a href="/account" target="_blank" rel="noopener">계정</a></nav>');
@@ -101,6 +108,8 @@ function createGateway({ authPort = 19383, allowAnonymousEditor = false, pdfPack
       return reply(503, '{"error":"Connection unavailable"}');
     }
   });
+  server.on('close', () => { sharingStore.close(); projects.close(); });
+  return server;
 }
 if (require.main === module) {
   const server = createGateway();
