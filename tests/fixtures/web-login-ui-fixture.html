@@ -7,11 +7,15 @@
     :root { --accent:#4c84ff; --bg-panel:#1f232b; --bg-input:#151820; --border:#404854; --text-primary:#f7f9fc; --text-secondary:#aeb7c5; }
     body { margin:0; min-height:100vh; background:#11151b; color:var(--text-primary); font:14px system-ui,sans-serif; }
     .canvas-global-controls { display:flex; gap:8px; padding:16px; }
+    #panel-right { width:215px; margin-left:auto; container-type:inline-size; container-name:inspector-panel; }
+    .panel-utility-bar-right { display:flex; gap:4px; min-height:32px; justify-content:flex-end; }
+    .panel-utility-bar-right .topbar-btn:not(.web-account-status) { width:32px; height:32px; overflow:hidden; font-size:0; }
     #ai-image-install-open { margin:80px; padding:10px 16px; border:1px solid var(--border); border-radius:8px; background:var(--bg-panel); color:var(--text-primary); }
   </style>
 </head>
 <body>
   <div class="canvas-global-controls"></div>
+  <aside id="panel-right"><div class="panel-utility-bar-right"><button class="topbar-btn" type="button">테마</button><button class="topbar-btn" type="button">전체화면</button><button class="topbar-btn" type="button">속성</button></div></aside>
   <button id="ai-image-install-open" type="button">AI 이미지 변환</button>
   <script>
     window.qaStatus = { login: { loggedIn: false } };
