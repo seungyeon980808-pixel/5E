@@ -3,23 +3,46 @@ const http = require('node:http');
 const { timingSafeEqual } = require('node:crypto');
 const { createServer } = require('./server.cjs');
 const { createGateway } = require('./editor-gateway.cjs');
+const { createProjectRoutes } = require('./project-routes.cjs');
 
 function sameSecret(value, secret) {
   const candidate = Buffer.from(value || '');
   const expected = Buffer.from(secret);
   return candidate.length === expected.length && timingSafeEqual(candidate, expected);
 }
-function createTrialProxy({ gatewayPort, publicOrigin, accessKey, webEditorOrigin = '' }) {
+function createTrialProxy({ gatewayPort, publicOrigin, accessKey, webEditorOrigin = '', projectOptions = {} }) {
   const external = new URL(publicOrigin);
   if (external.protocol !== 'https:' || external.origin !== publicOrigin) throw new Error('An exact HTTPS origin is required');
   if (!/^[a-f0-9]{64}$/.test(accessKey)) throw new Error('A 32-byte hex trial access key is required');
   const internal = `http://127.0.0.1:${gatewayPort}`;
-  return http.createServer((req, res) => {
+  const projects = createProjectRoutes({ ...projectOptions, webEditorOrigin: webEditorOrigin === 'https://www.5e.ai.kr' ? webEditorOrigin : '', publicApiUrl: publicOrigin, editorUrl: process.env.FIVE_E_PROJECT_EDITOR_URL || 'https://www.5e.ai.kr/preview/' });
+  const server = http.createServer(async (req, res) => {
     res.setHeader('Cache-Control', 'no-store');
     res.setHeader('Referrer-Policy', 'no-referrer');
     res.setHeader('X-Content-Type-Options', 'nosniff');
     const reject = (status, message) => { res.writeHead(status, { 'Content-Type': 'text/plain; charset=utf-8' }); res.end(message); };
     if (req.headers.host !== external.host) return reject(403, 'Origin rejected');
+    if (req.url.startsWith('/api/project-')) {
+      const web = webEditorOrigin === 'https://www.5e.ai.kr' && req.headers.origin === webEditorOrigin;
+      const packageRoute = req.url === '/api/project-package';
+      const launchGet = /^\/api\/project-launch\/[a-f0-9]{48}$/.test(req.url);
+      if (req.headers.origin && req.headers.origin !== publicOrigin && !web) return reject(403, 'Origin rejected');
+      if (web && (packageRoute || launchGet)) {
+        res.setHeader('Access-Control-Allow-Origin', webEditorOrigin);
+        res.setHeader('Vary', 'Origin');
+        if (req.method === 'OPTIONS') {
+          const method = packageRoute ? 'POST' : 'GET';
+          const requested = (req.headers['access-control-request-headers'] || '').toLowerCase().split(',').map(value => value.trim()).filter(Boolean);
+          if (req.headers['access-control-request-method'] !== method || requested.some(value => !['content-type', 'x-5e-request', 'x-5e-target'].includes(value))) return reject(403, 'Request rejected');
+          res.setHeader('Access-Control-Allow-Methods', method);
+          res.setHeader('Access-Control-Allow-Headers', 'Content-Type, X-5E-Request, X-5E-Target');
+          res.writeHead(204); return res.end();
+        }
+      }
+      return projects.handle(req, (status, body, type = 'application/json') => {
+        res.writeHead(status, { 'Content-Type': type }); res.end(body);
+      }, publicOrigin);
+    }
     const direct = webEditorOrigin === 'https://www.5e.ai.kr' && req.headers.origin === webEditorOrigin && /^\/api\/(?:bridge-(status|models|account|send|events|interrupt)|web-login-(start|status|cancel))$/.test(req.url);
     if (direct) {
       res.setHeader('Access-Control-Allow-Origin', webEditorOrigin);
@@ -71,6 +94,8 @@ function createTrialProxy({ gatewayPort, publicOrigin, accessKey, webEditorOrigi
     res.on('close', () => { if (!res.writableEnded) upstream.destroy(); });
     req.pipe(upstream);
   });
+  server.on('close', () => projects.close());
+  return server;
 }
 function createTrialAuth({
   maxSessions = process.env.TRIAL_MAX_SESSIONS ?? '5',
@@ -88,11 +113,14 @@ async function start() {
   const accessKey = process.env.TRIAL_ACCESS_KEY || '';
   const publicOrigin = process.env.RENDER_EXTERNAL_URL || process.env.TRIAL_PUBLIC_ORIGIN;
   if (!publicOrigin || !/^[a-f0-9]{64}$/.test(accessKey)) throw new Error('Configure public origin and TRIAL_ACCESS_KEY');
+  process.env.FIVE_E_PROJECT_PUBLIC_API_URL = publicOrigin;
+  process.env.FIVE_E_PROJECT_EDITOR_URL ||= 'https://www.5e.ai.kr/preview/';
+  await require('../../desktop/project-signing-runtime.cjs').ensureProjectSigner();
   const auth = createTrialAuth();
   await new Promise(resolve => auth.listen(0, '127.0.0.1', resolve));
   const gateway = createGateway({ authPort: auth.address().port, allowAnonymousEditor: true });
   await new Promise(resolve => gateway.listen(0, '127.0.0.1', resolve));
-  const proxy = createTrialProxy({ gatewayPort: gateway.address().port, publicOrigin, accessKey, webEditorOrigin: process.env.FIVE_E_WEB_EDITOR_ORIGIN || '' });
+  const proxy = createTrialProxy({ gatewayPort: gateway.address().port, publicOrigin, accessKey, webEditorOrigin: process.env.FIVE_E_WEB_EDITOR_ORIGIN || 'https://www.5e.ai.kr' });
   await new Promise(resolve => proxy.listen(Number(process.env.PORT || 10000), '0.0.0.0', resolve));
   console.log(`5E private trial ready; session limit ${process.env.TRIAL_MAX_SESSIONS ?? '5'}; generation limit ${process.env.TRIAL_MAX_RUNNING_GENERATIONS ?? '5'}; device login; no API fallback`);
   const stop = () => {

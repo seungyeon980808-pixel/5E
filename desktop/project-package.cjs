@@ -16,7 +16,8 @@ function parseProject(json) {
 
 async function createProjectPackage({ json, server = 'https://www.5e.ai.kr', development }) {
   parseProject(json);
-  if (process.platform !== 'darwin') throw new Error('실행형 프로젝트 저장은 현재 macOS에서만 지원합니다.');
+  const portableSigner = process.env.FIVE_E_RCODESIGN || (process.platform === 'linux' ? 'rcodesign' : '');
+  if (process.platform !== 'darwin' && !portableSigner) throw new Error('이 서버에서는 macOS 프로젝트 패키지를 생성할 수 없습니다.');
   const root = await fs.mkdtemp(path.join(os.tmpdir(), '5e-project-package-'));
   try {
     const bundle = path.join(root, '5E 프로젝트.app');
@@ -42,8 +43,14 @@ async function createProjectPackage({ json, server = 'https://www.5e.ai.kr', dev
 <key>LSMinimumSystemVersion</key><string>13.0</string><key>NSHighResolutionCapable</key><true/>
 <key>NSAppTransportSecurity</key><dict><key>NSAllowsLocalNetworking</key><true/></dict></dict></plist>`);
     const identity = process.env.FIVE_E_PROJECT_SIGNING_IDENTITY || '-';
-    await run('/usr/bin/codesign', ['--force', '--sign', identity, bundle]);
-    await run('/usr/bin/codesign', ['--verify', '--strict', bundle]);
+    if (portableSigner) {
+      if (identity !== '-') throw new Error('휴대용 프로젝트 서명은 임시 서명만 지원합니다.');
+      await run(portableSigner, ['sign', '--config-file', '/dev/null', '--timestamp-url', 'none', bundle]);
+      await require('./project-package-signature.cjs').verifyPortableBundle(bundle);
+    } else {
+      await run('/usr/bin/codesign', ['--force', '--sign', identity, bundle]);
+      await run('/usr/bin/codesign', ['--verify', '--strict', bundle]);
+    }
     return { root, bundle, close: () => fs.rm(root, { recursive: true, force: true }) };
   } catch (error) {
     await fs.rm(root, { recursive: true, force: true });
@@ -54,6 +61,9 @@ async function createProjectPackage({ json, server = 'https://www.5e.ai.kr', dev
 async function projectPackageZip(options) {
   const result = await createProjectPackage(options);
   try {
+    if (process.platform !== 'darwin' || process.env.FIVE_E_RCODESIGN) {
+      return await require('./project-package-zip.cjs').bundleZip(result.bundle);
+    }
     const zip = path.join(result.root, 'project.zip');
     await run('/usr/bin/ditto', ['-c', '-k', '--sequesterRsrc', '--keepParent', result.bundle, zip]);
     return await fs.readFile(zip);

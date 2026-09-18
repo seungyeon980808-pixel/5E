@@ -51,7 +51,7 @@ function parseWindowsProjectBytes(bytes) {
 async function createWindowsProjectPackage({ json, server = 'https://www.5e.ai.kr', development }) {
   parseProject(json);
   const thirdPartyNotices = await fs.readFile(path.join(__dirname, 'project-launcher/windows/ThirdPartyNotices.txt'), 'utf8');
-  const settings = { server: endpoint(server), editorOrigin: endpoint(process.env.FIVE_E_PROJECT_EDITOR_URL || server), thirdPartyNotices, ...(development ? { development } : {}) };
+  const settings = { server: endpoint(server), editorOrigin: endpoint(new URL(process.env.FIVE_E_PROJECT_EDITOR_URL || server).origin), thirdPartyNotices, ...(development ? { development } : {}) };
   const config = Buffer.from(JSON.stringify(settings)), source = Buffer.from(json);
   if (config.length > 65536) throw new Error('프로젝트 실행 설정이 너무 큽니다.');
   const launcher = await fs.readFile(path.join(__dirname, 'project-launcher/windows/launcher.exe'));

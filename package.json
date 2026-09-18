@@ -53,6 +53,8 @@
       "desktop/preload.cjs",
       "desktop/project-close-guard.cjs",
       "desktop/project-package.cjs",
+      "desktop/project-package-signature.cjs",
+      "desktop/project-package-zip.cjs",
       "desktop/windows-project-package.cjs",
       "desktop/project-open.cjs",
       "desktop/project-launcher/launcher",
