@@ -780,12 +780,13 @@ export function createUnifiedLibraryProvider(input = {}) {
       const local = search(options);
       const allowedSources = Array.isArray(options.sourceIds) ? new Set(options.sourceIds) : null;
       const allowedKinds = normalizedKinds(options.kinds);
-      if (typeof input.searchPdf !== "function" || parseCompactExamCode(options.query)
+      if (!String(options.query ?? "").trim() || typeof input.searchPdf !== "function" || parseCompactExamCode(options.query)
         || (allowedKinds && !allowedKinds.has("crop") && !allowedKinds.has("page"))) return local;
       const workerEntries = await input.searchPdf({
         query: options.query ?? "",
-        documentIds: documents.filter((document) => !allowedSources || allowedSources.has(pdfSourceId(document))).map((document) => document.id),
-        filters: options.filters ?? {}, limit: boundedLimit(options.limit),
+        documentIds: documents.filter((document) => (!allowedSources || allowedSources.has(pdfSourceId(document)))
+          && matchesFilters({ metadata: deriveExamMetadata({ metadata: document.metadata, source: document.source }) }, options.filters)).map((document) => document.id),
+        filters: {}, limit: boundedLimit(options.limit),
       });
       const nonPdf = local.filter((result) => result.provenance?.provider !== "pdf");
       const merged = dedupeResults([...nonPdf, ...normalizeWorkerEntries(workerEntries ?? [])]).filter((result) =>
