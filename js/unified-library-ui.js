@@ -900,7 +900,6 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   let currentMaterialized = null;
   let currentMaterializedIdentity = null;
   let returnFocus = null;
-  let returnFocusWasKeyboard = false;
   let driveSettingsReturnFocus = null;
   let lastInteractionWasKeyboard = false;
   let desktopConnections = [];
@@ -1662,10 +1661,6 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     if (activeElement && overlay.contains(activeElement)) activeElement.blur?.();
     if (restoreFocus && keyboard) {
       const focusTarget = returnFocus;
-      if (!returnFocusWasKeyboard && focusTarget instanceof HTMLElement) {
-        focusTarget.classList.add("library-return-focus");
-        focusTarget.addEventListener("blur", () => focusTarget.classList.remove("library-return-focus"), { once: true });
-      }
       focusTarget?.focus?.({ preventScroll: true });
       queueMicrotask(() => focusTarget?.focus?.({ preventScroll: true }));
     }
@@ -1674,7 +1669,6 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   async function open(trigger) {
     invalidateAction();
     returnFocus = trigger || document.activeElement;
-    returnFocusWasKeyboard = lastInteractionWasKeyboard;
     overlay.hidden = false;
     await pdfUi?.activate?.();
     if (desktopLibrary && pdfUi?.syncDesktopConnections) {
