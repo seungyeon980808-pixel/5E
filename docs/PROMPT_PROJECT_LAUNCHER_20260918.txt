@@ -1,0 +1,16 @@
+현재 브랜치에 실행형 프로젝트 저장·열기와 Windows 실행기 경량화 변경을 통합해줘.
+
+원본 작업트리: /Users/parkseungyeon/.codex/worktrees/1afc/5E
+원본 브랜치: codex/5e-sharing-0918
+가져올 기능 커밋: bf08683f7c40a3b3b0ea20dcdddac0edaeb026c2
+인계 문서: /Users/parkseungyeon/.codex/worktrees/1afc/5E/docs/HANDOFF_PROJECT_LAUNCHER_20260918.md
+
+먼저 인계 문서와 git show로 커밋 내용을 읽고, 대상 브랜치의 기존 변경을 보존한 상태에서 이 기능 커밋 하나를 cherry-pick해줘. 같은 저장소이므로 원본 브랜치 전체를 merge하거나 원본의 dirty 파일을 복사하지 말 것. 다른 저장소라면 커밋 객체가 있는지 먼저 확인할 것.
+
+포함 범위는 macOS .app/웹 ZIP 및 Windows .exe 프로젝트 저장·열기, 파란 아이콘, 지원 설치 앱 우선/웹 대체, 원본 보호, Windows 실행기 88,576바이트 경량화다. 맥 ZIP은 기존 구현의 전달 방식이며 압축 해제가 필요한 한계가 있다. 공유 기능 변경은 이번 커밋에서 제외했고 원본 작업트리에 남아 있으므로 추가로 가져오지 말 것. 필요한 실행기/아이콘 바이너리와 build/project-launcher.nsh는 커밋에 포함되어 있다.
+
+충돌은 현재 브랜치의 동작과 요청 범위를 보존하며 해결해줘. 개발 실행은 scripts/start-library-repair-dev.command를 사용하고 기존 프로필/PDF 경로와 자료 검색을 보존해줘. 인계 문서의 관련 테스트와 실제 메뉴 저장·불러오기를 확인한 뒤, 사용자가 확인할 순서와 정상 동작을 보고해줘.
+
+실제 Windows 더블클릭·설치 앱 등록·Windows 전용 API 테스트·인터넷 배포 검증은 아직 완료되지 않았다. 확인 가능한 환경에서 실제로 실행하고, 환경이 없으면 미검증으로 명시할 것. Mac에서 Windows 선택만 설정한 테스트를 Windows 실기기 검증으로 주장하지 말 것. localhost 파일을 다른 PC에 보내면 그 PC 자신의 서버를 가리킨다.
+
+푸시·프리뷰 배포·설치본 생성·관련 없는 기능 수정은 하지 말 것. cherry-pick 외 추가 수정은 통합에 필요한 충돌 해결 범위로 제한하고, 후속 변경 커밋은 결과 확인과 사용자 승인 뒤에 진행할 것.
