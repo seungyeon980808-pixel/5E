@@ -482,6 +482,13 @@ export function createImageCommentController({ panel, getImages, getSelectedId, 
   return {
     bind,
     render,
+    getViewState: () => ({tool,selected,tab:q('[data-ai-chat-panel]')?.hidden===false?'chat':'comments'}),
+    restoreViewState(value) {
+      tool=panel.dataset.aiSharingMode==='view'?'pan':TOOL_NAMES.has(value?.tool)?value.tool:'pan';
+      selected=typeof value?.selected==='string'?value.selected:null;
+      activateTab(value?.tab);
+      render();
+    },
     reset() { selected = null; activateTab('comments'); render(); },
     destroy() {
       destroyed = true;
