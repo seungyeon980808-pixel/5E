@@ -43,6 +43,11 @@ export function deriveExamMetadata(input = {}) {
     const { itemNumber: _itemNumber, itemCode: _itemCode, ...documentMetadata } = direct;
     return Object.freeze({ ...documentMetadata, sourceFileName });
   }
+  const subjectFirst = /^([pbce][12])_(20\d{2})_(06|09|11)\.pdf$/iu.exec(sourceFileName ?? "");
+  if (subjectFirst) {
+    const result = codeResult(subjectFirst[1].toLowerCase(), Number(subjectFirst[2]), subjectFirst[3], null);
+    return Object.freeze({ subject: result.subject, academicYear: result.academicYear, administration: result.administration, documentCode: result.documentCode, sourceFileName });
+  }
   const readable = /(?:^|[-_ ])(20\d{2})[-_ ](june|september|csat|suneung|06|09|11)[-_ ](phy|physics|che|chemistry|bio|biology|ear|earth)([12])(?:\.|[-_ ]|$)/iu.exec(sourceFileName ?? "");
   if (readable) {
     const subject = canonicalSubject(`${readable[3]}${readable[4]}`);
