@@ -801,6 +801,7 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
       const resultCard = activeCandidate();
       return {
         selectedCandidateId: activeCandidateKey,
+        selectedSourceId: activeSourceKey,
         zoom: { ...paneZoom },
         layout: panel.dataset.aiLayout,
         tracking: linkedZoom?.checked === true,
@@ -815,6 +816,7 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
       if (linkedZoom && typeof state.tracking === "boolean") linkedZoom.checked = state.tracking;
       if (state.layout) setLayout(state.layout, true);
       if (state.selectedCandidateId) panel.dataset.aiSelectedCandidateId = state.selectedCandidateId;
+      if (state.selectedSourceId) {activeSourceKey = state.selectedSourceId;syncSources();}
       if (Number.isFinite(state.zoom?.source)) paneZoom.source = state.zoom.source;
       if (Number.isFinite(state.zoom?.result)) paneZoom.result = state.zoom.result;
       syncCandidates();

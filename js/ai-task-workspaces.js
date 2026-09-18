@@ -4,6 +4,7 @@ import {
   writeTaskExports,
 } from './ai-task-export.js';
 import { restoreGenerationTiming } from './ai-generation-timing.js';
+import { idbGet, idbSet } from './idb-store.js';
 
 const CANCELLABLE_TASK_STATES = new Set(['busy', 'running']);
 
@@ -357,12 +358,40 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
     });
   };
   return {
+    sharingHasViewOnly: () => entries.some(entry => entry.panel.dataset.aiSharingMode === 'view'),
+    sharingSnapshot: async () => {
+      await ready;
+      return { workspaces: await Promise.all(entries.map(entry => entry.controller.sharingSnapshot())), activeWorkspace: entries.indexOf(active) };
+    },
+    openSharingDocument: async (id, document) => {
+      await ready;
+      const imports = await idbGet('sharing:imports') || {};
+      const existing = imports[id]?.scopes?.map(scope => entries.find(entry => entry.scope === scope) || (/^[a-f0-9-]{36}$/.test(scope) ? add(scope,false) : null));
+      if (existing?.length && existing.every(Boolean)) {
+        await Promise.all(existing.map(entry=>entry.controller.ready));
+        saveRegistry();
+        activate(existing.includes(active)?active:existing[Math.min(existing.length - 1, document.activeWorkspace)]);
+      } else {
+        const created = [];
+        for (const snapshot of document.workspaces) {
+          const entry = add(crypto.randomUUID(), false);
+          await entry.controller.importSharingSnapshot(snapshot, document.mode);
+          created.push(entry);
+        }
+        await idbSet('sharing:imports', {...imports, [id]: {scopes:created.map(entry => entry.scope)}});
+        saveRegistry();
+        activate(created[document.activeWorkspace]);
+      }
+      return active.controller.open({reveal:true});
+    },
     open: async options => {
       await ready;
       const selected = state.get().objects.find(o => state.get().selectedIds?.includes(o.id) && o.aiTaskId);
       const hasReference = options?.reference || options?.references?.length;
       const owner = !hasReference && entries.find(e => e.controller.ownsTask(selected?.aiTaskId));
-      activate(owner || active);
+      const target = owner || (hasReference && active.panel.dataset.aiSharingMode === 'view' ? add(crypto.randomUUID()) : active);
+      if (hasReference) saveRegistry();
+      activate(target);
       return active.controller.open(options);
     },
     close: () => active.controller.close(),

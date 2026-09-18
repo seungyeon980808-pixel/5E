@@ -1,4 +1,6 @@
 const { editorResultsSource, panelResultsSource } = require('./editor-results-source.cjs');
+const { createSharingStore } = require('./sharing-store.cjs');
+const { handleSharing } = require('./sharing-routes.cjs');
 const { createProjectRoutes } = require('./project-routes.cjs');
 const { editorCutSource, editorImagePasteSource } = require('./editor-cut-source.cjs');
 const http = require('node:http');
@@ -13,7 +15,7 @@ const authActions = new Set(['web-login-start', 'web-login-status', 'web-login-c
 function scriptJson(value) {
   return JSON.stringify(value).replace(/[<>&\u2028\u2029]/g, character => `\\u${character.charCodeAt(0).toString(16).padStart(4, '0')}`);
 }
-function createGateway({ authPort = 19383, allowAnonymousEditor = false, pdfPackBaseUrl = process.env.FIVE_E_PDF_PACK_BASE_URL ?? '' } = {}) {
+function createGateway({ authPort = 19383, allowAnonymousEditor = false, pdfPackBaseUrl = process.env.FIVE_E_PDF_PACK_BASE_URL ?? '', sharingStore = createSharingStore() } = {}) {
   const projects = createProjectRoutes();
   const upstream = `http://127.0.0.1:${authPort}`;
   async function auth(req, action) {
@@ -46,6 +48,7 @@ function createGateway({ authPort = 19383, allowAnonymousEditor = false, pdfPack
     try {
       const url = new URL(req.url, origin);
       if (await projects.handle(req, reply, origin)) return;
+      if (await handleSharing(req, reply, sharingStore, origin)) return;
       if (url.pathname.startsWith('/api/')) {
         const action = url.pathname.slice(5);
         if (req.method !== 'POST' || req.headers.origin !== origin || req.headers['x-5e-request'] !== '1') return reply(403, '{"error":"Request rejected"}');
@@ -105,7 +108,7 @@ function createGateway({ authPort = 19383, allowAnonymousEditor = false, pdfPack
       return reply(503, '{"error":"Connection unavailable"}');
     }
   });
-  server.on('close', () => { projects.close(); });
+  server.on('close', () => { sharingStore.close(); projects.close(); });
   return server;
 }
 if (require.main === module) {

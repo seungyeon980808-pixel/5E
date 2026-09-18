@@ -1,5 +1,6 @@
 import { initWebLoginUi } from './web-login-ui.js';
 import { showAlert } from "./ui-dialogs.js?v=1.4.0";
+import { initAiSharing } from './ai-sharing-ui.js';
 /* ===== MAIN (wire modules; data-as-truth + viewBox zoom/pan) ===== */
 //
 // Responsibilities:
@@ -312,6 +313,7 @@ const autosaveReady = initAutosave(state);
 initProjectFileOpening(state, autosaveReady);
 const recoveryChoice = await autosaveReady;
 const aiPanel = initAiPanel(state, { freshStart: recoveryChoice === "fresh" });
+initAiSharing(aiPanel);
 initDesktopProjectCloseGuard(state, () => aiPanel?.checkpointForClose());
 const aiEntryButton = document.getElementById("ai-image-install-open");
 if (aiEntryButton) {

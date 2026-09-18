@@ -43,18 +43,20 @@ function createTrialProxy({ gatewayPort, publicOrigin, accessKey, webEditorOrigi
         res.writeHead(status, { 'Content-Type': type }); res.end(body);
       }, publicOrigin);
     }
-    const direct = webEditorOrigin === 'https://www.5e.ai.kr' && req.headers.origin === webEditorOrigin && /^\/api\/(?:bridge-(status|models|account|send|events|interrupt)|web-login-(start|status|cancel))$/.test(req.url);
+    const sharing = /^\/api\/shares(?:\/[a-f0-9]{48})?$/.test(req.url);
+    const direct = webEditorOrigin === 'https://www.5e.ai.kr' && req.headers.origin === webEditorOrigin && (/^\/api\/(?:bridge-(status|models|account|send|events|interrupt)|web-login-(start|status|cancel))$/.test(req.url) || sharing);
+
     if (direct) {
       res.setHeader('Access-Control-Allow-Origin', webEditorOrigin);
       res.setHeader('Vary', 'Origin');
       if (req.method === 'OPTIONS') {
         const requested = (req.headers['access-control-request-headers'] || '').toLowerCase().split(',').map(value => value.trim()).filter(Boolean);
-        if (req.headers['access-control-request-method'] !== 'POST' || requested.some(value => !['authorization', 'content-type', 'x-5e-request'].includes(value))) return reject(403, 'Request rejected');
-        res.setHeader('Access-Control-Allow-Methods', 'POST');
+        if (!(sharing ? ['POST', 'GET', 'DELETE'] : ['POST']).includes(req.headers['access-control-request-method']) || requested.some(value => !['authorization', 'content-type', 'x-5e-request'].includes(value))) return reject(403, 'Request rejected');
+        res.setHeader('Access-Control-Allow-Methods', sharing ? 'POST, GET, DELETE' : 'POST');
         res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type, X-5E-Request');
         res.writeHead(204); return res.end();
       }
-      if (req.method !== 'POST' || (req.url !== '/api/web-login-start' && !/^Bearer [a-f0-9]{64}$/.test(req.headers.authorization || '')) || req.headers['x-5e-request'] !== '1') return reject(401, 'Web session required');
+      if (!sharing && (req.method !== 'POST' || (req.url !== '/api/web-login-start' && !/^Bearer [a-f0-9]{64}$/.test(req.headers.authorization || '')) || req.headers['x-5e-request'] !== '1')) return reject(401, 'Web session required');
     }
     if (req.headers.host !== external.host || (req.headers.origin && req.headers.origin !== publicOrigin && !direct)) return reject(403, 'Origin rejected');
     if (req.method === 'GET' && req.url === '/healthz') {
@@ -70,8 +72,8 @@ function createTrialProxy({ gatewayPort, publicOrigin, accessKey, webEditorOrigi
     const key = /(?:^|;\s*)__Host-fivee_trial=([a-f0-9]{64})(?:;|$)/.exec(req.headers.cookie || '')?.[1];
     const pathname = new URL(req.url, publicOrigin).pathname;
     const webConnection = webEditorOrigin === 'https://www.5e.ai.kr' && (['/web-connect', '/web-connect.js', '/popup-login.js', '/client.js', '/style.css'].includes(pathname) || pathname.startsWith('/api/'));
-    if (!webConnection && !sameSecret(key, accessKey)) return reject(401, '비공개 실사용 시험입니다. 전달받은 시험 초대 링크로 접속해 주세요.');
-    if (Number(req.headers['content-length']) > 12000000) return reject(413, '이미지가 너무 큽니다.');
+    if (!sharing && !webConnection && !sameSecret(key, accessKey)) return reject(401, '비공개 실사용 시험입니다. 전달받은 시험 초대 링크로 접속해 주세요.');
+    if (Number(req.headers['content-length']) > (sharing ? 32 * 1024 * 1024 : 12000000)) return reject(413, '이미지가 너무 큽니다.');
     const headers = { ...req.headers, host: `127.0.0.1:${gatewayPort}` };
     if (!direct) delete headers.authorization;
     delete headers['x-forwarded-host'];

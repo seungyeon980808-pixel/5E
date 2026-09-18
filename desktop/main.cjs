@@ -1610,6 +1610,19 @@ ipcMain.handle("codex:send", (_, payload) => {
   codexSendInvocationCount += 1;
   return runtimeFor(payload).sendTurn(payload);
 });
+ipcMain.handle('sharing:request', async (event, payload) => {
+  if (event.sender !== win?.webContents || !payload || !['GET','POST','DELETE'].includes(payload.method) || !/^(?:\/[a-f0-9]{48})?$/.test(payload.suffix || '')) throw new Error('허용되지 않은 공유 요청입니다.');
+  const base = process.env.FIVE_E_SHARING_BASE_URL || 'https://five-e-ai-runtime-probe.onrender.com';
+  const target = new URL(base);
+  if (!/^http:\/\/(?:127\.0\.0\.1|localhost):\d+\/?$/.test(base) && base !== 'https://five-e-ai-runtime-probe.onrender.com') throw new Error('공유 서버 설정을 확인해 주세요.');
+  const response = await fetch(`${target.origin}/api/shares${payload.suffix || ''}`, {
+    method:payload.method, headers:{Origin:target.protocol === 'http:' ? target.origin : 'https://www.5e.ai.kr', 'X-5E-Request':'1','Content-Type':'application/json'},
+    body:payload.body === undefined ? undefined : JSON.stringify(payload.body), signal:AbortSignal.timeout(60000),
+  });
+  const result = await response.json();
+  if (!response.ok) throw new Error(result.error || '공유 서버에 연결하지 못했습니다.');
+  return result;
+});
 ipcMain.handle("codex:interrupt", (_, payload) => runtimeFor(payload).interruptActiveTurn());
 ipcMain.handle("codex:login", () => { const launch = codexInvocation(["login"]); execFile(launch.file, launch.args, { windowsHide: true }); return { ok: true }; });
 ipcMain.handle("capture:sources", async () => {

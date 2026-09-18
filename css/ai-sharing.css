@@ -1,0 +1,23 @@
+.ai-sharing-dialog { width:min(440px,calc(100vw - 32px)); box-sizing:border-box; max-height:calc(100vh - 32px); overflow:auto; padding:20px; color:var(--text-primary); background:var(--bg-panel); border:1px solid var(--border); border-radius:12px; font:inherit; word-break:keep-all; }
+.ai-sharing-dialog::backdrop { background:rgba(0,0,0,.55); }
+.ai-sharing-dialog header { display:flex; justify-content:space-between; align-items:center; gap:12px; }
+.ai-sharing-dialog h2 { margin:0; font-size:18px; }
+.ai-sharing-dialog p { font-size:13px; line-height:1.6; }
+.ai-sharing-dialog .ai-sharing-note { color:var(--text-secondary); font-size:12px; }
+.ai-sharing-dialog fieldset { display:flex; flex-wrap:wrap; gap:16px; margin:16px 0; padding:12px; border:1px solid var(--border); border-radius:8px; }
+.ai-sharing-dialog label { font-size:13px; }
+.ai-sharing-dialog input[type=radio] { accent-color:var(--accent); }
+.ai-sharing-dialog button { padding:8px 12px; color:var(--text-primary); background:var(--bg-input); border:1px solid var(--border); border-radius:8px; cursor:pointer; font:inherit; font-size:13px; }
+.ai-sharing-dialog button.primary { border-color:var(--accent); }
+.ai-sharing-dialog button:disabled { opacity:.45; cursor:default; }
+.ai-sharing-dialog button:focus-visible,.ai-sharing-dialog input:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+.ai-sharing-dialog .ai-sharing-link-label { display:block; margin:16px 0 12px; }
+.ai-sharing-dialog [data-link] { display:block; width:100%; box-sizing:border-box; margin-top:8px; padding:8px; color:var(--text-primary); background:var(--bg-input); border:1px solid var(--border); border-radius:8px; }
+.ai-sharing-actions { display:flex; flex-wrap:wrap; gap:8px; }
+.ai-sharing-dialog [data-status] { overflow-wrap:anywhere; }
+.ai-sharing-received { color:var(--text-secondary); font-size:11px; max-width:140px; }
+#ai-image-panel[data-ai-sharing-mode=view] .ai-task-tab > .ai-task-delete { display:none; }
+.ai-sharing-access { color:var(--text-secondary); font-size:11px; white-space:nowrap; }
+#ai-image-panel[data-ai-sharing-mode=view] button:disabled { opacity:.45; cursor:default; }
+
+.ai-sharing-phrase { white-space:nowrap; }

@@ -3,6 +3,8 @@ window.addEventListener("DOMContentLoaded", () => {
   document.documentElement.classList.add("desktop-shell", `platform-${process.platform}`);
 });
 contextBridge.exposeInMainWorld("fiveEDesktop", {
+  sharingBaseUrl: process.env.FIVE_E_SHARING_BASE_URL || '',
+  sharingRequest: payload => ipcRenderer.invoke('sharing:request', payload),
   fullscreen: {
     onEscape: (callback) => {
       const listener = () => callback();

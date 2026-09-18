@@ -1,10 +1,12 @@
 const http = require('node:http');
 const fs = require('node:fs');
 const path = require('node:path');
+const { createSharingStore } = require('./sharing-store.cjs');
+const { handleSharing } = require('./sharing-routes.cjs');
 const { createProjectRoutes } = require('./project-routes.cjs');
 const root = path.resolve(__dirname,'../..');
 const types={'.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.html':'text/html','.json':'application/json','.png':'image/png','.jpg':'image/jpeg','.svg':'image/svg+xml','.ico':'image/x-icon','.woff2':'font/woff2','.otf':'font/otf','.wasm':'application/wasm','.bcmap':'application/octet-stream'};
-function createSharingDevServer() {
+function createSharingDevServer({store=createSharingStore()}={}) {
   const projects=createProjectRoutes();
   const server=http.createServer(async(req,res)=>{
     const origin=`http://127.0.0.1:${server.address().port}`;
@@ -12,6 +14,7 @@ function createSharingDevServer() {
     if(req.headers.host!==new URL(origin).host||(req.headers.origin&&req.headers.origin!==origin)||req.headers['sec-fetch-site']==='cross-site')return reply(403,'{}');
     try {
       if(await projects.handle(req,reply,origin))return;
+      if(await handleSharing(req,reply,store,origin))return;
       if(req.method!=='GET')return reply(405,'{}');
       const url=new URL(req.url,origin);
       const relative=['/','/editor/'].includes(url.pathname)?'index.html':decodeURIComponent(url.pathname).replace(/^\/editor\//,'/').slice(1);
@@ -23,7 +26,7 @@ function createSharingDevServer() {
       return reply(200,content,types[path.extname(file)]);
     }catch{return reply(404,'{}');}
   });
-  server.on('close',()=>{projects.close();});
+  server.on('close',()=>{store.close();projects.close();});
   return server;
 }
 if(require.main===module){
