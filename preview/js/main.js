@@ -1,6 +1,7 @@
 import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-preview-labeler-0917-1111';
 import { initWebLoginUi } from './web-login-ui.js?v=1.6.0-preview-runtime-bundle-0918-1356';
-import { showAlert } from "./ui-dialogs.js";
+import { showAlert } from "./ui-dialogs.js?v=1.6.0-preview-labeler-0917-1111";
+import { initAiSharing } from './ai-sharing-ui.js?v=1.6.0-preview-sharing-0918-2108';
 /* ===== MAIN (wire modules; data-as-truth + viewBox zoom/pan) ===== */
 //
 // Responsibilities:
@@ -69,7 +70,7 @@ import { initSteppers } from "./stepper.js?v=1.6.0-preview-labeler-0917-1111";
 import { initReferenceWindows } from "./reference-window.js?v=1.6.0-preview-common-year-login-0918-1302";
 import { initTutorial } from "./tutorial.js?v=1.6.0-preview-labeler-0917-1111";
 import { initAiInstallGuide } from "./ai-install-guide.js?v=1.6.0-preview-labeler-0917-1111";
-import { initAiPanel } from "./ai-panel.js?v=1.6.0-preview-runtime-bundle-0918-1356";
+import { initAiPanel } from "./ai-panel.js?v=1.6.0-preview-sharing-0918-2108";
 
 const svg = document.getElementById("canvas");
 // Canvas interaction transfers keyboard ownership away from the last toolbar button.
@@ -313,6 +314,7 @@ const autosaveReady = initAutosave(state);
 initProjectFileOpening(state, autosaveReady);
 const recoveryChoice = await autosaveReady;
 const aiPanel = initAiPanel(state, { freshStart: recoveryChoice === "fresh" });
+initAiSharing(aiPanel);
 initDesktopProjectCloseGuard(state, () => aiPanel?.checkpointForClose());
 const aiEntryButton = document.getElementById("ai-image-install-open");
 if (aiEntryButton) {

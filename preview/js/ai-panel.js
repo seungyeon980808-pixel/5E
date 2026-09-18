@@ -1,7 +1,8 @@
 import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-preview-labeler-0917-1111';
 import { openAiCompositionEditor } from './ai-composition-editor.js?v=1.6.0-preview-labeler-0917-1111';
+import { restrictSharedWorkspace } from './ai-sharing-access.js?v=1.6.0-preview-sharing-0918-2108';
 import { registerEscapeLayer } from './escape-layers.js?v=1.6.0-preview-labeler-0917-1111';
-import { clearTaskWorkspaces, createTaskPersistence, createTaskWorkspaces, recoverTaskWorkspaceSnapshot } from './ai-task-workspaces.js?v=1.6.0-preview-runtime-bundle-0918-1356';
+import { clearTaskWorkspaces, createTaskPersistence, createTaskWorkspaces, recoverTaskWorkspaceSnapshot } from './ai-task-workspaces.js?v=1.6.0-preview-sharing-0918-2108';
 import {
   advanceGenerationTiming,
   restoreGenerationTiming,
@@ -17,12 +18,12 @@ import {
   moveReferenceInComposition,
   normalizeReferenceComposition,
 } from './ai-source-tasking.js?v=1.6.0-preview-labeler-0917-1111';
-import { setupAiWorkbench } from './ai-workbench.js?v=1.6.0-preview-shared-zoom-0917-1415a';
+import { setupAiWorkbench } from './ai-workbench.js?v=1.6.0-preview-sharing-0918-2108';
 import { mountDurableBatchUi } from './ai-batch-ui.js?v=1.6.0-preview-labeler-0917-1111';
 import { createScopedEditSession, confirmScopedEditSession, prepareScopedEditProposal, acceptScopedEditProposal, invalidateScopedEditSession } from './ai-scoped-edit-session.js?v=1.6.0-preview-labeler-0917-1111';
 import { decodeScopedPng } from './ai-scoped-edit-png.js?v=1.6.0-preview-labeler-0917-1111';
 import { createScopedEditComparison } from './ai-scoped-edit-comparison.js?v=1.6.0-preview-labeler-0917-1111';
-import { createImageCommentController, buildCommentRequest, PRESERVE_UNREQUESTED } from "./ai-image-comments.js?v=1.6.0-preview-labeler-0917-1111";
+import { createImageCommentController, buildCommentRequest, PRESERVE_UNREQUESTED } from "./ai-image-comments.js?v=1.6.0-preview-sharing-0918-2108";
 import { IndexedDBOutputCacheBackend } from "./ai-output-cache-store.js?v=1.6.0-preview-labeler-0917-1111";
 import { insertImageFromSrc } from "./image-paste.js?v=1.6.0-preview-labeler-0917-1111";
 import { openEditableAssetsDialog } from "./ai-editable-assets-dialog.js?v=1.6.0-preview-labeler-0917-1111";
@@ -1127,7 +1128,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   const populateEfforts = () => {
     const model = selectedModel();
     const supported = model?.supportedReasoningEfforts || [];
-    const savedEffort = localStorage.getItem("5e.aiEffort");
+    const savedEffort = taskTabs.get(activeTaskTabId)?.effort || localStorage.getItem("5e.aiEffort");
     const supportsLow = supported.some((option) => (option.reasoningEffort || option.effort || option) === "low");
     const previous = savedEffort || (model?.defaultReasoningEffort || "medium");
     effortSelect.replaceChildren();
@@ -1147,7 +1148,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   const populateSpeeds = () => {
     const model = selectedModel();
     const tiers = Array.isArray(model?.serviceTiers) ? model.serviceTiers : [];
-    const saved = localStorage.getItem("5e.aiSpeed");
+    const saved = taskTabs.get(activeTaskTabId)?.serviceTier ?? localStorage.getItem("5e.aiSpeed");
     speedSelect.replaceChildren();
     if (!tiers.length) {
       speedSelect.add(new Option("표준", ""));
@@ -1180,7 +1181,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
         localStorage.setItem("5e.aiReviewDefaultsVersion", "1");
       }
       const sessionChoice = sessionStorage.getItem("5e.aiModelExplicit");
-      const preferred = availableModels.find((item) => (item.model || item.id) === sessionChoice)
+      const preferred = availableModels.find((item) => (item.model || item.id) === taskTabs.get(activeTaskTabId)?.model)
+        || availableModels.find((item) => (item.model || item.id) === sessionChoice)
         || availableModels.find((item) => (item.model || item.id) === AI_IMAGE_REVIEW_MODEL)
         || availableModels.find((item) => item.isDefault) || availableModels[0];
       modelSelect.value = preferred ? (preferred.model || preferred.id) : "";
@@ -1568,6 +1570,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   }
 
   function startAutomaticSeparation(item) {
+    if (panel.dataset.aiSharingMode === 'view') return Promise.resolve(null);
     if (!candidateUsesAutomaticSeparation(item)) return Promise.resolve(null);
     if (item.automaticSeparationState === 'ready' && item.automaticSeparationPrepared) {
       return Promise.resolve(item.automaticSeparationPrepared);
@@ -1885,6 +1888,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     return item;
   };
   const attachReference = async ({ src, name = "참고 이미지", prompt = "" } = {}) => {
+    if (panel.dataset.aiSharingMode === 'view') return;
     if (!src) return;
     setStatus("참고 이미지 불러오는 중…", "busy");
     try {
@@ -2040,6 +2044,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   let commentController = null;
   let workspaceReady = Promise.resolve();
   const taskStore = typeof indexedDB !== "undefined" ? new IndexedDBOutputCacheBackend({databaseName:clientScope ? `5e-ai-image-tasks-${clientScope}` : "5e-ai-image-tasks",storeName:"tasks"}) : null;
+  restrictSharedWorkspace(panel);
   const taskItemCopy = (item) => ({ ...snapshotImageItem(item), card: null });
   const captureActiveTaskTab = () => {
     const tab = taskTabs.get(activeTaskTabId);
@@ -2055,6 +2060,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     tab.referenceComposition = structuredClone(referenceComposition);
     const workbenchState = panel.aiWorkbench?.getViewState?.();
     if (workbenchState) tab.workbenchViewState = structuredClone(workbenchState);
+    const commentViewState=commentController?.getViewState?.();
+    if(commentViewState)tab.commentViewState=structuredClone(commentViewState);
     tab.input = input.value;
     tab.conversationId = conversationId;
     tab.mode = selectedMode;
@@ -2063,6 +2070,9 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     tab.generationMode = selectedAssetGenerationMode;
     tab.markPolicy = readMarkPolicy();
     tab.outputOptions = normalizeImageOutputOptions(selectedImageOutputOptions);
+    tab.model = modelSelect.value;
+    tab.effort = effortSelect.value;
+    tab.serviceTier = speedSelect.value;
     tab.generationTiming = serializeGenerationTiming(generationTiming, Date.now());
     if (busy && providerRequestPersistable && currentRequestSnapshot) {
       tab.inFlightRequest = {
@@ -2074,7 +2084,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   const taskPersistence = createTaskPersistence({
     store: taskStore,
     capture: captureActiveTaskTab,
-    snapshot: () => ({key:"workspace",tabs:[...taskTabs.values()],activeTaskTabId,taskTabSerial,imageSerial}),
+    snapshot: () => ({key:"workspace",tabs:[...taskTabs.values()],activeTaskTabId,taskTabSerial,imageSerial,sharingMode:panel.dataset.aiSharingMode || null}),
     warn: error => addLog(`작업 임시저장 실패: ${error.message}. 창을 새로고침하지 마세요.`, "error"),
   });
   const persistTasks = () => taskPersistence.schedule();
@@ -2185,6 +2195,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       closeTab.setAttribute('aria-label', `${tab.title} 작업 삭제`);
       closeTab.onclick = async (event) => {
         event.stopPropagation();
+        if (panel.dataset.aiSharingMode === 'view') return;
         if (busy) { setStatus('변환이 끝나거나 취소된 뒤 삭제해 주세요.', 'warn'); return; }
         if (!await scopedDialog('작업 삭제', `‘${tab.title}’ 작업을 삭제할까요? 원본 파일은 삭제하지 않습니다.`, {accept: '작업 삭제', defaultAccept: true})) return;
         if (busy || !taskTabs.has(tab.id)) return;
@@ -2252,6 +2263,11 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     selectedQualityMode = normalizeQualityMode(tab.qualityMode);
     selectedOutputEngine = normalizeOutputEngine(tab.outputEngine);
     selectedImageOutputOptions = normalizeImageOutputOptions(tab.outputOptions || selectedImageOutputOptions);
+    for (const [control, value] of [[modelSelect,tab.model],[effortSelect,tab.effort],[speedSelect,tab.serviceTier]]) {
+      if (typeof value !== 'string') continue;
+      if (![...control.options].some(option => option.value === value)) control.add(new Option(value || '기본값',value));
+      control.value = value;
+    }
     selectedAssetGenerationMode = tab.generationMode === AI_ASSET_GENERATION_MODES.SEPARATED
       ? AI_ASSET_GENERATION_MODES.SEPARATED : AI_ASSET_GENERATION_MODES.SINGLE;
     generationModeSelect.value = selectedAssetGenerationMode;
@@ -2318,6 +2334,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       dispatchReviewEvent({ state: "idle", candidateId: null, report: emptyReviewReport(), generationCount: 0, reviewCount: 0, elapsedMs: 0 });
     }
     commentController?.reset();
+    commentController?.restoreViewState?.(tab.commentViewState);
     if (!busy) {
       const legacyMixed = attachments.length > 1 && !tab.referenceComposition;
       setStatus(tab.workState === 'interrupted'
@@ -2363,6 +2380,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   };
 
   const addReferencesAsTasks = (references, { prompt = "", placement = "separate", groups = null } = {}) => {
+    if (panel.dataset.aiSharingMode === 'view') return [];
     if (busy) {
       setStatus("현재 변환이 끝난 뒤 이미지를 추가해 주세요.", "warn");
       return [];
@@ -3127,7 +3145,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     syncSelectedOutputActions();
     if (reveal) panel.hidden = false;
     const selectedForAutomaticSeparation = selectedOutputItem();
-    if (candidateUsesAutomaticSeparation(selectedForAutomaticSeparation)
+    if (panel.dataset.aiSharingMode !== 'view' && candidateUsesAutomaticSeparation(selectedForAutomaticSeparation)
       && selectedForAutomaticSeparation.automaticSeparationState !== 'ready') {
       void startAutomaticSeparation(selectedForAutomaticSeparation);
     }
@@ -3186,6 +3204,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   registerEscapeLayer(modal || panel, close);
 
   const submit = async (type, options = {}) => {
+    if (panel.dataset.aiSharingMode === 'view') return;
     if (busy || !desktop) return refresh();
     if (type === "image" && isWhitePngWorkflow({ mode: selectedMode, outputEngine: selectedOutputEngine }) && !modelsLoaded) {
       await loadModels();
@@ -3926,6 +3945,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   };
   panel.querySelector("[data-ai-interrupt]").onclick = interruptCurrentTask;
   async function clearTasks(confirm) {
+    if (panel.dataset.aiSharingMode === 'view') return {confirmed:false,removedIds:[],retainedIds:[...taskTabs.keys()]};
     await workspaceReady;
     captureActiveTaskTab();
     const result = await clearTaskWorkspaces({
@@ -4621,7 +4641,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   window.addEventListener('5e:shortcut-platform-change', syncTaskDeleteShortcutHints);
   window.addEventListener('5e:shortcut-platform-change', syncSourceShortcutHints);
   if (!taskTabs.size) createTaskTab();
-  workspaceReady=(async()=>{try{const recovered=recoverTaskWorkspaceSnapshot(await taskStore?.get('workspace'));if(Array.isArray(recovered?.tabs)){taskTabs.clear();for(const tab of recovered.tabs)taskTabs.set(tab.id,tab);taskTabSerial=Math.max(taskTabSerial,Number(recovered.taskTabSerial)||0);imageSerial=Math.max(imageSerial,Number(recovered.imageSerial)||0);if(taskTabs.size)restoreTaskTab(recovered.activeTaskTabId);else{activeTaskTabId=null;renderTaskTabs();}persistTasks();}}catch(error){addLog(`이전 이미지 작업 복원 실패: ${error.message}`,"error");}})();
+  workspaceReady=(async()=>{try{const recovered=recoverTaskWorkspaceSnapshot(await taskStore?.get('workspace'));if(Array.isArray(recovered?.tabs)){if(recovered.sharingMode)panel.dataset.aiSharingMode=recovered.sharingMode;taskTabs.clear();for(const tab of recovered.tabs)taskTabs.set(tab.id,tab);taskTabSerial=Math.max(taskTabSerial,Number(recovered.taskTabSerial)||0);imageSerial=Math.max(imageSerial,Number(recovered.imageSerial)||0);if(taskTabs.size)restoreTaskTab(recovered.activeTaskTabId);else{activeTaskTabId=null;renderTaskTabs();}persistTasks();}}catch(error){addLog(`이전 이미지 작업 복원 실패: ${error.message}`,"error");}})();
   if (reviewModelSelect) {
     reviewModelSelect.replaceChildren(new Option(AI_IMAGE_REVIEW_MODEL, AI_IMAGE_REVIEW_MODEL));
     reviewModelSelect.value = AI_IMAGE_REVIEW_MODEL;
@@ -4645,6 +4665,24 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     open, close, attachReference, clearTasks, ready: workspaceReady,
     ownsTask: id => taskTabs.has(id), activeTask: () => activeTaskTabId,
     exportCount, exportResults,
+    sharingSnapshot: async () => {
+      await workspaceReady;
+      captureActiveTaskTab();
+      return structuredClone({key:'workspace',tabs:[...taskTabs.values()],activeTaskTabId,taskTabSerial,imageSerial});
+    },
+    importSharingSnapshot: async (snapshot, mode) => {
+      await workspaceReady;
+      const recovered = recoverTaskWorkspaceSnapshot(snapshot);
+      if (!recovered || !taskStore) throw new Error('수신 문서 저장소를 열지 못했습니다.');
+      await taskStore.put({...recovered, key:'workspace', sharingMode:mode});
+      panel.dataset.aiSharingMode = mode;
+      taskTabs.clear();
+      for (const tab of recovered.tabs) taskTabs.set(tab.id,tab);
+      taskTabSerial = recovered.taskTabSerial || 0;
+      imageSerial = recovered.imageSerial || 0;
+      if (taskTabs.size) restoreTaskTab(recovered.activeTaskTabId);
+      else {activeTaskTabId=null;renderTaskTabs();}
+    },
     checkpointForClose: async () => {
       await workspaceReady;
       captureActiveTaskTab();
