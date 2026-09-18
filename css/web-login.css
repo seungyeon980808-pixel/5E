@@ -1,9 +1,18 @@
 .web-account-status { display:inline-flex; align-items:center; gap:8px; height:32px; white-space:nowrap; font-size:12px; }
+.panel-utility-bar-right .web-account-status { width:auto; min-width:0; max-width:160px; padding:4px 7px; flex:1 1 auto; }
+.panel-utility-bar-right .web-account-status [data-account-label] { overflow:hidden; text-overflow:ellipsis; }
+.web-account-status[data-state="connected"] { cursor:default; }
+@container inspector-panel (max-width:239px) {
+  .panel-utility-bar-right .web-account-status { max-width:none; padding-inline:6px; gap:5px; justify-content:center; }
+  .panel-utility-bar-right .web-account-status [data-account-label] { font-size:0; }
+  .panel-utility-bar-right .web-account-status [data-account-label]::after { content:'ChatGPT'; font-size:12px; }
+}
 @property --web-login-orbit-angle { syntax:'<angle>'; inherits:false; initial-value:0deg; }
 .web-account-dot { width:8px; height:8px; border:1px solid currentColor; border-radius:50%; flex:none; }
 .web-account-status[data-state="connected"] .web-account-dot { background:#3fb950; border-color:#3fb950; }
 .web-account-status:is([data-state="starting"],[data-state="waiting"]) .web-account-dot { border-color:var(--accent); border-top-color:transparent; animation:web-login-spin 1s linear infinite; }
 .web-login-dialog { box-sizing:border-box; width:min(420px,calc(100vw - 32px)); padding:24px; border:1px solid var(--border); border-radius:12px; background:var(--bg-panel); color:var(--text-primary); box-shadow:0 16px 48px #0006; }
+.web-login-dialog[open] { animation:web-login-dialog-in 180ms cubic-bezier(.2,.9,.25,1.06); }
 .web-login-dialog::backdrop { background:#0006; backdrop-filter:blur(4px); }
 .web-login-dialog h2 { margin:8px 24px 16px 0; font-size:20px; }
 .web-login-dialog p { color:var(--text-secondary); font-size:14px; line-height:1.6; }
@@ -23,6 +32,7 @@
 [data-login-code] p { margin-bottom:0; }
 .web-login-toast { position:fixed; right:24px; top:64px; z-index:20000; max-width:calc(100vw - 48px); padding:16px; border:1px solid var(--border); border-radius:8px; background:var(--bg-panel); color:var(--text-primary); box-shadow:0 8px 24px #0004; font-size:14px; }
 @keyframes web-login-spin { to { transform:rotate(360deg); } }
+@keyframes web-login-dialog-in { from { opacity:0; transform:translateY(-3px) scale(.96); } }
 @media(prefers-reduced-motion:reduce) { .web-account-status .web-account-dot { animation:none!important; } }
 @media(max-width:600px) { .web-account-status { font-size:11px; padding:4px 8px; } }
 .web-login-code-row{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}.web-login-code-row button{min-height:44px;padding:8px 16px}.web-login-download{display:block;text-align:center;padding:12px 16px;border-radius:8px;background:var(--accent);color:#fff;text-decoration:none}.web-login-dialog .web-login-account-note{font-size:12px}.web-login-toast button{margin-left:12px;padding:8px 12px;background:var(--accent);color:#fff;border:0;border-radius:8px;cursor:pointer}#ai-image-install-open[data-login-state="connected"]{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 18%,var(--bg-panel));color:var(--accent)}#ai-image-install-open[data-login-state="connected"]::after{content:'●';font-size:8px;margin-left:6px;flex:none}#ai-image-install-open[data-login-state="waiting"]::after{content:'…';font-size:11px;margin-left:6px;flex:none}
@@ -40,4 +50,4 @@
 @keyframes web-login-copy-shine { 0% { filter:brightness(1); } 45% { filter:brightness(1.25); } 100% { filter:brightness(1); } }
 @keyframes web-login-next-glow { 50% { box-shadow:0 0 0 1px color-mix(in srgb,var(--accent) 90%,#fff),0 0 24px color-mix(in srgb,var(--accent) 72%,transparent); } }
 @media (max-width:839px) { .web-login-dialog.web-login-paired { margin-left:auto; margin-right:auto; width:min(420px,calc(100vw - 32px)); } }
-@media(prefers-reduced-motion:reduce){.web-login-code-row [data-copy-code],.web-login-actions [data-login-start][data-copy-ready="true"]{animation:none}.web-login-dialog.web-login-pair-shift,.web-login-dialog.web-login-pair-settle{transition:none;transform:none}}
+@media(prefers-reduced-motion:reduce){.web-login-dialog[open],.web-login-code-row [data-copy-code],.web-login-actions [data-login-start][data-copy-ready="true"]{animation:none}.web-login-dialog.web-login-pair-shift,.web-login-dialog.web-login-pair-settle{transition:none;transform:none}}

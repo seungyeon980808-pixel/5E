@@ -74,6 +74,8 @@
   --workbench-thumbnail-bg-share: 58%;
   --workbench-remove-bg-share: 88%;
   --workbench-backdrop-blur: var(--unilib-space-3, 8px);
+  --workbench-motion: var(--unilib-motion, 140ms ease-out);
+  --workbench-dialog-motion-distance: var(--unilib-dialog-motion-distance, 8px);
   position: fixed;
   inset: 0;
   z-index: var(--workbench-overlay-z-index);
@@ -82,6 +84,7 @@
   padding: var(--workbench-space-7);
   background: color-mix(in srgb, var(--workbench-bg) var(--workbench-overlay-color-share), transparent);
   backdrop-filter: blur(var(--workbench-backdrop-blur));
+  animation: workbench-assignment-overlay-in var(--workbench-motion);
 }
 
 .workbench-assignment {
@@ -94,7 +97,11 @@
   background: var(--workbench-panel);
   border: var(--workbench-border-width) solid var(--workbench-border);
   border-radius: var(--workbench-radius-dialog);
+  animation: workbench-assignment-dialog-in var(--workbench-motion);
 }
+
+@keyframes workbench-assignment-overlay-in { from { opacity: 0; } }
+@keyframes workbench-assignment-dialog-in { from { opacity: 0; transform: translateY(var(--workbench-dialog-motion-distance)); } }
 
 :root[data-theme="light"] .workbench-assignment-overlay {
   --workbench-selected-chip-text: var(--workbench-text);
@@ -168,7 +175,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .workbench-assignment *, .workbench-assignment-confirm-layer { scroll-behavior: auto !important; transition: none !important; }
+  .workbench-assignment-overlay, .workbench-assignment, .workbench-assignment *, .workbench-assignment-confirm-layer { scroll-behavior: auto !important; animation: none !important; transition: none !important; }
 }
 
 .workbench-assignment-references { grid-template-columns: repeat(2, minmax(0, 1fr)); }

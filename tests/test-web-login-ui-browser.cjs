@@ -125,18 +125,53 @@ test('Test_cancel_and_completion_keep_one_dialog_flow_when_waiting_or_connected'
   } finally { await page.close(); }
 });
 
-test('Test_existing_connected_account_does_not_claim_automatic_return_when_reopened', async () => {
+test('Test_connected_status_stays_in_inspector_utility_area_without_reopening_the_login_dialog', async () => {
   // Given: a completed isolated connection whose brief completion dialog has closed.
   const page = await pageWithDialog();
   try {
     await page.evaluate(() => window.qaComplete());
     await page.waitForFunction(() => !document.querySelector('.web-login-dialog').open, null, { timeout:2000 });
-    // When: the connected account badge opens the guide again.
+    // When: the persistent connected-status badge is clicked.
     await page.getByRole('button', { name:'ChatGPT 연결됨' }).click();
-    // Then: it gives stable ready guidance rather than scheduling another automatic close.
-    assert.equal(await page.getByText('메인 화면의 AI 버튼을 눌러 작업을 시작하세요.').count(), 1);
-    await page.waitForTimeout(1000);
-    assert.equal(await page.locator('.web-login-dialog').evaluate(dialog => dialog.open), true);
+    // Then: its visible status remains in the inspector control strip and no empty guide opens.
+    assert.equal(await page.locator('.panel-utility-bar-right > .web-account-status').count(), 1);
+    assert.equal(await page.locator('.canvas-global-controls > .web-account-status').count(), 0);
+    assert.equal(await page.locator('.web-login-dialog').evaluate(dialog => dialog.open), false);
+  } finally { await page.close(); }
+});
+
+test('Test_unconnected_status_still_opens_the_login_dialog', async () => {
+  // Given: an unconnected account represented by the same utility-area status control.
+  const page = await browser.newPage({ viewport:{ width:1280, height:800 } });
+  try {
+    await page.goto(baseUrl);
+    // When: the account-status control is clicked before authentication.
+    await page.getByRole('button', { name:'ChatGPT 연결', exact:true }).click();
+    // Then: it opens the meaningful sign-in flow.
+    await page.locator('.web-login-dialog[open]').waitFor();
+  } finally { await page.close(); }
+});
+
+test('Test_narrow_inspector_uses_a_compact_visible_status_label', async () => {
+  // Given: the real inspector's 215px width, which leaves one short slot beside three controls.
+  const page = await browser.newPage({ viewport:{ width:1280, height:800 } });
+  try {
+    await page.goto(baseUrl);
+    // Then: the visible compact label retains ChatGPT and the dot retains status while accessibility keeps the full state.
+    const compact = await page.locator('.web-account-status').evaluate((badge) => {
+      const label = badge.querySelector('[data-account-label]');
+      const strip = badge.parentElement;
+      const badgeBox = badge.getBoundingClientRect();
+      const stripBox = strip.getBoundingClientRect();
+      return {
+        visibleLabel:getComputedStyle(label, '::after').content,
+        accessibleLabel:badge.getAttribute('aria-label'),
+        fits:badgeBox.left >= stripBox.left && badgeBox.right <= stripBox.right,
+      };
+    });
+    assert.equal(compact.visibleLabel, '"ChatGPT"');
+    assert.equal(compact.accessibleLabel, 'ChatGPT 연결');
+    assert.equal(compact.fits, true);
   } finally { await page.close(); }
 });
 
