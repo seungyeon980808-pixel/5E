@@ -1,4 +1,5 @@
 import { initWebLoginUi } from './web-login-ui.js';
+import { showAlert } from "./ui-dialogs.js?v=1.4.0";
 /* ===== MAIN (wire modules; data-as-truth + viewBox zoom/pan) ===== */
 //
 // Responsibilities:
@@ -82,49 +83,68 @@ svg.addEventListener("blur", () => svg.classList.remove("pointer-focused"));
 window.addEventListener("keydown", () => svg.classList.remove("pointer-focused"), { capture: true });
 const zoomReadout = document.getElementById("zoom-readout");
 
-/* ===== APP FULLSCREEN (workspace only; artboard state remains unchanged) ===== */
+/* ===== APP FULLSCREEN (native browser or desktop window; artboard state remains unchanged) ===== */
 (function initFullscreen() {
   const btn = document.getElementById("fullscreen-toggle");
   if (!btn) return;
 
   const nativeFullscreen = window.fiveEDesktop?.fullscreen;
-  let workspaceMaximized = false;
+  const browserFullscreenElement = () => document.fullscreenElement || document.webkitFullscreenElement || null;
 
   const syncButton = (active) => {
     if (nativeFullscreen) document.documentElement.classList.toggle("is-native-fullscreen", Boolean(active));
-    else document.documentElement.classList.toggle("is-workspace-maximized", Boolean(active));
     btn.setAttribute("aria-pressed", String(active));
-    const label = nativeFullscreen ? (active ? "전체화면 해제" : "전체화면")
-      : (active ? "작업영역 최대화 해제" : "작업영역 최대화");
+    const label = active ? "전체화면 해제" : "전체화면";
     btn.setAttribute("aria-label", label);
     btn.title = `${label} (Alt+Enter)`;
   };
+  const syncBrowserFullscreen = () => syncButton(Boolean(browserFullscreenElement()));
+  const showBrowserFullscreenError = (operation) => {
+    syncBrowserFullscreen();
+    const message = operation === "exit" ? "전체화면을 해제하지 못했습니다. 다시 시도해 주세요." : "전체화면을 시작하지 못했습니다. 다시 시도해 주세요.";
+    btn.setAttribute("aria-label", message);
+    btn.title = message;
+    void showAlert(message, { title: "전체화면" });
+  };
   const toggleFullscreen = async () => {
+    let browserOperation = "enter";
     try {
-      if (window.fiveEDesktop?.fullscreen) {
-        await window.fiveEDesktop.fullscreen.toggle();
+      if (nativeFullscreen) {
+        await nativeFullscreen.toggle();
         return;
       }
-      workspaceMaximized = !workspaceMaximized;
-      syncButton(workspaceMaximized);
+      if (browserFullscreenElement()) {
+        browserOperation = "exit";
+        const exit = document.exitFullscreen || document.webkitExitFullscreen;
+        if (!exit) throw new Error("Fullscreen exit is unavailable");
+        await exit.call(document);
+        return;
+      }
+      const request = document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen;
+      if (!request) throw new Error("Fullscreen is unavailable");
+      await request.call(document.documentElement);
     } catch (error) {
       console.error("Unable to toggle fullscreen", error);
+      if (!nativeFullscreen) showBrowserFullscreenError(browserOperation);
     }
   };
 
   btn.addEventListener("click", toggleFullscreen);
-  if (window.fiveEDesktop?.fullscreen) {
-    window.fiveEDesktop.fullscreen.onChange(syncButton);
-    window.fiveEDesktop.fullscreen.get().then(syncButton).catch((error) => {
+  if (nativeFullscreen) {
+    nativeFullscreen.onChange(syncButton);
+    nativeFullscreen.get().then(syncButton).catch((error) => {
       console.error("Unable to read fullscreen state", error);
     });
+  } else {
+    document.addEventListener("fullscreenchange", syncBrowserFullscreen);
+    document.addEventListener("webkitfullscreenchange", syncBrowserFullscreen);
+    syncBrowserFullscreen();
   }
   window.addEventListener("keydown", (e) => {
     if (!e.altKey || e.key !== "Enter" || e.repeat) return;
     e.preventDefault();
     toggleFullscreen();
   });
-  if (!nativeFullscreen) syncButton(workspaceMaximized);
 })();
 
 (function initGraphLauncherState() {
