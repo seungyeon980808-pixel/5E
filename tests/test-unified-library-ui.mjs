@@ -71,6 +71,7 @@ test("compact year range orders and clamps its endpoints", () => {
   assert.deepEqual(normalizeYearRange(2026, 2022, [2021, 2023, 2026]), { start: 2022, end: 2026 });
   assert.deepEqual(normalizeYearRange(1990, 2099, [2021, 2023, 2026]), { start: 2021, end: 2026 });
   assert.deepEqual(normalizeYearRange("", "", [2021, 2023, 2026]), { start: null, end: null });
+  assert.deepEqual(normalizeYearRange("", 2026, ["", 2021, 2023, 2026]), { start: 2021, end: 2026 });
 });
 
 test("search scheduling defers composition, coalesces input, and Enter runs immediately", async () => {
