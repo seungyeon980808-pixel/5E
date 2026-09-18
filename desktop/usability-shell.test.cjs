@@ -59,10 +59,9 @@ test('native fullscreen removes the custom title strip while retaining the windo
   assert.match(css, /\.desktop-shell\s+\.desktop-titlebar\s*\{[^}]*-webkit-app-region:\s*drag/s);
 });
 
-test('web maximization avoids browser fullscreen and survives Escape; graph follows dialog state', async () => {
+test('web fullscreen uses browser state, handles WebKit and rejection, while native bridge remains event-backed', async () => {
   const source = read('js/main.js');
   const fullscreen = source.slice(source.indexOf('/* ===== APP FULLSCREEN'), source.indexOf('(function initGraphLauncherState()'));
-  const graphLauncher = source.slice(source.indexOf('(function initGraphLauncherState()'), source.indexOf('/* ===== THEME TOGGLE'));
   const listeners = new Map();
   const buttonListeners = new Map();
   const classes = new Set();
@@ -71,55 +70,133 @@ test('web maximization avoids browser fullscreen and survives Escape; graph foll
     addEventListener: (name, listener) => buttonListeners.set(name, listener),
     setAttribute: (name, value) => attrs.set(name, value),
     getAttribute: (name) => attrs.get(name),
+    removeAttribute: (name) => attrs.delete(name),
     title: '',
   };
   const root = {
     classList: { toggle: (name, active) => active ? classes.add(name) : classes.delete(name) },
-    requestFullscreen: async () => { assert.fail('web must not enter browser fullscreen'); },
+    requestFullscreen: async () => {
+      document.fullscreenElement = root;
+      listeners.get('fullscreenchange')();
+    },
   };
   const document = {
     documentElement: root,
     fullscreenElement: null,
     getElementById: (id) => id === 'fullscreen-toggle' ? fullscreenButton : null,
     addEventListener: (name, listener) => listeners.set(name, listener),
-    exitFullscreen: async () => { assert.fail('web must not exit browser fullscreen'); },
+    exitFullscreen: async () => {
+      document.fullscreenElement = null;
+      listeners.get('fullscreenchange')();
+    },
   };
-  const keyboardCalls = [];
-  const navigator = { keyboard: {
-    async lock(keys) { keyboardCalls.push([...keys]); },
-    unlock() { keyboardCalls.push('unlock'); },
-  } };
-  const context = vm.createContext({ document, navigator, window: { addEventListener: (name, fn) => listeners.set(name, fn) }, console, Boolean });
+  const context = vm.createContext({ document, window: { addEventListener: (name, fn) => listeners.set(name, fn) }, console, Boolean, Error });
   vm.runInContext(fullscreen, context);
   await buttonListeners.get('click')();
-  assert.deepEqual(keyboardCalls, []);
   assert.equal(attrs.get('aria-pressed'), 'true');
-  assert.equal(classes.has('is-workspace-maximized'), true);
-  assert.equal(attrs.get('aria-label'), '작업영역 최대화 해제');
-  listeners.get('keydown')({ key: 'Escape', preventDefault() { assert.fail('maximize handler must ignore Escape'); } });
-  assert.equal(classes.has('is-workspace-maximized'), true);
+  assert.equal(attrs.get('aria-label'), '전체화면 해제');
+  assert.equal(classes.has('is-workspace-maximized'), false, 'web fullscreen must not use a CSS-only workspace fallback');
   await buttonListeners.get('click')();
-  assert.deepEqual(keyboardCalls, []);
   assert.equal(attrs.get('aria-pressed'), 'false');
-  assert.equal(classes.has('is-workspace-maximized'), false);
-  listeners.get('keydown')({ key: 'Enter', altKey: true, preventDefault() {} });
-  assert.equal(classes.has('is-workspace-maximized'), true);
 
-  const graphAttrs = new Map();
-  const graphClasses = new Set();
-  const graphButton = {
-    classList: { toggle: (name, active) => active ? graphClasses.add(name) : graphClasses.delete(name) },
-    setAttribute: (name, value) => graphAttrs.set(name, value),
+  const webkitListeners = new Map();
+  const webkitAttrs = new Map();
+  const webkitButton = {
+    addEventListener: (name, listener) => webkitListeners.set(`button:${name}`, listener),
+    setAttribute: (name, value) => webkitAttrs.set(name, value),
+    getAttribute: (name) => webkitAttrs.get(name),
+    removeAttribute: (name) => webkitAttrs.delete(name),
+    title: '',
+  };
+  const webkitRoot = {
+    classList: { toggle() {} },
+    webkitRequestFullscreen: async () => {
+      webkitDocument.webkitFullscreenElement = webkitRoot;
+      webkitListeners.get('webkitfullscreenchange')();
+    },
+  };
+  const webkitDocument = {
+    documentElement: webkitRoot,
+    fullscreenElement: null,
+    webkitFullscreenElement: null,
+    getElementById: (id) => id === 'fullscreen-toggle' ? webkitButton : null,
+    addEventListener: (name, listener) => webkitListeners.set(name, listener),
+    webkitExitFullscreen: async () => {
+      webkitDocument.webkitFullscreenElement = null;
+      webkitListeners.get('webkitfullscreenchange')();
+    },
+  };
+  vm.runInContext(fullscreen, vm.createContext({ document: webkitDocument, window: { addEventListener: (name, fn) => webkitListeners.set(name, fn) }, console, Boolean, Error }));
+  await webkitListeners.get('button:click')();
+  assert.equal(webkitAttrs.get('aria-pressed'), 'true');
+  await webkitListeners.get('button:click')();
+  assert.equal(webkitAttrs.get('aria-pressed'), 'false');
+
+  const rejectedListeners = new Map();
+  const rejectedAttrs = new Map();
+  const rejectedButton = {
+    addEventListener: (name, listener) => rejectedListeners.set(`button:${name}`, listener),
+    setAttribute: (name, value) => rejectedAttrs.set(name, value),
+    getAttribute: (name) => rejectedAttrs.get(name),
+    removeAttribute: (name) => rejectedAttrs.delete(name),
+    title: '',
+  };
+  const rejectedDocument = {
+    documentElement: { classList: { toggle() {} }, requestFullscreen: async () => { throw Error('blocked'); } },
+    fullscreenElement: null,
+    getElementById: (id) => id === 'fullscreen-toggle' ? rejectedButton : null,
+    addEventListener: (name, listener) => rejectedListeners.set(name, listener),
+  };
+  let rejectedAlert;
+  vm.runInContext(fullscreen, vm.createContext({ document: rejectedDocument, window: { addEventListener: (name, fn) => rejectedListeners.set(name, fn) }, console: { error() {} }, showAlert: async (message, options) => { rejectedAlert = { message, options }; }, Boolean, Error }));
+  await rejectedListeners.get('button:click')();
+  assert.equal(rejectedAttrs.get('aria-pressed'), 'false', 'a rejected browser request must not leave the button active');
+  assert.equal(rejectedButton.title, '전체화면을 시작하지 못했습니다. 다시 시도해 주세요.');
+  assert.equal(rejectedAlert.message, '전체화면을 시작하지 못했습니다. 다시 시도해 주세요.');
+  assert.equal(rejectedAlert.options.title, '전체화면');
+
+  const exitListeners = new Map();
+  const exitAttrs = new Map();
+  const exitRoot = { classList: { toggle() {} } };
+  const exitButton = { addEventListener: (name, listener) => exitListeners.set(`button:${name}`, listener), setAttribute: (name, value) => exitAttrs.set(name, value), getAttribute: (name) => exitAttrs.get(name), title: '' };
+  const exitDocument = { documentElement: exitRoot, fullscreenElement: exitRoot, getElementById: (id) => id === 'fullscreen-toggle' ? exitButton : null, addEventListener: (name, listener) => exitListeners.set(name, listener), exitFullscreen: async () => { throw Error('blocked'); } };
+  let exitAlert;
+  vm.runInContext(fullscreen, vm.createContext({ document: exitDocument, window: { addEventListener: (name, fn) => exitListeners.set(name, fn) }, console: { error() {} }, showAlert: async (message, options) => { exitAlert = { message, options }; }, Boolean, Error }));
+  await exitListeners.get('button:click')();
+  assert.equal(exitAttrs.get('aria-pressed'), 'true');
+  assert.equal(exitAlert.message, '전체화면을 해제하지 못했습니다. 다시 시도해 주세요.');
+  assert.equal(exitAlert.options.title, '전체화면');
+
+  const nativeListeners = new Map();
+  const nativeAttrs = new Map();
+  let nativeToggles = 0;
+  const nativeButton = { addEventListener: (name, listener) => nativeListeners.set(`button:${name}`, listener), setAttribute: (name, value) => nativeAttrs.set(name, value), title: '' };
+  const nativeBridge = { fullscreen: { toggle: async () => { nativeToggles++; }, onChange: (listener) => nativeListeners.set('native-change', listener), get: async () => false } };
+  vm.runInContext(fullscreen, vm.createContext({ document: { documentElement: { classList: { toggle: (name, active) => active ? classes.add(name) : classes.delete(name) } }, getElementById: (id) => id === 'fullscreen-toggle' ? nativeButton : null, addEventListener() {} }, window: { fiveEDesktop: nativeBridge, addEventListener: (name, fn) => nativeListeners.set(name, fn) }, console, Boolean, Error }));
+  await nativeListeners.get('button:click')();
+  assert.equal(nativeToggles, 1);
+  nativeListeners.get('native-change')(true);
+  assert.equal(classes.has('is-native-fullscreen'), true);
+});
+
+test('graph launcher follows dialog state', () => {
+  const source = read('js/main.js');
+  const graphLauncher = source.slice(source.indexOf('(function initGraphLauncherState()'), source.indexOf('/* ===== THEME TOGGLE'));
+  const attrs = new Map();
+  const classes = new Set();
+  const button = {
+    classList: { toggle: (name, active) => active ? classes.add(name) : classes.delete(name) },
+    setAttribute: (name, value) => attrs.set(name, value),
     addEventListener() {},
   };
-  const graphContext = vm.createContext({
-    document: { documentElement: {}, getElementById: () => graphButton, querySelector: () => ({}) },
+  const context = vm.createContext({
+    document: { documentElement: {}, getElementById: () => button, querySelector: () => ({}) },
     MutationObserver: class MutationObserver { observe() {} disconnect() {} },
     requestAnimationFrame: (callback) => callback(),
   });
-  vm.runInContext(graphLauncher, graphContext);
-  assert.equal(graphClasses.has('is-open'), true);
-  assert.equal(graphAttrs.get('aria-expanded'), 'true');
+  vm.runInContext(graphLauncher, context);
+  assert.equal(classes.has('is-open'), true);
+  assert.equal(attrs.get('aria-expanded'), 'true');
 });
 
 test('selected controls have one blue fill and keyboard-only focus has one unclipped outer cue', () => {
