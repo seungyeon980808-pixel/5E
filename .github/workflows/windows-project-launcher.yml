@@ -1,0 +1,45 @@
+name: Windows project launcher verification
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  project-opening:
+    runs-on: windows-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: desktop/project-launcher/windows/go.mod
+          cache-dependency-path: desktop/project-launcher/windows/go.sum
+      - name: Set up pinned Zig compiler
+        shell: pwsh
+        run: |
+          $archive = Join-Path $env:RUNNER_TEMP "zig-0.15.2.zip"
+          Invoke-WebRequest "https://ziglang.org/download/0.15.2/zig-x86_64-windows-0.15.2.zip" -OutFile $archive
+          if ((Get-FileHash $archive -Algorithm SHA256).Hash.ToLowerInvariant() -ne "3a0ed1e8799a2f8ce2a6e6290a9ff22e6906f8227865911fb7ddedc3cc14cb0c") { throw "Zig archive hash mismatch" }
+          $destination = Join-Path $env:RUNNER_TEMP "5e-zig"
+          Expand-Archive $archive -DestinationPath $destination
+          (Join-Path $destination "zig-x86_64-windows-0.15.2") | Out-File $env:GITHUB_PATH -Encoding utf8 -Append
+      - name: Build the Windows executable with the blue icon
+        run: node scripts/build-windows-project-launcher.cjs
+      - name: Verify legacy project-format interoperability
+        working-directory: desktop/project-launcher/windows
+        run: go test -race -shuffle=on -count=1 -timeout=2m ./...
+      - name: Verify native C reader and actual Windows API adapters
+        run: node --test tests/test-windows-native-launcher.cjs tests/test-windows-native-adapters.cjs
+      - name: Verify actual server downloads and source recovery
+        run: node --test tests/test-windows-project-package.cjs desktop/project-open.test.cjs tests/test-project-file-extension.mjs
+      - name: Retain the verified launcher template
+        uses: actions/upload-artifact@v4
+        with:
+          name: 5e-windows-project-launcher-x64
+          path: desktop/project-launcher/windows/launcher.exe
+          if-no-files-found: error

@@ -18,7 +18,7 @@ import { initEraseTool } from "./erase-tool.js?v=1.4.0";
 import { initTransform, undo, redo } from "./transform.js?v=1.4.0";
 import { initArtboardResize } from "./artboard-resize.js?v=1.4.3";
 import { initInspector } from "./inspector.js?v=1.4.3";
-import { initDesktopProjectCloseGuard, initProjectIO, saveProject } from "./project-io.js?v=1.4.0";
+import { initDesktopProjectCloseGuard, initProjectIO, initProjectFileOpening, saveProject } from "./project-io.js?v=1.4.0";
 import { initExportDialog } from "./export-dialog.js?v=1.4.11";
 import { initRuler, setRulerVisible } from "./ruler.js?v=1.4.0";
 import { initSettings } from "./settings.js?v=1.4.0";
@@ -308,7 +308,9 @@ initPages(state);
 
 /* ----- autosave: 2.5초 디바운스로 IndexedDB에 자동 저장 + 부팅 시 크래시 복구 -----
  * pages[] 채운 뒤에 초기화해야 첫 저장부터 유효한 다중 페이지 스냅샷이 된다. */
-const recoveryChoice = await initAutosave(state);
+const autosaveReady = initAutosave(state);
+initProjectFileOpening(state, autosaveReady);
+const recoveryChoice = await autosaveReady;
 const aiPanel = initAiPanel(state, { freshStart: recoveryChoice === "fresh" });
 initDesktopProjectCloseGuard(state, () => aiPanel?.checkpointForClose());
 const aiEntryButton = document.getElementById("ai-image-install-open");

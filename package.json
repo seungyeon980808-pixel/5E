@@ -52,6 +52,13 @@
       "desktop/main.cjs",
       "desktop/preload.cjs",
       "desktop/project-close-guard.cjs",
+      "desktop/project-package.cjs",
+      "desktop/windows-project-package.cjs",
+      "desktop/project-open.cjs",
+      "desktop/project-launcher/launcher",
+      "desktop/project-launcher/BlueDocument.icns",
+      "desktop/project-launcher/windows/launcher.exe",
+      "desktop/project-launcher/windows/ThirdPartyNotices.txt",
       "desktop/codex-turn-runtime.cjs",
       "desktop/codex-process-failure.cjs",
       "desktop/fullscreen-state.cjs",
@@ -101,13 +108,16 @@
     }],
     "win": {
       "icon": "assets/icon.ico",
+      "fileAssociations": [{ "ext": "5e", "name": "5E 프로젝트", "icon": "desktop/project-launcher/windows/BlueDocument.ico" }],
       "target": [{ "target": "nsis", "arch": ["x64"] }]
     },
     "mac": {
+      "extendInfo": { "FIVEEDocumentLaunchVersion": 1 },
+      "fileAssociations": [{ "ext": "5e", "name": "5E 프로젝트", "role": "Editor", "icon": "desktop/project-launcher/BlueDocument.icns" }],
       "icon": "assets/icon-512.png",
       "target": [{ "target": "dmg", "arch": ["x64", "arm64"] }]
     },
-    "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true, "createDesktopShortcut": true }
+    "nsis": { "include": "build/project-launcher.nsh", "oneClick": false, "allowToChangeInstallationDirectory": true, "createDesktopShortcut": true }
   },
   "dependencies": {
     "pdfjs-dist": "6.3.289"

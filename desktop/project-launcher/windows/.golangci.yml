@@ -1,0 +1,50 @@
+version: "2"
+run:
+  timeout: 5m
+  modules-download-mode: readonly
+linters:
+  default: none
+  enable:
+    - govet
+    - staticcheck
+    - errcheck
+    - errorlint
+    - nilerr
+    - nilnil
+    - bodyclose
+    - contextcheck
+    - fatcontext
+    - copyloopvar
+    - intrange
+    - usetesting
+    - testifylint
+    - unconvert
+    - unparam
+    - ineffassign
+    - whitespace
+    - gosec
+    - unused
+    - gocognit
+    - gocyclo
+    - funlen
+    - exhaustive
+  settings:
+    errcheck:
+      check-type-assertions: true
+      check-blank: true
+    gosec:
+      excludes:
+        - G104
+        - G304
+    gocognit:
+      min-complexity: 25
+    gocyclo:
+      min-complexity: 15
+    funlen:
+      lines: 90
+      statements: 60
+      ignore-comments: true
+formatters:
+  enable:
+    - gofumpt
+    - goimports
