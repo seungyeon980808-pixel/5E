@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="ko" data-theme="dark">
+<head><meta charset="utf-8"><base href="../../"><link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/unified-library.css"></head>
+<body><button id="open">라이브러리 열기</button><script type="module">
+import { createUnifiedLibraryUi } from './js/unified-library-ui.js';
+import { createUnifiedLibraryProvider } from './js/library/provider.js';
+import { materializePackDocument, materializePackSearchEntry } from './js/pdf-library/pack-identities.js';
+const [catalog, index] = await Promise.all(['catalog', 'search-index'].map(async name => (await fetch(`/qa-data/${name}.json`)).json()));
+const provider = createUnifiedLibraryProvider({
+  pdfDocuments: catalog.documents.map(document => materializePackDocument('5e.shared.drive', catalog, document)),
+  pdfSearchIndex: { ...index, entries: index.entries.map(entry => materializePackSearchEntry('5e.shared.drive', entry)) },
+});
+window.qaCatalog = { documents: catalog.documents.length, entries: index.entries.length, options: provider.getExamFilterOptions() };
+window.qaSearches = [];
+const observed = { ...provider, searchAsync: async options => {
+  const results = provider.search(options);
+  window.qaSearches.push({ filters: options.filters, query: options.query, years: [...new Set(results.map(result => result.metadata.academicYear))], subjects: [...new Set(results.map(result => result.metadata.subject))], count: results.length });
+  return results;
+} };
+const ui = createUnifiedLibraryUi({ getProvider: async () => observed });
+document.querySelector('#open').onclick = event => ui.open(event.currentTarget);
+document.querySelector('#open').click();
+</script></body></html>

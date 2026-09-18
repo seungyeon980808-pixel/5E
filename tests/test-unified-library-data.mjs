@@ -864,3 +864,14 @@ test("question search results sort by numeric question number", () => {
   const provider = createUnifiedLibraryProvider({ pdfDocuments: [{ ...document, pages: [{ ...page, items, words }] }] });
   assert.deepEqual(provider.search({ query: "공통어", kinds: ["crop"] }).map((result) => result.metadata.itemNumber), [1, 2, 10]);
 });
+
+test('shared Drive subject-first filenames supply exam filter metadata strictly', () => {
+  for (const subject of ['p1', 'p2', 'c1', 'c2', 'b1', 'b2', 'e1', 'e2']) {
+    assert.deepEqual(deriveExamMetadata({ source: { displayName: `${subject}_2025_09.pdf` } }), {
+      subject, academicYear: 2025, administration: '09', documentCode: `${subject}2509`, sourceFileName: `${subject}_2025_09.pdf`,
+    });
+  }
+  for (const filename of ['xp1_2025_09.pdf', 'p3_2025_09.pdf', 'p1_1999_09.pdf', 'p1_2025_13.pdf', 'p1_2025_09_notes.pdf', 'p1_2025_09.png']) {
+    assert.equal(deriveExamMetadata({ source: { displayName: filename } }), null, filename);
+  }
+});
