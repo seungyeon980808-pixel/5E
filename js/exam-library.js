@@ -373,7 +373,7 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
     packManagement = mount({
       host: pdfUi.getPackHost(),
       driveHost: pdfUi.getDriveHost(),
-      onProvidedStatus: (message) => unifiedUi?.setProvidedStatus(message),
+      onProvidedStatus: (message, error) => unifiedUi?.setProvidedStatus(message, error),
       store,
       googleDrive: {
         provided: !isDesktopLibrary,
@@ -429,6 +429,7 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
       }
     };
     packManagement.setProvidedRetry(connectProvided);
+    unifiedUi?.setProvidedRetry(connectProvided);
     if (isDesktopLibrary) {
       const bundled = await loadBundledDesktopPack();
       if (bundled) {

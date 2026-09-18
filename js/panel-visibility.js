@@ -95,12 +95,11 @@ function setup(root, kind) {
   const toolbar = root.querySelector(kind === 'editor' ? '.canvas-toolbar' : '.ai-head');
   if (!panels.every(Boolean) || !toolbar) return;
   root.dataset.panelLayout = kind;
-  const group = kind === 'image'
-    ? toolbar.querySelector('.panel-toggles') || document.createElement('div') : toolbar;
-  if (kind === 'image') {
-    group.className = 'panel-toggles';
+  const group = toolbar.querySelector('.panel-shell-toggles') || document.createElement('div');
+  if (!group.parentElement) {
+    group.className = kind === 'image' ? 'panel-shell-toggles panel-toggles' : 'panel-shell-toggles';
     group.setAttribute('role', 'group');
-    group.setAttribute('aria-label', '작업실 패널');
+    group.setAttribute('aria-label', kind === 'image' ? '작업실 패널' : '편집기 패널');
     toolbar.append(group);
   }
   const backdrop = root.querySelector('[data-panel-backdrop]') || document.createElement('button');
@@ -119,8 +118,9 @@ function setup(root, kind) {
     const name = kind === 'editor' ? ['도구', '속성'][index] : ['작업 목록', '수정 설정'][index];
     panel.id = kind === 'editor' ? panel.id : `image-${side}-panel-${++serial}`;
     panel.dataset.layoutPanel = side;
-    const button = kind === 'editor' ? document.getElementById(`drawer-${side}-toggle`)
-      : group.querySelector(`[data-panel-toggle="${side}"]`) || document.createElement('button');
+    const button = group.querySelector(`[data-panel-toggle="${side}"]`)
+      || (kind === 'editor' ? document.getElementById(`drawer-${side}-toggle`) : null)
+      || document.createElement('button');
     button.type = 'button';
     button.className = kind === 'editor'
       ? 'panel-visibility-toggle panel-edge-toggle'
@@ -131,8 +131,8 @@ function setup(root, kind) {
     label.className = 'panel-toggle-label';
     label.textContent = name;
     button.replaceChildren(panelIcon(side), label);
+    group.append(button);
     if (kind === 'image') {
-      group.append(button);
       const dock = panel.querySelector(`[data-panel-internal-toggle="${side}"]`) || document.createElement('button');
       dock.type = 'button';
       dock.className = 'panel-dock-toggle';

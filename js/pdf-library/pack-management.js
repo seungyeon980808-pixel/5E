@@ -226,7 +226,7 @@ export function mountPackManagement({
   return Object.freeze({
     ...controller,
     setProvidedRetry(callback) { retryProvided = callback; },
-    setProvidedStatus(message, error = false) { onProvidedStatus(message); providedStatus.textContent = message; providedStatus.classList.toggle("is-error", error); providedRetry.hidden = !error; },
+    setProvidedStatus(message, error = false) { onProvidedStatus(message, error); providedStatus.textContent = message; providedStatus.classList.toggle("is-error", error); providedRetry.hidden = !error; },
     setCandidate(value) { candidate = value; render(controller.getSnapshot()); },
     setDriveConnection(value) { driveConnection = value; renderDrive(); },
   });

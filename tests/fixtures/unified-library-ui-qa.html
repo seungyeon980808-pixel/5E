@@ -11,7 +11,9 @@
   <button id="open">라이브러리 열기</button>
   <div id="ai-image-panel" hidden></div>
   <script type="module">
+    import { initEscapeLayers } from "./js/escape-layers.js";
     import { createUnifiedLibraryUi } from "./js/unified-library-ui.js";
+    initEscapeLayers();
     const image = (label, color) => `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="600" height="600"><rect width="600" height="600" fill="white"/><text x="40" y="70" font-size="34">${label}</text><rect x="120" y="150" width="180" height="160" fill="${color}"/><rect x="340" y="330" width="160" height="130" fill="#ddd"/></svg>`)}`;
     const pdfImage = (label, color) => `data:image/svg+xml,${encodeURIComponent(`<svg xmlns="http://www.w3.org/2000/svg" width="600" height="800"><rect width="600" height="800" fill="white"/><text x="40" y="70" font-size="34">${label}</text><rect x="120" y="180" width="180" height="190" fill="${color}"/><rect x="340" y="470" width="160" height="180" fill="#ddd"/></svg>`)}`;
     const rasterizedCrop = async (result, representation) => {

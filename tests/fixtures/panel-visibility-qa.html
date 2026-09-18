@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="ko" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <base href="../../">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/ai-panel.css">
+  <link rel="stylesheet" href="css/panel-visibility.css">
+  <style>
+    body { margin:0; padding-top:30px; background:var(--bg-app); }
+    .app { height:300px; }
+    .canvas-toolbar { min-height:44px; }
+    #ai-image-panel { display:block !important; position:relative; height:340px; margin-top:24px; }
+    #ai-image-panel .ai-head { position:relative; min-height:44px; }
+    #ai-image-panel .ai-workspace { height:296px; }
+    .panel-left, .panel-right, .ai-task-rail, .ai-conversation { padding:12px; background:var(--bg-panel); }
+    .panel-center, .ai-results { min-width:0; padding:12px; background:var(--bg-canvas); }
+  </style>
+</head>
+<body>
+  <section class="app">
+    <aside id="panel-left" class="panel-left"><p>도구</p></aside>
+    <main class="panel-center"><header class="canvas-toolbar"><button id="drawer-left-toggle" type="button"></button><strong>편집기</strong></header><p>캔버스</p></main>
+    <aside id="panel-right" class="panel-right"><p>속성</p></aside>
+    <button id="drawer-right-toggle" type="button"></button>
+  </section>
+  <section id="ai-image-panel">
+    <header class="ai-head"><strong>AI 작업실</strong></header>
+    <div class="ai-workbench"><div class="ai-workspace"><aside class="ai-task-rail"><div class="ai-rail-heading">작업 목록</div></aside><main class="ai-results">결과</main><aside class="ai-conversation"><div class="ai-side-tabs">수정 설정</div></aside></div></div>
+  </section>
+  <script type="module" src="js/panel-visibility.js"></script>
+</body>
+</html>
