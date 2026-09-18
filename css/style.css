@@ -2285,10 +2285,6 @@ textarea.unified-text-input {
   outline: none;
   box-shadow: none;
 }
-.object-search-trigger.library-return-focus:focus {
-  outline: none;
-  box-shadow: none;
-}
 .tool-btn:focus-visible,
 .advanced-tool-btn:focus-visible,
 .topbar-btn:focus-visible,
@@ -2298,6 +2294,9 @@ textarea.unified-text-input {
   outline: 2px solid var(--text-primary);
   outline-offset: 2px;
   box-shadow: none;
+}
+[data-pointer-focus]:focus {
+  outline: none !important;
 }
 .canvas-bottom-bar .zoom-readout {
   flex:0 0 auto;
