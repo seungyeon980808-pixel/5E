@@ -2370,7 +2370,9 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     cropTitle.textContent = title;
     cropDialog.dataset.pdfPage = String(session.pageNumber);
     cropGesture = null;
-    draftCrop = emptyDraft ? null : clampRect(result.variants?.manual?.source?.rect || pdfUi?.cropForResult?.(result) || result.variants?.content?.source?.rect || result.provenance.rect);
+    const existingCrop = result.variants?.manual?.source?.rect || pdfUi?.cropForResult?.(result)
+      || (result.kind === "crop" ? result.variants?.content?.source?.rect || result.provenance.rect : null);
+    draftCrop = emptyDraft || !existingCrop ? null : clampRect(existingCrop);
     cropPreviewExact = false;
     cropExact = null;
     cropDialog.hidden = false;
