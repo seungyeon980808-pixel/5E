@@ -21,7 +21,7 @@ import { addPage } from "./pages.js?v=1.6.0-preview-labeler-0917-1111";
 
 import { initProjectStatus, captureProjectStatus, markProjectStatus } from "./project-status.js?v=1.6.0-preview-project-launcher-0918-1508";
 import { modKey, shortcutKey, isEditingTarget, isComposingKey } from "./platform.js?v=1.6.0-preview-labeler-0917-1111";
-import { nativeProjectTarget, saveNativeProjectPackage, initProjectLaunch } from './project-launch.js?v=1.6.0-preview-project-launcher-0918-1508';
+import { nativeProjectTarget, saveNativeProjectPackage, initProjectLaunch } from './project-launch.js?v=1.6.0-preview-web-native-project-0918-1617';
 import { extractWindowsProjectSource } from './windows-project-source.mjs?v=1.6.0-preview-project-launcher-0918-1508';
 
 // Schema version of the saved file. Distinct from the app UI version.
