@@ -1,3 +1,4 @@
+import { initPopupFocus } from "./popup-focus.js?v=1.6.0-preview-common-year-login-0918-1302";
 import { initEscapeLayers } from "./escape-layers.js?v=1.6.0-preview-labeler-0917-1111";
 
 /* ===== MODAL DRAG =====
@@ -107,6 +108,7 @@ function makeModalDraggable(modal, opts = {}) {
 /** 지금 문서에 있는 모달 전부에 손잡이를 달고, 이후 새로 생기는 모달도 자동으로 처리한다.
  *  각 모달이 자기 파일에서 따로 호출하지 않아도 되게(빠뜨리면 그 창만 조용히 못 움직인다). */
 function initModalDrag(root = document.body) {
+  initPopupFocus();
   initEscapeLayers();
   const scan = (node) => {
     if (!(node instanceof HTMLElement)) return;

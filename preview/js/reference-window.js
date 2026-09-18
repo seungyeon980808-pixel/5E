@@ -21,7 +21,7 @@ import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-pre
  */
 
 import { showConfirm } from "./ui-dialogs.js?v=1.6.0-preview-labeler-0917-1111";
-import { makeModalDraggable } from "./modal-drag.js?v=1.6.0-preview-labeler-0917-1111";
+import { makeModalDraggable } from "./modal-drag.js?v=1.6.0-preview-common-year-login-0918-1302";
 
 const IMG_BASE = "assets/exam-library/images/";
 

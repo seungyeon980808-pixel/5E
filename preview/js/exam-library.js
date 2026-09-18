@@ -11,15 +11,15 @@
 import { insertImageFromSrc } from "./image-paste.js?v=1.6.0-preview-labeler-0917-1111";
 import { openObjectifyWithFile } from "./image-objectify.js?v=1.6.0-preview-labeler-0917-1111";
 
-import { openReferenceWindow } from "./reference-window.js?v=1.6.0-preview-labeler-0917-1111";
+import { openReferenceWindow } from "./reference-window.js?v=1.6.0-preview-common-year-login-0918-1302";
 import { setOpenOrigin } from "./modal-motion.js?v=1.6.0-preview-labeler-0917-1111";
 import { createPdfLibraryUi } from "./pdf-library/pdf-library-ui.js?v=1.6.0-preview-labeler-0917-1111";
 import { defaultRecentThreePack } from "./pdf-library/default-pack-config.js?v=1.6.0-preview-labeler-0917-1111";
 import { loadBundledDesktopPack } from "./pdf-library/desktop-pack.js?v=1.6.0-preview-labeler-0917-1111";
 import { registerPdfReferencePicker } from "./pdf-library/reference-picker.js?v=1.6.0-preview-labeler-0917-1111";
 import { mergePreferredCatalogs } from "./pdf-library/catalog-merge.js?v=1.6.0-preview-labeler-0917-1111";
-import { createUnifiedLibraryProvider } from "./library/provider.js?v=1.6.0-preview-library-0918-1231";
-import { createUnifiedLibraryUi, unifiedLibrarySourceMetadata, unifiedLibraryTransfer } from "./unified-library-ui.js?v=1.6.0-preview-library-0918-1231";
+import { createUnifiedLibraryProvider } from "./library/provider.js?v=1.6.0-preview-common-year-login-0918-1302";
+import { createUnifiedLibraryUi, unifiedLibrarySourceMetadata, unifiedLibraryTransfer } from "./unified-library-ui.js?v=1.6.0-preview-common-year-login-0918-1302";
 import { insertPartsAsset, loadPartsManifest, materializePartsAsset } from "./parts-library.js?v=1.6.0-preview-labeler-0917-1111";
 const MAX_RENDER = 60; // 그리드에 한 번에 그리는 카드 수 (초과분은 안내문으로 표시)
 const BUNDLED_EXAM_CATALOG_URL = "assets/exam-library/sample-catalog.json";
@@ -272,7 +272,7 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
   });
   const ensurePdfSearchWorker = () => {
     if (pdfSearchWorker) return pdfSearchWorker;
-    pdfSearchWorker = new Worker(new URL("./pdf-library/search-worker.js?v=1.6.0-preview-labeler-0917-1111", import.meta.url), { type: "module" });
+    pdfSearchWorker = new Worker(new URL("./pdf-library/search-worker.js?v=1.6.0-preview-common-year-login-0918-1302", import.meta.url), { type: "module" });
     pdfSearchWorker.addEventListener("message", (event) => {
       const request = pdfSearchRequests.get(event.data?.id);
       if (!request) return;

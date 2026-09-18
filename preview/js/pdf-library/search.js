@@ -1,5 +1,5 @@
 import { createCropSource } from "./contract.js?v=1.6.0-preview-labeler-0917-1111";
-import { deriveExamMetadata } from "../library/exam-code.js?v=1.6.0-preview-labeler-0917-1111";
+import { deriveExamMetadata } from "../library/exam-code.js?v=1.6.0-preview-common-year-login-0918-1302";
 export { applyItemCorrections, resolveItemOrPageResult } from "./corrections.js?v=1.6.0-preview-labeler-0917-1111";
 
 function normalizedText(value) {

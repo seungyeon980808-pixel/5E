@@ -1,4 +1,4 @@
-import { initWebLoginUi } from './web-login-ui.js?v=1.6.0-preview-labeler-0917-1111';
+import { initWebLoginUi } from './web-login-ui.js?v=1.6.0-preview-common-year-login-0918-1302';
 import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-preview-labeler-0917-1111';
 /* ===== MAIN (wire modules; data-as-truth + viewBox zoom/pan) ===== */
 //
@@ -27,7 +27,7 @@ import { initImagePaste } from "./image-paste.js?v=1.6.0-preview-labeler-0917-11
 import { initImageCutout } from "./image-cutout.js?v=1.6.0-preview-labeler-0917-1111";
 import { renderSessionToDataUrl } from "./image-cutout.js?v=1.6.0-preview-labeler-0917-1111";
 import { handSelectedCanvasImageToAi } from "./ai-canvas-handoff.js?v=1.6.0-preview-labeler-0917-1111";
-import { initExamLibrary } from "./exam-library.js?v=1.6.0-preview-library-0918-1231";
+import { initExamLibrary } from "./exam-library.js?v=1.6.0-preview-common-year-login-0918-1302";
 import { initTemplates } from "./templates.js?v=1.6.0-preview-labeler-0917-1111";
 import { initObjectSearch } from "./search.js?v=1.6.0-preview-labeler-0917-1111";
 import { initCommandPalette } from "./command-palette.js?v=1.6.0-preview-labeler-0917-1111";
@@ -63,9 +63,9 @@ import { initPeriodicSection } from "./inspector/section-periodic.js?v=1.6.0-pre
 import { initAutosave } from "./autosave.js?v=1.6.0-preview-labeler-0917-1111";
 import { initPages } from "./pages.js?v=1.6.0-preview-labeler-0917-1111";
 import { localizeShortcutLabels } from "./platform.js?v=1.6.0-preview-labeler-0917-1111";
-import { initModalDrag } from "./modal-drag.js?v=1.6.0-preview-labeler-0917-1111";
+import { initModalDrag } from "./modal-drag.js?v=1.6.0-preview-common-year-login-0918-1302";
 import { initSteppers } from "./stepper.js?v=1.6.0-preview-labeler-0917-1111";
-import { initReferenceWindows } from "./reference-window.js?v=1.6.0-preview-labeler-0917-1111";
+import { initReferenceWindows } from "./reference-window.js?v=1.6.0-preview-common-year-login-0918-1302";
 import { initTutorial } from "./tutorial.js?v=1.6.0-preview-labeler-0917-1111";
 import { initAiInstallGuide } from "./ai-install-guide.js?v=1.6.0-preview-labeler-0917-1111";
 import { initAiPanel } from "./ai-panel.js?v=1.6.0-preview-shared-zoom-0917-1415a";
