@@ -44,6 +44,7 @@ export function initProjectStatus(state, serialize) {
     text,
     capture: () => ({ pages: state.get().pages, fingerprint: fingerprint() }),
     isFileDirty: () => file !== fingerprint(),
+    hasUnsavedWork: () => fingerprint() !== (file ?? initial),
     mark(token, kind) {
       if (!token || token.pages !== state.get().pages) return;
       if (kind === 'file') file = token.fingerprint;

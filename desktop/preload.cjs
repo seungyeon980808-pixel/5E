@@ -19,6 +19,12 @@ contextBridge.exposeInMainWorld("fiveEDesktop", {
   },
   project: {
     save: (payload) => ipcRenderer.invoke("project:save", payload),
+    onOpen(callback) {
+      const listener = (_, payload) => callback(payload);
+      ipcRenderer.on('project:open', listener);
+      ipcRenderer.send('project:ready');
+      return () => ipcRenderer.removeListener('project:open', listener);
+    },
   },
   projectClose: {
     onRequest: (callback) => {

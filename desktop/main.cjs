@@ -19,6 +19,9 @@ const { createImageExportService } = require("./image-export-service.cjs");
 const { createFullscreenCoordinator } = require("./fullscreen-state.cjs");
 const { routeFullscreenEscape } = require("./fullscreen-escape.cjs");
 const { createProjectCloseGuard } = require("./project-close-guard.cjs");
+const { createProjectPackage, saveProjectPackage } = require("./project-package.cjs");
+const { createWindowsProjectPackage, saveWindowsProjectPackage } = require("./windows-project-package.cjs");
+const { createProjectOpen } = require("./project-open.cjs");
 
 const APP_ID = "com.5e.editor";
 const APP_ICON_PATH = path.join(__dirname, "..", "assets", process.platform === "darwin" ? "icon-512.png" : "icon.ico");
@@ -655,11 +658,25 @@ async function saveProjectFile(sender, payload = {}) {
   if (typeof payload.json !== "string") return { kind: "failed", error: "invalid-project" };
   const result = await dialog.showSaveDialog(win, {
     title: "프로젝트 저장",
-    defaultPath: "physics_drawing.5e",
-    filters: [{ name: "5E 프로젝트 파일", extensions: ["5e"] }],
+    defaultPath: process.platform === 'darwin' ? "5E 프로젝트.app" : process.platform === 'win32' ? "5E 프로젝트.exe" : "physics_drawing.5e",
+    filters: [{ name: "5E 프로젝트 파일", extensions: [process.platform === 'darwin' ? "app" : process.platform === 'win32' ? "exe" : "5e"] }],
   });
   if (result.canceled || !result.filePath) return { kind: "cancelled" };
   try {
+    if (process.platform === 'darwin' || process.platform === 'win32') {
+      const development = app.isPackaged ? undefined : {
+        executable: process.execPath, args: [path.resolve(__dirname, '..')],
+        environment: { FIVE_E_DEV_USER_DATA: app.getPath('userData'), FIVE_E_SMOKE_USER_DATA: app.getPath('userData'),
+          FIVE_E_BUNDLED_PDF_PACK_SOURCE: process.env.FIVE_E_BUNDLED_PDF_PACK_SOURCE || '' },
+      };
+      const create = process.platform === 'win32' ? createWindowsProjectPackage : createProjectPackage;
+      const save = process.platform === 'win32' ? saveWindowsProjectPackage : saveProjectPackage;
+      const pkg = await create({ json: payload.json, server: process.env.FIVE_E_PROJECT_WEB_URL || 'https://www.5e.ai.kr', development });
+      try {
+        await save(pkg.bundle, result.filePath);
+      } finally { await pkg.close(); }
+      return { kind: 'saved' };
+    }
     await fs.promises.writeFile(result.filePath, payload.json, "utf8");
     return { kind: "saved" };
   } catch {
@@ -1676,5 +1693,7 @@ registerPdfLibraryIpc({
   bundledPack: bundledPdfPack,
   downloadsPath: app.getPath("downloads"),
 });
-app.whenReady().then(() => { Menu.setApplicationMenu(null); createWindow(); });
+createProjectOpen({ app, ipcMain, getWindow: () => win });
+if (!app.requestSingleInstanceLock()) app.quit();
+else app.whenReady().then(() => { Menu.setApplicationMenu(null); createWindow(); });
 app.on("will-quit", stopAllServers);

@@ -25,6 +25,17 @@ test('dirty status ignores navigation and tracks file versus recovery persistenc
   f.markProjectStatus(f.state, f.captureProjectStatus(f.state), 'file');
   assert.equal(f.status.text(), '파일 저장 완료');
 });
+
+test('OS project replacement protects unsaved empty-page layout changes but permits an untouched startup', () => {
+  const f = fixture();
+  assert.equal(f.status.hasUnsavedWork(), false);
+  f.update(s => { s.pages[0].artboard = { w: 120, h: 80 }; });
+  assert.equal(f.status.hasUnsavedWork(), true);
+  f.markProjectStatus(f.state, f.captureProjectStatus(f.state), 'file');
+  assert.equal(f.status.hasUnsavedWork(), false);
+  f.update(s => { s.pages[0].name = '이름 변경'; });
+  assert.equal(f.status.hasUnsavedWork(), true);
+});
 test('async completion preserves later edits and ignores replaced documents', () => {
   const f = fixture();
   const token = f.captureProjectStatus(f.state);
@@ -45,13 +56,15 @@ function saveHarness(f, picker) {
   let downloads = 0;
   const source = fs.readFileSync('js/project-io.js', 'utf8')
     .replace(/^import\s+[\s\S]*?;\r?\n/gm, '').replace(/\bexport\s+/g, '');
+  const launcher = fs.readFileSync('js/project-launch.js', 'utf8')
+    .replace(/^import\s+[\s\S]*?;\r?\n/gm, '').replace(/\bexport\s+/g, '');
   const context = {
-    Blob, JSON, window: { showSaveFilePicker: picker },
+    Blob, JSON, navigator: { platform: 'Win32' }, window: { showSaveFilePicker: picker },
     URL: { createObjectURL: () => 'blob:test', revokeObjectURL() {} },
     document: { createElement: () => ({ click() { downloads++; } }), body: { appendChild() {}, removeChild() {} } },
     captureProjectStatus: f.captureProjectStatus, markProjectStatus: f.markProjectStatus,
   };
-  vm.runInNewContext(source + '\nglobalThis.save = saveProject;', context);
+  vm.runInNewContext(launcher + '\n' + source + '\nglobalThis.save = saveProject;', context);
   return { save: () => context.save(f.state), downloads: () => downloads };
 }
 test('cancelled file picker leaves status and document untouched', async () => {
