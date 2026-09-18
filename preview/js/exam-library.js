@@ -19,7 +19,7 @@ import { loadBundledDesktopPack } from "./pdf-library/desktop-pack.js?v=1.6.0-pr
 import { registerPdfReferencePicker } from "./pdf-library/reference-picker.js?v=1.6.0-preview-labeler-0917-1111";
 import { mergePreferredCatalogs } from "./pdf-library/catalog-merge.js?v=1.6.0-preview-labeler-0917-1111";
 import { createUnifiedLibraryProvider } from "./library/provider.js?v=1.6.0-preview-common-year-provider-0918-1316";
-import { createUnifiedLibraryUi, unifiedLibrarySourceMetadata, unifiedLibraryTransfer } from "./unified-library-ui.js?v=1.6.0-preview-runtime-bundle-0918-1356";
+import { createUnifiedLibraryUi, unifiedLibrarySourceMetadata, unifiedLibraryTransfer } from "./unified-library-ui.js?v=1.6.0-preview-common-shell-stage1-0919-0832";
 import { insertPartsAsset, loadPartsManifest, materializePartsAsset } from "./parts-library.js?v=1.6.0-preview-labeler-0917-1111";
 const MAX_RENDER = 60; // 그리드에 한 번에 그리는 카드 수 (초과분은 안내문으로 표시)
 const BUNDLED_EXAM_CATALOG_URL = "assets/exam-library/sample-catalog.json";
@@ -339,7 +339,7 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
       { configuredGoogleDriveGatewayUrl, createGoogleDriveConnection, PROVIDED_DRIVE_FOLDER_URL, driveFolderPack, parseGoogleDriveFolderUrl },
     ] = await Promise.all([
       import("./pdf-library/pack-store.js?v=1.6.0-preview-labeler-0917-1111"),
-      import("./pdf-library/pack-management.js?v=1.6.0-preview-labeler-0917-1111"),
+      import("./pdf-library/pack-management.js?v=1.6.0-preview-common-shell-stage1-0919-0832"),
       import("./pdf-library/remote-pack.js?v=1.6.0-preview-labeler-0917-1111"),
       import("./pdf-library/google-drive.js?v=1.6.0-preview-labeler-0917-1111"),
     ]);
@@ -373,7 +373,7 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
     packManagement = mount({
       host: pdfUi.getPackHost(),
       driveHost: pdfUi.getDriveHost(),
-      onProvidedStatus: (message) => unifiedUi?.setProvidedStatus(message),
+      onProvidedStatus: (message, error) => unifiedUi?.setProvidedStatus(message, error),
       store,
       googleDrive: {
         provided: !isDesktopLibrary,
@@ -429,6 +429,7 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
       }
     };
     packManagement.setProvidedRetry(connectProvided);
+    unifiedUi?.setProvidedRetry(connectProvided);
     if (isDesktopLibrary) {
       const bundled = await loadBundledDesktopPack();
       if (bundled) {

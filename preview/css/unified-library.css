@@ -385,19 +385,24 @@
 .unified-library-overlay .unilib-pdf-display[hidden] { display: none; }
 .unified-library-overlay .unilib-pdf-display button { min-height: var(--unilib-control-height); padding: 0 var(--unilib-space-3); border: 0; border-radius: var(--unilib-control-radius); background: transparent; color: var(--unilib-muted); cursor: pointer; }
 .unified-library-overlay .unilib-pdf-display button[aria-pressed="true"] { background: var(--unilib-accent); color: var(--unilib-selected-foreground); }
-.unified-library-overlay .unilib-help { margin: 0; padding-bottom: var(--unilib-space-3); color: var(--unilib-muted); font-size: var(--unilib-type-caption); word-break: keep-all; }
+.unified-library-overlay .unilib-help { position:relative; margin: 0; padding-bottom: var(--unilib-space-3); color: var(--unilib-muted); font-size: var(--unilib-type-caption); word-break: keep-all; }
 .unified-library-overlay .unilib-help summary { display: grid; width: var(--unilib-clear-size); height: var(--unilib-clear-size); box-sizing: border-box; place-items: center; padding: 0; border: var(--unilib-border-width) solid var(--unilib-border); border-radius: 50%; background: var(--unilib-input); color: var(--unilib-label); cursor: pointer; list-style: none; }
 .unified-library-overlay .unilib-help summary::-webkit-details-marker { display: none; }
 .unified-library-overlay .unilib-help summary::marker { content: ""; }
 .unified-library-overlay .unilib-help summary:hover { border-color: var(--unilib-accent); color: var(--unilib-text); }
 .unified-library-overlay .unilib-help summary:focus-visible { outline: var(--unilib-focus-outline-width) solid var(--unilib-focus); outline-offset: var(--unilib-focus-outline-offset); }
-.unified-library-overlay .unilib-help p { margin: var(--unilib-space-2) 0 0; max-width: var(--unilib-dialog-width); }
+.unified-library-overlay .unilib-help[open] { z-index:7; }
+.unified-library-overlay .unilib-help p { position:absolute; z-index:6; top:calc(100% + var(--unilib-space-2)); right:0; width:min(320px, 70vw); margin:0; padding:var(--unilib-space-3); border:var(--unilib-border-width) solid var(--unilib-border); border-radius:var(--unilib-panel-radius); background:var(--unilib-raised); box-shadow:var(--unilib-no-shadow); }
 
 .unified-library-overlay .unilib-summary { display: flex; align-items: center; justify-content: space-between; height: var(--unilib-search-height); box-sizing: border-box; overflow: hidden; gap: var(--unilib-space-4); padding: var(--unilib-space-1) var(--unilib-space-5); color: var(--unilib-muted); font-size: var(--unilib-type-caption); }
 .unified-library-overlay .unilib-summary strong { color: var(--unilib-text); font-weight: var(--unilib-font-weight-strong); }
 .unified-library-overlay .unilib-summary-back { min-height: var(--unilib-control-height); margin-inline-end: var(--unilib-space-3); padding: 0 var(--unilib-space-3); border: var(--unilib-border-width) solid var(--unilib-border); border-radius: var(--unilib-control-radius); background: var(--unilib-input); color: var(--unilib-label); cursor: pointer; }
 .unified-library-overlay .unilib-summary-back:hover { border-color: var(--unilib-accent); background: var(--unilib-raised); color: var(--unilib-text); }
 .unified-library-overlay .unilib-result-list { display: grid; gap: var(--unilib-space-2); margin: 0; padding: 0 var(--unilib-space-3) var(--unilib-space-6); list-style: none; }
+.unified-library-overlay .unilib-result-state { display:flex; align-items:center; gap:var(--unilib-space-3); margin:var(--unilib-space-3); padding:var(--unilib-space-3); border:var(--unilib-border-width) solid var(--unilib-border); border-radius:var(--unilib-panel-radius); color:var(--unilib-muted); background:var(--unilib-raised); }
+.unified-library-overlay .unilib-result-state[data-state="error"],
+.unified-library-overlay .unilib-provided-state.is-error { color:var(--unilib-status-error); }
+.unified-library-overlay .unilib-provided-state { display:flex; align-items:center; gap:var(--unilib-space-2); margin:0 0 var(--unilib-space-3); font-size:var(--unilib-type-caption); color:var(--unilib-muted); }
 .unified-library-overlay .unilib-selection-summary { display: flex; min-width: 0; height: var(--unilib-selection-tray-height); box-sizing: border-box; align-items: center; gap: var(--unilib-space-2); overflow: hidden; padding: var(--unilib-space-1) var(--unilib-space-5); border-block: var(--unilib-border-width) solid var(--unilib-border-muted); }
 .unified-library-overlay .unilib-selection-summary.is-empty { color: var(--unilib-muted); }
 .unified-library-overlay .unilib-selection-summary.is-empty > button { visibility: hidden; }

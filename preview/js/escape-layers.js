@@ -1,4 +1,4 @@
-const DIALOGS = 'dialog[open], [role="dialog"], [role="alertdialog"], [role="menu"], .modal-overlay, .tool-chooser';
+const DIALOGS = 'dialog[open], [role="dialog"], [role="alertdialog"], [role="menu"], .modal-overlay, .tool-chooser, details[open][data-unilib-help]';
 const callbacks = new WeakMap();
 const openers = new WeakMap();
 let installed = false;
@@ -16,6 +16,7 @@ function visible(element) {
 
 function closeAction(element) {
   if (callbacks.has(element)) return callbacks.get(element);
+  if (element.matches('details[open][data-unilib-help]')) return () => { element.open = false; };
   if (element.matches('dialog[open]')) return () => {
     if (typeof element.requestClose === 'function') element.requestClose();
     else if (element.dispatchEvent(new Event('cancel', { cancelable: true }))) element.close();

@@ -1,4 +1,4 @@
-import { registerEscapeLayer } from "./escape-layers.js?v=1.6.0-preview-labeler-0917-1111";
+import { registerEscapeLayer } from "./escape-layers.js?v=1.6.0-preview-common-shell-stage1-0919-0832";
 import { safeExternalSourceUrl } from "./library-import-policy.js?v=1.6.0-preview-labeler-0917-1111";
 import { queryHighlightTerms } from "./pdf-library/search.js?v=1.6.0-preview-common-year-login-0918-1302";
 import { chooseWorkbenchAssignment } from "./library/workbench-assignment.js?v=1.6.0-preview-runtime-bundle-0918-1356";
@@ -776,24 +776,23 @@ function buildShell() {
   overlay.innerHTML = `
     <section class="unilib" role="dialog" aria-modal="true" aria-labelledby="unilib-title">
       <header class="unilib-header">
-        <div class="unilib-brand"><h2 id="unilib-title">라이브러리</h2></div>
+        <div class="unilib-brand"><button type="button" class="unilib-icon-button unilib-header-panel-toggle" data-unilib-folders-open aria-label="검색 위치 열기">${ICONS.folder}</button><h2 id="unilib-title">라이브러리</h2><span data-unilib-location-summary hidden>검색 위치</span></div>
         <div class="unilib-header-actions">
+          <button type="button" class="unilib-icon-button unilib-header-panel-toggle" data-unilib-preview-toggle aria-pressed="true" aria-label="미리보기 열기">${ICONS.file}</button>
           <button type="button" class="unilib-icon-button" data-unilib-close aria-label="라이브러리 닫기">${ICONS.close}</button>
         </div>
       </header>
       <div class="unilib-shell">
         <aside class="unilib-pane unilib-folders" aria-label="검색 위치">
           <div class="unilib-pane-head"><h3>검색 위치</h3><button type="button" class="unilib-icon-button" data-unilib-pane-collapse aria-label="검색 위치 접기">${ICONS.chevron}</button><button type="button" class="unilib-icon-button unilib-mobile-only" data-unilib-folders-close aria-label="검색 위치 닫기">${ICONS.close}</button></div>
-          <div class="unilib-folder-scroll"><p>기본 제공 Drive와 개인 자료를 폴더별로 탐색합니다.</p><p data-unilib-provided-status role="status" hidden></p><button type="button" class="unilib-button unilib-drive-settings-open" data-unilib-drive-settings-open>Drive 자료 연결</button><button type="button" class="unilib-button" data-unilib-local-folder-add hidden>로컬 폴더 추가</button><p data-unilib-local-folder-guide hidden>로컬 폴더 연결은 설치형에서 사용할 수 있습니다. <a href="https://github.com/seungyeon980808-pixel/5E/releases/latest" target="_blank" rel="noopener noreferrer">설치형 다운로드</a></p><ul class="unilib-tree" data-unilib-tree></ul></div>
+          <div class="unilib-folder-scroll"><p>기본 제공 Drive와 개인 자료를 폴더별로 탐색합니다.</p><div class="unilib-provided-state" data-unilib-provided-status role="status" hidden><span data-unilib-provided-status-message></span><button type="button" class="unilib-button" data-unilib-provided-retry hidden>다시 시도</button></div><button type="button" class="unilib-button unilib-drive-settings-open" data-unilib-drive-settings-open>Drive 자료 연결</button><button type="button" class="unilib-button" data-unilib-local-folder-add hidden>로컬 폴더 추가</button><p data-unilib-local-folder-guide hidden>로컬 폴더 연결은 설치형에서 사용할 수 있습니다. <a href="https://github.com/seungyeon980808-pixel/5E/releases/latest" target="_blank" rel="noopener noreferrer">설치형 다운로드</a></p><ul class="unilib-tree" data-unilib-tree></ul></div>
         </aside>
         <section class="unilib-pane unilib-results" aria-label="라이브러리 검색 결과">
           <div class="unilib-search-tools library-toolbar">
             <div class="unilib-search-row library-search-row">
-              <button type="button" class="unilib-location-summary" data-unilib-folders-open aria-label="검색 위치 열기">${ICONS.folder}<span data-unilib-location-summary>검색 위치</span></button>
               <label class="unilib-search library-search">${ICONS.search}<input data-unilib-query type="search" autocomplete="off" spellcheck="false" aria-label="라이브러리 통합 검색" placeholder="문항 코드, PDF 본문, 이미지 파일명 검색"><button type="button" data-unilib-clear aria-label="검색어 지우기">×</button></label>
               <strong class="unilib-result-count library-result-count" data-unilib-count>0개</strong>
               <details class="unilib-help library-help" data-unilib-help><summary aria-label="검색 도움말">?</summary><p>여러 단어는 같은 페이지에 모두 있는 자료를 찾습니다. 결과 종류는 하나씩 선택하며, 전체는 문항·이미지·PDF를 모두 포함합니다.</p></details>
-              <button type="button" class="unilib-icon-button" data-unilib-preview-toggle aria-pressed="true" aria-label="미리보기 열기">${ICONS.file}</button>
             </div>
             <div class="unilib-filter-row library-filter-row">
               <div class="unilib-tabs library-kind-toggle" role="group" aria-label="결과 종류">
@@ -811,7 +810,7 @@ function buildShell() {
             </div>
           </div>
           <div class="unilib-selection-summary library-selected-tray is-empty" data-unilib-selected-tray aria-label="선택한 자료"><strong data-unilib-selected-count>선택 0개</strong><span data-unilib-selected-items></span><button type="button" data-unilib-selected-clear disabled>모두 해제</button></div>
-          <div class="unilib-result-scroll"><ul class="unilib-result-list library-card-grid" data-unilib-results role="listbox"></ul></div>
+          <div class="unilib-result-scroll"><div class="unilib-result-state" data-unilib-result-state role="status" aria-live="polite" hidden><span data-unilib-result-state-message></span><button type="button" class="unilib-button" data-unilib-result-retry hidden>다시 시도</button></div><ul class="unilib-result-list library-card-grid" data-unilib-results role="listbox"></ul></div>
         </section>
         <aside class="unilib-pane unilib-preview library-reader" data-unilib-preview aria-label="선택 자료 미리보기">
           <div class="unilib-pane-head"><div><h3 data-unilib-preview-title>미리보기</h3><p data-unilib-preview-kind>자료를 선택하세요</p><span class="unilib-example-note" data-unilib-preview-example hidden>목업 · 예시 자료</span></div></div>
@@ -854,8 +853,12 @@ function createPartOptions(host, onChange) {
 export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openObjectify, openAi, openIndependentReferences, pdfUi, pdfDetailsElement, onImportedImages, onDesktopSnapshot, desktopLibrary = globalThis.fiveEDesktop?.pdfLibrary, storage = globalThis.localStorage }) {
   const overlay = buildShell();
   const root = overlay.querySelector(".unilib");
+  const help = overlay.querySelector("[data-unilib-help]");
   const tree = overlay.querySelector("[data-unilib-tree]");
   const localFolderAdd = overlay.querySelector("[data-unilib-local-folder-add]");
+  document.addEventListener("pointerdown", (event) => {
+    if (help.open && !help.contains(event.target)) help.open = false;
+  }, true);
   localFolderAdd.hidden = Boolean(desktopLibrary);
   localFolderAdd.addEventListener("click", () => { overlay.querySelector("[data-unilib-local-folder-guide]").hidden = false; });
   const list = overlay.querySelector("[data-unilib-results]");
@@ -908,6 +911,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   let actionBusy = false;
   let actionRevision = 0;
   let draftCrop = null;
+  let providedRetry = null;
   let cropGesture = null;
   let cropSession = null;
   let cropPreviewEpoch = 0;
@@ -972,6 +976,21 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     const status = overlay.querySelector("[data-unilib-status]");
     status.textContent = message;
     status.classList.toggle("is-error", error);
+  };
+  const setResultState = (state, message = "") => {
+    const host = overlay.querySelector("[data-unilib-result-state]");
+    host.hidden = state === "ready";
+    host.dataset.state = state;
+    host.querySelector("[data-unilib-result-state-message]").textContent = message;
+    host.querySelector("[data-unilib-result-retry]").hidden = state !== "error";
+    list.setAttribute("aria-busy", String(state === "loading"));
+  };
+  const setProvidedStatus = (message, error = false) => {
+    const host = overlay.querySelector("[data-unilib-provided-status]");
+    host.hidden = false;
+    host.classList.toggle("is-error", error);
+    host.querySelector("[data-unilib-provided-status-message]").textContent = message;
+    host.querySelector("[data-unilib-provided-retry]").hidden = !error || typeof providedRetry !== "function";
   };
   const followBackgroundIndexing = (snapshot) => {
     if (!snapshot?.backgroundIndexing || typeof snapshot.backgroundIndexing.then !== "function") return;
@@ -1114,16 +1133,18 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     thumbnailQueue = Promise.resolve();
     thumbnailObserver?.disconnect();
     const requestId = `unilib-${++requestSequence}`;
-    const activeProvider = await provider();
-    if (!enabledSources) await renderSources();
-    if (ownEpoch !== searchEpoch || signal.aborted || overlay.hidden) return;
-    const queryText = query.value.trim();
-    const pageDisplayActive = pdfDisplayMode === "page" && activeTypes.length === 1 && activeTypes[0] === "pdf";
-    const filters = Object.fromEntries(Object.entries(examFilters).filter(([, value]) => value !== "" && value != null));
-    const options = { query: queryText, sourceIds: [...enabledSources], filters, limit: 500, requestId, signal };
-    const pageInventoryOptions = { query: queryText, sourceIds: [...enabledSources], filters, requestId, signal };
+    setResultState("loading", "검색 결과를 불러오는 중…");
+    overlay.querySelector("[data-unilib-count]").textContent = "불러오는 중";
     setStatus("라이브러리를 검색하는 중…");
     try {
+      const activeProvider = await provider();
+      if (!enabledSources) await renderSources();
+      if (ownEpoch !== searchEpoch || signal.aborted || overlay.hidden) return;
+      const queryText = query.value.trim();
+      const pageDisplayActive = pdfDisplayMode === "page" && activeTypes.length === 1 && activeTypes[0] === "pdf";
+      const filters = Object.fromEntries(Object.entries(examFilters).filter(([, value]) => value !== "" && value != null));
+      const options = { query: queryText, sourceIds: [...enabledSources], filters, limit: 500, requestId, signal };
+      const pageInventoryOptions = { query: queryText, sourceIds: [...enabledSources], filters, requestId, signal };
       const kinds = [...(activeTypes.includes("question") ? ["crop"] : []), ...(activeTypes.includes("image") ? ["image"] : [])];
       const regularPromise = kinds.length
         ? (typeof activeProvider.searchAsync === "function" ? activeProvider.searchAsync({ ...options, kinds, limit: 60 }) : activeProvider.search({ ...options, kinds, limit: 60 }))
@@ -1145,11 +1166,16 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       results = Array.isArray(found) ? found : [];
       selectedId = reconcileUnifiedSelection(selectedId, results);
       renderResults();
+      setResultState(results.length ? "ready" : "empty", results.length ? "" : "검색 결과가 없습니다.");
       const pending = pendingIndexCount ? ` · 내 PDF ${pendingIndexCount}개 색인 중` : "";
       setStatus(results.length ? `${results.length}개 결과${pending}` : pendingIndexCount ? `내 PDF ${pendingIndexCount}개를 색인하는 중입니다.` : "검색 결과가 없습니다.");
       void renderPreview();
     } catch (error) {
-      if (error?.name !== "AbortError" && ownEpoch === searchEpoch) setStatus(`검색 실패: ${error instanceof Error ? error.message : error}`, true);
+      if (error?.name !== "AbortError" && ownEpoch === searchEpoch) {
+        const message = `검색 실패: ${error instanceof Error ? error.message : error}`;
+        setResultState("error", message);
+        setStatus(message, true);
+      }
     }
   }
 
@@ -1930,6 +1956,8 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     }
   });
   overlay.querySelector("[data-unilib-preview-toggle]").addEventListener("click", () => root.classList.toggle("preview-open"));
+  overlay.querySelector("[data-unilib-result-retry]").addEventListener("click", () => void runSearch());
+  overlay.querySelector("[data-unilib-provided-retry]").addEventListener("click", () => { if (typeof providedRetry === "function") void providedRetry(); });
   overlay.querySelector("[data-unilib-scrim]").addEventListener("click", closeDrawers);
   overlay.querySelector("[data-unilib-close]").addEventListener("click", close);
   overlay.addEventListener("mousedown", (event) => { if (event.target === overlay) close(); });
@@ -2855,7 +2883,12 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   registerEscapeLayer(driveSettings, closeDriveSettings);
   registerEscapeLayer(cropDialog, () => { lastInteractionWasKeyboard = true; cancelSpacePress(); closeCrop(); });
   return Object.freeze({
-    setProvidedStatus(message) { const status = overlay.querySelector("[data-unilib-provided-status]"); status.hidden = false; status.textContent = message; },
+    setProvidedStatus(message, error = false) { setProvidedStatus(message, error); },
+    setProvidedRetry(callback) {
+      providedRetry = typeof callback === "function" ? callback : null;
+      const host = overlay.querySelector("[data-unilib-provided-status]");
+      if (host.classList.contains("is-error")) host.querySelector("[data-unilib-provided-retry]").hidden = !providedRetry;
+    },
     open, close, refresh: async () => { await renderSources(); await runSearch(); }, element: overlay,
     async beginReferenceSelection(consumer, trigger) {
       referenceConsumer = consumer;
