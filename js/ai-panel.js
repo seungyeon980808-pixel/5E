@@ -444,8 +444,8 @@ function findNumber(value, keys) {
   return null;
 }
 
-export function initAiPanel(state) {
-  return createTaskWorkspaces(state, initAiTaskPanel, setupAiWorkbench);
+export function initAiPanel(state, options) {
+  return createTaskWorkspaces(state, initAiTaskPanel, setupAiWorkbench, options);
 }
 
 export function createUnifiedAiSourceConsumer({ addReferencesAsTasks, setStatus }) {

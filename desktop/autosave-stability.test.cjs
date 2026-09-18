@@ -123,7 +123,7 @@ function snapshot(label) {
   return { pages: [{ objects: [{ id: label, type: "rect" }] }] };
 }
 
-function loadAutosave({ clock, indexedDB, document, alerts }) {
+function loadAutosave({ clock, indexedDB, document, alerts, confirm = async () => false, applied = [] }) {
   let source = fs.readFileSync(path.join(root, "js/autosave.js"), "utf8");
   source = source.replace(/^import\s+[^;]+;\r?\n/gm, "").replace(/\bexport\s+/g, "");
   source += "\nglobalThis.__testExports = { initAutosave };";
@@ -143,8 +143,8 @@ function loadAutosave({ clock, indexedDB, document, alerts }) {
     markProjectStatus() {},
     serialize: (state) => structuredClone(state.snapshot),
     migrate: (value) => value,
-    applyLoaded() {},
-    showConfirm: async () => false,
+    applyLoaded: (_state, value) => applied.push(value),
+    showConfirm: confirm,
     showAlert: (message, options) => { alerts.push({ message, options }); return Promise.resolve(); },
   };
   sandbox.globalThis = sandbox;
@@ -310,4 +310,36 @@ test("unavailable IndexedDB is visible while the editor remains usable", async (
   const state = { get: () => ({}), subscribe() { throw new Error("autosave should not subscribe"); } };
   await autosave.initAutosave(state);
   assert.equal(alerts.length, 1);
+});
+
+
+test('recovery choice waits for confirmation and retains prior snapshots for fresh start', async () => {
+  const clock = new FakeClock();
+  const indexedDB = new FakeIndexedDB();
+  const document = new FakeDocument();
+  const saved = {id:1,ts:1,data:snapshot('saved')};
+  indexedDB.records.push(saved);
+  let choose;
+  const applied = [];
+  const autosave = loadAutosave({clock,indexedDB,document,alerts:[],applied,
+    confirm: () => new Promise(resolve => { choose = resolve; })});
+  let completed = false;
+  const initializing = autosave.initAutosave({subscribe(){}}).then(choice => {completed=true;return choice;});
+  await flush();
+  assert.equal(completed,false,'AI initialization must await the unresolved recovery choice');
+  choose(false);
+  assert.equal(await initializing,'fresh');
+  assert.equal(applied.length,0);
+  assert.equal(indexedDB.records[0],saved,'fresh start must preserve prior stored work');
+});
+
+test('restore choice applies existing canvas and allows matching AI workspace recovery', async () => {
+  const clock = new FakeClock();
+  const indexedDB = new FakeIndexedDB();
+  const document = new FakeDocument();
+  indexedDB.records.push({id:1,ts:1,data:snapshot('saved')});
+  const applied = [];
+  const autosave = loadAutosave({clock,indexedDB,document,alerts:[],applied,confirm:async()=>true});
+  assert.equal(await autosave.initAutosave({subscribe(){}}),'restore');
+  assert.equal(applied[0].pages[0].objects[0].id,'saved');
 });

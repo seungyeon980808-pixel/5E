@@ -17,9 +17,10 @@ class Element {
   focus(){globalThis.document.activeElement=this;}
 }
 const scope='11111111-1111-1111-1111-111111111111';
-function fixture({saved,delay=false,failStorage=false}={}) {
+function fixture({saved,delay=false,failStorage=false,freshStart=false,primary}={}) {
   const panel=new Element();panel.append(new Element('list'));panel.parentElement=new Element();
   const storage=new Map([['5e.aiParallelWorkspaces.v1',JSON.stringify([scope])],['5e.aiActiveTask.v1',JSON.stringify(saved||null)]]);
+  if(primary)storage.set('5e.aiPrimaryWorkspace.v1',JSON.stringify(primary));
   const alerts=[];const controllers=[];const release=[];const openings=[];const deleted=[];
   globalThis.document={getElementById:()=>panel,createElement:kind=>new Element(kind),activeElement:null};
   globalThis.localStorage={getItem:k=>storage.get(k),setItem:(k,v)=>{if(failStorage)throw Error('quota');storage.set(k,v);}};
@@ -30,7 +31,7 @@ function fixture({saved,delay=false,failStorage=false}={}) {
     function render(){const tabs=ids.map(id=>{const tab=new Element('button',id);tab.title=`${id} · 앱 삭제: Cmd/Ctrl+W · 웹 삭제: Alt+W`;tab.append(new Element('span',id));const close=new Element('.ai-task-delete','×');close.onclick=event=>{event.stopPropagation();deleted.push(id);};tab.append(close);tab.setAttribute('aria-selected',String(id===selected));tab.onclick=()=>{selected=id;render();};return tab;});options.navigationChanged(tabs);}
     const c={ready:delay?new Promise(r=>release.push(r)):Promise.resolve(),ownsTask:id=>ids.includes(id),activeTask:()=>selected,selectTask:id=>{selected=id;render();},open:(openOptions={})=>openings.push({scope:c.options.clientScope,options:openOptions}),close:()=>{},options};
     controllers.push(c);render();return c;
-  },()=>{});
+  },()=>{},{freshStart});
   return {manager,panel,controllers,storage,release,alerts,openings,deleted};
 }
 test('all workspaces expose the same task list and persist selection while another is busy',async()=>{
@@ -118,4 +119,24 @@ test('Given more than ten PDF crops assigned together, when workspaces are prepa
  const references=Array.from({length:11},(_,index)=>({dataUrl:'data:image/png;base64,AAAA',name:`crop-${index}`}));
  await assert.rejects(f.manager.openIndependentReferences({references,placement:'together'}),/최대 10개/);
  assert.equal(f.openings.length,0);
+});
+
+
+test('fresh start creates an isolated workspace without restoring legacy or registered tasks',async()=>{
+ const f=fixture({freshStart:true,saved:{scope,taskId:scope+'b'}});await f.manager.open();
+ assert.equal(f.controllers.length,1);
+ const primary=f.controllers[0].options.clientScope;
+ assert.match(primary,/^[a-f0-9-]{36}$/);
+ assert.notEqual(primary,scope);
+ assert.equal(JSON.parse(f.storage.get('5e.aiPrimaryWorkspace.v1')),primary);
+ assert.deepEqual(JSON.parse(f.storage.get('5e.aiParallelWorkspaces.v1')),[primary]);
+ assert.equal(f.deleted.length,0,'starting fresh must not delete stored work');
+});
+
+test('subsequent recovery uses the fresh primary and never reattaches the legacy database',async()=>{
+ const primary='22222222-2222-2222-2222-222222222222';
+ const f=fixture({primary,saved:{scope:primary,taskId:primary+'b'}});await f.manager.open();
+ assert.equal(f.controllers[0].options.clientScope,primary);
+ assert.equal(f.controllers[0].activeTask(),primary+'b');
+ assert.equal(f.controllers.some(c=>c.options.clientScope===''),false);
 });

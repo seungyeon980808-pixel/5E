@@ -288,8 +288,8 @@ initPages(state);
 
 /* ----- autosave: 2.5초 디바운스로 IndexedDB에 자동 저장 + 부팅 시 크래시 복구 -----
  * pages[] 채운 뒤에 초기화해야 첫 저장부터 유효한 다중 페이지 스냅샷이 된다. */
-initAutosave(state);
-const aiPanel = initAiPanel(state);
+const recoveryChoice = await initAutosave(state);
+const aiPanel = initAiPanel(state, { freshStart: recoveryChoice === "fresh" });
 initDesktopProjectCloseGuard(state, () => aiPanel?.checkpointForClose());
 const aiEntryButton = document.getElementById("ai-image-install-open");
 if (aiEntryButton) {
