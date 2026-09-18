@@ -875,3 +875,18 @@ test('shared Drive subject-first filenames supply exam filter metadata strictly'
     assert.equal(deriveExamMetadata({ source: { displayName: filename } }), null, filename);
   }
 });
+
+
+test("async question browsing preserves local PDF results without a keyword", async () => {
+  const provider = createUnifiedLibraryProvider({ pdfDocuments: [pdfDocument()], searchPdf: async () => [] });
+  assert.equal((await provider.searchAsync({ query: "", kinds: ["crop"], filters: { startYear: 2024, endYear: 2026 } })).length, 1);
+});
+
+test("async keyword filters use filename metadata before worker result limiting", async () => {
+  const document = { ...pdfDocument(), metadata: {}, source: { ...pdfSource, displayName: "p1_2026_06.pdf" } };
+  const entry = { documentId: document.id, pageNumber: 1, itemId: document.pages[0].items[0].id, itemNumber: 1, text: "운동량", normalized: "운동량", words: [], source: document.pages[0].items[0].source };
+  const index = { schemaVersion: "pdf-search-index-v1", entries: [entry] };
+  const provider = createUnifiedLibraryProvider({ pdfDocuments: [document], pdfSearchIndex: index, searchPdf: async options => searchIndex(index, options) });
+  assert.equal((await provider.searchAsync({ query: "운동량", kinds: ["crop"], filters: { subject: "p1", startYear: 2026, endYear: 2026, administration: "06" } })).length, 1);
+  assert.equal((await provider.searchAsync({ query: "운동량", kinds: ["crop"], filters: { subject: "e1" } })).length, 0);
+});
