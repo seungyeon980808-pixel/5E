@@ -378,9 +378,9 @@
 .unified-library-overlay [data-unilib-clear]:hover { background: var(--unilib-raised); color: var(--unilib-text); }
 
 .unified-library-overlay .unilib-tabs { display: flex; align-items: center; gap: var(--unilib-space-1); overflow-x: auto; }
-.unified-library-overlay .unilib-tabs button { position: relative; min-height: var(--unilib-control-height); padding: 0 var(--unilib-space-3); border: 0; border-radius: var(--unilib-control-radius); background: transparent; color: var(--unilib-muted); cursor: pointer; white-space: nowrap; }
-.unified-library-overlay .unilib-tabs button:hover { color: var(--unilib-text); }
-.unified-library-overlay .unilib-tabs button[aria-pressed="true"] { background: var(--unilib-accent); color: var(--unilib-selected-foreground); font-weight: var(--unilib-font-weight-strong); }
+.unified-library-overlay .unilib-tabs button { position: relative; min-height: 28px; padding: 0 var(--unilib-space-3); border: var(--unilib-border-width) solid var(--unilib-border); border-radius: var(--unilib-control-radius); background: var(--unilib-panel); color: var(--unilib-muted); cursor: pointer; white-space: nowrap; }
+.unified-library-overlay .unilib-tabs button:hover { border-color: var(--unilib-accent); color: var(--unilib-text); background: var(--unilib-raised); }
+.unified-library-overlay .unilib-tabs button[aria-pressed="true"] { border-color: var(--unilib-accent); background: var(--unilib-accent); color: var(--unilib-selected-foreground); }
 .unified-library-overlay .unilib-pdf-display { display: flex; width: max-content; align-items: center; gap: var(--unilib-space-1); padding: 0; border: 0; border-radius: 0; background: transparent; }
 .unified-library-overlay .unilib-pdf-display[hidden] { display: none; }
 .unified-library-overlay .unilib-pdf-display button { min-height: var(--unilib-control-height); padding: 0 var(--unilib-space-3); border: 0; border-radius: var(--unilib-control-radius); background: transparent; color: var(--unilib-muted); cursor: pointer; }
