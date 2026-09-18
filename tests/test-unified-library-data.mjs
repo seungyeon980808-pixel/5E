@@ -49,6 +49,30 @@ test("compact exam codes are strict and preserve item/page ambiguity", () => {
   }
 });
 
+test("question results honor inclusive academic-year range filters", () => {
+  const documents = [2024, 2025, 2026, 2027].map((academicYear) => ({
+    ...pdfDocument(`year-${academicYear}`),
+    title: `${academicYear}학년도 물리학 I`,
+    source: { ...pdfSource, locator: `verified-pack/documents/p1${String(academicYear).slice(2)}06.pdf`, displayName: `p1${String(academicYear).slice(2)}06.pdf` },
+    metadata: { academicYear, administration: "june", subject: "phy1" },
+  }));
+  const provider = createUnifiedLibraryProvider({ pdfDocuments: documents });
+
+  const results = provider.search({
+    query: "", kinds: ["crop"],
+    filters: { startYear: 2025, endYear: 2026 },
+  });
+
+  assert.deepEqual(results.map((result) => result.metadata.academicYear), [2025, 2026]);
+
+  const unbounded = provider.search({
+    query: "", kinds: ["crop"],
+    filters: { startYear: null, endYear: null },
+  });
+
+  assert.deepEqual(unbounded.map((result) => result.metadata.academicYear), [2024, 2025, 2026, 2027]);
+});
+
 test("lazy runtime figures become canonical for subsequently created action providers", async () => {
   const document = pdfDocument();
   const initial = createUnifiedLibraryProvider({ pdfDocuments: [document] }).search({ query: "p1260601" })[0];

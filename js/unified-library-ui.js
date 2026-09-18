@@ -160,7 +160,7 @@ export function toggleLibraryType(types, toggled) {
 }
 
 export function normalizeYearRange(start, end, availableYears) {
-  const years = [...new Set((availableYears || []).map(Number).filter(Number.isFinite))].sort((a, b) => a - b);
+  const years = [...new Set((availableYears || []).map(Number).filter((year) => Number.isInteger(year) && year >= 2000 && year <= 2099))].sort((a, b) => a - b);
   if (!years.length || (start === "" && end === "")) return { start: null, end: null };
   const minimum = years[0];
   const maximum = years.at(-1);
