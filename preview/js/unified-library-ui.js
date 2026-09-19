@@ -62,6 +62,8 @@ const ICONS = Object.freeze({
   folder: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6.5h7l2 2h11v10H3z"/></svg>',
   search: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/></svg>',
   file: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 2h10l4 4v16H5zM14 2v5h5"/></svg>',
+  panelLeft: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 3.5h14v13H3zM7 3.5v13"/></svg>',
+  panelRight: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 3.5h14v13H3zM13 3.5v13"/></svg>',
   chevron: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>',
 });
 
@@ -776,15 +778,15 @@ function buildShell() {
   overlay.innerHTML = `
     <section class="unilib" role="dialog" aria-modal="true" aria-labelledby="unilib-title">
       <header class="unilib-header">
-        <div class="unilib-brand"><button type="button" class="unilib-icon-button unilib-header-panel-toggle" data-unilib-folders-open aria-label="검색 위치 열기">${ICONS.folder}</button><h2 id="unilib-title">라이브러리</h2><span data-unilib-location-summary hidden>검색 위치</span></div>
+        <div class="unilib-brand"><button type="button" class="unilib-icon-button unilib-header-panel-toggle" data-unilib-folders-open aria-expanded="true" aria-label="검색 위치 접기">${ICONS.panelLeft}</button><h2 id="unilib-title">라이브러리</h2><span data-unilib-location-summary hidden>검색 위치</span></div>
         <div class="unilib-header-actions">
-          <button type="button" class="unilib-icon-button unilib-header-panel-toggle" data-unilib-preview-toggle aria-pressed="true" aria-label="미리보기 열기">${ICONS.file}</button>
+          <button type="button" class="unilib-icon-button unilib-header-panel-toggle" data-unilib-preview-toggle aria-pressed="true" aria-label="미리보기 열기">${ICONS.panelRight}</button>
           <button type="button" class="unilib-icon-button" data-unilib-close aria-label="라이브러리 닫기">${ICONS.close}</button>
         </div>
       </header>
       <div class="unilib-shell">
         <aside class="unilib-pane unilib-folders" aria-label="검색 위치">
-          <div class="unilib-pane-head"><h3>검색 위치</h3><button type="button" class="unilib-icon-button" data-unilib-pane-collapse aria-label="검색 위치 접기">${ICONS.chevron}</button><button type="button" class="unilib-icon-button unilib-mobile-only" data-unilib-folders-close aria-label="검색 위치 닫기">${ICONS.close}</button></div>
+          <div class="unilib-pane-head"><h3>검색 위치</h3><button type="button" class="unilib-icon-button unilib-mobile-only" data-unilib-folders-close aria-label="검색 위치 닫기">${ICONS.close}</button></div>
           <div class="unilib-folder-scroll"><p>기본 제공 Drive와 개인 자료를 폴더별로 탐색합니다.</p><div class="unilib-provided-state" data-unilib-provided-status role="status" hidden><span data-unilib-provided-status-message></span><button type="button" class="unilib-button" data-unilib-provided-retry hidden>다시 시도</button></div><button type="button" class="unilib-button unilib-drive-settings-open" data-unilib-drive-settings-open>Drive 자료 연결</button><button type="button" class="unilib-button" data-unilib-local-folder-add hidden>로컬 폴더 추가</button><p data-unilib-local-folder-guide hidden>로컬 폴더 연결은 설치형에서 사용할 수 있습니다. <a href="https://github.com/seungyeon980808-pixel/5E/releases/latest" target="_blank" rel="noopener noreferrer">설치형 다운로드</a></p><ul class="unilib-tree" data-unilib-tree></ul></div>
         </aside>
         <section class="unilib-pane unilib-results" aria-label="라이브러리 검색 결과">
@@ -887,6 +889,19 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   const expandedSources = loadExpandedSources(storage);
   let treeExpansionInitialized = (() => { try { return storage.getItem(TREE_STORAGE_KEY) !== null; } catch { return false; } })();
   let searchPaneOpen = loadPaneOpen(storage);
+  const foldersToggle = overlay.querySelector("[data-unilib-folders-open]");
+  const setSearchPaneOpen = (open) => {
+    searchPaneOpen = open;
+    root.classList.toggle("folders-collapsed", !open);
+    foldersToggle.setAttribute("aria-expanded", String(open));
+    foldersToggle.setAttribute("aria-label", `검색 위치 ${open ? "접기" : "펼치기"}`);
+    try { storage.setItem(PANE_STORAGE_KEY, String(open)); } catch {}
+  };
+  const setMobileFoldersOpen = (open) => {
+    root.classList.toggle("folders-open", open);
+    foldersToggle.setAttribute("aria-expanded", String(open));
+    foldersToggle.setAttribute("aria-label", `검색 위치 ${open ? "닫기" : "열기"}`);
+  };
   let activeRepresentation = "full";
   let activeFigureRepresentation = "figure:0";
   let sourcesInitialized = false;
@@ -1119,8 +1134,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     try { storage.setItem(TREE_STORAGE_KEY, JSON.stringify([...expandedSources])); } catch {}
     const selectedCount = enabledSources.size;
     overlay.querySelector("[data-unilib-location-summary]").textContent = selectedCount ? `검색 위치 ${selectedCount}곳` : "검색 위치 없음";
-    root.classList.toggle("folders-collapsed", !searchPaneOpen);
-    overlay.querySelector("[data-unilib-pane-collapse]").setAttribute("aria-expanded", String(searchPaneOpen));
+    setSearchPaneOpen(searchPaneOpen);
   }
 
   async function runSearch() {
@@ -1658,7 +1672,10 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     await renderSources();
   }
 
-  function closeDrawers() { root.classList.remove("folders-open", "preview-open"); }
+  function closeDrawers() {
+    root.classList.remove("folders-open", "preview-open");
+    if (window.matchMedia("(max-width: 720px)").matches) setMobileFoldersOpen(false);
+  }
   function closeExpandedReader() {
     root.classList.remove("is-reader-expanded");
     overlay.querySelector("[data-unilib-preview]").classList.remove("library-reader--expanded");
@@ -1906,21 +1923,12 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     overlay.querySelector("[data-unilib-source-meta]").textContent = resultSourceText(pdfFilePageResult(result, pageNumber));
     paintContinuousWindow(session, result, pageNumber);
   }, { passive: true });
-  overlay.querySelector("[data-unilib-folders-open]").addEventListener("click", () => {
-    if (window.matchMedia("(max-width: 720px)").matches) root.classList.add("folders-open");
-    else {
-      searchPaneOpen = true;
-      root.classList.remove("folders-collapsed");
-      overlay.querySelector("[data-unilib-pane-collapse]").setAttribute("aria-expanded", "true");
-      try { storage.setItem(PANE_STORAGE_KEY, "true"); } catch {}
+  foldersToggle.addEventListener("click", () => {
+    if (window.matchMedia("(max-width: 720px)").matches) {
+      setMobileFoldersOpen(!root.classList.contains("folders-open"));
+      return;
     }
-  });
-  overlay.querySelector("[data-unilib-pane-collapse]").addEventListener("click", () => {
-    if (window.matchMedia("(max-width: 767px)").matches) { closeDrawers(); return; }
-    searchPaneOpen = false;
-    root.classList.add("folders-collapsed");
-    overlay.querySelector("[data-unilib-pane-collapse]").setAttribute("aria-expanded", "false");
-    try { storage.setItem(PANE_STORAGE_KEY, "false"); } catch {}
+    setSearchPaneOpen(!searchPaneOpen);
   });
   overlay.querySelector("[data-unilib-folders-close]").addEventListener("click", closeDrawers);
   const setDriveSettingsOpen = (open) => {

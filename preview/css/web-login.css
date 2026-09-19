@@ -1,6 +1,8 @@
 .web-account-status { display:inline-flex; align-items:center; gap:8px; height:32px; white-space:nowrap; font-size:12px; }
 .panel-utility-bar-right .web-account-status { width:auto; min-width:0; max-width:160px; padding:4px 7px; flex:1 1 auto; }
+.app-shell-header .web-account-status { width:auto; min-width:0; max-width:160px; padding:4px 7px; flex:0 1 auto; }
 .panel-utility-bar-right .web-account-status [data-account-label] { overflow:hidden; text-overflow:ellipsis; }
+.app-shell-header .web-account-status [data-account-label] { overflow:hidden; text-overflow:ellipsis; }
 .web-account-status[data-state="connected"] { cursor:default; }
 @container inspector-panel (max-width:239px) {
   .panel-utility-bar-right .web-account-status { max-width:none; padding-inline:6px; gap:5px; justify-content:center; }

@@ -22,7 +22,6 @@ function panelIcon(side) {
 
 function setAccessibleState(layout, side, expanded) {
   const { panel, button, name, originalRole, originalAriaModal } = layout[side];
-  const internalButton = panel.querySelector(`[data-panel-internal-toggle="${side}"]`);
   if (!expanded && panel.contains(document.activeElement)) button.focus();
   panel.classList.toggle('is-open', narrow.matches && expanded);
   if (narrow.matches && expanded) {
@@ -37,11 +36,33 @@ function setAccessibleState(layout, side, expanded) {
   button.setAttribute('aria-expanded', String(expanded));
   button.setAttribute('aria-label', `${name} 패널 ${expanded ? '접기' : '펼치기'}`);
   button.title = `${name} 패널 ${expanded ? '접기' : '펼치기'}`;
-  if (internalButton) {
-    internalButton.setAttribute('aria-expanded', String(expanded));
-    internalButton.setAttribute('aria-label', `${name} 패널 접기`);
-    internalButton.title = `${name} 패널 접기`;
+}
+
+function moveEditorHeader(root, toolbar) {
+  let header = root.querySelector('.app-shell-header');
+  if (!header) {
+    header = document.createElement('header');
+    header.className = 'app-shell-header';
+    root.prepend(header);
   }
+  header.append(toolbar);
+
+  const separator = toolbar.querySelector('.tb-sep');
+  for (const id of ['undo-btn', 'redo-btn']) {
+    const button = root.querySelector(`#${id}`);
+    if (button && separator) toolbar.insertBefore(button, separator);
+  }
+  const controls = toolbar.querySelector('.canvas-global-controls');
+  if (controls) {
+    for (const id of ['fullscreen-toggle', 'theme-toggle']) {
+      const button = root.querySelector(`#${id}`);
+      if (button) controls.insertBefore(button, controls.firstChild);
+    }
+  }
+  root.querySelectorAll('[data-panel-internal-toggle]').forEach(button => button.remove());
+  root.querySelectorAll('#panel-left > .panel-utility-bar, #panel-right > .panel-utility-bar').forEach(utility => {
+    if (!utility.childElementCount) utility.remove();
+  });
 }
 
 function drawerFocusables(layout, side) {
@@ -94,6 +115,7 @@ function setup(root, kind) {
     : [root.querySelector('.ai-task-rail'), root.querySelector('.ai-conversation')];
   const toolbar = root.querySelector(kind === 'editor' ? '.canvas-toolbar' : '.ai-head');
   if (!panels.every(Boolean) || !toolbar) return;
+  if (kind === 'editor') moveEditorHeader(root, toolbar);
   root.dataset.panelLayout = kind;
   const group = toolbar.querySelector('.panel-shell-toggles') || document.createElement('div');
   if (!group.parentElement) {
@@ -122,9 +144,7 @@ function setup(root, kind) {
       || (kind === 'editor' ? document.getElementById(`drawer-${side}-toggle`) : null)
       || document.createElement('button');
     button.type = 'button';
-    button.className = kind === 'editor'
-      ? 'panel-visibility-toggle panel-edge-toggle'
-      : 'panel-visibility-toggle';
+    button.className = 'panel-visibility-toggle';
     button.dataset.panelToggle = side;
     button.setAttribute('aria-controls', panel.id);
     const label = document.createElement('span');
@@ -132,17 +152,6 @@ function setup(root, kind) {
     label.textContent = name;
     button.replaceChildren(panelIcon(side), label);
     group.append(button);
-    if (kind === 'image') {
-      const dock = panel.querySelector(`[data-panel-internal-toggle="${side}"]`) || document.createElement('button');
-      dock.type = 'button';
-      dock.className = 'panel-dock-toggle';
-      dock.dataset.panelInternalToggle = side;
-      dock.setAttribute('aria-controls', panel.id);
-      dock.replaceChildren(panelIcon(side));
-      const heading = panel.querySelector(side === 'left' ? '.ai-rail-heading' : '.ai-side-tabs');
-      heading?.prepend(dock);
-      panel.querySelectorAll('.panel-utility-bar').forEach(bar => bar.remove());
-    }
     const close = panel.querySelector('.panel-collapse-close') || document.createElement('button');
     close.type = 'button';
     close.className = 'panel-collapse-close';
@@ -188,8 +197,6 @@ function setup(root, kind) {
       }
       syncPeerLayouts(layout);
     };
-    const internalButton = panel.querySelector(`[data-panel-internal-toggle="${side}"]`);
-    if (internalButton) internalButton.onclick = () => button.click();
     close.onclick = () => closeDrawer(layout);
   }
   backdrop.onclick = () => closeDrawer(layout);

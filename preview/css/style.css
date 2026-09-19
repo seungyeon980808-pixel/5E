@@ -191,6 +191,8 @@ body {
   flex: 1 1 auto;
   display: grid;
   grid-template-columns: var(--panel-left-w) 1fr auto;
+  grid-template-rows: auto minmax(0, 1fr);
+  align-content:start;
   min-height: 0; /* allow children to shrink */
 }
 

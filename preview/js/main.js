@@ -1,5 +1,5 @@
 import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-preview-labeler-0917-1111';
-import { initWebLoginUi } from './web-login-ui.js?v=1.6.0-preview-runtime-bundle-0918-1356';
+import { initWebLoginUi } from './web-login-ui.js?v=1.6.0-preview-header-textbook-0919-0908';
 import { showAlert } from "./ui-dialogs.js?v=1.6.0-preview-labeler-0917-1111";
 import { initAiSharing } from './ai-sharing-ui.js?v=1.6.0-preview-sharing-0918-2108';
 /* ===== MAIN (wire modules; data-as-truth + viewBox zoom/pan) ===== */
@@ -29,7 +29,7 @@ import { initImagePaste } from "./image-paste.js?v=1.6.0-preview-labeler-0917-11
 import { initImageCutout } from "./image-cutout.js?v=1.6.0-preview-labeler-0917-1111";
 import { renderSessionToDataUrl } from "./image-cutout.js?v=1.6.0-preview-labeler-0917-1111";
 import { handSelectedCanvasImageToAi } from "./ai-canvas-handoff.js?v=1.6.0-preview-labeler-0917-1111";
-import { initExamLibrary } from "./exam-library.js?v=1.6.0-preview-common-shell-stage1-0919-0832";
+import { initExamLibrary } from "./exam-library.js?v=1.6.0-preview-header-textbook-0919-0908";
 import { initTemplates } from "./templates.js?v=1.6.0-preview-labeler-0917-1111";
 import { initObjectSearch } from "./search.js?v=1.6.0-preview-labeler-0917-1111";
 import { initCommandPalette } from "./command-palette.js?v=1.6.0-preview-labeler-0917-1111";
