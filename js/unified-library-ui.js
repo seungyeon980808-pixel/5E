@@ -114,7 +114,7 @@ export async function materializeLibraryThumbnail(result, activeProvider, pdfMod
     const pageNumber = pdfMode === "page"
       ? result.firstMatchingPage ?? result.matches?.[0]?.pageNumber ?? result.provenance?.pageNumber ?? 1
       : 1;
-    return result.loadPreview(pageNumber, { thumbnail: true });
+    return result.loadPreview(pageNumber, { thumbnail: true, ...(pdfMode === "page" ? { original: true } : {}) });
   }
   return activeProvider.materialize(result, { thumbnail: true });
 }
@@ -805,7 +805,7 @@ function buildShell() {
                 <button type="button" data-unilib-type="pdf" aria-pressed="false">PDF</button>
               </div>
               <div class="unilib-grid-density" data-unilib-grid-density hidden></div>
-              <div class="unilib-pdf-display library-scope-toggle" data-unilib-pdf-display hidden role="group" aria-label="PDF 표시 방식"><button type="button" data-unilib-pdf-mode="file" aria-pressed="true">파일</button><button type="button" data-unilib-pdf-mode="page" aria-pressed="false">페이지</button></div>
+              <div class="unilib-pdf-display library-scope-toggle" data-unilib-pdf-display hidden role="group" aria-label="PDF 표시 방식"><button type="button" data-unilib-pdf-mode="file" aria-pressed="false">파일</button><button type="button" data-unilib-pdf-mode="page" aria-pressed="true">페이지</button></div>
             </div>
             <div class="unilib-exam-filters" data-unilib-exam-filters hidden>
               <select data-unilib-filter="subject" aria-label="과목"><option value="">모든 과목</option><option value="p1">물리학Ⅰ</option><option value="p2">물리학Ⅱ</option><option value="c1">화학Ⅰ</option><option value="c2">화학Ⅱ</option><option value="b1">생명과학Ⅰ</option><option value="b2">생명과학Ⅱ</option><option value="e1">지구과학Ⅰ</option><option value="e2">지구과학Ⅱ</option></select>
@@ -904,7 +904,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   const selectedRecords = new Map();
   const acceptedAssets = new Map();
   let activeTypes = [...LIBRARY_TYPES];
-  let pdfDisplayMode = "file";
+  let pdfDisplayMode = "page";
   const examFilters = { subject: "", startYear: null, endYear: null, administration: "" };
   const storedSources = loadSourceState(storage);
   let enabledSources = storedSources.enabled;
@@ -1264,7 +1264,10 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
         delete media.dataset.thumbnailState;
         media.setAttribute("aria-busy", "false");
         media.querySelector(".unilib-thumbnail-status")?.remove();
-        paintHighlightLayer(media, image, result, result.provenance?.rect ?? [0, 0, 1, 1]);
+        const thumbnailCrop = thumbnailPdfMode === "page" && result.provenance?.provider === "pdf"
+          ? [0, 0, 1, 1]
+          : result.provenance?.rect ?? [0, 0, 1, 1];
+        paintHighlightLayer(media, image, result, thumbnailCrop);
       };
       image.onerror = () => {
         if (ownThumbnailEpoch === thumbnailEpoch && media.isConnected) thumbnailStatus(media, true);

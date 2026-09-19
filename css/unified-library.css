@@ -474,7 +474,7 @@
 .unified-library-overlay .unilib-result-card[aria-selected="true"]:focus-visible { outline: none; }
 .unified-library-overlay .unilib-result-card[aria-selected="true"]:focus-visible .unilib-result-copy strong { text-decoration: underline; text-decoration-thickness: var(--unilib-focus-text-thickness); text-underline-offset: var(--unilib-focus-text-offset); }
 .unified-library-overlay .unilib-thumb { position: relative; display: grid; width: var(--unilib-thumb-width); height: var(--unilib-thumb-height); overflow: hidden; place-items: center; border: var(--unilib-border-width) solid var(--unilib-border-muted); border-radius: var(--unilib-control-radius); background: var(--unilib-paper); color: var(--unilib-paper-ink); font-size: var(--unilib-type-caption); }
-.unified-library-overlay .unilib-thumb img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.unified-library-overlay .unilib-thumb img { display: block; width: 100%; height: 100%; object-fit: contain; object-position: center center; }
 .unified-library-overlay .unilib-result-copy { display: grid; align-content: center; min-width: 0; gap: var(--unilib-space-1); }
 .unified-library-overlay .unilib-result-copy strong { overflow: hidden; font-size: var(--unilib-type-body); font-weight: var(--unilib-font-weight-strong); line-height: var(--unilib-line-height-result); text-overflow: ellipsis; white-space: nowrap; word-break: keep-all; }
 .unified-library-overlay .unilib-result-copy small { overflow: hidden; color: var(--unilib-muted); font-size: var(--unilib-type-caption); text-overflow: ellipsis; white-space: nowrap; }
@@ -1141,9 +1141,15 @@
     grid-template-columns: repeat(3, minmax(0, 1fr));
     grid-auto-rows: minmax(8rem, calc((100cqh - (var(--unilib-space-3) * 2) - var(--unilib-space-6)) / 3));
   }
-  .unified-library-overlay .unilib.preview-hidden[data-active-tab="image"] .unilib-result-list,
-  .unified-library-overlay .unilib.preview-hidden[data-active-tab="question"] .unilib-result-list,
-  .unified-library-overlay .unilib.preview-hidden[data-active-tab="pdf"][data-pdf-display="page"] .unilib-result-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .unified-library-overlay .unilib.folders-collapsed:not(.preview-hidden)[data-active-tab="image"] .unilib-result-list,
+  .unified-library-overlay .unilib.folders-collapsed:not(.preview-hidden)[data-active-tab="question"] .unilib-result-list,
+  .unified-library-overlay .unilib.folders-collapsed:not(.preview-hidden)[data-active-tab="pdf"][data-pdf-display="page"] .unilib-result-list { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .unified-library-overlay .unilib.preview-hidden:not(.folders-collapsed)[data-active-tab="image"] .unilib-result-list,
+  .unified-library-overlay .unilib.preview-hidden:not(.folders-collapsed)[data-active-tab="question"] .unilib-result-list,
+  .unified-library-overlay .unilib.preview-hidden:not(.folders-collapsed)[data-active-tab="pdf"][data-pdf-display="page"] .unilib-result-list { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .unified-library-overlay .unilib.folders-collapsed.preview-hidden[data-active-tab="image"] .unilib-result-list,
+  .unified-library-overlay .unilib.folders-collapsed.preview-hidden[data-active-tab="question"] .unilib-result-list,
+  .unified-library-overlay .unilib.folders-collapsed.preview-hidden[data-active-tab="pdf"][data-pdf-display="page"] .unilib-result-list { grid-template-columns: repeat(6, minmax(0, 1fr)); }
   .unified-library-overlay .unilib[data-active-tab="image"] .unilib-result-card,
   .unified-library-overlay .unilib[data-active-tab="question"] .unilib-result-card,
   .unified-library-overlay .unilib[data-active-tab="pdf"][data-pdf-display="page"] .unilib-result-card { grid-template-rows: minmax(0, 1fr) auto; }

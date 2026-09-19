@@ -102,6 +102,9 @@ test("unified shell has multiselect type controls and a PDF file-page display to
   assert.match(source, /data-unilib-help/u);
   assert.match(source, /data-unilib-pdf-mode="file"/u);
   assert.match(source, /data-unilib-pdf-mode="page"/u);
+  assert.match(source, /data-unilib-pdf-mode="file" aria-pressed="false"/u);
+  assert.match(source, /data-unilib-pdf-mode="page" aria-pressed="true"/u);
+  assert.match(source, /let pdfDisplayMode = "page"/u);
   assert.doesNotMatch(source, /data-unilib-pdf-back/u);
   assert.doesNotMatch(source, /pdfBrowseSource/u);
 });
@@ -172,9 +175,17 @@ test("PDF thumbnail materialization uses page one in file mode and each matched 
 
   assert.deepEqual(calls, [
     { pageNumber: 1, options: { thumbnail: true } },
-    { pageNumber: 2, options: { thumbnail: true } },
-    { pageNumber: 3, options: { thumbnail: true } },
+    { pageNumber: 2, options: { thumbnail: true, original: true } },
+    { pageNumber: 3, options: { thumbnail: true, original: true } },
   ]);
+});
+
+test("desktop library density follows the open panel combination", async () => {
+  const source = await readFile(new URL("../css/unified-library.css", import.meta.url), "utf8");
+  assert.match(source, /folders-collapsed:not\(\.preview-hidden\)[^\{]+\{ grid-template-columns: repeat\(4,/u);
+  assert.match(source, /preview-hidden:not\(\.folders-collapsed\)[^\{]+\{ grid-template-columns: repeat\(5,/u);
+  assert.match(source, /folders-collapsed\.preview-hidden[^\{]+\{ grid-template-columns: repeat\(6,/u);
+  assert.match(source, /object-position: center center/u);
 });
 
 test("continuous PDF windows reach the first, middle, and last page with bounded live pages", () => {
