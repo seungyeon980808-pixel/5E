@@ -1,7 +1,7 @@
 import { registerEscapeLayer } from "./escape-layers.js?v=1.6.0-preview-common-shell-stage1-0919-0832";
 import { safeExternalSourceUrl } from "./library-import-policy.js?v=1.6.0-preview-labeler-0917-1111";
 import { queryHighlightTerms } from "./pdf-library/search.js?v=1.6.0-preview-common-year-login-0918-1302";
-import { chooseWorkbenchAssignment } from "./library/workbench-assignment.js?v=1.6.0-preview-crop-collection-0919-1430";
+import { chooseWorkbenchAssignment } from "./library/workbench-assignment.js?v=1.6.0-preview-crop-collection-0919-1440";
 
 const SOURCE_STORAGE_KEY = "5e.unified-library.sources.v1";
 const TREE_STORAGE_KEY = "5e.unified-library.tree-expanded.v1";
