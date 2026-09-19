@@ -571,7 +571,7 @@
 .unified-library-overlay .unilib-primary:hover { border-color: var(--unilib-accent-hover); background: var(--unilib-accent-hover); }
 
 .unified-library-overlay .unilib-scrim { display: none; }
-.unified-library-overlay .unilib-status { position: fixed; z-index: 5; right: var(--unilib-space-6); bottom: var(--unilib-space-6); max-width: min(var(--unilib-status-width), calc(100vw - 2 * var(--unilib-space-6))); margin: 0; color: var(--unilib-muted); font-size: var(--unilib-type-caption); pointer-events: none; }
+.unified-library-overlay .unilib-status { position: fixed; z-index: 5; right: var(--unilib-space-6); bottom: calc(var(--unilib-control-height) + 2 * var(--unilib-space-6)); max-width: min(var(--unilib-status-width), calc(100vw - 2 * var(--unilib-space-6))); margin: 0; color: var(--unilib-muted); font-size: var(--unilib-type-caption); pointer-events: none; }
 .unified-library-overlay .unilib-status.is-error { color: var(--unilib-status-error); }
 
 .unified-library-overlay .unilib-dialog-backdrop {
@@ -733,7 +733,7 @@
   .unified-library-overlay [data-unilib-drive-settings] .unilib-icon-button { width: var(--unilib-mobile-control-height); height: var(--unilib-mobile-control-height); }
   .unified-library-overlay [data-unilib-drive-settings] .modal-btn,
   .unified-library-overlay [data-unilib-drive-settings] input { min-height: var(--unilib-mobile-control-height); }
-  .unified-library-overlay .unilib-status { right: var(--unilib-space-4); bottom: var(--unilib-space-4); max-width: calc(100vw - var(--unilib-space-7)); }
+  .unified-library-overlay .unilib-status { right: var(--unilib-space-4); bottom: calc(var(--unilib-control-height) + 2 * var(--unilib-space-4)); max-width: calc(100vw - var(--unilib-space-7)); }
   .unified-library-overlay .unilib-crop { inset: 0; width: auto; height: auto; border: 0; border-radius: 0; transform: none; }
   .unified-library-overlay .unilib-crop-workspace { grid-template-columns: minmax(0, 1fr); }
   .unified-library-overlay .unilib-crop-preview { grid-template-columns: minmax(0, 1fr); border-inline-start: 0; border-top: var(--unilib-border-width) solid var(--unilib-border-muted); }

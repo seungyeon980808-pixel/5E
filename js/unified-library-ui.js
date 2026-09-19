@@ -1218,8 +1218,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       selectedId = reconcileUnifiedSelection(selectedId, results);
       renderResults();
       setResultState(results.length ? "ready" : "empty", results.length ? "" : "검색 결과가 없습니다.");
-      const pending = pendingIndexCount ? ` · 내 PDF ${pendingIndexCount}개 색인 중` : "";
-      setStatus(results.length ? `${results.length}개 결과${pending}` : pendingIndexCount ? `내 PDF ${pendingIndexCount}개를 색인하는 중입니다.` : "검색 결과가 없습니다.");
+      setStatus(pendingIndexCount ? `내 PDF ${pendingIndexCount}개를 색인하는 중입니다.` : "");
       void renderPreview();
     } catch (error) {
       if (error?.name !== "AbortError" && ownEpoch === searchEpoch) {
