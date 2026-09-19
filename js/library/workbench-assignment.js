@@ -24,13 +24,27 @@ export function assignmentHasUnassignedReferences(groups, referenceCount) {
   return Array.from({ length: referenceCount }, (_, index) => index).some((index) => !assigned.has(index));
 }
 
+function waitForStylesheet(link) {
+  if (link.sheet || link.dataset.loadSettled === "true") return Promise.resolve();
+  return new Promise((resolve) => {
+    const settle = () => {
+      link.dataset.loadSettled = "true";
+      resolve();
+    };
+    link.addEventListener("load", settle, { once: true });
+    link.addEventListener("error", settle, { once: true });
+  });
+}
+
 function ensureStylesheet() {
-  if (document.querySelector('link[data-workbench-assignment-style]')) return;
+  const existing = document.querySelector('link[data-workbench-assignment-style]');
+  if (existing) return waitForStylesheet(existing);
   const link = document.createElement("link");
   link.rel = "stylesheet";
   link.href = new URL("../../css/library-workbench-assignment.css", import.meta.url).href;
   link.dataset.workbenchAssignmentStyle = "";
   document.head.append(link);
+  return waitForStylesheet(link);
 }
 
 function focusable(container) {
@@ -48,10 +62,10 @@ function trapTab(event, container) {
   else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
 }
 
-export function chooseWorkbenchAssignment({ references, host, returnFocus } = {}) {
+export async function chooseWorkbenchAssignment({ references, host, returnFocus } = {}) {
   const items = Array.isArray(references) ? references : [];
   if (!items.length) return Promise.resolve(null);
-  ensureStylesheet();
+  await ensureStylesheet();
 
   return new Promise((resolve) => {
     const mount = host instanceof Element ? host : document.body;
