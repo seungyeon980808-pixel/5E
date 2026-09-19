@@ -29,7 +29,7 @@ import { initImagePaste } from "./image-paste.js?v=1.6.0-preview-labeler-0917-11
 import { initImageCutout } from "./image-cutout.js?v=1.6.0-preview-labeler-0917-1111";
 import { renderSessionToDataUrl } from "./image-cutout.js?v=1.6.0-preview-labeler-0917-1111";
 import { handSelectedCanvasImageToAi } from "./ai-canvas-handoff.js?v=1.6.0-preview-labeler-0917-1111";
-import { initExamLibrary } from "./exam-library.js?v=1.6.0-preview-header-textbook-0919-0908";
+import { initExamLibrary } from "./exam-library.js?v=1.6.0-preview-stage1-0919-1325";
 import { initTemplates } from "./templates.js?v=1.6.0-preview-labeler-0917-1111";
 import { initObjectSearch } from "./search.js?v=1.6.0-preview-labeler-0917-1111";
 import { initCommandPalette } from "./command-palette.js?v=1.6.0-preview-labeler-0917-1111";
@@ -70,7 +70,7 @@ import { initSteppers } from "./stepper.js?v=1.6.0-preview-labeler-0917-1111";
 import { initReferenceWindows } from "./reference-window.js?v=1.6.0-preview-common-year-login-0918-1302";
 import { initTutorial } from "./tutorial.js?v=1.6.0-preview-labeler-0917-1111";
 import { initAiInstallGuide } from "./ai-install-guide.js?v=1.6.0-preview-labeler-0917-1111";
-import { initAiPanel } from "./ai-panel.js?v=1.6.0-preview-sharing-0918-2108";
+import { initAiPanel } from "./ai-panel.js?v=1.6.0-preview-stage1-0919-1325";
 
 const svg = document.getElementById("canvas");
 // Canvas interaction transfers keyboard ownership away from the last toolbar button.

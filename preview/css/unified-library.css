@@ -982,12 +982,16 @@
 .unified-library-overlay .unilib-crop-collection-heading { display: flex; align-items: center; justify-content: space-between; gap: var(--unilib-space-3); }
 .unified-library-overlay .unilib-crop-collection { grid-auto-rows: minmax(0, 1fr); grid-template-rows: repeat(2, minmax(0, 1fr)); }
 
-/* Crop editing handles and an in-grid pending preview. */
 .unified-library-overlay .unilib-crop-collection-item { background: var(--unilib-canvas); }
 .unified-library-overlay .unilib-crop-collection-thumb,
 .unified-library-overlay .unilib-crop-collection-item canvas { background: var(--unilib-canvas); object-fit: contain; width: 100%; height: 100%; max-height: none; min-height: 0; }
 .unified-library-overlay .unilib-crop-collection-item canvas { grid-area: thumb; }
-.unified-library-overlay .unilib-crop-collection-item.is-pending { border-style: dashed; border-color: var(--unilib-accent); }
+.unified-library-overlay .unilib-crop-draft-review { display: grid; gap: var(--unilib-space-2); flex: 0 0 auto; min-width: 0; padding: var(--unilib-space-3); border: var(--unilib-border-width) dashed var(--unilib-accent); border-radius: var(--unilib-panel-radius); background: var(--unilib-canvas); }
+.unified-library-overlay .unilib-crop-draft-review[hidden] { display: none; }
+.unified-library-overlay .unilib-crop-draft-review > strong { color: var(--unilib-label); font-size: var(--unilib-type-helper); }
+.unified-library-overlay .unilib-crop-draft-review canvas { width: 100%; max-height: var(--unilib-crop-current-preview-height); background: var(--unilib-paper); object-fit: contain; }
+.unified-library-overlay .unilib-crop-draft-review .unilib-crop-confirm { position: static; justify-content: flex-end; box-shadow: none; border: 0; padding: 0; background: transparent; }
+.unified-library-overlay .unilib-crop-draft-review .unilib-crop-confirm > strong { display: none; }
 .unified-library-overlay [data-unilib-crop-box] { pointer-events: auto; border-style: dashed; cursor: move; }
 .unified-library-overlay .unilib-crop-accepted-box { pointer-events: auto; cursor: move; }
 .unified-library-overlay [data-crop-handle] { position: absolute; display: block; width: var(--unilib-crop-handle-size); height: var(--unilib-crop-handle-size); background: var(--unilib-paper); border: var(--unilib-border-width) solid var(--unilib-accent); transform: translate(-50%, -50%); pointer-events: auto; }
@@ -1004,9 +1008,6 @@
 .unified-library-overlay [data-unilib-crop-save]:hover,
 .unified-library-overlay [data-unilib-crop-save]:active { background: var(--unilib-accent); color: var(--unilib-selected-foreground); }
 .unified-library-overlay [data-unilib-crop-box].is-editing { border-style: solid; background: transparent; }
-.unified-library-overlay .unilib-crop-collection-item.is-pending { grid-template-areas: "thumb" "label" "confirm"; grid-template-rows: minmax(0, 1fr) auto auto; }
-.unified-library-overlay .unilib-crop-collection-item .unilib-crop-confirm { grid-area: confirm; position: static; justify-content: flex-end; box-shadow: none; border: 0; padding: 0; background: transparent; }
-.unified-library-overlay .unilib-crop-collection-item .unilib-crop-confirm > strong { display: none; }
 .unified-library-overlay .unilib-crop:has([data-unilib-crop-box]:not([hidden])) .unilib-crop-accepted-box [data-crop-handle] { display: none; }
 .unified-library-overlay [data-unilib-crop-save].is-pressed { background: var(--unilib-accent); color: var(--unilib-selected-foreground); }
 

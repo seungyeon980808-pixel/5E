@@ -821,7 +821,7 @@ function buildShell() {
         </aside>
         <button class="unilib-scrim" data-unilib-scrim type="button" aria-label="열린 패널 닫기"></button>
       </div>
-      <div class="unilib-crop library-reader--expanded" data-unilib-crop hidden role="dialog" aria-modal="true" aria-labelledby="unilib-crop-title"><header><strong id="unilib-crop-title">여러 영역 크롭</strong><div class="unilib-crop-view-controls"><button type="button" class="unilib-button" data-unilib-crop-fit>내용 맞춤</button><button type="button" class="unilib-button unilib-crop-help" aria-label="크롭 조작 도움말" title="빈 곳을 드래그해 추가 · 영역 안을 드래그해 이동 · 핸들로 크기 조절 · Enter 또는 Space로 확정">?</button><output data-unilib-crop-zoom aria-label="확대 비율">100%</output></div><button type="button" class="unilib-button" data-unilib-crop-cancel>닫기</button></header><div class="unilib-crop-workspace library-reader-main"><div class="unilib-crop-stage library-reader-preview" data-unilib-crop-stage tabindex="0" aria-label="PDF 페이지에서 자를 영역 선택"><div class="unilib-crop-load-state" data-unilib-crop-load-state role="status" hidden><span class="unilib-crop-spinner" aria-hidden="true"></span><span data-unilib-crop-load-message>PDF 페이지를 불러오는 중입니다…</span><button type="button" class="unilib-button" data-unilib-crop-retry hidden>다시 시도</button></div><div class="unilib-crop-canvas" data-unilib-crop-canvas><img data-unilib-crop-image draggable="false" alt="자를 원문 PDF 페이지"><div class="unilib-crop-accepted-layer" data-unilib-crop-accepted-layer aria-hidden="true"></div><div class="unilib-crop-draft" data-unilib-crop-box aria-hidden="true"></div><div class="unilib-crop-confirm" data-unilib-crop-confirm hidden><strong>이 영역을 추가할까요?</strong><button type="button" class="unilib-button" data-unilib-crop-save title="Enter / Space" disabled>추가</button><button type="button" class="unilib-button" data-unilib-crop-draft-cancel>취소</button></div></div></div><aside class="unilib-crop-preview library-reader-sidebar"><div class="unilib-crop-collection-heading"><strong data-unilib-crop-count>크롭 이미지 0개</strong><button type="button" class="unilib-button" data-unilib-crop-select-all>전체 선택</button></div><canvas data-unilib-crop-preview aria-label="현재 선택 영역 미리보기"></canvas><div class="unilib-crop-collection library-crop-collection" data-unilib-crop-collection aria-label="추가한 자르기 영역"></div><p class="unilib-crop-selection" data-unilib-crop-selection>추가한 영역이 없습니다.</p></aside></div><footer class="unilib-crop-footer"><div class="unilib-crop-actions library-reader-actions" aria-label="선택 영역 보내기"><button type="button" class="unilib-button" data-unilib-crop-save-png disabled>PNG 저장</button><button type="button" class="unilib-button" data-unilib-crop-objectify disabled>이미지 객체화</button><button type="button" class="unilib-button" data-unilib-crop-insert disabled>캔버스에 삽입</button><button type="button" class="unilib-primary" data-unilib-crop-ai disabled>AI 작업에 추가</button></div></footer></div>
+      <div class="unilib-crop library-reader--expanded" data-unilib-crop hidden role="dialog" aria-modal="true" aria-labelledby="unilib-crop-title"><header><strong id="unilib-crop-title">여러 영역 크롭</strong><div class="unilib-crop-view-controls"><button type="button" class="unilib-button" data-unilib-crop-fit>내용 맞춤</button><button type="button" class="unilib-button unilib-crop-help" aria-label="크롭 조작 도움말" title="빈 곳을 드래그해 추가 · 영역 안을 드래그해 이동 · 핸들로 크기 조절 · Enter 또는 Space로 확정">?</button><output data-unilib-crop-zoom aria-label="확대 비율">100%</output></div><button type="button" class="unilib-button" data-unilib-crop-cancel>닫기</button></header><div class="unilib-crop-workspace library-reader-main"><div class="unilib-crop-stage library-reader-preview" data-unilib-crop-stage tabindex="0" aria-label="PDF 페이지에서 자를 영역 선택"><div class="unilib-crop-load-state" data-unilib-crop-load-state role="status" hidden><span class="unilib-crop-spinner" aria-hidden="true"></span><span data-unilib-crop-load-message>PDF 페이지를 불러오는 중입니다…</span><button type="button" class="unilib-button" data-unilib-crop-retry hidden>다시 시도</button></div><div class="unilib-crop-canvas" data-unilib-crop-canvas><img data-unilib-crop-image draggable="false" alt="자를 원문 PDF 페이지"><div class="unilib-crop-accepted-layer" data-unilib-crop-accepted-layer aria-hidden="true"></div><div class="unilib-crop-draft" data-unilib-crop-box aria-hidden="true"></div></div></div><aside class="unilib-crop-preview library-reader-sidebar"><div class="unilib-crop-collection-heading"><strong data-unilib-crop-count>크롭 이미지 0개</strong><button type="button" class="unilib-button" data-unilib-crop-select-all>전체 선택</button></div><section class="unilib-crop-draft-review" data-unilib-crop-draft-review hidden aria-label="추가할 영역 미리보기"><strong>추가할 영역</strong><canvas data-unilib-crop-preview aria-label="현재 선택 영역 미리보기"></canvas><div class="unilib-crop-confirm" data-unilib-crop-confirm hidden><strong>이 영역을 추가할까요?</strong><button type="button" class="unilib-button" data-unilib-crop-save title="Enter / Space" disabled>추가</button><button type="button" class="unilib-button" data-unilib-crop-draft-cancel>취소</button></div></section><div class="unilib-crop-collection library-crop-collection" data-unilib-crop-collection aria-label="추가한 자르기 영역"></div><p class="unilib-crop-selection" data-unilib-crop-selection>추가한 영역이 없습니다.</p></aside></div><footer class="unilib-crop-footer"><div class="unilib-crop-actions library-reader-actions" aria-label="선택 영역 보내기"><button type="button" class="unilib-button" data-unilib-crop-save-png disabled>PNG 저장</button><button type="button" class="unilib-button" data-unilib-crop-objectify disabled>이미지 객체화</button><button type="button" class="unilib-button" data-unilib-crop-insert disabled>캔버스에 삽입</button><button type="button" class="unilib-primary" data-unilib-crop-ai disabled>AI 작업에 추가</button></div></footer></div>
       <div class="unilib-dialog-backdrop" data-unilib-drive-settings hidden><section class="unilib-dialog" role="dialog" aria-modal="true" aria-labelledby="unilib-drive-settings-title"><header><h3 id="unilib-drive-settings-title">Drive 자료 연결</h3><button type="button" class="unilib-icon-button" data-unilib-drive-settings-close aria-label="Drive 자료 연결 닫기">${ICONS.close}</button></header><div data-unilib-folder-manager><p class="unilib-folder-guidance">공개 읽기 전용 폴더를 연결하면 파일 목록과 검색 색인을 먼저 읽고, PDF 원문은 필요할 때만 가져옵니다.</p><div data-unilib-drive-settings-body></div></div></section></div>
       <p class="unilib-status" data-unilib-status role="status" aria-live="polite"></p>
     </section>`;
@@ -1973,7 +1973,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     const placement = assignment?.placement || "separate";
     const openDestination = typeof openIndependentReferences === "function"
       ? () => openIndependentReferences({ references, startGeneration: false, placement, groups: assignment?.groups })
-      : () => openAi?.({ references });
+      : () => openAi?.({ references, placement, groups: assignment?.groups });
     setStatus("AI 작업실을 여는 중…");
     try {
       await openDestination();
@@ -2103,6 +2103,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   const cropPreview = overlay.querySelector("[data-unilib-crop-preview]");
   const cropCollection = overlay.querySelector("[data-unilib-crop-collection]");
   const cropAcceptedLayer = overlay.querySelector("[data-unilib-crop-accepted-layer]");
+  const cropDraftReview = overlay.querySelector("[data-unilib-crop-draft-review]");
   const cropConfirm = overlay.querySelector("[data-unilib-crop-confirm]");
   const cropSave = overlay.querySelector("[data-unilib-crop-save]");
   const cropTitle = overlay.querySelector("#unilib-crop-title");
@@ -2123,7 +2124,6 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     cropImage.hidden = !cropReady;
     overlay.querySelector("[data-unilib-crop-fit]").disabled = !cropReady;
     overlay.querySelector("[data-unilib-crop-select-all]").disabled = !cropReady;
-    if (!cropReady) pendingCard.remove();
     setCropActionAvailability();
   };
   const addCropHandles = (box) => {
@@ -2134,14 +2134,8 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     }
   };
   addCropHandles(cropBox);
-  const pendingCard = document.createElement("div");
-  pendingCard.className = "unilib-crop-collection-item is-pending";
-  const pendingLabel = document.createElement("span");
-  pendingLabel.textContent = "추가할 영역";
-  pendingCard.append(cropPreview, pendingLabel, cropConfirm);
   const cropRectKey = () => draftCrop?.join(",") ?? "";
   const cropActionTargets = () => {
-    if (draftCrop) return cropPreviewExact && cropExact?.rectKey === cropRectKey() ? [cropExact] : [];
     if (activeAcceptedCropId) return acceptedCrops.filter(({ result }) => result.id === activeAcceptedCropId);
     return [...acceptedCrops];
   };
@@ -2200,8 +2194,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       marker.append(number);
       return marker;
     }));
-    if (cropReady && draftCrop && !editingAcceptedId) cropCollection.append(pendingCard);
-    cropCollection.hidden = acceptedCrops.length === 0 && (!cropReady || !draftCrop);
+    cropCollection.hidden = acceptedCrops.length === 0;
     overlay.querySelector("[data-unilib-crop-count]").textContent = `크롭 이미지 ${acceptedCrops.length}개`;
     overlay.querySelector("[data-unilib-crop-selection]").textContent = activeAcceptedCropId
       ? `${acceptedCrops.findIndex(({ result }) => result.id === activeAcceptedCropId) + 1}번 영역만 선택됨`
@@ -2286,22 +2279,13 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     cropBox.hidden = !draftCrop;
     cropBox.classList.toggle("is-editing", Boolean(editingAcceptedId));
     cropAcceptedLayer.querySelectorAll("[data-accepted-crop-id]").forEach((marker) => { marker.style.visibility = marker.dataset.acceptedCropId === editingAcceptedId && draftCrop ? "hidden" : ""; });
+    cropDraftReview.hidden = !cropReady || !draftCrop;
     setCropActionAvailability();
     if (!cropReady || !draftCrop) {
       if (cropPreviewFrame) cancelAnimationFrame(cropPreviewFrame);
       cropPreviewFrame = 0;
-      cropCollection.querySelectorAll(".unilib-crop-collection-thumb").forEach((image) => { image.style.display = ""; });
-      pendingCard.prepend(cropPreview);
-      pendingCard.remove(); paintCropPreview(); return;
+      paintCropPreview(); return;
     }
-    if (editingAcceptedId) {
-      const selectedCard = [...cropCollection.querySelectorAll("[data-unilib-crop-select]")].find((button) => button.dataset.unilibCropSelect === editingAcceptedId)?.closest(".unilib-crop-collection-item");
-      if (selectedCard && cropPreview.parentElement !== selectedCard) {
-        selectedCard.querySelector("img").style.display = "none";
-        selectedCard.prepend(cropPreview);
-      }
-    } else if (cropPreview.parentElement !== pendingCard) pendingCard.prepend(cropPreview);
-    if (!editingAcceptedId && !pendingCard.isConnected) { cropCollection.append(pendingCard); cropCollection.hidden = false; }
     const [x, y, width, height] = draftCrop;
     Object.assign(cropBox.style, { left: `${x * 100}%`, top: `${y * 100}%`, width: `${width * 100}%`, height: `${height * 100}%` });
     if (cropGesture?.drawing) {
