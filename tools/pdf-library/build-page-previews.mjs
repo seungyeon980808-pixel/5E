@@ -24,7 +24,7 @@ async function worker() {
     const target = path.join(output, hash);
     await mkdir(target, { recursive: true });
     try {
-      await run('pdftoppm', ['-scale-to', '1000', '-jpeg', '-jpegopt', 'quality=90', document.source, path.join(temporary, 'page')]);
+      await run('pdftoppm', ['-cropbox', '-scale-to', '1000', '-jpeg', '-jpegopt', 'quality=90', document.source, path.join(temporary, 'page')]);
       const files = (await readdir(temporary)).filter(name => /^page-\d+\.jpg$/.test(name));
       for (const file of files) {
         const page = Number(file.match(/(\d+)\.jpg$/)[1]);
