@@ -281,7 +281,7 @@ test("Space routes the selected PDF into the direct crop surface without a secon
   assert.doesNotMatch(source, /data-unilib-lightbox/u);
   assert.match(source, /shouldHandleLibrarySpace\(event\)[\s\S]*openExpandedPreview/u);
   assert.match(source, /openCropEditor\(\{ emptyDraft: true, wholePage: true,/u);
-  assert.match(source, /data-unilib-crop-ai/u);
+  assert.match(source, /data-unilib-crop-workbench/u);
 });
 
 test("AI consumer mode retains library tools while exposing only AI destinations", async () => {
@@ -633,13 +633,13 @@ test("Given an exact crop PNG, native save and web download report distinct trut
   assert.deepEqual(await saveCropPng({ dataUrl: "", suggestedName: "crop.png", requestDownload: () => assert.fail("must not download") }), { kind: "error", error: "invalid-image" });
 });
 
-test("crop editor exposes exact-preview direct save, canvas, objectify, and AI routes", async () => {
+test("crop editor keeps only zoom, width fit, close, and workbench transfer controls", async () => {
   const source = await readFile(new URL("../js/unified-library-ui.js", import.meta.url), "utf8");
-  assert.match(source, /data-unilib-crop-save-png/u);
-  assert.match(source, /data-unilib-crop-insert/u);
-  assert.match(source, /data-unilib-crop-objectify/u);
-  assert.match(source, /data-unilib-crop-ai/u);
-  assert.match(source, /chooseWorkbenchAssignment\(\{ references, host: overlay,[\s\S]*openAiDestination\(references, \{ closeCropSurface: true, assignment \}\)/u);
+  assert.match(source, /data-unilib-crop-zoom-out/u);
+  assert.match(source, /data-unilib-crop-zoom-in/u);
+  assert.match(source, /data-unilib-crop-fit>좌우 맞춤/u);
+  assert.match(source, /data-unilib-crop-workbench[^>]*>작업대에 넣기/u);
+  assert.doesNotMatch(source, /data-unilib-crop-(save-png|insert|objectify|ai|select-all)/u);
 });
 
 test("crop sessions reject stale result and page identities", () => {

@@ -159,6 +159,7 @@ function buildModal() {
             <button id="objectify-zoom-in" type="button" class="modal-btn" aria-label="확대">＋</button>
             <button id="objectify-zoom-reset" type="button" class="modal-btn">전체 보기</button>
             <button id="objectify-region" type="button" class="modal-btn" title="드래그로 남길 영역을 지정합니다. 영역 안쪽 조각만 남고 나머지는 제외됩니다.">영역만 남기기</button>
+            <button id="objectify-remove-image" type="button" class="modal-btn">이미지 삭제</button>
             <span class="modal-label" id="objectify-tool-hint" style="font-weight:normal;color:#6e7781;margin:0;">Control 키+휠·핀치=확대/축소 · 스크롤·드래그=이동 · 클릭=제외</span>
           </div>
           <p class="objectify-description" id="objectify-legend" hidden style="margin:0;">
@@ -277,6 +278,7 @@ export function initImageObjectify(state) {
   const zoomOut = overlay.querySelector("#objectify-zoom-out");
   const zoomIn = overlay.querySelector("#objectify-zoom-in");
   const regionButton = overlay.querySelector("#objectify-region");
+  const removeImageButton = overlay.querySelector("#objectify-remove-image");
   const toolHint = overlay.querySelector("#objectify-tool-hint");
 
   let sourceCanvas = null;   // 처리용 캔버스 (흰 배경 합성, 최대 2000px)
@@ -575,6 +577,33 @@ export function initImageObjectify(state) {
     analysisSuspended = false;
     analyzeButton.disabled = false;
     setStatus("분석이 중단되었습니다. 다시 분석하세요.");
+  }
+
+  function clearSourceImage() {
+    selectionOpenGeneration += 1;
+    loadGeneration += 1;
+    analysisGeneration += 1;
+    analysisController.cancel();
+    if (analysisStartTimer) { clearTimeout(analysisStartTimer); analysisStartTimer = 0; }
+    if (analyzeTimer) { clearTimeout(analyzeTimer); analyzeTimer = 0; }
+    sourceCanvas = null;
+    sourceDataUrl = null;
+    sourceMetadata = null;
+    analysis = null;
+    previewPaths = [];
+    excluded = new Set();
+    regionDrag = null;
+    panning = null;
+    setRegionMode(false);
+    preview.width = 1;
+    preview.height = 1;
+    stage.classList.remove("has-image");
+    tools.hidden = true;
+    legend.hidden = true;
+    analyzeButton.disabled = true;
+    insertButton.disabled = true;
+    setStatus("이미지를 선택하세요.");
+    dropzone.focus();
   }
 
   /* ----- 파일 로드 ----- */
@@ -1090,6 +1119,7 @@ export function initImageObjectify(state) {
     loadFile(imageFile);
   }, true);
 
+  removeImageButton.addEventListener("click", clearSourceImage);
   dropzone.addEventListener("click", () => fileInput.click());
   dropzone.addEventListener("keydown", (event) => {
     if (event.key === "Enter" || event.key === " ") { event.preventDefault(); fileInput.click(); }
