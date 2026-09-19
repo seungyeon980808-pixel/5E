@@ -31,7 +31,7 @@ try {
     return { folder: rect("[data-unilib-folders-open]"), preview: rect("[data-unilib-preview-toggle]"), search: rect("[data-unilib-query]") };
   });
   report.headerBefore = await geometry();
-  await page.locator("[data-unilib-pane-collapse]").click();
+  await page.locator("[data-unilib-folders-open]").click();
   report.headerAfterFolderCollapse = await geometry();
   assert.deepEqual(report.headerAfterFolderCollapse.folder, report.headerBefore.folder);
   assert.deepEqual(report.headerAfterFolderCollapse.preview, report.headerBefore.preview);
