@@ -9,7 +9,7 @@
 // — dataURL로 넣어 프로젝트 저장 파일이 라이브러리 폴더 없이도 자기완결되게 한다. */
 
 import { insertImageFromSrc } from "./image-paste.js?v=1.6.0-preview-labeler-0917-1111";
-import { openObjectifyWithFile } from "./image-objectify.js?v=1.6.0-preview-labeler-0917-1111";
+import { openObjectifyWithFile } from "./image-objectify.js?v=1.6.0-preview-library-workbench-0919-1830";
 
 import { openReferenceWindow } from "./reference-window.js?v=1.6.0-preview-common-year-login-0918-1302";
 import { setOpenOrigin } from "./modal-motion.js?v=1.6.0-preview-labeler-0917-1111";
@@ -19,7 +19,7 @@ import { loadBundledDesktopPack } from "./pdf-library/desktop-pack.js?v=1.6.0-pr
 import { registerPdfReferencePicker } from "./pdf-library/reference-picker.js?v=1.6.0-preview-labeler-0917-1111";
 import { mergePreferredCatalogs } from "./pdf-library/catalog-merge.js?v=1.6.0-preview-labeler-0917-1111";
 import { createUnifiedLibraryProvider } from "./library/provider.js?v=1.6.0-preview-header-textbook-0919-0908";
-import { createUnifiedLibraryUi, unifiedLibrarySourceMetadata, unifiedLibraryTransfer } from "./unified-library-ui.js?v=1.6.0-preview-crop-collection-0919-1440";
+import { createUnifiedLibraryUi, unifiedLibrarySourceMetadata, unifiedLibraryTransfer } from "./unified-library-ui.js?v=1.6.0-preview-library-workbench-0919-1830";
 import { insertPartsAsset, loadPartsManifest, materializePartsAsset } from "./parts-library.js?v=1.6.0-preview-labeler-0917-1111";
 const MAX_RENDER = 60; // 그리드에 한 번에 그리는 카드 수 (초과분은 안내문으로 표시)
 const BUNDLED_EXAM_CATALOG_URL = "assets/exam-library/sample-catalog.json";

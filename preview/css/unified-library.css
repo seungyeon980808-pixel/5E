@@ -1064,3 +1064,44 @@
 @keyframes unilib-crop-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .unified-library-overlay .unilib-crop-spinner { animation: none; } }
 @media (prefers-reduced-motion: reduce) { .unified-library-overlay .unilib-crop-tray { transition: none; } }
+
+/* Library density and independently collapsible panes. */
+.unified-library-overlay .unilib.preview-hidden .unilib-shell { grid-template-columns: 248px minmax(360px, 1fr); }
+.unified-library-overlay .unilib.folders-collapsed.preview-hidden .unilib-shell { grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 1100px) {
+  .unified-library-overlay .unilib.preview-hidden .unilib-preview { display: none; }
+}
+.unified-library-overlay .unilib-header-panel-toggle[aria-expanded="false"],
+.unified-library-overlay .unilib-header-panel-toggle[aria-pressed="false"] { border-color: var(--unilib-accent); background: var(--unilib-accent); color: var(--unilib-selected-foreground); }
+.unified-library-overlay .unilib-grid-density { display: inline-flex; align-items: center; gap: var(--unilib-space-1); margin-inline-start: auto; padding: var(--unilib-space-1); border: var(--unilib-border-width) solid var(--unilib-border); border-radius: var(--unilib-control-radius); background: var(--unilib-input); }
+.unified-library-overlay .unilib-grid-density > span { padding-inline: var(--unilib-space-2); color: var(--unilib-muted); font-size: var(--unilib-type-caption); }
+.unified-library-overlay .unilib-grid-density button { min-width: 2rem; min-height: 1.75rem; padding: 0; border: 0; border-radius: calc(var(--unilib-control-radius) - 2px); background: transparent; color: var(--unilib-muted); cursor: pointer; }
+.unified-library-overlay .unilib-grid-density button[aria-pressed="true"] { background: var(--unilib-raised); color: var(--unilib-text); }
+@media (min-width: 1101px) {
+  .unified-library-overlay .unilib-result-scroll { container-type: size; }
+  .unified-library-overlay .unilib[data-active-tab="image"] .unilib-result-list,
+  .unified-library-overlay .unilib[data-active-tab="question"] .unilib-result-list,
+  .unified-library-overlay .unilib[data-active-tab="pdf"][data-pdf-display="page"] .unilib-result-list {
+    grid-template-columns: repeat(var(--unilib-grid-columns, 3), minmax(0, 1fr));
+    grid-auto-rows: minmax(8rem, calc((100cqh - (var(--unilib-space-3) * 2) - var(--unilib-space-6)) / 3));
+  }
+  .unified-library-overlay .unilib[data-active-tab="image"] .unilib-thumb,
+  .unified-library-overlay .unilib[data-active-tab="question"] .unilib-thumb,
+  .unified-library-overlay .unilib[data-active-tab="pdf"][data-pdf-display="page"] .unilib-thumb { height: min(100%, var(--unilib-grid-thumb-height)); }
+}
+
+/* Opaque workbench with stable, horizontal cards. */
+.unified-library-overlay .unilib-crop-tray { background: var(--unilib-panel); }
+.unified-library-overlay .unilib-crop-tray > header .unilib-crop-tray-clear { margin-inline-start: auto; }
+.unified-library-overlay .unilib-crop-tray-miniatures { flex: 1 1 auto; }
+.unified-library-overlay .unilib-crop-tray.is-expanded .unilib-crop-tray-miniatures { visibility: hidden; }
+.unified-library-overlay .unilib-crop-tray-body { grid-template-columns: minmax(0, 1fr); }
+.unified-library-overlay .unilib-crop-tray-gallery { grid-auto-flow: column; grid-auto-columns: minmax(15rem, 19rem); grid-template-columns: none; align-items: stretch; }
+.unified-library-overlay .unilib-crop-tray-item { grid-template-columns: minmax(7rem, 42%) minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); aspect-ratio: 16 / 7; }
+.unified-library-overlay .unilib-crop-tray-item > span { align-content: center; border-top: 0; border-inline-start: var(--unilib-border-width) solid var(--unilib-border-muted); }
+
+/* Crop editor: solid focus surface and a stable append-only review order. */
+.unified-library-overlay:has(.unilib-crop:not([hidden]))::after { background: var(--unilib-canvas); backdrop-filter: none; }
+.unified-library-overlay .unilib-crop-card-grid { grid-auto-rows: minmax(12rem, 1fr); }
+.unified-library-overlay .unilib-crop-collection { display: contents; }
+.unified-library-overlay .unilib-crop-footer > button { min-width: 8rem; min-height: var(--unilib-control-height); }

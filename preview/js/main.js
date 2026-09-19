@@ -24,12 +24,12 @@ import { initDesktopProjectCloseGuard, initProjectIO, initProjectFileOpening, sa
 import { initExportDialog } from "./export-dialog.js?v=1.6.0-preview-labeler-0917-1111";
 import { initRuler, setRulerVisible } from "./ruler.js?v=1.6.0-preview-labeler-0917-1111";
 import { initSettings } from "./settings.js?v=1.6.0-preview-web-native-project-0918-1617";
-import { initImageObjectify } from "./image-objectify.js?v=1.6.0-preview-labeler-0917-1111";
+import { initImageObjectify } from "./image-objectify.js?v=1.6.0-preview-library-workbench-0919-1830";
 import { initImagePaste } from "./image-paste.js?v=1.6.0-preview-labeler-0917-1111";
 import { initImageCutout } from "./image-cutout.js?v=1.6.0-preview-labeler-0917-1111";
 import { renderSessionToDataUrl } from "./image-cutout.js?v=1.6.0-preview-labeler-0917-1111";
 import { handSelectedCanvasImageToAi } from "./ai-canvas-handoff.js?v=1.6.0-preview-labeler-0917-1111";
-import { initExamLibrary } from "./exam-library.js?v=1.6.0-preview-crop-collection-0919-1440";
+import { initExamLibrary } from "./exam-library.js?v=1.6.0-preview-library-workbench-0919-1830";
 import { initTemplates } from "./templates.js?v=1.6.0-preview-labeler-0917-1111";
 import { initObjectSearch } from "./search.js?v=1.6.0-preview-labeler-0917-1111";
 import { initCommandPalette } from "./command-palette.js?v=1.6.0-preview-labeler-0917-1111";
