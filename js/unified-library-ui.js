@@ -2498,7 +2498,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       cropDialog.hidden = false;
       paintCrop();
       cropStage.focus();
-      setStatus("원문 페이지를 준비하는 중…");
+      setStatus("");
       const original = await materializeOriginalLibraryPage(result, activeProvider);
       if (!cropSessionIsCurrent(session, selectedActiveResult()) || cropSession !== session) return;
       const canonicalPage = original?.result ?? (["page", "crop"].includes(result.kind) ? result : null);

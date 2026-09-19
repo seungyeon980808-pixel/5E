@@ -186,6 +186,13 @@ test("desktop library density follows the open panel combination", async () => {
   assert.match(source, /preview-hidden:not\(\.folders-collapsed\)[^\{]+\{ grid-template-columns: repeat\(5,/u);
   assert.match(source, /folders-collapsed\.preview-hidden[^\{]+\{ grid-template-columns: repeat\(6,/u);
   assert.match(source, /object-position: center center/u);
+  assert.match(source, /data-pdf-display="page"\] \.unilib-thumb img[^\{]*\{[^\}]*width: 100%;[^\}]*height: 100%;[^\}]*object-fit: cover;[^\}]*object-position: center center/u);
+  assert.match(source, /data-pdf-display="page"\] \.unilib-thumb img[^\{]*\{[^\}]*position: absolute;[^\}]*inset: 0;/u);
+});
+
+test("loading a PDF crop clears the shared action status instead of showing a persistent preparation message", async () => {
+  const source = await readFile(new URL("../js/unified-library-ui.js", import.meta.url), "utf8");
+  assert.doesNotMatch(source, /setStatus\("원문 페이지를 준비하는 중…"\)/u);
 });
 
 test("continuous PDF windows reach the first, middle, and last page with bounded live pages", () => {
