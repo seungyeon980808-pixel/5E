@@ -3132,7 +3132,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     }
   };
   if (desktop?.web) window.addEventListener('5e:web-ai-status', () => { void refresh(); });
-  const open = async ({ reference, references = [], prompt, startGeneration = false, placement = "separate", reveal = true } = {}) => {
+  const open = async ({ reference, references = [], prompt, startGeneration = false, placement = "separate", groups = null, reveal = true } = {}) => {
     await workspaceReady;
     const selectedObject=state.get().selectedIds?.length === 1 ? state.get().objects.find(o=>state.get().selectedIds?.includes(o.id)&&o.type==="image"&&o.aiTaskId) : null;
     if (!busy && selectedObject && !reference && !references.length && taskTabs.has(selectedObject.aiTaskId)) {
@@ -3177,7 +3177,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       const readyReferences = loaded
         .filter((result) => result.status === "fulfilled")
         .map((result) => result.value.source);
-      addReferencesAsTasks(readyReferences, { prompt, placement });
+      addReferencesAsTasks(readyReferences, { prompt, placement, groups });
       const loadedCount = readyReferences.length;
       setStatus(loadedCount ? `이미지 ${loadedCount}개 · 작업 ${placement === "together" ? 1 : loadedCount}개 준비됨` : "이미지를 불러오지 못했습니다.", loadedCount ? "ok" : "error");
     }

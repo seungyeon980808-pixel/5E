@@ -66,6 +66,23 @@ function appState() {
   return { objects: [], selectedIds: [], activePageId: 'page-1', activeLayerId: 'layer-1', artboard: { width: 100, height: 100 } };
 }
 
+function installMutationObserverTestDouble() {
+  const previousMutationObserver = globalThis.MutationObserver;
+  class MutationObserverTestDouble {
+    constructor(callback) {
+      this.callback = callback;
+    }
+    observe() {}
+    disconnect() {}
+    takeRecords() { return []; }
+  }
+  globalThis.MutationObserver = MutationObserverTestDouble;
+  return () => {
+    if (previousMutationObserver === undefined) delete globalThis.MutationObserver;
+    else globalThis.MutationObserver = previousMutationObserver;
+  };
+}
+
 test('Given the AI library entry, when unified selection completes, then it opens once with only the AI consumer', async () => {
   const calls = [];
   const added = [];
@@ -124,6 +141,7 @@ test('Given the AI reference search EXAM action, when the PDF picker returns an 
 
 test('Given the AI library entry, when the picker returns advanced PDF groups, then each workbench keeps its assigned reference order', async () => {
   const browser = installAiPanelBrowserFixture();
+  const restoreMutationObserver = installMutationObserverTestDouble();
   const references = [{ name: 'first', data: 'first' }, { name: 'second', data: 'second' }, { name: 'third', data: 'third' }];
   const unregister = registerPdfReferencePicker(async options => options.onAddMany(references, {
     placement: 'advanced', groups: [[1, 0], [2]],
@@ -145,6 +163,7 @@ test('Given the AI library entry, when the picker returns advanced PDF groups, t
   } finally {
     unregister();
     manager?.close();
+    restoreMutationObserver();
     browser.restore();
   }
 });

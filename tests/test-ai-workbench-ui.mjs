@@ -3,6 +3,9 @@ import fs from "node:fs";
 import path from "node:path";
 import test from "node:test";
 import { fileURLToPath } from "node:url";
+import vm from "node:vm";
+
+import { groupSourcesInTaskTab } from "../js/ai-source-tasking.js";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const index = fs.readFileSync(path.join(root, "index.html"), "utf8");
@@ -26,6 +29,97 @@ test("AI panel keeps one compatible instance of each logic-owned control", () =>
     assert.equal(attributeCount(attribute), 1, `${attribute} must remain unique`);
   }
   assert.match(index, /<script type="module" src="js\/ai-workbench\.js\?v=[^"]+"><\/script>/);
+});
+
+function panelDeclaration(start, end) {
+  const from = panel.indexOf(start);
+  const to = panel.indexOf(end, from);
+  assert.ok(from >= 0 && to > from, `cannot load AI panel path: ${start}`);
+  return panel.slice(from, to);
+}
+
+function legacyAiOpenHarness() {
+  const tasks = [];
+  const panelElement = {
+    dataset: {},
+    hidden: true,
+    aiWorkbench: { restoreViewState() {} },
+    querySelector(selector) {
+      if (selector === '[data-ai-chat-panel]') return { hidden: true };
+      return { focus() {} };
+    },
+    dispatchEvent() {},
+  };
+  const context = {
+    panel: panelElement,
+    workspaceReady: Promise.resolve(),
+    state: { get: () => ({ selectedIds: [], objects: [] }) },
+    busy: false,
+    taskTabs: new Map(),
+    activeTaskTabId: null,
+    attachments: [],
+    generatedImages: [],
+    referenceComposition: {},
+    input: { value: "" },
+    desktop: null,
+    syncSelectedOutputActions() {},
+    selectedOutputItem: () => null,
+    candidateUsesAutomaticSeparation: () => false,
+    refresh: async () => {},
+    sourceToDataUrl: async (source) => source,
+    setStatus() {},
+    addLog() {},
+    restoreTaskTab(taskId) { context.activeTaskTabId = taskId; },
+    createTaskTab() {
+      const id = `task-${tasks.length + 1}`;
+      tasks.push({ id, references: [] });
+      context.activeTaskTabId = id;
+      return id;
+    },
+    addReferenceData(reference) {
+      tasks.find((task) => task.id === context.activeTaskTabId).references.push(structuredClone(reference));
+      context.attachments.push(reference);
+    },
+    captureActiveTaskTab() {},
+    persistTasks() {},
+    normalizeReferenceComposition: value => value,
+    groupedReferences: null,
+    groupSourcesInTaskTab,
+    distributeSourcesToTaskTabs() { throw new Error("advanced groups must not use separate-task distribution"); },
+    structuredClone,
+  };
+  context.globalThis = context;
+  const groupedReferences = panelDeclaration("function groupedReferences", "\n\nexport async function acknowledgeActiveTaskClearCancellation");
+  const addReferences = panelDeclaration("const addReferencesAsTasks =", "\n\n  let batchQueue");
+  const open = panelDeclaration("const open = async", "\n  const close =");
+  vm.runInNewContext(`${groupedReferences}\n${addReferences}\n${open}\nglobalThis.openLegacyAi = open;`, context);
+  return { tasks, open: context.openLegacyAi };
+}
+
+test("legacy AI open creates advanced task groups in assigned order with cloned provenance", async () => {
+  const { tasks, open } = legacyAiOpenHarness();
+  const references = [
+    { name: "crop-one", dataUrl: "data:image/png;base64,ONE", source: { documentId: "book-a", pageNumber: 1, rect: [0.1, 0.2, 0.3, 0.4] } },
+    { name: "crop-two", dataUrl: "data:image/png;base64,TWO", source: { documentId: "book-a", pageNumber: 2, rect: [0.2, 0.2, 0.3, 0.4] } },
+    { name: "crop-three", dataUrl: "data:image/png;base64,THREE", source: { documentId: "book-b", pageNumber: 3, rect: [0.3, 0.2, 0.3, 0.4] } },
+  ];
+
+  await open({ references, placement: "advanced", groups: [[2, 0], [1]], reveal: false });
+
+  assert.deepEqual(tasks.map((task) => task.references.map((reference) => ({
+    name: reference.name,
+    documentId: reference.source.documentId,
+    pageNumber: reference.source.pageNumber,
+    rect: reference.source.rect,
+  }))), [
+    [
+      { name: "crop-three", documentId: "book-b", pageNumber: 3, rect: [0.3, 0.2, 0.3, 0.4] },
+      { name: "crop-one", documentId: "book-a", pageNumber: 1, rect: [0.1, 0.2, 0.3, 0.4] },
+    ],
+    [{ name: "crop-two", documentId: "book-a", pageNumber: 2, rect: [0.2, 0.2, 0.3, 0.4] }],
+  ]);
+  references[2].source.rect[0] = 0.9;
+  assert.equal(tasks[0].references[0].source.rect[0], 0.3);
 });
 
 test("workbench defaults to large result with comments and keeps comparison and chat accessible", () => {

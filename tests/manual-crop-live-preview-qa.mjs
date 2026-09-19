@@ -155,8 +155,8 @@ try {
  await page.mouse.up();await page.waitForFunction(()=>!document.querySelector('[data-unilib-crop-save]').disabled);await page.keyboard.press('Enter');await page.waitForFunction(()=>document.querySelectorAll('[data-unilib-crop-remove]').length===1);
  const marker=page.locator('[data-accepted-crop-id]').first();const m=await marker.boundingBox();
  await page.mouse.move(m.x+m.width/2,m.y+m.height/2);await page.mouse.down();await page.mouse.move(m.x+m.width/2+15,m.y+m.height/2+10);await page.waitForTimeout(40);
- const a=await page.locator('.unilib-crop-collection-item:not(.is-pending) canvas').evaluate(c=>c.toDataURL());
- await page.mouse.move(m.x+m.width/2+50,m.y+m.height/2+40);await page.waitForTimeout(40);const b=await page.locator('.unilib-crop-collection-item:not(.is-pending) canvas').evaluate(c=>c.toDataURL());assert.notEqual(a,b);
+ const a=await page.locator('[data-unilib-crop-draft-review] canvas').evaluate(c=>c.toDataURL());
+ await page.mouse.move(m.x+m.width/2+50,m.y+m.height/2+40);await page.waitForTimeout(40);const b=await page.locator('[data-unilib-crop-draft-review] canvas').evaluate(c=>c.toDataURL());assert.notEqual(a,b);
  await page.screenshot({path:join(output,'accepted-live.png')});await page.mouse.up();await page.waitForFunction(()=>document.querySelector('[data-unilib-crop-box]').hidden);
  const handles=await marker.locator('[data-crop-handle]').first().evaluate(e=>({hit:e.getBoundingClientRect().width,visual:getComputedStyle(e,'::after').width}));assert.equal(handles.visual,'6px');assert.equal(handles.hit,14);
  await draw([.7,.1,.9,.25]);await page.keyboard.press('Enter');await page.waitForFunction(()=>document.querySelectorAll('[data-unilib-crop-remove]').length===2);await page.locator('[data-unilib-crop-select-all]').click();

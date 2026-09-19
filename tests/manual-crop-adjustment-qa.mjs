@@ -145,7 +145,7 @@ const acceptTwo = async () => {
 try {
  await page.setViewportSize({width:1440,height:900}); await openExpandedPage();
  await draw([.1,.1,.3,.3]);
- assert.equal(await page.locator('.is-pending').count(),1);
+ assert.equal(await page.locator('[data-unilib-crop-draft-review]').isVisible(),true);
  assert.equal(await page.locator('[data-unilib-crop-save]').textContent(),'추가');
  await page.keyboard.press('Enter');
  await page.waitForFunction(()=>document.querySelectorAll('[data-unilib-crop-remove]').length===1);
@@ -160,7 +160,7 @@ try {
  await page.waitForFunction(()=>document.querySelector('[data-unilib-crop-box]').hidden);
  assert.equal(await page.locator('[data-unilib-crop-remove]').count(),2);
  await draw([.6,.1,.9,.3]); await page.screenshot({path:join(output,'pending.png')}); await page.locator('[data-unilib-crop-draft-cancel]').click();
- assert.equal(await page.locator('.is-pending').count(),0);
+ assert.equal(await page.locator('[data-unilib-crop-draft-review]').isHidden(),true);
  await page.screenshot({path:join(output,'adjusted.png')});
  await page.locator('[data-unilib-crop-select-all]').click(); await page.locator('[data-unilib-crop-insert]').click();
  assert.equal(await page.evaluate(()=>window.qaInserted.length),2);
