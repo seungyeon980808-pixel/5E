@@ -1,4 +1,5 @@
 import { initWebLoginUi } from './web-login-ui.js';
+import { initMobileImage } from './mobile-image.js';
 import { showAlert } from "./ui-dialogs.js?v=1.4.0";
 import { initAiSharing } from './ai-sharing-ui.js';
 /* ===== MAIN (wire modules; data-as-truth + viewBox zoom/pan) ===== */
@@ -313,6 +314,7 @@ const autosaveReady = initAutosave(state);
 initProjectFileOpening(state, autosaveReady);
 const recoveryChoice = await autosaveReady;
 const aiPanel = initAiPanel(state, { freshStart: recoveryChoice === "fresh" });
+initMobileImage(aiPanel);
 initAiSharing(aiPanel);
 initDesktopProjectCloseGuard(state, () => aiPanel?.checkpointForClose());
 const aiEntryButton = document.getElementById("ai-image-install-open");
@@ -321,11 +323,14 @@ if (aiEntryButton) {
   aiEntryButton.setAttribute("aria-label", "AI 이미지 변환");
   const label = aiEntryButton.querySelector(".search-trigger-label");
   if (label) label.textContent = "AI 이미지 변환";
-  const openSelectedAi = () => void handSelectedCanvasImageToAi(state, {
-    renderImage: renderSessionToDataUrl,
-    openPanel: options => aiPanel?.open(options),
-    reportError: error => window.alert(`AI 이미지 변환을 열 수 없습니다.\n${error.message}`),
-  });
+  const openSelectedAi = () => {
+    if (document.documentElement.classList.contains("mobile-image-mode")) { void aiPanel?.open(); return; }
+    void handSelectedCanvasImageToAi(state, {
+      renderImage: renderSessionToDataUrl,
+      openPanel: options => aiPanel?.open(options),
+      reportError: error => window.alert(`AI 이미지 변환을 열 수 없습니다.\n${error.message}`),
+    });
+  };
   const webLogin = initWebLoginUi({ openAi: openSelectedAi });
   aiEntryButton.addEventListener("click", () => webLogin ? webLogin.openAi() : openSelectedAi());
 }
@@ -339,7 +344,9 @@ if (projectTransferButton && window.fiveEDesktop) {
   projectTransferButton.hidden = false;
   projectTransferButton.addEventListener("click", () => desktopHandoff.openProjectChooser());
 }
-window.addEventListener("5e:ai-output-success", () => desktopHandoff.reportAiSuccess());
+window.addEventListener("5e:ai-output-success", () => {
+  if (!document.documentElement.classList.contains("mobile-image-mode")) desktopHandoff.reportAiSuccess();
+});
 window.addEventListener("5e:local-folder-intent", () => desktopHandoff.reportLocalFolderIntent());
 
 /* ----- export dialog: 파일 dropdown → 내보내기/미리보기 (PNG/SVG) ----- */
