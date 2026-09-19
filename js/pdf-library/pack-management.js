@@ -104,7 +104,7 @@ export function mountPackManagement({
     <form class="pdflib-drive-connect" data-drive-form>
       <label for="pdflib-drive-url">개인 Google Drive 공개 폴더 추가</label><p>사전 검색 색인이 준비된 공개 폴더를 연결할 수 있습니다.</p>
       <div class="pdflib-drive-controls">
-        <input id="pdflib-drive-url" type="url" inputmode="url" autocomplete="url" placeholder="https://drive.google.com/drive/folders/…" data-drive-url>
+        <input id="pdflib-drive-url" type="url" inputmode="url" autocomplete="url" placeholder="" data-drive-url>
         <button type="submit" class="modal-btn modal-btn-primary" data-drive-connect>연결</button>
         <button type="button" class="modal-btn" data-drive-disconnect hidden>연결 해제</button>
       </div>

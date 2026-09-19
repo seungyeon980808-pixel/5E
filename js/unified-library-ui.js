@@ -7,7 +7,6 @@ const SOURCE_STORAGE_KEY = "5e.unified-library.sources.v1";
 const TREE_STORAGE_KEY = "5e.unified-library.tree-expanded.v1";
 const PANE_STORAGE_KEY = "5e.unified-library.search-pane-open.v1";
 const PREVIEW_PANE_STORAGE_KEY = "5e.unified-library.preview-pane-open.v1";
-const GRID_COLUMNS_STORAGE_KEY = "5e.unified-library.grid-columns.v1";
 const LIBRARY_TYPES = Object.freeze(["question", "image", "pdf"]);
 const DEFAULT_KINDS = Object.freeze(["crop", "image", "page"]);
 const DEFAULT_CONTINUOUS_PDF_PAGE_EXTENT = 760;
@@ -789,7 +788,7 @@ function buildShell() {
       <div class="unilib-shell">
         <aside class="unilib-pane unilib-folders" aria-label="검색 위치">
           <div class="unilib-pane-head"><h3>검색 위치</h3><button type="button" class="unilib-icon-button unilib-mobile-only" data-unilib-folders-close aria-label="검색 위치 닫기">${ICONS.close}</button></div>
-          <div class="unilib-folder-scroll"><p>기본 제공 Drive와 개인 자료를 폴더별로 탐색합니다.</p><div class="unilib-provided-state" data-unilib-provided-status role="status" hidden><span data-unilib-provided-status-message></span><button type="button" class="unilib-button" data-unilib-provided-retry hidden>다시 시도</button></div><button type="button" class="unilib-button unilib-drive-settings-open" data-unilib-drive-settings-open>Drive 자료 연결</button><button type="button" class="unilib-button" data-unilib-local-folder-add hidden>로컬 폴더 추가</button><p data-unilib-local-folder-guide hidden>로컬 폴더 연결은 설치형에서 사용할 수 있습니다. <a href="https://github.com/seungyeon980808-pixel/5E/releases/latest" target="_blank" rel="noopener noreferrer">설치형 다운로드</a></p><ul class="unilib-tree" data-unilib-tree></ul></div>
+          <div class="unilib-folder-scroll"><p>기본 제공 Drive와 개인 자료를 폴더별로 탐색합니다.</p><div class="unilib-provided-state" data-unilib-provided-status role="status" hidden><span data-unilib-provided-status-message></span><button type="button" class="unilib-button" data-unilib-provided-retry hidden>다시 시도</button></div><ul class="unilib-tree" data-unilib-tree></ul></div><details class="unilib-location-add"><summary>＋ 자료 위치 추가</summary><div class="unilib-location-add-menu"><button type="button" class="unilib-button unilib-drive-settings-open" data-unilib-drive-settings-open>Google Drive 연결</button><button type="button" class="unilib-button" data-unilib-local-folder-add hidden>내 컴퓨터 폴더 연결</button><p data-unilib-local-folder-guide hidden>로컬 폴더 연결은 설치형에서 사용할 수 있습니다. <a href="https://github.com/seungyeon980808-pixel/5E/releases/latest" target="_blank" rel="noopener noreferrer">설치형 다운로드</a></p></div></details>
         </aside>
         <section class="unilib-pane unilib-results" aria-label="라이브러리 검색 결과">
           <div class="unilib-search-tools library-toolbar">
@@ -805,7 +804,7 @@ function buildShell() {
                 <button type="button" data-unilib-type="image" aria-pressed="false">이미지</button>
                 <button type="button" data-unilib-type="pdf" aria-pressed="false">PDF</button>
               </div>
-              <div class="unilib-grid-density" data-unilib-grid-density role="group" aria-label="한 줄에 표시할 이미지 수"><span>한 줄</span>${[2, 3, 4, 5].map((columns) => `<button type="button" data-unilib-grid-columns="${columns}" aria-pressed="${columns === 3}">${columns}</button>`).join("")}</div>
+              <div class="unilib-grid-density" data-unilib-grid-density hidden></div>
               <div class="unilib-pdf-display library-scope-toggle" data-unilib-pdf-display hidden role="group" aria-label="PDF 표시 방식"><button type="button" data-unilib-pdf-mode="file" aria-pressed="true">파일</button><button type="button" data-unilib-pdf-mode="page" aria-pressed="false">페이지</button></div>
             </div>
             <div class="unilib-exam-filters" data-unilib-exam-filters hidden>
@@ -814,17 +813,17 @@ function buildShell() {
               <select data-unilib-filter="administration" aria-label="시험"><option value="">모든 시험</option><option value="06">6월 모의평가</option><option value="09">9월 모의평가</option><option value="11">수능</option></select>
             </div>
           </div>
-          <div class="unilib-selection-summary library-selected-tray is-empty" data-unilib-selected-tray aria-label="선택한 자료"><strong data-unilib-selected-count>선택 0개</strong><span data-unilib-selected-items></span><button type="button" data-unilib-selected-clear disabled>모두 해제</button></div>
+          <div class="unilib-selection-summary library-selected-tray is-empty" data-unilib-selected-tray hidden aria-label="선택한 자료"><strong data-unilib-selected-count>선택 0개</strong><span data-unilib-selected-items></span><button type="button" data-unilib-selected-clear disabled>모두 해제</button></div>
           <div class="unilib-result-scroll"><div class="unilib-result-state" data-unilib-result-state role="status" aria-live="polite" hidden><span data-unilib-result-state-message></span><button type="button" class="unilib-button" data-unilib-result-retry hidden>다시 시도</button></div><ul class="unilib-result-list library-card-grid" data-unilib-results role="listbox"></ul></div>
-          <section class="unilib-crop-tray" data-unilib-crop-tray hidden aria-label="작업대">
-            <header><span class="unilib-crop-tray-icon" aria-hidden="true">${ICONS.file}</span><strong>작업대</strong><span class="unilib-crop-tray-count" data-unilib-crop-tray-count>0개</span><span class="unilib-crop-tray-miniatures" data-unilib-crop-tray-miniatures aria-hidden="true"></span><button type="button" class="unilib-button unilib-crop-tray-clear" data-unilib-crop-tray-clear>모두 비우기</button><button type="button" class="unilib-button" data-unilib-crop-tray-toggle aria-expanded="false">펼쳐보기</button></header>
+          <section class="unilib-crop-tray" data-unilib-crop-tray hidden aria-label="크롭된 이미지">
+            <header><span class="unilib-crop-tray-icon" aria-hidden="true">${ICONS.file}</span><strong>크롭된 이미지</strong><span class="unilib-crop-tray-count" data-unilib-crop-tray-count>0개</span><span class="unilib-crop-tray-miniatures" data-unilib-crop-tray-miniatures aria-hidden="true"></span><button type="button" class="unilib-button unilib-crop-tray-clear" data-unilib-crop-tray-clear>모두 비우기</button><button type="button" class="unilib-button" data-unilib-crop-tray-toggle aria-expanded="false">펼쳐보기</button></header>
             <div class="unilib-crop-tray-body"><div class="unilib-crop-tray-gallery" data-unilib-crop-tray-gallery></div></div>
           </section>
         </section>
         <aside class="unilib-pane unilib-preview library-reader" data-unilib-preview aria-label="선택 자료 미리보기">
           <div class="unilib-pane-head"><div><h3 data-unilib-preview-title>미리보기</h3><p data-unilib-preview-kind>자료를 선택하세요</p><span class="unilib-example-note" data-unilib-preview-example hidden>목업 · 예시 자료</span></div></div>
           <div class="unilib-preview-scroll library-reader-main"><div class="unilib-representations" data-unilib-representations hidden role="group" aria-label="문항 표시 범위"></div><nav class="unilib-match-nav" data-unilib-match-nav hidden aria-label="PDF 일치 페이지"><button type="button" data-unilib-match-prev>이전 일치</button><output data-unilib-match-position></output><button type="button" data-unilib-match-next>다음 일치</button></nav><details class="unilib-highlight-legend" data-unilib-highlight-legend hidden><summary>검색어 강조</summary><ul></ul></details><div class="unilib-stage library-reader-preview" data-unilib-stage><span>검색 결과를 선택하세요.</span></div><div class="unilib-match-context" data-unilib-match-context hidden></div><div class="unilib-part-options" data-unilib-part-options hidden></div></div>
-          <div class="unilib-preview-foot library-reader-actions"><div class="unilib-source">${ICONS.file}<div><strong data-unilib-source-name>—</strong><span data-unilib-source-meta>—</span></div><div class="unilib-source-actions"><button type="button" data-unilib-source-open>원문 페이지</button><button type="button" data-unilib-source-download hidden>컴퓨터에 저장</button><button type="button" data-unilib-adjust hidden>PDF에서 자르기</button></div></div><div class="unilib-actions"><button type="button" class="unilib-primary" data-unilib-insert disabled>캔버스에 삽입</button><button type="button" class="unilib-button" data-unilib-objectify disabled>이미지 객체화</button><button type="button" class="unilib-button" data-unilib-ai disabled>AI 작업에 추가</button></div></div>
+          <div class="unilib-preview-foot library-reader-actions"><div class="unilib-source">${ICONS.file}<div class="unilib-source-inline"><strong data-unilib-source-name>—</strong><span data-unilib-source-meta>—</span></div><div class="unilib-source-actions" hidden><button type="button" data-unilib-source-open hidden>원문 페이지</button><button type="button" data-unilib-source-download hidden>컴퓨터에 저장</button><button type="button" data-unilib-adjust hidden>PDF에서 자르기</button></div></div><div class="unilib-actions"><button type="button" data-unilib-insert hidden disabled>캔버스에 삽입</button><button type="button" class="unilib-button" data-unilib-objectify disabled>이미지 객체화</button><button type="button" class="unilib-button unilib-ai-glow" data-unilib-ai disabled>AI 이미지 변환</button></div></div>
         </aside>
         <button class="unilib-scrim" data-unilib-scrim type="button" aria-label="열린 패널 닫기"></button>
       </div>
@@ -868,8 +867,25 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   document.addEventListener("pointerdown", (event) => {
     if (help.open && !help.contains(event.target)) help.open = false;
   }, true);
-  localFolderAdd.hidden = Boolean(desktopLibrary);
-  localFolderAdd.addEventListener("click", () => { overlay.querySelector("[data-unilib-local-folder-guide]").hidden = false; });
+  localFolderAdd.hidden = false;
+  localFolderAdd.addEventListener("click", async () => {
+    if (!desktopLibrary?.pickFolder) {
+      overlay.querySelector("[data-unilib-local-folder-guide]").hidden = false;
+      return;
+    }
+    localFolderAdd.disabled = true;
+    try {
+      const connection = await desktopLibrary.pickFolder();
+      if (!connection?.connectionId) return;
+      await refreshDesktopSources(true);
+      await runSearch();
+      localFolderAdd.closest("details").open = false;
+    } catch (error) {
+      setStatus(`로컬 폴더 연결 실패: ${error instanceof Error ? error.message : error}`, true);
+    } finally {
+      localFolderAdd.disabled = false;
+    }
+  });
   const list = overlay.querySelector("[data-unilib-results]");
   const query = overlay.querySelector("[data-unilib-query]");
   const stage = overlay.querySelector("[data-unilib-stage]");
@@ -897,7 +913,6 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   let treeExpansionInitialized = (() => { try { return storage.getItem(TREE_STORAGE_KEY) !== null; } catch { return false; } })();
   let searchPaneOpen = loadPaneOpen(storage);
   let previewPaneOpen = (() => { try { return storage.getItem(PREVIEW_PANE_STORAGE_KEY) !== "false"; } catch { return true; } })();
-  let gridColumns = (() => { try { const value = Number(storage.getItem(GRID_COLUMNS_STORAGE_KEY)); return [2, 3, 4, 5].includes(value) ? value : 3; } catch { return 3; } })();
   const foldersToggle = overlay.querySelector("[data-unilib-folders-open]");
   const setSearchPaneOpen = (open) => {
     searchPaneOpen = open;
@@ -914,12 +929,6 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     previewToggle.setAttribute("aria-pressed", String(open));
     previewToggle.setAttribute("aria-label", `미리보기 ${open ? "접기" : "펼치기"}`);
     try { storage.setItem(PREVIEW_PANE_STORAGE_KEY, String(open)); } catch {}
-  };
-  const setGridColumns = (columns) => {
-    gridColumns = [2, 3, 4, 5].includes(columns) ? columns : 3;
-    root.style.setProperty("--unilib-grid-columns", String(gridColumns));
-    overlay.querySelectorAll("[data-unilib-grid-columns]").forEach((button) => button.setAttribute("aria-pressed", String(Number(button.dataset.unilibGridColumns) === gridColumns)));
-    try { storage.setItem(GRID_COLUMNS_STORAGE_KEY, String(gridColumns)); } catch {}
   };
   const setMobileFoldersOpen = (open) => {
     root.classList.toggle("folders-open", open);
@@ -1371,7 +1380,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       chip.append(name, remove);
       return chip;
     }));
-    overlay.querySelector("[data-unilib-ai]").textContent = records.length > 1 ? `선택 ${records.length}개 AI 작업에 추가` : "AI 작업에 추가";
+    overlay.querySelector("[data-unilib-ai]").textContent = "AI 이미지 변환";
     updateAiActionAvailability();
     renderCropTray();
   }
@@ -1382,6 +1391,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     if (!entries.length) cropTrayExpanded = false;
     tray.hidden = entries.length === 0;
     tray.classList.toggle("is-expanded", cropTrayExpanded);
+    tray.style.setProperty("--unilib-crop-card-count", String(Math.max(1, entries.length)));
     overlay.querySelector("[data-unilib-crop-tray-count]").textContent = `${entries.length}개`;
     const toggle = overlay.querySelector("[data-unilib-crop-tray-toggle]");
     toggle.setAttribute("aria-expanded", String(cropTrayExpanded));
@@ -2060,12 +2070,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   });
   setSearchPaneOpen(searchPaneOpen);
   setPreviewPaneOpen(previewPaneOpen);
-  setGridColumns(gridColumns);
   previewToggle.addEventListener("click", () => setPreviewPaneOpen(!previewPaneOpen));
-  overlay.querySelector("[data-unilib-grid-density]").addEventListener("click", (event) => {
-    const button = event.target.closest("[data-unilib-grid-columns]");
-    if (button) setGridColumns(Number(button.dataset.unilibGridColumns));
-  });
   overlay.querySelector("[data-unilib-result-retry]").addEventListener("click", () => void runSearch());
   overlay.querySelector("[data-unilib-provided-retry]").addEventListener("click", () => { if (typeof providedRetry === "function") void providedRetry(); });
   overlay.querySelector("[data-unilib-scrim]").addEventListener("click", closeDrawers);
