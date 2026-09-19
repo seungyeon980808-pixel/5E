@@ -66,7 +66,7 @@ export function chooseWorkbenchAssignment({ references, host, returnFocus } = {}
       <div class="workbench-assignment-summary" data-summary></div>
       <div class="workbench-assignment-advanced" data-advanced hidden><section class="workbench-assignment-reference-panel"><h3>크롭 이미지 <span data-reference-count></span>개</h3><div class="workbench-assignment-references" data-references></div></section><section class="workbench-assignment-bench-panel"><div class="workbench-assignment-bench-heading"><h3>작업대</h3><button type="button" data-action="add-bench">+ 작업대 추가</button></div><div class="workbench-assignment-benches" data-benches></div></section></div>
       <p class="workbench-assignment-error" data-error role="status" aria-live="polite"></p>
-      <footer><button type="button" data-action="cancel">취소</button><button type="button" class="workbench-assignment-primary" data-action="continue">계속</button></footer>
+      <footer><button type="button" data-action="cancel">취소</button><button type="button" class="workbench-assignment-primary" data-action="continue">AI 작업으로 보내기</button></footer>
     </section>`;
     const dialog = overlay.querySelector(".workbench-assignment");
     const advanced = overlay.querySelector("[data-advanced]");
