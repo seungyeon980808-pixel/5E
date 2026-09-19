@@ -87,6 +87,7 @@ function closeDrawer(layout) {
 }
 
 function setup(root, kind) {
+  if (kind === 'image' && document.documentElement.classList.contains('mobile-image-mode')) return;
   if (initialized.has(root)) return;
   initialized.add(root);
   const panels = kind === 'editor'

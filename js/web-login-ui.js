@@ -19,6 +19,8 @@ export function initWebLoginUi({ openAi }) {
     <div data-login-code hidden><span>1. 인증 코드 복사</span><div class="web-login-code-row"><strong></strong><button type="button" data-copy-code>복사</button></div><p>옆 인증 창에 붙여넣거나, 이 코드를 직접 입력해 주세요.</p></div>
     <div class="web-login-actions"><button type="button" data-login-later>나중에</button><button type="button" data-login-start><img data-login-logo src="${new URL('../assets/chatgpt-login.svg', import.meta.url).href}" width="20" height="20" alt="" aria-hidden="true"><span data-login-start-label>ChatGPT로 로그인</span></button></div>`;
   document.body.append(dialog);
+  const mobile = document.documentElement.classList.contains('mobile-image-mode');
+  if (mobile) dialog.querySelector('[data-login-code] p').textContent = '새 인증 탭에 코드를 입력하세요. 인증이 끝나면 이 5E 탭으로 돌아와 주세요.';
   const toast = document.createElement('div');
   toast.className = 'web-login-toast'; toast.hidden = true;
   toast.innerHTML = '<span role="status"></span><button type="button" hidden>전체화면으로 돌아가기</button>';
@@ -76,7 +78,7 @@ export function initWebLoginUi({ openAi }) {
     start.disabled = next === 'starting';
     start.querySelector('[data-login-start-label]').textContent = next === 'starting' ? '인증 창 준비 중…' : next === 'waiting' ? authenticating ? '인증 창으로 돌아가기' : '2. OpenAI 인증하기 →' : next === 'connected' ? 'AI 작업 열기' : next === 'error' ? '다시 로그인' : 'ChatGPT로 로그인';
     start.querySelector('[data-login-logo]').hidden = !['idle', 'error'].includes(next);
-    title.textContent = next === 'connected' ? 'AI 기능을 사용할 수 있습니다' : ['waiting', 'starting'].includes(next) ? '코드를 보면서 인증하세요' : 'AI 기능을 시작하세요';
+    title.textContent = mobile && ['waiting', 'starting'].includes(next) ? '인증 후 5E로 돌아오세요' : next === 'connected' ? 'AI 기능을 사용할 수 있습니다' : ['waiting', 'starting'].includes(next) ? '코드를 보면서 인증하세요' : 'AI 기능을 시작하세요';
     codeBox.hidden = !userCode || next !== 'waiting';
     codeBox.querySelector('strong').textContent = userCode;
   }
@@ -94,7 +96,7 @@ export function initWebLoginUi({ openAi }) {
   function show(forAi = false) {
     if (connected && forAi) { openAi(); return; }
     if (!dialog.open) { wasFullscreen = Boolean(document.fullscreenElement); dialog.showModal(); }
-    if (connected) render('connected', '메인 화면의 AI 버튼을 눌러 작업을 시작하세요.');
+    if (connected) render('connected', mobile ? '연결되었습니다. 사진 작업을 계속할 수 있습니다.' : '메인 화면의 AI 버튼을 눌러 작업을 시작하세요.');
     title.focus({ preventScroll: true });
   }
   badge.addEventListener('click', () => {
@@ -137,12 +139,12 @@ export function initWebLoginUi({ openAi }) {
       userCode = data.userCode || '';
       authenticating = false;
       resetCopyStage();
-      render('waiting', '코드를 복사한 뒤 아래 OpenAI 인증하기를 누르세요. 인증 팝업 하나가 열립니다.');
+      render('waiting', mobile ? '코드를 복사한 뒤 OpenAI 인증하기를 눌러 새 탭에서 인증하세요.' : '코드를 복사한 뒤 아래 OpenAI 인증하기를 누르세요. 인증 팝업 하나가 열립니다.');
     } else if (data.state === 'authenticating') {
       authenticating = true;
       delete start.dataset.copyReady;
       start.dataset.authenticating = 'true';
-      render('waiting', '인증이 끝나면 이 안내와 인증 창이 자동으로 닫히고 편집기로 돌아갑니다.');
+      render('waiting', mobile ? '새 탭에서 인증을 완료한 뒤 5E 탭으로 돌아와 주세요. 연결 상태를 확인합니다.' : '인증이 끝나면 이 안내와 인증 창이 자동으로 닫히고 편집기로 돌아갑니다.');
     } else if (data.state === 'blocked') {
       authenticating = false;
       delete start.dataset.authenticating;
@@ -162,7 +164,7 @@ export function initWebLoginUi({ openAi }) {
         const wasConnected = connected; connected = result.login?.loggedIn === true;
         if (connected) {
           const autoReturning = !wasConnected && dialog.open;
-          render('connected', autoReturning ? 'AI가 준비되었습니다. 자동으로 편집기로 돌아갑니다.' : '메인 화면의 AI 버튼을 눌러 작업을 시작하세요.');
+          render('connected', autoReturning ? 'AI가 준비되었습니다. 자동으로 편집기로 돌아갑니다.' : mobile ? '연결되었습니다. 사진 작업을 계속할 수 있습니다.' : '메인 화면의 AI 버튼을 눌러 작업을 시작하세요.');
           if (!wasConnected && dialog.open) {
             scheduleCompletionClose();
           }
