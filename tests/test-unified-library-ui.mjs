@@ -195,6 +195,38 @@ test("loading a PDF crop clears the shared action status instead of showing a pe
   assert.doesNotMatch(source, /setStatus\("원문 페이지를 준비하는 중…"\)/u);
 });
 
+test("preview chrome keeps only the two requested action labels visible", async () => {
+  const [source, css] = await Promise.all([
+    readFile(new URL("../js/unified-library-ui.js", import.meta.url), "utf8"),
+    readFile(new URL("../css/unified-library.css", import.meta.url), "utf8"),
+  ]);
+  assert.match(source, /class="unilib-pane-head unilib-preview-heading"[^>]*hidden/u);
+  assert.match(source, /class="unilib-source"[^>]*hidden/u);
+  assert.match(source, /class="unilib-status"[^>]*hidden/u);
+  assert.match(css, /\.unilib-preview-heading,[\s\S]*\.unilib-source,[\s\S]*\.unilib-status[^\{]*\{ display: none !important; \}/u);
+  assert.match(css, /\.unilib-preview \{ grid-template-rows: minmax\(0, 1fr\) auto; \}/u);
+  assert.match(source, />이미지 객체화<\/button>/u);
+  assert.match(source, />AI 이미지 변환<\/button>/u);
+});
+
+test("PDF page preview fits the available width and scrolls vertically", async () => {
+  const source = await readFile(new URL("../css/unified-library.css", import.meta.url), "utf8");
+  assert.match(source, /data-pdf-display="page"\] \.unilib-preview-image[^\{]*\{[^\}]*width: 100%;[^\}]*max-width: none;[^\}]*margin: 0;/u);
+  assert.match(source, /data-pdf-display="page"\] \.unilib-preview-image > img[^\{]*\{[^\}]*width: 100%;[^\}]*max-width: none;[^\}]*max-height: none;[^\}]*height: auto;/u);
+});
+
+test("library cache keys advance through the complete deployed module chain", async () => {
+  const [html, main, exam] = await Promise.all([
+    readFile(new URL("../index.html", import.meta.url), "utf8"),
+    readFile(new URL("../js/main.js", import.meta.url), "utf8"),
+    readFile(new URL("../js/exam-library.js", import.meta.url), "utf8"),
+  ]);
+  assert.match(html, /css\/unified-library\.css\?v=library-layout-0920/u);
+  assert.match(html, /js\/main\.js[^"']*library-layout-0920/u);
+  assert.match(main, /exam-library\.js\?v=library-layout-0920/u);
+  assert.match(exam, /unified-library-ui\.js\?v=library-layout-0920/u);
+});
+
 test("continuous PDF windows reach the first, middle, and last page with bounded live pages", () => {
   assert.deepEqual(continuousPdfWindow(327, 1), { start: 1, end: 4, pages: [1, 2, 3, 4] });
   assert.deepEqual(continuousPdfWindow(327, 164), { start: 161, end: 167, pages: [161, 162, 163, 164, 165, 166, 167] });

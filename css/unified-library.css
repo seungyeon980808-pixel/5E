@@ -1159,6 +1159,14 @@
   .unified-library-overlay .unilib[data-active-tab="pdf"][data-pdf-display="page"] .unilib-thumb { width: 100%; height: 100%; min-height: 0; }
 }
 
+/* Preview chrome is intentionally text-free; PDF pages use the full reader width. */
+.unified-library-overlay .unilib-preview-heading,
+.unified-library-overlay .unilib-source,
+.unified-library-overlay .unilib-status { display: none !important; }
+.unified-library-overlay .unilib-preview { grid-template-rows: minmax(0, 1fr) auto; }
+.unified-library-overlay .unilib[data-active-tab="pdf"][data-pdf-display="page"] .unilib-preview-image { display: block; width: 100%; max-width: none; margin: 0; }
+.unified-library-overlay .unilib[data-active-tab="pdf"][data-pdf-display="page"] .unilib-preview-image > img { width: 100%; max-width: none; max-height: none; height: auto; }
+
 /* Compact crop review and a fully visible horizontal crop collection. */
 .unified-library-overlay .unilib-crop-card-grid { grid-auto-rows: 14rem; align-content: start; }
 .unified-library-overlay .unilib-crop-tray-gallery { grid-auto-flow: row; grid-auto-columns: auto; grid-template-columns: repeat(var(--unilib-crop-card-count, 1), minmax(0, 1fr)); overflow-x: hidden; }
