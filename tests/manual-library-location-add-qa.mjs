@@ -22,8 +22,32 @@ const browser = await chromium.launch({ headless: true });
 const results = [];
 try {
   for (const viewport of [{ width: 375, height: 800 }, { width: 768, height: 900 }, { width: 1280, height: 900 }]) {
-    const page = await browser.newPage({ viewport });
+    const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
     await page.goto(`http://127.0.0.1:${server.address().port}/tests/fixtures/unified-library-ui-qa.html`);
+    await page.getByRole('button', { name: '문항', exact: true }).click();
+    const first = page.locator('[data-result-id="q1"]');
+    await first.click();
+    await page.waitForSelector('.unilib-preview-image > img');
+    assert.equal(await first.evaluate(node => getComputedStyle(node).borderColor), 'rgb(47, 129, 247)');
+    assert.equal(await page.locator('[data-unilib-selected-tray]').evaluate(node => node.getBoundingClientRect().height), 0);
+    await first.press('Space');
+    assert.equal(await first.evaluate(node => node.parentElement.querySelector('input').checked), true);
+    assert.equal(await first.evaluate(node => getComputedStyle(node).borderColor), 'rgb(47, 129, 247)');
+    await page.locator('[data-result-id="q3"]').click();
+    assert.equal(await first.getAttribute('aria-selected'), 'false');
+    assert.equal(await first.evaluate(node => node.parentElement.querySelector('input').checked), true);
+    await page.waitForFunction(() => document.querySelector('.unilib-stage img')?.alt.includes('3번'));
+    await page.setViewportSize(viewport);
+    const preview = await page.locator('.unilib-stage').evaluate(stage => {
+      const image = stage.querySelector('img');
+      const rect = image.getBoundingClientRect();
+      const frame = image.parentElement.getBoundingClientRect();
+      return { imageWidth: rect.width, frameWidth: frame.width, availableWidth: stage.clientWidth,
+        ratio: rect.width / rect.height, naturalRatio: image.naturalWidth / image.naturalHeight };
+    });
+    assert.ok(Math.abs(preview.imageWidth - preview.availableWidth) <= 2, JSON.stringify(preview));
+    assert.ok(Math.abs(preview.ratio - preview.naturalRatio) < .01);
+    await page.screenshot({ path: join(out, `question-preview-${viewport.width}.png`) });
     await page.locator('.unilib').evaluate((root, mobile) => {
       root.classList.toggle('folders-open', mobile);
       root.classList.remove('preview-open');
@@ -38,6 +62,9 @@ try {
       return {
         titleRight: title.right,
         triggerLeft: trigger.left,
+        triggerRight: trigger.right,
+        triggerWidth: trigger.width,
+        triggerHeight: trigger.height,
         menuLeft: menu.left,
         menuRight: menu.right,
         paneLeft: bounds.left,
@@ -45,7 +72,8 @@ try {
       };
     });
     assert.ok(geometry.triggerLeft >= geometry.titleRight, `${viewport.width}: trigger overlaps title`);
-    assert.ok(geometry.triggerLeft - geometry.titleRight <= 12, `${viewport.width}: trigger is detached from title`);
+    assert.equal(geometry.triggerWidth, geometry.triggerHeight, "add control is square");
+    assert.ok(geometry.paneRight - geometry.triggerRight <= (viewport.width <= 767 ? 80 : 24), "add control is right aligned");
     assert.ok(geometry.menuLeft >= geometry.paneLeft, `${viewport.width}: menu clips at left edge`);
     assert.ok(geometry.menuRight <= geometry.paneRight, `${viewport.width}: menu clips at right edge`);
     await page.screenshot({ path: join(out, `location-add-${viewport.width}.png`) });

@@ -10,7 +10,7 @@ const report = [];
 try {
   for (const width of [375, 768, 1280]) {
     const page = await browser.newPage({ viewport: { width, height: 900 } });
-    await page.goto("http://127.0.0.1:24891/tests/fixtures/unified-library-ui-qa.html");
+    await page.goto(`${process.env.LIBRARY_QA_URL || "http://127.0.0.1:24971"}/tests/fixtures/unified-library-ui-qa.html`);
     await page.waitForSelector(".unilib-result-card");
     if (await page.locator(".unilib").evaluate((node) => node.classList.contains("preview-open"))) {
       await page.locator("[data-unilib-preview-toggle]").click();
@@ -70,7 +70,8 @@ try {
     assert.equal(unselected.trayHeight, trayBefore.height);
     assert.equal(selected.count, "선택 1개");
     assert.equal(unselected.count, "선택 0개");
-    assert.equal(selected.cardBorder, "rgba(0, 0, 0, 0)");
+    assert.equal(selected.cardBorder, "rgb(47, 129, 247)");
+    assert.equal(selected.trayHeight, 0);
     assert.notEqual(selected.cardBackground, "rgba(0, 0, 0, 0)");
     assert.equal(selected.cardOutline, "solid");
     await page.getByRole("button", { name: "PDF", exact: true }).click();
