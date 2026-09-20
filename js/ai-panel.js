@@ -1999,13 +1999,13 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     detail = enforcePngAcceptance(detail, candidate);
     const normalized = dispatchReviewEvent(detail, candidate);
     if (normalized.state === "reviewing") {
-      setStatus(`${AI_IMAGE_REVIEW_MODEL} · high 독립 검수 중…`, "busy");
-      setGenerating(true, "원본과 후보를 독립 검수하고 있습니다", "객체 수·안팎·액체·연결·검은 채움 의미를 확인합니다.", "analyze");
+      setStatus("결과를 확인하는 중…", "busy");
+      setGenerating(true, "결과를 확인하고 있습니다", "요청 내용과 선택한 이미지를 비교합니다.", "analyze");
       return;
     }
     if (normalized.state === "correcting") {
-      setStatus("명시된 구조 실패를 한 번 교정 중…", "busy");
-      setGenerating(true, "검수 실패 영역을 교정하고 있습니다", "원본과 현재 후보를 보존하며 실패 항목만 교정합니다.", "render");
+      setStatus("수정 결과를 준비하는 중…", "busy");
+      setGenerating(true, "수정 결과를 준비하고 있습니다", "요청한 부분을 반영하고 나머지 영역은 유지합니다.", "render");
       return;
     }
     if (!["passed", "needs-attention", "failed", "cancelled"].includes(normalized.state)) return;
@@ -2015,19 +2015,19 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       currentReviewCandidate = candidate;
       stageCurrentOutput({ data: candidate.data, reviewVerified: true, reviewReport: normalized.report });
       setTaskState("completed");
-      setStatus("Sol 독립 검수 통과 · 생성 완료", "ok");
-      addLog("원본 참고와 현재 후보의 구조 하드 게이트가 모두 통과되었습니다.");
+      setStatus("결과 확인 완료 · 생성 완료", "ok");
+      addLog("요청 내용과 선택한 이미지의 비교를 마쳤습니다.");
       void commitCurrentOutput();
     } else {
       pendingCacheOutput = null;
       if (normalized.state === "needs-attention") {
-        setStatus("독립 검수 확인 필요", "warn");
-        addLog("자동 검수에서 실패 또는 불확실 항목이 남았습니다. 이 결과는 검증 완료로 재사용되지 않습니다.", "error");
+        setStatus("결과 확인 필요", "warn");
+        addLog("결과를 직접 확인해 주세요. 이 결과는 확인 완료 상태로 재사용되지 않습니다.", "error");
       } else if (normalized.state === "cancelled") {
-        setStatus("독립 검수 취소됨", "warn");
+        setStatus("결과 확인 취소됨", "warn");
       } else {
-        setStatus("독립 검수 실패", "error");
-        addLog(normalized.report?.issues?.[0]?.message || "독립 검수 보고서를 확인하지 못했습니다.", "error");
+        setStatus("결과 확인 실패", "error");
+        addLog("결과 확인을 마치지 못했습니다. 입력과 생성 결과는 보존되었습니다.", "error");
       }
     }
     setBusy(false);
@@ -2310,13 +2310,13 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     syncQualityMode();
     syncOutputEngine();
     syncReferenceSummary();
+    selectedCandidateId = tab.selectedCandidateId || generatedImages.at(-1)?.id || null;
+    panel.dataset.aiSelectedCandidateId = selectedCandidateId || "";
     panel.aiWorkbench?.restoreViewState?.(tab.workbenchViewState || null);
     renderTaskTabs();
     retryInterruptedButton.hidden = !['interrupted', 'failed'].includes(tab.workState);
     retryInterruptedButton.textContent = tab.workState === 'failed' ? '변환 다시 시도' : '중단 작업 다시 시도';
     retryInterruptedButton.disabled = busy || !tab.retryRequest?.snapshot;
-    selectedCandidateId = tab.selectedCandidateId || generatedImages.at(-1)?.id || null;
-    panel.dataset.aiSelectedCandidateId = selectedCandidateId || "";
     const selectedCandidate = generatedImages.find((item) => item.id === selectedCandidateId) || generatedImages.at(-1) || null;
     if (selectedCandidate) {
       dispatchReviewEvent({
@@ -3254,7 +3254,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     runInput.structureSpec = null;
     runInput.structureRecord = null;
     if (whiteRun && !runInput.approvedFirstPng && (runInput.attachments.length || runInput.generated.length) && !isReviewSolAvailable()) {
-      setStatus("원본 구조 분석용 Sol 높음 모델을 사용할 수 없습니다. 생성하지 않았습니다.", "error");
+      setStatus("결과 확인 기능을 사용할 수 없어 변환을 시작하지 않았습니다.", "error");
       return;
     }
     if (whiteRun && (!modelById(runInput.model) || !modelSupportsEffort(modelById(runInput.model), runInput.effort))) {
@@ -3582,8 +3582,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       };
       if (requestEpoch !== currentRequestEpoch || currentCancelRequested) throw new Error("작업 준비가 취소되었습니다.");
       if (whiteRun && !runInput.approvedFirstPng && !revisionImage && outgoingAttachments.length) {
-        setStatus("원본 구조 분석 중…", "busy");
-        setGenerating(true, "원본 구조 분석 중", "객체·단계·연결·작은 요소와 불확실성을 먼저 기록합니다.", "analyze");
+        setStatus("원본을 확인하는 중…", "busy");
+        setGenerating(true, "원본을 확인하고 있습니다", "선택한 이미지와 요청 내용을 준비합니다.", "analyze");
         const analysisStartedAt = performance.now();
         const analysisAttachments = observationAttachments || outgoingAttachments;
         const bindings = await Promise.all(analysisAttachments.map(async item => {
@@ -3596,10 +3596,9 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
         runInput.structureSpec = JSON.parse(JSON.stringify(spec));
         runInput.structureRecord = {version:STRUCTURE_SPEC_VERSION, spec:runInput.structureSpec, sourceBindings:bindings, model:AI_IMAGE_REVIEW_MODEL, effort:"high", elapsedMs:Math.round(performance.now()-analysisStartedAt)};
         currentTurnPerformance = {...currentTurnPerformance, structureAnalysisMs:runInput.structureRecord.elapsedMs};
-        addLog(`원본 구조 분석(JSON, 자동 관찰 가설):\n${JSON.stringify(runInput.structureRecord.spec)}`);
         panel.dispatchEvent(new CustomEvent("5e:ai-structure",{detail:JSON.parse(JSON.stringify(runInput.structureRecord))}));
-        setStatus("구조 명세를 반영해 이미지 생성 중…", "busy");
-        setGenerating(true, "구조 명세 기반 생성 중", "동일 명세를 독립 검수에도 전달합니다.", "generate");
+        setStatus("이미지 생성 중…", "busy");
+        setGenerating(true, "이미지를 생성하고 있습니다", "선택한 이미지와 요청 내용을 반영합니다.", "generate");
       }
       if (requestEpoch !== currentRequestEpoch || currentCancelRequested) throw new Error("작업 준비가 취소되었습니다.");
       const purpose = type === "image"
@@ -4108,9 +4107,9 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       };
       const correctionRequest = currentRequestSnapshot?.request || "원본과 직전 결과를 대조하여 구조가 달라진 부분만 교정해 줘.";
       setBusy(false);
-      setStatus("복잡 그림 구조 검수 중…", "busy");
-      setGenerating(true, "원본과 결과를 대조하고 있습니다", "형태·부품 수·연결이 달라진 부분만 한 번 더 교정합니다.", "analyze");
-      addLog("복잡 모드 1차 결과를 원본과 대조한 뒤 구조 교정 1회를 진행합니다.");
+      setStatus("결과를 확인하는 중…", "busy");
+      setGenerating(true, "결과를 확인하고 있습니다", "선택한 이미지와 요청 내용을 비교합니다.", "analyze");
+      addLog("첫 결과를 확인한 뒤 필요한 부분을 한 번 더 수정합니다.");
       setTimeout(() => {
         if (eventEpoch !== currentRequestEpoch) return;
         void submit("image", {
@@ -4131,8 +4130,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       && normalizeQualityMode(currentRunInput?.qualityMode) === AI_QUALITY_MODES.COMPLEX
       && Number(currentRunInput?.complexPass || 1) === 2;
     if (completedComplexCorrection) {
-      setStatus("복잡 변환 완료 · 원본 구조 확인 필요", "warn");
-      addLog("복잡 모드는 구조 교정을 마쳤지만 자동 확정하지 않습니다. 원본과 객체 수·분기·연결을 비교한 뒤 사용하세요.");
+      setStatus("복잡 변환 완료 · 직접 확인 필요", "warn");
+      addLog("복잡 변환을 마쳤습니다. 원본과 비교한 뒤 사용해 주세요.");
     }
     setBusy(false);
     currentTurnDone = true;
@@ -4188,8 +4187,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
         if (!terminalAllowsSuccess || currentCancelRequested) return;
         window.dispatchEvent(new CustomEvent("5e:ai-output-success", { detail: { candidateId: added.id } }));
         if (isWhitePngWorkflow(currentRunInput || {})) {
-          setStatus(currentRunInput?.approvedFirstPng ? "PNG 준비 완료 · 서버 종료 확인 중" : "1차 후보 준비 완료 · 독립 검수 대기", "busy");
-          addLog(currentRunInput?.approvedFirstPng ? "첫 PNG 원본을 보존했습니다. 자동 검수·교정 없이 직접 확인할 수 있습니다." : "흰 배경 PNG 후보가 준비되었습니다. 원본 참고와의 독립 구조 검수를 이어서 진행합니다.");
+          setStatus(currentRunInput?.approvedFirstPng ? "PNG 준비 완료 · 서버 종료 확인 중" : "첫 결과 준비 완료 · 결과 확인 대기", "busy");
+          addLog(currentRunInput?.approvedFirstPng ? "첫 PNG 원본을 보존했습니다. 직접 확인할 수 있습니다." : "흰 배경 PNG 결과가 준비되었습니다. 원본과 비교해 확인합니다.");
         } else {
           setStatus(serverTurnFinished ? "생성 완료" : "서버 작업 종료 확인 중", serverTurnFinished ? "ok" : "busy");
           addLog("이미지가 완성되었습니다. 생성 결과에서 확인하거나 캔버스로 출력할 수 있습니다.");
