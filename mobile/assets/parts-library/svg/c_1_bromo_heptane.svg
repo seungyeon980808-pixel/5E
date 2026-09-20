@@ -1,0 +1,312 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:cdml="http://www.freesoftware.fsf.org/bkchem/cdml"
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   height="15.61"
+   version="1.0"
+   viewBox="0 0 793 1122"
+   width="159.17654"
+   id="svg2604"
+   sodipodi:version="0.32"
+   inkscape:version="0.46"
+   sodipodi:docname="1-bromo-heptane.svg"
+   inkscape:output_extension="org.inkscape.output.svg.inkscape">
+  <metadata
+     id="metadata2641">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs2639">
+    <inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="0 : 526.18109 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_z="744.09448 : 526.18109 : 1"
+       inkscape:persp3d-origin="372.04724 : 350.78739 : 1"
+       id="perspective2643" />
+  </defs>
+  <sodipodi:namedview
+     inkscape:window-height="1005"
+     inkscape:window-width="1280"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     guidetolerance="10.0"
+     gridtolerance="10.0"
+     objecttolerance="10.0"
+     borderopacity="1.0"
+     bordercolor="#666666"
+     pagecolor="#ffffff"
+     id="base"
+     showgrid="false"
+     inkscape:zoom="3.5045944"
+     inkscape:cx="115.03093"
+     inkscape:cy="-14.805961"
+     inkscape:window-x="1020"
+     inkscape:window-y="-4"
+     inkscape:current-layer="svg2604" />
+  <g
+     font-size="12pt"
+     id="g2606"
+     style="font-size:15px;stroke-linecap:round;font-family:Helvetica"
+     transform="matrix(49.81529,0,0,49.81529,-15029.545,-11859.945)">
+    <g
+       id="g2608"
+       style="stroke:#000000;stroke-width:1">
+      <line
+         x1="248.25999"
+         x2="271.12"
+         y1="255.14999"
+         y2="241.85001"
+         id="line2610" />
+    </g>
+    <g
+       id="g2612"
+       style="stroke:#000000;stroke-width:1">
+      <line
+         x1="271.12"
+         x2="294.07001"
+         y1="241.85001"
+         y2="254.99001"
+         id="line2614" />
+    </g>
+    <g
+       id="g2616"
+       style="stroke:#000000;stroke-width:1">
+      <line
+         x1="225.31"
+         x2="248.25999"
+         y1="242.00999"
+         y2="255.14999"
+         id="line2618" />
+    </g>
+    <g
+       id="g2620"
+       style="stroke:#000000;stroke-width:1">
+      <line
+         x1="362.73999"
+         x2="379.17999"
+         y1="241.52"
+         y2="250.92999"
+         id="line2622" />
+    </g>
+    <g
+       id="g2624"
+       style="stroke:#000000;stroke-width:1">
+      <line
+         x1="339.88"
+         x2="362.73999"
+         y1="254.82001"
+         y2="241.52"
+         id="line2626" />
+    </g>
+    <g
+       id="g2628"
+       style="stroke:#000000;stroke-width:1">
+      <line
+         x1="316.92999"
+         x2="339.88"
+         y1="241.67999"
+         y2="254.82001"
+         id="line2630" />
+    </g>
+    <g
+       id="g2632"
+       style="stroke:#000000;stroke-width:1">
+      <line
+         x1="294.07001"
+         x2="316.92999"
+         y1="254.99001"
+         y2="241.67999"
+         id="line2634" />
+    </g>
+    <text
+       font-size="12pt"
+       x="379.29999"
+       y="257.66"
+       id="text2636"
+       style="font-size:15px;fill:#000000;font-family:helvetica">Br</text>
+  </g>
+  <cdml:cdml
+     version="0.15">
+    <cdml:info>
+      <cdml:author_program
+         version="0.12.6">BKchem</cdml:author_program>
+    </cdml:info>
+    <cdml:paper
+       crop_margin="10"
+       crop_svg="0"
+       orientation="portrait"
+       replace_minus="0"
+       type="A4"
+       use_real_minus="0" />
+    <cdml:viewport
+       viewport="0.000000 0.000000 640.000000 480.000000" />
+    <cdml:standard
+       area_color=""
+       font_family="helvetica"
+       font_size="12"
+       line_color="#000"
+       line_width="1px"
+       paper_crop_margin="10"
+       paper_crop_svg="0"
+       paper_orientation="portrait"
+       paper_type="A4">
+      <cdml:bond
+         double-ratio="0.75"
+         length="0.7cm"
+         wedge-width="5px"
+         width="6px" />
+      <cdml:arrow
+         length="1.6cm" />
+      <cdml:atom
+         show_hydrogens="0" />
+    </cdml:standard>
+    <cdml:molecule
+       id="molecule81145"
+       name="">
+      <cdml:atom
+         id="atom36287"
+         name="C"
+         number="1"
+         show_number="no"
+         valency="4">
+        <cdml:point
+           x="5.963cm"
+           y="6.405cm" />
+      </cdml:atom>
+      <cdml:atom
+         id="atom52508"
+         name="C"
+         number="2"
+         show_number="no"
+         valency="4">
+        <cdml:point
+           x="6.570cm"
+           y="6.753cm" />
+      </cdml:atom>
+      <cdml:atom
+         id="atom99800"
+         name="C"
+         number="3"
+         show_number="no"
+         valency="4">
+        <cdml:point
+           x="7.175cm"
+           y="6.400cm" />
+      </cdml:atom>
+      <cdml:atom
+         id="atom16141"
+         name="C"
+         number="4"
+         show_number="no"
+         valency="4">
+        <cdml:point
+           x="7.783cm"
+           y="6.748cm" />
+      </cdml:atom>
+      <cdml:atom
+         id="atom35837"
+         name="C"
+         number="5"
+         show_number="no"
+         valency="4">
+        <cdml:point
+           x="8.388cm"
+           y="6.396cm" />
+      </cdml:atom>
+      <cdml:atom
+         id="atom51459"
+         name="C"
+         number="6"
+         show_number="no"
+         valency="4">
+        <cdml:point
+           x="8.995cm"
+           y="6.744cm" />
+      </cdml:atom>
+      <cdml:atom
+         id="atom37271"
+         name="C"
+         number="7"
+         show_number="no"
+         valency="4">
+        <cdml:point
+           x="9.600cm"
+           y="6.392cm" />
+      </cdml:atom>
+      <cdml:atom
+         id="atom43926"
+         name="Br"
+         number="8"
+         pos="center-first"
+         show_number="no"
+         valency="1">
+        <cdml:point
+           x="10.207cm"
+           y="6.739cm" />
+      </cdml:atom>
+      <cdml:bond
+         double_ratio="0.75"
+         end="atom99800"
+         id="bond27216"
+         line_width="1.0"
+         start="atom52508"
+         type="n1" />
+      <cdml:bond
+         double_ratio="0.75"
+         end="atom16141"
+         id="bond28219"
+         line_width="1.0"
+         start="atom99800"
+         type="n1" />
+      <cdml:bond
+         double_ratio="0.75"
+         end="atom52508"
+         id="bond15442"
+         line_width="1.0"
+         start="atom36287"
+         type="n1" />
+      <cdml:bond
+         double_ratio="0.75"
+         end="atom43926"
+         id="bond22611"
+         line_width="1.0"
+         start="atom37271"
+         type="n1" />
+      <cdml:bond
+         double_ratio="0.75"
+         end="atom37271"
+         id="bond20648"
+         line_width="1.0"
+         start="atom51459"
+         type="n1" />
+      <cdml:bond
+         double_ratio="0.75"
+         end="atom51459"
+         id="bond28318"
+         line_width="1.0"
+         start="atom35837"
+         type="n1" />
+      <cdml:bond
+         double_ratio="0.75"
+         end="atom35837"
+         id="bond83630"
+         line_width="1.0"
+         start="atom16141"
+         type="n1" />
+    </cdml:molecule>
+  </cdml:cdml>
+</svg>

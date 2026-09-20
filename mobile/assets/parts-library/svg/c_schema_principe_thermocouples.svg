@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN"
+"http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd">
+<svg>
+	<title>Schéma du principe du thermocouples</title>
+	<line
+	     x1="100"
+	     y1="50"
+	     x2="100"
+	     y2="20"
+	     style="stroke:red;stroke-width:2"/>
+	<line
+	     x1="200"
+	     y1="50"
+	     x2="200"
+	     y2="20"
+	     style="stroke:red;stroke-width:2"/>
+	<line
+	     x1="100"
+	     y1="50"
+	     x2="100"
+	     y2="100"
+	     style="stroke:blue;stroke-width:2"/>
+	<line
+	     x1="200"
+	     y1="50"
+	     x2="200"
+	     y2="100"
+	     style="stroke:blue;stroke-width:2"/>
+	<line
+	     x1="100"
+	     y1="21"
+	     x2="200"
+	     y2="21"
+	     style="stroke:red;stroke-width:2"/>
+	<circle
+	       cx="100"
+	       cy="50"
+	       r="5"
+	       style="fill:black;stroke:black; stroke-width:2;"/>
+	<circle
+	       cx="200"
+	       cy="50"
+	       r="5"
+	       style="fill:black;stroke:black; stroke-width:2;"/>
+	<text
+	     x="140"
+	     y="14"
+	     font-family="Verdana"
+	     font-size="20"
+	     fill="red">a</text>
+	<text
+	     x="70"
+	     y="90"
+	     font-family="Verdana"
+	     font-size="16"
+	     fill="blue">b</text>
+	<text
+	     x="215"
+	     y="90"
+	     font-family="Verdana"
+	     font-size="16"
+	     fill="blue">b</text>
+	<text
+	     x="70"
+	     y="50"
+	     font-family="Verdana"
+	     font-size="18"
+	     fill="black">T</text>
+	<text
+	     x="78"
+	     y="52"
+	     font-family="Verdana"
+	     font-size="12"
+	     fill="black">1</text>
+	<text
+	     x="215"
+	     y="50"
+	     font-family="Verdana"
+	     font-size="18"
+	     fill="black">T</text>
+	<text
+	     x="223"
+	     y="52"
+	     font-family="Verdana"
+	     font-size="12"
+	     fill="black">2</text>
+</svg>

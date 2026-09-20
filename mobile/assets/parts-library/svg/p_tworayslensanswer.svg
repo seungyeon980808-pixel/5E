@@ -1,0 +1,29 @@
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN" 
+ "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd">
+
+<svg xmlns="http://www.w3.org/2000/svg" 
+ xmlns:xlink="http://www.w3.org/1999/xlink" 
+ width='600px' height='400px'>
+
+<title>Lens problem with two light rays</title>
+
+<g transform="translate(250,250)">
+
+<ellipse cx='0' cy='0' rx='10' ry='150'  stroke='black' fill="lightblue" /> 
+<path id="opticalAxis" d="M-300,0 h700"  style="stroke:black; fill:none;" stroke-width='4' />
+
+<path id="ray1" d="M-150,100 L0,-200 h400"  style="stroke:red; fill:none;" stroke-width='4' />
+<path id="ray2" d="M-150,100 h150 L400,-300"  style="stroke:red; fill:none;" stroke-width='4' />
+
+<path id="rayA" d="M-150,100 L0,-70 L300,-200 L600,-330"  style="stroke:blue; fill:none;" stroke-width='4' />
+<path id="rayB" d="M-150,100 L0,70 L300,-200 L600,-470"  style="stroke:blue; fill:none;" stroke-width='4' />
+<path id="lens" d="M0,-100 v200" style="stroke:black; fill:none;" stroke-width='2' />
+
+<path id="ray3" d="M-150,170 L0,0 L100,-113.33 L100,0"  style="stroke:black; fill:none;stroke-dasharray:8,10" stroke-width='3' />
+<circle cx='100' cy='-113.33' r='5' fill="black" />
+<circle cx='-100' cy='0' r='5' fill="black" />
+<circle cx='100' cy='0' r='5' fill="black" />
+
+</g>
+
+</svg>

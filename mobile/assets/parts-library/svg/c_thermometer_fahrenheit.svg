@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="125" height="570" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+	<g stroke="#000">
+		<path d="m60 60v434c-4 1-8 5-8 10v34c0 6 5 10 10.5 10s10.5-4 10.5-10v-34c0-5-4-9-8-10v-434c0-2-1-3-2.5-3s-2.5 1-2.5 3z" fill="none"/>
+		<path d="m60 315v179c-4 1-8 5-8 10v34c0 6 5 10 10.5 10s10.5-4 10.5-10v-34c0-5-4-9-8-10v-179z" fill="#f00"/>
+		<rect x="30" y="20" width="65" height="535" rx="30" ry="30" fill="none"/>
+		<path d="m85 471.67h-15" stroke-width=".5"/>
+	</g>
+	<g id="a">
+		<g id="e" transform="translate(-225)">
+			<g id="f">
+				<g id="g">
+					<g stroke="#000" stroke-width=".5">
+						<path d="m310 71.667h-15"/>
+						<path d="m301 75h-6"/>
+						<path d="m301 78.333h-6"/>
+						<path d="m301 81.667h-6"/>
+						<path d="m301 85h-6"/>
+					</g>
+				</g>
+				<use transform="translate(0,16.667)" xlink:href="#g"/>
+			</g>
+			<use transform="translate(0,33.333)" xlink:href="#f"/>
+		</g>
+		<use transform="translate(0,66.663)" xlink:href="#e"/>
+	</g>
+	<use transform="translate(0,266.67)" xlink:href="#a"/>
+	<use transform="translate(0,133.33)" xlink:href="#a"/>
+	<g font-family="DejaVu Sans" font-size="13" text-anchor="middle">
+		<text x="62" y="47" font-size="16">°F</text>
+		<text x="45" y="76">220</text>
+		<text x="45" y="93">210</text>
+		<text x="45" y="110">200</text>
+		<text x="45" y="126">190</text>
+		<text x="45" y="143">180</text>
+		<text x="45" y="160">170</text>
+		<text x="45" y="176">160</text>
+		<text x="45" y="193">150</text>
+		<text x="45" y="210">140</text>
+		<text x="45" y="226">130</text>
+		<text x="45" y="243">120</text>
+		<text x="45" y="260">110</text>
+		<text x="45" y="276">100</text>
+		<text x="45" y="293">90</text>
+		<text x="45" y="310">80</text>
+		<text x="45" y="326">70</text>
+		<text x="45" y="343">60</text>
+		<text x="45" y="360">50</text>
+		<text x="45" y="376">40</text>
+		<text x="45" y="393">30</text>
+		<text x="45" y="410">20</text>
+		<text x="45" y="426">10</text>
+		<text x="45" y="443">0</text>
+		<text x="45" y="460" fill="#ff0000">10</text>
+		<text x="45" y="476" fill="#ff0000">20</text>
+	</g>
+</svg>

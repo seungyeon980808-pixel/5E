@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="600" height="400" version="1.1" xmlns="http://www.w3.org/2000/svg">
+ <ellipse cx="171.5" cy="172.63" rx="160.99" ry="160.98" fill="#fbf8e1" stroke="#000"/>
+ <g stroke="#808080">
+  <ellipse cx="171.5" cy="172.63" rx="112.23" ry="112.22" fill="#e3e2e2"/>
+  <ellipse cx="171.5" cy="172.63" rx="55.674" ry="55.669" fill="#d6b7a9"/>
+  <ellipse cx="171.5" cy="172.63" rx="32.984" ry="32.981" fill="#fab897"/>
+ </g>
+ <ellipse cx="171.5" cy="172.63" rx="14.697" ry="14.696" stroke="#000"/>
+ <g fill="#f00">
+  <ellipse cx="194.1" cy="172.63" rx="5.4864" ry="5.486"/>
+  <ellipse cx="174.2" cy="179.04" rx="5.4864" ry="5.486"/>
+  <ellipse cx="257" cy="36.21" rx="5.4864" ry="5.486"/>
+  <ellipse cx="201" cy="140.58" rx="5.4864" ry="5.486"/>
+ </g>
+ <path d="m23.8 372.54-13.314 3.8038 13.314 3.8038z" stroke="#000" stroke-linejoin="round" stroke-width=".8pt"/>
+ <path d="m319.2 380.15 13.314-3.8038-13.314-3.8038z" stroke="#000" stroke-linejoin="round" stroke-width=".8pt"/>
+ <g fill="none" stroke-linejoin="round">
+  <path d="m10.5 376.34h321.99" stroke="#000"/>
+  <path d="m10.5 172.63v215.72" stroke="#b3b3b3" stroke-linecap="round"/>
+  <path d="m332.5 172.63v215.72" stroke="#b3b3b3" stroke-linecap="round"/>
+  <g stroke="#f00" stroke-linecap="round" stroke-width="2">
+   <path d="m257 36.21 70.976-7e-3"/>
+   <path d="m194.1 172.63 185.01-2e-3"/>
+   <path d="m201 140.58 41.626-37.076 124.61-3e-3"/>
+   <path d="m174.2 179.04 68.443 51.359 128.26 5e-3"/>
+  </g>
+ </g>
+ <g font-family="DejaVu Sans" font-size="20px">
+  <text><tspan x="331" y="33">Mondkruste aus </tspan><tspan x="331" y="52">Anorthosit</tspan></text>
+  <text><tspan x="370" y="89">~587 km Radius</tspan><tspan x="370" y="108">unterer Mantel</tspan><tspan x="370" y="127">(fast vollständig fest)</tspan></text>
+  <text><tspan x="381" y="168">~350 km Radius</tspan><tspan x="381" y="187">flüssiger äußerer Kern</tspan></text>
+  <text><tspan x="372" y="227">~160 km Radius</tspan><tspan x="372" y="247">fester innerer Kern</tspan></text>
+  <g text-anchor="middle">
+   <text x="171" y="372">3 474 km</text>
+   <text><tspan x="174" y="304">oberer </tspan><tspan x="171" y="323">Mantel</tspan></text>
+   <text><tspan x="171" y="252">mittlerer</tspan><tspan x="171" y="271">Mantel</tspan></text>
+  </g>
+ </g>
+</svg>

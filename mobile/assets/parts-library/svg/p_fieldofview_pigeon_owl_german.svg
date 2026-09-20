@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no" ?>
+<svg
+version="1.1"
+xmlns="http://www.w3.org/2000/svg"
+xmlns:xlink="http://www.w3.org/1999/xlink"
+width="600"
+height="400">
+<defs>
+<path id="pigeon"
+	opacity="0.3"
+	d="M 0 0 v -130 a 130 130 0 0 0 0 260 z" />
+	<!-- angle:180 degree -->
+<path id="owl"
+	opacity="0.3"
+	d="M 0 0 v -130 a 130 130 0 0 0 -122.16 174.4626 z" />
+	<!-- angle:100 degree -->
+<rect id="box" width="15" height="15" opacity="0.3" />
+</defs>
+<rect width="800" height="400" fill="#fff" />
+
+<g style="fill:#00f;">
+	<g transform="translate(150 200)">
+		<use xlink:href="#pigeon" transform="rotate(350)" />
+		<use xlink:href="#pigeon" transform="rotate(190)" />
+		<circle cx="0" cy="0" r="10" fill="#000" />
+	</g>
+	
+	<g transform="translate(450 200)">
+		<use xlink:href="#owl" transform="rotate(220)" />
+		<use xlink:href="#owl" transform="rotate(250)" />
+		<circle cx="0" cy="0" r="10" fill="#000" />
+	</g>
+	
+	<use xlink:href="#box" x="115" y="357" />
+	<use xlink:href="#box" x="115" y="357" />
+	<use xlink:href="#box" x="355" y="357" />
+</g>
+
+
+<g style="font-family:sans-serif;font-size:22px;text-anchor:middle;">
+<text x="150" y="40">Taube</text>
+<text x="450" y="40">Eule</text>
+</g>
+
+<g style="font-family:sans-serif;font-size:18px;text-anchor:start;">
+<text x="140" y="370">Binokulares Sehen</text>
+<text x="380" y="370">Monokulares Sehen</text>
+</g>
+
+</svg>

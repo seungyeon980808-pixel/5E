@@ -1,0 +1,270 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0" y="0" width="455" height="938" viewBox="0 0 455 938">
+<style type="text/css">
+	.st0{fill:#959595;}
+	.st1{fill:#EEF2FA;stroke:#000;stroke-width:0.5;}
+	.st2{fill:none;stroke:#FBCC34;stroke-width:2;}
+	.st3{font-family:Liberation Sans,Arial;}
+	.st4{font-size:12px;}
+	.st5{fill:none;stroke:#000;stroke-width:2;}
+</style>
+<symbol  id="slot" viewBox="-37.5 -12.5 75 25">
+	<polygon class="st0" points="37.5,-12.5 -37.5,-12.5 -37.5,12.5 37.5,12.5 	"/>
+	<polygon class="st1" points="-32.5,-9 -32.5,9 32.5,9 32.5,-9 	"/>
+	<line class="st2" x1="-22.5" y1="0" x2="22.5" y2="0"/>
+	<polygon points="3.5,9.1 3.5,12.1 -3.5,12.1 -3.5,9.1 -1.5,9.1 -1.5,-9 -3.5,-9 -3.5,-12 3.5,-12 3.5,-9 1.5,-9 1.5,9.1 	"/>
+</symbol>
+<g id="pins">
+	<rect x="177.7" y="30.3" width="100" height="885"/>
+	<rect x="177.7" y="30.3" class="st0" width="25" height="25"/>
+	<rect x="252.7" y="30.3" class="st0" width="25" height="25"/>
+	<rect x="177.7" y="890.3" class="st0" width="25" height="25"/>
+	<rect x="252.7" y="890.3" class="st0" width="25" height="25"/>
+	<g>
+<use xlink:href="#slot"  width="75" height="25" x="-37.5" y="-12.5" transform="matrix(1 0 0 -1 227.7025 82.7887)"/>
+<use xlink:href="#slot"  width="75" height="25" x="-37.5" y="-12.5" transform="matrix(1 0 0 -1 227.7025 108.7887)"/>
+<use xlink:href="#slot"  width="75" height="25" x="-37.5" y="-12.5" transform="matrix(1 0 0 -1 227.7025 134.7887)"/>
+<use xlink:href="#slot"  width="75" height="25" x="-37.5" y="-12.5" transform="matrix(1 0 0 -1 227.7025 160.7887)"/>
+<use xlink:href="#slot"  width="75" height="25" x="-37.5" y="-12.5" transform="matrix(1 0 0 -1 227.7025 186.7887)"/>
+<use xlink:href="#slot"  width="75" height="25" x="-37.5" y="-12.5" transform="matrix(1 0 0 -1 227.7025 212.7887)"/>
+<use xlink:href="#slot"  width="75" height="25" x="-37.5" y="-12.5" transform="matrix(1 0 0 -1 227.7025 238.7887)"/>
+<use xlink:href="#slot"  width="75" height="25" x="-37.5" y="-12.5" transform="matrix(1 0 0 -1 227.7025 264.7887)"/>
+<use xlink:href="#slot"  width="75" height="25" x="-37.5" y="-12.5" transform="matrix(1 0 0 -1 227.7025 290.7887)"/>
+<use xlink:href="#slot"  width="75" height="25" x="-37.5" y="-12.5" transform="matrix(1 0 0 -1 227.7025 316.7887)"/>
+<use xlink:href="#slot"  width="75" height="25" x="-37.5" y="-12.5" transform="matrix(1 0 0 -1 227.7025 342.7887)"/>
+<use xlink:href="#slot"  width="75" height="25" x="-37.5" y="-12.5" transform="matrix(1 0 0 -1 227.7025 368.7887)"/>
+<use xlink:href="#slot"  width="75" height="25" x="-37.5" y="-12.5" transform="matrix(1 0 0 -1 227.7025 394.7887)"/>
+<use xlink:href="#slot"  width="75" height="25" x="-37.5" y="-12.5" transform="matrix(1 0 0 -1 227.7025 420.7887)"/>
+<use xlink:href="#slot"  width="75" height="25" x="-37.5" y="-12.5" transform="matrix(1 0 0 -1 227.7025 446.7887)"/>
+<use xlink:href="#slot"  width="75" height="25" x="-37.5" y="-12.5" transform="matrix(1 0 0 -1 227.7025 472.7887)"/>
+<use xlink:href="#slot"  width="75" height="25" x="-37.5" y="-12.5" transform="matrix(1 0 0 -1 227.7025 498.7887)"/>
+<use xlink:href="#slot"  width="75" height="25" x="-37.5" y="-12.5" transform="matrix(1 0 0 -1 227.7025 524.7888)"/>
+<use xlink:href="#slot"  width="75" height="25" x="-37.5" y="-12.5" transform="matrix(1 0 0 -1 227.7025 550.7888)"/>
+<use xlink:href="#slot"  width="75" height="25" x="-37.5" y="-12.5" transform="matrix(1 0 0 -1 227.7025 576.7888)"/>
+<use xlink:href="#slot"  width="75" height="25" x="-37.5" y="-12.5" transform="matrix(1 0 0 -1 227.7025 602.7888)"/>
+<use xlink:href="#slot"  width="75" height="25" x="-37.5" y="-12.5" transform="matrix(1 0 0 -1 227.7025 628.7888)"/>
+<use xlink:href="#slot"  width="75" height="25" x="-37.5" y="-12.5" transform="matrix(1 0 0 -1 227.7025 654.7888)"/>
+<use xlink:href="#slot"  width="75" height="25" x="-37.5" y="-12.5" transform="matrix(1 0 0 -1 227.7025 680.7888)"/>
+<use xlink:href="#slot"  width="75" height="25" x="-37.5" y="-12.5" transform="matrix(1 0 0 -1 227.7025 706.7888)"/>
+<use xlink:href="#slot"  width="75" height="25" x="-37.5" y="-12.5" transform="matrix(1 0 0 -1 227.7025 732.7888)"/>
+<use xlink:href="#slot"  width="75" height="25" x="-37.5" y="-12.5" transform="matrix(1 0 0 -1 227.7025 758.7888)"/>
+<use xlink:href="#slot"  width="75" height="25" x="-37.5" y="-12.5" transform="matrix(1 0 0 -1 227.7025 784.7888)"/>
+<use xlink:href="#slot"  width="75" height="25" x="-37.5" y="-12.5" transform="matrix(1 0 0 -1 227.7025 810.7888)"/>
+<use xlink:href="#slot"  width="75" height="25" x="-37.5" y="-12.5" transform="matrix(1 0 0 -1 227.7025 836.7888)"/>
+<use xlink:href="#slot"  width="75" height="25" x="-37.5" y="-12.5" transform="matrix(1 0 0 -1 227.7025 862.7888)"/>
+<rect x="215.2" y="55.4" class="st0" width="25" height="15"/>
+<rect x="215.2" y="875.2" class="st0" width="25" height="15"/>
+	</g>
+</g>
+<g id="text">
+	<g id="L_numbers_1_">
+		<text transform="matrix(1 0 0 1 139 87)" class="st3 st4">01</text>
+		<text transform="matrix(1 0 0 1 139 113)" class="st3 st4">02</text>
+		<text transform="matrix(1 0 0 1 139 139)" class="st3 st4">03</text>
+		<text transform="matrix(1 0 0 1 139 165)" class="st3 st4">04</text>
+		<text transform="matrix(1 0 0 1 139 191)" class="st3 st4">05</text>
+		<text transform="matrix(1 0 0 1 139 217)" class="st3 st4">06</text>
+		<text transform="matrix(1 0 0 1 139 242)" class="st3 st4">07</text>
+		<text transform="matrix(1 0 0 1 139 268)" class="st3 st4">08</text>
+		<text transform="matrix(1 0 0 1 139 294)" class="st3 st4">09</text>
+		<text transform="matrix(1 0 0 1 139 320)" class="st3 st4">10</text>
+		<text transform="matrix(1 0 0 1 139 346)" class="st3 st4">11</text>
+		<text transform="matrix(1 0 0 1 139 372)" class="st3 st4">12</text>
+		<text transform="matrix(1 0 0 1 139 398)" class="st3 st4">13</text>
+		<text transform="matrix(1 0 0 1 139 424)" class="st3 st4">14</text>
+		<text transform="matrix(1 0 0 1 139 450)" class="st3 st4">15</text>
+		<text transform="matrix(1 0 0 1 139 476)" class="st3 st4">16</text>
+		<text transform="matrix(1 0 0 1 139 502)" class="st3 st4">17</text>
+		<text transform="matrix(1 0 0 1 139 528)" class="st3 st4">18</text>
+		<text transform="matrix(1 0 0 1 139 554)" class="st3 st4">19</text>
+		<text transform="matrix(1 0 0 1 139 580)" class="st3 st4">20</text>
+		<text transform="matrix(1 0 0 1 139 606)" class="st3 st4">21</text>
+		<text transform="matrix(1 0 0 1 139 632)" class="st3 st4">22</text>
+		<text transform="matrix(1 0 0 1 139 653)" class="st3 st4">23</text>
+		<text transform="matrix(1 0 0 1 139 684)" class="st3 st4">24</text>
+		<text transform="matrix(1 0 0 1 139 710)" class="st3 st4">25</text>
+		<text transform="matrix(1 0 0 1 139 736)" class="st3 st4">26</text>
+		<text transform="matrix(1 0 0 1 139 762)" class="st3 st4">27</text>
+		<text transform="matrix(1 0 0 1 139 788)" class="st3 st4">28</text>
+		<text transform="matrix(1 0 0 1 139 813)" class="st3 st4">29</text>
+		<text transform="matrix(1 0 0 1 139 839)" class="st3 st4">30</text>
+		<text transform="matrix(1 0 0 1 139 865)" class="st3 st4">31</text>
+	</g>
+	<g id="R_numbers_1_">
+		<text transform="matrix(1 0 0 1 325 87)" class="st3 st4">1</text>
+		<text transform="matrix(1 0 0 1 325 113)" class="st3 st4">2</text>
+		<text transform="matrix(1 0 0 1 325 139)" class="st3 st4">3</text>
+		<text transform="matrix(1 0 0 1 325 165)" class="st3 st4">4</text>
+		<text transform="matrix(1 0 0 1 325 191)" class="st3 st4">5</text>
+		<text transform="matrix(1 0 0 1 325 217)" class="st3 st4">6</text>
+		<text transform="matrix(1 0 0 1 325 243)" class="st3 st4">7</text>
+		<text transform="matrix(1 0 0 1 325 268)" class="st3 st4">8</text>
+		<text transform="matrix(1 0 0 1 325 294)" class="st3 st4">9</text>
+		<text transform="matrix(1 0 0 1 318 320)" class="st3 st4">10</text>
+		<text transform="matrix(1 0 0 1 318 346)" class="st3 st4">11</text>
+		<text transform="matrix(1 0 0 1 318 372)" class="st3 st4">12</text>
+		<text transform="matrix(1 0 0 1 318 398)" class="st3 st4">13</text>
+		<text transform="matrix(1 0 0 1 318 424)" class="st3 st4">14</text>
+		<text transform="matrix(1 0 0 1 318 450)" class="st3 st4">15</text>
+		<text transform="matrix(1 0 0 1 318 476)" class="st3 st4">16</text>
+		<text transform="matrix(1 0 0 1 318 502)" class="st3 st4">17</text>
+		<text transform="matrix(1 0 0 1 318 528)" class="st3 st4">18</text>
+		<text transform="matrix(1 0 0 1 318 554)" class="st3 st4">19</text>
+		<text transform="matrix(1 0 0 1 318 580)" class="st3 st4">20</text>
+		<text transform="matrix(1 0 0 1 318 606)" class="st3 st4">21</text>
+		<text transform="matrix(1 0 0 1 318 632)" class="st3 st4">22</text>
+		<text transform="matrix(1 0 0 1 318 658)" class="st3 st4">23</text>
+		<text transform="matrix(1 0 0 1 318 684)" class="st3 st4">24</text>
+		<text transform="matrix(1 0 0 1 318 710)" class="st3 st4">25</text>
+		<text transform="matrix(1 0 0 1 318 736)" class="st3 st4">26</text>
+		<text transform="matrix(1 0 0 1 318 762)" class="st3 st4">27</text>
+		<text transform="matrix(1 0 0 1 318 788)" class="st3 st4">28</text>
+		<text transform="matrix(1 0 0 1 318 813)" class="st3 st4">29</text>
+		<text transform="matrix(1 0 0 1 318 839)" class="st3 st4">30</text>
+		<text transform="matrix(1 0 0 1 318 865)" class="st3 st4">31</text>
+	</g>
+	<g id="Bs_1_">
+		<text transform="matrix(1 0 0 1 123 87)" class="st3 st4">B</text>
+		<text transform="matrix(1 0 0 1 123 113)" class="st3 st4">B</text>
+		<text transform="matrix(1 0 0 1 123 139)" class="st3 st4">B</text>
+		<text transform="matrix(1 0 0 1 123 165)" class="st3 st4">B</text>
+		<text transform="matrix(1 0 0 1 123 191)" class="st3 st4">B</text>
+		<text transform="matrix(1 0 0 1 123 217)" class="st3 st4">B</text>
+		<text transform="matrix(1 0 0 1 123 242)" class="st3 st4">B</text>
+		<text transform="matrix(1 0 0 1 123 268)" class="st3 st4">B</text>
+		<text transform="matrix(1 0 0 1 123 294)" class="st3 st4">B</text>
+		<text transform="matrix(1 0 0 1 123 320)" class="st3 st4">B</text>
+		<text transform="matrix(1 0 0 1 123 346)" class="st3 st4">B</text>
+		<text transform="matrix(1 0 0 1 123 372)" class="st3 st4">B</text>
+		<text transform="matrix(1 0 0 1 123 398)" class="st3 st4">B</text>
+		<text transform="matrix(1 0 0 1 123 424)" class="st3 st4">B</text>
+		<text transform="matrix(1 0 0 1 123 450)" class="st3 st4">B</text>
+		<text transform="matrix(1 0 0 1 123 476)" class="st3 st4">B</text>
+		<text transform="matrix(1 0 0 1 123 502)" class="st3 st4">B</text>
+		<text transform="matrix(1 0 0 1 123 528)" class="st3 st4">B</text>
+		<text transform="matrix(1 0 0 1 123 554)" class="st3 st4">B</text>
+		<text transform="matrix(1 0 0 1 123 580)" class="st3 st4">B</text>
+		<text transform="matrix(1 0 0 1 123 606)" class="st3 st4">B</text>
+		<text transform="matrix(1 0 0 1 123 632)" class="st3 st4">B</text>
+		<text transform="matrix(1 0 0 1 123 658)" class="st3 st4">B</text>
+		<text transform="matrix(1 0 0 1 123 684)" class="st3 st4">B</text>
+		<text transform="matrix(1 0 0 1 123 710)" class="st3 st4">B</text>
+		<text transform="matrix(1 0 0 1 123 736)" class="st3 st4">B</text>
+		<text transform="matrix(1 0 0 1 123 762)" class="st3 st4">B</text>
+		<text transform="matrix(1 0 0 1 123 788)" class="st3 st4">B</text>
+		<text transform="matrix(1 0 0 1 123 813)" class="st3 st4">B</text>
+		<text transform="matrix(1 0 0 1 123 839)" class="st3 st4">B</text>
+		<text transform="matrix(1 0 0 1 123 865)" class="st3 st4">B</text>
+	</g>
+	<g id="As_1_">
+		<text transform="matrix(1 0 0 1 302 87)" class="st3 st4">A</text>
+		<text transform="matrix(1 0 0 1 302 113)" class="st3 st4">A</text>
+		<text transform="matrix(1 0 0 1 302 139)" class="st3 st4">A</text>
+		<text transform="matrix(1 0 0 1 302 165)" class="st3 st4">A</text>
+		<text transform="matrix(1 0 0 1 302 191)" class="st3 st4">A</text>
+		<text transform="matrix(1 0 0 1 302 217)" class="st3 st4">A</text>
+		<text transform="matrix(1 0 0 1 302 242)" class="st3 st4">A</text>
+		<text transform="matrix(1 0 0 1 302 268)" class="st3 st4">A</text>
+		<text transform="matrix(1 0 0 1 302 294)" class="st3 st4">A</text>
+		<text transform="matrix(1 0 0 1 302 320)" class="st3 st4">A</text>
+		<text transform="matrix(1 0 0 1 302 346)" class="st3 st4">A</text>
+		<text transform="matrix(1 0 0 1 302 372)" class="st3 st4">A</text>
+		<text transform="matrix(1 0 0 1 302 398)" class="st3 st4">A</text>
+		<text transform="matrix(1 0 0 1 302 424)" class="st3 st4">A</text>
+		<text transform="matrix(1 0 0 1 302 450)" class="st3 st4">A</text>
+		<text transform="matrix(1 0 0 1 302 476)" class="st3 st4">A</text>
+		<text transform="matrix(1 0 0 1 302 502)" class="st3 st4">A</text>
+		<text transform="matrix(1 0 0 1 302 528)" class="st3 st4">A</text>
+		<text transform="matrix(1 0 0 1 302 554)" class="st3 st4">A</text>
+		<text transform="matrix(1 0 0 1 302 580)" class="st3 st4">A</text>
+		<text transform="matrix(1 0 0 1 302 606)" class="st3 st4">A</text>
+		<text transform="matrix(1 0 0 1 302 632)" class="st3 st4">A</text>
+		<text transform="matrix(1 0 0 1 302 658)" class="st3 st4">A</text>
+		<text transform="matrix(1 0 0 1 302 684)" class="st3 st4">A</text>
+		<text transform="matrix(1 0 0 1 302 710)" class="st3 st4">A</text>
+		<text transform="matrix(1 0 0 1 302 736)" class="st3 st4">A</text>
+		<text transform="matrix(1 0 0 1 302 762)" class="st3 st4">A</text>
+		<text transform="matrix(1 0 0 1 302 788)" class="st3 st4">A</text>
+		<text transform="matrix(1 0 0 1 302 813)" class="st3 st4">A</text>
+		<text transform="matrix(1 0 0 1 302 839)" class="st3 st4">A</text>
+		<text transform="matrix(1 0 0 1 302 865)" class="st3 st4">A</text>
+	</g>
+	<g id="L_pin_names_1_">
+		<text transform="matrix(1 1.842440e-004 -1.842440e-004 1 82 87)" class="st3 st4">GND</text>
+		<text transform="matrix(1 1.842440e-004 -1.842440e-004 1 40 113)" class="st3 st4">RESET DRV</text>
+		<text transform="matrix(1 1.842440e-004 -1.842440e-004 1 87 139)" class="st3 st4">+5V</text>
+		<text transform="matrix(1 1.842440e-004 -1.842440e-004 1 77 165)" class="st3 st4">IRQ 2</text>
+		<text transform="matrix(1 1.842440e-004 -1.842440e-004 1 90 191)" class="st3 st4">-5V</text>
+		<text transform="matrix(1 1.842440e-004 -1.842440e-004 1 72 217)" class="st3 st4">DRQ 2</text>
+		<text transform="matrix(1 1.842440e-004 -1.842440e-004 1 83 242)" class="st3 st4">-12V</text>
+		<text transform="matrix(1 1.842440e-004 -1.842440e-004 1 08 268)" class="st3 st4">NC, CARD SLCTD</text>
+		<text transform="matrix(1 1.842440e-004 -1.842440e-004 1 80 294)" class="st3 st4">+12V</text>
+		<text transform="matrix(1 1.842440e-004 -1.842440e-004 1 82 320)" class="st3 st4">GND</text>
+		<text transform="matrix(1 1.842440e-004 -1.842440e-004 1 69 346)" class="st3 st4">MEMW</text>
+		<text transform="matrix(1 1.842440e-004 -1.842440e-004 1 72 372)" class="st3 st4">MEMR</text>
+		<text transform="matrix(1 1.842440e-004 -1.842440e-004 1 85 398)" class="st3 st4">IOW</text>
+		<text transform="matrix(1 1.842440e-004 -1.842440e-004 1 87 424)" class="st3 st4">IOR</text>
+		<text transform="matrix(1 1.842440e-004 -1.842440e-004 1 65 450)" class="st3 st4">DACK 3</text>
+		<text transform="matrix(1 1.842440e-004 -1.842440e-004 1 72 476)" class="st3 st4">DRQ 3</text>
+		<text transform="matrix(1 1.842440e-004 -1.842440e-004 1 65 502)" class="st3 st4">DACK 1</text>
+		<text transform="matrix(1 1.842440e-004 -1.842440e-004 1 72 528)" class="st3 st4">DRQ 1</text>
+		<text transform="matrix(1 1.842440e-004 -1.842440e-004 1 51 554)" class="st3 st4">REFRESH</text>
+		<text transform="matrix(1 1.842440e-004 -1.842440e-004 1 85 580)" class="st3 st4">CLK</text>
+		<text transform="matrix(1 1.842440e-004 -1.842440e-004 1 77 606)" class="st3 st4">IRQ 7</text>
+		<text transform="matrix(1 1.842440e-004 -1.842440e-004 1 77 632)" class="st3 st4">IRQ 6</text>
+		<text transform="matrix(1 1.842440e-004 -1.842440e-004 1 77 658)" class="st3 st4">IRQ 5</text>
+		<text transform="matrix(1 1.842440e-004 -1.842440e-004 1 77 684)" class="st3 st4">IRQ 4</text>
+		<text transform="matrix(1 1.842440e-004 -1.842440e-004 1 77 710)" class="st3 st4">IRQ 3</text>
+		<text transform="matrix(1 1.842440e-004 -1.842440e-004 1 65 736)" class="st3 st4">DACK 2</text>
+		<text transform="matrix(1 1.842440e-004 -1.842440e-004 1 89 762)" class="st3 st4">T/C</text>
+		<text transform="matrix(1 1.842440e-004 -1.842440e-004 1 86 787)" class="st3 st4">ALE</text>
+		<text transform="matrix(1 1.842440e-004 -1.842440e-004 1 87 813)" class="st3 st4">+5V</text>
+		<text transform="matrix(1 1.842440e-004 -1.842440e-004 1 83 839)" class="st3 st4">OSC</text>
+		<text transform="matrix(1 1.842440e-004 -1.842440e-004 1 82 865)" class="st3 st4">GND</text>
+        <line class="st5" x1="33" y1="257.1" x2="108.5" y2="257.1"/>
+        <line class="st5" x1="70.3" y1="334.8" x2="109.3" y2="334.8"/>
+		<line class="st5" x1="72.9" y1="361.5" x2="107.9" y2="361.5"/>
+		<line class="st5" x1="85.5" y1="387.2" x2="108.5" y2="387.2"/>
+		<line class="st5" x1="88.5" y1="413.2" x2="108.5" y2="413.2"/>
+		<line class="st5" x1="66.2" y1="439.7" x2="108.2" y2="439.7"/>
+		<line class="st5" x1="66.2" y1="489.8" x2="108.2" y2="489.8"/>
+		<line class="st5" x1="52.1" y1="542.1" x2="108.1" y2="542.1"/>
+		<line class="st5" x1="66.2" y1="723.8" x2="108.2" y2="723.8"/>
+	</g>
+	<g id="R_pin_names_1_">
+		<text transform="matrix(1 0 0 1 345 87)" class="st3 st4">I/O CH CK</text>
+		<text transform="matrix(1 0 0 1 345 113)" class="st3 st4">DATA 7</text>
+		<text transform="matrix(1 0 0 1 345 139)" class="st3 st4">DATA 6</text>
+		<text transform="matrix(1 0 0 1 345 165)" class="st3 st4">DATA 5</text>
+		<text transform="matrix(1 0 0 1 345 191)" class="st3 st4">DATA 4</text>
+		<text transform="matrix(1 0 0 1 345 217)" class="st3 st4">DATA 3</text>
+		<text transform="matrix(1 0 0 1 345 243)" class="st3 st4">DATA 2</text>
+		<text transform="matrix(1 0 0 1 345 269)" class="st3 st4">DATA 1</text>
+		<text transform="matrix(1 0 0 1 345 295)" class="st3 st4">DATA 0</text>
+		<text transform="matrix(1 0 0 1 345 321)" class="st3 st4">I/O CH RDY</text>
+		<text transform="matrix(1 0 0 1 345 347)" class="st3 st4">AEN</text>
+		<text transform="matrix(1 0 0 1 345 373)" class="st3 st4">Addr 19</text>
+		<text transform="matrix(1 0 0 1 345 399)" class="st3 st4">Addr 18</text>
+		<text transform="matrix(1 0 0 1 345 425)" class="st3 st4">Addr 17</text>
+		<text transform="matrix(1 0 0 1 345 451)" class="st3 st4">Addr 16</text>
+		<text transform="matrix(1 0 0 1 345 477)" class="st3 st4">Addr 15</text>
+		<text transform="matrix(1 0 0 1 345 503)" class="st3 st4">Addr 14</text>
+		<text transform="matrix(1 0 0 1 345 529)" class="st3 st4">Addr 13</text>
+		<text transform="matrix(1 0 0 1 345 555)" class="st3 st4">Addr 12</text>
+		<text transform="matrix(1 0 0 1 345 581)" class="st3 st4">Addr 11</text>
+		<text transform="matrix(1 0 0 1 345 607)" class="st3 st4">Addr 10</text>
+		<text transform="matrix(1 0 0 1 345 633)" class="st3 st4">Addr 09</text>
+		<text transform="matrix(1 0 0 1 345 659)" class="st3 st4">Addr 08</text>
+		<text transform="matrix(1 0 0 1 345 685)" class="st3 st4">Addr 07</text>
+		<text transform="matrix(1 0 0 1 345 711)" class="st3 st4">Addr 06</text>
+		<text transform="matrix(1 0 0 1 345 737)" class="st3 st4">Addr 05</text>
+		<text transform="matrix(1 0 0 1 345 763)" class="st3 st4">Addr 04</text>
+		<text transform="matrix(1 0 0 1 345 789)" class="st3 st4">Addr 03</text>
+		<text transform="matrix(1 0 0 1 345 815)" class="st3 st4">Addr 02</text>
+		<text transform="matrix(1 0 0 1 345 841)" class="st3 st4">Addr 01</text>
+		<text transform="matrix(1 0 0 1 345 867)" class="st3 st4">Addr 00</text>
+		<line class="st5" x1="346.1" y1="74.9" x2="401.1" y2="74.9"/>
+	</g>
+</g>
+</svg>

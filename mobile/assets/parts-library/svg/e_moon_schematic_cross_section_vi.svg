@@ -1,0 +1,3453 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   version="1.0"
+   id="Layer_1"
+   width="835.4552"
+   height="551.44116"
+   viewBox="0 0 787.99471 551.44706"
+   overflow="visible"
+   enable-background="new 0 0 792.264 547.448"
+   xml:space="preserve"
+   sodipodi:version="0.32"
+   inkscape:version="1.0 (4035a4fb49, 2020-05-01)"
+   sodipodi:docname="Moon_Schematic_Cross_Section_vi.svg"
+   inkscape:output_extension="org.inkscape.output.svg.inkscape"
+   style="overflow:visible"><metadata
+   id="metadata4776"><rdf:RDF><cc:Work
+       rdf:about=""><dc:format>image/svg+xml</dc:format><dc:type
+         rdf:resource="http://purl.org/dc/dcmitype/StillImage" /><dc:title></dc:title></cc:Work></rdf:RDF></metadata><defs
+   id="defs4774"><inkscape:perspective
+   sodipodi:type="inkscape:persp3d"
+   inkscape:vp_x="0 : 801.39773 : 1"
+   inkscape:vp_y="0 : 999.99998 : 0"
+   inkscape:vp_z="792.26398 : 801.39773 : 1"
+   inkscape:persp3d-origin="396.13199 : 710.1564 : 1"
+   id="perspective701" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</defs><sodipodi:namedview
+   fit-margin-bottom="0"
+   fit-margin-right="0"
+   fit-margin-left="0"
+   fit-margin-top="0"
+   inkscape:window-height="1017"
+   inkscape:window-width="1920"
+   inkscape:pageshadow="2"
+   inkscape:pageopacity="0.0"
+   guidetolerance="10.0"
+   gridtolerance="10.0"
+   objecttolerance="10.0"
+   borderopacity="1.0"
+   bordercolor="#666666"
+   pagecolor="#ffffff"
+   id="base"
+   inkscape:zoom="0.92612197"
+   inkscape:cx="538.56018"
+   inkscape:cy="269.30363"
+   inkscape:window-x="-8"
+   inkscape:window-y="-8"
+   inkscape:current-layer="Layer_1"
+   showgrid="false"
+   inkscape:document-rotation="0"
+   inkscape:window-maximized="1" />
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<circle
+   style="fill:#f9f4d2;stroke:#3a180c"
+   cx="216.4817"
+   cy="240.188"
+   r="239.688"
+   id="circle3383" /><circle
+   style="fill:#dedddd;stroke:#000000;stroke-width:0.25"
+   cx="216.4827"
+   cy="240.188"
+   r="166.44701"
+   id="circle3385" /><circle
+   style="fill:#cea998;stroke:#000000;stroke-width:0.25"
+   cx="216.4827"
+   cy="240.188"
+   r="83.117996"
+   id="circle3387" /><circle
+   style="fill:#f89d6f;stroke:#000000;stroke-width:0.25"
+   cx="216.4817"
+   cy="240.188"
+   r="49.291"
+   id="circle3389" /><circle
+   style="stroke:#000000;stroke-width:0.25"
+   cx="216.4817"
+   cy="240.188"
+   r="22.229"
+   id="circle3391" /><rect
+   style="fill:none"
+   x="150.0047"
+   y="442.09799"
+   width="133.37601"
+   height="22.229"
+   id="rect3393" /><text
+   style="font-size:23.1957px;line-height:0%;font-family:BaskOldFace;opacity:0.88"
+   font-size="23.1957"
+   id="text3395"
+   x="142.44522"
+   y="446.08438">Lớp phủ trên</text><rect
+   style="fill:none"
+   x="159.66971"
+   y="358.013"
+   width="139.175"
+   height="22.229"
+   id="rect3397" /><text
+   style="font-size:23.1957px;line-height:0%;font-family:BaskOldFace;opacity:0.88"
+   font-size="23.1957"
+   id="text3399"
+   x="140.23361"
+   y="365.23874">Lớp phủ giữa</text><rect
+   style="fill:none"
+   x="174.16769"
+   y="523.28503"
+   width="99.547997"
+   height="24.162001"
+   id="rect3401" /><text
+   style="font-size:23.1957px;line-height:0%;font-family:ArialMT;opacity:0.75"
+   font-size="23.1957"
+   id="text3403"
+   x="24.077869"
+   y="532.33453">đường kính trung bình 3.474 km</text><g
+   style="opacity:0.5"
+   id="g3405"
+   transform="translate(-23.706307,-9.9182129e-4)">
+	<g
+   id="g3407">
+		<line
+   style="fill:none"
+   x1="0.5"
+   y1="233.33701"
+   x2="0.5"
+   y2="545.83899"
+   id="line3409" />
+		<g
+   id="g3411">
+			<g
+   id="g3413">
+				<g
+   id="g3415">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="238.368"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3417" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="236.106"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3419" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="233.85201"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3421" />
+			</g>
+		</g>
+		<g
+   id="g3423">
+			<g
+   id="g3425">
+				<g
+   id="g3427">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="245.162"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3429" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="242.89999"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3431" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="240.646"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3433" />
+			</g>
+		</g>
+		<g
+   id="g3435">
+			<g
+   id="g3437">
+				<g
+   id="g3439">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="251.955"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3441" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="249.69299"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3443" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="247.439"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3445" />
+			</g>
+		</g>
+		<g
+   id="g3447">
+			<g
+   id="g3449">
+				<g
+   id="g3451">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="258.74899"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3453" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="256.487"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3455" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="254.23199"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3457" />
+			</g>
+		</g>
+		<g
+   id="g3459">
+			<g
+   id="g3461">
+				<g
+   id="g3463">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="265.54199"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3465" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="263.28"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3467" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="261.026"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3469" />
+			</g>
+		</g>
+		<g
+   id="g3471">
+			<g
+   id="g3473">
+				<g
+   id="g3475">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="272.336"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3477" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="270.07401"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3479" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="267.819"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect3481" />
+			</g>
+		</g>
+		<g
+   id="g3483">
+			<g
+   id="g3485">
+				<g
+   id="g3487">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="279.129"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3489" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="276.867"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect3491" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="274.61301"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3493" />
+			</g>
+		</g>
+		<g
+   id="g3495">
+			<g
+   id="g3497">
+				<g
+   id="g3499">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="285.923"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3501" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="283.66101"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3503" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="281.40601"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect3505" />
+			</g>
+		</g>
+		<g
+   id="g3507">
+			<g
+   id="g3509">
+				<g
+   id="g3511">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="292.716"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3513" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="290.45401"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect3515" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="288.20001"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3517" />
+			</g>
+		</g>
+		<g
+   id="g3519">
+			<g
+   id="g3521">
+				<g
+   id="g3523">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="299.51001"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3525" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="297.24799"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3527" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="294.99399"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3529" />
+			</g>
+		</g>
+		<g
+   id="g3531">
+			<g
+   id="g3533">
+				<g
+   id="g3535">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="306.30301"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect3537" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="304.04099"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect3539" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="301.78699"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3541" />
+			</g>
+		</g>
+		<g
+   id="g3543">
+			<g
+   id="g3545">
+				<g
+   id="g3547">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="313.09698"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3549" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="310.83499"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3551" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="308.58099"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3553" />
+			</g>
+		</g>
+		<g
+   id="g3555">
+			<g
+   id="g3557">
+				<g
+   id="g3559">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="319.89099"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3561" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="317.629"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3563" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="315.37399"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3565" />
+			</g>
+		</g>
+		<g
+   id="g3567">
+			<g
+   id="g3569">
+				<g
+   id="g3571">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="326.68399"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3573" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="324.422"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3575" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="322.168"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3577" />
+			</g>
+		</g>
+		<g
+   id="g3579">
+			<g
+   id="g3581">
+				<g
+   id="g3583">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="333.478"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3585" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="331.216"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3587" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="328.961"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect3589" />
+			</g>
+		</g>
+		<g
+   id="g3591">
+			<g
+   id="g3593">
+				<g
+   id="g3595">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="340.271"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3597" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="338.009"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3599" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="335.755"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3601" />
+			</g>
+		</g>
+		<g
+   id="g3603">
+			<g
+   id="g3605">
+				<g
+   id="g3607">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="347.064"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3609" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="344.80301"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3611" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="342.548"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect3613" />
+			</g>
+		</g>
+		<g
+   id="g3615">
+			<g
+   id="g3617">
+				<g
+   id="g3619">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="353.85699"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect3621" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="351.59601"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect3623" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="349.34201"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3625" />
+			</g>
+		</g>
+		<g
+   id="g3627">
+			<g
+   id="g3629">
+				<g
+   id="g3631">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="360.651"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3633" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="358.39001"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3635" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="356.13599"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3637" />
+			</g>
+		</g>
+		<g
+   id="g3639">
+			<g
+   id="g3641">
+				<g
+   id="g3643">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="367.444"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect3645" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="365.18301"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect3647" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="362.92899"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3649" />
+			</g>
+		</g>
+		<g
+   id="g3651">
+			<g
+   id="g3653">
+				<g
+   id="g3655">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="374.23801"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3657" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="371.97699"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3659" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="369.72299"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3661" />
+			</g>
+		</g>
+		<g
+   id="g3663">
+			<g
+   id="g3665">
+				<g
+   id="g3667">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="381.03101"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect3669" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="378.771"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3671" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="376.51599"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3673" />
+			</g>
+		</g>
+		<g
+   id="g3675">
+			<g
+   id="g3677">
+				<g
+   id="g3679">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="387.82501"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3681" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="385.56299"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3683" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="383.31"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3685" />
+			</g>
+		</g>
+		<g
+   id="g3687">
+			<g
+   id="g3689">
+				<g
+   id="g3691">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="394.61899"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3693" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="392.35699"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3695" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="390.103"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect3697" />
+			</g>
+		</g>
+		<g
+   id="g3699">
+			<g
+   id="g3701">
+				<g
+   id="g3703">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="401.41199"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3705" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="399.14999"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3707" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="396.896"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3709" />
+			</g>
+		</g>
+		<g
+   id="g3711">
+			<g
+   id="g3713">
+				<g
+   id="g3715">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="408.20599"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3717" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="405.944"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3719" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="403.689"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect3721" />
+			</g>
+		</g>
+		<g
+   id="g3723">
+			<g
+   id="g3725">
+				<g
+   id="g3727">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="414.99899"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3729" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="412.737"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect3731" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="410.483"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3733" />
+			</g>
+		</g>
+		<g
+   id="g3735">
+			<g
+   id="g3737">
+				<g
+   id="g3739">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="421.793"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3741" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="419.53101"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3743" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="417.27701"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3745" />
+			</g>
+		</g>
+		<g
+   id="g3747">
+			<g
+   id="g3749">
+				<g
+   id="g3751">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="428.586"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect3753" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="426.32401"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect3755" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="424.07001"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3757" />
+			</g>
+		</g>
+		<g
+   id="g3759">
+			<g
+   id="g3761">
+				<g
+   id="g3763">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="435.38"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3765" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="433.11801"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3767" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="430.86401"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3769" />
+			</g>
+		</g>
+		<g
+   id="g3771">
+			<g
+   id="g3773">
+				<g
+   id="g3775">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="442.173"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect3777" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="439.91199"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3779" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="437.65701"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3781" />
+			</g>
+		</g>
+		<g
+   id="g3783">
+			<g
+   id="g3785">
+				<g
+   id="g3787">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="448.96701"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3789" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="446.70499"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3791" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="444.45099"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3793" />
+			</g>
+		</g>
+		<g
+   id="g3795">
+			<g
+   id="g3797">
+				<g
+   id="g3799">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="455.76099"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3801" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="453.49899"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3803" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="451.24399"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect3805" />
+			</g>
+		</g>
+		<g
+   id="g3807">
+			<g
+   id="g3809">
+				<g
+   id="g3811">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="462.55399"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3813" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="460.29199"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3815" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="458.03799"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3817" />
+			</g>
+		</g>
+		<g
+   id="g3819">
+			<g
+   id="g3821">
+				<g
+   id="g3823">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="469.34799"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3825" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="467.086"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3827" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="464.83099"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect3829" />
+			</g>
+		</g>
+		<g
+   id="g3831">
+			<g
+   id="g3833">
+				<g
+   id="g3835">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="476.14099"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3837" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="473.879"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect3839" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="471.625"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3841" />
+			</g>
+		</g>
+		<g
+   id="g3843">
+			<g
+   id="g3845">
+				<g
+   id="g3847">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="482.935"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3849" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="480.673"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3851" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="478.41901"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3853" />
+			</g>
+		</g>
+		<g
+   id="g3855">
+			<g
+   id="g3857">
+				<g
+   id="g3859">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="489.728"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect3861" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="487.466"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect3863" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="485.21201"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3865" />
+			</g>
+		</g>
+		<g
+   id="g3867">
+			<g
+   id="g3869">
+				<g
+   id="g3871">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="496.521"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3873" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="494.26001"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3875" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="492.00601"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3877" />
+			</g>
+		</g>
+		<g
+   id="g3879">
+			<g
+   id="g3881">
+				<g
+   id="g3883">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="503.314"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect3885" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="501.05399"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3887" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="498.79901"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3889" />
+			</g>
+		</g>
+		<g
+   id="g3891">
+			<g
+   id="g3893">
+				<g
+   id="g3895">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="510.108"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3897" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="507.84698"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3899" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="505.59299"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3901" />
+			</g>
+		</g>
+		<g
+   id="g3903">
+			<g
+   id="g3905">
+				<g
+   id="g3907">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="516.90198"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3909" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="514.64099"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3911" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="512.38599"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect3913" />
+			</g>
+		</g>
+		<g
+   id="g3915">
+			<g
+   id="g3917">
+				<g
+   id="g3919">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="523.69501"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3921" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="521.43402"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3923" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="519.17999"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3925" />
+			</g>
+		</g>
+		<g
+   id="g3927">
+			<g
+   id="g3929">
+				<g
+   id="g3931">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="530.48901"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3933" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="528.22803"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3935" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="525.97302"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect3937" />
+			</g>
+		</g>
+		<g
+   id="g3939">
+			<g
+   id="g3941">
+				<g
+   id="g3943">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="537.28198"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3945" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="535.021"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect3947" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="532.76703"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3949" />
+			</g>
+		</g>
+		<g
+   id="g3951">
+			<g
+   id="g3953">
+				<g
+   id="g3955">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="544.07599"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3957" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="541.81403"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3959" />
+				<rect
+   style="fill-rule:evenodd"
+   x="0.015"
+   y="539.56097"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3961" />
+			</g>
+		</g>
+	</g>
+</g><g
+   style="opacity:0.5"
+   id="g3963"
+   transform="translate(-23.706307,-9.9182129e-4)">
+	<g
+   id="g3965">
+		<line
+   style="fill:none"
+   x1="479.87701"
+   y1="240.05099"
+   x2="479.87701"
+   y2="545.83899"
+   id="line3967" />
+		<g
+   id="g3969">
+			<g
+   id="g3971">
+				<g
+   id="g3973">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="245.08299"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect3975" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="242.821"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3977" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="240.56599"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect3979" />
+			</g>
+		</g>
+		<g
+   id="g3981">
+			<g
+   id="g3983">
+				<g
+   id="g3985">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="251.87801"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3987" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="249.616"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3989" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="247.36099"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3991" />
+			</g>
+		</g>
+		<g
+   id="g3993">
+			<g
+   id="g3995">
+				<g
+   id="g3997">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="258.67401"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect3999" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="256.41199"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect4001" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="254.157"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect4003" />
+			</g>
+		</g>
+		<g
+   id="g4005">
+			<g
+   id="g4007">
+				<g
+   id="g4009">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="265.46899"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4011" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="263.207"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect4013" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="260.952"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect4015" />
+			</g>
+		</g>
+		<g
+   id="g4017">
+			<g
+   id="g4019">
+				<g
+   id="g4021">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="272.26501"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect4023" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="270.00201"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4025" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="267.74701"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4027" />
+			</g>
+		</g>
+		<g
+   id="g4029">
+			<g
+   id="g4031">
+				<g
+   id="g4033">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="279.06"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4035" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="276.797"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4037" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="274.543"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect4039" />
+			</g>
+		</g>
+		<g
+   id="g4041">
+			<g
+   id="g4043">
+				<g
+   id="g4045">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="285.854"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4047" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="283.59299"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect4049" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="281.33801"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4051" />
+			</g>
+		</g>
+		<g
+   id="g4053">
+			<g
+   id="g4055">
+				<g
+   id="g4057">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="292.64999"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect4059" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="290.388"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4061" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="288.133"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4063" />
+			</g>
+		</g>
+		<g
+   id="g4065">
+			<g
+   id="g4067">
+				<g
+   id="g4069">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="299.44501"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4071" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="297.18399"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect4073" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="294.92899"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect4075" />
+			</g>
+		</g>
+		<g
+   id="g4077">
+			<g
+   id="g4079">
+				<g
+   id="g4081">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="306.23999"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4083" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="303.979"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4085" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="301.724"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4087" />
+			</g>
+		</g>
+		<g
+   id="g4089">
+			<g
+   id="g4091">
+				<g
+   id="g4093">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="313.03601"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect4095" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="310.77301"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4097" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="308.51901"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4099" />
+			</g>
+		</g>
+		<g
+   id="g4101">
+			<g
+   id="g4103">
+				<g
+   id="g4105">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="319.83099"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4107" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="317.569"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect4109" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="315.314"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect4111" />
+			</g>
+		</g>
+		<g
+   id="g4113">
+			<g
+   id="g4115">
+				<g
+   id="g4117">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="326.62701"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect4119" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="324.36401"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4121" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="322.10901"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4123" />
+			</g>
+		</g>
+		<g
+   id="g4125">
+			<g
+   id="g4127">
+				<g
+   id="g4129">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="333.422"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4131" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="331.159"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4133" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="328.90399"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4135" />
+			</g>
+		</g>
+		<g
+   id="g4137">
+			<g
+   id="g4139">
+				<g
+   id="g4141">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="340.21701"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4143" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="337.95499"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect4145" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="335.70001"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect4147" />
+			</g>
+		</g>
+		<g
+   id="g4149">
+			<g
+   id="g4151">
+				<g
+   id="g4153">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="347.013"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect4155" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="344.75"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4157" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="342.495"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4159" />
+			</g>
+		</g>
+		<g
+   id="g4161">
+			<g
+   id="g4163">
+				<g
+   id="g4165">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="353.80801"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4167" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="351.54599"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect4169" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="349.29099"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect4171" />
+			</g>
+		</g>
+		<g
+   id="g4173">
+			<g
+   id="g4175">
+				<g
+   id="g4177">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="360.603"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4179" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="358.341"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect4181" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="356.086"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4183" />
+			</g>
+		</g>
+		<g
+   id="g4185">
+			<g
+   id="g4187">
+				<g
+   id="g4189">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="367.39801"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect4191" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="365.13599"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4193" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="362.88101"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4195" />
+			</g>
+		</g>
+		<g
+   id="g4197">
+			<g
+   id="g4199">
+				<g
+   id="g4201">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="374.19299"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4203" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="371.93201"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect4205" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="369.677"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect4207" />
+			</g>
+		</g>
+		<g
+   id="g4209">
+			<g
+   id="g4211">
+				<g
+   id="g4213">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="380.98901"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect4215" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="378.72699"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4217" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="376.47198"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4219" />
+			</g>
+		</g>
+		<g
+   id="g4221">
+			<g
+   id="g4223">
+				<g
+   id="g4225">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="387.784"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect4227" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="385.521"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4229" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="383.267"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4231" />
+			</g>
+		</g>
+		<g
+   id="g4233">
+			<g
+   id="g4235">
+				<g
+   id="g4237">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="394.57901"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4239" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="392.31699"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect4241" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="390.06299"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect4243" />
+			</g>
+		</g>
+		<g
+   id="g4245">
+			<g
+   id="g4247">
+				<g
+   id="g4249">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="401.375"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect4251" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="399.112"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4253" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="396.85699"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4255" />
+			</g>
+		</g>
+		<g
+   id="g4257">
+			<g
+   id="g4259">
+				<g
+   id="g4261">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="408.17001"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4263" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="405.90701"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4265" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="403.65302"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect4267" />
+			</g>
+		</g>
+		<g
+   id="g4269">
+			<g
+   id="g4271">
+				<g
+   id="g4273">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="414.965"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4275" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="412.703"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect4277" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="410.448"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect4279" />
+			</g>
+		</g>
+		<g
+   id="g4281">
+			<g
+   id="g4283">
+				<g
+   id="g4285">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="421.76099"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect4287" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="419.49799"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4289" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="417.24301"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4291" />
+			</g>
+		</g>
+		<g
+   id="g4293">
+			<g
+   id="g4295">
+				<g
+   id="g4297">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="428.556"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4299" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="426.29401"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect4301" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="424.039"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect4303" />
+			</g>
+		</g>
+		<g
+   id="g4305">
+			<g
+   id="g4307">
+				<g
+   id="g4309">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="435.35101"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4311" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="433.08899"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4313" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="430.83401"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4315" />
+			</g>
+		</g>
+		<g
+   id="g4317">
+			<g
+   id="g4319">
+				<g
+   id="g4321">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="442.146"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect4323" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="439.884"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4325" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="437.629"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4327" />
+			</g>
+		</g>
+		<g
+   id="g4329">
+			<g
+   id="g4331">
+				<g
+   id="g4333">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="448.94101"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4335" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="446.67999"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect4337" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="444.42499"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect4339" />
+			</g>
+		</g>
+		<g
+   id="g4341">
+			<g
+   id="g4343">
+				<g
+   id="g4345">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="455.737"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect4347" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="453.47501"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4349" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="451.22"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4351" />
+			</g>
+		</g>
+		<g
+   id="g4353">
+			<g
+   id="g4355">
+				<g
+   id="g4357">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="462.53201"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect4359" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="460.26999"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4361" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="458.01501"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4363" />
+			</g>
+		</g>
+		<g
+   id="g4365">
+			<g
+   id="g4367">
+				<g
+   id="g4369">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="469.327"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4371" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="467.065"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect4373" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="464.811"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect4375" />
+			</g>
+		</g>
+		<g
+   id="g4377">
+			<g
+   id="g4379">
+				<g
+   id="g4381">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="476.12299"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect4383" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="473.85999"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4385" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="471.60501"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4387" />
+			</g>
+		</g>
+		<g
+   id="g4389">
+			<g
+   id="g4391">
+				<g
+   id="g4393">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="482.918"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4395" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="480.65601"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect4397" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="478.401"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect4399" />
+			</g>
+		</g>
+		<g
+   id="g4401">
+			<g
+   id="g4403">
+				<g
+   id="g4405">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="489.71301"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4407" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="487.45099"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect4409" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="485.19601"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect4411" />
+			</g>
+		</g>
+		<g
+   id="g4413">
+			<g
+   id="g4415">
+				<g
+   id="g4417">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="496.509"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect4419" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="494.246"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4421" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="491.991"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4423" />
+			</g>
+		</g>
+		<g
+   id="g4425">
+			<g
+   id="g4427">
+				<g
+   id="g4429">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="503.30399"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4431" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="501.04199"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect4433" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="498.78699"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect4435" />
+			</g>
+		</g>
+		<g
+   id="g4437">
+			<g
+   id="g4439">
+				<g
+   id="g4441">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="510.099"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4443" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="507.83701"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4445" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="505.582"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4447" />
+			</g>
+		</g>
+		<g
+   id="g4449">
+			<g
+   id="g4451">
+				<g
+   id="g4453">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="516.89502"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect4455" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="514.63202"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4457" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="512.37701"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4459" />
+			</g>
+		</g>
+		<g
+   id="g4461">
+			<g
+   id="g4463">
+				<g
+   id="g4465">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="523.68903"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4467" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="521.42798"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect4469" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="519.17297"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect4471" />
+			</g>
+		</g>
+		<g
+   id="g4473">
+			<g
+   id="g4475">
+				<g
+   id="g4477">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="530.48499"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect4479" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="528.22302"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4481" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="525.96802"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4483" />
+			</g>
+		</g>
+		<g
+   id="g4485">
+			<g
+   id="g4487">
+				<g
+   id="g4489">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="537.28003"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4491" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="535.01801"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4493" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="532.763"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4495" />
+			</g>
+		</g>
+		<g
+   id="g4497">
+			<g
+   id="g4499">
+				<g
+   id="g4501">
+				</g>
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="544.07501"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.262"
+   id="rect4503" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="541.81299"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect4505" />
+				<rect
+   style="fill-rule:evenodd"
+   x="479.392"
+   y="539.55902"
+   clip-rule="evenodd"
+   width="0.75"
+   height="1.261"
+   id="rect4507" />
+			</g>
+		</g>
+	</g>
+</g><line
+   style="opacity:0.6;fill:none;stroke:#000000;stroke-width:0.25"
+   x1="424.48874"
+   y1="545.513"
+   x2="7.9326935"
+   y2="545.513"
+   id="line4509" /><g
+   style="opacity:0.6"
+   id="g4511"
+   transform="translate(-23.706307,-9.9182129e-4)">
+	<g
+   id="g4513">
+		<line
+   style="fill:none"
+   x1="17.142"
+   y1="545.51398"
+   x2="2.6440001"
+   y2="545.51398"
+   id="line4515" />
+		<g
+   id="g4517">
+			<g
+   id="g4519">
+				<polygon
+   points="9.994,547.432 9.994,543.6 2.843,545.516 "
+   id="polygon4521" />
+			</g>
+		</g>
+		<g
+   id="g4523">
+			<g
+   id="g4525">
+				<polygon
+   points="20.719,547.432 20.719,543.6 13.569,545.516 "
+   id="polygon4527" />
+			</g>
+		</g>
+	</g>
+</g><g
+   style="opacity:0.6"
+   id="g4529"
+   transform="translate(-23.706307,-9.9182129e-4)">
+	<g
+   id="g4531">
+		<line
+   style="fill:none"
+   x1="462.08899"
+   y1="545.51398"
+   x2="474.336"
+   y2="545.51398"
+   id="line4533" />
+		<g
+   id="g4535">
+			<g
+   id="g4537">
+				<polygon
+   points="469.242,543.601 469.242,547.432 476.393,545.517 "
+   id="polygon4539" />
+			</g>
+		</g>
+		<g
+   id="g4541">
+			<g
+   id="g4543">
+				<polygon
+   points="458.517,543.601 458.517,547.432 465.667,545.517 "
+   id="polygon4545" />
+			</g>
+		</g>
+	</g>
+</g><rect
+   style="fill:none"
+   x="542.39868"
+   y="122.18901"
+   width="198.131"
+   height="139.175"
+   id="rect4547" /><text
+   style="line-height:0%"
+   id="text4549"
+   x="563.35565"
+   y="129.07896"><tspan
+     style="font-size:23.1957px;font-family:ArialMT"
+     x="563.35565"
+     y="129.07896"
+     font-size="23.1957"
+     id="tspan4551">Bán kính ~587 km </tspan></text><rect
+   style="fill:none"
+   x="483.92773"
+   y="67.099007"
+   width="198.131"
+   height="21.531"
+   id="rect4557" /><text
+   style="font-size:23.1957px;line-height:0%;font-family:ArialMT"
+   font-size="23.1957"
+   id="text4559"
+   x="493.43973"
+   y="83.707504">Lớp vỏ anorthosit</text><rect
+   style="fill:none"
+   x="549.16467"
+   y="224.63701"
+   width="174.93401"
+   height="50.257"
+   id="rect4561" /><text
+   style="line-height:0%"
+   id="text4563"
+   x="557.44287"
+   y="230.44717"><tspan
+     style="font-size:23.1957px;font-family:ArialMT"
+     x="557.44287"
+     y="230.44717"
+     font-size="23.1957"
+     id="tspan4565">Bán kính ~350 km</tspan></text><rect
+   style="fill:none"
+   x="532.7337"
+   y="318.38699"
+   width="235.823"
+   height="110.179"
+   id="rect4569" /><text
+   style="line-height:0%"
+   id="text4571"
+   x="572.53668"
+   y="324.1962"><tspan
+     style="font-size:23.1957px;font-family:ArialMT"
+     x="572.53668"
+     y="324.1962"
+     font-size="23.1957"
+     id="tspan4573">Bán kính ~160 km</tspan></text><g
+   id="g4751"
+   transform="translate(-23.706307,-9.9182129e-4)">
+	<line
+   style="fill:none;stroke:#c32026;stroke-width:0.75"
+   x1="592.685"
+   y1="327.08701"
+   x2="356.37799"
+   y2="327.08701"
+   id="line4753" />
+	<line
+   x1="578.672"
+   y1="232.854"
+   x2="272"
+   y2="232.854"
+   id="line4755"
+   style="fill:none;stroke:#c32026;stroke-width:0.75" />
+	<line
+   style="fill:none;stroke:#c32026;stroke-width:0.75"
+   x1="581.08801"
+   y1="129.44"
+   x2="378.608"
+   y2="129.44"
+   id="line4757" />
+	<line
+   style="fill:none;stroke:#c32026;stroke-width:0.75"
+   x1="513.27899"
+   y1="76.438004"
+   x2="411.15201"
+   y2="76.438004"
+   id="line4759" />
+	<line
+   style="fill:none;stroke:#c32026;stroke-width:0.75"
+   x1="379.57501"
+   y1="129.44"
+   x2="279.05899"
+   y2="184.04601"
+   id="line4761" />
+	<line
+   style="fill:none;stroke:#c32026;stroke-width:0.75"
+   x1="356.37799"
+   y1="327.08701"
+   x2="246.97099"
+   y2="247.537"
+   id="line4763" />
+</g><circle
+   style="fill:#ed2024"
+   cx="255.3537"
+   cy="184.04501"
+   r="6.4400001"
+   id="circle4765" /><circle
+   style="fill:#ed2024"
+   cx="387.44574"
+   cy="76.437012"
+   r="6.441"
+   id="circle4767" /><ellipse
+   cx="249.44971"
+   cy="232.85301"
+   rx="6.5089998"
+   ry="6.441"
+   id="ellipse4769"
+   style="fill:#ed2024" /><circle
+   style="fill:#ed2024"
+   cx="223.26469"
+   cy="245.119"
+   r="6.441"
+   id="circle4771" />
+<text
+   y="152.86646"
+   x="502.55405"
+   id="text4549-8"
+   style="font-size:12px;line-height:0%;overflow:visible;stroke-width:1"><tspan
+     id="tspan4551-7"
+     font-size="23.1957"
+     y="152.86646"
+     x="502.55405"
+     style="font-size:23.1957px;font-family:ArialMT;stroke-width:1">Vùng nóng chảy một phần </tspan></text><text
+   style="font-size:12px;line-height:0%;overflow:visible;stroke-width:1"
+   id="text4549-8-5"
+   x="568.42078"
+   y="178.78123"><tspan
+     style="font-size:23.1957px;font-family:ArialMT;stroke-width:1"
+     x="568.42078"
+     y="178.78123"
+     font-size="23.1957"
+     id="tspan4551-7-0">(Lớp phủ dưới)</tspan></text><text
+   y="255.44585"
+   x="582.63007"
+   id="text4563-3"
+   style="font-size:12px;line-height:0%;overflow:visible;stroke-width:1"><tspan
+     id="tspan4565-7"
+     font-size="23.1957"
+     y="255.44585"
+     x="582.63007"
+     style="font-size:23.1957px;font-family:ArialMT;stroke-width:1">Lõi ngoài lỏng</tspan></text><text
+   y="350.81412"
+   x="592.4967"
+   id="text4571-7"
+   style="font-size:12px;line-height:0%;overflow:visible;stroke-width:1"><tspan
+     id="tspan4573-6"
+     font-size="23.1957"
+     y="350.81412"
+     x="592.4967"
+     style="font-size:23.1957px;font-family:ArialMT;stroke-width:1">Lõi trong rắn</tspan><tspan
+     id="tspan4577-5"
+     font-size="19.3298"
+     y="401.84509"
+     x="557.96167"
+     style="font-size:19.3298px;font-family:ArialMT;fill:#5b5b5b;stroke-width:1" /></text><text
+   y="324.89926"
+   x="557.9436"
+   id="text4571-2"
+   style="font-size:12px;line-height:0%;overflow:visible;stroke-width:1"><tspan
+     id="tspan4577-53"
+     font-size="19.3298"
+     y="375.93024"
+     x="523.40857"
+     style="font-size:19.3298px;font-family:ArialMT;fill:#5b5b5b;stroke-width:1">(giả định 10% lõi đã kết tinh)</tspan></text></svg>

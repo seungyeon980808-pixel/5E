@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Creator: CorelDRAW -->
+<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" width="80px" height="113px" style="shape-rendering:geometricPrecision; text-rendering:geometricPrecision; image-rendering:optimizeQuality; fill-rule:evenodd; clip-rule:evenodd"
+viewBox="0 0 80 113.143">
+ <defs>
+  <style type="text/css">
+   <![CDATA[
+    .str0 {stroke:#1F1A17;stroke-width:3.22541}
+    .fil0 {fill:none}
+    .fil1 {fill:#1F1A17}
+   ]]>
+  </style>
+ </defs>
+ <g id="Ebene_x0020_1">
+  <metadata id="CorelCorpID_0Corel-Layer"/>
+  <circle class="fil0 str0" cx="30.3842" cy="60.277" r="26.8053"/>
+  <line class="fil0 str0" x1="30.456" y1="93.7546" x2="30.456" y2= "75.4104" />
+  <line class="fil0 str0" x1="39.0131" y1="75.4104" x2="21.8988" y2= "75.4104" />
+  <line class="fil0 str0" x1="30.456" y1="25.792" x2="30.456" y2= "44.1363" />
+  <line class="fil0 str0" x1="39.0131" y1="44.1363" x2="21.8988" y2= "44.1363" />
+  <circle class="fil1 str0" cx="43.1972" cy="76.8503" r="0.851099"/>
+  <path class="fil0 str0" d="M56.725 43.0471c4.04811,4.82373 6.27017,10.9302 6.27017,17.2299 0,6.29962 -2.22206,12.4061 -6.27017,17.2299"/>
+  <line class="fil0 str0" x1="75.824" y1="60.277" x2="62.9952" y2= "60.277" />
+ </g>
+</svg>

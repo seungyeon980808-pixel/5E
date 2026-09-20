@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN" "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd">
+<svg xmlns="http://www.w3.org/2000/svg" width="50mm" height="50mm" viewBox="0 0 50 50" xml:space="preserve" color-interpolation-filters="sRGB">
+	<style type="text/css">
+	<![CDATA[
+		.bd {stroke:#000;stroke-width:.25;fill:#FFF}
+		.rc {stroke:#000;stroke-width:.5;fill-opacity:.35}
+		.l1 {fill:#F00}
+		.l2 {fill:#000}
+		.g {fill:#080}
+	]]>
+	</style>
+	<g>
+		<rect x="2.5" y="2.5" width="45" height="45" class="bd"/>
+		<path d="M10 12.5 a19.5,19.5 0 0,1 30,0 v 25 a19.5,19.5 0 0,1 -30,0 v -25 Z" class="bd" />
+
+		<path d="M13.8 13.6 h2.6 v9.8 h-2.6 v-9.8 Z" class="rc l1"/>
+		<path d="M26.5 17.2 h9.8 v2.6 h-9.8 v-2.6 Z" class="rc l2"/>
+		<path d="M22.3 36.5 a2.7,2.7 0 0,1 5.4,0 v 2.7 h -5.4 v -2.7" class="rc g"/>
+	</g>
+</svg>

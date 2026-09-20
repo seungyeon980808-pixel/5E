@@ -1,0 +1,8 @@
+<svg width="208mm" height="149mm" version="1.1" viewBox="0 0 208 149" xmlns="http://www.w3.org/2000/svg"><rect width="208" height="149" fill="#fff"/>
+ <g fill="none" stroke-width="1.4"><path d="m21 137c11-32 18-73 64-110 6-4 23-6 33 2 34 30 52 75 65 108" stroke="#00f"/><path d="m21 137 32-76 32-34 33 2 33 40 32 68" stroke="#f00"/></g>
+ <path d="m2 11 3-9l3 9-3-2zm195 123l9 3-9 3 2-3z"/><path d="m183 137v-3m-32 3v-3m-33 3v-3m-33 3v-3m-32 3v-3m-32 3v-3m-16-117h3m-3 24h3m-3 24h3m-3 24h3m-3 24h3m-5 24h196m-194 2v-130" fill="none" stroke="#000"/><path d="m151 137v-68m-33 68v-108m-33 108v-110m-32 110v-76" fill="none" stroke="#000" stroke-dasharray="2" stroke-width=".5"/>
+ <g font-family="Times" font-size="10px" font-style="italic">
+  <text x="8" y="145">x<tspan dy="2" font-size="7px" font-style="normal">0</tspan><tspan dy="-2" font-style="normal">
+ = 0</tspan></text>
+  <text x="171" y="145">x<tspan dy="2" font-size="7px" font-style="normal">5</tspan><tspan dy="-2" font-style="normal">
+ = 1</tspan></text><text x="50" y="145">x<tspan dy="2" font-size="7px" font-style="normal">1</tspan></text><text x="81" y="145">x<tspan dy="2" font-size="7px" font-style="normal">2</tspan></text><text x="115" y="145">x<tspan dy="2" font-size="7px" font-style="normal">3</tspan></text><text x="147" y="145">x<tspan dy="2" font-size="7px" font-style="normal">4</tspan></text></g></svg>

@@ -1,0 +1,1104 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="1256.9377"
+   height="1232.5883"
+   id="svg7258"
+   sodipodi:version="0.32"
+   inkscape:version="0.48.3.1 r9886"
+   version="1.0"
+   sodipodi:docname="bled_rankine_cycle.svg"
+   inkscape:output_extension="org.inkscape.output.svg.inkscape">
+  <defs
+     id="defs7260">
+    <pattern
+       inkscape:collect="always"
+       xlink:href="#pattern5247"
+       id="pattern6770"
+       patternTransform="matrix(2.3793934,0.99632667,-0.99632667,2.3793934,8566.96,12312.16)" />
+    <pattern
+       inkscape:collect="always"
+       xlink:href="#pattern5054"
+       id="pattern5247"
+       patternTransform="matrix(2.3793934,0.99632667,-0.99632667,2.3793934,8604.9296,8409.8424)" />
+    <pattern
+       inkscape:collect="always"
+       xlink:href="#pattern20948"
+       id="pattern5054"
+       patternTransform="matrix(2.3793934,0.99632667,-0.99632667,2.3793934,8101.3606,5691.8446)" />
+    <pattern
+       inkscape:collect="always"
+       xlink:href="#pattern6416"
+       id="pattern20948"
+       patternTransform="matrix(2.3793934,0.99632667,-0.99632667,2.3793934,8101.3606,5691.8446)" />
+    <pattern
+       inkscape:collect="always"
+       xlink:href="#pattern8666"
+       id="pattern6416"
+       patternTransform="matrix(2.3793934,0.99632667,-0.99632667,2.3793934,4808.3743,5591.4073)" />
+    <pattern
+       inkscape:collect="always"
+       xlink:href="#pattern6600"
+       id="pattern8666"
+       patternTransform="matrix(2.3793934,0.99632667,-0.99632667,2.3793934,933.37746,-1170.813)" />
+    <pattern
+       inkscape:collect="always"
+       xlink:href="#pattern6597"
+       id="pattern6600"
+       patternTransform="matrix(2.3793934,0.99632667,-0.99632667,2.3793934,933.37746,-1184.8974)" />
+    <pattern
+       inkscape:collect="always"
+       xlink:href="#pattern5867"
+       id="pattern6597"
+       patternTransform="matrix(1.6918524,-1.6918524,1.6918524,1.6918524,924.20518,445.0951)" />
+    <pattern
+       inkscape:collect="always"
+       xlink:href="#pattern3963"
+       id="pattern5867"
+       patternTransform="matrix(1.6918524,-1.6918524,1.6918524,1.6918524,953.54187,-1152.1881)" />
+    <pattern
+       inkscape:collect="always"
+       xlink:href="#Strips1_10"
+       id="pattern3963"
+       patternTransform="matrix(-1.6918524,-1.6918524,1.6918524,-1.6918524,226.41303,401.05819)" />
+    <pattern
+       inkscape:stockid="Stripes 1:10"
+       id="Strips1_10"
+       patternTransform="matrix(-1.6918524,-1.6918524,1.6918524,-1.6918524,245.56366,414.42224)"
+       height="1"
+       width="11"
+       patternUnits="userSpaceOnUse"
+       inkscape:collect="always">
+      <rect
+         id="rect8569"
+         height="2"
+         width="1"
+         y="-0.5"
+         x="0"
+         style="fill:black;stroke:none" />
+    </pattern>
+    <marker
+       style="overflow:visible"
+       id="TriangleOutM"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="TriangleOutM">
+      <path
+         transform="scale(0.4,0.4)"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;marker-start:none"
+         d="m 5.77,0 -8.65,5 0,-10 8.65,5 z"
+         id="path3336"
+         inkscape:connector-curvature="0" />
+    </marker>
+    <linearGradient
+       id="linearGradient5443"
+       inkscape:collect="always">
+      <stop
+         id="stop5445"
+         offset="0"
+         style="stop-color:#e2e2e2;stop-opacity:1" />
+      <stop
+         id="stop5447"
+         offset="1"
+         style="stop-color:#fafafa;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient9970">
+      <stop
+         style="stop-color:#e2e2e2;stop-opacity:1"
+         offset="0"
+         id="stop9972" />
+      <stop
+         style="stop-color:#ffffff;stop-opacity:1"
+         offset="1"
+         id="stop9974" />
+    </linearGradient>
+    <marker
+       inkscape:stockid="Arrow2Mend"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="marker9316"
+       style="overflow:visible">
+      <path
+         inkscape:connector-curvature="0"
+         id="path9318"
+         style="font-size:12px;fill-rule:evenodd;stroke-width:0.625;stroke-linejoin:round"
+         d="M 8.7185878,4.0337352 -2.2072895,0.01601326 8.7185884,-4.0017078 c -1.7454984,2.3720609 -1.7354408,5.6174519 -6e-7,8.035443 z"
+         transform="scale(-0.6,-0.6)" />
+    </marker>
+    <marker
+       inkscape:stockid="DotM"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="marker9328"
+       style="overflow:visible">
+      <path
+         inkscape:connector-curvature="0"
+         id="path9330"
+         d="m -2.5,-1 c 0,2.76 -2.24,5 -5,5 -2.76,0 -5,-2.24 -5,-5 0,-2.76 2.24,-5 5,-5 2.76,0 5,2.24 5,5 z"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;marker-start:none;marker-end:none"
+         transform="matrix(0.4,0,0,0.4,2.96,0.4)" />
+    </marker>
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient5443"
+       id="linearGradient7003"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(2.174438,0,0,2.174438,96.108673,-2839.9783)"
+       spreadMethod="reflect"
+       x1="480.48575"
+       y1="372.78125"
+       x2="480.48575"
+       y2="363.67633" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient9970"
+       id="linearGradient7007"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(-2.174438,0,0,2.174438,5622.803,8146.1373)"
+       spreadMethod="reflect"
+       x1="377.34229"
+       y1="-1084.8279"
+       x2="377.34229"
+       y2="-1260.0779" />
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     gridtolerance="10000"
+     guidetolerance="10"
+     objecttolerance="10"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.32"
+     inkscape:cx="1459.2273"
+     inkscape:cy="633.71196"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     borderlayer="false"
+     inkscape:showpageshadow="false"
+     inkscape:window-width="1280"
+     inkscape:window-height="741"
+     inkscape:window-x="0"
+     inkscape:window-y="27"
+     inkscape:window-maximized="1"
+     inkscape:snap-grids="true"
+     inkscape:snap-to-guides="true"
+     inkscape:snap-global="true"
+     showguides="false"
+     inkscape:guide-bbox="true"
+     fit-margin-top="100"
+     fit-margin-left="100"
+     fit-margin-right="100"
+     fit-margin-bottom="100"
+     inkscape:object-nodes="true"
+     inkscape:snap-object-midpoints="true"
+     inkscape:snap-smooth-nodes="true"
+     inkscape:snap-bbox="true"
+     inkscape:snap-bbox-midpoints="true"
+     inkscape:bbox-nodes="true">
+    <sodipodi:guide
+       orientation="0,1"
+       position="-3489.5857,7530.6019"
+       id="guide7170" />
+    <sodipodi:guide
+       orientation="0,1"
+       position="-3489.5857,6836.3159"
+       id="guide8801" />
+    <sodipodi:guide
+       orientation="0,1"
+       position="-3489.5857,6185.6976"
+       id="guide8838" />
+    <sodipodi:guide
+       orientation="-0.3357848,-0.94193873"
+       position="-3091.2011,6309.2539"
+       id="guide8860" />
+    <sodipodi:guide
+       orientation="0,1"
+       position="-3489.5857,5652.8404"
+       id="guide8880" />
+    <sodipodi:guide
+       orientation="0,1"
+       position="-3487.0242,4911.7731"
+       id="guide8911" />
+    <sodipodi:guide
+       orientation="0,1"
+       position="-3487.0242,2867.9622"
+       id="guide3139" />
+    <sodipodi:guide
+       orientation="0,1"
+       position="-3487.0242,3490.2162"
+       id="guide3149" />
+    <sodipodi:guide
+       orientation="0,1"
+       position="-3487.0242,4216.7734"
+       id="guide3151" />
+    <sodipodi:guide
+       orientation="1,0"
+       position="-680.79141,4892.9206"
+       id="guide4890" />
+    <sodipodi:guide
+       orientation="1,0"
+       position="-1505.9216,7630.5749"
+       id="guide4892" />
+    <sodipodi:guide
+       orientation="1,0"
+       position="-827.53091,4342.0476"
+       id="guide4896" />
+    <sodipodi:guide
+       orientation="1,0"
+       position="-1956.8055,7328.4479"
+       id="guide4900" />
+    <sodipodi:guide
+       orientation="1,0"
+       position="-1055.67,1968.6844"
+       id="guide4902" />
+    <sodipodi:guide
+       orientation="1,0"
+       position="473.15829,7632.7539"
+       id="guide5238" />
+    <sodipodi:guide
+       orientation="1,0"
+       position="578.78929,4666.2813"
+       id="guide6034" />
+    <sodipodi:guide
+       orientation="1,0"
+       position="669.20439,4755.4941"
+       id="guide6042" />
+    <sodipodi:guide
+       orientation="-0.33576929,0.94194426"
+       position="783.77239,3251.6513"
+       id="guide6133" />
+    <sodipodi:guide
+       orientation="-0.23080864,0.97299916"
+       position="783.78399,3212.1745"
+       id="guide6135" />
+    <sodipodi:guide
+       orientation="1,0"
+       position="1406.4143,-1459.1917"
+       id="guide6137" />
+    <sodipodi:guide
+       orientation="-0.33581345,0.94192852"
+       position="783.77239,3312.0263"
+       id="guide6139" />
+    <sodipodi:guide
+       orientation="0.23080861,0.97299917"
+       position="783.78399,3074.4596"
+       id="guide6141" />
+    <sodipodi:guide
+       orientation="0.33808376,0.94111602"
+       position="783.77239,3034.9815"
+       id="guide6143" />
+    <sodipodi:guide
+       orientation="0.33581341,0.94192853"
+       position="613.79939,3007.6497"
+       id="guide6147" />
+    <sodipodi:guide
+       orientation="1,0"
+       position="954.48329,3312.5036"
+       id="guide6149" />
+    <sodipodi:guide
+       orientation="1,0"
+       position="1067.7246,3352.87"
+       id="guide6151" />
+    <sodipodi:guide
+       orientation="-0.28543126,0.95839918"
+       position="868.98629,1917.861"
+       id="guide6245" />
+    <sodipodi:guide
+       orientation="0.36093892,0.93258946"
+       position="845.07859,1737.1137"
+       id="guide6258" />
+    <sodipodi:guide
+       orientation="1,0"
+       position="198.82229,707.0027"
+       id="guide6360" />
+    <sodipodi:guide
+       orientation="1,0"
+       position="158.73029,-655.849"
+       id="guide6534" />
+    <sodipodi:guide
+       orientation="0,1"
+       position="158.73029,-779.1373"
+       id="guide6544" />
+    <sodipodi:guide
+       orientation="1,0"
+       position="118.63829,-877.1784"
+       id="guide6554" />
+    <sodipodi:guide
+       orientation="0.98655274,-0.16344325"
+       position="198.82229,-413.8511"
+       id="guide6556" />
+    <sodipodi:guide
+       orientation="1,0"
+       position="1119.5334,-958.1623"
+       id="guide6558" />
+    <sodipodi:guide
+       orientation="0,1"
+       position="130.94359,-1017.958"
+       id="guide6560" />
+    <sodipodi:guide
+       orientation="1,0"
+       position="78.40469,-1151.2157"
+       id="guide6566" />
+    <sodipodi:guide
+       orientation="0,1"
+       position="1406.4143,-1074.1919"
+       id="guide6570" />
+    <sodipodi:guide
+       orientation="0,1"
+       position="898.59639,-1007.5724"
+       id="guide6580" />
+    <sodipodi:guide
+       orientation="0,1"
+       position="898.59639,-1026.7969"
+       id="guide6582" />
+    <sodipodi:guide
+       orientation="0,1"
+       position="-14.23431,-302.2091"
+       id="guide10964" />
+    <inkscape:grid
+       type="xygrid"
+       id="grid10966"
+       empspacing="5"
+       visible="true"
+       enabled="true"
+       snapvisiblegridlinesonly="true"
+       originx="-3758.5857px"
+       originy="2515.8082px" />
+    <sodipodi:guide
+       orientation="1,0"
+       position="1995.4082,5710.1179"
+       id="guide6000" />
+    <sodipodi:guide
+       orientation="0.33581338,0.94192854"
+       position="1192.0457,-1314.6766"
+       id="guide9423" />
+    <sodipodi:guide
+       orientation="1,0"
+       position="843.00799,-1198.0628"
+       id="guide9425" />
+    <sodipodi:guide
+       orientation="1,0"
+       position="530.45889,-992.4071"
+       id="guide9427" />
+    <sodipodi:guide
+       orientation="1,0"
+       position="268.16939,-916.3867"
+       id="guide9429" />
+    <sodipodi:guide
+       orientation="0.71447505,-0.69966092"
+       position="613.79939,-1067.3505"
+       id="guide9431" />
+    <sodipodi:guide
+       orientation="0,1"
+       position="158.73029,-1164.1371"
+       id="guide9433" />
+    <sodipodi:guide
+       orientation="0,1"
+       position="1422.4131,2640.5059"
+       id="guide11095" />
+    <sodipodi:guide
+       orientation="0,1"
+       position="855.22679,1716.6833"
+       id="guide11117" />
+    <sodipodi:guide
+       orientation="0,1"
+       position="843.00799,1593.3737"
+       id="guide11121" />
+    <sodipodi:guide
+       orientation="0,1"
+       position="828.13309,-1476.269"
+       id="guide6283" />
+    <sodipodi:guide
+       orientation="0,1"
+       position="1192.0457,-1314.6766"
+       id="guide6291" />
+  </sodipodi:namedview>
+  <metadata
+     id="metadata7263">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-3787.9224,-5132.5055)">
+    <path
+       style="fill:none;stroke:#2d2d2d;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       d="m 3957.408,7297.8895 0,165.949"
+       id="path6370"
+       inkscape:connector-curvature="0"
+       transform="translate(29.336694,-1588.2502)"
+       sodipodi:nodetypes="cc"
+       inkscape:export-filename="/home/olivier/aero/cours thermo/9 Puissance vapeur/images/circuit_prelevement.png"
+       inkscape:export-xdpi="99.972122"
+       inkscape:export-ydpi="99.972122" />
+    <path
+       inkscape:export-ydpi="100.03539"
+       inkscape:export-xdpi="100.03539"
+       inkscape:export-filename="/home/olivier/aero/cours thermo/9 Puissance vapeur/images/circuit_regeneration.png"
+       style="fill:none;stroke:#2d2d2d;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       d="m 4364.8979,5271.9867 92.2289,0 0,239.9308 121.5582,0"
+       id="use6280"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="cccc" />
+    <path
+       sodipodi:nodetypes="ccccccc"
+       inkscape:connector-curvature="0"
+       id="use6282"
+       d="m 4786.2316,5743.9542 92.2289,0 0,147.123 -617.9736,0 0,373.009 -314.4008,0 0,-335.8653"
+       style="fill:none;stroke:#2d2d2d;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       inkscape:export-filename="/home/olivier/aero/cours thermo/9 Puissance vapeur/images/circuit_prelevement.png"
+       inkscape:export-xdpi="99.972122"
+       inkscape:export-ydpi="99.972122" />
+    <path
+       style="fill:none;stroke:#2d2d2d;stroke-width:2;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       d="m 4026.8367,5595.8538 0,-334.5 92.2289,0"
+       id="use6284"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="ccc"
+       inkscape:export-filename="/home/olivier/aero/cours thermo/9 Puissance vapeur/images/circuit_prelevement.png"
+       inkscape:export-xdpi="99.972122"
+       inkscape:export-ydpi="99.972122" />
+    <rect
+       style="fill:#ae1a1a;fill-opacity:1;stroke:none"
+       id="use6286"
+       width="184.12044"
+       height="200.11996"
+       x="4155.8354"
+       y="5247.6719"
+       rx="4.219214"
+       ry="4.9233375"
+       inkscape:export-filename="/home/olivier/aero/cours thermo/9 Puissance vapeur/images/symbole_chaudiere.png"
+       inkscape:export-xdpi="110.92"
+       inkscape:export-ydpi="110.92" />
+    <rect
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:2.79999995;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
+       id="use6288"
+       width="53.125"
+       height="25.928301"
+       x="4102.7104"
+       y="5247.6719"
+       rx="0"
+       ry="0"
+       inkscape:export-filename="/home/olivier/aero/cours thermo/9 Puissance vapeur/images/symbole_chaudiere.png"
+       inkscape:export-xdpi="110.92"
+       inkscape:export-ydpi="110.92" />
+    <rect
+       ry="0"
+       rx="0"
+       y="5247.6719"
+       x="4338.3354"
+       height="48.630161"
+       width="53.125"
+       id="use6290"
+       style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:2.79999995;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
+       inkscape:export-filename="/home/olivier/aero/cours thermo/9 Puissance vapeur/images/symbole_chaudiere.png"
+       inkscape:export-xdpi="110.92"
+       inkscape:export-ydpi="110.92" />
+    <path
+       inkscape:connector-curvature="0"
+       id="use6292"
+       d="m 4143.7994,5233.9081 c -2.337,0 -4.2187,2.21 -4.2187,4.9375 l 0,227.6563 c 0,2.7273 1.8813,4.9062 4.2187,4.9062 l 206.5626,0 c 2.337,0 4.2187,-2.1787 4.2187,-4.9062 l 0,-227.6563 c 0,-2.7275 -1.8813,-4.9375 -4.2187,-4.9375 l -206.5626,0 z m 45.7813,39.4375 c 5.3257,0 9.6562,4.2993 9.6563,9.625 0,5.3257 -4.3306,9.6563 -9.6563,9.6563 -5.3257,0 -9.625,-4.3306 -9.625,-9.6563 0,-5.3257 4.2993,-9.625 9.625,-9.625 z m 38.3437,0 c 5.3261,0 9.6252,4.2993 9.625,9.625 0,5.3257 -4.2989,9.6563 -9.625,9.6563 -5.3254,0 -9.6562,-4.3306 -9.6562,-9.6563 0,-5.3257 4.3306,-9.625 9.6562,-9.625 z m 38.3126,0 c 5.3255,0 9.6562,4.2993 9.6562,9.625 0,5.3257 -4.3306,9.6563 -9.6562,9.6563 -5.326,0 -9.6251,-4.3306 -9.625,-9.6563 0,-5.3257 4.299,-9.625 9.625,-9.625 z m 38.3437,0 c 5.3257,0 9.6562,4.2993 9.6563,9.625 0,5.3257 -4.3306,9.6563 -9.6563,9.6563 -5.3257,0 -9.625,-4.3306 -9.625,-9.6563 0,-5.3257 4.2993,-9.625 9.625,-9.625 z m -115,47.5 c 5.3258,0 9.6562,4.2992 9.6563,9.625 0,5.3258 -4.3305,9.6563 -9.6563,9.6563 -5.3258,0 -9.625,-4.3305 -9.625,-9.6563 0,-5.3258 4.2992,-9.625 9.625,-9.625 z m 38.3437,0 c 5.3258,0 9.625,4.2992 9.625,9.625 0,5.3258 -4.2992,9.6563 -9.625,9.6563 -5.3257,0 -9.6562,-4.3305 -9.6562,-9.6563 0,-5.3258 4.3305,-9.625 9.6562,-9.625 z m 38.3126,0 c 5.3257,0 9.6562,4.2992 9.6562,9.625 0,5.3258 -4.3305,9.6563 -9.6562,9.6563 -5.3258,0 -9.625,-4.3305 -9.625,-9.6563 0,-5.3258 4.2992,-9.625 9.625,-9.625 z m 38.3437,0 c 5.3258,0 9.6562,4.2992 9.6563,9.625 0,5.3258 -4.3305,9.6563 -9.6563,9.6563 -5.3258,0 -9.625,-4.3305 -9.625,-9.6563 0,-5.3258 4.2992,-9.625 9.625,-9.625 z m -115,46.25 c 5.3258,0 9.6562,4.2992 9.6563,9.625 0,5.3258 -4.3305,9.6563 -9.6563,9.6563 -5.3258,0 -9.625,-4.3305 -9.625,-9.6563 0,-5.3258 4.2992,-9.625 9.625,-9.625 z m 38.3437,0 c 5.3258,0 9.625,4.2992 9.625,9.625 0,5.3258 -4.2992,9.6563 -9.625,9.6563 -5.3257,0 -9.6562,-4.3305 -9.6562,-9.6563 0,-5.3258 4.3305,-9.625 9.6562,-9.625 z m 38.3126,0 c 5.3257,0 9.6562,4.2992 9.6562,9.625 0,5.3258 -4.3305,9.6563 -9.6562,9.6563 -5.3258,0 -9.625,-4.3305 -9.625,-9.6563 0,-5.3258 4.2992,-9.625 9.625,-9.625 z m 38.3437,0 c 5.3258,0 9.6562,4.2992 9.6563,9.625 0,5.3258 -4.3305,9.6563 -9.6563,9.6563 -5.3258,0 -9.625,-4.3305 -9.625,-9.6563 0,-5.3258 4.2992,-9.625 9.625,-9.625 z m -115,44.375 c 5.3258,0 9.6562,4.2992 9.6563,9.625 0,5.3258 -4.3305,9.6563 -9.6563,9.6563 -5.3258,0 -9.625,-4.3305 -9.625,-9.6563 0,-5.3258 4.2992,-9.625 9.625,-9.625 z m 38.3437,0 c 5.3258,0 9.625,4.2992 9.625,9.625 0,5.3258 -4.2992,9.6563 -9.625,9.6563 -5.3257,0 -9.6562,-4.3305 -9.6562,-9.6563 0,-5.3258 4.3305,-9.625 9.6562,-9.625 z m 38.3126,0 c 5.3257,0 9.6562,4.2992 9.6562,9.625 0,5.3258 -4.3305,9.6563 -9.6562,9.6563 -5.3258,0 -9.625,-4.3305 -9.625,-9.6563 0,-5.3258 4.2992,-9.625 9.625,-9.625 z m 38.3437,0 c 5.3258,0 9.6562,4.2992 9.6563,9.625 0,5.3258 -4.3305,9.6563 -9.6563,9.6563 -5.3258,0 -9.625,-4.3305 -9.625,-9.6563 0,-5.3258 4.2992,-9.625 9.625,-9.625 z"
+       style="fill:#f7fbfd;fill-opacity:1;stroke:none"
+       inkscape:export-filename="/home/olivier/aero/cours thermo/9 Puissance vapeur/images/symbole_chaudiere.png"
+       inkscape:export-xdpi="110.92"
+       inkscape:export-ydpi="110.92" />
+    <g
+       transform="matrix(0.89528046,0,0,0.88870954,1146.5987,6493.0421)"
+       id="use6294"
+       inkscape:export-filename="/home/olivier/aero/cours thermo/9 Puissance vapeur/images/symbole_chaudiere.png"
+       inkscape:export-xdpi="110.92"
+       inkscape:export-ydpi="110.92">
+      <path
+         sodipodi:nodetypes="csssscccc"
+         id="path6961"
+         d="m 3344.7224,-1195.5679 c 0,0 25.0271,-9.4286 41.3252,-8.826 8.2994,0.3068 2.2434,11.4257 14.027,10.8579 10.1075,-0.4871 7.2269,-14.5335 18.3261,-8.6841 18.5947,9.7997 64.5427,5.9705 81.0618,8.9631 24.5179,4.4416 83.0502,-2.3109 83.0502,-2.3109 l 0,44.8204 -237.7903,0 z"
+         style="fill:#c5d7e3;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         inkscape:connector-curvature="0" />
+      <path
+         sodipodi:type="arc"
+         style="fill:#f7fbfd;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         id="path6963"
+         sodipodi:cx="669.47858"
+         sodipodi:cy="1909.2878"
+         sodipodi:rx="6.8185296"
+         sodipodi:ry="6.8185296"
+         d="m 676.29711,1909.2878 c 0,3.7658 -3.05276,6.8186 -6.81853,6.8186 -3.76577,0 -6.81853,-3.0528 -6.81853,-6.8186 0,-3.7657 3.05276,-6.8185 6.81853,-6.8185 3.76577,0 6.81853,3.0528 6.81853,6.8185 z"
+         transform="translate(2820.5977,-3080.3383)" />
+      <path
+         transform="translate(2791.3779,-3070.7565)"
+         d="m 676.29711,1909.2878 c 0,3.7658 -3.05276,6.8186 -6.81853,6.8186 -3.76577,0 -6.81853,-3.0528 -6.81853,-6.8186 0,-3.7657 3.05276,-6.8185 6.81853,-6.8185 3.76577,0 6.81853,3.0528 6.81853,6.8185 z"
+         sodipodi:ry="6.8185296"
+         sodipodi:rx="6.8185296"
+         sodipodi:cy="1909.2878"
+         sodipodi:cx="669.47858"
+         id="path6965"
+         style="fill:#f7fbfd;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         sodipodi:type="arc" />
+      <path
+         sodipodi:type="arc"
+         style="fill:#f7fbfd;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         id="path6967"
+         sodipodi:cx="669.47858"
+         sodipodi:cy="1909.2878"
+         sodipodi:rx="6.8185296"
+         sodipodi:ry="6.8185296"
+         d="m 676.29711,1909.2878 c 0,3.7658 -3.05276,6.8186 -6.81853,6.8186 -3.76577,0 -6.81853,-3.0528 -6.81853,-6.8186 0,-3.7657 3.05276,-6.8185 6.81853,-6.8185 3.76577,0 6.81853,3.0528 6.81853,6.8185 z"
+         transform="translate(2788.4253,-3099.6281)" />
+      <path
+         sodipodi:type="arc"
+         style="fill:#f7fbfd;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         id="path6969"
+         sodipodi:cx="669.47858"
+         sodipodi:cy="1909.2878"
+         sodipodi:rx="6.8185296"
+         sodipodi:ry="6.8185296"
+         d="m 676.29711,1909.2878 c 0,3.7658 -3.05276,6.8186 -6.81853,6.8186 -3.76577,0 -6.81853,-3.0528 -6.81853,-6.8186 0,-3.7657 3.05276,-6.8185 6.81853,-6.8185 3.76577,0 6.81853,3.0528 6.81853,6.8185 z"
+         transform="translate(2886.7951,-3080.6837)" />
+      <path
+         transform="matrix(0.5925926,0,0,0.5925926,3126.3423,-2321.4525)"
+         d="m 676.29711,1909.2878 c 0,3.7658 -3.05276,6.8186 -6.81853,6.8186 -3.76577,0 -6.81853,-3.0528 -6.81853,-6.8186 0,-3.7657 3.05276,-6.8185 6.81853,-6.8185 3.76577,0 6.81853,3.0528 6.81853,6.8185 z"
+         sodipodi:ry="6.8185296"
+         sodipodi:rx="6.8185296"
+         sodipodi:cy="1909.2878"
+         sodipodi:cx="669.47858"
+         id="path6971"
+         style="fill:#f7fbfd;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         sodipodi:type="arc" />
+      <path
+         sodipodi:type="arc"
+         style="fill:#f7fbfd;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         id="path6973"
+         sodipodi:cx="669.47858"
+         sodipodi:cy="1909.2878"
+         sodipodi:rx="6.8185296"
+         sodipodi:ry="6.8185296"
+         d="m 676.29711,1909.2878 c 0,3.7658 -3.05276,6.8186 -6.81853,6.8186 -3.76577,0 -6.81853,-3.0528 -6.81853,-6.8186 0,-3.7657 3.05276,-6.8185 6.81853,-6.8185 3.76577,0 6.81853,3.0528 6.81853,6.8185 z"
+         transform="matrix(0.5925926,0,0,0.5925926,2968.6569,-2307.5741)" />
+      <path
+         sodipodi:type="arc"
+         style="fill:#f7fbfd;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         id="path6975"
+         sodipodi:cx="669.47858"
+         sodipodi:cy="1909.2878"
+         sodipodi:rx="6.8185296"
+         sodipodi:ry="6.8185296"
+         d="m 676.29711,1909.2878 c 0,3.7658 -3.05276,6.8186 -6.81853,6.8186 -3.76577,0 -6.81853,-3.0528 -6.81853,-6.8186 0,-3.7657 3.05276,-6.8185 6.81853,-6.8185 3.76577,0 6.81853,3.0528 6.81853,6.8185 z"
+         transform="matrix(0.44444445,0,0,0.44444445,3084.4874,-2046.3636)" />
+      <path
+         transform="matrix(0.44444445,0,0,0.44444445,3122.9363,-2041.9442)"
+         d="m 676.29711,1909.2878 c 0,3.7658 -3.05276,6.8186 -6.81853,6.8186 -3.76577,0 -6.81853,-3.0528 -6.81853,-6.8186 0,-3.7657 3.05276,-6.8185 6.81853,-6.8185 3.76577,0 6.81853,3.0528 6.81853,6.8185 z"
+         sodipodi:ry="6.8185296"
+         sodipodi:rx="6.8185296"
+         sodipodi:cy="1909.2878"
+         sodipodi:cx="669.47858"
+         id="path6977"
+         style="fill:#f7fbfd;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         sodipodi:type="arc" />
+      <path
+         transform="translate(2742.3662,-3066.618)"
+         d="m 676.29711,1909.2878 c 0,3.7658 -3.05276,6.8186 -6.81853,6.8186 -3.76577,0 -6.81853,-3.0528 -6.81853,-6.8186 0,-3.7657 3.05276,-6.8185 6.81853,-6.8185 3.76577,0 6.81853,3.0528 6.81853,6.8185 z"
+         sodipodi:ry="6.8185296"
+         sodipodi:rx="6.8185296"
+         sodipodi:cy="1909.2878"
+         sodipodi:cx="669.47858"
+         id="path6979"
+         style="fill:#f7fbfd;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         sodipodi:type="arc" />
+    </g>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:2.79999995;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
+       d="m 4143.7994,5233.9081 c -2.337,0 -4.2187,2.21 -4.2187,4.9375 l 0,227.6563 c 0,2.7273 1.8813,4.9062 4.2187,4.9062 l 206.5626,0 c 2.337,0 4.2187,-2.1787 4.2187,-4.9062 l 0,-227.6563 c 0,-2.7275 -1.8813,-4.9375 -4.2187,-4.9375 l -206.5626,0 z m 45.7813,39.4375 c 5.3257,0 9.6562,4.2993 9.6563,9.625 0,5.3257 -4.3306,9.6563 -9.6563,9.6563 -5.3257,0 -9.625,-4.3306 -9.625,-9.6563 0,-5.3257 4.2993,-9.625 9.625,-9.625 z m 38.3437,0 c 5.3261,0 9.6252,4.2993 9.625,9.625 0,5.3257 -4.2989,9.6563 -9.625,9.6563 -5.3254,0 -9.6562,-4.3306 -9.6562,-9.6563 0,-5.3257 4.3306,-9.625 9.6562,-9.625 z m 38.3126,0 c 5.3255,0 9.6562,4.2993 9.6562,9.625 0,5.3257 -4.3306,9.6563 -9.6562,9.6563 -5.326,0 -9.6251,-4.3306 -9.625,-9.6563 0,-5.3257 4.299,-9.625 9.625,-9.625 z m 38.3437,0 c 5.3257,0 9.6562,4.2993 9.6563,9.625 0,5.3257 -4.3306,9.6563 -9.6563,9.6563 -5.3257,0 -9.625,-4.3306 -9.625,-9.6563 0,-5.3257 4.2993,-9.625 9.625,-9.625 z m -115,47.5 c 5.3258,0 9.6562,4.2992 9.6563,9.625 0,5.3258 -4.3305,9.6563 -9.6563,9.6563 -5.3258,0 -9.625,-4.3305 -9.625,-9.6563 0,-5.3258 4.2992,-9.625 9.625,-9.625 z m 38.3437,0 c 5.3258,0 9.625,4.2992 9.625,9.625 0,5.3258 -4.2992,9.6563 -9.625,9.6563 -5.3257,0 -9.6562,-4.3305 -9.6562,-9.6563 0,-5.3258 4.3305,-9.625 9.6562,-9.625 z m 38.3126,0 c 5.3257,0 9.6562,4.2992 9.6562,9.625 0,5.3258 -4.3305,9.6563 -9.6562,9.6563 -5.3258,0 -9.625,-4.3305 -9.625,-9.6563 0,-5.3258 4.2992,-9.625 9.625,-9.625 z m 38.3437,0 c 5.3258,0 9.6562,4.2992 9.6563,9.625 0,5.3258 -4.3305,9.6563 -9.6563,9.6563 -5.3258,0 -9.625,-4.3305 -9.625,-9.6563 0,-5.3258 4.2992,-9.625 9.625,-9.625 z m -115,46.25 c 5.3258,0 9.6562,4.2992 9.6563,9.625 0,5.3258 -4.3305,9.6563 -9.6563,9.6563 -5.3258,0 -9.625,-4.3305 -9.625,-9.6563 0,-5.3258 4.2992,-9.625 9.625,-9.625 z m 38.3437,0 c 5.3258,0 9.625,4.2992 9.625,9.625 0,5.3258 -4.2992,9.6563 -9.625,9.6563 -5.3257,0 -9.6562,-4.3305 -9.6562,-9.6563 0,-5.3258 4.3305,-9.625 9.6562,-9.625 z m 38.3126,0 c 5.3257,0 9.6562,4.2992 9.6562,9.625 0,5.3258 -4.3305,9.6563 -9.6562,9.6563 -5.3258,0 -9.625,-4.3305 -9.625,-9.6563 0,-5.3258 4.2992,-9.625 9.625,-9.625 z m 38.3437,0 c 5.3258,0 9.6562,4.2992 9.6563,9.625 0,5.3258 -4.3305,9.6563 -9.6563,9.6563 -5.3258,0 -9.625,-4.3305 -9.625,-9.6563 0,-5.3258 4.2992,-9.625 9.625,-9.625 z m -115,44.375 c 5.3258,0 9.6562,4.2992 9.6563,9.625 0,5.3258 -4.3305,9.6563 -9.6563,9.6563 -5.3258,0 -9.625,-4.3305 -9.625,-9.6563 0,-5.3258 4.2992,-9.625 9.625,-9.625 z m 38.3437,0 c 5.3258,0 9.625,4.2992 9.625,9.625 0,5.3258 -4.2992,9.6563 -9.625,9.6563 -5.3257,0 -9.6562,-4.3305 -9.6562,-9.6563 0,-5.3258 4.3305,-9.625 9.6562,-9.625 z m 38.3126,0 c 5.3257,0 9.6562,4.2992 9.6562,9.625 0,5.3258 -4.3305,9.6563 -9.6562,9.6563 -5.3258,0 -9.625,-4.3305 -9.625,-9.6563 0,-5.3258 4.2992,-9.625 9.625,-9.625 z m 38.3437,0 c 5.3258,0 9.6562,4.2992 9.6563,9.625 0,5.3258 -4.3305,9.6563 -9.6563,9.6563 -5.3258,0 -9.625,-4.3305 -9.625,-9.6563 0,-5.3258 4.2992,-9.625 9.625,-9.625 z"
+       id="use6296"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/olivier/aero/cours thermo/9 Puissance vapeur/images/symbole_chaudiere.png"
+       inkscape:export-xdpi="110.92"
+       inkscape:export-ydpi="110.92" />
+    <rect
+       style="fill:#f7fbfd;fill-opacity:1;stroke:none"
+       id="use6298"
+       width="54.78228"
+       height="45.757542"
+       x="4338.5566"
+       y="5249.1079"
+       rx="0"
+       ry="0"
+       inkscape:export-filename="/home/olivier/aero/cours thermo/9 Puissance vapeur/images/symbole_chaudiere.png"
+       inkscape:export-xdpi="110.92"
+       inkscape:export-ydpi="110.92" />
+    <path
+       id="use6300"
+       style="fill:#c5d7e3;fill-opacity:1;stroke:none"
+       d="m 4101.1999,5272.2483 0,-23.1403 41.0821,0 c 13.7477,0 33.3074,24.7596 19.6815,30.1116 -5.2587,2.0655 -14.8006,-6.9713 -19.6815,-6.9713 z"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="cccscc"
+       inkscape:export-filename="/home/olivier/aero/cours thermo/9 Puissance vapeur/images/symbole_chaudiere.png"
+       inkscape:export-xdpi="110.92"
+       inkscape:export-ydpi="110.92" />
+    <path
+       sodipodi:nodetypes="cssc"
+       inkscape:connector-curvature="0"
+       id="use6302"
+       d="m 4168.0995,5281.0096 c 7.4019,4.5759 10.693,10.1615 10.5907,14.7054 -0.1118,4.9701 -11.6769,7.5742 -12.5496,2.2209 -0.8696,-5.3403 -1.2773,-10.7721 1.9589,-16.9263 z"
+       style="fill:#c5d7e3;fill-opacity:1;stroke:none" />
+    <path
+       sodipodi:nodetypes="cssc"
+       inkscape:connector-curvature="0"
+       id="use6304"
+       d="m 4172.6223,5341.3763 c -6.3709,5.9278 -8.5131,12.0467 -7.5293,16.484 1.0761,4.8536 12.9268,5.1592 12.742,-0.2616 -0.1854,-5.4075 -0.8417,-10.8148 -5.2127,-16.2224 z"
+       style="fill:#c5d7e3;fill-opacity:1;stroke:none" />
+    <path
+       sodipodi:nodetypes="cssc"
+       inkscape:connector-curvature="0"
+       id="use6306"
+       d="m 4157.2395,5299.5442 c -6.3709,5.9278 -8.5131,12.0467 -7.5293,16.484 1.0761,4.8536 12.9268,5.1592 12.742,-0.2616 -0.1854,-5.4075 -0.8417,-10.8148 -5.2127,-16.2224 z"
+       style="fill:#c5d7e3;fill-opacity:1;stroke:none" />
+    <g
+       transform="translate(3874.9852,6762.2201)"
+       id="use6308"
+       inkscape:export-filename="/home/olivier/aero/cours thermo/10 Puissance gaz/images/symbole_turbine.png"
+       inkscape:export-xdpi="149.93005"
+       inkscape:export-ydpi="149.93005">
+      <g
+         id="g6995">
+        <path
+           sodipodi:nodetypes="ccscc"
+           id="path6997"
+           d="m 854.14127,-1146.9896 209.37703,0 c -7.7367,-7.1573 -5.524,-13.0468 0,-18.6866 5.524,-5.6398 4.8901,-11.992 0,-18.6866 l -209.37703,0"
+           style="fill:url(#linearGradient7003);fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+           inkscape:connector-curvature="0" />
+        <path
+           id="path6999"
+           d="m 1065.387,-1146.6547 c 0,0 3.4946,-3.2811 3.4946,-8.7172 0,-5.4361 -5.1595,-9.285 -5.1595,-9.285"
+           style="fill:none;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+           inkscape:connector-curvature="0" />
+      </g>
+      <path
+         sodipodi:type="arc"
+         style="fill:none;stroke:#000000;stroke-width:3.0185492;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0;marker-mid:none;marker-end:url(#TriangleOutM)"
+         id="path7001"
+         sodipodi:cx="534.11816"
+         sodipodi:cy="380.35822"
+         sodipodi:rx="32.072342"
+         sodipodi:ry="32.072342"
+         d="m 543.8348,349.79317 c 16.88061,5.36635 26.21476,23.40107 20.84841,40.28168 -5.36635,16.88061 -23.40107,26.21476 -40.28168,20.84841 -12.08896,-3.84308 -20.77697,-14.45022 -22.16353,-27.05933"
+         transform="matrix(-0.5807054,-1.5375599,-0.5807054,1.5375599,1527.4157,-929.09362)"
+         sodipodi:start="5.0201861"
+         sodipodi:end="9.3152527"
+         sodipodi:open="true"
+         inkscape:export-filename="/home/olivier/aero/documents/cc/figures/thermodynamics/ta_4a.png"
+         inkscape:export-xdpi="149.92632"
+         inkscape:export-ydpi="149.92632" />
+    </g>
+    <path
+       inkscape:export-ydpi="149.93005"
+       inkscape:export-xdpi="149.93005"
+       inkscape:export-filename="/home/olivier/aero/cours thermo/10 Puissance gaz/images/symbole_turbine.png"
+       sodipodi:nodetypes="ccccc"
+       id="use6310"
+       d="m 4802.2956,5787.2465 0,-381.0703 -230.5892,82.2011 0,216.6673 230.5892,82.2019 z"
+       style="fill:url(#linearGradient7007);fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       inkscape:connector-curvature="0" />
+    <g
+       inkscape:export-ydpi="100.07294"
+       inkscape:export-xdpi="100.07294"
+       inkscape:export-filename="/home/olivier/aero/cours thermo/9 Puissance vapeur/images/symbole_turbine.png"
+       id="use6312"
+       transform="translate(3874.9852,6762.2201)">
+      <path
+         inkscape:connector-curvature="0"
+         style="fill:#f7fbfd;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+         d="m 927.31043,-1289.0651 0,-66.9788 -230.58921,82.2011 0,39.4766 z"
+         id="path7011"
+         sodipodi:nodetypes="ccccc"
+         inkscape:export-filename="/home/olivier/aero/documents/cc/figures/thermodynamics/ta_1a.png"
+         inkscape:export-xdpi="150.02603"
+         inkscape:export-ydpi="150.02603" />
+      <path
+         inkscape:connector-curvature="0"
+         style="fill:#f7fbfd;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+         d="m 927.31043,-1041.9524 0,66.9788 -230.58921,-82.2011 0,-39.4766 z"
+         id="path7013"
+         sodipodi:nodetypes="ccccc"
+         inkscape:export-filename="/home/olivier/aero/documents/cc/figures/thermodynamics/ta_1a.png"
+         inkscape:export-xdpi="150.02603"
+         inkscape:export-ydpi="150.02603" />
+    </g>
+    <path
+       id="use6314"
+       style="fill:#f7fbfd;fill-opacity:1;stroke:none"
+       d="m 4252.1238,6225.1852 c -11.2433,-37.3284 -63.3409,-27.1266 -63.3363,-53.033 l 0,-175.0089 c 0.8215,-15.9626 23.3046,-22.0462 25.5514,-49.4975 l 93.4835,0.625 c 2.2468,27.4513 24.7299,33.5349 25.5514,49.4975 l 0,175.0089 c 0,25.9064 -52.093,15.7046 -63.3363,53.033"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="cccccccc"
+       inkscape:export-filename="/home/olivier/aero/cours thermo/9 Puissance vapeur/images/symbole_condenseur.png"
+       inkscape:export-xdpi="164.63"
+       inkscape:export-ydpi="164.63" />
+    <path
+       style="fill:none;stroke:#1a2eae;stroke-width:10;stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       d="m 4461.0988,6146.2297 -196.0479,0 -38.0531,-12.1078 73.3623,-24.7487 -74.2462,-24.7487 76.014,-24.7488 -76.014,-24.7487 39.3665,-12.5257 195.6184,0"
+       id="use6316"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="ccccccccc" />
+    <path
+       id="use6318"
+       style="opacity:0;fill:none;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       d="m 4252.1238,6225.1852 c -11.2433,-37.3284 -63.3409,-27.1266 -63.3363,-53.033 l 0,-175.0089 c 0.8215,-15.9626 23.3046,-22.0462 25.5514,-49.4975 m 55.6986,278.1644 c 11.2433,-37.3284 63.3409,-27.1266 63.3363,-53.033 l 0,-175.0089 c -0.8215,-15.9626 -23.3046,-22.0462 -25.5514,-49.4975"
+       inkscape:connector-curvature="0"
+       inkscape:export-filename="/home/olivier/aero/cours thermo/9 Puissance vapeur/images/symbole_condenseur.png"
+       inkscape:export-xdpi="164.63"
+       inkscape:export-ydpi="164.63" />
+    <path
+       style="fill:#c5d7e3;fill-opacity:1;stroke:none"
+       d="m 4189.1535,6006.0439 c 5.1484,3.572 7.362,7.999 7.3945,12.0637 0.036,4.4461 -7.4232,8.9015 -7.4166,4.073 z"
+       id="use6320"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="cssc"
+       inkscape:export-filename="/home/olivier/aero/cours thermo/9 Puissance vapeur/images/symbole_condenseur.png"
+       inkscape:export-xdpi="164.63"
+       inkscape:export-ydpi="164.63" />
+    <path
+       style="fill:#c5d7e3;fill-opacity:1;stroke:none"
+       d="m 4331.8291,6042.7626 c -7.3176,3.6332 -10.4638,8.1362 -10.5101,12.2706 -0.051,4.5223 10.551,9.0541 10.5416,4.1428 z"
+       id="use6322"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="cssc" />
+    <path
+       sodipodi:nodetypes="cssc"
+       inkscape:connector-curvature="0"
+       id="use6324"
+       d="m 4289.1609,6119.2017 c 6.3709,5.9278 8.5131,12.0467 7.5293,16.4839 -1.0761,4.8536 -12.9268,5.1592 -12.742,-0.2615 0.1854,-5.4075 0.8417,-10.8149 5.2127,-16.2224 z"
+       style="fill:#c5d7e3;fill-opacity:1;stroke:none" />
+    <path
+       sodipodi:nodetypes="cssc"
+       inkscape:connector-curvature="0"
+       id="use6326"
+       d="m 4234.6587,6047.9523 c -6.3709,5.9278 -8.5131,12.0467 -7.5293,16.484 1.0761,4.8536 12.9268,5.1592 12.742,-0.2616 -0.1854,-5.4075 -0.8417,-10.8149 -5.2127,-16.2224 z"
+       style="fill:#c5d7e3;fill-opacity:1;stroke:none" />
+    <path
+       sodipodi:nodetypes="cssc"
+       inkscape:connector-curvature="0"
+       id="use6328"
+       d="m 4239.6587,6151.3899 c -6.3709,5.9278 -8.5131,12.0467 -7.5293,16.4839 1.0761,4.8536 12.9268,5.1592 12.742,-0.2615 -0.1854,-5.4076 -0.8417,-10.8149 -5.2127,-16.2224 z"
+       style="fill:#c5d7e3;fill-opacity:1;stroke:none" />
+    <path
+       sodipodi:nodetypes="cssc"
+       inkscape:connector-curvature="0"
+       id="use6330"
+       d="m 4203.6241,6113.241 c -6.3709,5.9278 -8.5131,12.0467 -7.5293,16.484 1.0761,4.8536 12.9268,5.1592 12.742,-0.2616 -0.1854,-5.4075 -0.8417,-10.8149 -5.2127,-16.2224 z"
+       style="fill:#c5d7e3;fill-opacity:1;stroke:none" />
+    <path
+       sodipodi:nodetypes="cccscccc"
+       inkscape:connector-curvature="0"
+       d="m 4252.1238,6225.1852 c -11.2433,-37.3284 -63.3409,-27.1266 -63.3363,-53.033 l 0,-17.2752 c 0,0 18.4339,7.6632 32.046,8.5874 22.4615,1.5251 46.3156,1.2248 68.8297,-3.5937 33.3605,-4.8849 43.7106,2.1938 43.7106,2.1938 l 0,10.7127 c 0,25.9064 -52.093,15.7046 -63.3363,53.033"
+       style="fill:#c5d7e3;fill-opacity:1;stroke:none"
+       id="use6332"
+       inkscape:export-filename="/home/olivier/aero/cours thermo/9 Puissance vapeur/images/symbole_condenseur.png"
+       inkscape:export-xdpi="164.63"
+       inkscape:export-ydpi="164.63" />
+    <path
+       inkscape:export-ydpi="164.63"
+       inkscape:export-xdpi="164.63"
+       inkscape:export-filename="/home/olivier/aero/cours thermo/9 Puissance vapeur/images/symbole_condenseur.png"
+       style="fill:none;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       d="m 4252.1238,6225.1852 c -11.2433,-37.3284 -63.3409,-27.1266 -63.3363,-53.033 l 0,-175.0089 c 0.8215,-15.9626 23.3046,-22.0462 25.5514,-49.4975"
+       id="use6334"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="cccc" />
+    <path
+       sodipodi:nodetypes="cccc"
+       inkscape:connector-curvature="0"
+       id="use6336"
+       d="m 4270.0375,6225.8102 c 11.2433,-37.3284 63.3409,-27.1266 63.3363,-53.033 l 0,-175.0089 c -0.8215,-15.9626 -23.3046,-22.0462 -25.5514,-49.4975"
+       style="fill:none;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       inkscape:export-filename="/home/olivier/aero/cours thermo/9 Puissance vapeur/images/symbole_condenseur.png"
+       inkscape:export-xdpi="164.63"
+       inkscape:export-ydpi="164.63" />
+    <path
+       inkscape:export-ydpi="438.89001"
+       inkscape:export-xdpi="438.89001"
+       inkscape:export-filename="/home/olivier/aero/cours thermo/9 Puissance vapeur/images/symbole_pompe.png"
+       sodipodi:nodetypes="csssc"
+       inkscape:connector-curvature="0"
+       id="use6338"
+       d="m 3996.9126,5807.7961 0,81.7756 c 0,5.633 -4.5349,10.1679 -10.1679,10.1679 -5.633,0 -10.1679,-4.5349 -10.1679,-10.1679 l 0,-81.7756"
+       style="fill:#c5d7e3;fill-opacity:1;stroke:#000000;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
+    <path
+       inkscape:export-ydpi="438.89001"
+       inkscape:export-xdpi="438.89001"
+       inkscape:export-filename="/home/olivier/aero/cours thermo/9 Puissance vapeur/images/symbole_pompe.png"
+       transform="matrix(0.50259952,0,0,0.50259952,2991.7136,3076.253)"
+       d="m 2000,5597.5356 c 0,55.2285 -44.7715,100 -100,100 -55.2285,0 -100,-44.7715 -100,-100 0,-55.2284 44.7715,-100 100,-100 55.2285,0 100,44.7716 100,100 z"
+       sodipodi:ry="100"
+       sodipodi:rx="100"
+       sodipodi:cy="5597.5356"
+       sodipodi:cx="1900"
+       id="use6340"
+       style="fill:#c5d7e3;fill-opacity:1;stroke:#000000;stroke-width:3.97931147;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
+       sodipodi:type="arc" />
+    <path
+       inkscape:export-ydpi="438.89001"
+       inkscape:export-xdpi="438.89001"
+       inkscape:export-filename="/home/olivier/aero/cours thermo/9 Puissance vapeur/images/symbole_pompe.png"
+       sodipodi:type="arc"
+       style="fill:#c5d7e3;fill-opacity:1;stroke:#000000;stroke-width:2.45592713;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0"
+       id="use6342"
+       sodipodi:cx="1900"
+       sodipodi:cy="5597.5356"
+       sodipodi:rx="100"
+       sodipodi:ry="100"
+       d="m 2000,5597.5356 c 0,55.2285 -44.7715,100 -100,100 -55.2285,0 -100,-44.7715 -100,-100 0,-55.2284 44.7715,-100 100,-100 55.2285,0 100,44.7716 100,100 z"
+       transform="matrix(0.10517103,0,0,0.10517103,3746.8277,5300.8731)" />
+    <path
+       inkscape:export-ydpi="438.89001"
+       inkscape:export-xdpi="438.89001"
+       inkscape:export-filename="/home/olivier/aero/cours thermo/9 Puissance vapeur/images/symbole_pompe.png"
+       sodipodi:nodetypes="csssc"
+       inkscape:connector-curvature="0"
+       id="use6344"
+       d="m 3936.4848,5970.9981 0,-81.7756 c 0,-5.633 4.5349,-10.1679 10.1679,-10.1679 5.633,0 10.1679,4.5349 10.1679,10.1679 l 0,81.7756"
+       style="fill:#c5d7e3;fill-opacity:1;stroke:#000000;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0" />
+    <path
+       inkscape:connector-curvature="0"
+       id="use6350"
+       d="m 4674.6804,5742.723 0,24.6875 -687.9357,0"
+       style="fill:none;stroke:#2d2d2d;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       sodipodi:nodetypes="ccc"
+       inkscape:export-filename="/home/olivier/aero/cours thermo/9 Puissance vapeur/images/circuit_prelevement.png"
+       inkscape:export-xdpi="99.972122"
+       inkscape:export-ydpi="99.972122" />
+    <use
+       x="0"
+       y="0"
+       xlink:href="#use6338"
+       id="use6352"
+       transform="translate(40.092006,-241.99784)"
+       width="3189.9866"
+       height="5437.5356"
+       inkscape:export-filename="/home/olivier/aero/cours thermo/9 Puissance vapeur/images/circuit_prelevement.png"
+       inkscape:export-xdpi="99.972122"
+       inkscape:export-ydpi="99.972122" />
+    <use
+       x="0"
+       y="0"
+       xlink:href="#use6340"
+       id="use6354"
+       transform="translate(40.092006,-241.99784)"
+       width="3189.9866"
+       height="5437.5356"
+       inkscape:export-filename="/home/olivier/aero/cours thermo/9 Puissance vapeur/images/circuit_prelevement.png"
+       inkscape:export-xdpi="99.972122"
+       inkscape:export-ydpi="99.972122" />
+    <use
+       x="0"
+       y="0"
+       xlink:href="#use6342"
+       id="use6356"
+       transform="translate(40.092006,-241.99784)"
+       width="3189.9866"
+       height="5437.5356"
+       inkscape:export-filename="/home/olivier/aero/cours thermo/9 Puissance vapeur/images/circuit_prelevement.png"
+       inkscape:export-xdpi="99.972122"
+       inkscape:export-ydpi="99.972122" />
+    <use
+       x="0"
+       y="0"
+       xlink:href="#use6344"
+       id="use6358"
+       transform="translate(40.092006,-241.99784)"
+       width="3189.9866"
+       height="5437.5356"
+       inkscape:export-filename="/home/olivier/aero/cours thermo/9 Puissance vapeur/images/circuit_prelevement.png"
+       inkscape:export-xdpi="99.972122"
+       inkscape:export-ydpi="99.972122" />
+    <path
+       inkscape:export-ydpi="99.972122"
+       inkscape:export-xdpi="99.972122"
+       inkscape:export-filename="/home/olivier/aero/cours thermo/9 Puissance vapeur/images/circuit_prelevement.png"
+       style="fill:url(#pattern6770);fill-opacity:1;fill-rule:nonzero;stroke:none"
+       d="m 4802.2907,5345.7951 -230.5843,82.2072 0,60.375 230.5843,-82.2071 z m -112.7851,459.2957 112.7851,42.5386 0,-60.3751 -100.3871,-35.9741 z m -45.903,-74.4115 -71.8962,-25.6322 0,21.9262 72.8164,26.3183 z"
+       id="use6372"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="ccccccccccccccc" />
+    <path
+       sodipodi:nodetypes="cc"
+       inkscape:connector-curvature="0"
+       id="use11123"
+       d="m 3946.0861,6142.2112 0,-61.4828"
+       style="fill:none;stroke:#2d2d2d;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-start:url(#marker9328);marker-mid:url(#marker9328);marker-end:url(#marker9316)"
+       inkscape:export-filename="/home/olivier/aero/cours thermo/9 Puissance vapeur/images/circuit_carnot_lv.png"
+       inkscape:export-xdpi="100.03535"
+       inkscape:export-ydpi="100.03535" />
+    <text
+       xml:space="preserve"
+       style="font-size:47.4972229px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       x="3887.21"
+       y="6154.1831"
+       id="use11125"
+       inkscape:export-filename="/home/olivier/aero/cours thermo/9 Puissance vapeur/images/ts_lv_carnot.png"
+       inkscape:export-xdpi="100.03635"
+       inkscape:export-ydpi="100.03635"><tspan
+         sodipodi:role="line"
+         id="tspan7089"
+         x="3887.21"
+         y="6154.1831"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Nimbus Roman No9 L;-inkscape-font-specification:Nimbus Roman No9 L">A</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:47.4972229px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       x="3924.1541"
+       y="5809.2798"
+       id="use11127"
+       inkscape:export-filename="/home/olivier/aero/cours thermo/9 Puissance vapeur/images/ts_lv_carnot.png"
+       inkscape:export-xdpi="100.03635"
+       inkscape:export-ydpi="100.03635"><tspan
+         sodipodi:role="line"
+         id="tspan7097"
+         x="3924.1541"
+         y="5809.2798"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Nimbus Roman No9 L;-inkscape-font-specification:Nimbus Roman No9 L">B</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:47.4972229px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       x="3922.9429"
+       y="5755.1587"
+       id="use11129"
+       inkscape:export-filename="/home/olivier/aero/cours thermo/9 Puissance vapeur/images/ts_lv_carnot.png"
+       inkscape:export-xdpi="100.03635"
+       inkscape:export-ydpi="100.03635"><tspan
+         sodipodi:role="line"
+         id="tspan7105"
+         x="3922.9429"
+         y="5755.1587"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Nimbus Roman No9 L;-inkscape-font-specification:Nimbus Roman No9 L">C</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:47.4972229px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       x="3973.3821"
+       y="5491.8882"
+       id="use11131"
+       inkscape:export-filename="/home/olivier/aero/cours thermo/9 Puissance vapeur/images/ts_lv_carnot.png"
+       inkscape:export-xdpi="100.03635"
+       inkscape:export-ydpi="100.03635"><tspan
+         sodipodi:role="line"
+         id="tspan7113"
+         x="3973.3821"
+         y="5491.8882"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Nimbus Roman No9 L;-inkscape-font-specification:Nimbus Roman No9 L">D</tspan></text>
+    <path
+       sodipodi:nodetypes="cc"
+       inkscape:connector-curvature="0"
+       id="use11133"
+       d="m 4026.8367,5475.0237 0,-61.4828"
+       style="fill:none;stroke:#2d2d2d;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-start:url(#marker9328);marker-mid:url(#marker9328);marker-end:url(#marker9316)"
+       inkscape:export-filename="/home/olivier/aero/cours thermo/9 Puissance vapeur/images/circuit_carnot_lv.png"
+       inkscape:export-xdpi="100.03535"
+       inkscape:export-ydpi="100.03535" />
+    <path
+       sodipodi:nodetypes="cc"
+       inkscape:connector-curvature="0"
+       id="use11135"
+       d="m 4457.1268,5375.843 0,61.4828"
+       style="fill:none;stroke:#2d2d2d;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-start:url(#marker9328);marker-mid:url(#marker9328);marker-end:url(#marker9316)"
+       inkscape:export-filename="/home/olivier/aero/cours thermo/9 Puissance vapeur/images/circuit_carnot_lv.png"
+       inkscape:export-xdpi="100.03535"
+       inkscape:export-ydpi="100.03535" />
+    <path
+       sodipodi:nodetypes="cc"
+       inkscape:connector-curvature="0"
+       id="use11137"
+       d="m 4642.0217,5891.0772 -61.4828,0"
+       style="fill:none;stroke:#2d2d2d;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-start:url(#marker9328);marker-mid:url(#marker9328);marker-end:url(#marker9316)"
+       inkscape:export-filename="/home/olivier/aero/cours thermo/9 Puissance vapeur/images/circuit_carnot_lv.png"
+       inkscape:export-xdpi="100.03535"
+       inkscape:export-ydpi="100.03535" />
+    <use
+       x="0"
+       y="0"
+       xlink:href="#use11133"
+       id="use11270"
+       transform="translate(-40.092006,322.56195)"
+       width="6754.0684"
+       height="9881.5635"
+       inkscape:export-filename="/home/olivier/aero/cours thermo/9 Puissance vapeur/images/circuit_prelevement.png"
+       inkscape:export-xdpi="99.972122"
+       inkscape:export-ydpi="99.972122" />
+    <use
+       x="0"
+       y="0"
+       xlink:href="#use11137"
+       id="use11272"
+       transform="translate(-531.92184,-123.6667)"
+       width="6754.0684"
+       height="9881.5635"
+       inkscape:export-filename="/home/olivier/aero/cours thermo/9 Puissance vapeur/images/circuit_prelevement.png"
+       inkscape:export-xdpi="99.972122"
+       inkscape:export-ydpi="99.972122" />
+    <text
+       inkscape:export-ydpi="100.03641"
+       inkscape:export-xdpi="100.03641"
+       inkscape:export-filename="/home/olivier/aero/cours thermo/9 Puissance vapeur/images/ts_lv_rankine_surchauffe.png"
+       id="use11280"
+       y="5391.1763"
+       x="4477.5112"
+       style="font-size:47.4972229px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       xml:space="preserve"><tspan
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Nimbus Roman No9 L;-inkscape-font-specification:Nimbus Roman No9 L"
+         y="5391.1763"
+         x="4477.5112"
+         id="tspan5014"
+         sodipodi:role="line">E</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:47.4972229px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       x="4624.312"
+       y="5948.875"
+       id="use11282"
+       inkscape:export-filename="/home/olivier/aero/cours thermo/9 Puissance vapeur/images/ts_lv_prelevement.png"
+       inkscape:export-xdpi="100.03641"
+       inkscape:export-ydpi="100.03641"><tspan
+         sodipodi:role="line"
+         id="tspan5010"
+         x="4624.312"
+         y="5948.875"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Nimbus Roman No9 L;-inkscape-font-specification:Nimbus Roman No9 L">G</tspan></text>
+    <text
+       inkscape:export-ydpi="100.03641"
+       inkscape:export-xdpi="100.03641"
+       inkscape:export-filename="/home/olivier/aero/cours thermo/9 Puissance vapeur/images/ts_lv_prelevement.png"
+       id="use11284"
+       y="5743.3237"
+       x="4101.8193"
+       style="font-size:47.4972229px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       xml:space="preserve"><tspan
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Nimbus Roman No9 L;-inkscape-font-specification:Nimbus Roman No9 L"
+         y="5743.3237"
+         x="4101.8193"
+         id="tspan5006"
+         sodipodi:role="line">F</tspan></text>
+  </g>
+</svg>

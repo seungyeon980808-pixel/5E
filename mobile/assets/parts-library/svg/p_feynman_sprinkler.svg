@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="100%" height="100%" viewBox="-75 -48 128 192">
+ <title>Feynman sprinkler</title>
+ <desc>Comparison of a regular sprinkler (1) and a Feynman antisprinkler (2) by CMG Lee.</desc>
+ <style type="text/css">
+svg   { font-family:'Liberation Sans',Helvetica,Arial,sans-serif; font-size:30px; text-anchor:middle; fill:#000000; stroke:none; stroke-linecap:round; }
+.flow { fill:none; stroke:#0066ff; marker-end:url(#marker_flow); }
+.spin { fill:none; stroke:#cc0000; marker-end:url(#marker_spin); }
+ </style>
+ <defs>
+  <path id="arrowhead" d="M 1,2 Q 4,4 7,4 Q 4,4 1,6"/>
+  <marker id="marker_flow" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+   <use xlink:href="#arrowhead" fill="#0066ff"/>
+  </marker>
+  <marker id="marker_spin" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+   <use xlink:href="#arrowhead" fill="#cc0000"/>
+  </marker>
+ </defs>
+ <circle cx="0" cy="0" r="99999" fill="#ffffff"/>
+ <g>
+  <text x="-60" y="-22">1</text>
+  <g id="arm_out" transform="rotate(270)">
+   <g id="arm" fill="none">
+    <path stroke="#666666" stroke-width="9" d="M 0,0 c 30,30 40,9 40,4"/>
+    <path stroke="#ffffff" stroke-width="6" d="M 0,0 c 30,30 40,9 40,4 v -9"/>
+    <circle cx="0" cy="0" r="9" fill="#ffffff" stroke="#cccccc" stroke-width="12"/>
+   </g>
+   <g id="out" class="flow" transform="translate(40,0)">
+    <path d="M  0,0 l  0,-9"/>
+    <path d="M  2,0 l  1,-8"/>
+    <path d="M -2,0 l -1,-8"/>
+   </g>
+  </g>
+  <use xlink:href="#arm_out" transform="rotate(72)"/>
+  <use xlink:href="#arm_out" transform="rotate(144)"/>
+  <use xlink:href="#arm_out" transform="rotate(216)"/>
+  <use xlink:href="#arm_out" transform="rotate(288)"/>
+  <path id="spin" class="spin" d="M 9,0 A 9,9 0 1 1 0,-9 l 1,-0.1"/>
+ </g>
+ <g transform="translate(0,99)">
+  <text x="-60" y="-25">2</text>
+  <g id="arm_in" transform="rotate(270)">
+   <use xlink:href="#arm"/>
+   <g id="in" class="flow" transform="translate(40,0)">
+    <path d="M  0,-9 v  9"/>
+    <path d="M  7,-6 q -3,0 -5,6"/>
+    <path d="M -7,-6 q  3,0  5,6"/>
+   </g>
+  </g>
+  <use xlink:href="#arm_in" transform="rotate(72)"/>
+  <use xlink:href="#arm_in" transform="rotate(144)"/>
+  <use xlink:href="#arm_in" transform="rotate(216)"/>
+  <use xlink:href="#arm_in" transform="rotate(288)"/>
+  <use xlink:href="#spin" transform="scale(-1,1)" stroke-dasharray="3"/>
+ </g>
+</svg>
