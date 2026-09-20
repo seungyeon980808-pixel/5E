@@ -274,7 +274,7 @@
 }
 
 .unified-library-overlay .unilib-folders { display: grid; grid-template-rows: auto minmax(0, 1fr); }
-.unified-library-overlay .unilib-results { position: relative; display: grid; grid-template-rows: auto var(--unilib-selection-tray-height) minmax(0, 1fr); overflow: hidden; }
+.unified-library-overlay .unilib-results { position: relative; display: grid; grid-template-rows: auto minmax(0, 1fr); overflow: hidden; }
 .unified-library-overlay .unilib-preview { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; border-inline-end: 0; }
 
 .unified-library-overlay .unilib-pane-head {
@@ -468,7 +468,7 @@
   cursor: pointer;
 }
 .unified-library-overlay .unilib-result-card:hover { border-color: var(--unilib-border); background: var(--unilib-raised); }
-.unified-library-overlay .unilib-result-card[aria-selected="true"] { border-color: transparent; background: var(--unilib-raised); color: var(--unilib-text); box-shadow: var(--unilib-no-shadow); }
+.unified-library-overlay .unilib-result-card[aria-selected="true"] { border-color: var(--unilib-accent); background: var(--unilib-raised); color: var(--unilib-text); box-shadow: var(--unilib-no-shadow); }
 .unified-library-overlay .unilib-result-card[aria-selected="true"] .unilib-result-copy small,
 .unified-library-overlay .unilib-result-card[aria-selected="true"] .unilib-result-snippet { color: var(--unilib-muted); }
 .unified-library-overlay .unilib-result-card[aria-selected="true"]:focus-visible { outline: var(--unilib-focus-outline-width) solid var(--unilib-focus); outline-offset: calc(-1 * var(--unilib-focus-outline-width)); }
@@ -1100,12 +1100,12 @@
 
 /* Final library layout: automatic density, compact sources, and focused preview. */
 .unified-library-overlay .unilib-folders { grid-template-rows: auto minmax(0, 1fr); }
-.unified-library-overlay .unilib-results { grid-template-rows: auto var(--unilib-selection-tray-height) minmax(0, 1fr); }
+.unified-library-overlay .unilib-results { grid-template-rows: auto minmax(0, 1fr); }
 .unified-library-overlay .unilib-selection-summary[hidden],
 .unified-library-overlay .unilib-grid-density[hidden] { display: none; }
 .unified-library-overlay .unilib-folders > .unilib-pane-head { position: relative; }
-.unified-library-overlay .unilib-pane-head .unilib-location-add { position: static; min-width: 0; }
-.unified-library-overlay .unilib-location-add > summary { display: flex; min-height: var(--unilib-control-height); align-items: center; justify-content: center; padding: 0 var(--unilib-space-3); border: var(--unilib-border-width) solid var(--unilib-border); border-radius: var(--unilib-control-radius); background: var(--unilib-input); color: var(--unilib-label); cursor: pointer; font-size: var(--unilib-type-caption); list-style: none; white-space: nowrap; }
+.unified-library-overlay .unilib-pane-head .unilib-location-add { position: static; min-width: 0; margin-inline-start: auto; }
+.unified-library-overlay .unilib-location-add > summary { display: flex; box-sizing: border-box; width: var(--unilib-mobile-control-height); height: var(--unilib-mobile-control-height); min-height: var(--unilib-control-height); align-items: center; justify-content: center; padding: 0; border: var(--unilib-border-width) solid var(--unilib-border); border-radius: var(--unilib-control-radius); background: var(--unilib-input); color: var(--unilib-label); cursor: pointer; font-size: var(--unilib-type-caption); list-style: none; white-space: nowrap; }
 .unified-library-overlay .unilib-location-add > summary::-webkit-details-marker { display: none; }
 .unified-library-overlay .unilib-location-add-menu { position: absolute; z-index: 12; top: calc(100% + var(--unilib-space-1)); left: var(--unilib-space-4); display: grid; width: min(18rem, calc(100% - 2 * var(--unilib-space-4))); gap: var(--unilib-space-2); padding: var(--unilib-space-3); border: var(--unilib-border-width) solid var(--unilib-border); border-radius: var(--unilib-panel-radius); background: var(--unilib-raised); }
 .unified-library-overlay .unilib-location-add-menu .unilib-button,
@@ -1207,4 +1207,11 @@
   align-content: center;
   border-top: var(--unilib-border-width) solid var(--unilib-border-muted);
   border-inline-start: 0;
+}
+
+/* Question previews use the available reader width without distorting the source. */
+.unified-library-overlay .unilib[data-active-tab="question"] .unilib-preview-image { display: block; width: 100%; max-width: none; margin: 0; align-self: start; }
+.unified-library-overlay .unilib[data-active-tab="question"] .unilib-preview-image > img { width: 100%; max-width: none; max-height: none; height: auto; }
+@media (max-width: 767px) {
+  .unified-library-overlay .unilib-pane-head .unilib-location-add { order: 1; margin-inline-start: 0; }
 }
