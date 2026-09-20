@@ -24,8 +24,7 @@ import { modKey, shortcutKey, isEditingTarget, isComposingKey } from "./platform
 import { initProjectLaunch } from './project-launch.js?v=1.6.0-preview-web-native-project-0918-1617';
 import { extractWindowsProjectSource } from './windows-project-source.mjs?v=1.6.0-preview-project-launcher-0918-1508';
 
-import { chooseProjectFilename } from './project-save-dialog.js?v=1.6.0-preview-repair-0921';
-const projectNames = new WeakMap();
+import { chooseProjectFilename, timestampProjectFilename } from './project-save-dialog.js?v=1.6.0-preview-followup-0921';
 let savingProject = false;
 
 // Schema version of the saved file. Distinct from the app UI version.
@@ -370,13 +369,12 @@ export function serialize(s) {
   };
 }
 
-/* Save only after explicit filename confirmation; picker failures never download. */
+/* Native Save As opens directly; unsupported browsers confirm a download name. */
 export async function saveProject(state) {
   if (savingProject) return { kind: "cancelled" };
   savingProject = true;
   try {
-    const filename = await chooseProjectFilename(projectNames.get(state) || '새 프로젝트');
-    if (!filename) return { kind: "cancelled" };
+    let filename = timestampProjectFilename();
     const statusToken = captureProjectStatus(state);
     const json = JSON.stringify(serialize(state.get()), null, 2);
     const blob = new Blob([json], { type: "application/json" });
@@ -384,7 +382,6 @@ export async function saveProject(state) {
       const outcome = await window.fiveEDesktop.project.save({ json, suggestedName: filename });
       if (outcome?.kind === "failed") throw new Error('파일을 기록하지 못했습니다.');
       if (outcome?.kind === "saved") {
-        projectNames.set(state, filename);
         markProjectStatus(state, statusToken, "file");
       }
       return outcome;
@@ -397,10 +394,11 @@ export async function saveProject(state) {
       const writable = await handle.createWritable();
       await writable.write(blob);
       await writable.close();
-      projectNames.set(state, handle.name || filename);
       markProjectStatus(state, statusToken, "file");
       return { kind: "saved" };
     }
+    filename = await chooseProjectFilename(filename);
+    if (!filename) return { kind: "cancelled" };
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;
@@ -409,7 +407,6 @@ export async function saveProject(state) {
     anchor.click();
     anchor.remove();
     setTimeout(() => URL.revokeObjectURL(url), 60_000);
-    projectNames.set(state, filename);
     markProjectStatus(state, statusToken, "download");
     return { kind: "download-requested" };
   } catch (error) {
@@ -630,7 +627,6 @@ function openProject(state, file) {
       if (!ok) return;
 
       applyLoaded(state, data);
-      projectNames.set(state, file.name);
       markProjectStatus(state, captureProjectStatus(state), "file");
     } catch (err) {
       // On any failure, do NOT corrupt current state — just warn.

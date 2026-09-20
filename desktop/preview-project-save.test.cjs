@@ -11,7 +11,8 @@ function harness({ filename = '테스트.5e', picker, native } = {}) {
   const state = { get: () => ({ pages: [{ id: 'a', name: '페이지 1', objects: [] }] }) };
   const context = vm.createContext({
     window: { showSaveFilePicker: picker, fiveEDesktop: native ? { project: { save: native } } : undefined },
-    chooseProjectFilename: async () => filename,
+    chooseProjectFilename: async () => { calls.prompts = (calls.prompts || 0) + 1; return filename; },
+    timestampProjectFilename: () => '20260921_0324.5e',
     captureProjectStatus: () => 'snapshot', serialize: value => value,
     markProjectStatus: (...args) => calls.marks.push(args),
     showAlert: async message => calls.alerts.push(message),
@@ -52,21 +53,23 @@ test('native picker writes full document before marking saved', async () => {
     return { name: '다른 이름.5e', createWritable: async () => ({ write: async blob => { written = JSON.parse(await blob.text()); }, close: async () => { closed = true; } }) };
   } });
   assert.equal((await save()).kind, 'saved');
-  assert.equal(suggestedName, '테스트.5e');
+  assert.equal(suggestedName, '20260921_0324.5e');
+  assert.equal(calls.prompts || 0, 0);
   assert.equal(written.pages[0].id, 'a');
   assert.equal(closed, true);
   assert.equal(calls.marks[0][2], 'file');
 });
 test('filename normalization preserves Korean and prevents path injection', () => {
   const code = fs.readFileSync(path.join(root, 'preview/js/project-save-dialog.js'), 'utf8');
-  const fn = code.slice(code.indexOf('export function projectFilename'), code.indexOf('export async function chooseProjectFilename')).replace('export ', '');
+  const fn = code.slice(code.indexOf('export function projectFilename'), code.indexOf('export async function chooseProjectFilename')).replaceAll('export ', '');
   const context = vm.createContext({}); vm.runInContext(fn, context);
+  assert.equal(context.timestampProjectFilename(new Date(2026, 0, 2, 3, 4)), '20260102_0304.5e');
   assert.equal(context.projectFilename(' 물리 프로젝트.5e '), '물리 프로젝트.5e');
   assert.equal(context.projectFilename('../../test.json'), '.._.._test.5e');
   assert.equal(context.projectFilename('  '), '새 프로젝트.5e');
 });
 test('serialization retains active edits and inactive pages with guides layers and images', () => {
-  const code = source.slice(source.indexOf('export function serialize('), source.indexOf('/* Save only')).replace('export ', '');
+  const code = source.slice(source.indexOf('export function serialize('), source.indexOf('/* Native Save As')).replace('export ', '');
   const context = vm.createContext({ SCHEMA_VERSION: '0.17' }); vm.runInContext(code, context);
   const activeImage = { id: 'image', type: 'image', src: 'data:image/png;base64,x' };
   const guides = [{ axis: 'x', position: 12 }], layers = [{ id: 1, name: '레이어 1', visible: true }];
@@ -95,4 +98,27 @@ test('workflow shortcuts do not consume browser new-tab or location shortcuts', 
   onKey(event('a', { altKey: true, shiftKey: true }));
   assert.deepEqual(clicks, ['image-objectify-open', 'exam-library-open', 'ai-image-install-open']);
   onKey(event('k', { altKey: true, shiftKey: true, editing: true })); assert.equal(clicks.length, 3);
+});
+
+test('native picker is invoked synchronously before yielding user activation', async () => {
+  let invoked = false;
+  const { save, calls } = harness({ picker: () => { invoked = true; const error = new Error(); error.name = 'AbortError'; return Promise.reject(error); } });
+  const pending = save();
+  assert.equal(invoked, true);
+  assert.equal(calls.prompts || 0, 0);
+  await pending;
+});
+test('write failure does not mark saved or download', async () => {
+  const { save, calls } = harness({ picker: async () => ({ createWritable: async () => ({ write: async () => { throw new Error('disk full'); } }) }) });
+  assert.equal((await save()).kind, 'failed');
+  assert.equal(calls.downloads.length + calls.marks.length, 0);
+  assert.equal(calls.alerts.length, 1);
+});
+test('desktop bridge gets timestamp without a web name prompt', async () => {
+  let payload;
+  const { save, calls } = harness({ native: async value => { payload = value; return { kind: 'cancelled' }; } });
+  assert.equal((await save()).kind, 'cancelled');
+  assert.equal(payload.suggestedName, '20260921_0324.5e');
+  assert.equal(calls.prompts || 0, 0);
+  assert.equal(calls.downloads.length + calls.marks.length, 0);
 });

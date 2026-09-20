@@ -5,15 +5,16 @@ export function projectFilename(value) {
   return `${name || '새 프로젝트'}.5e`;
 }
 
-export async function chooseProjectFilename(currentName) {
-  const canChooseLocation = !!(window.showSaveFilePicker || window.fiveEDesktop?.project?.save);
-  const message = canChooseLocation
-    ? '프로젝트 이름을 정한 다음 저장 위치를 선택하세요. .5e 확장자는 자동으로 붙습니다.'
-    : '프로젝트 이름을 정하세요. .5e 확장자는 자동으로 붙습니다. 저장 위치는 브라우저의 다운로드 설정을 따릅니다. Safari에서 위치를 매번 선택하려면 설정 → 일반 → 파일 다운로드 위치를 “다운로드할 때마다 묻기”로 설정하세요.';
-  const result = await showPrompt(message, {
-    title: '프로젝트 저장', value: projectFilename(currentName).replace(/\.5e$/, ''),
+export function timestampProjectFilename(now = new Date()) {
+  const pad = value => String(value).padStart(2, '0');
+  return `${now.getFullYear()}${pad(now.getMonth() + 1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}.5e`;
+}
+
+export async function chooseProjectFilename(suggestedName) {
+  const result = await showPrompt('저장 위치는 브라우저 다운로드 설정을 따릅니다. Safari: 설정 → 일반 → 파일 다운로드 위치 → 다운로드할 때마다 묻기', {
+    title: '프로젝트 저장', value: suggestedName,
     placeholder: '프로젝트 이름', maxLength: 120,
-    okText: canChooseLocation ? '저장 위치 선택' : '파일 다운로드', cancelText: '취소',
+    okText: '저장', cancelText: '취소',
   });
-  return result === null ? null : projectFilename(result);
+  return result === null ? null : projectFilename(result.trim() || suggestedName);
 }
