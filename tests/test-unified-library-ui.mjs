@@ -147,6 +147,9 @@ test("search location actions stay inline and connected counts are hover-only", 
   assert.match(source, /unilib-pane-head[\s\S]*<h3>검색 위치<\/h3>[\s\S]*unilib-location-add/u);
   assert.match(source, /host\.hidden = !error/u);
   assert.match(source, /하위 폴더 포함 PDF/u);
+  assert.doesNotMatch(source, /data-unilib-local-folder-guide/u);
+  assert.match(source, /data-unilib-local-install/u);
+  assert.match(source, /설치형 5E에서 폴더 연결하기/u);
 });
 
 test("crop additions do not enter persistent selections before workbench confirmation", async () => {
@@ -271,10 +274,10 @@ test("library cache keys advance through the complete deployed module chain", as
     readFile(new URL("../js/main.js", import.meta.url), "utf8"),
     readFile(new URL("../js/exam-library.js", import.meta.url), "utf8"),
   ]);
-  assert.match(html, /css\/unified-library\.css\?v=library-scope-0920-0931/u);
-  assert.match(html, /js\/main\.js[^"']*library-scope-0920-0931/u);
-  assert.match(main, /exam-library\.js\?v=library-scope-0920-0931/u);
-  assert.match(exam, /unified-library-ui\.js\?v=library-scope-0920-0931/u);
+  assert.match(html, /css\/unified-library\.css\?v=library-file-crop-install-0920-1829/u);
+  assert.match(html, /js\/main\.js[^"']*library-file-crop-install-0920-1829/u);
+  assert.match(main, /exam-library\.js\?v=library-file-crop-install-0920-1829/u);
+  assert.match(exam, /unified-library-ui\.js\?v=library-file-crop-install-0920-1829/u);
 });
 
 test("continuous PDF windows reach the first, middle, and last page with bounded live pages", () => {
@@ -404,6 +407,8 @@ test("Space routes the selected PDF into the direct crop surface without a secon
   assert.doesNotMatch(source, /data-unilib-lightbox/u);
   assert.match(source, /shouldHandleLibrarySpace\(event\)[\s\S]*openExpandedPreview/u);
   assert.match(source, /openCropEditor\(\{ emptyDraft: true, wholePage: true,/u);
+  assert.doesNotMatch(source, /root\.classList\.add\("is-reader-expanded"\)/u);
+  assert.doesNotMatch(source, /label\.textContent = `이미지 \$\{index \+ 1\}`/u);
   assert.match(source, /data-unilib-crop-workbench/u);
 });
 

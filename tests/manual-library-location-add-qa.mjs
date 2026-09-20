@@ -76,6 +76,15 @@ try {
     assert.ok(geometry.paneRight - geometry.triggerRight <= (viewport.width <= 767 ? 80 : 24), "add control is right aligned");
     assert.ok(geometry.menuLeft >= geometry.paneLeft, `${viewport.width}: menu clips at left edge`);
     assert.ok(geometry.menuRight <= geometry.paneRight, `${viewport.width}: menu clips at right edge`);
+    await page.getByRole('button', { name: '내 컴퓨터 폴더 연결', exact: true }).click();
+    const installDialog = page.locator('[data-unilib-local-install]:not([hidden])');
+    await installDialog.waitFor();
+    assert.equal(await installDialog.getByRole('heading').textContent(), '설치형 5E에서 폴더 연결하기');
+    assert.equal(await installDialog.getByText(/로그인/).count(), 0, 'local folder prompt must not mention login');
+    await page.screenshot({ path: join(out, `local-install-${viewport.width}.png`), animations: 'disabled' });
+    await page.keyboard.press('Escape');
+    assert.equal(await installDialog.count(), 0, 'Escape closes the install prompt');
+    assert.equal(await page.locator('.unified-library-overlay').evaluate(node => node.hidden), false, 'library stays open');
     await page.screenshot({ path: join(out, `location-add-${viewport.width}.png`) });
     results.push({ viewport, geometry });
     await page.close();

@@ -96,6 +96,29 @@ try {
   await page.screenshot({ path: join(output, "expanded-escape-library.png") });
   observations.push("expanded preview Escape returns to q2");
 
+  // Given a PDF is opened in file mode, holding Space opens the crop editor
+  // on the currently visible page, and Escape returns to the library.
+  await openFixture();
+  await page.getByRole("button", { name: "PDF", exact: true }).click();
+  await page.getByRole("button", { name: "파일", exact: true }).click();
+  await page.waitForSelector('[data-result-id="file:qa"]');
+  await page.locator('[data-result-id="file:qa"]').click();
+  await page.waitForFunction(() => document.querySelector('[data-unilib-stage]').dataset.visiblePdfPage === "1");
+  const fileStage = page.locator('[data-unilib-stage]');
+  await fileStage.evaluate((node) => { node.scrollTop = node.scrollHeight; node.dispatchEvent(new Event("scroll")); });
+  await page.waitForFunction(() => Number(document.querySelector('[data-unilib-stage]').dataset.visiblePdfPage) > 1);
+  const visiblePage = Number(await fileStage.getAttribute("data-visible-pdf-page"));
+  await page.locator('[data-result-id="file:qa"]').focus();
+  await holdSpaceForExpandedSurface();
+  assert.equal(Number(await page.locator('[data-unilib-crop]').getAttribute("data-pdf-page")), visiblePage);
+  assert.equal(await page.locator('[data-unilib-crop]').evaluate(node => node.classList.contains("is-view-only")), false);
+  await drawAndAccept([0.14, 0.16, 0.48, 0.42], 1);
+  assert.equal(await page.locator('.unilib-crop-collection-item > span').count(), 0, "crop editor cards must not show image labels");
+  await page.screenshot({ path: join(output, "file-mode-current-page-crop.png"), animations: "disabled" });
+  await page.keyboard.press("Escape");
+  assert.deepEqual(await libraryState(), expectedLibrary({ focusedResult: "file:qa" }));
+  observations.push(`file mode crops visible page ${visiblePage} and Escape returns to the library`);
+
   // Given a workbench assignment opened from accepted crops, when Escape cancels it,
   // then the re-enabled library action regains focus and the library remains open.
   await openFixture();
