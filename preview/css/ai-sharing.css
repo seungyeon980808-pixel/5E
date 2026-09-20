@@ -30,7 +30,18 @@
 .ai-sharing-phrase { white-space:nowrap; }
 
 .ai-sharing-dialog [data-create] { width:100%; margin-top:2px; min-height:40px; color:var(--accent); background:color-mix(in srgb,var(--accent) 8%,var(--bg-input)); font-weight:600; }
-.ai-sharing-dialog [data-copy] { flex:1; font-weight:600; border-color:var(--accent); }
+.ai-sharing-dialog [data-copy] { flex:0 0 auto; min-width:88px; font-weight:600; border-color:var(--accent); }
+.ai-sharing-dialog [data-copy]:not(:disabled):not([data-copied]) {
+  border-color:transparent;
+  background:linear-gradient(var(--bg-input),var(--bg-input)) padding-box,conic-gradient(from var(--web-login-orbit-angle),transparent 0 18%,var(--accent) 27%,transparent 38% 100%) border-box;
+  box-shadow:0 0 0 1px color-mix(in srgb,var(--accent) 25%,transparent),0 0 10px color-mix(in srgb,var(--accent) 12%,transparent);
+  animation:web-login-copy-orbit 2.4s linear infinite;
+}
+.ai-sharing-dialog [data-copy]:not(:disabled):hover { filter:brightness(1.12); box-shadow:0 0 12px color-mix(in srgb,var(--accent) 30%,transparent); }
+.ai-sharing-dialog [data-copy][data-copied] { color:var(--success,#3fb950); border-color:var(--success,#3fb950); animation:none; }
+@media (prefers-reduced-motion: reduce) {
+  .ai-sharing-dialog [data-copy]:not(:disabled):not([data-copied]) { animation:none; border-color:var(--accent); background:var(--bg-input); }
+}
 .ai-sharing-dialog [data-revoke] { color:var(--text-secondary); }
 .ai-sharing-dialog [data-status]:empty { display:none; }
 .ai-sharing-dialog [data-expiry] { margin:12px 0 0; }

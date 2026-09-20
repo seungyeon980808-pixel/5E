@@ -50,6 +50,8 @@ export function initAiSharing(aiPanel) {
     resultBox.hidden = !active;
     link.value = active ? latest.link : '';
     copy.disabled = !active;
+    copy.textContent = '복사';
+    delete copy.dataset.copied;
     revoke.disabled = !active;
     expiry.textContent = active
       ? `${latest.mode === 'view' ? '보기 전용' : '편집 가능'} · ${new Date(latest.expiresAt).toLocaleString('ko-KR')} 만료`
@@ -90,7 +92,15 @@ export function initAiSharing(aiPanel) {
     }catch(failure){error(failure);}
     finally{working=false;create.disabled=false;revoke.disabled=!latest;}
   };
-  copy.onclick=async()=>{try{await navigator.clipboard.writeText(link.value);status.textContent='링크를 복사했습니다.';}catch{link.focus();link.select();status.textContent='자동 복사에 실패했습니다. 선택된 링크를 직접 복사하세요.';}};
+  copy.onclick=async()=>{
+    const value=link.value;
+    try{
+      await navigator.clipboard.writeText(value);
+      if(link.value!==value)return;
+      copy.dataset.copied='true';copy.textContent='복사됨';
+      status.textContent='링크를 복사했습니다.';
+    }catch{link.focus();link.select();status.textContent='자동 복사에 실패했습니다. 선택된 링크를 직접 복사하세요.';}
+  };
   revoke.onclick=async()=>{
     if(!latest||working)return;
     working=true;revoke.disabled=true;
