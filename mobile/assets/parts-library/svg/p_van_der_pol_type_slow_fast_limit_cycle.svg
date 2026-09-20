@@ -1,0 +1,537 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:ns0="http://www.iki.fi/pav/software/textext/"
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="195.5"
+   height="155.5"
+   id="svg2"
+   sodipodi:version="0.32"
+   inkscape:version="0.46"
+   sodipodi:docname="9-vdp.svg"
+   inkscape:output_extension="org.inkscape.output.svg.inkscape"
+   version="1.0">
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     gridtolerance="10000"
+     guidetolerance="10"
+     objecttolerance="10"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="2.56"
+     inkscape:cx="77.942966"
+     inkscape:cy="122.35276"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="true"
+     inkscape:window-width="1270"
+     inkscape:window-height="754"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     showguides="true"
+     inkscape:guide-bbox="true">
+    <inkscape:grid
+       type="xygrid"
+       id="grid2866"
+       visible="true"
+       enabled="true" />
+    <sodipodi:guide
+       id="guide13645"
+       position="156.25,1009.5703"
+       orientation="1,0" />
+    <sodipodi:guide
+       id="guide13647"
+       position="108.49609,920.80079"
+       orientation="1,0" />
+    <sodipodi:guide
+       orientation="0,1"
+       position="145.75195,952.97852"
+       id="guide19274" />
+    <sodipodi:guide
+       id="guide23723"
+       position="132.0301,954.45605"
+       orientation="1,0" />
+  </sodipodi:namedview>
+  <defs
+     id="defs4">
+    <marker
+       style="overflow:visible"
+       id="DotS"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="DotS">
+      <path
+         transform="matrix(0.2,0,0,0.2,1.48,0.2)"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;marker-start:none;marker-end:none"
+         d="M -2.5,-1 C -2.5,1.76 -4.74,4 -7.5,4 C -10.26,4 -12.5,1.76 -12.5,-1 C -12.5,-3.76 -10.26,-6 -7.5,-6 C -4.74,-6 -2.5,-3.76 -2.5,-1 z"
+         id="path21095" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="DotM"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="DotM">
+      <path
+         transform="matrix(0.4,0,0,0.4,2.96,0.4)"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;marker-start:none;marker-end:none"
+         d="M -2.5,-1 C -2.5,1.76 -4.74,4 -7.5,4 C -10.26,4 -12.5,1.76 -12.5,-1 C -12.5,-3.76 -10.26,-6 -7.5,-6 C -4.74,-6 -2.5,-3.76 -2.5,-1 z"
+         id="path21092" />
+    </marker>
+    <marker
+       inkscape:stockid="TriangleOutM"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="TriangleOutM"
+       style="overflow:visible">
+      <path
+         id="path21173"
+         d="M 5.77,0 L -2.88,5 L -2.88,-5 L 5.77,0 z"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;marker-start:none"
+         transform="scale(0.4,0.4)" />
+    </marker>
+    <marker
+       inkscape:stockid="Arrow2Mend"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="Arrow2Mend"
+       style="overflow:visible">
+      <path
+         id="path5148"
+         style="font-size:12px;fill-rule:evenodd;stroke-width:0.625;stroke-linejoin:round"
+         d="M 8.7185878,4.0337352 L -2.2072895,0.016013256 L 8.7185884,-4.0017078 C 6.97309,-1.6296469 6.9831476,1.6157441 8.7185878,4.0337352 z"
+         transform="scale(-0.6,-0.6)" />
+    </marker>
+    <marker
+       inkscape:stockid="StopM"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="StopM"
+       style="overflow:visible">
+      <path
+         id="path3937"
+         d="M 0,5.65 L 0,-5.65"
+         style="fill:none;fill-opacity:0.75;fill-rule:evenodd;stroke:#000000;stroke-width:1pt"
+         transform="scale(0.4,0.4)" />
+    </marker>
+    <marker
+       inkscape:stockid="StopL"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="StopL"
+       style="overflow:visible">
+      <path
+         id="path3934"
+         d="M 0,5.65 L 0,-5.65"
+         style="fill:none;fill-opacity:0.75;fill-rule:evenodd;stroke:#000000;stroke-width:1pt"
+         transform="scale(0.8,0.8)" />
+    </marker>
+    <marker
+       style="overflow:visible"
+       id="DistanceStart"
+       refX="0"
+       refY="0"
+       orient="auto"
+       inkscape:stockid="DistanceStart">
+      <g
+         id="g2300">
+        <path
+           style="fill:none;stroke:#ffffff;stroke-width:1.14999998;stroke-linecap:square"
+           d="M 0,0 L 2,0"
+           id="path2306" />
+        <path
+           style="fill:#000000;fill-rule:evenodd;stroke:none"
+           d="M 0,0 L 13,4 L 9,0 L 13,-4 L 0,0 z"
+           id="path2302" />
+        <path
+           style="fill:none;stroke:#000000;stroke-width:1;stroke-linecap:square"
+           d="M 0,-4 L 0,40"
+           id="path2304" />
+      </g>
+    </marker>
+    <marker
+       inkscape:stockid="Tail"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="Tail"
+       style="overflow:visible">
+      <g
+         id="g3800"
+         transform="scale(-1.2,-1.2)">
+        <path
+           id="path3802"
+           d="M -3.8048674,-3.9585227 L 0.54352094,0"
+           style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:0.80000001;stroke-linecap:round;marker-start:none;marker-end:none" />
+        <path
+           id="path3804"
+           d="M -1.2866832,-3.9585227 L 3.0617053,0"
+           style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:0.80000001;stroke-linecap:round;marker-start:none;marker-end:none" />
+        <path
+           id="path3806"
+           d="M 1.3053582,-3.9585227 L 5.6537466,0"
+           style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:0.80000001;stroke-linecap:round;marker-start:none;marker-end:none" />
+        <path
+           id="path3808"
+           d="M -3.8048674,4.1775838 L 0.54352094,0.21974226"
+           style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:0.80000001;stroke-linecap:round;marker-start:none;marker-end:none" />
+        <path
+           id="path3810"
+           d="M -1.2866832,4.1775838 L 3.0617053,0.21974226"
+           style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:0.80000001;stroke-linecap:round;marker-start:none;marker-end:none" />
+        <path
+           id="path3812"
+           d="M 1.3053582,4.1775838 L 5.6537466,0.21974226"
+           style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:0.80000001;stroke-linecap:round;marker-start:none;marker-end:none" />
+      </g>
+    </marker>
+    <marker
+       inkscape:stockid="Arrow1Mstart"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="Arrow1Mstart"
+       style="overflow:visible">
+      <path
+         id="path3770"
+         d="M 0,0 L 5,-5 L -12.5,0 L 5,5 L 0,0 z"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;marker-start:none"
+         transform="matrix(0.4,0,0,0.4,4,0)" />
+    </marker>
+    <marker
+       inkscape:stockid="Arrow1Mend"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="Arrow1Mend"
+       style="overflow:visible">
+      <path
+         id="path3773"
+         d="M 0,0 L 5,-5 L -12.5,0 L 5,5 L 0,0 z"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;marker-start:none"
+         transform="matrix(-0.4,0,0,-0.4,-4,0)" />
+    </marker>
+    <inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="0 : 526.18109 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_z="744.09448 : 526.18109 : 1"
+       inkscape:persp3d-origin="372.04724 : 350.78739 : 1"
+       id="perspective10" />
+    <marker
+       inkscape:stockid="TriangleOutM8"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="TriangleOutM8"
+       style="overflow:visible">
+      <path
+         id="path23657"
+         d="M 5.77,0 L -2.88,5 L -2.88,-5 L 5.77,0 z"
+         style="fill:#0000ff;fill-rule:evenodd;stroke:#0000ff;stroke-width:1pt;marker-start:none"
+         transform="scale(0.4,0.4)" />
+    </marker>
+    <marker
+       inkscape:stockid="TriangleOutMk"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="TriangleOutMk"
+       style="overflow:visible">
+      <path
+         id="path23660"
+         d="M 5.77,0 L -2.88,5 L -2.88,-5 L 5.77,0 z"
+         style="fill:#0000ff;fill-rule:evenodd;stroke:#0000ff;stroke-width:1pt;marker-start:none"
+         transform="scale(0.4,0.4)" />
+    </marker>
+  </defs>
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-34.75,-12.112183)">
+    <rect
+       style="fill:#ffffff;fill-opacity:0;stroke:#000000;stroke-width:0.5;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       id="rect5583"
+       width="195"
+       height="155"
+       x="35"
+       y="12.362183" />
+    <path
+       style="fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;marker-mid:url(#Arrow1Mend);stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="M 49.932105,17.453062 C 49.932105,17.453062 48.030122,29.275954 57.111812,32.43427 C 77.21499,39.425501 110,48.362183 132,53.362183 C 175.15282,63.169642 180,76.362179 180,99.362183 C 180,114.34338 180,151.36218 172,151.36218 C 161.94841,151.36218 141.49722,149.52792 132,146.36218 C 96,134.36218 85,135.36218 85,99.362183 C 85,84.380977 84.973442,48.672923 93.930947,48.672923 C 102.88845,48.672923 118,51.362183 118,51.362183"
+       id="path19272"
+       sodipodi:nodetypes="csssssszs" />
+    <g
+       id="g16672"
+       transform="translate(3.58,-9.9999974)">
+      <path
+         sodipodi:nodetypes="ccc"
+         id="path5587"
+         d="M 45,127.36218 L 45,145.67206 L 45,167.36218"
+         style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:miter;marker-start:url(#Arrow1Mstart);marker-mid:none;marker-end:none;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+      <path
+         id="path10704"
+         d="M 61.125841,162.36218 L 40,162.36218"
+         style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:miter;marker-start:url(#Tail);stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         sodipodi:nodetypes="cc" />
+      <g
+         ns0:preamble=""
+         ns0:text="$x$"
+         word-spacing="normal"
+         letter-spacing="normal"
+         font-size-adjust="none"
+         font-stretch="normal"
+         font-weight="normal"
+         font-variant="normal"
+         font-style="normal"
+         stroke-miterlimit="10.433"
+         xml:space="preserve"
+         transform="matrix(1,0,0,-1,-186.76,842.49218)"
+         id="content"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;letter-spacing:normal;word-spacing:normal;text-anchor:start;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10.43299961;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1">
+<path
+   id="path12425"
+   d="M 226.76,710.13 L 226.77,710.16 L 226.77,710.19 L 226.78,710.22 L 226.79,710.26 L 226.8,710.29 L 226.81,710.34 L 226.83,710.38 L 226.84,710.42 L 226.86,710.47 L 226.87,710.52 L 226.89,710.57 L 226.91,710.62 L 226.94,710.67 L 226.96,710.72 L 226.99,710.77 L 227.01,710.82 L 227.04,710.86 L 227.07,710.91 L 227.11,710.96 L 227.14,711 L 227.18,711.05 L 227.22,711.09 L 227.26,711.12 L 227.31,711.16 L 227.35,711.19 L 227.4,711.22 L 227.43,711.23 L 227.45,711.25 L 227.48,711.26 L 227.51,711.27 L 227.53,711.28 L 227.56,711.28 L 227.59,711.29 L 227.62,711.3 L 227.65,711.3 L 227.68,711.3 L 227.71,711.31 L 227.75,711.31 C 227.8,711.31 228.04,711.31 228.24,711.18 C 227.96,711.13 227.77,710.88 227.77,710.64 C 227.77,710.48 227.88,710.29 228.15,710.29 C 228.36,710.29 228.68,710.47 228.68,710.87 C 228.68,711.39 228.1,711.53 227.76,711.53 C 227.18,711.53 226.83,711 226.71,710.77 C 226.46,711.43 225.92,711.53 225.63,711.53 C 224.6,711.53 224.03,710.24 224.03,709.99 C 224.03,709.89 224.13,709.89 224.15,709.89 C 224.23,709.89 224.26,709.91 224.28,710 C 224.62,711.06 225.28,711.31 225.61,711.31 C 225.8,711.31 226.15,711.22 226.15,710.64 C 226.15,710.33 225.98,709.66 225.61,708.27 C 225.46,707.65 225.11,707.23 224.67,707.23 C 224.61,707.23 224.38,707.23 224.17,707.36 C 224.42,707.41 224.64,707.62 224.64,707.9 C 224.64,708.17 224.42,708.25 224.27,708.25 C 223.97,708.25 223.72,707.99 223.72,707.67 C 223.72,707.21 224.22,707.01 224.66,707.01 C 225.32,707.01 225.67,707.71 225.7,707.77 C 225.82,707.4 226.18,707.01 226.78,707.01 C 227.81,707.01 228.37,708.3 228.37,708.55 C 228.37,708.65 228.28,708.65 228.25,708.65 C 228.16,708.65 228.15,708.61 228.12,708.54 C 227.8,707.47 227.12,707.23 226.8,707.23 C 226.41,707.23 226.25,707.55 226.25,707.89 C 226.25,708.11 226.31,708.33 226.42,708.77 L 226.76,710.13 z"
+   style="fill:#000000;stroke-width:0" />
+</g>      <g
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;letter-spacing:normal;word-spacing:normal;text-anchor:start;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10.43299961;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+         id="g12531"
+         transform="matrix(1,0,0,-1,-156.89,870.44218)"
+         xml:space="preserve"
+         stroke-miterlimit="10.433"
+         font-style="normal"
+         font-variant="normal"
+         font-weight="normal"
+         font-stretch="normal"
+         font-size-adjust="none"
+         letter-spacing="normal"
+         word-spacing="normal"
+         ns0:text="$y$"
+         ns0:preamble="">
+<path
+   style="fill:#000000;stroke-width:0"
+   d="M 228.27,710.92 L 228.28,710.92 L 228.28,710.93 L 228.28,710.94 L 228.28,710.94 L 228.28,710.95 L 228.29,710.97 L 228.29,710.98 L 228.29,710.99 L 228.29,710.99 L 228.3,711 L 228.3,711.01 L 228.3,711.02 L 228.3,711.03 L 228.3,711.03 L 228.31,711.04 L 228.31,711.05 L 228.31,711.05 L 228.31,711.06 L 228.31,711.06 L 228.31,711.07 L 228.31,711.08 L 228.31,711.08 L 228.31,711.09 L 228.31,711.1 L 228.31,711.11 L 228.31,711.12 L 228.31,711.13 L 228.31,711.13 L 228.31,711.14 L 228.31,711.15 C 228.31,711.33 228.18,711.42 228.02,711.42 C 227.93,711.42 227.77,711.36 227.68,711.21 C 227.66,711.16 227.58,710.85 227.54,710.67 C 227.47,710.41 227.4,710.14 227.34,709.87 L 226.89,708.08 C 226.85,707.93 226.42,707.23 225.76,707.23 C 225.26,707.23 225.15,707.67 225.15,708.04 C 225.15,708.5 225.32,709.11 225.65,709.99 C 225.81,710.4 225.85,710.51 225.85,710.71 C 225.85,711.16 225.54,711.53 225.04,711.53 C 224.09,711.53 223.72,710.08 223.72,709.99 C 223.72,709.89 223.82,709.89 223.84,709.89 C 223.94,709.89 223.95,709.91 224,710.07 C 224.27,711.01 224.67,711.31 225.01,711.31 C 225.09,711.31 225.26,711.31 225.26,710.99 C 225.26,710.74 225.16,710.48 225.09,710.29 C 224.69,709.23 224.51,708.67 224.51,708.2 C 224.51,707.31 225.14,707.01 225.72,707.01 C 226.11,707.01 226.45,707.18 226.73,707.46 C 226.6,706.94 226.48,706.46 226.08,705.93 C 225.82,705.59 225.45,705.3 224.99,705.3 C 224.85,705.3 224.4,705.33 224.23,705.72 C 224.39,705.72 224.52,705.72 224.66,705.84 C 224.76,705.93 224.86,706.06 224.86,706.25 C 224.86,706.55 224.59,706.59 224.49,706.59 C 224.26,706.59 223.93,706.43 223.93,705.95 C 223.93,705.45 224.37,705.08 224.99,705.08 C 226.01,705.08 227.04,705.99 227.32,707.11 L 228.27,710.92 z"
+   id="path12533" />
+</g>    </g>
+    <path
+       style="opacity:1;fill:none;fill-opacity:1;fill-rule:nonzero;stroke:#0000ff;stroke-width:1;stroke-linecap:butt;marker-start:none;marker-mid:url(#TriangleOutMk);marker-end:none;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       d="M 193.49252 146.50349 C 130.1212 139.44866 94.7739 132.39382 77.43734 125.33897 C 68.562853 121.72763 64.37963 118.11628 63.536376 114.50493 "
+       id="path2454"
+       transform="translate(34.75,12.112183)" />
+    <path
+       style="opacity:1;fill:none;fill-opacity:1;fill-rule:nonzero;stroke:#0000ff;stroke-width:1;stroke-linecap:butt;marker-start:none;marker-mid:url(#TriangleOutMk);marker-end:none;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       d="M 96,88.5 C 91.79031,90.68079 77.678967,98.175457 74.31191,100.35625 C 67.88317,104.52004 63.5485,108.68382 63.379028,112.8476"
+       id="path21022"
+       transform="translate(34.75,12.112183)"
+       sodipodi:nodetypes="csc" />
+    <path
+       sodipodi:nodetypes="css"
+       id="path23968"
+       d="M 132.75,99.612183 C 136.52878,97.629178 152.17917,89.761673 155.23689,87.77866 C 161.97767,83.407099 167.14018,78.742572 166.88451,74.371014"
+       style="opacity:1;fill:none;fill-opacity:1;fill-rule:nonzero;stroke:#0000ff;stroke-width:1.00721598;stroke-linecap:butt;marker-mid:url(#TriangleOutM8);stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
+    <path
+       id="path19280"
+       d="M 36.769428,41.336391 C 100.17468,48.391915 135.43785,55.447435 152.81845,62.502957 C 162.56371,66.458979 166.65315,70.414997 166.88451,74.371014"
+       style="opacity:1;fill:none;fill-opacity:1;fill-rule:nonzero;stroke:#0000ff;stroke-width:1.007;stroke-linecap:butt;marker-mid:url(#TriangleOutM8);marker-end:none;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
+    <g
+       ns0:preamble="/home/user/prj/seminar/misc/nonconvex-ducks/pr-all.tex"
+       ns0:text="$G_1$"
+       word-spacing="normal"
+       letter-spacing="normal"
+       font-size-adjust="none"
+       font-stretch="normal"
+       font-weight="normal"
+       font-variant="normal"
+       font-style="normal"
+       stroke-miterlimit="10.433"
+       xml:space="preserve"
+       transform="matrix(1,0,0,-1,-70.56,554.10218)"
+       id="g23776"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;letter-spacing:normal;word-spacing:normal;text-anchor:start;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10.43299961;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1">
+<path
+   id="path23778"
+   d="M 231,484.16 L 231,484.16 L 231,484.16 L 231,484.17 L 231,484.17 L 231,484.17 L 231,484.18 L 231,484.18 L 231,484.18 L 231,484.19 L 231,484.19 L 230.99,484.2 L 230.99,484.2 L 230.99,484.21 L 230.99,484.21 L 230.99,484.21 L 230.98,484.22 L 230.98,484.22 L 230.98,484.23 L 230.97,484.23 L 230.97,484.23 L 230.96,484.24 L 230.96,484.24 L 230.95,484.24 L 230.95,484.24 L 230.94,484.25 L 230.94,484.25 L 230.94,484.25 L 230.93,484.25 L 230.93,484.25 L 230.93,484.25 L 230.92,484.25 L 230.92,484.25 L 230.92,484.25 L 230.91,484.25 L 230.91,484.26 L 230.91,484.26 L 230.9,484.26 L 230.9,484.26 L 230.89,484.26 C 230.87,484.26 230.85,484.25 230.74,484.14 L 230.05,483.37 C 229.96,483.51 229.5,484.26 228.39,484.26 C 226.17,484.26 223.93,482.05 223.93,479.74 C 223.93,478.16 225.04,477.01 226.65,477.01 C 227.09,477.01 227.54,477.1 227.9,477.25 C 228.39,477.45 228.58,477.66 228.76,477.86 C 228.85,477.61 229.11,477.24 229.21,477.24 C 229.26,477.24 229.28,477.27 229.28,477.28 C 229.3,477.3 229.4,477.68 229.45,477.89 L 229.64,478.66 C 229.68,478.83 229.73,479 229.77,479.17 C 229.88,479.61 229.89,479.63 230.46,479.64 C 230.51,479.64 230.62,479.65 230.62,479.84 C 230.62,479.91 230.57,479.95 230.49,479.95 C 230.26,479.95 229.67,479.92 229.44,479.92 C 229.13,479.92 228.35,479.95 228.04,479.95 C 227.96,479.95 227.84,479.95 227.84,479.75 C 227.84,479.64 227.92,479.64 228.13,479.64 C 228.15,479.64 228.43,479.64 228.66,479.62 C 228.92,479.59 228.97,479.56 228.97,479.43 C 228.97,479.35 228.86,478.9 228.76,478.53 C 228.48,477.43 227.19,477.32 226.84,477.32 C 225.88,477.32 224.84,477.89 224.84,479.41 C 224.84,479.72 224.94,481.37 225.98,482.66 C 226.52,483.34 227.49,483.95 228.47,483.95 C 229.49,483.95 230.08,483.18 230.08,482.02 C 230.08,481.63 230.05,481.62 230.05,481.52 C 230.05,481.42 230.16,481.42 230.2,481.42 C 230.33,481.42 230.33,481.44 230.38,481.62 L 231,484.16 z"
+   style="fill:#000000;stroke-width:0" />
+<path
+   id="path23780"
+   d="M 233.6,480.17 L 233.6,480.18 L 233.6,480.19 L 233.6,480.2 L 233.6,480.21 L 233.6,480.22 L 233.6,480.22 L 233.6,480.23 L 233.6,480.24 L 233.6,480.24 L 233.6,480.25 L 233.6,480.26 L 233.6,480.26 L 233.6,480.27 L 233.6,480.27 L 233.59,480.28 L 233.59,480.29 L 233.59,480.29 L 233.59,480.3 L 233.59,480.3 L 233.59,480.31 L 233.58,480.32 L 233.58,480.33 L 233.58,480.33 L 233.57,480.34 L 233.57,480.34 L 233.56,480.35 L 233.56,480.35 L 233.55,480.36 L 233.54,480.36 L 233.53,480.36 L 233.52,480.36 L 233.52,480.37 L 233.51,480.37 L 233.5,480.37 L 233.5,480.37 L 233.49,480.37 L 233.49,480.37 L 233.48,480.37 L 233.48,480.37 L 233.47,480.37 L 233.46,480.37 L 233.45,480.37 L 233.45,480.37 L 233.44,480.37 L 233.43,480.37 L 233.42,480.37 L 233.42,480.37 L 233.41,480.37 L 233.4,480.37 L 233.39,480.37 C 232.94,479.93 232.31,479.92 232.02,479.92 L 232.02,479.67 C 232.19,479.67 232.65,479.67 233.03,479.87 L 233.03,476.31 C 233.03,476.08 233.03,475.99 232.34,475.99 L 232.07,475.99 L 232.07,475.74 C 232.2,475.75 233.05,475.77 233.31,475.77 C 233.53,475.77 234.41,475.75 234.56,475.74 L 234.56,475.99 L 234.3,475.99 C 233.6,475.99 233.6,476.08 233.6,476.31 L 233.6,480.17 z"
+   style="fill:#000000;stroke-width:0" />
+</g>    <path
+       sodipodi:type="arc"
+       id="path23834"
+       style="fill:#ffffff;stroke:#0000ff"
+       sodipodi:cx="132.85873"
+       sodipodi:cy="99.97773"
+       sodipodi:rx="1.5"
+       sodipodi:ry="1.5"
+       d="M 134.35873,99.97773 A 1.5,1.5 0 1 1 131.35873,99.97773 A 1.5,1.5 0 1 1 134.35873,99.97773 z"
+       transform="translate(-0.8587341,-0.1155472)" />
+    <g
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;letter-spacing:normal;word-spacing:normal;text-anchor:start;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10.43299961;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="g23896"
+       transform="matrix(1,0,0,-1,-147.17,533.67218)"
+       xml:space="preserve"
+       stroke-miterlimit="10.433"
+       font-style="normal"
+       font-variant="normal"
+       font-weight="normal"
+       font-stretch="normal"
+       font-size-adjust="none"
+       letter-spacing="normal"
+       word-spacing="normal"
+       ns0:text="$F_1$"
+       ns0:preamble="/home/user/prj/seminar/misc/nonconvex-ducks/pr-all.tex">
+<path
+   style="fill:#000000;stroke-width:0"
+   d="M 226.45,480.47 L 227.42,480.47 C 228.16,480.47 228.24,480.31 228.24,480.02 C 228.24,479.95 228.24,479.83 228.18,479.53 C 228.15,479.48 228.15,479.44 228.15,479.42 C 228.15,479.35 228.21,479.3 228.26,479.3 C 228.36,479.3 228.36,479.33 228.41,479.51 L 228.96,481.68 C 228.99,481.79 228.99,481.8 228.99,481.83 C 228.99,481.86 228.97,481.95 228.87,481.95 C 228.77,481.95 228.76,481.89 228.72,481.74 C 228.51,480.96 228.28,480.78 227.44,480.78 L 226.53,480.78 L 227.17,483.31 C 227.26,483.66 227.27,483.7 227.71,483.7 L 229.02,483.7 C 230.25,483.7 230.48,483.37 230.48,482.6 C 230.48,482.37 230.48,482.33 230.45,482.06 C 230.43,481.93 230.43,481.92 230.43,481.89 C 230.43,481.83 230.46,481.77 230.55,481.77 C 230.65,481.77 230.66,481.83 230.68,482.02 L 230.88,483.74 C 230.91,484.01 230.87,484.01 230.62,484.01 L 225.73,484.01 C 225.54,484.01 225.43,484.01 225.43,483.81 C 225.43,483.7 225.52,483.7 225.71,483.7 C 226.08,483.7 226.36,483.7 226.36,483.52 C 226.36,483.48 226.36,483.46 226.31,483.28 L 225,478.01 C 224.9,477.62 224.88,477.54 224.09,477.54 C 223.92,477.54 223.81,477.54 223.81,477.35 C 223.81,477.23 223.93,477.23 223.96,477.23 C 224.25,477.23 224.99,477.26 225.28,477.26 C 225.6,477.26 226.43,477.23 226.76,477.23 C 226.85,477.23 226.97,477.23 226.97,477.42 C 226.97,477.5 226.91,477.52 226.91,477.53 C 226.88,477.54 226.86,477.54 226.63,477.54 C 226.41,477.54 226.36,477.54 226.11,477.56 C 225.82,477.59 225.79,477.63 225.79,477.76 C 225.79,477.78 225.79,477.84 225.83,477.99 L 226.45,480.47 z"
+   id="path23898" />
+<path
+   style="fill:#000000;stroke-width:0"
+   d="M 232.17,480.17 L 232.17,480.18 L 232.17,480.19 L 232.17,480.2 L 232.17,480.21 L 232.17,480.22 L 232.17,480.22 L 232.17,480.23 L 232.17,480.24 L 232.17,480.24 L 232.17,480.25 L 232.17,480.26 L 232.17,480.26 L 232.17,480.27 L 232.17,480.27 L 232.17,480.28 L 232.17,480.29 L 232.17,480.29 L 232.17,480.3 L 232.16,480.3 L 232.16,480.31 L 232.16,480.32 L 232.16,480.33 L 232.15,480.33 L 232.15,480.34 L 232.14,480.34 L 232.14,480.35 L 232.13,480.35 L 232.12,480.36 L 232.12,480.36 L 232.11,480.36 L 232.1,480.36 L 232.09,480.37 L 232.09,480.37 L 232.08,480.37 L 232.07,480.37 L 232.07,480.37 L 232.06,480.37 L 232.06,480.37 L 232.05,480.37 L 232.04,480.37 L 232.04,480.37 L 232.03,480.37 L 232.02,480.37 L 232.02,480.37 L 232.01,480.37 L 232,480.37 L 231.99,480.37 L 231.98,480.37 L 231.97,480.37 L 231.96,480.37 C 231.52,479.93 230.88,479.92 230.6,479.92 L 230.6,479.67 C 230.76,479.67 231.23,479.67 231.61,479.87 L 231.61,476.31 C 231.61,476.08 231.61,475.99 230.91,475.99 L 230.65,475.99 L 230.65,475.74 C 230.77,475.75 231.63,475.77 231.89,475.77 C 232.1,475.77 232.98,475.75 233.14,475.74 L 233.14,475.99 L 232.87,475.99 C 232.17,475.99 232.17,476.08 232.17,476.31 L 232.17,480.17 z"
+   id="path23900" />
+</g>    <path
+       sodipodi:nodetypes="cc"
+       id="path23961"
+       d="M 167,74.362183 L 167,150.36218"
+       style="fill:none;fill-rule:evenodd;stroke:#0000ff;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+    <path
+       id="path23963"
+       d="M 97.75,126.61218 L 97.75,49.612183"
+       style="fill:#0000ff;fill-rule:evenodd;stroke:#0000ff;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       sodipodi:nodetypes="cc" />
+    <path
+       d="M 168.39453,74.261589 A 1.5,1.5 0 1 1 165.39453,74.261589 A 1.5,1.5 0 1 1 168.39453,74.261589 z"
+       sodipodi:ry="1.5"
+       sodipodi:rx="1.5"
+       sodipodi:cy="74.261589"
+       sodipodi:cx="166.89453"
+       style="fill:#0000ff;stroke:none"
+       id="path28772"
+       sodipodi:type="arc" />
+    <path
+       d="M 99.351562,126.1903 A 1.5,1.5 0 1 1 96.351562,126.1903 A 1.5,1.5 0 1 1 99.351562,126.1903 z"
+       sodipodi:ry="1.5"
+       sodipodi:rx="1.5"
+       sodipodi:cy="126.1903"
+       sodipodi:cx="97.851562"
+       style="fill:#0000ff;stroke:none"
+       id="path28774"
+       sodipodi:type="arc" />
+    <path
+       d="M 168.47112,150.3867 A 1.5,1.5 0 1 1 165.47112,150.3867 A 1.5,1.5 0 1 1 168.47112,150.3867 z"
+       sodipodi:ry="1.5"
+       sodipodi:rx="1.5"
+       sodipodi:cy="150.3867"
+       sodipodi:cx="166.97112"
+       style="fill:#0000ff;stroke:none"
+       id="path28776"
+       sodipodi:type="arc" />
+    <path
+       d="M 98.589073,49.016327 A 1.5,1.5 0 1 1 95.589073,49.016327 A 1.5,1.5 0 1 1 98.589073,49.016327 z"
+       sodipodi:ry="1.5"
+       sodipodi:rx="1.5"
+       sodipodi:cy="49.016327"
+       sodipodi:cx="97.089073"
+       style="fill:#0000ff;stroke:none"
+       id="path28778"
+       sodipodi:type="arc"
+       transform="translate(0.6609268,9.5856096e-2)" />
+    <g
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;letter-spacing:normal;word-spacing:normal;text-anchor:start;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10.43299961;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       ns0:preamble="/home/user/prj/seminar/misc/nonconvex-ducks/pr-all.tex"
+       ns0:text="$G_2$"
+       word-spacing="normal"
+       letter-spacing="normal"
+       font-size-adjust="none"
+       font-stretch="normal"
+       font-weight="normal"
+       font-variant="normal"
+       font-style="normal"
+       stroke-miterlimit="10.433"
+       xml:space="preserve"
+       transform="matrix(1,0,0,-1,-120.62,606.37218)"
+       id="g30071">
+<path
+   id="path30073"
+   d="M 231,484.16 L 231,484.16 L 231,484.16 L 231,484.17 L 231,484.17 L 231,484.17 L 231,484.18 L 231,484.18 L 231,484.18 L 231,484.19 L 231,484.19 L 230.99,484.2 L 230.99,484.2 L 230.99,484.21 L 230.99,484.21 L 230.99,484.21 L 230.98,484.22 L 230.98,484.22 L 230.98,484.23 L 230.97,484.23 L 230.97,484.23 L 230.96,484.24 L 230.96,484.24 L 230.95,484.24 L 230.95,484.24 L 230.94,484.25 L 230.94,484.25 L 230.94,484.25 L 230.93,484.25 L 230.93,484.25 L 230.93,484.25 L 230.92,484.25 L 230.92,484.25 L 230.92,484.25 L 230.91,484.25 L 230.91,484.26 L 230.91,484.26 L 230.9,484.26 L 230.9,484.26 L 230.89,484.26 C 230.87,484.26 230.85,484.25 230.74,484.14 L 230.05,483.37 C 229.96,483.51 229.5,484.26 228.39,484.26 C 226.17,484.26 223.93,482.05 223.93,479.74 C 223.93,478.16 225.04,477.01 226.65,477.01 C 227.09,477.01 227.54,477.1 227.9,477.25 C 228.39,477.45 228.58,477.66 228.76,477.86 C 228.85,477.61 229.11,477.24 229.21,477.24 C 229.26,477.24 229.28,477.27 229.28,477.28 C 229.3,477.3 229.4,477.68 229.45,477.89 L 229.64,478.66 C 229.68,478.83 229.73,479 229.77,479.17 C 229.88,479.61 229.89,479.63 230.46,479.64 C 230.51,479.64 230.62,479.65 230.62,479.84 C 230.62,479.91 230.57,479.95 230.49,479.95 C 230.26,479.95 229.67,479.92 229.44,479.92 C 229.13,479.92 228.35,479.95 228.04,479.95 C 227.96,479.95 227.84,479.95 227.84,479.75 C 227.84,479.64 227.92,479.64 228.13,479.64 C 228.15,479.64 228.43,479.64 228.66,479.62 C 228.92,479.59 228.97,479.56 228.97,479.43 C 228.97,479.35 228.86,478.9 228.76,478.53 C 228.48,477.43 227.19,477.32 226.84,477.32 C 225.88,477.32 224.84,477.89 224.84,479.41 C 224.84,479.72 224.94,481.37 225.98,482.66 C 226.52,483.34 227.49,483.95 228.47,483.95 C 229.49,483.95 230.08,483.18 230.08,482.02 C 230.08,481.63 230.05,481.62 230.05,481.52 C 230.05,481.42 230.16,481.42 230.2,481.42 C 230.33,481.42 230.33,481.44 230.38,481.62 L 231,484.16 z"
+   style="fill:#000000;stroke-width:0" />
+<path
+   id="path30075"
+   d="M 234.78,477.01 L 234.55,477.01 C 234.53,476.86 234.46,476.44 234.37,476.38 C 234.31,476.33 233.77,476.33 233.68,476.33 L 232.39,476.33 C 233.12,476.98 233.37,477.18 233.79,477.5 C 234.3,477.92 234.78,478.35 234.78,479.01 C 234.78,479.86 234.04,480.37 233.15,480.37 C 232.29,480.37 231.7,479.76 231.7,479.12 C 231.7,478.77 232,478.73 232.07,478.73 C 232.24,478.73 232.44,478.85 232.44,479.1 C 232.44,479.23 232.39,479.47 232.03,479.47 C 232.25,479.97 232.72,480.12 233.05,480.12 C 233.74,480.12 234.11,479.58 234.11,479.01 C 234.11,478.4 233.68,477.92 233.45,477.67 L 231.77,476.01 C 231.7,475.95 231.7,475.93 231.7,475.74 L 234.57,475.74 L 234.78,477.01 z"
+   style="fill:#000000;stroke-width:0" />
+</g>    <g
+       id="g30225"
+       transform="matrix(1,0,0,-1,-67.71,621.06218)"
+       xml:space="preserve"
+       stroke-miterlimit="10.433"
+       font-style="normal"
+       font-variant="normal"
+       font-weight="normal"
+       font-stretch="normal"
+       font-size-adjust="none"
+       letter-spacing="normal"
+       word-spacing="normal"
+       ns0:text="$F_2$"
+       ns0:preamble="/home/user/prj/seminar/misc/nonconvex-ducks/pr-all.tex"
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;letter-spacing:normal;word-spacing:normal;text-anchor:start;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10.43299961;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1">
+<path
+   style="fill:#000000;stroke-width:0"
+   d="M 226.45,480.47 L 227.42,480.47 C 228.16,480.47 228.24,480.31 228.24,480.02 C 228.24,479.95 228.24,479.83 228.18,479.53 C 228.15,479.48 228.15,479.44 228.15,479.42 C 228.15,479.35 228.21,479.3 228.26,479.3 C 228.36,479.3 228.36,479.33 228.41,479.51 L 228.96,481.68 C 228.99,481.79 228.99,481.8 228.99,481.83 C 228.99,481.86 228.97,481.95 228.87,481.95 C 228.77,481.95 228.76,481.89 228.72,481.74 C 228.51,480.96 228.28,480.78 227.44,480.78 L 226.53,480.78 L 227.17,483.31 C 227.26,483.66 227.27,483.7 227.71,483.7 L 229.02,483.7 C 230.25,483.7 230.48,483.37 230.48,482.6 C 230.48,482.37 230.48,482.33 230.45,482.06 C 230.43,481.93 230.43,481.92 230.43,481.89 C 230.43,481.83 230.46,481.77 230.55,481.77 C 230.65,481.77 230.66,481.83 230.68,482.02 L 230.88,483.74 C 230.91,484.01 230.87,484.01 230.62,484.01 L 225.73,484.01 C 225.54,484.01 225.43,484.01 225.43,483.81 C 225.43,483.7 225.52,483.7 225.71,483.7 C 226.08,483.7 226.36,483.7 226.36,483.52 C 226.36,483.48 226.36,483.46 226.31,483.28 L 225,478.01 C 224.9,477.62 224.88,477.54 224.09,477.54 C 223.92,477.54 223.81,477.54 223.81,477.35 C 223.81,477.23 223.93,477.23 223.96,477.23 C 224.25,477.23 224.99,477.26 225.28,477.26 C 225.6,477.26 226.43,477.23 226.76,477.23 C 226.85,477.23 226.97,477.23 226.97,477.42 C 226.97,477.5 226.91,477.52 226.91,477.53 C 226.88,477.54 226.86,477.54 226.63,477.54 C 226.41,477.54 226.36,477.54 226.11,477.56 C 225.82,477.59 225.79,477.63 225.79,477.76 C 225.79,477.78 225.79,477.84 225.83,477.99 L 226.45,480.47 z"
+   id="path30227" />
+<path
+   style="fill:#000000;stroke-width:0"
+   d="M 233.36,477.01 L 233.12,477.01 C 233.1,476.86 233.03,476.44 232.94,476.38 C 232.88,476.33 232.35,476.33 232.25,476.33 L 230.97,476.33 C 231.7,476.98 231.94,477.18 232.36,477.5 C 232.88,477.92 233.36,478.35 233.36,479.01 C 233.36,479.86 232.62,480.37 231.73,480.37 C 230.86,480.37 230.28,479.76 230.28,479.12 C 230.28,478.77 230.58,478.73 230.65,478.73 C 230.81,478.73 231.02,478.85 231.02,479.1 C 231.02,479.23 230.97,479.47 230.6,479.47 C 230.82,479.97 231.29,480.12 231.62,480.12 C 232.32,480.12 232.68,479.58 232.68,479.01 C 232.68,478.4 232.25,477.92 232.03,477.67 L 230.35,476.01 C 230.28,475.95 230.28,475.93 230.28,475.74 L 233.15,475.74 L 233.36,477.01 z"
+   id="path30229" />
+</g>    <path
+       id="path30344"
+       d="M 112,62.362183 L 112,37.362183"
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       sodipodi:nodetypes="cc" />
+    <g
+       style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;letter-spacing:normal;word-spacing:normal;text-anchor:start;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:10.43299961;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       ns0:preamble="/home/user/prj/seminar/misc/nonconvex-ducks/pr-all.tex"
+       ns0:text="$J$"
+       word-spacing="normal"
+       letter-spacing="normal"
+       font-size-adjust="none"
+       font-stretch="normal"
+       font-weight="normal"
+       font-variant="normal"
+       font-style="normal"
+       stroke-miterlimit="10.433"
+       xml:space="preserve"
+       transform="matrix(1,0,0,-1,-108.84,520.73218)"
+       id="g30428">
+<path
+   id="path30430"
+   d="M 228.82,483.31 L 228.83,483.34 L 228.84,483.37 L 228.84,483.4 L 228.85,483.42 L 228.86,483.45 L 228.86,483.47 L 228.87,483.49 L 228.88,483.51 L 228.89,483.53 L 228.9,483.55 L 228.91,483.57 L 228.92,483.59 L 228.93,483.6 L 228.94,483.62 L 228.96,483.63 L 228.97,483.64 L 228.99,483.65 L 229,483.66 L 229.02,483.67 L 229.05,483.68 L 229.07,483.69 L 229.09,483.7 L 229.12,483.7 L 229.13,483.71 L 229.15,483.71 L 229.16,483.71 L 229.18,483.71 L 229.2,483.72 L 229.21,483.72 L 229.23,483.72 L 229.25,483.72 L 229.27,483.72 L 229.29,483.72 L 229.31,483.72 L 229.33,483.73 L 229.35,483.73 L 229.37,483.73 L 229.4,483.73 L 229.42,483.73 L 229.44,483.73 L 229.47,483.73 C 229.63,483.73 229.74,483.73 229.74,483.92 C 229.74,484.01 229.68,484.04 229.6,484.04 C 229.35,484.04 228.74,484.01 228.49,484.01 C 228.16,484.01 227.36,484.04 227.03,484.04 C 226.94,484.04 226.82,484.04 226.82,483.84 C 226.82,483.73 226.9,483.73 227.16,483.73 C 227.39,483.73 227.49,483.73 227.74,483.71 C 227.98,483.68 228.04,483.65 228.04,483.51 C 228.04,483.45 228.02,483.38 228.01,483.3 L 226.86,478.73 C 226.62,477.76 225.94,477.23 225.43,477.23 C 225.17,477.23 224.64,477.33 224.48,477.85 C 224.51,477.84 224.58,477.84 224.6,477.84 C 224.99,477.84 225.25,478.18 225.25,478.48 C 225.25,478.8 224.98,478.9 224.81,478.9 C 224.63,478.9 224.14,478.78 224.14,478.1 C 224.14,477.48 224.67,477.01 225.46,477.01 C 226.37,477.01 227.41,477.67 227.66,478.66 L 228.82,483.31 z"
+   style="fill:#000000;stroke-width:0" />
+</g>  </g>
+</svg>

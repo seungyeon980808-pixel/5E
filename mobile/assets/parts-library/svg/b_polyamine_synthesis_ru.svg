@@ -1,0 +1,14 @@
+<svg width="292mm" height="228mm" version="1.1" viewBox="0 0 292 228" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><rect width="292" height="228" fill="#fff"/><rect id="e" x="171" y="2" width="67" height="16" fill="#efb" stroke="#000"/><use transform="translate(29 94)" xlink:href="#e"/><use transform="translate(51 198)" xlink:href="#e"/>
+ <g font-family="Arial" font-size="11px"><text x="178" y="13">путресцин</text><text x="206" y="107">спермидин</text><text x="233" y="211">спермин</text><path d="m62 212 9-5m46 5-14-8-13 8-8-5" fill="none" stroke="#000"/>
+ <g id="d"><path d="m121 47c-19 0-23 31 0 31m-16-46v56" fill="none" stroke="#000"/><path d="m118 81 11-3-11-3 3 3m-19 5 3 11 3-11-3 3"/></g>
+ <use transform="translate(0 99)" xlink:href="#d"/>
+ <g id="a"><path d="m153 74 7 5m-25 1 9-6" fill="none" stroke="#000"/><text x="161" y="84">Ado</text><text x="145" y="77">S</text></g>
+ <use transform="translate(0 98)" xlink:href="#a"/><use transform="translate(55 71)" xlink:href="#a"/><path id="c" d="m204 155v-4m-2 2h4m-2-15v-10" fill="none" stroke="#000"/><use transform="translate(55 -27)" xlink:href="#a"/>
+ <g id="b"><path d="m154 47 12 6 12-8 12 8" fill="none" stroke="#000"/><text x="132" y="50">H<tspan baseline-shift="sub" font-size="8px">2</tspan>N</text></g>
+ <use transform="translate(0 98)" xlink:href="#b"/><use transform="translate(-128 159)" xlink:href="#b"/><use transform="translate(-100 54)" xlink:href="#b"/><use transform="translate(-73-36)" xlink:href="#b"/>
+ <g id="f"><text x="141" y="21">NH<tspan baseline-shift="sub" font-size="8px">2</tspan></text><path d="m139 14-8-5-14 8" fill="none" stroke="#000"/></g>
+ <use transform="translate(27 90)" xlink:href="#f"/><use transform="translate(54 195)" xlink:href="#f"/>
+ <g id="g"><text x="141" y="212">N</text><text x="141" y="221">H</text><path d="m139 209-8-5-14 8m33-3 8-5 13 8" fill="none" stroke="#000"/></g>
+ <text x="72" y="200">H</text><text x="72" y="209">N</text><use transform="translate(-27 -105)" xlink:href="#g"/>
+ <g fill="#06f"><text x="46" y="60">спермидин<tspan x="54" y="70">синтаза</tspan></text><text x="54" y="158">спермин</text><text x="55" y="168">синтаза</text></g>
+ <use transform="translate(0-98)" xlink:href="#c"/></g></svg>

@@ -1,0 +1,39 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+"http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1"
+	xmlns:xlink="http://www.w3.org/1999/xlink"
+	width="185px" height="210px" viewBox="-100 -120 185 210" >
+<title>Thick Cylinder</title>
+<defs>
+	<marker id="EndArrow" viewBox="0 0 10 10" refX="10" refY="5"
+		markerUnits="strokeWidth" orient="auto"
+		markerWidth="10" markerHeight="10">
+		<polyline points="10,5 0,10 4,5 0,0 10,5" fill="black" />
+	</marker>
+	<marker id="StartArrow" viewBox="0 0 10 10" refX="0" refY="5"
+		markerUnits="strokeWidth" orient="auto"
+		markerWidth="10" markerHeight="10">
+		<polyline points="0,5 10,0 6,5 10,10 0,5" fill="black" />
+	</marker>
+</defs>
+<g style="stroke:black;stroke-width:1;fill:none" transform="translate(10,0)" >
+	<line x1="0" x2="0" y1="-60" y2="-105" marker-end="url(#EndArrow)" />
+	<ellipse cx="0" cy="-70" rx="40" ry="10" />
+	<ellipse cx="0" cy="-70" rx="70" ry="17.5" />
+	<path d="M0,-60 V70 M40,-70 V70 M-40,-70 V70 A40,10 0,0 0 40,70 A40,10 0,0 0 -40,70 M70,70 
+		A70,17.5 0,0 0 -70,70" stroke-dasharray="3" />
+	<path d="M70,-70 V70 M-70,-70 V70 A70,17.5 0,0 0 70,70" />
+	<g marker-end="url(#EndArrow)" marker-start="url(#StartArrow)">
+		<line x1="-85" x2="-85" y1="-70" y2="70" />
+		<line x1="0" x2="40" y1="-10" y2="-10" />
+		<line x1="0" x2="70" y1="30" y2="30" />
+	</g>
+</g>
+<g style="stroke:none;fill:black;" font-size="20" font-style="italic" >
+	<text x="5" y="-107">z</text>
+	<text x="-95" y="0">h</text>
+	<text x="22" y="-20">r<tspan dy="5" font-size="12">1</tspan></text>
+	<text x="22" y="20">r<tspan dy="5" font-size="12">2</tspan></text>
+</g>
+</svg>

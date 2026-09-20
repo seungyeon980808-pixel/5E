@@ -1,0 +1,73 @@
+<?xml version="1.0"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="208mm" height="241.7mm" version="1.1" viewBox="0 0 208 241.7397">
+    <defs>
+        <style>
+          .label{
+            font-family:sans-serif;
+            font-size:10.91px;
+            letter-spacing:0;
+            word-spacing:0;
+            stroke-linejoin:round;
+            stroke-width:.2182;
+            paint-order:stroke fill markers;
+          }
+        </style>
+    </defs>
+ <g transform="translate(-10.69 15.76)">
+  <g fill-rule="evenodd">
+   <rect x="10.69" y="-15.76" width="208" height="241.7" fill="#fff" style="paint-order:fill markers stroke"/>
+   <path d="m216.1 223.6v-97.41l-33.54-2.625-7.437 6.562-11.52 2.042-26.39-6.708-6.853 9.77-37.62-2.187-16.33-9.478-17.21 9.332-21.44-15.16-17.21 10.06-7.145-2.625v98.43" fill="#e6e6e6" style="paint-order:fill markers stroke"/>
+   <path d="m29.78-12.7 70.38 236.3" fill="#03fdfe" stroke="#000" stroke-linejoin="round" stroke-width="1.637" style="paint-order:fill markers stroke"/>
+  </g>
+  <path d="m120.3 108.7h12.77m-68.62 21.36-12.97 93.54m-11.46-45.42-13.92 45.42m125.9-94.17-4.994 94.17m-22.1-67.25 91.22 61.13m-84.23-68.56-118.5-63.99m45.4 104.2 118.6-202.5m-72.22 189.4-91.75-53.32" fill="none" stroke="#0ff" stroke-linejoin="round" stroke-width="1.637" style="paint-order:fill markers stroke"/>
+  <path d="m120.3 97.31h13.2m-62.35 29.11-57.73-118.8m65.99 146.3-65.99-105.4m76.98 142.3 125.7-125.7m-119.7 145.8-82.96-48.21" fill="none" stroke="#00f" stroke-linejoin="round" stroke-width="1.637" style="paint-order:fill markers stroke"/>
+  <g fill-rule="evenodd">
+   <path d="m160.7 175 10.75 12.59-15.73-5.158 4.35-2.466zm-4.719-36.61-5.308 15.68-3.621-16.15 4.346 2.474zm-94.49 37.25 12.21-11.18-4.609 15.9-2.616-4.262zm36.49 1.471-11.53-11.87 16.02 4.142-4.184 2.739zm-55.97 9.895-8.944 13.93 0.3943-16.55 3.618 3.452zm23.22-30.02-6.617 15.17-2.24-16.4 4.121 2.834zm-26.56-14.34-11.53-11.87l16.02 4.142-4.184 2.74zm85.08 7.004-11.9-11.51 16.15 3.64-4.096 2.868zm-92.31-49.87-11.9-11.51 16.15 3.64-4.096 2.869zm63.39 19.98 11.57-11.83-3.727 16.13-2.847-4.112z" fill="#0ff" style="paint-order:fill markers stroke"/>
+   <path d="m76.86 95.17 0.2639 16.55-8.834-14l4.924 0.8715z" style="paint-order:fill markers stroke"/>
+   <path d="m68.3 81.78 4.92 16.82" fill="#0f0" stroke="#000" stroke-linejoin="round" stroke-width="1.637" style="paint-order:fill markers stroke"/>
+   <path d="m31.66 178.5-11.53-11.87 16.02 4.142-4.184 2.739zm121.4-56.58 14.43-8.107-8.107 14.43-1.577-4.746zm43.41-43.41 14.43-8.107-8.107 14.43-1.577-4.746zm-159.8-12.9-2.945-16.29l10.99 12.38-5.001-0.061zm-7.227 16.9-4.668-15.88 12.25 11.13-4.979 0.4735zm77.49 85.54 14.43-8.107-8.107 14.43-1.577-4.746z" fill="#00f" style="paint-order:fill markers stroke"/>
+  </g>
+  <g fill="none" stroke-linejoin="round">
+   <path d="m17.77 223.6-4.229-10.28m27.12-2.552-17.35-8.166-9.915 10.79m45.93-13.42-0.7291-15.02-8.312-10.06-28.87 9.332 1.896 18.37m36.02-2.625-18.66 10.79 1.896 12.83m54.66-27.69-22-16.93-16.62 5.979 0.7291 15.02 18.23 18.52m35.43 5.104-1.167-6.416-9.916-7.874-24.35 9.186-0.7291 5.104m46.66-36.02-17.64-8.749-8.622 17.07 4.685 13.4m9.916 7.874 14.58-13.12 23.62 12.83m-11.96-40.83-14.58 11.52 2.916 16.48m26.4 19.54-2.78-6.708 5.979-9.77 28.39 8.749 10.98-2.771m-10.98 2.771-2.579 7.728m15.6-31.5-2.042 21 12.83 10.21 7.874-2.479m-5.687-39.52-12.98 10.79-15.6-8.457-22.31 10.35-3.5 13.12m60.08-21.87-5.687-3.937-4.374-14.87m10.06-33.1-30.77 7.437 3.791 16.62 16.91 9.041 10.06-8.895m0-31.35-33.54-2.625-7.437 6.562 10.21 10.64m-5.833 31.5 2.333 11.37m-22.31 10.35-21.44-17.94m3.062-12.39 16.77-5.978m-16.77 5.978-3.062 12.39m-32.23 2.77-3.062-15.6 29.46-9.186m-52.79 0.7291-4.229 24.21m-61.83-0.4374 8.02 5.687m28.87-9.332-2.77-17.5m116.1-25.23 11.52-2.042m14 27.27-9.624 14.87-21.58-14.58m-27.56-22.46 6.853-9.77 26.39 6.708-5.687 25.52m-16.77 5.978-8.895-9.624m-39.52-21 37.62 2.187 1.896 18.81m-29.46 9.186-13.12-17.5m-30.48-12.83 17.21-9.332 16.33 9.478-3.062 12.69-10.21 9.041-17.94-10.79m-40.97-16.19l17.21-10.06 21.44 15.16 2.333 11.08-14 13.42-27.12-13.12m-6.999-19.1 7.145 2.625-0.1459 16.48-6.999 8.02" stroke="#4d4d4d" stroke-opacity=".9744" stroke-width=".7638" style="paint-order:fill markers stroke"/>
+   <path d="m153.6 129.4c0 0.9866-0.7997 1.786-1.786 1.786s-1.786-0.7997-1.786-1.786c0-0.9865 0.7997-1.786 1.786-1.786s1.786 0.7997 1.786 1.786zm-111.8 48.76c-2e-5 0.9865-0.7998 1.786-1.786 1.786-0.9865 0-1.786-0.7997-1.786-1.786 2e-5 -0.9865 0.7998-1.786 1.786-1.786 0.9865 0 1.786 0.7997 1.786 1.786zm18.8 10.93c-2e-5 0.9865-0.7998 1.786-1.786 1.786s-1.786-0.7997-1.786-1.786c2e-5 -0.9865 0.7998-1.786 1.786-1.786s1.786 0.7997 1.786 1.786zm5.62-59.05c-3e-5 0.9866-0.7998 1.786-1.786 1.786-0.9865 0-1.786-0.7997-1.786-1.786 2e-5 -0.9865 0.7998-1.786 1.786-1.786 0.9865 0 1.786 0.7997 1.786 1.786zm60.44 26.28c0 0.9865-0.7997 1.786-1.786 1.786s-1.786-0.7997-1.786-1.786 0.7997-1.786 1.786-1.786 1.786 0.7997 1.786 1.786zm6.99-7.429c0 0.9865-0.7997 1.786-1.786 1.786s-1.786-0.7997-1.786-1.786 0.7997-1.786 1.786-1.786 1.786 0.7997 1.786 1.786zm-11.58-40.21c0 0.9866-0.7997 1.786-1.786 1.786-0.9864 0-1.786-0.7997-1.786-1.786 1e-4 -0.9865 0.7998-1.786 1.786-1.786 0.9866 0 1.786 0.7997 1.786 1.786zm-15.13 67.38c0 0.9865-0.7997 1.786-1.786 1.786s-1.786-0.7997-1.786-1.786 0.7998-1.786 1.786-1.786 1.786 0.7997 1.786 1.786z" stroke="#0ff" stroke-width="2.182" style="paint-order:fill markers stroke"/>
+   <path d="m92.19 190.9c-2e-5 0.9865-0.7998 1.786-1.786 1.786s-1.786-0.7998-1.786-1.786c2e-5 -0.9865 0.7998-1.786 1.786-1.786s1.786 0.7997 1.786 1.786zm-19.25-64.43c-2e-5 0.9865-0.7998 1.786-1.786 1.786-0.9865 0-1.786-0.7997-1.786-1.786 2e-5 -0.9865 0.7998-1.786 1.786-1.786 0.9865 0 1.786 0.7997 1.786 1.786zm8.258 27.54c-2e-5 0.9865-0.7998 1.786-1.786 1.786s-1.786-0.7997-1.786-1.786c2e-5 -0.9865 0.7998-1.786 1.786-1.786s1.786 0.7997 1.786 1.786zm16.97 56.98c-3e-5 0.9865-0.7998 1.786-1.786 1.786-0.9865 0-1.786-0.7997-1.786-1.786 2e-5 -0.9866 0.7998-1.786 1.786-1.786 0.9865 0 1.786 0.7997 1.786 1.786zm23.92-113.6c0 0.9865-0.7997 1.786-1.786 1.786-0.9864 0-1.786-0.7997-1.786-1.786 1e-4 -0.9865 0.7998-1.786 1.786-1.786 0.9866 0 1.786 0.7997 1.786 1.786z" stroke="#00f" stroke-width="2.182" style="paint-order:fill markers stroke"/>
+  </g>
+  <g>
+  
+  <switch class="label" fill="#000" transform="translate(64, 76), rotate(73.22)" style="text-anchor:end;">
+    <text systemLanguage="it" id="trsvg21"><tspan id="trsvg1">Luce incidente</tspan></text>
+    <text systemLanguage="pt" id="trsvg22"><tspan id="trsvg2">Luz incidente</tspan></text>
+    <text systemLanguage="ru" id="trsvg23"><tspan id="trsvg3">&#x41F;&#x430;&#x434;&#x430;&#x44E;&#x449;&#x438;&#x439; &#x441;&#x432;&#x435;&#x442;</tspan></text>
+    
+  <text id="trsvg24-ca" systemLanguage="ca"><tspan id="trsvg4-ca">Llum incident</tspan></text><text id="trsvg24-mk" systemLanguage="mk"><tspan id="trsvg4-mk">&#x423;&#x43F;&#x430;&#x434;&#x43D;&#x430; &#x441;&#x432;&#x435;&#x442;&#x43B;&#x438;&#x43D;&#x430;</tspan></text><text id="trsvg24"><tspan id="trsvg4">Incident light</tspan></text></switch>
+
+
+   <rect x="126.8" y="57.56" width="69.08" height="23.1" fill="#fff" fill-rule="evenodd" style="paint-order:fill markers stroke"/>
+   
+  <switch class="label" fill="#00f" transform="translate(169.1953, 69.02343)" style="text-anchor:middle;">
+    <text systemLanguage="it" id="trsvg25"><tspan id="trsvg5">Luce</tspan><tspan x="0" y="10" id="trsvg6">diffusa</tspan></text>
+    <text systemLanguage="pt" id="trsvg26"><tspan id="trsvg7">Luz</tspan><tspan x="0" y="10" id="trsvg8">difusa</tspan></text>
+    <text systemLanguage="ru" id="trsvg27"><tspan id="trsvg9">&#x420;&#x430;&#x441;&#x441;&#x435;&#x44F;&#x43D;&#x43D;&#x44B;&#x439;</tspan><tspan x="0" y="8" id="trsvg10">&#x441;&#x432;&#x435;&#x442;</tspan></text>
+    
+  <text id="trsvg28-ca" systemLanguage="ca"><tspan id="trsvg11-ca">Llum</tspan><tspan x="0" y="10" id="trsvg12-ca">reflectida</tspan></text><text id="trsvg28-mk" systemLanguage="mk"><tspan id="trsvg11-mk">&#x420;&#x430;&#x441;&#x435;&#x430;&#x43D;&#x430;</tspan><tspan x="0" y="10" id="trsvg12-mk">&#x441;&#x432;&#x435;&#x442;&#x43B;&#x438;&#x43D;&#x430;</tspan></text><text id="trsvg28"><tspan id="trsvg11">Scattered</tspan><tspan x="0" y="10" id="trsvg12">light</tspan></text></switch>
+
+   <rect x="134" y="90.1" width="69.08" height="23.1" fill="#fff" fill-rule="evenodd" style="paint-order:fill markers stroke"/>
+
+  <switch class="label" fill="#00f" transform="translate(139, 99.29592)">
+    <text systemLanguage="it" id="trsvg29"><tspan id="trsvg13">primaria</tspan></text>
+    <text systemLanguage="pt" id="trsvg30"><tspan id="trsvg14">prim&#xE1;ria</tspan></text>
+    <text systemLanguage="ru" id="trsvg31"><tspan id="trsvg15">&#x43F;&#x435;&#x440;&#x432;&#x438;&#x447;&#x43D;&#x44B;&#x439;</tspan></text>
+    
+  <text id="trsvg32-ca" systemLanguage="ca"><tspan id="trsvg16-ca">prim&#xE0;ria</tspan></text><text id="trsvg32-mk" systemLanguage="mk"><tspan id="trsvg16-mk">&#x43F;&#x440;&#x432;&#x438;&#x447;&#x43D;&#x430;</tspan></text><text id="trsvg32"><tspan id="trsvg16">primary</tspan></text></switch>
+
+  <switch class="label" fill="#0ff" transform="translate(139, 111.0502)">
+    <text systemLanguage="it" id="trsvg33"><tspan id="trsvg17">secondaria</tspan></text>
+    <text systemLanguage="pt" id="trsvg34"><tspan id="trsvg18">secund&#xE1;ria</tspan></text>
+    <text systemLanguage="ru" id="trsvg35"><tspan id="trsvg19">&#x432;&#x442;&#x43E;&#x440;&#x438;&#x447;&#x43D;&#x44B;&#x439;</tspan></text>
+    
+  <text id="trsvg36-ca" systemLanguage="ca"><tspan id="trsvg20-ca">secund&#xE0;ria</tspan></text><text id="trsvg36-mk" systemLanguage="mk"><tspan id="trsvg20-mk">&#x432;&#x442;&#x43E;&#x440;&#x438;&#x447;&#x43D;&#x430;</tspan></text><text id="trsvg36"><tspan id="trsvg20">secondary</tspan></text></switch>
+
+  </g>
+  <path d="m190.8 54.72h-21.54m14.52-2.165 7.888 2.165-7.888 2.165 1.444-2.165zm4.126-8.602-18.65 10.77m11.5-9.137 7.914-2.069-5.748 5.819 0.1675-2.597zm-0.7278-9.513-10.77 18.65m5.387-13.66 5.819-5.748-2.069 7.914-1.153-2.333zm-5.387-7.875v21.54m-2.165-14.52 2.165-7.888 2.165 7.888-2.165-1.443zm-8.602-4.126 10.77 18.65m-9.137-11.5-2.069-7.914 5.819 5.748-2.597-0.1675zm-9.513 0.7278 18.65 10.77m-13.66-5.387-5.748-5.819 7.914 2.069-2.333 1.153zm-7.875 5.387h21.54m-14.52 2.165-7.888-2.165 7.888-2.165-1.444 2.165z" fill="none" stroke="#00f" stroke-width=".3273" style="paint-order:fill markers stroke"/>
+ </g>
+</svg>

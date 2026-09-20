@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN" "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd">
+<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" width="2.83465in" height="4.37008in" version="1.0" style="shape-rendering:geometricPrecision; text-rendering:geometricPrecision; image-rendering:optimizeQuality; fill-rule:evenodd; clip-rule:evenodd"
+viewBox="0 0 3109 4792"
+ xmlns:xlink="http://www.w3.org/1999/xlink">
+ <defs>
+  <style type="text/css">
+   <![CDATA[
+    .str0 {stroke:black;stroke-width:12.9525;stroke-linecap:round;stroke-linejoin:round}
+    .fil2 {fill:none}
+    .fil1 {fill:black}
+    .fil0 {fill:white}
+    .fil3 {fill:black;fill-rule:nonzero}
+    .fnt1 {font-weight:normal;font-size:137.08px;font-family:'DejaVu Sans'}
+    .fnt2 {font-weight:normal;font-size:137.08px;font-family:'DejaVu Sans'}
+    .fnt3 {font-weight:normal;font-size:182.772px;font-family:'DejaVu Sans'}
+    .fnt0 {font-style:italic;font-weight:normal;font-size:182.772px;font-family:'DejaVu Sans'}
+   ]]>
+  </style>
+ </defs>
+ <g>
+  <rect class="fil0" width="3109" height="4792"/>
+  <circle class="fil1 str0" cx="863" cy="1268" r="22"/>
+  <polyline class="fil2 str0" points="1079,1052 1115,976 1187,1128 1259,976 1331,1128 1403,976 1475,1128 1511,1052"/>
+  <text x="1191" y="868" class="fil1 fnt0">R</text>
+  <text x="1318" y="910" class="fil1 fnt1">L</text>
+  <line class="fil2 str0" x1="1252" y1="1635" x2="1252" y2="1333"/>
+  <line class="fil2 str0" x1="1338" y1="1635" x2="1338" y2="1333"/>
+  <text x="1228" y="1854" class="fil1 fnt0">C</text>
+  <line class="fil2 str0" x1="863" y1="1052" x2="1079" y2="1052"/>
+  <line class="fil2 str0" x1="1511" y1="1052" x2="1727" y2="1052"/>
+  <path class="fil2 str0" d="M863 1484l389 0m86 0l389 0"/>
+  <line class="fil2 str0" x1="863" y1="1052" x2="863" y2="1484"/>
+  <line class="fil2 str0" x1="432" y1="1268" x2="863" y2="1268"/>
+  <circle class="fil0 str0" cx="432" cy="1268" r="28"/>
+  <line class="fil2 str0" x1="1727" y1="1052" x2="1943" y2="1052"/>
+  <line class="fil2 str0" x1="1727" y1="1484" x2="1943" y2="1484"/>
+  <circle class="fil1 str0" cx="1727" cy="1052" r="22"/>
+  <circle class="fil1 str0" cx="1727" cy="1484" r="22"/>
+  <line class="fil2 str0" x1="1727" y1="620" x2="1727" y2="1052"/>
+  <line class="fil2 str0" x1="2677" y1="1268" x2="2893" y2="1268"/>
+  <line class="fil2 str0" x1="1727" y1="620" x2="2893" y2="620"/>
+  <line class="fil2 str0" x1="2893" y1="1268" x2="2893" y2="620"/>
+  <text x="1871" y="1977" class="fil1 fnt0">R</text>
+  <polyline class="fil2 str0" points="1727,1700 1803,1736 1651,1808 1803,1880 1651,1951 1803,2023 1651,2095 1727,2131"/>
+  <line class="fil2 str0" x1="1727" y1="1700" x2="1727" y2="1484"/>
+  <line class="fil2 str0" x1="1727" y1="2347" x2="1727" y2="2131"/>
+  <polygon class="fil2 str0" points="2677,1268 1943,844 1943,1692"/>
+  <g>
+   <line class="fil2 str0" x1="1651" y1="2347" x2="1803" y2="2347"/>
+   <line class="fil2 str0" x1="1676" y1="2390" x2="1778" y2="2390"/>
+   <line class="fil2 str0" x1="1701" y1="2434" x2="1753" y2="2434"/>
+  </g>
+  <line class="fil2 str0" x1="1997" y1="1052" x2="2105" y2="1052"/>
+  <polyline class="fil2 str0" points="945,3454 981,3378 1052,3530 1124,3378 1196,3530 1268,3378 1340,3530 1376,3454"/>
+  <text x="1057" y="3270" class="fil1 fnt0">R</text>
+  <text x="1184" y="3312" class="fil1 fnt1">L</text>
+  <line class="fil2 str0" x1="513" y1="3454" x2="945" y2="3454"/>
+  <line class="fil2 str0" x1="1376" y1="3454" x2="1592" y2="3454"/>
+  <line class="fil2 str0" x1="1592" y1="3454" x2="1592" y2="3670"/>
+  <path class="fil2 str0" d="M1592 3670c42,0 76,34 76,76 0,42 -34,76 -76,76 42,0 76,34 76,76 0,42 -34,76 -76,76 42,0 76,34 76,76 0,42 -34,76 -76,76 42,0 76,34 76,76 0,42 -34,76 -76,76"/>
+  <text x="1758" y="4039" class="fil1 fnt0">L = R</text>
+  <text x="2341" y="4039" class="fil1 fnt0">RC</text>
+  <text x="2256" y="4080" class="fil1 fnt2">L</text>
+  <line class="fil2 str0" x1="1592" y1="4274" x2="1592" y2="4490"/>
+  <g>
+   <line class="fil2 str0" x1="1517" y1="4490" x2="1668" y2="4490"/>
+   <line class="fil2 str0" x1="1542" y1="4533" x2="1643" y2="4533"/>
+   <line class="fil2 str0" x1="1566" y1="4577" x2="1618" y2="4577"/>
+  </g>
+  <g>
+   <line class="fil2 str0" x1="1997" y1="1484" x2="2105" y2="1484"/>
+   <line class="fil2 str0" x1="2051" y1="1538" x2="2051" y2="1430"/>
+  </g>
+  <text x="674" y="361" class="fil1 fnt3">Inductance gyrator</text>
+  <text x="671" y="2963" class="fil1 fnt3">Simulated circuit</text>
+  <path class="fil3" d="M216 1132l0 13 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0zm343 13l-343 0 0 -13 343 0 0 13zm89 -6l-94 47 0 -94 94 47zm-89 6l0 -13 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0z"/>
+  <text x="293" y="1009" class="fil1 fnt0">Z</text>
+  <text x="418" y="1050" class="fil1 fnt1">in</text>
+  <circle class="fil0 str0" cx="513" cy="3454" r="28"/>
+  <path class="fil3" d="M297 3318l0 13 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0zm343 13l-343 0 0 -13 343 0 0 13zm89 -6l-94 47 0 -94 94 47zm-89 6l0 -13 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0z"/>
+  <text x="374" y="3195" class="fil1 fnt0">Z</text>
+  <text x="499" y="3236" class="fil1 fnt1">in</text>
+ </g>
+</svg>

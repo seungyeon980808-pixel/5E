@@ -1,0 +1,672 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   height="400"
+   width="700"
+   version="1.1"
+   id="svg1079"
+   sodipodi:docname="Bruchlinie.svg"
+   inkscape:version="1.0.1 (3bc2e813f5, 2020-09-07)">
+  <defs
+     id="defs1083" />
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1841"
+     inkscape:window-height="913"
+     id="namedview1081"
+     showgrid="false"
+     inkscape:zoom="1.2557143"
+     inkscape:cx="350"
+     inkscape:cy="200"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="g925" />
+  <title
+     id="title833">Bruchlinie</title>
+  <metadata
+     id="metadata835">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title>Bruchlinie</dc:title>
+        <dc:creator>
+          <cc:Agent>
+            <dc:title>MagentaGreen</dc:title>
+          </cc:Agent>
+        </dc:creator>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     id="g925">
+    <rect
+       fill-rule="evenodd"
+       height="400"
+       width="700"
+       y="0"
+       x="0"
+       fill="#ffffff"
+       id="rect837" />
+    <path
+       fill="#d0ffff"
+       d="m 139.932,144.948 176.725,72.5001 v 26.1532 L 140.919,203.3681 Z"
+       fill-rule="evenodd"
+       id="path839" />
+    <path
+       d="M 97.5968,192.351 241.858,226.363 220.348,267.024 86.7411,237.197 Z"
+       fill="#4d4d4d"
+       id="path841" />
+    <path
+       fill="#c09191"
+       d="m 9.98585,212.402 192.932,45.2283 25.9575,-41.7524 c 72.3297,9.42533 142.759,18.8507 215.089,28.276 v 149.245 L 9.98635,293.6116 Z"
+       fill-rule="evenodd"
+       id="path843" />
+    <path
+       fill="#c09191"
+       d="m 534.467,192.803 -90.5024,56.9506 v 143.546 l 90.5024,-54.4708 z"
+       fill-rule="evenodd"
+       id="path845" />
+    <path
+       fill="#ebaf73"
+       d="m 534.467,81.8983 -90.5022,25.6442 v 76.3576 l 90.5022,-3.5e-4 z"
+       fill-rule="evenodd"
+       id="path847" />
+    <path
+       fill="#ebaf73"
+       d="m 9.986,46.5997 433.979,31.8704 v 105.43 L 9.986,110.1801 Z"
+       fill-rule="evenodd"
+       id="path849" />
+    <path
+       fill="#d1d1d1"
+       d="M 302.494,95.1356 C 216.724,116.393 9.986,174.362 9.986,174.362 v 63.3356 -0.001 c 0,0 90.3207,8.36287 231.873,-43.612 z"
+       fill-rule="evenodd"
+       id="path851" />
+    <path
+       fill="#e1e1e1"
+       d="M 183.693,74.1391 C 104.329,112.481 9.986,107.162 9.986,107.162 v 67.4338 c 0,0 174.943,0.7082 287.664,-71.5551 z"
+       fill-rule="evenodd"
+       id="path853" />
+    <path
+       stroke-linejoin="round"
+       d="m 89.7664,5.45449 c 41.7106,7.16861 61.4306,7.55701 103.081,14.9512 15.491,2.47727 27.0566,-4.69587 43.1372,1.2915 5.95926,2.21885 8.96036,8.77742 16.9392,9.18657 30.7791,3.47012 128.949,25.571 128.949,25.571 l -0.78364,6.88128 c 0,0 89.2991,8.35422 126.791,14.546 8.53593,1.47865 17.0719,2.95728 25.6078,4.43591 -30.1906,16.9106 -60.3811,33.8212 -90.5717,50.7319 -38.1094,-8.51133 -149.116,-23.7272 -149.116,-23.7272 l 3.73594,-6.0965 c 0,0 -86.2876,-19.7185 -109.765,-22.1199 -9.482,-1.6863 -16.095,-1.9365 -17.916,-8.9847 -4.626,-15.0378 -25.527,-6.0635 -36.724,-6.9754 -38.3051,0.2355 -49.5514,-3.5754 -86.9741,-10.1881 -11.9435,-2.0467 -23.1358,-7.0345 -35.2116,-8.5633 26.2739,-13.6468 52.5479,-27.2935 78.8218,-40.9403 z"
+       stroke="#a5a500"
+       stroke-linecap="round"
+       stroke-width="0.75"
+       fill="#cccc75"
+       id="path855" />
+    <path
+       fill="#d1d1d1"
+       d="m 185.575,285.93 c 105.571,-34.743 257.961,-28.088 257.961,-28.088 v -59.1475 c 0,0 -114.84,-18.3915 -201.677,-4.60965 z"
+       fill-rule="evenodd"
+       id="path857" />
+    <path
+       fill="#e1e1e1"
+       d="m 227.993,217.509 c 97.0279,-39.0147 215.543,-17.4674 215.543,-17.4674 v -49.647 c 0,0 -84.6741,-19.3178 -171.512,-5.53589 z"
+       fill-rule="evenodd"
+       id="path859" />
+    <path
+       fill="#c4c4c4"
+       d="m 534.466,99.981 -90.731,50.433 v 49.647 l 90.45,-51.746 c 0.11017,-23.2446 0.19418,-25.0889 0.28117,-48.3336 z"
+       fill-rule="evenodd"
+       id="path861" />
+    <path
+       fill="#b8b8b8"
+       d="m 534.466,148.28 -90.731,50.433 v 59.1475 l 90.45,-51.746 c 0.11017,-23.2446 0.19418,-34.5894 0.28117,-57.8341 z"
+       fill-rule="evenodd"
+       id="path863" />
+    <path
+       fill="#a5a500"
+       d="m 380.302,56.1057 c 2.6679,0.525637 0.99711,7.42752 0.99711,7.42752 l -86.681,46.3358 c -1.80899,-1.48286 4.23726,-5.66127 1.01748,-6.99395 36.5114,-20.9299 51.5145,-29.5025 84.6669,-46.7695 z"
+       fill-rule="evenodd"
+       id="path865" />
+    <path
+       stroke="#000000"
+       fill="none"
+       transform="translate(-3.0625,-28.643658)"
+       d="m 92.8438,34.0938 -79.7812,40.75 v 63.5938 57.8125 86.4062 l 0.25,0.0625 c -0.03267,0.0147 -0.25,0.0937 -0.25,0.0937 v 39.2812 l 37.8125,8.78125 c -0.0016,5.7e-4 -0.09375,0.0312 -0.09375,0.0312 l 41.9375,9.6875 354.312,82.25 v -0.4375 l 90.219,-49.531 c 0.0579,-16.4919 0.1701,-35.2795 0.28125,-51.9062 -0.3008,-71.3397 -5e-5,-138.49 -5e-5,-209.938 -44.0972,-7.527 -153.389,-19.0421 -153.389,-19.0421 l 0.76635,-5.82439 -0.56656,-1.20358 c 0,0 -97.7674,-21.9839 -128.345,-25.4313 -7.9264,-0.307574 -10.6653,-7.2807 -16.75,-9.125 -19.124,-5.7967 -27.847,1.1338 -43.338,-1.3435 -41.648,-7.3923 -103.064,-14.9651 -103.064,-14.9651 z"
+       id="path867" />
+    <path
+       fill="#ae6a5d"
+       d="m 288.243,357.724 c 83.0357,-28.4794 155.361,-13.509 155.361,-13.509 v 48.8844 c -49.273,-10.992 -100.685,-22.595 -155.361,-35.375 z"
+       fill-rule="evenodd"
+       id="path869" />
+    <path
+       fill="#ae6a5d"
+       d="M 159.904,327.822 9.98585,293.454 v -39.2725 23.3991 c 0,0 80.9499,17.927 187.239,-10.6605"
+       fill-rule="evenodd"
+       id="path871" />
+    <path
+       fill="#a97167"
+       d="m 534.467,290.781 -90.5023,53.3005 c 1.4e-4,18.127 9e-5,31.5539 9e-5,49.681 l 90.221,-49.5469 c 0.0596,-16.9784 0.16623,-36.4564 0.28117,-53.4346 z"
+       fill-rule="evenodd"
+       id="path873" />
+    <path
+       style="color:#000000;text-indent:0;text-align:start;text-transform:none;direction:ltr;baseline-shift:baseline;enable-background:accumulate"
+       fill="#000000"
+       transform="translate(-3.0625,-28.643658)"
+       d="m 446.156,161.844 v 260.375 h 1 V 161.844 Z"
+       id="path875" />
+    <path
+       fill="#a5a500"
+       d="m 164.201,64.7482 71.9744,-42.9916 c 0,0 3.32979,2.24955 4.98984,3.38146 2.14937,1.46556 6.4355,4.41514 6.4355,4.41514 l -71.4377,48.8053 c 0,0 -4.46369,-1.29198 -5.62164,-5.27824 -0.70291,-2.4198 -1.64776,-4.36926 -3.15145,-6.09115 -0.85456,-0.978561 -3.1889,-2.24088 -3.1889,-2.24088 z"
+       fill-rule="evenodd"
+       id="path877" />
+    <g
+       transform="translate(-38.590347,-35.55185)"
+       id="g915">
+      <g
+         transform="matrix(0.91351725,0,0,0.91351725,2.550454,4.4548426)"
+         id="g913">
+        <path
+           style="color:#000000;text-indent:0;text-align:start;text-transform:none;direction:ltr;baseline-shift:baseline;enable-background:accumulate"
+           d="m 255.407,62.25 -4.34375,60.4688 1,0.0625 4.3125,-60.4375 -0.96875,-0.09375 z"
+           stroke="#b3b3b3"
+           stroke-width="0.273668"
+           fill="#1a1a1a"
+           id="path879" />
+        <path
+           style="color:#000000;text-indent:0;text-align:start;text-transform:none;direction:ltr;baseline-shift:baseline;enable-background:accumulate"
+           d="m 263.513,62.25 4.34375,60.4688 -1,0.0625 -4.3125,-60.4375 0.96875,-0.09375 z"
+           stroke="#b3b3b3"
+           stroke-width="0.273668"
+           fill="#1a1a1a"
+           id="path881" />
+        <path
+           style="color:#000000;text-indent:0;text-align:start;text-transform:none;direction:ltr;baseline-shift:baseline;enable-background:accumulate"
+           d="m 258.607,59.7011 v 226.656 h 1.91022 V 59.7011 Z"
+           stroke="#1c1c24"
+           stroke-width="0.637119"
+           fill="#b3b3b3"
+           id="path883" />
+        <g
+           stroke="#b3b3b3"
+           stroke-width="0.273668"
+           fill="#1a1a1a"
+           id="g893">
+          <path
+             style="color:#000000;text-indent:0;text-align:start;text-transform:none;direction:ltr;baseline-shift:baseline;enable-background:accumulate"
+             d="m 265.656,78.9688 -14.4062,16.6875 0.78125,0.65625 14.375,-16.6875 -0.75,-0.65625 z"
+             id="path885" />
+          <path
+             style="color:#000000;text-indent:0;text-align:start;text-transform:none;direction:ltr;baseline-shift:baseline;enable-background:accumulate"
+             d="m 266.531,90.1875 -16.3206,19.4814 0.78125,0.625 16.2893,-19.4501 z"
+             id="path887" />
+          <path
+             style="color:#000000;text-indent:0;text-align:start;text-transform:none;direction:ltr;baseline-shift:baseline;enable-background:accumulate"
+             d="m 267.094,101.125 -17.2307,20.02 0.75,0.625 17.2307,-19.9887 z"
+             id="path889" />
+          <path
+             style="color:#000000;text-indent:0;text-align:start;text-transform:none;direction:ltr;baseline-shift:baseline;enable-background:accumulate"
+             d="m 265.375,69.4375 -13.25,14.4062 0.75,0.6875 13.25,-14.4062 z"
+             id="path891" />
+        </g>
+        <g
+           stroke="#b3b3b3"
+           stroke-width="0.273668"
+           transform="matrix(-1,0,0,1,518.92974,-7.4e-4)"
+           fill="#1a1a1a"
+           id="g903">
+          <path
+             style="color:#000000;text-indent:0;text-align:start;text-transform:none;direction:ltr;baseline-shift:baseline;enable-background:accumulate"
+             d="m 265.656,78.9688 -14.4062,16.6875 0.78125,0.65625 14.375,-16.6875 -0.75,-0.65625 z"
+             id="path895" />
+          <path
+             style="color:#000000;text-indent:0;text-align:start;text-transform:none;direction:ltr;baseline-shift:baseline;enable-background:accumulate"
+             d="m 266.531,90.1875 -16.2542,19.4821 0.78125,0.625 16.2229,-19.4508 z"
+             id="path897" />
+          <path
+             style="color:#000000;text-indent:0;text-align:start;text-transform:none;direction:ltr;baseline-shift:baseline;enable-background:accumulate"
+             d="m 267.094,101.125 -16.8325,19.8209 0.75,0.625 16.8325,-19.7896 z"
+             id="path899" />
+          <path
+             style="color:#000000;text-indent:0;text-align:start;text-transform:none;direction:ltr;baseline-shift:baseline;enable-background:accumulate"
+             d="m 265.375,69.4375 -13.25,14.4062 0.75,0.6875 13.25,-14.4062 z"
+             id="path901" />
+        </g>
+        <path
+           style="color:#000000;text-indent:0;text-align:start;text-transform:none;direction:ltr;baseline-shift:baseline;enable-background:accumulate"
+           fill="#1a1a1a"
+           d="m 263.656,61.7188 -8.43802,0.03125 0.0312,1 8.40677,-0.03125 v -1 z"
+           fill-rule="nonzero"
+           id="path905" />
+        <path
+           style="color:#000000;text-indent:0;text-align:start;text-transform:none;direction:ltr;baseline-shift:baseline;enable-background:accumulate"
+           d="m 253.562,63.4062 v 1.0625 h 11.8125 v -1.0625 z"
+           fill="#1a1a1a"
+           id="path907" />
+        <path
+           style="color:#000000;text-indent:0;text-align:start;text-transform:none;direction:ltr;baseline-shift:baseline;enable-background:accumulate"
+           d="m 266.188,69.1875 -13.2812,0.03125 v 3 l 13.3125,-0.03125 -0.0312,-3 z"
+           fill="#1a1a1a"
+           id="path909" />
+        <path
+           style="color:#000000;text-indent:0;text-align:start;text-transform:none;direction:ltr;baseline-shift:baseline;enable-background:accumulate"
+           d="m 268.91,119.214 -19.2875,0.0312 v 2.99999 l 19.333,-0.0312 -0.0467,-2.99999 z"
+           fill="#1a1a1a"
+           id="path911" />
+      </g>
+    </g>
+    <path
+       style="color:#000000;text-indent:0;text-align:start;text-transform:none;direction:ltr;baseline-shift:baseline;enable-background:accumulate"
+       d="m 293.658,109.799 -134.801,217.633 1.06181,0.36483 134.739,-217.997 z"
+       fill="#000000"
+       id="path923" />
+  </g>
+  <g
+     font-size="18px"
+     font-family="Arial"
+     transform="translate(-3.0625,-28.643658)"
+     id="g1077">
+    <switch
+       fill-rule="evenodd"
+       allowReorder="yes"
+       stroke="#1a1a1a"
+       stroke-width="0.5"
+       fill="#ffffc9"
+       id="switch933">
+      <path
+         systemLanguage="de"
+         d="m544.638,143.273,154.401,0,0,51.8366-154.401,0-50.1655,28.967,50.1655-54.8854z"
+         id="path927" />
+      <path
+         systemLanguage="fr"
+         d="m544.638,143.273,136.7,0,0,51.8366-136.7,0-50.1655,28.967,50.1655-54.8854z"
+         id="path929" />
+      <path
+         stroke-width="0.5"
+         d="m544.638,143.273,125.9,0,0,51.8366-125.9,0-50.1655,28.967,50.1655-54.8854z"
+         id="path931" />
+    </switch>
+    <g
+       id="g955">
+      <switch
+         allowReorder="yes"
+         id="switch943">
+        <text
+           systemLanguage="de"
+           id="trsvg28"><tspan
+             y="163"
+             x="550"
+             id="trsvg1">Undurchlässiger</tspan></text>
+        <text
+           systemLanguage="fr"
+           id="trsvg29"><tspan
+             y="163"
+             x="550"
+             id="trsvg2">Schiste argileux</tspan></text>
+        <text
+           id="trsvg30-ca"
+           systemLanguage="ca"><tspan
+             y="163"
+             x="550"
+             id="trsvg3-ca">Esquist argilós</tspan></text>
+        <text
+           id="trsvg30"><tspan
+             y="163"
+             x="550"
+             id="trsvg3">Impermeable</tspan></text>
+      </switch>
+      <switch
+         allowReorder="yes"
+         id="switch953">
+        <text
+           systemLanguage="de"
+           id="trsvg31"><tspan
+             y="187"
+             x="550"
+             id="trsvg4">Schieferton</tspan></text>
+        <text
+           systemLanguage="fr"
+           id="trsvg32"><tspan
+             y="187"
+             x="550"
+             id="trsvg5">imperméable</tspan></text>
+        <text
+           id="trsvg33-ca"
+           systemLanguage="ca"><tspan
+             y="187"
+             x="550"
+             id="trsvg6-ca">impermeable</tspan></text>
+        <text
+           id="trsvg33"><tspan
+             y="187"
+             x="550"
+             id="trsvg6">Shale clay</tspan></text>
+      </switch>
+    </g>
+    <switch
+       fill-rule="evenodd"
+       allowReorder="yes"
+       stroke="#1a1a1a"
+       stroke-width="0.5"
+       fill="#ffffc9"
+       id="switch963">
+      <path
+         systemLanguage="de"
+         d="m544.638,231.373,154.401,0,0,51.8366-154.401,0-50.1655,28.967,50.1655-54.8854z"
+         id="path957" />
+      <path
+         systemLanguage="fr"
+         d="m544.638,231.373,136.7,0,0,51.8366-136.7,0-50.1655,28.967,50.1655-54.8854z"
+         id="path959" />
+      <path
+         stroke-width="0.5"
+         d="m544.638,231.373,125.9,0,0,51.8366-125.9,0-50.1655,28.967,50.1655-54.8854z"
+         id="path961" />
+    </switch>
+    <g
+       id="g985">
+      <switch
+         allowReorder="yes"
+         id="switch973">
+        <text
+           systemLanguage="de"
+           id="trsvg34"><tspan
+             y="252"
+             x="550"
+             id="trsvg7">Poröses</tspan></text>
+        <text
+           systemLanguage="fr"
+           id="trsvg35"><tspan
+             y="252"
+             x="550"
+             id="trsvg8">Roche réservoir</tspan></text>
+        <text
+           id="trsvg36-ca"
+           systemLanguage="ca"><tspan
+             y="252"
+             x="550"
+             id="trsvg9-ca">Dipòsit de</tspan></text>
+        <text
+           id="trsvg36"><tspan
+             y="252"
+             x="550"
+             id="trsvg9">Porous</tspan></text>
+      </switch>
+      <switch
+         allowReorder="yes"
+         id="switch983">
+        <text
+           systemLanguage="de"
+           id="trsvg37"><tspan
+             y="276"
+             x="550"
+             id="trsvg10">Speichergestein</tspan></text>
+        <text
+           systemLanguage="fr"
+           id="trsvg38"><tspan
+             y="276"
+             x="550"
+             id="trsvg11">poreuse</tspan></text>
+        <text
+           id="trsvg39-ca"
+           systemLanguage="ca"><tspan
+             y="276"
+             x="550"
+             id="trsvg12-ca">roca porosa</tspan></text>
+        <text
+           id="trsvg39"><tspan
+             y="276"
+             x="550"
+             id="trsvg12">Reservoir rock</tspan></text>
+      </switch>
+    </g>
+    <switch
+       fill-rule="evenodd"
+       allowReorder="yes"
+       stroke="#1a1a1a"
+       stroke-width="0.5"
+       fill="#ffffc9"
+       id="switch993">
+      <path
+         systemLanguage="de"
+         d="m544.638,321.273,154.401,0,0,24.337-154.401,0-50.1655,28.967,50.1655-43.486z"
+         id="path987" />
+      <path
+         systemLanguage="fr"
+         d="m544.638,321.273,136.7,0,0,24.337-136.7,0-50.1655,28.967,50.1655-43.486z"
+         id="path989" />
+      <path
+         stroke-width="0.5"
+         d="m544.638,321.273,125.9,0,0,24.337-125.9,0-50.1655,28.967,50.1655-43.486z"
+         id="path991" />
+    </switch>
+    <switch
+       allowReorder="yes"
+       id="switch1003">
+      <text
+         systemLanguage="de"
+         id="trsvg40"><tspan
+           y="339"
+           x="550"
+           id="trsvg13">Ausgangsgestein</tspan></text>
+      <text
+         systemLanguage="fr"
+         id="trsvg41"><tspan
+           y="339"
+           x="550"
+           id="trsvg14">Roche mère</tspan></text>
+      <text
+         id="trsvg42-ca"
+         systemLanguage="ca"><tspan
+           y="339"
+           x="550"
+           id="trsvg15-ca">Roca mare</tspan></text>
+      <text
+         id="trsvg42"><tspan
+           y="339"
+           x="550"
+           id="trsvg15">Source rock</tspan></text>
+    </switch>
+    <switch
+       fill-rule="evenodd"
+       allowReorder="yes"
+       stroke="#000000"
+       stroke-width="0.5"
+       fill="#ffffc9"
+       id="switch1011">
+      <path
+         systemLanguage="de"
+         d="m234.673,76.6541,95.6346,0,0,24.5067-95.6346,0-31.0722,7.39476,31.0722-19.6481z"
+         id="path1005" />
+      <path
+         systemLanguage="fr"
+         d="m234.866,76.0359,130.132,0.000008,0,24.5067-130.132-0.00001-31.0722,7.39477,31.0722-19.6481z"
+         id="path1007" />
+      <path
+         stroke-width="0.5"
+         d="m236.026,78.103,66.0345,0,0,24.5067-66.0345,0-31.0722,7.39476,31.0722-19.6481z"
+         id="path1009" />
+    </switch>
+    <switch
+       allowReorder="yes"
+       id="switch1021">
+      <text
+         systemLanguage="de"
+         id="trsvg43"><tspan
+           y="95"
+           x="239"
+           id="trsvg16">Erdölquelle</tspan></text>
+      <text
+         y="-8.9345074"
+         x="-35.738029"
+         systemLanguage="fr"
+         id="trsvg44"><tspan
+           y="94"
+           x="238"
+           id="trsvg17">Puits de pétrole</tspan></text>
+      <text
+         y="-5.8963275"
+         x="-34.55162"
+         id="trsvg45-ca"
+         systemLanguage="ca"><tspan
+           y="96.103676"
+           x="239.44841"
+           id="trsvg18-ca">Pou</tspan></text>
+      <text
+         y="-5.8963275"
+         x="-34.55162"
+         id="trsvg45"><tspan
+           y="96.103676"
+           x="239.44841"
+           id="trsvg18">Oil well</tspan></text>
+    </switch>
+    <switch
+       fill-rule="evenodd"
+       allowReorder="yes"
+       stroke="#000000"
+       stroke-width="0.5"
+       fill="#ffffc9"
+       id="switch1029">
+      <path
+         systemLanguage="de"
+         d="m250.818,207.399,64.4344,0,0,24.5067-64.4344,0-31.0722,7.39476,31.0722-19.6481z"
+         id="path1023" />
+      <path
+         systemLanguage="fr"
+         d="m247.88,207.399,99.66,0.00031,0,24.5067-99.66-0.00031-31.0722,7.39476,31.0722-19.6481z"
+         id="path1025" />
+      <path
+         d="m247.699,209.04,98.3342,0,0,24.5067-98.3342,0-31.0722,7.39476,31.0722-19.6481z"
+         id="path1027" />
+    </switch>
+    <switch
+       allowReorder="yes"
+       id="switch1039">
+      <text
+         systemLanguage="de"
+         id="trsvg46"><tspan
+           y="225.74791"
+           x="255"
+           id="trsvg19">Erdgas</tspan></text>
+      <text
+         y="48.747974"
+         x="-53.485504"
+         systemLanguage="fr"
+         id="trsvg47"><tspan
+           y="226"
+           x="252"
+           id="trsvg20">Gaz naturel</tspan></text>
+      <text
+         id="trsvg48-ca"
+         systemLanguage="ca"><tspan
+           y="227"
+           x="252"
+           id="trsvg21-ca">Gas natural</tspan></text>
+      <text
+         id="trsvg48"><tspan
+           y="227"
+           x="252"
+           id="trsvg21">Natural gas</tspan></text>
+    </switch>
+    <switch
+       fill-rule="evenodd"
+       allowReorder="yes"
+       stroke="#000000"
+       stroke-width="0.5"
+       fill="#ffffc9"
+       id="switch1047">
+      <path
+         systemLanguage="de"
+         d="m142.425,224.035-51.435,0,0,24.5067,51.435,0,31.0722,7.39476-31.0722-19.6481z"
+         id="path1041" />
+      <path
+         systemLanguage="fr"
+         d="m145.332,222.566-62.5614,0.00031,0,24.5067,62.5614-0.00031,31.0722,7.39476-31.0722-19.6481z"
+         id="path1043" />
+      <path
+         d="m134.396,227.069-71.1352,0,0,24.5067,71.1352,0,31.0722,7.39476-31.0722-19.6481z"
+         id="path1045" />
+    </switch>
+    <switch
+       allowReorder="yes"
+       id="switch1057">
+      <text
+         systemLanguage="de"
+         id="trsvg49"><tspan
+           y="241.97377"
+           x="95.705139"
+           id="trsvg22">Erdöl</tspan></text>
+      <text
+         systemLanguage="fr"
+         id="trsvg50"><tspan
+           y="242"
+           x="85"
+           id="trsvg23">Pétrole</tspan></text>
+      <text
+         id="trsvg51-ca"
+         systemLanguage="ca"><tspan
+           y="245"
+           x="67"
+           id="trsvg24-ca">Petroli</tspan></text>
+      <text
+         id="trsvg51"><tspan
+           y="245"
+           x="67"
+           id="trsvg24">Rock oil</tspan></text>
+    </switch>
+    <switch
+       fill-rule="evenodd"
+       allowReorder="yes"
+       stroke="#000000"
+       stroke-width="0.5"
+       fill="#ffffc9"
+       id="switch1065">
+      <path
+         systemLanguage="fr"
+         d="m200.315,313.829,116.748,0.00031,0,24.5067-116.748-0.00031-31.0722,7.39476,31.0722-19.6481z"
+         id="path1059" />
+      <path
+         systemLanguage="de"
+         d="m200.315,313.829,84.8345,0,0,24.5067-84.8345,0-31.0722,7.39476,31.0722-19.6481z"
+         id="path1061" />
+      <path
+         d="m200.315,313.829,47.7345,0,0,24.5067-47.7345,0-31.0722,7.39476,31.0722-19.6481z"
+         id="path1063" />
+    </switch>
+    <switch
+       allowReorder="yes"
+       id="switch1075">
+      <text
+         systemLanguage="fr"
+         id="trsvg52"><tspan
+           y="332"
+           x="204"
+           id="trsvg25">Ligne de faille</tspan></text>
+      <text
+         systemLanguage="de"
+         id="trsvg53"><tspan
+           y="332"
+           x="204"
+           id="trsvg26">Bruchlinie</tspan></text>
+      <text
+         id="trsvg54-ca"
+         systemLanguage="ca"><tspan
+           y="332"
+           x="205"
+           id="trsvg27-ca">Falla</tspan></text>
+      <text
+         id="trsvg54"><tspan
+           y="332"
+           x="205"
+           id="trsvg27">Fault</tspan></text>
+    </switch>
+  </g>
+</svg>

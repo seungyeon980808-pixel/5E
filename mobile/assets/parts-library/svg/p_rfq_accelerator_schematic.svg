@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" height="359" width="415">
+  <defs>
+    <marker id="Arrow1Lend" refY="0" refX="0" orient="auto" inkscape:stockid="Arrow1Lend" overflow="visible">
+      <path d="m0 0 5-5-17.5 5 17.5 5-5-5z" transform="matrix(-.8 0 0 -.8 -10 0)" stroke="#000" stroke-width="1pt"/>
+    </marker>
+    <pattern id="b" inkscape:collect="always" xlink:href="#e" patternTransform="matrix(0,2.25,16,0,0,1)"/>
+    <pattern id="a" inkscape:collect="always" xlink:href="#d" patternTransform="matrix(2.25,0,0,16,4,0)"/>
+    <pattern id="e" height="1" width="3" patternUnits="userSpaceOnUse" patternTransform="translate(0) scale(10)" inkscape:collect="always">
+      <rect height="2" width="3" y="-.5" x="1" fill="#fdd"/>
+      <rect height="3" width="1" y="-1" x="0" fill="#808080"/>
+    </pattern>
+    <pattern id="d" height="1" width="3" patternUnits="userSpaceOnUse" patternTransform="translate(0) scale(10)" inkscape:collect="always">
+      <rect height="2" width="3" y="-.5" x="1" fill="#ddf"/>
+      <rect height="3" width="1" y="-1" x="0" fill="#808080"/>
+    </pattern>
+    <marker id="c" refY="0" refX="0" orient="auto" inkscape:stockid="Arrow1Lend" overflow="visible">
+      <path d="m0 0 5-5-17.5 5 17.5 5-5-5z" transform="matrix(-.8 0 0 -.8 -10 0)" stroke="#000" stroke-width="1pt"/>
+    </marker>
+  </defs>
+  <g inkscape:label="Ebene 1" transform="translate(-61.22,-18.60)" inkscape:groupmode="layer">
+    <g opacity=".5" stroke="#00f" stroke-width="1.5" fill="#ddf">
+      <path d="m181.70119 368.09901 233.15583-162.12949c0-14.27058-2.84691-27.95668-7.91444-38.04751l-196.99753 98.28392c-34.0682 24.53592-10.11842 20.89925-55.26544 48.08578z"/>
+      <path sodipodi:rx="27.021582" sodipodi:ry="53.807297" sodipodi:type="arc" sodipodi:start="3.1415927" stroke-linejoin="bevel" transform="translate(0,186.61459)" sodipodi:cy="181.48442" sodipodi:cx="154.67961" sodipodi:end="6.2831853" d="m127.65803 181.48442c0-29.71695 12.09797-53.8073 27.02158-53.8073 14.92361 0.00001 27.02158 24.09035 27.02158 53.8073h-27.02158z"/>
+    </g>
+    <g opacity=".5" stroke-linejoin="bevel" stroke="#f00" stroke-width="1.5" fill="#fdd">
+      <path d="m300.82334 86.025-232.95809 162.63456 64.09636 36.39658c27.78422-28.78255 1.6177-44.76615 50.91994-70.17355 44.37167-33.37853 83.97322-71.44413 131.94179-99.4369z"/>
+      <path sodipodi:rx="27.021582" sodipodi:ry="67.807297" sodipodi:type="arc" sodipodi:start="3.1415927" transform="matrix(0,-1,-1,0,249.34967,430.36075)" sodipodi:cy="181.48442" sodipodi:cx="154.67961" sodipodi:end="6.2831853" d="m127.65803 181.48442a27.021582 67.807297 0 0 1 54.04316 0h-27.02158z"/>
+    </g>
+    <g stroke-width="3" stroke="#000" fill="none">
+      <path d="m291.41696 194.65008h-20.66828v-42.10682"/>
+      <path d="m335.34886 133.76541v15.78547h50.50526"/>
+      <path d="m218.1259 215.60204v15.78547h52.50526"/>
+      <path d="m175.34789 275.68114h-20.66828v-42.10682"/>
+    </g>
+    <g stroke-linejoin="bevel" stroke-width="1.5" stroke="#00f">
+      <path fill="#ddf" d="m127.65803 181.48442h27.02158l233.15583-162.12949h-29.48382z"/>
+      <path sodipodi:rx="27.021582" sodipodi:ry="53.807297" sodipodi:type="arc" sodipodi:start="1.5707963" sodipodi:cy="181.48442" sodipodi:cx="154.67961" fill="#ddf" sodipodi:end="3.1415927" d="m154.67961 235.29172c-14.92361 0-27.02158-24.09035-27.02158-53.8073h27.02158z"/>
+      <path d="m154.67961 181.48442v53.8073c33.46265-20.62667 44.06117-7.15317 67.75314-20.7648 35.34218-23.06683 18.03661-37.43532 48.82455-58.51247 22.98521-16.60329 47.78551-9.41459 67.03885-22.67435 31.41078-20.38989 21.74217-38.572658 49.53885-56.60292v-57.382246z" fill="url(#a)"/>
+    </g>
+    <g stroke-linejoin="bevel" stroke="#f00" stroke-width="1.5">
+      <path sodipodi:rx="27.021582" sodipodi:ry="67.807297" sodipodi:type="arc" sodipodi:start="1.5707963" transform="matrix(0,-1,-1,0,423.96427,430.36075)" sodipodi:cy="181.48442" sodipodi:cx="154.67961" fill="#fdd" sodipodi:end="3.1415927" d="m154.67961 249.29172a27.021582 67.807297 0 0 1 -27.02158 -67.8073h27.02158z"/>
+      <path fill="#fdd" d="m242.47985 275.68114v27.02158l232.95809-160.36171v-29.29443z"/>
+      <path d="m174.67255 275.68114h67.8073l232.95809-162.63456h-73.65223c-20.89091 16.51157-9.78519 33.33532-21.24257 42.26578-34.74197 23.9108-58.44173 16.04353-92.31401 39.0515-20.38816 18.92879-8.29282 30.64026-23.74258 43.15864-30.87519 21.4292-54.00295 14.41816-89.814 38.15864z" fill="url(#b)"/>
+    </g>
+    <g stroke="#000" fill="none">
+      <path marker-end="url(#Arrow1Lend)" d="m154.67961 377.09901v-204.08988" stroke-width="1px"/>
+      <path stroke-linejoin="bevel" marker-end="url(#c)" d="m154.67961 275.68114 261.29159-182.41497"/>
+      <path marker-end="url(#Arrow1Lend)" d="m61.752185 275.68114h189.30186" stroke-width="1px"/>
+    </g>
+    <use xlink:href="#t" height="350.24408" width="413.82269" stroke="#ffffff" y="0" x="0" stroke-width="2" fill="#ffffff"/>
+    <g id="t" font-size="24px" font-family="Arial">
+      <text y="290.98639" x="165.59697" style="text-anchor:middle;text-align:center">a</text>
+      <text y="264.74701" x="145.87865" style="text-anchor:middle;text-align:center">b</text>
+      <text y="231.26303" x="209.57674" style="text-anchor:middle;text-align:center">a</text>
+      <text y="251.10612" x="240.91626" style="text-anchor:middle;text-align:center">b</text>
+    </g>
+  </g>
+</svg>

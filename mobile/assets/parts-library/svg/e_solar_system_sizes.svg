@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+  width="2100"
+  height="970"
+  viewBox="0 0 210 97"
+  version="1.1"
+  xmlns="http://www.w3.org/2000/svg"
+  xmlns:xlink="http://www.w3.org/1999/xlink">
+<defs>
+  <linearGradient id="fadeToWhite">
+    <stop
+      offset="0"
+      stop-color="#cccccc"
+      stop-opacity="1" />
+    <stop
+      offset="1"
+      stop-color="#cccccc"
+      stop-opacity="0" />
+  </linearGradient>
+  <linearGradient
+    xlink:href="#fadeToWhite"
+    id="fadeToWhiteTopDown"
+    x1="0"
+    y1="50"
+    x2="0"
+    y2="97"
+    gradientUnits="userSpaceOnUse" />
+  </defs>
+  <circle
+      id="sun"
+      cx="105"
+      cy="115"
+      r="109"
+      fill="url(#fadeToWhiteTopDown)" />
+  <circle
+      id="mercury"
+      cx="28.106"
+      cy="64"
+      r="0.38" />
+  <circle
+      id="venus"
+      cx="42.583"
+      cy="64"
+      r="0.95" />
+  <circle
+      id="earth"
+      cx="57.680"
+      cy="64"
+      r="1" />
+  <circle
+      id="mars"
+      cx="72.357"
+      cy="64"
+      r="0.53" />
+  <circle
+      id="jupiter"
+      cx="97.133"
+      cy="64"
+      r="11.1" />
+  <circle
+      id="saturn"
+      cx="130.780"
+      cy="64"
+      r="9.4" />
+  <circle
+      id="uranus"
+      cx="157.327"
+      cy="64"
+      r="4" />
+  <circle
+      id="neptune"
+      cx="178.374"
+      cy="64"
+      r="3.9" />
+</svg>

@@ -1,0 +1,145 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg x="0" y="0" width="512" height="196" xmlns="http://www.w3.org/2000/svg"
+                                          xmlns:xlink="http://www.w3.org/1999/xlink">
+ <defs>
+  <marker id="se_marker_start" markerUnits="strokeWidth" orient="auto" viewBox="0 0 100 100" markerWidth="8" markerHeight="8" refX="50" refY="50">
+   <path d="m0,50l100,40l-30,-40l30,-40l-100,40z" fill="none" stroke="#f70404" stroke-width="10"/>
+  </marker>
+  <marker id="se_marker_end" refY="50" refX="50" markerHeight="8" markerWidth="8" viewBox="0 0 100 100" se_type="rightarrow" orient="auto" markerUnits="strokeWidth">
+   <path stroke-width="10" stroke="#008000" fill="#008000" d="m100,50l-100,40l30,-40l-30,-40z"/>
+  </marker>
+  <g id="resistor" fill="#ffffff" stroke-width="1" stroke="#000000">
+    <line x1="0" y1="0" x2="60" y2="0"/>
+    <rect x="10" y="-5" width="40" height="10" />
+  </g>
+  <g id="capacitor" fill="#ffffff" stroke-width="1" stroke="#000000">
+    <line x1="0" y1="0" x2="10" y2="0" />
+    <line x1="10" y1="-10" x2="10" y2="10" />
+    <line x1="15" y1="-10" x2="15" y2="10" />
+    <line x1="15" y1="0" x2="25" y2="0" />
+  </g>
+  <g id="polcap" fill="#ffffff" stroke-width="1" stroke="#000000">
+    <line x1="0" y1="0" x2="0" y2="10" />
+    <line x1="0" y1="16" x2="0" y2="25" />
+    <path d="M -10 9 L -10 18 L 10 18 L 10 9 " />
+    <rect x="-6" y="10" width="12" height="4" />
+    <text x="4" y="7" font-size="7" font-family="sans-serif" text-anchor="left" xml:space="preserve">+</text>
+  </g>
+  <g id="gnd" fill="#ffffff" stroke-width="1" stroke="#000000">
+    <line x1="0" y1="0" x2="0" y2="10"/>
+    <line x1="-10" y1="10" x2="10" y2="10" />
+    <line x1="-7" y1="14" x2="7" y2="14" />
+    <line x1="-4" y1="18" x2="4" y2="18" />
+    <line x1="-1" y1="22" x2="1" y2="22" />
+  </g>
+  <g id="mic" fill="#ffffff" stroke-width="1" stroke="#000000">
+    <line x1="10" y1="-6" x2="25" y2="-6" />
+    <line x1="10" y1="6" x2="25" y2="6" />
+    <circle r="12" cx="0" cy="0" />
+    <line x1="-12" y1="-12" x2="-12" y2="12" stroke-width="2" />
+  </g>
+  <g id="transformer" fill="#ffffff" stroke-width="1" stroke="#000000">
+    <line x1="0" y1="0" x2="10" y2="0" />
+    <line x1="0" y1="30" x2="10" y2="30" />
+    <line x1="33" y1="0" x2="45" y2="0" />
+    <line x1="33" y1="30" x2="45" y2="30"/>
+    <rect x="10" y="0" width="8" height="30" />
+    <line x1="23" y1="-1" x2="23" y2="31" stroke-width="3" />
+    <rect x="28" y="0" width="8" height="30" />
+  </g>
+  <g id="dot" fill="#000000" stroke-width="1" stroke="#000000">
+    <circle r="2" cx="0" cy="0"/>
+  </g>
+  <g id="pin" stroke-width="1" stroke="#000000" fill="#ffffff">
+    <circle r="4" cx="0" cy="0"/>
+  </g>
+  <g id="signal" stroke-width="1" stroke="#ff0000" fill="none">
+    <path d="m 0 0 c 10 20 10 -20 20 0" />
+  </g>
+ </defs>
+ <g fill="#ffffff" stroke-width="1" stroke="#000000">
+  <title>phantom power schematics</title>
+  <rect id="bg" x="0" y="0" width="100%" height="100%"  stroke-width="0" stroke="none" fill="none" />
+  <svg id="cable" x="166" y="87">
+    <path id="cable0" d="M 0 0 C 30 0 20 50 50 20 S 70 20 100 20" fill="none" />
+    <use xlink:href="#cable0" x="0" y="20" />
+    <use xlink:href="#cable0" x="0" y="40" />
+    <use xlink:href="#signal"  transform="translate (2, 10) scale(.5)" />
+  </svg>
+  <svg id="microphone" x="4" y ="17">
+      <rect x="0" y="0" width="160" height="140" fill="#FCFAFF"/>
+      <line x1="45" y1="74" x2="50" y2="74" />
+      <line x1="45" y1="86" x2="50" y2="86" />
+      <path d="M 60 90 L 60 110 L 160 110" fill="none" />
+      <path d="M 60 73 L 60 20 L 145 20 L 145 70" fill="none" />
+      <path d="M 60 50 L 135 50 L 135 90" fill="none" />
+      <path d="M 60 20 L 40 20 L 40 110 L 60 110" fill="none" />
+      <line x1="120" y1="70" x2="160" y2="70" />
+      <line x1="120" y1="90" x2="160" y2="90" />
+      <use xlink:href="#mic" x="20" y="80" />
+      <svg x="50" y="62">
+        <rect x="0" y="0" width="70" height="35" />
+        <text x="4" y="13" font-size="10" font-family="sans-serif" font-style="italic" text-anchor="left" xml:space="preserve">électronique</text>
+        <text x="4" y="25" font-size="10" font-family="sans-serif" font-style="italic" text-anchor="left" xml:space="preserve">du micro</text>
+      </svg>
+      <use xlink:href="#resistor" transform="translate(70, 20)" />
+      <use xlink:href="#resistor" transform="translate(70, 50)" />
+      <use xlink:href="#polcap" transform="translate (40, 35)" />
+      <use xlink:href="#dot" x="60" y="20" />
+      <use xlink:href="#dot" x="60" y="110" />
+      <use xlink:href="#dot" x="60" y="50" />
+      <use xlink:href="#dot" x="145" y="70" />
+      <use xlink:href="#dot" x="135" y="90" />
+      <text fill="#0000ff" stroke="#0000ff" x="90" y="11" font-size="11" font-family="sans-serif" text-anchor="left" xml:space="preserve">Rm0</text>
+      <text fill="#0O00ff" stroke="#0000ff" x="90" y="41" font-size="11" font-family="sans-serif" text-anchor="left" xml:space="preserve">Rm1</text>
+      <text  x="55" y="13" fill="#008000" stroke="#008000" font-size="12" font-family="serif" text-anchor="left" xml:space="preserve"><tspan>U</tspan><tspan font-style="italic" font-size="9" text-anchor="start">m</tspan></text>
+      <use xlink:href="#pin" x="160" y="70" />
+      <use xlink:href="#pin" x="160" y="90" />
+      <use xlink:href="#pin" x="160" y="110" />
+      <svg x="100" y="113">
+          <line id="I_mic" x1="0" y1="3" x2="20" y2="3" marker-end="url(#se_marker_end)" fill="#008000" stroke-width="1" stroke="#008000"/>
+          <text  x="6" y="16" fill="#008000" stroke="#008000" font-size="12" font-family="serif" text-anchor="left" xml:space="preserve"><tspan>I</tspan><tspan font-style="italic" font-size="9" text-anchor="start">a</tspan></text>
+      </svg>
+  </svg>
+  <svg id="preamp" x="262" y ="7">
+      <rect x="4" y="0" width="240" height="170" fill="#FFF8F0"/>
+      <path d="M 4 100 L 20 100 L 30 90 L 80 90"  fill="none" />
+      <line x1="4" y1="120" x2="80" y2="120" />
+      <path d="M 40 90 L 40 22 L 130 22" fill="none" />
+      <path d="M 50 120 L 50 55 L 110 55 L 110 22" fill="none" />
+      <path d="M 4 140 L 220 140 L 220 60" fill="none" />
+      <use xlink:href="#gnd" x="220" y="140" />      
+      <svg x="80" y="80">
+        <use xlink:href="#transformer" x="0" y="10" />
+        <rect x="45" y="0" width="80" height="50" />
+        <text x="51" y="30" font-size="14" font-family="sans-serif" font-style="italic" text-anchor="left" xml:space="preserve">PRÉAMPLI</text>
+      </svg>
+      <svg x="130" y="12">
+        <rect x="0" y="0" width="100" height="50" />
+        <text x="10" y="20" font-size="12" font-family="sans-serif" font-style="italic" text-anchor="left" xml:space="preserve">Alimentation</text>
+        <text x="20" y="40" font-size="12" font-family="sans-serif" font-style="italic" text-anchor="left" xml:space="preserve">régulée</text>
+      </svg>
+      <use xlink:href="#resistor" transform="translate(40, 22)" />
+      <use xlink:href="#resistor" transform="translate(50, 55)" />
+      <text fill="#0000ff" stroke="#0000ff" x="60" y="12" font-size="11" font-family="sans-serif" text-anchor="left" xml:space="preserve">Rp0</text>
+      <text fill="#0O00ff" stroke="#0000ff" x="70" y="45" font-size="11" font-family="sans-serif" text-anchor="left" xml:space="preserve">Rp1</text>
+      <use xlink:href="#dot" x="40" y="90" />
+      <use xlink:href="#dot" x="50" y="120" />
+      <use xlink:href="#dot" x="110" y="22" />
+      <use xlink:href="#dot" x="220" y="140" />
+      <use xlink:href="#pin" x="4" y="100" />
+      <use xlink:href="#pin" x="4" y="120" />
+      <use xlink:href="#pin" x="4" y="140" />
+      <text  x="100" y="15" fill="#008000" stroke="#008000" font-size="12" font-family="serif" text-anchor="left" xml:space="preserve"><tspan>U</tspan><tspan font-style="italic" font-size="9" text-anchor="start">a</tspan></text>
+      <svg x="10" y="35">
+          <line id="I_mic" x1="25" y1="0" x2="25" y2="20" marker-end="url(#se_marker_end)" fill="#008000" stroke-width="1" stroke="#008000"/>
+          <text  x="0" y="15" fill="#008000" stroke="#008000" font-size="12" font-family="serif" text-anchor="left" xml:space="preserve"><tspan>I</tspan><tspan font-style="italic" font-size="9" text-anchor="start">a</tspan><tspan>/2</tspan></text>
+      </svg>
+      <svg x="52" y="62">
+          <line id="I_mic" x1="3" y1="0" x2="3" y2="20" marker-end="url(#se_marker_end)" fill="#008000" stroke-width="1" stroke="#008000"/>
+          <text  x="6" y="15" fill="#008000" stroke="#008000" font-size="12" font-family="serif" text-anchor="left" xml:space="preserve"><tspan>I</tspan><tspan font-style="italic" font-size="9" text-anchor="start">a</tspan><tspan>/2</tspan></text>
+      </svg>
+  </svg>
+  </g>
+</svg>

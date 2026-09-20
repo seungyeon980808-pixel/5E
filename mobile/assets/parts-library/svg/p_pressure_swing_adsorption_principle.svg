@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="100%" height="100%" viewBox="-32 -72 128 144">
+ <title>pressure swing adsorption principle</title>
+ <desc>CSS3 animation of the principle of pressure swing adsorption to purify oxygen from air by CMG Lee. (I) denotes the air input, (O) the oxygen output, (E) the exhaust, (A) adsorption and (D) desorption. (1) and (2) show alternating adsorption and desorption.</desc>
+ <style type="text/css">
+#main { font-size:12px; font-family:Helvetica,Arial,sans-serif; text-anchor:middle;
+        fill:#0000ff; stroke-linejoin:round; stroke-width:0.5; }
+text  { stroke:none; cursor:default; }
+#lower,#upper   { fill:none; }
+.path           { stroke:#000000; animation:dash 1s infinite linear; }
+@keyframes dash { from { stroke-dashoffset:5; } to { stroke-dashoffset:0; } }
+ </style>
+ <defs>
+  <linearGradient id="grad_trap" x1="0%" y1="0%" x2="0%" y2="100%">
+   <stop offset="0%"   stop-color="#00ff00"/>
+   <stop offset="100%" stop-color="#003300"/>
+  </linearGradient>
+  <g id="trap" stroke="#cccccc" transform="translate(-20,0)">
+   <path d="M 15,-3 a 6,6 0 0 1 -6,6" fill="none" stroke-width="2"/>
+   <path d="M 15,-3 a 4,4 0 1 1 0.1,0 m -2,-1 q 2,-2 4,0" fill="#ffffff"/>
+   <path d="M -9,-9 A 9,9 0 1 1 9,-9 V 9 A 9,9 0 1 1 -9,9 Z" fill="url(#grad_trap)"/>
+  </g>
+  <path id="needle" d="M 1,-5 l 2,-3" stroke="#ff0000"/>
+  <path id="open" d="M 6,0.1 A 6,6 0 1 1 6,0 M -5,-2 H 5 V 2 H -5" fill-rule="evenodd" fill="#009999"/>
+  <g id="closed">
+   <circle cx="0" cy="0" r="5.9" fill="#00cccc"/>
+   <use xlink:href="#open" transform="rotate(90)"/>
+  </g>
+  <path id="arrow" d="M -2,0 L 0,-4 L 2,0 M 0,-4 V 4" fill="none" stroke="#0000ff" stroke-width="1"/>
+  <path id="lower" d="M 0,60 V 55 q 0,-5 5,-5 H 15 q 5,0 5,-5 V 0 M -20,0 V 25 q 0,5 5,5 H -5 q 5,0 5,-5 V 20"/>
+  <path id="upper" d="M 20,0 V -45 q 0,-5 -5,-5 H 5 q -5,0 -5,-5 V -60 M 20,0 V -25 q 0,-5 -5,-5 H -15 q -5,0 -5,5 V 0"/>
+  <g id="impure"><use class="path" xlink:href="#lower" stroke-dasharray="4,1"/></g>
+  <g id="pure"  ><use class="path" xlink:href="#upper" stroke-dasharray="1,4"/></g>
+  <g id="all">
+   <use xlink:href="#lower"/>
+   <use xlink:href="#upper"/>
+   <use xlink:href="#lower" transform="scale(-1,1)"/>
+   <use xlink:href="#upper" transform="scale(-1,1)"/>
+  </g>
+  <g id="common">
+   <use xlink:href="#all" stroke="#cccccc" stroke-width="7"/>
+   <use xlink:href="#all" stroke="#ffffff" stroke-width="5"/>
+   <path d="M -3,-33 h 6 l -6,6 h 6" fill="#cccccc"/>
+   <g stroke="#00ff00" stroke-width="3">
+    <use xlink:href="#upper"/>
+    <use xlink:href="#lower"/>
+    <use xlink:href="#pure"/>
+    <use xlink:href="#impure"/>
+   </g>
+   <use xlink:href="#trap"/>
+   <use xlink:href="#trap"   transform="scale(-1,1)"/>
+   <use xlink:href="#arrow"  transform="translate(-20,-10) rotate(180)"/>
+   <use xlink:href="#arrow"  transform="translate( 20,-10)"/>
+   <use xlink:href="#arrow"  transform="translate(  0, 15)"/>
+   <use xlink:href="#arrow"  transform="translate(  0, 65)"/>
+   <use xlink:href="#arrow"  transform="translate(  0,-65)"/>
+   <use xlink:href="#closed" transform="translate(-10,-50)"/>
+   <use xlink:href="#open"   transform="translate( 10,-50)"/>
+   <use xlink:href="#open"   transform="translate(-10, 30)"/>
+   <use xlink:href="#closed" transform="translate( 10, 30)"/>
+   <use xlink:href="#closed" transform="translate(-10, 50)"/>
+   <use xlink:href="#open"   transform="translate( 10, 50)"/>
+  </g>
+ </defs>
+ <circle cx="0" cy="0" r="99999" fill="#ffffff"/>
+ <g id="main">
+  <g>
+   <text transform="translate(-25,-65)" y="0.7ex" fill="#000000">1.</text>
+   <text transform="translate( 10,-65)" y="0.7ex">O</text>
+   <text transform="translate( 10, 65)" y="0.7ex">I</text>
+   <text transform="translate(  0,  5)" y="0.7ex">E</text>
+   <text transform="translate( -8,-20)" y="0.7ex">D</text>
+   <text transform="translate(  8,-20)" y="0.7ex">A</text>
+   <use xlink:href="#common"/>
+   <use xlink:href="#needle" transform="translate( 5,0)"/>
+   <use xlink:href="#needle" transform="translate(-5,0) scale(-1,1)"/>
+  </g>
+  <g transform="translate(64,0)">
+   <text transform="translate(-25,-65)" y="0.7ex" fill="#000000">2.</text>
+   <text transform="translate( 10,-65)" y="0.7ex">O</text>
+   <text transform="translate( 10, 65)" y="0.7ex">I</text>
+   <text transform="translate(  0,  5)" y="0.7ex">E</text>
+   <text transform="translate( -8,-20)" y="0.7ex">A</text>
+   <text transform="translate(  9,-20)" y="0.7ex">D</text>
+   <use xlink:href="#common" transform="scale(-1,1)"/>
+   <use xlink:href="#needle" transform="translate(-5,0)"/>
+   <use xlink:href="#needle" transform="translate( 5,0) scale(-1,1)"/>
+  </g>
+ </g>
+</svg>
