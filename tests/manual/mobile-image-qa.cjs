@@ -31,7 +31,7 @@ const report = {
 };
 const fixture = path.join(root,'assets/exam-library/images/p1_2025_11_05.png');
 const png = 'data:image/png;base64,' + fs.readFileSync(fixture).toString('base64');
-const expectedNames=['empty','home-reopen','source','processing','comparison','320','375','768','1280','landscape','keyboard-size','restored','failed','interrupted','controlled-auth-tab-return','desktop-preserved','crop-pixels-and-rect','crop-reverse-edge-small','cancel-keeps-reference','malformed-recovery','decode-close-reselect','busy-readonly-transition','secondary-pointer-cancel','bounded-large-image-measurement'];
+const expectedNames=['empty','mobile-share','home-reopen','source','processing','comparison','320','375','768','1280','landscape','keyboard-size','restored','failed','interrupted','controlled-auth-tab-return','desktop-preserved','crop-pixels-and-rect','crop-reverse-edge-small','cancel-keeps-reference','malformed-recovery','decode-close-reselect','busy-readonly-transition','secondary-pointer-cancel','bounded-large-image-measurement'];
 report.expectedCases=['chromium','webkit'].flatMap(engine=>expectedNames.map(suffix=>({name:`${engine}-${suffix}`,status:'NOT_RUN'})));
 report.implementation=[{name:'mobile-canvas-and-library-flow',status:'NOT_IMPLEMENTED',reason:'This approved crop repair does not implement the separately scoped mobile canvas/library work.'}];
 async function snapshot(page, name) {
@@ -48,9 +48,16 @@ async function snapshot(page, name) {
   report.scenarios.push({name,geometry});
 }
 async function transport(context, connected=true) {
-  const state = {connected,release:false,outcome:'completed',sends:[],delivered:false};
+  const state = {connected,release:false,outcome:'completed',sends:[],sharePosts:[],delivered:false};
   await context.route('https://five-e-ai-runtime-probe.onrender.com/**', async route => {
-    const action = new URL(route.request().url()).pathname.split('/').pop();
+    const request = route.request();
+    const requestUrl = new URL(request.url());
+    if (requestUrl.pathname === '/api/shares' && request.method() === 'POST') {
+      state.sharePosts.push(request.postDataJSON());
+      await route.fulfill({status:201,json:{id:'c'.repeat(48),revokeKey:'d'.repeat(64),expiresAt:new Date(Date.now()+3600000).toISOString()}});
+      return;
+    }
+    const action = requestUrl.pathname.split('/').pop();
     let result = {};
     if(action==='bridge-status') result={login:{loggedIn:state.connected},server:state.connected};
     if(action==='bridge-models') result={data:[{model:'gpt-5.6-sol',displayName:'Controlled QA',supportedReasoningEfforts:['medium','high'],serviceTiers:['priority']}]};
@@ -72,7 +79,11 @@ async function transport(context, connected=true) {
     await route.fulfill({json:result});
   });
   await context.route('https://auth.openai.com/**',route=>route.fulfill({contentType:'text/html',body:'<h1>Controlled authentication tab</h1>'}));
-  await context.addInitScript(({connected})=>{localStorage.setItem('5e.tutorial.bannerSeen','true');if(connected)sessionStorage.setItem('5e:web-ai-session','f'.repeat(64));},{connected});
+  await context.addInitScript(({connected})=>{
+    window.FIVE_E_SHARING_BASE_URL='https://five-e-ai-runtime-probe.onrender.com';
+    localStorage.setItem('5e.tutorial.bannerSeen','true');
+    if(connected)sessionStorage.setItem('5e:web-ai-session','f'.repeat(64));
+  },{connected});
   return state;
 }
 async function runEngine(engine,device,base) {
@@ -86,6 +97,20 @@ async function runEngine(engine,device,base) {
     await page.goto(base);
     await page.locator('[data-mobile-photo]').waitFor();
     await snapshot(page,engine.name()+'-empty');
+    await page.locator('[data-mobile-share]').click();
+    await page.locator('.ai-sharing-dialog[open]').waitFor();
+    const sharingControls = await page.locator('.ai-sharing-dialog button,.ai-sharing-dialog [data-link],.ai-sharing-dialog label').evaluateAll(elements => elements.filter(element => {
+      const box=element.getBoundingClientRect();
+      return box.width>0&&box.height>0&&(box.width<43||box.height<43);
+    }).map(element => ({name:element.getAttribute('aria-label')||element.textContent.trim(),width:element.getBoundingClientRect().width,height:element.getBoundingClientRect().height})));
+    assert.deepEqual(sharingControls,[]);
+    await page.locator('.ai-sharing-dialog [data-create]').click();
+    await page.waitForFunction(()=>document.querySelector('.ai-sharing-dialog [data-link]').value.includes('#share='));
+    assert.equal(api.sharePosts.length,1);
+    await page.screenshot({path:path.join(output,engine.name()+'-mobile-share.png')});
+    await page.locator('.ai-sharing-dialog [data-close]').click();
+    assert.equal(await page.locator('[data-mobile-share]').evaluate(element=>document.activeElement===element),true);
+    report.scenarios.push({name:engine.name()+'-mobile-share',sharingLink:true});
     await page.locator('#ai-image-panel [data-ai-close]').click();
     await page.screenshot({path:path.join(output,engine.name()+'-home.png')});
     report.scenarios.push({name:engine.name()+'-home-reopen'});
