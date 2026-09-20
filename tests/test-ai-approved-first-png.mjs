@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { approvedFirstRun, APPROVED_FIRST_PROMPT, prepareApprovedFirstAttachment } from '../js/ai-approved-first-png.js';
+import { approvedFirstRequestText, approvedFirstRun, APPROVED_FIRST_PROMPT, prepareApprovedFirstAttachment } from '../js/ai-approved-first-png.js';
 import { candidateUsesAutomaticSeparation } from '../js/ai-panel.js';
 const models = [{ model:'gpt-5.6-sol', supportedReasoningEfforts:['medium','high'] }];
 const source = { attachments:[{referenceRole:'INPUT_SOURCE'}], model:'different', effort:'low', serviceTier:'standard' };
@@ -18,6 +18,11 @@ test('first conversion accepts exactly one source and rejects STYLE attachments'
 });
 test('approved protocol artifact remains byte-identical to the user-approved request',()=>{
   assert.equal(createHash('sha256').update(APPROVED_FIRST_PROMPT).digest('hex'),'8d6180f311791d497469d93cbc0eff98919b0d376d84a958f2b391c475e14067');
+});
+test('approved first conversion carries role contract and user instructions without changing the base protocol',()=>{
+  const text=approvedFirstRequestText({referenceRoleContract:'ROLE CONTRACT',instructions:'keep order'});
+  assert.equal(text,`${APPROVED_FIRST_PROMPT}\n\nROLE CONTRACT\n\n사용자 수정 요청:\nkeep order`);
+  assert.equal(approvedFirstRequestText(),APPROVED_FIRST_PROMPT);
 });
 test('input preparation failure stops before AI instead of silently using a fallback',async()=>{
   await assert.rejects(prepareApprovedFirstAttachment({data:'broken'}));

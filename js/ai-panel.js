@@ -70,7 +70,7 @@ import { openPdfReferencePicker } from "./pdf-library/reference-picker.js";
 import { getReferenceRole, partitionReferenceItems, planImageReferences } from "./ai-reference-roles.js";
 import { normalizeMarkPolicy, buildMarkPolicyContract } from "./ai-mark-policy.js?v=1";
 import { createStructureAnalysisController, formatStructureContract, STRUCTURE_SPEC_VERSION } from "./ai-structure-spec.js?v=1";
-import { APPROVED_FIRST_PROMPT, APPROVED_FIRST_REQUEST, approvedFirstRun, prepareApprovedFirstAttachment } from './ai-approved-first-png.js';
+import { APPROVED_FIRST_PROMPT, APPROVED_FIRST_REQUEST, approvedFirstRequestText, approvedFirstRun, prepareApprovedFirstAttachment } from './ai-approved-first-png.js';
 import { WHITE_PNG_VERSION, isWhitePngWorkflow, buildWhitePngPrompt } from "./ai-white-png.js?v=1";
 import {
   AI_IMAGE_GENERATION_EFFORT,
@@ -3617,7 +3617,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       const firstPrompt = imagePromptForRun(runInput) || APPROVED_FIRST_PROMPT;
       const firstInstructions = [discussionContext, entered, requestComments].filter(Boolean).join('\n\n');
       const result = await desktop.send({
-        text: runInput.approvedFirstPng ? `${firstPrompt}${firstInstructions ? `\n\n사용자 수정 요청:\n${firstInstructions}` : ''}` : (type === "image"
+        text: runInput.approvedFirstPng ? approvedFirstRequestText({ prompt: firstPrompt, referenceRoleContract, instructions: firstInstructions }) : (type === "image"
           ? (currentEngine === IMAGE_ENGINE_IDS.FAST_SCENE
             ? buildFastScenePrompt({
               request: requestWithVisualPlan,

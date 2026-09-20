@@ -354,6 +354,7 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
         name: String(reference.name || `PDF 선택 영역 ${index + 1}`),
         sourceKind: String(reference.sourceKind || 'auto'),
         source: reference.source === undefined ? null : structuredClone(reference.source),
+        referenceRole: reference.referenceRole,
       };
     });
   };
