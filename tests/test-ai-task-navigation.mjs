@@ -114,6 +114,29 @@ test('Given ten materialized PDF crops, when one deliberate batch start is reque
  },null,2));
 });
 
+test('Given ordered input and style references, when one grouped conversion starts, then one workspace receives every role intact',async()=>{
+ const f=fixture();
+ const references=[
+   {dataUrl:'data:image/png;base64,AAAA',name:'structure-a.png',referenceRole:'INPUT_SOURCE'},
+   {dataUrl:'data:image/png;base64,BBBB',name:'structure-b.png',referenceRole:'INPUT_SOURCE'},
+   {dataUrl:'data:image/png;base64,CCCC',name:'style.png',referenceRole:'STYLE_REFERENCE'},
+ ];
+ const result=await f.manager.openIndependentReferences({
+   references,
+   prompt:'convert together',
+   placement:'together',
+   startGeneration:true,
+ });
+ assert.equal(result.length,1);
+ assert.equal(f.openings.length,1);
+ assert.equal(f.openings[0].options.startGeneration,true);
+ assert.equal(f.openings[0].options.placement,'together');
+ assert.deepEqual(
+   f.openings[0].options.references.map(reference=>[reference.name,reference.referenceRole]),
+   references.map(reference=>[reference.name,reference.referenceRole]),
+ );
+});
+
 test('Given more than ten PDF crops assigned together, when workspaces are prepared, then it rejects before opening a partial batch',async()=>{
  const f=fixture();
  const references=Array.from({length:11},(_,index)=>({dataUrl:'data:image/png;base64,AAAA',name:`crop-${index}`}));
