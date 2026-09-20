@@ -258,6 +258,8 @@ test("preview chrome keeps only the two requested action labels visible", async 
 
 test("PDF page preview fits the available width and scrolls vertically", async () => {
   const source = await readFile(new URL("../css/unified-library.css", import.meta.url), "utf8");
+  assert.match(source, /\.unilib-stage \{[^\}]*min-width: 0;[^\}]*overflow-x: hidden;[^\}]*scrollbar-gutter: stable both-edges;/u);
+  assert.match(source, /\.unilib-preview \.unilib-stage \{[^\}]*width: auto;[^\}]*height: 100%;/u);
   assert.match(source, /data-pdf-display="page"\] \.unilib-preview-image[^\{]*\{[^\}]*width: 100%;[^\}]*max-width: none;[^\}]*margin: 0;/u);
   assert.match(source, /data-pdf-display="page"\] \.unilib-preview-image > img[^\{]*\{[^\}]*width: 100%;[^\}]*max-width: none;[^\}]*max-height: none;[^\}]*height: auto;/u);
 });
