@@ -293,12 +293,27 @@ test("continuous PDF cache evicts old rendered pages at its documented bound", (
 });
 
 test("library shell keeps the selected tray outside the result scroller", async () => {
-  const source = await readFile(new URL("../js/unified-library-ui.js", import.meta.url), "utf8");
+  const [source, css] = await Promise.all([
+    readFile(new URL("../js/unified-library-ui.js", import.meta.url), "utf8"),
+    readFile(new URL("../css/unified-library.css", import.meta.url), "utf8"),
+  ]);
   const tray = source.indexOf('data-unilib-selected-tray');
   const scroller = source.indexOf('class="unilib-result-scroll"');
   const list = source.indexOf('data-unilib-results', scroller);
   assert.ok(tray > 0 && scroller > tray && list > scroller);
+  assert.doesNotMatch(source, /data-unilib-selected-tray hidden/u);
+  assert.match(css, /\.unilib-selection-summary \{[^}]*height: var\(--unilib-selection-tray-height\)/u);
+  assert.doesNotMatch(css, /\.unilib-results \{ grid-template-rows: auto minmax\(0, 1fr\); \}/u);
+  assert.doesNotMatch(css, /\.unilib-selection-summary:not\(\.is-empty\)/u);
   assert.match(source, /result\.loadPreview\(pageNumber, \{ original: true \}\)/u);
+});
+
+test("result focus, checked selection, and PDF filters use one visual cue apiece", async () => {
+  const css = await readFile(new URL("../css/unified-library.css", import.meta.url), "utf8");
+  assert.match(css, /\.unilib-result-card\[aria-selected="true"\] \{[^}]*border-color: transparent;[^}]*background: var\(--unilib-raised\)/u);
+  assert.match(css, /\.unilib-result-card\[aria-selected="true"\]:focus-visible \{[^}]*outline: var\(--unilib-focus-outline-width\) solid var\(--unilib-focus\)/u);
+  assert.doesNotMatch(css, /aria-selected="true"\]:focus-visible \.unilib-result-copy strong[^}]*text-decoration/u);
+  assert.match(css, /\.unilib-pdf-display \{[^}]*border: 0;/u);
 });
 
 test("empty-query page mode preserves canonical pages and does not cap the inventory", async () => {
