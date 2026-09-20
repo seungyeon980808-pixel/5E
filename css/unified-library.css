@@ -738,6 +738,7 @@
   .unified-library-overlay .unilib-summary > span:last-child { display: none; }
   .unified-library-overlay .unilib-result-list { padding-inline: var(--unilib-space-1); }
   .unified-library-overlay .unilib-result-card { grid-template-columns: var(--unilib-mobile-card-columns); gap: var(--unilib-space-3); min-height: var(--unilib-mobile-card-height); padding: var(--unilib-space-3); }
+  .unified-library-overlay .unilib-result-copy strong { display: -webkit-box; white-space: normal; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
   .unified-library-overlay .unilib-thumb { width: var(--unilib-mobile-thumb-width); height: var(--unilib-mobile-thumb-height); }
   .unified-library-overlay .unilib-stage { min-height: var(--unilib-mobile-stage-height); margin: var(--unilib-space-4); }
   .unified-library-overlay .unilib-representations { margin-inline: var(--unilib-space-4); }
