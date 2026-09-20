@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg version="1.1" viewBox="0 0 401.33 217.33" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+<metadata>
+<rdf:RDF>
+<cc:Work rdf:about="">
+<dc:format>image/svg+xml</dc:format>
+<dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+<dc:title/>
+</cc:Work>
+</rdf:RDF>
+</metadata>
+<g>
+<rect x="359.03" y="23.693" width="36.45" height="188.17" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+<circle cx="19.82" cy="40.095" r="12.985" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="20.959" cy="115.73" r="12.985" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="20.048" cy="191.36" r="12.985" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="108.44" cy="40.095" r="22.064" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="235.56" cy="115.73" r="22.064" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="108.44" cy="191.36" r="2.5059"/>
+<circle cx="235.56" cy="191.36" r="2.5059"/>
+<circle cx="274.29" cy="115.73" r="2.5059"/>
+<circle cx="148.53" cy="40.095" r="2.5059"/>
+<path d="m33.261 40.095h52.966" fill="none" stroke="#000" stroke-width="2.0108"/>
+<path d="m33.481 115.73h179.99" fill="none" stroke="#000" stroke-width="2.0077"/>
+<path d="m108.44 62.296v128.61" fill="none" stroke="#000" stroke-width="2.0162"/>
+<path d="m33.186 191.36h325.39" fill="none" stroke="#000" stroke-width="2.0033"/>
+<path d="m235.56 137.78v56.498" fill="none" stroke="#000" stroke-width="2"/>
+<path d="m235.56 93.576v-13.841h38.647v34.335" fill="none" stroke="#000" stroke-width="2"/>
+<path d="m257.41 115.73h100.71" fill="none" stroke="#000" stroke-width="1.9914"/>
+<path d="m130.76 40.095h227.7" fill="none" stroke="#000" stroke-width="2.0035"/>
+<path d="m108.44 18.064v-11.229h40.095v34.172" fill="none" stroke="#000" stroke-width="2"/>
+<text x="12.913456" y="46.396141" fill="#000000" font-family="sans-serif" font-size="17.333px" letter-spacing="0px" stroke-width="2" word-spacing="0px" style="line-height:1.25" xml:space="preserve"><tspan x="12.913456" y="46.396141">R</tspan></text>
+<text x="14.966581" y="122.02996" fill="#000000" font-family="sans-serif" font-size="17.333px" letter-spacing="0px" stroke-width="2" word-spacing="0px" style="line-height:1.25" xml:space="preserve"><tspan x="14.966581" y="122.02996">S</tspan></text>
+<text x="14.707023" y="197.66377" fill="#000000" font-family="sans-serif" font-size="17.333px" letter-spacing="0px" stroke-width="2" word-spacing="0px" style="line-height:1.25" xml:space="preserve"><tspan x="14.707023" y="197.66377">T</tspan></text>
+<text x="226.989" y="122.02996" fill="#000000" font-family="sans-serif" font-size="17.333px" letter-spacing="0px" stroke-width="2" word-spacing="0px" style="line-height:1.25" xml:space="preserve"><tspan x="226.989" y="122.02996">W</tspan></text>
+<text x="99.869507" y="46.396141" fill="#000000" font-family="sans-serif" font-size="17.333px" letter-spacing="0px" stroke-width="2" word-spacing="0px" style="line-height:1.25" xml:space="preserve"><tspan x="99.869507" y="46.396141">W</tspan></text>
+<text x="370.80862" y="91.580276" fill="#000000" font-family="sans-serif" font-size="17.333px" letter-spacing="0px" stroke-width="2" word-spacing="0px" style="line-height:1.25" xml:space="preserve"><tspan x="370.80862" y="91.580276">L</tspan><tspan x="370.80862" y="113.24694">O</tspan><tspan x="370.80862" y="134.9136">A</tspan><tspan x="370.80862" y="156.58028">D</tspan></text>
+</g>
+</svg>

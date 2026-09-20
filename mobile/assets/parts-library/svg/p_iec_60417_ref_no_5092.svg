@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200" height="200" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <g fill="none">
+  <g stroke="#999" stroke-width="3">
+   <path d="m0 16v-16h16"/>
+   <path d="m200 16v-16h-16"/>
+   <path d="m0 184v16h16"/>
+   <path d="m200 184v16h-16"/>
+  </g>
+  <g stroke="#000" stroke-width="5">
+   <path d="M106.5,70 93.5,91"/>
+   <path d="M51,121 71,109C76,106 83.1,106 87,109L113,129C116.9,132 124,132 129,129L149,117" id="a"/>
+   <use xlink:href="#a" y="-38"/>
+  </g>
+ </g>
+ </svg>

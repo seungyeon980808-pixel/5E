@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   version="1.0"
+   width="50"
+   height="50"
+   id="svg2">
+  <defs
+     id="defs4" />
+  <g
+     id="layer1">
+    <path
+       d="M 25,25 L 28,22 L 28,28 L 25,25 z "
+       style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       id="path1307" />
+    <path
+       d="M 28,25 L 30,25 L 30,45"
+       style="fill:none;fill-opacity:0.75;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       id="path1309" />
+    <path
+       d="M 24,31 L 30,31"
+       style="fill:none;fill-opacity:0.75;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       id="path1315" />
+    <path
+       d="M 24,19 L 30,19 L 30,5"
+       style="fill:none;fill-opacity:0.75;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       id="path1321" />
+    <path
+       d="M 22,19 L 22,32 L 5,32"
+       style="fill:none;fill-opacity:0.75;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       id="path1325" />
+    <path
+       d="M 40,25 C 40,32.179702 34.179702,38 27,38 C 19.820298,38 14,32.179702 14,25 C 14,17.820298 19.820298,12 27,12 C 34.179702,12 40,17.820298 40,25 L 40,25 z "
+       transform="matrix(0.814815,0,0,0.814815,5,4.62963)"
+       style="opacity:1;fill:none;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-linecap:square;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="path2202" />
+    <path
+       d="M 24,17 L 24,21"
+       style="fill:none;fill-opacity:0.75;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       id="path4647" />
+    <path
+       d="M 24,23 L 24,27"
+       style="fill:none;fill-opacity:0.75;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       id="path4649" />
+    <path
+       d="M 24,29 L 24,33"
+       style="fill:none;fill-opacity:0.75;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       id="path4651" />
+  </g>
+  <text
+     x="31.414063"
+     y="11.362305"
+     style="font-size:6px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+     id="text3963"
+     xml:space="preserve"><tspan
+       x="31.414063"
+       y="11.362305"
+       id="tspan3965">D</tspan></text>
+  <text
+     x="31.607422"
+     y="42.920898"
+     style="font-size:6px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+     id="text3967"
+     xml:space="preserve"><tspan
+       x="31.607422"
+       y="42.920898"
+       id="tspan3969">S</tspan></text>
+  <text
+     x="6.6630859"
+     y="29.915039"
+     style="font-size:6px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+     id="text3971"
+     xml:space="preserve"><tspan
+       x="6.6630859"
+       y="29.915039"
+       id="tspan3973">G</tspan></text>
+</svg>

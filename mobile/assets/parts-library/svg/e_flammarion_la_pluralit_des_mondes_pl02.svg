@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- !AU (astronomical units) for Wikisource (f0x1) -->
+<svg	xmlns="http://www.w3.org/2000/svg"
+	xmlns:xlink="http://www.w3.org/1999/xlink"
+	width="1008pt" height="1008pt"
+	viewBox="0 1000 16000 16000">
+<desc>Source:
+Camille Flammarion « La pluralité des mondes habités » (1864) Pl. 2
+Scale: 1 AU (astronomical units) = 258.065 units; origin(x=y=0): 8000,9000; -31 ≤x≤ 31
+</desc>
+<g fill="none">
+<defs>
+<clipPath id="cp0">
+	<path clip-rule="evenodd" d="M 225,128 H 15775 V 16774 H 225 z
+		M 8289,8483 8274,8475 8272,8458 8217,8500 8229,8518z"/>
+</clipPath>
+</defs>
+<path d="M 8510,8358 A 1198 1198 0 0 0 8232 8503" clip-path="url(#cp0)"
+	stroke="black" stroke-width="15px"/>
+<polygon points=" 8272,8458 8249,8491 8289,8483 8274,8475 8272,8458"
+	stroke="black" stroke-width="15px" stroke-miterlimit="8" fill="black"/>
+<defs>
+<clipPath id="cp1">
+	<path clip-rule="evenodd" d="M 225,128 H 15775 V 16774 H 225 z
+		M 7913,9190 7916,9206 7905,9219 7972,9233 7978,9213z"/>
+</clipPath>
+</defs>
+<path d="M 7800,9097 A 222 222 0 0 0 7965 9220" clip-path="url(#cp1)"
+	stroke="black" stroke-width="15px"/>
+<polygon points=" 7905,9219 7945,9214 7913,9190 7916,9206 7905,9219"
+	stroke="black" stroke-width="15px" stroke-miterlimit="8" fill="black"/>
+<defs>
+<clipPath id="cp2">
+	<path clip-rule="evenodd" d="M 225,128 H 15775 V 16774 H 225 z
+		M 7495,8942 7479,8949 7465,8941 7466,9010 7487,9011z"/>
+</clipPath>
+</defs>
+<path d="M 7526,8779 A 523 523 0 0 0 7477 9000" clip-path="url(#cp2)"
+	stroke="black" stroke-width="15px"/>
+<polygon points=" 7465,8941 7478,8979 7495,8942 7479,8949 7465,8941"
+	stroke="black" stroke-width="15px" stroke-miterlimit="8" fill="black"/>
+<defs>
+<clipPath id="cp3">
+	<path clip-rule="evenodd" d="M 225,128 H 15775 V 16774 H 225 z
+		M 9231,8842 9245,8832 9261,8837 9246,8770 9225,8773z"/>
+</clipPath>
+</defs>
+<path d="M 9255,8956 A 1256 1256 0 0 0 9237 8782" clip-path="url(#cp3)"
+	stroke="black" stroke-width="15px"/>
+<polygon points=" 9261,8837 9240,8803 9231,8842 9245,8832 9261,8837"
+	stroke="black" stroke-width="15px" stroke-miterlimit="8" fill="black"/>
+<defs>
+<clipPath id="cp4">
+	<path clip-rule="evenodd" d="M 225,128 H 15775 V 16774 H 225 z
+		M 8701,6769 8698,6753 8709,6741 8642,6725 8636,6745z"/>
+</clipPath>
+</defs>
+<path d="M 8957,6850 A 2353 2353 0 0 0 8649 6738" clip-path="url(#cp4)"
+	stroke="black" stroke-width="15px"/>
+<polygon points=" 8709,6741 8669,6744 8701,6769 8698,6753 8709,6741"
+	stroke="black" stroke-width="15px" stroke-miterlimit="8" fill="black"/>
+<path d="M 9710,6895 A 60 60 0 0 0 9710 7015"
+	stroke="black" stroke-width="15px"/>
+<path d="M 9694,6836 A 119 119 0 0 0 9694 7073"
+	stroke="black" stroke-width="15px"/>
+<path d="M 9669,6782 A 175 175 0 0 0 9669 7128"
+	stroke="black" stroke-width="15px"/>
+<path d="M 9634,6732 A 228 228 0 0 0 9634 7177"
+	stroke="black" stroke-width="15px"/>
+<path d="M 9029,7015 A 60 60 0 0 0 9029 6895"
+	stroke="black" stroke-width="15px"/>
+<path d="M 9044,7073 A 118 118 0 0 0 9044 6836"
+	stroke="black" stroke-width="15px"/>
+<path d="M 9070,7128 A 175 175 0 0 0 9070 6782"
+	stroke="black" stroke-width="15px"/>
+<path d="M 9104,7177 A 227 227 0 0 0 9104 6732"
+	stroke="black" stroke-width="15px"/>
+<path d="M 9309,6614 A 60 60 0 0 0 9429 6614"
+	stroke="black" stroke-width="15px"/>
+<path d="M 9251,6630 A 118 118 0 0 0 9488 6630"
+	stroke="black" stroke-width="15px"/>
+<path d="M 9196,6655 A 175 175 0 0 0 9542 6655"
+	stroke="black" stroke-width="15px"/>
+<path d="M 9147,6690 A 228 228 0 0 0 9592 6690"
+	stroke="black" stroke-width="15px"/>
+<path d="M 9429,7295 A 60 60 0 0 0 9309 7295"
+	stroke="black" stroke-width="15px"/>
+<path d="M 9488,7280 A 119 119 0 0 0 9251 7280"
+	stroke="black" stroke-width="15px"/>
+<path d="M 9542,7254 A 175 175 0 0 0 9196 7254"
+	stroke="black" stroke-width="15px"/>
+<path d="M 9592,7220 A 228 228 0 0 0 9147 7220"
+	stroke="black" stroke-width="15px"/>
+<defs>
+<clipPath id="cp5">
+	<path clip-rule="evenodd" d="M 225,128 H 15775 V 16774 H 225 z
+		M 3202,9530 3188,9539 3173,9534 3185,9602 3206,9599z"/>
+</clipPath>
+</defs>
+<path d="M 3164,9253 A 4843 4843 0 0 0 3194 9590" clip-path="url(#cp5)"
+	stroke="black" stroke-width="15px"/>
+<polygon points=" 3173,9534 3192,9569 3202,9530 3188,9539 3173,9534"
+	stroke="black" stroke-width="15px" stroke-miterlimit="8" fill="black"/>
+<defs>
+<clipPath id="cp6">
+	<path clip-rule="evenodd" d="M 225,128 H 15775 V 16774 H 225 z
+		M 3014,3216 2998,3209 2994,3193 2945,3242 2959,3258z"/>
+</clipPath>
+</defs>
+<path d="M 3268,2987 A 7652 7652 0 0 0 2960 3243" clip-path="url(#cp6)"
+	stroke="black" stroke-width="15px"/>
+<polygon points=" 2994,3193 2976,3229 3014,3216 2998,3209 2994,3193"
+	stroke="black" stroke-width="15px" stroke-miterlimit="8" fill="black"/>
+<circle cx="8000" cy="9000" r="100"
+	stroke="black" stroke-width="15px"/>
+<circle cx="8000" cy="9000" r="187"
+	stroke="black" stroke-width="15px"/>
+<circle cx="8000" cy="9000" r="258"
+	stroke="black" stroke-width="15px"/>
+<circle cx="8000" cy="9000" r="393"
+	stroke="black" stroke-width="15px"/>
+<circle cx="8000" cy="9000" r="865"
+	stroke="black" stroke-width="15px"/>
+<circle cx="8000" cy="9000" r="1343"
+	stroke="black" stroke-width="15px"/>
+<circle cx="8000" cy="9000" r="2461"
+	stroke="black" stroke-width="15px"/>
+<circle cx="8000" cy="9000" r="4950"
+	stroke="black" stroke-width="15px"/>
+<circle cx="8000" cy="9000" r="7760"
+	stroke="black" stroke-width="15px"/>
+<ellipse transform="translate(8497,8730) rotate(-29)" rx="645" ry="258"
+	stroke="black" stroke-width="15px"/>
+<ellipse transform="translate(4780,5794) rotate(-135)" rx="4619" ry="1155"
+	stroke="black" stroke-width="15px"/>
+<circle cx="8522" cy="8430" r="22" fill="#0c0c0c"
+	stroke="black" stroke-width="15px"/>
+<circle cx="2900" cy="5455" r="22" fill="#0c0c0c"
+	stroke="black" stroke-width="15px"/>
+<circle cx="8000" cy="9000" r="26" fill="#0c0c0c"
+	stroke="black" stroke-width="15px"/>
+<circle cx="8063" cy="8922" r="22" fill="#0c0c0c"
+	stroke="black" stroke-width="15px"/>
+<circle cx="7832" cy="9082" r="22" fill="#0c0c0c"
+	stroke="black" stroke-width="15px"/>
+<circle cx="8238" cy="9101" r="22" fill="#0c0c0c"
+	stroke="black" stroke-width="15px"/>
+<circle cx="8238" cy="9101" r="43"
+	stroke="black" stroke-width="15px"/>
+<circle cx="7620" cy="8898" r="22" fill="#0c0c0c"
+	stroke="black" stroke-width="15px"/>
+<circle cx="9338" cy="9115" r="22" fill="#0c0c0c"
+	stroke="black" stroke-width="15px"/>
+<circle cx="9338" cy="9115" r="65"
+	stroke="black" stroke-width="15px"/>
+<circle cx="9338" cy="9115" r="108"
+	stroke="black" stroke-width="15px"/>
+<circle cx="9338" cy="9115" r="162"
+	stroke="black" stroke-width="15px"/>
+<circle cx="9338" cy="9115" r="216"
+	stroke="black" stroke-width="15px"/>
+<circle cx="9369" cy="6955" r="22" fill="#0c0c0c"
+	stroke="black" stroke-width="15px"/>
+<circle cx="9369" cy="6955" r="43"
+	stroke="#000020" stroke-width="30px"/>
+<circle cx="9369" cy="6955" r="86"
+	stroke="#000020" stroke-width="30px"/>
+<circle cx="9369" cy="6955" r="130"
+	stroke="#000020" stroke-width="30px"/>
+<circle cx="9369" cy="6955" r="173"
+	stroke="#000020" stroke-width="30px"/>
+<circle cx="9369" cy="6955" r="216"
+	stroke="#000020" stroke-width="30px"/>
+<circle cx="9369" cy="6955" r="259"
+	stroke="#000020" stroke-width="30px"/>
+<circle cx="9369" cy="6955" r="303"
+	stroke="#000020" stroke-width="30px"/>
+<circle cx="9369" cy="6955" r="346"
+	stroke="#000020" stroke-width="30px"/>
+<circle cx="3050" cy="9043" r="22" fill="#0c0c0c"
+	stroke="black" stroke-width="15px"/>
+<ellipse transform="translate(3050,9043) rotate(-90)" rx="216" ry="86"
+	stroke="black" stroke-width="15px"/>
+<circle cx="3362" cy="2778" r="22" fill="#0c0c0c"
+	stroke="black" stroke-width="15px"/>
+<circle cx="3362" cy="2778" r="173"
+	stroke="black" stroke-width="15px"/>
+<path stroke="black" stroke-width="30px" d=" M 8522.0,8430.3 l 216.2,-36.7" />
+<path stroke="black" stroke-width="30px" d=" M 2900.0,5455.4 l 216.2,389.1 M 2900.0,5455.4 l 129.7,324.2" />
+<defs>
+<clipPath id="cp7">
+	<path clip-rule="evenodd" d="M 225,128 H 15775 V 16774 H 225 z
+		M 2813,5244 2820,5229 2836,5225 2788,5175 2772,5189z"/>
+</clipPath>
+</defs>
+<polyline points=" 3008,5455 2787,5190" clip-path="url(#cp7)"
+	stroke="black" stroke-width="15px"/>
+<polygon points=" 2836,5225 2800,5206 2813,5244 2820,5229 2836,5225"
+	stroke="black" stroke-width="15px" stroke-miterlimit="8" fill="black"/>
+<text xml:space="preserve" x="8627" y="8313" font-family="Times" font-style="normal" font-weight="bold" font-size="168" fill="black">Comète d'Encke</text>
+<text xml:space="preserve" x="3029" y="5518" font-family="Times" font-style="normal" font-weight="bold" font-size="168" fill="black">Comète de Halley</text>
+<text xml:space="preserve" x="8010" y="8901" font-family="Times" font-style="normal" font-weight="bold" font-size="168" fill="black">Mercure</text>
+<text xml:space="preserve" x="7465" y="9061" font-family="Times" font-style="normal" font-weight="bold" font-size="168" fill="black">Vénus</text>
+<text xml:space="preserve" x="8311" y="9059" font-family="Times" font-style="normal" font-weight="bold" font-size="168" fill="black">La Terre</text>
+<text xml:space="preserve" x="8290" y="9206" font-family="Times" font-style="normal" font-weight="bold" font-size="168" fill="black">et la Lune</text>
+<text xml:space="preserve" x="7410" y="8846" font-family="Times" font-style="normal" font-weight="bold" font-size="168" fill="black">Mars</text>
+<path  id="ARC1" d="M 7200,8815 A 821,821,0 1,0 8623,8465" />
+<text xml:space="preserve" font-family="Times" font-style="normal" font-weight="bold" font-size="168" fill="black"><textPath xlink:href="#ARC1">Moyenne Orbite des petites Planètes</textPath></text>
+<text xml:space="preserve" x="9128" y="8720" font-family="Times" font-style="normal" font-weight="bold" font-size="168" fill="black">Monde</text>
+<text xml:space="preserve" x="9023" y="8846" font-family="Times" font-style="normal" font-weight="bold" font-size="168" fill="black">de Jupiter</text>
+<text xml:space="preserve" x="8844" y="6556" font-family="Times" font-style="normal" font-weight="bold" font-size="168" fill="black">Monde de Saturne</text>
+<text xml:space="preserve" x="2525" y="8806" font-family="Times" font-style="normal" font-weight="bold" font-size="168" fill="black">Monde d'Uranus</text>
+<text xml:space="preserve" x="2356" y="2556" font-family="Times" font-style="normal" font-weight="bold" font-size="168" fill="black">Monde de Neptune</text>
+<path  id="ARC2" d="M 4016,2290 A 7803,7803,0 0,1 7136,1245" />
+<text xml:space="preserve" font-family="Times" font-style="normal" font-weight="bold" font-size="168" fill="black"><textPath xlink:href="#ARC2">Distance su Soleil : 1,147,528,000 lieues.</textPath></text>
+</g>
+</svg>

@@ -1,0 +1,314 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   id="svg2"
+   sodipodi:version="0.32"
+   inkscape:version="0.46"
+   width="800"
+   height="800"
+   version="1.0"
+   sodipodi:docname="Aufbau_der_erde_schematisch.svg"
+   inkscape:output_extension="org.inkscape.output.svg.inkscape">
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs5">
+    <inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="0 : 526.18109 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_z="744.09448 : 526.18109 : 1"
+       inkscape:persp3d-origin="372.04724 : 350.78739 : 1"
+       id="perspective9" />
+    <inkscape:perspective
+       id="perspective2536"
+       inkscape:persp3d-origin="372.04724 : 350.78739 : 1"
+       inkscape:vp_z="744.09448 : 526.18109 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 526.18109 : 1"
+       sodipodi:type="inkscape:persp3d" />
+  </defs>
+  <sodipodi:namedview
+     inkscape:window-height="750"
+     inkscape:window-width="1280"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     guidetolerance="10.0"
+     gridtolerance="10.0"
+     objecttolerance="10.0"
+     borderopacity="1.0"
+     bordercolor="#666666"
+     pagecolor="#ffffff"
+     id="base"
+     showgrid="false"
+     inkscape:zoom="1.155"
+     inkscape:cx="425.56568"
+     inkscape:cy="590.73229"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:current-layer="svg2" />
+  <rect
+     style="fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:5;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+     id="rect2623"
+     width="800"
+     height="800"
+     x="0"
+     y="0" />
+  <g
+     id="g2384">
+    <path
+       style="fill:#fcfcfc"
+       d="M 0,400 L 0,0 L 400,0 L 800,0 L 800,400 L 800,800 L 400,800 L 0,800 L 0,400 z"
+       id="path2400" />
+    <path
+       style="fill:#fbf900"
+       d="M 0,400 L 0,0 L 10.75,0.006467515 C 34.788153,0.020929572 72.216859,2.5564771 100.5,6.086437 C 247.01783,24.373022 385.68708,83.25444 501.5,176.35813 C 543.21798,209.89582 590.10418,256.78202 623.64187,298.5 C 716.74556,414.31292 775.62698,552.98217 793.91356,699.5 C 797.44352,727.78314 799.97907,765.21185 799.99353,789.25 L 800,800 L 400,800 L 0,800 L 0,400 z"
+       id="path2398"
+       sodipodi:nodetypes="cccssssccccc" />
+    <path
+       style="fill:#fdbc00"
+       d="M 160,795.55122 C 160,793.10439 159.32814,786.01689 158.50697,779.80122 C 148.91136,707.16917 92.830828,651.08864 20.198784,641.49303 C 13.983115,640.67186 6.8956146,640 4.4487836,640 L 0,640 L 0,320 L 0,0 L 10.75,0.006467515 C 34.788153,0.020929572 72.216859,2.5564771 100.5,6.086437 C 247.01783,24.373022 385.68708,83.25444 501.5,176.35813 C 543.21798,209.89582 590.10418,256.78202 623.64187,298.5 C 716.74556,414.31292 775.62698,552.98217 793.91356,699.5 C 797.44352,727.78314 799.97907,765.21185 799.99353,789.25 L 800,800 L 480,800 L 160,800 L 160,795.55122 z"
+       id="path2396"
+       sodipodi:nodetypes="csscccccssssccccc" />
+    <path
+       style="fill:#fd7d00"
+       d="M 436,791.19989 C 436,772.3746 432.26966,737.61971 427.88558,715.59941 C 415.72111,654.49982 391.32226,597.94015 355.15473,547 C 328.80002,509.88071 290.11929,471.19998 253,444.84527 C 202.05985,408.67774 145.50018,384.27889 84.400595,372.11442 C 62.380287,367.73034 27.625404,364 8.8001057,364 L 0,364 L 0,182 L 0,0 L 10.75,0.006467515 C 34.788153,0.020929572 72.216859,2.5564771 100.5,6.086437 C 247.01783,24.373022 385.68708,83.25444 501.5,176.35813 C 543.21798,209.89582 590.10418,256.78202 623.64187,298.5 C 716.74556,414.31292 775.62698,552.98217 793.91356,699.5 C 797.44352,727.78314 799.97907,765.21185 799.99353,789.25 L 800,800 L 618,800 L 436,800 L 436,791.19989 z"
+       id="path2394"
+       sodipodi:nodetypes="csssscccccssssccccc" />
+    <path
+       style="fill:#fd3d00"
+       d="M 674.99444,796.75 C 674.97779,787.02775 672.76637,748.39652 671.45959,735 C 659.42586,611.63571 614.63941,495.54784 541.15652,397.25039 C 426.55386,243.94738 254.57282,146.80335 65.5,128.57432 C 51.665746,127.24052 12.971572,125.02221 3.25,125.00556 L 0,125 L 0,62.5 L 0,0 L 10.585768,0 C 26.619601,0 58.100649,1.8348101 80.883919,4.0971876 C 161.83157,12.135285 238.28968,31.765351 314.88103,64.17425 C 334.92924,72.65746 382.99346,96.869469 403,108.56356 C 435.61044,127.62479 478.00165,157.0841 506.23639,180.30655 C 546.26543,213.22956 586.77044,253.73457 619.69345,293.76361 C 642.96469,322.05767 672.49108,364.5566 691.41756,397 C 702.25377,415.5752 723.84372,457.86801 732.51181,477.5 C 760.56346,541.03297 781.46397,613.59098 791.41852,682 C 796.23535,715.1019 800,762.22399 800,789.41423 L 800,800 L 737.5,800 L 675,800 L 674.99444,796.75 z"
+       id="path2392"
+       sodipodi:nodetypes="cssscccccssssssssccccc" />
+    <path
+       style="fill:#fd0000"
+       d="M 736.69675,774.75 C 735.04436,705.21422 722.93785,636.9011 700.05634,568 C 655.96918,435.24417 576.80232,319.83364 468.49365,230.42474 C 361.14477,141.80815 229.61706,85.245924 91,68.087216 C 65.005121,64.869441 52.320983,63.946544 25.25,63.30325 L -1.1363133e-13,62.703229 L -5.6815663e-14,31.351615 L 0,0 L 10.585768,0 C 26.619601,-1.1368684e-13 58.100649,1.8348101 80.883919,4.0971876 C 161.83157,12.135285 238.28968,31.765351 314.88103,64.17425 C 334.92924,72.65746 382.99346,96.869469 403,108.56356 C 435.61044,127.62479 478.00165,157.0841 506.23639,180.30655 C 546.26543,213.22956 586.77044,253.73457 619.69345,293.76361 C 642.96469,322.05767 672.49108,364.5566 691.41756,397 C 702.25377,415.5752 723.84372,457.86801 732.51181,477.5 C 760.56346,541.03297 781.46397,613.59098 791.41852,682 C 796.23535,715.1019 800,762.22399 800,789.41423 L 800,800 L 768.64839,800 L 737.29677,800 L 736.69675,774.75 z"
+       id="path2390"
+       sodipodi:nodetypes="cssscccccssssssssccccc" />
+    <path
+       style="fill:#9e0f00"
+       d="M 793.57673,797.75 C 793.32297,796.5125 792.841,786.725 792.50568,776 C 789.54903,681.43368 770.51214,590.60498 735.13955,502.29515 C 727.66505,483.63459 719.89713,466.74603 707.40673,442 C 669.19324,366.29134 621.16122,300.03283 560.5642,239.4358 C 520.88918,199.76079 484.44572,169.98639 437,138.48353 C 373.44418,96.283939 303.89853,63.480689 231.35452,41.48479 C 163.63711,20.952353 95.098796,9.7172502 24,7.4943217 C -0.22807804,6.7368224 1.8053992e-14,6.7797141 7.9380946e-15,2.980948 L 0,0 L 10.585768,0 C 26.619601,1.1368684e-13 58.100649,1.8348101 80.883919,4.0971876 C 161.83157,12.135285 238.28968,31.765351 314.88103,64.17425 C 334.92924,72.65746 382.99346,96.869469 403,108.56356 C 435.61044,127.62479 478.00165,157.0841 506.23639,180.30655 C 546.26543,213.22956 586.77044,253.73457 619.69345,293.76361 C 642.96469,322.05767 672.49108,364.5566 691.41756,397 C 702.25377,415.5752 723.84372,457.86801 732.51181,477.5 C 760.56346,541.03297 781.46397,613.59098 791.41852,682 C 796.23535,715.1019 800,762.22399 800,789.41423 L 800,800 L 797.01905,800 C 794.73107,800 793.93085,799.47695 793.57673,797.75 z"
+       id="path2388"
+       sodipodi:nodetypes="cssssssscccsssssssscccc" />
+    <path
+       style="fill:#000000"
+       d="M 793.99535,785.75 C 793.98516,754.48092 789.78208,706.75953 783.93276,671.5 C 759.11441,521.89586 695.75716,388.6984 594.38062,273 C 579.18729,255.66026 544.33974,220.81271 527,205.61938 C 411.3016,104.24284 278.10414,40.885594 128.5,16.067242 C 93.240469,10.217915 45.519085,6.0148436 14.25,6.0046469 L 0,6 L 0,3 L 0,0 L 10.585768,0 C 26.619601,1.1368684e-13 58.100649,1.8348101 80.883919,4.0971876 C 161.83157,12.135285 238.28968,31.765351 314.88103,64.17425 C 334.92924,72.65746 382.99346,96.869469 403,108.56356 C 435.61044,127.62479 478.00165,157.0841 506.23639,180.30655 C 546.26543,213.22956 586.77044,253.73457 619.69345,293.76361 C 642.96469,322.05767 672.49108,364.5566 691.41756,397 C 702.25377,415.5752 723.84372,457.86801 732.51181,477.5 C 760.56346,541.03297 781.46397,613.59098 791.41852,682 C 796.23535,715.1019 800,762.22399 800,789.41423 L 800,800 L 797,800 L 794,800 L 793.99535,785.75 z"
+       id="path2386"
+       sodipodi:nodetypes="csssscccccssssssssccccc" />
+  </g>
+  <rect
+     style="fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:6;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+     id="rect2419"
+     width="800"
+     height="800"
+     x="1247.4049"
+     y="-142.90742" />
+  <text
+     xml:space="preserve"
+     style="font-size:40px;font-style:normal;font-weight:normal;writing-mode:lr-tb;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+     x="14.075677"
+     y="771.7384"
+     id="text3182"><tspan
+       sodipodi:role="line"
+       id="tspan3184"
+       x="14.075677"
+       y="771.7384"
+       style="font-size:20px;writing-mode:lr-tb">Innerer Kern</tspan><tspan
+       sodipodi:role="line"
+       x="14.075677"
+       y="796.7384"
+       id="tspan3186"
+       style="font-size:20px;writing-mode:lr-tb" /></text>
+  <text
+     xml:space="preserve"
+     style="font-size:40px;font-style:normal;font-weight:normal;writing-mode:lr-tb;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+     x="13.08056"
+     y="759.51965"
+     id="text3188"><tspan
+       sodipodi:role="line"
+       id="tspan3190"
+       x="13.08056"
+       y="759.51965"
+       style="font-size:20px;writing-mode:lr-tb" /><tspan
+       sodipodi:role="line"
+       x="13.08056"
+       y="790.2204"
+       id="tspan3192"
+       style="font-size:20px;writing-mode:lr-tb">5100-6371 km</tspan></text>
+  <text
+     xml:space="preserve"
+     style="font-size:40.84649277px;font-style:normal;font-weight:normal;writing-mode:lr-tb;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+     x="13.326287"
+     y="525.89294"
+     id="text3194"><tspan
+       sodipodi:role="line"
+       id="tspan3196"
+       x="13.326287"
+       y="525.89294"
+       style="font-size:20.42324638px;writing-mode:lr-tb">Äuβerer Kern</tspan><tspan
+       sodipodi:role="line"
+       x="13.326287"
+       y="551.422"
+       id="tspan3198"
+       style="font-size:20.42324638px;writing-mode:lr-tb" /></text>
+  <text
+     xml:space="preserve"
+     style="font-size:40px;font-style:normal;font-weight:normal;writing-mode:lr-tb;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+     x="13.83056"
+     y="514.55988"
+     id="text3200"><tspan
+       sodipodi:role="line"
+       id="tspan3202"
+       x="13.83056"
+       y="514.55988"
+       style="font-size:20px;writing-mode:lr-tb" /><tspan
+       sodipodi:role="line"
+       x="13.83056"
+       y="545.26062"
+       id="tspan3204"
+       style="font-size:20px;writing-mode:lr-tb">2900-5100 km</tspan></text>
+  <text
+     xml:space="preserve"
+     style="font-size:40.92739487px;font-style:normal;font-weight:normal;writing-mode:lr-tb;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+     x="13.039178"
+     y="250.52295"
+     id="text3206"><tspan
+       sodipodi:role="line"
+       id="tspan3208"
+       x="13.039178"
+       y="250.52295"
+       style="font-size:20.46369743px;writing-mode:lr-tb">Unterer Mantel</tspan><tspan
+       sodipodi:role="line"
+       x="13.039178"
+       y="276.10257"
+       id="tspan3210"
+       style="font-size:20.46369743px;writing-mode:lr-tb" /></text>
+  <text
+     xml:space="preserve"
+     style="font-size:40px;font-style:normal;font-weight:normal;writing-mode:lr-tb;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+     x="13.83056"
+     y="238.55986"
+     id="text3212"><tspan
+       sodipodi:role="line"
+       id="tspan3214"
+       x="13.83056"
+       y="238.55986"
+       style="font-size:20px;writing-mode:lr-tb" /><tspan
+       sodipodi:role="line"
+       x="13.83056"
+       y="269.26059"
+       id="tspan3216"
+       style="font-size:20px;writing-mode:lr-tb">900-2900 km</tspan></text>
+  <text
+     xml:space="preserve"
+     style="font-size:40px;font-style:normal;font-weight:normal;writing-mode:lr-tb;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+     x="14.325677"
+     y="93.028618"
+     id="text3218"><tspan
+       sodipodi:role="line"
+       id="tspan3220"
+       x="14.325677"
+       y="93.028618"
+       style="font-size:20px;writing-mode:lr-tb">Übergangszone</tspan><tspan
+       sodipodi:role="line"
+       x="14.325677"
+       y="118.02862"
+       id="tspan3222"
+       style="font-size:20px;writing-mode:lr-tb" /></text>
+  <text
+     xml:space="preserve"
+     style="font-size:40px;font-style:normal;font-weight:normal;writing-mode:lr-tb;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+     x="12.83056"
+     y="81.309868"
+     id="text3224"><tspan
+       sodipodi:role="line"
+       id="tspan3226"
+       x="12.83056"
+       y="81.309868"
+       style="font-size:20px;writing-mode:lr-tb" /><tspan
+       sodipodi:role="line"
+       x="12.83056"
+       y="112.0106"
+       id="tspan3228"
+       style="font-size:20px;writing-mode:lr-tb">400-900 km</tspan></text>
+  <text
+     xml:space="preserve"
+     style="font-size:40.55755997px;font-style:normal;font-weight:normal;writing-mode:lr-tb;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+     x="13.062249"
+     y="37.025215"
+     id="text3230"><tspan
+       sodipodi:role="line"
+       id="tspan3232"
+       x="13.062249"
+       y="37.025215"
+       style="font-size:20.27877998px;writing-mode:lr-tb">Oberer Mantel</tspan><tspan
+       sodipodi:role="line"
+       x="13.062249"
+       y="62.373692"
+       id="tspan3234"
+       style="font-size:20.27877998px;writing-mode:lr-tb" /></text>
+  <text
+     xml:space="preserve"
+     style="font-size:40px;font-style:normal;font-weight:normal;writing-mode:lr-tb;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+     x="13.33056"
+     y="25.559862"
+     id="text3236"><tspan
+       sodipodi:role="line"
+       id="tspan3238"
+       x="13.33056"
+       y="25.559862"
+       style="font-size:20px;writing-mode:lr-tb" /><tspan
+       sodipodi:role="line"
+       x="13.33056"
+       y="56.26059"
+       id="tspan3240"
+       style="font-size:20px;writing-mode:lr-tb">40-400 km</tspan></text>
+  <text
+     xml:space="preserve"
+     style="font-size:40px;font-style:normal;font-weight:normal;writing-mode:lr-tb;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+     x="540.06787"
+     y="144.60304"
+     id="text3242"><tspan
+       sodipodi:role="line"
+       id="tspan3244"
+       x="540.06787"
+       y="144.60304"
+       style="font-size:20px;writing-mode:lr-tb" /><tspan
+       sodipodi:role="line"
+       x="540.06787"
+       y="175.30377"
+       id="tspan3246"
+       style="font-size:20px;writing-mode:lr-tb">0-40 km</tspan></text>
+  <text
+     xml:space="preserve"
+     style="font-size:40px;font-style:normal;font-weight:normal;writing-mode:lr-tb;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+     x="541.4126"
+     y="125.60305"
+     id="text3248"><tspan
+       sodipodi:role="line"
+       id="tspan3250"
+       x="541.4126"
+       y="125.60305"
+       style="font-size:20px;writing-mode:lr-tb" /><tspan
+       sodipodi:role="line"
+       x="541.4126"
+       y="156.30377"
+       id="tspan3252"
+       style="font-size:20px;writing-mode:lr-tb">Erdkruste</tspan></text>
+</svg>

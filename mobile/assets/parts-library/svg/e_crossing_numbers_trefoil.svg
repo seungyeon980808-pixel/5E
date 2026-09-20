@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" width="330.71mm" height="258.83mm" fill-rule="evenodd" stroke-linejoin="round" stroke-width="28.222" baseProfile="tiny" preserveAspectRatio="xMidYMid" version="1.2" viewBox="-8550 -1146 33071 25883">
+  <path fill="none" stroke="red" stroke-width="2540" d="M-7280 12693 4394 1021M-6383 11795 5291 23467M3495 124l3592 3591m1796 8978 2694 2693"/>
+  <path fill="none" stroke="#00F" stroke-width="2540" d="M22353 11795 10679 23467m12572-10774L11577 1021m0 21547-2694-2693m-1796-8978L3495 7306"/>
+  <path fill="none" stroke="#0F0" stroke-width="2540" d="m12475 7306-8082 8080m2694 2693-3592-3591"/>
+  <path fill="none" stroke="red" stroke-width="2540" d="m4393 22568 8082-8080"/>
+  <path fill="none" d="M5248 18136h5081v6350H5248z"/>
+  <text x="7200" y="20179" font-family="Arial embedded" font-size="2117" font-weight="400">3</text>
+  <path fill="none" stroke="#00F" stroke-width="2540" d="M12475 124 4393 8204"/>
+  <path fill="none" d="M5242 3769h5081v6350H5242z"/>
+  <text x="7194" y="5812" font-family="Arial embedded" font-size="2117" font-weight="400">1</text>
+  <path fill="none" stroke="#0F0" stroke-width="2540" d="M11577 8203 8883 5510"/>
+  <path fill="none" d="M5264 10960h5081v6349H5264z"/>
+  <text x="7216" y="13003" font-family="Arial embedded" font-size="2117" font-weight="400">2</text>
+</svg>

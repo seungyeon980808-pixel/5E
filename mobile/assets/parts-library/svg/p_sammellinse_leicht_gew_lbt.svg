@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 4250 1800">
+<g font-size="144" font-family="sans">
+<text x="49" y="900">optische Achse</text>
+<text x="2436" y="1650">f</text>
+<text x="3657" y="700">F</text>
+</g>
+<g stroke="#000" stroke-width="9" fill="none">
+<path d="m63,286h1114l3023,589M69,535H1107L4198,826M61,1020H1115L4198,733M57,1263h1127l3006,-578M1245,1408v85h2445v-84.8528M1245,192c202,399 187,793 0,1184M1234,191c-211,407 -185,801 0,1185"/>
+<path d="M194,782 3131,774" stroke-dasharray="100"/>
+</g>
+</svg>

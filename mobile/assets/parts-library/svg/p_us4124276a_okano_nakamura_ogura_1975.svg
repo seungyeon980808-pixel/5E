@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg width="650" height="1e3" version="1.1" viewBox="0 0 650 1e3" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+ <metadata>
+  <rdf:RDF>
+   <cc:Work rdf:about="">
+    <dc:format>image/svg+xml</dc:format>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:title/>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <g transform="translate(0 -122.52)" fill-opacity=".13333" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-opacity=".53333" stroke-width=".5">
+  <path d="m54.951 672.52a477.17 477.17 0 0 0-44.951 200 477.17 477.17 0 0 0 44.678 200h31.715a9955.2 9955.2 0 0 0 10.008-200 9955.2 9955.2 0 0 0-7.082-200z" fill="#0bf"/>
+  <path d="m167.72 697.52a716.07 716.07 0 0 1 22.379 175 716.07 716.07 0 0 1-22.633 175h67.533l22.205-22.205a359.67 359.67 0 0 1-34.904-152.79 359.67 359.67 0 0 1 34.752-152.95l-22.053-22.053z" fill="#08f"/>
+  <path d="m302.4 697.52a6507.2 6507.2 0 0 0-6.1973 175 6507.2 6507.2 0 0 0 8.7578 175h66.662a357.11 357.11 0 0 1-46.318-175 357.11 357.11 0 0 1 46.043-175z" fill="#48f"/>
+  <path d="m371.41 697.52a357.11 357.11 0 0 0-46.105 175 357.11 357.11 0 0 0 46.477 175h30.5a542.16 542.16 0 0 0 29.922-175 542.16 542.16 0 0 0-29.91-175z" fill="#0bf"/>
+  <path d="m423.1 687.52a496.47 496.47 0 0 1 36.701 185 496.47 496.47 0 0 1-36.248 185h40.152a347.3 347.3 0 0 0 53.895-185 347.3 347.3 0 0 0-53.998-185z" fill="#0bf"/>
+  <path d="m481.61 687.52a315.59 315.59 0 0 1 60.389 185 315.59 315.59 0 0 1-60.295 185h55.619a487.43 487.43 0 0 0 36.875-185 487.43 487.43 0 0 0-36.719-185z" fill="#08f"/>
+  <path d="m54.951 172.52a477.17 477.17 0 0 0-44.951 200 477.17 477.17 0 0 0 44.678 200h31.715a9955.2 9955.2 0 0 0 10.008-200 9955.2 9955.2 0 0 0-7.082-200z" fill="#0bf"/>
+  <path d="m167.72 197.52a716.07 716.07 0 0 1 22.379 175 716.07 716.07 0 0 1-22.633 175h67.533l22.205-22.205a359.67 359.67 0 0 1-34.904-152.79 359.67 359.67 0 0 1 34.752-152.95l-22.053-22.053z" fill="#08f"/>
+  <path d="m302.4 197.52a6507.2 6507.2 0 0 0-6.1973 175 6507.2 6507.2 0 0 0 8.7578 175h66.662a357.11 357.11 0 0 1-46.318-175 357.11 357.11 0 0 1 46.043-175z" fill="#48f"/>
+  <path d="m371.41 197.52a357.11 357.11 0 0 0-46.105 175 357.11 357.11 0 0 0 46.477 175h30.5a542.16 542.16 0 0 0 29.922-175 542.16 542.16 0 0 0-29.91-175z" fill="#0bf"/>
+  <path d="m423.1 187.52a496.47 496.47 0 0 1 36.701 185 496.47 496.47 0 0 1-36.248 185h40.152a347.3 347.3 0 0 0 53.895-185 347.3 347.3 0 0 0-53.998-185z" fill="#0bf"/>
+  <path d="m542.91 187.52a315.59 315.59 0 0 1 60.389 185 315.59 315.59 0 0 1-60.295 185h55.619a487.43 487.43 0 0 0 36.875-185 487.43 487.43 0 0 0-36.719-185z" fill="#08f"/>
+ </g>
+ <g transform="translate(0 -122.52)" fill="none">
+  <g stroke="#000">
+   <path d="m270 652.52v90" stroke-width="5"/>
+   <path d="m270 1002.5v90" stroke-width="5"/>
+   <path d="m-50 872.52h750" stroke-dasharray="20, 5, 2.5, 5" stroke-width="2.5"/>
+   <path d="m270 152.52v90" stroke-width="5"/>
+   <path d="m270 502.52v90" stroke-width="5"/>
+   <path d="m-50 372.52h750" stroke-dasharray="20, 5, 2.5, 5" stroke-width="2.5"/>
+  </g>
+  <g stroke-width="3">
+   <path d="m540 582.52 10 30h50l10-30" stroke="#080"/>
+   <path d="m40 582.52 10 30h350l10-30" stroke="#f00"/>
+   <path d="m420 582.52 10 30h50l10-30" stroke="#f80"/>
+   <path d="m480 662.52 10-30h50l10 30" stroke="#080"/>
+  </g>
+  <path d="m575 612.52s-1.8298 8.0407-5 10c-14.178 8.7622-35.822-8.7622-50 0-3.1702 1.9593-5 10-5 10" stroke="#080" stroke-dasharray="3,3" stroke-width="3"/>
+ </g>
+ <g font-family="sans-serif" font-size="26.667px" letter-spacing="-1px" text-anchor="middle" word-spacing="0px">
+  <text x="225" y="480" fill="#000000" text-align="center" style="line-height:1.25" xml:space="preserve"><tspan x="225" y="480" fill="#ff0000" letter-spacing="-1px">A-I</tspan></text>
+  <text x="455" y="480" fill="#ff8800" text-align="center" style="line-height:1.25" xml:space="preserve"><tspan x="455" y="480">A-II</tspan></text>
+  <text x="575" y="480" fill="#008800" text-align="center" style="line-height:1.25" xml:space="preserve"><tspan x="575" y="480" fill="#008800" font-size="26.667px" letter-spacing="-1px">B</tspan></text>
+ </g>
+</svg>

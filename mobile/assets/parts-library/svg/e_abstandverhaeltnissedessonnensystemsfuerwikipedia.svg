@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns:ev="http://www.w3.org/2001/xml-events" version="1.1" baseProfile="full" width="33cm" height="3cm" viewBox="0 0 33 3">
+ 
+
+<title>Abstandsverhältnisse des Sonnensystems</title>
+<desc>Maßstäbliche Darstellung der Abstandsverhältnisse der Planetenbahnen</desc>
+<metadata>
+  <!-- Metainformationen mit RDF und Dublin-Core -->
+  <rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:rdfs="http://www.w3.org/2000/01/rdf-schema#" xmlns:dc="http://purl.org/dc/elements/1.1/">
+    <rdf:Description>
+      <dc:creator>Stefan Knauf</dc:creator>
+      <dc:created>2013-08-16</dc:created>
+      <dc:language>de</dc:language>
+    </rdf:Description>
+  </rdf:RDF>
+</metadata>
+
+<!--Inhalt der Datei: -->
+
+<rect x="0" y="0" width="33" height="3" fill="black"/>
+<!-- Sonne: -->
+<circle cx="32" cy="1" r="0.1" fill="yellow"/>
+<!-- Merkur: -->
+<circle cx="31.6129" cy="1" r="0.05" fill="grey"/>
+<polyline stroke="#666666" stroke-width="0.02" points="31.533,1.1 31.533,1.2 31.693,1.2 31.693,1.1"/>
+<!-- Venus: -->
+<circle cx="31.277" cy="1" r="0.05" fill="#FFFAF0"/>
+<polyline stroke="#666666" stroke-width="0.02" points="31.272,1.1 31.272,1.2 31.282,1.2 31.282,1.1"/>
+<!-- Erde: -->
+<circle cx="31" cy="1" r="0.05" fill="blue"/>
+<polyline stroke="#666666" stroke-width="0.02" points="30.983,1.1 30.983,1.2 31.017,1.2 31.017,1.1"/>
+<!-- Mars: -->
+<circle cx="30.476" cy="1" r="0.05" fill="red"/>
+<polyline stroke="#666666" stroke-width="0.02" points="30.334,1.1 30.334,1.2 30.619,1.2 30.619,1.1"/>
+<switch><text x="30.476" y="1.8" fill="white" text-anchor="middle" font-size="0.5" font-family="sans-serif" id="trsvg6"><tspan id="trsvg1">Mars</tspan></text></switch>
+<!-- Jupiter: -->
+<circle cx="26.797" cy="1" r="0.05" fill="#F4A460"/>
+<polyline stroke="#666666" stroke-width="0.02" points="26.54,1.1 26.54,1.2 27.05,1.2 27.05,1.1"/>
+<switch><text x="26.797" y="1.8" fill="white" text-anchor="middle" font-size="0.5" font-family="sans-serif" id="trsvg7"><tspan id="trsvg2">Jupiter</tspan></text></switch>
+<!-- Saturn: -->
+<circle cx="22.417" cy="1" r="0.05" fill="#CD853F"/>
+<polyline stroke="#666666" stroke-width="0.02" points="21.876,1.1 21.876,1.2 22.959,1.2 22.959,1.1"/>
+<switch><text x="22.417" y="1.8" fill="white" text-anchor="middle" font-size="0.5" font-family="sans-serif" id="trsvg8-fr" systemLanguage="fr"><tspan id="trsvg3-fr">Saturne</tspan></text><text x="22.417" y="1.8" fill="white" text-anchor="middle" font-size="0.5" font-family="sans-serif" id="trsvg8"><tspan id="trsvg3">Saturn</tspan></text></switch>
+<!-- Uranus: -->
+<circle cx="12.799" cy="1" r="0.05" fill="#87CEFF"/>
+<polyline stroke="#666666" stroke-width="0.02" points="11.922,1.1 11.922,1.2 13.676,1.2 13.676,1.1"/>
+<switch><text x="12.799" y="1.8" fill="white" text-anchor="middle" font-size="0.5" font-family="sans-serif" id="trsvg9"><tspan id="trsvg4">Uranus</tspan></text></switch>
+<!-- Neptun: -->
+<circle cx="1.953" cy="1" r="0.05" fill="#1874CD"/>
+<polyline stroke="#666666" stroke-width="0.02" points="1.615,1.1 1.615,1.2 2.291,1.2 2.291,1.1"/>
+<switch><text x="1.953" y="1.8" fill="white" text-anchor="middle" font-size="0.5" font-family="sans-serif" id="trsvg10-fr" systemLanguage="fr"><tspan id="trsvg5-fr">Neptune</tspan></text><text x="1.953" y="1.8" fill="white" text-anchor="middle" font-size="0.5" font-family="sans-serif" id="trsvg10"><tspan id="trsvg5">Neptun</tspan></text></switch>
+</svg>

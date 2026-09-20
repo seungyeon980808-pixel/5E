@@ -1,0 +1,317 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   version="1.1"
+   width="300"
+   height="1800"
+   id="svg2">
+  <style type="text/css">
+   .reverse-chron {
+       fill:#ffffff;
+       fill-opacity:1;
+       stroke:none;
+   }
+   .normal-chron {
+       fill:#000000;
+       fill-opacity:1;
+       stroke:none;
+   }
+   .chron-frame {
+       fill:none;
+       stroke:#000000;
+       stroke-width:5;
+       stroke-linecap:square;
+       stroke-linejoin:round;
+       stroke-miterlimit:40;
+       stroke-opacity:1;
+       stroke-dasharray:none
+   }
+
+   .tic {
+       fill:none;
+       stroke:#000000;
+       stroke-width:2.5px;
+       stroke-linecap:butt;
+       stroke-linejoin:miter;
+       stroke-opacity:1
+   }
+
+   .agelabel {
+        font-size:10px;
+   }
+
+   .eralabel {
+        font-size:40px;
+   }
+
+   .periodlabel {
+        font-size:30px;
+   }
+
+   #epochlabel {
+        font-size:18px;
+   }
+
+   .timelabel {
+        font-style:normal;
+        font-variant:normal;
+        font-weight:normal;
+        font-stretch:normal;
+        fill:#000000;
+        fill-opacity:1;
+        stroke:none;
+        font-family:DejaVu Sans;
+    }
+                
+   .l {
+        text-anchor:start;
+        text-align:start;
+   }
+
+   .c {
+        text-anchor:middle;
+        text-align:center;
+   }
+
+   .r {
+        text-anchor:end;
+        text-align:end;
+   }
+  </style>
+  <defs>
+    <linearGradient id="lg-wb">
+      <stop style="stop-color:#ffffff;stop-opacity:1" offset="0" />
+      <stop style="stop-color:#000000;stop-opacity:1" offset="1" />
+    </linearGradient>
+    <linearGradient id="lg1" x1="0" y1="1690" x2="0" y2="1756" xlink:href="#lg-wb" gradientUnits="userSpaceOnUse" />
+    <mask id="m1"><rect width="400" height="2000" x="-50" y="-100" style="fill:url(#lg1);fill-opacity:1;stroke:none" /></mask>
+  </defs>
+ 
+  <g transform="translate(64.6265,22.6409)">
+    <g id="image" mask="url(#m1)">
+      <g>
+        <g id="chrons">
+          <rect y="0" height="1756" x="0" width="100" class="reverse-chron" />
+  
+          <rect y="0" height="7.8" x="0" width="100" class="normal-chron" />
+          <rect y="9.9" height="0.8" x="0" width="100" class="normal-chron" />
+          <rect y="17.7" height="1.8" x="0" width="100" class="normal-chron" />
+          <rect y="21.4" height="0.1" x="0" width="100" class="normal-chron" />
+          <rect y="25.81" height="4.59" x="0" width="100" class="normal-chron" />
+          <rect y="31.1" height="1.1" x="0" width="100" class="normal-chron" />
+          <rect y="33.3" height="2.5" x="0" width="100" class="normal-chron" />
+          <rect y="41.8" height="1.1" x="0" width="100" class="normal-chron" />
+          <rect y="44.8" height="1.4" x="0" width="100" class="normal-chron" />
+          <rect y="48" height="0.9" x="0" width="100" class="normal-chron" />
+          <rect y="49.8" height="2.5" x="0" width="100" class="normal-chron" />
+          <rect y="58.94" height="2.43" x="0" width="100" class="normal-chron" />
+          <rect y="62.69" height="2.98" x="0" width="100" class="normal-chron" />
+          <rect y="69.35" height="1.56" x="0" width="100" class="normal-chron" />
+          <rect y="71.35" height="0.35" x="0" width="100" class="normal-chron" />
+          <rect y="73.41" height="0.34" x="0" width="100" class="normal-chron" />
+          <rect y="74.32" height="1.3" x="0" width="100" class="normal-chron" />
+          <rect y="76.5" height="4.22" x="0" width="100" class="normal-chron" />
+          <rect y="82.25" height="0.32" x="0" width="100" class="normal-chron" />
+          <rect y="86.99" height="3.26" x="0" width="100" class="normal-chron" />
+          <rect y="92.3" height="0.78" x="0" width="100" class="normal-chron" />
+          <rect y="95.8" height="0.62" x="0" width="100" class="normal-chron" />
+          <rect y="97.4" height="1.4" x="0" width="100" class="normal-chron" />
+          <rect y="99.2" height="10.29" x="0" width="100" class="normal-chron" />
+          <rect y="110.52" height="0.47" x="0" width="100" class="normal-chron" />
+          <rect y="114.76" height="0.55" x="0" width="100" class="normal-chron" />
+          <rect y="119.35" height="1.43" x="0" width="100" class="normal-chron" />
+          <rect y="121.84" height="2.17" x="0" width="100" class="normal-chron" />
+          <rect y="126.78" height="0.3" x="0" width="100" class="normal-chron" />
+          <rect y="127.75" height="0.44" x="0" width="100" class="normal-chron" />
+          <rect y="129.91" height="1.48" x="0" width="100" class="normal-chron" />
+          <rect y="133.02" height="2.08" x="0" width="100" class="normal-chron" />
+          <rect y="137.03" height="3.73" x="0" width="100" class="normal-chron" />
+          <rect y="141.78" height="4.34" x="0" width="100" class="normal-chron" />
+          <rect y="148" height="0.88" x="0" width="100" class="normal-chron" />
+          <rect y="150.34" height="1.21" x="0" width="100" class="normal-chron" />
+          <rect y="160.14" height="2.79" x="0" width="100" class="normal-chron" />
+          <rect y="163.27" height="1.61" x="0" width="100" class="normal-chron" />
+          <rect y="165.56" height="1.7" x="0" width="100" class="normal-chron" />
+          <rect y="172.77" height="3.38" x="0" width="100" class="normal-chron" />
+          <rect y="182.81" height="5" x="0" width="100" class="normal-chron" />
+          <rect y="190.48" height="10.83" x="0" width="100" class="normal-chron" />
+          <rect y="205.18" height="2.07" x="0" width="100" class="normal-chron" />
+          <rect y="209.96" height="3.24" x="0" width="100" class="normal-chron" />
+          <rect y="217.68" height="0.91" x="0" width="100" class="normal-chron" />
+          <rect y="221.51" height="0.97" x="0" width="100" class="normal-chron" />
+          <rect y="224.59" height="0.34" x="0" width="100" class="normal-chron" />
+          <rect y="225.88" height="1.62" x="0" width="100" class="normal-chron" />
+          <rect y="228.04" height="2.65" x="0" width="100" class="normal-chron" />
+          <rect y="233.53" height="1.82" x="0" width="100" class="normal-chron" />
+          <rect y="236.77" height="1.23" x="0" width="100" class="normal-chron" />
+          <rect y="239.99" height="1.19" x="0" width="100" class="normal-chron" />
+          <rect y="247.3" height="0.51" x="0" width="100" class="normal-chron" />
+          <rect y="248.35" height="3.48" x="0" width="100" class="normal-chron" />
+          <rect y="254.96" height="1.52" x="0" width="100" class="normal-chron" />
+          <rect y="258.23" height="1.28" x="0" width="100" class="normal-chron" />
+          <rect y="259.92" height="5.62" x="0" width="100" class="normal-chron" />
+          <rect y="270.27" height="9.45" x="0" width="100" class="normal-chron" />
+          <rect y="282.83" height="2.29" x="0" width="100" class="normal-chron" />
+          <rect y="285.78" height="1.67" x="0" width="100" class="normal-chron" />
+          <rect y="294.01" height="2.61" x="0" width="100" class="normal-chron" />
+          <rect y="297.65" height="3.33" x="0" width="100" class="normal-chron" />
+          <rect y="304.79" height="4.6" x="0" width="100" class="normal-chron" />
+          <rect y="330.58" height="4.87" x="0" width="100" class="normal-chron" />
+          <rect y="346.55" height="2.85" x="0" width="100" class="normal-chron" />
+          <rect y="353.43" height="1.83" x="0" width="100" class="normal-chron" />
+          <rect y="356.85" height="6.56" x="0" width="100" class="normal-chron" />
+          <rect y="366.18" height="8.55" x="0" width="100" class="normal-chron" />
+          <rect y="376.04" height="2.44" x="0" width="100" class="normal-chron" />
+          <rect y="379.2" height="1.93" x="0" width="100" class="normal-chron" />
+          <rect y="384.26" height="11.26" x="0" width="100" class="normal-chron" />
+          <rect y="396.31" height="4.99" x="0" width="100" class="normal-chron" />
+          <rect y="412.57" height="2.64" x="0" width="100" class="normal-chron" />
+          <rect y="425.36" height="12.53" x="0" width="100" class="normal-chron" />
+          <rect y="462.64" height="16.42" x="0" width="100" class="normal-chron" />
+          <rect y="490.37" height="6.77" x="0" width="100" class="normal-chron" />
+          <rect y="507.78" height="1.68" x="0" width="100" class="normal-chron" />
+          <rect y="510.47" height="6.96" x="0" width="100" class="normal-chron" />
+          <rect y="523.64" height="2.99" x="0" width="100" class="normal-chron" />
+          <rect y="527.57" height="0.44" x="0" width="100" class="normal-chron" />
+          <rect y="529.03" height="4.44" x="0" width="100" class="normal-chron" />
+          <rect y="559.04" height="4.87" x="0" width="100" class="normal-chron" />
+          <rect y="575.54" height="3.57" x="0" width="100" class="normal-chron" />
+          <rect y="609.2" height="3.56" x="0" width="100" class="normal-chron" />
+          <rect y="624.99" height="11.35" x="0" width="100" class="normal-chron" />
+          <rect y="639.76" height="7.69" x="0" width="100" class="normal-chron" />
+          <rect y="655.78" height="20.32" x="0" width="100" class="normal-chron" />
+          <rect y="677.35" height="10.02" x="0" width="100" class="normal-chron" />
+          <rect y="710.71" height="2.67" x="0" width="100" class="normal-chron" />
+          <rect y="715.87" height="14.17" x="0" width="100" class="normal-chron" />
+          <rect y="732.91" height="0.83" x="0" width="100" class="normal-chron" />
+          <rect y="736.19" height="54.56" x="0" width="100" class="normal-chron" />
+          <rect y="830" height="350" x="0" width="100" class="normal-chron" />
+          <rect y="1187" height="31.1" x="0" width="100" class="normal-chron" />
+          <rect y="1222.5" height="7.8" x="0" width="100" class="normal-chron" />
+          <rect y="1253.6" height="11" x="0" width="100" class="normal-chron" />
+          <rect y="1270.5" height="1.6" x="0" width="100" class="normal-chron" />
+          <rect y="1273.4" height="1.8" x="0" width="100" class="normal-chron" />
+          <rect y="1279.7" height="3.6" x="0" width="100" class="normal-chron" />
+          <rect y="1286" height="3.1" x="0" width="100" class="normal-chron" />
+          <rect y="1294.3" height="3.9" x="0" width="100" class="normal-chron" />
+          <rect y="1301.9" height="3.8" x="0" width="100" class="normal-chron" />
+          <rect y="1306.3" height="3.7" x="0" width="100" class="normal-chron" />
+          <rect y="1310.2" height="3.4" x="0" width="100" class="normal-chron" />
+          <rect y="1316.5" height="8.8" x="0" width="100" class="normal-chron" />
+          <rect y="1330.3" height="0.5" x="0" width="100" class="normal-chron" />
+          <rect y="1335" height="8.1" x="0" width="100" class="normal-chron" />
+          <rect y="1344.2" height="3.3" x="0" width="100" class="normal-chron" />
+          <rect y="1355.6" height="1" x="0" width="100" class="normal-chron" />
+          <rect y="1358.8" height="3.6" x="0" width="100" class="normal-chron" />
+          <rect y="1363.7" height="2.7" x="0" width="100" class="normal-chron" />
+          <rect y="1371" height="2.9" x="0" width="100" class="normal-chron" />
+          <rect y="1383" height="7.1" x="0" width="100" class="normal-chron" />
+          <rect y="1395.8" height="16.2" x="0" width="100" class="normal-chron" />
+          <rect y="1418.5" height="4.2" x="0" width="100" class="normal-chron" />
+          <rect y="1437.6" height="5.7" x="0" width="100" class="normal-chron" />
+          <rect y="1447.5" height="1.3" x="0" width="100" class="normal-chron" />
+          <rect y="1449.6" height="10.2" x="0" width="100" class="normal-chron" />
+          <rect y="1464.4" height="3.1" x="0" width="100" class="normal-chron" />
+          <rect y="1468.1" height="6.6" x="0" width="100" class="normal-chron" />
+          <rect y="1483.3" height="10.9" x="0" width="100" class="normal-chron" />
+          <rect y="1498.9" height="15.7" x="0" width="100" class="normal-chron" />
+          <rect y="1515.1" height="0.5" x="0" width="100" class="normal-chron" />
+          <rect y="1516.1" height="0.8" x="0" width="100" class="normal-chron" />
+          <rect y="1522.3" height="4.3" x="0" width="100" class="normal-chron" />
+          <rect y="1528.4" height="3.7" x="0" width="100" class="normal-chron" />
+          <rect y="1534.9" height="0.3" x="0" width="100" class="normal-chron" />
+          <rect y="1541.5" height="3.3" x="0" width="100" class="normal-chron" />
+          <rect y="1548.5" height="0.3" x="0" width="100" class="normal-chron" />
+          <rect y="1550.8" height="1.3" x="0" width="100" class="normal-chron" />
+          <rect y="1554.8" height="3.6" x="0" width="100" class="normal-chron" />
+          <rect y="1560" height="2.9" x="0" width="100" class="normal-chron" />
+          <rect y="1565.5" height="1.5" x="0" width="100" class="normal-chron" />
+          <rect y="1567.8" height="1" x="0" width="100" class="normal-chron" />
+          <rect y="1569.6" height="1.4" x="0" width="100" class="normal-chron" />
+          <rect y="1572" height="1" x="0" width="100" class="normal-chron" />
+          <rect y="1573.8" height="0.8" x="0" width="100" class="normal-chron" />
+          <rect y="1575.3" height="0.8" x="0" width="100" class="normal-chron" />
+          <rect y="1576.6" height="1.9" x="0" width="100" class="normal-chron" />
+          <rect y="1580.1" height="2" x="0" width="100" class="normal-chron" />
+          <rect y="1583.7" height="2.9" x="0" width="100" class="normal-chron" />
+          <rect y="1588.7" height="9.3" x="0" width="100" class="normal-chron" />
+          <rect y="1603.3" height="152.7" x="0" width="100" class="normal-chron" />
+        </g>
+        <path d="M 0,1756 0,0 100,0 100,1756" class="chron-frame" />
+      </g>
+    
+      <g id="agebar">
+        <path d="M -20,0 -10,0 -10,1756 M -20,100 -10,100 M -20,200 -10,200 M -20,300 -10,300 M -20,400 -10,400 M -20,500 -10,500 M -20,600 -10,600 M -20,700 -10,700 M -20,800 -10,800 M -20,900 -10,900 M -20,1000 -10,1000 M -20,1100 -10,1100 M -20,1200 -10,1200 M -20,1300 -10,1300 M -20,1400 -10,1400 M -20,1500 -10,1500 M -20,1600 -10,1600 M -20,1700 -10,1700" class="tic" />
+        <text x="-22.5" y="3.64014" class="timelabel agelabel r z">0</text>
+        <text x="-22.5" y="103.64" class="timelabel agelabel r">10</text>
+        <text x="-22.5" y="203.64" class="timelabel agelabel r">20</text>
+        <text x="-22.5" y="303.64" class="timelabel agelabel r">30</text>
+        <text x="-22.5" y="403.64" class="timelabel agelabel r">40</text>
+        <text x="-22.5" y="503.64" class="timelabel agelabel r">50</text>
+        <text x="-22.5" y="603.64" class="timelabel agelabel r">60</text>
+        <text x="-22.5" y="703.64" class="timelabel agelabel r">70</text>
+        <text x="-22.5" y="803.64" class="timelabel agelabel r">80</text>
+        <text x="-22.5" y="903.64" class="timelabel agelabel r">90</text>
+        <text x="-22.5" y="1003.64" class="timelabel agelabel r">100</text>
+        <text x="-22.5" y="1103.64" class="timelabel agelabel r">110</text>
+        <text x="-22.5" y="1203.64" class="timelabel agelabel r">120</text>
+        <text x="-22.5" y="1303.64" class="timelabel agelabel r">130</text>
+        <text x="-22.5" y="1403.64" class="timelabel agelabel r">140</text>
+        <text x="-22.5" y="1503.64" class="timelabel agelabel r">150</text>
+        <text x="-22.5" y="1603.64" class="timelabel agelabel r">160</text>
+        <text x="-22.5" y="1703.64" class="timelabel agelabel r">170</text>
+      </g>
+    
+      <g id="timescalebar" transform="matrix(0,1,-1,0,210,-1.25)">
+    
+        <g id="eras">
+          <path d="M 0,100 0,0 1756,0" class="tic" />
+          <path d="m 655,0 0,100" class="tic" />
+          <text x="327.637" y="35.8821" class="timelabel eralabel c">Cenozoico</text>
+          <text x="1204.8" y="35.8821" class="timelabel eralabel c">Mesozoico</text>
+        </g>
+    
+        <g id="periods">
+          <path d="M 0,44 1756,44" class="tic" />
+          <path d="m 25.88,44 0,56" class="tic" />
+          <path d="m 230.3,44 0,56" class="tic" />
+          <path d="m 1455,44 0,56" class="tic" />
+    
+          <text x="12.94" y="69.7826" class="timelabel periodlabel c">Q</text>
+          <text x="127.416" y="69.7826" class="timelabel periodlabel c">Neogeno</text>
+          <text x="441.976" y="69.7826" class="timelabel periodlabel c">Paleogeno</text>
+          <text x="1054.9" y="69.7826" class="timelabel periodlabel c">Cretáceo</text>
+          <text x="1607.22" y="69.7826" class="timelabel periodlabel c">Jurássico</text>
+        </g>
+    
+        <g id="epochs">
+          <path d="M 25.88,80 1756,80" class="tic" />
+          <path d="m 53.32,80 0,20" class="tic" />
+          <path d="m 339,80 0,20" class="tic" />
+          <path d="m 558,80 0,20" class="tic" />
+          <path d="m 996,80 0,20" class="tic" />
+          <path d="m 1612,80 0,20" class="tic" />
+          <path d="m 1756,80 0,20" class="tic" />
+    
+          <text x="39.5561" y="97.7589" class="timelabel epochlabel c">Pli</text>
+          <text x="141.406" y="97.7589" class="timelabel epochlabel c">Mioceno</text>
+          <text x="284.624" y="97.7589" class="timelabel epochlabel c">Oligoceno</text>
+          <text x="448.096" y="97.7589" class="timelabel epochlabel c">Eoceno</text>
+          <text x="606.096" y="97.7589" class="timelabel epochlabel c">Paleoceno</text>
+    
+          <text x="824.727" y="97.7589" class="timelabel epochlabel c">Superior</text>
+          <text x="1224.63" y="97.7589" class="timelabel epochlabel c">Inferior</text>
+    
+          <text x="1532.73" y="97.7589" class="timelabel epochlabel c">Superior</text>
+          <text x="1683.6" y="97.7589" class="timelabel epochlabel c">Médio</text>
+        </g>
+    
+      </g>
+    </g>
+  </g>
+
+</svg>

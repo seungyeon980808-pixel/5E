@@ -1,0 +1,590 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   viewBox="0 0 695 1000"
+   version="1.1"
+   id="svg220"
+   sodipodi:docname="mexico klima-y2.svg"
+   inkscape:version="1.1.2 (b8e25be833, 2022-02-05)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <defs
+     id="defs224" />
+  <sodipodi:namedview
+     id="namedview222"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     showgrid="false"
+     inkscape:zoom="0.823"
+     inkscape:cx="346.90158"
+     inkscape:cy="403.40219"
+     inkscape:window-width="1920"
+     inkscape:window-height="1009"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg220" />
+  <rect
+     x="10"
+     y="10"
+     rx="5"
+     ry="5"
+     width="670"
+     height="980"
+     style="fill:none;stroke:firebrick; stroke-width:6;"
+     id="rect2" />
+  <text
+     text-anchor="middle"
+     x="300"
+     y="50"
+     font-family="Verdana"
+     font-size="32"
+     id="text4">Klimatabelle von Mexiko </text>
+  <rect
+     x="15"
+     y="15"
+     rx="3"
+     ry="3"
+     width="660"
+     height="50"
+     style="fill:none;stroke:black; stroke-width:1;"
+     id="rect6" />
+  <!-- ueberschrift -->
+  <text
+     x="60"
+     y="105"
+     font-family="Verdana"
+     font-size="32"
+     style="fill:black"
+     id="text30">J
+    <tspan
+   x="110"
+   y="105"
+   id="tspan8">F</tspan><tspan
+   x="160"
+   y="105"
+   id="tspan10">M</tspan><tspan
+   x="210"
+   y="105"
+   id="tspan12">A</tspan><tspan
+   x="260"
+   y="105"
+   id="tspan14">M</tspan><tspan
+   x="310"
+   y="105"
+   id="tspan16">J</tspan><tspan
+   x="360"
+   y="105"
+   id="tspan18">J</tspan><tspan
+   x="410"
+   y="105"
+   id="tspan20">A</tspan><tspan
+   x="460"
+   y="105"
+   id="tspan22">S</tspan><tspan
+   x="510"
+   y="105"
+   id="tspan24">O</tspan><tspan
+   x="560"
+   y="105"
+   id="tspan26">N</tspan><tspan
+   x="610"
+   y="105"
+   id="tspan28">D</tspan></text>
+  <!-- linien -->
+  <line
+     x1="50"
+     y1="135"
+     x2="650"
+     y2="135"
+     style="stroke:rgb(100,100,100);stroke-width:2"
+     id="line32" />
+  <line
+     x1="40"
+     y1="185"
+     x2="650"
+     y2="185"
+     style="stroke:rgb(100,100,100);stroke-width:2"
+     id="line34" />
+  <!-- hoechsttemp -->
+  <rect
+     x="50"
+     y="150"
+     width="35"
+     height="29"
+     style="fill:firebrick;stroke:rgb(255,0,0);stroke-width:1;"
+     id="rect36" />
+  <rect
+     x="100"
+     y="147"
+     width="35"
+     height="31"
+     style="fill:firebrick;stroke:rgb(255,0,0);stroke-width:1;"
+     id="rect38" />
+  <rect
+     x="150"
+     y="147"
+     width="35"
+     height="31"
+     style="fill:firebrick;stroke:rgb(255,0,0);stroke-width:1;"
+     id="rect40" />
+  <rect
+     x="200"
+     y="142"
+     width="35"
+     height="31"
+     style="fill:firebrick;stroke:rgb(255,0,0);stroke-width:1;"
+     id="rect42" />
+  <rect
+     x="250"
+     y="142"
+     width="35"
+     height="31"
+     style="fill:firebrick;stroke:rgb(255,0,0);stroke-width:1;"
+     id="rect44" />
+  <rect
+     x="300"
+     y="138"
+     width="35"
+     height="31"
+     style="fill:firebrick;stroke:rgb(255,0,0);stroke-width:1;"
+     id="rect46" />
+  <rect
+     x="350"
+     y="137"
+     width="35"
+     height="31"
+     style="fill:firebrick;stroke:rgb(255,0,0);stroke-width:1;"
+     id="rect48" />
+  <rect
+     x="400"
+     y="135"
+     width="35"
+     height="33"
+     style="fill:firebrick;stroke:rgb(255,0,0);stroke-width:1;"
+     id="rect50" />
+  <rect
+     x="450"
+     y="142"
+     width="35"
+     height="33"
+     style="fill:firebrick;stroke:rgb(255,0,0);stroke-width:1;"
+     id="rect52" />
+  <rect
+     x="500"
+     y="145"
+     width="35"
+     height="33"
+     style="fill:firebrick;stroke:rgb(255,0,0);stroke-width:1;"
+     id="rect54" />
+  <rect
+     x="500"
+     y="145"
+     width="35"
+     height="33"
+     style="fill:firebrick;stroke:rgb(255,0,0);stroke-width:1;"
+     id="rect56" />
+  <rect
+     x="550"
+     y="145"
+     width="35"
+     height="33"
+     style="fill:firebrick;stroke:rgb(255,0,0);stroke-width:1;"
+     id="rect58" />
+  <rect
+     x="600"
+     y="148"
+     width="35"
+     height="33"
+     style="fill:firebrick;stroke:rgb(255,0,0);stroke-width:1;"
+     id="rect60" />
+  <text
+     x="60"
+     y="130"
+     font-family="Verdana"
+     font-size="20"
+     fill="black"
+     id="text84">21
+    <tspan
+   x="100"
+   y="130"
+   id="tspan62">22</tspan><tspan
+   x="160"
+   y="130"
+   id="tspan64">24</tspan><tspan
+   x="210"
+   y="130"
+   id="tspan66">25</tspan><tspan
+   x="260"
+   y="130"
+   id="tspan68">26</tspan><tspan
+   x="310"
+   y="130"
+   id="tspan70">24</tspan><tspan
+   x="360"
+   y="130"
+   id="tspan72">23</tspan><tspan
+   x="410"
+   y="130"
+   id="tspan74">23</tspan><tspan
+   x="460"
+   y="130"
+   id="tspan76">22</tspan><tspan
+   x="510"
+   y="130"
+   id="tspan78">22</tspan><tspan
+   x="560"
+   y="130"
+   id="tspan80">22</tspan><tspan
+   x="610"
+   y="130"
+   id="tspan82">21</tspan></text>
+  <!-- niedere temp -->
+  <text
+     x="60"
+     y="200"
+     font-family="Verdana"
+     font-size="20"
+     fill="black"
+     id="text108">7
+    <tspan
+   x="310"
+   y="200"
+   id="tspan86">13</tspan><tspan
+   x="360"
+   y="200"
+   id="tspan88">13</tspan><tspan
+   x="110"
+   y="200"
+   id="tspan90">7</tspan><tspan
+   x="160"
+   y="200"
+   id="tspan92">10</tspan><tspan
+   x="210"
+   y="200"
+   id="tspan94">11</tspan><tspan
+   x="260"
+   y="200"
+   id="tspan96">12</tspan><tspan
+   x="410"
+   y="200"
+   id="tspan98">23</tspan><tspan
+   x="460"
+   y="200"
+   id="tspan100">12</tspan><tspan
+   x="510"
+   y="200"
+   id="tspan102">11</tspan><tspan
+   x="560"
+   y="200"
+   id="tspan104">8</tspan><tspan
+   x="610"
+   y="200"
+   id="tspan106">7</tspan></text>
+  <!-- niederschlaege -->
+  <rect
+     x="49"
+     y="699"
+     width="45"
+     height="2"
+     style="fill:firebrick;stroke:rgb(50,50,255);stroke-width:1;"
+     id="rect110" />
+  <rect
+     x="99"
+     y="699"
+     width="45"
+     height="3"
+     style="fill:firebrick;stroke:rgb(50,50,255);stroke-width:1;"
+     id="rect112" />
+  <rect
+     x="149"
+     y="660"
+     width="45"
+     height="40"
+     style="fill:steelblue;stroke:rgb(50,50,255);stroke-width:1;"
+     id="rect114" />
+  <rect
+     x="199"
+     y="620"
+     width="45"
+     height="80"
+     style="fill:steelblue;stroke:rgb(50,50,255);stroke-width:1;"
+     id="rect116" />
+  <rect
+     x="249"
+     y="540"
+     width="45"
+     height="160"
+     style="fill:steelblue;stroke:rgb(50,50,255);stroke-width:1;"
+     id="rect118" />
+  <rect
+     x="299"
+     y="300"
+     width="45"
+     height="400"
+     style="fill:steelblue;stroke:rgb(50,50,255);stroke-width:1;"
+     id="rect120" />
+  <rect
+     x="349"
+     y="220"
+     width="45"
+     height="480"
+     style="fill:steelblue;stroke:rgb(50,50,255);stroke-width:1;"
+     id="rect122" />
+  <rect
+     x="399"
+     y="522.23712"
+     width="45"
+     height="177.76286"
+     style="fill:#4682b4;stroke:#3232ff;stroke-width:0.608555"
+     id="rect124" />
+  <rect
+     x="398.46838"
+     y="220.58336"
+     width="44.803268"
+     height="423.06207"
+     style="fill:#4682b4;stroke:#3232ff;stroke-width:0.936764"
+     id="rect124-1" />
+  <rect
+     x="448.5"
+     y="300"
+     width="45"
+     height="400"
+     style="fill:#4682b4;stroke:#3232ff;stroke-width:1"
+     id="rect126" />
+  <rect
+     x="499"
+     y="540"
+     width="45"
+     height="160"
+     style="fill:steelblue;stroke:rgb(50,50,255);stroke-width:1;"
+     id="rect128" />
+  <rect
+     x="549"
+     y="660"
+     width="45"
+     height="40"
+     style="fill:steelblue;stroke:rgb(50,50,255);stroke-width:1;"
+     id="rect130" />
+  <rect
+     x="599"
+     y="699"
+     width="45"
+     height="2"
+     style="fill:steelblue;stroke:rgb(50,50,255);stroke-width:1;"
+     id="rect132" />
+  <!-- niederschlaege -->
+  <text
+     x="42"
+     y="650"
+     font-family="Verdana"
+     font-size="20"
+     fill="black"
+     id="text142">0
+    <tspan
+   x="99"
+   y="650"
+   id="tspan134">0</tspan><tspan
+   x="149"
+   y="650"
+   id="tspan136">10</tspan><tspan
+   x="549"
+   y="650"
+   id="tspan138">10</tspan><tspan
+   x="599"
+   y="650"
+   id="tspan140">0</tspan></text>
+  <text
+     x="49"
+     y="650"
+     font-family="Verdana"
+     font-size="20"
+     fill="white"
+     id="text158">0
+    <tspan
+   x="199"
+   y="650"
+   id="tspan144">20</tspan><tspan
+   x="249"
+   y="650"
+   id="tspan146">40</tspan><tspan
+   x="295"
+   y="650"
+   id="tspan148">100</tspan><tspan
+   x="349"
+   y="650"
+   id="tspan150">120</tspan><tspan
+   x="399"
+   y="650"
+   id="tspan152">120</tspan><tspan
+   x="449"
+   y="650"
+   id="tspan154">100</tspan><tspan
+   x="499"
+   y="650"
+   id="tspan156">40</tspan></text>
+  <text
+     x="60"
+     y="220"
+     font-family="Verdana"
+     font-size="20"
+     fill="white"
+     id="text164">7
+    <tspan
+   x="560"
+   y="650"
+   id="tspan160">10</tspan><tspan
+   x="610"
+   y="650"
+   id="tspan162">0</tspan></text>
+  <!-- niederw twmp -->
+  <!-- regentage -->
+  <text
+     x="60"
+     y="730"
+     font-family="Verdana"
+     font-size="20"
+     fill="black"
+     id="text188">1,1
+    <tspan
+   x="100"
+   y="730"
+   id="tspan166">1,2</tspan><tspan
+   x="160"
+   y="730"
+   id="tspan168">1,8</tspan><tspan
+   x="210"
+   y="730"
+   id="tspan170">4,4</tspan><tspan
+   x="260"
+   y="730"
+   id="tspan172">8,3</tspan><tspan
+   x="310"
+   y="730"
+   id="tspan174">13,6</tspan><tspan
+   x="360"
+   y="730"
+   id="tspan176">16,8</tspan><tspan
+   x="410"
+   y="730"
+   id="tspan178">13,8</tspan><tspan
+   x="460"
+   y="730"
+   id="tspan180">11</tspan><tspan
+   x="510"
+   y="730"
+   id="tspan182">5,71</tspan><tspan
+   x="560"
+   y="730"
+   id="tspan184">1,3</tspan><tspan
+   x="610"
+   y="730"
+   id="tspan186">1</tspan></text>
+  <!-- zahlen etc -->
+  <rect
+     x="50"
+     y="770"
+     width="55"
+     height="30"
+     style="fill:firebrick;stroke:rgb(20,50,50);"
+     id="rect190" />
+  <rect
+     x="50"
+     y="820"
+     width="55"
+     height="30"
+     style="fill:firebrick;stroke:rgb(20,50,50);"
+     id="rect192" />
+  <rect
+     x="50"
+     y="870"
+     width="55"
+     height="30"
+     style="fill:steelblue;stroke:rgb(25,25,200);"
+     id="rect194" />
+  <rect
+     x="50"
+     y="920"
+     width="55"
+     height="30"
+     style="fill:steelblue;stroke:rgb(25,25,200);"
+     id="rect196" />
+  <text
+     x="60"
+     y="790"
+     font-family="Verdana"
+     font-size="20"
+     fill="white"
+     id="text198">21</text>
+  <text
+     x="60"
+     y="840"
+     font-family="Verdana"
+     font-size="20"
+     fill="white"
+     id="text200">12</text>
+  <text
+     x="60"
+     y="890"
+     font-family="Verdana"
+     font-size="20"
+     fill="white"
+     id="text202">66</text>
+  <text
+     x="60"
+     y="940"
+     font-family="Verdana"
+     font-size="20"
+     fill="white"
+     id="text204">580</text>
+  <text
+     x="150"
+     y="790"
+     font-family="Verdana"
+     font-size="20"
+     fill="black"
+     id="text206">Ø Mittlere Jahreshöchsttemperaturen in °C</text>
+  <text
+     x="150"
+     y="840"
+     font-family="Verdana"
+     font-size="20"
+     fill="black"
+     id="text208">Ø Mittlere Jahrestiefsttemperaturen in °C</text>
+  <text
+     x="150"
+     y="890"
+     font-family="Verdana"
+     font-size="20"
+     fill="black"
+     id="text210">Σ Anzahl der Regentage </text>
+  <text
+     x="150"
+     y="940"
+     font-family="Verdana"
+     font-size="20"
+     fill="black"
+     id="text212">Σ Summe der Niederschläge in mm</text>
+  <a
+     href="https://www.weatherbase.com/"
+     id="a218">
+    <circle
+       cx="560"
+       cy="903"
+       r="35"
+       style="fill:#89bcde;stroke:rgb(20,50,50);"
+       id="circle214" />
+    <text
+       x="530"
+       y="925"
+       font-family="Verdana"
+       font-size="70"
+       fill="red"
+       id="text216">✵</text>
+  </a>
+</svg>

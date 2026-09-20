@@ -1,0 +1,239 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 18.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 589 887.9" enable-background="new 0 0 589 887.9" xml:space="preserve">
+<g id="Membranes">
+	<linearGradient id="SVGID_1_" gradientUnits="userSpaceOnUse" x1="293.0024" y1="870.7424" x2="293.0024" y2="150">
+		<stop  offset="8.271665e-007" style="stop-color:#F9F6C1"/>
+		<stop  offset="1" style="stop-color:#FDEC7F"/>
+	</linearGradient>
+	
+		<rect x="12" y="150" fill="url(#SVGID_1_)" stroke="#EEB930" stroke-width="20" stroke-miterlimit="10" width="562" height="720.7"/>
+	<radialGradient id="SVGID_2_" cx="206.8869" cy="677.0417" r="168.7502" gradientUnits="userSpaceOnUse">
+		<stop  offset="0" style="stop-color:#EBC1DB"/>
+		<stop  offset="0.259" style="stop-color:#E7BCD8"/>
+		<stop  offset="0.578" style="stop-color:#DBADD0"/>
+		<stop  offset="0.9272" style="stop-color:#C997C4"/>
+		<stop  offset="1" style="stop-color:#C592C1"/>
+	</radialGradient>
+	
+		<ellipse fill="url(#SVGID_2_)" stroke="#92278F" stroke-width="5" stroke-miterlimit="10" cx="206.9" cy="677" rx="162.6" ry="174.7"/>
+</g>
+<g id="Receptors">
+	<path fill="#549FD2" stroke="#3557A7" stroke-width="2" stroke-miterlimit="10" d="M126.1,194.7h-22.9c-7.8,0-14.2-5.4-14.2-12
+		v-69.3c0-6.6,6.4-12,14.2-12c0,0-5.5,21.2,11.4,21.2s11.4-21.2,11.4-21.2c7.8,0,14.2,5.4,14.2,12v69.3
+		C140.3,189.3,133.9,194.7,126.1,194.7z"/>
+	<ellipse fill="#FEDC49" stroke="#F1A61E" stroke-width="2" stroke-miterlimit="10" cx="151" cy="185.1" rx="18.5" ry="18.3"/>
+	<ellipse fill="#FEDC49" stroke="#F1A61E" stroke-width="2" stroke-miterlimit="10" cx="145.9" cy="193.1" rx="18.1" ry="15.1"/>
+	<ellipse fill="#FEDC49" stroke="#F1A61E" stroke-width="2" stroke-miterlimit="10" cx="137.1" cy="197.9" rx="15" ry="12.8"/>
+	<path fill="#EE7E9C" stroke="#EF3937" stroke-width="2" stroke-miterlimit="10" d="M351.1,198h-46c-6.6,0-12-5.4-12-12
+		c11.7-24.7,11.4-48.9,0-72.7c0-6.6,5.4-12,12-12h46c6.6,0,12,5.4,12,12c-10.3,25-10.9,49.3,0,72.7C363.1,192.6,357.7,198,351.1,198
+		z"/>
+	<path fill="#F6ACC8" stroke="#E2444C" stroke-width="2" stroke-miterlimit="10" d="M304.1,198h3.5c6,0,11-4.9,11-11v-74.7
+		c0-6-5-11-11-11h-3.5c-6,0-11,4.9-11,11c11.5,24.7,11.6,49.6,0,74.7C293.1,193.1,298,198,304.1,198z"/>
+	<path fill="#F6ACC8" stroke="#E2444C" stroke-width="2" stroke-miterlimit="10" d="M348.2,198h3.5c6,0,11-4.9,11-11
+		c-9.9-22.5-10.2-46.1,0-74.7c0-6.1-4.9-11-11-11h-3.5c-6,0-11,4.9-11,11V187C337.2,193.1,342.1,198,348.2,198z"/>
+	<path fill="#CEA3CC" stroke="#92278F" stroke-width="2" stroke-miterlimit="10" d="M474.3,200.7c0,0.7-0.5,1.4-1.3,1.5
+		c-2.1,0.4-7.2,0.9-7.2-0.7c0.1-4,4.9-67.4-1.8-72.3c-3.7-2.7-14.5-3.9-13.2-11c2-11.5,15.4-13.4,24.3-12.6c2.3,0.2,9.1,1.3,1,4
+		c-4.3,1.5-10.7,1.9-10.3,7.9c0.4,5.4,10.6,5.3,15,6.3c0.9,0.2,1.1,1.4,0.3,1.8c0,0-6.3,2.3-6.7,4.2
+		C470.6,150.4,486.9,164.1,474.3,200.7z"/>
+	<path fill="#CEA3CC" stroke="#92278F" stroke-width="2" stroke-miterlimit="10" d="M493.1,200.7c0,0.7,0.5,1.4,1.3,1.5
+		c2.1,0.4,7.2,0.9,7.2-0.7c-0.1-4-4.9-67.4,1.8-72.3c3.7-2.7,14.5-3.9,13.2-11c-2-11.5-15.4-13.4-24.3-12.6c-2.3,0.2-9.1,1.3-1,4
+		c4.3,1.5,10.7,1.9,10.3,7.9c-0.4,5.4-10.6,5.3-15,6.3c-0.9,0.2-1.1,1.4-0.3,1.8c0,0,6.3,2.3,6.7,4.2
+		C496.7,150.4,480.5,164.1,493.1,200.7z"/>
+</g>
+<g id="DNA">
+	<path fill="#234190" stroke="#000000" stroke-miterlimit="10" d="M137.9,747.1c-10.7,17.9-26.3,15.2-26.3,15.2s11.4-0.5,19.6-15.2
+		c9.8-17.6,26.2-15.4,26.2-15.4S148,730.1,137.9,747.1z"/>
+	<path fill="#234190" stroke="#000000" stroke-miterlimit="10" d="M156.4,747.1c-10.7,17.9-26.3,15.2-26.3,15.2s11.4-0.5,19.6-15.2
+		c9.8-17.6,26.2-15.4,26.2-15.4S166.6,730.1,156.4,747.1z"/>
+	<path fill="#234190" stroke="#000000" stroke-miterlimit="10" d="M242.5,747.1c-10.7,17.9-26.3,15.2-26.3,15.2s11.4-0.5,19.6-15.2
+		c9.8-17.6,26.2-15.4,26.2-15.4S252.7,730.1,242.5,747.1z"/>
+	<path fill="#234190" stroke="#000000" stroke-miterlimit="10" d="M224,747.1c-10.7,17.9-26.3,15.2-26.3,15.2s11.4-0.5,19.6-15.2
+		c9.8-17.6,26.2-15.4,26.2-15.4S234.1,730.1,224,747.1z"/>
+	<path fill="#52ABE0" stroke="#000000" stroke-miterlimit="10" d="M193.1,747.1c10.7,17.9,26.3,15.2,26.3,15.2s-11.4-0.5-19.6-15.2
+		c-9.8-17.6-26.2-15.4-26.2-15.4S182.9,730.1,193.1,747.1z"/>
+	<path fill="#52ABE0" stroke="#000000" stroke-miterlimit="10" d="M173.5,747.1c10.7,17.9,26.3,15.2,26.3,15.2s-11.4-0.5-19.6-15.2
+		c-9.8-17.6-26.2-15.4-26.2-15.4S163.3,730.1,173.5,747.1z"/>
+	<path fill="#52ABE0" stroke="#000000" stroke-miterlimit="10" d="M258.6,747.1c10.7,17.9,26.3,15.2,26.3,15.2s-11.4-0.5-19.6-15.2
+		c-9.8-17.6-26.2-15.4-26.2-15.4S248.4,730.1,258.6,747.1z"/>
+	<path fill="#52ABE0" stroke="#000000" stroke-miterlimit="10" d="M278.2,747.1c10.7,17.9,26.3,15.2,26.3,15.2s-11.4-0.5-19.6-15.2
+		c-9.8-17.6-26.2-15.4-26.2-15.4S268,730.1,278.2,747.1z"/>
+	
+		<ellipse transform="matrix(0.9602 -0.2793 0.2793 0.9602 -200.1578 71.2704)" fill="#F36F25" stroke="#000000" stroke-miterlimit="10" cx="150" cy="738" rx="9" ry="24.1"/>
+</g>
+<g id="Secondaries">
+	<path id="cAMP" fill="#F4C42A" stroke="#000000" stroke-miterlimit="10" d="M179.3,343h-44c-6.6,0-12-5.4-12-12v-1
+		c0-6.6,5.4-12,12-12h44c6.6,0,12,5.4,12,12v1C191.3,337.6,185.9,343,179.3,343z"/>
+	<path fill="#F47421" stroke="#000000" stroke-miterlimit="10" d="M123,481.3H86.5c-6.6,0-12-5.4-12-12v-34.5c0-6.6,5.4-12,12-12
+		H123c6.6,0,12,5.4,12,12v34.5C135,475.9,129.6,481.3,123,481.3z"/>
+	<ellipse fill="#E61E25" stroke="#000000" stroke-miterlimit="10" cx="481.6" cy="285.2" rx="25.9" ry="10.8"/>
+	<ellipse fill="#50B848" stroke="#000000" stroke-miterlimit="10" cx="405.8" cy="387.2" rx="43.6" ry="16.1"/>
+	
+		<radialGradient id="SVGID_3_" cx="479.2658" cy="578.491" r="52.9998" gradientTransform="matrix(0.9331 0 0 0.9554 36.3704 27.4826)" gradientUnits="userSpaceOnUse">
+		<stop  offset="4.135833e-007" style="stop-color:#F7A4A8"/>
+		<stop  offset="1" style="stop-color:#ED1C24"/>
+	</radialGradient>
+	<path fill="url(#SVGID_3_)" stroke="#000000" stroke-miterlimit="10" d="M534.4,616.1c-44.6-31.6-81,1.7-98.9,0
+		c-17.3-1.6-14.9-80.2,0-71.1c32.6,20.2,67.6,43.4,98.9,0C544.7,530.7,548.7,626.2,534.4,616.1z"/>
+	<ellipse fill="#234190" stroke="#000000" stroke-miterlimit="10" cx="190.8" cy="574.8" rx="27.8" ry="22"/>
+</g>
+<g id="Inputs">
+	<polygon fill="#F9ED23" stroke="#000000" stroke-miterlimit="10" points="364.1,94.2 393.4,80.8 384.9,76.2 401.8,65.4 393.4,60.9 
+		414.3,44.9 380.5,57.3 389.9,65 374.6,75.7 381.6,80.4 	"/>
+	<circle fill="#39B54A" stroke="#000000" stroke-miterlimit="10" cx="114.6" cy="108" r="6.7"/>
+	<circle fill="#00AEEF" stroke="#000000" stroke-miterlimit="10" cx="315.2" cy="65.1" r="3.4"/>
+	<circle fill="#00AEEF" stroke="#000000" stroke-miterlimit="10" cx="335.2" cy="242.3" r="3.4"/>
+	<circle fill="#00AEEF" stroke="#000000" stroke-miterlimit="10" cx="315.2" cy="89.1" r="3.4"/>
+	<circle fill="#00AEEF" stroke="#000000" stroke-miterlimit="10" cx="320.4" cy="229.1" r="3.4"/>
+	<circle fill="#00AEEF" stroke="#000000" stroke-miterlimit="10" cx="333.8" cy="79.3" r="3.4"/>
+	<circle fill="#39B54A" stroke="#000000" stroke-miterlimit="10" cx="484.1" cy="115.7" r="4.9"/>
+	<circle fill="#00AEEF" stroke="#000000" stroke-miterlimit="10" cx="177.9" cy="556.2" r="3.4"/>
+</g>
+<g id="Labels">
+	<rect x="39" y="60" fill="none" width="118.3" height="29.1"/>
+	<text transform="matrix(1 0 0 1 38.9998 69.9399)"><tspan x="0" y="0" font-family="'MyriadPro-Regular'" font-size="14">G-protein-coupled</tspan><tspan x="0" y="16.8" font-family="'MyriadPro-Regular'" font-size="14">receptor</tspan></text>
+	<rect x="39" y="212.7" fill="none" width="96" height="37.5"/>
+	<text transform="matrix(1 0 0 1 39.0002 222.6064)"><tspan x="0" y="0" font-family="'MyriadPro-Regular'" font-size="14">Heterotrimeric </tspan><tspan x="0" y="16.8" font-family="'MyriadPro-Regular'" font-size="14">G-protein</tspan></text>
+	<rect x="196.6" y="214.7" fill="none" width="62.9" height="33.4"/>
+	<text transform="matrix(1 0 0 1 196.6458 224.6661)"><tspan x="0" y="0" font-family="'MyriadPro-Regular'" font-size="14">Adenylate </tspan><tspan x="0" y="16.8" font-family="'MyriadPro-Regular'" font-size="14">cyclase</tspan></text>
+	<rect x="140" y="325.5" fill="none" width="34.7" height="16"/>
+	<text transform="matrix(1 0 0 1 139.9582 335.4398)" font-family="'MyriadPro-Regular'" font-size="14">cAMP</text>
+	<rect x="79.2" y="437.4" fill="none" width="51.1" height="29.2"/>
+	<text transform="matrix(1 0 0 1 83.5471 447.3564)"><tspan x="0" y="0" font-family="'MyriadPro-Regular'" font-size="14">Protein </tspan><tspan x="-3.5" y="16.8" font-family="'MyriadPro-Regular'" font-size="14">Kinase A</tspan></text>
+	<rect x="263.2" y="72" fill="none" width="31.8" height="21.3"/>
+	<text transform="matrix(1 0 0 1 264.9956 81.9398)"><tspan x="0" y="0" font-family="'MyriadPro-Regular'" font-size="14">Ca</tspan><tspan x="14.9" y="-4" font-family="'MyriadPro-Regular'" font-size="12">2+</tspan></text>
+	<rect x="284.5" y="38.3" fill="none" width="88.5" height="15.7"/>
+	<text transform="matrix(1 0 0 1 289.8548 48.2736)"><tspan x="0" y="0" font-family="'MyriadPro-Regular'" font-size="14">Ca</tspan><tspan x="14.9" y="-4" font-family="'MyriadPro-Regular'" font-size="12">2+</tspan><tspan x="28.2" y="-4" font-family="'MyriadPro-Regular'" font-size="14"> </tspan><tspan x="31.1" y="0" font-family="'MyriadPro-Regular'" font-size="14">channel</tspan></text>
+	<rect x="159.5" y="569.5" fill="none" width="62.6" height="21.7"/>
+	<text transform="matrix(1 0 0 1 168.3991 579.4391)" fill="#FFFFFF" font-family="'MyriadPro-Regular'" font-size="14">CaMKIV</text>
+	<rect x="349" y="214.7" fill="none" width="33" height="17.8"/>
+	<text transform="matrix(1 0 0 1 351.412 224.6662)"><tspan x="0" y="0" font-family="'MyriadPro-Regular'" font-size="14">Ca</tspan><tspan x="14.9" y="-4" font-family="'MyriadPro-Regular'" font-size="12">2+</tspan></text>
+	<rect x="488.6" y="48.8" fill="none" width="55.3" height="46.4"/>
+	<text transform="matrix(1 0 0 1 489.9146 58.7292)"><tspan x="0" y="0" font-family="'MyriadPro-Regular'" font-size="14">Receptor </tspan><tspan x="2.8" y="16.8" font-family="'MyriadPro-Regular'" font-size="14">tyrosine </tspan><tspan x="7.9" y="33.6" font-family="'MyriadPro-Regular'" font-size="14">kinase</tspan></text>
+	<rect x="369.4" y="382.2" fill="none" width="70.1" height="14"/>
+	<text transform="matrix(1 0 0 1 370.9212 392.1068)" font-family="'MyriadPro-Regular'" font-size="14">MAP kinase</text>
+	<rect x="462" y="279.5" fill="none" width="39.3" height="15.3"/>
+	<text transform="matrix(1 0 0 1 473.1959 289.4399)" font-family="'MyriadPro-Regular'" font-size="14">ras</text>
+	<rect x="449.4" y="578.1" fill="none" width="77" height="21.9"/>
+	<text transform="matrix(1 0 0 1 457.568 592.2627)" font-family="'MyriadPro-Regular'" font-size="20">Protein</text>
+	<rect x="77.2" y="707.4" fill="none" width="47.9" height="14.6"/>
+	<text transform="matrix(1 0 0 1 79.5973 721.5973)" font-family="'MyriadPro-Regular'" font-size="20">CREB</text>
+	<line stroke="#000000" stroke-miterlimit="10" x1="127.1" y1="714.7" x2="148.6" y2="728.9"/>
+	<rect x="215.5" y="703.7" fill="none" width="121" height="22.5"/>
+	<text transform="matrix(1 0 0 1 232.6287 715.0367)" font-family="'MyriadPro-Regular'" font-size="16">Target genes</text>
+	<rect x="163.1" y="793" fill="none" width="100" height="22"/>
+	<text transform="matrix(1 0 0 1 186.3558 804.3594)" font-family="'MyriadPro-Regular'" font-size="16">Nucleus</text>
+</g>
+<g id="Arrows">
+	<g>
+		<g>
+			<path fill="none" stroke="#000000" stroke-width="2" stroke-miterlimit="10" d="M178.3,191.3c20.9-26.7,41-20.7,46.4,4.8"/>
+			<g>
+				<path d="M226.1,208.1c-2.8-5.4-7.2-11.9-11.5-15.8l9.9,2.2l9-4.6C230.2,194.8,227.5,202.2,226.1,208.1z"/>
+			</g>
+		</g>
+	</g>
+	<g>
+		<g>
+			<path fill="none" stroke="#000000" stroke-width="2" stroke-miterlimit="10" d="M216.6,250.2c-5.4,17.3-18.4,34-36,50.2"/>
+			<g>
+				<path d="M171.6,308.3c2.8-5.4,5.7-12.7,6.4-18.5l3.8,9.4l8.9,4.8C184.9,304.1,177.3,306.1,171.6,308.3z"/>
+			</g>
+		</g>
+	</g>
+	<g>
+		<g>
+			<path fill="none" stroke="#000000" stroke-width="2" stroke-miterlimit="10" d="M137.1,352.7c-17.2,17.1-25.7,29.6-30.7,47.2"/>
+			<g>
+				<path d="M103.7,411.7c-0.7-6-2.5-13.7-5.2-18.9l8.4,5.6l10.1-1.1C112.2,400.7,107.1,406.7,103.7,411.7z"/>
+			</g>
+		</g>
+	</g>
+	<g>
+		<g>
+			<path fill="none" stroke="#000000" stroke-width="2" stroke-miterlimit="10" d="M83.3,493.7C60,543.5,69.2,630.5,104.2,681.1"/>
+			<g>
+				<path d="M111.5,690.7c-5.1-3.3-12.2-6.7-17.9-7.9l9.7-3l5.5-8.5C108.4,677.1,109.8,684.9,111.5,690.7z"/>
+			</g>
+		</g>
+	</g>
+	<g>
+		<g>
+			<path fill="none" stroke="#000000" stroke-width="2" stroke-miterlimit="10" d="M163.1,595.1c-19.3,15.1-33.5,53.2-35.9,78.8"/>
+			<g>
+				<path d="M127.1,686c-2-5.7-5.4-12.8-9.2-17.3l9.4,3.6l9.6-3.2C133,673.4,129.3,680.4,127.1,686z"/>
+			</g>
+		</g>
+	</g>
+	<g>
+		<g>
+			<path fill="none" stroke="#000000" stroke-width="2" stroke-miterlimit="10" d="M313.3,242.3C243.1,327.2,208.3,428.7,202,530.9"
+				/>
+			<g>
+				<path d="M201.4,542.9c-1.8-5.8-4.9-13-8.5-17.6l9.3,4l9.7-2.9C207.8,530.5,203.8,537.4,201.4,542.9z"/>
+			</g>
+		</g>
+	</g>
+	<g>
+		<g>
+			<path fill="none" stroke="#000000" stroke-width="2" stroke-miterlimit="10" d="M346.3,254.3c22.8,29.2,34.4,61.1,40.2,92.8"/>
+			<g>
+				<path d="M388.5,359c-3-5.3-7.7-11.6-12.2-15.3l9.9,1.8l8.8-4.9C392.1,345.5,389.7,353.1,388.5,359z"/>
+			</g>
+		</g>
+	</g>
+	<g>
+		<line fill="#CEA3CC" x1="482" y1="216.3" x2="481.2" y2="259.3"/>
+		<g>
+			<line fill="none" stroke="#000000" stroke-width="2" stroke-miterlimit="10" x1="482" y1="216.3" x2="481.4" y2="247.3"/>
+			<g>
+				<path d="M481.2,259.3c-2-5.7-5.5-12.8-9.2-17.3l9.4,3.6l9.6-3.3C487.2,246.7,483.4,253.7,481.2,259.3z"/>
+			</g>
+		</g>
+	</g>
+	<g>
+		<g>
+			<path fill="none" stroke="#000000" stroke-width="2" stroke-miterlimit="10" d="M482,308c-0.8,18.9-8.9,37.4-24.5,50.4"/>
+			<g>
+				<path d="M447.6,365.3c3.4-5,7.1-12,8.4-17.7l2.7,9.7l8.3,5.8C461.3,362.6,453.5,363.8,447.6,365.3z"/>
+			</g>
+		</g>
+	</g>
+	<g>
+		<g>
+			<path fill="none" stroke="#000000" stroke-width="2" stroke-miterlimit="10" d="M404.5,411.7c-29.7,102.2-200.6,200.5-252.8,271"
+				/>
+			<g>
+				<path d="M145,692.7c1.5-5.9,2.5-13.7,1.8-19.5l5.9,8.2l9.8,2.5C156.8,685.4,149.9,689.2,145,692.7z"/>
+			</g>
+		</g>
+	</g>
+	<g>
+		<g>
+			<polyline fill="none" stroke="#000000" stroke-width="2" stroke-miterlimit="10" points="175.9,718.7 175.9,683.3 243.2,683.3 
+							"/>
+			<g>
+				<path d="M255.3,683.3c-5.7,2.1-12.7,5.7-17.1,9.5l3.4-9.5l-3.4-9.5C242.5,677.6,249.6,681.2,255.3,683.3z"/>
+			</g>
+		</g>
+	</g>
+	<g>
+		<g>
+			<path fill="none" stroke="#000000" stroke-width="2" stroke-miterlimit="10" d="M266.9,685.6c49.5,0,129.6-6.7,182.2-47.2"/>
+			<g>
+				<path d="M458.3,630.7c-3,5.2-6.2,12.5-7.1,18.2l-3.4-9.5l-8.7-5.1C444.9,634.4,452.6,632.7,458.3,630.7z"/>
+			</g>
+		</g>
+	</g>
+	<g>
+		<g>
+			<line fill="none" stroke="#000000" stroke-width="2" stroke-miterlimit="10" x1="328.1" y1="93.3" x2="330.1" y2="210.2"/>
+			<g>
+				<path d="M330.3,222.3c-2.2-5.6-5.9-12.6-9.8-16.9l9.6,3.3l9.4-3.6C335.8,209.4,332.3,216.5,330.3,222.3z"/>
+			</g>
+		</g>
+	</g>
+</g>
+</svg>

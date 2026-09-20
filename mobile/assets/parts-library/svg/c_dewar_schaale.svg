@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   version="1.1"
+   width="189.81013"
+   height="91.518608"
+   id="svg4898">
+  <defs
+     id="defs4900">
+    <marker
+       refX="0"
+       refY="0"
+       orient="auto"
+       id="Arrow1Lend"
+       style="overflow:visible">
+      <path
+         d="M 0,0 5,-5 -12.5,0 5,5 0,0 z"
+         transform="matrix(-0.8,0,0,-0.8,-10,0)"
+         id="path3650"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;marker-start:none" />
+    </marker>
+  </defs>
+  <g
+     transform="translate(-79.380647,-426.60288)"
+     id="layer1">
+    <path
+       d="m 98.537427,430.38843 c 0,0 -1.66924,60.25202 45.885593,60.25636 50.69796,0.005 50.82454,-57.79048 51.68433,-60.7606 0.79223,-2.73672 4.25684,-4.56863 6.30296,0 1.02066,2.27895 2.01841,69.99722 -55.46611,68.57627 -64.173553,-1.58629 -56.474573,-68.57627 -56.474573,-68.57627 0,0 4.0339,-6.05084 8.0678,0.50424 z"
+       id="path2818"
+       style="fill:#0000ff;fill-opacity:0.15822784;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+    <path
+       d="m 79.880647,427.86724 0,89.75424 7.81567,0 -0.25211,-9.07627 117.487283,0.50424 0,8.57204 7.56356,-10e-6 1e-5,-90.00635 -7.56357,-0.25212 0,75.13135 -117.991523,0.50424 0.75636,-75.13136 -7.81568,0 z"
+       id="path2820"
+       style="fill:none;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+    <path
+       d="m 117.67041,491.37311 0,11.14928 7.61962,0 -0.50796,-7.96921 -7.11166,-3.18007 z"
+       id="path2822"
+       style="fill:none;stroke:#000000;stroke-width:0.94393027px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+    <path
+       d="m 174.50466,492.83433 0,9.73955 -7.7226,0 0.0106,-6.3835 7.71202,-3.35605 z"
+       id="path2822-1"
+       style="fill:none;stroke:#000000;stroke-width:0.84094173px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+    <rect
+       width="2.5574458"
+       height="5.0786319"
+       x="87.6782"
+       y="432.13513"
+       id="rect3618"
+       style="fill:none;stroke:#000000;stroke-width:0.96374089;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none" />
+    <rect
+       width="2.1306202"
+       height="5.1560435"
+       x="202.73166"
+       y="431.59219"
+       id="rect3618-3"
+       style="fill:none;stroke:#000000;stroke-width:0.88632911;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none" />
+    <text
+       x="222.07555"
+       y="489.88843"
+       id="text4652"
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"><tspan
+         x="222.07555"
+         y="489.88843"
+         id="tspan4654"
+         style="fill:#0000ff">Vakuum</tspan></text>
+    <path
+       d="m 221.57132,486.35877 -44.37287,-0.25212"
+       id="path4658"
+       style="fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-end:url(#Arrow1Lend)" />
+  </g>
+</svg>

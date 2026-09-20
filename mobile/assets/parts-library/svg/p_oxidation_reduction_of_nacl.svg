@@ -1,0 +1,739 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Generator: Adobe Illustrator 23.1.1, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+
+<svg
+   xmlns:i="&amp;ns_ai;"
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   version="1.1"
+   x="0px"
+   y="0px"
+   viewBox="0 0 838.81 239.90479"
+   xml:space="preserve"
+   id="svg224"
+   sodipodi:docname="Oxidation_Reduction_of_NaCl.svg"
+   width="838.81"
+   height="239.90479"
+   inkscape:version="0.92.4 (5da689c313, 2019-01-14)"><metadata
+   id="metadata230"><rdf:RDF><cc:Work
+       rdf:about=""><dc:format>image/svg+xml</dc:format><dc:type
+         rdf:resource="http://purl.org/dc/dcmitype/StillImage" /><dc:title></dc:title></cc:Work></rdf:RDF></metadata><defs
+   id="defs228" /><sodipodi:namedview
+   pagecolor="#ffffff"
+   bordercolor="#666666"
+   borderopacity="1"
+   objecttolerance="10"
+   gridtolerance="10"
+   guidetolerance="10"
+   inkscape:pageopacity="0"
+   inkscape:pageshadow="2"
+   inkscape:window-width="640"
+   inkscape:window-height="480"
+   id="namedview226"
+   showgrid="false"
+   fit-margin-top="10"
+   fit-margin-right="10"
+   fit-margin-bottom="10"
+   fit-margin-left="10"
+   inkscape:zoom="0.34424603"
+   inkscape:cx="384.47"
+   inkscape:cy="112.46001"
+   inkscape:window-x="0"
+   inkscape:window-y="0"
+   inkscape:window-maximized="0"
+   inkscape:current-layer="svg224" />
+<style
+   type="text/css"
+   id="style2">
+	.st0{fill:#FFFFFF;stroke:#666666;stroke-miterlimit:10;}
+	.st1{font-family:'MyriadPro-Bold';}
+	.st2{font-size:24px;}
+	.st3{fill:none;stroke:#666666;stroke-miterlimit:10;}
+	.st4{fill:#FF0000;}
+	.st5{fill:#0000FF;}
+	.st6{fill:none;stroke:#000000;stroke-width:3;stroke-miterlimit:10;}
+	.st7{fill:none;}
+	.st8{fill:none;stroke:#006837;stroke-width:3;stroke-miterlimit:10;}
+	.st9{fill:none;stroke:#006837;stroke-width:3;stroke-miterlimit:10;stroke-dasharray:10.2186,10.2186;}
+	.st10{fill:#006837;}
+</style>
+<font
+   horiz-adv-x="1000"
+   id="font20"
+   horiz-origin-x="0"
+   horiz-origin-y="0"
+   vert-origin-x="45"
+   vert-origin-y="90"
+   vert-adv-y="90">
+<!-- Copyright 1992, 1994, 1997, 2000, 2004 Adobe Systems Incorporated. All rights reserved. Myriad is either a registered trademark or a trademark of Adobe Systems Incorporated in the United States and/or other countries. -->
+<font-face
+   font-family="MyriadPro-Bold"
+   units-per-em="1000"
+   underline-position="-100"
+   underline-thickness="50"
+   id="font-face4" />
+<missing-glyph
+   horiz-adv-x="500"
+   d="M0,0l500,0l0,700l-500,0M250,395l-170,255l340,0M280,350l170,255l0,-510M80,50l170,255l170,-255M50,605l170,-255l-170,-255z"
+   id="missing-glyph6" />
+<glyph
+   unicode="C"
+   horiz-adv-x="595"
+   d="M538,138C508,126 457,116 411,116C275,116 195,201 195,336C195,486 289,559 410,559C464,559 507,547 538,534l31,121C542,669 482,685 403,685C199,685 35,557 35,327C35,135 155,-10 388,-10C470,-10 533,5 561,19z"
+   id="glyph8" />
+<glyph
+   unicode="N"
+   horiz-adv-x="690"
+   d="M206,0l0,203C206,313 204,408 200,497l3,1C236,419 280,332 320,260l144,-260l160,0l0,674l-140,0l0,-197C484,376 487,285 497,196l-3,0C464,272 424,356 384,427l-140,247l-178,0l0,-674z"
+   id="glyph10" />
+<glyph
+   unicode="a"
+   horiz-adv-x="528"
+   d="M476,0C471,27 469,72 469,119l0,170C469,404 417,500 254,500C165,500 98,476 64,457l28,-98C124,379 177,396 227,396C302,396 316,359 316,333l0,-7C143,327 29,266 29,139C29,61 88,-11 187,-11C245,-11 295,10 327,49l3,0l9,-49M321,178C321,169 320,160 318,152C308,121 277,96 239,96C205,96 179,115 179,154C179,213 241,232 321,231z"
+   id="glyph12" />
+<glyph
+   unicode="-"
+   horiz-adv-x="322"
+   d="M30,313l0,-101l262,0l0,101z"
+   id="glyph14" />
+<glyph
+   unicode="l"
+   horiz-adv-x="275"
+   d="M61,0l152,0l0,710l-152,0z"
+   id="glyph16" />
+<glyph
+   unicode="+"
+   horiz-adv-x="596"
+   d="M249,532l0,-218l-209,0l0,-94l209,0l0,-220l98,0l0,220l209,0l0,94l-209,0l0,218z"
+   id="glyph18" />
+</font>
+
+	<switch
+   id="switch222"
+   transform="translate(-119.53,-208.55522)">
+	<foreignObject
+   requiredExtensions="http://ns.adobe.com/AdobeIllustrator/10.0/"
+   x="0"
+   y="0"
+   width="1"
+   height="1">
+		
+	</foreignObject>
+	<g
+   i:extraneous="self"
+   id="g220">
+		<g
+   id="guides">
+		</g>
+		<g
+   id="drawing">
+			<g
+   id="g53">
+				<circle
+   class="st0"
+   cx="215.05"
+   cy="351.06"
+   r="36.07"
+   id="circle23"
+   style="fill:#ffffff;stroke:#666666;stroke-miterlimit:10" />
+				<text
+   transform="translate(202.9473,355.8116)"
+   class="st1 st2"
+   id="text25"
+   style="font-size:24px;font-family:MyriadPro-Bold">Na</text>
+
+				<path
+   class="st3"
+   d="m 300.07,351.06 c 0,27.41 -12.97,51.8 -33.12,67.34 -14.36,11.08 -32.36,17.68 -51.9,17.68 -46.96,0 -85.02,-38.06 -85.02,-85.02 0,-46.96 38.06,-85.02 85.02,-85.02 46.96,0 85.02,38.06 85.02,85.02 z"
+   id="path27"
+   inkscape:connector-curvature="0"
+   style="fill:none;stroke:#666666;stroke-miterlimit:10" />
+				<circle
+   class="st3"
+   cx="215.05"
+   cy="351.06"
+   r="63.349998"
+   id="circle29"
+   style="fill:none;stroke:#666666;stroke-miterlimit:10" />
+				<circle
+   class="st4"
+   cx="215.05"
+   cy="314.98999"
+   r="4.7600002"
+   id="circle31"
+   style="fill:#ff0000" />
+				<circle
+   class="st4"
+   cx="215.05"
+   cy="387.12"
+   r="4.7600002"
+   id="circle33"
+   style="fill:#ff0000" />
+				<circle
+   class="st4"
+   cx="215.05"
+   cy="414.41"
+   r="4.7600002"
+   id="circle35"
+   style="fill:#ff0000" />
+				<circle
+   class="st4"
+   cx="215.05"
+   cy="287.70001"
+   r="4.7600002"
+   id="circle37"
+   style="fill:#ff0000" />
+				<circle
+   class="st4"
+   cx="151.7"
+   cy="351.06"
+   r="4.7600002"
+   id="circle39"
+   style="fill:#ff0000" />
+				<circle
+   class="st4"
+   cx="278.39999"
+   cy="351.06"
+   r="4.7600002"
+   id="circle41"
+   style="fill:#ff0000" />
+				<circle
+   class="st4"
+   cx="262.20001"
+   cy="394.60001"
+   r="4.7600002"
+   id="circle43"
+   style="fill:#ff0000" />
+				<circle
+   class="st4"
+   cx="259.73999"
+   cy="307.51001"
+   r="4.7600002"
+   id="circle45"
+   style="fill:#ff0000" />
+				<circle
+   class="st4"
+   cx="170.11"
+   cy="307.51001"
+   r="4.7600002"
+   id="circle47"
+   style="fill:#ff0000" />
+				<circle
+   class="st4"
+   cx="168.27"
+   cy="394.60001"
+   r="4.7600002"
+   id="circle49"
+   style="fill:#ff0000" />
+				<circle
+   class="st4"
+   cx="215.05"
+   cy="266.04001"
+   r="4.7600002"
+   id="circle51"
+   style="fill:#ff0000" />
+			</g>
+			<g
+   id="g101">
+				<g
+   id="g57">
+					<circle
+   class="st0"
+   cx="415.28"
+   cy="348.67999"
+   r="36.07"
+   id="circle55"
+   style="fill:#ffffff;stroke:#666666;stroke-miterlimit:10" />
+				</g>
+				<text
+   transform="translate(403.173,353.4337)"
+   class="st1 st2"
+   id="text59"
+   style="font-size:24px;font-family:MyriadPro-Bold">Cl</text>
+
+				<g
+   id="g63">
+					<path
+   class="st3"
+   d="m 500.3,348.68 c 0,27.41 -12.97,51.8 -33.12,67.34 -14.36,11.08 -32.36,17.68 -51.9,17.68 -46.96,0 -85.02,-38.06 -85.02,-85.02 0,-46.96 38.06,-85.02 85.02,-85.02 46.96,0 85.02,38.06 85.02,85.02 z"
+   id="path61"
+   inkscape:connector-curvature="0"
+   style="fill:none;stroke:#666666;stroke-miterlimit:10" />
+				</g>
+				<circle
+   class="st3"
+   cx="415.28"
+   cy="348.67999"
+   r="63.349998"
+   id="circle65"
+   style="fill:none;stroke:#666666;stroke-miterlimit:10" />
+				<circle
+   class="st5"
+   cx="415.28"
+   cy="312.60999"
+   r="4.7600002"
+   id="circle67"
+   style="fill:#0000ff" />
+				<circle
+   class="st5"
+   cx="415.28"
+   cy="384.73999"
+   r="4.7600002"
+   id="circle69"
+   style="fill:#0000ff" />
+				<circle
+   class="st5"
+   cx="415.28"
+   cy="412.03"
+   r="4.7600002"
+   id="circle71"
+   style="fill:#0000ff" />
+				<circle
+   class="st5"
+   cx="415.28"
+   cy="285.32999"
+   r="4.7600002"
+   id="circle73"
+   style="fill:#0000ff" />
+				<circle
+   class="st5"
+   cx="351.92999"
+   cy="348.67999"
+   r="4.7600002"
+   id="circle75"
+   style="fill:#0000ff" />
+				<circle
+   class="st5"
+   cx="478.63"
+   cy="348.67999"
+   r="4.7600002"
+   id="circle77"
+   style="fill:#0000ff" />
+				<circle
+   class="st5"
+   cx="462.42001"
+   cy="392.22"
+   r="4.7600002"
+   id="circle79"
+   style="fill:#0000ff" />
+				<circle
+   class="st5"
+   cx="459.97"
+   cy="305.13"
+   r="4.7600002"
+   id="circle81"
+   style="fill:#0000ff" />
+				<circle
+   class="st5"
+   cx="370.32999"
+   cy="305.13"
+   r="4.7600002"
+   id="circle83"
+   style="fill:#0000ff" />
+				<circle
+   class="st5"
+   cx="368.5"
+   cy="392.22"
+   r="4.7600002"
+   id="circle85"
+   style="fill:#0000ff" />
+				<circle
+   class="st5"
+   cx="354.14999"
+   cy="287.70001"
+   r="4.7600002"
+   id="circle87"
+   style="fill:#0000ff" />
+				<circle
+   class="st5"
+   cx="416.31"
+   cy="433.70001"
+   r="4.7600002"
+   id="circle89"
+   style="fill:#0000ff" />
+				<circle
+   class="st5"
+   cx="473.87"
+   cy="409.64999"
+   r="4.7600002"
+   id="circle91"
+   style="fill:#0000ff" />
+				<circle
+   class="st5"
+   cx="500.29999"
+   cy="346.29999"
+   r="4.7600002"
+   id="circle93"
+   style="fill:#0000ff" />
+				<circle
+   class="st5"
+   cx="476.69"
+   cy="287.70001"
+   r="4.7600002"
+   id="circle95"
+   style="fill:#0000ff" />
+				<circle
+   class="st5"
+   cx="351.92999"
+   cy="407.26999"
+   r="4.7600002"
+   id="circle97"
+   style="fill:#0000ff" />
+				<circle
+   class="st5"
+   cx="330.26001"
+   cy="348.67999"
+   r="4.7600002"
+   id="circle99"
+   style="fill:#0000ff" />
+			</g>
+			<g
+   id="g111">
+				<g
+   id="g109">
+					<line
+   class="st6"
+   x1="522.89001"
+   y1="348.67999"
+   x2="547.33002"
+   y2="348.67999"
+   id="line103"
+   style="fill:none;stroke:#000000;stroke-width:3;stroke-miterlimit:10" />
+					<g
+   id="g107">
+						<polygon
+   points="545.14,341.2 545.14,356.16 558.09,348.68 "
+   id="polygon105" />
+					</g>
+				</g>
+			</g>
+			<text
+   transform="translate(305.9958,356.4128)"
+   class="st1 st2"
+   id="text113"
+   style="font-size:24px;font-family:MyriadPro-Bold">+</text>
+
+			<g
+   id="g217">
+				<circle
+   class="st0"
+   cx="658.33002"
+   cy="350.38"
+   r="36.07"
+   id="circle115"
+   style="fill:#ffffff;stroke:#666666;stroke-miterlimit:10" />
+				<text
+   transform="translate(646.229,355.1307)"
+   id="text121"><tspan
+     x="0"
+     y="0"
+     class="st1 st2"
+     id="tspan117"
+     style="font-size:24px;font-family:MyriadPro-Bold">Na</tspan><tspan
+     x="29.23"
+     y="-3"
+     class="st1 st2"
+     id="tspan119"
+     style="font-size:24px;font-family:MyriadPro-Bold">+</tspan></text>
+
+				<path
+   class="st3"
+   d="m 743.35,350.38 c 0,27.41 -12.97,51.8 -33.12,67.34 -14.36,11.08 -32.36,17.68 -51.9,17.68 -46.96,0 -85.02,-38.06 -85.02,-85.02 0,-46.96 38.06,-85.02 85.02,-85.02 46.96,0 85.02,38.06 85.02,85.02 z"
+   id="path123"
+   inkscape:connector-curvature="0"
+   style="fill:none;stroke:#666666;stroke-miterlimit:10" />
+				<circle
+   class="st3"
+   cx="658.33002"
+   cy="350.38"
+   r="63.349998"
+   id="circle125"
+   style="fill:none;stroke:#666666;stroke-miterlimit:10" />
+				<circle
+   class="st4"
+   cx="658.33002"
+   cy="314.31"
+   r="4.7600002"
+   id="circle127"
+   style="fill:#ff0000" />
+				<circle
+   class="st7"
+   cx="658.33002"
+   cy="386.44"
+   r="4.7600002"
+   id="circle129"
+   style="fill:none" />
+				<circle
+   class="st4"
+   cx="658.33002"
+   cy="413.73001"
+   r="4.7600002"
+   id="circle131"
+   style="fill:#ff0000" />
+				<circle
+   class="st4"
+   cx="658.33002"
+   cy="287.01999"
+   r="4.7600002"
+   id="circle133"
+   style="fill:#ff0000" />
+				<circle
+   class="st4"
+   cx="594.97998"
+   cy="350.38"
+   r="4.7600002"
+   id="circle135"
+   style="fill:#ff0000" />
+				<circle
+   class="st4"
+   cx="721.67999"
+   cy="350.38"
+   r="4.7600002"
+   id="circle137"
+   style="fill:#ff0000" />
+				<circle
+   class="st4"
+   cx="705.47998"
+   cy="393.92001"
+   r="4.7600002"
+   id="circle139"
+   style="fill:#ff0000" />
+				<circle
+   class="st4"
+   cx="703.02002"
+   cy="306.82999"
+   r="4.7600002"
+   id="circle141"
+   style="fill:#ff0000" />
+				<circle
+   class="st4"
+   cx="613.39001"
+   cy="306.82999"
+   r="4.7600002"
+   id="circle143"
+   style="fill:#ff0000" />
+				<circle
+   class="st4"
+   cx="611.56"
+   cy="393.92001"
+   r="4.7600002"
+   id="circle145"
+   style="fill:#ff0000" />
+				<circle
+   class="st4"
+   cx="858.56"
+   cy="263.66"
+   r="4.7600002"
+   id="circle147"
+   style="fill:#ff0000" />
+				<g
+   id="g199">
+					<g
+   id="g151">
+						<circle
+   class="st0"
+   cx="858.56"
+   cy="348"
+   r="36.07"
+   id="circle149"
+   style="fill:#ffffff;stroke:#666666;stroke-miterlimit:10" />
+					</g>
+					<text
+   transform="translate(846.4547,352.7529)"
+   id="text157"><tspan
+     x="0"
+     y="0"
+     class="st1 st2"
+     id="tspan153"
+     style="font-size:24px;font-family:MyriadPro-Bold">Cl</tspan><tspan
+     x="20.879999"
+     y="-4"
+     class="st1 st2"
+     id="tspan155"
+     style="font-size:24px;font-family:MyriadPro-Bold">-</tspan></text>
+
+					<g
+   id="g161">
+						<path
+   class="st3"
+   d="m 943.58,348 c 0,27.41 -12.97,51.8 -33.12,67.34 -14.36,11.08 -32.36,17.68 -51.9,17.68 -46.96,0 -85.02,-38.06 -85.02,-85.02 0,-46.96 38.06,-85.02 85.02,-85.02 46.95,0 85.02,38.06 85.02,85.02 z"
+   id="path159"
+   inkscape:connector-curvature="0"
+   style="fill:none;stroke:#666666;stroke-miterlimit:10" />
+					</g>
+					<circle
+   class="st3"
+   cx="858.56"
+   cy="348"
+   r="63.349998"
+   id="circle163"
+   style="fill:none;stroke:#666666;stroke-miterlimit:10" />
+					<circle
+   class="st5"
+   cx="858.56"
+   cy="311.92999"
+   r="4.7600002"
+   id="circle165"
+   style="fill:#0000ff" />
+					<circle
+   class="st5"
+   cx="858.56"
+   cy="384.06"
+   r="4.7600002"
+   id="circle167"
+   style="fill:#0000ff" />
+					<circle
+   class="st5"
+   cx="858.56"
+   cy="411.35001"
+   r="4.7600002"
+   id="circle169"
+   style="fill:#0000ff" />
+					<circle
+   class="st5"
+   cx="858.56"
+   cy="284.64999"
+   r="4.7600002"
+   id="circle171"
+   style="fill:#0000ff" />
+					<circle
+   class="st5"
+   cx="795.21002"
+   cy="348"
+   r="4.7600002"
+   id="circle173"
+   style="fill:#0000ff" />
+					<circle
+   class="st5"
+   cx="921.90997"
+   cy="348"
+   r="4.7600002"
+   id="circle175"
+   style="fill:#0000ff" />
+					<circle
+   class="st5"
+   cx="905.70001"
+   cy="391.54001"
+   r="4.7600002"
+   id="circle177"
+   style="fill:#0000ff" />
+					<circle
+   class="st5"
+   cx="903.25"
+   cy="304.45001"
+   r="4.7600002"
+   id="circle179"
+   style="fill:#0000ff" />
+					<circle
+   class="st5"
+   cx="813.60999"
+   cy="304.45001"
+   r="4.7600002"
+   id="circle181"
+   style="fill:#0000ff" />
+					<circle
+   class="st5"
+   cx="811.78003"
+   cy="391.54001"
+   r="4.7600002"
+   id="circle183"
+   style="fill:#0000ff" />
+					<circle
+   class="st5"
+   cx="797.42999"
+   cy="287.01999"
+   r="4.7600002"
+   id="circle185"
+   style="fill:#0000ff" />
+					<circle
+   class="st5"
+   cx="859.59998"
+   cy="433.01999"
+   r="4.7600002"
+   id="circle187"
+   style="fill:#0000ff" />
+					<circle
+   class="st5"
+   cx="917.15002"
+   cy="408.97"
+   r="4.7600002"
+   id="circle189"
+   style="fill:#0000ff" />
+					<circle
+   class="st5"
+   cx="943.58002"
+   cy="345.62"
+   r="4.7600002"
+   id="circle191"
+   style="fill:#0000ff" />
+					<circle
+   class="st5"
+   cx="919.96997"
+   cy="287.01999"
+   r="4.7600002"
+   id="circle193"
+   style="fill:#0000ff" />
+					<circle
+   class="st5"
+   cx="795.21002"
+   cy="406.59"
+   r="4.7600002"
+   id="circle195"
+   style="fill:#0000ff" />
+					<circle
+   class="st5"
+   cx="773.53998"
+   cy="348"
+   r="4.7600002"
+   id="circle197"
+   style="fill:#0000ff" />
+				</g>
+				<g
+   id="g213">
+					<g
+   id="g211">
+						<path
+   class="st8"
+   d="m 689.96,249.1 c 0,0 1.48,-1.04 4.19,-2.72"
+   id="path201"
+   inkscape:connector-curvature="0"
+   style="fill:none;stroke:#006837;stroke-width:3;stroke-miterlimit:10" />
+						<path
+   class="st9"
+   d="m 702.99,241.25 c 25.88,-14.12 85.11,-39 129.46,-1.28"
+   id="path203"
+   inkscape:connector-curvature="0"
+   style="fill:none;stroke:#006837;stroke-width:3;stroke-miterlimit:10;stroke-dasharray:10.2186, 10.2186" />
+						<path
+   class="st8"
+   d="m 836.25,243.4 c 1.19,1.13 2.36,2.31 3.53,3.54"
+   id="path205"
+   inkscape:connector-curvature="0"
+   style="fill:none;stroke:#006837;stroke-width:3;stroke-miterlimit:10" />
+						<g
+   id="g209">
+							<polygon
+   class="st10"
+   points="843.84,240.48 832.59,250.33 846.75,255.15 "
+   id="polygon207"
+   style="fill:#006837" />
+						</g>
+					</g>
+				</g>
+				<text
+   transform="translate(749.5854,356.4126)"
+   class="st1 st2"
+   id="text215"
+   style="font-size:24px;font-family:MyriadPro-Bold">+</text>
+
+			</g>
+		</g>
+	</g>
+</switch>
+
+</svg>

@@ -1,0 +1,167 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://web.resource.org/cc/"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="225"
+   height="285"
+   id="svg2"
+   sodipodi:version="0.32"
+   inkscape:version="0.44.1"
+   version="1.0"
+   sodipodi:docbase="/home/buck/Desktop/Wikipedia"
+   sodipodi:docname="Tidal braking.svg">
+  <defs
+     id="defs4">
+    <marker
+       inkscape:stockid="Arrow2Mstart"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="Arrow2Mstart"
+       style="overflow:visible">
+      <path
+         id="path4747"
+         style="font-size:12px;fill-rule:evenodd;stroke-width:0.625;stroke-linejoin:round"
+         d="M 8.7185878,4.0337352 L -2.2072895,0.016013256 L 8.7185884,-4.0017078 C 6.97309,-1.6296469 6.9831476,1.6157441 8.7185878,4.0337352 z "
+         transform="scale(0.6,0.6)" />
+    </marker>
+    <marker
+       inkscape:stockid="Arrow1Lstart"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="Arrow1Lstart"
+       style="overflow:visible">
+      <path
+         id="path4771"
+         d="M 0,0 L 5,-5 L -12.5,0 L 5,5 L 0,0 z "
+         style="fill-rule:evenodd;stroke:black;stroke-width:1pt;marker-start:none"
+         transform="matrix(0.8,0,0,0.8,10,0)" />
+    </marker>
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     gridtolerance="10000"
+     guidetolerance="10"
+     objecttolerance="10"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.98994949"
+     inkscape:cx="141.04339"
+     inkscape:cy="221.49598"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     width="225px"
+     height="285px"
+     inkscape:window-width="982"
+     inkscape:window-height="715"
+     inkscape:window-x="289"
+     inkscape:window-y="60" />
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-344.2505,-314.2193)">
+    <path
+       transform="matrix(0.964897,-0.246037,0.368726,1.446052,-183.7748,-19.47344)"
+       d="M 545.71427 452.71933 A 51.785713 51.785713 0 1 1  442.14285,452.71933 A 51.785713 51.785713 0 1 1  545.71427 452.71933 z"
+       sodipodi:ry="51.785713"
+       sodipodi:rx="51.785713"
+       sodipodi:cy="452.71933"
+       sodipodi:cx="493.92856"
+       id="path2822"
+       style="opacity:1;fill:blue;fill-opacity:1;stroke:black;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       sodipodi:type="arc" />
+    <path
+       sodipodi:type="arc"
+       style="opacity:1;fill:lime;fill-opacity:1;stroke:black;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="path1933"
+       sodipodi:cx="493.92856"
+       sodipodi:cy="452.71933"
+       sodipodi:rx="51.785713"
+       sodipodi:ry="51.785713"
+       d="M 545.71427 452.71933 A 51.785713 51.785713 0 1 1  442.14285,452.71933 A 51.785713 51.785713 0 1 1  545.71427 452.71933 z"
+       transform="translate(-34.18409,60.93826)" />
+    <path
+       sodipodi:type="arc"
+       style="opacity:1;fill:gray;fill-opacity:1;stroke:black;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="path2824"
+       sodipodi:cx="454.64285"
+       sodipodi:cy="325.57648"
+       sodipodi:rx="10.357142"
+       sodipodi:ry="10.357142"
+       d="M 465 325.57648 A 10.357142 10.357142 0 1 1  444.28571,325.57648 A 10.357142 10.357142 0 1 1  465 325.57648 z"
+       transform="translate(5.101619,8.081221)" />
+    <path
+       sodipodi:type="arc"
+       style="opacity:1;fill:none;fill-opacity:1;stroke:black;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;marker-start:none;marker-end:none;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="path2826"
+       sodipodi:cx="610"
+       sodipodi:cy="420.21933"
+       sodipodi:rx="35"
+       sodipodi:ry="35"
+       d="M 584.63394,396.10372 A 35,35 0 0 1 645,420.21933"
+       sodipodi:start="3.9017252"
+       sodipodi:end="6.2831853"
+       sodipodi:open="true"
+       transform="translate(-149.8984,92.36693)" />
+    <path
+       style="opacity:1;fill:black;fill-opacity:1;stroke:black;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       d="M 431.64577,490.44461 L 437.67168,475.5443 L 445.94136,490.37608 L 431.64577,490.44461 z "
+       id="path5665" />
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:black;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="525.8158"
+       y="521.15771"
+       id="text6552"><tspan
+         sodipodi:role="line"
+         id="tspan6554"
+         x="525.8158"
+         y="521.15771">Earth</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:black;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="482.24438"
+       y="337.58624"
+       id="text6556"><tspan
+         sodipodi:role="line"
+         id="tspan6558"
+         x="482.24438"
+         y="337.58624">Moon</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:black;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="354.38724"
+       y="484.01483"
+       id="text6560"><tspan
+         sodipodi:role="line"
+         id="tspan6562"
+         x="354.38724"
+         y="484.01483">Tides</tspan></text>
+    <path
+       style="opacity:1;fill:none;fill-opacity:1;stroke:black;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       d="M 455.81581,579.01483 L 390.10152,481.15769 L 453.67295,449.01483"
+       id="path6564" />
+  </g>
+</svg>

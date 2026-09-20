@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://web.resource.org/cc/"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="519"
+   height="780"
+   id="svg10853"
+   sodipodi:version="0.32"
+   inkscape:version="0.44.1"
+   version="1.0"
+   sodipodi:docbase="/home/david/pulley"
+   sodipodi:docname="pulley1a.svg">
+  <defs
+     id="defs10855" />
+  <sodipodi:namedview
+     id="base"
+     showgrid="true"
+     inkscape:grid-points="true"
+     gridtolerance="10000"
+     inkscape:zoom="5.6568543"
+     inkscape:cx="240.64695"
+     inkscape:cy="382.72728"
+     inkscape:window-width="849"
+     inkscape:window-height="582"
+     inkscape:window-x="0"
+     inkscape:window-y="93"
+     inkscape:current-layer="layer1" />
+  <metadata
+     id="metadata10858">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <path
+       style="fill:black;stroke:none"
+       d="M 210,615 L 300,615 L 350,760 L 160,760 z "
+       id="path16243"
+       sodipodi:nodetypes="ccccc" />
+    <text
+       xml:space="preserve"
+       style="font-size:64px;text-align:center;text-anchor:middle;fill:white;font-family:Serif"
+       x="255"
+       y="710"
+       id="text16245"><tspan
+         sodipodi:role="line"
+         id="tspan16247"
+         x="255"
+         y="710">W</tspan></text>
+    <g
+       id="g24969">
+      <path
+         d="M 325 460 A 70 70 0 1 1  185,460 A 70 70 0 1 1  325 460 z"
+         sodipodi:ry="70"
+         sodipodi:rx="70"
+         sodipodi:cy="460"
+         sodipodi:cx="255"
+         id="path12680"
+         style="fill:#58c0ee;stroke:none"
+         sodipodi:type="arc" />
+      <path
+         d="M 280 460 A 25 25 0 1 1  230,460 A 25 25 0 1 1  280 460 z"
+         sodipodi:ry="25"
+         sodipodi:rx="25"
+         sodipodi:cy="460"
+         sodipodi:cx="255"
+         id="path12678"
+         style="opacity:1;fill:#373535;stroke:none"
+         sodipodi:type="arc" />
+    </g>
+    <path
+       style="fill:none;stroke:red;stroke-width:10;stroke-linecap:butt"
+       d="M 330,25 L 330,460 C 330,501 296,535 255,535 C 213,535 180,501 180,460 L 180,180 C 180,139 147,105 105,105 C 64,105 30,139 30,180 L 30,460"
+       id="path14456"
+       sodipodi:nodetypes="cccscccc" />
+    <path
+       style="stroke:black;stroke-width:10;stroke-linecap:round"
+       d="M 255,460 L 255,625"
+       id="path12682" />
+    <path
+       style="fill:red;stroke:none"
+       d="M 5,436 L 55,436 L 30,501 z "
+       id="path15344" />
+    <text
+       xml:space="preserve"
+       style="font-size:32px;text-align:center;text-anchor:middle;fill:red;font-family:Serif"
+       x="372.68658"
+       y="300.02881"
+       id="text16237"><tspan
+         sodipodi:role="line"
+         id="tspan16239"
+         x="372.68658"
+         y="300.02881">W/2</tspan></text>
+    <use
+       x="0"
+       y="0"
+       xlink:href="#text16237"
+       id="use16241"
+       transform="translate(-152,0)"
+       width="744.09448"
+       height="1052" />
+    <use
+       x="0"
+       y="0"
+       xlink:href="#text16237"
+       id="use25089"
+       transform="translate(-302,0)"
+       width="519"
+       height="780" />
+    <path
+       style="fill:none;stroke:black;stroke-width:10;stroke-linecap:butt"
+       d="M 20,25 L 495,25"
+       id="path18271" />
+    <path
+       sodipodi:type="arc"
+       style="fill:black;stroke:none"
+       id="path22220"
+       sodipodi:cx="330"
+       sodipodi:cy="25"
+       sodipodi:rx="15"
+       sodipodi:ry="15"
+       d="M 345 25 A 15 15 0 1 1  315,25 A 15 15 0 1 1  345 25 z" />
+    <use
+       x="0"
+       y="0"
+       xlink:href="#g24969"
+       id="use24973"
+       transform="translate(-150,-280)"
+       width="519"
+       height="780" />
+    <path
+       style="stroke:black;stroke-width:9.56105137;stroke-linecap:round"
+       d="M 105,25 L 105,180"
+       id="path25038"
+       sodipodi:nodetypes="cc" />
+    <use
+       x="0"
+       y="0"
+       xlink:href="#path22220"
+       id="use25064"
+       transform="translate(-225,0)"
+       width="519"
+       height="780" />
+    <text
+       xml:space="preserve"
+       style="font-size:32px;text-align:start;text-anchor:start;fill:black;fill-opacity:1;font-family:Serif"
+       x="115"
+       y="82"
+       id="text25120"><tspan
+         sodipodi:role="line"
+         id="tspan25122"
+         x="115"
+         y="82">W</tspan></text>
+  </g>
+</svg>

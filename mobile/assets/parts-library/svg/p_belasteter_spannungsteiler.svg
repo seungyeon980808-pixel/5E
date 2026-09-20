@@ -1,0 +1,343 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Creator: fig2dev Version 3.2 Patchlevel 5-alpha4 -->
+<!-- CreationDate: Wed Oct 19 17:47:08 2005 -->
+<!-- Magnification: 1.050 -->
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="4.9in"
+   height="5.1in"
+   viewBox="1732 2232 5829 6165"
+   id="svg2"
+   sodipodi:version="0.32"
+   inkscape:version="0.46"
+   sodipodi:docname="Belasteter_Spannungsteiler.svg"
+   inkscape:output_extension="org.inkscape.output.svg.inkscape">
+  <metadata
+     id="metadata71">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs69">
+    <inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="0 : 229.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_z="441 : 229.5 : 1"
+       inkscape:persp3d-origin="220.5 : 153 : 1"
+       id="perspective73" />
+  </defs>
+  <sodipodi:namedview
+     inkscape:window-height="667"
+     inkscape:window-width="688"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     guidetolerance="10.0"
+     gridtolerance="10.0"
+     objecttolerance="10.0"
+     borderopacity="1.0"
+     bordercolor="#666666"
+     pagecolor="#ffffff"
+     id="base"
+     showgrid="false"
+     inkscape:zoom="1.0065359"
+     inkscape:cx="198.03896"
+     inkscape:cy="203.33985"
+     inkscape:window-x="22"
+     inkscape:window-y="29"
+     inkscape:current-layer="svg2" />
+  <text
+     style="font-size:227px;font-style:normal;font-weight:normal;text-anchor:start;fill:#000000;stroke:#000000;stroke-width:0.025in;font-family:Times"
+     id="text6"
+     font-size="227"
+     font-weight="normal"
+     font-style="normal"
+     y="7013.6558"
+     x="3572.0388">2</text>
+  <text
+     style="font-size:303px;font-style:italic;font-weight:normal;text-anchor:start;fill:#000000;stroke:#000000;stroke-width:0.025in;font-family:Times"
+     id="text8"
+     font-size="303"
+     font-weight="normal"
+     font-style="italic"
+     y="6883.6558"
+     x="3288.0388">R</text>
+  <text
+     style="font-size:227px;font-style:normal;font-weight:normal;text-anchor:start;fill:#000000;stroke:#000000;stroke-width:0.025in;font-family:Times"
+     id="text10"
+     font-size="227"
+     font-weight="normal"
+     font-style="normal"
+     y="3942.6558"
+     x="3572.0388">1</text>
+  <text
+     style="font-size:303px;font-style:italic;font-weight:normal;text-anchor:start;fill:#000000;stroke:#000000;stroke-width:0.025in;font-family:Times"
+     id="text12"
+     font-size="303"
+     font-weight="normal"
+     font-style="italic"
+     y="3812.6558"
+     x="3288.0388">R</text>
+  <text
+     style="font-size:227px;font-style:normal;font-weight:normal;text-anchor:start;fill:#000000;stroke:#000000;stroke-width:0.025in;font-family:Times"
+     id="text14"
+     font-size="227"
+     font-weight="normal"
+     font-style="normal"
+     y="7027"
+     x="7401">2</text>
+  <text
+     style="font-size:303px;font-style:italic;font-weight:normal;text-anchor:start;fill:#000000;stroke:#000000;stroke-width:0.025in;font-family:Times"
+     id="text16"
+     font-size="303"
+     font-weight="normal"
+     font-style="italic"
+     y="6897"
+     x="7086">U</text>
+  <text
+     style="font-size:227px;font-style:normal;font-weight:normal;text-anchor:start;fill:#000000;stroke:#000000;stroke-width:0.025in;font-family:Times"
+     id="text18"
+     font-size="227"
+     font-weight="normal"
+     font-style="normal"
+     y="3956"
+     x="7401">1</text>
+  <text
+     style="font-size:303px;font-style:italic;font-weight:normal;text-anchor:start;fill:#000000;stroke:#000000;stroke-width:0.025in;font-family:Times"
+     id="text20"
+     font-size="303"
+     font-weight="normal"
+     font-style="italic"
+     y="3826"
+     x="7086">U</text>
+  <circle
+     sodipodi:ry="94"
+     sodipodi:rx="94"
+     sodipodi:cy="5338"
+     sodipodi:cx="5055"
+     id="circle22"
+     style="fill:#000000;stroke:#000000;stroke-width:48"
+     r="94"
+     cy="5338"
+     cx="5055"
+     transform="translate(-773.96105,-13.344156)" />
+  <circle
+     sodipodi:ry="94"
+     sodipodi:rx="94"
+     sodipodi:cy="2362"
+     sodipodi:cx="5055"
+     id="circle24"
+     style="fill:#000000;stroke:#000000;stroke-width:48"
+     r="94"
+     cy="2362"
+     cx="5055"
+     transform="translate(-747.27273,0)" />
+  <circle
+     sodipodi:ry="94"
+     sodipodi:rx="94"
+     sodipodi:cy="8267"
+     sodipodi:cx="5055"
+     id="circle26"
+     style="fill:#000000;stroke:#000000;stroke-width:48"
+     r="94"
+     cy="8267"
+     cx="5055"
+     transform="translate(-787.30519,13.344156)" />
+  <circle
+     sodipodi:ry="94"
+     sodipodi:rx="94"
+     sodipodi:cy="2362"
+     sodipodi:cx="2267"
+     id="circle28"
+     style="stroke:#000000;stroke-width:48;fill:none"
+     r="94"
+     cy="2362"
+     cx="2267" />
+  <circle
+     sodipodi:ry="94"
+     sodipodi:rx="94"
+     sodipodi:cy="8267"
+     sodipodi:cx="2267"
+     id="circle30"
+     style="stroke:#000000;stroke-width:48;fill:none"
+     r="94"
+     cy="8267"
+     cx="2267" />
+  <circle
+     sodipodi:ry="94"
+     sodipodi:rx="94"
+     sodipodi:cy="5338"
+     sodipodi:cx="6708"
+     id="circle32"
+     style="stroke:#000000;stroke-width:48;fill:none"
+     r="94"
+     cy="5338"
+     cx="6708" />
+  <circle
+     sodipodi:ry="94"
+     sodipodi:rx="94"
+     sodipodi:cy="8267"
+     sodipodi:cx="6708"
+     id="circle34"
+     style="stroke:#000000;stroke-width:48;fill:none"
+     r="94"
+     cy="8267"
+     cx="6708" />
+  <circle
+     sodipodi:ry="94"
+     sodipodi:rx="94"
+     sodipodi:cy="2362"
+     sodipodi:cx="6708"
+     id="circle36"
+     style="stroke:#000000;stroke-width:48;fill:none"
+     r="94"
+     cy="2362"
+     cx="6708" />
+  <polyline
+     id="polyline38"
+     style="stroke:#000000;stroke-width:48;stroke-linecap:butt;stroke-linejoin:miter"
+     points="5055,4724 5055,5905 "
+     transform="translate(-773.96105,-13.344156)" />
+  <polyline
+     id="polyline44"
+     style="stroke:#000000;stroke-width:48;stroke-linecap:butt;stroke-linejoin:miter"
+     points="2362,2362 6566,2362 " />
+  <polyline
+     id="polyline46"
+     style="stroke:#000000;stroke-width:47.39572144;stroke-linecap:butt;stroke-linejoin:miter"
+     points="5055,2362 5055,2834 "
+     transform="matrix(1,0,0,1.0256618,-747.27273,-59.997378)" />
+  <polyline
+     id="polyline48"
+     style="stroke:#000000;stroke-width:48;stroke-linecap:butt;stroke-linejoin:miter"
+     points="5055,7795 5055,8267 "
+     transform="translate(-787.30519,-93.409094)" />
+  <polyline
+     id="polyline50"
+     style="stroke:#000000;stroke-width:32;stroke-linecap:butt;stroke-linejoin:miter"
+     points="2267,2598 2267,7779 " />
+  <polyline
+     id="polyline52"
+     style="fill:#000000;stroke:#000000;stroke-width:32"
+     points="2204 7711 2267 7963 2330 7711 2204 7711  " />
+  <polyline
+     id="polyline54"
+     style="stroke:#000000;stroke-width:48.00372549;stroke-linecap:butt;stroke-linejoin:miter;fill:none;stroke-miterlimit:4;stroke-dasharray:none"
+     points="2362,8267 6614,8267 " />
+  <polyline
+     id="polyline56"
+     style="stroke:#000000;stroke-width:38.81610488999999800;stroke-linecap:butt;stroke-linejoin:miter;fill:none"
+     points="5149,5338 6614,5338 "
+     transform="matrix(1.52918,0,0,1,-3512.6969,0)" />
+  <polyline
+     id="polyline58"
+     style="stroke:#000000;stroke-width:32;stroke-linecap:butt;stroke-linejoin:miter"
+     points="6708,5527 6708,7779 " />
+  <polyline
+     id="polyline60"
+     style="fill:#000000;stroke:#000000;stroke-width:32"
+     points="6645 7711 6708 7963 6771 7711 6645 7711  " />
+  <polyline
+     id="polyline62"
+     style="stroke:#000000;stroke-width:32;stroke-linecap:butt;stroke-linejoin:miter"
+     points="6708,2598 6708,4850 " />
+  <polyline
+     id="polyline64"
+     style="fill:#000000;stroke:#000000;stroke-width:32"
+     points="6645 4782 6708 5034 6771 4782 6645 4782  " />
+  <text
+     style="font-size:303px;font-style:italic;font-weight:normal;text-anchor:start;fill:#000000;stroke:#000000;stroke-width:0.025in;font-family:Times"
+     id="text66"
+     font-size="303"
+     font-weight="normal"
+     font-style="italic"
+     y="5338"
+     x="1748">U</text>
+  <rect
+     style="opacity:1;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:48.32608032;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+     id="rect2477"
+     width="667.20782"
+     height="1814.8051"
+     x="3926.7007"
+     y="5901.6431"
+     ry="0.46854463"
+     rx="0.46854469" />
+  <rect
+     style="opacity:1;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:48.32608032;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+     id="rect3249"
+     width="667.20782"
+     height="1814.8051"
+     x="3940.0447"
+     y="2872.5198"
+     ry="0.46854463"
+     rx="0.46854469" />
+  <text
+     style="font-size:227px;font-style:normal;font-weight:normal;text-anchor:start;fill:#000000;stroke:#000000;stroke-width:0.025in;font-family:Times"
+     id="text3251"
+     font-size="227"
+     font-weight="normal"
+     font-style="normal"
+     y="7020.2012"
+     x="5055.5703">L</text>
+  <text
+     style="font-size:303px;font-style:italic;font-weight:normal;text-anchor:start;fill:#000000;stroke:#000000;stroke-width:0.025in;font-family:Times"
+     id="text3253"
+     font-size="303"
+     font-weight="normal"
+     font-style="italic"
+     y="6890.2012"
+     x="4771.5703">R</text>
+  <circle
+     sodipodi:ry="94"
+     sodipodi:rx="94"
+     sodipodi:cy="5338"
+     sodipodi:cx="5055"
+     id="circle3255"
+     style="fill:#000000;stroke:#000000;stroke-width:48"
+     r="94"
+     cy="5338"
+     cx="5055"
+     transform="translate(709.57075,-6.7986814)" />
+  <circle
+     sodipodi:ry="94"
+     sodipodi:rx="94"
+     sodipodi:cy="8267"
+     sodipodi:cx="5055"
+     id="circle3257"
+     style="fill:#000000;stroke:#000000;stroke-width:48"
+     r="94"
+     cy="8267"
+     cx="5055"
+     transform="translate(696.22655,19.88959)" />
+  <polyline
+     id="polyline3259"
+     style="stroke:#000000;stroke-width:48;stroke-linecap:butt;stroke-linejoin:miter"
+     points="5055,7795 5055,8267 "
+     transform="translate(696.22655,-86.863631)" />
+  <rect
+     style="opacity:1;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:48.32608032;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+     id="rect3261"
+     width="667.20782"
+     height="1814.8051"
+     x="5410.2324"
+     y="5908.1885"
+     ry="0.46854463"
+     rx="0.46854469" />
+  <polyline
+     id="polyline3263"
+     style="stroke:#000000;stroke-width:67.84533691;stroke-linecap:butt;stroke-linejoin:miter"
+     points="5055,4724 5055,5905 "
+     transform="matrix(1,0,0,0.5005442,699.84989,2947.9292)" />
+</svg>

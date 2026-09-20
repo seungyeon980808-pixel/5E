@@ -1,0 +1,13 @@
+<?xml version="1.0" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+width="632" height="600" viewBox="0 0 632 600">
+<defs><path id="Main" stroke-width="15" stroke="#000000" stroke-linejoin="round"
+d="M850.651,-618.034 L324.92,-1000 L0,0 H649.839Z M324.92,1000 L449.028,618.034
+H200.811Z"/></defs>
+<title>Pentagonally folded ribbon.</title>
+<g transform="translate(316,301.5) scale(0.29,-0.29)">
+<use fill="rgb(204,25,204)" xlink:href="#Main"/>
+<use transform="rotate(72)" fill="rgb(0,204,0)" xlink:href="#Main"/>
+<use transform="rotate(144)" fill="rgb(223,0,0)" xlink:href="#Main"/>
+<use transform="rotate(216)" fill="rgb(25,25,236)" xlink:href="#Main"/>
+<use transform="rotate(288)" fill="rgb(243,230,0)" xlink:href="#Main"/></g></svg>

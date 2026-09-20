@@ -1,0 +1,12 @@
+<svg width="199mm" height="74mm" version="1.1" viewBox="0 0 199 74" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><rect width="199" height="74" fill="#fff"/>
+ <g font-family="Arial" font-size="9px" text-anchor="middle">
+ <g id="a"><text x="25" y="49" font-size="15px">M</text> <path id="b" d="m20 24v5c4-1 6-1 10 0v-5z" fill="#000"/><use transform="matrix(1 0 0-1 0 88)" xlink:href="#b"/>
+ <g fill="none" stroke="#000"><circle cx="25" cy="44" r="16"/>
+ <g stroke-width=".6"><path d="m5 16v4m-2-2h4" stroke="#f00"/><circle cx="5" cy="18" r="3"/><path d="m3 69h4" stroke="#00f"/><circle cx="5" cy="69" r="3"/></g></g></g>
+ <use transform="translate(58)" xlink:href="#a"/><use transform="translate(122)" xlink:href="#a"/>
+ <g stroke="#000" stroke-width=".6"><path d="m147 64v5m-81 0h17l0-5m-75-46h17m0 51h-17m17-45v-6l26 0 0 51h-26v-5m154-46h14v51h-63" fill="none"/>
+ <g id="c"><path d="m66 18 49 0v43h-11v-40h-21v3" fill="none"/><rect x="111" y="34" width="8" height="20" fill="#fff"/></g>
+ <use transform="translate(64)" xlink:href="#c"/><rect x="47" y="34" width="8" height="20" fill="#fff"/><rect x="189" y="34" width="8" height="20" fill="#fff"/></g>
+ <circle cx="25" cy="18" r="2"/><circle cx="25" cy="69" r="2"/><circle cx="179" cy="18" r="2"/><circle cx="147" cy="69" r="2"/>
+ <g fill="#080" font-size="15px"><text x="25" y="13">A</text><text x="83" y="13">B</text><text x="147" y="13">C</text></g>
+ <text x="179" y="47">f<tspan dy="2" font-size="5px">1</tspan></text><text x="193" y="47">f<tspan dy="2" font-size="5px">2</tspan></text><text x="115" y="47">f</text><text x="51" y="47">f</text></g></svg>
