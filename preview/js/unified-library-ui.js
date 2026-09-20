@@ -63,7 +63,7 @@ const ICONS = Object.freeze({
   close: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 6 12 12M18 6 6 18"/></svg>',
   folder: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6.5h7l2 2h11v10H3z"/></svg>',
   search: '<svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m15.5 15.5 5 5"/></svg>',
-  file: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 2h10l4 4v16H5zM14 2v5h5"/></svg>',
+  file: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 2h10l4 4v16H5zM14 2v5h5M8 12h8M8 16h8"/></svg>',
   panelLeft: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 3.5h14v13H3zM7 3.5v13"/></svg>',
   panelRight: '<svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 3.5h14v13H3zM13 3.5v13"/></svg>',
   chevron: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 5 7 7-7 7"/></svg>',
@@ -812,7 +812,7 @@ function buildShell() {
       <div class="unilib-shell">
         <aside class="unilib-pane unilib-folders" aria-label="검색 위치">
           <div class="unilib-pane-head"><h3>검색 위치</h3><details class="unilib-location-add"><summary aria-label="자료 위치 추가" title="자료 위치 추가">＋</summary><div class="unilib-location-add-menu"><button type="button" class="unilib-button unilib-drive-settings-open" data-unilib-drive-settings-open>Google Drive 연결</button><button type="button" class="unilib-button" data-unilib-local-folder-add hidden>내 컴퓨터 폴더 연결</button></div></details><button type="button" class="unilib-icon-button unilib-mobile-only" data-unilib-folders-close aria-label="검색 위치 닫기">${ICONS.close}</button></div>
-          <div class="unilib-folder-scroll"><div class="unilib-provided-state" data-unilib-provided-status role="status" hidden><span data-unilib-provided-status-message></span><button type="button" class="unilib-button" data-unilib-provided-retry hidden>다시 시도</button></div><ul class="unilib-tree" data-unilib-tree></ul></div>
+          <div class="unilib-folder-scroll"><div class="unilib-folder-loading" data-unilib-folder-loading role="status" aria-live="polite" hidden><div class="unilib-folder-loading-copy"><span class="unilib-folder-loading-spinner" aria-hidden="true"></span><div><strong data-unilib-folder-loading-title>라이브러리 폴더를 불러오는 중</strong><span data-unilib-folder-loading-detail>자료 수에 따라 잠시 걸릴 수 있습니다.</span></div></div><div class="unilib-folder-skeleton" aria-hidden="true"><i></i><i></i><i></i></div></div><div class="unilib-provided-state" data-unilib-provided-status role="status" hidden><span data-unilib-provided-status-message></span><button type="button" class="unilib-button" data-unilib-provided-retry hidden>다시 시도</button></div><ul class="unilib-tree" data-unilib-tree></ul></div>
         </aside>
         <section class="unilib-pane unilib-results" aria-label="라이브러리 검색 결과">
           <div class="unilib-search-tools library-toolbar">
@@ -1072,6 +1072,20 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     host.querySelector("[data-unilib-provided-status-message]").textContent = message;
     host.querySelector("[data-unilib-provided-retry]").hidden = !error || typeof providedRetry !== "function";
   };
+  const setFolderLoading = (state, message = "") => {
+    const host = overlay.querySelector("[data-unilib-folder-loading]");
+    const loading = state === "loading";
+    host.hidden = state === "ready";
+    host.dataset.state = state;
+    host.querySelector("[data-unilib-folder-loading-title]").textContent = loading
+      ? "라이브러리 폴더를 불러오는 중"
+      : "라이브러리 폴더를 불러오지 못했습니다.";
+    host.querySelector("[data-unilib-folder-loading-detail]").textContent = loading
+      ? "자료 수에 따라 잠시 걸릴 수 있습니다."
+      : message;
+    tree.hidden = state !== "ready";
+    tree.setAttribute("aria-busy", String(loading));
+  };
   const followBackgroundIndexing = (snapshot) => {
     if (!snapshot?.backgroundIndexing || typeof snapshot.backgroundIndexing.then !== "function") return;
     void snapshot.backgroundIndexing.then(async () => {
@@ -1107,10 +1121,10 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     for (const source of sources) if (!containers.has(source.kind)) knownSourceIds.add(source.id);
     sourcesInitialized = true;
     const fragment = document.createDocumentFragment();
-    const appendTreeNode = ({ id, name, counts = null, checked, indeterminate, children = [], depth = 0, desktop = null, container = false }, parent) => {
+    const appendTreeNode = ({ id, name, counts = null, checked, indeterminate, children = [], depth = 0, desktop = null, container = false, file = false }, parent) => {
       if (!treeExpansionInitialized && depth === 0) expandedSources.add(id);
       const item = document.createElement("li");
-      item.className = `unilib-tree-item${desktop ? " is-desktop-folder" : ""}`;
+      item.className = `unilib-tree-item${desktop ? " is-desktop-folder" : ""}${file ? " is-file" : ""}`;
       item.style.setProperty("--unilib-tree-depth", String(depth));
       const row = document.createElement("div");
       row.className = "unilib-tree-row";
@@ -1135,7 +1149,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       } else check.dataset.sourceId = id;
       const icon = document.createElement("span");
       icon.className = "unilib-tree-icon";
-      icon.innerHTML = ICONS.folder;
+      icon.innerHTML = file ? ICONS.file : ICONS.folder;
       const text = document.createElement("span");
       text.className = "unilib-tree-label";
       const visibleName = visibleLibraryName(name);
@@ -1145,7 +1159,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       label.title = tooltip;
       row.title = tooltip;
       label.append(check, icon, text);
-      if (!desktop && children.length === 0 && /\.pdf$/iu.test(name)) {
+      if (file) {
         label.dataset.browseSource = id;
         label.title = `${visibleName} 페이지 열기`;
       }
@@ -1187,6 +1201,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
         name: node.label,
         counts: sourceCountBreakdown(node),
         container: node.kind !== "source",
+        file: node.kind === "source" && children.length === 0 && /\.pdf$/iu.test(node.label),
         ...selection,
         children,
       };
@@ -1835,19 +1850,32 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     invalidateAction();
     returnFocus = trigger || document.activeElement;
     overlay.hidden = false;
-    await pdfUi?.activate?.();
-    if (desktopLibrary && pdfUi?.syncDesktopConnections) {
-      const snapshot = await pdfUi.syncDesktopConnections();
-      desktopConnections = snapshot?.connections || [];
-      desktopWarnings = snapshot?.warnings || [];
-      pendingIndexCount = (snapshot?.documents || []).filter((record) => ["reading", "unindexed", "indexing"].includes(record.indexState?.state)).length;
-      onDesktopSnapshot?.(snapshot);
-      followBackgroundIndexing(snapshot);
-      if (desktopWarnings.length) setStatus(`${desktopWarnings.length}개 파일을 안전 제한으로 건너뛰었습니다.`, true);
+    setFolderLoading("loading");
+    const loadingStarted = performance.now();
+    try {
+      await pdfUi?.activate?.();
+      if (desktopLibrary && pdfUi?.syncDesktopConnections) {
+        const snapshot = await pdfUi.syncDesktopConnections();
+        desktopConnections = snapshot?.connections || [];
+        desktopWarnings = snapshot?.warnings || [];
+        pendingIndexCount = (snapshot?.documents || []).filter((record) => ["reading", "unindexed", "indexing"].includes(record.indexState?.state)).length;
+        onDesktopSnapshot?.(snapshot);
+        followBackgroundIndexing(snapshot);
+        if (desktopWarnings.length) setStatus(`${desktopWarnings.length}개 파일을 안전 제한으로 건너뛰었습니다.`, true);
+      }
+      await renderSources();
+      const remaining = 300 - (performance.now() - loadingStarted);
+      if (remaining > 0) await new Promise((resolve) => setTimeout(resolve, remaining));
+      if (overlay.hidden) return;
+      setFolderLoading("ready");
+      await runSearch();
+      if (!overlay.hidden) query.focus();
+    } catch (error) {
+      if (overlay.hidden) return;
+      const message = error instanceof Error ? error.message : String(error);
+      setFolderLoading("error", message);
+      setStatus(`라이브러리 폴더를 불러오지 못했습니다: ${message}`, true);
     }
-    await renderSources();
-    await runSearch();
-    if (!overlay.hidden) query.focus();
   }
 
   tree.addEventListener("change", async (event) => {

@@ -29,7 +29,13 @@ export function initWebLoginUi({ openAi }) {
   const label = badge.querySelector('[data-account-label]'), message = dialog.querySelector('[data-login-message]');
   const title = dialog.querySelector('h2'), codeBox = dialog.querySelector('[data-login-code]');
   const start = dialog.querySelector('[data-login-start]'), copy = dialog.querySelector('[data-copy-code]');
-  let connected = false, userCode = '', phase = 'idle', wasFullscreen = false, toastTimer, completionTimer, pairFrame, authenticating = false;
+  let connected = false, userCode = '', phase = 'idle', wasFullscreen = false, toastTimer, completionTimer, pairFrame, authenticating = false, pendingAiAction = null;
+  function runPendingAiAction({ fallback = false } = {}) {
+    const action = pendingAiAction;
+    pendingAiAction = null;
+    if (action) return action();
+    if (fallback) return openAi();
+  }
   function resetCopyStage() {
     copy.textContent = '복사';
     delete copy.dataset.copied;
@@ -60,6 +66,7 @@ export function initWebLoginUi({ openAi }) {
     completionTimer = setTimeout(() => {
       if (!connected || !dialog.open) return;
       dialog.close(); resetPairedLayout(); aiButton?.focus();
+      runPendingAiAction();
     }, 900);
   }
   function render(next, text) {
@@ -93,8 +100,9 @@ export function initWebLoginUi({ openAi }) {
       wasFullscreen = false; toast.hidden = true;
     } catch { toast.querySelector('span').textContent = '상단 전체화면 버튼으로 다시 전환해 주세요.'; }
   });
-  function show(forAi = false) {
-    if (connected && forAi) { openAi(); return; }
+  function show(forAi = false, aiAction = null) {
+    if (forAi && typeof aiAction === 'function') pendingAiAction = aiAction;
+    if (connected && forAi) { runPendingAiAction({ fallback:true }); return; }
     if (!dialog.open) { wasFullscreen = Boolean(document.fullscreenElement); dialog.showModal(); }
     if (connected) render('connected', '메인 화면의 AI 버튼을 눌러 작업을 시작하세요.');
     title.focus({ preventScroll: true });
@@ -104,6 +112,7 @@ export function initWebLoginUi({ openAi }) {
   });
   function dismiss() {
     clearTimeout(completionTimer);
+    pendingAiAction = null;
     if (['starting', 'waiting'].includes(phase)) window.fiveEWebCancelLogin?.();
     dialog.close(); resetPairedLayout();
     if (wasFullscreen && !document.fullscreenElement) notify('편집 화면으로 돌아왔습니다.');
@@ -123,7 +132,7 @@ export function initWebLoginUi({ openAi }) {
     } catch { if (phase === 'waiting') message.textContent = '코드를 직접 선택해 복사하거나 인증 창에 그대로 입력해 주세요.'; }
   });
   start.addEventListener('click', () => {
-    if (connected) { dialog.close(); openAi(); return; }
+    if (connected) { dialog.close(); runPendingAiAction({ fallback:true }); return; }
     if (phase === 'waiting') { window.fiveEWebContinueLogin?.(); return; }
     userCode = ''; authenticating = false; resetCopyStage();
     render('starting', '코드와 인증 창을 나란히 볼 수 있도록 준비하고 있습니다. 편집 내용은 그대로 유지됩니다.');
@@ -178,5 +187,8 @@ export function initWebLoginUi({ openAi }) {
   window.addEventListener('5e:web-login-request', () => show());
   window.addEventListener('focus', () => { if (!dialog.open) void refresh(); });
   void refresh();
-  return { openAi: () => show(true) };
+  return {
+    openAi: options => show(true, () => openAi(options)),
+    requireAi: action => show(true, action),
+  };
 }

@@ -1,5 +1,5 @@
 import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-preview-labeler-0917-1111';
-import { initWebLoginUi } from './web-login-ui.js?v=1.6.0-preview-library-wave1-0920-1514';
+import { initWebLoginUi } from './web-login-ui.js?v=1.6.0-preview-library-ai-postprocess-0920-2009';
 import { showAlert } from "./ui-dialogs.js?v=1.6.0-preview-labeler-0917-1111";
 import { initAiSharing } from './ai-sharing-ui.js?v=1.6.0-preview-sharing-0918-2108';
 /* ===== MAIN (wire modules; data-as-truth + viewBox zoom/pan) ===== */
@@ -29,7 +29,7 @@ import { initImagePaste } from "./image-paste.js?v=1.6.0-preview-labeler-0917-11
 import { initImageCutout } from "./image-cutout.js?v=1.6.0-preview-labeler-0917-1111";
 import { renderSessionToDataUrl } from "./image-cutout.js?v=1.6.0-preview-labeler-0917-1111";
 import { handSelectedCanvasImageToAi } from "./ai-canvas-handoff.js?v=1.6.0-preview-labeler-0917-1111";
-import { initExamLibrary } from "./exam-library.js?v=1.6.0-preview-file-crop-install-0920-1835";
+import { initExamLibrary } from "./exam-library.js?v=1.6.0-preview-library-ai-postprocess-0920-2009";
 import { initTemplates } from "./templates.js?v=1.6.0-preview-labeler-0917-1111";
 import { initObjectSearch } from "./search.js?v=1.6.0-preview-labeler-0917-1111";
 import { initCommandPalette } from "./command-palette.js?v=1.6.0-preview-labeler-0917-1111";
@@ -70,7 +70,7 @@ import { initSteppers } from "./stepper.js?v=1.6.0-preview-labeler-0917-1111";
 import { initReferenceWindows } from "./reference-window.js?v=1.6.0-preview-common-year-login-0918-1302";
 import { initTutorial } from "./tutorial.js?v=1.6.0-preview-labeler-0917-1111";
 import { initAiInstallGuide } from "./ai-install-guide.js?v=1.6.0-preview-labeler-0917-1111";
-import { initAiPanel } from "./ai-panel.js?v=1.6.0-preview-ai-library-wave2-0920-1656";
+import { initAiPanel } from "./ai-panel.js?v=1.6.0-preview-library-ai-postprocess-0920-2009";
 
 const svg = document.getElementById("canvas");
 // Canvas interaction transfers keyboard ownership away from the last toolbar button.
@@ -317,17 +317,17 @@ const aiPanel = initAiPanel(state, { freshStart: recoveryChoice === "fresh" });
 initAiSharing(aiPanel);
 initDesktopProjectCloseGuard(state, () => aiPanel?.checkpointForClose());
 const aiEntryButton = document.getElementById("ai-image-install-open");
+const openSelectedAi = () => void handSelectedCanvasImageToAi(state, {
+  renderImage: renderSessionToDataUrl,
+  openPanel: options => aiPanel?.open(options),
+  reportError: error => window.alert(`AI 이미지 변환을 열 수 없습니다.\n${error.message}`),
+});
+const webLogin = initWebLoginUi({ openAi: openSelectedAi });
 if (aiEntryButton) {
   aiEntryButton.title = "AI 이미지 변환";
   aiEntryButton.setAttribute("aria-label", "AI 이미지 변환");
   const label = aiEntryButton.querySelector(".search-trigger-label");
   if (label) label.textContent = "AI 이미지 변환";
-  const openSelectedAi = () => void handSelectedCanvasImageToAi(state, {
-    renderImage: renderSessionToDataUrl,
-    openPanel: options => aiPanel?.open(options),
-    reportError: error => window.alert(`AI 이미지 변환을 열 수 없습니다.\n${error.message}`),
-  });
-  const webLogin = initWebLoginUi({ openAi: openSelectedAi });
   aiEntryButton.addEventListener("click", () => webLogin ? webLogin.openAi() : openSelectedAi());
 }
 const desktopHandoff = initAiInstallGuide({
@@ -359,8 +359,12 @@ initImageObjectify(state);
 initImagePaste(state, svg);
 
 /* ----- exam library: 기출 문항 검색 → 이미지 삽입/객체 변환 (지연 로딩) ----- */
-const openAiWithReference = (options) => aiPanel?.open(options);
-const openIndependentAiReferences = (options) => aiPanel?.openIndependentReferences(options);
+const openAiWithReference = (options) => webLogin
+  ? webLogin.requireAi(() => aiPanel?.open(options))
+  : aiPanel?.open(options);
+const openIndependentAiReferences = (options) => webLogin
+  ? webLogin.requireAi(() => aiPanel?.openIndependentReferences(options))
+  : aiPanel?.openIndependentReferences(options);
 initExamLibrary(state, { openAi: openAiWithReference, openIndependentReferences: openIndependentAiReferences });
 
 /* ----- image cutout editing: edit-mode image 오려내기 (사각형/자유 영역 지우기) ----- */
