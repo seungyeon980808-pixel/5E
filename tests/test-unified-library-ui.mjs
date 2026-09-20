@@ -52,6 +52,9 @@ import {
   createBoundedPageCache,
   acceptedCropResult,
   workbenchReferenceGroups,
+  visibleLibraryName,
+  shouldShowResultTypeBadge,
+  commitAcceptedCropSession,
 } from "../js/unified-library-ui.js";
 
 test("All is the exclusive no-filter state and includes questions, images, and PDFs", () => {
@@ -65,6 +68,36 @@ test("All is the exclusive no-filter state and includes questions, images, and P
 test("result types select exclusively", () => {
   assert.deepEqual(toggleLibraryType(["question"], "pdf"), ["pdf"]);
   assert.deepEqual(toggleLibraryType(["pdf"], "image"), ["image"]);
+});
+
+
+test("visible library names omit common file extensions without changing source data", () => {
+  const source = { title: "교과서_중2.pdf" };
+  assert.equal(visibleLibraryName(source.title), "교과서_중2");
+  assert.equal(visibleLibraryName("diagram.PNG · 7쪽"), "diagram · 7쪽");
+  assert.equal(visibleLibraryName("교과서_중2.pdf 문항"), "교과서_중2 문항");
+  assert.equal(source.title, "교과서_중2.pdf");
+});
+
+test("result type badges appear only where results need differentiation", () => {
+  assert.equal(shouldShowResultTypeBadge(["question", "image", "pdf"], "pdf"), true);
+  assert.equal(shouldShowResultTypeBadge(["question"], "crop"), true);
+  assert.equal(shouldShowResultTypeBadge(["pdf"], "pdf"), false);
+  assert.equal(shouldShowResultTypeBadge(["image"], "image"), false);
+});
+
+test("accepted crops remain transient until workbench confirmation", () => {
+  const prior = { result: { id: "old", provenance: { documentId: "doc", pageNumber: 2 } }, materialized: {} };
+  const next = { result: { id: "new", provenance: { documentId: "doc", pageNumber: 2 } }, materialized: {} };
+  const acceptedAssets = new Map([["old", prior]]);
+  const selectedIds = new Set(["old"]);
+  const selectedRecords = new Map([["old", prior.result]]);
+
+  assert.deepEqual([...acceptedAssets.keys()], ["old"]);
+  commitAcceptedCropSession({ acceptedAssets, selectedIds, selectedRecords, acceptedCrops: [next], documentId: "doc", pageNumber: 2 });
+  assert.deepEqual([...acceptedAssets.keys()], ["new"]);
+  assert.deepEqual([...selectedIds], ["new"]);
+  assert.deepEqual([...selectedRecords.keys()], ["new"]);
 });
 
 test("compact year range orders and clamps its endpoints", () => {
@@ -107,6 +140,20 @@ test("unified shell has multiselect type controls and a PDF file-page display to
   assert.match(source, /let pdfDisplayMode = "page"/u);
   assert.doesNotMatch(source, /data-unilib-pdf-back/u);
   assert.doesNotMatch(source, /pdfBrowseSource/u);
+});
+
+test("search location actions stay inline and connected counts are hover-only", async () => {
+  const source = await readFile(new URL("../js/unified-library-ui.js", import.meta.url), "utf8");
+  assert.match(source, /unilib-pane-head[\s\S]*<h3>검색 위치<\/h3>[\s\S]*unilib-location-add/u);
+  assert.match(source, /host\.hidden = !error/u);
+  assert.match(source, /하위 폴더 포함 PDF/u);
+});
+
+test("crop additions do not enter persistent selections before workbench confirmation", async () => {
+  const source = await readFile(new URL("../js/unified-library-ui.js", import.meta.url), "utf8");
+  const saveHandler = source.match(/cropSave\.addEventListener\("click", async \(\) => \{([\s\S]*?)\n  \}\);/u)?.[1] ?? "";
+  assert.doesNotMatch(saveHandler, /acceptedAssets\.set|selectedIds\.add|selectedRecords\.set/u);
+  assert.match(source, /data-unilib-crop-workbench[\s\S]*commitAcceptedCropSession/u);
 });
 
 test("Given the library shell, count and help stay beside search while PDF file-page stays beside PDF", async () => {
@@ -221,10 +268,10 @@ test("library cache keys advance through the complete deployed module chain", as
     readFile(new URL("../js/main.js", import.meta.url), "utf8"),
     readFile(new URL("../js/exam-library.js", import.meta.url), "utf8"),
   ]);
-  assert.match(html, /css\/unified-library\.css\?v=library-layout-0920/u);
-  assert.match(html, /js\/main\.js[^"']*library-layout-0920/u);
-  assert.match(main, /exam-library\.js\?v=library-layout-0920/u);
-  assert.match(exam, /unified-library-ui\.js\?v=library-layout-0920/u);
+  assert.match(html, /css\/unified-library\.css\?v=library-scope-0920-0931/u);
+  assert.match(html, /js\/main\.js[^"']*library-scope-0920-0931/u);
+  assert.match(main, /exam-library\.js\?v=library-scope-0920-0931/u);
+  assert.match(exam, /unified-library-ui\.js\?v=library-scope-0920-0931/u);
 });
 
 test("continuous PDF windows reach the first, middle, and last page with bounded live pages", () => {
@@ -741,9 +788,9 @@ test("saving a transient crop does not write the persistent correction override"
   assert.match(source, /result\.variants\?\.manual\?\.source\?\.rect/u);
 });
 
-test("accepting crops keeps independent checked records for later filtered AI dispatch", async () => {
+test("confirming crops keeps independent checked records for later filtered AI dispatch", async () => {
   const source = await readFile(new URL("../js/unified-library-ui.js", import.meta.url), "utf8");
-  assert.match(source, /selectedIds\.add\(accepted\.id\);\s*selectedRecords\.set\(accepted\.id, accepted\)/u);
+  assert.match(source, /selectedIds\.add\(entry\.result\.id\);\s*selectedRecords\.set\(entry\.result\.id, entry\.result\)/u);
   assert.match(source, /const chosen = aiActionRecords\(selectedRecords, selectedIds,/u);
 });
 

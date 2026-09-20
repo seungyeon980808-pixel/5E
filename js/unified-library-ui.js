@@ -676,6 +676,29 @@ export function includeNewLibrarySources(enabled, known, sources, excludedGroups
   return enabled;
 }
 
+export function visibleLibraryName(value) {
+  return String(value ?? "").replace(/\.(?:pdf|png|jpe?g|webp|gif|svg|bmp|tiff?|heic|avif)(?=\s|·|$)/giu, "");
+}
+
+export function shouldShowResultTypeBadge(activeTypes, kind) {
+  const types = normalizeLibraryTypes(activeTypes);
+  return types.length === LIBRARY_TYPES.length || (types.length === 1 && types[0] === "question" && kind === "crop");
+}
+
+export function commitAcceptedCropSession({ acceptedAssets, selectedIds, selectedRecords, acceptedCrops, documentId, pageNumber }) {
+  for (const [id, entry] of acceptedAssets) {
+    if (entry.result.provenance?.documentId !== documentId || entry.result.provenance?.pageNumber !== pageNumber) continue;
+    acceptedAssets.delete(id);
+    selectedIds.delete(id);
+    selectedRecords.delete(id);
+  }
+  for (const entry of acceptedCrops) {
+    acceptedAssets.set(entry.result.id, entry);
+    selectedIds.add(entry.result.id);
+    selectedRecords.set(entry.result.id, entry.result);
+  }
+}
+
 function labelForKind(kind) {
   return ({ crop: "문항", image: "이미지", page: "PDF", pdf: "PDF" })[kind] || "자료";
 }
@@ -769,7 +792,7 @@ function clampRect(rect) {
 function resultSourceText(result) {
   const source = result.provenance || {};
   const page = source.pageNumber ? ` · ${source.pageNumber}쪽` : "";
-  return result.subtitle || `${result.sourceLabel || "라이브러리"}${page}`;
+  return visibleLibraryName(result.subtitle || `${result.sourceLabel || "라이브러리"}${page}`);
 }
 
 function buildShell() {
@@ -787,8 +810,8 @@ function buildShell() {
       </header>
       <div class="unilib-shell">
         <aside class="unilib-pane unilib-folders" aria-label="검색 위치">
-          <div class="unilib-pane-head"><h3>검색 위치</h3><button type="button" class="unilib-icon-button unilib-mobile-only" data-unilib-folders-close aria-label="검색 위치 닫기">${ICONS.close}</button></div>
-          <details class="unilib-location-add"><summary>＋ 자료 위치 추가</summary><div class="unilib-location-add-menu"><button type="button" class="unilib-button unilib-drive-settings-open" data-unilib-drive-settings-open>Google Drive 연결</button><button type="button" class="unilib-button" data-unilib-local-folder-add hidden>내 컴퓨터 폴더 연결</button><p data-unilib-local-folder-guide hidden>로컬 폴더 연결은 설치형에서 사용할 수 있습니다. <a href="https://github.com/seungyeon980808-pixel/5E/releases/latest" target="_blank" rel="noopener noreferrer">설치형 다운로드</a></p></div></details><div class="unilib-folder-scroll"><div class="unilib-provided-state" data-unilib-provided-status role="status" hidden><span data-unilib-provided-status-message></span><button type="button" class="unilib-button" data-unilib-provided-retry hidden>다시 시도</button></div><ul class="unilib-tree" data-unilib-tree></ul></div>
+          <div class="unilib-pane-head"><h3>검색 위치</h3><details class="unilib-location-add"><summary>＋ 자료 위치 추가</summary><div class="unilib-location-add-menu"><button type="button" class="unilib-button unilib-drive-settings-open" data-unilib-drive-settings-open>Google Drive 연결</button><button type="button" class="unilib-button" data-unilib-local-folder-add hidden>내 컴퓨터 폴더 연결</button><p data-unilib-local-folder-guide hidden>로컬 폴더 연결은 설치형에서 사용할 수 있습니다. <a href="https://github.com/seungyeon980808-pixel/5E/releases/latest" target="_blank" rel="noopener noreferrer">설치형 다운로드</a></p></div></details><button type="button" class="unilib-icon-button unilib-mobile-only" data-unilib-folders-close aria-label="검색 위치 닫기">${ICONS.close}</button></div>
+          <div class="unilib-folder-scroll"><div class="unilib-provided-state" data-unilib-provided-status role="status" hidden><span data-unilib-provided-status-message></span><button type="button" class="unilib-button" data-unilib-provided-retry hidden>다시 시도</button></div><ul class="unilib-tree" data-unilib-tree></ul></div>
         </aside>
         <section class="unilib-pane unilib-results" aria-label="라이브러리 검색 결과">
           <div class="unilib-search-tools library-toolbar">
@@ -1039,7 +1062,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   };
   const setProvidedStatus = (message, error = false) => {
     const host = overlay.querySelector("[data-unilib-provided-status]");
-    host.hidden = false;
+    host.hidden = !error;
     host.classList.toggle("is-error", error);
     host.querySelector("[data-unilib-provided-status-message]").textContent = message;
     host.querySelector("[data-unilib-provided-retry]").hidden = !error || typeof providedRetry !== "function";
@@ -1110,15 +1133,16 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       icon.innerHTML = ICONS.folder;
       const text = document.createElement("span");
       text.className = "unilib-tree-label";
-      text.textContent = name;
-      const tooltip = counts ? `${name} · 하위 폴더 포함 PDF ${counts.pdf}개 · 이미지 ${counts.image}개` : name;
+      const visibleName = visibleLibraryName(name);
+      text.textContent = visibleName;
+      const tooltip = counts ? `${visibleName} · 하위 폴더 포함 PDF ${counts.pdf}개 · 이미지 ${counts.image}개` : visibleName;
       text.title = tooltip;
       label.title = tooltip;
       row.title = tooltip;
       label.append(check, icon, text);
       if (!desktop && children.length === 0 && /\.pdf$/iu.test(name)) {
         label.dataset.browseSource = id;
-        label.title = `${name} 페이지 열기`;
+        label.title = `${visibleName} 페이지 열기`;
       }
       row.append(toggle, label);
       item.append(row);
@@ -1328,23 +1352,25 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       disclosure.hidden = !isExampleLibraryResult(result);
       const title = document.createElement("strong");
       title.className = "library-card-name";
-      title.textContent = result.title;
+      const visibleTitle = visibleLibraryName(result.title);
+      title.textContent = visibleTitle;
       const sourceText = resultSourceText(result);
       const pageText = result.provenance?.pageNumber ? `${result.provenance.pageNumber}쪽` : "";
-      title.title = sourceText.includes(result.title) ? sourceText : `${result.title} · ${sourceText}`;
+      title.title = sourceText.includes(visibleTitle) ? sourceText : `${visibleTitle} · ${sourceText}`;
       if (pageText && !title.title.includes(pageText)) title.title += ` · ${pageText}`;
       const meta = document.createElement("small");
       meta.className = "library-card-page";
       const compactPdfPage = pdfDisplayMode === "page" && activeTypes.length === 1 && activeTypes[0] === "pdf" && result.provenance?.provider === "pdf";
       meta.textContent = compactPdfPage ? `${result.provenance.pageNumber}쪽` : resultSourceText(result);
       meta.title = meta.textContent;
-      copy.append(badge, disclosure, title, meta);
+      if (shouldShowResultTypeBadge(activeTypes, result.kind)) copy.append(badge);
+      copy.append(disclosure, title, meta);
       const check = document.createElement("input");
       check.type = "checkbox";
       check.className = "unilib-result-check";
       check.dataset.selectResult = result.id;
       check.checked = selectedIds.has(result.id);
-      check.setAttribute("aria-label", `${result.title} AI 참고 선택`);
+      check.setAttribute("aria-label", `${visibleTitle} AI 참고 선택`);
       button.append(media, copy);
       item.append(button, check);
       return item;
@@ -2609,9 +2635,6 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     activeAcceptedCropId = editIndex < 0 ? null : accepted.id;
     editingAcceptedId = null;
     invalidateAction();
-    selectedIds.add(accepted.id);
-    selectedRecords.set(accepted.id, accepted);
-    acceptedAssets.set(accepted.id, entry);
     draftCrop = null;
     cropPreviewEpoch += 1;
     cropPreviewExact = false;
@@ -2626,20 +2649,23 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     if (!remove) return;
     acceptedCrops = acceptedCrops.filter(({ result }) => result.id !== remove.dataset.unilibCropRemove);
     if (activeAcceptedCropId === remove.dataset.unilibCropRemove) activeAcceptedCropId = null;
-    selectedIds.delete(remove.dataset.unilibCropRemove);
-    selectedRecords.delete(remove.dataset.unilibCropRemove);
-    acceptedAssets.delete(remove.dataset.unilibCropRemove);
     invalidateAction();
     renderAcceptedCrops();
     updateResultSelection();
     setCropActionAvailability();
   });
   overlay.querySelector("[data-unilib-crop-workbench]").addEventListener("click", () => {
-    if (!acceptedCrops.length) return;
-    acceptedCrops.forEach((entry) => acceptedAssets.set(entry.result.id, entry));
+    if (!acceptedCrops.length || !cropSession) return;
+    const count = acceptedCrops.length;
+    commitAcceptedCropSession({
+      acceptedAssets, selectedIds, selectedRecords, acceptedCrops,
+      documentId: cropSession.documentId, pageNumber: cropSession.pageNumber,
+    });
+    invalidateAction();
+    updateResultSelection();
     renderCropTray();
     closeCrop(false);
-    setStatus(`${acceptedCrops.length}개 이미지를 작업대에 넣었습니다.`);
+    setStatus(`${count}개 이미지를 작업대에 넣었습니다.`);
   });
   cropConfirm.querySelector("[data-unilib-crop-draft-cancel]").addEventListener("click", () => {
     cropPreviewEpoch += 1;

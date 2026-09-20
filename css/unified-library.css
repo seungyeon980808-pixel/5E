@@ -1109,14 +1109,14 @@
 .unified-library-overlay .unilib-crop-footer > button { min-width: 8rem; min-height: var(--unilib-control-height); }
 
 /* Final library layout: automatic density, compact sources, and focused preview. */
-.unified-library-overlay .unilib-folders { grid-template-rows: auto auto minmax(0, 1fr); }
+.unified-library-overlay .unilib-folders { grid-template-rows: auto minmax(0, 1fr); }
 .unified-library-overlay .unilib-results { grid-template-rows: auto minmax(0, 1fr); }
 .unified-library-overlay .unilib-selection-summary[hidden],
 .unified-library-overlay .unilib-grid-density[hidden] { display: none; }
-.unified-library-overlay .unilib-location-add { position: relative; margin: 0; padding: var(--unilib-space-3); border-bottom: var(--unilib-border-width) solid var(--unilib-border-muted); background: var(--unilib-panel); }
-.unified-library-overlay .unilib-location-add > summary { display: flex; min-height: var(--unilib-control-height); align-items: center; justify-content: center; border: var(--unilib-border-width) solid var(--unilib-border); border-radius: var(--unilib-control-radius); background: var(--unilib-input); color: var(--unilib-label); cursor: pointer; list-style: none; }
+.unified-library-overlay .unilib-pane-head .unilib-location-add { position: relative; min-width: 0; margin-inline-start: auto; }
+.unified-library-overlay .unilib-location-add > summary { display: flex; min-height: var(--unilib-control-height); align-items: center; justify-content: center; padding: 0 var(--unilib-space-3); border: var(--unilib-border-width) solid var(--unilib-border); border-radius: var(--unilib-control-radius); background: var(--unilib-input); color: var(--unilib-label); cursor: pointer; font-size: var(--unilib-type-caption); list-style: none; white-space: nowrap; }
 .unified-library-overlay .unilib-location-add > summary::-webkit-details-marker { display: none; }
-.unified-library-overlay .unilib-location-add-menu { position: absolute; z-index: 12; top: calc(100% + var(--unilib-space-1)); right: var(--unilib-space-3); left: var(--unilib-space-3); display: grid; gap: var(--unilib-space-2); padding: var(--unilib-space-3); border: var(--unilib-border-width) solid var(--unilib-border); border-radius: var(--unilib-panel-radius); background: var(--unilib-raised); }
+.unified-library-overlay .unilib-location-add-menu { position: absolute; z-index: 12; top: calc(100% + var(--unilib-space-1)); right: 0; display: grid; width: min(18rem, calc(100vw - 2 * var(--unilib-space-4))); gap: var(--unilib-space-2); padding: var(--unilib-space-3); border: var(--unilib-border-width) solid var(--unilib-border); border-radius: var(--unilib-panel-radius); background: var(--unilib-raised); }
 .unified-library-overlay .unilib-location-add-menu .unilib-button,
 .unified-library-overlay .unilib-location-add-menu .unilib-drive-settings-open { width: 100%; margin: 0; text-align: left; }
 .unified-library-overlay .unilib-location-add-menu p { margin: var(--unilib-space-1); color: var(--unilib-muted); font-size: var(--unilib-type-caption); }
