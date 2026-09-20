@@ -75,12 +75,12 @@ export async function chooseWorkbenchAssignment({ references, host, returnFocus 
     overlay.innerHTML = `<section class="workbench-assignment" role="dialog" aria-modal="true" aria-labelledby="workbench-assignment-title">
       <header><h2 id="workbench-assignment-title">AI 작업대 배정</h2><button type="button" class="workbench-assignment-icon" data-action="cancel" aria-label="닫기">×</button></header>
       <div class="workbench-assignment-modes" role="group" aria-label="배정 방법">
-        <button type="button" data-placement="separate">이미지마다 따로</button><button type="button" data-placement="together">한 작업대에 함께</button><button type="button" data-placement="advanced">직접 나누기</button>
+        <button type="button" class="ai-action-motion" data-placement="separate"><span class="ai-action-motion-label">이미지마다 따로</span></button><button type="button" class="ai-action-motion" data-placement="together"><span class="ai-action-motion-label">한 작업대에 함께</span></button><button type="button" class="ai-action-motion" data-placement="advanced"><span class="ai-action-motion-label">직접 나누기</span></button>
       </div>
       <div class="workbench-assignment-summary" data-summary></div>
       <div class="workbench-assignment-advanced" data-advanced hidden><section class="workbench-assignment-reference-panel"><h3>크롭 이미지 <span data-reference-count></span>개</h3><div class="workbench-assignment-references" data-references></div></section><section class="workbench-assignment-bench-panel"><div class="workbench-assignment-bench-heading"><h3>작업대</h3><button type="button" data-action="add-bench">+ 작업대 추가</button></div><div class="workbench-assignment-benches" data-benches></div></section></div>
       <p class="workbench-assignment-error" data-error role="status" aria-live="polite"></p>
-      <footer><button type="button" data-action="cancel">취소</button><button type="button" class="workbench-assignment-primary" data-action="continue">AI 작업으로 보내기</button></footer>
+      <footer><button type="button" data-action="cancel">취소</button><button type="button" class="workbench-assignment-primary ai-action-motion" data-ai-orbit="true" data-action="continue"><span class="ai-action-motion-label">AI 작업으로 보내기</span></button></footer>
     </section>`;
     const dialog = overlay.querySelector(".workbench-assignment");
     const advanced = overlay.querySelector("[data-advanced]");
@@ -148,6 +148,7 @@ export async function chooseWorkbenchAssignment({ references, host, returnFocus 
       for (const button of overlay.querySelectorAll("[data-placement]")) {
         const active = button.dataset.placement === placement;
         button.setAttribute("aria-pressed", String(active));
+        button.dataset.aiOrbit = String(active);
       }
       const editable = placement === "advanced";
       const displayGroups = editable ? groups : assignmentForPlacement(items.length, placement);
@@ -218,7 +219,15 @@ export async function chooseWorkbenchAssignment({ references, host, returnFocus 
       if (!button || confirmation) return;
       error.textContent = "";
       if (button.dataset.action === "cancel") { finish(null); return; }
-      if (button.dataset.placement && PLACEMENTS.has(button.dataset.placement)) { placement = button.dataset.placement; render(); return; }
+      if (button.dataset.placement && PLACEMENTS.has(button.dataset.placement)) {
+        placement = button.dataset.placement;
+        overlay.dataset.assignmentChoice = "explicit";
+        for (const control of overlay.querySelectorAll("[data-placement]")) delete control.dataset.activation;
+        void button.offsetWidth;
+        button.dataset.activation = "pulse";
+        render();
+        return;
+      }
       if (button.dataset.action === "add-bench") { groups = [...groups, []]; selectedGroup = groups.length - 1; render(); return; }
       if (button.dataset.action === "remove-reference") {
         groups = removeReferenceAssignment(groups, Number(button.dataset.group), Number(button.dataset.reference));

@@ -1,0 +1,41 @@
+@property --ai-action-orbit-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+:root {
+  --ai-action-orbit-duration: 5.4s;
+  --ai-action-sparkle-duration: 460ms;
+  --ai-action-press-duration: 160ms;
+  --ai-action-ease-out: cubic-bezier(.16, 1, .3, 1);
+  --ai-action-press-scale: .97;
+}
+
+.ai-action-motion {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  transition: color 140ms ease, background-color 140ms ease, border-color 140ms ease, box-shadow 180ms ease, filter 140ms ease, transform var(--ai-action-press-duration) var(--ai-action-ease-out);
+}
+
+.ai-action-motion > .ai-action-motion-label { position: relative; z-index: 1; }
+.ai-action-motion::after { content: ""; position: absolute; inset: -55% auto -55% -38%; z-index: 0; width: 30%; background: linear-gradient(90deg, transparent, var(--ai-action-shimmer-color, rgb(255 255 255 / 66%)), transparent); pointer-events: none; opacity: 0; filter: blur(2px); transform: translateX(-160%) rotate(12deg); transition: transform var(--ai-action-sparkle-duration) var(--ai-action-ease-out), opacity 120ms ease; }
+.ai-action-motion[data-ai-orbit="true"] { animation: ai-action-orbit var(--ai-action-orbit-duration) linear infinite; }
+.ai-action-motion:active { transform: scale(var(--ai-action-press-scale)); filter: brightness(.97); }
+.ai-action-motion[data-activation="pulse"]::after,
+.ai-action-motion:active::after { animation: ai-action-shimmer var(--ai-action-sparkle-duration) var(--ai-action-ease-out); }
+
+@keyframes ai-action-orbit { to { --ai-action-orbit-angle: 1turn; } }
+@keyframes ai-action-shimmer { 0% { opacity: 0; transform: translateX(-160%) rotate(12deg); } 24% { opacity: .82; } 100% { opacity: 0; transform: translateX(560%) rotate(12deg); } }
+
+@media (hover: hover) and (pointer: fine) {
+  .ai-action-motion:hover { filter: brightness(1.07); }
+  .ai-action-motion:hover::after { opacity: .72; transform: translateX(560%) rotate(12deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-action-motion { animation: none !important; transition: color 120ms ease, background-color 120ms ease, border-color 120ms ease, box-shadow 120ms ease, filter 120ms ease; }
+  .ai-action-motion:active { transform: none; }
+  .ai-action-motion::after { animation: none !important; opacity: 0 !important; transform: none !important; transition: none; }
+}

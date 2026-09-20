@@ -1,8 +1,11 @@
 import assert from "node:assert/strict";
 import { createServer } from "node:http";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { createRequire } from "node:module";
 import { extname, join, normalize } from "node:path";
-import { chromium } from "playwright";
+
+const require = createRequire(import.meta.url);
+const { chromium } = require(process.env.PLAYWRIGHT_MODULE || "playwright");
 
 const root = new URL("../", import.meta.url).pathname;
 const evidence = join(root, process.argv[2] || ".omo/evidence/library-next/assignment");
@@ -34,6 +37,9 @@ try {
   assert.equal(await page.$eval(".workbench-assignment", (element) => getComputedStyle(element).borderRadius), "12px");
   assert.equal(await page.$eval('[data-action="continue"]', (element) => getComputedStyle(element).backgroundColor !== getComputedStyle(element.closest(".workbench-assignment")).backgroundColor), true);
   assert.equal(await page.getAttribute('[data-placement="separate"]', "aria-pressed"), "true");
+  assert.equal(await page.getAttribute('.workbench-assignment-overlay', "data-assignment-choice"), null);
+  assert.match(await page.$eval('[data-placement="separate"]', (element) => getComputedStyle(element).backgroundImage), /conic-gradient/u);
+  assert.match(await page.$eval('[data-placement="separate"]', (element) => getComputedStyle(element).animationName), /orbit/u);
   await page.screenshot({ path: join(evidence, "default-separate.png") });
   await page.locator('[data-action="continue"]').focus();
   await page.keyboard.press("Tab");
@@ -47,6 +53,10 @@ try {
 
   await open();
   await page.click('[data-placement="together"]');
+  assert.equal(await page.getAttribute('.workbench-assignment-overlay', "data-assignment-choice"), "explicit");
+  assert.equal(await page.getAttribute('[data-placement="together"]', "data-activation"), "pulse");
+  await page.waitForTimeout(220);
+  assert.notEqual(await page.$eval('[data-placement="together"]', (element) => getComputedStyle(element).backgroundColor), await page.$eval('[data-placement="separate"]', (element) => getComputedStyle(element).backgroundColor));
   await page.screenshot({ path: join(evidence, "together-preview.png") });
   await page.click('[data-action="continue"]');
   assert.deepEqual(await page.evaluate(() => window.qaResults.at(-1)), { placement: "together", groups: [[0, 1, 2]] });
