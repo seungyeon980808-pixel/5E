@@ -435,6 +435,37 @@ function openPreferencesDialog({ focusShortcut = false } = {}) {
     countEl.textContent = "0개";
   });
 }
+
+function openShortcutDialog() {
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  const mac = getShortcutPlatform() === "mac" || (getShortcutPlatform() === "auto" && /mac/i.test(navigator.platform));
+  const mod = mac ? "⌘" : "Ctrl";
+  const groups = [
+    ["파일", [["프로젝트 저장", `${mod}+S`], ["이미지로 내보내기", "Alt+P"]]],
+    ["편집", [["실행 취소", `${mod}+Z`], ["다시 실행", `${mod}+Shift+Z`], ["복사", `${mod}+C`], ["붙여넣기", `${mod}+V`], ["삭제", "Delete"]]],
+    ["도구", [["선택", "V"], ["회전", "R"], ["타원", "O"], ["사각형", "S"], ["직선", "L"], ["꺾은선", "P"], ["곡선", "C"], ["텍스트", "T"]]],
+    ["화면과 이동", [["미세 이동", "방향키"], ["큰 폭 이동", "Shift+방향키"], ["임시 화면 이동", "Space+드래그"], ["선택 해제", "Esc"]]],
+    ["이미지", [["이미지 객체화", `${mod}+T`], ["AI 이미지 변환", "하단 AI 버튼"]]],
+  ];
+  overlay.innerHTML = `<div class="modal shortcut-modal" role="dialog" aria-modal="true" aria-labelledby="shortcut-title"><style>
+    .shortcut-modal{width:min(620px,calc(100vw - 32px));max-height:min(760px,calc(100vh - 32px));overflow:auto}.shortcut-head{display:flex;align-items:center;justify-content:space-between;gap:12px}.shortcut-platform{min-width:150px}.shortcut-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:16px 0}.shortcut-group{padding:12px;border:1px solid var(--border);border-radius:8px}.shortcut-group h3{margin:0 0 8px;font-size:13px}.shortcut-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:5px 0;color:var(--text-secondary);font-size:12px}.shortcut-row kbd{padding:2px 6px;border:1px solid var(--border);border-bottom-width:2px;border-radius:5px;background:var(--bg-input);color:var(--text-primary);font:11px/1.5 "IBM Plex Mono",monospace}@media(max-width:560px){.shortcut-list{grid-template-columns:1fr}}
+  </style><div class="shortcut-head"><h2 class="modal-title" id="shortcut-title">키보드 단축키</h2><select class="modal-select shortcut-platform" data-shortcut-platform aria-label="단축키 기준"><option value="auto">자동 감지</option><option value="mac">Mac (⌘)</option><option value="windows">Windows (Ctrl)</option></select></div><div class="shortcut-list">${groups.map(([title, entries]) => `<section class="shortcut-group"><h3>${title}</h3>${entries.map(([label, key]) => `<div class="shortcut-row"><span>${label}</span><kbd>${key}</kbd></div>`).join("")}</section>`).join("")}</div><div class="modal-actions"><button type="button" class="modal-btn modal-btn-primary" data-close>닫기</button></div></div>`;
+  document.body.append(overlay);
+  const select = overlay.querySelector("[data-shortcut-platform]");
+  select.value = getShortcutPlatform();
+  select.addEventListener("change", () => {
+    setShortcutPlatform(select.value);
+    localizeShortcutLabels();
+    overlay.remove();
+    openShortcutDialog();
+  });
+  const close = () => overlay.remove();
+  overlay.querySelector("[data-close]").addEventListener("click", close);
+  overlay.addEventListener("mousedown", (event) => { if (event.target === overlay) close(); });
+  overlay.addEventListener("keydown", (event) => { if (event.key === "Escape") { event.stopPropagation(); close(); } });
+  overlay.querySelector("[data-close]").focus();
+}
 function openExportDialog() {
   const overlay = document.createElement("div");
   overlay.className = "modal-overlay";
@@ -836,7 +867,7 @@ export function initSettings(state) {
   const screenBtn = document.getElementById("open-screen");
   if (screenBtn) screenBtn.addEventListener("click", openPreferencesDialog);
   const shortcutBtn = document.getElementById("open-shortcuts");
-  if (shortcutBtn) shortcutBtn.addEventListener("click", () => openPreferencesDialog({ focusShortcut: true }));
+  if (shortcutBtn) shortcutBtn.addEventListener("click", openShortcutDialog);
   // 저장해 둔 자유 배율이 있으면 프리셋 위에 덮어쓴다(없으면 프리셋 그대로).
   const savedZoom = loadUiZoom();
   if (savedZoom != null) applyUiZoom(savedZoom);

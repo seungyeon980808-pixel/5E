@@ -1,7 +1,7 @@
 import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-preview-labeler-0917-1111';
-import { initWebLoginUi } from './web-login-ui.js?v=1.6.0-preview-library-ai-postprocess-0920-2009';
+import { initWebLoginUi } from './web-login-ui.js?v=1.6.0-preview-usability-0920';
 import { showAlert } from "./ui-dialogs.js?v=1.6.0-preview-labeler-0917-1111";
-import { initAiSharing } from './ai-sharing-ui.js?v=1.6.0-preview-sharing-0918-2108';
+import { initAiSharing } from './ai-sharing-ui.js?v=1.6.0-preview-usability-0920';
 /* ===== MAIN (wire modules; data-as-truth + viewBox zoom/pan) ===== */
 //
 // Responsibilities:
@@ -23,7 +23,7 @@ import { initInspector } from "./inspector.js?v=1.6.0-preview-labeler-0917-1111"
 import { initDesktopProjectCloseGuard, initProjectIO, initProjectFileOpening, saveProject } from "./project-io.js?v=1.6.0-preview-web-native-project-0918-1617";
 import { initExportDialog } from "./export-dialog.js?v=1.6.0-preview-labeler-0917-1111";
 import { initRuler, setRulerVisible } from "./ruler.js?v=1.6.0-preview-labeler-0917-1111";
-import { initSettings } from "./settings.js?v=1.6.0-preview-web-native-project-0918-1617";
+import { initSettings } from "./settings.js?v=1.6.0-preview-usability-0920";
 import { initImageObjectify } from "./image-objectify.js?v=1.6.0-preview-library-popup-0919-1630";
 import { initImagePaste } from "./image-paste.js?v=1.6.0-preview-labeler-0917-1111";
 import { initImageCutout } from "./image-cutout.js?v=1.6.0-preview-labeler-0917-1111";
@@ -63,7 +63,7 @@ import { initChemGraphSection } from "./inspector/section-chemgraph.js?v=1.6.0-p
 import { initElectrodeSection } from "./inspector/section-electrode.js?v=1.6.0-preview-labeler-0917-1111";
 import { initPeriodicSection } from "./inspector/section-periodic.js?v=1.6.0-preview-labeler-0917-1111";
 import { initAutosave } from "./autosave.js?v=1.6.0-preview-web-native-project-0918-1617";
-import { initPages } from "./pages.js?v=1.6.0-preview-labeler-0917-1111";
+import { initPages } from "./pages.js?v=1.6.0-preview-usability-0920";
 import { localizeShortcutLabels } from "./platform.js?v=1.6.0-preview-labeler-0917-1111";
 import { initModalDrag } from "./modal-drag.js?v=1.6.0-preview-common-year-login-0918-1302";
 import { initSteppers } from "./stepper.js?v=1.6.0-preview-labeler-0917-1111";

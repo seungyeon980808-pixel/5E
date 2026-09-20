@@ -41,10 +41,10 @@
   />
 
   <!-- ?v= 캐시버스트: CSS도 버전 범프 시 함께 올려 새 스타일이 즉시 반영되게 함(하드리프레시 불필요) -->
-  <link rel="stylesheet" href="css/style.css?v=1.6.0-preview-header-textbook-0919-0908" />
+  <link rel="stylesheet" href="css/style.css?v=1.6.0-preview-usability-0920" />
   <link rel="stylesheet" href="css/inspector.css?v=1.6.0-preview-labeler-0917-1111" />
   <link rel="stylesheet" href="css/exam-library.css?v=1.6.0-preview-labeler-0917-1111" />
-  <link rel="stylesheet" href="css/unified-library.css?v=1.6.0-preview-library-ai-postprocess-0920-2009" />
+  <link rel="stylesheet" href="css/unified-library.css?v=1.6.0-preview-usability-0920" />
   <link rel="stylesheet" href="css/parts-library.css?v=1.6.0-preview-labeler-0917-1111" />
   <link rel="stylesheet" href="css/tutorial.css?v=1.6.0-preview-labeler-0917-1111" />
   <link rel="stylesheet" href="css/ai-panel.css?v=1.6.0-preview-ai-library-wave2-0920-1656" />
@@ -52,9 +52,9 @@
   <link rel="stylesheet" href="css/ai-editable-assets.css?v=1.6.0-preview-labeler-0917-1111" />
   <link rel="stylesheet" href="css/panel-visibility.css?v=1.6.0-preview-header-textbook-0919-0908" />
   <link rel="stylesheet" href="css/productization.css?v=1.6.0-preview-labeler-0917-1111" />
-  <link rel="stylesheet" href="css/web-login.css?v=1.6.0-preview-library-wave1-0920-1514" />
+  <link rel="stylesheet" href="css/web-login.css?v=1.6.0-preview-usability-0920" />
   <script>window.FIVE_E_PROJECT_PACKAGE_API_URL="";window.FIVE_E_PROJECT_PACKAGE_TARGETS=[];</script>
-  <link rel="stylesheet" href="css/ai-sharing.css?v=1.6.0-preview-sharing-0918-2108" />
+  <link rel="stylesheet" href="css/ai-sharing.css?v=1.6.0-preview-usability-0920" />
 </head>
 <body>
   <div class="desktop-titlebar" aria-hidden="true">
@@ -228,15 +228,15 @@
           </button>
           <div id="settings-menu-list" class="file-menu-list" role="menu" hidden>
             <button id="open-defaults" class="file-menu-item" type="button" role="menuitem"
-                    data-desc="선 굵기·글꼴 크기 같은 새 오브젝트의 기본값을 정합니다.">오브젝트 설정</button>
+                    data-desc="새 도형과 글자의 선·채우기·글꼴 기본값을 정합니다.">도구 기본값…</button>
             <button id="open-screen" class="file-menu-item" type="button" role="menuitem"
-                    data-desc="화면 크기·편집 도구 기본값·저장·라이브러리 설정을 탭으로 모아 놓았습니다.">환경 설정</button>
+                    data-desc="화면 크기와 편집 환경을 설정합니다.">환경 설정…</button>
             <button id="settings-export" class="file-menu-item" type="button" role="menuitem"
-                    data-desc="개인 설정·퍼스널 라이브러리·현재 프로젝트를 한 파일로 저장해 백업합니다.">전체 저장 (백업)</button>
+                    data-desc="개인 설정·라이브러리·현재 프로젝트를 백업 파일로 저장합니다.">백업 파일 만들기…</button>
             <button id="settings-import" class="file-menu-item" type="button" role="menuitem"
-                    data-desc="저장해 둔 백업 파일을 불러와 설정·라이브러리·프로젝트를 복원합니다.">불러오기 (복원)</button>
+                    data-desc="저장해 둔 백업 파일에서 작업 환경을 복원합니다.">백업에서 복원…</button>
             <button id="open-shortcuts" class="file-menu-item" type="button" role="menuitem"
-                    data-desc="Mac·Windows 단축키 기준을 선택합니다.">단축키 설정</button>
+                    data-desc="현재 키보드 단축키를 기능별로 확인합니다.">키보드 단축키…</button>
             <div id="settings-menu-desc" class="file-menu-desc">설정 작업을 선택하세요.</div>
           </div>
         </div>
@@ -681,7 +681,7 @@
   <script src="experiments/web-codex-auth/editor-bridge.js?v=1.6.0-preview-login-0916-1535"></script>
   <!-- ===== MODULES (load order matters: store → state → viewport → render → main) ===== -->
   <!-- ?v= busts the ES-module cache so edits actually load (DESIGN: cache-bust) -->
-  <script type="module" src="js/panel-visibility.js?v=1.6.0-preview-header-textbook-0919-0908"></script>
+  <script type="module" src="js/panel-visibility.js?v=1.6.0-preview-usability-0920"></script>
   <!-- 모바일: 캔버스 터치를 마우스 이벤트로 변환(그리기·이동). 모듈 그래프 밖 독립 스크립트. -->
   <script src="js/touch-drag.js?v=1.6.0-preview-labeler-0917-1111"></script>
   <script type="module" src="js/ai-workbench.js?v=1.6.0-preview-sharing-0918-2108"></script>

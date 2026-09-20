@@ -36,6 +36,12 @@ export function parseCompactExamCode(value) {
   return codeResult(match[1].toLowerCase(), 2000 + Number(match[2]), match[3], itemNumber);
 }
 
+export function isRecognizedExamSourceName(value) {
+  const sourceFileName = String(value ?? "").split(/[\\/]/u).at(-1) || "";
+  return Boolean(parseCompactExamCode(sourceFileName)
+    || /^([pbce][12])_(20\d{2})_?(06|09|11)\.pdf$/iu.test(sourceFileName));
+}
+
 export function deriveExamMetadata(input = {}) {
   const sourceFileName = String(input.source?.displayName ?? input.fileName ?? "").split(/[\\/]/u).at(-1) || null;
   const direct = parseCompactExamCode(sourceFileName ?? "");
@@ -43,7 +49,7 @@ export function deriveExamMetadata(input = {}) {
     const { itemNumber: _itemNumber, itemCode: _itemCode, ...documentMetadata } = direct;
     return Object.freeze({ ...documentMetadata, sourceFileName });
   }
-  const subjectFirst = /^([pbce][12])_(20\d{2})_(06|09|11)\.pdf$/iu.exec(sourceFileName ?? "");
+  const subjectFirst = /^([pbce][12])_(20\d{2})_?(06|09|11)\.pdf$/iu.exec(sourceFileName ?? "");
   if (subjectFirst) {
     const result = codeResult(subjectFirst[1].toLowerCase(), Number(subjectFirst[2]), subjectFirst[3], null);
     return Object.freeze({ subject: result.subject, academicYear: result.academicYear, administration: result.administration, documentCode: result.documentCode, sourceFileName });

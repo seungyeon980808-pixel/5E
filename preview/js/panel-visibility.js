@@ -47,10 +47,10 @@ function moveEditorHeader(root, toolbar) {
   }
   header.append(toolbar);
 
-  const separator = toolbar.querySelector('.tb-sep');
+  const brand = toolbar.querySelector('.app-brand');
   for (const id of ['undo-btn', 'redo-btn']) {
     const button = root.querySelector(`#${id}`);
-    if (button && separator) toolbar.insertBefore(button, separator);
+    if (button && brand) toolbar.insertBefore(button, brand);
   }
   const controls = toolbar.querySelector('.canvas-global-controls');
   if (controls) {

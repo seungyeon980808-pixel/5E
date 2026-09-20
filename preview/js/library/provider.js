@@ -1,6 +1,6 @@
 import { cropPrebuiltPreview } from "./prebuilt-preview-crop.js?v=1.6.0-preview-labeler-0917-1111";
 import { providedPagePreviews } from "../../assets/pdf-library/previews/manifest.js?v=1.6.0-preview-labeler-0917-1111";
-import { deriveExamMetadata, examMetadataMatches, parseCompactExamCode } from "./exam-code.js?v=1.6.0-preview-common-year-login-0918-1302";
+import { deriveExamMetadata, examMetadataMatches, isRecognizedExamSourceName, parseCompactExamCode } from "./exam-code.js?v=1.6.0-preview-usability-0920";
 import { createHierarchicalSourceNodes, normalizeSourceCategory } from "./source-tree.js?v=1.6.0-preview-labeler-0917-1111";
 import { createCropSource } from "../pdf-library/contract.js?v=1.6.0-preview-labeler-0917-1111";
 import { isAnswerChoiceBoxCandidate, textBeforeFooter, trimImageCandidateAtExternalCaption, trimQuestionRectAtFooter } from "../pdf-library/page-geometry.js?v=1.6.0-preview-labeler-0917-1111";
@@ -421,20 +421,22 @@ function pdfResults(documents, index) {
       const pageResult = pdfPageResult(document, pageNumber, text, metadata, itemNumbers, words);
       results.push(freezeResult({ ...pageResult, metadata: { ...pageResult.metadata, boundaryUncertain: itemNumbers.size === 0 } }));
     }
-    const questions = new Map();
-    for (const entry of entries) {
-      if (!entry.itemId && !Number.isInteger(entry.itemNumber)) continue;
-      if (entry.source.fullPageFallback === true) continue;
-      const key = entry.itemId ?? `${entry.pageNumber}:${entry.itemNumber}`;
-      const previous = questions.get(key);
-      questions.set(key, previous ? {
-        ...previous,
-        text: `${previous.text ?? ""} ${entry.text ?? ""}`.trim(),
-        words: [...(previous.words ?? []), ...(entry.words ?? [])],
-        figureCandidates: [...(previous.figureCandidates ?? []), ...(entry.figureCandidates ?? [])],
-      } : entry);
+    if (isRecognizedExamSourceName(document.source?.displayName)) {
+      const questions = new Map();
+      for (const entry of entries) {
+        if (!entry.itemId && !Number.isInteger(entry.itemNumber)) continue;
+        if (entry.source.fullPageFallback === true) continue;
+        const key = entry.itemId ?? `${entry.pageNumber}:${entry.itemNumber}`;
+        const previous = questions.get(key);
+        questions.set(key, previous ? {
+          ...previous,
+          text: `${previous.text ?? ""} ${entry.text ?? ""}`.trim(),
+          words: [...(previous.words ?? []), ...(entry.words ?? [])],
+          figureCandidates: [...(previous.figureCandidates ?? []), ...(entry.figureCandidates ?? [])],
+        } : entry);
+      }
+      for (const entry of questions.values()) results.push(pdfQuestionResult(document, entry, metadata));
     }
-    for (const entry of questions.values()) results.push(pdfQuestionResult(document, entry, metadata));
     const sourceId = pdfSourceId(document);
     const firstPage = results.slice(resultStart).find((result) => result.kind === "page");
     const inventorySource = { documentId: document.id, pageNumber: 1, rect: [0, 0, 1, 1], fullPageFallback: true };

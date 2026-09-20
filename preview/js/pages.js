@@ -237,7 +237,12 @@ function buildBar(state) {
   // 탭 클릭=전환, 더블클릭=이름 변경, 우클릭=컨텍스트 메뉴(엑셀식).
   _tabsEl.addEventListener("click", (e) => {
     const tab = e.target.closest(".page-tab");
-    if (tab) switchPage(state, tab.dataset.id);
+    if (!tab) return;
+    if (e.target.closest(".page-tab-close")) {
+      void deletePage(state, tab.dataset.id);
+      return;
+    }
+    switchPage(state, tab.dataset.id);
   });
   _tabsEl.addEventListener("dblclick", (e) => {
     const tab = e.target.closest(".page-tab");
@@ -267,7 +272,14 @@ function renderTabs(state) {
     const name = document.createElement("span");
     name.className = "page-tab-name";
     name.textContent = p.name;
-    tab.append(name);
+    const close = document.createElement("button");
+    close.type = "button";
+    close.className = "page-tab-close";
+    close.textContent = "×";
+    close.disabled = (s.pages || []).length <= 1;
+    close.setAttribute("aria-label", `${p.name} 삭제`);
+    close.title = `${p.name} 삭제`;
+    tab.append(name, close);
     return tab;
   });
   _tabsEl.replaceChildren(...tabs);

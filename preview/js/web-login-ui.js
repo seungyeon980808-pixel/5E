@@ -29,7 +29,7 @@ export function initWebLoginUi({ openAi }) {
   const label = badge.querySelector('[data-account-label]'), message = dialog.querySelector('[data-login-message]');
   const title = dialog.querySelector('h2'), codeBox = dialog.querySelector('[data-login-code]');
   const start = dialog.querySelector('[data-login-start]'), copy = dialog.querySelector('[data-copy-code]');
-  let connected = false, userCode = '', phase = 'idle', wasFullscreen = false, toastTimer, completionTimer, pairFrame, authenticating = false, pendingAiAction = null;
+  let connected = false, userCode = '', phase = 'idle', wasFullscreen = false, toastTimer, completionTimer, countdownTimer, pairFrame, authenticating = false, pendingAiAction = null;
   function runPendingAiAction({ fallback = false } = {}) {
     const action = pendingAiAction;
     pendingAiAction = null;
@@ -44,8 +44,10 @@ export function initWebLoginUi({ openAi }) {
   }
   function resetPairedLayout() {
     cancelAnimationFrame(pairFrame);
-    dialog.classList.remove('web-login-paired', 'web-login-pair-shift', 'web-login-pair-settle');
+    dialog.classList.remove('web-login-paired', 'web-login-pair-shift', 'web-login-pair-settle', 'web-login-completing');
     dialog.style.removeProperty('--login-pair-shift-x');
+    dialog.style.removeProperty('--login-complete-x');
+    dialog.style.removeProperty('--login-complete-y');
   }
   function shiftToPairedLayout(paired) {
     const before = dialog.open ? dialog.getBoundingClientRect() : null;
@@ -63,11 +65,35 @@ export function initWebLoginUi({ openAi }) {
   }
   function scheduleCompletionClose() {
     clearTimeout(completionTimer);
+    clearInterval(countdownTimer);
+    pendingAiAction = null;
+    let remaining = 3;
+    const writeCountdown = () => { message.textContent = `이제 AI 기능을 이용할 수 있습니다. ${remaining}초 뒤 자동으로 닫힙니다.`; };
+    writeCountdown();
+    countdownTimer = setInterval(() => {
+      remaining -= 1;
+      if (remaining > 0) writeCountdown();
+    }, 1000);
     completionTimer = setTimeout(() => {
       if (!connected || !dialog.open) return;
-      dialog.close(); resetPairedLayout(); aiButton?.focus();
-      runPendingAiAction();
-    }, 900);
+      clearInterval(countdownTimer);
+      const from = dialog.getBoundingClientRect();
+      const target = aiButton?.getBoundingClientRect();
+      if (target && !matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        dialog.style.setProperty('--login-complete-x', `${target.left + target.width / 2 - (from.left + from.width / 2)}px`);
+        dialog.style.setProperty('--login-complete-y', `${target.top + target.height / 2 - (from.top + from.height / 2)}px`);
+        dialog.classList.add('web-login-completing');
+      }
+      setTimeout(() => {
+        if (dialog.open) dialog.close();
+        resetPairedLayout();
+        if (aiButton) {
+          aiButton.focus();
+          aiButton.classList.add('ai-login-ready-pulse');
+          setTimeout(() => aiButton.classList.remove('ai-login-ready-pulse'), 900);
+        }
+      }, target ? 360 : 0);
+    }, 3000);
   }
   function render(next, text) {
     phase = next; badge.dataset.state = next;
@@ -112,6 +138,7 @@ export function initWebLoginUi({ openAi }) {
   });
   function dismiss() {
     clearTimeout(completionTimer);
+    clearInterval(countdownTimer);
     pendingAiAction = null;
     if (['starting', 'waiting'].includes(phase)) window.fiveEWebCancelLogin?.();
     dialog.close(); resetPairedLayout();
@@ -173,7 +200,7 @@ export function initWebLoginUi({ openAi }) {
         const wasConnected = connected; connected = result.login?.loggedIn === true;
         if (connected) {
           const autoReturning = !wasConnected && dialog.open;
-          render('connected', autoReturning ? 'AI가 준비되었습니다. 자동으로 편집기로 돌아갑니다.' : '메인 화면의 AI 버튼을 눌러 작업을 시작하세요.');
+          render('connected', autoReturning ? '이제 AI 기능을 이용할 수 있습니다.' : '메인 화면의 AI 버튼을 눌러 작업을 시작하세요.');
           if (!wasConnected && dialog.open) {
             scheduleCompletionClose();
           }

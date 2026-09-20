@@ -1872,6 +1872,10 @@ body { zoom: var(--ui-zoom, 1); }
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='412' height='233'%3E%3Cg fill='%23e6edf3' fill-opacity='0.08' font-family='Georgia, serif' font-size='17.25' font-style='italic' font-weight='600' text-anchor='middle'%3E%3Ctext transform='rotate(-24 116 66)'%3E%3Ctspan x='116' y='58'%3EsciEnce Educational%3C/tspan%3E%3Ctspan x='116' y='80'%3EExam Easy Editor%3C/tspan%3E%3C/text%3E%3Ctext transform='rotate(-24 300 168)'%3E%3Ctspan x='300' y='160'%3EsciEnce Educational%3C/tspan%3E%3Ctspan x='300' y='182'%3EExam Easy Editor%3C/tspan%3E%3C/text%3E%3C/g%3E%3C/svg%3E");
   background-repeat: repeat;
 }
+:root[data-theme="light"] #canvas {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='412' height='233'%3E%3Cg fill='%230d1117' fill-opacity='0.055' font-family='Georgia, serif' font-size='17.25' font-style='italic' font-weight='600' text-anchor='middle'%3E%3Ctext transform='rotate(-24 116 66)'%3E%3Ctspan x='116' y='58'%3EsciEnce Educational%3C/tspan%3E%3Ctspan x='116' y='80'%3EExam Easy Editor%3C/tspan%3E%3C/text%3E%3Ctext transform='rotate(-24 300 168)'%3E%3Ctspan x='300' y='160'%3EsciEnce Educational%3C/tspan%3E%3Ctspan x='300' y='182'%3EExam Easy Editor%3C/tspan%3E%3C/text%3E%3C/g%3E%3C/svg%3E");
+  background-repeat: repeat;
+}
 
 /* ===== TEXT EDITOR OVERLAY (T tool) ===== */
 /* Native editor overlay: while editing, this textarea owns both the visible
@@ -2721,6 +2725,11 @@ textarea.unified-text-input {
   background: var(--accent); color: #fff; border-color: var(--accent);
 }
 .page-tab-name { overflow: hidden; text-overflow: ellipsis; }
+.page-tab-close { display:inline-flex; align-items:center; justify-content:center; width:18px; height:18px; margin-left:5px; padding:0; border:0; border-radius:4px; color:inherit; background:transparent; font:600 14px/1 system-ui; cursor:pointer; opacity:0; }
+.page-tab:is(:hover,.is-active) .page-tab-close { opacity:.78; }
+.page-tab-close:hover:not(:disabled) { opacity:1; background:color-mix(in srgb,currentColor 18%,transparent); }
+.page-tab-close:focus-visible { opacity:1; outline:2px solid currentColor; outline-offset:1px; }
+.page-tab-close:disabled { visibility:hidden; }
 .page-add-btn {
   flex: none; width: 26px; height: 26px; margin-bottom: 3px;
   display: inline-flex; align-items: center; justify-content: center;
