@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   version="1.0"
+   width="720"
+   height="700"
+   id="svg2226"
+   sodipodi:version="0.32"
+   inkscape:version="0.46"
+   sodipodi:docname="Risorse di uranio.svg"
+   inkscape:output_extension="org.inkscape.output.svg.inkscape">
+  <metadata
+     id="metadata30">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <sodipodi:namedview
+     inkscape:window-height="974"
+     inkscape:window-width="1264"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     guidetolerance="10.0"
+     gridtolerance="10.0"
+     objecttolerance="10.0"
+     borderopacity="1.0"
+     bordercolor="#666666"
+     pagecolor="#ffffff"
+     id="base"
+     showgrid="false"
+     inkscape:zoom="1.0957143"
+     inkscape:cx="360"
+     inkscape:cy="350"
+     inkscape:window-x="0"
+     inkscape:window-y="14"
+     inkscape:current-layer="svg2226" />
+  <defs
+     id="defs2229">
+    <inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="0 : 350 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_z="720 : 350 : 1"
+       inkscape:persp3d-origin="360 : 233.33333 : 1"
+       id="perspective32" />
+    <linearGradient
+       id="linearGradient4273">
+      <stop
+         style="stop-color:#0400f7;stop-opacity:1"
+         offset="0"
+         id="stop4275" />
+      <stop
+         style="stop-color:#1d00ff;stop-opacity:0"
+         offset="1"
+         id="stop4277" />
+    </linearGradient>
+    <radialGradient
+       cx="11.140584"
+       cy="8.4977798"
+       r="358.24118"
+       fx="11.140584"
+       fy="8.4977798"
+       id="radialGradient4281"
+       xlink:href="#linearGradient4273"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0,1.9207375,-1.9004314,0,37.215356,-7.5470843)" />
+  </defs>
+  <rect
+     width="680.81274"
+     height="670.49731"
+     x="21.065907"
+     y="13.85105"
+     style="opacity:0.98999999;fill:url(#radialGradient4281);fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:2.85064697;stroke-miterlimit:4;stroke-dasharray:8.55194076, 2.85064692;stroke-dashoffset:0;stroke-opacity:1"
+     id="rect3223" />
+  <rect
+     width="465.56494"
+     height="458.51089"
+     x="20.153259"
+     y="12.938406"
+     style="opacity:1;fill:#84d680;fill-opacity:1;stroke:#000000;stroke-width:2.85064697;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     id="rect3225" />
+  <rect
+     width="202.68036"
+     height="199.60942"
+     x="21.065907"
+     y="13.851052"
+     style="opacity:1;fill:#bbe97d;fill-opacity:1;stroke:#000000;stroke-width:2.85064697;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     id="rect3227" />
+  <rect
+     width="110.93541"
+     height="109.25455"
+     x="21.065907"
+     y="13.851052"
+     style="opacity:1;fill:#f6f192;fill-opacity:1;stroke:#000000;stroke-width:2.85064697;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     id="rect3229" />
+  <rect
+     width="57.868553"
+     height="56.991753"
+     x="21.065907"
+     y="13.851052"
+     style="opacity:1;fill:#ffcc66;fill-opacity:1;stroke:#000000;stroke-width:2.85064697;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     id="rect3237" />
+  <flowRoot
+     transform="matrix(3.6942699,0,0,3.6942699,-1266.1465,1022.8331)"
+     style="font-size:5.95516872px"
+     id="flowRoot5276"
+     xml:space="preserve"><flowRegion
+       id="flowRegion5278"><rect
+         width="20.635845"
+         height="15.021776"
+         x="380.74982"
+         y="-161.28232"
+         style="font-size:5.95516872px"
+         id="rect5280" /></flowRegion><flowPara
+       id="flowPara5282">150011164wdgtffgrwerwerw</flowPara></flowRoot>  <text
+     x="379.22534"
+     y="455.36136"
+     style="font-size:42.12423706px;text-align:center;text-anchor:middle;font-family:Arial"
+     id="text6327"
+     xml:space="preserve"><tspan
+       x="379.22534"
+       y="455.36136"
+       id="tspan6329"><tspan
+         x="379.22534"
+         y="455.36136"
+         id="tspan6331">1500 anni</tspan></tspan></text>
+  <text
+     x="145.77708"
+     y="205.74948"
+     style="font-size:42.12423706px;font-family:Arial"
+     id="text6333"
+     xml:space="preserve"><tspan
+       x="145.77708"
+       y="205.74948"
+       id="tspan6335"><tspan
+         x="145.77708"
+         y="205.74948"
+         id="tspan6337">300</tspan></tspan></text>
+  <text
+     x="77.891563"
+     y="114.7067"
+     style="font-size:42.12423706px;font-family:Arial"
+     id="text6339"
+     xml:space="preserve"><tspan
+       x="77.891563"
+       y="114.7067"
+       id="tspan6341"><tspan
+         x="77.891563"
+         y="114.7067"
+         id="tspan6343">80</tspan></tspan></text>
+  <text
+     x="26.953304"
+     y="61.831348"
+     style="font-size:42.12423706px"
+     id="text6345"
+     xml:space="preserve"><tspan
+       x="26.953304"
+       y="61.831348"
+       id="tspan6347"><tspan
+         x="26.953304"
+         y="61.831348"
+         style="font-family:Arial"
+         id="tspan6349">20</tspan></tspan></text>
+</svg>

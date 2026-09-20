@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-104 -107 222 222" fill="none" stroke="#000">
+<g id="h">
+<path id="a" d="M70-9V9m-4-4l4,4l4-4"/>
+<use href="#a" transform="rotate(90)"/>
+</g>
+<use href="#h" transform="scale(-1)"/>
+<g transform="translate(-70-50)">
+<path fill="#69c" d="M20,13v7a20,9 0 0 1-40,0v-7"/>
+<path fill="#9cf" d="M20,13a20,9 0 1 0 0,.1"/>
+<path id="v" d="M20-40a20,9 0 1 0 0,.1v60a20,9 0 0 1-40,0v-60"/>
+<g id="c">
+<path fill="#9cf" d="M0-56c7,7-7,7 0,0m0,9c7,7-7,7 0,0"/>
+<path d="M-7,7a2,2 0 1 0 .1.1l-9,9M8-8a2,2 0 1 0 .1.1l5-5"/>
+</g>
+</g>
+<g transform="translate(70-50)">
+<path fill="#69c" d="M20-30v50a20,9 0 0 1-40,0v-50"/>
+<path fill="#9cf" d="M20-30a20,9 0 1 0 0,.1"/>
+<use href="#v"/>
+<use href="#c"/>
+</g>
+<g transform="translate(70,80)">
+<path fill="#69c" d="M44-16l-44,44a19,9 45 0 1-28-28l20-20"/>
+<path fill="#9cf" d="M44-18a26,9 0 1 0 0,.1"/>
+<use href="#v" transform="rotate(45)"/>
+<use href="#c"/>
+</g>
+<g transform="translate(-70,80)">
+<path fill="#666" d="M-20-20a9,20 0 1 0 .1,0"/>
+<path fill="#69c" d="M45,35q0-15-5-15h-61l-3-3h66q9,0 9,18"/>
+<use href="#v" transform="rotate(90)"/>
+<use href="#c"/>
+</g>
+<!--script>setTimeout('location.reload()',2000);</script-->
+</svg>

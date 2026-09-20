@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:i="http://ns.adobe.com/AdobeIllustrator/10.0/"
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://web.resource.org/cc/"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="1555"
+   height="537"
+   id="svg1480"
+   sodipodi:version="0.32"
+   inkscape:version="0.45.1"
+   sodipodi:docname="Prime_focus_telescope.svg"
+   inkscape:output_extension="org.inkscape.output.svg.inkscape"
+   sodipodi:docbase="C:\Documents and Settings\YoungAe Han\Desktop"
+   version="1.0">
+  <defs
+     id="defs1482" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.2412811"
+     inkscape:cx="828.29351"
+     inkscape:cy="61.181124"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     inkscape:window-width="1013"
+     inkscape:window-height="972"
+     inkscape:window-x="72"
+     inkscape:window-y="63"
+     showgrid="true"
+     inkscape:grid-points="true"
+     width="1555px"
+     height="537px" />
+  <metadata
+     id="metadata1485">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <cc:license
+           rdf:resource="http://www.gnu.org/copyleft/fdl.html" />
+        <dc:title>Light path in a Nasmyth telescope</dc:title>
+        <dc:date>2005-11-15</dc:date>
+        <dc:creator>
+          <cc:Agent>
+            <dc:title>Christian Eyrich</dc:title>
+          </cc:Agent>
+        </dc:creator>
+        <dc:description>*Strahlengang in einem Nasmyth-Teleskop
+*Light path in a Nasmyth telescope</dc:description>
+        <dc:contributor>
+          <cc:Agent>
+            <dc:title>based upon the illustration of the light path in a Cassegrain teleskop by ArtMechanic</dc:title>
+          </cc:Agent>
+        </dc:contributor>
+        <dc:rights>
+          <cc:Agent>
+            <dc:title />
+          </cc:Agent>
+        </dc:rights>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Ebene 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-24.602211,440.42243)">
+    <path
+       style="fill:#f2f2f2;stroke:#000000;stroke-width:2.43756843;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10"
+       id="path8022"
+       d="M 25.915605,95.349313 L 25.820995,-439.20365 L 1573.6797,-439.20365 L 1578.1901,95.349313 L 25.915605,95.349313 z "
+       stroke-miterlimit="10"
+       i:knockout="Off"
+       sodipodi:nodetypes="ccccc" />
+    <path
+       style="fill:none;stroke:#0000ff;stroke-width:5.57146835;stroke-linecap:round;stroke-miterlimit:10;stroke-dasharray:none"
+       id="path8094"
+       d="M 1434.8123,-0.55000755 L 85.046939,-0.55000755"
+       stroke-miterlimit="10"
+       i:knockout="Off" />
+    <path
+       style="fill:none;stroke:#0000ff;stroke-width:5.57146835;stroke-linecap:round;stroke-miterlimit:10;stroke-dasharray:none"
+       id="path8096"
+       d="M 1434.8123,-355.91267 L 85.046939,-355.91267"
+       stroke-miterlimit="10"
+       i:knockout="Off" />
+    <path
+       id="path8108"
+       style="fill:none;stroke:#000000;stroke-width:6.96433496;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-dasharray:none"
+       d="M 408.95403,-385.18981 L 1523.2477,-385.18981 L 1523.2477,32.670293 L 408.95403,25.705959"
+       sodipodi:nodetypes="cccc" />
+    <path
+       style="fill:none;stroke:#999999;stroke-width:1.74112022;stroke-linecap:round;stroke-miterlimit:10"
+       id="path8112"
+       d="M 122.99574,-180.48784 L 123.15592,-180.48784"
+       stroke-miterlimit="10"
+       i:knockout="Off" />
+    <path
+       style="fill:none;stroke:#0000ff;stroke-width:5.57146835;stroke-linecap:round;stroke-miterlimit:10;stroke-dasharray:none"
+       id="path8120"
+       d="M 1435.6549,-357.33248 L 125.67129,-181.1526"
+       stroke-miterlimit="10"
+       i:knockout="Off"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;stroke:#0000ff;stroke-width:5.57146835;stroke-linecap:round;stroke-miterlimit:10;stroke-dasharray:none"
+       id="path8122"
+       d="M 1435.7143,-2.1513796 L 126.40724,-180.37469"
+       stroke-miterlimit="10"
+       i:knockout="Off"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;stroke:#0000ff;stroke-width:5.57146835;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none"
+       id="path8134"
+       d="M 221.71096,-370.83059 L 263.48392,-355.90571 L 221.71096,-340.98082"
+       i:knockout="Off" />
+    <path
+       style="fill:none;stroke:#0000ff;stroke-width:5.57146835;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none"
+       id="path8136"
+       d="M 221.71096,-15.474892 L 263.48392,-0.55000755 L 221.71096,14.374874"
+       i:knockout="Off" />
+    <g
+       id="g8594"
+       transform="matrix(6.9644814,0,0,6.9644814,-442.93321,-828.93739)">
+      <path
+         i:knockout="Off"
+         stroke-miterlimit="10"
+         d="M 269.72139,120.3276 C 269.83539,118.1566 269.93639,115.9816 270.02339,113.8076 C 270.16039,110.4066 270.26139,107.0076 270.33039,103.6026 C 270.39839,100.20159 270.43239,96.799594 270.43239,93.398594 C 270.43239,89.997594 270.39939,86.595594 270.33039,83.195594 C 270.26239,79.792594 270.15939,76.388594 270.02339,72.987594 C 269.93639,70.816594 269.83539,68.640594 269.72139,66.469594 L 278.93539,66.469594 L 278.93539,120.3266 L 269.72139,120.3266 L 269.72139,120.3276 z "
+         id="path1955"
+         style="fill:#65c1c8;stroke:#000000;stroke-width:0.99997902;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10;stroke-dasharray:none" />
+      <path
+         i:knockout="Off"
+         stroke-miterlimit="10"
+         d="M 269.72139,120.3276 C 269.83539,118.1566 269.93639,115.9816 270.02339,113.8076 C 270.16039,110.4066 270.26139,107.0076 270.33039,103.6026 C 270.39839,100.20159 270.43239,96.799594 270.43239,93.398594 C 270.43239,89.997594 270.39939,86.595594 270.33039,83.195594 C 270.26239,79.792594 270.15939,76.388594 270.02339,72.987594 C 269.93639,70.816594 269.83539,68.640594 269.72139,66.469594"
+         id="path1957"
+         style="fill:none;stroke:#fb0f0c;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:10" />
+    </g>
+    <path
+       style="fill:none;stroke:#fb0f0c;stroke-width:5.57146835;stroke-linecap:round;stroke-miterlimit:10;stroke-dasharray:none"
+       id="path1897"
+       d="M 110.47663,-167.50492 L 138.39727,-195.41164"
+       stroke-miterlimit="10"
+       i:knockout="Off" />
+    <path
+       style="fill:none;stroke:#fb0f0c;stroke-width:5.57146835;stroke-linecap:round;stroke-miterlimit:10;stroke-dasharray:none"
+       id="path1899"
+       d="M 138.39727,-167.50492 L 110.47663,-195.41164"
+       stroke-miterlimit="10"
+       i:knockout="Off" />
+  </g>
+</svg>

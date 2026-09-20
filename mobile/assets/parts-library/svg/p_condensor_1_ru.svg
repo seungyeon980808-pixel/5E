@@ -1,0 +1,20 @@
+<svg width="197.8mm" height="92.16mm" version="1.1" viewBox="0 0 197.79 92.16" xmlns="http://www.w3.org/2000/svg">
+  <g transform="translate(-6.938 -102.8)">
+  <g fill-rule="evenodd">
+   <rect x="6.938" y="102.8" width="197.8" height="92.16" fill="#fff" style="paint-order:fill markers stroke"/>
+   <rect x="146.3" y="105.3" width="6.409" height="74.82" fill="#afafe9" stroke="#00f" stroke-width=".5" style="paint-order:fill markers stroke"/>
+   <path d="m180.4 105.3c-14.47 12.08-14.79 59.29 0 74.47zm-80.24-1.134a38.4 38.4 0 0 1 38.14 38.48 38.4 38.4 0 0 1 -38.31 38.31l-0.0901-38.4z" fill="#c0ffff" stroke="#000" stroke-width=".5" style="paint-order:fill markers stroke"/>
+  </g>
+  <g>
+   <path d="m17.8 143 182.3-0.6518m-179.4-17.49 79.19 42.44 22.14 6.082 52.63 0.01 26.01-7.27m-180-6.46 79.19-42.44 22.14-6.082 52.63-0.01 26.01 7.27" fill="none" stroke="#f00" stroke-width=".5" style="paint-order:fill markers stroke"/>
+   <rect x="49.18" y="129.6" width="19.97" height="38.25" ry="5.914" fill="#fff" fill-rule="evenodd" stroke="#00f" style="paint-order:fill markers stroke"/>
+   <path d="m61.87 146v-12.58m-1.165 14.39v-12.58m-1.261 13.69v-12.58m-1.238 13.88v-12.58m-2.229 15.03v-12.58m1.064 11.41v-12.58" fill="#fff" fill-rule="evenodd" stroke="#000" stroke-width=".5" style="paint-order:fill markers stroke"/>
+   <path d="m65.6 180.1v-18.56l-3.209-0.22-0.1154-15.3m-9.745 34.09v-18.78h3.38l-0.2688-8.61m-13.2-47.91c-1.275 0.061-3.358 1.223-4.37 1.54-6.621 3.087-11.82 8.655-15.22 15.05-6.588 12.45-6.896 27.96-1.057 40.76 3.961 8.604 11.21 16.25 20.61 18.67" fill="none" stroke="#000" style="paint-order:fill markers stroke"/>
+  </g>
+  <path d="m29.06 129.5 4.77 0.5317c-1.147 0.2804-1.825 1.191-1.696 3.188zm10.57 5.554-4.77-0.5317c1.147-0.2804 1.825-1.191 1.696-3.188zm-9.959 19.74 4.77-0.5317c-1.147-0.2804-1.825-1.191-1.696-3.188zm10.57-5.554-4.77 0.5317c1.147 0.2804 1.825 1.191 1.696 3.188zm162.3 16.38-3.824 2.9c0.6383-0.9931 0.5031-2.12-0.9653-3.479zm-0.2173-46.6-3.824-2.9c0.6383 0.9931 0.5031 2.12-0.9653 3.479zm0.013 23.63-4.42-1.87c0.8629 0.8057 1.009 1.932-0.08 3.61z" clip-rule="evenodd" fill="#fd300d" fill-rule="evenodd" image-rendering="optimizeQuality" shape-rendering="geometricPrecision" stroke-width=".01"/>
+  <g fill="#000000" font-family="Arial" font-size="5.5px" letter-spacing="0px" stroke-dashoffset="42.85" stroke-linejoin="round" text-anchor="middle" word-spacing="0px">
+   <text x="29.53268" y="186.549" dominant-baseline="auto" style="font-feature-settings:normal;font-variant-alternates:normal;font-variant-caps:normal;font-variant-ligatures:normal;font-variant-numeric:normal;font-variant-position:normal;line-height:5.3400002px;paint-order:stroke fill markers;shape-padding:0;text-decoration-color:#000000;text-decoration-line:none;text-decoration-style:solid;text-indent:0;text-orientation:mixed;text-transform:none;white-space:normal" xml:space="preserve"><tspan x="29.53268" y="186.549" style="line-height:5.3400002px">Сферическое</tspan><tspan x="29.53268" y="191.889" style="line-height:5.3400002px">зеркало</tspan><tspan x="59.73088" y="186.8206" style="line-height:5.3400002px">Лампа</tspan><tspan x="59.73088" y="192.1606" style="line-height:5.3400002px">накаливания</tspan><tspan x="110.894" y="186.6577" style="line-height:5.3400002px">Асферическая</tspan><tspan x="110.894" y="191.9977" style="line-height:5.3400002px">линза</tspan><tspan x="149.5107" y="186.7121" style="line-height:5.3400002px">Тепловой</tspan><tspan x="149.5107" y="192.0521" style="line-height:5.3400002px">фильтр</tspan><tspan x="182.9135" y="186.875" style="line-height:5.3400002px">Конденсорная</tspan><tspan x="182.9135" y="192.215" style="line-height:5.3400002px">линза</tspan></text>
+
+   </g>
+ </g>
+</svg>

@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://web.resource.org/cc/"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="293.66525"
+   height="350.01599"
+   id="svg2"
+   sodipodi:version="0.32"
+   inkscape:version="0.44"
+   version="1.0"
+   sodipodi:docbase="/home/wim"
+   sodipodi:docname="Centaur_zeilteken.svg">
+  <defs
+     id="defs4" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     gridtolerance="10000"
+     guidetolerance="10"
+     objecttolerance="10"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.35"
+     inkscape:cx="375"
+     inkscape:cy="518.57143"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     inkscape:window-width="1400"
+     inkscape:window-height="975"
+     inkscape:window-x="0"
+     inkscape:window-y="25" />
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-9.193132,-22.80107)">
+    <path
+       style="font-size:144px;font-style:normal;font-variant:normal;font-weight:bold;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:black;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Nimbus Sans L"
+       d="M 301.48399,141.45832 C 299.19331,112.59578 293.2375,94.270297 279.03532,75.486717 C 253.37972,41.584687 212.14738,22.80107 162.2106,22.80107 C 67.834653,22.80107 9.1931319,90.147197 9.1931319,198.2672 C 9.1931319,305.47096 67.376513,372.81707 160.37806,372.81707 C 243.3006,372.81707 298.73517,324.71271 302.85839,248.20404 L 235.97052,248.20404 C 231.84729,290.81067 204.81723,315.09192 162.2106,315.09192 C 109.06686,315.09192 77.913553,272.02706 77.913553,199.18348 C 77.913553,125.42365 110.44127,81.442487 164.50128,81.442487 C 188.32433,81.442487 208.02421,89.688967 220.85203,105.7237 C 228.1822,114.88643 231.84729,123.59104 235.97052,141.45832 L 301.48399,141.45832"
+       id="text1872" />
+  </g>
+</svg>

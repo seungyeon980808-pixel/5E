@@ -1,0 +1,101 @@
+﻿<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg>
+<svg version="1.1" baseProfile="full" xmlns:ev="http://www.w3.org/2001/xml-events" xmlns:xlink="http://www.w3.org/1999/xlink" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet" zoomAndPan="magnify" id="Electron shell Iridium" viewBox="-900 -900 1800 1800" width="1800" height="1800">
+<title id="title">Electron shells for element: Z=077 Ir (Iridium): 2,8,18,32,15,2</title>
+<desc id="element_description">077 Ir (Iridium) Legend_color:#ffc0c0</desc>
+<desc id="element_electron_configuration">2,8,18,32,15,2</desc>
+
+<defs>
+<circle id="electron" fill="#77868b" stroke="none" r="30"/>
+</defs>
+
+<circle fill="#ffc0c0" r="200" stroke="#343434" stroke-width="10"/>
+<g font-weight="bold" font="DejaVu Sans">
+<text x="0" y="50" font-size="150" text-anchor="middle">Ir</text>
+</g>
+
+<g stroke="#77868b" stroke-width="8" fill="none"><circle id="s1" r="300"/>
+<use id="e0s1" xlink:href="#electron" y="-300"/>
+<use id="e1s1" xlink:href="#e0s1" transform="rotate(180)"/>
+<circle id="s2" r="400"/>
+<use id="e0s2" xlink:href="#electron" y="-400"/>
+<use id="e1s2" xlink:href="#e0s2" transform="rotate(45)"/>
+<use id="e2s2" xlink:href="#e0s2" transform="rotate(90)"/>
+<use id="e3s2" xlink:href="#e0s2" transform="rotate(135)"/>
+<use id="e4s2" xlink:href="#e0s2" transform="rotate(180)"/>
+<use id="e5s2" xlink:href="#e0s2" transform="rotate(225)"/>
+<use id="e6s2" xlink:href="#e0s2" transform="rotate(270)"/>
+<use id="e7s2" xlink:href="#e0s2" transform="rotate(315)"/>
+<circle id="s3" r="500"/>
+<use id="e0s3" xlink:href="#electron" y="-500"/>
+<use id="e1s3" xlink:href="#e0s3" transform="rotate(20)"/>
+<use id="e2s3" xlink:href="#e0s3" transform="rotate(40)"/>
+<use id="e3s3" xlink:href="#e0s3" transform="rotate(60)"/>
+<use id="e4s3" xlink:href="#e0s3" transform="rotate(80)"/>
+<use id="e5s3" xlink:href="#e0s3" transform="rotate(100)"/>
+<use id="e6s3" xlink:href="#e0s3" transform="rotate(120)"/>
+<use id="e7s3" xlink:href="#e0s3" transform="rotate(140)"/>
+<use id="e8s3" xlink:href="#e0s3" transform="rotate(160)"/>
+<use id="e9s3" xlink:href="#e0s3" transform="rotate(180)"/>
+<use id="e10s3" xlink:href="#e0s3" transform="rotate(200)"/>
+<use id="e11s3" xlink:href="#e0s3" transform="rotate(220)"/>
+<use id="e12s3" xlink:href="#e0s3" transform="rotate(240)"/>
+<use id="e13s3" xlink:href="#e0s3" transform="rotate(260)"/>
+<use id="e14s3" xlink:href="#e0s3" transform="rotate(280)"/>
+<use id="e15s3" xlink:href="#e0s3" transform="rotate(300)"/>
+<use id="e16s3" xlink:href="#e0s3" transform="rotate(320)"/>
+<use id="e17s3" xlink:href="#e0s3" transform="rotate(340)"/>
+<circle id="s4" r="600"/>
+<use id="e0s4" xlink:href="#electron" y="-600"/>
+<use id="e1s4" xlink:href="#e0s4" transform="rotate(11.25)"/>
+<use id="e2s4" xlink:href="#e0s4" transform="rotate(22.5)"/>
+<use id="e3s4" xlink:href="#e0s4" transform="rotate(33.75)"/>
+<use id="e4s4" xlink:href="#e0s4" transform="rotate(45)"/>
+<use id="e5s4" xlink:href="#e0s4" transform="rotate(56.25)"/>
+<use id="e6s4" xlink:href="#e0s4" transform="rotate(67.5)"/>
+<use id="e7s4" xlink:href="#e0s4" transform="rotate(78.75)"/>
+<use id="e8s4" xlink:href="#e0s4" transform="rotate(90)"/>
+<use id="e9s4" xlink:href="#e0s4" transform="rotate(101.25)"/>
+<use id="e10s4" xlink:href="#e0s4" transform="rotate(112.5)"/>
+<use id="e11s4" xlink:href="#e0s4" transform="rotate(123.75)"/>
+<use id="e12s4" xlink:href="#e0s4" transform="rotate(135)"/>
+<use id="e13s4" xlink:href="#e0s4" transform="rotate(146.25)"/>
+<use id="e14s4" xlink:href="#e0s4" transform="rotate(157.5)"/>
+<use id="e15s4" xlink:href="#e0s4" transform="rotate(168.75)"/>
+<use id="e16s4" xlink:href="#e0s4" transform="rotate(180)"/>
+<use id="e17s4" xlink:href="#e0s4" transform="rotate(191.25)"/>
+<use id="e18s4" xlink:href="#e0s4" transform="rotate(202.5)"/>
+<use id="e19s4" xlink:href="#e0s4" transform="rotate(213.75)"/>
+<use id="e20s4" xlink:href="#e0s4" transform="rotate(225)"/>
+<use id="e21s4" xlink:href="#e0s4" transform="rotate(236.25)"/>
+<use id="e22s4" xlink:href="#e0s4" transform="rotate(247.5)"/>
+<use id="e23s4" xlink:href="#e0s4" transform="rotate(258.75)"/>
+<use id="e24s4" xlink:href="#e0s4" transform="rotate(270)"/>
+<use id="e25s4" xlink:href="#e0s4" transform="rotate(281.25)"/>
+<use id="e26s4" xlink:href="#e0s4" transform="rotate(292.5)"/>
+<use id="e27s4" xlink:href="#e0s4" transform="rotate(303.75)"/>
+<use id="e28s4" xlink:href="#e0s4" transform="rotate(315)"/>
+<use id="e29s4" xlink:href="#e0s4" transform="rotate(326.25)"/>
+<use id="e30s4" xlink:href="#e0s4" transform="rotate(337.5)"/>
+<use id="e31s4" xlink:href="#e0s4" transform="rotate(348.75)"/>
+<circle id="s5" r="700"/>
+<use id="e0s5" xlink:href="#electron" y="-700"/>
+<use id="e1s5" xlink:href="#e0s5" transform="rotate(24)"/>
+<use id="e2s5" xlink:href="#e0s5" transform="rotate(48)"/>
+<use id="e3s5" xlink:href="#e0s5" transform="rotate(72)"/>
+<use id="e1s5" xlink:href="#e0s5" transform="rotate(96)"/>
+<use id="e2s5" xlink:href="#e0s5" transform="rotate(120)"/>
+<use id="e1s5" xlink:href="#e0s5" transform="rotate(144)"/>
+<use id="e2s5" xlink:href="#e0s5" transform="rotate(168)"/>
+<use id="e3s5" xlink:href="#e0s5" transform="rotate(192)"/>
+<use id="e1s5" xlink:href="#e0s5" transform="rotate(216)"/>
+<use id="e2s5" xlink:href="#e0s5" transform="rotate(240)"/>
+<use id="e1s5" xlink:href="#e0s5" transform="rotate(264)"/>
+<use id="e2s5" xlink:href="#e0s5" transform="rotate(288)"/>
+<use id="e3s5" xlink:href="#e0s5" transform="rotate(312)"/>
+<use id="e1s5" xlink:href="#e0s5" transform="rotate(336)"/>
+<circle id="s6" r="800"/>
+<use id="e0s6" xlink:href="#electron" y="-800"/>
+<use id="e1s6" xlink:href="#e0s6" transform="rotate(180)"/>
+</g>
+</svg>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Creator: CorelDRAW Home & Student X8 -->
+<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" width="240mm" height="240mm" version="1.1" style="shape-rendering:geometricPrecision; text-rendering:geometricPrecision; image-rendering:optimizeQuality; fill-rule:evenodd; clip-rule:evenodd"
+viewBox="0 0 24000 24000"
+ xmlns:xlink="http://www.w3.org/1999/xlink">
+ <defs>
+  <style type="text/css">
+   <![CDATA[
+    .str1 {stroke:red;stroke-width:100}
+    .str0 {stroke:black;stroke-width:150;stroke-linecap:square}
+    .fil1 {fill:none}
+    .fil0 {fill:lightcyan}
+    .fil2 {fill:red}
+   ]]>
+  </style>
+ </defs>
+ <g id="Ebene_x0020_1">
+  <metadata id="CorelCorpID_0Corel-Layer"/>
+  <g id="_576750392">
+   <path class="fil0" d="M993 1064l22014 0 0 21872 -22014 0 0 -21872z"/>
+   <path class="fil1 str0" d="M2810 2881l0 -36m35 -1693l0 1552c-31,87 -19,61 -35,141 -210,-128 -1600,-1518 -1728,-1728"/>
+   <path class="fil1 str0" d="M22954 22883l-1517 -1517c-43,-63 -71,-110 -106,-176m-1870 1693c283,-282 1587,-1480 1658,-1728m106 1693l0 -1658 106 0c276,-90 1228,-35 1587,-35m-8431 -6703l-2364 -2364 -178 -102 -2362 -2367m4939 4833c141,-208 950,-988 1270,-1376l776 -988c565,-577 792,-1368 1024,-2081l35 -565c-112,-709 -580,-1634 -1164,-2116 -506,-418 -1212,-748 -1835,-847 -443,-70 -1572,338 -2011,623 -526,342 -969,689 -1481,1035 -504,416 -1090,984 -1553,1446m-8537 -4868l1588 -1587c86,-58 94,-65 176,-141m35 19861l0 -1658c405,-157 16357,-35 18274,-35 209,-19 -40,-147 -211,-318 -1156,-1156 -6177,-6045 -6386,-6385l-35 0c-139,193 -1322,1275 -1658,1552 -183,124 -505,376 -670,529l-174 75c-491,446 -1301,751 -1908,948l-811 36c-304,-49 -1062,-360 -1270,-494 -384,-248 -898,-830 -1141,-1235 -243,-404 -343,-696 -411,-1129 -122,-771 453,-2042 882,-2575 180,-184 592,-732 741,-953 289,-351 1255,-1427 1516,-1587l0 -36c-391,-239 -1946,-1910 -2398,-2363 -812,-812 -1623,-1623 -2435,-2434 -334,-276 -1573,-1428 -1834,-1870m-1799 18239l1728 0c0,-1907 121,-17766 -35,-18168l0 -71m20144 16475l-1552 1552c-97,139 -21,95 -177,141 0,-1907 -121,-17765 35,-18168l1658 0m-19967 0l18274 0 0 -1764m-20108 1764l1693 0 106 0 35 0c36,-70 72,-141 106,-212 329,-328 1323,-1404 1623,-1587"/>
+  </g>
+  <circle class="fil2 str1" cx="2846" cy="2886" r="236"/>
+  <circle class="fil2 str1" cx="21247" cy="21119" r="236"/>
+  <circle class="fil2 str1" cx="2811" cy="21150" r="236"/>
+  <circle class="fil2 str1" cx="14532" cy="14429" r="236"/>
+  <circle class="fil2 str1" cx="9598" cy="9559" r="236"/>
+  <circle class="fil2 str1" cx="21201" cy="2957" r="236"/>
+ </g>
+</svg>

@@ -1,0 +1,71 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 13.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 14948)  -->
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" id="Layer_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 width="563.24px" height="669.339px" viewBox="0 0 563.24 669.339" enable-background="new 0 0 563.24 669.339"
+	 xml:space="preserve">
+<symbol  id="Arrow_18" viewBox="-18.465 -40.899 36.93 81.799">
+	<path d="M-8.954-40.899c-3.033,5.733-5.553,19.869-0.335,26.987C0.907-0.004-8.322,12.187-9.535,13.817h-8.93L-0.76,40.899
+		l19.225-26.912l-9.521-0.17c0.929-1.945,7.93-15.739-1.159-28.543c-6.116-8.614-3.093-20.842,0.6-26.158L-8.954-40.899z"/>
+</symbol>
+<path fill="none" stroke="#000000" stroke-width="2" d="M103.867,88.427c39.712,0,39.712,8,79.425,8c39.711,0,39.711-8,79.423-8
+	c39.941,0,39.484,8,79.426,8c39.715,0,39.715-8,79.43-8s39.715,8,79.43,8"/>
+<polyline fill="none" stroke="#000000" stroke-width="2" points="501,92.427 501,569.511 103.867,569.511 104,90.511 "/>
+<line fill="none" stroke="#000000" stroke-width="2" x1="104.943" y1="153.119" x2="114.362" y2="153.119"/>
+<line fill="none" stroke="#000000" stroke-width="2" x1="497.943" y1="457.119" x2="507.362" y2="457.119"/>
+<line fill="none" stroke="#000000" stroke-width="2" x1="496.943" y1="151.119" x2="506.362" y2="151.119"/>
+<line fill="none" stroke="#000000" stroke-width="2" x1="104.943" y1="213.923" x2="114.362" y2="213.923"/>
+<line fill="none" stroke="#000000" stroke-width="2" x1="104.943" y1="308.535" x2="114.362" y2="308.535"/>
+<line fill="none" stroke="#000000" stroke-width="2" x1="104.943" y1="468.814" x2="114.362" y2="468.814"/>
+<line fill="none" stroke="#000000" stroke-width="2" x1="136.463" y1="568.711" x2="136.463" y2="583.439"/>
+<line fill="none" stroke="#000000" stroke-width="2" x1="264.82" y1="568.711" x2="264.82" y2="583.439"/>
+<line fill="none" stroke="#000000" stroke-width="2" x1="396.82" y1="568.711" x2="396.82" y2="583.439"/>
+<text transform="matrix(0.9748 0 0 1 22.5898 159.1211)" font-family="'ArialMT'" font-size="21">10 μm</text>
+<text transform="matrix(0.9748 0 0 1 293.666 149.1211)" font-family="'ArialMT'" font-size="21">Skin SST</text>
+<text transform="matrix(0.9748 0 0 1 508.666 106.1211)"><tspan x="0" y="0" font-family="'ArialMT'" font-size="21">Skin</tspan><tspan x="0" y="25.2" font-family="'ArialMT'" font-size="21">depth</tspan></text>
+<text transform="matrix(0.9748 0 0 1 508.666 383.1206)"><tspan x="0" y="0" font-family="'ArialMT'" font-size="21">Warm</tspan><tspan x="0" y="25.201" font-family="'ArialMT'" font-size="21">layer</tspan><tspan x="0" y="50.4" font-family="'ArialMT'" font-size="21">depth</tspan></text>
+<text transform="matrix(0.9748 0 0 1 183.6655 197.1211)"><tspan x="0" y="0" font-family="'ArialMT'" font-size="21">Warm</tspan><tspan x="0" y="25.2" font-family="'ArialMT'" font-size="21">layer</tspan></text>
+<text transform="matrix(0.9748 0 0 1 508.666 159.1211)" font-family="'ArialMT'" font-size="21">δ</text>
+<text transform="matrix(0.9748 0 0 1 6.6655 66.1211)" font-family="'ArialMT'" font-size="21">Interface SST</text>
+<text transform="matrix(0.9748 0 0 1 263.6655 76.1211)" font-family="'ArialMT'" font-size="21">emission</text>
+<text transform="matrix(0.9748 0 0 1 263.6655 49.1211)" font-family="'ArialMT'" font-size="21">evaporation</text>
+<text transform="matrix(0.9748 0 0 1 147.6655 34.1211)" font-family="'ArialMT'" font-size="21">Solar</text>
+<text transform="matrix(0.9748 0 0 1 508.666 464.1206)" font-family="'ArialMT'" font-size="21">D</text>
+<text transform="matrix(0.5683 0 0 0.583 523.4492 471.1147)" font-family="'ArialMT'" font-size="21">T</text>
+<text transform="matrix(0.9748 0 0 1 313.666 193.1211)" font-family="'ArialMT'" font-size="21">Subskin SST</text>
+<text transform="matrix(0.9748 0 0 1 175.6655 474.1206)" font-family="'ArialMT'" font-size="21">Foundation SST</text>
+<text transform="matrix(0.9748 0 0 1 424.666 542.1206)" font-family="'ArialMT'" font-size="21">Day</text>
+<text transform="matrix(0.9748 0 0 1 34.4048 216.9263)" font-family="'ArialMT'" font-size="21">1mm</text>
+<text transform="matrix(0.9748 0 0 1 51.457 311.5396)" font-family="'ArialMT'" font-size="21">1m</text>
+<text transform="matrix(0.9748 0 0 1 257.9111 608.5396)" font-family="'ArialMT'" font-size="21">1</text>
+<text transform="matrix(0.9748 0 0 1 391.9111 608.5396)" font-family="'ArialMT'" font-size="21">2</text>
+<text transform="matrix(0.9748 0 0 1 117.9824 608.5396)" font-family="'ArialMT'" font-size="21">  0 </text>
+<text transform="matrix(0.9748 0 0 1 21.8706 471.8179)" font-family="'ArialMT'" font-size="21">5-10m</text>
+<text transform="matrix(0.9748 0 0 1 176.8511 654.5327)" font-family="'ArialMT'" font-size="22.5141">Difference from SST</text>
+<text transform="matrix(0.5683 0 0 0.583 375.6465 662.0288)" font-family="'ArialMT'" font-size="22.5141">fnd </text>
+<text transform="matrix(0.9748 0 0 1 396.9883 654.5327)" font-family="'ArialMT'" font-size="22.5141">(C)</text>
+<circle fill="none" stroke="#000000" cx="474" cy="184.511" r="15"/>
+<circle fill="none" stroke="#000000" cx="436" cy="149.511" r="15"/>
+<circle fill="none" stroke="#000000" cx="104" cy="90.511" r="15"/>
+<circle fill="none" stroke="#000000" cx="220" cy="304.511" r="15"/>
+<circle fill="none" stroke="#000000" cx="136" cy="469.511" r="15"/>
+<path fill="none" stroke="#000000" d="M318,97.511c0,0,62,18,69,22s82,46,87,65c7.848,29.82-179.274,35.611-258,126
+	c-27,31-79,132-80,159s0,99,0,99"/>
+<path fill="none" stroke="#000000" d="M156,44.511c0,4.351-8,4.351-8,8.701c0,4.35,8,4.35,8,8.7c0,4.351-8,4.351-8,8.702
+	c0,4.35,8,4.35,8,8.701s-8,4.351-8,8.701c0,4.351,8,4.351,8,8.702c0,4.35-8,4.35-8,8.7c0,4.352,8,4.352,8,8.703
+	c0,4.35-8,4.35-8,8.701c0,4.352,8,4.352,8,8.703c0,4.351-8,4.351-8,8.701c0,4.351,8,4.351,8,8.702s-8,4.351-8,8.702
+	c0,4.349,8,4.349,8,8.698c0,4.351-8,4.351-8,8.701c0,4.349,8,4.349,8,8.697c0,4.351-8,4.351-8,8.702c0,4.35,8,4.35,8,8.699
+	c0,4.351-8,4.351-8,8.701c0,4.35,8,4.35,8,8.7c0,4.351-8,4.351-8,8.703c0,4.351,8,4.351,8,8.701c0,4.352-8,4.352-8,8.703
+	c0,4.352,8,4.352,8,8.704c0,4.352-8,4.352-8,8.703c0,4.352,8,4.352,8,8.704c0,4.352-8,4.352-8,8.704c0,4.353,8,4.353,8,8.705
+	s-8,4.353-8,8.704s8,4.352,8,8.703s-8,4.352-8,8.703s8,4.352,8,8.703c0,4.354-8,4.354-8,8.706c0,4.354,8,4.354,8,8.708
+	s-8,4.354-8,8.706c0,4.355,8,4.355,8,8.711c0,4.356-8,4.356-8,8.712"/>
+<path fill="none" stroke="#000000" d="M173,44.694c0,4.351-8,4.351-8,8.701c0,4.35,8,4.35,8,8.7c0,4.351-8,4.351-8,8.702
+	c0,4.35,8,4.35,8,8.701s-8,4.351-8,8.701c0,4.351,8,4.351,8,8.702c0,4.35-8,4.35-8,8.7c0,4.352,8,4.352,8,8.703
+	c0,4.35-8,4.35-8,8.701c0,4.352,8,4.352,8,8.703c0,4.351-8,4.351-8,8.701c0,4.351,8,4.351,8,8.702s-8,4.351-8,8.702
+	c0,4.349,8,4.349,8,8.698c0,4.351-8,4.351-8,8.701c0,4.349,8,4.349,8,8.697c0,4.351-8,4.351-8,8.702c0,4.35,8,4.35,8,8.699
+	c0,4.351-8,4.351-8,8.701c0,4.35,8,4.35,8,8.7c0,4.351-8,4.351-8,8.703c0,4.351,8,4.351,8,8.701c0,4.352-8,4.352-8,8.703
+	c0,4.352,8,4.352,8,8.704c0,4.352-8,4.352-8,8.703c0,4.352,8,4.352,8,8.704c0,4.352-8,4.352-8,8.704c0,4.353,8,4.353,8,8.705
+	s-8,4.353-8,8.705c0,4.352,8,4.352,8,8.703s-8,4.352-8,8.703s8,4.352,8,8.703c0,2.177-2,3.266-4,4.354"/>
+<path fill="none" stroke="#000000" d="M258,405.511"/>
+<use xlink:href="#Arrow_18"  width="36.93" height="81.799" x="-18.465" y="-40.899" transform="matrix(0.4314 0 0 -0.4314 245.5 67.7686)" overflow="visible"/>
+</svg>

@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.0" width="600" height="348" id="svg2">
+  <defs id="defs4">
+    <marker refX="0" refY="0" orient="auto" id="TriangleOutM" style="overflow: visible;">
+      <path d="M 5.77,0 L -2.88,5 L -2.88,-5 L 5.77,0 z" transform="scale(0.5, 0.5)" id="path3416" style="fill: rgb(208, 43, 34); stroke: rgb(208, 43, 34); stroke-width: 1pt;"/>
+    </marker>
+    <marker refX="0" refY="0" orient="auto" id="TriangleBlack" style="overflow: visible;">
+      <use id="use4576" style="fill: rgb(0, 0, 0); stroke: rgb(0, 0, 0);" xlink:href="#path3416"/>
+    </marker>
+    <marker refX="0" refY="0" orient="auto" id="TriangleBlue" style="overflow: visible;">
+      <use id="use4580" style="fill: rgb(97, 189, 228); stroke: rgb(97, 189, 228);" xlink:href="#path3416"/>
+    </marker>
+  </defs>
+  <path d="M 193.59375,168.21875 C 134.77021,172.53408 77.711325,183.59463 30,198.71875 L 30,222.34375 C 44.730327,219.79052 102.32536,209.48804 127.8125,200.0625 C 154.45206,190.21078 170.19389,183.59344 193.59375,168.21875 z" id="path2486" style="fill: rgb(97, 189, 228);"/>
+  <path d="M 554.71875,270.5625 C 553.36934,260.41251 550.84253,241.96906 548.75,230.25 C 543.42324,200.41766 548.91023,220.78332 529.28125,194.5 C 515.71765,176.33824 522.22559,169.8248 507.75,162.875 C 501.10457,159.68449 493.96584,156.57672 484.5,153.5 C 466.99657,147.81078 470.27708,139.96343 456.34375,127.46875 C 449.47395,121.30828 440.79928,110.73337 431.4375,100.59375 C 423.7543,92.272186 414.41879,85.275209 408.78125,80.21875 C 400.64818,72.923965 396.20637,67.869565 381,65.65625 C 374.73542,64.74443 368.07399,63.142753 359.9375,63.25 C 356.2391,63.298749 352.22577,63.684361 347.8125,64.65625 C 331.07279,68.34266 309.97493,79.554914 300.78125,85.4375 C 284.8548,95.628039 285.68424,102.15659 260.8125,121.21875 C 242.79644,135.0266 218.57096,151.24142 200,163.9375 C 172.88091,182.47752 156.81613,189.33651 127.8125,200.0625 C 102.32536,209.48804 44.730327,219.79052 30,222.34375" id="path2459" style="fill: none; stroke: rgb(97, 157, 88); stroke-width: 2;"/>
+  <path d="M 539.84375,284.71875 C 455,143 190,148 30,198.71875" id="path2455" style="fill: none; stroke: rgb(97, 189, 228); stroke-width: 2;"/>
+  <path d="M 30,280.84375 C 193.33533,232.79042 400.37339,226.50005 501.90625,320.8125" id="path2453" style="fill: none; stroke: rgb(208, 43, 34); stroke-width: 4; stroke-miterlimit: 4; stroke-dasharray: 22, 15;"/>
+  <path d="M 369,63 C 369,65.208 367.208,67 365,67 C 362.792,67 361,65.208 361,63 C 361,60.792 362.792,59 365,59 C 367.208,59 369,60.792 369,63 z" id="path3261"/>
+  <path d="M 341,252 L 364,70" id="path3265" style="fill: none; stroke: rgb(208, 43, 34); stroke-width: 2; marker-end: url(#TriangleOutM);"/>
+  <path d="M 342,173 L 355,69" id="path4049" style="fill: none; stroke: rgb(97, 189, 228); stroke-width: 2; marker-end: url(#TriangleBlue);"/>
+  <path d="M 332,251 L 341.09477,180.06082" id="path4045" style="fill: none; stroke: rgb(0, 0, 0); stroke-width: 2; marker-end: url(#TriangleBlack);"/>
+<switch>
+  <g systemLanguage="en" id="g6721" style="font-size: 15px; text-anchor: middle; font-family: Sansserif;">
+    <text x="265" y="200"><tspan x="265" y="200">quasi geoid height</tspan><tspan x="265" y="218.75">(h<tspan dy="5px" style="font-size: 10px;">QG</tspan><tspan dy="-5px">)</tspan></tspan></text>
+    <text x="260" y="133" id="text6727" style="text-anchor: start;"><tspan x="260" y="133" id="tspan6729">normal</tspan><tspan x="260" y="151" id="tspan6731">height (H)</tspan></text>
+    <text x="362" y="146" id="text6735" style="text-anchor: start;"><tspan x="362" y="146" id="tspan6737">ellipsoidal</tspan><tspan x="362" y="164.75" id="tspan6739">height (h)</tspan></text>
+    <text x="105" y="165" id="text6741">quasi geoid</text>
+    <text x="100" y="250" id="text6742">ellipsoid</text>
+    <text x="430" y="55" id="text6747">surface of the earth</text>
+  </g>
+  <g systemLanguage="de" id="g6721" style="font-size: 15px; text-anchor: middle; font-family: Sansserif;">
+    <text x="265" y="200"><tspan x="265" y="200">Quasigeoidhöhe</tspan><tspan x="265" y="218.75">(h<tspan dy="5px" style="font-size: 10px;">QG</tspan><tspan dy="-5px">)</tspan></tspan></text>
+    <text x="297" y="143" id="text6727"><tspan x="297" y="143" id="tspan6729">Normalhöhe</tspan><tspan x="297" y="161.75" id="tspan6731">(H)</tspan></text>
+    <text x="362" y="146" id="text6735" style="text-anchor: start;"><tspan x="362" y="146" id="tspan6737">ellipsoidische</tspan><tspan x="362" y="164.75" id="tspan6739">Höhe (h)</tspan></text>
+    <text x="105" y="165" id="text6741">Quasigeoid</text>
+    <text x="100" y="250" id="text6742">Ellipsoid</text>
+    <text x="430" y="55" id="text6747">Erdoberfläche</text>
+  </g>
+  <g systemLanguage="es" id="g6721" style="font-size: 15px; text-anchor: middle; font-family: Sansserif;">
+    <text x="250" y="205"><tspan x="250" y="205">altura del cuasigeoide</tspan><tspan x="250" y="224">(h<tspan dy="5px" style="font-size: 10px;">QG</tspan><tspan dy="-5px">)</tspan></tspan></text>
+    <text x="270" y="133" id="text6727"><tspan x="270" y="133" id="tspan6729">altura ortométrica</tspan><tspan x="270" y="151" id="tspan6731">(H)</tspan></text>
+    <text x="362" y="146" id="text6735" style="text-anchor: start;"><tspan x="362" y="146" id="tspan6737">altura</tspan><tspan x="362" y="164.75" id="tspan6739">elipsoidal (h)</tspan></text>
+    <text x="105" y="165" id="text6741">cuasigeoide</text>
+    <text x="100" y="250" id="text6742">elipsoide</text>
+    <text x="410" y="55" id="text6747">terreno</text>
+  </g>
+</switch>
+</svg>

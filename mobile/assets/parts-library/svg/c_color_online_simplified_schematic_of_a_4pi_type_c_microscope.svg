@@ -1,0 +1,11 @@
+<svg width="217mm" height="243mm" version="1.1" viewBox="0 0 217 243" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <defs><linearGradient id="c" x1="412" x2="441" y1="147" y2="147" gradientTransform="translate(-332 20)" gradientUnits="userSpaceOnUse"><stop stop-color="#999" offset="0"/><stop stop-color="#444" offset="1"/></linearGradient></defs>
+ <rect width="217" height="243" fill="#fff"/>
+ <g stroke="#000" stroke-linejoin="round"><rect x="105" y="148" width="8" height="62" fill="#ad2"/><rect x="122" y="55" width="37" height="2" fill="#0ff"/><path d="m167 95 13-13 31 31-13 13zm-24-77 13-13 31 31-13 13z" fill="none"/>
+ <g id="e"><path d="m8 166 14 28m-4 1 3-3m-5-1 3-3m-5-1 3-3m-5-1 3-3m-5-1 3-3m-5-1 3-3m-5-1 3-3m-5-1" fill="#fff"/><path d="m109 65-24 24 24 24z" fill="#bff"/><path id="b" d="m41 176 9 3-3-3 3-3" fill="#f00" stroke="none"/><use transform="rotate(135 74 151)" xlink:href="#b"/><path d="m109 91-92 92h62" fill="none" stroke="#00f"/><path id="a" d="m64 183-9-3 3 3-3 3" fill="#00f" stroke="none"/><use transform="rotate(134 68 162)" xlink:href="#a"/>
+ <g id="f"><path d="m109 179v-1c-4 0-19-13-28-24l-1 25" fill="url(#c)"/><path d="m82 179c0-8 0-17-1-25h-1c-1 8-1 17-1 25" fill="#888"/></g>
+ <use transform="matrix(1 0 0-1 0 357.8)" xlink:href="#f"/><path d="m79 176h-65l95-95" fill="none" stroke="#f00"/></g>
+ <use transform="matrix(-1 0 0 1 218 0)" xlink:href="#e"/>
+ <g id="d"><path d="m123 226-9-3 3 3-3 3m-19-3 9 3-3-3 3-3" stroke="none"/><path d="m101 226h16" fill="none"/></g>
+ <use transform="rotate(90 109 226)" xlink:href="#d"/><path d="m109 81 48-48" fill="none" stroke="#f00"/><use transform="rotate(135 122.5 131)" xlink:href="#b"/><path d="m109 91 33-33 31 31" fill="none" stroke="#00f"/><use transform="rotate(225 88 109)" xlink:href="#a"/></g>
+ <g font-family="Times" font-size="11px" text-anchor="middle"><text x="110" y="132">Scannable<tspan x="110" y="142">Object</tspan></text><text x="97" y="51">Dichroic Mirror</text><text x="66" y="74">Beamsplitter</text><text x="196" y="204">Mirror</text><text x="137" y="214">Lens</text><text transform="rotate(45)" x="207" y="-57">Source</text><text transform="rotate(45)" x="136" y="-95">Detector</text></g></svg>

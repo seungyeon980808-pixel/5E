@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" width="306" height="527">
+  <font horiz-adv-x="1000">
+    <font-face font-family="LetterGothicStd-Bold" underline-position="-100" underline-thickness="50"/>
+    <glyph d="M301 780 47 0h81l64 212h219L475 0h81M301 566l92-291H210z" horiz-adv-x="600" unicode="A"/>
+    <glyph d="M505 564c-6 100-81 170-181 170-203 0-236-220-236-378 0-153 29-370 227-370 120 0 191 73 199 190h-75c-1-71-46-127-121-127-144 0-155 200-155 305 0 111 10 317 162 317 61 0 104-47 105-107z" horiz-adv-x="600" unicode="C"/>
+    <glyph d="M112 0h172c157 0 243 83 243 360 0 281-93 360-232 360H112m75-63h90c96 0 175-21 175-297 0-268-69-297-173-297h-92z" horiz-adv-x="600" unicode="D"/>
+    <glyph d="M513 720H139V0h381v63H214v275h215v63H214v256h299z" horiz-adv-x="600" unicode="E"/>
+    <glyph d="M435 720H165v-63h97V63h-97V0h270v63h-98v594h98z" horiz-adv-x="600" unicode="I"/>
+    <glyph d="M300 361 149 720H76V0h75v546l2 2 147-353 148 353h2V0h75v720h-74z" horiz-adv-x="600" unicode="M"/>
+    <glyph d="M115 0h75v572l2 2L428-7h71v727h-75V182h-3L202 720h-87z" horiz-adv-x="600" unicode="N"/>
+    <glyph d="M79 360c0-102-1-374 221-374 228 0 221 278 221 374 0 134-11 374-221 374-121 0-221-73-221-374M300 49c-150 0-146 229-146 311 0 42-14 311 146 311 156 0 146-245 146-311 0-261-71-311-146-311z" horiz-adv-x="600" unicode="O"/>
+    <glyph d="M300-14c33 0 67 8 96 24l50-70h92L450 54c62 70 72 173 72 306 0 72 14 374-222 374-121 0-222-72-222-374 0-92-6-374 222-374M153 360c0 30-17 311 147 311 76 0 147-55 147-311 0-236-59-311-147-311-75 0-147 55-147 311z" horiz-adv-x="600" unicode="Q"/>
+    <glyph d="M131 0h75v298c36 1 72 1 108 2L489 0h91L386 317c100 57 128 125 128 199 0 42-16 204-196 204H131m75-358v295h74c119 0 159-41 159-137 0-106-60-158-162-158z" horiz-adv-x="600" unicode="R"/>
+    <glyph d="M502 644c-54 50-123 90-198 90-108 0-194-65-194-178 0-90 62-139 133-181l65-39c127-76 131-96 131-154 0-77-62-133-137-133-69 0-125 44-160 100l-58-46C140 31 209-14 302-14c126 0 212 77 212 206 0 84-36 122-168 203l-57 35c-97 59-104 93-104 131 0 66 52 110 116 110 62 0 112-42 156-81z" horiz-adv-x="600" unicode="S"/>
+    <glyph d="M541 720H60v-63h201V0h75v657h205z" horiz-adv-x="600" unicode="T"/>
+    <glyph d="M424 720V198c0-81-32-149-124-149-58 0-125 36-125 140v531h-75V229C100 30 222-14 300-14c97 0 199 67 199 203v531z" horiz-adv-x="600" unicode="U"/>
+    <glyph d="M297 109h-2L165 720H83L243-7h103l163 727h-83z" horiz-adv-x="600" unicode="V"/>
+    <glyph d="M297 519 183 158h-2l-38 562H62L122-7h83l92 312L388-7h86l55 727h-81l-36-562h-2z" horiz-adv-x="600" unicode="W"/>
+    <glyph d="M282 394 143 720H60l184-416V0h75v304l184 416h-83z" horiz-adv-x="600" unicode="Y"/>
+    <glyph d="M145 196c0 93 65 147 155 147s155-54 155-147c0-94-64-147-155-147s-155 53-155 147m285 343c0-81-49-133-130-133-75 0-131 48-131 125 0 84 45 140 131 140 82 0 130-52 130-132m-8-162c55 47 83 86 83 161 0 123-86 196-205 196-113 0-206-71-206-189 0-79 26-118 84-168-73-28-108-107-108-181C70 86 140-14 300-14c152 0 230 93 230 210 0 74-35 153-108 181z" horiz-adv-x="600" unicode="8"/>
+    <glyph d="M460 720H138l-30-399 76-15c28 46 66 82 123 82 55 0 123-52 123-173 0-76-45-166-131-166-63 0-114 46-141 100l-58-43C145 38 208-14 294-14c132 0 211 111 211 235 0 144-89 230-200 230-46 0-86-15-120-46l20 252h255z" horiz-adv-x="600" unicode="5"/>
+    <glyph d="M423 734h-97L61 235v-49h287V0h75v186h103v63H423m-75 0H147l199 383h2z" horiz-adv-x="600" unicode="4"/>
+    <glyph d="M163 486c0 86 37 185 138 185 87 0 124-93 124-167 0-89-58-180-139-180-90 0-123 84-123 162M97 30c40-25 87-44 135-44 143 0 273 145 273 428 0 139-34 320-209 320-137 0-208-126-208-249 0-112 65-224 189-224 67 0 109 25 153 74-6-104-69-286-195-286-36 0-74 23-102 43z" horiz-adv-x="600" unicode="9"/>
+    <glyph d="m341 742-216-68v-57l141 43V63H131V0h339v63H341z" horiz-adv-x="600" unicode="1"/>
+    <glyph d="M411-29C293 56 250 192 250 332s43 276 161 360l-36 50c-137-89-200-252-200-410S238 9 375-78z" horiz-adv-x="600" unicode="("/>
+    <glyph d="M189 692c118-84 161-221 161-360 0-140-43-277-161-361l36-49c137 88 200 252 200 410s-63 321-200 410z" horiz-adv-x="600" unicode=")"/>
+    <glyph d="M220 64c0-44 37-78 81-78 43 0 80 34 80 78s-37 77-80 77-81-33-81-77z" horiz-adv-x="600" unicode="."/>
+    <glyph d="M93 720v-63h306L135 0h81l281 720z" horiz-adv-x="600" unicode="7"/>
+    <glyph d="M436 234c0-86-36-185-137-185-88 0-124 93-124 168 0 87 57 179 138 179 91 0 123-84 123-162m67 456c-40 25-88 44-135 44-134 0-273-130-273-428 0-139 34-320 209-320 137 0 207 126 207 249 0 112-64 224-188 224-67 0-110-25-153-73 5 103 69 285 195 285 40 0 71-22 102-43z" horiz-adv-x="600" unicode="6"/>
+    <glyph d="m187-27 301 774h-75L112-27z" horiz-adv-x="600" unicode="/"/>
+    <glyph d="M248 354c106 10 190-47 190-162 0-89-63-143-150-143-78 0-122 45-152 113l-66-39C120 40 184-14 285-14c130 0 228 83 228 216 0 89-48 154-128 189 56 35 95 87 95 155 0 106-86 188-192 188-92 0-166-50-208-131l63-36c24 53 75 104 137 104 67 0 125-48 125-119 0-86-76-139-157-135z" horiz-adv-x="600" unicode="3"/>
+    <glyph d="M175 63c4 92 48 150 113 209l52 47c73 66 161 133 161 241 0 109-75 174-181 174-129 0-199-91-206-213h75c4 78 42 150 130 150 68 0 107-45 107-112 0-81-91-154-148-202-113-97-178-167-178-325V0h403v63z" horiz-adv-x="600" unicode="2"/>
+    <glyph d="M509 360c0 104-1 374-209 374C74 734 91 402 91 360c0-84-1-374 209-374 212 0 209 274 209 374m-343 0c0 68-8 311 134 311 72 0 134-56 134-311 0-264-68-311-134-311-136 0-134 219-134 311z" horiz-adv-x="600" unicode="0"/>
+  </font>
+  <font horiz-adv-x="1000">
+    <font-face font-family="LetterGothicStd" underline-position="-100" underline-thickness="50"/>
+    <glyph d="M449 720H148l-29-388 56-11c29 47 72 82 131 82 53 0 141-44 141-188 0-100-59-186-148-186-63 0-119 42-149 95l-35-27C157 36 215-11 293-11c129 0 201 111 201 230 0 147-89 224-189 224-58 0-106-29-140-75l24 312h260z" horiz-adv-x="600" unicode="5"/>
+    <glyph d="M453 230c0-97-42-201-155-201-98 0-140 98-140 182 0 132 91 199 156 199 101 0 139-92 139-180m35 467c-34 22-79 37-119 37-131 0-264-136-264-430 0-244 96-315 192-315 138 0 203 117 203 241 0 107-57 220-177 220-80 0-133-46-171-111-7 124 61 355 215 355 37 0 69-16 98-37z" horiz-adv-x="600" unicode="6"/>
+    <glyph d="M157 40c2 102 25 154 175 288 72 64 158 133 158 238 0 104-66 168-170 168-118 0-184-82-193-194h47c6 84 54 154 145 154 76 0 124-50 124-125 0-93-93-166-157-222C136 216 110 157 110 0h383v40z" horiz-adv-x="600" unicode="2"/>
+    <glyph d="M498 360c0 76-2 167-27 239-27 77-84 135-171 135-91 0-148-62-174-143-22-67-24-160-24-231 0-76 2-168 27-239 27-77 85-135 171-135 90 0 148 62 174 143 22 66 24 161 24 231m-47 0c0-59-2-139-15-195-17-68-57-140-136-140-74 0-115 65-132 128-18 62-19 143-19 207 0 59 2 138 15 195 17 68 57 140 136 140 74 0 115-65 132-129 18-61 19-142 19-206z" horiz-adv-x="600" unicode="0"/>
+  </font>
+  <path fill="#FFF" d="M0 0h306v527H0z"/>
+  <path fill="#E1E1E1" stroke="#8C8C8C" d="M72.5078125 18.5151367h160.3398438v18.6142578H72.5078125z"/>
+  <path fill="#E1E1E1" stroke="#8C8C8C" d="M72.5078125 42.7797852h160.3398438v18.6137695H72.5078125z"/>
+  <path fill="#E1E1E1" stroke="#8C8C8C" d="M71.9633789 67.4379883h160.8227539v18.6704102H71.9633789z"/>
+  <path fill="#E1E1E1" stroke="#8C8C8C" d="M71.9633789 91.7749023h160.8227539v18.6704102H71.9633789z"/>
+  <path fill="#E1E1E1" stroke="#8C8C8C" d="M71.9633789 117.4038086h160.8227539v18.6157227H71.9633789z"/>
+  <path fill="#E1E1E1" stroke="#8C8C8C" d="M71.9633789 141.668457h160.3413086v18.6147461H71.9633789z"/>
+  <path fill="#E1E1E1" stroke="#8C8C8C" d="M71.9633789 166.3901367h160.3393555v18.6142578H71.9633789z"/>
+  <path fill="#E1E1E1" stroke="#8C8C8C" d="M71.9633789 191.3188477h160.3413086v18.6157227H71.9633789z"/>
+  <path fill="#E1E1E1" stroke="#8C8C8C" d="M71.9633789 215.5830078h160.3413086v18.6142578H71.9633789z"/>
+  <path fill="#E1E1E1" stroke="#8C8C8C" d="M71.9633789 240.3061523h160.3413086v18.6157227H71.9633789z"/>
+  <path fill="#E1E1E1" stroke="#8C8C8C" d="M71.9633789 266.1962891h160.3413086v18.6132813H71.9633789z"/>
+  <path fill="#E1E1E1" stroke="#8C8C8C" d="M71.9633789 290.4580078h160.3413086v18.6152344H71.9633789z"/>
+  <path fill="#E1E1E1" stroke="#8C8C8C" d="M71.4189453 315.1806641h160.8183594v18.6142578H71.4189453z"/>
+  <path fill="#E1E1E1" stroke="#8C8C8C" d="M71.4189453 339.4453125h160.8183594v18.6152344H71.4189453z"/>
+  <path fill="#E1E1E1" stroke="#8C8C8C" d="M71.4189453 365.0859375h160.8183594v18.6132813H71.4189453z"/>
+  <path fill="#E1E1E1" stroke="#8C8C8C" d="M71.4189453 389.3476563h160.8183594v18.6132813H71.4189453z"/>
+  <path fill="#E1E1E1" stroke="#8C8C8C" d="M71.4189453 414.0693359h160.8183594V432.6875H71.4189453z"/>
+  <path fill="#E1E1E1" stroke="#8C8C8C" d="M71.4189453 438.9980469h160.8183594v18.6142578H71.4189453z"/>
+  <path fill="#E1E1E1" stroke="#8C8C8C" d="M71.4189453 463.2597656H232.71875v18.6171875H71.4189453z"/>
+  <path fill="#E1E1E1" stroke="#8C8C8C" d="M71.4189453 487.9863281H232.71875v18.6132813H71.4189453z"/>
+  <path fill="#2E2E2E" d="M160.9443359 9.1069336c-.09375 4.6303711-3.9414063 8.3579102-8.6875 8.3579102-4.7441406 0-8.59375-3.7275391-8.6875-8.3579102H89.2543945v508.6362305h125.7602539V9.1069336h-54.0703125z"/>
+  <path fill="none" stroke="#000" d="M160.9443359 9.1069336c-.09375 4.6303711-3.9414063 8.3579102-8.6875 8.3579102-4.7441406 0-8.59375-3.7275391-8.6875-8.3579102H89.2543945v508.6362305h125.7602539V9.1069336h-54.0703125z"/>
+  <text font-family="'LetterGothicStd-Bold'" font-size="12" transform="translate(76.8676758 32.4697266)">1</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="14" transform="translate(22 32.3745117)">PA3</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="12" transform="translate(76.46875 56.7202148)">2</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="14" transform="translate(22 56.6274414)">PA2</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="12" transform="translate(76.4228516 81.4135742)">3</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="14" transform="translate(22 81.3212891)">PA1</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="12" transform="translate(76.4248047 105.7333984)">4</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="14" transform="translate(22 105.6391602)">PA0</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="12" transform="translate(76.3769531 131.3383789)">5</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="14" transform="translate(22 131.2441406)">RD</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="12" transform="translate(76.3291016 155.5644531)">6</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="14" transform="translate(22 155.472168)">CS</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="12" transform="translate(76.2817383 180.3061523)">7</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="14" transform="translate(22 180.2114258)">GND</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="12" transform="translate(76.4248047 205.2099609)">8</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="14" transform="translate(22 205.1162109)">A1</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="12" transform="translate(76.4931641 229.5063477)">9</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="14" transform="translate(22 229.4121094)">A0</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="12" transform="translate(72.4121094 254.2109375)">10</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="14" transform="translate(22 254.1181641)">PC7</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="12" transform="translate(72.4228516 280.1552734)">11</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="14" transform="translate(22 280.0615234)">PC6</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="12" transform="translate(72.5405273 304.3574219)">12</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="14" transform="translate(22 304.265625)">PC5</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="12" transform="translate(72.5141602 329.1210938)">13</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="14" transform="translate(22 329.0292969)">PC4</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="12" transform="translate(72.5878906 353.5605469)">14</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="14" transform="translate(22 353.4658203)">PC0</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="12" transform="translate(72.4467773 379.0009766)">15</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="14" transform="translate(22 378.90625)">PC1</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="12" transform="translate(72.4003906 403.25)">16</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="14" transform="translate(22 403.1572266)">PC2</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="12" transform="translate(72.3305664 428.1767578)">17</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="14" transform="translate(22 428.0839844)">PC3</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="12" transform="translate(72.4702148 452.8945313)">18</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="14" transform="translate(22 452.8017578)">PB0</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="12" transform="translate(72.5625 477.3535156)">19</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="14" transform="translate(22 477.2607422)">PB1</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="12" transform="matrix(.95485 0 0 1 73.5063477 502.0566406)">20</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="14" transform="matrix(.95485 0 0 1 22 501.9658203)">PB2</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="12" transform="matrix(.95485 0 0 1 217 502.4775391)">21</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="14" transform="matrix(.95485 0 0 1 244 503.9228516)">PB3</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="12" transform="translate(217 477.7744141)">22</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="14" transform="translate(244 479.2216797)">PB4</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="12" transform="translate(217 453.3154297)">23</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="14" transform="translate(244 454.7636719)">PB5</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="12" transform="translate(217 428.6005859)">24</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="14" transform="translate(244 430.046875)">PB6</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="12" transform="translate(217 403.671875)">25</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="14" transform="translate(244 405.1181641)">PB7</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="12" transform="translate(217 379.4248047)">26</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="14" transform="translate(244 380.8720703)">Vcc</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="12" transform="translate(217 353.9814453)">27</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="14" transform="translate(244 355.4277344)">D7</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="12" transform="translate(217 329.5429688)">28</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="14" transform="translate(244 330.9912109)">D6</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="12" transform="translate(217 304.7802734)">29</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="14" transform="translate(244 306.2285156)">D5</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="12" transform="translate(217 280.546875)">30</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="14" transform="translate(244 282.0263672)">D4</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="12" transform="translate(217 254.6660156)">31</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="14" transform="translate(244 256.0810547)">D3</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="12" transform="translate(217 229.9599609)">32</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="14" transform="translate(244 231.3754883)">D2</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="12" transform="translate(217 205.7246094)">33</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="14" transform="translate(244 207.078125)">D1</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="12" transform="translate(217 180.7285156)">34</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="14" transform="translate(244 182.1738281)">D0</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="12" transform="translate(217 155.9863281)">35</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="14" transform="translate(244 157.4345703)">RESET</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="12" transform="translate(217 131.7915039)">36</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="14" transform="translate(244 133.2080078)">WR</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="12" transform="translate(217 106.1870117)">37</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="14" transform="translate(244 107.6035156)">PA7</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="12" transform="translate(217 81.8364258)">38</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="14" transform="translate(244 83.2836914)">PA6</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="12" transform="translate(217 57.1118164)">39</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="14" transform="translate(244 58.5888672)">PA5</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="12" transform="translate(217 32.8920898)">40</text>
+  <text font-family="'LetterGothicStd-Bold'" font-size="14" transform="translate(244 34.3388672)">PA4</text>
+  <path stroke="#000" d="M21.251654 117.78212h24"/>
+  <path stroke="#000" d="M244.251654 117.78212h24"/>
+  <path stroke="#000" d="M21.251654 142.78212h24"/>
+</svg>

@@ -1,0 +1,286 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="2e3" height="1600" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+	<defs>
+		<radialGradient id="h" cx="2999" cy="168.3" r="57.37" gradientTransform="matrix(.21304 0 0 .21756 740.15 1367.4)" gradientUnits="userSpaceOnUse">
+			<stop stop-color="#fff" offset="0"/>
+			<stop stop-color="#f00" offset="1"/>
+		</radialGradient>
+		<radialGradient id="l" cx="2999" cy="168.3" r="57.37" gradientTransform="matrix(.12174 0 0 .12432 619.79 421.6)" gradientUnits="userSpaceOnUse">
+			<stop stop-color="#e6e6e6" offset="0"/>
+			<stop stop-color="#fff" offset="1"/>
+		</radialGradient>
+		<radialGradient id="o" cx="2999" cy="168.3" r="57.37" gradientTransform="matrix(.41364 0 0 .42242 -490.5 1011.2)" gradientUnits="userSpaceOnUse">
+			<stop stop-color="#fff" offset="0"/>
+			<stop stop-color="#36b533" offset="1"/>
+		</radialGradient>
+		<radialGradient id="k" cx="2999" cy="168.3" r="57.37" gradientTransform="matrix(.62865 0 0 .642 -1189.5 931.23)" gradientUnits="userSpaceOnUse">
+			<stop stop-color="#fff" offset="0"/>
+			<stop stop-color="#808080" offset="1"/>
+		</radialGradient>
+		<radialGradient id="n" cx="2999" cy="168.3" r="57.37" gradientTransform="matrix(.14548 0 0 .14857 985.48 1337.1)" gradientUnits="userSpaceOnUse">
+			<stop stop-color="#ccc" offset="0"/>
+			<stop stop-color="#fff" offset="1"/>
+		</radialGradient>
+		<radialGradient id="i" cx="2999" cy="168.3" r="57.37" gradientTransform="matrix(.19017 0 0 .19421 431.18 403.45)" gradientUnits="userSpaceOnUse">
+			<stop stop-color="#fff" offset="0"/>
+			<stop stop-color="#f00" offset="1"/>
+		</radialGradient>
+		<radialGradient id="m" cx="2999" cy="168.3" r="57.37" gradientTransform="matrix(.1437 0 0 .14675 1581.1 1602.3)" gradientUnits="userSpaceOnUse">
+			<stop stop-color="#fff" offset="0"/>
+			<stop stop-color="#2a8fd7" offset="1"/>
+		</radialGradient>
+		<linearGradient id="q" x1="1643.9" x2="1643.9" y1="643.72" y2="808.17" gradientUnits="userSpaceOnUse">
+			<stop stop-color="#fff" offset="0"/>
+			<stop stop-color="#217dc5" offset="1"/>
+		</linearGradient>
+		<filter id="v" x="-.27433" y="-.1082" width="1.5487" height="1.2164" color-interpolation-filters="sRGB">
+			<feGaussianBlur stdDeviation="21.461533"/>
+		</filter>
+	</defs>
+	<g transform="translate(-881.81 -1035.5)">
+		<path d="m856.81 1010.5v1650h2050v-1650h-2050z"/>
+		<g>
+			<path d="m2906.8 1740.1c-11.838 3.5834-23.676 7.167-49.921 6.2293-26.245-0.9376-66.894-6.3969-107.22-19.014s-80.33-32.392-104.81-42.625c-24.481-10.233-33.438-10.922-91.314-0.9316-57.876 9.9903-164.67 30.66-220.82 42.028s-61.667 13.436-75.188 26.118c-13.522 12.682-35.051 35.979-46.803 47.344-11.752 11.365-13.728 10.799-28.925 10.861-15.197 0.062-43.612 0.7549-57.821 1.1013-14.209 0.3463-19.668 0.3463-30.605-10.959-10.936-11.306-32.763-33.869-44.038-45.665s-11.901-12.724-14.257-14.016c-2.356-1.292-6.4639-2.9572-10.561-4.6179-1.3279-0.2045-2.6559-0.4089-7.2061 1.629-4.5503 2.0379-12.346 6.3309-18.993 7.4414-6.6476 1.1105-12.159-0.9564-37.796-5.7344-25.636-4.778-71.376-12.263-95.351-15.566-23.975-3.303-26.145-2.4176-44.01 4.6151s-51.424 20.212-85.739 25.807-69.383 3.6044-94.902 5.1386-41.483 6.5935-53.599 7.7458c-12.116 1.1522-20.384-1.6037-31.266-6.7101-10.882-5.1065-24.376-12.564-37.077-21.978-12.702-9.415-24.59-20.77-30.628-27.078-6.0375-6.3081-6.1844-7.5311-15.48-9.8047-9.2954-2.2737-27.765-5.6012-45.664-7.1633-17.899-1.562-35.196-1.3569-44.541-0.8873-9.3442 0.4695-10.727 1.2039-25.28 8.1703-14.552 6.9664-42.275 20.165-74.596 26.444-32.322 6.2795-69.241 5.6395-118.87 11.924s-111.95 19.493-146.06 26.039c-34.106 6.5458-39.987 6.4276-56.018-0.5209-16.031-6.9486-42.213-20.728-56.682-27.963-14.469-7.2349-17.225-7.9239-23.266-8.0634s-15.365 0.2711-24.691 0.6818v930.33h2050z" fill="#abdbeb" stroke="#000" stroke-linecap="round" stroke-width=".945"/>
+			<path transform="matrix(1.4368 0 0 1.4368 -934.06 -754.97)" d="m2149 1957.3c-2.7566-11.417-1.1817-32.678-3.1502-59.844s-7.4804-60.238-19.292-93.704-29.922-67.325-48.033-95.672c-18.111-28.348-36.221-51.183-33.859-70.475 2.3622-19.293 25.197-35.041 44.489-61.42 19.292-26.379 35.04-63.387 49.215-77.954s26.773-6.6932 34.253 5.1186 9.8423 27.56 20.473 46.065c10.631 18.505 29.529 39.765 36.221 70.475 6.6926 30.71 1.1807 70.868-10.237 99.215-11.418 28.347-28.741 44.883-38.19 70.475-9.4492 25.592-11.024 60.238-12.205 92.13-1.1811 31.891-1.9686 61.025-5.9051 74.805-3.9366 13.78-11.023 12.205-13.78 0.7874z" fill="#fff" filter="url(#v)" opacity=".76025"/>
+			<g stroke-linecap="round">
+				<path d="m856.81 2204.3h993.61c201.7 0 203 0 205.19-0.5176s5.2951-1.5498 9.9453-5.6836 10.851-11.368 14.468-16.019c3.6171-4.6505 4.6506-6.7174 8.0957-14.469 3.4451-7.7513 9.3014-21.186 13.78-28.938 4.4789-7.7519 7.5793-9.8188 11.196-13.78 3.6169-3.9616 7.7508-9.8179 9.6457-21.53 1.8949-11.712 1.5504-29.282 3.445-42.718s6.0285-22.737 9.1291-33.072 5.1676-21.703 7.9236-30.144c2.756-8.4408 6.2008-13.953 8.6134-16.709 2.4126-2.7562 3.7906-2.7562 6.374 0.8622 2.5835 3.6183 6.3728 10.853 8.9563 17.743s3.9614 13.435 6.5456 19.809 6.3736 12.574 9.8183 22.048c3.4446 9.4739 6.5451 22.22 9.4741 29.627 2.929 7.4064 5.6849 9.4734 7.2342 14.641 1.5492 5.1677 1.8937 13.436 3.4443 23.254 1.5505 9.8185 4.3064 21.187 7.9244 28.593 3.6181 7.4066 8.0965 10.852 12.402 18.259s8.4396 18.776 13.091 27.216 9.8186 13.952 13.436 17.052c3.6174 3.1 5.688 3.7902 7.1923 4.1337s2.4516 0.3435 115.8 0.3435h533.27l1e-4 456.15h-2050z" fill="#217dc5" stroke="#144c78" stroke-width=".945"/>
+				<path d="m2906.8 2433.8h-696.09l-1.1561-0.6641c-1.156-0.664-3.4702-1.9933-5.7849-4.9108s-4.6289-7.4241-5.7866-9.6785c-1.1576-2.2543-1.1576-19.063-1.6446-21.498-0.487-2.4349-1.4614-7.3067-4.3837-11.509s-7.7943-7.7346-11.144-11.815c-3.3501-4.0799-5.1771-8.7082-8.5868-11.693-3.4097-2.9848-8.4035-4.3246-11.206-6.4554s-3.4112-5.054-3.9589-6.9419-1.0349-2.7405-2.1926-2.3152c-1.1576 0.4252-2.9845 2.1303-4.6279 2.4965-1.6434 0.3661-3.1049-0.6083-4.2621-1.5824-1.1573-0.9742-2.0099-1.9486-2.9852-1.7058-0.9753 0.2429-2.0715 1.7045-3.1677 4.689-1.0963 2.9846-2.1925 7.4911-2.8622 9.8657-0.6698 2.3745-0.9134 2.6181-1.8879 4.0799-0.9746 1.4617-2.6798 4.1413-4.0803 5.9071-1.4004 1.7658-2.4965 2.6183-2.6183 5.8471s0.7308 8.8314 0.6087 13.033c-0.1222 4.2016-1.2184 7.0029-1.8881 9.9874-0.6698 2.9845-0.9134 6.151-4.0801 11.022-3.1667 4.8712-9.2565 11.448-15.718 15.706-6.4619 4.2576-13.296 6.1958-16.715 7.1652s-10.318 0.9694-10.318 0.9694h-1223.5v226.72h2050z" fill="#c58127" stroke="#a16920" stroke-width=".875"/>
+				<path d="m2084.5 2433.8c2.5982 0 5.0061-0.5166 6.4138-0.7753 4.2199-0.7752 11.282-2.3256 18.818-4.0481s15.545-3.6172 20.282-6.8031c4.736-3.1861 6.2003-7.6645 8.0089-12.057 1.8086-4.3927 3.9616-8.6989 4.35-12.186 0.3881-3.4874-0.9898-6.1572-0.3875-9.2155 0.6022-3.0583 3.1861-6.5033 3.6603-9.9043 0.4743-3.4011-1.1622-6.7599-1.8088-9.9468-0.6464-3.1869-0.302-6.2013-0.3878-8.8279-0.086-2.6266-0.6025-4.8657-0.3013-7.0196 0.301-2.1539 1.0974-4.1562 2.2174-6.2239 2.9512 3.9514 5.9127 2.4357 8.268 0.2585 0.086 2.5856-0.023 5.3631 0.9694 9.0234 0.9908 3.6604 2.8855 8.3973 3.5311 12.919 0.6454 4.5212 0.042 8.8274-2e-4 11.928-0.042 3.1008 0.4739 4.9956 0.3875 9.0431-0.086 4.0478-0.7754 10.249 0.044 15.718 0.8189 5.4693 3.1443 10.206 5.2115 13.436 2.0675 3.2294 3.8759 4.9519 8.053 5.5539 4.1769 0.602 10.722 0.086 16.192 0.8178 5.4693 0.7327 9.8616 2.7136 13.35 4.3069 3.4881 1.5932 6.072 2.7992 7.8813 3.4015 0.9988 0.3325 2.2285 0.5357 3.2601 0.6024 0.8374 0.054 16.806 0 17.269 0" fill="#a66d21" stroke="#82551a" stroke-linejoin="round" stroke-width=".875" style="font-variation-settings:normal"/>
+				<path d="m1194.8 2382.1v240.8h728.62l223.75-213.41-223.75-27.388z" fill="#f9f9f9" opacity=".7224" stroke="#999" stroke-width="2"/>
+			</g>
+		</g>
+		<g id="b" transform="matrix(1.75 0 0 1.75 -450.09 996.53)">
+			<use transform="matrix(.81457 0 0 .81457 171.25 44.755)" xlink:href="#j"/>
+			<use transform="rotate(73.053,908.12,303.8)" xlink:href="#f"/>
+			<g transform="matrix(.2888 0 0 .2888 709.32 3.1434)" stroke-width="3">
+				<ellipse cx="707.29" cy="1052.3" rx="36.06" ry="36.826" fill="url(#k)" stroke-width="3"/>
+			</g>
+			<path id="f" d="m913.44 298.27a1.5905 1.5905 0 0 0 1.6511-1.5275 1.5905 1.5905 0 0 0 8.1e-4 -0.0304l0.302-7.7682a1.5905 1.5905 0 0 0-1.5275-1.6511 1.5905 1.5905 0 0 0-1.6505 1.5276 1.5905 1.5905 0 0 0-8.1e-4 0.0304l-0.30199 7.7682a1.5905 1.5905 0 0 0 1.527 1.6511z" fill="#f2f2f2"/>
+			<use transform="rotate(123.41,913.08,305.8)" xlink:href="#f"/>
+			<use transform="rotate(74.569,896.09,294.78)" xlink:href="#f"/>
+			<g id="j" transform="matrix(.2943 0 0 .2943 707.19 -3.5548)" stroke-width="3">
+				<ellipse cx="757.49" cy="1090.8" rx="23.727" ry="24.231" fill="url(#o)" stroke-width="3"/>
+			</g>
+			<use transform="matrix(1.0371,0,0,1.0371,-50.84,-41.005)" xlink:href="#j"/>
+			<use transform="matrix(.99695 0 0 .99695 -32.686 -3.9698)" xlink:href="#j"/>
+		</g>
+		<g id="u" transform="matrix(1.75 0 0 1.75 -606.42 590.09)">
+			<use transform="matrix(.78752 0 0 .78752 240.37 83.661)" xlink:href="#s"/>
+			<use transform="rotate(63.608 845.73 444.64)" xlink:href="#f"/>
+			<ellipse id="r" cx="1005" cy="440.08" rx="10.909" ry="11.14" fill="url(#i)"/>
+			<use transform="rotate(73.636 853.16 422.35)" xlink:href="#f"/>
+			<ellipse id="s" cx="987.13" cy="445.03" rx="6.9829" ry="7.1313" fill="url(#l)"/>
+		</g>
+		<g id="a" transform="matrix(1.75 0 0 1.75 -465.21 1062.9)">
+			<use transform="matrix(.70531 0 0 .70531 240.5 354.04)" xlink:href="#r"/>
+			<use transform="matrix(.37846 0 0 .37846 597.28 544.28)" xlink:href="#j"/>
+		</g>
+		<use transform="translate(-43.422 40.943)" xlink:href="#a"/>
+		<use transform="translate(-150.93 33.194)" xlink:href="#a"/>
+		<use transform="translate(-104.68 79.444)" xlink:href="#a"/>
+		<use transform="translate(-102.18 165.69)" xlink:href="#a"/>
+		<use transform="translate(-175.93 149.44)" xlink:href="#a"/>
+		<use transform="translate(-300.29 68.712)" xlink:href="#a"/>
+		<use transform="translate(109.45 137.46)" xlink:href="#a"/>
+		<use transform="translate(217.36 139.85)" xlink:href="#a"/>
+		<use transform="translate(416.46 71.819)" xlink:href="#a"/>
+		<use transform="translate(446.28 136.71)" xlink:href="#a"/>
+		<use transform="translate(519.1 82.558)" xlink:href="#a"/>
+		<use transform="translate(525.23 140.58)" xlink:href="#a"/>
+		<use transform="translate(660.43 37.887)" xlink:href="#a"/>
+		<use transform="translate(810.2 55.693)" xlink:href="#a"/>
+		<use transform="translate(862.59 169.95)" xlink:href="#a"/>
+		<use transform="translate(892.58 69.233)" xlink:href="#a"/>
+		<use transform="translate(928.1 7.1552)" xlink:href="#a"/>
+		<use transform="translate(961.85 -77.729)" xlink:href="#a"/>
+		<use transform="translate(950.82 -150.73)" xlink:href="#a"/>
+		<use transform="translate(1005.4 -38.268)" xlink:href="#a"/>
+		<use transform="translate(1082 63.447)" xlink:href="#a"/>
+		<use transform="translate(1173.5 18.289)" xlink:href="#a"/>
+		<use transform="translate(1296.7 10.174)" xlink:href="#a"/>
+		<use transform="translate(1119.3 127.29)" xlink:href="#a"/>
+		<use transform="translate(1308.8 115.52)" xlink:href="#a"/>
+		<use transform="translate(1460.8 92.6)" xlink:href="#a"/>
+		<use transform="translate(1554.2 121.04)" xlink:href="#a"/>
+		<use transform="translate(1682.4 131.56)" xlink:href="#a"/>
+		<g stroke-width="2.4242">
+			<use transform="matrix(.4125 0 0 .4125 512.31 1684.9)" xlink:href="#b"/>
+			<use transform="matrix(.4125 0 0 .4125 1273.4 1636.7)" xlink:href="#b"/>
+			<use transform="matrix(.4125 0 0 .4125 1339.3 1707.7)" xlink:href="#b"/>
+			<use transform="matrix(.4125 0 0 .4125 1424.7 1681.5)" xlink:href="#b"/>
+			<use transform="matrix(.4125 0 0 .4125 1468.8 1599.2)" xlink:href="#b"/>
+			<use transform="matrix(.4125 0 0 .4125 1538.8 1744.5)" xlink:href="#b"/>
+			<use transform="matrix(.4125 0 0 .4125 1543.8 1682.8)" xlink:href="#b"/>
+			<use transform="matrix(.4125 0 0 .4125 1594.5 1619.8)" xlink:href="#b"/>
+			<use transform="matrix(.4125 0 0 .4125 2342.6 1661.1)" xlink:href="#b"/>
+			<use transform="matrix(.4125 0 0 .4125 2302.7 1769.2)" xlink:href="#b"/>
+			<use transform="matrix(.4125 0 0 .4125 2103.6 1706.7)" xlink:href="#b"/>
+			<use transform="matrix(.4125 0 0 .4125 1908.9 1687.4)" xlink:href="#b"/>
+			<use transform="matrix(.4125 0 0 .4125 1976 1636)" xlink:href="#b"/>
+			<use transform="matrix(.4125 0 0 .4125 1870 1675.7)" xlink:href="#b"/>
+			<use transform="matrix(.4125 0 0 .4125 1763.5 1704.8)" xlink:href="#b"/>
+			<use transform="matrix(.4125 0 0 .4125 1853.4 1603.8)" xlink:href="#b"/>
+			<use transform="matrix(.4125 0 0 .4125 1990 1674.2)" xlink:href="#b"/>
+			<use transform="matrix(.4125 0 0 .4125 1715 1613.9)" xlink:href="#b"/>
+			<use transform="matrix(.4125 0 0 .4125 1747.1 1651.4)" xlink:href="#b"/>
+			<use transform="matrix(.4125 0 0 .4125 1677 1565.9)" xlink:href="#b"/>
+			<use transform="matrix(.4125 0 0 .4125 1696.8 1468)" xlink:href="#b"/>
+		</g>
+		<g stroke-width="3.3639">
+			<use transform="matrix(.20288 0 0 .20288 1909.2 1959.4)" xlink:href="#b"/>
+			<use transform="matrix(.20288 0 0 .20288 1937.4 1976.6)" xlink:href="#b"/>
+			<use transform="matrix(.20288 0 0 .20288 1898.7 1996)" xlink:href="#b"/>
+		</g>
+		<g stroke-width="4.0111">
+			<use transform="matrix(.24931 0 0 .24931 1863 1978.9)" xlink:href="#b"/>
+			<use transform="matrix(.24931 0 0 .24931 1864.2 2006.4)" xlink:href="#b"/>
+			<use transform="matrix(.24931 0 0 .24931 1862.3 2038.9)" xlink:href="#b"/>
+		</g>
+		<ellipse id="e" cx="2014.7" cy="1629.9" rx="8.2427" ry="8.4177" fill="url(#m)" stroke-width="1.75"/>
+		<use transform="translate(67.617 27.4)" xlink:href="#e"/>
+		<use transform="translate(99.751 125.88)" xlink:href="#e"/>
+		<use transform="translate(178.42 100.57)" xlink:href="#e"/>
+		<use transform="translate(159.86 101.45)" xlink:href="#e"/>
+		<use transform="translate(156.05 20.389)" xlink:href="#e"/>
+		<use transform="translate(101.52 -91.339)" xlink:href="#e"/>
+		<use transform="translate(-25.759 -123.6)" xlink:href="#e"/>
+		<use transform="translate(-6.3138 -213.76)" xlink:href="#e"/>
+		<use transform="translate(44.952 -270.77)" xlink:href="#e"/>
+		<use transform="translate(106.82 -213.76)" xlink:href="#e"/>
+		<use transform="translate(183.29 -309.22)" xlink:href="#e"/>
+		<use transform="translate(208.03 -195.64)" xlink:href="#e"/>
+		<use transform="translate(254.42 -214.65)" xlink:href="#e"/>
+		<use transform="translate(262.39 -90.014)" xlink:href="#e"/>
+		<g id="g" transform="matrix(1.75 0 0 1.75 -517.83 1097.5)">
+			<path d="m1520.7 225.47 6.6292-18.028 6.6292 18.028c-1.957-1.44-4.2741-2.1559-6.6008-2.1538-2.3267 2e-3 -6.6576 2.1538-6.6576 2.1538z" fill="#fff" stroke="#fff" stroke-linejoin="round"/>
+			<path d="m1527.3 219.64v69.286" fill="#fff" stroke="#fff" stroke-linecap="round" stroke-width="4"/>
+		</g>
+		<g transform="matrix(1.75 0 0 1.75 -721.79 578.63)">
+			<path d="m1643.9 624.63v183.54" fill="none" stroke="url(#q)" stroke-width="5"/>
+			<path d="m1633.1 639.3 10.791-29.345 10.79 29.345c-3.1854-2.3439-6.9571-3.5092-10.744-3.5058-3.7873 3e-3 -10.837 3.5058-10.837 3.5058z" fill="#fff" stroke="#fff" stroke-linejoin="round"/>
+		</g>
+		<path d="m1352.9 1388.4 58.184-80.15 67.657-44.219 100.81 24.183 61.57 68.404 6.0891 92.587-45.328 88.442-79.16 20.038-95.4-4.1454-47.36-80.15z" fill="none" stroke="#d16d0a" stroke-linecap="round" stroke-linejoin="round" stroke-width="7"/>
+		<use transform="translate(-30.998 -20.344)" xlink:href="#c"/>
+		<path d="m1380.8 1408.6-27.739-20.038" fill="none" stroke="#c26509" stroke-linecap="round" stroke-linejoin="round" stroke-width="7"/>
+		<use transform="translate(95.564 -145.66)" xlink:href="#c"/>
+		<path d="m1470 1319.4 8.7955-55.274" fill="none" stroke="#c26509" stroke-linecap="round" stroke-linejoin="round" stroke-width="7"/>
+		<use transform="translate(87.199 -89.063)" xlink:href="#c"/>
+		<ellipse id="c" cx="1382.8" cy="1408.4" rx="12.22" ry="12.48" fill="url(#h)" stroke-width="1.75"/>
+		<use transform="translate(259.32 -52.532)" xlink:href="#c"/>
+		<path d="m1579.9 1384.4 61.57-27.638" fill="none" stroke="#c26509" stroke-linecap="round" stroke-linejoin="round" stroke-width="7"/>
+		<use transform="translate(220.26 129.97)" xlink:href="#c"/>
+		<path d="m1556 1513.4 46.008 24.183" fill="none" stroke="#c26509" stroke-linecap="round" stroke-linejoin="round" stroke-width="7"/>
+		<use transform="translate(170.15 105.18)" xlink:href="#c"/>
+		<use transform="translate(44.118 147.19)" xlink:href="#c"/>
+		<path d="m1427.4 1553.6 2.03-29.018" fill="none" stroke="#c26509" stroke-linecap="round" stroke-linejoin="round" stroke-width="7"/>
+		<use transform="translate(46.846 114.9)" xlink:href="#c"/>
+		<path d="m1524.3 1486.7 67.657-60.804-37.212-84.987-89.985 10.364-19.619 93.277z" fill="none" stroke="#f4871b" stroke-linecap="round" stroke-linejoin="round" stroke-opacity=".99608" stroke-width="7"/>
+		<use transform="translate(64.118 35.938)" xlink:href="#c"/>
+		<use transform="translate(207.13 16.218)" xlink:href="#c"/>
+		<use transform="translate(141.5 76.218)" xlink:href="#c"/>
+		<path d="m1522.8 1557.9 1.3527-71.166" fill="none" stroke="#ed7b0b" stroke-linecap="round" stroke-linejoin="round" stroke-width="7"/>
+		<use transform="translate(139.63 148.72)" xlink:href="#c"/>
+		<use transform="translate(171.19 -65.97)" xlink:href="#c"/>
+		<path d="m1380.1 1473.3 64.953-29.02" fill="none" stroke="#ed7b0b" stroke-linecap="round" stroke-linejoin="round" stroke-width="7"/>
+		<use transform="translate(-1.9353 66.218)" xlink:href="#c"/>
+		<use transform="translate(84.627 -53.781)" xlink:href="#c"/>
+		<path d="m1411.1 1308.2 53.448 42.838" fill="none" stroke="#ed7b0b" stroke-linecap="round" stroke-linejoin="round" stroke-width="7"/>
+		<use transform="translate(29.628 -102.53)" xlink:href="#c"/>
+		<path d="m1554.6 1340.7 25.032-52.514" fill="none" stroke="#ed7b0b" stroke-linecap="round" stroke-linejoin="round" stroke-width="7"/>
+		<use transform="translate(195.56 -120.03)" xlink:href="#c"/>
+		<path d="m1591.8 1425.6 55.48 23.492" fill="none" stroke="#ed7b0b" stroke-linecap="round" stroke-linejoin="round" stroke-width="7"/>
+		<use transform="translate(266.82 41.218)" xlink:href="#c"/>
+		<use transform="translate(60.263 100.54)" xlink:href="#d"/>
+		<use transform="translate(30.494 32.83)" xlink:href="#d"/>
+		<use transform="translate(85.295 -18.991)" xlink:href="#d"/>
+		<use transform="translate(50.654 190.52)" xlink:href="#d"/>
+		<use transform="translate(137.93 182.58)" xlink:href="#d"/>
+		<use transform="translate(200.18 128.34)" xlink:href="#d"/>
+		<use transform="translate(219.8 37.825)" xlink:href="#d"/>
+		<use transform="translate(185.97 -42.672)" xlink:href="#d"/>
+		<use transform="translate(104.78 -88.965)" xlink:href="#d"/>
+		<use transform="translate(20.545 -78.948)" xlink:href="#d"/>
+		<use transform="translate(-42.376 -16.763)" xlink:href="#d"/>
+		<use transform="translate(-57.937 65.807)" xlink:href="#d"/>
+		<use transform="translate(-20.725 148.38)" xlink:href="#d"/>
+		<use transform="translate(195.16 72.284)" xlink:href="#d"/>
+		<use transform="translate(186.29 5.5181)" xlink:href="#d"/>
+		<use transform="translate(364.03 -108.54)" xlink:href="#b"/>
+		<use transform="translate(195.34 -23.424)" xlink:href="#c"/>
+		<g transform="matrix(1.75 0 0 1.75 2574.8 702.61)" fill="none" stroke="#ac5a07" stroke-linecap="round" stroke-linejoin="round" stroke-width="4">
+			<path d="m-573.62 386.68-52.832-31.307"/>
+			<path d="m-581.34 458.8 11.783-64.292"/>
+			<path d="m-635.95 357.14-42.9 42.815"/>
+			<path d="m-648.65 469.26 60.007-5.2434"/>
+			<path d="m-680.38 408.1 23.849 56.829"/>
+		</g>
+		<ellipse id="d" cx="1424.4" cy="1365.1" rx="8.345" ry="8.5223" fill="url(#n)" stroke-width="1.75"/>
+		<use transform="translate(100.38 -13.161)" xlink:href="#d"/>
+		<use transform="translate(143.4 84.182)" xlink:href="#d"/>
+		<use transform="translate(67.816 154.15)" xlink:href="#d"/>
+		<use transform="translate(-19.35 101.43)" xlink:href="#d"/>
+		<use transform="matrix(.80083 0 0 .80083 916.95 1283.8)" xlink:href="#b"/>
+		<rect x="1012.8" y="1233.1" width="267.47" height="353.7" fill="none" stroke="#fc0" stroke-linecap="round" stroke-width="7"/>
+		<rect x="1320.2" y="1233.1" width="361.01" height="353.7" fill="none" stroke="#fc0" stroke-linecap="round" stroke-width="7"/>
+		<g fill="#ffffff" font-family="'DejaVu Sans'" font-size="35px" font-weight="bold" stroke-width="1.75">
+			<text x="1146.0812" y="1298.3844" text-anchor="middle">Wasser</text>
+			<text x="1146.312" y="1459.6102" text-anchor="middle">Methan</text>
+			<text x="1694.1685" y="1269.179"><tspan x="1694.1685" y="1269.179">Methan-</tspan><tspan x="1694.1685" y="1312.929">hydrat</tspan></text>
+		</g>
+		<rect x="1590.1" y="2275.6" width="44.871" height="43.848" fill="none" stroke="#fc0" stroke-linecap="round" stroke-width="5.25"/>
+		<use transform="matrix(.90074 0 0 .90074 567.89 1241.2)" xlink:href="#u"/>
+		<g transform="matrix(1.75 0 0 1.75 -602.27 576.64)" stroke="#666" stroke-linecap="round" stroke-width=".3">
+			<path d="m1185.6 1083.9c-1.392 2.1576-2.7842 4.3154-3.7064 6.6473s-1.3744 4.8366-1.8268 7.3422c3.8628-0.7308 7.7264-1.4618 10.614-2.6101 2.8881-1.1484 4.8019-2.7143 6.7159-4.2803-0.3828-2.4012-0.7654-4.8012-0.348-7.6551 0.4174-2.8538 1.6356-6.1603 2.8536-9.4663-3.0624 1.566-6.1244 3.1318-8.5084 4.8023s-4.0891 3.4452-5.7943 5.22" fill="#9d8056"/>
+			<path d="m1143.6 1074.6c4.7328-1.044 9.4661-2.0881 13.712-3.3758s8.0033-2.8186 11.762-4.3498c4.4892 0.8352 8.9795 1.6706 13.295 2.0881 4.3151 0.4175 8.4562 0.4175 11.362 1.1662 2.9058 0.7486 4.5751 2.2441 6.2455 3.7405-2.5752 2.8884-5.1504 5.7768-7.5338 7.4471-2.3834 1.6702-4.5765 2.1228-6.7689 2.5752-8.3519-0.4176-16.703-0.8351-23.715-2.3835s-12.686-4.2284-18.358-6.908" fill="#d9cdb6"/>
+			<path d="m1180.1 1097.9c1.7052-2.8188 3.4103-5.6373 4.3325-7.9686s1.0615-4.1765 1.2007-6.0209c-2.7144-0.2784-5.4277-0.5567-10.7-2.2095-5.2722-1.6528-13.102-4.6804-18.757-6.09-5.6552-1.4097-9.136-1.2008-12.616-0.992 1.3572 3.132 2.7149 6.2651 3.6021 9.1187 0.8873 2.8535 1.3047 5.4275 1.7223 8.0027 5.7071 0.7308 11.415 1.4617 16.618 2.4885 5.2027 1.0267 9.8993 2.3487 14.597 3.6711" fill="#839b95"/>
+		</g>
+		<g fill="none" stroke="#000" stroke-linecap="round" stroke-width="5">
+			<path d="m1383.8 2396.5h-17.539v154.2h17.539"/>
+			<path d="m1665.9 2396.5h17.539v154.2h-17.539"/>
+		</g>
+		<g transform="matrix(1.75 0 0 1.75 -604.25 600.02)" fill="none" stroke="#000" stroke-linecap="round" stroke-width="2">
+			<path d="m1221.3 1068.9v-12.697"/>
+			<path d="m1227.6 1062.6h-12.697"/>
+		</g>
+		<path d="m1733.7 2472.4 21.895 7.9839-21.895 7.9838c1.7489-2.3569 2.6183-5.1474 2.6157-7.9497 0-2.8021-2.6157-8.018-2.6157-8.018z" stroke="#000" stroke-linejoin="round" stroke-width="1.75"/>
+		<path d="m1738.6 2480.3h-41.725" fill="none" stroke="#000" stroke-linecap="round" stroke-width="3.5"/>
+		<g id="t">
+			<use transform="rotate(-30 2152.4 1657.6)" xlink:href="#g"/>
+			<use transform="rotate(-60 2154.3 1654.2)" xlink:href="#g"/>
+		</g>
+		<use transform="matrix(-1 0 0 1 4307.7 0)" xlink:href="#t"/>
+		<path d="m1320.2 1586.8h361.01l-46.26 688.77h-44.871z" fill="#e1e1ee" fill-opacity=".82239" opacity=".85489" stroke="#ccc" stroke-linecap="round" stroke-width="2"/>
+		<path d="m856.81 2020.4h2050" fill="none" stroke="#df00df" stroke-dasharray="35, 17.5" stroke-linecap="round" stroke-width="8.75"/>
+	</g>
+	<g fill="none" stroke="#a6d0f0" stroke-width="2">
+		<path id="p" d="m1270.6 1307.2c-0.049-3.2964-0.098-6.5937 0.8367-9.0058 0.9352-2.4121 2.8545-3.9377 4.823-5.8078s3.9862-4.0846 4.5771-6.3479c0.5908-2.2633-0.2458-4.5763-1.0829-6.8906" fill="none" stroke="#a6d0f0" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"/>
+		<use transform="matrix(-.97003 -.24297 -.24297 .97003 2814.6 354.79)" xlink:href="#p"/>
+		<use transform="matrix(-.9308 -.36552 -.36552 .9308 2930.1 537.52)" xlink:href="#p"/>
+	</g>
+	<g fill="#000000" font-family="'DejaVu Sans'" font-weight="bold">
+		<g font-size="35px" stroke-width="1.75">
+			<text x="1416.5068" y="1021.5372"><tspan x="1416.5068" y="1021.5372">Beginn der Methanhydrat-</tspan><tspan x="1416.5068" y="1065.2871">Stabilitätszone</tspan></text>
+			<g text-anchor="middle">
+				<text x="1517.036" y="838.16766">Eiskruste</text>
+				<text x="644.34021" y="1564.8375">Abiotische Methanquellen</text>
+				<text x="567.03119" y="1392.7876">Olivin</text>
+				<text x="718.3656" y="1389.4469">Wasser</text>
+			</g>
+		</g>
+		<g text-anchor="middle">
+			<text x="635.66058" y="1485.908" font-size="30.048px" stroke-width="1.502"><tspan x="635.66058" y="1485.908" stroke-width="1.502">Geochemische</tspan></text>
+			<text x="953.09357" y="1430.3713" font-size="35px" stroke-width="1.75">Methan</text>
+			<text x="637.66235" y="1512.6342" font-size="30.048px" stroke-width="1.502"><tspan x="637.66235" y="1512.6342" stroke-width="1.502">Reaktionen</tspan></text>
+		</g>
+	</g>
+	<g font-family="'DejaVu Sans'" font-size="35px" font-weight="bold" stroke-width="1.75">
+		<text x="1329.6467" y="1380.6703" fill="#ffffff"><tspan x="1329.6467" y="1380.6703">Hydrothermaler Schlot</tspan></text>
+		<text x="1417.3979" y="1451.2512" fill="#000000" text-anchor="middle">Gesteinskern</text>
+		<text x="1440.8279" y="497.272" fill="#ffffff"><tspan x="1440.8279" y="497.272">Wasserdampffahne</tspan></text>
+	</g>
+	<g transform="translate(-10.022 -1.6704)" fill="#000000" font-family="'DejaVu Sans'" font-size="35px" font-weight="bold" stroke-width="1.75" text-anchor="end">
+		<text x="694.13928" y="1301.3008"><tspan x="694.13928" y="1301.3008">eingeschlossen</tspan></text>
+		<text x="694.13928" y="1268.2288"><tspan x="694.13928" y="1268.2288">Methanhydrat</tspan></text>
+		<text x="694.13928" y="1235.1567"><tspan x="694.13928" y="1235.1567">Metan in</tspan></text>
+	</g>
+</svg>

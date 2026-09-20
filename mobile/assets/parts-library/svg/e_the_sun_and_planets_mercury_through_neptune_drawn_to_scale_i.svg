@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg id="svg1" width="1400000" height="500" xmlns="http://www.w3.org/2000/svg" style="fill: black">
+  <rect x="0" Y="0" width="1400000" height="500" style="fill:black;"/>
+  
+  <circle id="sun" r="216" cx="250" cy="250" style="stroke-width: 1; fill: orange;"/>
+  <text x="250" y="50" fill="white" style="font-size: 24pt">Sun</text>
+
+  <circle id="mer" r="1" cx="18250" cy="250" style="stroke-width: 1; fill: tan;"/>
+  <text x="18250" y="50" fill="white" style="font-size: 24pt">Mercury</text>
+
+  <circle id="ven" r="2" cx="33750" cy="250" style="stroke-width: 1; fill: tan;"/>
+  <text x="33750" y="50" fill="white" style="font-size: 24pt">Venus</text>
+
+  <circle id="ear" r="2" cx="46750" cy="250" style="stroke-width: 1; fill: blue;"/>
+  <text x="46750" y="50" fill="white" style="font-size: 24pt">Earth</text>
+
+  <circle id="mar" r="1" cx="70750" cy="250" style="stroke-width: 1; fill: red;"/>
+  <text x="70750" y="50" fill="white" style="font-size: 24pt">Mars</text>
+
+  <circle id="jup" r="22" cx="241750" cy="250" style="stroke-width: 1; fill: red;"/>
+  <text x="241750" y="50" fill="white" style="font-size: 24pt">Juputer</text>
+
+  <circle id="sat" r="19" cx="443250" cy="250" style="stroke-width: 1; fill: green;"/>
+  <text x="443250" y="50" fill="white" style="font-size: 24pt">Saturn</text>
+
+  <circle id="ura" r="8" cx="890250" cy="250" style="stroke-width: 1; fill: blue;"/>
+  <text x="890250" y="50" fill="white" style="font-size: 24pt">Uranus</text>
+
+  <circle id="nep" r="8" cx="1396250" cy="250" style="stroke-width: 1; fill: blue;"/>
+  <text x="1396250" y="50" fill="white" style="font-size: 24pt">Neptune</text>  
+</svg>

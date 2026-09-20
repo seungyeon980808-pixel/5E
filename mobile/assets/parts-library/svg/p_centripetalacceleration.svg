@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://web.resource.org/cc/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg" xmlns="http://www.w3.org/2000/svg" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" width="302.5" height="359.5">
+  <g transform="translate(-159.775, -314.089)">
+    <rect style="fill:#fff;stroke:#9c9c9e;stroke-width:0.5" id="rect2640" width="302.01761" height="359.01761" x="160.01631" y="314.33041"/>
+    <path style="fill:#f6f6f6;stroke:#646464;stroke-width:0.5" id="path2171" sodipodi:cx="188.75" sodipodi:cy="162.25" sodipodi:rx="107.25" sodipodi:ry="46.75" d="M 264.97457,195.13752 A 107.25,46.75 0 1 1 265.41352,194.94308" sodipodi:start="0.78027711" sodipodi:end="7.0576273" sodipodi:open="true" transform="matrix(1.21, 0, 0, 1.21, 35.1201, 276.556)"/>
+    <path style="fill:none;fill-rule:evenodd;stroke:#000;stroke-width:1" d="M 266.74005,468.60941 C 351.27783,498.14719 351.27783,498.14719 351.27783,498.14719" id="path3178"/>
+    <path style="fill:none;fill-rule:evenodd;stroke:#000;stroke-width:1" d="M 264.26784,343.63719 C 265.25004,632.6194 265.25004,632.6194 265.25004,632.6194" id="path2169"/>
+    <path style="fill:none;fill-rule:evenodd;stroke:#000;stroke-width:4" d="M 364.74554,510.6417 C 265.27234,617.05831 265.27234,616.6149 265.27234,616.6149" id="path3146"/>
+    <path style="fill:none;fill-rule:evenodd;stroke:#000;stroke-width:1" d="M 195.25894,655.1283 C 195.25894,655.1283 195.25894,655.1283 264.75894,616.1283 C 346.75894,645.1283 346.75894,645.1283 346.75894,645.1283" id="path3148"/>
+    <path style="fill-rule:evenodd;stroke:#000;stroke-width:0.3" d="M 371.70465,502.79981 C 353.46991,515.50553 353.46991,515.50553 353.46991,515.50553 L 361.3155,521.64143 L 371.70465,502.79981 z " id="path3150"/>
+    <path style="fill:#6868ff;fill-rule:evenodd;stroke:#7e81ff;stroke-width:0.3" d="M 451.34387,451.33017 C 434.73356,457.57965 434.73356,457.57965 434.73356,457.57965 L 439.39219,463.88689 L 451.34387,451.33017 z " id="path3152"/>
+    <path style="fill-rule:evenodd;stroke:#000;stroke-width:0.3" d="M 264.60867,377.26969 C 260.57444,397.2096 260.57444,397.2096 260.57444,397.2096 L 269.75674,396.83343 L 264.60867,377.26969 z " id="path3154"/>
+    <path style="fill:none;fill-rule:evenodd;stroke:#000;stroke-width:4" d="M 265.00894,394.60449 C 265.00894,468.65211 265.00894,468.65211 265.00894,468.65211" id="path3156"/>
+    <text x="245.25894" y="616.6283" style="font-size:18;font-style:italic;font-family:serif">0</text>
+    <text x="181.75894" y="664.1283" style="font-size:18;font-style:italic;font-family:serif">x</text>
+    <text x="356.75894" y="652.6283" style="font-size:18;font-family:serif">y</text>
+    <text x="260.25894" y="333.1283" style="font-size:18;font-style:italic;font-family:serif">z</text>
+    <path style="fill:none;fill-rule:evenodd;stroke:#ca0000;stroke-width:4" d="M 371.36501,504.23437 C 308.15287,483.02223 308.15287,483.02223 308.15287,483.02223" id="path3174"/>
+    <path style="fill:none;fill-rule:evenodd;stroke:#7472ff;stroke-width:4" d="M 371.25894,504.1283 C 443.75894,457.1283 443.75894,457.1283 443.75894,457.1283" id="path3176"/>
+    <path style="fill:#d40000;fill-rule:evenodd;stroke:#d90000;stroke-width:0.31145531" d="M 289.5926,476.24912 C 309.48206,487.8248 309.48206,487.8248 309.48206,487.8248 L 311.84897,479.69185 L 289.5926,476.24912 z " id="path3180"/>
+    <text style="font-size:16;fill:#da0000;font-family:serif" x="432.91064" y="336.67026" id="text3200" transform="matrix(0.939693, 0.34202, -0.34202, 0.939693, 0, 0)">ω × (ω × r)</text>
+    <text style="font-size:16;fill:#00f;font-family:serif;font-style:italic" x="85.322502" y="615.16827" transform="matrix(0.846193, -0.532876, 0.532876, 0.846193, 0, 0)">ω × r</text>
+    <text style="font-size:22;font-family:serif" x="316.25894" y="546.1283">r</text>
+    <text style="font-size:20;font-family:serif;font-style:italic" x="245" y="412">ω</text>
+  </g>
+</svg>
