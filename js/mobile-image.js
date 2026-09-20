@@ -15,6 +15,15 @@ export function initMobileImage(aiPanel) {
   panel.querySelector('.ai-head').after(toolbar);
   const photo = toolbar.querySelector('[data-mobile-photo]');
   const picker = toolbar.querySelector('[data-mobile-file]');
+  const sharing = document.getElementById('sharing-btn');
+  if (sharing) {
+    sharing.dataset.mobileShare = '';
+    sharing.removeAttribute('data-shell-tip');
+    const label = document.createElement('span');
+    label.textContent = '공유';
+    sharing.append(label);
+    toolbar.insertBefore(sharing, picker);
+  }
   toolbar.querySelector('[data-mobile-login]').onclick = () => window.dispatchEvent(new Event('5e:web-login-request'));
   home.querySelector('[data-mobile-open]').onclick = () => void aiPanel.open();
   photo.onclick = () => picker.click();

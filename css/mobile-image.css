@@ -38,7 +38,9 @@
 .mobile-image-mode #ai-image-panel .ai-head-status { display: flex; flex: 1 1 auto; gap: var(--mobile-space); }
 .mobile-image-mode #ai-image-panel .ai-status { white-space: normal; font-size: 12px; line-height: var(--mobile-line); }
 .mobile-image-mode #ai-image-panel .ai-close { flex: 0 0 var(--mobile-control); height: var(--mobile-control); }
-.mobile-image-mode .mobile-image-toolbar { display: flex; flex-wrap: wrap; gap: var(--mobile-space); padding: 0 var(--mobile-space) var(--mobile-space); }
+.mobile-image-mode .mobile-image-toolbar { display: flex; gap: var(--mobile-space); padding: 0 var(--mobile-space) var(--mobile-space); }
+.mobile-image-mode .mobile-image-toolbar > button { flex: 1 1 0; width: auto; min-width: 0; justify-content: center; gap: calc(var(--mobile-space) / 2); white-space: nowrap; }
+.mobile-image-mode .mobile-image-toolbar .mobile-image-share::after { content: none; }
 .mobile-image-mode #ai-image-panel .ai-workspace { display: flex; flex-direction: column; min-height: 0; overflow: visible; }
 .mobile-image-mode #ai-image-panel .ai-task-rail { display: flex; max-height: none; width: 100%; border: 0; }
 .mobile-image-mode #ai-image-panel .ai-rail-heading { padding: var(--mobile-space); }
@@ -102,3 +104,7 @@
 .mobile-image-mode #ai-image-panel .ai-image-card-head { height: var(--mobile-control); min-height: var(--mobile-control); flex-basis: var(--mobile-control); }
 .mobile-image-mode .web-login-dialog button { min-width: var(--mobile-control); min-height: var(--mobile-control); }
 .mobile-image-mode .web-login-close { width: var(--mobile-control); height: var(--mobile-control); }
+.mobile-image-mode .ai-sharing-dialog { max-height: calc(var(--mobile-viewport-height, 100dvh) - 2 * var(--mobile-space)); }
+.mobile-image-mode .ai-sharing-dialog :is(button,[data-link],label) { box-sizing: border-box; min-height: var(--mobile-control); }
+.mobile-image-mode .ai-sharing-dialog button { min-width: var(--mobile-control); }
+.mobile-image-mode .ai-sharing-dialog label { display: flex; align-items: center; gap: calc(var(--mobile-space) / 2); }
