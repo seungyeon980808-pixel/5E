@@ -977,6 +977,8 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   let thumbnailEpoch = 0;
   let thumbnailQueue = Promise.resolve();
   let thumbnailObserver = null;
+  let renderedResultCount = 0;
+  let appendResultBatch = () => {};
   let currentMaterialized = null;
   let currentMaterializedIdentity = null;
   let returnFocus = null;
@@ -1287,11 +1289,16 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     thumbnailObserver?.disconnect();
     thumbnailObserver = null;
     const visibleResults = results;
+    const scroller = overlay.querySelector(".unilib-result-scroll");
+    renderedResultCount = 0;
+    list.replaceChildren();
+    scroller.scrollTop = 0;
     root.dataset.activeTab = activeTypes.length === LIBRARY_TYPES.length ? "all" : activeTypes.join("-");
     root.dataset.pdfDisplay = activeTypes.length === 1 && activeTypes[0] === "pdf" ? pdfDisplayMode : "file";
     overlay.querySelector("[data-unilib-count]").textContent = `${visibleResults.length}개`;
     renderSelectedTray();
     const pendingThumbnails = [];
+    const thumbnailLookup = new Map();
     const thumbnailPdfMode = activeTypes.length === 1 && activeTypes[0] === "pdf" ? pdfDisplayMode : "file";
     const thumbnailStatus = (media, failed = false) => {
       media.dataset.thumbnailState = failed ? "error" : "loading";
@@ -1343,7 +1350,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
         if (ownThumbnailEpoch === thumbnailEpoch && media.isConnected) thumbnailStatus(media, true);
       });
     };
-    list.replaceChildren(...visibleResults.map((result) => {
+    const createResultCard = (result) => {
       const item = document.createElement("li");
       item.className = "unilib-result-row";
       const button = document.createElement("button");
@@ -1396,20 +1403,36 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       button.append(media, copy);
       item.append(button, check);
       return item;
-    }));
-    if (pendingThumbnails.length && "IntersectionObserver" in globalThis) {
-      const lookup = new Map(pendingThumbnails.map((entry) => [entry.media, entry.result]));
+    };
+    if ("IntersectionObserver" in globalThis) {
       thumbnailObserver = new IntersectionObserver((entries) => {
         for (const entry of entries) {
           if (!entry.isIntersecting) continue;
+          if (ownThumbnailEpoch !== thumbnailEpoch) return;
           thumbnailObserver?.unobserve(entry.target);
-          const result = lookup.get(entry.target);
+          const result = thumbnailLookup.get(entry.target);
+          thumbnailLookup.delete(entry.target);
           if (result) loadThumbnail(result, entry.target);
         }
       }, { root: overlay.querySelector(".unilib-result-scroll"), rootMargin: "240px 0px" });
-      pendingThumbnails.forEach(({ media }) => thumbnailObserver.observe(media));
-    } else pendingThumbnails.forEach(({ result, media }) => loadThumbnail(result, media));
+    }
+    appendResultBatch = (throughIndex = renderedResultCount) => {
+      if (ownThumbnailEpoch !== thumbnailEpoch || overlay.hidden) return;
+      const end = Math.min(visibleResults.length, Math.max(renderedResultCount + 60, throughIndex + 1));
+      if (end <= renderedResultCount) return;
+      list.append(...visibleResults.slice(renderedResultCount, end).map(createResultCard));
+      renderedResultCount = end;
+      for (const { result, media } of pendingThumbnails.splice(0)) {
+        if (thumbnailObserver) { thumbnailLookup.set(media, result); thumbnailObserver.observe(media); }
+        else loadThumbnail(result, media);
+      }
+    };
+    appendResultBatch();
   }
+  const resultScroller = overlay.querySelector(".unilib-result-scroll");
+  resultScroller.addEventListener("scroll", () => {
+    if (resultScroller.scrollHeight - resultScroller.scrollTop - resultScroller.clientHeight < 480) appendResultBatch();
+  }, { passive: true });
 
   function renderSelectedTray() {
     const tray = overlay.querySelector("[data-unilib-selected-tray]");
@@ -1925,6 +1948,8 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     void renderSources();
   });
   const focusResultCard = (id) => {
+    const index = results.findIndex(result => result.id === id);
+    if (index >= renderedResultCount) appendResultBatch(index);
     const card = list.querySelector(`[data-result-id="${CSS.escape(id)}"]`);
     if (!card) return;
     card.focus({ preventScroll: true });
