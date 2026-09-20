@@ -96,13 +96,25 @@ export async function chooseWorkbenchAssignment({ references, host, returnFocus 
     let confirmation = null;
     let settled = false;
 
+    const restoreFocus = () => {
+      if (!(focusReturn instanceof HTMLElement) || !focusReturn.isConnected
+        || focusReturn.matches(":disabled") || focusReturn.closest("[hidden], [inert]")) return false;
+      focusReturn.focus();
+      return document.activeElement === focusReturn;
+    };
+
     const finish = (value) => {
       if (settled) return;
       settled = true;
       confirmation?.finish(false);
       overlay.remove();
-      if (focusReturn instanceof HTMLElement && focusReturn.isConnected) focusReturn.focus();
+      const focused = restoreFocus();
       resolve(value);
+      if (value === null && !focused) {
+        window.setTimeout(() => {
+          if (document.activeElement === document.body) restoreFocus();
+        }, 0);
+      }
     };
 
     const confirmAction = ({ title, message, okText }) => new Promise((confirmResolve) => {
