@@ -41,7 +41,7 @@ function ensureStylesheet() {
   if (existing) return waitForStylesheet(existing);
   const link = document.createElement("link");
   link.rel = "stylesheet";
-  link.href = new URL("../../css/library-workbench-assignment.css?v=1.6.0-preview-library-wave1-0920-1459", import.meta.url).href;
+  link.href = new URL("../../css/library-workbench-assignment.css?v=1.6.0-preview-library-wave1-0920-1514", import.meta.url).href;
   link.dataset.workbenchAssignmentStyle = "";
   document.head.append(link);
   return waitForStylesheet(link);
