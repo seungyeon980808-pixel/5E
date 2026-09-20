@@ -1,7 +1,7 @@
 import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-preview-labeler-0917-1111';
 import { initWebLoginUi } from './web-login-ui.js?v=1.6.0-preview-repair-0921';
 import { showAlert } from "./ui-dialogs.js?v=1.6.0-preview-labeler-0917-1111";
-import { initAiSharing } from './ai-sharing-ui.js?v=1.6.0-preview-repair-0921';
+import { initAiSharing } from './ai-sharing-ui.js?v=1.6.0-preview-followup-0921';
 /* ===== MAIN (wire modules; data-as-truth + viewBox zoom/pan) ===== */
 //
 // Responsibilities:
@@ -19,17 +19,17 @@ import { initCutTool } from "./cut-tool.js?v=1.6.0-preview-labeler-0917-1111";
 import { initEraseTool } from "./erase-tool.js?v=1.6.0-preview-labeler-0917-1111";
 import { initTransform, undo, redo } from "./transform.js?v=1.6.0-preview-labeler-0917-1111";
 import { initArtboardResize } from "./artboard-resize.js?v=1.6.0-preview-repair-0921";
-import { initInspector } from "./inspector.js?v=1.6.0-preview-repair-0921";
-import { initDesktopProjectCloseGuard, initProjectIO, initProjectFileOpening, saveProject } from "./project-io.js?v=1.6.0-preview-repair-0921";
+import { initInspector } from "./inspector.js?v=1.6.0-preview-followup-0921";
+import { initDesktopProjectCloseGuard, initProjectIO, initProjectFileOpening, saveProject } from "./project-io.js?v=1.6.0-preview-followup-0921";
 import { initExportDialog } from "./export-dialog.js?v=1.6.0-preview-repair-0921";
 import { initRuler, setRulerVisible } from "./ruler.js?v=1.6.0-preview-labeler-0917-1111";
-import { initSettings } from "./settings.js?v=1.6.0-preview-repair-0921";
+import { initSettings } from "./settings.js?v=1.6.0-preview-followup-0921";
 import { initImageObjectify } from "./image-objectify.js?v=1.6.0-preview-repair-0921";
 import { initImagePaste } from "./image-paste.js?v=1.6.0-preview-labeler-0917-1111";
 import { initImageCutout } from "./image-cutout.js?v=1.6.0-preview-labeler-0917-1111";
 import { renderSessionToDataUrl } from "./image-cutout.js?v=1.6.0-preview-labeler-0917-1111";
 import { handSelectedCanvasImageToAi } from "./ai-canvas-handoff.js?v=1.6.0-preview-labeler-0917-1111";
-import { initExamLibrary } from "./exam-library.js?v=1.6.0-preview-repair-0921";
+import { initExamLibrary } from "./exam-library.js?v=1.6.0-preview-followup-0921";
 import { initTemplates } from "./templates.js?v=1.6.0-preview-labeler-0917-1111";
 import { initObjectSearch } from "./search.js?v=1.6.0-preview-labeler-0917-1111";
 import { initCommandPalette } from "./command-palette.js?v=1.6.0-preview-repair-0921";
@@ -62,7 +62,7 @@ import { initAxisBreakSection } from "./inspector/section-axisbreak.js?v=1.6.0-p
 import { initChemGraphSection } from "./inspector/section-chemgraph.js?v=1.6.0-preview-labeler-0917-1111";
 import { initElectrodeSection } from "./inspector/section-electrode.js?v=1.6.0-preview-labeler-0917-1111";
 import { initPeriodicSection } from "./inspector/section-periodic.js?v=1.6.0-preview-labeler-0917-1111";
-import { initAutosave } from "./autosave.js?v=1.6.0-preview-repair-0921";
+import { initAutosave } from "./autosave.js?v=1.6.0-preview-followup-0921";
 import { initPages } from "./pages.js?v=1.6.0-preview-repair-0921";
 import { localizeShortcutLabels } from "./platform.js?v=1.6.0-preview-labeler-0917-1111";
 import { initModalDrag } from "./modal-drag.js?v=1.6.0-preview-common-year-login-0918-1302";
