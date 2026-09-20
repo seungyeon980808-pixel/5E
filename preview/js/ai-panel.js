@@ -1,78 +1,77 @@
-import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-preview-labeler-0917-1111';
-import { openAiCompositionEditor } from './ai-composition-editor.js?v=1.6.0-preview-labeler-0917-1111';
-import { restrictSharedWorkspace } from './ai-sharing-access.js?v=1.6.0-preview-sharing-0918-2108';
-import { registerEscapeLayer } from './escape-layers.js?v=1.6.0-preview-labeler-0917-1111';
-import { clearTaskWorkspaces, createTaskPersistence, createTaskWorkspaces, recoverTaskWorkspaceSnapshot } from './ai-task-workspaces.js?v=1.6.0-preview-sharing-0918-2108';
+import { openAiCompositionEditor } from './ai-composition-editor.js';
+import { restrictSharedWorkspace } from './ai-sharing-access.js';
+import { registerEscapeLayer } from './escape-layers.js?v=1';
+import { clearTaskWorkspaces, createTaskPersistence, createTaskWorkspaces, recoverTaskWorkspaceSnapshot } from './ai-task-workspaces.js?v=1.6.0-preview-ai-library-wave2-0920-1656';
 import {
   advanceGenerationTiming,
   restoreGenerationTiming,
   sampleGenerationTiming,
   serializeGenerationTiming,
   startGenerationTiming,
-} from './ai-generation-timing.js?v=1.6.0-preview-labeler-0917-1111';
-import { taskExportSelection } from './ai-task-export.js?v=1.6.0-preview-labeler-0917-1111';
-import { keyLabel, modKey } from './platform.js?v=1.6.0-preview-labeler-0917-1111';
+} from './ai-generation-timing.js';
+import { taskExportSelection } from './ai-task-export.js';
+import { keyLabel, modKey } from './platform.js?v=1.4.0';
 import {
   distributeSourcesToTaskTabs,
   groupSourcesInTaskTab,
   moveReferenceInComposition,
   normalizeReferenceComposition,
-} from './ai-source-tasking.js?v=1.6.0-preview-labeler-0917-1111';
-import { setupAiWorkbench } from './ai-workbench.js?v=1.6.0-preview-sharing-0918-2108';
-import { mountDurableBatchUi } from './ai-batch-ui.js?v=1.6.0-preview-labeler-0917-1111';
-import { createScopedEditSession, confirmScopedEditSession, prepareScopedEditProposal, acceptScopedEditProposal, invalidateScopedEditSession } from './ai-scoped-edit-session.js?v=1.6.0-preview-labeler-0917-1111';
-import { decodeScopedPng } from './ai-scoped-edit-png.js?v=1.6.0-preview-labeler-0917-1111';
-import { createScopedEditComparison } from './ai-scoped-edit-comparison.js?v=1.6.0-preview-labeler-0917-1111';
-import { createImageCommentController, buildCommentRequest, PRESERVE_UNREQUESTED } from "./ai-image-comments.js?v=1.6.0-preview-sharing-0918-2108";
-import { IndexedDBOutputCacheBackend } from "./ai-output-cache-store.js?v=1.6.0-preview-labeler-0917-1111";
-import { insertImageFromSrc } from "./image-paste.js?v=1.6.0-preview-labeler-0917-1111";
-import { openEditableAssetsDialog } from "./ai-editable-assets-dialog.js?v=1.6.0-preview-labeler-0917-1111";
-import { insertEditableAssets } from "./ai-editable-assets.js?v=1.6.0-preview-labeler-0917-1111";
-import { prepareSeparatedAssets, SEPARATED_ASSETS_PROMPT } from "./ai-separated-assets.js?v=1.6.0-preview-labeler-0917-1111";
-import { buildDiscussionPrompt, buildImagePrompt } from "./ai-prompt.js?v=1.6.0-preview-labeler-0917-1111";
-import { IMAGE_BACKGROUND_VERSION, transparentizeGeneratedImage } from "./image-background.js?v=1.6.0-preview-labeler-0917-1111";
-import { parseAiEvent } from "./ai-events.js?v=1.6.0-preview-labeler-0917-1111";
+} from './ai-source-tasking.js?v=1';
+import { setupAiWorkbench } from './ai-workbench.js?v=shared-zoom-0917';
+import { mountDurableBatchUi } from './ai-batch-ui.js';
+import { createScopedEditSession, confirmScopedEditSession, prepareScopedEditProposal, acceptScopedEditProposal, invalidateScopedEditSession } from './ai-scoped-edit-session.js';
+import { decodeScopedPng } from './ai-scoped-edit-png.js';
+import { createScopedEditComparison } from './ai-scoped-edit-comparison.js';
+import { createImageCommentController, buildCommentRequest, PRESERVE_UNREQUESTED } from "./ai-image-comments.js?v=1";
+import { IndexedDBOutputCacheBackend } from "./ai-output-cache-store.js?v=1.5.3";
+import { insertImageFromSrc } from "./image-paste.js?v=1.4.0";
+import { openEditableAssetsDialog } from "./ai-editable-assets-dialog.js";
+import { insertEditableAssets } from "./ai-editable-assets.js";
+import { prepareSeparatedAssets, SEPARATED_ASSETS_PROMPT } from "./ai-separated-assets.js";
+import { buildDiscussionPrompt, buildImagePrompt } from "./ai-prompt.js?v=1.5.5";
+import { IMAGE_BACKGROUND_VERSION, transparentizeGeneratedImage } from "./image-background.js?v=1.5.4";
+import { parseAiEvent } from "./ai-events.js?v=1.5.3";
 import {
   AI_IMAGE_TRANSPORT_VERSION,
   createCheapImageSignature,
   prepareAIImageForTransport,
-} from "./ai-image-transport.js?v=1.6.0-preview-labeler-0917-1111";
+} from "./ai-image-transport.js?v=1.5.3";
 import {
   compactConversation,
   markImagesSent,
   selectOutgoingImageItems,
-} from "./ai-request-plan.js?v=1.6.0-preview-labeler-0917-1111";
-import { buildFastScenePrompt, FAST_SCENE_PROMPT_VERSION } from "./ai-scene-prompt.js?v=1.6.0-preview-labeler-0917-1111";
-import { chooseImageEngine, IMAGE_ENGINE_IDS } from "./ai-engine-router.js?v=1.6.0-preview-labeler-0917-1111";
-import { compileFastScene } from "./ai-scene-fastpath.js?v=1.6.0-preview-labeler-0917-1111";
+} from "./ai-request-plan.js?v=1.5.3";
+import { buildFastScenePrompt, FAST_SCENE_PROMPT_VERSION } from "./ai-scene-prompt.js?v=1.5.3";
+import { chooseImageEngine, IMAGE_ENGINE_IDS } from "./ai-engine-router.js?v=1.5.3";
+import { compileFastScene } from "./ai-scene-fastpath.js?v=1.5.3";
 import {
   compileFastSceneWithMotifs,
   expandAiMotifScene,
   MOTIF_CATALOG_VERSION,
-} from "./ai-motif-catalog.js?v=1.6.0-preview-labeler-0917-1111";
+} from "./ai-motif-catalog.js?v=1.5.3";
 import {
   LOCAL_ASSET_ROUTER_VERSION,
   matchLocalAssetRequest,
-} from "./ai-local-asset-router.js?v=1.6.0-preview-labeler-0917-1111";
-import { fastSceneToSvgDataUrl, insertFastSceneIntoState } from "./ai-scene-preview.js?v=1.6.0-preview-labeler-0917-1111";
+} from "./ai-local-asset-router.js?v=1.5.3";
+import { fastSceneToSvgDataUrl, insertFastSceneIntoState } from "./ai-scene-preview.js?v=1.5.3";
 import {
   buildExactOutputCacheDescriptor,
   createExactOutputCacheKey,
   createRemoteImageInputPlan,
   REMOTE_INPUT_PLAN_VERSION,
-} from "./ai-remote-input-plan.js?v=1.6.0-preview-labeler-0917-1111";
-import { composeReferenceImages } from './ai-reference-composite.js?v=1.6.0-preview-labeler-0917-1111';
+} from "./ai-remote-input-plan.js?v=1.5.3";
+import { composeReferenceImages } from './ai-reference-composite.js';
 import {
   composeRemoteImageInputPlan,
   REMOTE_COMPOSITOR_VERSION,
-} from "./ai-remote-compositor.js?v=1.6.0-preview-labeler-0917-1111";
-import { createExactOutputCacheStore } from "./ai-output-cache-store.js?v=1.6.0-preview-labeler-0917-1111";
-import { openPdfReferencePicker } from "./pdf-library/reference-picker.js?v=1.6.0-preview-labeler-0917-1111";
-import { getReferenceRole, partitionReferenceItems, planImageReferences } from "./ai-reference-roles.js?v=1.6.0-preview-labeler-0917-1111";
-import { normalizeMarkPolicy, buildMarkPolicyContract } from "./ai-mark-policy.js?v=1.6.0-preview-labeler-0917-1111";
-import { createStructureAnalysisController, formatStructureContract, STRUCTURE_SPEC_VERSION } from "./ai-structure-spec.js?v=1.6.0-preview-labeler-0917-1111";
-import { APPROVED_FIRST_PROMPT, APPROVED_FIRST_REQUEST, approvedFirstRun, prepareApprovedFirstAttachment } from './ai-approved-first-png.js?v=1.6.0-preview-labeler-0917-1111';
-import { WHITE_PNG_VERSION, isWhitePngWorkflow, buildWhitePngPrompt } from "./ai-white-png.js?v=1.6.0-preview-labeler-0917-1111";
+} from "./ai-remote-compositor.js?v=1.5.3";
+import { createExactOutputCacheStore } from "./ai-output-cache-store.js?v=1.5.3";
+import { openPdfReferencePicker } from "./pdf-library/reference-picker.js";
+import { getReferenceRole, partitionReferenceItems, planImageReferences } from "./ai-reference-roles.js";
+import { normalizeMarkPolicy, buildMarkPolicyContract } from "./ai-mark-policy.js?v=1";
+import { createStructureAnalysisController, formatStructureContract, STRUCTURE_SPEC_VERSION } from "./ai-structure-spec.js?v=1";
+import { APPROVED_FIRST_PROMPT, APPROVED_FIRST_REQUEST, approvedFirstRequestText, approvedFirstRun, prepareApprovedFirstAttachment } from './ai-approved-first-png.js?v=1.6.0-preview-ai-library-wave2-0920-1656';
+import { WHITE_PNG_VERSION, isWhitePngWorkflow, buildWhitePngPrompt } from "./ai-white-png.js?v=1";
 import {
   AI_IMAGE_GENERATION_EFFORT,
   AI_IMAGE_REVIEW_EFFORT,
@@ -81,27 +80,27 @@ import {
   buildImageCorrectionRequest,
   buildStructuralInventory,
   createAiImageReviewController,
-} from "./ai-image-review.js?v=1.6.0-preview-labeler-0917-1111";
-import { resolveGeneratedRaster } from "./ai-raster-output.js?v=1.6.0-preview-labeler-0917-1111";
+} from "./ai-image-review.js?v=1";
+import { resolveGeneratedRaster } from "./ai-raster-output.js?v=1";
 import {
   imageOutputOptionsKey,
   normalizeImageOutputOptions,
   resolveImageOutput,
-} from "./ai-output-processing.js?v=1.6.0-preview-labeler-0917-1111";
-import { inspectPngDataUrl, enforcePngAcceptance } from "./ai-png-inspection.js?v=1.6.0-preview-labeler-0917-1111";
+} from "./ai-output-processing.js?v=1";
+import { inspectPngDataUrl, enforcePngAcceptance } from "./ai-png-inspection.js?v=1";
 import {
   enforceKiceImageRunInput,
   KICE_IMAGE_MODE,
   KICE_IMAGE_OUTPUT_ENGINE,
   kiceImageRequest,
-} from "./kice-image-workflow.js?v=1.6.0-preview-labeler-0917-1111";
+} from "./kice-image-workflow.js?v=1.0.0";
 import {
   AI_OUTPUT_ENGINES,
   AI_QUALITY_MODES,
   normalizeOutputEngine,
   normalizeQualityMode,
   qualityModeCacheVersion,
-} from "./ai-quality-mode.js?v=1.6.0-preview-labeler-0917-1111";
+} from "./ai-quality-mode.js?v=1.5.5";
 
 // This path never redraws a PNG through Canvas or registers a pending proposal.
 export function scopedPngBytes(data) {
@@ -2000,13 +1999,13 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     detail = enforcePngAcceptance(detail, candidate);
     const normalized = dispatchReviewEvent(detail, candidate);
     if (normalized.state === "reviewing") {
-      setStatus(`${AI_IMAGE_REVIEW_MODEL} · high 독립 검수 중…`, "busy");
-      setGenerating(true, "원본과 후보를 독립 검수하고 있습니다", "객체 수·안팎·액체·연결·검은 채움 의미를 확인합니다.", "analyze");
+      setStatus("결과를 확인하는 중…", "busy");
+      setGenerating(true, "결과를 확인하고 있습니다", "요청 내용과 선택한 이미지를 비교합니다.", "analyze");
       return;
     }
     if (normalized.state === "correcting") {
-      setStatus("명시된 구조 실패를 한 번 교정 중…", "busy");
-      setGenerating(true, "검수 실패 영역을 교정하고 있습니다", "원본과 현재 후보를 보존하며 실패 항목만 교정합니다.", "render");
+      setStatus("수정 결과를 준비하는 중…", "busy");
+      setGenerating(true, "수정 결과를 준비하고 있습니다", "요청한 부분을 반영하고 나머지 영역은 유지합니다.", "render");
       return;
     }
     if (!["passed", "needs-attention", "failed", "cancelled"].includes(normalized.state)) return;
@@ -2016,19 +2015,19 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       currentReviewCandidate = candidate;
       stageCurrentOutput({ data: candidate.data, reviewVerified: true, reviewReport: normalized.report });
       setTaskState("completed");
-      setStatus("Sol 독립 검수 통과 · 생성 완료", "ok");
-      addLog("원본 참고와 현재 후보의 구조 하드 게이트가 모두 통과되었습니다.");
+      setStatus("결과 확인 완료 · 생성 완료", "ok");
+      addLog("요청 내용과 선택한 이미지의 비교를 마쳤습니다.");
       void commitCurrentOutput();
     } else {
       pendingCacheOutput = null;
       if (normalized.state === "needs-attention") {
-        setStatus("독립 검수 확인 필요", "warn");
-        addLog("자동 검수에서 실패 또는 불확실 항목이 남았습니다. 이 결과는 검증 완료로 재사용되지 않습니다.", "error");
+        setStatus("결과 확인 필요", "warn");
+        addLog("결과를 직접 확인해 주세요. 이 결과는 확인 완료 상태로 재사용되지 않습니다.", "error");
       } else if (normalized.state === "cancelled") {
-        setStatus("독립 검수 취소됨", "warn");
+        setStatus("결과 확인 취소됨", "warn");
       } else {
-        setStatus("독립 검수 실패", "error");
-        addLog(normalized.report?.issues?.[0]?.message || "독립 검수 보고서를 확인하지 못했습니다.", "error");
+        setStatus("결과 확인 실패", "error");
+        addLog("결과 확인을 마치지 못했습니다. 입력과 생성 결과는 보존되었습니다.", "error");
       }
     }
     setBusy(false);
@@ -2311,13 +2310,13 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     syncQualityMode();
     syncOutputEngine();
     syncReferenceSummary();
+    selectedCandidateId = tab.selectedCandidateId || generatedImages.at(-1)?.id || null;
+    panel.dataset.aiSelectedCandidateId = selectedCandidateId || "";
     panel.aiWorkbench?.restoreViewState?.(tab.workbenchViewState || null);
     renderTaskTabs();
     retryInterruptedButton.hidden = !['interrupted', 'failed'].includes(tab.workState);
     retryInterruptedButton.textContent = tab.workState === 'failed' ? '변환 다시 시도' : '중단 작업 다시 시도';
     retryInterruptedButton.disabled = busy || !tab.retryRequest?.snapshot;
-    selectedCandidateId = tab.selectedCandidateId || generatedImages.at(-1)?.id || null;
-    panel.dataset.aiSelectedCandidateId = selectedCandidateId || "";
     const selectedCandidate = generatedImages.find((item) => item.id === selectedCandidateId) || generatedImages.at(-1) || null;
     if (selectedCandidate) {
       dispatchReviewEvent({
@@ -3255,7 +3254,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     runInput.structureSpec = null;
     runInput.structureRecord = null;
     if (whiteRun && !runInput.approvedFirstPng && (runInput.attachments.length || runInput.generated.length) && !isReviewSolAvailable()) {
-      setStatus("원본 구조 분석용 Sol 높음 모델을 사용할 수 없습니다. 생성하지 않았습니다.", "error");
+      setStatus("결과 확인 기능을 사용할 수 없어 변환을 시작하지 않았습니다.", "error");
       return;
     }
     if (whiteRun && (!modelById(runInput.model) || !modelSupportsEffort(modelById(runInput.model), runInput.effort))) {
@@ -3583,8 +3582,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       };
       if (requestEpoch !== currentRequestEpoch || currentCancelRequested) throw new Error("작업 준비가 취소되었습니다.");
       if (whiteRun && !runInput.approvedFirstPng && !revisionImage && outgoingAttachments.length) {
-        setStatus("원본 구조 분석 중…", "busy");
-        setGenerating(true, "원본 구조 분석 중", "객체·단계·연결·작은 요소와 불확실성을 먼저 기록합니다.", "analyze");
+        setStatus("원본을 확인하는 중…", "busy");
+        setGenerating(true, "원본을 확인하고 있습니다", "선택한 이미지와 요청 내용을 준비합니다.", "analyze");
         const analysisStartedAt = performance.now();
         const analysisAttachments = observationAttachments || outgoingAttachments;
         const bindings = await Promise.all(analysisAttachments.map(async item => {
@@ -3597,10 +3596,9 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
         runInput.structureSpec = JSON.parse(JSON.stringify(spec));
         runInput.structureRecord = {version:STRUCTURE_SPEC_VERSION, spec:runInput.structureSpec, sourceBindings:bindings, model:AI_IMAGE_REVIEW_MODEL, effort:"high", elapsedMs:Math.round(performance.now()-analysisStartedAt)};
         currentTurnPerformance = {...currentTurnPerformance, structureAnalysisMs:runInput.structureRecord.elapsedMs};
-        addLog(`원본 구조 분석(JSON, 자동 관찰 가설):\n${JSON.stringify(runInput.structureRecord.spec)}`);
         panel.dispatchEvent(new CustomEvent("5e:ai-structure",{detail:JSON.parse(JSON.stringify(runInput.structureRecord))}));
-        setStatus("구조 명세를 반영해 이미지 생성 중…", "busy");
-        setGenerating(true, "구조 명세 기반 생성 중", "동일 명세를 독립 검수에도 전달합니다.", "generate");
+        setStatus("이미지 생성 중…", "busy");
+        setGenerating(true, "이미지를 생성하고 있습니다", "선택한 이미지와 요청 내용을 반영합니다.", "generate");
       }
       if (requestEpoch !== currentRequestEpoch || currentCancelRequested) throw new Error("작업 준비가 취소되었습니다.");
       const purpose = type === "image"
@@ -3618,7 +3616,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       const firstPrompt = imagePromptForRun(runInput) || APPROVED_FIRST_PROMPT;
       const firstInstructions = [discussionContext, entered, requestComments].filter(Boolean).join('\n\n');
       const result = await desktop.send({
-        text: runInput.approvedFirstPng ? `${firstPrompt}${firstInstructions ? `\n\n사용자 수정 요청:\n${firstInstructions}` : ''}` : (type === "image"
+        text: runInput.approvedFirstPng ? approvedFirstRequestText({ prompt: firstPrompt, referenceRoleContract, instructions: firstInstructions }) : (type === "image"
           ? (currentEngine === IMAGE_ENGINE_IDS.FAST_SCENE
             ? buildFastScenePrompt({
               request: requestWithVisualPlan,
@@ -4109,9 +4107,9 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       };
       const correctionRequest = currentRequestSnapshot?.request || "원본과 직전 결과를 대조하여 구조가 달라진 부분만 교정해 줘.";
       setBusy(false);
-      setStatus("복잡 그림 구조 검수 중…", "busy");
-      setGenerating(true, "원본과 결과를 대조하고 있습니다", "형태·부품 수·연결이 달라진 부분만 한 번 더 교정합니다.", "analyze");
-      addLog("복잡 모드 1차 결과를 원본과 대조한 뒤 구조 교정 1회를 진행합니다.");
+      setStatus("결과를 확인하는 중…", "busy");
+      setGenerating(true, "결과를 확인하고 있습니다", "선택한 이미지와 요청 내용을 비교합니다.", "analyze");
+      addLog("첫 결과를 확인한 뒤 필요한 부분을 한 번 더 수정합니다.");
       setTimeout(() => {
         if (eventEpoch !== currentRequestEpoch) return;
         void submit("image", {
@@ -4132,8 +4130,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       && normalizeQualityMode(currentRunInput?.qualityMode) === AI_QUALITY_MODES.COMPLEX
       && Number(currentRunInput?.complexPass || 1) === 2;
     if (completedComplexCorrection) {
-      setStatus("복잡 변환 완료 · 원본 구조 확인 필요", "warn");
-      addLog("복잡 모드는 구조 교정을 마쳤지만 자동 확정하지 않습니다. 원본과 객체 수·분기·연결을 비교한 뒤 사용하세요.");
+      setStatus("복잡 변환 완료 · 직접 확인 필요", "warn");
+      addLog("복잡 변환을 마쳤습니다. 원본과 비교한 뒤 사용해 주세요.");
     }
     setBusy(false);
     currentTurnDone = true;
@@ -4189,8 +4187,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
         if (!terminalAllowsSuccess || currentCancelRequested) return;
         window.dispatchEvent(new CustomEvent("5e:ai-output-success", { detail: { candidateId: added.id } }));
         if (isWhitePngWorkflow(currentRunInput || {})) {
-          setStatus(currentRunInput?.approvedFirstPng ? "PNG 준비 완료 · 서버 종료 확인 중" : "1차 후보 준비 완료 · 독립 검수 대기", "busy");
-          addLog(currentRunInput?.approvedFirstPng ? "첫 PNG 원본을 보존했습니다. 자동 검수·교정 없이 직접 확인할 수 있습니다." : "흰 배경 PNG 후보가 준비되었습니다. 원본 참고와의 독립 구조 검수를 이어서 진행합니다.");
+          setStatus(currentRunInput?.approvedFirstPng ? "PNG 준비 완료 · 서버 종료 확인 중" : "첫 결과 준비 완료 · 결과 확인 대기", "busy");
+          addLog(currentRunInput?.approvedFirstPng ? "첫 PNG 원본을 보존했습니다. 직접 확인할 수 있습니다." : "흰 배경 PNG 결과가 준비되었습니다. 원본과 비교해 확인합니다.");
         } else {
           setStatus(serverTurnFinished ? "생성 완료" : "서버 작업 종료 확인 중", serverTurnFinished ? "ok" : "busy");
           addLog("이미지가 완성되었습니다. 생성 결과에서 확인하거나 캔버스로 출력할 수 있습니다.");

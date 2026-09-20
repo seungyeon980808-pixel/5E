@@ -1,11 +1,10 @@
-import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-preview-labeler-0917-1111';
 import {
   chooseTaskExportDestination,
   normalizeTaskExportMode,
   writeTaskExports,
-} from './ai-task-export.js?v=1.6.0-preview-labeler-0917-1111';
-import { restoreGenerationTiming } from './ai-generation-timing.js?v=1.6.0-preview-labeler-0917-1111';
-import { idbGet, idbSet } from './idb-store.js?v=1.6.0-preview-labeler-0917-1111';
+} from './ai-task-export.js';
+import { restoreGenerationTiming } from './ai-generation-timing.js';
+import { idbGet, idbSet } from './idb-store.js';
 
 const CANCELLABLE_TASK_STATES = new Set(['busy', 'running']);
 
@@ -355,6 +354,7 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
         name: String(reference.name || `PDF 선택 영역 ${index + 1}`),
         sourceKind: String(reference.sourceKind || 'auto'),
         source: reference.source === undefined ? null : structuredClone(reference.source),
+        referenceRole: reference.referenceRole,
       };
     });
   };
