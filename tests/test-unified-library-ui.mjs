@@ -343,6 +343,14 @@ test("folder counts are tooltip-only and never reserve label width", async () =>
   assert.match(source, /text\.title = tooltip;\s*label\.title = tooltip;\s*row\.title = tooltip;/u);
 });
 
+test("add-location control stays beside the folder title and its menu stays inside the folder pane", async () => {
+  const source = await readFile(new URL("../css/unified-library.css", import.meta.url), "utf8");
+  assert.match(source, /\.unilib-folders > \.unilib-pane-head \{ position: relative; \}/u);
+  assert.match(source, /\.unilib-pane-head \.unilib-location-add \{ position: static; min-width: 0; \}/u);
+  assert.match(source, /\.unilib-location-add-menu[^\{]*\{[^\}]*left: var\(--unilib-space-4\);[^\}]*width: min\(18rem, calc\(100% - 2 \* var\(--unilib-space-4\)\)\);/u);
+  assert.doesNotMatch(source, /\.unilib-location-add-menu[^\{]*\{[^\}]*right: 0;/u);
+});
+
 test("an aggregate PDF resolves the active match and uses its own full-page loader", async () => {
   const calls = [];
   const aggregate = {
