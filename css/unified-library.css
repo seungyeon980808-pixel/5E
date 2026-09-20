@@ -1058,9 +1058,9 @@
 @media (prefers-reduced-motion: reduce) { .unified-library-overlay .unilib-crop-tray { transition: none; } }
 
 /* Library density and independently collapsible panes. */
-.unified-library-overlay .unilib.preview-hidden .unilib-shell { grid-template-columns: 248px minmax(360px, 1fr); }
-.unified-library-overlay .unilib.folders-collapsed.preview-hidden .unilib-shell { grid-template-columns: minmax(0, 1fr); }
 @media (min-width: 1100px) {
+  .unified-library-overlay .unilib.preview-hidden .unilib-shell { grid-template-columns: 248px minmax(360px, 1fr); }
+  .unified-library-overlay .unilib.folders-collapsed.preview-hidden .unilib-shell { grid-template-columns: minmax(0, 1fr); }
   .unified-library-overlay .unilib.preview-hidden .unilib-preview { display: none; }
 }
 .unified-library-overlay .unilib-header-panel-toggle[aria-expanded="false"],
