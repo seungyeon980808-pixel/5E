@@ -167,6 +167,8 @@ test("workbench inherits the existing theme and retains zoom and responsive layo
   assert.match(css, /\.ai-pane-zoom/);
   assert.match(css, /\.ai-compare-heading > \.ai-compare-controls:first-child \{[\s\S]*display:\s*flex;[\s\S]*flex-direction:\s*row;/);
   assert.match(css, /@media \(max-width: 1000px\)/);
+  assert.doesNotMatch(css, /grid-template-columns:\s*minmax\(0,\s*1fr\)\s+(?:248|254)px/);
+  assert.match(css, /@media \(max-width:\s*760px\)[\s\S]*?grid-template-columns:\s*minmax\(0,\s*1fr\);[\s\S]*?grid-template-areas:\s*"results"\s+"conversation";/);
   assert.match(css, /#ai-image-panel \.ai-compare-heading > \.ai-annotation-toolbar \{ flex-direction:row/);
   assert.match(css, /\.ai-task-tab-title\s*\{[\s\S]*text-overflow:\s*ellipsis;[\s\S]*white-space:\s*nowrap;/);
 });
