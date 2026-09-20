@@ -421,8 +421,8 @@ function pdfResults(documents, index) {
       const pageResult = pdfPageResult(document, pageNumber, text, metadata, itemNumbers, words);
       results.push(freezeResult({ ...pageResult, metadata: { ...pageResult.metadata, boundaryUncertain: itemNumbers.size === 0 } }));
     }
+    const questions = new Map();
     if (isRecognizedExamSourceName(document.source?.displayName)) {
-      const questions = new Map();
       for (const entry of entries) {
         if (!entry.itemId && !Number.isInteger(entry.itemNumber)) continue;
         if (entry.source.fullPageFallback === true) continue;
