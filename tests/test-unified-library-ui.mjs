@@ -229,6 +229,7 @@ test("PDF thumbnail materialization uses page one in file mode and each matched 
 
 test("desktop library density follows the open panel combination", async () => {
   const source = await readFile(new URL("../css/unified-library.css", import.meta.url), "utf8");
+  assert.match(source, /@media \(min-width: 1100px\) \{\s*\.unified-library-overlay \.unilib\.preview-hidden \.unilib-shell \{ grid-template-columns: 248px minmax\(360px, 1fr\); \}\s*\.unified-library-overlay \.unilib\.folders-collapsed\.preview-hidden \.unilib-shell \{ grid-template-columns: minmax\(0, 1fr\); \}/u);
   assert.match(source, /folders-collapsed:not\(\.preview-hidden\)[^\{]+\{ grid-template-columns: repeat\(4,/u);
   assert.match(source, /preview-hidden:not\(\.folders-collapsed\)[^\{]+\{ grid-template-columns: repeat\(5,/u);
   assert.match(source, /folders-collapsed\.preview-hidden[^\{]+\{ grid-template-columns: repeat\(6,/u);
