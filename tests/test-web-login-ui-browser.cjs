@@ -190,3 +190,34 @@ test('Test_reduced_motion_disables_login_motion_when_requested', async () => {
     assert.equal(await page.locator('[data-login-code]').isVisible(), true);
   } finally { await page.close(); }
 });
+
+test('Test_install_download_keeps_navigation_semantics_and_motion_states', async () => {
+  // Given: the install guide is open in the central login dialog.
+  const page = await pageWithDialog();
+  try {
+    const download = page.getByRole('link', { name:'설치형 다운로드' });
+    // Then: the link keeps its external-navigation contract and rests at full scale.
+    assert.match(await download.getAttribute('href'), /^https:/u);
+    assert.equal(await download.getAttribute('target'), '_blank');
+    assert.equal(await download.getAttribute('rel'), 'noopener noreferrer');
+    assert.equal(await download.evaluate((link) => getComputedStyle(link).transform), 'none');
+    assert.match(await download.evaluate((link) => getComputedStyle(link).animationName), /orbit/u);
+    // When: a fine pointer hovers the action, the sparkle layer becomes active.
+    await download.hover();
+    assert.notEqual(await download.evaluate((link) => getComputedStyle(link, '::after').transform), 'none');
+  } finally { await page.close(); }
+});
+
+test('Test_reduced_motion_keeps_install_download_actionable_without_orbit', async () => {
+  // Given: reduced motion is requested before opening the install guide.
+  const page = await browser.newPage({ viewport:{ width:1280, height:800 }, reducedMotion:'reduce' });
+  try {
+    await page.goto(baseUrl);
+    await page.getByRole('button', { name:'AI 이미지 변환' }).click();
+    const download = page.getByRole('link', { name:'설치형 다운로드' });
+    // Then: spatial motion is removed while the real release destination remains available.
+    assert.equal(await download.evaluate((link) => getComputedStyle(link).animationName), 'none');
+    assert.equal(await download.evaluate((link) => getComputedStyle(link, '::after').transform), 'none');
+    assert.match(await download.getAttribute('href'), /^https:/u);
+  } finally { await page.close(); }
+});
