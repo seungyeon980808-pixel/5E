@@ -1,0 +1,134 @@
+[
+  {
+    "path": "preview/css/ai-sharing.css",
+    "match": true
+  },
+  {
+    "path": "preview/css/panel-visibility.css",
+    "match": true
+  },
+  {
+    "path": "preview/css/style.css",
+    "match": true
+  },
+  {
+    "path": "preview/css/unified-library.css",
+    "match": true
+  },
+  {
+    "path": "preview/css/web-login.css",
+    "match": true
+  },
+  {
+    "path": "preview/index.html",
+    "match": true
+  },
+  {
+    "path": "preview/js/ai-sharing-ui.js",
+    "match": true
+  },
+  {
+    "path": "preview/js/artboard-resize.js",
+    "match": true
+  },
+  {
+    "path": "preview/js/autosave.js",
+    "match": true
+  },
+  {
+    "path": "preview/js/command-palette.js",
+    "match": true
+  },
+  {
+    "path": "preview/js/exam-library.js",
+    "match": true
+  },
+  {
+    "path": "preview/js/export-batch.js",
+    "match": true
+  },
+  {
+    "path": "preview/js/export-dialog.js",
+    "match": true
+  },
+  {
+    "path": "preview/js/image-compare.js",
+    "match": true
+  },
+  {
+    "path": "preview/js/image-objectify.js",
+    "match": true
+  },
+  {
+    "path": "preview/js/inspector.js",
+    "match": true
+  },
+  {
+    "path": "preview/js/inspector/section-global-image.js",
+    "match": true
+  },
+  {
+    "path": "preview/js/inspector/section-image.js",
+    "match": true
+  },
+  {
+    "path": "preview/js/library/continuous-crop-pages.js",
+    "match": true
+  },
+  {
+    "path": "preview/js/library/provider.js",
+    "match": true
+  },
+  {
+    "path": "preview/js/main.js",
+    "match": true
+  },
+  {
+    "path": "preview/js/mcp-bridge.js",
+    "match": true
+  },
+  {
+    "path": "preview/js/pages.js",
+    "match": true
+  },
+  {
+    "path": "preview/js/panel-visibility.js",
+    "match": true
+  },
+  {
+    "path": "preview/js/project-io.js",
+    "match": true
+  },
+  {
+    "path": "preview/js/project-save-dialog.js",
+    "match": true
+  },
+  {
+    "path": "preview/js/settings-shortcuts.js",
+    "match": true
+  },
+  {
+    "path": "preview/js/settings.js",
+    "match": true
+  },
+  {
+    "path": "preview/js/tutorial-courses.js",
+    "match": true
+  },
+  {
+    "path": "preview/js/tutorial.js",
+    "match": true
+  },
+  {
+    "path": "preview/js/unified-library-ui.js",
+    "match": true
+  },
+  {
+    "path": "preview/js/web-ai-connection.js",
+    "match": true
+  },
+  {
+    "path": "preview/js/web-login-ui.js",
+    "match": true
+  }
+]
