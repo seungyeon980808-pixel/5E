@@ -119,6 +119,26 @@ try {
   assert.deepEqual(await libraryState(), expectedLibrary({ aiFocused: true }));
   observations.push("assignment close button returns focus to the library AI action");
 
+  await page.locator("[data-unilib-crop-tray-toggle]").click();
+  await page.waitForSelector("[data-unilib-crop-tray].is-expanded");
+  const captions = await page.locator(".unilib-crop-tray-item > span").count();
+  const sourceTooltip = await page.locator(".unilib-crop-tray-item").first().getAttribute("title");
+  await page.screenshot({ path: join(output, "crop-tray-images-only.png"), animations: "disabled" });
+  const imageFill = await page.locator(".unilib-crop-tray-item").first().evaluate(item => ({
+    cardWidth: item.clientWidth, imageWidth: item.querySelector("img").getBoundingClientRect().width,
+  }));
+  assert.ok(Math.abs(imageFill.cardWidth - imageFill.imageWidth) < 2, "image must fill the card without a reserved metadata column");
+  await page.keyboard.press("Escape");
+  const afterTrayEscape = await libraryState();
+  console.log(JSON.stringify({ captions, sourceTooltip, afterTrayEscape }));
+  assert.equal(captions, 0, "crop collection must not render metadata or separator rows");
+  assert.ok(sourceTooltip, "source remains available on hover");
+  assert.equal(afterTrayEscape.libraryVisible, true, "Escape from the crop collection must keep the library open");
+  assert.equal(afterTrayEscape.cropTrayExpanded, false, "Escape must collapse only the crop collection");
+  assert.equal(await page.locator("[data-unilib-crop-tray-toggle]").evaluate(node => node === document.activeElement), true);
+  assert.equal(await page.locator(".unilib-crop-tray-item").count(), 2, "Escape must preserve accepted crops");
+  observations.push("expanded crop collection has images only and Escape preserves the library and both crops");
+
   assert.deepEqual(pageErrors, []);
   await page.screenshot({ path: join(output, "assignment-cancelled-library.png") });
   await writeFile(join(output, "browser-results.json"), `${JSON.stringify({ passed: true, observations, pageErrors }, null, 2)}\n`);
