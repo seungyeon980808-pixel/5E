@@ -20,6 +20,7 @@
   <script>
     window.qaStatus = { login: { loggedIn: false } };
     window.qaEvents = [];
+    window.qaAiPayloads = [];
     window.fiveEWebAI = { status: async () => window.qaStatus };
     window.fiveEWebLogin = () => window.qaEvents.push('login');
     window.fiveEWebContinueLogin = () => window.qaEvents.push('continue');
@@ -36,7 +37,7 @@
   </script>
   <script type="module">
     import { initWebLoginUi } from '/js/web-login-ui.js';
-    window.qaLoginUi = initWebLoginUi({ openAi: () => window.qaEvents.push('open-ai') });
+    window.qaLoginUi = initWebLoginUi({ openAi: payload => { window.qaEvents.push('open-ai'); window.qaAiPayloads.push(payload); } });
     document.getElementById('ai-image-install-open').addEventListener('click', () => window.qaLoginUi.openAi());
   </script>
 </body>

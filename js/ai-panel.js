@@ -285,18 +285,25 @@ const RASTER_ENGINE_VERSION = `imagegen-one-shot-v2+${REMOTE_INPUT_PLAN_VERSION}
 const FAST_SCENE_PANEL_COMPILE_VERSION = "motif-direct-v1";
 
 export const AI_ASSET_GENERATION_MODES = Object.freeze({ SINGLE: 'single', SEPARATED: 'separated' });
+export const AI_SEPARATION_MODES = Object.freeze({ AUTO: 'auto', GRID: 'grid', MANUAL: 'manual' });
 export const AUTOMATIC_SEPARATION_OPTIONS = Object.freeze({ layout: 'auto', maxAssets: 128, maxDurationMs: 8_000 });
+const normalizeSeparationMode = value => Object.values(AI_SEPARATION_MODES).includes(value)
+  ? value : AI_SEPARATION_MODES.AUTO;
+const separationOptionsForMode = mode => ({
+  ...AUTOMATIC_SEPARATION_OPTIONS,
+  layout: mode === AI_SEPARATION_MODES.GRID ? 'grid' : 'auto',
+});
 export const candidateUsesSeparatedAssets = item => item?.generationMode === AI_ASSET_GENERATION_MODES.SEPARATED;
 export const candidateUsesAutomaticSeparation = item => item?.kind === 'generated'
   && !item?.sceneResult && !candidateUsesSeparatedAssets(item);
-export async function automaticSeparationCacheKey(dataUrl, outputOptions = {}) {
+export async function automaticSeparationCacheKey(dataUrl, outputOptions = {}, separationOptions = AUTOMATIC_SEPARATION_OPTIONS) {
   const prefix = 'data:image/png;base64,';
   if (typeof dataUrl !== 'string' || !dataUrl.startsWith(prefix)) throw new TypeError('자동 분리 원본은 PNG 데이터여야 합니다.');
   const encoded = dataUrl.slice(prefix.length);
   const bytes = Uint8Array.from(atob(encoded), character => character.charCodeAt(0));
   const digest = await crypto.subtle.digest('SHA-256', bytes);
   const hash = [...new Uint8Array(digest)].map(value => value.toString(16).padStart(2, '0')).join('');
-  return `automatic-separation-v1:${hash}:${imageOutputOptionsKey(outputOptions)}:auto:128:8000`;
+  return `automatic-separation-v1:${hash}:${imageOutputOptionsKey(outputOptions)}:${separationOptions.layout}:${separationOptions.maxAssets}:${separationOptions.maxDurationMs}`;
 }
 export const separatedCandidateNextAction = item => {
   if (!candidateUsesSeparatedAssets(item)) return 'ordinary-insert';
@@ -572,6 +579,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   const backgroundPolicySelect = panel.querySelector('select[data-ai-background-policy]');
   const examPaletteSelect = panel.querySelector('select[data-ai-exam-palette]');
   const lineThicknessSelect = panel.querySelector('select[data-ai-line-thickness]');
+  const separationModeSelect = panel.querySelector('select[data-ai-separation-mode]');
   const batchButton = panel.querySelector("[data-ai-batch]");
   const batchPanel = panel.querySelector("[data-ai-batch-panel]");
   const batchGrid = panel.querySelector("[data-ai-batch-grid]");
@@ -638,6 +646,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     examPalette: localStorage.getItem('5e.aiOutputExamPalette') === 'true',
     lineThickness: Number(localStorage.getItem('5e.aiOutputLineThickness')),
   });
+  let selectedSeparationMode = normalizeSeparationMode(localStorage.getItem('5e.aiSeparationMode'));
   const outputVariantCache = new WeakMap();
   const automaticSeparationCache = new Map();
   let automaticSeparationRun = null;
@@ -782,7 +791,12 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     }[selectedImageOutputOptions.backgroundPolicy];
     const thickness = selectedImageOutputOptions.lineThickness
       ? `선 굵기 +${selectedImageOutputOptions.lineThickness}px` : '원본 굵기';
-    return `${background} · ${selectedImageOutputOptions.examPalette ? '평가원용 무채색으로 단순화' : '원본 색상 유지'} · ${thickness}`;
+    const separation = {
+      auto: '객체 자동 감지',
+      grid: '격자 기준 분리',
+      manual: '영역 직접 지정',
+    }[selectedSeparationMode];
+    return `${background} · ${selectedImageOutputOptions.examPalette ? '평가원용 무채색으로 단순화' : '원본 색상 유지'} · ${thickness} · ${separation}`;
   };
   const syncOutputProcessingUi = () => {
     if (outputProcessing) outputProcessing.hidden = selectedOutputEngine === AI_OUTPUT_ENGINES.ASSET;
@@ -808,6 +822,10 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     if (lineThicknessSelect) {
       lineThicknessSelect.value = String(selectedImageOutputOptions.lineThickness);
       lineThicknessSelect.disabled = busy;
+    }
+    if (separationModeSelect) {
+      separationModeSelect.value = selectedSeparationMode;
+      separationModeSelect.disabled = busy;
     }
     if (outputProcessingStatus) outputProcessingStatus.textContent = imageOutputSummary();
   };
@@ -1559,7 +1577,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
 
   function automaticSeparationIsCurrent(run) {
     return automaticSeparationRun === run && !run.controller.signal.aborted
-      && run.taskId === activeTaskTabId && selectedOutputItem() === run.item;
+      && run.taskId === activeTaskTabId && run.separationMode === selectedSeparationMode
+      && selectedOutputItem() === run.item;
   }
 
   function rememberAutomaticSeparation(key, prepared) {
@@ -1571,6 +1590,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   function startAutomaticSeparation(item) {
     if (panel.dataset.aiSharingMode === 'view') return Promise.resolve(null);
     if (!candidateUsesAutomaticSeparation(item)) return Promise.resolve(null);
+    if (selectedSeparationMode === AI_SEPARATION_MODES.MANUAL) return Promise.resolve(null);
     if (item.automaticSeparationState === 'ready' && item.automaticSeparationPrepared) {
       return Promise.resolve(item.automaticSeparationPrepared);
     }
@@ -1578,7 +1598,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     if (automaticSeparationRun?.item === item) return automaticSeparationRun.promise;
     abortAutomaticSeparation('result-replaced');
     const controller = new AbortController();
-    const run = { controller, item, taskId: activeTaskTabId, promise: null };
+    const separationOptions = separationOptionsForMode(selectedSeparationMode);
+    const run = { controller, item, taskId: activeTaskTabId, separationMode: selectedSeparationMode, promise: null };
     automaticSeparationRun = run;
     item.automaticSeparationState = 'preparing';
     item.automaticSeparationPrepared = null;
@@ -1589,14 +1610,14 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
         const outputOptions = normalizeImageOutputOptions(selectedImageOutputOptions);
         const effectiveSource = await resolveImageOutput(item, outputOptions, transparentizeGeneratedImage);
         if (!automaticSeparationIsCurrent(run)) return null;
-        const key = await automaticSeparationCacheKey(effectiveSource, outputOptions);
+        const key = await automaticSeparationCacheKey(effectiveSource, outputOptions, separationOptions);
         if (!automaticSeparationIsCurrent(run)) return null;
         item.automaticSeparationKey = key;
         item.automaticSeparationSource = effectiveSource;
         let prepared = automaticSeparationCache.get(key);
         item.automaticSeparationCacheHit = Boolean(prepared);
         if (!prepared) {
-          prepared = await prepareSeparatedAssets(effectiveSource, { ...AUTOMATIC_SEPARATION_OPTIONS, signal: controller.signal });
+          prepared = await prepareSeparatedAssets(effectiveSource, { ...separationOptions, signal: controller.signal });
           if (!automaticSeparationIsCurrent(run)) return null;
           if (prepared.assets?.length && !prepared.fallbackToOriginal) rememberAutomaticSeparation(key, prepared);
         }
@@ -1636,7 +1657,10 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     if (!candidateUsesAutomaticSeparation(item)) return;
     item.automaticSeparationState = 'idle';
     item.automaticSeparationPrepared = null;
-    void startAutomaticSeparation(item);
+    item.automaticSeparationKey = '';
+    item.automaticSeparationCacheHit = false;
+    if (selectedSeparationMode === AI_SEPARATION_MODES.MANUAL) syncSelectedOutputActions();
+    else void startAutomaticSeparation(item);
   }
 
   function candidateAlreadyInserted(item) {
@@ -1644,7 +1668,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       && object.aiCandidateId === item.id && object.editableAssetRegionId));
   }
 
-  async function openGroupsForItem(item, separated = false) {
+  async function openGroupsForItem(item, separated = false, manual = false) {
     const epoch = currentRequestEpoch;
     const taskId = activeTaskTabId;
     const candidateId = item.id;
@@ -1661,8 +1685,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
         captureActiveTaskTab();
         persistTasks();
       }
-      setStatus(separated ? '분리 결과를 확인하는 중…' : '편집용 그룹을 준비하는 중…', 'busy');
-      const initialPrepared = separated ? await prepareSeparatedAssets(source) : await startAutomaticSeparation(item);
+      setStatus(separated ? '분리 결과를 확인하는 중…' : manual ? '직접 지정할 영역을 준비하는 중…' : '편집용 그룹을 준비하는 중…', 'busy');
+      const initialPrepared = separated ? await prepareSeparatedAssets(source) : manual ? null : await startAutomaticSeparation(item);
       if (!isCurrent()) throw new Error('분리 결과를 준비하는 동안 페이지·작업 또는 후보가 변경되었습니다.');
       const dialogSource = separated ? source : (item.automaticSeparationSource || await resolveOutputVariant(item));
       const inserted = await openEditableAssetsDialog({
@@ -1702,7 +1726,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     const nextAction = separatedCandidateNextAction(item);
     if (groups) {
       const automatic = candidateUsesAutomaticSeparation(item);
-      const automaticState = automatic ? (item.automaticSeparationState || 'idle') : '';
+      const manual = automatic && selectedSeparationMode === AI_SEPARATION_MODES.MANUAL;
+      const automaticState = manual ? 'manual' : automatic ? (item.automaticSeparationState || 'idle') : '';
       const inserted = automatic && candidateAlreadyInserted(item);
       groups.hidden = candidateUsesSeparatedAssets(item);
       groups.disabled = busy || !item || Boolean(item.sceneResult) || automaticState === 'preparing' || inserted;
@@ -1712,6 +1737,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       groups.dataset.aiSeparatedCount = automatic && item.automaticSeparationPrepared?.assets?.length
         ? String(item.automaticSeparationPrepared.assets.length) : '';
       groups.textContent = inserted ? '이미 페이지에 추가됨'
+        : manual ? '영역을 직접 지정해서 분리'
         : automaticState === 'preparing' ? '물체를 분리하는 중…'
         : automaticState === 'ready' ? '분리 결과 확인'
         : automaticState === 'fallback' ? '영역을 직접 지정해서 분리'
@@ -2069,6 +2095,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     tab.generationMode = selectedAssetGenerationMode;
     tab.markPolicy = readMarkPolicy();
     tab.outputOptions = normalizeImageOutputOptions(selectedImageOutputOptions);
+    tab.separationMode = selectedSeparationMode;
     tab.model = modelSelect.value;
     tab.effort = effortSelect.value;
     tab.serviceTier = speedSelect.value;
@@ -2262,6 +2289,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     selectedQualityMode = normalizeQualityMode(tab.qualityMode);
     selectedOutputEngine = normalizeOutputEngine(tab.outputEngine);
     selectedImageOutputOptions = normalizeImageOutputOptions(tab.outputOptions || selectedImageOutputOptions);
+    selectedSeparationMode = normalizeSeparationMode(tab.separationMode || selectedSeparationMode);
     for (const [control, value] of [[modelSelect,tab.model],[effortSelect,tab.effort],[speedSelect,tab.serviceTier]]) {
       if (typeof value !== 'string') continue;
       if (![...control.options].some(option => option.value === value)) control.add(new Option(value || '기본값',value));
@@ -3728,7 +3756,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       ? "5E 에셋 출력은 지원되는 장치만 벡터로 생성합니다."
       : "그림형은 PNG를 한 번 생성합니다. 이후 배경·선 굵기는 기기에서 처리합니다.", "ok");
   }));
-  for (const select of [backgroundPolicySelect, examPaletteSelect, lineThicknessSelect].filter(Boolean)) {
+  for (const select of [backgroundPolicySelect, examPaletteSelect, lineThicknessSelect, separationModeSelect].filter(Boolean)) {
     select.addEventListener('keydown', (event) => {
       if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return;
       const options = Array.from(select.options).filter((option) => !option.disabled);
@@ -3779,6 +3807,19 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     restartSelectedAutomaticSeparation();
     captureActiveTaskTab(); persistTasks();
     setStatus('추가 AI 요청 없이 기기에서 선 굵기를 처리합니다. 생성 원본은 유지됩니다.', 'ok');
+  });
+  separationModeSelect?.addEventListener('change', () => {
+    if (busy) { syncOutputProcessingUi(); return; }
+    selectedSeparationMode = normalizeSeparationMode(separationModeSelect.value);
+    localStorage.setItem('5e.aiSeparationMode', selectedSeparationMode);
+    syncOutputProcessingUi();
+    restartSelectedAutomaticSeparation('separation-mode-changed');
+    captureActiveTaskTab(); persistTasks();
+    setStatus(selectedSeparationMode === AI_SEPARATION_MODES.MANUAL
+      ? '생성 결과에서 분리할 영역을 직접 지정할 수 있습니다.'
+      : selectedSeparationMode === AI_SEPARATION_MODES.GRID
+        ? '생성 결과를 격자 기준으로 다시 분석합니다.'
+        : '생성 결과의 객체를 자동으로 다시 분석합니다.', 'ok');
   });
   generationModeSelect.addEventListener('change', () => {
     if (busy) { generationModeSelect.value = selectedAssetGenerationMode; return; }
@@ -4518,7 +4559,9 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   editableGroups.addEventListener('click', async () => {
     const item = selectedOutputItem();
     if (busy || !item || item.sceneResult) return;
-    await openGroupsForItem(item, candidateUsesSeparatedAssets(item));
+    const manual = !candidateUsesSeparatedAssets(item)
+      && (selectedSeparationMode === AI_SEPARATION_MODES.MANUAL || item.automaticSeparationState === 'fallback');
+    await openGroupsForItem(item, candidateUsesSeparatedAssets(item), manual);
   });
   panel.querySelector('[data-ai-insert-selected]')?.after(editableGroups);
   const separatedRecovery = document.createElement('button');

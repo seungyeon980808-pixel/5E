@@ -40,6 +40,13 @@ test("production uses independent image task tabs while retaining the durable qu
   assert.match(batchUi, /maxRunning: 10/);
 });
 
+test("library AI handoffs use the same web login gate as the canvas AI entry", async () => {
+  const main = await source("js/main.js");
+  assert.match(main, /const webLogin = initWebLoginUi\(\{ openAi: openSelectedAi \}\)/u);
+  assert.match(main, /const openAiWithReference = \(options\) => webLogin[\s\S]*webLogin\.requireAi\(\(\) => aiPanel\?\.open\(options\)\)/u);
+  assert.match(main, /const openIndependentAiReferences = \(options\) => webLogin[\s\S]*webLogin\.requireAi\(\(\) => aiPanel\?\.openIndependentReferences\(options\)\)/u);
+});
+
 test("batch selection renders all pending sources before the queue starts", () => {
   const pending = Array.from({ length: 25 }, (_value, index) => ({ name: `figure-${index + 1}.png` }));
 

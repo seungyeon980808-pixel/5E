@@ -67,12 +67,47 @@ test('the derived cache identity binds the effective PNG bytes and processing op
   const same = await automaticSeparationCacheKey(source, { backgroundPolicy: 'preserve', examPalette: false, lineThickness: 0 });
   assert.equal(await automaticSeparationCacheKey(source, { backgroundPolicy: 'preserve', examPalette: false, lineThickness: 0 }), same);
   assert.notEqual(await automaticSeparationCacheKey(source, { backgroundPolicy: 'connected', examPalette: false, lineThickness: 0 }), same);
+  assert.notEqual(await automaticSeparationCacheKey(
+    source,
+    { backgroundPolicy: 'preserve', examPalette: false, lineThickness: 0 },
+    { layout: 'grid', maxAssets: 128, maxDurationMs: 8_000 },
+  ), same);
 
   const mutationIndex = source.indexOf(',') + 12;
   const changed = source.slice(0, mutationIndex) + (source[mutationIndex] === 'A' ? 'B' : 'A') + source.slice(mutationIndex + 1);
   assert.notEqual(await automaticSeparationCacheKey(changed, { backgroundPolicy: 'preserve', examPalette: false, lineThickness: 0 }), same);
   assert.equal(candidateUsesAutomaticSeparation({ kind: 'generated', data: source }), true);
   assert.equal(candidateUsesAutomaticSeparation({ kind: 'generated', data: source, sceneResult: { objects: [{}] } }), false);
+});
+
+test('an existing generated image can switch to manual object separation inside the AI panel', async () => {
+  const generated = { id: 'generated-1', name: 'generated-1', data: threeObjectsPng(), kind: 'generated', generationMode: 'single',
+    reviewState: 'needs-attention', reviewReport: { verdict: 'uncertain', checks: [], issues: [] } };
+  const workspace = {
+    key: 'workspace', activeTaskTabId: 'task-1', taskTabSerial: 1, imageSerial: 1,
+    tabs: [{
+      id: 'task-1', title: '기존 생성 이미지', workState: 'completed', attachments: [], generated: [generated],
+      selectedCandidateId: 'generated-1', conversationMessages: [], uiMessages: [], input: '', conversationId: null,
+      mode: 'diagram', qualityMode: 'standard', outputEngine: 'raster', generationMode: 'single',
+      outputOptions: { backgroundPolicy: 'preserve', examPalette: false, lineThickness: 0 },
+    }],
+  };
+  const browser = installAiPanelBrowserFixture({ workspace });
+  let manager;
+  try {
+    manager = initAiPanel({ get: appState });
+    await manager.open();
+    const select = browser.panel.querySelector('[data-ai-separation-mode]');
+    select.value = 'manual';
+    select.dispatchEvent(new Event('change', { bubbles:true }));
+    const groups = browser.panel.querySelector('[data-ai-editable-groups]');
+    assert.equal(groups.dataset.aiSeparationState, 'manual');
+    assert.equal(groups.textContent, '영역을 직접 지정해서 분리');
+    assert.equal(browser.storage.getItem('5e.aiSeparationMode'), 'manual');
+  } finally {
+    manager?.close();
+    browser.restore();
+  }
 });
 
 test('changing output processing invalidates the ready preparation and recomputes from the effective PNG', async () => {

@@ -364,6 +364,19 @@ test("folder counts are tooltip-only and never reserve label width", async () =>
   assert.match(source, /text\.title = tooltip;\s*label\.title = tooltip;\s*row\.title = tooltip;/u);
 });
 
+test("library folder loading is explicit and PDF sources use a document icon", async () => {
+  const [source, css] = await Promise.all([
+    readFile(new URL("../js/unified-library-ui.js", import.meta.url), "utf8"),
+    readFile(new URL("../css/unified-library.css", import.meta.url), "utf8"),
+  ]);
+  assert.match(source, /라이브러리 폴더를 불러오는 중/u);
+  assert.match(source, /setFolderLoading\("loading"\)/u);
+  assert.match(source, /file: node\.kind === "source"[\s\S]*\\\.pdf\$/u);
+  assert.match(source, /icon\.innerHTML = file \? ICONS\.file : ICONS\.folder/u);
+  assert.match(css, /\.unilib-folder-loading-spinner/u);
+  assert.match(css, /prefers-reduced-motion: reduce[\s\S]*\.unilib-folder-skeleton i \{ animation:none;/u);
+});
+
 test("add-location control stays beside the folder title and its menu stays inside the folder pane", async () => {
   const source = await readFile(new URL("../css/unified-library.css", import.meta.url), "utf8");
   assert.match(source, /\.unilib-folders > \.unilib-pane-head \{ position: relative; \}/u);

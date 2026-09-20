@@ -64,6 +64,7 @@ function createPanel(document) {
   appendSelect('data-ai-background-policy', ['preserve', 'connected', 'all-near-white']);
   appendSelect('data-ai-exam-palette', ['false', 'true']);
   appendSelect('data-ai-line-thickness', ['0', '1', '2']);
+  appendSelect('data-ai-separation-mode', ['auto', 'grid', 'manual']);
   appendControl(document, outputProcessing, 'p', 'data-ai-output-processing-status');
   appendControl(document, panel, 'div', 'data-ai-tab-list');
   appendControl(document, panel, 'button', 'data-ai-interrupt');
@@ -122,7 +123,7 @@ export function installAiPanelBrowserFixture({ workspace, indexedDbOptions } = {
   };
   document.defaultView = window;
   const panel = createPanel(document);
-  const globals = ['document', 'window', 'localStorage', 'sessionStorage', 'indexedDB', 'Image', 'Option', 'requestAnimationFrame', 'cancelAnimationFrame'];
+  const globals = ['document', 'window', 'localStorage', 'sessionStorage', 'indexedDB', 'Image', 'Option', 'MutationObserver', 'requestAnimationFrame', 'cancelAnimationFrame'];
   const saved = saveGlobals(globals);
   const Image = class extends TestImage { constructor() { super(document); } };
   const Option = class extends TestElement {
@@ -132,7 +133,11 @@ export function installAiPanelBrowserFixture({ workspace, indexedDbOptions } = {
       this.textContent = text;
     }
   };
-  Object.assign(globalThis, { document, window, localStorage: storage, sessionStorage, indexedDB, Image, Option, requestAnimationFrame, cancelAnimationFrame });
+  const MutationObserver = class {
+    observe() {}
+    disconnect() {}
+  };
+  Object.assign(globalThis, { document, window, localStorage: storage, sessionStorage, indexedDB, Image, Option, MutationObserver, requestAnimationFrame, cancelAnimationFrame });
   return {
     document,
     panel,

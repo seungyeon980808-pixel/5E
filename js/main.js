@@ -316,17 +316,17 @@ const aiPanel = initAiPanel(state, { freshStart: recoveryChoice === "fresh" });
 initAiSharing(aiPanel);
 initDesktopProjectCloseGuard(state, () => aiPanel?.checkpointForClose());
 const aiEntryButton = document.getElementById("ai-image-install-open");
+const openSelectedAi = () => void handSelectedCanvasImageToAi(state, {
+  renderImage: renderSessionToDataUrl,
+  openPanel: options => aiPanel?.open(options),
+  reportError: error => window.alert(`AI 이미지 변환을 열 수 없습니다.\n${error.message}`),
+});
+const webLogin = initWebLoginUi({ openAi: openSelectedAi });
 if (aiEntryButton) {
   aiEntryButton.title = "AI 이미지 변환";
   aiEntryButton.setAttribute("aria-label", "AI 이미지 변환");
   const label = aiEntryButton.querySelector(".search-trigger-label");
   if (label) label.textContent = "AI 이미지 변환";
-  const openSelectedAi = () => void handSelectedCanvasImageToAi(state, {
-    renderImage: renderSessionToDataUrl,
-    openPanel: options => aiPanel?.open(options),
-    reportError: error => window.alert(`AI 이미지 변환을 열 수 없습니다.\n${error.message}`),
-  });
-  const webLogin = initWebLoginUi({ openAi: openSelectedAi });
   aiEntryButton.addEventListener("click", () => webLogin ? webLogin.openAi() : openSelectedAi());
 }
 const desktopHandoff = initAiInstallGuide({
@@ -358,8 +358,12 @@ initImageObjectify(state);
 initImagePaste(state, svg);
 
 /* ----- exam library: 기출 문항 검색 → 이미지 삽입/객체 변환 (지연 로딩) ----- */
-const openAiWithReference = (options) => aiPanel?.open(options);
-const openIndependentAiReferences = (options) => aiPanel?.openIndependentReferences(options);
+const openAiWithReference = (options) => webLogin
+  ? webLogin.requireAi(() => aiPanel?.open(options))
+  : aiPanel?.open(options);
+const openIndependentAiReferences = (options) => webLogin
+  ? webLogin.requireAi(() => aiPanel?.openIndependentReferences(options))
+  : aiPanel?.openIndependentReferences(options);
 initExamLibrary(state, { openAi: openAiWithReference, openIndependentReferences: openIndependentAiReferences });
 
 /* ----- image cutout editing: edit-mode image 오려내기 (사각형/자유 영역 지우기) ----- */

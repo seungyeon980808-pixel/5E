@@ -152,6 +152,22 @@ test('Test_unconnected_status_still_opens_the_login_dialog', async () => {
   } finally { await page.close(); }
 });
 
+test('Test_library_ai_request_waits_for_login_and_resumes_with_its_original_payload', async () => {
+  // Given: the library requests AI with selected references while the web account is disconnected.
+  const page = await browser.newPage({ viewport:{ width:1280, height:800 } });
+  try {
+    await page.goto(baseUrl);
+    await page.evaluate(() => window.qaLoginUi.openAi({ source:'library', referenceCount:2 }));
+    await page.locator('.web-login-dialog[open]').waitFor();
+    assert.deepEqual(await page.evaluate(() => window.qaEvents), []);
+    // When: login completes, the queued library action resumes after the completion dialog closes.
+    await page.evaluate(() => window.qaComplete());
+    await page.waitForFunction(() => window.qaEvents.includes('open-ai'), null, { timeout:2000 });
+    // Then: no unauthenticated entry occurred and the original library context is preserved.
+    assert.deepEqual(await page.evaluate(() => window.qaAiPayloads), [{ source:'library', referenceCount:2 }]);
+  } finally { await page.close(); }
+});
+
 test('Test_narrow_inspector_uses_a_compact_visible_status_label', async () => {
   // Given: the real inspector's 215px width, which leaves one short slot beside three controls.
   const page = await browser.newPage({ viewport:{ width:1280, height:800 } });
