@@ -15,7 +15,7 @@ export function initWebLoginUi({ openAi }) {
   dialog.innerHTML = `<button type="button" class="web-login-close" aria-label="연결 안내 닫기">×</button>
     <h2 id="web-login-title" tabindex="-1">AI 기능을 시작하세요</h2>
     <div data-install-guide><p>설치형에서는 라이브러리에 내 컴퓨터의 폴더를 연결하고 AI 기능을 편리하게 사용할 수 있습니다.</p>
-      <a class="web-login-download" href="${DESKTOP_RELEASE_URL}" target="_blank" rel="noopener noreferrer">설치형 다운로드</a></div>
+      <a class="web-login-download ai-action-motion" data-ai-orbit="true" href="${DESKTOP_RELEASE_URL}" target="_blank" rel="noopener noreferrer"><span class="ai-action-motion-label">설치형 다운로드</span></a></div>
     <p data-login-message role="status">웹에서도 기존 ChatGPT 계정으로 연결할 수 있습니다.</p>
     <p class="web-login-account-note">별도 API 키 없이 연결하며, ChatGPT 계정의 이용 한도와 제한이 적용됩니다.</p>
     <div data-login-code hidden><span>1. 인증 코드 복사</span><div class="web-login-code-row"><strong></strong><button type="button" data-copy-code>복사</button></div><p>옆 인증 창에 붙여넣거나, 이 코드를 직접 입력해 주세요.</p></div>

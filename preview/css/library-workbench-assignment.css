@@ -1,3 +1,5 @@
+@import url("./ai-action-motion.css");
+
 .workbench-assignment-overlay {
   --workbench-bg: var(--unilib-bg, var(--bg-app));
   --workbench-panel: var(--unilib-panel, var(--bg-panel));
@@ -121,7 +123,8 @@
 .workbench-assignment button:disabled { cursor: default; opacity: 1; }
 .workbench-assignment-icon { width: var(--workbench-icon-size); padding: 0 !important; font-size: var(--workbench-type-icon) !important; }
 .workbench-assignment-modes { display: flex; flex: none; flex-wrap: wrap; justify-content: flex-start; gap: var(--workbench-space-7px); border-bottom: var(--workbench-border-width) solid var(--workbench-border); }
-.workbench-assignment-modes button[aria-pressed="true"] { color: var(--workbench-selected-foreground); background: var(--workbench-accent); border-color: var(--workbench-accent); box-shadow: inset 0 0 0 var(--workbench-border-width) color-mix(in srgb, var(--workbench-selected-foreground) var(--workbench-selected-inset-share), transparent); }
+.workbench-assignment-modes button[aria-pressed="true"] { color: var(--workbench-text); background: linear-gradient(var(--workbench-input), var(--workbench-input)) padding-box, conic-gradient(from var(--ai-action-orbit-angle), transparent 0 18%, var(--workbench-accent) 27%, transparent 38% 100%) border-box; border-color: transparent; box-shadow: inset 0 0 0 var(--workbench-border-width) color-mix(in srgb, var(--workbench-accent) 32%, transparent), 0 0 12px color-mix(in srgb, var(--workbench-accent) 16%, transparent); }
+.workbench-assignment-overlay[data-assignment-choice="explicit"] .workbench-assignment-modes button[aria-pressed="true"] { color: var(--workbench-selected-foreground); background: linear-gradient(var(--workbench-accent), var(--workbench-accent)) padding-box, conic-gradient(from var(--ai-action-orbit-angle), transparent 0 18%, var(--workbench-selected-foreground) 27%, transparent 38% 100%) border-box; border-color: transparent; box-shadow: inset 0 0 0 var(--workbench-border-width) color-mix(in srgb, var(--workbench-selected-foreground) var(--workbench-selected-inset-share), transparent), 0 6px 18px color-mix(in srgb, var(--workbench-accent) 24%, transparent); }
 .workbench-assignment-summary { color: var(--workbench-muted); }
 
 .workbench-assignment-advanced { display: grid; flex: 1 1 auto; grid-template-columns: minmax(var(--workbench-reference-column-min), var(--workbench-reference-column-ratio)) minmax(var(--workbench-bench-column-min), var(--workbench-bench-column-ratio)); min-height: 0; overflow: auto; }
@@ -154,6 +157,7 @@
 .workbench-assignment-error { flex: none; min-height: var(--workbench-error-height); margin: 0; padding: 0 var(--workbench-space-6); color: var(--workbench-danger); font-size: var(--workbench-type-body); }
 .workbench-assignment > footer { display: flex; flex: none; justify-content: flex-end; gap: var(--workbench-space-3); border-top: var(--workbench-border-width) solid var(--workbench-border); }
 .workbench-assignment .workbench-assignment-primary { color: var(--workbench-selected-foreground); background: var(--workbench-accent); border-color: var(--workbench-accent); }
+.workbench-assignment > footer .workbench-assignment-primary { background: linear-gradient(var(--workbench-accent), var(--workbench-accent)) padding-box, conic-gradient(from var(--ai-action-orbit-angle), transparent 0 18%, var(--workbench-selected-foreground) 27%, transparent 38% 100%) border-box; border-color: transparent; }
 .workbench-assignment-confirm-layer { position: absolute; inset: 0; z-index: 1; display: grid; place-items: center; padding: var(--workbench-space-7); background: color-mix(in srgb, var(--workbench-bg) var(--workbench-confirm-overlay-share), transparent); backdrop-filter: blur(var(--workbench-space-1)); }
 .workbench-assignment-confirm { width: min(var(--workbench-confirm-width), 100%); padding: var(--workbench-space-6); background: var(--workbench-panel); border: var(--workbench-border-width) solid var(--workbench-border); border-radius: var(--workbench-radius-dialog); }
 .workbench-assignment-confirm p { margin: var(--workbench-space-3) 0 var(--workbench-space-6); color: var(--workbench-muted); font-size: var(--workbench-type-body); line-height: var(--workbench-line-height-confirm); }

@@ -1,7 +1,7 @@
 import { registerEscapeLayer } from "./escape-layers.js?v=1";
 import { safeExternalSourceUrl } from "./library-import-policy.js";
 import { queryHighlightTerms } from "./pdf-library/search.js";
-import { chooseWorkbenchAssignment } from "./library/workbench-assignment.js";
+import { chooseWorkbenchAssignment } from "./library/workbench-assignment.js?v=1.6.0-preview-library-wave1-0920-1459";
 
 const SOURCE_STORAGE_KEY = "5e.unified-library.sources.v1";
 const TREE_STORAGE_KEY = "5e.unified-library.tree-expanded.v1";
