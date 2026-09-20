@@ -47,10 +47,14 @@ function moveEditorHeader(root, toolbar) {
   }
   header.append(toolbar);
 
-  const brand = toolbar.querySelector('.app-brand');
+  const history = document.createElement('div');
+  history.className = 'toolbar-history';
+  history.setAttribute('role', 'group');
+  history.setAttribute('aria-label', '작업 기록');
+  toolbar.prepend(history);
   for (const id of ['undo-btn', 'redo-btn']) {
     const button = root.querySelector(`#${id}`);
-    if (button && brand) toolbar.insertBefore(button, brand);
+    if (button) history.append(button);
   }
   const controls = toolbar.querySelector('.canvas-global-controls');
   if (controls) {
@@ -59,6 +63,12 @@ function moveEditorHeader(root, toolbar) {
       if (button) controls.insertBefore(button, controls.firstChild);
     }
   }
+  const menus = document.createElement('div');
+  menus.className = 'toolbar-document';
+  for (const child of [...toolbar.children]) {
+    if (child !== history && child !== controls) menus.append(child);
+  }
+  toolbar.insertBefore(menus, controls);
   root.querySelectorAll('[data-panel-internal-toggle]').forEach(button => button.remove());
   root.querySelectorAll('#panel-left > .panel-utility-bar, #panel-right > .panel-utility-bar').forEach(utility => {
     if (!utility.childElementCount) utility.remove();

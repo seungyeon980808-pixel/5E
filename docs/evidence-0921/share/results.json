@@ -1,0 +1,21 @@
+{
+  "source": "actual preview/index.html + production CSS/fonts + ai-sharing-ui.js",
+  "api": "local fixture only; no external requests",
+  "checks": [
+    "create success",
+    "clipboard contents",
+    "expiry survives copy",
+    "IDB reopen link and expiry",
+    "details visible",
+    "server error recovery",
+    "revoke",
+    "reopen after revoke",
+    "375px dialog bounds"
+  ],
+  "errors": [],
+  "calls": [
+    "POST",
+    "POST",
+    "DELETE"
+  ]
+}

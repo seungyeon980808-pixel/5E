@@ -1,0 +1,755 @@
+{
+  "errors": [],
+  "cases": [
+    {
+      "width": 1440,
+      "mode": "normal",
+      "h": {
+        "x": 150,
+        "y": 49,
+        "width": 1004,
+        "height": 20,
+        "top": 49,
+        "right": 1154,
+        "bottom": 69,
+        "left": 150
+      },
+      "v": {
+        "x": 130,
+        "y": 69,
+        "width": 20,
+        "height": 822.203125,
+        "top": 69,
+        "right": 150,
+        "bottom": 891.203125,
+        "left": 130
+      },
+      "canvas": {
+        "x": 150,
+        "y": 69,
+        "width": 1004,
+        "height": 822.203125,
+        "top": 69,
+        "right": 1154,
+        "bottom": 891.203125,
+        "left": 150
+      },
+      "inspector": {
+        "x": 1154,
+        "y": 49,
+        "width": 286,
+        "height": 923,
+        "top": 49,
+        "right": 1440,
+        "bottom": 972,
+        "left": 1154
+      },
+      "controls": {
+        "x": 1154,
+        "y": 8,
+        "width": 286,
+        "height": 32,
+        "top": 8,
+        "right": 1440,
+        "bottom": 40,
+        "left": 1154
+      },
+      "brand": {
+        "x": 150,
+        "y": 10,
+        "width": 29.046875,
+        "height": 28,
+        "top": 10,
+        "right": 179.046875,
+        "bottom": 38,
+        "left": 150
+      },
+      "menu": {
+        "x": 130,
+        "y": 9.25,
+        "width": 1024,
+        "height": 29.5,
+        "top": 9.25,
+        "right": 1154,
+        "bottom": 38.75,
+        "left": 130
+      },
+      "scroll": 1440
+    },
+    {
+      "width": 1440,
+      "collapsed": "left",
+      "h": {
+        "x": 20,
+        "y": 49,
+        "width": 1134,
+        "height": 20,
+        "top": 49,
+        "right": 1154,
+        "bottom": 69,
+        "left": 20
+      },
+      "v": {
+        "x": 0,
+        "y": 69,
+        "width": 20,
+        "height": 822.203125,
+        "top": 69,
+        "right": 20,
+        "bottom": 891.203125,
+        "left": 0
+      },
+      "canvas": {
+        "x": 20,
+        "y": 69,
+        "width": 1134,
+        "height": 822.203125,
+        "top": 69,
+        "right": 1154,
+        "bottom": 891.203125,
+        "left": 20
+      },
+      "inspector": {
+        "x": 1154,
+        "y": 49,
+        "width": 286,
+        "height": 923,
+        "top": 49,
+        "right": 1440,
+        "bottom": 972,
+        "left": 1154
+      },
+      "controls": {
+        "x": 1154,
+        "y": 8,
+        "width": 286,
+        "height": 32,
+        "top": 8,
+        "right": 1440,
+        "bottom": 40,
+        "left": 1154
+      },
+      "brand": {
+        "x": 150,
+        "y": 10,
+        "width": 29.046875,
+        "height": 28,
+        "top": 10,
+        "right": 179.046875,
+        "bottom": 38,
+        "left": 150
+      },
+      "menu": {
+        "x": 130,
+        "y": 9.25,
+        "width": 1024,
+        "height": 29.5,
+        "top": 9.25,
+        "right": 1154,
+        "bottom": 38.75,
+        "left": 130
+      },
+      "scroll": 1440
+    },
+    {
+      "width": 1440,
+      "collapsed": "right",
+      "h": {
+        "x": 20,
+        "y": 49,
+        "width": 1420,
+        "height": 20,
+        "top": 49,
+        "right": 1440,
+        "bottom": 69,
+        "left": 20
+      },
+      "v": {
+        "x": 0,
+        "y": 69,
+        "width": 20,
+        "height": 822.203125,
+        "top": 69,
+        "right": 20,
+        "bottom": 891.203125,
+        "left": 0
+      },
+      "canvas": {
+        "x": 20,
+        "y": 69,
+        "width": 1420,
+        "height": 822.203125,
+        "top": 69,
+        "right": 1440,
+        "bottom": 891.203125,
+        "left": 20
+      },
+      "inspector": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "controls": {
+        "x": 1154,
+        "y": 8,
+        "width": 286,
+        "height": 32,
+        "top": 8,
+        "right": 1440,
+        "bottom": 40,
+        "left": 1154
+      },
+      "brand": {
+        "x": 150,
+        "y": 10,
+        "width": 29.046875,
+        "height": 28,
+        "top": 10,
+        "right": 179.046875,
+        "bottom": 38,
+        "left": 150
+      },
+      "menu": {
+        "x": 130,
+        "y": 9.25,
+        "width": 1024,
+        "height": 29.5,
+        "top": 9.25,
+        "right": 1154,
+        "bottom": 38.75,
+        "left": 130
+      },
+      "scroll": 1440
+    },
+    {
+      "width": 1024,
+      "mode": "normal",
+      "h": {
+        "x": 124,
+        "y": 49,
+        "width": 614,
+        "height": 20,
+        "top": 49,
+        "right": 738,
+        "bottom": 69,
+        "left": 124
+      },
+      "v": {
+        "x": 104,
+        "y": 69,
+        "width": 20,
+        "height": 753.203125,
+        "top": 69,
+        "right": 124,
+        "bottom": 822.203125,
+        "left": 104
+      },
+      "canvas": {
+        "x": 124,
+        "y": 69,
+        "width": 614,
+        "height": 753.203125,
+        "top": 69,
+        "right": 738,
+        "bottom": 822.203125,
+        "left": 124
+      },
+      "inspector": {
+        "x": 738,
+        "y": 49,
+        "width": 286,
+        "height": 923,
+        "top": 49,
+        "right": 1024,
+        "bottom": 972,
+        "left": 738
+      },
+      "controls": {
+        "x": 738,
+        "y": 8,
+        "width": 286,
+        "height": 32,
+        "top": 8,
+        "right": 1024,
+        "bottom": 40,
+        "left": 738
+      },
+      "brand": {
+        "x": 124,
+        "y": 10,
+        "width": 29.046875,
+        "height": 28,
+        "top": 10,
+        "right": 153.046875,
+        "bottom": 38,
+        "left": 124
+      },
+      "menu": {
+        "x": 104,
+        "y": 9.25,
+        "width": 634,
+        "height": 29.5,
+        "top": 9.25,
+        "right": 738,
+        "bottom": 38.75,
+        "left": 104
+      },
+      "scroll": 1024
+    },
+    {
+      "width": 1024,
+      "collapsed": "left",
+      "h": {
+        "x": 20,
+        "y": 49,
+        "width": 718,
+        "height": 20,
+        "top": 49,
+        "right": 738,
+        "bottom": 69,
+        "left": 20
+      },
+      "v": {
+        "x": 0,
+        "y": 69,
+        "width": 20,
+        "height": 822.203125,
+        "top": 69,
+        "right": 20,
+        "bottom": 891.203125,
+        "left": 0
+      },
+      "canvas": {
+        "x": 20,
+        "y": 69,
+        "width": 718,
+        "height": 822.203125,
+        "top": 69,
+        "right": 738,
+        "bottom": 891.203125,
+        "left": 20
+      },
+      "inspector": {
+        "x": 738,
+        "y": 49,
+        "width": 286,
+        "height": 923,
+        "top": 49,
+        "right": 1024,
+        "bottom": 972,
+        "left": 738
+      },
+      "controls": {
+        "x": 738,
+        "y": 8,
+        "width": 286,
+        "height": 32,
+        "top": 8,
+        "right": 1024,
+        "bottom": 40,
+        "left": 738
+      },
+      "brand": {
+        "x": 150,
+        "y": 10,
+        "width": 29.046875,
+        "height": 28,
+        "top": 10,
+        "right": 179.046875,
+        "bottom": 38,
+        "left": 150
+      },
+      "menu": {
+        "x": 130,
+        "y": 9.25,
+        "width": 608,
+        "height": 29.5,
+        "top": 9.25,
+        "right": 738,
+        "bottom": 38.75,
+        "left": 130
+      },
+      "scroll": 1024
+    },
+    {
+      "width": 1024,
+      "collapsed": "right",
+      "h": {
+        "x": 20,
+        "y": 49,
+        "width": 1004,
+        "height": 20,
+        "top": 49,
+        "right": 1024,
+        "bottom": 69,
+        "left": 20
+      },
+      "v": {
+        "x": 0,
+        "y": 69,
+        "width": 20,
+        "height": 822.203125,
+        "top": 69,
+        "right": 20,
+        "bottom": 891.203125,
+        "left": 0
+      },
+      "canvas": {
+        "x": 20,
+        "y": 69,
+        "width": 1004,
+        "height": 822.203125,
+        "top": 69,
+        "right": 1024,
+        "bottom": 891.203125,
+        "left": 20
+      },
+      "inspector": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "controls": {
+        "x": 738,
+        "y": 8,
+        "width": 286,
+        "height": 32,
+        "top": 8,
+        "right": 1024,
+        "bottom": 40,
+        "left": 738
+      },
+      "brand": {
+        "x": 150,
+        "y": 10,
+        "width": 29.046875,
+        "height": 28,
+        "top": 10,
+        "right": 179.046875,
+        "bottom": 38,
+        "left": 150
+      },
+      "menu": {
+        "x": 130,
+        "y": 9.25,
+        "width": 608,
+        "height": 29.5,
+        "top": 9.25,
+        "right": 738,
+        "bottom": 38.75,
+        "left": 130
+      },
+      "scroll": 1024
+    },
+    {
+      "width": 768,
+      "mode": "normal",
+      "h": {
+        "x": 150,
+        "y": 49,
+        "width": 332,
+        "height": 20,
+        "top": 49,
+        "right": 482,
+        "bottom": 69,
+        "left": 150
+      },
+      "v": {
+        "x": 130,
+        "y": 69,
+        "width": 20,
+        "height": 753.203125,
+        "top": 69,
+        "right": 150,
+        "bottom": 822.203125,
+        "left": 130
+      },
+      "canvas": {
+        "x": 150,
+        "y": 69,
+        "width": 332,
+        "height": 753.203125,
+        "top": 69,
+        "right": 482,
+        "bottom": 822.203125,
+        "left": 150
+      },
+      "inspector": {
+        "x": 482,
+        "y": 49,
+        "width": 286,
+        "height": 923,
+        "top": 49,
+        "right": 768,
+        "bottom": 972,
+        "left": 482
+      },
+      "controls": {
+        "x": 482,
+        "y": 8,
+        "width": 286,
+        "height": 32,
+        "top": 8,
+        "right": 768,
+        "bottom": 40,
+        "left": 482
+      },
+      "brand": {
+        "x": 140,
+        "y": 10,
+        "width": 29.046875,
+        "height": 28,
+        "top": 10,
+        "right": 169.046875,
+        "bottom": 38,
+        "left": 140
+      },
+      "menu": {
+        "x": 130,
+        "y": 9.25,
+        "width": 352,
+        "height": 29.5,
+        "top": 9.25,
+        "right": 482,
+        "bottom": 38.75,
+        "left": 130
+      },
+      "scroll": 768
+    },
+    {
+      "width": 768,
+      "collapsed": "left",
+      "h": {
+        "x": 20,
+        "y": 49,
+        "width": 462,
+        "height": 20,
+        "top": 49,
+        "right": 482,
+        "bottom": 69,
+        "left": 20
+      },
+      "v": {
+        "x": 0,
+        "y": 69,
+        "width": 20,
+        "height": 753.203125,
+        "top": 69,
+        "right": 20,
+        "bottom": 822.203125,
+        "left": 0
+      },
+      "canvas": {
+        "x": 20,
+        "y": 69,
+        "width": 462,
+        "height": 753.203125,
+        "top": 69,
+        "right": 482,
+        "bottom": 822.203125,
+        "left": 20
+      },
+      "inspector": {
+        "x": 482,
+        "y": 49,
+        "width": 286,
+        "height": 923,
+        "top": 49,
+        "right": 768,
+        "bottom": 972,
+        "left": 482
+      },
+      "controls": {
+        "x": 482,
+        "y": 8,
+        "width": 286,
+        "height": 32,
+        "top": 8,
+        "right": 768,
+        "bottom": 40,
+        "left": 482
+      },
+      "brand": {
+        "x": 140,
+        "y": 10,
+        "width": 29.046875,
+        "height": 28,
+        "top": 10,
+        "right": 169.046875,
+        "bottom": 38,
+        "left": 140
+      },
+      "menu": {
+        "x": 130,
+        "y": 9.25,
+        "width": 352,
+        "height": 29.5,
+        "top": 9.25,
+        "right": 482,
+        "bottom": 38.75,
+        "left": 130
+      },
+      "scroll": 768
+    },
+    {
+      "width": 768,
+      "collapsed": "right",
+      "h": {
+        "x": 20,
+        "y": 49,
+        "width": 748,
+        "height": 20,
+        "top": 49,
+        "right": 768,
+        "bottom": 69,
+        "left": 20
+      },
+      "v": {
+        "x": 0,
+        "y": 69,
+        "width": 20,
+        "height": 822.203125,
+        "top": 69,
+        "right": 20,
+        "bottom": 891.203125,
+        "left": 0
+      },
+      "canvas": {
+        "x": 20,
+        "y": 69,
+        "width": 748,
+        "height": 822.203125,
+        "top": 69,
+        "right": 768,
+        "bottom": 891.203125,
+        "left": 20
+      },
+      "inspector": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "controls": {
+        "x": 482,
+        "y": 8,
+        "width": 286,
+        "height": 32,
+        "top": 8,
+        "right": 768,
+        "bottom": 40,
+        "left": 482
+      },
+      "brand": {
+        "x": 140,
+        "y": 10,
+        "width": 29.046875,
+        "height": 28,
+        "top": 10,
+        "right": 169.046875,
+        "bottom": 38,
+        "left": 140
+      },
+      "menu": {
+        "x": 130,
+        "y": 9.25,
+        "width": 352,
+        "height": 29.5,
+        "top": 9.25,
+        "right": 482,
+        "bottom": 38.75,
+        "left": 130
+      },
+      "scroll": 768
+    },
+    {
+      "width": 375,
+      "mode": "normal",
+      "h": {
+        "x": 20,
+        "y": 118.5,
+        "width": 355,
+        "height": 20,
+        "top": 118.5,
+        "right": 375,
+        "bottom": 138.5,
+        "left": 20
+      },
+      "v": {
+        "x": 0,
+        "y": 138.5,
+        "width": 20,
+        "height": 683.703125,
+        "top": 138.5,
+        "right": 20,
+        "bottom": 822.203125,
+        "left": 0
+      },
+      "canvas": {
+        "x": 20,
+        "y": 138.5,
+        "width": 355,
+        "height": 683.703125,
+        "top": 138.5,
+        "right": 375,
+        "bottom": 822.203125,
+        "left": 20
+      },
+      "inspector": {
+        "x": 0,
+        "y": 0,
+        "width": 0,
+        "height": 0,
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      },
+      "controls": {
+        "x": 161.359375,
+        "y": 77.5,
+        "width": 165.640625,
+        "height": 32,
+        "top": 77.5,
+        "right": 327,
+        "bottom": 109.5,
+        "left": 161.359375
+      },
+      "brand": {
+        "x": 48,
+        "y": 42.75,
+        "width": 29.046875,
+        "height": 28,
+        "top": 42.75,
+        "right": 77.046875,
+        "bottom": 70.75,
+        "left": 48
+      },
+      "menu": {
+        "x": 48,
+        "y": 42,
+        "width": 279,
+        "height": 29.5,
+        "top": 42,
+        "right": 327,
+        "bottom": 71.5,
+        "left": 48
+      },
+      "scroll": 375
+    }
+  ]
+}

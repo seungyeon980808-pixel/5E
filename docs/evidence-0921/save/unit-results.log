@@ -1,0 +1,25 @@
+✔ filename dialog cancellation creates no file (1.077291ms)
+✔ browser download uses the confirmed filename (0.561083ms)
+✔ picker failure cannot silently download or claim save success (0.295083ms)
+✔ picker cancellation creates no download or error (0.23975ms)
+✔ native picker writes full document before marking saved (0.280333ms)
+✔ filename normalization preserves Korean and prevents path injection (0.341458ms)
+✔ serialization retains active edits and inactive pages with guides layers and images (0.3025ms)
+✔ workflow shortcuts do not consume browser new-tab or location shortcuts (0.732625ms)
+(node:13651) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///private/tmp/5e-preview-deploy-0920/preview/js/library/exam-code.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /private/tmp/5e-preview-deploy-0920/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ question results require a recognized exam filename (0.540292ms)
+✔ textbook PDFs load without question crops (1.023167ms)
+✔ library cards do not show redundant result-type badges (0.047667ms)
+✔ preview exposes doubleclick page management without permanent close buttons and crop navigation (1.189834ms)
+✔ light canvas has a visible workspace watermark (0.237042ms)
+ℹ tests 13
+ℹ suites 0
+ℹ pass 13
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 41.833833

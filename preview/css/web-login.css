@@ -28,7 +28,7 @@
 .web-login-actions [data-login-start] { border-color:transparent; background:linear-gradient(var(--bg-input),var(--bg-input)) padding-box,conic-gradient(from var(--web-login-orbit-angle),transparent 0 18%,color-mix(in srgb,var(--accent) 72%,#fff) 27%,transparent 38% 100%) border-box; color:var(--text-primary); box-shadow:0 0 0 1px color-mix(in srgb,var(--accent) 20%,transparent); animation:web-login-copy-orbit 2.4s linear infinite; transition:transform 140ms cubic-bezier(.23,1,.32,1),filter 140ms ease,box-shadow 180ms ease; }
 .web-login-actions [data-login-start]:hover:not(:disabled) { color:#fff; filter:brightness(1.08); box-shadow:0 0 0 1px color-mix(in srgb,var(--accent) 86%,#fff),0 0 20px color-mix(in srgb,var(--accent) 38%,transparent); }
 .web-login-actions [data-login-start]:active:not(:disabled) { transform:scale(.97); }
-.web-login-actions [data-login-start][data-copy-ready="true"] { border-color:transparent;border-radius:999px;background:linear-gradient(var(--accent),var(--accent)) padding-box,conic-gradient(from var(--web-login-orbit-angle),transparent,var(--accent),#fff,transparent 45%) border-box;box-shadow:0 0 0 1px color-mix(in srgb,var(--accent) 75%,#fff),0 0 18px color-mix(in srgb,var(--accent) 62%,transparent); animation:web-login-next-glow 1.8s ease-in-out infinite,web-login-copy-orbit 1.8s linear infinite; }
+.web-login-actions [data-login-start][data-copy-ready="true"] { border-color:transparent;border-radius:999px;background:linear-gradient(var(--bg-input),var(--bg-input)) padding-box,conic-gradient(from var(--web-login-orbit-angle),transparent,var(--accent),#fff,transparent 45%) border-box;box-shadow:0 0 0 1px color-mix(in srgb,var(--accent) 75%,#fff),0 0 18px color-mix(in srgb,var(--accent) 62%,transparent); animation:web-login-next-glow 1.8s ease-in-out infinite,web-login-copy-orbit 1.8s linear infinite; }
 .web-login-actions button:disabled { opacity:.65; cursor:wait; }
 .web-login-dialog button:focus-visible,.web-account-status:focus-visible { outline:2px solid var(--accent); outline-offset:3px; }
 [data-login-code] { padding:16px; border:1px solid var(--border); border-radius:8px; background:var(--bg-input); }
@@ -59,5 +59,15 @@
 @keyframes web-login-complete-out { to { opacity:0; transform:translate(var(--login-complete-x),var(--login-complete-y)) scale(.08); } }
 @keyframes web-login-ready-pulse { 45% { box-shadow:0 0 0 5px color-mix(in srgb,var(--accent) 28%,transparent),0 0 24px color-mix(in srgb,var(--accent) 45%,transparent); } }
 @media (max-width:839px) { .web-login-dialog.web-login-paired { margin-left:auto; margin-right:auto; width:min(420px,calc(100vw - 32px)); } }
-@media (hover:hover) and (pointer:fine){.web-login-download:hover{background:linear-gradient(color-mix(in srgb,var(--accent) 14%,var(--bg-input)),color-mix(in srgb,var(--accent) 14%,var(--bg-input))) padding-box,conic-gradient(from var(--ai-action-orbit-angle),transparent 0 12%,#fff 25%,var(--accent) 34%,transparent 46% 100%) border-box;color:#fff;box-shadow:0 0 0 1px color-mix(in srgb,var(--accent) 86%,#fff),0 10px 28px color-mix(in srgb,var(--accent) 34%,transparent)}}
+@media (hover:hover) and (pointer:fine){.web-login-download:hover{background:linear-gradient(color-mix(in srgb,var(--accent) 14%,var(--bg-input)),color-mix(in srgb,var(--accent) 14%,var(--bg-input))) padding-box,conic-gradient(from var(--ai-action-orbit-angle),transparent 0 12%,#fff 25%,var(--accent) 34%,transparent 46% 100%) border-box;color:var(--text-primary);box-shadow:0 0 0 1px color-mix(in srgb,var(--accent) 86%,#fff),0 10px 28px color-mix(in srgb,var(--accent) 34%,transparent)}}
 @media(prefers-reduced-motion:reduce){.web-login-dialog[open],.web-login-code-row [data-copy-code],.web-login-actions [data-login-start][data-copy-ready="true"],.web-login-dialog.web-login-completing,#ai-image-install-open.ai-login-ready-pulse{animation:none}.web-login-dialog.web-login-pair-shift,.web-login-dialog.web-login-pair-settle{transition:none;transform:none}}
+
+/* Only the next available action orbits; completion remains a manual handoff. */
+.web-login-dialog[data-phase="waiting"] [data-login-start]:not([data-copy-ready="true"]):not([data-authenticating="true"]) { animation:none; background:var(--bg-input); border-color:var(--border); box-shadow:none; }
+.web-login-dialog[data-phase="connected"] [data-login-start] { animation:none; background:var(--bg-input); border-color:var(--border); box-shadow:none; }
+.web-login-actions [data-login-start]:hover:not(:disabled) { color:var(--text-primary); }
+@media(prefers-reduced-motion:reduce) { .web-login-actions [data-login-start] { animation:none!important; transition:none; } }
+
+.web-login-dialog h2,.web-login-dialog p { word-break:keep-all; overflow-wrap:break-word; }
+
+:root[data-theme="light"] .web-login-actions [data-login-logo] { filter:brightness(.2); }

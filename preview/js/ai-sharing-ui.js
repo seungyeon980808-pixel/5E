@@ -38,12 +38,24 @@ export function initAiSharing(aiPanel) {
   if (!trigger || !aiPanel) return;
   const dialog = document.createElement('dialog'); dialog.className='ai-sharing-dialog';
   dialog.setAttribute('aria-labelledby','ai-sharing-title');
-  dialog.innerHTML=`<header><h2 id="ai-sharing-title">작업 공유</h2><button type="button" data-close aria-label="공유 닫기">×</button></header><p class="ai-sharing-lead">현재 AI 작업을 링크 하나로 공유합니다.</p><fieldset><legend>권한</legend><label><input type="radio" name="sharing-mode" value="view" checked> 보기</label><label><input type="radio" name="sharing-mode" value="edit"> 편집</label></fieldset><button type="button" data-create class="primary">공유 링크 만들기</button><section class="ai-sharing-result" data-result hidden><label class="ai-sharing-link-label">공유 링크<input data-link type="text" readonly aria-label="공유 링크"></label><div class="ai-sharing-actions"><button type="button" data-copy disabled>복사</button><button type="button" data-revoke disabled>공유 중지</button></div></section><p data-status role="status" aria-live="polite">링크는 1시간 동안 사용할 수 있습니다.</p><details class="ai-sharing-details"><summary>공유 안내</summary><p>원본·크롭·생성 버전과 작업 설정이 함께 전달됩니다. 로그인 쿠키와 인증 정보는 포함하지 않습니다.</p><p>편집 권한은 받는 사람의 복사본에 적용되며, AI 실행은 받는 사람의 계정을 사용합니다.</p></details>`;
+  dialog.innerHTML=`<header><h2 id="ai-sharing-title">작업 공유</h2><button type="button" data-close aria-label="공유 닫기">×</button></header><p class="ai-sharing-lead">현재 AI 작업을 링크 하나로 공유합니다.</p><fieldset><legend>권한</legend><label><input type="radio" name="sharing-mode" value="view" checked> 보기 전용</label><label><input type="radio" name="sharing-mode" value="edit"> 편집 가능</label></fieldset><button type="button" data-create class="primary">공유 링크 만들기</button><section class="ai-sharing-result" data-result hidden><label class="ai-sharing-link-label">공유 링크<input data-link type="text" readonly aria-label="공유 링크"></label><div class="ai-sharing-actions"><button type="button" data-copy disabled>복사</button><button type="button" data-revoke disabled>공유 중지</button></div></section><p data-expiry class="ai-sharing-note">링크는 생성 후 1시간 동안 사용할 수 있습니다.</p><p data-status role="status" aria-live="polite"></p><details class="ai-sharing-details"><summary>공유 범위와 보관 안내</summary><p>링크를 가진 사람은 문서를 받을 수 있습니다. 임시 서버가 재시작되면 만료 전에도 링크가 사라질 수 있습니다.</p><p>원본·크롭·생성 버전과 작업 설정이 함께 전달됩니다. 로그인 쿠키와 인증 정보는 포함하지 않습니다.</p><p>편집 권한은 받는 사람의 복사본에 적용되며, AI 실행은 받는 사람의 계정을 사용합니다. 보기 전용은 앱 안의 편집 제한입니다.</p><p>받은 문서는 이 브라우저에 저장되며 링크 만료 후에도 열 수 있습니다. 브라우저 데이터를 삭제하면 저장된 문서도 사라집니다.</p></details>`;
   document.body.append(dialog);
   const status = dialog.querySelector('[data-status]'), link = dialog.querySelector('[data-link]');
   const create = dialog.querySelector('[data-create]'), copy=dialog.querySelector('[data-copy]'), revoke=dialog.querySelector('[data-revoke]');
   const resultBox = dialog.querySelector('[data-result]');
+  const expiry = dialog.querySelector('[data-expiry]');
   let latest, working=false;
+  const showLatest = () => {
+    const active = latest && new Date(latest.expiresAt).getTime() > Date.now();
+    resultBox.hidden = !active;
+    link.value = active ? latest.link : '';
+    copy.disabled = !active;
+    revoke.disabled = !active;
+    expiry.textContent = active
+      ? `${latest.mode === 'view' ? '보기 전용' : '편집 가능'} · ${new Date(latest.expiresAt).toLocaleString('ko-KR')} 만료`
+      : '링크는 생성 후 1시간 동안 사용할 수 있습니다.';
+    if (latest && !active) { latest = null; status.textContent = '이전 링크가 만료되었습니다. 새 링크를 만들어 주세요.'; }
+  };
   const error = failure => {
     const message=failure.name==='QuotaExceededError'||/quota/i.test(failure.message) ? '브라우저 저장 공간이 부족해 문서를 저장하지 못했습니다. 공간을 확보한 뒤 다시 받아 주세요.' : failure.message;
     status.textContent=`실패: ${message} 저장 완료 안내가 없으면 새로고침하지 마세요.`;
@@ -58,7 +70,8 @@ export function initAiSharing(aiPanel) {
     dialog.showModal();
     try {
       latest=await idbGet('sharing:latest-sent');
-      if(latest){resultBox.hidden=false;link.value=latest.link;copy.disabled=false;revoke.disabled=false;status.textContent=`${latest.mode==='view'?'보기':'편집'} · ${new Date(latest.expiresAt).toLocaleTimeString('ko-KR')}까지` ;}
+      status.textContent='';
+      showLatest();
     } catch(failure){error(failure);}
   };
   create.onclick=async()=>{
@@ -71,8 +84,8 @@ export function initAiSharing(aiPanel) {
       const document=await createSharingDocument(snapshot.workspaces,{mode,activeWorkspace:snapshot.activeWorkspace,embedImage});
       if(!document.workspaces.some(workspace=>workspace.tabs.length))throw new Error('공유할 AI 작업이 없습니다.');
       latest={...await request('POST','',document),mode};latest.link=linkFor(latest.id);
-      resultBox.hidden=false;link.value=latest.link;copy.disabled=false;revoke.disabled=false;
-      try{await idbSet('sharing:latest-sent',latest);status.textContent=`링크 준비 완료 · ${mode==='view'?'보기 전용':'편집 가능'} · 만료 ${new Date(latest.expiresAt).toLocaleTimeString('ko-KR')} (임시 서버)`;}
+      showLatest();
+      try{await idbSet('sharing:latest-sent',latest);status.textContent='링크가 준비되었습니다. 복사해서 전달하세요.';}
       catch{status.textContent='링크는 생성되었지만 이 브라우저에 공유 해제 정보를 저장하지 못했습니다. 아래 링크를 복사하고 이 창에서 해제하세요.';}
     }catch(failure){error(failure);}
     finally{working=false;create.disabled=false;revoke.disabled=!latest;}
@@ -81,7 +94,7 @@ export function initAiSharing(aiPanel) {
   revoke.onclick=async()=>{
     if(!latest||working)return;
     working=true;revoke.disabled=true;
-    try{await request('DELETE',`/${latest.id}`,{revokeKey:latest.revokeKey});await idbSet('sharing:latest-sent',null);latest=null;status.textContent='공유를 중지했습니다.';copy.disabled=true;link.value='';resultBox.hidden=true;}
+    try{await request('DELETE',`/${latest.id}`,{revokeKey:latest.revokeKey});await idbSet('sharing:latest-sent',null);latest=null;showLatest();status.textContent='공유를 중지했습니다.';}
     catch(failure){error(failure);revoke.disabled=false;}
     finally{working=false;}
   };

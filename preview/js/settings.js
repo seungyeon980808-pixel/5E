@@ -1,3 +1,4 @@
+import { initSettingsShortcuts, settingsShortcutRows, workflowShortcutRows } from './settings-shortcuts.js?v=1.6.0-preview-repair-0921';
 import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-preview-labeler-0917-1111';
 /* ===== SETTINGS (설정 dropdown + 기본값 설정 modal) ===== */
 //
@@ -30,7 +31,7 @@ import {
 // 전체 백업(요구 3): 개인 설정·라이브러리와 함께 '현재 프로젝트(그림·페이지)'도 한 파일에
 // 담기 위해 프로젝트 직렬화/복원 함수를 재사용한다(project-io는 settings를 import하지 않아
 // 순환 없음).
-import { serialize as serializeProject, applyLoaded, migrate as migrateProject } from "./project-io.js?v=1.6.0-preview-web-native-project-0918-1617";
+import { serialize as serializeProject, applyLoaded, migrate as migrateProject } from "./project-io.js?v=1.6.0-preview-repair-0921";
 // 퍼스널 라이브러리는 이제 IndexedDB에 산다(localStorage 아님). 백업은 이 함수들로 왕복하고,
 // hasLibraryItems는 "덮어쓰기 전 확인"(감사 finding 1)의 판단 근거로 쓴다 —
 // localStorage를 봐서는 IDB에 든 실제 항목 유무를 알 수 없기 때문이다.
@@ -442,11 +443,12 @@ function openShortcutDialog() {
   const mac = getShortcutPlatform() === "mac" || (getShortcutPlatform() === "auto" && /mac/i.test(navigator.platform));
   const mod = mac ? "⌘" : "Ctrl";
   const groups = [
+    ["설정", settingsShortcutRows()],
     ["파일", [["프로젝트 저장", `${mod}+S`], ["이미지로 내보내기", "Alt+P"]]],
     ["편집", [["실행 취소", `${mod}+Z`], ["다시 실행", `${mod}+Shift+Z`], ["복사", `${mod}+C`], ["붙여넣기", `${mod}+V`], ["삭제", "Delete"]]],
     ["도구", [["선택", "V"], ["회전", "R"], ["타원", "O"], ["사각형", "S"], ["직선", "L"], ["꺾은선", "P"], ["곡선", "C"], ["텍스트", "T"]]],
     ["화면과 이동", [["미세 이동", "방향키"], ["큰 폭 이동", "Shift+방향키"], ["임시 화면 이동", "Space+드래그"], ["선택 해제", "Esc"]]],
-    ["이미지", [["이미지 객체화", `${mod}+T`], ["AI 이미지 변환", "하단 AI 버튼"]]],
+    ["라이브러리와 이미지", workflowShortcutRows()],
   ];
   overlay.innerHTML = `<div class="modal shortcut-modal" role="dialog" aria-modal="true" aria-labelledby="shortcut-title"><style>
     .shortcut-modal{width:min(620px,calc(100vw - 32px));max-height:min(760px,calc(100vh - 32px));overflow:auto}.shortcut-head{display:flex;align-items:center;justify-content:space-between;gap:12px}.shortcut-platform{min-width:150px}.shortcut-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:16px 0}.shortcut-group{padding:12px;border:1px solid var(--border);border-radius:8px}.shortcut-group h3{margin:0 0 8px;font-size:13px}.shortcut-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:5px 0;color:var(--text-secondary);font-size:12px}.shortcut-row kbd{padding:2px 6px;border:1px solid var(--border);border-bottom-width:2px;border-radius:5px;background:var(--bg-input);color:var(--text-primary);font:11px/1.5 "IBM Plex Mono",monospace}@media(max-width:560px){.shortcut-list{grid-template-columns:1fr}}
@@ -464,7 +466,7 @@ function openShortcutDialog() {
   overlay.querySelector("[data-close]").addEventListener("click", close);
   overlay.addEventListener("mousedown", (event) => { if (event.target === overlay) close(); });
   overlay.addEventListener("keydown", (event) => { if (event.key === "Escape") { event.stopPropagation(); close(); } });
-  overlay.querySelector("[data-close]").focus();
+  select.focus({ preventScroll: true });
 }
 function openExportDialog() {
   const overlay = document.createElement("div");
@@ -859,6 +861,7 @@ function buildModal() {
 
 /* ----- initSettings: wire dropdown + 기본값 설정 modal ----- */
 export function initSettings(state) {
+  initSettingsShortcuts();
   _state = state;   // 전체 백업(프로젝트 포함 저장/복원)에서 사용
   initSettingsMenu();
 

@@ -6,7 +6,7 @@
 import { startRectErase, startPathErase, startSmartCutout, clearCutouts, cancelImageEditSession } from "../image-cutout.js?v=1.6.0-preview-labeler-0917-1111";
 import { makeSection } from "./widgets.js?v=1.6.0-preview-labeler-0917-1111";
 import { trimImageMargins } from "../image-margin-trim.js?v=1.6.0-preview-labeler-0917-1111";
-import { startImageCompare } from "../image-compare.js?v=1.6.0-preview-labeler-0917-1111";
+import { startImageCompare } from "../image-compare.js?v=1.6.0-preview-repair-0921";
 
 export function buildImageSection(ctx) {
   const { state, snapBefore, pushSnap } = ctx;

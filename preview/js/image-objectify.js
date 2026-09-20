@@ -16,7 +16,7 @@ import { DEFAULT_TEXT_FONT } from "./state.js?v=1.4.0";
 import { MAX_PROCESS_DIMENSION } from "./image-analysis.js";
 import { createImageAnalysisController } from "./image-analysis-controller.js";
 import { measureFormula } from "./formula.js?v=1.4.0";
-import { modKey, shortcutKey, keyLabel, isComposingKey } from "./platform.js?v=1.4.0";
+import { modKey, shortcutKey, keyLabel } from "./platform.js?v=1.4.0";
 import { selectedObjectifyImage, objectifyImageFile } from "./image-objectify-source.js";
 import { renderSessionToDataUrl } from "./image-cutout.js?v=1.4.0";
 
@@ -1070,15 +1070,6 @@ export function initImageObjectify(state) {
     }
   };
   openButton.addEventListener("click", openSelectedImage);
-  // Ctrl+T = 이미지 객체화. (일부 브라우저는 Ctrl+T를 새 탭에 예약해 가로챌 수
-  // 없다 — 그 경우 버튼으로 연다. 가로챌 수 있는 환경에서는 즉시 열림.)
-  document.addEventListener("keydown", (e) => {
-    if (e.defaultPrevented || isComposingKey(e) || !modKey(e) || e.shiftKey || e.altKey || shortcutKey(e) !== "t") return;
-    const tgt = e.target;
-    if (tgt && (tgt.tagName === "INPUT" || tgt.tagName === "TEXTAREA" || tgt.isContentEditable)) return;
-    e.preventDefault();
-    if (overlay.hidden) void openSelectedImage();
-  }, true);
   _openWithFile = (file, options = {}) => {
     selectionOpenGeneration += 1;
     overlay.hidden = false;

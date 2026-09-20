@@ -31,9 +31,19 @@ export function humanExamName(metadata = {}, itemNumber = null) {
   const validYear = Number.isInteger(metadata.academicYear) && metadata.academicYear >= 2000 && metadata.academicYear <= 2099;
   const administration = ADMINISTRATION_LABELS[metadata.administration];
   if (!subject || !validYear || !administration) return "";
-  const year = `${metadata.academicYear}학년도`;
+  const year = `${String(metadata.academicYear).slice(-2)}년`;
   const question = Number.isInteger(itemNumber) ? `${itemNumber}번` : "";
-  return [subject, year, administration, question].filter(Boolean).join(" ");
+  return [subject.replace("물리학", "물리").replace("지구과학", "지구").replace("생명과학", "생명").replace("Ⅰ", "1").replace("Ⅱ", "2"), year, ({ "06": "6평", "09": "9평", "11": "수능" })[metadata.administration], question].filter(Boolean).join(" ");
+}
+
+export function compareExamResults(left, right) {
+  const a = left.metadata ?? {}, b = right.metadata ?? {};
+  return (b.academicYear ?? 0) - (a.academicYear ?? 0)
+    || Number(b.administration ?? 0) - Number(a.administration ?? 0)
+    || String(a.subject ?? "").localeCompare(String(b.subject ?? ""))
+    || String(left.provenance?.documentId ?? a.documentCode ?? "").localeCompare(String(right.provenance?.documentId ?? b.documentCode ?? ""))
+    || (a.itemNumber ?? a.pageNumber ?? left.provenance?.pageNumber ?? 0) - (b.itemNumber ?? b.pageNumber ?? right.provenance?.pageNumber ?? 0)
+    || left.title.localeCompare(right.title, "ko");
 }
 
 function matchesFilters(result, filters = {}) {
@@ -71,7 +81,7 @@ function matchesText(haystack, queryTokens) {
 }
 
 function boundedLimit(value) {
-  return Number.isInteger(value) && value > 0 ? Math.min(value, 500) : 100;
+  return Number.isInteger(value) && value > 0 ? value : 100;
 }
 
 function freezeResult(value) {
@@ -276,7 +286,7 @@ function pdfPageResult(document, pageNumber, pageText, metadata, itemNumbers, pa
   const code = metadata?.documentCode ?? null;
   return freezeResult({
     id: stableId("page", sourceId, pageNumber), kind: "page",
-    title: `${document.title} · ${pageNumber}쪽`,
+    title: `${humanExamName(metadata) || document.title} · ${pageNumber}쪽`,
     subtitle: [code ? `${code}.pdf` : document.source?.displayName, `${pageNumber}쪽`].filter(Boolean).join(" · "),
     sourceId, sourceLabel: document.source?.displayName ?? document.title,
     searchText: [document.title, document.source?.displayName, code, pageText].join(" "),
@@ -614,6 +624,7 @@ export function createUnifiedLibraryProvider(input = {}) {
       const exactLeft = compact && left.metadata.itemCode === compact.itemCode ? 1 : 0;
       const exactRight = compact && right.metadata.itemCode === compact.itemCode ? 1 : 0;
       return exactRight - exactLeft
+        || compareExamResults(left, right)
         || ((left.metadata.itemNumber ?? Number.MAX_SAFE_INTEGER) - (right.metadata.itemNumber ?? Number.MAX_SAFE_INTEGER))
         || left.title.localeCompare(right.title, "ko");
     });
@@ -667,7 +678,7 @@ export function createUnifiedLibraryProvider(input = {}) {
           && matchesFilters(result, options.filters)
           && resultMatches(result, queryText, compact));
       });
-      return Object.freeze(found.sort((left, right) => left.title.localeCompare(right.title, "ko")).map((file) => Object.freeze({
+      return Object.freeze(found.sort(compareExamResults).map((file) => Object.freeze({
         ...file,
         firstMatchingPage: 1,
         loadPreview: (pageNumber = 1, previewOptions = {}) => loadPdfPage(file, pageNumber, previewOptions),
@@ -770,7 +781,7 @@ export function createUnifiedLibraryProvider(input = {}) {
         && resultMatches(result, options.query ?? "", compact))
         .map((result) => contextualized(result, options.query ?? ""));
       const limit = Number.isInteger(options.limit) && options.limit > 0 ? boundedLimit(options.limit) : found.length;
-      return Object.freeze(found.slice(0, limit));
+      return Object.freeze(found.sort(compareExamResults).slice(0, limit));
     },
     getExamFilterOptions() {
       const metadata = allResults().filter((result) => result.kind === "crop").map((result) => result.metadata ?? {});

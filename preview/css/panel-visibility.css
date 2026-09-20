@@ -206,3 +206,53 @@
   .panel-collapse-close:active { transform: none; transition: none; }
 }
 html.is-workspace-maximized .app-footer { display: none; }
+
+/* Header columns follow the same panel boundaries as the editor below. */
+@media (min-width: 768px) {
+  .app { --panel-right-w: 286px; }
+  .app-shell-header .canvas-toolbar {
+    display: grid;
+    grid-template-columns: var(--panel-left-w) minmax(0, 1fr) var(--panel-right-w);
+    padding: 8px 0;
+    gap: 0;
+  }
+  .toolbar-history { display: flex; gap: 4px; padding-left: 48px; }
+  .toolbar-document { display: flex; align-items: center; gap: 6px; min-width: 0; padding-left: 20px; }
+  .app[data-panel-layout] .app-shell-header .canvas-global-controls {
+    width: 100%;
+    margin: 0;
+    padding: 0 48px 0 10px;
+    gap: 4px;
+    min-width: 0;
+    justify-content: flex-end;
+    border-left: 1px solid var(--border-strong);
+  }
+  .app[data-left-collapsed="true"] .canvas-toolbar { grid-template-columns: 130px minmax(0, 1fr) var(--panel-right-w); }
+  .app[data-right-collapsed="true"] .canvas-toolbar { grid-template-columns: var(--panel-left-w) minmax(0, 1fr) 286px; }
+  .app[data-left-collapsed="true"][data-right-collapsed="true"] .canvas-toolbar { grid-template-columns: 130px minmax(0, 1fr) 286px; }
+}
+@media (min-width: 768px) and (max-width: 1000px) {
+  .app { --panel-left-w: 130px; }
+  .toolbar-document { gap: 4px; padding-left: 10px; }
+}
+@media (max-width: 767px) {
+  .toolbar-history, .toolbar-document { display: flex; align-items: center; gap: 4px; }
+  .toolbar-document { flex-wrap: wrap; }
+  .app-shell-header .canvas-toolbar { gap: 6px; }
+}
+@media (max-width: 767px) {
+  .app[data-panel-layout] { grid-template-columns: minmax(0, 1fr); }
+  .app[data-panel-layout] > .panel-center { grid-column: 1; }
+  .app-shell-header { grid-column: 1; }
+  .app-shell-header .canvas-toolbar { display: flex; width: 100%; padding: 8px 48px; flex-wrap: wrap; }
+  .toolbar-history { flex: 0 0 auto; }
+  .toolbar-document { flex: 1 0 100%; flex-wrap: nowrap; gap: 4px; }
+  .app-shell-header .canvas-global-controls { margin-inline-start: 0; }
+  .app-shell-header .panel-shell-toggles { align-items: start; padding-top: 8px; }
+}
+.panel-center { container-type: inline-size; }
+@container (max-width: 650px) {
+  .canvas-bottom-bar { flex-wrap: wrap; gap: 6px; }
+  .image-workflow-hub { flex: 1 1 100%; flex-wrap: wrap; min-width: 0; }
+  #tool-hint { flex: 1 1 100%; max-width: 100%; overflow: hidden; }
+}

@@ -71,22 +71,22 @@
    (bg #f6f8fa / border #d0d7de / ink #0d1117) with the signature blue #0969da.
    Canvas surround stays a cool light gray so the white artboard still frames. */
 :root[data-theme="light"] {
-  --bg-app: #eaeef2;
+  --bg-app: #f4f5f7;
   --bg-panel: #ffffff;
-  --bg-panel-hover: #f3f5f8;
-  --bg-canvas: #dde3ea;
-  --bg-input: #ffffff;
-  --border-strong: #d0d7de;
-  --text-primary: #0d1117;
-  --text-secondary: #656d76;
+  --bg-panel-hover: #eef1f5;
+  --bg-canvas: #e5e7eb;
+  --bg-input: #f8f9fb;
+  --border-strong: #d4d9e1;
+  --text-primary: #202630;
+  --text-secondary: #5d6878;
   --text-label: #424a53;
-  --accent: #0969da;
+  --accent: #1769d2;
   --accent-hover: #0860ca;
   --accent-2: #0a5aa8;
   --accent-2-hover: #084b8d;
-  --btn-tool-active: #0969da;
+  --btn-tool-active: #1769d2;
   --btn-tool-bg: transparent;
-  --btn-tool-hover: #eaeef2;
+  --btn-tool-hover: #f4f5f7;
   --scrollbar-thumb: #afb8c1;
 }
 
@@ -190,7 +190,7 @@ body {
 .app {
   flex: 1 1 auto;
   display: grid;
-  grid-template-columns: var(--panel-left-w) 1fr auto;
+  grid-template-columns: var(--panel-left-w) minmax(0, 1fr) var(--panel-right-w);
   grid-template-rows: auto minmax(0, 1fr);
   align-content:start;
   min-height: 0; /* allow children to shrink */
@@ -1769,49 +1769,38 @@ body { zoom: var(--ui-zoom, 1); }
 .image-placement-hint[hidden] { display: none; }
 
 /* ===== RULER CONTAINER (CSS grid: corner | h-ruler / v-ruler | canvas) ===== */
+/* Absolute tracks avoid replaced-element percentage sizing cycles in WebKit. */
 .ruler-container {
+  --ruler-size: 20px;
   position: absolute;
   inset: 0;
-  display: grid;
-  grid-template-columns: 20px minmax(0, 1fr);
-  grid-template-rows: 20px minmax(0, 1fr);
   overflow: hidden;
 }
-
-/* Rulers hidden: collapse the 20px tracks so canvas fills the full area */
-.ruler-container.rulers-hidden {
-  grid-template-columns: 0 minmax(0, 1fr);
-  grid-template-rows: 0 minmax(0, 1fr);
-}
-
+.ruler-container.rulers-hidden { --ruler-size: 0px; }
+.ruler-container.rulers-hidden > .ruler,
+.ruler-container.rulers-hidden > .ruler-corner { display: none; }
 .ruler-corner {
-  grid-column: 1;
-  grid-row: 1;
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: var(--ruler-size);
+  height: var(--ruler-size);
   background: var(--bg-panel);
   border-right: 1px solid var(--border-muted);
   border-bottom: 1px solid var(--border-muted);
 }
-
-.ruler {
-  display: block;
-  min-width: 0;
-  min-height: 0;
-  background: var(--bg-panel);
-}
-
+.ruler { position: absolute; display: block; min-width: 0; min-height: 0; background: var(--bg-panel); }
 .ruler-h {
-  grid-column: 2;
-  grid-row: 1;
-  width: 100%;
-  height: 100%;
+  top: 0;
+  left: var(--ruler-size);
+  width: calc(100% - var(--ruler-size));
+  height: var(--ruler-size);
   border-bottom: 1px solid var(--border-muted);
 }
-
 .ruler-v {
-  grid-column: 1;
-  grid-row: 2;
-  width: 100%;
-  height: 100%;
+  top: var(--ruler-size);
+  left: 0;
+  width: var(--ruler-size);
+  height: calc(100% - var(--ruler-size));
   border-right: 1px solid var(--border-muted);
 }
 
@@ -1847,15 +1836,15 @@ body { zoom: var(--ui-zoom, 1); }
 }
 
 #canvas {
-  grid-column: 2;
-  grid-row: 2;
-  width: 100%;
-  height: 100%;
+  position: absolute;
+  top: var(--ruler-size);
+  left: var(--ruler-size);
+  width: calc(100% - var(--ruler-size));
+  height: calc(100% - var(--ruler-size));
   min-width: 0;
   min-height: 0;
   display: block;
   background: var(--bg-canvas);
-  /* cursor hints for pan are set from viewport.js */
 }
 #canvas.is-panning { cursor: grabbing; }
 #canvas.space-held { cursor: grab; }
@@ -1873,7 +1862,7 @@ body { zoom: var(--ui-zoom, 1); }
   background-repeat: repeat;
 }
 :root[data-theme="light"] #canvas {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='412' height='233'%3E%3Cg fill='%230d1117' fill-opacity='0.055' font-family='Georgia, serif' font-size='17.25' font-style='italic' font-weight='600' text-anchor='middle'%3E%3Ctext transform='rotate(-24 116 66)'%3E%3Ctspan x='116' y='58'%3EsciEnce Educational%3C/tspan%3E%3Ctspan x='116' y='80'%3EExam Easy Editor%3C/tspan%3E%3C/text%3E%3Ctext transform='rotate(-24 300 168)'%3E%3Ctspan x='300' y='160'%3EsciEnce Educational%3C/tspan%3E%3Ctspan x='300' y='182'%3EExam Easy Editor%3C/tspan%3E%3C/text%3E%3C/g%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='412' height='233'%3E%3Cg fill='%239da7b5' fill-opacity='0.30' font-family='Georgia, serif' font-size='17.25' font-style='italic' font-weight='600' text-anchor='middle'%3E%3Ctext transform='rotate(-24 116 66)'%3E%3Ctspan x='116' y='58'%3EsciEnce Educational%3C/tspan%3E%3Ctspan x='116' y='80'%3EExam Easy Editor%3C/tspan%3E%3C/text%3E%3Ctext transform='rotate(-24 300 168)'%3E%3Ctspan x='300' y='160'%3EsciEnce Educational%3C/tspan%3E%3Ctspan x='300' y='182'%3EExam Easy Editor%3C/tspan%3E%3C/text%3E%3C/g%3E%3C/svg%3E");
   background-repeat: repeat;
 }
 
@@ -2570,10 +2559,12 @@ textarea.unified-text-input {
   border: 1px solid var(--c-border); border-radius: 6px; cursor: pointer;
 }
 .app-footer-copyright {
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
+  position: static;
+  margin-inline: auto;
+  flex: 0 0 auto;
 }
+.app-footer-main { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
 @media (max-width: 1000px) {
   .app-footer-main .footer-badge { display: none; }
 }

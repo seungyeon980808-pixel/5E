@@ -9,7 +9,7 @@
 // — dataURL로 넣어 프로젝트 저장 파일이 라이브러리 폴더 없이도 자기완결되게 한다. */
 
 import { insertImageFromSrc } from "./image-paste.js?v=1.6.0-preview-labeler-0917-1111";
-import { openObjectifyWithFile } from "./image-objectify.js?v=1.6.0-preview-library-popup-0919-1630";
+import { openObjectifyWithFile } from "./image-objectify.js?v=1.6.0-preview-repair-0921";
 
 import { openReferenceWindow } from "./reference-window.js?v=1.6.0-preview-common-year-login-0918-1302";
 import { setOpenOrigin } from "./modal-motion.js?v=1.6.0-preview-labeler-0917-1111";
@@ -18,8 +18,8 @@ import { defaultRecentThreePack } from "./pdf-library/default-pack-config.js?v=1
 import { loadBundledDesktopPack } from "./pdf-library/desktop-pack.js?v=1.6.0-preview-labeler-0917-1111";
 import { registerPdfReferencePicker } from "./pdf-library/reference-picker.js?v=1.6.0-preview-labeler-0917-1111";
 import { mergePreferredCatalogs } from "./pdf-library/catalog-merge.js?v=1.6.0-preview-labeler-0917-1111";
-import { createUnifiedLibraryProvider } from "./library/provider.js?v=1.6.0-preview-library-hotfix-0921";
-import { createUnifiedLibraryUi, unifiedLibrarySourceMetadata, unifiedLibraryTransfer } from "./unified-library-ui.js?v=1.6.0-preview-usability-0920";
+import { createUnifiedLibraryProvider } from "./library/provider.js?v=1.6.0-preview-repair-0921";
+import { createUnifiedLibraryUi, unifiedLibrarySourceMetadata, unifiedLibraryTransfer } from "./unified-library-ui.js?v=1.6.0-preview-repair-0921";
 import { insertPartsAsset, loadPartsManifest, materializePartsAsset } from "./parts-library.js?v=1.6.0-preview-labeler-0917-1111";
 const MAX_RENDER = 60; // 그리드에 한 번에 그리는 카드 수 (초과분은 안내문으로 표시)
 const BUNDLED_EXAM_CATALOG_URL = "assets/exam-library/sample-catalog.json";
@@ -236,9 +236,6 @@ function buildModal() {
 export function initExamLibrary(state, { openAi, openIndependentReferences } = {}) {
   const openButton = document.getElementById("exam-library-open");
   if (!openButton) return;
-  const libraryShortcut = /Mac|iPhone|iPad/u.test(navigator.platform) ? "⌘L" : "Ctrl+L";
-  openButton.title = `라이브러리 (${libraryShortcut})`;
-  openButton.setAttribute("aria-label", `라이브러리 (${libraryShortcut})`);
 
   const overlay = buildModal();
   const queryInput = overlay.querySelector("#examlib-query");
@@ -294,7 +291,7 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
       const { createPdfRuntime } = await import("./pdf-library/pdf-runtime.js?v=1.6.0-preview-crop-quality-0920-1806");
       return createPdfRuntime();
     },
-    searchDocuments: async (documents, query, { filters = {}, prebuiltIndexes = [] } = {}) => {
+    searchDocuments: async (documents, query, { filters = {}, prebuiltIndexes = [], limit = MAX_RENDER } = {}) => {
       const prebuiltDocumentIds = new Set(prebuiltIndexes.flatMap((source) => source.documents.map((document) => document.id)));
       const dynamicDocuments = documents.filter((document) => !prebuiltDocumentIds.has(document.id));
       const key = [
@@ -309,7 +306,7 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
           pdfSearchWorkerKey = key;
         }
       }
-      return workerSearch({ type: "search", options: { query, filters, limit: MAX_RENDER } });
+      return workerSearch({ type: "search", options: { query, filters, limit } });
     },
     invalidateSearch: () => {
       pdfSearchKey = "";
@@ -894,12 +891,6 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
     else runSearch();
   });
   pdfTab.addEventListener("click", () => setMode("pdf"));
-  document.addEventListener("keydown", (e) => {
-    if (!(e.ctrlKey || e.metaKey) || e.shiftKey || e.altKey || e.key.toLowerCase() !== "l") return;
-    if (e.target instanceof HTMLElement && (e.target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/u.test(e.target.tagName))) return;
-    e.preventDefault();
-    if (overlay.hidden) void openLibrary();
-  }, true);
   overlay.querySelector("#examlib-close").addEventListener("click", close);
   overlay.addEventListener("mousedown", (e) => { if (e.target === overlay) close(); });
   document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !overlay.hidden) close(); });

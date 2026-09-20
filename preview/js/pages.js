@@ -238,15 +238,30 @@ function buildBar(state) {
   _tabsEl.addEventListener("click", (e) => {
     const tab = e.target.closest(".page-tab");
     if (!tab) return;
-    if (e.target.closest(".page-tab-close")) {
-      void deletePage(state, tab.dataset.id);
-      return;
-    }
     switchPage(state, tab.dataset.id);
   });
   _tabsEl.addEventListener("dblclick", (e) => {
     const tab = e.target.closest(".page-tab");
-    if (tab) renamePage(state, tab.dataset.id);
+    if (tab) {
+      const rect = tab.getBoundingClientRect();
+      openContextMenu(state, tab.dataset.id, rect.left, rect.top);
+    }
+  });
+  _tabsEl.addEventListener("keydown", (e) => {
+    const tab = e.target.closest('.page-tab');
+    if (!tab) return;
+    if (e.key === 'Enter' || e.key === ' ' || e.key === 'F2') {
+      e.preventDefault();
+      const rect = tab.getBoundingClientRect();
+      openContextMenu(state, tab.dataset.id, rect.left, rect.top);
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+      e.preventDefault();
+      const pages = state.get().pages;
+      const index = pages.findIndex(p => p.id === tab.dataset.id);
+      const next = pages[(index + (e.key === 'ArrowLeft' ? -1 : 1) + pages.length) % pages.length];
+      switchPage(state, next.id);
+      [..._tabsEl.children].find(el => el.dataset.id === next.id)?.focus();
+    }
   });
   _tabsEl.addEventListener("contextmenu", (e) => {
     const tab = e.target.closest(".page-tab");
@@ -268,18 +283,12 @@ function renderTabs(state) {
     tab.dataset.id = p.id;
     tab.setAttribute("role", "tab");
     tab.setAttribute("aria-selected", String(isActive));
-    tab.title = `${p.name} · 더블클릭 이름 변경 · 우클릭 메뉴`;
+    tab.title = `${p.name} · 더블클릭 또는 Enter로 이름 변경·삭제`;
     const name = document.createElement("span");
     name.className = "page-tab-name";
     name.textContent = p.name;
-    const close = document.createElement("button");
-    close.type = "button";
-    close.className = "page-tab-close";
-    close.textContent = "×";
-    close.disabled = (s.pages || []).length <= 1;
-    close.setAttribute("aria-label", `${p.name} 삭제`);
-    close.title = `${p.name} 삭제`;
-    tab.append(name, close);
+    tab.tabIndex = isActive ? 0 : -1;
+    tab.append(name);
     return tab;
   });
   _tabsEl.replaceChildren(...tabs);
@@ -287,11 +296,14 @@ function renderTabs(state) {
 
 /* ===== 우클릭 컨텍스트 메뉴 (복제·순서·삭제) ===== */
 let _menuEl = null;
+let _menuTabId = null;
 function closeContextMenu() {
   if (_menuEl) { _menuEl.remove(); _menuEl = null; }
   document.removeEventListener("mousedown", _onDocDown, true);
   document.removeEventListener("keydown", _onDocKey, true);
   window.removeEventListener("blur", closeContextMenu);
+  if (_menuTabId) [...(_tabsEl?.children || [])].find(tab => tab.dataset.id === _menuTabId)?.focus();
+  _menuTabId = null;
 }
 function _onDocDown(e) { if (_menuEl && !_menuEl.contains(e.target)) closeContextMenu(); }
 function _onDocKey(e) { if (e.key === "Escape") closeContextMenu(); }
@@ -333,7 +345,20 @@ function openContextMenu(state, id, x, y) {
     closeContextMenu();
     it.act();
   });
+  menu.setAttribute('role', 'menu');
+  menu.setAttribute('aria-label', '페이지 관리');
+  menu.querySelectorAll('button').forEach(button => button.setAttribute('role', 'menuitem'));
+  menu.addEventListener('keydown', event => {
+    if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return;
+    event.preventDefault();
+    const buttons = [...menu.querySelectorAll('button:not(:disabled)')];
+    const index = buttons.indexOf(document.activeElement);
+    const next = event.key === 'Home' ? 0 : event.key === 'End' ? buttons.length - 1 : (index + (event.key === 'ArrowUp' ? -1 : 1) + buttons.length) % buttons.length;
+    buttons[next]?.focus();
+  });
+  _menuTabId = id;
   _menuEl = menu;
+  menu.querySelector('button:not(:disabled)')?.focus();
   document.addEventListener("mousedown", _onDocDown, true);
   document.addEventListener("keydown", _onDocKey, true);
   window.addEventListener("blur", closeContextMenu);

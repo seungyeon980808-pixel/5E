@@ -29,7 +29,7 @@ export function initWebLoginUi({ openAi }) {
   const label = badge.querySelector('[data-account-label]'), message = dialog.querySelector('[data-login-message]');
   const title = dialog.querySelector('h2'), codeBox = dialog.querySelector('[data-login-code]');
   const start = dialog.querySelector('[data-login-start]'), copy = dialog.querySelector('[data-copy-code]');
-  let connected = false, userCode = '', phase = 'idle', wasFullscreen = false, toastTimer, completionTimer, countdownTimer, pairFrame, authenticating = false, pendingAiAction = null;
+  let connected = false, userCode = '', phase = 'idle', wasFullscreen = false, toastTimer, completionTimer, countdownTimer, closeTimer, preparationTimer, pairFrame, authenticating = false, pendingAiAction = null;
   function runPendingAiAction({ fallback = false } = {}) {
     const action = pendingAiAction;
     pendingAiAction = null;
@@ -63,9 +63,11 @@ export function initWebLoginUi({ openAi }) {
       dialog.style.setProperty('--login-pair-shift-x', '0px');
     });
   }
+  function clearCompletion() {
+    clearTimeout(completionTimer); clearTimeout(closeTimer); clearInterval(countdownTimer);
+  }
   function scheduleCompletionClose() {
-    clearTimeout(completionTimer);
-    clearInterval(countdownTimer);
+    clearCompletion();
     pendingAiAction = null;
     let remaining = 3;
     const writeCountdown = () => { message.textContent = `이제 AI 기능을 이용할 수 있습니다. ${remaining}초 뒤 자동으로 닫힙니다.`; };
@@ -84,7 +86,7 @@ export function initWebLoginUi({ openAi }) {
         dialog.style.setProperty('--login-complete-y', `${target.top + target.height / 2 - (from.top + from.height / 2)}px`);
         dialog.classList.add('web-login-completing');
       }
-      setTimeout(() => {
+      closeTimer = setTimeout(() => {
         if (dialog.open) dialog.close();
         resetPairedLayout();
         if (aiButton) {
@@ -92,11 +94,21 @@ export function initWebLoginUi({ openAi }) {
           aiButton.classList.add('ai-login-ready-pulse');
           setTimeout(() => aiButton.classList.remove('ai-login-ready-pulse'), 900);
         }
-      }, target ? 360 : 0);
+      }, target && !matchMedia('(prefers-reduced-motion: reduce)').matches ? 360 : 0);
     }, 3000);
   }
   function render(next, text) {
+    if (next !== 'connected') clearCompletion();
     phase = next; badge.dataset.state = next;
+    dialog.dataset.phase = next;
+    clearInterval(preparationTimer);
+    if (next === 'starting') {
+      const began = Date.now();
+      preparationTimer = setInterval(() => {
+        const seconds = Math.floor((Date.now() - began) / 1000);
+        message.textContent = seconds < 5 ? `인증 코드를 요청하고 있습니다. ${seconds}초 경과` : `인증 서버의 응답을 기다리고 있습니다. ${seconds}초 경과 · 준비가 끝나면 코드가 표시됩니다.`;
+      }, 1000);
+    }
     if (next !== 'waiting') resetPairedLayout();
     label.textContent = next === 'connected' ? 'ChatGPT 연결됨' : ['waiting', 'starting'].includes(next) ? '로그인 중…' : next === 'error' ? '연결 확인' : 'ChatGPT 연결';
     badge.title = connected ? 'ChatGPT 연결됨 · AI 이미지 변환을 사용할 수 있습니다' : label.textContent;
@@ -109,9 +121,9 @@ export function initWebLoginUi({ openAi }) {
     if (text) message.textContent = text;
     dialog.querySelector('[data-install-guide]').hidden = next !== 'idle';
     start.disabled = next === 'starting';
-    start.querySelector('[data-login-start-label]').textContent = next === 'starting' ? '인증 창 준비 중…' : next === 'waiting' ? authenticating ? '인증 창으로 돌아가기' : '2. OpenAI 인증하기 →' : next === 'connected' ? 'AI 작업 열기' : next === 'error' ? '다시 로그인' : 'ChatGPT로 로그인';
+    start.querySelector('[data-login-start-label]').textContent = next === 'starting' ? '인증 창 준비 중…' : next === 'waiting' ? authenticating ? '인증 창으로 돌아가기' : '2. OpenAI 인증하기 →' : next === 'connected' ? '닫기' : next === 'error' ? '다시 로그인' : 'ChatGPT로 로그인';
     start.querySelector('[data-login-logo]').hidden = !['idle', 'error'].includes(next);
-    title.textContent = next === 'connected' ? 'AI 기능을 사용할 수 있습니다' : ['waiting', 'starting'].includes(next) ? '코드를 보면서 인증하세요' : 'AI 기능을 시작하세요';
+    title.textContent = next === 'connected' ? '이제 AI 기능을 이용할 수 있습니다.' : ['waiting', 'starting'].includes(next) ? '코드를 보면서 인증하세요' : 'AI 기능을 시작하세요';
     codeBox.hidden = !userCode || next !== 'waiting';
     codeBox.querySelector('strong').textContent = userCode;
   }
@@ -137,10 +149,10 @@ export function initWebLoginUi({ openAi }) {
     if (!connected) show();
   });
   function dismiss() {
-    clearTimeout(completionTimer);
-    clearInterval(countdownTimer);
+    clearCompletion();
     pendingAiAction = null;
     if (['starting', 'waiting'].includes(phase)) window.fiveEWebCancelLogin?.();
+    clearInterval(preparationTimer);
     dialog.close(); resetPairedLayout();
     if (wasFullscreen && !document.fullscreenElement) notify('편집 화면으로 돌아왔습니다.');
   }
@@ -159,10 +171,10 @@ export function initWebLoginUi({ openAi }) {
     } catch { if (phase === 'waiting') message.textContent = '코드를 직접 선택해 복사하거나 인증 창에 그대로 입력해 주세요.'; }
   });
   start.addEventListener('click', () => {
-    if (connected) { dialog.close(); runPendingAiAction({ fallback:true }); return; }
+    if (connected) { dismiss(); aiButton?.focus(); return; }
     if (phase === 'waiting') { window.fiveEWebContinueLogin?.(); return; }
     userCode = ''; authenticating = false; resetCopyStage();
-    render('starting', '코드와 인증 창을 나란히 볼 수 있도록 준비하고 있습니다. 편집 내용은 그대로 유지됩니다.');
+    render('starting', '인증 코드를 요청하고 있습니다. 편집 내용은 그대로 유지됩니다.');
     try { window.fiveEWebLogin(); } catch (error) { render('error', error.message); }
   });
   window.addEventListener('5e:web-login-progress', event => {
@@ -184,7 +196,7 @@ export function initWebLoginUi({ openAi }) {
     } else if (data.state === 'blocked') {
       authenticating = false;
       delete start.dataset.authenticating;
-      delete start.dataset.copyReady;
+      if (copy.dataset.copied === 'true') start.dataset.copyReady = 'true';
       render('waiting', data.message);
     }
     else if (['error', 'cancelled'].includes(data.state)) {
@@ -200,12 +212,13 @@ export function initWebLoginUi({ openAi }) {
         const wasConnected = connected; connected = result.login?.loggedIn === true;
         if (connected) {
           const autoReturning = !wasConnected && dialog.open;
+          if (phase === 'connected' && dialog.open) return;
           render('connected', autoReturning ? '이제 AI 기능을 이용할 수 있습니다.' : '메인 화면의 AI 버튼을 눌러 작업을 시작하세요.');
           if (!wasConnected && dialog.open) {
             scheduleCompletionClose();
           }
         } else if (!['starting', 'waiting'].includes(phase)) render('idle');
-      } catch { render('error', '연결 상태를 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.'); }
+      } catch { connected = false; render('error', '연결 상태를 확인하지 못했습니다. 잠시 후 다시 시도해 주세요.'); }
       finally { checking = null; }
     })();
     return checking;

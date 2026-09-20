@@ -121,8 +121,7 @@
     }
     positioning = true;
     positionLogin();
-    positionTimer = setTimeout(navigateLogin, 350);
-    positionDeadline = setTimeout(navigateLogin, 1500);
+    navigateLogin();
     progress({ state: 'authenticating' });
     return true;
   };
@@ -133,8 +132,7 @@
     preparing = true;
     clearTimeout(loginTimer);
     try {
-      if (document.fullscreenElement) await document.exitFullscreen();
-      if (current !== attempt) return;
+      // Request immediately; fullscreen only needs to exit when opening the popup.
       const result = await loginRequest('start');
       if (!/^[a-f0-9]{64}$/.test(result.ticket)) throw new Error('인증 연결 정보를 확인할 수 없습니다.');
       if (current !== attempt) { void loginRequest('cancel', result.ticket).catch(() => {}); return; }

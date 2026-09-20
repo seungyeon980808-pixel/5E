@@ -16,7 +16,7 @@
  */
 
 import { rasterizeExportCanvas } from "./svg-export.js?v=1.6.0-preview-labeler-0917-1111";
-import { commitActivePage } from "./pages.js?v=1.6.0-preview-labeler-0917-1111";
+import { commitActivePage } from "./pages.js?v=1.6.0-preview-repair-0921";
 import { showAlert } from "./ui-dialogs.js?v=1.6.0-preview-labeler-0917-1111";
 import {
   FS_DIR_SUPPORTED, loadSavedDir, currentDir, ensureDirPermission, pickDir, clearDir,

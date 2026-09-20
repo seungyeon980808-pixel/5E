@@ -2,7 +2,7 @@
  * 내보내기 영역 지정과 동일한 오버레이에서 고른 world 사각형의 크기를 새 아트보드로
  * 쓰고, 그 중심이 원점에 오도록 모든 객체와 가이드를 평행이동한다. */
 
-import { runAreaCapture } from "./export-dialog.js?v=1.6.0-preview-labeler-0917-1111";
+import { runAreaCapture } from "./export-dialog.js?v=1.6.0-preview-repair-0921";
 import { translateObject } from "./transform.js?v=1.6.0-preview-labeler-0917-1111";
 import { artboardChangeFromBounds } from "./artboard-area.js?v=1.6.0-preview-labeler-0917-1111";
 import { captureDocumentSnapshot, commitDocumentHistory } from "./document-history.js?v=1.6.0-preview-labeler-0917-1111";

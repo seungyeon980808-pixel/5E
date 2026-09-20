@@ -1224,3 +1224,13 @@
 @media (max-width: 767px) {
   .unified-library-overlay .unilib-pane-head .unilib-location-add { order: 1; margin-inline-start: 0; }
 }
+
+/* Short question previews share the available vertical space; tall ones stay scrollable. */
+.unified-library-overlay .unilib[data-active-tab="question"] .unilib-preview-image { margin-block: auto; align-self: center; flex-shrink: 0; }
+.unified-library-overlay .unilib[data-active-tab="question"] .unilib-stage:not(.is-continuous-pdf) { display: flex; flex-direction: column; }
+
+.unified-library-overlay .unilib-crop-stage.is-continuous-crop { display: block; overflow-anchor: none; }
+.unified-library-overlay .unilib-crop-pages { margin-inline: auto; }
+.unified-library-overlay .unilib-crop-page { position: relative; overflow: hidden; background: var(--unilib-paper); outline: 1px solid var(--unilib-border); }
+.unified-library-overlay .unilib-crop-page > img { position: absolute; inset: 0; }
+.unified-library-overlay .unilib-crop-page.is-active > img { visibility: hidden; }

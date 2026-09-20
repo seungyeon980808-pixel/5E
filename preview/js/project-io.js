@@ -12,17 +12,21 @@
 import { screenToWorld } from "./viewport.js?v=1.6.0-preview-labeler-0917-1111";
 import { applyNewObjectStyleDefaults, migrateObjectStyleMode } from "./style-mode.js?v=1.6.0-preview-labeler-0917-1111";
 import { showProjectCloseDialog } from "./project-close-dialog.js?v=1.6.0-preview-labeler-0917-1111";
-import { showConfirm } from "./ui-dialogs.js?v=1.6.0-preview-labeler-0917-1111";
+import { showAlert, showConfirm } from "./ui-dialogs.js?v=1.6.0-preview-labeler-0917-1111";
 import { downscaleIfNeeded } from "./image-paste.js?v=1.6.0-preview-labeler-0917-1111";
 import { DEFAULT_TEXT_SIZE_MM, DEFAULT_TEXT_FONT, normalizeTextRuns, textRunsToText } from "./state.js?v=1.6.0-preview-labeler-0917-1111";
 import { LABEL_CAPABLE_TYPES } from "./object-types.js?v=1.6.0-preview-labeler-0917-1111";
 import { insertImageFromSrc } from "./image-paste.js?v=1.6.0-preview-labeler-0917-1111";
-import { addPage } from "./pages.js?v=1.6.0-preview-labeler-0917-1111";
+import { addPage } from "./pages.js?v=1.6.0-preview-repair-0921";
 
 import { initProjectStatus, captureProjectStatus, markProjectStatus } from "./project-status.js?v=1.6.0-preview-project-launcher-0918-1508";
 import { modKey, shortcutKey, isEditingTarget, isComposingKey } from "./platform.js?v=1.6.0-preview-labeler-0917-1111";
-import { nativeProjectTarget, saveNativeProjectPackage, initProjectLaunch } from './project-launch.js?v=1.6.0-preview-web-native-project-0918-1617';
+import { initProjectLaunch } from './project-launch.js?v=1.6.0-preview-web-native-project-0918-1617';
 import { extractWindowsProjectSource } from './windows-project-source.mjs?v=1.6.0-preview-project-launcher-0918-1508';
+
+import { chooseProjectFilename } from './project-save-dialog.js?v=1.6.0-preview-repair-0921';
+const projectNames = new WeakMap();
+let savingProject = false;
 
 // Schema version of the saved file. Distinct from the app UI version.
 // 0.15 adds editing guides; older files without them load with an empty guide list.
@@ -38,7 +42,6 @@ const DEFAULT_ARTBOARD = { w: 90, h: 60 };
 
 // The .5e container is UTF-8 JSON so project files stay inspectable and old
 // .json saves remain readable. Only the user-facing extension changes.
-const DEFAULT_FILENAME = "physics_drawing.5e";
 const PROJECT_FILE_ACCEPT = ".5e,.json,application/json";
 const APPARATUS_TEMPLATE_IDS = {
   wire: "E001",
@@ -367,66 +370,55 @@ export function serialize(s) {
   };
 }
 
-/* ----- saveProject: write the current drawing as a .5e file -----
- * Chromium/Edge(showSaveFilePicker): 사용자가 저장 폴더 + 파일명을 직접 고른다(요구:
- * "어디에 어떻게 저장될지 정할 수 있어야"). 그 외 브라우저·취소 외 오류 → 기존처럼
- * 브라우저 기본 다운로드로 폴백. 피커는 클릭 제스처 안에서 첫 await로 불러야 한다
- * (svg-export.js pickSaveHandle와 동일 패턴 — 여기선 project-io 자립을 위해 인라인). */
+/* Save only after explicit filename confirmation; picker failures never download. */
 export async function saveProject(state) {
-  const statusToken = captureProjectStatus(state);
-  const json = JSON.stringify(serialize(state.get()), null, 2);
-  const blob = new Blob([json], { type: "application/json" });
-
-  if (window.fiveEDesktop?.project?.save) {
-    const outcome = await window.fiveEDesktop.project.save({ json });
-    if (outcome?.kind === "saved") markProjectStatus(state, statusToken, "file");
-    else if (outcome?.kind === "failed") {
-      alert("프로젝트 파일을 저장하지 못했습니다. 작업은 그대로 유지됩니다.");
-    }
-    return outcome;
-  }
-
-  const target = nativeProjectTarget();
-  if (window.FIVE_E_PROJECT_PACKAGE_API_URL && (window.FIVE_E_PROJECT_PACKAGE_TARGETS || ['darwin']).includes(target)) {
-    try {
-      const outcome = await saveNativeProjectPackage(json, target);
-      if (outcome.kind === 'saved') markProjectStatus(state, statusToken, 'file');
-      if (outcome.kind === 'download-requested') markProjectStatus(state, statusToken, 'download');
+  if (savingProject) return { kind: "cancelled" };
+  savingProject = true;
+  try {
+    const filename = await chooseProjectFilename(projectNames.get(state) || '새 프로젝트');
+    if (!filename) return { kind: "cancelled" };
+    const statusToken = captureProjectStatus(state);
+    const json = JSON.stringify(serialize(state.get()), null, 2);
+    const blob = new Blob([json], { type: "application/json" });
+    if (window.fiveEDesktop?.project?.save) {
+      const outcome = await window.fiveEDesktop.project.save({ json, suggestedName: filename });
+      if (outcome?.kind === "failed") throw new Error('파일을 기록하지 못했습니다.');
+      if (outcome?.kind === "saved") {
+        projectNames.set(state, filename);
+        markProjectStatus(state, statusToken, "file");
+      }
       return outcome;
-    } catch (error) {
-      alert('실행형 프로젝트를 저장하지 못했습니다. 작업은 그대로 유지됩니다.\n' + error.message);
-      return { kind: 'failed' };
     }
-  }
-
-  if (window.showSaveFilePicker) {
-    try {
+    if (window.showSaveFilePicker) {
       const handle = await window.showSaveFilePicker({
-        suggestedName: DEFAULT_FILENAME,
+        suggestedName: filename,
         types: [{ description: "5E 프로젝트 파일", accept: { "application/json": [".5e"] } }],
       });
       const writable = await handle.createWritable();
       await writable.write(blob);
       await writable.close();
+      projectNames.set(state, handle.name || filename);
       markProjectStatus(state, statusToken, "file");
       return { kind: "saved" };
-    } catch (e) {
-      if (e && e.name === "AbortError") return { kind: "cancelled" };   // 사용자가 저장 취소 → 아무것도 안 함
-      // 권한 거부/기타 오류 → 아래 기본 다운로드로 폴백
     }
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = filename;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    projectNames.set(state, filename);
+    markProjectStatus(state, statusToken, "download");
+    return { kind: "download-requested" };
+  } catch (error) {
+    if (error?.name === 'AbortError') return { kind: "cancelled" };
+    await showAlert('프로젝트 파일을 저장하지 못했습니다. 작업은 그대로 유지됩니다.\n다시 저장해 주세요.\n' + (error?.message || ''), { title: '저장 실패' });
+    return { kind: "failed" };
+  } finally {
+    savingProject = false;
   }
-
-  // 폴백: 브라우저 기본 다운로드(다운로드 폴더로 저장, 위치 선택 없음).
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = DEFAULT_FILENAME;
-  document.body.appendChild(a);
-  a.click();
-  markProjectStatus(state, statusToken, "download");
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-  return { kind: "download-requested" };
 }
 
 /* ----- defaultLayers: fresh 3-layer set for pages saved without layers ----- */
@@ -638,6 +630,7 @@ function openProject(state, file) {
       if (!ok) return;
 
       applyLoaded(state, data);
+      projectNames.set(state, file.name);
       markProjectStatus(state, captureProjectStatus(state), "file");
     } catch (err) {
       // On any failure, do NOT corrupt current state — just warn.

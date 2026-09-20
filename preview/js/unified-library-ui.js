@@ -1,3 +1,4 @@
+import { createContinuousCropPages } from "./library/continuous-crop-pages.js?v=1.6.0-preview-repair-0921";
 import { registerEscapeLayer } from "./escape-layers.js?v=1";
 import { DESKTOP_RELEASE_URL } from "./ai-install-guide.js?v=1.6.0-preview-labeler-0917-1111";
 import { safeExternalSourceUrl } from "./library-import-policy.js";
@@ -494,7 +495,7 @@ export function workbenchReferenceGroups(references, assignment) {
 
 export function cropContentBoundsForResult(result, candidates = []) {
   const source = result?.provenance ?? {};
-  const pageResults = [result, ...candidates.filter((candidate) => candidate !== result)].filter((candidate) => {
+  const pageResults = (result?.kind === "crop" ? [result] : [result, ...candidates.filter((candidate) => candidate !== result)]).filter((candidate) => {
     const candidateSource = candidate?.provenance ?? {};
     return candidateSource.documentId === source.documentId && candidateSource.pageNumber === source.pageNumber;
   });
@@ -1107,7 +1108,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     const yearEnd = overlay.querySelector("[data-unilib-year-end]");
     const filterOptions = activeProvider.getExamFilterOptions?.();
     const years = filterOptions?.academicYears
-      ?? [...new Set((activeProvider.search({ query: "", kinds: ["crop"], limit: 500 }) ?? []).map((result) => result.metadata?.academicYear).filter(Number.isInteger))].sort((a, b) => b - a);
+      ?? [...new Set((activeProvider.search({ query: "", kinds: ["crop"], limit: Number.MAX_SAFE_INTEGER }) ?? []).map((result) => result.metadata?.academicYear).filter(Number.isInteger))].sort((a, b) => b - a);
     const selectedStart = yearStart.value;
     const selectedEnd = yearEnd.value;
     yearStart.replaceChildren(new Option("시작", ""), ...years.map((year) => new Option(`${year}`, String(year))));
@@ -1239,11 +1240,11 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       const queryText = query.value.trim();
       const pageDisplayActive = pdfDisplayMode === "page" && activeTypes.length === 1 && activeTypes[0] === "pdf";
       const filters = Object.fromEntries(Object.entries(examFilters).filter(([, value]) => value !== "" && value != null));
-      const options = { query: queryText, sourceIds: [...enabledSources], filters, limit: 500, requestId, signal };
+      const options = { query: queryText, sourceIds: [...enabledSources], filters, limit: Number.MAX_SAFE_INTEGER, requestId, signal };
       const pageInventoryOptions = { query: queryText, sourceIds: [...enabledSources], filters, requestId, signal };
       const kinds = [...(activeTypes.includes("question") ? ["crop"] : []), ...(activeTypes.includes("image") ? ["image"] : [])];
       const regularPromise = kinds.length
-        ? (typeof activeProvider.searchAsync === "function" ? activeProvider.searchAsync({ ...options, kinds, limit: 60 }) : activeProvider.search({ ...options, kinds, limit: 60 }))
+        ? (typeof activeProvider.searchAsync === "function" ? activeProvider.searchAsync({ ...options, kinds }) : activeProvider.search({ ...options, kinds }))
         : [];
       const pdfPromise = activeTypes.includes("pdf")
         ? (queryText && typeof activeProvider.searchPdfFiles === "function" ? activeProvider.searchPdfFiles(options) : pageDisplayActive ? activeProvider.listPdfPages?.(pageInventoryOptions) ?? [] : activeProvider.listPdfFiles?.(options) ?? [])
@@ -2282,7 +2283,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       let pageResult = results.find((item) => item.kind === "page" && (item.id === result.parentId
         || (item.provenance?.documentId === result.provenance.documentId && item.provenance?.pageNumber === result.provenance.pageNumber)));
       if (!pageResult) {
-        const pages = activeProvider.search({ query: query.value.trim(), sourceIds: [...enabledSources], kinds: ["page"], limit: 500 });
+        const pages = activeProvider.search({ query: query.value.trim(), sourceIds: [...enabledSources], kinds: ["page"], limit: Number.MAX_SAFE_INTEGER });
         pageResult = pages.find((item) => item.provenance?.documentId === result.provenance.documentId && item.provenance?.pageNumber === result.provenance.pageNumber);
         if (pageResult) results = [...results, pageResult];
       }
@@ -2366,8 +2367,13 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     open: !cropDialog.hidden,
     exact: Boolean(cropActionTargets().length && cropSessionIsCurrent(cropSession, selectedActiveResult())),
   });
+  const cropDocumentEntries = () => [
+    ...[...acceptedAssets.values()].filter(({ result }) => result.provenance.documentId === cropSession?.documentId && result.provenance.pageNumber !== cropSession?.pageNumber),
+    ...acceptedCrops,
+  ];
   const renderAcceptedCrops = () => {
-    cropCollection.replaceChildren(...acceptedCrops.map(({ result, materialized }, index) => {
+    const documentCrops = cropDocumentEntries();
+    cropCollection.replaceChildren(...documentCrops.map(({ result, materialized }, index) => {
       const item = document.createElement("div");
       item.className = "unilib-crop-collection-item";
       const thumbnail = document.createElement("img");
@@ -2401,14 +2407,14 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       marker.append(number);
       return marker;
     }));
-    cropCollection.hidden = acceptedCrops.length === 0;
-    overlay.querySelector("[data-unilib-crop-count]").textContent = `크롭 이미지 ${acceptedCrops.length}개`;
+    cropCollection.hidden = documentCrops.length === 0;
+    overlay.querySelector("[data-unilib-crop-count]").textContent = `크롭 이미지 ${documentCrops.length}개`;
     overlay.querySelector("[data-unilib-crop-selection]").textContent = activeAcceptedCropId
       ? `${acceptedCrops.findIndex(({ result }) => result.id === activeAcceptedCropId) + 1}번 영역만 선택됨`
-      : acceptedCrops.length ? `${acceptedCrops.length}개 영역 모두 선택됨` : "추가한 영역이 없습니다.";
+      : documentCrops.length ? `${documentCrops.length}개 영역 모두 선택됨` : "추가한 영역이 없습니다.";
   };
   const setCropActionAvailability = () => {
-    const available = cropReady && acceptedCrops.length > 0 && !cropActionBusy;
+    const available = cropReady && cropDocumentEntries().length > 0 && !cropActionBusy;
     const draftReady = Boolean(cropReady && draftCrop && cropPreviewExact && cropExact?.rectKey === cropRectKey() && !cropActionBusy);
     cropConfirm.hidden = !draftCrop || Boolean(editingAcceptedId);
     cropSave.disabled = !draftReady;
@@ -2418,14 +2424,18 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     if (!cropImage.naturalWidth || !cropImage.naturalHeight) return;
     cropCanvas.style.width = `${cropImage.naturalWidth * cropBaseScale * cropZoom}px`;
     cropCanvas.style.height = `${cropImage.naturalHeight * cropBaseScale * cropZoom}px`;
+    continuousCrop.size(cropImage.naturalWidth * cropBaseScale * cropZoom, cropImage.naturalHeight * cropBaseScale * cropZoom);
     cropZoomOutput.value = `${Math.round(cropZoom * 100)}%`;
     cropZoomOutput.textContent = cropZoomOutput.value;
   };
   const centerCropContent = () => {
+    if (continuousCrop.mounted) { continuousCrop.activate(cropSession.pageNumber, true); return; }
     const [x, y, width, height] = cropFitBounds;
     const focusY = draftCrop ? draftCrop[1] + draftCrop[3] / 2 : y + height / 2;
     cropStage.scrollLeft = (x + width / 2) * cropCanvas.offsetWidth - cropStage.clientWidth / 2;
-    cropStage.scrollTop = focusY * cropCanvas.offsetHeight - cropStage.clientHeight / 2;
+    cropStage.scrollTop = height * cropCanvas.offsetHeight > cropStage.clientHeight
+      ? y * cropCanvas.offsetHeight
+      : focusY * cropCanvas.offsetHeight - cropStage.clientHeight / 2;
   };
   const fitCropContent = () => {
     if (!cropImage.naturalWidth || !cropImage.naturalHeight || !cropStage.clientWidth || !cropStage.clientHeight) return;
@@ -2538,6 +2548,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     }
   };
   const closeCrop = (restoreFocus = true) => {
+    continuousCrop.reset();
     cropPreviewEpoch += 1;
     cropReady = false;
     cropPreviewExact = false;
@@ -2565,7 +2576,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     if (restoreFocus && !overlay.hidden) cropReturnFocus?.focus?.({ preventScroll: true });
     cropReturnFocus = null;
   };
-  const openCropEditor = async ({ emptyDraft = false, wholePage = false, title = "여러 영역 크롭" } = {}) => {
+  const openCropEditor = async ({ emptyDraft = false, wholePage = false, title = "여러 영역 크롭", preserveScroll = false } = {}) => {
     const result = selectedActiveResult();
     if (!result || result.provenance?.provider !== "pdf") return;
     if (cropDialog.hidden) cropReturnFocus = document.activeElement;
@@ -2605,7 +2616,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       const activeProvider = await provider();
       if (overlay.hidden || cropSession !== session || !cropSessionIsCurrent(session, selectedActiveResult())) return;
       const pageResults = typeof activeProvider.search === "function"
-        ? activeProvider.search({ query: "", kinds: ["crop"], limit: 500 })
+        ? activeProvider.search({ query: "", kinds: ["crop"], limit: Number.MAX_SAFE_INTEGER })
         : results;
       cropFitBounds = wholePage ? [0, 0, 1, 1] : cropContentBoundsForResult(result, pageResults);
       cropDialog.hidden = false;
@@ -2628,7 +2639,14 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       await cropImage.decode();
       if (!cropSessionIsCurrent(session, selectedActiveResult()) || cropSession !== session) return;
       setCropLoadState("ready");
-      fitCropContent();
+      if (pageCount > 1 && !continuousCrop.mounted) continuousCrop.mount(pageCount, session.pageNumber);
+      if (continuousCrop.mounted) continuousCrop.activate(session.pageNumber);
+      if (!preserveScroll) fitCropContent();
+      else {
+        const inset = getComputedStyle(cropStage);
+        cropBaseScale = Math.max(1, cropStage.clientWidth - parseFloat(inset.paddingLeft) - parseFloat(inset.paddingRight)) / cropImage.naturalWidth;
+        sizeCropCanvas();
+      }
       paintCrop();
       void paintExactCropPreview();
       return true;
@@ -2689,15 +2707,25 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   overlay.querySelector("[data-unilib-crop-fit]").addEventListener("click", fitCropContent);
   overlay.querySelector("[data-unilib-crop-zoom-out]").addEventListener("click", () => setCropZoom(cropZoom / 1.2));
   overlay.querySelector("[data-unilib-crop-zoom-in]").addEventListener("click", () => setCropZoom(cropZoom * 1.2));
-  const stepCropPage = (delta) => {
+  const changeCropPage = async (page, preserveScroll = false) => {
     const file = selectedResult();
     if (file?.kind !== "pdf" || !continuousView) return;
     commitAcceptedCropSession({ acceptedAssets, selectedIds, selectedRecords, acceptedCrops, documentId: cropSession?.documentId, pageNumber: cropSession?.pageNumber });
-    continuousView.visiblePage = Math.max(1, Math.min(continuousView.pageCount, continuousView.visiblePage + delta));
+    continuousView.visiblePage = Math.max(1, Math.min(continuousView.pageCount, page));
     stage.scrollTop = (continuousView.visiblePage - 1) * continuousView.pageExtent;
     stage.dispatchEvent(new Event("scroll"));
-    void openCropEditor(cropOpenOptions);
+    await openCropEditor({ ...cropOpenOptions, title: `${file.title} · ${continuousView.visiblePage}쪽`, preserveScroll });
   };
+  const continuousCrop = createContinuousCropPages({
+    stage: cropStage, canvas: cropCanvas,
+    loadPage: async (page) => {
+      const file = selectedResult();
+      const asset = await file.loadPreview(page, { continuous: true });
+      return resultImage(file, asset);
+    },
+    onPage: (page) => changeCropPage(page, true),
+  });
+  const stepCropPage = (delta) => void changeCropPage((cropSession?.pageNumber ?? 1) + delta);
   cropPagePrev.addEventListener("click", () => stepCropPage(-1));
   cropPageNext.addEventListener("click", () => stepCropPage(1));
   cropStage.addEventListener("wheel", (event) => {
@@ -2736,6 +2764,9 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     const remove = event.target.closest("[data-unilib-crop-remove]");
     if (!remove) return;
     acceptedCrops = acceptedCrops.filter(({ result }) => result.id !== remove.dataset.unilibCropRemove);
+    acceptedAssets.delete(remove.dataset.unilibCropRemove);
+    selectedIds.delete(remove.dataset.unilibCropRemove);
+    selectedRecords.delete(remove.dataset.unilibCropRemove);
     if (activeAcceptedCropId === remove.dataset.unilibCropRemove) activeAcceptedCropId = null;
     invalidateAction();
     renderAcceptedCrops();
@@ -2743,8 +2774,8 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     setCropActionAvailability();
   });
   overlay.querySelector("[data-unilib-crop-workbench]").addEventListener("click", () => {
-    if (!acceptedCrops.length || !cropSession) return;
-    const count = acceptedCrops.length;
+    if (!cropDocumentEntries().length || !cropSession) return;
+    const count = cropDocumentEntries().length;
     commitAcceptedCropSession({
       acceptedAssets, selectedIds, selectedRecords, acceptedCrops,
       documentId: cropSession.documentId, pageNumber: cropSession.pageNumber,
@@ -2772,7 +2803,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     return normalizedCropPoint(event, cropCanvas.getBoundingClientRect());
   };
   cropStage.addEventListener("pointerdown", (event) => {
-    if (!cropReady || cropSession?.viewOnly) return;
+    if (!cropReady || cropSession?.viewOnly || !cropCanvas.contains(event.target)) return;
     if (!cropSessionIsCurrent(cropSession, selectedActiveResult())) return;
     if (event.target.closest("button")) return;
     event.preventDefault();

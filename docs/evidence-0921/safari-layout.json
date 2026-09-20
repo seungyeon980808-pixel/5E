@@ -1,0 +1,420 @@
+[
+  {
+    "theme": "dark",
+    "metrics": [
+      {
+        "s": "#ruler-h",
+        "client": [
+          1004,
+          19
+        ],
+        "rect": {
+          "x": 150,
+          "height": 20,
+          "bottom": 69,
+          "y": 49,
+          "width": 1004,
+          "left": 150,
+          "top": 49,
+          "right": 1154
+        },
+        "backing": [
+          2008,
+          38
+        ]
+      },
+      {
+        "s": "#ruler-v",
+        "client": [
+          19,
+          811
+        ],
+        "rect": {
+          "x": 130,
+          "height": 811,
+          "bottom": 880,
+          "y": 69,
+          "width": 20,
+          "left": 130,
+          "top": 69,
+          "right": 150
+        },
+        "backing": [
+          38,
+          1622
+        ]
+      },
+      {
+        "s": "#canvas",
+        "client": [
+          1004,
+          811
+        ],
+        "rect": {
+          "x": 150,
+          "height": 811,
+          "bottom": 880,
+          "y": 69,
+          "width": 1004,
+          "left": 150,
+          "top": 69,
+          "right": 1154
+        },
+        "backing": [
+          {
+            "baseVal": {
+              "SVG_LENGTHTYPE_EMS": 3,
+              "unitType": 2,
+              "newValueSpecifiedUnits": {},
+              "SVG_LENGTHTYPE_IN": 8,
+              "SVG_LENGTHTYPE_PC": 10,
+              "SVG_LENGTHTYPE_UNKNOWN": 0,
+              "valueAsString": "100%",
+              "value": 1004,
+              "SVG_LENGTHTYPE_PT": 9,
+              "SVG_LENGTHTYPE_PERCENTAGE": 2,
+              "convertToSpecifiedUnits": {},
+              "SVG_LENGTHTYPE_CM": 6,
+              "SVG_LENGTHTYPE_PX": 5,
+              "valueInSpecifiedUnits": 100,
+              "SVG_LENGTHTYPE_MM": 7,
+              "SVG_LENGTHTYPE_EXS": 4,
+              "SVG_LENGTHTYPE_NUMBER": 1
+            },
+            "animVal": {
+              "SVG_LENGTHTYPE_EMS": 3,
+              "unitType": 2,
+              "newValueSpecifiedUnits": {},
+              "SVG_LENGTHTYPE_IN": 8,
+              "SVG_LENGTHTYPE_PC": 10,
+              "SVG_LENGTHTYPE_UNKNOWN": 0,
+              "valueAsString": "100%",
+              "value": 1004,
+              "SVG_LENGTHTYPE_PT": 9,
+              "SVG_LENGTHTYPE_PERCENTAGE": 2,
+              "convertToSpecifiedUnits": {},
+              "SVG_LENGTHTYPE_CM": 6,
+              "SVG_LENGTHTYPE_PX": 5,
+              "valueInSpecifiedUnits": 100,
+              "SVG_LENGTHTYPE_MM": 7,
+              "SVG_LENGTHTYPE_EXS": 4,
+              "SVG_LENGTHTYPE_NUMBER": 1
+            }
+          },
+          {
+            "baseVal": {
+              "SVG_LENGTHTYPE_EMS": 3,
+              "unitType": 2,
+              "newValueSpecifiedUnits": {},
+              "SVG_LENGTHTYPE_IN": 8,
+              "SVG_LENGTHTYPE_PC": 10,
+              "SVG_LENGTHTYPE_UNKNOWN": 0,
+              "valueAsString": "100%",
+              "value": 811,
+              "SVG_LENGTHTYPE_PT": 9,
+              "SVG_LENGTHTYPE_PERCENTAGE": 2,
+              "convertToSpecifiedUnits": {},
+              "SVG_LENGTHTYPE_CM": 6,
+              "SVG_LENGTHTYPE_PX": 5,
+              "valueInSpecifiedUnits": 100,
+              "SVG_LENGTHTYPE_MM": 7,
+              "SVG_LENGTHTYPE_EXS": 4,
+              "SVG_LENGTHTYPE_NUMBER": 1
+            },
+            "animVal": {
+              "SVG_LENGTHTYPE_EMS": 3,
+              "unitType": 2,
+              "newValueSpecifiedUnits": {},
+              "SVG_LENGTHTYPE_IN": 8,
+              "SVG_LENGTHTYPE_PC": 10,
+              "SVG_LENGTHTYPE_UNKNOWN": 0,
+              "valueAsString": "100%",
+              "value": 811,
+              "SVG_LENGTHTYPE_PT": 9,
+              "SVG_LENGTHTYPE_PERCENTAGE": 2,
+              "convertToSpecifiedUnits": {},
+              "SVG_LENGTHTYPE_CM": 6,
+              "SVG_LENGTHTYPE_PX": 5,
+              "valueInSpecifiedUnits": 100,
+              "SVG_LENGTHTYPE_MM": 7,
+              "SVG_LENGTHTYPE_EXS": 4,
+              "SVG_LENGTHTYPE_NUMBER": 1
+            }
+          }
+        ]
+      },
+      {
+        "s": "#panel-right",
+        "client": [
+          285,
+          911
+        ],
+        "rect": {
+          "x": 1154,
+          "height": 911,
+          "bottom": 960,
+          "y": 49,
+          "width": 286,
+          "left": 1154,
+          "top": 49,
+          "right": 1440
+        },
+        "backing": [
+          null,
+          null
+        ]
+      },
+      {
+        "s": ".canvas-global-controls",
+        "client": [
+          285,
+          32
+        ],
+        "rect": {
+          "x": 1154,
+          "height": 32,
+          "bottom": 40,
+          "y": 8,
+          "width": 286,
+          "left": 1154,
+          "top": 8,
+          "right": 1440
+        },
+        "backing": [
+          null,
+          null
+        ]
+      },
+      {
+        "s": ".app-brand",
+        "client": [
+          29,
+          28
+        ],
+        "rect": {
+          "x": 150,
+          "height": 28,
+          "bottom": 38,
+          "y": 10,
+          "width": 29.046875,
+          "left": 150,
+          "top": 10,
+          "right": 179.046875
+        },
+        "backing": [
+          null,
+          null
+        ]
+      }
+    ]
+  },
+  {
+    "theme": "light",
+    "metrics": [
+      {
+        "s": "#ruler-h",
+        "client": [
+          1004,
+          19
+        ],
+        "rect": {
+          "x": 150,
+          "height": 20,
+          "bottom": 69,
+          "y": 49,
+          "width": 1004,
+          "left": 150,
+          "top": 49,
+          "right": 1154
+        },
+        "backing": [
+          2008,
+          38
+        ]
+      },
+      {
+        "s": "#ruler-v",
+        "client": [
+          19,
+          811
+        ],
+        "rect": {
+          "x": 130,
+          "height": 811,
+          "bottom": 880,
+          "y": 69,
+          "width": 20,
+          "left": 130,
+          "top": 69,
+          "right": 150
+        },
+        "backing": [
+          38,
+          1622
+        ]
+      },
+      {
+        "s": "#canvas",
+        "client": [
+          1004,
+          811
+        ],
+        "rect": {
+          "x": 150,
+          "height": 811,
+          "bottom": 880,
+          "y": 69,
+          "width": 1004,
+          "left": 150,
+          "top": 69,
+          "right": 1154
+        },
+        "backing": [
+          {
+            "baseVal": {
+              "SVG_LENGTHTYPE_EMS": 3,
+              "unitType": 2,
+              "newValueSpecifiedUnits": {},
+              "SVG_LENGTHTYPE_IN": 8,
+              "SVG_LENGTHTYPE_PC": 10,
+              "SVG_LENGTHTYPE_UNKNOWN": 0,
+              "valueAsString": "100%",
+              "value": 1004,
+              "SVG_LENGTHTYPE_PT": 9,
+              "SVG_LENGTHTYPE_PERCENTAGE": 2,
+              "convertToSpecifiedUnits": {},
+              "SVG_LENGTHTYPE_CM": 6,
+              "SVG_LENGTHTYPE_PX": 5,
+              "valueInSpecifiedUnits": 100,
+              "SVG_LENGTHTYPE_MM": 7,
+              "SVG_LENGTHTYPE_EXS": 4,
+              "SVG_LENGTHTYPE_NUMBER": 1
+            },
+            "animVal": {
+              "SVG_LENGTHTYPE_EMS": 3,
+              "unitType": 2,
+              "newValueSpecifiedUnits": {},
+              "SVG_LENGTHTYPE_IN": 8,
+              "SVG_LENGTHTYPE_PC": 10,
+              "SVG_LENGTHTYPE_UNKNOWN": 0,
+              "valueAsString": "100%",
+              "value": 1004,
+              "SVG_LENGTHTYPE_PT": 9,
+              "SVG_LENGTHTYPE_PERCENTAGE": 2,
+              "convertToSpecifiedUnits": {},
+              "SVG_LENGTHTYPE_CM": 6,
+              "SVG_LENGTHTYPE_PX": 5,
+              "valueInSpecifiedUnits": 100,
+              "SVG_LENGTHTYPE_MM": 7,
+              "SVG_LENGTHTYPE_EXS": 4,
+              "SVG_LENGTHTYPE_NUMBER": 1
+            }
+          },
+          {
+            "baseVal": {
+              "SVG_LENGTHTYPE_EMS": 3,
+              "unitType": 2,
+              "newValueSpecifiedUnits": {},
+              "SVG_LENGTHTYPE_IN": 8,
+              "SVG_LENGTHTYPE_PC": 10,
+              "SVG_LENGTHTYPE_UNKNOWN": 0,
+              "valueAsString": "100%",
+              "value": 811,
+              "SVG_LENGTHTYPE_PT": 9,
+              "SVG_LENGTHTYPE_PERCENTAGE": 2,
+              "convertToSpecifiedUnits": {},
+              "SVG_LENGTHTYPE_CM": 6,
+              "SVG_LENGTHTYPE_PX": 5,
+              "valueInSpecifiedUnits": 100,
+              "SVG_LENGTHTYPE_MM": 7,
+              "SVG_LENGTHTYPE_EXS": 4,
+              "SVG_LENGTHTYPE_NUMBER": 1
+            },
+            "animVal": {
+              "SVG_LENGTHTYPE_EMS": 3,
+              "unitType": 2,
+              "newValueSpecifiedUnits": {},
+              "SVG_LENGTHTYPE_IN": 8,
+              "SVG_LENGTHTYPE_PC": 10,
+              "SVG_LENGTHTYPE_UNKNOWN": 0,
+              "valueAsString": "100%",
+              "value": 811,
+              "SVG_LENGTHTYPE_PT": 9,
+              "SVG_LENGTHTYPE_PERCENTAGE": 2,
+              "convertToSpecifiedUnits": {},
+              "SVG_LENGTHTYPE_CM": 6,
+              "SVG_LENGTHTYPE_PX": 5,
+              "valueInSpecifiedUnits": 100,
+              "SVG_LENGTHTYPE_MM": 7,
+              "SVG_LENGTHTYPE_EXS": 4,
+              "SVG_LENGTHTYPE_NUMBER": 1
+            }
+          }
+        ]
+      },
+      {
+        "s": "#panel-right",
+        "client": [
+          285,
+          911
+        ],
+        "rect": {
+          "x": 1154,
+          "height": 911,
+          "bottom": 960,
+          "y": 49,
+          "width": 286,
+          "left": 1154,
+          "top": 49,
+          "right": 1440
+        },
+        "backing": [
+          null,
+          null
+        ]
+      },
+      {
+        "s": ".canvas-global-controls",
+        "client": [
+          285,
+          32
+        ],
+        "rect": {
+          "x": 1154,
+          "height": 32,
+          "bottom": 40,
+          "y": 8,
+          "width": 286,
+          "left": 1154,
+          "top": 8,
+          "right": 1440
+        },
+        "backing": [
+          null,
+          null
+        ]
+      },
+      {
+        "s": ".app-brand",
+        "client": [
+          29,
+          28
+        ],
+        "rect": {
+          "x": 150,
+          "height": 28,
+          "bottom": 38,
+          "y": 10,
+          "width": 29.046875,
+          "left": 150,
+          "top": 10,
+          "right": 179.046875
+        },
+        "backing": [
+          null,
+          null
+        ]
+      }
+    ]
+  }
+]

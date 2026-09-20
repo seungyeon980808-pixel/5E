@@ -12,7 +12,7 @@
 //      exportPng() or exportSvg(); the extension is appended from the format.
 
 import { exportPng, exportSvg, copyPngToClipboard, formatExportTimestamp, getContentBounds } from "./svg-export.js?v=1.6.0-preview-labeler-0917-1111";
-import { openBatchExport } from "./export-batch.js?v=1.6.0-preview-labeler-0917-1111";
+import { openBatchExport } from "./export-batch.js?v=1.6.0-preview-repair-0921";
 import {
   FS_DIR_SUPPORTED, loadSavedDir, currentDirName, pickDir, clearDir,
 } from "./export-dir.js?v=1.6.0-preview-labeler-0917-1111";

@@ -39,12 +39,15 @@ test('library cards do not show redundant result-type badges', () => {
   assert.equal(shouldShowResultTypeBadge(['all'], 'page'), false);
 });
 
-test('preview exposes direct page-tab deletion and crop page navigation', async () => {
+test('preview exposes doubleclick page management without permanent close buttons and crop navigation', async () => {
   const [pages, library] = await Promise.all([
     readFile(new URL('../preview/js/pages.js', import.meta.url), 'utf8'),
     readFile(new URL('../preview/js/unified-library-ui.js', import.meta.url), 'utf8'),
   ]);
-  assert.match(pages, /page-tab-close/);
+  assert.doesNotMatch(pages, /page-tab-close/);
+  assert.match(pages, /addEventListener\("dblclick"/);
+  assert.match(pages, /label: "삭제"/);
+  assert.match(pages, /페이지 관리/);
   assert.match(library, /data-unilib-crop-page-prev/);
   assert.match(library, /data-unilib-crop-page-next/);
 });

@@ -28,3 +28,10 @@
 #ai-image-panel[data-ai-sharing-mode=view] button:disabled { opacity:.45; cursor:default; }
 
 .ai-sharing-phrase { white-space:nowrap; }
+
+.ai-sharing-dialog [data-create] { width:100%; margin-top:2px; min-height:40px; color:var(--accent); background:color-mix(in srgb,var(--accent) 8%,var(--bg-input)); font-weight:600; }
+.ai-sharing-dialog [data-copy] { flex:1; font-weight:600; border-color:var(--accent); }
+.ai-sharing-dialog [data-revoke] { color:var(--text-secondary); }
+.ai-sharing-dialog [data-status]:empty { display:none; }
+.ai-sharing-dialog [data-expiry] { margin:12px 0 0; }
+.ai-sharing-dialog .ai-sharing-details { border-top:1px solid var(--border); padding-top:12px; }

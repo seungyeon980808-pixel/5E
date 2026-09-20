@@ -19,7 +19,7 @@ import { buildTextSection } from "./inspector/section-text.js?v=1.6.0-preview-la
 import { buildFillSection } from "./inspector/section-fill.js?v=1.6.0-preview-labeler-0917-1111";
 import { buildGeometrySection } from "./inspector/section-geometry.js?v=1.6.0-preview-labeler-0917-1111";
 import { buildProtectSection } from "./inspector/section-protect.js?v=1.6.0-preview-labeler-0917-1111";
-import { buildImageSection } from "./inspector/section-image.js?v=1.6.0-preview-labeler-0917-1111";
+import { buildImageSection } from "./inspector/section-image.js?v=1.6.0-preview-repair-0921";
 import { buildPendulumSection } from "./inspector/section-pendulum.js?v=1.6.0-preview-labeler-0917-1111";
 import { buildSpringSection } from "./inspector/section-spring.js?v=1.6.0-preview-labeler-0917-1111";
 import { buildApparatusSection } from "./inspector/section-apparatus.js?v=1.6.0-preview-labeler-0917-1111";
@@ -28,7 +28,7 @@ import { buildCoordplaneSection } from "./inspector/section-coordplane.js?v=1.6.
 import { buildFuncgraphSection } from "./inspector/section-funcgraph.js?v=1.6.0-preview-labeler-0917-1111";
 import { buildArtboardSection } from "./inspector/section-artboard.js?v=1.6.0-preview-labeler-0917-1111";
 import { buildLayersSection } from "./inspector/section-layers.js?v=1.6.0-preview-labeler-0917-1111";
-import { buildGlobalImageSection } from "./inspector/section-global-image.js?v=1.6.0-preview-labeler-0917-1111";
+import { buildGlobalImageSection } from "./inspector/section-global-image.js?v=1.6.0-preview-repair-0921";
 
 /* ===== PUBLIC ===== */
 export function initInspector(state) {
