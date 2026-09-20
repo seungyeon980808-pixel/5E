@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-label="5E">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="60%" r="72%">
+      <stop offset="0%" stop-color="#23366b"/>
+      <stop offset="66%" stop-color="#0b1128"/>
+    </radialGradient>
+  </defs>
+  <rect width="96" height="96" rx="20" fill="url(#bg)"/>
+  <text x="49" y="49" font-family="Georgia, 'Times New Roman', serif" font-style="italic" font-weight="600" font-size="54" fill="#f5f8ff" text-anchor="middle" dominant-baseline="central">5E</text>
+</svg>

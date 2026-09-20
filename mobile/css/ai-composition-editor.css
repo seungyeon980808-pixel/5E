@@ -1,0 +1,16 @@
+.ai-composition-editor { width: min(860px, calc(100vw - 40px)); max-height: calc(100vh - 40px); padding: 20px; border: 1px solid var(--border, #30363d); border-radius: 16px; background: var(--bg-panel, #161b22); color: var(--text-primary, #e6edf3); box-shadow: 0 24px 80px #0006; }
+.ai-composition-editor::backdrop { background: #10141a66; backdrop-filter: blur(8px); }
+.ai-composition-editor header, .ai-composition-editor footer, .ai-composition-tools { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.ai-composition-editor h2 { margin: 0; font-size: 18px; }
+.ai-composition-editor p { color: var(--text-secondary, #8b949e); font-size: 12px; line-height: 1.6; }
+.ai-composition-editor button, .ai-composition-editor select { color: inherit; background: var(--bg-input, #21262d); border: 1px solid var(--border, #30363d); border-radius: 7px; padding: 8px 12px; cursor: pointer; font: inherit; }
+.ai-composition-editor button.primary { background: var(--accent, #2f81f7); color: white; }
+.ai-composition-editor button:focus-visible, .ai-composition-editor select:focus-visible { outline: 2px solid var(--accent, #2f81f7); outline-offset: 3px; }
+.ai-composition-tools { font-size: 12px; }
+.ai-composition-stage { height: min(52vh, 470px); display: flex; justify-content: center; align-items: center; margin: 16px 0; padding: 12px; background: var(--bg-app, #0d1117); border-radius: 8px; overflow: hidden; }
+.ai-composition-canvas { position: relative; width: 100%; max-height: 100%; background: white; overflow: hidden; }
+.ai-composition-item { position: absolute; cursor: grab; touch-action: none; outline: 1px solid transparent; }
+.ai-composition-item:focus, .ai-composition-item:hover { outline: 2px solid var(--accent, #2f81f7); z-index: 1; }
+.ai-composition-item img { display: block; width: 100%; height: 100%; object-fit: contain; pointer-events: none; }
+.ai-composition-resize { position: absolute; bottom: 0; right: 0; width: 16px; height: 16px; border: 2px solid white; background: var(--accent, #2f81f7); cursor: nwse-resize; }
+.ai-composition-editor footer { justify-content: flex-end; }

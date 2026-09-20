@@ -1,0 +1,271 @@
+/* ===== EXAM LIBRARY MODAL (기출 문항 검색) ===== */
+
+/* 세로도 .modal의 max-height(calc(100vh - 40px)) 안에서 flex column으로 눌러 담는다.
+   제목·필터·검색·툴바·하단 버튼은 flex:none으로 고정 높이를 지키고, 결과 그리드만
+   flex:1로 남는 공간을 전부 차지해 자체 스크롤한다 — 그래야 결과가 몇 장이든 "닫기"
+   버튼이 화면 밖으로 밀려나지 않는다(예전엔 그리드가 58vh 고정이라, 필터·검색 줄까지
+   합친 전체 높이가 모달의 max-height를 넘으면 모달 전체가 스크롤되며 하단 버튼이
+   보이지 않는 위치까지 밀려났다). */
+.modal-examlib {
+  width: 980px;
+  /* .modal의 max-width와 같은 이유로 ui-zoom의 역수를 곱한다 — 자세한 설명은 style.css
+     .modal 규칙의 주석 참고. */
+  max-width: calc((100vw - 32px) / var(--ui-zoom, 1));
+  /* overflow는 .modal의 기본값(auto)을 그대로 쓴다 — hidden으로 막아 두면, 필터 행이
+     화면 크기(ui-zoom)가 아주 클 때 줄바꿈되며 그리드를 0까지 줄여도 모자란 극단적
+     상황에서 "닫기" 버튼이 잘려서 아예 스크롤로도 닿지 않게 된다. auto로 두면 평소엔
+     안쪽 .examlib-grid가 먼저 스크롤을 흡수하고(자연스러운 동작), 그래도 모자란
+     극단적 경우에만 모달 전체가 스크롤되는 안전망으로 전환된다. */
+}
+.modal-examlib .examlib-title-row,
+.modal-examlib .examlib-filter-row,
+.modal-examlib .examlib-search-row,
+.modal-examlib .examlib-toolbar,
+.modal-examlib .modal-actions {
+  flex: none;
+}
+
+.examlib-mode-tabs {
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
+  border-bottom: 1px solid var(--border);
+}
+.examlib-mode-tabs button {
+  border: 0;
+  border-bottom: 2px solid transparent;
+  padding: 6px 10px;
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.examlib-mode-tabs button[aria-selected="true"] {
+  border-bottom-color: var(--accent);
+  color: var(--text-primary);
+}
+.examlib-mode-tabs button:focus-visible,
+.pdflib-card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.examlib-pdf-panel { min-height: 0; display: flex; flex: 1 1 auto; flex-direction: column; }
+.examlib-pdf-panel[hidden] { display: none; }
+
+.pdflib-source-row,
+.pdflib-filter-row,
+.pdflib-toolbar,
+.pdflib-preview-head,
+.pdflib-preview-actions,
+.pdflib-actions { display: flex; align-items: center; gap: 8px; }
+.pdflib-source-row { flex-wrap: wrap; margin-top: 10px; }
+.pdflib-packs:empty { display: none; }
+.pdflib-pack-toolbar, .pdflib-pack-row { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.pdflib-pack-toolbar { margin-top: 6px; color: var(--text-secondary); font-size: 12px; }
+.pdflib-pack-row { justify-content: flex-end; padding: 4px 0; border-bottom: 1px solid var(--border); font-size: 12px; }
+.pdflib-pack-row span { margin-right: auto; }
+.pdflib-source-status { color: var(--text-secondary); font-size: 12px; }
+.pdflib-source-status.is-error { color: var(--danger, #b42318); }
+.pdflib-upload { cursor: pointer; }
+.pdflib-desktop-link { text-decoration: none; }
+.pdflib-query-label { margin-top: 8px; color: var(--text-secondary); font-size: 12px; }
+.pdflib-query {
+  width: 100%; box-sizing: border-box; margin-top: 3px; padding: 7px 10px;
+  border: 1px solid var(--border); border-radius: 6px; background: var(--bg-input); color: var(--text-primary); font: inherit;
+}
+.pdflib-query:focus { outline: none; border-color: var(--accent); }
+.pdflib-filter-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.pdflib-filter-row select {
+  min-width: 112px; padding: 5px 8px; border: 1px solid var(--border); border-radius: 6px;
+  background: var(--bg-input); color: var(--text-primary); font: inherit; font-size: 12px;
+}
+.pdflib-toolbar { justify-content: space-between; flex-wrap: wrap; margin-top: 8px; color: var(--text-secondary); font-size: 12px; }
+.pdflib-actions { flex-wrap: wrap; }
+.pdflib-grid {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; overflow-y: auto;
+  margin-top: 8px; padding: 4px; min-height: 180px; flex: 1 1 auto; align-content: start;
+}
+.pdflib-card {
+  display: flex; min-width: 0; flex-direction: column; padding: 0; overflow: hidden; text-align: left;
+  border: 1px solid var(--border); border-radius: 6px; background: var(--bg-panel); color: var(--text-primary); cursor: pointer;
+}
+.pdflib-card:hover { border-color: var(--text-secondary); }
+.pdflib-card.is-selected { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+.pdflib-thumb { display: flex; height: 140px; align-items: center; justify-content: center; background: #fff; }
+.pdflib-thumb img { width: 100%; height: 100%; object-fit: contain; }
+.pdflib-card-meta { display: grid; gap: 3px; padding: 7px 8px 8px; }
+.pdflib-card-meta strong { font-size: 12px; }
+.pdflib-card-meta small, .pdflib-card-meta em { overflow: hidden; color: var(--text-secondary); font-size: 11px; font-style: normal; text-overflow: ellipsis; white-space: nowrap; }
+.pdflib-preview,
+.pdflib-crop-editor {
+  position: absolute; z-index: 4; inset: 12px; display: flex; flex-direction: column; gap: 8px;
+  padding: 14px; overflow: auto; border: 1px solid var(--border); border-radius: 8px; background: var(--bg-panel);
+}
+.pdflib-preview[hidden], .pdflib-crop-editor[hidden] { display: none; }
+.pdflib-preview-head { justify-content: space-between; flex-wrap: wrap; }
+.pdflib-preview-head > strong { font-size: 14px; line-height: 1.4; }
+.pdflib-preview-actions { flex-wrap: wrap; }
+.pdflib-preview-stage {
+  position: relative; display: grid; min-height: 260px; flex: 1 1 auto; place-items: center;
+  overflow: auto; background: #fff;
+}
+.pdflib-preview-stage img {
+  display: block; width: auto; height: auto; max-width: 100%; max-height: calc(100dvh - 220px);
+  margin: auto; object-fit: contain;
+}
+.pdflib-query-highlights { position: absolute; inset: 0; pointer-events: none; }
+.pdflib-query-highlights span { position: absolute; background: color-mix(in srgb, var(--pdflib-highlight-color, var(--accent)) 28%, transparent); outline: 1px solid var(--pdflib-highlight-color, var(--accent)); }
+.pdflib-highlight-legend { color: var(--text-secondary); font-size: 12px; }
+.pdflib-highlight-legend summary { cursor: pointer; }
+.pdflib-highlight-legend ul { display: flex; flex-wrap: wrap; gap: 8px; margin: 6px 0 0; padding: 0; list-style: none; }
+.pdflib-highlight-legend li { display: inline-flex; align-items: center; gap: 6px; }
+.pdflib-highlight-legend li > span { width: 14px; height: 8px; border: 1px solid var(--pdflib-highlight-color, var(--accent)); border-radius: 2px; background: color-mix(in srgb, var(--pdflib-highlight-color, var(--accent)) 30%, transparent); }
+.pdflib-preview-help, .pdflib-crop-editor p { margin: 0; color: var(--text-secondary); font-size: 12px; }
+.pdflib-crop-stage { position: relative; min-height: 260px; overflow: hidden; background: #fff; cursor: grab; touch-action: none; }
+.pdflib-crop-stage:active { cursor: grabbing; }
+.pdflib-crop-stage img { display: block; width: 100%; user-select: none; }
+.pdflib-crop-box { position: absolute; box-sizing: border-box; border: 2px solid var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); pointer-events: none; }
+@media (max-width: 760px) {
+  .pdflib-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .pdflib-preview, .pdflib-crop-editor { inset: 6px; }
+}
+
+.examlib-search-row input {
+  width: 100%;
+  padding: 6px 10px;
+  font: inherit;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+.examlib-search-row input:focus { outline: none; border-color: var(--accent); }
+
+/* ----- 드롭다운 필터 행 (과목·년도·단원·개념 + 초기화) ----- */
+.examlib-filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin-top: 8px;
+}
+.examlib-filter-row select {
+  padding: 4px 8px;
+  font: inherit;
+  font-size: 13px;
+  background: var(--bg-input);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+}
+.examlib-filter-row select:focus { outline: none; border-color: var(--accent); }
+.examlib-reset {
+  margin-left: auto;
+  padding: 4px 10px;
+  font: inherit;
+  font-size: 12px;
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  cursor: pointer;
+}
+.examlib-reset:hover { background: var(--btn-tool-hover); color: var(--text-primary); }
+
+/* ----- 상태줄 + 선택된 문항용 액션 버튼(상단 고정, 카드마다 반복 안 함) ----- */
+.examlib-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 8px;
+}
+.examlib-toolbar .objectify-status { margin: 0; }
+.examlib-selected-actions { display: flex; gap: 6px; flex-shrink: 0; }
+.examlib-selected-actions .modal-btn { padding: 5px 12px; font-size: 13px; }
+.examlib-selected-actions .modal-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* ----- 결과 그리드 (한 줄 4장 고정) ----- */
+.examlib-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  /* 이 그리드가 flex:1 아이템이라 자기 자신도 유동 크기라는 점과 맞물려, 암묵 행
+     높이를 auto로 두면(기본값) Chromium이 행 트랙을 전부 같은 위치로 뭉개서
+     카드가 층층이 겹쳐 그려지는 버그가 있었다(실측: 1열 카드끼리 완전히 겹침).
+     min-content로 명시해 각 행이 카드 내용만큼 확실히 자기 높이를 갖게 한다. */
+  grid-auto-rows: min-content;
+  align-items: start; /* Safari 방지: 기본 stretch면 grid 행이 카드를 실제보다 낮게 늘려서
+                          안의 고정높이 썸네일(.examlib-thumb)이 눌리는 WebKit 버그가 있음 */
+  gap: 12px;
+  align-content: start; /* 결과가 적을 때 grid가 flex:1의 남는 공간까지 늘어나며 카드 사이
+                            간격이 벌어지지 않게 — 카드는 위에서부터 채우고 나머지는 빈 공간 */
+  flex: 1 1 auto;
+  /* 평소엔 0까지 줄어들 수 있어야 부모 안에서 스크롤되지만(표준 트릭), 화면 크기가
+     아주 커서 위 필터·검색 줄까지 다 합쳐 공간이 심하게 모자랄 땐 카드가 안 보일
+     만큼 쪼그라드는 것보다 차라리 모달 전체가 스크롤되는 게 낫다 — 최소 키를 둬서
+     그 지점부터는 넘치는 몫을 .modal-examlib(부모)의 스크롤로 넘긴다. */
+  min-height: 160px;
+  overflow-y: auto;
+  /* Chromium이 body{zoom} 안에 있는 스크롤 컨테이너에서 스크롤 시 이전 프레임의
+     카드 이미지를 지우지 못하고 겹쳐 그리는 알려진 리페인트 버그가 있다(화면 크기
+     배율을 올린 채 기출 문항 검색을 스크롤하면 카드가 층층이 겹쳐 보임). 자체
+     컴포지팅 레이어로 승격해 강제로 다시 그리게 하면 사라진다. */
+  transform: translateZ(0);
+  margin-top: 8px;
+  /* 선택 링(카드 바깥 3px)이 그려질 자리. overflow-y:auto가 가로도 함께 잘라내므로,
+     여백이 없으면 1열·4열 카드의 바깥쪽 링만 잘려 나가 가운데 카드와 두께가 달라 보인다. */
+  padding: 4px;
+}
+.examlib-card {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  overflow: hidden;
+  cursor: pointer;
+}
+.examlib-card:hover { border-color: var(--text-secondary); }
+/* 선택 표시: 바깥쪽 링 하나로만 그린다.
+   inset 그림자를 쓰면 카드 안 썸네일(흰 배경 150px)이 위쪽 링을 덮어버려
+   변/모서리마다 두께가 달라 보였다. 바깥 링은 overflow:hidden에 잘리지 않고
+   border-radius를 그대로 따라가므로 네 변 두께가 항상 균일하다. */
+.examlib-card.is-selected {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent);
+}
+.examlib-thumb {
+  height: 150px;
+  flex-shrink: 0; /* 위 align-items:start와 이중 방어 — 어떤 경우에도 150px 밑으로 눌리지 않게 */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff; /* 문항 PNG는 흰 배경 전제 — 다크 모드에서도 흰 판 유지 */
+}
+/* 로드 전에도 박스를 차지해야 함 — 0×0 img는 브라우저가 lazy 로딩을 건너뜀 */
+.examlib-thumb img { width: 100%; height: 100%; object-fit: contain; }
+.examlib-meta { padding: 6px 8px 8px; }
+.examlib-title { font-size: 12px; color: var(--text-primary); }
+.examlib-tags {
+  min-height: 14px;
+  margin-top: 2px;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+/* 제목 옆 인라인 상태 문구 (예: "과목을 먼저 선택하세요.") */
+.examlib-title-row { display: flex; align-items: baseline; gap: 14px; flex-wrap: wrap; }
+.examlib-title-row .modal-title { margin: 0; }
+.examlib-status-inline { margin: 0; font-size: 13px; }
+
+/* 삽입/변환 버튼의 hover 색은 style.css의 공용 .modal-btn 규칙을 그대로 따른다.
+   (예전엔 여기서 두 버튼 모두 hover 시 파랗게 덮어써서 앱 내 다른 모달과 규칙이 어긋났음) */
+.examlib-selected-actions .modal-btn[disabled] { opacity: .45; cursor: not-allowed; }
+
+/* 연도 범위(시작~끝) */
+.examlib-year-range { display: inline-flex; align-items: center; gap: 4px; min-width: 0; }
+.examlib-year-range select { min-width: 0; }
+.examlib-year-tilde { color: var(--text-secondary); flex: none; }
+
+/* 오브젝트 저장소: 카드 하단 액션 + SVG 썸네일 */
+.postore-actions { display: flex; gap: 6px; padding: 6px 8px 8px; }
+.postore-actions .modal-btn { flex: 1 1 0; padding: 4px 0; font-size: 12px; }
+.postore-thumb svg { width: 100%; height: 100%; display: block; background: #fff; }

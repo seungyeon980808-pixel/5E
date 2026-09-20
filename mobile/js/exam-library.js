@@ -1,0 +1,923 @@
+/* ===== EXAM IMAGE LIBRARY (기출 문항 검색·삽입) =====
+//
+// 성능 규약:
+//  - 앱 시작 시 로드 0 — manifest fetch는 모달 "첫" 오픈 시 1회 (no-store: 재생성 반영)
+//  - 이미지는 결과 그리드에서 loading="lazy"로 화면에 보이는 것만 로드
+//  - 검색은 클라이언트 선형 스캔, 렌더링은 MAX_RENDER개로 캡
+//
+// [이미지로 삽입]은 image-paste.js의 기존 삽입 경로(insertImageFromSrc)를 재사용
+// — dataURL로 넣어 프로젝트 저장 파일이 라이브러리 폴더 없이도 자기완결되게 한다. */
+
+import { insertImageFromSrc } from "./image-paste.js?v=1.4.0";
+import { openObjectifyWithFile } from "./image-objectify.js?v=1.4.0";
+
+import { openReferenceWindow } from "./reference-window.js?v=1.4.0";
+import { setOpenOrigin } from "./modal-motion.js?v=1.4.0";
+import { createPdfLibraryUi } from "./pdf-library/pdf-library-ui.js";
+import { defaultRecentThreePack } from "./pdf-library/default-pack-config.js";
+import { loadBundledDesktopPack } from "./pdf-library/desktop-pack.js";
+import { registerPdfReferencePicker } from "./pdf-library/reference-picker.js";
+import { mergePreferredCatalogs } from "./pdf-library/catalog-merge.js";
+import { createUnifiedLibraryProvider } from "./library/provider.js";
+import { createUnifiedLibraryUi, unifiedLibrarySourceMetadata, unifiedLibraryTransfer } from "./unified-library-ui.js?v=library-motion-0917";
+import { insertPartsAsset, loadPartsManifest, materializePartsAsset } from "./parts-library.js?v=1.4.12";
+const MAX_RENDER = 60; // 그리드에 한 번에 그리는 카드 수 (초과분은 안내문으로 표시)
+const BUNDLED_EXAM_CATALOG_URL = "assets/exam-library/sample-catalog.json";
+
+export function configuredLegacyDatasetBase(value = globalThis.FIVE_E_LEGACY_EXAM_BASE_URL) {
+  if (typeof value !== "string" || !value.trim()) return "";
+  return `${value.trim().replace(/\/+$/u, "")}/`;
+}
+
+export function unifiedImageInsertionOptions(result, asset) {
+  return {
+    preserveBytes: true,
+    centerArtboard: true,
+    sourceMetadata: unifiedLibrarySourceMetadata(result, asset),
+  };
+}
+
+export function createUnifiedLibraryConsumerRegistry(beginSelection) {
+  let consumer = null;
+  return Object.freeze({
+    register(nextConsumer) {
+      if (!nextConsumer || typeof nextConsumer.onAdd !== "function") throw new TypeError("A unified library onAdd consumer is required.");
+      if (consumer) throw new Error("A unified library consumer is already registered.");
+      consumer = nextConsumer;
+      return () => { if (consumer === nextConsumer) consumer = null; };
+    },
+    begin(trigger) {
+      if (!consumer) throw new Error("No unified library consumer is registered.");
+      return beginSelection(consumer, trigger);
+    },
+  });
+}
+
+let manifest = null;      // { items, tagVocab, ... } — 첫 오픈 시 1회 로드
+let synonyms = {};        // { 태그/단원명: [동의어…] } — synonyms.json의 map (없으면 {})
+let byId = new Map();
+// 그리드에서 선택된 카드(문항) id들 — 상단 액션 버튼이 이걸 대상으로 동작.
+// 참고 창이 최대 4문항까지 받으므로 선택도 4개까지만 허용한다.
+let selectedIds = [];
+const MAX_SELECT = 4;
+// 삽입/객체변환 fetch가 진행 중인 동안 true. 진행 중 다른 카드를 선택해도(updateActionButtons가
+// 다시 불려도) 버튼이 재활성화되지 않게 막아 중복 삽입을 방지한다.
+let _busy = false;
+
+function imageUrl(item) {
+  return configuredLegacyDatasetBase() + "images/" + encodeURIComponent(item.file);
+}
+
+function blobToDataUrl(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onerror = () => reject(new Error("파일을 읽지 못했습니다."));
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.readAsDataURL(blob);
+  });
+}
+
+async function urlToDataUrl(url) {
+  const response = await fetch(url, { cache: "no-store" });
+  if (!response.ok) throw new Error(`HTTP ${response.status}`);
+  return blobToDataUrl(await response.blob());
+}
+
+
+/* ----- 검색: 모든 토큰이 (id+제목+태그) 문자열에 포함되어야 매치 (AND) ----- */
+function prepareItems(items) {
+  for (const it of items) {
+    // 태그·단원에 걸린 동의어·연관어를 검색 문자열에 이어붙인다 — "빗면에서 미끄러지는"
+    // 같은 자연어 일부 키워드로도 관련 태그가 걸리게. (AND 매치 로직 자체는 그대로)
+    const extra = [];
+    for (const key of [...(it.tags || []), ...(it.parts || [])]) {
+      const syns = synonyms[key];
+      if (syns) extra.push(...syns);
+    }
+    const hay = `${it.id} ${it.title} ${(it.tags || []).join(" ")} ${extra.join(" ")}`.toLowerCase();
+    it._hay = hay;
+    it._hayNs = hay.replace(/\s+/g, ""); // "물리11번"처럼 붙여 써도 매치되게
+  }
+}
+
+// 과목 드롭다운은 manifest에 실제로 존재하는 과목만 채운다(populateFilters) —
+// 값은 과목코드(p1/c1/b1/e1...) 그대로라 item.subject와 직접 비교하면 된다.
+function subjectMatches(it, subj) {
+  return !subj || it.subject === subj; // "" = 전체
+}
+
+// 드롭다운 정렬 순서(물리→화학→생명→지구→통합). 목록에 없는 과목코드는 뒤로.
+const SUBJECT_ORDER = ["p1", "p2", "c1", "c2", "b1", "b2", "e1", "e2", "i1"];
+
+// 4자리 연도가 실제 라이브러리 연도 범위 안이면 "연도"로 인정(6자리 애매성 해소용).
+function plausibleYear4(y) {
+  const years = (manifest && manifest.years) || [];
+  if (years.length) return y >= Math.min(...years) && y <= Math.max(...years);
+  return y >= 2000 && y <= 2099;
+}
+
+// 압축 코드 파싱 — 숫자·구분자만 있을 때, 자릿수로 알아서 해석(문항번호는 선택):
+//   4자리 YYMM        예: 2611     → 2026학년도 11월(수능), 전 문항
+//   6자리 YYYYMM      예: 202611   → 2026학년도 11월, 전 문항
+//   6자리 YYMMNN      예: 261101   → 2026학년도 11월 1번  (앞 4자리가 연도로 안 맞을 때)
+//   8자리 YYYYMMNN    예: 20261101 → 2026학년도 11월 1번
+// 연도 2자리는 20YY로 본다(26→2026). 안 맞으면 null → 일반 토큰검색으로 폴백.
+function parseCompactCode(query) {
+  const q = String(query).trim();
+  if (!q || !/^[\d\s.\-]+$/.test(q)) return null; // 문자가 섞이면 압축코드 아님
+  const d = q.replace(/\D/g, "");
+  const okM = (m) => m >= 1 && m <= 12;
+  const okN = (n) => n >= 1 && n <= 40;
+  const y2 = (s) => 2000 + Number(s);
+  if (d.length === 4) {
+    const year = y2(d.slice(0, 2)), month = Number(d.slice(2, 4));
+    return okM(month) ? { year, month, no: null } : null;
+  }
+  if (d.length === 6) {
+    const yA = Number(d.slice(0, 4)), mA = Number(d.slice(4, 6));
+    if (plausibleYear4(yA) && okM(mA)) return { year: yA, month: mA, no: null };
+    const yB = y2(d.slice(0, 2)), mB = Number(d.slice(2, 4)), nB = Number(d.slice(4, 6));
+    if (okM(mB) && okN(nB)) return { year: yB, month: mB, no: nB };
+    return null;
+  }
+  if (d.length === 8) {
+    const year = Number(d.slice(0, 4)), month = Number(d.slice(4, 6)), no = Number(d.slice(6, 8));
+    return okM(month) && okN(no) ? { year, month, no } : null;
+  }
+  return null;
+}
+
+/* 검색 방식(압축코드 또는 토큰입력 · 드롭다운 4종)을 전부 AND로 결합.
+ * filters = { subject, part, year, concept } (빈 문자열이면 해당 축 무시). */
+function searchItems(query, filters) {
+  const trimmed = query.trim();
+  const compact = parseCompactCode(trimmed);
+  // '#'는 태그 구분자로도 허용: "#역학#도르레" → ["역학","도르레"] (AND)
+  const tokens = compact ? [] : trimmed.toLowerCase().split(/[#\s]+/).filter(Boolean);
+  const { subject, part, yearFrom, yearTo, concept } = filters;
+  // 연도 범위: 시작·끝 어느 쪽만 골라도 동작, 순서가 뒤집혀 있어도 자동 정규화
+  let yLo = yearFrom ? Number(yearFrom) : null;
+  let yHi = yearTo ? Number(yearTo) : null;
+  if (yLo !== null && yHi !== null && yLo > yHi) { const tmp = yLo; yLo = yHi; yHi = tmp; }
+  return manifest.items.filter((it) =>
+    (compact
+      ? (it.year === compact.year && it.month === compact.month
+         && (compact.no == null || it.no === compact.no))
+      : tokens.every((t) => it._hay.includes(t) || it._hayNs.includes(t))) &&
+    (!concept || (it.tags || []).includes(concept)) &&
+    (!subject || subjectMatches(it, subject)) &&
+    (!part || (it.parts || []).includes(part)) &&
+    (yLo === null || it.year >= yLo) &&
+    (yHi === null || it.year <= yHi));
+}
+
+/* ===== modal ===== */
+function buildModal() {
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay";
+  overlay.hidden = true;
+  overlay.innerHTML = `
+    <div class="modal modal-examlib" role="dialog" aria-modal="true" aria-labelledby="examlib-title">
+      <div class="examlib-title-row">
+        <h2 class="modal-title" id="examlib-title">기출문제 라이브러리</h2>
+        <p id="examlib-status" class="objectify-status examlib-status-inline" role="status"></p>
+      </div>
+      <div class="examlib-mode-tabs" role="tablist" aria-label="자료 형식">
+        <button id="examlib-legacy-tab" type="button" role="tab" aria-selected="true" aria-controls="examlib-legacy-panel">기출 이미지</button>
+        <button id="examlib-pdf-tab" type="button" role="tab" aria-selected="false" aria-controls="examlib-pdf-panel">PDF 자료</button>
+      </div>
+      <section id="examlib-legacy-panel" role="tabpanel" aria-labelledby="examlib-legacy-tab">
+      <div class="examlib-filter-row">
+        <select id="examlib-subject" aria-label="과목 선택">
+          <option value="">과목 선택</option>
+        </select>
+        <span class="examlib-year-range">
+          <select id="examlib-year-from" aria-label="년도 시작">
+            <option value="">년도(시작)</option>
+          </select>
+          <span class="examlib-year-tilde">~</span>
+          <select id="examlib-year-to" aria-label="년도 끝">
+            <option value="">년도(끝)</option>
+          </select>
+        </span>
+        <select id="examlib-part" aria-label="단원 선택">
+          <option value="">단원 전체</option>
+        </select>
+        <select id="examlib-concept" aria-label="개념 선택">
+          <option value="">개념 전체</option>
+        </select>
+        <button id="examlib-reset" type="button" class="examlib-reset">필터 초기화</button>
+      </div>
+      <div class="examlib-search-row">
+        <input id="examlib-query" type="search" autocomplete="off"
+               placeholder="번호 검색 : 261101 = 2026학년도 수능 1번   /   해시태그 검색 : #역학#도르레#마찰력" />
+      </div>
+      <div class="examlib-toolbar">
+        <div class="examlib-selected-actions">
+          <button id="examlib-insert" type="button" class="modal-btn modal-btn-primary" disabled>이미지 삽입</button>
+          <button id="examlib-objectify" type="button" class="modal-btn modal-btn-primary" disabled>오브젝트 변환</button>
+          <button id="examlib-ai" type="button" class="modal-btn" disabled
+                  title="선택한 기출 이미지를 AI 생성·변환의 참고 이미지로 보냅니다">AI로 재구성</button>
+          <button id="examlib-refwin" type="button" class="modal-btn modal-btn-primary" disabled
+                  title="선택한 문항을 별도 창으로 띄웁니다 (듀얼 모니터용)">참고 창 열기</button>
+        </div>
+      </div>
+      <div id="examlib-grid" class="examlib-grid"></div>
+      </section>
+      <section id="examlib-pdf-panel" class="examlib-pdf-panel" role="tabpanel" aria-labelledby="examlib-pdf-tab" hidden></section>
+      <div class="modal-actions">
+        <button id="examlib-close" type="button" class="modal-btn">닫기</button>
+      </div>
+    </div>`;
+  document.body.appendChild(overlay);
+  return overlay;
+}
+
+export function initExamLibrary(state, { openAi, openIndependentReferences } = {}) {
+  const openButton = document.getElementById("exam-library-open");
+  if (!openButton) return;
+  const libraryShortcut = /Mac|iPhone|iPad/u.test(navigator.platform) ? "⌘L" : "Ctrl+L";
+  openButton.title = `라이브러리 (${libraryShortcut})`;
+  openButton.setAttribute("aria-label", `라이브러리 (${libraryShortcut})`);
+
+  const overlay = buildModal();
+  const queryInput = overlay.querySelector("#examlib-query");
+  const subjectSelect = overlay.querySelector("#examlib-subject");
+  const partSelect = overlay.querySelector("#examlib-part");
+  const yearFromSelect = overlay.querySelector("#examlib-year-from");
+  const yearToSelect = overlay.querySelector("#examlib-year-to");
+  const conceptSelect = overlay.querySelector("#examlib-concept");
+  const resetButton = overlay.querySelector("#examlib-reset");
+  const status = overlay.querySelector("#examlib-status");
+  const grid = overlay.querySelector("#examlib-grid");
+  const insertBtn = overlay.querySelector("#examlib-insert");
+  const objectifyBtn = overlay.querySelector("#examlib-objectify");
+  const aiBtn = overlay.querySelector("#examlib-ai");
+  const refwinBtn = overlay.querySelector("#examlib-refwin");
+  const legacyPanel = overlay.querySelector("#examlib-legacy-panel");
+  const pdfPanel = overlay.querySelector("#examlib-pdf-panel");
+  const legacyTab = overlay.querySelector("#examlib-legacy-tab");
+  const pdfTab = overlay.querySelector("#examlib-pdf-tab");
+  const legacyDatasetConfigured = Boolean(configuredLegacyDatasetBase());
+  legacyTab.hidden = !legacyDatasetConfigured;
+  let pdfSearchWorker = null;
+  let pdfSearchRequestId = 0;
+  let pdfSearchWorkerKey = "";
+  const pdfSearchRequests = new Map();
+  let pdfSearchKey = "";
+  const workerSearch = (message) => new Promise((resolve, reject) => {
+    const requestId = ++pdfSearchRequestId;
+    pdfSearchRequests.set(requestId, { resolve, reject });
+    pdfSearchWorker.postMessage({ id: requestId, ...message });
+  });
+  const ensurePdfSearchWorker = () => {
+    if (pdfSearchWorker) return pdfSearchWorker;
+    pdfSearchWorker = new Worker(new URL("./pdf-library/search-worker.js", import.meta.url), { type: "module" });
+    pdfSearchWorker.addEventListener("message", (event) => {
+      const request = pdfSearchRequests.get(event.data?.id);
+      if (!request) return;
+      pdfSearchRequests.delete(event.data.id);
+      if (event.data.ok) request.resolve(event.data.result);
+      else request.reject(new Error(event.data.error?.message || "PDF 검색 작업이 실패했습니다."));
+    });
+    pdfSearchWorker.addEventListener("error", (event) => {
+      for (const request of pdfSearchRequests.values()) request.reject(event.error || new Error("PDF 검색 작업이 중단되었습니다."));
+      pdfSearchRequests.clear();
+    });
+    return pdfSearchWorker;
+  };
+  let unifiedUi = null;
+  const pdfUi = createPdfLibraryUi({
+    state,
+    host: pdfPanel,
+    loadRuntime: async () => {
+      const { createPdfRuntime } = await import("./pdf-library/pdf-runtime.js");
+      return createPdfRuntime();
+    },
+    searchDocuments: async (documents, query, { filters = {}, prebuiltIndexes = [] } = {}) => {
+      const prebuiltDocumentIds = new Set(prebuiltIndexes.flatMap((source) => source.documents.map((document) => document.id)));
+      const dynamicDocuments = documents.filter((document) => !prebuiltDocumentIds.has(document.id));
+      const key = [
+        ...dynamicDocuments.map((document) => `${document.id}:${document.status}:${document.pageCount}`),
+        ...prebuiltIndexes.map((source) => `prebuilt:${source.documents.map((document) => `${document.id}:${document.pageCount}`).join(",")}:${source.index.entries.length}`),
+      ].join("|");
+      if (key !== pdfSearchKey) {
+        pdfSearchKey = key;
+        const worker = ensurePdfSearchWorker();
+        if (pdfSearchWorkerKey !== key) {
+          await workerSearch({ type: "replace", documents: dynamicDocuments, prebuilt: prebuiltIndexes });
+          pdfSearchWorkerKey = key;
+        }
+      }
+      return workerSearch({ type: "search", options: { query, filters, limit: MAX_RENDER } });
+    },
+    invalidateSearch: () => {
+      pdfSearchKey = "";
+      pdfSearchWorkerKey = "";
+    },
+    insertImage: insertImageFromSrc,
+    openIndependentReferences,
+    loadDesktopAdapter: async (runtime) => {
+      const { createDesktopPdfLibraryAdapter, hasDesktopPdfLibrary } = await import("./pdf-library/desktop-adapter.js");
+      return hasDesktopPdfLibrary() ? createDesktopPdfLibraryAdapter({ runtime }) : null;
+    },
+    onCatalogChange: () => void unifiedUi?.refresh(),
+  });
+  const isDesktopLibrary = Boolean(globalThis.fiveEDesktop?.pdfLibrary);
+  let packManagement = null;
+  let installedPackDocuments = [];
+  let installedPackSearchIndex = { schemaVersion: "pdf-search-index-v1", entries: [] };
+  let defaultPack = null;
+  let drivePack = null;
+  let drivePackDocumentIds = new Set();
+  const mountPackManagement = async () => {
+    if (packManagement) return packManagement;
+    const [
+      { createIndexedDbPackAdapter, createPackStore },
+      { mountPackManagement: mount },
+      { loadRemotePack },
+      { configuredGoogleDriveGatewayUrl, createGoogleDriveConnection, PROVIDED_DRIVE_FOLDER_URL, driveFolderPack, parseGoogleDriveFolderUrl },
+    ] = await Promise.all([
+      import("./pdf-library/pack-store.js"),
+      import("./pdf-library/pack-management.js"),
+      import("./pdf-library/remote-pack.js"),
+      import("./pdf-library/google-drive.js"),
+    ]);
+    const store = createPackStore({ adapter: createIndexedDbPackAdapter() });
+    const configured = defaultRecentThreePack();
+    const gatewayBaseUrl = await configuredGoogleDriveGatewayUrl();
+    const driveConnection = createGoogleDriveConnection({ gatewayBaseUrl });
+    const providedConnection = createGoogleDriveConnection({ gatewayBaseUrl, storage: null });
+    const isProvidedFolder = (url) => Boolean(url) && parseGoogleDriveFolderUrl(url).folderId === parseGoogleDriveFolderUrl(PROVIDED_DRIVE_FOLDER_URL).folderId;
+    const syncPackCatalog = () => {
+      const preferredRemote = mergePreferredCatalogs(defaultPack, drivePack);
+      const merged = mergePreferredCatalogs(
+        preferredRemote,
+        isDesktopLibrary ? { documents: installedPackDocuments, searchIndex: installedPackSearchIndex } : null,
+      );
+      return pdfUi.syncPackCatalog({
+        documents: merged.documents,
+        searchIndex: merged.searchIndex,
+        openDocument: (runtime, document) => merged.installedDocumentIds.has(document.id)
+          ? store.openDocument(runtime, document)
+          : drivePackDocumentIds.has(document.id)
+            ? drivePack.openDocument(runtime, document)
+            : defaultPack.openDocument(runtime, document),
+        downloadDocument: (document) => drivePackDocumentIds.has(document.id)
+          ? drivePack.downloadDocument(document)
+          : defaultPack?.downloadDocument?.(document),
+        canDownloadDocument: (document) => !merged.installedDocumentIds.has(document.id)
+          && (drivePackDocumentIds.has(document.id) || typeof defaultPack?.downloadDocument === "function"),
+      });
+    };
+    packManagement = mount({
+      host: pdfUi.getPackHost(),
+      driveHost: pdfUi.getDriveHost(),
+      onProvidedStatus: (message) => unifiedUi?.setProvidedStatus(message),
+      store,
+      googleDrive: {
+        provided: !isDesktopLibrary,
+        gatewayConfigured: driveConnection.gatewayConfigured,
+        savedFolderUrl: () => {
+          const saved = driveConnection.savedFolderUrl();
+          return !isDesktopLibrary && isProvidedFolder(saved) ? "" : saved;
+        },
+        async connect(folderUrl) {
+          if (!isDesktopLibrary && isProvidedFolder(folderUrl)) throw new Error("이 폴더는 기본 제공 자료로 이미 연결되어 있습니다.");
+          const connection = await driveConnection.connect(folderUrl);
+          drivePack = driveFolderPack(connection.pack, folderUrl);
+          drivePackDocumentIds = new Set(drivePack.documents.map((document) => document.id));
+          await syncPackCatalog();
+          pdfUi.setSourceStatus(`${drivePack.title}에서 ${drivePack.documentCount}개 PDF와 사전 색인을 읽었습니다.`);
+          return connection;
+        },
+        async disconnect() {
+          driveConnection.disconnect();
+          drivePack = null;
+          drivePackDocumentIds = new Set();
+          await syncPackCatalog();
+          pdfUi.setSourceStatus("Google Drive 폴더 연결을 해제했습니다.");
+        },
+      },
+      onUpdateCandidate: isDesktopLibrary && configured.baseUrl ? async () => {
+        const latest = await loadRemotePack({ baseUrl: defaultRecentThreePack().baseUrl });
+        defaultPack = latest;
+        packManagement.setCandidate(latest);
+        await syncPackCatalog();
+      } : null,
+      onChange: (snapshot) => {
+        if (snapshot.status !== "ready") return;
+        void store.enabledCatalog().then((catalog) => {
+          installedPackDocuments = [...catalog.documents];
+          installedPackSearchIndex = catalog.searchIndex;
+          return syncPackCatalog();
+        });
+      },
+    });
+    const connectProvided = async () => {
+      packManagement.setProvidedStatus("제공 자료를 연결하는 중…");
+      try {
+        const connection = await providedConnection.connect(PROVIDED_DRIVE_FOLDER_URL);
+        defaultPack = driveFolderPack(connection.pack, PROVIDED_DRIVE_FOLDER_URL);
+        await syncPackCatalog();
+        packManagement.setProvidedStatus(`${defaultPack.title} · ${defaultPack.documentCount}개 PDF 연결됨`);
+        pdfUi.setSourceStatus(`제공 자료 ${defaultPack.documentCount}개 PDF 연결됨`);
+      } catch (error) {
+        const message = `제공 자료 연결 실패: ${error instanceof Error ? error.message : error}`;
+        packManagement.setProvidedStatus(message, true);
+        pdfUi.setSourceStatus(message, true);
+      }
+    };
+    packManagement.setProvidedRetry(connectProvided);
+    if (isDesktopLibrary) {
+      const bundled = await loadBundledDesktopPack();
+      if (bundled) {
+        defaultPack = bundled;
+        packManagement.setCandidate(bundled);
+        await syncPackCatalog();
+      }
+      if (!bundled && configured.baseUrl) {
+        void loadRemotePack({ baseUrl: configured.baseUrl }).then((pack) => {
+          defaultPack = pack;
+          packManagement.setCandidate(pack);
+          return syncPackCatalog();
+        }).catch((error) => {
+          pdfUi.setSourceStatus(`기본 PDF 자료팩을 불러오지 못했습니다. 자료팩 폴더를 설치하거나 PDF를 직접 가져오세요. (${error instanceof Error ? error.message : error})`, true);
+        });
+      } else if (!bundled) {
+        pdfUi.setSourceStatus(configured.message, true);
+      }
+    } else {
+      void connectProvided();
+    }
+    return packManagement;
+  };
+
+  const setMode = (mode) => {
+    const pdfMode = mode === "pdf";
+    legacyPanel.hidden = pdfMode;
+    pdfPanel.hidden = !pdfMode;
+    legacyTab.setAttribute("aria-selected", String(!pdfMode));
+    pdfTab.setAttribute("aria-selected", String(pdfMode));
+    if (pdfMode) {
+      void pdfUi.activate();
+      void mountPackManagement();
+    }
+    else pdfUi.deactivate();
+  };
+
+  const filterValues = () => ({
+    subject: subjectSelect.value,
+    part: partSelect.value,
+    yearFrom: yearFromSelect.value,
+    yearTo: yearToSelect.value,
+    concept: conceptSelect.value,
+  });
+
+  const setStatus = (msg, isError = false) => {
+    status.textContent = msg;
+    status.classList.toggle("is-error", isError);
+  };
+  const close = () => {
+    if (overlay.hidden) return;
+    overlay.hidden = true;
+    pdfUi.deactivate();
+    window.dispatchEvent(new CustomEvent("5e:library-closed", { detail: { library: "exam" } }));
+  };
+
+  /* ----- 그리드 선택 상태(카드 클릭 → 상단 액션 버튼이 대상으로 삼음) -----
+     클릭할 때마다 켜고 끄는 토글이다(Ctrl/⌘를 눌러야 하는 방식은 Mac에서 우클릭과
+     충돌하고, 이 화면은 어차피 다중 선택이 기본 동작이라 그냥 토글이 낫다). */
+  const selectedItems = () => selectedIds.map((id) => byId.get(id)).filter(Boolean);
+  function updateActionButtons() {
+    const n = selectedIds.length;
+    const ready = n > 0 && !_busy;
+    insertBtn.disabled = !ready;
+    // 오브젝트 변환은 편집 모달을 띄우는 대화형이라 한 번에 하나만 다룰 수 있다.
+    objectifyBtn.disabled = !ready || n > 1;
+    objectifyBtn.title = n > 1 ? "오브젝트 변환은 한 문항씩만 됩니다." : "";
+    aiBtn.disabled = !ready || typeof openAi !== "function";
+    aiBtn.title = "선택한 기출 이미지를 AI 생성·변환의 참고 이미지로 보냅니다.";
+    refwinBtn.disabled = !ready;
+    insertBtn.textContent = n > 1 ? `이미지 삽입 (${n})` : "이미지 삽입";
+    aiBtn.textContent = n > 1 ? `AI로 재구성 (${n})` : "AI로 재구성";
+    refwinBtn.textContent = n > 1 ? `참고 창 열기 (${n})` : "참고 창 열기";
+  }
+  function syncCardMarks() {
+    grid.querySelectorAll(".examlib-card").forEach((c) => {
+      c.classList.toggle("is-selected", selectedIds.includes(c.dataset.id));
+    });
+  }
+  function toggleCard(id) {
+    const at = selectedIds.indexOf(id);
+    if (at >= 0) selectedIds.splice(at, 1);
+    else if (selectedIds.length >= MAX_SELECT) {
+      setStatus(`한 번에 ${MAX_SELECT}문항까지만 선택할 수 있습니다.`);
+      return;
+    } else selectedIds.push(id);
+    syncCardMarks();
+    updateActionButtons();
+  }
+  function clearSelection() {
+    selectedIds = [];
+    syncCardMarks();
+    updateActionButtons();
+  }
+
+  /* ----- 드롭다운 옵션 채우기 (과목·파트·년도 전부 manifest 실제 데이터에서) ----- */
+  /* 과목 옵션: 앱의 현재 과목 모드(p/c/b/e)에 해당하는 과목(예: 화학 → 화학1·화학2)만.
+   * 모드와 겹치는 과목이 manifest에 없으면 전체를 보여준다(안전 폴백). */
+  function populateSubjectOptions() {
+    // manifest 로드 실패/대기 중(null)에도 '필터 초기화' 버튼은 눌릴 수 있으므로,
+    // openLibrary/runSearch와 같은 가드로 크래시를 막는다.
+    if (!manifest) return;
+    const prev = subjectSelect.value;
+    subjectSelect.length = 1;
+    const subjectLabels = new Map(); // code → label (첫 등장값 사용)
+    for (const it of manifest.items) {
+      if (!subjectLabels.has(it.subject)) subjectLabels.set(it.subject, it.subjectLabel || it.subject);
+    }
+    const mode = document.documentElement.getAttribute("data-subject") || "";
+    let codes = [...subjectLabels.keys()];
+    const modeCodes = codes.filter((c) => c.startsWith(mode));
+    if (mode && modeCodes.length) codes = modeCodes;
+    codes.sort((a, b) => {
+      const ia = SUBJECT_ORDER.indexOf(a), ib = SUBJECT_ORDER.indexOf(b);
+      if (ia === -1 && ib === -1) return a.localeCompare(b);
+      if (ia === -1) return 1;
+      if (ib === -1) return -1;
+      return ia - ib;
+    });
+    for (const code of codes) {
+      subjectSelect.add(new Option(subjectLabels.get(code), code));
+    }
+    // 과목 모드가 이미 정해져 있으므로 첫 과목(과목1)을 자동 선택해 바로 보여준다.
+    subjectSelect.value = codes.includes(prev) ? prev : (codes[0] || "");
+  }
+
+  function populateFilters() {
+    populateSubjectOptions();
+
+    partSelect.length = 1;  // "단원 전체"만 남기고 재생성
+    for (const p of manifest.parts || []) {
+      partSelect.add(new Option(p, p));
+    }
+    yearFromSelect.length = 1;
+    yearToSelect.length = 1;
+    for (const y of manifest.years || []) {
+      yearFromSelect.add(new Option(`${y}학년도`, String(y)));
+      yearToSelect.add(new Option(`${y}학년도`, String(y)));
+    }
+    populateConceptOptions();
+  }
+
+  /* ----- 개념 드롭다운: manifest.tagVocab(카테고리=단원) 기반, 단원 선택 시 그 단원 개념만 -----
+   * (주의: 현재 태그 어휘집은 물리 전용 — 다른 과목 문항은 개념이 비어 있음, SPEC 참고) */
+  function populateConceptOptions() {
+    if (!manifest) return; // manifest 없음 → populateSubjectOptions과 동일하게 안전 폴백
+    const vocab = manifest.tagVocab || [];
+    const selectedPart = partSelect.value;
+    const prevValue = conceptSelect.value;
+    conceptSelect.length = 1; // "개념 전체"만 남기고 재생성
+    for (const cat of vocab) {
+      if (selectedPart && cat.name !== selectedPart) continue;
+      for (const tag of cat.tags) {
+        conceptSelect.add(new Option(tag, tag));
+      }
+    }
+    conceptSelect.value = [...conceptSelect.options].some((o) => o.value === prevValue) ? prevValue : "";
+  }
+
+  /* ----- 결과 그리드 (카드 클릭=선택, 삽입/변환은 상단 버튼이 담당) ----- */
+  function renderResults(list) {
+    clearSelection();
+    grid.innerHTML = "";
+    const shown = list.slice(0, MAX_RENDER);
+    for (const item of shown) {
+      const card = document.createElement("div");
+      card.className = "examlib-card";
+      card.dataset.id = item.id;
+      card.innerHTML = `
+        <div class="examlib-thumb"><img loading="lazy" alt=""></div>
+        <div class="examlib-meta">
+          <div class="examlib-title"></div>
+          <div class="examlib-tags"></div>
+        </div>`;
+      card.querySelector("img").src = imageUrl(item);
+      card.querySelector(".examlib-title").textContent = item.title;
+      card.querySelector(".examlib-tags").textContent = (item.tags || []).join(" · ");
+      grid.appendChild(card);
+    }
+    if (!list.length) {
+      setStatus("검색 결과가 없습니다.");
+    } else if (list.length > MAX_RENDER) {
+      setStatus(`검색 결과 ${list.length}개 — 앞 ${MAX_RENDER}개만 표시. 검색어나 필터로 좁혀보세요.`);
+    } else {
+      setStatus(`문항 ${list.length}개`);
+    }
+  }
+
+  // 과목을 고르기 전에는 아무것도 그리지 않는다 — 552개 전체를 무작정 훑지 않도록.
+  function runSearch() {
+    if (!manifest) return;
+    const filters = filterValues();
+    if (!filters.subject) {
+      clearSelection();
+      grid.innerHTML = "";
+      setStatus("과목을 먼저 선택하세요.");
+      return;
+    }
+    renderResults(searchItems(queryInput.value, filters));
+  }
+
+  function resetFilters() {
+    queryInput.value = "";
+    partSelect.value = "";
+    yearFromSelect.value = "";
+    yearToSelect.value = "";
+    conceptSelect.value = "";
+    populateSubjectOptions(); // 과목은 현재 모드의 첫 과목으로 복귀
+    populateConceptOptions(); // 단원 초기화됐으니 개념 목록도 전체로
+    runSearch();
+  }
+
+  /* ----- [이미지로 삽입]: fetch → dataURL → 기존 이미지 객체 삽입 경로 ----- */
+  async function insertItem(item, button) {
+    _busy = true;
+    button.disabled = true;
+    setStatus(`${item.title} 불러오는 중…`);
+    try {
+      const res = await fetch(imageUrl(item));
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const dataUrl = await blobToDataUrl(await res.blob());
+      await insertImageFromSrc(state, dataUrl);
+      close();
+    } catch (e) {
+      setStatus(`삽입 실패: ${e && e.message ? e.message : e}`, true);
+    } finally {
+      _busy = false;
+      updateActionButtons(); // 카드 선택이 바뀌어 있었다면 여기서 반영
+    }
+  }
+
+  /* ----- [객체로 변환]: fetch → File → 기존 이미지 객체화 모달로 전달 ----- */
+  async function objectifyItem(item, button) {
+    _busy = true;
+    button.disabled = true;
+    setStatus(`${item.title} 불러오는 중…`);
+    try {
+      const res = await fetch(imageUrl(item));
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const blob = await res.blob();
+      const file = new File([blob], item.file, { type: "image/png" });
+      if (!openObjectifyWithFile(file)) throw new Error("이미지 객체화 모듈이 준비되지 않았습니다.");
+      close();
+    } catch (e) {
+      setStatus(`객체 변환 실패: ${e && e.message ? e.message : e}`, true);
+    } finally {
+      _busy = false;
+      updateActionButtons();
+    }
+  }
+
+  grid.addEventListener("click", (e) => {
+    const card = e.target.closest(".examlib-card");
+    if (!card) return;
+    toggleCard(card.dataset.id);
+  });
+
+  insertBtn.addEventListener("click", async () => {
+    // 여러 개를 고른 경우 고른 순서대로 차례차례 넣는다.
+    for (const item of selectedItems()) await insertItem(item, insertBtn);
+  });
+  objectifyBtn.addEventListener("click", () => {
+    const item = selectedItems()[0];
+    if (item) objectifyItem(item, objectifyBtn);
+  });
+  aiBtn.addEventListener("click", () => {
+    const items = selectedItems();
+    if (!items.length || typeof openAi !== "function") return;
+    close();
+    void openAi({
+      references: items.map((item) => ({ src: imageUrl(item), name: item.title || item.file })),
+    });
+  });
+  refwinBtn.addEventListener("click", () => {
+    const items = selectedItems();
+    if (!items.length) return;
+    openReferenceWindow(items);
+    close();   // 참고 창을 띄웠으면 검색 모달은 비켜 준다
+  });
+
+  /* ----- manifest 로드 (첫 오픈 시 1회) ----- */
+  async function loadManifest() {
+    setStatus("문항 목록 불러오는 중…");
+    try {
+      const baseUrl = configuredLegacyDatasetBase();
+      if (!baseUrl) throw new Error("외부 레거시 자료 위치가 설정되지 않았습니다.");
+      const res = await fetch(baseUrl + "manifest.json", { cache: "no-store" });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      if (data.version !== "exam-library-v1" || !Array.isArray(data.items)) {
+        throw new Error("manifest 형식이 exam-library-v1이 아닙니다.");
+      }
+      manifest = data;
+      // 동의어 사전(선택): 있으면 검색어 확장에 쓰고, 없거나 깨져도 검색은 정상 동작.
+      try {
+        const sres = await fetch(baseUrl + "synonyms.json", { cache: "no-store" });
+        if (sres.ok) {
+          const sdata = await sres.json();
+          synonyms = (sdata && sdata.map) || {};
+        }
+      } catch { synonyms = {}; }
+      prepareItems(manifest.items);
+      byId = new Map(manifest.items.map((it) => [it.id, it]));
+      populateFilters();
+      runSearch();
+    } catch (e) {
+      manifest = null;
+      setStatus("외부 레거시 기출 자료를 불러올 수 없습니다. 설정한 자료 위치를 확인하세요. "
+        + `(${e && e.message ? e.message : e})`, true);
+    }
+  }
+
+  let partsManifest = null;
+  let bundledExamManifest;
+  let externalExamManifest = null;
+  let importedImages = [];
+  let unifiedProviderCache = null;
+  let unifiedProviderCacheKey = "";
+  async function ensureUnifiedManifests() {
+    if (!partsManifest) partsManifest = await loadPartsManifest();
+    if (bundledExamManifest === undefined) {
+      try {
+        const response = await fetch(BUNDLED_EXAM_CATALOG_URL, { cache: "no-store" });
+        const catalog = response.ok ? await response.json() : null;
+        bundledExamManifest = catalog?.version === "exam-library-v1" && Array.isArray(catalog.items) ? catalog : null;
+      } catch (_) {
+        bundledExamManifest = null;
+      }
+    }
+    const externalBase = configuredLegacyDatasetBase();
+    if (externalBase && !externalExamManifest) {
+      const response = await fetch(`${externalBase}manifest.json`, { cache: "no-store" });
+      if (response.ok) externalExamManifest = await response.json();
+    }
+  }
+
+  function unifiedExamManifest() {
+    const items = new Map();
+    for (const item of [...(bundledExamManifest?.items ?? []), ...(externalExamManifest?.items ?? [])]) {
+      if (item?.id) items.set(item.id, item);
+    }
+    return items.size ? { version: "exam-library-v1", items: [...items.values()] } : null;
+  }
+
+  async function materializeImportedImage({ result, item }) {
+    if (item?.bytes instanceof Uint8Array) {
+      const type = item.mimeType || "image/png";
+      return { bytes: item.bytes.slice(), dataUrl: await blobToDataUrl(new Blob([item.bytes], { type })), result };
+    }
+    if (item?.imageId && globalThis.fiveEDesktop?.pdfLibrary?.readImage) {
+      const opened = await globalThis.fiveEDesktop.pdfLibrary.readImage(item.imageId);
+      const bytes = opened.data instanceof Uint8Array ? opened.data : Uint8Array.from(opened.data || []);
+      return { bytes, dataUrl: await blobToDataUrl(new Blob([bytes], { type: opened.mimeType || item.mimeType || "image/png" })), result };
+    }
+    return { dataUrl: await urlToDataUrl(result.preview.url), result };
+  }
+
+  async function getUnifiedProvider() {
+    await ensureUnifiedManifests();
+    const catalog = pdfUi.getCatalog();
+    const resolvedPdfResults = pdfUi.getResolvedResults();
+    const cacheKey = JSON.stringify([
+      catalog.revision,
+      importedImages.map((item) => [item.id, item.version ?? item.bytes?.byteLength ?? null]),
+      resolvedPdfResults.map((item) => item.id),
+    ]);
+    if (unifiedProviderCache && unifiedProviderCacheKey === cacheKey) return unifiedProviderCache;
+    unifiedProviderCacheKey = cacheKey;
+    unifiedProviderCache = createUnifiedLibraryProvider({
+      partsManifest: isDesktopLibrary ? partsManifest : null,
+      examManifest: isDesktopLibrary ? unifiedExamManifest() : null,
+      examBaseUrl: configuredLegacyDatasetBase(),
+      pdfDocuments: catalog.documents,
+      pdfSearchIndex: catalog.searchIndex,
+      revision: catalog.revision,
+      resolvedPdfResults,
+      importedImages,
+      searchPdf: (options) => pdfUi.searchPdf(options),
+      cropForResult: (result) => pdfUi.cropForResult(result),
+      materializers: {
+        pdf: (input) => pdfUi.materializePdf(input),
+        part: ({ item, options }) => materializePartsAsset(item, options),
+        examImage: ({ result }) => urlToDataUrl(result.preview.url).then((dataUrl) => ({ dataUrl, result })),
+        importedImage: materializeImportedImage,
+      },
+    });
+    return unifiedProviderCache;
+  }
+
+  async function insertUnifiedResult(result, asset, options, context = {}) {
+    if (result.provenance.provider === "parts") {
+      insertPartsAsset(state, {
+        item: { id: result.provenance.itemId, defaultLevel: result.metadata?.defaultLevel },
+        asset,
+        widthMm: options.targetMm,
+        lineLevel: options.mode === "original" ? "RAW" : options.level,
+        lineFill: options.fill,
+      });
+      return;
+    }
+    const dataUrl = asset.dataUrl || asset.dataUri || asset.url;
+    if (!dataUrl) throw new Error("삽입할 이미지 데이터를 만들지 못했습니다.");
+    await insertImageFromSrc(state, dataUrl, { ...unifiedImageInsertionOptions(result, asset), isCurrent: context.isCurrent });
+  }
+
+  unifiedUi = createUnifiedLibraryUi({
+    getProvider: getUnifiedProvider,
+    insertMaterialized: insertUnifiedResult,
+    openObjectify: async (result, asset, context = {}) => {
+      const transfer = unifiedLibraryTransfer(result, asset);
+      const dataUrl = transfer.dataUrl;
+      if (!dataUrl) throw new Error("객체화할 이미지 데이터를 만들지 못했습니다.");
+      const response = await fetch(dataUrl);
+      if (context.isCurrent && !context.isCurrent()) return;
+      const blob = await response.blob();
+      if (context.isCurrent && !context.isCurrent()) return;
+      const safeName = `${String(result.title || "library-image").replace(/[\\/:*?"<>|]+/gu, "-")}.png`;
+      if (!openObjectifyWithFile(new File([blob], safeName, { type: blob.type || "image/png" }), { sourceMetadata: transfer.source })) throw new Error("이미지 객체화 모듈이 준비되지 않았습니다.");
+    },
+    openAi,
+    openIndependentReferences,
+    pdfUi,
+    pdfDetailsElement: pdfPanel,
+    onImportedImages: async (files) => {
+      const records = [];
+      for (const file of files) {
+        const bytes = new Uint8Array(await file.arrayBuffer());
+        records.push({ id: `browser-image:${crypto.randomUUID()}`, fileName: file.name, name: file.name, mimeType: file.type, bytes, sourceId: "browser-imports", sourceLabel: "가져온 이미지" });
+      }
+      importedImages = [...importedImages, ...records];
+    },
+    onDesktopSnapshot: (snapshot) => {
+      const browserImports = importedImages.filter((item) => !item.imageId);
+      const desktopImages = (snapshot?.images || []).map((item) => ({
+        ...item,
+        id: item.imageId,
+        fileName: item.name,
+        sourceId: item.connectionId || "desktop",
+        sourceLabel: "연결한 폴더",
+      }));
+      importedImages = [...browserImports, ...desktopImages];
+    },
+  });
+  const unifiedConsumerRegistry = createUnifiedLibraryConsumerRegistry((consumer, trigger) =>
+    unifiedUi.beginReferenceSelection({ ...consumer, onComplete: consumer.onComplete ?? unifiedUi.close }, trigger || openButton));
+  pdfPanel.hidden = false;
+
+  /* ----- open/close ----- */
+  const openLibrary = async (trigger) => {
+    const opening = unifiedUi.open(trigger || openButton);
+    void mountPackManagement().catch((error) => pdfUi.setSourceStatus(`자료팩 관리 열기 실패: ${error instanceof Error ? error.message : error}`, true));
+    await opening;
+  };
+  openButton.addEventListener("click", () => void openLibrary(openButton));
+  registerPdfReferencePicker(async ({ onAdd, onAddMany, onStatus, trigger } = {}) => {
+    void mountPackManagement().catch((error) => onStatus?.(error instanceof Error ? error.message : String(error), "error"));
+    await unifiedUi.beginReferenceSelection({ onAdd, onAddMany, onStatus, onComplete: unifiedUi.close }, trigger || openButton);
+  });
+  legacyTab.addEventListener("click", () => {
+    setMode("legacy");
+    if (!manifest) void loadManifest();
+    else runSearch();
+  });
+  pdfTab.addEventListener("click", () => setMode("pdf"));
+  document.addEventListener("keydown", (e) => {
+    if (!(e.ctrlKey || e.metaKey) || e.shiftKey || e.altKey || e.key.toLowerCase() !== "l") return;
+    if (e.target instanceof HTMLElement && (e.target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/u.test(e.target.tagName))) return;
+    e.preventDefault();
+    if (overlay.hidden) void openLibrary();
+  }, true);
+  overlay.querySelector("#examlib-close").addEventListener("click", close);
+  overlay.addEventListener("mousedown", (e) => { if (e.target === overlay) close(); });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape" && !overlay.hidden) close(); });
+  queryInput.addEventListener("input", runSearch);
+  partSelect.addEventListener("change", () => { populateConceptOptions(); runSearch(); });
+  // 과목을 바꾸면 이전 과목의 단원/개념 값이 새 과목엔 안 맞을 수 있어(예: 물리 '역학'이
+  // 화학에 남아 결과가 항상 0건이 됨) 초기화하고 개념 옵션도 다시 채운다.
+  subjectSelect.addEventListener("change", () => {
+    partSelect.value = "";
+    populateConceptOptions();
+    runSearch();
+  });
+  for (const sel of [yearFromSelect, yearToSelect, conceptSelect]) {
+    sel.addEventListener("change", runSearch);
+  }
+  resetButton.addEventListener("click", resetFilters);
+  return Object.freeze({
+    openLibrary,
+    registerUnifiedLibraryConsumer: (consumer) => unifiedConsumerRegistry.register(consumer),
+    beginUnifiedLibrarySelection: (trigger) => unifiedConsumerRegistry.begin(trigger),
+  });
+}

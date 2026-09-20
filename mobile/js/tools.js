@@ -1,0 +1,1571 @@
+/* ===== TOOLS (DESIGN 짠3 tool selection + the rectangle draw pipeline) ===== */
+//
+// Two responsibilities, both routed through the store so data stays the truth:
+//   1. Tool selection ??V (select) / R (rectangle), via buttons or keyboard.
+//      The armed tool lives in state.activeTool.
+//   2. Rectangle drawing ??mouse down?뭗rag?뭫p while R is armed. The drag builds
+//      a `draft` rect (live preview via state.draft); mouse-up commits it into
+//      state.objects, then auto-returns to V (DESIGN 4-3).
+//
+// Mouse points are screen pixels; they are converted to WORLD coords through
+// screenToWorld BEFORE being stored, so shapes are anchored in world space and
+// survive zoom/pan unchanged (DESIGN 1-2).
+
+import { screenToWorld, getRenderScale, worldToScreen } from "./viewport.js?v=1.4.0";
+import { registerEscapeLayer } from "./escape-layers.js?v=1";
+import {
+  TEXT_FONTS, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_PX, DEFAULT_TEXT_SIZE_MM,
+  TEXT_SIZE_PRESETS, ptToMm, mmToPt, MIN_TEXT_PT,
+  EQUATION_FONT_FAMILY,
+  resolveTextFontStyle, resolveTextLetterSpacing,
+  normalizeTextRuns, normalizeTextRunStyle, textRunStyleFromObject, textRunsToText,
+  hasStyledTextRuns, SECTION_ROMAN_STYLE, QUANTITY_STYLE,
+} from "./state.js?v=1.4.0";
+import { setSnapPreview, pendulumBobRadius } from "./render.js?v=1.4.0";
+import { resolveEndpointSnap } from "./snap.js?v=1.4.0";
+import { applyNewObjectStyleDefaults } from "./style-mode.js?v=1.4.0";
+import { measureFormula, renderFormula, fontOf } from "./formula.js?v=1.4.0";
+import { fillHtmlTextWithRomanRuns } from "./text-rendering.js?v=1.4.0";
+import { getSvgAsset } from "./svg-assets.js?v=1.4.0";
+import { openPlaneModal } from "./function-graph/plane-modal.js?v=1.4.0";
+import { openGraphModal } from "./graph/graph-modal.js?v=1.4.0";
+import { nextObjectId } from "./tools/id.js?v=1.4.0";
+import { setupFreeDraw } from "./tools/free-draw.js?v=1.4.0";
+import { setupNodePlacement } from "./tools/node-placement.js?v=1.5.2";
+import { setupClickDrawing, clearClickLocals } from "./tools/click-placement.js?v=1.5.2";
+// Pure math helpers (MOVE-ONLY extraction, v0.44.0) — see js/geometry.js.
+import {
+  snapLineEnd, snapAngle, mathAngleDeg, snappedDeg, normalizeSweep,
+  bboxIntersects,
+} from "./geometry.js?v=1.4.0";
+// 각도 이산 변환 대상 목록의 정본(리터럴 5종을 대체) — object-types.js의 angleSnap.
+import { ANGLE_SNAP_TYPES } from "./object-types.js?v=1.4.0";
+// Selection / hit-testing (MOVE-ONLY extraction, v0.44.0) — see js/pick.js.
+// initPick(svg) hands pick.js the live SVG root for text/formula getBBox measurement.
+import {
+  initPick, pickSelectableObjectAtPoint, pickSelectableObjectFromEvent,
+  isPositionMovableForCursor, isLockedTracingImage, isBackgroundUnrecognized,
+  getObjectBBox, marqueeHitsObject,
+} from "./pick.js?v=1.4.2";
+// Re-export the picking API at its historical home so existing importers of
+// tools.js (transform.js: pickSelectableObjectFromEvent, and any future callers
+// of pickTolerances / pickSelectableObjectAtPoint) keep working unchanged.
+export { pickTolerances, pickSelectableObjectAtPoint, pickSelectableObjectFromEvent } from "./pick.js?v=1.4.2";
+// Text/formula editing subsystem (MOVE-ONLY extraction, v0.44.0) — see js/text-editor.js.
+// initTextEditing(svg, state) registers the text tool + click-to-edit + shortcuts +
+// context menu (called from initTools). isTextEditorOpen() replaces the old direct
+// _textEditor reads in setupDrawing; cancelActive*Editor are called by setActiveTool.
+import {
+  initTextEditing, isTextEditorOpen,
+  startEditingTextObject, openLabelerTextEditor, openAngleArcLabelEditor, insertLabelerChar,
+  cancelActiveTextEditor, cancelActiveFormulaEditor,
+} from "./text-editor.js?v=1.5.1";
+// Re-export the editor entry points at their historical home so existing importers of
+// tools.js keep working unchanged (inspector/section-geometry.js imports
+// openAngleArcLabelEditor; the openers are also used internally by the drawing code).
+export { startEditingTextObject, openLabelerTextEditor, openAngleArcLabelEditor, insertLabelerChar } from "./text-editor.js?v=1.5.1";
+// Guide hover cursor: ruler.js owns guide geometry. Called only at runtime inside
+// the pointermove handler, so the ruler↔tools import cycle stays safe.
+import { guideCursorAt } from "./ruler.js?v=1.4.0";
+import { SELECTION_COLOR, SELECTION_MARQUEE_FILL, selectionVisualMetrics } from "./selection-visuals.js?v=1.0.0";
+
+import { snapKey, modKey, shortcutKey, blocksCanvasShortcut } from "./platform.js?v=1.4.0";
+// Default look until the inspector exists (DESIGN 짠3-2: border only, hollow).
+export const DEFAULT_STROKE_WIDTH = 0.2; // world units (mm)
+export const MIN_SIZE = 0.3; // world units; ignore stray clicks that draw nothing
+// 그릴 때 각도 이산 변환(Ctrl/Cmd)을 직선과 똑같이 받는 타입들. 전부 p1/p2 계열이라
+// "두 점을 찍어 방향을 정한다"는 조작이 같다(2026-07-26 교사 지시로 확장).
+// 정본은 object-types.js의 angleSnap 플래그다 — 여기 리터럴로 적혀 있던 탓에 그 뒤
+// 추가된 p1/p2 타입(포물선·원호·진자·생명 부품 4종)이 조용히 빠져 있었다(2026-07-31 수정).
+const TEXT_EDITOR_PX = 14; // on-screen px of the text editor (matches .text-editor-overlay font-size)
+const TEXT_LINE_HEIGHT = 1.4; // matches .text-editor-overlay line-height AND renderText() tspan dy
+// A textarea centers its glyphs in the line box, so the first line sits half a
+// leading below the element top. The committed SVG <text> uses dominant-baseline:
+// hanging (glyph top AT the anchor), so we shift the editor up by that half-leading
+// to keep the draft and the final text from jumping vertically on commit.
+const TEXT_HALF_LEADING_PX = TEXT_EDITOR_PX * (TEXT_LINE_HEIGHT - 1) / 2;
+
+let _svg = null;
+let _state = null;
+// object-id generation moved to tools/id.js (nextObjectId) so extracted tool
+// pipelines share one counter and can never mint colliding ids.
+
+// Which circuit element / optics kind the next placement creates. Set via
+let _symbolProps = null;   // 팔레트가 지정한 추가 필드(예: 도르래 variant) — 생성 시 병합
+// armSymbol() when a left-panel symbol button is clicked; the placement pipelines
+// read these so a single CIRCUIT/OPTICS tool covers every variant.
+let _circuitElement = "resistor";
+let _opticsKind = "convex_lens";
+let _apparatusKind = "wire";
+let _svgAssetId = "pulley";
+let _solid3dKind = "box";
+const APPARATUS_TEMPLATE_IDS = {
+  wire: "E001",
+  compass: "E002",
+  pulley: "M001",
+  clamp: "M004",
+  scale: "M003",
+  electroscope: "E013",
+};
+const CIRCUIT_CAP_GAP_DEFAULT = 2; // capacitor plate gap default (mm); mirrors render.js
+
+// The UNIQUE id (data-symbol) of the library symbol currently armed, or null when
+// a plain drawing tool is active. Drives single-button highlight in syncButtons:
+// many symbols share ONE placement tool (CIRCUIT/OPTICS/ARC) but each button has a
+// unique data-symbol, so exactly one highlights — fixing the old all-CIRCUIT /
+// all-OPTICS multi-highlight where every button matching data-tool lit up.
+let _activeSymbolId = null;
+// Tools that a library symbol arms (vs. the plain V/R/O/... drawing tools). While
+// one of these is active, _activeSymbolId names WHICH symbol armed it; any other
+// tool (incl. auto-return to V after a commit) means no symbol is armed.
+const SYMBOL_TOOLS = new Set(["CIRCUIT", "OPTICS", "ARC", "APPARATUS", "SVGASSET", "RIGHTANGLE", "LABELER", "PENDULUM",
+  "SPRING", "CHARGEFIELD", "FIELDLINES", "STANDINGWAVE", "SOLID3D", "PARABOLA", "GROUNDARC",
+  // 생명과학 부품 (2026-07-31) — docs/BIO_PARTS_SPEC.md
+  "BRACE", "CHROMOSOME", "BILAYER", "NEURON", "LEGEND", "PEDIGREE",
+  // 화학 부품 (2026-07-31) — docs/CHEM_PARTS_SPEC.md
+  "VESSEL", "CHEMMODEL", "PARTICLEBOX", "ORBITAL", "BONDGROUP",
+  "CHEMCHART", "AXISBREAK", "CHEMGRAPH", "ELECTRODE", "PERIODIC"]);
+const TOOL_CHOOSER_GROUPS = [
+  { btn: "tool-text-merged", chooser: "chooser-text", persistent: true, tools: ["T", "LABELER"] },
+  { btn: "tool-angle-merged", chooser: "chooser-angle", persistent: true, tools: ["ARC", "RIGHTANGLE"] },
+  { btn: "tool-cut-merged", chooser: "chooser-cut", persistent: true, tools: ["CUT", "DELAYED_CUT", "ERASE"] },
+];
+
+/* ----- public: wire buttons, keyboard, and the drawing gestures ----- */
+export function initTools(svg, state) {
+  _svg = svg;
+  // 브라우저 기본 드래그 차단(요구: 이미지 위에서 선택이 깨지는 버그).
+  // SVG <image>는 기본적으로 draggable이라, 이미지 위에서 누르고 끌면 브라우저가 자기
+  // 드래그앤드롭(첨부파일 고스트)을 시작하면서 포인터를 가져간다 → mousemove가 끊겨
+  // 선택·마퀴·오브젝트 드래그가 중간에 죽는다. 특히 객체화가 남기는 반투명 원본 이미지는
+  // 원본 영역 전체를 덮으므로, '오브젝트가 없는 곳'에서도 이 현상이 난다.
+  // 캔버스 루트에서 한 번 막으면 모든 자식(이미지 포함)에 적용된다.
+  svg.addEventListener("dragstart", (e) => e.preventDefault());
+  initPick(svg); // pick.js keeps its own _svg for text/formula getBBox hit-testing
+  _state = state;
+
+  setupButtons();
+  setupToolChoosers();
+  setupKeyboard();
+  setupDrawing();
+  setupClickDrawing(_svg, _state);
+  setupFreeDraw(_svg, _state);
+  setupNodePlacement(_svg, _state);
+  initTextEditing(_svg, _state); // text tool + click-to-edit + shortcuts + context menu
+
+  // 고급 기능의 "좌표(중간점)함수" 버튼 → 통합 그래프 모달(요구: 함수 기능을 고급으로 이동).
+  document.getElementById("graph-tool-open")?.addEventListener("click", () => openGraphModal());
+
+  // Keep the tool buttons in sync with state.activeTool on every change.
+  state.subscribe((s) => syncButtons(s.activeTool));
+  syncButtons(state.get().activeTool);
+}
+
+/* ----- tool selection: the one path that changes the armed tool ----- */
+export function setActiveTool(tool) {
+  if (_state.get().activeTool === tool) return;
+  /* 팔레트가 얹어둔 추가 필드를 여기서 버린다. 곡선·꺾은선이 심볼 도구가 되면서
+   * (지구과학 전선·등치선·산점) 팔레트로 '한랭 전선'을 고른 뒤 C 키로 맨 곡선을
+   * 그리면 옛 필드가 따라붙는 사고가 가능해졌다. armSymbol 은 이 함수를 부른 **뒤에**
+   * 값을 넣으므로 정상 경로는 영향받지 않는다. */
+  _symbolProps = null;
+  clearClickLocals(); // arming another tool discards any in-progress click draft
+  cancelActiveTextEditor(); // discard any in-progress text edit
+  cancelActiveFormulaEditor(); // discard any in-progress formula edit
+  _state.update((s) => {
+    s.activeTool = tool;
+    s.draft = null; // arming another tool discards any unfinished draft
+  });
+}
+
+/* ----- left-panel buttons (the plain V/R/O/Y/L/P/C/T/rotate drawing tools) ----- */
+// These map ONE button to ONE tool via data-tool. Library symbol buttons are NOT
+// wired here — they carry data-symbol and are handled by templates.js, which calls
+// armSymbol() below to record the variant and arm the shared placement tool.
+function setupButtons() {
+  document.querySelectorAll("[data-tool]").forEach((btn) => {
+    btn.addEventListener("click", () => setActiveTool(btn.dataset.tool));
+  });
+}
+
+/* ----- 통합 도구 버튼(텍스트·라벨러 / 각도·직각) 선택 팝오버 -----
+ * 통합 버튼을 누르면 옆에 팝오버가 떠 둘 중 하나를 고른다. 팝오버 안의 옵션 버튼은 진짜
+ * data-tool/data-symbol을 달고 있어 클릭 시 기존 파이프라인(setupButtons / #tool-list 위임)이
+ * 그대로 도구를 켠다 — 여기서는 팝오버 열고/닫고/위치만 잡는다. 단축키는 팝오버가 숨겨져
+ * 있어도 이 옵션 버튼을 querySelector로 찾아 click()하므로 그대로 작동한다. */
+function setupToolChoosers() {
+  const closeAll = () => {
+    document.querySelectorAll(".tool-chooser").forEach((c) => { c.hidden = true; });
+    document.querySelectorAll(".tool-btn.is-open").forEach((b) => {
+      b.classList.remove("is-open");
+      b.setAttribute("aria-expanded", "false");
+    });
+    if (_state) syncButtons(_state.get().activeTool);
+  };
+  let anyBound = false;
+  TOOL_CHOOSER_GROUPS.forEach(({ btn, chooser, persistent }) => {
+    const b = document.getElementById(btn), c = document.getElementById(chooser);
+    if (!b || !c) return;
+    registerEscapeLayer(c, () => { closeAll(); b.focus(); });
+    anyBound = true;
+    let closeTimer = 0;
+    const open = () => {
+      closeAll();
+      c.hidden = false;
+      c.dataset.persistent = persistent ? "true" : "false";
+      b.classList.add("is-open");
+      b.setAttribute("aria-expanded", "true");
+      // While choosing a child tool, suppress the old tool highlight. The
+      // selected child will restore its own active state after it is armed.
+      document.querySelectorAll(".tool-btn.is-active").forEach((tool) => tool.classList.remove("is-active"));
+
+      const uiZoom = Number.parseFloat(getComputedStyle(document.body).zoom) || 1;
+      const buttonRect = b.getBoundingClientRect();
+      const panelRect = document.getElementById("panel-left")?.getBoundingClientRect();
+      const popupRect = c.getBoundingClientRect();
+      const panelRight = panelRect?.right || buttonRect.right;
+      const gap = 12;
+      // Always clear the button's own right edge. On narrow layouts the
+      // panel rect can be narrower than an overflowing tool button.
+      let left = Math.max(buttonRect.right + gap, panelRight + gap);
+      let top = buttonRect.top;
+      // If the side does not fit, keep the popup below the tool panel rather
+      // than covering the button grid.
+      if (left + popupRect.width > window.innerWidth - 8) {
+        left = Math.max(8, panelRight - popupRect.width);
+        top = Math.min(buttonRect.bottom + gap, window.innerHeight - popupRect.height - 8);
+      }
+      // getBoundingClientRect() is in rendered pixels, while a fixed child
+      // of body uses the pre-zoom coordinate system. Convert back so the
+      // popup never slides over its triggering button at medium/small zoom.
+      c.style.left = Math.round(left / uiZoom) + "px";
+      c.style.top = Math.round(Math.max(8, top) / uiZoom) + "px";
+    };
+    const scheduleClose = () => {
+      if (persistent) return;
+      window.clearTimeout(closeTimer);
+      closeTimer = window.setTimeout(() => {
+        // Use the shared closer so the temporary blue "open" state is also
+        // removed when the pointer leaves without choosing a child tool.
+        if (!b.matches(":hover") && !c.matches(":hover")) closeAll();
+      }, 160);
+    };
+    b.addEventListener("click", (e) => {
+      e.stopPropagation();               // 바깥클릭 닫기 리스너가 방금 연 걸 닫지 않게
+      const willOpen = c.hidden;
+      closeAll();
+      if (willOpen) {
+        // A merged button is a chooser, not the previously armed drawing
+        // tool. Clear the old tool highlight while child options are open;
+        // choosing an option arms the actual tool afterwards.
+        open();
+      }
+    });
+    if (!persistent) {
+      b.addEventListener("mouseenter", () => { window.clearTimeout(closeTimer); open(); });
+      b.addEventListener("mouseleave", scheduleClose);
+      c.addEventListener("mouseenter", () => window.clearTimeout(closeTimer));
+      c.addEventListener("mouseleave", scheduleClose);
+    }
+    // 옵션 클릭 = 도구 선택(기존 위임이 처리) + 팝오버 닫기.
+    c.addEventListener("click", () => { if (!persistent) closeAll(); });
+  });
+  if (anyBound) {
+    // 팝오버 바깥을 누르면 닫는다(통합 버튼 자신은 stopPropagation으로 제외됨).
+    document.addEventListener("click", (e) => {
+      if (e.target.closest(".tool-chooser")) return;
+      // A persistent chooser belongs to the armed child tool. Canvas clicks
+      // must remain drawing input and must not dismiss it. Another toolbar
+      // button still closes it normally.
+      const persistentOpen = document.querySelector('.tool-chooser[data-persistent="true"]:not([hidden])');
+      if (persistentOpen && !e.target.closest(".tool-btn")) return;
+      if (!e.target.closest(".tool-chooser")) closeAll();
+    });
+  }
+}
+
+/* ----- arm a library symbol (called by templates.js for "shape"-kind symbols) -----
+ * Records the concrete variant (the EXACT thing the old per-element/per-kind
+ * buttons did) then arms the shared placement tool. syncButtons runs explicitly so
+ * the highlight updates even when the armed tool is unchanged (e.g. 저항 → 전지,
+ * both on CIRCUIT, where setActiveTool early-returns and fires no subscriber). */
+export function armSymbol(symbolId, tool, variant, props) {
+  if (tool === "CIRCUIT") _circuitElement = variant || "resistor";
+  if (tool === "OPTICS")  _opticsKind = variant || "convex_lens";
+  if (tool === "APPARATUS") _apparatusKind = variant || "wire";
+  if (tool === "SVGASSET") _svgAssetId = variant || "pulley";
+  if (tool === "SOLID3D") _solid3dKind = variant || "box";
+  // 같은 배치 도구 안에서 소자만 바꾸면(예: 저항→전지) setActiveTool이 조기 반환해
+  // 진행 중이던 첫 단자 클릭 draft가 남는다 → 도구 전환 여부와 무관하게 항상 폐기.
+  clearClickLocals();
+  if (_state.get().activeTool === tool) _state.update((s) => { s.draft = null; });
+  else setActiveTool(tool);
+  // 추가 필드는 setActiveTool **뒤에** 넣는다 — 그 안에서 옛 값을 비우기 때문이다.
+  _symbolProps = (props && typeof props === "object") ? { ...props } : null;
+  // _activeSymbolId는 위 도구 상태 갱신이 유발하는 syncButtons(이전 도구 기준) 뒤에 설정해야
+  // 한다. 먼저 설정하면, 비-심볼 도구(예: 텍스트 T)에서 심볼로 전환할 때 그 syncButtons가
+  // "!SYMBOL_TOOLS.has(옛 도구)"로 _activeSymbolId를 null로 지워 하이라이트가 사라졌다.
+  _activeSymbolId = symbolId;
+  syncButtons(_state.get().activeTool);
+}
+
+// Read the armed optics kind. Exposed as a getter (armSymbol owns the value) so
+// tools/node-placement.js can tell when the 점 tool is armed without a copy.
+export function getOpticsKind() { return _opticsKind; }
+
+// The exact library symbol currently armed. Tutorial checks must not mistake a
+// different variant sharing OPTICS/CIRCUIT for the requested symbol.
+export function getActiveSymbolId() { return _activeSymbolId; }
+
+/* 팔레트가 지정한 추가 필드. 드래그로 그리는 도형은 makeShape 안에서 직접 병합하지만,
+ * 클릭배치(선 L·꺾은선 P·곡선 C)는 commit이 tools/click-placement.js 에 있어 값을 못 봤다.
+ * 지구과학 부품(전선 기호·등치선·산점)이 전부 곡선·꺾은선 위에 얹히는 옵션이라
+ * 이 경로에도 병합이 필요해졌다 — 값의 주인은 그대로 armSymbol 이고 여기선 읽기만 한다. */
+export function getSymbolProps() { return _symbolProps; }
+
+function syncButtons(activeTool) {
+  // A library symbol stays armed only while its placement tool is active; any plain
+  // tool (or the auto-return to V after a commit) clears the symbol highlight.
+  if (!SYMBOL_TOOLS.has(activeTool)) _activeSymbolId = null;
+  for (const group of TOOL_CHOOSER_GROUPS) {
+    if (group.tools.includes(activeTool)) continue;
+    const chooser = document.getElementById(group.chooser);
+    const button = document.getElementById(group.btn);
+    if (chooser) chooser.hidden = true;
+    button?.classList.remove("is-open");
+    button?.setAttribute("aria-expanded", "false");
+  }
+  // Plain tool buttons: one button ↔ one tool (unchanged behavior).
+  document.querySelectorAll("[data-tool]").forEach((btn) => {
+    btn.classList.toggle("is-active", btn.dataset.tool === activeTool);
+  });
+  // Symbol buttons share a placement tool but each has a UNIQUE data-symbol, so
+  // exactly one highlights — keyed on the armed symbol id, not the shared tool.
+  document.querySelectorAll("[data-symbol]").forEach((btn) => {
+    btn.classList.toggle("is-active", btn.dataset.symbol === _activeSymbolId);
+  });
+  // 통합 버튼(텍스트·라벨러 / 각도·직각)은 data-tool/data-symbol이 없으니 직접 하이라이트한다.
+  const tm = document.getElementById("tool-text-merged");
+  if (tm) tm.classList.toggle("is-active", activeTool === "T" || _activeSymbolId === "labeler");
+  const am = document.getElementById("tool-angle-merged");
+  if (am) am.classList.toggle("is-active", _activeSymbolId === "anglearc" || _activeSymbolId === "rightangle");
+  const cm = document.getElementById("tool-cut-merged");
+  if (cm) cm.classList.toggle("is-active", activeTool === "CUT" || activeTool === "DELAYED_CUT" || activeTool === "ERASE");
+}
+
+// Mirrors transform.js's own F-key precondition (selected, unlocked, type "triangle")
+// so tools.js can tell whether THAT handler is about to flip a triangle instead.
+function hasFlippableTriangleSelected() {
+  const s = _state.get();
+  return (s.selectedIds || []).some((id) => {
+    const o = s.objects.find((ob) => ob.id === id);
+    return !!o && !o.locked && o.type === "triangle";
+  });
+}
+
+/* ----- keyboard shortcuts: V / S / R / O / Y / L / P(꺾은선) / D(자유그리기) / N(점) / C / E(자르기) / Ctrl+E(지연 자르기) / T ----- */
+function setupKeyboard() {
+  window.addEventListener("keydown", (e) => {
+    if (blocksCanvasShortcut(e)) return;
+    const key = shortcutKey(e);
+    if (modKey(e) && !e.altKey && !e.shiftKey && key === "e") {
+      e.preventDefault();
+      setActiveTool("DELAYED_CUT");
+      return;
+    }
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.shiftKey && (key === "c" || key === "v")) return;
+    if (key === "v") setActiveTool("V");
+    else if (key === "s") setActiveTool("RECT");       // 사각형 — shortcut is S, not R (see SHAPE_TYPE note)
+    else if (key === "r") setActiveTool("rotate");
+    else if (key === "o") setActiveTool("O");
+    else if (key === "y") setActiveTool("Y");
+    else if (key === "l") setActiveTool("L");
+    else if (key === "p") setActiveTool("P");              // 꺾은선 (polyline)
+    else if (key === "d" && !e.shiftKey) setActiveTool("F"); // 자유 그리기 (Draw) — 도구코드는 "F"; Shift+D는 좌표 디버그 오버레이(main.js) 몫
+    else if (key === "n") activateSymbolShortcut("node", "N"); // 점 (node, mnemonic: node)
+    else if (key === "a" && e.shiftKey) activateSymbolShortcut("rightangle", "Shift+A"); // 직각 표시 (④: Shift+G에서 이전, Shift+G는 폐기)
+    else if (key === "a") activateSymbolShortcut("anglearc", "A"); // 각도호
+    else if (key === "c") setActiveTool("C");
+    else if (key === "e" && e.shiftKey) setActiveTool("ERASE"); // 지우개(올가미) — 이미지·SVG자산에 투명 구멍 (erase-tool.js)
+    else if (key === "e") setActiveTool("CUT");           // 자르기(가위) — 자유곡선/Shift 직선/Shift+Ctrl 각도스냅 (cut-tool.js)
+    else if (key === "t" && e.shiftKey) activateSymbolShortcut("labeler", "Shift+T"); // 라벨러 (텍스트 도구 T와 한 글자 차이)
+    else if (key === "t") setActiveTool("T");
+    else if (key === "f") {
+      // F collides with transform.js's triangle flipY toggle (same reason as above).
+      // Skip the shortcut whenever an unlocked triangle is selected — transform.js
+      // will flip it instead. 자유그리기 is now button-only (its F shortcut moved to
+      // 함수 입력, freeing F up — 확정 항목 ⑧).
+      // F = 통합 그래프 모달(좌표 탭 먼저, 확정 6). 선택된 그래프(좌표평면 richLabels 또는
+      // 그 위 계열)가 있으면 그 그래프를 편집 모드로, 없으면 새 그래프를 만든다.
+      if (!hasFlippableTriangleSelected()) {
+        const s = _state.get();
+        const sel = (s.selectedIds || [])[0];
+        const selObj = sel ? s.objects.find((o) => o.id === sel) : null;
+        let planeId = null;
+        if (selObj && selObj.type === "coordplane" && selObj.richLabels) planeId = selObj.id;
+        else if (selObj && selObj.type === "funcgraph" && selObj.planeId) planeId = selObj.planeId;
+        openGraphModal(planeId);   // startTab 기본 "coord"
+      }
+    }
+    else if (key === "tab") {
+      // ④: while the angle-tool pair is armed, Tab toggles 호(ARC) ↔ 직각(RIGHTANGLE)
+      // in place instead of tabbing focus away.
+      const activeTool = _state.get().activeTool;
+      if (activeTool === "ARC" || activeTool === "RIGHTANGLE") {
+        e.preventDefault();
+        activateSymbolShortcut(activeTool === "ARC" ? "rightangle" : "anglearc", "Tab");
+      }
+    }
+  });
+}
+
+function activateSymbolShortcut(symbolId, shortcutLabel) {
+  const btn = document.querySelector(`[data-symbol="${symbolId}"]`);
+  if (btn) btn.click();
+  else console.warn(`[tools] shortcut ${shortcutLabel} could not find ${symbolId}`);
+}
+
+/* ===== SHAPE DRAWING (rect / ellipse / triangle ??one shared pipeline) ===== */
+
+// Armed tool ??object type. Size-based shapes (rect/ellipse/triangle) draw
+// through the SAME down?뭗rag?뭫p flow; only the stored geometry differs
+// (makeShape branches on type). Line (L) and polyline (P) are click-to-click
+// instead ??see setupClickDrawing below.
+// NOTE: keys are internal tool-ids (state.activeTool values), NOT keyboard shortcut
+// letters — RECT's actual shortcut key is "S" (see setupKeyboard), not "R". The
+// letter "R" is reserved for the rotate-mode shortcut; using "RECT" here (instead of
+// the old bare "R") avoids reading like a collision with rotate.
+const SHAPE_TYPE = { RECT: "rect", O: "ellipse", Y: "triangle", OPTICS: "optics", APPARATUS: "apparatus", SVGASSET: "svgAsset", PENDULUM: "pendulum", SPRING: "spring", CHARGEFIELD: "chargefield", FIELDLINES: "fieldlines", STANDINGWAVE: "standingwave", RULER: "gauge", PROTRACTOR: "gauge", SOLID3D: "solid3d", PARABOLA: "parabola", GROUNDARC: "groundarc",
+  BRACE: "brace", CHROMOSOME: "chromosome", BILAYER: "bilayer", NEURON: "neuron",
+  LEGEND: "legend", PEDIGREE: "pedigree",
+  // 화학 부품 10종 — 전부 크기박스 계열이라 드래그로 상자를 그려 만든다.
+  VESSEL: "vessel", CHEMMODEL: "chemmodel", PARTICLEBOX: "particlebox",
+  ORBITAL: "orbital", BONDGROUP: "bondgroup", CHEMCHART: "chemchart",
+  AXISBREAK: "axisbreak", CHEMGRAPH: "chemgraph", ELECTRODE: "electrode",
+  PERIODIC: "periodic" };
+// 자·각도기는 같은 오브젝트 타입("gauge")이라 도구코드로 kind를 구분한다(드래그 시작 시 캡처).
+const GAUGE_KIND = { RULER: "ruler", PROTRACTOR: "protractor" };
+let _drawKind = null; // 현재 드래그로 만드는 gauge의 kind
+
+let drawing = false;
+let startWorld = null; // world coord of the mouse-down point
+let drawType = null;   // type being drawn for the current drag
+let spaceHeld = false; // mirror viewport's Space-pan so we never draw while panning
+// text-editor.js reads Space-held state in its "don't act while panning" guards.
+// Exposed as a getter (setupDrawing owns the keydown/keyup tracker) so the editor
+// never keeps a divergent copy.
+export function isSpaceHeld() { return spaceHeld; }
+
+let _marqueeStart = null; // world {x,y} of marquee drag start, or null
+let _marqueeEl = null;    // temporary SVG <rect> shown during marquee drag
+
+function constrainShapeEnd(type, start, end, shiftHeld) {
+  if (type === "svgAsset") {
+    const asset = getSvgAsset(_svgAssetId);
+    const ratio = asset ? asset.defaultWidth / asset.defaultHeight : 1;
+    const dx = end.x - start.x;
+    const dy = end.y - start.y;
+    let w = Math.abs(dx);
+    let h = Math.abs(dy);
+    if (w / Math.max(h, MIN_SIZE) > ratio) w = h * ratio;
+    else h = w / ratio;
+    return {
+      x: start.x + (dx < 0 ? -w : w),
+      y: start.y + (dy < 0 ? -h : h),
+    };
+  }
+  if (!shiftHeld || (type !== "rect" && type !== "ellipse")) return end;
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  const size = Math.max(Math.abs(dx), Math.abs(dy));
+  return {
+    x: start.x + (dx < 0 ? -size : size),
+    y: start.y + (dy < 0 ? -size : size),
+  };
+}
+
+function setupDrawing() {
+  // track Space locally so a Space+drag pans (viewport) instead of drawing.
+  window.addEventListener("keydown", (e) => { if (e.code === "Space") spaceHeld = true; });
+  window.addEventListener("keyup", (e) => { if (e.code === "Space") spaceHeld = false; });
+  // Space를 누른 채 창 포커스를 잃으면(alt-tab 등) keyup을 못 받아 spaceHeld가 true로
+  // 고착돼 돌아와도 계속 팬 모드로 오동작한다 — blur 시 강제 리셋.
+  window.addEventListener("blur", () => { spaceHeld = false; });
+
+  _svg.addEventListener("pointermove", (e) => {
+    if (e.buttons & 1) return;
+    const s = _state.get();
+    const activeTool = s.activeTool;
+    if (activeTool === "CUT" || activeTool === "ERASE") return; // 자르기/지우개 커서는 cut-tool.js·erase-tool.js가 전담 — 여기서 지우지 않는다
+    if (activeTool !== "V" && activeTool !== "rotate") {
+      _svg.style.cursor = "";
+      return;
+    }
+    if (spaceHeld) {
+      _svg.style.cursor = "";
+      return;
+    }
+    if (e.target?.dataset?.handle) return;
+    const picked = pickSelectableObjectFromEvent(_svg, s, e);
+    if (!picked) {
+      // Over an empty spot: if a ruler guide passes under the pointer, show the
+      // grab (↕/↔) affordance — the visible guide line is pointer-transparent, so
+      // without this there is NO hover cue that the guide is draggable over the
+      // artboard (ruler.js owns the proximity test; objects already won above).
+      const guideCursor = activeTool === "V" ? guideCursorAt(e.clientX, e.clientY) : null;
+      _svg.style.cursor = guideCursor || (activeTool === "V" ? "default" : "");
+      return;
+    }
+    const isSelected = (s.selectedIds || []).includes(picked.id);
+    _svg.style.cursor = activeTool === "V" && isSelected && isPositionMovableForCursor(picked)
+      ? "grab"
+      : "pointer";
+  });
+
+  _svg.addEventListener("pointerleave", () => {
+    _svg.style.cursor = "";
+  });
+
+  // HOVER CURSOR is now driven by the open-path hit twin (render.js): each twin
+  // carries cursor:pointer over the SAME fat transparent band that drives click
+  // selection and grab/move, so hover and click share one element. The old
+  // pointermove handler here set a "grab" cursor only for basic lines via a
+  // separate geometric test — that divergence is removed so the two can't disagree.
+
+  // V (select): click hit-tests committed rects by world bbox, topmost wins.
+  // Clicking empty space clears the selection.
+  _svg.addEventListener("mousedown", (e) => {
+    if (e.button !== 0) return;                  // left button only
+    if (spaceHeld) return;                        // Space+left = pan, not select
+    const _at = _state.get().activeTool;
+    if (_at !== "V" && _at !== "rotate") return;  // select or rotate tool picks
+    // A click on a selection handle means "manipulate the selected object",
+    // NOT "change selection". Handles can sit OUTSIDE the shape outline
+    // (ellipse/triangle corners), where hitTest finds empty space and would
+    // wrongly clear selectedIds ??breaking transform.js's handle-drag guard.
+    const tgt = e.target;
+    if (tgt && tgt.dataset && tgt.dataset.handle) return;
+    const p = screenToWorld(_svg, _state.get().viewBox, e.clientX, e.clientY);
+    const shiftHeld = e.shiftKey;
+    let hitId = null;
+    _state.update((s) => {
+      hitId = pickSelectableObjectAtPoint(s, p);
+      // Some compound symbols (points/optics and angle markers) are rendered
+      // from several child SVG nodes. Their geometric hit-test can miss when
+      // the click lands on a child path or on a transparent hit twin, even
+      // though the renderer already identifies the owning object with data-id.
+      // Use that DOM identity as a bounded fallback, never as a cross-layer
+      // bypass: the object still has to belong to the active visible layer.
+      if (hitId === null) {
+        const domId = e.target?.closest?.("[data-id]")?.dataset?.id;
+        const domObj = domId && s.objects.find((o) => o.id === domId);
+        const domLayer = domObj && (s.layers || []).find((layer) => layer.id === (domObj.layerId ?? 1));
+        if (domObj && domLayer && domLayer.visible !== false && (domObj.layerId ?? 1) === s.activeLayerId) hitId = domId;
+      }
+      if (hitId === null) {
+        if (_at !== "V") s.selectedIds = []; // rotate: clear immediately
+        // V: defer selection to mouseup so marquee can run
+      } else if (shiftHeld) {
+        const idx = s.selectedIds.indexOf(hitId);
+        if (idx === -1) s.selectedIds = [...s.selectedIds, hitId];
+        else s.selectedIds = s.selectedIds.filter(id => id !== hitId);
+      } else {
+        const _hitObj = s.objects.find((o) => o.id === hitId);
+        if (_hitObj && _hitObj.groupId) {
+          if (e.detail >= 2) {
+            // Double-click targets the individual member (DESIGN 6-2). We detect
+            // it here via e.detail rather than via a dblclick listener: every
+            // mousedown re-renders (scene.replaceChildren), detaching the clicked
+            // node before mouseup, so the browser never fires click/dblclick.
+            s.targetedId = hitId;
+            s.selectedIds = [hitId];
+          } else if (s.targetedId === hitId) {
+            // Already targeting this member ??preserve targeted state
+            s.selectedIds = [hitId];
+          } else {
+            const _grp = s.groups.find((g) => g.id === _hitObj.groupId);
+            s.selectedIds = _grp ? [..._grp.memberIds] : [hitId];
+            s.targetedId = null;
+          }
+        } else if (!s.selectedIds.includes(hitId)) {
+          s.selectedIds = [hitId];
+          s.targetedId = null;
+        }
+      }
+    });
+    // Double-click a text object → edit its content in place (DESIGN: like the
+    // group-member targeting above, detected via e.detail since re-render detaches
+    // the node before a real dblclick can fire).
+    if (hitId !== null && e.detail >= 2 && !shiftHeld) {
+      const _ho = _state.get().objects.find((o) => o.id === hitId);
+      if (_ho && _ho.type === "text") {
+        if (isTextEditorOpen()) return; // already editing (e.g. opened by click-to-edit on press #1)
+        startEditingTextObject(hitId, { x: e.clientX, y: e.clientY }); return;
+      }
+      if (_ho && _ho.type === "formula") {
+        if (isTextEditorOpen()) return;
+        startEditingTextObject(hitId, { x: e.clientX, y: e.clientY }); return;
+      }
+      if (_ho && _ho.type === "labeler") {
+        openLabelerTextEditor(hitId); return;
+      }
+      if (_ho && _ho.type === "anglearc") {
+        openAngleArcLabelEditor(hitId); return;
+      }
+      if (_ho && _ho.type === "coordplane") {
+        // 그래프 도구로 만든 평면(richLabels)은 통합 그래프 모달(좌표+계열 한 화면)로,
+        // 그 외(함수입력이 만든 구형 평면)는 기존 상세 편집 모달로 재편집한다.
+        if (_ho.richLabels) openGraphModal(hitId);
+        else openPlaneModal(hitId);
+        return;
+      }
+    }
+    if (hitId === null && _at === "V") {
+      _marqueeStart = { x: p.x, y: p.y };
+      _marqueeEl = document.createElementNS("http://www.w3.org/2000/svg", "rect");
+      const marqueeMetrics = selectionVisualMetrics(getRenderScale());
+      _marqueeEl.setAttribute("fill", SELECTION_MARQUEE_FILL);
+      _marqueeEl.setAttribute("stroke", SELECTION_COLOR);
+      _marqueeEl.setAttribute("stroke-width", marqueeMetrics.strokeWorld);
+      _marqueeEl.setAttribute("stroke-dasharray", marqueeMetrics.dashWorld.join(" "));
+      _marqueeEl.setAttribute("vector-effect", "non-scaling-stroke");
+      _marqueeEl.setAttribute("pointer-events", "none");
+      _marqueeEl.setAttribute("x", p.x);
+      _marqueeEl.setAttribute("y", p.y);
+      _marqueeEl.setAttribute("width", "0");
+      _marqueeEl.setAttribute("height", "0");
+      _svg.appendChild(_marqueeEl);
+    }
+  });
+
+  _svg.addEventListener("mousedown", (e) => {
+    if (e.button !== 0) return;                 // left button only
+    if (spaceHeld) return;                       // Space+left = pan, not draw
+    const type = SHAPE_TYPE[_state.get().activeTool];
+    if (!type) return;                           // only a shape tool draws
+    // 6a: node (점) is placed by a single CLICK (atomic), not a size-drag — the
+    // dedicated setupNodePlacement() click handler owns it, so skip the drag flow.
+    if (type === "optics" && _opticsKind === "node") return;
+    e.preventDefault();
+
+    const vb = _state.get().viewBox;
+    startWorld = screenToWorld(_svg, vb, e.clientX, e.clientY);
+    drawing = true;
+    drawType = type;
+    _drawKind = GAUGE_KIND[_state.get().activeTool] || null; // gauge일 때만 유효
+    _state.update((s) => { s.draft = makeShape(drawType, startWorld, startWorld); });
+  });
+
+  // move/up on window so a fast drag that leaves the SVG still tracks.
+  window.addEventListener("mousemove", (e) => {
+    if (!drawing) return;
+    const vb = _state.get().viewBox;
+    const pointer = screenToWorld(_svg, vb, e.clientX, e.clientY);
+    // Shift = aspect-ratio lock: force w === h (perfect square / circle) using the
+    // larger of the two extents, preserving the drag direction on each axis.
+    const cur = ANGLE_SNAP_TYPES.has(drawType)
+      ? snapLineEnd(startWorld, pointer, snapKey(e))
+      : constrainShapeEnd(drawType, startWorld, pointer, e.shiftKey);
+    _state.update((s) => { s.draft = makeShape(drawType, startWorld, cur); });
+  });
+
+  window.addEventListener("mouseup", (e) => {
+    if (!drawing) return;
+    drawing = false;
+    const vb = _state.get().viewBox;
+    const pointer = screenToWorld(_svg, vb, e.clientX, e.clientY);
+    const cur = ANGLE_SNAP_TYPES.has(drawType)
+      ? snapLineEnd(startWorld, pointer, snapKey(e))
+      : constrainShapeEnd(drawType, startWorld, pointer, e.shiftKey);
+    const shape = makeShape(drawType, startWorld, cur);
+    // 실험기구(전선 등)는 makeShape가 종류별 최소 크기를 강제(예: wire length=Math.max(w,18))
+    // 하므로 isCommittable(shape)의 w/h 검사가 제로 드래그 클릭에서도 항상 통과해버린다.
+    // 다른 도형처럼 "실제 드래그 이동량"을 별도로 확인해야 빈 클릭이 커밋되지 않는다.
+    const dragDist = Math.hypot(cur.x - startWorld.x, cur.y - startWorld.y);
+    startWorld = null;
+    drawType = null;
+
+    _state.update((s) => {
+      s.draft = null;
+      const committable = isCommittable(shape) &&
+        (shape.type !== "apparatus" || dragDist >= MIN_SIZE);
+      // Only commit a real drag; a click with no movement draws nothing.
+      if (committable) {
+        // Snapshot the pre-creation objects so a single Ctrl+Z removes this shape.
+        const snap = JSON.parse(JSON.stringify(s.objects));
+        shape.id = nextObjectId();
+        shape.order = s.objects.length;
+        shape.layerId = s.activeLayerId;
+        s.objects.push(shape);
+        s.selectedIds = [shape.id];
+        s.targetedId = null;
+        s.undoStack.push(snap);
+        s.redoStack = [];
+        s.activeTool = "V"; // auto-return to select right after drawing (DESIGN 4-3)
+      }
+    });
+  });
+
+  // Marquee drag ??update the dashed selection rect while dragging empty space.
+  window.addEventListener("mousemove", (e) => {
+    if (!_marqueeStart) return;
+    const vb = _state.get().viewBox;
+    const cur = screenToWorld(_svg, vb, e.clientX, e.clientY);
+    const rx = Math.min(_marqueeStart.x, cur.x);
+    const ry = Math.min(_marqueeStart.y, cur.y);
+    const rw = Math.abs(cur.x - _marqueeStart.x);
+    const rh = Math.abs(cur.y - _marqueeStart.y);
+    _marqueeEl.setAttribute("x", rx);
+    _marqueeEl.setAttribute("y", ry);
+    _marqueeEl.setAttribute("width", rw);
+    _marqueeEl.setAttribute("height", rh);
+  });
+
+  // Marquee drag ??commit or cancel on mouse-up.
+  window.addEventListener("mouseup", (e) => {
+    if (!_marqueeStart) return;
+    const vb = _state.get().viewBox;
+    const cur = screenToWorld(_svg, vb, e.clientX, e.clientY);
+    const start = _marqueeStart;
+    _marqueeStart = null;
+    if (_marqueeEl) { _marqueeEl.remove(); _marqueeEl = null; }
+
+    const dist = Math.hypot(cur.x - start.x, cur.y - start.y);
+    if (dist < 2) {
+      // Plain empty-click ??clear selection.
+      _state.update((s) => { s.selectedIds = []; s.targetedId = null; });
+      return;
+    }
+    const rx = Math.min(start.x, cur.x);
+    const ry = Math.min(start.y, cur.y);
+    const rw = Math.abs(cur.x - start.x);
+    const rh = Math.abs(cur.y - start.y);
+    const selRect = { x: rx, y: ry, w: rw, h: rh };
+    _state.update((s) => {
+      s.targetedId = null;
+      s.selectedIds = s.objects
+        .filter((o) => {
+          if (isLockedTracingImage(o)) return false;
+          if (isBackgroundUnrecognized(o)) return false; // unrecognized bg = not marquee-selectable
+          const _mLayerId = o.layerId ?? 1;
+          const _mLayer = (s.layers || []).find(l => l.id === _mLayerId);
+          if (!_mLayer || _mLayer.visible === false || _mLayerId !== s.activeLayerId) return false;
+          return marqueeHitsObject(o, selRect); // 기하 기반: 큰 선의 bbox만 겹쳐도 선택되던 버그 수정
+        })
+        .map((o) => o.id);
+    });
+  });
+
+  window.addEventListener("pointercancel", () => {
+    drawing = false;
+    startWorld = null;
+    drawType = null;
+    _marqueeStart = null;
+    if (_marqueeEl) { _marqueeEl.remove(); _marqueeEl = null; }
+    _state.update((s) => { s.draft = null; });
+  });
+
+  // NOTE: targeting a group member on double-click is handled in the mousedown
+  // handler above (e.detail >= 2). A dblclick listener can't be used here: every
+  // mousedown re-renders (scene.replaceChildren) and detaches the clicked node
+  // before mouseup, so the browser never fires click/dblclick on it.
+}
+
+// CLICK-TO-CLICK drawing (line/polyline/curve/circuit) + ARC / RIGHTANGLE / LABELER
+// placement extracted to tools/click-placement.js (setupClickDrawing, clearClickLocals).
+// FREE-DRAW (F) -> tools/free-draw.js ; NODE -> tools/node-placement.js.
+
+/* ----- commit gate: ignore stray clicks that drew nothing ----- */
+// Size-based shapes need a non-trivial box; a line needs a non-trivial length.
+export function isCommittable(shape) {
+  if (shape.type === "line" || shape.type === "circuit" || shape.type === "labeler" || shape.type === "pendulum" || shape.type === "spring"
+      || shape.type === "chargefield" || shape.type === "fieldlines" || shape.type === "standingwave"
+      || shape.type === "parabola" || shape.type === "groundarc"
+      // 생명과학 p1/p2 계열 (docs/BIO_PARTS_SPEC.md)
+      || shape.type === "brace" || shape.type === "chromosome"
+      || shape.type === "bilayer" || shape.type === "neuron") {
+    return Math.hypot(shape.p2.x - shape.p1.x, shape.p2.y - shape.p1.y) >= MIN_SIZE;
+  }
+  if (shape.type === "rightangle") return (shape.size || 0) >= MIN_SIZE;
+  return shape.w >= MIN_SIZE && shape.h >= MIN_SIZE;
+}
+
+/* ----- build a size-based shape from two world points (handles negative drags) ----- */
+// DESIGN 2-1 branch A (size-based): x/y is the top-left, w/h are positive.
+// `type` is "rect" | "ellipse" | "triangle"; all share this identical structure.
+function makeShape(type, a, b) {
+  if (type === "line") return makeLine(a, b);
+  if (type === "pendulum") return makePendulum(a, b);
+  if (type === "spring") return makeSpring(a, b);
+  if (type === "parabola" || type === "groundarc") {
+    const obj = type === "parabola" ? makeParabola(a, b) : makeGroundArc(a, b);
+    if (_symbolProps) Object.assign(obj, _symbolProps);
+    return obj;
+  }
+  // 생명과학 부품 — p1/p2 계열 넷과 크기박스 계열 둘. 팔레트가 고른 갈래(_symbolProps)를
+  // 얹는 방식은 위 전기력선·정상파와 같다. (docs/BIO_PARTS_SPEC.md)
+  if (type === "brace" || type === "chromosome" || type === "bilayer" || type === "neuron"
+      || type === "legend" || type === "pedigree") {
+    const obj = type === "brace" ? makeBrace(a, b)
+      : type === "chromosome" ? makeChromosome(a, b)
+      : type === "bilayer" ? makeBilayer(a, b)
+      : type === "neuron" ? makeNeuron(a, b)
+      : type === "legend" ? makeLegend(a, b) : makePedigree(a, b);
+    if (_symbolProps) Object.assign(obj, _symbolProps);
+    return obj;
+  }
+  // 화학 부품 10종 — 전부 크기박스 계열이라 팩토리 하나로 묶인다(docs/CHEM_PARTS_SPEC.md).
+  // 팔레트가 고른 갈래(kind 등)는 _symbolProps 로 얹는다 — 위 생명과학과 같은 방식.
+  if (CHEM_FACTORIES[type]) {
+    const obj = CHEM_FACTORIES[type](a, b);
+    if (_symbolProps) Object.assign(obj, _symbolProps);
+    return obj;
+  }
+  if (type === "chargefield" || type === "fieldlines" || type === "standingwave") {
+    const obj = type === "chargefield" ? makeChargeField(a, b)
+      : type === "fieldlines" ? makeFieldLines(a, b) : makeStandingWave(a, b);
+    // 팔레트가 고른 갈래(전기력선 kind, 정상파 medium 등)를 얹는다.
+    if (_symbolProps) Object.assign(obj, _symbolProps);
+    return obj;
+  }
+  const shape = {
+    id: null, // assigned on commit
+    type,
+    x: Math.min(a.x, b.x),
+    y: Math.min(a.y, b.y),
+    w: Math.abs(b.x - a.x),
+    h: Math.abs(b.y - a.y),
+    rotation: 0,
+    strokeLevel: 0,        // 0 = black (DESIGN 2-2)
+    strokeWidth: DEFAULT_STROKE_WIDTH,
+    fillLevel: 255,        // opaque white default for new shapes
+    fillNone: false,
+    fillStyle: "solid",   // "solid" | "dots" | "cross" | "hatch"
+    dashLength: 0,
+    dashGap: 0,
+    labelType: "quantity",
+    locked: false,
+    positionLocked: false,
+    layerId: 1,
+    order: 0,              // assigned on commit (z-order within layer)
+  };
+  if (type === "triangle") shape.flipX = b.x < a.x;
+  // 모든 도형의 기본 라벨은 "물리량"(quantity, 수식 글꼴 이탤릭) + 가운데(labelPos 미설정
+  // → withBoxLabel에서 "center"). 사각형도 동일하게 quantity로 시작한다(블록 이름 A·B·C를
+  // 쓸 때는 인스펙터에서 "라벨" 종류로 바꾸면 신명중명조 정체로 렌더된다).
+  // shape.labelType은 위에서 이미 "quantity"로 초기화되어 있으므로 rect 전용 재지정은 없다.
+  // Optics (branch A): reuse the size-drag box wholesale; only kind + label fields
+  // are added. Default fillNone so lenses/mirrors drop as clean outlines.
+  if (type === "optics") {
+    shape.kind = _opticsKind || "convex_lens";
+    shape.label = "";
+    shape.labelType = "quantity";
+    shape.showLabel = false;
+    shape.fillNone = true;
+    // node (점) carries an always-upright text label (Feature G); labelPos picks
+    // the side (above/below). Old node objects without these default to no label.
+    if (shape.kind === "node") shape.labelPos = "above";
+    if (shape.kind === "object_arrow") {
+      shape.dashLength = 0;
+      shape.dashGap = 0;
+    }
+    // Center dashed-line option: convex/concave lenses only (default off).
+    if (shape.kind === "convex_lens" || shape.kind === "concave_lens") {
+      shape.centerLine = "none";
+    }
+  }
+  if (type === "apparatus") {
+    shape.kind = _apparatusKind || "wire";
+    shape.templateId = APPARATUS_TEMPLATE_IDS[shape.kind] || null;
+    shape.fillNone = true;
+    shape.label = "";
+    if (shape.kind === "wire") {
+      shape.length = Math.max(shape.w, 18);
+      shape.thickness = 1.8;
+      shape.gap = shape.thickness;
+      shape.angle = 0;
+      shape.w = Math.max(shape.w, shape.length);
+      shape.h = Math.max(shape.h, shape.thickness * 3);
+      shape.rotation = 0;
+    } else if (shape.kind === "slit") {
+      // 슬릿은 세 값이 인스펙터에서 조절된다(개수·틈 길이·틈 간격). 기본은 이중 슬릿.
+      shape.slits = 2;
+      shape.slitLen = 1.6;
+      shape.slitGap = 4;
+    } else if (shape.kind === "device_box") {
+      shape.terminals = 2;
+      shape.termSide = "bottom";
+    } else if (shape.kind === "speaker") {
+      shape.facing = "right";
+    } else if (shape.kind === "bar_magnet") {
+      shape.northSide = "left";
+    } else if (shape.kind === "electroscope") {
+      shape.leafSpread = 0.55;
+      shape.lockAspect = true;
+    } else if (shape.kind === "transistor") {
+      shape.variant = "npn";
+    } else if (shape.kind === "compass") {
+      const size = Math.max(shape.w, shape.h, 12);
+      shape.w = size;
+      shape.h = size;
+      shape.lockAspect = true;
+      shape.needleAngle = -90;
+    } else if (shape.kind === "pulley") {
+      // 드래그한 크기를 그대로 쓴다. 예전엔 18mm를 최소로 강제해 작은 도르래를 만들 수
+      // 없었다(2026-07-26 교사 지적). 비율만 유지한다.
+      const size = Math.max(shape.w, shape.h, MIN_SIZE);
+      shape.w = size * 1.18;
+      shape.h = size;
+      shape.lockAspect = true;
+      shape.variant = "basic";
+    } else if (shape.kind === "clamp") {
+      const size = Math.max(shape.w, shape.h, 20);
+      shape.w = size * 0.7;
+      shape.h = size;
+      shape.lockAspect = true;
+      shape.flipped = false;
+    } else if (shape.kind === "scale") {
+      shape.w = Math.max(shape.w, 26);
+      shape.h = Math.max(shape.h, 13);
+      shape.lockAspect = true;
+      shape.displayText = "0.99 N";
+    }
+    // 팔레트가 지정한 필드(예: 천장 도르래 variant)는 kind별 기본값보다 뒤에 병합한다 —
+    // 앞에서 병합하면 pulley 분기의 variant="basic"이 덮어써서 옛 모양이 나온다.
+    if (_symbolProps) Object.assign(shape, _symbolProps);
+  }
+  if (type === "svgAsset") {
+    const asset = getSvgAsset(_svgAssetId);
+    if (asset) {
+      shape.assetId = asset.id;
+      shape.name = asset.name;
+      shape.lockAspect = true;
+      shape.fillNone = true;
+      shape.strokeWidth = 0;
+    }
+  }
+  if (type === "gauge") {
+    const d = gaugeTickDefaults();
+    shape.kind = _drawKind || "ruler";
+    shape.opacity = 1;
+    shape.fillNone = true;
+    if (shape.kind === "ruler") {
+      // 눈금자: 폭=드래그 가로길이, 높이=고정 띠(10mm). 눈금 간격은 드래그와 무관.
+      shape.tickIntervalMm = d.rulerTickMm;
+      shape.h = 10;
+    } else {
+      // 각도기: 반지름=드래그 더 큰 변, 폭=지름, 높이=반지름(반원 bbox).
+      const rad = Math.max(shape.w, shape.h);
+      shape.w = rad * 2;
+      shape.h = rad;
+      shape.lockAspect = true;
+      shape.tickIntervalDeg = d.protractorTickDeg;
+    }
+  }
+  if (type === "solid3d") {
+    // 투영각은 그림 전체가 같아야 하므로 객체마다 새로 정하지 않고 공유 기본값을 읽는다.
+    shape.kind = _solid3dKind || "box";
+    shape.projAngle = solid3dProjAngle();
+    shape.shade = 2;
+    shape.axis = "v";
+    shape.label = "";
+    shape.showLabel = false;
+    shape.labelType = "label";   // 블록 이름 A·B·C — 정체(물리량 이탤릭 아님)
+    shape.fillNone = false;
+    shape.flipX = false;
+    if (shape.kind === "cylinder" || shape.kind === "axes3d" || shape.kind === "plane") {
+      // 드래그 상자가 곧 그림 전체인 갈래.
+      //  · 원기둥·원판: 상자가 실루엣이다(가로=지름, 세로=길이). 깊이는 마개 타원의
+      //    납작함만 정하므로 bbox를 키우지 않는다.
+      //  · 좌표축: 상자가 x축·y축 길이다. 깊이가 z축 길이가 된다.
+      //  · 수평면: 상자가 곧 평행사변형의 화면상 크기다(두께가 없어 깊이를 안 쓴다).
+      shape.w = Math.max(shape.w, 3);
+      shape.h = Math.max(shape.h, 3);
+      shape.depth = shape.kind === "axes3d"
+        ? Math.max(Math.min(shape.w, shape.h) * 0.6, 4)
+        : Math.max(Math.min(shape.w, shape.h) * 0.5, 2);
+      if (shape.kind === "plane") shape.shade = 1;
+      if (shape.kind === "axes3d") {
+        shape.axisLabels = true;
+        shape.labelX = "x"; shape.labelY = "y"; shape.labelZ = "z";
+        shape.fillNone = true;
+      }
+    } else {
+      // box·slab·wedge: **드래그한 사각형 = 앞에서 보이는 면**(가로 × 두께).
+      // 깊이는 그 뒤(오른쪽 위)로 더 뻗으므로 bbox가 드래그 상자보다 커진다.
+      //
+      // 왜 이렇게 읽나: 드래그 상자를 bbox로 쓰면 두께 = 높이 − 깊이의 세로성분이라,
+      // 상판처럼 납작하게 끌수록 깊이가 0으로 눌려 종잇장이 됐다. 앞면으로 읽으면
+      // "가로 60 · 두께 2.5"를 끌고 깊이는 별도로 붙으므로 기출 상판이 그대로 나온다.
+      const fw = Math.max(shape.w, 2);
+      const fh = Math.max(shape.h, 1);
+      // 판·책상은 넓게(가로의 45%), 블록·빗면은 앞면에 어울리게(짧은 변의 90%).
+      const d = (shape.kind === "slab" || shape.kind === "desk")
+        ? Math.max(fw * 0.45, 6)
+        : Math.max(Math.min(fw, fh) * 0.9, 3);
+      const rad = (shape.projAngle * Math.PI) / 180;
+      shape.depth = d;
+      shape.y -= d * Math.sin(rad);
+      shape.w = fw + d * Math.cos(rad);
+      shape.h = fh + d * Math.sin(rad);
+    }
+    if (_symbolProps) Object.assign(shape, _symbolProps);
+  }
+  /* 크기박스 계열이 아닌 **맨 도형**(사각형·타원·삼각형)에도 팔레트 필드를 얹는다.
+   * 지금까지는 kind 를 고르는 부품(광학·기구·입체·화학·생명)만 병합 지점이 있었다.
+   * 지구과학 지질 단면은 "사각형 + 암상 무늬(fillStyle)"라 맨 도형에 필드가 붙어야 한다.
+   * 여기서 얹고 아래 applyNewObjectStyleDefaults 로 넘긴다 — 그 함수는 사용자가 정한
+   * 새 객체 기본 스타일을 채우되 이미 있는 값을 덮지 않으므로 순서가 이 편이 안전하다. */
+  if (_symbolProps && (type === "rect" || type === "ellipse" || type === "triangle")) {
+    Object.assign(shape, _symbolProps);
+  }
+  return applyNewObjectStyleDefaults(shape);
+}
+
+/* 입체 투영각 공유 기본값 — 한 그림 안의 입체는 각도가 같아야 나란히 놓인 것처럼 보인다.
+ * gaugeTickDefaults와 같은 이유(순환 import 회피)로 localStorage를 직접 읽는다.
+ * 인스펙터의 "모든 입체에 적용"이 이 값을 갱신하고 기존 객체에도 일괄 반영한다. */
+function solid3dProjAngle() {
+  try {
+    const d = JSON.parse(localStorage.getItem("phyDraw.defaults") || "{}");
+    const v = Number(d.solid3dProjAngle);
+    return v > 0 && v < 90 ? v : 50;
+  } catch (_) {
+    return 50;
+  }
+}
+
+/* 자·각도기 눈금 간격 기본값 — 기본값 설정(localStorage)에서 읽는다(순환 import
+ * 회피를 위해 직접 파싱). 값이 없거나 깨졌으면 안전한 기본값(10mm / 10°). */
+function gaugeTickDefaults() {
+  const fallback = { rulerTickMm: 10, protractorTickDeg: 10 };
+  try {
+    const d = JSON.parse(localStorage.getItem("phyDraw.defaults") || "{}");
+    return {
+      rulerTickMm: Number(d.rulerTickMm) > 0 ? Number(d.rulerTickMm) : fallback.rulerTickMm,
+      protractorTickDeg: Number(d.protractorTickDeg) > 0 ? Number(d.protractorTickDeg) : fallback.protractorTickDeg,
+    };
+  } catch (_) {
+    return fallback;
+  }
+}
+
+/* ----- build an endpoint-based line from two world points (DESIGN 2-1 branch B) ----- */
+// A line is defined by TWO endpoints (p1/p2), not x/y/w/h, and has no fill.
+export function makeLine(a, b) {
+  return applyNewObjectStyleDefaults({
+    id: null, // assigned on commit
+    type: "line",
+    p1: { x: a.x, y: a.y },
+    p2: { x: b.x, y: b.y },
+    rotation: 0,
+    strokeLevel: 0,        // 0 = black (DESIGN 2-2)
+    strokeWidth: DEFAULT_STROKE_WIDTH,
+    // ----- branch-B common line props (arrow + dashes) -----
+    lineMode: "solid",     // "solid" | "arrow" | "middleArrow" | "lengthArrow"
+    lineStyle: "solid",    // legacy alias retained for project compatibility
+    arrowVariant: "right",
+    dimensionVariant: "basic",
+    arrowHead: "none",     // "none" | "end" | "start" | "both"
+    dashLength: 0,         // world units (mm); 0 = solid (no dasharray)
+    dashGap: 0,            // world units (mm); 0 = solid
+    locked: false,
+    positionLocked: false,
+    layerId: 1,
+    order: 0,              // assigned on commit (z-order within layer)
+  });
+}
+
+/* ----- build a simple pendulum from a drag (branch B, same family as line) -----
+ * drag start (a) = pivot / top support; drag end (b) = real bob center. All other
+ * geometry (ghost bobs, vertical normal) is derived at render (see render.js
+ * pendulumGeometry), never stored. bobRadius is seeded from the length so the bob
+ * scales sensibly; it is then a stored, editable property. */
+/* ----- 용수철: 드래그 두 점이 곧 양 끝(물체에 닿는 지점) -----
+ * 길이는 두 점으로 정해지고 코일 수·진폭은 필드로 남는다 — 압축/이완을 끌어서 표현한다. */
+/* 전기력선 — p1·p2가 '전하 위치'다(kind single이면 p2는 그림 반경).
+ * 팔레트가 kind·q1·q2를 _symbolProps로 얹어 준다. */
+function makeChargeField(a, b) {
+  return applyNewObjectStyleDefaults({
+    id: null,
+    type: "chargefield",
+    p1: { x: a.x, y: a.y },
+    p2: { x: b.x, y: b.y },
+    kind: "pair",
+    q1: 1, q2: -1,
+    lines: 12,
+    arrowDist: 6,
+    chargeR: 1.9,
+    showCharge: true,
+    label1: "", label2: "",
+    label: "", labelShow: false, labelType: "quantity",
+    strokeLevel: 0,
+    strokeWidth: 0.25,
+    locked: false, positionLocked: false, layerId: 1, order: 0,
+  });
+}
+
+/* 자기력선 — p1 = N극 끝, p2 = S극 끝(kind wire면 p1 = 도선, p2 = 바깥 원 반지름). */
+function makeFieldLines(a, b) {
+  return applyNewObjectStyleDefaults({
+    id: null,
+    type: "fieldlines",
+    p1: { x: a.x, y: a.y },
+    p2: { x: b.x, y: b.y },
+    kind: "bar",
+    lines: 14,
+    showMagnet: true,
+    magnetThick: 5.2,
+    rings: 3,
+    into: false,
+    label: "", labelShow: false, labelType: "quantity",
+    strokeLevel: 0,
+    strokeWidth: 0.25,
+    locked: false, positionLocked: false, layerId: 1, order: 0,
+  });
+}
+
+/* 정상파 — p1·p2가 줄·관의 양 끝. */
+/* 포물선 궤적 — 드래그한 두 점은 **바닥(그림자)의 출발점·도달점**이다.
+ * 최고 높이는 두 점 사이 거리에 비례해 잡아 둔다(짧게 끌면 낮게, 길게 끌면 높게).
+ * 그래야 그린 직후 모양이 그럴듯하고, 이후 인스펙터에서 숫자로 다듬는다. */
+function makeParabola(a, b) {
+  const span = Math.hypot(b.x - a.x, b.y - a.y);
+  return applyNewObjectStyleDefaults({
+    id: null,
+    type: "parabola",
+    p1: { x: a.x, y: a.y },
+    p2: { x: b.x, y: b.y },
+    apex: Math.max(span * 0.35, 3),
+    showShadow: true,     // 바닥 점선 — 이게 없으면 깊이가 안 읽힌다
+    showApex: false,
+    label: "",
+    showLabel: false,
+    rotation: 0,
+    strokeLevel: 0,
+    strokeWidth: DEFAULT_STROKE_WIDTH,
+    fillNone: true,
+    locked: false,
+    positionLocked: false,
+    layerId: 1,
+    order: 0,
+  });
+}
+
+/* 수평면 위 원호 — 드래그는 **중심 → 시작점**이다(반지름 + 시작 방향을 한 번에 정한다).
+ * 벌림각은 기본 90°이고 인스펙터에서 바꾼다. 기출의 거리 표시가 대개 직각이라 90°가
+ * 맞고, 그렇지 않을 때만 손대면 된다. */
+function makeGroundArc(a, b) {
+  return applyNewObjectStyleDefaults({
+    id: null,
+    type: "groundarc",
+    p1: { x: a.x, y: a.y },
+    p2: { x: b.x, y: b.y },
+    sweep: 90,
+    dashed: true,          // 기출의 거리 표시는 전부 점선
+    showRadii: false,
+    projAngle: solid3dProjAngle(),   // 입체·좌표축과 같은 각을 쓴다
+    label: "",
+    showLabel: false,
+    rotation: 0,
+    strokeLevel: 0,
+    strokeWidth: DEFAULT_STROKE_WIDTH,
+    fillNone: true,
+    locked: false,
+    positionLocked: false,
+    layerId: 1,
+    order: 0,
+  });
+}
+
+/* ===== 생명과학 부품 팩토리 (2026-07-31) =====
+ * 규격은 docs/BIO_PARTS_SPEC.md. 기본값을 여기서 바꾸면 명세도 같이 고칠 것.
+ * 앞의 넷은 p1/p2 계열(드래그 = 두 끝점), 뒤의 둘은 크기박스 계열(드래그 = 상자). */
+
+/* 중괄호 — 드래그가 **묶는 구간**이고 꼭짓점은 그 선의 수직 방향으로 나온다. */
+function makeBrace(a, b) {
+  return applyNewObjectStyleDefaults({
+    id: null,
+    type: "brace",
+    p1: { x: a.x, y: a.y },
+    p2: { x: b.x, y: b.y },
+    depth: 5,
+    flipSide: false,
+    label: "",
+    showLabel: false,
+    labelType: "label",   // 중괄호에 붙는 건 ㉠㉡ 같은 이름표라 정체가 기본
+    rotation: 0,
+    strokeLevel: 0,
+    strokeWidth: DEFAULT_STROKE_WIDTH,
+    fillNone: true,
+    locked: false,
+    positionLocked: false,
+    layerId: 1,
+    order: 0,
+  });
+}
+
+/* 염색체 — 드래그가 위 끝 → 아래 끝. X자가 아니라 캡슐 2개 + 동원체 점이다. */
+function makeChromosome(a, b) {
+  return applyNewObjectStyleDefaults({
+    id: null,
+    type: "chromosome",
+    p1: { x: a.x, y: a.y },
+    p2: { x: b.x, y: b.y },
+    chromatidWidth: 3,
+    chromatidGap: 1.6,
+    centromere: 0.32,
+    fillStyle: "solid",
+    fillLevel: 255,
+    homologPair: false,
+    pairGap: 20,
+    labelLeft: "", labelRight: "",
+    labelLeft2: "", labelRight2: "",
+    showLabels: true,
+    rotation: 0,
+    strokeLevel: 0,
+    strokeWidth: DEFAULT_STROKE_WIDTH,
+    locked: false,
+    positionLocked: false,
+    layerId: 1,
+    order: 0,
+  });
+}
+
+/* 인지질 이중층 — 드래그가 막의 좌 → 우(중심선). */
+function makeBilayer(a, b) {
+  return applyNewObjectStyleDefaults({
+    id: null,
+    type: "bilayer",
+    p1: { x: a.x, y: a.y },
+    p2: { x: b.x, y: b.y },
+    unitCount: 14,
+    thickness: 7,
+    headRadius: 1.05,
+    proteins: [],          // 기본은 단백질 없음 — 인스펙터에서 개수를 올리면 균등 배치된다
+    labelOuter: "",
+    labelInner: "",
+    rotation: 0,
+    strokeLevel: 0,
+    strokeWidth: DEFAULT_STROKE_WIDTH,
+    fillNone: true,
+    locked: false,
+    positionLocked: false,
+    layerId: 1,
+    order: 0,
+  });
+}
+
+/* 뉴런 — 드래그가 신경세포체 → 축삭 말단. */
+function makeNeuron(a, b) {
+  return applyNewObjectStyleDefaults({
+    id: null,
+    type: "neuron",
+    p1: { x: a.x, y: a.y },
+    p2: { x: b.x, y: b.y },
+    somaRadius: 3.4,
+    dendrites: 5,
+    terminals: 3,
+    showStim: false,
+    stimAt: 0.45,
+    stimLabel: "자극",
+    showStimDistance: true,
+    distanceLabel: "d",
+    rotation: 0,
+    strokeLevel: 0,
+    strokeWidth: DEFAULT_STROKE_WIDTH,
+    fillNone: true,
+    locked: false,
+    positionLocked: false,
+    layerId: 1,
+    order: 0,
+  });
+}
+
+/* 크기박스 계열 두 종의 공통 상자 계산 — 음수 드래그를 정규화하고, 너무 작게 끌었을
+ * 때는 기본 크기를 준다(팔레트에서 클릭 한 번으로 놓는 경우가 흔하다). */
+function bioBox(a, b, defW, defH) {
+  const w = Math.abs(b.x - a.x), h = Math.abs(b.y - a.y);
+  const useDefault = w < MIN_SIZE || h < MIN_SIZE;
+  return {
+    x: useDefault ? a.x : Math.min(a.x, b.x),
+    y: useDefault ? a.y : Math.min(a.y, b.y),
+    w: useDefault ? defW : w,
+    h: useDefault ? defH : h,
+  };
+}
+
+/* 범례 — 그래프 모달 안에만 있던 범례를 그림 어디서나 쓸 수 있게 뺀 것. */
+function makeLegend(a, b) {
+  const box = bioBox(a, b, 34, 16);
+  return applyNewObjectStyleDefaults({
+    id: null,
+    type: "legend",
+    ...box,
+    items: [
+      { sample: "solid", text: "A" },
+      { sample: "dash", text: "B" },
+    ],
+    direction: "vertical",
+    border: true,
+    padding: 2.4,
+    sampleWidth: 8,
+    fontSize: 2.8,
+    rotation: 0,
+    strokeLevel: 0,
+    strokeWidth: DEFAULT_STROKE_WIDTH,
+    locked: false,
+    positionLocked: false,
+    layerId: 1,
+    order: 0,
+  });
+}
+
+/* 가계도 — 전체 그림이 상자 안에 맞춰 그려진다. */
+function makePedigree(a, b) {
+  const box = bioBox(a, b, 60, 42);
+  return applyNewObjectStyleDefaults({
+    id: null,
+    type: "pedigree",
+    ...box,
+    gen2Kids: 3,
+    gen3Kids: 0,
+    gen3Parent: 0,
+    symbolRadius: 2.6,
+    showNumbers: true,
+    affected: "",
+    affectedFill: "hatch",
+    carrier: "",
+    carrierFill: "gray",
+    rotation: 0,
+    strokeLevel: 0,
+    strokeWidth: DEFAULT_STROKE_WIDTH,
+    locked: false,
+    positionLocked: false,
+    layerId: 1,
+    order: 0,
+  });
+}
+
+/* ===== 화학 부품 10종 — 크기박스 팩토리 (docs/CHEM_PARTS_SPEC.md) =====
+ * 전부 "상자 안에 그림을 맞춰 그리는" 성격이라 공통 뼈대(id/type/box/공용 스타일)가
+ * 같다. 생명과학처럼 함수를 열 개 늘어놓는 대신 부품별 기본 필드만 표로 두고
+ * makeChem() 하나가 상자와 공용 필드를 붙인다 — 새 부품을 더할 때 표에 한 줄만 쓰면 된다.
+ * 기본 크기(defW·defH)는 명세의 "기본 크기" 값이다. */
+const CHEM_DEFAULTS = {
+  vessel: [30, 34, {
+    kind: "box", liquid: 0.34, liquidColor: "#d9dcdf",
+    hasPiston: true, pistonAt: 0.66, hasFix: true, hasWeight: false,
+    hasStopcock: false, hasTicks: false,
+    text: "A(g) 2 mol\n1 L", textPos: "middle",
+  }],
+  chemmodel: [30, 30, {
+    kind: "atom", symbol: "O", shade: true,
+    shells: "2,8,2", dashedShell: true,
+    cell: "fcc", ballRadius: 2.0, showEdge: true, cut: false,
+    molecule: "H2O", bondLength: 9, bondAngle: 104.5, showGeoLabel: true,
+    bracket: false, charge: "",
+  }],
+  particlebox: [26, 26, {
+    state: "gas", count: 14, particleRadius: 1.15,
+    motion: "none", particleShape: "circle", mix: false, seed: 7,
+  }],
+  orbital: [30, 30, {
+    kind: "shape", electrons: 8, showOrbitalLabels: true,
+    orbital: "pz", showAxis: true, showNode: true, showSymbol: true,
+  }],
+  bondgroup: [40, 26, {
+    molecule: "C2H4", bondLength: 8, symbolSize: 3.2, showKoreanName: true,
+  }],
+  chemchart: [44, 34, {
+    kind: "bar", values: "3,5,2,4", names: "A,B,C,D",
+    xTitle: "물질", yTitle: "양(mol)", showGuide: true,
+    colors: ["#ffffff", "#c9c9c9", "#8f8f8f", "#e4e4e4", "#6f6f6f"],
+    showRatio: true, showTick: false,
+  }],
+  axisbreak: [30, 4, { dir: "horizontal", amp: 0.5, gap: 1.6, period: 3.0 }],
+  chemgraph: [44, 34, {
+    kind: "energy", reactant: 0.42, product: 0.2, peak: 0.85,
+    showCatalyst: false, showMarks: true,
+    acidType: "sw", eqVolume: 0.5, eqPH: 7, showEqPoint: true,
+    isWater: true, triplePt: { x: 0.34, y: 0.3 }, criticalPt: { x: 0.82, y: 0.82 },
+    showRegionNames: true,
+  }],
+  electrode: [44, 40, {
+    solution: "KOH(aq)", liquidColor: "#c9cdd1", depth: 0.62,
+    leftLabel: "산화 전극", rightLabel: "환원 전극",
+    lampOn: true, saltBridge: false, showElectronArrow: true,
+  }],
+  periodic: [52, 26, {
+    periods: 4, highlight: "", highlightSymbols: "", showZ: true, metalShade: false,
+  }],
+};
+
+function makeChem(type, a, b) {
+  const [defW, defH, fields] = CHEM_DEFAULTS[type];
+  const box = bioBox(a, b, defW, defH);
+  // 중첩 객체(triplePt 등)가 여러 인스턴스에 공유되지 않도록 깊은 복사로 떼어 낸다.
+  return applyNewObjectStyleDefaults({
+    id: null,
+    type,
+    ...box,
+    ...JSON.parse(JSON.stringify(fields)),
+    rotation: 0,
+    strokeLevel: 0,
+    strokeWidth: DEFAULT_STROKE_WIDTH,
+    locked: false,
+    positionLocked: false,
+    layerId: 1,
+    order: 0,
+  });
+}
+
+const CHEM_FACTORIES = Object.fromEntries(
+  Object.keys(CHEM_DEFAULTS).map((t) => [t, (a, b) => makeChem(t, a, b)]),
+);
+
+function makeStandingWave(a, b) {
+  return applyNewObjectStyleDefaults({
+    id: null,
+    type: "standingwave",
+    p1: { x: a.x, y: a.y },
+    p2: { x: b.x, y: b.y },
+    medium: "string",
+    n: 2,
+    amplitude: 4.2,
+    closedEnd: "p1",
+    showNodes: true,
+    label: "", labelShow: false, labelType: "quantity",
+    strokeLevel: 0,
+    strokeWidth: 0.5,
+    locked: false, positionLocked: false, layerId: 1, order: 0,
+  });
+}
+
+function makeSpring(a, b) {
+  return applyNewObjectStyleDefaults({
+    id: null,
+    type: "spring",
+    p1: { x: a.x, y: a.y },
+    p2: { x: b.x, y: b.y },
+    turns: 14,
+    radius: 2,
+    leadLength: 2,
+    springStyle: "helix",
+    label: "",
+    labelShow: false,
+    labelType: "quantity",
+    strokeLevel: 0,
+    strokeWidth: DEFAULT_STROKE_WIDTH,
+    locked: false,
+    positionLocked: false,
+    layerId: 1,
+    order: 0,
+  });
+}
+
+function makePendulum(a, b) {
+  return applyNewObjectStyleDefaults({
+    id: null,                     // assigned on commit
+    type: "pendulum",
+    p1: { x: a.x, y: a.y },       // pivot / top support
+    p2: { x: b.x, y: b.y },       // real bob center
+    bobRadius: pendulumBobRadius({ p1: a, p2: b }),
+    showCenterGhost: true,        // 중앙잔상 (vertical normal, directly below pivot)
+    showSymmetricGhost: true,     // 대칭잔상 (mirror across the vertical normal)
+    showLengthLabel: true,        // 길이표시
+    lengthLabel: "L_B",           // physics-quantity label near the real string
+    labelType: "quantity",
+    strokeLevel: 0,               // 0 = black (DESIGN 2-2)
+    strokeWidth: DEFAULT_STROKE_WIDTH,
+    locked: false,
+    positionLocked: false,
+    layerId: 1,
+    order: 0,                     // assigned on commit (z-order within layer)
+  });
+}
+
+/* ----- build a circuit element from two terminals (branch B, same family as line) ----- */
+// Two endpoints (p1/p2), one label, one element kind. Leads + body geometry are
+// PROJECTION (derived at render time from p1/p2), never stored — see render.js.
+export function makeCircuit(a, b) {
+  const element = _circuitElement || "resistor";
+  const obj = {
+    id: null,                 // assigned on commit
+    type: "circuit",
+    element,                  // render dispatches the body on this
+    p1: { x: a.x, y: a.y },   // left terminal
+    p2: { x: b.x, y: b.y },   // right terminal
+    label: "",                // single optional text label (empty allowed)
+    labelType: "quantity",
+    strokeLevel: 0,           // 0 = black (DESIGN 2-2)
+    strokeWidth: DEFAULT_STROKE_WIDTH,
+    locked: false,
+    positionLocked: false,
+    layerId: 1,
+    order: 0,                 // assigned on commit (z-order within layer)
+  };
+  // Element-specific data fields (only the relevant element carries each).
+  if (["resistor", "inductor", "capacitor", "voltmeter", "ammeter", "galvanometer", "motor"].includes(element)) {
+    obj.height = (element === "resistor" || element === "inductor" || element === "capacitor") ? 3.2 : 5.12;
+  }
+  if (element === "capacitor") obj.gap = CIRCUIT_CAP_GAP_DEFAULT; // plate separation (world mm)
+  if (element === "diode") obj.terminalLabels = ["", ""];          // 단자1 / 단자2
+  return applyNewObjectStyleDefaults(obj);
+}
+
+/* ----- build a polyline from a list of world points (click-to-click) ----- */
+// Many vertices, connected in order; no fill. Used both for the live preview
+// (placed points + floating mouse) and the committed object.
+export function makePolyline(points) {
+  return applyNewObjectStyleDefaults({
+    id: null, // assigned on commit
+    type: "polyline",
+    points: points.map((p) => ({ x: p.x, y: p.y })),
+    rotation: 0,
+    strokeLevel: 0,        // 0 = black (DESIGN 2-2)
+    strokeWidth: DEFAULT_STROKE_WIDTH,
+    // ----- branch-B common line props (arrow + dashes) -----
+    arrowHead: "none",     // "none" | "end" | "start" | "both"
+    dashLength: 0,         // world units (mm); 0 = solid (no dasharray)
+    dashGap: 0,            // world units (mm); 0 = solid
+    // ----- closed-fill props: a closed polyline behaves like a fillable shape -----
+    closed: false,         // false = open <polyline>; true = filled <polygon>
+    fillLevel: 255,        // opaque white default for new shapes (mark shade when closed)
+    fillNone: false,
+    fillStyle: "solid",    // "solid" | "dots" | "cross" | "hatch"
+    // ----- 경사면처리 (corner-rounding): render-time fillet, never mutates points[] -----
+    rounded: false,        // false = sharp joints; true = quadratic-fillet each interior vertex
+    cornerRadius: 10,      // back-off distance in world units (mm), clamped per segment at render
+    locked: false,
+    positionLocked: false,
+    layerId: 1,
+    order: 0,              // assigned on commit (z-order within layer)
+  });
+}
+
+/* ----- build a curve from a list of world points (click-to-click, Catmull-Rom) ----- */
+export function makeCurve(points) {
+  return applyNewObjectStyleDefaults({
+    id: null,
+    type: "curve",
+    points: points.map((p) => ({ x: p.x, y: p.y })),
+    rotation: 0,
+    strokeLevel: 0,
+    strokeWidth: DEFAULT_STROKE_WIDTH,
+    // ----- branch-B common line props (curve: dashes only this round) -----
+    arrowHead: "none",     // schema-common; curve excluded from arrowheads for now
+    dashLength: 0,         // world units (mm); 0 = solid (no dasharray)
+    dashGap: 0,            // world units (mm); 0 = solid
+    // ----- closed-fill props: a closed curve behaves like a fillable shape -----
+    closed: false,         // false = open <path>; true = smoothly-closed filled <path>
+    fillLevel: 255,        // opaque white default for new shapes (mark shade when closed)
+    fillNone: false,
+    fillStyle: "solid",    // "solid" | "dots" | "cross" | "hatch"
+    locked: false,
+    positionLocked: false,
+    layerId: 1,
+    order: 0,
+  });
+}

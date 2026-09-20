@@ -1,0 +1,149 @@
+{
+  "version": "exam-library-v1",
+  "complete": false,
+  "title": "오프라인 기출 이미지 예시",
+  "items": [
+    {
+      "id": "p1_2025_11_05",
+      "file": "p1_2025_11_05.png",
+      "subject": "p1",
+      "subjectLabel": "물리1",
+      "year": 2025,
+      "month": 11,
+      "exam": "수능",
+      "no": 5,
+      "title": "2025학년도 수능 물리1 5번",
+      "tags": [
+        "작용반작용",
+        "마찰력",
+        "자기장"
+      ],
+      "parts": [
+        "역학",
+        "전자기학"
+      ],
+      "url": "assets/exam-library/images/p1_2025_11_05.png",
+      "license": "이용 조건 미확인"
+    },
+    {
+      "id": "p1_2026_06_12",
+      "file": "p1_2026_06_12.png",
+      "subject": "p1",
+      "subjectLabel": "물리1",
+      "year": 2026,
+      "month": 6,
+      "exam": "6월 모평",
+      "no": 12,
+      "title": "2026학년도 6월 모평 물리1 12번",
+      "tags": [
+        "간섭"
+      ],
+      "parts": [
+        "광학"
+      ],
+      "url": "assets/exam-library/images/p1_2026_06_12.png",
+      "license": "이용 조건 미확인"
+    },
+    {
+      "id": "p1_2026_09_01",
+      "file": "p1_2026_09_01.png",
+      "subject": "p1",
+      "subjectLabel": "물리1",
+      "year": 2026,
+      "month": 9,
+      "exam": "9월 모평",
+      "no": 1,
+      "title": "2026학년도 9월 모평 물리1 1번",
+      "tags": [
+        "전자기파"
+      ],
+      "parts": [
+        "광학"
+      ],
+      "url": "assets/exam-library/images/p1_2026_09_01.png",
+      "license": "이용 조건 미확인"
+    },
+    {
+      "id": "p1_2026_11_01",
+      "file": "p1_2026_11_01.png",
+      "subject": "p1",
+      "subjectLabel": "물리1",
+      "year": 2026,
+      "month": 11,
+      "exam": "수능",
+      "no": 1,
+      "title": "2026학년도 수능 물리1 1번",
+      "tags": [
+        "질량에너지등가"
+      ],
+      "parts": [
+        "현대물리학"
+      ],
+      "url": "assets/exam-library/images/p1_2026_11_01.png",
+      "license": "이용 조건 미확인"
+    },
+    {
+      "id": "p1_2026_11_08",
+      "file": "p1_2026_11_08.png",
+      "subject": "p1",
+      "subjectLabel": "물리1",
+      "year": 2026,
+      "month": 11,
+      "exam": "수능",
+      "no": 8,
+      "title": "2026학년도 수능 물리1 8번",
+      "tags": [
+        "등속직선운동",
+        "특수상대성이론"
+      ],
+      "parts": [
+        "역학",
+        "현대물리학"
+      ],
+      "url": "assets/exam-library/images/p1_2026_11_08.png",
+      "license": "이용 조건 미확인"
+    },
+    {
+      "id": "p1_2027_06_01",
+      "file": "p1_2027_06_01.png",
+      "subject": "p1",
+      "subjectLabel": "물리1",
+      "year": 2027,
+      "month": 6,
+      "exam": "6월 모평",
+      "no": 1,
+      "title": "2027학년도 6월 모평 물리1 1번",
+      "tags": [
+        "전자기파"
+      ],
+      "parts": [
+        "광학"
+      ],
+      "url": "assets/exam-library/images/p1_2027_06_01.png",
+      "license": "이용 조건 미확인"
+    },
+    {
+      "id": "p2_2027_06_13",
+      "file": "p2_2027_06_13.png",
+      "subject": "p2",
+      "subjectLabel": "물리2",
+      "year": 2027,
+      "month": 6,
+      "exam": "6월 모평",
+      "no": 13,
+      "title": "2027학년도 6월 모평 물리2 13번",
+      "tags": [
+        "등속직선운동",
+        "마찰력",
+        "빗면",
+        "일과에너지",
+        "역학적에너지보존"
+      ],
+      "parts": [
+        "역학"
+      ],
+      "url": "assets/exam-library/images/p2_2027_06_13.png",
+      "license": "이용 조건 미확인"
+    }
+  ]
+}
