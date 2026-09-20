@@ -56,6 +56,8 @@ try {
   await page.waitForTimeout(220);
   assert.equal(await download.evaluate((element) => getComputedStyle(element).transform), 'none');
   assert.match(await download.evaluate((element) => getComputedStyle(element).animationName), /orbit/u);
+  assert.notEqual(await download.evaluate((element) => getComputedStyle(element).backgroundColor), 'rgb(47, 128, 237)');
+  assert.match(await download.evaluate((element) => getComputedStyle(element).backgroundImage), /linear-gradient/u);
   assert.match(await download.getAttribute('href'), /^https:/u);
   await page.screenshot({ path:path.join(evidence, 'login-rest.png') });
   await download.hover();

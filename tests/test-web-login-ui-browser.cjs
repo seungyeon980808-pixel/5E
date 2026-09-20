@@ -202,6 +202,8 @@ test('Test_install_download_keeps_navigation_semantics_and_motion_states', async
     assert.equal(await download.getAttribute('rel'), 'noopener noreferrer');
     assert.equal(await download.evaluate((link) => getComputedStyle(link).transform), 'none');
     assert.match(await download.evaluate((link) => getComputedStyle(link).animationName), /orbit/u);
+    assert.notEqual(await download.evaluate((link) => getComputedStyle(link).backgroundColor), 'rgb(47, 128, 237)');
+    assert.match(await download.evaluate((link) => getComputedStyle(link).backgroundImage), /linear-gradient/u);
     // When: a fine pointer hovers the action, the sparkle layer becomes active.
     await download.hover();
     assert.notEqual(await download.evaluate((link) => getComputedStyle(link, '::after').transform), 'none');
