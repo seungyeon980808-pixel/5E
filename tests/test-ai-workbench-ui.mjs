@@ -181,6 +181,14 @@ test("review events expose only concise user status", () => {
   assert.doesNotMatch(index, /data-ai-review-meta|data-ai-review-checks|data-ai-review-issues|data-ai-pixel-inspection/);
   assert.doesNotMatch(workbench, /reviewMeta\.textContent|renderPixelInspection\(/);
   assert.doesNotMatch(workbench, /formatRuntimeSummary|syncRuntimeSummary/);
+  assert.doesNotMatch(panel, /setStatus\(`\$\{AI_IMAGE_REVIEW_MODEL\}[\s\S]*?독립 검수/);
+  assert.doesNotMatch(panel, /setStatus\("Sol 독립 검수/);
+  assert.doesNotMatch(panel, /원본 구조 분석용 Sol 높음 모델/);
+  assert.doesNotMatch(panel, /addLog\(normalized\.report/);
+  assert.doesNotMatch(panel, /구조 하드 게이트/);
+  assert.doesNotMatch(panel, /addLog\(`원본 구조 분석\(JSON/);
+  assert.doesNotMatch(panel, /setGenerating\([^\n]*(객체·단계·연결|구조 명세|독립 검수)/);
+  assert.doesNotMatch(panel, /setStatus\([^\n]*독립 검수/);
   assert.match(index, /<details class="ai-advanced-settings">[\s\S]*?<label class="ai-setting-label">생성 모델/);
   assert.match(index, /<details class="ai-advanced-settings">[\s\S]*?<label class="ai-setting-label">추론/);
 });
@@ -216,6 +224,17 @@ test("comparison controls use an app-owned version listbox and one shared zoom c
   assert.match(workbench, /versionButton\?\.addEventListener\("keydown"/);
   assert.match(workbench, /case "Escape":[\s\S]*?event\.stopPropagation\(\)/);
   assert.match(workbench, /document\.addEventListener\('pointerdown'/);
+});
+
+test("task restore establishes the selected version before the shared version UI renders", () => {
+  const restoreStart = panel.indexOf("function restoreTaskTab(tabId)");
+  const restoreEnd = panel.indexOf("\n  const createTaskTab =", restoreStart);
+  const restore = panel.slice(restoreStart, restoreEnd);
+  const selectedAt = restore.indexOf("selectedCandidateId = tab.selectedCandidateId");
+  const datasetAt = restore.indexOf("panel.dataset.aiSelectedCandidateId = selectedCandidateId");
+  const workbenchAt = restore.indexOf("panel.aiWorkbench?.restoreViewState?.");
+  assert.ok(selectedAt >= 0 && datasetAt > selectedAt && workbenchAt > datasetAt,
+    "the controller, shared dataset, and version list must restore in one authoritative order");
 });
 
 test("source composition controls expose orientation, ordering, and live preview hooks", () => {
