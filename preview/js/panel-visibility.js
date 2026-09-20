@@ -69,6 +69,11 @@ function moveEditorHeader(root, toolbar) {
     if (child !== history && child !== controls) menus.append(child);
   }
   toolbar.insertBefore(menus, controls);
+  const canvasHeader = document.createElement('div');
+  canvasHeader.className = 'toolbar-canvas';
+  toolbar.insertBefore(canvasHeader, menus);
+  canvasHeader.append(menus);
+  if (controls) canvasHeader.append(controls);
   root.querySelectorAll('[data-panel-internal-toggle]').forEach(button => button.remove());
   root.querySelectorAll('#panel-left > .panel-utility-bar, #panel-right > .panel-utility-bar').forEach(utility => {
     if (!utility.childElementCount) utility.remove();
