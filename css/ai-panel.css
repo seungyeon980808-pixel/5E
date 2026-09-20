@@ -1519,7 +1519,7 @@
 
 #ai-image-panel .ai-previews > .ai-generating,
 #ai-image-panel .ai-previews > .ai-empty { grid-area: 1 / 1; }
-#ai-image-panel .ai-previews > .ai-generating { z-index: 2; }
+#ai-image-panel .ai-previews > .ai-generating { z-index: 8; }
 
 
 /* Native hidden must win over workbench flex/grid presentation rules. */
