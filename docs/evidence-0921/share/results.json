@@ -10,8 +10,35 @@
     "server error recovery",
     "revoke",
     "reopen after revoke",
-    "375px dialog bounds"
+    "375px dialog bounds",
+    "compact copy < half actions at desktop and 375px",
+    "orbit angle changes after 100ms",
+    "hover illumination",
+    "keyboard focus-visible",
+    "copy success animation none",
+    "copy text and green border",
+    "reduced motion animation none"
   ],
+  "geometry": {
+    "width": 88,
+    "actions": 378
+  },
+  "before": {
+    "animation": "web-login-copy-orbit",
+    "angle": "16.26deg",
+    "filter": "none"
+  },
+  "orbitAngle": "38.805deg",
+  "hover": "brightness(1.12)",
+  "copiedColors": {
+    "color": "rgb(63, 185, 80)",
+    "border": "rgb(63, 185, 80)"
+  },
+  "mobileGeometry": {
+    "width": 88,
+    "actions": 295
+  },
+  "backgroundScrollWidth": 431,
   "errors": [],
   "calls": [
     "POST",

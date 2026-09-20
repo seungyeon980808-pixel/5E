@@ -1,0 +1,794 @@
+[
+  {
+    "path": "docs/evidence-0921/followup/webkit-1024-ai-left-toggled.png",
+    "size": [
+      1024,
+      1000
+    ],
+    "bytes": 60958
+  },
+  {
+    "path": "docs/evidence-0921/followup/chromium-768-editor-left-closed.png",
+    "size": [
+      768,
+      1000
+    ],
+    "bytes": 106339
+  },
+  {
+    "path": "docs/evidence-0921/followup/chromium-1024-ai-left-toggled.png",
+    "size": [
+      1024,
+      1000
+    ],
+    "bytes": 44340
+  },
+  {
+    "path": "docs/evidence-0921/followup/webkit-1024-editor-right-closed.png",
+    "size": [
+      1024,
+      1000
+    ],
+    "bytes": 136294
+  },
+  {
+    "path": "docs/evidence-0921/followup/webkit-1024-ai-right-mid.png",
+    "size": [
+      1024,
+      1000
+    ],
+    "bytes": 59661
+  },
+  {
+    "path": "docs/evidence-0921/followup/chromium-1440-ai-right-mid.png",
+    "size": [
+      1440,
+      1000
+    ],
+    "bytes": 46097
+  },
+  {
+    "path": "docs/evidence-0921/followup/chromium-1440-editor-right-closed.png",
+    "size": [
+      1440,
+      1000
+    ],
+    "bytes": 115943
+  },
+  {
+    "path": "docs/evidence-0921/followup/chromium-768-ai-right-toggled.png",
+    "size": [
+      768,
+      1000
+    ],
+    "bytes": 34954
+  },
+  {
+    "path": "docs/evidence-0921/followup/chromium-375-ai-right-toggled.png",
+    "size": [
+      375,
+      1000
+    ],
+    "bytes": 28660
+  },
+  {
+    "path": "docs/evidence-0921/followup/webkit-1440-zoom150-resized.png",
+    "size": [
+      1440,
+      1000
+    ],
+    "bytes": 197028
+  },
+  {
+    "path": "docs/evidence-0921/followup/chromium-1440-zoom150-resized.png",
+    "size": [
+      1440,
+      1000
+    ],
+    "bytes": 157276
+  },
+  {
+    "path": "docs/evidence-0921/followup/webkit-375-ai-right-toggled.png",
+    "size": [
+      375,
+      1000
+    ],
+    "bytes": 34378
+  },
+  {
+    "path": "docs/evidence-0921/followup/webkit-768-ai-right-toggled.png",
+    "size": [
+      768,
+      1000
+    ],
+    "bytes": 45384
+  },
+  {
+    "path": "docs/evidence-0921/followup/contact-webkit-1440.png",
+    "size": [
+      1440,
+      1550
+    ],
+    "bytes": 170362
+  },
+  {
+    "path": "docs/evidence-0921/followup/chromium-1024-editor-left-closed.png",
+    "size": [
+      1024,
+      1000
+    ],
+    "bytes": 112363
+  },
+  {
+    "path": "docs/evidence-0921/followup/chromium-768-ai-right-mid.png",
+    "size": [
+      768,
+      1000
+    ],
+    "bytes": 42572
+  },
+  {
+    "path": "docs/evidence-0921/followup/chromium-375-ai-left-toggled.png",
+    "size": [
+      375,
+      1000
+    ],
+    "bytes": 19721
+  },
+  {
+    "path": "docs/evidence-0921/followup/webkit-1440-editor.png",
+    "size": [
+      1440,
+      1000
+    ],
+    "bytes": 156420
+  },
+  {
+    "path": "docs/evidence-0921/followup/webkit-768-ai-left-mid.png",
+    "size": [
+      768,
+      1000
+    ],
+    "bytes": 54551
+  },
+  {
+    "path": "docs/evidence-0921/followup/chromium-375-ai-right-mid.png",
+    "size": [
+      375,
+      1000
+    ],
+    "bytes": 29286
+  },
+  {
+    "path": "docs/evidence-0921/followup/contact-chromium-1024.png",
+    "size": [
+      1024,
+      1395
+    ],
+    "bytes": 156193
+  },
+  {
+    "path": "docs/evidence-0921/followup/webkit-375-ai-left-toggled.png",
+    "size": [
+      375,
+      1000
+    ],
+    "bytes": 24892
+  },
+  {
+    "path": "docs/evidence-0921/followup/webkit-1024-ai-left-mid.png",
+    "size": [
+      1024,
+      1000
+    ],
+    "bytes": 59140
+  },
+  {
+    "path": "docs/evidence-0921/followup/webkit-1024-editor.png",
+    "size": [
+      1024,
+      1000
+    ],
+    "bytes": 147761
+  },
+  {
+    "path": "docs/evidence-0921/followup/webkit-1440-ai-left-mid.png",
+    "size": [
+      1440,
+      1000
+    ],
+    "bytes": 64720
+  },
+  {
+    "path": "docs/evidence-0921/followup/chromium-1024-resized.png",
+    "size": [
+      1024,
+      1000
+    ],
+    "bytes": 115378
+  },
+  {
+    "path": "docs/evidence-0921/followup/library-webkit-appended80-top.png",
+    "size": [
+      1440,
+      1000
+    ],
+    "bytes": 102340
+  },
+  {
+    "path": "docs/evidence-0921/followup/webkit-1440-ai-right-toggled.png",
+    "size": [
+      1440,
+      1000
+    ],
+    "bytes": 59177
+  },
+  {
+    "path": "docs/evidence-0921/followup/webkit-1024-ai-right-toggled.png",
+    "size": [
+      1024,
+      1000
+    ],
+    "bytes": 51997
+  },
+  {
+    "path": "docs/evidence-0921/followup/contact-webkit-1024.png",
+    "size": [
+      1024,
+      1395
+    ],
+    "bytes": 144148
+  },
+  {
+    "path": "docs/evidence-0921/followup/webkit-768-ai-left-toggled.png",
+    "size": [
+      768,
+      1000
+    ],
+    "bytes": 56024
+  },
+  {
+    "path": "docs/evidence-0921/followup/chromium-375-ai-left-mid.png",
+    "size": [
+      375,
+      1000
+    ],
+    "bytes": 18768
+  },
+  {
+    "path": "docs/evidence-0921/followup/webkit-1440-editor-left-closed.png",
+    "size": [
+      1440,
+      1000
+    ],
+    "bytes": 159738
+  },
+  {
+    "path": "docs/evidence-0921/followup/chromium-768-ai-left-toggled.png",
+    "size": [
+      768,
+      1000
+    ],
+    "bytes": 44991
+  },
+  {
+    "path": "docs/evidence-0921/followup/library-chromium-appended80-bottom.png",
+    "size": [
+      1440,
+      1000
+    ],
+    "bytes": 68858
+  },
+  {
+    "path": "docs/evidence-0921/followup/chromium-1440-editor.png",
+    "size": [
+      1440,
+      1000
+    ],
+    "bytes": 119141
+  },
+  {
+    "path": "docs/evidence-0921/followup/webkit-1440-editor-right-closed.png",
+    "size": [
+      1440,
+      1000
+    ],
+    "bytes": 148164
+  },
+  {
+    "path": "docs/evidence-0921/followup/contact-chromium-768.png",
+    "size": [
+      768,
+      1395
+    ],
+    "bytes": 138838
+  },
+  {
+    "path": "docs/evidence-0921/followup/chromium-1024-editor-right-closed.png",
+    "size": [
+      1024,
+      1000
+    ],
+    "bytes": 110245
+  },
+  {
+    "path": "docs/evidence-0921/followup/webkit-1440-resized.png",
+    "size": [
+      1440,
+      1000
+    ],
+    "bytes": 157078
+  },
+  {
+    "path": "docs/evidence-0921/followup/webkit-768-editor-right-closed.png",
+    "size": [
+      768,
+      1000
+    ],
+    "bytes": 128669
+  },
+  {
+    "path": "docs/evidence-0921/followup/contact-webkit-375.png",
+    "size": [
+      375,
+      930
+    ],
+    "bytes": 44993
+  },
+  {
+    "path": "docs/evidence-0921/followup/chromium-1024-editor.png",
+    "size": [
+      1024,
+      1000
+    ],
+    "bytes": 116614
+  },
+  {
+    "path": "docs/evidence-0921/followup/contact-chromium-1440.png",
+    "size": [
+      1440,
+      1550
+    ],
+    "bytes": 184775
+  },
+  {
+    "path": "docs/evidence-0921/followup/webkit-1440-ai-left-toggled.png",
+    "size": [
+      1440,
+      1000
+    ],
+    "bytes": 68192
+  },
+  {
+    "path": "docs/evidence-0921/followup/chromium-1440-ai-left-toggled.png",
+    "size": [
+      1440,
+      1000
+    ],
+    "bytes": 47512
+  },
+  {
+    "path": "docs/evidence-0921/followup/webkit-375-ai-left-mid.png",
+    "size": [
+      375,
+      1000
+    ],
+    "bytes": 27536
+  },
+  {
+    "path": "docs/evidence-0921/followup/contact-webkit-768.png",
+    "size": [
+      768,
+      1395
+    ],
+    "bytes": 126108
+  },
+  {
+    "path": "docs/evidence-0921/followup/contact-chromium-375.png",
+    "size": [
+      375,
+      930
+    ],
+    "bytes": 50920
+  },
+  {
+    "path": "docs/evidence-0921/followup/chromium-768-resized.png",
+    "size": [
+      768,
+      1000
+    ],
+    "bytes": 113409
+  },
+  {
+    "path": "docs/evidence-0921/followup/webkit-768-ai-right-mid.png",
+    "size": [
+      768,
+      1000
+    ],
+    "bytes": 50607
+  },
+  {
+    "path": "docs/evidence-0921/followup/chromium-1440-resized.png",
+    "size": [
+      1440,
+      1000
+    ],
+    "bytes": 119279
+  },
+  {
+    "path": "docs/evidence-0921/followup/webkit-1024-editor-left-closed.png",
+    "size": [
+      1024,
+      1000
+    ],
+    "bytes": 141481
+  },
+  {
+    "path": "docs/evidence-0921/followup/chromium-375-editor.png",
+    "size": [
+      375,
+      1000
+    ],
+    "bytes": 63985
+  },
+  {
+    "path": "docs/evidence-0921/followup/webkit-375-ai-right-mid.png",
+    "size": [
+      375,
+      1000
+    ],
+    "bytes": 38595
+  },
+  {
+    "path": "docs/evidence-0921/followup/library-webkit-appended80-bottom.png",
+    "size": [
+      1440,
+      1000
+    ],
+    "bytes": 98681
+  },
+  {
+    "path": "docs/evidence-0921/followup/webkit-375-ai.png",
+    "size": [
+      375,
+      1000
+    ],
+    "bytes": 27298
+  },
+  {
+    "path": "docs/evidence-0921/followup/chromium-1024-ai.png",
+    "size": [
+      1024,
+      1000
+    ],
+    "bytes": 50832
+  },
+  {
+    "path": "docs/evidence-0921/followup/chromium-768-ai.png",
+    "size": [
+      768,
+      1000
+    ],
+    "bytes": 49680
+  },
+  {
+    "path": "docs/evidence-0921/followup/webkit-768-editor.png",
+    "size": [
+      768,
+      1000
+    ],
+    "bytes": 136815
+  },
+  {
+    "path": "docs/evidence-0921/followup/chromium-1440-ai.png",
+    "size": [
+      1440,
+      1000
+    ],
+    "bytes": 54165
+  },
+  {
+    "path": "docs/evidence-0921/followup/chromium-1440-ai-right-toggled.png",
+    "size": [
+      1440,
+      1000
+    ],
+    "bytes": 37670
+  },
+  {
+    "path": "docs/evidence-0921/followup/chromium-1024-ai-left-mid.png",
+    "size": [
+      1024,
+      1000
+    ],
+    "bytes": 42113
+  },
+  {
+    "path": "docs/evidence-0921/followup/chromium-1024-ai-right-toggled.png",
+    "size": [
+      1024,
+      1000
+    ],
+    "bytes": 37915
+  },
+  {
+    "path": "docs/evidence-0921/followup/chromium-1440-ai-left-mid.png",
+    "size": [
+      1440,
+      1000
+    ],
+    "bytes": 44199
+  },
+  {
+    "path": "docs/evidence-0921/followup/library-chromium-appended80-top.png",
+    "size": [
+      1440,
+      1000
+    ],
+    "bytes": 71339
+  },
+  {
+    "path": "docs/evidence-0921/followup/webkit-1024-ai.png",
+    "size": [
+      1024,
+      1000
+    ],
+    "bytes": 69420
+  },
+  {
+    "path": "docs/evidence-0921/followup/chromium-1440-editor-left-closed.png",
+    "size": [
+      1440,
+      1000
+    ],
+    "bytes": 124602
+  },
+  {
+    "path": "docs/evidence-0921/followup/chromium-375-ai.png",
+    "size": [
+      375,
+      1000
+    ],
+    "bytes": 19820
+  },
+  {
+    "path": "docs/evidence-0921/followup/webkit-375-editor.png",
+    "size": [
+      375,
+      1000
+    ],
+    "bytes": 80335
+  },
+  {
+    "path": "docs/evidence-0921/followup/webkit-1024-resized.png",
+    "size": [
+      1024,
+      1000
+    ],
+    "bytes": 145935
+  },
+  {
+    "path": "docs/evidence-0921/followup/library-webkit-initial60-top.png",
+    "size": [
+      1440,
+      1000
+    ],
+    "bytes": 102442
+  },
+  {
+    "path": "docs/evidence-0921/followup/webkit-1440-ai.png",
+    "size": [
+      1440,
+      1000
+    ],
+    "bytes": 77505
+  },
+  {
+    "path": "docs/evidence-0921/followup/webkit-768-ai.png",
+    "size": [
+      768,
+      1000
+    ],
+    "bytes": 62507
+  },
+  {
+    "path": "docs/evidence-0921/followup/webkit-768-resized.png",
+    "size": [
+      768,
+      1000
+    ],
+    "bytes": 139203
+  },
+  {
+    "path": "docs/evidence-0921/followup/webkit-1440-ai-right-mid.png",
+    "size": [
+      1440,
+      1000
+    ],
+    "bytes": 65376
+  },
+  {
+    "path": "docs/evidence-0921/followup/chromium-1024-ai-right-mid.png",
+    "size": [
+      1024,
+      1000
+    ],
+    "bytes": 44751
+  },
+  {
+    "path": "docs/evidence-0921/followup/webkit-768-editor-left-closed.png",
+    "size": [
+      768,
+      1000
+    ],
+    "bytes": 128881
+  },
+  {
+    "path": "docs/evidence-0921/followup/library-chromium-initial60-top.png",
+    "size": [
+      1440,
+      1000
+    ],
+    "bytes": 71449
+  },
+  {
+    "path": "docs/evidence-0921/followup/chromium-768-ai-left-mid.png",
+    "size": [
+      768,
+      1000
+    ],
+    "bytes": 42791
+  },
+  {
+    "path": "docs/evidence-0921/followup/chromium-768-editor-right-closed.png",
+    "size": [
+      768,
+      1000
+    ],
+    "bytes": 104400
+  },
+  {
+    "path": "docs/evidence-0921/followup/chromium-768-editor.png",
+    "size": [
+      768,
+      1000
+    ],
+    "bytes": 110934
+  },
+  {
+    "path": "docs/evidence-0921/share/03-copied-expiry.png",
+    "size": [
+      1280,
+      900
+    ],
+    "bytes": 109018
+  },
+  {
+    "path": "docs/evidence-0921/share/05-details.png",
+    "size": [
+      1280,
+      900
+    ],
+    "bytes": 141751
+  },
+  {
+    "path": "docs/evidence-0921/share/09-copy-rest.png",
+    "size": [
+      1280,
+      900
+    ],
+    "bytes": 110187
+  },
+  {
+    "path": "docs/evidence-0921/share/02-created.png",
+    "size": [
+      1280,
+      900
+    ],
+    "bytes": 110196
+  },
+  {
+    "path": "docs/evidence-0921/share/14-mobile-copied.png",
+    "size": [
+      375,
+      812
+    ],
+    "bytes": 42344
+  },
+  {
+    "path": "docs/evidence-0921/share/12-copy-focus.png",
+    "size": [
+      1280,
+      900
+    ],
+    "bytes": 110411
+  },
+  {
+    "path": "docs/evidence-0921/share/04-reopened.png",
+    "size": [
+      1280,
+      900
+    ],
+    "bytes": 107153
+  },
+  {
+    "path": "docs/evidence-0921/share/15-mobile-orbit.png",
+    "size": [
+      375,
+      812
+    ],
+    "bytes": 41179
+  },
+  {
+    "path": "docs/evidence-0921/share/13-copy-reduced-motion.png",
+    "size": [
+      1280,
+      900
+    ],
+    "bytes": 110383
+  },
+  {
+    "path": "docs/evidence-0921/share/07-revoked.png",
+    "size": [
+      1280,
+      900
+    ],
+    "bytes": 99171
+  },
+  {
+    "path": "docs/evidence-0921/share/06-server-failure.png",
+    "size": [
+      1280,
+      900
+    ],
+    "bytes": 112417
+  },
+  {
+    "path": "docs/evidence-0921/share/08-mobile.png",
+    "size": [
+      375,
+      812
+    ],
+    "bytes": 35385
+  },
+  {
+    "path": "docs/evidence-0921/share/01-initial.png",
+    "size": [
+      1280,
+      900
+    ],
+    "bytes": 97745
+  },
+  {
+    "path": "docs/evidence-0921/share/11-copy-hover.png",
+    "size": [
+      1280,
+      900
+    ],
+    "bytes": 110817
+  },
+  {
+    "path": "docs/evidence-0921/share/10-copy-orbit-100ms.png",
+    "size": [
+      1280,
+      900
+    ],
+    "bytes": 110143
+  },
+  {
+    "path": "docs/evidence-0921/save/chromium-save.png",
+    "size": [
+      1400,
+      950
+    ],
+    "bytes": 133739
+  },
+  {
+    "path": "docs/evidence-0921/save/webkit-save.png",
+    "size": [
+      1400,
+      950
+    ],
+    "bytes": 168765
+  }
+]

@@ -1,0 +1,77 @@
+[
+  {
+    "path": "preview/css/ai-sharing.css",
+    "matches": true,
+    "sha256": "3cb6877effacd7b55c2f05bc0fdf00e87337f87bf076a6ddf067b9525d925743"
+  },
+  {
+    "path": "preview/css/panel-visibility.css",
+    "matches": true,
+    "sha256": "4b3adaf7ca859fb5287cacf1cb5afc5848ec5c1cb7eec15be224ced984d0a2bf"
+  },
+  {
+    "path": "preview/css/unified-library.css",
+    "matches": true,
+    "sha256": "6598be0211a3ead0113461a3a3dda430348f877bb262abb6fc4311395dc2650d"
+  },
+  {
+    "path": "preview/index.html",
+    "matches": true,
+    "sha256": "947a085468b6ef9ef8d869614cebe035ec42c064039211ddcfadcf49425bc202"
+  },
+  {
+    "path": "preview/js/ai-sharing-ui.js",
+    "matches": true,
+    "sha256": "625b99230640fe966a883be44bbf2d3ada10a06c2328ead0313d7b9cd9bbcc50"
+  },
+  {
+    "path": "preview/js/autosave.js",
+    "matches": true,
+    "sha256": "b85d703f30cd86dbd511732114c5b3b4f0d737cd95cb1877f69d5f26febf872d"
+  },
+  {
+    "path": "preview/js/exam-library.js",
+    "matches": true,
+    "sha256": "b5d3c1de5dc01ae05d6f4c87af491cd387c66ceae9b034efeecbe412e1307f81"
+  },
+  {
+    "path": "preview/js/inspector.js",
+    "matches": true,
+    "sha256": "04149e8f124be08577d4d641b9c2f8d35d149c30a50a342411b29c0196a29d08"
+  },
+  {
+    "path": "preview/js/main.js",
+    "matches": true,
+    "sha256": "cfd4f7ef90172be1fd84d7c1547530856dfb5a9e12f45bbfd76967c18c997a0e"
+  },
+  {
+    "path": "preview/js/mcp-bridge.js",
+    "matches": true,
+    "sha256": "03dadd9f2ff70d9a79604afae6b8178037cec20962964a23e78461befc107cdf"
+  },
+  {
+    "path": "preview/js/panel-visibility.js",
+    "matches": true,
+    "sha256": "adb74b3ac560a3eb9c4cd0fff2508ca12bf69d28804c09d5fe4af7c6cdbd2c91"
+  },
+  {
+    "path": "preview/js/project-io.js",
+    "matches": true,
+    "sha256": "9a88a2ca09a3895e433a779cfdacbb37c0e680239d96ff8efc513282ac8911cc"
+  },
+  {
+    "path": "preview/js/project-save-dialog.js",
+    "matches": true,
+    "sha256": "74b5f26c871f80a4ccd371255fef605e8fe8d13eec00b59c0ce310077a105d2e"
+  },
+  {
+    "path": "preview/js/settings.js",
+    "matches": true,
+    "sha256": "464e31eb731e358297ca778142667a00c4d50af72f84bf559f497733b9e360c0"
+  },
+  {
+    "path": "preview/js/unified-library-ui.js",
+    "matches": true,
+    "sha256": "172100059599f24dc8a1e2663ae2625fc8177bfbbe9b15d3fc9ddbc94ac64c32"
+  }
+]

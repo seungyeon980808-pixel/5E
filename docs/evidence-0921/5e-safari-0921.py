@@ -22,7 +22,7 @@ try:
   metrics=req('POST',api+'/execute/sync',{'script':"return ['#ruler-h','#ruler-v','#canvas','#panel-right','.canvas-global-controls','.app-brand'].map(s=>{const e=document.querySelector(s);return {s,rect:e.getBoundingClientRect().toJSON(),client:[e.clientWidth,e.clientHeight],backing:[e.width,e.height]}})",'args':[]})
   assert metrics[0]['client'][1]>0,metrics
   assert abs(metrics[1]['rect']['bottom']-metrics[2]['rect']['bottom'])<1,metrics
-  assert abs(metrics[3]['rect']['left']-metrics[4]['rect']['left'])<1,metrics
+  assert metrics[4]['rect']['right']<=metrics[3]['rect']['left'],metrics
   out.append({'theme':theme,'metrics':metrics})
   img=req('GET',api+'/screenshot');Path(f'docs/evidence-0921/safari-{theme}.png').write_bytes(base64.b64decode(img))
  print(json.dumps(out,ensure_ascii=False,indent=2));Path('docs/evidence-0921/safari-layout.json').write_text(json.dumps(out,ensure_ascii=False,indent=2))

@@ -1,4 +1,4 @@
-import os,subprocess,time,json,urllib.request,socket,base64
+import os,subprocess,time,json,urllib.request,socket,base64,re
 from pathlib import Path
 
 def req(method,url,data=None):
@@ -19,7 +19,7 @@ try:
  js("document.querySelector('.tut-banner-no')?.click();document.querySelector('#file-menu-btn').click();document.querySelector('#project-save').click();return true;")
  time.sleep(.4)
  assert '프로젝트 저장' in js("return document.querySelector('.modal-overlay:not([hidden])').innerText")
- assert js("return document.querySelector('.modal-overlay:not([hidden]) .modal-input').value")=='새 프로젝트'
+ assert re.fullmatch(r'\d{8}_\d{4}\.5e',js("return document.querySelector('.modal-overlay:not([hidden]) .modal-input').value"))
  Path('docs/evidence-0921/safari-save.png').write_bytes(base64.b64decode(req('GET',api+'/screenshot')))
  js("[...document.querySelectorAll('.modal-overlay:not([hidden]) button')].find(x=>x.textContent==='취소').click();document.querySelector('#settings-menu-btn').click();document.querySelector('#open-shortcuts').click();return true;")
  time.sleep(.4)

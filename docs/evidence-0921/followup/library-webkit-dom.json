@@ -1,0 +1,110 @@
+[
+  {
+    "state": "initial60-top",
+    "geometry": [
+      {
+        "rowTop": 163,
+        "rowBottom": 413.65625,
+        "cardBottom": 413.65625,
+        "labelTop": 385.46875,
+        "labelBottom": 403.65625,
+        "thumbHeight": 200.46875,
+        "thumbBottom": 373.46875
+      },
+      {
+        "rowTop": 163,
+        "rowBottom": 413.65625,
+        "cardBottom": 413.65625,
+        "labelTop": 385.46875,
+        "labelBottom": 403.65625,
+        "thumbHeight": 200.46875,
+        "thumbBottom": 373.46875
+      },
+      {
+        "rowTop": 163,
+        "rowBottom": 413.65625,
+        "cardBottom": 413.65625,
+        "labelTop": 385.46875,
+        "labelBottom": 403.65625,
+        "thumbHeight": 200.46875,
+        "thumbBottom": 373.46875
+      }
+    ],
+    "mounted": 60,
+    "total": "80개",
+    "firstSelected": true,
+    "scrollTop": 0
+  },
+  {
+    "state": "appended80-bottom",
+    "geometry": [
+      {
+        "rowTop": -6045,
+        "rowBottom": -5794.34375,
+        "cardBottom": -5794.34375,
+        "labelTop": -5822.53125,
+        "labelBottom": -5804.34375,
+        "thumbHeight": 200.46875,
+        "thumbBottom": -5834.53125
+      },
+      {
+        "rowTop": -6045,
+        "rowBottom": -5794.34375,
+        "cardBottom": -5794.34375,
+        "labelTop": -5822.53125,
+        "labelBottom": -5804.34375,
+        "thumbHeight": 200.46875,
+        "thumbBottom": -5834.53125
+      },
+      {
+        "rowTop": -6045,
+        "rowBottom": -5794.34375,
+        "cardBottom": -5794.34375,
+        "labelTop": -5822.53125,
+        "labelBottom": -5804.34375,
+        "thumbHeight": 200.46875,
+        "thumbBottom": -5834.53125
+      }
+    ],
+    "mounted": 80,
+    "total": "80개",
+    "firstSelected": true,
+    "scrollTop": 6208
+  },
+  {
+    "state": "appended80-top",
+    "geometry": [
+      {
+        "rowTop": 163,
+        "rowBottom": 413.65625,
+        "cardBottom": 413.65625,
+        "labelTop": 385.46875,
+        "labelBottom": 403.65625,
+        "thumbHeight": 200.46875,
+        "thumbBottom": 373.46875
+      },
+      {
+        "rowTop": 163,
+        "rowBottom": 413.65625,
+        "cardBottom": 413.65625,
+        "labelTop": 385.46875,
+        "labelBottom": 403.65625,
+        "thumbHeight": 200.46875,
+        "thumbBottom": 373.46875
+      },
+      {
+        "rowTop": 163,
+        "rowBottom": 413.65625,
+        "cardBottom": 413.65625,
+        "labelTop": 385.46875,
+        "labelBottom": 403.65625,
+        "thumbHeight": 200.46875,
+        "thumbBottom": 373.46875
+      }
+    ],
+    "mounted": 80,
+    "total": "80개",
+    "firstSelected": true,
+    "scrollTop": 0
+  }
+]

@@ -1,0 +1,19 @@
+✔ filename dialog cancellation creates no file (1.063041ms)
+✔ browser download uses the confirmed filename (0.49975ms)
+✔ picker failure cannot silently download or claim save success (0.261292ms)
+✔ picker cancellation creates no download or error (0.235042ms)
+✔ native picker writes full document before marking saved (0.301083ms)
+✔ filename normalization preserves Korean and prevents path injection (0.735375ms)
+✔ serialization retains active edits and inactive pages with guides layers and images (0.559ms)
+✔ workflow shortcuts do not consume browser new-tab or location shortcuts (0.445208ms)
+✔ native picker is invoked synchronously before yielding user activation (0.247666ms)
+✔ write failure does not mark saved or download (0.288625ms)
+✔ desktop bridge gets timestamp without a web name prompt (0.233ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 38.152375

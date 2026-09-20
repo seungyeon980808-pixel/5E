@@ -167,18 +167,18 @@
       {
         "s": ".canvas-global-controls",
         "client": [
-          285,
+          172,
           32
         ],
         "rect": {
-          "x": 1154,
+          "x": 970.390625,
           "height": 32,
           "bottom": 40,
           "y": 8,
-          "width": 286,
-          "left": 1154,
+          "width": 171.609375,
+          "left": 970.390625,
           "top": 8,
-          "right": 1440
+          "right": 1142
         },
         "backing": [
           null,
@@ -376,18 +376,18 @@
       {
         "s": ".canvas-global-controls",
         "client": [
-          285,
+          172,
           32
         ],
         "rect": {
-          "x": 1154,
+          "x": 970.390625,
           "height": 32,
           "bottom": 40,
           "y": 8,
-          "width": 286,
-          "left": 1154,
+          "width": 171.609375,
+          "left": 970.390625,
           "top": 8,
-          "right": 1440
+          "right": 1142
         },
         "backing": [
           null,
