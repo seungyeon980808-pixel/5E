@@ -806,7 +806,7 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
     ocrController = operation.controller;
     refreshOcrControls();
     try {
-      const { createPdfOcrService } = await import("./ocr.js?v=1.6.0-preview-labeler-0917-1111");
+      const { createPdfOcrService } = await import("./ocr.js?v=1.6.0-preview-crop-quality-0920-1806");
       const ocr = createPdfOcrService({ runtime });
       for (const document of targets) {
         const expectedSource = JSON.stringify(document.source);
@@ -1366,7 +1366,7 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
         await ensureDocumentOpen(normalized.documentId);
         return options.original
           ? runtime.renderPage({ documentId: normalized.documentId, pageNumber: normalized.pageNumber, dpi, signal })
-          : runtime.renderCrop({ source: normalized, dpi, signal });
+          : runtime.renderCrop({ source: normalized, dpi, targetPixelWidth: options.previewPixelWidth, signal });
       }, {
         priority: options.preview ? 2 : options.thumbnail ? 0 : 1,
         key: replaceablePreview ? "materialize-preview" : null,

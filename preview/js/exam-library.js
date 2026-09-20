@@ -13,13 +13,13 @@ import { openObjectifyWithFile } from "./image-objectify.js?v=1.6.0-preview-libr
 
 import { openReferenceWindow } from "./reference-window.js?v=1.6.0-preview-common-year-login-0918-1302";
 import { setOpenOrigin } from "./modal-motion.js?v=1.6.0-preview-labeler-0917-1111";
-import { createPdfLibraryUi } from "./pdf-library/pdf-library-ui.js?v=1.6.0-preview-labeler-0917-1111";
+import { createPdfLibraryUi } from "./pdf-library/pdf-library-ui.js?v=1.6.0-preview-crop-quality-0920-1806";
 import { defaultRecentThreePack } from "./pdf-library/default-pack-config.js?v=1.6.0-preview-labeler-0917-1111";
 import { loadBundledDesktopPack } from "./pdf-library/desktop-pack.js?v=1.6.0-preview-labeler-0917-1111";
 import { registerPdfReferencePicker } from "./pdf-library/reference-picker.js?v=1.6.0-preview-labeler-0917-1111";
 import { mergePreferredCatalogs } from "./pdf-library/catalog-merge.js?v=1.6.0-preview-labeler-0917-1111";
-import { createUnifiedLibraryProvider } from "./library/provider.js?v=1.6.0-preview-header-textbook-0919-0908";
-import { createUnifiedLibraryUi, unifiedLibrarySourceMetadata, unifiedLibraryTransfer } from "./unified-library-ui.js?v=1.6.0-preview-library-screen-0920-1742";
+import { createUnifiedLibraryProvider } from "./library/provider.js?v=1.6.0-preview-crop-quality-0920-1806";
+import { createUnifiedLibraryUi, unifiedLibrarySourceMetadata, unifiedLibraryTransfer } from "./unified-library-ui.js?v=1.6.0-preview-crop-quality-0920-1806";
 import { insertPartsAsset, loadPartsManifest, materializePartsAsset } from "./parts-library.js?v=1.6.0-preview-labeler-0917-1111";
 const MAX_RENDER = 60; // 그리드에 한 번에 그리는 카드 수 (초과분은 안내문으로 표시)
 const BUNDLED_EXAM_CATALOG_URL = "assets/exam-library/sample-catalog.json";
@@ -291,7 +291,7 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
     state,
     host: pdfPanel,
     loadRuntime: async () => {
-      const { createPdfRuntime } = await import("./pdf-library/pdf-runtime.js?v=1.6.0-preview-labeler-0917-1111");
+      const { createPdfRuntime } = await import("./pdf-library/pdf-runtime.js?v=1.6.0-preview-crop-quality-0920-1806");
       return createPdfRuntime();
     },
     searchDocuments: async (documents, query, { filters = {}, prebuiltIndexes = [] } = {}) => {
@@ -318,7 +318,7 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
     insertImage: insertImageFromSrc,
     openIndependentReferences,
     loadDesktopAdapter: async (runtime) => {
-      const { createDesktopPdfLibraryAdapter, hasDesktopPdfLibrary } = await import("./pdf-library/desktop-adapter.js?v=1.6.0-preview-labeler-0917-1111");
+      const { createDesktopPdfLibraryAdapter, hasDesktopPdfLibrary } = await import("./pdf-library/desktop-adapter.js?v=1.6.0-preview-crop-quality-0920-1806");
       return hasDesktopPdfLibrary() ? createDesktopPdfLibraryAdapter({ runtime }) : null;
     },
     onCatalogChange: () => void unifiedUi?.refresh(),

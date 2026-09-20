@@ -289,16 +289,24 @@ export function createPdfRuntime(options = {}) {
     } finally { page.cleanup(); }
   }
 
-  async function render(source, dpi, signal) {
+  async function render(source, dpi, signal, targetPixelWidth) {
     const parsedSource = createCropSource(source);
-    const key = `${parsedSource.documentId}:${parsedSource.pageNumber}:${parsedSource.rect.join(",")}:${dpi}`;
+    const key = `${parsedSource.documentId}:${parsedSource.pageNumber}:${parsedSource.rect.join(",")}:${dpi}:${targetPixelWidth ?? ""}`;
     const cached = renders.get(key);
     if (cached) { renders.delete(key); renders.set(key, cached); return copyRenderResult(cached); }
     if (signal?.aborted) throw signal.reason ?? new DOMException("Aborted", "AbortError");
     const { pdf } = getOpened(parsedSource.documentId);
     const page = await pdf.getPage(parsedSource.pageNumber);
-    const viewport = page.getViewport({ scale: dpi / 72 });
     const [x, y, widthRatio, heightRatio] = parsedSource.rect;
+    if (Number.isFinite(targetPixelWidth) && targetPixelWidth > 0) {
+      const base = page.getViewport({ scale: 1 });
+      const cropWidth = base.width * widthRatio;
+      const cropHeight = base.height * heightRatio;
+      const budgetScale = Math.min((maxRenderDimension - 1) / cropWidth, (maxRenderDimension - 1) / cropHeight,
+        Math.sqrt(maxRenderPixels / ((cropWidth + 1) * (cropHeight + 1))));
+      dpi = Math.max(1, Math.min(Math.ceil(Math.max(dpi, 72 * targetPixelWidth / cropWidth)), Math.floor(72 * budgetScale)));
+    }
+    const viewport = page.getViewport({ scale: dpi / 72 });
     const width = Math.max(1, Math.ceil(viewport.width * widthRatio));
     const height = Math.max(1, Math.ceil(viewport.height * heightRatio));
     if (width > maxRenderDimension || height > maxRenderDimension || width * height > maxRenderPixels) {
@@ -336,7 +344,7 @@ export function createPdfRuntime(options = {}) {
       try { return detectGraphics({ item: input.item, marks: await collectPageGraphicMarks({ pdfjs: await pdfjs(), page }), words: pageRecord.words, pageWidthPoints: pageRecord.widthPoints, pageHeightPoints: pageRecord.heightPoints }); } finally { page.cleanup(); }
     },
     renderPage(input) { return render({ documentId: input.documentId, pageNumber: input.pageNumber, rect: [0, 0, 1, 1], fullPageFallback: true }, Math.max(36, input.dpi ?? 110), input.signal); },
-    renderCrop(input) { return render(input.source, Math.max(36, input.dpi ?? 300), input.signal); },
+    renderCrop(input) { return render(input.source, Math.max(36, input.dpi ?? 300), input.signal, input.targetPixelWidth); },
     async clearCache() {
       renders.clear(); renderCacheBytes = 0;
       const ids = [...opened.keys()];

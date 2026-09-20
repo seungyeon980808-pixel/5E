@@ -839,6 +839,16 @@ export function createUnifiedLibraryProvider(input = {}) {
           ...result,
           provenance: Object.freeze({ ...result.provenance, ...securedSource }),
         });
+        if (options.preview === true && Number.isFinite(options.previewPixelWidth) && options.previewPixelWidth > 0) {
+          try {
+            return await materializers.pdf({ result: materializerResult, source: securedSource, options });
+          } catch (error) {
+            if (error?.name === "AbortError") throw error;
+            const fallback = await providedPagePreview(documents.find(document => document.id === securedSource.documentId), securedSource, materializerResult, options);
+            if (fallback) return fallback;
+            throw error;
+          }
+        }
         if (options.thumbnail === true || options.preview === true) {
           const prebuilt = await providedPagePreview(documents.find(document => document.id === securedSource.documentId), securedSource, materializerResult, options);
           if (prebuilt) return prebuilt;

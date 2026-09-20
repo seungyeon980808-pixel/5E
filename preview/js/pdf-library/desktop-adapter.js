@@ -1,4 +1,4 @@
-import { createPdfRuntime, detectPageItems } from "./pdf-runtime.js?v=1.6.0-preview-labeler-0917-1111";
+import { createPdfRuntime, detectPageItems } from "./pdf-runtime.js?v=1.6.0-preview-crop-quality-0920-1806";
 import { createDocumentRecord, createSourceRecord, PDF_LIBRARY_SCHEMA } from "./contract.js?v=1.6.0-preview-labeler-0917-1111";
 
 function pdfOpenDiagnostic(error) {

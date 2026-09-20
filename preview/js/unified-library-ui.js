@@ -1419,6 +1419,13 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     if (!entries.length) cropTrayExpanded = false;
     tray.hidden = entries.length === 0;
     tray.classList.toggle("is-expanded", cropTrayExpanded);
+    if (cropTrayExpanded) {
+      tray.setAttribute("role", "dialog");
+      tray.setAttribute("aria-label", "크롭된 이미지");
+    } else {
+      tray.removeAttribute("role");
+      tray.removeAttribute("aria-label");
+    }
     tray.style.setProperty("--unilib-crop-card-count", String(Math.max(1, entries.length)));
     overlay.querySelector("[data-unilib-crop-tray-count]").textContent = `${entries.length}개`;
     const toggle = overlay.querySelector("[data-unilib-crop-tray-toggle]");
@@ -1436,20 +1443,22 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       const image = document.createElement("img");
       image.src = resultImage(result, materialized);
       image.alt = `크롭 이미지 ${index + 1}`;
-      const copy = document.createElement("span");
-      const title = document.createElement("strong");
-      title.textContent = result.title || `크롭 이미지 ${index + 1}`;
-      const source = document.createElement("small");
-      source.textContent = Number.isInteger(result.provenance?.pageNumber) ? `${result.provenance.pageNumber}쪽` : "원본 정보 없음";
-      copy.append(title, source);
+      const sourceTitle = result.title || `크롭 이미지 ${index + 1}`;
+      item.title = sourceTitle;
       const remove = document.createElement("button");
       remove.type = "button";
       remove.dataset.unilibCropTrayRemove = result.id;
-      remove.setAttribute("aria-label", `${title.textContent} 모음에서 제거`);
+      remove.setAttribute("aria-label", `${sourceTitle} 모음에서 제거`);
       remove.textContent = "×";
-      item.append(image, copy, remove);
+      item.append(image, remove);
       return item;
     }));
+  }
+
+  function collapseCropTray() {
+    cropTrayExpanded = false;
+    renderCropTray();
+    overlay.querySelector("[data-unilib-crop-tray-toggle]").focus({ preventScroll: true });
   }
 
   async function loadContinuousPage(session, result, pageNumber, frame) {
@@ -1715,12 +1724,14 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     if (!result) { stage.textContent = "검색 결과를 선택하세요."; stage.removeAttribute("aria-busy"); return; }
     try {
       const activeProvider = await provider();
-      const cacheKey = JSON.stringify([libraryResultIdentity(materializeResult), materializeResult.provenance?.rect, result.revision ?? activeProvider.revision, activeRepresentation, getPartOptions()]);
+      const previewPixelWidth = result.kind === "crop" && result.cropType === "question" && result.provenance?.provider === "pdf"
+        ? Math.ceil(stage.clientWidth * (window.devicePixelRatio || 1)) : undefined;
+      const cacheKey = JSON.stringify([previewPixelWidth, libraryResultIdentity(materializeResult), materializeResult.provenance?.rect, result.revision ?? activeProvider.revision, activeRepresentation, getPartOptions()]);
       let pending = previewCache.get(cacheKey);
       if (!pending) {
         pending = result.kind === "pdf" && typeof result.loadPreview === "function"
           ? result.loadPreview(activePdfMatch?.pageNumber || result.firstMatchingPage || 1)
-          : activeProvider.materialize(materializeResult, { ...getPartOptions(), preview: true, representation: materializationRepresentation(result, activeRepresentation) });
+          : activeProvider.materialize(materializeResult, { ...getPartOptions(), preview: true, previewPixelWidth, representation: materializationRepresentation(result, activeRepresentation) });
         previewCache.set(cacheKey, pending);
         pending.catch(() => { if (previewCache.get(cacheKey) === pending) previewCache.delete(cacheKey); });
         if (previewCache.size > 24) previewCache.delete(previewCache.keys().next().value);
@@ -2811,6 +2822,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       else if (root.classList.contains("is-reader-expanded")) closeExpandedReader();
       else if (cancelPlacementChoice) cancelPlacementChoice();
       else if (!cropDialog.hidden) closeCrop();
+      else if (cropTrayExpanded) collapseCropTray();
       else if (root.classList.contains("folders-open") || root.classList.contains("preview-open")) closeDrawers();
       else close({ keyboard: true });
       return;
@@ -2892,9 +2904,11 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   const closeLibraryLayer = () => {
     lastInteractionWasKeyboard = true;
     cancelSpacePress();
-    if (root.classList.contains("folders-open") || root.classList.contains("preview-open")) closeDrawers();
+    if (cropTrayExpanded) collapseCropTray();
+    else if (root.classList.contains("folders-open") || root.classList.contains("preview-open")) closeDrawers();
     else close({ keyboard: true });
   };
+  registerEscapeLayer(overlay.querySelector("[data-unilib-crop-tray]"), collapseCropTray);
   registerEscapeLayer(overlay, closeLibraryLayer);
   registerEscapeLayer(root, closeLibraryLayer);
   registerEscapeLayer(driveSettings, closeDriveSettings);
