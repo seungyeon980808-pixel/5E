@@ -72,6 +72,26 @@ try {
 
   const panel = page.locator('#ai-image-panel');
   await panel.waitFor({ state: 'visible' });
+  const assertViewportControls = async selectors => {
+    const layout = await panel.evaluate((element, requestedSelectors) => {
+      const rect = target => {
+        const box = target.getBoundingClientRect();
+        return { left: box.left, top: box.top, right: box.right, bottom: box.bottom, width: box.width, height: box.height };
+      };
+      return {
+        viewport: { width: innerWidth, height: innerHeight },
+        controls: requestedSelectors.map(selector => ({ selector, ...rect(element.querySelector(selector)) })),
+        horizontalOverflow: document.documentElement.scrollWidth > innerWidth + 2,
+      };
+    }, selectors);
+    assert.equal(layout.horizontalOverflow, false, `viewport must not overflow horizontally: ${JSON.stringify(layout)}`);
+    for (const control of layout.controls) {
+      assert.ok(control.width >= 44 && control.height >= 26
+          && control.left >= 0 && control.right <= layout.viewport.width
+          && control.top >= 0 && control.bottom <= layout.viewport.height,
+        `control must be usable inside the viewport: ${JSON.stringify(control)}`);
+    }
+  };
   await page.waitForFunction(() => document.querySelectorAll('.ai-generated-card').length === 2);
   assert.equal(await panel.getAttribute('data-ai-selected-candidate-id'), 'v1');
   assert.equal(await panel.locator('.is-ai-active-candidate').getAttribute('data-ai-candidate-id'), 'v1');
@@ -98,14 +118,72 @@ try {
   const v2Editor = panel.locator('[data-ai-comment-row] textarea');
   await v2Editor.fill('v2 영역 수정됨');
   await page.setViewportSize({ width: 768, height: 820 });
+  await assertViewportControls(['[data-ai-version-button]', '[data-ai-side-tab="comments"]', '[data-ai-comments-apply]']);
   await page.screenshot({ path: path.join(outputDir, 'v2-area-768.png'), fullPage: true });
+  await panel.locator('[data-ai-version-button]').click();
+  assert.equal(await panel.locator('[data-ai-version-list]').getAttribute('hidden'), null,
+    'version list must open at tablet width');
+  await page.screenshot({ path: path.join(outputDir, 'version-dropdown-768.png'), fullPage: true });
+  await panel.locator('[data-ai-version-button]').click();
   await panel.locator('[data-ai-inline-delete]').click();
   assert.equal(await panel.locator('[data-ai-comment-row]').count(), 0);
   await page.setViewportSize({ width: 375, height: 820 });
+  await page.waitForFunction(() => document.querySelector('#ai-image-panel')?.dataset.rightCollapsed === 'true');
   assert.equal(await panel.evaluate(element => element.scrollWidth > element.clientWidth + 2), false);
-  await page.screenshot({ path: path.join(outputDir, 'v2-deleted-375.png'), fullPage: true });
+  const mobileLayout = await panel.evaluate(element => {
+    const workspace = element.querySelector('.ai-workspace');
+    const versionButton = element.querySelector('[data-ai-version-button]');
+    const rect = target => {
+      const box = target.getBoundingClientRect();
+      return { left: box.left, top: box.top, right: box.right, bottom: box.bottom, width: box.width, height: box.height };
+    };
+    return {
+      viewport: { width: innerWidth, height: innerHeight },
+      columns: getComputedStyle(workspace).gridTemplateColumns,
+      rows: getComputedStyle(workspace).gridTemplateRows,
+      workspace: rect(workspace),
+      versionButton: rect(versionButton),
+      horizontalOverflow: document.documentElement.scrollWidth > innerWidth + 2,
+    };
+  });
+  assert.equal(mobileLayout.columns.split(' ').length, 1, 'phone layout must collapse to one workspace column');
+  assert.equal(mobileLayout.horizontalOverflow, false, 'phone layout must not overflow horizontally');
+  assert.ok(mobileLayout.versionButton.left >= 0 && mobileLayout.versionButton.right <= mobileLayout.viewport.width,
+    'version dropdown must remain inside the phone viewport');
+  await panel.locator('[data-ai-version-button]').click();
+  assert.equal(await panel.locator('[data-ai-version-list]').getAttribute('hidden'), null,
+    'version list must open at phone width');
+  await page.screenshot({ path: path.join(outputDir, 'version-dropdown-375.png'), fullPage: true });
+  await panel.locator('[data-ai-version-button]').click();
+
+  const conversationToggle = panel.locator('[data-panel-toggle="right"]');
+  assert.equal(await conversationToggle.getAttribute('aria-expanded'), 'false');
+  await conversationToggle.click();
+  await page.waitForTimeout(500);
+  assert.equal(await conversationToggle.getAttribute('aria-expanded'), 'true', 'right drawer toggle must expand at phone width');
+  assert.ok(await panel.locator('.ai-conversation').evaluate(element => element.getClientRects().length > 0),
+    'right drawer must render after its phone toggle is pressed');
+  const mobileComments = await panel.evaluate(element => {
+    const commentsTab = element.querySelector('[data-ai-side-tab="comments"]');
+    const applyButton = element.querySelector('[data-ai-comments-apply]');
+    const rect = target => {
+      const box = target.getBoundingClientRect();
+      return { left: box.left, top: box.top, right: box.right, bottom: box.bottom, width: box.width, height: box.height };
+    };
+    return { viewport: { width: innerWidth, height: innerHeight }, commentsTab: rect(commentsTab), applyButton: rect(applyButton) };
+  });
+  for (const control of [mobileComments.commentsTab, mobileComments.applyButton]) {
+    assert.ok(control.width >= 44 && control.height >= 28
+        && control.left >= 0 && control.right <= mobileComments.viewport.width
+        && control.top >= 0 && control.bottom <= mobileComments.viewport.height,
+      `comment controls must be usable inside the phone viewport: ${JSON.stringify(mobileComments)}`);
+  }
+  assert.equal(await panel.evaluate(element => element.scrollWidth > element.clientWidth + 2), false);
+  await page.screenshot({ path: path.join(outputDir, 'comments-drawer-375.png'), fullPage: true });
+  await conversationToggle.click();
 
   await page.setViewportSize({ width: 1280, height: 820 });
+  await assertViewportControls(['[data-ai-version-button]', '[data-ai-side-tab="comments"]', '[data-ai-comments-apply]']);
   await panel.locator('[data-ai-version-button]').click();
   await panel.locator('[data-ai-candidate-option="v1"]').click();
   assert.equal(await panel.locator('[data-ai-comment-row] textarea').inputValue(), 'v1 점 수정');
@@ -128,7 +206,7 @@ try {
   const visibleText = await panel.locator(':visible').allTextContents();
   assert.equal(visibleText.some(text => /gpt-5|pixelInspection|\bhigh\b|Sol 독립 검수/.test(text)), false);
   await page.screenshot({ path: path.join(outputDir, 'comments-version-followup.png'), fullPage: true });
-  console.log(JSON.stringify({ selected: 'v1', versionLifecycle: 'pass', followupComment: 'v1 점 수정', screenshots: 6 }));
+  console.log(JSON.stringify({ selected: 'v1', versionLifecycle: 'pass', followupComment: 'v1 점 수정', screenshots: 8 }));
 } finally {
   await browser.close();
 }
