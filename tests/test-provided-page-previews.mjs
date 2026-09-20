@@ -88,6 +88,7 @@ test('question previews crop the small static page image and retain original ins
     const documentId = '5e.shared.drive::question-doc';
     const rect = [0.1, 0.2, 0.5, 0.4];
     let originalCalls = 0;
+    let originalFailure = null;
     const provider = createUnifiedLibraryProvider({
       pdfDocuments: [{ id: documentId, title: 'p12606.pdf', pageCount: 1,
         source: { kind: 'pack', locator: '5e.shared.drive/test.pdf', sha256: hash },
@@ -96,7 +97,7 @@ test('question previews crop the small static page image and retain original ins
             source: { documentId, pageNumber: 1, rect, fullPageFallback: false } }],
         }],
       }],
-      materializers: { pdf: async () => { originalCalls++; return { url: 'original' }; } },
+      materializers: { pdf: async () => { originalCalls++; if (originalFailure) throw originalFailure; return { url: 'original' }; } },
     });
     const question = provider.search({ kinds: ['crop'] })[0];
     assert.ok(question);
@@ -108,8 +109,17 @@ test('question previews crop the small static page image and retain original ins
     assert.equal(thumb.height, 320);
     assert.equal(decoded, 1);
     assert.equal(originalCalls, 0);
-    await provider.materialize(question);
+    const sharp = await provider.materialize(question, { preview: true, previewPixelWidth: 1200 });
+    assert.equal(sharp.url, 'original');
     assert.equal(originalCalls, 1);
+    await provider.materialize(question);
+    assert.equal(originalCalls, 2);
+    originalFailure = new Error('Original unavailable');
+    const fallback = await provider.materialize(question, { preview: true, previewPixelWidth: 1200 });
+    assert.equal(fallback.previewOnly, true);
+    assert.equal(fallback.dataUrl, 'data:image/webp;base64,cropped');
+    originalFailure = new DOMException('Superseded', 'AbortError');
+    await assert.rejects(provider.materialize(question, { preview: true, previewPixelWidth: 1200 }), { name: 'AbortError' });
   } finally {
     globalThis.Image = previousImage;
     globalThis.document = previousDocument;

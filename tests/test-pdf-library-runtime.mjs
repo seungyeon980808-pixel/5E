@@ -177,3 +177,28 @@ test("preindexed resource renders without scanning and analyzes only a requested
   assert.ok(page.text.length>0); assert.equal(runtime.getDocument('lazy').pages.length,1);
   assert.equal(await runtime.ensurePageRecord('lazy',1),page);
 });
+
+test("Question preview renders enough original pixels for display width and caches each resolution separately", async (context) => {
+  const runtime = createPdfRuntime({ canvasFactory: { create: createCanvas } });
+  context.after(() => runtime.clearCache());
+  await runtime.openDocument({ id: "sharp", title: "Sharp preview",
+    source: { kind: "file", locator: "test:sharp", displayName: "fixture.pdf" }, data: createPdfLibraryFixture() });
+  const source = { documentId: "sharp", pageNumber: 1, rect: [0.1, 0.04, 0.42, 0.48], fullPageFallback: false };
+  const normal = await runtime.renderCrop({ source, dpi: 144 });
+  const sharp = await runtime.renderCrop({ source, dpi: 144, targetPixelWidth: 1200 });
+  assert.ok(sharp.width >= 1200 && sharp.width <= 1210);
+  assert.ok(sharp.width > normal.width);
+  assert.equal(sharp.bytes[0], 0x89);
+  assert.equal((await runtime.renderCrop({ source, dpi: 144 })).width, normal.width);
+});
+
+test("Oversized preview target is reduced to the configured render budget", async (context) => {
+  const runtime = createPdfRuntime({ canvasFactory: { create: createCanvas }, maxRenderPixels: 100_000, maxRenderDimension: 400 });
+  context.after(() => runtime.clearCache());
+  await runtime.openDocument({ id: "bounded-preview", title: "Bounded preview",
+    source: { kind: "file", locator: "test:bounded-preview", displayName: "fixture.pdf" }, data: createPdfLibraryFixture() });
+  const source = { documentId: "bounded-preview", pageNumber: 1, rect: [0.1, 0.04, 0.42, 0.48], fullPageFallback: false };
+  const preview = await runtime.renderCrop({ source, dpi: 144, targetPixelWidth: 10000 });
+  assert.ok(preview.width <= 400 && preview.height <= 400);
+  assert.ok(preview.width * preview.height <= 100_000);
+});

@@ -1366,7 +1366,7 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
         await ensureDocumentOpen(normalized.documentId);
         return options.original
           ? runtime.renderPage({ documentId: normalized.documentId, pageNumber: normalized.pageNumber, dpi, signal })
-          : runtime.renderCrop({ source: normalized, dpi, signal });
+          : runtime.renderCrop({ source: normalized, dpi, targetPixelWidth: options.previewPixelWidth, signal });
       }, {
         priority: options.preview ? 2 : options.thumbnail ? 0 : 1,
         key: replaceablePreview ? "materialize-preview" : null,

@@ -1724,12 +1724,14 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     if (!result) { stage.textContent = "검색 결과를 선택하세요."; stage.removeAttribute("aria-busy"); return; }
     try {
       const activeProvider = await provider();
-      const cacheKey = JSON.stringify([libraryResultIdentity(materializeResult), materializeResult.provenance?.rect, result.revision ?? activeProvider.revision, activeRepresentation, getPartOptions()]);
+      const previewPixelWidth = result.kind === "crop" && result.cropType === "question" && result.provenance?.provider === "pdf"
+        ? Math.ceil(stage.clientWidth * (window.devicePixelRatio || 1)) : undefined;
+      const cacheKey = JSON.stringify([previewPixelWidth, libraryResultIdentity(materializeResult), materializeResult.provenance?.rect, result.revision ?? activeProvider.revision, activeRepresentation, getPartOptions()]);
       let pending = previewCache.get(cacheKey);
       if (!pending) {
         pending = result.kind === "pdf" && typeof result.loadPreview === "function"
           ? result.loadPreview(activePdfMatch?.pageNumber || result.firstMatchingPage || 1)
-          : activeProvider.materialize(materializeResult, { ...getPartOptions(), preview: true, representation: materializationRepresentation(result, activeRepresentation) });
+          : activeProvider.materialize(materializeResult, { ...getPartOptions(), preview: true, previewPixelWidth, representation: materializationRepresentation(result, activeRepresentation) });
         previewCache.set(cacheKey, pending);
         pending.catch(() => { if (previewCache.get(cacheKey) === pending) previewCache.delete(cacheKey); });
         if (previewCache.size > 24) previewCache.delete(previewCache.keys().next().value);
