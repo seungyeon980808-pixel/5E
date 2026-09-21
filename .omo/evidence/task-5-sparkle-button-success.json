@@ -1,0 +1,75 @@
+{
+  "source": "actual preview/index.html + production CSS/fonts + ai-sharing-ui.js",
+  "api": "local fixture only; no external requests",
+  "browser": "chromium",
+  "checks": [
+    "idle 2.4s blue orbit",
+    "activation full 420ms shimmer",
+    "API result reveal before visual settle",
+    "180ms emerald static complete",
+    "active-share reopen",
+    "reduced motion",
+    "failure resets idle",
+    "revoke resets idle",
+    "actual expiry cancels timers and resets idle",
+    "mobile dialog bounds"
+  ],
+  "stateEvidence": {
+    "idle": {
+      "animation": "sparkle-button-orbit",
+      "duration": "2.4s"
+    },
+    "activating": {
+      "animation": "sparkle-button-settle",
+      "shimmer": "0.42s"
+    },
+    "settling": {
+      "text": "✓ 링크 생성됨",
+      "animation": "sparkle-button-emerald-settle",
+      "border": "rgb(47, 129, 247)"
+    },
+    "complete": {
+      "text": "✓ 링크 생성됨",
+      "animation": "none",
+      "border": "rgb(52, 211, 153)"
+    },
+    "timeline": {
+      "apiToResultMs": 16.5,
+      "activationToSettlingMs": 421.80000001192093,
+      "settlingToCompleteMs": 180.30000001192093,
+      "transitions": [
+        {
+          "at": 211.89999997615814,
+          "state": "activating",
+          "resultVisible": false
+        },
+        {
+          "at": 229.89999997615814,
+          "state": "activating",
+          "resultVisible": true
+        },
+        {
+          "at": 633.1999999880791,
+          "state": "settling",
+          "resultVisible": true
+        },
+        {
+          "at": 813.5,
+          "state": "complete",
+          "resultVisible": true
+        }
+      ]
+    },
+    "reducedMotion": {
+      "animation": "none",
+      "state": "complete"
+    }
+  },
+  "calls": [
+    "POST",
+    "POST",
+    "DELETE",
+    "POST"
+  ],
+  "errors": []
+}
