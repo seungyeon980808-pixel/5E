@@ -53,6 +53,11 @@
 .app > .panel-center { grid-column:2; grid-row:2; }
 .app > .panel-right { grid-column:3; grid-row:2; }
 .app-shell-header .canvas-toolbar { min-width:0; padding-inline:52px; border-bottom:0; }
+.toolbar-inspector-controls {
+  min-width:0;
+  container-type:inline-size;
+  container-name:inspector-header;
+}
 .app-shell-header .panel-shell-toggles {
   position:absolute;
   inset:0;
@@ -218,14 +223,29 @@ html.is-workspace-maximized .app-footer { display: none; }
   .toolbar-history { display: flex; gap: 4px; padding-left: 48px; }
   .toolbar-canvas { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; padding-right: 12px; }
   .toolbar-document { display: flex; align-items: center; gap: 6px; min-width: 0; padding-left: 20px; }
+  .toolbar-inspector-controls {
+    grid-column:3;
+    grid-row:1;
+    display:flex;
+    align-items:center;
+    justify-content:flex-end;
+    padding:0 50px 0 8px;
+  }
   .app[data-panel-layout] .app-shell-header .canvas-global-controls {
-    width: auto;
-    margin: 0 0 0 auto;
-    padding: 0;
+    display:flex;
+    width:100%;
+    margin:0;
+    padding:0;
     gap: 4px;
     min-width: 0;
     justify-content: flex-end;
     border-left: 0;
+  }
+  .app[data-right-collapsed="true"] .toolbar-inspector-controls { display:none; }
+  @container inspector-header (max-width: 170px) {
+    .web-account-status { max-width:none; padding-inline:6px; gap:5px; justify-content:center; }
+    .web-account-status [data-account-label] { font-size:0; }
+    .web-account-status [data-account-label]::after { content:'GPT'; font-size:12px; }
   }
   .app[data-left-collapsed="true"] .canvas-toolbar { grid-template-columns: 130px minmax(0, 1fr) var(--panel-right-w); }
   .app[data-right-collapsed="true"] .canvas-toolbar { grid-template-columns: var(--panel-left-w) minmax(0, 1fr) 48px; }
@@ -248,6 +268,7 @@ html.is-workspace-maximized .app-footer { display: none; }
   .toolbar-history { flex: 0 0 auto; }
   .toolbar-canvas { display: flex; flex: 1 1 100%; flex-wrap: wrap; gap: 6px; min-width: 0; }
   .toolbar-document { flex: 1 0 100%; flex-wrap: nowrap; gap: 4px; }
+  .toolbar-inspector-controls { display:none; }
   .app-shell-header .canvas-global-controls { margin-inline-start: 0; }
   .app-shell-header .panel-shell-toggles { align-items: start; padding-top: 8px; }
 }

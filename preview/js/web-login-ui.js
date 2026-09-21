@@ -6,7 +6,7 @@ export function initWebLoginUi({ openAi }) {
   const badge = document.createElement('button');
   badge.className = 'topbar-btn web-account-status'; badge.type = 'button';
   badge.innerHTML = '<span class="web-account-dot" aria-hidden="true"></span><span data-account-label>ChatGPT 연결</span>';
-  const badgeHost = document.querySelector('.app-shell-header .canvas-global-controls')
+  const badgeHost = document.querySelector('.app-shell-header .toolbar-inspector-controls .canvas-global-controls')
     || document.querySelector('.panel-utility-bar-right')
     || document.querySelector('.canvas-global-controls');
   badgeHost?.prepend(badge);

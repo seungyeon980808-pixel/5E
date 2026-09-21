@@ -56,24 +56,18 @@ function moveEditorHeader(root, toolbar) {
     const button = root.querySelector(`#${id}`);
     if (button) history.append(button);
   }
-  const controls = toolbar.querySelector('.canvas-global-controls');
-  if (controls) {
-    for (const id of ['fullscreen-toggle', 'theme-toggle']) {
-      const button = root.querySelector(`#${id}`);
-      if (button) controls.insertBefore(button, controls.firstChild);
-    }
-  }
+  const inspectorControls = toolbar.querySelector('.toolbar-inspector-controls');
   const menus = document.createElement('div');
   menus.className = 'toolbar-document';
   for (const child of [...toolbar.children]) {
-    if (child !== history && child !== controls) menus.append(child);
+    if (child !== history && child !== inspectorControls) menus.append(child);
   }
-  toolbar.insertBefore(menus, controls);
+  toolbar.insertBefore(menus, inspectorControls);
   const canvasHeader = document.createElement('div');
   canvasHeader.className = 'toolbar-canvas';
   toolbar.insertBefore(canvasHeader, menus);
   canvasHeader.append(menus);
-  if (controls) canvasHeader.append(controls);
+  if (inspectorControls) toolbar.append(inspectorControls);
   root.querySelectorAll('[data-panel-internal-toggle]').forEach(button => button.remove());
   root.querySelectorAll('#panel-left > .panel-utility-bar, #panel-right > .panel-utility-bar').forEach(utility => {
     if (!utility.childElementCount) utility.remove();

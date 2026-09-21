@@ -280,7 +280,21 @@
                 title="AI로 그리기 — 클릭: 연결 시도 / 설치 안내" aria-label="MCP 연결 상태" aria-pressed="false" hidden>
           MCP <span class="mcp-dot" aria-hidden="true"></span>
         </button>
-        <div class="canvas-global-controls" role="group" aria-label="화면 및 속성 패널 조작">
+        <div class="toolbar-inspector-controls" role="group" aria-label="계정 및 화면 조작">
+          <div class="canvas-global-controls" role="group" aria-label="계정 및 화면 조작">
+            <button id="theme-toggle" class="topbar-btn icon-btn theme-toggle" type="button" title="흑백 모드 끄기" aria-label="흑백 모드 끄기" aria-pressed="true">
+              <svg viewBox="0 0 20 20" aria-hidden="true">
+                <circle cx="10" cy="10" r="6.5" fill="none" stroke="currentColor" stroke-width="1.5" />
+                <path d="M10 3.5a6.5 6.5 0 0 1 0 13z" fill="currentColor" />
+              </svg>
+            </button>
+            <button id="fullscreen-toggle" class="topbar-btn fullscreen-toggle" type="button"
+                    title="전체화면 (Alt+Enter)" aria-label="전체화면" aria-pressed="false">
+              <svg viewBox="0 0 20 20" aria-hidden="true">
+                <path d="M3.5 7V3.5H7M13 3.5h3.5V7M16.5 13v3.5H13M7 16.5H3.5V13" />
+              </svg>
+            </button>
+          </div>
           <button id="drawer-right-toggle" class="panel-edge-toggle" type="button"
                   aria-controls="panel-right" aria-expanded="true" title="속성 패널 접기">속성</button>
         </div>
@@ -355,18 +369,6 @@
     <aside class="panel panel-right" id="panel-right">
       <div id="inspector-resize"></div>
       <div class="panel-utility-bar panel-utility-bar-right" role="group" aria-label="속성 패널 조작">
-        <button id="theme-toggle" class="topbar-btn icon-btn theme-toggle" type="button" title="흑백 모드 끄기" aria-label="흑백 모드 끄기" aria-pressed="true">
-          <svg viewBox="0 0 20 20" aria-hidden="true">
-            <circle cx="10" cy="10" r="6.5" fill="none" stroke="currentColor" stroke-width="1.5" />
-            <path d="M10 3.5a6.5 6.5 0 0 1 0 13z" fill="currentColor" />
-          </svg>
-        </button>
-        <button id="fullscreen-toggle" class="topbar-btn fullscreen-toggle" type="button"
-                title="전체화면 (Alt+Enter)" aria-label="전체화면" aria-pressed="false">
-          <svg viewBox="0 0 20 20" aria-hidden="true">
-            <path d="M3.5 7V3.5H7M13 3.5h3.5V7M16.5 13v3.5H13M7 16.5H3.5V13" />
-          </svg>
-        </button>
         <button class="panel-dock-toggle" type="button" data-panel-internal-toggle="right"
                 aria-expanded="true" aria-label="속성 패널 접기">
           <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 3.5h14v13H3z M13 3.5v13" /></svg>
