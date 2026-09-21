@@ -3,6 +3,8 @@
 #ai-image-panel[data-panel-layout] .ai-workspace { position: relative; }
 [data-layout-panel].is-panel-transitioning {
   position: absolute !important;
+  grid-column: auto !important;
+  grid-row: auto !important;
   left: var(--panel-motion-left) !important;
   top: var(--panel-motion-top) !important;
   width: var(--panel-motion-width) !important;

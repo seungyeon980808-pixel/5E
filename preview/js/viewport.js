@@ -7,11 +7,11 @@
 
 /* ----- module geometry helpers (depend only on the SVG box + viewBox) ----- */
 
-// zoom factor = screen pixels per world unit (uniform; we keep aspect square).
-// Derived from how many on-screen pixels one viewBox-width currently spans.
 function currentZoom(svg, vb) {
+  const matrix = svg.getScreenCTM();
+  if (matrix && Number.isFinite(matrix.a) && matrix.a > 0) return matrix.a;
   const rect = svg.getBoundingClientRect();
-  return rect.width / vb.w;
+  return Math.min(rect.width / vb.w, rect.height / vb.h);
 }
 
 // world (viewBox) coords -> screen (client) pixels
@@ -43,10 +43,6 @@ export function getZoom() {
   return currentZoom(_svgRef, _stateRef.get().viewBox);
 }
 
-// TRUE on-screen scale (px per world unit) honouring preserveAspectRatio="xMidYMid
-// meet" letterboxing. getZoom() uses rect.width/vb.w, which is wrong whenever the
-// SVG box aspect ratio differs from the viewBox — that mismatch is what made
-// committed text resize on commit. The screen CTM's .a is the real meet scale.
 export function getRenderScale() {
   if (!_svgRef) return getZoom();
   const m = _svgRef.getScreenCTM();
