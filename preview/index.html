@@ -41,7 +41,7 @@
   />
 
   <!-- ?v= 캐시버스트: CSS도 버전 범프 시 함께 올려 새 스타일이 즉시 반영되게 함(하드리프레시 불필요) -->
-  <link rel="stylesheet" href="css/style.css?v=1.6.0-preview-repair-0921" />
+  <link rel="stylesheet" href="css/style.css?v=1.6.0-preview-panel-lock-0921" />
   <link rel="stylesheet" href="css/inspector.css?v=1.6.0-preview-labeler-0917-1111" />
   <link rel="stylesheet" href="css/exam-library.css?v=1.6.0-preview-labeler-0917-1111" />
   <link rel="stylesheet" href="css/unified-library.css?v=1.6.0-preview-emerald-polish-0921" />
@@ -50,7 +50,7 @@
   <link rel="stylesheet" href="css/ai-panel.css?v=1.6.0-preview-emerald-polish-0921" />
   <link rel="stylesheet" href="css/ai-composition-editor.css?v=1.6.0-preview-labeler-0917-1111" />
   <link rel="stylesheet" href="css/ai-editable-assets.css?v=1.6.0-preview-labeler-0917-1111" />
-  <link rel="stylesheet" href="css/panel-visibility.css?v=1.6.0-preview-emerald-polish-0921" />
+  <link rel="stylesheet" href="css/panel-visibility.css?v=1.6.0-preview-panel-lock-0921" />
   <link rel="stylesheet" href="css/productization.css?v=1.6.0-preview-labeler-0917-1111" />
   <link rel="stylesheet" href="css/web-login.css?v=1.6.0-preview-emerald-polish-0921" />
   <script>window.FIVE_E_PROJECT_PACKAGE_API_URL="";window.FIVE_E_PROJECT_PACKAGE_TARGETS=[];</script>
@@ -359,8 +359,26 @@
             mm
           </label>
         </span>
-        <button id="center-view-btn" type="button" aria-pressed="false"
-                title="중앙 고정 (Ctrl+Space) · 스페이스바 탭 = 중앙으로 복귀">⌖</button>
+        <div class="canvas-lock-control">
+          <button id="center-view-btn" type="button" aria-pressed="false" aria-haspopup="menu"
+                  aria-expanded="false" aria-controls="canvas-lock-menu" aria-label="자유 이동"
+                  data-mode="free" title="자유 이동 (Ctrl+Space)">⌖</button>
+          <div id="canvas-lock-menu" class="canvas-lock-menu" role="menu" hidden>
+            <button type="button" role="menuitemradio" aria-checked="true" data-canvas-lock-mode="free">
+              <strong>자유 이동</strong><span>캔버스를 자유롭게 이동합니다.</span>
+            </button>
+            <button type="button" role="menuitemradio" aria-checked="false" data-canvas-lock-mode="current">
+              <strong>현재 위치 고정</strong><span>지금 보이는 위치를 그대로 고정합니다.</span>
+            </button>
+            <button type="button" role="menuitemradio" aria-checked="false" data-canvas-lock-mode="coordinate">
+              <strong>기준 좌표 고정</strong><span>지정 좌표를 화면 중심에 고정합니다.</span>
+            </button>
+            <div class="canvas-lock-coordinates">
+              <label>X <input id="canvas-lock-x" type="number" step="1" value="0" /></label>
+              <label>Y <input id="canvas-lock-y" type="number" step="1" value="0" /></label>
+            </div>
+          </div>
+        </div>
         <span id="zoom-readout" class="zoom-readout" aria-label="현재 화면 배율">zoom 1.00×</span>
       </div>
     </main>
@@ -683,11 +701,11 @@
   <script src="experiments/web-codex-auth/editor-bridge.js?v=1.6.0-preview-login-0916-1535"></script>
   <!-- ===== MODULES (load order matters: store → state → viewport → render → main) ===== -->
   <!-- ?v= busts the ES-module cache so edits actually load (DESIGN: cache-bust) -->
-  <script type="module" src="js/panel-visibility.js?v=1.6.0-preview-emerald-polish-0921"></script>
+  <script type="module" src="js/panel-visibility.js?v=1.6.0-preview-panel-lock-0921"></script>
   <!-- 모바일: 캔버스 터치를 마우스 이벤트로 변환(그리기·이동). 모듈 그래프 밖 독립 스크립트. -->
   <script src="js/touch-drag.js?v=1.6.0-preview-labeler-0917-1111"></script>
   <script type="module" src="js/ai-workbench.js?v=1.6.0-preview-sharing-0918-2108"></script>
-  <script type="module" src="js/main.js?v=1.6.0-preview-emerald-polish-0921"></script>
+  <script type="module" src="js/main.js?v=1.6.0-preview-panel-lock-0921"></script>
   <!-- MCP 통로: localhost에서 MCP 서버가 떠 있을 때만 붙는다(배포본은 무동작) -->
   <script type="module" src="js/mcp-bridge.js?v=1.6.0-preview-emerald-polish-0921"></script>
 </body>

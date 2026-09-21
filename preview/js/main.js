@@ -13,7 +13,7 @@ import { initAiSharing } from './ai-sharing-ui.js?v=1.6.0-preview-emerald-polish
 // ?v= matches index.html so a version bump reloads every module, not just main.
 import { state } from "./state.js?v=1.6.0-preview-labeler-0917-1111";
 import { render } from "./render.js?v=1.6.0-preview-labeler-0917-1111";
-import { initViewport, getZoom, screenToWorld, centerView, setCenterLocked } from "./viewport.js?v=1.6.0-preview-labeler-0917-1111";
+import { initViewport, getZoom, screenToWorld, centerView, setCanvasLockMode } from "./viewport.js?v=1.6.0-preview-panel-lock-0921";
 import { initTools } from "./tools.js?v=1.6.0-preview-labeler-0917-1111";
 import { initCutTool } from "./cut-tool.js?v=1.6.0-preview-labeler-0917-1111";
 import { initEraseTool } from "./erase-tool.js?v=1.6.0-preview-labeler-0917-1111";
@@ -477,27 +477,58 @@ initDataPlot();
     });
   }
   if (centerBtn) {
-    // 스타일은 CSS(.is-active = 과목 강조색)에 위임 — 인라인 하드코딩 제거
-    const applyCenterLock = (locked) => {
-      centerBtn.classList.toggle("is-active", locked);
-      centerBtn.setAttribute("aria-pressed", String(locked));
-      setCenterLocked(locked);
-      if (locked) centerView(state); // state.update → applyViewBox+render 구독자 자동 호출
+    const control = centerBtn.closest(".canvas-lock-control");
+    const menu = document.getElementById("canvas-lock-menu");
+    const xInput = document.getElementById("canvas-lock-x");
+    const yInput = document.getElementById("canvas-lock-y");
+    const options = [...menu.querySelectorAll("[data-canvas-lock-mode]")];
+    const labels = {
+      free: "자유 이동",
+      current: "현재 위치 고정",
+      coordinate: "기준 좌표 고정",
+    };
+    let mode = "free";
+    const point = () => ({ x: Number(xInput.value) || 0, y: Number(yInput.value) || 0 });
+    const closeMenu = () => {
+      menu.hidden = true;
+      centerBtn.setAttribute("aria-expanded", "false");
+    };
+    const applyCanvasLock = (next) => {
+      mode = next;
+      setCanvasLockMode(mode, state, point());
+      centerBtn.dataset.mode = mode;
+      centerBtn.classList.toggle("is-active", mode !== "free");
+      centerBtn.setAttribute("aria-pressed", String(mode !== "free"));
+      centerBtn.setAttribute("aria-label", labels[mode]);
+      centerBtn.title = `${labels[mode]} (Ctrl+Space)`;
+      for (const option of options) {
+        option.setAttribute("aria-checked", String(option.dataset.canvasLockMode === mode));
+      }
+      closeMenu();
     };
     centerBtn.addEventListener("click", () => {
-      applyCenterLock(!centerBtn.classList.contains("is-active"));
+      menu.hidden = !menu.hidden;
+      centerBtn.setAttribute("aria-expanded", String(!menu.hidden));
     });
-    // 단축키: Ctrl+Space = 중앙 고정 토글 (텍스트 입력 중에는 무시).
-    // 캡처 단계로 등록해 다른 핸들러의 stopPropagation 영향을 받지 않게 한다.
-    // 참고: Windows에서 Ctrl+Space가 '입력 방법 전환' OS 단축키로 예약돼 있으면
-    //       브라우저에 이벤트가 도달하지 않을 수 있다(그 경우 Windows 키보드 설정에서 해제).
+    for (const option of options) {
+      option.addEventListener("click", () => applyCanvasLock(option.dataset.canvasLockMode));
+    }
+    for (const input of [xInput, yInput]) {
+      input.addEventListener("change", () => {
+        if (mode === "coordinate") applyCanvasLock(mode);
+      });
+    }
+    document.addEventListener("pointerdown", (event) => {
+      if (!menu.hidden && !control.contains(event.target)) closeMenu();
+    });
     document.addEventListener("keydown", (e) => {
       if (e.code !== "Space" || !(e.ctrlKey || e.metaKey)) return;
       const t = e.target;
       if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
       e.preventDefault();
-      applyCenterLock(!centerBtn.classList.contains("is-active"));
+      centerBtn.click();
     }, true);
+    applyCanvasLock("free");
   }
   // 눈금자는 항상 켜짐(토글 UI 제거) — 명시적으로 한 번 켜 둔다.
   setRulerVisible(true);

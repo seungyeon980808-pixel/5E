@@ -1,4 +1,4 @@
-import { createPanelMotion, cycleFocusIndex } from './panel-motion.js?v=1.6.0-preview-labeler-0917-1111';
+import { createPanelMotion, cycleFocusIndex } from './panel-motion.js?v=1.6.0-preview-panel-lock-0921';
 
 const narrow = window.matchMedia('(max-width: 767px)');
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');

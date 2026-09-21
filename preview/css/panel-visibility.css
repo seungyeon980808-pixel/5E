@@ -1,8 +1,20 @@
 [data-panel-layout] [data-layout-panel][hidden] { display: none !important; }
+@property --editor-left-track {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 130px;
+}
+@property --editor-right-track {
+  syntax: "<length>";
+  inherits: false;
+  initial-value: 286px;
+}
 .app[data-panel-layout],
 #ai-image-panel[data-panel-layout] .ai-workspace { position: relative; }
 .app[data-panel-layout].is-panel-track-moving {
-  transition: grid-template-columns 300ms cubic-bezier(.22, 1, .36, 1);
+  transition:
+    --editor-left-track 300ms cubic-bezier(.22, 1, .36, 1),
+    --editor-right-track 300ms cubic-bezier(.22, 1, .36, 1);
 }
 [data-layout-panel].is-panel-transitioning {
   position: absolute !important;
@@ -140,9 +152,13 @@
 
 @media (min-width: 768px) {
   [data-panel-layout] { overflow: hidden; }
-  .app[data-left-collapsed="true"] { grid-template-columns: 0 minmax(0, 1fr) var(--panel-right-w); }
-  .app[data-right-collapsed="true"] { grid-template-columns: var(--panel-left-w) minmax(0, 1fr) 0; }
-  .app[data-left-collapsed="true"][data-right-collapsed="true"] { grid-template-columns: 0 minmax(0, 1fr) 0; }
+  .app[data-panel-layout] {
+    --editor-left-track: var(--panel-left-w);
+    --editor-right-track: var(--panel-right-w);
+    grid-template-columns: var(--editor-left-track) minmax(0, 1fr) var(--editor-right-track);
+  }
+  .app[data-left-collapsed="true"] { --editor-left-track: 0px; }
+  .app[data-right-collapsed="true"] { --editor-right-track: 0px; }
   #ai-image-panel[data-panel-layout] { --workbench-left-width: 150px; --workbench-right-width: 326px; }
   #ai-image-panel[data-panel-layout] .ai-workspace {
     grid-template-columns: var(--workbench-left-width) minmax(0, 1fr) var(--workbench-right-width);

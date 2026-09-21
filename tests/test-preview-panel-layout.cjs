@@ -41,39 +41,43 @@ function assertRectNear(engine, label, actual, expected) {
   for (const engine of [chromium, webkit]) {
     const browser = await engine.launch({ headless: true });
     try {
-      const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
-      await page.goto(previewUrl);
-      await page.getByRole("button", { name: "건너뛰기", exact: true }).click();
-      const initial = await snapshot(page);
-      const left = await toggleAndMeasure(page, "left");
-      await page.locator('.app-shell-header [data-panel-toggle="left"]').click();
-      await page.waitForTimeout(360);
-      const right = await toggleAndMeasure(page, "right");
+      for (const viewport of [{ width: 986, height: 800 }, { width: 1600, height: 1000 }]) {
+        const label = `${engine.name()} ${viewport.width}px`;
+        const page = await browser.newPage({ viewport });
+        await page.goto(previewUrl);
+        await page.getByRole("button", { name: "건너뛰기", exact: true }).click();
+        const initial = await snapshot(page);
+        const left = await toggleAndMeasure(page, "left");
+        await page.locator('.app-shell-header [data-panel-toggle="left"]').click();
+        await page.waitForTimeout(360);
+        const right = await toggleAndMeasure(page, "right");
 
-      if (process.env.PANEL_DEBUG) console.log(JSON.stringify({ initial, left, right }, null, 2));
+        if (process.env.PANEL_DEBUG) console.log(JSON.stringify({ viewport, initial, left, right }, null, 2));
 
-      for (const [name, state] of [["initial", initial], ["left", left.settled], ["right", right.settled]]) {
-        assert.ok(Math.abs(state.readout - state.scale) < 0.02,
-          `${engine.name()} ${name} zoom readout ${state.readout} must match render scale ${state.scale}`);
+        for (const [name, state] of [["initial", initial], ["left", left.settled], ["right", right.settled]]) {
+          assert.ok(Math.abs(state.readout - state.scale) < 0.02,
+            `${label} ${name} zoom readout ${state.readout} must match render scale ${state.scale}`);
+        }
+        assert.ok(Math.abs(left.settled.scale - initial.scale) < 0.01,
+          `${label} left toggle changed canvas scale`);
+        assert.ok(Math.abs(right.settled.scale - initial.scale) < 0.01,
+          `${label} right toggle changed canvas scale`);
+        for (const [side, result] of [["left", left], ["right", right]]) {
+          assertRectNear(label, `${side} middle`, result.middle.artboard, result.before.artboard);
+          assertRectNear(label, `${side} settled`, result.settled.artboard, result.before.artboard);
+          assert.equal(result.middle.controlsVisible, true, `${label} ${side} middle controls disappeared`);
+          assert.equal(result.settled.controlsVisible, true, `${label} ${side} settled controls disappeared`);
+          assert.equal(result.panelHidden, true, `${label} ${side} panel must hide after its track closes`);
+        }
+        assert.ok(left.middle.surface.x < left.before.surface.x
+          && left.middle.surface.x > left.settled.surface.x,
+        `${label} left workspace must expand progressively toward the left`);
+        assert.ok(right.middle.surface.width > right.before.surface.width
+          && right.middle.surface.width < right.settled.surface.width,
+        `${label} right workspace must expand progressively toward the right`);
+        console.log(`${label}: canvas scale and symmetric panel motion passed`);
+        await page.close();
       }
-      assert.ok(Math.abs(left.settled.scale - initial.scale) < 0.01,
-        `${engine.name()} left toggle changed canvas scale`);
-      assert.ok(Math.abs(right.settled.scale - initial.scale) < 0.01,
-        `${engine.name()} right toggle changed canvas scale`);
-      for (const [side, result] of [["left", left], ["right", right]]) {
-        assertRectNear(engine.name(), `${side} middle`, result.middle.artboard, result.before.artboard);
-        assertRectNear(engine.name(), `${side} settled`, result.settled.artboard, result.before.artboard);
-        assert.equal(result.middle.controlsVisible, true, `${engine.name()} ${side} middle controls disappeared`);
-        assert.equal(result.settled.controlsVisible, true, `${engine.name()} ${side} settled controls disappeared`);
-        assert.equal(result.panelHidden, true, `${engine.name()} ${side} panel must hide after its track closes`);
-      }
-      assert.ok(left.middle.surface.x < left.before.surface.x
-        && left.middle.surface.x > left.settled.surface.x,
-      `${engine.name()} left workspace must expand progressively toward the left`);
-      assert.ok(right.middle.surface.width > right.before.surface.width
-        && right.middle.surface.width < right.settled.surface.width,
-      `${engine.name()} right workspace must expand progressively toward the right`);
-      console.log(`${engine.name()}: canvas scale and symmetric panel motion passed`);
     } finally {
       await browser.close();
     }

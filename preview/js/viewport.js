@@ -49,9 +49,48 @@ export function getRenderScale() {
   return (m && m.a) ? m.a : getZoom();
 }
 
-/* ----- center lock: when true, drag-pan is suppressed ----- */
-let centerLocked = false;
-export function setCenterLocked(val) { centerLocked = val; }
+let canvasLock = { mode: "free", worldX: 0, worldY: 0, screenX: 0, screenY: 0 };
+
+function canvasLocked() {
+  return canvasLock.mode !== "free";
+}
+
+function placeLockAnchor(state, scale = getRenderScale()) {
+  if (!_svgRef || !canvasLocked() || !(scale > 0)) return;
+  const rect = _svgRef.getBoundingClientRect();
+  state.update((s) => {
+    const vb = s.viewBox;
+    vb.w = rect.width / scale;
+    vb.h = rect.height / scale;
+    vb.x = canvasLock.worldX - (canvasLock.screenX - rect.left) / scale;
+    vb.y = canvasLock.worldY - (canvasLock.screenY - rect.top) / scale;
+  });
+}
+
+export function setCanvasLockMode(mode, state, point = { x: 0, y: 0 }) {
+  if (!_svgRef || !["free", "current", "coordinate"].includes(mode)) return;
+  if (mode === "free") {
+    canvasLock = { ...canvasLock, mode };
+    return;
+  }
+  const vb = state.get().viewBox;
+  const rect = _svgRef.getBoundingClientRect();
+  if (mode === "current") {
+    const worldX = vb.x + vb.w / 2;
+    const worldY = vb.y + vb.h / 2;
+    const screen = worldToScreen(_svgRef, vb, worldX, worldY);
+    canvasLock = { mode, worldX, worldY, screenX: screen.x, screenY: screen.y };
+    return;
+  }
+  canvasLock = {
+    mode,
+    worldX: Number(point.x) || 0,
+    worldY: Number(point.y) || 0,
+    screenX: rect.left + rect.width / 2,
+    screenY: rect.top + rect.height / 2,
+  };
+  placeLockAnchor(state);
+}
 
 /* ===== ZOOM LIMITS (easy-to-tune) =====================================
  * MAX_ZOOM        — maximum zoom-IN factor (readout ×). 100 = 10000%.
@@ -188,7 +227,7 @@ export function initViewport(svg, state, onChange) {
       if (!zooming && !e.shiftKey) {
         // plain scroll → pan vertically (blocked when centerLocked)
         e.preventDefault();
-        if (!centerLocked) {
+        if (!canvasLocked()) {
           state.update((s) => {
             const _rect = svg.getBoundingClientRect();
             s.viewBox.y += (d.y / _rect.height) * s.viewBox.h;
@@ -203,7 +242,7 @@ export function initViewport(svg, state, onChange) {
         // Mac 트랙패드의 가로 스와이프는 deltaX로 오고, Shift+휠은 deltaY로 온다.
         // 둘 중 실제로 값이 있는 쪽을 쓴다.
         e.preventDefault();
-        if (!centerLocked) {
+        if (!canvasLocked()) {
           state.update((s) => {
             const _rect = svg.getBoundingClientRect();
             const amount = Math.abs(d.x) > Math.abs(d.y) ? d.x : d.y;
@@ -225,11 +264,13 @@ export function initViewport(svg, state, onChange) {
         const newW = vb.w * k;
         const newH = vb.h * k;
 
-        if (centerLocked) {
-          vb.w = newW;
-          vb.h = newH;
-          vb.x = -newW / 2;
-          vb.y = -newH / 2;
+        if (canvasLocked()) {
+          const rect = svg.getBoundingClientRect();
+          const newScale = getRenderScale() / k;
+          vb.w = rect.width / newScale;
+          vb.h = rect.height / newScale;
+          vb.x = canvasLock.worldX - (canvasLock.screenX - rect.left) / newScale;
+          vb.y = canvasLock.worldY - (canvasLock.screenY - rect.top) / newScale;
         } else {
           const before = screenToWorld(svg, vb, e.clientX, e.clientY);
           // rect 기준 fx/fy는 preserveAspectRatio="xMidYMid meet"의 레터박스를 무시해
@@ -256,7 +297,7 @@ export function initViewport(svg, state, onChange) {
     if (!isMiddle && !isSpaceLeft) return;
 
     e.preventDefault(); // always suppress middle-click autoscroll
-    if (centerLocked) return;
+    if (canvasLocked()) return;
     if (isSpaceLeft) spaceDragged = true; // 스페이스+드래그 팬 → 탭이 아님(중앙복귀 억제)
     panning = true;
     const vb = state.get().viewBox;
@@ -267,7 +308,7 @@ export function initViewport(svg, state, onChange) {
   window.addEventListener("mousemove", (e) => {
     if (!panning) return;
     if (!panStart || e.buttons === 0) { panning = false; panStart = null; svg.classList.remove("is-panning"); return; }
-    if (centerLocked) return;
+    if (canvasLocked()) return;
     const rect = svg.getBoundingClientRect();
     const start = panStart.vb;
     // convert pixel delta into world delta using the *start* viewBox scale
@@ -310,7 +351,7 @@ export function initViewport(svg, state, onChange) {
     spaceHeld = false;
     svg.classList.remove("space-held");
     // 드래그 없이 캔버스에서 탭 → 1회 중앙 복귀 (고정 상태면 이미 중앙이라 생략)
-    if (spaceOnCanvas && !spaceDragged && !centerLocked) {
+    if (spaceOnCanvas && !spaceDragged && !canvasLocked()) {
       centerView(state); // state.update → applyViewBox+render 구독자 자동 호출
     }
   });
@@ -334,9 +375,9 @@ export function initViewport(svg, state, onChange) {
   window.addEventListener("resize", () => {
     state.update((s) => {
       clampZoom(svg, s);
-      if (centerLocked) {
-        s.viewBox.x = -s.viewBox.w / 2;
-        s.viewBox.y = -s.viewBox.h / 2;
+      if (canvasLocked()) {
+        s.viewBox.x = canvasLock.worldX - s.viewBox.w / 2;
+        s.viewBox.y = canvasLock.worldY - s.viewBox.h / 2;
       }
       clampViewBox(s);
     });
