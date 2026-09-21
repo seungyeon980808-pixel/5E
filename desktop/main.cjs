@@ -13,8 +13,13 @@ const { buildEphemeralThreadStartParams } = require("./ai-thread-profile.cjs");
 const { createProcessFailureFinalization } = require("./codex-process-failure.cjs");
 
 const APP_ID = "com.5e.editor";
-const APP_ICON_PATH = path.join(__dirname, "..", "assets", "icon.ico");
-app.setAppUserModelId(APP_ID);
+const APP_ICON_PATH = path.join(
+  __dirname,
+  "..",
+  "assets",
+  process.platform === "darwin" ? "icon-512.png" : "icon.ico",
+);
+if (process.platform === "win32") app.setAppUserModelId(APP_ID);
 
 const userDataOverride = process.env.FIVE_E_SMOKE_USER_DATA || process.env.FIVE_E_DEV_USER_DATA;
 if (userDataOverride) app.setPath("userData", path.resolve(userDataOverride));
@@ -473,6 +478,10 @@ async function sendTurn(payload = {}) {
 }
 
 function createWindow() {
+  if (win && !win.isDestroyed()) {
+    win.show();
+    return;
+  }
   const splashStartedAt = Date.now();
   splash = new BrowserWindow({
     width: 520,
@@ -486,6 +495,12 @@ function createWindow() {
     webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true },
   });
   splash.loadFile(path.join(__dirname, "splash.html"));
+  const platformWindowOptions = process.platform === "darwin"
+    ? { titleBarStyle: "hiddenInset", trafficLightPosition: { x: 12, y: 7 } }
+    : {
+        titleBarStyle: "hidden",
+        titleBarOverlay: { color: "#0e1512", symbolColor: "#9fb8b0", height: 30 },
+      };
   win = new BrowserWindow({
     width: 1520,
     height: 960,
@@ -494,8 +509,7 @@ function createWindow() {
     show: false,
     backgroundColor: "#0e1512",
     icon: APP_ICON_PATH,
-    titleBarStyle: "hidden",
-    titleBarOverlay: { color: "#0e1512", symbolColor: "#9fb8b0", height: 30 },
+    ...platformWindowOptions,
     webPreferences: { preload: path.join(__dirname, "preload.cjs"), contextIsolation: true, nodeIntegration: false, sandbox: true },
   });
   win.setMenu(null);
@@ -511,6 +525,7 @@ function createWindow() {
   };
   win.once("ready-to-show", revealMainWindow);
   win.webContents.once("did-fail-load", revealMainWindow);
+  win.on("closed", () => { win = null; });
   win.loadFile(path.join(__dirname, "..", "index.html"));
   win.webContents.setWindowOpenHandler(({ url }) => { if (/^https:\/\//i.test(url)) shell.openExternal(url); return { action: "deny" }; });
   if (process.env.FIVE_E_SMOKE_TEST === "1") {
@@ -981,6 +996,7 @@ function createWindow() {
         })`);
         result.codexSendInvocationsDuringLocalSmoke = codexSendInvocationCount - codexSendsBeforeSmoke;
         result.menuBarVisible = win.isMenuBarVisible();
+        result.menuBarStateValid = process.platform === "darwin" ? result.menuBarVisible : !result.menuBarVisible;
         result.appIconReadable = !nativeImage.createFromPath(APP_ICON_PATH).isEmpty();
         const ok = result.buttonText === "AI 이미지 생성" && result.panelOpened &&
           result.modelCatalogReadable && result.captureSourcesReadable && result.aiUsesCentralModal &&
@@ -998,7 +1014,7 @@ function createWindow() {
           result.artboardAreaOverlayOpened && result.artboardConfirmButtonPresent && result.artboardAreaCaptureWorks && result.artboardCornerHandleRemoved &&
           result.artboardSelectionRecentersObjects && result.artboardSelectionRecentersGuides &&
           result.internalCutSeparates && result.internalCutSelectsExtracted && result.internalCutRendersBoth &&
-          !result.installDialogOpened && result.menuBarVisible === false && result.appIconReadable;
+          !result.installDialogOpened && result.menuBarStateValid && result.appIconReadable;
         if (process.env.FIVE_E_IMAGE_E2E === "1") {
           result.imageE2e = await win.webContents.executeJavaScript(`new Promise(async (resolve) => {
             let settled = false;
@@ -1117,5 +1133,15 @@ ipcMain.handle("local-images:read", async (_, filePath) => {
   if (!allowedLocalImagePath(filePath)) throw new Error("허용되지 않은 이미지 경로입니다.");
   return imageDataUrl(path.resolve(filePath));
 });
-app.whenReady().then(() => { Menu.setApplicationMenu(null); createWindow(); });
+app.whenReady().then(() => {
+  Menu.setApplicationMenu(null);
+  if (process.platform === "darwin" && app.dock) app.dock.setIcon(APP_ICON_PATH);
+  createWindow();
+});
+app.on("activate", () => {
+  if (BrowserWindow.getAllWindows().length === 0) createWindow();
+});
+app.on("window-all-closed", () => {
+  if (process.platform !== "darwin") app.quit();
+});
 app.on("before-quit", stopServer);

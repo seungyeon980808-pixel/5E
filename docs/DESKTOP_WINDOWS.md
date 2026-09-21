@@ -3,7 +3,7 @@
 ## 개발 실행
 
 1. Node.js 20 이상과 Codex CLI를 설치한다.
-2. `5E_main`에서 `npm install`을 실행한다.
+2. 저장소 루트에서 `npm install`을 실행한다.
 3. `npm run desktop`으로 실행한다.
 
 개발 중에는 설치·삭제를 반복하지 않는다. 소스를 수정한 뒤 `npm.cmd run desktop`으로 바로 실행하고, 자동 검증은 `npm.cmd test`와 `npm.cmd run test:desktop`을 사용한다. `test:desktop`은 실제 Electron 화면을 열어 고급 기능 버튼, AI 패널 열기, Codex 로그인 상태 IPC, App Server 시작·종료를 확인하고 자동 종료한다.
@@ -23,9 +23,9 @@ Codex CLI가 PATH에 없거나 로그인하지 않은 경우 AI 패널이 각각
 - 현재 설치된 Codex가 생성한 공식 App Server 스키마에 맞춰 `initialize`, `thread/start`, `thread/resume`, `turn/start`, `turn/interrupt`를 사용한다.
 - `item/completed`의 `imageGeneration` 결과는 허용된 이미지 형식과 20MB 제한을 확인한 뒤 data URL로 변환하여 미리보기로 전달한다.
 - 이미지 생성 자체는 ChatGPT/Codex 계정과 해당 모델 기능이 필요하다. 로그인하지 않은 상태에서 로컬 편집·저장·내보내기는 계속 사용할 수 있다.
-- 현재 설치 파일에는 배포용 코드 서명 인증서와 전용 앱 아이콘이 설정되지 않았다. 외부 배포 전 인증서 서명과 `.ico` 자산 설정이 필요하다.
+- 설치 파일에는 전용 `.ico` 앱 아이콘이 포함된다. 배포용 코드 서명 인증서는 아직 연결하지 않았으므로 외부 배포 전 서명 상태를 릴리스 설명에 명시한다.
 
-웹판에서 `AI 이미지 생성/변환`을 누르면 설치 안내만 표시된다. preload API가 있는 Windows 데스크톱판에서는 같은 버튼이 실제 AI 패널을 연다.
+웹판에서 `AI 이미지 생성/변환`을 누르면 설치 안내만 표시된다. preload API가 있는 데스크톱판에서는 같은 버튼이 실제 AI 패널을 연다.
 
 ## AI 이미지 생성 속도
 

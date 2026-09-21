@@ -171,8 +171,6 @@ body {
   overflow: hidden;
 }
 
-/* Electron에서는 Windows 기본 회색 제목 표시줄 대신 5E의 중립 패널색을 사용한다.
-   웹판에는 나타나지 않으며, 우측 140px은 운영체제 창 버튼 영역으로 비워 둔다. */
 .desktop-titlebar { display: none; }
 .desktop-shell .desktop-titlebar {
   flex: 0 0 30px;
@@ -194,6 +192,9 @@ body {
   font-size: 15px;
   font-style: italic;
   font-weight: 700;
+}
+.desktop-shell.platform-darwin .desktop-titlebar {
+  padding: 0 12px 0 78px;
 }
 
 /* ===== APP LAYOUT (3-panel, DESIGN §7) ===== */

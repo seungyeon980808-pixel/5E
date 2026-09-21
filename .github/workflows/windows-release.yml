@@ -1,4 +1,4 @@
-name: Windows Release
+name: Desktop Release
 
 on:
   push:
@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 jobs:
-  build-and-release:
+  build-windows:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
@@ -28,29 +28,79 @@ jobs:
       - name: Build Windows installer
         run: npm run package:win
 
-      - name: Write SHA-256 checksum
-        shell: pwsh
+      - name: Upload Windows installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: 5e-windows
+          path: release/*.exe
+          if-no-files-found: error
+
+  build-macos:
+    runs-on: macos-latest
+    env:
+      CSC_IDENTITY_AUTO_DISCOVERY: "false"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests
+        run: npm test
+
+      - name: Build macOS installers
+        run: npm run package:mac
+
+      - name: Upload macOS installers
+        uses: actions/upload-artifact@v4
+        with:
+          name: 5e-macos
+          path: |
+            release/*.dmg
+            release/*.zip
+          if-no-files-found: error
+
+  publish-release:
+    runs-on: ubuntu-latest
+    needs:
+      - build-windows
+      - build-macos
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download installers
+        uses: actions/download-artifact@v4
+        with:
+          pattern: 5e-*
+          path: release-assets
+          merge-multiple: true
+
+      - name: Write SHA-256 checksums
+        shell: bash
         run: |
-          $installer = Get-ChildItem -LiteralPath release -Filter "*.exe" | Select-Object -First 1
-          if (-not $installer) { throw "Windows installer was not created" }
-          $hash = (Get-FileHash -Algorithm SHA256 -LiteralPath $installer.FullName).Hash.ToLowerInvariant()
-          "$hash  $($installer.Name)" | Set-Content -Encoding ascii release/SHA256SUMS.txt
+          cd release-assets
+          find . -maxdepth 1 -type f \( -name '*.exe' -o -name '*.dmg' -o -name '*.zip' \) -print0 \
+            | sort -z \
+            | xargs -0 sha256sum \
+            | sed 's#  \./#  #' > SHA256SUMS.txt
 
       - name: Publish GitHub Release
-        shell: pwsh
+        shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          $tag = "${{ github.ref_name }}"
-          $assets = @(
-            (Get-ChildItem -LiteralPath release -Filter "*.exe" | Select-Object -First 1).FullName
-            (Resolve-Path -LiteralPath release/SHA256SUMS.txt).Path
-          )
-          $notesPath = "docs/RELEASE_NOTES_$tag.md"
-          if (Test-Path -LiteralPath $notesPath) {
-            $firstLine = Get-Content -LiteralPath $notesPath -Encoding utf8 -TotalCount 1
-            $releaseTitle = if ($firstLine -match '^<!-- release-title: (.+) -->$') { $Matches[1] } else { "5E $tag" }
-            & gh release create $tag @assets --notes-file $notesPath --title $releaseTitle
-          } else {
-            & gh release create $tag @assets --generate-notes --title "5E $tag"
-          }
+          tag="${{ github.ref_name }}"
+          notes_path="docs/RELEASE_NOTES_${tag}.md"
+          release_title="5E ${tag}"
+          if [[ -f "$notes_path" ]]; then
+            parsed_title=$(sed -n 's/^<!-- release-title: \(.*\) -->$/\1/p' "$notes_path" | head -n 1)
+            if [[ -n "$parsed_title" ]]; then release_title="$parsed_title"; fi
+            gh release create "$tag" release-assets/* --notes-file "$notes_path" --title "$release_title"
+          else
+            gh release create "$tag" release-assets/* --generate-notes --title "$release_title"
+          fi

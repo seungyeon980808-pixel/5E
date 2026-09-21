@@ -1,6 +1,6 @@
 const { contextBridge, ipcRenderer } = require("electron");
 window.addEventListener("DOMContentLoaded", () => {
-  document.documentElement.classList.add("desktop-shell");
+  document.documentElement.classList.add("desktop-shell", `platform-${process.platform}`);
 });
 contextBridge.exposeInMainWorld("fiveEDesktop", {
   status: () => ipcRenderer.invoke("codex:status"),
