@@ -65,6 +65,7 @@ test('filename normalization preserves Korean and prevents path injection', () =
   const context = vm.createContext({}); vm.runInContext(fn, context);
   assert.equal(context.timestampProjectFilename(new Date(2026, 0, 2, 3, 4)), '20260102_0304.5e');
   assert.equal(context.projectFilename(' 물리 프로젝트.5e '), '물리 프로젝트.5e');
+  assert.equal(context.projectFilename('물리 프로젝트.5e.5e'), '물리 프로젝트.5e');
   assert.equal(context.projectFilename('../../test.json'), '.._.._test.5e');
   assert.equal(context.projectFilename('  '), '새 프로젝트.5e');
 });
