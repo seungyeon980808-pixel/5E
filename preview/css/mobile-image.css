@@ -1,0 +1,110 @@
+.mobile-image-mode {
+  --mobile-space: 12px;
+  --mobile-control: 44px;
+  --mobile-body: 14px;
+  --mobile-input: 16px;
+  --mobile-stage: 300px;
+  --mobile-radius: 8px;
+  --mobile-line: 1.6;
+  --ui-zoom: 1 !important;
+}
+.mobile-image-mode body { zoom: 1; }
+.mobile-image-mode body > .app,
+.mobile-image-mode body > .topbar,
+.mobile-image-mode body > .app-footer { display: none; }
+.mobile-image-mode .mobile-image-home { padding: max(var(--mobile-space), env(safe-area-inset-top)) var(--mobile-space) max(var(--mobile-space), env(safe-area-inset-bottom)); max-width: 600px; margin: auto; color: var(--text-primary); word-break: keep-all; }
+.mobile-image-home h1 { font-size: 24px; }
+.mobile-image-home p { font-size: var(--mobile-body); line-height: var(--mobile-line); }
+.mobile-image-home a { display: block; padding: var(--mobile-space) 0; color: var(--accent); }
+.mobile-image-mode :is(.mobile-image-home, .mobile-image-toolbar, .mobile-crop-dialog) button {
+  min-height: var(--mobile-control); padding: 0 var(--mobile-space); border: 1px solid var(--border); border-radius: var(--mobile-radius);
+  background: var(--bg-input); color: var(--text-primary); font: inherit; font-size: var(--mobile-body); cursor: pointer;
+}
+.mobile-image-mode :is([data-mobile-photo], [data-mobile-open], [data-crop-apply]) { background: var(--accent); color: var(--text-on-accent, #fff); }
+.mobile-image-mode button:disabled { opacity: .55; cursor: default; }
+.mobile-image-mode :is(button, input, select, summary):focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.mobile-image-mode #ai-image-panel {
+  top: var(--mobile-viewport-top, 0px); height: var(--mobile-viewport-height, 100dvh); padding: 0;
+  align-items: stretch; overflow: hidden; background: var(--bg-panel);
+}
+.mobile-image-mode #ai-image-panel .modal-ai.ai-workbench {
+  width: 100%; height: 100%; min-height: 0; min-width: 0; max-height: none; border: 0;
+  overflow-y: auto; overflow-x: hidden; display: block; font-size: var(--mobile-body);
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+}
+.mobile-image-mode #ai-image-panel .ai-head { display: flex; flex-wrap: wrap; min-height: 0; padding: var(--mobile-space); gap: var(--mobile-space); height: auto; }
+.mobile-image-mode #ai-image-panel .ai-title-line { display: block; flex: 1 0 100%; word-break: keep-all; }
+.mobile-image-mode #ai-image-panel .modal-title { display: block; font-size: 18px; }
+.mobile-image-mode #ai-image-panel .ai-head-status { display: flex; flex: 1 1 auto; gap: var(--mobile-space); }
+.mobile-image-mode #ai-image-panel .ai-status { white-space: normal; font-size: 12px; line-height: var(--mobile-line); }
+.mobile-image-mode #ai-image-panel .ai-close { flex: 0 0 var(--mobile-control); height: var(--mobile-control); }
+.mobile-image-mode .mobile-image-toolbar { display: flex; gap: var(--mobile-space); padding: 0 var(--mobile-space) var(--mobile-space); }
+.mobile-image-mode .mobile-image-toolbar > button { flex: 1 1 0; width: auto; min-width: 0; justify-content: center; gap: calc(var(--mobile-space) / 2); white-space: nowrap; }
+.mobile-image-mode .mobile-image-toolbar .mobile-image-share::after { content: none; }
+.mobile-image-mode #ai-image-panel .ai-workspace { display: flex; flex-direction: column; min-height: 0; overflow: visible; }
+.mobile-image-mode #ai-image-panel .ai-task-rail { display: flex; max-height: none; width: 100%; border: 0; }
+.mobile-image-mode #ai-image-panel .ai-rail-heading { padding: var(--mobile-space); }
+.mobile-image-mode #ai-image-panel .ai-task-tabs { overflow: auto; }
+.mobile-image-mode #ai-image-panel .ai-task-tab-list { display: flex; width: max-content; padding: 0 var(--mobile-space) var(--mobile-space); }
+.mobile-image-mode #ai-image-panel .ai-task-tab { width: 180px; min-height: var(--mobile-control); }
+.mobile-image-mode #ai-image-panel .ai-results { flex: none; min-height: var(--mobile-stage); height: auto; overflow: visible; }
+.mobile-image-mode #ai-image-panel .ai-comparison-grid { display: flex; flex-direction: column; min-height: 0; overflow: visible; }
+.mobile-image-mode #ai-image-panel .ai-image-pane { flex: none; min-height: var(--mobile-stage); }
+.mobile-image-mode #ai-image-panel :is(.ai-previews,.ai-reference-list) { min-height: var(--mobile-stage); height: var(--mobile-stage); }
+.mobile-image-mode #ai-image-panel .ai-conversation { display: flex; width: 100%; position: static; max-height: none; overflow: visible; border: 0; }
+.mobile-image-mode #ai-image-panel :is(.ai-side-content,.ai-comments-panel,.ai-chat-panel) { flex: none; overflow: visible; }
+.mobile-image-mode #ai-image-panel .ai-preparation { overflow: visible; max-height: none; }
+.mobile-image-mode #ai-image-panel :is(button,select,summary) { min-height: var(--mobile-control); font-size: var(--mobile-body); }
+.mobile-image-mode #ai-image-panel :is(input,textarea,select) { font-size: var(--mobile-input); }
+.mobile-image-mode #ai-image-panel .ai-pane-head select { max-width: none; }
+.mobile-image-mode #ai-image-panel .ai-pane-head-controls { flex-wrap: wrap; }
+.mobile-image-mode #ai-image-panel .ai-compare-heading { flex-wrap: wrap; padding: var(--mobile-space); }
+.mobile-image-mode #ai-image-panel .ai-pane-head { padding: var(--mobile-space); }
+.mobile-image-mode #ai-image-panel .ai-workbench-actions { flex-wrap: wrap; }
+.mobile-image-mode #ai-image-panel .ai-output-actions { width: 100%; }
+.mobile-image-mode #ai-image-panel .ai-output-actions button { flex: 1; }
+.mobile-image-mode #ai-image-panel .ai-log { max-height: var(--mobile-stage); overflow-y: auto; }
+.mobile-image-mode #ai-image-panel :is(.panel-toggles,.panel-dock-toggle,.panel-collapse-close,[data-ai-insert-selected]) { display: none; }
+.mobile-image-mode #ai-image-panel [data-ai-add-file] { display: none; }
+.mobile-image-mode #ai-image-panel :is(p,small,.ai-empty span) { word-break: keep-all; line-height: var(--mobile-line); }
+.mobile-image-mode .web-login-dialog { max-height: calc(var(--mobile-viewport-height, 100dvh) - 2 * var(--mobile-space)); overflow-y: auto; word-break: keep-all; }
+.mobile-image-mode .web-login-dialog [data-install-guide] { display: none; }
+.mobile-crop-dialog {
+  box-sizing: border-box; width: min(600px, calc(100% - 2 * var(--mobile-space))); max-height: calc(var(--mobile-viewport-height, 100dvh) - 2 * var(--mobile-space));
+  overflow-y: auto; padding: var(--mobile-space); border: 1px solid var(--border); border-radius: var(--mobile-radius); background: var(--bg-panel); color: var(--text-primary);
+  font-family: "IBM Plex Sans KR", system-ui, sans-serif; word-break: keep-all;
+}
+.mobile-crop-dialog::backdrop { background: color-mix(in srgb, var(--bg-canvas) 75%, transparent); }
+.mobile-crop-dialog header, .mobile-crop-dialog footer { display: flex; align-items: center; justify-content: space-between; gap: var(--mobile-space); }
+.mobile-crop-dialog h2 { font-size: 18px; margin: 0; }
+.mobile-crop-dialog p { font-size: var(--mobile-body); line-height: var(--mobile-line); color: var(--text-secondary); }
+.mobile-crop-stage { position: relative; width: fit-content; max-width: 100%; margin: auto; touch-action: none; user-select: none; }
+.mobile-crop-stage img { display: block; max-width: 100%; max-height: 40dvh; width: auto; height: auto; pointer-events: none; }
+.mobile-crop-stage [data-crop-box] { position: absolute; box-sizing: border-box; border: 2px solid var(--accent); background: color-mix(in srgb, var(--accent) 15%, transparent); pointer-events: none; }
+.mobile-crop-fields { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: var(--mobile-space); margin-bottom: var(--mobile-space); }
+.mobile-crop-fields label { font-size: var(--mobile-body); }
+.mobile-crop-fields input { box-sizing: border-box; display: block; width: 100%; min-height: var(--mobile-control); padding: 0 var(--mobile-space); border: 1px solid var(--border); border-radius: var(--mobile-radius); background: var(--bg-input); color: var(--text-primary); font-size: var(--mobile-input); }
+.mobile-image-mode #ai-image-panel .ai-task-tab-list { flex-direction: row; }
+.mobile-image-mode #ai-image-panel .ai-rail-heading > strong { display: block; }
+.mobile-image-mode #ai-image-panel .ai-rail-actions { margin-left: auto; }
+.mobile-image-mode #ai-image-panel .ai-rail-actions button { white-space: nowrap; }
+.mobile-image-mode #ai-image-panel :is(button,select,summary) { min-height: var(--mobile-control) !important; height: auto; }
+.mobile-image-mode #ai-image-panel [data-ai-task-export],
+.mobile-image-mode #ai-image-panel [data-ai-task-export-mode] { display: none; }
+.mobile-image-mode #ai-image-panel .ai-task-export-controls:not(:has([data-ai-retry-interrupted]:not([hidden]))) { display: none !important; }
+.mobile-image-mode #ai-image-panel .ai-rail-heading > strong { font-size: var(--mobile-body); }
+.mobile-image-mode #ai-image-panel .ai-side-tabs { min-height: var(--mobile-control); flex-basis: auto; }
+.mobile-image-mode #ai-image-panel .ai-output-processing-row { grid-template-columns: 88px minmax(0, 1fr); }
+.mobile-image-mode #ai-image-panel .ai-output-processing-row > span { font-size: var(--mobile-body); }
+
+.mobile-image-mode #ai-image-panel :is(button,select,summary) { min-width: var(--mobile-control) !important; }
+.mobile-image-mode #ai-image-panel select { height: var(--mobile-control) !important; }
+.mobile-image-mode #ai-image-panel .ai-status { flex: 1; word-break: keep-all; }
+.mobile-image-mode #ai-image-panel .ai-task-delete { width: var(--mobile-control); min-width: var(--mobile-control); height: var(--mobile-control); }
+.mobile-image-mode #ai-image-panel .ai-image-card-head { height: var(--mobile-control); min-height: var(--mobile-control); flex-basis: var(--mobile-control); }
+.mobile-image-mode .web-login-dialog button { min-width: var(--mobile-control); min-height: var(--mobile-control); }
+.mobile-image-mode .web-login-close { width: var(--mobile-control); height: var(--mobile-control); }
+.mobile-image-mode .ai-sharing-dialog { max-height: calc(var(--mobile-viewport-height, 100dvh) - 2 * var(--mobile-space)); }
+.mobile-image-mode .ai-sharing-dialog :is(button,[data-link],label) { box-sizing: border-box; min-height: var(--mobile-control); }
+.mobile-image-mode .ai-sharing-dialog button { min-width: var(--mobile-control); }
+.mobile-image-mode .ai-sharing-dialog label { display: flex; align-items: center; gap: calc(var(--mobile-space) / 2); }
