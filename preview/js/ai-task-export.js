@@ -2,7 +2,7 @@ import {
   FS_DIR_SUPPORTED,
   ensureDirPermission,
   pickDir,
-} from "./export-dir.js?v=1.6.0-preview-labeler-0917-1111";
+} from "./export-dir.js?v=1.6.0-preview-golden-export-save-0922";
 import { zipStore } from "./backup-zip.js?v=1.6.0-preview-labeler-0917-1111";
 
 export const TASK_EXPORT_MODES = Object.freeze({

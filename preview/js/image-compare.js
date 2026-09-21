@@ -21,7 +21,7 @@
  */
 
 import { runAreaCapture } from "./export-dialog.js?v=1.6.0-preview-repair-0921";
-import { rasterizeExportCanvas } from "./svg-export.js?v=1.6.0-preview-labeler-0917-1111";
+import { rasterizeExportCanvas } from "./svg-export.js?v=1.6.0-preview-golden-export-save-0922";
 
 let _overlay = null; // 비교 모달 오버레이(1회 생성 후 재사용)
 let _els = null;     // 자주 쓰는 하위 요소 캐시

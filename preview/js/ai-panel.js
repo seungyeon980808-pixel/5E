@@ -1,7 +1,7 @@
 import { openAiCompositionEditor } from './ai-composition-editor.js';
 import { restrictSharedWorkspace } from './ai-sharing-access.js';
 import { registerEscapeLayer } from './escape-layers.js?v=1';
-import { clearTaskWorkspaces, createTaskPersistence, createTaskWorkspaces, recoverTaskWorkspaceSnapshot } from './ai-task-workspaces.js?v=1.6.0-preview-emerald-polish-0921';
+import { clearTaskWorkspaces, createTaskPersistence, createTaskWorkspaces, recoverTaskWorkspaceSnapshot } from './ai-task-workspaces.js?v=1.6.0-preview-golden-export-save-0922';
 import {
   advanceGenerationTiming,
   restoreGenerationTiming,
@@ -9,7 +9,7 @@ import {
   serializeGenerationTiming,
   startGenerationTiming,
 } from './ai-generation-timing.js';
-import { taskExportSelection } from './ai-task-export.js';
+import { taskExportSelection } from './ai-task-export.js?v=1.6.0-preview-golden-export-save-0922';
 import { keyLabel, modKey } from './platform.js?v=1.4.0';
 import {
   distributeSourcesToTaskTabs,

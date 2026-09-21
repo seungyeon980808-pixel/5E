@@ -2,7 +2,7 @@ import {
   chooseTaskExportDestination,
   normalizeTaskExportMode,
   writeTaskExports,
-} from './ai-task-export.js';
+} from './ai-task-export.js?v=1.6.0-preview-golden-export-save-0922';
 import { restoreGenerationTiming } from './ai-generation-timing.js';
 import { idbGet, idbSet } from './idb-store.js';
 

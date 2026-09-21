@@ -6,12 +6,23 @@ const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 const source = fs.readFileSync(path.join(root, 'preview/js/project-io.js'), 'utf8');
 const saveCode = source.slice(source.indexOf('export async function saveProject('), source.indexOf('/* ----- defaultLayers')).replace('export ', '');
-function harness({ filename = '테스트.5e', picker, native } = {}) {
-  const calls = { downloads: [], marks: [], alerts: [], writes: [] };
+function harness({ filename = '테스트.5e', picker, native, target, projectWriter } = {}) {
+  const calls = { downloads: [], marks: [], alerts: [], writes: [], targets: [] };
   const state = { get: () => ({ pages: [{ id: 'a', name: '페이지 1', objects: [] }] }) };
   const context = vm.createContext({
     window: { showSaveFilePicker: picker, fiveEDesktop: native ? { project: { save: native } } : undefined },
-    chooseProjectFilename: async () => { calls.prompts = (calls.prompts || 0) + 1; return filename; },
+    chooseProjectSaveTarget: async () => {
+      calls.targets.push(true);
+      return target ?? (filename ? { kind: 'download', filename } : { kind: 'cancelled' });
+    },
+    FS_DIR_SUPPORTED: false,
+    loadSavedProjectDir: async () => null,
+    currentProjectDirName: () => '',
+    pickProjectDir: async () => null,
+    writeProjectToDir: async (...args) => {
+      calls.writes.push(args);
+      return projectWriter ? projectWriter(...args) : false;
+    },
     timestampProjectFilename: () => '20260921_0324.5e',
     captureProjectStatus: () => 'snapshot', serialize: value => value,
     markProjectStatus: (...args) => calls.marks.push(args),
@@ -54,7 +65,7 @@ test('native picker writes full document before marking saved', async () => {
   } });
   assert.equal((await save()).kind, 'saved');
   assert.equal(suggestedName, '20260921_0324.5e');
-  assert.equal(calls.prompts || 0, 0);
+  assert.equal(calls.targets.length, 0);
   assert.equal(written.pages[0].id, 'a');
   assert.equal(closed, true);
   assert.equal(calls.marks[0][2], 'file');
@@ -106,7 +117,7 @@ test('native picker is invoked synchronously before yielding user activation', a
   const { save, calls } = harness({ picker: () => { invoked = true; const error = new Error(); error.name = 'AbortError'; return Promise.reject(error); } });
   const pending = save();
   assert.equal(invoked, true);
-  assert.equal(calls.prompts || 0, 0);
+  assert.equal(calls.targets.length, 0);
   await pending;
 });
 test('write failure does not mark saved or download', async () => {
@@ -120,6 +131,38 @@ test('desktop bridge gets timestamp without a web name prompt', async () => {
   const { save, calls } = harness({ native: async value => { payload = value; return { kind: 'cancelled' }; } });
   assert.equal((await save()).kind, 'cancelled');
   assert.equal(payload.suggestedName, '20260921_0324.5e');
-  assert.equal(calls.prompts || 0, 0);
+  assert.equal(calls.targets.length, 0);
   assert.equal(calls.downloads.length + calls.marks.length, 0);
+});
+
+test('connected project folder writes before marking saved', async () => {
+  let saved;
+  const { save, calls } = harness({
+    target: { kind: 'directory', filename: '물리.5e' },
+    projectWriter: async (filename, blob) => {
+      saved = { filename, document: JSON.parse(await blob.text()) };
+      return true;
+    },
+  });
+  assert.equal((await save()).kind, 'saved');
+  assert.equal(saved.filename, '물리.5e');
+  assert.equal(saved.document.pages[0].id, 'a');
+  assert.equal(calls.downloads.length, 0);
+  assert.equal(calls.marks[0][2], 'file');
+});
+
+test('project folder write failure cannot claim saved or download', async () => {
+  const { save, calls } = harness({
+    target: { kind: 'directory', filename: '물리.5e' },
+    projectWriter: async () => false,
+  });
+  assert.equal((await save()).kind, 'failed');
+  assert.equal(calls.downloads.length + calls.marks.length, 0);
+  assert.equal(calls.alerts.length, 1);
+});
+
+test('project folder dialog cancellation has no file side effect', async () => {
+  const { save, calls } = harness({ target: { kind: 'cancelled' } });
+  assert.equal((await save()).kind, 'cancelled');
+  assert.equal(calls.downloads.length + calls.marks.length + calls.writes.length, 0);
 });

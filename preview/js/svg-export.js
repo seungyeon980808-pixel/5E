@@ -21,7 +21,7 @@
 import { renderObject, makeFillPattern } from "./render.js?v=1.6.0-preview-labeler-0917-1111";
 import {
   FS_DIR_SUPPORTED, loadSavedDir, ensureDirPermission, writeToDir,
-} from "./export-dir.js?v=1.6.0-preview-labeler-0917-1111";
+} from "./export-dir.js?v=1.6.0-preview-golden-export-save-0922";
 import { getObjectBBox } from "./pick.js?v=1.6.0-preview-labeler-0917-1111";
 
 const SVG_NS = "http://www.w3.org/2000/svg";

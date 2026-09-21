@@ -24,7 +24,10 @@ import { modKey, shortcutKey, isEditingTarget, isComposingKey } from "./platform
 import { initProjectLaunch } from './project-launch.js?v=1.6.0-preview-web-native-project-0918-1617';
 import { extractWindowsProjectSource } from './windows-project-source.mjs?v=1.6.0-preview-project-launcher-0918-1508';
 
-import { chooseProjectFilename, timestampProjectFilename } from './project-save-dialog.js?v=1.6.0-preview-emerald-polish-0921';
+import { chooseProjectSaveTarget, timestampProjectFilename } from './project-save-dialog.js?v=1.6.0-preview-golden-export-save-0922';
+import {
+  FS_DIR_SUPPORTED, loadSavedProjectDir, currentProjectDirName, pickProjectDir, writeProjectToDir,
+} from './export-dir.js?v=1.6.0-preview-golden-export-save-0922';
 let savingProject = false;
 
 // Schema version of the saved file. Distinct from the app UI version.
@@ -397,8 +400,22 @@ export async function saveProject(state) {
       markProjectStatus(state, statusToken, "file");
       return { kind: "saved" };
     }
-    filename = await chooseProjectFilename(filename);
-    if (!filename) return { kind: "cancelled" };
+    await loadSavedProjectDir();
+    const target = await chooseProjectSaveTarget(filename, {
+      directorySupported: FS_DIR_SUPPORTED,
+      directoryName: currentProjectDirName(),
+      pickDirectory: async () => {
+        await pickProjectDir();
+        return currentProjectDirName();
+      },
+    });
+    if (target.kind === 'cancelled') return { kind: "cancelled" };
+    filename = target.filename;
+    if (target.kind === 'directory') {
+      if (!(await writeProjectToDir(filename, blob))) throw new Error('선택한 폴더에 파일을 기록하지 못했습니다.');
+      markProjectStatus(state, statusToken, "file");
+      return { kind: "saved" };
+    }
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;

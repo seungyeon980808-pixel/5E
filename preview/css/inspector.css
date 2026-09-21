@@ -173,6 +173,10 @@ details[open] > .insp-summary::before {
 }
 .insp-geometry-pair .insp-unit { margin-left: -2px; }
 
+.insp-section-geometry > .insp-summary { padding-block: 4px; }
+.insp-section-geometry > .insp-body { gap: 3px; }
+.insp-section-geometry .insp-geometry-pair { gap: 4px; }
+
 @container inspector-panel (max-width: 239px) {
   .insp-geometry-pair { grid-template-columns: 1fr; }
   .insp-geometry-pair .insp-field-label { min-width: 28px; }

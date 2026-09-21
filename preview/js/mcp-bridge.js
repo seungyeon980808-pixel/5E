@@ -26,7 +26,7 @@ import {
 import { showAlert, showConfirm, showPrompt } from "./ui-dialogs.js?v=1.6.0-preview-labeler-0917-1111";
 import { switchPage, addPage } from "./pages.js?v=1.6.0-preview-repair-0921";
 import { rasterizeExportCanvas, ensureEmbeddedFonts, insertPngPhys,
-         getContentBounds } from "./svg-export.js?v=1.6.0-preview-labeler-0917-1111";
+         getContentBounds } from "./svg-export.js?v=1.6.0-preview-golden-export-save-0922";
 import { translateObject } from "./transform.js?v=1.6.0-preview-labeler-0917-1111";
 import { captureDocumentSnapshot, commitDocumentHistory } from "./document-history.js?v=1.6.0-preview-labeler-0917-1111";
 import { MCP_BRIDGE_PORTS, parseMcpPairingRecord } from "./mcp-pairing.js?v=1.6.0-preview-labeler-0917-1111";

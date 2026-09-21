@@ -15,7 +15,7 @@ export function buildGeometrySection(ctx) {
   /* ---- Section 3: 크기·위치 (shapes only, single selection only) ---- */
   const sec3Body = document.createElement("div");
   sec3Body.className = "insp-body";
-  sec3Body.style.padding = "6px 6px"; // narrower than default for a compact section
+  sec3Body.style.padding = "4px 6px";
 
   // negate=true → inspector shows/accepts math convention (Y up) while the stored
   // value stays in SVG convention (Y down). Display = -internal, internal = -input.
@@ -1097,6 +1097,7 @@ export function buildGeometrySection(ctx) {
   });
 
   const sec3 = makeSection("크기·위치", sec3Body);
+  sec3.classList.add("insp-section-geometry");
 
   return {
     sec3, xF, yF, wF, hF, rotF, xyPair, whPair, lockAspectRow, lockAspectCb, trimRow,

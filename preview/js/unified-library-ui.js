@@ -956,6 +956,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   let activeFigureRepresentation = "figure:0";
   let sourcesInitialized = false;
   const knownSourceIds = new Set();
+  let openEpoch = 0;
   let searchEpoch = 0;
   let searchController = null;
   let requestSequence = 0;
@@ -1078,21 +1079,23 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     tree.hidden = state !== "ready";
     tree.setAttribute("aria-busy", String(loading));
   };
-  const followBackgroundIndexing = (snapshot) => {
+  const followBackgroundIndexing = (snapshot, isCurrent = () => !overlay.hidden) => {
     if (!snapshot?.backgroundIndexing || typeof snapshot.backgroundIndexing.then !== "function") return;
     void snapshot.backgroundIndexing.then(async () => {
-      if (overlay.hidden) return;
-      await refreshDesktopSources(false);
+      if (!isCurrent()) return;
+      await refreshDesktopSources(false, isCurrent);
+      if (!isCurrent()) return;
       await runSearch();
     }).catch((error) => {
-      if (!overlay.hidden) setStatus(`백그라운드 색인 실패: ${error instanceof Error ? error.message : error}`, true);
+      if (isCurrent()) setStatus(`백그라운드 색인 실패: ${error instanceof Error ? error.message : error}`, true);
     });
   };
 
   async function provider() { return getProvider(); }
 
-  async function renderSources() {
+  async function renderSources(isCurrent = () => true) {
     const activeProvider = await provider();
+    if (!isCurrent()) return false;
     const sources = activeProvider.getSources();
     const yearStart = overlay.querySelector("[data-unilib-year-start]");
     const yearEnd = overlay.querySelector("[data-unilib-year-end]");
@@ -1208,6 +1211,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     const selectedCount = enabledSources.size;
     overlay.querySelector("[data-unilib-location-summary]").textContent = selectedCount ? `검색 위치 ${selectedCount}곳` : "검색 위치 없음";
     setSearchPaneOpen(searchPaneOpen);
+    return true;
   }
 
   const searchIsCurrent = (ownEpoch, signal) => ownEpoch === searchEpoch && !signal.aborted && !overlay.hidden;
@@ -1787,22 +1791,24 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     }
   }
 
-  async function refreshDesktopSources(sync = false) {
+  async function refreshDesktopSources(sync = false, isCurrent = () => true) {
     if (!desktopLibrary) return;
     let snapshot;
     if (sync && pdfUi?.syncDesktopConnections) {
       snapshot = await pdfUi.syncDesktopConnections();
+      if (!isCurrent()) return;
       onDesktopSnapshot?.(snapshot);
       desktopWarnings = snapshot?.warnings || [];
       pendingIndexCount = (snapshot?.documents || []).filter((record) => ["reading", "unindexed", "indexing"].includes(record.indexState?.state)).length;
-      followBackgroundIndexing(snapshot);
+      followBackgroundIndexing(snapshot, isCurrent);
     } else {
       snapshot = await desktopLibrary.connections();
+      if (!isCurrent()) return;
       desktopWarnings = [];
     }
     desktopConnections = snapshot?.connections || [];
     if (desktopWarnings.length) setStatus(`${desktopWarnings.length}개 파일을 안전 제한으로 건너뛰었습니다. 파일 크기를 확인하세요.`, true);
-    await renderSources();
+    await renderSources(isCurrent);
   }
 
   function closeDrawers() {
@@ -1815,6 +1821,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   }
   function close({ restoreFocus = true, keyboard = lastInteractionWasKeyboard } = {}) {
     if (overlay.hidden) return;
+    openEpoch += 1;
     invalidateAction();
     cancelPlacementChoice?.();
     cancelSpacePress?.();
@@ -1844,31 +1851,36 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     window.dispatchEvent(new CustomEvent("5e:library-closed", { detail: { library: "unified" } }));
   }
   async function open(trigger) {
+    const ownOpenEpoch = ++openEpoch;
+    const isCurrentOpen = () => ownOpenEpoch === openEpoch && !overlay.hidden;
     invalidateAction();
     returnFocus = trigger || document.activeElement;
     overlay.hidden = false;
     setFolderLoading("loading");
-    const loadingStarted = performance.now();
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    if (!isCurrentOpen()) return;
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    if (!isCurrentOpen()) return;
     try {
       await pdfUi?.activate?.();
+      if (!isCurrentOpen()) return;
       if (desktopLibrary && pdfUi?.syncDesktopConnections) {
         const snapshot = await pdfUi.syncDesktopConnections();
+        if (!isCurrentOpen()) return;
         desktopConnections = snapshot?.connections || [];
         desktopWarnings = snapshot?.warnings || [];
         pendingIndexCount = (snapshot?.documents || []).filter((record) => ["reading", "unindexed", "indexing"].includes(record.indexState?.state)).length;
         onDesktopSnapshot?.(snapshot);
-        followBackgroundIndexing(snapshot);
+        followBackgroundIndexing(snapshot, isCurrentOpen);
         if (desktopWarnings.length) setStatus(`${desktopWarnings.length}개 파일을 안전 제한으로 건너뛰었습니다.`, true);
       }
-      await renderSources();
-      const remaining = 300 - (performance.now() - loadingStarted);
-      if (remaining > 0) await new Promise((resolve) => setTimeout(resolve, remaining));
-      if (overlay.hidden) return;
+      if (!await renderSources(isCurrentOpen)) return;
+      if (!isCurrentOpen()) return;
       setFolderLoading("ready");
       await runSearch();
-      if (!overlay.hidden) query.focus();
+      if (isCurrentOpen()) query.focus();
     } catch (error) {
-      if (overlay.hidden) return;
+      if (!isCurrentOpen()) return;
       const message = error instanceof Error ? error.message : String(error);
       setFolderLoading("error", message);
       setStatus(`라이브러리 폴더를 불러오지 못했습니다: ${message}`, true);
