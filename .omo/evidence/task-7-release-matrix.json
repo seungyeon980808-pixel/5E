@@ -1,0 +1,127 @@
+{
+  "result": "PASS",
+  "implementationSha": "9195dee112febd4567a3285aec18dd10bf674723",
+  "baseSha": "d357fda2",
+  "branch": "codex/preview-1.6.0",
+  "commands": [
+    {
+      "name": "npm-test",
+      "exitCode": 0,
+      "statusLedger": ".omo/evidence/task-7-command-status.txt"
+    },
+    {
+      "name": "library-pure",
+      "exitCode": 0,
+      "statusLedger": ".omo/evidence/task-7-command-status.txt"
+    },
+    {
+      "name": "library-chromium",
+      "exitCode": 0,
+      "statusLedger": ".omo/evidence/task-7-command-status.txt"
+    },
+    {
+      "name": "library-webkit",
+      "exitCode": 0,
+      "statusLedger": ".omo/evidence/task-7-command-status.txt"
+    },
+    {
+      "name": "ai-task-rail",
+      "exitCode": 0,
+      "statusLedger": ".omo/evidence/task-7-command-status.txt"
+    },
+    {
+      "name": "layout",
+      "exitCode": 0,
+      "statusLedger": ".omo/evidence/task-7-command-status.txt"
+    },
+    {
+      "name": "share-chromium",
+      "exitCode": 0,
+      "statusLedger": ".omo/evidence/task-7-command-status.txt"
+    },
+    {
+      "name": "share-webkit",
+      "exitCode": 0,
+      "statusLedger": ".omo/evidence/task-7-command-status.txt"
+    },
+    {
+      "name": "save-unit",
+      "exitCode": 0,
+      "statusLedger": ".omo/evidence/task-7-command-status.txt"
+    },
+    {
+      "name": "save-browser",
+      "exitCode": 0,
+      "statusLedger": ".omo/evidence/task-7-command-status.txt"
+    }
+  ],
+  "browserCoverage": {
+    "chromium": [
+      "library first-paint/progressive 60+60",
+      "crop-only AI transfer",
+      "task rail",
+      "layout 1440/1024/768/375",
+      "emerald share",
+      "save fallback/download/reopen"
+    ],
+    "webkit": [
+      "library first-paint/progressive 60+60",
+      "crop-only AI transfer",
+      "task rail",
+      "layout 1440/1024/768/375",
+      "emerald share",
+      "save fallback/download/reopen"
+    ],
+    "pageErrors": []
+  },
+  "sourceIdentity": {
+    "footer": "v1.6.0 Preview · Emerald Polish · 2026.09.21",
+    "packageVersion": "1.5.3 unchanged",
+    "cacheKey": "1.6.0-preview-emerald-polish-0921"
+  },
+  "atomicCommits": [
+    {
+      "sha": "9195dee112febd4567a3285aec18dd10bf674723",
+      "subject": "fix(preview): complete emerald cache graph"
+    },
+    {
+      "sha": "ac32ea72f8816461f27e5593395384c0771a22f8",
+      "subject": "chore(preview): label emerald polish revision"
+    },
+    {
+      "sha": "ccd411689b68f608d6191c0702753f068b0cdb62",
+      "subject": "fix(ai): use crop tray sources and unify task rail"
+    },
+    {
+      "sha": "3e75f19b880d14e658c7cda5fcac100c75a75eb4",
+      "subject": "fix(sharing): preserve sparkle timing"
+    },
+    {
+      "sha": "180c6f47f3d50e36b3f5822f2025c9984d836427",
+      "subject": "feat(sharing): add emerald sparkle button states"
+    },
+    {
+      "sha": "6dd7bbde6dd0a8a3fbaf1bcc026c7ab4e6700610",
+      "subject": "fix(preview): align account controls over inspector"
+    },
+    {
+      "sha": "0fbed1c8e418fb763b33fc8ae4d5413fcdd80076",
+      "subject": "fix(library): hand off loading state after first paint"
+    },
+    {
+      "sha": "27912d7b2cb283170a2ff6f2b6e770d987aa50d3",
+      "subject": "fix(project): preserve native save as contract"
+    }
+  ],
+  "diffCheckExitCode": 0,
+  "evidence": [
+    "task-7-library-chromium.json",
+    "task-7-library-webkit.json",
+    "task-7-safari-header-dark.png",
+    "task-7-safari-header-light.png",
+    "task-7-safari-save.png",
+    "task-7-safari-crop-tray.png",
+    "task-7-safari-task-rail.png",
+    "task-7-safari-share.json"
+  ]
+}

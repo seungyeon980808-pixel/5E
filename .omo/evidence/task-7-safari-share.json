@@ -1,0 +1,16 @@
+{
+  "result": "PASS",
+  "fixtureOnly": true,
+  "idle": {
+    "state": "idle",
+    "duration": "2.4s",
+    "animation": "sparkle-button-orbit"
+  },
+  "complete": {
+    "label": "✓ 링크 생성됨",
+    "state": "complete",
+    "border": "rgba(0, 0, 0, 0)",
+    "animation": "none"
+  },
+  "errors": []
+}

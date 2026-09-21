@@ -1,0 +1,47 @@
+{
+  "localUrl": "http://127.0.0.1:8767/preview/",
+  "publicTarget": "https://www.5e.ai.kr/preview/?revision=<release-short-sha>",
+  "localSafari": {
+    "result": "PASS_WITH_DRIVER_LIMITATION",
+    "checks": [
+      {
+        "name": "inspector controls right aligned/no overlap/horizontal ruler",
+        "result": "PASS",
+        "evidence": "task-7-safari-header-dark.png; task-7-safari-header-light.png; task-7-safari-driver.txt"
+      },
+      {
+        "name": "timestamp save fallback and cancel",
+        "result": "PASS",
+        "evidence": "task-7-safari-save.png; task-7-safari-driver.txt"
+      },
+      {
+        "name": "library loader to cards, no persistent checkboxes",
+        "result": "PASS",
+        "evidence": "task-7-safari-library.png; split run reached 60 cards/ready assertions"
+      },
+      {
+        "name": "one accepted crop is sole AI source",
+        "result": "PASS",
+        "evidence": "task-7-safari-crop-tray.png; split run asserted crop count 1 and AI enabled before later independent share-fixture failure"
+      },
+      {
+        "name": "task rail add card and clear",
+        "result": "PASS",
+        "evidence": "task-7-safari-task-rail.png; split run asserted +1 then 0 before later independent share-fixture failure"
+      },
+      {
+        "name": "emerald share idle to complete",
+        "result": "PASS",
+        "evidence": "task-7-safari-share.json; task-7-safari-driver.txt"
+      }
+    ],
+    "limitation": "SafariDriver permits one paired session and became intermittently unavailable after repeated long composite sessions. Header/save and isolated share scripts exited 0; crop/task assertions completed and screenshots were captured before a later independent share-fixture failure. Dedicated Chromium/WebKit end-to-end suites cover the same crop/task state transitions and exited 0."
+  },
+  "public": {
+    "status": "PENDING_PUSH",
+    "requiredFooter": "Emerald Polish",
+    "requiredCacheKey": "1.6.0-preview-emerald-polish-0921",
+    "mustOpenInSafariOnlyAfterLive": true
+  },
+  "safariSaveLimitation": "Safari web does not expose showSaveFilePicker; the product intentionally uses an editable timestamp-name dialog and browser download-location guidance."
+}

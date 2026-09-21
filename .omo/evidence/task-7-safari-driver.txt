@@ -1,0 +1,8 @@
+Actual Safari local verification
+
+PASS: inspector controls contained/right-aligned, horizontal ruler visible, dark/light geometry (5e-safari-0921.py exit 0).
+PASS: editable YYYYMMDD_HHmm.5e fallback dialog and cancel; shortcut modal (5e-safari-save.py exit 0).
+PASS: library opened with 60 first cards, preview selection alone kept AI disabled, one crop accepted, crop tray count 1, crop-only AI enabled/opened; subsequent task rail add-once and clear assertions completed before an independent share-fixture setup failed later in that composite run. Screenshots were captured at each completed state.
+PASS: isolated Safari share fixture exited 0: idle sparkle-button-orbit 2.4s -> static complete label `✓ 링크 생성됨`; no external share request.
+
+LIMITATION: SafariDriver allows one paired session. Repeated long composite attempts intermittently left Safari paired or timed out during fixture setup. The failing attempts were evidence-harness failures after completed checkpoints, not product assertions. Chromium/WebKit dedicated end-to-end suites independently passed the same library/crop/task/share behaviors with empty page-error arrays.

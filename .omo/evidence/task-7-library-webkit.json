@@ -1,0 +1,176 @@
+[
+  {
+    "state": "first-paint-handoff",
+    "firstPaintTransition": {
+      "cards": 60,
+      "frames": 2,
+      "frameTimestamps": [
+        10006,
+        10048
+      ],
+      "timestamp": 10050,
+      "rect": {
+        "width": 192.40625,
+        "height": 266.65625
+      }
+    }
+  },
+  {
+    "state": "initial60-top",
+    "geometry": [
+      {
+        "rowTop": 163,
+        "rowBottom": 429.65625,
+        "cardBottom": 429.65625,
+        "labelTop": 401.46875,
+        "labelBottom": 419.65625,
+        "thumbHeight": 216.46875,
+        "thumbBottom": 389.46875
+      },
+      {
+        "rowTop": 163,
+        "rowBottom": 429.65625,
+        "cardBottom": 429.65625,
+        "labelTop": 401.46875,
+        "labelBottom": 419.65625,
+        "thumbHeight": 216.46875,
+        "thumbBottom": 389.46875
+      },
+      {
+        "rowTop": 163,
+        "rowBottom": 429.65625,
+        "cardBottom": 429.65625,
+        "labelTop": 401.46875,
+        "labelBottom": 419.65625,
+        "thumbHeight": 216.46875,
+        "thumbBottom": 389.46875
+      }
+    ],
+    "mounted": 60,
+    "total": "80개",
+    "checkboxCount": 0,
+    "scrollTop": 0
+  },
+  {
+    "state": "appended80-bottom",
+    "geometry": [
+      {
+        "rowTop": -6429,
+        "rowBottom": -6162.34375,
+        "cardBottom": -6162.34375,
+        "labelTop": -6190.53125,
+        "labelBottom": -6172.34375,
+        "thumbHeight": 216.46875,
+        "thumbBottom": -6202.53125
+      },
+      {
+        "rowTop": -6429,
+        "rowBottom": -6162.34375,
+        "cardBottom": -6162.34375,
+        "labelTop": -6190.53125,
+        "labelBottom": -6172.34375,
+        "thumbHeight": 216.46875,
+        "thumbBottom": -6202.53125
+      },
+      {
+        "rowTop": -6429,
+        "rowBottom": -6162.34375,
+        "cardBottom": -6162.34375,
+        "labelTop": -6190.53125,
+        "labelBottom": -6172.34375,
+        "thumbHeight": 216.46875,
+        "thumbBottom": -6202.53125
+      }
+    ],
+    "mounted": 80,
+    "total": "80개",
+    "checkboxCount": 0,
+    "scrollTop": 6592
+  },
+  {
+    "state": "appended80-top",
+    "geometry": [
+      {
+        "rowTop": 163,
+        "rowBottom": 429.65625,
+        "cardBottom": 429.65625,
+        "labelTop": 401.46875,
+        "labelBottom": 419.65625,
+        "thumbHeight": 216.46875,
+        "thumbBottom": 389.46875
+      },
+      {
+        "rowTop": 163,
+        "rowBottom": 429.65625,
+        "cardBottom": 429.65625,
+        "labelTop": 401.46875,
+        "labelBottom": 419.65625,
+        "thumbHeight": 216.46875,
+        "thumbBottom": 389.46875
+      },
+      {
+        "rowTop": 163,
+        "rowBottom": 429.65625,
+        "cardBottom": 429.65625,
+        "labelTop": 401.46875,
+        "labelBottom": 419.65625,
+        "thumbHeight": 216.46875,
+        "thumbBottom": 389.46875
+      }
+    ],
+    "mounted": 80,
+    "total": "80개",
+    "checkboxCount": 0,
+    "scrollTop": 0
+  },
+  {
+    "state": "crop-only-ai",
+    "transfers": [
+      [
+        {
+          "name": "물리1 27년 6평 1번 · 자른 영역 4",
+          "source": {
+            "provider": "pdf",
+            "documentId": "pdf0",
+            "title": "물리1 27년 6평 1번 · 자른 영역 4",
+            "pageNumber": 1,
+            "rect": [
+              0.25766730693396767,
+              0.19941006658076565,
+              0.1025784539452762,
+              0.07959162599837477
+            ],
+            "fullPageFallback": false,
+            "displayName": "p1_2027_06.pdf",
+            "sourceKind": "pack",
+            "itemId": "q1"
+          }
+        }
+      ]
+    ],
+    "checkboxCount": 0
+  },
+  {
+    "state": "stale-search-race",
+    "raceAfterFirst": {
+      "state": "loading",
+      "hidden": false,
+      "cards": 60
+    },
+    "raceReady": {
+      "state": "ready",
+      "hidden": true,
+      "cards": 60,
+      "firstRect": {
+        "x": 257,
+        "y": 163,
+        "width": 192.40625,
+        "height": 250.65625,
+        "top": 163,
+        "right": 449.40625,
+        "bottom": 413.65625,
+        "left": 257
+      }
+    }
+  }
+]
