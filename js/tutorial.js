@@ -1385,7 +1385,7 @@ export function openPicker({ justFinished = null } = {}) {
          <strong>'${finished.title}' 코스를 마쳤습니다.</strong>
          ${suggested.length ? `<span>이어서 '${suggested[0].title}' 코스는 어떠세요?</span>` : "<span>수고하셨습니다.</span>"}
        </div>`
-    : `<p class="tut-picker-lead">배우고 싶은 것을 고르세요. 실제 화면 위에서 하나씩 짚어 드립니다.</p>`;
+    : `<p class="tut-picker-lead">배우고 싶은 것을 고르세요. 실제 화면 위에서 하나씩 짚어드립니다.</p>`;
 
   overlay.innerHTML = `
     <div class="tut-picker" role="dialog" aria-modal="true" aria-labelledby="tut-picker-title">
@@ -1571,7 +1571,7 @@ function maybeShowBanner() {
       <h2 class="tut-welcome-title" id="tut-welcome-title">찾아 주셔서 고맙습니다</h2>
       <p class="tut-welcome-lead">5E는 시험지·학습지에 넣을 그림을 만드는 도구입니다.
         파워포인트로 10분 걸리던 그림이 2분이면 나옵니다.</p>
-      <p class="tut-welcome-lead">처음이시라면 <b>튜토리얼</b>을 권합니다. 화면 위에서 하나씩 짚어 드립니다.</p>
+      <p class="tut-welcome-lead">처음이시라면 <b>튜토리얼</b>을 권합니다. 화면 위에서 하나씩 짚어드립니다.</p>
       <ul class="tut-welcome-list">
         <li>읽는 설명서가 아니라 <b>직접 해 보는</b> 안내입니다</li>
         <li><b>30분이면 끝</b>납니다. 코스마다 끊어서 하셔도 됩니다</li>
