@@ -76,6 +76,29 @@ async function panHorizontally(page) {
       await browser.close();
     }
   }
+
+  const browser = await chromium.launch({ headless: true });
+  try {
+    const page = await browser.newPage({ viewport: { width: 375, height: 812 } });
+    await page.goto(previewUrl);
+    await page.getByRole("button", { name: "건너뛰기", exact: true }).click();
+    await page.locator("#center-view-btn").click();
+    const menuBox = await page.locator("#canvas-lock-menu").boundingBox();
+    assert.ok(menuBox.x >= 0, `mobile lock menu clipped left at ${menuBox.x}`);
+    assert.ok(menuBox.x + menuBox.width <= 375,
+      `mobile lock menu clipped right at ${menuBox.x + menuBox.width}`);
+    const hitModes = await page.locator("[data-canvas-lock-mode]").evaluateAll(buttons =>
+      buttons.map(button => {
+        const rect = button.getBoundingClientRect();
+        return document.elementFromPoint(rect.left + rect.width / 2, rect.top + rect.height / 2)
+          ?.closest("[data-canvas-lock-mode]")?.dataset.canvasLockMode || null;
+      }));
+    assert.deepEqual(hitModes, ["free", "current", "coordinate"],
+      `mobile lock options are occluded: ${hitModes.join(", ")}`);
+    console.log("chromium 375px: canvas lock menu stays inside viewport");
+  } finally {
+    await browser.close();
+  }
 })().catch(error => {
   console.error(error);
   process.exitCode = 1;

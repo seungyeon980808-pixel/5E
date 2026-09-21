@@ -2615,11 +2615,11 @@ textarea.unified-text-input {
 .canvas-lock-menu > button:hover { background: var(--bg-panel-hover); }
 .canvas-lock-menu > button[aria-checked="true"] {
   color: #fff;
-  background: var(--accent);
-  border-color: var(--accent);
+  background: #1457b8;
+  border-color: #2874d4;
 }
 .canvas-lock-menu > button span { color: var(--text-secondary); font-size: 10px; }
-.canvas-lock-menu > button[aria-checked="true"] span { color: rgba(255, 255, 255, .76); }
+.canvas-lock-menu > button[aria-checked="true"] span { color: rgba(255, 255, 255, .92); }
 .canvas-lock-coordinates {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -2630,6 +2630,14 @@ textarea.unified-text-input {
 }
 .canvas-lock-coordinates label { display: grid; grid-template-columns: auto 1fr; gap: 5px; align-items: center; }
 .canvas-lock-coordinates input { width: 100%; min-width: 0; padding: 4px 5px; }
+@media (max-width: 767px) {
+  .canvas-lock-menu { left: 0; transform: none; }
+  .canvas-bottom-bar:has(.canvas-lock-menu:not([hidden])) {
+    position: relative;
+    z-index: 500;
+    overflow: visible;
+  }
+}
 .grid-detail { display: inline-flex; align-items: center; gap: 10px; }
 .grid-detail[hidden] { display: none; }
 
