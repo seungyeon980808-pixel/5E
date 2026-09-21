@@ -1229,6 +1229,15 @@ body { zoom: var(--ui-zoom, 1); }
   gap: 8px;
   margin-top: 4px;
 }
+#export-overlay .export-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+#export-overlay .export-actions .modal-btn {
+  min-width: 0;
+  padding-inline: 6px;
+  white-space: nowrap;
+}
 .modal-btn {
   font-family: inherit;
   font-size: 12px;
@@ -1821,7 +1830,7 @@ body { zoom: var(--ui-zoom, 1); }
 .ruler-h {
   top: 0;
   left: var(--ruler-size);
-  width: calc(100% - (var(--ruler-size) * 2));
+  width: calc(100% - var(--ruler-size));
   height: var(--ruler-size);
   border-bottom: 1px solid var(--border-muted);
 }
@@ -1868,7 +1877,7 @@ body { zoom: var(--ui-zoom, 1); }
   position: absolute;
   top: var(--ruler-size);
   left: var(--ruler-size);
-  width: calc(100% - (var(--ruler-size) * 2));
+  width: calc(100% - var(--ruler-size));
   height: calc(100% - var(--ruler-size));
   min-width: 0;
   min-height: 0;
