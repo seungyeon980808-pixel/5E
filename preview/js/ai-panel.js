@@ -999,6 +999,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     else if (taskTabs.get(activeTaskTabId)?.workState === "busy") setTaskState("idle");
     panel.dataset.aiBusy = String(on);
     navigationChanged();
+    const addTaskButton = panel.querySelector('[data-ai-task-add]');
+    if (addTaskButton) addTaskButton.disabled = on;
     sendButton.disabled = on;
     input.disabled = on || (isWhitePngWorkflow({ mode: selectedMode, outputEngine: selectedOutputEngine }) && generatedImages.length === 0);
     chatButton.disabled = on;

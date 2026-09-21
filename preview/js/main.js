@@ -1,5 +1,6 @@
 import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-preview-labeler-0917-1111';
-import { initWebLoginUi } from './web-login-ui.js?v=1.6.0-preview-shell-presentation2-0921';
+import { initWebLoginUi } from './web-login-ui.js?v=1.6.0-preview-mobile-golden-0922';
+import { initMobileImage } from './mobile-image.js?v=1.6.0-preview-mobile-golden-0922';
 import { showAlert } from "./ui-dialogs.js?v=1.6.0-preview-labeler-0917-1111";
 import { initAiSharing } from './ai-sharing-ui.js?v=1.6.0-preview-emerald-polish-0921';
 /* ===== MAIN (wire modules; data-as-truth + viewBox zoom/pan) ===== */
@@ -70,7 +71,7 @@ import { initSteppers } from "./stepper.js?v=1.6.0-preview-labeler-0917-1111";
 import { initReferenceWindows } from "./reference-window.js?v=1.6.0-preview-common-year-login-0918-1302";
 import { initTutorial } from "./tutorial.js?v=1.6.0-preview-repair-0921";
 import { initAiInstallGuide } from "./ai-install-guide.js?v=1.6.0-preview-labeler-0917-1111";
-import { initAiPanel } from "./ai-panel.js?v=1.6.0-preview-emerald-polish-0921";
+import { initAiPanel } from "./ai-panel.js?v=1.6.0-preview-mobile-golden-0922";
 
 const svg = document.getElementById("canvas");
 // Canvas interaction transfers keyboard ownership away from the last toolbar button.
@@ -314,14 +315,21 @@ const autosaveReady = initAutosave(state);
 initProjectFileOpening(state, autosaveReady);
 const recoveryChoice = await autosaveReady;
 const aiPanel = initAiPanel(state, { freshStart: recoveryChoice === "fresh" });
+initMobileImage(aiPanel);
 initAiSharing(aiPanel);
 initDesktopProjectCloseGuard(state, () => aiPanel?.checkpointForClose());
 const aiEntryButton = document.getElementById("ai-image-install-open");
-const openSelectedAi = () => void handSelectedCanvasImageToAi(state, {
-  renderImage: renderSessionToDataUrl,
-  openPanel: options => aiPanel?.open(options),
+const openSelectedAi = () => {
+  if (document.documentElement.classList.contains("mobile-image-mode")) {
+    void aiPanel?.open();
+    return;
+  }
+  void handSelectedCanvasImageToAi(state, {
+    renderImage: renderSessionToDataUrl,
+    openPanel: options => aiPanel?.open(options),
   reportError: error => window.alert(`AI 이미지 변환을 열 수 없습니다.\n${error.message}`),
-});
+    });
+};
 const webLogin = initWebLoginUi({ openAi: openSelectedAi });
 if (aiEntryButton) {
   aiEntryButton.title = "AI 이미지 변환";
@@ -340,7 +348,9 @@ if (projectTransferButton && window.fiveEDesktop) {
   projectTransferButton.hidden = false;
   projectTransferButton.addEventListener("click", () => desktopHandoff.openProjectChooser());
 }
-window.addEventListener("5e:ai-output-success", () => desktopHandoff.reportAiSuccess());
+window.addEventListener("5e:ai-output-success", () => {
+  if (!document.documentElement.classList.contains("mobile-image-mode")) desktopHandoff.reportAiSuccess();
+});
 window.addEventListener("5e:local-folder-intent", () => desktopHandoff.reportLocalFolderIntent());
 
 /* ----- export dialog: 파일 dropdown → 내보내기/미리보기 (PNG/SVG) ----- */
