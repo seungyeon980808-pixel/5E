@@ -47,6 +47,8 @@
 .sparkle-button.sparkle-button[data-sparkle-state="idle"] { border-color:transparent; background:linear-gradient(var(--bg-input),var(--bg-input)) padding-box,conic-gradient(from var(--sparkle-button-orbit-angle),transparent 0 18%,rgb(96 165 250 / .92) 27%,transparent 38% 100%) border-box; box-shadow:0 0 0 1px rgb(96 165 250 / .20),0 0 12px rgb(96 165 250 / .12); animation:sparkle-button-orbit var(--sparkle-button-orbit-duration) linear infinite; }
 .sparkle-button.sparkle-button[data-sparkle-state="activating"] { transform:scale(.98); animation:sparkle-button-settle var(--sparkle-button-settle-duration) var(--ai-action-ease-out) both; }
 .sparkle-button.sparkle-button[data-sparkle-state="activating"]::after { animation:sparkle-button-shimmer var(--sparkle-button-shimmer-duration) var(--ai-action-ease-out) both; }
+.sparkle-button.sparkle-button[data-sparkle-state="settling"] { color:var(--sparkle-button-emerald); border-color:var(--sparkle-button-emerald); background:color-mix(in srgb,var(--sparkle-button-emerald) 8%,var(--bg-input)); box-shadow:0 0 0 1px rgb(52 211 153 / .20),0 0 12px rgb(52 211 153 / .12); animation:sparkle-button-emerald-settle var(--sparkle-button-settle-duration) var(--ai-action-ease-out) both; }
+.sparkle-button.sparkle-button[data-sparkle-state="settling"]::after { animation:none; }
 .sparkle-button.sparkle-button[data-sparkle-state="complete"] { color:var(--sparkle-button-emerald); border-color:var(--sparkle-button-emerald); background:color-mix(in srgb,var(--sparkle-button-emerald) 8%,var(--bg-input)); box-shadow:0 0 0 1px rgb(52 211 153 / .20),0 0 12px rgb(52 211 153 / .12); animation:none; }
 .sparkle-button.sparkle-button[data-sparkle-state="complete"]::after { animation:none; }
 
@@ -55,6 +57,7 @@
 @keyframes sparkle-button-orbit { to { --sparkle-button-orbit-angle:1turn; } }
 @keyframes sparkle-button-shimmer { 0% { opacity:0; transform:translateX(-170%) rotate(12deg); } 24% { opacity:.92; } 100% { opacity:0; transform:translateX(570%) rotate(12deg); } }
 @keyframes sparkle-button-settle { from { filter:brightness(1.18); } to { filter:brightness(1); } }
+@keyframes sparkle-button-emerald-settle { from { filter:brightness(1.18); } to { filter:brightness(1); } }
 
 @media (hover: hover) and (pointer: fine) {
   .ai-action-motion:hover { filter: brightness(1.07); }

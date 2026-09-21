@@ -44,19 +44,33 @@ export function initAiSharing(aiPanel) {
   const create = dialog.querySelector('[data-create]'), copy=dialog.querySelector('[data-copy]'), revoke=dialog.querySelector('[data-revoke]');
   const resultBox = dialog.querySelector('[data-result]');
   const expiry = dialog.querySelector('[data-expiry]');
-  let latest, working=false, settleTimer;
-  const setSparkleState = state => {
+  const SPARKLE_SHIMMER_MS = 420;
+  const SPARKLE_SETTLE_MS = 180;
+  let latest, working=false, settleTimer, completeTimer, expiryTimer, sparkleStartedAt=0;
+  const clearSparkleTimers = () => {
     clearTimeout(settleTimer);
+    clearTimeout(completeTimer);
+  };
+  const setSparkleState = state => {
     create.dataset.sparkleState = state;
-    create.querySelector('.sparkle-button-label').textContent = state === 'complete'
+    create.querySelector('.sparkle-button-label').textContent = state === 'complete' || state === 'settling'
       ? '✓ 링크 생성됨'
       : state === 'activating' ? '공유 링크 만드는 중…' : '공유 링크 만들기';
   };
-  const settleSparkle = () => {
+  const beginSparkle = () => {
+    clearSparkleTimers();
+    sparkleStartedAt = performance.now();
     setSparkleState('activating');
-    settleTimer = window.setTimeout(() => setSparkleState('complete'), 180);
   };
-  const showLatest = () => {
+  const settleSparkle = () => {
+    const remainingShimmer = Math.max(0, SPARKLE_SHIMMER_MS - (performance.now() - sparkleStartedAt));
+    settleTimer = window.setTimeout(() => {
+      setSparkleState('settling');
+      completeTimer = window.setTimeout(() => setSparkleState('complete'), SPARKLE_SETTLE_MS);
+    }, remainingShimmer);
+  };
+  const showLatest = ({ restoreSparkle=true } = {}) => {
+    clearTimeout(expiryTimer);
     const active = latest && new Date(latest.expiresAt).getTime() > Date.now();
     resultBox.hidden = !active;
     link.value = active ? latest.link : '';
@@ -67,8 +81,13 @@ export function initAiSharing(aiPanel) {
     expiry.textContent = active
       ? `${latest.mode === 'view' ? '보기 전용' : '편집 가능'} · ${new Date(latest.expiresAt).toLocaleString('ko-KR')} 만료`
       : '링크는 생성 후 1시간 동안 사용할 수 있습니다.';
-    if (active) setSparkleState('complete');
-    else setSparkleState('idle');
+    if (!active) {
+      clearSparkleTimers();
+      setSparkleState('idle');
+    } else if (restoreSparkle) setSparkleState('complete');
+    if (active) {
+      expiryTimer = window.setTimeout(() => showLatest(), Math.max(0, new Date(latest.expiresAt).getTime() - Date.now()));
+    }
     if (latest && !active) { latest = null; status.textContent = '이전 링크가 만료되었습니다. 새 링크를 만들어 주세요.'; }
   };
   const error = failure => {
@@ -91,7 +110,7 @@ export function initAiSharing(aiPanel) {
   };
   create.onclick=async()=>{
     if(working)return;
-    working=true;create.disabled=true;revoke.disabled=true;setSparkleState('activating');
+    working=true;create.disabled=true;revoke.disabled=true;beginSparkle();
     status.textContent='이미지와 AI 작업 상태를 묶어 저장 중…';
     try{
       const snapshot=await aiPanel.sharingSnapshot();
@@ -99,11 +118,11 @@ export function initAiSharing(aiPanel) {
       const document=await createSharingDocument(snapshot.workspaces,{mode,activeWorkspace:snapshot.activeWorkspace,embedImage});
       if(!document.workspaces.some(workspace=>workspace.tabs.length))throw new Error('공유할 AI 작업이 없습니다.');
       latest={...await request('POST','',document),mode};latest.link=linkFor(latest.id);
-      showLatest();
+      showLatest({restoreSparkle:false});
       settleSparkle();
       try{await idbSet('sharing:latest-sent',latest);status.textContent='링크가 준비되었습니다. 복사해서 전달하세요.';}
       catch{status.textContent='링크는 생성되었지만 이 브라우저에 공유 해제 정보를 저장하지 못했습니다. 아래 링크를 복사하고 이 창에서 해제하세요.';}
-    }catch(failure){setSparkleState('idle');error(failure);}
+    }catch(failure){clearSparkleTimers();setSparkleState('idle');error(failure);}
     finally{working=false;create.disabled=false;revoke.disabled=!latest;}
   };
   copy.onclick=async()=>{
