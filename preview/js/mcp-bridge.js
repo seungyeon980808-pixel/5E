@@ -22,7 +22,7 @@ import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-pre
 import { state } from "./state.js?v=1.6.0-preview-labeler-0917-1111";
 import {
   serialize as serializeProject, migrate as migrateProject, applyLoaded as applyLoadedProject,
-} from "./project-io.js?v=1.6.0-preview-followup-0921";
+} from "./project-io.js?v=1.6.0-preview-emerald-polish-0921";
 import { showAlert, showConfirm, showPrompt } from "./ui-dialogs.js?v=1.6.0-preview-labeler-0917-1111";
 import { switchPage, addPage } from "./pages.js?v=1.6.0-preview-repair-0921";
 import { rasterizeExportCanvas, ensureEmbeddedFonts, insertPngPhys,

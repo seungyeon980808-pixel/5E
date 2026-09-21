@@ -24,7 +24,7 @@ import { modKey, shortcutKey, isEditingTarget, isComposingKey } from "./platform
 import { initProjectLaunch } from './project-launch.js?v=1.6.0-preview-web-native-project-0918-1617';
 import { extractWindowsProjectSource } from './windows-project-source.mjs?v=1.6.0-preview-project-launcher-0918-1508';
 
-import { chooseProjectFilename, timestampProjectFilename } from './project-save-dialog.js?v=1.6.0-preview-followup-0921';
+import { chooseProjectFilename, timestampProjectFilename } from './project-save-dialog.js?v=1.6.0-preview-emerald-polish-0921';
 let savingProject = false;
 
 // Schema version of the saved file. Distinct from the app UI version.
