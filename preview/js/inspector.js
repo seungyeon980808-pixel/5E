@@ -53,7 +53,7 @@ export function initInspector(state) {
       const startW = panelRight.offsetWidth;
       const displayScale = panelRight.getBoundingClientRect().width / startW;
       function onMove(e2) {
-        const newW = Math.min(480, Math.max(200, startW + (startX - e2.clientX) / displayScale));
+        const newW = Math.min(480, Math.max(180, startW + (startX - e2.clientX) / displayScale));
         panelRight.closest(".app").style.setProperty("--panel-right-w", newW + "px");
       }
       function onUp() {

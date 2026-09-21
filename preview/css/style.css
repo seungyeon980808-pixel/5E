@@ -115,8 +115,26 @@ input[type="checkbox"], input[type="radio"], input[type="range"] { accent-color:
   --border: color-mix(in srgb, var(--border-strong, #30363d) 65%, var(--bg-panel));
   --border-muted: color-mix(in srgb, var(--border-strong, #30363d) 35%, var(--bg-panel));
 
-  --panel-left-w: 130px;
-  --panel-right-w: 200px;
+  --shell-left-panel-size: 160px;
+  --shell-right-panel-size: 180px;
+  --shell-control-size: 32px;
+  --shell-control-radius: 8px;
+  --shell-icon-size: 17px;
+  --shell-control-gap: 8px;
+  --shell-control-font-family: "IBM Plex Sans KR", system-ui, sans-serif;
+  --shell-control-font-size: 12px;
+  --shell-control-font-weight: 600;
+  --shell-control-line-height: 1.5;
+  --settings-dialog-max-width: 560px;
+  --settings-content-gap: 12px;
+  --settings-preset-font-size: 13px;
+  --screen-scale-small: 0.80;
+  --screen-scale-medium: 0.90;
+  --screen-scale-large: 1.00;
+  --screen-scale-wide: 1.10;
+
+  --panel-left-w: var(--shell-left-panel-size);
+  --panel-right-w: var(--shell-right-panel-size);
   --footer-h: 28px;
 }
 
@@ -235,10 +253,10 @@ body {
    body(뷰포트를 채우는 요소)에 걸어야 빈 공간 없이 반영되고, 모달/위젯도 함께
    줄어 화면 밖으로 벗어나지 않는다. (.app 에 걸면 100vh 기준이라 하단 여백 발생) */
 body { zoom: var(--ui-zoom, 1); }
-:root[data-screen="small"]  { --ui-zoom: 0.68; }
-:root[data-screen="medium"] { --ui-zoom: 0.84; }
-:root[data-screen="large"]  { --ui-zoom: 1.00; }
-:root[data-screen="wide"]   { --ui-zoom: 1.12; }
+:root[data-screen="small"]  { --ui-zoom: var(--screen-scale-small); }
+:root[data-screen="medium"] { --ui-zoom: var(--screen-scale-medium); }
+:root[data-screen="large"]  { --ui-zoom: var(--screen-scale-large); }
+:root[data-screen="wide"]   { --ui-zoom: var(--screen-scale-wide); }
 
 .panel-title {
   font-weight: 600;
@@ -558,12 +576,12 @@ body { zoom: var(--ui-zoom, 1); }
   display: inline-flex; align-items: center;
   /* 툴바 컨테이너의 flex gap(6px)을 음수 마진으로 상쇄해 브랜드에 바짝 붙인다.
      컨테이너 gap 자체를 줄이면 툴바의 다른 묶음까지 좁아진다. */
-  height: 23px; margin-left: 8px; margin-right: 6px; padding: 0 6px;
+  height: 32px; margin-left: 8px; margin-right: 6px; padding: 0 8px;
   font-family: Georgia, "Times New Roman", serif;
   font-style: italic; font-size: 15px; font-weight: 600; line-height: 1;
   color: var(--accent-2);
   background: var(--btn-tool-bg);
-  border: 1px solid var(--c-border); border-radius: 6px;
+  border: 1px solid var(--c-border); border-radius: 8px;
   cursor: pointer; transition: background .12s, border-color .12s, color .12s;
 }
 .mode-toggle-btn:hover { border-color: var(--accent); color: var(--accent); }
@@ -578,7 +596,7 @@ body { zoom: var(--ui-zoom, 1); }
 /* ===== LITE 모드 =====
    구조는 그대로 두고 CSS로만 숨기거나 키운다(display:none / 크기 조정). */
 /* 좌측 패널을 조금 넓혀 큰 도구 버튼이 들어갈 공간 확보 */
-:root[data-mode="lite"] { --panel-left-w: 176px; }
+:root[data-mode="lite"] { --panel-left-w: var(--shell-left-panel-size); }
 /* Lite 숨김 항목: 과목별/퍼스널 오브젝트(+저장) · 전체 통일/수정 · 오브젝트 검색 */
 :root[data-mode="lite"] #subject-section,
 :root[data-mode="lite"] #personal-section,
@@ -634,7 +652,8 @@ body { zoom: var(--ui-zoom, 1); }
   color: var(--text-primary);
   background: var(--btn-tool-bg);
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--shell-control-radius);
+  min-height: var(--shell-control-size);
   padding: 6px 10px;
   cursor: pointer;
 }
@@ -645,8 +664,8 @@ body { zoom: var(--ui-zoom, 1); }
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 28px;
+  width: var(--shell-control-size);
+  height: var(--shell-control-size);
   padding: 4px;
 }
 .shell-icon-button-menu {
@@ -655,8 +674,8 @@ body { zoom: var(--ui-zoom, 1); }
   padding-inline: 5px 3px;
 }
 .shell-icon-button svg {
-  width: 17px;
-  height: 17px;
+  width: var(--shell-icon-size);
+  height: var(--shell-icon-size);
   flex: none;
 }
 .shell-menu-chevron {
@@ -702,8 +721,8 @@ body { zoom: var(--ui-zoom, 1); }
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 28px;
+  width: var(--shell-control-size);
+  height: var(--shell-control-size);
   padding: 4px;
   font-size: 16px;
 }
@@ -717,13 +736,13 @@ body { zoom: var(--ui-zoom, 1); }
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 30px;
-  height: 28px;
+  width: var(--shell-control-size);
+  height: var(--shell-control-size);
   padding: 4px;
 }
 .fullscreen-toggle svg {
-  width: 16px;
-  height: 16px;
+  width: var(--shell-icon-size);
+  height: var(--shell-icon-size);
   fill: none;
   stroke: currentColor;
   stroke-width: 1.5;
@@ -1733,8 +1752,8 @@ body { zoom: var(--ui-zoom, 1); }
   color: var(--text-secondary);
 }
 .theme-toggle svg {
-  width: 16px;
-  height: 16px;
+  width: var(--shell-icon-size);
+  height: var(--shell-icon-size);
   display: block;
 }
 .theme-toggle[aria-pressed="true"] {
@@ -1779,6 +1798,16 @@ body { zoom: var(--ui-zoom, 1); }
 .ruler-container.rulers-hidden { --ruler-size: 0px; }
 .ruler-container.rulers-hidden > .ruler,
 .ruler-container.rulers-hidden > .ruler-corner { display: none; }
+.ruler-container::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto auto;
+  width: var(--ruler-size);
+  height: var(--ruler-size);
+  background: var(--bg-panel);
+  border-bottom: 1px solid var(--border-muted);
+  pointer-events: none;
+}
 .ruler-corner {
   position: absolute;
   inset: 0 auto auto 0;
@@ -1792,7 +1821,7 @@ body { zoom: var(--ui-zoom, 1); }
 .ruler-h {
   top: 0;
   left: var(--ruler-size);
-  width: calc(100% - var(--ruler-size));
+  width: calc(100% - (var(--ruler-size) * 2));
   height: var(--ruler-size);
   border-bottom: 1px solid var(--border-muted);
 }
@@ -1839,7 +1868,7 @@ body { zoom: var(--ui-zoom, 1); }
   position: absolute;
   top: var(--ruler-size);
   left: var(--ruler-size);
-  width: calc(100% - var(--ruler-size));
+  width: calc(100% - (var(--ruler-size) * 2));
   height: calc(100% - var(--ruler-size));
   min-width: 0;
   min-height: 0;
@@ -2511,7 +2540,10 @@ textarea.unified-text-input {
 
 /* ----- 태블릿 ----- */
 @media (max-width: 1024px) {
-  :root { --panel-left-w: 104px; }
+  :root {
+    --panel-left-w: var(--shell-left-panel-size);
+    --panel-right-w: var(--shell-right-panel-size);
+  }
   .panel-left { padding: 8px 4px; }
 }
 
@@ -2702,17 +2734,15 @@ textarea.unified-text-input {
 }
 .personal-store-btn:hover { color: #fff; background: var(--accent); border-style: solid; }
 
-/* ===== 버튼 곡률 통일: 기준 = 좌측 도구 버튼(.tool-btn) 6px ===== */
+/* ===== 버튼 곡률 통일: 일반 컨트롤 6px, 상단 셸 컨트롤 8px ===== */
 .btn, .topbar-btn, .modal-btn, .file-menu-item, .seg-btn, .advanced-tool-btn,
 .examlib-reset, .grid-toggle-btn, .object-search-trigger,
 .personal-item-btn, .personal-item-del, .drawer-toggle, .icon-btn,
 .objectify-dropzone, .subject-part-header {
   border-radius: 6px;
 }
-/* 요구: 상단 툴바(과목 선택·되돌리기/다시 실행 등)를 애플 곡률에 맞게 — 6px보다
-   더 부드럽고 둥근 인상. 다른 버튼들의 6px 기준은 그대로 두고 우선 이 두 곳만
-   먼저 손본다(요청 범위). */
-.topbar-btn { border-radius: 9px; }
+/* 상단 셸 버튼은 패널 토글과 동일한 32px 높이·8px 곡률을 쓴다. */
+.topbar-btn { border-radius: 8px; }
 
 /* 파일 메뉴 항목의 단축키 표기 (오른쪽 정렬, 흐리게) */
 .file-menu-item { display: flex; align-items: center; }
@@ -2785,7 +2815,7 @@ textarea.unified-text-input {
 .page-add-btn:hover { background: var(--btn-tool-hover); color: var(--text-primary); }
 
 /* page context menu: text-ctx-menu 스타일을 재사용하되 토큰·구분선·삭제색만 보강 */
-.page-ctx-menu { min-width: 150px; border-color: var(--border); }
+.page-ctx-menu { min-width: 150px; max-width: calc(100vw - 16px); border-color: var(--border); overflow-y: auto; }
 .page-ctx-sep { height: 1px; margin: 4px 6px; background: var(--border); }
 .text-ctx-item:disabled { opacity: 0.4; cursor: default; }
 .text-ctx-item:disabled:hover { background: transparent; color: inherit; }

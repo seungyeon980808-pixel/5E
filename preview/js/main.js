@@ -19,11 +19,11 @@ import { initCutTool } from "./cut-tool.js?v=1.6.0-preview-labeler-0917-1111";
 import { initEraseTool } from "./erase-tool.js?v=1.6.0-preview-labeler-0917-1111";
 import { initTransform, undo, redo } from "./transform.js?v=1.6.0-preview-labeler-0917-1111";
 import { initArtboardResize } from "./artboard-resize.js?v=1.6.0-preview-repair-0921";
-import { initInspector } from "./inspector.js?v=1.6.0-preview-followup-0921";
+import { initInspector } from "./inspector.js?v=1.6.0-preview-ui-180-fs-0921-r2";
 import { initDesktopProjectCloseGuard, initProjectIO, initProjectFileOpening, saveProject } from "./project-io.js?v=1.6.0-preview-emerald-polish-0921";
 import { initExportDialog } from "./export-dialog.js?v=1.6.0-preview-repair-0921";
 import { initRuler, setRulerVisible } from "./ruler.js?v=1.6.0-preview-labeler-0917-1111";
-import { initSettings } from "./settings.js?v=1.6.0-preview-emerald-polish-0921";
+import { initSettings } from "./settings.js?v=1.6.0-preview-ui-180-fs-0921-r2";
 import { initImageObjectify } from "./image-objectify.js?v=1.6.0-preview-repair-0921";
 import { initImagePaste } from "./image-paste.js?v=1.6.0-preview-labeler-0917-1111";
 import { initImageCutout } from "./image-cutout.js?v=1.6.0-preview-labeler-0917-1111";
@@ -63,7 +63,7 @@ import { initChemGraphSection } from "./inspector/section-chemgraph.js?v=1.6.0-p
 import { initElectrodeSection } from "./inspector/section-electrode.js?v=1.6.0-preview-labeler-0917-1111";
 import { initPeriodicSection } from "./inspector/section-periodic.js?v=1.6.0-preview-labeler-0917-1111";
 import { initAutosave } from "./autosave.js?v=1.6.0-preview-emerald-polish-0921";
-import { initPages } from "./pages.js?v=1.6.0-preview-repair-0921";
+import { initPages } from "./pages.js?v=1.6.0-preview-ui-180-fs-0921-r2";
 import { localizeShortcutLabels } from "./platform.js?v=1.6.0-preview-labeler-0917-1111";
 import { initModalDrag } from "./modal-drag.js?v=1.6.0-preview-common-year-login-0918-1302";
 import { initSteppers } from "./stepper.js?v=1.6.0-preview-labeler-0917-1111";
@@ -91,17 +91,16 @@ const zoomReadout = document.getElementById("zoom-readout");
   if (!btn) return;
 
   const nativeFullscreen = window.fiveEDesktop?.fullscreen;
-  const useWorkspaceMaximize = !nativeFullscreen && /Safari/.test(navigator.userAgent) && !/Chrome|Chromium|Edg/.test(navigator.userAgent);
   const browserFullscreenElement = () => document.fullscreenElement || document.webkitFullscreenElement || null;
 
   const syncButton = (active) => {
     if (nativeFullscreen) document.documentElement.classList.toggle("is-native-fullscreen", Boolean(active));
     btn.setAttribute("aria-pressed", String(active));
-    const label = useWorkspaceMaximize ? (active ? "편집기 최대화 해제" : "편집기 최대화") : (active ? "전체화면 해제" : "전체화면");
+    const label = active ? "전체화면 해제" : "전체화면";
     btn.setAttribute("aria-label", label);
     btn.title = `${label} (Alt+Enter)`;
   };
-  const syncBrowserFullscreen = () => syncButton(useWorkspaceMaximize ? document.documentElement.classList.contains("is-workspace-maximized") : Boolean(browserFullscreenElement()));
+  const syncBrowserFullscreen = () => syncButton(Boolean(browserFullscreenElement()));
   const showBrowserFullscreenError = (operation) => {
     syncBrowserFullscreen();
     const message = operation === "exit" ? "전체화면을 해제하지 못했습니다. 다시 시도해 주세요." : "전체화면을 시작하지 못했습니다. 다시 시도해 주세요.";
@@ -114,14 +113,6 @@ const zoomReadout = document.getElementById("zoom-readout");
     try {
       if (nativeFullscreen) {
         await nativeFullscreen.toggle();
-        return;
-      }
-      if (useWorkspaceMaximize) {
-        if (browserFullscreenElement()) {
-          const exit = document.exitFullscreen || document.webkitExitFullscreen;
-          await exit.call(document);
-        }
-        syncButton(document.documentElement.classList.toggle("is-workspace-maximized"));
         return;
       }
       if (browserFullscreenElement()) {

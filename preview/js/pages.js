@@ -244,7 +244,7 @@ function buildBar(state) {
     const tab = e.target.closest(".page-tab");
     if (tab) {
       const rect = tab.getBoundingClientRect();
-      openContextMenu(state, tab.dataset.id, rect.left, rect.top);
+      openContextMenu(state, tab.dataset.id, tab, rect.left);
     }
   });
   _tabsEl.addEventListener("keydown", (e) => {
@@ -253,7 +253,7 @@ function buildBar(state) {
     if (e.key === 'Enter' || e.key === ' ' || e.key === 'F2') {
       e.preventDefault();
       const rect = tab.getBoundingClientRect();
-      openContextMenu(state, tab.dataset.id, rect.left, rect.top);
+      openContextMenu(state, tab.dataset.id, tab, rect.left);
     } else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
       e.preventDefault();
       const pages = state.get().pages;
@@ -268,7 +268,7 @@ function buildBar(state) {
     if (!tab) return;
     e.preventDefault();
     switchPage(state, tab.dataset.id);       // 우클릭한 탭을 활성화한 뒤 메뉴를 연다.
-    openContextMenu(state, tab.dataset.id, e.clientX, e.clientY);
+    openContextMenu(state, tab.dataset.id, tab, e.clientX);
   });
 }
 
@@ -308,7 +308,7 @@ function closeContextMenu() {
 function _onDocDown(e) { if (_menuEl && !_menuEl.contains(e.target)) closeContextMenu(); }
 function _onDocKey(e) { if (e.key === "Escape") closeContextMenu(); }
 
-function openContextMenu(state, id, x, y) {
+function openContextMenu(state, id, tab, x) {
   closeContextMenu();
   const s = state.get();
   const idx = (s.pages || []).findIndex((p) => p.id === id);
@@ -331,12 +331,15 @@ function openContextMenu(state, id, x, y) {
   ).join("");
   document.body.appendChild(menu);
 
-  // 화면 밖으로 나가지 않게 위치 보정.
+  // 하단 탭 위로 열고, 작은 화면이나 큰 UI 배율에서도 화면 안에 가둔다.
+  const tabRect = tab.getBoundingClientRect();
+  const scale = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--ui-zoom")) || 1;
+  menu.style.maxHeight = `${Math.max(96, tabRect.top - 16) / scale}px`;
   const r = menu.getBoundingClientRect();
-  const px = Math.min(x, window.innerWidth - r.width - 8);
-  const py = Math.min(y, window.innerHeight - r.height - 8);
-  menu.style.left = `${Math.max(8, px)}px`;
-  menu.style.top = `${Math.max(8, py)}px`;
+  const px = Math.min(Math.max(8, x), Math.max(8, window.innerWidth - r.width - 8));
+  const py = Math.max(8, tabRect.top - r.height - 8);
+  menu.style.left = `${px / scale}px`;
+  menu.style.top = `${py / scale}px`;
 
   menu.addEventListener("click", (e) => {
     const btn = e.target.closest(".text-ctx-item");

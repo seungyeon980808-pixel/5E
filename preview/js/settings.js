@@ -94,13 +94,18 @@ const THEME_KEY = "theme";
 const PERSONAL_OBJECTS_KEY = "5e.personalObjects"; // 퍼스널 오브젝트 라이브러리
 const SUBJECT_KEY = "5e.subject";                   // 선택 과목(테마)
 const SCREEN_KEY = "5e.screenSize";                 // 환경 설정: 화면 크기 프리셋
-const UI_ZOOM_KEY = "5e.uiZoom";                    // 환경 설정: 자유 UI 배율
 const REF_MEMO_KEY = "5e.refmemo";                  // 참고 창의 문항별 메모
-const PERSONAL_KEYS = [DEFAULTS_KEY, THEME_KEY, PERSONAL_OBJECTS_KEY, SUBJECT_KEY, PREVIEW_BG_KEY, SCREEN_KEY, UI_ZOOM_KEY, REF_MEMO_KEY, SHORTCUT_PLATFORM_KEY];
+const PERSONAL_KEYS = [DEFAULTS_KEY, THEME_KEY, PERSONAL_OBJECTS_KEY, SUBJECT_KEY, PREVIEW_BG_KEY, SCREEN_KEY, REF_MEMO_KEY, SHORTCUT_PLATFORM_KEY];
 
 /* ----- 환경 설정: 화면 크기 프리셋(글씨·패널 스케일) -----
  * :root[data-screen] 를 바꾸면 style.css의 --ui-zoom(=body zoom)이 전환된다. */
-const SCREEN_SIZES = new Set(["small", "medium", "large", "wide"]);
+const SCREEN_PRESETS = [
+  { id: "small", label: "80%" },
+  { id: "medium", label: "90%" },
+  { id: "large", label: "100%" },
+  { id: "wide", label: "110%" },
+];
+const SCREEN_SIZES = new Set(SCREEN_PRESETS.map((preset) => preset.id));
 const DEFAULT_SCREEN = "large";
 export function loadScreenSize() {
   let v = DEFAULT_SCREEN;
@@ -112,46 +117,6 @@ export function applyScreenSize(value) {
   document.documentElement.setAttribute("data-screen", v);
   try { localStorage.setItem(SCREEN_KEY, v); } catch (_) { /* ignore */ }
   return v;
-}
-
-/* ----- 환경 설정: UI 배율 자유 조절 -----
- * 프리셋(:root[data-screen] → --ui-zoom)이 4단계뿐이라 원하는 크기를 못 맞춘다는
- * 요구에 따라 자유값을 얹는다. :root의 인라인 스타일은 선택자 규칙보다 우선하므로
- * 프리셋 CSS를 그대로 둔 채 덮어쓸 수 있다. 값을 지우면 다시 프리셋으로 돌아간다. */
-const ZOOM_KEY = "5e.uiZoom";
-// 요구: 60~140%는 너무 좁아 원하는 크기를 못 맞춘다 — 자유롭게 조절 가능하도록 범위 확장.
-// --ui-zoom은 CSS zoom(배율 전체를 통째로 키움, 폰트만 커지는 게 아님)이라 범위를 넓혀도
-// 텍스트만 줄바꿈되는 일 없이 레이아웃째 같이 커진다(실측 검증: 250%에서도 내보내기
-// 다이얼로그 버튼 줄바꿈 없음).
-const ZOOM_MIN = 0.50;
-const ZOOM_MAX = 3.00;
-const clampZoom = (n) => Math.min(ZOOM_MAX, Math.max(ZOOM_MIN, Number(n)));
-
-export function loadUiZoom() {
-  try {
-    const raw = localStorage.getItem(ZOOM_KEY);
-    if (raw == null) return null;
-    const n = Number(raw);
-    return Number.isFinite(n) ? clampZoom(n) : null;
-  } catch (_) { return null; }
-}
-export function applyUiZoom(n) {
-  const v = clampZoom(Number.isFinite(Number(n)) ? n : 1);
-  document.documentElement.style.setProperty("--ui-zoom", String(v));
-  try { localStorage.setItem(ZOOM_KEY, String(v)); } catch (_) { /* ignore */ }
-  return v;
-}
-export function clearUiZoom() {
-  document.documentElement.style.removeProperty("--ui-zoom");
-  try { localStorage.removeItem(ZOOM_KEY); } catch (_) { /* ignore */ }
-}
-/** 지금 실제로 먹고 있는 배율(자유값이 없으면 프리셋 값)을 읽는다. */
-function currentUiZoom() {
-  const free = loadUiZoom();
-  if (free != null) return free;
-  const css = getComputedStyle(document.documentElement).getPropertyValue("--ui-zoom");
-  const n = Number(String(css).trim());
-  return Number.isFinite(n) && n > 0 ? n : 1;
 }
 
 // 파일 안의 마커/버전 — 불러오기 시 프로젝트 파일 등 다른 JSON과 구분하고
@@ -253,7 +218,6 @@ const EXPORT_CHOICES = [
   { key: THEME_KEY,             label: "화면 테마 (다크/화이트)" },
   { key: SUBJECT_KEY,           label: "과목 선택" },
   { key: SCREEN_KEY,            label: "환경 설정 (화면 크기)" },
-  { key: UI_ZOOM_KEY,           label: "환경 설정 (자유 배율)" },
   { key: SHORTCUT_PLATFORM_KEY, label: "환경 설정 (단축키 운영체제)" },
   { key: PERSONAL_OBJECTS_KEY,  label: "퍼스널 오브젝트 라이브러리" },
   { key: PREVIEW_BG_KEY,        label: "인쇄 비교 배경 이미지" },
@@ -276,31 +240,37 @@ const PREF_TABS = [
 
 function prefStyles() {
   return `
-    .pref-modal { width:min(560px, calc(100vw - 32px)); }
-    .pref-tabs { display:flex; gap:2px; margin:2px 0 12px; border-bottom:1px solid var(--c-border); }
+    .pref-modal { width:min(var(--settings-dialog-max-width), calc(100vw - var(--shell-control-size))); }
+    .pref-tabs { display:flex; gap:2px; margin:2px 0 var(--settings-content-gap); border-bottom:1px solid var(--c-border); }
     .pref-tab { appearance:none; background:transparent; border:0; border-bottom:2px solid transparent;
                 padding:7px 11px; margin-bottom:-1px; cursor:pointer; border-radius:6px 6px 0 0;
-                font: 600 12.5px/1 "IBM Plex Sans KR",system-ui,sans-serif; color:var(--text-secondary); }
+                font: var(--shell-control-font-weight) 12.5px/1 var(--shell-control-font-family); color:var(--text-secondary); }
     .pref-tab:hover { color:var(--text-primary); background:var(--btn-tool-hover); }
     .pref-tab.is-on { color:var(--accent); border-bottom-color:var(--accent); }
     .pref-panel { display:none; min-height:180px; }
     .pref-panel.is-on { display:block; }
-    .pref-row { display:flex; align-items:center; gap:10px; margin-bottom:12px; }
+    .pref-row { display:flex; align-items:center; gap:10px; margin-bottom:var(--settings-content-gap); }
     .pref-row .modal-label { margin:0; flex:0 0 auto; }
-    .pref-zoom { flex:1 1 auto; }
     .pref-zoom-val { flex:0 0 52px; text-align:right; font: 600 12px/1 "IBM Plex Mono",monospace;
                      color:var(--text-primary); }
-    .pref-note { margin:0 0 12px; font-size: 12px; line-height:1.6; color:var(--text-secondary); word-break:keep-all; }
-    .pref-actions { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
+    .pref-scale-group { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:var(--shell-control-gap); margin:0 0 16px; }
+    .pref-scale-btn { min-height:42px; border:1px solid var(--c-border); border-radius:var(--shell-control-radius);
+                      background:var(--bg-input); color:var(--text-secondary); cursor:pointer;
+                      font:var(--shell-control-font-weight) var(--settings-preset-font-size)/1 "IBM Plex Mono",monospace; }
+    .pref-scale-btn:hover { color:var(--text-primary); background:var(--btn-tool-hover); }
+    .pref-scale-btn[aria-pressed="true"] { color:#fff; border-color:var(--accent); background:var(--accent); }
+    .pref-scale-btn:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+    .pref-note { margin:0 0 var(--settings-content-gap); font-size:var(--shell-control-font-size); line-height:1.6; color:var(--text-secondary); word-break:keep-all; }
+    .pref-actions { display:flex; flex-wrap:wrap; gap:var(--shell-control-gap); margin-bottom:var(--settings-content-gap); }
     .pref-soon { margin:0; padding:10px 12px; border:1px dashed var(--c-border); border-radius:8px;
-                 font-size: 12px; line-height:1.6; color:var(--text-secondary); word-break:keep-all; }
+                 font-size:var(--shell-control-font-size); line-height:1.6; color:var(--text-secondary); word-break:keep-all; }
   `;
 }
 
 function openPreferencesDialog({ focusShortcut = false } = {}) {
   const overlay = document.createElement("div");
   overlay.className = "modal-overlay";
-  const zoom0 = currentUiZoom();
+  const currentScreen = loadScreenSize();
   overlay.innerHTML = `
     <div class="modal pref-modal" role="dialog" aria-modal="true" aria-labelledby="pref-title">
       <style>${prefStyles()}</style>
@@ -311,15 +281,10 @@ function openPreferencesDialog({ focusShortcut = false } = {}) {
       </div>
 
       <section class="pref-panel is-on" data-panel="screen" role="tabpanel">
-        <p class="pref-note">글씨와 도구 패널의 크기를 한꺼번에 키우거나 줄입니다. 움직이는 즉시 적용됩니다.</p>
-        <div class="pref-row">
-          <span class="modal-label">화면 크기</span>
-          <input id="pref-zoom" class="pref-zoom" type="range" min="50" max="300" step="1"
-                 value="${Math.round(zoom0 * 100)}" />
-          <output class="pref-zoom-val" id="pref-zoom-val">${Math.round(zoom0 * 100)}%</output>
-        </div>
-        <div class="pref-actions">
-          <button type="button" class="modal-btn" id="pref-zoom-reset">기본 크기로</button>
+        <p class="pref-note">화면 크기를 선택하면 글씨와 도구 패널이 함께 바뀝니다.</p>
+        <div class="pref-scale-group" role="group" aria-label="화면 크기">
+          ${SCREEN_PRESETS.map((preset) => `<button type="button" class="pref-scale-btn"
+            data-screen-size="${preset.id}" aria-pressed="${preset.id === currentScreen}">${preset.label}</button>`).join("")}
         </div>
         <div class="pref-row">
           <label class="modal-label" for="pref-shortcut-platform">단축키 기준</label>
@@ -330,7 +295,7 @@ function openPreferencesDialog({ focusShortcut = false } = {}) {
           </select>
         </div>
         <p class="pref-note">실제 단축키 판정과 화면의 키 안내가 함께 바뀝니다.</p>
-        <p class="pref-note">브라우저 자체 확대(Ctrl + 휠)와는 별개입니다. 이 값은 5E 안에서만 적용됩니다.</p>
+        <p class="pref-note">브라우저 자체 확대(Ctrl + 휠)와는 별개이며, 100%가 기본 크기입니다.</p>
       </section>
 
       <section class="pref-panel" data-panel="tools" role="tabpanel">
@@ -391,20 +356,12 @@ function openPreferencesDialog({ focusShortcut = false } = {}) {
     panels.forEach((p) => p.classList.toggle("is-on", p.dataset.panel === tab.dataset.tab));
   }));
 
-  // --- 화면: 자유 배율 ---
-  const zoomInput = overlay.querySelector("#pref-zoom");
-  const zoomOut = overlay.querySelector("#pref-zoom-val");
-  zoomInput.addEventListener("input", () => {
-    const pct = Number(zoomInput.value);
-    zoomOut.textContent = `${pct}%`;
-    applyUiZoom(pct / 100);
-  });
-  overlay.querySelector("#pref-zoom-reset").addEventListener("click", () => {
-    clearUiZoom();
-    const back = Math.round(currentUiZoom() * 100);
-    zoomInput.value = String(back);
-    zoomOut.textContent = `${back}%`;
-  });
+  // --- 화면: 고정 배율 프리셋 ---
+  const scaleButtons = [...overlay.querySelectorAll("[data-screen-size]")];
+  scaleButtons.forEach((button) => button.addEventListener("click", () => {
+    applyScreenSize(button.dataset.screenSize);
+    scaleButtons.forEach((item) => item.setAttribute("aria-pressed", String(item === button)));
+  }));
 
   // --- 다른 대화상자는 드롭다운의 원래 버튼을 눌러 재사용한다(배선 중복 방지) ---
   const relay = (btnId, targetId) => {
@@ -865,16 +822,14 @@ export function initSettings(state) {
   _state = state;   // 전체 백업(프로젝트 포함 저장/복원)에서 사용
   initSettingsMenu();
 
-  // 환경 설정(화면 크기): 저장값을 즉시 적용 + 드롭다운 항목 배선
+  // 환경 설정(화면 크기): 자유 배율 잔여값을 제거하고 승인된 프리셋만 적용한다.
+  document.documentElement.style.removeProperty("--ui-zoom");
+  try { localStorage.removeItem("5e.uiZoom"); } catch (_) { /* ignore */ }
   applyScreenSize(loadScreenSize());
   const screenBtn = document.getElementById("open-screen");
   if (screenBtn) screenBtn.addEventListener("click", openPreferencesDialog);
   const shortcutBtn = document.getElementById("open-shortcuts");
   if (shortcutBtn) shortcutBtn.addEventListener("click", openShortcutDialog);
-  // 저장해 둔 자유 배율이 있으면 프리셋 위에 덮어쓴다(없으면 프리셋 그대로).
-  const savedZoom = loadUiZoom();
-  if (savedZoom != null) applyUiZoom(savedZoom);
-
   const overlay = buildModal();
   const fields = {
     strokeWidth:  overlay.querySelector("#defaults-stroke-width"),

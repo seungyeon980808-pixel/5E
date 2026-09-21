@@ -14,7 +14,7 @@
 
 .panel-right {
   width: var(--panel-right-w);
-  min-width: 150px;
+  min-width: var(--shell-right-panel-size);
   max-width: 480px;
   flex-shrink: 0;
   border-left: 1px solid var(--border-strong);
