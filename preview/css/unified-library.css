@@ -1,4 +1,4 @@
-@import url("./ai-action-motion.css");
+@import url("./ai-action-motion.css?v=1.6.0-preview-emerald-polish-0921");
 
 .unified-library-overlay {
   -webkit-backdrop-filter: blur(6px);

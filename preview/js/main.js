@@ -1,7 +1,7 @@
 import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-preview-labeler-0917-1111';
-import { initWebLoginUi } from './web-login-ui.js?v=1.6.0-preview-repair-0921';
+import { initWebLoginUi } from './web-login-ui.js?v=1.6.0-preview-emerald-polish-0921';
 import { showAlert } from "./ui-dialogs.js?v=1.6.0-preview-labeler-0917-1111";
-import { initAiSharing } from './ai-sharing-ui.js?v=1.6.0-preview-followup-0921';
+import { initAiSharing } from './ai-sharing-ui.js?v=1.6.0-preview-emerald-polish-0921';
 /* ===== MAIN (wire modules; data-as-truth + viewBox zoom/pan) ===== */
 //
 // Responsibilities:
@@ -29,7 +29,7 @@ import { initImagePaste } from "./image-paste.js?v=1.6.0-preview-labeler-0917-11
 import { initImageCutout } from "./image-cutout.js?v=1.6.0-preview-labeler-0917-1111";
 import { renderSessionToDataUrl } from "./image-cutout.js?v=1.6.0-preview-labeler-0917-1111";
 import { handSelectedCanvasImageToAi } from "./ai-canvas-handoff.js?v=1.6.0-preview-labeler-0917-1111";
-import { initExamLibrary } from "./exam-library.js?v=1.6.0-preview-followup-0921";
+import { initExamLibrary } from "./exam-library.js?v=1.6.0-preview-emerald-polish-0921";
 import { initTemplates } from "./templates.js?v=1.6.0-preview-labeler-0917-1111";
 import { initObjectSearch } from "./search.js?v=1.6.0-preview-labeler-0917-1111";
 import { initCommandPalette } from "./command-palette.js?v=1.6.0-preview-repair-0921";
@@ -70,7 +70,7 @@ import { initSteppers } from "./stepper.js?v=1.6.0-preview-labeler-0917-1111";
 import { initReferenceWindows } from "./reference-window.js?v=1.6.0-preview-common-year-login-0918-1302";
 import { initTutorial } from "./tutorial.js?v=1.6.0-preview-repair-0921";
 import { initAiInstallGuide } from "./ai-install-guide.js?v=1.6.0-preview-labeler-0917-1111";
-import { initAiPanel } from "./ai-panel.js?v=1.6.0-preview-library-ai-postprocess-0920-2009";
+import { initAiPanel } from "./ai-panel.js?v=1.6.0-preview-emerald-polish-0921";
 
 const svg = document.getElementById("canvas");
 // Canvas interaction transfers keyboard ownership away from the last toolbar button.

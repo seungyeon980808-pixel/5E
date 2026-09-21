@@ -3,7 +3,7 @@ import { registerEscapeLayer } from "./escape-layers.js?v=1";
 import { DESKTOP_RELEASE_URL } from "./ai-install-guide.js?v=1.6.0-preview-labeler-0917-1111";
 import { safeExternalSourceUrl } from "./library-import-policy.js";
 import { queryHighlightTerms } from "./pdf-library/search.js";
-import { chooseWorkbenchAssignment } from "./library/workbench-assignment.js?v=1.6.0-preview-ai-library-wave2-0920-1656";
+import { chooseWorkbenchAssignment } from "./library/workbench-assignment.js?v=1.6.0-preview-emerald-polish-0921";
 
 const SOURCE_STORAGE_KEY = "5e.unified-library.sources.v1";
 const TREE_STORAGE_KEY = "5e.unified-library.tree-expanded.v1";

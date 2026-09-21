@@ -1,4 +1,4 @@
-@import url("./ai-action-motion.css");
+@import url("./ai-action-motion.css?v=1.6.0-preview-emerald-polish-0921");
 
 .web-account-status { display:inline-flex; align-items:center; gap:8px; height:32px; white-space:nowrap; font-size:12px; }
 .panel-utility-bar-right .web-account-status { width:auto; min-width:0; max-width:160px; padding:4px 7px; flex:1 1 auto; }
