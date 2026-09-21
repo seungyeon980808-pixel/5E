@@ -212,66 +212,66 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
   function renderNavigation() {
     for (const owner of entries) {
       const list = owner.panel.querySelector('[data-ai-tab-list]');
+      const retainedAddTask = list.querySelector(':scope > .ai-task-add');
+      const focusedControl = document.activeElement?.closest?.('.ai-task-tab-select, .ai-task-delete');
       const focusedRow = document.activeElement?.closest?.('.ai-task-tab');
       const focusedKey = list.contains?.(focusedRow)
         ? `${focusedRow.dataset.aiWorkspaceLink || ''}:${focusedRow.dataset.tabId || ''}` : null;
+      const focusedKind = focusedControl?.classList.contains('ai-task-delete') ? 'delete' : 'select';
       list.replaceChildren();
       for (const entry of entries) {
         for (const source of entry.tabs || []) {
           const button = source.cloneNode(true);
-          const selected = entry === active && source.getAttribute('aria-selected') === 'true';
+          const sourceSelect = source.querySelector('.ai-task-tab-select');
+          const selected = entry === active && sourceSelect?.getAttribute('aria-pressed') === 'true';
+          const select = button.querySelector('.ai-task-tab-select');
           button.classList.toggle('is-on', selected);
-          button.setAttribute('aria-selected', String(selected));
-          button.setAttribute('tabindex', selected ? '0' : '-1');
-          button.disabled = !entry.ready;
-          button.setAttribute('aria-disabled', String(!entry.ready));
+          select?.setAttribute('aria-pressed', String(selected));
+          if (select) select.disabled = !entry.ready;
           button.title = source.title || source.textContent.replace('×', '').trim();
           button.dataset.aiWorkspaceLink = entry.scope || 'legacy';
-          if (entry.panel.dataset.aiBusy === 'true' && source.getAttribute('aria-selected') === 'true') {
+          if (entry.panel.dataset.aiBusy === 'true' && sourceSelect?.getAttribute('aria-pressed') === 'true') {
             const timing = button.querySelector('.ai-task-tab-time');
             if (timing) timing.textContent = '변환 중';
           }
-          button.onclick = () => {
-            if (entry.panel.dataset.aiBusy === 'true' && source.getAttribute('aria-selected') !== 'true') return;
+          if (select) select.onclick = () => {
+            if (entry.panel.dataset.aiBusy === 'true' && sourceSelect?.getAttribute('aria-pressed') !== 'true') return;
             activate(entry);
-            source.onclick?.();
+            sourceSelect?.click();
             saveSelection();
           };
-          button.onkeydown = event => {
-            if (event.target !== button) return;
-            if (event.key === 'Enter' || event.key === ' ') {
-              event.preventDefault();
-              button.onclick();
-              return;
-            }
-            const rows = [...list.children].filter(row => !row.disabled);
-            const index = rows.indexOf(button);
+          if (select) select.onkeydown = event => {
+            if (!['Home', 'End', 'ArrowRight', 'ArrowLeft', 'ArrowDown', 'ArrowUp'].includes(event.key)) return;
+            const controls = [...list.querySelectorAll(':scope > .ai-task-tab .ai-task-tab-select:not(:disabled)')];
+            const index = controls.indexOf(select);
             let next = null;
-            if (event.key === 'Home') next = rows[0];
-            else if (event.key === 'End') next = rows.at(-1);
-            else if (event.key === 'ArrowRight') next = rows[(index + 1) % rows.length];
-            else if (event.key === 'ArrowLeft') next = rows[(index - 1 + rows.length) % rows.length];
+            if (event.key === 'Home') next = controls[0];
+            else if (event.key === 'End') next = controls.at(-1);
+            else if (event.key === 'ArrowRight' || event.key === 'ArrowDown') next = controls[(index + 1) % controls.length];
+            else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') next = controls[(index - 1 + controls.length) % controls.length];
             if (!next) return;
             event.preventDefault();
-            for (const row of rows) row.setAttribute('tabindex', row === next ? '0' : '-1');
             next.focus();
           };
           const close = button.querySelector('.ai-task-delete');
-          if (close) close.onclick = event => {
-            event.stopPropagation();
-            activate(entry);
-            source.querySelector('.ai-task-delete')?.onclick?.(event);
-            saveSelection();
-          };
+          if (close) {
+            close.disabled = !entry.ready;
+            close.onclick = event => {
+              event.stopPropagation();
+              activate(entry);
+              source.querySelector('.ai-task-delete')?.onclick?.(event);
+              saveSelection();
+            };
+          }
           list.append(button);
         }
       }
+      if (retainedAddTask) list.append(retainedAddTask);
       if (focusedKey) {
         const restored = [...list.children].find(row =>
           `${row.dataset.aiWorkspaceLink || ''}:${row.dataset.tabId || ''}` === focusedKey);
         if (restored) {
-          for (const row of list.children) row.setAttribute('tabindex', row === restored ? '0' : '-1');
-          restored.focus();
+          restored.querySelector(focusedKind === 'delete' ? '.ai-task-delete' : '.ai-task-tab-select')?.focus();
         }
       }
     }

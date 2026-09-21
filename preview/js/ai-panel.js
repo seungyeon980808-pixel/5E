@@ -585,7 +585,6 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   const batchGrid = panel.querySelector("[data-ai-batch-grid]");
   const batchSummary = panel.querySelector("[data-ai-batch-summary]");
   const tabList = panel.querySelector("[data-ai-tab-list]");
-  const tabNewButton = panel.querySelector("[data-ai-tab-new]");
   const tabClearButton = panel.querySelector("[data-ai-tab-clear]");
   const reviewModeCheckbox = panel.querySelector("[data-ai-review-mode]");
   const reviewModelSelect = panel.querySelector("[data-ai-review-model]");
@@ -1014,7 +1013,6 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     syncOutputProcessingUi();
     syncReferenceSummary();
     if (batchButton) batchButton.disabled = on || attachments.length < 2 || (isWhitePngWorkflow({ mode: selectedMode, outputEngine: selectedOutputEngine }) && reviewModeCheckbox?.checked !== false);
-    if (tabNewButton) tabNewButton.disabled = false;
     panel.querySelectorAll("[data-ai-input-mutator]").forEach((control) => { control.disabled = on; });
     retryInterruptedButton.disabled = on || !taskTabs.get(activeTaskTabId)?.retryRequest?.snapshot;
     collectiveExportMode.disabled = on || exportInProgress;
@@ -2153,7 +2151,6 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       button.dataset.tabId = tab.id;
       button.dataset.workState = tab.workState || "idle";
       const stateLabel = { busy: "작업 중", interrupted: "작업 중단", completed: "작업 완료", failed: "작업 실패", idle: "대기" }[button.dataset.workState] || "대기";
-      button.setAttribute("aria-label", `${tab.title} · ${stateLabel}`);
       button.title = `${tab.title} · ${stateLabel} · ${taskDeleteShortcutHint()}`;
       if (["completed", "busy", "interrupted", "failed"].includes(tab.workState)) {
         const check = document.createElementNS("http://www.w3.org/2000/svg", "svg");
@@ -2179,14 +2176,11 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
         button.append(check);
       }
       button.classList.toggle("is-on", tab.id === activeTaskTabId);
-      button.setAttribute("role", "tab");
-      button.setAttribute('tabindex', tab.id === activeTaskTabId ? '0' : '-1');
-      button.setAttribute("aria-selected", String(tab.id === activeTaskTabId));
       const selectTab = document.createElement('button');
       selectTab.type = 'button';
       selectTab.className = 'ai-task-tab-select';
-      selectTab.setAttribute('aria-hidden', 'true');
-      selectTab.setAttribute('tabindex', '-1');
+      selectTab.setAttribute('aria-pressed', String(tab.id === activeTaskTabId));
+      selectTab.setAttribute('aria-label', `${tab.title} · ${stateLabel}`);
       const source = (tab.attachments || [])[0];
       if (source?.data) {
         const thumbnail = document.createElement("img");
@@ -2239,19 +2233,26 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       };
       selectTab.append(copy);
       button.append(selectTab, closeTab);
-      button.onclick = () => {
+      selectTab.onclick = () => {
         if (busy || tab.id === activeTaskTabId) return;
         captureActiveTaskTab();
         restoreTaskTab(tab.id);
       };
-      button.onkeydown = event => {
-        if (event.target !== button || (event.key !== 'Enter' && event.key !== ' ')) return;
-        event.preventDefault();
-        button.click();
-      };
       tabList.appendChild(button);
     }
     navigationChanged([...tabList.children]);
+    tabList.querySelector(':scope > .ai-task-add')?.remove();
+    if (panel.dataset.aiSharingMode !== 'view') {
+      const addTask = document.createElement('button');
+      addTask.type = 'button';
+      addTask.className = 'ai-task-tab ai-task-add';
+      addTask.dataset.aiTaskAdd = '';
+      addTask.textContent = '＋ 새 작업';
+      addTask.title = '독립된 참고 이미지와 대화를 사용하는 새 작업을 만듭니다';
+      addTask.disabled = busy;
+      addTask.onclick = () => { if (!busy) newWorkspace(); };
+      tabList.append(addTask);
+    }
     collectiveExportButton.disabled = busy || exportInProgress
       || !(generatedImages.length || [...taskTabs.values()].some(tab => Array.isArray(tab.generated) && tab.generated.length));
   };
@@ -3895,7 +3896,6 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     restoreTaskTab(activeTaskTabId);
     persistTasks();
   };
-  if (tabNewButton) tabNewButton.onclick = () => newWorkspace();
   if (batchButton && panel.querySelector("[data-ai-batch-files]")) durableBatchUi = mountDurableBatchUi({
     panel,
     scope: { sessionId: "5e", workspaceId: clientScope || "main" },

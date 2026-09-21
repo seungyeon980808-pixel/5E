@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { humanExamName, compareExamResults, createUnifiedLibraryProvider } from '../preview/js/library/provider.js';
-import { cropContentBoundsForResult, commitAcceptedCropSession } from '../preview/js/unified-library-ui.js';
+import { aiActionRecords, cropContentBoundsForResult, commitAcceptedCropSession } from '../preview/js/unified-library-ui.js';
 assert.equal(humanExamName({subject:'p1',academicYear:2008,administration:'06'}),'물리1 08년 6평');
 assert.equal(humanExamName({subject:'c2',academicYear:2009,administration:'11'}),'화학2 09년 수능');
 assert.equal(humanExamName({subject:'e1',academicYear:2014,administration:'09'}),'지구1 14년 9평');
@@ -13,9 +13,10 @@ const question={kind:'crop',provenance:{documentId:'d',pageNumber:1,rect:[.1,.2,
 const bounds=cropContentBoundsForResult(question,[{...question,provenance:{...question.provenance,rect:[.6,.7,.3,.2]}}]);
 assert.ok(bounds.every((n,i)=>Math.abs(n-question.provenance.rect[i])<1e-9));
 const entry=page=>({result:{id:`crop${page}`,provenance:{documentId:'d',pageNumber:page}}});
-const acceptedAssets=new Map([['crop1',entry(1)]]),selectedIds=new Set(['crop1']),selectedRecords=new Map();
-commitAcceptedCropSession({acceptedAssets,selectedIds,selectedRecords,acceptedCrops:[entry(2)],documentId:'d',pageNumber:2});
+const acceptedAssets=new Map([['crop1',entry(1)]]);
+commitAcceptedCropSession({acceptedAssets,acceptedCrops:[entry(2)],documentId:'d',pageNumber:2});
 assert.equal(acceptedAssets.size,2);
+assert.deepEqual(aiActionRecords(acceptedAssets).map((result)=>result.id),['crop1','crop2']);
 assert.equal([...results].reverse().sort(compareExamResults)[0].metadata.academicYear,2027);
 console.log('library-followup: labels, >500 results, exam ordering, target crop, cross-page preservation PASS');
 

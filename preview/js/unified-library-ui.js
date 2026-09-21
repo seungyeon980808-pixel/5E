@@ -307,13 +307,8 @@ export function figureChoicesForResult(result, selectedRepresentation = "figure:
   });
 }
 
-export function selectedResultRecords(records, selectedIds) {
-  return [...selectedIds].map((id) => records.get(id)).filter(Boolean);
-}
-
-export function aiActionRecords(records, selectedIds, currentResult) {
-  if (selectedIds.size > 0) return selectedResultRecords(records, selectedIds);
-  return currentResult ? [currentResult] : [];
+export function aiActionRecords(acceptedAssets) {
+  return [...acceptedAssets.values()].map((entry) => entry?.result).filter(Boolean);
 }
 
 export function hasInsertableAiRecord(records, { selectedId, representation, selectedFigure }) {
@@ -338,7 +333,7 @@ export function libraryActionSnapshotIsCurrent(snapshot, state) {
   return snapshot?.selectedId === state?.selectedId
     && snapshot?.representation === state?.representation
     && (snapshot?.selectedFigure ?? "") === (state?.selectedFigure ?? "")
-    && (snapshot?.selectedIdsKey ?? "") === (state?.selectedIdsKey ?? "")
+    && (snapshot?.acceptedAssetsKey ?? "") === (state?.acceptedAssetsKey ?? "")
     && (snapshot?.activePage ?? null) === (state?.activePage ?? null)
     && snapshot?.revision === state?.revision
     && snapshot?.open === true && state?.open === true;
@@ -688,17 +683,13 @@ export function shouldShowResultTypeBadge(activeTypes, kind) {
   return false;
 }
 
-export function commitAcceptedCropSession({ acceptedAssets, selectedIds, selectedRecords, acceptedCrops, documentId, pageNumber }) {
+export function commitAcceptedCropSession({ acceptedAssets, acceptedCrops, documentId, pageNumber }) {
   for (const [id, entry] of acceptedAssets) {
     if (entry.result.provenance?.documentId !== documentId || entry.result.provenance?.pageNumber !== pageNumber) continue;
     acceptedAssets.delete(id);
-    selectedIds.delete(id);
-    selectedRecords.delete(id);
   }
   for (const entry of acceptedCrops) {
     acceptedAssets.set(entry.result.id, entry);
-    selectedIds.add(entry.result.id);
-    selectedRecords.set(entry.result.id, entry.result);
   }
 }
 
@@ -839,7 +830,6 @@ function buildShell() {
               <select data-unilib-filter="administration" aria-label="시험"><option value="">모든 시험</option><option value="06">6월 모의평가</option><option value="09">9월 모의평가</option><option value="11">수능</option></select>
             </div>
           </div>
-          <div class="unilib-selection-summary library-selected-tray is-empty" data-unilib-selected-tray hidden aria-label="선택한 자료"><strong data-unilib-selected-count>선택 0개</strong><span data-unilib-selected-items></span><button type="button" data-unilib-selected-clear disabled>모두 해제</button></div>
           <div class="unilib-result-scroll"><div class="unilib-result-state" data-unilib-result-state role="status" aria-live="polite" hidden><span data-unilib-result-state-message></span><button type="button" class="unilib-button" data-unilib-result-retry hidden>다시 시도</button></div><ul class="unilib-result-list library-card-grid" data-unilib-results role="listbox"></ul></div>
           <section class="unilib-crop-tray" data-unilib-crop-tray hidden aria-label="크롭된 이미지">
             <header><span class="unilib-crop-tray-icon" aria-hidden="true">${ICONS.file}</span><strong>크롭된 이미지</strong><span class="unilib-crop-tray-count" data-unilib-crop-tray-count>0개</span><span class="unilib-crop-tray-miniatures" data-unilib-crop-tray-miniatures aria-hidden="true"></span><button type="button" class="unilib-button unilib-crop-tray-clear" data-unilib-crop-tray-clear>모두 비우기</button><button type="button" class="unilib-button" data-unilib-crop-tray-toggle aria-expanded="false">펼쳐보기</button></header>
@@ -929,8 +919,6 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   const continuousPageCache = createBoundedPageCache();
   let results = [];
   let selectedId = null;
-  const selectedIds = new Set();
-  const selectedRecords = new Map();
   const acceptedAssets = new Map();
   let activeTypes = [...LIBRARY_TYPES];
   let pdfDisplayMode = "page";
@@ -1021,17 +1009,17 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   };
   const selectedVariantResult = () => resultForRepresentation(selectedResult(), activeRepresentation);
   const actionButtons = () => [...overlay.querySelectorAll("[data-unilib-insert],[data-unilib-objectify],[data-unilib-ai]")];
-  const selectionKey = () => [...selectedIds].sort().join("\u0000");
+  const acceptedAssetsKey = () => [...acceptedAssets.keys()].join("\u0000");
   const invalidateAction = () => { actionRevision += 1; };
   const activePageNumber = () => continuousView?.resultId === selectedId ? continuousView.visiblePage : null;
-  const snapshotAction = () => Object.freeze({ selectedId, selectedIdsKey: selectionKey(), representation: activeRepresentation, selectedFigure: activeFigureRepresentation, activePage: activePageNumber(), revision: actionRevision, options: Object.freeze(getPartOptions()), open: !overlay.hidden });
-  const actionIsCurrent = (snapshot) => libraryActionSnapshotIsCurrent(snapshot, { selectedId, selectedIdsKey: selectionKey(), representation: activeRepresentation, selectedFigure: activeFigureRepresentation, activePage: activePageNumber(), revision: actionRevision, open: !overlay.hidden });
+  const snapshotAction = () => Object.freeze({ selectedId, acceptedAssetsKey: acceptedAssetsKey(), acceptedAssetIds: Object.freeze([...acceptedAssets.keys()]), representation: activeRepresentation, selectedFigure: activeFigureRepresentation, activePage: activePageNumber(), revision: actionRevision, options: Object.freeze(getPartOptions()), open: !overlay.hidden });
+  const actionIsCurrent = (snapshot) => libraryActionSnapshotIsCurrent(snapshot, { selectedId, acceptedAssetsKey: acceptedAssetsKey(), representation: activeRepresentation, selectedFigure: activeFigureRepresentation, activePage: activePageNumber(), revision: actionRevision, open: !overlay.hidden });
   const resultForActionSnapshot = (snapshot) => {
     const result = results.find((item) => item.id === snapshot.selectedId);
     return Number.isInteger(snapshot.activePage) ? pdfFilePageResult(result, snapshot.activePage) : result;
   };
   const updateAiActionAvailability = () => {
-    const aiRecords = aiActionRecords(selectedRecords, selectedIds, selectedResult());
+    const aiRecords = aiActionRecords(acceptedAssets);
     const aiAllowed = hasInsertableAiRecord(aiRecords, {
       selectedId,
       representation: activeRepresentation,
@@ -1295,8 +1283,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
 
   function updateResultSelection() {
     list.querySelectorAll("[data-result-id]").forEach((card) => card.setAttribute("aria-selected", String(card.dataset.resultId === selectedId)));
-    list.querySelectorAll("[data-select-result]").forEach((check) => { check.checked = selectedIds.has(check.dataset.selectResult); });
-    renderSelectedTray();
+    renderCropTray();
   }
 
   function renderResults() {
@@ -1312,7 +1299,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     root.dataset.activeTab = activeTypes.length === LIBRARY_TYPES.length ? "all" : activeTypes.join("-");
     root.dataset.pdfDisplay = activeTypes.length === 1 && activeTypes[0] === "pdf" ? pdfDisplayMode : "file";
     overlay.querySelector("[data-unilib-count]").textContent = `${visibleResults.length}개`;
-    renderSelectedTray();
+    renderCropTray();
     const pendingThumbnails = [];
     const thumbnailLookup = new Map();
     const thumbnailPdfMode = activeTypes.length === 1 && activeTypes[0] === "pdf" ? pdfDisplayMode : "file";
@@ -1410,14 +1397,8 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       meta.title = meta.textContent;
       if (shouldShowResultTypeBadge(activeTypes, result.kind)) copy.append(badge);
       copy.append(disclosure, title, meta);
-      const check = document.createElement("input");
-      check.type = "checkbox";
-      check.className = "unilib-result-check";
-      check.dataset.selectResult = result.id;
-      check.checked = selectedIds.has(result.id);
-      check.setAttribute("aria-label", `${visibleTitle} AI 참고 선택`);
       button.append(media, copy);
-      item.append(button, check);
+      item.append(button);
       return item;
     };
     if ("IntersectionObserver" in globalThis) {
@@ -1449,30 +1430,6 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   resultScroller.addEventListener("scroll", () => {
     if (resultScroller.scrollHeight - resultScroller.scrollTop - resultScroller.clientHeight < 480) appendResultBatch();
   }, { passive: true });
-
-  function renderSelectedTray() {
-    const tray = overlay.querySelector("[data-unilib-selected-tray]");
-    const records = selectedResultRecords(selectedRecords, selectedIds);
-    tray.classList.toggle("is-empty", records.length === 0);
-    overlay.querySelector("[data-unilib-selected-count]").textContent = `선택 ${records.length}개`;
-    overlay.querySelector("[data-unilib-selected-clear]").disabled = records.length === 0;
-    overlay.querySelector("[data-unilib-selected-items]").replaceChildren(...records.map((result) => {
-      const chip = document.createElement("span");
-      chip.className = "unilib-selected-item";
-      const name = document.createElement("span");
-      name.textContent = result.title || result.id;
-      const remove = document.createElement("button");
-      remove.type = "button";
-      remove.dataset.unilibSelectedRemove = result.id;
-      remove.setAttribute("aria-label", `${result.title || result.id} 선택 해제`);
-      remove.textContent = "×";
-      chip.append(name, remove);
-      return chip;
-    }));
-    overlay.querySelector("[data-unilib-ai]").textContent = "AI 이미지 변환";
-    updateAiActionAvailability();
-    renderCropTray();
-  }
 
   function renderCropTray() {
     const tray = overlay.querySelector("[data-unilib-crop-tray]");
@@ -1514,6 +1471,8 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       item.append(image, remove);
       return item;
     }));
+    overlay.querySelector("[data-unilib-ai]").textContent = "AI 이미지 변환";
+    updateAiActionAvailability();
   }
 
   function collapseCropTray() {
@@ -1701,9 +1660,6 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       }
       invalidateAction();
       results = results.map((value) => libraryResultIdentity(value) === requestIdentity ? resolution.result : value);
-      if (selectedRecords.has(result.id) && libraryResultIdentity(selectedRecords.get(result.id)) === requestIdentity) {
-        selectedRecords.set(result.id, resolution.result);
-      }
       result = resolution.result;
     }
     if (cropSession && !cropSessionIsCurrent(cropSession, result)) closeCrop(false);
@@ -1975,37 +1931,8 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     if (cardBounds.top < scrollBounds.top) scroller.scrollTop += cardBounds.top - scrollBounds.top;
     else if (cardBounds.bottom > scrollBounds.bottom) scroller.scrollTop += cardBounds.bottom - scrollBounds.bottom;
   };
-  const toggleResultSelection = (id) => {
-    const card = list.querySelector(`[data-result-id="${CSS.escape(id)}"]`);
-    invalidateAction();
-    if (selectedIds.has(id)) { selectedIds.delete(id); selectedRecords.delete(id); acceptedAssets.delete(id); }
-    else {
-      selectedIds.add(id);
-      const record = results.find((result) => result.id === id);
-      if (record) selectedRecords.set(id, record);
-    }
-    updateResultSelection();
-    card?.focus({ preventScroll: true });
-  };
   list.addEventListener("click", (event) => {
     cancelSpacePress();
-    const check = event.target.closest("[data-select-result]");
-    if (check) {
-      event.stopPropagation();
-      invalidateAction();
-      const id = check.dataset.selectResult;
-      if (check.checked) {
-        selectedIds.add(id);
-        const record = results.find((result) => result.id === id);
-        if (record) selectedRecords.set(id, record);
-      } else {
-        selectedIds.delete(id);
-        selectedRecords.delete(id);
-        acceptedAssets.delete(id);
-      }
-      renderSelectedTray();
-      return;
-    }
     const card = event.target.closest("[data-result-id]");
     if (!card) return;
     invalidateAction();
@@ -2017,15 +1944,6 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     focusResultCard(selectedId);
     void renderPreview();
   });
-  overlay.querySelector("[data-unilib-selected-items]").addEventListener("click", (event) => {
-    const remove = event.target.closest("[data-unilib-selected-remove]");
-    if (!remove) return;
-    invalidateAction();
-    selectedIds.delete(remove.dataset.unilibSelectedRemove);
-    selectedRecords.delete(remove.dataset.unilibSelectedRemove);
-    acceptedAssets.delete(remove.dataset.unilibSelectedRemove);
-    updateResultSelection();
-  });
   overlay.querySelector("[data-unilib-crop-tray-toggle]").addEventListener("click", () => {
     cropTrayExpanded = !cropTrayExpanded;
     renderCropTray();
@@ -2035,8 +1953,6 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     if (!remove) return;
     const id = remove.dataset.unilibCropTrayRemove;
     acceptedAssets.delete(id);
-    selectedIds.delete(id);
-    selectedRecords.delete(id);
     acceptedCrops = acceptedCrops.filter(({ result }) => result.id !== id);
     invalidateAction();
     renderAcceptedCrops();
@@ -2102,18 +2018,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     examFilters.endYear = range.end;
     void runSearch();
   }));
-  overlay.querySelector("[data-unilib-selected-clear]").addEventListener("click", () => {
-    invalidateAction();
-    selectedIds.clear();
-    selectedRecords.clear();
-    acceptedAssets.clear();
-    updateResultSelection();
-  });
   overlay.querySelector("[data-unilib-crop-tray-clear]").addEventListener("click", () => {
-    for (const id of acceptedAssets.keys()) {
-      selectedIds.delete(id);
-      selectedRecords.delete(id);
-    }
     acceptedAssets.clear();
     acceptedCrops = [];
     activeAcceptedCropId = null;
@@ -2275,9 +2180,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   let cancelPlacementChoice = null;
   overlay.querySelector("[data-unilib-ai]").addEventListener("click", async () => {
     await runLibraryAction(async (snapshot, isCurrent) => {
-      const actionResult = resultForActionSnapshot(snapshot);
-      const chosen = aiActionRecords(selectedRecords, selectedIds, actionResult)
-        .map((result) => result.id === snapshot.selectedId ? actionResult : result);
+      const chosen = snapshot.acceptedAssetIds.map((id) => acceptedAssets.get(id)?.result).filter(Boolean);
       if (!chosen.length) return;
       const activeProvider = await provider();
       if (!isCurrent()) return;
@@ -2751,7 +2654,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   const changeCropPage = async (page, preserveScroll = false) => {
     const file = selectedResult();
     if (file?.kind !== "pdf" || !continuousView) return;
-    commitAcceptedCropSession({ acceptedAssets, selectedIds, selectedRecords, acceptedCrops, documentId: cropSession?.documentId, pageNumber: cropSession?.pageNumber });
+    commitAcceptedCropSession({ acceptedAssets, acceptedCrops, documentId: cropSession?.documentId, pageNumber: cropSession?.pageNumber });
     continuousView.visiblePage = Math.max(1, Math.min(continuousView.pageCount, page));
     stage.scrollTop = (continuousView.visiblePage - 1) * continuousView.pageExtent;
     stage.dispatchEvent(new Event("scroll"));
@@ -2806,8 +2709,6 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     if (!remove) return;
     acceptedCrops = acceptedCrops.filter(({ result }) => result.id !== remove.dataset.unilibCropRemove);
     acceptedAssets.delete(remove.dataset.unilibCropRemove);
-    selectedIds.delete(remove.dataset.unilibCropRemove);
-    selectedRecords.delete(remove.dataset.unilibCropRemove);
     if (activeAcceptedCropId === remove.dataset.unilibCropRemove) activeAcceptedCropId = null;
     invalidateAction();
     renderAcceptedCrops();
@@ -2818,7 +2719,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     if (!cropDocumentEntries().length || !cropSession) return;
     const count = cropDocumentEntries().length;
     commitAcceptedCropSession({
-      acceptedAssets, selectedIds, selectedRecords, acceptedCrops,
+      acceptedAssets, acceptedCrops,
       documentId: cropSession.documentId, pageNumber: cropSession.pageNumber,
     });
     invalidateAction();
@@ -3039,7 +2940,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     }
     cancelSpacePress();
     suppressSpaceKeyup = false;
-    if (!press.opened && !overlay.hidden && press.id === selectedId) toggleResultSelection(press.id);
+    if (!press.opened && !overlay.hidden && press.id === selectedId) focusResultCard(press.id);
   }, true);
   let referenceConsumer = null;
   let focusSyncTimer = 0;
@@ -3075,9 +2976,8 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     async beginReferenceSelection(consumer, trigger) {
       referenceConsumer = consumer;
       root.classList.add("consumer-mode");
-      selectedIds.clear();
       await open(trigger);
-      setStatus("추가할 자료를 체크하세요.");
+      setStatus("자료를 열고 필요한 영역을 크롭한 뒤 작업대에 넣어 주세요.");
     },
   });
 }
