@@ -5,7 +5,7 @@
 // LIVE rendered SVG element (getBBox), so this module keeps its own _svg
 // reference, assigned by initPick(svg) from initTools.
 
-import { screenToWorld, getRenderScale } from "./viewport.js?v=1.6.0-preview-labeler-0917-1111";
+import { screenToWorld, getRenderScale } from "./viewport.js?v=1.6.0-preview-stable-view-0921";
 import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, scaleBBoxForWidth } from "./state.js?v=1.6.0-preview-labeler-0917-1111";
 // Single-source circuit body geometry: hit-testing reuses the SAME polygon the
 // renderer draws, so the clickable box and the visible box can never diverge.

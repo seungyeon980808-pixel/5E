@@ -19,7 +19,7 @@
 // (they read obj.cutouts). Temporary drag UI is drawn on the SVG root (not in
 // state.objects), so it is never selectable and never exported. */
 
-import { screenToWorld } from "./viewport.js?v=1.6.0-preview-labeler-0917-1111";
+import { screenToWorld } from "./viewport.js?v=1.6.0-preview-stable-view-0921";
 import { tightenBoxObject } from "./cut-geometry.js?v=1.6.0-preview-labeler-0917-1111";
 import { smartCutoutRgba } from "./smart-cutout.js?v=1.6.0-preview-labeler-0917-1111";
 

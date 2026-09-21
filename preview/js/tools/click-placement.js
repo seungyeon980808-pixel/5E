@@ -18,7 +18,7 @@
 // its getters/exports. clearClickLocals is exported back so setActiveTool (tools.js)
 // can discard an in-progress draft when another tool is armed. */
 
-import { screenToWorld, getRenderScale } from "../viewport.js?v=1.6.0-preview-labeler-0917-1111";
+import { screenToWorld, getRenderScale } from "../viewport.js?v=1.6.0-preview-stable-view-0921";
 import { snapAngle, mathAngleDeg, snappedDeg, normalizeSweep } from "../geometry.js?v=1.6.0-preview-labeler-0917-1111";
 import { setSnapPreview } from "../render.js?v=1.6.0-preview-labeler-0917-1111";
 import { resolveEndpointSnap } from "../snap.js?v=1.6.0-preview-labeler-0917-1111";

@@ -9,7 +9,7 @@
 // derived from it when a page is loaded or switched. groupId is the single
 // source of truth, and the saved file never supplies a separate groups list.
 
-import { screenToWorld } from "./viewport.js?v=1.6.0-preview-labeler-0917-1111";
+import { screenToWorld } from "./viewport.js?v=1.6.0-preview-stable-view-0921";
 import { applyNewObjectStyleDefaults, migrateObjectStyleMode } from "./style-mode.js?v=1.6.0-preview-labeler-0917-1111";
 import { showProjectCloseDialog } from "./project-close-dialog.js?v=1.6.0-preview-labeler-0917-1111";
 import { showAlert, showConfirm } from "./ui-dialogs.js?v=1.6.0-preview-labeler-0917-1111";

@@ -1,5 +1,5 @@
 import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-preview-labeler-0917-1111';
-import { initWebLoginUi } from './web-login-ui.js?v=1.6.0-preview-emerald-polish-0921';
+import { initWebLoginUi } from './web-login-ui.js?v=1.6.0-preview-shell-presentation2-0921';
 import { showAlert } from "./ui-dialogs.js?v=1.6.0-preview-labeler-0917-1111";
 import { initAiSharing } from './ai-sharing-ui.js?v=1.6.0-preview-emerald-polish-0921';
 /* ===== MAIN (wire modules; data-as-truth + viewBox zoom/pan) ===== */
@@ -13,7 +13,7 @@ import { initAiSharing } from './ai-sharing-ui.js?v=1.6.0-preview-emerald-polish
 // ?v= matches index.html so a version bump reloads every module, not just main.
 import { state } from "./state.js?v=1.6.0-preview-labeler-0917-1111";
 import { render } from "./render.js?v=1.6.0-preview-labeler-0917-1111";
-import { initViewport, getZoom, screenToWorld, centerView, setCanvasLockMode } from "./viewport.js?v=1.6.0-preview-panel-lock-0921";
+import { initViewport, getZoom, screenToWorld, centerView, setCanvasLockMode } from "./viewport.js?v=1.6.0-preview-stable-view-0921";
 import { initTools } from "./tools.js?v=1.6.0-preview-labeler-0917-1111";
 import { initCutTool } from "./cut-tool.js?v=1.6.0-preview-labeler-0917-1111";
 import { initEraseTool } from "./erase-tool.js?v=1.6.0-preview-labeler-0917-1111";
@@ -91,16 +91,17 @@ const zoomReadout = document.getElementById("zoom-readout");
   if (!btn) return;
 
   const nativeFullscreen = window.fiveEDesktop?.fullscreen;
+  const useWorkspaceMaximize = !nativeFullscreen && /Safari/.test(navigator.userAgent) && !/Chrome|Chromium|Edg/.test(navigator.userAgent);
   const browserFullscreenElement = () => document.fullscreenElement || document.webkitFullscreenElement || null;
 
   const syncButton = (active) => {
     if (nativeFullscreen) document.documentElement.classList.toggle("is-native-fullscreen", Boolean(active));
     btn.setAttribute("aria-pressed", String(active));
-    const label = active ? "전체화면 해제" : "전체화면";
+    const label = useWorkspaceMaximize ? (active ? "편집기 최대화 해제" : "편집기 최대화") : (active ? "전체화면 해제" : "전체화면");
     btn.setAttribute("aria-label", label);
     btn.title = `${label} (Alt+Enter)`;
   };
-  const syncBrowserFullscreen = () => syncButton(Boolean(browserFullscreenElement()));
+  const syncBrowserFullscreen = () => syncButton(useWorkspaceMaximize ? document.documentElement.classList.contains("is-workspace-maximized") : Boolean(browserFullscreenElement()));
   const showBrowserFullscreenError = (operation) => {
     syncBrowserFullscreen();
     const message = operation === "exit" ? "전체화면을 해제하지 못했습니다. 다시 시도해 주세요." : "전체화면을 시작하지 못했습니다. 다시 시도해 주세요.";
@@ -113,6 +114,14 @@ const zoomReadout = document.getElementById("zoom-readout");
     try {
       if (nativeFullscreen) {
         await nativeFullscreen.toggle();
+        return;
+      }
+      if (useWorkspaceMaximize) {
+        if (browserFullscreenElement()) {
+          const exit = document.exitFullscreen || document.webkitExitFullscreen;
+          await exit.call(document);
+        }
+        syncButton(document.documentElement.classList.toggle("is-workspace-maximized"));
         return;
       }
       if (browserFullscreenElement()) {

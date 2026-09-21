@@ -14,7 +14,7 @@ export function initWebLoginUi({ openAi }) {
   dialog.className = 'web-login-dialog'; dialog.setAttribute('aria-labelledby', 'web-login-title');
   dialog.innerHTML = `<button type="button" class="web-login-close" aria-label="연결 안내 닫기">×</button>
     <h2 id="web-login-title" tabindex="-1">AI 기능을 시작하세요</h2>
-    <div data-install-guide><p>설치형에서는 라이브러리에 내 컴퓨터의 폴더를 연결하고 AI 기능을 편리하게 사용할 수 있습니다.</p>
+    <div data-install-guide><p>설치형에서는 라이브러리에 내 컴퓨터의 폴더를 연결하고 AI&nbsp;기능을 편리하게 사용할 수 있습니다.</p>
       <a class="web-login-download ai-action-motion" data-ai-orbit="true" href="${DESKTOP_RELEASE_URL}" target="_blank" rel="noopener noreferrer"><span class="ai-action-motion-label">설치형 다운로드</span></a></div>
     <p data-login-message role="status">웹에서도 기존 ChatGPT 계정으로 연결할 수 있습니다.</p>
     <p class="web-login-account-note">별도 API 키 없이 연결하며, ChatGPT 계정의 이용 한도와 제한이 적용됩니다.</p>
@@ -141,7 +141,7 @@ export function initWebLoginUi({ openAi }) {
   function show(forAi = false, aiAction = null) {
     if (forAi && typeof aiAction === 'function') pendingAiAction = aiAction;
     if (connected && forAi) { runPendingAiAction({ fallback:true }); return; }
-    if (!dialog.open) { wasFullscreen = Boolean(document.fullscreenElement); dialog.showModal(); }
+    if (!dialog.open) { wasFullscreen = Boolean(document.fullscreenElement); dialog.show(); }
     if (connected) render('connected', '메인 화면의 AI 버튼을 눌러 작업을 시작하세요.');
     title.focus({ preventScroll: true });
   }
@@ -159,6 +159,10 @@ export function initWebLoginUi({ openAi }) {
   dialog.querySelector('.web-login-close').addEventListener('click', dismiss);
   dialog.querySelector('[data-login-later]').addEventListener('click', dismiss);
   dialog.addEventListener('cancel', event => { event.preventDefault(); dismiss(); });
+  dialog.addEventListener('keydown', event => {
+    if (event.key !== 'Escape') return;
+    event.preventDefault(); dismiss();
+  });
   copy.addEventListener('click', async () => {
     const currentCode = userCode;
     try {

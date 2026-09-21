@@ -12,7 +12,7 @@
 // 구조·규약(포인터 처리·오버레이 미리보기·Undo 1스텝)은 js/cut-tool.js 를 그대로 따랐다.
 // 가위(CUT)와는 완전히 독립이며 가위 코드는 전혀 건드리지 않는다. */
 
-import { screenToWorld } from "./viewport.js?v=1.6.0-preview-labeler-0917-1111";
+import { screenToWorld } from "./viewport.js?v=1.6.0-preview-stable-view-0921";
 import { simplifyRDP } from "./geometry.js?v=1.6.0-preview-labeler-0917-1111";
 import { getObjectBBox } from "./pick.js?v=1.6.0-preview-labeler-0917-1111";
 import { tightenBoxObject } from "./cut-geometry.js?v=1.6.0-preview-labeler-0917-1111";

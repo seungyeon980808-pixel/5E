@@ -13,7 +13,7 @@
 // we can distinguish "click on already-selected ??move allowed" from "click
 // selects a new object ??just select, no move this press."
 
-import { screenToWorld, getRenderScale } from "./viewport.js?v=1.6.0-preview-labeler-0917-1111";
+import { screenToWorld, getRenderScale } from "./viewport.js?v=1.6.0-preview-stable-view-0921";
 import { resolveSnap, resolveEndpointSnap, resolveRadialCenterSnap } from "./snap.js?v=1.6.0-preview-labeler-0917-1111";
 import { setSnapPreview, setSmartGuides, pendulumBBox } from "./render.js?v=1.6.0-preview-labeler-0917-1111";
 import { pickSelectableObjectFromEvent } from "./tools.js?v=1.6.0-preview-labeler-0917-1111";

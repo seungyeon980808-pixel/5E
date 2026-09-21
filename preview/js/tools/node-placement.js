@@ -13,7 +13,7 @@
 // × line width, so with the 0.2 mm default line width a new 점 is ≈ 1.0 mm Ø
 // (0.5 mm radius). Tune POINT_DIAMETER_PER_WIDTH to rescale every new 점.
 
-import { screenToWorld, getRenderScale } from "../viewport.js?v=1.6.0-preview-labeler-0917-1111";
+import { screenToWorld, getRenderScale } from "../viewport.js?v=1.6.0-preview-stable-view-0921";
 import { resolveEndpointSnap } from "../snap.js?v=1.6.0-preview-labeler-0917-1111";
 import { setSnapPreview } from "../render.js?v=1.6.0-preview-labeler-0917-1111";
 import { nextObjectId } from "./id.js?v=1.6.0-preview-labeler-0917-1111";

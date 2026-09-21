@@ -8,7 +8,7 @@
 // replicates the exact obj-id scheme, and three small accessors (isTextEditorOpen /
 // commitActiveText) plus imported isSpaceHeld to replace cross-module raw reads.
 
-import { screenToWorld, getRenderScale, worldToScreen } from "./viewport.js?v=1.6.0-preview-labeler-0917-1111";
+import { screenToWorld, getRenderScale, worldToScreen } from "./viewport.js?v=1.6.0-preview-stable-view-0921";
 import {
   TEXT_FONTS, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM,
   TEXT_SIZE_PRESETS, ptToMm, mmToPt, MIN_TEXT_PT,

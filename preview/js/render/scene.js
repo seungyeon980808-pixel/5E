@@ -7,7 +7,7 @@
 // the projection stays anchored in world space through zoom/pan (the viewBox
 // alone changes what slice of that space is shown).
 
-import { getZoom, getRenderScale } from "../viewport.js?v=1.6.0-preview-labeler-0917-1111";
+import { getZoom, getRenderScale } from "../viewport.js?v=1.6.0-preview-stable-view-0921";
 import { SVG_NS, rotPt, catmullRomPath } from "./core.js?v=1.6.0-preview-labeler-0917-1111";
 import { renderText } from "./labels.js?v=1.6.0-preview-labeler-0917-1111";
 import { makeFillPattern } from "./fill.js?v=1.6.0-preview-labeler-0917-1111";

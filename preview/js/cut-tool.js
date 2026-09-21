@@ -11,7 +11,7 @@
 // 분할 수학은 cut-geometry.js(순수 함수, Node 테스트 완료). 여기선 UI·포인터·
 // 스토어 교체(Undo 1스텝)만 담당. */
 
-import { screenToWorld, getRenderScale } from "./viewport.js?v=1.6.0-preview-labeler-0917-1111";
+import { screenToWorld, getRenderScale } from "./viewport.js?v=1.6.0-preview-stable-view-0921";
 import { cutObject, isCuttable, cutCrossingPoints, isBoxCuttable, cutBoxObject } from "./cut-geometry.js?v=1.6.0-preview-labeler-0917-1111";
 import { snapAngle } from "./geometry.js?v=1.6.0-preview-labeler-0917-1111";
 import { simplifyRDP } from "./geometry.js?v=1.6.0-preview-labeler-0917-1111";

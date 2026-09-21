@@ -12,7 +12,7 @@
  * initTools. Space-held (pan) state stays owned by tools.js and is read via its
  * isSpaceHeld() getter so there is never a divergent copy. */
 
-import { screenToWorld } from "../viewport.js?v=1.6.0-preview-labeler-0917-1111";
+import { screenToWorld } from "../viewport.js?v=1.6.0-preview-stable-view-0921";
 import { simplifyRDP } from "../geometry.js?v=1.6.0-preview-labeler-0917-1111";
 import { nextObjectId } from "./id.js?v=1.6.0-preview-labeler-0917-1111";
 import { isSpaceHeld } from "../tools.js?v=1.6.0-preview-labeler-0917-1111";

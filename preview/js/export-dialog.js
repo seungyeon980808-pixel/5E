@@ -18,7 +18,7 @@ import {
 } from "./export-dir.js?v=1.6.0-preview-labeler-0917-1111";
 import { showAlert } from "./ui-dialogs.js?v=1.6.0-preview-labeler-0917-1111";
 import { registerTopMenu } from "./top-menu.js?v=1.6.0-preview-labeler-0917-1111";
-import { screenToWorld } from "./viewport.js?v=1.6.0-preview-labeler-0917-1111";
+import { screenToWorld } from "./viewport.js?v=1.6.0-preview-stable-view-0921";
 import { openExamPreview } from "./exam-preview.js?v=1.6.0-preview-labeler-0917-1111";
 
 // Default export filename base = local date/time to the minute (YYYYMMDD_HHmm),

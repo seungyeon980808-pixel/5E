@@ -1,7 +1,7 @@
 /* Only a scoped 5E session is retained; OpenAI credentials stay on the runtime. */
 (() => {
   if (window.fiveEDesktop) return;
-  const origin = 'https://five-e-ai-runtime-probe.onrender.com';
+  const origin = location.hostname === '127.0.0.1' ? location.origin : 'https://five-e-ai-runtime-probe.onrender.com';
   const key = '5e:web-ai-session';
   let popup, token = '', loginTicket = '', loginTimer, attempt = 0;
   let authUrl = '', preparing = false, positioning = false, positionTimer, positionDeadline;
@@ -41,7 +41,7 @@
   const loginRequest = async (action, ticket) => {
     const response = await fetch(`${origin}/api/web-login-${action}`, {
       method: 'POST', credentials: 'omit', headers: { ...(ticket ? { Authorization: `Bearer ${ticket}` } : {}), 'X-5E-Request': '1', 'Content-Type': 'application/json' },
-      body: '{}', signal: AbortSignal.timeout(40000),
+      body: '{}', signal: AbortSignal.timeout(action === 'start' ? 120000 : 40000),
     });
     const result = await response.json();
     if (!response.ok) throw new Error('로그인 시간이 만료되었거나 연결이 끊겼습니다. 다시 시도해 주세요.');
@@ -63,7 +63,7 @@
       if (current !== attempt) return;
       loginTicket = ''; authUrl = ''; closeLoginWindows();
       void loginRequest('cancel', ticket).catch(() => {});
-      progress({ state: 'error', message: error.message });
+      progress({ state: 'error', message: error.name === 'TimeoutError' ? '인증 서버 응답이 지연되고 있습니다. 잠시 후 다시 로그인해 주세요.' : error instanceof TypeError ? '인증 서버에 연결하지 못했습니다. 네트워크 연결을 확인하고 다시 시도해 주세요.' : error.message });
     }
   }
   window.fiveEWebCancelLogin = () => {
@@ -77,10 +77,10 @@
     const availableHeight = screen.availHeight || screen.height || 800;
     const viewport = Math.min(window.innerWidth || availableWidth, availableWidth);
     const paired = viewport >= 840;
-    const width = paired ? Math.min(560, Math.floor((viewport - 48) * .56)) : Math.min(560, availableWidth);
+    const width = paired ? Math.min(480, Math.floor((viewport - 48) * .56)) : Math.min(480, availableWidth);
     const codeWidth = Math.min(420, viewport - width - 48);
     const codeLeft = Math.max(16, Math.round((viewport - codeWidth - width - 16) / 2));
-    const height = Math.max(1, availableHeight - 32);
+    const height = Math.max(1, Math.min(640, availableHeight - 32));
     const screenLeft = screen.availLeft || 0, screenTop = screen.availTop || 0;
     const left = paired ? Math.min(screenLeft + availableWidth - width, Math.max(screenLeft, (window.screenX || 0) + codeLeft + codeWidth + 16))
       : screenLeft + Math.round((availableWidth - width) / 2);
@@ -106,12 +106,6 @@
   window.fiveEWebContinueLogin = async () => {
     if (!loginTicket || !authUrl) return false;
     if (popup && !popup.closed) { popup.focus(); return true; }
-    if (document.fullscreenElement) {
-      try { await document.exitFullscreen(); } catch {}
-      if (!loginTicket || !authUrl) return false;
-      progress({ state: 'blocked', message: '나란히 볼 준비가 되었습니다. OpenAI 인증하기를 눌러 주세요.' });
-      return false;
-    }
     const { width, height, left, top } = loginLayout();
     const name = `fivee-openai-auth-${window.crypto?.randomUUID?.() || `${Date.now()}-${attempt}`}`;
     popup = window.open('about:blank', name, `popup=yes,width=${width},height=${height},left=${left},top=${top}`);
@@ -132,7 +126,6 @@
     preparing = true;
     clearTimeout(loginTimer);
     try {
-      // Request immediately; fullscreen only needs to exit when opening the popup.
       const result = await loginRequest('start');
       if (!/^[a-f0-9]{64}$/.test(result.ticket)) throw new Error('인증 연결 정보를 확인할 수 없습니다.');
       if (current !== attempt) { void loginRequest('cancel', result.ticket).catch(() => {}); return; }
@@ -146,7 +139,7 @@
       if (current !== attempt) return;
       const ticket = loginTicket; loginTicket = ''; authUrl = '';
       if (ticket) void loginRequest('cancel', ticket).catch(() => {});
-      progress({ state: 'error', message: error.message });
+      progress({ state: 'error', message: error.name === 'TimeoutError' ? '인증 서버 응답이 지연되고 있습니다. 잠시 후 다시 로그인해 주세요.' : error instanceof TypeError ? '인증 서버에 연결하지 못했습니다. 네트워크 연결을 확인하고 다시 시도해 주세요.' : error.message });
     } finally { if (current === attempt) preparing = false; }
   };
 })();

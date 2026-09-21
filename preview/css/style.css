@@ -116,7 +116,7 @@ input[type="checkbox"], input[type="radio"], input[type="range"] { accent-color:
   --border-muted: color-mix(in srgb, var(--border-strong, #30363d) 35%, var(--bg-panel));
 
   --panel-left-w: 130px;
-  --panel-right-w: 215px;
+  --panel-right-w: 200px;
   --footer-h: 28px;
 }
 

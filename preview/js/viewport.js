@@ -166,45 +166,41 @@ export function initViewport(svg, state, onChange) {
   // notify caller (main) that viewBox changed → it writes SVG + re-renders
   const commit = () => onChange();
 
-  let panelView = null;
-  let panelObserver = null;
-  let panelFrame = 0;
-  const preservePanelView = () => {
-    panelFrame = 0;
-    const previous = panelView;
+  const readProjection = () => {
     const rect = svg.getBoundingClientRect();
-    if (!previous || rect.width <= 0 || rect.height <= 0) return;
+    const vb = state.get().viewBox;
+    const scale = Math.min(rect.width / vb.w, rect.height / vb.h);
+    return { left: rect.left, top: rect.top, width: rect.width, height: rect.height,
+      scale, x: rect.left + rect.width / 2 - (vb.x + vb.w / 2) * scale,
+      y: rect.top + rect.height / 2 - (vb.y + vb.h / 2) * scale };
+  };
+  let projection = readProjection();
+  const sameBox = (a, b) => a.left === b.left && a.top === b.top
+    && a.width === b.width && a.height === b.height;
+  state.subscribe(() => {
+    const next = readProjection();
+    if (sameBox(projection, next)) projection = next;
+  });
+  const preserveProjection = () => {
+    const next = readProjection();
+    if (sameBox(projection, next)) return;
+    const previous = projection;
+    if (!(previous.scale > 0) || next.width <= 0 || next.height <= 0) {
+      projection = next;
+      return;
+    }
     state.update((s) => {
-      const vb = s.viewBox;
-      vb.w = rect.width / previous.scale;
-      vb.h = rect.height / previous.scale;
-      vb.x = previous.worldX - (previous.screenX - rect.left) / previous.scale;
-      vb.y = previous.worldY - (previous.screenY - rect.top) / previous.scale;
+      s.viewBox.w = next.width / previous.scale;
+      s.viewBox.h = next.height / previous.scale;
+      s.viewBox.x = (next.left - previous.x) / previous.scale;
+      s.viewBox.y = (next.top - previous.y) / previous.scale;
     });
+    projection = readProjection();
     commit();
   };
-  window.addEventListener("5e:panel-layout-will-change", () => {
-    const vb = state.get().viewBox;
-    const scale = svg.getScreenCTM()?.a;
-    const worldX = vb.x + vb.w / 2;
-    const worldY = vb.y + vb.h / 2;
-    const screen = worldToScreen(svg, vb, worldX, worldY);
-    panelView = scale > 0 ? { scale, worldX, worldY, screenX: screen.x, screenY: screen.y } : null;
-    panelObserver?.disconnect();
-    panelObserver = new ResizeObserver(() => {
-      if (panelFrame) return;
-      panelFrame = requestAnimationFrame(preservePanelView);
-    });
-    panelObserver.observe(svg);
-  });
-  window.addEventListener("5e:panel-layout-did-change", () => {
-    if (panelFrame) cancelAnimationFrame(panelFrame);
-    panelFrame = 0;
-    preservePanelView();
-    panelObserver?.disconnect();
-    panelObserver = null;
-    panelView = null;
-  });
+  const layoutObserver = new ResizeObserver(preserveProjection);
+  layoutObserver.observe(svg);
+  window.addEventListener("5e:panel-layout-did-change", preserveProjection);
 
   /* --- wheel: plain = vertical pan, Shift = horizontal pan, Ctrl/⌘ = zoom ---
    * 휠 이벤트의 단위는 브라우저·기기마다 다르다. deltaMode가 0이면 픽셀,
@@ -370,19 +366,7 @@ export function initViewport(svg, state, onChange) {
     if (e.button === 1) e.preventDefault();
   });
 
-  /* --- window resize: zoom bounds depend on viewport size, so re-clamp both
-         the zoom level and the pan offset whenever the SVG box changes. --- */
-  window.addEventListener("resize", () => {
-    state.update((s) => {
-      clampZoom(svg, s);
-      if (canvasLocked()) {
-        s.viewBox.x = canvasLock.worldX - s.viewBox.w / 2;
-        s.viewBox.y = canvasLock.worldY - s.viewBox.h / 2;
-      }
-      clampViewBox(s);
-    });
-    commit();
-  });
+  window.addEventListener("resize", preserveProjection);
 }
 
 /* ----- centerView: reposition so artboard (world origin) is centered in view ----- */

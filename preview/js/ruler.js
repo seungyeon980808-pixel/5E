@@ -5,7 +5,7 @@
 // is automatically accounted for. Y labels are inverted (math Y: up = positive)
 // to match the inspector display.
 
-import { getRenderScale } from "./viewport.js?v=1.6.0-preview-labeler-0917-1111";
+import { getRenderScale } from "./viewport.js?v=1.6.0-preview-stable-view-0921";
 // Guide click-to-select over the artboard: objects always win, so the guide is
 // only picked when NO object sits under the point (pick.js is the same oracle
 // tools.js selection uses). tools.js also owns the Space-pan tracker.

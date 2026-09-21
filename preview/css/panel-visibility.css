@@ -7,7 +7,7 @@
 @property --editor-right-track {
   syntax: "<length>";
   inherits: false;
-  initial-value: 286px;
+  initial-value: 200px;
 }
 .app[data-panel-layout],
 #ai-image-panel[data-panel-layout] .ai-workspace { position: relative; }
@@ -234,7 +234,7 @@
 html.is-workspace-maximized .app-footer { display: none; }
 
 @media (min-width: 768px) {
-  .app { --panel-right-w: 286px; }
+  .app { --panel-right-w: 200px; }
   .app-shell-header .canvas-toolbar {
     display: grid;
     grid-template-columns: var(--panel-left-w) minmax(0, 1fr) var(--panel-right-w);

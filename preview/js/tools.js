@@ -12,7 +12,7 @@ import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-pre
 // screenToWorld BEFORE being stored, so shapes are anchored in world space and
 // survive zoom/pan unchanged (DESIGN 1-2).
 
-import { screenToWorld, getRenderScale, worldToScreen } from "./viewport.js?v=1.6.0-preview-labeler-0917-1111";
+import { screenToWorld, getRenderScale, worldToScreen } from "./viewport.js?v=1.6.0-preview-stable-view-0921";
 import { registerEscapeLayer } from "./escape-layers.js?v=1.6.0-preview-labeler-0917-1111";
 import {
   TEXT_FONTS, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_PX, DEFAULT_TEXT_SIZE_MM,
