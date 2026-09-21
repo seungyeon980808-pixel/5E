@@ -1222,6 +1222,20 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     setSearchPaneOpen(searchPaneOpen);
   }
 
+  const searchIsCurrent = (ownEpoch, signal) => ownEpoch === searchEpoch && !signal.aborted && !overlay.hidden;
+
+  const waitForFirstResultPaint = async (ownEpoch, signal) => {
+    await Promise.resolve();
+    if (!searchIsCurrent(ownEpoch, signal)) return false;
+    const firstCard = list.querySelector("[data-result-id]");
+    const firstRect = firstCard?.getBoundingClientRect();
+    if (!firstCard || !firstRect || firstRect.width <= 0 || firstRect.height <= 0) return false;
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    if (!searchIsCurrent(ownEpoch, signal)) return false;
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    return searchIsCurrent(ownEpoch, signal);
+  };
+
   async function runSearch() {
     invalidateAction();
     const ownEpoch = ++searchEpoch;
@@ -1238,7 +1252,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     try {
       const activeProvider = await provider();
       if (!enabledSources) await renderSources();
-      if (ownEpoch !== searchEpoch || signal.aborted || overlay.hidden) return;
+      if (!searchIsCurrent(ownEpoch, signal)) return;
       const queryText = query.value.trim();
       const pageDisplayActive = pdfDisplayMode === "page" && activeTypes.length === 1 && activeTypes[0] === "pdf";
       const filters = Object.fromEntries(Object.entries(examFilters).filter(([, value]) => value !== "" && value != null));
@@ -1261,10 +1275,12 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
         provenance: { ...(file.provenance || {}), provider: "pdf", documentId: file.documentId, pageNumber: file.firstMatchingPage || file.provenance?.pageNumber || 1 },
       })) : [];
       const found = [...(Array.isArray(regular) ? regular : []), ...normalizedPdf];
-      if (ownEpoch !== searchEpoch || overlay.hidden) return;
+      if (!searchIsCurrent(ownEpoch, signal)) return;
       results = Array.isArray(found) ? found : [];
       selectedId = reconcileUnifiedSelection(selectedId, results);
       renderResults();
+      if (results.length && !await waitForFirstResultPaint(ownEpoch, signal)) return;
+      if (!searchIsCurrent(ownEpoch, signal)) return;
       setResultState(results.length ? "ready" : "empty", results.length ? "" : "검색 결과가 없습니다.");
       setStatus(pendingIndexCount ? `내 PDF ${pendingIndexCount}개를 색인하는 중입니다.` : "");
       void renderPreview();
