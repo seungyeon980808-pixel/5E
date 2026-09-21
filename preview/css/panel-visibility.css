@@ -1,6 +1,9 @@
 [data-panel-layout] [data-layout-panel][hidden] { display: none !important; }
 .app[data-panel-layout],
 #ai-image-panel[data-panel-layout] .ai-workspace { position: relative; }
+.app[data-panel-layout].is-panel-track-moving {
+  transition: grid-template-columns 300ms cubic-bezier(.22, 1, .36, 1);
+}
 [data-layout-panel].is-panel-transitioning {
   position: absolute !important;
   grid-column: auto !important;
@@ -243,15 +246,11 @@ html.is-workspace-maximized .app-footer { display: none; }
     justify-content: flex-end;
     border-left: 0;
   }
-  .app[data-right-collapsed="true"] .toolbar-inspector-controls { display:none; }
   @container inspector-header (max-width: 170px) {
     .web-account-status { max-width:none; padding-inline:6px; gap:5px; justify-content:center; }
     .web-account-status [data-account-label] { font-size:0; }
     .web-account-status [data-account-label]::after { content:'GPT'; font-size:12px; }
   }
-  .app[data-left-collapsed="true"] .canvas-toolbar { grid-template-columns: 130px minmax(0, 1fr) var(--panel-right-w); }
-  .app[data-right-collapsed="true"] .canvas-toolbar { grid-template-columns: var(--panel-left-w) minmax(0, 1fr) 48px; }
-  .app[data-left-collapsed="true"][data-right-collapsed="true"] .canvas-toolbar { grid-template-columns: 130px minmax(0, 1fr) 48px; }
 }
 @media (min-width: 768px) and (max-width: 1000px) {
   .app { --panel-left-w: 130px; }

@@ -128,24 +128,43 @@ export function initViewport(svg, state, onChange) {
   const commit = () => onChange();
 
   let panelView = null;
-  window.addEventListener("5e:panel-layout-will-change", () => {
-    const vb = state.get().viewBox;
-    const scale = svg.getScreenCTM()?.a;
-    panelView = scale > 0 ? { scale, x: vb.x + vb.w / 2, y: vb.y + vb.h / 2 } : null;
-  });
-  window.addEventListener("5e:panel-layout-did-change", () => {
+  let panelObserver = null;
+  let panelFrame = 0;
+  const preservePanelView = () => {
+    panelFrame = 0;
     const previous = panelView;
-    panelView = null;
     const rect = svg.getBoundingClientRect();
     if (!previous || rect.width <= 0 || rect.height <= 0) return;
     state.update((s) => {
       const vb = s.viewBox;
       vb.w = rect.width / previous.scale;
       vb.h = rect.height / previous.scale;
-      vb.x = previous.x - vb.w / 2;
-      vb.y = previous.y - vb.h / 2;
+      vb.x = previous.worldX - (previous.screenX - rect.left) / previous.scale;
+      vb.y = previous.worldY - (previous.screenY - rect.top) / previous.scale;
     });
     commit();
+  };
+  window.addEventListener("5e:panel-layout-will-change", () => {
+    const vb = state.get().viewBox;
+    const scale = svg.getScreenCTM()?.a;
+    const worldX = vb.x + vb.w / 2;
+    const worldY = vb.y + vb.h / 2;
+    const screen = worldToScreen(svg, vb, worldX, worldY);
+    panelView = scale > 0 ? { scale, worldX, worldY, screenX: screen.x, screenY: screen.y } : null;
+    panelObserver?.disconnect();
+    panelObserver = new ResizeObserver(() => {
+      if (panelFrame) return;
+      panelFrame = requestAnimationFrame(preservePanelView);
+    });
+    panelObserver.observe(svg);
+  });
+  window.addEventListener("5e:panel-layout-did-change", () => {
+    if (panelFrame) cancelAnimationFrame(panelFrame);
+    panelFrame = 0;
+    preservePanelView();
+    panelObserver?.disconnect();
+    panelObserver = null;
+    panelView = null;
   });
 
   /* --- wheel: plain = vertical pan, Shift = horizontal pan, Ctrl/⌘ = zoom ---

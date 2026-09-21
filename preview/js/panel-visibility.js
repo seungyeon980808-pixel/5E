@@ -175,6 +175,7 @@ function setup(root, kind) {
     layout[side].motion = createPanelMotion({
       panel,
       surface: layout.surface,
+      trackRoot: kind === 'editor' ? root : null,
       side,
       reducedMotion: () => reducedMotion.matches,
       mutateLayout: expanded => {
