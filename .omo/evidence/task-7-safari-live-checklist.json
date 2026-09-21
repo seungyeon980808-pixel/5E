@@ -1,6 +1,6 @@
 {
   "localUrl": "http://127.0.0.1:8767/preview/",
-  "publicTarget": "https://www.5e.ai.kr/preview/?revision=<release-short-sha>",
+  "publicTarget": "https://www.5e.ai.kr/preview/?revision=772194b4",
   "localSafari": {
     "result": "PASS_WITH_DRIVER_LIMITATION",
     "checks": [
@@ -38,10 +38,31 @@
     "limitation": "SafariDriver permits one paired session and became intermittently unavailable after repeated long composite sessions. Header/save and isolated share scripts exited 0; crop/task assertions completed and screenshots were captured before a later independent share-fixture failure. Dedicated Chromium/WebKit end-to-end suites cover the same crop/task state transitions and exited 0."
   },
   "public": {
-    "status": "PENDING_PUSH",
+    "status": "PASS",
+    "releaseSha": "772194b45e276551b611b825932a35a00166dc9f",
+    "pagesRunId": "35555162420",
     "requiredFooter": "Emerald Polish",
+    "observedFooter": "v1.6.0 Preview · Emerald Polish · 2026.09.21",
     "requiredCacheKey": "1.6.0-preview-emerald-polish-0921",
-    "mustOpenInSafariOnlyAfterLive": true
+    "observedCacheKey": "1.6.0-preview-emerald-polish-0921",
+    "openedInActualSafariAfterLive": true,
+    "actualSafariChecks": [
+      {
+        "name": "exact revision URL and footer identity",
+        "result": "PASS",
+        "observable": "Safari AX URL 5e.ai.kr/preview/?revision=772194b4 and footer text v1.6.0 Preview · Emerald Polish · 2026.09.21"
+      },
+      {
+        "name": "horizontal ruler and right-aligned header controls",
+        "result": "PASS",
+        "observable": "Actual Safari screenshot and AX tree showed the horizontal ruler plus ChatGPT, theme, fullscreen, and inspector controls without overlap"
+      },
+      {
+        "name": "library loading handoff",
+        "result": "PASS",
+        "observable": "Actual Safari showed the library loader, then immediately rendered the empty 0-result state without an intermediate blank surface"
+      }
+    ]
   },
   "safariSaveLimitation": "Safari web does not expose showSaveFilePicker; the product intentionally uses an editable timestamp-name dialog and browser download-location guidance."
 }

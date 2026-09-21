@@ -1,5 +1,6 @@
 {
   "result": "PASS",
+  "releaseSha": "772194b45e276551b611b825932a35a00166dc9f",
   "implementationSha": "9195dee112febd4567a3285aec18dd10bf674723",
   "baseSha": "d357fda2",
   "branch": "codex/preview-1.6.0",
@@ -78,6 +79,17 @@
     "footer": "v1.6.0 Preview · Emerald Polish · 2026.09.21",
     "packageVersion": "1.5.3 unchanged",
     "cacheKey": "1.6.0-preview-emerald-polish-0921"
+  },
+  "deployment": {
+    "push": "PASS",
+    "remoteBranch": "codex/preview-1.6.0",
+    "remoteSha": "772194b45e276551b611b825932a35a00166dc9f",
+    "pagesRunId": "35555162420",
+    "pagesResult": "success",
+    "liveUrl": "https://www.5e.ai.kr/preview/?revision=772194b4",
+    "footer": "PASS",
+    "cacheKey": "PASS",
+    "actualSafari": "PASS"
   },
   "atomicCommits": [
     {
