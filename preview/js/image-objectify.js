@@ -18,7 +18,7 @@ import { createImageAnalysisController } from "./image-analysis-controller.js";
 import { measureFormula } from "./formula.js?v=1.4.0";
 import { modKey, shortcutKey, keyLabel } from "./platform.js?v=1.4.0";
 import { selectedObjectifyImage, objectifyImageFile } from "./image-objectify-source.js";
-import { renderSessionToDataUrl } from "./image-cutout.js?v=1.4.0";
+import { renderSessionToDataUrl } from "./image-cutout.js?v=1.6.0-preview-lite-hybrid-0922";
 
 const ACCEPTED_TYPES = new Set(["image/png", "image/jpeg", "image/webp"]);
 const MAX_SOURCE_FILE_BYTES = 64 * 1024 * 1024;

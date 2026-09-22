@@ -1,3 +1,4 @@
+import { initLiteShell } from "./lite-shell.js?v=1.6.0-preview-lite-hybrid-0922";
 import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-preview-labeler-0917-1111';
 import { initWebLoginUi } from './web-login-ui.js?v=1.6.0-preview-mobile-golden-0922';
 import { initMobileImage } from './mobile-image.js?v=1.6.0-preview-mobile-golden-0922';
@@ -13,38 +14,38 @@ import { initAiSharing } from './ai-sharing-ui.js?v=1.6.0-preview-emerald-polish
 
 // ?v= matches index.html so a version bump reloads every module, not just main.
 import { state } from "./state.js?v=1.6.0-preview-labeler-0917-1111";
-import { render } from "./render.js?v=1.6.0-preview-lite-tools-0922b";
-import { initViewport, getZoom, screenToWorld, centerView, setCanvasLockMode } from "./viewport.js?v=1.6.0-preview-stable-view-0921";
-import { initTools } from "./tools.js?v=1.6.0-preview-lite-tools-0922b";
-import { initCutTool } from "./cut-tool.js?v=1.6.0-preview-labeler-0917-1111";
-import { initEraseTool } from "./erase-tool.js?v=1.6.0-preview-labeler-0917-1111";
-import { initTransform, undo, redo } from "./transform.js?v=1.6.0-preview-labeler-0917-1111";
-import { initArtboardResize } from "./artboard-resize.js?v=1.6.0-preview-repair-0921";
-import { initInspector } from "./inspector.js?v=1.6.0-preview-lite-tools-0922b";
-import { initDesktopProjectCloseGuard, initProjectIO, initProjectFileOpening, saveProject } from "./project-io.js?v=1.6.0-preview-golden-export-save-0922";
-import { initExportDialog } from "./export-dialog.js?v=1.6.0-preview-golden-export-save-0922";
-import { initRuler, setRulerVisible } from "./ruler.js?v=1.6.0-preview-labeler-0917-1111";
-import { initSettings } from "./settings.js?v=1.6.0-preview-ui-180-fs-0921-r2";
-import { initImageObjectify } from "./image-objectify.js?v=1.6.0-preview-compact-0922";
-import { initImagePaste } from "./image-paste.js?v=1.6.0-preview-labeler-0917-1111";
-import { initImageCutout } from "./image-cutout.js?v=1.6.0-preview-labeler-0917-1111";
-import { renderSessionToDataUrl } from "./image-cutout.js?v=1.6.0-preview-labeler-0917-1111";
+import { render } from "./render.js?v=1.6.0-preview-lite-hybrid-0922";
+import { initViewport, getZoom, screenToWorld, centerView, setCanvasLockMode } from "./viewport.js?v=1.6.0-preview-lite-hybrid-0922";
+import { initTools } from "./tools.js?v=1.6.0-preview-lite-hybrid-0922";
+import { initCutTool } from "./cut-tool.js?v=1.6.0-preview-lite-hybrid-0922";
+import { initEraseTool } from "./erase-tool.js?v=1.6.0-preview-lite-hybrid-0922";
+import { initTransform, undo, redo } from "./transform.js?v=1.6.0-preview-lite-hybrid-0922";
+import { initArtboardResize } from "./artboard-resize.js?v=1.6.0-preview-lite-hybrid-0922";
+import { initInspector } from "./inspector.js?v=1.6.0-preview-lite-hybrid-0922";
+import { initDesktopProjectCloseGuard, initProjectIO, initProjectFileOpening, saveProject } from "./project-io.js?v=1.6.0-preview-lite-hybrid-0922";
+import { initExportDialog } from "./export-dialog.js?v=1.6.0-preview-lite-hybrid-0922";
+import { initRuler, setRulerVisible } from "./ruler.js?v=1.6.0-preview-lite-hybrid-0922";
+import { initSettings } from "./settings.js?v=1.6.0-preview-lite-hybrid-0922";
+import { initImageObjectify } from "./image-objectify.js?v=1.6.0-preview-lite-hybrid-0922";
+import { initImagePaste } from "./image-paste.js?v=1.6.0-preview-lite-hybrid-0922";
+import { initImageCutout } from "./image-cutout.js?v=1.6.0-preview-lite-hybrid-0922";
+import { renderSessionToDataUrl } from "./image-cutout.js?v=1.6.0-preview-lite-hybrid-0922";
 import { handSelectedCanvasImageToAi } from "./ai-canvas-handoff.js?v=1.6.0-preview-labeler-0917-1111";
-import { initExamLibrary } from "./exam-library.js?v=1.6.0-preview-library-open-epoch-0922";
-import { initTemplates } from "./templates.js?v=1.6.0-preview-labeler-0917-1111";
-import { initObjectSearch } from "./search.js?v=1.6.0-preview-labeler-0917-1111";
-import { initCommandPalette } from "./command-palette.js?v=1.6.0-preview-repair-0921";
-import { initSubjectObjects } from "./subject-objects.js?v=1.6.0-preview-compact-0922";
+import { initExamLibrary } from "./exam-library.js?v=1.6.0-preview-lite-hybrid-0922";
+import { initTemplates } from "./templates.js?v=1.6.0-preview-lite-hybrid-0922";
+import { initObjectSearch } from "./search.js?v=1.6.0-preview-lite-hybrid-0922";
+import { initCommandPalette } from "./command-palette.js?v=1.6.0-preview-lite-hybrid-0922";
+import { initSubjectObjects } from "./subject-objects.js?v=1.6.0-preview-lite-hybrid-0922";
 import { initToolHint } from "./tool-hint.js?v=1.6.0-preview-labeler-0917-1111";
 import { initTooltips } from "./tooltip.js?v=1.6.0-preview-labeler-0917-1111";
-import { initViewMode } from "./view-mode.js?v=1.6.0-preview-lite-tools-0922b";
-import { initPersonalObjects } from "./personal-objects.js?v=1.6.0-preview-labeler-0917-1111";
-import { initBulkEdit } from "./bulk-edit.js?v=1.6.0-preview-labeler-0917-1111";
-import { initDataPlot } from "./data-plot.js?v=1.6.0-preview-labeler-0917-1111";
+import { initViewMode } from "./view-mode.js?v=1.6.0-preview-lite-hybrid-0922";
+import { initPersonalObjects } from "./personal-objects.js?v=1.6.0-preview-lite-hybrid-0922";
+import { initBulkEdit } from "./bulk-edit.js?v=1.6.0-preview-lite-hybrid-0922";
+import { initDataPlot } from "./data-plot.js?v=1.6.0-preview-lite-hybrid-0922";
 import { initGaugeSection } from "./inspector/section-gauge.js?v=1.6.0-preview-labeler-0917-1111";
 import { initSolid3dSection } from "./inspector/section-solid3d.js?v=1.6.0-preview-labeler-0917-1111";
 import { initParabolaSection } from "./inspector/section-parabola.js?v=1.6.0-preview-labeler-0917-1111";
-import { initGroundArcSection } from "./inspector/section-groundarc.js?v=1.6.0-preview-labeler-0917-1111";
+import { initGroundArcSection } from "./inspector/section-groundarc.js?v=1.6.0-preview-lite-hybrid-0922";
 // 생명과학 부품 6종 (2026-07-31) — 규격은 docs/BIO_PARTS_SPEC.md
 import { initBraceSection } from "./inspector/section-brace.js?v=1.6.0-preview-labeler-0917-1111";
 import { initChromosomeSection } from "./inspector/section-chromosome.js?v=1.6.0-preview-labeler-0917-1111";
@@ -63,15 +64,15 @@ import { initAxisBreakSection } from "./inspector/section-axisbreak.js?v=1.6.0-p
 import { initChemGraphSection } from "./inspector/section-chemgraph.js?v=1.6.0-preview-labeler-0917-1111";
 import { initElectrodeSection } from "./inspector/section-electrode.js?v=1.6.0-preview-labeler-0917-1111";
 import { initPeriodicSection } from "./inspector/section-periodic.js?v=1.6.0-preview-labeler-0917-1111";
-import { initAutosave } from "./autosave.js?v=1.6.0-preview-emerald-polish-0921";
-import { initPages } from "./pages.js?v=1.6.0-preview-ui-180-fs-0921-r2";
+import { initAutosave } from "./autosave.js?v=1.6.0-preview-lite-hybrid-0922";
+import { initPages } from "./pages.js?v=1.6.0-preview-lite-hybrid-0922";
 import { localizeShortcutLabels } from "./platform.js?v=1.6.0-preview-labeler-0917-1111";
 import { initModalDrag } from "./modal-drag.js?v=1.6.0-preview-common-year-login-0918-1302";
 import { initSteppers } from "./stepper.js?v=1.6.0-preview-labeler-0917-1111";
 import { initReferenceWindows } from "./reference-window.js?v=1.6.0-preview-common-year-login-0918-1302";
-import { initTutorial } from "./tutorial.js?v=1.6.0-preview-golden-export-save-0922";
+import { initTutorial } from "./tutorial.js?v=1.6.0-preview-lite-hybrid-0922";
 import { initAiInstallGuide } from "./ai-install-guide.js?v=1.6.0-preview-labeler-0917-1111";
-import { initAiPanel } from "./ai-panel.js?v=1.6.0-preview-lite-tools-0922b";
+import { initAiPanel } from "./ai-panel.js?v=1.6.0-preview-lite-hybrid-0922";
 
 const svg = document.getElementById("canvas");
 // Canvas interaction transfers keyboard ownership away from the last toolbar button.
@@ -110,6 +111,7 @@ const zoomReadout = document.getElementById("zoom-readout");
     void showAlert(message, { title: "전체화면" });
   };
   const toggleFullscreen = async () => {
+    if (document.documentElement.dataset.mode === "lite") return;
     let browserOperation = "enter";
     try {
       if (nativeFullscreen) {
@@ -197,6 +199,7 @@ const zoomReadout = document.getElementById("zoom-readout");
 
   if (btn) {
     btn.addEventListener("click", () => {
+      if (root.dataset.mode === "lite") return;
       const next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
       root.setAttribute("data-theme", next);
       localStorage.setItem("theme", next);
@@ -472,6 +475,7 @@ initDataPlot();
     if (detail) detail.hidden = !on;
   };
   gridBtn.addEventListener("click", () => {
+    if (document.documentElement.dataset.mode === "lite") return;
     const on = !state.get().grid.visible;
     state.update((s) => { s.grid.visible = on; });
     syncGridBtn(on);
@@ -517,6 +521,7 @@ initDataPlot();
       closeMenu();
     };
     centerBtn.addEventListener("click", () => {
+      if (document.documentElement.dataset.mode === "lite") return;
       menu.hidden = !menu.hidden;
       centerBtn.setAttribute("aria-expanded", String(!menu.hidden));
     });
@@ -543,6 +548,8 @@ initDataPlot();
   // 눈금자는 항상 켜짐(토글 UI 제거) — 명시적으로 한 번 켜 둔다.
   setRulerVisible(true);
 })();
+
+initLiteShell(state);
 
 /* ----- initial paint ----- */
 applyViewBox(state.get());

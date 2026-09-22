@@ -1,4 +1,8 @@
 const assert = require("node:assert/strict");
+const fs = require("node:fs");
+const path = require("node:path");
+const evidence = process.env.EVIDENCE_DIR || "/tmp/5e-lite-hybrid-qa";
+fs.mkdirSync(evidence, { recursive: true });
 const { chromium, webkit } = require(process.env.PLAYWRIGHT_MODULE || "playwright");
 
 const previewUrl = process.env.PREVIEW_URL || "http://127.0.0.1:8798/preview/?local=LITE-TOOLS-0922";
@@ -8,6 +12,8 @@ const previewUrl = process.env.PREVIEW_URL || "http://127.0.0.1:8798/preview/?lo
     const browser = await engine.launch({ headless: true });
     try {
       const page = await browser.newPage({ viewport: { width: 1600, height: 1000 } });
+      // Exercise Safari-style browser download; native OS pickers need interactive QA.
+      await page.addInitScript(() => { window.showSaveFilePicker = undefined; });
       await page.goto(previewUrl);
       const skipTutorial = page.getByRole("button", { name: "건너뛰기", exact: true });
       if (await skipTutorial.isVisible().catch(() => false)) await skipTutorial.click();
@@ -75,11 +81,12 @@ const previewUrl = process.env.PREVIEW_URL || "http://127.0.0.1:8798/preview/?lo
       await textInput.fill("텍스트");
       await textInput.press("Enter");
       assert.equal(await page.locator("html").getAttribute("data-lite-inspector"), "text");
-      assert.deepEqual(await page.locator("#panel-right [data-lite-control]:visible")
+      assert.deepEqual(await page.locator("#inspector [data-lite-control]:visible")
         .evaluateAll(controls => controls.map(control => control.dataset.liteControl)),
       ["font-size", "font-weight"],
       `${engine.name()} text inspector must expose only size and bold`);
 
+      await page.screenshot({ path: path.join(evidence, `${engine.name()}-text.png`) });
       await page.locator('.lite-tool-direct[data-symbol="labeler"]').click();
       await page.mouse.click(center.x - 100, center.y + 80);
       await page.mouse.click(center.x, center.y + 20);
@@ -88,7 +95,7 @@ const previewUrl = process.env.PREVIEW_URL || "http://127.0.0.1:8798/preview/?lo
       await labelInput.fill("지시선 라벨");
       await labelInput.press("Enter");
       assert.equal(await page.locator("html").getAttribute("data-lite-inspector"), "line");
-      assert.deepEqual(await page.locator("#panel-right [data-lite-control]:visible")
+      assert.deepEqual(await page.locator("#inspector [data-lite-control]:visible")
         .evaluateAll(controls => controls.map(control => control.dataset.liteControl)),
       ["stroke-width", "line-style"],
       `${engine.name()} leader-label inspector must expose only width and line style`);
@@ -96,7 +103,22 @@ const previewUrl = process.env.PREVIEW_URL || "http://127.0.0.1:8798/preview/?lo
       assert.ok(await page.locator("#scene g[data-id] line[stroke-dasharray]").count() > 0,
         `${engine.name()} leader-label line style must render on the canvas`);
 
-      console.log(`${engine.name()}: Lite route, tools, contextual inspector, AI choices, and canvas geometry passed`);
+      await page.screenshot({ path: path.join(evidence, `${engine.name()}-line.png`) });
+      await page.locator('#lite-save').click();
+      await page.locator('#export-overlay').waitFor({ state: 'visible' });
+      await page.screenshot({ path: path.join(evidence, `${engine.name()}-save.png`) });
+      const downloadPromise = page.waitForEvent('download');
+      await page.locator('#export-confirm').click();
+      const download = await downloadPromise;
+      assert.ok(download.suggestedFilename().endsWith('.png'));
+      assert.equal(await download.failure(), null);
+      await download.saveAs(path.join(evidence, `${engine.name()}-result.png`));
+      if (await page.locator('#export-overlay').isVisible()) await page.locator('#export-cancel').click();
+      await page.locator('#exam-library-open').click();
+      await page.locator('[data-unilib-close]').waitFor({ state: 'visible', timeout: 20000 });
+      await page.screenshot({ path: path.join(evidence, `${engine.name()}-library.png`) });
+      await page.locator('[data-unilib-close]').click();
+      console.log(`${engine.name()}: Lite tools, contextual edits, Pro round trip, PNG download, and library passed`);
     } finally {
       await browser.close();
     }

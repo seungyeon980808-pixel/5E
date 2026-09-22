@@ -13,12 +13,12 @@
 // we can distinguish "click on already-selected ??move allowed" from "click
 // selects a new object ??just select, no move this press."
 
-import { screenToWorld, getRenderScale } from "./viewport.js?v=1.6.0-preview-stable-view-0921";
-import { resolveSnap, resolveEndpointSnap, resolveRadialCenterSnap } from "./snap.js?v=1.6.0-preview-labeler-0917-1111";
-import { setSnapPreview, setSmartGuides, pendulumBBox } from "./render.js?v=1.6.0-preview-lite-tools-0922b";
-import { pickSelectableObjectFromEvent } from "./tools.js?v=1.6.0-preview-lite-tools-0922b";
-import { isObjectSelectable } from "./pick.js?v=1.6.0-preview-labeler-0917-1111";
-import { IMAGE_EDIT_SESSION_ID } from "./image-cutout.js?v=1.6.0-preview-labeler-0917-1111";
+import { screenToWorld, getRenderScale } from "./viewport.js?v=1.6.0-preview-lite-hybrid-0922";
+import { resolveSnap, resolveEndpointSnap, resolveRadialCenterSnap } from "./snap.js?v=1.6.0-preview-lite-hybrid-0922";
+import { setSnapPreview, setSmartGuides, pendulumBBox } from "./render.js?v=1.6.0-preview-lite-hybrid-0922";
+import { pickSelectableObjectFromEvent } from "./tools.js?v=1.6.0-preview-lite-hybrid-0922";
+import { isObjectSelectable } from "./pick.js?v=1.6.0-preview-lite-hybrid-0922";
+import { IMAGE_EDIT_SESSION_ID } from "./image-cutout.js?v=1.6.0-preview-lite-hybrid-0922";
 import { SHAPE_TYPES, SIZE_TYPES, FLIP_TYPES, POINT_ARRAY_TYPES,
          ENDPOINT_HANDLE_TYPES, TEXT_MEASURED_TYPES } from "./object-types.js?v=1.6.0-preview-labeler-0917-1111";
 

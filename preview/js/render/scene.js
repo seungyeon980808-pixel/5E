@@ -7,7 +7,7 @@
 // the projection stays anchored in world space through zoom/pan (the viewBox
 // alone changes what slice of that space is shown).
 
-import { getZoom, getRenderScale } from "../viewport.js?v=1.6.0-preview-stable-view-0921";
+import { getZoom, getRenderScale } from "../viewport.js?v=1.6.0-preview-lite-hybrid-0922";
 import { SVG_NS, rotPt, catmullRomPath } from "./core.js?v=1.6.0-preview-labeler-0917-1111";
 import { renderText } from "./labels.js?v=1.6.0-preview-labeler-0917-1111";
 import { makeFillPattern } from "./fill.js?v=1.6.0-preview-labeler-0917-1111";
@@ -57,7 +57,7 @@ import { SIZE_TYPES, TEXT_MEASURED_TYPES, POINT_ARRAY_TYPES, ENDPOINT_HANDLE_TYP
          zOrderObjects } from "../object-types.js?v=1.6.0-preview-labeler-0917-1111";
 import { resolveObjectStyle } from "../style-mode.js?v=1.6.0-preview-labeler-0917-1111";
 import { renderFormula } from "../formula.js?v=1.6.0-preview-labeler-0917-1111";
-import { IMAGE_EDIT_SESSION_ID } from "../image-cutout.js?v=1.6.0-preview-labeler-0917-1111";
+import { IMAGE_EDIT_SESSION_ID } from "../image-cutout.js?v=1.6.0-preview-lite-hybrid-0922";
 import {
   SELECTION_COLOR,
   SELECTION_DASH_PX,

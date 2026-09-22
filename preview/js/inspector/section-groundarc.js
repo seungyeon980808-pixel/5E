@@ -8,7 +8,7 @@
  */
 
 import { makeSection } from "./widgets.js?v=1.6.0-preview-labeler-0917-1111";
-import { groundArcRadius } from "../render.js?v=1.6.0-preview-lite-tools-0922b";
+import { groundArcRadius } from "../render.js?v=1.6.0-preview-lite-hybrid-0922";
 
 function row(labelText) {
   const r = document.createElement("div");

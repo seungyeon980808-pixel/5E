@@ -12,7 +12,7 @@
  */
 
 import { showPrompt, showConfirm } from "./ui-dialogs.js?v=1.6.0-preview-labeler-0917-1111";
-import { rebuildGroups } from "./transform.js?v=1.6.0-preview-labeler-0917-1111";
+import { rebuildGroups } from "./transform.js?v=1.6.0-preview-lite-hybrid-0922";
 import { savePageRuntime, restorePageRuntime } from "./page-history.js?v=1.6.0-preview-labeler-0917-1111";
 
 let _seq = 0;

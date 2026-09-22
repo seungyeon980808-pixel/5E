@@ -15,7 +15,7 @@ import { state } from "./state.js?v=1.6.0-preview-labeler-0917-1111";
 import { worldFromMath } from "./function-graph/coords.js?v=1.6.0-preview-labeler-0917-1111";
 import { makeDefaultCoordplane } from "./function-graph/defaults.js?v=1.6.0-preview-labeler-0917-1111";
 import { nextObjectId } from "./tools/id.js?v=1.6.0-preview-labeler-0917-1111";
-import { NODE_DEFAULT_SIZE } from "./tools/node-placement.js?v=1.6.0-preview-lite-tools-0922b";
+import { NODE_DEFAULT_SIZE } from "./tools/node-placement.js?v=1.6.0-preview-lite-hybrid-0922";
 
 // 점 객체 기본 크기(bbox mm) — 숫자를 복사해 두면 기본 크기를 바꿀 때 여기만 옛 값으로
 // 남는다(실제로 2.27 이 남아 있었다). node-placement.js 의 값을 그대로 가져다 쓴다.
