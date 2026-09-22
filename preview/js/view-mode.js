@@ -1,4 +1,5 @@
 import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-preview-labeler-0917-1111';
+import { setActiveTool } from './tools.js?v=1.6.0-preview-lite-tools-0922b';
 /* ===== VIEW MODE: Pro / Lite 모드 전환 =====
  *
  * 단축키를 모르면 쓰기 어려운 기능이 많아, 입문용 'Lite' 모드를 둔다.
@@ -16,12 +17,18 @@ import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-pre
 const MODE_KEY = "5e.mode";
 const MODES = ["pro", "lite"];
 const DEFAULT_MODE = "pro";
+const LITE_TOOLS = new Set(["V", "rotate", "CUT", "L", "P", "T", "LABELER"]);
+const LITE_SHORTCUT_KEYS = new Set(["v", "r", "l", "p", "e", "t"]);
 
 let _state = null;
 let _btn = null;
 let _savedLayerId = null; // Lite 진입 직전 activeLayerId(Pro 복귀 시 복원용)
 
 function loadMode() {
+  const params = new URLSearchParams(window.location.search);
+  const requestedMode = params.get("mode");
+  if (MODES.includes(requestedMode)) return requestedMode;
+  if (/^lite(?:-|$)/i.test(params.get("local") || "")) return "lite";
   let v = DEFAULT_MODE;
   try { v = localStorage.getItem(MODE_KEY) || DEFAULT_MODE; } catch (_) { /* ignore */ }
   return MODES.includes(v) ? v : DEFAULT_MODE;
@@ -47,13 +54,25 @@ function applyMode(mode, persist = true) {
     _btn.setAttribute("aria-pressed", String(m === "lite"));
     _btn.classList.toggle("is-on", m === "lite"); // 채워진 알약(켜짐) 표시
   }
+  const empty = document.getElementById("inspector-empty");
+  if (empty) {
+    empty.textContent = m === "lite"
+      ? "선·꺾은선·텍스트·지시선 라벨을 선택하면 필요한 속성만 표시됩니다."
+      : "선택된 오브젝트 없음";
+  }
   // Lite에서는 레이어 1만 보이므로, 활성 레이어를 1로 고정한다.
   if (m === "lite" && _state) {
     const s = _state.get();
-    if (s.activeLayerId !== 1) {
+    const resetTool = !LITE_TOOLS.has(s.activeTool);
+    if (s.activeLayerId !== 1 || resetTool) {
       // Pro로 되돌아갈 때 복원할 수 있도록 강제 변경 직전 값을 저장해둔다.
-      _savedLayerId = s.activeLayerId;
-      _state.update((st) => { st.activeLayerId = 1; st.selectedIds = []; st.targetedId = null; });
+      if (s.activeLayerId !== 1) _savedLayerId = s.activeLayerId;
+      _state.update((st) => {
+        st.activeLayerId = 1;
+        if (resetTool) { st.activeTool = "V"; st.draft = null; }
+        st.selectedIds = [];
+        st.targetedId = null;
+      });
     }
   } else if (m === "pro" && _state && _savedLayerId != null) {
     // Lite가 강제한 레이어1 고정을 되돌린다 — 저장된 레이어가 아직 존재할 때만 복원하고,
@@ -66,6 +85,7 @@ function applyMode(mode, persist = true) {
     }
     _savedLayerId = null;
   }
+  window.dispatchEvent(new CustomEvent("5e:view-mode-change", { detail: { mode: m } }));
   return m;
 }
 
@@ -87,6 +107,23 @@ export function initViewMode(state) {
     const cur = document.documentElement.getAttribute("data-mode") || DEFAULT_MODE;
     applyMode(cur === "lite" ? "pro" : "lite");
   });
+
+  document.getElementById("tool-cut-merged")?.addEventListener("click", (event) => {
+    if (document.documentElement.dataset.mode !== "lite") return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+    setActiveTool("CUT");
+  }, { capture: true });
+
+  window.addEventListener("keydown", (event) => {
+    if (document.documentElement.dataset.mode !== "lite") return;
+    if (event.target instanceof Element && event.target.closest("input, textarea, select, [contenteditable='true']")) return;
+    const key = String(event.key || "").toLowerCase();
+    if (LITE_SHORTCUT_KEYS.has(key) && !(key === "e" && (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey))) return;
+    if (!/^[a-z]$/.test(key) || ((event.metaKey || event.ctrlKey || event.altKey) && key !== "e")) return;
+    event.preventDefault();
+    event.stopImmediatePropagation();
+  }, { capture: true });
 
   applyMode(loadMode(), false);
 }

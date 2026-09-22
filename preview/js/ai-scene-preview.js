@@ -1,4 +1,4 @@
-import { renderObject } from "./render.js?v=1.6.0-preview-labeler-0917-1111";
+import { renderObject } from "./render.js?v=1.6.0-preview-lite-tools-0922b";
 import { makeFillPattern } from "./render/fill.js?v=1.6.0-preview-labeler-0917-1111";
 
 const SVG_NS = "http://www.w3.org/2000/svg";

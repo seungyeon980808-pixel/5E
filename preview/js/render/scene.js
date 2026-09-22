@@ -21,7 +21,7 @@ import {
   renderImage,
   renderSvgAsset,
 } from "./shapes.js?v=1.6.0-preview-labeler-0917-1111";
-import { renderAxes, renderAngleArc, renderRightAngle, renderLabeler } from "./annotations.js?v=1.6.0-preview-labeler-0917-1111";
+import { renderAxes, renderAngleArc, renderRightAngle, renderLabeler } from "./annotations.js?v=1.6.0-preview-lite-tools-0922b";
 import { renderCoordplane, renderFuncgraph } from "./coordplane.js?v=1.6.0-preview-labeler-0917-1111";
 import { renderCircuit } from "./circuit.js?v=1.6.0-preview-labeler-0917-1111";
 import { renderOptics, renderApparatus } from "./optics-apparatus.js?v=1.6.0-preview-labeler-0917-1111";

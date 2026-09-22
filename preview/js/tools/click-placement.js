@@ -20,14 +20,14 @@
 
 import { screenToWorld, getRenderScale } from "../viewport.js?v=1.6.0-preview-stable-view-0921";
 import { snapAngle, mathAngleDeg, snappedDeg, normalizeSweep } from "../geometry.js?v=1.6.0-preview-labeler-0917-1111";
-import { setSnapPreview } from "../render.js?v=1.6.0-preview-labeler-0917-1111";
+import { setSnapPreview } from "../render.js?v=1.6.0-preview-lite-tools-0922b";
 import { resolveEndpointSnap } from "../snap.js?v=1.6.0-preview-labeler-0917-1111";
 import { applyNewObjectStyleDefaults } from "../style-mode.js?v=1.6.0-preview-labeler-0917-1111";
 import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM } from "../state.js?v=1.6.0-preview-labeler-0917-1111";
 import { nextObjectId } from "./id.js?v=1.6.0-preview-labeler-0917-1111";
 import { initLabelerMagnifier } from "./labeler-magnifier.js?v=1.6.0-preview-labeler-0917-1111";
 import { initLabelerBranches } from "./labeler-branches.js?v=1.6.0-preview-labeler-0917-1111";
-import { openLabelerTextEditor } from "../text-editor.js?v=1.6.0-preview-labeler-0917-1111";
+import { openLabelerTextEditor } from "../text-editor.js?v=1.6.0-preview-lite-tools-0922b";
 import { mathFromWorld, worldFromMath } from "../function-graph/coords.js?v=1.6.0-preview-labeler-0917-1111";
 import { makeDefaultCoordplane } from "../function-graph/defaults.js?v=1.6.0-preview-labeler-0917-1111";
 import { snapKey } from "../platform.js?v=1.6.0-preview-labeler-0917-1111";
@@ -35,7 +35,7 @@ import {
   isSpaceHeld,
   makeLine, makeCircuit, makePolyline, makeCurve, isCommittable, getSymbolProps,
   DEFAULT_STROKE_WIDTH, MIN_SIZE,
-} from "../tools.js?v=1.6.0-preview-labeler-0917-1111";
+} from "../tools.js?v=1.6.0-preview-lite-tools-0922b";
 
 // SERIES(계열 추가): 클릭으로 점을 찍어 좌표평면 위에 직선/꺾은선 계열(funcgraph,
 // sourceKind:"points")을 만든다. 폴리라인(P)과 같은 클릭 라이프사이클(더블클릭/Enter로

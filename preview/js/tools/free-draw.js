@@ -15,7 +15,7 @@
 import { screenToWorld } from "../viewport.js?v=1.6.0-preview-stable-view-0921";
 import { simplifyRDP } from "../geometry.js?v=1.6.0-preview-labeler-0917-1111";
 import { nextObjectId } from "./id.js?v=1.6.0-preview-labeler-0917-1111";
-import { isSpaceHeld } from "../tools.js?v=1.6.0-preview-labeler-0917-1111";
+import { isSpaceHeld } from "../tools.js?v=1.6.0-preview-lite-tools-0922b";
 
 let _svg = null;
 let _state = null;

@@ -2585,6 +2585,23 @@
 #ai-image-panel .ai-combined-card .ai-preview-stage { cursor: grab; }
 #ai-image-panel .ai-combined-card .ai-preview-stage:active { cursor: grabbing; }
 #ai-image-panel .ai-output-processing-note { margin: 4px 0; color: var(--text-secondary); font-size: 10px; }
+.ai-output-processing-note-lite { display: none; }
+
+:root[data-mode="lite"] #ai-image-panel .ai-output-option-palette,
+:root[data-mode="lite"] #ai-image-panel .ai-output-option-thickness,
+:root[data-mode="lite"] #ai-image-panel .ai-separated-mode,
+:root[data-mode="lite"] #ai-image-panel .ai-output-processing-note-pro,
+:root[data-mode="lite"] #ai-image-panel .ai-conversion-options,
+:root[data-mode="lite"] #ai-image-panel .ai-advanced-settings,
+:root[data-mode="lite"] #ai-image-panel [data-ai-side-tab="chat"],
+:root[data-mode="lite"] #ai-image-panel [data-ai-editable-groups],
+:root[data-mode="lite"] #ai-image-panel [data-ai-separated-recovery],
+:root[data-mode="lite"] #ai-image-panel [data-ai-selected-output-note] {
+  display: none !important;
+}
+:root[data-mode="lite"] #ai-image-panel .ai-output-processing-note-lite {
+  display: block;
+}
 #ai-image-panel[data-ai-busy="true"] [data-ai-send]::before {
   content: ''; display: inline-block; width: 12px; height: 12px; margin-right: 7px;
   border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%;

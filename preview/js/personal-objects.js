@@ -12,7 +12,7 @@ import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-pre
 
 import { instantiateObjectsAt } from "./transform.js?v=1.6.0-preview-labeler-0917-1111";
 import { showAlert, showConfirm } from "./ui-dialogs.js?v=1.6.0-preview-labeler-0917-1111";
-import { renderObject } from "./render.js?v=1.6.0-preview-labeler-0917-1111";
+import { renderObject } from "./render.js?v=1.6.0-preview-lite-tools-0922b";
 import { getObjectBBox } from "./pick.js?v=1.6.0-preview-labeler-0917-1111";
 import { idbGet, idbSet, idbAvailable } from "./idb-store.js?v=1.6.0-preview-labeler-0917-1111";
 

@@ -285,7 +285,7 @@ const RASTER_ENGINE_VERSION = `imagegen-one-shot-v2+${REMOTE_INPUT_PLAN_VERSION}
 const FAST_SCENE_PANEL_COMPILE_VERSION = "motif-direct-v1";
 
 export const AI_ASSET_GENERATION_MODES = Object.freeze({ SINGLE: 'single', SEPARATED: 'separated' });
-export const AI_SEPARATION_MODES = Object.freeze({ AUTO: 'auto', GRID: 'grid', MANUAL: 'manual' });
+export const AI_SEPARATION_MODES = Object.freeze({ OFF: 'off', AUTO: 'auto', GRID: 'grid', MANUAL: 'manual' });
 export const AUTOMATIC_SEPARATION_OPTIONS = Object.freeze({ layout: 'auto', maxAssets: 128, maxDurationMs: 8_000 });
 const normalizeSeparationMode = value => Object.values(AI_SEPARATION_MODES).includes(value)
   ? value : AI_SEPARATION_MODES.AUTO;
@@ -645,7 +645,14 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     examPalette: localStorage.getItem('5e.aiOutputExamPalette') === 'true',
     lineThickness: Number(localStorage.getItem('5e.aiOutputLineThickness')),
   });
+  let liteBackgroundPolicy = localStorage.getItem('5e.aiLiteOutputBackgroundPolicy') === 'connected'
+    ? 'connected' : 'preserve';
   let selectedSeparationMode = normalizeSeparationMode(localStorage.getItem('5e.aiSeparationMode'));
+  let liteSeparationMode = normalizeSeparationMode(localStorage.getItem('5e.aiLiteSeparationMode'));
+  if (![AI_SEPARATION_MODES.OFF, AI_SEPARATION_MODES.AUTO].includes(liteSeparationMode)) {
+    liteSeparationMode = AI_SEPARATION_MODES.OFF;
+  }
+  let liteHiddenOptionSnapshot = null;
   const outputVariantCache = new WeakMap();
   const automaticSeparationCache = new Map();
   let automaticSeparationRun = null;
@@ -782,6 +789,13 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   };
   if (sourceMenu) registerEscapeLayer(sourceMenu, () => closeSourceMenu({ restoreFocus: true }));
   const imageOutputSummary = () => {
+    if (document.documentElement.dataset.mode === 'lite') {
+      const background = selectedImageOutputOptions.backgroundPolicy === 'connected'
+        ? '외부 배경 제거' : '배경 유지';
+      const separation = selectedSeparationMode === AI_SEPARATION_MODES.AUTO
+        ? '떨어진 물체 자동 분리' : '분리 사용 안 함';
+      return `${background} · 평가원식 무채색 선화 · ${separation}`;
+    }
     const background = {
       preserve: '흰 배경과 투명도를 원본대로 유지',
       connected: '물체 바깥의 흰색만 투명하게 처리',
@@ -791,6 +805,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     const thickness = selectedImageOutputOptions.lineThickness
       ? `선 굵기 +${selectedImageOutputOptions.lineThickness}px` : '원본 굵기';
     const separation = {
+      off: '객체 분리 안 함',
       auto: '객체 자동 감지',
       grid: '격자 기준 분리',
       manual: '영역 직접 지정',
@@ -1090,6 +1105,67 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       button.setAttribute("aria-pressed", String(active));
     });
     syncConversionSummary();
+  };
+  const syncLiteModeUi = () => {
+    const lite = document.documentElement.dataset.mode === 'lite';
+    const option = (select, value) => select?.querySelector(`option[value="${value}"]`);
+    const offOption = option(separationModeSelect, AI_SEPARATION_MODES.OFF);
+    const gridOption = option(separationModeSelect, AI_SEPARATION_MODES.GRID);
+    const manualOption = option(separationModeSelect, AI_SEPARATION_MODES.MANUAL);
+    const allWhiteOption = option(backgroundPolicySelect, 'all-near-white');
+    for (const item of [gridOption, manualOption, allWhiteOption]) {
+      if (!item) continue;
+      item.hidden = lite;
+      item.disabled = lite;
+    }
+    if (offOption) {
+      offOption.hidden = !lite;
+      offOption.disabled = !lite;
+    }
+    if (lite) {
+      if (!liteHiddenOptionSnapshot) {
+        liteHiddenOptionSnapshot = {
+          mode: selectedMode,
+          outputEngine: selectedOutputEngine,
+          generationMode: selectedAssetGenerationMode,
+          backgroundPolicy: selectedImageOutputOptions.backgroundPolicy,
+          examPalette: selectedImageOutputOptions.examPalette,
+          lineThickness: selectedImageOutputOptions.lineThickness,
+          separationMode: selectedSeparationMode,
+        };
+      }
+      selectedMode = KICE_IMAGE_MODE;
+      selectedOutputEngine = KICE_IMAGE_OUTPUT_ENGINE;
+      selectedAssetGenerationMode = AI_ASSET_GENERATION_MODES.SINGLE;
+      selectedImageOutputOptions = normalizeImageOutputOptions({
+        ...selectedImageOutputOptions,
+        examPalette: true,
+        lineThickness: 0,
+        backgroundPolicy: liteBackgroundPolicy,
+      });
+      selectedSeparationMode = liteSeparationMode;
+    } else {
+      if (liteHiddenOptionSnapshot) {
+        liteBackgroundPolicy = selectedImageOutputOptions.backgroundPolicy;
+        liteSeparationMode = selectedSeparationMode;
+        selectedMode = liteHiddenOptionSnapshot.mode;
+        selectedOutputEngine = liteHiddenOptionSnapshot.outputEngine;
+        selectedAssetGenerationMode = liteHiddenOptionSnapshot.generationMode;
+        selectedSeparationMode = liteHiddenOptionSnapshot.separationMode;
+        selectedImageOutputOptions = normalizeImageOutputOptions({
+          ...selectedImageOutputOptions,
+          backgroundPolicy: liteHiddenOptionSnapshot.backgroundPolicy,
+          examPalette: liteHiddenOptionSnapshot.examPalette,
+          lineThickness: liteHiddenOptionSnapshot.lineThickness,
+        });
+        liteHiddenOptionSnapshot = null;
+      }
+    }
+    generationModeSelect.value = selectedAssetGenerationMode;
+    syncMode();
+    syncOutputEngine();
+    syncOutputProcessingUi();
+    syncSelectedOutputActions();
   };
   const syncReferenceSummary = () => {
     referenceCount.textContent = String(attachments.length);
@@ -1590,7 +1666,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   function startAutomaticSeparation(item) {
     if (panel.dataset.aiSharingMode === 'view') return Promise.resolve(null);
     if (!candidateUsesAutomaticSeparation(item)) return Promise.resolve(null);
-    if (selectedSeparationMode === AI_SEPARATION_MODES.MANUAL) return Promise.resolve(null);
+    if ([AI_SEPARATION_MODES.OFF, AI_SEPARATION_MODES.MANUAL].includes(selectedSeparationMode)) return Promise.resolve(null);
     if (item.automaticSeparationState === 'ready' && item.automaticSeparationPrepared) {
       return Promise.resolve(item.automaticSeparationPrepared);
     }
@@ -1659,7 +1735,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     item.automaticSeparationPrepared = null;
     item.automaticSeparationKey = '';
     item.automaticSeparationCacheHit = false;
-    if (selectedSeparationMode === AI_SEPARATION_MODES.MANUAL) syncSelectedOutputActions();
+    if ([AI_SEPARATION_MODES.OFF, AI_SEPARATION_MODES.MANUAL].includes(selectedSeparationMode)) syncSelectedOutputActions();
     else void startAutomaticSeparation(item);
   }
 
@@ -1725,7 +1801,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     const outputNote = panel.querySelector('[data-ai-selected-output-note]');
     const nextAction = separatedCandidateNextAction(item);
     if (groups) {
-      const automatic = candidateUsesAutomaticSeparation(item);
+      const automatic = candidateUsesAutomaticSeparation(item) && selectedSeparationMode !== AI_SEPARATION_MODES.OFF;
       const manual = automatic && selectedSeparationMode === AI_SEPARATION_MODES.MANUAL;
       const automaticState = manual ? 'manual' : automatic ? (item.automaticSeparationState || 'idle') : '';
       const inserted = automatic && candidateAlreadyInserted(item);
@@ -2340,6 +2416,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     syncMode();
     syncQualityMode();
     syncOutputEngine();
+    syncLiteModeUi();
     syncReferenceSummary();
     selectedCandidateId = tab.selectedCandidateId || generatedImages.at(-1)?.id || null;
     panel.dataset.aiSelectedCandidateId = selectedCandidateId || "";
@@ -3165,6 +3242,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   if (desktop?.web) window.addEventListener('5e:web-ai-status', () => { void refresh(); });
   const open = async ({ reference, references = [], prompt, startGeneration = false, placement = "separate", groups = null, reveal = true } = {}) => {
     await workspaceReady;
+    syncLiteModeUi();
     const selectedObject=state.get().selectedIds?.length === 1 ? state.get().objects.find(o=>state.get().selectedIds?.includes(o.id)&&o.type==="image"&&o.aiTaskId) : null;
     if (!busy && selectedObject && !reference && !references.length && taskTabs.has(selectedObject.aiTaskId)) {
       restoreTaskTab(selectedObject.aiTaskId);
@@ -3778,7 +3856,9 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       ...selectedImageOutputOptions,
       backgroundPolicy: backgroundPolicySelect.value,
     });
-    localStorage.setItem('5e.aiOutputBackgroundPolicy', selectedImageOutputOptions.backgroundPolicy);
+    const lite = document.documentElement.dataset.mode === 'lite';
+    if (lite) liteBackgroundPolicy = selectedImageOutputOptions.backgroundPolicy;
+    localStorage.setItem(lite ? '5e.aiLiteOutputBackgroundPolicy' : '5e.aiOutputBackgroundPolicy', selectedImageOutputOptions.backgroundPolicy);
     syncOutputProcessingUi();
     refreshOutputPreviews();
     restartSelectedAutomaticSeparation();
@@ -3814,11 +3894,15 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   separationModeSelect?.addEventListener('change', () => {
     if (busy) { syncOutputProcessingUi(); return; }
     selectedSeparationMode = normalizeSeparationMode(separationModeSelect.value);
-    localStorage.setItem('5e.aiSeparationMode', selectedSeparationMode);
+    const lite = document.documentElement.dataset.mode === 'lite';
+    if (lite) liteSeparationMode = selectedSeparationMode;
+    localStorage.setItem(lite ? '5e.aiLiteSeparationMode' : '5e.aiSeparationMode', selectedSeparationMode);
     syncOutputProcessingUi();
     restartSelectedAutomaticSeparation('separation-mode-changed');
     captureActiveTaskTab(); persistTasks();
-    setStatus(selectedSeparationMode === AI_SEPARATION_MODES.MANUAL
+    setStatus(selectedSeparationMode === AI_SEPARATION_MODES.OFF
+      ? '생성 결과를 한 장의 이미지로 유지합니다.'
+      : selectedSeparationMode === AI_SEPARATION_MODES.MANUAL
       ? '생성 결과에서 분리할 영역을 직접 지정할 수 있습니다.'
       : selectedSeparationMode === AI_SEPARATION_MODES.GRID
         ? '생성 결과를 격자 기준으로 다시 분석합니다.'
@@ -4683,6 +4767,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   window.addEventListener('pagehide',()=>{void taskPersistence.flush();});
   window.addEventListener('5e:shortcut-platform-change', syncTaskDeleteShortcutHints);
   window.addEventListener('5e:shortcut-platform-change', syncSourceShortcutHints);
+  window.addEventListener('5e:view-mode-change', syncLiteModeUi);
   if (!taskTabs.size) createTaskTab();
   workspaceReady=(async()=>{try{const recovered=recoverTaskWorkspaceSnapshot(await taskStore?.get('workspace'));if(Array.isArray(recovered?.tabs)){if(recovered.sharingMode)panel.dataset.aiSharingMode=recovered.sharingMode;taskTabs.clear();for(const tab of recovered.tabs)taskTabs.set(tab.id,tab);taskTabSerial=Math.max(taskTabSerial,Number(recovered.taskTabSerial)||0);imageSerial=Math.max(imageSerial,Number(recovered.imageSerial)||0);if(taskTabs.size)restoreTaskTab(recovered.activeTaskTabId);else{activeTaskTabId=null;renderTaskTabs();}persistTasks();}}catch(error){addLog(`이전 이미지 작업 복원 실패: ${error.message}`,"error");}})();
   if (reviewModelSelect) {
@@ -4699,6 +4784,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   syncMode();
   syncQualityMode();
   syncOutputEngine();
+  syncLiteModeUi();
   syncReferenceSummary();
   syncSourceShortcutHints();
   setBusy(false);
