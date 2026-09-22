@@ -24,7 +24,7 @@ import { decodeScopedPng } from './ai-scoped-edit-png.js';
 import { createScopedEditComparison } from './ai-scoped-edit-comparison.js';
 import { createImageCommentController, buildCommentRequest, PRESERVE_UNREQUESTED } from "./ai-image-comments.js?v=1";
 import { IndexedDBOutputCacheBackend } from "./ai-output-cache-store.js?v=1.5.3";
-import { insertImageFromSrc } from "./image-paste.js?v=1.4.0";
+import { insertImageFromSrc } from "./image-paste.js?v=1.6.0-preview-lite-hybrid-0922";
 import { openEditableAssetsDialog } from "./ai-editable-assets-dialog.js";
 import { insertEditableAssets } from "./ai-editable-assets.js";
 import { prepareSeparatedAssets, SEPARATED_ASSETS_PROMPT } from "./ai-separated-assets.js";
@@ -53,7 +53,7 @@ import {
   LOCAL_ASSET_ROUTER_VERSION,
   matchLocalAssetRequest,
 } from "./ai-local-asset-router.js?v=1.5.3";
-import { fastSceneToSvgDataUrl, insertFastSceneIntoState } from "./ai-scene-preview.js?v=1.5.3";
+import { fastSceneToSvgDataUrl, insertFastSceneIntoState } from "./ai-scene-preview.js?v=1.6.0-preview-lite-hybrid-0922";
 import {
   buildExactOutputCacheDescriptor,
   createExactOutputCacheKey,

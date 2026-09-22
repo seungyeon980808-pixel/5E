@@ -8,8 +8,8 @@
 // [이미지로 삽입]은 image-paste.js의 기존 삽입 경로(insertImageFromSrc)를 재사용
 // — dataURL로 넣어 프로젝트 저장 파일이 라이브러리 폴더 없이도 자기완결되게 한다. */
 
-import { insertImageFromSrc } from "./image-paste.js?v=1.6.0-preview-labeler-0917-1111";
-import { openObjectifyWithFile } from "./image-objectify.js?v=1.6.0-preview-compact-0922";
+import { insertImageFromSrc } from "./image-paste.js?v=1.6.0-preview-lite-hybrid-0922";
+import { openObjectifyWithFile } from "./image-objectify.js?v=1.6.0-preview-lite-hybrid-0922";
 
 import { openReferenceWindow } from "./reference-window.js?v=1.6.0-preview-common-year-login-0918-1302";
 import { setOpenOrigin } from "./modal-motion.js?v=1.6.0-preview-labeler-0917-1111";

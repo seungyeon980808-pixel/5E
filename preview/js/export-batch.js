@@ -15,8 +15,8 @@
  * 쓴다. 페이지별로 그 페이지의 4필드를 담은 스냅샷 상태를 만들어 넘긴다.
  */
 
-import { rasterizeExportCanvas } from "./svg-export.js?v=1.6.0-preview-golden-export-save-0922";
-import { commitActivePage } from "./pages.js?v=1.6.0-preview-repair-0921";
+import { rasterizeExportCanvas } from "./svg-export.js?v=1.6.0-preview-lite-hybrid-0922";
+import { commitActivePage } from "./pages.js?v=1.6.0-preview-lite-hybrid-0922";
 import { showAlert } from "./ui-dialogs.js?v=1.6.0-preview-labeler-0917-1111";
 import {
   FS_DIR_SUPPORTED, loadSavedDir, currentDir, ensureDirPermission, pickDir, clearDir,

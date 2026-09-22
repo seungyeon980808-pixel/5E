@@ -1,5 +1,5 @@
 import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-preview-labeler-0917-1111';
-import { setActiveTool } from './tools.js?v=1.6.0-preview-lite-tools-0922b';
+import { setActiveTool } from './tools.js?v=1.6.0-preview-lite-hybrid-0922';
 /* ===== VIEW MODE: Pro / Lite 모드 전환 =====
  *
  * 단축키를 모르면 쓰기 어려운 기능이 많아, 입문용 'Lite' 모드를 둔다.

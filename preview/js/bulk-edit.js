@@ -15,8 +15,8 @@ import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-pre
 import { ptToMm, MIN_TEXT_PT, TEXT_FONTS, DEFAULT_TEXT_FONT } from "./state.js?v=1.6.0-preview-labeler-0917-1111";
 import { SHAPE_TYPES } from "./object-types.js?v=1.6.0-preview-labeler-0917-1111";
 import { showAlert } from "./ui-dialogs.js?v=1.6.0-preview-labeler-0917-1111";
-import { getObjectBBox } from "./pick.js?v=1.6.0-preview-labeler-0917-1111";
-import { translateObject } from "./transform.js?v=1.6.0-preview-labeler-0917-1111";
+import { getObjectBBox } from "./pick.js?v=1.6.0-preview-lite-hybrid-0922";
+import { translateObject } from "./transform.js?v=1.6.0-preview-lite-hybrid-0922";
 
 let _state = null;
 let _overlay = null;

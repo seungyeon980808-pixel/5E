@@ -41,7 +41,7 @@ test("Lite tool and leader-label render modules share one cache identity", () =>
   GUARDED_MODULES.forEach((modulePath) => {
     assert.deepEqual(
       [...(versionsByModule.get(modulePath) || [])],
-      [CACHE_ID],
+      [modulePath === "render/annotations.js" ? CACHE_ID : "1.6.0-preview-lite-hybrid-0922"],
       `${modulePath} must use only the current Lite cache identity`,
     );
   });

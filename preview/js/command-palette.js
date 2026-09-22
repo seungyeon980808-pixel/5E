@@ -17,10 +17,10 @@ import { modKey, shortcutKey, isEditingTarget, isComposingKey, keyLabel } from "
  *   - 오브젝트는 search.js와 동일한 데이터(TEMPLATES/퍼스널)를 재사용해 생성한다.
  */
 
-import { TEMPLATES, activateTemplate, buildSymbolIcon, sizeIconViewBox } from "./templates.js?v=1.6.0-preview-labeler-0917-1111";
-import { listPersonalItems, insertPersonalItem } from "./personal-objects.js?v=1.6.0-preview-labeler-0917-1111";
+import { TEMPLATES, activateTemplate, buildSymbolIcon, sizeIconViewBox } from "./templates.js?v=1.6.0-preview-lite-hybrid-0922";
+import { listPersonalItems, insertPersonalItem } from "./personal-objects.js?v=1.6.0-preview-lite-hybrid-0922";
 import { state } from "./state.js?v=1.6.0-preview-labeler-0917-1111";
-import { trimSelectedBoxMargins } from "./erase-tool.js?v=1.6.0-preview-labeler-0917-1111";
+import { trimSelectedBoxMargins } from "./erase-tool.js?v=1.6.0-preview-lite-hybrid-0922";
 
 const CATEGORY_ORDER = ["공통", "광학", "회로", "역학"];
 

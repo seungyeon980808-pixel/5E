@@ -1,4 +1,4 @@
-import { screenToWorld } from "../viewport.js?v=1.6.0-preview-stable-view-0921";
+import { screenToWorld } from "../viewport.js?v=1.6.0-preview-lite-hybrid-0922";
 
 const NS = "http://www.w3.org/2000/svg";
 let runtime = null;

@@ -11,15 +11,15 @@ import { resolveObjectStyle } from "./style-mode.js?v=1.6.0-preview-labeler-0917
 import {
   SHAPE_TYPES, LINE_TYPES, CIRCUIT_HEIGHT_ELEMENTS, supportsDash, isColorDragging,
 } from "./inspector/widgets.js?v=1.6.0-preview-labeler-0917-1111";
-import { nodeDiameterFromBox } from "./tools/node-placement.js?v=1.6.0-preview-lite-tools-0922b";
+import { nodeDiameterFromBox } from "./tools/node-placement.js?v=1.6.0-preview-lite-hybrid-0922";
 import { createInspectorContext } from "./inspector/context.js?v=1.6.0-preview-labeler-0917-1111";
 import { buildLineSection } from "./inspector/section-line.js?v=1.6.0-preview-lite-tools-0922b";
 import { buildGroupSection } from "./inspector/section-group.js?v=1.6.0-preview-labeler-0917-1111";
 import { buildTextSection } from "./inspector/section-text.js?v=1.6.0-preview-lite-tools-0922b";
 import { buildFillSection } from "./inspector/section-fill.js?v=1.6.0-preview-labeler-0917-1111";
-import { buildGeometrySection } from "./inspector/section-geometry.js?v=1.6.0-preview-compact-0922";
+import { buildGeometrySection } from "./inspector/section-geometry.js?v=1.6.0-preview-lite-hybrid-0922";
 import { buildProtectSection } from "./inspector/section-protect.js?v=1.6.0-preview-labeler-0917-1111";
-import { buildImageSection } from "./inspector/section-image.js?v=1.6.0-preview-repair-0921";
+import { buildImageSection } from "./inspector/section-image.js?v=1.6.0-preview-lite-hybrid-0922";
 import { buildPendulumSection } from "./inspector/section-pendulum.js?v=1.6.0-preview-labeler-0917-1111";
 import { buildSpringSection } from "./inspector/section-spring.js?v=1.6.0-preview-labeler-0917-1111";
 import { buildApparatusSection } from "./inspector/section-apparatus.js?v=1.6.0-preview-labeler-0917-1111";
@@ -28,7 +28,7 @@ import { buildCoordplaneSection } from "./inspector/section-coordplane.js?v=1.6.
 import { buildFuncgraphSection } from "./inspector/section-funcgraph.js?v=1.6.0-preview-labeler-0917-1111";
 import { buildArtboardSection } from "./inspector/section-artboard.js?v=1.6.0-preview-labeler-0917-1111";
 import { buildLayersSection } from "./inspector/section-layers.js?v=1.6.0-preview-labeler-0917-1111";
-import { buildGlobalImageSection } from "./inspector/section-global-image.js?v=1.6.0-preview-golden-export-save-0922";
+import { buildGlobalImageSection } from "./inspector/section-global-image.js?v=1.6.0-preview-lite-hybrid-0922";
 
 /* ===== PUBLIC ===== */
 export function initInspector(state) {

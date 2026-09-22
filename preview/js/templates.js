@@ -22,8 +22,8 @@
 //               tool. The registry only names which tool + variant to arm.
 
 import { state } from "./state.js?v=1.6.0-preview-labeler-0917-1111";
-import { armSymbol } from "./tools.js?v=1.6.0-preview-lite-tools-0922b";
-import { renderObject } from "./render.js?v=1.6.0-preview-lite-tools-0922b";
+import { armSymbol } from "./tools.js?v=1.6.0-preview-lite-hybrid-0922";
+import { renderObject } from "./render.js?v=1.6.0-preview-lite-hybrid-0922";
 import { applyNewObjectStyleDefaults } from "./style-mode.js?v=1.6.0-preview-labeler-0917-1111";
 import { getSvgAsset } from "./svg-assets.js?v=1.6.0-preview-labeler-0917-1111";
 import { TOOL_ICONS } from "./tool-icons.js?v=1.6.0-preview-labeler-0917-1111";

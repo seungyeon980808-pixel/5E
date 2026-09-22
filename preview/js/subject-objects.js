@@ -4,7 +4,7 @@ import {
   renderSymbolsForCategories,
   renderSymbolsForIds,
   sizeIconViewBox,
-} from "./templates.js?v=1.6.0-preview-labeler-0917-1111";
+} from "./templates.js?v=1.6.0-preview-lite-hybrid-0922";
 
 const SUBJECTS = {
   p: {

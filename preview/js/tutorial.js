@@ -21,10 +21,10 @@ import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-pre
  */
 
 import { state } from "./state.js?v=1.6.0-preview-labeler-0917-1111";
-import { addPage, switchPage } from "./pages.js?v=1.6.0-preview-repair-0921";
+import { addPage, switchPage } from "./pages.js?v=1.6.0-preview-lite-hybrid-0922";
 import { showConfirm } from "./ui-dialogs.js?v=1.6.0-preview-labeler-0917-1111";
-import { buildExportSvg } from "./svg-export.js?v=1.6.0-preview-golden-export-save-0922";
-import { COURSES, getCourse } from "./tutorial-courses.js?v=1.6.0-preview-repair-0921";
+import { buildExportSvg } from "./svg-export.js?v=1.6.0-preview-lite-hybrid-0922";
+import { COURSES, getCourse } from "./tutorial-courses.js?v=1.6.0-preview-lite-hybrid-0922";
 
 /* ===== 저장 (localStorage) ===== */
 
