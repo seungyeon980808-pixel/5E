@@ -67,6 +67,36 @@
   flex-direction: column;
 }
 
+[data-lite-control="font-weight"] {
+  display: none !important;
+}
+
+/* Lite uses the same inspector wiring but reveals only the two contextual groups
+   approved for the reduced editor. Inline display values still decide whether a
+   supported row applies to the selected object. */
+:root[data-mode="lite"] #inspector > :not(#inspector-empty):not(#inspector-content) {
+  display: none !important;
+}
+:root[data-mode="lite"] #inspector-content > :not([data-lite-section]) {
+  display: none !important;
+}
+:root[data-mode="lite"] [data-lite-section] .insp-body > :not([data-lite-control]) {
+  display: none !important;
+}
+:root[data-mode="lite"] [data-lite-control="font-weight"] {
+  display: flex !important;
+}
+:root[data-mode="lite"][data-lite-inspector="line"] [data-lite-section="text"],
+:root[data-mode="lite"][data-lite-inspector="text"] [data-lite-section="line"] {
+  display: none !important;
+}
+:root[data-mode="lite"][data-lite-inspector="none"] #inspector-content {
+  display: none !important;
+}
+:root[data-mode="lite"][data-lite-inspector="none"] #inspector-empty {
+  display: block !important;
+}
+
 /* ----- Collapsible section ----- */
 .insp-section {
   border-bottom: 1px solid var(--border-muted);

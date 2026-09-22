@@ -36,6 +36,7 @@ export function buildTextSection(ctx) {
 
   const fontSizeRow = document.createElement("div");
   fontSizeRow.className = "insp-row";
+  fontSizeRow.dataset.liteControl = "font-size";
   const fontSizeLbl = document.createElement("label");
   fontSizeLbl.className = "insp-field-label";
   fontSizeLbl.textContent = "크기";
@@ -52,6 +53,19 @@ export function buildTextSection(ctx) {
   fontSizeRow.appendChild(fontSizeNum);
   fontSizeRow.appendChild(fontSizeUnit);
   secTextBody.appendChild(fontSizeRow);
+
+  const boldRow = document.createElement("div");
+  boldRow.className = "insp-row";
+  boldRow.dataset.liteControl = "font-weight";
+  const boldCb = document.createElement("input");
+  boldCb.type = "checkbox";
+  boldCb.className = "insp-cb";
+  const boldLbl = document.createElement("label");
+  boldLbl.className = "insp-field-label";
+  boldLbl.textContent = "굵게";
+  boldRow.appendChild(boldCb);
+  boldRow.appendChild(boldLbl);
+  secTextBody.appendChild(boldRow);
 
   const italicRow = document.createElement("div");
   italicRow.className = "insp-row";
@@ -160,6 +174,7 @@ export function buildTextSection(ctx) {
     });
   }
   fontFamSel.addEventListener("change", () => applyTextProp("fontFamily", fontFamSel.value));
+  boldCb.addEventListener("change", () => applyTextProp("fontWeight", boldCb.checked ? "bold" : "normal"));
   italicCb.addEventListener("change", () => {
     const val = italicCb.checked;
     const s = state.get();
@@ -244,6 +259,7 @@ export function buildTextSection(ctx) {
   // 예전의 "글꼴 설정..." 버튼(별도 모달)은 제거됐다. 글꼴/크기/굵게/기울임과 심볼
   // 팔레트는 이제 통합 텍스트/라벨 편집기(더블클릭·텍스트 도구) 안에서 모두 처리한다.
   const secText = makeSection("글꼴", secTextBody);
+  secText.dataset.liteSection = "text";
 
-  return { secText, fontFamSel, fontSizeNum, italicCb, haloCb, vertCb, lsRange, lsNum, wsRange, wsNum };
+  return { secText, fontFamSel, fontSizeNum, boldCb, italicCb, haloCb, vertCb, lsRange, lsNum, wsRange, wsNum };
 }

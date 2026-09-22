@@ -24,7 +24,7 @@ import { pickSelectableObjectAtPoint } from "./pick.js?v=1.6.0-preview-labeler-0
 // tools.js owns the Space-pan tracker (setupDrawing keydown/keyup). The editor only
 // READS it in a few "don't act while panning" guards, so we import a getter rather
 // than duplicate the tracker (which would silently diverge).
-import { isSpaceHeld } from "./tools.js?v=1.6.0-preview-labeler-0917-1111";
+import { isSpaceHeld } from "./tools.js?v=1.6.0-preview-lite-tools-0922b";
 
 // On-screen px of the text editor (matches .text-editor-overlay font-size). Used by
 // _syncEditorWidth's fallback font string; replicated here since the constant lives

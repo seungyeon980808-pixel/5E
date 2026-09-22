@@ -600,24 +600,32 @@ body { zoom: var(--ui-zoom, 1); }
 /* Lite 숨김 항목: 과목별/퍼스널 오브젝트(+저장) · 전체 통일/수정 · 오브젝트 검색 */
 :root[data-mode="lite"] #subject-section,
 :root[data-mode="lite"] #personal-section,
+:root[data-mode="lite"] #advanced-section,
 :root[data-mode="lite"] #personal-object-save,
 :root[data-mode="lite"] #bulk-edit-open,
-:root[data-mode="lite"] #object-search-trigger { display: none !important; }
+:root[data-mode="lite"] #object-search-trigger,
+:root[data-mode="lite"] #image-objectify-open { display: none !important; }
 /* 레이어: 1만 표시(활성 레이어 고정은 view-mode.js가 처리) */
 :root[data-mode="lite"] .insp-layer-row:not([data-layer-id="1"]) { display: none; }
 /* 도구 버튼: 크게 + 아이콘 아래 단축키 표시 */
+.lite-tool-direct { display: none !important; }
 :root[data-mode="lite"] #tool-list .tool-btn {
   flex-direction: column; aspect-ratio: auto; min-height: 54px;
   padding: 8px 4px 6px; gap: 4px;
 }
+:root[data-mode="lite"] #tool-list .tool-btn:not([data-lite-label]) { display: none !important; }
+:root[data-mode="lite"] #tool-list .lite-tool-direct { display: flex !important; }
 :root[data-mode="lite"] #tool-list .tool-btn kbd .tool-ico { width: 23px; height: 23px; }
 :root[data-mode="lite"] #tool-list .tool-btn kbd .tool-letter { width: 23px; height: 23px; font-size: 19px; }
-:root[data-mode="lite"] #tool-list .tool-btn[data-sc]::after {
-  content: attr(data-sc);
-  font: 600 10px/1 "IBM Plex Mono", monospace;
+:root[data-mode="lite"] #tool-list .tool-btn[data-lite-label]::after {
+  content: attr(data-lite-label);
+  font: 600 10px/1.15 "IBM Plex Sans KR", sans-serif;
   color: var(--text-secondary); letter-spacing: .02em;
+  white-space: nowrap;
 }
-:root[data-mode="lite"] #tool-list .tool-btn.is-active[data-sc]::after { color: rgba(255, 255, 255, .85); }
+:root[data-mode="lite"] #tool-list .tool-btn.is-active[data-lite-label]::after { color: rgba(255, 255, 255, .85); }
+:root[data-mode="lite"] #chooser-cut [data-tool="DELAYED_CUT"],
+:root[data-mode="lite"] #chooser-cut [data-tool="ERASE"] { display: none !important; }
 
 /* Beta label: red "[시범공개]" badge before the program name (brand + footer) */
 .beta-label {

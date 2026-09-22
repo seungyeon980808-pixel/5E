@@ -15,8 +15,8 @@
 
 import { screenToWorld, getRenderScale } from "./viewport.js?v=1.6.0-preview-stable-view-0921";
 import { resolveSnap, resolveEndpointSnap, resolveRadialCenterSnap } from "./snap.js?v=1.6.0-preview-labeler-0917-1111";
-import { setSnapPreview, setSmartGuides, pendulumBBox } from "./render.js?v=1.6.0-preview-labeler-0917-1111";
-import { pickSelectableObjectFromEvent } from "./tools.js?v=1.6.0-preview-labeler-0917-1111";
+import { setSnapPreview, setSmartGuides, pendulumBBox } from "./render.js?v=1.6.0-preview-lite-tools-0922b";
+import { pickSelectableObjectFromEvent } from "./tools.js?v=1.6.0-preview-lite-tools-0922b";
 import { isObjectSelectable } from "./pick.js?v=1.6.0-preview-labeler-0917-1111";
 import { IMAGE_EDIT_SESSION_ID } from "./image-cutout.js?v=1.6.0-preview-labeler-0917-1111";
 import { SHAPE_TYPES, SIZE_TYPES, FLIP_TYPES, POINT_ARRAY_TYPES,

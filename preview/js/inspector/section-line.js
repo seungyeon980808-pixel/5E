@@ -7,6 +7,8 @@ import { makeColorPicker, makeSection, supportsDash, DASH_PRESETS } from "./widg
 // 패턴 유효성 판정은 렌더러(applyDash)와 같은 함수를 써야 인스펙터 표시와 실제 그림이 안 어긋난다.
 import { normalizeDashPattern } from "../render/core.js?v=1.6.0-preview-labeler-0917-1111";
 
+const supportsLineStyle = (obj) => supportsDash(obj) || obj?.type === "labeler";
+
 export function buildLineSection(ctx) {
   const { state, snapBefore, pushSnap, makeLabelSizeRow, makeLabelTypeRow } = ctx;
 
@@ -35,6 +37,7 @@ export function buildLineSection(ctx) {
   // Stroke width row
   const widthRow = document.createElement("div");
   widthRow.className = "insp-row";
+  widthRow.dataset.liteControl = "stroke-width";
   const widthLbl = document.createElement("label");
   widthLbl.className = "insp-field-label";
   widthLbl.textContent = "선 굵기";
@@ -362,6 +365,7 @@ export function buildLineSection(ctx) {
   // ---- Dash presets + length/gap sliders (line/polyline/curve) ----
   const dashRow = document.createElement("div");
   dashRow.className = "insp-row";
+  dashRow.dataset.liteControl = "line-style";
   const dashLbl = document.createElement("label");
   dashLbl.className = "insp-field-label";
   dashLbl.textContent = "선 종류";
@@ -390,7 +394,7 @@ export function buildLineSection(ctx) {
       const snap = JSON.parse(JSON.stringify(s.objects));
       state.update((s2) => {
         const o = s2.objects.find((o) => o.id === ids[0]);
-        if (supportsDash(o)) {
+        if (supportsLineStyle(o)) {
           if (Array.isArray(preset.dashPattern)) {
             // 패턴 프리셋: dashPattern 이 켜지면 2값은 solid(0,0)로 내려 상호배타를 지킨다.
             o.dashPattern = preset.dashPattern.slice();
@@ -477,7 +481,7 @@ export function buildLineSection(ctx) {
       if (ids.length !== 1) return;
       state.update((s2) => {
         const o = s2.objects.find((o) => o.id === ids[0]);
-        if (supportsDash(o)) o[prop] = val;
+        if (supportsLineStyle(o)) o[prop] = val;
       });
     }
 
@@ -959,6 +963,7 @@ export function buildLineSection(ctx) {
   angleInp.addEventListener("blur", commitAngle);
 
   const sec1 = makeSection("선", sec1Body);
+  sec1.dataset.liteSection = "line";
 
   return {
     sec1, strokeCP, widthRange, widthNum,

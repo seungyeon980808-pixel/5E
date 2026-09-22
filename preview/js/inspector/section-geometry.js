@@ -3,10 +3,10 @@
  * split). Builds the section DOM and wires its events; mounting into the
  * inspector panel happens in js/inspector.js (the orchestrator). */
 
-import { openAngleArcLabelEditor } from "../tools.js?v=1.6.0-preview-labeler-0917-1111";
-import { boxLabelSlots } from "../render.js?v=1.6.0-preview-labeler-0917-1111";
+import { openAngleArcLabelEditor } from "../tools.js?v=1.6.0-preview-lite-tools-0922b";
+import { boxLabelSlots } from "../render.js?v=1.6.0-preview-lite-tools-0922b";
 import { makeSection } from "./widgets.js?v=1.6.0-preview-labeler-0917-1111";
-import { nodeBoxFromDiameter, nodeDiameterFromBox } from "../tools/node-placement.js?v=1.6.0-preview-labeler-0917-1111";
+import { nodeBoxFromDiameter, nodeDiameterFromBox } from "../tools/node-placement.js?v=1.6.0-preview-lite-tools-0922b";
 import { beginLabelerBranches, labelerAnchorCount, labelerBranchStatus } from "../tools/labeler-branches.js?v=1.6.0-preview-labeler-0917-1111";
 
 export function buildGeometrySection(ctx) {

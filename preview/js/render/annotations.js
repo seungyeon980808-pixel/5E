@@ -2,6 +2,7 @@
 
 import {
   SVG_NS,
+  applyDash,
   grayHex,
   makeArrowHead,
   fillTextWithRomanRuns,
@@ -300,6 +301,7 @@ function renderLabeler(obj) {
     l.setAttribute("stroke", color);
     l.setAttribute("stroke-width", sw);
     l.setAttribute("stroke-linecap", "round");
+    applyDash(l, obj);
     g.appendChild(l);
   };
   const drawLeader = (from) => {

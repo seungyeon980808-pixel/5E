@@ -15,12 +15,12 @@
 
 import { screenToWorld, getRenderScale } from "../viewport.js?v=1.6.0-preview-stable-view-0921";
 import { resolveEndpointSnap } from "../snap.js?v=1.6.0-preview-labeler-0917-1111";
-import { setSnapPreview } from "../render.js?v=1.6.0-preview-labeler-0917-1111";
+import { setSnapPreview } from "../render.js?v=1.6.0-preview-lite-tools-0922b";
 import { nextObjectId } from "./id.js?v=1.6.0-preview-labeler-0917-1111";
 // Keep the placement helper on the exact same tools module instance as the
 // main tool registry. Loading a second query-version would split the active
 // optics kind/space state and make point placement appear inert.
-import { isSpaceHeld, getOpticsKind } from "../tools.js?v=1.6.0-preview-labeler-0917-1111";
+import { isSpaceHeld, getOpticsKind } from "../tools.js?v=1.6.0-preview-lite-tools-0922b";
 
 const DEFAULT_STROKE_WIDTH = 0.2;     // mirrors tools.js default line width (DESIGN 3-2)
 /* 새 점의 지름 = 이 값 × 선 굵기.

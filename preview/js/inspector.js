@@ -11,11 +11,11 @@ import { resolveObjectStyle } from "./style-mode.js?v=1.6.0-preview-labeler-0917
 import {
   SHAPE_TYPES, LINE_TYPES, CIRCUIT_HEIGHT_ELEMENTS, supportsDash, isColorDragging,
 } from "./inspector/widgets.js?v=1.6.0-preview-labeler-0917-1111";
-import { nodeDiameterFromBox } from "./tools/node-placement.js?v=1.6.0-preview-labeler-0917-1111";
+import { nodeDiameterFromBox } from "./tools/node-placement.js?v=1.6.0-preview-lite-tools-0922b";
 import { createInspectorContext } from "./inspector/context.js?v=1.6.0-preview-labeler-0917-1111";
-import { buildLineSection } from "./inspector/section-line.js?v=1.6.0-preview-labeler-0917-1111";
+import { buildLineSection } from "./inspector/section-line.js?v=1.6.0-preview-lite-tools-0922b";
 import { buildGroupSection } from "./inspector/section-group.js?v=1.6.0-preview-labeler-0917-1111";
-import { buildTextSection } from "./inspector/section-text.js?v=1.6.0-preview-labeler-0917-1111";
+import { buildTextSection } from "./inspector/section-text.js?v=1.6.0-preview-lite-tools-0922b";
 import { buildFillSection } from "./inspector/section-fill.js?v=1.6.0-preview-labeler-0917-1111";
 import { buildGeometrySection } from "./inspector/section-geometry.js?v=1.6.0-preview-compact-0922";
 import { buildProtectSection } from "./inspector/section-protect.js?v=1.6.0-preview-labeler-0917-1111";
@@ -84,7 +84,7 @@ export function initInspector(state) {
     angleRow, angleInp, syncDashControls,
   } = buildLineSection(ctx);
   const { groupDiv, groupBtnDiv } = buildGroupSection(ctx);
-  const { secText, fontFamSel, fontSizeNum, italicCb, haloCb, vertCb, lsRange, lsNum, wsRange, wsNum } = buildTextSection(ctx);
+  const { secText, fontFamSel, fontSizeNum, boldCb, italicCb, haloCb, vertCb, lsRange, lsNum, wsRange, wsNum } = buildTextSection(ctx);
   const { sec2, fnCb, fillCP, syncFillStyle, _fillStyleBtnEls } = buildFillSection(ctx);
   const {
     sec3, xF, yF, wF, hF, rotF, xyPair, whPair, lockAspectRow, lockAspectCb, trimRow,
@@ -167,6 +167,7 @@ export function initInspector(state) {
     fnCb.disabled = disabled;
     fontFamSel.disabled = disabled;
     fontSizeNum.disabled = disabled;
+    boldCb.disabled = disabled;
     italicCb.disabled = disabled;
     haloCb.disabled = disabled;
     vertCb.disabled = disabled;
@@ -183,6 +184,11 @@ export function initInspector(state) {
     renderLayerPanel(s);
     const ids = s.selectedIds || [];
     const selectedObjects = ids.map((id) => s.objects.find((o) => o.id === id)).filter(Boolean);
+    const liteObject = selectedObjects.length === 1 ? selectedObjects[0] : null;
+    document.documentElement.dataset.liteInspector = liteObject
+      ? (["line", "polyline", "labeler"].includes(liteObject.type) ? "line"
+        : liteObject.type === "text" ? "text" : "none")
+      : "empty";
 
     if (s.imageEditSession) {
       emptyEl.style.display = "none";
@@ -447,6 +453,7 @@ export function initInspector(state) {
     imageSection.style.display = "none";
     if (isText) {
       fontFamSel.value = styleObj.fontFamily || DEFAULT_TEXT_FONT;
+      boldCb.checked = (styleObj.fontWeight || "normal") === "bold";
       italicCb.checked = styleObj.italic === true;
       haloCb.checked = styleObj.halo !== false;   // 부재 = 켜짐
       // 세로쓰기는 text 전용(수식은 세로로 쌓을 물건이 아니다) — 부재 = 가로쓰기.
@@ -591,7 +598,7 @@ export function initInspector(state) {
     }
 
     // Dash presets + sliders: lines and size-based shape outlines.
-    const canDash = supportsDash(obj);
+    const canDash = supportsDash(obj) || obj.type === "labeler";
     dashRow.style.display = canDash ? "" : "none";
     if (canDash) {
       syncDashControls(styleObj);

@@ -13,7 +13,7 @@ import { circuitBodyPolygon, pendulumGeometry, pendulumBBox, springGeometry, spr
          chargeFieldBBox, fieldLinesBBox, standingWaveGeometry, standingWaveBBox,
          parabolaPoints, parabolaBBox, groundArcPoints, groundArcBBox,
          bracePathPoints, braceBBox, chromosomeBBox, bilayerBBox, neuronBBox,
-         legendBBox, pedigreeBBox } from "./render.js?v=1.6.0-preview-labeler-0917-1111";
+         legendBBox, pedigreeBBox } from "./render.js?v=1.6.0-preview-lite-tools-0922b";
 // Labeler hit-test reuses the SAME label block the renderer trims the leader to
 // (render/annotations.js:renderLabeler): estimateLabelBlock for plain-text labels,
 // measureFormula for formula labels (확정 항목 ①) — so the clickable label area

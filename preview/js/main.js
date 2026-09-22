@@ -13,14 +13,14 @@ import { initAiSharing } from './ai-sharing-ui.js?v=1.6.0-preview-emerald-polish
 
 // ?v= matches index.html so a version bump reloads every module, not just main.
 import { state } from "./state.js?v=1.6.0-preview-labeler-0917-1111";
-import { render } from "./render.js?v=1.6.0-preview-labeler-0917-1111";
+import { render } from "./render.js?v=1.6.0-preview-lite-tools-0922b";
 import { initViewport, getZoom, screenToWorld, centerView, setCanvasLockMode } from "./viewport.js?v=1.6.0-preview-stable-view-0921";
-import { initTools } from "./tools.js?v=1.6.0-preview-labeler-0917-1111";
+import { initTools } from "./tools.js?v=1.6.0-preview-lite-tools-0922b";
 import { initCutTool } from "./cut-tool.js?v=1.6.0-preview-labeler-0917-1111";
 import { initEraseTool } from "./erase-tool.js?v=1.6.0-preview-labeler-0917-1111";
 import { initTransform, undo, redo } from "./transform.js?v=1.6.0-preview-labeler-0917-1111";
 import { initArtboardResize } from "./artboard-resize.js?v=1.6.0-preview-repair-0921";
-import { initInspector } from "./inspector.js?v=1.6.0-preview-compact-0922";
+import { initInspector } from "./inspector.js?v=1.6.0-preview-lite-tools-0922b";
 import { initDesktopProjectCloseGuard, initProjectIO, initProjectFileOpening, saveProject } from "./project-io.js?v=1.6.0-preview-golden-export-save-0922";
 import { initExportDialog } from "./export-dialog.js?v=1.6.0-preview-golden-export-save-0922";
 import { initRuler, setRulerVisible } from "./ruler.js?v=1.6.0-preview-labeler-0917-1111";
@@ -37,7 +37,7 @@ import { initCommandPalette } from "./command-palette.js?v=1.6.0-preview-repair-
 import { initSubjectObjects } from "./subject-objects.js?v=1.6.0-preview-compact-0922";
 import { initToolHint } from "./tool-hint.js?v=1.6.0-preview-labeler-0917-1111";
 import { initTooltips } from "./tooltip.js?v=1.6.0-preview-labeler-0917-1111";
-import { initViewMode } from "./view-mode.js?v=1.6.0-preview-labeler-0917-1111";
+import { initViewMode } from "./view-mode.js?v=1.6.0-preview-lite-tools-0922b";
 import { initPersonalObjects } from "./personal-objects.js?v=1.6.0-preview-labeler-0917-1111";
 import { initBulkEdit } from "./bulk-edit.js?v=1.6.0-preview-labeler-0917-1111";
 import { initDataPlot } from "./data-plot.js?v=1.6.0-preview-labeler-0917-1111";
@@ -71,7 +71,7 @@ import { initSteppers } from "./stepper.js?v=1.6.0-preview-labeler-0917-1111";
 import { initReferenceWindows } from "./reference-window.js?v=1.6.0-preview-common-year-login-0918-1302";
 import { initTutorial } from "./tutorial.js?v=1.6.0-preview-golden-export-save-0922";
 import { initAiInstallGuide } from "./ai-install-guide.js?v=1.6.0-preview-labeler-0917-1111";
-import { initAiPanel } from "./ai-panel.js?v=1.6.0-preview-golden-export-save-0922";
+import { initAiPanel } from "./ai-panel.js?v=1.6.0-preview-lite-tools-0922b";
 
 const svg = document.getElementById("canvas");
 // Canvas interaction transfers keyboard ownership away from the last toolbar button.
