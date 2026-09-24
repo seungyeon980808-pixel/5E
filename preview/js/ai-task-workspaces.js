@@ -206,6 +206,7 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
       item.panel.id = item === entry ? 'ai-image-panel' : `ai-workspace-${item.scope || 'legacy'}`;
     }
     active = entry;
+    window.dispatchEvent(new CustomEvent('5e:ai-workspace-activate', { detail: { panel: entry.panel, scope: entry.scope } }));
     renderNavigation();
     saveSelection();
   }

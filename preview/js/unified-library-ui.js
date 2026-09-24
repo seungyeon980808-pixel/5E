@@ -839,7 +839,7 @@ function buildShell() {
         <aside class="unilib-pane unilib-preview library-reader" data-unilib-preview aria-label="선택 자료 미리보기">
           <div class="unilib-pane-head unilib-preview-heading" hidden><div><h3 data-unilib-preview-title>미리보기</h3><p data-unilib-preview-kind>자료를 선택하세요</p><span class="unilib-example-note" data-unilib-preview-example hidden>목업 · 예시 자료</span></div></div>
           <div class="unilib-preview-scroll library-reader-main"><div class="unilib-representations" data-unilib-representations hidden role="group" aria-label="문항 표시 범위"></div><nav class="unilib-match-nav" data-unilib-match-nav hidden aria-label="PDF 일치 페이지"><button type="button" data-unilib-match-prev>이전 일치</button><output data-unilib-match-position></output><button type="button" data-unilib-match-next>다음 일치</button></nav><details class="unilib-highlight-legend" data-unilib-highlight-legend hidden><summary>검색어 강조</summary><ul></ul></details><div class="unilib-stage library-reader-preview" data-unilib-stage><span>검색 결과를 선택하세요.</span></div><div class="unilib-match-context" data-unilib-match-context hidden></div><div class="unilib-part-options" data-unilib-part-options hidden></div></div>
-          <div class="unilib-preview-foot library-reader-actions"><div class="unilib-source" hidden>${ICONS.file}<div class="unilib-source-inline"><strong data-unilib-source-name>—</strong><span data-unilib-source-meta>—</span></div><div class="unilib-source-actions" hidden><button type="button" data-unilib-source-open hidden>원문 페이지</button><button type="button" data-unilib-source-download hidden>컴퓨터에 저장</button><button type="button" data-unilib-adjust hidden>PDF에서 자르기</button></div></div><div class="unilib-actions"><button type="button" data-unilib-insert hidden disabled>캔버스에 삽입</button><button type="button" class="unilib-button" data-unilib-objectify disabled>이미지 객체화</button><button type="button" class="unilib-button unilib-ai-glow" data-unilib-ai disabled>AI 이미지 변환</button></div></div>
+          <div class="unilib-preview-foot library-reader-actions"><div class="unilib-source" hidden>${ICONS.file}<div class="unilib-source-inline"><strong data-unilib-source-name>—</strong><span data-unilib-source-meta>—</span></div><div class="unilib-source-actions" hidden><button type="button" data-unilib-source-open hidden>원문 페이지</button><button type="button" data-unilib-source-download hidden>컴퓨터에 저장</button></div></div><p data-unilib-ai-help hidden>PDF에서 필요한 영역을 자르고 작업대에 넣으면 AI 이미지 변환을 사용할 수 있습니다.</p><div class="unilib-actions"><button type="button" class="unilib-button" data-unilib-adjust hidden>PDF에서 자르기</button><button type="button" data-unilib-insert hidden disabled>캔버스에 삽입</button><button type="button" class="unilib-button" data-unilib-objectify disabled>이미지 객체화</button><button type="button" class="unilib-button unilib-ai-glow" data-unilib-ai disabled>AI 이미지 변환</button></div></div>
         </aside>
         <button class="unilib-scrim" data-unilib-scrim type="button" aria-label="열린 패널 닫기"></button>
       </div>
@@ -930,22 +930,25 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   let treeExpansionInitialized = (() => { try { return storage.getItem(TREE_STORAGE_KEY) !== null; } catch { return false; } })();
   let searchPaneOpen = loadPaneOpen(storage);
   let previewPaneOpen = (() => { try { return storage.getItem(PREVIEW_PANE_STORAGE_KEY) !== "false"; } catch { return true; } })();
+  const isLiteMode = () => document.documentElement.dataset.mode === "lite";
   const foldersToggle = overlay.querySelector("[data-unilib-folders-open]");
   const setSearchPaneOpen = (open) => {
-    searchPaneOpen = open;
+    if (isLiteMode()) open = true;
+    else searchPaneOpen = open;
     root.classList.toggle("folders-collapsed", !open);
     foldersToggle.setAttribute("aria-expanded", String(open));
     foldersToggle.setAttribute("aria-label", `검색 위치 ${open ? "접기" : "펼치기"}`);
-    try { storage.setItem(PANE_STORAGE_KEY, String(open)); } catch {}
+    if (!isLiteMode()) { try { storage.setItem(PANE_STORAGE_KEY, String(open)); } catch {} }
   };
   const previewToggle = overlay.querySelector("[data-unilib-preview-toggle]");
   const setPreviewPaneOpen = (open) => {
-    previewPaneOpen = open;
+    if (isLiteMode()) open = true;
+    else previewPaneOpen = open;
     root.classList.toggle("preview-hidden", !open);
     root.classList.toggle("preview-open", open);
     previewToggle.setAttribute("aria-pressed", String(open));
     previewToggle.setAttribute("aria-label", `미리보기 ${open ? "접기" : "펼치기"}`);
-    try { storage.setItem(PREVIEW_PANE_STORAGE_KEY, String(open)); } catch {}
+    if (!isLiteMode()) { try { storage.setItem(PREVIEW_PANE_STORAGE_KEY, String(open)); } catch {} }
   };
   const setMobileFoldersOpen = (open) => {
     root.classList.toggle("folders-open", open);
@@ -1027,6 +1030,10 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       selectedFigure: activeFigureRepresentation,
     });
     overlay.querySelector("[data-unilib-ai]").disabled = actionBusy || !aiAllowed || (typeof openAi !== "function" && typeof openIndependentReferences !== "function");
+    const needsCrop = !aiAllowed && selectedActiveResult()?.provenance?.provider === "pdf";
+    const help = overlay.querySelector("[data-unilib-ai-help]");
+    help.hidden = !needsCrop;
+    overlay.querySelector("[data-unilib-ai]").title = needsCrop ? help.textContent : "";
   };
   const runLibraryAction = async (work) => {
     if (actionBusy) return;
@@ -1856,6 +1863,8 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     invalidateAction();
     returnFocus = trigger || document.activeElement;
     overlay.hidden = false;
+    setSearchPaneOpen(searchPaneOpen);
+    setPreviewPaneOpen(previewPaneOpen);
     setFolderLoading("loading");
     await new Promise((resolve) => requestAnimationFrame(resolve));
     if (!isCurrentOpen()) return;

@@ -355,7 +355,7 @@ export function render(state) {
     if (sel.positionLocked) renderPositionLockMarker(sel, scene, getZoom());
     const _selColor = state.targetedId === _sid ? "#e67700" : SELECTION_COLOR;
     const _frameKind = _selIds.length > 1 ? "multi-member" : "single";
-    if (sel.type === "line" || sel.type === "circuit" || sel.type === "pendulum" || sel.type === "spring"
+    if (sel.type === "line" || sel.type === "circuit" || sel.type === "labeler" || sel.type === "pendulum" || sel.type === "spring"
         || sel.type === "chargefield" || sel.type === "fieldlines" || sel.type === "standingwave"
         || sel.type === "parabola" || sel.type === "groundarc"
         // 생명과학 p1/p2 계열 — 두 점을 잇는 점선 복제가 선택 표시다(위와 같은 규칙)

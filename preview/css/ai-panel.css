@@ -2441,7 +2441,6 @@
 #ai-image-panel .ai-generating > small,
 #ai-image-panel [data-ai-progress-detail],
 #ai-image-panel .ai-chat-intro p,
-#ai-image-panel [data-ai-selected-output-note],
 #ai-image-panel [data-ai-comment-status],
 #ai-image-panel .ai-separated-mode small { display: none; }
 #ai-image-panel .ai-advanced-settings { align-self: stretch; max-width: 100%; margin: 8px; border: 1px solid var(--border-strong); border-radius: 6px; }
@@ -2588,15 +2587,11 @@
 .ai-output-processing-note-lite { display: none; }
 
 :root[data-mode="lite"] #ai-image-panel .ai-output-option-palette,
-:root[data-mode="lite"] #ai-image-panel .ai-output-option-thickness,
 :root[data-mode="lite"] #ai-image-panel .ai-separated-mode,
 :root[data-mode="lite"] #ai-image-panel .ai-output-processing-note-pro,
 :root[data-mode="lite"] #ai-image-panel .ai-conversion-options,
 :root[data-mode="lite"] #ai-image-panel .ai-advanced-settings,
-:root[data-mode="lite"] #ai-image-panel [data-ai-side-tab="chat"],
-:root[data-mode="lite"] #ai-image-panel [data-ai-editable-groups],
-:root[data-mode="lite"] #ai-image-panel [data-ai-separated-recovery],
-:root[data-mode="lite"] #ai-image-panel [data-ai-selected-output-note] {
+:root[data-mode="lite"] #ai-image-panel [data-ai-side-tab="chat"] {
   display: none !important;
 }
 :root[data-mode="lite"] #ai-image-panel .ai-output-processing-note-lite {

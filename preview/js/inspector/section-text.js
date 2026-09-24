@@ -7,6 +7,7 @@ import { TEXT_FONTS, MIN_TEXT_PT, ptToMm, normalizeTextRunStyle,
          LETTER_SPACING_MIN, LETTER_SPACING_MAX,
          WIDTH_SCALE_MIN, WIDTH_SCALE_MAX } from "../state.js?v=1.6.0-preview-labeler-0917-1111";
 import { makeSection } from "./widgets.js?v=1.6.0-preview-labeler-0917-1111";
+import { startEditingTextObject } from "../tools.js?v=1.6.0-preview-lite-hybrid-0922";
 
 export function buildTextSection(ctx) {
   const { state } = ctx;
@@ -53,6 +54,25 @@ export function buildTextSection(ctx) {
   fontSizeRow.appendChild(fontSizeNum);
   fontSizeRow.appendChild(fontSizeUnit);
   secTextBody.appendChild(fontSizeRow);
+
+  const textEditRow = document.createElement("div");
+  textEditRow.className = "insp-row";
+  textEditRow.dataset.liteControl = "text-label";
+  textEditRow.style.display = "none";
+  const textEditLbl = document.createElement("label");
+  textEditLbl.className = "insp-field-label";
+  textEditLbl.textContent = "텍스트";
+  const textEditBtn = document.createElement("button");
+  textEditBtn.type = "button";
+  textEditBtn.textContent = "편집";
+  textEditBtn.title = "텍스트 편집";
+  textEditBtn.style.cssText = "padding:4px 10px;font-size:11px;cursor:pointer;border:1px solid var(--border);border-radius:6px;background:var(--bg-input);color:var(--text-primary);";
+  textEditBtn.addEventListener("click", () => {
+    const id = (state.get().selectedIds || [])[0];
+    if (id) startEditingTextObject(id);
+  });
+  textEditRow.append(textEditLbl, textEditBtn);
+  secTextBody.appendChild(textEditRow);
 
   const boldRow = document.createElement("div");
   boldRow.className = "insp-row";
@@ -261,5 +281,5 @@ export function buildTextSection(ctx) {
   const secText = makeSection("글꼴", secTextBody);
   secText.dataset.liteSection = "text";
 
-  return { secText, fontFamSel, fontSizeNum, boldCb, italicCb, haloCb, vertCb, lsRange, lsNum, wsRange, wsNum };
+  return { secText, fontFamSel, fontSizeNum, textEditRow, textEditBtn, boldCb, italicCb, haloCb, vertCb, lsRange, lsNum, wsRange, wsNum };
 }
