@@ -66,7 +66,7 @@ import {
   REMOTE_COMPOSITOR_VERSION,
 } from "./ai-remote-compositor.js?v=1.5.3";
 import { createExactOutputCacheStore } from "./ai-output-cache-store.js?v=1.5.3";
-import { openPdfReferencePicker } from "./pdf-library/reference-picker.js";
+import { openPdfReferencePicker } from "./pdf-library/reference-picker.js?v=1.6.0-preview-labeler-0917-1111";
 import { getReferenceRole, partitionReferenceItems, planImageReferences } from "./ai-reference-roles.js";
 import { normalizeMarkPolicy, buildMarkPolicyContract } from "./ai-mark-policy.js?v=1";
 import { createStructureAnalysisController, formatStructureContract, STRUCTURE_SPEC_VERSION } from "./ai-structure-spec.js?v=1";
@@ -512,6 +512,16 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   const readMarkPolicy = () => normalizeMarkPolicy({arrows:markArrows?.value,trendLines:markTrends?.value,leaders:markLeaders?.value});
   const restoreMarkPolicy = value => {const p=normalizeMarkPolicy(value);if(markArrows)markArrows.value=p.arrows;if(markTrends)markTrends.value=p.trendLines;if(markLeaders)markLeaders.value=p.leaders;};
   const previews = panel.querySelector("[data-ai-previews]");
+  const renderEmptyResult = (empty) => {
+    if (!empty) return;
+    empty.className = "ai-empty ai-stage-empty";
+    empty.dataset.aiEmpty = "";
+    const lite = document.documentElement.dataset.mode === "lite";
+    empty.innerHTML = lite
+      ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.5"/><path d="m5 17 4.5-4.5 3.2 3.2 2-2L19 18"/></svg><strong>변환 결과 대기</strong><span>변환하면 결과가 여기에 표시됩니다.</span>'
+      : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.5"/><path d="m5 17 4.5-4.5 3.2 3.2 2-2L19 18"/></svg><strong>작업할 이미지를 추가하세요</strong><span>이미지를 끌어놓거나 파일을 선택하세요.</span><button class="ai-stage-add" type="button" data-ai-add-file>이미지 선택</button>';
+  };
+  renderEmptyResult(previews?.querySelector("[data-ai-empty]"));
   const attachmentList = panel.querySelector("[data-ai-attachment-list]");
   const referenceCount = panel.querySelector("[data-ai-reference-count]");
   const referenceSection = panel.querySelector(".ai-reference-section");
@@ -1108,6 +1118,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   };
   const syncLiteModeUi = () => {
     const lite = document.documentElement.dataset.mode === 'lite';
+    renderEmptyResult(previews?.querySelector('[data-ai-empty]'));
     const option = (select, value) => select?.querySelector(`option[value="${value}"]`);
     const offOption = option(separationModeSelect, AI_SEPARATION_MODES.OFF);
     const gridOption = option(separationModeSelect, AI_SEPARATION_MODES.GRID);
@@ -1508,9 +1519,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       if (item.kind === "reference") syncReferenceSummary();
       if (!generatedImages.length && !previews.querySelector("[data-ai-empty]")) {
         const empty = document.createElement("p");
-        empty.className = "ai-empty";
-        empty.dataset.aiEmpty = "";
-        empty.textContent = "생성된 이미지가 여기에 표시됩니다.";
+        renderEmptyResult(empty);
         previews.appendChild(empty);
       }
     };
@@ -1534,11 +1543,22 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       output.onclick = () => {
         if (busy || output.disabled) return;
         if (candidateUsesSeparatedAssets(item)) { void openGroupsForItem(item, true); return; }
+        if (candidateUsesAutomaticSeparation(item) && selectedSeparationMode !== AI_SEPARATION_MODES.OFF) {
+          void openGroupsForItem(item, false, selectedSeparationMode === AI_SEPARATION_MODES.MANUAL || item.automaticSeparationState === 'fallback');
+          return;
+        }
         if (item.sceneResult?.objects?.length) {
           try {
             const inserted = insertFastSceneIntoState(state, item.sceneResult);
+            state.update((draft) => {
+              for (const object of draft.objects) {
+                if (!inserted.ids.includes(object.id)) continue;
+                object.aiTaskId = activeTaskTabId;
+                object.aiCandidateId = item.id;
+              }
+            });
             addLog(`편집 가능한 벡터 오브젝트 ${inserted.added}개를 캔버스에 출력했습니다.`);
-            close();
+            close({ integratedEdit: true });
           } catch (error) {
             addLog(`캔버스 출력 실패: ${error.message}`, "error");
           }
@@ -1554,7 +1574,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
         if (footerInsert) footerInsert.disabled = true;
         void resolveOutputVariant(item)
           .then(data => insertImageFromSrc(state, data, {preserveBytes:true,centerArtboard:true,aiTaskId:activeTaskTabId,aiCandidateId:item.id,replaceId:replace?target.id:null}))
-          .then(()=>{captureActiveTaskTab();persistTasks();close();})
+          .then(()=>{captureActiveTaskTab();persistTasks();close({ integratedEdit: true });})
           .catch((error)=>{setStatus(`페이지 삽입 실패: ${error.message}`, 'error');addLog(`페이지 삽입 실패: ${error.message}`,"error");})
           .finally(()=>{output.disabled=false;setBusy(false);});
       };
@@ -1768,10 +1788,10 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       const inserted = await openEditableAssetsDialog({
         dataUrl: dialogSource, isCurrent, artboard: { ...state.get().artboard }, initialPrepared,
         onInsert: prepared => candidateAlreadyInserted(item) || insertEditableAssets(state, prepared, {
-          isCurrent, aiTaskId: taskId, aiCandidateId: candidateId, ...(separated ? {} : { groupMode: 'single' }),
+          isCurrent, aiTaskId: taskId, aiCandidateId: candidateId,
         }),
       });
-      if (inserted) { captureActiveTaskTab(); persistTasks(); close(); }
+      if (inserted) { captureActiveTaskTab(); persistTasks(); close({ integratedEdit: true }); }
       else if (isCurrent()) setStatus('원본 PNG를 유지했습니다.', 'ok');
     } catch (error) {
       const message = error.message || String(error);
@@ -1805,7 +1825,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       const manual = automatic && selectedSeparationMode === AI_SEPARATION_MODES.MANUAL;
       const automaticState = manual ? 'manual' : automatic ? (item.automaticSeparationState || 'idle') : '';
       const inserted = automatic && candidateAlreadyInserted(item);
-      groups.hidden = candidateUsesSeparatedAssets(item);
+      groups.hidden = false;
       groups.disabled = busy || !item || Boolean(item.sceneResult) || automaticState === 'preparing' || inserted;
       groups.dataset.aiSeparationState = automaticState;
       groups.dataset.aiSeparationKey = automatic ? (item.automaticSeparationKey || '') : '';
@@ -1824,8 +1844,10 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       recovery.disabled = busy || nextAction !== 'manual-regions';
     }
     if (outputNote) {
-      outputNote.hidden = nextAction === 'ordinary-insert';
-      outputNote.textContent = nextAction === 'manual-regions'
+      outputNote.hidden = nextAction === 'ordinary-insert' && item?.automaticSeparationState !== 'fallback';
+      outputNote.textContent = item?.automaticSeparationState === 'fallback'
+        ? `자동 분리를 완료하지 못했습니다: ${item.automaticSeparationError} 영역을 직접 지정해 분리할 수 있습니다.`
+        : nextAction === 'manual-regions'
         ? `자동 분리 실패: ${item.separatedAssetsError} 원본 PNG의 배경은 아직 제거되지 않았습니다. 아래 버튼에서 영역을 직접 지정해 분리할 수 있습니다.`
         : '분리용 원본 PNG입니다. 배경 제거와 개별 객체 분리는 “분리 결과 확인”에서 확인한 뒤 진행됩니다.';
     }
@@ -2352,6 +2374,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     scopedSelectionRevision += 1;
     scopedTransport?.fail(new Error("작업 탭이 변경되었습니다."));
     activeTaskTabId = tab.id;
+    window.dispatchEvent(new CustomEvent('5e:ai-task-change', { detail: { taskId: tab.id } }));
     generationTiming = restoreGenerationTiming(tab.generationTiming, { interruptRunning: false });
     generationLongWaitShown = false;
     stopGenerationTimingTimer();
@@ -2408,9 +2431,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     for (const item of generatedImages) previews.prepend(makeImageCard(item));
     if (!generatedImages.length) {
       const empty = document.createElement("p");
-      empty.className = "ai-empty ai-stage-empty";
-      empty.dataset.aiEmpty = "";
-      empty.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.5"/><path d="m5 17 4.5-4.5 3.2 3.2 2-2L19 18"/></svg><strong>작업할 이미지를 추가하세요</strong><span>이미지를 끌어놓거나 파일을 선택하세요.</span><button class="ai-stage-add" type="button" data-ai-add-file>이미지 선택</button>';
+      renderEmptyResult(empty);
       previews.appendChild(empty);
     }
     syncMode();
@@ -3302,9 +3323,17 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     if (!panel.querySelector('[data-ai-chat-panel]')?.hidden) input.focus();
     else panel.querySelector('[data-ai-side-tab="comments"]')?.focus();
   };
-  const close = () => {
+  const close = ({ integratedEdit = false } = {}) => {
+    if (document.documentElement.dataset.mode === 'lite') {
+      if (integratedEdit) {
+        captureActiveTaskTab(); persistTasks(); void taskPersistence.flush();
+        window.dispatchEvent(new CustomEvent('5e:lite-result-edit', { detail: { taskId: activeTaskTabId } }));
+      }
+      return;
+    }
     abortAutomaticSeparation('panel-closed');
-    captureActiveTaskTab(); persistTasks(); void taskPersistence.flush(); panel.hidden = true;
+    captureActiveTaskTab(); persistTasks(); void taskPersistence.flush();
+    panel.hidden = true;
     desktop?.setAiTaskShortcutActive?.(false);
     if (!document.querySelector('.modal-overlay:not([hidden])')) document.getElementById('canvas')?.focus();
   };
@@ -3314,6 +3343,18 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   const submit = async (type, options = {}) => {
     if (panel.dataset.aiSharingMode === 'view') return;
     if (busy || !desktop) return refresh();
+    if (desktop.web) {
+      try {
+        const connection = await desktop.status();
+        if (!connection.login?.loggedIn) {
+          window.dispatchEvent(new Event('5e:web-login-request'));
+          return;
+        }
+      } catch (error) {
+        setStatus(`연결 상태를 확인하지 못했습니다: ${error.message}`, 'error');
+        return;
+      }
+    }
     if (type === "image" && isWhitePngWorkflow({ mode: selectedMode, outputEngine: selectedOutputEngine }) && !modelsLoaded) {
       await loadModels();
     }
@@ -4657,7 +4698,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   separatedRecovery.addEventListener('click', () => {
     const item = selectedOutputItem();
     if (busy || !item || separatedCandidateNextAction(item) !== 'manual-regions') return;
-    void openGroupsForItem(item, false);
+    void openGroupsForItem(item, false, true);
   });
   editableGroups.after(separatedRecovery);
   const selectedOutputNote = document.createElement('p');

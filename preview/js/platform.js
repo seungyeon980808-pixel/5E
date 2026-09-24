@@ -66,9 +66,16 @@ function isComposingKey(e) {
   return !!e.isComposing || e.keyCode === 229;
 }
 
+function hasBlockingModal() {
+  const persistentLiteEditor = document.documentElement?.dataset.mode === 'lite'
+    && document.documentElement?.dataset.liteResultMode === 'edit';
+  return [...document.querySelectorAll('.modal-overlay:not([hidden])')]
+    .some((overlay) => !(persistentLiteEditor && overlay.id === 'ai-image-panel'));
+}
+
 function blocksCanvasShortcut(e) {
   return !!e.defaultPrevented || isComposingKey(e) || isEditingTarget(e.target) ||
-    !!document.querySelector(".modal-overlay:not([hidden])");
+    hasBlockingModal();
 }
 
 /** "Ctrl+S"·"Alt+P" 같은 구조화된 단축키 문자열을 현재 플랫폼 표기로 바꾼다.
@@ -118,4 +125,4 @@ function localizeShortcutLabels(root = document.body) {
   });
 }
 
-export { IS_MAC, modKey, snapKey, keyLabel, localizeShortcutLabels, MOD_LABEL, ALT_LABEL, SNAP_LABEL, shortcutKey, isEditingTarget, isComposingKey, blocksCanvasShortcut, getShortcutPlatform, setShortcutPlatform, SHORTCUT_PLATFORM_KEY };
+export { IS_MAC, modKey, snapKey, keyLabel, localizeShortcutLabels, MOD_LABEL, ALT_LABEL, SNAP_LABEL, shortcutKey, isEditingTarget, isComposingKey, hasBlockingModal, blocksCanvasShortcut, getShortcutPlatform, setShortcutPlatform, SHORTCUT_PLATFORM_KEY };

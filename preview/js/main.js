@@ -1,4 +1,4 @@
-import { initLiteShell } from "./lite-shell.js?v=1.6.0-preview-lite-hybrid-0922";
+import { initLiteShell } from "./lite-shell.js?v=1.6.0-preview-lite-four-pane-0924";
 import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-preview-labeler-0917-1111';
 import { initWebLoginUi } from './web-login-ui.js?v=1.6.0-preview-mobile-golden-0922';
 import { initMobileImage } from './mobile-image.js?v=1.6.0-preview-mobile-golden-0922';
@@ -31,14 +31,14 @@ import { initImagePaste } from "./image-paste.js?v=1.6.0-preview-lite-hybrid-092
 import { initImageCutout } from "./image-cutout.js?v=1.6.0-preview-lite-hybrid-0922";
 import { renderSessionToDataUrl } from "./image-cutout.js?v=1.6.0-preview-lite-hybrid-0922";
 import { handSelectedCanvasImageToAi } from "./ai-canvas-handoff.js?v=1.6.0-preview-labeler-0917-1111";
-import { initExamLibrary } from "./exam-library.js?v=1.6.0-preview-lite-hybrid-0922";
+import { initExamLibrary } from "./exam-library.js?v=1.6.0-preview-lite-flow-0924";
 import { initTemplates } from "./templates.js?v=1.6.0-preview-lite-hybrid-0922";
 import { initObjectSearch } from "./search.js?v=1.6.0-preview-lite-hybrid-0922";
 import { initCommandPalette } from "./command-palette.js?v=1.6.0-preview-lite-hybrid-0922";
 import { initSubjectObjects } from "./subject-objects.js?v=1.6.0-preview-lite-hybrid-0922";
 import { initToolHint } from "./tool-hint.js?v=1.6.0-preview-labeler-0917-1111";
 import { initTooltips } from "./tooltip.js?v=1.6.0-preview-labeler-0917-1111";
-import { initViewMode } from "./view-mode.js?v=1.6.0-preview-lite-hybrid-0922";
+import { initViewMode } from "./view-mode.js?v=1.6.0-preview-mode-separation-0925";
 import { initPersonalObjects } from "./personal-objects.js?v=1.6.0-preview-lite-hybrid-0922";
 import { initBulkEdit } from "./bulk-edit.js?v=1.6.0-preview-lite-hybrid-0922";
 import { initDataPlot } from "./data-plot.js?v=1.6.0-preview-lite-hybrid-0922";
@@ -72,7 +72,7 @@ import { initSteppers } from "./stepper.js?v=1.6.0-preview-labeler-0917-1111";
 import { initReferenceWindows } from "./reference-window.js?v=1.6.0-preview-common-year-login-0918-1302";
 import { initTutorial } from "./tutorial.js?v=1.6.0-preview-lite-hybrid-0922";
 import { initAiInstallGuide } from "./ai-install-guide.js?v=1.6.0-preview-labeler-0917-1111";
-import { initAiPanel } from "./ai-panel.js?v=1.6.0-preview-lite-hybrid-0922";
+import { initAiPanel } from "./ai-panel.js?v=1.6.0-preview-mode-separation-0925";
 
 const svg = document.getElementById("canvas");
 // Canvas interaction transfers keyboard ownership away from the last toolbar button.
@@ -318,6 +318,10 @@ const autosaveReady = initAutosave(state);
 initProjectFileOpening(state, autosaveReady);
 const recoveryChoice = await autosaveReady;
 const aiPanel = initAiPanel(state, { freshStart: recoveryChoice === "fresh" });
+window.addEventListener('5e:lite-ai-open', async () => {
+  await aiPanel?.open();
+  window.dispatchEvent(new Event('5e:lite-ai-opened'));
+});
 initMobileImage(aiPanel);
 initAiSharing(aiPanel);
 initDesktopProjectCloseGuard(state, () => aiPanel?.checkpointForClose());

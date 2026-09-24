@@ -6,7 +6,7 @@ const MAX_PNG_BYTES = 64 * 1024 * 1024;
 const MAX_RAW_BYTES = 64 * 1024 * 1024;
 const MAX_DIMENSION = 16384;
 const COLOR_CHUNKS = new Set(['gAMA', 'cHRM', 'sBIT', 'sRGB', 'iCCP']);
-const ALLOWED = new Set(['IHDR', 'IDAT', 'IEND', ...COLOR_CHUNKS, 'caBX']);
+const ALLOWED = new Set(['IHDR', 'IDAT', 'IEND', ...COLOR_CHUNKS, 'caBX', 'eXIf']);
 let crcTable;
 function fail(message) { throw new Error(`Unsupported or invalid PNG: ${message}`); }
 function bytes(value, label = 'bytes') { if (!(value instanceof Uint8Array)) throw new TypeError(`${label} must be a Uint8Array.`); return value; }
@@ -94,13 +94,15 @@ function paeth(a,b,c) { const p=a+b-c, pa=Math.abs(p-a), pb=Math.abs(p-b), pc=Ma
 
 export async function decodeScopedPng(input) {
  const png=bytes(input); if(png.length>MAX_PNG_BYTES) fail(`input exceeds ${MAX_PNG_BYTES} bytes.`); if(png.length<45 || !equal(png.subarray(0,8),SIGNATURE)) fail('bad PNG signature.');
- let o=8, width, height, channels, colorType, idat=[], metadata=[], hasCaBX=false, phase='start';
+ let o=8, width, height, channels, colorType, idat=[], metadata=[], hasCaBX=false, hasExif=false, phase='start';
  while(o<png.length) { if(o+12>png.length) fail('truncated chunk.'); const len=u32(png,o); if(len>MAX_PNG_BYTES || o+12+len>png.length) fail('invalid chunk length.'); const type=typeAt(png,o+4), data=png.subarray(o+8,o+8+len); if(crc32(png,o+4,o+8+len)!==u32(png,o+8+len)) fail(`CRC mismatch in ${type}.`); o+=12+len;
   if(!ALLOWED.has(type)) fail(`${type === 'tRNS' ? 'tRNS transparency' : `chunk ${type}`} is not supported.`);
   if(type==='IHDR') { if(phase!=='start'||len!==13) fail('IHDR must be first and exactly 13 bytes.'); width=u32(data,0);height=u32(data,4);colorType=data[9]; if(!width||!height||width>MAX_DIMENSION||height>MAX_DIMENSION) fail('dimensions exceed limits.'); if(data[8]!==8 || (colorType!==2&&colorType!==6) || data[10]||data[11]||data[12]) fail('only non-interlaced 8-bit RGB/RGBA PNG is supported.'); channels=colorType===2?3:4; const pixels=width*height, scanlineBytes=height*(width*channels+1), rgbaBytes=pixels*4; if(scanlineBytes>MAX_RAW_BYTES||rgbaBytes>MAX_RAW_BYTES) fail('dimensions exceed limits.'); phase='before-idat'; continue; }
   if(phase==='start') fail('IHDR is missing.');
-  if(type==='IEND') { if(len!==0||phase!=='idat'||o!==png.length) fail('IEND must follow IDAT and finish the PNG.'); phase='done'; break; }
-  if(type==='IDAT') { phase='idat'; idat.push(data); continue; }
+  if(type==='IEND') { if(len!==0||(phase!=='idat'&&phase!=='after-idat')||o!==png.length) fail('IEND must follow IDAT and finish the PNG.'); phase='done'; break; }
+  if(type==='IDAT') { if(phase==='after-idat') fail('IDAT chunks must be consecutive.'); phase='idat'; idat.push(data); continue; }
+  // Exif is non-pixel metadata; cropped outputs must not inherit stale dimensions/orientation.
+  if(type==='eXIf') { if(hasExif) fail('duplicate eXIf chunk.'); hasExif=true; if(phase==='idat') phase='after-idat'; continue; }
   if(phase!=='before-idat') fail(`${type} must occur before IDAT.`);
   // C2PA specifies caBX as an ancillary, private, unsafe-to-copy manifest store.
   // It never enters output metadata: editing invalidates its provenance signature.
@@ -112,7 +114,7 @@ export async function decodeScopedPng(input) {
  const row=width*channels, expected=height*(row+1); if(expected>MAX_RAW_BYTES) fail('inflated image exceeds limit.'); const raw=await transform(compressedPixels,'inflate'); if(raw.length!==expected) fail(`inflated data length ${raw.length} does not equal expected ${expected}.`);
  const scan=new Uint8Array(height*row); for(let y=0;y<height;y+=1){const f=raw[y*(row+1)], src=y*(row+1)+1, dst=y*row; if(f>4)fail(`invalid filter ${f}.`); for(let x=0;x<row;x+=1){const left=x>=channels?scan[dst+x-channels]:0, up=y?scan[dst-row+x]:0, ul=y&&x>=channels?scan[dst-row+x-channels]:0, v=raw[src+x]; scan[dst+x]=(v+(f===0?0:f===1?left:f===2?up:f===3?Math.floor((left+up)/2):paeth(left,up,ul)))&255;}}
  const rgba=new Uint8Array(width*height*4); for(let p=0,s=0,d=0;p<width*height;p+=1,s+=channels,d+=4){rgba[d]=scan[s];rgba[d+1]=scan[s+1];rgba[d+2]=scan[s+2];rgba[d+3]=channels===4?scan[s+3]:255;}
- return {width,height,data:rgba,metadata,metadataDisposition:hasCaBX ? 'caBX-recognized-not-preserved' : 'supported-metadata-preserved',removedMetadata:hasCaBX ? ['caBX'] : []};
+ return {width,height,data:rgba,metadata,metadataDisposition:hasCaBX ? 'caBX-recognized-not-preserved' : hasExif ? 'eXIf-recognized-not-preserved' : 'supported-metadata-preserved',removedMetadata:[...(hasCaBX ? ['caBX'] : []), ...(hasExif ? ['eXIf'] : [])]};
 }
 export async function encodeScopedPng(image,{metadata=[]}={}) {
  const checked=validateRgbaImage(image), rawLength=checked.height*(checked.width*4+1); if(checked.data.constructor!==Uint8Array) throw new TypeError('image.data must be Uint8Array.'); if(checked.width>MAX_DIMENSION||checked.height>MAX_DIMENSION||checked.data.length>MAX_RAW_BYTES||rawLength>MAX_RAW_BYTES) fail('dimensions exceed limits.'); const preservedMetadata=validateMetadata(metadata);

@@ -24,7 +24,7 @@ import { SHAPE_TYPES, SIZE_TYPES, FLIP_TYPES, POINT_ARRAY_TYPES,
 
 import { isPageHistoryEntry, inversePageHistoryEntry, restorePageHistoryEntry } from "./page-history.js?v=1.6.0-preview-labeler-0917-1111";
 import { initObjectClipboard, cloneClipboardObjects } from "./editor-clipboard.js?v=1.6.0-preview-labeler-0917-1111";
-import { snapKey, modKey, IS_MAC, shortcutKey, blocksCanvasShortcut } from "./platform.js?v=1.6.0-preview-labeler-0917-1111";
+import { snapKey, modKey, IS_MAC, shortcutKey, blocksCanvasShortcut, hasBlockingModal } from "./platform.js?v=1.6.0-preview-labeler-0917-1111";
 /* ----- shared lock guard: locked objects are excluded from mutating ops ----- */
 function isMutable(o) { return o && !o.locked; }
 function isPositionMovable(o) { return isMutable(o) && !o.positionLocked; }
@@ -1038,7 +1038,7 @@ export function initTransform(svg, state) {
     if (isEditingFieldTarget(t) || blocksCanvasShortcut(e)) return;
     // 모달(전체 통일/수정 등)이 열려 있으면 Delete가 뒤편 캔버스 선택을 지우는 등
     // 단축키가 새어 들어가지 않게 차단한다.
-    if (document.querySelector(".modal-overlay:not([hidden])")) return;
+    if (hasBlockingModal()) return;
 
     const s = state.get();
     const selectedIds = s.selectedIds || [];

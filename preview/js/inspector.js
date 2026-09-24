@@ -13,9 +13,9 @@ import {
 } from "./inspector/widgets.js?v=1.6.0-preview-labeler-0917-1111";
 import { nodeDiameterFromBox } from "./tools/node-placement.js?v=1.6.0-preview-lite-hybrid-0922";
 import { createInspectorContext } from "./inspector/context.js?v=1.6.0-preview-labeler-0917-1111";
-import { buildLineSection } from "./inspector/section-line.js?v=1.6.0-preview-lite-tools-0922b";
+import { buildLineSection } from "./inspector/section-line.js?v=1.6.0-preview-lite-inspector-controls-0924";
 import { buildGroupSection } from "./inspector/section-group.js?v=1.6.0-preview-labeler-0917-1111";
-import { buildTextSection } from "./inspector/section-text.js?v=1.6.0-preview-lite-tools-0922b";
+import { buildTextSection } from "./inspector/section-text.js?v=1.6.0-preview-lite-inspector-controls-0924";
 import { buildFillSection } from "./inspector/section-fill.js?v=1.6.0-preview-labeler-0917-1111";
 import { buildGeometrySection } from "./inspector/section-geometry.js?v=1.6.0-preview-lite-hybrid-0922";
 import { buildProtectSection } from "./inspector/section-protect.js?v=1.6.0-preview-labeler-0917-1111";
@@ -74,7 +74,7 @@ export function initInspector(state) {
     lineModeRow, lineModeBtnEls,
     dimensionLabelRow, dimensionLabelInp, dimensionLabelTypeRow, dimensionLabelSizeRow,
     waveLengthRow, waveAmpRow, waveTailRow,
-    lineLabelRow, lineLabelInp, lineLabelTypeRow, lineLabelShowRow, lineLabelShowCb,
+    lineLabelRow, lineLabelInp, leaderLabelRow, leaderLabelBtn, lineLabelTypeRow, lineLabelShowRow, lineLabelShowCb,
     lineLabelFlipRow, lineLabelSizeRow,
     dashRow, _dashBtnEls, partialDashBtn, dashSliders, dashLenSlider, dashGapSlider,
     partialControls, ratioRange, ratioNum, flipBtn,
@@ -84,7 +84,7 @@ export function initInspector(state) {
     angleRow, angleInp, syncDashControls,
   } = buildLineSection(ctx);
   const { groupDiv, groupBtnDiv } = buildGroupSection(ctx);
-  const { secText, fontFamSel, fontSizeNum, boldCb, italicCb, haloCb, vertCb, lsRange, lsNum, wsRange, wsNum } = buildTextSection(ctx);
+  const { secText, fontFamSel, fontSizeNum, textEditRow, textEditBtn, boldCb, italicCb, haloCb, vertCb, lsRange, lsNum, wsRange, wsNum } = buildTextSection(ctx);
   const { sec2, fnCb, fillCP, syncFillStyle, _fillStyleBtnEls } = buildFillSection(ctx);
   const {
     sec3, xF, yF, wF, hF, rotF, xyPair, whPair, lockAspectRow, lockAspectCb, trimRow,
@@ -227,6 +227,8 @@ export function initInspector(state) {
     abSection.style.display = "none"; // hidden whenever something is selected
     groupBtnDiv.style.display = "none"; // shown only for an ungrouped multi-selection
     secText.style.display = "none"; // shown only for a single text object (set below)
+    textEditRow.style.display = "none";
+    leaderLabelRow.style.display = "none";
     imageSection.style.display = "none";
     secPend.style.display = "none"; // shown only for a single pendulum (set below)
     secSpring.style.display = "none"; // 용수철 하나를 골랐을 때만
@@ -452,6 +454,7 @@ export function initInspector(state) {
     // 이 섹션을 쓰므로 그대로 둔다(여긴 일반 선택 분기라 영향 없음).
     imageSection.style.display = "none";
     if (isText) {
+      textEditRow.style.display = document.documentElement.dataset.mode === "lite" && obj.type === "text" ? "" : "none";
       fontFamSel.value = styleObj.fontFamily || DEFAULT_TEXT_FONT;
       boldCb.checked = (styleObj.fontWeight || "normal") === "bold";
       italicCb.checked = styleObj.italic === true;
@@ -587,7 +590,8 @@ export function initInspector(state) {
     }
 
     // Arrow head: open line + open polyline (closed polyline = filled shape, no arrow).
-    const showArrow = obj.type === "polyline" && !isClosedPoly;
+    const showArrow = (obj.type === "polyline" && !isClosedPoly)
+      || (document.documentElement.dataset.mode === "lite" && obj.type === "line");
     arrowRow.style.display = showArrow ? "" : "none";
     if (showArrow) {
       const ah = obj.arrowHead ?? "none";
@@ -596,6 +600,7 @@ export function initInspector(state) {
       arrowBtn.setAttribute("aria-label", `화살표 방향: ${ARROW_LABELS[displayArrow]}`);
       arrowBtn.innerHTML = `<svg width="40" height="24" viewBox="0 0 40 24">${ARROW_ICONS[displayArrow]}</svg>`;
     }
+    leaderLabelRow.style.display = document.documentElement.dataset.mode === "lite" && obj.type === "labeler" ? "" : "none";
 
     // Dash presets + sliders: lines and size-based shape outlines.
     const canDash = supportsDash(obj) || obj.type === "labeler";
@@ -871,6 +876,8 @@ export function initInspector(state) {
     labelPosSel.disabled = !!obj.locked;
     // 상자 라벨 두 슬롯의 잠금은 boxLabel.sync가 함께 처리한다(꺼진 슬롯 비활성과 겹치므로).
     lineLabelInp.disabled = !!obj.locked;
+    textEditBtn.disabled = !!obj.locked;
+    leaderLabelBtn.disabled = !!obj.locked;
     lineLabelTypeRow.sel.disabled = !!obj.locked;
     lineLabelShowCb.disabled = !!obj.locked;
     dimensionLabelInp.disabled = !!obj.locked;
@@ -902,5 +909,6 @@ export function initInspector(state) {
   }
 
   state.subscribe(populate);
+  window.addEventListener("5e:view-mode-change", () => populate(state.get()));
   populate(state.get());
 }

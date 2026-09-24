@@ -22,6 +22,7 @@ function centered(p) {
       page.on('pageerror', error => errors.push(error.message));
       await page.goto(url);
       await page.locator('#lite-dock').waitFor({ state: 'visible' });
+      await page.locator('#ai-image-panel').waitFor({ state: 'visible' });
       const skip = page.getByRole('button', { name: '건너뛰기', exact: true });
       if (await skip.isVisible()) await skip.click();
       await page.waitForTimeout(400);
@@ -41,6 +42,9 @@ function centered(p) {
       assert.equal(await page.locator('html').getAttribute('data-theme'), proTheme);
       assert.equal(await page.locator('#grid-btn').getAttribute('aria-pressed'), proGrid);
       await page.locator('#mode-toggle-btn').click();
+      await page.evaluate(() => window.dispatchEvent(new CustomEvent('5e:lite-result-edit')));
+      await page.locator('#canvas').waitFor({ state: 'visible' });
+      await page.waitForTimeout(150);
       const before = await projection(page); centered(before);
       await page.keyboard.press('Alt+Enter');
       assert.equal(await page.evaluate(() => Boolean(document.fullscreenElement || document.webkitFullscreenElement)), false);
@@ -60,15 +64,16 @@ function centered(p) {
         centered(await projection(page));
         assert.ok(Math.abs((await projection(page)).scale - zoomed.scale) < 0.02, 'resize preserves zoom');
         assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), 'no horizontal page overflow');
-        const tools = await page.locator('#tool-list .tool-btn:visible').count();
+        const tools = await page.locator('.lite-dock-tools .tool-btn:visible').count();
         assert.equal(tools, 7);
         await page.screenshot({ path: path.join(evidence, `${engine.name()}-${width}-empty.png`) });
+        assert.equal(await page.locator('#lite-reference-toggle').count(), 0);
       }
       await page.setViewportSize({ width: 1600, height: 1000 });
       await page.waitForTimeout(250);
       await page.screenshot({ path: path.join(evidence, `${engine.name()}-1600-empty.png`) });
       const draw = await projection(page);
-      await page.locator('#tool-list .tool-btn[data-tool="L"]').click();
+      await page.locator('.lite-dock-tools .tool-btn[data-tool="L"]').click();
       const points = [{ x: draw.cx - 110, y: draw.cy - 70 }, { x: draw.cx + 110, y: draw.cy + 70 }];
       await page.mouse.click(points[0].x, points[0].y);
       await page.mouse.click(points[1].x, points[1].y);
@@ -79,10 +84,21 @@ function centered(p) {
           .map(p => ({ x: p.x, y: p.y }));
       });
       for (let i = 0; i < 2; i++) assert.ok(Math.hypot(hit[i].x - points[i].x, hit[i].y - points[i].y) < 1, 'drawn endpoint matches pointer');
-      assert.ok((await page.locator('#lite-context').boundingBox()).height < 160, 'context remains compact');
+      const editorBox = await page.locator('#ai-image-panel .ai-workspace').boundingBox();
+      const contextBox = await page.locator('#ai-image-panel .ai-conversation').boundingBox();
+      assert.ok(contextBox.width >= 240, 'context rail keeps a usable fixed width');
+      assert.ok(Math.abs(contextBox.y - editorBox.y) < 1 && Math.abs(contextBox.height - editorBox.height) < 1,
+        'context rail spans the editor work area');
       centered(await projection(page));
       await page.setViewportSize({ width: 375, height: 900 });
       await page.waitForTimeout(250);
+      assert.equal(await page.locator('#ai-image-panel .ai-conversation').isVisible(), true, 'selected object properties remain reachable on narrow screens');
+      const narrowStrokeControl = page.locator('#ai-image-panel .ai-conversation [data-lite-control="stroke-width"]');
+      await narrowStrokeControl.scrollIntoViewIfNeeded();
+      const narrowStrokeBox = await narrowStrokeControl.boundingBox();
+      const narrowContextBox = await page.locator('#ai-image-panel .ai-conversation').boundingBox();
+      assert.ok(narrowStrokeBox.width > 0 && narrowStrokeBox.y + narrowStrokeBox.height <= narrowContextBox.y + narrowContextBox.height,
+        `line thickness control is visible on narrow screens: ${JSON.stringify({ narrowStrokeBox, narrowContextBox })}`);
       await page.screenshot({ path: path.join(evidence, `${engine.name()}-375-context.png`) });
       assert.deepEqual(errors, []);
       console.log(`${engine.name()}: Lite light/fullscreen/pan/zoom/resize and 4 viewport layouts passed`);

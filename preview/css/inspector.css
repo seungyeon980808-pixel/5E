@@ -83,9 +83,6 @@
 :root[data-mode="lite"] [data-lite-section] .insp-body > :not([data-lite-control]) {
   display: none !important;
 }
-:root[data-mode="lite"] [data-lite-control="font-weight"] {
-  display: flex !important;
-}
 :root[data-mode="lite"][data-lite-inspector="line"] [data-lite-section="text"],
 :root[data-mode="lite"][data-lite-inspector="text"] [data-lite-section="line"] {
   display: none !important;

@@ -1,3 +1,4 @@
+import { showConfirm } from './ui-dialogs.js?v=1.6.0-preview-labeler-0917-1111';
 import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-preview-labeler-0917-1111';
 import { setActiveTool } from './tools.js?v=1.6.0-preview-lite-hybrid-0922';
 /* ===== VIEW MODE: Pro / Lite 모드 전환 =====
@@ -103,9 +104,19 @@ export function initViewMode(state) {
   if (brand && brand.parentElement) brand.insertAdjacentElement("afterend", _btn);
   else document.body.appendChild(_btn);
 
-  _btn.addEventListener("click", () => {
+  _btn.addEventListener("click", async () => {
     const cur = document.documentElement.getAttribute("data-mode") || DEFAULT_MODE;
-    applyMode(cur === "lite" ? "pro" : "lite");
+    if (_btn.disabled) return;
+    if (cur === "lite") {
+      _btn.disabled = true;
+      try {
+        const confirmed = await showConfirm('현재 작업하던 이미지와 편집 내용을 그대로 유지하고 Pro로 전환할까요?', {
+          title: 'Pro로 전환', okText: '유지하고 전환', cancelText: '취소',
+        });
+        if (!confirmed) return;
+        applyMode('pro');
+      } finally { _btn.disabled = false; }
+    } else applyMode('lite');
   });
 
   document.getElementById("tool-cut-merged")?.addEventListener("click", (event) => {

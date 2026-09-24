@@ -12,6 +12,7 @@ import { getRenderScale } from "./viewport.js?v=1.6.0-preview-lite-hybrid-0922";
 import { pickSelectableObjectAtPoint } from "./pick.js?v=1.6.0-preview-lite-hybrid-0922";
 import { isSpaceHeld } from "./tools.js?v=1.6.0-preview-lite-hybrid-0922";
 import { captureDocumentSnapshot, commitDocumentHistory } from "./document-history.js?v=1.6.0-preview-labeler-0917-1111";
+import { hasBlockingModal } from "./platform.js?v=1.6.0-preview-labeler-0917-1111";
 
 let _svg    = null;
 let _state  = null;
@@ -336,7 +337,7 @@ export function initRuler(svg, state) {
     const t = e.target;
     const tag = t && t.tagName;
     if (t && (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || t.isContentEditable)) return;
-    if (document.querySelector(".modal-overlay:not([hidden])")) return;
+    if (hasBlockingModal()) return;
     const selectedGuideId = state.get().selectedGuideId;
     if (!selectedGuideId || !(state.get().guides || []).some((guide) => guide.id === selectedGuideId)) return;
     e.preventDefault();

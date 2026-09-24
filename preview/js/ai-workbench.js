@@ -461,14 +461,17 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     const empty = panel.querySelector('[data-ai-empty]');
     if (empty) {
       const prepared = sourceCards().length > 0;
+      const lite = document.documentElement.dataset.mode === 'lite';
       const title = empty.querySelector('strong');
       const detail = empty.querySelector('span');
       const add = empty.querySelector('[data-ai-add-file]');
-      const titleText = prepared ? '변환 결과 대기' : '작업할 이미지를 추가하세요';
-      const detailText = prepared ? '변환하기를 누르면 결과가 여기에 표시됩니다.' : '이미지를 끌어놓거나 파일을 선택하세요.';
+      const titleText = prepared || lite ? '변환 결과 대기' : '작업할 이미지를 추가하세요';
+      const detailText = lite
+        ? '변환하면 결과가 여기에 표시됩니다.'
+        : prepared ? '변환하기를 누르면 결과가 여기에 표시됩니다.' : '이미지를 끌어놓거나 파일을 선택하세요.';
       if (title && title.textContent !== titleText) title.textContent = titleText;
       if (detail && detail.textContent !== detailText) detail.textContent = detailText;
-      if (add && add.hidden !== prepared) add.hidden = prepared;
+      if (add && add.hidden !== (prepared || lite)) add.hidden = prepared || lite;
     }
     panel.dataset.aiStage = processing
       ? "processing"
