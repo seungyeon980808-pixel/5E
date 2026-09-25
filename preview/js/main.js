@@ -1,4 +1,4 @@
-import { initLiteShell } from "./lite-shell.js?v=1.6.0-preview-lite-four-pane-0924";
+import { initLiteShell } from "./lite-shell.js?v=lite-main-0925";
 import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-preview-labeler-0917-1111';
 import { initWebLoginUi } from './web-login-ui.js?v=1.6.0-preview-mobile-golden-0922';
 import { initMobileImage } from './mobile-image.js?v=1.6.0-preview-mobile-golden-0922';
@@ -38,7 +38,7 @@ import { initCommandPalette } from "./command-palette.js?v=1.6.0-preview-lite-hy
 import { initSubjectObjects } from "./subject-objects.js?v=1.6.0-preview-lite-hybrid-0922";
 import { initToolHint } from "./tool-hint.js?v=1.6.0-preview-labeler-0917-1111";
 import { initTooltips } from "./tooltip.js?v=1.6.0-preview-labeler-0917-1111";
-import { initViewMode } from "./view-mode.js?v=1.6.0-preview-mode-separation-0925";
+import { initViewMode } from "./view-mode.js?v=mode-switch-0925";
 import { initPersonalObjects } from "./personal-objects.js?v=1.6.0-preview-lite-hybrid-0922";
 import { initBulkEdit } from "./bulk-edit.js?v=1.6.0-preview-lite-hybrid-0922";
 import { initDataPlot } from "./data-plot.js?v=1.6.0-preview-lite-hybrid-0922";
@@ -406,7 +406,7 @@ initToolHint(state);
 initTooltips();
 
 /* ----- Pro/Lite 모드: 5E 옆 전환 버튼 + Lite 간소화(도구 확대·기능 숨김) ----- */
-initViewMode(state);
+initViewMode(state, { prepareNewAiWork: () => aiPanel.prepareNewWork() });
 
 /* ----- Mac 표기 정리: 화면에 박힌 "Ctrl"을 ⌘로 바꾼다(Windows에선 무동작) -----
    UI가 다 만들어진 뒤 한 번만 훑는다. 이후 동적으로 생기는 문구는 각자 keyLabel()을 쓴다. */
