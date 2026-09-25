@@ -1081,7 +1081,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       batchButton.disabled = busy || attachments.length < 2 || (white && reviewModeCheckbox?.checked !== false);
       batchButton.title = white && reviewModeCheckbox?.checked !== false ? "검수 포함 일괄 변환은 아직 지원하지 않습니다. 새 작업으로 그림별 변환을 실행하세요." : "여러 이미지를 각각 생성합니다. 일괄 결과는 독립 검수되지 않습니다.";
     }
-    sendButton.textContent = "변환하기";
+    sendButton.textContent = "변환/선택 영역 수정";
   };
   const syncConversionSummary = () => {
     if (!conversionSummary) return;
@@ -1542,9 +1542,9 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       output.textContent = "페이지에 넣기";
       output.onclick = () => {
         if (busy || output.disabled) return;
-        if (candidateUsesSeparatedAssets(item)) { void openGroupsForItem(item, true); return; }
+        if (candidateUsesSeparatedAssets(item) && selectedSeparationMode !== AI_SEPARATION_MODES.OFF) { void openGroupsForItem(item, true, false, true); return; }
         if (candidateUsesAutomaticSeparation(item) && selectedSeparationMode !== AI_SEPARATION_MODES.OFF) {
-          void openGroupsForItem(item, false, selectedSeparationMode === AI_SEPARATION_MODES.MANUAL || item.automaticSeparationState === 'fallback');
+          void openGroupsForItem(item, false, selectedSeparationMode === AI_SEPARATION_MODES.MANUAL || item.automaticSeparationState === 'fallback', true);
           return;
         }
         if (item.sceneResult?.objects?.length) {
@@ -1750,7 +1750,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   function restartSelectedAutomaticSeparation(reason = 'options-changed') {
     abortAutomaticSeparation(reason);
     const item = selectedOutputItem();
-    if (!candidateUsesAutomaticSeparation(item)) return;
+    if (!candidateUsesAutomaticSeparation(item)) { syncSelectedOutputActions(); return; }
     item.automaticSeparationState = 'idle';
     item.automaticSeparationPrepared = null;
     item.automaticSeparationKey = '';
@@ -1764,7 +1764,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       && object.aiCandidateId === item.id && object.editableAssetRegionId));
   }
 
-  async function openGroupsForItem(item, separated = false, manual = false) {
+  async function openGroupsForItem(item, separated = false, manual = false, useResult = false) {
     const epoch = currentRequestEpoch;
     const taskId = activeTaskTabId;
     const candidateId = item.id;
@@ -1784,6 +1784,14 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       setStatus(separated ? '분리 결과를 확인하는 중…' : manual ? '직접 지정할 영역을 준비하는 중…' : '편집용 그룹을 준비하는 중…', 'busy');
       const initialPrepared = separated ? await prepareSeparatedAssets(source) : manual ? null : await startAutomaticSeparation(item);
       if (!isCurrent()) throw new Error('분리 결과를 준비하는 동안 페이지·작업 또는 후보가 변경되었습니다.');
+      if (useResult && initialPrepared) {
+        const prepared = { ...initialPrepared, labelsDisabled: true };
+        const inserted = candidateAlreadyInserted(item) || insertEditableAssets(state, prepared, {
+          isCurrent, aiTaskId: taskId, aiCandidateId: candidateId,
+        });
+        if (inserted) { captureActiveTaskTab(); persistTasks(); close({ integratedEdit: true }); }
+        return;
+      }
       const dialogSource = separated ? source : (item.automaticSeparationSource || await resolveOutputVariant(item));
       const inserted = await openEditableAssetsDialog({
         dataUrl: dialogSource, isCurrent, artboard: { ...state.get().artboard }, initialPrepared,
@@ -1824,41 +1832,32 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       const automatic = candidateUsesAutomaticSeparation(item) && selectedSeparationMode !== AI_SEPARATION_MODES.OFF;
       const manual = automatic && selectedSeparationMode === AI_SEPARATION_MODES.MANUAL;
       const automaticState = manual ? 'manual' : automatic ? (item.automaticSeparationState || 'idle') : '';
-      const inserted = automatic && candidateAlreadyInserted(item);
       groups.hidden = false;
-      groups.disabled = busy || !item || Boolean(item.sceneResult) || automaticState === 'preparing' || inserted;
+      groups.disabled = busy || !item || selectedSeparationMode === AI_SEPARATION_MODES.OFF || Boolean(item.sceneResult) || automaticState === 'preparing';
       groups.dataset.aiSeparationState = automaticState;
       groups.dataset.aiSeparationKey = automatic ? (item.automaticSeparationKey || '') : '';
       groups.dataset.aiSeparationCacheHit = automatic ? String(item.automaticSeparationCacheHit === true) : '';
       groups.dataset.aiSeparatedCount = automatic && item.automaticSeparationPrepared?.assets?.length
         ? String(item.automaticSeparationPrepared.assets.length) : '';
-      groups.textContent = inserted ? '이미 페이지에 추가됨'
-        : manual ? '영역을 직접 지정해서 분리'
-        : automaticState === 'preparing' ? '물체를 분리하는 중…'
-        : automaticState === 'ready' ? '분리 결과 확인'
-        : automaticState === 'fallback' ? '영역을 직접 지정해서 분리'
-        : candidateUsesSeparatedAssets(item) ? '분리 결과 확인' : '편집용 그룹 준비';
+      groups.textContent = '결과 확인';
     }
     if (recovery) {
-      recovery.hidden = nextAction !== 'manual-regions';
+      recovery.hidden = true;
       recovery.disabled = busy || nextAction !== 'manual-regions';
     }
     if (outputNote) {
-      outputNote.hidden = nextAction === 'ordinary-insert' && item?.automaticSeparationState !== 'fallback';
+      outputNote.hidden = selectedSeparationMode === AI_SEPARATION_MODES.OFF || nextAction === 'ordinary-insert' && item?.automaticSeparationState !== 'fallback';
       outputNote.textContent = item?.automaticSeparationState === 'fallback'
         ? `자동 분리를 완료하지 못했습니다: ${item.automaticSeparationError} 영역을 직접 지정해 분리할 수 있습니다.`
         : nextAction === 'manual-regions'
         ? `자동 분리 실패: ${item.separatedAssetsError} 원본 PNG의 배경은 아직 제거되지 않았습니다. 아래 버튼에서 영역을 직접 지정해 분리할 수 있습니다.`
-        : '분리용 원본 PNG입니다. 배경 제거와 개별 객체 분리는 “분리 결과 확인”에서 확인한 뒤 진행됩니다.';
+        : '분리된 물체를 확인한 뒤 결과를 사용할 수 있습니다.';
     }
     if (scoped) scoped.disabled = busy || !item || Boolean(item.sceneResult);
     if (save) save.disabled = busy || !item || Boolean(item.sceneResult);
     if (insert) {
       insert.disabled = busy || !item || Boolean(item.card?.querySelector('.ai-canvas-output')?.disabled);
-      const replacement = !candidateUsesSeparatedAssets(item) && state.get().selectedIds?.length === 1 && state.get().objects.some((object) => object.type === 'image' && !object.editableAssetRegionId && object.aiTaskId === activeTaskTabId && state.get().selectedIds?.includes(object.id));
-      insert.textContent = candidateUsesSeparatedAssets(item)
-        ? '분리 결과 확인'
-        : replacement ? '선택 이미지 교체 후 닫기' : '페이지에 넣고 닫기';
+      insert.textContent = '결과 사용';
     }
   }
 
@@ -1911,7 +1910,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     const fingerprint = JSON.stringify(item.comments || []);
     const getCurrent = () => {
       const live = selectedOutputItem();
-      const visibleId = panel.querySelector('[data-ai-candidate-select]')?.value;
+      const visibleId = panel.querySelector('[data-ai-candidate-option][aria-selected="true"]')?.dataset.aiCandidateOption;
       if (!live || visibleId !== live.id || panel.dataset.aiSelectedCandidateId !== live.id) {
         throw new Error('화면의 선택 버전과 내부 수정 대상이 달라 적용할 수 없습니다.');
       }
@@ -3324,13 +3323,6 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     else panel.querySelector('[data-ai-side-tab="comments"]')?.focus();
   };
   const close = ({ integratedEdit = false } = {}) => {
-    if (document.documentElement.dataset.mode === 'lite') {
-      if (integratedEdit) {
-        captureActiveTaskTab(); persistTasks(); void taskPersistence.flush();
-        window.dispatchEvent(new CustomEvent('5e:lite-result-edit', { detail: { taskId: activeTaskTabId } }));
-      }
-      return;
-    }
     abortAutomaticSeparation('panel-closed');
     captureActiveTaskTab(); persistTasks(); void taskPersistence.flush();
     panel.hidden = true;
@@ -4087,7 +4079,14 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     requestAnimationFrame(() => sendButton.focus());
   });
   sendButton.title = "대화와 코멘트를 반영해 새 이미지로 변환합니다.";
-  sendButton.onclick = (event) => submit("image", { bypassCache: true });
+  sendButton.onclick = () => {
+    const item = selectedOutputItem();
+    if (item?.comments?.some(comment => comment.type === 'area')) {
+      void startScopedEdit(item);
+      return;
+    }
+    void submit("image", { bypassCache: true });
+  };
   chatInput?.addEventListener("keydown", (event) => {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
@@ -4676,21 +4675,20 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   });
   modal?.addEventListener("mousedown", (event) => event.stopPropagation());
   commentController=createImageCommentController({panel,getImages:()=>[...attachments.filter(isInputReference),...generatedImages],getSelectedId:()=>selectedCandidateId||generatedImages.at(-1)?.id,isBusy:()=>busy,changed:()=>{scopedSelectionRevision += 1;captureActiveTaskTab();persistTasks();}});
-  panel.querySelector('[data-ai-comments-apply]')?.addEventListener('click',()=>submit('image', { bypassCache: true }));
-  // Per-card action rows are intentionally hidden by the workbench CSS.
-  // Keep the real scoped-edit action in the visible, fixed selected-result footer.
+  panel.querySelector('[data-ai-comments-apply]')?.addEventListener('click', () => sendButton.onclick());
+  // Selected-result actions stay in the fixed footer; per-card controls are hidden.
   const editableGroups = document.createElement('button');
   editableGroups.type = 'button';
   editableGroups.dataset.aiEditableGroups = '';
   editableGroups.textContent = '편집용 그룹 준비';
   editableGroups.addEventListener('click', async () => {
     const item = selectedOutputItem();
-    if (busy || !item || item.sceneResult) return;
-    const manual = !candidateUsesSeparatedAssets(item)
+    if (busy || !item || item.sceneResult || selectedSeparationMode === AI_SEPARATION_MODES.OFF) return;
+    const manual = separatedCandidateNextAction(item) === 'manual-regions' || !candidateUsesSeparatedAssets(item)
       && (selectedSeparationMode === AI_SEPARATION_MODES.MANUAL || item.automaticSeparationState === 'fallback');
-    await openGroupsForItem(item, candidateUsesSeparatedAssets(item), manual);
+    await openGroupsForItem(item, candidateUsesSeparatedAssets(item) && !manual, manual);
   });
-  panel.querySelector('[data-ai-insert-selected]')?.after(editableGroups);
+  panel.querySelector('[data-ai-insert-selected]')?.before(editableGroups);
   const separatedRecovery = document.createElement('button');
   separatedRecovery.type = 'button'; separatedRecovery.dataset.aiSeparatedRecovery = '';
   separatedRecovery.textContent = '영역을 직접 지정해서 분리';
@@ -4707,12 +4705,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   selectedOutputNote.setAttribute('role', 'status');
   selectedOutputNote.setAttribute('aria-live', 'polite');
   selectedOutputNote.hidden = true;
-  separatedRecovery.after(selectedOutputNote);
-  const scoped = document.createElement('button');
-  scoped.type = 'button'; scoped.dataset.aiInputMutator = ''; scoped.dataset.aiScopedEditSelected = '';
-  scoped.textContent = '선택 영역 수정';
-  scoped.addEventListener('click', () => { const item = selectedOutputItem(); if (item) void startScopedEdit(item); });
-  panel.querySelector('[data-ai-save-selected]')?.before(scoped);
+  panel.querySelector('.ai-output-actions')?.append(selectedOutputNote);
   syncSelectedOutputActions();
   panel.querySelector('[data-ai-save-selected]')?.addEventListener('click', () => {
     if (!busy) selectedOutputItem()?.card?.querySelector('[data-ai-save-candidate]')?.click();

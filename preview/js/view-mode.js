@@ -1,4 +1,7 @@
-import { showConfirm } from './ui-dialogs.js?v=1.6.0-preview-labeler-0917-1111';
+import { animateModeChange } from './mode-transition.js';
+import { checkpointBeforeModeSwitch } from './autosave.js?v=mode-switch-0925';
+import { serialize, applyLoaded } from './project-io.js?v=1.6.0-preview-lite-hybrid-0922';
+import { showModeSwitch, showAlert } from './ui-dialogs.js?v=1.6.0-preview-labeler-0917-1111';
 import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-preview-labeler-0917-1111';
 import { setActiveTool } from './tools.js?v=1.6.0-preview-lite-hybrid-0922';
 /* ===== VIEW MODE: Pro / Lite 모드 전환 =====
@@ -46,7 +49,7 @@ function tagShortcuts() {
   });
 }
 
-function applyMode(mode, persist = true) {
+function applyMode(mode, persist = true, detail = {}) {
   const m = MODES.includes(mode) ? mode : DEFAULT_MODE;
   document.documentElement.setAttribute("data-mode", m);
   if (persist) { try { localStorage.setItem(MODE_KEY, m); } catch (_) { /* ignore */ } }
@@ -86,11 +89,11 @@ function applyMode(mode, persist = true) {
     }
     _savedLayerId = null;
   }
-  window.dispatchEvent(new CustomEvent("5e:view-mode-change", { detail: { mode: m } }));
+  window.dispatchEvent(new CustomEvent("5e:view-mode-change", { detail: { ...detail, mode: m } }));
   return m;
 }
 
-export function initViewMode(state) {
+export function initViewMode(state, { prepareNewAiWork } = {}) {
   _state = state;
   tagShortcuts();
 
@@ -107,16 +110,44 @@ export function initViewMode(state) {
   _btn.addEventListener("click", async () => {
     const cur = document.documentElement.getAttribute("data-mode") || DEFAULT_MODE;
     if (_btn.disabled) return;
-    if (cur === "lite") {
-      _btn.disabled = true;
-      try {
-        const confirmed = await showConfirm('현재 작업하던 이미지와 편집 내용을 그대로 유지하고 Pro로 전환할까요?', {
-          title: 'Pro로 전환', okText: '유지하고 전환', cancelText: '취소',
-        });
-        if (!confirmed) return;
-        applyMode('pro');
-      } finally { _btn.disabled = false; }
-    } else applyMode('lite');
+    _btn.disabled = true;
+    const target = cur === 'lite' ? 'pro' : 'lite';
+    try {
+      const choice = await showModeSwitch(target === 'pro' ? 'Pro' : 'Lite');
+      if (choice === 'cancel') return;
+      let resetWork = () => {};
+      if (choice === 'new') {
+        await checkpointBeforeModeSwitch(state);
+        const activateNewAiWork = await prepareNewAiWork();
+        const blank = serialize(state.get());
+        const id = crypto.randomUUID();
+        blank.pages = [{ id, name: '페이지 1', meta: { number: '', points: '' },
+          objects: [], guides: [], artboard: { w: 90, h: 60 },
+          layers: [1, 2, 3].map(id => ({ id, name: `레이어 ${id}`, visible: true })) }];
+        blank.activePageId = id;
+        resetWork = () => {
+          applyLoaded(state, blank);
+          state.update(s => { s.activeTool = 'V'; s.imageEditSession = null; s.editingFormulaId = null; s.artboardResizeMode = false; });
+          _savedLayerId = null;
+          activateNewAiWork();
+          const newAiPanel = document.getElementById('ai-image-panel');
+          if (newAiPanel) newAiPanel.hidden = true;
+        };
+      }
+      const aiWasOpen = document.getElementById('ai-image-panel')?.hidden === false;
+      const preserveWork = choice === 'keep';
+      const editorVisible = document.getElementById('canvas')?.getBoundingClientRect().width > 0;
+      window.dispatchEvent(new CustomEvent('5e:mode-switch-start', { detail: { preserveWork } }));
+      await animateModeChange(() => {
+        resetWork();
+        applyMode(target, true, { preserveWork, editorVisible, aiWasOpen });
+      });
+      const url = new URL(window.location.href);
+      url.searchParams.set('mode', target);
+      window.history.replaceState(window.history.state, '', url);
+    } catch (error) {
+      await showAlert(error.message || '작업을 보관하지 못해 전환하지 않았습니다.', { title: '모드 전환 실패' });
+    } finally { _btn.disabled = false; _btn.focus(); }
   });
 
   document.getElementById("tool-cut-merged")?.addEventListener("click", (event) => {

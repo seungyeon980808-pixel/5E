@@ -1007,7 +1007,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   const selectedResult = () => results.find((result) => result.id === selectedId) || null;
   const selectedActiveResult = () => {
     const result = selectedResult();
-    return continuousView?.resultId === result?.id
+    return continuousView && result && continuousView.resultId === result.id
       ? pdfFilePageResult(result, continuousView.visiblePage)
       : activePdfPageResult(result, pdfMatchIndex);
   };
@@ -1015,7 +1015,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   const actionButtons = () => [...overlay.querySelectorAll("[data-unilib-insert],[data-unilib-objectify],[data-unilib-ai]")];
   const acceptedAssetsKey = () => [...acceptedAssets.keys()].join("\u0000");
   const invalidateAction = () => { actionRevision += 1; };
-  const activePageNumber = () => continuousView?.resultId === selectedId ? continuousView.visiblePage : null;
+  const activePageNumber = () => continuousView && continuousView.resultId === selectedId ? continuousView.visiblePage : null;
   const snapshotAction = () => Object.freeze({ selectedId, acceptedAssetsKey: acceptedAssetsKey(), acceptedAssetIds: Object.freeze([...acceptedAssets.keys()]), representation: activeRepresentation, selectedFigure: activeFigureRepresentation, activePage: activePageNumber(), revision: actionRevision, options: Object.freeze(getPartOptions()), open: !overlay.hidden });
   const actionIsCurrent = (snapshot) => libraryActionSnapshotIsCurrent(snapshot, { selectedId, acceptedAssetsKey: acceptedAssetsKey(), representation: activeRepresentation, selectedFigure: activeFigureRepresentation, activePage: activePageNumber(), revision: actionRevision, open: !overlay.hidden });
   const resultForActionSnapshot = (snapshot) => {

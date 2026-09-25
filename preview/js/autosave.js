@@ -81,13 +81,18 @@ function saveSnapshot(db, data) {
   });
 }
 
-/* ----- snapshotHasObjects: 페이지 여러 개 중 하나라도 객체가 있는지 -----
- * serialize()가 다중 페이지(pages[]) 형식을 내보내므로(단일 objects[] 아님),
- * "빈 도면" 판정은 모든 페이지를 훑어야 한다. */
-function snapshotHasObjects(data) {
-  return Array.isArray(data.pages) && data.pages.some(
-    (p) => p && Array.isArray(p.objects) && p.objects.length
-  );
+// Preserve document setup even before the first object is drawn.
+function snapshotHasWork(data) {
+  if (!Array.isArray(data.pages)) return false;
+  if (data.pages.length > 1) return true;
+  return data.pages.some(p => p && (
+    p.objects?.length || p.guides?.length ||
+    (p.name && p.name !== '페이지 1') || p.meta?.number || p.meta?.points ||
+    (p.artboard && (p.artboard.w !== 90 || p.artboard.h !== 60)) ||
+    (p.layers && JSON.stringify(p.layers) !== JSON.stringify(
+      [1, 2, 3].map(id => ({ id, name: `레이어 ${id}`, visible: true }))
+    ))
+  ));
 }
 
 /* ----- 복구 모달용 시각 포맷 ----- */
@@ -121,7 +126,7 @@ export async function initAutosave(state) {
   //     덮어쓰지 않는다.
   try {
     const latest = await getLatest(db);
-    if (latest && latest.data && snapshotHasObjects(latest.data)) {
+    if (latest && latest.data && snapshotHasWork(latest.data)) {
       const ok = await showConfirm(
         `이전에 작업하던 도해가 남아 있습니다.\n(${formatTime(latest.ts)})\n\n이전 작업을 복구할까요?`,
         { title: "작업 복구", okText: "복구", cancelText: "새로 시작" }
@@ -163,7 +168,7 @@ export async function initAutosave(state) {
   const captureAndQueue = () => {
     const statusToken = captureProjectStatus(state);
     const snap = serialize(state.get());
-    if (!snapshotHasObjects(snap)) return;
+    if (!snapshotHasWork(snap)) return;
     const json = JSON.stringify(snap);
     if (json === lastSavedJson || json === lastQueuedJson) return;
     const data = JSON.parse(json);
@@ -203,4 +208,12 @@ export async function initAutosave(state) {
   });
   window.addEventListener("pagehide", flush);
   return recoveryChoice;
+}
+
+// Explicit checkpoint before replacing a document; never discard work on failure.
+export async function checkpointBeforeModeSwitch(state) {
+  const snapshot = JSON.parse(JSON.stringify(serialize(state.get())));
+  if (!snapshotHasWork(snapshot)) return;
+  const db = await openDB();
+  try { await saveSnapshot(db, snapshot); } finally { db.close(); }
 }

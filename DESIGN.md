@@ -682,3 +682,16 @@ populate를 건드리지 않아도 된다.
 - Lite→Pro는 기존 공용 확인창에서 작업 유지 전환을 확인한 경우에만 실행한다. 취소는 현재 모드와 작업을 유지한다.
 - Lite 전용 탭·접기 버튼·프록시 옵션은 Pro에 표시하지 않는다.
 - 생성 후에도 객체 분리 결과 확인과 직접 영역 지정이 가능하다. 자동 분리를 선택한 결과 사용은 분리 확인을 거친다.
+
+### 0-12. 양방향 모드 전환 (2026-09-25)
+- Lite↔Pro 모두 취소 / 새 작업으로 전환 / 유지하고 전환을 제공한다. Enter는 포커스된 버튼을 실행하며 최초 포커스는 유지 버튼이다. Escape와 바깥 클릭은 취소다.
+- 유지는 문서·Undo·AI 작업을 보존한다. 새 작업은 현재 도면의 자동 복구 스냅샷과 AI 작업 체크포인트를 먼저 저장하고 빈 문서 및 독립된 빈 AI 작업을 연다. 저장 실패 시 현재 작업을 비우지 않는다. 기존 AI 작업은 작업 목록에 남긴다.
+- 승인 모션 토큰: --mode-motion-duration:240ms, --mode-motion-easing:cubic-bezier(.2,.7,.2,1). 테마·도구는 opacity 크로스페이드, 캔버스에는 회전·이동·확대 애니메이션을 적용하지 않는다. beui theme-toggle의 View Transition 감지·동작 감소 분기를 참고하되 원형 reveal은 사용하지 않는다.
+- View Transition 미지원 시 도구 영역의 짧은 opacity 등장만 사용한다. reduced-motion에서는 즉시 전환한다. 모드 왕복은 현재 배율과 화면상의 투영을 보존한다.
+- 확인창은 기존 modal 토큰을 사용하며 3개 버튼이 좁은 화면에서 줄바꿈할 수 있다. 변경 식별 코드 MODE-SWITCH-0925.
+
+## 0-13. Lite 메인 캔버스 복원 (2026-09-25)
+사용자가 최종 승인한 구조: Pro와 같은 좌측 도구 / 중앙 단일 편집 캔버스 / 우측 속성의 세 영역. AI 화면에 canvas/inspector를 재부모화하지 않는다. AI는 별도 모달이고 결과 사용/닫기로 메인에 복귀한다. 헤더도 같은 열 기준: 로고+Lite / 실행취소·다시실행 / 중앙 정렬 이미지로 저장. 기존 도구, 라이브러리, 좌표·함수 팝업, 이미지 저장 로직을 재사용한다.
+토큰: 좌측 224px, 우측 288px, 헤더 64px, 도구 72px, 패딩16px; 1100px 이하 좌측180px/우측248px; 700px 이하 좌측88px/우측156px, 도구 한 열. 화면이 좁아도 도구·속성은 고정된 세 영역이며 별도 선택지를 추가하지 않는다. 기존 하늘색 ramp와 경계 토큰 유지, 캔버스 바탕 #e1e8ed, 종이 흰색, 워터마크 제거. 모션/데이터/Pro 도구 구성은 기존 계약 유지. 실행 취소 이력 및 페이지 데이터 보존이 필수 검증이다.
+
+Main role tokens additionally name title15, action icon20, history type22/control40, tool icon24, bottom48, save max224, help leading1.7/tool leading1.4. Existing Lite spacing, border and type tokens are reused by all consumers. Breakpoints remain literal CSS media queries.

@@ -427,6 +427,14 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
       activate(created.at(-1));
       return created.map((entry, index) => ({ scope: entry.scope, name: groupedSnapshots[index][0].name }));
     },
+    prepareNewWork: async () => {
+      await ready;
+      await Promise.all(entries.map(entry => entry.controller.checkpointForClose()));
+      const next = add(crypto.randomUUID(), false);
+      await next.controller.ready;
+      saveRegistry();
+      return () => activate(next);
+    },
     checkpointForClose: async () => {
       const snapshots = await Promise.all(entries.map((entry) => entry.controller.checkpointForClose()));
       return {

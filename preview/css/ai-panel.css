@@ -1756,7 +1756,7 @@
 #ai-image-panel .ai-workbench-actions > [data-ai-comments-apply] { width:100%; min-height:33px; color:#fff; background:var(--accent); border:1px solid var(--accent); font-size:12px; }
 #ai-image-panel .ai-workbench-actions .ai-conversation-actions { display:flex; gap:6px; margin:0; }
 #ai-image-panel .ai-workbench-actions .ai-conversation-actions [data-ai-send] { flex:1; min-height:32px; font-size:11px; }
-#ai-image-panel .ai-output-actions { display:grid; grid-template-columns:1fr 1.35fr; gap:6px; }
+#ai-image-panel .ai-output-actions { display:grid; grid-template-columns:1fr 1fr; gap:6px; }
 #ai-image-panel .ai-output-actions button { min-width:0; min-height:30px; padding:5px 6px; font-size:11px; color:var(--text-primary); background:var(--bg-input); border:1px solid var(--border); }
 #ai-image-panel .ai-comment-pin,#ai-image-panel .ai-comment-marker,#ai-image-panel [data-ai-comment-pin] { position:absolute; z-index:6; width:24px; height:24px; padding:0; border:2px solid #fff; border-radius:50%; color:#fff; background:var(--accent); font:600 11px/1 ui-monospace,monospace; display:grid; place-items:center; cursor:pointer; }
 #ai-image-panel .ai-comment-pin.is-active,#ai-image-panel .ai-comment-marker.is-active { outline:2px solid var(--accent); outline-offset:2px; }

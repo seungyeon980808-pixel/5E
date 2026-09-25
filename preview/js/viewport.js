@@ -179,11 +179,17 @@ export function initViewport(svg, state, onChange) {
       y: rect.top + rect.height / 2 - (vb.y + vb.h / 2) * scale };
   };
   let projection = readProjection();
+  let retainModeProjection = false;
+  window.addEventListener('5e:mode-switch-start', event => {
+    retainModeProjection = event.detail?.preserveWork === true;
+    const current = readProjection();
+    if (current.width > 0 && current.height > 0) projection = current;
+  });
   const sameBox = (a, b) => a.left === b.left && a.top === b.top
     && a.width === b.width && a.height === b.height;
   state.subscribe(() => {
     const vb = state.get().viewBox;
-    if (liteMode() && (Math.abs(vb.x + vb.w / 2) > 1e-8 || Math.abs(vb.y + vb.h / 2) > 1e-8)) {
+    if (liteMode() && !retainModeProjection && (Math.abs(vb.x + vb.w / 2) > 1e-8 || Math.abs(vb.y + vb.h / 2) > 1e-8)) {
       centerView(state);
       return;
     }
@@ -194,15 +200,16 @@ export function initViewport(svg, state, onChange) {
     const next = readProjection();
     if (sameBox(projection, next)) return;
     const previous = projection;
-    if (!(previous.scale > 0) || next.width <= 0 || next.height <= 0) {
+    if (next.width <= 0 || next.height <= 0) return;
+    if (!(previous.scale > 0)) {
       projection = next;
       return;
     }
     state.update((s) => {
       s.viewBox.w = next.width / previous.scale;
       s.viewBox.h = next.height / previous.scale;
-      s.viewBox.x = liteMode() ? -s.viewBox.w / 2 : (next.left - previous.x) / previous.scale;
-      s.viewBox.y = liteMode() ? -s.viewBox.h / 2 : (next.top - previous.y) / previous.scale;
+      s.viewBox.x = liteMode() && !retainModeProjection ? -s.viewBox.w / 2 : (next.left - previous.x) / previous.scale;
+      s.viewBox.y = liteMode() && !retainModeProjection ? -s.viewBox.h / 2 : (next.top - previous.y) / previous.scale;
     });
     projection = readProjection();
     commit();
@@ -211,7 +218,7 @@ export function initViewport(svg, state, onChange) {
   layoutObserver.observe(svg);
   window.addEventListener("5e:panel-layout-did-change", preserveProjection);
   window.addEventListener("5e:view-mode-change", () => {
-    if (liteMode()) centerView(state);
+    if (liteMode() && !retainModeProjection) centerView(state);
     requestAnimationFrame(preserveProjection);
   });
 

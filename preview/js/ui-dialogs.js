@@ -13,30 +13,37 @@ function escapeHtml(s) {
   return String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
-function buildDialog({ title, message, buttons }) {
+function buildDialog({ title, message, buttons, wide = false }) {
   return new Promise((resolve) => {
     const overlay = document.createElement("div");
-    overlay.className = "modal-overlay";
+    overlay.className = wide ? "modal-overlay mode-switch-dialog" : "modal-overlay";
     const btnHtml = buttons.map((b, i) =>
-      `<button type="button" class="modal-btn${b.primary ? " modal-btn-primary" : ""}" data-i="${i}">${b.label}</button>`
+      `<button type="button" class="modal-btn${b.primary ? " modal-btn-primary" : ""}" data-i="${i}">${escapeHtml(b.label)}</button>`
     ).join("");
     overlay.innerHTML = `
       <div class="modal" role="${buttons.length > 1 ? "alertdialog" : "dialog"}" aria-modal="true"
-           style="width:min(320px, calc(100vw - 32px))">
+           style="width:min(${wide ? 520 : 320}px, calc(100vw - 32px))">
         <h2 class="modal-title">${escapeHtml(title)}</h2>
         <p class="objectify-description" style="margin:0 0 4px;white-space:pre-line;">${escapeHtml(message)}</p>
         <div class="modal-actions">${btnHtml}</div>
       </div>`;
     document.body.appendChild(overlay);
-    const done = (value) => { overlay.remove(); resolve(value); };
+    const previousFocus = document.activeElement;
+    const done = (value) => { overlay.remove(); previousFocus?.focus(); resolve(value); };
     registerEscapeLayer(overlay.querySelector('[role="dialog"], [role="alertdialog"]'), () => done(buttons[0].value));
     overlay.querySelectorAll(".modal-btn").forEach((b) => {
       b.addEventListener("click", () => done(buttons[Number(b.dataset.i)].value));
     });
     overlay.addEventListener("mousedown", (e) => { if (e.target === overlay) done(buttons[0].value); });
     overlay.addEventListener("keydown", (e) => {
+      if (wide && e.key === 'Tab') {
+        const controls = [...overlay.querySelectorAll('.modal-btn')];
+        const index = controls.indexOf(document.activeElement);
+        e.preventDefault();
+        controls[(index + (e.shiftKey ? -1 : 1) + controls.length) % controls.length].focus();
+      }
       if (e.key === "Escape") { e.stopPropagation(); done(buttons[0].value); }
-      if (e.key === "Enter") { e.preventDefault(); done(buttons[buttons.length - 1].value); }
+      if (e.key === "Enter" && !e.target.closest("button")) { e.preventDefault(); done(buttons[buttons.length - 1].value); }
     });
     // 마지막(주) 버튼에 포커스
     overlay.querySelector(".modal-btn:last-child")?.focus();
@@ -91,5 +98,18 @@ export function showPrompt(message, { title = "입력", value = "", placeholder 
     });
     input.focus();
     input.select();
+  });
+}
+
+export function showModeSwitch(target) {
+  return buildDialog({
+    title: `${target}로 전환`,
+    message: '현재 작업을 이어서 사용할까요, 새 작업으로 시작할까요?\n새 작업을 선택해도 이전 도면은 복구용으로 보관됩니다. AI 작업은 작업 목록에 남습니다.',
+    wide: true,
+    buttons: [
+      { label: '취소', value: 'cancel' },
+      { label: '새 작업으로 전환', value: 'new' },
+      { label: '유지하고 전환', value: 'keep', primary: true },
+    ],
   });
 }
