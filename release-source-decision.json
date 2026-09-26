@@ -1710,13 +1710,13 @@
       "rationale": "The deferred header-resize fix is the final source for the preview workbench."
     },
     {
-      "sourceCommit": "2acb707bfadd794eeb5023a50026c0942a632c73",
-      "originalTaskCommit": "c12649cb69a324e63662ec08bb32f151f082e707",
+      "sourceCommit": "4d00f55d349bbfb64320a7cd29fe6c838a5d944b",
+      "originalTaskCommit": "491a91554f7bfe1a5e392518854f2b0fba32b1f9",
       "paths": [
         "desktop/main.cjs"
       ],
-      "evidence": ".omo/evidence/5e-160-release-remediation/task-12-native-df25-harness-independent-v2/REVIEW.md",
-      "rationale": "The independently reviewed native smoke public-control and rendered-geometry repair is the final source for the desktop entry."
+      "evidence": ".omo/evidence/5e-160-release-remediation/task-12-native-f812-harness-independent/REVIEW.md",
+      "rationale": "The independently reviewed primary-pointer smoke repair is the final source for the desktop entry."
     },
     {
       "sourceCommit": "5a70fb2d34788ebf04e2e8cde0d241d4071598b4",
@@ -1740,12 +1740,12 @@
     },
     {
       "path": "desktop/main.cjs",
-      "sourceCommit": "2acb707bfadd794eeb5023a50026c0942a632c73",
-      "sourceBlob": "a467d2de295e436fa19a65b2390078df1b147c51",
-      "sourceSha256": "dec3d5bf0de6196d423ce50a8992b046fc34cc2b1040070fb9610346df096e78",
-      "currentSha256": "dec3d5bf0de6196d423ce50a8992b046fc34cc2b1040070fb9610346df096e78",
-      "bytes": 64201,
-      "rationale": "exercise the packaged native smoke through current public controls and rendered geometry"
+      "sourceCommit": "4d00f55d349bbfb64320a7cd29fe6c838a5d944b",
+      "sourceBlob": "f22de32d55e74dba71a2a89ab20c31eecf273767",
+      "sourceSha256": "7e7ebc5496dbe16d1afb9a677b2f046b6d716ceff0be1568e4073e48219ce458",
+      "currentSha256": "7e7ebc5496dbe16d1afb9a677b2f046b6d716ceff0be1568e4073e48219ce458",
+      "bytes": 64307,
+      "rationale": "drive packaged area-comment smoke gestures with the required primary-pointer contract"
     },
     {
       "path": "preview/js/ai-scoped-edit-png.js",

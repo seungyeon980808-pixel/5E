@@ -94,8 +94,8 @@ const expectedFollowOnChanges = [
     paths: ['preview/js/ai-workbench.js'],
   },
   {
-    sourceCommit: '2acb707bfadd794eeb5023a50026c0942a632c73',
-    originalTaskCommit: 'c12649cb69a324e63662ec08bb32f151f082e707',
+    sourceCommit: '4d00f55d349bbfb64320a7cd29fe6c838a5d944b',
+    originalTaskCommit: '491a91554f7bfe1a5e392518854f2b0fba32b1f9',
     paths: ['desktop/main.cjs'],
   },
   {
@@ -106,7 +106,7 @@ const expectedFollowOnChanges = [
 ];
 const expectedTaskChanges = [
   ['package.json', '8013eaf097c999c0bbd8b9aa3aab7933942fe145'],
-  ['desktop/main.cjs', '2acb707bfadd794eeb5023a50026c0942a632c73'],
+  ['desktop/main.cjs', '4d00f55d349bbfb64320a7cd29fe6c838a5d944b'],
   ['preview/js/ai-scoped-edit-png.js', '5a70fb2d34788ebf04e2e8cde0d241d4071598b4'],
   ['js/svg-export.js', '9f22fb5dfbb0036979e14de8f557a53f0a58545e'],
   ['docs/credits.html', 'c1bca259aff32cb29caf0df6cb68503edb869863'],
