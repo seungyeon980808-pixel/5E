@@ -66,10 +66,25 @@ export function createTaskBridge(base, clientScope) {
     if (typeof base[method] === 'function') bridge[method] = (payload = {}) => base[method]({ ...payload, clientScope });
   }
   for (const method of ['onEvent', 'onState', 'onLog']) {
-    if (typeof base[method] === 'function') bridge[method] = callback => base[method](event => {
-      if ((event.clientScope || '') === clientScope) callback(event);
-    });
+    if (typeof base[method] === 'function') bridge[method] = callback => {
+      let active = callback;
+      const unsubscribe = base[method](event => {
+        if ((event.clientScope || '') === clientScope) active?.(event);
+      });
+      return () => {
+        active = null;
+        if (typeof unsubscribe === 'function') unsubscribe();
+      };
+    };
   }
+  if (typeof base.onAiCloseTaskShortcut === 'function') bridge.onAiCloseTaskShortcut = callback => {
+    let active = callback;
+    const unsubscribe = base.onAiCloseTaskShortcut(() => active?.());
+    return () => {
+      active = null;
+      if (typeof unsubscribe === 'function') unsubscribe();
+    };
+  };
   return bridge;
 }
 
@@ -135,6 +150,11 @@ export function createTaskPersistence({
       timer = null;
       return captureAndQueue({ force: true, required: true });
     },
+    dispose() {
+      if (timer) clearTimer(timer);
+      timer = null;
+      dirty = false;
+    },
     settled: () => queue,
   };
 }
@@ -196,11 +216,12 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
     try { localStorage.setItem(key, JSON.stringify(value)); }
     catch { window.alert('작업 목록 저장에 실패했습니다. 현재 작업을 저장하기 전에는 새로고침하지 마세요.'); }
   }
-  const saveRegistry = () => store(registryKey, entries.map(e => e.scope).filter(Boolean));
+  const saveRegistry = () => store(registryKey, entries.filter(e => e.panel !== original).map(e => e.scope).filter(Boolean));
   function saveSelection() {
     if (restored && active?.controller) store(selectionKey, {scope: active.scope, taskId: active.controller.activeTask()});
   }
   function activate(entry) {
+    if (!entry) return;
     for (const item of entries) {
       item.panel.hidden = item !== entry;
       item.panel.id = item === entry ? 'ai-image-panel' : `ai-workspace-${item.scope || 'legacy'}`;
@@ -209,6 +230,19 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
     window.dispatchEvent(new CustomEvent('5e:ai-workspace-activate', { detail: { panel: entry.panel, scope: entry.scope } }));
     renderNavigation();
     saveSelection();
+  }
+  function disposeEntry(entry) {
+    if (!entry || entries.length <= 1 || entry.tabs.length || entry.panel.dataset.aiBusy === 'true') return false;
+    const index = entries.indexOf(entry);
+    if (index < 0) return false;
+    entries.splice(index, 1);
+    entry.controller?.dispose?.();
+    entry.panel.aiWorkbench?.dispose?.();
+    if (entry.panel !== original) entry.panel.remove();
+    if (active === entry) active = entries.find(item => item.tabs.length) || entries[0];
+    activate(active);
+    saveRegistry();
+    return true;
   }
   function renderNavigation() {
     for (const owner of entries) {
@@ -295,6 +329,7 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
       exportCollection, clearCollection,
       newWorkspace: () => { const next = add(crypto.randomUUID()); saveRegistry(); return next.scope; },
       workspaceEmpty: () => {
+        if (disposeEntry(entry)) return;
         const next = entries.find(item => item !== entry && item.tabs.length);
         if (!clearing) activate(next || entry);
         saveRegistry();
@@ -327,6 +362,9 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
     for (const scope of saved) if (typeof scope === 'string' && /^[a-f0-9-]{36}$/.test(scope) && scope !== primaryScope) add(scope, false);
   } catch { /* The original workspace remains available if the registry is unreadable. */ }
   const ready = Promise.all(entries.map(e => e.controller.ready)).then(() => {
+    for (const entry of [...entries]) {
+      if (entry.panel !== original && !entry.tabs.length) disposeEntry(entry);
+    }
     let saved;
     try { saved = JSON.parse(localStorage.getItem(selectionKey) || 'null'); } catch {}
     const target = entries.find(e => e.scope === saved?.scope && e.controller.ownsTask(saved?.taskId));
