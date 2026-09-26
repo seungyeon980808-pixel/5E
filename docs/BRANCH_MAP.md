@@ -1,113 +1,31 @@
-# 폴더 ↔ 브랜치 ↔ 포트 ↔ 역할 지도 (BRANCH_MAP.md)
+# Branch and release map
 
-> 2026-07-03 세션 교훈: "이 폴더 = 이 브랜치 = 이 역할"이 문서에 없으면 오진이 생긴다.
-> **폴더에서 브랜치를 바꾸지 말 것. 브랜치가 필요하면 폴더(워크트리)를 만든다.**
+Observed public state on 2026-09-26. Recheck moving refs before any public operation.
 
-- 최종 실측: **2026-07-26** (`feat/solid3d` 병합 직후)
-- 배포 버전: **v1.1.0** (마지막 GitHub Release = v1.1.0). 코드는 그 이후 41커밋 더 나갔고
-  버전 문자열은 아직 안 올렸다 — 다음 릴리즈 때 한 번에 올린다.
-- 이 표는 추측이 아니라 실측이다. 갱신할 때도 맨 아래 명령으로 다시 뽑는다.
+| Role | Ref/source | Exact observed commit | State |
+|---|---|---|---|
+| Default source | `main` | `d8d75df3a9db3c1bd662867df80a82dbe3bde5fc` | Public remote observation |
+| Pages source | `codex/preview-1.6.0:/` | `09f94d830a7cec15632aa5286f6cffbe58e5f39f` | Serves stable and preview entries |
+| Latest desktop release | tag `v1.5.8` | `0684bcf70b01959423b12556a077c3077b04afc7` | Published 2026-08-13 |
+| 1.6 remediation | `codex/release-160-remediation` | resolved at release build | Candidate `HOLD` |
 
----
+The 1.6 implementation baseline reviewed for this documentation was `8d98bab0f5c9f762a6d8ed6ca8c50e4e369d4013`. It is not the final release SHA. Documentation, dependency, and native-validation work may add commits. The build records the final full SHA in the external artifact manifest.
 
-## 현재 지도
+## Worktree rules
 
-흐름은 **`main` 하나**다. 2026-07-23에 살아 있던 브랜치를 전부 `main`에 병합하고
-origin에 올린 뒤, 역할이 끝난 브랜치·워크트리를 정리했다.
-`integration-hub`(합치는 곳)는 **없앴다** — main이 그 역할을 그대로 한다.
+- One task branch per worktree; inspect `git status` before editing.
+- Never use a remembered worktree count or branch list as release evidence. Capture `git worktree list --porcelain` and remote refs at the decision time.
+- A merged or reachable branch is not deletion approval. Keep release worktrees while retention is `PENDING_OWNER_APPROVAL`.
+- Do not switch a shared worktree to another branch or remove unfamiliar work.
+- Ports and temporary profiles belong to the task that started them and must be included in its cleanup receipt.
 
-| 폴더 (`51_5E\` 아래) | 브랜치 | 포트 | 역할 | 상태 |
-|---|---|---|---|---|
-| `5E_main` | `main` | 8190 | **배포 기준**(GitHub Pages) · 기본 작업 폴더 | ✅ origin 동기 |
-| `branches/5E_ai_dev` | `feat/ai-assist` | 8250 | AI 챗봇(Cloudflare Worker 프록시) — 베타, 보류 | ⏸ main에 +2커밋, origin에는 있음 |
-| `branches/5E_solid3d_dev` | `feat/solid3d` | 8260 | 입체(경사 투영) 도구 — **2026-07-26 main에 병합 완료** | ✅ main과 동일(+0) · 지워도 된다 |
-| `branches/5E_tutorial_dev` | `fix/tutorial_detail` | 8270 | 튜토리얼 디테일 개편(쉬움 모드 폐지·단일 흐름) | 🚧 작업 중 (2026-08-02~) |
-
-**워크트리는 3개다.** 여기 없는 폴더는 없는 게 맞다.
-
-### 2026-07-26 `feat/solid3d` 병합에서 배운 것
-
-- **같은 문제를 양쪽에서 각자 고치면 충돌한다.** 이번엔 두 건이었다 —
-  ① 끝점 핸들 타입 목록(main은 리터럴에 4종 추가 / 브랜치는 `object-types.js`
-  파생 집합으로 교체), ② 통합 버튼 팝오버(main은 `kind:"group"+variants` /
-  브랜치는 별도 `chooser`). 해소는 **한쪽 고르기가 아니라 합치기**였다:
-  파생 집합을 쓰되 main이 켠 4종을 표에 반영하고, 팝오버는 main 방식으로 일원화했다.
-  → 새 브랜치를 오래 들고 있지 말 것. 겹치는 영역이 있으면 먼저 main을 받아둘 것.
-- **`run-server.bat`과 `.claude/launch.json`이 main으로 새어 들어갔다.**
-  둘 다 tracked라 fast-forward에 그대로 딸려온다(main 포트가 8190→8260으로 바뀌었다).
-  병합 직후 `git checkout <병합전 main> -- run-server.bat .claude/launch.json`으로
-  되돌렸다. **다음 브랜치에서는 포트 변경 커밋을 병합 전에 되돌리는 편이 낫다.**
-
-### 정리된 것 (2026-07-23)
-
-- **워크트리 11개 삭제** — `5E_hub` · `5E_annot_dev` · `5E_curve_dev` · `5E_debt_dev` ·
-  `5E_export_dev` · `5E_hubmerge` · `5E_label_dev` · `5E_libstore_dev` · `5E_macfix_dev` ·
-  `5E_uibatch_dev` · `5E_uidetail_dev` (+ 빈 껍데기 `5E_majorfix_dev`)
-- **로컬 브랜치 12개 삭제** — 전부 `git rev-list --count main..<브랜치>` = 0 확인 후 삭제.
-  `integration-hub` · `feature/app-icon` · `feat/visual-weight` · `feat/annot-tab` ·
-  `feat/curve-smoothing` · `feat/export-batch` · `feat/library-storage` ·
-  `feat/mac-graph-examlib` · `feat/ui-batch7` · `feat/ui-detail` ·
-  `fix/label-centering` · `fix/schema-backfill`
-- **origin 브랜치 4개 삭제** — `integration-hub` · `object-dev` · `feat/exam-image-import` ·
-  `feat/curve-smoothing` (모두 `main`에서 도달 가능)
-- ~~**남긴 것** — `origin/main-backup-20260701`~~ → **이 브랜치는 지금 없다.**
-  2026-07-26 확인 시 origin에서 사라져 있었다. 그 안의 `main`에 없는 커밋 2개는
-  태그로 되살려 push했다: `backup-20260701`(d3e36f0) · `backup-20260701-b`(c1df5bf).
-  브랜치를 찾지 말고 이 태그를 볼 것.
-- `5E_hub`에 있던 참고 이미지(`graph_reference/`, 26장)는 워크트리 삭제에 휩쓸리지 않게
-  `51_5E/graph_reference/`로 옮겼다(git 밖).
-
----
-
-## 규칙
-
-- **한 폴더 = 한 브랜치 = 한 포트.** 셋 중 하나라도 겹치면 오진이 시작된다.
-- **새 브랜치는 `main`에서 딴다.** 허브를 base로 삼던 습관 때문에 작업 브랜치가 main보다
-  뒤처진 채로 자라 병합 때 충돌이 났다.
-  ```bash
-  git worktree add -b feat/<이름> ../branches/5E_<약칭>_dev main
-  ```
-- 폴더에서 `git checkout`으로 브랜치를 갈아타지 않는다. 새 작업 = 새 워크트리.
-- **병합이 끝나면 그 자리에서 지운다.** 안 지워서 12개까지 쌓였다.
-  ```bash
-  git rev-list --count main..<브랜치>   # 0이면
-  git worktree remove ../branches/<폴더> && git branch -d <브랜치>
-  ```
-- `run-server.bat`은 그 폴더 전용 포트를 박아 둔다. **병합할 때는 제외**한다(dev 전용).
-- 배포는 `main` 기준 — `main`에 올라간 것만 사용자에게 보인다.
-- 작업 시작 전 `git status`로 그 폴더의 미커밋 상태를 먼저 확인한다.
-
-## 알아 둘 함정 — 줄바꿈(CRLF/LF) 충돌
-
-2026-07-23 병합에서 `js/export-dialog.js`·`js/render/labels.js`가 **파일 전체 충돌**로 잡혔다.
-내용이 아니라 한쪽이 CRLF로 다시 저장돼 모든 줄이 바뀐 것으로 보인 탓이다. 해결은 이렇게 한다.
+## Refresh commands
 
 ```bash
-git show $BASE:$f > base.txt
-git show HEAD:$f  > ours.txt
-git show <브랜치>:$f | tr -d '\r' > theirs.txt   # 줄바꿈만 되돌리고
-git merge-file -L main -L base -L branch ours.txt base.txt theirs.txt   # 3-way 재실행
+git worktree list --porcelain
+git ls-remote --heads origin
+git ls-remote --tags origin
+git status --short
 ```
-실제 충돌은 0이었다. **파일째 `--ours`로 덮지 말 것** — 반대편 변경이 통째로 날아간다.
 
-## 갱신하는 법
-
-표를 손으로 고치지 말고 아래로 다시 뽑는다.
-
-```bash
-# 폴더 ↔ 브랜치 ↔ 포트
-git worktree list | while read path head br; do
-  p=$(grep -ho "http.server [0-9]*" "$path/run-server.bat" 2>/dev/null | grep -o "[0-9]*")
-  printf "%-28s %-28s %s\n" "$(basename $path)" "$br" "${p:-없음}"
-done
-
-# main 대비 미병합 커밋 수
-for b in $(git branch --format='%(refname:short)'); do
-  printf "%-26s +%s\n" "$b" "$(git rev-list --count main..$b)"
-done
-
-# origin에 없는(=로컬 전용) 브랜치
-for b in $(git branch --format='%(refname:short)'); do
-  git ls-remote --exit-code --heads origin "$b" >/dev/null 2>&1 || echo "$b 로컬만"
-done
-```
+These commands are observations. They do not authorize merge, deletion, deployment, tag creation, or release publication.
