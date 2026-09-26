@@ -39,6 +39,7 @@
     { "path": "tests/test-ai-focus-browser.cjs", "findingIds": ["EDGE-DIALOG-01"] },
     { "path": "tests/test-ai-workspace-lifecycle-browser.cjs", "findingIds": ["ARCH-160-01"] },
     { "path": "tests/test-circuit-body-scale-browser.cjs", "findingIds": ["TASK12-CIRCUIT-SCALE"] },
+    { "path": "tests/test-endpoint-draft-browser.cjs", "findingIds": ["TASK12-ENDPOINT-DRAFT"] },
     { "path": "tests/test-smoke-contract-browser.cjs", "findingIds": ["TPK-005"] },
     { "path": "tests/task10-ui-browser.cjs", "findingIds": ["CAN-DATA-01", "TPK-007", "TPK-008"] }
   ],
