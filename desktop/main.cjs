@@ -3,6 +3,12 @@ const { spawn, execFile } = require("node:child_process");
 const { createInterface } = require("node:readline");
 const fs = require("node:fs");
 const path = require("node:path");
+const { pathToFileURL } = require("node:url");
+const {
+  LOCAL_IMAGE_EXTENSIONS,
+  createLocalImageAccess,
+  isTrustedIpcSender,
+} = require("./local-image-policy.cjs");
 const {
   resolveTurnPlan,
   shouldAutoFinalizeImageTurn,
@@ -43,28 +49,22 @@ const autoFinalizingImageTurns = new Set();
 const IMAGE_FINALIZE_TIMEOUT_MS = 10_000;
 const IMAGE_FINALIZE_POLL_MS = 500;
 const RPC_CHECK_TIMEOUT_MS = 1_500;
-const localImageRoots = new Set();
-const LOCAL_IMAGE_EXTENSIONS = new Set([".png", ".jpg", ".jpeg", ".webp", ".gif", ".bmp", ".svg"]);
+const localImages = createLocalImageAccess();
 
-function isPathInside(root, candidate) {
-  const relative = path.relative(path.resolve(root), path.resolve(candidate));
-  return relative === "" || (!relative.startsWith("..") && !path.isAbsolute(relative));
-}
-
-function allowedLocalImagePath(filePath) {
-  const resolved = path.resolve(String(filePath || ""));
-  return LOCAL_IMAGE_EXTENSIONS.has(path.extname(resolved).toLowerCase())
-    && Array.from(localImageRoots).some((root) => isPathInside(root, resolved));
-}
-
-function imageDataUrl(filePath) {
-  const ext = path.extname(filePath).toLowerCase();
+function imageDataUrl({ extension: ext, bytes }) {
   const mime = ext === ".svg" ? "image/svg+xml"
     : ext === ".jpg" || ext === ".jpeg" ? "image/jpeg"
       : ext === ".webp" ? "image/webp"
         : ext === ".gif" ? "image/gif"
           : ext === ".bmp" ? "image/bmp" : "image/png";
-  return `data:${mime};base64,${fs.readFileSync(filePath).toString("base64")}`;
+  return `data:${mime};base64,${bytes.toString("base64")}`;
+}
+
+function assertTrustedLocalImageSender(event) {
+  const expectedUrl = pathToFileURL(path.join(__dirname, "..", "preview", "index.html")).href;
+  if (!isTrustedIpcSender(event, win, expectedUrl)) {
+    throw new Error("허용되지 않은 로컬 이미지 요청입니다.");
+  }
 }
 
 function collectLocalImages(root, limit = 5000) {
@@ -1098,29 +1098,26 @@ ipcMain.handle("capture:sources", async () => {
   });
   return sources.map((source) => ({ id: source.id, name: source.name, data: source.thumbnail.toDataURL() }));
 });
-ipcMain.handle("local-images:pick-folder", async () => {
+ipcMain.handle("local-images:pick-folder", async (event) => {
+  assertTrustedLocalImageSender(event);
   const result = await dialog.showOpenDialog(win, {
     title: "검색할 로컬 이미지 폴더 선택",
     properties: ["openDirectory"],
   });
-  const folder = result.canceled ? "" : path.resolve(result.filePaths[0] || "");
-  if (folder) localImageRoots.add(folder);
+  const folder = result.canceled ? "" : localImages.addRoot(result.filePaths[0] || "");
   return { folder };
 });
-ipcMain.handle("local-images:list", async (_, folder) => {
-  const resolved = path.resolve(String(folder || ""));
-  if (!resolved || !fs.existsSync(resolved) || !fs.statSync(resolved).isDirectory()) {
-    throw new Error("로컬 이미지 폴더를 찾을 수 없습니다.");
-  }
-  if (!localImageRoots.has(resolved)) throw new Error("먼저 폴더 선택 창에서 로컬 폴더를 연결하세요.");
+ipcMain.handle("local-images:list", async (event, folder) => {
+  assertTrustedLocalImageSender(event);
+  const resolved = localImages.requireRoot(folder);
   return { folder: resolved, items: collectLocalImages(resolved) };
 });
-ipcMain.handle("local-images:thumbnail", async (_, filePath) => {
-  if (!allowedLocalImagePath(filePath)) throw new Error("허용되지 않은 이미지 경로입니다.");
-  const resolved = path.resolve(filePath);
-  if (path.extname(resolved).toLowerCase() === ".svg") return imageDataUrl(resolved);
-  const source = nativeImage.createFromPath(resolved);
-  if (source.isEmpty()) return imageDataUrl(resolved);
+ipcMain.handle("local-images:thumbnail", async (event, filePath) => {
+  assertTrustedLocalImageSender(event);
+  const image = localImages.read(filePath);
+  if (image.extension === ".svg") return imageDataUrl(image);
+  const source = nativeImage.createFromBuffer(image.bytes);
+  if (source.isEmpty()) return imageDataUrl(image);
   const size = source.getSize();
   const scale = Math.min(1, 260 / Math.max(size.width, size.height, 1));
   return source.resize({
@@ -1129,9 +1126,9 @@ ipcMain.handle("local-images:thumbnail", async (_, filePath) => {
     quality: "good",
   }).toDataURL();
 });
-ipcMain.handle("local-images:read", async (_, filePath) => {
-  if (!allowedLocalImagePath(filePath)) throw new Error("허용되지 않은 이미지 경로입니다.");
-  return imageDataUrl(path.resolve(filePath));
+ipcMain.handle("local-images:read", async (event, filePath) => {
+  assertTrustedLocalImageSender(event);
+  return imageDataUrl(localImages.read(filePath));
 });
 app.whenReady().then(() => {
   Menu.setApplicationMenu(null);
