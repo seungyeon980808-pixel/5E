@@ -1007,6 +1007,9 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   const selectedResult = () => results.find((result) => result.id === selectedId) || null;
   const selectedActiveResult = () => {
     const result = selectedResult();
+    if (cropSession && result && cropSession.resultId === result.id) {
+      return pdfFilePageResult(result, cropSession.pageNumber);
+    }
     return continuousView && result && continuousView.resultId === result.id
       ? pdfFilePageResult(result, continuousView.visiblePage)
       : activePdfPageResult(result, pdfMatchIndex);
@@ -2674,12 +2677,16 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   overlay.querySelector("[data-unilib-crop-zoom-in]").addEventListener("click", () => setCropZoom(cropZoom * 1.2));
   const changeCropPage = async (page, preserveScroll = false) => {
     const file = selectedResult();
-    if (file?.kind !== "pdf" || !continuousView) return;
+    if (file?.kind !== "pdf" || !cropSession) return;
     commitAcceptedCropSession({ acceptedAssets, acceptedCrops, documentId: cropSession?.documentId, pageNumber: cropSession?.pageNumber });
-    continuousView.visiblePage = Math.max(1, Math.min(continuousView.pageCount, page));
-    stage.scrollTop = (continuousView.visiblePage - 1) * continuousView.pageExtent;
-    stage.dispatchEvent(new Event("scroll"));
-    await openCropEditor({ ...cropOpenOptions, title: `${file.title} · ${continuousView.visiblePage}쪽`, preserveScroll });
+    const targetPage = Math.max(1, Math.min(Math.max(1, Number(file.pageCount) || 1), page));
+    cropSession = { ...cropSession, pageNumber: targetPage, resultIdentity: libraryResultIdentity(pdfFilePageResult(file, targetPage)) };
+    if (continuousView?.resultId === file.id) {
+      continuousView.visiblePage = targetPage;
+      stage.scrollTop = (targetPage - 1) * continuousView.pageExtent;
+      stage.dispatchEvent(new Event("scroll"));
+    }
+    await openCropEditor({ ...cropOpenOptions, title: `${file.title} · ${targetPage}쪽`, preserveScroll });
   };
   const continuousCrop = createContinuousCropPages({
     stage: cropStage, canvas: cropCanvas,
