@@ -19,7 +19,7 @@ import { buildCircuitLoop, buildCircuitPath, buildGraph, buildDimension,
 import { buildInclineScene, LINE_KIND_NAMES } from "./lib/scene.js";
 import { buildSafePart, safePartsSummary } from "./lib/parts.js";
 import { buildStandRig } from "./lib/rig.js";
-import { startBridge, sendToApp, bridgeStatus } from "./lib/bridge.js";
+import { bridgePairingRecord, startBridge, sendToApp, bridgeStatus } from "./lib/bridge.js";
 import { existsSync } from "node:fs";
 import { mkdir, writeFile } from "node:fs/promises";
 import { isAbsolute, join } from "node:path";
@@ -590,6 +590,13 @@ const TOOLS = [
     },
   },
   {
+    name: "app_pairing",
+    description:
+      "현재 MCP 프로세스가 실행되는 동안 5E 앱을 연결할 페어링 기록을 표시한다. " +
+      "사용자가 5E의 MCP 배지에서 요청한 경우에만 호출하고, 결과 한 줄을 그대로 전달한다.",
+    inputSchema: { type: "object", properties: {} },
+  },
+  {
     name: "app_status",
     description:
       "지금 열려 있는 5E 앱과 연결돼 있는지 확인한다. 앱에 바로 그리기 전에 이걸 먼저 부르고, " +
@@ -980,6 +987,13 @@ const HANDLERS = {
   },
 
   /* ----- 열려 있는 앱 직결 ----- */
+  async app_pairing() {
+    return [
+      "5E의 MCP 배지를 누르고 아래 페어링 기록을 붙여 넣으세요. 이 기록은 현재 MCP 프로세스가 끝나면 무효가 됩니다.",
+      bridgePairingRecord(),
+    ].join("\n");
+  },
+
   async app_status() {
     const b = bridgeStatus();
     if (!b.port) return "❌ 로컬 통로를 열지 못했습니다 (포트 8579~8583 사용중)";
@@ -988,23 +1002,20 @@ const HANDLERS = {
         `통로는 열려 있습니다 (127.0.0.1:${b.port}) — 하지만 5E 앱이 붙어 있지 않습니다.`,
         "",
         "확인할 것:",
-        "1. 앱을 http://localhost:… 로 열었는지 (파일 더블클릭(file://)으로는 안 됩니다)",
-        "2. 이미 열었다면 새로고침 — 앱은 켜질 때 한 번만 통로를 찾습니다",
-        "3. 연결되면 화면 왼쪽 아래에 'MCP 연결됨' 배지가 뜹니다",
+        "1. app_pairing을 호출해 현재 프로세스의 페어링 기록을 받으세요",
+        "2. 5E의 MCP 배지를 누르고 그 기록을 붙여 넣으세요",
+        "3. 연결되면 MCP 배지가 파란색으로 표시됩니다",
       ].join("\n");
     }
     const info = await sendToApp("ping");
-    /* 어느 창에 붙었는지 반드시 밝힌다. 5E 를 두 개 열어 두면 나중에 연 쪽이 통로를
-     * 가져가는데, 예전에는 그걸 알 수 없어 교사가 쓰던 문서에 그림을 그려 넣는 사고가 났다.
-     * 창 표식(cid)과 주소를 같이 보여줘야 "내가 만든 창이 맞나"를 판단할 수 있다. */
     const c = b.client || {};
     return [
       `✅ 연결됨 (127.0.0.1:${b.port})`,
       `   창: ${c.clientId || "?"}  ${c.href || c.origin || ""}`,
       `   내용: ${info.page}, 객체 ${info.objects}개, 아트보드 ${info.artboard.w}×${info.artboard.h}mm`,
       "",
-      "⚠️ 이 창이 내가 의도한 창인지 확인하고 그릴 것. 5E 를 여러 개 열어 두면",
-      "   가장 마지막에 연 창이 통로를 가져간다(이전 창에는 그려지지 않는다).",
+      "⚠️ 이 창이 내가 의도한 창인지 확인하고 그릴 것. 다른 창으로 바꾸려면",
+      "   그 창의 MCP 배지에서 같은 페어링 기록을 직접 입력해야 합니다.",
     ].join("\n");
   },
 

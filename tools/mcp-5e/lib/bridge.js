@@ -9,52 +9,86 @@
  *     앱 → 서버 : POST /result        — 실행 결과를 돌려준다
  *
  * 127.0.0.1에만 바인딩한다(외부에서 접근 불가). 포트는 8579부터 비어 있는 것을 쓴다.
- *
- * 좀비 서버 정리: Claude Code 창을 X 버튼으로 닫으면(정상 종료가 아니라) 이 서버의
- * 부모 프로세스는 죽어도 이 서버 자신은 안 죽고 포트를 계속 쥐고 있는 경우가 있다.
- * 그러면 새로 켠 세션은 그다음 포트로 밀려나고, 브라우저는 여전히 그 죽은 좀비한테
- * 붙어서 "연결은 됐는데 반응이 없는" 상태가 된다. 그래서 시작할 때마다 먼저
- * PORT_RANGE 전체를 훑어 이미 떠 있는 mcp-5e 서버가 있으면 종료 요청을 보내고
- * (evictOthers), 그다음에 8579부터 다시 잡는다 — 항상 "제일 최근에 켠 것만" 산다.
  */
 
 import http from "node:http";
+import { randomBytes, timingSafeEqual } from "node:crypto";
 
 const PORT_RANGE = [8579, 8580, 8581, 8582, 8583];
 const RESULT_TIMEOUT_MS = 10000;
+const MAX_RESULT_BYTES = 2 * 1024 * 1024;
+const PROCESS_CAPABILITY = randomBytes(32).toString("base64url");
+const PRODUCTION_ORIGIN = "https://seungyeon980808-pixel.github.io";
 
 let server = null;
 let port = null;
 let client = null;              // 현재 붙어 있는 앱(SSE 응답 스트림). 하나만 받는다.
 let clientInfo = null;
+let clientSessionId = null;
 let seq = 0;
 const pending = new Map();      // id → { resolve, reject, timer }
-// 연결을 뺏긴 창들. 자동 재연결로는 다시 못 붙는다(사람이 배지를 눌러야 한다).
-const evictedCids = new Set();
+
+function allowedOrigin(origin) {
+  return origin === "null" || origin === PRODUCTION_ORIGIN
+    || /^http:\/\/(?:localhost|127\.0\.0\.1)(?::\d+)?$/.test(origin);
+}
 
 function cors(req, res) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Headers", "content-type");
+  const origin = String(req.headers.origin || "");
+  if (!allowedOrigin(origin)) return false;
+  res.setHeader("Access-Control-Allow-Origin", origin);
+  res.setHeader("Vary", "Origin");
+  res.setHeader("Access-Control-Allow-Headers", "authorization, content-type, x-mcp-session");
   res.setHeader("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
   // 사설망 접근(Private Network Access): https 페이지(배포본)에서 127.0.0.1로 붙을 때
   // 크롬이 프리플라이트에 이 헤더를 요구한다. 없으면 배포본에서만 조용히 차단된다.
   if (req.headers["access-control-request-private-network"]) {
     res.setHeader("Access-Control-Allow-Private-Network", "true");
   }
+  return true;
+}
+
+function sameSecret(provided) {
+  const left = Buffer.from(String(provided || ""));
+  const right = Buffer.from(`Bearer ${PROCESS_CAPABILITY}`);
+  return left.length === right.length && timingSafeEqual(left, right);
+}
+
+function reject(res, status, code) {
+  res.writeHead(status, { "content-type": "application/json" });
+  res.end(JSON.stringify({ error: code }));
+}
+
+function rejectPendingSession(sessionId, message) {
+  for (const [id, entry] of pending) {
+    if (entry.sessionId !== sessionId) continue;
+    pending.delete(id);
+    clearTimeout(entry.timer);
+    entry.reject(new Error(message));
+  }
 }
 
 function handle(req, res) {
-  cors(req, res);
   const url = new URL(req.url, "http://127.0.0.1");
+  const expectedHost = port ? `127.0.0.1:${port}` : "";
 
-  if (req.method === "OPTIONS") { res.writeHead(204); return res.end(); }
+  if (req.headers.host !== expectedHost) return reject(res, 421, "invalid_host");
+
+  if (req.method === "OPTIONS") {
+    if (!cors(req, res)) return reject(res, 403, "origin_denied");
+    res.writeHead(204);
+    return res.end();
+  }
 
   if (url.pathname === "/health") {
     res.writeHead(200, { "content-type": "application/json" });
     return res.end(JSON.stringify({ ok: true, server: "mcp-5e", connected: !!client }));
   }
 
-  if (url.pathname === "/events") {
+  if (!cors(req, res)) return reject(res, 403, "origin_denied");
+  if (!sameSecret(req.headers.authorization)) return reject(res, 401, "capability_required");
+
+  if (url.pathname === "/events" && req.method === "GET") {
     /* 자동 재연결은 남의 연결을 뺏지 못한다 (2026-07-27).
      *
      * 예전에는 "가장 마지막에 붙은 앱이 이긴다"만 있었다. 그런데 뺏긴 앱은 연결이 끊긴 걸
@@ -67,11 +101,9 @@ function handle(req, res) {
      * 그림을 보내는 것이 가장 위험하다. */
     const cid = url.searchParams.get("cid") || "";
     const manual = url.searchParams.get("manual") === "1";
-    if (client && !manual && (!cid || evictedCids.has(cid))) {
-      res.writeHead(409, { "content-type": "application/json" });
-      return res.end(JSON.stringify({
-        error: "이미 다른 5E 창이 연결돼 있습니다. 이 창에 연결하려면 화면의 MCP 배지를 누르세요.",
-      }));
+    if (!cid) return reject(res, 400, "client_id_required");
+    if (client && !manual) {
+      return reject(res, 409, "manual_replacement_required");
     }
     /* 새 탭이 붙으면 이전 연결은 끊는다 — 명령이 두 곳으로 가면 어느 쪽이 반영됐는지 알 수 없다.
      *
@@ -80,11 +112,10 @@ function handle(req, res) {
      * 문서에 그림을 그려 넣는 사고가 났다. 이제 이전 앱은 "연결을 뺏겼다"를 화면에 띄운다. */
     if (client) {
       // 뺏긴 창은 "parked" 로 기억해 둔다 — 저 혼자 다시 붙지 못하게(위 409 규칙).
-      if (clientInfo && clientInfo.clientId) evictedCids.add(clientInfo.clientId);
       try { client.write(`event: evicted\ndata: {"by":${JSON.stringify(req.headers.origin || "?")}}\n\n`); } catch { /* 이미 끊김 */ }
       try { client.end(); } catch { /* 이미 끊김 */ }
+      rejectPendingSession(clientSessionId, "앱 연결이 사용자의 요청으로 교체되었습니다");
     }
-    evictedCids.delete(cid);   // 지금 붙는 창은 다시 정상 후보로 돌린다
     res.writeHead(200, {
       "content-type": "text/event-stream",
       "cache-control": "no-cache",
@@ -92,6 +123,8 @@ function handle(req, res) {
     });
     res.write(": connected\n\n");
     client = res;
+    clientSessionId = randomBytes(16).toString("base64url");
+    res.write(`event: session\ndata: ${JSON.stringify({ sessionId: clientSessionId })}\n\n`);
     /* 어느 앱이 붙었는지 식별할 수 있게 붙은 쪽이 스스로 밝힌 정보를 함께 담는다.
      * origin(포트)만으로는 같은 포트의 다른 탭을 구분하지 못한다 → 앱이 만든 clientId 를 쓴다. */
     clientInfo = {
@@ -105,29 +138,40 @@ function handle(req, res) {
     }, 25000);
     req.on("close", () => {
       clearInterval(keepAlive);
-      if (client === res) { client = null; clientInfo = null; }
+      if (client === res) {
+        const closedSessionId = clientSessionId;
+        client = null;
+        clientInfo = null;
+        clientSessionId = null;
+        rejectPendingSession(closedSessionId, "앱과의 연결이 끊어졌습니다 — 다시 연결해 주세요");
+      }
     });
     return;
   }
 
-  if (url.pathname === "/shutdown" && req.method === "POST") {
-    // 새로 뜬 세션이 좀비를 정리할 때 보내는 요청. 응답부터 보내고 나서 죽는다 —
-    // 안 그러면 요청 보낸 쪽이 연결 끊김 에러를 본다.
-    res.writeHead(204);
-    res.end();
-    setTimeout(() => process.exit(0), 50);
-    return;
-  }
-
   if (url.pathname === "/result" && req.method === "POST") {
+    const sessionId = String(req.headers["x-mcp-session"] || "");
+    if (!clientSessionId || sessionId !== clientSessionId) return reject(res, 409, "session_mismatch");
+    if (Number(req.headers["content-length"] || 0) > MAX_RESULT_BYTES) return reject(res, 413, "result_too_large");
     let body = "";
-    req.on("data", (c) => { body += c; });
+    let tooLarge = false;
+    req.on("data", (c) => {
+      if (tooLarge) return;
+      body += c;
+      if (Buffer.byteLength(body) > MAX_RESULT_BYTES) tooLarge = true;
+    });
     req.on("end", () => {
+      if (tooLarge) return reject(res, 413, "result_too_large");
       try {
         const msg = JSON.parse(body);
         const p = pending.get(msg.id);
-        if (p) { pending.delete(msg.id); clearTimeout(p.timer); p.resolve(msg); }
-      } catch { /* 형식이 깨진 응답은 무시 — 타임아웃이 처리한다 */ }
+        if (!p || p.sessionId !== sessionId) return reject(res, 409, "command_mismatch");
+        pending.delete(msg.id);
+        clearTimeout(p.timer);
+        p.resolve(msg);
+      } catch {
+        return reject(res, 400, "invalid_result");
+      }
       res.writeHead(204);
       res.end();
     });
@@ -138,28 +182,9 @@ function handle(req, res) {
   res.end();
 }
 
-/* ----- 좀비 정리: 이미 떠 있는 mcp-5e 서버들에 종료 요청을 보낸다 -----
- * 요청 자체가 실패해도(이미 죽은 포트 등) 무시한다 — 정리가 목적이지 확인이 목적이 아니다. */
-async function evictOthers() {
-  let evicted = 0;
-  for (const p of PORT_RANGE) {
-    try {
-      const h = await fetch(`http://127.0.0.1:${p}/health`, { signal: AbortSignal.timeout(400) });
-      if (!h.ok) continue;
-      const info = await h.json();
-      if (info.server !== "mcp-5e") continue;   // 다른 프로그램이 그 포트를 쓰는 중 — 손대지 않는다
-      await fetch(`http://127.0.0.1:${p}/shutdown`, { method: "POST", signal: AbortSignal.timeout(400) });
-      evicted++;
-    } catch { /* 그 포트엔 없거나 이미 죽음 — 정상 */ }
-  }
-  if (evicted) await new Promise((r) => setTimeout(r, 300));   // 포트가 실제로 풀릴 시간
-  return evicted;
-}
-
-/* ----- 서버 기동: 좀비 정리 후, 비어 있는 포트를 찾아 순서대로 시도 ----- */
+/* ----- 서버 기동: 비어 있는 포트를 찾아 순서대로 시도 ----- */
 export async function startBridge() {
   if (server) return port;
-  await evictOthers();
   return new Promise((resolve) => {
     const tryPort = (i) => {
       if (i >= PORT_RANGE.length) { resolve(null); return; }   // 전부 사용중 → 통로 없이 동작
@@ -171,6 +196,27 @@ export async function startBridge() {
     };
     tryPort(0);
   });
+}
+
+export function bridgePairingRecord() {
+  if (!port) throw new Error("로컬 통로가 아직 열리지 않았습니다");
+  return `mcp-5e://127.0.0.1:${port}/#${PROCESS_CAPABILITY}`;
+}
+
+export async function stopBridge() {
+  if (!server) return;
+  const activeServer = server;
+  server = null;
+  port = null;
+  if (client) {
+    try { client.end(); } catch {}
+    client = null;
+  }
+  clientInfo = null;
+  const sessionId = clientSessionId;
+  clientSessionId = null;
+  rejectPendingSession(sessionId, "로컬 통로가 종료되었습니다");
+  await new Promise((resolve) => activeServer.close(resolve));
 }
 
 export function bridgeStatus() {
@@ -194,7 +240,7 @@ export function sendToApp(cmd, args = {}) {
       pending.delete(id);
       reject(new Error(`앱이 ${RESULT_TIMEOUT_MS / 1000}초 안에 응답하지 않았습니다`));
     }, RESULT_TIMEOUT_MS);
-    pending.set(id, { resolve, reject, timer });
+    pending.set(id, { resolve, reject, timer, sessionId: clientSessionId });
     try {
       client.write(`data: ${payload}\n\n`);
     } catch (e) {

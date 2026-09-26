@@ -1,0 +1,9 @@
+{
+  "name": "mcp-5e",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "5E 도면(.json)을 생성·검증하는 MCP 서버 — 의존성 없음",
+  "bin": { "mcp-5e": "./server.js" },
+  "engines": { "node": ">=18" }
+}
