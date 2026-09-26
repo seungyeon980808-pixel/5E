@@ -1,4 +1,5 @@
 const { app, BrowserWindow, ipcMain, shell, Menu, desktopCapturer, dialog, nativeImage } = require("electron");
+const { desktopSmokePasses } = require("./smoke-contract.cjs");
 const { spawn, execFile } = require("node:child_process");
 const { createInterface } = require("node:readline");
 const fs = require("node:fs");
@@ -790,7 +791,7 @@ function createWindow() {
             let aiQualityControlsReady = false;
             let aiOutputControlsReady = false;
             let aiTaskTabsIsolated = false;
-            let aiBatchControlReady = false;
+            let aiWorkspaceControlsReady = false;
             document.getElementById("exam-library-open")?.click();
             if (await waitFor(() => document.querySelector(".examlib-card"))) {
               const examCards = Array.from(document.querySelectorAll(".examlib-card")).slice(0, 2);
@@ -866,17 +867,13 @@ function createWindow() {
             if (await waitFor(() => panel?.hidden === false, 2000)) {
               aiQualityControlsReady = panel.querySelectorAll("[data-ai-quality]").length === 3;
               aiOutputControlsReady = panel.querySelectorAll("[data-ai-output-engine]").length === 2;
-              aiBatchControlReady = !!panel.querySelector("[data-ai-batch]") && !!panel.querySelector("[data-ai-batch-panel]");
-              const originalTab = panel.querySelector("[data-ai-tab-list] .ai-task-tab.is-on");
-              const originalInputValue = panel.querySelector("[data-ai-input]")?.value || "";
-              panel.querySelector("[data-ai-tab-new]")?.click();
-              const isolatedInput = panel.querySelector("[data-ai-input]");
-              if (isolatedInput) isolatedInput.value = "tab isolation smoke";
-              originalTab?.click();
-              const originalRestored = panel.querySelector("[data-ai-input]")?.value === originalInputValue;
-              const createdTab = Array.from(panel.querySelectorAll("[data-ai-tab-list] .ai-task-tab")).at(-1);
-              createdTab?.click();
-              aiTaskTabsIsolated = originalRestored && panel.querySelector("[data-ai-input]")?.value === "tab isolation smoke";
+              const taskList = panel.querySelector("[data-ai-tab-list]");
+              const taskAdd = panel.querySelector("[data-ai-task-add]");
+              const taskCount = taskList?.querySelectorAll(".ai-task-tab:not(.ai-task-add)").length || 0;
+              aiWorkspaceControlsReady = !!taskList && !!taskAdd && !!panel.querySelector("[data-ai-close]");
+              taskAdd?.click();
+              aiTaskTabsIsolated = aiWorkspaceControlsReady && await waitFor(() =>
+                (panel.querySelectorAll("[data-ai-tab-list] .ai-task-tab:not(.ai-task-add)").length || 0) > taskCount, 2000);
               // Local zero-round-trip diagrams are now an explicit user choice;
               // textbook raster conversion is never auto-routed to 5E assets.
               panel.querySelector('[data-ai-output-engine="asset"]')?.click();
@@ -984,7 +981,7 @@ function createWindow() {
               aiQualityControlsReady,
               aiOutputControlsReady,
               aiTaskTabsIsolated,
-              aiBatchControlReady,
+              aiWorkspaceControlsReady,
               aiComposerDockedRight: !!panel.querySelector(".ai-conversation [data-ai-input]") &&
                 panel.querySelector("[data-ai-chat-send]")?.textContent?.trim() === "",
               buttonText: button?.textContent?.trim() || "",
@@ -998,23 +995,7 @@ function createWindow() {
         result.menuBarVisible = win.isMenuBarVisible();
         result.menuBarStateValid = process.platform === "darwin" ? result.menuBarVisible : !result.menuBarVisible;
         result.appIconReadable = !nativeImage.createFromPath(APP_ICON_PATH).isEmpty();
-        const ok = result.buttonText === "AI 이미지 생성" && result.panelOpened &&
-          result.modelCatalogReadable && result.captureSourcesReadable && result.aiUsesCentralModal &&
-          result.aiAutoConnectControlsSimplified && result.aiProgressUiReady && result.aiResultsPlacedLeft &&
-          result.aiSourceEntrypointsReady && result.aiLoadMenuReady && result.aiCaptureCropReady && result.aiCancelIsContextual && result.aiReturnsAfterLibraryClose &&
-          result.cutChooserVisible && result.cutChooserInToolPanel && result.textChooserBehavior && result.angleChooserBehavior &&
-          result.angleTabToggleWorks && result.chooserPanelSwitchingWorks && result.cutChooserPersistsAfterChoice &&
-          result.chooserClosesOnOtherTool && result.eraseToolReachable &&
-          result.cutToolReachable && result.delayedCutUiReachable && result.eraseShortcutWorks && result.delayedShortcutWorks &&
-          result.examLibraryAiReferenceWorks && result.imageLibraryAiReferenceWorks &&
-          result.aiMultipleReferencesReady && result.aiComparisonReady && result.aiAreaCommentReady && result.aiAreaCommentTracksZoom &&
-          result.aiReferencesOpenImmediately && result.aiComposerDockedRight && result.aiLocalAssetZeroRoundTripWorks &&
-          result.aiLocalApparatusZeroRoundTripWorks && result.aiQualityControlsReady && result.aiOutputControlsReady &&
-          result.aiTaskTabsIsolated && result.aiBatchControlReady && result.codexSendInvocationsDuringLocalSmoke === 0 &&
-          result.artboardAreaOverlayOpened && result.artboardConfirmButtonPresent && result.artboardAreaCaptureWorks && result.artboardCornerHandleRemoved &&
-          result.artboardSelectionRecentersObjects && result.artboardSelectionRecentersGuides &&
-          result.internalCutSeparates && result.internalCutSelectsExtracted && result.internalCutRendersBoth &&
-          !result.installDialogOpened && result.menuBarStateValid && result.appIconReadable;
+        const ok = desktopSmokePasses(result);
         if (process.env.FIVE_E_IMAGE_E2E === "1") {
           result.imageE2e = await win.webContents.executeJavaScript(`new Promise(async (resolve) => {
             let settled = false;
