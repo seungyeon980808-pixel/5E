@@ -23,10 +23,19 @@ console.log('Primary action: initial transform, regenerated image, area edit and
 
 const library = fs.readFileSync(new URL('../preview/js/unified-library-ui.js', `file://${__filename}`), 'utf8');
 const selectedActive = library.match(/const selectedActiveResult = \(\) => \{[\s\S]*?\n  \};/)[0];
-const emptyContext = { selectedResult: () => null, continuousView: null, pdfMatchIndex: 0,
+const emptyContext = { selectedResult: () => null, cropSession: null, continuousView: null, pdfMatchIndex: 0,
   activePdfPageResult: result => result, pdfFilePageResult: () => { throw new Error('Empty library is not a PDF page'); } };
 assert.equal(vm.runInNewContext(selectedActive + '\nselectedActiveResult()', emptyContext), null);
 console.log('Library empty selection: no null PDF-view access');
+
+const pdfResult = { id: 'pdf-result', kind: 'pdf' };
+const cropContext = { selectedResult: () => pdfResult,
+  cropSession: { resultId: pdfResult.id, pageNumber: 2 }, continuousView: null, pdfMatchIndex: 0,
+  activePdfPageResult: () => { throw new Error('Crop session must select its bound PDF page'); },
+  pdfFilePageResult: (result, pageNumber) => ({ result, pageNumber }) };
+assert.deepEqual(vm.runInNewContext(selectedActive + '\nselectedActiveResult()', cropContext),
+  { result: pdfResult, pageNumber: 2 });
+console.log('Library crop selection: bound PDF page remains active');
 
 const useResultBlock = source.match(/if \(useResult && initialPrepared\) \{[\s\S]*?\n        return;\n      \}/)[0];
 const used = [];

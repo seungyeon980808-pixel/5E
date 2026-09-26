@@ -82,11 +82,12 @@ async function confirm(page, name) {
       assert.equal((await stateSnapshot(page)).undo.length, 0);
       assert.equal(await page.locator('html').getAttribute('data-mode'), 'lite');
       const backup = await page.evaluate(() => new Promise((resolve, reject) => {
-        const req = indexedDB.open('5e-autosave', 1);
+        const req = indexedDB.open('5e-preview-autosave', 1);
         req.onerror = () => reject(req.error);
-        req.onsuccess = () => { const db = req.result; const read = db.transaction('snapshots').objectStore('snapshots').openCursor(null, 'prev'); read.onsuccess = () => { resolve(read.result?.value.data); db.close(); }; };
+        req.onsuccess = () => { const db = req.result; const read = db.transaction('checkpoints').objectStore('checkpoints').openCursor(null, 'prev'); read.onsuccess = () => { resolve(read.result?.value); db.close(); }; };
       }));
-      assert.deepEqual(backup.pages[0].objects, initial.objects);
+      assert.equal(backup.reason, 'mode-switch');
+      assert.deepEqual(backup.data.pages[0].objects, initial.objects);
       await page.screenshot({ path: `${evidence}/${name}-fresh.png` });
       await page.emulateMedia({ reducedMotion: 'reduce' });
       await confirm(page, '새 작업으로 전환');
@@ -100,7 +101,7 @@ async function confirm(page, name) {
       });
       await confirm(page, '새 작업으로 전환');
       await page.reload();
-      await page.getByRole('button', { name: '복구', exact: true }).click();
+      await page.getByRole('button', { name: '선택한 작업 복구', exact: true }).click();
       await page.waitForTimeout(1000);
       assert.deepEqual(await page.evaluate(async () => {
         const { state } = await import('./js/state.js?v=1.6.0-preview-labeler-0917-1111');
