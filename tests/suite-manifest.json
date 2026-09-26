@@ -34,6 +34,7 @@
     { "path": "tests/test-personal-object-category-text-browser.cjs", "findingIds": ["SEC-160-01"] },
     { "path": "tests/test-ai-release-browser.cjs", "findingIds": ["AI-160-01", "AI-160-02", "AI-160-03", "SEC-160-04"] },
     { "path": "tests/test-ai-workspace-lifecycle-browser.cjs", "findingIds": ["ARCH-160-01"] },
+    { "path": "tests/test-circuit-body-scale-browser.cjs", "findingIds": ["TASK12-CIRCUIT-SCALE"] },
     { "path": "tests/task10-ui-browser.cjs", "findingIds": ["CAN-DATA-01", "TPK-007", "TPK-008"] }
   ],
   "deferred": [
