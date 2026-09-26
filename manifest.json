@@ -1,0 +1,16 @@
+{
+  "name": "5E — 과학 시험용 그림 에디터",
+  "short_name": "5E",
+  "description": "원하는 그림을 찾고, 편집하고, 그리는 과학시험문제용 에디터입니다.",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0a1230",
+  "theme_color": "#0d1117",
+  "icons": [
+    { "src": "assets/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "assets/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
