@@ -3350,6 +3350,44 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     if (!document.querySelector('.modal-overlay:not([hidden])')) document.getElementById('canvas')?.focus();
   };
 
+  const panelFocusables = () => [...panel.querySelectorAll('button, [href], input, select, textarea, summary, [tabindex]:not([tabindex="-1"])')]
+    .filter((element) => {
+      const closedDetails = element.closest('details:not([open])');
+      return !element.disabled && !element.hidden && !element.closest('[hidden], [inert]')
+        && (!closedDetails || element === closedDetails.querySelector(':scope > summary'))
+        && element.getClientRects().length > 0 && getComputedStyle(element).visibility !== 'hidden';
+    });
+  let tabDirection = null;
+  document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Tab' || panel.hidden || panel.querySelector('dialog[open]')) return;
+    tabDirection = event.shiftKey ? 'reverse' : 'forward';
+    const focusables = panelFocusables();
+    const first = focusables[0];
+    const last = focusables.at(-1);
+    if (!first || !last) return;
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+      tabDirection = null;
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+      tabDirection = null;
+    }
+  }, { capture: true, signal: lifecycle.signal });
+  panel.addEventListener('focusout', (event) => {
+    const direction = tabDirection;
+    if (!direction || panel.hidden || panel.querySelector('dialog[open]') || panel.contains(event.relatedTarget)) return;
+    queueMicrotask(() => {
+      if (!panel.hidden && !panel.querySelector('dialog[open]') && !panel.contains(document.activeElement)) {
+        const focusables = panelFocusables();
+        (direction === 'reverse' ? focusables.at(-1) : focusables[0])?.focus();
+      }
+      tabDirection = null;
+    });
+  }, { signal: lifecycle.signal });
+  panel.addEventListener('focusin', () => { tabDirection = null; }, { signal: lifecycle.signal });
+
   disposalCallbacks.push(registerEscapeLayer(modal || panel, close));
 
   const submit = async (type, options = {}) => {
