@@ -10,7 +10,15 @@
     { "path": "tests/test-png-exif-regression.mjs" },
     { "path": "tests/test-preview-lite-cache-identity.cjs" },
     { "path": "tests/test-release-entry-closure.cjs" },
-    { "path": "tests/test-separation-edge-regression.mjs" }
+    { "path": "tests/test-separation-edge-regression.mjs" },
+    { "path": "tests/task4-data-contracts.cjs" },
+    { "path": "tests/test-graph-correctness.mjs" },
+    { "path": "tests/test-ai-release-remediation.cjs" },
+    { "path": "tests/test-ui-accessibility-lifecycle.cjs" },
+    { "path": "tests/test-library-crop-session.mjs" },
+    { "path": "tests/test-library-import-policy.mjs" },
+    { "path": "tools/mcp-5e/test/bridge-security.test.mjs" },
+    { "path": "tools/mcp-5e/test/server-pairing.test.mjs" }
   ],
   "browser": [
     { "path": "tests/test-release-entry-browser.cjs", "findingIds": ["TPK-001", "TPK-002"] },
@@ -22,7 +30,11 @@
     { "path": "tests/test-preview-canvas-center.cjs", "findingIds": ["TPK-005"] },
     { "path": "tests/test-preview-lite-restored-workspace.cjs", "findingIds": ["TPK-005"] },
     { "path": "tests/test-preview-lite-inspector-controls.cjs", "findingIds": ["TPK-005"] },
-    { "path": "tests/project-save-download.cjs", "findingIds": ["TPK-005"] }
+    { "path": "tests/project-save-download.cjs", "findingIds": ["TPK-005"] },
+    { "path": "tests/test-personal-object-category-text-browser.cjs", "findingIds": ["SEC-160-01"] },
+    { "path": "tests/test-ai-release-browser.cjs", "findingIds": ["AI-160-01", "AI-160-02", "AI-160-03", "SEC-160-04"] },
+    { "path": "tests/test-ai-workspace-lifecycle-browser.cjs", "findingIds": ["ARCH-160-01"] },
+    { "path": "tests/task10-ui-browser.cjs", "findingIds": ["CAN-DATA-01", "TPK-007", "TPK-008"] }
   ],
   "deferred": [
     { "path": "tests/library-open-epoch-browser.cjs", "findingIds": ["AI-160-02"], "reason": "AI owner regression" },
@@ -32,6 +44,12 @@
     { "path": "tests/test-preview-lite-integrated.cjs", "findingIds": ["TPK-005"], "reason": "historical Lite prototype" },
     { "path": "tests/test-preview-lite-runtime.cjs", "findingIds": ["TPK-005"], "reason": "historical Lite prototype" },
     { "path": "tests/test-preview-lite-unified.cjs", "findingIds": ["TPK-005"], "reason": "historical Lite prototype" },
-    { "path": "tests/test-preview-shell-presentation.cjs", "findingIds": ["ARCH-160-02"], "reason": "full UI gate" }
+    { "path": "tests/test-preview-shell-presentation.cjs", "findingIds": ["ARCH-160-02"], "reason": "full UI gate" },
+    { "path": "tests/task4-data-browser-server.cjs", "findingIds": ["CAN-DATA-01"], "reason": "orchestration-required Task 4 browser fixture; run with task4-data-browser.mjs" },
+    { "path": "tests/task4-data-browser.mjs", "findingIds": ["CAN-DATA-01"], "reason": "in-page module for the orchestration-required Task 4 browser gate" },
+    { "path": "tests/test-graph-browser.cjs", "findingIds": ["GEO160-005", "GEO160-006", "GEO160-007"], "reason": "orchestration-required graph gate needs GRAPH_BASE_URL, evidence, and an isolated browser profile" },
+    { "path": "tests/task8-geometry-browser-server.cjs", "findingIds": ["GEO160-001", "GEO160-002", "GEO160-004", "GEO160-008"], "reason": "orchestration-required Task 8 browser fixture and artifact receiver" },
+    { "path": "tests/task8-geometry-browser.cjs", "findingIds": ["GEO160-001", "GEO160-002", "GEO160-004", "GEO160-008"], "reason": "orchestration-required Task 8 driver needs a positional URL and evidence directory" },
+    { "path": "tests/task8-geometry-browser.mjs", "findingIds": ["GEO160-001", "GEO160-002", "GEO160-004", "GEO160-008"], "reason": "in-page module for the orchestration-required Task 8 browser gate" }
   ]
 }
