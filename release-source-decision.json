@@ -1717,6 +1717,15 @@
       ],
       "evidence": ".omo/evidence/5e-160-release-remediation/task-12-native-df25-harness-independent-v2/REVIEW.md",
       "rationale": "The independently reviewed native smoke public-control and rendered-geometry repair is the final source for the desktop entry."
+    },
+    {
+      "sourceCommit": "5a70fb2d34788ebf04e2e8cde0d241d4071598b4",
+      "originalTaskCommit": "6e3436ebff5bf640bce295c59973a060a9077627",
+      "paths": [
+        "preview/js/ai-scoped-edit-png.js"
+      ],
+      "evidence": ".omo/evidence/5e-160-release-remediation/task-12-png-phys-independent/REVIEW.md",
+      "rationale": "The independently reviewed bounded pHYs metadata repair is the final source for the scoped PNG decoder."
     }
   ],
   "taskChanges": [
@@ -1737,6 +1746,15 @@
       "currentSha256": "dec3d5bf0de6196d423ce50a8992b046fc34cc2b1040070fb9610346df096e78",
       "bytes": 64201,
       "rationale": "exercise the packaged native smoke through current public controls and rendered geometry"
+    },
+    {
+      "path": "preview/js/ai-scoped-edit-png.js",
+      "sourceCommit": "5a70fb2d34788ebf04e2e8cde0d241d4071598b4",
+      "sourceBlob": "4f2e1721a86a2a6e58b62881d6892e802287aa3d",
+      "sourceSha256": "c70506b95c921bddf6b6925f165e3cf8e40942f3c672f9544e5a8c618c32bbf3",
+      "currentSha256": "c70506b95c921bddf6b6925f165e3cf8e40942f3c672f9544e5a8c618c32bbf3",
+      "bytes": 12813,
+      "rationale": "accept bounded pHYs metadata while preserving the scoped PNG decoder's fail-closed policy"
     },
     {
       "path": "js/svg-export.js",
