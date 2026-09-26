@@ -295,6 +295,7 @@ async function run() {
       new MutationObserver(() => { window.__task10ZoomMutations += 1; })
         .observe(readout, { childList: true, characterData: true, subtree: true });
       document.documentElement.classList.remove('mobile-image-mode');
+      document.getElementById('ai-image-panel').hidden = true;
     });
     await mobile.waitForFunction(() => document.getElementById('canvas').getBoundingClientRect().width > 0);
     await mobile.waitForFunction(() => document.getElementById('zoom-readout').textContent !== 'zoom 0.00×');
