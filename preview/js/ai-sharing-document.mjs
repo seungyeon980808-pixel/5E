@@ -25,10 +25,17 @@ async function clean(value, embedImage, key = '', depth = 0) {
   return Object.fromEntries(entries);
 }
 
-export async function createSharingDocument(workspaces, { mode = 'view', activeWorkspace = 0, embedImage = async () => { throw new Error('이미지 주소에 의존하는 문서는 공유할 수 없습니다.'); } } = {}) {
+export async function createSharingDocument(workspaces, { mode = 'view', activeWorkspace = 0, scope = 'active', embedImage = async () => { throw new Error('이미지 주소에 의존하는 문서는 공유할 수 없습니다.'); } } = {}) {
   if (!['view', 'edit'].includes(mode) || !Array.isArray(workspaces) || workspaces.length < 1 || workspaces.length > 100) throw new Error('공유 문서 형식이 올바르지 않습니다.');
+  if (!['active', 'all'].includes(scope)) throw new Error('공유 범위를 확인할 수 없습니다.');
+  const selectedWorkspace = Math.max(0, Math.min(workspaces.length - 1, activeWorkspace));
+  const active = workspaces[selectedWorkspace];
+  if (!active || !Array.isArray(active.tabs)) throw new Error('공유 작업 목록이 올바르지 않습니다.');
+  const scopedWorkspaces = scope === 'all'
+    ? workspaces
+    : [{ ...active, tabs: active.tabs.filter(tab => tab?.id === active.activeTaskTabId) }];
   const copies = [];
-  for (const workspace of workspaces) {
+  for (const workspace of scopedWorkspaces) {
     if (!workspace || !Array.isArray(workspace.tabs) || workspace.tabs.length > 500) throw new Error('공유 작업 목록이 올바르지 않습니다.');
     const tabs = [];
     for (const tab of workspace.tabs) {
@@ -49,12 +56,12 @@ export async function createSharingDocument(workspaces, { mode = 'view', activeW
     }
     copies.push({ key: 'workspace', tabs, activeTaskTabId: workspace.activeTaskTabId, taskTabSerial: workspace.taskTabSerial || 0, imageSerial: workspace.imageSerial || 0 });
   }
-  return { schema: '5e-ai-sharing', version: 1, mode, activeWorkspace: Math.max(0, Math.min(copies.length - 1, activeWorkspace)), workspaces: copies };
+  return { schema: '5e-ai-sharing', version: 1, mode, activeWorkspace: scope === 'all' ? selectedWorkspace : 0, workspaces: copies };
 }
 
 export async function parseSharingDocument(value) {
   if (value?.schema !== '5e-ai-sharing' || value.version !== 1) throw new Error('지원하지 않는 공유 문서입니다.');
-  const canonical = await createSharingDocument(value.workspaces, { mode: value.mode, activeWorkspace: value.activeWorkspace });
+  const canonical = await createSharingDocument(value.workspaces, { mode: value.mode, activeWorkspace: value.activeWorkspace, scope: 'all' });
   const ordered = item => Array.isArray(item) ? item.map(ordered) : item && typeof item === 'object' ? Object.fromEntries(Object.keys(item).sort().map(key => [key,ordered(item[key])])) : item;
   if (JSON.stringify(ordered(canonical)) !== JSON.stringify(ordered(value))) throw new Error('공유 문서에 허용되지 않은 데이터가 있습니다.');
   return canonical;

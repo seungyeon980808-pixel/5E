@@ -123,6 +123,7 @@ export function normalizeReviewBBox(value) {
 export function setupAiWorkbench(panel = document.getElementById("ai-image-panel")) {
   if (!panel || panel.dataset.aiWorkbenchReady === "true") return;
   panel.dataset.aiWorkbenchReady = "true";
+  const lifecycle = new AbortController();
 
   const results = panel.querySelector(".ai-results");
   const previews = panel.querySelector("[data-ai-previews]");
@@ -311,7 +312,7 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     syncedScroll.delete(card);
     if (card === paneCard('source')) copyPosition('source', 'result');
     else if (card === paneCard('result')) copyPosition('result', 'source');
-  }, true);
+  }, { capture: true, signal: lifecycle.signal });
   document.addEventListener('keydown', event => {
     if (panel.hidden || !['source', 'result'].includes(panel.dataset.aiLayout) || event.key !== ' ') return;
     if (event.isComposing || event.ctrlKey || event.metaKey || event.altKey || event.shiftKey) return;
@@ -321,7 +322,7 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     event.preventDefault();
     event.stopImmediatePropagation();
     if (!event.repeat) setLayout(panel.dataset.aiLayout === 'source' ? 'result' : 'source', true);
-  }, true);
+  }, { capture: true, signal: lifecycle.signal });
   function applyPaneZoom(pane) {
     paneZoom[pane] = Math.min(4, Math.max(.25, Math.round(paneZoom[pane] * 10000) / 10000));
     const card = paneCard(pane);
@@ -712,7 +713,7 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
   document.addEventListener('pointerdown', (event) => {
     if (versionList?.hidden || versionButton?.contains(event.target) || versionList?.contains(event.target)) return;
     closeVersionList();
-  });
+  }, { signal: lifecycle.signal });
   orientationButtons.forEach((button) => button.addEventListener("click", () => {
     if (panel.dataset.aiBusy === "true") return;
     const orientation = button.dataset.aiCompositionOrientation;
@@ -779,7 +780,7 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
 
   window.addEventListener("5e:image-panel-layout-will-change", (event) => {
     if (event.detail?.root === panel) panelLayoutChanging = true;
-  });
+  }, { signal: lifecycle.signal });
   window.addEventListener("5e:image-panel-layout-did-change", (event) => {
     if (event.detail?.root !== panel) return;
     window.requestAnimationFrame(() => {
@@ -787,10 +788,10 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
       fitCardStage(activeCandidate());
       fitCardStage(activeSource());
     });
-  });
+  }, { signal: lifecycle.signal });
 
   const narrowQuery = window.matchMedia("(max-width: 1000px)");
-  narrowQuery.addEventListener?.("change", updateResponsiveLayout);
+  narrowQuery.addEventListener?.("change", updateResponsiveLayout, { signal: lifecycle.signal });
   updateResponsiveLayout();
   syncCandidates();
   knownGeneratedCount = generatedCards().length;
@@ -799,6 +800,14 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
   applyPaneZoom("source");
   applyPaneZoom("result");
   panel.aiWorkbench = {
+    dispose() {
+      lifecycle.abort();
+      headResizeObserver?.disconnect();
+      stageResizeObserver?.disconnect();
+      cardObserver.disconnect();
+      delete panel.dataset.aiWorkbenchReady;
+      delete panel.aiWorkbench;
+    },
     getViewState() {
       const sourceCard = activeSource();
       const resultCard = activeCandidate();
