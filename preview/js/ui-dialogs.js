@@ -32,7 +32,7 @@ function buildDialog({ title, message, buttons, wide = false }) {
       <div class="modal" role="${buttons.length > 1 ? "alertdialog" : "dialog"}" aria-modal="true"
            aria-labelledby="${titleId}" aria-describedby="${descriptionId}"${wide ? ' tabindex="-1"' : ''}
            style="width:min(${wide ? 520 : 320}px, calc(100vw - 32px))">
-        <h2 class="modal-title" id="${titleId}">${escapeHtml(title)}</h2>
+        <h2 class="modal-title"><span id="${titleId}">${escapeHtml(title)}</span></h2>
         <p class="objectify-description" id="${descriptionId}" style="margin:0 0 4px;white-space:pre-line;">${escapeHtml(message)}</p>
         <div class="modal-actions">${btnHtml}</div>
       </div>`;
@@ -84,7 +84,7 @@ export function showPrompt(message, { title = "입력", value = "", placeholder 
     overlay.innerHTML = `
       <div class="modal" role="dialog" aria-modal="true" aria-labelledby="${titleId}"
            ${message ? `aria-describedby="${descriptionId}"` : ""} style="width:min(340px, calc(100vw - 32px))">
-        <h2 class="modal-title" id="${titleId}">${escapeHtml(title)}</h2>
+        <h2 class="modal-title"><span id="${titleId}">${escapeHtml(title)}</span></h2>
         <div class="modal-field">
           ${message ? `<label class="modal-label" id="${descriptionId}">${escapeHtml(message)}</label>` : ""}
           <input type="text" class="modal-input" />
@@ -162,7 +162,7 @@ export function showRecoveryCheckpointDialog(checkpoints, { legacyStatus = "empt
     overlay.innerHTML = `
       <section class="modal recovery-checkpoint-modal" role="dialog" aria-modal="true" tabindex="-1"
         aria-labelledby="${titleId}" aria-describedby="${descriptionId}">
-        <h2 class="modal-title" id="${titleId}">보관된 작업 복구</h2>
+        <h2 class="modal-title"><span id="${titleId}">보관된 작업 복구</span></h2>
         <p class="objectify-description" id="${descriptionId}">모드 전환 전에 보관한 작업이 있습니다. 복구할 작업을 선택하세요.</p>
         <div class="recovery-checkpoint-list" role="radiogroup" aria-label="복구할 작업">${choices}</div>
         ${legacyNote}

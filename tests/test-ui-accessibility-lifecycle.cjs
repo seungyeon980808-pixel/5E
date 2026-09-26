@@ -89,7 +89,7 @@ if (!characterizeOnly) {
       const descriptionId = referencedId(markup, 'aria-describedby');
       assert.ok(titleId, 'dialog must reference its visible title');
       assert.ok(descriptionId, 'dialog must reference its visible description');
-      assert.match(markup, new RegExp(`<h2[^>]*id="${titleId}"`));
+      assert.match(markup, new RegExp(`id="${titleId}"`));
       assert.match(markup, new RegExp(`<p[^>]*id="${descriptionId}"`));
       return `${titleId}|${descriptionId}`;
     });
@@ -104,6 +104,7 @@ if (!characterizeOnly) {
     assert.match(source, /checkpoint\.pageCount/);
     assert.match(source, /source:\s*selected\.source/);
     assert.match(source, /id:\s*Number\(selected\.id\)/);
+    assert.match(read('preview/js/main.js'), /selectRecoveryCheckpoint:\s*showRecoveryCheckpointDialog/);
   });
 
   test('ARCH-160-02: hidden zoom readout is idle and refreshes on reveal and visibility', async () => {
