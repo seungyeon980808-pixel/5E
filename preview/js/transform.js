@@ -156,11 +156,12 @@ export function rebuildGroups(s) {
 export function undo(state) {
   if (state.get().undoStack.length === 0) return;
   state.update((s) => {
-    const prev = s.undoStack[s.undoStack.length - 1];
+    const sourceStack = s.undoStack;
+    const prev = sourceStack[sourceStack.length - 1];
     if (!Array.isArray(prev) && !isDocumentHistoryEntry(prev) && !isPageHistoryEntry(prev)) return;
     const current = inverseForHistoryEntry(s, prev);
     if (!restoreHistoryEntry(s, prev)) return;
-    s.undoStack.pop();
+    sourceStack.pop();
     s.redoStack.push(current);
     s.targetedId = null;
     s.selectedIds = (s.selectedIds || []).filter(id => s.objects.find((o) => o.id === id));
@@ -174,11 +175,12 @@ export function undo(state) {
 export function redo(state) {
   if (state.get().redoStack.length === 0) return;
   state.update((s) => {
-    const next = s.redoStack[s.redoStack.length - 1];
+    const sourceStack = s.redoStack;
+    const next = sourceStack[sourceStack.length - 1];
     if (!Array.isArray(next) && !isDocumentHistoryEntry(next) && !isPageHistoryEntry(next)) return;
     const current = inverseForHistoryEntry(s, next);
     if (!restoreHistoryEntry(s, next)) return;
-    s.redoStack.pop();
+    sourceStack.pop();
     s.undoStack.push(current);
     s.targetedId = null;
     s.selectedIds = (s.selectedIds || []).filter(id => s.objects.find((o) => o.id === id));

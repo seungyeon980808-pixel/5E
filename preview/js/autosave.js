@@ -17,9 +17,11 @@ import { showAlert, showConfirm } from "./ui-dialogs.js?v=1.6.0-preview-labeler-
 
 import { captureProjectStatus, markProjectStatus } from "./project-status.js?v=1.6.0-preview-project-launcher-0918-1508";
 
-const DB_NAME = "5e-autosave";
+const DB_NAME = "5e-preview-autosave";
 const DB_VERSION = 1;
 const STORE = "snapshots";
+const CHECKPOINT_STORE = "checkpoints";
+const LEGACY_DB_NAME = "5e-autosave";
 
 // 롤링 보관 개수: 최근 N개를 넘으면 가장 오래된 것부터 제거.
 const MAX_SNAPSHOTS = 8;
@@ -43,10 +45,99 @@ function openDB() {
         // autoIncrement 키는 항상 오름차순 → keys[0]이 가장 오래된 스냅샷.
         db.createObjectStore(STORE, { keyPath: "id", autoIncrement: true });
       }
+      if (!db.objectStoreNames.contains(CHECKPOINT_STORE)) {
+        db.createObjectStore(CHECKPOINT_STORE, { keyPath: "id", autoIncrement: true });
+      }
     };
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
   });
+}
+
+function getAll(db, storeName) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(storeName, "readonly");
+    const req = tx.objectStore(storeName).getAll();
+    req.onsuccess = () => resolve(req.result || []);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function getById(db, storeName, id) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(storeName, "readonly");
+    const req = tx.objectStore(storeName).get(id);
+    req.onsuccess = () => resolve(req.result || null);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function saveCheckpoint(db, data, reason) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(CHECKPOINT_STORE, "readwrite");
+    const ts = Date.now();
+    const summary = snapshotSummary(data);
+    const req = tx.objectStore(CHECKPOINT_STORE).add({ ts, reason, ...summary, data });
+    let id = null;
+    req.onsuccess = () => { id = req.result; };
+    req.onerror = () => reject(req.error);
+    tx.oncomplete = () => resolve({ id, ts, ...summary });
+    tx.onerror = () => reject(tx.error);
+    tx.onabort = () => reject(tx.error || new DOMException("복구 checkpoint 저장이 중단되었습니다.", "AbortError"));
+  });
+}
+
+function snapshotSummary(data) {
+  const pages = Array.isArray(data?.pages) ? data.pages : [];
+  const active = pages.find(page => page?.id === data.activePageId) || pages[0];
+  return { label: active?.name || "이전 작업", pageCount: pages.length };
+}
+
+async function openLegacyDB() {
+  if (typeof indexedDB.databases === "function") {
+    try {
+      const databases = await indexedDB.databases();
+      if (!databases.some(database => database.name === LEGACY_DB_NAME)) return null;
+    } catch {}
+  }
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(LEGACY_DB_NAME, 1);
+    let absent = false;
+    req.onupgradeneeded = event => {
+      if (event.oldVersion !== 0) return;
+      absent = true;
+      req.transaction.abort();
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => absent ? resolve(null) : reject(req.error);
+  });
+}
+
+export async function inspectLegacyRecovery() {
+  let legacy;
+  try {
+    legacy = await openLegacyDB();
+  } catch (error) {
+    return { status: "unavailable", checkpoints: [], error: error?.message || String(error) };
+  }
+  if (!legacy) return { status: "empty", checkpoints: [] };
+  try {
+    if (!legacy.objectStoreNames.contains(STORE)) {
+      return { status: "empty", checkpoints: [] };
+    }
+    const rows = await getAll(legacy, STORE);
+    return {
+      status: "available",
+      checkpoints: rows.filter(row => row?.data && snapshotHasWork(row.data)).map(row => ({
+        id: row.id, source: "legacy", reason: "legacy-shared-autosave", ts: row.ts,
+        ...snapshotSummary(row.data),
+      })),
+    };
+  } catch (error) {
+    return { status: "unavailable", checkpoints: [], error: error?.message || String(error) };
+  } finally {
+    legacy.close();
+  }
 }
 
 /* ----- 최신 스냅샷 1개 읽기(커서 역방향) ----- */
@@ -211,9 +302,58 @@ export async function initAutosave(state) {
 }
 
 // Explicit checkpoint before replacing a document; never discard work on failure.
-export async function checkpointBeforeModeSwitch(state) {
+export async function createRecoveryCheckpoint(state, { reason = "mode-switch" } = {}) {
   const snapshot = JSON.parse(JSON.stringify(serialize(state.get())));
-  if (!snapshotHasWork(snapshot)) return;
+  if (!snapshotHasWork(snapshot)) return null;
   const db = await openDB();
-  try { await saveSnapshot(db, snapshot); } finally { db.close(); }
+  try {
+    const saved = await saveCheckpoint(db, snapshot, reason);
+    return { ...saved, source: "preview", reason };
+  } finally {
+    db.close();
+  }
+}
+
+export async function listRecoveryCheckpoints({ includeLegacy = true } = {}) {
+  const checkpoints = [];
+  const db = await openDB();
+  try {
+    const rows = await getAll(db, CHECKPOINT_STORE);
+    checkpoints.push(...rows.map(row => ({
+      id: row.id, source: "preview", reason: row.reason || "mode-switch", ts: row.ts,
+      label: row.label || snapshotSummary(row.data).label,
+      pageCount: Number.isInteger(row.pageCount) ? row.pageCount : snapshotSummary(row.data).pageCount,
+    })));
+  } finally {
+    db.close();
+  }
+  if (includeLegacy) {
+    const legacy = await inspectLegacyRecovery();
+    checkpoints.push(...legacy.checkpoints);
+  }
+  return checkpoints.sort((a, b) => (b.ts || 0) - (a.ts || 0));
+}
+
+export async function restoreRecoveryCheckpoint(state, checkpoint) {
+  if (!checkpoint || !Number.isInteger(checkpoint.id)
+      || (checkpoint.source !== "preview" && checkpoint.source !== "legacy")) {
+    throw new Error("복구 checkpoint 식별자가 올바르지 않습니다.");
+  }
+  const db = checkpoint.source === "preview" ? await openDB() : await openLegacyDB();
+  if (!db) throw new Error("기존 복구 저장소를 찾을 수 없습니다.");
+  try {
+    const storeName = checkpoint.source === "preview" ? CHECKPOINT_STORE : STORE;
+    if (!db.objectStoreNames.contains(storeName)) throw new Error("복구 저장소를 찾을 수 없습니다.");
+    const row = await getById(db, storeName, checkpoint.id);
+    if (!row?.data) throw new Error("복구 checkpoint를 찾을 수 없습니다.");
+    applyLoaded(state, migrate(row.data));
+    markProjectStatus(state, captureProjectStatus(state), "recovery");
+    return { id: checkpoint.id, source: checkpoint.source };
+  } finally {
+    db.close();
+  }
+}
+
+export async function checkpointBeforeModeSwitch(state) {
+  return createRecoveryCheckpoint(state, { reason: "mode-switch" });
 }
