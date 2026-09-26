@@ -199,7 +199,7 @@ function formatTime(ts) {
 }
 
 /* ----- initAutosave: 부팅 복구 → 디바운스 자동 저장 구독 ----- */
-export async function initAutosave(state) {
+export async function initAutosave(state, { selectRecoveryCheckpoint } = {}) {
   let db;
   try {
     db = await openDB();
@@ -216,16 +216,34 @@ export async function initAutosave(state) {
   //     구독을 걸기 전이라, 사용자가 결정하는 동안 빈 초기 상태가 스냅샷을
   //     덮어쓰지 않는다.
   try {
-    const latest = await getLatest(db);
-    if (latest && latest.data && snapshotHasWork(latest.data)) {
-      const ok = await showConfirm(
-        `이전에 작업하던 도해가 남아 있습니다.\n(${formatTime(latest.ts)})\n\n이전 작업을 복구할까요?`,
-        { title: "작업 복구", okText: "복구", cancelText: "새로 시작" }
-      );
-      recoveryChoice = ok ? "restore" : "fresh";
-      if (ok) {
-        applyLoaded(state, migrate(latest.data));
-        markProjectStatus(state, captureProjectStatus(state), "recovery");
+    let checkpointRecovered = false;
+    if (typeof selectRecoveryCheckpoint === "function") {
+      const [previewCheckpoints, legacy] = await Promise.all([
+        listRecoveryCheckpoints({ includeLegacy: false }),
+        inspectLegacyRecovery(),
+      ]);
+      const checkpoints = [...previewCheckpoints, ...legacy.checkpoints]
+        .sort((a, b) => (b.ts || 0) - (a.ts || 0));
+      const selected = await selectRecoveryCheckpoint(checkpoints, { legacyStatus: legacy.status });
+      if (selected) {
+        await restoreRecoveryCheckpoint(state, selected);
+        recoveryChoice = "restore";
+        checkpointRecovered = true;
+      }
+    }
+
+    if (!checkpointRecovered) {
+      const latest = await getLatest(db);
+      if (latest && latest.data && snapshotHasWork(latest.data)) {
+        const ok = await showConfirm(
+          `이전에 작업하던 도해가 남아 있습니다.\n(${formatTime(latest.ts)})\n\n이전 작업을 복구할까요?`,
+          { title: "작업 복구", okText: "복구", cancelText: "새로 시작" }
+        );
+        recoveryChoice = ok ? "restore" : "fresh";
+        if (ok) {
+          applyLoaded(state, migrate(latest.data));
+          markProjectStatus(state, captureProjectStatus(state), "recovery");
+        }
       }
     }
   } catch {
