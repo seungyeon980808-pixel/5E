@@ -192,6 +192,10 @@ class MemoryIndexedDB {
             }),
             getAll: () => request(() => clone(store.rows)),
             getAllKeys: () => request(() => store.rows.map(row => row[store.keyPath])),
+            openCursor: () => request(() => {
+              const row = store.rows[store.rows.length - 1];
+              return row ? { value: clone(row) } : null;
+            }),
             delete: key => request(() => {
               const index = store.rows.findIndex(row => row[store.keyPath] === key);
               if (index >= 0) store.rows.splice(index, 1);
@@ -259,6 +263,29 @@ async function testAutosaveServices() {
     b.changed();
     await first.flush();
   }
+
+  const declined = autosaveState(project('blank'));
+  const declinedChoice = await autosaveContext(indexedDB).ctx.initAutosave(declined, {
+    selectRecoveryCheckpoint: async () => null,
+  });
+  assert.equal(declinedChoice, 'fresh');
+  assert.deepEqual(declined.project, project('blank'),
+    'declining a checkpoint preserves the existing rolling autosave cancel path');
+
+  const restart = autosaveContext(indexedDB);
+  const selectedA = autosaveState(project('blank'));
+  let selectorInput = null;
+  const recoveryChoice = await restart.ctx.initAutosave(selectedA, {
+    selectRecoveryCheckpoint: async (items, options) => {
+      selectorInput = { items: clone(items), options: clone(options) };
+      return { id: checkpoint.id, source: checkpoint.source };
+    },
+  });
+  assert.equal(recoveryChoice, 'restore');
+  assert.equal(selectorInput.items[0].label, 'A');
+  assert.equal(selectorInput.options.legacyStatus, 'empty');
+  assert.deepEqual(selectedA.project, project('A'),
+    'selected checkpoint A is not overwritten by rolling autosave B');
 
   const reopened = autosaveContext(indexedDB);
   const checkpoints = await reopened.ctx.listRecoveryCheckpoints();

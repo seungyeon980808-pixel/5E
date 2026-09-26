@@ -106,6 +106,21 @@ async function run() {
   }
   await new Promise(resolve => setTimeout(resolve, 250));
 
+  const restartState = stateFor(project([page('blank')], 'blank'));
+  let selectorEvidence = null;
+  const recoveryChoice = await initAutosave(restartState, {
+    selectRecoveryCheckpoint: async (items, options) => {
+      selectorEvidence = { items: clone(items), options: clone(options) };
+      return { id: checkpoint.id, source: checkpoint.source };
+    },
+  });
+  assert(recoveryChoice === 'restore', 'startup reports durable checkpoint recovery');
+  assert(selectorEvidence.items.some(item => item.id === checkpoint.id && item.label === 'A1'),
+    'startup selector receives durable checkpoint metadata');
+  assert(selectorEvidence.options.legacyStatus === 'empty', 'startup selector receives legacy status');
+  equal(serialize(restartState.get()), migrate(sourceA),
+    'selected checkpoint A is not overwritten by rolling autosave B');
+
   const checkpoints = await listRecoveryCheckpoints({ includeLegacy: false });
   assert(checkpoints.some(candidate => candidate.id === checkpoint.id),
     'transition checkpoint survives nine rolling autosaves');
@@ -172,6 +187,8 @@ async function run() {
     checkpointCount: checkpoints.length,
     previewAutosaves: previewAutosaves.length,
     previewCheckpoints: previewCheckpoints.length,
+    startupRecoveryChoice: recoveryChoice,
+    startupRecoveryLabel: selectorEvidence.items.find(item => item.id === checkpoint.id)?.label,
     legacyStatus: legacy.status,
     checkpointError,
     importError,
