@@ -2,7 +2,7 @@ import { initLiteShell } from "./lite-shell.js?v=lite-quick-help-0925";
 import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-preview-labeler-0917-1111';
 import { initWebLoginUi } from './web-login-ui.js?v=1.6.0-preview-mobile-golden-0922';
 import { initMobileImage } from './mobile-image.js?v=1.6.0-preview-mobile-golden-0922';
-import { showAlert } from "./ui-dialogs.js?v=watermark-focus-0925";
+import { showAlert, showRecoveryCheckpointDialog } from "./ui-dialogs.js?v=task10-recovery-160";
 import { initAiSharing } from './ai-sharing-ui.js?v=1.6.0-preview-emerald-polish-0921';
 /* ===== MAIN (wire modules; data-as-truth + viewBox zoom/pan) ===== */
 //
@@ -305,7 +305,7 @@ initPages(state);
 
 /* ----- autosave: 2.5초 디바운스로 IndexedDB에 자동 저장 + 부팅 시 크래시 복구 -----
  * pages[] 채운 뒤에 초기화해야 첫 저장부터 유효한 다중 페이지 스냅샷이 된다. */
-const autosaveReady = initAutosave(state);
+const autosaveReady = initAutosave(state, { selectRecoveryCheckpoint: showRecoveryCheckpointDialog });
 initProjectFileOpening(state, autosaveReady);
 const recoveryChoice = await autosaveReady;
 const aiPanel = initAiPanel(state, { freshStart: recoveryChoice === "fresh" });
