@@ -221,7 +221,7 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
     if (restored && active?.controller) store(selectionKey, {scope: active.scope, taskId: active.controller.activeTask()});
   }
   function activate(entry) {
-    if (!entry) return;
+    if (!entry || entry.disposed || !entries.includes(entry)) return;
     for (const item of entries) {
       item.panel.hidden = item !== entry;
       item.panel.id = item === entry ? 'ai-image-panel' : `ai-workspace-${item.scope || 'legacy'}`;
@@ -235,6 +235,7 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
     if (!entry || entries.length <= 1 || entry.tabs.length || entry.panel.dataset.aiBusy === 'true') return false;
     const index = entries.indexOf(entry);
     if (index < 0) return false;
+    entry.disposed = true;
     entries.splice(index, 1);
     entry.controller?.dispose?.();
     entry.panel.aiWorkbench?.dispose?.();
@@ -322,7 +323,7 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
       }
       panel.hidden = true; original.parentElement.append(panel);
     }
-    const entry = { scope, panel, controller: null, tabs: [], ready: false };
+    const entry = { scope, panel, controller: null, tabs: [], ready: false, disposed: false };
     entries.push(entry);
     entry.controller = initialize(state, {
       panel, clientScope: scope, desktop: createTaskBridge(window.fiveEDesktop || window.fiveEWebAI, scope),
@@ -335,13 +336,20 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
         saveRegistry();
       },
       navigationChanged: tabs => {
+        if (entry.disposed || !entries.includes(entry)) return;
         if (tabs) entry.tabs = tabs;
         renderNavigation();
         saveSelection();
       },
     });
     setupWorkbench(panel);
-    entry.controller.ready.then(() => { entry.ready = true; if (show) activate(entry); else renderNavigation(); });
+    entry.controller.ready.then(() => {
+      if (entry.disposed || !entries.includes(entry)) return;
+      entry.ready = true;
+      if (show) activate(entry); else renderNavigation();
+    }, () => {
+      if (!entry.disposed && entries.includes(entry)) renderNavigation();
+    });
     return entry;
   }
   const primaryKey = '5e.aiPrimaryWorkspace.v1';

@@ -94,6 +94,124 @@ test('ARCH-160-01: 100 empty workspace removals dispose DOM, controller, and reg
   assert.equal(result.snapshotWorkspaces, 1);
 });
 
+test('ARCH-160-01: disposed workspaces cannot reactivate when deferred recovery settles', async (context) => {
+  const browser = await chromium.launch({ headless: true });
+  context.after(() => browser.close());
+  const page = await browser.newPage();
+  await page.route('https://workspace-ready-race.invalid/', (route) => route.fulfill({
+    contentType: 'text/html',
+    body: '<!doctype html><body></body>',
+  }));
+  await page.goto('https://workspace-ready-race.invalid/');
+
+  const managerSource = fs.readFileSync(path.join(root, 'preview/js/ai-task-workspaces.js'), 'utf8');
+  const createTaskWorkspaces = managerSource
+    .slice(managerSource.indexOf('export function createTaskWorkspaces('))
+    .replace(/^export /, '');
+  const indexSource = fs.readFileSync(path.join(root, 'preview/index.html'), 'utf8');
+  const result = await page.evaluate(async ({ createTaskWorkspaces, indexSource }) => {
+    const parsed = new DOMParser().parseFromString(indexSource, 'text/html');
+    const template = parsed.getElementById('ai-image-panel');
+    document.body.innerHTML = template.outerHTML;
+    const factory = new Function('createTaskBridge', `${createTaskWorkspaces}; return createTaskWorkspaces;`)(() => undefined);
+    const controllers = [];
+    const activationEvents = [];
+    window.addEventListener('5e:ai-workspace-activate', (event) => activationEvents.push({
+      scope: event.detail.scope,
+      connected: event.detail.panel.isConnected,
+    }));
+    let serial = 0;
+    const initialize = (_state, options) => {
+      serial += 1;
+      let tabs = [];
+      if (serial === 1) {
+        const row = document.createElement('div');
+        row.className = 'ai-task-tab';
+        row.dataset.tabId = 'primary-task';
+        row.innerHTML = '<button class="ai-task-tab-select" aria-pressed="true">Primary</button><button class="ai-task-delete">Delete</button>';
+        tabs = [row];
+      }
+      let resolveReady;
+      let rejectReady;
+      const ready = serial === 1 ? Promise.resolve() : new Promise((resolve, reject) => {
+        resolveReady = resolve;
+        rejectReady = reject;
+      });
+      options.navigationChanged(tabs);
+      const controller = {
+        options, ready, resolveReady, rejectReady,
+        activeTask: () => tabs[0]?.dataset.tabId || null,
+        ownsTask: (id) => tabs.some((tab) => tab.dataset.tabId === id),
+        selectTask() {}, dispose() {}, close() {}, attachReference() {}, open: async () => {},
+        sharingSnapshot: async () => ({ tabs: tabs.map((tab) => ({ id: tab.dataset.tabId })) }),
+        deleteAll() {
+          tabs = [];
+          options.navigationChanged(tabs);
+          options.workspaceEmpty();
+        },
+      };
+      controllers.push(controller);
+      return controller;
+    };
+    const manager = factory({ get: () => ({ objects: [], selectedIds: [] }) }, initialize, () => {});
+    await manager.open();
+
+    controllers[0].options.newWorkspace();
+    const resolving = controllers.at(-1);
+    const resolvingPanel = resolving.options.panel;
+    resolving.deleteAll();
+    resolving.resolveReady();
+    await Promise.resolve();
+    await Promise.resolve();
+
+    controllers[0].options.newWorkspace();
+    const rejecting = controllers.at(-1);
+    const rejectingPanel = rejecting.options.panel;
+    rejecting.deleteAll();
+    rejecting.rejectReady(new Error('synthetic recovery rejection'));
+    await Promise.resolve();
+    await Promise.resolve();
+
+    const afterStalePanel = document.getElementById('ai-image-panel');
+    const afterStale = {
+      activeConnected: afterStalePanel?.isConnected === true,
+      activeIsPrimary: afterStalePanel === controllers[0].options.panel,
+      primaryVisible: controllers[0].options.panel.hidden === false,
+    };
+
+    controllers[0].options.newWorkspace();
+    const live = controllers.at(-1);
+    const livePanel = live.options.panel;
+    live.resolveReady();
+    await Promise.resolve();
+    await Promise.resolve();
+    const liveActivation = {
+      connected: livePanel.isConnected,
+      active: document.getElementById('ai-image-panel') === livePanel,
+      visible: livePanel.hidden === false,
+    };
+    live.deleteAll();
+
+    return {
+      afterStale,
+      liveActivation,
+      primaryRestored: document.getElementById('ai-image-panel') === controllers[0].options.panel,
+      resolvingConnected: resolvingPanel.isConnected,
+      rejectingConnected: rejectingPanel.isConnected,
+      staleActivation: activationEvents.some((event) => !event.connected),
+      registryEntries: JSON.parse(localStorage.getItem('5e.aiParallelWorkspaces.v1') || '[]').length,
+    };
+  }, { createTaskWorkspaces, indexSource });
+
+  assert.deepEqual(result.afterStale, { activeConnected: true, activeIsPrimary: true, primaryVisible: true });
+  assert.deepEqual(result.liveActivation, { connected: true, active: true, visible: true });
+  assert.equal(result.primaryRestored, true);
+  assert.equal(result.resolvingConnected, false);
+  assert.equal(result.rejectingConnected, false);
+  assert.equal(result.staleActivation, false);
+  assert.equal(result.registryEntries, 0);
+});
+
 test('ARCH-160-01: 100 real workbench disposals release listeners and observers', async (context) => {
   const browser = await chromium.launch({ headless: true });
   context.after(() => browser.close());
