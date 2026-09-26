@@ -1,21 +1,27 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "candidate": {
     "version": "1.6.0",
     "desktopEntry": "preview/index.html",
     "sourceBranch": "codex/release-160-remediation",
-    "tag": "v1.6.0"
+    "tag": "v1.6.0",
+    "status": "HOLD"
   },
   "channels": {
     "stableWeb": {
       "version": "1.5.3",
       "url": "https://www.5e.ai.kr/",
-      "entry": "index.html"
+      "entry": "index.html",
+      "pagesSourceBranch": "codex/preview-1.6.0",
+      "pagesSourceSha": "09f94d830a7cec15632aa5286f6cffbe58e5f39f"
     },
     "previewWeb": {
       "version": "1.6.0",
+      "label": "Preview",
       "url": "https://www.5e.ai.kr/preview/",
-      "entry": "preview/index.html"
+      "entry": "preview/index.html",
+      "pagesSourceBranch": "codex/preview-1.6.0",
+      "pagesSourceSha": "09f94d830a7cec15632aa5286f6cffbe58e5f39f"
     },
     "desktop": {
       "version": "1.6.0",
@@ -27,6 +33,26 @@
         "5E-1.6.0-macos-x64.zip",
         "5E-1.6.0-macos-arm64.zip"
       ]
+    },
+    "latestPublishedDesktop": {
+      "version": "1.5.8",
+      "publishedAt": "2026-08-13T05:07:45Z",
+      "tagCommit": "0684bcf70b01959423b12556a077c3077b04afc7",
+      "releaseUrl": "https://github.com/seungyeon980808-pixel/5E/releases/tag/v1.5.8",
+      "artifact": {
+        "name": "5E.Setup.1.5.8.exe",
+        "size": 391187448,
+        "sha256": "04d30dacf9b3dd8e63889872527f69a95a96106dc7d4e709ab933dd55de65487"
+      }
     }
+  },
+  "releaseHolds": {
+    "windowsSigning": "PENDING_EXTERNAL",
+    "nativeWindowsValidation": "PENDING_EXTERNAL",
+    "serverDeploymentAndAuth": "PENDING_EXTERNAL",
+    "liveAuthenticatedAi": "PENDING_EXTERNAL",
+    "worktreeRetention": "PENDING_OWNER_APPROVAL",
+    "sample7Rights": "UNVERIFIED",
+    "publishedV158Checksum": "OPEN_PENDING_PUBLICATION"
   }
 }

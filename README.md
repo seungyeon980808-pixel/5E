@@ -9,10 +9,10 @@
   <img src="https://img.shields.io/badge/made__for-teachers-8957e5?style=flat-square" alt="made for teachers" />
 </p>
 
-<p><strong>과학교사를 위한 시험용 이미지 제작기</strong> · 설치 없이 브라우저에서 · <a href="https://seungyeon980808-pixel.github.io/5E/">▶ 바로 써보기</a></p>
+<p><strong>과학교사를 위한 시험용 이미지 제작기</strong> · 설치 없이 브라우저에서 · <a href="https://www.5e.ai.kr/">▶ 안정판 바로 쓰기</a> · <a href="https://www.5e.ai.kr/preview/">1.6 Preview</a></p>
 
-<p><a href="https://github.com/seungyeon980808-pixel/5E/releases/tag/v1.5.0">최신 릴리즈 <strong>v1.5.0</strong> — 무엇이 바뀌었나</a></p>
-<p><a href="docs/RELEASE_NOTES_v1.5.0.html"><strong>v1.5.0 릴리즈 노트</strong> — 전체 변경 보기</a></p>
+<p><a href="https://github.com/seungyeon980808-pixel/5E/releases/tag/v1.5.8">최신 릴리즈 <strong>v1.5.8</strong> — Windows x64 · 2026-08-13</a></p>
+<p><a href="docs/RELEASE_NOTES_v1.6.0.md"><strong>v1.6.0 후보 릴리즈 노트</strong></a> — 외부 검증이 남아 있어 현재 <strong>HOLD</strong></p>
 
 </div>
 
@@ -409,11 +409,21 @@ python -m http.server 8000
 
 정적 파일이라 GitHub Pages에 그대로 올라갑니다. 브라우저가 옛 모듈을 캐시하지 않도록 각 모듈의 `?v=` 값을 릴리즈 버전과 맞춰 둡니다.
 
+| 채널 | 현재 공개 상태 |
+|---|---|
+| [안정 웹](https://www.5e.ai.kr/) | v1.5.3 |
+| [미리보기 웹](https://www.5e.ai.kr/preview/) | v1.6.0 Preview |
+| [데스크톱](https://github.com/seungyeon980808-pixel/5E/releases/tag/v1.5.8) | v1.5.8 Windows x64 |
+| v1.6.0 후보 | [`HOLD`](docs/RELEASE_HOLD.md) — 게시 전 외부 검증 필요 |
+
+채널의 정확한 출처와 승격 규칙은 [`release-channels.json`](release-channels.json)과 [릴리즈 채널 문서](docs/RELEASE_CHANNELS.md)를 따릅니다.
+
 ## 릴리즈 이력
 
 | 판 | 무엇이 들어갔나 |
 |---|---|
-| [**v1.5.0**](docs/RELEASE_NOTES_v1.5.0.html) | 이미지 작업대 · 다중 참고 이미지와 영역 요청 · 분리형 자르기 · 드래그 아트보드 · 투명 배경 · Windows 설치판 · `.5e` 프로젝트 · 평가원 도식 Engine V2 |
+| [**v1.5.8**](https://github.com/seungyeon980808-pixel/5E/releases/tag/v1.5.8) | 최신 공개 Windows x64 데스크톱 설치판 · 2026-08-13 |
+| [**v1.5.0**](https://github.com/seungyeon980808-pixel/5E/releases/tag/v1.5.0) | 이미지 작업대 · 다중 참고 이미지와 영역 요청 · 분리형 자르기 · 드래그 아트보드 · 투명 배경 · Windows 설치판 · `.5e` 프로젝트 · 평가원 도식 Engine V2 |
 | [v1.4.0](https://github.com/seungyeon980808-pixel/5E/releases/tag/v1.4.0) | 과목별 과학 부품 확장 · 3D 도구 · 용수철·파동·전자기 도구 개선 · 정렬과 라벨 가림 개선 |
 | [**v1.3.0**](https://github.com/seungyeon980808-pixel/5E/releases/tag/v1.3.0) | 입체 도구(실험) · 용수철 재설계 · 전기력선/자기력선/정상파 · 정렬·간격 통일 · 라벨 가림 개선 · MCP 도구 |
 | [v1.2.0](https://github.com/seungyeon980808-pixel/5E/releases/tag/v1.2.0) | 표시 탭 · 라벨러 표시점 · 평가원 화살촉 · 자간/장평 · 페이지 일괄 내보내기 |
