@@ -31,6 +31,33 @@ function loadMainTestSeam() {
   }
 }
 
+async function loadPlatformTestSeam() {
+  const source = fs.readFileSync(path.join(__dirname, "..", "preview", "js", "platform.js"), "utf8")
+    .replace(/^import .*preview-storage\.js[^;]+;$/m, "const previewStorage = { getItem() { return null; }, setItem() {} };");
+  const original = {
+    navigator: Object.getOwnPropertyDescriptor(globalThis, "navigator"),
+    document: Object.getOwnPropertyDescriptor(globalThis, "document"),
+    window: Object.getOwnPropertyDescriptor(globalThis, "window"),
+    CustomEvent: Object.getOwnPropertyDescriptor(globalThis, "CustomEvent"),
+  };
+  Object.defineProperties(globalThis, {
+    navigator: { configurable: true, value: { platform: "MacIntel" } },
+    document: { configurable: true, value: { documentElement: { setAttribute() {} } } },
+    window: { configurable: true, value: { dispatchEvent() {} } },
+    CustomEvent: { configurable: true, value: class CustomEvent {} },
+  });
+  const restore = () => {
+    for (const [name, descriptor] of Object.entries(original)) {
+      if (descriptor) Object.defineProperty(globalThis, name, descriptor);
+      else delete globalThis[name];
+    }
+  };
+  return {
+    platform: await import(`data:text/javascript;base64,${Buffer.from(source).toString("base64")}#native-smoke-shortcut`),
+    restore,
+  };
+}
+
 test("packaged smoke accepts the legacy empty primary scope without weakening sender trust", () => {
   const { createSmokeFixtureTurn, isValidSmokeFixtureRequest } = loadMainTestSeam();
   assert.equal(typeof isValidSmokeFixtureRequest, "function", "main process exposes the smoke request validation seam");
@@ -81,5 +108,26 @@ test("packaged smoke follows the current source, library, state, and platform sh
   assert.doesNotMatch(mainSource, /\.ai-file-button input\[type=file\]/);
   assert.doesNotMatch(mainSource, /document\.querySelector\("\.ai-reference-search-dialog"\)/);
   assert.match(mainSource, /import\("\.\/js\/state\.js\?v=1\.6\.0-preview-labeler-0917-1111"\)/);
-  assert.match(mainSource, /ctrlKey: true, metaKey: true/);
+  assert.doesNotMatch(mainSource, /ctrlKey: true, metaKey: true/);
+  assert.match(mainSource, /navigator\.userAgentData\?\.platform \|\| navigator\.platform/);
+  assert.match(mainSource, /\.\.\.shortcutModifiersForPlatform\(shortcutPlatform\)/);
+});
+
+test("packaged smoke uses only the platform-primary delayed-cut modifier", async (context) => {
+  const { shortcutModifiersForPlatform } = loadMainTestSeam();
+  const { platform, restore } = await loadPlatformTestSeam();
+  context.after(restore);
+
+  for (const [configuration, runtimePlatform, primary, nonPrimary] of [
+    ["mac", "MacIntel", { metaKey: true }, { ctrlKey: true }],
+    ["windows", "Win32", { ctrlKey: true }, { metaKey: true }],
+  ]) {
+    platform.setShortcutPlatform(configuration);
+    assert.deepEqual(shortcutModifiersForPlatform(runtimePlatform), primary,
+      `${configuration} smoke input contains only its primary modifier`);
+    assert.equal(Boolean(platform.modKey(primary)), true,
+      `${configuration} accepts its primary modifier`);
+    assert.equal(Boolean(platform.modKey(nonPrimary)), false,
+      `${configuration} rejects its non-primary modifier alone`);
+  }
 });

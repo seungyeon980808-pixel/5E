@@ -85,6 +85,10 @@ function createSmokeFixtureTurn(payload, index, imageDataUrl) {
   };
 }
 
+function shortcutModifiersForPlatform(platform) {
+  return /mac/i.test(String(platform || "")) ? { metaKey: true } : { ctrlKey: true };
+}
+
 function assertTrustedLocalImageSender(event) {
   const expectedUrl = pathToFileURL(path.join(__dirname, "..", "preview", "index.html")).href;
   if (!isTrustedIpcSender(event, win, expectedUrl)) {
@@ -560,6 +564,7 @@ function createWindow() {
         const smokeFixtureImageDataUrl = readSmokeFixtureImageDataUrl();
         const result = await win.webContents.executeJavaScript(`new Promise((resolve) => {
           requestAnimationFrame(() => requestAnimationFrame(async () => {
+            const shortcutModifiersForPlatform = ${shortcutModifiersForPlatform.toString()};
             const waitFor = async (test, timeout = 4000) => {
               const started = Date.now();
               while (Date.now() - started < timeout) {
@@ -737,7 +742,10 @@ function createWindow() {
               .map((node) => ({ id: node.id, className: node.className, title: node.querySelector(".modal-title")?.textContent?.trim() || "" }));
             window.dispatchEvent(new KeyboardEvent("keydown", { key: "e", code: "KeyE", shiftKey: true, bubbles: true }));
             const eraseShortcutWorks = stateModule.state.get().activeTool === "ERASE";
-            window.dispatchEvent(new KeyboardEvent("keydown", { key: "e", code: "KeyE", ctrlKey: true, metaKey: true, bubbles: true }));
+            const shortcutPlatform = navigator.userAgentData?.platform || navigator.platform || "";
+            window.dispatchEvent(new KeyboardEvent("keydown", {
+              key: "e", code: "KeyE", ...shortcutModifiersForPlatform(shortcutPlatform), bubbles: true,
+            }));
             const delayedShortcutWorks = stateModule.state.get().activeTool === "DELAYED_CUT";
             document.querySelector('[data-tool="V"]')?.click();
             const chooserClosesOnOtherTool = await waitFor(() => !isActuallyVisible(cutChooser) &&
@@ -1138,4 +1146,4 @@ app.on("window-all-closed", () => {
 });
 app.on("before-quit", stopServer);
 
-module.exports = { createSmokeFixtureTurn, isValidSmokeFixtureRequest };
+module.exports = { createSmokeFixtureTurn, isValidSmokeFixtureRequest, shortcutModifiersForPlatform };
