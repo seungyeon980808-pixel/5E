@@ -846,8 +846,13 @@ function createWindow() {
                     stage.dispatchEvent(new PointerEvent('pointermove', { ...down, clientX: rect.left + rect.width * .65, clientY: rect.top + rect.height * .60 }));
                     stage.dispatchEvent(new PointerEvent('pointerup', { ...down, clientX: rect.left + rect.width * .65, clientY: rect.top + rect.height * .60 }));
                     aiAreaCommentReady = await waitFor(() => !!panel.querySelector('[data-ai-comment-row]'), 2000);
+                    await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
+                    const renderedCommentReady = await waitFor(() => Array.from(panel.querySelectorAll('.ai-result-pane .ai-comment-region'))
+                      .some((region) => { const bounds = region.getBoundingClientRect(); return bounds.width > 0 && bounds.height > 0; }), 2000);
                     const normalizedRegion = () => {
-                      const regionBounds = panel.querySelector('.ai-comment-region')?.getBoundingClientRect();
+                      const region = Array.from(panel.querySelectorAll('.ai-result-pane .ai-comment-region'))
+                        .find((candidate) => { const bounds = candidate.getBoundingClientRect(); return bounds.width > 0 && bounds.height > 0; });
+                      const regionBounds = region?.getBoundingClientRect();
                       const imageBounds = image?.getBoundingClientRect();
                       if (!regionBounds || !imageBounds?.width || !imageBounds.height) return null;
                       return {
@@ -859,7 +864,7 @@ function createWindow() {
                         imageHeight: imageBounds.height,
                       };
                     };
-                    const before = normalizedRegion();
+                    const before = renderedCommentReady ? normalizedRegion() : null;
                     const zoomBefore = panel.querySelector('[data-ai-zoom-value]')?.textContent?.trim() || '';
                     panel.querySelector('[data-ai-zoom-action="in"]')?.click();
                     await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
