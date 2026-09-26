@@ -68,6 +68,23 @@ function readSmokeFixtureImageDataUrl() {
   return `data:image/png;base64,${fs.readFileSync(SMOKE_FIXTURE_IMAGE_PATH).toString("base64")}`;
 }
 
+function isValidSmokeFixtureRequest(event, payload, expectedWindow = win) {
+  const expectedUrl = pathToFileURL(path.join(__dirname, "..", "preview", "index.html")).href;
+  return isTrustedIpcSender(event, expectedWindow, expectedUrl) &&
+    typeof payload?.clientScope === "string" && payload.clientScope.length <= 256;
+}
+
+function createSmokeFixtureTurn(payload, index, imageDataUrl) {
+  const turnId = `smoke-fixture-${index}`;
+  return {
+    response: { turnId, renderThreadId: `smoke-render-${index}` },
+    events: [
+      { clientScope: payload.clientScope, method: "item/completed", params: { turnId, item: { type: "imageGeneration", imageDataUrl } } },
+      { clientScope: payload.clientScope, method: "turn/completed", params: { turn: { id: turnId, status: "completed" } } },
+    ],
+  };
+}
+
 function assertTrustedLocalImageSender(event) {
   const expectedUrl = pathToFileURL(path.join(__dirname, "..", "preview", "index.html")).href;
   if (!isTrustedIpcSender(event, win, expectedUrl)) {
@@ -553,6 +570,7 @@ function createWindow() {
             };
             const startupDialogTitles = new Set(["작업 복구", "찾아 주셔서 고맙습니다"]);
             const dismissStartupDialogs = () => {
+              document.querySelector(".tut-welcome-overlay .tut-banner-no")?.click();
               for (const title of document.querySelectorAll(".modal-overlay .modal-title")) {
                 if (!startupDialogTitles.has(title.textContent?.trim())) continue;
                 title.closest(".modal-overlay")?.querySelector(".modal-btn")?.click();
@@ -586,11 +604,12 @@ function createWindow() {
               await window.fiveEDesktop.stop();
             } catch (error) { codexStatusError = error?.message || String(error); }
             const panelWasOpened = panel?.hidden === false;
-            const aiModal = panel?.querySelector(".modal-ai");
-            const aiModalRect = aiModal?.getBoundingClientRect();
-            const aiUsesCentralModal = panel?.classList.contains("modal-overlay") && !!aiModalRect &&
-              Math.abs(aiModalRect.left + aiModalRect.width / 2 - window.innerWidth / 2) < 4 &&
-              Math.abs(aiModalRect.top + aiModalRect.height / 2 - window.innerHeight / 2) < 4;
+            const aiUsesCentralModal = await waitFor(() => {
+              const aiModalRect = panel?.querySelector(".modal-ai")?.getBoundingClientRect();
+              return panel?.classList.contains("modal-overlay") && !!aiModalRect &&
+                Math.abs(aiModalRect.left + aiModalRect.width / 2 - window.innerWidth / 2) < 4 &&
+                Math.abs(aiModalRect.top + aiModalRect.height / 2 - window.innerHeight / 2) < 4;
+            }, 2000);
             const aiAutoConnectControlsSimplified = !panel?.querySelector("[data-ai-start]") &&
               !panel?.querySelector("[data-ai-stop]") && !!panel?.querySelector("[data-ai-login]");
             const aiProgressUiReady = !!panel?.querySelector("[data-ai-generating] .ai-e-loader") &&
@@ -599,15 +618,17 @@ function createWindow() {
             const resultRect = panel?.querySelector(".ai-results")?.getBoundingClientRect();
             const conversationRect = panel?.querySelector(".ai-conversation")?.getBoundingClientRect();
             const aiResultsPlacedLeft = !!resultRect && !!conversationRect && resultRect.left < conversationRect.left;
-            const aiSourceEntrypointsReady = !!panel?.querySelector(".ai-file-button input[type=file]") &&
-              !!panel?.querySelector("[data-ai-reference-search]") && !!panel?.querySelector("[data-ai-capture]");
-            panel?.querySelector("[data-ai-reference-search]")?.click();
+            const aiSourceEntrypointsReady = !!panel?.querySelector("[data-ai-source-file]") &&
+              !!panel?.querySelector("[data-ai-source-action=\"library\"]") &&
+              !!panel?.querySelector("[data-ai-source-action=\"capture\"]");
+            panel?.querySelector("[data-ai-source-action=\"library\"]")?.click();
             const aiLoadMenuReady = await waitFor(() => {
-              const search = document.querySelector(".ai-reference-search-dialog");
-              return search?.querySelectorAll("[data-ai-search-source]").length === 3 &&
-                search.querySelector("input[type=search]") === document.activeElement;
+              const library = document.querySelector(".unified-library-overlay:not([hidden])");
+              return !!library?.querySelector("[data-unilib-close]") &&
+                !!document.querySelector("[data-unilib-query]");
             }, 4000);
-            document.querySelector("[data-ai-search-close]")?.click();
+            document.querySelector("[data-unilib-close]")?.click();
+            await waitFor(() => !document.querySelector(".unified-library-overlay:not([hidden])"), 2000);
             panel?.querySelector("[data-ai-capture]")?.click();
             await waitFor(() => document.querySelector(".ai-capture-source"), 5000);
             document.querySelector(".ai-capture-source")?.click();
@@ -620,12 +641,14 @@ function createWindow() {
             cropDialog?.querySelector(".ai-crop-foot button")?.click();
             const cancelButton = panel?.querySelector("[data-ai-interrupt]");
             const aiCancelIsContextual = cancelButton?.textContent?.trim() === "작업 취소" && cancelButton.hidden;
-            const aiReturnsAfterLibraryClose = panel?.hidden === false && !document.querySelector(".ai-reference-search-dialog");
+            const aiReturnsAfterLibraryClose = panel?.hidden === false &&
+              !document.querySelector(".unified-library-overlay:not([hidden])");
             panel.hidden = true;
             dismissStartupDialogs();
-            await waitFor(() => !Array.from(document.querySelectorAll(".modal-overlay .modal-title"))
-              .some((title) => startupDialogTitles.has(title.textContent?.trim())), 2000);
-            const stateModule = await import("./js/state.js?v=1.4.0");
+            await waitFor(() => !document.querySelector(".tut-welcome-overlay") &&
+              !Array.from(document.querySelectorAll(".modal-overlay .modal-title"))
+                .some((title) => startupDialogTitles.has(title.textContent?.trim())), 2000);
+            const stateModule = await import("./js/state.js?v=1.6.0-preview-labeler-0917-1111");
             const textChooser = document.getElementById("chooser-text");
             const textChooserButton = document.getElementById("tool-text-merged");
             const angleChooser = document.getElementById("chooser-angle");
@@ -714,7 +737,7 @@ function createWindow() {
               .map((node) => ({ id: node.id, className: node.className, title: node.querySelector(".modal-title")?.textContent?.trim() || "" }));
             window.dispatchEvent(new KeyboardEvent("keydown", { key: "e", code: "KeyE", shiftKey: true, bubbles: true }));
             const eraseShortcutWorks = stateModule.state.get().activeTool === "ERASE";
-            window.dispatchEvent(new KeyboardEvent("keydown", { key: "e", code: "KeyE", ctrlKey: true, bubbles: true }));
+            window.dispatchEvent(new KeyboardEvent("keydown", { key: "e", code: "KeyE", ctrlKey: true, metaKey: true, bubbles: true }));
             const delayedShortcutWorks = stateModule.state.get().activeTool === "DELAYED_CUT";
             document.querySelector('[data-tool="V"]')?.click();
             const chooserClosesOnOtherTool = await waitFor(() => !isActuallyVisible(cutChooser) &&
@@ -807,8 +830,10 @@ function createWindow() {
               aiOutputControlsReady = panel.querySelectorAll('[data-ai-output-engine]').length === 2;
               const conversionOptions = panel.querySelector('.ai-conversion-options');
               if (conversionOptions) conversionOptions.open = true;
+              const rasterButton = panel.querySelector('[data-ai-output-engine="raster"]');
+              rasterButton?.scrollIntoView({ block: 'nearest' });
               await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
-              aiPublicRasterVisible = isActuallyVisible(panel.querySelector('[data-ai-output-engine="raster"]'));
+              aiPublicRasterVisible = isActuallyVisible(rasterButton);
               aiPublicAssetHidden = panel.querySelector('[data-ai-output-engine="asset"]')?.hidden === true;
               if (conversionOptions) conversionOptions.open = false;
               if (sourceFile) {
@@ -1041,19 +1066,16 @@ ipcMain.handle("codex:models", () => listModels());
 ipcMain.handle("codex:account", () => accountOverview());
 ipcMain.handle("codex:send", (event, payload) => {
   if (process.env.FIVE_E_SMOKE_TEST === "1") {
-    const expectedUrl = pathToFileURL(path.join(__dirname, "..", "preview", "index.html")).href;
-    if (!isTrustedIpcSender(event, win, expectedUrl) || typeof payload?.clientScope !== "string" ||
-      payload.clientScope.length < 1 || payload.clientScope.length > 256) {
+    if (!isValidSmokeFixtureRequest(event, payload)) {
       throw new Error("Invalid smoke fixture request.");
     }
     const imageDataUrl = readSmokeFixtureImageDataUrl();
     const index = ++smokeFixtureSendCount;
-    const fixtureTurnId = `smoke-fixture-${index}`;
+    const fixture = createSmokeFixtureTurn(payload, index, imageDataUrl);
     setTimeout(() => {
-      send("codex:event", { clientScope: payload.clientScope, method: "item/completed", params: { turnId: fixtureTurnId, item: { type: "imageGeneration", imageDataUrl } } });
-      send("codex:event", { clientScope: payload.clientScope, method: "turn/completed", params: { turn: { id: fixtureTurnId, status: "completed" } } });
+      for (const event of fixture.events) send("codex:event", event);
     }, 0);
-    return { turnId: fixtureTurnId, renderThreadId: `smoke-render-${index}` };
+    return fixture.response;
   }
   codexSendInvocationCount += 1;
   realSendCount += 1;
@@ -1115,3 +1137,5 @@ app.on("window-all-closed", () => {
   if (process.platform !== "darwin") app.quit();
 });
 app.on("before-quit", stopServer);
+
+module.exports = { createSmokeFixtureTurn, isValidSmokeFixtureRequest };
