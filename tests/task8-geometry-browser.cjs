@@ -50,6 +50,8 @@ async function run() {
       'browser-export-zorder.png',
       'browser-arrow-content-fit.png',
       'browser-arrow-content-fit.svg',
+      'browser-wavy-content-fit.png',
+      'browser-wavy-content-fit.svg',
       'task-8-browser-viewport-1440x1100.png',
       'task-8-browser-full-page.png',
     ]) {
