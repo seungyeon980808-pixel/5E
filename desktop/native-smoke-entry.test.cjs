@@ -96,7 +96,9 @@ async function executeDesktopSmokeContractProbe(probe) {
   assert.equal(typeof smokeScript, "string", "the production executeJavaScript payload is captured as source text");
   assert.ok(smokeScript.length > 0, "the production executeJavaScript payload is non-empty before execution");
   class ProbePointerEvent {
-    constructor(type, init = {}) { this.type = type; Object.assign(this, init); }
+    constructor(type, init = {}) {
+      Object.assign(this, { type, isPrimary: false, pointerType: "", button: 0, buttons: 0 }, init);
+    }
   }
   const context = {
     __FIVE_E_SMOKE_CONTRACT_PROBE__: probe,
@@ -232,7 +234,8 @@ test("packaged smoke generated payload drives current native geometry and public
     addEventListener(type, listener) { stageListeners.set(type, listener); },
     dispatchEvent(event) {
       event.target = stage;
-      pointerTargets.push({ type: event.type, target: "stage" });
+      pointerTargets.push({ type: event.type, target: "stage", isPrimary: event.isPrimary,
+        pointerType: event.pointerType, button: event.button, buttons: event.buttons });
       stageListeners.get(event.type)?.(event);
     },
     setPointerCapture() {},
@@ -243,12 +246,15 @@ test("packaged smoke generated payload drives current native geometry and public
     getBoundingClientRect() { return imageRect; },
     dispatchEvent(event) {
       event.target = image;
-      pointerTargets.push({ type: event.type, target: "image" });
+      pointerTargets.push({ type: event.type, target: "image", isPrimary: event.isPrimary,
+        pointerType: event.pointerType, button: event.button, buttons: event.buttons });
       stageListeners.get(event.type)?.(event);
     },
   };
   let dragStart = false;
-  stageListeners.set("pointerdown", event => { if (areaActive && event.target === image) dragStart = true; });
+  stageListeners.set("pointerdown", event => {
+    if (areaActive && event.target === image && event.isPrimary !== false && event.button === 0) dragStart = true;
+  });
   stageListeners.set("pointermove", () => {});
   stageListeners.set("pointerup", () => { if (dragStart) commentReady = true; });
 
@@ -287,14 +293,14 @@ test("packaged smoke generated payload drives current native geometry and public
     },
   });
 
-  assert.deepEqual(JSON.parse(JSON.stringify(result)), {
-    aiUsesCentralModal: true,
-    aiPublicRasterVisible: true,
-    aiAreaCommentReady: true,
-    pointerTargets: [
-      { type: "pointerdown", target: "image" },
-      { type: "pointermove", target: "stage" },
-      { type: "pointerup", target: "stage" },
-    ],
-  });
+  const observed = JSON.parse(JSON.stringify(result));
+  assert.equal(observed.aiUsesCentralModal, true);
+  assert.equal(observed.aiPublicRasterVisible, true);
+  assert.equal(observed.aiAreaCommentReady, true,
+    "the generated smoke payload must create a comment through the production primary-pointer guard");
+  assert.deepEqual(observed.pointerTargets, [
+    { type: "pointerdown", target: "image", isPrimary: true, pointerType: "mouse", button: 0, buttons: 1 },
+    { type: "pointermove", target: "stage", isPrimary: true, pointerType: "mouse", button: 0, buttons: 1 },
+    { type: "pointerup", target: "stage", isPrimary: true, pointerType: "mouse", button: 0, buttons: 0 },
+  ], "the generated smoke payload uses a realistic primary mouse lifecycle");
 });
