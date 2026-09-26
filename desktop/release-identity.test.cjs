@@ -1,40 +1,45 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
+const os = require("node:os");
 const path = require("node:path");
+const { spawnSync } = require("node:child_process");
 
-const root = path.join(__dirname, "..");
+const root = path.resolve(__dirname, "..");
+const validator = path.join(root, "scripts", "check-release-identity.cjs");
 
-test("desktop packages, visible footer and release notes share one final identity", () => {
-  const pkg = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
-  const lock = JSON.parse(fs.readFileSync(path.join(root, "package-lock.json"), "utf8"));
-  const index = fs.readFileSync(path.join(root, "index.html"), "utf8");
-  const main = fs.readFileSync(path.join(root, "js", "main.js"), "utf8");
-  const notes = fs.readFileSync(path.join(root, "docs", "RELEASE_NOTES_v1.5.3.md"), "utf8");
-  const desktopGuide = fs.readFileSync(path.join(root, "docs", "DESKTOP_WINDOWS.md"), "utf8");
-  const macGuide = fs.readFileSync(path.join(root, "docs", "DESKTOP_MACOS.md"), "utf8");
-  const releaseWorkflow = fs.readFileSync(path.join(root, ".github", "workflows", "windows-release.yml"), "utf8");
-  const desktopMain = fs.readFileSync(path.join(root, "desktop", "main.cjs"), "utf8");
+test("release identity binds the 1.6.0 package, lock, preview UI, and artifact names", () => {
+  const result = spawnSync(process.execPath, [validator], { cwd: root, encoding: "utf8" });
+  assert.equal(result.status, 0, result.stderr || result.stdout);
+  assert.match(result.stdout, /Release identity OK: 1\.6\.0/);
+});
 
-  assert.equal(pkg.version, "1.5.3");
-  assert.equal(lock.version, pkg.version);
-  assert.equal(lock.packages[""].version, pkg.version);
-  assert.match(pkg.scripts["package:win"], /--publish never/);
-  assert.match(pkg.scripts["package:mac"], /--publish never/);
-  assert.equal(pkg.build.win.icon, "assets/icon.ico");
-  assert.equal(pkg.build.mac.icon, "assets/icon.icns");
-  assert.ok(fs.statSync(path.join(root, "assets", "icon.ico")).size > 0);
-  assert.ok(fs.statSync(path.join(root, "assets", "icon.icns")).size > 0);
-  assert.match(desktopMain, /app\.setAppUserModelId\(APP_ID\)/);
-  assert.equal((desktopMain.match(/icon: APP_ICON_PATH/g) || []).length, 2);
-  assert.match(index, /5E<\/strong> <strong>v1\.5\.3 · 2026\.08\.11<\/strong>/);
-  assert.match(main, /\[5E v1\.5\.3\]/);
-  assert.match(notes, /release-title: v1\.5\.3 — 지연 자르기 업데이트 캐시 수정/);
-  assert.match(notes, /Full Changelog.*v1\.5\.2\.\.\.v1\.5\.3/);
-  assert.match(desktopGuide, /release\/5E Setup 1\.5\.3\.exe/);
-  assert.match(macGuide, /npm run package:mac/);
-  assert.match(releaseWorkflow, /build-windows/);
-  assert.match(releaseWorkflow, /build-macos/);
-  assert.match(releaseWorkflow, /--notes-file "\$notes_path"/);
-  assert.match(releaseWorkflow, /RELEASE_NOTES_\$\{tag\}\.md/);
+test("tag mismatch fails before a build can start", (t) => {
+  const fixture = fs.mkdtempSync(path.join(os.tmpdir(), "5e-release-identity-"));
+  t.after(() => fs.rmSync(fixture, { recursive: true, force: true }));
+  for (const relativePath of ["package.json", "package-lock.json", "release-channels.json", "preview/index.html"]) {
+    const destination = path.join(fixture, relativePath);
+    fs.mkdirSync(path.dirname(destination), { recursive: true });
+    fs.copyFileSync(path.join(root, relativePath), destination);
+  }
+  fs.mkdirSync(path.join(fixture, "scripts"), { recursive: true });
+  fs.copyFileSync(validator, path.join(fixture, "scripts", "check-release-identity.cjs"));
+  const pkg = JSON.parse(fs.readFileSync(path.join(fixture, "package.json"), "utf8"));
+  pkg.version = "1.6.1";
+  fs.writeFileSync(path.join(fixture, "package.json"), `${JSON.stringify(pkg, null, 2)}\n`);
+
+  const result = spawnSync(process.execPath, ["scripts/check-release-identity.cjs", "--tag", "v1.6.0"], {
+    cwd: fixture,
+    encoding: "utf8",
+  });
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /package\.version.*candidate version/);
+});
+
+test("release workflows require same-SHA Test and Release Identity jobs", () => {
+  const workflow = fs.readFileSync(path.join(root, ".github", "workflows", "windows-release.yml"), "utf8");
+  assert.match(workflow, /test:\n\s+name: Test/);
+  assert.match(workflow, /release-identity:\n\s+name: Release Identity/);
+  assert.match(workflow, /needs: \[test, release-identity\]/);
+  assert.match(workflow, /--sha "\$\{\{ github\.sha \}\}" --tag "\$\{\{ github\.ref_name \}\}"/);
 });

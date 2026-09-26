@@ -3,8 +3,9 @@ const https = require('node:https');
 const fs = require('node:fs');
 const path = require('node:path');
 const root = path.resolve(__dirname, '..');
-const port = Number(process.env.PORT || 8795);
-const origin = `http://127.0.0.1:${port}`;
+const requestedPort = Number(process.env.PORT || 8795);
+let port = requestedPort;
+let origin = `http://127.0.0.1:${port}`;
 const types = { '.html':'text/html', '.mjs':'text/javascript', '.js':'text/javascript', '.css':'text/css', '.json':'application/json', '.svg':'image/svg+xml', '.png':'image/png', '.webp':'image/webp', '.woff2':'font/woff2', '.pdf':'application/pdf' };
 const api = /^\/api\/(web-login-(start|status|cancel)|bridge-(status|models|account|send|events|interrupt))$/;
 const server = http.createServer((req, res) => {
@@ -41,4 +42,8 @@ const server = http.createServer((req, res) => {
     });
   });
 });
-server.listen(port, '127.0.0.1', () => console.log(`Local preview: ${origin}/preview/`));
+server.listen(requestedPort, '127.0.0.1', () => {
+  port = server.address().port;
+  origin = `http://127.0.0.1:${port}`;
+  console.log(`Local preview: ${origin}/preview/`);
+});

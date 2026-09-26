@@ -94,7 +94,7 @@ test('serialization retains active edits and inactive pages with guides layers a
   assert.equal(saved.pages[1].objects[0].id, 'other');
   assert.equal(saved.activePageId, 'a');
 });
-test('workflow shortcuts do not consume browser new-tab or location shortcuts', () => {
+test('workflow shortcuts preserve browser keys and removed four-key chords stay inactive', () => {
   const code = fs.readFileSync(path.join(root, 'preview/js/settings-shortcuts.js'), 'utf8').replace(/^import .*\n/, '').replaceAll('export ', '');
   let onKey; const clicks = [];
   const context = vm.createContext({ IS_MAC: false, keyLabel: value => value, modKey: event => event.ctrlKey,
@@ -105,11 +105,10 @@ test('workflow shortcuts do not consume browser new-tab or location shortcuts', 
   context.document.getElementById = id => ({ click: () => clicks.push(id) });
   const event = (key, extra = {}) => ({ key, ctrlKey: true, altKey: false, shiftKey: false, preventDefault() { this.prevented = true; }, ...extra });
   onKey(event('t')); onKey(event('l')); assert.deepEqual(clicks, []);
-  onKey(event('t', { altKey: true, shiftKey: true }));
-  onKey(event('l', { altKey: true, shiftKey: true }));
-  onKey(event('a', { altKey: true, shiftKey: true }));
-  assert.deepEqual(clicks, ['image-objectify-open', 'exam-library-open', 'ai-image-install-open']);
-  onKey(event('k', { altKey: true, shiftKey: true, editing: true })); assert.equal(clicks.length, 3);
+  for (const key of ['t', 'l', 'a', 'k']) onKey(event(key, { altKey: true, shiftKey: true }));
+  assert.deepEqual(clicks, []);
+  onKey(event('k', { altKey: true, shiftKey: true, editing: true }));
+  assert.deepEqual(clicks, []);
 });
 
 test('native picker is invoked synchronously before yielding user activation', async () => {

@@ -36,6 +36,7 @@ async function snapshot(page) {
         right: rulerRect.right - canvasRect.right,
         width: rulerRect.width - canvasRect.width,
       },
+      rulerVisible: getComputedStyle(ruler).display !== 'none',
       pointerRoundTripError: { x: roundTrip.x - screenPoint.x, y: roundTrip.y - screenPoint.y },
     };
   });
@@ -50,11 +51,14 @@ function assertProjection(before, after, label) {
   assertNear(after.artboardMidpointX, before.artboardMidpointX, `${label} artboard midpoint`);
 }
 
-function assertCentered(snapshotValue, label) {
-  assertNear(snapshotValue.canvasMidpointX, snapshotValue.screenMidpointX, `${label} canvas midpoint`);
-  assertNear(snapshotValue.artboardMidpointX, snapshotValue.screenMidpointX, `${label} artboard midpoint`);
-  assertNear(snapshotValue.originScreenX, snapshotValue.screenMidpointX, `${label} origin screen X`);
-  assert.deepEqual(snapshotValue.rulerCanvasDeltas, { left: 0, right: 0, width: 0 }, `${label} ruler/canvas bounds`);
+function assertAligned(snapshotValue, expectedOffsetMm, rulersVisible, label) {
+  const expectedProjectionX = snapshotValue.canvasMidpointX + expectedOffsetMm * snapshotValue.ctm.a;
+  assertNear(snapshotValue.artboardMidpointX, expectedProjectionX, `${label} artboard midpoint`);
+  assertNear(snapshotValue.originScreenX, expectedProjectionX, `${label} origin screen X`);
+  assert.equal(snapshotValue.rulerVisible, rulersVisible, `${label} ruler visibility`);
+  if (rulersVisible) {
+    assert.deepEqual(snapshotValue.rulerCanvasDeltas, { left: 0, right: 0, width: 0 }, `${label} ruler/canvas bounds`);
+  }
   assertNear(snapshotValue.pointerRoundTripError.x, 0, `${label} pointer round-trip X`);
   assertNear(snapshotValue.pointerRoundTripError.y, 0, `${label} pointer round-trip Y`);
 }
@@ -71,11 +75,12 @@ async function togglePanel(page, side) {
       const context = await browser.newContext({ viewport: { width: 1600, height: 1000 } });
       const page = await context.newPage();
       await page.addInitScript(() => { localStorage.clear(); sessionStorage.clear(); });
-      await page.goto(previewUrl, { waitUntil: 'networkidle' });
+      const separator = previewUrl.includes('?') ? '&' : '?';
+      await page.goto(`${previewUrl}${separator}mode=pro`, { waitUntil: 'networkidle' });
       await dismissWelcome(page);
 
       const baseline = await snapshot(page);
-      assertCentered(baseline, `${engine.name()} visible rulers at 100%`);
+      assertAligned(baseline, 5, true, `${engine.name()} Pro +5mm projection at 100%`);
 
       for (const preset of presets) {
         await page.evaluate(value => document.documentElement.setAttribute('data-screen', value), preset);
@@ -100,8 +105,15 @@ async function togglePanel(page, side) {
       await page.waitForTimeout(100);
       assertProjection(beforePanels, await snapshot(page), `${engine.name()} rulers hidden`);
 
+      const lite = await context.newPage();
+      await lite.addInitScript(() => { localStorage.clear(); sessionStorage.clear(); });
+      await lite.goto(`${previewUrl}${separator}mode=lite`, { waitUntil: 'networkidle' });
+      await dismissWelcome(lite);
+      assertAligned(await snapshot(lite), 0, false, `${engine.name()} Lite centered projection`);
+      await lite.close();
+
       await context.close();
-      console.log(`${engine.name()}: visible centering, presets, panel transitions, ruler hiding, and native hit mapping passed`);
+      console.log(`${engine.name()}: Pro +5mm intent, Lite centering, panel transitions, rulers, and native hit mapping passed`);
     } finally {
       await browser.close();
     }

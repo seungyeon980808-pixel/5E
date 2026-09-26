@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "unit": [
+    { "path": "tests/test-ai-events.mjs" },
+    { "path": "tests/test-ai-panel-local-bypass.mjs" },
+    { "path": "tests/test-ai-primary-action.cjs" },
+    { "path": "tests/test-ai-remote-input-plan.mjs" },
+    { "path": "tests/test-image-background.mjs" },
+    { "path": "tests/test-lite-workflow-state.mjs" },
+    { "path": "tests/test-png-exif-regression.mjs" },
+    { "path": "tests/test-preview-lite-cache-identity.cjs" },
+    { "path": "tests/test-release-entry-closure.cjs" },
+    { "path": "tests/test-separation-edge-regression.mjs" }
+  ],
+  "browser": [
+    { "path": "tests/test-release-entry-browser.cjs", "findingIds": ["TPK-001", "TPK-002"] },
+    { "path": "tests/test-preview-startup-browser.cjs", "findingIds": ["TPK-004"] },
+    { "path": "tests/test-shortcut-simplification-browser.cjs", "findingIds": ["TPK-005"] },
+    { "path": "tests/test-mode-switch-browser.cjs", "findingIds": ["CAN-DATA-01"] },
+    { "path": "tests/project-save-folder-dialog.cjs", "findingIds": ["TPK-004"] },
+    { "path": "tests/export-dialog-layout.cjs", "findingIds": ["TPK-004"] },
+    { "path": "tests/test-preview-canvas-center.cjs", "findingIds": ["TPK-005"] },
+    { "path": "tests/test-preview-lite-restored-workspace.cjs", "findingIds": ["TPK-005"] },
+    { "path": "tests/test-preview-lite-inspector-controls.cjs", "findingIds": ["TPK-005"] },
+    { "path": "tests/project-save-download.cjs", "findingIds": ["TPK-005"] }
+  ],
+  "deferred": [
+    { "path": "tests/library-open-epoch-browser.cjs", "findingIds": ["AI-160-02"], "reason": "AI owner regression" },
+    { "path": "tests/test-lite-main-browser.cjs", "findingIds": ["ARCH-160-02"], "reason": "full UI gate" },
+    { "path": "tests/test-preview-lite-four-pane-qa.cjs", "findingIds": ["TPK-005"], "reason": "retired four-pane contract" },
+    { "path": "tests/test-preview-lite-hybrid.cjs", "findingIds": ["TPK-005"], "reason": "historical Lite prototype" },
+    { "path": "tests/test-preview-lite-integrated.cjs", "findingIds": ["TPK-005"], "reason": "historical Lite prototype" },
+    { "path": "tests/test-preview-lite-runtime.cjs", "findingIds": ["TPK-005"], "reason": "historical Lite prototype" },
+    { "path": "tests/test-preview-lite-unified.cjs", "findingIds": ["TPK-005"], "reason": "historical Lite prototype" },
+    { "path": "tests/test-preview-shell-presentation.cjs", "findingIds": ["ARCH-160-02"], "reason": "full UI gate" }
+  ]
+}

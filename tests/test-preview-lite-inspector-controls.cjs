@@ -7,13 +7,19 @@ const previewUrl = process.env.PREVIEW_URL || "http://127.0.0.1:8798/preview/?mo
 const evidence = process.env.EVIDENCE_DIR || "/tmp/5e-lite-inspector-controls";
 fs.mkdirSync(evidence, { recursive: true });
 
+function liteUrl() {
+  const url = new URL(previewUrl);
+  url.searchParams.set("mode", "lite");
+  return url.href;
+}
+
 async function dismissTutorial(page) {
   const skip = page.getByRole("button", { name: "건너뛰기", exact: true });
   if (await skip.waitFor({ state: "visible", timeout: 2_000 }).then(() => true).catch(() => false)) await skip.click();
 }
 
 async function drawLine(page, from, to) {
-  await page.locator('.lite-dock-tools .tool-btn[data-tool="L"]').click();
+  await page.locator('#tool-list .tool-btn[data-tool="L"]').click();
   await page.mouse.click(from.x, from.y);
   await page.mouse.click(to.x, to.y);
 }
@@ -26,10 +32,9 @@ async function drawLine(page, from, to) {
       const page = await browser.newPage({ viewport: { width: 1440, height: 960 } });
       const errors = [];
       page.on("pageerror", error => errors.push(error.message));
-      await page.goto(previewUrl);
+      await page.goto(liteUrl());
       await dismissTutorial(page);
-      await page.locator("#lite-dock").waitFor({ state: "visible" });
-      await page.evaluate(() => window.dispatchEvent(new CustomEvent("5e:lite-result-edit")));
+      await page.locator("#panel-left").waitFor({ state: "visible" });
       await page.locator("#canvas").waitFor({ state: "visible" });
 
       const canvas = await page.locator("#canvas").boundingBox();
@@ -59,7 +64,7 @@ async function drawLine(page, from, to) {
         `${engine.name()} Lite line style must render its dash pattern`);
       await page.screenshot({ path: path.join(evidence, `${engine.name()}-line-controls.png`) });
 
-      await page.locator('.lite-dock-tools .lite-tool-direct[data-tool="T"]').click();
+      await page.locator('#tool-list .lite-tool-direct[data-tool="T"]').click();
       await page.mouse.click(center.x, center.y);
       await page.locator(".unified-text-input:visible").fill("편집 전");
       await page.locator(".unified-text-input:visible").press("Enter");
@@ -80,7 +85,7 @@ async function drawLine(page, from, to) {
         `${engine.name()} Lite text label editor must update the selected text`);
       await page.screenshot({ path: path.join(evidence, `${engine.name()}-text-label.png`) });
 
-      await page.locator('.lite-dock-tools .lite-tool-direct[data-symbol="labeler"]').click();
+      await page.locator('#tool-list .lite-tool-direct[data-symbol="labeler"]').click();
       await page.mouse.click(center.x - 180, center.y + 100);
       await page.mouse.click(center.x - 40, center.y + 50);
       await page.mouse.click(center.x + 70, center.y);
@@ -98,6 +103,8 @@ async function drawLine(page, from, to) {
       await page.screenshot({ path: path.join(evidence, `${engine.name()}-leader-label.png`) });
 
       await page.locator("#mode-toggle-btn").click();
+      await page.getByRole("button", { name: "유지하고 전환", exact: true }).click();
+      await page.locator('html[data-mode="pro"]').waitFor();
       assert.equal(await page.locator('[data-lite-control="text-label"]').isVisible(), false,
         `${engine.name()} Pro must not gain the Lite text-label button`);
       assert.equal(await page.locator('[data-lite-control="leader-label"]').isVisible(), false,
