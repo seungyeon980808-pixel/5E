@@ -607,10 +607,12 @@ function createWindow() {
               await settleLayout();
               const rect = image?.getBoundingClientRect();
               if (!stage || !rect?.width || !rect.height) return { stage, ready: false };
-              const down = { bubbles: true, pointerId: 91, clientX: rect.left + rect.width * .25, clientY: rect.top + rect.height * .25 };
+              const down = { bubbles: true, pointerId: 91, pointerType: 'mouse', isPrimary: true, button: 0, buttons: 1,
+                clientX: rect.left + rect.width * .25, clientY: rect.top + rect.height * .25 };
               image.dispatchEvent(new PointerEvent('pointerdown', down));
               stage.dispatchEvent(new PointerEvent('pointermove', { ...down, clientX: rect.left + rect.width * .65, clientY: rect.top + rect.height * .60 }));
-              stage.dispatchEvent(new PointerEvent('pointerup', { ...down, clientX: rect.left + rect.width * .65, clientY: rect.top + rect.height * .60 }));
+              stage.dispatchEvent(new PointerEvent('pointerup', { ...down, buttons: 0,
+                clientX: rect.left + rect.width * .65, clientY: rect.top + rect.height * .60 }));
               return { stage, ready: await waitFor(() => !!activePanel.querySelector('[data-ai-comment-row]'), 2000) };
             };
             const contractProbe = globalThis.__FIVE_E_SMOKE_CONTRACT_PROBE__;
