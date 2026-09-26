@@ -33,6 +33,7 @@ const DEF_PAIR_GAP = 20;   // pairGap
 const LABEL_AT   = 0.66;   // 라벨 높이(0 = p1, 1 = p2) — 기출 관례
 const LABEL_PAD  = 2.2;    // 캡슐 바깥 모서리에서 라벨까지(mm)
 const GRAY_LEVEL = 217;    // fillStyle "gray" = #d9d9d9 (생명 부품 공용 회색)
+const MIN_AXIS_LENGTH = 1;
 
 function num(v, d) { return Number.isFinite(v) ? v : d; }
 
@@ -42,7 +43,7 @@ export function chromosomeGeometry(obj) {
   const p2 = obj.p2 || { x: p1.x, y: p1.y + 20 };
   let dx = p2.x - p1.x, dy = p2.y - p1.y;
   let len = Math.hypot(dx, dy);
-  if (!(len > 0.0001)) { dx = 0; dy = 1; len = 0.0001; }   // 퇴화: 세로로 세운다
+  if (!(len > 0.0001)) { dx = 0; dy = MIN_AXIS_LENGTH; len = MIN_AXIS_LENGTH; }
   const ux = dx / len, uy = dy / len;      // 축(p1→p2) 단위벡터 = 국소 +y
   const nx = uy, ny = -ux;                 // 법선 = 국소 +x (rotate 변환과 같은 부호)
   const mid = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
