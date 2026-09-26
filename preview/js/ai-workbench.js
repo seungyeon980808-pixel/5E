@@ -142,11 +142,23 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
   const zoomPane = () => panel.dataset.aiLayout === 'result' ? 'result'
     : panel.dataset.aiLayout === 'source' || linkedZoom?.checked ? 'source' : zoomTarget?.value || 'source';
   const paneHeadControls = Array.from(panel.querySelectorAll('.ai-pane-head-controls'));
+  let paneHeadSyncFrame = 0;
+  let paneHeadHeight = '';
   const syncPaneHeadHeight = () => {
     const height = Math.max(0, ...paneHeadControls.map(control => control.offsetHeight));
-    panel.style.setProperty('--ai-pane-head-height', `${height + 16}px`);
+    const nextHeight = `${height + 16}px`;
+    if (nextHeight === paneHeadHeight) return;
+    paneHeadHeight = nextHeight;
+    panel.style.setProperty('--ai-pane-head-height', nextHeight);
   };
-  const headResizeObserver = typeof ResizeObserver === 'function' ? new ResizeObserver(syncPaneHeadHeight) : null;
+  const schedulePaneHeadSync = () => {
+    if (paneHeadSyncFrame) return;
+    paneHeadSyncFrame = window.requestAnimationFrame(() => {
+      paneHeadSyncFrame = 0;
+      syncPaneHeadHeight();
+    });
+  };
+  const headResizeObserver = typeof ResizeObserver === 'function' ? new ResizeObserver(schedulePaneHeadSync) : null;
   paneHeadControls.forEach(control => headResizeObserver?.observe(control));
   const generatedKeys = new WeakMap();
   const sourceKeys = new WeakMap();
@@ -261,7 +273,7 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     const targetControl = panel.querySelector('[data-ai-zoom-target-control]');
     if (targetControl) targetControl.hidden = mode !== 'side-by-side' || linkedZoom?.checked;
     if (mode === 'side-by-side' && linkedZoom?.checked) paneZoom.result = paneZoom.source;
-    syncPaneHeadHeight();
+    schedulePaneHeadSync();
     window.requestAnimationFrame(() => {
       fitCardStage(activeCandidate());
       fitCardStage(activeSource());
@@ -802,6 +814,7 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
   panel.aiWorkbench = {
     dispose() {
       lifecycle.abort();
+      if (paneHeadSyncFrame) window.cancelAnimationFrame(paneHeadSyncFrame);
       headResizeObserver?.disconnect();
       stageResizeObserver?.disconnect();
       cardObserver.disconnect();
