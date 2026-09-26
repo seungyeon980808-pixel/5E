@@ -510,6 +510,21 @@ export function render(state) {
         styleSelectionFrame(box, _frameKind, _selColor);
         scene.appendChild(box);
       }
+    } else if (sel.type === "funcgraph") {
+      const bb = singleObjBBox(sel, scene);
+      if (bb) {
+        const box = document.createElementNS(SVG_NS, "rect");
+        box.setAttribute("x", bb.x);
+        box.setAttribute("y", bb.y);
+        box.setAttribute("width", bb.w);
+        box.setAttribute("height", bb.h);
+        box.setAttribute("fill", "none");
+        box.setAttribute("stroke-width", "0.4");
+        box.setAttribute("stroke-dasharray", "0.6 0.6");
+        box.style.stroke = _selColor;
+        styleSelectionFrame(box, _frameKind, _selColor);
+        scene.appendChild(box);
+      }
     } else {
       const box = document.createElementNS(SVG_NS, "rect");
       box.setAttribute("x", sel.x);
