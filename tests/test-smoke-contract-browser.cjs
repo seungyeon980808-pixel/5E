@@ -14,9 +14,14 @@ function traceLibrary(step, detail = {}) {
   fs.appendFileSync(path.join(evidenceDir, 'library-trace.ndjson'), `${JSON.stringify({ step, at: new Date().toISOString(), ...detail })}\n`);
 }
 
-async function transferCurrentLibraryReference(page, panel) {
+async function transferCurrentLibraryReference(page, panel, mode) {
   traceLibrary('open-current-library');
-  await page.locator('.lite-ai-source-actions').getByRole('button', { name: '라이브러리', exact: true }).click();
+  if (mode === 'lite') await page.locator('.lite-ai-source-actions').getByRole('button', { name: '라이브러리', exact: true }).click();
+  else {
+    await panel.locator('[data-ai-close]').click();
+    await page.locator('#ai-image-panel').waitFor({ state: 'hidden' });
+    await page.locator('#exam-library-open').click();
+  }
   await page.locator('[data-unilib-close]').waitFor({ state: 'visible' });
   await waitForAnimations(page, '[data-unilib-close]');
   const result = page.locator('[data-result-id]').first();
@@ -170,19 +175,14 @@ test('TPK-005: current library and task workspace smoke contract has real contro
       let libraryAction = null;
       await panel.locator('[data-ai-tab-list] .ai-task-tab:not(.ai-task-add) .ai-task-tab-select').waitFor({ state: 'visible' });
       await panel.locator('[data-ai-task-add]').waitFor({ state: 'visible' });
-      if (mode === 'lite') {
-        await transferCurrentLibraryReference(page, panel);
-        libraryAction = await page.evaluate(() => ({
-          results: document.querySelectorAll('[data-result-id]').length,
-          selected: document.querySelector('[data-result-id][aria-selected="true"]')?.dataset.resultId || null,
-          references: document.querySelectorAll('#ai-image-panel [data-ai-reference-id]').length,
-          tasks: document.querySelectorAll('#ai-image-panel [data-ai-tab-list] .ai-task-tab:not(.ai-task-add)').length,
-        }));
-        await page.locator('[data-unilib-close]').waitFor({ state: 'hidden' });
-      } else {
-        await panel.locator('[data-ai-source-file]').setInputFiles(fixture);
-        await panel.locator('[data-ai-reference-id]').first().waitFor({ state: 'attached' });
-      }
+      await transferCurrentLibraryReference(page, panel, mode);
+      libraryAction = await page.evaluate(() => ({
+        results: document.querySelectorAll('[data-result-id]').length,
+        selected: document.querySelector('[data-result-id][aria-selected="true"]')?.dataset.resultId || null,
+        references: document.querySelectorAll('#ai-image-panel [data-ai-reference-id]').length,
+        tasks: document.querySelectorAll('#ai-image-panel [data-ai-tab-list] .ai-task-tab:not(.ai-task-add)').length,
+      }));
+      await page.locator('[data-unilib-close]').waitFor({ state: 'hidden' });
 
       if (await page.locator('#ai-image-panel').isHidden()) await page.locator('#ai-image-install-open').click();
       await page.locator('#ai-image-panel').waitFor({ state: 'visible' });
@@ -198,8 +198,8 @@ test('TPK-005: current library and task workspace smoke contract has real contro
       }));
       assert.deepEqual(oldChecks, { legacyLibraryCards: false, legacyLibraryTransferReady: false, retiredTaskAdd: false, retiredBatch: false });
 
-      const original = await panel.locator('[data-ai-tab-list] .ai-task-tab:not(.ai-task-add)').first().getAttribute('data-tab-id');
-      assert.ok(original, 'initial task id exists');
+      const original = await panel.locator('[data-ai-tab-list] .ai-task-tab.is-on').getAttribute('data-tab-id');
+      assert.ok(original, 'current library task id exists');
       await panel.locator('[data-ai-reference-id]').first().waitFor({ state: 'attached' });
       const expectedReferences = await panel.locator('[data-ai-reference-id]').count();
       assert.equal(expectedReferences, 1, 'the current source transfer creates one reference in its task');
@@ -207,6 +207,7 @@ test('TPK-005: current library and task workspace smoke contract has real contro
       traceLibrary('fixture-send-click', { mode });
       await panel.locator('[data-ai-send]').click();
       await page.waitForFunction(() => document.querySelectorAll('#ai-image-panel .ai-generated-card').length === 1, undefined, { timeout: 15_000 });
+      const expectedResults = 1;
       traceLibrary('fixture-send-observed', { mode, sends: transport.sends.length, events: transport.delivered.size });
       const generatedImage = panel.locator('.ai-generated-card .ai-preview-stage img').first();
       await generatedImage.waitFor({ state: 'visible', timeout: 15_000 });
@@ -288,8 +289,12 @@ test('TPK-005: current library and task workspace smoke contract has real contro
       }, { oldId: original, tasksBefore: tasksBeforeFileAdd });
       assert.equal(await panel.locator('[data-ai-reference-id]').count(), expectedReferences,
         'a second file starts an isolated task instead of appending to the library reference task');
+      assert.equal(await panel.locator('.ai-generated-card').count(), 0,
+        'the isolated file task does not inherit the prior generated result');
       await panel.locator(`[data-tab-id="${original}"] .ai-task-tab-select`).click();
       await panel.locator('[data-ai-reference-id]').first().waitFor({ state: 'attached' });
+      assert.equal(await panel.locator('.ai-generated-card').count(), expectedResults,
+        'returning to the original task restores its generated result');
 
       await page.screenshot({ path: path.join(evidenceDir, `${engine.name()}-${mode}-workspace.png`), fullPage: true });
       await panel.locator('[data-ai-close]').click();
@@ -298,10 +303,12 @@ test('TPK-005: current library and task workspace smoke contract has real contro
       await page.locator('#ai-image-panel').waitFor({ state: 'visible' });
       assert.equal(await panel.locator('[data-ai-reference-id]').count(), expectedReferences,
         'reopened workspace restores its own reference count');
+      assert.equal(await panel.locator('.ai-generated-card').count(), expectedResults,
+        'reopened workspace restores its own generated result');
 
       const mutation = await page.evaluate(() => {
-        document.querySelector('[data-ai-source-file]')?.remove();
         const panel = document.querySelector('#ai-image-panel:not([hidden])');
+        panel?.querySelectorAll('[data-ai-source-file]').forEach((node) => node.remove());
         const missing = [['workspace-file-source', panel?.querySelector('[data-ai-source-file]')]]
           .filter(([, node]) => !node).map(([name]) => name);
         return { exitCode: missing.length ? 1 : 0, missing };
