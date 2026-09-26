@@ -1665,13 +1665,13 @@
       "rationale": "Task 11 regenerated both credit pages from the authoritative 991-item parts manifest."
     },
     {
-      "sourceCommit": "9f5423bbfdb5b01d5e1e0d56d439a48458514c0d",
-      "originalTaskCommit": "9f5423bbfdb5b01d5e1e0d56d439a48458514c0d",
+      "sourceCommit": "8013eaf097c999c0bbd8b9aa3aab7933942fe145",
+      "originalTaskCommit": "8013eaf097c999c0bbd8b9aa3aab7933942fe145",
       "paths": [
         "package.json"
       ],
-      "evidence": ".omo/start-work/ledger.jsonl",
-      "rationale": "The release-runtime integration recorded the final package entry at this commit."
+      "evidence": ".omo/evidence/5e-160-release-remediation/task-12-extra-smoke-script-independent/REVIEW.md",
+      "rationale": "The independently reviewed named smoke-contract command is the final source for the package manifest."
     },
     {
       "sourceCommit": "949d5bdc054fdc5de0f9e1603efc9ae0fb64c6cb",
@@ -1710,33 +1710,33 @@
       "rationale": "The deferred header-resize fix is the final source for the preview workbench."
     },
     {
-      "sourceCommit": "f87729370bdf31dda5d7f8b3109095ff24f2f713",
-      "originalTaskCommit": "f87729370bdf31dda5d7f8b3109095ff24f2f713",
+      "sourceCommit": "f5b04d9eba4a27f8c8c18bd6a773722ef18b7d59",
+      "originalTaskCommit": "f5b04d9eba4a27f8c8c18bd6a773722ef18b7d59",
       "paths": [
         "desktop/main.cjs"
       ],
-      "evidence": ".omo/evidence/5e-160-release-remediation/task-12-native-f877-diagnosis/diagnosis.md",
-      "rationale": "The frozen candidate's smoke modifier is the final source for the desktop entry."
+      "evidence": ".omo/evidence/5e-160-release-remediation/task-12-native-f877-diagnosis/task-12-native-f877-diagnosis-code-review.md",
+      "rationale": "The independently reviewed packaged native smoke script repair is the final source for the desktop entry."
     }
   ],
   "taskChanges": [
     {
       "path": "package.json",
-      "sourceCommit": "9f5423bbfdb5b01d5e1e0d56d439a48458514c0d",
-      "sourceBlob": "1528192ab4313a185e7384deffb4b64fa2385942",
-      "sourceSha256": "be9707bc2d86a5e4170f24b879a0497c5670888c2c433602705aa7becfd02af7",
-      "currentSha256": "be9707bc2d86a5e4170f24b879a0497c5670888c2c433602705aa7becfd02af7",
-      "bytes": 2576,
-      "rationale": "include preview/**/* in desktop package"
+      "sourceCommit": "8013eaf097c999c0bbd8b9aa3aab7933942fe145",
+      "sourceBlob": "73d70e70c1b25d8c5d6cc28c3f0af3cee4e2b38d",
+      "sourceSha256": "5609e82500d35bcd7b8ab03680b3b2cafe33bd6748fa6f1869ef8bc3e65eabae",
+      "currentSha256": "5609e82500d35bcd7b8ab03680b3b2cafe33bd6748fa6f1869ef8bc3e65eabae",
+      "bytes": 2728,
+      "rationale": "expose the independently reviewed named smoke-contract command"
     },
     {
       "path": "desktop/main.cjs",
-      "sourceCommit": "f87729370bdf31dda5d7f8b3109095ff24f2f713",
-      "sourceBlob": "b66defa40bf1286f1f07cbe4e62e580739ad1974",
-      "sourceSha256": "ac8bc4740304c9fbb63376a59a092d36a0eb5ec8323dadff3a9bdaa506301953",
-      "currentSha256": "ac8bc4740304c9fbb63376a59a092d36a0eb5ec8323dadff3a9bdaa506301953",
-      "bytes": 62246,
-      "rationale": "load canonical preview/index.html desktop entry"
+      "sourceCommit": "f5b04d9eba4a27f8c8c18bd6a773722ef18b7d59",
+      "sourceBlob": "8f1fbc65c68da31e168badd36389c16807ee70ad",
+      "sourceSha256": "8a53543732f1dd665cfc290a3244e43e1be757179b1317dd496f754b0ff54be5",
+      "currentSha256": "8a53543732f1dd665cfc290a3244e43e1be757179b1317dd496f754b0ff54be5",
+      "bytes": 62240,
+      "rationale": "compile the packaged native smoke script with valid selector quoting"
     },
     {
       "path": "js/svg-export.js",
