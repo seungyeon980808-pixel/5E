@@ -193,6 +193,21 @@ function linePoints(element) {
   return points;
 }
 
+function pathPoints(element) {
+  const points = [];
+  const visit = (node) => {
+    if (node.tagName === "path") {
+      const numbers = node.getAttribute("d").match(/-?\d+(?:\.\d+)?/g)?.map(Number) || [];
+      for (let index = 0; index < numbers.length; index += 2) {
+        points.push({ x: numbers[index], y: numbers[index + 1] });
+      }
+    }
+    for (const child of node.children) visit(child);
+  };
+  visit(element);
+  return points;
+}
+
 function commitInspectorValue(prop, initialValue, inputValue) {
   const inspectorSource = readPreviewSource("inspector/section-geometry.js");
   const propsStart = inspectorSource.indexOf("  const POSITIVE_SIZE_PROPS");
@@ -291,6 +306,31 @@ test("GEO160-002: zero-margin content bounds contain rotated bidirectional arrow
           `stroke ${strokeWidth}: arrow y=${point.y} outside ${JSON.stringify(bounds)}`);
       }
       }
+    }
+  }
+});
+
+test("GEO160-002: zero-margin bounds contain normal, short, rotated, and zero-length wavy arrows", () => {
+  const cases = [
+    [{ x: 0, y: 0 }, { x: 40, y: 0 }],
+    [{ x: 0, y: 0 }, { x: 1, y: 0 }],
+    [{ x: 2, y: 3 }, { x: 2.6, y: 3.8 }],
+    [{ x: -4, y: 7 }, { x: -4, y: 7 }],
+  ];
+  for (const [p1, p2] of cases) {
+    const line = lineFixture({
+      p1, p2, lineMode: "wavyArrow", lineStyle: "wavyArrow", arrowHead: "none",
+      strokeWidth: 1, waveLength: 5, tailRatio: 0.35, waveAmp: 1.1,
+    });
+    const bounds = exportModule.getContentBounds({ objects: [line], layers: [] }, {}, 0);
+    const rendered = shapes.renderLine(line);
+    const points = [...pathPoints(rendered), ...polygonPoints(rendered), ...linePoints(rendered)];
+    assert.ok(points.length > 0, "wavy arrow must emit visible geometry");
+    for (const point of points) {
+      assert.ok(point.x >= bounds.x && point.x <= bounds.x + bounds.w,
+        `wavy x=${point.x} outside ${JSON.stringify(bounds)} for ${JSON.stringify({ p1, p2 })}`);
+      assert.ok(point.y >= bounds.y && point.y <= bounds.y + bounds.h,
+        `wavy y=${point.y} outside ${JSON.stringify(bounds)} for ${JSON.stringify({ p1, p2 })}`);
     }
   }
 });

@@ -13,6 +13,8 @@ const outputs = new Map([
   ['/__task8_export_png', ['browser-export-zorder.png', 'image/png']],
   ['/__task8_arrow_png', ['browser-arrow-content-fit.png', 'image/png']],
   ['/__task8_export_svg', ['browser-arrow-content-fit.svg', 'image/svg+xml']],
+  ['/__task8_wavy_png', ['browser-wavy-content-fit.png', 'image/png']],
+  ['/__task8_wavy_svg', ['browser-wavy-content-fit.svg', 'image/svg+xml']],
 ]);
 const contentTypes = new Map([
   ['.html', 'text/html; charset=utf-8'], ['.mjs', 'text/javascript; charset=utf-8'],

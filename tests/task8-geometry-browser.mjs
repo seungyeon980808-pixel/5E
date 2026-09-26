@@ -79,6 +79,23 @@ function arrowPoints(svg) {
     }));
 }
 
+function exportedGeometryPoints(svg) {
+  const points = arrowPoints(svg);
+  for (const path of svg.querySelectorAll('path[d]')) {
+    const numbers = path.getAttribute('d').match(/-?\d+(?:\.\d+)?/g)?.map(Number) || [];
+    for (let index = 0; index < numbers.length; index += 2) {
+      points.push({ x: numbers[index], y: numbers[index + 1] });
+    }
+  }
+  for (const line of svg.querySelectorAll('line')) {
+    points.push(
+      { x: Number(line.getAttribute('x1')), y: Number(line.getAttribute('y1')) },
+      { x: Number(line.getAttribute('x2')), y: Number(line.getAttribute('y2')) },
+    );
+  }
+  return points;
+}
+
 async function post(path, body) {
   const response = await fetch(path, { method: 'POST', body });
   assert(response.ok, `evidence POST failed: ${path}`);
@@ -135,6 +152,41 @@ async function run() {
   card('Zero-margin rotated bidirectional arrow SVG', fittedSvg);
   card('Zero-margin rotated bidirectional arrow PNG', arrowCanvas);
 
+  const wavyCases = [
+    [{ x: 0, y: 0 }, { x: 40, y: 0 }],
+    [{ x: 0, y: 0 }, { x: 1, y: 0 }],
+    [{ x: 2, y: 3 }, { x: 2.6, y: 3.8 }],
+    [{ x: -4, y: 7 }, { x: -4, y: 7 }],
+  ];
+  const wavyReports = [];
+  let shortWavySvg;
+  let shortWavyCanvas;
+  for (const [index, [p1, p2]] of wavyCases.entries()) {
+    const object = {
+      id: `wavy-${index}`, type: 'line', p1, p2,
+      lineMode: 'wavyArrow', lineStyle: 'wavyArrow', arrowHead: 'none',
+      strokeLevel: 0, strokeWidth: 1, waveLength: 5, tailRatio: 0.35, waveAmp: 1.1, layerId: 1,
+    };
+    const objectState = state([object]);
+    const objectBounds = getContentBounds(objectState, {}, 0);
+    const objectSvg = buildExportSvg(objectState, objectBounds);
+    const points = exportedGeometryPoints(objectSvg);
+    assert(points.length > 0, `wavy ${index} emitted no geometry`);
+    for (const point of points) {
+      assert(point.x >= objectBounds.x && point.x <= objectBounds.x + objectBounds.w,
+        `wavy ${index} x clipped`);
+      assert(point.y >= objectBounds.y && point.y <= objectBounds.y + objectBounds.h,
+        `wavy ${index} y clipped`);
+    }
+    wavyReports.push({ p1, p2, bounds: objectBounds, pointCount: points.length });
+    if (index === 1) {
+      shortWavySvg = objectSvg;
+      shortWavyCanvas = (await rasterizeExportCanvas(objectState, { dpi: 300, bounds: objectBounds })).canvas;
+      card('Zero-margin short wavy arrow SVG', shortWavySvg);
+      card('Zero-margin short wavy arrow PNG', shortWavyCanvas);
+    }
+  }
+
   const sizeModel = {
     objects: [{ id: 'size-object', type: 'rect', x: 2, y: 3, w: 20, h: 10, rotation: 0 }],
     selectedIds: ['size-object'], undoStack: [], redoStack: [],
@@ -184,6 +236,7 @@ async function run() {
     hiddenOrder: ids(buildExportSvg(hiddenState)),
     arrowBounds: bounds,
     arrowPointCount: arrowPoints(fittedSvg).length,
+    wavyCases: wavyReports,
     invalidSize: { width: sizeModel.objects[0].w, undoEntries: sizeModel.undoStack.length - 2 },
     legalSigned: { x: sizeModel.objects[0].x, rotation: sizeModel.objects[0].rotation },
     chromosomeCases: chromosomeCases.map(({ object, ...entry }) => entry),
@@ -216,12 +269,15 @@ async function run() {
   const boardBlob = await new Promise(resolve => board.toBlob(resolve, 'image/png'));
   const exportBlob = await new Promise(resolve => exportedCanvas.toBlob(resolve, 'image/png'));
   const arrowBlob = await new Promise(resolve => arrowCanvas.toBlob(resolve, 'image/png'));
+  const wavyBlob = await new Promise(resolve => shortWavyCanvas.toBlob(resolve, 'image/png'));
   await Promise.all([
     post('/__task8_report', `${JSON.stringify(report, null, 2)}\n`),
     post('/__task8_board', boardBlob),
     post('/__task8_export_png', exportBlob),
     post('/__task8_arrow_png', arrowBlob),
     post('/__task8_export_svg', serializer.serializeToString(fittedSvg)),
+    post('/__task8_wavy_png', wavyBlob),
+    post('/__task8_wavy_svg', serializer.serializeToString(shortWavySvg)),
   ]);
   result.dataset.status = 'passed';
   result.textContent = JSON.stringify(report, null, 2);

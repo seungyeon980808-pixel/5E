@@ -171,11 +171,13 @@ export function getLineDecorationBounds(obj) {
       const body = Math.max(waveLen, length - headLen - tail);
       const amp = Math.max(0, obj.waveAmp ?? WAVY_DEFAULTS.waveAmp);
       const bodyEnd = { x: obj.p1.x + ux * body, y: obj.p1.y + uy * body };
+      const tailEnd = { x: obj.p1.x + ux * (body + tail), y: obj.p1.y + uy * (body + tail) };
       points.push(
         { x: obj.p1.x - uy * amp, y: obj.p1.y + ux * amp },
         { x: obj.p1.x + uy * amp, y: obj.p1.y - ux * amp },
         { x: bodyEnd.x - uy * amp, y: bodyEnd.y + ux * amp },
         { x: bodyEnd.x + uy * amp, y: bodyEnd.y - ux * amp },
+        tailEnd,
       );
       addArrow(obj.p2, ux, uy);
     } else if (arrowHead === "end") {
