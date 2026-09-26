@@ -13,18 +13,27 @@ function escapeHtml(s) {
   return String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
 
+let dialogSequence = 0;
+
+function dialogIdentity() {
+  const id = `app-dialog-${++dialogSequence}`;
+  return { titleId: `${id}-title`, descriptionId: `${id}-description` };
+}
+
 function buildDialog({ title, message, buttons, wide = false }) {
   return new Promise((resolve) => {
+    const { titleId, descriptionId } = dialogIdentity();
     const overlay = document.createElement("div");
     overlay.className = wide ? "modal-overlay mode-switch-dialog" : "modal-overlay";
     const btnHtml = buttons.map((b, i) =>
       `<button type="button" class="modal-btn${b.primary ? " modal-btn-primary" : ""}" data-i="${i}">${escapeHtml(b.label)}</button>`
     ).join("");
     overlay.innerHTML = `
-      <div class="modal" role="${buttons.length > 1 ? "alertdialog" : "dialog"}" aria-modal="true"${wide ? ' tabindex="-1"' : ''}
+      <div class="modal" role="${buttons.length > 1 ? "alertdialog" : "dialog"}" aria-modal="true"
+           aria-labelledby="${titleId}" aria-describedby="${descriptionId}"${wide ? ' tabindex="-1"' : ''}
            style="width:min(${wide ? 520 : 320}px, calc(100vw - 32px))">
-        <h2 class="modal-title">${escapeHtml(title)}</h2>
-        <p class="objectify-description" style="margin:0 0 4px;white-space:pre-line;">${escapeHtml(message)}</p>
+        <h2 class="modal-title" id="${titleId}">${escapeHtml(title)}</h2>
+        <p class="objectify-description" id="${descriptionId}" style="margin:0 0 4px;white-space:pre-line;">${escapeHtml(message)}</p>
         <div class="modal-actions">${btnHtml}</div>
       </div>`;
     document.body.appendChild(overlay);
@@ -69,13 +78,15 @@ export function showConfirm(message, { title = "확인", okText = "예", cancelT
  * 확인=입력값, 취소/Esc/바깥클릭=null. */
 export function showPrompt(message, { title = "입력", value = "", placeholder = "", okText = "확인", cancelText = "취소", maxLength } = {}) {
   return new Promise((resolve) => {
+    const { titleId, descriptionId } = dialogIdentity();
     const overlay = document.createElement("div");
     overlay.className = "modal-overlay";
     overlay.innerHTML = `
-      <div class="modal" role="dialog" aria-modal="true" style="width:min(340px, calc(100vw - 32px))">
-        <h2 class="modal-title">${escapeHtml(title)}</h2>
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="${titleId}"
+           ${message ? `aria-describedby="${descriptionId}"` : ""} style="width:min(340px, calc(100vw - 32px))">
+        <h2 class="modal-title" id="${titleId}">${escapeHtml(title)}</h2>
         <div class="modal-field">
-          ${message ? `<label class="modal-label">${escapeHtml(message)}</label>` : ""}
+          ${message ? `<label class="modal-label" id="${descriptionId}">${escapeHtml(message)}</label>` : ""}
           <input type="text" class="modal-input" />
         </div>
         <div class="modal-actions">
@@ -112,5 +123,84 @@ export function showModeSwitch(target) {
       { label: '새 작업으로 전환', value: 'new' },
       { label: '유지하고 전환', value: 'keep', primary: true },
     ],
+  });
+}
+
+function formatRecoveryTime(ts) {
+  try {
+    return new Date(ts).toLocaleString("ko-KR", {
+      month: "long", day: "numeric", hour: "2-digit", minute: "2-digit",
+    });
+  } catch {
+    return "저장 시간 미상";
+  }
+}
+
+export function showRecoveryCheckpointDialog(checkpoints, { legacyStatus = "empty" } = {}) {
+  const available = Array.isArray(checkpoints) ? checkpoints.filter(checkpoint => (
+    Number.isInteger(checkpoint?.id)
+      && (checkpoint.source === "preview" || checkpoint.source === "legacy")
+  )) : [];
+  if (available.length === 0) return Promise.resolve(null);
+
+  return new Promise((resolve) => {
+    const { titleId, descriptionId } = dialogIdentity();
+    const overlay = document.createElement("div");
+    overlay.className = "modal-overlay recovery-checkpoint-dialog";
+    const choices = available.map((checkpoint, index) => `
+      <label class="recovery-checkpoint-row">
+        <input type="radio" name="recovery-checkpoint" data-recovery-checkpoint
+          data-id="${checkpoint.id}" data-source="${checkpoint.source}"${index === 0 ? " checked" : ""}>
+        <span class="recovery-checkpoint-copy">
+          <strong>${escapeHtml(checkpoint.label || "이전 작업")}</strong>
+          <span>${Number(checkpoint.pageCount) || 1}쪽 · ${escapeHtml(formatRecoveryTime(checkpoint.ts))}${checkpoint.source === "legacy" ? " · 이전 버전" : ""}</span>
+        </span>
+      </label>`).join("");
+    const legacyNote = legacyStatus === "unavailable"
+      ? '<p class="recovery-checkpoint-note" role="status">이전 버전의 복구 저장소는 확인할 수 없었습니다.</p>'
+      : "";
+    overlay.innerHTML = `
+      <section class="modal recovery-checkpoint-modal" role="dialog" aria-modal="true" tabindex="-1"
+        aria-labelledby="${titleId}" aria-describedby="${descriptionId}">
+        <h2 class="modal-title" id="${titleId}">보관된 작업 복구</h2>
+        <p class="objectify-description" id="${descriptionId}">모드 전환 전에 보관한 작업이 있습니다. 복구할 작업을 선택하세요.</p>
+        <div class="recovery-checkpoint-list" role="radiogroup" aria-label="복구할 작업">${choices}</div>
+        ${legacyNote}
+        <div class="modal-actions">
+          <button type="button" class="modal-btn" data-act="cancel">지금은 복구하지 않음</button>
+          <button type="button" class="modal-btn modal-btn-primary" data-act="restore">선택한 작업 복구</button>
+        </div>
+      </section>`;
+    document.body.appendChild(overlay);
+    const previousFocus = document.activeElement;
+    const dialog = overlay.querySelector('[role="dialog"]');
+    const done = (value) => {
+      overlay.remove();
+      previousFocus?.focus();
+      resolve(value);
+    };
+    const cancel = () => done(null);
+    registerEscapeLayer(dialog, cancel);
+    overlay.querySelector('[data-act="cancel"]').addEventListener("click", cancel);
+    overlay.querySelector('[data-act="restore"]').addEventListener("click", () => {
+      const selected = overlay.querySelector('[data-recovery-checkpoint]:checked')?.dataset;
+      done(selected ? { id: Number(selected.id), source: selected.source } : null);
+    });
+    overlay.addEventListener("mousedown", event => { if (event.target === overlay) cancel(); });
+    overlay.addEventListener("keydown", event => {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        event.stopPropagation();
+        cancel();
+        return;
+      }
+      if (event.key !== "Tab") return;
+      const controls = [...overlay.querySelectorAll('input:not(:disabled), button:not(:disabled)')];
+      const index = controls.indexOf(document.activeElement);
+      event.preventDefault();
+      controls[index < 0 ? (event.shiftKey ? controls.length - 1 : 0)
+        : (index + (event.shiftKey ? -1 : 1) + controls.length) % controls.length].focus();
+    });
+    dialog.focus({ preventScroll: true });
   });
 }

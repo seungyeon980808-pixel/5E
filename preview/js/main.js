@@ -16,6 +16,7 @@ import { initAiSharing } from './ai-sharing-ui.js?v=1.6.0-preview-emerald-polish
 import { state } from "./state.js?v=1.6.0-preview-labeler-0917-1111";
 import { render } from "./render.js?v=1.6.0-preview-lite-hybrid-0922";
 import { initViewport, getZoom, screenToWorld, centerView, setCanvasLockMode } from "./viewport.js?v=1.6.0-preview-lite-hybrid-0922";
+import { initZoomReadoutLifecycle } from "./zoom-readout-lifecycle.js?v=task10-160";
 import { initTools } from "./tools.js?v=1.6.0-preview-lite-hybrid-0922";
 import { initCutTool } from "./cut-tool.js?v=1.6.0-preview-lite-hybrid-0922";
 import { initEraseTool } from "./erase-tool.js?v=1.6.0-preview-lite-hybrid-0922";
@@ -225,17 +226,7 @@ state.subscribe(applyViewBox);
 // state.update(), which already fires the applyViewBox + render subscribers.
 initViewport(svg, state, () => {});
 
-/* zoom readout is derived from the SVG's on-screen width, which is 0 until the
-   3-panel grid finishes its first layout pass. The last applyViewBox at init
-   therefore burns in a stale "0.00×"; refresh once the box has real width so the
-   readout shows the true fit-zoom. */
-requestAnimationFrame(function refreshZoomReadout() {
-  if (svg.getBoundingClientRect().width === 0) {
-    requestAnimationFrame(refreshZoomReadout);
-    return;
-  }
-  applyViewBox(state.get());
-});
+initZoomReadoutLifecycle({ target: svg, refresh: () => applyViewBox(state.get()) });
 
 /* ----- tools: V/R selection + rectangle drawing (mouse ??store.update) ----- */
 initTools(svg, state);

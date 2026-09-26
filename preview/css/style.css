@@ -1266,6 +1266,35 @@ body { zoom: var(--ui-zoom, 1); }
   background: var(--accent);
   border-color: var(--accent);
 }
+.recovery-checkpoint-modal { width: min(520px, calc(100vw - 32px)); }
+.recovery-checkpoint-list {
+  display: grid;
+  gap: 8px;
+  max-height: min(320px, 45vh);
+  overflow-y: auto;
+}
+.recovery-checkpoint-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-input);
+  cursor: pointer;
+}
+.recovery-checkpoint-row:has(input:checked) { border-color: var(--accent); }
+.recovery-checkpoint-copy { display: grid; gap: 2px; min-width: 0; }
+.recovery-checkpoint-copy strong {
+  overflow: hidden;
+  color: var(--text-primary);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.recovery-checkpoint-copy span,
+.recovery-checkpoint-note { color: var(--text-secondary); font-size: 11px; }
+.recovery-checkpoint-note { margin: 0; }
 
 /* ===== GRAPH MODAL (그래프 틀 삽입/설정: 미리보기 좌 · 설정 우) ===== */
 /* 폭은 여기서만 정한다 — 종전엔 마크업에 인라인 width가 박혀 있어 이 값이 무시됐다.
@@ -2316,7 +2345,10 @@ textarea.unified-text-input {
   color: var(--text-label);
 }
 #canvas:focus { outline: none; }
-#canvas:focus-visible { outline: none; }
+#canvas:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: -3px;
+}
 #canvas.pointer-focused { outline: none; }
 [data-mcp-entrypoint] { display: none !important; }
 .tool-btn:focus:not(:focus-visible),
