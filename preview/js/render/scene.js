@@ -573,11 +573,7 @@ export function render(state) {
   if (state.draft) {
     const d = state.draft;
 
-    // For size-based shapes (ellipse/triangle) the bbox differs from the shape
-    // outline, so draw a dashed rectangle guide spanning the drag bounds first.
-    // (rect's own preview already IS that rectangle; the line has no bbox ??it
-    // shows its own solid preview below ??so both skip the duplicate guide.)
-    if (d.type !== "rect" && d.type !== "line" && d.type !== "polyline" && d.type !== "curve" && d.type !== "anglearc" && d.type !== "rightangle" && d.type !== "circuit" && d.type !== "labeler" && d.type !== "pendulum") {
+    if (d.type !== "rect" && SIZE_TYPES.has(d.type)) {
       const box = document.createElementNS(SVG_NS, "rect");
       box.setAttribute("x", d.x);
       box.setAttribute("y", d.y);
