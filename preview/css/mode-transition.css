@@ -1,17 +1,26 @@
 :root {
-  --mode-motion-duration: 240ms;
-  --mode-motion-easing: cubic-bezier(.2,.7,.2,1);
+  --mode-motion-duration: 1000ms;
+  --mode-motion-blur: 4px;
 }
 html.mode-transition::view-transition-group(root) { animation: none; }
 html.mode-transition::view-transition-old(root) {
-  animation: mode-fade-out var(--mode-motion-duration) var(--mode-motion-easing) both;
+  animation: mode-calm-out var(--mode-motion-duration) linear both;
 }
 html.mode-transition::view-transition-new(root) {
-  animation: mode-fade-in var(--mode-motion-duration) var(--mode-motion-easing) both;
+  animation: mode-calm-in var(--mode-motion-duration) linear both;
 }
-@keyframes mode-fade-out { to { opacity: 0; } }
-@keyframes mode-fade-in { from { opacity: 0; } }
+@keyframes mode-calm-out {
+  0% { opacity: 1; filter: blur(0); animation-timing-function: cubic-bezier(.45,0,.55,1); }
+  25% { opacity: 1; filter: blur(var(--mode-motion-blur)); animation-timing-function: cubic-bezier(.45,0,.55,1); }
+  55%, 100% { opacity: 0; filter: blur(var(--mode-motion-blur)); }
+}
+@keyframes mode-calm-in {
+  0%, 25% { opacity: 0; filter: blur(var(--mode-motion-blur)); animation-timing-function: cubic-bezier(.45,0,.55,1); }
+  55% { opacity: 1; filter: blur(var(--mode-motion-blur)); animation-timing-function: cubic-bezier(.4,0,.2,1); }
+  100% { opacity: 1; filter: blur(0); }
+}
 .mode-switch-dialog .modal-actions { flex-wrap: wrap; }
+.mode-switch-dialog .modal:focus { outline: none; }
 .mode-switch-dialog .modal-btn { white-space: nowrap; }
 .mode-switch-dialog .objectify-description { word-break: keep-all; }
 @media (prefers-reduced-motion: reduce) {

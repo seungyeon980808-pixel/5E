@@ -1,8 +1,8 @@
-import { initLiteShell } from "./lite-shell.js?v=lite-main-0925";
+import { initLiteShell } from "./lite-shell.js?v=lite-quick-help-0925";
 import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-preview-labeler-0917-1111';
 import { initWebLoginUi } from './web-login-ui.js?v=1.6.0-preview-mobile-golden-0922';
 import { initMobileImage } from './mobile-image.js?v=1.6.0-preview-mobile-golden-0922';
-import { showAlert } from "./ui-dialogs.js?v=1.6.0-preview-labeler-0917-1111";
+import { showAlert } from "./ui-dialogs.js?v=watermark-focus-0925";
 import { initAiSharing } from './ai-sharing-ui.js?v=1.6.0-preview-emerald-polish-0921';
 /* ===== MAIN (wire modules; data-as-truth + viewBox zoom/pan) ===== */
 //
@@ -38,7 +38,7 @@ import { initCommandPalette } from "./command-palette.js?v=1.6.0-preview-lite-hy
 import { initSubjectObjects } from "./subject-objects.js?v=1.6.0-preview-lite-hybrid-0922";
 import { initToolHint } from "./tool-hint.js?v=1.6.0-preview-labeler-0917-1111";
 import { initTooltips } from "./tooltip.js?v=1.6.0-preview-labeler-0917-1111";
-import { initViewMode } from "./view-mode.js?v=mode-switch-0925";
+import { initViewMode } from "./view-mode.js?v=watermark-focus-0925";
 import { initPersonalObjects } from "./personal-objects.js?v=1.6.0-preview-lite-hybrid-0922";
 import { initBulkEdit } from "./bulk-edit.js?v=1.6.0-preview-lite-hybrid-0922";
 import { initDataPlot } from "./data-plot.js?v=1.6.0-preview-lite-hybrid-0922";

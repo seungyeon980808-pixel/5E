@@ -41,10 +41,14 @@ async function confirm(page, name) {
         const modal = page.locator('.mode-switch-dialog .modal');
         const box = await modal.boundingBox();
         assert.ok(box.x >= 0 && box.x + box.width <= width + 1);
+        assert.equal(await modal.evaluate(element => document.activeElement === element), true);
+        assert.equal(await modal.evaluate(element => getComputedStyle(element).outlineStyle), 'none');
         for (const b of await modal.locator('button').all()) {
           const r = await b.boundingBox(); assert.ok(r.x >= box.x && r.x+r.width <= box.x+box.width+1);
         }
         await page.screenshot({ path: `${evidence}/${name}-dialog-${width}.png` });
+        await page.keyboard.press('Tab');
+        assert.equal(await page.evaluate(() => document.activeElement?.textContent?.trim()), '취소');
         await page.getByRole('button', { name: '취소', exact: true }).focus();
         await page.keyboard.press('Enter');
         assert.equal(await page.locator('html').getAttribute('data-mode'), 'pro');

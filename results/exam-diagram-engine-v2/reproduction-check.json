@@ -1,8 +1,0 @@
-{
-  "engine_version": "2.0.0",
-  "request": ".agents/skills/exam-diagram-engine-v2/assets/example-request.json",
-  "command": "python .agents/skills/exam-diagram-engine-v2/scripts/engine.py compile --request .agents/skills/exam-diagram-engine-v2/assets/example-request.json --out-dir tmp/exam-diagram-v2/fresh-session-check",
-  "preflight_passed": true,
-  "outputs": ["structure.json", "prompt.txt", "prompt.json", "preflight.json"],
-  "result": "PASS"
-}

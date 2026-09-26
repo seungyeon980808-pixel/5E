@@ -1368,7 +1368,7 @@ const EXAM_SEARCH = {
       title: "라이브러리 열기",
       text:
         "캔버스 아래 막대에 있습니다. 눌러 주세요.\n\n" +
-        "· 단축키는 Ctrl+Alt+Shift+L 입니다",
+        "· 캔버스 아래 [라이브러리] 버튼이나 명령 팔레트(Ctrl+K)에서 엽니다",
       demo: () => ({ kind: "clicks", at: ["#exam-library-open"] }),
       wait: { click: "#exam-library-open", hint: "라이브러리를 눌러 주세요" },
     },
@@ -1891,7 +1891,7 @@ const TRIM_EXAM = {
     {
       target: () => "#exam-library-open",
       title: "라이브러리 열기",
-      text: "캔버스 아래 막대에 있습니다. 눌러 주세요.\n\n· 단축키는 Ctrl+Alt+Shift+L 입니다",
+      text: "캔버스 아래 막대에 있습니다. 눌러 주세요.\n\n· 명령 팔레트(Ctrl+K)에서도 찾을 수 있습니다",
       demo: () => ({ kind: "clicks", at: ["#exam-library-open"] }),
       wait: { click: "#exam-library-open", hint: "라이브러리를 눌러 주세요" },
     },

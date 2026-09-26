@@ -1,7 +1,7 @@
-import { animateModeChange } from './mode-transition.js';
+import { animateModeChange } from './mode-transition.js?v=calm-blur-0925';
 import { checkpointBeforeModeSwitch } from './autosave.js?v=mode-switch-0925';
 import { serialize, applyLoaded } from './project-io.js?v=1.6.0-preview-lite-hybrid-0922';
-import { showModeSwitch, showAlert } from './ui-dialogs.js?v=1.6.0-preview-labeler-0917-1111';
+import { showModeSwitch, showAlert } from './ui-dialogs.js?v=watermark-focus-0925';
 import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-preview-labeler-0917-1111';
 import { setActiveTool } from './tools.js?v=1.6.0-preview-lite-hybrid-0922';
 /* ===== VIEW MODE: Pro / Lite 모드 전환 =====

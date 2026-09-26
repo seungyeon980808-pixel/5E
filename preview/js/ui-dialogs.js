@@ -21,7 +21,7 @@ function buildDialog({ title, message, buttons, wide = false }) {
       `<button type="button" class="modal-btn${b.primary ? " modal-btn-primary" : ""}" data-i="${i}">${escapeHtml(b.label)}</button>`
     ).join("");
     overlay.innerHTML = `
-      <div class="modal" role="${buttons.length > 1 ? "alertdialog" : "dialog"}" aria-modal="true"
+      <div class="modal" role="${buttons.length > 1 ? "alertdialog" : "dialog"}" aria-modal="true"${wide ? ' tabindex="-1"' : ''}
            style="width:min(${wide ? 520 : 320}px, calc(100vw - 32px))">
         <h2 class="modal-title">${escapeHtml(title)}</h2>
         <p class="objectify-description" style="margin:0 0 4px;white-space:pre-line;">${escapeHtml(message)}</p>
@@ -30,7 +30,8 @@ function buildDialog({ title, message, buttons, wide = false }) {
     document.body.appendChild(overlay);
     const previousFocus = document.activeElement;
     const done = (value) => { overlay.remove(); previousFocus?.focus(); resolve(value); };
-    registerEscapeLayer(overlay.querySelector('[role="dialog"], [role="alertdialog"]'), () => done(buttons[0].value));
+    const dialog = overlay.querySelector('[role="dialog"], [role="alertdialog"]');
+    registerEscapeLayer(dialog, () => done(buttons[0].value));
     overlay.querySelectorAll(".modal-btn").forEach((b) => {
       b.addEventListener("click", () => done(buttons[Number(b.dataset.i)].value));
     });
@@ -40,13 +41,13 @@ function buildDialog({ title, message, buttons, wide = false }) {
         const controls = [...overlay.querySelectorAll('.modal-btn')];
         const index = controls.indexOf(document.activeElement);
         e.preventDefault();
-        controls[(index + (e.shiftKey ? -1 : 1) + controls.length) % controls.length].focus();
+        controls[index < 0 ? (e.shiftKey ? controls.length - 1 : 0) : (index + (e.shiftKey ? -1 : 1) + controls.length) % controls.length].focus();
       }
       if (e.key === "Escape") { e.stopPropagation(); done(buttons[0].value); }
-      if (e.key === "Enter" && !e.target.closest("button")) { e.preventDefault(); done(buttons[buttons.length - 1].value); }
+      if (!wide && e.key === "Enter" && !e.target.closest("button")) { e.preventDefault(); done(buttons[buttons.length - 1].value); }
     });
-    // 마지막(주) 버튼에 포커스
-    overlay.querySelector(".modal-btn:last-child")?.focus();
+    if (wide) dialog.focus({ preventScroll: true });
+    else overlay.querySelector(".modal-btn:last-child")?.focus();
   });
 }
 

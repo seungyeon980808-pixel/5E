@@ -40,6 +40,7 @@ function setAccessibleState(layout, side, expanded) {
 }
 
 function moveEditorHeader(root, toolbar) {
+  if (toolbar.closest('.app-shell-header') && toolbar.querySelector('.toolbar-history')) return;
   let header = root.querySelector('.app-shell-header');
   if (!header) {
     header = document.createElement('header');

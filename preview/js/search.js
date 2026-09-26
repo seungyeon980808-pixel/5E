@@ -1,4 +1,5 @@
 import { registerEscapeLayer } from "./escape-layers.js?v=1.6.0-preview-labeler-0917-1111";
+import { modKey, shortcutKey, isComposingKey } from "./platform.js?v=1.6.0-preview-labeler-0917-1111";
 
 /* ===== OBJECT SEARCH (registry filtering + modal interaction only) ===== */
 
@@ -26,8 +27,8 @@ export function initObjectSearch() {
     <section class="modal object-search-modal" role="dialog" aria-modal="true" aria-labelledby="object-search-title">
       <h2 class="modal-title" id="object-search-title">오브젝트 검색</h2>
       <input class="modal-input object-search-input" type="text" autocomplete="off"
-             placeholder="이름 또는 키워드 검색" aria-label="오브젝트 이름 검색">
-      <div class="object-search-results" role="listbox" aria-label="검색 결과"></div>
+             placeholder="이름 또는 키워드 검색" aria-label="오브젝트 이름 검색" aria-controls="object-search-results">
+      <div class="object-search-results" id="object-search-results" role="listbox" aria-label="검색 결과"></div>
     </section>`;
   document.body.appendChild(overlay);
 
@@ -35,10 +36,14 @@ export function initObjectSearch() {
   const results = overlay.querySelector(".object-search-results");
   let matches = [];
   let highlighted = 0;
+  let returnFocus = null;
 
   function close() {
+    input.blur();
     overlay.hidden = true;
     input.value = "";
+    input.removeAttribute("aria-activedescendant");
+    (returnFocus?.isConnected && returnFocus !== document.body ? returnFocus : document.getElementById("canvas"))?.focus();
   }
 
   registerEscapeLayer(overlay.querySelector('[role="dialog"]'), close);
@@ -58,6 +63,8 @@ export function initObjectSearch() {
       row.classList.toggle("is-highlighted", active);
       row.setAttribute("aria-selected", String(active));
     });
+    if (rows[highlighted]) input.setAttribute("aria-activedescendant", rows[highlighted].id);
+    else input.removeAttribute("aria-activedescendant");
     if (scroll) rows[highlighted]?.scrollIntoView({ block: "nearest" });
   }
 
@@ -92,6 +99,7 @@ export function initObjectSearch() {
 
       const heading = document.createElement("div");
       heading.className = "object-search-category";
+      heading.setAttribute("role", "presentation");
       heading.textContent = category;
       results.appendChild(heading);
 
@@ -100,6 +108,7 @@ export function initObjectSearch() {
         const row = document.createElement("button");
         row.type = "button";
         row.className = "object-search-row";
+        row.id = `object-search-option-${index}`;
         row.dataset.index = String(index);
         row.setAttribute("role", "option");
 
@@ -130,6 +139,7 @@ export function initObjectSearch() {
   }
 
   function open() {
+    returnFocus = document.activeElement;
     overlay.hidden = false;
     input.value = "";
     renderResults();
@@ -167,9 +177,10 @@ export function initObjectSearch() {
     if (event.target === overlay) close();
   });
   document.addEventListener("keydown", (event) => {
-    if (!(event.ctrlKey || event.metaKey) || event.key.toLocaleLowerCase() !== "f") return;
-    if (event.shiftKey) return;
+    if (isComposingKey(event) || event.defaultPrevented || !modKey(event) || event.shiftKey || event.altKey) return;
+    if (shortcutKey(event) !== "f") return;
     if (isTypingTarget(event.target) && event.target !== input) return;
+    if (overlay.hidden && document.querySelector(".modal-overlay:not([hidden])")) return;
     event.preventDefault();
     if (overlay.hidden) open();
     else input.focus();

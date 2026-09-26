@@ -1,7 +1,6 @@
-import { WORKFLOW_COMMANDS } from './settings-shortcuts.js?v=1.6.0-preview-repair-0921';
 import { registerEscapeLayer } from "./escape-layers.js?v=1.6.0-preview-labeler-0917-1111";
 
-import { modKey, shortcutKey, isEditingTarget, isComposingKey, keyLabel } from "./platform.js?v=1.6.0-preview-labeler-0917-1111";
+import { modKey, shortcutKey, isEditingTarget, isComposingKey, keyLabel, IS_MAC } from "./platform.js?v=1.6.0-preview-labeler-0917-1111";
 /* ===== COMMAND PALETTE (Ctrl+K unified runner: 명령 + 오브젝트 검색) =====
  *
  * Ctrl+F는 오브젝트만 찾는다. 이 팔레트는 같은 창에서 "명령"(실행취소·그룹묶기·
@@ -90,9 +89,10 @@ const COMMANDS = [
   { id: "settingsExport", label: "설정 저장하기",  keywords: ["settings", "설정", "export", "저장"], shortcutLabel: "",            run: () => clickById("settings-export") },
   { id: "settingsImport", label: "설정 불러오기",  keywords: ["settings", "설정", "import", "불러오기"], shortcutLabel: "",        run: () => clickById("settings-import") },
   { id: "objectSearch", label: "오브젝트 검색 열기", keywords: ["object", "오브젝트", "검색", "찾기"], shortcutLabel: "Ctrl+F",     run: () => clickById("object-search-trigger") },
-  { id: "examSearch",  label: "라이브러리 열기", keywords: ["exam", "기출", "문항", "검색", "라이브러리"], shortcutLabel: WORKFLOW_COMMANDS.find(command => command.id === "exam-library-open").shortcut, run: () => clickById("exam-library-open") },
+  { id: "examSearch",  label: "라이브러리 열기", keywords: ["exam", "기출", "문항", "검색", "라이브러리"], shortcutLabel: "", run: () => clickById("exam-library-open") },
   { id: "bulkEdit",    label: "전체 통일 수정 열기", keywords: ["bulk", "통일", "일괄", "전체수정"], shortcutLabel: "",            run: () => clickById("bulk-edit-open") },
   { id: "imageObjectify", label: "이미지 객체화",  keywords: ["objectify", "객체화", "벡터", "이미지"], shortcutLabel: "",         run: () => clickById("image-objectify-open") },
+  { id: "aiImage", label: "AI 이미지 변환", keywords: ["ai", "인공지능", "이미지 변환", "변환"], shortcutLabel: "", run: () => clickById("ai-image-install-open") },
   // 자르기·지우기는 이미 자동으로 좁히지만, 옛 파일·여러 번 손댄 객체를 위한 손 경로.
   { id: "trimMargins", label: "이미지 여백 정리",  keywords: ["trim", "여백", "정리", "상자", "맞춤", "crop"], shortcutLabel: "",  run: () => {
     const n = trimSelectedBoxMargins();
@@ -110,8 +110,8 @@ export function initCommandPalette() {
     <section class="modal object-search-modal" role="dialog" aria-modal="true" aria-labelledby="command-palette-title">
       <h2 class="modal-title" id="command-palette-title">명령 팔레트</h2>
       <input class="modal-input object-search-input" type="text" autocomplete="off"
-             placeholder="명령 또는 오브젝트 검색 (Ctrl+K)" aria-label="명령 또는 오브젝트 검색">
-      <div class="object-search-results" role="listbox" aria-label="명령/검색 결과"></div>
+             placeholder="명령 또는 오브젝트 검색 (Ctrl+K)" aria-label="명령 또는 오브젝트 검색" aria-controls="command-palette-results">
+      <div class="object-search-results" id="command-palette-results" role="listbox" aria-label="명령/검색 결과"></div>
     </section>`;
   document.body.appendChild(overlay);
 
@@ -120,11 +120,14 @@ export function initCommandPalette() {
   const results = overlay.querySelector(".object-search-results");
   let matches = [];
   let highlighted = 0;
+  let returnFocus = null;
 
   function close() {
     input.blur();
     overlay.hidden = true;
     input.value = "";
+    input.removeAttribute("aria-activedescendant");
+    (returnFocus?.isConnected && returnFocus !== document.body ? returnFocus : document.getElementById("canvas"))?.focus();
   }
 
   registerEscapeLayer(overlay.querySelector('[role="dialog"]'), close);
@@ -147,6 +150,8 @@ export function initCommandPalette() {
       row.classList.toggle("is-highlighted", active);
       row.setAttribute("aria-selected", String(active));
     });
+    if (rows[highlighted]) input.setAttribute("aria-activedescendant", rows[highlighted].id);
+    else input.removeAttribute("aria-activedescendant");
     if (scroll) rows[highlighted]?.scrollIntoView({ block: "nearest" });
   }
 
@@ -193,6 +198,7 @@ export function initCommandPalette() {
     if (commandRows.length) {
       const heading = document.createElement("div");
       heading.className = "object-search-category";
+      heading.setAttribute("role", "presentation");
       heading.textContent = "명령";
       results.appendChild(heading);
       for (const match of commandRows) {
@@ -200,13 +206,14 @@ export function initCommandPalette() {
         const row = document.createElement("button");
         row.type = "button";
         row.className = "object-search-row";
+        row.id = `command-palette-option-${index}`;
         row.dataset.index = String(index);
         row.setAttribute("role", "option");
 
         const iconBox = document.createElement("span");
         iconBox.className = "object-search-icon";
         const glyph = document.createElement("span");
-        glyph.textContent = "⌘";
+        glyph.textContent = IS_MAC ? "⌘" : "Ctrl";
         glyph.style.cssText = "font-weight:700;font-size: 13px;opacity:.65;";
         iconBox.appendChild(glyph);
 
@@ -229,6 +236,7 @@ export function initCommandPalette() {
 
       const heading = document.createElement("div");
       heading.className = "object-search-category";
+      heading.setAttribute("role", "presentation");
       heading.textContent = category;
       results.appendChild(heading);
 
@@ -237,6 +245,7 @@ export function initCommandPalette() {
         const row = document.createElement("button");
         row.type = "button";
         row.className = "object-search-row";
+        row.id = `command-palette-option-${index}`;
         row.dataset.index = String(index);
         row.setAttribute("role", "option");
 
@@ -267,6 +276,7 @@ export function initCommandPalette() {
   }
 
   function open() {
+    returnFocus = document.activeElement;
     overlay.hidden = false;
     input.value = "";
     renderResults();
