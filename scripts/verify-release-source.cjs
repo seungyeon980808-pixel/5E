@@ -62,7 +62,62 @@ assert.equal(receipt.untrackedClassification.filter(item => item.decision === 'e
 for (const item of receipt.untrackedClassification) assert.ok(item.rationale, `untracked rationale: ${item.path}`);
 
 const authorizedFollowOnChanges = receipt.authorizedFollowOnTaskChanges;
+const expectedFollowOnChanges = [
+  {
+    sourceCommit: 'c1bca259aff32cb29caf0df6cb68503edb869863',
+    originalTaskCommit: 'de7b5ecddd93504ba77bf37e0f79148215723d13',
+    paths: ['docs/credits.html', 'preview/docs/credits.html'],
+  },
+  {
+    sourceCommit: '9f5423bbfdb5b01d5e1e0d56d439a48458514c0d',
+    originalTaskCommit: '9f5423bbfdb5b01d5e1e0d56d439a48458514c0d',
+    paths: ['package.json'],
+  },
+  {
+    sourceCommit: '949d5bdc054fdc5de0f9e1603efc9ae0fb64c6cb',
+    originalTaskCommit: '949d5bdc054fdc5de0f9e1603efc9ae0fb64c6cb',
+    paths: ['preview/css/style.css'],
+  },
+  {
+    sourceCommit: '3e62c46d626d45cc580a0ff4960da6cfa5be9696',
+    originalTaskCommit: '3e62c46d626d45cc580a0ff4960da6cfa5be9696',
+    paths: ['preview/js/main.js'],
+  },
+  {
+    sourceCommit: '4db68c6ad160eb99197f73d882106d7127d42323',
+    originalTaskCommit: '4db68c6ad160eb99197f73d882106d7127d42323',
+    paths: ['preview/js/mcp-bridge.js'],
+  },
+  {
+    sourceCommit: 'a93e7708087246a6f6c39d3ab8a57d00b2d7f46b',
+    originalTaskCommit: 'a93e7708087246a6f6c39d3ab8a57d00b2d7f46b',
+    paths: ['preview/js/ai-workbench.js'],
+  },
+  {
+    sourceCommit: 'f87729370bdf31dda5d7f8b3109095ff24f2f713',
+    originalTaskCommit: 'f87729370bdf31dda5d7f8b3109095ff24f2f713',
+    paths: ['desktop/main.cjs'],
+  },
+];
+const expectedTaskChanges = [
+  ['package.json', '9f5423bbfdb5b01d5e1e0d56d439a48458514c0d'],
+  ['desktop/main.cjs', 'f87729370bdf31dda5d7f8b3109095ff24f2f713'],
+  ['js/svg-export.js', '9f22fb5dfbb0036979e14de8f557a53f0a58545e'],
+  ['docs/credits.html', 'c1bca259aff32cb29caf0df6cb68503edb869863'],
+  ['preview/docs/credits.html', 'c1bca259aff32cb29caf0df6cb68503edb869863'],
+  ['preview/css/style.css', '949d5bdc054fdc5de0f9e1603efc9ae0fb64c6cb'],
+  ['preview/js/ai-workbench.js', 'a93e7708087246a6f6c39d3ab8a57d00b2d7f46b'],
+  ['preview/js/main.js', '3e62c46d626d45cc580a0ff4960da6cfa5be9696'],
+  ['preview/js/mcp-bridge.js', '4db68c6ad160eb99197f73d882106d7127d42323'],
+];
 assert.equal(authorizedFollowOnChanges.length, 7);
+assert.deepEqual(authorizedFollowOnChanges.map(({ sourceCommit, originalTaskCommit, paths }) => ({
+  sourceCommit,
+  originalTaskCommit,
+  paths,
+})), expectedFollowOnChanges, 'follow-on authorization map');
+assert.equal(receipt.taskChanges.length, 9);
+assert.deepEqual(receipt.taskChanges.map(({ path: taskPath, sourceCommit }) => [taskPath, sourceCommit]), expectedTaskChanges, 'task change path map');
 for (const authorization of authorizedFollowOnChanges) {
   assert.match(authorization.sourceCommit, /^[0-9a-f]{40}$/);
   assert.match(authorization.originalTaskCommit, /^[0-9a-f]{40}$/);
