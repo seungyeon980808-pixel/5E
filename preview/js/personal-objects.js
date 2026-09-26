@@ -386,7 +386,12 @@ export function renderLibrary() {
     const header = document.createElement("button");
     header.type = "button";
     header.className = "subject-part-header";
-    header.innerHTML = `<span>${cat}</span><span class="toggle-icon">▾</span>`;
+    const categoryLabel = document.createElement("span");
+    categoryLabel.textContent = cat;
+    const toggleIcon = document.createElement("span");
+    toggleIcon.className = "toggle-icon";
+    toggleIcon.textContent = "▾";
+    header.append(categoryLabel, toggleIcon);
     header.addEventListener("click", () => sec.classList.toggle("is-collapsed"));
     const body = document.createElement("div");
     body.className = "subject-part-body";
