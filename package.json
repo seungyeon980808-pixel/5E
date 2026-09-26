@@ -14,6 +14,7 @@
     "test": "npm run test:unit",
     "test:unit": "node desktop/run-unit-tests.cjs",
     "test:browser": "node tests/run-browser-tests.cjs",
+    "test:smoke-contract": "node --test tests/test-smoke-gate-contract.cjs && node tests/run-browser-tests.cjs --only test-smoke-contract-browser.cjs",
     "verify:release-identity": "node scripts/check-release-identity.cjs",
     "build:unpacked": "electron-builder --dir --publish never",
     "test:desktop": "node desktop/run-smoke.cjs",
