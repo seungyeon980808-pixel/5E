@@ -43,6 +43,8 @@ let recoveryTerminatingTurnId = null;
 let initialized = false;
 let initializingPromise = null;
 let codexSendInvocationCount = 0;
+let smokeFixtureSendCount = 0;
+let realSendCount = 0;
 const pending = new Map();
 const turnAttachmentPaths = new Map();
 const turnPerformance = new TurnPerformanceRegistry();
@@ -51,6 +53,7 @@ const IMAGE_FINALIZE_TIMEOUT_MS = 10_000;
 const IMAGE_FINALIZE_POLL_MS = 500;
 const RPC_CHECK_TIMEOUT_MS = 1_500;
 const localImages = createLocalImageAccess();
+const SMOKE_FIXTURE_IMAGE_PATH = path.join(__dirname, "..", "preview", "assets", "exam-library", "images", "p1_2027_06_01.png");
 
 function imageDataUrl({ extension: ext, bytes }) {
   const mime = ext === ".svg" ? "image/svg+xml"
@@ -59,6 +62,10 @@ function imageDataUrl({ extension: ext, bytes }) {
         : ext === ".gif" ? "image/gif"
           : ext === ".bmp" ? "image/bmp" : "image/png";
   return `data:${mime};base64,${bytes.toString("base64")}`;
+}
+
+function readSmokeFixtureImageDataUrl() {
+  return `data:image/png;base64,${fs.readFileSync(SMOKE_FIXTURE_IMAGE_PATH).toString("base64")}`;
 }
 
 function assertTrustedLocalImageSender(event) {
@@ -533,6 +540,7 @@ function createWindow() {
     win.webContents.once("did-finish-load", async () => {
       try {
         const codexSendsBeforeSmoke = codexSendInvocationCount;
+        const smokeFixtureImageDataUrl = readSmokeFixtureImageDataUrl();
         const result = await win.webContents.executeJavaScript(`new Promise((resolve) => {
           requestAnimationFrame(() => requestAnimationFrame(async () => {
             const waitFor = async (test, timeout = 4000) => {
@@ -779,143 +787,106 @@ function createWindow() {
             const internalCutRendersBoth = !!remainderNode?.querySelector('mask polygon[fill="#000000"]') &&
               !!extractedNode?.querySelector('mask rect[fill="#000000"]') &&
               !!extractedNode?.querySelector('mask polygon[fill="#ffffff"]');
-            let examLibraryAiReferenceWorks = false;
-            let imageLibraryAiReferenceWorks = false;
-            let aiMultipleReferencesReady = false;
-            let aiComparisonReady = false;
+            let currentSourceReferenceWorks = false;
+            let aiCurrentComparisonReady = false;
             let aiAreaCommentReady = false;
             let aiAreaCommentTracksZoom = false;
             let aiReferencesOpenImmediately = false;
-            let aiLocalAssetZeroRoundTripWorks = false;
-            let aiLocalApparatusZeroRoundTripWorks = false;
+            let aiPublicRasterVisible = false;
+            let aiPublicAssetHidden = false;
             let aiQualityControlsReady = false;
             let aiOutputControlsReady = false;
-            let aiTaskTabsIsolated = false;
+            let aiTaskIsolationWorks = false;
             let aiWorkspaceControlsReady = false;
-            document.getElementById("exam-library-open")?.click();
-            if (await waitFor(() => document.querySelector(".examlib-card"))) {
-              const examCards = Array.from(document.querySelectorAll(".examlib-card")).slice(0, 2);
-              examCards.forEach((card) => card.click());
-              const examAiButton = document.getElementById("examlib-ai");
-              if (examAiButton && !examAiButton.disabled) {
-                examAiButton.click();
-                examLibraryAiReferenceWorks = await waitFor(() =>
-                  panel?.hidden === false && panel.querySelectorAll(".ai-reference-card").length >= examCards.length);
-                panel.querySelector("[data-ai-close]")?.click();
-              }
-            }
-            document.getElementById("parts-library-open")?.click();
-            if (await waitFor(() => document.querySelector(".partslib-card"))) {
-              const partCards = Array.from(document.querySelectorAll(".partslib-card")).slice(0, 2);
-              partCards.forEach((card) => card.click());
-              const imageAiReady = await waitFor(() => {
-                const candidate = document.getElementById("partslib-ai");
-                return candidate && !candidate.disabled;
-              });
-              if (imageAiReady) {
-                document.getElementById("partslib-ai")?.click();
-                imageLibraryAiReferenceWorks = await waitFor(() =>
-                  panel?.hidden === false && panel.querySelectorAll(".ai-reference-card").length >= 4);
-                aiMultipleReferencesReady = imageLibraryAiReferenceWorks;
-                const referenceDetails = panel.querySelector(".ai-reference-section");
-                aiReferencesOpenImmediately = !!referenceDetails?.open;
-                const commentCard = panel.querySelector(".ai-reference-card");
-                const commentStage = commentCard?.querySelector(".ai-preview-stage");
-                const commentImage = commentStage?.querySelector("img");
-                const commentButton = commentCard?.querySelector(".ai-preview-actions button:last-child");
-                if (commentStage && commentImage && commentButton) {
-                  commentButton.click();
-                  const rect = commentStage.getBoundingClientRect();
-                  commentImage.dispatchEvent(new PointerEvent("pointerdown", { bubbles: true, pointerId: 77, clientX: rect.left + rect.width * .2, clientY: rect.top + rect.height * .2 }));
-                  commentStage.dispatchEvent(new PointerEvent("pointermove", { bubbles: true, pointerId: 77, clientX: rect.left + rect.width * .6, clientY: rect.top + rect.height * .6 }));
-                  commentStage.dispatchEvent(new PointerEvent("pointerup", { bubbles: true, pointerId: 77, clientX: rect.left + rect.width * .6, clientY: rect.top + rect.height * .6 }));
-                  const selection = commentCard.querySelector(".ai-selection-box");
-                  aiAreaCommentReady = !!selection && !!commentCard.querySelector(".ai-comment-row input");
-                  if (selection) {
-                    const beforeStage = commentStage.getBoundingClientRect();
-                    const beforeSelection = selection.getBoundingClientRect();
-                    const before = {
-                      x: (beforeSelection.left - beforeStage.left) / beforeStage.width,
-                      y: (beforeSelection.top - beforeStage.top) / beforeStage.height,
-                      w: beforeSelection.width / beforeStage.width,
-                      h: beforeSelection.height / beforeStage.height,
-                    };
-                    commentCard.querySelector(".ai-preview-actions button:first-child")?.click();
-                    await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
-                    const afterStage = commentStage.getBoundingClientRect();
-                    const afterImage = commentImage.getBoundingClientRect();
-                    const afterSelection = selection.getBoundingClientRect();
-                    const after = {
-                      x: (afterSelection.left - afterStage.left) / afterStage.width,
-                      y: (afterSelection.top - afterStage.top) / afterStage.height,
-                      w: afterSelection.width / afterStage.width,
-                      h: afterSelection.height / afterStage.height,
-                    };
-                    aiAreaCommentTracksZoom = Math.abs(afterStage.height - afterImage.height) < 4 &&
-                      Object.keys(before).every((key) => Math.abs(before[key] - after[key]) < .02);
-                  }
-                }
-                panel.querySelector("[data-ai-compare]")?.click();
-                aiComparisonReady = await waitFor(() =>
-                  document.querySelectorAll(".ai-compare-pane").length === 2 &&
-                  document.querySelectorAll(".ai-compare-picker button").length >= 4);
-                document.querySelector(".ai-compare-head button")?.click();
-                panel.querySelector("[data-ai-close]")?.click();
-              }
-            }
             button?.click();
             if (await waitFor(() => panel?.hidden === false, 2000)) {
-              aiQualityControlsReady = panel.querySelectorAll("[data-ai-quality]").length === 3;
-              aiOutputControlsReady = panel.querySelectorAll("[data-ai-output-engine]").length === 2;
-              const taskList = panel.querySelector("[data-ai-tab-list]");
-              const taskAdd = panel.querySelector("[data-ai-task-add]");
-              const taskCount = taskList?.querySelectorAll(".ai-task-tab:not(.ai-task-add)").length || 0;
-              aiWorkspaceControlsReady = !!taskList && !!taskAdd && !!panel.querySelector("[data-ai-close]");
-              taskAdd?.click();
-              aiTaskTabsIsolated = aiWorkspaceControlsReady && await waitFor(() =>
-                (panel.querySelectorAll("[data-ai-tab-list] .ai-task-tab:not(.ai-task-add)").length || 0) > taskCount, 2000);
-              // Local zero-round-trip diagrams are now an explicit user choice;
-              // textbook raster conversion is never auto-routed to 5E assets.
-              panel.querySelector('[data-ai-output-engine="asset"]')?.click();
-              const localRequests = [
-                "한반도 물리 해안선 지도를 그려 줘",
-                "one closed rectangular series circuit with exactly one dc source on the left, one open switch on the top, one resistor on the right, and one lamp on the bottom, no labels or arrows",
-                "one ceiling-fixed pulley with one continuous rope, one blank rectangular load on the left branch, and on the right branch one spring followed by one blank rectangular load of the same shape, no labels or arrows",
-                "optical bench with exactly one convex lens on the left, one plane mirror at 45 degrees in the center, and one screen on the right, no rays labels or arrows",
-                "beaker and particle box side by side comparison: beaker liquid fill fraction 0.45, gas 16 circular particles, unmixed, no labels or arrows",
-                "one generic unlabeled logistic S-shaped population curve without labels text numbers",
-              ];
-              const localResults = [];
-              for (const localRequest of localRequests) {
-                panel.querySelector("[data-ai-new]")?.click();
-                panel.querySelector('[data-ai-mode="diagram"]')?.click();
-                const aiInput = panel.querySelector("[data-ai-input]");
-                let historyTail = "";
-                try {
-                  const history = JSON.parse(localStorage.getItem("5e.aiPerformance.v1") || "[]");
-                  historyTail = JSON.stringify(Array.isArray(history) ? history.at(-1) || null : null);
-                } catch {}
-                if (aiInput) aiInput.value = localRequest;
-                panel.querySelector("[data-ai-send]")?.click();
-                const localPreviewReady = await waitFor(() =>
-                  !!panel.querySelector("[data-ai-previews] .ai-preview-card img[src^='data:image/svg+xml']"), 4000);
-                let localMetric = null;
-                await waitFor(() => {
-                  try {
-                    const history = JSON.parse(localStorage.getItem("5e.aiPerformance.v1") || "[]");
-                    if (!Array.isArray(history)) return false;
-                    const nextMetric = history.at(-1) || null;
-                    if (JSON.stringify(nextMetric) === historyTail) return false;
-                    localMetric = nextMetric;
-                    return true;
-                  } catch { return false; }
-                }, 4000);
-                localResults.push(localPreviewReady && localMetric?.route === "local-asset" &&
-                  localMetric?.imageCallCount === 0 && localMetric?.localAsset === true);
+              const sourceFile = panel.querySelector('[data-ai-source-file]');
+              const taskList = panel.querySelector('[data-ai-tab-list]');
+              aiWorkspaceControlsReady = !!taskList && !!sourceFile && !!panel.querySelector('[data-ai-task-add]') && !!panel.querySelector('[data-ai-close]');
+              aiQualityControlsReady = panel.querySelectorAll('[data-ai-quality]').length === 3;
+              aiOutputControlsReady = panel.querySelectorAll('[data-ai-output-engine]').length === 2;
+              const conversionOptions = panel.querySelector('.ai-conversion-options');
+              if (conversionOptions) conversionOptions.open = true;
+              await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
+              aiPublicRasterVisible = isActuallyVisible(panel.querySelector('[data-ai-output-engine="raster"]'));
+              aiPublicAssetHidden = panel.querySelector('[data-ai-output-engine="asset"]')?.hidden === true;
+              if (conversionOptions) conversionOptions.open = false;
+              if (sourceFile) {
+                const fixtureBlob = await fetch(${JSON.stringify(smokeFixtureImageDataUrl)}).then((response) => response.blob());
+                const attachFixture = () => {
+                  const transfer = new DataTransfer();
+                  transfer.items.add(new File([fixtureBlob], 'smoke-reference.png', { type: 'image/png' }));
+                  sourceFile.files = transfer.files;
+                  sourceFile.dispatchEvent(new Event('change', { bubbles: true }));
+                };
+                attachFixture();
+                currentSourceReferenceWorks = await waitFor(() => panel.querySelectorAll('[data-ai-reference-id]').length === 1, 4000);
+                aiReferencesOpenImmediately = !!panel.querySelector('.ai-reference-section[open]');
+                if (currentSourceReferenceWorks) {
+                  const originalTaskId = taskList?.querySelector('.ai-task-tab.is-on')?.dataset.tabId || '';
+                  panel.querySelector('[data-ai-send]')?.click();
+                  const generated = await waitFor(() => panel.querySelectorAll('.ai-generated-card').length === 1, 4000);
+                  panel.querySelector('[data-ai-layout-mode="side-by-side"]')?.click();
+                  const paneVisible = (selector) => {
+                    const bounds = panel.querySelector(selector)?.getBoundingClientRect();
+                    return !!bounds && bounds.width > 0 && bounds.height > 0;
+                  };
+                  aiCurrentComparisonReady = generated && await waitFor(() => panel.dataset.aiLayout === 'side-by-side' &&
+                    paneVisible('.ai-original-pane .ai-reference-card') && paneVisible('.ai-result-pane .ai-generated-card'), 2000);
+                  const image = panel.querySelector('.ai-result-pane .ai-generated-card .ai-preview-stage img');
+                  await image?.decode?.();
+                  await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
+                  const stage = image?.closest('.ai-preview-stage');
+                  panel.querySelector('[data-ai-comment-tool="area"]')?.click();
+                  await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
+                  const rect = image?.getBoundingClientRect();
+                  if (stage && rect?.width && rect.height) {
+                    const down = { bubbles: true, pointerId: 91, clientX: rect.left + rect.width * .25, clientY: rect.top + rect.height * .25 };
+                    stage.dispatchEvent(new PointerEvent('pointerdown', down));
+                    stage.dispatchEvent(new PointerEvent('pointermove', { ...down, clientX: rect.left + rect.width * .65, clientY: rect.top + rect.height * .60 }));
+                    stage.dispatchEvent(new PointerEvent('pointerup', { ...down, clientX: rect.left + rect.width * .65, clientY: rect.top + rect.height * .60 }));
+                    aiAreaCommentReady = await waitFor(() => !!panel.querySelector('[data-ai-comment-row]'), 2000);
+                    const normalizedRegion = () => {
+                      const regionBounds = panel.querySelector('.ai-comment-region')?.getBoundingClientRect();
+                      const imageBounds = image?.getBoundingClientRect();
+                      if (!regionBounds || !imageBounds?.width || !imageBounds.height) return null;
+                      return {
+                        x: (regionBounds.left - imageBounds.left) / imageBounds.width,
+                        y: (regionBounds.top - imageBounds.top) / imageBounds.height,
+                        w: regionBounds.width / imageBounds.width,
+                        h: regionBounds.height / imageBounds.height,
+                        imageWidth: imageBounds.width,
+                        imageHeight: imageBounds.height,
+                      };
+                    };
+                    const before = normalizedRegion();
+                    const zoomBefore = panel.querySelector('[data-ai-zoom-value]')?.textContent?.trim() || '';
+                    panel.querySelector('[data-ai-zoom-action="in"]')?.click();
+                    await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
+                    const after = normalizedRegion();
+                    const zoomAfter = panel.querySelector('[data-ai-zoom-value]')?.textContent?.trim() || '';
+                    aiAreaCommentTracksZoom = !!before && !!after && zoomBefore !== zoomAfter &&
+                      (before.imageWidth !== after.imageWidth || before.imageHeight !== after.imageHeight) &&
+                      ['x', 'y', 'w', 'h'].every((key) => Math.abs(before[key] - after[key]) < .002);
+                  }
+                  const originalReferenceCount = panel.querySelectorAll('[data-ai-reference-id]').length;
+                  const originalResultCount = panel.querySelectorAll('.ai-generated-card').length;
+                  attachFixture();
+                  const isolatedTaskReady = await waitFor(() => {
+                    const activeId = taskList?.querySelector('.ai-task-tab.is-on')?.dataset.tabId || '';
+                    return !!originalTaskId && activeId !== originalTaskId &&
+                      panel.querySelectorAll('[data-ai-reference-id]').length === 1 &&
+                      panel.querySelectorAll('.ai-generated-card').length === 0;
+                  }, 4000);
+                  taskList?.querySelector('[data-tab-id="' + originalTaskId + '"] .ai-task-tab-select')?.click();
+                  const originalTaskRestored = await waitFor(() =>
+                    taskList?.querySelector('.ai-task-tab.is-on')?.dataset.tabId === originalTaskId &&
+                    panel.querySelectorAll('[data-ai-reference-id]').length === originalReferenceCount &&
+                    panel.querySelectorAll('.ai-generated-card').length === originalResultCount, 4000);
+                  aiTaskIsolationWorks = isolatedTaskReady && originalTaskRestored;
+                }
               }
-              aiLocalAssetZeroRoundTripWorks = localResults.length === localRequests.length && localResults.every(Boolean);
-              aiLocalApparatusZeroRoundTripWorks = localResults.slice(1).length === 5 && localResults.slice(1).every(Boolean);
-              panel.querySelector("[data-ai-close]")?.click();
+              panel.querySelector('[data-ai-close]')?.click();
             }
             if (${process.env.FIVE_E_SMOKE_CUT_SCREENSHOT === "1" ? "true" : "false"}) {
               dismissStartupDialogs();
@@ -969,18 +940,16 @@ function createWindow() {
               internalCutSeparates,
               internalCutSelectsExtracted,
               internalCutRendersBoth,
-              examLibraryAiReferenceWorks,
-              imageLibraryAiReferenceWorks,
-              aiMultipleReferencesReady,
-              aiComparisonReady,
+              currentSourceReferenceWorks,
+              aiCurrentComparisonReady,
               aiAreaCommentReady,
               aiAreaCommentTracksZoom,
               aiReferencesOpenImmediately,
-              aiLocalAssetZeroRoundTripWorks,
-              aiLocalApparatusZeroRoundTripWorks,
+              aiPublicRasterVisible,
+              aiPublicAssetHidden,
               aiQualityControlsReady,
               aiOutputControlsReady,
-              aiTaskTabsIsolated,
+              aiTaskIsolationWorks,
               aiWorkspaceControlsReady,
               aiComposerDockedRight: !!panel.querySelector(".ai-conversation [data-ai-input]") &&
                 panel.querySelector("[data-ai-chat-send]")?.textContent?.trim() === "",
@@ -992,6 +961,8 @@ function createWindow() {
           }));
         })`);
         result.codexSendInvocationsDuringLocalSmoke = codexSendInvocationCount - codexSendsBeforeSmoke;
+        result.fixtureSendCount = smokeFixtureSendCount;
+        result.realSendCount = realSendCount;
         result.menuBarVisible = win.isMenuBarVisible();
         result.menuBarStateValid = process.platform === "darwin" ? result.menuBarVisible : !result.menuBarVisible;
         result.appIconReadable = !nativeImage.createFromPath(APP_ICON_PATH).isEmpty();
@@ -1063,8 +1034,24 @@ ipcMain.handle("codex:start", () => startServer());
 ipcMain.handle("codex:stop", () => stopServer());
 ipcMain.handle("codex:models", () => listModels());
 ipcMain.handle("codex:account", () => accountOverview());
-ipcMain.handle("codex:send", (_, payload) => {
+ipcMain.handle("codex:send", (event, payload) => {
+  if (process.env.FIVE_E_SMOKE_TEST === "1") {
+    const expectedUrl = pathToFileURL(path.join(__dirname, "..", "preview", "index.html")).href;
+    if (!isTrustedIpcSender(event, win, expectedUrl) || typeof payload?.clientScope !== "string" ||
+      payload.clientScope.length < 1 || payload.clientScope.length > 256) {
+      throw new Error("Invalid smoke fixture request.");
+    }
+    const imageDataUrl = readSmokeFixtureImageDataUrl();
+    const index = ++smokeFixtureSendCount;
+    const fixtureTurnId = `smoke-fixture-${index}`;
+    setTimeout(() => {
+      send("codex:event", { clientScope: payload.clientScope, method: "item/completed", params: { turnId: fixtureTurnId, item: { type: "imageGeneration", imageDataUrl } } });
+      send("codex:event", { clientScope: payload.clientScope, method: "turn/completed", params: { turn: { id: fixtureTurnId, status: "completed" } } });
+    }, 0);
+    return { turnId: fixtureTurnId, renderThreadId: `smoke-render-${index}` };
+  }
   codexSendInvocationCount += 1;
+  realSendCount += 1;
   return sendTurn(payload);
 });
 ipcMain.handle("codex:interrupt", async () => server && activeTurnThreadId && turnId

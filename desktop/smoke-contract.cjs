@@ -5,19 +5,21 @@ const requiredTruthy = Object.freeze([
   "aiReturnsAfterLibraryClose", "cutChooserVisible", "cutChooserInToolPanel", "textChooserBehavior",
   "angleChooserBehavior", "angleTabToggleWorks", "chooserPanelSwitchingWorks", "cutChooserPersistsAfterChoice",
   "chooserClosesOnOtherTool", "eraseToolReachable", "cutToolReachable", "delayedCutUiReachable",
-  "eraseShortcutWorks", "delayedShortcutWorks", "examLibraryAiReferenceWorks", "imageLibraryAiReferenceWorks",
-  "aiMultipleReferencesReady", "aiComparisonReady", "aiAreaCommentReady", "aiAreaCommentTracksZoom",
-  "aiReferencesOpenImmediately", "aiComposerDockedRight", "aiLocalAssetZeroRoundTripWorks",
-  "aiLocalApparatusZeroRoundTripWorks", "aiQualityControlsReady", "aiOutputControlsReady",
-  "aiTaskTabsIsolated", "aiWorkspaceControlsReady", "artboardAreaOverlayOpened", "artboardConfirmButtonPresent",
+  "eraseShortcutWorks", "delayedShortcutWorks", "currentSourceReferenceWorks", "aiReferencesOpenImmediately",
+  "aiTaskIsolationWorks", "aiCurrentComparisonReady", "aiAreaCommentReady", "aiAreaCommentTracksZoom",
+  "aiComposerDockedRight", "aiPublicRasterVisible", "aiPublicAssetHidden",
+  "aiQualityControlsReady", "aiOutputControlsReady", "aiWorkspaceControlsReady",
+  "artboardAreaOverlayOpened", "artboardConfirmButtonPresent",
   "artboardAreaCaptureWorks", "artboardCornerHandleRemoved", "artboardSelectionRecentersObjects",
   "artboardSelectionRecentersGuides", "internalCutSeparates", "internalCutSelectsExtracted", "internalCutRendersBoth",
   "menuBarStateValid", "appIconReadable",
 ]);
 
 function desktopSmokePasses(result) {
-  return result.buttonText === "AI 이미지 생성" &&
+  return result.buttonText === "AI 이미지 변환" &&
     result.codexSendInvocationsDuringLocalSmoke === 0 &&
+    result.realSendCount === 0 &&
+    result.fixtureSendCount === 1 &&
     !result.installDialogOpened &&
     requiredTruthy.every((field) => result[field] === true);
 }
