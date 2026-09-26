@@ -526,7 +526,7 @@ function createWindow() {
   win.once("ready-to-show", revealMainWindow);
   win.webContents.once("did-fail-load", revealMainWindow);
   win.on("closed", () => { win = null; });
-  win.loadFile(path.join(__dirname, "..", "index.html"));
+  win.loadFile(path.join(__dirname, "..", "preview", "index.html"));
   win.webContents.setWindowOpenHandler(({ url }) => { if (/^https:\/\//i.test(url)) shell.openExternal(url); return { action: "deny" }; });
   if (process.env.FIVE_E_SMOKE_TEST === "1") {
     win.webContents.once("did-finish-load", async () => {

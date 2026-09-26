@@ -1,0 +1,1934 @@
+{
+  "schemaVersion": 1,
+  "decision": "5E 1.6.0 source materialization and canonical entry",
+  "candidate": {
+    "auditedHead": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+    "preservedBaselineCommit": "f731414c",
+    "branch": "codex/release-160-remediation",
+    "worktree": "/Users/parkseungyeon/Documents/Codex/2026-09-06/x20/5E/.omo/worktrees/5e-160-release-source"
+  },
+  "preservation": {
+    "inventory": "/Users/parkseungyeon/Documents/Codex/2026-09-06/x20/5E/.omo/preservation/20260926-160/inventory.json",
+    "archive": "/Users/parkseungyeon/Documents/Codex/2026-09-06/x20/5E/.omo/preservation/20260926-160/archives/worktree-38.tar.zst",
+    "archiveSha256": "e1fcef43d40ec8bf2a83d9f2215af2237d1d5838584d3eca779597e41b074ee3",
+    "statusSha256": "6635d6722f59e5f3fe3a6abb4635cfd374ae7b017c0f5a5b4109cc024a4ae17c"
+  },
+  "auditManifest": {
+    "path": "/Users/parkseungyeon/Documents/Codex/2026-09-06/x20/5E/docs/audits/1.6.0-2026-09-26/evidence/source-manifest.json",
+    "sha256": "4316c969198893acade40b35bff07bff705734dfefe61075f9f34a28c90ca215",
+    "expected": 457,
+    "matchedBeforeBaselineCommit": 457,
+    "missing": 0,
+    "mismatch": 0,
+    "evidence": ".omo/evidence/task2/01-baseline-manifest.json"
+  },
+  "untrackedClassification": [
+    {
+      "path": ".codex-mockups/lite-canvas-surface-0922/README.md",
+      "classification": "nonrelease-generated-design-artifact",
+      "decision": "excluded",
+      "rationale": "generated mockup source or render; preserved in the worktree-38 archive, outside the release source set"
+    },
+    {
+      "path": ".codex-mockups/lite-canvas-surface-0922/index.html",
+      "classification": "nonrelease-generated-design-artifact",
+      "decision": "excluded",
+      "rationale": "generated mockup source or render; preserved in the worktree-38 archive, outside the release source set"
+    },
+    {
+      "path": ".codex-mockups/lite-canvas-surface-0922/mockup.css",
+      "classification": "nonrelease-generated-design-artifact",
+      "decision": "excluded",
+      "rationale": "generated mockup source or render; preserved in the worktree-38 archive, outside the release source set"
+    },
+    {
+      "path": ".codex-mockups/lite-canvas-surface-0922/renders/A.png",
+      "classification": "nonrelease-generated-design-artifact",
+      "decision": "excluded",
+      "rationale": "generated mockup source or render; preserved in the worktree-38 archive, outside the release source set"
+    },
+    {
+      "path": ".codex-mockups/lite-canvas-surface-0922/renders/B.png",
+      "classification": "nonrelease-generated-design-artifact",
+      "decision": "excluded",
+      "rationale": "generated mockup source or render; preserved in the worktree-38 archive, outside the release source set"
+    },
+    {
+      "path": ".codex-mockups/lite-canvas-surface-0922/renders/C.png",
+      "classification": "nonrelease-generated-design-artifact",
+      "decision": "excluded",
+      "rationale": "generated mockup source or render; preserved in the worktree-38 archive, outside the release source set"
+    },
+    {
+      "path": ".codex-mockups/lite-canvas-surface-0922/renders/D.png",
+      "classification": "nonrelease-generated-design-artifact",
+      "decision": "excluded",
+      "rationale": "generated mockup source or render; preserved in the worktree-38 archive, outside the release source set"
+    },
+    {
+      "path": ".codex-mockups/lite-canvas-surface-0922/renders/E.png",
+      "classification": "nonrelease-generated-design-artifact",
+      "decision": "excluded",
+      "rationale": "generated mockup source or render; preserved in the worktree-38 archive, outside the release source set"
+    },
+    {
+      "path": ".codex-mockups/lite-compact-structure-0922/README.md",
+      "classification": "nonrelease-generated-design-artifact",
+      "decision": "excluded",
+      "rationale": "generated mockup source or render; preserved in the worktree-38 archive, outside the release source set"
+    },
+    {
+      "path": ".codex-mockups/lite-compact-structure-0922/index.html",
+      "classification": "nonrelease-generated-design-artifact",
+      "decision": "excluded",
+      "rationale": "generated mockup source or render; preserved in the worktree-38 archive, outside the release source set"
+    },
+    {
+      "path": ".codex-mockups/lite-compact-structure-0922/mockup.css",
+      "classification": "nonrelease-generated-design-artifact",
+      "decision": "excluded",
+      "rationale": "generated mockup source or render; preserved in the worktree-38 archive, outside the release source set"
+    },
+    {
+      "path": ".codex-mockups/lite-compact-structure-0922/renders/S1.png",
+      "classification": "nonrelease-generated-design-artifact",
+      "decision": "excluded",
+      "rationale": "generated mockup source or render; preserved in the worktree-38 archive, outside the release source set"
+    },
+    {
+      "path": ".codex-mockups/lite-compact-structure-0922/renders/S2.png",
+      "classification": "nonrelease-generated-design-artifact",
+      "decision": "excluded",
+      "rationale": "generated mockup source or render; preserved in the worktree-38 archive, outside the release source set"
+    },
+    {
+      "path": ".codex-mockups/lite-compact-structure-0922/renders/S3.png",
+      "classification": "nonrelease-generated-design-artifact",
+      "decision": "excluded",
+      "rationale": "generated mockup source or render; preserved in the worktree-38 archive, outside the release source set"
+    },
+    {
+      "path": ".codex-mockups/lite-compact-structure-0922/renders/S4.png",
+      "classification": "nonrelease-generated-design-artifact",
+      "decision": "excluded",
+      "rationale": "generated mockup source or render; preserved in the worktree-38 archive, outside the release source set"
+    },
+    {
+      "path": "tests/test-preview-startup-browser.cjs",
+      "classification": "release-test-source",
+      "decision": "included",
+      "rationale": "browser contract source used by the audited candidate"
+    },
+    {
+      "path": "tests/test-shortcut-simplification-browser.cjs",
+      "classification": "release-test-source",
+      "decision": "included",
+      "rationale": "browser contract source used by the audited candidate"
+    }
+  ],
+  "entryDecision": {
+    "desktop": "preview/index.html",
+    "stableWeb": "index.html",
+    "packagePattern": "preview/**/*",
+    "previewStorageNamespace": "5e.preview:",
+    "storageMigrationFilesModified": false
+  },
+  "restorations": [
+    {
+      "path": "LICENSE",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "be3f7b28e564e7dd05eaf59d64adba1a4065ac0e",
+      "sourceSha256": "0d96a4ff68ad6d4b6f1f30f713b18d5184912ba8dd389f86aa7710db079abcb0",
+      "bytes": 34523,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "be3f7b28e564e7dd05eaf59d64adba1a4065ac0e",
+      "comparisonRelation": "identical",
+      "rationale": "declared package and root entry requirement"
+    },
+    {
+      "path": "assets/apple-touch-icon.png",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "e7d56e1ee6d51031871e0a996f7a54624c568316",
+      "sourceSha256": "fb04497eefc90992d99e5d1e70b79d08873c4e9d8bbe194b151afd72c052b436",
+      "bytes": 26060,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "e7d56e1ee6d51031871e0a996f7a54624c568316",
+      "comparisonRelation": "identical",
+      "rationale": "reviewed root entry or dynamic asset reference"
+    },
+    {
+      "path": "assets/exam-library/manifest.json",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "9e98c7649fe07fdd545f4e2b830e2d84c60eedd3",
+      "sourceSha256": "3358afa22ec528fe912db887f5f89b3eb47967e46d44ebcdc26899830932f288",
+      "bytes": 1294149,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "9e98c7649fe07fdd545f4e2b830e2d84c60eedd3",
+      "comparisonRelation": "identical",
+      "rationale": "reviewed root entry or dynamic asset reference"
+    },
+    {
+      "path": "assets/icon-192.png",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "870f415384500eceec79190275c3c99eb1e8cd54",
+      "sourceSha256": "a8e6d3f0e857ea145979c0b5ea30678d55aec86664558200f4fc8d25ae323c91",
+      "bytes": 28821,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "870f415384500eceec79190275c3c99eb1e8cd54",
+      "comparisonRelation": "identical",
+      "rationale": "reviewed root entry or dynamic asset reference"
+    },
+    {
+      "path": "assets/icon-512.png",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "7282b7d7c59c893fe0f81b52411b8fa398fb76ad",
+      "sourceSha256": "b21fc9a0eef2ad60e078ef975ee16ca30706d394a91499d340be248c3eb43b41",
+      "bytes": 126118,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "7282b7d7c59c893fe0f81b52411b8fa398fb76ad",
+      "comparisonRelation": "identical",
+      "rationale": "reviewed root entry or dynamic asset reference"
+    },
+    {
+      "path": "assets/icon.ico",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "7ed67f975d64e1d9e106c645ce523c078cbb4a58",
+      "sourceSha256": "0732f636fc144312e5c27bb46508e4b300227e909abfb79df811d7dd06c5a839",
+      "bytes": 78845,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "7ed67f975d64e1d9e106c645ce523c078cbb4a58",
+      "comparisonRelation": "identical",
+      "rationale": "reviewed root entry or dynamic asset reference"
+    },
+    {
+      "path": "assets/logo.svg",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "67412622e895f8ada502e022a4f7bff09eaf10ac",
+      "sourceSha256": "32d034db852905d4eca2962274d144684f1c6186b70229b0cd8e602db0c2002a",
+      "bytes": 540,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "67412622e895f8ada502e022a4f7bff09eaf10ac",
+      "comparisonRelation": "identical",
+      "rationale": "reviewed root entry or dynamic asset reference"
+    },
+    {
+      "path": "assets/parts-library/manifest.json",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "d28acddb109a1b8cc30b9dc58ed41c6988f41bd3",
+      "sourceSha256": "3044617e2702bec2212a58c7e294c815003e21631809cbd3b06d17a693d27521",
+      "bytes": 750968,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "d28acddb109a1b8cc30b9dc58ed41c6988f41bd3",
+      "comparisonRelation": "identical",
+      "rationale": "reviewed root entry or dynamic asset reference"
+    },
+    {
+      "path": "assets/svg_object/1.svg",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "063942f465869fb093611dee96a0757fb5d11809",
+      "sourceSha256": "8a6f46bf0c8dfdb317b1a99483d5293bb6a3df3946d35940ea1ed3fa418abfab",
+      "bytes": 1772,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "063942f465869fb093611dee96a0757fb5d11809",
+      "comparisonRelation": "identical",
+      "rationale": "reviewed root entry or dynamic asset reference"
+    },
+    {
+      "path": "assets/svg_object/2.svg",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "7b8d17db4af2af21f20941f1e19ae20c06947c9b",
+      "sourceSha256": "61bbbd76424dbbd5b7b8d709a462006aca5cd6737bcbd2e4d8f19471d8ac3721",
+      "bytes": 4736,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "7b8d17db4af2af21f20941f1e19ae20c06947c9b",
+      "comparisonRelation": "identical",
+      "rationale": "reviewed root entry or dynamic asset reference"
+    },
+    {
+      "path": "css/parts-library.css",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "5557651fdb1099af41c9b5af0f857ca7fa06ab19",
+      "sourceSha256": "2bdf8f18e536a10fc3e6c3aaa63d3d7d1c44e761bd5fba0ad2f50d7e7f487571",
+      "bytes": 9692,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "5557651fdb1099af41c9b5af0f857ca7fa06ab19",
+      "comparisonRelation": "identical",
+      "rationale": "root HTML stylesheet reference"
+    },
+    {
+      "path": "desktop/ai-thread-profile.cjs",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "73a7bae13e3f52c332aec70d374625942bc2cfda",
+      "sourceSha256": "cc4e148eee22301833111c8f2a65323641db606bbf01f7027c7c6f95441c7fda",
+      "bytes": 1125,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "73a7bae13e3f52c332aec70d374625942bc2cfda",
+      "comparisonRelation": "identical",
+      "rationale": "desktop runtime closure"
+    },
+    {
+      "path": "desktop/codex-process-failure.cjs",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "a23162a4c730f85a1e5bc80d4b4489901ee03697",
+      "sourceSha256": "7cc9d37e9b646601eb3e3c86e615f7a345bb2534ed9ef31502b5b09eed3f9460",
+      "bytes": 960,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "a23162a4c730f85a1e5bc80d4b4489901ee03697",
+      "comparisonRelation": "identical",
+      "rationale": "desktop runtime closure"
+    },
+    {
+      "path": "desktop/codex-turn-runtime.cjs",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "87f0207cc8f2b644b1c715210c2dfdb53dd89cdf",
+      "sourceSha256": "dde66edc5b6f73f95b2fd2944656a3af75ea04a621ef71241a5dcb475a42becb",
+      "bytes": 6162,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "87f0207cc8f2b644b1c715210c2dfdb53dd89cdf",
+      "comparisonRelation": "identical",
+      "rationale": "desktop runtime closure"
+    },
+    {
+      "path": "desktop/splash.html",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "ebdd77f4e60b3ddf7908b0d9b2e992ef798ddc29",
+      "sourceSha256": "c45bf5041ea0c42678de8f31088cfb42afc8f85b1fc4046e49369ae72c4e300f",
+      "bytes": 3020,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "ebdd77f4e60b3ddf7908b0d9b2e992ef798ddc29",
+      "comparisonRelation": "identical",
+      "rationale": "desktop runtime closure"
+    },
+    {
+      "path": "docs/EXAM_SCIENTIFIC_DIAGRAM_STYLE.md",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "d02d0bc4acc9fd10b62cdace4692bf53c511a7db",
+      "sourceSha256": "0f1501a9987bf85de9b2510c95e4538fae1c88d611b29703b1100aacb382b745",
+      "bytes": 48647,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "d02d0bc4acc9fd10b62cdace4692bf53c511a7db",
+      "comparisonRelation": "identical",
+      "rationale": "declared package document or runtime data"
+    },
+    {
+      "path": "docs/GPT_KNOWLEDGE_EVALUATION_SCIENCE_LINEART.md",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "1e6e5241f3d061a69f69481ee836969555121695",
+      "sourceSha256": "fd44a0487066758e3bdab207a31e96b604c6d1857969b10e22384f79242e9aee",
+      "bytes": 5313,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "1e6e5241f3d061a69f69481ee836969555121695",
+      "comparisonRelation": "identical",
+      "rationale": "declared package document or runtime data"
+    },
+    {
+      "path": "docs/credits.html",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "4e1bb9c09f47d69f7b12141037709d3a1795731e",
+      "sourceSha256": "82933924c73dcfab7762d12c318dfcab0f0ea46d3d460dd6ee83e396c384caec",
+      "bytes": 160168,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "4e1bb9c09f47d69f7b12141037709d3a1795731e",
+      "comparisonRelation": "identical",
+      "rationale": "declared package document or runtime data"
+    },
+    {
+      "path": "docs/engine-v2/ILLUSTRATION_ASSET_CANDIDATES.json",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "0a9d434b05200a5805c330c8314c3d3f8b7ee966",
+      "sourceSha256": "09d9a28c079ebcea601a6fe4f3071f90e6ce2c76d5a6d69545c8c21c13dc8179",
+      "bytes": 159091,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "0a9d434b05200a5805c330c8314c3d3f8b7ee966",
+      "comparisonRelation": "identical",
+      "rationale": "declared package document or runtime data"
+    },
+    {
+      "path": "fonts/lmroman10-italic.otf",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "b369873788610a67d52a6cf58e2e9c769f3a7ab6",
+      "sourceSha256": "c1fce25075567bb8dbf2151658c3b442690041db17a2d49fc9e55905ea5b7169",
+      "bytes": 118828,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "b369873788610a67d52a6cf58e2e9c769f3a7ab6",
+      "comparisonRelation": "identical",
+      "rationale": "reviewed root entry or dynamic asset reference"
+    },
+    {
+      "path": "fonts/lmroman10-italic.woff2",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "49d7d95a9ada4fa96fc89299f782b187783dca8f",
+      "sourceSha256": "2bd3bf1d80811b9ba0069b79cad12488afa2867538346649bece1c936057b2a6",
+      "bytes": 50240,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "49d7d95a9ada4fa96fc89299f782b187783dca8f",
+      "comparisonRelation": "identical",
+      "rationale": "reviewed root entry or dynamic asset reference"
+    },
+    {
+      "path": "fonts/lmroman10-regular.otf",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "6a96b468286d83fd759dce5c95030d1a4e2aa67d",
+      "sourceSha256": "1aa18cfefa58132c52ce5de70db1fd1154201c19cd2b2cdaffba4906a33e6852",
+      "bytes": 111536,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "6a96b468286d83fd759dce5c95030d1a4e2aa67d",
+      "comparisonRelation": "identical",
+      "rationale": "reviewed root entry or dynamic asset reference"
+    },
+    {
+      "path": "fonts/lmroman10-regular.woff2",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "9a54affc5e19c421a1d9c2e0ff3deea4fc8b8bd1",
+      "sourceSha256": "ee30b2208ff7627a9addc0b8a00dbc764d03315e14af18f9dcf3f44ee164fbe3",
+      "bytes": 48180,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "9a54affc5e19c421a1d9c2e0ff3deea4fc8b8bd1",
+      "comparisonRelation": "identical",
+      "rationale": "reviewed root entry or dynamic asset reference"
+    },
+    {
+      "path": "js/ai-engine-router.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "d5a8efe634a2f48c8e63a8463920e162790abfac",
+      "sourceSha256": "704910f5fb34a2b0270d32b8a82c60252f3770a77156343a48ddae089ca8b89b",
+      "bytes": 14828,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "d5a8efe634a2f48c8e63a8463920e162790abfac",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/ai-illustration-assets.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "6539f73af339705d0d4de3e81700e7f39f009ae9",
+      "sourceSha256": "a2958052e82aa5c2a01cc2ab885704f266bca35d3bc8c9bfa8eecb5fcad55643",
+      "bytes": 16295,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "6539f73af339705d0d4de3e81700e7f39f009ae9",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/ai-image-transport.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "d08d2713f89cd3d49b1d83c024b726f88ebc00e3",
+      "sourceSha256": "1365d4dcf2f0f3ef0b3539cc523d30799497bb9df406c560c44b6332d143910a",
+      "bytes": 11930,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "d08d2713f89cd3d49b1d83c024b726f88ebc00e3",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/ai-local-asset-router.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "3b4eb302b38047c6f2ba6feeb4b0508fc7112b21",
+      "sourceSha256": "fa49f4dd1044f66d0095406a42cf974dc11a343228ee9f31079edc4475f01b4e",
+      "bytes": 60966,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "3b4eb302b38047c6f2ba6feeb4b0508fc7112b21",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/ai-map-assets-data.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "f1c353b39fe03f505cfc9a7730e929398abc7589",
+      "sourceSha256": "a024a0e9800424366e9e35e7977ba5f773af600fc748ee23fef4868db47e4cb6",
+      "bytes": 611956,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "f1c353b39fe03f505cfc9a7730e929398abc7589",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/ai-map-assets.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "6a06e2d89fe70a42d696d1b0cb31d81e12c916ee",
+      "sourceSha256": "c10d0279084e8b018699b8281bc4f81c3d2c5435331984325e891b4c7030041f",
+      "bytes": 20933,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "6a06e2d89fe70a42d696d1b0cb31d81e12c916ee",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/ai-motif-catalog.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "74184c1c9d4a0b7d4a9cf23bfa5f629a9b028b61",
+      "sourceSha256": "d00a8a12de0547eab41b37b45193f874e7eba3f2b8cc2c37ae499b3a20346cee",
+      "bytes": 43518,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "74184c1c9d4a0b7d4a9cf23bfa5f629a9b028b61",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/ai-output-cache-store.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "40afd3e8438393ec3ec709dab53ae5d8a684b704",
+      "sourceSha256": "2aa863a8115eda315567e76c6c7f3380b5c94a7c7ec0f80cd80a0b861cb7fac8",
+      "bytes": 6620,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "40afd3e8438393ec3ec709dab53ae5d8a684b704",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/ai-remote-compositor.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "d8dde324ac44bf8796ee80d6c8fcdb72cfca3a4e",
+      "sourceSha256": "deba3626c4d3a7afd0345614277a66003c7d837162261a4954b2fb4827b27ac3",
+      "bytes": 14220,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "d8dde324ac44bf8796ee80d6c8fcdb72cfca3a4e",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/ai-request-plan.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "f5d85899b16811c65aa87f7db9d4bf1d63ceec97",
+      "sourceSha256": "ba42962eb2583d8975ab4afeb812e35f0561b7163962dcd1aaccf414ed000fbe",
+      "bytes": 2855,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "f5d85899b16811c65aa87f7db9d4bf1d63ceec97",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/ai-scene-fastpath.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "da6a41a92a71c3d539f7b51382b26be68d694951",
+      "sourceSha256": "c8e201ea734202ef792aec8bcc6127daee34d781d3a5cbcf4d098acc2592b6c8",
+      "bytes": 40526,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "da6a41a92a71c3d539f7b51382b26be68d694951",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/ai-scene-preview.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "529452af3184859dfe9e48eb641592d92c1d69ea",
+      "sourceSha256": "8b31fab13f185197757cbbe0692500bda2903d0f3eb96e152e0f4f3d9e7fd3a2",
+      "bytes": 3763,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "529452af3184859dfe9e48eb641592d92c1d69ea",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/ai-scene-prompt.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "8a5a4c21f65e67bf3f85d677594c89c4c466347e",
+      "sourceSha256": "68a7e215df0e6c55c1721b410e8e1740d50cf3567c3cf129e806257fb86b577a",
+      "bytes": 5538,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "8a5a4c21f65e67bf3f85d677594c89c4c466347e",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/artboard-area.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "fded5246ac3e6e827fc19b8286edd6c4d98d9608",
+      "sourceSha256": "15f414ff808e98d0b9ec603d2790b9b076707d5556a82c8a49baf4975b4aa68d",
+      "bytes": 522,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "fded5246ac3e6e827fc19b8286edd6c4d98d9608",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/data-plot.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "64915e03008cfb7df843449ead2e8470f518450e",
+      "sourceSha256": "02cceb154e9dad7417bdfc468850e0c3720730cc7bc1df49d7f489ebedae1c3e",
+      "bytes": 10993,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "64915e03008cfb7df843449ead2e8470f518450e",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/exam-preview.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "1c19524a0fa6417787273738220750074344fa8e",
+      "sourceSha256": "69423254ab6ce7f49fce76415be619b3cf747a9163dc1e41621f7439502b8679",
+      "bytes": 15085,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "1c19524a0fa6417787273738220750074344fa8e",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/export-batch.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "1ea7c34d52daa21d58fd9fd7394034364edbd000",
+      "sourceSha256": "5feda504ae1324ea2c8726ec9a8215865ede788b735840e27b90132c992090e4",
+      "bytes": 10960,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "1ea7c34d52daa21d58fd9fd7394034364edbd000",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/export-dir.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "39060f8f4b19fe3d497be40cc87602d9f80812cd",
+      "sourceSha256": "4617b1e0fa864ed5ac577be820c9febbc9ad3fb95bbf964a66fe7cdedecddaf3",
+      "bytes": 3396,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "39060f8f4b19fe3d497be40cc87602d9f80812cd",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/formula.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "e001b41f7fce5fb531ec61d7429d2d769086ea7c",
+      "sourceSha256": "14f3190b5200c58e44e101316c3ddf6c0611e9efd810855ee196af9049bb4f3e",
+      "bytes": 19620,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "e001b41f7fce5fb531ec61d7429d2d769086ea7c",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/function-graph/coords.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "1484f5c7bc260d5e6e07d0e257d37d5991c30d48",
+      "sourceSha256": "315095454226d83ebf17e4e1a4af746c9c40b0e5db62ca02508eb69b161bc99f",
+      "bytes": 4678,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "1484f5c7bc260d5e6e07d0e257d37d5991c30d48",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/function-graph/defaults.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "6180ef1cdacbdfcf5b442cb78be88b5f5aec53eb",
+      "sourceSha256": "b79a6c4c7d36e3a7fea172d7dabe2c8ba26e755662123b7c43901c546c5f25f5",
+      "bytes": 2164,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "6180ef1cdacbdfcf5b442cb78be88b5f5aec53eb",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/function-graph/parser.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "3f06ef7d29b16005523ee7cc639dad79836664a8",
+      "sourceSha256": "8a1d967c6cad935c737aa96a916e2562ea5187c77ed92ab19597f923b460b77b",
+      "bytes": 8512,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "3f06ef7d29b16005523ee7cc639dad79836664a8",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/function-graph/plane-modal.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "2c071fa5b41b9be534968f5a462f7e6eacd0c8e6",
+      "sourceSha256": "7f0cd0d0f17f5c0104572f6aa37af92e2de22a8662b1e0e411a1dd10cf7fe22f",
+      "bytes": 14604,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "2c071fa5b41b9be534968f5a462f7e6eacd0c8e6",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/function-graph/sampler.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "cac28edd347c17dac511b26fb5acbee6afb0c487",
+      "sourceSha256": "532b1ebd17031d7ebd0bf7a97e9519f4f724fb0a0238cb34e584fe05c8795837",
+      "bytes": 4213,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "cac28edd347c17dac511b26fb5acbee6afb0c487",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/geometry.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "9a0c59b9ffe67ec41a41540841ab37b0b6450995",
+      "sourceSha256": "745712d60c408a3dbb603ed0d2a4a8a2608f714f3a9abb72b6ee5783714ffc7b",
+      "bytes": 6901,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "9a0c59b9ffe67ec41a41540841ab37b0b6450995",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/graph/graph-modal.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "f772608ce2a7de23a4f3b7c32562b5b0b8c17096",
+      "sourceSha256": "b009d8de7516da385efe7f28f36d9856d1ee25ec75f0377800f4142dabf5ca89",
+      "bytes": 221660,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "f772608ce2a7de23a4f3b7c32562b5b0b8c17096",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/idb-store.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "4718d7a86efac922a1fad6ab8ed15f558ae293f6",
+      "sourceSha256": "faf1d7de48724c6534ac910ad4d9c72a0186a1e207fcc27db1524c5978d7e0ea",
+      "bytes": 2689,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "4718d7a86efac922a1fad6ab8ed15f558ae293f6",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/image-compare.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "08d1c3f12c9b622a1b1aa008ef2e9d6a8fe859e4",
+      "sourceSha256": "696b3890770ea341309da4821c7fa6e340b03b34c8dab48e06a64d84e5c543af",
+      "bytes": 10533,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "08d1c3f12c9b622a1b1aa008ef2e9d6a8fe859e4",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/image-line-extract.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "e886a2a4e266ec027bb2eba890c7a7f2b3ba7dd4",
+      "sourceSha256": "7933686a4493eef35044a482ca1444089711dd9c14444220e00869fbd1f5d68c",
+      "bytes": 23462,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "e886a2a4e266ec027bb2eba890c7a7f2b3ba7dd4",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/image-vectorize.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "3e1e7bdd66f20cbc9bf1cf6b3684ddd02ac8e677",
+      "sourceSha256": "1a1a613bc6bc0b30ffb5f5e6211aae66d897e11d3b39a3f787023833440bf151",
+      "bytes": 69254,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "3e1e7bdd66f20cbc9bf1cf6b3684ddd02ac8e677",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/inspector/context.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "8810deec2e2bfa0760a3856c84a31bc188ff4901",
+      "sourceSha256": "569ae8908fd509e2f5ea2f8d91ee802cdf8039bdd01961364baaac8106db3f94",
+      "bytes": 6202,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "8810deec2e2bfa0760a3856c84a31bc188ff4901",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/inspector/section-apparatus.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "97be9912b8a784f2ba33a8e3d1305e61c5594e8a",
+      "sourceSha256": "5470644582d03e517f9c912ea6b6883bdfe49ab54876fc29c22172f49318aa3a",
+      "bytes": 6664,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "97be9912b8a784f2ba33a8e3d1305e61c5594e8a",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/inspector/section-axisbreak.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "8ce333a206579db90b83df4c3a4a4910af39f01d",
+      "sourceSha256": "2f8d431b0421760938b2b906068d7695ac2070c5953b9ad3eae13953a3f9d7e7",
+      "bytes": 4814,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "8ce333a206579db90b83df4c3a4a4910af39f01d",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/inspector/section-bilayer.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "8d5f72681f286f7d1d8ff80277e4c24d1d6d11d0",
+      "sourceSha256": "f75e702632d6bc310ccef61f96b1d6bc061afc2566aa27aa97b77e06a4d254b1",
+      "bytes": 6739,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "8d5f72681f286f7d1d8ff80277e4c24d1d6d11d0",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/inspector/section-bondgroup.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "51b4f31eebce47484b3ca7947ca2b941303c34f7",
+      "sourceSha256": "5f5af5eb5af4ec974df5b1dcc260b28fb962411c3f3c34e52e07a656cdbf5635",
+      "bytes": 4997,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "51b4f31eebce47484b3ca7947ca2b941303c34f7",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/inspector/section-brace.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "4cd6c832d58a1fb7a24a487125cb57cd9020aa61",
+      "sourceSha256": "2b2c5e2557f1f345dab10e760890320033be697ffff94bdee172569d826423bd",
+      "bytes": 4685,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "4cd6c832d58a1fb7a24a487125cb57cd9020aa61",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/inspector/section-chemchart.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "0d96761b6650a4c09aa41ca90a1085c223533c1d",
+      "sourceSha256": "06d8626e541971b54c4a7bc9d75d05d0936bea4eb97893f8b600b36a138c89fd",
+      "bytes": 8508,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "0d96761b6650a4c09aa41ca90a1085c223533c1d",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/inspector/section-chemgraph.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "60d43fe4f0b891733f07cfbcbcc756f02469962f",
+      "sourceSha256": "4fa5aa5450dae2a0c11cb185b286df3521e3c14b3bb813e498b50381ccecc02d",
+      "bytes": 9502,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "60d43fe4f0b891733f07cfbcbcc756f02469962f",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/inspector/section-chemmodel.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "7ba403dace3041dc1dd3f6f35d05e10fdaabe9a6",
+      "sourceSha256": "91a299e86f23f9a5e9ebab6739a764b9db43b36b246051646b757b4d082a08fc",
+      "bytes": 10168,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "7ba403dace3041dc1dd3f6f35d05e10fdaabe9a6",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/inspector/section-chromosome.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "618193e2f118a2eebf46cc2eb949f48184d74659",
+      "sourceSha256": "72698b2b516e786b167476d4235294c614bd665e7539107984565d8caf74c4d9",
+      "bytes": 8416,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "618193e2f118a2eebf46cc2eb949f48184d74659",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/inspector/section-coordplane.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "ecd14d54f871e43fef24de901f8f176991c2ba31",
+      "sourceSha256": "aca4aebb8d82b71275b338dcbb3447ede54a63d58053b7748e71df435f4f7f43",
+      "bytes": 5202,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "ecd14d54f871e43fef24de901f8f176991c2ba31",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/inspector/section-electrode.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "c2c9939c3ee5a54b641e414989bdff15243e8c86",
+      "sourceSha256": "49959b233fe9b7210ebdf51665f6c043d4be0894265fb4dafbbd5ffd583725e7",
+      "bytes": 5808,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "c2c9939c3ee5a54b641e414989bdff15243e8c86",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/inspector/section-field.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "ddbe27c2b9d57beb5d0d596460e47d7ec3aeeec2",
+      "sourceSha256": "f95c7439af213fde21ec083e217baccf80468994260d8f2967b2e446d3e58944",
+      "bytes": 10045,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "ddbe27c2b9d57beb5d0d596460e47d7ec3aeeec2",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/inspector/section-funcgraph.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "eb5238bb24de1fb9f1f01ba1274cee12d8e99abf",
+      "sourceSha256": "f1c8b9eca13dec5b46844d53b1e65673b284c6efae9d54ac7601ca9d8b171148",
+      "bytes": 5861,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "eb5238bb24de1fb9f1f01ba1274cee12d8e99abf",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/inspector/section-gauge.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "11c7689fe810a3c25dd7f26ca3200d23612146c8",
+      "sourceSha256": "dcff86a8740b2aee5f8c4c652823a422bb4b391b1f4d16ed13c81a630c3b6299",
+      "bytes": 4916,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "11c7689fe810a3c25dd7f26ca3200d23612146c8",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/inspector/section-global-image.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "3df88b4917b76cba01a44a06d5236067d72075ad",
+      "sourceSha256": "7dc949e8d14d7fc6c8d257bc811f3c6212887cfeced314f6134fd764f0d1863a",
+      "bytes": 17707,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "3df88b4917b76cba01a44a06d5236067d72075ad",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/inspector/section-groundarc.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "a89c875d65ec9a2888ce6865b814903c990e871c",
+      "sourceSha256": "21d29c4ec56bc91651bf8a17add14e227beafe4dd0df393a041157980c467552",
+      "bytes": 3977,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "a89c875d65ec9a2888ce6865b814903c990e871c",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/inspector/section-group.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "34aaafe4365176d8656c9858c545e4dd88ac1f40",
+      "sourceSha256": "16eba8d445e3bb6aa977fdf32d1687ca528f6a48f78c2cafcaecb852e7c9431c",
+      "bytes": 3223,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "34aaafe4365176d8656c9858c545e4dd88ac1f40",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/inspector/section-layers.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "4e6c207087004518c1cd2ac684afb41cfaa6f17a",
+      "sourceSha256": "fdcf9d2381d571af96cf7a4fd816557680ce83ac9fe80d1fadee8c9df30f754e",
+      "bytes": 5306,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "4e6c207087004518c1cd2ac684afb41cfaa6f17a",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/inspector/section-legend.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "895ca680a7f7d1eecfa499fe878d524fdf8960fd",
+      "sourceSha256": "bc0c32b628174b4a33bbf27402d2388bccb875fcc97fdd7cc5697a6499038c88",
+      "bytes": 6178,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "895ca680a7f7d1eecfa499fe878d524fdf8960fd",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/inspector/section-line.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "6d171403b1e43277afbd90c189a073b056bb3a1f",
+      "sourceSha256": "6e330290aadb46fefc833313b194cc8359480169831fcfcf1c75dc757352411c",
+      "bytes": 45930,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "6d171403b1e43277afbd90c189a073b056bb3a1f",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/inspector/section-neuron.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "7afc449f9616e3b577427a8304125a522719bb5c",
+      "sourceSha256": "786f96d9392c287a756d1be19a216d49a76b3a13fc2ede06b54edb5222986a29",
+      "bytes": 6835,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "7afc449f9616e3b577427a8304125a522719bb5c",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/inspector/section-orbital.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "f140a43a4c0e718e58c47c69b42a55be1ba6d6de",
+      "sourceSha256": "4540961a381166a763a753d61984151281310601f86ef59dc63a10ca35568d28",
+      "bytes": 6596,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "f140a43a4c0e718e58c47c69b42a55be1ba6d6de",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/inspector/section-parabola.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "6ca7b918c6fa0b0bfdb3d69a9ce92f2ba2deca94",
+      "sourceSha256": "fdae71ca336611ced7d5b4c6e657b380a6ab828bc13cd20f39a55d3b76442af1",
+      "bytes": 4110,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "6ca7b918c6fa0b0bfdb3d69a9ce92f2ba2deca94",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/inspector/section-particlebox.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "17f991a8451493c6e172933bedc10936508e3b35",
+      "sourceSha256": "760d36691f29d8c146131b0adb1ea7e1a485031dc12d87e8e084200277953cd9",
+      "bytes": 7403,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "17f991a8451493c6e172933bedc10936508e3b35",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/inspector/section-pedigree.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "e5ac906dfbbd63a4099fa3b41863d4940c1f8e71",
+      "sourceSha256": "68853f6954dc9e9a7efb526e6d8537373f1bf7627f4cfbe0dd145820d1d7d002",
+      "bytes": 7436,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "e5ac906dfbbd63a4099fa3b41863d4940c1f8e71",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/inspector/section-pendulum.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "6b0713cd55676543017ceefc3947c194436e55a6",
+      "sourceSha256": "3b3f81d3e0a8dbff4fc4fd409b09a6ccc9a7127b804fc2a074cb5b47bdc9d663",
+      "bytes": 5023,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "6b0713cd55676543017ceefc3947c194436e55a6",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/inspector/section-periodic.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "7229bac8e9a2568c55e19f60266ff586f6932f25",
+      "sourceSha256": "aadb11bc1dd0eacceb0193a51a67d09dc1430917b7433c66194e53f50cf1c1aa",
+      "bytes": 5218,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "7229bac8e9a2568c55e19f60266ff586f6932f25",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/inspector/section-protect.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "7e6317491844442bb76511b49afc65f0a92f83da",
+      "sourceSha256": "6c0218572a0fb987a1b04df33096b758354aa1f141cb2d3972ab45558ab68fd5",
+      "bytes": 2811,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "7e6317491844442bb76511b49afc65f0a92f83da",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/inspector/section-solid3d.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "13b79d18d79c7173cfc1ed3d095f24e6765a1ac0",
+      "sourceSha256": "10214c2fbe5d27fdfe0360d712c8a52737cba628c6e185ac9af59c39980aa58a",
+      "bytes": 13500,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "13b79d18d79c7173cfc1ed3d095f24e6765a1ac0",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/inspector/section-spring.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "1150629074344fa72ff03670a591adaf662abe01",
+      "sourceSha256": "a28e5ad2f79cd1d7b6f341fb7bf92c05b40703f1e00143efb1d617abf2c2f7e6",
+      "bytes": 5018,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "1150629074344fa72ff03670a591adaf662abe01",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/inspector/section-text.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "b44e8b8b2729d6124764bb182dec436d2ef64543",
+      "sourceSha256": "b90a4bdf83e539d95b20e7e113e36c4e437266511e7b048994fa8f3f1e00687f",
+      "bytes": 11190,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "b44e8b8b2729d6124764bb182dec436d2ef64543",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/inspector/section-vessel.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "8fb2eda108c5e9bf64f3e4ac2b4aa4bafc43e979",
+      "sourceSha256": "670e9425c64407d609d13689cfd401ecbdb1d5779c9b74495060e8129e441266",
+      "bytes": 7961,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "8fb2eda108c5e9bf64f3e4ac2b4aa4bafc43e979",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/inspector/widgets.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "08fc30fc99b3925fb8c21cf038cf4d828a50a1c6",
+      "sourceSha256": "a5f193e91cc23075e533c0e1093a25efb4ae1fa5e3af0237d0a97a5c2a957589",
+      "bytes": 6814,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "08fc30fc99b3925fb8c21cf038cf4d828a50a1c6",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/lineart.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "6e975f67b3c5f21c72904a645b47768a7f42414b",
+      "sourceSha256": "e361ffd27051c040908523e1471cd55b29da6bf79ad8408c0a68a5eb31a07fa6",
+      "bytes": 11061,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "6e975f67b3c5f21c72904a645b47768a7f42414b",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/modal-motion.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "5fd65b06a1e87b521902efed86b4bcf365c92d59",
+      "sourceSha256": "06827d4d65ad49d37760a084e85ec472e1e4ed09c02ddc486a4778c5141fadbe",
+      "bytes": 2203,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "5fd65b06a1e87b521902efed86b4bcf365c92d59",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/object-types.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "d6fca89a1569ba6cfc5f560741738addd2ef260e",
+      "sourceSha256": "05884b0a016464dc62cfa4a6cab1966131ef469f2b5ff9603ed5897ebe5d7284",
+      "bytes": 13602,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "d6fca89a1569ba6cfc5f560741738addd2ef260e",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/preview-backgrounds.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "52a0299bc711ac7f0cc9eeab9a116f2c7a69b952",
+      "sourceSha256": "cd7f8579a11a905e128ff7dfcf4719c3c6b829c6c08d5142b2cfe4edc318f15c",
+      "bytes": 3615,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "52a0299bc711ac7f0cc9eeab9a116f2c7a69b952",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/render.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "1b6e82c5bfb5ea185620366e5f90ee8023e8ad24",
+      "sourceSha256": "7aa83b7059b3cdf0e0d5308e40aada8b5fc117533f82014b39aa953a0a051b0e",
+      "bytes": 2954,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "1b6e82c5bfb5ea185620366e5f90ee8023e8ad24",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/render/axisbreak.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "4d43689c38a9f2176d827cdf3da83cec3257b3d7",
+      "sourceSha256": "1c1e8979d1c63575a1c0ae3fdc053c352c4e5af75b5b424fc0ace72c253bc66d",
+      "bytes": 5416,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "4d43689c38a9f2176d827cdf3da83cec3257b3d7",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/render/bilayer.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "65aea704224e510aa85b3f45e857c1110adaef8f",
+      "sourceSha256": "d09635cdaa179bcdb3751d7258382cd77e342e72a05de8f4e2bb87e72405e2e3",
+      "bytes": 9891,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "65aea704224e510aa85b3f45e857c1110adaef8f",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/render/bondgroup.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "fbe42d5005552077e123f92f415f8910e097e147",
+      "sourceSha256": "22107d8d5a725e7b1efce5a8960e143b87064b394ff12938bef6d0685e94186a",
+      "bytes": 10140,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "fbe42d5005552077e123f92f415f8910e097e147",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/render/brace.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "d4791a17d04970382b4f9be5f084a940580ae00e",
+      "sourceSha256": "6d435e586639ede003ce6feb84511ef5bb6724e9b0f5dcefd9d2c0b16e19257f",
+      "bytes": 8192,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "d4791a17d04970382b4f9be5f084a940580ae00e",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/render/chemchart.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "f2e7e57bafe535ea7874e8ad71d6bc7f118a185c",
+      "sourceSha256": "08870c28a3c5e2f0a3c440d74d216ae649e167861fb0004a7d7e0ac285d1e47b",
+      "bytes": 8826,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "f2e7e57bafe535ea7874e8ad71d6bc7f118a185c",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/render/chemgraph.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "a997e51bf5f3ef33c08edce7f4542feb7bb2636e",
+      "sourceSha256": "b68c3dd28a5eb11649ac4b90cd20169f6392be031a3261d90978466a3ab5212a",
+      "bytes": 12777,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "a997e51bf5f3ef33c08edce7f4542feb7bb2636e",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/render/chemmodel.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "837c4e008761ee77c89bce6bf7900f58e3330f93",
+      "sourceSha256": "a600b3f5131f9cffab7b84637079cb927de140960b1cbdd317cb0b9cc3e6aea6",
+      "bytes": 22665,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "837c4e008761ee77c89bce6bf7900f58e3330f93",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/render/chromosome.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "243034ee42f6d8c71f00ae036e6df9043e19ce44",
+      "sourceSha256": "d631b30acd813717f7501bb4e3753a9356d6301cdb530f13036d3c27d397431c",
+      "bytes": 8106,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "243034ee42f6d8c71f00ae036e6df9043e19ce44",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/render/circuit.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "a554afd32ec6786edf0ffe46adffd2d33c1718e5",
+      "sourceSha256": "67ca80487b1492a47a9cccd909df4255bd6341f0355d2b51afcabc33625b721e",
+      "bytes": 19644,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "a554afd32ec6786edf0ffe46adffd2d33c1718e5",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/render/coordplane.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "ea8155b21c3135505f02601eb510a69c04ca443b",
+      "sourceSha256": "2bf3c8f1294e6e86ec4ece942863a0a99faca67c0014b740d0b0a3aaf97b5699",
+      "bytes": 61588,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "ea8155b21c3135505f02601eb510a69c04ca443b",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/render/core.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "9bb038cc2fd33c169a13f7129a6120bdc9f995ba",
+      "sourceSha256": "3dc64f44ee1baf844d90f6497c0872ac2c03ea238e7254388549be49e1c3a3c0",
+      "bytes": 24090,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "9bb038cc2fd33c169a13f7129a6120bdc9f995ba",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/render/electrode.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "f7da0e6b679736efe50b5ac86a9eeb113af56156",
+      "sourceSha256": "f19d707259cfdb849511d2988169ca2ca61cdac7d364eafba0f72769c9e5beef",
+      "bytes": 10109,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "f7da0e6b679736efe50b5ac86a9eeb113af56156",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/render/field.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "5dfcb900ac192a1a9710701cc1c52564bb9b9f31",
+      "sourceSha256": "e6bf8f485dbcc66da63b03047a32ae789e6491f74217a501cabbcda0b9d76991",
+      "bytes": 20371,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "5dfcb900ac192a1a9710701cc1c52564bb9b9f31",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/render/fill.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "f06bbee90f8c6cbb7f49ec01b00cc9c4002b7fd9",
+      "sourceSha256": "1bde293dc15fab02a21cbd3f73d79bfca916b53aec57b830dd5bac2e2a8dafe9",
+      "bytes": 6722,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "f06bbee90f8c6cbb7f49ec01b00cc9c4002b7fd9",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/render/gauge.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "577bb15d2d4386ea20b8eb906779cbfc26d5a588",
+      "sourceSha256": "9179a5d854fd1a202c6dc00cce6b8046ea74ad2353d358cd2ca75391d25d6e74",
+      "bytes": 6401,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "577bb15d2d4386ea20b8eb906779cbfc26d5a588",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/render/graph-label.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "8d26dbd96f25dbb7e2bca514886857f9580e5a69",
+      "sourceSha256": "625dc02d57264bff37f5580263b8075739454612c67c866e8749d29af3f4341e",
+      "bytes": 11678,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "8d26dbd96f25dbb7e2bca514886857f9580e5a69",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/render/groundarc.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "bb54aa6a0f3925326f2a4139828eb61b39fef3b7",
+      "sourceSha256": "7259b3cab4f67b38eb02c0aba08b8a8194cad01befe9681e964891c81ae938d8",
+      "bytes": 4872,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "bb54aa6a0f3925326f2a4139828eb61b39fef3b7",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/render/labels.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "2daf041bd48e7ba5bcffc349c07c3870f60638a1",
+      "sourceSha256": "fd8c9f1b922aa2a0fd3c4d601ee1b61b6703e7493668c9e6d7998ef143babd6d",
+      "bytes": 25423,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "2daf041bd48e7ba5bcffc349c07c3870f60638a1",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/render/legend.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "8049aa1c5492d252b708935eb6ed506cf6e53b9b",
+      "sourceSha256": "4f2ec17b930e33932b7b11a1b742e9cb3037288880b605944748e7bad140b353",
+      "bytes": 8688,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "8049aa1c5492d252b708935eb6ed506cf6e53b9b",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/render/neuron.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "6167702f0c10772368254be8cfcae597defc1acf",
+      "sourceSha256": "b68aa5dbbfca7d6c74a1d66bbd5fce916acb80e6b0d2b761f9b811479fc734af",
+      "bytes": 10323,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "6167702f0c10772368254be8cfcae597defc1acf",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/render/optics-apparatus.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "e4dcecd49f28a23dd765790f740d1493192e1b4c",
+      "sourceSha256": "7c1267b1a3c430db79e60d4952742d1cf4fdd43b5c27f7556e0be1448787b8ba",
+      "bytes": 41426,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "e4dcecd49f28a23dd765790f740d1493192e1b4c",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/render/orbital.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "573aa26e4c6887d63afb4ecd6427c046686c23f3",
+      "sourceSha256": "7088b5ddbe47f218262c948032a5d3fdd613b36164ebc1f0c894bde8652bfa7f",
+      "bytes": 12587,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "573aa26e4c6887d63afb4ecd6427c046686c23f3",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/render/parabola.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "e3322d6e36a87363ceaf53704087417b1f85b7cd",
+      "sourceSha256": "652a8e7e0aed8869e2ba4ff5154ba33d4f1557071317046a3c829ec6fdfab77f",
+      "bytes": 4705,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "e3322d6e36a87363ceaf53704087417b1f85b7cd",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/render/particlebox.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "206675d6f139a9876059f4da5d6444ea20e2bb9f",
+      "sourceSha256": "f64ae0402eba9e22370809818a2b5c9a464c081d229385f7edd39b70b37b908b",
+      "bytes": 9986,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "206675d6f139a9876059f4da5d6444ea20e2bb9f",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/render/pedigree.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "6cba77f00b45a1dcc1e8643309228526c7b3a70b",
+      "sourceSha256": "487451ae5b0eab0e7172f94142d4a1a907e549f229bedfdffdcc74da74f9716d",
+      "bytes": 11294,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "6cba77f00b45a1dcc1e8643309228526c7b3a70b",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/render/pendulum.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "f45f5382f4b8b9ffea54da66f2c33d3562969b66",
+      "sourceSha256": "1f1f723b32084d923fee41a4e4c6c709a035495882b4612181af7dd8b29d9cc2",
+      "bytes": 6698,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "f45f5382f4b8b9ffea54da66f2c33d3562969b66",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/render/periodic.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "2e8c59c3e17810ab6fdd16cacfd5e7e23114bd0f",
+      "sourceSha256": "c958dc917cc229c5289b463e60806cd2eeb9d7384862b5b6739be2fcd2e8a4a0",
+      "bytes": 7996,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "2e8c59c3e17810ab6fdd16cacfd5e7e23114bd0f",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/render/shapes.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "6752b2f8067c94900849cfdf28296258dd929e18",
+      "sourceSha256": "7a0e64ea183a79c7fb2f05ca1dfcdaea6fd556713e6bd3a9c13604836e9438e4",
+      "bytes": 41206,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "6752b2f8067c94900849cfdf28296258dd929e18",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/render/solid3d.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "09370a04124efded3bed86fc1092fcbeb80d022d",
+      "sourceSha256": "af695c43840fbd7792d23eda1cb2821241ac1f1bf4af7040830864c8684238ac",
+      "bytes": 20948,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "09370a04124efded3bed86fc1092fcbeb80d022d",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/render/spring.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "2539fe377396f84f4cbe4d39bc4877db16354b5e",
+      "sourceSha256": "b3fb33d7976cbbfc8ad971b85cbfc8e531cc7c6788f3a6775abc0e8b17fe055e",
+      "bytes": 7944,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "2539fe377396f84f4cbe4d39bc4877db16354b5e",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/render/standing-wave.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "6cfd887064422bbb3edd1aca98931ce720e104e2",
+      "sourceSha256": "0fb37707686ff8fee60857981c9b516b4b478ee49b1e668a53285ebf8dfd7c6f",
+      "bytes": 6394,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "6cfd887064422bbb3edd1aca98931ce720e104e2",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/render/vessel.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "475301fa467c74ac5e3615f0373b4417cf6cd310",
+      "sourceSha256": "50dffa072703f0a7a32d58f06425328d9d7facba69fd84f7c8a740c551b98e32",
+      "bytes": 15445,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "475301fa467c74ac5e3615f0373b4417cf6cd310",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/smart-cutout.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "ead66ec02387d321067c197f49f8e389984947e2",
+      "sourceSha256": "b012e559a1d16b0d28bc9941a25ebee41222c1cbee76849309dd48bea98db621",
+      "bytes": 6748,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "ead66ec02387d321067c197f49f8e389984947e2",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/snap.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "4a430cf0b52610ef78cc94ca6c88012871d4ccda",
+      "sourceSha256": "479aa8b1d1c00ac3de486a96bdad8ed93c2bd9e6f331035ce9eb01960f7808f8",
+      "bytes": 42981,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "4a430cf0b52610ef78cc94ca6c88012871d4ccda",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/stepper.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "deb3771c2ad35d0a43c1ff85ccb88b5c6b1fddc9",
+      "sourceSha256": "407948443aa4110d606c92f6898e849995e885a78ed160dcf44277747e9058bc",
+      "bytes": 1051,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "deb3771c2ad35d0a43c1ff85ccb88b5c6b1fddc9",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/store.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "b2b579ca40110285fb51c0f22de72f19b57c03f3",
+      "sourceSha256": "9e2a933e7eba77202105af1afa2b74d271d3107395a562bd3b5d7c1897bc16b5",
+      "bytes": 1077,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "b2b579ca40110285fb51c0f22de72f19b57c03f3",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/style-mode.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "d413b50764423077b97e39efe95ea8e370b3298d",
+      "sourceSha256": "fafb0ec3ed19843d11895e0ca7171808d67ea6cf91b232bb59056cb1783fef6f",
+      "bytes": 1101,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "d413b50764423077b97e39efe95ea8e370b3298d",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/svg-assets.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "a79f2b72a31eca5f839a074882ed33231788f8c3",
+      "sourceSha256": "263190e253f021f5c351cae980d949e32d283bcbb95b4c3aa21a780651b79bc9",
+      "bytes": 10747,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "a79f2b72a31eca5f839a074882ed33231788f8c3",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/text-rendering.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "fc08e5196356bc418733370e210113a87884115a",
+      "sourceSha256": "e2ea7f4e2c30cac31e1151404c3f2ad84a25ed375664392b57c985950c27cb71",
+      "bytes": 3778,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "fc08e5196356bc418733370e210113a87884115a",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/tool-icons.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "099e20278771966ac28eaa3f7d1fde46359dedd7",
+      "sourceSha256": "c67b630d753c6baeab0d5f43e85b5646886e60b15ec5d13d5e1d07f83c52e66d",
+      "bytes": 17654,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "099e20278771966ac28eaa3f7d1fde46359dedd7",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/tools/free-draw.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "71890ee797390b27dba4da402da299042c09cdc1",
+      "sourceSha256": "d44f098dad495ce0e74a35fd8ce88ca2e649b6fa70e5b67b85dabca77e0e4921",
+      "bytes": 4246,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "71890ee797390b27dba4da402da299042c09cdc1",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/tools/id.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "74b46ce3eac2ebd9c74095a5c420ee86b6e5fee2",
+      "sourceSha256": "4674c303617a3f36cc2c77dda79cb99363f93cf957dd224209cb145479ec7b7d",
+      "bytes": 635,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "74b46ce3eac2ebd9c74095a5c420ee86b6e5fee2",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/tools/node-placement.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "d506601bf905e92f487d77f1c34b8a132b7d884b",
+      "sourceSha256": "47d9a38944a5b40f79b18fe49c5861dbac411a81d998c1e190135c89a92bb753",
+      "bytes": 5000,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "d506601bf905e92f487d77f1c34b8a132b7d884b",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/tooltip.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "6e1dd1ea111acd7ceabaa6457b293cd759a35253",
+      "sourceSha256": "fa23c03ac171c8c9f06390e5a3cc715d3544ff23b864e22c348f0a4fb27d5076",
+      "bytes": 5590,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "6e1dd1ea111acd7ceabaa6457b293cd759a35253",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/touch-drag.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "1a8426eb82c1f88ced34396f4eed614e3d17df94",
+      "sourceSha256": "78dd11ba751f4a1745bedd5ca587e16f72e7656fdaa5dc44fbba79cc85cac31b",
+      "bytes": 4685,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "1a8426eb82c1f88ced34396f4eed614e3d17df94",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "js/view-mode.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "51d0ef4b079a38dbe33d3f04654772a392394a6d",
+      "sourceSha256": "67641fd2ea8f13724a1041319fefade668ec1b30b1b7e9dd8ed459e7eaaecb3a",
+      "bytes": 4197,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "51d0ef4b079a38dbe33d3f04654772a392394a6d",
+      "comparisonRelation": "identical",
+      "rationale": "recursive root ESM import closure"
+    },
+    {
+      "path": "manifest.json",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "171620e3f25269a833f8a1dea355c5f9dee93417",
+      "sourceSha256": "42333e3bd642ce0dbdfc772e41e0f42e12ef28e8de641c32043fcda455795a09",
+      "bytes": 588,
+      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
+      "comparisonBlob": "171620e3f25269a833f8a1dea355c5f9dee93417",
+      "comparisonRelation": "identical",
+      "rationale": "declared package and root entry requirement"
+    }
+  ],
+  "taskChanges": [
+    {
+      "path": "package.json",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "a4f4580d89567d65ffbf952f8062be2bb037c4b6",
+      "sourceSha256": "2222c09c1c6836d63750edcf8dc14ddfc7f42cdd41e92a39045e711795328d98",
+      "currentSha256": "fe252e05a6147de579516da9cf0a128e2d2943d66b3a4d37776b210bf4c70d1c",
+      "rationale": "include preview/**/* in desktop package"
+    },
+    {
+      "path": "desktop/main.cjs",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "7880495e07765ebf188dd347f86ea87bda27592f",
+      "sourceSha256": "b57b6e03f7b979977f007041093d5cb7d9665c44d51d0f38091395817f2d41f4",
+      "currentSha256": "f87b93c5ad8a4edf462824726e328bc82befcae382026283519c60f5560b8678",
+      "rationale": "load canonical preview/index.html desktop entry"
+    },
+    {
+      "path": "js/svg-export.js",
+      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
+      "sourceBlob": "07983262d6aa8da5cec5d9ebea29ab26f7ed7866",
+      "sourceSha256": "3b74e3cfd4b985adddd1aedbbcb141896483f2f896f339befc09a099009a0197",
+      "currentSha256": "71f53e9dc3eba2670902d1c3fa3672a35fd8925c93a0d72d8f402b76aa9caaef",
+      "rationale": "export the matching-head PNG helper required by the retained root mcp-bridge import"
+    }
+  ],
+  "directEntryHashes": {
+    "preview": [
+      {
+        "path": "preview/assets/apple-touch-icon.png",
+        "sha256": "fb04497eefc90992d99e5d1e70b79d08873c4e9d8bbe194b151afd72c052b436",
+        "bytes": 26060
+      },
+      {
+        "path": "preview/assets/favicon.png",
+        "sha256": "1cf454e7bb8ce1c26f8c9127698afed9bfdc0e1a4c84a57977154b4593a5bb05",
+        "bytes": 5514
+      },
+      {
+        "path": "preview/assets/logo.svg",
+        "sha256": "32d034db852905d4eca2962274d144684f1c6186b70229b0cd8e602db0c2002a",
+        "bytes": 540
+      },
+      {
+        "path": "preview/css/ai-composition-editor.css",
+        "sha256": "5f0d9ca288a81e8d13a28024568eace5717d4680f4aa44ce9024f689505f3eb4",
+        "bytes": 2133
+      },
+      {
+        "path": "preview/css/ai-editable-assets.css",
+        "sha256": "55712ce1cb4367475bd94591878c14d4c6cefa23e408afab7393ed6ad3db9e68",
+        "bytes": 6296
+      },
+      {
+        "path": "preview/css/ai-panel.css",
+        "sha256": "fa4e86498706d543adc1f8a9be66cc87b350e9bace80e423407eabce1817b4c0",
+        "bytes": 111502
+      },
+      {
+        "path": "preview/css/ai-sharing.css",
+        "sha256": "12a5d4c2c40536d5379cb5a248b6f076ef2964ab082d866f8033f0c57a4b7dd1",
+        "bytes": 4424
+      },
+      {
+        "path": "preview/css/exam-library.css",
+        "sha256": "b1450634c530410ef20dea08c32d8d4876843978fb816ced370740db65679ff1",
+        "bytes": 13964
+      },
+      {
+        "path": "preview/css/inspector.css",
+        "sha256": "fcc8520664e5a19e997207ff36999dd3b7df843d0bf059a6075177d77d1cf34b",
+        "bytes": 17521
+      },
+      {
+        "path": "preview/css/lite-shell.css",
+        "sha256": "c5ad10525d399f4ab3b8fad321077592b8a68d31c3433b1116d96ef94b68d255",
+        "bytes": 22499
+      },
+      {
+        "path": "preview/css/mobile-image.css",
+        "sha256": "42ebae7ad0009c2d982990a94ebd9790188dc6a2f21e597dfdefc235ee909c59",
+        "bytes": 10482
+      },
+      {
+        "path": "preview/css/mode-transition.css",
+        "sha256": "1b8c78bccaacf885b88b432c82daefac634f81e704eb17703635a0113804c909",
+        "bytes": 1383
+      },
+      {
+        "path": "preview/css/panel-visibility.css",
+        "sha256": "8cedcdf8eacda168c67ab799b13837320447fc665d35c8a8e20c37ec81534a19",
+        "bytes": 13011
+      },
+      {
+        "path": "preview/css/parts-library.css",
+        "sha256": "682d81130f6758719f121f88d8bd3fbccbcac84e9d52c3f8bdb6470e16e5cc2d",
+        "bytes": 9430
+      },
+      {
+        "path": "preview/css/productization.css",
+        "sha256": "b2488a5dd98a7d736951ea221474e8f39b62a027d919e7734ba734e4a0c405ec",
+        "bytes": 10384
+      },
+      {
+        "path": "preview/css/style.css",
+        "sha256": "c8b13880421a2f3cae110eb5d89e4b3c89c605f8a6ca1e03896e10c5024e331c",
+        "bytes": 103813
+      },
+      {
+        "path": "preview/css/tutorial.css",
+        "sha256": "672bcc25e6c22f6ec0d6291ae0b9a95608d18952f1f93ab5cb93efcd05a47910",
+        "bytes": 29129
+      },
+      {
+        "path": "preview/css/unified-library.css",
+        "sha256": "5e0f61357953102bd646d838db5a1df258b2b7afac9de69d61456070d12612eb",
+        "bytes": 107174
+      },
+      {
+        "path": "preview/css/web-login.css",
+        "sha256": "af1d305c8da0c9a8b3828a0ecc50f35e44340ba53ec58fd113746a931c3dc6b6",
+        "bytes": 11325
+      },
+      {
+        "path": "preview/docs/credits.html",
+        "sha256": "ece5296864dbaf6ff950f4f922de1f50c4aca755f894cbf9c6d04a5590ef6bc3",
+        "bytes": 160106
+      },
+      {
+        "path": "preview/experiments/web-codex-auth/editor-bridge.js",
+        "sha256": "a280a6d7781c0d6d9bc1293daab529c8f0edbabd3751d4e9f14b7a225b2ba914",
+        "bytes": 4062
+      },
+      {
+        "path": "preview/js/ai-workbench.js",
+        "sha256": "91b8ca5f44b47e04da27dbcf517a13fef734bbe84abe0c35bd1f2331712097ca",
+        "bytes": 40596
+      },
+      {
+        "path": "preview/js/main.js",
+        "sha256": "8ab904df507e9aa204baff9c2568b8d3665eda925ac3a199b07e5f492a91ba02",
+        "bytes": 31633
+      },
+      {
+        "path": "preview/js/mcp-bridge.js",
+        "sha256": "49a5935d1f98117db95429450d02d96fbd76ef5598e2cd6e8893a59b77775ceb",
+        "bytes": 30632
+      },
+      {
+        "path": "preview/js/mobile-entry.js",
+        "sha256": "9f256a8af433d3ff4cb00236943ce39881039b9ca5dd12a809f00869d23e4e07",
+        "bytes": 534
+      },
+      {
+        "path": "preview/js/panel-visibility.js",
+        "sha256": "049765bd46213f1283baf8b4c3188392bd6200d3ba616d2333be076dc556fecb",
+        "bytes": 11053
+      },
+      {
+        "path": "preview/js/touch-drag.js",
+        "sha256": "78dd11ba751f4a1745bedd5ca587e16f72e7656fdaa5dc44fbba79cc85cac31b",
+        "bytes": 4685
+      },
+      {
+        "path": "preview/js/web-ai-connection.js",
+        "sha256": "fa75f3546842ba73b852ca1934ce71eaaa2f865217111a96f8ee4d59cb41b71c",
+        "bytes": 8209
+      },
+      {
+        "path": "preview/manifest.json",
+        "sha256": "1d4fe69a4224f42438901741fffd9d8324c7891acc0b9906ca4d5d1b7f714917",
+        "bytes": 572
+      }
+    ],
+    "stable": [
+      {
+        "path": "assets/apple-touch-icon.png",
+        "sha256": "fb04497eefc90992d99e5d1e70b79d08873c4e9d8bbe194b151afd72c052b436",
+        "bytes": 26060
+      },
+      {
+        "path": "assets/favicon.png",
+        "sha256": "1cf454e7bb8ce1c26f8c9127698afed9bfdc0e1a4c84a57977154b4593a5bb05",
+        "bytes": 5514
+      },
+      {
+        "path": "assets/logo.svg",
+        "sha256": "32d034db852905d4eca2962274d144684f1c6186b70229b0cd8e602db0c2002a",
+        "bytes": 540
+      },
+      {
+        "path": "css/ai-panel.css",
+        "sha256": "990f507ae8a20039f5cd862c7aad3cf6a425d13d851d31be3d70d4971dc59bdd",
+        "bytes": 31645
+      },
+      {
+        "path": "css/exam-library.css",
+        "sha256": "ef2703e328bb2fa0dce91b9a94839a4095365a8cb0f8c39418a457ab1841016a",
+        "bytes": 8232
+      },
+      {
+        "path": "css/inspector.css",
+        "sha256": "05f369cf3a609168480341fd56b40f5d510caa27ab67c949b27f21ae64ebfa3a",
+        "bytes": 11211
+      },
+      {
+        "path": "css/parts-library.css",
+        "sha256": "2bdf8f18e536a10fc3e6c3aaa63d3d7d1c44e761bd5fba0ad2f50d7e7f487571",
+        "bytes": 9692
+      },
+      {
+        "path": "css/style.css",
+        "sha256": "3d2ea13e1cbfce80c15bb1fc1f65ec66fadac1dca8e6c5679de7a0e55336ca69",
+        "bytes": 99100
+      },
+      {
+        "path": "css/tutorial.css",
+        "sha256": "d0706ab5bc5f07268f4109fedcf66d3ad082cd77cde8f6eaac917902e0193a5b",
+        "bytes": 28588
+      },
+      {
+        "path": "docs/credits.html",
+        "sha256": "82933924c73dcfab7762d12c318dfcab0f0ea46d3d460dd6ee83e396c384caec",
+        "bytes": 160168
+      },
+      {
+        "path": "js/main.js",
+        "sha256": "850e1f7e969a1e5aea5b8c9670ca929a179f471834bd3dd377a5f0d6efc60da2",
+        "bytes": 22989
+      },
+      {
+        "path": "js/mcp-bridge.js",
+        "sha256": "c1081d4e65677106b8ca2c5f2de1044f07cc5e7d5d13a9a1be19456cdb2537f2",
+        "bytes": 33589
+      },
+      {
+        "path": "js/touch-drag.js",
+        "sha256": "78dd11ba751f4a1745bedd5ca587e16f72e7656fdaa5dc44fbba79cc85cac31b",
+        "bytes": 4685
+      },
+      {
+        "path": "manifest.json",
+        "sha256": "42333e3bd642ce0dbdfc772e41e0f42e12ef28e8de641c32043fcda455795a09",
+        "bytes": 588
+      }
+    ]
+  },
+  "dynamicAssetManifests": [
+    {
+      "path": "assets/exam-library/manifest.json",
+      "itemCount": 3961,
+      "materializedPayloadCount": 3955,
+      "payloadPolicy": "catalog payloads are lazy optional stable-root library content; Task 2 restores only startup/draw/undo and canonical preview release dependencies"
+    },
+    {
+      "path": "assets/parts-library/manifest.json",
+      "itemCount": 991,
+      "materializedPayloadCount": 0,
+      "payloadPolicy": "catalog payloads are lazy optional stable-root library content; Task 2 restores only startup/draw/undo and canonical preview release dependencies"
+    }
+  ],
+  "deferredToTask3": [
+    "Electron/Node/runtime upgrade",
+    "version and release identity",
+    "test discovery and CI enforcement",
+    "package lock changes"
+  ]
+}
