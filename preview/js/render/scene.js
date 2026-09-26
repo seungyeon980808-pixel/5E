@@ -964,8 +964,15 @@ export function singleObjBBox(o, scene) {
     return { x: o.x - r, y: o.y - r, w: 2 * r, h: 2 * r };
   }
   if (o.type === "rightangle") {
-    const r = (o.size || 0) * 1.6;
-    return { x: o.x - r, y: o.y - r, w: 2 * r, h: 2 * r };
+    const size = Math.max(o.size || 4, 0.1);
+    const angle = (o.angle || 0) * Math.PI / 180;
+    const side = (o.orientation ?? 1) >= 0 ? 1 : -1;
+    const ux = Math.cos(angle), uy = Math.sin(angle);
+    const vx = -uy * side, vy = ux * side;
+    const xs = [o.x, o.x + ux * size, o.x + (ux + vx) * size, o.x + vx * size];
+    const ys = [o.y, o.y + uy * size, o.y + (uy + vy) * size, o.y + vy * size];
+    const x = Math.min(...xs), y = Math.min(...ys);
+    return { x, y, w: Math.max(...xs) - x, h: Math.max(...ys) - y };
   }
   if (TEXT_MEASURED_TYPES.has(o.type)) { // was: text|formula
     const el = scene.querySelector(`[data-id="${o.id}"]`);
