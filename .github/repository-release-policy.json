@@ -3,6 +3,9 @@
   "repository": "seungyeon980808-pixel/5E",
   "apply": false,
   "requiredStatusChecks": ["Test", "Release Identity"],
+  "requiredStatusChecksStrict": true,
+  "enforceAdmins": true,
+  "requireObservedCheckContextsBeforeApply": true,
   "protectedBranches": ["main", "codex/preview-1.6.0"],
   "pages": {
     "buildType": "legacy",
