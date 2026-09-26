@@ -275,3 +275,59 @@ test('ARCH-160-01: 100 real workbench disposals release listeners and observers'
   assert.equal(result.activeObservers, 0);
   assert.equal(result.panels, 0);
 });
+
+test('TPK-005: pane header resize writes after observer delivery and coalesces unchanged height', async (context) => {
+  const browser = await chromium.launch({ headless: true });
+  context.after(() => browser.close());
+  const page = await browser.newPage();
+  await page.setContent('<!doctype html><body></body>');
+  const indexSource = fs.readFileSync(path.join(root, 'preview/index.html'), 'utf8');
+  const rawWorkbench = fs.readFileSync(path.join(root, 'preview/js/ai-workbench.js'), 'utf8');
+  const workbenchSource = rawWorkbench
+    .replace(/^import .*;\n/, '')
+    .replace(/^export /gm, '')
+    .slice(0, rawWorkbench.replace(/^import .*;\n/, '').replace(/^export /gm, '').indexOf('\nif (typeof document !== "undefined")'));
+
+  const result = await page.evaluate(async ({ indexSource, workbenchSource }) => {
+    const parsed = new DOMParser().parseFromString(indexSource, 'text/html');
+    const panel = parsed.getElementById('ai-image-panel');
+    document.body.append(panel);
+    const observers = [];
+    window.ResizeObserver = class {
+      constructor(callback) { this.callback = callback; this.active = true; observers.push(this); }
+      observe() {}
+      disconnect() { this.active = false; }
+    };
+    const writes = [];
+    const nativeSetProperty = panel.style.setProperty.bind(panel.style);
+    panel.style.setProperty = (name, value, priority) => {
+      if (name === '--ai-pane-head-height') writes.push(value);
+      nativeSetProperty(name, value, priority);
+    };
+    const setup = new Function('composeReferenceImages', `${workbenchSource}; return setupAiWorkbench;`)(async () => null);
+    setup(panel);
+    const headObserver = observers[0];
+    headObserver.callback([]);
+    const duringDelivery = panel.style.getPropertyValue('--ai-pane-head-height');
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    const afterDelivery = panel.style.getPropertyValue('--ai-pane-head-height');
+    const writesAfterFirstDelivery = writes.length;
+    headObserver.callback([]);
+    await new Promise((resolve) => requestAnimationFrame(resolve));
+    const writesAfterUnchangedDelivery = writes.length;
+    panel.aiWorkbench.dispose();
+    return {
+      duringDelivery,
+      afterDelivery,
+      writesAfterFirstDelivery,
+      writesAfterUnchangedDelivery,
+      disconnected: headObserver.active === false,
+    };
+  }, { indexSource, workbenchSource });
+
+  assert.equal(result.duringDelivery, '');
+  assert.equal(result.afterDelivery, '16px');
+  assert.equal(result.writesAfterFirstDelivery, 1);
+  assert.equal(result.writesAfterUnchangedDelivery, 1);
+  assert.equal(result.disconnected, true);
+});
