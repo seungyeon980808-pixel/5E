@@ -30,6 +30,7 @@
     { "path": "tests/export-dialog-layout.cjs", "findingIds": ["TPK-004"] },
     { "path": "tests/test-preview-canvas-center.cjs", "findingIds": ["TPK-005"] },
     { "path": "tests/test-rightangle-selection-browser.cjs", "findingIds": ["TPK-005"] },
+    { "path": "tests/test-funcgraph-selection-browser.cjs", "findingIds": ["TPK-005"] },
     { "path": "tests/test-preview-lite-restored-workspace.cjs", "findingIds": ["TPK-005"] },
     { "path": "tests/test-preview-lite-inspector-controls.cjs", "findingIds": ["TPK-005"] },
     { "path": "tests/project-save-download.cjs", "findingIds": ["TPK-005"] },
