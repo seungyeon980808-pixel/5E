@@ -9,55 +9,63 @@ permissions:
   contents: write
 
 jobs:
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.21.0
+          cache: npm
+      - run: npm ci --no-audit
+      - run: npx playwright install --with-deps chromium webkit
+      - run: npm run test:unit
+      - run: npm run test:browser
+
+  release-identity:
+    name: Release Identity
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.21.0
+      - run: npm run verify:release-identity -- --sha "${{ github.sha }}" --tag "${{ github.ref_name }}"
+
   build-windows:
+    needs: [test, release-identity]
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24.21.0
           cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run unit tests
-        run: npm test
-
-      - name: Build Windows installer
-        run: npm run package:win
-
-      - name: Upload Windows installer
-        uses: actions/upload-artifact@v4
+      - run: npm ci --no-audit
+      - run: npm run verify:release-identity -- --sha "${{ github.sha }}" --tag "${{ github.ref_name }}"
+      - run: npm run package:win
+      - uses: actions/upload-artifact@v4
         with:
           name: 5e-windows
           path: release/*.exe
           if-no-files-found: error
 
   build-macos:
+    needs: [test, release-identity]
     runs-on: macos-latest
     env:
       CSC_IDENTITY_AUTO_DISCOVERY: "false"
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 24.21.0
           cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Run unit tests
-        run: npm test
-
-      - name: Build macOS installers
-        run: npm run package:mac
-
-      - name: Upload macOS installers
-        uses: actions/upload-artifact@v4
+      - run: npm ci --no-audit
+      - run: npm run verify:release-identity -- --sha "${{ github.sha }}" --tag "${{ github.ref_name }}"
+      - run: npm run package:mac
+      - uses: actions/upload-artifact@v4
         with:
           name: 5e-macos
           path: |
@@ -66,20 +74,15 @@ jobs:
           if-no-files-found: error
 
   publish-release:
+    needs: [build-windows, build-macos]
     runs-on: ubuntu-latest
-    needs:
-      - build-windows
-      - build-macos
     steps:
       - uses: actions/checkout@v4
-
-      - name: Download installers
-        uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v4
         with:
           pattern: 5e-*
           path: release-assets
           merge-multiple: true
-
       - name: Write SHA-256 checksums
         shell: bash
         run: |
@@ -88,7 +91,6 @@ jobs:
             | sort -z \
             | xargs -0 sha256sum \
             | sed 's#  \./#  #' > SHA256SUMS.txt
-
       - name: Publish GitHub Release
         shell: bash
         env:

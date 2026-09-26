@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "repository": "seungyeon980808-pixel/5E",
+  "apply": false,
+  "requiredStatusChecks": ["Test", "Release Identity"],
+  "protectedBranches": ["main", "codex/preview-1.6.0"],
+  "pages": {
+    "buildType": "legacy",
+    "sourceBranch": "codex/preview-1.6.0",
+    "sourcePath": "/"
+  },
+  "rollback": {
+    "removeRequiredStatusChecks": ["Test", "Release Identity"],
+    "restorePagesSourceFromRecordedPreApplyState": true
+  }
+}

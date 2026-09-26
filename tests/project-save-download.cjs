@@ -10,8 +10,11 @@ const previewUrl = process.env.PREVIEW_URL || 'http://127.0.0.1:8765/';
     const page = await browser.newPage({ viewport: { width: 1280, height: 900 } });
     const errors = [];
     page.on('pageerror', error => errors.push(String(error)));
+    await page.addInitScript(() => {
+      localStorage.setItem('5e.preview:5e.tutorial.bannerSeen', 'true');
+      localStorage.setItem('5e.tutorial.bannerSeen', 'true');
+    });
     await page.goto(previewUrl, { waitUntil: 'load' });
-    await page.evaluate(() => document.querySelector('.tut-welcome-overlay')?.remove());
     assert.equal(await page.evaluate(() => typeof window.showDirectoryPicker), 'undefined');
     assert.equal(await page.evaluate(() => typeof window.showSaveFilePicker), 'undefined');
     await page.locator('#file-menu-btn').click();
