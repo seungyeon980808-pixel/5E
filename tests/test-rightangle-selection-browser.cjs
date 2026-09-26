@@ -76,15 +76,44 @@ async function assertFiniteSingleFrame(page, label) {
   await frame.waitFor({ state: 'attached' });
   const values = await frame.evaluate((node) => ['x', 'y', 'width', 'height'].map((name) => node.getAttribute(name)));
   for (const [index, value] of values.entries()) assert.ok(Number.isFinite(Number(value)), `${label} frame attribute ${index} must be finite: ${value}`);
-  return values;
+  return Object.fromEntries(['x', 'y', 'w', 'h'].map((name, index) => [name, Number(values[index])]));
+}
+
+function rightAngleBounds(object) {
+  const size = Math.max(object.size || 4, 0.1);
+  const angle = (object.angle || 0) * Math.PI / 180;
+  const side = (object.orientation ?? 1) >= 0 ? 1 : -1;
+  const ux = Math.cos(angle);
+  const uy = Math.sin(angle);
+  const vx = -uy * side;
+  const vy = ux * side;
+  const p0 = { x: object.x, y: object.y };
+  const p1 = { x: p0.x + ux * size, y: p0.y + uy * size };
+  const p2 = { x: p1.x + vx * size, y: p1.y + vy * size };
+  const p3 = { x: p0.x + vx * size, y: p0.y + vy * size };
+  const xs = [p0.x, p1.x, p2.x, p3.x];
+  const ys = [p0.y, p1.y, p2.y, p3.y];
+  const minX = Math.min(...xs);
+  const minY = Math.min(...ys);
+  return { x: minX, y: minY, w: Math.max(...xs) - minX, h: Math.max(...ys) - minY };
+}
+
+async function assertRightAngleFrame(page, object, label) {
+  const actual = await assertFiniteSingleFrame(page, label);
+  const expected = rightAngleBounds(object);
+  for (const key of ['x', 'y', 'w', 'h']) {
+    assert.ok(Math.abs(actual[key] - expected[key]) < 1e-6, `${label} ${key} must match oriented right-angle bounds: expected ${expected[key]}, got ${actual[key]}`);
+  }
+  return { actual, expected };
 }
 
 async function selectMoveResizeRotate(page, id) {
   let target = page.locator(`[data-id="${id}"]`).first();
   await target.click({ force: true });
-  const frame = await assertFiniteSingleFrame(page, 'select');
   const selected = await stateSnapshot(page);
   assert.ok(selected.selectedIds.includes(id), 'rightangle must be selected');
+  const selectedObject = selected.objects.find((object) => object.id === id);
+  const initialFrame = await assertRightAngleFrame(page, selectedObject, 'select');
 
   let box = await target.boundingBox();
   assert.ok(box, 'rightangle must render before move');
@@ -95,7 +124,7 @@ async function selectMoveResizeRotate(page, id) {
   await page.mouse.up();
   const afterMove = await stateSnapshot(page);
   assert.notEqual(JSON.stringify(afterMove.objects.find((object) => object.id === id)), beforeMove, 'move must change rightangle geometry');
-  await assertFiniteSingleFrame(page, 'move');
+  const moveFrame = await assertRightAngleFrame(page, afterMove.objects.find((object) => object.id === id), 'move');
 
   const resizeHandle = page.locator('#handles [data-handle]').last();
   box = await resizeHandle.boundingBox();
@@ -107,10 +136,10 @@ async function selectMoveResizeRotate(page, id) {
   await page.mouse.up();
   const afterResize = await stateSnapshot(page);
   assert.notEqual(JSON.stringify(afterResize.objects.find((object) => object.id === id)), beforeResize, 'resize must change rightangle geometry');
-  await assertFiniteSingleFrame(page, 'resize');
+  const resizeFrame = await assertRightAngleFrame(page, afterResize.objects.find((object) => object.id === id), 'resize');
 
   await page.locator('[data-tool="rotate"]').click();
-  const rotateHandle = page.locator('#handles [data-handle]').first();
+  const rotateHandle = page.locator('#handles [data-handle="ne"]');
   box = await rotateHandle.boundingBox();
   assert.ok(box, 'rightangle rotate handle must render');
   const beforeRotate = JSON.stringify(afterResize.objects.find((object) => object.id === id));
@@ -120,9 +149,18 @@ async function selectMoveResizeRotate(page, id) {
   await page.mouse.up();
   const afterRotate = await stateSnapshot(page);
   assert.notEqual(JSON.stringify(afterRotate.objects.find((object) => object.id === id)), beforeRotate, 'rotate must change rightangle geometry');
+  assert.notEqual(afterRotate.objects.find((object) => object.id === id).angle, afterResize.objects.find((object) => object.id === id).angle, 'rotate must change rightangle angle');
   await page.locator('[data-tool="V"]').click();
-  await assertFiniteSingleFrame(page, 'rotate');
-  return { frame, object: afterRotate.objects.find((object) => object.id === id) };
+  const rotatedObject = afterRotate.objects.find((object) => object.id === id);
+  const rotateFrame = await assertRightAngleFrame(page, rotatedObject, 'rotate');
+
+  const orientation = page.locator('select.insp-input:has(option[value="-1"])');
+  await orientation.selectOption('-1');
+  await page.waitForFunction((selectedId) => import('./js/state.js?v=1.6.0-preview-labeler-0917-1111')
+    .then(({ state }) => state.get().objects.find((object) => object.id === selectedId)?.orientation === -1), id);
+  const oppositeOrientation = (await stateSnapshot(page)).objects.find((object) => object.id === id);
+  const oppositeFrame = await assertRightAngleFrame(page, oppositeOrientation, 'opposite orientation');
+  return { initialFrame, moveFrame, resizeFrame, rotateFrame, oppositeFrame, object: oppositeOrientation };
 }
 
 async function saveAndReopen(page, context, id) {
@@ -136,6 +174,8 @@ async function saveAndReopen(page, context, id) {
   const savedPath = path.join(evidence, 'rightangle-selection.5e');
   await download.saveAs(savedPath);
   const reopened = await context.newPage();
+  const reopenedErrors = [];
+  reopened.on('pageerror', (error) => reopenedErrors.push(error.message));
   await reopened.goto(`${base}?mode=pro&mobile=0`, { waitUntil: 'domcontentloaded' });
   await dismissWelcome(reopened);
   await reopened.locator('#file-menu-btn').click();
@@ -146,9 +186,16 @@ async function saveAndReopen(page, context, id) {
   if (await open.isVisible().catch(() => false)) await open.click();
   await reopened.waitForFunction((expectedId) => import('./js/state.js?v=1.6.0-preview-labeler-0917-1111')
     .then(({ state }) => state.get().objects.some((object) => object.id === expectedId)), id);
-  await reopened.locator(`[data-id="${id}"]`).first().click({ force: true });
-  const frame = await assertFiniteSingleFrame(reopened, 'reopen');
-  return { reopened, savedPath, frame };
+  const rendered = reopened.locator(`[data-id="${id}"]`).first();
+  try {
+    await rendered.waitFor({ state: 'attached' });
+  } catch (error) {
+    throw new Error(`${error.message}; reopen errors=${JSON.stringify(reopenedErrors)}`);
+  }
+  await rendered.click({ force: true });
+  const object = (await stateSnapshot(reopened)).objects.find((candidate) => candidate.id === id);
+  const frame = await assertRightAngleFrame(reopened, object, 'reopen');
+  return { reopened, savedPath, frame, object };
 }
 
 (async () => {

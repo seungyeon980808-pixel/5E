@@ -83,9 +83,22 @@ function rotPt(px, py, cx, cy, deg) {
            y: cy + (px - cx) * sin + (py - cy) * cos };
 }
 
+function rightAngleBounds(obj) {
+  const size = Math.max(obj.size || 4, 0.1);
+  const angle = (obj.angle || 0) * Math.PI / 180;
+  const side = (obj.orientation ?? 1) >= 0 ? 1 : -1;
+  const ux = Math.cos(angle), uy = Math.sin(angle);
+  const vx = -uy * side, vy = ux * side;
+  const xs = [obj.x, obj.x + ux * size, obj.x + (ux + vx) * size, obj.x + vx * size];
+  const ys = [obj.y, obj.y + uy * size, obj.y + (uy + vy) * size, obj.y + vy * size];
+  const x = Math.min(...xs), y = Math.min(...ys);
+  return { x, y, w: Math.max(...xs) - x, h: Math.max(...ys) - y };
+}
+
 /* ----- world position of the corner diagonally opposite to `corner` ----- */
 function getRotPivot(obj, corner) {
-  const { x, y, w, h, rotation } = obj;
+  const box = obj.type === "rightangle" ? rightAngleBounds(obj) : obj;
+  const { x, y, w, h, rotation } = box;
   const cx = x + w / 2, cy = y + h / 2;
   const deg = rotation || 0;
   switch (corner) {
