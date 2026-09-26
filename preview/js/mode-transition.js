@@ -8,19 +8,35 @@ export async function animateModeChange(change) {
       const transition = document.startViewTransition(async () => {
         await change();
       });
-      void transition.ready.catch(() => {});
       // The update promise propagates real failures; a skipped animation does not.
       await transition.updateCallbackDone;
       await transition.finished.catch(() => {});
     } else {
-      await change();
       const styles = getComputedStyle(root);
-      const duration = parseFloat(styles.getPropertyValue('--mode-motion-duration'));
-      const easing = styles.getPropertyValue('--mode-motion-easing').trim();
-      const animations = [...document.querySelectorAll('.app-shell-header, #panel-left, #panel-right')]
-        .filter(element => element.getBoundingClientRect().width > 0)
-        .map(element => element.animate([{ opacity: 0.35 }, { opacity: 1 }], { duration, easing }));
-      await Promise.all(animations.map(animation => animation.finished.catch(() => {})));
+      const blur = styles.getPropertyValue('--mode-motion-blur').trim();
+      const body = document.body;
+      const play = (frames, duration, easing) => body.animate(frames, { duration, easing, fill: 'both' });
+      const soften = play([{ filter: 'blur(0)' }, { filter: `blur(${blur})` }], 250, 'cubic-bezier(.45,0,.55,1)');
+      await soften.finished;
+      soften.cancel();
+      body.style.filter = `blur(${blur})`;
+      try {
+        const fadeOut = play([{ opacity: 1 }, { opacity: 0.55 }], 150, 'cubic-bezier(.45,0,.55,1)');
+        await fadeOut.finished;
+        fadeOut.cancel();
+        body.style.opacity = '0.55';
+        await change();
+        const fadeIn = play([{ opacity: 0.55 }, { opacity: 1 }], 150, 'cubic-bezier(.45,0,.55,1)');
+        await fadeIn.finished;
+        fadeIn.cancel();
+        body.style.opacity = '1';
+        const sharpen = play([{ filter: `blur(${blur})` }, { filter: 'blur(0)' }], 450, 'cubic-bezier(.4,0,.2,1)');
+        await sharpen.finished;
+        sharpen.cancel();
+      } finally {
+        body.style.filter = '';
+        body.style.opacity = '';
+      }
     }
   } finally {
     root.classList.remove('mode-transition');

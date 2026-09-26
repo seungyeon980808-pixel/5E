@@ -1,4 +1,4 @@
-import { initSettingsShortcuts, settingsShortcutRows, workflowShortcutRows } from './settings-shortcuts.js?v=1.6.0-preview-repair-0921';
+import { initSettingsShortcuts, settingsShortcutRows } from './settings-shortcuts.js?v=1.6.0-preview-repair-0921';
 import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-preview-labeler-0917-1111';
 /* ===== SETTINGS (설정 dropdown + 기본값 설정 modal) ===== */
 //
@@ -401,15 +401,16 @@ function openShortcutDialog() {
   const mod = mac ? "⌘" : "Ctrl";
   const groups = [
     ["설정", settingsShortcutRows()],
-    ["파일", [["프로젝트 저장", `${mod}+S`], ["이미지로 내보내기", "Alt+P"]]],
+    ["파일", [["프로젝트 저장", `${mod}+S`], ["이미지로 내보내기", mac ? "⌥P" : "Alt+P"]]],
     ["편집", [["실행 취소", `${mod}+Z`], ["다시 실행", `${mod}+Shift+Z`], ["복사", `${mod}+C`], ["붙여넣기", `${mod}+V`], ["삭제", "Delete"]]],
     ["도구", [["선택", "V"], ["회전", "R"], ["타원", "O"], ["사각형", "S"], ["직선", "L"], ["꺾은선", "P"], ["곡선", "C"], ["텍스트", "T"]]],
-    ["화면과 이동", [["미세 이동", "방향키"], ["큰 폭 이동", "Shift+방향키"], ["임시 화면 이동", "Space+드래그"], ["선택 해제", "Esc"]]],
-    ["라이브러리와 이미지", workflowShortcutRows()],
+    ["검색·명령", [["오브젝트 검색", `${mod}+F`], ["명령 팔레트", `${mod}+K`]]],
+    ["화면과 이동", [["미세 이동", "방향키"], ["큰 폭 이동", `${mod}+방향키`], ["임시 화면 이동", "Space+드래그"], ["선택 해제", "Esc"]]],
   ];
+  const paletteHint = `${mod}+K로 명령 팔레트를 열면 기본값·백업·복원·라이브러리·이미지 객체화·AI 이미지 변환·단축키 도움말을 검색할 수 있습니다.`;
   overlay.innerHTML = `<div class="modal shortcut-modal" role="dialog" aria-modal="true" aria-labelledby="shortcut-title"><style>
     .shortcut-modal{width:min(620px,calc(100vw - 32px));max-height:min(760px,calc(100vh - 32px));overflow:auto}.shortcut-head{display:flex;align-items:center;justify-content:space-between;gap:12px}.shortcut-platform{min-width:150px}.shortcut-list{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:16px 0}.shortcut-group{padding:12px;border:1px solid var(--border);border-radius:8px}.shortcut-group h3{margin:0 0 8px;font-size:13px}.shortcut-row{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:5px 0;color:var(--text-secondary);font-size:12px}.shortcut-row kbd{padding:2px 6px;border:1px solid var(--border);border-bottom-width:2px;border-radius:5px;background:var(--bg-input);color:var(--text-primary);font:11px/1.5 "IBM Plex Mono",monospace}@media(max-width:560px){.shortcut-list{grid-template-columns:1fr}}
-  </style><div class="shortcut-head"><h2 class="modal-title" id="shortcut-title">키보드 단축키</h2><select class="modal-select shortcut-platform" data-shortcut-platform aria-label="단축키 기준"><option value="auto">자동 감지</option><option value="mac">Mac (⌘)</option><option value="windows">Windows (Ctrl)</option></select></div><div class="shortcut-list">${groups.map(([title, entries]) => `<section class="shortcut-group"><h3>${title}</h3>${entries.map(([label, key]) => `<div class="shortcut-row"><span>${label}</span><kbd>${key}</kbd></div>`).join("")}</section>`).join("")}</div><div class="modal-actions"><button type="button" class="modal-btn modal-btn-primary" data-close>닫기</button></div></div>`;
+  </style><div class="shortcut-head"><h2 class="modal-title" id="shortcut-title">키보드 단축키</h2><select class="modal-select shortcut-platform" data-shortcut-platform aria-label="단축키 기준"><option value="auto">자동 감지</option><option value="mac">Mac (⌘)</option><option value="windows">Windows (Ctrl)</option></select></div><p class="pref-note">${paletteHint}</p><div class="shortcut-list">${groups.map(([title, entries]) => `<section class="shortcut-group"><h3>${title}</h3>${entries.map(([label, key]) => `<div class="shortcut-row"><span>${label}</span><kbd>${key}</kbd></div>`).join("")}</section>`).join("")}</div><div class="modal-actions"><button type="button" class="modal-btn modal-btn-primary" data-close>닫기</button></div></div>`;
   document.body.append(overlay);
   const select = overlay.querySelector("[data-shortcut-platform]");
   select.value = getShortcutPlatform();

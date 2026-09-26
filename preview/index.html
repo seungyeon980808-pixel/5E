@@ -56,8 +56,8 @@
   <link rel="stylesheet" href="css/web-login.css?v=1.6.0-preview-ui-180-fs-0921-r2" />
   <script>window.FIVE_E_PROJECT_PACKAGE_API_URL="";window.FIVE_E_PROJECT_PACKAGE_TARGETS=[];</script>
   <link rel="stylesheet" href="css/ai-sharing.css?v=1.6.0-preview-emerald-polish-0921" />
-  <link rel="stylesheet" href="css/lite-shell.css?v=lite-main-0925" />
-  <link rel="stylesheet" href="css/mode-transition.css?v=mode-switch-0925" />
+  <link rel="stylesheet" href="css/lite-shell.css?v=watermark-focus-0925" />
+  <link rel="stylesheet" href="css/mode-transition.css?v=watermark-focus-0925" />
 </head>
 <body>
   <div class="desktop-titlebar" aria-hidden="true">
@@ -66,18 +66,105 @@
   </div>
   <!-- ===== APP SHELL (DESIGN §7 three-panel skeleton) ===== -->
   <div class="app">
+<header class="app-shell-header">
+<div class="canvas-toolbar">
+<div class="toolbar-history" role="group" aria-label="작업 기록"><button id="undo-btn" class="topbar-btn icon-btn" type="button"
+                title="되돌리기 (Ctrl+Z)" aria-label="되돌리기" disabled>↶</button><button id="redo-btn" class="topbar-btn icon-btn" type="button"
+                title="다시 실행 (Ctrl+Shift+Z)" aria-label="다시 실행" disabled>↷</button></div>
+<div class="toolbar-canvas"><div class="toolbar-document">
+
+        <a class="app-brand" href="https://seungyeon980808-pixel.github.io/personal_site/projects/physics-draw.html"
+           target="_blank" rel="noopener" title="5E (sciEnceEducationalExamEasyEditor) · 기능 안내 페이지">5E</a>
+        <span class="tb-sep" aria-hidden="true"></span>
+        <!-- 설정 dropdown: 기본값 설정 (localStorage) + 단축키 설정 (준비 중) -->
+        <div class="file-menu">
+          <button id="settings-menu-btn" class="topbar-btn shell-icon-button" type="button"
+                  aria-haspopup="true" aria-expanded="false" aria-label="설정" data-shell-tip="설정">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" aria-hidden="true">
+              <path d="M3 5h14M3 10h14M3 15h14"/><circle cx="7" cy="5" r="1.7" fill="var(--bg-panel)"/><circle cx="13" cy="10" r="1.7" fill="var(--bg-panel)"/><circle cx="8.5" cy="15" r="1.7" fill="var(--bg-panel)"/>
+            </svg>
+          </button>
+          <div id="settings-menu-list" class="file-menu-list" role="menu" hidden>
+            <button id="open-defaults" class="file-menu-item" type="button" role="menuitem"
+                    data-desc="새 도형과 글자의 선·채우기·글꼴 기본값을 정합니다.">도구 기본값…</button>
+            <button id="open-screen" class="file-menu-item" type="button" role="menuitem"
+                    data-desc="화면 크기와 편집 환경을 설정합니다.">환경 설정…</button>
+            <button id="settings-export" class="file-menu-item" type="button" role="menuitem"
+                    data-desc="개인 설정·라이브러리·현재 프로젝트를 백업 파일로 저장합니다.">백업 파일 만들기…</button>
+            <button id="settings-import" class="file-menu-item" type="button" role="menuitem"
+                    data-desc="저장해 둔 백업 파일에서 작업 환경을 복원합니다.">백업에서 복원…</button>
+            <button id="open-shortcuts" class="file-menu-item" type="button" role="menuitem"
+                    data-desc="현재 키보드 단축키를 기능별로 확인합니다.">키보드 단축키…</button>
+            <div id="settings-menu-desc" class="file-menu-desc">설정 작업을 선택하세요.</div>
+          </div>
+        </div>
+        <!-- 파일 dropdown: project I/O (JSON) + image export (PNG/SVG) -->
+        <div class="file-menu">
+          <button id="file-menu-btn" class="topbar-btn shell-icon-button" type="button"
+                  aria-haspopup="true" aria-expanded="false" aria-label="파일" data-shell-tip="파일">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M2.75 5.75h5.1l1.55 1.7h7.85v7.8H2.75z"/><path d="M2.75 5.75V4.1h4.2l1.55 1.65"/>
+            </svg>
+          </button>
+          <div id="file-menu-list" class="file-menu-list" role="menu" hidden>
+            <button id="project-save" class="file-menu-item" type="button" role="menuitem"
+                    data-desc="현재 작업을 나중에 다시 편집할 수 있는 프로젝트 파일로 저장합니다.">프로젝트 저장 <span class="menu-kbd">Ctrl+S</span></button>
+            <button id="project-open" class="file-menu-item" type="button" role="menuitem"
+                    data-desc="저장해 둔 프로젝트 파일을 열어 이어서 편집합니다.">프로젝트 불러오기</button>
+            <button id="image-import" class="file-menu-item file-menu-parent" type="button" role="menuitem"
+                    aria-haspopup="true" aria-expanded="false"
+                    data-desc="여러 이미지를 한 페이지에 모아 넣거나, 페이지별로 하나씩 나눠 불러옵니다.">이미지 불러오기 <span class="menu-caret" aria-hidden="true">▸</span></button>
+            <button id="image-export" class="file-menu-item" type="button" role="menuitem"
+                    data-desc="현재 그림을 PNG 또는 JPG 이미지 파일로 저장합니다.">이미지로 내보내기 <span class="menu-kbd">Alt+P</span></button>
+            <div id="file-menu-desc" class="file-menu-desc">파일 작업을 선택하세요.</div>
+          </div>
+        </div>
+        <button id="sharing-btn" class="topbar-btn shell-icon-button" type="button"
+                aria-label="공유" data-shell-tip="공유" aria-haspopup="dialog">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M10 12V2.75m-3 3 3-3 3 3M5 8.5H3.75v8h12.5v-8H15"/>
+          </svg>
+        </button>
+        <!-- 튜토리얼: 실제 화면 위에서 짚어 주는 안내(js/tutorial.js).
+             처음 온 사람이 찾을 수 있어야 하므로 드롭다운 안이 아니라 상단바에 직접 둔다. -->
+        <button id="tutorial-btn" class="topbar-btn shell-icon-button" type="button"
+                aria-label="튜토리얼" data-shell-tip="튜토리얼">
+          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.45" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M2.75 4.25c2.75-.8 5-.35 7.25 1.35v10.15c-2.25-1.7-4.5-2.15-7.25-1.35zM17.25 4.25c-2.75-.8-5-.35-7.25 1.35v10.15c2.25-1.7 4.5-2.15 7.25-1.35z"/><path d="m11.95 8.2 2.55 1.8-2.55 1.8z" fill="currentColor" stroke="none"/>
+          </svg>
+        </button>
+        <button id="mcp-bridge-btn" class="topbar-btn mcp-bridge-btn" type="button"
+                data-mcp-entrypoint
+                title="AI로 그리기 — 클릭: 연결 시도 / 설치 안내" aria-label="MCP 연결 상태" aria-pressed="false" hidden>
+          MCP <span class="mcp-dot" aria-hidden="true"></span>
+        </button>
+
+      </div></div>
+<div class="toolbar-inspector-controls" role="group" aria-label="계정 및 화면 조작">
+          <div class="canvas-global-controls" role="group" aria-label="계정 및 화면 조작">
+            <button id="theme-toggle" class="topbar-btn icon-btn theme-toggle" type="button" title="흑백 모드 끄기" aria-label="흑백 모드 끄기" aria-pressed="true">
+              <svg viewBox="0 0 20 20" aria-hidden="true">
+                <circle cx="10" cy="10" r="6.5" fill="none" stroke="currentColor" stroke-width="1.5" />
+                <path d="M10 3.5a6.5 6.5 0 0 1 0 13z" fill="currentColor" />
+              </svg>
+            </button>
+            <button id="fullscreen-toggle" class="topbar-btn fullscreen-toggle" type="button"
+                    title="전체화면 (Alt+Enter)" aria-label="전체화면" aria-pressed="false">
+              <svg viewBox="0 0 20 20" aria-hidden="true">
+                <path d="M3.5 7V3.5H7M13 3.5h3.5V7M16.5 13v3.5H13M7 16.5H3.5V13" />
+              </svg>
+            </button>
+          </div>
+
+        </div>
+<div class="panel-shell-toggles" role="group" aria-label="편집기 패널"><button id="drawer-left-toggle" class="panel-visibility-toggle" data-panel-toggle="left" type="button"
+                aria-controls="panel-left" aria-expanded="true" title="도구 패널 접기"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 3.5h14v13H3z M7 3.5v13" /></svg><span class="panel-toggle-label">도구</span></button><button id="drawer-right-toggle" class="panel-visibility-toggle" data-panel-toggle="right" type="button"
+                  aria-controls="panel-right" aria-expanded="true" title="속성 패널 접기"><svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 3.5h14v13H3z M13 3.5v13" /></svg><span class="panel-toggle-label">속성</span></button></div>
+</div>
+</header>
     <!-- ----- LEFT: tools (V/R now; more shapes land later) ----- -->
     <aside class="panel panel-left" id="panel-left">
-      <div class="panel-utility-bar" role="group" aria-label="도구 패널 조작">
-        <button class="panel-dock-toggle" type="button" data-panel-internal-toggle="left"
-                aria-expanded="true" aria-label="도구 패널 접기">
-          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 3.5h14v13H3z M7 3.5v13" /></svg>
-        </button>
-        <button id="undo-btn" class="topbar-btn icon-btn" type="button"
-                title="되돌리기 (Ctrl+Z)" aria-label="되돌리기" disabled>↶</button>
-        <button id="redo-btn" class="topbar-btn icon-btn" type="button"
-                title="다시 실행 (Ctrl+Shift+Z)" aria-label="다시 실행" disabled>↷</button>
-      </div>
+
       <div class="tool-list" id="tool-list">
         <div class="tool-section">
           <div class="tool-section-header">공통 도구 <span class="toggle-icon">▾</span></div>
@@ -196,7 +283,7 @@
           <div class="tool-section-body tool-section-body-wide">
             <div class="subject-switch" id="subject-switch" role="tablist" aria-label="오브젝트 과목"></div>
             <button class="object-panel-search" type="button" id="object-search-trigger"
-                    title="검색 (Ctrl+F)" aria-label="검색 (Ctrl+F)">
+                    title="검색 (Ctrl+F)" aria-label="검색 (Ctrl+F)" aria-keyshortcuts="Control+F Meta+F">
               <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><circle cx="8.5" cy="8.5" r="5.5"/><line x1="12.8" y1="12.8" x2="17" y2="17"/></svg>
               <span>검색</span>
             </button>
@@ -223,93 +310,7 @@
 
     <!-- ----- CENTER: canvas (the only working panel in 1A) ----- -->
     <main class="panel panel-center">
-      <div class="canvas-toolbar">
-        <button id="drawer-left-toggle" class="panel-edge-toggle" type="button"
-                aria-controls="panel-left" aria-expanded="true" title="도구 패널 접기">도구</button>
-        <a class="app-brand" href="https://seungyeon980808-pixel.github.io/personal_site/projects/physics-draw.html"
-           target="_blank" rel="noopener" title="5E (sciEnceEducationalExamEasyEditor) · 기능 안내 페이지">5E</a>
-        <span class="tb-sep" aria-hidden="true"></span>
-        <!-- 설정 dropdown: 기본값 설정 (localStorage) + 단축키 설정 (준비 중) -->
-        <div class="file-menu">
-          <button id="settings-menu-btn" class="topbar-btn shell-icon-button" type="button"
-                  aria-haspopup="true" aria-expanded="false" aria-label="설정" data-shell-tip="설정">
-            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" aria-hidden="true">
-              <path d="M3 5h14M3 10h14M3 15h14"/><circle cx="7" cy="5" r="1.7" fill="var(--bg-panel)"/><circle cx="13" cy="10" r="1.7" fill="var(--bg-panel)"/><circle cx="8.5" cy="15" r="1.7" fill="var(--bg-panel)"/>
-            </svg>
-          </button>
-          <div id="settings-menu-list" class="file-menu-list" role="menu" hidden>
-            <button id="open-defaults" class="file-menu-item" type="button" role="menuitem"
-                    data-desc="새 도형과 글자의 선·채우기·글꼴 기본값을 정합니다.">도구 기본값…</button>
-            <button id="open-screen" class="file-menu-item" type="button" role="menuitem"
-                    data-desc="화면 크기와 편집 환경을 설정합니다.">환경 설정…</button>
-            <button id="settings-export" class="file-menu-item" type="button" role="menuitem"
-                    data-desc="개인 설정·라이브러리·현재 프로젝트를 백업 파일로 저장합니다.">백업 파일 만들기…</button>
-            <button id="settings-import" class="file-menu-item" type="button" role="menuitem"
-                    data-desc="저장해 둔 백업 파일에서 작업 환경을 복원합니다.">백업에서 복원…</button>
-            <button id="open-shortcuts" class="file-menu-item" type="button" role="menuitem"
-                    data-desc="현재 키보드 단축키를 기능별로 확인합니다.">키보드 단축키…</button>
-            <div id="settings-menu-desc" class="file-menu-desc">설정 작업을 선택하세요.</div>
-          </div>
-        </div>
-        <!-- 파일 dropdown: project I/O (JSON) + image export (PNG/SVG) -->
-        <div class="file-menu">
-          <button id="file-menu-btn" class="topbar-btn shell-icon-button" type="button"
-                  aria-haspopup="true" aria-expanded="false" aria-label="파일" data-shell-tip="파일">
-            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M2.75 5.75h5.1l1.55 1.7h7.85v7.8H2.75z"/><path d="M2.75 5.75V4.1h4.2l1.55 1.65"/>
-            </svg>
-          </button>
-          <div id="file-menu-list" class="file-menu-list" role="menu" hidden>
-            <button id="project-save" class="file-menu-item" type="button" role="menuitem"
-                    data-desc="현재 작업을 나중에 다시 편집할 수 있는 프로젝트 파일로 저장합니다.">프로젝트 저장 <span class="menu-kbd">Ctrl+S</span></button>
-            <button id="project-open" class="file-menu-item" type="button" role="menuitem"
-                    data-desc="저장해 둔 프로젝트 파일을 열어 이어서 편집합니다.">프로젝트 불러오기</button>
-            <button id="image-import" class="file-menu-item file-menu-parent" type="button" role="menuitem"
-                    aria-haspopup="true" aria-expanded="false"
-                    data-desc="여러 이미지를 한 페이지에 모아 넣거나, 페이지별로 하나씩 나눠 불러옵니다.">이미지 불러오기 <span class="menu-caret" aria-hidden="true">▸</span></button>
-            <button id="image-export" class="file-menu-item" type="button" role="menuitem"
-                    data-desc="현재 그림을 PNG 또는 JPG 이미지 파일로 저장합니다.">이미지로 내보내기 <span class="menu-kbd">Alt+P</span></button>
-            <div id="file-menu-desc" class="file-menu-desc">파일 작업을 선택하세요.</div>
-          </div>
-        </div>
-        <button id="sharing-btn" class="topbar-btn shell-icon-button" type="button"
-                aria-label="공유" data-shell-tip="공유" aria-haspopup="dialog">
-          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M10 12V2.75m-3 3 3-3 3 3M5 8.5H3.75v8h12.5v-8H15"/>
-          </svg>
-        </button>
-        <!-- 튜토리얼: 실제 화면 위에서 짚어 주는 안내(js/tutorial.js).
-             처음 온 사람이 찾을 수 있어야 하므로 드롭다운 안이 아니라 상단바에 직접 둔다. -->
-        <button id="tutorial-btn" class="topbar-btn shell-icon-button" type="button"
-                aria-label="튜토리얼" data-shell-tip="튜토리얼">
-          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.45" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M2.75 4.25c2.75-.8 5-.35 7.25 1.35v10.15c-2.25-1.7-4.5-2.15-7.25-1.35zM17.25 4.25c-2.75-.8-5-.35-7.25 1.35v10.15c2.25-1.7 4.5-2.15 7.25-1.35z"/><path d="m11.95 8.2 2.55 1.8-2.55 1.8z" fill="currentColor" stroke="none"/>
-          </svg>
-        </button>
-        <button id="mcp-bridge-btn" class="topbar-btn mcp-bridge-btn" type="button"
-                data-mcp-entrypoint
-                title="AI로 그리기 — 클릭: 연결 시도 / 설치 안내" aria-label="MCP 연결 상태" aria-pressed="false" hidden>
-          MCP <span class="mcp-dot" aria-hidden="true"></span>
-        </button>
-        <div class="toolbar-inspector-controls" role="group" aria-label="계정 및 화면 조작">
-          <div class="canvas-global-controls" role="group" aria-label="계정 및 화면 조작">
-            <button id="theme-toggle" class="topbar-btn icon-btn theme-toggle" type="button" title="흑백 모드 끄기" aria-label="흑백 모드 끄기" aria-pressed="true">
-              <svg viewBox="0 0 20 20" aria-hidden="true">
-                <circle cx="10" cy="10" r="6.5" fill="none" stroke="currentColor" stroke-width="1.5" />
-                <path d="M10 3.5a6.5 6.5 0 0 1 0 13z" fill="currentColor" />
-              </svg>
-            </button>
-            <button id="fullscreen-toggle" class="topbar-btn fullscreen-toggle" type="button"
-                    title="전체화면 (Alt+Enter)" aria-label="전체화면" aria-pressed="false">
-              <svg viewBox="0 0 20 20" aria-hidden="true">
-                <path d="M3.5 7V3.5H7M13 3.5h3.5V7M16.5 13v3.5H13M7 16.5H3.5V13" />
-              </svg>
-            </button>
-          </div>
-          <button id="drawer-right-toggle" class="panel-edge-toggle" type="button"
-                  aria-controls="panel-right" aria-expanded="true" title="속성 패널 접기">속성</button>
-        </div>
-      </div>
+
 
       <div class="canvas-wrap">
         <!-- ruler-container: CSS grid — corner | h-ruler / v-ruler | canvas -->
@@ -340,12 +341,12 @@
       <div class="canvas-bottom-bar">
         <div class="image-workflow-hub" role="group" aria-label="이미지 작업">
           <button class="object-search-trigger" type="button" id="exam-library-open"
-                  title="라이브러리 (Ctrl+L)" aria-label="라이브러리 (Ctrl+L)" aria-keyshortcuts="Control+L Meta+L">
+                  title="라이브러리" aria-label="라이브러리">
             <svg class="search-trigger-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="14" height="14" rx="2"/><line x1="6.5" y1="7" x2="13.5" y2="7"/><line x1="6.5" y1="10" x2="13.5" y2="10"/><line x1="6.5" y1="13" x2="10.5" y2="13"/></svg>
             <span class="search-trigger-label">라이브러리</span>
           </button>
           <span class="image-workflow-divider" aria-hidden="true"></span>
-          <button class="object-search-trigger" type="button" id="image-objectify-open" title="이미지 객체화 (Ctrl+T)" aria-label="이미지 객체화">
+          <button class="object-search-trigger" type="button" id="image-objectify-open" title="이미지 객체화" aria-label="이미지 객체화">
             <svg class="search-trigger-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 3h6v6H3zM11 3h6v6h-6zM3 11h6v6H3z"/><path stroke-dasharray="2 2" d="M11 11h6v6h-6z"/></svg>
             <span class="search-trigger-label">이미지 객체화</span>
           </button>
@@ -397,12 +398,7 @@
     <!-- ----- RIGHT: inspector ----- -->
     <aside class="panel panel-right" id="panel-right">
       <div id="inspector-resize"></div>
-      <div class="panel-utility-bar panel-utility-bar-right" role="group" aria-label="속성 패널 조작">
-        <button class="panel-dock-toggle" type="button" data-panel-internal-toggle="right"
-                aria-expanded="true" aria-label="속성 패널 접기">
-          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 3.5h14v13H3z M13 3.5v13" /></svg>
-        </button>
-      </div>
+
       <div id="inspector">
         <div id="inspector-empty">선택된 오브젝트 없음</div>
         <div id="inspector-content" style="display:none">
@@ -719,7 +715,7 @@
   <!-- 모바일: 캔버스 터치를 마우스 이벤트로 변환(그리기·이동). 모듈 그래프 밖 독립 스크립트. -->
   <script src="js/touch-drag.js?v=1.6.0-preview-labeler-0917-1111"></script>
   <script type="module" src="js/ai-workbench.js?v=1.6.0-preview-sharing-0918-2108"></script>
-  <script type="module" src="js/main.js?v=lite-main-0925"></script>
+  <script type="module" src="js/main.js?v=watermark-focus-0925"></script>
   <!-- MCP 통로: localhost에서 MCP 서버가 떠 있을 때만 붙는다(배포본은 무동작) -->
   <script type="module" src="js/mcp-bridge.js?v=1.6.0-preview-lite-hybrid-0922"></script>
 </body>

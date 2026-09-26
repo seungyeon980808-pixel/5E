@@ -49,6 +49,8 @@ export function getRenderScale() {
   return (m && m.a) ? m.a : getZoom();
 }
 
+const VIEW_CENTER_OFFSET_X_MM = 5;
+
 let canvasLock = { mode: "free", worldX: 0, worldY: 0, screenX: 0, screenY: 0 };
 
 function liteMode() {
@@ -158,6 +160,7 @@ function clampZoom(svg, s) {
 export function initViewport(svg, state, onChange) {
   _svgRef = svg;
   _stateRef = state;
+  centerView(state);
 
   const ZOOM_STEP = 1.0015; // per wheel delta unit; >1 so deltaY<0 zooms in
 
@@ -389,10 +392,10 @@ export function initViewport(svg, state, onChange) {
   window.addEventListener("resize", preserveProjection);
 }
 
-/* ----- centerView: reposition so artboard (world origin) is centered in view ----- */
+/* ----- centerView: restore the default visual alignment ----- */
 export function centerView(state) {
   state.update((s) => {
-    s.viewBox.x = -s.viewBox.w / 2;
+    s.viewBox.x = -s.viewBox.w / 2 - (liteMode() ? 0 : VIEW_CENTER_OFFSET_X_MM);
     s.viewBox.y = -s.viewBox.h / 2;
   });
 }

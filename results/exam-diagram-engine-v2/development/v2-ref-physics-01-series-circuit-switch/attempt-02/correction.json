@@ -1,9 +1,0 @@
-{
-  "attempt": 2,
-  "parent_attempt": 1,
-  "failure_tags": ["BENCHMARK_DEFECT", "SCIENCE_ERROR", "TOPOLOGY_LOSS"],
-  "observed_failure": "The development source placed battery plates beside a continuous conductor.",
-  "single_change": "Correct the synthetic source so horizontal battery plates interrupt the left conductor and strengthen the case invariant against bypass.",
-  "regression_cases_rerun": ["example-series-circuit", "v2-ref-physics-01-series-circuit-switch"],
-  "result": "pass"
-}
