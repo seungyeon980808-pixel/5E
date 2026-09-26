@@ -573,6 +573,61 @@ function createWindow() {
               }
               return false;
             };
+            const settleLayout = () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
+            const isActuallyVisible = (element) => {
+              if (!element || element.hidden) return false;
+              const style = getComputedStyle(element);
+              const rect = element.getBoundingClientRect();
+              return style.display !== "none" && style.visibility !== "hidden" && Number(style.opacity) !== 0 &&
+                rect.width > 0 && rect.height > 0 && rect.right > 0 && rect.bottom > 0 &&
+                rect.left < innerWidth && rect.top < innerHeight;
+            };
+            const isCenteredWithin = (elementRect, containerRect, tolerance = 4) => !!elementRect && !!containerRect &&
+              Math.abs(elementRect.left + elementRect.width / 2 - (containerRect.left + containerRect.width / 2)) < tolerance &&
+              Math.abs(elementRect.top + elementRect.height / 2 - (containerRect.top + containerRect.height / 2)) < tolerance;
+            const publicRasterIsVisible = async (activePanel) => {
+              const conversionOptions = activePanel?.querySelector('.ai-conversion-options');
+              if (conversionOptions) conversionOptions.open = true;
+              const rasterButton = activePanel?.querySelector('[data-ai-output-engine="raster"]');
+              rasterButton?.scrollIntoView({ block: 'nearest' });
+              await settleLayout();
+              return isActuallyVisible(rasterButton);
+            };
+            const attachFixtureAndInspectRaster = async (activePanel, attachFixture) => {
+              attachFixture();
+              const referenceReady = await waitFor(() => activePanel.querySelectorAll('[data-ai-reference-id]').length === 1, 4000);
+              return {
+                referenceReady,
+                rasterVisible: referenceReady && await publicRasterIsVisible(activePanel),
+              };
+            };
+            const createAreaComment = async (activePanel, image) => {
+              const stage = image?.closest('.ai-preview-stage');
+              activePanel?.querySelector('[data-ai-comment-tool="area"]')?.click();
+              await settleLayout();
+              const rect = image?.getBoundingClientRect();
+              if (!stage || !rect?.width || !rect.height) return { stage, ready: false };
+              const down = { bubbles: true, pointerId: 91, clientX: rect.left + rect.width * .25, clientY: rect.top + rect.height * .25 };
+              image.dispatchEvent(new PointerEvent('pointerdown', down));
+              stage.dispatchEvent(new PointerEvent('pointermove', { ...down, clientX: rect.left + rect.width * .65, clientY: rect.top + rect.height * .60 }));
+              stage.dispatchEvent(new PointerEvent('pointerup', { ...down, clientX: rect.left + rect.width * .65, clientY: rect.top + rect.height * .60 }));
+              return { stage, ready: await waitFor(() => !!activePanel.querySelector('[data-ai-comment-row]'), 2000) };
+            };
+            const contractProbe = globalThis.__FIVE_E_SMOKE_CONTRACT_PROBE__;
+            if (contractProbe) {
+              const fixture = await attachFixtureAndInspectRaster(contractProbe.panel, contractProbe.attachFixture);
+              const area = await createAreaComment(contractProbe.panel, contractProbe.image);
+              resolve({
+                aiUsesCentralModal: isCenteredWithin(
+                  contractProbe.panel.querySelector('.modal-ai')?.getBoundingClientRect(),
+                  contractProbe.panel.getBoundingClientRect(),
+                ),
+                aiPublicRasterVisible: fixture.rasterVisible,
+                aiAreaCommentReady: area.ready,
+                pointerTargets: contractProbe.pointerTargets,
+              });
+              return;
+            }
             const startupDialogTitles = new Set(["작업 복구", "찾아 주셔서 고맙습니다"]);
             const dismissStartupDialogs = () => {
               document.querySelector(".tut-welcome-overlay .tut-banner-no")?.click();
@@ -611,9 +666,8 @@ function createWindow() {
             const panelWasOpened = panel?.hidden === false;
             const aiUsesCentralModal = await waitFor(() => {
               const aiModalRect = panel?.querySelector(".modal-ai")?.getBoundingClientRect();
-              return panel?.classList.contains("modal-overlay") && !!aiModalRect &&
-                Math.abs(aiModalRect.left + aiModalRect.width / 2 - window.innerWidth / 2) < 4 &&
-                Math.abs(aiModalRect.top + aiModalRect.height / 2 - window.innerHeight / 2) < 4;
+              const overlayRect = panel?.getBoundingClientRect();
+              return panel?.classList.contains("modal-overlay") && isCenteredWithin(aiModalRect, overlayRect);
             }, 2000);
             const aiAutoConnectControlsSimplified = !panel?.querySelector("[data-ai-start]") &&
               !panel?.querySelector("[data-ai-stop]") && !!panel?.querySelector("[data-ai-login]");
@@ -660,14 +714,6 @@ function createWindow() {
             const angleChooserButton = document.getElementById("tool-angle-merged");
             const cutChooser = document.getElementById("chooser-cut");
             const cutChooserButton = document.getElementById("tool-cut-merged");
-            const isActuallyVisible = (element) => {
-              if (!element || element.hidden) return false;
-              const style = getComputedStyle(element);
-              const rect = element.getBoundingClientRect();
-              return style.display !== "none" && style.visibility !== "hidden" && Number(style.opacity) !== 0 &&
-                rect.width > 0 && rect.height > 0 && rect.right > 0 && rect.bottom > 0 &&
-                rect.left < innerWidth && rect.top < innerHeight;
-            };
             const choosePersistentTool = async ({ button, chooser, selector, expectedTool }) => {
               if (!isActuallyVisible(chooser)) button?.click();
               const opened = await waitFor(() => isActuallyVisible(chooser));
@@ -836,14 +882,7 @@ function createWindow() {
               aiWorkspaceControlsReady = !!taskList && !!sourceFile && !!panel.querySelector('[data-ai-task-add]') && !!panel.querySelector('[data-ai-close]');
               aiQualityControlsReady = panel.querySelectorAll('[data-ai-quality]').length === 3;
               aiOutputControlsReady = panel.querySelectorAll('[data-ai-output-engine]').length === 2;
-              const conversionOptions = panel.querySelector('.ai-conversion-options');
-              if (conversionOptions) conversionOptions.open = true;
-              const rasterButton = panel.querySelector('[data-ai-output-engine="raster"]');
-              rasterButton?.scrollIntoView({ block: 'nearest' });
-              await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
-              aiPublicRasterVisible = isActuallyVisible(rasterButton);
               aiPublicAssetHidden = panel.querySelector('[data-ai-output-engine="asset"]')?.hidden === true;
-              if (conversionOptions) conversionOptions.open = false;
               if (sourceFile) {
                 const fixtureBlob = await fetch(${JSON.stringify(smokeFixtureImageDataUrl)}).then((response) => response.blob());
                 const attachFixture = () => {
@@ -852,10 +891,13 @@ function createWindow() {
                   sourceFile.files = transfer.files;
                   sourceFile.dispatchEvent(new Event('change', { bubbles: true }));
                 };
-                attachFixture();
-                currentSourceReferenceWorks = await waitFor(() => panel.querySelectorAll('[data-ai-reference-id]').length === 1, 4000);
+                const fixture = await attachFixtureAndInspectRaster(panel, attachFixture);
+                currentSourceReferenceWorks = fixture.referenceReady;
+                aiPublicRasterVisible = fixture.rasterVisible;
                 aiReferencesOpenImmediately = !!panel.querySelector('.ai-reference-section[open]');
                 if (currentSourceReferenceWorks) {
+                  const conversionOptions = panel.querySelector('.ai-conversion-options');
+                  if (conversionOptions) conversionOptions.open = false;
                   const originalTaskId = taskList?.querySelector('.ai-task-tab.is-on')?.dataset.tabId || '';
                   panel.querySelector('[data-ai-send]')?.click();
                   const generated = await waitFor(() => panel.querySelectorAll('.ai-generated-card').length === 1, 4000);
@@ -868,17 +910,11 @@ function createWindow() {
                     paneVisible('.ai-original-pane .ai-reference-card') && paneVisible('.ai-result-pane .ai-generated-card'), 2000);
                   const image = panel.querySelector('.ai-result-pane .ai-generated-card .ai-preview-stage img');
                   await image?.decode?.();
-                  await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
-                  const stage = image?.closest('.ai-preview-stage');
-                  panel.querySelector('[data-ai-comment-tool="area"]')?.click();
-                  await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
-                  const rect = image?.getBoundingClientRect();
-                  if (stage && rect?.width && rect.height) {
-                    const down = { bubbles: true, pointerId: 91, clientX: rect.left + rect.width * .25, clientY: rect.top + rect.height * .25 };
-                    stage.dispatchEvent(new PointerEvent('pointerdown', down));
-                    stage.dispatchEvent(new PointerEvent('pointermove', { ...down, clientX: rect.left + rect.width * .65, clientY: rect.top + rect.height * .60 }));
-                    stage.dispatchEvent(new PointerEvent('pointerup', { ...down, clientX: rect.left + rect.width * .65, clientY: rect.top + rect.height * .60 }));
-                    aiAreaCommentReady = await waitFor(() => !!panel.querySelector('[data-ai-comment-row]'), 2000);
+                  await settleLayout();
+                  const areaComment = await createAreaComment(panel, image);
+                  const stage = areaComment.stage;
+                  aiAreaCommentReady = areaComment.ready;
+                  if (stage) {
                     await new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)));
                     const renderedCommentReady = await waitFor(() => Array.from(panel.querySelectorAll('.ai-result-pane .ai-comment-region'))
                       .some((region) => { const bounds = region.getBoundingClientRect(); return bounds.width > 0 && bounds.height > 0; }), 2000);
