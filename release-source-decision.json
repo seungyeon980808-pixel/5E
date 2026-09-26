@@ -1710,13 +1710,13 @@
       "rationale": "The deferred header-resize fix is the final source for the preview workbench."
     },
     {
-      "sourceCommit": "f5b04d9eba4a27f8c8c18bd6a773722ef18b7d59",
-      "originalTaskCommit": "f5b04d9eba4a27f8c8c18bd6a773722ef18b7d59",
+      "sourceCommit": "2acb707bfadd794eeb5023a50026c0942a632c73",
+      "originalTaskCommit": "c12649cb69a324e63662ec08bb32f151f082e707",
       "paths": [
         "desktop/main.cjs"
       ],
-      "evidence": ".omo/evidence/5e-160-release-remediation/task-12-native-f877-diagnosis/task-12-native-f877-diagnosis-code-review.md",
-      "rationale": "The independently reviewed packaged native smoke script repair is the final source for the desktop entry."
+      "evidence": ".omo/evidence/5e-160-release-remediation/task-12-native-df25-harness-independent-v2/REVIEW.md",
+      "rationale": "The independently reviewed native smoke public-control and rendered-geometry repair is the final source for the desktop entry."
     }
   ],
   "taskChanges": [
@@ -1731,12 +1731,12 @@
     },
     {
       "path": "desktop/main.cjs",
-      "sourceCommit": "f5b04d9eba4a27f8c8c18bd6a773722ef18b7d59",
-      "sourceBlob": "8f1fbc65c68da31e168badd36389c16807ee70ad",
-      "sourceSha256": "8a53543732f1dd665cfc290a3244e43e1be757179b1317dd496f754b0ff54be5",
-      "currentSha256": "8a53543732f1dd665cfc290a3244e43e1be757179b1317dd496f754b0ff54be5",
-      "bytes": 62240,
-      "rationale": "compile the packaged native smoke script with valid selector quoting"
+      "sourceCommit": "2acb707bfadd794eeb5023a50026c0942a632c73",
+      "sourceBlob": "a467d2de295e436fa19a65b2390078df1b147c51",
+      "sourceSha256": "dec3d5bf0de6196d423ce50a8992b046fc34cc2b1040070fb9610346df096e78",
+      "currentSha256": "dec3d5bf0de6196d423ce50a8992b046fc34cc2b1040070fb9610346df096e78",
+      "bytes": 64201,
+      "rationale": "exercise the packaged native smoke through current public controls and rendered geometry"
     },
     {
       "path": "js/svg-export.js",

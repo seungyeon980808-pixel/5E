@@ -94,14 +94,14 @@ const expectedFollowOnChanges = [
     paths: ['preview/js/ai-workbench.js'],
   },
   {
-    sourceCommit: 'f5b04d9eba4a27f8c8c18bd6a773722ef18b7d59',
-    originalTaskCommit: 'f5b04d9eba4a27f8c8c18bd6a773722ef18b7d59',
+    sourceCommit: '2acb707bfadd794eeb5023a50026c0942a632c73',
+    originalTaskCommit: 'c12649cb69a324e63662ec08bb32f151f082e707',
     paths: ['desktop/main.cjs'],
   },
 ];
 const expectedTaskChanges = [
   ['package.json', '8013eaf097c999c0bbd8b9aa3aab7933942fe145'],
-  ['desktop/main.cjs', 'f5b04d9eba4a27f8c8c18bd6a773722ef18b7d59'],
+  ['desktop/main.cjs', '2acb707bfadd794eeb5023a50026c0942a632c73'],
   ['js/svg-export.js', '9f22fb5dfbb0036979e14de8f557a53f0a58545e'],
   ['docs/credits.html', 'c1bca259aff32cb29caf0df6cb68503edb869863'],
   ['preview/docs/credits.html', 'c1bca259aff32cb29caf0df6cb68503edb869863'],
