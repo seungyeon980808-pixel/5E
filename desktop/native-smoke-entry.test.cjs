@@ -4,6 +4,7 @@ const fs = require("node:fs");
 const Module = require("node:module");
 const path = require("node:path");
 const { pathToFileURL } = require("node:url");
+const vm = require("node:vm");
 
 function loadMainTestSeam() {
   const originalLoad = Module._load;
@@ -28,6 +29,65 @@ function loadMainTestSeam() {
   } finally {
     Module._load = originalLoad;
     delete require.cache[require.resolve("./main.cjs")];
+  }
+}
+
+async function captureDesktopSmokeScript() {
+  const originalLoad = Module._load;
+  const originalSmokeTest = process.env.FIVE_E_SMOKE_TEST;
+  let readyCallback;
+  let didFinishLoad;
+  let smokeScript;
+  class FakeBrowserWindow {
+    static getAllWindows() { return []; }
+    constructor() {
+      this.webContents = {
+        once(event, callback) { if (event === "did-finish-load") didFinishLoad = callback; },
+        setWindowOpenHandler() {},
+        async executeJavaScript(source) { smokeScript = source; return {}; },
+      };
+    }
+    isDestroyed() { return false; }
+    isMenuBarVisible() { return true; }
+    loadFile() {}
+    on() {}
+    once() {}
+    setMenu() {}
+    setMenuBarVisibility() {}
+    show() {}
+  }
+  Module._load = function load(request, parent, isMain) {
+    if (request === "electron") {
+      return {
+        app: {
+          dock: { setIcon() {} },
+          exit() {},
+          on() {},
+          whenReady: () => ({ then(callback) { readyCallback = callback; } }),
+        },
+        BrowserWindow: FakeBrowserWindow,
+        ipcMain: { handle() {} },
+        shell: {},
+        Menu: { setApplicationMenu() {} },
+        desktopCapturer: {},
+        dialog: {},
+        nativeImage: { createFromPath: () => ({ isEmpty: () => false }) },
+      };
+    }
+    return originalLoad.call(this, request, parent, isMain);
+  };
+  process.env.FIVE_E_SMOKE_TEST = "1";
+  try {
+    delete require.cache[require.resolve("./main.cjs")];
+    require("./main.cjs");
+    readyCallback();
+    await didFinishLoad();
+    return smokeScript;
+  } finally {
+    Module._load = originalLoad;
+    delete require.cache[require.resolve("./main.cjs")];
+    if (originalSmokeTest === undefined) delete process.env.FIVE_E_SMOKE_TEST;
+    else process.env.FIVE_E_SMOKE_TEST = originalSmokeTest;
   }
 }
 
@@ -101,7 +161,7 @@ test("packaged smoke dismisses the first-run tutorial through its public skip co
 test("packaged smoke follows the current source, library, state, and platform shortcut contracts", () => {
   const mainSource = fs.readFileSync(path.join(__dirname, "main.cjs"), "utf8");
   assert.match(mainSource, /panel\?\.querySelector\("\[data-ai-source-file\]"\)/);
-  assert.match(mainSource, /panel\?\.querySelector\("\[data-ai-source-action=\\"library\\"\]"\)/);
+  assert.match(mainSource, /panel\?\.querySelector\('\[data-ai-source-action="library"\]'\)/);
   assert.match(mainSource, /document\.querySelector\("\.unified-library-overlay:not\(\[hidden\]\)"\)/);
   assert.match(mainSource, /document\.querySelector\("\[data-unilib-close\]"\)\?\.click\(\)/);
   assert.match(mainSource, /document\.querySelector\("\[data-unilib-query\]"\)/);
@@ -130,4 +190,12 @@ test("packaged smoke uses only the platform-primary delayed-cut modifier", async
     assert.equal(Boolean(platform.modKey(nonPrimary)), false,
       `${configuration} rejects its non-primary modifier alone`);
   }
+});
+
+test("packaged smoke renderer payload compiles after production substitutions", async () => {
+  const smokeScript = await captureDesktopSmokeScript();
+  assert.doesNotThrow(
+    () => new vm.Script(smokeScript, { filename: "packaged-smoke-renderer.js" }),
+    "the exact executeJavaScript payload must remain syntactically valid after fixture and platform substitutions",
+  );
 });
