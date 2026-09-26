@@ -14,6 +14,7 @@
     { "path": "tests/task4-data-contracts.cjs" },
     { "path": "tests/test-graph-correctness.mjs" },
     { "path": "tests/test-ai-release-remediation.cjs" },
+    { "path": "tests/test-smoke-gate-contract.cjs", "findingIds": ["TPK-005"] },
     { "path": "tests/test-ui-accessibility-lifecycle.cjs" },
     { "path": "tests/test-library-crop-session.mjs" },
     { "path": "tests/test-library-import-policy.mjs" },
@@ -37,6 +38,7 @@
     { "path": "tests/test-ai-focus-browser.cjs", "findingIds": ["EDGE-DIALOG-01"] },
     { "path": "tests/test-ai-workspace-lifecycle-browser.cjs", "findingIds": ["ARCH-160-01"] },
     { "path": "tests/test-circuit-body-scale-browser.cjs", "findingIds": ["TASK12-CIRCUIT-SCALE"] },
+    { "path": "tests/test-smoke-contract-browser.cjs", "findingIds": ["TPK-005"] },
     { "path": "tests/task10-ui-browser.cjs", "findingIds": ["CAN-DATA-01", "TPK-007", "TPK-008"] }
   ],
   "deferred": [
