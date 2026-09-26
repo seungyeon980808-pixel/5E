@@ -91,6 +91,27 @@ async function captureDesktopSmokeScript() {
   }
 }
 
+async function executeDesktopSmokeContractProbe(probe) {
+  const smokeScript = await captureDesktopSmokeScript();
+  assert.equal(typeof smokeScript, "string", "the production executeJavaScript payload is captured as source text");
+  assert.ok(smokeScript.length > 0, "the production executeJavaScript payload is non-empty before execution");
+  class ProbePointerEvent {
+    constructor(type, init = {}) { this.type = type; Object.assign(this, init); }
+  }
+  const context = {
+    __FIVE_E_SMOKE_CONTRACT_PROBE__: probe,
+    PointerEvent: ProbePointerEvent,
+    getComputedStyle(element) { return element.computedStyle; },
+    innerWidth: 1600,
+    innerHeight: 1000,
+    requestAnimationFrame(callback) { callback(); },
+    setTimeout,
+    clearTimeout,
+  };
+  context.globalThis = context;
+  return new vm.Script(smokeScript, { filename: "packaged-smoke-renderer.js" }).runInNewContext(context);
+}
+
 async function loadPlatformTestSeam() {
   const source = fs.readFileSync(path.join(__dirname, "..", "preview", "js", "platform.js"), "utf8")
     .replace(/^import .*preview-storage\.js[^;]+;$/m, "const previewStorage = { getItem() { return null; }, setItem() {} };");
@@ -198,4 +219,82 @@ test("packaged smoke renderer payload compiles after production substitutions", 
     () => new vm.Script(smokeScript, { filename: "packaged-smoke-renderer.js" }),
     "the exact executeJavaScript payload must remain syntactically valid after fixture and platform substitutions",
   );
+});
+
+test("packaged smoke generated payload drives current native geometry and public controls", async () => {
+  let attached = false;
+  let areaActive = false;
+  let commentReady = false;
+  const pointerTargets = [];
+  const stageListeners = new Map();
+  const stage = {
+    classList: { contains(name) { return name === "is-annotating" && areaActive; } },
+    addEventListener(type, listener) { stageListeners.set(type, listener); },
+    dispatchEvent(event) {
+      event.target = stage;
+      pointerTargets.push({ type: event.type, target: "stage" });
+      stageListeners.get(event.type)?.(event);
+    },
+    setPointerCapture() {},
+  };
+  const imageRect = { left: 200, top: 200, width: 600, height: 300, right: 800, bottom: 500 };
+  const image = {
+    closest(selector) { return selector === ".ai-preview-stage" ? stage : null; },
+    getBoundingClientRect() { return imageRect; },
+    dispatchEvent(event) {
+      event.target = image;
+      pointerTargets.push({ type: event.type, target: "image" });
+      stageListeners.get(event.type)?.(event);
+    },
+  };
+  let dragStart = false;
+  stageListeners.set("pointerdown", event => { if (areaActive && event.target === image) dragStart = true; });
+  stageListeners.set("pointermove", () => {});
+  stageListeners.set("pointerup", () => { if (dragStart) commentReady = true; });
+
+  const overlayRect = { left: 0, top: 30, width: 1600, height: 970 };
+  const modalRect = { left: 6, top: 36, width: 1588, height: 958 };
+  const modal = { getBoundingClientRect() { return modalRect; } };
+  const conversionOptions = { open: false };
+  const rasterButton = {
+    hidden: false,
+    computedStyle: { display: "none", visibility: "visible", opacity: "1" },
+    getBoundingClientRect() { return attached ? { left: 1100, top: 300, width: 100, height: 30, right: 1200, bottom: 330 } : { left: 0, top: 0, width: 0, height: 0, right: 0, bottom: 0 }; },
+    scrollIntoView() {},
+  };
+  const areaTool = { click() { areaActive = true; } };
+  const panel = {
+    classList: { contains(name) { return name === "modal-overlay"; } },
+    getBoundingClientRect() { return overlayRect; },
+    querySelector(selector) {
+      if (selector === ".modal-ai") return modal;
+      if (selector === ".ai-conversion-options") return conversionOptions;
+      if (selector === '[data-ai-output-engine="raster"]') return rasterButton;
+      if (selector === '[data-ai-comment-tool="area"]') return areaTool;
+      if (selector === '[data-ai-comment-row]') return commentReady ? {} : null;
+      return null;
+    },
+    querySelectorAll(selector) { return selector === "[data-ai-reference-id]" && attached ? [{}] : []; },
+  };
+
+  const result = await executeDesktopSmokeContractProbe({
+    panel,
+    image,
+    pointerTargets,
+    attachFixture() {
+      attached = true;
+      rasterButton.computedStyle.display = "block";
+    },
+  });
+
+  assert.deepEqual(JSON.parse(JSON.stringify(result)), {
+    aiUsesCentralModal: true,
+    aiPublicRasterVisible: true,
+    aiAreaCommentReady: true,
+    pointerTargets: [
+      { type: "pointerdown", target: "image" },
+      { type: "pointermove", target: "stage" },
+      { type: "pointerup", target: "stage" },
+    ],
+  });
 });
