@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Task 8 geometry browser QA</title>
+  <style>
+    body { margin: 0; padding: 24px; background: #eef1f5; color: #111827; font: 15px/1.45 system-ui, sans-serif; }
+    h1 { margin: 0 0 18px; font-size: 24px; }
+    #surfaces { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+    .card { min-width: 0; padding: 16px; background: white; border: 1px solid #cbd5e1; border-radius: 10px; }
+    .card h2 { margin: 0 0 10px; font-size: 16px; }
+    svg, canvas { display: block; width: 100%; height: 240px; border: 1px solid #94a3b8; background: white; object-fit: contain; }
+    pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+    #result[data-status="passed"] { color: #166534; }
+    #result[data-status="failed"] { color: #991b1b; }
+  </style>
+</head>
+<body>
+  <h1>5E 1.6 Task 8 geometry QA</h1>
+  <div id="surfaces"></div>
+  <pre id="result" data-status="running">running</pre>
+  <script type="module" src="./task8-geometry-browser.mjs"></script>
+</body>
+</html>

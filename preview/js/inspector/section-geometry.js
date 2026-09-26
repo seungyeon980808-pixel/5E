@@ -11,6 +11,7 @@ import { beginLabelerBranches, labelerAnchorCount, labelerBranchStatus } from ".
 
 export function buildGeometrySection(ctx) {
   const { state, makeLabelSizeRow, makeLabelTypeRow, commitSelectedObject } = ctx;
+  const POSITIVE_SIZE_PROPS = new Set(["w", "h", "radius", "height", "size", "length", "thickness"]);
 
   /* ---- Section 3: 크기·위치 (shapes only, single selection only) ---- */
   const sec3Body = document.createElement("div");
@@ -35,10 +36,19 @@ export function buildGeometrySection(ctx) {
 
     function commit() {
       const val = parseFloat(inp.value);
-      if (!isFinite(val)) return;
       const s = state.get();
       const ids = s.selectedIds || [];
       if (!ids.length) return;
+      const current = s.objects.find((o) => o.id === ids[0]);
+      const invalidSize = POSITIVE_SIZE_PROPS.has(prop) && (!isFinite(val) || !(val > 0));
+      if (invalidSize) {
+        inp.value = String(current?.[prop] ?? "");
+        inp.setCustomValidity?.("0보다 큰 값을 입력하세요.");
+        inp.reportValidity?.();
+        return;
+      }
+      if (!isFinite(val)) return;
+      inp.setCustomValidity?.("");
       const snap = JSON.parse(JSON.stringify(s.objects));
       state.update((s2) => {
         const id = (s2.selectedIds || [])[0];
@@ -46,6 +56,7 @@ export function buildGeometrySection(ctx) {
         if (!o) return;
         if (o.locked || (o.positionLocked && (prop === "x" || prop === "y"))) return;
         const next = negate ? -val : val;
+        if (o[prop] === next) return;
         if (o.positionLocked && prop === "w") o.x -= (next - o.w) / 2;
         if (o.positionLocked && prop === "h") o.y -= (next - o.h) / 2;
         s2.undoStack.push(snap);
