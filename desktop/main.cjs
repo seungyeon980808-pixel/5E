@@ -624,9 +624,9 @@ function createWindow() {
             const conversationRect = panel?.querySelector(".ai-conversation")?.getBoundingClientRect();
             const aiResultsPlacedLeft = !!resultRect && !!conversationRect && resultRect.left < conversationRect.left;
             const aiSourceEntrypointsReady = !!panel?.querySelector("[data-ai-source-file]") &&
-              !!panel?.querySelector("[data-ai-source-action=\"library\"]") &&
-              !!panel?.querySelector("[data-ai-source-action=\"capture\"]");
-            panel?.querySelector("[data-ai-source-action=\"library\"]")?.click();
+              !!panel?.querySelector('[data-ai-source-action="library"]') &&
+              !!panel?.querySelector('[data-ai-source-action="capture"]');
+            panel?.querySelector('[data-ai-source-action="library"]')?.click();
             const aiLoadMenuReady = await waitFor(() => {
               const library = document.querySelector(".unified-library-overlay:not([hidden])");
               return !!library?.querySelector("[data-unilib-close]") &&
