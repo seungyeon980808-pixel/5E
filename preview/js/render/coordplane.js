@@ -833,6 +833,28 @@ function straightPathD(pts, breaks) {
     .filter(Boolean).join(" ").trim();
 }
 
+function pointAtWorldX(a, b, x) {
+  const span = b.x - a.x;
+  if (Math.abs(span) < 1e-12) return { x, y: a.y };
+  const t = (x - a.x) / span;
+  return { x, y: a.y + (b.y - a.y) * t };
+}
+
+function clipRunByWorldX(run, xMin, xMax) {
+  const clipped = [];
+  for (let i = 0; i < run.length - 1; i++) {
+    const a = run[i], b = run[i + 1];
+    const segMin = Math.max(Math.min(a.x, b.x), xMin);
+    const segMax = Math.min(Math.max(a.x, b.x), xMax);
+    if (segMax < segMin) continue;
+    const first = pointAtWorldX(a, b, a.x <= b.x ? segMin : segMax);
+    const last = pointAtWorldX(a, b, a.x <= b.x ? segMax : segMin);
+    if (!clipped.length || Math.hypot(clipped.at(-1).x - first.x, clipped.at(-1).y - first.y) > 1e-9) clipped.push(first);
+    if (!clipped.length || Math.hypot(clipped.at(-1).x - last.x, clipped.at(-1).y - last.y) > 1e-9) clipped.push(last);
+  }
+  return clipped;
+}
+
 // 막대 무늬 <pattern> id 일련번호 — 모달 미리보기처럼 obj.id가 없는 렌더에서 충돌을 막는다.
 let _barPatSeq = 0;
 
@@ -852,28 +874,23 @@ function renderFuncgraph(obj) {
   if (area && Number.isFinite(area.baseY) && pts.length > 1) {
     const dMin = obj.domainMin, dMax = obj.domainMax;
     const hasDomain = Number.isFinite(dMin) && Number.isFinite(dMax) && dMax !== dMin;
-    const n = pts.length;
-    // 정의역 값 → 점 배열의 (실수) 인덱스. 샘플이 정의역에 균등 분포라는 성질을 쓴다.
-    const idxOf = (d) => Math.max(0, Math.min(n - 1, ((d - dMin) / (dMax - dMin)) * (n - 1)));
-    const at = (f) => {
-      const i = Math.floor(f), t = f - i;
-      if (i >= n - 1) return pts[n - 1];
-      return { x: pts[i].x + (pts[i + 1].x - pts[i].x) * t,
-               y: pts[i].y + (pts[i + 1].y - pts[i].y) * t };
-    };
-    let f0 = 0, f1 = n - 1;
+    const allX = pts.map((point) => point.x);
+    const dataXMin = Math.min(...allX), dataXMax = Math.max(...allX);
+    let clipXMin = dataXMin, clipXMax = dataXMax;
     if (hasDomain && (Number.isFinite(area.from) || Number.isFinite(area.to))) {
       const lo = Math.min(area.from ?? dMin, area.to ?? dMax);
       const hi = Math.max(area.from ?? dMin, area.to ?? dMax);
-      f0 = idxOf(lo); f1 = idxOf(hi);
+      const worldX = (value) => dataXMin + ((value - Math.min(dMin, dMax)) / Math.abs(dMax - dMin)) * (dataXMax - dataXMin);
+      clipXMin = Number.isFinite(area.worldFrom) ? area.worldFrom : worldX(lo);
+      clipXMax = Number.isFinite(area.worldTo) ? area.worldTo : worldX(hi);
     }
-    if (f1 > f0) {
-      const seg = [at(f0)];
-      for (let i = Math.ceil(f0); i <= Math.floor(f1); i++) seg.push(pts[i]);
-      seg.push(at(f1));
-      const d = `M ${seg[0].x.toFixed(3)} ${area.baseY.toFixed(3)} `
+    const areaRuns = splitByBreaks(pts, obj.breaks)
+      .map((run) => clipRunByWorldX(run, Math.min(clipXMin, clipXMax), Math.max(clipXMin, clipXMax)))
+      .filter((run) => run.length > 1);
+    if (areaRuns.length) {
+      const d = areaRuns.map((seg) => `M ${seg[0].x.toFixed(3)} ${area.baseY.toFixed(3)} `
         + seg.map((p) => `L ${p.x.toFixed(3)} ${p.y.toFixed(3)}`).join(" ")
-        + ` L ${seg[seg.length - 1].x.toFixed(3)} ${area.baseY.toFixed(3)} Z`;
+        + ` L ${seg.at(-1).x.toFixed(3)} ${area.baseY.toFixed(3)} Z`).join(" ");
       const fillEl = document.createElementNS(SVG_NS, "path");
       fillEl.setAttribute("d", d);
       fillEl.setAttribute("fill", grayHex(area.level ?? 220));
@@ -881,7 +898,7 @@ function renderFuncgraph(obj) {
       g.appendChild(fillEl);
       // 경계선: 채운 구간의 양 끝을 곡선에서 기준선까지 가는 실선으로 내린다(기본 켬).
       if (area.edges !== false) {
-        [seg[0], seg[seg.length - 1]].forEach((p) => {
+        [areaRuns[0][0], areaRuns.at(-1).at(-1)].forEach((p) => {
           const l = document.createElementNS(SVG_NS, "line");
           l.setAttribute("x1", p.x); l.setAttribute("y1", p.y);
           l.setAttribute("x2", p.x); l.setAttribute("y2", area.baseY);
@@ -892,9 +909,10 @@ function renderFuncgraph(obj) {
       }
       // 면적 라벨: 채운 영역 한가운데에 흰 halo 글자(스타일 가이드 5장).
       if (area.label) {
-        const mid = at((f0 + f1) / 2);
+        const seg = areaRuns.reduce((longest, run) => run.length > longest.length ? run : longest, areaRuns[0]);
+        const mid = seg[Math.floor(seg.length / 2)];
         const lbl = renderGraphLabel(area.label, {
-          x: (seg[0].x + seg[seg.length - 1].x) / 2,
+          x: (seg[0].x + seg.at(-1).x) / 2,
           y: (mid.y + area.baseY) / 2,
           size: area.labelSize || Math.max((obj.strokeWidth || 0.3) * 11, 2.8),
           color: grayHex(obj.strokeLevel), anchor: "middle", vAlign: "middle", halo: true,
