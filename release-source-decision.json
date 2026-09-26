@@ -322,17 +322,6 @@
       "rationale": "declared package document or runtime data"
     },
     {
-      "path": "docs/credits.html",
-      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
-      "sourceBlob": "4e1bb9c09f47d69f7b12141037709d3a1795731e",
-      "sourceSha256": "82933924c73dcfab7762d12c318dfcab0f0ea46d3d460dd6ee83e396c384caec",
-      "bytes": 160168,
-      "comparisonCommit": "8cdb183e298eff2b69c863e65f8c4668d2bae4f0",
-      "comparisonBlob": "4e1bb9c09f47d69f7b12141037709d3a1795731e",
-      "comparisonRelation": "identical",
-      "rationale": "declared package document or runtime data"
-    },
-    {
       "path": "docs/engine-v2/ILLUSTRATION_ASSET_CANDIDATES.json",
       "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
       "sourceBlob": "0a9d434b05200a5805c330c8314c3d3f8b7ee966",
@@ -1664,21 +1653,89 @@
       "rationale": "declared package and root entry requirement"
     }
   ],
+  "authorizedFollowOnTaskChanges": [
+    {
+      "sourceCommit": "c1bca259aff32cb29caf0df6cb68503edb869863",
+      "originalTaskCommit": "de7b5ecddd93504ba77bf37e0f79148215723d13",
+      "paths": [
+        "docs/credits.html",
+        "preview/docs/credits.html"
+      ],
+      "evidence": ".omo/evidence/5e-160-release-remediation/task-11-credits/receipt.md",
+      "rationale": "Task 11 regenerated both credit pages from the authoritative 991-item parts manifest."
+    },
+    {
+      "sourceCommit": "9f5423bbfdb5b01d5e1e0d56d439a48458514c0d",
+      "originalTaskCommit": "9f5423bbfdb5b01d5e1e0d56d439a48458514c0d",
+      "paths": [
+        "package.json"
+      ],
+      "evidence": ".omo/start-work/ledger.jsonl",
+      "rationale": "The release-runtime integration recorded the final package entry at this commit."
+    },
+    {
+      "sourceCommit": "949d5bdc054fdc5de0f9e1603efc9ae0fb64c6cb",
+      "originalTaskCommit": "949d5bdc054fdc5de0f9e1603efc9ae0fb64c6cb",
+      "paths": [
+        "preview/css/style.css"
+      ],
+      "evidence": ".omo/evidence/5e-160-release-remediation/integration-prep/integration-receipt.json",
+      "rationale": "The integrated accessibility fix is the final source for the preview stylesheet."
+    },
+    {
+      "sourceCommit": "3e62c46d626d45cc580a0ff4960da6cfa5be9696",
+      "originalTaskCommit": "3e62c46d626d45cc580a0ff4960da6cfa5be9696",
+      "paths": [
+        "preview/js/main.js"
+      ],
+      "evidence": ".omo/evidence/5e-160-release-remediation/integration-prep/integration-receipt.json",
+      "rationale": "The integrated recovery fix is the final source for the preview entry module."
+    },
+    {
+      "sourceCommit": "4db68c6ad160eb99197f73d882106d7127d42323",
+      "originalTaskCommit": "4db68c6ad160eb99197f73d882106d7127d42323",
+      "paths": [
+        "preview/js/mcp-bridge.js"
+      ],
+      "evidence": ".omo/evidence/5e-160-release-remediation/integration-prep/integration-apply.log",
+      "rationale": "The integrated local-input security fix is the final source for the preview bridge."
+    },
+    {
+      "sourceCommit": "a93e7708087246a6f6c39d3ab8a57d00b2d7f46b",
+      "originalTaskCommit": "a93e7708087246a6f6c39d3ab8a57d00b2d7f46b",
+      "paths": [
+        "preview/js/ai-workbench.js"
+      ],
+      "evidence": ".omo/evidence/5e-160-release-remediation/task-13-final/f8772937/freeze-receipt.json",
+      "rationale": "The deferred header-resize fix is the final source for the preview workbench."
+    },
+    {
+      "sourceCommit": "f87729370bdf31dda5d7f8b3109095ff24f2f713",
+      "originalTaskCommit": "f87729370bdf31dda5d7f8b3109095ff24f2f713",
+      "paths": [
+        "desktop/main.cjs"
+      ],
+      "evidence": ".omo/evidence/5e-160-release-remediation/task-12-native-f877-diagnosis/diagnosis.md",
+      "rationale": "The frozen candidate's smoke modifier is the final source for the desktop entry."
+    }
+  ],
   "taskChanges": [
     {
       "path": "package.json",
-      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
-      "sourceBlob": "a4f4580d89567d65ffbf952f8062be2bb037c4b6",
-      "sourceSha256": "2222c09c1c6836d63750edcf8dc14ddfc7f42cdd41e92a39045e711795328d98",
-      "currentSha256": "fe252e05a6147de579516da9cf0a128e2d2943d66b3a4d37776b210bf4c70d1c",
+      "sourceCommit": "9f5423bbfdb5b01d5e1e0d56d439a48458514c0d",
+      "sourceBlob": "1528192ab4313a185e7384deffb4b64fa2385942",
+      "sourceSha256": "be9707bc2d86a5e4170f24b879a0497c5670888c2c433602705aa7becfd02af7",
+      "currentSha256": "be9707bc2d86a5e4170f24b879a0497c5670888c2c433602705aa7becfd02af7",
+      "bytes": 2576,
       "rationale": "include preview/**/* in desktop package"
     },
     {
       "path": "desktop/main.cjs",
-      "sourceCommit": "9f22fb5dfbb0036979e14de8f557a53f0a58545e",
-      "sourceBlob": "7880495e07765ebf188dd347f86ea87bda27592f",
-      "sourceSha256": "b57b6e03f7b979977f007041093d5cb7d9665c44d51d0f38091395817f2d41f4",
-      "currentSha256": "f87b93c5ad8a4edf462824726e328bc82befcae382026283519c60f5560b8678",
+      "sourceCommit": "f87729370bdf31dda5d7f8b3109095ff24f2f713",
+      "sourceBlob": "b66defa40bf1286f1f07cbe4e62e580739ad1974",
+      "sourceSha256": "ac8bc4740304c9fbb63376a59a092d36a0eb5ec8323dadff3a9bdaa506301953",
+      "currentSha256": "ac8bc4740304c9fbb63376a59a092d36a0eb5ec8323dadff3a9bdaa506301953",
+      "bytes": 62246,
       "rationale": "load canonical preview/index.html desktop entry"
     },
     {
@@ -1688,6 +1745,60 @@
       "sourceSha256": "3b74e3cfd4b985adddd1aedbbcb141896483f2f896f339befc09a099009a0197",
       "currentSha256": "71f53e9dc3eba2670902d1c3fa3672a35fd8925c93a0d72d8f402b76aa9caaef",
       "rationale": "export the matching-head PNG helper required by the retained root mcp-bridge import"
+    },
+    {
+      "path": "docs/credits.html",
+      "sourceCommit": "c1bca259aff32cb29caf0df6cb68503edb869863",
+      "sourceBlob": "0aaae675624ca2ed06acfec86eb450efdb7f81ec",
+      "sourceSha256": "7cb5c2a5717abdb50085596850ae355a52d10d63300aaeb1ed5d1bb2a1dfc19e",
+      "currentSha256": "7cb5c2a5717abdb50085596850ae355a52d10d63300aaeb1ed5d1bb2a1dfc19e",
+      "bytes": 243322,
+      "rationale": "Task 11 generated the complete stable credits page from the authoritative parts manifest."
+    },
+    {
+      "path": "preview/docs/credits.html",
+      "sourceCommit": "c1bca259aff32cb29caf0df6cb68503edb869863",
+      "sourceBlob": "0aaae675624ca2ed06acfec86eb450efdb7f81ec",
+      "sourceSha256": "7cb5c2a5717abdb50085596850ae355a52d10d63300aaeb1ed5d1bb2a1dfc19e",
+      "currentSha256": "7cb5c2a5717abdb50085596850ae355a52d10d63300aaeb1ed5d1bb2a1dfc19e",
+      "bytes": 243322,
+      "rationale": "Task 11 generated the complete preview credits page from the authoritative parts manifest."
+    },
+    {
+      "path": "preview/css/style.css",
+      "sourceCommit": "949d5bdc054fdc5de0f9e1603efc9ae0fb64c6cb",
+      "sourceBlob": "5af42bcb7a773da265a26508b56899b005a7f6cf",
+      "sourceSha256": "d6ddba5b6b3351c45afdea1edf2b9521d37d4c3a46046d267d3d1d3d5b79304d",
+      "currentSha256": "d6ddba5b6b3351c45afdea1edf2b9521d37d4c3a46046d267d3d1d3d5b79304d",
+      "bytes": 104729,
+      "rationale": "The integrated accessibility fix supplies the final preview stylesheet."
+    },
+    {
+      "path": "preview/js/ai-workbench.js",
+      "sourceCommit": "a93e7708087246a6f6c39d3ab8a57d00b2d7f46b",
+      "sourceBlob": "ae5d9869c56fbf04d70d3b597dc685fa73528478",
+      "sourceSha256": "5e70f3b96212b5246d68f1ae402c873ed7c9098cf0de3e324f8620179199a0e0",
+      "currentSha256": "5e70f3b96212b5246d68f1ae402c873ed7c9098cf0de3e324f8620179199a0e0",
+      "bytes": 41533,
+      "rationale": "The deferred header-resize fix supplies the final preview workbench."
+    },
+    {
+      "path": "preview/js/main.js",
+      "sourceCommit": "3e62c46d626d45cc580a0ff4960da6cfa5be9696",
+      "sourceBlob": "038ffb7660f76441122c97b335b9d488350d522f",
+      "sourceSha256": "3851d702b5e91f23b2b7a094600bb633eae10ed07f6a4898da1bf0365d1baa86",
+      "currentSha256": "3851d702b5e91f23b2b7a094600bb633eae10ed07f6a4898da1bf0365d1baa86",
+      "bytes": 31413,
+      "rationale": "The integrated recovery fix supplies the final preview entry module."
+    },
+    {
+      "path": "preview/js/mcp-bridge.js",
+      "sourceCommit": "4db68c6ad160eb99197f73d882106d7127d42323",
+      "sourceBlob": "b87f6b447ee22a1d7024d81a457ecb314730e5e7",
+      "sourceSha256": "ecd50eb2a25ca8564dd9e665656b77d0c03d1761673a8a982fde65efe1bcb15f",
+      "currentSha256": "ecd50eb2a25ca8564dd9e665656b77d0c03d1761673a8a982fde65efe1bcb15f",
+      "bytes": 32221,
+      "rationale": "The integrated local-input security fix supplies the final preview bridge."
     }
   ],
   "directEntryHashes": {
@@ -1769,8 +1880,8 @@
       },
       {
         "path": "preview/css/style.css",
-        "sha256": "c8b13880421a2f3cae110eb5d89e4b3c89c605f8a6ca1e03896e10c5024e331c",
-        "bytes": 103813
+        "sha256": "d6ddba5b6b3351c45afdea1edf2b9521d37d4c3a46046d267d3d1d3d5b79304d",
+        "bytes": 104729
       },
       {
         "path": "preview/css/tutorial.css",
@@ -1789,8 +1900,8 @@
       },
       {
         "path": "preview/docs/credits.html",
-        "sha256": "ece5296864dbaf6ff950f4f922de1f50c4aca755f894cbf9c6d04a5590ef6bc3",
-        "bytes": 160106
+        "sha256": "7cb5c2a5717abdb50085596850ae355a52d10d63300aaeb1ed5d1bb2a1dfc19e",
+        "bytes": 243322
       },
       {
         "path": "preview/experiments/web-codex-auth/editor-bridge.js",
@@ -1799,18 +1910,18 @@
       },
       {
         "path": "preview/js/ai-workbench.js",
-        "sha256": "91b8ca5f44b47e04da27dbcf517a13fef734bbe84abe0c35bd1f2331712097ca",
-        "bytes": 40596
+        "sha256": "5e70f3b96212b5246d68f1ae402c873ed7c9098cf0de3e324f8620179199a0e0",
+        "bytes": 41533
       },
       {
         "path": "preview/js/main.js",
-        "sha256": "8ab904df507e9aa204baff9c2568b8d3665eda925ac3a199b07e5f492a91ba02",
-        "bytes": 31633
+        "sha256": "3851d702b5e91f23b2b7a094600bb633eae10ed07f6a4898da1bf0365d1baa86",
+        "bytes": 31413
       },
       {
         "path": "preview/js/mcp-bridge.js",
-        "sha256": "49a5935d1f98117db95429450d02d96fbd76ef5598e2cd6e8893a59b77775ceb",
-        "bytes": 30632
+        "sha256": "ecd50eb2a25ca8564dd9e665656b77d0c03d1761673a8a982fde65efe1bcb15f",
+        "bytes": 32221
       },
       {
         "path": "preview/js/mobile-entry.js",
@@ -1886,8 +1997,8 @@
       },
       {
         "path": "docs/credits.html",
-        "sha256": "82933924c73dcfab7762d12c318dfcab0f0ea46d3d460dd6ee83e396c384caec",
-        "bytes": 160168
+        "sha256": "7cb5c2a5717abdb50085596850ae355a52d10d63300aaeb1ed5d1bb2a1dfc19e",
+        "bytes": 243322
       },
       {
         "path": "js/main.js",
