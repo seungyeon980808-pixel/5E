@@ -1,4 +1,4 @@
-import { createContinuousCropPages } from "./library/continuous-crop-pages.js?v=1.6.0-library-scroll-loading-0927";
+import { createContinuousCropPages } from "./library/continuous-crop-pages.js?v=1.6.0-library-navigation-0928";
 import { registerEscapeLayer } from "./escape-layers.js?v=1";
 import { DESKTOP_RELEASE_URL } from "./ai-install-guide.js?v=1.6.0-preview-labeler-0917-1111";
 import { safeExternalSourceUrl } from "./library-import-policy.js";
@@ -1236,32 +1236,26 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
 
   const searchIsCurrent = (ownEpoch, signal) => ownEpoch === searchEpoch && !signal.aborted && !overlay.hidden;
 
+  let prepareVisibleThumbnails = () => [];
   const waitForFirstResultPaint = async (ownEpoch, signal) => {
-    await Promise.resolve();
-    if (!searchIsCurrent(ownEpoch, signal)) return false;
-    const firstCard = list.querySelector("[data-result-id]");
-    const firstRect = firstCard?.getBoundingClientRect();
-    if (!firstCard || !firstRect || firstRect.width <= 0 || firstRect.height <= 0) return false;
     await new Promise((resolve) => requestAnimationFrame(resolve));
     if (!searchIsCurrent(ownEpoch, signal)) return false;
-    await new Promise((resolve) => requestAnimationFrame(resolve));
-    if (!searchIsCurrent(ownEpoch, signal)) return false;
-    const firstMedia = () => list.querySelector("[data-result-id] .unilib-thumb");
-    if (firstMedia()?.dataset.thumbnailState === "loading") {
+    const cohort = prepareVisibleThumbnails();
+    const settled = () => cohort.every((media) => !media.isConnected || media.dataset.thumbnailState !== "loading");
+    if (!settled()) {
       await new Promise((resolve, reject) => {
-        const finish = () => {
+        const cleanup = () => {
           observer.disconnect();
           clearTimeout(timeout);
           signal.removeEventListener("abort", abort);
-          if (firstMedia()?.dataset.thumbnailState === "error") reject(new Error("첫 미리보기를 불러오지 못했습니다."));
-          else resolve();
         };
-        const abort = () => { observer.disconnect(); clearTimeout(timeout); resolve(); };
-        const observer = new MutationObserver(() => { if (firstMedia()?.dataset.thumbnailState !== "loading") finish(); });
-        const timeout = setTimeout(() => { observer.disconnect(); signal.removeEventListener("abort", abort); reject(new Error("미리보기를 불러오는 시간이 너무 오래 걸립니다.")); }, 20_000);
+        const finish = () => { cleanup(); resolve(); };
+        const abort = () => { cleanup(); resolve(); };
+        const observer = new MutationObserver(() => { if (settled()) finish(); });
+        const timeout = setTimeout(() => { cleanup(); reject(new Error("미리보기를 불러오는 시간이 너무 오래 걸립니다.")); }, 20_000);
         observer.observe(list, { subtree: true, childList: true, attributes: true, attributeFilter: ["data-thumbnail-state"] });
         signal.addEventListener("abort", abort, { once: true });
-        if (firstMedia()?.dataset.thumbnailState !== "loading") finish();
+        if (settled()) finish();
       });
     }
     return searchIsCurrent(ownEpoch, signal);
@@ -1417,7 +1411,10 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
         showThumbnail(media, preview, result);
       } else {
         media.textContent = result.kind === "page" ? "PDF" : "5E";
-        if (result.provenance?.provider === "pdf") pendingThumbnails.push({ result, media });
+        if (result.provenance?.provider === "pdf") {
+          thumbnailStatus(media);
+          pendingThumbnails.push({ result, media });
+        }
       }
       const copy = document.createElement("span");
       copy.className = "unilib-result-copy unilib-card-meta library-card-meta";
@@ -1460,6 +1457,22 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
         }
       }, { root: overlay.querySelector(".unilib-result-scroll"), rootMargin: "240px 0px" });
     }
+    prepareVisibleThumbnails = () => {
+      const bounds = scroller.getBoundingClientRect();
+      const visible = [...list.querySelectorAll(".unilib-thumb")].filter((media) => {
+        const rect = media.getBoundingClientRect();
+        return rect.width > 0 && rect.height > 0 && rect.bottom > bounds.top && rect.top < bounds.bottom
+          && rect.right > bounds.left && rect.left < bounds.right;
+      });
+      for (const media of visible) {
+        const result = thumbnailLookup.get(media);
+        if (!result) continue;
+        thumbnailObserver?.unobserve(media);
+        thumbnailLookup.delete(media);
+        loadThumbnail(result, media);
+      }
+      return visible;
+    };
     appendResultBatch = (throughIndex = renderedResultCount) => {
       if (ownThumbnailEpoch !== thumbnailEpoch || overlay.hidden) return;
       const end = Math.min(visibleResults.length, Math.max(renderedResultCount + 60, throughIndex + 1));
@@ -1472,6 +1485,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       }
     };
     appendResultBatch();
+    prepareVisibleThumbnails();
   }
   const resultScroller = overlay.querySelector(".unilib-result-scroll");
   resultScroller.addEventListener("scroll", () => {
@@ -2101,7 +2115,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     const session = continuousView;
     const result = selectedResult();
     if (!session || result?.id !== session.resultId) return;
-    const pageNumber = Math.max(1, Math.min(session.pageCount, Math.floor((stage.scrollTop + session.pageExtent * 0.45) / session.pageExtent) + 1));
+    const pageNumber = Math.max(1, Math.min(session.pageCount, Math.floor((stage.scrollTop + stage.clientHeight / 2) / session.pageExtent) + 1));
     session.visiblePage = pageNumber;
     stage.dataset.visiblePdfPage = String(pageNumber);
     overlay.querySelector("[data-unilib-source-meta]").textContent = resultSourceText(pdfFilePageResult(result, pageNumber));
@@ -2357,23 +2371,52 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   let cropReady = false;
   let cropOpenOptions = {};
   const cropLoadState = overlay.querySelector("[data-unilib-crop-load-state]");
+  const cropLoadPaper = document.createElement("div");
+  cropLoadPaper.className = "unilib-crop-load-paper";
+  cropLoadPaper.setAttribute("aria-hidden", "true");
   const cropLoadPreview = new Image();
   cropLoadPreview.className = "unilib-crop-load-preview";
   cropLoadPreview.alt = "";
   cropLoadPreview.hidden = true;
   cropLoadPreview.setAttribute("aria-hidden", "true");
-  cropLoadState.prepend(cropLoadPreview);
+  cropLoadState.prepend(cropLoadPaper, cropLoadPreview);
+  const showCropTargetThumbnail = async (session, file) => {
+    if (typeof file?.loadPreview !== "function") return;
+    const isCurrent = () => cropSession === session && !cropDialog.hidden && !overlay.hidden && !cropReady
+      && cropLoadState.dataset.state === "loading";
+    let timeout;
+    try {
+      const materialized = await Promise.race([
+        Promise.resolve().then(() => file.loadPreview(session.pageNumber, { thumbnail: true })),
+        new Promise((resolve) => { timeout = setTimeout(() => resolve(null), 2000); }),
+      ]);
+      if (!materialized || !isCurrent()) return;
+      const renderedPage = materialized?.provenance?.pageNumber ?? materialized?.source?.pageNumber;
+      if (renderedPage != null && Number(renderedPage) !== session.pageNumber) return;
+      const src = resultImage(pdfFilePageResult(file, session.pageNumber), materialized);
+      if (!src) return;
+      const decoded = new Image();
+      decoded.src = src;
+      await decoded.decode();
+      if (!isCurrent()) return;
+      cropLoadPreview.src = src;
+      cropLoadPreview.hidden = false;
+      cropLoadPaper.hidden = true;
+    } catch { /* The neutral paper remains while the original page loads. */ }
+    finally { clearTimeout(timeout); }
+  };
   const cropRetry = overlay.querySelector("[data-unilib-crop-retry]");
   const setCropLoadState = (state, message = "PDF 페이지를 불러오는 중입니다…") => {
     cropReady = state === "ready";
-    cropLoadPreview.hidden = state === "ready" || !cropImage.src;
-    if (!cropLoadPreview.hidden) cropLoadPreview.src = cropImage.src;
+    cropLoadPreview.hidden = true;
+    cropLoadPreview.removeAttribute("src");
+    cropLoadPaper.hidden = false;
     cropStage.setAttribute("aria-busy", String(state === "loading"));
     cropLoadState.hidden = cropReady;
     cropLoadState.dataset.state = state;
     cropLoadState.querySelector("[data-unilib-crop-load-message]").textContent = message;
     cropRetry.hidden = state !== "error";
-    cropImage.hidden = !cropReady && !cropImage.src;
+    cropImage.hidden = !cropReady;
     overlay.querySelector("[data-unilib-crop-fit]").disabled = !cropReady;
     setCropActionAvailability();
   };
@@ -2648,6 +2691,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       const file = result.kind === "pdf" ? selectedResult() : (await activeProvider.listPdfFiles?.({ query: "", sourceIds: [...enabledSources], limit: Number.MAX_SAFE_INTEGER }))?.find((item) => item.documentId === session.documentId);
       if (cropSession !== session) return;
       cropDocumentFile = file?.kind === "pdf" ? file : null;
+      void showCropTargetThumbnail(session, cropDocumentFile);
       const pageCount = Math.max(1, Number(cropDocumentFile?.pageCount) || 1);
       cropPageControls.hidden = pageCount <= 1;
       cropPageOutput.textContent = `${session.pageNumber} / ${pageCount}쪽`;
