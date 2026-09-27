@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 
-import { cropSessionIsCurrent } from "../preview/js/unified-library-ui.js";
+import { cropSessionIsCurrent, pdfResultsForDisplay } from "../preview/js/unified-library-ui.js";
 
 const page = (pageNumber) => ({
   id: "audit-document",
@@ -19,4 +19,22 @@ test("keeps a crop session bound to its requested PDF page", () => {
   };
   assert.equal(cropSessionIsCurrent(session, target), true);
   assert.equal(cropSessionIsCurrent(session, page(1)), false);
+});
+
+test("file display retains the original PDF result", () => {
+  const file = { id: "book", kind: "pdf", pageCount: 3 };
+  assert.deepEqual(pdfResultsForDisplay([file], "file"), [file]);
+});
+
+test("page display includes adjacent PDF pages so scrolling can select and crop them", () => {
+  const file = {
+    id: "book", kind: "pdf", title: "Book", pageCount: 3,
+    provenance: { provider: "pdf", documentId: "book", pageNumber: 1 },
+    matches: [{ pageNumber: 2, source: { documentId: "book", pageNumber: 2 } }],
+  };
+  const pages = pdfResultsForDisplay([file], "page");
+  assert.deepEqual(pages.map((item) => item.provenance.pageNumber), [1, 2, 3]);
+  assert.deepEqual(pages.map((item) => item.id), ["book:page:1", "book:page:2", "book:page:3"]);
+  assert.deepEqual(pages.map((item) => item.matches.length), [0, 1, 0]);
+  assert.deepEqual(pdfResultsForDisplay([file], "page", true).map((item) => item.provenance.pageNumber), [2]);
 });
