@@ -130,6 +130,9 @@
   --unilib-overlay-radius: 10px;
   --unilib-motion: 140ms ease-out;
   --unilib-loading-motion: 800ms linear infinite;
+  --unilib-loading-blur: 4px;
+  --unilib-loading-image-opacity: .7;
+  --unilib-loading-image-scale: 1.01;
   --unilib-loading-skeleton-motion: 1400ms ease-in-out infinite;
   --unilib-loading-delay-short: 120ms;
   --unilib-loading-delay-long: 240ms;
@@ -643,7 +646,8 @@
 .unified-library-overlay .unilib-crop-view-controls { display: flex; align-items: center; gap: var(--unilib-space-3); }
 .unified-library-overlay .unilib-crop-view-controls output { min-width: 6ch; color: var(--unilib-label); text-align: center; font-variant-numeric: tabular-nums; }
 .unified-library-overlay .unilib-crop-workspace { display: grid; grid-template-columns: minmax(0, 1fr) var(--unilib-crop-sidebar-width); gap: 0; min-height: 0; }
-.unified-library-overlay .unilib-crop-stage { display: grid; min-height: var(--unilib-crop-stage-height); padding: var(--unilib-space-5); align-items: safe center; justify-items: center; overflow: auto; overscroll-behavior: contain; scrollbar-gutter: stable; background: var(--unilib-canvas); cursor: crosshair; touch-action: none; }
+.unified-library-overlay .unilib-crop-stage-shell { position: relative; min-width: 0; min-height: 0; overflow: hidden; }
+.unified-library-overlay .unilib-crop-stage { display: grid; box-sizing: border-box; width: 100%; height: 100%; min-height: var(--unilib-crop-stage-height); padding: var(--unilib-space-5); align-items: safe center; justify-items: center; overflow: auto; overscroll-behavior: contain; scrollbar-gutter: stable; background: var(--unilib-canvas); cursor: crosshair; touch-action: none; }
 .unified-library-overlay .unilib-crop-stage:focus-visible { outline: var(--unilib-focus-outline-width) solid var(--unilib-focus); outline-offset: calc(-1 * var(--unilib-focus-outline-width)); }
 .unified-library-overlay .unilib-crop-canvas { position: relative; display: block; width: fit-content; margin: 0; background: var(--unilib-paper); box-shadow: var(--unilib-separation); }
 .unified-library-overlay .unilib-crop-stage img { display: block; width: 100%; height: 100%; max-width: none; max-height: none; user-select: none; }
@@ -1072,9 +1076,13 @@
 .unified-library-overlay [data-crop-handle]::after { content: ""; position: absolute; width: var(--unilib-space-2); height: var(--unilib-space-2); box-sizing: border-box; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--unilib-paper); border: var(--unilib-border-width) solid var(--unilib-accent); }
 
 .unified-library-overlay .unilib-crop-stage { position: relative; }
-.unified-library-overlay .unilib-crop-load-state { position: absolute; inset: 0; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--unilib-space-4); padding: var(--unilib-space-5); color: var(--unilib-text); text-align: center; }
+.unified-library-overlay .unilib-crop-load-state { position: absolute; inset: 0; z-index: 2; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--unilib-space-4); padding: var(--unilib-space-5); color: var(--unilib-text); text-align: center; background: color-mix(in srgb, var(--unilib-canvas) 70%, transparent); }
 .unified-library-overlay .unilib-crop-load-state[hidden] { display: none; }
-.unified-library-overlay .unilib-crop-spinner { width: var(--unilib-space-7); height: var(--unilib-space-7); border: calc(var(--unilib-border-width) * 2) solid var(--unilib-border); border-top-color: var(--unilib-accent); border-radius: 50%; animation: unilib-crop-spin var(--unilib-loading-motion); }
+.unified-library-overlay .unilib-crop-load-state[data-state="loading"] { pointer-events: none; }
+.unified-library-overlay .unilib-crop-load-preview { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; filter: blur(var(--unilib-loading-blur)); opacity: var(--unilib-loading-image-opacity); pointer-events: none; }
+.unified-library-overlay .unilib-crop-load-preview[hidden] { display: none; }
+.unified-library-overlay [data-unilib-crop-load-message] { position: relative; z-index: 1; display: block; max-width: 100%; padding: var(--unilib-space-3) var(--unilib-space-4); border-radius: var(--unilib-control-radius); color: var(--unilib-text); background: var(--unilib-panel); }
+.unified-library-overlay .unilib-crop-spinner { position: relative; z-index: 1; width: var(--unilib-space-7); height: var(--unilib-space-7); border: calc(var(--unilib-border-width) * 2) solid var(--unilib-border); border-top-color: var(--unilib-accent); border-radius: 50%; animation: unilib-crop-spin var(--unilib-loading-motion); }
 .unified-library-overlay .unilib-crop-load-state[data-state="error"] .unilib-crop-spinner { display: none; }
 @keyframes unilib-crop-spin { to { transform: rotate(360deg); } }
 @media (prefers-reduced-motion: reduce) { .unified-library-overlay .unilib-crop-spinner { animation: none; } }
@@ -1234,6 +1242,10 @@
 
 .unified-library-overlay .unilib-crop-stage.is-continuous-crop { display: block; overflow-anchor: none; }
 .unified-library-overlay .unilib-crop-pages { margin-inline: auto; }
-.unified-library-overlay .unilib-crop-page { position: relative; overflow: hidden; background: var(--unilib-paper); outline: 1px solid var(--unilib-border); }
+.unified-library-overlay .unilib-crop-page { position: relative; overflow: hidden; background: var(--unilib-paper); outline: var(--unilib-border-width) solid var(--unilib-border); }
 .unified-library-overlay .unilib-crop-page > img { position: absolute; inset: 0; }
-.unified-library-overlay .unilib-crop-page.is-active > img { visibility: hidden; }
+.unified-library-overlay .unilib-crop-page.is-active > img:not(.unilib-crop-page-placeholder) { visibility: hidden; }
+.unified-library-overlay .unilib-crop-page-placeholder { width: 100%; height: 100%; object-fit: cover; filter: blur(var(--unilib-loading-blur)); opacity: var(--unilib-loading-image-opacity); transform: scale(var(--unilib-loading-image-scale)); }
+.unified-library-overlay .unilib-crop-page-status { position: absolute; inset: 0; z-index: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: var(--unilib-space-3); box-sizing: border-box; padding: var(--unilib-space-5); color: var(--unilib-paper-ink); text-align: center; background: color-mix(in srgb, var(--unilib-canvas) 25%, transparent); }
+.unified-library-overlay .unilib-crop-page-status .unilib-button { color: var(--unilib-text); }
+.unified-library-overlay .unilib-crop-stage[aria-busy="true"] .unilib-crop-canvas { filter: blur(var(--unilib-loading-blur)); pointer-events: none; }

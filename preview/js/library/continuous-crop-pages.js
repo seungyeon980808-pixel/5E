@@ -18,6 +18,20 @@ export function createContinuousCropPages({ stage, canvas, loadPage, onPage }) {
     if (slot.dataset.loaded) return;
     slot.dataset.loaded = "loading";
     const own = generation;
+    const fallback = canvas.querySelector("img")?.src;
+    if (fallback) {
+      const blurred = new Image();
+      blurred.src = fallback;
+      blurred.alt = "";
+      blurred.className = "unilib-crop-page-placeholder";
+      blurred.setAttribute("aria-hidden", "true");
+      slot.append(blurred);
+    }
+    const status = document.createElement("div");
+    status.className = "unilib-crop-page-status";
+    status.setAttribute("role", "status");
+    status.textContent = `${page}쪽을 불러오는 중…`;
+    slot.append(status);
     try {
       const src = await loadPage(page);
       if (own !== generation) return;
@@ -30,9 +44,20 @@ export function createContinuousCropPages({ stage, canvas, loadPage, onPage }) {
       ratios.set(page, image.naturalHeight / image.naturalWidth);
       if (pageWidth) slot.style.height = `${pageWidth * ratios.get(page)}px`;
       slot.prepend(image);
+      slot.querySelector(".unilib-crop-page-placeholder")?.remove();
+      status.remove();
       slot.dataset.loaded = "ready";
     } catch (_) {
-      if (own === generation) { delete slot.dataset.loaded; slot.setAttribute("aria-label", `${page}쪽 다시 불러오기`); }
+      if (own === generation) {
+        slot.dataset.loaded = "error";
+        status.replaceChildren(`${page}쪽을 불러오지 못했습니다.`);
+        const retry = document.createElement("button");
+        retry.type = "button";
+        retry.className = "unilib-button";
+        retry.textContent = "다시 시도";
+        retry.addEventListener("click", () => { delete slot.dataset.loaded; status.remove(); slot.querySelector(".unilib-crop-page-placeholder")?.remove(); void render(slot, page); });
+        status.append(retry);
+      }
     }
   };
   const mount = (count, page) => {
@@ -102,6 +127,7 @@ export function createContinuousCropPages({ stage, canvas, loadPage, onPage }) {
     void request(pageAtScroll());
   });
   stage.addEventListener("pointerdown", event => {
+    if (event.target.closest("button")) return;
     const slot = event.target.closest(".unilib-crop-page");
     if (slot && Number(slot.dataset.page) !== activePage) { event.stopImmediatePropagation(); void request(Number(slot.dataset.page)); }
   }, true);
