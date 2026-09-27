@@ -90,8 +90,7 @@
 .ai-batch-card[data-state="cancelled"] { opacity: var(--product-cancelled-opacity); }
 .ai-batch-card small { display: block; margin-top: var(--product-space-label); color: var(--text-secondary); }
 .ai-project-transfer { padding: var(--product-space-control) var(--product-space-default); border: var(--product-border-width) solid var(--border); background: var(--bg-panel); color: var(--text-primary); white-space: nowrap; }
-.modal-overlay .modal-btn:focus-visible,
-.modal-overlay .modal-btn:focus {
+.modal-overlay .modal-btn:focus-visible:not([data-pointer-focus]) {
   outline: var(--product-focus-outline-width) solid var(--accent) !important;
   outline-offset: var(--product-focus-outline-offset);
   box-shadow: 0 0 0 var(--product-focus-ring-width) color-mix(in srgb, var(--accent) var(--product-focus-ring-alpha), transparent);

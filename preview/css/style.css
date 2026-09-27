@@ -2370,6 +2370,7 @@ textarea.unified-text-input {
 }
 [data-pointer-focus]:focus {
   outline: none !important;
+  box-shadow: none !important;
 }
 .canvas-bottom-bar .zoom-readout {
   flex:0 0 auto;

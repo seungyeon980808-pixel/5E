@@ -85,7 +85,6 @@ svg.addEventListener("pointerdown", (event) => {
   }
 });
 svg.addEventListener("blur", () => svg.classList.remove("pointer-focused"));
-window.addEventListener("keydown", () => svg.classList.remove("pointer-focused"), { capture: true });
 const zoomReadout = document.getElementById("zoom-readout");
 
 /* ===== APP FULLSCREEN (native browser or desktop window; artboard state remains unchanged) ===== */
