@@ -7,7 +7,7 @@ const test = require('node:test');
 const { chromium, webkit } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const root = path.resolve(__dirname, '..');
 const evidenceDir = path.resolve(process.env.EVIDENCE_DIR || '.omo/evidence/smoke-contract-browser');
-const fixture = path.join(root, 'preview/assets/exam-library/images/p1_2027_06_01.png');
+const fixture = path.join(root, 'tests/fixtures/rights-clear-smoke.png');
 const generatedFixtureDataUrl = `data:image/png;base64,${fs.readFileSync(fixture).toString('base64')}`;
 
 function traceLibrary(step, detail = {}) {

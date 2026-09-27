@@ -39,7 +39,7 @@
     "productName": "5E",
     "artifactName": "5E-${version}-${os}-${arch}.${ext}",
     "directories": { "output": "release", "buildResources": "build" },
-    "files": ["index.html", "manifest.json", "LICENSE", "css/**/*", "js/**/*", "assets/**/*", "fonts/**/*", "preview/**/*", "desktop/**/*", "docs/EXAM_SCIENTIFIC_DIAGRAM_STYLE.md", "docs/GPT_KNOWLEDGE_EVALUATION_SCIENCE_LINEART.md", "docs/IMAGE_COMPLEXITY_MODE_SPEC.md"],
+    "files": ["index.html", "manifest.json", "LICENSE", "css/**/*", "js/**/*", "assets/**/*", "!assets/exam-library/**", "fonts/**/*", "preview/**/*", "desktop/**/*", "tests/fixtures/rights-clear-smoke.png", "docs/EXAM_SCIENTIFIC_DIAGRAM_STYLE.md", "docs/GPT_KNOWLEDGE_EVALUATION_SCIENCE_LINEART.md", "docs/IMAGE_COMPLEXITY_MODE_SPEC.md"],
     "win": { "icon": "assets/icon.ico", "artifactName": "5E-${version}-windows-${arch}.${ext}", "target": [{ "target": "nsis", "arch": ["x64"] }] },
     "mac": {
       "icon": "assets/icon.icns",

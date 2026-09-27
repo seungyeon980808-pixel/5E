@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "fixture": "tests/fixtures/rights-clear-smoke.png",
+  "generator": "tests/fixtures/generate-rights-clear-smoke.mjs",
+  "generationCommand": "node tests/fixtures/generate-rights-clear-smoke.mjs --output tests/fixtures/rights-clear-smoke.png",
+  "createdFor": "5E 1.6 desktop smoke tests",
+  "createdOn": "2026-09-27",
+  "sourceInputs": [],
+  "externalImageMaterial": false,
+  "primitives": [
+    "solid RGB background",
+    "100-pixel Cartesian grid",
+    "filled circle",
+    "diagonal line segment"
+  ],
+  "width": 1005,
+  "height": 399,
+  "sha256": "8d61e85b08a2bad52528c9f51567410f8aee84031c41bf12eb6c069be5c2aeab",
+  "license": "Original fixture generated for this repository from the listed geometric primitives, with no third-party image material; distributed under the repository license."
+}

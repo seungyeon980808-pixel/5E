@@ -137,19 +137,6 @@ function imageResult(provider, item, sourceId, sourceLabel, fields) {
   });
 }
 
-function externalExamImageUrl(input, item) {
-  if (typeof item.url === "string" && item.url) return item.url;
-  if (typeof item.src === "string" && item.src) return item.src;
-  if (typeof input.examBaseUrl !== "string" || !input.examBaseUrl.trim() || !item.file) return null;
-  const baseUrl = `${input.examBaseUrl.trim().replace(/\/+$/u, "")}/`;
-  const relative = `images/${encodeURIComponent(item.file)}`;
-  try {
-    return new URL(relative, baseUrl).href;
-  } catch {
-    return `${baseUrl}${relative}`;
-  }
-}
-
 function collectImageResults(input) {
   const results = [];
   const sources = [];
@@ -171,35 +158,6 @@ function collectImageResults(input) {
   }
   for (const [id, values] of partsBySource) sources.push(sourceNode(id, values[0].subjectLabel || "과학 부품", ["image"], values.length, {
     origin: "provided", category: "other", pathSegments: ["과학 부품"], counts: { pdf: 0, image: values.length, page: 0, question: 0 },
-  }));
-
-  const examsBySource = new Map();
-  for (const item of input.examManifest?.items ?? []) {
-    const subject = item.subject || "all";
-    const sourceId = stableId("source", "exam-images", subject);
-    if (!examsBySource.has(sourceId)) examsBySource.set(sourceId, []);
-    examsBySource.get(sourceId).push(item);
-    const previewUrl = externalExamImageUrl(input, item);
-    const derived = deriveExamMetadata({
-      metadata: { subject: item.subject, academicYear: item.year, administration: item.month },
-      source: { displayName: item.fileName ?? item.file ?? item.name },
-    });
-    const examMetadata = {
-      subject: derived?.subject ?? null, academicYear: derived?.academicYear ?? null,
-      administration: derived?.administration ?? null, documentCode: derived?.documentCode ?? null,
-      itemNumber: Number.isInteger(item.no) ? item.no : null, curated: true,
-    };
-    const fallbackTitle = item.fileName ?? item.file ?? item.name ?? item.id;
-    const result = imageResult("exam-image", { ...item, title: humanExamName(examMetadata, item.no) || fallbackTitle }, sourceId, item.subjectLabel || "기출 이미지", {
-      subtitle: [item.subjectLabel, item.exam, item.no ? `${item.no}번` : null].filter(Boolean).join(" · "),
-      searchText: [item.id, item.title, ...(item.tags ?? []), ...(item.parts ?? [])].join(" "),
-      metadata: examMetadata,
-      previewUrl,
-    });
-    results.push(result); items.set(result.id, item);
-  }
-  for (const [id, values] of examsBySource) sources.push(sourceNode(id, values[0].subjectLabel || "기출 이미지", ["image"], values.length, {
-    origin: "provided", category: "past-exams", pathSegments: ["이미지"], counts: { pdf: 0, image: values.length, page: 0, question: 0 },
   }));
 
   const importsBySource = new Map();
@@ -869,7 +827,7 @@ export function createUnifiedLibraryProvider(input = {}) {
         return materializers.pdf({ result: materializerResult, source: securedSource, options });
       }
       const item = images.items.get(result.id);
-      const materializer = materializers[result.provenance.provider === "parts" ? "part" : result.provenance.provider === "exam-image" ? "examImage" : "importedImage"];
+      const materializer = materializers[result.provenance.provider === "parts" ? "part" : "importedImage"];
       if (typeof materializer === "function") return materializer({ result, item, options });
       const bytes = item?.bytes instanceof Uint8Array ? item.bytes : item?.data instanceof Uint8Array ? item.data : null;
       if (bytes) return { bytes: bytes.slice(), mimeType: item.mimeType ?? null, result };

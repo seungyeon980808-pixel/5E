@@ -10,6 +10,7 @@
     { "path": "tests/test-png-exif-regression.mjs" },
     { "path": "tests/test-preview-lite-cache-identity.cjs" },
     { "path": "tests/test-release-entry-closure.cjs" },
+    { "path": "tests/test-rights-clear-smoke-fixture.mjs" },
     { "path": "tests/test-separation-edge-regression.mjs" },
     { "path": "tests/task4-data-contracts.cjs" },
     { "path": "tests/test-graph-correctness.mjs" },

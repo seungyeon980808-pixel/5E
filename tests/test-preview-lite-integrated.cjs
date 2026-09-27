@@ -5,7 +5,7 @@ const { chromium, webkit } = require(process.env.PLAYWRIGHT_MODULE || 'playwrigh
 
 const url = process.env.PREVIEW_URL || 'http://127.0.0.1:8798/preview/?mode=lite';
 const evidence = process.env.EVIDENCE_DIR || '.omo/evidence/lite-persistent-four-pane-0924/integrated';
-const fixture = path.resolve('preview/assets/exam-library/images/p1_2027_06_01.png');
+const fixture = path.resolve('tests/fixtures/rights-clear-smoke.png');
 const fixtureDataUrl = `data:image/png;base64,${fs.readFileSync(fixture).toString('base64')}`;
 fs.mkdirSync(evidence, { recursive: true });
 

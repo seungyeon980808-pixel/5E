@@ -23,7 +23,6 @@ import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-pre
 import { state } from "./state.js?v=1.6.0-preview-labeler-0917-1111";
 import { addPage, switchPage } from "./pages.js?v=1.6.0-preview-lite-hybrid-0922";
 import { showConfirm } from "./ui-dialogs.js?v=1.6.0-preview-labeler-0917-1111";
-import { buildExportSvg } from "./svg-export.js?v=1.6.0-preview-lite-hybrid-0922";
 import { COURSES, getCourse } from "./tutorial-courses.js?v=1.6.0-preview-lite-hybrid-0922";
 
 /* ===== 저장 (localStorage) ===== */
@@ -1065,23 +1064,7 @@ function showStep(attempt = 0) {
 
   ensurePractice(step);
 
-  // step.compare = 기출 도판 id. 내용(코스)은 "무엇과 비교하는가"만 적고, 창을 띄우는
-  // 일은 연출(엔진)이 한다 — 그래서 tutorial-courses.js 가 이 파일을 되짚지 않는다.
-  // step.exam = 아직 그린 것이 없을 때(첫 단계) — 원본만 한 칸으로 보여 준다.
-  // 빈 칸과 나란히 놓는 것은 비교가 아니므로 '비교' 단추를 만들지 않는다(사용자 지적).
-  const stepAuto = step.auto || (step.compare
-    ? {
-      label: "원본과 나란히 놓고 보기",
-      stay: true,   // 창을 열어 두는 단추라 단계를 넘기지 않는다
-      run: () => openCompare(step.compare, { note: step.compareNote || "" }),
-    }
-    : step.exam
-      ? {
-        label: "기출 원본 보기",
-        stay: true,
-        run: () => openCompare(step.exam, { note: step.examNote || "", examOnly: true }),
-      }
-      : null);
+  const stepAuto = step.auto || null;
 
   // 단계 진입 준비는 처음 들어올 때 딱 한 번만(되돌아왔을 때 다시 돌리면 안 된다).
   if (attempt <= 0.5 && !seen) {
@@ -1422,7 +1405,6 @@ function teardown() {
   if (!_run) return;
   unbindWait();
   stopDemo();
-  closeCompare();
   for (const timer of _run.timers) clearTimeout(timer);
   _run.timers.clear();
   if (_run.tick) clearInterval(_run.tick);
@@ -1575,62 +1557,6 @@ export function closePicker() {
   document.querySelectorAll(".tut-picker-overlay").forEach((el) => el.remove());
 }
 
-/* ===== 원본과 비교하기 =====
- * 코스 마지막 단계용. 왼쪽에 기출 원본 도판(assets/exam-library), 오른쪽에
- * 지금 그린 것을 나란히 놓는다. 내 그림은 내보내기와 똑같은 경로(buildExportSvg)로
- * 뽑는다 — 편집 화면의 보조선·핸들이 섞이면 비교가 안 되기 때문이다. */
-let _compare = null;
-
-export function openCompare(examId, { note = "", examOnly = false } = {}) {
-  closeCompare();
-
-  const overlay = document.createElement("div");
-  overlay.className = "tut-compare-overlay";
-  overlay.innerHTML = `
-    <div class="tut-compare${examOnly ? " is-single" : ""}" role="dialog" aria-modal="true" aria-labelledby="tut-compare-title">
-      <div class="tut-compare-head">
-        <h2 class="tut-compare-title" id="tut-compare-title">${examOnly ? "기출 원본" : "원본과 비교"}</h2>
-        <button type="button" class="tut-btn tut-compare-close">닫기</button>
-      </div>
-      ${note ? `<p class="tut-compare-note">${note}</p>` : ""}
-      <div class="tut-compare-body">
-        <figure class="tut-compare-pane">
-          <figcaption>${examOnly ? "오늘 만들 그림" : "기출 원본"}</figcaption>
-          <div class="tut-compare-box">
-            <img alt="기출 원본 도판" src="assets/exam-library/images/${examId}.png">
-          </div>
-        </figure>
-        ${examOnly ? "" : `<figure class="tut-compare-pane">
-          <figcaption>내가 만든 그림</figcaption>
-          <div class="tut-compare-box tut-compare-mine"></div>
-        </figure>`}
-      </div>
-    </div>`;
-
-  const box = overlay.querySelector(".tut-compare-mine");
-  if (box) try {
-    const svg = buildExportSvg(state.get());
-    // mm 실측 크기로 나오므로 칸에 맞게 다시 재운다(viewBox 는 그대로 둔다).
-    svg.removeAttribute("width");
-    svg.removeAttribute("height");
-    svg.setAttribute("preserveAspectRatio", "xMidYMid meet");
-    box.appendChild(svg);
-  } catch (err) {
-    console.warn("[튜토리얼] 비교용 그림을 만들지 못했습니다", err);
-    box.textContent = "그림을 불러오지 못했습니다.";
-  }
-
-  overlay.querySelector(".tut-compare-close").addEventListener("click", closeCompare);
-  overlay.addEventListener("click", (e) => { if (e.target === overlay) closeCompare(); });
-
-  document.documentElement.appendChild(overlay);
-  _compare = overlay;
-}
-
-export function closeCompare() {
-  if (_compare) { _compare.remove(); _compare = null; }
-}
-
 /* ===== 첫 방문 제안 배너 =====
  * 처음 온 사람만 한 번 본다. 거절하면 다시 뜨지 않는다(기존 사용자 방해 금지). */
 function maybeShowBanner() {
@@ -1744,7 +1670,6 @@ export function initTutorial() {
   }, true);
   document.addEventListener("keydown", (e) => {
     if (e.key !== "Escape" || appEscapes.has(e) || appOwnsEscape(e)) return;
-    if (_compare) { closeCompare(); return; }
     if (_picker) { closePicker(); return; }
     if (!_run) return;
     const step = _run.course.steps[_run.index];

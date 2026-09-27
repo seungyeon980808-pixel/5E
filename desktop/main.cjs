@@ -53,7 +53,7 @@ const IMAGE_FINALIZE_TIMEOUT_MS = 10_000;
 const IMAGE_FINALIZE_POLL_MS = 500;
 const RPC_CHECK_TIMEOUT_MS = 1_500;
 const localImages = createLocalImageAccess();
-const SMOKE_FIXTURE_IMAGE_PATH = path.join(__dirname, "..", "preview", "assets", "exam-library", "images", "p1_2027_06_01.png");
+const SMOKE_FIXTURE_IMAGE_PATH = path.join(__dirname, "..", "tests", "fixtures", "rights-clear-smoke.png");
 
 function imageDataUrl({ extension: ext, bytes }) {
   const mime = ext === ".svg" ? "image/svg+xml"

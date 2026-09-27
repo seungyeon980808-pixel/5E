@@ -49,6 +49,17 @@ test('desktop packages and loads the audited preview entry', () => {
   }
 });
 
+test('desktop package excludes the root exam library and carries the rights-clear smoke fixture', () => {
+  const packageJson = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
+  const files = packageJson.build.files;
+  assert.ok(files.includes('!assets/exam-library/**'), 'root exam library must be excluded from the desktop package');
+  assert.ok(files.includes('tests/fixtures/rights-clear-smoke.png'), 'rights-clear smoke fixture must be packaged');
+
+  const main = fs.readFileSync(path.join(root, 'desktop/main.cjs'), 'utf8');
+  assert.match(main, /tests", "fixtures", "rights-clear-smoke\.png/);
+  assert.doesNotMatch(main, /exam-library["/\\].*\.png/);
+});
+
 test('stable root has a complete local render and import closure', () => {
   const html = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
   for (const match of html.matchAll(/(?:src|href)=["']([^"']+)["']/g)) {

@@ -46,7 +46,7 @@ const ancillary = Buffer.concat([png.subarray(0,33), chunk('aBCD', new Uint8Arra
 await assert.rejects(decodeScopedPng(ancillary), /not supported/);
 console.log('PNG eXIf: before/after IDAT, byte-exact pixels, CRC, critical, and ancillary-chunk rejection passed');
 
-const nativeFixture = Buffer.from(await readFile(new URL('../preview/assets/exam-library/images/p1_2027_06_01.png', import.meta.url)));
+const nativeFixture = Buffer.from(await readFile(new URL('./fixtures/rights-clear-smoke.png', import.meta.url)));
 const nativeDecoded = await decodeScopedPng(nativeFixture);
 const nativeWithoutPhys = await decodeScopedPng(withoutChunk(nativeFixture, 'pHYs'));
 assert.equal(nativeDecoded.width, 1005);

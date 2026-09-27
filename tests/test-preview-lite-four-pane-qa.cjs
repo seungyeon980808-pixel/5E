@@ -4,7 +4,7 @@ const { chromium } = require(process.env.PLAYWRIGHT_MODULE || '/Users/parkseungy
 
 const BASE_URL = process.env.PREVIEW_URL || 'http://127.0.0.1:8798/preview/?mode=lite';
 const EVIDENCE = path.resolve(process.env.EVIDENCE_DIR || '.omo/evidence/lite-four-pane-0924');
-const FIXTURE = path.resolve('preview/assets/exam-library/images/p1_2027_06_01.png');
+const FIXTURE = path.resolve('tests/fixtures/rights-clear-smoke.png');
 const FIXTURE_DATA_URL = `data:image/png;base64,${fs.readFileSync(FIXTURE).toString('base64')}`;
 fs.mkdirSync(EVIDENCE, { recursive: true });
 fs.writeFileSync(path.join(EVIDENCE, 'browser-actions.ndjson'), '');
