@@ -1,6 +1,6 @@
 import { openPdfReferencePicker } from "./pdf-library/reference-picker.js?v=1.6.0-preview-labeler-0917-1111";
 
-const SOURCES = Object.freeze({ PARTS: "parts", EXAM: "exam", LOCAL: "local" });
+const SOURCES = Object.freeze({ PARTS: "parts", PDF: "pdf", LOCAL: "local" });
 const MAX_RESULTS = 60;
 const MAX_SELECT = 10;
 
@@ -159,7 +159,7 @@ export function createAiReferenceSearch({ desktop, onAdd, onAddMany, onStatus } 
       <header><strong>이미지 검색</strong><button type="button" data-ai-search-close aria-label="닫기">×</button></header>
       <nav aria-label="검색 위치">
         <button type="button" data-ai-search-source="parts">온라인 이미지</button>
-        <button type="button" data-ai-search-source="exam">기출문제</button>
+        <button type="button" data-ai-search-source="pdf">PDF 기출문제</button>
         <button type="button" data-ai-search-source="local">로컬 폴더</button>
       </nav>
       <div class="ai-reference-search-query"><span aria-hidden="true">⌕</span><input type="search" placeholder="이미지 검색어를 입력하세요" aria-label="이미지 검색어"></div>
@@ -174,7 +174,7 @@ export function createAiReferenceSearch({ desktop, onAdd, onAddMany, onStatus } 
     overlay.querySelectorAll("[data-ai-search-source]").forEach((button) => {
       button.onclick = async () => {
         const nextSource = button.dataset.aiSearchSource;
-        if (nextSource === SOURCES.EXAM) {
+        if (nextSource === SOURCES.PDF) {
           close();
           try {
             await openPdfReferencePicker({ onAdd, onAddMany, onStatus: status });

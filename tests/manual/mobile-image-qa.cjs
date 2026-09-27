@@ -31,7 +31,7 @@ const report = {
   source: Object.fromEntries(['DESIGN.md', 'tests/manual/mobile-image-qa.cjs', 'preview/index.html', 'preview/css/mobile-image.css', 'preview/js/ai-panel.js', 'preview/js/main.js', 'preview/js/mobile-entry.js', 'preview/js/mobile-image.js', 'preview/js/panel-visibility.js', 'preview/js/web-login-ui.js']
     .map(file => [file, require('node:crypto').createHash('sha256').update(fs.readFileSync(path.join(root, file))).digest('hex')])),
 };
-const fixture = path.join(root,'assets/exam-library/images/p1_2025_11_05.png');
+const fixture = path.join(root,'tests/fixtures/rights-clear-smoke.png');
 const png = 'data:image/png;base64,' + fs.readFileSync(fixture).toString('base64');
 const expectedNames=['empty','mobile-share','home-reopen','source','processing','comparison','320','375','768','1280','landscape','keyboard-size','restored','failed','interrupted','controlled-auth-tab-return','desktop-preserved','crop-pixels-and-rect','crop-reverse-edge-small','cancel-keeps-reference','malformed-recovery','decode-close-reselect','busy-readonly-transition','secondary-pointer-cancel','bounded-large-image-measurement'];
 report.expectedCases=['chromium','webkit'].flatMap(engine=>expectedNames.map(suffix=>({name:`${engine}-${suffix}`,status:'NOT_RUN'})));

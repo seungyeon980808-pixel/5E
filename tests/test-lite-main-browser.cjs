@@ -1,6 +1,6 @@
 const assert=require('node:assert/strict'),fs=require('fs');
 const {chromium,webkit}=require(process.env.PLAYWRIGHT_MODULE || 'playwright');
-const FIXTURE = require('node:path').resolve('preview/assets/exam-library/images/p1_2027_06_01.png');
+const FIXTURE = require('node:path').resolve('tests/fixtures/rights-clear-smoke.png');
 const FIXTURE_DATA_URL='data:image/png;base64,'+fs.readFileSync(FIXTURE).toString('base64');
 async function installTransport(context, { loggedIn, controlled } = {}) {
   const state = { sends: [], delivered: new Set() };
