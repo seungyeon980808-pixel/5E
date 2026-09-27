@@ -53,11 +53,16 @@ for (const token of ["v1.5.8", "https://www.5e.ai.kr/", "HOLD", "UNVERIFIED", "O
   if (!combined.includes(token)) fail(`release docs missing ${token}`);
 }
 
-const sampleCatalog = JSON.parse(read("preview/assets/exam-library/sample-catalog.json"));
-if (sampleCatalog.items.length !== 7) fail("sample rights hold must cover exactly the current seven samples");
-for (const sample of sampleCatalog.items) {
-  if (sample.license !== "이용 조건 미확인") fail(`sample ${sample.id} no longer matches the UNVERIFIED hold`);
-  if (!read("docs/RELEASE_HOLD.md").includes(`\`${sample.id}\``)) fail(`release hold is missing sample ID ${sample.id}`);
+const driveConfig = JSON.parse(read("preview/assets/pdf-library/google-drive.json"));
+if (driveConfig.schemaVersion !== 1) fail("PDF/Drive metadata schemaVersion must be 1");
+let driveGateway;
+try {
+  driveGateway = new URL(driveConfig.gatewayBaseUrl);
+} catch {
+  fail("PDF/Drive metadata gatewayBaseUrl must be a valid URL");
+}
+if (driveGateway.protocol !== "https:" || !driveGateway.hostname) {
+  fail("PDF/Drive metadata gatewayBaseUrl must use HTTPS");
 }
 
 const correctedV158 = read("docs/checksums/SHA256SUMS-v1.5.8-corrected.txt").trim();
@@ -105,4 +110,4 @@ if (artifactsDirOption) {
   console.log(`Artifact checksums OK: ${actualNames.length} files`);
 }
 
-console.log(`Release docs OK: candidate ${channels.candidate.version} ${channels.candidate.status}`);
+console.log(`Release docs OK: candidate ${channels.candidate.version} ${channels.candidate.status}; PDF/Drive metadata schema ${driveConfig.schemaVersion}`);
