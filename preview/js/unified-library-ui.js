@@ -97,18 +97,26 @@ export function activePdfPageResult(result, matchIndex = 0) {
   };
 }
 
-export function pdfResultsForDisplay(files, mode = "file") {
+export function pdfResultsForDisplay(files, mode = "file", matchesOnly = false) {
   if (mode !== "page") return files;
-  return files.flatMap((file) => Array.isArray(file.matches) && file.matches.length ? file.matches.map((match) => ({
-    ...file,
-    id: `${file.id}:page:${match.pageNumber}`,
-    firstMatchingPage: match.pageNumber,
-    matches: [match],
-    metadata: { ...file.metadata, pageNumber: match.pageNumber },
-    preview: { source: match.source },
-    provenance: { ...file.provenance, ...match.source, pageNumber: match.pageNumber },
-    subtitle: `${file.title} · ${match.pageNumber}쪽`,
-  })) : [file]);
+  return files.flatMap((file) => {
+    const pageNumbers = matchesOnly && file.matches?.length
+      ? file.matches.map((match) => match.pageNumber)
+      : Array.from({ length: Math.max(1, Number(file.pageCount) || 1) }, (_, index) => index + 1);
+    return pageNumbers.map((pageNumber) => {
+      const match = file.matches?.find?.((item) => item.pageNumber === pageNumber);
+      return {
+        ...file,
+        id: `${file.id}:page:${pageNumber}`,
+        firstMatchingPage: pageNumber,
+        matches: match ? [match] : [],
+        metadata: { ...file.metadata, pageNumber },
+        preview: match?.source ? { source: match.source } : file.preview,
+        provenance: { ...file.provenance, ...(match?.source ?? {}), pageNumber },
+        subtitle: `${file.title} · ${pageNumber}쪽`,
+      };
+    });
+  });
 }
 
 export async function materializeLibraryThumbnail(result, activeProvider, pdfMode = "file") {
@@ -1265,11 +1273,11 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
         ? (typeof activeProvider.searchAsync === "function" ? activeProvider.searchAsync({ ...options, kinds }) : activeProvider.search({ ...options, kinds }))
         : [];
       const pdfPromise = activeTypes.includes("pdf")
-        ? (queryText && typeof activeProvider.searchPdfFiles === "function" ? activeProvider.searchPdfFiles(options) : pageDisplayActive ? activeProvider.listPdfPages?.(pageInventoryOptions) ?? [] : activeProvider.listPdfFiles?.(options) ?? [])
+        ? (queryText && typeof activeProvider.searchPdfFiles === "function" ? activeProvider.searchPdfFiles(options) : activeProvider.listPdfFiles?.(pageDisplayActive ? pageInventoryOptions : options) ?? [])
         : [];
       const [regular, pdfFiles] = await Promise.all([regularPromise, pdfPromise]);
-      const displayedPdf = pageDisplayActive && queryText ? pdfResultsForDisplay(pdfFiles, "page") : pdfFiles;
-      const normalizedPdf = Array.isArray(displayedPdf) ? displayedPdf.map((file) => pageDisplayActive && !queryText && file.kind === "page" ? file : ({
+      const displayedPdf = pageDisplayActive ? pdfResultsForDisplay(pdfFiles, "page", Boolean(queryText)) : pdfFiles;
+      const normalizedPdf = Array.isArray(displayedPdf) ? displayedPdf.map((file) => ({
         ...file,
         id: file.id || `pdf:${file.documentId}`,
         kind: "pdf",
@@ -1280,6 +1288,9 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       if (!searchIsCurrent(ownEpoch, signal)) return;
       results = Array.isArray(found) ? found : [];
       selectedId = reconcileUnifiedSelection(selectedId, results);
+      if (pageDisplayActive && queryText && !results.find((item) => item.id === selectedId && item.matches?.length)) {
+        selectedId = results.find((item) => item.matches?.length)?.id ?? selectedId;
+      }
       renderResults();
       if (results.length && !await waitForFirstResultPaint(ownEpoch, signal)) return;
       if (!searchIsCurrent(ownEpoch, signal)) return;
@@ -1399,7 +1410,8 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       const title = document.createElement("strong");
       title.className = "library-card-name";
       const visibleTitle = visibleLibraryName(result.title);
-      title.textContent = visibleTitle;
+      title.textContent = pdfDisplayMode === "page" && result.kind === "pdf" && result.provenance?.pageNumber
+        ? `${visibleTitle} · ${result.provenance.pageNumber}쪽` : visibleTitle;
       const sourceText = resultSourceText(result);
       const pageText = result.provenance?.pageNumber ? `${result.provenance.pageNumber}쪽` : "";
       title.title = sourceText.includes(visibleTitle) ? sourceText : `${visibleTitle} · ${sourceText}`;
@@ -1634,7 +1646,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     const matchNav = overlay.querySelector("[data-unilib-match-nav]");
     matchNav.hidden = pdfMatches.length < 2;
     overlay.querySelector("[data-unilib-match-position]").textContent = pdfMatches.length ? `${pdfMatchIndex + 1} / ${pdfMatches.length} · ${activePdfMatch.pageNumber}쪽` : "";
-    const continuousPdf = result?.kind === "pdf" && pdfDisplayMode === "file" && activeTypes.length === 1 && activeTypes[0] === "pdf" && typeof result.loadPreview === "function";
+    const continuousPdf = result?.kind === "pdf" && activeTypes.length === 1 && activeTypes[0] === "pdf" && typeof result.loadPreview === "function";
     if (continuousPdf) {
       overlay.querySelector("[data-unilib-preview-title]").textContent = result.title || "PDF 전체 보기";
       overlay.querySelector("[data-unilib-preview-kind]").textContent = `전체 문서 · ${result.pageCount || 1}쪽`;
@@ -2071,6 +2083,30 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     session.visiblePage = pageNumber;
     stage.dataset.visiblePdfPage = String(pageNumber);
     overlay.querySelector("[data-unilib-source-meta]").textContent = resultSourceText(pdfFilePageResult(result, pageNumber));
+    if (pdfDisplayMode === "page" && result.provenance?.pageNumber !== pageNumber) {
+      let next = results.find((item) => item.kind === "pdf"
+        && item.provenance?.documentId === result.provenance?.documentId
+        && item.provenance?.pageNumber === pageNumber);
+      if (!next) {
+        next = { ...pdfFilePageResult(result, pageNumber), id: result.id.replace(/:page:\d+$/, `:page:${pageNumber}`), matches: [], subtitle: `${result.title} · ${pageNumber}쪽` };
+        const following = results.findIndex((item) => item.kind === "pdf"
+          && item.provenance?.documentId === result.provenance?.documentId
+          && item.provenance?.pageNumber > pageNumber);
+        const index = following >= 0 ? following : results.map((item) => item.provenance?.documentId).lastIndexOf(result.provenance?.documentId) + 1;
+        results.splice(index, 0, next);
+      }
+      if (next) {
+        const cardMissing = !list.querySelector(`[data-result-id="${CSS.escape(next.id)}"]`);
+        invalidateAction();
+        selectedId = next.id;
+        session.resultId = next.id;
+        if (cardMissing) renderResults();
+        else updateResultSelection();
+        const index = results.indexOf(next);
+        if (index >= renderedResultCount) appendResultBatch(index);
+        list.querySelector(`[data-result-id="${CSS.escape(next.id)}"]`)?.scrollIntoView({ block: "nearest", inline: "nearest" });
+      }
+    }
     paintContinuousWindow(session, result, pageNumber);
   }, { passive: true });
   foldersToggle.addEventListener("click", () => {

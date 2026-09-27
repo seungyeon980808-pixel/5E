@@ -23,6 +23,7 @@
     { "path": "tools/mcp-5e/test/server-pairing.test.mjs" }
   ],
   "browser": [
+    { "path": "tests/test-unified-library-page-scroll-browser.cjs", "findingIds": ["LIB-PAGE-SCROLL"] },
     { "path": "tests/test-release-entry-browser.cjs", "findingIds": ["TPK-001", "TPK-002"] },
     { "path": "tests/test-preview-startup-browser.cjs", "findingIds": ["TPK-004"] },
     { "path": "tests/test-shortcut-simplification-browser.cjs", "findingIds": ["TPK-005"] },
