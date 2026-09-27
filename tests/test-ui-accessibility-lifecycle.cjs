@@ -71,7 +71,7 @@ test('characterization: pointer focus remains deliberately quiet', () => {
   assert.match(cssRule(css, '#canvas.pointer-focused'), /outline:\s*none/);
   const main = read('preview/js/main.js');
   assert.match(main, /svg\.classList\.add\("pointer-focused"\)/);
-  assert.match(main, /window\.addEventListener\("keydown", \(\) => svg\.classList\.remove\("pointer-focused"\)/);
+  assert.match(main, /svg\.addEventListener\("blur", \(\) => svg\.classList\.remove\("pointer-focused"\)/);
 });
 
 if (!characterizeOnly) {
