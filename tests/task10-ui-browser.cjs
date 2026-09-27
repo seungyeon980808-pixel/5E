@@ -1,7 +1,7 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
-const { chromium } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
+const { chromium, webkit } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 
 const base = process.env.PREVIEW_URL || 'http://127.0.0.1:18810/preview/';
 const evidenceDir = path.resolve(process.env.EVIDENCE_DIR || '.omo/evidence/task10');
@@ -104,7 +104,7 @@ async function run() {
     mobile: {},
     teardown: {},
   };
-  const browser = await chromium.launch({ headless: false });
+  const browser = await (process.env.FOCUS_BROWSER === 'webkit' ? webkit : chromium).launch({ headless: false });
   report.browser = browser.version();
   try {
     const context = await browser.newContext({
@@ -222,12 +222,36 @@ async function run() {
     assert.equal(restored.pages[1].objects.some(object => object.id === 'line-a2'), true);
     report.recovery.restored = clone(restored);
 
+    const liteCanvas = page.locator('#canvas');
+    const liteCanvasBox = await liteCanvas.boundingBox();
+    await page.mouse.click(liteCanvasBox.x + liteCanvasBox.width / 2, liteCanvasBox.y + liteCanvasBox.height / 2);
+    await page.keyboard.press('ArrowRight');
+    assert.equal(await liteCanvas.evaluate(element => getComputedStyle(element).outlineStyle), 'none',
+      'Lite canvas must not gain a viewport frame after pointer editing');
+    await page.screenshot({ path: path.join(evidenceDir, 'lite-canvas-pointer-no-frame.png') });
+
     await page.locator('#mode-toggle-btn').click();
     const keepDialog = page.locator('.mode-switch-dialog [role="alertdialog"]');
     await keepDialog.waitFor();
     const keepSnapshot = await keepDialog.ariaSnapshot();
     assert.match(keepSnapshot, /^- alertdialog "Pro로 전환":/);
-    await page.getByRole('button', { name: '유지하고 전환', exact: true }).click();
+    const keepButton = page.getByRole('button', { name: '유지하고 전환', exact: true });
+    await page.keyboard.press('Tab');
+    await keepButton.focus();
+    assert.equal(await keepButton.evaluate(element => element.matches(':focus-visible')), true);
+    assert.equal(await keepButton.evaluate(element => getComputedStyle(element).outlineStyle), 'solid',
+      'keyboard focus must remain visible before pointer input');
+    await page.waitForTimeout(350);
+    const keepBox = await keepButton.boundingBox();
+    await page.mouse.move(keepBox.x + keepBox.width / 2, keepBox.y + keepBox.height / 2);
+    await page.mouse.down();
+    assert.deepEqual(await keepButton.evaluate(element => ({
+      outline: getComputedStyle(element).outlineStyle,
+      shadow: getComputedStyle(element).boxShadow,
+    })), { outline: 'none', shadow: 'none' },
+    'pointer pressing a modal action must not retain a keyboard focus ring');
+    await page.screenshot({ path: path.join(evidenceDir, 'modal-pointer-no-ring.png') });
+    await page.mouse.up();
     await page.waitForFunction(() => document.documentElement.dataset.mode === 'pro');
     await page.waitForFunction(() => !document.documentElement.classList.contains('mode-transition'));
     assert.deepEqual(await projectSnapshot(page), restored);
@@ -258,6 +282,14 @@ async function run() {
     }));
     assert.equal(pointerOutline.pointerClass, true);
     assert.equal(pointerOutline.style, 'none');
+    await page.keyboard.press('ArrowRight');
+    assert.deepEqual(await canvas.evaluate(element => ({
+      focused: document.activeElement === element,
+      pointerClass: element.classList.contains('pointer-focused'),
+      outline: getComputedStyle(element).outlineStyle,
+    })), { focused: true, pointerClass: true, outline: 'none' },
+    'using a canvas shortcut after pointer focus must not draw a viewport frame');
+    await page.screenshot({ path: path.join(evidenceDir, 'canvas-pointer-no-frame.png') });
     report.focus = { initialOutline, tabCount, keyboardOutline, pointerOutline };
     await context.close();
 
@@ -299,6 +331,7 @@ async function run() {
     });
     await mobile.waitForFunction(() => document.getElementById('canvas').getBoundingClientRect().width > 0);
     await mobile.waitForFunction(() => document.getElementById('zoom-readout').textContent !== 'zoom 0.00×');
+    await waitFrames(mobile, 20);
     const reveal = await mobile.evaluate(() => ({
       width: document.getElementById('canvas').getBoundingClientRect().width,
       zoom: document.getElementById('zoom-readout').textContent,
