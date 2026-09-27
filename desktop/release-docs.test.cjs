@@ -19,8 +19,34 @@ test("release documentation and channel provenance are internally consistent", (
   const result = spawnSync(process.execPath, [validator], { cwd: root, encoding: "utf8" });
   assert.equal(result.status, 0, result.stderr || result.stdout);
   assert.match(result.stdout, /Release docs OK: candidate 1\.6\.0 HOLD/);
+  assert.match(result.stdout, /PDF\/Drive metadata schema 1/);
   const channels = JSON.parse(fs.readFileSync(path.join(root, "release-channels.json"), "utf8"));
   assert.equal(Object.hasOwn(channels.candidate, "sourceSha"), false);
+});
+
+test("release documentation checker reads current PDF/Drive metadata", (t) => {
+  const fixture = fs.mkdtempSync(path.join(os.tmpdir(), "5e-release-docs-drive-config-"));
+  t.after(() => fs.rmSync(fixture, { recursive: true, force: true }));
+  for (const relative of ["README.md", "DESIGN.md", "LICENSE", ".nvmrc", "package.json", "release-channels.json", "docs", "preview/PREVIEW.md"]) {
+    const source = path.join(root, relative);
+    const target = path.join(fixture, relative);
+    fs.mkdirSync(path.dirname(target), { recursive: true });
+    fs.cpSync(source, target, { recursive: true });
+  }
+  const configRelative = path.join("preview", "assets", "pdf-library", "google-drive.json");
+  const configPath = path.join(fixture, configRelative);
+  fs.mkdirSync(path.dirname(configPath), { recursive: true });
+  fs.copyFileSync(path.join(root, configRelative), configPath);
+
+  fs.rmSync(configPath);
+  const missing = spawnSync(process.execPath, [validator, "--root", fixture], { cwd: root, encoding: "utf8" });
+  assert.notEqual(missing.status, 0);
+  assert.match(missing.stderr, /google-drive\.json/);
+
+  fs.copyFileSync(path.join(root, configRelative), configPath);
+  const restored = spawnSync(process.execPath, [validator, "--root", fixture], { cwd: root, encoding: "utf8" });
+  assert.equal(restored.status, 0, restored.stderr || restored.stdout);
+  assert.match(restored.stdout, /PDF\/Drive metadata schema 1/);
 });
 
 test("checksum validation uses exact artifact basenames and bytes", (t) => {
