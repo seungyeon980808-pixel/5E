@@ -26,9 +26,9 @@ import {
   state, DEFAULT_TEXT_SIZE_MM, DEFAULT_TEXT_FONT,
   EQUATION_FONT_FAMILY, OBJECT_LABEL_TEXT_FONT_FAMILY,
 } from "./state.js?v=1.6.0-preview-labeler-0917-1111";
-import { makeLine, makePolyline, setActiveTool, DEFAULT_STROKE_WIDTH, getActiveSymbolId } from "./tools.js?v=1.6.0-preview-labeler-0917-1111";
-import { TEMPLATES } from "./templates.js?v=1.6.0-preview-labeler-0917-1111";
-import { NODE_DEFAULT_SIZE } from "./tools/node-placement.js?v=1.6.0-preview-labeler-0917-1111";
+import { makeLine, makePolyline, setActiveTool, DEFAULT_STROKE_WIDTH, getActiveSymbolId } from "./tools.js?v=1.6.0-preview-lite-hybrid-0922";
+import { TEMPLATES } from "./templates.js?v=1.6.0-preview-lite-hybrid-0922";
+import { NODE_DEFAULT_SIZE } from "./tools/node-placement.js?v=1.6.0-preview-lite-hybrid-0922";
 import { applyNewObjectStyleDefaults } from "./style-mode.js?v=1.6.0-preview-labeler-0917-1111";
 
 import { localizeTutorialCourse } from "./tutorial-labels.js?v=1.6.0-preview-labeler-0917-1111";
@@ -552,7 +552,7 @@ const BASICS = {
       text:
         "화면은 다섯 구역입니다.\n" +
         "왼쪽은 도구, 가운데는 그림, 오른쪽은 속성, 아래는 페이지, 위는 파일과 설정.\n" +
-        "지금부터 하나씩 짚어 드립니다.\n\n" +
+        "지금부터 하나씩 짚어드립니다.\n\n" +
         "· 연습용 페이지를 따로 만들어 두었습니다 — 원래 작업은 건드리지 않습니다",
     },
     {
@@ -889,7 +889,7 @@ const INCLINE_FIGURE = {
       text:
         "역학 문항에 가장 많이 나오는 그림입니다.\n" +
         "바닥을 먼저 깔고, 거기에 빗면과 물체를 붙여 나갑니다.\n\n" +
-        "· 그릴 자리는 점선으로 짚어 드립니다\n" +
+        "· 그릴 자리는 점선으로 짚어드립니다\n" +
         "· 어디를 눌러 어디까지 끄는지는 가상 커서가 보여 줍니다\n" +
         "· 물체는 빗면에 나란히 눕습니다 — 스냅이 각도까지 맞춰 줍니다",
       guide: () => [
@@ -1207,21 +1207,9 @@ const INCLINE_FIGURE = {
  * '내보내기'를 따로 코스로 두지 않고 여기 붙였다(사용자 요구) — 실제로도 이 흐름의 끝이
  * 내보내기이기 때문에, 떼어 놓으면 맥락이 끊긴다.
  *
- * 번들에 남긴 한 장의 물리 도해를 실제 라이브러리 가져오기 경로로 넣고, 파일명의
- * 학년도·월·번호를 차례로 검색한다. 외부 기출 자료팩이 설정돼 있지 않은 설치에서도
- * 같은 연습을 할 수 있어야 한다.
+ * 사용 권한을 확인한 자기 그림을 라이브러리에서 고른 뒤 같은 가져오기 경로를 밟는다.
+ * 번들 예시 이미지는 쓰지 않는다.
  */
-
-const TUTORIAL_EXAM_IMAGE = "assets/exam-library/images/p2_2027_06_13.png";
-const TUTORIAL_EXAM_FILE_NAME = "p2_2027_06_13.png";
-const EXAM_QUERY_STEPS = ["2027", "2027 06", "2027 06 13"];
-
-function typeIntoSearch(v) {
-  const q = document.querySelector(".unified-library-overlay:not([hidden]) [data-unilib-query]");
-  if (!q) return;
-  q.value = v;
-  q.dispatchEvent(new Event("input", { bubbles: true }));
-}
 
 function libraryOverlay() {
   return document.querySelector(".unified-library-overlay:not([hidden])");
@@ -1229,64 +1217,6 @@ function libraryOverlay() {
 
 function selectedLibraryResult() {
   return libraryOverlay()?.querySelector('[data-result-id][aria-selected="true"]') || null;
-}
-
-function setFilesOnInput(input, file) {
-  const transfer = new DataTransfer();
-  transfer.items.add(file);
-  input.files = transfer.files;
-  input.dispatchEvent(new Event("change", { bubbles: true }));
-}
-
-function importedLibrarySource(overlay) {
-  return [...overlay.querySelectorAll("[data-source-id]")].find((input) =>
-    input.closest("label")?.textContent.includes("가져온 이미지"));
-}
-
-async function importTutorialExamImage(ctx) {
-  if (ctx.tutorialExamImport?.state === "ready") return true;
-  if (ctx.tutorialExamImport?.state === "loading") return false;
-  const overlay = libraryOverlay();
-  const input = overlay?.querySelector("[data-unilib-files]");
-  if (!overlay || !input) {
-    ctx.tutorialExamImport = { state: "failed" };
-    return false;
-  }
-  ctx.tutorialExamImport = { state: "loading" };
-  try {
-    const response = await fetch(TUTORIAL_EXAM_IMAGE);
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    const blob = await response.blob();
-    const file = new File([blob], TUTORIAL_EXAM_FILE_NAME, { type: blob.type || "image/png" });
-    ctx.tutorialExamFile = file;
-    setFilesOnInput(input, file);
-    let source = importedLibrarySource(overlay);
-    for (let attempts = 0; !source && attempts < 100; attempts += 1) {
-      await new Promise((resolve) => setTimeout(resolve, 20));
-      source = importedLibrarySource(overlay);
-    }
-    if (!source) throw new Error("Imported tutorial image was not registered");
-    if (!source.checked) {
-      source.click();
-      const restore = () => {
-        const current = importedLibrarySource(overlay);
-        if (current?.checked) current.click();
-      };
-      window.addEventListener("5e:library-closed", restore, { once: true });
-    }
-    ctx.tutorialExamImport = { state: "ready" };
-    return true;
-  } catch (_) {
-    ctx.tutorialExamImport = { state: "failed" };
-    return false;
-  }
-}
-
-function loadTutorialExamIntoObjectify(ctx) {
-  const input = document.getElementById("objectify-file");
-  if (!input || !ctx.tutorialExamFile) return false;
-  setFilesOnInput(input, ctx.tutorialExamFile);
-  return true;
 }
 // 지금 캔버스에 있는 그룹 id 들(객체화 삽입물은 하나의 groupId 로 묶여 온다).
 const groupIds = () => new Set(objects().map((o) => o.groupId).filter(Boolean));
@@ -1368,57 +1298,23 @@ const EXAM_SEARCH = {
       title: "라이브러리 열기",
       text:
         "캔버스 아래 막대에 있습니다. 눌러 주세요.\n\n" +
-        "· 단축키는 Ctrl+Alt+Shift+L 입니다",
+        "· 캔버스 아래 [라이브러리] 버튼이나 명령 팔레트(Ctrl+K)에서 엽니다",
       demo: () => ({ kind: "clicks", at: ["#exam-library-open"] }),
       wait: { click: "#exam-library-open", hint: "라이브러리를 눌러 주세요" },
     },
     {
-      target: () => ["[data-unilib-query]", "[data-unilib-status]"],
+      target: () => ["[data-unilib-results]", "[data-unilib-status]"],
       coachSide: "right",
       chapter: "가져오기",
-      title: "연습용 기출 그림을 가져옵니다",
+      title: "사용 권한을 확인한 그림을 고르세요",
       text:
-        "외부 자료팩을 아직 연결하지 않아도 연습할 수 있게 예시 그림을 라이브러리에 넣습니다.\n" +
-        "실제 [파일 가져오기] 흐름을 그대로 쓰므로, 가져온 자료도 다른 이미지처럼 검색됩니다.",
-      auto: {
-        label: "연습 그림 가져오기",
-        run: importTutorialExamImage,
-      },
-      wait: { until: (ctx) => ctx.tutorialExamImport?.state === "ready", hint: "연습 그림을 가져오지 못했다면 [다시 시도하기]를 눌러 주세요" },
-    },
-    {
-      target: () => ["[data-unilib-query]", "[data-unilib-status]"],
-      coachSide: "right",
-      chapter: "가져오기",
-      title: "번호를 한 조각씩 — 결과가 좁혀집니다",
-      text:
-        "파일명의 학년도·월·번호를 나눠 찾습니다. 아래 단추를 누를 때마다 결과가 좁혀집니다.\n\n" +
-        "· 2027 = 학년도 · 2027 06 = 6월 · 2027 06 13 = 13번\n" +
-        "· 가져온 이미지는 파일명으로 검색합니다",
-      auto: {
-        repeat: {
-          label: (i) => (i < EXAM_QUERY_STEPS.length
-            ? `'${EXAM_QUERY_STEPS[i]}' 찾기  (${i + 1}/${EXAM_QUERY_STEPS.length})`
-            : "다음"),
-          run: (i) => {
-            if (i >= EXAM_QUERY_STEPS.length) return false;
-            typeIntoSearch(EXAM_QUERY_STEPS[i]);
-            return i + 1 < EXAM_QUERY_STEPS.length;
-          },
-        },
-      },
-    },
-    {
-      target: () => "[data-unilib-results]",
-      coachSide: "right",
-      chapter: "가져오기",
-      title: "딱 한 문항이 남았습니다",
-      text:
-        "2027년 6월 13번 그림입니다. 결과 카드를 눌러 미리보기를 열어 주세요.\n\n" +
-        "· 선택한 카드의 테두리가 활성화됩니다",
+        "내가 만들었거나 사용 권한을 확인한 그림만 고릅니다.\n\n" +
+        "· 결과가 없으면 [자료 위치 추가]에서 내 폴더 또는 Drive 자료를 연결하세요\n" +
+        "· 검색창에는 내 파일명을 넣어 찾을 수 있습니다\n" +
+        "· 카드 하나를 눌러 오른쪽 미리보기를 엽니다",
       wait: {
         until: () => !!selectedLibraryResult(),
-        hint: "카드를 눌러 골라 주세요",
+        hint: "사용 권한을 확인한 그림 카드를 눌러 주세요",
       },
     },
     {
@@ -1443,7 +1339,7 @@ const EXAM_SEARCH = {
       target: () => "#image-objectify-open",
       chapter: "가져오기",
       title: "이미지 객체화를 열어 주세요",
-      text: "캔버스 아래 막대의 [이미지 객체화]를 누릅니다. 방금 라이브러리에서 쓴 같은 그림을 여기에도 불러옵니다.",
+      text: "캔버스 아래 막대의 [이미지 객체화]를 누릅니다. 방금 고른 것과 같은, 사용 권한을 확인한 파일을 여기에서 다시 고릅니다.",
       demo: () => ({ kind: "clicks", at: ["#image-objectify-open"] }),
       wait: { click: "#image-objectify-open", hint: "이미지 객체화를 눌러 주세요" },
     },
@@ -1451,9 +1347,8 @@ const EXAM_SEARCH = {
       target: () => "#objectify-status",
       chapter: "가져오기",
       title: "같은 그림을 선으로 준비합니다",
-      text: "파일을 따로 고르지 않아도 됩니다. 튜토리얼이 방금 라이브러리에 넣은 실제 그림을 이 창에 불러옵니다.",
-      action: loadTutorialExamIntoObjectify,
-      wait: { until: () => { const button = document.getElementById("objectify-insert"); return !!button && !button.disabled; }, hint: "그림을 분석하는 중입니다" },
+      text: "파일을 끌어 놓거나 왼쪽 미리보기를 눌러 같은 파일을 고르세요. 분석이 끝나면 [객체로 삽입] 단추가 켜집니다.",
+      wait: { until: () => { const button = document.getElementById("objectify-insert"); return !!button && !button.disabled; }, hint: "사용 권한을 확인한 그림 파일을 고르고 분석이 끝날 때까지 기다려 주세요" },
     },
     {
       target: () => "#objectify-insert",
@@ -1891,35 +1786,20 @@ const TRIM_EXAM = {
     {
       target: () => "#exam-library-open",
       title: "라이브러리 열기",
-      text: "캔버스 아래 막대에 있습니다. 눌러 주세요.\n\n· 단축키는 Ctrl+Alt+Shift+L 입니다",
+      text: "캔버스 아래 막대에 있습니다. 눌러 주세요.\n\n· 명령 팔레트(Ctrl+K)에서도 찾을 수 있습니다",
       demo: () => ({ kind: "clicks", at: ["#exam-library-open"] }),
       wait: { click: "#exam-library-open", hint: "라이브러리를 눌러 주세요" },
     },
     {
-      target: () => ["[data-unilib-query]", "[data-unilib-status]"],
-      title: "연습 그림을 가져옵니다",
+      target: () => ["[data-unilib-results]", "[data-unilib-status]"],
+      title: "사용 권한을 확인한 그림을 고르세요",
       text:
-        "외부 자료팩 없이도 쓸 수 있는 예시 그림을 실제 [파일 가져오기] 흐름으로 넣습니다.",
-      auto: {
-        label: "연습 그림 가져오기",
-        run: importTutorialExamImage,
-      },
-      wait: { until: (ctx) => ctx.tutorialExamImport?.state === "ready", hint: "연습 그림을 가져오지 못했다면 [다시 시도하기]를 눌러 주세요" },
-    },
-    {
-      target: () => "[data-unilib-query]",
-      title: "그림을 찾아 드릴게요",
-      text: "파일명 2027 06 13으로 검색합니다. 검색 결과의 카드를 누르면 오른쪽에 미리보기가 열립니다.",
-      auto: { label: "'2027 06 13' 검색하기", run: () => typeIntoSearch("2027 06 13") },
-      wait: { until: () => !!libraryOverlay()?.querySelector("[data-result-id]"), hint: "검색 결과를 준비하는 중입니다" },
-    },
-    {
-      target: () => "[data-unilib-results]",
-      title: "카드를 눌러 고르세요",
-      text: "한 그림만 남았습니다. 카드를 눌러 주세요.",
+        "내가 만들었거나 사용 권한을 확인한 그림만 고릅니다. 결과가 없으면 [자료 위치 추가]에서 내 폴더 또는 Drive 자료를 연결하세요.\n\n" +
+        "· 검색창에 내 파일명을 넣어 찾을 수 있습니다\n" +
+        "· 카드 하나를 눌러 오른쪽 미리보기를 엽니다",
       wait: {
         until: () => !!selectedLibraryResult(),
-        hint: "카드를 눌러 골라 주세요",
+        hint: "사용 권한을 확인한 그림 카드를 눌러 주세요",
       },
     },
     {
@@ -2477,7 +2357,6 @@ const TASKS = [
 /* 좌표는 원본 PNG(1199×324px)를 픽셀로 재서 130mm 판으로 환산한 값이다
  * (1px = 0.1084mm, 원점 = 이미지 중심). 재현이 어긋나면 이 환산부터 다시 한다. */
 const EX = {
-  id: "p2_2027_06_13",       // assets/exam-library/images/<id>.png
   board: { w: 130, h: 40 },  // 원본 비율(약 3.7:1)에 맞춘 아트보드
   ground: 9.2,               // 수평면 y
   p: [-54.5, -13],           // 5h 높이 출발점
@@ -2684,16 +2563,13 @@ const EXAM_TASK_INCLINE = {
   steps: [
     /* ---------- 국면 0: 목표 확인 ---------- */
     {
-      title: "오늘 만들 그림",
+      title: "오늘 만들 그림의 구조",
       text:
-        "2027학년도 6월 물리Ⅱ 13번 도판입니다. 아래 단추로 원본을 먼저 보세요.\n\n" +
+        "빗면·마찰 구간·치수선이 한 도판 안에서 어떻게 맞물리는지 연습합니다.\n\n" +
         "· 점선이 만들 자리입니다 — 딱 맞지 않아도 됩니다\n" +
         "· 판 맞추기 → 지형 → 이름표 → 치수 → 마감 순으로 갑니다\n" +
         "· 스페이스바를 누르면 [다음]과 같습니다",
       guide: () => [{ pts: EX.terrain, close: false, note: "지형", noteDy: -6 }],
-      // 아직 아무것도 안 그렸으므로 '비교'가 아니라 원본만 보여 준다(빈 칸과 비교할 수 없다).
-      exam: EX.id,
-      examNote: "이것이 목표 도판입니다. 다 만든 뒤 마지막 단계에서 내 그림과 나란히 비교합니다.",
     },
 
     /* ---------- 국면 1: 판 비율 맞추기 ---------- */
@@ -2981,14 +2857,12 @@ const EXAM_TASK_INCLINE = {
 
     /* ---------- 국면 5: 비교 · 내보내기 ---------- */
     {
-      title: "원본과 비교해 보세요",
+      title: "도판을 점검해 보세요",
       text:
-        "다 만들었습니다. 아래 단추를 누르면 기출 원본과 내 그림을 나란히 놓고 볼 수 있습니다.\n\n" +
-        "· 선 굵기·글자 크기·치수 위치를 원본과 견주어 보세요\n" +
-        "· 다르게 보이는 곳이 있으면 창을 닫고 그 객체만 고치면 됩니다\n" +
-        "· 똑같이 만드는 것이 목표가 아닙니다 — 무엇이 도판을 도판답게 하는지 보는 것이 목표입니다",
-      compare: EX.id,
-      compareNote: "왼쪽이 기출 원본, 오른쪽이 지금 만든 그림입니다.",
+        "다 만들었습니다. 선 굵기·글자 크기·치수 위치를 차례로 확인하세요.\n\n" +
+        "· 지형선과 치수선의 굵기가 구분되는지 봅니다\n" +
+        "· 이름표와 물리량이 선을 가리지 않는지 봅니다\n" +
+        "· 마찰 구간 띠가 지형선에 붙어 있는지 봅니다",
     },
     {
       target: () => "#menu-file",

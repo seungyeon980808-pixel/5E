@@ -10,10 +10,10 @@ import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-pre
  * · 백업: settings.js PERSONAL_KEYS에 포함 — '설정 저장하기/불러오기'로 왕복.
  */
 
-import { instantiateObjectsAt } from "./transform.js?v=1.6.0-preview-labeler-0917-1111";
+import { instantiateObjectsAt } from "./transform.js?v=1.6.0-preview-lite-hybrid-0922";
 import { showAlert, showConfirm } from "./ui-dialogs.js?v=1.6.0-preview-labeler-0917-1111";
-import { renderObject } from "./render.js?v=1.6.0-preview-labeler-0917-1111";
-import { getObjectBBox } from "./pick.js?v=1.6.0-preview-labeler-0917-1111";
+import { renderObject } from "./render.js?v=1.6.0-preview-lite-hybrid-0922";
+import { getObjectBBox } from "./pick.js?v=1.6.0-preview-lite-hybrid-0922";
 import { idbGet, idbSet, idbAvailable } from "./idb-store.js?v=1.6.0-preview-labeler-0917-1111";
 
 const KEY = "5e.personalObjects";
@@ -386,7 +386,12 @@ export function renderLibrary() {
     const header = document.createElement("button");
     header.type = "button";
     header.className = "subject-part-header";
-    header.innerHTML = `<span>${cat}</span><span class="toggle-icon">▾</span>`;
+    const categoryLabel = document.createElement("span");
+    categoryLabel.textContent = cat;
+    const toggleIcon = document.createElement("span");
+    toggleIcon.className = "toggle-icon";
+    toggleIcon.textContent = "▾";
+    header.append(categoryLabel, toggleIcon);
     header.addEventListener("click", () => sec.classList.toggle("is-collapsed"));
     const body = document.createElement("div");
     body.className = "subject-part-body";

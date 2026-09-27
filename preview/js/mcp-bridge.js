@@ -22,12 +22,12 @@ import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-pre
 import { state } from "./state.js?v=1.6.0-preview-labeler-0917-1111";
 import {
   serialize as serializeProject, migrate as migrateProject, applyLoaded as applyLoadedProject,
-} from "./project-io.js?v=1.6.0-preview-emerald-polish-0921";
+} from "./project-io.js?v=1.6.0-preview-lite-hybrid-0922";
 import { showAlert, showConfirm, showPrompt } from "./ui-dialogs.js?v=1.6.0-preview-labeler-0917-1111";
-import { switchPage, addPage } from "./pages.js?v=1.6.0-preview-repair-0921";
+import { switchPage, addPage } from "./pages.js?v=1.6.0-preview-lite-hybrid-0922";
 import { rasterizeExportCanvas, ensureEmbeddedFonts, insertPngPhys,
-         getContentBounds } from "./svg-export.js?v=1.6.0-preview-labeler-0917-1111";
-import { translateObject } from "./transform.js?v=1.6.0-preview-labeler-0917-1111";
+         getContentBounds } from "./svg-export.js?v=1.6.0-preview-lite-hybrid-0922";
+import { translateObject } from "./transform.js?v=1.6.0-preview-lite-hybrid-0922";
 import { captureDocumentSnapshot, commitDocumentHistory } from "./document-history.js?v=1.6.0-preview-labeler-0917-1111";
 import { MCP_BRIDGE_PORTS, parseMcpPairingRecord } from "./mcp-pairing.js?v=1.6.0-preview-labeler-0917-1111";
 
@@ -55,6 +55,7 @@ let idSeq = 0;
 let lastPort = null;
 let pairedPort = null;
 let pairedCapability = null;
+let pairedSessionId = null;
 let connecting = false;   // 버튼을 눌러 재시도하는 중 — 중복 클릭 방지
 
 /* ----- 화면에 그려진 모양의 실제 범위 (fitArtboard 용) -----
@@ -458,16 +459,42 @@ function nextId() {
 }
 
 /* ----- 연결 ----- */
-async function respond(port, id, ok, payload) {
-  if (port !== pairedPort || !pairedCapability) return;
+async function respond(port, capability, sessionId, id, ok, payload) {
+  if (port !== pairedPort || capability !== pairedCapability || sessionId !== pairedSessionId) return;
   try {
-    const query = `cap=${encodeURIComponent(pairedCapability)}&cid=${encodeURIComponent(CLIENT_ID)}`;
-    await fetch(`http://127.0.0.1:${port}/result?${query}`, {
+    await fetch(`http://127.0.0.1:${port}/result`, {
       method: "POST",
-      headers: { "content-type": "application/json" },
+      headers: {
+        authorization: `Bearer ${capability}`,
+        "content-type": "application/json",
+        "x-mcp-session": sessionId,
+      },
       body: JSON.stringify(ok ? { id, ok: true, data: payload } : { id, ok: false, error: String(payload) }),
     });
   } catch { /* 서버가 사라졌다 — 다음 명령에서 재연결된다 */ }
+}
+
+async function consumeEventStream(response, onEvent) {
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let buffered = "";
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) return;
+    buffered += decoder.decode(value, { stream: true }).replaceAll("\r\n", "\n");
+    let boundary;
+    while ((boundary = buffered.indexOf("\n\n")) >= 0) {
+      const block = buffered.slice(0, boundary);
+      buffered = buffered.slice(boundary + 2);
+      let event = "message";
+      const data = [];
+      for (const line of block.split("\n")) {
+        if (line.startsWith("event: ")) event = line.slice(7);
+        else if (line.startsWith("data: ")) data.push(line.slice(6));
+      }
+      if (data.length) await onEvent(event, data.join("\n"));
+    }
+  }
 }
 
 /* ----- 자동 재연결(워치독) -----
@@ -502,34 +529,53 @@ function retryNow() {
   connectPaired();
 }
 
-function connectPaired() {
+function connectPaired(manual = false) {
   if (!pairedPort || !pairedCapability) return;
   const connectionPort = pairedPort;
   const connectionCapability = pairedCapability;
   lastPort = connectionPort;
   if (source) { try { source.close(); } catch { /* 이미 닫힘 */ } }
+  pairedSessionId = null;
   /* 내가 누구인지 밝히면서 붙는다 — 서버가 app_status 로 "지금 붙은 게 어느 창인지"를
    * 돌려줄 수 있어야 한다. 같은 포트의 다른 탭도 구분해야 하므로 창마다 다른 CLIENT_ID 를 쓴다.
    * (2026-07-27: 어느 창에 붙었는지 알 수 없어 교사 문서에 그림이 들어간 사고가 있었다) */
   const q = `?cid=${encodeURIComponent(CLIENT_ID)}&href=${encodeURIComponent(location.href)}`
-          + `&cap=${encodeURIComponent(connectionCapability)}`;
-  source = new EventSource(`http://127.0.0.1:${connectionPort}/events${q}`);
-  source.onopen = () => { stopWatchdog(); setBadge("connected", connectionPort); };
-  source.onerror = () => {
-    if (source) { try { source.close(); } catch { /* 무시 */ } source = null; }
+          + (manual ? "&manual=1" : "");
+  const controller = new AbortController();
+  const ownSource = { close: () => controller.abort() };
+  source = ownSource;
+  fetch(`http://127.0.0.1:${connectionPort}/events${q}`, {
+    headers: { authorization: `Bearer ${connectionCapability}` },
+    signal: controller.signal,
+  }).then(async (response) => {
+    if (!response.ok) throw new Error(`MCP 연결 거부 (${response.status})`);
+    stopWatchdog();
+    setBadge("connected", connectionPort);
+    await consumeEventStream(response, async (event, data) => {
+      if (source !== ownSource) return;
+      if (event === "session") {
+        const value = JSON.parse(data);
+        pairedSessionId = value.sessionId;
+        return;
+      }
+      if (event === "evicted") throw new Error("MCP 연결이 다른 창으로 이동했습니다");
+      if (!pairedSessionId) return;
+      let msg;
+      try { msg = JSON.parse(data); } catch { return; }
+      const fn = COMMANDS[msg.cmd];
+      if (!fn) return respond(connectionPort, connectionCapability, pairedSessionId, msg.id, false, `알 수 없는 명령: ${msg.cmd}`);
+      try { respond(connectionPort, connectionCapability, pairedSessionId, msg.id, true, await fn(msg.args || {})); }
+      catch (e) { respond(connectionPort, connectionCapability, pairedSessionId, msg.id, false, e.message); }
+    });
+    throw new Error("MCP 연결이 종료되었습니다");
+  }).catch((error) => {
+    if (source !== ownSource || controller.signal.aborted) return;
+    source = null;
+    pairedSessionId = null;
     setBadge("disconnected", connectionPort);
     scheduleReconnect();
-  };
-  source.onmessage = async (ev) => {
-    let msg;
-    try { msg = JSON.parse(ev.data); } catch { return; }
-    const fn = COMMANDS[msg.cmd];
-    if (!fn) return respond(connectionPort, msg.id, false, `알 수 없는 명령: ${msg.cmd}`);
-    // await 를 반드시 건다 — exportImage 처럼 비동기인 명령이 있다. 안 걸면 Promise
-    // 객체가 그대로 직렬화돼 빈 {} 가 나간다(동기 명령은 await 해도 그대로다).
-    try { respond(connectionPort, msg.id, true, await fn(msg.args || {})); }
-    catch (e) { respond(connectionPort, msg.id, false, e.message); }
-  };
+    if (manual) console.warn(error.message);
+  });
 }
 
 /* ----- 연결 상태 버튼 -----
@@ -574,7 +620,7 @@ async function requestPairing() {
   connecting = true;
   stopWatchdog();
   const value = await showPrompt(
-    "MCP의 app_pairing 또는 app_status가 보여 준 페어링 기록을 붙여 넣으세요.",
+    "MCP의 app_pairing이 보여 준 페어링 기록을 붙여 넣으세요.",
     {
       title: "MCP 페어링",
       placeholder: "mcp-5e://127.0.0.1:8579/#…",
@@ -600,7 +646,7 @@ async function requestPairing() {
   button?.removeEventListener("click", handleInstallClick);
   button?.addEventListener("click", handleBadgeClick);
   setBadge("connecting");
-  connectPaired();
+  connectPaired(true);
   return true;
 }
 

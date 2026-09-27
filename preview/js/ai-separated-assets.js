@@ -136,33 +136,30 @@ function isAcceptedFrameBackground(data, pixel) {
   return Math.min(red, green, blue) >= 250 && Math.max(red, green, blue) - Math.min(red, green, blue) <= 3 && data[offset + 3] === 255;
 }
 
-function frameIsTransparent(source) {
+function framePixels(source) {
+  const pixels = [];
   for (let x = 0; x < source.width; x++) {
-    if (source.data[x * 4 + 3] !== 0 || source.data[((source.height - 1) * source.width + x) * 4 + 3] !== 0) return false;
+    pixels.push(x, (source.height - 1) * source.width + x);
   }
-  for (let y = 0; y < source.height; y++) {
-    if (source.data[y * source.width * 4 + 3] !== 0 || source.data[(y * source.width + source.width - 1) * 4 + 3] !== 0) return false;
+  for (let y = 1; y < source.height - 1; y++) {
+    pixels.push(y * source.width, y * source.width + source.width - 1);
   }
-  return true;
+  return pixels;
 }
 
-function assertOuterFrame(source, transparent) {
-  let pureWhite = true;
-  const inspect = pixel => {
-    if (transparent ? source.data[pixel * 4 + 3] !== 0 : !isAcceptedFrameBackground(source.data, pixel)) {
-      throw new Error('체크무늬나 어두운 배경은 분리할 수 없습니다. 실제 투명 또는 흰색 배경을 사용해 주세요.');
-    }
-    pureWhite &&= isPureWhite(source.data, pixel);
-  };
-  for (let x = 0; x < source.width; x++) {
-    inspect(x);
-    inspect((source.height - 1) * source.width + x);
+function frameIsTransparent(source, minimumFraction) {
+  const pixels = framePixels(source);
+  return pixels.filter(pixel => source.data[pixel * 4 + 3] === 0).length / pixels.length >= minimumFraction;
+}
+
+function assertOuterFrame(source, transparent, minimumFraction) {
+  const pixels = framePixels(source);
+  const accepted = pixels.filter(pixel => transparent
+    ? source.data[pixel * 4 + 3] === 0 : isAcceptedFrameBackground(source.data, pixel));
+  if (accepted.length / pixels.length < minimumFraction) {
+    throw new Error('체크무늬나 어두운 배경은 분리할 수 없습니다. 실제 투명 또는 흰색 배경을 사용해 주세요.');
   }
-  for (let y = 0; y < source.height; y++) {
-    inspect(y * source.width);
-    inspect(y * source.width + source.width - 1);
-  }
-  return transparent ? 'transparent' : pureWhite ? 'white' : 'near-white';
+  return transparent ? 'transparent' : accepted.every(pixel => isPureWhite(source.data, pixel)) ? 'white' : 'near-white';
 }
 
 async function detectBackground(source, transparent, checkpoint) {
@@ -257,8 +254,10 @@ export async function prepareSeparatedAssets(dataUrl, options) {
     if (layout === 'grid' && Math.floor(Math.min(source.width, source.height) / GRID_SIZE / 3) < 2) {
       throw new RangeError('4×4 객체 분리에 필요한 이미지 해상도가 부족합니다.');
     }
-    const transparent = frameIsTransparent(source);
-    const backgroundMode = assertOuterFrame(source, transparent);
+    // Natural compositions may touch the edge; atlas grids still require a fully clear frame.
+    const minimumFrameBackground = layout === 'grid' ? 1 : 0.75;
+    const transparent = frameIsTransparent(source, minimumFrameBackground);
+    const backgroundMode = assertOuterFrame(source, transparent, minimumFrameBackground);
     const background = await detectBackground(source, transparent, checkpoint);
     let foregroundPixelCount = 0;
     for (let pixel = 0; pixel < background.length; pixel++) {

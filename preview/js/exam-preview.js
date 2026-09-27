@@ -18,7 +18,7 @@ import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-pre
  * 포함될 수 있어 .gitignore 처리 — 공개 배포 전 자작 목업으로 교체할 것.
  */
 
-import { rasterizeExportCanvas, ensureEmbeddedFonts } from "./svg-export.js?v=1.6.0-preview-labeler-0917-1111";
+import { rasterizeExportCanvas, ensureEmbeddedFonts } from "./svg-export.js?v=1.6.0-preview-lite-hybrid-0922";
 import { loadPreviewBackgrounds } from "./preview-backgrounds.js?v=1.6.0-preview-labeler-0917-1111";
 
 /* ----- 배경 양식 목록 -----

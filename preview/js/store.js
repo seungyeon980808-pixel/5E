@@ -8,6 +8,7 @@
 
 export function createStore(initialState) {
   let state = initialState;
+  let pageContextRevision = 0;
   const subscribers = new Set();
 
   /* ----- subscribe: register fn, get an unsubscribe handle ----- */
@@ -18,7 +19,18 @@ export function createStore(initialState) {
 
   /* ----- update: mutate via updaterFn, then notify everyone ----- */
   function update(updaterFn) {
+    const activePageId = state?.activePageId ?? null;
+    const pages = state?.pages;
+    const activePage = Array.isArray(pages)
+      ? pages.find(page => page?.id === activePageId) : null;
     updaterFn(state); // mutate in place — state object identity is stable
+    const nextPageId = state?.activePageId ?? null;
+    const nextPages = state?.pages;
+    const nextActivePage = Array.isArray(nextPages)
+      ? nextPages.find(page => page?.id === nextPageId) : null;
+    if (nextPageId !== activePageId || nextPages !== pages || nextActivePage !== activePage) {
+      pageContextRevision += 1;
+    }
     subscribers.forEach((fn) => fn(state));
   }
 
@@ -27,5 +39,14 @@ export function createStore(initialState) {
     return state;
   }
 
-  return { subscribe, update, get };
+  function capturePageContext() {
+    return { pageId: state?.activePageId ?? null, revision: pageContextRevision };
+  }
+
+  function isPageContextCurrent(context) {
+    return !!context && context.pageId === (state?.activePageId ?? null)
+      && context.revision === pageContextRevision;
+  }
+
+  return { subscribe, update, get, capturePageContext, isPageContextCurrent };
 }

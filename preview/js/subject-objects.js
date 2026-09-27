@@ -4,7 +4,7 @@ import {
   renderSymbolsForCategories,
   renderSymbolsForIds,
   sizeIconViewBox,
-} from "./templates.js?v=1.6.0-preview-labeler-0917-1111";
+} from "./templates.js?v=1.6.0-preview-lite-hybrid-0922";
 
 const SUBJECTS = {
   p: {
@@ -131,28 +131,23 @@ export function initSubjectObjects() {
     return grid;
   }
 
-  function quickGroup(title, ids, emptyText) {
+  function quickGroup(title, ids) {
+    if (!ids.length) return null;
     const group = document.createElement("section");
     group.className = "object-quick-group";
     const heading = document.createElement("h3");
     heading.className = "object-quick-title";
     heading.textContent = title;
     group.appendChild(heading);
-    if (ids.length) group.appendChild(symbolGrid(ids));
-    else {
-      const empty = document.createElement("p");
-      empty.className = "object-quick-empty";
-      empty.textContent = emptyText;
-      group.appendChild(empty);
-    }
+    group.appendChild(symbolGrid(ids));
     return group;
   }
 
   function renderQuickAccess() {
-    quickHost.replaceChildren(
-      quickGroup("즐겨찾기", favorites, "오브젝트의 별을 누르면 여기에 모입니다."),
-      quickGroup("최근 사용", recent, "사용한 오브젝트가 여기에 표시됩니다."),
-    );
+    quickHost.replaceChildren(...[
+      quickGroup("즐겨찾기", favorites),
+      quickGroup("최근 사용", recent),
+    ].filter(Boolean));
   }
 
   function renderParts() {

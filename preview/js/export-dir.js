@@ -15,60 +15,48 @@
 
 import { idbAvailable, idbGet, idbSet, idbDel } from "./idb-store.js?v=1.6.0-preview-labeler-0917-1111";
 
-const DIR_KEY = "export-dir-handle";
+const DIR_CONFIG = {
+  export: { key: "export-dir-handle", id: "5e-export" },
+  project: { key: "project-dir-handle", id: "5e-project" },
+};
 
 export const FS_DIR_SUPPORTED =
   typeof window !== "undefined" && !!window.showDirectoryPicker;
 
-let dirHandle = null;
+const dirHandles = { export: null, project: null };
 
-/* 저장해 둔 폴더 핸들을 되살린다(권한 요청은 하지 않는다 — 제스처가 없으므로). */
-export async function loadSavedDir() {
-  if (dirHandle || !FS_DIR_SUPPORTED || !idbAvailable()) return dirHandle;
+function configFor(kind) { return DIR_CONFIG[kind] || DIR_CONFIG.export; }
+
+async function loadSavedHandle(kind) {
+  if (dirHandles[kind] || !FS_DIR_SUPPORTED || !idbAvailable()) return dirHandles[kind];
   try {
-    const h = await idbGet(DIR_KEY);
-    if (h && typeof h.queryPermission === "function") dirHandle = h;
-  } catch (_) { /* 저장된 핸들이 깨졌으면 없는 것으로 본다 */ }
-  return dirHandle;
+    const h = await idbGet(configFor(kind).key);
+    if (h && typeof h.queryPermission === "function") dirHandles[kind] = h;
+  } catch (_) { }
+  return dirHandles[kind];
 }
 
-export function currentDir() { return dirHandle; }
-export function currentDirName() { return dirHandle ? (dirHandle.name || "") : ""; }
-
-export async function ensureDirPermission(handle = dirHandle) {
-  if (!handle || typeof handle.queryPermission !== "function") return false;
-  try {
-    if (await handle.queryPermission({ mode: "readwrite" }) === "granted") return true;
-    return await handle.requestPermission({ mode: "readwrite" }) === "granted";
-  } catch (_) { return false; }
-}
-
-/* 폴더 고르기. 사용자 제스처(클릭) 안에서 불러야 한다. */
-export async function pickDir() {
+async function pickHandle(kind) {
   if (!FS_DIR_SUPPORTED) return null;
   try {
-    const h = await window.showDirectoryPicker({ id: "5e-export", mode: "readwrite" });
+    const h = await window.showDirectoryPicker({ id: configFor(kind).id, mode: "readwrite" });
     if (!h) return null;
-    dirHandle = h;
-    if (idbAvailable()) { try { await idbSet(DIR_KEY, h); } catch (_) {} }
+    dirHandles[kind] = h;
+    if (idbAvailable()) { try { await idbSet(configFor(kind).key, h); } catch (_) {} }
     return h;
   } catch (_) {
-    return null; // 취소 또는 미지원
+    return null;
   }
 }
 
-/* 연결 해제 — 다음 내보내기부터는 다시 '저장 위치 묻기'로 돌아간다. */
-export async function clearDir() {
-  dirHandle = null;
-  if (idbAvailable()) { try { await idbDel(DIR_KEY); } catch (_) {} }
+async function clearHandle(kind) {
+  dirHandles[kind] = null;
+  if (idbAvailable()) { try { await idbDel(configFor(kind).key); } catch (_) {} }
 }
 
-/* 연결된 폴더에 파일 하나를 쓴다. 성공하면 true.
- * 폴더가 없거나 권한이 거절되면 false — 부르는 쪽이 다운로드로 떨어지면 된다. */
-export async function writeToDir(filename, blob) {
-  const h = await loadSavedDir();
-  if (!h) return false;
-  if (!(await ensureDirPermission(h))) return false;
+async function writeToSavedDir(kind, filename, blob) {
+  const h = await loadSavedHandle(kind);
+  if (!h || !(await ensureDirPermission(h))) return false;
   try {
     const fh = await h.getFileHandle(filename, { create: true });
     const w = await fh.createWritable();
@@ -79,3 +67,41 @@ export async function writeToDir(filename, blob) {
     return false;
   }
 }
+
+/* 저장해 둔 폴더 핸들을 되살린다(권한 요청은 하지 않는다 — 제스처가 없으므로). */
+export async function loadSavedDir() {
+  return loadSavedHandle("export");
+}
+
+export function currentDir() { return dirHandles.export; }
+export function currentDirName() { return dirHandles.export ? (dirHandles.export.name || "") : ""; }
+
+export async function ensureDirPermission(handle = dirHandles.export) {
+  if (!handle || typeof handle.queryPermission !== "function") return false;
+  try {
+    if (await handle.queryPermission({ mode: "readwrite" }) === "granted") return true;
+    return await handle.requestPermission({ mode: "readwrite" }) === "granted";
+  } catch (_) { return false; }
+}
+
+/* 폴더 고르기. 사용자 제스처(클릭) 안에서 불러야 한다. */
+export async function pickDir() {
+  return pickHandle("export");
+}
+
+/* 연결 해제 — 다음 내보내기부터는 다시 '저장 위치 묻기'로 돌아간다. */
+export async function clearDir() {
+  return clearHandle("export");
+}
+
+/* 연결된 폴더에 파일 하나를 쓴다. 성공하면 true.
+ * 폴더가 없거나 권한이 거절되면 false — 부르는 쪽이 다운로드로 떨어지면 된다. */
+export async function writeToDir(filename, blob) {
+  return writeToSavedDir("export", filename, blob);
+}
+
+export async function loadSavedProjectDir() { return loadSavedHandle("project"); }
+export function currentProjectDirName() { return dirHandles.project ? (dirHandles.project.name || "") : ""; }
+export async function pickProjectDir() { return pickHandle("project"); }
+export async function clearProjectDir() { return clearHandle("project"); }
+export async function writeProjectToDir(filename, blob) { return writeToSavedDir("project", filename, blob); }

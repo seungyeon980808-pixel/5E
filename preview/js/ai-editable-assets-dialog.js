@@ -1,7 +1,7 @@
 import { prepareEditableAssets, effectiveAssetLabelMode } from './ai-editable-assets.js?v=1.6.0-preview-labeler-0917-1111';
 import { refinePreparedAssets } from './ai-editable-assets-refinement.js?v=1.6.0-preview-labeler-0917-1111';
 import { decodeScopedPng } from './ai-scoped-edit-png.js?v=1.6.0-preview-labeler-0917-1111';
-import { renderLabeler } from './render/annotations.js?v=1.6.0-preview-labeler-0917-1111';
+import { renderLabeler } from './render/annotations.js?v=1.6.0-preview-lite-tools-0922b';
 import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM } from './state.js?v=1.6.0-preview-labeler-0917-1111';
 export { refinePreparedAssets };
 
@@ -58,7 +58,7 @@ export async function openEditableAssetsDialog({ dataUrl, artboard, isCurrent = 
       ${automatic ? '<button type="button" data-action="refine">미세 조정</button><button type="button" data-mode="inspect" hidden>확인</button><button type="button" data-mode="merge" hidden>두 물체 합치기</button><button type="button" data-mode="split" hidden>영역 나누기</button><button type="button" data-mode="reassign" hidden>선택에 옮기기</button><button type="button" data-mode="anchor" hidden>지시선 끝점</button><button type="button" data-mode="label" hidden>라벨 위치</button>' : '<button type="button" data-mode="region">객체 선택</button><button type="button" data-mode="keep">흰색 보존</button><button type="button" data-mode="anchor">지시선 끝점</button><button type="button" data-mode="label">라벨 위치</button>'}
     <span class="aea-view-tools" role="group" aria-label="그림 보기"><button type="button" data-action="zoom-out" aria-label="축소">−</button><output class="aea-zoom" aria-label="확대 비율">100%</output><button type="button" data-action="zoom-in" aria-label="확대">+</button><button type="button" data-action="fit">전체 보기</button><button type="button" data-mode="pan">이동</button></span></div><p class="aea-hint" id="aea-hint"></p>
     <div class="aea-body"><div class="aea-workspace"><div class="aea-stage"><img class="aea-source" alt="객체를 선택할 원본 이미지"><svg class="aea-original" aria-hidden="true"></svg><svg class="aea-overlay" aria-label="객체 선택 영역"></svg><svg class="aea-preview" aria-label="투명 배경 미리보기" hidden></svg></div></div>
-      <aside class="aea-sidebar"><h3>${automatic ? '분리된 물체' : '선택한 객체'} <span class="aea-count">0</span></h3><label class="aea-label-toggle"><input type="checkbox" data-disable-labels>전체 라벨 사용 안 함</label><div class="aea-list"></div><p class="aea-empty">${automatic ? '확인할 분리 결과가 없습니다.' : '왼쪽 그림에서 객체를 감싸는 사각형을 그리세요.'}</p><button type="button" data-action="clear-keep" hidden>이 객체의 흰색 보존 해제</button></aside></div>
+      <aside class="aea-sidebar"><h3>${automatic ? '분리된 물체' : '선택한 객체'} <span class="aea-count">0</span></h3><label class="aea-label-toggle"><input type="checkbox" data-disable-labels checked>전체 라벨 사용 안 함</label><div class="aea-list"></div><p class="aea-empty">${automatic ? '확인할 분리 결과가 없습니다.' : '왼쪽 그림에서 객체를 감싸는 사각형을 그리세요.'}</p><button type="button" data-action="clear-keep" hidden>이 객체의 흰색 보존 해제</button></aside></div>
     <p class="aea-status" role="status" aria-live="polite">이미지를 불러오는 중…</p>
     <footer class="aea-footer"><button type="button" data-action="cancel">취소</button><div><button type="button" data-action="preview">${automatic ? '원본 보기' : '미리보기'}</button><button type="button" class="aea-primary" data-action="insert">${automatic ? '페이지에 넣고 닫기' : '페이지에 각각 넣기'}</button></div></footer>`;
   const find = selector => dialog.querySelector(selector);
@@ -79,7 +79,8 @@ export async function openEditableAssetsDialog({ dataUrl, artboard, isCurrent = 
   };
   const changeZoom = factor => { if (!width || drag || pan) return; zoom = Math.max(0.25, Math.min(8, zoom * factor)); updateViewport(); };
   let regions = [], selected = null, mode = automatic ? 'inspect' : 'region', revision = 0, prepared = automatic ? structuredClone(initialPrepared) : null;
-  let labelsDisabled = false;
+  let labelsDisabled = true;
+  if (prepared) prepared.labelsDisabled = true;
   let width = 0, height = 0, busy = false, closed = false, drag = null, showingPreview = false, refining = false, mergeSource = null;
   let refinementController = null;
   let finish;

@@ -13,18 +13,18 @@
 // we can distinguish "click on already-selected ??move allowed" from "click
 // selects a new object ??just select, no move this press."
 
-import { screenToWorld, getRenderScale } from "./viewport.js?v=1.6.0-preview-stable-view-0921";
-import { resolveSnap, resolveEndpointSnap, resolveRadialCenterSnap } from "./snap.js?v=1.6.0-preview-labeler-0917-1111";
-import { setSnapPreview, setSmartGuides, pendulumBBox } from "./render.js?v=1.6.0-preview-labeler-0917-1111";
-import { pickSelectableObjectFromEvent } from "./tools.js?v=1.6.0-preview-labeler-0917-1111";
-import { isObjectSelectable } from "./pick.js?v=1.6.0-preview-labeler-0917-1111";
-import { IMAGE_EDIT_SESSION_ID } from "./image-cutout.js?v=1.6.0-preview-labeler-0917-1111";
+import { screenToWorld, getRenderScale } from "./viewport.js?v=1.6.0-preview-lite-hybrid-0922";
+import { resolveSnap, resolveEndpointSnap, resolveRadialCenterSnap } from "./snap.js?v=1.6.0-preview-lite-hybrid-0922";
+import { setSnapPreview, setSmartGuides, pendulumBBox } from "./render.js?v=1.6.0-preview-lite-hybrid-0922";
+import { pickSelectableObjectFromEvent } from "./tools.js?v=1.6.0-preview-lite-hybrid-0922";
+import { isObjectSelectable } from "./pick.js?v=1.6.0-preview-lite-hybrid-0922";
+import { IMAGE_EDIT_SESSION_ID } from "./image-cutout.js?v=1.6.0-preview-lite-hybrid-0922";
 import { SHAPE_TYPES, SIZE_TYPES, FLIP_TYPES, POINT_ARRAY_TYPES,
          ENDPOINT_HANDLE_TYPES, TEXT_MEASURED_TYPES } from "./object-types.js?v=1.6.0-preview-labeler-0917-1111";
 
 import { isPageHistoryEntry, inversePageHistoryEntry, restorePageHistoryEntry } from "./page-history.js?v=1.6.0-preview-labeler-0917-1111";
 import { initObjectClipboard, cloneClipboardObjects } from "./editor-clipboard.js?v=1.6.0-preview-labeler-0917-1111";
-import { snapKey, modKey, IS_MAC, shortcutKey, blocksCanvasShortcut } from "./platform.js?v=1.6.0-preview-labeler-0917-1111";
+import { snapKey, modKey, IS_MAC, shortcutKey, blocksCanvasShortcut, hasBlockingModal } from "./platform.js?v=1.6.0-preview-labeler-0917-1111";
 /* ----- shared lock guard: locked objects are excluded from mutating ops ----- */
 function isMutable(o) { return o && !o.locked; }
 function isPositionMovable(o) { return isMutable(o) && !o.positionLocked; }
@@ -83,9 +83,22 @@ function rotPt(px, py, cx, cy, deg) {
            y: cy + (px - cx) * sin + (py - cy) * cos };
 }
 
+function rightAngleBounds(obj) {
+  const size = Math.max(obj.size || 4, 0.1);
+  const angle = (obj.angle || 0) * Math.PI / 180;
+  const side = (obj.orientation ?? 1) >= 0 ? 1 : -1;
+  const ux = Math.cos(angle), uy = Math.sin(angle);
+  const vx = -uy * side, vy = ux * side;
+  const xs = [obj.x, obj.x + ux * size, obj.x + (ux + vx) * size, obj.x + vx * size];
+  const ys = [obj.y, obj.y + uy * size, obj.y + (uy + vy) * size, obj.y + vy * size];
+  const x = Math.min(...xs), y = Math.min(...ys);
+  return { x, y, w: Math.max(...xs) - x, h: Math.max(...ys) - y };
+}
+
 /* ----- world position of the corner diagonally opposite to `corner` ----- */
 function getRotPivot(obj, corner) {
-  const { x, y, w, h, rotation } = obj;
+  const box = obj.type === "rightangle" ? rightAngleBounds(obj) : obj;
+  const { x, y, w, h, rotation } = box;
   const cx = x + w / 2, cy = y + h / 2;
   const deg = rotation || 0;
   switch (corner) {
@@ -156,11 +169,12 @@ export function rebuildGroups(s) {
 export function undo(state) {
   if (state.get().undoStack.length === 0) return;
   state.update((s) => {
-    const prev = s.undoStack[s.undoStack.length - 1];
+    const sourceStack = s.undoStack;
+    const prev = sourceStack[sourceStack.length - 1];
     if (!Array.isArray(prev) && !isDocumentHistoryEntry(prev) && !isPageHistoryEntry(prev)) return;
     const current = inverseForHistoryEntry(s, prev);
     if (!restoreHistoryEntry(s, prev)) return;
-    s.undoStack.pop();
+    sourceStack.pop();
     s.redoStack.push(current);
     s.targetedId = null;
     s.selectedIds = (s.selectedIds || []).filter(id => s.objects.find((o) => o.id === id));
@@ -174,11 +188,12 @@ export function undo(state) {
 export function redo(state) {
   if (state.get().redoStack.length === 0) return;
   state.update((s) => {
-    const next = s.redoStack[s.redoStack.length - 1];
+    const sourceStack = s.redoStack;
+    const next = sourceStack[sourceStack.length - 1];
     if (!Array.isArray(next) && !isDocumentHistoryEntry(next) && !isPageHistoryEntry(next)) return;
     const current = inverseForHistoryEntry(s, next);
     if (!restoreHistoryEntry(s, next)) return;
-    s.redoStack.pop();
+    sourceStack.pop();
     s.undoStack.push(current);
     s.targetedId = null;
     s.selectedIds = (s.selectedIds || []).filter(id => s.objects.find((o) => o.id === id));
@@ -1038,7 +1053,7 @@ export function initTransform(svg, state) {
     if (isEditingFieldTarget(t) || blocksCanvasShortcut(e)) return;
     // 모달(전체 통일/수정 등)이 열려 있으면 Delete가 뒤편 캔버스 선택을 지우는 등
     // 단축키가 새어 들어가지 않게 차단한다.
-    if (document.querySelector(".modal-overlay:not([hidden])")) return;
+    if (hasBlockingModal()) return;
 
     const s = state.get();
     const selectedIds = s.selectedIds || [];

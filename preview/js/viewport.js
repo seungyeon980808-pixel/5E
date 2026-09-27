@@ -49,10 +49,16 @@ export function getRenderScale() {
   return (m && m.a) ? m.a : getZoom();
 }
 
+const VIEW_CENTER_OFFSET_X_MM = 5;
+
 let canvasLock = { mode: "free", worldX: 0, worldY: 0, screenX: 0, screenY: 0 };
 
+function liteMode() {
+  return document.documentElement.dataset.mode === "lite";
+}
+
 function canvasLocked() {
-  return canvasLock.mode !== "free";
+  return liteMode() || canvasLock.mode !== "free";
 }
 
 function placeLockAnchor(state, scale = getRenderScale()) {
@@ -68,7 +74,7 @@ function placeLockAnchor(state, scale = getRenderScale()) {
 }
 
 export function setCanvasLockMode(mode, state, point = { x: 0, y: 0 }) {
-  if (!_svgRef || !["free", "current", "coordinate"].includes(mode)) return;
+  if (liteMode() || !_svgRef || !["free", "current", "coordinate"].includes(mode)) return;
   if (mode === "free") {
     canvasLock = { ...canvasLock, mode };
     return;
@@ -154,6 +160,7 @@ function clampZoom(svg, s) {
 export function initViewport(svg, state, onChange) {
   _svgRef = svg;
   _stateRef = state;
+  centerView(state);
 
   const ZOOM_STEP = 1.0015; // per wheel delta unit; >1 so deltaY<0 zooms in
 
@@ -175,9 +182,20 @@ export function initViewport(svg, state, onChange) {
       y: rect.top + rect.height / 2 - (vb.y + vb.h / 2) * scale };
   };
   let projection = readProjection();
+  let retainModeProjection = false;
+  window.addEventListener('5e:mode-switch-start', event => {
+    retainModeProjection = event.detail?.preserveWork === true;
+    const current = readProjection();
+    if (current.width > 0 && current.height > 0) projection = current;
+  });
   const sameBox = (a, b) => a.left === b.left && a.top === b.top
     && a.width === b.width && a.height === b.height;
   state.subscribe(() => {
+    const vb = state.get().viewBox;
+    if (liteMode() && !retainModeProjection && (Math.abs(vb.x + vb.w / 2) > 1e-8 || Math.abs(vb.y + vb.h / 2) > 1e-8)) {
+      centerView(state);
+      return;
+    }
     const next = readProjection();
     if (sameBox(projection, next)) projection = next;
   });
@@ -185,15 +203,16 @@ export function initViewport(svg, state, onChange) {
     const next = readProjection();
     if (sameBox(projection, next)) return;
     const previous = projection;
-    if (!(previous.scale > 0) || next.width <= 0 || next.height <= 0) {
+    if (next.width <= 0 || next.height <= 0) return;
+    if (!(previous.scale > 0)) {
       projection = next;
       return;
     }
     state.update((s) => {
       s.viewBox.w = next.width / previous.scale;
       s.viewBox.h = next.height / previous.scale;
-      s.viewBox.x = (next.left - previous.x) / previous.scale;
-      s.viewBox.y = (next.top - previous.y) / previous.scale;
+      s.viewBox.x = liteMode() && !retainModeProjection ? -s.viewBox.w / 2 : (next.left - previous.x) / previous.scale;
+      s.viewBox.y = liteMode() && !retainModeProjection ? -s.viewBox.h / 2 : (next.top - previous.y) / previous.scale;
     });
     projection = readProjection();
     commit();
@@ -201,6 +220,10 @@ export function initViewport(svg, state, onChange) {
   const layoutObserver = new ResizeObserver(preserveProjection);
   layoutObserver.observe(svg);
   window.addEventListener("5e:panel-layout-did-change", preserveProjection);
+  window.addEventListener("5e:view-mode-change", () => {
+    if (liteMode() && !retainModeProjection) centerView(state);
+    requestAnimationFrame(preserveProjection);
+  });
 
   /* --- wheel: plain = vertical pan, Shift = horizontal pan, Ctrl/⌘ = zoom ---
    * 휠 이벤트의 단위는 브라우저·기기마다 다르다. deltaMode가 0이면 픽셀,
@@ -265,8 +288,8 @@ export function initViewport(svg, state, onChange) {
           const newScale = getRenderScale() / k;
           vb.w = rect.width / newScale;
           vb.h = rect.height / newScale;
-          vb.x = canvasLock.worldX - (canvasLock.screenX - rect.left) / newScale;
-          vb.y = canvasLock.worldY - (canvasLock.screenY - rect.top) / newScale;
+          vb.x = liteMode() ? -vb.w / 2 : canvasLock.worldX - (canvasLock.screenX - rect.left) / newScale;
+          vb.y = liteMode() ? -vb.h / 2 : canvasLock.worldY - (canvasLock.screenY - rect.top) / newScale;
         } else {
           const before = screenToWorld(svg, vb, e.clientX, e.clientY);
           // rect 기준 fx/fy는 preserveAspectRatio="xMidYMid meet"의 레터박스를 무시해
@@ -369,10 +392,10 @@ export function initViewport(svg, state, onChange) {
   window.addEventListener("resize", preserveProjection);
 }
 
-/* ----- centerView: reposition so artboard (world origin) is centered in view ----- */
+/* ----- centerView: restore the default visual alignment ----- */
 export function centerView(state) {
   state.update((s) => {
-    s.viewBox.x = -s.viewBox.w / 2;
+    s.viewBox.x = -s.viewBox.w / 2 - (liteMode() ? 0 : VIEW_CENTER_OFFSET_X_MM);
     s.viewBox.y = -s.viewBox.h / 2;
   });
 }

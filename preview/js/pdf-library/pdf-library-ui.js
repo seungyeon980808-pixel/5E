@@ -1,6 +1,6 @@
 import { createCropOverrideStore } from "./crop-overrides.js?v=1.6.0-preview-labeler-0917-1111";
 import { createRenderScheduler } from "./render-scheduler.js?v=1.6.0-preview-labeler-0917-1111";
-import { partitionLibraryImports } from "../library-import-policy.js?v=1.6.0-preview-labeler-0917-1111";
+import { importRejectionMessage, partitionLibraryImports } from "../library-import-policy.js?v=1.6.0-preview-labeler-0917-1111";
 import { createCropSource } from "./contract.js?v=1.6.0-preview-labeler-0917-1111";
 
 const MAX_SELECTIONS = 10;
@@ -330,8 +330,7 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
   let packSyncEpoch = 0;
   let catalogRevision = 0;
   const updatedPackDocumentIds = new Set();
-  let browserPdfBytes = 0;
-  let browserPdfCount = 0;
+  const browserPdfSizes = new Map();
   const documentOpeners = new Map();
   const documentDownloaders = new Map();
   const documentPersistors = new Map();
@@ -723,15 +722,19 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
   }
 
   async function openFiles(files) {
-    const { acceptedPdfs, rejected } = partitionLibraryImports(files, { currentPdfBytes: browserPdfBytes, currentPdfCount: browserPdfCount });
+    const currentPdfBytes = [...browserPdfSizes.values()].reduce((total, size) => total + size, 0);
+    const { acceptedPdfs, rejected } = partitionLibraryImports(files, { currentPdfBytes, currentPdfCount: browserPdfSizes.size });
     if (!acceptedPdfs.length) {
-      if (rejected.length) setStatus("지원하지 않거나 256MB를 넘는 PDF는 열 수 없습니다.", true);
+      if (rejected.length) setStatus(importRejectionMessage(rejected), true);
       return;
     }
+    const stagedIds = new Set();
     try {
       const activeRuntime = await ensureRuntime();
       setStatus("PDF를 여는 중…");
       const opened = [];
+      const stagedOpeners = new Map();
+      const stagedSizes = new Map();
       for (const file of acceptedPdfs) {
         const bytes = new Uint8Array(await file.arrayBuffer());
         const contentHash = await sha256Hex(bytes);
@@ -742,7 +745,9 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
           source: { kind: "file", locator: `browser:${id}`, displayName: file.name, sha256: contentHash },
         };
         const openDocument = async (targetRuntime) => targetRuntime.openDocument({ ...input, data: bytes });
-        documentOpeners.set(id, openDocument);
+        stagedIds.add(id);
+        stagedOpeners.set(id, openDocument);
+        stagedSizes.set(id, file.size);
         const openedDocument = await withRuntimeLock(() => openDocument(activeRuntime));
         const enrichedPages = [];
         for (const page of openedDocument.pages) {
@@ -754,17 +759,21 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
           enrichedPages.push({ ...page, items: enrichedItems });
         }
         opened.push({ ...openedDocument, pages: enrichedPages });
-        browserPdfBytes += file.size;
-        browserPdfCount += 1;
       }
-      const openedIds = new Set(opened.map((document) => document.id));
-      docs = [...docs.filter((document) => !openedIds.has(document.id)), ...opened];
+      const openedById = new Map(opened.map((document) => [document.id, document]));
+      docs = [...docs.filter((document) => !openedById.has(document.id)), ...openedById.values()];
+      for (const [id, openDocument] of stagedOpeners) documentOpeners.set(id, openDocument);
+      for (const [id, size] of stagedSizes) browserPdfSizes.set(id, size);
       catalogChanged();
       onCatalogChange?.();
       refreshOcrControls();
       sourceStatus.textContent = `${docs.length}개 PDF를 현재 브라우저에서 읽고 있습니다.`;
       await runSearch();
     } catch (error) {
+      const activeRuntime = runtime;
+      await Promise.all([...stagedIds]
+        .filter((id) => !docs.some((document) => document.id === id))
+        .map((id) => withRuntimeLock(() => activeRuntime?.closeDocument?.(id)).catch(() => {})));
       setStatus(`PDF 열기 실패: ${error instanceof Error ? error.message : error}`, true);
     }
   }

@@ -9,7 +9,7 @@
  */
 
 import { rotPt, singleObjBBox, curveSamplePoints, pendulumGeometry, springGeometry, pulleyAnchors,
-         standingWaveGeometry } from "./render.js?v=1.6.0-preview-labeler-0917-1111";
+         standingWaveGeometry } from "./render.js?v=1.6.0-preview-lite-hybrid-0922";
 import {
   SHAPE_TYPES,
   SNAP_EDGE_TARGET_TYPES as EDGE_TARGET_TYPES,

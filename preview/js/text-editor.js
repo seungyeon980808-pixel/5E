@@ -8,7 +8,7 @@
 // replicates the exact obj-id scheme, and three small accessors (isTextEditorOpen /
 // commitActiveText) plus imported isSpaceHeld to replace cross-module raw reads.
 
-import { screenToWorld, getRenderScale, worldToScreen } from "./viewport.js?v=1.6.0-preview-stable-view-0921";
+import { screenToWorld, getRenderScale, worldToScreen } from "./viewport.js?v=1.6.0-preview-lite-hybrid-0922";
 import {
   TEXT_FONTS, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM,
   TEXT_SIZE_PRESETS, ptToMm, mmToPt, MIN_TEXT_PT,
@@ -20,11 +20,11 @@ import {
 import { applyNewObjectStyleDefaults } from "./style-mode.js?v=1.6.0-preview-labeler-0917-1111";
 import { measureFormula, renderFormula, fontOf } from "./formula.js?v=1.6.0-preview-labeler-0917-1111";
 import { fillHtmlTextWithRomanRuns } from "./text-rendering.js?v=1.6.0-preview-labeler-0917-1111";
-import { pickSelectableObjectAtPoint } from "./pick.js?v=1.6.0-preview-labeler-0917-1111";
+import { pickSelectableObjectAtPoint } from "./pick.js?v=1.6.0-preview-lite-hybrid-0922";
 // tools.js owns the Space-pan tracker (setupDrawing keydown/keyup). The editor only
 // READS it in a few "don't act while panning" guards, so we import a getter rather
 // than duplicate the tracker (which would silently diverge).
-import { isSpaceHeld } from "./tools.js?v=1.6.0-preview-labeler-0917-1111";
+import { isSpaceHeld } from "./tools.js?v=1.6.0-preview-lite-hybrid-0922";
 
 // On-screen px of the text editor (matches .text-editor-overlay font-size). Used by
 // _syncEditorWidth's fallback font string; replicated here since the constant lives

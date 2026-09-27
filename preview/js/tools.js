@@ -12,7 +12,7 @@ import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-pre
 // screenToWorld BEFORE being stored, so shapes are anchored in world space and
 // survive zoom/pan unchanged (DESIGN 1-2).
 
-import { screenToWorld, getRenderScale, worldToScreen } from "./viewport.js?v=1.6.0-preview-stable-view-0921";
+import { screenToWorld, getRenderScale, worldToScreen } from "./viewport.js?v=1.6.0-preview-lite-hybrid-0922";
 import { registerEscapeLayer } from "./escape-layers.js?v=1.6.0-preview-labeler-0917-1111";
 import {
   TEXT_FONTS, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_PX, DEFAULT_TEXT_SIZE_MM,
@@ -22,8 +22,8 @@ import {
   normalizeTextRuns, normalizeTextRunStyle, textRunStyleFromObject, textRunsToText,
   hasStyledTextRuns, SECTION_ROMAN_STYLE, QUANTITY_STYLE,
 } from "./state.js?v=1.6.0-preview-labeler-0917-1111";
-import { setSnapPreview, pendulumBobRadius } from "./render.js?v=1.6.0-preview-labeler-0917-1111";
-import { resolveEndpointSnap } from "./snap.js?v=1.6.0-preview-labeler-0917-1111";
+import { setSnapPreview, pendulumBobRadius } from "./render.js?v=1.6.0-preview-lite-hybrid-0922";
+import { resolveEndpointSnap } from "./snap.js?v=1.6.0-preview-lite-hybrid-0922";
 import { applyNewObjectStyleDefaults } from "./style-mode.js?v=1.6.0-preview-labeler-0917-1111";
 import { measureFormula, renderFormula, fontOf } from "./formula.js?v=1.6.0-preview-labeler-0917-1111";
 import { fillHtmlTextWithRomanRuns } from "./text-rendering.js?v=1.6.0-preview-labeler-0917-1111";
@@ -31,9 +31,9 @@ import { getSvgAsset } from "./svg-assets.js?v=1.6.0-preview-labeler-0917-1111";
 import { openPlaneModal } from "./function-graph/plane-modal.js?v=1.6.0-preview-labeler-0917-1111";
 import { openGraphModal } from "./graph/graph-modal.js?v=1.6.0-preview-labeler-0917-1111";
 import { nextObjectId } from "./tools/id.js?v=1.6.0-preview-labeler-0917-1111";
-import { setupFreeDraw } from "./tools/free-draw.js?v=1.6.0-preview-labeler-0917-1111";
-import { setupNodePlacement } from "./tools/node-placement.js?v=1.6.0-preview-labeler-0917-1111";
-import { setupClickDrawing, clearClickLocals } from "./tools/click-placement.js?v=1.6.0-preview-labeler-0917-1111";
+import { setupFreeDraw } from "./tools/free-draw.js?v=1.6.0-preview-lite-hybrid-0922";
+import { setupNodePlacement } from "./tools/node-placement.js?v=1.6.0-preview-lite-hybrid-0922";
+import { setupClickDrawing, clearClickLocals } from "./tools/click-placement.js?v=1.6.0-preview-lite-hybrid-0922";
 // Pure math helpers (MOVE-ONLY extraction, v0.44.0) — see js/geometry.js.
 import {
   snapLineEnd, snapAngle, mathAngleDeg, snappedDeg, normalizeSweep,
@@ -47,11 +47,11 @@ import {
   initPick, pickSelectableObjectAtPoint, pickSelectableObjectFromEvent,
   isPositionMovableForCursor, isLockedTracingImage, isBackgroundUnrecognized,
   getObjectBBox, marqueeHitsObject,
-} from "./pick.js?v=1.6.0-preview-labeler-0917-1111";
+} from "./pick.js?v=1.6.0-preview-lite-hybrid-0922";
 // Re-export the picking API at its historical home so existing importers of
 // tools.js (transform.js: pickSelectableObjectFromEvent, and any future callers
 // of pickTolerances / pickSelectableObjectAtPoint) keep working unchanged.
-export { pickTolerances, pickSelectableObjectAtPoint, pickSelectableObjectFromEvent } from "./pick.js?v=1.6.0-preview-labeler-0917-1111";
+export { pickTolerances, pickSelectableObjectAtPoint, pickSelectableObjectFromEvent } from "./pick.js?v=1.6.0-preview-lite-hybrid-0922";
 // Text/formula editing subsystem (MOVE-ONLY extraction, v0.44.0) — see js/text-editor.js.
 // initTextEditing(svg, state) registers the text tool + click-to-edit + shortcuts +
 // context menu (called from initTools). isTextEditorOpen() replaces the old direct
@@ -60,14 +60,14 @@ import {
   initTextEditing, isTextEditorOpen,
   startEditingTextObject, openLabelerTextEditor, openAngleArcLabelEditor, insertLabelerChar,
   cancelActiveTextEditor, cancelActiveFormulaEditor,
-} from "./text-editor.js?v=1.6.0-preview-labeler-0917-1111";
+} from "./text-editor.js?v=1.6.0-preview-lite-hybrid-0922";
 // Re-export the editor entry points at their historical home so existing importers of
 // tools.js keep working unchanged (inspector/section-geometry.js imports
 // openAngleArcLabelEditor; the openers are also used internally by the drawing code).
-export { startEditingTextObject, openLabelerTextEditor, openAngleArcLabelEditor, insertLabelerChar } from "./text-editor.js?v=1.6.0-preview-labeler-0917-1111";
+export { startEditingTextObject, openLabelerTextEditor, openAngleArcLabelEditor, insertLabelerChar } from "./text-editor.js?v=1.6.0-preview-lite-hybrid-0922";
 // Guide hover cursor: ruler.js owns guide geometry. Called only at runtime inside
 // the pointermove handler, so the ruler↔tools import cycle stays safe.
-import { guideCursorAt } from "./ruler.js?v=1.6.0-preview-labeler-0917-1111";
+import { guideCursorAt } from "./ruler.js?v=1.6.0-preview-lite-hybrid-0922";
 import { SELECTION_COLOR, SELECTION_MARQUEE_FILL } from "./selection-visuals.js?v=1.6.0-preview-labeler-0917-1111";
 
 import { snapKey, modKey, shortcutKey, blocksCanvasShortcut } from "./platform.js?v=1.6.0-preview-labeler-0917-1111";

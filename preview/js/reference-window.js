@@ -23,8 +23,6 @@ import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-pre
 import { showConfirm } from "./ui-dialogs.js?v=1.6.0-preview-labeler-0917-1111";
 import { makeModalDraggable } from "./modal-drag.js?v=1.6.0-preview-common-year-login-0918-1302";
 
-const IMG_BASE = "assets/exam-library/images/";
-
 /* 문항별 메모는 창이 아니라 "문항"에 딸린다 — 같은 기출을 다음에 다시 열어도 남아야
    하기 때문. 기출 문항은 manifest의 item.id(예: b1_2027_06_01)가 안정적인 열쇠다.
    저장 위치는 localStorage: 프로젝트 파일과 무관한 개인 메모라 저장 형식을 건드리지
@@ -102,10 +100,7 @@ function snapshotImageSource(value) {
 }
 
 function referenceImageSource(item) {
-  const snapshot = snapshotImageSource(item?.snapshotSrc);
-  if (snapshot) return snapshot;
-  const file = String(item?.file || "");
-  return /^[A-Za-z0-9][A-Za-z0-9._-]*\.png$/i.test(file) ? `${IMG_BASE}${encodeURIComponent(file)}` : "";
+  return snapshotImageSource(item?.snapshotSrc) || "";
 }
 
 /* 창의 겉모습은 5E 본 화면과 같아야 한다(사용자 요구). 색·글꼴 토큰을 손으로 베끼면

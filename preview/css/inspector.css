@@ -14,7 +14,7 @@
 
 .panel-right {
   width: var(--panel-right-w);
-  min-width: 150px;
+  min-width: var(--shell-right-panel-size);
   max-width: 480px;
   flex-shrink: 0;
   border-left: 1px solid var(--border-strong);
@@ -65,6 +65,33 @@
 #inspector-content {
   display: flex;
   flex-direction: column;
+}
+
+[data-lite-control="font-weight"] {
+  display: none !important;
+}
+
+/* Lite uses the same inspector wiring but reveals only the two contextual groups
+   approved for the reduced editor. Inline display values still decide whether a
+   supported row applies to the selected object. */
+:root[data-mode="lite"] #inspector > :not(#inspector-empty):not(#inspector-content) {
+  display: none !important;
+}
+:root[data-mode="lite"] #inspector-content > :not([data-lite-section]) {
+  display: none !important;
+}
+:root[data-mode="lite"] [data-lite-section] .insp-body > :not([data-lite-control]) {
+  display: none !important;
+}
+:root[data-mode="lite"][data-lite-inspector="line"] [data-lite-section="text"],
+:root[data-mode="lite"][data-lite-inspector="text"] [data-lite-section="line"] {
+  display: none !important;
+}
+:root[data-mode="lite"][data-lite-inspector="none"] #inspector-content {
+  display: none !important;
+}
+:root[data-mode="lite"][data-lite-inspector="none"] #inspector-empty {
+  display: block !important;
 }
 
 /* ----- Collapsible section ----- */
@@ -172,6 +199,10 @@ details[open] > .insp-summary::before {
   box-sizing: border-box;
 }
 .insp-geometry-pair .insp-unit { margin-left: -2px; }
+
+.insp-section-geometry > .insp-summary { padding-block: 4px; }
+.insp-section-geometry > .insp-body { gap: 3px; }
+.insp-section-geometry .insp-geometry-pair { gap: 4px; }
 
 @container inspector-panel (max-width: 239px) {
   .insp-geometry-pair { grid-template-columns: 1fr; }

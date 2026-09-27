@@ -3,19 +3,20 @@
  * split). Builds the section DOM and wires its events; mounting into the
  * inspector panel happens in js/inspector.js (the orchestrator). */
 
-import { openAngleArcLabelEditor } from "../tools.js?v=1.6.0-preview-labeler-0917-1111";
-import { boxLabelSlots } from "../render.js?v=1.6.0-preview-labeler-0917-1111";
+import { openAngleArcLabelEditor } from "../tools.js?v=1.6.0-preview-lite-hybrid-0922";
+import { boxLabelSlots } from "../render.js?v=1.6.0-preview-lite-hybrid-0922";
 import { makeSection } from "./widgets.js?v=1.6.0-preview-labeler-0917-1111";
-import { nodeBoxFromDiameter, nodeDiameterFromBox } from "../tools/node-placement.js?v=1.6.0-preview-labeler-0917-1111";
-import { beginLabelerBranches, labelerAnchorCount, labelerBranchStatus } from "../tools/labeler-branches.js?v=1.6.0-preview-labeler-0917-1111";
+import { nodeBoxFromDiameter, nodeDiameterFromBox } from "../tools/node-placement.js?v=1.6.0-preview-lite-hybrid-0922";
+import { beginLabelerBranches, labelerAnchorCount, labelerBranchStatus } from "../tools/labeler-branches.js?v=1.6.0-preview-lite-hybrid-0922";
 
 export function buildGeometrySection(ctx) {
   const { state, makeLabelSizeRow, makeLabelTypeRow, commitSelectedObject } = ctx;
+  const POSITIVE_SIZE_PROPS = new Set(["w", "h", "radius", "height", "size", "length", "thickness"]);
 
   /* ---- Section 3: 크기·위치 (shapes only, single selection only) ---- */
   const sec3Body = document.createElement("div");
   sec3Body.className = "insp-body";
-  sec3Body.style.padding = "6px 6px"; // narrower than default for a compact section
+  sec3Body.style.padding = "4px 6px";
 
   // negate=true → inspector shows/accepts math convention (Y up) while the stored
   // value stays in SVG convention (Y down). Display = -internal, internal = -input.
@@ -35,10 +36,19 @@ export function buildGeometrySection(ctx) {
 
     function commit() {
       const val = parseFloat(inp.value);
-      if (!isFinite(val)) return;
       const s = state.get();
       const ids = s.selectedIds || [];
       if (!ids.length) return;
+      const current = s.objects.find((o) => o.id === ids[0]);
+      const invalidSize = POSITIVE_SIZE_PROPS.has(prop) && (!isFinite(val) || !(val > 0));
+      if (invalidSize) {
+        inp.value = String(current?.[prop] ?? "");
+        inp.setCustomValidity?.("0보다 큰 값을 입력하세요.");
+        inp.reportValidity?.();
+        return;
+      }
+      if (!isFinite(val)) return;
+      inp.setCustomValidity?.("");
       const snap = JSON.parse(JSON.stringify(s.objects));
       state.update((s2) => {
         const id = (s2.selectedIds || [])[0];
@@ -46,6 +56,7 @@ export function buildGeometrySection(ctx) {
         if (!o) return;
         if (o.locked || (o.positionLocked && (prop === "x" || prop === "y"))) return;
         const next = negate ? -val : val;
+        if (o[prop] === next) return;
         if (o.positionLocked && prop === "w") o.x -= (next - o.w) / 2;
         if (o.positionLocked && prop === "h") o.y -= (next - o.h) / 2;
         s2.undoStack.push(snap);
@@ -130,7 +141,7 @@ export function buildGeometrySection(ctx) {
   trimRow.appendChild(trimBtn);
   sec3Body.appendChild(trimRow);
   trimBtn.addEventListener("click", async () => {
-    const mod = await import("../erase-tool.js?v=1.6.0-preview-labeler-0917-1111");
+    const mod = await import("../erase-tool.js?v=1.6.0-preview-lite-hybrid-0922");
     const n = mod.trimSelectedBoxMargins();
     const orig = trimBtn.textContent;
     trimBtn.textContent = n > 0 ? "정리했습니다" : "좁힐 여백 없음";
@@ -1097,6 +1108,7 @@ export function buildGeometrySection(ctx) {
   });
 
   const sec3 = makeSection("크기·위치", sec3Body);
+  sec3.classList.add("insp-section-geometry");
 
   return {
     sec3, xF, yF, wF, hF, rotF, xyPair, whPair, lockAspectRow, lockAspectCb, trimRow,

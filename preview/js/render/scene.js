@@ -7,7 +7,7 @@
 // the projection stays anchored in world space through zoom/pan (the viewBox
 // alone changes what slice of that space is shown).
 
-import { getZoom, getRenderScale } from "../viewport.js?v=1.6.0-preview-stable-view-0921";
+import { getZoom, getRenderScale } from "../viewport.js?v=1.6.0-preview-lite-hybrid-0922";
 import { SVG_NS, rotPt, catmullRomPath } from "./core.js?v=1.6.0-preview-labeler-0917-1111";
 import { renderText } from "./labels.js?v=1.6.0-preview-labeler-0917-1111";
 import { makeFillPattern } from "./fill.js?v=1.6.0-preview-labeler-0917-1111";
@@ -21,7 +21,7 @@ import {
   renderImage,
   renderSvgAsset,
 } from "./shapes.js?v=1.6.0-preview-labeler-0917-1111";
-import { renderAxes, renderAngleArc, renderRightAngle, renderLabeler } from "./annotations.js?v=1.6.0-preview-labeler-0917-1111";
+import { renderAxes, renderAngleArc, renderRightAngle, renderLabeler } from "./annotations.js?v=1.6.0-preview-lite-tools-0922b";
 import { renderCoordplane, renderFuncgraph } from "./coordplane.js?v=1.6.0-preview-labeler-0917-1111";
 import { renderCircuit } from "./circuit.js?v=1.6.0-preview-labeler-0917-1111";
 import { renderOptics, renderApparatus } from "./optics-apparatus.js?v=1.6.0-preview-labeler-0917-1111";
@@ -57,7 +57,7 @@ import { SIZE_TYPES, TEXT_MEASURED_TYPES, POINT_ARRAY_TYPES, ENDPOINT_HANDLE_TYP
          zOrderObjects } from "../object-types.js?v=1.6.0-preview-labeler-0917-1111";
 import { resolveObjectStyle } from "../style-mode.js?v=1.6.0-preview-labeler-0917-1111";
 import { renderFormula } from "../formula.js?v=1.6.0-preview-labeler-0917-1111";
-import { IMAGE_EDIT_SESSION_ID } from "../image-cutout.js?v=1.6.0-preview-labeler-0917-1111";
+import { IMAGE_EDIT_SESSION_ID } from "../image-cutout.js?v=1.6.0-preview-lite-hybrid-0922";
 import {
   SELECTION_COLOR,
   SELECTION_DASH_PX,
@@ -355,7 +355,7 @@ export function render(state) {
     if (sel.positionLocked) renderPositionLockMarker(sel, scene, getZoom());
     const _selColor = state.targetedId === _sid ? "#e67700" : SELECTION_COLOR;
     const _frameKind = _selIds.length > 1 ? "multi-member" : "single";
-    if (sel.type === "line" || sel.type === "circuit" || sel.type === "pendulum" || sel.type === "spring"
+    if (sel.type === "line" || sel.type === "circuit" || sel.type === "labeler" || sel.type === "pendulum" || sel.type === "spring"
         || sel.type === "chargefield" || sel.type === "fieldlines" || sel.type === "standingwave"
         || sel.type === "parabola" || sel.type === "groundarc"
         // 생명과학 p1/p2 계열 — 두 점을 잇는 점선 복제가 선택 표시다(위와 같은 규칙)
@@ -495,6 +495,36 @@ export function render(state) {
         styleSelectionFrame(box, _frameKind, _selColor);
         scene.appendChild(box);
       }
+    } else if (sel.type === "rightangle") {
+      const bb = singleObjBBox(sel, scene);
+      if (bb) {
+        const box = document.createElementNS(SVG_NS, "rect");
+        box.setAttribute("x", bb.x);
+        box.setAttribute("y", bb.y);
+        box.setAttribute("width", bb.w);
+        box.setAttribute("height", bb.h);
+        box.setAttribute("fill", "none");
+        box.setAttribute("stroke-width", "0.4");
+        box.setAttribute("stroke-dasharray", "0.6 0.6");
+        box.style.stroke = _selColor;
+        styleSelectionFrame(box, _frameKind, _selColor);
+        scene.appendChild(box);
+      }
+    } else if (sel.type === "funcgraph") {
+      const bb = singleObjBBox(sel, scene);
+      if (bb) {
+        const box = document.createElementNS(SVG_NS, "rect");
+        box.setAttribute("x", bb.x);
+        box.setAttribute("y", bb.y);
+        box.setAttribute("width", bb.w);
+        box.setAttribute("height", bb.h);
+        box.setAttribute("fill", "none");
+        box.setAttribute("stroke-width", "0.4");
+        box.setAttribute("stroke-dasharray", "0.6 0.6");
+        box.style.stroke = _selColor;
+        styleSelectionFrame(box, _frameKind, _selColor);
+        scene.appendChild(box);
+      }
     } else {
       const box = document.createElementNS(SVG_NS, "rect");
       box.setAttribute("x", sel.x);
@@ -543,11 +573,7 @@ export function render(state) {
   if (state.draft) {
     const d = state.draft;
 
-    // For size-based shapes (ellipse/triangle) the bbox differs from the shape
-    // outline, so draw a dashed rectangle guide spanning the drag bounds first.
-    // (rect's own preview already IS that rectangle; the line has no bbox ??it
-    // shows its own solid preview below ??so both skip the duplicate guide.)
-    if (d.type !== "rect" && d.type !== "line" && d.type !== "polyline" && d.type !== "curve" && d.type !== "anglearc" && d.type !== "rightangle" && d.type !== "circuit" && d.type !== "labeler" && d.type !== "pendulum") {
+    if (d.type !== "rect" && SIZE_TYPES.has(d.type)) {
       const box = document.createElementNS(SVG_NS, "rect");
       box.setAttribute("x", d.x);
       box.setAttribute("y", d.y);
@@ -949,8 +975,15 @@ export function singleObjBBox(o, scene) {
     return { x: o.x - r, y: o.y - r, w: 2 * r, h: 2 * r };
   }
   if (o.type === "rightangle") {
-    const r = (o.size || 0) * 1.6;
-    return { x: o.x - r, y: o.y - r, w: 2 * r, h: 2 * r };
+    const size = Math.max(o.size || 4, 0.1);
+    const angle = (o.angle || 0) * Math.PI / 180;
+    const side = (o.orientation ?? 1) >= 0 ? 1 : -1;
+    const ux = Math.cos(angle), uy = Math.sin(angle);
+    const vx = -uy * side, vy = ux * side;
+    const xs = [o.x, o.x + ux * size, o.x + (ux + vx) * size, o.x + vx * size];
+    const ys = [o.y, o.y + uy * size, o.y + (uy + vy) * size, o.y + vy * size];
+    const x = Math.min(...xs), y = Math.min(...ys);
+    return { x, y, w: Math.max(...xs) - x, h: Math.max(...ys) - y };
   }
   if (TEXT_MEASURED_TYPES.has(o.type)) { // was: text|formula
     const el = scene.querySelector(`[data-id="${o.id}"]`);

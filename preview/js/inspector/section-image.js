@@ -3,10 +3,10 @@
  * split). Builds the section DOM and wires its events; mounting into the
  * inspector panel happens in js/inspector.js (the orchestrator). */
 
-import { startRectErase, startPathErase, startSmartCutout, clearCutouts, cancelImageEditSession } from "../image-cutout.js?v=1.6.0-preview-labeler-0917-1111";
+import { startRectErase, startPathErase, startSmartCutout, clearCutouts, cancelImageEditSession } from "../image-cutout.js?v=1.6.0-preview-lite-hybrid-0922";
 import { makeSection } from "./widgets.js?v=1.6.0-preview-labeler-0917-1111";
 import { trimImageMargins } from "../image-margin-trim.js?v=1.6.0-preview-labeler-0917-1111";
-import { startImageCompare } from "../image-compare.js?v=1.6.0-preview-repair-0921";
+import { startImageCompare } from "../image-compare.js?v=1.6.0-preview-lite-hybrid-0922";
 
 export function buildImageSection(ctx) {
   const { state, snapBefore, pushSnap } = ctx;
@@ -202,11 +202,11 @@ export function buildImageSection(ctx) {
     </svg>
   </span><span>자유 영역 지우기</span>`;
   imgRectEraseBtn.onclick = async () => {
-    const mod = await import("../image-cutout.js?v=1.6.0-preview-labeler-0917-1111");
+    const mod = await import("../image-cutout.js?v=1.6.0-preview-lite-hybrid-0922");
     mod.startRectErase();
   };
   imgPathEraseBtn.onclick = async () => {
-    const mod = await import("../image-cutout.js?v=1.6.0-preview-labeler-0917-1111");
+    const mod = await import("../image-cutout.js?v=1.6.0-preview-lite-hybrid-0922");
     mod.startPathErase();
   };
 

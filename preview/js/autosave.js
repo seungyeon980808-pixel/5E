@@ -12,14 +12,16 @@ import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-pre
  * 스냅샷이 수 MB에 달할 수 있어 localStorage(≈5MB, 문자열 전용) 용량이 부족하다.
  */
 
-import { serialize, migrate, applyLoaded } from "./project-io.js?v=1.6.0-preview-emerald-polish-0921";
+import { serialize, migrate, applyLoaded } from "./project-io.js?v=1.6.0-preview-lite-hybrid-0922";
 import { showAlert, showConfirm } from "./ui-dialogs.js?v=1.6.0-preview-labeler-0917-1111";
 
 import { captureProjectStatus, markProjectStatus } from "./project-status.js?v=1.6.0-preview-project-launcher-0918-1508";
 
-const DB_NAME = "5e-autosave";
+const DB_NAME = "5e-preview-autosave";
 const DB_VERSION = 1;
 const STORE = "snapshots";
+const CHECKPOINT_STORE = "checkpoints";
+const LEGACY_DB_NAME = "5e-autosave";
 
 // 롤링 보관 개수: 최근 N개를 넘으면 가장 오래된 것부터 제거.
 const MAX_SNAPSHOTS = 8;
@@ -43,10 +45,99 @@ function openDB() {
         // autoIncrement 키는 항상 오름차순 → keys[0]이 가장 오래된 스냅샷.
         db.createObjectStore(STORE, { keyPath: "id", autoIncrement: true });
       }
+      if (!db.objectStoreNames.contains(CHECKPOINT_STORE)) {
+        db.createObjectStore(CHECKPOINT_STORE, { keyPath: "id", autoIncrement: true });
+      }
     };
     req.onsuccess = () => resolve(req.result);
     req.onerror = () => reject(req.error);
   });
+}
+
+function getAll(db, storeName) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(storeName, "readonly");
+    const req = tx.objectStore(storeName).getAll();
+    req.onsuccess = () => resolve(req.result || []);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function getById(db, storeName, id) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(storeName, "readonly");
+    const req = tx.objectStore(storeName).get(id);
+    req.onsuccess = () => resolve(req.result || null);
+    req.onerror = () => reject(req.error);
+  });
+}
+
+function saveCheckpoint(db, data, reason) {
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(CHECKPOINT_STORE, "readwrite");
+    const ts = Date.now();
+    const summary = snapshotSummary(data);
+    const req = tx.objectStore(CHECKPOINT_STORE).add({ ts, reason, ...summary, data });
+    let id = null;
+    req.onsuccess = () => { id = req.result; };
+    req.onerror = () => reject(req.error);
+    tx.oncomplete = () => resolve({ id, ts, ...summary });
+    tx.onerror = () => reject(tx.error);
+    tx.onabort = () => reject(tx.error || new DOMException("복구 checkpoint 저장이 중단되었습니다.", "AbortError"));
+  });
+}
+
+function snapshotSummary(data) {
+  const pages = Array.isArray(data?.pages) ? data.pages : [];
+  const active = pages.find(page => page?.id === data.activePageId) || pages[0];
+  return { label: active?.name || "이전 작업", pageCount: pages.length };
+}
+
+async function openLegacyDB() {
+  if (typeof indexedDB.databases === "function") {
+    try {
+      const databases = await indexedDB.databases();
+      if (!databases.some(database => database.name === LEGACY_DB_NAME)) return null;
+    } catch {}
+  }
+  return new Promise((resolve, reject) => {
+    const req = indexedDB.open(LEGACY_DB_NAME, 1);
+    let absent = false;
+    req.onupgradeneeded = event => {
+      if (event.oldVersion !== 0) return;
+      absent = true;
+      req.transaction.abort();
+    };
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => absent ? resolve(null) : reject(req.error);
+  });
+}
+
+export async function inspectLegacyRecovery() {
+  let legacy;
+  try {
+    legacy = await openLegacyDB();
+  } catch (error) {
+    return { status: "unavailable", checkpoints: [], error: error?.message || String(error) };
+  }
+  if (!legacy) return { status: "empty", checkpoints: [] };
+  try {
+    if (!legacy.objectStoreNames.contains(STORE)) {
+      return { status: "empty", checkpoints: [] };
+    }
+    const rows = await getAll(legacy, STORE);
+    return {
+      status: "available",
+      checkpoints: rows.filter(row => row?.data && snapshotHasWork(row.data)).map(row => ({
+        id: row.id, source: "legacy", reason: "legacy-shared-autosave", ts: row.ts,
+        ...snapshotSummary(row.data),
+      })),
+    };
+  } catch (error) {
+    return { status: "unavailable", checkpoints: [], error: error?.message || String(error) };
+  } finally {
+    legacy.close();
+  }
 }
 
 /* ----- 최신 스냅샷 1개 읽기(커서 역방향) ----- */
@@ -81,13 +172,18 @@ function saveSnapshot(db, data) {
   });
 }
 
-/* ----- snapshotHasObjects: 페이지 여러 개 중 하나라도 객체가 있는지 -----
- * serialize()가 다중 페이지(pages[]) 형식을 내보내므로(단일 objects[] 아님),
- * "빈 도면" 판정은 모든 페이지를 훑어야 한다. */
-function snapshotHasObjects(data) {
-  return Array.isArray(data.pages) && data.pages.some(
-    (p) => p && Array.isArray(p.objects) && p.objects.length
-  );
+// Preserve document setup even before the first object is drawn.
+function snapshotHasWork(data) {
+  if (!Array.isArray(data.pages)) return false;
+  if (data.pages.length > 1) return true;
+  return data.pages.some(p => p && (
+    p.objects?.length || p.guides?.length ||
+    (p.name && p.name !== '페이지 1') || p.meta?.number || p.meta?.points ||
+    (p.artboard && (p.artboard.w !== 90 || p.artboard.h !== 60)) ||
+    (p.layers && JSON.stringify(p.layers) !== JSON.stringify(
+      [1, 2, 3].map(id => ({ id, name: `레이어 ${id}`, visible: true }))
+    ))
+  ));
 }
 
 /* ----- 복구 모달용 시각 포맷 ----- */
@@ -103,7 +199,7 @@ function formatTime(ts) {
 }
 
 /* ----- initAutosave: 부팅 복구 → 디바운스 자동 저장 구독 ----- */
-export async function initAutosave(state) {
+export async function initAutosave(state, { selectRecoveryCheckpoint } = {}) {
   let db;
   try {
     db = await openDB();
@@ -120,16 +216,34 @@ export async function initAutosave(state) {
   //     구독을 걸기 전이라, 사용자가 결정하는 동안 빈 초기 상태가 스냅샷을
   //     덮어쓰지 않는다.
   try {
-    const latest = await getLatest(db);
-    if (latest && latest.data && snapshotHasObjects(latest.data)) {
-      const ok = await showConfirm(
-        `이전에 작업하던 도해가 남아 있습니다.\n(${formatTime(latest.ts)})\n\n이전 작업을 복구할까요?`,
-        { title: "작업 복구", okText: "복구", cancelText: "새로 시작" }
-      );
-      recoveryChoice = ok ? "restore" : "fresh";
-      if (ok) {
-        applyLoaded(state, migrate(latest.data));
-        markProjectStatus(state, captureProjectStatus(state), "recovery");
+    let checkpointRecovered = false;
+    if (typeof selectRecoveryCheckpoint === "function") {
+      const [previewCheckpoints, legacy] = await Promise.all([
+        listRecoveryCheckpoints({ includeLegacy: false }),
+        inspectLegacyRecovery(),
+      ]);
+      const checkpoints = [...previewCheckpoints, ...legacy.checkpoints]
+        .sort((a, b) => (b.ts || 0) - (a.ts || 0));
+      const selected = await selectRecoveryCheckpoint(checkpoints, { legacyStatus: legacy.status });
+      if (selected) {
+        await restoreRecoveryCheckpoint(state, selected);
+        recoveryChoice = "restore";
+        checkpointRecovered = true;
+      }
+    }
+
+    if (!checkpointRecovered) {
+      const latest = await getLatest(db);
+      if (latest && latest.data && snapshotHasWork(latest.data)) {
+        const ok = await showConfirm(
+          `이전에 작업하던 도해가 남아 있습니다.\n(${formatTime(latest.ts)})\n\n이전 작업을 복구할까요?`,
+          { title: "작업 복구", okText: "복구", cancelText: "새로 시작" }
+        );
+        recoveryChoice = ok ? "restore" : "fresh";
+        if (ok) {
+          applyLoaded(state, migrate(latest.data));
+          markProjectStatus(state, captureProjectStatus(state), "recovery");
+        }
       }
     }
   } catch {
@@ -163,7 +277,7 @@ export async function initAutosave(state) {
   const captureAndQueue = () => {
     const statusToken = captureProjectStatus(state);
     const snap = serialize(state.get());
-    if (!snapshotHasObjects(snap)) return;
+    if (!snapshotHasWork(snap)) return;
     const json = JSON.stringify(snap);
     if (json === lastSavedJson || json === lastQueuedJson) return;
     const data = JSON.parse(json);
@@ -203,4 +317,61 @@ export async function initAutosave(state) {
   });
   window.addEventListener("pagehide", flush);
   return recoveryChoice;
+}
+
+// Explicit checkpoint before replacing a document; never discard work on failure.
+export async function createRecoveryCheckpoint(state, { reason = "mode-switch" } = {}) {
+  const snapshot = JSON.parse(JSON.stringify(serialize(state.get())));
+  if (!snapshotHasWork(snapshot)) return null;
+  const db = await openDB();
+  try {
+    const saved = await saveCheckpoint(db, snapshot, reason);
+    return { ...saved, source: "preview", reason };
+  } finally {
+    db.close();
+  }
+}
+
+export async function listRecoveryCheckpoints({ includeLegacy = true } = {}) {
+  const checkpoints = [];
+  const db = await openDB();
+  try {
+    const rows = await getAll(db, CHECKPOINT_STORE);
+    checkpoints.push(...rows.map(row => ({
+      id: row.id, source: "preview", reason: row.reason || "mode-switch", ts: row.ts,
+      label: row.label || snapshotSummary(row.data).label,
+      pageCount: Number.isInteger(row.pageCount) ? row.pageCount : snapshotSummary(row.data).pageCount,
+    })));
+  } finally {
+    db.close();
+  }
+  if (includeLegacy) {
+    const legacy = await inspectLegacyRecovery();
+    checkpoints.push(...legacy.checkpoints);
+  }
+  return checkpoints.sort((a, b) => (b.ts || 0) - (a.ts || 0));
+}
+
+export async function restoreRecoveryCheckpoint(state, checkpoint) {
+  if (!checkpoint || !Number.isInteger(checkpoint.id)
+      || (checkpoint.source !== "preview" && checkpoint.source !== "legacy")) {
+    throw new Error("복구 checkpoint 식별자가 올바르지 않습니다.");
+  }
+  const db = checkpoint.source === "preview" ? await openDB() : await openLegacyDB();
+  if (!db) throw new Error("기존 복구 저장소를 찾을 수 없습니다.");
+  try {
+    const storeName = checkpoint.source === "preview" ? CHECKPOINT_STORE : STORE;
+    if (!db.objectStoreNames.contains(storeName)) throw new Error("복구 저장소를 찾을 수 없습니다.");
+    const row = await getById(db, storeName, checkpoint.id);
+    if (!row?.data) throw new Error("복구 checkpoint를 찾을 수 없습니다.");
+    applyLoaded(state, migrate(row.data));
+    markProjectStatus(state, captureProjectStatus(state), "recovery");
+    return { id: checkpoint.id, source: checkpoint.source };
+  } finally {
+    db.close();
+  }
+}
+
+export async function checkpointBeforeModeSwitch(state) {
+  return createRecoveryCheckpoint(state, { reason: "mode-switch" });
 }

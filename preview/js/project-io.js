@@ -9,22 +9,28 @@
 // derived from it when a page is loaded or switched. groupId is the single
 // source of truth, and the saved file never supplies a separate groups list.
 
-import { screenToWorld } from "./viewport.js?v=1.6.0-preview-stable-view-0921";
+import { screenToWorld } from "./viewport.js?v=1.6.0-preview-lite-hybrid-0922";
 import { applyNewObjectStyleDefaults, migrateObjectStyleMode } from "./style-mode.js?v=1.6.0-preview-labeler-0917-1111";
 import { showProjectCloseDialog } from "./project-close-dialog.js?v=1.6.0-preview-labeler-0917-1111";
 import { showAlert, showConfirm } from "./ui-dialogs.js?v=1.6.0-preview-labeler-0917-1111";
-import { downscaleIfNeeded } from "./image-paste.js?v=1.6.0-preview-labeler-0917-1111";
+import { downscaleIfNeeded } from "./image-paste.js?v=1.6.0-preview-lite-hybrid-0922";
 import { DEFAULT_TEXT_SIZE_MM, DEFAULT_TEXT_FONT, normalizeTextRuns, textRunsToText } from "./state.js?v=1.6.0-preview-labeler-0917-1111";
-import { LABEL_CAPABLE_TYPES } from "./object-types.js?v=1.6.0-preview-labeler-0917-1111";
-import { insertImageFromSrc } from "./image-paste.js?v=1.6.0-preview-labeler-0917-1111";
-import { addPage } from "./pages.js?v=1.6.0-preview-repair-0921";
+import {
+  ENDPOINT_HANDLE_TYPES, LABEL_CAPABLE_TYPES, OBJECT_TYPE_IDS,
+  POINT_ARRAY_TYPES, SIZE_TYPES, TEXT_MEASURED_TYPES,
+} from "./object-types.js?v=1.6.0-preview-labeler-0917-1111";
+import { insertImageFromSrc } from "./image-paste.js?v=1.6.0-preview-lite-hybrid-0922";
+import { addPage } from "./pages.js?v=1.6.0-preview-lite-hybrid-0922";
 
 import { initProjectStatus, captureProjectStatus, markProjectStatus } from "./project-status.js?v=1.6.0-preview-project-launcher-0918-1508";
 import { modKey, shortcutKey, isEditingTarget, isComposingKey } from "./platform.js?v=1.6.0-preview-labeler-0917-1111";
 import { initProjectLaunch } from './project-launch.js?v=1.6.0-preview-web-native-project-0918-1617';
 import { extractWindowsProjectSource } from './windows-project-source.mjs?v=1.6.0-preview-project-launcher-0918-1508';
 
-import { chooseProjectFilename, timestampProjectFilename } from './project-save-dialog.js?v=1.6.0-preview-emerald-polish-0921';
+import { chooseProjectSaveTarget, timestampProjectFilename } from './project-save-dialog.js?v=1.6.0-preview-golden-export-save-0922';
+import {
+  FS_DIR_SUPPORTED, loadSavedProjectDir, currentProjectDirName, pickProjectDir, writeProjectToDir,
+} from './export-dir.js?v=1.6.0-preview-golden-export-save-0922';
 let savingProject = false;
 
 // Schema version of the saved file. Distinct from the app UI version.
@@ -397,8 +403,22 @@ export async function saveProject(state) {
       markProjectStatus(state, statusToken, "file");
       return { kind: "saved" };
     }
-    filename = await chooseProjectFilename(filename);
-    if (!filename) return { kind: "cancelled" };
+    await loadSavedProjectDir();
+    const target = await chooseProjectSaveTarget(filename, {
+      directorySupported: FS_DIR_SUPPORTED,
+      directoryName: currentProjectDirName(),
+      pickDirectory: async () => {
+        await pickProjectDir();
+        return currentProjectDirName();
+      },
+    });
+    if (target.kind === 'cancelled') return { kind: "cancelled" };
+    filename = target.filename;
+    if (target.kind === 'directory') {
+      if (!(await writeProjectToDir(filename, blob))) throw new Error('선택한 폴더에 파일을 기록하지 못했습니다.');
+      markProjectStatus(state, statusToken, "file");
+      return { kind: "saved" };
+    }
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement("a");
     anchor.href = url;
@@ -452,11 +472,44 @@ function assertUniqueIds(items, getId, label) {
   }
 }
 
-function validateObjects(objects) {
+const OBJECT_TYPE_ID_SET = new Set(OBJECT_TYPE_IDS);
+
+function isFinitePoint(value) {
+  return isRecord(value) && Number.isFinite(value.x) && Number.isFinite(value.y);
+}
+
+function validateObjectGeometry(object) {
+  if (SIZE_TYPES.has(object.type)) {
+    if (![object.x, object.y, object.w, object.h].every(Number.isFinite)) {
+      throw new Error(`${object.type} 객체의 위치/크기 형식이 올바르지 않습니다.`);
+    }
+  }
+  if (ENDPOINT_HANDLE_TYPES.has(object.type)) {
+    if (!isFinitePoint(object.p1) || !isFinitePoint(object.p2)) {
+      throw new Error(`${object.type} 객체의 끝점 형식이 올바르지 않습니다.`);
+    }
+  }
+  if (POINT_ARRAY_TYPES.has(object.type)) {
+    if (!Array.isArray(object.points) || object.points.some(point => !isFinitePoint(point))) {
+      throw new Error(`${object.type} 객체의 점 목록 형식이 올바르지 않습니다.`);
+    }
+  }
+  if (TEXT_MEASURED_TYPES.has(object.type)
+      || object.type === "anglearc" || object.type === "rightangle") {
+    if (!Number.isFinite(object.x) || !Number.isFinite(object.y)) {
+      throw new Error(`${object.type} 객체의 위치 형식이 올바르지 않습니다.`);
+    }
+  }
+}
+
+function validateObjects(objects, { geometry = false } = {}) {
   if (!Array.isArray(objects)) throw new Error("객체 목록 형식이 올바르지 않습니다.");
   for (const object of objects) {
     if (!isRecord(object) || !isStringId(object.id)) {
       throw new Error("객체에는 유효한 ID가 필요합니다.");
+    }
+    if (!OBJECT_TYPE_ID_SET.has(object.type)) {
+      throw new Error(`지원하지 않는 객체 형식입니다: ${String(object.type || "(없음)")}`);
     }
     if (hasOwn(object, "groupId") && object.groupId != null && !isStringId(object.groupId)) {
       throw new Error("객체 그룹 ID 형식이 올바르지 않습니다.");
@@ -464,6 +517,7 @@ function validateObjects(objects) {
     if (hasOwn(object, "layerId") && object.layerId != null && !isLayerId(object.layerId)) {
       throw new Error("객체 레이어 ID 형식이 올바르지 않습니다.");
     }
+    if (geometry) validateObjectGeometry(object);
   }
   assertUniqueIds(objects, (object) => object.id, "객체");
 }
@@ -530,7 +584,7 @@ export function prepareLoadedProject(data) {
   assertUniqueIds(pages, (page) => page.id, "페이지");
   for (const page of pages) {
     if (!isStringId(page.id)) throw new Error("페이지 ID 형식이 올바르지 않습니다.");
-    validateObjects(page.objects);
+    validateObjects(page.objects, { geometry: true });
     validateLayers(page.layers);
   }
   const active = pages.find((page) => page.id === migrated.activePageId) || pages[0];

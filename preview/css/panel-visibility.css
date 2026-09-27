@@ -2,12 +2,12 @@
 @property --editor-left-track {
   syntax: "<length>";
   inherits: false;
-  initial-value: 130px;
+  initial-value: 160px;
 }
 @property --editor-right-track {
   syntax: "<length>";
   inherits: false;
-  initial-value: 200px;
+  initial-value: 180px;
 }
 .app[data-panel-layout],
 #ai-image-panel[data-panel-layout] .ai-workspace { position: relative; }
@@ -40,13 +40,13 @@
   justify-content: center;
   flex: none;
   gap: 4px;
-  min-height: 32px;
+  min-height: var(--shell-control-size);
   padding: 4px 8px;
   border: 1px solid var(--border);
-  border-radius: 6px;
+  border-radius: var(--shell-control-radius);
   background: var(--bg-input);
   color: var(--text-label);
-  font: 12px/1.5 "IBM Plex Sans KR", system-ui, sans-serif;
+  font: var(--shell-control-font-weight) var(--shell-control-font-size)/var(--shell-control-line-height) var(--shell-control-font-family);
   cursor: pointer;
 }
 .panel-visibility-toggle:hover,
@@ -54,8 +54,8 @@
 .panel-collapse-close:hover { background: var(--bg-panel-hover); color: var(--text-primary); }
 .panel-visibility-toggle:focus-visible,
 .panel-collapse-close:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.panel-visibility-toggle svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.5; }
-.app .panel-visibility-toggle { width:32px; height:32px; min-height:32px; padding:4px; }
+.panel-visibility-toggle svg { width:var(--shell-icon-size); height:var(--shell-icon-size); fill:none; stroke:currentColor; stroke-width:1.5; }
+.app .panel-visibility-toggle { width:var(--shell-control-size); height:var(--shell-control-size); min-height:var(--shell-control-size); padding:4px; }
 .app .panel-visibility-toggle .panel-toggle-label { display:none; }
 .app-shell-header {
   grid-column:1 / -1;
@@ -90,8 +90,8 @@
 .panel-utility-bar {
   display:flex;
   align-items:center;
-  gap:4px;
-  min-height:32px;
+  gap:var(--shell-control-gap);
+  min-height:var(--shell-control-size);
   margin:0 0 8px;
   flex:none;
 }
@@ -100,15 +100,15 @@
   display:inline-flex;
   align-items:center;
   justify-content:center;
-  width:32px;
-  height:32px;
-  min-height:32px;
+  width:var(--shell-control-size);
+  height:var(--shell-control-size);
+  min-height:var(--shell-control-size);
   padding:4px;
   flex:none;
   color:var(--text-label);
   background:var(--bg-input);
   border:1px solid var(--border);
-  border-radius:8px;
+  border-radius:var(--shell-control-radius);
   cursor:pointer;
 }
 .panel-left[data-layout-panel] { display:flex; flex-direction:column; overflow:hidden; }
@@ -119,7 +119,7 @@
 .panel-visibility-toggle[aria-expanded="true"] svg { color: var(--accent); }
 .panel-visibility-toggle:active,
 .panel-collapse-close:active { transform: scale(.97); transition: transform 100ms ease-out; }
-.panel-shell-toggles { display:flex; flex:none; gap:4px; }
+.panel-shell-toggles { display:flex; flex:none; gap:var(--shell-control-gap); }
 #ai-image-panel .ai-head > .panel-shell-toggles {
   position:absolute;
   inset:0;
@@ -131,7 +131,7 @@
 }
 #ai-image-panel .panel-shell-toggles > * { pointer-events:auto; }
 #ai-image-panel .panel-toggle-label { display: none; }
-#ai-image-panel .panel-visibility-toggle { width:32px; height:32px; min-height:32px; padding:4px; }
+#ai-image-panel .panel-visibility-toggle { width:var(--shell-control-size); height:var(--shell-control-size); min-height:var(--shell-control-size); padding:4px; }
 #ai-image-panel [data-panel-toggle="left"] { grid-column:1; margin-left:8px; }
 #ai-image-panel [data-panel-toggle="right"] { grid-column:3; margin-right:8px; }
 #ai-image-panel .panel-utility-bar { margin: 4px 6px; }
@@ -231,37 +231,39 @@
   .panel-visibility-toggle:active,
   .panel-collapse-close:active { transform: none; transition: none; }
 }
-html.is-workspace-maximized .app-footer { display: none; }
-
 @media (min-width: 768px) {
-  .app { --panel-right-w: 200px; }
+  .app {
+    --panel-left-w: var(--shell-left-panel-size);
+    --panel-right-w: var(--shell-right-panel-size);
+  }
   .app-shell-header .canvas-toolbar {
     display: grid;
     grid-template-columns: var(--panel-left-w) minmax(0, 1fr) var(--panel-right-w);
     padding: 8px 0;
     gap: 0;
   }
-  .toolbar-history { display: flex; gap: 4px; padding-left: 48px; }
-  .toolbar-canvas { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; min-width: 0; padding-right: 12px; }
-  .toolbar-document { display: flex; align-items: center; gap: 6px; min-width: 0; padding-left: 20px; }
+  .toolbar-history { display:flex; gap:var(--shell-control-gap); padding-left:48px; }
+  .toolbar-canvas { display:flex; flex-wrap:wrap; align-items:center; gap:var(--shell-control-gap); min-width:0; padding-right:12px; }
+  .toolbar-document { display:flex; align-items:center; gap:var(--shell-control-gap); min-width:0; padding-left:20px; }
   .toolbar-inspector-controls {
     grid-column:3;
     grid-row:1;
     display:flex;
     align-items:center;
     justify-content:flex-end;
-    padding:0 50px 0 8px;
+    padding:0 48px 0 0;
   }
-  .app[data-panel-layout] .app-shell-header .canvas-global-controls {
+  .app-shell-header .canvas-global-controls {
     display:flex;
     width:100%;
     margin:0;
     padding:0;
-    gap: 4px;
+    gap: var(--shell-control-gap);
     min-width: 0;
     justify-content: flex-end;
     border-left: 0;
   }
+  .app-shell-header .canvas-global-controls > * { flex-shrink:0; }
   @container inspector-header (max-width: 170px) {
     .web-account-status { max-width:none; padding-inline:6px; gap:5px; justify-content:center; }
     .web-account-status [data-account-label] { font-size:0; }
@@ -269,7 +271,10 @@ html.is-workspace-maximized .app-footer { display: none; }
   }
 }
 @media (min-width: 768px) and (max-width: 1000px) {
-  .app { --panel-left-w: 130px; }
+  .app {
+    --panel-left-w: var(--shell-left-panel-size);
+    --panel-right-w: var(--shell-right-panel-size);
+  }
   .toolbar-document { gap: 4px; padding-left: 10px; }
 }
 @media (max-width: 767px) {

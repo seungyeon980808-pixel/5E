@@ -123,6 +123,7 @@ export function normalizeReviewBBox(value) {
 export function setupAiWorkbench(panel = document.getElementById("ai-image-panel")) {
   if (!panel || panel.dataset.aiWorkbenchReady === "true") return;
   panel.dataset.aiWorkbenchReady = "true";
+  const lifecycle = new AbortController();
 
   const results = panel.querySelector(".ai-results");
   const previews = panel.querySelector("[data-ai-previews]");
@@ -141,11 +142,23 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
   const zoomPane = () => panel.dataset.aiLayout === 'result' ? 'result'
     : panel.dataset.aiLayout === 'source' || linkedZoom?.checked ? 'source' : zoomTarget?.value || 'source';
   const paneHeadControls = Array.from(panel.querySelectorAll('.ai-pane-head-controls'));
+  let paneHeadSyncFrame = 0;
+  let paneHeadHeight = '';
   const syncPaneHeadHeight = () => {
     const height = Math.max(0, ...paneHeadControls.map(control => control.offsetHeight));
-    panel.style.setProperty('--ai-pane-head-height', `${height + 16}px`);
+    const nextHeight = `${height + 16}px`;
+    if (nextHeight === paneHeadHeight) return;
+    paneHeadHeight = nextHeight;
+    panel.style.setProperty('--ai-pane-head-height', nextHeight);
   };
-  const headResizeObserver = typeof ResizeObserver === 'function' ? new ResizeObserver(syncPaneHeadHeight) : null;
+  const schedulePaneHeadSync = () => {
+    if (paneHeadSyncFrame) return;
+    paneHeadSyncFrame = window.requestAnimationFrame(() => {
+      paneHeadSyncFrame = 0;
+      syncPaneHeadHeight();
+    });
+  };
+  const headResizeObserver = typeof ResizeObserver === 'function' ? new ResizeObserver(schedulePaneHeadSync) : null;
   paneHeadControls.forEach(control => headResizeObserver?.observe(control));
   const generatedKeys = new WeakMap();
   const sourceKeys = new WeakMap();
@@ -260,7 +273,7 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     const targetControl = panel.querySelector('[data-ai-zoom-target-control]');
     if (targetControl) targetControl.hidden = mode !== 'side-by-side' || linkedZoom?.checked;
     if (mode === 'side-by-side' && linkedZoom?.checked) paneZoom.result = paneZoom.source;
-    syncPaneHeadHeight();
+    schedulePaneHeadSync();
     window.requestAnimationFrame(() => {
       fitCardStage(activeCandidate());
       fitCardStage(activeSource());
@@ -311,7 +324,7 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     syncedScroll.delete(card);
     if (card === paneCard('source')) copyPosition('source', 'result');
     else if (card === paneCard('result')) copyPosition('result', 'source');
-  }, true);
+  }, { capture: true, signal: lifecycle.signal });
   document.addEventListener('keydown', event => {
     if (panel.hidden || !['source', 'result'].includes(panel.dataset.aiLayout) || event.key !== ' ') return;
     if (event.isComposing || event.ctrlKey || event.metaKey || event.altKey || event.shiftKey) return;
@@ -321,7 +334,7 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     event.preventDefault();
     event.stopImmediatePropagation();
     if (!event.repeat) setLayout(panel.dataset.aiLayout === 'source' ? 'result' : 'source', true);
-  }, true);
+  }, { capture: true, signal: lifecycle.signal });
   function applyPaneZoom(pane) {
     paneZoom[pane] = Math.min(4, Math.max(.25, Math.round(paneZoom[pane] * 10000) / 10000));
     const card = paneCard(pane);
@@ -461,14 +474,17 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     const empty = panel.querySelector('[data-ai-empty]');
     if (empty) {
       const prepared = sourceCards().length > 0;
+      const lite = document.documentElement.dataset.mode === 'lite';
       const title = empty.querySelector('strong');
       const detail = empty.querySelector('span');
       const add = empty.querySelector('[data-ai-add-file]');
-      const titleText = prepared ? '변환 결과 대기' : '작업할 이미지를 추가하세요';
-      const detailText = prepared ? '변환하기를 누르면 결과가 여기에 표시됩니다.' : '이미지를 끌어놓거나 파일을 선택하세요.';
+      const titleText = prepared || lite ? '변환 결과 대기' : '작업할 이미지를 추가하세요';
+      const detailText = lite
+        ? '변환하면 결과가 여기에 표시됩니다.'
+        : prepared ? '변환하기를 누르면 결과가 여기에 표시됩니다.' : '이미지를 끌어놓거나 파일을 선택하세요.';
       if (title && title.textContent !== titleText) title.textContent = titleText;
       if (detail && detail.textContent !== detailText) detail.textContent = detailText;
-      if (add && add.hidden !== prepared) add.hidden = prepared;
+      if (add && add.hidden !== (prepared || lite)) add.hidden = prepared || lite;
     }
     panel.dataset.aiStage = processing
       ? "processing"
@@ -709,7 +725,7 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
   document.addEventListener('pointerdown', (event) => {
     if (versionList?.hidden || versionButton?.contains(event.target) || versionList?.contains(event.target)) return;
     closeVersionList();
-  });
+  }, { signal: lifecycle.signal });
   orientationButtons.forEach((button) => button.addEventListener("click", () => {
     if (panel.dataset.aiBusy === "true") return;
     const orientation = button.dataset.aiCompositionOrientation;
@@ -776,7 +792,7 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
 
   window.addEventListener("5e:image-panel-layout-will-change", (event) => {
     if (event.detail?.root === panel) panelLayoutChanging = true;
-  });
+  }, { signal: lifecycle.signal });
   window.addEventListener("5e:image-panel-layout-did-change", (event) => {
     if (event.detail?.root !== panel) return;
     window.requestAnimationFrame(() => {
@@ -784,10 +800,10 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
       fitCardStage(activeCandidate());
       fitCardStage(activeSource());
     });
-  });
+  }, { signal: lifecycle.signal });
 
   const narrowQuery = window.matchMedia("(max-width: 1000px)");
-  narrowQuery.addEventListener?.("change", updateResponsiveLayout);
+  narrowQuery.addEventListener?.("change", updateResponsiveLayout, { signal: lifecycle.signal });
   updateResponsiveLayout();
   syncCandidates();
   knownGeneratedCount = generatedCards().length;
@@ -796,6 +812,15 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
   applyPaneZoom("source");
   applyPaneZoom("result");
   panel.aiWorkbench = {
+    dispose() {
+      lifecycle.abort();
+      if (paneHeadSyncFrame) window.cancelAnimationFrame(paneHeadSyncFrame);
+      headResizeObserver?.disconnect();
+      stageResizeObserver?.disconnect();
+      cardObserver.disconnect();
+      delete panel.dataset.aiWorkbenchReady;
+      delete panel.aiWorkbench;
+    },
     getViewState() {
       const sourceCard = activeSource();
       const resultCard = activeCandidate();

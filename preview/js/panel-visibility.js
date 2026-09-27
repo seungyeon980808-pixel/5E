@@ -1,6 +1,7 @@
 import { createPanelMotion, cycleFocusIndex } from './panel-motion.js?v=1.6.0-preview-panel-lock-0921';
 
 const narrow = window.matchMedia('(max-width: 767px)');
+const fixedLite = () => document.documentElement.dataset.mode === 'lite';
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 const preferences = {
   editor: { left: true, right: true, drawer: null },
@@ -23,8 +24,8 @@ function panelIcon(side) {
 function setAccessibleState(layout, side, expanded) {
   const { panel, button, name, originalRole, originalAriaModal } = layout[side];
   if (!expanded && panel.contains(document.activeElement)) button.focus();
-  panel.classList.toggle('is-open', narrow.matches && expanded);
-  if (narrow.matches && expanded) {
+  panel.classList.toggle('is-open', !fixedLite() && narrow.matches && expanded);
+  if (!fixedLite() && narrow.matches && expanded) {
     panel.setAttribute('role', 'dialog');
     panel.setAttribute('aria-modal', 'true');
   } else {
@@ -39,6 +40,7 @@ function setAccessibleState(layout, side, expanded) {
 }
 
 function moveEditorHeader(root, toolbar) {
+  if (toolbar.closest('.app-shell-header') && toolbar.querySelector('.toolbar-history')) return;
   let header = root.querySelector('.app-shell-header');
   if (!header) {
     header = document.createElement('header');
@@ -85,11 +87,11 @@ function drawerFocusables(layout, side) {
 function render(layout) {
   const preference = preferences[layout.kind];
   for (const side of ['left', 'right']) {
-    const expanded = narrow.matches ? preference.drawer === side : preference[side];
+    const expanded = fixedLite() || (narrow.matches ? preference.drawer === side : preference[side]);
     layout.root.dataset[`${side}Collapsed`] = String(!expanded);
-    layout[side].motion.reset(expanded, narrow.matches);
+    layout[side].motion.reset(expanded, !fixedLite() && narrow.matches);
   }
-  layout.backdrop.hidden = !narrow.matches || preference.drawer === null;
+  layout.backdrop.hidden = fixedLite() || !narrow.matches || preference.drawer === null;
 }
 
 function refresh() {
@@ -117,6 +119,7 @@ function closeDrawer(layout) {
 }
 
 function setup(root, kind) {
+  if (kind === 'image' && document.documentElement.classList.contains('mobile-image-mode')) return;
   if (initialized.has(root)) return;
   initialized.add(root);
   const panels = kind === 'editor'
@@ -194,6 +197,7 @@ function setup(root, kind) {
       },
     });
     button.onclick = () => {
+      if (fixedLite()) return;
       const preference = preferences[kind];
       if (narrow.matches) {
         const previous = preference.drawer;
@@ -230,7 +234,9 @@ narrow.addEventListener('change', () => {
   preferences.image.drawer = null;
   refresh();
 });
+window.addEventListener('5e:view-mode-change', refresh);
 window.addEventListener('keydown', event => {
+  if (fixedLite()) return;
   if (!narrow.matches || (event.key !== 'Escape' && event.key !== 'Tab')) return;
   const layout = [...layouts].find(item => !item.root.hidden && preferences[item.kind].drawer
     && (item.kind === 'image' || !document.querySelector('#ai-image-panel:not([hidden])')));

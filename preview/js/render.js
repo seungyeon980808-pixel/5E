@@ -2,9 +2,9 @@
  * js/render.js was split into domain modules under js/render/ (v0.41.0).
  * This file only re-exports the symbols consumed outside the render layer
  * (main.js, snap.js, svg-export.js, templates.js, tools.js, transform.js),
- * so every existing `from "./render.js?v=1.6.0-preview-labeler-0917-1111"` import keeps working. */
+ * so every existing `from "./render.js?v=1.6.0-preview-lite-hybrid-0922"` import keeps working. */
 
-export { render, setSnapPreview, setSmartGuides, renderObject, singleObjBBox } from "./render/scene.js?v=1.6.0-preview-labeler-0917-1111";
+export { render, setSnapPreview, setSmartGuides, renderObject, singleObjBBox } from "./render/scene.js?v=1.6.0-preview-lite-hybrid-0922";
 export { rotPt, curveSamplePoints } from "./render/core.js?v=1.6.0-preview-labeler-0917-1111";
 export { makeFillPattern } from "./render/fill.js?v=1.6.0-preview-labeler-0917-1111";
 // 인스펙터가 상자 라벨 두 슬롯을 렌더러와 '같은 규칙'으로 읽기 위해 필요하다.
