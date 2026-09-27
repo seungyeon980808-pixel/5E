@@ -18,15 +18,10 @@ export function createContinuousCropPages({ stage, canvas, loadPage, onPage }) {
     if (slot.dataset.loaded) return;
     slot.dataset.loaded = "loading";
     const own = generation;
-    const fallback = canvas.querySelector("img")?.src;
-    if (fallback) {
-      const blurred = new Image();
-      blurred.src = fallback;
-      blurred.alt = "";
-      blurred.className = "unilib-crop-page-placeholder";
-      blurred.setAttribute("aria-hidden", "true");
-      slot.append(blurred);
-    }
+    const placeholder = document.createElement("div");
+    placeholder.className = "unilib-crop-page-placeholder";
+    placeholder.setAttribute("aria-hidden", "true");
+    slot.append(placeholder);
     const status = document.createElement("div");
     status.className = "unilib-crop-page-status";
     status.setAttribute("role", "status");

@@ -23,6 +23,7 @@ const { chromium, webkit } = require("playwright");
         sourceLabel: "Test book", documentId: "book",
         provenance: { provider: "pdf", documentId: "book", pageNumber: 1 },
         loadPreview: async (number, options = {}) => {
+          if (options.thumbnail && window.thumbnailDelay?.number === number) await window.thumbnailDelay.promise;
           if (options.continuous && window.failContinuousPage === number) throw new Error('temporary page failure');
           if ((options.original || options.continuous) && window.pageDelay?.number === number) await window.pageDelay.promise;
           return ({
@@ -65,6 +66,16 @@ const { chromium, webkit } = require("playwright");
     if (process.env.EVIDENCE_DIR) {
       fs.mkdirSync(process.env.EVIDENCE_DIR, { recursive: true });
       await page.screenshot({ path: path.join(process.env.EVIDENCE_DIR, "page-2-selected.png") });
+    }
+    for (const viewport of [{ width: 1280, height: 720 }, { width: 1600, height: 1000 }]) {
+      await page.setViewportSize(viewport);
+      await stage.evaluate((el) => {
+        const extent = parseFloat(getComputedStyle(el.closest('.unilib')).getPropertyValue('--unilib-pdf-page-extent'));
+        el.scrollTop = extent - el.clientHeight / 2 - 20;
+      });
+      await ui.locator('[data-result-id="book:page:1"][aria-selected="true"]').waitFor();
+      await stage.evaluate((el) => { el.scrollTop += 40; });
+      await ui.locator('[data-result-id="book:page:2"][aria-selected="true"]').waitFor();
     }
     await ui.locator('[data-unilib-adjust]').click();
     await ui.locator('[data-unilib-crop][data-pdf-page="2"]').waitFor({ state: "visible" });
@@ -144,18 +155,48 @@ const { chromium, webkit } = require("playwright");
     await ui.locator('[data-unilib-crop][data-pdf-page="1"]').waitFor({ state: "visible" });
     await cropStage.evaluate((el) => { el.scrollTop = 1200; });
     await ui.locator('.unilib-crop-page[data-page="2"][data-loaded="loading"]').waitFor();
-    assert.equal(await ui.locator('.unilib-crop-page[data-page="2"] .unilib-crop-page-placeholder').count(), 1, 'pending page should keep a blurred placeholder');
+    assert.equal(await ui.locator('.unilib-crop-page[data-page="2"] .unilib-crop-page-placeholder').count(), 1, 'pending page should keep a neutral paper placeholder');
     await ui.locator('[data-unilib-crop-page-next]').click();
     await ui.locator('[data-unilib-crop-load-state][data-state="loading"]').waitFor({ state: "visible" });
-    assert.match(await ui.locator('[data-unilib-crop-image]').getAttribute('src'), /%3E1%3C/, 'old page should remain behind blur until next image decodes');
-    assert.equal(await ui.locator('.unilib-crop-load-preview').isVisible(), true, 'blurred previous page should remain visible while loading');
-    assert.match(await ui.locator('.unilib-crop-load-preview').getAttribute('src'), /%3E1%3C/);
-    assert.match(await ui.locator('.unilib-crop-load-preview').evaluate((el) => getComputedStyle(el).filter), /blur/);
+    await ui.locator('.unilib-crop-load-preview:not([hidden])').waitFor();
+    assert.match(await ui.locator('.unilib-crop-load-preview').getAttribute('src'), /%3E2%3C/, 'loading preview must depict the target page, never the previous page');
+    assert.equal(await ui.locator('.unilib-crop-load-preview').evaluate((el) => getComputedStyle(el).filter), 'blur(1.5px)');
+    assert.equal(await ui.locator('[data-unilib-crop-image]').isVisible(), false, 'previous crop must be hidden while the target page loads');
+    assert.equal(await ui.locator('[data-unilib-crop-canvas]').evaluate((el) => getComputedStyle(el).filter), 'none', 'loading should not blur the crop canvas');
     if (process.env.EVIDENCE_DIR) await page.screenshot({ path: path.join(process.env.EVIDENCE_DIR, 'crop-page-loading.png') });
     await page.evaluate(() => window.pageDelay.release());
     await ui.locator('[data-unilib-crop][data-pdf-page="2"]').waitFor({ state: "visible" });
     await ui.locator('[data-unilib-crop-load-state]').waitFor({ state: "hidden" });
     if (process.env.EVIDENCE_DIR) await page.screenshot({ path: path.join(process.env.EVIDENCE_DIR, 'crop-page-settled.png') });
+    await ui.locator('[data-unilib-crop-cancel]').click();
+    await ui.locator('[data-unilib-type="question"]').click();
+    await ui.locator('[data-result-id="question-1"]').click();
+    await ui.locator('[data-unilib-adjust]').click();
+    await ui.locator('[data-unilib-crop-load-state]').waitFor({ state: 'hidden' });
+    await page.evaluate(() => {
+      window.setPageDelay(2);
+      let release;
+      window.thumbnailDelay = { number: 2, promise: new Promise((resolve) => { release = resolve; }) };
+      window.thumbnailDelay.release = release;
+    });
+    await ui.locator('[data-unilib-crop-page-next]').click();
+    await ui.locator('[data-unilib-crop-load-state][data-state="loading"]').waitFor({ state: 'visible' });
+    assert.equal(await ui.locator('.unilib-crop-load-paper').isVisible(), true, 'unavailable target thumbnail should leave a neutral paper placeholder');
+    await page.evaluate(() => window.pageDelay.release());
+    await ui.locator('[data-unilib-crop-load-state]').waitFor({ state: 'hidden' });
+    assert.match(await ui.locator('[data-unilib-crop-image]').getAttribute('src'), /%3E2%3C/, 'original must become ready without waiting for the thumbnail');
+    await ui.locator('[data-unilib-crop-cancel]').click();
+    await ui.locator('[data-unilib-type="question"]').click();
+    await ui.locator('[data-result-id="question-1"]').click();
+    await ui.locator('[data-unilib-adjust]').click();
+    await ui.locator('[data-unilib-crop-load-state]').waitFor({ state: 'hidden' });
+    await page.evaluate(async () => {
+      window.thumbnailDelay.release();
+      window.thumbnailDelay = null;
+      for (let frame = 0; frame < 4; frame++) await new Promise(requestAnimationFrame);
+    });
+    assert.match(await ui.locator('[data-unilib-crop-image]').getAttribute('src'), /%3E1%3C/);
+    assert.equal(await ui.locator('.unilib-crop-load-preview').getAttribute('src'), null, 'a stale thumbnail cannot replace the reopened page');
     await ui.locator('[data-unilib-crop-cancel]').click();
     await page.evaluate(() => { window.failContinuousPage = 2; window.pageDelay = null; });
     await ui.locator('[data-unilib-type="question"]').click();
@@ -178,12 +219,31 @@ const { chromium, webkit } = require("playwright");
       let release;
       const thumbnail = new Promise((resolve) => { release = resolve; });
       window.releaseFirstThumbnail = release;
+      window.initialThumbnailLoads = [];
+      const NativeObserver = window.IntersectionObserver;
+      window.delayedThumbnailObservers = [];
+      window.IntersectionObserver = class extends NativeObserver {
+        constructor(callback, options) {
+          super((entries, observer) => {
+            if (options?.root?.classList.contains('unilib-result-scroll')) window.delayedThumbnailObservers.push(() => callback(entries, observer));
+            else callback(entries, observer);
+          }, options);
+        }
+      };
       const loadingProvider = {
         revision: 'slow-thumbnail', getSources: () => [], getExamFilterOptions: () => ({ academicYears: [] }),
-        search: () => [], listPdfFiles: () => [{ ...file, loadPreview: async (number, options) => {
-          if (options?.thumbnail) await thumbnail;
-          return file.loadPreview(number, options);
-        } }],
+        search: () => [], listPdfFiles: () => Array.from({ length: 20 }, (_, index) => ({
+          ...file, id: index ? `book-${index}` : 'book', documentId: index ? `book-${index}` : 'book',
+          title: `Test book ${index + 1}`, provenance: { ...file.provenance, documentId: index ? `book-${index}` : 'book' },
+          loadPreview: async (number, options) => {
+            if (options?.thumbnail) {
+              window.initialThumbnailLoads.push(index);
+              if (index === 1) await thumbnail;
+              if (index === 2) throw new Error('thumbnail unavailable');
+            }
+            return file.loadPreview(number, options);
+          },
+        })),
         materialize: async () => { throw new Error('unexpected materialize'); },
       };
       window.loadingUiPromise = import('/preview/js/unified-library-ui.js').then(({ createUnifiedLibraryUi }) => {
@@ -193,11 +253,16 @@ const { chromium, webkit } = require("playwright");
     });
     const loadingUi = page.locator('.unified-library-overlay').last();
     await loadingUi.locator('[data-result-id="book"]').waitFor();
-    assert.equal(await loadingUi.locator('[data-unilib-result-state]').isVisible(), true, 'initial loading message should remain until first thumbnail is ready');
+    await page.evaluate(async () => { for (let frame = 0; frame < 8; frame++) await new Promise(requestAnimationFrame); });
+    assert.equal(await loadingUi.locator('[data-unilib-result-state]').isVisible(), true, 'initial loading must wait for the second visible thumbnail even after the first is ready');
+    assert.equal(await loadingUi.locator('[data-result-id="book"] img').evaluate((image) => image.complete && image.naturalWidth > 0), true);
     if (process.env.EVIDENCE_DIR) await page.screenshot({ path: path.join(process.env.EVIDENCE_DIR, 'library-first-loading.png') });
-    await page.evaluate(() => window.releaseFirstThumbnail());
+    await page.evaluate(() => { window.releaseFirstThumbnail(); });
     await loadingUi.locator('[data-unilib-result-state]').waitFor({ state: 'hidden' });
     assert.equal(await loadingUi.locator('[data-result-id="book"] img').evaluate((image) => image.complete && image.naturalWidth > 0), true);
+    assert.equal(await loadingUi.locator('[data-result-id="book-1"] img').evaluate((image) => image.complete && image.naturalWidth > 0), true);
+    assert.equal(await loadingUi.locator('[data-result-id="book-2"] .unilib-thumb').getAttribute('data-thumbnail-state'), 'error', 'failed visible thumbnail should settle into its error placeholder');
+    assert.equal(await page.evaluate(() => window.initialThumbnailLoads.includes(19)), false, 'offscreen thumbnails must remain lazy');
     if (process.env.EVIDENCE_DIR) await page.screenshot({ path: path.join(process.env.EVIDENCE_DIR, 'library-first-settled.png') });
     assert.equal(errors.length, 0, errors.join("\n"));
     console.log("PASS page scroll selects thumbnails and crop source follows both directions");

@@ -59,6 +59,10 @@ function matchesFilters(result, filters = {}) {
     && (!filters.administration || metadata.administration === filters.administration);
 }
 
+function matchesPdfInventoryFilters(result, filters) {
+  return !result.metadata?.documentCode || matchesFilters(result, filters);
+}
+
 function normalizedText(value) {
   return String(value ?? "").normalize("NFKC").toLocaleLowerCase().replace(/\s+/gu, " ").trim();
 }
@@ -414,6 +418,7 @@ function pdfResults(documents, index) {
           metadata, preview: {}, provenance: pdfProvenance(document, inventorySource),
         }),
         id: stableId("file", sourceId),
+        kind: "pdf",
         title: humanExamName(metadata) || document.title || document.source?.displayName,
         subtitle: [document.source?.displayName, `PDF ${pages.size}쪽`].filter(Boolean).join(" · "),
         documentId: document.id,
@@ -630,10 +635,9 @@ export function createUnifiedLibraryProvider(input = {}) {
       const queryText = options.query ?? "";
       const found = pdf.files.filter((file) => {
         if (allowedSources && !allowedSources.has(file.sourceId)) return false;
-        if (!matchesFilters(file, options.filters)) return false;
+        if (!matchesPdfInventoryFilters(file, options.filters)) return false;
         if (!String(queryText).trim()) return true;
         return pdf.results.some((result) => result.sourceId === file.sourceId
-          && matchesFilters(result, options.filters)
           && resultMatches(result, queryText, compact));
       });
       return Object.freeze(found.sort(compareExamResults).map((file) => Object.freeze({
@@ -647,12 +651,12 @@ export function createUnifiedLibraryProvider(input = {}) {
       const query = String(options.query ?? "").trim();
       if (!query) return this.listPdfFiles(options);
       if (typeof input.searchPdf !== "function") return Object.freeze([]);
-      const allowedSources = Array.isArray(options.sourceIds) ? new Set(options.sourceIds) : null;
-      const allowedDocuments = documents.filter((document) => !allowedSources || allowedSources.has(pdfSourceId(document)));
+      const filesByDocument = new Map(this.listPdfFiles({ ...options, query: "" }).map((file) => [file.documentId, file]));
+      const allowedDocuments = documents.filter((document) => filesByDocument.has(document.id));
       const entries = [...(await input.searchPdf({
         query,
         documentIds: allowedDocuments.map((document) => document.id),
-        filters: options.filters ?? {},
+        filters: {},
         limit: null,
         requestId: options.requestId,
         signal: options.signal,
@@ -682,7 +686,6 @@ export function createUnifiedLibraryProvider(input = {}) {
         }
       }
       if (options.signal?.aborted) throw new DOMException("PDF search was cancelled", "AbortError");
-      const filesByDocument = new Map(this.listPdfFiles({ ...options, query: "" }).map((file) => [file.documentId, file]));
       const matchesByDocument = new Map();
       for (const entry of entries ?? []) {
         if (!filesByDocument.has(entry.documentId)) continue;

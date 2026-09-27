@@ -1,6 +1,7 @@
 {
   "schemaVersion": 1,
   "unit": [
+    { "path": "tests/test-library-provider.mjs" },
     { "path": "tests/test-ai-events.mjs" },
     { "path": "tests/test-ai-panel-local-bypass.mjs" },
     { "path": "tests/test-ai-primary-action.cjs" },
@@ -23,6 +24,7 @@
     { "path": "tools/mcp-5e/test/server-pairing.test.mjs" }
   ],
   "browser": [
+    { "path": "tests/test-library-real-provider-browser.cjs", "findingIds": ["LIB-REAL-PROVIDER"] },
     { "path": "tests/test-unified-library-page-scroll-browser.cjs", "findingIds": ["LIB-PAGE-SCROLL"] },
     { "path": "tests/test-release-entry-browser.cjs", "findingIds": ["TPK-001", "TPK-002"] },
     { "path": "tests/test-preview-startup-browser.cjs", "findingIds": ["TPK-004"] },
