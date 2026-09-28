@@ -1,12 +1,12 @@
 /* Keep one editable original page inside a lazily rendered continuous document. */
 export function createContinuousCropPages({ stage, canvas, loadPage, onPage }) {
   let root = null, observer = null, pageCount = 0, activePage = 1, extent = 0;
-  let busy = false, generation = 0, pendingPage = null, pageWidth = 0;
+  let generation = 0, pageWidth = 0;
   const ratios = new Map();
   const slots = new Map();
   const reset = () => {
     generation += 1;
-    busy = false; pendingPage = null; ratios.clear();
+    ratios.clear();
     observer?.disconnect();
     observer = null;
     if (root) { stage.append(canvas); root.remove(); }
@@ -106,18 +106,8 @@ export function createContinuousCropPages({ stage, canvas, loadPage, onPage }) {
     return page;
   };
   const request = async page => {
-    if (!root) return;
-    pendingPage = page;
-    if (busy) return;
-    busy = true;
-    const own = generation;
-    try {
-      while (own === generation && root && pendingPage !== null) {
-        const next = pendingPage;
-        pendingPage = null;
-        if (next !== activePage) await onPage(next);
-      }
-    } finally { if (own === generation) busy = false; }
+    if (!root || page === activePage) return;
+    await onPage(page);
   };
   stage.addEventListener("scroll", () => {
     if (!root || !extent) return;

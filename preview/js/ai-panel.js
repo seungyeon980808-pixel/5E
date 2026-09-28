@@ -1,4 +1,4 @@
-import { mountRevisionComparison } from './ai-comparison.js?v=1.6.0-ai-frames-handoff-0928';
+import { mountRevisionComparison } from './ai-comparison.js?v=1.6.0-ai-latest-fixes-0928';
 import { attachCropMagnifier } from './tools/pointer-magnifier.js?v=1.6.0-workbench-polish-0928-final';
 import { readAIModelCatalog, resolveAIModelSelection, defaultAIModelSelection } from './ai-model-capabilities.js?v=1.6.0-workbench-polish-0928-final';
 import { transitionSeparationMode, SEPARATION_BACKGROUND_HINT, SEPARATION_LIMITS_HINT } from './ai-separation-mode.js?v=1.6.0-workbench-polish-0928-final';
@@ -6,7 +6,7 @@ import { createWorkbenchRequestState } from './ai-workbench-request-state.js?v=1
 import { openAiCompositionEditor } from './ai-composition-editor.js';
 import { restrictSharedWorkspace } from './ai-sharing-access.js';
 import { registerEscapeLayer } from './escape-layers.js?v=1';
-import { clearTaskWorkspaces, createTaskPersistence, createTaskWorkspaces, recoverTaskWorkspaceSnapshot } from './ai-task-workspaces.js?v=1.6.0-ai-frames-handoff-0928';
+import { clearTaskWorkspaces, createTaskPersistence, createTaskWorkspaces, recoverTaskWorkspaceSnapshot } from './ai-task-workspaces.js?v=1.6.0-ai-latest-fixes-0928';
 import {
   advanceGenerationTiming,
   restoreGenerationTiming,
@@ -22,7 +22,7 @@ import {
   moveReferenceInComposition,
   normalizeReferenceComposition,
 } from './ai-source-tasking.js?v=1';
-import { setupAiWorkbench } from './ai-workbench.js?v=1.6.0-ai-frames-handoff-0928';
+import { setupAiWorkbench } from './ai-workbench.js?v=1.6.0-ai-latest-fixes-0928';
 import { mountDurableBatchUi } from './ai-batch-ui.js?v=1.6.0-workbench-polish-0928-final';
 import { createScopedEditSession, confirmScopedEditSession, prepareScopedEditProposal, acceptScopedEditProposal, invalidateScopedEditSession } from './ai-scoped-edit-session.js';
 import { decodeScopedPng } from './ai-scoped-edit-png.js';
@@ -32,7 +32,7 @@ import { IndexedDBOutputCacheBackend } from "./ai-output-cache-store.js?v=1.5.3"
 import { insertImageFromSrc } from "./image-paste.js?v=1.6.0-workbench-polish-0928-final";
 import { openEditableAssetsDialog } from "./ai-editable-assets-dialog.js?v=1.6.0-workbench-polish-0928-final";
 import { insertEditableAssets } from "./ai-editable-assets.js";
-import { prepareSeparatedAssets, SEPARATED_ASSETS_PROMPT } from "./ai-separated-assets.js";
+import { prepareSeparatedAssets, SEPARATED_ASSETS_PROMPT } from "./ai-separated-assets.js?v=1.6.0-ai-latest-fixes-0928";
 import { buildDiscussionPrompt, buildImagePrompt } from "./ai-prompt.js?v=1.5.5";
 import { IMAGE_BACKGROUND_VERSION, transparentizeGeneratedImage } from "./image-background.js?v=1.5.4";
 import { parseAiEvent } from "./ai-events.js?v=1.5.3";
@@ -297,7 +297,7 @@ const separationOptionsForMode = mode => ({
 });
 export const candidateUsesSeparatedAssets = item => item?.generationMode === AI_ASSET_GENERATION_MODES.SEPARATED;
 export const candidateUsesAutomaticSeparation = item => item?.kind === 'generated'
-  && !item?.sceneResult && !candidateUsesSeparatedAssets(item);
+  && !item?.sceneResult;
 export async function automaticSeparationCacheKey(dataUrl, outputOptions = {}, separationOptions = AUTOMATIC_SEPARATION_OPTIONS) {
   const prefix = 'data:image/png;base64,';
   if (typeof dataUrl !== 'string' || !dataUrl.startsWith(prefix)) throw new TypeError('자동 분리 원본은 PNG 데이터여야 합니다.');
@@ -1039,8 +1039,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     const request = requestStates.snapshot(tab?.id);
     if (request) {
       const seconds = Math.floor(request.elapsedMs / 1000);
-      const phase = { preparing: '요청 준비', 'confirmation-wait': '확인 대기', generating: '생성 중', validating: '결과 확인', completed: '완료', failed: '실패', cancelled: '취소' }[request.phase];
-      return `${phase} · ${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+      const phase = { preparing: '요청 준비', 'confirmation-wait': '확인 대기', generating: '변환 중', validating: '결과 확인', completed: '완료', failed: '실패', cancelled: '취소' }[request.phase];
+      return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')} · ${phase}`;
     }
     if (view.available) return view.formatted;
     return (tab?.workState === "idle" && !(tab.generated?.length || tab.conversationMessages?.length)) ? "실행 전" : "시간 알 수 없음";
@@ -1070,7 +1070,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       const seconds = Math.floor(request.elapsedMs / 1000);
       const label = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
       if (elapsedTime) { elapsedTime.textContent = label; elapsedTime.dateTime = `PT${seconds}S`; }
-      if (tab) updateTaskTimingLabels(tab, `${phaseCopy[request.phase]} · ${label}`);
+      if (tab) updateTaskTimingLabels(tab, taskTimingLabel(tab));
       if (request.elapsedMs >= 90_000 && request.phase === 'generating') progressDetail.textContent = '90초 넘게 응답을 기다리고 있습니다. 취소할 수 있으며 자동 재시도하지 않습니다.';
       if (!running) stopGenerationTimingTimer();
       return { running, available: true, phase: request.phase, elapsedMs: request.elapsedMs, formatted: label };
@@ -1839,7 +1839,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     run.promise = (async () => {
       try {
         const outputOptions = normalizeImageOutputOptions(selectedImageOutputOptions);
-        const effectiveSource = await resolveImageOutput(item, outputOptions, transparentizeGeneratedImage);
+        const effectiveSource = await resolveOutputVariant(item);
         if (!automaticSeparationIsCurrent(run)) return null;
         const key = await automaticSeparationCacheKey(effectiveSource, outputOptions, separationOptions);
         if (!automaticSeparationIsCurrent(run)) return null;
@@ -1928,7 +1928,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
         persistTasks();
       }
       setStatus(separated ? '분리 결과를 확인하는 중…' : manual ? '직접 지정할 영역을 준비하는 중…' : '편집용 그룹을 준비하는 중…', 'busy');
-      const initialPrepared = separated ? await prepareSeparatedAssets(source) : manual ? null : await startAutomaticSeparation(item);
+      const initialPrepared = manual ? null : await startAutomaticSeparation(item);
       if (!isCurrent()) throw new Error('분리 결과를 준비하는 동안 페이지·작업 또는 후보가 변경되었습니다.');
       if (useResult && initialPrepared) {
         const prepared = { ...initialPrepared, labelsDisabled: true };
@@ -1938,7 +1938,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
         if (inserted) { captureActiveTaskTab(); persistTasks(); close({ integratedEdit: true }); }
         return;
       }
-      const dialogSource = separated ? source : (item.automaticSeparationSource || await resolveOutputVariant(item));
+      const dialogSource = await resolveOutputVariant(item);
       const inserted = await openEditableAssetsDialog({
         dataUrl: dialogSource, isCurrent, artboard: { ...state.get().artboard }, initialPrepared,
         onInsert: prepared => candidateAlreadyInserted(item) || insertEditableAssets(state, prepared, {

@@ -395,7 +395,8 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
         if (job) row.dataset.aiWorkspaceJob = job.id;
         else delete row.dataset.aiWorkspaceJob;
         for (const selector of ['.ai-task-tab-title', '.ai-task-tab-time']) {
-          const next = source.querySelector(selector)?.textContent || '';
+          const next = selector === '.ai-task-tab-time' && job?.state === 'queued'
+            ? '실행 대기' : source.querySelector(selector)?.textContent || '';
           const node = row.querySelector(selector);
           if (node && node.textContent !== next) node.textContent = next;
         }

@@ -1914,7 +1914,6 @@
   line-height: 1.45;
   overflow-wrap: anywhere;
 }
-#ai-image-panel .ai-preview-stage > img.ai-output-transparent { background: transparent; }
 #ai-image-panel .ai-mark-policy {
   display: grid;
   gap: 5px;
@@ -2577,11 +2576,14 @@
 /* A shared, centered viewport for single and combined sources. */
 #ai-image-panel .ai-preview-stage {
   margin: auto; align-self: auto;
-  background-color: var(--ai-transparency-base, #fafafa);
-  background-image: conic-gradient(var(--ai-transparency-tile, #ededed) 25%, transparent 0 50%, var(--ai-transparency-tile, #ededed) 0 75%, transparent 0);
-  background-size: 16px 16px;
+  background: transparent;
 }
-#ai-image-panel .ai-preview-stage > img { background: transparent; max-width: none; }
+#ai-image-panel .ai-preview-stage > img {
+  background-color: var(--ai-transparency-base, #b8bec6);
+  background-image: conic-gradient(var(--ai-transparency-tile, #9fa7b2) 25%, transparent 0 50%, var(--ai-transparency-tile, #9fa7b2) 0 75%, transparent 0);
+  background-size: 16px 16px;
+  max-width: none;
+}
 #ai-image-panel .ai-composite-preview { display: none !important; }
 #ai-image-panel .ai-combined-card { flex-direction: column; }
 #ai-image-panel .ai-combined-card .ai-preview-stage { cursor: grab; }

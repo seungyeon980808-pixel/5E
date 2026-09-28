@@ -95,6 +95,8 @@ input[type="checkbox"], input[type="radio"], input[type="range"] { accent-color:
 
 /* ===== TOKENS (legacy aliases → resolve against the active theme) ===== */
 :root {
+  --ai-transparency-base: #b8bec6;
+  --ai-transparency-tile: #9fa7b2;
   --font-normal-text: "돋움", "Dotum", "Apple SD Gothic Neo", "맑은 고딕", "Malgun Gothic", sans-serif;
   --font-tool-label: "Latin Modern Roman", "HYhwpEQ", "HWhwpEQ", "Cambria Math", "Times New Roman", "Batang", "바탕", serif;
 
@@ -2435,8 +2437,10 @@ textarea.unified-text-input {
 .app-footer {
   position: relative;
   flex: 0 0 auto;
-  height: var(--footer-h);
+  min-height: var(--footer-h);
+  height: auto;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
@@ -2445,6 +2449,27 @@ textarea.unified-text-input {
   color: var(--text-secondary);
   background: var(--bg-panel);
   border-top: 1px solid var(--border-strong);
+}
+[data-release-receipt] {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 10px;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 11px;
+  line-height: 1.4;
+  word-break: keep-all;
+}
+[data-release-receipt] > :first-child,
+[data-release-receipt] > :last-child { white-space: nowrap; }
+[data-release-receipt] a { color: inherit; text-underline-offset: 2px; }
+.app-footer > [data-release-receipt] { flex-basis: 100%; padding-block: 3px; }
+#ai-image-panel [data-release-receipt] {
+  flex: 0 0 auto;
+  padding: 4px 12px;
+  border-top: 1px solid var(--border-strong);
+  background: var(--bg-panel);
 }
 /* 요구: 은색으로 살짝 빛나는 느낌 — 상단 경계선을 은은한 은색 그라데이션 실선으로,
    그 위에 아주 옅은 광선을 얹는다. 과하지 않게(디자인 원칙: 큰 그림자·과한 효과 금지)
