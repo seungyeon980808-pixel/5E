@@ -1,6 +1,6 @@
 const release = Object.freeze({
   modifiedAt: '2026.09.28',
-  sourceCommit: '',
+  sourceCommit: '741339903342168e6696c0a5a8b64a422898ea0d',
   changes: 'AI 분리·비교·배경·경과 시간 / PDF 전환 / 캔버스 이미지 성능',
 });
 
