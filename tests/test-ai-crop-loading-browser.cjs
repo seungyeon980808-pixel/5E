@@ -37,7 +37,8 @@ async function lensCoordinates(page, ui) {
       const load = ui.locator('[data-unilib-crop-load-state]');
       const stage = ui.locator('[data-unilib-crop-stage]');
       const toggle = ui.locator('[data-crop-magnifier-toggle]');
-      assert.equal(await toggle.isChecked(), true, 'default-on');
+      assert.equal(await toggle.isChecked(), false, 'library default-off');
+      await toggle.check();
       await lensCoordinates(page, ui);
       await page.screenshot({ path: path.join(evidence, `${name}-raster-lens.png`) });
       await ui.locator('[data-unilib-crop-zoom-in]').click();
@@ -126,7 +127,11 @@ async function lensCoordinates(page, ui) {
       await verifyToolLenses(page, evidence, name);
       await page.locator('#panel-right [data-crop-magnifier-toggle]').uncheck();
       await page.reload();
-      const reopened = await installCropFixture(page);
+      let reopened = await installCropFixture(page);
+      assert.equal(await reopened.locator('[data-crop-magnifier-toggle]').isChecked(), true, 'canvas preference does not change library preference');
+      await reopened.locator('[data-crop-magnifier-toggle]').uncheck();
+      await page.reload();
+      reopened = await installCropFixture(page);
       assert.equal(await reopened.locator('[data-crop-magnifier-toggle]').isChecked(), false, 'preference survives document reload');
       await reopened.locator('[data-unilib-crop-cancel]').click();
       await page.evaluate(() => window.cropFixture.close());

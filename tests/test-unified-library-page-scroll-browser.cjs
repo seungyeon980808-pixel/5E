@@ -119,7 +119,7 @@ const { chromium, webkit } = require("playwright");
     assert.equal(await ui.locator('[data-unilib-crop-page-controls]').isVisible(), true, 'question crop should expose document pages');
     const cropStage = ui.locator('[data-unilib-crop-stage]');
     await cropStage.hover();
-    await page.mouse.wheel(0, 1900);
+    await page.mouse.wheel(0, 1200);
     await page.waitForTimeout(300);
     await ui.locator('[data-unilib-crop][data-pdf-page="2"]').waitFor({ state: "visible" });
     assert.match(await ui.locator('[data-unilib-crop-image]').getAttribute("src"), /%3E2%3C/);
@@ -214,6 +214,14 @@ const { chromium, webkit } = require("playwright");
     await ui.locator('.unilib-crop-page[data-page="2"] .unilib-crop-page-status button').click();
     await ui.locator('.unilib-crop-page[data-page="2"][data-loaded="ready"]').waitFor();
     await ui.locator('[data-unilib-crop-cancel]').click();
+    await ui.locator('[data-result-id="question-1"]').focus();
+    await page.keyboard.press('Space');
+    await ui.locator('[data-unilib-crop][data-pdf-page="1"]').waitFor({ state: 'visible' });
+    await ui.locator('[data-unilib-crop-cancel]').click();
+    await ui.locator('[data-result-id="question-1"]').focus();
+    await page.keyboard.press('Enter');
+    await ui.locator('[data-unilib-crop][data-pdf-page="1"]').waitFor({ state: 'visible' });
+    await ui.locator('[data-unilib-crop-cancel]').click();
     await page.evaluate(() => {
       window.pageScrollFixture.close();
       const file = window.pageScrollFile;
@@ -247,12 +255,18 @@ const { chromium, webkit } = require("playwright");
         })),
         materialize: async () => { throw new Error('unexpected materialize'); },
       };
+      let releaseProvider;
+      const waitProvider = new Promise((resolve) => { releaseProvider = resolve; });
+      window.releaseLoadingProvider = releaseProvider;
       window.loadingUiPromise = import('/preview/js/unified-library-ui.js').then(({ createUnifiedLibraryUi }) => {
-        window.loadingUi = createUnifiedLibraryUi({ getProvider: async () => loadingProvider, insertMaterialized: async () => {} });
+        window.loadingUi = createUnifiedLibraryUi({ getProvider: async () => { await waitProvider; return loadingProvider; }, insertMaterialized: async () => {} });
         return window.loadingUi.open();
       });
     });
     const loadingUi = page.locator('.unified-library-overlay').last();
+    await loadingUi.locator('[data-unilib-result-state]').waitFor({ state: 'visible' });
+    await loadingUi.locator('[data-unilib-stage] .unilib-preview-loading').waitFor({ state: 'visible' });
+    await page.evaluate(() => window.releaseLoadingProvider());
     await loadingUi.locator('[data-result-id="book"]').waitFor();
     await page.evaluate(async () => { for (let frame = 0; frame < 8; frame++) await new Promise(requestAnimationFrame); });
     assert.equal(await loadingUi.locator('[data-unilib-result-state]').isVisible(), true, 'initial loading must wait for the second visible thumbnail even after the first is ready');

@@ -57,6 +57,7 @@ async function pointerOnImage(page, ui, fraction = .25) {
   const right = Math.min(image.x + image.width, stage.x + stage.width - 2);
   const bottom = Math.min(image.y + image.height, stage.y + stage.height - 2);
   const point = { x: Math.round(left + (right - left) * fraction), y: Math.round(top + (bottom - top) * fraction) };
+  await page.mouse.move(point.x + (point.x + 1 < right ? 1 : -1), point.y);
   await page.mouse.move(point.x, point.y);
   return { image, point };
 }

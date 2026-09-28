@@ -1,4 +1,4 @@
-import { createPointerMagnifier, svgMagnifierSample, cropMagnifierEnabled, mountCropMagnifierToggle } from "./tools/pointer-magnifier.js?v=1.6.0-workbench-polish-0928-final";
+import { createPointerMagnifier, svgMagnifierSample, cropMagnifierEnabled, mountCropMagnifierToggle } from "./tools/pointer-magnifier.js?v=1.6.0-library-keyboard-magnifier-0928";
 /* ===== CUT TOOL — 삽입(생성) 후 캔버스에서 객체 자르기 (가위 하나) =====
 //
 // activeTool === "CUT" 또는 "DELAYED_CUT" 일 때 동작한다.
@@ -651,7 +651,7 @@ export function initCutTool(svg, state) {
   ensureModeTabs();
   const magnifier = createPointerMagnifier({
     surface: svg, id: "cut-magnifier",
-    available: () => cropMagnifierEnabled() && (isActive() || isDelayedActive()) && !_space,
+    available: () => cropMagnifierEnabled("canvas") && (isActive() || isDelayedActive()) && !_space,
     sample: pointer => svgMagnifierSample(svg, pointer),
   });
   state.subscribe(magnifier.refresh);

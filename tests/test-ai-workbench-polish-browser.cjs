@@ -182,6 +182,9 @@ for (const engine of ['chromium', 'webkit']) test(`${engine}: dark reduced-motio
   await page.emulateMedia({ reducedMotion: 'reduce', colorScheme: 'dark' });
   const load = ui.locator('[data-unilib-crop-load-state]');
   const image = ui.locator('[data-unilib-crop-image]');
+  const libraryMagnifier = ui.locator('[data-crop-magnifier-toggle]');
+  assert.equal(await libraryMagnifier.isChecked(), false, 'library crop magnifier starts off');
+  await libraryMagnifier.check();
   await pointerOnImage(page, ui);
   await page.locator('#library-crop-magnifier').waitFor({ state: 'visible' });
   await ui.locator('[data-unilib-crop-zoom-in]').click();
