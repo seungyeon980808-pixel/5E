@@ -27,6 +27,7 @@ for (const engine of ['chromium', 'webkit']) {
       await page.screenshot({ path:path.join(evidence, `${name}.png`) });
       assert.ok(Math.abs(result.source.y - result.result.y) <= 1, JSON.stringify(result));
       assert.ok(Math.abs(result.source.height - result.result.height) <= 1, JSON.stringify(result));
+      assert.ok(Math.abs(result.source.width - result.result.width) <= 1, 'Both comparison frames must have the same width: ' + JSON.stringify(result));
       assert.ok(result.picker.x - (result.title.x + result.title.width) < 15, 'revision picker sits immediately beside its heading');
     }
     await geometry('same-ratio');
@@ -34,7 +35,7 @@ for (const engine of ['chromium', 'webkit']) {
     assert.equal(await page.locator(`${panel} .ai-conversation [data-ai-comment-visibility]`).count(), 1);
     await page.click(`${panel} [data-ai-comment-visibility]`);
     assert.equal(await page.locator(panel).getAttribute('data-ai-comments-visible'), 'false');
-    // A portrait result must keep its own proportions while sharing the reference's displayed height.
+    // Different aspect ratios share one frame, while each image keeps its own proportions.
     await page.evaluate(() => {
       const canvas = document.createElement('canvas'); canvas.width = 300; canvas.height = 500;
       const ctx = canvas.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0,0,300,500); ctx.fillStyle = '#222'; ctx.fillRect(30,40,240,420);
@@ -43,8 +44,59 @@ for (const engine of ['chromium', 'webkit']) {
     await page.waitForFunction(() => document.querySelector('#ai-image-panel .is-ai-active-candidate .ai-preview-stage > img').naturalWidth === 300);
     await page.click(`${panel} [data-ai-zoom-action="fit"]`);
     await geometry('different-ratio');
-    const ratio = await page.locator(`${panel} .is-ai-active-candidate .ai-preview-stage`).evaluate(node => node.clientWidth / node.clientHeight);
-    assert.ok(Math.abs(ratio - 0.6) < 0.01, 'result is not stretched or letterboxed to source ratio');
+    const ratio = await page.locator(`${panel} .is-ai-active-candidate .ai-preview-stage > img`).evaluate(node => node.getBoundingClientRect().width / node.getBoundingClientRect().height);
+    assert.ok(Math.abs(ratio - 0.6) < 0.01, 'image content retains its aspect ratio inside the common frame');
+    await page.evaluate(() => {
+      for (const [selector, width, height, transparent] of [
+        ['.is-ai-active-source', 2050, 957, false], ['.is-ai-active-candidate', 1448, 1086, true],
+      ]) {
+        const canvas = document.createElement('canvas'); canvas.width = width; canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        if (!transparent) { ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, width, height); }
+        ctx.strokeStyle = '#222'; ctx.lineWidth = 8; ctx.strokeRect(width * .3, height * .3, width * .4, height * .4);
+        document.querySelector(`#ai-image-panel ${selector} .ai-preview-stage > img`).src = canvas.toDataURL();
+      }
+    });
+    await page.waitForFunction(() => document.querySelector('#ai-image-panel .is-ai-active-candidate .ai-preview-stage > img').naturalWidth === 1448);
+    await page.click(`${panel} [data-ai-zoom-action="fit"]`);
+    await geometry('2050x957-1448x1086');
+    const content = await page.evaluate(() => [...document.querySelectorAll('#ai-image-panel .is-ai-active-source .ai-preview-stage, #ai-image-panel .is-ai-active-candidate .ai-preview-stage')].map(stage => {
+      const frame = stage.getBoundingClientRect(), image = stage.querySelector('img').getBoundingClientRect();
+      return { frame: {x:frame.x,y:frame.y,width:frame.width,height:frame.height}, image: {x:image.x,y:image.y,width:image.width,height:image.height} };
+    }));
+    for (const {frame,image} of content) {
+      assert.ok(Math.abs(frame.x + frame.width / 2 - image.x - image.width / 2) < 1);
+      assert.ok(Math.abs(frame.y + frame.height / 2 - image.y - image.height / 2) < 1);
+      assert.ok(image.width <= frame.width + 1 && image.height <= frame.height + 1);
+    }
+    const comment = await page.locator(`${panel} .is-ai-active-candidate .ai-comment-marker`).first().evaluate(pin => {
+      const image = pin.parentElement.querySelector('img');
+      return {x:parseFloat(pin.style.left), y:parseFloat(pin.style.top), expectedX:image.offsetLeft+image.offsetWidth*.25, expectedY:image.offsetTop+image.offsetHeight*.25};
+    });
+    assert.ok(Math.abs(comment.x - comment.expectedX) < 1 && Math.abs(comment.y - comment.expectedY) < 1, JSON.stringify(comment));
+    const screenshot = await page.screenshot();
+    const colors = await page.evaluate(async ({png, content}) => {
+      const image = new Image(); image.src = 'data:image/png;base64,' + png; await image.decode();
+      const canvas = document.createElement('canvas'); canvas.width = image.width; canvas.height = image.height;
+      const ctx = canvas.getContext('2d'); ctx.drawImage(image, 0, 0);
+      return content.map(({frame}) => [...ctx.getImageData(Math.floor((frame.x+3)*devicePixelRatio), Math.floor((frame.y+3)*devicePixelRatio), 24, 1).data].filter((_,i)=>i%4!==3));
+    }, {png:screenshot.toString('base64'),content});
+    for (const values of colors) {
+      assert.ok(values.includes(237) && values.includes(250), 'both light checker colors are visible');
+      assert.ok(values.every(value => value >= 236 && value <= 251), 'checker is neutral and low contrast');
+    }
+    await page.click(`${panel} [data-ai-comment-tool="point"]`);
+    const imageBox = await page.locator(`${panel} .is-ai-active-candidate .ai-preview-stage > img`).boundingBox();
+    await page.mouse.click(imageBox.x + imageBox.width * .6, imageBox.y + imageBox.height * .6);
+    const addedComment = await page.evaluate(async () => {
+      const snapshot = await window.__task2Manager.sharingSnapshot();
+      return snapshot.workspaces.flatMap(workspace => workspace.tabs).find(tab => tab.id === 'task-0').generated[0].comments.at(-1);
+    });
+    assert.ok(Math.abs(addedComment.x - 60) < .5 && Math.abs(addedComment.y - 60) < .5, 'comment clicks use actual image coordinates');
+    await page.click(`${panel} [data-ai-comment-tool="pan"]`);
+    await page.click(`${panel} [data-ai-zoom-action="in"]`);
+    await geometry('linked-zoom');
+    assert.equal(await page.evaluate(() => window.__task2.sends.length), 0, 'comparison does not send AI requests');
     assert.deepEqual(errors, []);
   });
 }
