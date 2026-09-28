@@ -1,4 +1,4 @@
-import { mountRevisionComparison } from './ai-comparison.js?v=1.6.0-inline-comparison-0928';
+import { mountRevisionComparison } from './ai-comparison.js?v=1.6.0-ai-frames-handoff-0928';
 import { attachCropMagnifier } from './tools/pointer-magnifier.js?v=1.6.0-workbench-polish-0928-final';
 import { readAIModelCatalog, resolveAIModelSelection, defaultAIModelSelection } from './ai-model-capabilities.js?v=1.6.0-workbench-polish-0928-final';
 import { transitionSeparationMode, SEPARATION_BACKGROUND_HINT, SEPARATION_LIMITS_HINT } from './ai-separation-mode.js?v=1.6.0-workbench-polish-0928-final';
@@ -6,7 +6,7 @@ import { createWorkbenchRequestState } from './ai-workbench-request-state.js?v=1
 import { openAiCompositionEditor } from './ai-composition-editor.js';
 import { restrictSharedWorkspace } from './ai-sharing-access.js';
 import { registerEscapeLayer } from './escape-layers.js?v=1';
-import { clearTaskWorkspaces, createTaskPersistence, createTaskWorkspaces, recoverTaskWorkspaceSnapshot } from './ai-task-workspaces.js?v=1.6.0-ai-followup-0928';
+import { clearTaskWorkspaces, createTaskPersistence, createTaskWorkspaces, recoverTaskWorkspaceSnapshot } from './ai-task-workspaces.js?v=1.6.0-ai-frames-handoff-0928';
 import {
   advanceGenerationTiming,
   restoreGenerationTiming,
@@ -22,7 +22,7 @@ import {
   moveReferenceInComposition,
   normalizeReferenceComposition,
 } from './ai-source-tasking.js?v=1';
-import { setupAiWorkbench } from './ai-workbench.js?v=1.6.0-ai-followup-0928';
+import { setupAiWorkbench } from './ai-workbench.js?v=1.6.0-ai-frames-handoff-0928';
 import { mountDurableBatchUi } from './ai-batch-ui.js?v=1.6.0-workbench-polish-0928-final';
 import { createScopedEditSession, confirmScopedEditSession, prepareScopedEditProposal, acceptScopedEditProposal, invalidateScopedEditSession } from './ai-scoped-edit-session.js';
 import { decodeScopedPng } from './ai-scoped-edit-png.js';
@@ -460,9 +460,14 @@ export function initAiPanel(state, options) {
 }
 
 export function createUnifiedAiSourceConsumer({ addReferencesAsTasks, setStatus }) {
+  const accept = (references, options) => {
+    const taskIds = addReferencesAsTasks(references, options);
+    if (!Array.isArray(taskIds) || !taskIds.length) throw new Error("현재 AI 작업이 참고 이미지를 받지 못했습니다. 변환이 끝난 뒤 다시 시도해 주세요.");
+    return taskIds;
+  };
   return Object.freeze({
-    onAdd(reference) { addReferencesAsTasks([reference]); },
-    onAddMany(references, options) { addReferencesAsTasks(references, options); },
+    onAdd(reference) { return accept([reference]); },
+    onAddMany(references, options) { return accept(references, options); },
     onStatus(message, kind) { setStatus(message, kind); },
   });
 }
@@ -685,7 +690,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   });
   let liteBackgroundPolicy = localStorage.getItem('5e.aiLiteOutputBackgroundPolicy') === 'connected'
     ? 'connected' : 'preserve';
-  let selectedSeparationMode = normalizeSeparationMode(localStorage.getItem('5e.aiSeparationMode'));
+  let selectedSeparationMode = AI_SEPARATION_MODES.OFF;
   let singleBackgroundPolicy = selectedImageOutputOptions.backgroundPolicy;
   let comparison = null;
   const comparisonHost = document.createElement('div');
@@ -878,6 +883,10 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   const applySeparationMode = mode => {
     const next = transitionSeparationMode({ separationMode: selectedSeparationMode, outputOptions: selectedImageOutputOptions, singleBackgroundPolicy }, mode);
     selectedSeparationMode = next.separationMode;
+    if (document.documentElement.dataset.mode !== 'lite') {
+      selectedAssetGenerationMode = selectedSeparationMode === AI_SEPARATION_MODES.OFF
+        ? AI_ASSET_GENERATION_MODES.SINGLE : AI_ASSET_GENERATION_MODES.SEPARATED;
+    }
     selectedImageOutputOptions = next.outputOptions;
     singleBackgroundPolicy = next.singleBackgroundPolicy;
   };
@@ -1953,9 +1962,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   }
   function syncSelectedOutputActions() {
     const item = selectedOutputItem();
-    generationModeSelect.value = item
-      ? (selectedSeparationMode === AI_SEPARATION_MODES.OFF ? AI_ASSET_GENERATION_MODES.SINGLE : AI_ASSET_GENERATION_MODES.SEPARATED)
-      : selectedAssetGenerationMode;
+    generationModeSelect.value = selectedSeparationMode === AI_SEPARATION_MODES.OFF
+      ? AI_ASSET_GENERATION_MODES.SINGLE : AI_ASSET_GENERATION_MODES.SEPARATED;
     generationModeRow.querySelector('small').textContent = item
       ? `추가 AI 요청 없이 현재 선택 결과를 기기에서 분리합니다. ${SEPARATION_LIMITS_HINT}`
       : `최대 16개 · ${SEPARATION_LIMITS_HINT}`;
@@ -2608,14 +2616,19 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     selectedImageOutputOptions = normalizeImageOutputOptions(tab.outputOptions || selectedImageOutputOptions);
     selectedSeparationMode = normalizeSeparationMode(tab.separationMode || selectedSeparationMode);
     singleBackgroundPolicy = normalizeImageOutputOptions({ backgroundPolicy: tab.singleBackgroundPolicy ?? (selectedSeparationMode === AI_SEPARATION_MODES.OFF ? selectedImageOutputOptions.backgroundPolicy : undefined) }).backgroundPolicy;
+    selectedAssetGenerationMode = tab.generationMode === AI_ASSET_GENERATION_MODES.SEPARATED
+      ? AI_ASSET_GENERATION_MODES.SEPARATED : AI_ASSET_GENERATION_MODES.SINGLE;
+    const restoringBeforeOutput = !(tab.generated?.length) && document.documentElement.dataset.mode !== 'lite';
+    applySeparationMode(restoringBeforeOutput
+      ? (selectedAssetGenerationMode === AI_ASSET_GENERATION_MODES.SINGLE ? AI_SEPARATION_MODES.OFF
+        : selectedSeparationMode === AI_SEPARATION_MODES.OFF ? AI_SEPARATION_MODES.AUTO : selectedSeparationMode)
+      : selectedSeparationMode);
     if (document.documentElement.dataset.mode === 'lite') {
       liteBackgroundPolicy = singleBackgroundPolicy;
       liteSeparationMode = [AI_SEPARATION_MODES.OFF, AI_SEPARATION_MODES.AUTO].includes(selectedSeparationMode) ? selectedSeparationMode : AI_SEPARATION_MODES.AUTO;
       liteHiddenOptionSnapshot = null;
     }
     if (modelsLoaded) restoreModelChoices();
-    selectedAssetGenerationMode = tab.generationMode === AI_ASSET_GENERATION_MODES.SEPARATED
-      ? AI_ASSET_GENERATION_MODES.SEPARATED : AI_ASSET_GENERATION_MODES.SINGLE;
     generationModeSelect.value = selectedAssetGenerationMode;
     const savedView = taskViews.get(tab.id);
     const cachedView = savedView && savedView.sourceSnapshot === tab.attachments && savedView.outputSnapshot === tab.generated
@@ -4197,18 +4210,20 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   });
   generationModeSelect.addEventListener('change', () => {
     if (busy) { syncSelectedOutputActions(); return; }
-    if (selectedOutputItem()) {
-      applySeparationMode(generationModeSelect.value === AI_ASSET_GENERATION_MODES.SEPARATED ? AI_SEPARATION_MODES.AUTO : AI_SEPARATION_MODES.OFF);
-      syncOutputProcessingUi(); refreshOutputPreviews();
-      restartSelectedAutomaticSeparation('image-composition-changed');
-      captureActiveTaskTab(); persistTasks();
+    const hasOutput = Boolean(selectedOutputItem());
+    applySeparationMode(generationModeSelect.value === AI_ASSET_GENERATION_MODES.SEPARATED
+      ? AI_SEPARATION_MODES.AUTO : AI_SEPARATION_MODES.OFF);
+    const lite = document.documentElement.dataset.mode === 'lite';
+    if (lite) liteSeparationMode = selectedSeparationMode;
+    localStorage.setItem(lite ? '5e.aiLiteSeparationMode' : '5e.aiSeparationMode', selectedSeparationMode);
+    syncOutputProcessingUi(); refreshOutputPreviews();
+    restartSelectedAutomaticSeparation('image-composition-changed');
+    syncConversionSummary();
+    captureActiveTaskTab(); persistTasks();
+    if (hasOutput) {
       setStatus('추가 AI 요청 없이 현재 선택 결과의 이미지 구성을 바꿨습니다. 생성 원본은 유지됩니다.', 'ok');
       return;
     }
-    selectedAssetGenerationMode = generationModeSelect.value === AI_ASSET_GENERATION_MODES.SEPARATED
-      ? AI_ASSET_GENERATION_MODES.SEPARATED : AI_ASSET_GENERATION_MODES.SINGLE;
-    syncConversionSummary();
-    captureActiveTaskTab(); persistTasks();
     setStatus(selectedAssetGenerationMode === AI_ASSET_GENERATION_MODES.SEPARATED
       ? '다음 첫 변환을 최대 16개 물체 분리용 이미지로 생성합니다.' : '다음 변환을 한 장의 이미지로 생성합니다.', 'ok');
   });

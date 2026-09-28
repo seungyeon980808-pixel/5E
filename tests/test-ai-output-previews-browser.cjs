@@ -10,7 +10,7 @@ const start = original.indexOf('function seedRequestWorkspaces(');
 const end = original.indexOf('\nfor (const count of [1, 10, 30])', start);
 // Reuse the production-page harness; only replace its deterministic drawing with three disjoint objects.
 const harness = original.slice(start, end).replace('draw.strokeRect(40, 50, 420, 280);', 'draw.strokeRect(40, 50, 100, 180); draw.strokeRect(200, 50, 100, 180); draw.strokeRect(360, 50, 100, 180);');
-const controlledHarness = harness.replace('  await page.goto(', `  await page.route('**/preview/js/image-background.js*', route => {
+const controlledHarness = harness.replace("separationMode: 'off',", "separationMode: initialGeneration && index === 0 ? 'auto' : 'off', generationMode: 'single',").replace('  await page.goto(', `  await page.route('**/preview/js/image-background.js*', route => {
     const source = fs.readFileSync(path.join(root, 'preview/js/image-background.js'), 'utf8');
     return route.fulfill({ contentType: 'text/javascript', body: source.replace('export async function transparentizeGeneratedImage(', 'async function realTransparentizeGeneratedImage(') + '\\nexport async function transparentizeGeneratedImage(src, options) { const gate = window.__outputGate; if (gate && gate.policy === options.backgroundPolicy) { gate.entered = true; await gate.promise; } return realTransparentizeGeneratedImage(src, options); }' });
   });
@@ -135,5 +135,69 @@ for (const engine of ['chromium', 'webkit']) {
     const sends = await page.evaluate(() => window.__task2.sends.length);
     write(evidence, 'result.json', { count, sends, errors, staleSelectionRejected: true });
     assert.equal(sends, 0); assert.deepEqual(errors, []);
+  });
+}
+
+for (const engine of ['chromium', 'webkit']) {
+  test(`${engine}: composition controls stay consistent before output, after output and restored tasks`, { timeout: 90000 }, async t => {
+    const evidence = path.join(evidenceRoot, engine, 'composition'); fs.mkdirSync(evidence, { recursive: true });
+    process.env.TASK2_ENGINE = engine;
+    const { page, errors } = await fixture(t, 2, evidence, { initialGeneration: true });
+    const composition = `${panel} select[data-ai-generation-mode]`;
+    const state = () => page.evaluate(() => {
+      const panel = document.querySelector('#ai-image-panel');
+      const background = panel.querySelector('[data-ai-background-policy]');
+      return {
+        composition: panel.querySelector('select[data-ai-generation-mode]').value,
+        separation: panel.querySelector('[data-ai-separation-mode]').value,
+        background: background.value,
+        locked: background.disabled,
+      };
+    });
+    const selectTask = async id => {
+      await page.click(`${panel} [data-tab-id="${id}"] .ai-task-tab-select`);
+      await page.waitForFunction(id => document.querySelector(`#ai-image-panel [data-tab-id="${id}"] .ai-task-tab-select`)?.getAttribute('aria-pressed') === 'true', id);
+    };
+    const single = { composition: 'single', separation: 'off', background: 'preserve', locked: false };
+    const separated = { composition: 'separated', separation: 'auto', background: 'connected', locked: true };
+    const initial = await state(); write(evidence, 'initial.json', initial);
+    await page.screenshot({ path: path.join(evidence, 'initial.png') });
+    assert.deepEqual(initial, single, 'legacy single task must not inherit automatic separation');
+    await page.selectOption(background, 'all-near-white');
+    await page.selectOption(composition, 'separated');
+    assert.deepEqual(await state(), separated);
+    await page.selectOption(composition, 'single');
+    assert.deepEqual(await state(), { ...single, background: 'all-near-white' });
+    await page.selectOption(composition, 'separated');
+    await selectTask('task-1');
+    assert.deepEqual(await state(), single);
+    await page.selectOption(composition, 'separated'); await settled(page);
+    assert.deepEqual(await state(), separated);
+    const processed = await inspect(page);
+    assert.equal(processed.outside[3], 0, 'composition immediately applies local external-background processing');
+    assert.equal(processed.inside[3], 255);
+    await page.selectOption(composition, 'single'); await settled(page);
+    assert.deepEqual(await state(), single);
+    assert.equal((await inspect(page)).outside[3], 255);
+    await selectTask('task-0');
+    assert.deepEqual(await state(), separated);
+    const snapshot = await page.evaluate(() => window.__task2Manager.sharingSnapshot());
+    const saved = snapshot.workspaces.flatMap(workspace => workspace.tabs).find(tab => tab.id === 'task-0');
+    assert.equal(saved.generationMode, 'separated');
+    assert.equal(saved.separationMode, 'auto');
+    assert.equal(saved.singleBackgroundPolicy, 'all-near-white');
+    assert.equal(await page.evaluate(() => window.__task2.sends.length), 0);
+    await page.reload({ waitUntil: 'networkidle' });
+    const open = page.locator('#ai-image-install-open');
+    if (!(await page.locator(panel).isVisible())) await open.click();
+    await page.waitForFunction(() => document.querySelector('#ai-image-panel [data-tab-id="task-0"]'));
+    await selectTask('task-0');
+    assert.deepEqual(await state(), separated);
+    await page.selectOption(composition, 'single');
+    assert.deepEqual(await state(), { ...single, background: 'all-near-white' });
+    await page.screenshot({ path: path.join(evidence, 'restored-single.png') });
+    assert.equal(await page.evaluate(() => window.__task2.sends.length), 0);
+    assert.deepEqual(errors, []);
+    write(evidence, 'result.json', { initial, restored: await state(), saved, processed, sends: 0, errors });
   });
 }

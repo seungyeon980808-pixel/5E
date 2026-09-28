@@ -32,7 +32,7 @@ import { initImagePaste } from "./image-paste.js?v=1.6.0-workbench-polish-0928-f
 import { initImageCutout } from "./image-cutout.js?v=1.6.0-preview-lite-hybrid-0922";
 import { renderSessionToDataUrl } from "./image-cutout.js?v=1.6.0-preview-lite-hybrid-0922";
 import { handSelectedCanvasImageToAi } from "./ai-canvas-handoff.js?v=1.6.0-preview-labeler-0917-1111";
-import { initExamLibrary } from "./exam-library.js?v=1.6.0-library-keyboard-magnifier-0928";
+import { initExamLibrary } from "./exam-library.js?v=1.6.0-ai-frames-handoff-0928";
 import { initTemplates } from "./templates.js?v=1.6.0-workbench-polish-0928-final";
 import { initObjectSearch } from "./search.js?v=1.6.0-workbench-polish-0928-final";
 import { initCommandPalette } from "./command-palette.js?v=1.6.0-workbench-polish-0928-final";
@@ -73,7 +73,7 @@ import { initSteppers } from "./stepper.js?v=1.6.0-preview-labeler-0917-1111";
 import { initReferenceWindows } from "./reference-window.js?v=1.6.0-preview-common-year-login-0918-1302";
 import { initTutorial } from "./tutorial.js?v=1.6.0-workbench-polish-0928-final";
 import { initAiInstallGuide } from "./ai-install-guide.js?v=1.6.0-preview-labeler-0917-1111";
-import { initAiPanel } from "./ai-panel.js?v=1.6.0-ai-followup-0928";
+import { initAiPanel } from "./ai-panel.js?v=1.6.0-ai-frames-handoff-0928";
 
 const svg = document.getElementById("canvas");
 // Canvas interaction transfers keyboard ownership away from the last toolbar button.
