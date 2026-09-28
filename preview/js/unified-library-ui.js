@@ -1,6 +1,6 @@
 import { attachCropMagnifier } from "./tools/pointer-magnifier.js?v=1.6.0-library-keyboard-magnifier-0928";
 import { targetPageGeometry, fittedPageSize, createPreviewPaper } from "./library/page-loading.js?v=1.6.0-workbench-polish-0928-final";
-import { createContinuousCropPages } from "./library/continuous-crop-pages.js?v=1.6.0-workbench-polish-0928-final";
+import { createContinuousCropPages } from "./library/continuous-crop-pages.js?v=1.6.0-ai-latest-fixes-0928";
 import { registerEscapeLayer } from "./escape-layers.js?v=1";
 import { DESKTOP_RELEASE_URL } from "./ai-install-guide.js?v=1.6.0-preview-labeler-0917-1111";
 import { safeExternalSourceUrl } from "./library-import-policy.js";

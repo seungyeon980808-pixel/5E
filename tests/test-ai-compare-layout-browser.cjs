@@ -79,12 +79,16 @@ for (const engine of ['chromium', 'webkit']) {
       const image = new Image(); image.src = 'data:image/png;base64,' + png; await image.decode();
       const canvas = document.createElement('canvas'); canvas.width = image.width; canvas.height = image.height;
       const ctx = canvas.getContext('2d'); ctx.drawImage(image, 0, 0);
-      return content.map(({frame}) => [...ctx.getImageData(Math.floor((frame.x+3)*devicePixelRatio), Math.floor((frame.y+3)*devicePixelRatio), 24, 1).data].filter((_,i)=>i%4!==3));
+      const sample = rect => {
+        const data = ctx.getImageData(Math.floor((rect.x+3)*devicePixelRatio), Math.floor((rect.y+3)*devicePixelRatio), 40, 1).data;
+        return [...new Set(Array.from({length: data.length / 4}, (_, i) => [...data.slice(i*4, i*4+3)].join(',')))];
+      };
+      return content.map(({frame, image}) => ({frame:sample(frame), image:sample(image)}));
     }, {png:screenshot.toString('base64'),content});
-    for (const values of colors) {
-      assert.ok(values.includes(237) && values.includes(250), 'both light checker colors are visible');
-      assert.ok(values.every(value => value >= 236 && value <= 251), 'checker is neutral and low contrast');
-    }
+    assert.equal(colors[0].frame.length, 1, 'original aspect-ratio padding is a plain background');
+    assert.deepEqual(colors[0].image, ['255,255,255'], 'opaque original stays white');
+    assert.ok(colors[1].image.includes('184,190,198') && colors[1].image.includes('159,167,178'), 'transparent output uses both medium gray tones');
+    assert.ok(colors[1].image.every(value => [[184,190,198],[159,167,178]].some(expected => value.split(',').every((channel,i) => Math.abs(Number(channel)-expected[i])<=1))), 'only checker tones and one-level rendering rounding are present');
     await page.click(`${panel} [data-ai-comment-tool="point"]`);
     const imageBox = await page.locator(`${panel} .is-ai-active-candidate .ai-preview-stage > img`).boundingBox();
     await page.mouse.click(imageBox.x + imageBox.width * .6, imageBox.y + imageBox.height * .6);

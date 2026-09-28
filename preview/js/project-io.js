@@ -22,7 +22,7 @@ import {
 import { insertImageFromSrc } from "./image-paste.js?v=1.6.0-workbench-polish-0928-final";
 import { addPage } from "./pages.js?v=1.6.0-workbench-polish-0928-final";
 
-import { initProjectStatus, captureProjectStatus, markProjectStatus } from "./project-status.js?v=1.6.0-preview-project-launcher-0918-1508";
+import { initProjectStatus, captureProjectStatus, markProjectStatus } from "./project-status.js?v=1.6.0-ai-latest-fixes-0928";
 import { modKey, shortcutKey, isEditingTarget, isComposingKey } from "./platform.js?v=1.6.0-preview-labeler-0917-1111";
 import { initProjectLaunch } from './project-launch.js?v=1.6.0-preview-web-native-project-0918-1617';
 import { extractWindowsProjectSource } from './windows-project-source.mjs?v=1.6.0-preview-project-launcher-0918-1508';

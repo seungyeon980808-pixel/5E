@@ -1,0 +1,58 @@
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const test = require('node:test');
+const { chromium, webkit } = require(process.env.PLAYWRIGHT_MODULE || '/Users/parkseungyeon/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
+const root = path.resolve(__dirname, '..');
+const evidence = process.env.ELAPSED_EVIDENCE || path.join(root, '.omo/evidence/ai-latest-fixes-0928/separation-elapsed-green');
+fs.mkdirSync(evidence, { recursive: true });
+const source = fs.readFileSync(path.join(root, 'tests/test-ai-batch-source-browser.cjs'), 'utf8');
+const start = source.indexOf('function seedRequestWorkspaces(');
+const end = source.indexOf("\ntest('selected workspaces", start);
+const harness = source.slice(start, end).replace("  localStorage.setItem('5e.tutorial.bannerSeen', 'true');", "  const realNow = Date.now; window.__elapsedOffset = 0; Date.now = () => realNow() + window.__elapsedOffset; localStorage.setItem('5e.tutorial.bannerSeen', 'true');")
+ .replace('sends.push({ payload, turnId, threadId });', 'sends.push({ payload, turnId, threadId }); window.__elapsedOffset += 10000;');
+const fixture = new Function('require', 'root', 'fs', 'path', 'assert', 'chromium', 'webkit', harness + '; return requestBrowserFixture;')(require, root, fs, path, assert, chromium, webkit);
+test('two running task cards show elapsed first and stop independently on terminal', { timeout: 90000 }, async t => {
+  const { page, errors } = await fixture(t, 2, evidence);
+  await page.click('#ai-image-panel [data-tab-id="task-0"] .ai-task-tab-select');
+  await page.click('#ai-image-panel [data-tab-id="task-1"] .ai-task-tab-select', { modifiers: ['Meta'] });
+  await page.click('#ai-image-panel [data-ai-comments-apply]');
+  await page.waitForFunction(() => window.__task2.sends.length === 2);
+  await page.evaluate(() => { window.__elapsedOffset += 63000; });
+  const labels = () => page.locator('#ai-image-panel .ai-task-tab-time').allTextContents();
+  await page.waitForFunction(() => [...document.querySelectorAll('#ai-image-panel .ai-task-tab-time')].every(node => /1분|1:/.test(node.textContent)));
+  const running = await labels();
+  const visibleTime = await page.evaluate(() => [...document.querySelectorAll('#ai-image-panel .ai-task-tab-time')].map(node => {
+    const range = document.createRange(); range.setStart(node.firstChild, 0); range.setEnd(node.firstChild, node.textContent.indexOf(' ·'));
+    const text = range.getBoundingClientRect(), box = node.getBoundingClientRect();
+    return { width: box.width, elapsedWidth: text.width, fullyVisible: text.left >= box.left && text.right <= box.right + 1 };
+  }));
+  fs.writeFileSync(path.join(evidence, 'visible-time.json'), JSON.stringify(visibleTime, null, 2));
+  assert.ok(visibleTime.every(item => item.fullyVisible));
+  fs.writeFileSync(path.join(evidence, 'running.json'), JSON.stringify(running));
+  await page.screenshot({ path: path.join(evidence, 'running.png') });
+  assert.equal(running.length, 2); assert.ok(running.every(label => /^\d+:\d{2} · 변환 중$/.test(label)), JSON.stringify(running));
+  assert.notEqual(running[0], running[1]);
+  await page.evaluate(() => window.__task2.emit(0, 'error'));
+  await page.waitForFunction(() => [...document.querySelectorAll('#ai-image-panel .ai-task-tab-time')].some(node => node.textContent.includes('실패')));
+  const terminal = await labels();
+  await page.evaluate(() => { window.__elapsedOffset += 11000; });
+  await page.waitForFunction(previous => [...document.querySelectorAll('#ai-image-panel .ai-task-tab-time')].some((node, index) => node.textContent.includes('변환 중') && node.textContent !== previous[index]), terminal);
+  const after = await labels();
+  const failedIndex = terminal.findIndex(label => label.includes('실패'));
+  assert.equal(after[failedIndex], terminal[failedIndex]); assert.deepEqual(errors, []);
+  fs.writeFileSync(path.join(evidence, 'result.json'), JSON.stringify({ running, terminal, after, errors }, null, 2));
+  await page.screenshot({ path: path.join(evidence, 'terminal.png') });
+});
+test('queued task displays waiting without borrowing running elapsed time', { timeout: 90000 }, async t => {
+  const queuedEvidence = path.join(evidence, 'queued'); fs.mkdirSync(queuedEvidence, { recursive: true });
+  const { page, errors } = await fixture(t, 2, queuedEvidence, { serviceCap: 1 });
+  await page.click('#ai-image-panel [data-tab-id="task-0"] .ai-task-tab-select');
+  await page.click('#ai-image-panel [data-tab-id="task-1"] .ai-task-tab-select', { modifiers: ['Meta'] });
+  await page.click('#ai-image-panel [data-ai-comments-apply]');
+  await page.waitForFunction(() => window.__task2Manager.workspaceBatchState().some(job => job.state === 'queued'));
+  const rows = await page.evaluate(() => window.__task2Manager.workspaceBatchState().map(job => ({ state: job.state, label: document.querySelector(`#ai-image-panel [data-tab-id="${job.sourceSnapshot.owner.taskId}"] .ai-task-tab-time`).textContent })));
+  fs.writeFileSync(path.join(queuedEvidence, 'result.json'), JSON.stringify({ rows, errors }, null, 2));
+  await page.screenshot({ path: path.join(queuedEvidence, 'queued.png') });
+  assert.equal(rows.find(row => row.state === 'queued').label, '실행 대기'); assert.deepEqual(errors, []);
+});

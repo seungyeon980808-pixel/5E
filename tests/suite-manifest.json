@@ -1,6 +1,7 @@
 {
   "schemaVersion": 1,
   "unit": [
+    { "path": "tests/test-project-status-image-fingerprint.cjs" },
     { "path": "tests/test-ai-batch-source.cjs" },
     { "path": "tests/test-ai-workspace-multiselect.cjs" },
     { "path": "tests/test-library-provider.mjs" },
@@ -62,7 +63,10 @@
     { "path": "tests/test-circuit-body-scale-browser.cjs", "findingIds": ["TASK12-CIRCUIT-SCALE"] },
     { "path": "tests/test-endpoint-draft-browser.cjs", "findingIds": ["TASK12-ENDPOINT-DRAFT"] },
     { "path": "tests/test-smoke-contract-browser.cjs", "findingIds": ["TPK-005"] },
-    { "path": "tests/task10-ui-browser.cjs", "findingIds": ["CAN-DATA-01", "TPK-007", "TPK-008"] }
+    { "path": "tests/task10-ui-browser.cjs", "findingIds": ["CAN-DATA-01", "TPK-007", "TPK-008"] },
+    { "path": "tests/test-pdf-navigation-browser.cjs", "findingIds": ["PDF-LATEST-PAGE-NAVIGATION"] },
+    { "path": "tests/test-ai-separation-preservation-browser.cjs", "findingIds": ["AI-SEPARATION-PRESERVATION"] },
+    { "path": "tests/test-ai-task-elapsed-browser.cjs", "findingIds": ["AI-TASK-ELAPSED"] }
   ],
   "deferred": [
     { "path": "tests/authenticated-desktop-observer.cjs", "findingIds": ["ARCH-160-01"], "reason": "Helper for manual authenticated acceptance; requires the explicitly authorized real-service harness" },

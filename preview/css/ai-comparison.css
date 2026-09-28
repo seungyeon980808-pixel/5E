@@ -29,8 +29,8 @@
 .ai-comparison-stage:active { cursor: grabbing; }
 .ai-comparison-pane { position: absolute; inset: 0; overflow: hidden; }
 .ai-comparison-pane svg { display: block; width: 100%; height: 100%; }
-.ai-comparison-checker-base { fill: var(--ai-transparency-base, #fafafa); }
-.ai-comparison-checker-tile { fill: var(--ai-transparency-tile, #ededed); }
+.ai-comparison-checker-base { fill: var(--ai-transparency-base, #b8bec6); }
+.ai-comparison-checker-tile { fill: var(--ai-transparency-tile, #9fa7b2); }
 .ai-comparison-markers { pointer-events: none; }
 .ai-comparison-left .ai-comparison-markers { color: #267fbd; }
 .ai-comparison-right .ai-comparison-markers { color: #9162cb; }
