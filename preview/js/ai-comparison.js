@@ -1,4 +1,5 @@
 const SVG_NS = 'http://www.w3.org/2000/svg';
+let comparisonPatternSerial = 0;
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 function dimensions(value) {
   if (!Number.isFinite(value?.width) || !Number.isFinite(value?.height) || value.width <= 0 || value.height <= 0) {
@@ -137,14 +138,30 @@ export function mountRevisionComparison(container, options) {
     group.append(label, status, retry); selectors.append(group);
     const pane = node(doc, 'div', `ai-comparison-pane ai-comparison-${name}`);
     const svg = doc.createElementNS(SVG_NS, 'svg'); svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+    const defs = doc.createElementNS(SVG_NS, 'defs');
+    const pattern = doc.createElementNS(SVG_NS, 'pattern');
+    const patternId = `ai-comparison-checker-${++comparisonPatternSerial}`;
+    pattern.setAttribute('id', patternId);
+    pattern.setAttribute('patternUnits', 'userSpaceOnUse');
+    pattern.setAttribute('width', '16'); pattern.setAttribute('height', '16');
+    const base = doc.createElementNS(SVG_NS, 'rect');
+    base.setAttribute('width', '16'); base.setAttribute('height', '16');
+    base.setAttribute('class', 'ai-comparison-checker-base');
+    const tiles = doc.createElementNS(SVG_NS, 'path');
+    tiles.setAttribute('d', 'M0 0h8v8H0zM8 8h8v8H8z');
+    tiles.setAttribute('class', 'ai-comparison-checker-tile');
+    pattern.append(base, tiles); defs.append(pattern);
+    const background = doc.createElementNS(SVG_NS, 'rect');
+    background.setAttribute('class', 'ai-comparison-frame');
+    background.setAttribute('fill', `url(#${patternId})`);
     const image = doc.createElementNS(SVG_NS, 'image'); image.setAttribute('preserveAspectRatio', 'xMidYMid meet');
     const markers = doc.createElementNS(SVG_NS, 'g');
     markers.setAttribute('class', 'ai-comparison-markers');
     markers.setAttribute('aria-hidden', 'true');
-    svg.append(image, markers); pane.append(svg); stage.append(pane);
+    svg.append(defs, background, image, markers); pane.append(svg); stage.append(pane);
     const id = options[`${name}RevisionId`] || defaults[`${name}RevisionId`];
     if (!revisions.some(item => item.id === id)) throw new RangeError(`Unknown comparison revision id: ${id}`);
-    const side = { name, select, status, retry, pane, svg, image, markers, markerNodes: [], id, size: null, state: 'loading', request: null, generation: 0, pending: Promise.resolve() };
+    const side = { name, select, status, retry, pane, svg, image, background, pattern, markers, markerNodes: [], id, size: null, state: 'loading', request: null, generation: 0, pending: Promise.resolve() };
     listen(select, 'change', () => { side.id = select.value; load(side); });
     listen(retry, 'click', () => load(side));
     return side;
@@ -170,6 +187,9 @@ export function mountRevisionComparison(container, options) {
     sides.forEach((side, index) => {
       side.pane.style.clipPath = mode === 'wipe' ? (index ? `inset(0 0 0 ${ratio * 100}%)` : `inset(0 ${(1 - ratio) * 100}% 0 0)`) : 'none';
       side.svg.setAttribute('viewBox', viewBox);
+      side.background.setAttribute('width', String(geometry.bounds.width));
+      side.background.setAttribute('height', String(geometry.bounds.height));
+      side.pattern.setAttribute('patternTransform', `scale(${1 / geometry.scale})`);
       const bounds = geometry[side.name];
       for (const [key, value] of Object.entries(bounds)) side.image.setAttribute(key, String(value));
       side.markers.style.display = side.state === 'ready' ? '' : 'none';
