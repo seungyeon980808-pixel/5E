@@ -10,6 +10,15 @@ async function snapshot(page) {
   return page.evaluate(() => import('./js/state.js?v=1.6.0-preview-labeler-0917-1111').then(({ state }) => structuredClone(state.get())));
 }
 
+async function waitForFuncgraph(page) {
+  const store = await page.evaluateHandle(() => import('./js/state.js?v=1.6.0-preview-labeler-0917-1111').then(({ state }) => state));
+  try {
+    await page.waitForFunction((state) => state.get().objects.some((object) => object.type === 'funcgraph'), store);
+  } finally {
+    await store.dispose();
+  }
+}
+
 async function dismissWelcome(page) {
   const skip = page.getByRole('button', { name: '건너뛰기', exact: true });
   if (await skip.isVisible().catch(() => false)) await skip.click();
@@ -43,13 +52,16 @@ async function createFuncgraph(page) {
   await page.locator('#gm-add-series').click();
   await page.locator('#gm-expr').last().fill('x^2');
   await page.locator('#gm-confirm').click();
-  await page.waitForFunction(() => import('./js/state.js?v=1.6.0-preview-labeler-0917-1111')
-    .then(({ state }) => state.get().objects.some((object) => object.type === 'funcgraph')));
+  await waitForFuncgraph(page);
   return (await snapshot(page)).objects.find((object) => object.type === 'funcgraph');
 }
 
 async function selectAndMoveGroup(page, graphId, label) {
-  await page.locator(`[data-id="${graphId}"]`).first().click({ force: true });
+  const before = await snapshot(page);
+  const groupId = before.objects.find((object) => object.id === graphId)?.groupId;
+  const plane = before.objects.find((object) => object.type === 'coordplane' && object.groupId === groupId);
+  assert.ok(plane, `${label}: generated graph must have a grouped coordinate plane`);
+  await page.click(`[data-ui="hit-twin"][data-id="${plane.id}"]`);
   let state = await snapshot(page);
   const graph = state.objects.find((object) => object.id === graphId);
   assert.equal(state.selectedIds.length, 2, `${label}: selecting generated funcgraph must select the graph group`);
@@ -85,9 +97,8 @@ async function saveAndReopen(page, context) {
   await reopened.locator('#project-open').click();
   await (await chooser).setFiles(savedPath);
   const open = reopened.getByRole('button', { name: '열기', exact: true });
-  if (await open.isVisible().catch(() => false)) await open.click();
-  await reopened.waitForFunction(() => import('./js/state.js?v=1.6.0-preview-labeler-0917-1111')
-    .then(({ state }) => state.get().objects.some((object) => object.type === 'funcgraph')));
+  await open.click();
+  await waitForFuncgraph(reopened);
   return reopened;
 }
 
@@ -115,6 +126,8 @@ async function saveAndReopen(page, context) {
     const reopened = await saveAndReopen(page, context);
     reopened.on('console', recordConsole);
     const reopenedGraph = (await snapshot(reopened)).objects.find((object) => object.type === 'funcgraph');
+    assert.equal(reopenedGraph?.id, created.id, 'reopened graph must be the saved graph');
+    assert.deepEqual(reopenedGraph.points, selected.state.objects.find((object) => object.id === created.id).points, 'reopened graph must preserve the saved movement');
     const restored = await selectAndMoveGroup(reopened, reopenedGraph.id, 'reopened graph');
     await reopened.screenshot({ path: path.join(evidence, 'funcgraph-group-reopened.png'), fullPage: true });
     assert.deepEqual(invalidRectErrors, [], `funcgraph group selection must not emit invalid rect errors: ${invalidRectErrors.join(' | ')}`);
