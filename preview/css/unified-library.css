@@ -360,7 +360,7 @@
 .unified-library-overlay .unilib-tree-item.is-file .unilib-tree-icon { color:color-mix(in srgb, var(--unilib-muted) 88%, var(--unilib-text)); }
 .unified-library-overlay .unilib-tree-item label > span:last-of-type { min-width: 0; overflow-wrap: anywhere; white-space: normal; word-break: keep-all; }
 
-.unified-library-overlay .unilib-search-tools { display: grid; gap: var(--unilib-space-3); padding: var(--unilib-space-4) var(--unilib-space-5) 0; border-bottom: var(--unilib-border-width) solid var(--unilib-border); }
+.unified-library-overlay .unilib-search-tools { display: grid; gap: var(--unilib-space-3); padding: var(--unilib-space-4) var(--unilib-space-5); border-bottom: var(--unilib-border-width) solid var(--unilib-border); }
 .unified-library-overlay .unilib-search-row { gap: var(--unilib-space-3); min-width: 0; }
 .unified-library-overlay .unilib-location-summary {
   display: flex;
@@ -725,7 +725,7 @@
   .unified-library-overlay .unilib-scrim { position: absolute; z-index: 25; inset: 0; margin: 0; padding: 0; border: 0; appearance: none; background: var(--unilib-mobile-scrim); }
   .unified-library-overlay .unilib.folders-open .unilib-scrim,
   .unified-library-overlay .unilib.preview-open .unilib-scrim { display: block; }
-  .unified-library-overlay .unilib-search-tools { padding: var(--unilib-space-4) var(--unilib-space-4) 0; }
+  .unified-library-overlay .unilib-search-tools { padding: var(--unilib-space-4); }
   .unified-library-overlay .unilib-search-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; }
   .unified-library-overlay .unilib-location-summary { width: var(--unilib-mobile-control-height); padding: 0; justify-content: center; }
   .unified-library-overlay .unilib:not(.folders-collapsed) .unilib-location-summary { display: flex; }

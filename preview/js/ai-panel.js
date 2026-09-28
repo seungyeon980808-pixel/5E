@@ -1,7 +1,7 @@
-import { mountAiErrorLog, safeAiErrorText } from './ai-error-log.js?v=1.6.0-small-fixes-0928';
+import { mountAiErrorLog, safeAiErrorText } from './ai-error-log.js?v=1.6.0-server-fixes-0929';
 import { mountRevisionComparison } from './ai-comparison.js?v=1.6.0-ai-latest-fixes-0928';
 import { attachCropMagnifier } from './tools/pointer-magnifier.js?v=1.6.0-workbench-polish-0928-final';
-import { readAIModelCatalog, resolveAIModelSelection, defaultAIModelSelection, supplementVerifiedCodexModels } from './ai-model-capabilities.js?v=1.6.0-small-fixes-0928';
+import { readAIModelCatalog, resolveAIModelSelection, defaultAIModelSelection } from './ai-model-capabilities.js?v=1.6.0-server-fixes-0929';
 import { transitionSeparationMode, SEPARATION_BACKGROUND_HINT, SEPARATION_LIMITS_HINT } from './ai-separation-mode.js?v=1.6.0-workbench-polish-0928-final';
 import { createWorkbenchRequestState } from './ai-workbench-request-state.js?v=1.6.0-workbench-polish-0928-final';
 import { openAiCompositionEditor } from './ai-composition-editor.js';
@@ -75,15 +75,15 @@ import { createExactOutputCacheStore } from "./ai-output-cache-store.js?v=1.5.3"
 import { openPdfReferencePicker } from "./pdf-library/reference-picker.js?v=1.6.0-preview-labeler-0917-1111";
 import { getReferenceRole, partitionReferenceItems, planImageReferences } from "./ai-reference-roles.js";
 import { normalizeMarkPolicy, buildMarkPolicyContract } from "./ai-mark-policy.js?v=1";
-import { createStructureAnalysisController, formatStructureContract, STRUCTURE_SPEC_VERSION } from "./ai-structure-spec.js?v=1.6.0-small-fixes-0928";
-import { APPROVED_FIRST_PROMPT, APPROVED_FIRST_REQUEST, approvedFirstRequestText, approvedFirstRun, prepareApprovedFirstAttachment } from './ai-approved-first-png.js?v=1.6.0-small-fixes-0928';
+import { createStructureAnalysisController, formatStructureContract, STRUCTURE_SPEC_VERSION } from "./ai-structure-spec.js?v=1.6.0-server-fixes-0929";
+import { APPROVED_FIRST_PROMPT, APPROVED_FIRST_REQUEST, approvedFirstRequestText, approvedFirstRun, prepareApprovedFirstAttachment } from './ai-approved-first-png.js?v=1.6.0-server-fixes-0929';
 import { WHITE_PNG_VERSION, isWhitePngWorkflow, buildWhitePngPrompt } from "./ai-white-png.js?v=1";
 import {
   parseImageReviewReport,
   buildImageCorrectionRequest,
   buildStructuralInventory,
   createAiImageReviewController,
-} from "./ai-image-review.js?v=1.6.0-small-fixes-0928";
+} from "./ai-image-review.js?v=1.6.0-server-fixes-0929";
 import { resolveGeneratedRaster } from "./ai-raster-output.js?v=1";
 import {
   imageOutputOptionsKey,
@@ -1383,13 +1383,16 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   const fillChoice = (control, choices, selected) => {
     control.replaceChildren(...choices.map(([value, label]) => new Option(label, value)));
     const value = selected == null ? '' : String(selected);
-    if (![...control.options].some(option => option.value === value)) control.add(new Option(`${value || '(없음)'} · 사용할 수 없음`, value));
+    if (![...control.options].some(option => option.value === value)) {
+      const unavailable = new Option(`${value || '(없음)'} · 사용할 수 없음`, value);
+      unavailable.disabled = true;
+      control.add(unavailable);
+    }
     control.value = value;
   };
   const syncModelWarning = () => {
     let message = '';
     try { resolveAIModelSelection(modelSelection(), availableModels); } catch (error) { message = error.message; }
-    if (!message && availableModels.find(entry => (entry.model || entry.id) === modelSelect.value)?.catalogSource === 'verified-codex-2026-09-28') message = '현재 Codex에서 확인한 모델입니다. 이 서버의 목록에는 없어 계정·서버의 생성 지원은 아직 확인되지 않았습니다.';
     if (modelWarning) { modelWarning.textContent = message; modelWarning.hidden = !message; }
     for (const [control, value] of [[reviewModelSelect, modelSelect.value], [reviewEffortSelect, effortSelect.value]]) {
       if (control) { control.replaceChildren(new Option(value, value)); control.disabled = true; }
@@ -1425,11 +1428,11 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     populateSpeeds(selection.serviceTier);
     syncModelWarning();
   };
-  const loadModels = async () => {
-    if (modelsLoaded || !desktop?.models) return;
+  const loadModels = async ({ refresh = false } = {}) => {
+    if (!desktop?.models || (modelsLoaded && !refresh) || (refresh && busy)) return;
     try {
       const result = await desktop.models();
-      availableModels = supplementVerifiedCodexModels(Array.isArray(result) ? result : result?.data || []);
+      availableModels = structuredClone(Array.isArray(result) ? result : result?.data || []);
       readAIModelCatalog(availableModels);
       modelsLoaded = true;
       restoreModelChoices();
@@ -3466,12 +3469,12 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
         }
       } else if (current.server) {
         setStatus("준비됨", "ok");
-        await Promise.all([loadModels(), loadAccountOverview()]);
+        await Promise.all([loadModels({ refresh: true }), loadAccountOverview()]);
       } else if (autoConnect) {
         setStatus("AI 자동 연결 중…", "busy");
         const result = await desktop.start();
         setStatus(result.ok ? "준비됨" : `연결 실패: ${result.message}`, result.ok ? "ok" : "error");
-        if (result.ok) await Promise.all([loadModels(), loadAccountOverview()]);
+        if (result.ok) await Promise.all([loadModels({ refresh: true }), loadAccountOverview()]);
       }
     } catch (error) {
       setStatus(`상태 확인 실패: ${error.message}`, "error");
