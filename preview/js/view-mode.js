@@ -1,6 +1,6 @@
 import { animateModeChange } from './mode-transition.js?v=calm-blur-0925';
-import { checkpointBeforeModeSwitch } from './autosave.js?v=1.6.0-workbench-polish-0928-final';
-import { serialize, applyLoaded } from './project-io.js?v=1.6.0-workbench-polish-0928-final';
+import { checkpointBeforeModeSwitch } from './autosave.js?v=1.6.0-ai-latest-fixes-0928';
+import { serialize, applyLoaded } from './project-io.js?v=1.6.0-ai-latest-fixes-0928';
 import { showModeSwitch, showAlert } from './ui-dialogs.js?v=watermark-focus-0925';
 import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-preview-labeler-0917-1111';
 import { setActiveTool } from './tools.js?v=1.6.0-workbench-polish-0928-final';

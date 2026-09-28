@@ -174,7 +174,8 @@ test('AI-160-02: candidate preparation is keyed by source, output, and separatio
     separationOptionsForMode: (mode) => ({ layout: mode }),
     normalizeImageOutputOptions: (value) => ({ ...value }),
     transparentizeGeneratedImage: () => {},
-    resolveImageOutput: async (item, options) => {
+    resolveOutputVariant: async (item) => {
+      const options = context.selectedImageOutputOptions;
       const value = `${item.id}:thickness-${options.lineThickness}`;
       calls.push(value);
       return value;

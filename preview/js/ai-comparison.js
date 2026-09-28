@@ -187,11 +187,12 @@ export function mountRevisionComparison(container, options) {
     sides.forEach((side, index) => {
       side.pane.style.clipPath = mode === 'wipe' ? (index ? `inset(0 0 0 ${ratio * 100}%)` : `inset(0 ${(1 - ratio) * 100}% 0 0)`) : 'none';
       side.svg.setAttribute('viewBox', viewBox);
-      side.background.setAttribute('width', String(geometry.bounds.width));
-      side.background.setAttribute('height', String(geometry.bounds.height));
       side.pattern.setAttribute('patternTransform', `scale(${1 / geometry.scale})`);
       const bounds = geometry[side.name];
-      for (const [key, value] of Object.entries(bounds)) side.image.setAttribute(key, String(value));
+      for (const [key, value] of Object.entries(bounds)) {
+        side.image.setAttribute(key, String(value));
+        side.background.setAttribute(key, String(value));
+      }
       side.markers.style.display = side.state === 'ready' ? '' : 'none';
       for (const marker of side.markerNodes) {
         const { comment, shape, badge, label } = marker;

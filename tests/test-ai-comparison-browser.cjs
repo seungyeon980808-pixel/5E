@@ -213,7 +213,12 @@ for (const engine of ['chromium', 'webkit']) test(`${engine}: revision wipe, coo
     const frames = await page.locator('.ai-comparison-frame').evaluateAll(nodes => nodes.map(node => {
       const r=node.getBoundingClientRect(); return {x:r.x,y:r.y,width:r.width,height:r.height};
     }));
-    assert.deepEqual(frames[0],frames[1], 'wipe layers share an identical common frame');
+    const imageFrames = await page.locator('.ai-comparison-pane image').evaluateAll(nodes => nodes.map(node => {
+      const r=node.getBoundingClientRect(); return {x:r.x,y:r.y,width:r.width,height:r.height};
+    }));
+    assert.deepEqual(frames,imageFrames, 'checkerboards cover image bounds only, never aspect-ratio padding');
+    const viewBoxes = await page.locator('.ai-comparison-pane svg').evaluateAll(nodes => nodes.map(node => node.getAttribute('viewBox')));
+    assert.equal(viewBoxes[0],viewBoxes[1], 'wipe layers still share the same camera');
     const divergent = await imageBounds();
     assert.ok(Math.abs(divergent[0].width/divergent[0].height-2050/957)<1e-5);
     assert.ok(Math.abs(divergent[1].width/divergent[1].height-1448/1086)<1e-5);
@@ -231,8 +236,8 @@ for (const engine of ['chromium', 'webkit']) test(`${engine}: revision wipe, coo
         const ctx=canvas.getContext('2d');ctx.drawImage(image,0,0);
         return [...ctx.getImageData(Math.floor((frame.x+frame.width*.75)*devicePixelRatio),Math.floor((frame.y+frame.height*.5)*devicePixelRatio),40,1).data].filter((_,i)=>i%4!==3);
       },{png:shot.toString('base64'),frame:frames[1]});
-      assert.ok(colors.includes(237)&&colors.includes(250),'transparent revised image displays both checker colors');
-      assert.ok(colors.every(value=>value>=237&&value<=250),'transparent revision does not reveal dark canvas or red original');
+      assert.ok(colors.includes(184)&&colors.includes(159),'transparent revised image displays both medium-gray checker colors');
+      assert.ok(colors.every((value,index)=>value >= [159,167,178][index%3]-1 && value <= [184,190,198][index%3]+1),'transparent revision contains only checker tones including antialiased tile edges, never dark canvas or red original');
       await capture(`divergent-transparent-${theme}`);
     }
     assert.deepEqual(errors,[]);
