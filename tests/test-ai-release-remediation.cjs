@@ -69,6 +69,8 @@ async function resultInsertionScenario(change = () => {}, { duringDecode = false
     selectedCandidateId: 'candidate-A',
     generatedImages: [],
     selectedSeparationMode: 'off',
+    selectedImageOutputOptions: {},
+    imageOutputOptionsKey: value => JSON.stringify(value),
     AI_SEPARATION_MODES: { OFF: 'off' },
     candidateUsesSeparatedAssets: () => false,
     candidateUsesAutomaticSeparation: () => true,
@@ -139,6 +141,9 @@ test('AI-160-01: ordinary result use rejects page, close, candidate, and decode 
   });
   assert.equal(changedCandidate.pageA.length, 0, 'changing candidate must invalidate use');
 
+  const changedOutput = await resultInsertionScenario(context => { context.selectedImageOutputOptions = { backgroundPolicy: 'connected' }; });
+  assert.equal(changedOutput.pageA.length, 0, 'changing output options must invalidate use');
+
   const decodeRace = await resultInsertionScenario(switchPage, { duringDecode: true });
   assert.equal(decodeRace.pageB.length, 0, 'page changes during image decode must invalidate use');
 
@@ -159,6 +164,8 @@ test('AI-160-02: candidate preparation is keyed by source, output, and separatio
     panel: { dataset: {} },
     activeTaskTabId: 'task-A',
     selectedSeparationMode: 'off',
+    selectedImageOutputOptions: {},
+    imageOutputOptionsKey: value => JSON.stringify(value),
     selectedImageOutputOptions: { lineThickness: 0 },
     AbortController,
     AI_SEPARATION_MODES: { OFF: 'off', MANUAL: 'manual' },
@@ -229,8 +236,20 @@ function submitContext(statusPromise) {
     modelSelect: { value: 'synthetic' },
     effortSelect: { value: 'medium' },
     speedSelect: { value: '' },
+    reviewModeCheckbox: { checked: false },
     currentRequestEpoch: 0,
     preflightRun: null,
+    modelsLoaded: true,
+    availableModels: [],
+    modelSelection: () => ({model:'synthetic',effort:'medium',serviceTier:null}),
+    savedModelPreference: () => ({model:'synthetic',effort:'medium',serviceTier:null}),
+    defaultAIModelSelection: (catalog, value) => value,
+    requestToken: null,
+    beginRequest: () => { context.requestToken = {}; return context.requestToken; },
+    requestStates: { live: () => true, advance: () => {} },
+    requestPhase: () => {},
+    setGenerating: () => {},
+    queueMicrotask,
     structuredClone,
     isWhitePngWorkflow: () => false,
     kiceImageRequest: (value) => value,
@@ -249,7 +268,7 @@ function submitContext(statusPromise) {
     setBusy: (value) => { context.busy = value; sends.push(value); },
   };
   const prefix = sourcePart('  const submit = async (type, options = {}) => {', '    imageReceived = false;');
-  vm.runInNewContext(`${prefix}\nreturn {request, taskId:activeTaskTabId, sourceIds:runInput.attachments.map(item=>item.id), requestEpoch};\n};\nglobalThis.submit = submit;`, context);
+  vm.runInNewContext(`${prefix}\nreturn {request, taskId:activeTaskTabId, sourceIds:runInput.attachments.map(item=>item.id), reviewEnabled:runInput.reviewEnabled, requestEpoch};\n};\nglobalThis.submit = submit;`, context);
   return { context, sends, statusCalls: () => statusCalls };
 }
 
@@ -273,8 +292,7 @@ test('AI-160-03: preflight locks before status await so a double click prepares 
 test('AI-160-03: model loading is covered by the same preflight lock', async () => {
   const models = deferred();
   const { context, statusCalls } = submitContext(Promise.resolve({ login: { loggedIn: true } }));
-  let workflowChecks = 0;
-  context.isWhitePngWorkflow = () => ++workflowChecks === 1;
+  context.isWhitePngWorkflow = () => false;
   context.modelsLoaded = false;
   context.loadModels = () => models.promise;
   const first = context.submit('image');
@@ -358,3 +376,76 @@ test('SEC-160-04: default sharing serializes only the active workspace and activ
 });
 
 const { pathToFileURL } = require('node:url');
+
+for (const enabled of [false, true]) {
+  test(`white revision terminal routes captured review preference ${enabled} without reading live model controls`, () => {
+    const calls = [];
+    const context = {
+      currentRequestEpoch: 7, serverTurnFinished: true, previewPending: false, batchRun: null,
+      currentImageOutputError: null, currentTerminalOutcome: 'completed',
+      currentRunInput: { model: 'catalog-luna', effort: 'high', serviceTier: null, reviewEnabled: enabled },
+      currentTurnType: 'image', currentEngine: 'raster', IMAGE_ENGINE_IDS: { RASTER: 'raster' },
+      isWhitePngWorkflow: () => true, imageReceived: true, currentReviewCandidate: { id: 'owner-candidate' },
+      currentReviewScheduled: false, pendingCacheOutput: {}, currentTurnStartedAt: Date.now(),
+      advanceGenerationClock() {}, reviewModeCheckbox: { checked: !enabled },
+      handleReviewLifecycle: (detail, candidate) => calls.push({ type: 'lifecycle', detail, candidate }),
+      beginWhiteImageReview: (candidate, epoch) => calls.push({ type: 'review', candidate, epoch }),
+      get modelSelect() { throw new Error('live model selection must not replace originating config'); },
+      get effortSelect() { throw new Error('live effort selection must not replace originating config'); },
+    };
+    vm.createContext(context);
+    const finish = panelSource.match(/  const finishCurrentTurnUi = \([\s\S]*?\n  \};/)[0];
+    const predicate = panelSource.match(/  const reviewEnabled = [^\n]+/)[0];
+    vm.runInContext(`${predicate}\n${finish}\nfinishCurrentTurnUi(6); finishCurrentTurnUi(7); finishCurrentTurnUi(7);`, context);
+    assert.equal(calls.length, 1, 'stale and duplicate terminal callbacks must not route another review');
+    assert.equal(calls[0].candidate.id, 'owner-candidate');
+    if (enabled) {
+      assert.equal(calls[0].type, 'review');
+      assert.equal(calls[0].epoch, 7);
+    } else {
+      assert.equal(calls[0].type, 'lifecycle');
+      assert.equal(calls[0].detail.state, 'needs-attention');
+      assert.equal(calls[0].detail.reviewCount, 0);
+      assert.equal(calls[0].detail.model, 'catalog-luna');
+      assert.equal(calls[0].detail.effort, 'high');
+      assert.equal(calls[0].detail.serviceTier, null);
+    }
+  });
+}
+
+test('review preference is captured before delayed status even if its control changes', async () => {
+  const status = deferred();
+  const { context } = submitContext(status.promise);
+  const pending = context.submit('image');
+  context.reviewModeCheckbox.checked = true;
+  status.resolve({ login: { loggedIn: true } });
+  assert.equal((await pending).reviewEnabled, false);
+});
+
+test('batch capture retains only selected revision inputs and immutable operation settings without changing stored history', async () => {
+  const { snapshotImageItem } = await import(pathToFileURL(path.join(root, 'preview/js/ai-panel.js')).href);
+  const source = { id:'original',kind:'reference',data:'original-bytes',comments:[{text:'original comment'}] };
+  const selected = { id:'selected',kind:'generated',data:'selected-bytes',comments:[{type:'area',text:'captured comment'}] };
+  const tab = { id:'A',title:'A',input:'request',attachments:[source],generated:[{id:'older',data:'history-bytes'},selected,{id:'newer',data:'newer-history'}],selectedCandidateId:'selected',model:'catalog-sol',effort:'medium',serviceTier:null,mode:'diagram',outputEngine:'raster',qualityMode:'default',generationMode:'single',referenceComposition:{kind:'all'},markPolicy:{text:'preserve'},conversationMessages:[],uiMessages:[{text:'unrelated history'}] };
+  const stored=JSON.stringify(tab);
+  const context={structuredClone,taskTabs:new Map([['A',tab]]),activeTaskTabId:'C',availableModels:[],snapshotImageItem,defaultAIModelSelection:(_,value)=>({model:value.model,effort:value.effort,serviceTier:value.serviceTier}),compactConversation:()=>'',batchOwner:taskId=>({taskId,scope:{sessionId:'session',workspaceId:'workspace'}}),panel:{dataset:{}},busy:false,preflightRun:null,desktop:{send(){}},resolveAIModelSelection:()=>{}};
+  vm.runInNewContext(sourcePart('  function captureBatchTask(id) {','  async function runWorkspaceBatch(context,emit) {')+'\nglobalThis.capture=captureBatchTask;globalThis.preflight=preflightBatch;',context);
+  const scoped=context.capture('A');
+  assert.equal(scoped.snapshot.operation,'scoped-edit');
+  assert.equal(scoped.snapshot.options.attachments.length,0);
+  assert.deepEqual(Array.from(scoped.snapshot.options.generated,item=>item.id),['selected']);
+  assert.equal(scoped.snapshot.options.uiMessages,undefined);
+  assert.equal(context.preflight(scoped),null);
+  assert.equal(JSON.stringify(tab),stored);
+  selected.comments[0].text='later comment';tab.model='catalog-luna';
+  assert.equal(scoped.snapshot.comments[0].text,'captured comment');
+  assert.equal(scoped.snapshot.options.model,'catalog-sol');
+  selected.data='changed source';assert.match(context.preflight(scoped),/원본 버전이 변경/);selected.data='selected-bytes';
+  selected.comments=[];
+  const normal=context.capture('A');
+  assert.equal(normal.snapshot.operation,'generate');
+  assert.deepEqual(Array.from(normal.snapshot.options.generated,item=>item.id),['selected']);
+  assert.equal(normal.snapshot.options.attachments[0].data,'original-bytes');
+  assert.equal(normal.snapshot.options.attachments[0].comments[0].text,'original comment');
+  assert.equal(tab.generated.length,3);
+});

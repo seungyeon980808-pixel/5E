@@ -31,9 +31,9 @@ import { getSvgAsset } from "./svg-assets.js?v=1.6.0-preview-labeler-0917-1111";
 import { openPlaneModal } from "./function-graph/plane-modal.js?v=1.6.0-preview-labeler-0917-1111";
 import { openGraphModal } from "./graph/graph-modal.js?v=1.6.0-preview-labeler-0917-1111";
 import { nextObjectId } from "./tools/id.js?v=1.6.0-preview-labeler-0917-1111";
-import { setupFreeDraw } from "./tools/free-draw.js?v=1.6.0-preview-lite-hybrid-0922";
-import { setupNodePlacement } from "./tools/node-placement.js?v=1.6.0-preview-lite-hybrid-0922";
-import { setupClickDrawing, clearClickLocals } from "./tools/click-placement.js?v=1.6.0-preview-lite-hybrid-0922";
+import { setupFreeDraw } from "./tools/free-draw.js?v=1.6.0-workbench-polish-0928-final";
+import { setupNodePlacement } from "./tools/node-placement.js?v=1.6.0-workbench-polish-0928-final";
+import { setupClickDrawing, clearClickLocals } from "./tools/click-placement.js?v=1.6.0-workbench-polish-0928-final";
 // Pure math helpers (MOVE-ONLY extraction, v0.44.0) — see js/geometry.js.
 import {
   snapLineEnd, snapAngle, mathAngleDeg, snappedDeg, normalizeSweep,
@@ -60,14 +60,14 @@ import {
   initTextEditing, isTextEditorOpen,
   startEditingTextObject, openLabelerTextEditor, openAngleArcLabelEditor, insertLabelerChar,
   cancelActiveTextEditor, cancelActiveFormulaEditor,
-} from "./text-editor.js?v=1.6.0-preview-lite-hybrid-0922";
+} from "./text-editor.js?v=1.6.0-workbench-polish-0928-final";
 // Re-export the editor entry points at their historical home so existing importers of
 // tools.js keep working unchanged (inspector/section-geometry.js imports
 // openAngleArcLabelEditor; the openers are also used internally by the drawing code).
-export { startEditingTextObject, openLabelerTextEditor, openAngleArcLabelEditor, insertLabelerChar } from "./text-editor.js?v=1.6.0-preview-lite-hybrid-0922";
+export { startEditingTextObject, openLabelerTextEditor, openAngleArcLabelEditor, insertLabelerChar } from "./text-editor.js?v=1.6.0-workbench-polish-0928-final";
 // Guide hover cursor: ruler.js owns guide geometry. Called only at runtime inside
 // the pointermove handler, so the ruler↔tools import cycle stays safe.
-import { guideCursorAt } from "./ruler.js?v=1.6.0-preview-lite-hybrid-0922";
+import { guideCursorAt } from "./ruler.js?v=1.6.0-workbench-polish-0928-final";
 import { SELECTION_COLOR, SELECTION_MARQUEE_FILL } from "./selection-visuals.js?v=1.6.0-preview-labeler-0917-1111";
 
 import { snapKey, modKey, shortcutKey, blocksCanvasShortcut } from "./platform.js?v=1.6.0-preview-labeler-0917-1111";

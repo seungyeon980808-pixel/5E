@@ -54,6 +54,7 @@ async function transferCurrentLibraryReference(page, panel, mode) {
   await page.locator('[data-unilib-crop-save]:not([disabled])').click();
   await page.locator('[data-unilib-crop-draft-review]').waitFor({ state: 'hidden' });
   traceLibrary('current-crop-saved');
+  await page.screenshot({ path: path.join(evidenceDir, `${page.context().browser().browserType().name()}-${mode}-library-crop.png`), fullPage: true });
   await page.locator('[data-unilib-crop-workbench]:not([disabled])').click();
   traceLibrary('current-crop-added-to-workbench');
   await page.locator('[data-unilib-ai]:not([disabled])').click();
@@ -145,10 +146,25 @@ async function contract(page) {
   });
 }
 
+async function waitForTaskRevision(page, taskId, candidateId, referenceId) {
+  await page.waitForFunction(({ taskId, candidateId, referenceId }) => {
+    const panel = document.querySelector('#ai-image-panel:not([hidden])');
+    const task = panel?.querySelector('[data-ai-tab-list] .ai-task-tab.is-on');
+    return task?.dataset.tabId === taskId &&
+      task.querySelector('.ai-task-tab-select')?.getAttribute('aria-pressed') === 'true' &&
+      panel.querySelector('[data-ai-candidate-option][aria-selected="true"]')?.dataset.aiCandidateOption === candidateId &&
+      panel.querySelector('.ai-generated-card')?.dataset.aiCandidateId === candidateId &&
+      panel.querySelector('[data-ai-reference-id]')?.dataset.aiReferenceId === referenceId;
+  }, { taskId, candidateId, referenceId });
+}
+
 test('TPK-005: current library and task workspace smoke contract has real controls and rejects missing controls', async (context) => {
   fs.mkdirSync(evidenceDir, { recursive: true });
   const server = await startServer();
-  context.after(() => new Promise((resolve) => server.close(resolve)));
+  context.after(async () => {
+    await new Promise((resolve) => server.close(resolve));
+    fs.writeFileSync(path.join(evidenceDir, 'server-cleanup.json'), JSON.stringify({ serverClosed: !server.listening }));
+  });
   const origin = `http://127.0.0.1:${server.address().port}`;
   const report = { invocation: 'node --test tests/test-smoke-contract-browser.cjs', engines: [], errors: [] };
 
@@ -156,7 +172,10 @@ test('TPK-005: current library and task workspace smoke contract has real contro
   const modes = process.env.SMOKE_MODES === 'lite' ? ['lite'] : process.env.SMOKE_MODES === 'pro' ? ['pro'] : ['pro', 'lite'];
   for (const engine of engines) {
     const browser = await engine.launch({ headless: true });
-    context.after(() => browser.close());
+    context.after(async () => {
+      await browser.close();
+      fs.writeFileSync(path.join(evidenceDir, `${engine.name()}-cleanup.json`), JSON.stringify({ browserClosed: !browser.isConnected() }));
+    });
     for (const mode of modes) {
       const browserContext = await browser.newContext({ viewport: { width: 1600, height: 1000 } });
       const transport = await installDesktopStub(browserContext);
@@ -277,9 +296,37 @@ test('TPK-005: current library and task workspace smoke contract has real contro
         const panel = document.querySelector('#ai-image-panel:not([hidden])');
         const visible = (selector) => { const rect = panel?.querySelector(selector)?.getBoundingClientRect(); return Boolean(rect && rect.width > 0 && rect.height > 0); };
         return { layout: panel?.dataset.aiLayout, sourceVisible: visible('.ai-original-pane .ai-reference-card'),
-          resultVisible: visible('.ai-result-pane .ai-generated-card'), legacyModalHidden: Boolean(panel?.querySelector('[data-ai-compare]')?.hidden) };
+          resultVisible: visible('.ai-result-pane .ai-generated-card'), compareVisible: visible('[data-ai-compare]') };
       });
-      assert.deepEqual(comparison, { layout: 'side-by-side', sourceVisible: true, resultVisible: true, legacyModalHidden: true });
+      traceLibrary('comparison-controls', { engine: engine.name(), mode, ...comparison });
+      await page.screenshot({ path: path.join(evidenceDir, `${engine.name()}-${mode}-comparison-controls.png`), fullPage: true });
+      assert.deepEqual(comparison, { layout: 'side-by-side', sourceVisible: true, resultVisible: true, compareVisible: true });
+      const referenceId = await panel.locator('[data-ai-reference-id]').first().getAttribute('data-ai-reference-id');
+      const selectedRevisionId = await panel.locator('[data-ai-candidate-option][aria-selected="true"]').getAttribute('data-ai-candidate-option');
+      const originalSource = await panel.locator('.ai-original-pane .ai-reference-card img').first().getAttribute('src');
+      assert.ok(referenceId && selectedRevisionId && originalSource, 'comparison has an identified original and selected revision');
+      assert.equal(await panel.locator('.ai-generated-card').getAttribute('data-ai-candidate-id'), selectedRevisionId,
+        'the rendered result is the selected revision');
+      assert.equal(await generatedImage.getAttribute('src'), generatedFixtureDataUrl,
+        'the selected revision contains the generated fixture bytes');
+      await panel.locator('[data-ai-compare]').click();
+      const comparisonDialog = page.getByRole('dialog', { name: '원본과 수정본 비교', exact: true });
+      await comparisonDialog.waitFor({ state: 'visible' });
+      await page.waitForFunction(() => ['left', 'right'].every((side) => {
+        const image = document.querySelector(`.ai-comparison-${side} image`);
+        return image?.getAttribute('href') && Number(image.getAttribute('width')) > 0 && Number(image.getAttribute('height')) > 0;
+      }));
+      assert.equal(await comparisonDialog.getByLabel('왼쪽 비교 버전', { exact: true }).inputValue(), referenceId,
+        'comparison defaults its left side to the original reference');
+      assert.equal(await comparisonDialog.getByLabel('오른쪽 비교 버전', { exact: true }).inputValue(), selectedRevisionId,
+        'comparison defaults its right side to the selected revision');
+      assert.equal(await comparisonDialog.locator('.ai-comparison-left image').getAttribute('href'), originalSource,
+        'the comparison left side displays the original image content');
+      assert.equal(await comparisonDialog.locator('.ai-comparison-right image').getAttribute('href'), generatedFixtureDataUrl,
+        'the comparison right side displays the selected generated content');
+      await page.screenshot({ path: path.join(evidenceDir, `${engine.name()}-${mode}-comparison.png`), fullPage: true });
+      await comparisonDialog.getByRole('button', { name: '비교 닫기', exact: true }).click();
+      await comparisonDialog.waitFor({ state: 'detached' });
       const tasksBeforeFileAdd = await panel.locator('[data-ai-tab-list] .ai-task-tab:not(.ai-task-add)').count();
       await panel.locator('[data-ai-source-file]').setInputFiles(fixture);
       await page.waitForFunction(({ oldId, tasksBefore }) => {
@@ -292,7 +339,7 @@ test('TPK-005: current library and task workspace smoke contract has real contro
       assert.equal(await panel.locator('.ai-generated-card').count(), 0,
         'the isolated file task does not inherit the prior generated result');
       await panel.locator(`[data-tab-id="${original}"] .ai-task-tab-select`).click();
-      await panel.locator('[data-ai-reference-id]').first().waitFor({ state: 'attached' });
+      await waitForTaskRevision(page, original, selectedRevisionId, referenceId);
       assert.equal(await panel.locator('.ai-generated-card').count(), expectedResults,
         'returning to the original task restores its generated result');
 
@@ -301,6 +348,7 @@ test('TPK-005: current library and task workspace smoke contract has real contro
       await page.locator('#ai-image-panel').waitFor({ state: 'hidden' });
       if (await page.locator('#ai-image-panel').isHidden()) await page.locator('#ai-image-install-open').click();
       await page.locator('#ai-image-panel').waitFor({ state: 'visible' });
+      await waitForTaskRevision(page, original, selectedRevisionId, referenceId);
       assert.equal(await panel.locator('[data-ai-reference-id]').count(), expectedReferences,
         'reopened workspace restores its own reference count');
       assert.equal(await panel.locator('.ai-generated-card').count(), expectedResults,
@@ -318,7 +366,8 @@ test('TPK-005: current library and task workspace smoke contract has real contro
       assert.equal(counts.bridgeSends, 1, 'the deterministic local UI bridge receives exactly one send');
       assert.equal(counts.bridgeEventBatches, 1, 'the deterministic local UI bridge supplies exactly one result batch');
       assert.deepEqual(errors, []);
-      report.engines.push({ engine: engine.name(), mode, approvedAssertions: true, oldChecks, libraryAction, comparison, mutation, counts, errors });
+      report.engines.push({ engine: engine.name(), mode, approvedAssertions: true, oldChecks, libraryAction, comparison,
+        comparisonDialog: { referenceId, selectedRevisionId, originalContentMatches: true, generatedContentMatches: true }, mutation, counts, errors });
       await browserContext.close();
     }
   }

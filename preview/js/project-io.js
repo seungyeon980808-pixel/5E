@@ -13,14 +13,14 @@ import { screenToWorld } from "./viewport.js?v=1.6.0-preview-lite-hybrid-0922";
 import { applyNewObjectStyleDefaults, migrateObjectStyleMode } from "./style-mode.js?v=1.6.0-preview-labeler-0917-1111";
 import { showProjectCloseDialog } from "./project-close-dialog.js?v=1.6.0-preview-labeler-0917-1111";
 import { showAlert, showConfirm } from "./ui-dialogs.js?v=1.6.0-preview-labeler-0917-1111";
-import { downscaleIfNeeded } from "./image-paste.js?v=1.6.0-preview-lite-hybrid-0922";
+import { downscaleIfNeeded } from "./image-paste.js?v=1.6.0-workbench-polish-0928-final";
 import { DEFAULT_TEXT_SIZE_MM, DEFAULT_TEXT_FONT, normalizeTextRuns, textRunsToText } from "./state.js?v=1.6.0-preview-labeler-0917-1111";
 import {
   ENDPOINT_HANDLE_TYPES, LABEL_CAPABLE_TYPES, OBJECT_TYPE_IDS,
   POINT_ARRAY_TYPES, SIZE_TYPES, TEXT_MEASURED_TYPES,
 } from "./object-types.js?v=1.6.0-preview-labeler-0917-1111";
-import { insertImageFromSrc } from "./image-paste.js?v=1.6.0-preview-lite-hybrid-0922";
-import { addPage } from "./pages.js?v=1.6.0-preview-lite-hybrid-0922";
+import { insertImageFromSrc } from "./image-paste.js?v=1.6.0-workbench-polish-0928-final";
+import { addPage } from "./pages.js?v=1.6.0-workbench-polish-0928-final";
 
 import { initProjectStatus, captureProjectStatus, markProjectStatus } from "./project-status.js?v=1.6.0-preview-project-launcher-0918-1508";
 import { modKey, shortcutKey, isEditingTarget, isComposingKey } from "./platform.js?v=1.6.0-preview-labeler-0917-1111";

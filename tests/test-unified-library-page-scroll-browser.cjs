@@ -81,6 +81,7 @@ const { chromium, webkit } = require("playwright");
     await ui.locator('[data-unilib-crop][data-pdf-page="2"]').waitFor({ state: "visible" });
     assert.match(await ui.locator('[data-unilib-crop-image]').getAttribute("src"), /%3E2%3C/);
     await ui.locator('[data-unilib-crop-load-state]').waitFor({ state: "hidden" });
+    assert.equal(await ui.locator('[data-crop-magnifier-toggle]').count(), 1, 'crop inspector must offer a magnifier toggle');
     const cropBounds = await ui.locator('[data-unilib-crop-canvas]').boundingBox();
     assert.ok(cropBounds && cropBounds.width > 100 && cropBounds.height > 100);
     await page.mouse.move(cropBounds.x + cropBounds.width * 0.2, cropBounds.y + cropBounds.height * 0.2);

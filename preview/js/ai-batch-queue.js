@@ -28,6 +28,7 @@ export function createBatchQueue({ store, generation, output, maxRunning = 10, n
   if (!Number.isInteger(maxRunning) || maxRunning < 1) throw new RangeError('maxRunning must be a positive integer.');
   const jobs = new Map();
   const scopes = new Map();
+  const stopping = new Set();
   let operations = Promise.resolve();
 
   const serialize = action => {
@@ -39,10 +40,13 @@ export function createBatchQueue({ store, generation, output, maxRunning = 10, n
   const mutate = action => serialize(async () => {
     const previousJobs = clone(Array.from(jobs.entries()));
     const previousScopes = clone(Array.from(scopes.entries()));
+    const previousStopping = [...stopping];
     try { return await action(); }
     catch (error) {
       jobs.clear();
       scopes.clear();
+      stopping.clear();
+      for (const id of previousStopping) stopping.add(id);
       for (const [id, job] of previousJobs) jobs.set(id, job);
       for (const [key, ids] of previousScopes) scopes.set(key, ids);
       throw error;
@@ -66,7 +70,7 @@ export function createBatchQueue({ store, generation, output, maxRunning = 10, n
 
   function beginQueuedJobs() {
     const starts = [];
-    let running = Array.from(jobs.values()).filter(job => job.state === 'running').length;
+    let running = stopping.size + Array.from(jobs.values()).filter(job => job.state === 'running').length;
     for (const job of jobs.values()) {
       if (running >= maxRunning) break;
       if (job.state !== 'queued') continue;
@@ -135,27 +139,41 @@ export function createBatchQueue({ store, generation, output, maxRunning = 10, n
   }
 
   async function cancel(jobId) {
-    return mutate(async () => {
+    const cancelled = await mutate(async () => {
       const job = jobs.get(jobId);
-      if (!job || TERMINAL_STATES.has(job.state)) return job ? clone(job) : null;
-      const wasRunning = job.state === 'running';
-      const interruptSnapshot = clone(job);
+      if (!job || TERMINAL_STATES.has(job.state)) return { job: job ? clone(job) : null };
+      const interruptSnapshot = job.state === 'running' ? clone(job) : null;
       const timestamp = now();
       job.state = 'cancelled';
       job.timestamps.cancelledAt = timestamp;
       job.timestamps.updatedAt = timestamp;
-      await settleAndPump();
-      if (wasRunning && typeof generation.interrupt === 'function') {
-        try { void Promise.resolve(generation.interrupt(interruptSnapshot)).catch(() => {}); } catch {}
-      }
-      return clone(job);
+      if (interruptSnapshot) stopping.add(jobId);
+      await persistAll();
+      return { job: clone(job), interruptSnapshot };
     });
+    if (!cancelled.interruptSnapshot) return cancelled.job;
+    // Await outside the journal lock: interrupt handlers may emit their terminal event.
+    await generation.interrupt?.(cancelled.interruptSnapshot);
+    await mutate(async () => {
+      stopping.delete(jobId);
+      await settleAndPump();
+    });
+    return cancelled.job;
   }
 
-  async function retryFailed(jobId) {
+  async function retryFailed(jobId, { validate } = {}) {
     return mutate(async () => {
       const job = jobs.get(jobId);
       if (!job || job.state !== 'failed') throw new Error('Only failed jobs can be retried.');
+      if (validate) {
+        try { validate(clone(job)); }
+        catch (error) {
+          job.error = `Retry blocked: ${error instanceof Error ? error.message : String(error)}`;
+          job.timestamps.updatedAt = now();
+          await persistAll();
+          return clone(job);
+        }
+      }
       const timestamp = now();
       job.state = 'queued';
       job.attempt += 1;
@@ -174,7 +192,13 @@ export function createBatchQueue({ store, generation, output, maxRunning = 10, n
   async function handleEvent(event = {}) {
     return mutate(async () => {
       const job = jobs.get(event.jobId);
-      if (!job || job.state !== 'running' || event.attempt !== job.attempt) return null;
+      if (!job || event.attempt !== job.attempt) return null;
+      if (job.state === 'cancelled' && stopping.has(job.id) && (event.type === 'completed' || event.type === 'failed')) {
+        stopping.delete(job.id);
+        await settleAndPump();
+        return clone(job);
+      }
+      if (job.state !== 'running') return null;
       if (event.eventId && job.eventIds.includes(event.eventId)) return clone(job);
       if (event.eventId) job.eventIds.push(event.eventId);
       const timestamp = now();
@@ -209,7 +233,7 @@ export function createBatchQueue({ store, generation, output, maxRunning = 10, n
     });
   }
 
-  async function resume(scope) {
+  async function resume(scope, { restartInterrupted = true } = {}) {
     return mutate(async () => {
       const key = scopeKey(scope);
       if (!scopes.has(key)) {
@@ -218,7 +242,12 @@ export function createBatchQueue({ store, generation, output, maxRunning = 10, n
         for (const value of Array.isArray(loaded) ? loaded : []) {
           const record = parseRecord(value, scope);
           if (!record || jobs.has(record.id)) continue;
-          if (record.state === 'running') {
+          if (!restartInterrupted && (record.state === 'running' || record.state === 'queued')) {
+            record.state = 'failed';
+            record.error = 'Interrupted before recovery; explicit retry required.';
+            record.timestamps.failedAt = now();
+            record.timestamps.updatedAt = record.timestamps.failedAt;
+          } else if (record.state === 'running') {
             const timestamp = now();
             record.state = 'queued';
             record.attempt += 1;

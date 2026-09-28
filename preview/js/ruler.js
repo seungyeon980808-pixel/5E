@@ -10,7 +10,7 @@ import { getRenderScale } from "./viewport.js?v=1.6.0-preview-lite-hybrid-0922";
 // only picked when NO object sits under the point (pick.js is the same oracle
 // tools.js selection uses). tools.js also owns the Space-pan tracker.
 import { pickSelectableObjectAtPoint } from "./pick.js?v=1.6.0-preview-lite-hybrid-0922";
-import { isSpaceHeld } from "./tools.js?v=1.6.0-preview-lite-hybrid-0922";
+import { isSpaceHeld } from "./tools.js?v=1.6.0-workbench-polish-0928-final";
 import { captureDocumentSnapshot, commitDocumentHistory } from "./document-history.js?v=1.6.0-preview-labeler-0917-1111";
 import { hasBlockingModal } from "./platform.js?v=1.6.0-preview-labeler-0917-1111";
 

@@ -335,7 +335,7 @@
 :root[data-mode="lite"] #ai-image-panel .ai-pane-head{flex-wrap:wrap;min-height:var(--lite-main-ai-head-h)}
 :root[data-mode="lite"] #ai-image-panel .lite-ai-source-actions{display:flex;gap:var(--lite-space-row);align-items:center;flex-wrap:wrap}
 :root[data-mode="lite"] #ai-image-panel .lite-ai-source-actions button{font:inherit;padding:var(--lite-space-row) var(--lite-space-layout);min-height:var(--lite-control-h);border:var(--lite-border-w) solid var(--lite-color-toolbar-border);border-radius:var(--lite-radius-control);background:var(--lite-sky-50);color:var(--lite-color-text-accent);cursor:pointer}
-:root[data-mode="lite"] #ai-image-panel :is(.ai-compare-controls,.ai-pane-zoom,.ai-view-options,.ai-source-menu-shell){display:none!important}
+:root[data-mode="lite"] #ai-image-panel :is(.ai-compare-controls [data-ai-layout-mode],.ai-pane-zoom,.ai-view-options,.ai-source-menu-shell){display:none!important}
 :root[data-mode="lite"] .app[data-panel-layout]>.panel{box-shadow:none}
 @media(max-width:700px){:root[data-mode="lite"] #ai-image-panel .ai-comparison-grid{grid-template-columns:minmax(0,1fr)!important}}
 

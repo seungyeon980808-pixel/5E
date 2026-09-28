@@ -1,0 +1,47 @@
+.ai-comparison-overlay {
+  position: fixed; inset: 0; z-index: 12500; display: grid; place-items: center;
+  padding: var(--mobile-space, 12px); background: rgb(0 0 0 / .55);
+  color: var(--text-primary, #202630); font-family: inherit;
+}
+.ai-comparison-dialog {
+  display: flex; flex-direction: column; width: min(1280px, 100%); height: min(820px, 100%);
+  min-height: 0; overflow: hidden; background: var(--bg-panel, #fff);
+  border: 1px solid var(--border, #d4d9e1); border-radius: var(--mobile-radius, 8px);
+}
+.ai-comparison-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px; border-bottom: 1px solid var(--border, #d4d9e1); }
+.ai-comparison { display: flex; flex: 1; flex-direction: column; min-height: 0; min-width: 0; gap: 8px; padding: 12px; color: var(--text-primary, #202630); font: inherit; }
+.ai-comparison-selectors { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.ai-comparison-choice { display: grid; grid-template-columns: minmax(0, 1fr) auto; min-width: 0; align-items: center; align-content: start; gap: 4px 8px; }
+.ai-comparison-choice label { display: flex; grid-column: 1 / -1; min-width: 0; flex-direction: column; gap: 4px; font-size: 12px; }
+.ai-comparison select { height: 32px; width: 100%; min-width: 0; text-overflow: ellipsis; }
+.ai-comparison button, .ai-comparison select, .ai-comparison-header button {
+  min-height: 32px; padding: 4px 8px; border: 1px solid var(--border, #d4d9e1); border-radius: 8px;
+  color: inherit; background: var(--bg-input, #f8f9fb); font: inherit; font-size: 12px; cursor: pointer;
+}
+.ai-comparison button:hover, .ai-comparison-header button:hover { background: var(--bg-panel-hover, var(--bg-canvas, #e5e7eb)); }
+.ai-comparison button[aria-pressed="true"] { color: var(--accent, #1769d2); background: var(--bg-canvas, #e5e7eb); font-weight: 600; }
+.ai-comparison button:disabled { opacity: .5; cursor: default; }
+.ai-comparison :focus-visible, .ai-comparison-header button:focus-visible { outline: 2px solid var(--accent, #1769d2); outline-offset: 2px; }
+.ai-comparison-status { display: flex; align-items: center; min-height: 32px; color: var(--text-secondary, #5d6878); font-size: 12px; }
+.ai-comparison-toolbar { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.ai-comparison-zoom { min-width: 4ch; text-align: center; font-size: 12px; font-variant-numeric: tabular-nums; }
+.ai-comparison-stage { position: relative; flex: 1; min-height: 160px; overflow: hidden; touch-action: none; user-select: none; background: var(--bg-canvas, #e5e7eb); border: 1px solid var(--border, #d4d9e1); border-radius: 8px; cursor: grab; }
+.ai-comparison-stage:active { cursor: grabbing; }
+.ai-comparison-pane { position: absolute; inset: 0; overflow: hidden; }
+.ai-comparison-pane svg { display: block; width: 100%; height: 100%; }
+.ai-comparison[data-mode="side-by-side"] .ai-comparison-left { right: 50%; }
+.ai-comparison[data-mode="side-by-side"] .ai-comparison-right { left: 50%; box-shadow: inset 1px 0 var(--border, #d4d9e1); }
+.ai-comparison-divider { position: absolute; inset-block: 0; width: 32px; margin-left: -16px; cursor: ew-resize; touch-action: none; }
+.ai-comparison-divider::before { content: ''; position: absolute; top: 0; bottom: 0; left: 15px; width: 2px; background: var(--accent, #1769d2); box-shadow: 0 0 0 1px var(--bg-panel, #fff); }
+.ai-comparison-divider:focus-visible { outline: none; }
+.ai-comparison-divider:focus-visible span { outline: 2px solid var(--accent, #1769d2); outline-offset: 2px; }
+.ai-comparison-divider span { position: absolute; left: 0; top: calc(50% - 16px); display: grid; place-items: center; width: 32px; height: 32px; border-radius: 8px; color: var(--text-primary, #202630); background: var(--bg-panel, #fff); border: 1px solid var(--border, #d4d9e1); }
+.ai-comparison-hint { margin: 0; font-size: 12px; line-height: 1.6; color: var(--text-secondary, #5d6878); word-break: keep-all; }
+.ai-comparison [hidden] { display: none !important; }
+@media (max-width: 700px) {
+  .ai-comparison button, .ai-comparison select, .ai-comparison-header button { min-height: var(--mobile-control, 44px); }
+  .ai-comparison select { height: var(--mobile-control, 44px); font-size: var(--mobile-input, 16px); }
+  .ai-comparison-overlay { padding: 4px; }
+  .ai-comparison { padding: 8px; }
+  .ai-comparison-toolbar { gap: 4px; }
+}

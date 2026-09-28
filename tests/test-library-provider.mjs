@@ -58,3 +58,13 @@ test("worker PDF search keeps textbook matches and scopes exam filters before di
   assert.deepEqual(scoped.map(file => file.documentId), ["book"]);
   assert.deepEqual(request.documentIds, ["book"]);
 });
+
+test("PDF files and page results expose target dimensions before materialization", async () => {
+  const document = { ...documents[0], pages: [{ pageNumber: 1, widthPoints: 600, heightPoints: 800 }, { pageNumber: 2, widthPoints: 800, heightPoints: 400 }] };
+  const provider = makeProvider({ pdfDocuments: [document], pdfSearchIndex: { entries: [] } });
+  const file = provider.listPdfFiles()[0];
+  assert.deepEqual(file.getPageGeometry(2), { width: 800, height: 400 });
+  const page = provider.listPdfPages().find(item => item.provenance.pageNumber === 1);
+  assert.deepEqual(page.preview.pageGeometry, { width: 600, height: 800 });
+  assert.equal(file.getPageGeometry(99), null);
+});

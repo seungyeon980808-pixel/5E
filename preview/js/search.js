@@ -8,8 +8,8 @@ import {
   activateTemplate,
   buildSymbolIcon,
   sizeIconViewBox,
-} from "./templates.js?v=1.6.0-preview-lite-hybrid-0922";
-import { listPersonalItems, insertPersonalItem } from "./personal-objects.js?v=1.6.0-preview-lite-hybrid-0922";
+} from "./templates.js?v=1.6.0-workbench-polish-0928-final";
+import { listPersonalItems, insertPersonalItem } from "./personal-objects.js?v=1.6.0-workbench-polish-0928-final";
 
 const CATEGORY_ORDER = ["공통", "광학", "회로", "역학"];
 

@@ -3,9 +3,9 @@ const fs = require('node:fs');
 const vm = require('node:vm');
 const source = fs.readFileSync(new URL('../preview/js/ai-panel.js', `file://${__filename}`), 'utf8');
 const handler = source.match(/sendButton\.onclick = \(\) => \{[\s\S]*?\n  \};/)[0];
-function route(item) {
+function route(item, launchSelected = () => false) {
   const calls = [];
-  const context = { sendButton: {}, selectedOutputItem: () => item,
+  const context = { sendButton: {}, launchSelected, selectedOutputItem: () => item,
     startScopedEdit: value => calls.push(['scoped', value]),
     submit: (kind, options) => calls.push(['transform', kind, options.bypassCache]) };
   vm.runInNewContext(handler, context);
@@ -19,7 +19,14 @@ assert.deepEqual(route(image), [['scoped',image]]);
 const unfinished = {kind:'generated',comments:[{type:'area',text:''}]};
 assert.deepEqual(route(unfinished), [['scoped',unfinished]], 'Incomplete area requests must validate, never fall through to full generation');
 assert.deepEqual(route({kind:'generated',comments:[{type:'point',text:'수정'}]}), [['transform','image',true]]);
-console.log('Primary action: initial transform, regenerated image, area edit and incomplete-area guard passed');
+let batchCalls = 0;
+for (const selected of [null, image, unfinished]) {
+  assert.deepEqual(route(selected, () => { batchCalls += 1; return true; }), [],
+    'An accepted multiselect action must not also submit or scope-edit the active task');
+}
+assert.equal(batchCalls, 3, 'Each primary click offers the selected task set exactly once');
+assert.deepEqual(route(image, null), [['scoped', image]], 'A declared absent batch callback preserves single-task behavior');
+console.log('Primary action: original single-task routing, incomplete-area guard, and exclusive batch routing passed');
 
 const library = fs.readFileSync(new URL('../preview/js/unified-library-ui.js', `file://${__filename}`), 'utf8');
 const selectedActive = library.match(/const selectedActiveResult = \(\) => \{[\s\S]*?\n  \};/)[0];
