@@ -1,5 +1,5 @@
-import { createBatchQueue } from './ai-batch-queue.js?v=1.6.0-workbench-polish-0928-final';
-import { parseBatchSource } from './ai-batch-source.js?v=1.6.0-preview-labeler-0917-1111';
+import { createBatchQueue } from './ai-batch-queue.js?v=1.6.0-ai-followup-0928';
+import { parseBatchSource } from './ai-batch-source.js?v=1.6.0-ai-followup-0928';
 
 const clone = value => structuredClone(value);
 const key = owner => JSON.stringify([owner.scope.sessionId, owner.scope.workspaceId, owner.taskId]);

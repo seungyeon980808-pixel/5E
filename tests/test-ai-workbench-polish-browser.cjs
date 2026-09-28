@@ -162,13 +162,7 @@ for (const engine of ['chromium', 'webkit']) for (const count of [1, 10, 30]) {
     assert.equal(await page.getByRole('slider').getAttribute('aria-valuenow'), '10');
     await page.screenshot({ path: path.join(evidence, 'compare-dark-retina-zoompan.png') });
     await page.click(`${active} [data-ai-compare]`);
-    await page.click(`${active} [data-ai-capture]`); await page.click('.ai-capture-source');
-    const image = page.locator('.ai-crop-image-wrap > img'); await image.waitFor(); const box = await image.boundingBox();
-    await page.mouse.move(box.x + box.width * .3, box.y + box.height * .3);
-    await page.locator('#ai-capture-magnifier').waitFor({ state: 'visible' });
-    assert.equal(Math.round((await page.locator('#ai-capture-magnifier').boundingBox()).width), 160);
-    await page.screenshot({ path: path.join(evidence, 'capture-dark-retina-lens.png') });
-    await page.keyboard.press('Escape');
+    assert.equal(await page.locator(`${active} [data-ai-capture]`).count(), 0, 'retired capture entry is absent');
     write(evidence, 'visual-content.json', { before, screenshots, comparison: { fitViews, zoomViews, left: 'source-0', right: 'candidate-0' }, errors, sends: await page.evaluate(() => window.__task2.sends.length) });
     assert.deepEqual(errors, []); assert.equal(await page.evaluate(() => window.__task2.sends.length), 0);
   });

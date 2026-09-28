@@ -1,4 +1,4 @@
-import { createWorkspaceBatch, createWorkspaceSelection } from './ai-workspace-batch.js?v=1.6.0-workbench-polish-0928-final';
+import { createWorkspaceBatch, createWorkspaceSelection } from './ai-workspace-batch.js?v=1.6.0-ai-followup-0928';
 import { createBatchStore } from './ai-batch-store.js';
 import {
   chooseTaskExportDestination,
@@ -302,12 +302,15 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
     entry.controller?.dispose?.();
     entry.panel.aiWorkbench?.dispose?.();
     if (entry.panel !== original) entry.panel.remove();
+    else entry.panel.id = `ai-workspace-${entry.scope || 'legacy'}`;
     if (active === entry) active = entries.find(item => item.tabs.length) || entries[0];
     activate(active);
     saveRegistry();
     return true;
   }
   async function selectWorkspaceTask(entry, taskId, reveal = true) {
+    const sourceExists = () => !entry.disposed && entries.includes(entry) && entry.controller.ownsTask(taskId);
+    if (!sourceExists()) return;
     const sequence = reveal ? ++selectionSequence : selectionSequence;
     if (entry.controller.activeTask() === taskId || !entry.controller.snapshotTask) {
       if (reveal) { activate(entry); entry.controller.selectTask(taskId); saveSelection(); }
@@ -318,10 +321,12 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
     if (!pending) {
       pending = (async () => {
         const snapshot = await entry.controller.snapshotTask(taskId);
+        if (!sourceExists()) throw new DOMException('삭제된 작업입니다.', 'AbortError');
         if(!reveal && batchDisposed)throw new Error('작업 대기열이 종료되었습니다.');
         const target = add(crypto.randomUUID(), false);
         try {
           await target.controller.importTaskSnapshot(snapshot, entry.panel.dataset.aiSharingMode);
+          if (!sourceExists()) throw new DOMException('삭제된 작업입니다.', 'AbortError');
           if(!reveal && batchDisposed)throw new Error('작업 대기열이 종료되었습니다.');
           const transfer = { taskId, from: entry.scope, to: target.scope };
           writeTransfers([...readTransfers(), transfer]);
@@ -341,10 +346,12 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
     }
     try {
       const target = await pending;
+      if (target.disposed || !target.controller.ownsTask(taskId)) return;
       if (reveal && sequence === selectionSequence) { activate(target); saveSelection(); }
       return target;
     } catch (error) {
       if (!reveal) throw error;
+      if (!sourceExists()) return;
       window.alert(`작업을 열지 못했습니다. 원래 작업은 유지됩니다: ${error.message}`);
     } finally {
       pendingSelections.delete(key);
@@ -442,10 +449,10 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
         } else jobAction?.remove();
         if (close) {
           close.disabled = !entry.ready || batchJobs.some(job=>['running','queued'].includes(job.state)&&ownerKey(job.sourceSnapshot.owner)===ownerKey(batchOwner));
-          close.onclick = event => {
+          close.onclick = async event => {
             event.stopPropagation();
             activate(entry);
-            source.querySelector('.ai-task-delete')?.onclick?.(event);
+            await source.querySelector('.ai-task-delete')?.onclick?.(event);
             saveSelection();
           };
         }

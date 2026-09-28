@@ -1,6 +1,7 @@
 {
   "schemaVersion": 1,
   "unit": [
+    { "path": "tests/test-ai-batch-source.cjs" },
     { "path": "tests/test-ai-workspace-multiselect.cjs" },
     { "path": "tests/test-library-provider.mjs" },
     { "path": "tests/test-ai-events.mjs" },
@@ -29,6 +30,10 @@
     { "path": "tools/mcp-5e/test/server-pairing.test.mjs" }
   ],
   "browser": [
+    { "path": "tests/test-ai-batch-source-browser.cjs", "findingIds": ["AI-FOLLOWUP-BATCH"] },
+    { "path": "tests/test-ai-compare-layout-browser.cjs", "findingIds": ["AI-FOLLOWUP-LAYOUT"] },
+    { "path": "tests/test-ai-output-previews-browser.cjs", "findingIds": ["AI-FOLLOWUP-OUTPUT"] },
+    { "path": "tests/test-ai-workspace-deletion-browser.cjs", "findingIds": ["AI-FOLLOWUP-DELETION"] },
     { "path": "tests/test-ai-workbench-polish-browser.cjs", "findingIds": ["B0", "R1", "R2", "R3", "R5"] },
     { "path": "tests/test-ai-workspace-multiselect-browser.cjs", "findingIds": ["ARCH-160-01"] },
     { "path": "tests/test-ai-workbench-integration-browser.cjs", "findingIds": ["R2", "R3", "R7", "R8"] },
