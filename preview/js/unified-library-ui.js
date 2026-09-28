@@ -2245,24 +2245,14 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   overlay.querySelector("[data-unilib-scrim]").addEventListener("click", closeDrawers);
   overlay.querySelector("[data-unilib-close]").addEventListener("click", close);
   overlay.addEventListener("mousedown", (event) => { if (event.target === overlay) close(); });
-  const openAiDestination = async (references, { closeCropSurface = false, assignment = null } = {}) => {
+  const openAiDestination = async (references, { assignment = null } = {}) => {
     const placement = assignment?.placement || "separate";
-    const openDestination = typeof openIndependentReferences === "function"
-      ? () => openIndependentReferences({ references, startGeneration: false, placement, groups: assignment?.groups })
-      : () => openAi?.({ references, placement, groups: assignment?.groups });
     setStatus("AI 작업실을 여는 중…");
-    try {
-      await openDestination();
-      if (overlay.hidden) return;
-      if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-        const fade = overlay.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 140, easing: "ease-out" });
-        await fade.finished;
-      }
-      if (closeCropSurface) closeCrop(false);
-      close({ restoreFocus: false });
-    } catch (error) {
-      setStatus(`AI 작업실을 열지 못했습니다: ${error instanceof Error ? error.message : error}`, true);
+    if (typeof openIndependentReferences === "function") {
+      return openIndependentReferences({ references, startGeneration: false, placement, groups: assignment?.groups });
     }
+    if (typeof openAi !== "function") throw new Error("AI 작업실을 사용할 수 없습니다.");
+    return openAi({ references, placement, groups: assignment?.groups });
   };
   overlay.querySelector("[data-unilib-insert]").addEventListener("click", async () => {
     await runLibraryAction(async (snapshot, isCurrent) => {
@@ -2301,6 +2291,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       if (!isCurrent()) return;
       setStatus("AI 작업용 이미지를 준비하는 중…");
       const references = [];
+      const transferredEntries = [];
       for (const result of chosen) {
         const representation = aiActionRepresentationForResult(result, snapshot.selectedId, snapshot.representation, snapshot.selectedFigure);
         if (!canInsertLibraryResult(result, representation)) continue;
@@ -2308,6 +2299,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
         const materialized = await materializeLibraryAction(effectiveResult, activeProvider, { ...snapshot.options, acceptedAssets, representation: materializationRepresentation(result, representation) });
         if (!isCurrent()) return;
         references.push(await rasterizeReference(materializedReference(effectiveResult, materialized)));
+        transferredEntries.push(acceptedAssets.get(result.id));
         if (!isCurrent()) return;
       }
       if (!isCurrent() || !references.length) return;
@@ -2316,22 +2308,54 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
         : { placement: "separate", groups: [[0]] };
       if (!assignment || !isCurrent()) return;
       workbenchReferenceGroups(references, assignment);
-    if (referenceConsumer) {
-      const assignedReferences = referenceConsumer.onAddMany
-        ? references
-        : [...new Set(assignment.groups.flat())].map((index) => references[index]);
-      const additions = assignedReferences.map((reference) => ({ name: reference.name, data: reference.dataUrl, sourceKind: reference.sourceKind, source: reference.source }));
-      if (referenceConsumer.onAddMany) await referenceConsumer.onAddMany(additions, assignment);
-      else additions.forEach((reference) => referenceConsumer.onAdd?.(reference));
-      referenceConsumer.onStatus?.(`라이브러리 참고 이미지 ${additions.length}개가 추가되었습니다.`, "ok");
-      referenceConsumer.onComplete?.();
-      referenceConsumer = null;
-    } else if (typeof openIndependentReferences === "function") {
-      await openAiDestination(references, { assignment });
-    } else {
-      await openAiDestination(references, { assignment });
-    }
-      if (isCurrent()) close({ restoreFocus: false });
+      const assignedIndices = [...new Set(assignment.groups.flat())];
+      const removeTransferred = (indices) => {
+        const removed = new Set();
+        for (const index of indices) {
+          const entry = transferredEntries[index];
+          if (!entry || acceptedAssets.get(entry.result.id) !== entry) continue;
+          acceptedAssets.delete(entry.result.id);
+          removed.add(entry);
+        }
+        acceptedCrops = acceptedCrops.filter(entry => !removed.has(entry));
+        if (removed.size) {
+          if ([...removed].some(entry => entry.result.id === activeAcceptedCropId)) activeAcceptedCropId = null;
+          renderAcceptedCrops();
+          renderCropTray();
+          updateResultSelection();
+        }
+      };
+      const completedIndices = [];
+      try {
+        if (referenceConsumer) {
+          const consumer = referenceConsumer;
+          const additions = references.map(reference => ({ name: reference.name, data: reference.dataUrl, sourceKind: reference.sourceKind, source: reference.source }));
+          if (consumer.onAddMany) {
+            await consumer.onAddMany(additions, assignment);
+            completedIndices.push(...assignedIndices);
+          } else {
+            if (typeof consumer.onAdd !== "function") throw new Error("참고 이미지를 받을 작업이 없습니다.");
+            for (const index of assignedIndices) {
+              await consumer.onAdd(additions[index]);
+              completedIndices.push(index);
+            }
+          }
+          consumer.onStatus?.(`라이브러리 참고 이미지 ${completedIndices.length}개가 추가되었습니다.`, "ok");
+          consumer.onComplete?.();
+          if (referenceConsumer === consumer) referenceConsumer = null;
+        } else {
+          const receipt = await openAiDestination(references, { assignment });
+          completedIndices.push(...(Array.isArray(receipt) && receipt.every(item => Array.isArray(item.referenceIndices))
+            ? receipt.flatMap(item => item.referenceIndices) : assignedIndices));
+        }
+      } catch (error) {
+        removeTransferred([...completedIndices, ...(error?.transferredReferenceIndices || [])]);
+        setStatus(`AI 작업실을 열지 못했습니다: ${error instanceof Error ? error.message : error}`, true);
+        return;
+      }
+      const shouldClose = isCurrent();
+      removeTransferred(completedIndices);
+      if (shouldClose) close({ restoreFocus: false });
     });
   });
   overlay.querySelector("[data-unilib-source-open]").addEventListener("click", async () => {

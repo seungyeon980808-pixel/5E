@@ -521,6 +521,8 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
     } catch { /* Existing installations use the legacy workspace. */ }
   }
   active = add(primaryScope, false);
+  const initialEntry = active;
+  let initialReferenceTargetAvailable = true;
   try {
     const saved = freshStart ? [] : JSON.parse(localStorage.getItem(registryKey) || '[]');
     for (const scope of saved) if (typeof scope === 'string' && /^[a-f0-9-]{36}$/.test(scope) && scope !== primaryScope) add(scope, false);
@@ -641,18 +643,50 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
         : placement === 'together' ? [snapshots] : snapshots.map(snapshot => [snapshot]);
       if (!groupedSnapshots.length) throw new Error('열 AI 작업대가 없습니다.');
       if (placement === 'together' && snapshots.length > 10) throw new Error('한 AI 작업대는 참고 이미지를 최대 10개까지 받을 수 있습니다.');
-      const created = groupedSnapshots.map(() => add(crypto.randomUUID(), false));
-      saveRegistry();
-      await Promise.all(created.map(entry => entry.controller.ready));
-      await Promise.all(created.map((entry, index) => entry.controller.open({
-        references: groupedSnapshots[index],
-        placement: groupedSnapshots[index].length > 1 ? 'together' : 'separate',
-        reveal: false,
-        prompt,
-        startGeneration: startGeneration === true,
-      })));
-      activate(created.at(-1));
-      return created.map((entry, index) => ({ scope: entry.scope, name: groupedSnapshots[index][0].name }));
+      let reusable = null;
+      if (initialReferenceTargetAvailable) {
+        initialReferenceTargetAvailable = false;
+        if (!initialEntry.disposed && initialEntry.panel.dataset.aiSharingMode !== 'view') {
+          const snapshot = await initialEntry.controller.sharingSnapshot();
+          const checkpoint = await initialEntry.controller.checkpointForClose();
+          if (checkpoint.recovered && !checkpoint.hasWork && snapshot.tabs.length <= 1 && snapshot.taskTabSerial <= 1) reusable = initialEntry;
+        }
+      }
+      const imported = [];
+      const transferredReferenceIndices = [];
+      for (const [index, group] of groupedSnapshots.entries()) {
+        const entry = index === 0 && reusable ? reusable : add(crypto.randomUUID(), false);
+        const created = entry !== reusable;
+        try {
+          await entry.controller.ready;
+          await entry.controller.open({ references: group, placement: group.length > 1 ? 'together' : 'separate', reveal: false, prompt, startGeneration: startGeneration === true });
+          const snapshot = await entry.controller.sharingSnapshot();
+          const attachments = snapshot.tabs.flatMap(tab => tab.attachments || []);
+          const accepted = group.filter(reference => attachments.some(item => item.data === reference.dataUrl));
+          const checkpoint = await entry.controller.checkpointForClose();
+          if (!checkpoint.recovered) throw new Error('참고 이미지가 저장되지 않았습니다. 다시 시도해 주세요.');
+          const referenceIndices = accepted.map(reference => snapshots.indexOf(reference));
+          transferredReferenceIndices.push(...referenceIndices);
+          if (accepted.length !== group.length) throw new Error('일부 참고 이미지를 AI 작업실에 불러오지 못했습니다.');
+          imported.push({ scope: entry.scope, name: group[0].name, referenceIndices });
+        } catch (cause) {
+          const checkpoint = await entry.controller.checkpointForClose();
+          if (checkpoint.recovered && !checkpoint.hasWork) {
+            if (created) {
+              await entry.controller.importSharingSnapshot({ key: 'workspace', tabs: [], activeTaskTabId: null, taskTabSerial: 0, imageSerial: 0 });
+              disposeEntry(entry);
+            } else initialReferenceTargetAvailable = true;
+          }
+          saveRegistry();
+          renderNavigation();
+          const error = new Error(cause?.message || String(cause), { cause });
+          error.transferredReferenceIndices = [...new Set(transferredReferenceIndices)];
+          throw error;
+        }
+        saveRegistry();
+        activate(entry);
+      }
+      return imported;
     },
     prepareNewWork: async () => {
       await ready;
