@@ -9,6 +9,29 @@ export function safeAiErrorText(value) {
     .replace(/[a-z0-9+/_=-]{128,}/gi, '[인코딩 데이터 제거됨]');
 }
 
+const genericFailures = new Set([
+  '작업 실패',
+  '요청 실패',
+  '변환에 실패했습니다. 입력과 코멘트는 보존되었습니다.',
+]);
+
+export function appendAiErrorRecord(records, current, message, cause) {
+  const details = [message, cause?.message, cause?.code ? `오류 코드: ${cause.code}` : '', cause?.status ? `HTTP 상태: ${cause.status}` : ''].filter(Boolean);
+  const error = safeAiErrorText([...new Set(details)].join('\n'));
+  const generic = genericFailures.has(error.trim());
+  const sameRequest = record => current.taskId != null && current.requestId != null
+    && record.taskId === current.taskId && record.requestId === current.requestId
+    && !(record.turnId && current.turnId && record.turnId !== current.turnId);
+  if (records.some(record => sameRequest(record) && (record.error === error || (generic && !record.generic)))) return false;
+  if (!generic) {
+    for (let index = records.length - 1; index >= 0; index -= 1) {
+      if (sameRequest(records[index]) && records[index].generic) records.splice(index, 1);
+    }
+  }
+  records.push({ taskId: current.taskId, requestId: current.requestId, turnId: current.turnId, error, generic, text: safeAiErrorText(`시간: ${new Date().toISOString()}\n작업: ${current.taskTitle || current.taskId || '(없음)'} (${current.taskId || '-'})\n요청: ${current.requestId || '-'} · 실행: ${current.turnId || '-'}\n모델: ${current.model || '-'} · 추론: ${current.effort || '-'} · 속도: ${current.serviceTier || '표준'}\n\n${error}`) });
+  return true;
+}
+
 export function mountAiErrorLog(panel, context) {
   const records = [];
   const open = document.createElement('button');
@@ -36,12 +59,7 @@ export function mountAiErrorLog(panel, context) {
   });
   return {
     record(message, cause) {
-      const details = [message, cause?.message, cause?.code ? `오류 코드: ${cause.code}` : '', cause?.status ? `HTTP 상태: ${cause.status}` : ''].filter(Boolean);
-      const error = safeAiErrorText([...new Set(details)].join('\n'));
-      const current = context();
-      const key = `${current.taskId}:${current.requestId}:${error}`;
-      if (records.at(-1)?.key === key) return;
-      records.push({ key, text: safeAiErrorText(`시간: ${new Date().toISOString()}\n작업: ${current.taskTitle || current.taskId || '(없음)'} (${current.taskId || '-'})\n요청: ${current.requestId || '-'} · 실행: ${current.turnId || '-'}\n모델: ${current.model || '-'} · 추론: ${current.effort || '-'} · 속도: ${current.serviceTier || '표준'}\n\n${error}`) });
+      if (!appendAiErrorRecord(records, context(), message, cause)) return;
       if (dialog.open) refresh();
     },
   };

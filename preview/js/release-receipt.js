@@ -1,7 +1,7 @@
 const release = Object.freeze({
-  modifiedAt: '2026.09.28',
-  sourceCommit: '4d3fb77ce4d2c4dabba2743b6e2162a8e7f0e6f4',
-  changes: '라이브러리 간격 / 기준 좌표 고정 / GPT-6 모델 선택 / 오류 로그',
+  modifiedAt: '2026.09.29',
+  sourceCommit: '',
+  changes: '서버 모델 목록 연동 / 중복 오류 정리 / 필터 구분선 / GPT 표시',
 });
 
 const panel = document.querySelector('#ai-image-panel .modal-ai');

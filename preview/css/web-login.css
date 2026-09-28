@@ -8,9 +8,9 @@
 .app-shell-header .web-account-status [data-account-label] { overflow:hidden; text-overflow:ellipsis; }
 .web-account-status[data-state="connected"] { cursor:default; }
 @container inspector-panel (max-width:239px) {
-  .panel-utility-bar-right .web-account-status { max-width:none; padding-inline:6px; gap:5px; justify-content:center; }
-  .panel-utility-bar-right .web-account-status [data-account-label] { font-size:0; }
-  .panel-utility-bar-right .web-account-status [data-account-label]::after { content:'ChatGPT'; font-size:12px; }
+  .panel-utility-bar-right .web-account-status { min-width:max-content; max-width:none; padding-inline:6px; gap:5px; justify-content:center; }
+  .panel-utility-bar-right .web-account-status [data-account-label] { font-size:0; flex:none; overflow:visible; }
+  .panel-utility-bar-right .web-account-status [data-account-label]::after { content:'GPT'; font-size:12px; }
 }
 @property --web-login-orbit-angle { syntax:'<angle>'; inherits:false; initial-value:0deg; }
 .web-account-dot { width:8px; height:8px; border:1px solid currentColor; border-radius:50%; flex:none; }
