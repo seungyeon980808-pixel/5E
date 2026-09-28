@@ -50,9 +50,10 @@ module.exports = async function verifyToolLenses(page, evidence, engine) {
     close.onclick = () => { magnifier.destroy(); dialog.remove(); };
   });
   const captureToggle = page.locator('#capture-adapter [data-crop-magnifier-toggle]');
-  assert.equal(await captureToggle.isChecked(), false, 'shared persisted setting reaches capture adapter');
+  assert.equal(await captureToggle.isChecked(), true, 'capture retains its own default');
+  await captureToggle.uncheck();
+  assert.equal(await toggle.isChecked(), false, 'capture toggle does not change canvas preference');
   await captureToggle.check();
-  assert.equal(await toggle.isChecked(), true, 'mounted main inspector tracks capture preference');
   await page.mouse.move(180, 180);
   await page.locator('#capture-adapter-magnifier').waitFor({ state: 'visible' });
   await page.screenshot({ path: path.join(evidence, `${engine}-capture-adapter.png`) });
