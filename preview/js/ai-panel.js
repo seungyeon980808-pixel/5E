@@ -6,7 +6,7 @@ import { createWorkbenchRequestState } from './ai-workbench-request-state.js?v=1
 import { openAiCompositionEditor } from './ai-composition-editor.js';
 import { restrictSharedWorkspace } from './ai-sharing-access.js';
 import { registerEscapeLayer } from './escape-layers.js?v=1';
-import { clearTaskWorkspaces, createTaskPersistence, createTaskWorkspaces, recoverTaskWorkspaceSnapshot } from './ai-task-workspaces.js?v=1.6.0-inline-comparison-glow-0928';
+import { clearTaskWorkspaces, createTaskPersistence, createTaskWorkspaces, recoverTaskWorkspaceSnapshot } from './ai-task-workspaces.js?v=1.6.0-ai-followup-0928';
 import {
   advanceGenerationTiming,
   restoreGenerationTiming,
@@ -22,7 +22,7 @@ import {
   moveReferenceInComposition,
   normalizeReferenceComposition,
 } from './ai-source-tasking.js?v=1';
-import { setupAiWorkbench } from './ai-workbench.js?v=shared-zoom-0917';
+import { setupAiWorkbench } from './ai-workbench.js?v=1.6.0-ai-followup-0928';
 import { mountDurableBatchUi } from './ai-batch-ui.js?v=1.6.0-workbench-polish-0928-final';
 import { createScopedEditSession, confirmScopedEditSession, prepareScopedEditProposal, acceptScopedEditProposal, invalidateScopedEditSession } from './ai-scoped-edit-session.js';
 import { decodeScopedPng } from './ai-scoped-edit-png.js';
@@ -937,23 +937,35 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   const renderOutputVariant = async (item, image, revision = outputProcessingRevision) => {
     if (!item || !image || item.kind !== 'generated' || item.sceneResult) return;
     const key = imageOutputOptionsKey(selectedImageOutputOptions);
+    const taskId = activeTaskTabId;
+    const original = item.data;
+    const isCurrent = () => revision === outputProcessingRevision && taskId === activeTaskTabId
+      && key === imageOutputOptionsKey(selectedImageOutputOptions) && item.data === original
+      && item.outputImage === image && generatedImages.includes(item);
     try {
       const source = await resolveOutputVariant(item);
-      if (revision !== outputProcessingRevision || key !== imageOutputOptionsKey(selectedImageOutputOptions) || item.outputImage !== image) return;
+      if (!isCurrent()) return;
       image.src = source;
       image.classList.toggle('ai-output-transparent', selectedImageOutputOptions.backgroundPolicy !== 'preserve');
+      comparison?.update({ revisions: comparisonRevisions() });
+      const backgroundLocked = selectedSeparationMode !== AI_SEPARATION_MODES.OFF;
+      outputProcessingStatus?.style.removeProperty('display');
       if (outputProcessingStatus) outputProcessingStatus.textContent = `${imageOutputSummary()}${backgroundLocked ? ` · ${SEPARATION_BACKGROUND_HINT} ${SEPARATION_LIMITS_HINT}` : ''}`;
     } catch (error) {
-      if (revision !== outputProcessingRevision) return;
-      image.src = item.data;
-      image.classList.remove('ai-output-transparent');
-      if (outputProcessingStatus) outputProcessingStatus.textContent = `결과 처리 실패: ${error.message}`;
+      if (!isCurrent()) return;
+      if (outputProcessingStatus) {
+        outputProcessingStatus.style.display = 'block';
+        outputProcessingStatus.textContent = `결과 처리 실패: ${error.message}`;
+      }
     }
   };
   const refreshOutputPreviews = () => {
     const revision = ++outputProcessingRevision;
     if (!generatedImages.some((item) => !item.sceneResult)) { syncOutputProcessingUi(); return; }
-    if (outputProcessingStatus) outputProcessingStatus.textContent = '선택한 방식으로 결과를 처리하는 중…';
+    if (outputProcessingStatus) {
+      outputProcessingStatus.style.display = 'block';
+      outputProcessingStatus.textContent = '선택한 방식으로 결과를 처리하는 중…';
+    }
     for (const item of generatedImages) void renderOutputVariant(item, item.outputImage, revision);
   };
   const emptyReviewReport = () => ({ verdict: "uncertain", checks: [], issues: [] });
@@ -1979,8 +1991,12 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       recovery.disabled = busy || nextAction !== 'manual-regions';
     }
     if (outputNote) {
-      outputNote.hidden = selectedSeparationMode === AI_SEPARATION_MODES.OFF || nextAction === 'ordinary-insert' && item?.automaticSeparationState !== 'fallback';
-      outputNote.textContent = item?.automaticSeparationState === 'fallback'
+      outputNote.hidden = !item || selectedSeparationMode === AI_SEPARATION_MODES.OFF;
+      outputNote.textContent = item?.automaticSeparationState === 'preparing'
+        ? '기기에서 물체를 분리하는 중…'
+        : item?.automaticSeparationState === 'ready'
+        ? `${item.automaticSeparationPrepared.assets.length}개 물체를 분리했습니다. 결과 확인에서 번호별 영역과 개별 PNG를 확인하세요.`
+        : item?.automaticSeparationState === 'fallback'
         ? `자동 분리를 완료하지 못했습니다: ${item.automaticSeparationError} 영역을 직접 지정해 분리할 수 있습니다.`
         : nextAction === 'manual-regions'
         ? `자동 분리 실패: ${item.separatedAssetsError} 원본 PNG의 배경은 아직 제거되지 않았습니다. 아래 버튼에서 영역을 직접 지정해 분리할 수 있습니다.`
@@ -2519,7 +2535,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
         taskTabs.delete(tab.id); taskViews.delete(tab.id); taskRows.delete(tab.id); requestStates.forget(tab.id);
         if (!taskTabs.size) {
           restoreTaskTab(null);
-          persistTasks();
+          await taskPersistence.checkpoint();
           workspaceEmpty();
           return;
         }
@@ -2566,6 +2582,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
 
   function restoreTaskTab(tabId) {
     closeComparison();
+    outputProcessingRevision += 1;
     const tab = tabId === null ? { id: null } : taskTabs.get(tabId);
     if (!tab) return;
     abortAutomaticSeparation('task-changed');
@@ -2601,7 +2618,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       ? AI_ASSET_GENERATION_MODES.SEPARATED : AI_ASSET_GENERATION_MODES.SINGLE;
     generationModeSelect.value = selectedAssetGenerationMode;
     const savedView = taskViews.get(tab.id);
-    const cachedView = savedView?.sourceSnapshot === tab.attachments && savedView?.outputSnapshot === tab.generated
+    const cachedView = savedView && savedView.sourceSnapshot === tab.attachments && savedView.outputSnapshot === tab.generated
       && savedView.attachments.length === (tab.attachments || []).length && savedView.generatedImages.length === (tab.generated || []).length ? savedView : null;
     attachments = cachedView?.attachments || (tab.attachments || []).map(taskItemCopy);
     generatedImages = cachedView?.generatedImages || (tab.generated || []).map(taskItemCopy);
@@ -2689,6 +2706,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     } else if (!timingView?.running) {
       generating.hidden = true;
     }
+    refreshOutputPreviews();
     if (candidateUsesAutomaticSeparation(selectedCandidate)) void startAutomaticSeparation(selectedCandidate);
   }
 
@@ -3020,6 +3038,13 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   };
 
   const allImages = () => [...attachments, ...generatedImages];
+  function comparisonRevisions() {
+    return allImages().map((item, index) => ({
+      id: item.id, label: item.name || `이미지 ${index + 1}`,
+      src: item.kind === 'generated' ? (item.outputImage?.src || item.data) : item.data,
+      comments: item.comments, kind: attachments.includes(item) ? 'original' : undefined,
+    }));
+  }
   const openComparison = () => {
     if (comparison) { closeComparison(); return; }
     const images = allImages();
@@ -3029,7 +3054,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     compareButton.setAttribute('aria-pressed', 'true');
     compareButton.classList.add('is-on');
     comparison = mountRevisionComparison(comparisonHost, {
-      revisions: images.map((item, index) => ({ id: item.id, label: item.name || `이미지 ${index + 1}`, src: item.data, comments: item.comments, kind: attachments.includes(item) ? 'original' : undefined })),
+      revisions: comparisonRevisions(),
       selectedRevisionId: selectedOutputItem()?.id || selectedCandidateId,
       wipeOnly: true,
     });
@@ -4155,11 +4180,11 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   separationModeSelect?.addEventListener('change', () => {
     if (busy) { syncOutputProcessingUi(); return; }
     applySeparationMode(normalizeSeparationMode(separationModeSelect.value));
-    refreshOutputPreviews();
     const lite = document.documentElement.dataset.mode === 'lite';
     if (lite) liteSeparationMode = selectedSeparationMode;
     localStorage.setItem(lite ? '5e.aiLiteSeparationMode' : '5e.aiSeparationMode', selectedSeparationMode);
     syncOutputProcessingUi();
+    refreshOutputPreviews();
     restartSelectedAutomaticSeparation('separation-mode-changed');
     captureActiveTaskTab(); persistTasks();
     setStatus(selectedSeparationMode === AI_SEPARATION_MODES.OFF
@@ -4241,7 +4266,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     void openPdfReferencePicker({ ...createUnifiedAiSourceConsumer({ addReferencesAsTasks, setStatus }), trigger: sourceMenuTrigger || referenceSearchButton })
       .catch(error => setStatus(error instanceof Error ? error.message : String(error), "error"));
   };
-  captureButton.onclick = () => { void openCaptureChooser(); };
+  if (captureButton) captureButton.onclick = () => { void openCaptureChooser(); };
   newButton.onclick = async () => {
     if (busy) { setStatus('작업 취소가 완료된 뒤 초기화해 주세요.', 'warn'); return; }
     const taskId = activeTaskTabId;

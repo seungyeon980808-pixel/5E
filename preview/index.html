@@ -47,7 +47,7 @@
   <link rel="stylesheet" href="css/unified-library.css?v=1.6.0-workbench-polish-0928-final" />
   <link rel="stylesheet" href="css/parts-library.css?v=1.6.0-preview-labeler-0917-1111" />
   <link rel="stylesheet" href="css/tutorial.css?v=1.6.0-preview-labeler-0917-1111" />
-  <link rel="stylesheet" href="css/ai-panel.css?v=1.6.0-inline-comparison-0928" />
+  <link rel="stylesheet" href="css/ai-panel.css?v=1.6.0-ai-followup-0928" />
   <link rel="stylesheet" href="css/ai-comparison.css?v=1.6.0-inline-comparison-0928" />
   <link rel="stylesheet" href="css/ai-composition-editor.css?v=1.6.0-preview-labeler-0917-1111" />
   <link rel="stylesheet" href="css/ai-editable-assets.css?v=1.6.0-workbench-polish-0928-final" />
@@ -452,7 +452,6 @@
               <button type="button" role="menuitem" data-ai-source-action="file">파일에서 추가</button>
               <button type="button" role="menuitem" data-ai-source-action="clipboard">클립보드에서 붙여넣기 <kbd data-ai-paste-shortcut>Ctrl+V</kbd></button>
               <button type="button" role="menuitem" class="ai-search-trigger" data-ai-source-action="library" data-ai-reference-search>자료 라이브러리에서 찾기</button>
-              <button type="button" role="menuitem" data-ai-source-action="capture" data-ai-capture>화면에서 캡처</button>
             </div>
           </div>
           <input id="ai-image-file-input" class="ai-source-file-input" type="file" accept="image/*" data-ai-source-file aria-label="파일에서 원본 이미지 추가" multiple>
@@ -478,7 +477,6 @@
               <button type="button" data-ai-layout-mode="side-by-side" aria-pressed="false">비교</button>
               <button type="button" data-ai-compare hidden aria-pressed="false">겹쳐 비교</button>
             </div>
-            <button type="button" class="ai-comment-visibility" data-ai-comment-visibility aria-pressed="true" title="이미지 위의 코멘트 표시를 켜거나 끕니다">코멘트 표시</button>
 <div class="ai-pane-zoom" data-ai-pane-zoom="shared" role="group" aria-label="이미지 배율">
                   <button type="button" data-ai-zoom-action="out" aria-label="이미지 축소">−</button>
                   <output data-ai-zoom-value>100%</output>
@@ -523,7 +521,6 @@
               <header class="ai-pane-head"><div class="ai-pane-head-controls"><div class="ai-pane-metadata">
                 <strong>수정본</strong>
                 <div class="ai-version-picker">
-                  <span>버전</span>
                   <button type="button" data-ai-version-button aria-haspopup="listbox" aria-expanded="false" aria-controls="ai-version-list" disabled>생성 결과 없음</button>
                   <div id="ai-version-list" class="ai-version-list" data-ai-version-list role="listbox" aria-label="생성 결과 버전" tabindex="-1" hidden></div>
                 </div>
@@ -560,6 +557,7 @@
           <nav class="ai-side-tabs" aria-label="오른쪽 패널">
             <button type="button" class="is-on" data-ai-side-tab="comments" aria-pressed="true">코멘트 <span data-ai-comments-count>0</span></button>
             <button type="button" data-ai-side-tab="chat" aria-pressed="false">Codex 대화</button>
+            <button type="button" class="ai-comment-visibility" data-ai-comment-visibility aria-pressed="true" title="이미지 위의 코멘트 표시를 켜거나 끕니다">코멘트 표시</button>
           </nav>
           <section class="ai-output-processing" data-ai-output-processing aria-label="생성 결과 처리">
             <label class="ai-output-processing-row ai-output-option-background">
@@ -716,8 +714,8 @@
   <script type="module" src="js/panel-visibility.js?v=1.6.0-preview-lite-flow-0924"></script>
   <!-- 모바일: 캔버스 터치를 마우스 이벤트로 변환(그리기·이동). 모듈 그래프 밖 독립 스크립트. -->
   <script src="js/touch-drag.js?v=1.6.0-preview-labeler-0917-1111"></script>
-  <script type="module" src="js/ai-workbench.js?v=1.6.0-preview-sharing-0918-2108"></script>
-  <script type="module" src="js/main.js?v=1.6.0-library-keyboard-magnifier-0928"></script>
+  <script type="module" src="js/ai-workbench.js?v=1.6.0-ai-followup-0928"></script>
+  <script type="module" src="js/main.js?v=1.6.0-ai-followup-0928"></script>
   <!-- MCP 통로: localhost에서 MCP 서버가 떠 있을 때만 붙는다(배포본은 무동작) -->
   <script type="module" src="js/mcp-bridge.js?v=1.6.0-workbench-polish-0928-final"></script>
 </body>
