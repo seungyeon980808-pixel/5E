@@ -226,9 +226,9 @@ test('ARCH-160-01: 100 real workbench disposals release listeners and observers'
   const indexSource = fs.readFileSync(path.join(root, 'preview/index.html'), 'utf8');
   const rawWorkbench = fs.readFileSync(path.join(root, 'preview/js/ai-workbench.js'), 'utf8');
   const workbenchSource = rawWorkbench
-    .replace(/^import .*;\n/, '')
+    .replace(/^import .*;\n/gm, '')
     .replace(/^export /gm, '')
-    .slice(0, rawWorkbench.replace(/^import .*;\n/, '').replace(/^export /gm, '').indexOf('\nif (typeof document !== "undefined")'));
+    .slice(0, rawWorkbench.replace(/^import .*;\n/gm, '').replace(/^export /gm, '').indexOf('\nif (typeof document !== "undefined")'));
 
   const result = await page.evaluate(async ({ indexSource, workbenchSource }) => {
     const parsed = new DOMParser().parseFromString(indexSource, 'text/html');
@@ -290,9 +290,9 @@ test('TPK-005: pane header resize writes after observer delivery and coalesces u
   const indexSource = fs.readFileSync(path.join(root, 'preview/index.html'), 'utf8');
   const rawWorkbench = fs.readFileSync(path.join(root, 'preview/js/ai-workbench.js'), 'utf8');
   const workbenchSource = rawWorkbench
-    .replace(/^import .*;\n/, '')
+    .replace(/^import .*;\n/gm, '')
     .replace(/^export /gm, '')
-    .slice(0, rawWorkbench.replace(/^import .*;\n/, '').replace(/^export /gm, '').indexOf('\nif (typeof document !== "undefined")'));
+    .slice(0, rawWorkbench.replace(/^import .*;\n/gm, '').replace(/^export /gm, '').indexOf('\nif (typeof document !== "undefined")'));
 
   const result = await page.evaluate(async ({ indexSource, workbenchSource }) => {
     const parsed = new DOMParser().parseFromString(indexSource, 'text/html');

@@ -1,4 +1,5 @@
 import { composeReferenceImages } from './ai-reference-composite.js?v=1.6.0-preview-labeler-0917-1111';
+import { comparisonGeometry } from './ai-comparison.js?v=1.6.0-ai-frames-handoff-0928';
 const REVIEW_STATES = new Set([
   "idle", "generating", "reviewing", "correcting", "passed",
   "first-generated", "scoped-applied", "needs-attention", "failed", "cancelled",
@@ -202,8 +203,7 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     const headHeight = pane.querySelector('.ai-pane-head').offsetHeight;
     const availableWidth = Math.max(40, card.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight));
     const availableHeight = Math.max(40, pane.clientHeight - headHeight - 100);
-    const ratio = image.naturalWidth / image.naturalHeight;
-    return {stage, ratio, height: Math.min(availableHeight, availableWidth / ratio)};
+    return { stage, availableWidth, availableHeight, width: image.naturalWidth, height: image.naturalHeight };
   }
 
   function applyStageSize(stage) {
@@ -212,8 +212,14 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     const baseHeight = Number(stage.dataset.aiFitHeight);
     const zoom = Number(stage.dataset.aiZoom) || 1;
     if (!baseWidth || !baseHeight) return;
-    stage.style.width = `${Math.round(baseWidth * zoom)}px`;
-    stage.style.height = `${Math.round(baseHeight * zoom)}px`;
+    stage.style.width = `${baseWidth * zoom}px`;
+    stage.style.height = `${baseHeight * zoom}px`;
+    const image = stage.querySelector(':scope > img');
+    if (image?.naturalWidth && image?.naturalHeight) {
+      const scale = Math.min(baseWidth / image.naturalWidth, baseHeight / image.naturalHeight) * zoom;
+      image.style.width = `${image.naturalWidth * scale}px`;
+      image.style.setProperty('height', `${image.naturalHeight * scale}px`, 'important');
+    }
   }
 
   function fitCardStage(card) {
@@ -222,11 +228,13 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     const fits = results?.classList.contains('mode-side-by-side')
       ? [cardFit(activeCandidate()), cardFit(activeSource())].filter(Boolean)
       : [fit];
-    const sharedHeight = Math.floor(Math.min(...fits.map(item => item.height)));
+    const geometry = comparisonGeometry(fits[0], fits[1] || fits[0], {
+      width: Math.min(...fits.map(item => item.availableWidth)),
+      height: Math.min(...fits.map(item => item.availableHeight)),
+    });
     for (const item of fits) {
-      const height = sharedHeight;
-      item.stage.dataset.aiFitWidth = String(Math.floor(height * item.ratio));
-      item.stage.dataset.aiFitHeight = String(height);
+      item.stage.dataset.aiFitWidth = String(geometry.bounds.width * geometry.scale);
+      item.stage.dataset.aiFitHeight = String(geometry.bounds.height * geometry.scale);
       applyStageSize(item.stage);
     }
     const source = cardFit(activeSource());
@@ -247,7 +255,7 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     fittedCards.add(card);
     stageResizeObserver?.observe(card);
     const image = card.querySelector(".ai-preview-stage > img");
-    image?.addEventListener("load", () => fitCardStage(card), { once: true });
+    image?.addEventListener("load", () => fitCardStage(card), { signal: lifecycle.signal });
     window.requestAnimationFrame(() => fitCardStage(card));
   }
 

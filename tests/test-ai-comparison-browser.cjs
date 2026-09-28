@@ -195,6 +195,46 @@ for (const engine of ['chromium', 'webkit']) test(`${engine}: revision wipe, coo
       if(width===375) assert.ok((await page.locator('select').first().boundingBox()).height>=44);
       const overflow = await page.getByRole('dialog').evaluate(el => el.scrollWidth > el.clientWidth || el.scrollHeight > el.clientHeight); assert.equal(overflow,false);
     }
+    await page.setViewportSize({width:1280,height:900});
+    await page.evaluate(() => {
+      const make = (width,height,opaque) => {
+        const canvas = document.createElement('canvas'); canvas.width=width; canvas.height=height;
+        const ctx=canvas.getContext('2d');
+        if(opaque) { ctx.fillStyle='#d00000'; ctx.fillRect(0,0,width,height); }
+        return canvas.toDataURL();
+      };
+      window.compare.update({revisions:[
+        {id:'wide',label:'2050 × 957',kind:'original',src:make(2050,957,true)},
+        {id:'transparent',label:'1448 × 1086 투명',src:make(1448,1086,false),comments:[{number:1,type:'point',x:25,y:25}]},
+      ],leftRevisionId:'wide',rightRevisionId:'transparent'});
+    });
+    await page.evaluate(() => window.compare.ready);
+    await page.getByRole('button',{name:'전체 맞춤',exact:true}).click();
+    const frames = await page.locator('.ai-comparison-frame').evaluateAll(nodes => nodes.map(node => {
+      const r=node.getBoundingClientRect(); return {x:r.x,y:r.y,width:r.width,height:r.height};
+    }));
+    assert.deepEqual(frames[0],frames[1], 'wipe layers share an identical common frame');
+    const divergent = await imageBounds();
+    assert.ok(Math.abs(divergent[0].width/divergent[0].height-2050/957)<1e-5);
+    assert.ok(Math.abs(divergent[1].width/divergent[1].height-1448/1086)<1e-5);
+    const marker = await page.locator('.ai-comparison-right').evaluate(pane => {
+      const image=pane.querySelector('image'),circle=pane.querySelector('.ai-comparison-markers circle');
+      return {x:+circle.getAttribute('cx'),y:+circle.getAttribute('cy'),expectedX:+image.getAttribute('x')+.25*image.getAttribute('width'),expectedY:+image.getAttribute('y')+.25*image.getAttribute('height')};
+    });
+    assert.equal(marker.x,marker.expectedX); assert.equal(marker.y,marker.expectedY);
+    for(const theme of ['light','dark']) {
+      await page.evaluate(theme => document.documentElement.classList.toggle('dark',theme==='dark'),theme);
+      const shot=await page.screenshot();
+      const colors=await page.evaluate(async ({png,frame}) => {
+        const image=new Image(); image.src='data:image/png;base64,'+png; await image.decode();
+        const canvas=document.createElement('canvas');canvas.width=image.width;canvas.height=image.height;
+        const ctx=canvas.getContext('2d');ctx.drawImage(image,0,0);
+        return [...ctx.getImageData(Math.floor((frame.x+frame.width*.75)*devicePixelRatio),Math.floor((frame.y+frame.height*.5)*devicePixelRatio),40,1).data].filter((_,i)=>i%4!==3);
+      },{png:shot.toString('base64'),frame:frames[1]});
+      assert.ok(colors.includes(237)&&colors.includes(250),'transparent revised image displays both checker colors');
+      assert.ok(colors.every(value=>value>=237&&value<=250),'transparent revision does not reveal dark canvas or red original');
+      await capture(`divergent-transparent-${theme}`);
+    }
     assert.deepEqual(errors,[]);
     actions.push({name:'immutable-history',pass:unchanged},{name:'malformed-dimensions-rejected',pass:malformed},{name:'no-page-errors',errors});
   } finally {
