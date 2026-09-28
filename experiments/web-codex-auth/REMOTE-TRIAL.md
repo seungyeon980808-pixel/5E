@@ -3,7 +3,9 @@
 Base: integrated image/web AI checkout 9b4baa054e3ab4441129f1ded600c68b5f207ee8.
 Deployment branch: codex/render-ai-trial. Main/Pages remain unchanged.
 
-Build: `npm install --prefix .render-probe --no-package-lock --no-audit --no-fund @openai/codex@0.153.4`
+Build: `npm install --prefix .render-probe --no-package-lock --no-audit --no-fund @openai/codex@0.158.0`
+
+Codex 0.158.0 or newer is required: 0.153.4's built-in model/list omits gpt-6-sol and gpt-6-luna, so the editor cannot offer them.
 
 Start: `PATH="$PWD/.render-probe/node_modules/.bin:$PATH" node experiments/web-codex-auth/remote-trial.cjs`
 
