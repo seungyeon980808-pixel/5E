@@ -1,7 +1,7 @@
 const release = Object.freeze({
   modifiedAt: '2026.09.28',
-  sourceCommit: '741339903342168e6696c0a5a8b64a422898ea0d',
-  changes: 'AI 분리·비교·배경·경과 시간 / PDF 전환 / 캔버스 이미지 성능',
+  sourceCommit: '',
+  changes: '라이브러리 간격 / 기준 좌표 고정 / GPT-6 모델 선택 / 오류 로그',
 });
 
 const panel = document.querySelector('#ai-image-panel .modal-ai');

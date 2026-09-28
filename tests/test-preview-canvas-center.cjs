@@ -80,7 +80,12 @@ async function togglePanel(page, side) {
       await dismissWelcome(page);
 
       const baseline = await snapshot(page);
-      assertAligned(baseline, 5, true, `${engine.name()} Pro +5mm projection at 100%`);
+      assertAligned(baseline, 0, true, `${engine.name()} Pro coordinate lock centers the origin`);
+      assert.equal(await page.locator('#center-view-btn').getAttribute('data-mode'), 'coordinate');
+      await page.locator('#canvas').hover();
+      await page.mouse.wheel(0, 120);
+      await page.waitForTimeout(100);
+      assertProjection(baseline, await snapshot(page), `${engine.name()} default lock blocks wheel panning`);
 
       for (const preset of presets) {
         await page.evaluate(value => document.documentElement.setAttribute('data-screen', value), preset);
@@ -105,6 +110,14 @@ async function togglePanel(page, side) {
       await page.waitForTimeout(100);
       assertProjection(beforePanels, await snapshot(page), `${engine.name()} rulers hidden`);
 
+      await page.click('#center-view-btn');
+      await page.click('[data-canvas-lock-mode="free"]');
+      const beforeFreePan = await snapshot(page);
+      await page.locator('#canvas').hover();
+      await page.mouse.wheel(0, 120);
+      await page.waitForTimeout(100);
+      assert.ok(Math.abs((await snapshot(page)).ctm.f - beforeFreePan.ctm.f) > 1, 'free mode remains available');
+
       const lite = await context.newPage();
       await lite.addInitScript(() => { localStorage.clear(); sessionStorage.clear(); });
       await lite.goto(`${previewUrl}${separator}mode=lite`, { waitUntil: 'networkidle' });
@@ -113,7 +126,7 @@ async function togglePanel(page, side) {
       await lite.close();
 
       await context.close();
-      console.log(`${engine.name()}: Pro +5mm intent, Lite centering, panel transitions, rulers, and native hit mapping passed`);
+      console.log(`${engine.name()}: default coordinate lock, optional free pan, Lite centering, panel transitions, rulers, and native hit mapping passed`);
     } finally {
       await browser.close();
     }

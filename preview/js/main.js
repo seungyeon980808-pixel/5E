@@ -73,7 +73,7 @@ import { initSteppers } from "./stepper.js?v=1.6.0-preview-labeler-0917-1111";
 import { initReferenceWindows } from "./reference-window.js?v=1.6.0-preview-common-year-login-0918-1302";
 import { initTutorial } from "./tutorial.js?v=1.6.0-workbench-polish-0928-final";
 import { initAiInstallGuide } from "./ai-install-guide.js?v=1.6.0-preview-labeler-0917-1111";
-import { initAiPanel } from "./ai-panel.js?v=1.6.0-ai-latest-fixes-0928";
+import { initAiPanel } from "./ai-panel.js?v=1.6.0-small-fixes-0928";
 
 const svg = document.getElementById("canvas");
 // Canvas interaction transfers keyboard ownership away from the last toolbar button.
@@ -495,7 +495,7 @@ initDataPlot();
       current: "현재 위치 고정",
       coordinate: "기준 좌표 고정",
     };
-    let mode = "free";
+    let mode = "coordinate";
     const point = () => ({ x: Number(xInput.value) || 0, y: Number(yInput.value) || 0 });
     const closeMenu = () => {
       menu.hidden = true;
@@ -537,7 +537,7 @@ initDataPlot();
       e.preventDefault();
       centerBtn.click();
     }, true);
-    applyCanvasLock("free");
+    applyCanvasLock("coordinate");
   }
   // 눈금자는 항상 켜짐(토글 UI 제거) — 명시적으로 한 번 켜 둔다.
   setRulerVisible(true);
