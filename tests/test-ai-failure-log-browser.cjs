@@ -58,24 +58,34 @@ test('model switch normalizes unsupported settings; full error is safe, copyable
  assert.deepEqual(errors,[]);
  fs.writeFileSync(path.join(evidence,'result.json'),JSON.stringify({selected,safeLog:text,preservedComments:preserved,inputPreserved:true,copyMatches:true,errors},null,2));
 });
-test('older hosted-style catalog exposes verified Sol/Luna and discloses unverified server access', {timeout:90000}, async t=>{
- const dir=path.join(evidence,'older-catalog');fs.mkdirSync(dir,{recursive:true});
- const oldHarness=harness.replace(/models: async \(\) => .*?\n/, "models: async () => ({data:[{model:'gpt-6-astra',displayName:'GPT-6-Astra',supportedReasoningEfforts:['medium','ultra'],defaultReasoningEffort:'medium',serviceTiers:['priority']}]}),\n");
+test('only advertised models are selectable and refreshed catalog preserves explicit selection', {timeout:90000}, async t=>{
+ const dir=path.join(evidence,'server-catalog');fs.mkdirSync(dir,{recursive:true});
+ const oldHarness=harness.replace(/models: async \(\) => .*?\n/, "models: async () => ({data:[{model:'gpt-6-astra',displayName:'GPT-6-Astra',supportedReasoningEfforts:['medium','ultra'],defaultReasoningEffort:'medium',serviceTiers:['priority']},...(window.__catalogRefreshed ? [{model:'gpt-6-sol',supportedReasoningEfforts:['medium','ultra'],defaultReasoningEffort:'medium',serviceTiers:['priority']},{model:'gpt-6-luna',supportedReasoningEfforts:['medium','high'],defaultReasoningEffort:'medium',serviceTiers:[]}] : [])]}),\n");
  const oldFixture=new Function('require','root','fs','path','assert','chromium','webkit',oldHarness+'; return requestBrowserFixture;')(require,root,fs,path,assert,chromium,webkit);
  const {page,errors}=await oldFixture(t,1,dir);
  await page.click('#ai-image-panel .ai-advanced-settings > summary');
- const options=await page.locator('#ai-image-panel [data-ai-model] option').evaluateAll(nodes=>nodes.map(node=>({value:node.value,label:node.textContent})));
- for(const model of ['gpt-6-sol','gpt-6-luna']){
-  assert.ok(options.some(option=>option.value===model));
-  await page.selectOption('#ai-image-panel [data-ai-model]',model);
-  assert.match(await page.locator('#ai-image-panel [data-ai-model-warning]').textContent(),/지원은 아직 확인되지/);
- }
+ const readOptions=()=>page.locator('#ai-image-panel [data-ai-model] option').evaluateAll(nodes=>nodes.map(node=>({value:node.value,label:node.textContent,disabled:node.disabled})));
+ const oldOptions=await readOptions();
+ fs.writeFileSync(path.join(dir,'old-options.json'),JSON.stringify(oldOptions,null,2));
+ assert.deepEqual(oldOptions.filter(option=>!option.disabled).map(option=>option.value),['gpt-6-astra']);
+ assert.equal(await page.locator('#ai-image-panel [data-ai-model]').inputValue(),'gpt-6-luna','stale explicit preference is surfaced, not silently replaced');
+ await page.evaluate(()=>{window.__catalogRefreshed=true;window.dispatchEvent(new Event('5e:web-ai-status'));});
+ await page.waitForFunction(()=>[...document.querySelectorAll('#ai-image-panel [data-ai-model] option')].some(option=>option.value==='gpt-6-sol'&&!option.disabled));
+ const refreshed=await readOptions();
+ assert.deepEqual(refreshed.filter(option=>!option.disabled).map(option=>option.value),['gpt-6-astra','gpt-6-sol','gpt-6-luna']);
+ assert.equal(await page.locator('#ai-image-panel [data-ai-model]').inputValue(),'gpt-6-luna');
+ await page.selectOption('#ai-image-panel [data-ai-model]','gpt-6-sol');
+ await page.selectOption('#ai-image-panel [data-ai-model]','gpt-6-luna');
+ await page.selectOption('#ai-image-panel [data-ai-effort]','high');
+ await page.click('#ai-image-panel [data-ai-model-refresh]');
+ assert.equal(await page.locator('#ai-image-panel [data-ai-effort]').inputValue(),'high');
+ assert.equal(await page.locator('#ai-image-panel [data-ai-model-warning]').isVisible(),false);
  await page.click('#ai-image-panel [data-ai-comments-apply]');
  await page.waitForFunction(()=>window.__task2.sends.length===1);
  const request=await page.evaluate(()=>{const {model,effort,serviceTier}=window.__task2.sends[0].payload;return {model,effort,serviceTier};});
- assert.equal(request.model,'gpt-6-luna');assert.equal(request.effort,'medium');
+ assert.equal(request.model,'gpt-6-luna');assert.equal(request.effort,'high');
  await page.evaluate(()=>window.__task2.emit(0,'error'));
- await page.screenshot({path:path.join(dir,'selectable-models.png')});
+ await page.screenshot({path:path.join(dir,'refreshed-models.png')});
  assert.deepEqual(errors,[]);
- fs.writeFileSync(path.join(dir,'result.json'),JSON.stringify({options,request,errors,providerAvailability:'not verified; UI warning disclosed'},null,2));
+ fs.writeFileSync(path.join(dir,'result.json'),JSON.stringify({oldOptions,refreshed,request,errors},null,2));
 });

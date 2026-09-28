@@ -265,8 +265,8 @@
   }
   .app-shell-header .canvas-global-controls > * { flex-shrink:0; }
   @container inspector-header (max-width: 170px) {
-    .web-account-status { max-width:none; padding-inline:6px; gap:5px; justify-content:center; }
-    .web-account-status [data-account-label] { font-size:0; }
+    .app-shell-header .web-account-status { min-width:max-content; max-width:none; padding-inline:6px; gap:5px; justify-content:center; }
+    .app-shell-header .web-account-status [data-account-label] { font-size:0; flex:none; overflow:visible; }
     .web-account-status [data-account-label]::after { content:'GPT'; font-size:12px; }
   }
 }
