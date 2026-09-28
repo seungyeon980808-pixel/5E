@@ -161,7 +161,7 @@ for (const engine of ['chromium', 'webkit']) for (const count of [1, 10, 30]) {
     await page.getByRole('slider').focus(); await page.keyboard.press('Home'); await page.keyboard.press('Shift+ArrowRight');
     assert.equal(await page.getByRole('slider').getAttribute('aria-valuenow'), '10');
     await page.screenshot({ path: path.join(evidence, 'compare-dark-retina-zoompan.png') });
-    await page.getByRole('button', { name: '비교 닫기', exact: true }).click();
+    await page.click(`${active} [data-ai-compare]`);
     await page.click(`${active} [data-ai-capture]`); await page.click('.ai-capture-source');
     const image = page.locator('.ai-crop-image-wrap > img'); await image.waitFor(); const box = await image.boundingBox();
     await page.mouse.move(box.x + box.width * .3, box.y + box.height * .3);

@@ -1,4 +1,4 @@
-import { openRevisionComparison } from './ai-comparison.js?v=1.6.0-workbench-polish-0928-final';
+import { mountRevisionComparison } from './ai-comparison.js?v=1.6.0-inline-comparison-0928';
 import { attachCropMagnifier } from './tools/pointer-magnifier.js?v=1.6.0-workbench-polish-0928-final';
 import { readAIModelCatalog, resolveAIModelSelection, defaultAIModelSelection } from './ai-model-capabilities.js?v=1.6.0-workbench-polish-0928-final';
 import { transitionSeparationMode, SEPARATION_BACKGROUND_HINT, SEPARATION_LIMITS_HINT } from './ai-separation-mode.js?v=1.6.0-workbench-polish-0928-final';
@@ -6,7 +6,7 @@ import { createWorkbenchRequestState } from './ai-workbench-request-state.js?v=1
 import { openAiCompositionEditor } from './ai-composition-editor.js';
 import { restrictSharedWorkspace } from './ai-sharing-access.js';
 import { registerEscapeLayer } from './escape-layers.js?v=1';
-import { clearTaskWorkspaces, createTaskPersistence, createTaskWorkspaces, recoverTaskWorkspaceSnapshot } from './ai-task-workspaces.js?v=1.6.0-workbench-polish-0928-final';
+import { clearTaskWorkspaces, createTaskPersistence, createTaskWorkspaces, recoverTaskWorkspaceSnapshot } from './ai-task-workspaces.js?v=1.6.0-inline-comparison-glow-0928';
 import {
   advanceGenerationTiming,
   restoreGenerationTiming,
@@ -27,7 +27,7 @@ import { mountDurableBatchUi } from './ai-batch-ui.js?v=1.6.0-workbench-polish-0
 import { createScopedEditSession, confirmScopedEditSession, prepareScopedEditProposal, acceptScopedEditProposal, invalidateScopedEditSession } from './ai-scoped-edit-session.js';
 import { decodeScopedPng } from './ai-scoped-edit-png.js';
 import { createScopedEditComparison } from './ai-scoped-edit-comparison.js';
-import { createImageCommentController, buildCommentRequest, PRESERVE_UNREQUESTED } from "./ai-image-comments.js?v=1";
+import { createImageCommentController, buildCommentRequest, PRESERVE_UNREQUESTED } from "./ai-image-comments.js?v=1.6.0-comment-visibility-0928";
 import { IndexedDBOutputCacheBackend } from "./ai-output-cache-store.js?v=1.5.3";
 import { insertImageFromSrc } from "./image-paste.js?v=1.6.0-workbench-polish-0928-final";
 import { openEditableAssetsDialog } from "./ai-editable-assets-dialog.js?v=1.6.0-workbench-polish-0928-final";
@@ -688,9 +688,22 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   let selectedSeparationMode = normalizeSeparationMode(localStorage.getItem('5e.aiSeparationMode'));
   let singleBackgroundPolicy = selectedImageOutputOptions.backgroundPolicy;
   let comparison = null;
+  const comparisonHost = document.createElement('div');
+  comparisonHost.className = 'ai-inline-comparison';
+  comparisonHost.hidden = true;
+  panel.querySelector('.ai-comparison-grid')?.after(comparisonHost);
+  const closeComparison = () => {
+    comparison?.dispose();
+    comparison = null;
+    comparisonHost.hidden = true;
+    panel.querySelector('.ai-results')?.classList.remove('is-wipe-comparing');
+    const button = panel.querySelector('[data-ai-compare]');
+    button?.setAttribute('aria-pressed', 'false');
+    button?.classList.remove('is-on');
+  };
   let closeCapture = null;
   window.addEventListener('5e:ai-workspace-activate', event => {
-    if (event.detail?.panel !== panel) { comparison?.dispose(); closeCapture?.(); }
+    if (event.detail?.panel !== panel) { closeComparison(); closeCapture?.(); }
   }, { signal: lifecycle.signal });
   let liteSeparationMode = normalizeSeparationMode(localStorage.getItem('5e.aiLiteSeparationMode'));
   if (![AI_SEPARATION_MODES.OFF, AI_SEPARATION_MODES.AUTO].includes(liteSeparationMode)) {
@@ -1939,7 +1952,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     compareButton.disabled = comparisonCount < 2;
     compareButton.title = comparisonCount < 2
       ? '첫 결과가 준비되면 원본과 비교할 수 있습니다.'
-      : '별도 창에서 원본과 생성 결과를 비교합니다.';
+      : '이 화면에서 원본과 생성 결과를 겹쳐 비교합니다.';
+    if (comparison && comparisonCount < 2) closeComparison();
     const save = panel.querySelector('[data-ai-save-selected]');
     const insert = panel.querySelector('[data-ai-insert-selected]');
     const scoped = panel.querySelector('[data-ai-scoped-edit-selected]');
@@ -2462,13 +2476,17 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       selectTab.setAttribute('aria-pressed', String(tab.id === activeTaskTabId));
       selectTab.setAttribute('aria-label', `${tab.title} · ${stateLabel}`);
       const source = (tab.attachments || [])[0];
+      const thumbnailFrame = document.createElement('span');
+      thumbnailFrame.className = 'ai-task-tab-thumb-frame';
+      thumbnailFrame.setAttribute('aria-hidden', 'true');
       if (source?.data) {
         const thumbnail = document.createElement("img");
         thumbnail.className = "ai-task-tab-thumb";
         thumbnail.src = source.data;
         thumbnail.alt = "";
-        selectTab.append(thumbnail);
+        thumbnailFrame.append(thumbnail);
       }
+      selectTab.append(thumbnailFrame);
       const copy = document.createElement("span");
       copy.className = "ai-task-tab-copy";
       const label = document.createElement("span");
@@ -2547,6 +2565,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   };
 
   function restoreTaskTab(tabId) {
+    closeComparison();
     const tab = tabId === null ? { id: null } : taskTabs.get(tabId);
     if (!tab) return;
     abortAutomaticSeparation('task-changed');
@@ -3002,15 +3021,22 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
 
   const allImages = () => [...attachments, ...generatedImages];
   const openComparison = () => {
+    if (comparison) { closeComparison(); return; }
     const images = allImages();
     if (images.length < 2) { setStatus('비교할 이미지를 두 개 이상 추가해 주세요.', 'warn'); return; }
-    comparison?.dispose();
-    comparison = openRevisionComparison({
-      revisions: images.map((item, index) => ({ id: item.id, label: item.name || `이미지 ${index + 1}`, src: item.data, kind: attachments.includes(item) ? 'original' : undefined })),
+    comparisonHost.hidden = false;
+    panel.querySelector('.ai-results')?.classList.add('is-wipe-comparing');
+    compareButton.setAttribute('aria-pressed', 'true');
+    compareButton.classList.add('is-on');
+    comparison = mountRevisionComparison(comparisonHost, {
+      revisions: images.map((item, index) => ({ id: item.id, label: item.name || `이미지 ${index + 1}`, src: item.data, comments: item.comments, kind: attachments.includes(item) ? 'original' : undefined })),
       selectedRevisionId: selectedOutputItem()?.id || selectedCandidateId,
-      onClose: () => { comparison = null; },
+      wipeOnly: true,
     });
   };
+  panel.addEventListener('click', event => {
+    if (event.target.closest?.('[data-ai-layout-mode]')) closeComparison();
+  }, { signal: lifecycle.signal });
 
   const openCaptureCrop = (source) => {
     const overlay = document.createElement("div");
@@ -3464,7 +3490,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     else panel.querySelector('[data-ai-side-tab="comments"]')?.focus();
   };
   const close = ({ integratedEdit = false } = {}) => {
-    comparison?.dispose(); closeCapture?.();
+    closeComparison(); closeCapture?.();
     abortAutomaticSeparation('panel-closed');
     captureActiveTaskTab(); persistTasks(); void taskPersistence.flush();
     panel.hidden = true;
@@ -4909,7 +4935,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     }
   }));
   modal?.addEventListener("mousedown", (event) => event.stopPropagation());
-  commentController=createImageCommentController({panel,getImages:()=>[...attachments.filter(isInputReference),...generatedImages],getSelectedId:()=>selectedCandidateId||generatedImages.at(-1)?.id,isBusy:()=>busy,changed:()=>{scopedSelectionRevision += 1;captureActiveTaskTab();persistTasks();}});
+  commentController=createImageCommentController({panel,getImages:()=>[...attachments.filter(isInputReference),...generatedImages],getSelectedId:()=>selectedCandidateId||generatedImages.at(-1)?.id,isBusy:()=>busy,changed:()=>{scopedSelectionRevision += 1;captureActiveTaskTab();persistTasks();},viewChanged:()=>{captureActiveTaskTab();persistTasks();}});
   panel.querySelector('[data-ai-comments-apply]')?.addEventListener('click', () => sendButton.onclick());
   // Selected-result actions stay in the fixed footer; per-card controls are hidden.
   const editableGroups = document.createElement('button');
@@ -5157,7 +5183,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       if (disposed) return;
       disposed = true;
       lifecycle.abort();
-      comparison?.dispose(); closeCapture?.();
+      closeComparison(); closeCapture?.();
       abortAutomaticSeparation('workspace-disposed');
       structureAnalysis.cancel();
       if (imageReview?.isActive()) imageReview.cancel();
