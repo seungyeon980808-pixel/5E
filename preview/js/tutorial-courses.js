@@ -26,9 +26,9 @@ import {
   state, DEFAULT_TEXT_SIZE_MM, DEFAULT_TEXT_FONT,
   EQUATION_FONT_FAMILY, OBJECT_LABEL_TEXT_FONT_FAMILY,
 } from "./state.js?v=1.6.0-preview-labeler-0917-1111";
-import { makeLine, makePolyline, setActiveTool, DEFAULT_STROKE_WIDTH, getActiveSymbolId } from "./tools.js?v=1.6.0-preview-lite-hybrid-0922";
-import { TEMPLATES } from "./templates.js?v=1.6.0-preview-lite-hybrid-0922";
-import { NODE_DEFAULT_SIZE } from "./tools/node-placement.js?v=1.6.0-preview-lite-hybrid-0922";
+import { makeLine, makePolyline, setActiveTool, DEFAULT_STROKE_WIDTH, getActiveSymbolId } from "./tools.js?v=1.6.0-workbench-polish-0928-final";
+import { TEMPLATES } from "./templates.js?v=1.6.0-workbench-polish-0928-final";
+import { NODE_DEFAULT_SIZE } from "./tools/node-placement.js?v=1.6.0-workbench-polish-0928-final";
 import { applyNewObjectStyleDefaults } from "./style-mode.js?v=1.6.0-preview-labeler-0917-1111";
 
 import { localizeTutorialCourse } from "./tutorial-labels.js?v=1.6.0-preview-labeler-0917-1111";

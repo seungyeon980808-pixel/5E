@@ -20,7 +20,7 @@
  *     preserveAspectRatio 없이 박스에 꽉 채움) → world→source 매핑이 균일하다.
  */
 
-import { runAreaCapture } from "./export-dialog.js?v=1.6.0-preview-lite-hybrid-0922";
+import { runAreaCapture } from "./export-dialog.js?v=1.6.0-workbench-polish-0928-final";
 import { rasterizeExportCanvas } from "./svg-export.js?v=1.6.0-preview-lite-hybrid-0922";
 
 let _overlay = null; // 비교 모달 오버레이(1회 생성 후 재사용)

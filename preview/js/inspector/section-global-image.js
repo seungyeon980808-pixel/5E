@@ -3,7 +3,7 @@
  * split). Builds the section DOM and wires its events; mounting into the
  * inspector panel happens in js/inspector.js (the orchestrator). */
 
-import { startImageCompare } from "../image-compare.js?v=1.6.0-preview-lite-hybrid-0922";
+import { startImageCompare } from "../image-compare.js?v=1.6.0-workbench-polish-0928-final";
 import { startSmartCutoutForImage } from "../image-cutout.js?v=1.6.0-preview-lite-hybrid-0922";
 
 export function buildGlobalImageSection(ctx) {

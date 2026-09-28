@@ -4,7 +4,7 @@ import {
   renderSymbolsForCategories,
   renderSymbolsForIds,
   sizeIconViewBox,
-} from "./templates.js?v=1.6.0-preview-lite-hybrid-0922";
+} from "./templates.js?v=1.6.0-workbench-polish-0928-final";
 
 const SUBJECTS = {
   p: {

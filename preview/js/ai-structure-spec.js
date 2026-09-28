@@ -2,8 +2,9 @@
  * STRUCTURE_SPEC_VERSION identifies the prompt/rule dialect in structureRecord.
  * spec.version=1 is the JSON envelope shape; unknown roles/profiles fail closed.
  */
+import { resolveAIModelSelection } from './ai-model-capabilities.js?v=1.6.0-workbench-polish-0928-final';
+
 export const STRUCTURE_SPEC_VERSION = '1.3.0';
-export const STRUCTURE_ANALYSIS_MODEL = 'gpt-5.6-sol';
 const profiles = {
   routing: '회로·관·분기망에서는 기능적 연결망과 실제 그려진 경로를 따로 관찰한다. 중간 연결 구간, 별도의 가로·세로 연결선, 꺾임, 접점과 합류 위치, 연결선 사이의 빈 간격을 구별한다. 같은 전기적 노드나 같은 유로라는 이유로 서로 떨어져 그려진 선을 한 줄로 합쳐 설명하지 않는다. 각 분기 묶음·폐회로의 실제 실선 외곽을 기준으로 가로·세로 범위와 비율, 내부 분기 위치를 관찰 근거에 적는다. 제거될 글자·점선 주석을 외곽 기준으로 삼지 않는다. 가려진 경로나 비율은 추정해 확정하지 말고 uncertainties에 남긴다.',
   graph: '좌표틀·원자료 곡선·눈금·보조선·강조면을 따로 관찰한다. 채움의 상·하·좌·우 경계를 각각 확인한다. 면 위를 지나는 곡선을 면의 경계로 추정하지 않는다. 접촉과 겹침을 구별할 수 없으면 contact를 확정하지 말고 불확실성에 남긴다. 단순 배경장식과 실제 좌표/자료 구획을 구별한다. 플롯 가로세로비, 교점과 끝점의 축 구획 내 상대 위치를 보존한다. 곡선 존재와 좌우 순서만으로 비율 보존을 판정하지 않는다.',
@@ -87,13 +88,16 @@ export function createStructureAnalysisController({transport,timeoutMs=120000}={
       if(r.awaiting){if(r.queue.length>=512)finish(r,Error('구조 분석 이벤트 한도 초과'));else r.queue.push(e);return true;}
       if(!matches(r,e))return false;route(r,e);return true;
     },
-    analyze({request='',attachments=[],serviceTier=null}={}) {
+    analyze({request='',attachments=[],model,effort,serviceTier=null,models}={}) {
       if(active&&!active.done)return Promise.reject(Error('구조 분석이 이미 진행 중입니다.'));
       if(!attachments.length)return Promise.reject(Error('관찰할 원본 이미지가 없습니다.'));
+      let selection;
+      try { selection = resolveAIModelSelection({model,effort,serviceTier}, models); }
+      catch (error) { return Promise.reject(error); }
       return new Promise((resolve,reject)=>{
         const r={resolve,reject,sourceCount:attachments.length,text:'',queue:[],awaiting:true,done:false};active=r;
         r.timer=setTimeout(()=>{if(!r.done){interrupt();finish(r,Error('구조 분석 시간 초과. 생성하지 않았습니다.'));}},timeoutMs);
-        Promise.resolve().then(()=>r.done ? null : transport.send({text:buildStructureAnalysisPrompt({request,referenceNames:attachments.map(a=>a.name)}),attachments,conversationId:null,resetConversation:true,purpose:'chat',ephemeralRender:true,model:STRUCTURE_ANALYSIS_MODEL,effort:'high',serviceTier})).then(result=>{
+        Promise.resolve().then(()=>r.done ? null : transport.send({text:buildStructureAnalysisPrompt({request,referenceNames:attachments.map(a=>a.name)}),attachments,conversationId:null,resetConversation:true,purpose:'chat',ephemeralRender:true,...selection})).then(result=>{
           if(r.done && !result)return;
           r.turnId=result?.turnId;r.threadId=result?.renderThreadId||result?.threadId;r.awaiting=false;
           if(r.done){retire(r);return;}

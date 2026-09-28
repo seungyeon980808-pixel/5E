@@ -55,7 +55,7 @@ export function createContinuousCropPages({ stage, canvas, loadPage, onPage }) {
       }
     }
   };
-  const mount = (count, page) => {
+  const mount = (count, page, geometry) => {
     reset();
     pageCount = count;
     activePage = page;
@@ -67,6 +67,8 @@ export function createContinuousCropPages({ stage, canvas, loadPage, onPage }) {
       slot.className = "unilib-crop-page";
       slot.dataset.page = String(number);
       slot.setAttribute("aria-label", `${number} / ${count}쪽`);
+      const dimensions = geometry?.(number);
+      if (dimensions) ratios.set(number, dimensions.height / dimensions.width);
       slots.set(number, slot);
       root.append(slot);
     }
