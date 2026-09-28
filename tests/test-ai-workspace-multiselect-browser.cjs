@@ -269,6 +269,10 @@ for(const engine of ['chromium','webkit']) test(`lower cap cancellation acknowle
   const {page}=await requestBrowserFixture(context,4,evidence,{serviceCap:2});
   await selectTasks(page,4);await page.dblclick('#ai-image-panel [data-ai-comments-apply]',{delay:10});
   await page.waitForFunction(()=>window.__task2.sends.length===2);
+  assert.equal(await page.locator('#ai-image-panel [data-ai-workspace-batch] [data-ai-workspace-job]').count(), 0);
+  const runningCard = page.locator('#ai-image-panel [data-ai-generation-active="true"]').first();
+  assert.equal(await runningCard.evaluate(node => getComputedStyle(node).animationName), 'ai-task-card-glow');
+  await page.screenshot({path:path.join(evidence,'running-cards.png')});
   await page.evaluate(()=>window.__task2.emit(0,'error'));
   await page.waitForFunction(()=>window.__task2.sends.length===3);
   await page.evaluate(()=>window.__task2.delayInterrupt());

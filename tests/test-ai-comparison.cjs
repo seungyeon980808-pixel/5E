@@ -27,6 +27,21 @@ test('descriptor snapshot is immutable, detached, rejects ambiguous IDs and malf
     assert.throws(() => snapshotComparisonRevisions([{ ...input[0], width }]), /dimension/i);
   }
 });
+test('comparison keeps comments on their own revision and rejects invalid positions', async () => {
+  const { snapshotComparisonRevisions } = await import(moduleUrl);
+  const input = revisions().slice(0, 2);
+  input[0].comments = [{ number: 1, type: 'point', x: 20, y: 30 }];
+  input[1].comments = [
+    { number: 2, type: 'area', x: 60, y: 40, w: 20, h: 30 },
+    { number: 3, type: 'area', x: 90, y: 90, w: 20, h: 20 },
+  ];
+  const snapshot = snapshotComparisonRevisions(input);
+  assert.deepEqual(snapshot[0].comments.map(comment => comment.number), [1]);
+  assert.deepEqual(snapshot[1].comments.map(comment => comment.number), [2]);
+  input[1].comments[0].x = 5;
+  assert.equal(snapshot[1].comments[0].x, 60);
+  assert.ok(Object.isFrozen(snapshot[1].comments) && Object.isFrozen(snapshot[1].comments[0]));
+});
 test('different aspects retain centered contain padding at zoom and pan', async () => {
   const { comparisonGeometry } = await import(moduleUrl);
   const g = comparisonGeometry({ width: 400, height: 200 }, { width: 200, height: 400 }, { width: 800, height: 600, zoom: 2, panX: 10, panY: -20 });

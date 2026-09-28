@@ -310,7 +310,7 @@ test('TPK-005: current library and task workspace smoke contract has real contro
       assert.equal(await generatedImage.getAttribute('src'), generatedFixtureDataUrl,
         'the selected revision contains the generated fixture bytes');
       await panel.locator('[data-ai-compare]').click();
-      const comparisonDialog = page.getByRole('dialog', { name: '원본과 수정본 비교', exact: true });
+      const comparisonDialog = panel.locator('.ai-inline-comparison .ai-comparison');
       await comparisonDialog.waitFor({ state: 'visible' });
       await page.waitForFunction(() => ['left', 'right'].every((side) => {
         const image = document.querySelector(`.ai-comparison-${side} image`);
@@ -325,7 +325,7 @@ test('TPK-005: current library and task workspace smoke contract has real contro
       assert.equal(await comparisonDialog.locator('.ai-comparison-right image').getAttribute('href'), generatedFixtureDataUrl,
         'the comparison right side displays the selected generated content');
       await page.screenshot({ path: path.join(evidenceDir, `${engine.name()}-${mode}-comparison.png`), fullPage: true });
-      await comparisonDialog.getByRole('button', { name: '비교 닫기', exact: true }).click();
+      await panel.locator('[data-ai-compare]').click();
       await comparisonDialog.waitFor({ state: 'detached' });
       const tasksBeforeFileAdd = await panel.locator('[data-ai-tab-list] .ai-task-tab:not(.ai-task-add)').count();
       await panel.locator('[data-ai-source-file]').setInputFiles(fixture);

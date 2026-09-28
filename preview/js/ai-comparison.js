@@ -15,7 +15,21 @@ export function snapshotComparisonRevisions(revisions) {
     if (typeof item.src !== 'string' || !item.src || typeof item.label !== 'string' || !item.label) throw new TypeError('Comparison revision requires label and src.');
     ids.add(item.id);
     const size = item.width !== undefined || item.height !== undefined ? dimensions(item) : {};
-    return Object.freeze({ id: item.id, label: item.label, src: item.src, ...size, kind: item.kind === 'original' ? 'original' : 'revision' });
+    const comments = Object.freeze((Array.isArray(item.comments) ? item.comments : []).filter(comment =>
+      Number.isInteger(Number(comment.number)) && Number(comment.number) > 0
+      && Number.isFinite(Number(comment.x)) && Number.isFinite(Number(comment.y))
+      && Number(comment.x) >= 0 && Number(comment.x) <= 100
+      && Number(comment.y) >= 0 && Number(comment.y) <= 100
+      && Number.isFinite(Number(comment.w ?? 0)) && Number.isFinite(Number(comment.h ?? 0))
+      && Number(comment.w ?? 0) >= 0 && Number(comment.h ?? 0) >= 0
+      && Number(comment.x) + Number(comment.w ?? 0) <= 100
+      && Number(comment.y) + Number(comment.h ?? 0) <= 100
+      && (comment.type !== 'area' || (Number(comment.w) > 0 && Number(comment.h) > 0))
+    ).map(comment => Object.freeze({
+      number: Number(comment.number) || 0, type: comment.type === 'area' ? 'area' : 'point',
+      x: Number(comment.x), y: Number(comment.y), w: Number(comment.w) || 0, h: Number(comment.h) || 0,
+    })));
+    return Object.freeze({ id: item.id, label: item.label, src: item.src, ...size, kind: item.kind === 'original' ? 'original' : 'revision', comments });
   }));
 }
 
@@ -96,6 +110,7 @@ export function mountRevisionComparison(container, options) {
   const toolbar = node(doc, 'div', 'ai-comparison-toolbar');
   const wipeButton = button(doc, '겹쳐 비교');
   const sideButton = button(doc, '나란히 비교');
+  if (options.wipeOnly) { wipeButton.hidden = true; sideButton.hidden = true; }
   const zoomOut = button(doc, '−'); zoomOut.setAttribute('aria-label', '비교 축소');
   const zoomIn = button(doc, '+'); zoomIn.setAttribute('aria-label', '비교 확대');
   const zoomValue = node(doc, 'output', 'ai-comparison-zoom');
@@ -123,10 +138,13 @@ export function mountRevisionComparison(container, options) {
     const pane = node(doc, 'div', `ai-comparison-pane ai-comparison-${name}`);
     const svg = doc.createElementNS(SVG_NS, 'svg'); svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
     const image = doc.createElementNS(SVG_NS, 'image'); image.setAttribute('preserveAspectRatio', 'xMidYMid meet');
-    svg.append(image); pane.append(svg); stage.append(pane);
+    const markers = doc.createElementNS(SVG_NS, 'g');
+    markers.setAttribute('class', 'ai-comparison-markers');
+    markers.setAttribute('aria-hidden', 'true');
+    svg.append(image, markers); pane.append(svg); stage.append(pane);
     const id = options[`${name}RevisionId`] || defaults[`${name}RevisionId`];
     if (!revisions.some(item => item.id === id)) throw new RangeError(`Unknown comparison revision id: ${id}`);
-    const side = { name, select, status, retry, pane, svg, image, id, size: null, state: 'loading', request: null, generation: 0, pending: Promise.resolve() };
+    const side = { name, select, status, retry, pane, svg, image, markers, markerNodes: [], id, size: null, state: 'loading', request: null, generation: 0, pending: Promise.resolve() };
     listen(select, 'change', () => { side.id = select.value; load(side); });
     listen(retry, 'click', () => load(side));
     return side;
@@ -154,6 +172,35 @@ export function mountRevisionComparison(container, options) {
       side.svg.setAttribute('viewBox', viewBox);
       const bounds = geometry[side.name];
       for (const [key, value] of Object.entries(bounds)) side.image.setAttribute(key, String(value));
+      side.markers.style.display = side.state === 'ready' ? '' : 'none';
+      for (const marker of side.markerNodes) {
+        const { comment, shape, badge, label } = marker;
+        const x = bounds.x + comment.x / 100 * bounds.width;
+        const y = bounds.y + comment.y / 100 * bounds.height;
+        if (comment.type === 'area') {
+          shape.setAttribute('x', String(x)); shape.setAttribute('y', String(y));
+          shape.setAttribute('width', String(comment.w / 100 * bounds.width));
+          shape.setAttribute('height', String(comment.h / 100 * bounds.height));
+          shape.setAttribute('stroke-width', String(2 / geometry.scale));
+        }
+        badge.setAttribute('cx', String(x)); badge.setAttribute('cy', String(y));
+        badge.setAttribute('r', String(10 / geometry.scale));
+        label.setAttribute('x', String(x)); label.setAttribute('y', String(y));
+        label.setAttribute('font-size', String(11 / geometry.scale));
+      }
+    });
+  }
+  function fillMarkers(side, item) {
+    side.markers.replaceChildren();
+    side.markerNodes = item.comments.map(comment => {
+      const shape = doc.createElementNS(SVG_NS, comment.type === 'area' ? 'rect' : 'circle');
+      const badge = comment.type === 'area' ? doc.createElementNS(SVG_NS, 'circle') : shape;
+      const label = doc.createElementNS(SVG_NS, 'text');
+      label.textContent = String(comment.number);
+      side.markers.append(shape);
+      if (badge !== shape) side.markers.append(badge);
+      side.markers.append(label);
+      return { comment, shape, badge, label };
     });
   }
   function fillSelectors() {
@@ -170,6 +217,7 @@ export function mountRevisionComparison(container, options) {
     const request = new win.AbortController(); side.request = request;
     const generation = ++side.generation;
     const item = revisions.find(value => value.id === side.id);
+    fillMarkers(side, item);
     side.size = null; side.state = 'loading'; side.status.textContent = '불러오는 중…'; side.retry.hidden = true;
     side.image.removeAttribute('href'); side.svg.setAttribute('aria-label', item.label);
     render();

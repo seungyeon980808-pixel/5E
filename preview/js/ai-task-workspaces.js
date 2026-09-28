@@ -199,23 +199,11 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
     let count=active.panel.querySelector('[data-ai-selection-count]');
     if(!count){count=document.createElement('output');count.dataset.aiSelectionCount='';active.panel.querySelector('[data-ai-tabs]').prepend(count);}
     count.textContent = `${selectedTasks.values().length}개 선택`;
-    const renderKey=JSON.stringify([batchIssue,batchJobs.map(job=>[job.id,job.state,job.progress,job.error,job.attempt])]);
+    controls.hidden = !batchIssue;
+    const renderKey=JSON.stringify([batchIssue]);
     if(controls.dataset.renderKey===renderKey)return;
     controls.dataset.renderKey=renderKey;controls.replaceChildren();
     if (batchIssue) { const error = document.createElement('p'); error.setAttribute('role','alert'); error.textContent = batchIssue; controls.append(error); }
-    for (const job of batchJobs) {
-      const row = document.createElement('div'); row.dataset.aiWorkspaceJob = job.id; row.dataset.state = job.state;
-      const label = document.createElement('span');
-      label.textContent = `${job.sourceSnapshot?.snapshot?.title || job.sourceSnapshot?.owner?.taskId || '복원 작업'} · ${{queued:'대기',running:'진행 중',completed:'완료',failed:'실패',cancelled:'취소'}[job.state]} ${job.state==='running' ? ({preparing:'요청 준비',generating:'이미지 생성',validating:'결과 확인','confirmation-wait':'사용자 확인 대기'})[job.progress?.phase] || '' : ''} ${job.error || ''}`;
-      row.append(label);
-      if (['queued','running','failed'].includes(job.state)) {
-        const button = document.createElement('button'); button.type='button'; button.className='modal-btn'; button.textContent=job.state==='failed'?'다시 시도':'취소';
-        button.dataset.aiWorkspaceJobAction=job.state==='failed'?'retry':'cancel';
-        button.onclick=async()=>{button.disabled=true;try{await workspaceBatch[button.dataset.aiWorkspaceJobAction](job.id);}catch(error){batchError(error);}finally{await refreshBatch();}};
-        row.append(button);
-      }
-      controls.append(row);
-    }
   }
   async function refreshBatch() {
     if (!workspaceBatch || batchDisposed) return;
@@ -394,6 +382,11 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
         row.dataset.aiBatchSelected=String(batchSelected);
         row.dataset.workState = source.dataset.workState || 'idle';
         row.title = source.title || source.textContent.replace('×', '').trim();
+        const job = batchJobs.find(candidate => ownerKey(candidate.sourceSnapshot?.owner) === ownerKey(batchOwner)
+          && ['queued', 'running', 'failed'].includes(candidate.state));
+        row.dataset.aiGenerationActive = String(job?.state === 'running' || row.dataset.workState === 'busy');
+        if (job) row.dataset.aiWorkspaceJob = job.id;
+        else delete row.dataset.aiWorkspaceJob;
         for (const selector of ['.ai-task-tab-title', '.ai-task-tab-time']) {
           const next = source.querySelector(selector)?.textContent || '';
           const node = row.querySelector(selector);
@@ -426,6 +419,27 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
           };
         }
         const close = row.querySelector('.ai-task-delete');
+        let jobAction = row.querySelector('.ai-task-job-action');
+        if (job) {
+          if (!jobAction) {
+            jobAction = document.createElement('button');
+            jobAction.type = 'button';
+            jobAction.className = 'ai-task-job-action';
+            row.insertBefore(jobAction, close);
+          }
+          const action = job.state === 'failed' ? 'retry' : 'cancel';
+          jobAction.dataset.aiWorkspaceJobAction = action;
+          jobAction.textContent = action === 'retry' ? '↻' : '■';
+          jobAction.setAttribute('aria-label', `${source.querySelector('.ai-task-tab-title')?.textContent || taskId} ${action === 'retry' ? '다시 시도' : '변환 취소'}`);
+          jobAction.title = action === 'retry' ? '변환 다시 시도' : '변환 취소';
+          jobAction.onclick = async event => {
+            event.stopPropagation();
+            jobAction.disabled = true;
+            try { await workspaceBatch[action](job.id); }
+            catch (error) { batchError(error); }
+            finally { await refreshBatch(); }
+          };
+        } else jobAction?.remove();
         if (close) {
           close.disabled = !entry.ready || batchJobs.some(job=>['running','queued'].includes(job.state)&&ownerKey(job.sourceSnapshot.owner)===ownerKey(batchOwner));
           close.onclick = event => {

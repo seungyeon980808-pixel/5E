@@ -430,11 +430,11 @@ async function compareAndInsert(page, owner, label) {
   const revision = versions[0], original = tab.images.find(item => item.kind === 'reference');
   await selectVersion(page, owner, revision.id, `${label}-nonlatest-selection`);
   await page.click(`${panel} [data-ai-compare]`);
-  const dialog = page.getByRole('dialog', { name: '원본과 수정본 비교', exact: true });
-  await dialog.waitFor();
+  const comparison = page.locator(`${panel} .ai-inline-comparison .ai-comparison`);
+  await comparison.waitFor();
   assert.equal(await page.getByLabel('오른쪽 비교 버전', { exact: true }).inputValue(), revision.id);
   await page.getByLabel('왼쪽 비교 버전', { exact: true }).selectOption(original.id);
-  await page.getByRole('button', { name: '겹쳐 비교', exact: true }).click();
+  assert.equal(await comparison.getAttribute('data-mode'), 'wipe');
   await until(async () => (await page.locator('.ai-comparison-right image').getAttribute('href')) && (await page.locator('.ai-comparison-left image').getAttribute('href')), 'comparison images decode', 15000);
   assert.equal(digest(await page.locator('.ai-comparison-right image').getAttribute('href')), revision.sha256);
   assert.equal(digest(await page.locator('.ai-comparison-left image').getAttribute('href')), original.sha256);
@@ -443,7 +443,7 @@ async function compareAndInsert(page, owner, label) {
   await slider.focus(); await slider.press('ArrowRight');
   assert.notEqual(await slider.getAttribute('aria-valuenow'), ratio, 'Wipe boundary actually moves');
   await screenshot(page, `${label}-nonlatest-compare`);
-  await page.getByRole('button', { name: '비교 닫기', exact: true }).click();
+  await page.click(`${panel} [data-ai-compare]`);
   const count = requests().length, canvasBefore = await canvasObjects(page);
   assert.equal(canvasBefore.length, 0, 'Owned acceptance canvas begins empty');
   await page.selectOption(`${panel} select[data-ai-generation-mode]`, 'single');

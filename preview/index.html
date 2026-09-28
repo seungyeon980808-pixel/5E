@@ -47,8 +47,8 @@
   <link rel="stylesheet" href="css/unified-library.css?v=1.6.0-workbench-polish-0928-final" />
   <link rel="stylesheet" href="css/parts-library.css?v=1.6.0-preview-labeler-0917-1111" />
   <link rel="stylesheet" href="css/tutorial.css?v=1.6.0-preview-labeler-0917-1111" />
-  <link rel="stylesheet" href="css/ai-panel.css?v=1.6.0-workbench-polish-0928-final" />
-  <link rel="stylesheet" href="css/ai-comparison.css?v=1.6.0-workbench-polish-0928-final" />
+  <link rel="stylesheet" href="css/ai-panel.css?v=1.6.0-inline-comparison-0928" />
+  <link rel="stylesheet" href="css/ai-comparison.css?v=1.6.0-inline-comparison-0928" />
   <link rel="stylesheet" href="css/ai-composition-editor.css?v=1.6.0-preview-labeler-0917-1111" />
   <link rel="stylesheet" href="css/ai-editable-assets.css?v=1.6.0-workbench-polish-0928-final" />
   <link rel="stylesheet" href="css/panel-visibility.css?v=1.6.0-preview-ui-l160-r180-0921" />
@@ -476,8 +476,9 @@
               <button type="button" data-ai-layout-mode="source" aria-pressed="false" title="Space로 수정본과 빠르게 비교">원본</button>
               <button type="button" class="is-on" data-ai-layout-mode="result" aria-pressed="true" title="Space로 원본과 빠르게 비교">수정본</button>
               <button type="button" data-ai-layout-mode="side-by-side" aria-pressed="false">비교</button>
-              <button type="button" data-ai-compare hidden>전체 비교</button>
+              <button type="button" data-ai-compare hidden aria-pressed="false">겹쳐 비교</button>
             </div>
+            <button type="button" class="ai-comment-visibility" data-ai-comment-visibility aria-pressed="true" title="이미지 위의 코멘트 표시를 켜거나 끕니다">코멘트 표시</button>
 <div class="ai-pane-zoom" data-ai-pane-zoom="shared" role="group" aria-label="이미지 배율">
                   <button type="button" data-ai-zoom-action="out" aria-label="이미지 축소">−</button>
                   <output data-ai-zoom-value>100%</output>
