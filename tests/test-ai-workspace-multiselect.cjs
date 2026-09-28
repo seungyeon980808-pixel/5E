@@ -415,11 +415,11 @@ test('one bounded selected image round-trips without repeated image bytes and st
   await recovered.batch.dispose(); await first.batch.dispose();
 });
 
-test('compact workspace records keep original image/record caps and refuse corrupt encodings before retry', async () => {
+test('compact workspace records enforce transport-aligned image/record caps and refuse corrupt encodings before retry', async () => {
   const f = await fixture();
   for (const mutate of [
-    value => { value.snapshot.options.padding = 'x'.repeat(1500000); },
-    value => { const bytes=Buffer.alloc(1048577); Buffer.from([137,80,78,71,13,10,26,10]).copy(bytes); value.snapshot.dataUrl='data:image/png;base64,'+bytes.toString('base64'); },
+    value => { value.snapshot.options.padding = 'x'.repeat(12000000); },
+    value => { const bytes=Buffer.alloc(8000001); Buffer.from([137,80,78,71,13,10,26,10]).copy(bytes); value.snapshot.dataUrl='data:image/png;base64,'+bytes.toString('base64'); },
     value => { value.snapshot.dataUrl='data:image/png;base64,AAAA'; },
     value => { value.snapshot.options=[]; },
   ]) { const value=entry(0);mutate(value);assert.equal(f.batch.prepare([value]).eligible,false); }
