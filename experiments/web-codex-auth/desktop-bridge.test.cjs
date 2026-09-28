@@ -10,7 +10,7 @@ class Fake extends EventEmitter {
   async rpc(method, params) {
     this.calls.push({ method, params });
     if (method === 'account/read') return { account: this.signedIn ? { type: 'chatgpt' } : null };
-    if (method === 'model/list') return { data: [{ model: 'gpt-5.6-sol' }] };
+    if (method === 'model/list') return { data: [{ model: 'gpt-5.6-sol', supportedReasoningEfforts: [{ reasoningEffort: 'medium' }], serviceTiers: ['priority'] }] };
     if (method === 'thread/start') return { thread: { id: 'native-thread' } };
     if (method === 'turn/start') return { turn: { id: 'native-turn' } };
     return {};
@@ -23,7 +23,7 @@ test('native UI transport preserves prompt, isolates workspaces and emits one ra
   const runtime = new Fake(); const session = new Session(runtime); t.after(() => session.close());
   const bridge = session.bridge;
   assert.equal((await bridge.call('status', payload)).server, true);
-  assert.deepEqual(await bridge.call('models', payload), { data: [{ model: 'gpt-5.6-sol' }] });
+  assert.deepEqual((await bridge.call('models', payload)).data, { data: [{ model: 'gpt-5.6-sol', supportedReasoningEfforts: [{ reasoningEffort: 'medium' }], serviceTiers: ['priority'] }] }.data);
   const sent = await bridge.call('send', payload);
   assert.equal(sent.renderThreadId, sent.turnId);
   const generation = session.generations.generation(sent.turnId);

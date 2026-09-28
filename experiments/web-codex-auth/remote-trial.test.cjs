@@ -79,7 +79,8 @@ test('trial defaults global generation capacity to five while accepting an expli
     runtime.directory = '/tmp/5e-trial-default-test';
     runtime.rpc = async method => {
       if (method === 'account/read') return { account: { type: 'chatgpt' } };
-      if (method === 'thread/start') return { thread: { id: `thread-${started.length + 1}` } };
+      if (method === 'model/list') return { data: [{ model: 'gpt-5.6-sol', supportedReasoningEfforts: [{ reasoningEffort: 'medium' }], serviceTiers: ['priority'] }] };
+    if (method === 'thread/start') return { thread: { id: `thread-${started.length + 1}` } };
       if (method === 'turn/start') {
         const turnId = `turn-${started.length + 1}`;
         started.push(turnId);
@@ -145,7 +146,9 @@ test('private proxy requires invitation, rejects cross-origin posts, and secures
     }); req.on('error', reject); req.end();
   });
   try {
-    assert.equal((await request('/healthz')).status, 200);
+    const health = await request('/healthz');
+    assert.equal(health.status, 200);
+    assert.deepEqual(await health.json(), { status: 'ready', mode: 'private-device-code-trial', modelCallsFromHealthCheck: 0, revision: process.env.RENDER_GIT_COMMIT || null, modelSelection: 'runtime-catalog-v1' });
     assert.equal((await request('/api/session', { method: 'POST', headers: { Origin: 'https://trial.example' } })).status, 401);
     assert.equal(hits, 0);
     assert.equal((await request('/trial/' + 'b'.repeat(64))).status, 401);

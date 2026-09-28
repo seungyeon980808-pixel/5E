@@ -7,7 +7,7 @@ const PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwM
 class Fake extends EventEmitter {
   constructor(directory) { super(); this.directory = directory; this.calls = []; this.signedIn = true; }
   async init() {}
-  async rpc(method, params) { this.calls.push({ method, params }); if (method === 'account/read') return { account: this.signedIn ? { type: 'chatgpt' } : null }; if (method === 'thread/start') return { thread: { id: 'thread' } }; if (method === 'turn/start') return { turn: { id: 'turn' } }; return {}; }
+  async rpc(method, params) { this.calls.push({ method, params }); if (method === 'account/read') return { account: this.signedIn ? { type: 'chatgpt' } : null }; if (method === 'model/list') return { data: [{ model: 'gpt-5.6-sol', isDefault: true, defaultReasoningEffort: 'medium', supportedReasoningEfforts: [{ reasoningEffort: 'medium' }], serviceTiers: ['priority'] }] }; if (method === 'thread/start') return { thread: { id: 'thread' } }; if (method === 'turn/start') return { turn: { id: 'turn' } }; return {}; }
   close() { this.dead = true; this.emit('unavailable'); }
 }
 async function until(predicate) { for (let i = 0; i < 100; i++) { if (predicate()) return; await new Promise(resolve => setTimeout(resolve, 5)); } assert.fail('Condition timed out'); }
@@ -34,7 +34,7 @@ test('HTTP generation authentication, isolation, malformed request, concurrency,
   assert.equal((await post('/api/generation', { jobId: job.jobId }, other)).status, 404);
   await until(() => runtimes[0].calls.some(call => call.method === 'turn/start'));
   const turn = runtimes[0].calls.find(call => call.method === 'turn/start').params;
-  assert.equal(turn.model, 'gpt-5.6-sol'); assert.equal(turn.effort, 'medium'); assert.equal(turn.serviceTier, 'priority');
+  assert.equal(turn.model, 'gpt-5.6-sol'); assert.equal(turn.effort, 'medium'); assert.equal(turn.serviceTier, null);
   runtimes[0].emit('notification', { method: 'item/completed', params: { threadId: 'wrong', turnId: 'turn', item: { type: 'imageGeneration', result: PNG } } });
   assert.equal((await (await post('/api/generation', { jobId: job.jobId }, cookie)).json()).state, 'running');
   runtimes[0].emit('notification', { method: 'item/completed', params: { threadId: 'thread', turnId: 'turn', item: { type: 'imageGeneration', result: PNG } } });

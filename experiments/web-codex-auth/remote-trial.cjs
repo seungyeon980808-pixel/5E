@@ -61,7 +61,7 @@ function createTrialProxy({ gatewayPort, publicOrigin, accessKey, webEditorOrigi
     if (req.headers.host !== external.host || (req.headers.origin && req.headers.origin !== publicOrigin && !direct)) return reject(403, 'Origin rejected');
     if (req.method === 'GET' && req.url === '/healthz') {
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      return res.end(JSON.stringify({ status: 'ready', mode: 'private-device-code-trial', modelCallsFromHealthCheck: 0 }));
+      return res.end(JSON.stringify({ status: 'ready', mode: 'private-device-code-trial', modelCallsFromHealthCheck: 0, revision: process.env.RENDER_GIT_COMMIT || null, modelSelection: 'runtime-catalog-v1' }));
     }
     if (req.headers['sec-fetch-site'] === 'cross-site' && req.method !== 'GET' && !direct) return reject(403, 'Origin rejected');
     const invitation = /^\/trial\/([a-f0-9]{64})$/.exec(req.url);

@@ -1,6 +1,7 @@
-const { RequestError } = require('./generation.cjs');
+const { RequestError, validateInput } = require('./generation.cjs');
 const { GenerationManager } = require('./generation-manager.cjs');
 const { DesktopBridge } = require('./desktop-bridge.cjs');
+const { resolveSelection } = require('./model-selection.cjs');
 class Session {
   constructor(runtime, { loginTimeout = 600000, generationTimeout, loginMode = 'chatgpt', generationScheduler, schedulerOwner } = {}) {
     if (!['chatgpt', 'chatgptDeviceCode'].includes(loginMode)) throw new Error('Unsupported login mode');
@@ -59,7 +60,9 @@ class Session {
   }
   async startGeneration(input, prepared) {
     if (!(await this.status()).signedIn) throw new RequestError(401, 'Sign in first');
-    return this.generations.start(input, prepared);
+    validateInput(input);
+    const selection = await resolveSelection(this.runtime, prepared?.selection || {});
+    return this.generations.start(input, { ...prepared, images: prepared?.images ?? (input.image ? [input.image] : []), selection });
   }
   async generate(input) {
     return (await this.startGeneration(input)).job;

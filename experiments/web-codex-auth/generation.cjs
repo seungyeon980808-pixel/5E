@@ -44,7 +44,7 @@ class Generation {
     if (this.job && (this.job.state === 'running' || this.job.launchPending || (this.job.turnId && !this.job.stopped))) throw new RequestError(409, 'Generation already running');
     this.job = { jobId: randomUUID(), state: 'queued', launchPending: false, queuedAt: Date.now() };
     this.releaseNotified = false;
-    this.preparedInput = { value, prepared };
+    this.preparedInput = { value: { ...value }, prepared: prepared ? { ...prepared, images: prepared.images ? [...prepared.images] : undefined, selection: prepared.selection ? Object.freeze({ ...prepared.selection }) : undefined } : null };
     return this.snapshot(this.job.jobId);
   }
   launch() {
@@ -80,13 +80,14 @@ class Generation {
   async execute(value, job, prepared) {
     const { APPROVED_FIRST_PROMPT } = await import(pathToFileURL(path.resolve(__dirname, '../../js/ai-approved-first-png.js')).href);
     if (job.state !== 'running') return;
-    const thread = await this.runtime.rpc('thread/start', { model: 'gpt-5.6-sol', serviceTier: 'priority', ephemeral: true, cwd: this.runtime.directory, approvalPolicy: 'never', sandbox: 'read-only', config: { 'features.shell_tool': false, 'features.image_generation': true, web_search: 'disabled' }, baseInstructions: 'Use only the image generation tool once. Never execute commands, browse, inspect files, review, retry, or postprocess. Return the first PNG.', developerInstructions: '' });
+    const { model, effort, serviceTier } = prepared?.selection ?? { model: 'gpt-5.6-sol', effort: 'medium', serviceTier: 'priority' };
+    const thread = await this.runtime.rpc('thread/start', { model, serviceTier, ephemeral: true, cwd: this.runtime.directory, approvalPolicy: 'never', sandbox: 'read-only', config: { 'features.shell_tool': false, 'features.image_generation': true, web_search: 'disabled' }, baseInstructions: 'Use only the image generation tool once. Never execute commands, browse, inspect files, review, retry, or postprocess. Return the first PNG.', developerInstructions: '' });
     job.threadId = thread.thread?.id;
     if (!job.threadId) throw new Error('Missing thread');
     if (job.state !== 'running') return;
     const input = [{ type: 'text', text: prepared?.text ?? (APPROVED_FIRST_PROMPT + (value.request.trim() ? '\n\n사용자 추가 요청:\n' + value.request : '')), text_elements: [] }];
     for (const url of prepared?.images ?? (value.image ? [value.image] : [])) input.push({ type: 'image', url });
-    const result = await this.runtime.rpc('turn/start', { threadId: job.threadId, model: 'gpt-5.6-sol', effort: 'medium', serviceTier: 'priority', approvalPolicy: 'never', input });
+    const result = await this.runtime.rpc('turn/start', { threadId: job.threadId, model, effort, serviceTier, approvalPolicy: 'never', input });
     job.turnId = result.turn?.id || job.turnId;
     if (job.state !== 'running') await this.interrupt(job);
   }

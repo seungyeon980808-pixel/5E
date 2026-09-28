@@ -14,6 +14,7 @@ class BrowserRuntime extends EventEmitter {
   close() { this.dead = true; }
   async rpc(method, params = {}) {
     if (method === 'account/read') return { account: { type: 'chatgpt' } };
+    if (method === 'model/list') return { data: [{ model: 'gpt-5.6-sol', supportedReasoningEfforts: [{ reasoningEffort: 'medium' }], serviceTiers: ['priority'] }] };
     if (method === 'thread/start') return { thread: { id: `${this.id}-thread-${++this.serial}` } };
     if (method === 'turn/start') {
       this.activity.push({ event: 'started', session: this.id, turnId: `${this.id}-turn-${this.serial}` });
