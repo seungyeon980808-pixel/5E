@@ -1,4 +1,4 @@
-import { attachCropMagnifier } from "./tools/pointer-magnifier.js?v=1.6.0-workbench-polish-0928-final";
+import { attachCropMagnifier } from "./tools/pointer-magnifier.js?v=1.6.0-library-keyboard-magnifier-0928";
 import { targetPageGeometry, fittedPageSize, createPreviewPaper } from "./library/page-loading.js?v=1.6.0-workbench-polish-0928-final";
 import { createContinuousCropPages } from "./library/continuous-crop-pages.js?v=1.6.0-workbench-polish-0928-final";
 import { registerEscapeLayer } from "./escape-layers.js?v=1";
@@ -82,7 +82,9 @@ function resultCardTarget(target) {
 }
 
 export function shouldHandleLibrarySpace(event) {
-  return event?.key === " " && (!editableTarget(event.target) || resultCardTarget(event.target));
+  return [" ", "Enter"].includes(event?.key)
+    && (!editableTarget(event.target) || resultCardTarget(event.target))
+    && !event?.isComposing && !event?.ctrlKey && !event?.metaKey && !event?.altKey && !event?.shiftKey;
 }
 
 export function activePdfPageResult(result, matchIndex = 0) {
@@ -505,8 +507,8 @@ export function cropContentBoundsForResult(result, candidates = []) {
     return candidateSource.documentId === source.documentId && candidateSource.pageNumber === source.pageNumber;
   });
   const rects = pageResults.flatMap((candidate) => {
-    const rect = candidate?.variants?.content?.source?.rect
-      ?? candidate?.variants?.full?.source?.rect
+    const rect = candidate?.variants?.full?.source?.rect
+      ?? candidate?.variants?.content?.source?.rect
       ?? candidate?.provenance?.rect;
     if (!Array.isArray(rect) || rect.length !== 4 || rect.some((value) => !Number.isFinite(Number(value))) || Number(rect[2]) <= 0 || Number(rect[3]) <= 0) return [];
     const normalized = clampRect(rect);
@@ -1080,6 +1082,14 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     host.querySelector("[data-unilib-result-retry]").hidden = state !== "error";
     list.setAttribute("aria-busy", String(state === "loading"));
   };
+  const setPreviewLoading = () => {
+    const loading = document.createElement("div");
+    loading.className = "unilib-preview-loading";
+    loading.setAttribute("role", "status");
+    loading.textContent = "미리보기를 불러오는 중…";
+    stage.replaceChildren(loading);
+    stage.setAttribute("aria-busy", "true");
+  };
   const setProvidedStatus = (message, error = false) => {
     const host = overlay.querySelector("[data-unilib-provided-status]");
     host.hidden = !error;
@@ -1274,6 +1284,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     thumbnailObserver?.disconnect();
     const requestId = `unilib-${++requestSequence}`;
     setResultState("loading", "검색 결과를 불러오는 중…");
+    setPreviewLoading();
     overlay.querySelector("[data-unilib-count]").textContent = "불러오는 중";
     setStatus("라이브러리를 검색하는 중…");
     try {
@@ -1318,6 +1329,8 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       if (error?.name !== "AbortError" && ownEpoch === searchEpoch) {
         const message = `검색 실패: ${error instanceof Error ? error.message : error}`;
         setResultState("error", message);
+        stage.removeAttribute("aria-busy");
+        stage.textContent = "미리보기를 불러오지 못했습니다. 검색을 다시 시도해 주세요.";
         setStatus(message, true);
       }
     }
@@ -1917,6 +1930,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     returnFocus = trigger || document.activeElement;
     overlay.hidden = false;
     setResultState("loading", "검색 결과를 불러오는 중…");
+    setPreviewLoading();
     setSearchPaneOpen(searchPaneOpen);
     setPreviewPaneOpen(previewPaneOpen);
     setFolderLoading("loading");
@@ -1946,6 +1960,8 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       if (!isCurrentOpen()) return;
       const message = error instanceof Error ? error.message : String(error);
       setFolderLoading("error", message);
+      stage.removeAttribute("aria-busy");
+      stage.textContent = "미리보기를 준비하지 못했습니다. 폴더 연결을 확인해 주세요.";
       setStatus(`라이브러리 폴더를 불러오지 못했습니다: ${message}`, true);
     }
   }
@@ -2387,6 +2403,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     surface: cropStage, image: cropImage,
     inspector: overlay.querySelector(".unilib-crop-preview"),
     id: "library-crop-magnifier",
+    context: "library",
     available: () => cropReady && !cropDialog.hidden && !overlay.hidden && !cropSession?.viewOnly,
   });
   const sizePendingCrop = (geometry) => {
@@ -2525,21 +2542,32 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     cropZoomOutput.textContent = cropZoomOutput.value;
   };
   const centerCropContent = () => {
-    if (continuousCrop.mounted) { continuousCrop.activate(cropSession.pageNumber, true); return; }
+    if (continuousCrop.mounted) {
+      continuousCrop.activate(cropSession.pageNumber, true);
+      if (selectedActiveResult()?.kind !== "crop") return;
+    }
     const [x, y, width, height] = cropFitBounds;
     const focusY = draftCrop ? draftCrop[1] + draftCrop[3] / 2 : y + height / 2;
-    cropStage.scrollLeft = (x + width / 2) * cropCanvas.offsetWidth - cropStage.clientWidth / 2;
-    cropStage.scrollTop = height * cropCanvas.offsetHeight > cropStage.clientHeight
-      ? y * cropCanvas.offsetHeight
-      : focusY * cropCanvas.offsetHeight - cropStage.clientHeight / 2;
+    const stageRect = cropStage.getBoundingClientRect();
+    const canvasRect = cropCanvas.getBoundingClientRect();
+    const canvasLeft = canvasRect.left - stageRect.left + cropStage.scrollLeft;
+    const canvasTop = canvasRect.top - stageRect.top + cropStage.scrollTop;
+    cropStage.scrollLeft = canvasLeft + (x + width / 2) * cropCanvas.offsetWidth - cropStage.clientWidth / 2;
+    cropStage.scrollTop = canvasTop + focusY * cropCanvas.offsetHeight - cropStage.clientHeight / 2;
   };
   const fitCropContent = () => {
     if (!cropImage.naturalWidth || !cropImage.naturalHeight || !cropStage.clientWidth || !cropStage.clientHeight) return;
-    const [, , contentWidth] = cropFitBounds;
+    const [, , contentWidth, contentHeight] = cropFitBounds;
     const stageStyle = getComputedStyle(cropStage);
     const horizontalInset = Number.parseFloat(stageStyle.paddingLeft) + Number.parseFloat(stageStyle.paddingRight);
     const availableWidth = Math.max(1, cropStage.clientWidth - horizontalInset);
-    cropBaseScale = Math.max(0.01, availableWidth / (cropImage.naturalWidth * contentWidth));
+    const verticalInset = Number.parseFloat(stageStyle.paddingTop) + Number.parseFloat(stageStyle.paddingBottom);
+    const availableHeight = Math.max(1, cropStage.clientHeight - verticalInset);
+    const widthScale = availableWidth / (cropImage.naturalWidth * contentWidth);
+    const question = selectedActiveResult()?.kind === "crop";
+    cropBaseScale = Math.max(0.01, question
+      ? Math.min(widthScale, availableHeight / (cropImage.naturalHeight * contentHeight))
+      : widthScale);
     cropZoom = 1;
     sizeCropCanvas();
     centerCropContent();
@@ -3110,20 +3138,16 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       suppressSpaceKeyup = false;
       const id = selectedId;
       const identity = libraryResultIdentity(selectedActiveResult());
-      const press = { id, identity, opened: false, long: false, released: false, timer: null, waitTimer: null };
-      press.timer = window.setTimeout(() => {
-        if (spacePress !== press || selectedId !== id || libraryResultIdentity(selectedActiveResult()) !== identity || overlay.hidden) return;
-        press.long = true;
-        void continueSpacePreview(press);
-      }, 400);
+      const press = { id, identity, opened: false, released: false, waitTimer: null };
       spacePress = press;
+      void continueSpacePreview(press);
     }
   }, true);
   document.addEventListener("focusin", (event) => {
     if (spacePress && !event.target?.closest?.(`[data-result-id="${CSS.escape(spacePress.id)}"]`)) cancelSpacePress();
   }, true);
   document.addEventListener("keyup", (event) => {
-    if (event.key !== " ") return;
+    if (![" ", "Enter"].includes(event.key)) return;
     if (!spacePress) {
       if (suppressSpaceKeyup) event.preventDefault();
       suppressSpaceKeyup = false;
@@ -3131,13 +3155,8 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     }
     event.preventDefault();
     const press = spacePress;
-    if (press.long) {
-      press.released = true;
-      return;
-    }
-    cancelSpacePress();
-    suppressSpaceKeyup = false;
-    if (!press.opened && !overlay.hidden && press.id === selectedId) focusResultCard(press.id);
+    press.released = true;
+    if (press.opened) cancelSpacePress();
   }, true);
   let referenceConsumer = null;
   let focusSyncTimer = 0;

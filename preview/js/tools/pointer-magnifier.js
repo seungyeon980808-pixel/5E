@@ -6,7 +6,9 @@ const SCALE = 8;
 const OFFSET = 24;
 const MARGIN = 8;
 const preferenceEvent = "5e:crop-magnifier-preference";
-let sessionPreference = true;
+const preferences = new Map();
+const preferenceKey = (context) => context === "canvas" || context === "library"
+  ? `crop-magnifier-${context}` : "crop-magnifier";
 
 export function magnifierPosition(x, y, width, height) {
   const fit = (point, limit) => Math.max(MARGIN, Math.min(
@@ -16,22 +18,25 @@ export function magnifierPosition(x, y, width, height) {
   return { x: fit(x, width), y: fit(y, height) };
 }
 
-export function cropMagnifierEnabled() {
-  try { return previewStorage.getItem("crop-magnifier") !== "false"; }
-  catch { return sessionPreference; }
+export function cropMagnifierEnabled(context = "capture") {
+  const fallback = context !== "library";
+  try {
+    const stored = previewStorage.getItem(preferenceKey(context));
+    return stored === null ? preferences.get(context) ?? fallback : stored === "true";
+  } catch { return preferences.get(context) ?? fallback; }
 }
 
-export function mountCropMagnifierToggle(host) {
+export function mountCropMagnifierToggle(host, context = "canvas") {
   const label = document.createElement("label");
   label.className = "crop-magnifier-control";
   const input = document.createElement("input");
   input.type = "checkbox";
   input.dataset.cropMagnifierToggle = "";
-  const sync = () => { input.checked = cropMagnifierEnabled(); };
+  const sync = () => { input.checked = cropMagnifierEnabled(context); };
   sync();
   input.addEventListener("change", () => {
-    sessionPreference = input.checked;
-    try { previewStorage.setItem("crop-magnifier", String(input.checked)); }
+    preferences.set(context, input.checked);
+    try { previewStorage.setItem(preferenceKey(context), String(input.checked)); }
     catch { /* A blocked settings store keeps the preference for this session. */ }
     window.dispatchEvent(new Event(preferenceEvent));
   });
@@ -155,11 +160,11 @@ export function createPointerMagnifier({ surface, sample, available, id = "crop-
   return { hide, refresh, destroy() { hide(); events.abort(); lens?.remove(); } };
 }
 
-export function attachCropMagnifier({ surface, image, inspector, available = () => true, id }) {
+export function attachCropMagnifier({ surface, image, inspector, available = () => true, id, context = "capture" }) {
   const lens = createPointerMagnifier({
-    surface, id, available: () => cropMagnifierEnabled() && available(),
+    surface, id, available: () => cropMagnifierEnabled(context) && available(),
     sample: pointer => rasterMagnifierSample(image, pointer),
   });
-  const removeToggle = mountCropMagnifierToggle(inspector);
+  const removeToggle = mountCropMagnifierToggle(inspector, context);
   return { ...lens, destroy() { lens.destroy(); removeToggle(); } };
 }
