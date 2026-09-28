@@ -8,7 +8,7 @@ const playwrightPath = process.env.PLAYWRIGHT_MODULE
   || '/Users/parkseungyeon/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright';
 const { chromium } = require(playwrightPath);
 const root = path.resolve(__dirname, '..');
-const evidenceDir = process.env.TASK6_EVIDENCE || path.join(root, '.omo/evidence/task6');
+const evidenceDir = process.env.TASK7_RELEASE_EVIDENCE || path.join(root, '.omo/evidence/ai-workbench-polish-0928/task7/release');
 
 const contentTypes = {
   '.css': 'text/css', '.html': 'text/html', '.js': 'text/javascript', '.json': 'application/json',
@@ -41,13 +41,18 @@ test('Task 6 browser flow binds preflight, insertion, and default share to the a
   fs.mkdirSync(evidenceDir, { recursive: true });
   const server = staticServer();
   await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
-  context.after(() => new Promise((resolve) => server.close(resolve)));
   const port = server.address().port;
   const browser = await chromium.launch({ headless: true });
-  context.after(() => browser.close());
   const browserContext = await browser.newContext({
     viewport: { width: 1280, height: 900 },
     recordVideo: { dir: evidenceDir, size: { width: 1280, height: 900 } },
+  });
+  await browserContext.tracing.start({screenshots:true,snapshots:true});
+  context.after(async()=>{
+    await browserContext.tracing.stop({path:path.join(evidenceDir,'release-trace.zip')});
+    await browserContext.close(); await browser.close();
+    await new Promise(resolve=>server.close(resolve));
+    fs.writeFileSync(path.join(evidenceDir,'cleanup.json'),JSON.stringify({browserContextClosed:true,browserClosed:!browser.isConnected(),serverClosed:!server.listening,serverPort:port}));
   });
   const page = await browserContext.newPage();
   const video = page.video();
@@ -59,6 +64,7 @@ test('Task 6 browser flow binds preflight, insertion, and default share to the a
     let sendCount = 0;
     let statusCount = 0;
     let lastScope = '';
+    const scopes = [];
     const subscribe = (set, callback) => { set.add(callback); return () => set.delete(callback); };
     window.__task6Mock = {
       delayStatus() {
@@ -70,8 +76,8 @@ test('Task 6 browser flow binds preflight, insertion, and default share to the a
         delayedStatus = null;
       },
       counts: () => ({ sendCount, statusCount }),
-      emitEvent(message) {
-        for (const listener of eventListeners) listener({ clientScope: lastScope, ...message });
+      emitEvent(message, index = scopes.length - 1) {
+        for (const listener of eventListeners) listener({ clientScope: scopes[index], ...message });
       },
       delayImages() {
         const NativeImage = window.Image;
@@ -96,12 +102,13 @@ test('Task 6 browser flow binds preflight, insertion, and default share to the a
       start: async () => ({ ok: true }),
       stop: async () => ({ ok: true }),
       models: async () => ({ data: [{ model: 'gpt-5.6-sol', displayName: 'Sol', isDefault: true,
-        supportedReasoningEfforts: ['low', 'medium', 'high'], serviceTiers: ['priority'] }] }),
+        defaultReasoningEffort: 'medium', supportedReasoningEfforts: ['low', 'medium', 'high'], serviceTiers: ['priority'] }] }),
       account: async () => ({ email: 'local@example.invalid', rateLimits: {} }),
       login: async () => {},
       send: async (payload) => {
         sendCount += 1;
         lastScope = payload.clientScope || '';
+        scopes.push(lastScope);
         return { turnId: `turn-${sendCount}`, threadId: `thread-${sendCount}` };
       },
       interrupt: async () => ({ ok: true }),
@@ -144,8 +151,7 @@ test('Task 6 browser flow binds preflight, insertion, and default share to the a
 
   const countsBefore = await page.evaluate(() => window.__task6Mock.counts());
   await page.evaluate(() => window.__task6Mock.delayStatus());
-  await page.locator('#ai-image-panel [data-ai-send]').click();
-  await page.locator('#ai-image-panel [data-ai-send]').click();
+  await page.locator('#ai-image-panel [data-ai-send]').dblclick();
   await page.waitForFunction((before) => window.__task6Mock.counts().statusCount === before + 1,
     countsBefore.statusCount);
   assert.equal((await page.evaluate(() => window.__task6Mock.counts())).statusCount - countsBefore.statusCount, 1);
@@ -167,15 +173,9 @@ test('Task 6 browser flow binds preflight, insertion, and default share to the a
     input.dispatchEvent(new Event('input', { bubbles: true }));
   });
   await page.evaluate(() => window.__task6Mock.releaseStatus());
-  await page.waitForFunction(() => window.__task6OldPanel
-    ?.querySelector('[data-ai-status]')
-    ?.textContent
-    ?.includes('변경'));
-  const cancelledCounts = await page.evaluate(() => window.__task6Mock.counts());
-  assert.equal(cancelledCounts.sendCount, 0);
-
-  await page.locator('#ai-image-panel [data-ai-send]').click();
   await page.waitForFunction(() => window.__task6Mock.counts().sendCount === 1);
+  assert.equal(await page.locator('#ai-image-panel .ai-generated-card').count(), 0, 'B remains unmodified while A continues');
+
   const png = await page.evaluate(() => {
     const canvas = document.createElement('canvas');
     canvas.width = 32; canvas.height = 32;
@@ -185,13 +185,17 @@ test('Task 6 browser flow binds preflight, insertion, and default share to the a
     return canvas.toDataURL('image/png');
   });
   await page.evaluate((imageDataUrl) => {
-    window.__task6Mock.emitEvent({ method: 'item/completed', params: {
-      turnId: 'turn-1', item: { type: 'imageGeneration', imageDataUrl },
-    } });
-    window.__task6Mock.emitEvent({ method: 'turn/completed', params: {
-      turn: { id: 'turn-1', status: 'completed', error: null },
-    } });
+    window.__task6Mock.emitEvent({ method: 'item/completed', params: { turnId:'turn-1', item:{type:'imageGeneration',imageDataUrl} } },0);
+    window.__task6Mock.emitEvent({ method: 'turn/completed', params: { turn:{id:'turn-1',status:'completed',error:null} } },0);
   }, png);
+  await page.waitForFunction(() => window.__task6OldPanel.querySelectorAll('.ai-generated-card').length===1 && window.__task6OldPanel.dataset.aiBusy==='false');
+  assert.equal(await page.locator('#ai-image-panel .ai-generated-card').count(),0,'A result never enters active B');
+  await page.locator('#ai-image-panel [data-ai-send]').click();
+  await page.waitForFunction(() => window.__task6Mock.counts().sendCount===2);
+  await page.evaluate((imageDataUrl) => {
+    window.__task6Mock.emitEvent({ method: 'item/completed', params: { turnId:'turn-2', item:{type:'imageGeneration',imageDataUrl} } },1);
+    window.__task6Mock.emitEvent({ method: 'turn/completed', params: { turn:{id:'turn-2',status:'completed',error:null} } },1);
+  },png);
   await page.locator('#ai-image-panel [data-ai-insert-selected]:not([disabled])').waitFor();
 
   await page.evaluate(() => { window.__releaseTask6Images = window.__task6Mock.delayImages(); });
@@ -223,5 +227,4 @@ test('Task 6 browser flow binds preflight, insertion, and default share to the a
   await page.close();
   const recordedVideo = await video.path();
   fs.copyFileSync(recordedVideo, path.join(evidenceDir, 'task-6-ai-browser.webm'));
-  await browserContext.close();
 });

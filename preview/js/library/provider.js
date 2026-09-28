@@ -242,6 +242,12 @@ function entriesForDocument(index, document) {
   }));
 }
 
+function pageGeometry(document, pageNumber) {
+  const page = document?.pages?.find((entry) => entry.pageNumber === pageNumber);
+  return page?.widthPoints > 0 && page?.heightPoints > 0
+    ? Object.freeze({ width: page.widthPoints, height: page.heightPoints }) : null;
+}
+
 function pdfPageResult(document, pageNumber, pageText, metadata, itemNumbers, pageWords = []) {
   const sourceId = pdfSourceId(document);
   const source = { documentId: document.id, pageNumber, rect: [0, 0, 1, 1], fullPageFallback: true };
@@ -253,7 +259,7 @@ function pdfPageResult(document, pageNumber, pageText, metadata, itemNumbers, pa
     sourceId, sourceLabel: document.source?.displayName ?? document.title,
     searchText: [document.title, document.source?.displayName, code, pageText].join(" "),
     metadata: { ...metadata, pageNumber, itemNumbers: Object.freeze([...itemNumbers]) },
-    preview: { source }, provenance: pdfProvenance(document, source),
+    preview: { source, pageGeometry: pageGeometry(document, pageNumber) }, provenance: pdfProvenance(document, source),
     matchText: pageText, searchWords: Object.freeze([...pageWords]),
   });
 }
@@ -281,7 +287,7 @@ function pdfQuestionResult(document, entry, metadata) {
     parentId: stableId("page", pdfSourceId(document), pageNumber),
     searchText: [document.title, document.source?.displayName, code, itemCode, entry.text].join(" "),
     metadata: { ...metadata, itemNumber, itemCode, pageNumber },
-    preview: { source }, provenance: { ...pdfProvenance(document, source), itemId: entry.itemId ?? null },
+    preview: { source, pageGeometry: pageGeometry(document, pageNumber) }, provenance: { ...pdfProvenance(document, source), itemId: entry.itemId ?? null },
     variants: {
       full: { label: "전체", source },
       content: { label: "내용", source: contentSource },
@@ -643,6 +649,7 @@ export function createUnifiedLibraryProvider(input = {}) {
       return Object.freeze(found.sort(compareExamResults).map((file) => Object.freeze({
         ...file,
         firstMatchingPage: 1,
+        getPageGeometry: (pageNumber = 1) => pageGeometry(documents.find((document) => document.id === file.documentId), pageNumber),
         loadPreview: (pageNumber = 1, previewOptions = {}) => loadPdfPage(file, pageNumber, previewOptions),
       })));
     },
@@ -728,6 +735,7 @@ export function createUnifiedLibraryProvider(input = {}) {
           requestId: options.requestId ?? null,
           firstMatchingPage: first.pageNumber,
           matches: Object.freeze(matches),
+          getPageGeometry: (pageNumber = matches[0].pageNumber) => pageGeometry(documents.find((document) => document.id === file.documentId), pageNumber),
           loadPreview: (pageNumber = matches[0].pageNumber, previewOptions = {}) => loadPdfPage(file, pageNumber, previewOptions),
         });
       }));

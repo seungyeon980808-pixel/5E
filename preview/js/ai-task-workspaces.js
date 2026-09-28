@@ -1,3 +1,5 @@
+import { createWorkspaceBatch, createWorkspaceSelection } from './ai-workspace-batch.js?v=1.6.0-workbench-polish-0928-final';
+import { createBatchStore } from './ai-batch-store.js';
 import {
   chooseTaskExportDestination,
   normalizeTaskExportMode,
@@ -48,7 +50,7 @@ export function recoverTaskWorkspaceSnapshot(value) {
       generated,
       selectedCandidateId: selected,
       workState: wasRunning ? 'interrupted' : (tab.workState || 'idle'),
-      retryRequest: wasRunning ? (tab.inFlightRequest || tab.retryRequest || null) : (tab.retryRequest || null),
+      retryRequest: (tab.inFlightRequest?.snapshot?.runInput?.workspaceBatchJobId || tab.retryRequest?.snapshot?.runInput?.workspaceBatchJobId) ? null : wasRunning ? (tab.inFlightRequest || tab.retryRequest || null) : (tab.retryRequest || null),
       inFlightRequest: wasRunning ? null : (tab.inFlightRequest || null),
       generationTiming: restoreGenerationTiming(tab.generationTiming, { interruptRunning: wasRunning }),
     };
@@ -159,18 +161,89 @@ export function createTaskPersistence({
   };
 }
 
-export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshStart = false } = {}) {
+export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshStart = false, serviceCap = 10 } = {}) {
   const original = document.getElementById('ai-image-panel');
   if (!original) return;
   const template = original.cloneNode(true);
   delete template.dataset.aiWorkbenchReady;
   const entries = [];
   const registryKey = '5e.aiParallelWorkspaces.v1';
+  const transfersKey = '5e.aiTaskTransfers.v1';
+  const readTransfers = () => {
+    try { const value = JSON.parse(localStorage.getItem(transfersKey) || '[]'); return Array.isArray(value) ? value : []; }
+    catch { return []; }
+  };
+  const writeTransfers = records => localStorage.setItem(transfersKey, JSON.stringify(records));
   let active;
   let restored = false;
   let collectiveExportInProgress = false;
   let clearing = false;
+  let selectionSequence = 0;
+  const pendingSelections = new Map();
   const selectionKey = '5e.aiActiveTask.v1';
+  const selectedTasks = createWorkspaceSelection();
+  let workspaceBatch, batchReady = false, batchTimer = null, batchDisposed = false, batchLaunching = false;
+  let batchDisposal;
+  let batchJobs = [], batchIssue = '', preparedLaunch = null;
+  const ownerKey = owner => JSON.stringify([owner?.scope?.sessionId, owner?.scope?.workspaceId, owner?.taskId]);
+  const ownerFor = (entry, id) => entry.controller?.batchOwner(id) || {scope:{sessionId:'5e',workspaceId:entry.scope||'main'},taskId:id};
+  const resolveOwner = owner => entries.find(entry => entry.controller?.ownsBatchOwner(owner));
+  const batchError = error => { batchIssue = error?.message || String(error); renderNavigation(); };
+  function renderBatchControls() {
+    if (!active) return;
+    let controls = active.panel.querySelector('[data-ai-workspace-batch]');
+    if (!controls) {
+      controls = document.createElement('div'); controls.dataset.aiWorkspaceBatch = '';
+      active.panel.querySelector('[data-ai-tabs]').append(controls);
+    }
+    let count=active.panel.querySelector('[data-ai-selection-count]');
+    if(!count){count=document.createElement('output');count.dataset.aiSelectionCount='';active.panel.querySelector('[data-ai-tabs]').prepend(count);}
+    count.textContent = `${selectedTasks.values().length}개 선택`;
+    const renderKey=JSON.stringify([batchIssue,batchJobs.map(job=>[job.id,job.state,job.progress,job.error,job.attempt])]);
+    if(controls.dataset.renderKey===renderKey)return;
+    controls.dataset.renderKey=renderKey;controls.replaceChildren();
+    if (batchIssue) { const error = document.createElement('p'); error.setAttribute('role','alert'); error.textContent = batchIssue; controls.append(error); }
+    for (const job of batchJobs) {
+      const row = document.createElement('div'); row.dataset.aiWorkspaceJob = job.id; row.dataset.state = job.state;
+      const label = document.createElement('span');
+      label.textContent = `${job.sourceSnapshot?.snapshot?.title || job.sourceSnapshot?.owner?.taskId || '복원 작업'} · ${{queued:'대기',running:'진행 중',completed:'완료',failed:'실패',cancelled:'취소'}[job.state]} ${job.state==='running' ? ({preparing:'요청 준비',generating:'이미지 생성',validating:'결과 확인','confirmation-wait':'사용자 확인 대기'})[job.progress?.phase] || '' : ''} ${job.error || ''}`;
+      row.append(label);
+      if (['queued','running','failed'].includes(job.state)) {
+        const button = document.createElement('button'); button.type='button'; button.className='modal-btn'; button.textContent=job.state==='failed'?'다시 시도':'취소';
+        button.dataset.aiWorkspaceJobAction=job.state==='failed'?'retry':'cancel';
+        button.onclick=async()=>{button.disabled=true;try{await workspaceBatch[button.dataset.aiWorkspaceJobAction](job.id);}catch(error){batchError(error);}finally{await refreshBatch();}};
+        row.append(button);
+      }
+      controls.append(row);
+    }
+  }
+  async function refreshBatch() {
+    if (!workspaceBatch || batchDisposed) return;
+    batchJobs = await workspaceBatch.list(); renderNavigation();
+    clearTimeout(batchTimer);
+    if (batchJobs.some(job=>['running','queued'].includes(job.state))) batchTimer=setTimeout(()=>{void refreshBatch().catch(batchError);},250);
+  }
+  function launchSelected() {
+    if (selectedTasks.values().length < 2) {
+      const owner=ownerFor(active,active.controller.activeTask());
+      if(batchJobs.some(job=>['running','queued'].includes(job.state)&&ownerKey(job.sourceSnapshot.owner)===ownerKey(owner))){batchError(new Error('이 작업은 대기열에서 실행 중입니다. 취소 후 새 요청을 시작하세요.'));return true;}
+      return false;
+    }
+    if (!batchReady) { batchError(new Error('작업 대기열을 복원하고 있습니다. 잠시 후 다시 실행하세요.')); return true; }
+    if (batchLaunching || preparedLaunch) return true;
+    batchIssue='';
+    const chosen=selectedTasks.values();
+    const captures=chosen.map(owner=>{
+      const entry=resolveOwner(owner);
+      try{return entry.controller.captureBatchTask(owner.taskId);}catch(error){return {...owner,snapshot:{captureError:error.message}};}
+    });
+    const report=workspaceBatch.prepare(captures);
+    if (!report.eligible) { batchIssue=report.issues.map(issue=>`${captures[issue.index]?.snapshot?.title || chosen[issue.index].taskId}: ${captures[issue.index]?.snapshot?.captureError || issue.reason}`).join('\n');renderNavigation();return true; }
+    preparedLaunch=report;batchLaunching=true;
+    void workspaceBatch.launch(report).then(refreshBatch).catch(batchError).finally(()=>{batchLaunching=false;});
+    return true;
+  }
+
   async function exportCollection(mode) {
     if (collectiveExportInProgress) {
       throw new Error('다른 작업 결과를 저장 중입니다. 완료 후 다시 시도해 주세요.');
@@ -237,6 +310,7 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
     if (index < 0) return false;
     entry.disposed = true;
     entries.splice(index, 1);
+    entry.panel.removeEventListener('input',entry.batchInputChanged);entry.panel.removeEventListener('change',entry.batchInputChanged);
     entry.controller?.dispose?.();
     entry.panel.aiWorkbench?.dispose?.();
     if (entry.panel !== original) entry.panel.remove();
@@ -245,73 +319,131 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
     saveRegistry();
     return true;
   }
+  async function selectWorkspaceTask(entry, taskId, reveal = true) {
+    const sequence = reveal ? ++selectionSequence : selectionSequence;
+    if (entry.controller.activeTask() === taskId || !entry.controller.snapshotTask) {
+      if (reveal) { activate(entry); entry.controller.selectTask(taskId); saveSelection(); }
+      return entry;
+    }
+    const key = `${entry.scope}:${taskId}`;
+    let pending = pendingSelections.get(key);
+    if (!pending) {
+      pending = (async () => {
+        const snapshot = await entry.controller.snapshotTask(taskId);
+        if(!reveal && batchDisposed)throw new Error('작업 대기열이 종료되었습니다.');
+        const target = add(crypto.randomUUID(), false);
+        try {
+          await target.controller.importTaskSnapshot(snapshot, entry.panel.dataset.aiSharingMode);
+          if(!reveal && batchDisposed)throw new Error('작업 대기열이 종료되었습니다.');
+          const transfer = { taskId, from: entry.scope, to: target.scope };
+          writeTransfers([...readTransfers(), transfer]);
+          // Register the durable destination before removing the source. A restart can finish this receipt.
+          localStorage.setItem(registryKey, JSON.stringify(entries.filter(item => item.panel !== original).map(item => item.scope).filter(Boolean)));
+          await entry.controller.removeTransferredTask(taskId);
+          writeTransfers(readTransfers().filter(record => record.to !== target.scope));
+          return target;
+        } catch (error) {
+          target.tabs = [];
+          disposeEntry(target);
+          writeTransfers(readTransfers().filter(record => record.to !== target.scope));
+          throw error;
+        }
+      })();
+      pendingSelections.set(key, pending);
+    }
+    try {
+      const target = await pending;
+      if (reveal && sequence === selectionSequence) { activate(target); saveSelection(); }
+      return target;
+    } catch (error) {
+      if (!reveal) throw error;
+      window.alert(`작업을 열지 못했습니다. 원래 작업은 유지됩니다: ${error.message}`);
+    } finally {
+      pendingSelections.delete(key);
+    }
+  }
   function renderNavigation() {
-    for (const owner of entries) {
-      const list = owner.panel.querySelector('[data-ai-tab-list]');
-      const retainedAddTask = list.querySelector(':scope > .ai-task-add');
-      const focusedControl = document.activeElement?.closest?.('.ai-task-tab-select, .ai-task-delete');
-      const focusedRow = document.activeElement?.closest?.('.ai-task-tab');
-      const focusedKey = list.contains?.(focusedRow)
-        ? `${focusedRow.dataset.aiWorkspaceLink || ''}:${focusedRow.dataset.tabId || ''}` : null;
-      const focusedKind = focusedControl?.classList.contains('ai-task-delete') ? 'delete' : 'select';
-      list.replaceChildren();
-      for (const entry of entries) {
-        for (const source of entry.tabs || []) {
-          const button = source.cloneNode(true);
-          const sourceSelect = source.querySelector('.ai-task-tab-select');
-          const selected = entry === active && sourceSelect?.getAttribute('aria-pressed') === 'true';
-          const select = button.querySelector('.ai-task-tab-select');
-          button.classList.toggle('is-on', selected);
-          select?.setAttribute('aria-pressed', String(selected));
-          if (select) select.disabled = !entry.ready;
-          button.title = source.title || source.textContent.replace('×', '').trim();
-          button.dataset.aiWorkspaceLink = entry.scope || 'legacy';
-          if (entry.panel.dataset.aiBusy === 'true' && sourceSelect?.getAttribute('aria-pressed') === 'true') {
-            const timing = button.querySelector('.ai-task-tab-time');
-            if (timing) timing.textContent = '변환 중';
-          }
-          if (select) select.onclick = () => {
-            if (entry.panel.dataset.aiBusy === 'true' && sourceSelect?.getAttribute('aria-pressed') !== 'true') return;
-            activate(entry);
-            sourceSelect?.click();
-            saveSelection();
+    // Hidden workspaces retain their cards; only the visible navigation needs reconciliation.
+    if(restored) for(const selected of selectedTasks.values())if(!resolveOwner(selected))selectedTasks.select(selected,{toggle:true});
+    const owner = active;
+    if (!owner || owner.disposed) return;
+    const list = owner.panel.querySelector('[data-ai-tab-list]');
+    if (!list) return;
+    const retainedAddTask = list.querySelector(':scope > .ai-task-add');
+    const existing = new Map([...list.querySelectorAll(':scope > .ai-task-tab[data-ai-workspace-link]')]
+      .map(row => [`${row.dataset.aiWorkspaceLink}:${row.dataset.tabId}`, row]));
+    const retained = new Set();
+    let position = 0;
+    for (const entry of entries) {
+      for (const source of entry.tabs || []) {
+        const taskId = source.dataset.tabId;
+        const key = `${entry.scope || 'legacy'}:${taskId}`;
+        const batchOwner=ownerFor(entry,taskId);
+        const batchSelected=selectedTasks.values().some(owner=>ownerKey(owner)===ownerKey(batchOwner));
+        let row = existing.get(key);
+        if (!row) {
+          row = source.cloneNode(true);
+          row.dataset.aiWorkspaceLink = entry.scope || 'legacy';
+        }
+        retained.add(row);
+        const select = row.querySelector('.ai-task-tab-select');
+        const sourceSelect = source.querySelector('.ai-task-tab-select');
+        const selected = entry === active && entry.controller?.activeTask() === taskId;
+        row.classList.toggle('is-on', selected);
+        row.classList.toggle('is-batch-selected', batchSelected);
+        row.dataset.aiBatchSelected=String(batchSelected);
+        row.dataset.workState = source.dataset.workState || 'idle';
+        row.title = source.title || source.textContent.replace('×', '').trim();
+        for (const selector of ['.ai-task-tab-title', '.ai-task-tab-time']) {
+          const next = source.querySelector(selector)?.textContent || '';
+          const node = row.querySelector(selector);
+          if (node && node.textContent !== next) node.textContent = next;
+        }
+        const oldIcon = row.querySelector('.ai-task-tab-status');
+        const newIcon = source.querySelector('.ai-task-tab-status');
+        if (oldIcon?.outerHTML !== newIcon?.outerHTML) {
+          oldIcon?.remove();
+          if (newIcon) row.prepend(newIcon.cloneNode(true));
+        }
+        if (select) {
+          select.disabled = !entry.ready;
+          select.setAttribute('aria-pressed', String(selected));
+          select.setAttribute('aria-label', sourceSelect?.getAttribute('aria-label') || row.title);
+          select.onclick = event => {
+            const toggle=event.metaKey || event.ctrlKey;
+            selectedTasks.select(batchOwner,{toggle}); preparedLaunch=null;
+            if (toggle) renderNavigation(); else void selectWorkspaceTask(entry,taskId);
           };
-          if (select) select.onkeydown = event => {
+          select.oncontextmenu = event => { if(event.ctrlKey){event.preventDefault();selectedTasks.select(batchOwner,{toggle:true});preparedLaunch=null;renderNavigation();} };
+          select.onkeydown = event => {
+            if (event.key===' ' && (event.metaKey || event.ctrlKey)) { event.preventDefault(); selectedTasks.select(batchOwner,{toggle:true});preparedLaunch=null;renderNavigation();return; }
             if (!['Home', 'End', 'ArrowRight', 'ArrowLeft', 'ArrowDown', 'ArrowUp'].includes(event.key)) return;
             const controls = [...list.querySelectorAll(':scope > .ai-task-tab .ai-task-tab-select:not(:disabled)')];
             const index = controls.indexOf(select);
-            let next = null;
-            if (event.key === 'Home') next = controls[0];
-            else if (event.key === 'End') next = controls.at(-1);
-            else if (event.key === 'ArrowRight' || event.key === 'ArrowDown') next = controls[(index + 1) % controls.length];
-            else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') next = controls[(index - 1 + controls.length) % controls.length];
-            if (!next) return;
-            event.preventDefault();
-            next.focus();
+            const next = event.key === 'Home' ? controls[0] : event.key === 'End' ? controls.at(-1)
+              : controls[(index + (['ArrowRight', 'ArrowDown'].includes(event.key) ? 1 : controls.length - 1)) % controls.length];
+            if (next) { event.preventDefault(); next.focus(); }
           };
-          const close = button.querySelector('.ai-task-delete');
-          if (close) {
-            close.disabled = !entry.ready;
-            close.onclick = event => {
-              event.stopPropagation();
-              activate(entry);
-              source.querySelector('.ai-task-delete')?.onclick?.(event);
-              saveSelection();
-            };
-          }
-          list.append(button);
         }
-      }
-      if (retainedAddTask) list.append(retainedAddTask);
-      if (focusedKey) {
-        const restored = [...list.children].find(row =>
-          `${row.dataset.aiWorkspaceLink || ''}:${row.dataset.tabId || ''}` === focusedKey);
-        if (restored) {
-          restored.querySelector(focusedKind === 'delete' ? '.ai-task-delete' : '.ai-task-tab-select')?.focus();
+        const close = row.querySelector('.ai-task-delete');
+        if (close) {
+          close.disabled = !entry.ready || batchJobs.some(job=>['running','queued'].includes(job.state)&&ownerKey(job.sourceSnapshot.owner)===ownerKey(batchOwner));
+          close.onclick = event => {
+            event.stopPropagation();
+            activate(entry);
+            source.querySelector('.ai-task-delete')?.onclick?.(event);
+            saveSelection();
+          };
         }
+        if (list.children[position] !== row) list.insertBefore(row, list.children[position] || null);
+        position += 1;
       }
     }
+    for (const child of [...list.children]) if (!retained.has(child) && child !== retainedAddTask) child.remove();
+    if (retainedAddTask && list.lastElementChild !== retainedAddTask) list.append(retainedAddTask);
+    renderBatchControls();
   }
+
   function add(scope, show = true) {
     const panel = entries.length ? template.cloneNode(true) : original;
     if (panel !== original) {
@@ -327,7 +459,7 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
     entries.push(entry);
     entry.controller = initialize(state, {
       panel, clientScope: scope, desktop: createTaskBridge(window.fiveEDesktop || window.fiveEWebAI, scope),
-      exportCollection, clearCollection,
+      exportCollection, clearCollection, launchSelected, cancelWorkspaceJob: context=>workspaceBatch.cancel(context.jobId).then(refreshBatch).catch(batchError),
       newWorkspace: () => { const next = add(crypto.randomUUID()); saveRegistry(); return next.scope; },
       workspaceEmpty: () => {
         if (disposeEntry(entry)) return;
@@ -342,6 +474,9 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
         saveSelection();
       },
     });
+    entry.batchInputChanged=()=>{preparedLaunch=null;};
+    panel.addEventListener('input',entry.batchInputChanged);
+    panel.addEventListener('change',entry.batchInputChanged);
     setupWorkbench(panel);
     entry.controller.ready.then(() => {
       if (entry.disposed || !entries.includes(entry)) return;
@@ -369,7 +504,14 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
     const saved = freshStart ? [] : JSON.parse(localStorage.getItem(registryKey) || '[]');
     for (const scope of saved) if (typeof scope === 'string' && /^[a-f0-9-]{36}$/.test(scope) && scope !== primaryScope) add(scope, false);
   } catch { /* The original workspace remains available if the registry is unreadable. */ }
-  const ready = Promise.all(entries.map(e => e.controller.ready)).then(() => {
+  const ready = Promise.all(entries.map(e => e.controller.ready)).then(async () => {
+    for (const transfer of readTransfers()) {
+      const source = entries.find(entry => entry.scope === transfer.from);
+      const destination = entries.find(entry => entry.scope === transfer.to);
+      if (!destination?.controller.ownsTask(transfer.taskId)) continue;
+      if (source?.controller.ownsTask(transfer.taskId)) await source.controller.removeTransferredTask(transfer.taskId);
+      writeTransfers(readTransfers().filter(record => record.to !== transfer.to));
+    }
     for (const entry of [...entries]) {
       if (entry.panel !== original && !entry.tabs.length) disposeEntry(entry);
     }
@@ -382,6 +524,22 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
     }
     if (!active.tabs.length) active = entries.find(e => e.tabs.length) || active;
     restored = true;
+    if(active.controller.activeTask())selectedTasks.select(ownerFor(active,active.controller.activeTask()));
+    const store=createBatchStore({read:key=>idbGet(`ai-workspace-batch:${key}`),write:(key,value)=>idbSet(`ai-workspace-batch:${key}`,value)});
+    workspaceBatch=createWorkspaceBatch({store,serviceCap,scope:{sessionId:'5e',workspaceId:`workspace-selection:${primaryScope||'main'}`},
+      preflight: entry=>resolveOwner(entry)?.controller.preflightBatch(entry) || (!resolveOwner(entry)?'원래 작업을 찾을 수 없습니다.':null),
+      runner:{start:async(context,emit)=>{
+        const source=resolveOwner(context.owner);
+        if (!source) throw new Error('원래 작업을 찾을 수 없습니다.');
+        const target=await selectWorkspaceTask(source,context.owner.taskId,false);
+        if (context.signal.aborted) throw new Error('작업이 취소되었습니다.');
+        return target.controller.runBatch(context,async event=>{const result=await emit(event);void refreshBatch().catch(batchError);return result;});
+      },interrupt:context=>resolveOwner(context.owner)?.controller.interruptBatch(context)},
+      commit:(context,result)=>{
+        const target=resolveOwner(context.owner);if(!target)throw new Error('원래 작업을 찾을 수 없습니다.');
+        return target.controller.commitBatch(context,result);
+      },onError:batchError});
+    try { await workspaceBatch.recover();batchReady=true;await refreshBatch(); } catch(error){batchError(error);}
     saveRegistry();
     renderNavigation();
   });
@@ -406,6 +564,8 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
     });
   };
   return {
+    workspaceBatchState: () => structuredClone(batchJobs),
+    dispose: () => batchDisposal ||= (async()=>{ batchDisposed=true;clearTimeout(batchTimer);await workspaceBatch?.dispose();for(const entry of entries){entry.panel.removeEventListener('input',entry.batchInputChanged);entry.panel.removeEventListener('change',entry.batchInputChanged);entry.controller.dispose();} })(),
     sharingHasViewOnly: () => entries.some(entry => entry.panel.dataset.aiSharingMode === 'view'),
     sharingSnapshot: async () => {
       await ready;

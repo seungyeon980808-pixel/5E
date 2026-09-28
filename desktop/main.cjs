@@ -36,9 +36,6 @@ let win;
 let splash;
 let server;
 let rpcId = 0;
-let threadId = null;
-let turnId = null;
-let activeTurnThreadId = null;
 let recoveryTerminatingTurnId = null;
 let initialized = false;
 let initializingPromise = null;
@@ -46,6 +43,39 @@ let codexSendInvocationCount = 0;
 let smokeFixtureSendCount = 0;
 let realSendCount = 0;
 const pending = new Map();
+const workspaceRequests = new Map();
+const workspaceConversations = new Map();
+const turnOwners = new Map();
+let earlyTurnEvents = [];
+function workspaceScope(payload = {}) {
+  if (payload.clientScope == null) return "";
+  if (typeof payload.clientScope !== "string" || payload.clientScope.length > 256) throw new Error("Invalid workspace scope");
+  return payload.clientScope;
+}
+function eventTurnIdOf(msg) { return msg?.params?.turnId || msg?.params?.turn?.id || null; }
+function eventOwner(msg) {
+  const id = eventTurnIdOf(msg);
+  const owner = id && turnOwners.get(id);
+  if (owner) return owner;
+  const thread = msg?.params?.threadId;
+  return thread && [...workspaceRequests.values()].find(request => request.threadId === thread);
+}
+async function interruptWorkspace(payload = {}) {
+  const owner = workspaceRequests.get(workspaceScope(payload));
+  if (!owner) return null;
+  owner.cancelled = true;
+  if (!owner.turnId) return { pending: true };
+  const { threadId: activeTurnThreadId, turnId } = owner;
+  if (!owner.interruptPromise) {
+    owner.interruptPromise = rpc("turn/interrupt", { threadId: activeTurnThreadId, turnId });
+    owner.interruptPromise.then(() => {
+      if (owner.done || autoFinalizingImageTurns.has(turnId)) return;
+      autoFinalizingImageTurns.add(turnId);
+      void autoFinalizeImageTurn(activeTurnThreadId, turnId, owner.interruptPromise);
+    }, () => {});
+  }
+  return owner.interruptPromise;
+}
 const turnAttachmentPaths = new Map();
 const turnPerformance = new TurnPerformanceRegistry();
 const autoFinalizingImageTurns = new Set();
@@ -126,21 +156,23 @@ function collectLocalImages(root, limit = 5000) {
 
 function delay(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
 function withTimeout(promise, ms, label) {
+  let timer;
   return Promise.race([
     promise,
-    delay(ms).then(() => { throw new Error(`${label} timeout`); }),
-  ]);
+    new Promise((_, reject) => { timer = setTimeout(() => reject(new Error(`${label} timeout`)), ms); }),
+  ]).finally(() => clearTimeout(timer));
 }
 function sendImageFinalization(turnId, state, extra = {}) {
   send("codex:event", { method: "5e/image-finalization", params: { turnId, state, ...extra } });
 }
 function releaseActiveTurn(completedTurnId) {
+  const owner = turnOwners.get(completedTurnId);
+  if (owner) {
+    owner.done = true;
+    if (workspaceRequests.get(owner.scope) === owner) workspaceRequests.delete(owner.scope);
+  }
   cleanupAttachments(completedTurnId);
   autoFinalizingImageTurns.delete(completedTurnId);
-  if (turnId === completedTurnId) {
-    turnId = null;
-    activeTurnThreadId = null;
-  }
 }
 function sendSyntheticPerformance(completedTurnId) {
   const performance = turnPerformance.snapshot(completedTurnId, Date.now());
@@ -189,11 +221,11 @@ function terminateProcessTreeAndWait(child, timeoutMs = 4_000) {
     }
   });
 }
-async function autoFinalizeImageTurn(renderThreadId, completedTurnId) {
+async function autoFinalizeImageTurn(renderThreadId, completedTurnId, acceptedInterrupt = null) {
   sendImageFinalization(completedTurnId, "interrupting");
   try {
     await withTimeout(
-      rpc("turn/interrupt", { threadId: renderThreadId, turnId: completedTurnId }),
+      acceptedInterrupt || rpc("turn/interrupt", { threadId: renderThreadId, turnId: completedTurnId }),
       RPC_CHECK_TIMEOUT_MS,
       "turn/interrupt",
     );
@@ -205,7 +237,7 @@ async function autoFinalizeImageTurn(renderThreadId, completedTurnId) {
   }
 
   const deadline = Date.now() + IMAGE_FINALIZE_TIMEOUT_MS;
-  while (autoFinalizingImageTurns.has(completedTurnId) && turnId === completedTurnId && Date.now() < deadline) {
+  while (autoFinalizingImageTurns.has(completedTurnId) && turnOwners.get(completedTurnId)?.done === false && Date.now() < deadline) {
     try {
       const response = await withTimeout(
         rpc("thread/read", { threadId: renderThreadId, includeTurns: true }),
@@ -220,9 +252,10 @@ async function autoFinalizeImageTurn(renderThreadId, completedTurnId) {
         return;
       }
     } catch {}
+    if (!autoFinalizingImageTurns.has(completedTurnId)) return;
     await delay(IMAGE_FINALIZE_POLL_MS);
   }
-  if (!autoFinalizingImageTurns.has(completedTurnId) || turnId !== completedTurnId) return;
+  if (!autoFinalizingImageTurns.has(completedTurnId) || turnOwners.get(completedTurnId)?.done !== false) return;
 
   // A missing turn/completed notification or a stuck interrupt must not leave the
   // editor locked forever. Terminate the local App Server and wait for its process
@@ -249,7 +282,20 @@ function codexInvocation(args) {
   if (process.platform !== "win32") return { file: "codex", args };
   return { file: process.env.ComSpec || "C:\\Windows\\System32\\cmd.exe", args: ["/d", "/s", "/c", "codex", ...args] };
 }
-function send(event, payload) { if (win && !win.isDestroyed()) win.webContents.send(event, payload); }
+function send(event, payload, trustedScope, targetScopes) {
+  if (!win || win.isDestroyed()) return;
+  if (event === "codex:event") {
+    const owner = eventOwner(payload);
+    const { clientScope: untrustedScope, ...message } = payload;
+    const scope = trustedScope ?? owner?.scope;
+    win.webContents.send(event, scope ? { ...message, clientScope: scope } : message);
+    return;
+  }
+  win.webContents.send(event, payload);
+  for (const scope of targetScopes || new Set([...workspaceRequests.keys(), ...workspaceConversations.keys()])) {
+    if (scope) win.webContents.send(event, { ...payload, clientScope: scope });
+  }
+}
 function rejectPending(error) { for (const p of pending.values()) p.reject(error); pending.clear(); }
 function cleanupAttachments(id) {
   for (const file of turnAttachmentPaths.get(id) || []) void fs.promises.unlink(file).catch(() => {});
@@ -277,27 +323,21 @@ function handleServerProcessTermination(child, {
   signal = null,
 } = {}) {
   if (server !== child) return;
-  const failure = createProcessFailureFinalization({
-    activeTurnId: turnId,
-    recoveryTerminatingTurnId,
-    error,
-    code,
-    signal,
-  });
-  // Preserve the active turn identity until the renderer has received its
-  // terminal signal and the last performance snapshot has been emitted.
-  if (failure) {
-    sendImageFinalization(failure.turnId, failure.state, {
-      status: failure.status,
-      message: failure.message,
-    });
-    sendSyntheticPerformance(failure.turnId);
-    releaseActiveTurn(failure.turnId);
+  const affectedScopes = new Set([...workspaceRequests.keys(), ...workspaceConversations.keys()]);
+  let failure;
+  for (const owner of [...workspaceRequests.values()]) {
+    failure = createProcessFailureFinalization({ activeTurnId: owner.turnId, recoveryTerminatingTurnId, error, code, signal });
+    if (failure) {
+      sendImageFinalization(failure.turnId, failure.state, { status: failure.status, message: failure.message });
+      sendSyntheticPerformance(failure.turnId);
+    }
+    if (owner.turnId) releaseActiveTurn(owner.turnId);
+    owner.done = true;
   }
+  workspaceRequests.clear();
+  workspaceConversations.clear();
+  earlyTurnEvents = [];
   server = null;
-  threadId = null;
-  turnId = null;
-  activeTurnThreadId = null;
   initialized = false;
   initializingPromise = null;
   turnPerformance.clear();
@@ -309,7 +349,35 @@ function handleServerProcessTermination(child, {
   rejectPending(terminalError);
   send("codex:state", state === "missing"
     ? { state: "missing", message: terminalError.message }
-    : { state: "stopped", code, signal });
+    : { state: "stopped", code, signal }, undefined, affectedScopes);
+}
+
+function processTurnEvent(msg) {
+  if (msg.params?.turnId != null && msg.params?.turn?.id != null && msg.params.turnId !== msg.params.turn.id) return;
+  if (msg.method === "account/rateLimits/updated") {
+    send("codex:event", msg);
+    for (const scope of new Set([...workspaceRequests.keys(), ...workspaceConversations.keys()])) {
+      if (scope) send("codex:event", msg, scope);
+    }
+    return;
+  }
+  const owner = eventOwner(msg);
+  const eventTurnId = eventTurnIdOf(msg);
+  if (!owner || owner.done || !eventTurnId || owner.turnId !== eventTurnId) return;
+  if (msg.params?.threadId && owner.threadId !== msg.params.threadId) return;
+  const performanceObservation = turnPerformance.observe(msg);
+  attachGeneratedImageData(msg);
+  send("codex:event", msg);
+  if (shouldAutoFinalizeImageTurn({ message: msg, observation: performanceObservation,
+    activeTurnId: owner.turnId, alreadyFinalizing: autoFinalizingImageTurns.has(eventTurnId) })) {
+    autoFinalizingImageTurns.add(eventTurnId);
+    void autoFinalizeImageTurn(owner.threadId, eventTurnId);
+  }
+  if (performanceObservation?.completed) {
+    send("codex:event", { method: "5e/performance", params: performanceObservation.performance });
+    turnPerformance.delete(performanceObservation.performance.turnId);
+  }
+  if (msg.method === "turn/completed" && msg.params?.turn?.id) releaseActiveTurn(owner.turnId);
 }
 
 function startServer() {
@@ -320,36 +388,27 @@ function startServer() {
     const child = server;
     const rl = createInterface({ input: child.stdout });
     rl.on("line", (line) => {
+      if (server !== child) return;
       let msg; try { msg = JSON.parse(line); } catch { return; }
+      if (!msg || typeof msg !== "object" || Array.isArray(msg)) return;
       if (msg.id != null && pending.has(msg.id)) {
         const p = pending.get(msg.id); pending.delete(msg.id);
         if (msg.error) p.reject(new Error(msg.error.message || "Codex request failed")); else p.resolve(msg.result);
+        return;
       }
-      if (msg.method === "turn/completed" && msg.params?.turn?.id) {
-        releaseActiveTurn(msg.params.turn.id);
+      if (typeof msg.method !== "string") return;
+      const owner = eventOwner(msg);
+      if (owner && !owner.turnId) {
+        if (earlyTurnEvents.length < 1024) earlyTurnEvents.push(msg);
+        return;
       }
-      const performanceObservation = turnPerformance.observe(msg);
-      attachGeneratedImageData(msg);
-      send("codex:event", msg);
-      const eventTurnId = msg.params?.turnId || performanceObservation?.performance?.turnId || null;
-      if (shouldAutoFinalizeImageTurn({
-        message: msg,
-        observation: performanceObservation,
-        activeTurnId: turnId,
-        alreadyFinalizing: autoFinalizingImageTurns.has(eventTurnId),
-      })) {
-        const renderThreadId = activeTurnThreadId;
-        autoFinalizingImageTurns.add(eventTurnId);
-        // The generated file is the terminal result for an image-only turn. Stop any
-        // trailing narration, then verify the server-side turn is terminal before a
-        // subsequent render is allowed to start.
-        void autoFinalizeImageTurn(renderThreadId, eventTurnId);
+      if (!owner && eventTurnIdOf(msg) && [...workspaceRequests.values()].some(request => !request.turnId)) {
+        if (earlyTurnEvents.length < 1024) earlyTurnEvents.push(msg);
+        return;
       }
-      if (performanceObservation?.completed) {
-        send("codex:event", { method: "5e/performance", params: performanceObservation.performance });
-        turnPerformance.delete(performanceObservation.performance.turnId);
-      }
+      processTurnEvent(msg);
     });
+    child.stdin.on("error", error => handleServerProcessTermination(child, { state: "stopped", error }));
     child.stderr.on("data", (b) => send("codex:log", { level: "error", message: String(b).trim() }));
     child.on("error", (error) => handleServerProcessTermination(child, { state: "missing", error }));
     child.on("exit", (code, signal) => handleServerProcessTermination(child, { state: "stopped", code, signal }));
@@ -357,11 +416,41 @@ function startServer() {
     return { ok: true, state: "running" };
   } catch (error) { return { ok: false, state: "missing", message: error.message }; }
 }
-function stopServer() { if (server) server.kill(); server = null; threadId = null; turnId = null; activeTurnThreadId = null; initialized = false; initializingPromise = null; turnPerformance.clear(); autoFinalizingImageTurns.clear(); cleanupAllAttachments(); return { ok: true, state: "stopped" }; }
+function stopServer() {
+  const child = server;
+  if (child) {
+    handleServerProcessTermination(child, { state: "stopped", error: new Error("Codex App Server stopped") });
+    child.kill();
+  }
+  return { ok: true, state: "stopped" };
+}
 function rpc(method, params) {
   if (!server) throw new Error("Codex App Server가 실행되지 않았습니다.");
+  const child = server;
   const id = ++rpcId;
-  return new Promise((resolve, reject) => { pending.set(id, { resolve, reject }); server.stdin.write(JSON.stringify({ jsonrpc: "2.0", id, method, params }) + "\n"); });
+  return new Promise((resolve, reject) => {
+    const timeoutMs = method === "turn/start" ? 120_000 : method === "turn/interrupt" ? 10_000 : 30_000;
+    const timer = setTimeout(() => {
+      const error = new Error(`${method} timeout`);
+      error.code = "RPC_TIMEOUT";
+      // Optional metadata does not own any turn. Recovery reads and mutations
+      // retain the fatal deadline because their remote state may be uncertain.
+      if (["model/list", "account/read", "account/rateLimits/read", "account/usage/read"].includes(method)) {
+        const request = pending.get(id);
+        pending.delete(id);
+        request?.reject(error);
+        return;
+      }
+      handleServerProcessTermination(child, { state: "stopped", error });
+      child.kill();
+    }, timeoutMs);
+    pending.set(id, {
+      resolve: value => { clearTimeout(timer); resolve(value); },
+      reject: error => { clearTimeout(timer); reject(error); },
+    });
+    try { child.stdin.write(JSON.stringify({ jsonrpc: "2.0", id, method, params }) + "\n"); }
+    catch (error) { pending.get(id)?.reject(error); pending.delete(id); }
+  });
 }
 function notify(method, params = {}) {
   if (!server) throw new Error("Codex App Server가 실행되지 않았습니다.");
@@ -370,11 +459,15 @@ function notify(method, params = {}) {
 async function ensureInitialized() {
   if (initialized) return;
   if (!initializingPromise) {
-    initializingPromise = (async () => {
+    const child = server;
+    const initialization = (async () => {
       await rpc("initialize", { clientInfo: { name: "5e-desktop", title: "5E", version: app.getVersion() }, capabilities: { experimentalApi: true } });
+      if (server !== child) throw new Error("Codex App Server stopped during initialization");
       notify("initialized");
       initialized = true;
-    })().finally(() => { initializingPromise = null; });
+    })();
+    initializingPromise = initialization;
+    initialization.finally(() => { if (initializingPromise === initialization) initializingPromise = null; }).catch(() => {});
   }
   await initializingPromise;
 }
@@ -395,6 +488,9 @@ async function accountOverview() {
     rpc("account/rateLimits/read"),
     rpc("account/usage/read"),
   ]);
+  for (const result of [accountResult, limitsResult, usageResult]) {
+    if (result.status === "rejected" && result.reason.code === "RPC_TIMEOUT") throw result.reason;
+  }
   return {
     account: accountResult.status === "fulfilled" ? accountResult.value : null,
     limits: limitsResult.status === "fulfilled" ? limitsResult.value : null,
@@ -413,6 +509,20 @@ async function safeAttachment(data, name) {
   return { file, bytes: buffer.length, name: name || path.basename(file) };
 }
 async function sendTurn(payload = {}) {
+  const scope = workspaceScope(payload);
+  if (workspaceRequests.has(scope)) throw new Error("이전 AI 작업을 종료하고 있습니다. 잠시 후 다시 시도해 주세요.");
+  const owner = { scope, threadId: null, turnId: null, done: false, cancelled: false };
+  workspaceRequests.set(scope, owner);
+  try { return await sendWorkspaceTurn(payload, owner); }
+  catch (error) {
+    if (workspaceRequests.get(scope) === owner) workspaceRequests.delete(scope);
+    owner.done = true;
+    throw error;
+  }
+}
+async function sendWorkspaceTurn(payload, owner) {
+  let threadId = workspaceConversations.get(owner.scope) || null;
+  const turnId = owner.turnId;
   const {
     text,
     attachments = [],
@@ -452,6 +562,10 @@ async function sendTurn(payload = {}) {
     requestThreadId = threadId;
   }
   if (!requestThreadId) throw new Error("Codex 대화를 시작하지 못했습니다.");
+  if (owner.done || owner.cancelled) throw new Error("AI 작업이 취소되었습니다.");
+  if ([...workspaceConversations].some(([scope, id]) => scope !== owner.scope && id === requestThreadId) || [...workspaceRequests.values()].some(other => other !== owner && other.threadId === requestThreadId)) throw new Error("Conversation is active in another workspace");
+  owner.threadId = requestThreadId;
+  if (!plan.ephemeralRender) workspaceConversations.set(owner.scope, requestThreadId);
 
   const safeAttachments = Array.isArray(attachments) ? attachments : [];
   const preparedResults = await Promise.allSettled(safeAttachments.map((attachment) => safeAttachment(attachment.data, attachment.name)));
@@ -468,6 +582,7 @@ async function sendTurn(payload = {}) {
   const input = [{ type: "text", text }].concat(paths.map((file) => ({ type: "localImage", path: file })));
   let result;
   try {
+    if (owner.done || owner.cancelled) throw new Error("AI 작업이 취소되었습니다.");
     // Exactly one backend turn is started. Any image retry must be an explicit agent/tool decision.
     result = await rpc("turn/start", { threadId: requestThreadId, input, model: model || null, effort: effort || null, serviceTier: serviceTier || null });
   } catch (error) {
@@ -479,8 +594,15 @@ async function sendTurn(payload = {}) {
     await Promise.all(paths.map((file) => fs.promises.unlink(file).catch(() => {})));
     throw new Error("Codex 작업을 시작하지 못했습니다.");
   }
-  turnId = requestTurnId;
-  activeTurnThreadId = requestThreadId;
+  if (owner.done) {
+    await Promise.all(paths.map(file => fs.promises.unlink(file).catch(() => {})));
+    throw new Error("AI 작업이 종료되었습니다.");
+  }
+  owner.turnId = requestTurnId;
+  turnOwners.set(requestTurnId, owner);
+  for (const [id, previous] of turnOwners) {
+    if (turnOwners.size > 1024 && previous.done) turnOwners.delete(id);
+  }
   if (requestTurnId && paths.length) turnAttachmentPaths.set(requestTurnId, paths);
   const performance = turnPerformance.register({
     turnId: requestTurnId,
@@ -491,6 +613,13 @@ async function sendTurn(payload = {}) {
     attachmentCount: preparedAttachments.length,
     attachmentBytes,
   });
+  const buffered = earlyTurnEvents;
+  earlyTurnEvents = [];
+  for (const event of buffered) {
+    if (eventOwner(event)?.turnId) processTurnEvent(event);
+    else if ([...workspaceRequests.values()].some(request => !request.turnId)) earlyTurnEvents.push(event);
+  }
+  if (owner.cancelled && !owner.done) await interruptWorkspace({ clientScope: owner.scope });
   const preservedConversationId = plan.ephemeralRender
     ? (threadId || plan.preservedConversationId || null)
     : requestThreadId;
@@ -1107,7 +1236,7 @@ function createWindow() {
 }
 ipcMain.handle("codex:status", async () => ({ server: !!server, login: await loginStatus() }));
 ipcMain.handle("codex:start", () => startServer());
-ipcMain.handle("codex:stop", () => stopServer());
+ipcMain.handle("codex:stop", (_event, payload = {}) => workspaceScope(payload) ? interruptWorkspace(payload) : stopServer());
 ipcMain.handle("codex:models", () => listModels());
 ipcMain.handle("codex:account", () => accountOverview());
 ipcMain.handle("codex:send", (event, payload) => {
@@ -1119,7 +1248,7 @@ ipcMain.handle("codex:send", (event, payload) => {
     const index = ++smokeFixtureSendCount;
     const fixture = createSmokeFixtureTurn(payload, index, imageDataUrl);
     setTimeout(() => {
-      for (const event of fixture.events) send("codex:event", event);
+      for (const event of fixture.events) send("codex:event", event, event.clientScope);
     }, 0);
     return fixture.response;
   }
@@ -1127,9 +1256,7 @@ ipcMain.handle("codex:send", (event, payload) => {
   realSendCount += 1;
   return sendTurn(payload);
 });
-ipcMain.handle("codex:interrupt", async () => server && activeTurnThreadId && turnId
-  ? rpc("turn/interrupt", { threadId: activeTurnThreadId, turnId }).catch(() => null)
-  : null);
+ipcMain.handle("codex:interrupt", (_event, payload = {}) => interruptWorkspace(payload));
 ipcMain.handle("codex:login", () => { const launch = codexInvocation(["login"]); execFile(launch.file, launch.args, { windowsHide: true }); return { ok: true }; });
 ipcMain.handle("capture:sources", async () => {
   const sources = await desktopCapturer.getSources({

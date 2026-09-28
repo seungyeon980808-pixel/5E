@@ -1,8 +1,13 @@
 {
   "schemaVersion": 1,
   "unit": [
+    { "path": "tests/test-ai-workspace-multiselect.cjs" },
     { "path": "tests/test-library-provider.mjs" },
     { "path": "tests/test-ai-events.mjs" },
+    { "path": "tests/test-ai-comparison.cjs" },
+    { "path": "tests/test-ai-model-capabilities.cjs" },
+    { "path": "tests/test-ai-separation-mode.cjs" },
+    { "path": "tests/test-ai-workbench-request-state.cjs" },
     { "path": "tests/test-ai-panel-local-bypass.mjs" },
     { "path": "tests/test-ai-primary-action.cjs" },
     { "path": "tests/test-ai-remote-input-plan.mjs" },
@@ -24,6 +29,12 @@
     { "path": "tools/mcp-5e/test/server-pairing.test.mjs" }
   ],
   "browser": [
+    { "path": "tests/test-ai-workbench-polish-browser.cjs", "findingIds": ["B0", "R1", "R2", "R3", "R5"] },
+    { "path": "tests/test-ai-workspace-multiselect-browser.cjs", "findingIds": ["ARCH-160-01"] },
+    { "path": "tests/test-ai-workbench-integration-browser.cjs", "findingIds": ["R2", "R3", "R7", "R8"] },
+    { "path": "tests/test-ai-comparison-browser.cjs", "findingIds": ["R2", "R3"] },
+    { "path": "tests/test-ai-crop-loading-browser.cjs", "findingIds": ["B0", "R1"] },
+    { "path": "tests/test-ai-separation-mode-browser.cjs", "findingIds": ["R7", "R8"] },
     { "path": "tests/test-library-real-provider-browser.cjs", "findingIds": ["LIB-REAL-PROVIDER"] },
     { "path": "tests/test-unified-library-page-scroll-browser.cjs", "findingIds": ["LIB-PAGE-SCROLL"] },
     { "path": "tests/test-release-entry-browser.cjs", "findingIds": ["TPK-001", "TPK-002"] },
@@ -48,6 +59,8 @@
     { "path": "tests/task10-ui-browser.cjs", "findingIds": ["CAN-DATA-01", "TPK-007", "TPK-008"] }
   ],
   "deferred": [
+    { "path": "tests/authenticated-desktop-observer.cjs", "findingIds": ["ARCH-160-01"], "reason": "Helper for manual authenticated acceptance; requires the explicitly authorized real-service harness" },
+    { "path": "tests/test-ai-workbench-authenticated.cjs", "findingIds": ["ARCH-160-01"], "reason": "Manual authenticated acceptance gate requires explicit AI_WORKBENCH_REAL and authorization for paid provider requests" },
     { "path": "tests/library-open-epoch-browser.cjs", "findingIds": ["AI-160-02"], "reason": "AI owner regression" },
     { "path": "tests/test-lite-main-browser.cjs", "findingIds": ["ARCH-160-02"], "reason": "full UI gate" },
     { "path": "tests/test-preview-lite-four-pane-qa.cjs", "findingIds": ["TPK-005"], "reason": "retired four-pane contract" },

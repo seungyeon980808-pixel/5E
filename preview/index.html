@@ -44,19 +44,20 @@
   <link rel="stylesheet" href="css/style.css?v=1.6.0-focus-0927" />
   <link rel="stylesheet" href="css/inspector.css?v=1.6.0-preview-lite-tools-0922b" />
   <link rel="stylesheet" href="css/exam-library.css?v=1.6.0-preview-labeler-0917-1111" />
-  <link rel="stylesheet" href="css/unified-library.css?v=1.6.0-library-navigation-0928" />
+  <link rel="stylesheet" href="css/unified-library.css?v=1.6.0-workbench-polish-0928-final" />
   <link rel="stylesheet" href="css/parts-library.css?v=1.6.0-preview-labeler-0917-1111" />
   <link rel="stylesheet" href="css/tutorial.css?v=1.6.0-preview-labeler-0917-1111" />
-  <link rel="stylesheet" href="css/ai-panel.css?v=1.6.0-preview-mode-separation-0925" />
+  <link rel="stylesheet" href="css/ai-panel.css?v=1.6.0-workbench-polish-0928-final" />
+  <link rel="stylesheet" href="css/ai-comparison.css?v=1.6.0-workbench-polish-0928-final" />
   <link rel="stylesheet" href="css/ai-composition-editor.css?v=1.6.0-preview-labeler-0917-1111" />
-  <link rel="stylesheet" href="css/ai-editable-assets.css?v=1.6.0-preview-mode-separation-0925" />
+  <link rel="stylesheet" href="css/ai-editable-assets.css?v=1.6.0-workbench-polish-0928-final" />
   <link rel="stylesheet" href="css/panel-visibility.css?v=1.6.0-preview-ui-l160-r180-0921" />
   <link rel="stylesheet" href="css/mobile-image.css?v=1.6.0-preview-mobile-golden-0922" />
   <link rel="stylesheet" href="css/productization.css?v=1.6.0-focus-0927" />
   <link rel="stylesheet" href="css/web-login.css?v=1.6.0-preview-ui-180-fs-0921-r2" />
   <script>window.FIVE_E_PROJECT_PACKAGE_API_URL="";window.FIVE_E_PROJECT_PACKAGE_TARGETS=[];</script>
   <link rel="stylesheet" href="css/ai-sharing.css?v=1.6.0-preview-emerald-polish-0921" />
-  <link rel="stylesheet" href="css/lite-shell.css?v=watermark-focus-0925" />
+  <link rel="stylesheet" href="css/lite-shell.css?v=1.6.0-workbench-polish-0928-final" />
   <link rel="stylesheet" href="css/mode-transition.css?v=watermark-focus-0925" />
 </head>
 <body>
@@ -684,9 +685,9 @@
               <label class="ai-setting-label">생성 모델
                 <select data-ai-model aria-label="AI 모델 선택"><option value="">불러오는 중…</option></select>
               </label>
-              <span class="ai-model-warning" data-ai-model-warning role="status" aria-live="polite" hidden>권장 기본값은 Sol · 보통입니다. 모델별 품질·시간은 검증 중입니다.</span>
+              <span class="ai-model-warning" data-ai-model-warning role="status" aria-live="polite" hidden>선택한 모델의 지원 설정을 확인해 주세요.</span>
               <label class="ai-setting-label">추론
-                <select data-ai-effort aria-label="추론 수준 선택"><option value="medium">보통</option></select>
+                <select data-ai-effort aria-label="추론 수준 선택"><option value="">불러오는 중…</option></select>
               </label>
               <label class="ai-setting-label">속도
                 <select data-ai-speed aria-label="응답 속도 선택"><option value="">표준</option></select>
@@ -699,7 +700,7 @@
             <div class="ai-conversation-actions">
               <button type="button" data-ai-interrupt title="현재 진행 중인 AI 요청을 취소합니다" hidden>작업 취소</button>
             </div>
-            <div class="ai-output-actions"><button type="button" data-ai-insert-selected disabled>결과 사용</button></div>
+            <div class="ai-output-actions"><button type="button" data-ai-insert-selected disabled>캔버스에 삽입</button></div>
           </footer>
         </section>
       </div>
@@ -715,8 +716,8 @@
   <!-- 모바일: 캔버스 터치를 마우스 이벤트로 변환(그리기·이동). 모듈 그래프 밖 독립 스크립트. -->
   <script src="js/touch-drag.js?v=1.6.0-preview-labeler-0917-1111"></script>
   <script type="module" src="js/ai-workbench.js?v=1.6.0-preview-sharing-0918-2108"></script>
-  <script type="module" src="js/main.js?v=1.6.0-library-navigation-0928"></script>
+  <script type="module" src="js/main.js?v=1.6.0-workbench-polish-0928-final"></script>
   <!-- MCP 통로: localhost에서 MCP 서버가 떠 있을 때만 붙는다(배포본은 무동작) -->
-  <script type="module" src="js/mcp-bridge.js?v=1.6.0-preview-lite-hybrid-0922"></script>
+  <script type="module" src="js/mcp-bridge.js?v=1.6.0-workbench-polish-0928-final"></script>
 </body>
 </html>

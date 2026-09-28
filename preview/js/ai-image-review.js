@@ -1,9 +1,8 @@
 import { planImageReferences } from "./ai-reference-roles.js?v=1.6.0-preview-labeler-0917-1111";
 
+import { resolveAIModelSelection } from "./ai-model-capabilities.js?v=1.6.0-workbench-polish-0928-final";
+
 export const AI_IMAGE_REVIEW_VERSION = "1.6.0";
-export const AI_IMAGE_REVIEW_MODEL = "gpt-5.6-sol";
-export const AI_IMAGE_REVIEW_EFFORT = "high";
-export const AI_IMAGE_GENERATION_EFFORT = "medium";
 export const AI_IMAGE_MAX_GENERATIONS = 2;
 
 const REQUIRED_CHECKS = Object.freeze([
@@ -198,8 +197,7 @@ export function createAiImageReviewController({ transport, onState = () => {}, n
       report: clone(extra.report || owner.report || emptyReport()),
       generationCount: owner.generationCount,
       reviewCount: owner.reviewCount,
-      model: AI_IMAGE_REVIEW_MODEL,
-      effort: AI_IMAGE_REVIEW_EFFORT,
+      ...owner.selection,
       elapsedMs: Math.max(0, now() - owner.startedAt),
     };
     owner.state = state;
@@ -374,9 +372,7 @@ export function createAiImageReviewController({ transport, onState = () => {}, n
       resetConversation: true,
       purpose: "chat",
       ephemeralRender: true,
-      model: AI_IMAGE_REVIEW_MODEL,
-      effort: AI_IMAGE_REVIEW_EFFORT,
-      serviceTier: owner.serviceTier || null,
+      ...owner.selection,
     });
   }
 
@@ -400,6 +396,9 @@ export function createAiImageReviewController({ transport, onState = () => {}, n
         report: clone(report), candidate: capturedCandidate, generationCount: owner.generationCount,
         referenceRoleContract: referencePlan?.roleContract || "",
       });
+      if (["model", "effort", "serviceTier"].some(key => (payload?.[key] ?? null) !== owner.selection[key])) {
+        throw new Error("교정 요청의 모델 설정이 선택한 설정과 다릅니다. 다시 선택해 주세요.");
+      }
       if (referencePlan) {
         if (!text(payload?.text)) throw new TypeError("Correction prompt is required");
         // The controller owns ordered images; callback cannot drop/reorder styles
@@ -527,7 +526,7 @@ export function createAiImageReviewController({ transport, onState = () => {}, n
       prepareCandidateAttachment: options.prepareCandidateAttachment,
       makeCorrectionPayload: options.makeCorrectionPayload,
       acceptCorrectionImage: options.acceptCorrectionImage,
-      serviceTier: options.serviceTier || null,
+      selection: { model: options.model, effort: options.effort, serviceTier: options.serviceTier ?? null },
       generationCount: Math.max(1, Number(options.generationCount || 1)),
       reviewCount: 0,
       startedAt: Number.isFinite(options.startedAt) && options.startedAt >= 0 ? Math.min(options.startedAt, now()) : now(),
@@ -538,8 +537,9 @@ export function createAiImageReviewController({ transport, onState = () => {}, n
       turn: null,
     };
     activeRun = owner;
-    if (options.modelAvailable !== true) {
-      finish(owner, "failed", failureReport(`${AI_IMAGE_REVIEW_MODEL} high 검수 모델을 사용할 수 없습니다. 다른 모델로 자동 대체하지 않았습니다.`));
+    try { owner.selection = resolveAIModelSelection(owner.selection, options.models); }
+    catch (error) {
+      finish(owner, "failed", failureReport(error.message));
       return false;
     }
     return sendReview(owner);

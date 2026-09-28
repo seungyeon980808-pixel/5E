@@ -6,7 +6,7 @@
 import { makeColorPicker, makeSection, supportsDash, DASH_PRESETS } from "./widgets.js?v=1.6.0-preview-labeler-0917-1111";
 // 패턴 유효성 판정은 렌더러(applyDash)와 같은 함수를 써야 인스펙터 표시와 실제 그림이 안 어긋난다.
 import { normalizeDashPattern } from "../render/core.js?v=1.6.0-preview-labeler-0917-1111";
-import { openLabelerTextEditor } from "../tools.js?v=1.6.0-preview-lite-hybrid-0922";
+import { openLabelerTextEditor } from "../tools.js?v=1.6.0-workbench-polish-0928-final";
 
 const supportsLineStyle = (obj) => supportsDash(obj) || obj?.type === "labeler";
 

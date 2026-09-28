@@ -3,6 +3,7 @@ import { refinePreparedAssets } from './ai-editable-assets-refinement.js?v=1.6.0
 import { decodeScopedPng } from './ai-scoped-edit-png.js?v=1.6.0-preview-labeler-0917-1111';
 import { renderLabeler } from './render/annotations.js?v=1.6.0-preview-lite-tools-0922b';
 import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM } from './state.js?v=1.6.0-preview-labeler-0917-1111';
+import { SEPARATION_LIMITS_HINT } from './ai-separation-mode.js?v=1.6.0-workbench-polish-0928-final';
 export { refinePreparedAssets };
 
 const NS = 'http://www.w3.org/2000/svg';
@@ -26,7 +27,6 @@ const REFINEMENT_GUIDANCE = new Set([
   '선택한 영역에 다른 물체의 픽셀이 없습니다.',
   '지원하지 않는 미세 조정 작업입니다.',
   '미세 조정 PNG의 RGBA 검증에 실패했습니다.',
-  '페이지에 넣을 물체가 하나 이상 있어야 합니다.',
   '분리 결과의 픽셀 합계가 올바르지 않습니다.',
 ]);
 function svgNode(tag, attributes, text) {
@@ -42,6 +42,7 @@ export function previewViewBoxForLabels(width, height, padding) {
 
 export function refinementFailureGuidance(error) {
   if (error?.name === 'AbortError') return null;
+  if (error?.message === '페이지에 넣을 물체가 하나 이상 있어야 합니다.') return '캔버스에 삽입할 물체가 하나 이상 있어야 합니다.';
   if (error?.name === 'PreparedAssetRefinementError' || REFINEMENT_GUIDANCE.has(error?.message)) return error.message;
   return '미세 조정 결과를 만들지 못했습니다. 자동 분리를 다시 실행하거나 원본을 사용해 주세요.';
 }
@@ -53,14 +54,14 @@ export async function openEditableAssetsDialog({ dataUrl, artboard, isCurrent = 
   dialog.className = 'aea-dialog';
   dialog.setAttribute('aria-labelledby', 'aea-title');
   dialog.classList.toggle('is-automatic', automatic);
-  dialog.innerHTML = `<header class="aea-header"><div><h2 id="aea-title">${automatic ? '분리 결과 확인' : '편집 가능한 객체로 나누기'}</h2><p>${automatic ? '각 PNG와 편집 가능한 이름을 확인한 뒤 페이지에 넣으세요.' : '그림에서 객체를 하나씩 드래그해 선택하세요.'}</p></div><button type="button" data-action="close" aria-label="닫기">×</button></header>
+  dialog.innerHTML = `<header class="aea-header"><div><h2 id="aea-title">${automatic ? '분리 결과 확인' : '편집 가능한 객체로 나누기'}</h2><p>${automatic ? '원본의 번호별 영역과 개별 PNG를 확인한 뒤 캔버스에 삽입하세요.' : '그림에서 객체를 하나씩 드래그해 선택하세요.'}</p></div><button type="button" data-action="close" aria-label="닫기">×</button></header>
     <div class="aea-tools" role="group" aria-label="선택 도구">
       ${automatic ? '<button type="button" data-action="refine">미세 조정</button><button type="button" data-mode="inspect" hidden>확인</button><button type="button" data-mode="merge" hidden>두 물체 합치기</button><button type="button" data-mode="split" hidden>영역 나누기</button><button type="button" data-mode="reassign" hidden>선택에 옮기기</button><button type="button" data-mode="anchor" hidden>지시선 끝점</button><button type="button" data-mode="label" hidden>라벨 위치</button>' : '<button type="button" data-mode="region">객체 선택</button><button type="button" data-mode="keep">흰색 보존</button><button type="button" data-mode="anchor">지시선 끝점</button><button type="button" data-mode="label">라벨 위치</button>'}
     <span class="aea-view-tools" role="group" aria-label="그림 보기"><button type="button" data-action="zoom-out" aria-label="축소">−</button><output class="aea-zoom" aria-label="확대 비율">100%</output><button type="button" data-action="zoom-in" aria-label="확대">+</button><button type="button" data-action="fit">전체 보기</button><button type="button" data-mode="pan">이동</button></span></div><p class="aea-hint" id="aea-hint"></p>
     <div class="aea-body"><div class="aea-workspace"><div class="aea-stage"><img class="aea-source" alt="객체를 선택할 원본 이미지"><svg class="aea-original" aria-hidden="true"></svg><svg class="aea-overlay" aria-label="객체 선택 영역"></svg><svg class="aea-preview" aria-label="투명 배경 미리보기" hidden></svg></div></div>
       <aside class="aea-sidebar"><h3>${automatic ? '분리된 물체' : '선택한 객체'} <span class="aea-count">0</span></h3><label class="aea-label-toggle"><input type="checkbox" data-disable-labels checked>전체 라벨 사용 안 함</label><div class="aea-list"></div><p class="aea-empty">${automatic ? '확인할 분리 결과가 없습니다.' : '왼쪽 그림에서 객체를 감싸는 사각형을 그리세요.'}</p><button type="button" data-action="clear-keep" hidden>이 객체의 흰색 보존 해제</button></aside></div>
     <p class="aea-status" role="status" aria-live="polite">이미지를 불러오는 중…</p>
-    <footer class="aea-footer"><button type="button" data-action="cancel">취소</button><div><button type="button" data-action="preview">${automatic ? '원본 보기' : '미리보기'}</button><button type="button" class="aea-primary" data-action="insert">${automatic ? '페이지에 넣고 닫기' : '페이지에 각각 넣기'}</button></div></footer>`;
+    <footer class="aea-footer"><button type="button" data-action="cancel">취소</button><div><button type="button" data-action="preview">${automatic ? '분리 결과 보기' : '미리보기'}</button><button type="button" class="aea-primary" data-action="insert">캔버스에 삽입</button></div></footer>`;
   const find = selector => dialog.querySelector(selector);
   const source = find('.aea-source'), overlay = find('.aea-overlay'), preview = find('.aea-preview');
   const status = find('.aea-status'), list = find('.aea-list'), original = find('.aea-original'), stage = find('.aea-stage');
@@ -82,7 +83,7 @@ export async function openEditableAssetsDialog({ dataUrl, artboard, isCurrent = 
   let labelsDisabled = true;
   if (prepared) prepared.labelsDisabled = true;
   let width = 0, height = 0, busy = false, closed = false, drag = null, showingPreview = false, refining = false, mergeSource = null;
-  let refinementController = null;
+  let refinementController = null, invalidated = false;
   let finish;
   const result = new Promise(resolve => { finish = resolve; });
   const close = inserted => {
@@ -93,19 +94,24 @@ export async function openEditableAssetsDialog({ dataUrl, artboard, isCurrent = 
     dialog.close(); dialog.remove(); previousFocus?.focus(); finish(inserted);
   };
   const current = () => {
-    if (closed) return false;
+    if (closed || invalidated) return false;
     if (isCurrent()) return true;
+    invalidated = true;
     prepared = null;
+    find('[data-action="insert"]').disabled = true;
+    find('[data-action="preview"]').disabled = true;
+    dialog.querySelectorAll('[data-mode], .aea-list input, .aea-list select, .aea-list button, [data-disable-labels]').forEach(node => { node.disabled = true; });
     status.textContent = '생성 이미지가 바뀌었습니다. 닫고 새 이미지에서 다시 선택해 주세요.';
     return false;
   };
   const active = () => regions.find(region => region.id === selected);
   const controls = () => {
+    const unavailable = !current();
     dialog.setAttribute('aria-busy', String(busy));
-    dialog.querySelectorAll('[data-mode], .aea-list input, .aea-list select, [data-disable-labels], .aea-list button, [data-action="clear-keep"]').forEach(node => { node.disabled = busy || !width; });
-    dialog.querySelectorAll('.aea-list input, .aea-list select').forEach(node => { node.disabled = busy || !width || labelsDisabled; });
-    find('[data-action="preview"]').disabled = busy || !regions.length || !width;
-    find('[data-action="insert"]').disabled = busy || !prepared || !current();
+    dialog.querySelectorAll('[data-mode], .aea-list input, .aea-list select, [data-disable-labels], .aea-list button, [data-action="clear-keep"]').forEach(node => { node.disabled = busy || !width || unavailable; });
+    dialog.querySelectorAll('.aea-list input, .aea-list select').forEach(node => { node.disabled = busy || !width || labelsDisabled || unavailable; });
+    find('[data-action="preview"]').disabled = busy || !regions.length || !width || unavailable;
+    find('[data-action="insert"]').disabled = busy || !prepared || unavailable;
     find('[data-action="clear-keep"]').hidden = !active()?.keepRects.length;
     for (const button of dialog.querySelectorAll('[data-mode]')) button.setAttribute('aria-pressed', String(button.dataset.mode === mode));
   };
@@ -118,12 +124,33 @@ export async function openEditableAssetsDialog({ dataUrl, artboard, isCurrent = 
   };
   const draw = () => {
     overlay.replaceChildren();
-    for (const region of regions) {
+    for (const [index, region] of regions.entries()) {
       const chosen = region.id === selected;
-      overlay.append(svgNode('rect', { x: region.x, y: region.y, width: region.width, height: region.height, class: chosen ? 'aea-region is-selected' : 'aea-region' }));
+      const group = svgNode('g', { 'data-region-id': region.id });
+      group.append(svgNode('rect', { x: region.x, y: region.y, width: region.width, height: region.height, class: chosen ? 'aea-region is-selected' : 'aea-region' }));
+      if (automatic) {
+        const radius = Math.max(3, width / 90);
+        const x = Math.min(width - radius, region.x + radius), y = Math.min(height - radius, region.y + radius);
+        group.setAttribute('role', 'button'); group.setAttribute('tabindex', '0');
+        group.setAttribute('aria-label', `객체 ${index + 1} 영역 선택`); group.setAttribute('aria-pressed', String(chosen));
+        group.append(svgNode('circle', { cx: x, cy: y, r: radius, class: 'aea-region-number-bg' }));
+        group.append(svgNode('text', { x, y, 'font-size': radius * 1.3, class: 'aea-region-number' }, String(index + 1)));
+        const choose = () => {
+          if (busy || !['inspect', 'merge'].includes(mode) || !current()) return;
+          const row = [...list.children].find(node => node.dataset.regionId === region.id);
+          row?.querySelector('button')?.click();
+        };
+        group.onclick = choose;
+        group.onkeydown = event => {
+          if (event.key !== 'Enter' && event.key !== ' ') return;
+          event.preventDefault(); choose();
+          [...overlay.children].find(node => node.dataset.regionId === region.id)?.focus({ preventScroll: true });
+        };
+      }
+      overlay.append(group);
       for (const rect of region.keepRects) overlay.append(svgNode('rect', { ...rect, class: 'aea-keep' }));
       if (effectiveAssetLabelMode(region, labelsDisabled) !== 'none') overlay.append(labelNode(region));
-      if (chosen) overlay.append(svgNode('circle', { cx: region.anchor.x, cy: region.anchor.y, r: Math.max(3, width / 180), class: 'aea-anchor' }));
+      if (chosen && (!automatic || refining)) overlay.append(svgNode('circle', { cx: region.anchor.x, cy: region.anchor.y, r: Math.max(3, width / 180), class: 'aea-anchor' }));
     }
   };
   const drawPrepared = () => {
@@ -179,10 +206,17 @@ export async function openEditableAssetsDialog({ dataUrl, artboard, isCurrent = 
     list.replaceChildren();
     for (const [index, region] of regions.entries()) {
       const row = document.createElement('div'); row.className = 'aea-row';
-      row.dataset.selected = String(region.id === selected);
+      row.dataset.selected = String(region.id === selected); row.dataset.regionId = region.id;
       const choose = document.createElement('button'); choose.type = 'button'; choose.textContent = String(index + 1);
       choose.setAttribute('aria-label', `객체 ${index + 1} 선택`); choose.setAttribute('aria-pressed', String(region.id === selected));
+      if (automatic) {
+        choose.className = 'aea-thumbnail';
+        const thumbnail = document.createElement('img'); thumbnail.src = region.data; thumbnail.alt = `객체 ${index + 1} 분리 PNG`; thumbnail.width = region.width; thumbnail.height = region.height;
+        const number = document.createElement('span'); number.textContent = String(index + 1);
+        choose.replaceChildren(thumbnail, number);
+      }
       choose.onclick = async () => {
+        if (busy || !current()) return;
         if (automatic && refining && mode === 'merge') {
           if (!mergeSource) {
             mergeSource = region.id; selected = region.id; renderList(); draw(); controls();
@@ -217,7 +251,7 @@ export async function openEditableAssetsDialog({ dataUrl, artboard, isCurrent = 
       remove.onclick = () => { regions = regions.filter(item => item !== region); if (selected === region.id) selected = regions.at(-1)?.id ?? null; renderList(); invalidate(); };
       if (automatic && !refining) {
         const download = document.createElement('button'); download.type = 'button'; download.dataset.action = 'download-asset'; download.textContent = 'PNG'; download.setAttribute('aria-label', `${region.label} PNG 저장`);
-        download.onclick = () => { const link = document.createElement('a'); link.href = prepared.assets[index].data; link.download = `${region.label.replace(/[\\/:*?"<>|]+/g, '-')}.png`; link.click(); };
+        download.onclick = () => { if (!current()) return; const link = document.createElement('a'); link.href = prepared.assets[index].data; link.download = `${region.label.replace(/[\\/:*?"<>|]+/g, '-')}.png`; link.click(); };
         row.append(choose, input, download);
       } else {
         if (automatic) { remove.textContent = '제외'; remove.setAttribute('aria-label', `물체 ${index + 1} 결과에서 제외`); remove.onclick = () => applyRefinement({ type: 'exclude', assetId: region.id }); }
@@ -227,6 +261,12 @@ export async function openEditableAssetsDialog({ dataUrl, artboard, isCurrent = 
       list.append(row);
     }
     find('.aea-count').textContent = String(regions.length); find('.aea-empty').hidden = !!regions.length;
+    const chosen = [...list.children].find(node => node.dataset.regionId === selected);
+    if (chosen) {
+      const rowBounds = chosen.getBoundingClientRect(), listBounds = list.getBoundingClientRect();
+      if (rowBounds.top < listBounds.top) list.scrollTop -= listBounds.top - rowBounds.top;
+      else if (rowBounds.bottom > listBounds.bottom) list.scrollTop += rowBounds.bottom - listBounds.bottom;
+    }
   };
   const setMode = next => {
     mode = next; mergeSource = null; stage.classList.toggle('is-pan', mode === 'pan');
@@ -303,10 +343,10 @@ export async function openEditableAssetsDialog({ dataUrl, artboard, isCurrent = 
   stage.addEventListener('wheel', event => { event.preventDefault(); changeZoom(event.deltaY < 0 ? 1.1 : 1 / 1.1); }, { passive: false });
   const runPreview = async () => {
     if (busy || !regions.length || !current()) return;
-    if (showingPreview) { showingPreview = false; showSource(true); overlay.toggleAttribute("hidden", automatic && !refining); preview.toggleAttribute("hidden", true); find('[data-action="preview"]').textContent = automatic ? '분리 결과 보기' : '미리보기'; return; }
+    if (showingPreview) { showingPreview = false; showSource(true); overlay.toggleAttribute("hidden", false); preview.toggleAttribute("hidden", true); find('[data-action="preview"]').textContent = automatic ? '분리 결과 보기' : '미리보기'; return; }
     if (automatic) {
       drawPrepared(); showingPreview = true; showSource(false); overlay.toggleAttribute('hidden', true); preview.toggleAttribute('hidden', false);
-      find('[data-action="preview"]').textContent = '원본 보기'; status.textContent = `${prepared.assets.length}개 물체를 확인했습니다. 라벨 방식과 표시 여부를 선택한 뒤 페이지에 넣으세요.`; return;
+      find('[data-action="preview"]').textContent = '원본 보기'; status.textContent = `${prepared.assets.length}개 물체를 확인했습니다. 라벨 방식과 표시 여부를 선택한 뒤 캔버스에 삽입하세요.`; return;
     }
     busy = true; status.textContent = '객체 바깥 배경을 투명하게 만드는 중…'; controls();
     const version = revision;
@@ -320,7 +360,7 @@ export async function openEditableAssetsDialog({ dataUrl, artboard, isCurrent = 
       }
       showingPreview = true; showSource(false); overlay.toggleAttribute("hidden", true); preview.toggleAttribute("hidden", false);
       find('[data-action="preview"]').textContent = '선택으로 돌아가기';
-      status.textContent = `${output.assets.length}개 객체 · 체크무늬는 투명 영역입니다. 흰색 내부와 라벨을 확인한 뒤 넣으세요.`;
+      status.textContent = `${output.assets.length}개 객체 · 체크무늬는 투명 영역입니다. 흰색 내부와 라벨을 확인한 뒤 캔버스에 삽입하세요.`;
     } catch (error) { if (!closed) status.textContent = error instanceof Error ? error.message : '미리보기를 만들지 못했습니다.'; }
     finally { busy = false; if (!closed) controls(); }
   };
@@ -343,7 +383,7 @@ export async function openEditableAssetsDialog({ dataUrl, artboard, isCurrent = 
     if (action === 'insert' && prepared && !busy && current()) {
       busy = true; controls();
       try { const inserted = await onInsert(prepared); if (inserted !== false) close(true); }
-      catch (error) { if (!closed) status.textContent = error instanceof Error ? error.message : '객체를 넣지 못했습니다.'; }
+      catch (error) { if (!closed) status.textContent = error instanceof Error ? error.message : '캔버스에 삽입하지 못했습니다.'; }
       finally { busy = false; if (!closed) controls(); }
     }
   });
@@ -358,10 +398,11 @@ export async function openEditableAssetsDialog({ dataUrl, artboard, isCurrent = 
     center = { x: width / 2, y: height / 2 }; updateViewport();
     preview.setAttribute('viewBox', previewViewBoxForLabels(width, height, previewLabelPadding()));
     if (automatic) {
-      if (prepared.width !== width || prepared.height !== height || !Array.isArray(prepared.assets) || !prepared.assets.length || prepared.assets.length > 128) {
+      if (prepared.fallbackToOriginal || prepared.width !== width || prepared.height !== height || !Array.isArray(prepared.assets) || !prepared.assets.length || prepared.assets.length > 128) {
         prepared = null; status.textContent = '분리 결과가 원본 PNG와 맞지 않습니다. 원본 PNG를 유지했습니다.'; controls(); return;
       }
-      syncPreparedRegions(); selected = regions[0].id; renderList(); void runPreview();
+      syncPreparedRegions(); selected = regions[0].id; renderList(); draw();
+      status.textContent = `${prepared.assets.length}개 물체 · 번호별 영역과 개별 PNG를 확인하세요. ${SEPARATION_LIMITS_HINT}`;
     } else status.textContent = '원본은 그대로 유지됩니다. 객체를 선택해 주세요.';
     controls();
   };
@@ -380,7 +421,7 @@ export async function openEditableAssetsDialog({ dataUrl, artboard, isCurrent = 
       if (!closed) status.textContent = error instanceof Error ? error.message : '이미지를 확인하지 못했습니다.';
     }
   };
-  if (automatic) find('.aea-hint').textContent = '결과가 만족스럽지 않을 때만 미세 조정을 여세요.';
+  if (automatic) find('.aea-hint').textContent = '원본 영역 또는 개별 PNG를 선택하면 같은 번호가 표시됩니다. 필요한 경우 미세 조정을 여세요.';
   else setMode('region');
   void loadSource();
   return result;

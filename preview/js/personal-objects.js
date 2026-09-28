@@ -10,7 +10,7 @@ import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-pre
  * · 백업: settings.js PERSONAL_KEYS에 포함 — '설정 저장하기/불러오기'로 왕복.
  */
 
-import { instantiateObjectsAt } from "./transform.js?v=1.6.0-preview-lite-hybrid-0922";
+import { instantiateObjectsAt } from "./transform.js?v=1.6.0-workbench-polish-0928-final";
 import { showAlert, showConfirm } from "./ui-dialogs.js?v=1.6.0-preview-labeler-0917-1111";
 import { renderObject } from "./render.js?v=1.6.0-preview-lite-hybrid-0922";
 import { getObjectBBox } from "./pick.js?v=1.6.0-preview-lite-hybrid-0922";

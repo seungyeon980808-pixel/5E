@@ -16,7 +16,7 @@
 import { screenToWorld, getRenderScale } from "./viewport.js?v=1.6.0-preview-lite-hybrid-0922";
 import { resolveSnap, resolveEndpointSnap, resolveRadialCenterSnap } from "./snap.js?v=1.6.0-preview-lite-hybrid-0922";
 import { setSnapPreview, setSmartGuides, pendulumBBox } from "./render.js?v=1.6.0-preview-lite-hybrid-0922";
-import { pickSelectableObjectFromEvent } from "./tools.js?v=1.6.0-preview-lite-hybrid-0922";
+import { pickSelectableObjectFromEvent } from "./tools.js?v=1.6.0-workbench-polish-0928-final";
 import { isObjectSelectable } from "./pick.js?v=1.6.0-preview-lite-hybrid-0922";
 import { IMAGE_EDIT_SESSION_ID } from "./image-cutout.js?v=1.6.0-preview-lite-hybrid-0922";
 import { SHAPE_TYPES, SIZE_TYPES, FLIP_TYPES, POINT_ARRAY_TYPES,

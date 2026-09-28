@@ -1,4 +1,6 @@
-import { createContinuousCropPages } from "./library/continuous-crop-pages.js?v=1.6.0-library-navigation-0928";
+import { attachCropMagnifier } from "./tools/pointer-magnifier.js?v=1.6.0-workbench-polish-0928-final";
+import { targetPageGeometry, fittedPageSize, createPreviewPaper } from "./library/page-loading.js?v=1.6.0-workbench-polish-0928-final";
+import { createContinuousCropPages } from "./library/continuous-crop-pages.js?v=1.6.0-workbench-polish-0928-final";
 import { registerEscapeLayer } from "./escape-layers.js?v=1";
 import { DESKTOP_RELEASE_URL } from "./ai-install-guide.js?v=1.6.0-preview-labeler-0917-1111";
 import { safeExternalSourceUrl } from "./library-import-policy.js";
@@ -1672,7 +1674,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       loading.className = "unilib-preview-loading";
       loading.setAttribute("role", "status");
       loading.textContent = "미리보기 불러오는 중…";
-      stage.append(loading);
+      stage.replaceChildren(createPreviewPaper(result), loading);
       stage.setAttribute("aria-busy", "true");
     }
     const pdfMatches = result?.kind === "pdf" && Array.isArray(result.matches) ? result.matches : [];
@@ -1729,6 +1731,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     if (representations.length && !isValidQuestionRepresentation(result, activeRepresentation)) activeRepresentation = representations[0].id;
     if (!representations.length) activeRepresentation = result?.variants?.manual ? "manual" : "full";
     const materializeResult = resultForRepresentation(result, activeRepresentation);
+    stage.querySelector(".unilib-preview-paper")?.replaceWith(createPreviewPaper(materializeResult));
     const representationHost = overlay.querySelector("[data-unilib-representations]");
     representationHost.hidden = representations.length === 0;
     representationHost.replaceChildren(...representations.map((option) => {
@@ -2379,7 +2382,22 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   cropLoadPreview.alt = "";
   cropLoadPreview.hidden = true;
   cropLoadPreview.setAttribute("aria-hidden", "true");
-  cropLoadState.prepend(cropLoadPaper, cropLoadPreview);
+  cropCanvas.prepend(cropLoadPaper, cropLoadPreview);
+  const cropMagnifier = attachCropMagnifier({
+    surface: cropStage, image: cropImage,
+    inspector: overlay.querySelector(".unilib-crop-preview"),
+    id: "library-crop-magnifier",
+    available: () => cropReady && !cropDialog.hidden && !overlay.hidden && !cropSession?.viewOnly,
+  });
+  const sizePendingCrop = (geometry) => {
+    if (!geometry) return;
+    const style = getComputedStyle(cropStage);
+    const available = Math.max(1, cropStage.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight));
+    const size = fittedPageSize(geometry, available / cropFitBounds[2], cropZoom);
+    cropCanvas.style.width = `${size.width}px`;
+    cropCanvas.style.height = `${size.height}px`;
+    continuousCrop.size(size.width, size.height);
+  };
   const showCropTargetThumbnail = async (session, file) => {
     if (typeof file?.loadPreview !== "function") return;
     const isCurrent = () => cropSession === session && !cropDialog.hidden && !overlay.hidden && !cropReady
@@ -2399,6 +2417,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       decoded.src = src;
       await decoded.decode();
       if (!isCurrent()) return;
+      sizePendingCrop({ width: decoded.naturalWidth, height: decoded.naturalHeight });
       cropLoadPreview.src = src;
       cropLoadPreview.hidden = false;
       cropLoadPaper.hidden = true;
@@ -2408,9 +2427,10 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   const cropRetry = overlay.querySelector("[data-unilib-crop-retry]");
   const setCropLoadState = (state, message = "PDF 페이지를 불러오는 중입니다…") => {
     cropReady = state === "ready";
+    cropMagnifier.hide();
     cropLoadPreview.hidden = true;
     cropLoadPreview.removeAttribute("src");
-    cropLoadPaper.hidden = false;
+    cropLoadPaper.hidden = cropReady;
     cropStage.setAttribute("aria-busy", String(state === "loading"));
     cropLoadState.hidden = cropReady;
     cropLoadState.dataset.state = state;
@@ -2625,6 +2645,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   };
   const closeCrop = (restoreFocus = true) => {
     const refreshSelection = cropSelectionChanged && !overlay.hidden;
+    cropMagnifier.hide();
     continuousCrop.reset();
     cropPreviewEpoch += 1;
     cropReady = false;
@@ -2684,6 +2705,8 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     cropExact = null;
     cropDialog.hidden = false;
     setCropLoadState("loading");
+    if (continuousCrop.mounted) continuousCrop.activate(session.pageNumber, !preserveScroll);
+    sizePendingCrop(targetPageGeometry(result) || { width: 3, height: 4 });
     cropStage.focus();
     try {
       const activeProvider = await provider();
@@ -2701,6 +2724,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
         ? activeProvider.search({ query: "", kinds: ["crop"], limit: Number.MAX_SAFE_INTEGER })
         : results;
       cropFitBounds = wholePage ? [0, 0, 1, 1] : cropContentBoundsForResult(result, pageResults);
+      sizePendingCrop(cropDocumentFile?.getPageGeometry?.(session.pageNumber) || targetPageGeometry(result));
       cropDialog.hidden = false;
       paintCrop();
       cropStage.focus();
@@ -2725,7 +2749,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       await cropImage.decode();
       if (!cropSessionIsCurrent(session, selectedActiveResult()) || cropSession !== session) return;
       setCropLoadState("ready");
-      if (pageCount > 1 && !continuousCrop.mounted) continuousCrop.mount(pageCount, session.pageNumber);
+      if (pageCount > 1 && !continuousCrop.mounted) continuousCrop.mount(pageCount, session.pageNumber, cropDocumentFile?.getPageGeometry);
       if (continuousCrop.mounted) continuousCrop.activate(session.pageNumber);
       if (!preserveScroll) fitCropContent();
       else {
@@ -2769,6 +2793,14 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     cropTitle.textContent = "확대 미리보기";
     cropDialog.hidden = false;
     setCropLoadState("loading", "이미지를 불러오는 중입니다…");
+    cropFitBounds = [0, 0, 1, 1];
+    const displayed = stage.querySelector(".unilib-preview-image img");
+    if (displayed?.naturalWidth) {
+      sizePendingCrop({ width: displayed.naturalWidth, height: displayed.naturalHeight });
+      cropLoadPreview.src = src;
+      cropLoadPreview.hidden = false;
+      cropLoadPaper.hidden = true;
+    }
     cropImage.src = src;
     try {
       await cropImage.decode();
@@ -2828,6 +2860,8 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       const file = cropDocumentFile;
       if (!file) throw new Error("PDF 문서를 찾을 수 없습니다.");
       const asset = await file.loadPreview(page, { continuous: true });
+      const receivedPage = asset?.provenance?.pageNumber ?? asset?.source?.pageNumber;
+      if (receivedPage != null && Number(receivedPage) !== page) throw new Error("PDF 미리보기 쪽이 일치하지 않습니다.");
       return resultImage(file, asset);
     },
     onPage: (page) => changeCropPage(page, true),

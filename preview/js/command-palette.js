@@ -16,8 +16,8 @@ import { modKey, shortcutKey, isEditingTarget, isComposingKey, keyLabel, IS_MAC 
  *   - 오브젝트는 search.js와 동일한 데이터(TEMPLATES/퍼스널)를 재사용해 생성한다.
  */
 
-import { TEMPLATES, activateTemplate, buildSymbolIcon, sizeIconViewBox } from "./templates.js?v=1.6.0-preview-lite-hybrid-0922";
-import { listPersonalItems, insertPersonalItem } from "./personal-objects.js?v=1.6.0-preview-lite-hybrid-0922";
+import { TEMPLATES, activateTemplate, buildSymbolIcon, sizeIconViewBox } from "./templates.js?v=1.6.0-workbench-polish-0928-final";
+import { listPersonalItems, insertPersonalItem } from "./personal-objects.js?v=1.6.0-workbench-polish-0928-final";
 import { state } from "./state.js?v=1.6.0-preview-labeler-0917-1111";
 import { trimSelectedBoxMargins } from "./erase-tool.js?v=1.6.0-preview-lite-hybrid-0922";
 
