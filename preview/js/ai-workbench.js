@@ -202,8 +202,7 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     const headHeight = pane.querySelector('.ai-pane-head').offsetHeight;
     const availableWidth = Math.max(40, card.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight));
     const availableHeight = Math.max(40, pane.clientHeight - headHeight - 100);
-    const original = activeSource()?.querySelector('.ai-preview-stage > img');
-    const ratio = original?.naturalWidth && original?.naturalHeight ? original.naturalWidth / original.naturalHeight : image.naturalWidth / image.naturalHeight;
+    const ratio = image.naturalWidth / image.naturalHeight;
     return {stage, ratio, height: Math.min(availableHeight, availableWidth / ratio)};
   }
 
@@ -638,6 +637,9 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
         }
         card.appendChild(controls);
       }
+      const orderControls = card.querySelector('[data-ai-reference-order-controls]');
+      const hideOrderControls = cards.filter(item => item.dataset.aiReferenceRole !== 'STYLE_REFERENCE').length < 2;
+      if (orderControls && orderControls.hidden !== hideOrderControls) orderControls.hidden = hideOrderControls;
       watchCardFit(card);
     }
     if (compositePreview) compositePreview.hidden = true;

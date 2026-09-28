@@ -216,28 +216,15 @@ for (const engine of ['chromium', 'webkit']) {
     const single=await objects(page); assert.equal(single.length,1); assert.equal(single[0].aiCandidateId,'candidate-0');
     await page.click('#undo-btn'); assert.equal((await objects(page)).length,0);
     await openPanel(page);
-    await page.click(`${active} [data-ai-capture]`);
-    await page.click('.ai-capture-source');
-    await page.locator('.ai-crop-inspector [data-crop-magnifier-toggle]').waitFor();
-    const image = page.locator('.ai-crop-image-wrap > img'); await image.waitFor();
-    const box=await image.boundingBox(); await page.mouse.move(box.x+45,box.y+100);
-    await page.locator('#ai-capture-magnifier').waitFor({state:'visible'});
-    assert.equal(await page.evaluate(()=>Number(getComputedStyle(document.querySelector('#ai-capture-magnifier')).zIndex)>Number(getComputedStyle(document.querySelector('.ai-crop-dialog').parentElement).zIndex)),true,'lens must paint above capture overlay');
-    assert.equal(await page.locator('#ai-capture-magnifier image').first().getAttribute('href'),await page.evaluate(()=>window.__task2.original));
-    await page.screenshot({path:path.join(evidence,'capture-magnifier.png')});
-    await page.locator('.ai-crop-inspector [data-crop-magnifier-toggle]').uncheck();
-    await page.locator('#ai-capture-magnifier').waitFor({state:'hidden'});
-    await page.locator('.ai-crop-inspector [data-crop-magnifier-toggle]').check();
-    await page.mouse.move(box.x+30,box.y+30); await page.mouse.down(); await page.mouse.move(box.x+180,box.y+160); await page.mouse.up();
-    await page.click('[data-ai-crop-apply]');
+    assert.equal(await page.locator(`${active} [data-ai-capture]`).count(),0,'retired capture entry must not reappear');
     assert.equal(await page.locator('#ai-capture-magnifier').count(),0);
     assert.equal(await page.locator('.ai-crop-dialog').count(),0);
     const snapshots=await page.evaluate(async()=> (await window.__task2Manager.sharingSnapshot()).workspaces.flatMap(item=>item.tabs));
-    assert.ok(snapshots.some(tab=>tab.attachments.some(item=>item.name.includes('캡처'))));
+    assert.equal(snapshots.some(tab=>tab.attachments.some(item=>item.name.includes('캡처'))),false);
     assert.equal(snapshots.find(tab=>tab.id==='task-0').generated[0].data,await page.evaluate(()=>window.__task2.original));
     assert.equal(await page.evaluate(()=>window.__task2.sends.length),0);
     assert.deepEqual(errors,[]);
-    fs.writeFileSync(path.join(evidence,'result.json'),JSON.stringify({selectedRevision:'candidate-0',separatedObjects:separated.length,singleObjects:single.length,undoObjects:0,localSeparationSends:0,cropAdded:true,modelRestored:true,backgroundRestored:true,originalPreserved:snapshots.find(tab=>tab.id==='task-0').generated[0].data===await page.evaluate(()=>window.__task2.original)},null,2));
+    fs.writeFileSync(path.join(evidence,'result.json'),JSON.stringify({selectedRevision:'candidate-0',separatedObjects:separated.length,singleObjects:single.length,undoObjects:0,localSeparationSends:0,captureEntryRemoved:true,modelRestored:true,backgroundRestored:true,originalPreserved:snapshots.find(tab=>tab.id==='task-0').generated[0].data===await page.evaluate(()=>window.__task2.original)},null,2));
   });
 }
 
