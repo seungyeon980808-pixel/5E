@@ -1,5 +1,6 @@
-const MAX_SOURCE_BYTES = 1_048_576;
-const MAX_SOURCE_RECORD_BYTES = 1_500_000;
+// Keep base64 below the 11,000,000-character image transport limit; allow metadata in the IndexedDB record.
+const MAX_SOURCE_BYTES = 8_000_000;
+const MAX_SOURCE_RECORD_BYTES = 12_000_000;
 const isRecord = value => value && typeof value === 'object' && !Array.isArray(value);
 
 export function parseBatchSource(source, options) {
@@ -10,7 +11,7 @@ export function parseBatchSource(source, options) {
   if (!match || match[2].length % 4 !== 0) throw new TypeError('Batch source requires a valid image data URL.');
   const padding = match[2].endsWith('==') ? 2 : match[2].endsWith('=') ? 1 : 0;
   const decodedLength = (match[2].length / 4) * 3 - padding;
-  if (decodedLength < 1 || decodedLength > MAX_SOURCE_BYTES) throw new RangeError('Batch source exceeds the size limit.');
+  if (decodedLength < 1 || decodedLength > MAX_SOURCE_BYTES) throw new RangeError('선택한 원본 이미지가 8MB 제한을 넘었습니다. 해당 이미지를 제외한 뒤 다시 선택해 주세요.');
   let bytes;
   try { bytes = Uint8Array.from(atob(match[2]), character => character.charCodeAt(0)); }
   catch { throw new TypeError('Batch source requires a valid image data URL.'); }
@@ -22,7 +23,7 @@ export function parseBatchSource(source, options) {
   const snapshot = structuredClone(source);
   const parsedOptions = structuredClone(options);
   const serializedSize = new TextEncoder().encode(JSON.stringify({ sourceSnapshot: snapshot, options: parsedOptions })).byteLength;
-  if (serializedSize > MAX_SOURCE_RECORD_BYTES) throw new RangeError('Batch source record exceeds the size limit.');
+  if (serializedSize > MAX_SOURCE_RECORD_BYTES) throw new RangeError('선택한 작업의 이미지와 설정이 12MB 저장 제한을 넘었습니다. 해당 작업을 제외한 뒤 다시 선택해 주세요.');
   return { snapshot, options: parsedOptions };
 }
 
