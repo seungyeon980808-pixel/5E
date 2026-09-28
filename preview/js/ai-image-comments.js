@@ -96,13 +96,14 @@ export function isImageCommentTarget(item, selectedId) {
   return Boolean(selectedId) && item.id === selectedId;
 }
 
-export function createImageCommentController({ panel, getImages, getSelectedId, isBusy, changed }) {
+export function createImageCommentController({ panel, getImages, getSelectedId, isBusy, changed, viewChanged }) {
   const doc = panel.ownerDocument || document;
   const win = doc.defaultView || globalThis;
   const q = selector => panel.querySelector(selector);
   const bindings = new Map();
   const cleanup = [];
   let tool = 'pan';
+  let markersVisible = true;
   let selected = null;
   let geometrySelection = null;
   let geometry = null;
@@ -272,6 +273,12 @@ export function createImageCommentController({ panel, getImages, getSelectedId, 
   function updateControls(allEntries) {
     const active = current();
     const busy = isBusy();
+    const visibility = q('[data-ai-comment-visibility]');
+    if (visibility) {
+      visibility.setAttribute('aria-pressed', String(markersVisible));
+      visibility.textContent = markersVisible ? '코멘트 표시' : '코멘트 숨김';
+    }
+    panel.dataset.aiCommentsVisible = String(markersVisible);
     const count = q('[data-ai-comments-count]');
     if (count) count.textContent = String(allEntries.length);
     const status = q('[data-ai-comment-status]');
@@ -444,9 +451,16 @@ export function createImageCommentController({ panel, getImages, getSelectedId, 
   }
 
   listen(panel, 'click', event => {
+    if (event.target.closest?.('[data-ai-comment-visibility]')) {
+      markersVisible = !markersVisible;
+      updateControls(entries());
+      viewChanged?.();
+      return;
+    }
     const button = event.target.closest?.('[data-ai-comment-tool]');
     if (button && !isBusy() && TOOL_NAMES.has(button.dataset.aiCommentTool)) {
       tool = button.dataset.aiCommentTool;
+      if (tool !== 'pan') markersVisible = true;
       for (const entry of bindings.values()) clearDrag(entry);
       updateControls(entries());
     }
@@ -482,10 +496,11 @@ export function createImageCommentController({ panel, getImages, getSelectedId, 
   return {
     bind,
     render,
-    getViewState: () => ({tool,selected,tab:q('[data-ai-chat-panel]')?.hidden===false?'chat':'comments'}),
+    getViewState: () => ({tool,selected,markersVisible,tab:q('[data-ai-chat-panel]')?.hidden===false?'chat':'comments'}),
     restoreViewState(value) {
       tool=panel.dataset.aiSharingMode==='view'?'pan':TOOL_NAMES.has(value?.tool)?value.tool:'pan';
       selected=typeof value?.selected==='string'?value.selected:null;
+      markersVisible=value?.markersVisible !== false;
       activateTab(value?.tab);
       render();
     },

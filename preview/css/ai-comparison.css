@@ -9,7 +9,7 @@
   border: 1px solid var(--border, #d4d9e1); border-radius: var(--mobile-radius, 8px);
 }
 .ai-comparison-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px; border-bottom: 1px solid var(--border, #d4d9e1); }
-.ai-comparison { display: flex; flex: 1; flex-direction: column; min-height: 0; min-width: 0; gap: 8px; padding: 12px; color: var(--text-primary, #202630); font: inherit; }
+.ai-comparison { display: flex; flex: 1; flex-direction: column; min-height: 0; min-width: 0; gap: 8px; padding: 12px; color: var(--text-primary, #202630); font-family: "IBM Plex Sans KR", system-ui, sans-serif; }
 .ai-comparison-selectors { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 .ai-comparison-choice { display: grid; grid-template-columns: minmax(0, 1fr) auto; min-width: 0; align-items: center; align-content: start; gap: 4px 8px; }
 .ai-comparison-choice label { display: flex; grid-column: 1 / -1; min-width: 0; flex-direction: column; gap: 4px; font-size: 12px; }
@@ -29,6 +29,12 @@
 .ai-comparison-stage:active { cursor: grabbing; }
 .ai-comparison-pane { position: absolute; inset: 0; overflow: hidden; }
 .ai-comparison-pane svg { display: block; width: 100%; height: 100%; }
+.ai-comparison-markers { pointer-events: none; }
+.ai-comparison-left .ai-comparison-markers { color: #267fbd; }
+.ai-comparison-right .ai-comparison-markers { color: #9162cb; }
+.ai-comparison-markers rect { fill: color-mix(in srgb, currentColor 12%, transparent); stroke: currentColor; }
+.ai-comparison-markers circle { fill: currentColor; stroke: #fff; stroke-width: 1px; }
+.ai-comparison-markers text { fill: #fff; text-anchor: middle; dominant-baseline: central; font-family: "IBM Plex Sans KR", system-ui, sans-serif; font-weight: 700; }
 .ai-comparison[data-mode="side-by-side"] .ai-comparison-left { right: 50%; }
 .ai-comparison[data-mode="side-by-side"] .ai-comparison-right { left: 50%; box-shadow: inset 1px 0 var(--border, #d4d9e1); }
 .ai-comparison-divider { position: absolute; inset-block: 0; width: 32px; margin-left: -16px; cursor: ew-resize; touch-action: none; }
