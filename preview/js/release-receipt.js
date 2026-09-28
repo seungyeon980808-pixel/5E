@@ -1,6 +1,6 @@
 const release = Object.freeze({
   modifiedAt: '2026.09.29',
-  sourceCommit: '',
+  sourceCommit: '3403a42e416fe671726acc8f59230efa04610683',
   changes: '서버 모델 목록 연동 / 중복 오류 정리 / 필터 구분선 / GPT 표시',
 });
 
