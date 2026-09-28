@@ -55,3 +55,18 @@ export function defaultAIModelSelection(catalog, preference = {}) {
     serviceTier: Object.hasOwn(preference, 'serviceTier') ? preference.serviceTier : entry?.defaultServiceTier ?? null,
   }, catalog);
 }
+
+// Captured from Codex 0.153.2 model/list on 2026-09-28. Server entries always win.
+const verifiedCodexModels = [
+  { model: 'gpt-6-sol', displayName: 'GPT-6-Sol', supportedReasoningEfforts: ['low', 'medium', 'high', 'xhigh', 'max', 'ultra'] },
+  { model: 'gpt-6-luna', displayName: 'GPT-6-Luna', supportedReasoningEfforts: ['low', 'medium', 'high', 'xhigh', 'max'] },
+].map(entry => ({ ...entry, defaultReasoningEffort: 'medium', serviceTiers: ['priority'], defaultServiceTier: null, catalogSource: 'verified-codex-2026-09-28' }));
+
+/** Supplement an older Codex catalog without claiming access for its server/account. */
+export function supplementVerifiedCodexModels(catalog) {
+  readAIModelCatalog(catalog);
+  const entries = structuredClone(Array.isArray(catalog) ? catalog : catalog.data);
+  if (!entries.some(entry => /^gpt-(?:6|5\.6|5\.5)(?:-|$)/.test(entry.model || entry.id))) return entries;
+  const ids = new Set(entries.map(entry => entry.model || entry.id));
+  return [...entries, ...structuredClone(verifiedCodexModels.filter(entry => !ids.has(entry.model)))];
+}

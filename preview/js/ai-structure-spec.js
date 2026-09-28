@@ -2,7 +2,7 @@
  * STRUCTURE_SPEC_VERSION identifies the prompt/rule dialect in structureRecord.
  * spec.version=1 is the JSON envelope shape; unknown roles/profiles fail closed.
  */
-import { resolveAIModelSelection } from './ai-model-capabilities.js?v=1.6.0-workbench-polish-0928-final';
+import { resolveAIModelSelection } from './ai-model-capabilities.js?v=1.6.0-small-fixes-0928';
 
 export const STRUCTURE_SPEC_VERSION = '1.3.0';
 const profiles = {

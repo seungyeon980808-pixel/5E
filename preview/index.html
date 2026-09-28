@@ -44,10 +44,10 @@
   <link rel="stylesheet" href="css/style.css?v=1.6.0-ai-latest-fixes-0928" />
   <link rel="stylesheet" href="css/inspector.css?v=1.6.0-preview-lite-tools-0922b" />
   <link rel="stylesheet" href="css/exam-library.css?v=1.6.0-preview-labeler-0917-1111" />
-  <link rel="stylesheet" href="css/unified-library.css?v=1.6.0-workbench-polish-0928-final" />
+  <link rel="stylesheet" href="css/unified-library.css?v=1.6.0-small-fixes-0928" />
   <link rel="stylesheet" href="css/parts-library.css?v=1.6.0-preview-labeler-0917-1111" />
   <link rel="stylesheet" href="css/tutorial.css?v=1.6.0-preview-labeler-0917-1111" />
-  <link rel="stylesheet" href="css/ai-panel.css?v=1.6.0-ai-latest-fixes-0928" />
+  <link rel="stylesheet" href="css/ai-panel.css?v=1.6.0-small-fixes-0928" />
   <link rel="stylesheet" href="css/ai-comparison.css?v=1.6.0-ai-latest-fixes-0928" />
   <link rel="stylesheet" href="css/ai-composition-editor.css?v=1.6.0-preview-labeler-0917-1111" />
   <link rel="stylesheet" href="css/ai-editable-assets.css?v=1.6.0-ai-latest-fixes-0928" />
@@ -373,17 +373,17 @@
           </label>
         </span>
         <div class="canvas-lock-control">
-          <button id="center-view-btn" type="button" aria-pressed="false" aria-haspopup="menu"
-                  aria-expanded="false" aria-controls="canvas-lock-menu" aria-label="자유 이동"
-                  data-mode="free" title="자유 이동 (Ctrl+Space)">⌖</button>
+          <button id="center-view-btn" type="button" aria-pressed="true" aria-haspopup="menu"
+                  aria-expanded="false" aria-controls="canvas-lock-menu" aria-label="기준 좌표 고정"
+                  data-mode="coordinate" title="기준 좌표 고정 (Ctrl+Space)">⌖</button>
           <div id="canvas-lock-menu" class="canvas-lock-menu" role="menu" hidden>
-            <button type="button" role="menuitemradio" aria-checked="true" data-canvas-lock-mode="free">
+            <button type="button" role="menuitemradio" aria-checked="false" data-canvas-lock-mode="free">
               <strong>자유 이동</strong><span>캔버스를 자유롭게 이동합니다.</span>
             </button>
             <button type="button" role="menuitemradio" aria-checked="false" data-canvas-lock-mode="current">
               <strong>현재 위치 고정</strong><span>지금 보이는 위치를 그대로 고정합니다.</span>
             </button>
-            <button type="button" role="menuitemradio" aria-checked="false" data-canvas-lock-mode="coordinate">
+            <button type="button" role="menuitemradio" aria-checked="true" data-canvas-lock-mode="coordinate">
               <strong>기준 좌표 고정</strong><span>지정 좌표를 화면 중심에 고정합니다.</span>
             </button>
             <div class="canvas-lock-coordinates">
@@ -707,7 +707,7 @@
     </section>
   </div>
 
-  <script type="module" src="js/release-receipt.js?v=1.6.0-ai-latest-fixes-0928"></script>
+  <script type="module" src="js/release-receipt.js?v=1.6.0-small-fixes-0928"></script>
   <script src="js/mobile-entry.js?v=1.6.0-preview-mobile-golden-0922"></script>
   <script src="js/web-ai-connection.js?v=1.6.0-preview-auth-popup-0921"></script>
   <script src="experiments/web-codex-auth/editor-bridge.js?v=1.6.0-preview-login-0916-1535"></script>
@@ -717,7 +717,7 @@
   <!-- 모바일: 캔버스 터치를 마우스 이벤트로 변환(그리기·이동). 모듈 그래프 밖 독립 스크립트. -->
   <script src="js/touch-drag.js?v=1.6.0-preview-labeler-0917-1111"></script>
   <script type="module" src="js/ai-workbench.js?v=1.6.0-ai-latest-fixes-0928"></script>
-  <script type="module" src="js/main.js?v=1.6.0-ai-latest-fixes-0928"></script>
+  <script type="module" src="js/main.js?v=1.6.0-small-fixes-0928"></script>
   <!-- MCP 통로: localhost에서 MCP 서버가 떠 있을 때만 붙는다(배포본은 무동작) -->
   <script type="module" src="js/mcp-bridge.js?v=1.6.0-ai-latest-fixes-0928"></script>
 </body>
