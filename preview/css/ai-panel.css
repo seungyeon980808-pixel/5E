@@ -2751,3 +2751,26 @@
 
 #ai-image-panel [data-ai-selection-count] { display:block; position:sticky; top:0; z-index:1; padding:6px; background:var(--bg-panel, #fff); font-size:11px; }
 #ai-image-panel [data-ai-workspace-job] .modal-btn { min-height:24px; padding:3px 5px; font-size:10px; }
+
+.ai-error-log-open { flex: none; white-space: nowrap; }
+.ai-error-log-dialog {
+  width: min(680px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  box-sizing: border-box;
+  padding: 20px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-panel, 12px);
+  color: var(--text-primary);
+  background: var(--bg-panel);
+}
+.ai-error-log-dialog::backdrop { background: rgb(0 0 0 / 45%); }
+.ai-error-log-dialog h3 { margin: 0 0 12px; }
+.ai-error-log-dialog p { color: var(--text-secondary); font-size: 12px; }
+.ai-error-log-dialog textarea {
+  display: block; box-sizing: border-box; width: 100%; height: min(440px, 55dvh);
+  resize: vertical; padding: 12px; white-space: pre-wrap; overflow-wrap: anywhere;
+  border: 1px solid var(--border); color: var(--text-primary); background: var(--bg-input, var(--bg-panel));
+  font: 12px/1.6 ui-monospace, monospace;
+}
+.ai-error-log-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 8px; margin-top: 12px; }
+.ai-error-log-actions [role="status"] { margin-right: auto; font-size: 12px; color: var(--text-secondary); }

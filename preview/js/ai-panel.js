@@ -1,6 +1,7 @@
+import { mountAiErrorLog, safeAiErrorText } from './ai-error-log.js?v=1.6.0-small-fixes-0928';
 import { mountRevisionComparison } from './ai-comparison.js?v=1.6.0-ai-latest-fixes-0928';
 import { attachCropMagnifier } from './tools/pointer-magnifier.js?v=1.6.0-workbench-polish-0928-final';
-import { readAIModelCatalog, resolveAIModelSelection, defaultAIModelSelection } from './ai-model-capabilities.js?v=1.6.0-workbench-polish-0928-final';
+import { readAIModelCatalog, resolveAIModelSelection, defaultAIModelSelection, supplementVerifiedCodexModels } from './ai-model-capabilities.js?v=1.6.0-small-fixes-0928';
 import { transitionSeparationMode, SEPARATION_BACKGROUND_HINT, SEPARATION_LIMITS_HINT } from './ai-separation-mode.js?v=1.6.0-workbench-polish-0928-final';
 import { createWorkbenchRequestState } from './ai-workbench-request-state.js?v=1.6.0-workbench-polish-0928-final';
 import { openAiCompositionEditor } from './ai-composition-editor.js';
@@ -74,15 +75,15 @@ import { createExactOutputCacheStore } from "./ai-output-cache-store.js?v=1.5.3"
 import { openPdfReferencePicker } from "./pdf-library/reference-picker.js?v=1.6.0-preview-labeler-0917-1111";
 import { getReferenceRole, partitionReferenceItems, planImageReferences } from "./ai-reference-roles.js";
 import { normalizeMarkPolicy, buildMarkPolicyContract } from "./ai-mark-policy.js?v=1";
-import { createStructureAnalysisController, formatStructureContract, STRUCTURE_SPEC_VERSION } from "./ai-structure-spec.js?v=1.6.0-workbench-polish-0928-final";
-import { APPROVED_FIRST_PROMPT, APPROVED_FIRST_REQUEST, approvedFirstRequestText, approvedFirstRun, prepareApprovedFirstAttachment } from './ai-approved-first-png.js?v=1.6.0-workbench-polish-0928-final';
+import { createStructureAnalysisController, formatStructureContract, STRUCTURE_SPEC_VERSION } from "./ai-structure-spec.js?v=1.6.0-small-fixes-0928";
+import { APPROVED_FIRST_PROMPT, APPROVED_FIRST_REQUEST, approvedFirstRequestText, approvedFirstRun, prepareApprovedFirstAttachment } from './ai-approved-first-png.js?v=1.6.0-small-fixes-0928';
 import { WHITE_PNG_VERSION, isWhitePngWorkflow, buildWhitePngPrompt } from "./ai-white-png.js?v=1";
 import {
   parseImageReviewReport,
   buildImageCorrectionRequest,
   buildStructuralInventory,
   createAiImageReviewController,
-} from "./ai-image-review.js?v=1.6.0-workbench-polish-0928-final";
+} from "./ai-image-review.js?v=1.6.0-small-fixes-0928";
 import { resolveGeneratedRaster } from "./ai-raster-output.js?v=1";
 import {
   imageOutputOptionsKey,
@@ -802,8 +803,17 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     high: "높음 · 정밀", xhigh: "매우 높음", max: "최대", ultra: "울트라",
   };
 
+  const errorLog = mountAiErrorLog(panel, () => {
+    const preparing = requestStates.snapshot(activeTaskTabId)?.phase === 'preparing';
+    const selection = !preparing && busy && currentRunInput ? currentRunInput : modelSelection();
+    return { taskId: requestToken?.taskId || activeTaskTabId,
+      taskTitle: taskTabs.get(requestToken?.taskId || activeTaskTabId)?.title,
+      requestId: requestToken?.requestId, turnId: preparing ? null : currentTurnId,
+      model: selection.model, effort: selection.effort, serviceTier: selection.serviceTier };
+  });
   const addLog = (text, kind = "assistant") => {
     if (!text) return null;
+    if (kind === "error") { errorLog.record(text); text = safeAiErrorText(text); }
     if (text === APPROVED_FIRST_REQUEST || text === APPROVED_FIRST_PROMPT || text === SEPARATED_ASSETS_PROMPT) {
       text = "이미지 변환을 요청했습니다.";
       kind = "assistant";
@@ -838,7 +848,9 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   };
   const setStatus = (text, kind = "", cause) => {
     if (kind === "error" && batchRun) batchRun.reject(cause || new Error(text));
+    if (kind === "error") { errorLog.record(text, cause); text = safeAiErrorText(text); }
     status.textContent = text;
+    status.title = text;
     status.dataset.kind = kind;
     if (busy && !insertingOutput && kind === "error") setTaskState("failed");
   };
@@ -1377,6 +1389,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   const syncModelWarning = () => {
     let message = '';
     try { resolveAIModelSelection(modelSelection(), availableModels); } catch (error) { message = error.message; }
+    if (!message && availableModels.find(entry => (entry.model || entry.id) === modelSelect.value)?.catalogSource === 'verified-codex-2026-09-28') message = '현재 Codex에서 확인한 모델입니다. 이 서버의 목록에는 없어 계정·서버의 생성 지원은 아직 확인되지 않았습니다.';
     if (modelWarning) { modelWarning.textContent = message; modelWarning.hidden = !message; }
     for (const [control, value] of [[reviewModelSelect, modelSelect.value], [reviewEffortSelect, effortSelect.value]]) {
       if (control) { control.replaceChildren(new Option(value, value)); control.disabled = true; }
@@ -1416,7 +1429,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     if (modelsLoaded || !desktop?.models) return;
     try {
       const result = await desktop.models();
-      availableModels = structuredClone(Array.isArray(result) ? result : result?.data || []);
+      availableModels = supplementVerifiedCodexModels(Array.isArray(result) ? result : result?.data || []);
       readAIModelCatalog(availableModels);
       modelsLoaded = true;
       restoreModelChoices();
@@ -4114,7 +4127,12 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     localStorage.setItem('5e.aiSpeed', choice.serviceTier || '');
     syncModelWarning(); captureActiveTaskTab(); persistTasks();
   };
-  modelSelect.addEventListener('change', () => { populateEfforts(); populateSpeeds(); persistModelChoice(); });
+  modelSelect.addEventListener('change', () => {
+    const entry = catalogEntry();
+    populateEfforts(entry?.efforts.includes(effortSelect.value) ? effortSelect.value : entry?.defaultEffort);
+    populateSpeeds(!speedSelect.value || entry?.tiers.includes(speedSelect.value) ? speedSelect.value : entry?.defaultServiceTier ?? null);
+    persistModelChoice();
+  });
   modelRefreshButton.addEventListener('click', async () => { if (busy) return; modelsLoaded = false; await loadModels(); });
   effortSelect.addEventListener('change', persistModelChoice);
   speedSelect.addEventListener('change', persistModelChoice);
