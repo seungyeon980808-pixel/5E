@@ -19,14 +19,19 @@ const DEFAULT_MM = 30;
 let manifest = null;
 let loading = null;
 
+async function fetchJson(path) {
+  const res = await fetch(LIB_BASE + path, { cache: "no-store" });
+  if (!res.ok) throw new Error("HTTP " + res.status + " (" + path + ")");
+  return res.json();
+}
+
+// manifest.json은 과목 묶음 파일 목록(parts)만 가진다. 과목 브랜치가 서로 다른 파일을 고치게 하려는 것.
 function loadManifest() {
-  loading ??= fetch(LIB_BASE + "manifest.json", { cache: "no-store" })
-    .then((res) => {
-      if (!res.ok) throw new Error("HTTP " + res.status);
-      return res.json();
-    })
-    .then((data) => {
-      if (!data || !Array.isArray(data.items)) throw new Error("manifest.items가 없습니다.");
+  loading ??= fetchJson("manifest.json")
+    .then(async (data) => {
+      if (!data || !Array.isArray(data.parts)) throw new Error("manifest.parts가 없습니다.");
+      const parts = await Promise.all(data.parts.map(fetchJson));
+      data.items = parts.flatMap((part) => (Array.isArray(part?.items) ? part.items : []));
       for (const item of data.items) {
         item._hay = [item.name, item.category, ...(item.keywords || [])].join(" ").toLowerCase();
         item._hayNs = item._hay.replace(/\s+/g, "");
