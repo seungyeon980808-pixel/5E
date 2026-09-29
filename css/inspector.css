@@ -14,13 +14,15 @@
 
 .panel-right {
   width: var(--panel-right-w);
-  min-width: 150px;
+  min-width: var(--shell-right-panel-size);
   max-width: 480px;
   flex-shrink: 0;
   border-left: 1px solid var(--border-strong);
   overflow-y: auto;
   background: var(--insp-bg);
   position: relative;
+  container-type: inline-size;
+  container-name: inspector-panel;
 }
 
 .panel-right .panel-title {
@@ -63,6 +65,33 @@
 #inspector-content {
   display: flex;
   flex-direction: column;
+}
+
+[data-lite-control="font-weight"] {
+  display: none !important;
+}
+
+/* Lite uses the same inspector wiring but reveals only the two contextual groups
+   approved for the reduced editor. Inline display values still decide whether a
+   supported row applies to the selected object. */
+:root[data-mode="lite"] #inspector > :not(#inspector-empty):not(#inspector-content) {
+  display: none !important;
+}
+:root[data-mode="lite"] #inspector-content > :not([data-lite-section]) {
+  display: none !important;
+}
+:root[data-mode="lite"] [data-lite-section] .insp-body > :not([data-lite-control]) {
+  display: none !important;
+}
+:root[data-mode="lite"][data-lite-inspector="line"] [data-lite-section="text"],
+:root[data-mode="lite"][data-lite-inspector="text"] [data-lite-section="line"] {
+  display: none !important;
+}
+:root[data-mode="lite"][data-lite-inspector="none"] #inspector-content {
+  display: none !important;
+}
+:root[data-mode="lite"][data-lite-inspector="none"] #inspector-empty {
+  display: block !important;
 }
 
 /* ----- Collapsible section ----- */
@@ -153,6 +182,31 @@ details[open] > .insp-summary::before {
   padding: 4px 6px;
   font-family: "IBM Plex Mono", monospace;
   min-width: 0;
+}
+
+.insp-geometry-pair {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+.insp-geometry-pair .insp-row {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+}
+.insp-geometry-pair .insp-input {
+  width: 100%;
+  box-sizing: border-box;
+}
+.insp-geometry-pair .insp-unit { margin-left: -2px; }
+
+.insp-section-geometry > .insp-summary { padding-block: 4px; }
+.insp-section-geometry > .insp-body { gap: 3px; }
+.insp-section-geometry .insp-geometry-pair { gap: 4px; }
+
+@container inspector-panel (max-width: 239px) {
+  .insp-geometry-pair { grid-template-columns: 1fr; }
+  .insp-geometry-pair .insp-field-label { min-width: 28px; }
 }
 
 .insp-input:focus {
@@ -327,6 +381,96 @@ details[open] > .insp-summary::before {
   border: 1px solid var(--insp-border);
 }
 
+.fill-style-picker { position: relative; margin-left: auto; }
+.fill-style-trigger,
+.fill-style-option {
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  display: inline-grid;
+  place-items: center;
+  cursor: pointer;
+  color: var(--insp-text);
+  background: var(--insp-field-bg);
+  border: 1px solid var(--insp-border);
+  border-radius: 6px;
+}
+.fill-style-trigger::after {
+  content: "";
+  width: 0;
+  height: 0;
+  margin-left: 1px;
+  border: 3px solid transparent;
+  border-top-color: currentColor;
+  transform: translateY(2px);
+}
+.fill-style-trigger { width: 42px; grid-template-columns: 18px 8px; }
+.fill-style-trigger:hover,
+.fill-style-trigger:focus-visible,
+.fill-style-option:hover,
+.fill-style-option:focus-visible { border-color: var(--insp-accent); outline: 2px solid var(--insp-accent); outline-offset: 1px; }
+.fill-style-menu {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 4px);
+  z-index: 20;
+  display: grid;
+  grid-template-columns: repeat(4, 30px);
+  gap: 4px;
+  padding: 5px;
+  background: var(--insp-bg);
+  border: 1px solid var(--insp-border);
+  border-radius: 7px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, .2);
+}
+.fill-style-menu[hidden] { display: none; }
+.fill-style-option.is-active { border-color: var(--insp-accent); background: color-mix(in srgb, var(--insp-accent) 15%, var(--insp-field-bg)); }
+
+.bulk-modal {
+  width: min(560px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.bulk-modal > .modal-title { flex: 0 0 auto; margin: 0; padding: 14px 16px 8px; }
+.bulk-scroll { min-height: 0; overflow-y: auto; padding: 0 16px 10px; }
+.bulk-mode-row { display: flex; align-items: center; gap: 8px; margin-bottom: 3px; }
+.bulk-mode-row .seg { flex: 1; }
+.bulk-scroll > .objectify-description { margin: 2px 0 5px; }
+.bulk-group { margin-top: 9px; padding-top: 8px; border-top: 1px solid var(--border-muted); }
+.bulk-group h3 { margin: 0 0 6px; font-size: 12px; font-weight: 600; color: var(--text-primary); }
+.bulk-fields-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px 10px; }
+.bulk-control-row { display: grid; grid-template-columns: 16px minmax(76px, 1fr) minmax(72px, 96px) 34px; align-items: center; gap: 5px; margin: 0; min-width: 0; }
+.bulk-control-row .modal-label { min-width: 0; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#bulk-gap-rows .modal-label {
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  word-break: keep-all;
+  line-height: 1.25;
+}
+#bulk-gap-rows [data-bulk-kind="align"] {
+  grid-column: 1 / -1;
+  grid-template-columns: 16px minmax(150px, 1fr) minmax(90px, 120px) 34px;
+}
+.bulk-control-row .modal-input { width: 100%; min-width: 0; box-sizing: border-box; }
+.bulk-unit { width: 34px; flex: none; font-size: 11px; color: var(--text-secondary); }
+.bulk-group .objectify-description { margin: 5px 0 0; line-height: 1.35; }
+.bulk-modal > .modal-actions {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: 10px 16px 14px;
+  background: var(--bg-panel);
+  border-top: 1px solid var(--border-muted);
+}
+@media (max-width: 520px) {
+  .bulk-modal { width: calc(100vw - 20px); max-height: calc(100dvh - 20px); }
+  .bulk-fields-grid { grid-template-columns: 1fr; }
+  #bulk-gap-rows [data-bulk-kind="align"] { grid-template-columns: 16px minmax(120px, 1fr) minmax(90px, 120px) 34px; }
+}
+
 /* ===== 배경 이미지 섹션 (always-on list of background-mode images) ===== */
 /* One row per background image: thumbnail + a controls column (투명도 slider,
    객체로 인식/배경으로 되돌리기 toggle, 배경 이미지 제거). Pinned at the top of
@@ -473,3 +617,24 @@ details[open] > .insp-summary::before {
 }
 .insp-2col .insp-field-label { width: auto; min-width: 0; text-align: left; }
 .insp-2col .insp-input, .insp-2col select, .insp-2col input { min-width: 0; width: 100%; box-sizing: border-box; }
+
+/* Both operations stay visible; each property chooses one before Apply. */
+.bulk-modal { width: min(940px, calc(100vw - 32px)); }
+.bulk-property-groups { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; }
+.bulk-property-groups .bulk-fields-grid { grid-template-columns: 1fr; }
+.bulk-column-head { display: grid; grid-template-columns: minmax(105px, 1fr) repeat(2, minmax(100px, 1fr)); gap: 8px; margin: 0 0 6px; color: var(--text-secondary); font-size: 11px; }
+.bulk-property-row { display: grid; grid-template-columns: 16px minmax(80px, 1fr) repeat(2, minmax(100px, 1fr)); align-items: center; gap: 6px; margin: 0; min-width: 0; }
+.bulk-property-row .modal-label { margin: 0; min-width: 0; white-space: normal; word-break: keep-all; }
+.bulk-value-cell { display: flex; gap: 4px; align-items: center; min-width: 0; }
+.bulk-value-cell .modal-input { width: 100%; min-width: 0; padding: 6px; }
+.bulk-wide-input { grid-column: 3 / -1; width: 100%; min-width: 0; }
+.bulk-control-row .modal-label { overflow: visible; white-space: normal; word-break: keep-all; }
+#bulk-gap-rows [data-bulk-kind="align"] { grid-column: auto; grid-template-columns: 16px minmax(140px, 1fr) minmax(90px, 120px) 34px; }
+@media (max-width: 800px) {
+  .bulk-property-groups { grid-template-columns: 1fr; gap: 0; }
+}
+@media (max-width: 520px) {
+  .bulk-property-row { grid-template-columns: 16px minmax(65px, 1fr) repeat(2, minmax(76px, 1fr)); gap: 4px; }
+  .bulk-column-head { grid-template-columns: minmax(85px, 1fr) repeat(2, minmax(76px, 1fr)); gap: 4px; }
+  .bulk-value-cell { gap: 2px; }
+}

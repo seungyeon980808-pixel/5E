@@ -18,11 +18,13 @@
 // Both formats share buildExportSvg(); the dialog (export-dialog.js) decides
 // filename, format, and resolution and calls exportSvg() / exportPng().
 
-import { renderObject, makeFillPattern } from "./render.js?v=1.4.0";
+import { renderObject, makeFillPattern } from "./render.js?v=1.6.0-remediation-0929";
+import { getLineDecorationBounds } from "./render/shapes.js?v=1.6.0-remediation-0929";
 import {
   FS_DIR_SUPPORTED, loadSavedDir, ensureDirPermission, writeToDir,
-} from "./export-dir.js?v=1.4.0";
-import { getObjectBBox } from "./pick.js?v=1.4.0";
+} from "./export-dir.js?v=1.6.0-remediation-0929";
+import { getObjectBBox } from "./pick.js?v=1.6.0-remediation-0929";
+import { zOrderObjects } from "./object-types.js?v=1.6.0-preview-labeler-0917-1111";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const MM_PER_INCH = 25.4;
@@ -44,7 +46,7 @@ function _crc32(bytes) {
   for (let i = 0; i < bytes.length; i++) c = _CRC_TABLE[(c ^ bytes[i]) & 0xFF] ^ (c >>> 8);
   return (c ^ 0xFFFFFFFF) >>> 0;
 }
-function insertPngPhys(buffer, dpi) {
+export function insertPngPhys(buffer, dpi) {
   const src = new Uint8Array(buffer);
   // PNG 시그니처(8) + IHDR(길이4+타입4+데이터13+CRC4 = 25) 뒤(=33)에 삽입.
   const PNG_SIG = [0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A];
@@ -251,7 +253,8 @@ export function getContentBounds(s, options = {}, padding = 0) {
   for (const obj of s.objects) {
     if (isHidden(s, obj, options)) continue;
     let bb = null;
-    try { bb = getObjectBBox(obj); } catch (_) { bb = null; }
+    try { bb = obj.type === "line" ? getLineDecorationBounds(obj) : getObjectBBox(obj); }
+    catch (_) { bb = null; }
     if (!bb || !isFinite(bb.x) || !isFinite(bb.y) || !(bb.w >= 0) || !(bb.h >= 0)) continue;
     const rot = Number(obj.rotation) || 0;
     if (rot) bb = rotatedBBox(bb, rot, bb.x + bb.w / 2, bb.y + bb.h / 2);
@@ -306,11 +309,10 @@ export function buildExportSvg(s, bounds = null, options = {}) {
   }
   svg.appendChild(defs);
 
-  // ----- drawing objects, clipped to the artboard, z-order = array order -----
   // No active-layer dimming here: this is the final artwork, not the editor view.
   const g = document.createElementNS(SVG_NS, "g");
   g.setAttribute("clip-path", "url(#artboard-clip)");
-  for (const obj of s.objects) {
+  for (const obj of zOrderObjects(s.objects)) {
     if (isHidden(s, obj, options)) continue;
     const el = renderObject(obj);
     if (el) g.appendChild(el);

@@ -6,29 +6,29 @@
  * original DOM order, and keeps setStyleControlsDisabled() + populate() as
  * verbatim original code. */
 
-import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, mmToPt } from "./state.js?v=1.4.0";
-import { resolveObjectStyle } from "./style-mode.js?v=1.4.0";
+import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, mmToPt } from "./state.js?v=1.6.0-remediation-0929";
+import { resolveObjectStyle } from "./style-mode.js?v=1.6.0-remediation-0929";
 import {
   SHAPE_TYPES, LINE_TYPES, CIRCUIT_HEIGHT_ELEMENTS, supportsDash, isColorDragging,
-} from "./inspector/widgets.js?v=1.4.0";
-import { nodeDiameterFromBox } from "./tools/node-placement.js?v=1.4.0";
-import { createInspectorContext } from "./inspector/context.js?v=1.4.0";
-import { buildLineSection } from "./inspector/section-line.js?v=1.4.0";
-import { buildGroupSection } from "./inspector/section-group.js?v=1.4.0";
-import { buildTextSection } from "./inspector/section-text.js?v=1.4.0";
-import { buildFillSection } from "./inspector/section-fill.js?v=1.4.0";
-import { buildGeometrySection } from "./inspector/section-geometry.js?v=1.4.0";
-import { buildProtectSection } from "./inspector/section-protect.js?v=1.4.0";
-import { buildImageSection } from "./inspector/section-image.js?v=1.4.0";
-import { buildPendulumSection } from "./inspector/section-pendulum.js?v=1.4.0";
-import { buildSpringSection } from "./inspector/section-spring.js?v=1.4.0";
-import { buildApparatusSection } from "./inspector/section-apparatus.js?v=1.4.0";
-import { buildChargeFieldSection, buildFieldLinesSection, buildStandingWaveSection } from "./inspector/section-field.js?v=1.4.0";
-import { buildCoordplaneSection } from "./inspector/section-coordplane.js?v=1.4.0";
-import { buildFuncgraphSection } from "./inspector/section-funcgraph.js?v=1.4.0";
-import { buildArtboardSection } from "./inspector/section-artboard.js?v=1.4.3";
-import { buildLayersSection } from "./inspector/section-layers.js?v=1.4.0";
-import { buildGlobalImageSection } from "./inspector/section-global-image.js?v=1.4.0";
+} from "./inspector/widgets.js?v=1.6.0-preview-labeler-0917-1111";
+import { nodeDiameterFromBox } from "./tools/node-placement.js?v=1.6.0-remediation-0929";
+import { createInspectorContext } from "./inspector/context.js?v=1.6.0-remediation-0929";
+import { buildLineSection } from "./inspector/section-line.js?v=1.6.0-remediation-0929";
+import { buildGroupSection } from "./inspector/section-group.js?v=1.6.0-preview-labeler-0917-1111";
+import { buildTextSection } from "./inspector/section-text.js?v=1.6.0-remediation-0929";
+import { buildFillSection } from "./inspector/section-fill.js?v=1.6.0-preview-labeler-0917-1111";
+import { buildGeometrySection } from "./inspector/section-geometry.js?v=1.6.0-remediation-0929";
+import { buildProtectSection } from "./inspector/section-protect.js?v=1.6.0-preview-labeler-0917-1111";
+import { buildImageSection } from "./inspector/section-image.js?v=1.6.0-remediation-0929";
+import { buildPendulumSection } from "./inspector/section-pendulum.js?v=1.6.0-preview-labeler-0917-1111";
+import { buildSpringSection } from "./inspector/section-spring.js?v=1.6.0-remediation-0929";
+import { buildApparatusSection } from "./inspector/section-apparatus.js?v=1.6.0-preview-labeler-0917-1111";
+import { buildChargeFieldSection, buildFieldLinesSection, buildStandingWaveSection } from "./inspector/section-field.js?v=1.6.0-preview-labeler-0917-1111";
+import { buildCoordplaneSection } from "./inspector/section-coordplane.js?v=1.6.0-remediation-0929";
+import { buildFuncgraphSection } from "./inspector/section-funcgraph.js?v=1.6.0-remediation-0929";
+import { buildArtboardSection } from "./inspector/section-artboard.js?v=1.6.0-preview-labeler-0917-1111";
+import { buildLayersSection } from "./inspector/section-layers.js?v=1.6.0-preview-labeler-0917-1111";
+import { buildGlobalImageSection } from "./inspector/section-global-image.js?v=1.6.0-remediation-0929";
 
 /* ===== PUBLIC ===== */
 export function initInspector(state) {
@@ -51,9 +51,10 @@ export function initInspector(state) {
       e.preventDefault();
       const startX = e.clientX;
       const startW = panelRight.offsetWidth;
+      const displayScale = panelRight.getBoundingClientRect().width / startW;
       function onMove(e2) {
-        const newW = Math.min(480, Math.max(200, startW + (startX - e2.clientX)));
-        panelRight.style.width = newW + "px";
+        const newW = Math.min(480, Math.max(180, startW + (startX - e2.clientX) / displayScale));
+        panelRight.closest(".app").style.setProperty("--panel-right-w", newW + "px");
       }
       function onUp() {
         window.removeEventListener("mousemove", onMove);
@@ -73,7 +74,7 @@ export function initInspector(state) {
     lineModeRow, lineModeBtnEls,
     dimensionLabelRow, dimensionLabelInp, dimensionLabelTypeRow, dimensionLabelSizeRow,
     waveLengthRow, waveAmpRow, waveTailRow,
-    lineLabelRow, lineLabelInp, lineLabelTypeRow, lineLabelShowRow, lineLabelShowCb,
+    lineLabelRow, lineLabelInp, leaderLabelRow, leaderLabelBtn, lineLabelTypeRow, lineLabelShowRow, lineLabelShowCb,
     lineLabelFlipRow, lineLabelSizeRow,
     dashRow, _dashBtnEls, partialDashBtn, dashSliders, dashLenSlider, dashGapSlider,
     partialControls, ratioRange, ratioNum, flipBtn,
@@ -83,7 +84,7 @@ export function initInspector(state) {
     angleRow, angleInp, syncDashControls,
   } = buildLineSection(ctx);
   const { groupDiv, groupBtnDiv } = buildGroupSection(ctx);
-  const { secText, fontFamSel, fontSizeNum, italicCb, haloCb, vertCb, lsRange, lsNum, wsRange, wsNum } = buildTextSection(ctx);
+  const { secText, fontFamSel, fontSizeNum, textEditRow, textEditBtn, boldCb, italicCb, haloCb, vertCb, lsRange, lsNum, wsRange, wsNum } = buildTextSection(ctx);
   const { sec2, fnCb, fillCP, syncFillStyle, _fillStyleBtnEls } = buildFillSection(ctx);
   const {
     sec3, xF, yF, wF, hF, rotF, xyPair, whPair, lockAspectRow, lockAspectCb, trimRow,
@@ -166,6 +167,7 @@ export function initInspector(state) {
     fnCb.disabled = disabled;
     fontFamSel.disabled = disabled;
     fontSizeNum.disabled = disabled;
+    boldCb.disabled = disabled;
     italicCb.disabled = disabled;
     haloCb.disabled = disabled;
     vertCb.disabled = disabled;
@@ -182,6 +184,11 @@ export function initInspector(state) {
     renderLayerPanel(s);
     const ids = s.selectedIds || [];
     const selectedObjects = ids.map((id) => s.objects.find((o) => o.id === id)).filter(Boolean);
+    const liteObject = selectedObjects.length === 1 ? selectedObjects[0] : null;
+    document.documentElement.dataset.liteInspector = liteObject
+      ? (["line", "polyline", "labeler"].includes(liteObject.type) ? "line"
+        : liteObject.type === "text" ? "text" : "none")
+      : "empty";
 
     if (s.imageEditSession) {
       emptyEl.style.display = "none";
@@ -220,6 +227,8 @@ export function initInspector(state) {
     abSection.style.display = "none"; // hidden whenever something is selected
     groupBtnDiv.style.display = "none"; // shown only for an ungrouped multi-selection
     secText.style.display = "none"; // shown only for a single text object (set below)
+    textEditRow.style.display = "none";
+    leaderLabelRow.style.display = "none";
     imageSection.style.display = "none";
     secPend.style.display = "none"; // shown only for a single pendulum (set below)
     secSpring.style.display = "none"; // 용수철 하나를 골랐을 때만
@@ -294,7 +303,7 @@ export function initInspector(state) {
       angleRow.style.display = "none";
       // A group always uses the box rows (W/H + rotation); never the arc rows,
       // even if the prior single selection was an anglearc.
-      whPair.style.display  = "flex";
+      whPair.style.display  = "grid";
       rotF.el.style.display = "";
       radF.el.style.display = "none";
       arcPair.style.display = "none";
@@ -445,7 +454,9 @@ export function initInspector(state) {
     // 이 섹션을 쓰므로 그대로 둔다(여긴 일반 선택 분기라 영향 없음).
     imageSection.style.display = "none";
     if (isText) {
+      textEditRow.style.display = document.documentElement.dataset.mode === "lite" && obj.type === "text" ? "" : "none";
       fontFamSel.value = styleObj.fontFamily || DEFAULT_TEXT_FONT;
+      boldCb.checked = (styleObj.fontWeight || "normal") === "bold";
       italicCb.checked = styleObj.italic === true;
       haloCb.checked = styleObj.halo !== false;   // 부재 = 켜짐
       // 세로쓰기는 text 전용(수식은 세로로 쌓을 물건이 아니다) — 부재 = 가로쓰기.
@@ -579,7 +590,8 @@ export function initInspector(state) {
     }
 
     // Arrow head: open line + open polyline (closed polyline = filled shape, no arrow).
-    const showArrow = obj.type === "polyline" && !isClosedPoly;
+    const showArrow = (obj.type === "polyline" && !isClosedPoly)
+      || (document.documentElement.dataset.mode === "lite" && obj.type === "line");
     arrowRow.style.display = showArrow ? "" : "none";
     if (showArrow) {
       const ah = obj.arrowHead ?? "none";
@@ -588,9 +600,10 @@ export function initInspector(state) {
       arrowBtn.setAttribute("aria-label", `화살표 방향: ${ARROW_LABELS[displayArrow]}`);
       arrowBtn.innerHTML = `<svg width="40" height="24" viewBox="0 0 40 24">${ARROW_ICONS[displayArrow]}</svg>`;
     }
+    leaderLabelRow.style.display = document.documentElement.dataset.mode === "lite" && obj.type === "labeler" ? "" : "none";
 
     // Dash presets + sliders: lines and size-based shape outlines.
-    const canDash = supportsDash(obj);
+    const canDash = supportsDash(obj) || obj.type === "labeler";
     dashRow.style.display = canDash ? "" : "none";
     if (canDash) {
       syncDashControls(styleObj);
@@ -638,14 +651,14 @@ export function initInspector(state) {
     sec3.style.display = (isShape || isImage || isArc || isRightAngle || isCircuit || isLabeler) ? "" : "none";
     // Toggle which rows belong to this selection: arc swaps W/H + rotation for
     // radius + start/sweep angle; circuit (two terminals) hides the box rows.
-    xyPair.style.display  = (isCircuit || isLabeler) ? "none" : "flex";
-    whPair.style.display  = (isArc || isRightAngle || isCircuit || isLabeler) ? "none" : "flex";
+    xyPair.style.display  = (isCircuit || isLabeler) ? "none" : "grid";
+    whPair.style.display  = (isArc || isRightAngle || isCircuit || isLabeler) ? "none" : "grid";
     lockAspectRow.style.display = isSvgAsset ? "flex" : "none";
     // 여백 정리는 상자 + 그림을 함께 갖는 타입(이미지·SVG 자산)에만 뜻이 있다.
     trimRow.style.display = (isSvgAsset || isImage) ? "flex" : "none";
     rotF.el.style.display = (isArc || isRightAngle || isCircuit || isLabeler) ? "none" : "";
     radF.el.style.display = isArc ? "" : "none";
-    arcPair.style.display = isArc ? "flex" : "none";
+    arcPair.style.display = isArc ? "grid" : "none";
     raSizeF.el.style.display = isRightAngle ? "" : "none";
     raAngleF.el.style.display = isRightAngle ? "" : "none";
     raDirRow.style.display = isRightAngle ? "" : "none";
@@ -863,6 +876,8 @@ export function initInspector(state) {
     labelPosSel.disabled = !!obj.locked;
     // 상자 라벨 두 슬롯의 잠금은 boxLabel.sync가 함께 처리한다(꺼진 슬롯 비활성과 겹치므로).
     lineLabelInp.disabled = !!obj.locked;
+    textEditBtn.disabled = !!obj.locked;
+    leaderLabelBtn.disabled = !!obj.locked;
     lineLabelTypeRow.sel.disabled = !!obj.locked;
     lineLabelShowCb.disabled = !!obj.locked;
     dimensionLabelInp.disabled = !!obj.locked;
@@ -894,5 +909,6 @@ export function initInspector(state) {
   }
 
   state.subscribe(populate);
+  window.addEventListener("5e:view-mode-change", () => populate(state.get()));
   populate(state.get());
 }

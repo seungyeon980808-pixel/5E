@@ -13,7 +13,7 @@
  * points use the same centred-artboard coordinate system as stored 5E objects.
  */
 
-import { OBJECT_TYPE_IDS } from "./object-types.js";
+import { OBJECT_TYPE_IDS } from "./object-types.js?v=1.6.0-preview-labeler-0917-1111";
 
 export const FAST_SCENE_SCHEMA_ID = "5e-fast-scene@1";
 export const FAST_SCENE_MODES = Object.freeze(["diagram", "complete"]);

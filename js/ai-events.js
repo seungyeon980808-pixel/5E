@@ -32,6 +32,7 @@ export function parseAiEvent(message) {
       kind: "image",
       turnId,
       src: typeof src === "string" && (/^data:image\//.test(src) || /^https:\/\//.test(src)) ? src : null,
+      rendererPrompt: typeof item.revisedPrompt === "string" ? item.revisedPrompt : "",
     };
   }
   if (method === "item/completed" && item?.type === "agentMessage") {

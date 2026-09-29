@@ -11,15 +11,15 @@
 //      with 취소 / 내보내기. On 내보내기 it delegates to svg-export.js's
 //      exportPng() or exportSvg(); the extension is appended from the format.
 
-import { exportPng, exportSvg, copyPngToClipboard, formatExportTimestamp, getContentBounds } from "./svg-export.js?v=1.4.0";
-import { openBatchExport } from "./export-batch.js?v=1.4.0";
+import { exportPng, exportSvg, copyPngToClipboard, formatExportTimestamp, getContentBounds } from "./svg-export.js?v=1.6.0-remediation-0929";
+import { openBatchExport } from "./export-batch.js?v=1.6.0-remediation-0929";
 import {
   FS_DIR_SUPPORTED, loadSavedDir, currentDirName, pickDir, clearDir,
-} from "./export-dir.js?v=1.4.0";
-import { showAlert } from "./ui-dialogs.js?v=1.4.0";
-import { registerTopMenu } from "./top-menu.js?v=1.4.0";
-import { screenToWorld } from "./viewport.js?v=1.4.0";
-import { openExamPreview } from "./exam-preview.js?v=1.4.0";
+} from "./export-dir.js?v=1.6.0-remediation-0929";
+import { showAlert } from "./ui-dialogs.js?v=1.6.0-remediation-0929";
+import { registerTopMenu } from "./top-menu.js?v=1.6.0-remediation-0929";
+import { screenToWorld } from "./viewport.js?v=1.6.0-preview-lite-hybrid-0922";
+import { openExamPreview } from "./exam-preview.js?v=1.6.0-remediation-0929";
 
 // Default export filename base = local date/time to the minute (YYYYMMDD_HHmm),
 // recomputed each time the modal opens so it reflects the actual export time.
@@ -121,7 +121,7 @@ function buildModal() {
         </div>
       </div>
 
-      <div class="modal-actions">
+      <div class="modal-actions export-actions">
         <button type="button" class="modal-btn" id="export-cancel">취소</button>
         <button type="button" class="modal-btn" id="export-preview">미리보기</button>
         <button type="button" class="modal-btn" id="export-area">영역 지정</button>
@@ -532,14 +532,6 @@ export function initExportDialog(state, svg) {
       showAlert("클립보드 복사에 실패했습니다. 다시 시도해 주세요.", { title: "복사" });
     }
     copyBtn.disabled = false;
-  });
-
-  // Ctrl+S = 프로젝트 저장 (브라우저 기본 저장 대화상자 차단)
-  window.addEventListener("keydown", (e) => {
-    if (!(e.ctrlKey || e.metaKey) || e.shiftKey || e.altKey) return;
-    if ((e.key || "").toLowerCase() !== "s") return;
-    e.preventDefault();
-    document.getElementById("project-save")?.click();
   });
 
   // 미리보기: 먼저 영역을 지정하게 한 뒤(영역지정과 동일한 드래그), 그 영역을 실제

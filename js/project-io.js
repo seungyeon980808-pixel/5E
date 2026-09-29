@@ -6,19 +6,32 @@
 // active tool/layer, viewBox) is deliberately NOT saved.
 //
 // Groups are NOT stored: each object already carries `groupId`, and groups are
-// derived from it everywhere (see transform.js rebuildGroups + the undo engine,
-// which snapshots only `objects` and rebuilds groups). groupId is the single
-// source of truth, so we rebuild groups on load via that same helper.
+// derived from it when a page is loaded or switched. groupId is the single
+// source of truth, and the saved file never supplies a separate groups list.
 
-import { rebuildGroups } from "./transform.js?v=1.4.0";
-import { screenToWorld } from "./viewport.js?v=1.4.0";
-import { applyNewObjectStyleDefaults, migrateObjectStyleMode } from "./style-mode.js?v=1.4.0";
-import { showConfirm } from "./ui-dialogs.js?v=1.4.0";
-import { downscaleIfNeeded } from "./image-paste.js?v=1.4.0";
-import { DEFAULT_TEXT_SIZE_MM, DEFAULT_TEXT_FONT, normalizeTextRuns, textRunsToText } from "./state.js?v=1.4.0";
-import { LABEL_CAPABLE_TYPES } from "./object-types.js?v=1.4.0";
-import { insertImageFromSrc } from "./image-paste.js?v=1.4.0";
-import { addPage } from "./pages.js?v=1.4.0";
+import { screenToWorld } from "./viewport.js?v=1.6.0-preview-lite-hybrid-0922";
+import { applyNewObjectStyleDefaults, migrateObjectStyleMode } from "./style-mode.js?v=1.6.0-remediation-0929";
+import { showProjectCloseDialog } from "./project-close-dialog.js?v=1.6.0-remediation-0929";
+import { showAlert, showConfirm } from "./ui-dialogs.js?v=1.6.0-remediation-0929";
+import { downscaleIfNeeded } from "./image-paste.js?v=1.6.0-remediation-0929";
+import { DEFAULT_TEXT_SIZE_MM, DEFAULT_TEXT_FONT, normalizeTextRuns, textRunsToText } from "./state.js?v=1.6.0-remediation-0929";
+import {
+  ENDPOINT_HANDLE_TYPES, LABEL_CAPABLE_TYPES, OBJECT_TYPE_IDS,
+  POINT_ARRAY_TYPES, SIZE_TYPES, TEXT_MEASURED_TYPES,
+} from "./object-types.js?v=1.6.0-preview-labeler-0917-1111";
+import { insertImageFromSrc } from "./image-paste.js?v=1.6.0-remediation-0929";
+import { addPage } from "./pages.js?v=1.6.0-remediation-0929";
+
+import { initProjectStatus, captureProjectStatus, markProjectStatus } from "./project-status.js?v=1.6.0-ai-latest-fixes-0928";
+import { modKey, shortcutKey, isEditingTarget, isComposingKey } from "./platform.js?v=1.6.0-remediation-0929";
+import { initProjectLaunch } from './project-launch.js?v=1.6.0-remediation-0929';
+import { extractWindowsProjectSource } from './windows-project-source.mjs?v=1.6.0-preview-project-launcher-0918-1508';
+
+import { chooseProjectSaveTarget, timestampProjectFilename } from './project-save-dialog.js?v=1.6.0-remediation-0929';
+import {
+  FS_DIR_SUPPORTED, loadSavedProjectDir, currentProjectDirName, pickProjectDir, writeProjectToDir,
+} from './export-dir.js?v=1.6.0-remediation-0929';
+let savingProject = false;
 
 // Schema version of the saved file. Distinct from the app UI version.
 // 0.15 adds editing guides; older files without them load with an empty guide list.
@@ -34,7 +47,6 @@ const DEFAULT_ARTBOARD = { w: 90, h: 60 };
 
 // The .5e container is UTF-8 JSON so project files stay inspectable and old
 // .json saves remain readable. Only the user-facing extension changes.
-const DEFAULT_FILENAME = "physics_drawing.5e";
 const PROJECT_FILE_ACCEPT = ".5e,.json,application/json";
 const APPARATUS_TEMPLATE_IDS = {
   wire: "E001",
@@ -298,13 +310,14 @@ function makePageId() { return `page_load_${Date.now().toString(36)}_${++_loadSe
 
 /* ----- migratePage: normalize one page record (objects + guides + layers + meta) ----- */
 function migratePage(page, index) {
+  const hasLayers = !!page && hasOwn(page, "layers");
   return {
     id: page && page.id ? page.id : makePageId(),
     name: page && typeof page.name === "string" && page.name ? page.name : `페이지 ${index + 1}`,
     meta: sanitizeMeta(page && page.meta),
     objects: migrateObjectList(page && page.objects),
     guides: sanitizeGuides(page && page.guides),
-    layers: Array.isArray(page && page.layers) && page.layers.length ? page.layers : null,
+    ...(hasLayers ? { layers: page.layers } : {}),
     artboard: sanitizeArtboard(page && page.artboard),
   };
 }
@@ -327,13 +340,14 @@ export function migrate(data) {
 
   // Legacy single-page file: wrap the top-level drawing into page 1.
   if (!Array.isArray(data.objects)) return data;
-  const page = migratePage({
+  const legacyPage = {
     name: "페이지 1",
     objects: data.objects,
     guides: data.guides,
-    layers: data.layers,
     artboard: data.artboard,
-  }, 0);
+  };
+  if (hasOwn(data, "layers")) legacyPage.layers = data.layers;
+  const page = migratePage(legacyPage, 0);
   return { ...data, pages: [page], activePageId: page.id };
 }
 
@@ -361,40 +375,67 @@ export function serialize(s) {
   };
 }
 
-/* ----- saveProject: write the current drawing as a .5e file -----
- * Chromium/Edge(showSaveFilePicker): 사용자가 저장 폴더 + 파일명을 직접 고른다(요구:
- * "어디에 어떻게 저장될지 정할 수 있어야"). 그 외 브라우저·취소 외 오류 → 기존처럼
- * 브라우저 기본 다운로드로 폴백. 피커는 클릭 제스처 안에서 첫 await로 불러야 한다
- * (svg-export.js pickSaveHandle와 동일 패턴 — 여기선 project-io 자립을 위해 인라인). */
-async function saveProject(state) {
-  const json = JSON.stringify(serialize(state.get()), null, 2);
-  const blob = new Blob([json], { type: "application/json" });
-
-  if (window.showSaveFilePicker) {
-    try {
+/* Native Save As opens directly; unsupported browsers confirm a download name. */
+export async function saveProject(state) {
+  if (savingProject) return { kind: "cancelled" };
+  savingProject = true;
+  try {
+    let filename = timestampProjectFilename();
+    const statusToken = captureProjectStatus(state);
+    const json = JSON.stringify(serialize(state.get()), null, 2);
+    const blob = new Blob([json], { type: "application/json" });
+    if (window.fiveEDesktop?.project?.save) {
+      const outcome = await window.fiveEDesktop.project.save({ json, suggestedName: filename });
+      if (outcome?.kind === "failed") throw new Error('파일을 기록하지 못했습니다.');
+      if (outcome?.kind === "saved") {
+        markProjectStatus(state, statusToken, "file");
+      }
+      return outcome;
+    }
+    if (window.showSaveFilePicker) {
       const handle = await window.showSaveFilePicker({
-        suggestedName: DEFAULT_FILENAME,
+        suggestedName: filename,
         types: [{ description: "5E 프로젝트 파일", accept: { "application/json": [".5e"] } }],
       });
       const writable = await handle.createWritable();
       await writable.write(blob);
       await writable.close();
-      return;
-    } catch (e) {
-      if (e && e.name === "AbortError") return;   // 사용자가 저장 취소 → 아무것도 안 함
-      // 권한 거부/기타 오류 → 아래 기본 다운로드로 폴백
+      markProjectStatus(state, statusToken, "file");
+      return { kind: "saved" };
     }
+    await loadSavedProjectDir();
+    const target = await chooseProjectSaveTarget(filename, {
+      directorySupported: FS_DIR_SUPPORTED,
+      directoryName: currentProjectDirName(),
+      pickDirectory: async () => {
+        await pickProjectDir();
+        return currentProjectDirName();
+      },
+    });
+    if (target.kind === 'cancelled') return { kind: "cancelled" };
+    filename = target.filename;
+    if (target.kind === 'directory') {
+      if (!(await writeProjectToDir(filename, blob))) throw new Error('선택한 폴더에 파일을 기록하지 못했습니다.');
+      markProjectStatus(state, statusToken, "file");
+      return { kind: "saved" };
+    }
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = filename;
+    document.body.appendChild(anchor);
+    anchor.click();
+    anchor.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 60_000);
+    markProjectStatus(state, statusToken, "download");
+    return { kind: "download-requested" };
+  } catch (error) {
+    if (error?.name === 'AbortError') return { kind: "cancelled" };
+    await showAlert('프로젝트 파일을 저장하지 못했습니다. 작업은 그대로 유지됩니다.\n다시 저장해 주세요.\n' + (error?.message || ''), { title: '저장 실패' });
+    return { kind: "failed" };
+  } finally {
+    savingProject = false;
   }
-
-  // 폴백: 브라우저 기본 다운로드(다운로드 폴더로 저장, 위치 선택 없음).
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = DEFAULT_FILENAME;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
 }
 
 /* ----- defaultLayers: fresh 3-layer set for pages saved without layers ----- */
@@ -406,11 +447,210 @@ function defaultLayers() {
   ];
 }
 
+function isRecord(value) {
+  return !!value && typeof value === "object" && !Array.isArray(value);
+}
+
+function hasOwn(value, key) {
+  return Object.prototype.hasOwnProperty.call(value, key);
+}
+
+function isStringId(value) {
+  return typeof value === "string" && value.length > 0;
+}
+
+function isLayerId(value) {
+  return isStringId(value) || (typeof value === "number" && Number.isFinite(value));
+}
+
+function assertUniqueIds(items, getId, label) {
+  const ids = new Set();
+  for (const item of items) {
+    const id = getId(item);
+    if (ids.has(id)) throw new Error(`${label} ID가 중복되었습니다.`);
+    ids.add(id);
+  }
+}
+
+const OBJECT_TYPE_ID_SET = new Set(OBJECT_TYPE_IDS);
+
+function isFinitePoint(value) {
+  return isRecord(value) && Number.isFinite(value.x) && Number.isFinite(value.y);
+}
+
+function validateObjectGeometry(object) {
+  if (SIZE_TYPES.has(object.type)) {
+    if (![object.x, object.y, object.w, object.h].every(Number.isFinite)) {
+      throw new Error(`${object.type} 객체의 위치/크기 형식이 올바르지 않습니다.`);
+    }
+  }
+  if (ENDPOINT_HANDLE_TYPES.has(object.type)) {
+    if (!isFinitePoint(object.p1) || !isFinitePoint(object.p2)) {
+      throw new Error(`${object.type} 객체의 끝점 형식이 올바르지 않습니다.`);
+    }
+  }
+  if (POINT_ARRAY_TYPES.has(object.type)) {
+    if (!Array.isArray(object.points) || object.points.some(point => !isFinitePoint(point))) {
+      throw new Error(`${object.type} 객체의 점 목록 형식이 올바르지 않습니다.`);
+    }
+  }
+  if (TEXT_MEASURED_TYPES.has(object.type)
+      || object.type === "anglearc" || object.type === "rightangle") {
+    if (!Number.isFinite(object.x) || !Number.isFinite(object.y)) {
+      throw new Error(`${object.type} 객체의 위치 형식이 올바르지 않습니다.`);
+    }
+  }
+}
+
+function validateObjects(objects, { geometry = false } = {}) {
+  if (!Array.isArray(objects)) throw new Error("객체 목록 형식이 올바르지 않습니다.");
+  for (const object of objects) {
+    if (!isRecord(object) || !isStringId(object.id)) {
+      throw new Error("객체에는 유효한 ID가 필요합니다.");
+    }
+    if (!OBJECT_TYPE_ID_SET.has(object.type)) {
+      throw new Error(`지원하지 않는 객체 형식입니다: ${String(object.type || "(없음)")}`);
+    }
+    if (hasOwn(object, "groupId") && object.groupId != null && !isStringId(object.groupId)) {
+      throw new Error("객체 그룹 ID 형식이 올바르지 않습니다.");
+    }
+    if (hasOwn(object, "layerId") && object.layerId != null && !isLayerId(object.layerId)) {
+      throw new Error("객체 레이어 ID 형식이 올바르지 않습니다.");
+    }
+    if (geometry) validateObjectGeometry(object);
+  }
+  assertUniqueIds(objects, (object) => object.id, "객체");
+}
+
+function validateLayers(layers) {
+  if (!Array.isArray(layers)) throw new Error("레이어 목록 형식이 올바르지 않습니다.");
+  for (const layer of layers) {
+    if (!isRecord(layer) || !isLayerId(layer.id)) {
+      throw new Error("레이어에는 유효한 ID가 필요합니다.");
+    }
+  }
+  assertUniqueIds(layers, (layer) => layer.id, "레이어");
+}
+
+function validateRawPage(page) {
+  if (!isRecord(page)) throw new Error("페이지 형식이 올바르지 않습니다.");
+  if (hasOwn(page, "id") && !isStringId(page.id)) {
+    throw new Error("페이지 ID 형식이 올바르지 않습니다.");
+  }
+  validateObjects(page.objects);
+  if (hasOwn(page, "layers")) validateLayers(page.layers);
+}
+
+function validateRawProject(data) {
+  if (!isRecord(data)) throw new Error("프로젝트 파일 형식이 올바르지 않습니다.");
+  if (hasOwn(data, "pages")) {
+    if (!Array.isArray(data.pages) || data.pages.length === 0) {
+      throw new Error("페이지 목록 형식이 올바르지 않습니다.");
+    }
+    for (const page of data.pages) validateRawPage(page);
+    assertUniqueIds(data.pages.filter((page) => hasOwn(page, "id")), (page) => page.id, "페이지");
+    if (hasOwn(data, "activePageId") && data.activePageId != null && !isStringId(data.activePageId)) {
+      throw new Error("활성 페이지 ID 형식이 올바르지 않습니다.");
+    }
+    return;
+  }
+  validateObjects(data.objects);
+  if (hasOwn(data, "layers")) validateLayers(data.layers);
+}
+
+function buildGroups(objects) {
+  const groups = new Map();
+  for (const object of objects) {
+    if (!object.groupId) continue;
+    const members = groups.get(object.groupId);
+    if (members) members.push(object.id);
+    else groups.set(object.groupId, [object.id]);
+  }
+  return Array.from(groups, ([id, memberIds]) => ({ id, memberIds }));
+}
+
+export function prepareLoadedProject(data) {
+  validateRawProject(data);
+  const migrated = migrate(data);
+  const pages = migrated.pages.map((page) => ({
+    id: page.id,
+    name: page.name,
+    meta: page.meta || { number: "", points: "" },
+    objects: page.objects,
+    guides: page.guides,
+    layers: Array.isArray(page.layers) && page.layers.length ? page.layers : defaultLayers(),
+    artboard: page.artboard || { ...DEFAULT_ARTBOARD },
+  }));
+  assertUniqueIds(pages, (page) => page.id, "페이지");
+  for (const page of pages) {
+    if (!isStringId(page.id)) throw new Error("페이지 ID 형식이 올바르지 않습니다.");
+    validateObjects(page.objects, { geometry: true });
+    validateLayers(page.layers);
+  }
+  const active = pages.find((page) => page.id === migrated.activePageId) || pages[0];
+  if (!active) throw new Error("열 수 있는 페이지가 없습니다.");
+  return { pages, activePageId: active.id, active, groups: buildGroups(active.objects) };
+}
+
 /* ----- applyLoaded: replace drawing data through the store (re-renders) ----- */
 // data.pages[] is guaranteed by migrate(). The active page's 4 fields are lifted
 // to the top level (the live drawing), the rest stay in s.pages — the same swap
 // structure pages.js maintains, so render/pick/etc. read the active page as before.
 export function applyLoaded(state, data) {
+  const prepared = prepareLoadedProject(data);
+  const previous = state.get();
+  const rollback = {
+    pages: previous.pages,
+    activePageId: previous.activePageId,
+    objects: previous.objects,
+    guides: previous.guides,
+    layers: previous.layers,
+    artboard: previous.artboard,
+    groups: previous.groups,
+    undoStack: previous.undoStack,
+    redoStack: previous.redoStack,
+    selectedIds: previous.selectedIds,
+    selectedGuideId: previous.selectedGuideId,
+    targetedId: previous.targetedId,
+    draft: previous.draft,
+    draftText: previous.draftText,
+    activeLayerId: previous.activeLayerId,
+  };
+  try {
+    state.update((s) => {
+      s.pages = prepared.pages;
+      s.activePageId = prepared.activePageId;
+
+      // Lift the active page's data to the live top-level fields.
+      s.objects = prepared.active.objects;
+      s.guides = prepared.active.guides;
+      s.layers = prepared.active.layers;
+      s.artboard = prepared.active.artboard;
+
+      s.groups = prepared.groups;
+
+      // Fresh session for the opened file: drop history + selection.
+      s.undoStack = [];
+      s.redoStack = [];
+      s.selectedIds = [];
+      s.selectedGuideId = null;
+      s.targetedId = null;
+      s.draft = null;
+      s.draftText = null;
+
+      // Keep activeLayerId valid against the loaded layers.
+      if (!s.layers.some((l) => l.id === s.activeLayerId)) {
+        s.activeLayerId = s.layers[0] ? s.layers[0].id : 1;
+      }
+      // viewBox is left as-is on purpose (do not restore saved view).
+    });
+  } catch (error) {
+    Object.assign(previous, rollback);
+    try {
+      state.update(() => {});
+    } catch (_) {}
+    throw error;
+  }
   // 이미지 배치 대기 상태(_placement)가 남아있으면 정리한다 — 프로젝트를 새로
   // 불러와 objects가 통째로 교체되는데 대기 중이던 placeholder id를 계속 들고
   // 있으면 이후 클릭/Escape 처리가 존재하지 않는 오브젝트를 참조하게 된다.
@@ -418,65 +658,17 @@ export function applyLoaded(state, data) {
     _placement = null;
     if (_placementHint) _placementHint.hidden = true;
   }
-  state.update((s) => {
-    const pages = data.pages.map((p) => ({
-      id: p.id,
-      name: p.name,
-      meta: p.meta || { number: "", points: "" },
-      objects: Array.isArray(p.objects) ? p.objects : [],
-      guides: Array.isArray(p.guides) ? p.guides : [],
-      layers: Array.isArray(p.layers) && p.layers.length ? p.layers : defaultLayers(),
-      artboard: p.artboard || { ...DEFAULT_ARTBOARD },
-    }));
-    s.pages = pages;
-    const active = pages.find((p) => p.id === data.activePageId) || pages[0];
-    s.activePageId = active.id;
-
-    // Lift the active page's data to the live top-level fields.
-    s.objects = active.objects;
-    s.guides = active.guides;
-    s.layers = active.layers;
-    s.artboard = active.artboard;
-
-    // Groups are derived from groupId — rebuild rather than trust the file.
-    rebuildGroups(s);
-
-    // Fresh session for the opened file: drop history + selection.
-    s.undoStack = [];
-    s.redoStack = [];
-    s.selectedIds = [];
-    s.selectedGuideId = null;
-    s.targetedId = null;
-    s.draft = null;
-    s.draftText = null;
-
-    // Keep activeLayerId valid against the loaded layers.
-    if (!s.layers.some((l) => l.id === s.activeLayerId)) {
-      s.activeLayerId = s.layers[0] ? s.layers[0].id : 1;
-    }
-    // viewBox is left as-is on purpose (do not restore saved view).
-  });
 }
 
 /* ----- openProject: read a .5e (or legacy .json) file and load it into state ----- */
 function openProject(state, file) {
+  const executable = /\.exe$/i.test(file.name);
+  if (executable && file.size > 64 * 1024 * 1024) { alert('프로젝트 실행 파일이 너무 큽니다.'); return; }
   const reader = new FileReader();
   reader.onload = async () => {
     try {
-      const raw = JSON.parse(reader.result);
-      const data = migrate(raw);
-
-      // Structural sanity check before touching live state. migrate() guarantees
-      // a pages[] array (legacy single-page files are wrapped into one page).
-      if (
-        !data ||
-        typeof data !== "object" ||
-        !Array.isArray(data.pages) ||
-        data.pages.length === 0 ||
-        !data.pages.every((p) => p && Array.isArray(p.objects))
-      ) {
-        throw new Error("필요한 데이터(pages) 형식이 올바르지 않습니다.");
-      }
+      const json = executable ? await extractWindowsProjectSource(reader.result) : reader.result;
+      const data = prepareLoadedProject(JSON.parse(json));
 
       // 파일이 유효하다고 확인된 뒤에만 묻는다(깨진 파일은 확인창 없이 바로 에러).
       // applyLoaded는 undoStack까지 비워 되돌릴 수 없는 '대체'다 — 폴더에 섞여 있던
@@ -489,13 +681,15 @@ function openProject(state, file) {
       if (!ok) return;
 
       applyLoaded(state, data);
+      markProjectStatus(state, captureProjectStatus(state), "file");
     } catch (err) {
       // On any failure, do NOT corrupt current state — just warn.
       alert("프로젝트 파일을 열 수 없습니다.\n" + (err && err.message ? err.message : err));
     }
   };
   reader.onerror = () => alert("파일을 읽는 중 오류가 발생했습니다.");
-  reader.readAsText(file);
+  if (executable) reader.readAsArrayBuffer(file);
+  else reader.readAsText(file);
 }
 
 /* ----- image import: file-picker + drag-and-drop helper ----- */
@@ -592,8 +786,32 @@ function readImageFile(file, dropPos, state) {
   reader.readAsDataURL(file);
 }
 
+function initProjectShortcuts(state, fileInput) {
+  window.addEventListener("keydown", (e) => {
+    if (!modKey(e) || e.shiftKey || e.altKey) return;
+    const key = shortcutKey(e);
+    if (key !== "o" && key !== "s") return;
+    const handled = e.defaultPrevented;
+    e.preventDefault();
+    if (handled || e.repeat || isComposingKey(e) || document.querySelector(".modal-overlay:not([hidden])")) return;
+    // Commit the focused editor field before capturing the project snapshot.
+    if (isEditingTarget(e.target)) e.target.blur?.();
+    if (document.querySelector(".modal-overlay:not([hidden])")) return;
+    if (key === "o") fileInput.click();
+    else void saveProject(state);
+  });
+}
+
 /* ----- initProjectIO: wire the top-bar buttons + hidden file input ----- */
+export function initProjectFileOpening(state, ready) {
+  initProjectLaunch({ state, ready, prepare: prepareLoadedProject, apply: applyLoaded,
+    needsConfirm: () => initProjectStatus(state, serialize).hasUnsavedWork(),
+    mark: () => markProjectStatus(state, captureProjectStatus(state), 'file') });
+}
+
 export function initProjectIO(state, svg) {
+  // initPages wraps the initial drawing later in the same boot task.
+  queueMicrotask(() => initProjectStatus(state, serialize));
   const saveBtn = document.getElementById("project-save");
   const openBtn = document.getElementById("project-open");
   const imageImportBtn = document.getElementById("image-import");
@@ -623,13 +841,15 @@ export function initProjectIO(state, svg) {
   // Hidden file input for 5E projects. Legacy .json files remain supported.
   const fileInput = document.createElement("input");
   fileInput.type = "file";
-  fileInput.accept = PROJECT_FILE_ACCEPT;
+  fileInput.accept = PROJECT_FILE_ACCEPT + ',.exe';
   fileInput.style.display = "none";
   document.body.appendChild(fileInput);
 
   if (saveBtn) saveBtn.addEventListener("click", () => saveProject(state));
 
   if (openBtn) openBtn.addEventListener("click", () => fileInput.click());
+
+  initProjectShortcuts(state, fileInput);
 
   fileInput.addEventListener("change", () => {
     const file = fileInput.files && fileInput.files[0];
@@ -745,7 +965,7 @@ export function initProjectIO(state, svg) {
       if (!file) return;
       // 5E 프로젝트 파일과 기존 JSON 프로젝트 파일도 드래그앤드랍 지원.
       // 일부 OS에서 사용자 정의 확장자의 MIME이 비어 있으므로 확장자도 함께 본다.
-      if (file.type === "application/json" || /\.(?:5e|json)$/i.test(file.name)) {
+      if (file.type === "application/json" || /\.(?:5e|json)$/i.test(file.name) || /\.exe$/i.test(file.name)) {
         openProject(state, file);
         return;
       }
@@ -755,4 +975,30 @@ export function initProjectIO(state, svg) {
       readImageFile(file, pos, state);
     });
   }
+}
+
+export function initDesktopProjectCloseGuard(state, getAiCloseStatus) {
+  const desktopClose = window.fiveEDesktop?.projectClose;
+  if (!desktopClose) return;
+  desktopClose.onRequest(async (requestId, promptSnapshot) => {
+    if (promptSnapshot) {
+      const choice = await showProjectCloseDialog(promptSnapshot);
+      desktopClose.respond(requestId, { choice });
+      return;
+    }
+    let ai = { recovered: true, hasWork: false };
+    try {
+      ai = await getAiCloseStatus?.() || ai;
+    } catch {
+      ai = { recovered: false, hasWork: true };
+    }
+    const controller = initProjectStatus(state, serialize);
+    const projectDirty = controller.isFileDirty();
+    desktopClose.respond(requestId, {
+      projectDirty,
+      projectJson: projectDirty ? JSON.stringify(serialize(state.get()), null, 2) : "",
+      aiRecovered: ai.recovered === true,
+      aiHasWork: ai.hasWork === true,
+    });
+  });
 }

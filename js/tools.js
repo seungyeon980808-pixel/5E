@@ -1,3 +1,4 @@
+import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-remediation-0929';
 /* ===== TOOLS (DESIGN 짠3 tool selection + the rectangle draw pipeline) ===== */
 //
 // Two responsibilities, both routed through the store so data stays the truth:
@@ -11,7 +12,8 @@
 // screenToWorld BEFORE being stored, so shapes are anchored in world space and
 // survive zoom/pan unchanged (DESIGN 1-2).
 
-import { screenToWorld, getRenderScale, worldToScreen } from "./viewport.js?v=1.4.0";
+import { screenToWorld, getRenderScale, worldToScreen } from "./viewport.js?v=1.6.0-preview-lite-hybrid-0922";
+import { registerEscapeLayer } from "./escape-layers.js?v=1.6.0-remediation-0929";
 import {
   TEXT_FONTS, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_PX, DEFAULT_TEXT_SIZE_MM,
   TEXT_SIZE_PRESETS, ptToMm, mmToPt, MIN_TEXT_PT,
@@ -19,37 +21,37 @@ import {
   resolveTextFontStyle, resolveTextLetterSpacing,
   normalizeTextRuns, normalizeTextRunStyle, textRunStyleFromObject, textRunsToText,
   hasStyledTextRuns, SECTION_ROMAN_STYLE, QUANTITY_STYLE,
-} from "./state.js?v=1.4.0";
-import { setSnapPreview, pendulumBobRadius } from "./render.js?v=1.4.0";
-import { resolveEndpointSnap } from "./snap.js?v=1.4.0";
-import { applyNewObjectStyleDefaults } from "./style-mode.js?v=1.4.0";
-import { measureFormula, renderFormula, fontOf } from "./formula.js?v=1.4.0";
-import { fillHtmlTextWithRomanRuns } from "./text-rendering.js?v=1.4.0";
-import { getSvgAsset } from "./svg-assets.js?v=1.4.0";
-import { openPlaneModal } from "./function-graph/plane-modal.js?v=1.4.0";
-import { openGraphModal } from "./graph/graph-modal.js?v=1.4.0";
-import { nextObjectId } from "./tools/id.js?v=1.4.0";
-import { setupFreeDraw } from "./tools/free-draw.js?v=1.4.0";
-import { setupNodePlacement } from "./tools/node-placement.js?v=1.5.2";
-import { setupClickDrawing, clearClickLocals } from "./tools/click-placement.js?v=1.5.2";
+} from "./state.js?v=1.6.0-remediation-0929";
+import { setSnapPreview, pendulumBobRadius } from "./render.js?v=1.6.0-remediation-0929";
+import { resolveEndpointSnap } from "./snap.js?v=1.6.0-remediation-0929";
+import { applyNewObjectStyleDefaults } from "./style-mode.js?v=1.6.0-remediation-0929";
+import { measureFormula, renderFormula, fontOf } from "./formula.js?v=1.6.0-remediation-0929";
+import { fillHtmlTextWithRomanRuns } from "./text-rendering.js?v=1.6.0-remediation-0929";
+import { getSvgAsset } from "./svg-assets.js?v=1.6.0-preview-labeler-0917-1111";
+import { openPlaneModal } from "./function-graph/plane-modal.js?v=1.6.0-remediation-0929";
+import { openGraphModal } from "./graph/graph-modal.js?v=1.6.0-remediation-0929";
+import { nextObjectId } from "./tools/id.js?v=1.6.0-preview-labeler-0917-1111";
+import { setupFreeDraw } from "./tools/free-draw.js?v=1.6.0-remediation-0929";
+import { setupNodePlacement } from "./tools/node-placement.js?v=1.6.0-remediation-0929";
+import { setupClickDrawing, clearClickLocals } from "./tools/click-placement.js?v=1.6.0-remediation-0929";
 // Pure math helpers (MOVE-ONLY extraction, v0.44.0) — see js/geometry.js.
 import {
   snapLineEnd, snapAngle, mathAngleDeg, snappedDeg, normalizeSweep,
   bboxIntersects,
-} from "./geometry.js?v=1.4.0";
+} from "./geometry.js?v=1.6.0-preview-labeler-0917-1111";
 // 각도 이산 변환 대상 목록의 정본(리터럴 5종을 대체) — object-types.js의 angleSnap.
-import { ANGLE_SNAP_TYPES } from "./object-types.js?v=1.4.0";
+import { ANGLE_SNAP_TYPES } from "./object-types.js?v=1.6.0-preview-labeler-0917-1111";
 // Selection / hit-testing (MOVE-ONLY extraction, v0.44.0) — see js/pick.js.
 // initPick(svg) hands pick.js the live SVG root for text/formula getBBox measurement.
 import {
   initPick, pickSelectableObjectAtPoint, pickSelectableObjectFromEvent,
   isPositionMovableForCursor, isLockedTracingImage, isBackgroundUnrecognized,
   getObjectBBox, marqueeHitsObject,
-} from "./pick.js?v=1.4.2";
+} from "./pick.js?v=1.6.0-remediation-0929";
 // Re-export the picking API at its historical home so existing importers of
 // tools.js (transform.js: pickSelectableObjectFromEvent, and any future callers
 // of pickTolerances / pickSelectableObjectAtPoint) keep working unchanged.
-export { pickTolerances, pickSelectableObjectAtPoint, pickSelectableObjectFromEvent } from "./pick.js?v=1.4.2";
+export { pickTolerances, pickSelectableObjectAtPoint, pickSelectableObjectFromEvent } from "./pick.js?v=1.6.0-remediation-0929";
 // Text/formula editing subsystem (MOVE-ONLY extraction, v0.44.0) — see js/text-editor.js.
 // initTextEditing(svg, state) registers the text tool + click-to-edit + shortcuts +
 // context menu (called from initTools). isTextEditorOpen() replaces the old direct
@@ -58,16 +60,17 @@ import {
   initTextEditing, isTextEditorOpen,
   startEditingTextObject, openLabelerTextEditor, openAngleArcLabelEditor, insertLabelerChar,
   cancelActiveTextEditor, cancelActiveFormulaEditor,
-} from "./text-editor.js?v=1.5.1";
+} from "./text-editor.js?v=1.6.0-remediation-0929";
 // Re-export the editor entry points at their historical home so existing importers of
 // tools.js keep working unchanged (inspector/section-geometry.js imports
 // openAngleArcLabelEditor; the openers are also used internally by the drawing code).
-export { startEditingTextObject, openLabelerTextEditor, openAngleArcLabelEditor, insertLabelerChar } from "./text-editor.js?v=1.5.1";
+export { startEditingTextObject, openLabelerTextEditor, openAngleArcLabelEditor, insertLabelerChar } from "./text-editor.js?v=1.6.0-remediation-0929";
 // Guide hover cursor: ruler.js owns guide geometry. Called only at runtime inside
 // the pointermove handler, so the ruler↔tools import cycle stays safe.
-import { guideCursorAt } from "./ruler.js?v=1.4.0";
+import { guideCursorAt } from "./ruler.js?v=1.6.0-remediation-0929";
+import { SELECTION_COLOR, SELECTION_MARQUEE_FILL } from "./selection-visuals.js?v=1.6.0-preview-labeler-0917-1111";
 
-import { snapKey } from "./platform.js?v=1.4.0";
+import { snapKey, modKey, shortcutKey, blocksCanvasShortcut } from "./platform.js?v=1.6.0-remediation-0929";
 // Default look until the inspector exists (DESIGN 짠3-2: border only, hollow).
 export const DEFAULT_STROKE_WIDTH = 0.2; // world units (mm)
 export const MIN_SIZE = 0.3; // world units; ignore stray clicks that draw nothing
@@ -123,6 +126,11 @@ const SYMBOL_TOOLS = new Set(["CIRCUIT", "OPTICS", "ARC", "APPARATUS", "SVGASSET
   // 화학 부품 (2026-07-31) — docs/CHEM_PARTS_SPEC.md
   "VESSEL", "CHEMMODEL", "PARTICLEBOX", "ORBITAL", "BONDGROUP",
   "CHEMCHART", "AXISBREAK", "CHEMGRAPH", "ELECTRODE", "PERIODIC"]);
+const TOOL_CHOOSER_GROUPS = [
+  { btn: "tool-text-merged", chooser: "chooser-text", persistent: true, tools: ["T", "LABELER"] },
+  { btn: "tool-angle-merged", chooser: "chooser-angle", persistent: true, tools: ["ARC", "RIGHTANGLE"] },
+  { btn: "tool-cut-merged", chooser: "chooser-cut", persistent: true, tools: ["CUT", "DELAYED_CUT", "ERASE"] },
+];
 
 /* ----- public: wire buttons, keyboard, and the drawing gestures ----- */
 export function initTools(svg, state) {
@@ -187,11 +195,6 @@ function setupButtons() {
  * 그대로 도구를 켠다 — 여기서는 팝오버 열고/닫고/위치만 잡는다. 단축키는 팝오버가 숨겨져
  * 있어도 이 옵션 버튼을 querySelector로 찾아 click()하므로 그대로 작동한다. */
 function setupToolChoosers() {
-  const PAIRS = [
-    { btn: "tool-text-merged", chooser: "chooser-text", persistent: true },
-    { btn: "tool-angle-merged", chooser: "chooser-angle", persistent: true },
-    { btn: "tool-cut-merged", chooser: "chooser-cut", persistent: true },
-  ];
   const closeAll = () => {
     document.querySelectorAll(".tool-chooser").forEach((c) => { c.hidden = true; });
     document.querySelectorAll(".tool-btn.is-open").forEach((b) => {
@@ -201,9 +204,10 @@ function setupToolChoosers() {
     if (_state) syncButtons(_state.get().activeTool);
   };
   let anyBound = false;
-  PAIRS.forEach(({ btn, chooser, persistent }) => {
+  TOOL_CHOOSER_GROUPS.forEach(({ btn, chooser, persistent }) => {
     const b = document.getElementById(btn), c = document.getElementById(chooser);
     if (!b || !c) return;
+    registerEscapeLayer(c, () => { closeAll(); b.focus(); });
     anyBound = true;
     let closeTimer = 0;
     const open = () => {
@@ -295,11 +299,11 @@ export function armSymbol(symbolId, tool, variant, props) {
   // 같은 배치 도구 안에서 소자만 바꾸면(예: 저항→전지) setActiveTool이 조기 반환해
   // 진행 중이던 첫 단자 클릭 draft가 남는다 → 도구 전환 여부와 무관하게 항상 폐기.
   clearClickLocals();
-  _state.update((s) => { s.draft = null; });
-  setActiveTool(tool);
+  if (_state.get().activeTool === tool) _state.update((s) => { s.draft = null; });
+  else setActiveTool(tool);
   // 추가 필드는 setActiveTool **뒤에** 넣는다 — 그 안에서 옛 값을 비우기 때문이다.
   _symbolProps = (props && typeof props === "object") ? { ...props } : null;
-  // _activeSymbolId는 위 두 state.update가 유발하는 syncButtons(이전 도구 기준) 뒤에 설정해야
+  // _activeSymbolId는 위 도구 상태 갱신이 유발하는 syncButtons(이전 도구 기준) 뒤에 설정해야
   // 한다. 먼저 설정하면, 비-심볼 도구(예: 텍스트 T)에서 심볼로 전환할 때 그 syncButtons가
   // "!SYMBOL_TOOLS.has(옛 도구)"로 _activeSymbolId를 null로 지워 하이라이트가 사라졌다.
   _activeSymbolId = symbolId;
@@ -309,6 +313,10 @@ export function armSymbol(symbolId, tool, variant, props) {
 // Read the armed optics kind. Exposed as a getter (armSymbol owns the value) so
 // tools/node-placement.js can tell when the 점 tool is armed without a copy.
 export function getOpticsKind() { return _opticsKind; }
+
+// The exact library symbol currently armed. Tutorial checks must not mistake a
+// different variant sharing OPTICS/CIRCUIT for the requested symbol.
+export function getActiveSymbolId() { return _activeSymbolId; }
 
 /* 팔레트가 지정한 추가 필드. 드래그로 그리는 도형은 makeShape 안에서 직접 병합하지만,
  * 클릭배치(선 L·꺾은선 P·곡선 C)는 commit이 tools/click-placement.js 에 있어 값을 못 봤다.
@@ -320,6 +328,14 @@ function syncButtons(activeTool) {
   // A library symbol stays armed only while its placement tool is active; any plain
   // tool (or the auto-return to V after a commit) clears the symbol highlight.
   if (!SYMBOL_TOOLS.has(activeTool)) _activeSymbolId = null;
+  for (const group of TOOL_CHOOSER_GROUPS) {
+    if (group.tools.includes(activeTool)) continue;
+    const chooser = document.getElementById(group.chooser);
+    const button = document.getElementById(group.btn);
+    if (chooser) chooser.hidden = true;
+    button?.classList.remove("is-open");
+    button?.setAttribute("aria-expanded", "false");
+  }
   // Plain tool buttons: one button ↔ one tool (unchanged behavior).
   document.querySelectorAll("[data-tool]").forEach((btn) => {
     btn.classList.toggle("is-active", btn.dataset.tool === activeTool);
@@ -351,25 +367,15 @@ function hasFlippableTriangleSelected() {
 /* ----- keyboard shortcuts: V / S / R / O / Y / L / P(꺾은선) / D(자유그리기) / N(점) / C / E(자르기) / Ctrl+E(지연 자르기) / T ----- */
 function setupKeyboard() {
   window.addEventListener("keydown", (e) => {
-    const t = e.target;
-    if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
-    if ((e.ctrlKey || e.metaKey) && !e.altKey && (e.code === "KeyE" || e.key.toLowerCase() === "e")) {
+    if (blocksCanvasShortcut(e)) return;
+    const key = shortcutKey(e);
+    if (modKey(e) && !e.altKey && !e.shiftKey && key === "e") {
       e.preventDefault();
       setActiveTool("DELAYED_CUT");
       return;
     }
-    if (e.ctrlKey || e.metaKey || e.altKey) return; // leave Ctrl+R (reload) etc.
-    if (e.shiftKey && (e.key.toLowerCase() === "c" || e.key.toLowerCase() === "v")) return;
-    // 모달(함수 입력·좌표평면 상세 등)이 열린 동안, 포커스가 그 안의 BUTTON에 있을 때도
-    // v/s/t/f 등 도구 단축키가 뒤편 캔버스 도구를 바꾸지 않게 차단(transform.js의 Delete/
-    // Ctrl+Z 가드와 동일 패턴). 특히 F는 그래프 모달을 모달 위에 겹쳐 열어버렸다.
-    if (document.querySelector(".modal-overlay:not([hidden])")) return;
-    // IME가 한글 조합 상태면 e.key가 'Process'/자모 문자로 들어와 아래 문자 비교가
-    // 전부 실패한다(한글 라벨 입력 직후 캔버스로 돌아와 단축키를 누르는 경우가 잦음).
-    // e.code는 물리 키를 그대로 보고하므로(IME 상태 무관) 우선 사용하고, 매핑에
-    // 없는 키(Tab 등)만 기존 e.key 판정으로 폴백한다.
-    const CODE_KEY_MAP = { KeyV: "v", KeyS: "s", KeyR: "r", KeyO: "o", KeyY: "y", KeyL: "l", KeyP: "p", KeyD: "d", KeyN: "n", KeyA: "a", KeyC: "c", KeyE: "e", KeyT: "t", KeyF: "f" };
-    const key = CODE_KEY_MAP[e.code] || e.key.toLowerCase();
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.shiftKey && (key === "c" || key === "v")) return;
     if (key === "v") setActiveTool("V");
     else if (key === "s") setActiveTool("RECT");       // 사각형 — shortcut is S, not R (see SHAPE_TYPE note)
     else if (key === "r") setActiveTool("rotate");
@@ -619,8 +625,8 @@ function setupDrawing() {
     if (hitId === null && _at === "V") {
       _marqueeStart = { x: p.x, y: p.y };
       _marqueeEl = document.createElementNS("http://www.w3.org/2000/svg", "rect");
-      _marqueeEl.setAttribute("fill", "rgba(9,105,218,0.08)");
-      _marqueeEl.setAttribute("stroke", "#0969da");
+      _marqueeEl.setAttribute("fill", SELECTION_MARQUEE_FILL);
+      _marqueeEl.setAttribute("stroke", SELECTION_COLOR);
       _marqueeEl.setAttribute("stroke-width", "0.3");
       _marqueeEl.setAttribute("stroke-dasharray", "0.7 0.5");
       _marqueeEl.setAttribute("pointer-events", "none");

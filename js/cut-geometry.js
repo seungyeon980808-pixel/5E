@@ -10,7 +10,7 @@
 // 영역(객체화 덩어리 등)은 잘린 현(弦)을 따라 닫아 두 개의 "채워진" 조각으로 방출.
 // 대상이 아니거나 교차가 없으면 null 반환 → 호출자는 원본 유지. */
 
-import { curveBezierSeg, curveBezierSegClosed, evalBezier, pointInPolygon, segDist } from "./geometry.js?v=1.4.0";
+import { curveBezierSeg, curveBezierSegClosed, evalBezier, pointInPolygon, segDist } from "./geometry.js?v=1.6.0-preview-labeler-0917-1111";
 
 // curve 객체의 렌더된 스플라인을 폴리라인으로 샘플링(제어점 직선이 아니라 실제 곡선
 // 기준으로 잘리게). render/core.js의 curveSamplePoints와 동일한 Catmull-Rom 제어점 사용.
@@ -557,6 +557,12 @@ export function tightenBoxObject(o) {
   if (!(fw > 0) || !(fh > 0)) return null;
   if (fw > 1 - TRIM_MIN_GAIN && fh > 1 - TRIM_MIN_GAIN) return null;   // 이미 딱 맞음
 
+  return cropBoxToBounds(o, b);
+}
+
+export function cropBoxToBounds(o, b) {
+  const fw = b.x1 - b.x0, fh = b.y1 - b.y0;
+  const cutouts = Array.isArray(o.cutouts) ? o.cutouts : [];
   const next = JSON.parse(JSON.stringify(o));
   const nw = fw * o.w, nh = fh * o.h;
   // 회전은 상자 중심을 기준으로 걸린다. 상자를 좁히면 중심이 옮겨지므로, 새 중심을

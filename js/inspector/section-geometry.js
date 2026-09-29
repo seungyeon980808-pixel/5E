@@ -3,18 +3,20 @@
  * split). Builds the section DOM and wires its events; mounting into the
  * inspector panel happens in js/inspector.js (the orchestrator). */
 
-import { openAngleArcLabelEditor } from "../tools.js?v=1.5.4";
-import { boxLabelSlots } from "../render.js?v=1.4.0";
-import { makeSection } from "./widgets.js?v=1.4.0";
-import { nodeBoxFromDiameter, nodeDiameterFromBox } from "../tools/node-placement.js?v=1.4.0";
+import { openAngleArcLabelEditor } from "../tools.js?v=1.6.0-remediation-0929";
+import { boxLabelSlots } from "../render.js?v=1.6.0-remediation-0929";
+import { makeSection } from "./widgets.js?v=1.6.0-preview-labeler-0917-1111";
+import { nodeBoxFromDiameter, nodeDiameterFromBox } from "../tools/node-placement.js?v=1.6.0-remediation-0929";
+import { beginLabelerBranches, labelerAnchorCount, labelerBranchStatus } from "../tools/labeler-branches.js?v=1.6.0-preview-lite-hybrid-0922";
 
 export function buildGeometrySection(ctx) {
   const { state, makeLabelSizeRow, makeLabelTypeRow, commitSelectedObject } = ctx;
+  const POSITIVE_SIZE_PROPS = new Set(["w", "h", "radius", "height", "size", "length", "thickness"]);
 
   /* ---- Section 3: 크기·위치 (shapes only, single selection only) ---- */
   const sec3Body = document.createElement("div");
   sec3Body.className = "insp-body";
-  sec3Body.style.padding = "6px 6px"; // narrower than default for a compact section
+  sec3Body.style.padding = "4px 6px";
 
   // negate=true → inspector shows/accepts math convention (Y up) while the stored
   // value stays in SVG convention (Y down). Display = -internal, internal = -input.
@@ -28,13 +30,25 @@ export function buildGeometrySection(ctx) {
     inp.type = "number";
     inp.step = step;
     inp.className = "insp-input";
+    const unit = document.createElement("span");
+    unit.className = "insp-unit";
+    unit.textContent = ["rotation", "startAngle", "sweepAngle", "angle", "needleAngle"].includes(prop) ? "°" : "mm";
 
     function commit() {
       const val = parseFloat(inp.value);
-      if (!isFinite(val)) return;
       const s = state.get();
       const ids = s.selectedIds || [];
       if (!ids.length) return;
+      const current = s.objects.find((o) => o.id === ids[0]);
+      const invalidSize = POSITIVE_SIZE_PROPS.has(prop) && (!isFinite(val) || !(val > 0));
+      if (invalidSize) {
+        inp.value = String(current?.[prop] ?? "");
+        inp.setCustomValidity?.("0보다 큰 값을 입력하세요.");
+        inp.reportValidity?.();
+        return;
+      }
+      if (!isFinite(val)) return;
+      inp.setCustomValidity?.("");
       const snap = JSON.parse(JSON.stringify(s.objects));
       state.update((s2) => {
         const id = (s2.selectedIds || [])[0];
@@ -42,6 +56,7 @@ export function buildGeometrySection(ctx) {
         if (!o) return;
         if (o.locked || (o.positionLocked && (prop === "x" || prop === "y"))) return;
         const next = negate ? -val : val;
+        if (o[prop] === next) return;
         if (o.positionLocked && prop === "w") o.x -= (next - o.w) / 2;
         if (o.positionLocked && prop === "h") o.y -= (next - o.h) / 2;
         s2.undoStack.push(snap);
@@ -61,6 +76,7 @@ export function buildGeometrySection(ctx) {
     inp.addEventListener("blur", commit);
     row.appendChild(lbl);
     row.appendChild(inp);
+    row.appendChild(unit);
     return { el: row, inp };
   }
 
@@ -68,19 +84,19 @@ export function buildGeometrySection(ctx) {
   const yF   = makePosRow("Y",     "y",        "0.1", true); // math Y (up = positive)
   const wF   = makePosRow("W",     "w",        "0.1");
   const hF   = makePosRow("H",     "h",        "0.1");
-  const rotF = makePosRow("회전 °", "rotation", "1");
+  const rotF = makePosRow("회전", "rotation", "1");
 
   sec3Body.appendChild(rotF.el);
 
   // X/Y on one row, W/H on the next — compact pairs, left-aligned (not stretched).
   const xyPair = document.createElement("div");
-  xyPair.style.cssText = "display:flex;gap:10px;";
+  xyPair.className = "insp-geometry-pair";
   xyPair.appendChild(xF.el);
   xyPair.appendChild(yF.el);
   sec3Body.appendChild(xyPair);
 
   const whPair = document.createElement("div");
-  whPair.style.cssText = "display:flex;gap:10px;";
+  whPair.className = "insp-geometry-pair";
   whPair.appendChild(wF.el);
   whPair.appendChild(hF.el);
   sec3Body.appendChild(whPair);
@@ -125,7 +141,7 @@ export function buildGeometrySection(ctx) {
   trimRow.appendChild(trimBtn);
   sec3Body.appendChild(trimRow);
   trimBtn.addEventListener("click", async () => {
-    const mod = await import("../erase-tool.js?v=1.4.0");
+    const mod = await import("../erase-tool.js?v=1.6.0-remediation-0929");
     const n = mod.trimSelectedBoxMargins();
     const orig = trimBtn.textContent;
     trimBtn.textContent = n > 0 ? "정리했습니다" : "좁힐 여백 없음";
@@ -135,11 +151,11 @@ export function buildGeometrySection(ctx) {
   // anglearc-only rows: radius + start/sweep angle (math convention, CCW +). The
   // arc has no W/H/rotation — these replace those rows for an anglearc selection.
   const radF = makePosRow("반지름", "radius", "0.1");
-  const saF  = makePosRow("시작각 °", "startAngle", "1");
-  const swF  = makePosRow("사잇각 °", "sweepAngle", "1");
+  const saF  = makePosRow("시작각", "startAngle", "1");
+  const swF  = makePosRow("사잇각", "sweepAngle", "1");
   sec3Body.appendChild(radF.el);
   const arcPair = document.createElement("div");
-  arcPair.style.cssText = "display:flex;gap:10px;";
+  arcPair.className = "insp-geometry-pair";
   arcPair.appendChild(saF.el);
   arcPair.appendChild(swF.el);
   sec3Body.appendChild(arcPair);
@@ -393,39 +409,94 @@ export function buildGeometrySection(ctx) {
     }
   }
 
-  /* 라벨선 추가(요구 2026-07-26): 지시선을 하나 더 뽑아 두 영역을 하나의 라벨로 가리킨다.
-   * 켜면 p3(두 번째 지시선 끝점)가 생기고, 캔버스에 세 번째 핸들이 나와 끌 수 있다. */
   const labelerLine2Row = document.createElement("div");
   labelerLine2Row.className = "insp-row";
+  labelerLine2Row.style.flexWrap = "wrap";
   const labelerLine2Lbl = document.createElement("label");
   labelerLine2Lbl.className = "insp-field-label";
   labelerLine2Lbl.textContent = "라벨선";
   const labelerLine2Btn = document.createElement("button");
   labelerLine2Btn.type = "button";
   labelerLine2Btn.className = "insp-input";
-  labelerLine2Btn.title = "지시선을 하나 더 만들어 두 곳을 한 라벨로 가리킵니다";
+  labelerLine2Btn.title = "시작점을 최대 5개까지 지정하고 Enter로 확정합니다";
   labelerLine2Row.appendChild(labelerLine2Lbl);
   labelerLine2Row.appendChild(labelerLine2Btn);
-  sec3Body.appendChild(labelerLine2Row);
-  labelerLine2Btn.addEventListener("click", () => {
-    const s = state.get();
-    const ids = s.selectedIds || [];
-    if (ids.length !== 1) return;
-    const snap = JSON.parse(JSON.stringify(s.objects));
-    state.update((s2) => {
-      const o = s2.objects.find((it) => it.id === ids[0]);
-      if (!o || o.type !== "labeler" || o.locked) return;
-      s2.undoStack.push(snap); s2.redoStack = [];
-      if (o.p3) { delete o.p3; return; }
-      // 첫 지시선을 라벨 기준으로 반대편에 복사해 둔다 — 바로 눈에 띄고 끌어 옮기기 쉽다.
-      o.p3 = { x: o.p2.x + (o.p2.x - o.p1.x), y: o.p2.y + (o.p2.y - o.p1.y) };
+  const removeBranchBtn = document.createElement("button");
+  removeBranchBtn.type = "button";
+  removeBranchBtn.className = "insp-input";
+  removeBranchBtn.textContent = "제거";
+  removeBranchBtn.title = "마지막으로 추가한 시작점을 제거합니다";
+  removeBranchBtn.addEventListener("click", () => {
+    commitSelectedObject((o) => {
+      if (o.type !== "labeler" || o.locked || labelerAnchorCount(o) <= 1) return;
+      if (o.extraAnchors?.length) o.extraAnchors.pop();
+      else delete o.p3;
+      return true;
     });
+  });
+  labelerLine2Row.appendChild(removeBranchBtn);
+  sec3Body.appendChild(labelerLine2Row);
+  const branchHint = document.createElement("span");
+  Object.assign(branchHint.style, { flexBasis: "100%", fontSize: "11px", color: "var(--text-secondary)" });
+  labelerLine2Row.appendChild(branchHint);
+  const labelerGapRow = document.createElement("div");
+  labelerGapRow.className = "insp-row";
+  labelerGapRow.style.flexBasis = "100%";
+  const gapLabel = document.createElement("label");
+  gapLabel.className = "insp-field-label";
+  gapLabel.textContent = "선–글자 간격";
+  const gapInput = document.createElement("input");
+  gapInput.type = "number";
+  gapInput.min = "0";
+  gapInput.step = "0.1";
+  gapInput.className = "insp-input";
+  gapInput.setAttribute("aria-label", "선–글자 간격");
+  const gapUnit = document.createElement("span");
+  gapUnit.className = "insp-unit";
+  gapUnit.textContent = "mm";
+  labelerGapRow.append(gapLabel, gapInput, gapUnit);
+  labelerLine2Row.appendChild(labelerGapRow);
+  let gapUndoRecorded = false;
+  let gapEditedId = null;
+  gapInput.addEventListener("focus", () => {
+    gapUndoRecorded = false;
+    gapEditedId = (state.get().selectedIds || [])[0];
+  });
+  gapInput.addEventListener("input", () => {
+    const value = Number.parseFloat(gapInput.value);
+    if (!Number.isFinite(value) || value < 0) return;
+    state.update((s) => {
+      const o = s.objects.find((item) => item.id === gapEditedId);
+      if (!o || o.id !== (s.selectedIds || [])[0] || o.type !== "labeler" || o.locked || o.labelGap === value) return;
+      if (!gapUndoRecorded) {
+        s.undoStack.push(JSON.parse(JSON.stringify(s.objects)));
+        s.redoStack = [];
+        gapUndoRecorded = true;
+      }
+      o.labelGap = value;
+    });
+  });
+  gapInput.addEventListener("blur", () => { gapUndoRecorded = false; gapEditedId = null; syncLabelerLine2(); });
+  gapInput.addEventListener("keydown", (event) => { if (event.key === "Enter") gapInput.blur(); });
+  labelerLine2Btn.addEventListener("click", () => {
+    const ids = state.get().selectedIds || [];
+    if (ids.length !== 1) return;
+    beginLabelerBranches(ids[0]);
     syncLabelerLine2();
   });
   function syncLabelerLine2() {
     const s = state.get();
     const o = (s.objects || []).find((it) => it.id === (s.selectedIds || [])[0]);
-    labelerLine2Btn.textContent = (o && o.p3) ? "제거" : "추가";
+    const pending = labelerBranchStatus();
+    const count = o ? labelerAnchorCount(o) : 0;
+    labelerLine2Btn.textContent = pending ? "확정" : "추가";
+    labelerLine2Btn.disabled = !o || o.locked || (!pending && count >= 5);
+    removeBranchBtn.disabled = !o || o.locked || !!pending || count <= 1;
+    branchHint.textContent = pending
+      ? (pending.needsElbow ? "먼저 합류점을 클릭하세요 · Esc 취소" : `${pending.count}/5개 · 시작점 클릭 · Enter 확정 · Esc 취소`)
+      : `${count}/5개 시작점`;
+    gapInput.disabled = !o || o.locked || !!pending;
+    if (o && document.activeElement !== gapInput) gapInput.value = String(Number((o.labelGap ?? 0).toFixed(2)));
   }
 
   function commitLabelerLength() {
@@ -1037,6 +1108,7 @@ export function buildGeometrySection(ctx) {
   });
 
   const sec3 = makeSection("크기·위치", sec3Body);
+  sec3.classList.add("insp-section-geometry");
 
   return {
     sec3, xF, yF, wF, hF, rotF, xyPair, whPair, lockAspectRow, lockAspectCb, trimRow,

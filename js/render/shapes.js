@@ -16,11 +16,12 @@ import {
   applyGlyphHalo,
   DIM_HALO_RATIO,
   LABEL_INK,
-} from "./core.js?v=1.4.0";
-import { withBoxLabel, withLineLabel } from "./labels.js?v=1.4.0";
-import { resolveFill } from "./fill.js?v=1.4.0";
-import { getSvgAsset } from "../svg-assets.js?v=1.4.0";
-import { normalizeSrcRect } from "../cut-geometry.js?v=1.4.2";
+} from "./core.js?v=1.6.0-remediation-0929";
+import { estimateLabelBlock, withBoxLabel, withLineLabel } from "./labels.js?v=1.6.0-remediation-0929";
+import { resolveFill } from "./fill.js?v=1.6.0-remediation-0929";
+import { getSvgAsset } from "../svg-assets.js?v=1.6.0-preview-labeler-0917-1111";
+import { normalizeSrcRect } from "../cut-geometry.js?v=1.6.0-preview-labeler-0917-1111";
+import { DEFAULT_TEXT_SIZE_MM } from "../state.js?v=1.6.0-remediation-0929";
 
 // 직선/폴리라인 끝 화살표(요구): 원래 makeArrowHead 기본값(4.5/1.8/0.3)보다 더 크고, 아래쪽
 // (홈) 각도가 더 넓게. 위쪽(끝) 각도는 lenMul:widthMul 비율(0.4)을 그대로 유지해 그대로 둔다.
@@ -115,10 +116,8 @@ export const WAVY_DEFAULTS = { waveLength: 5, waveAmp: 1.1, tailRatio: 0.35 };
 // (0.2mm)에서 0.3mm가 되어 사실상 보이지 않았다(2026-07-26 교사 지적). 파장에 비례하면
 // 물결을 촘촘히 해도 직선부가 같이 줄어 비율이 항상 자연스럽다.
 
-/* ----- line: endpoint-based shape (DESIGN 2-1 branch B); p1?뭦2, no fill ----- */
-function renderLine(obj) {
+function resolvedLineStyle(obj) {
   const savedArrowHead = obj.arrowHead ?? "none";
-  // Files created before lineStyle used arrowHead="center" for midpoint arrows.
   let lineStyle = obj.lineMode ?? obj.lineStyle
     ?? (savedArrowHead === "center" ? "middleArrow" : savedArrowHead === "none" ? "solid" : "arrow");
   if (lineStyle === "dimensionArrow") lineStyle = "lengthArrow";
@@ -127,6 +126,120 @@ function renderLine(obj) {
   const arrowHead = lineStyle === "arrow"
     ? ({ right: "end", left: "start", both: "both" }[obj.arrowVariant] || savedArrowHead)
     : "none";
+  return { lineStyle, arrowHead };
+}
+
+function appendArrowPoints(points, tip, dirX, dirY, strokeWidth) {
+  const length = strokeWidth * LINE_ARROW_OPTS.lenMul;
+  const halfWidth = strokeWidth * LINE_ARROW_OPTS.widthMul;
+  const baseX = tip.x - dirX * length;
+  const baseY = tip.y - dirY * length;
+  const perpX = -dirY, perpY = dirX;
+  points.push(
+    tip,
+    { x: baseX + perpX * halfWidth, y: baseY + perpY * halfWidth },
+    { x: baseX - perpX * halfWidth, y: baseY - perpY * halfWidth },
+  );
+}
+
+function appendBlockPoints(points, cx, cy, text, size, pad = size * 0.2) {
+  const { hw, hh } = estimateLabelBlock(text, size, pad);
+  points.push({ x: cx - hw, y: cy - hh }, { x: cx + hw, y: cy + hh });
+}
+
+export function getLineDecorationBounds(obj) {
+  if (!obj?.p1 || !obj?.p2) return null;
+  const points = [{ ...obj.p1 }, { ...obj.p2 }];
+  const sw = obj.strokeWidth ?? 0.2;
+  const dx = obj.p2.x - obj.p1.x, dy = obj.p2.y - obj.p1.y;
+  const length = Math.hypot(dx, dy);
+  const ux = length ? dx / length : 0, uy = length ? dy / length : 0;
+  const { lineStyle, arrowHead } = resolvedLineStyle(obj);
+  const addArrow = (tip, dirX, dirY) => appendArrowPoints(points, tip, dirX, dirY, sw);
+  const addCap = (point, half) => {
+    points.push(
+      { x: point.x - uy * half, y: point.y + ux * half },
+      { x: point.x + uy * half, y: point.y - ux * half },
+    );
+  };
+
+  if (length > 0) {
+    if (lineStyle === "wavyArrow") {
+      const headLen = sw * 4.5;
+      const waveLen = Math.max(0.5, obj.waveLength ?? WAVY_DEFAULTS.waveLength);
+      const tail = waveLen * Math.max(0, obj.tailRatio ?? WAVY_DEFAULTS.tailRatio);
+      const body = Math.max(waveLen, length - headLen - tail);
+      const amp = Math.max(0, obj.waveAmp ?? WAVY_DEFAULTS.waveAmp);
+      const bodyEnd = { x: obj.p1.x + ux * body, y: obj.p1.y + uy * body };
+      const tailEnd = { x: obj.p1.x + ux * (body + tail), y: obj.p1.y + uy * (body + tail) };
+      points.push(
+        { x: obj.p1.x - uy * amp, y: obj.p1.y + ux * amp },
+        { x: obj.p1.x + uy * amp, y: obj.p1.y - ux * amp },
+        { x: bodyEnd.x - uy * amp, y: bodyEnd.y + ux * amp },
+        { x: bodyEnd.x + uy * amp, y: bodyEnd.y - ux * amp },
+        tailEnd,
+      );
+      addArrow(obj.p2, ux, uy);
+    } else if (arrowHead === "end") {
+      addArrow(obj.p2, ux, uy);
+    } else if (arrowHead === "start") {
+      addArrow(obj.p1, -ux, -uy);
+    } else if (arrowHead === "both" || lineStyle === "lengthArrow") {
+      addArrow(obj.p2, ux, uy);
+      addArrow(obj.p1, -ux, -uy);
+    } else if (lineStyle === "middleArrow") {
+      const direction = obj.arrowVariant === "left" ? -1 : 1;
+      addArrow({ x: (obj.p1.x + obj.p2.x) / 2, y: (obj.p1.y + obj.p2.y) / 2 }, ux * direction, uy * direction);
+    } else if (lineStyle === "midInward") {
+      addArrow({ x: obj.p1.x + dx / 3, y: obj.p1.y + dy / 3 }, ux, uy);
+      addArrow({ x: obj.p1.x + dx * 2 / 3, y: obj.p1.y + dy * 2 / 3 }, -ux, -uy);
+    }
+
+    if (lineStyle === "lengthArrow") {
+      const variant = ["basic", "rightBar", "leftBar", "bothBars"].includes(obj.dimensionVariant)
+        ? obj.dimensionVariant : "basic";
+      const half = Math.max(sw * 4, 1.2);
+      if (variant === "leftBar" || variant === "bothBars") addCap(obj.p1, half);
+      if (variant === "rightBar" || variant === "bothBars") addCap(obj.p2, half);
+      const size = obj.dimensionLabelSize || Math.max(2.5, sw * 8);
+      appendBlockPoints(points, (obj.p1.x + obj.p2.x) / 2,
+        (obj.p1.y + obj.p2.y) / 2 + size * LABEL_OPTICAL_CENTER_EM,
+        obj.dimensionLabel || "d", size);
+    } else if (lineStyle === "scaleBar") {
+      const variant = ["bars", "alt", "simple"].includes(obj.scaleBarVariant) ? obj.scaleBarVariant : "bars";
+      const half = variant === "alt" ? Math.max(sw * 3, 0.9) : Math.max(sw * 4, 1.2);
+      if (variant !== "simple") { addCap(obj.p1, half); addCap(obj.p2, half); }
+      if (obj.dimensionLabel) {
+        const size = obj.dimensionLabelSize || Math.max(2.5, sw * 8);
+        const gap = half + size * 0.9;
+        appendBlockPoints(points,
+          (obj.p1.x + obj.p2.x) / 2 + uy * gap,
+          (obj.p1.y + obj.p2.y) / 2 - ux * gap + size * LABEL_OPTICAL_CENTER_EM,
+          obj.dimensionLabel, size);
+      }
+    }
+  }
+
+  if (lineStyle !== "lengthArrow" && obj.labelShow && String(obj.label ?? "")) {
+    const size = obj.labelSize || DEFAULT_TEXT_SIZE_MM;
+    let nx = length ? -uy : 0, ny = length ? ux : -1;
+    if (ny > 0) { nx = -nx; ny = -ny; }
+    const side = obj.labelFlip ? -1 : 1;
+    appendBlockPoints(points,
+      (obj.p1.x + obj.p2.x) / 2 + nx * size * side,
+      (obj.p1.y + obj.p2.y) / 2 + ny * size * side,
+      obj.label, size);
+  }
+
+  const xs = points.map((point) => point.x), ys = points.map((point) => point.y);
+  const minX = Math.min(...xs), minY = Math.min(...ys);
+  const maxX = Math.max(...xs), maxY = Math.max(...ys);
+  return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
+}
+
+/* ----- line: endpoint-based shape (DESIGN 2-1 branch B); p1?뭦2, no fill ----- */
+function renderLine(obj) {
+  const { lineStyle, arrowHead } = resolvedLineStyle(obj);
   const sw = obj.strokeWidth ?? 0.2;
   const color = grayHex(obj.strokeLevel);
 

@@ -1,3 +1,6 @@
+import { registerEscapeLayer } from "./escape-layers.js?v=1.6.0-remediation-0929";
+
+import { modKey, shortcutKey, isEditingTarget, isComposingKey, keyLabel, IS_MAC } from "./platform.js?v=1.6.0-remediation-0929";
 /* ===== COMMAND PALETTE (Ctrl+K unified runner: 명령 + 오브젝트 검색) =====
  *
  * Ctrl+F는 오브젝트만 찾는다. 이 팔레트는 같은 창에서 "명령"(실행취소·그룹묶기·
@@ -13,18 +16,12 @@
  *   - 오브젝트는 search.js와 동일한 데이터(TEMPLATES/퍼스널)를 재사용해 생성한다.
  */
 
-import { TEMPLATES, activateTemplate, buildSymbolIcon, sizeIconViewBox } from "./templates.js?v=1.4.0";
-import { listPersonalItems, insertPersonalItem } from "./personal-objects.js?v=1.4.0";
-import { state } from "./state.js?v=1.4.0";
-import { trimSelectedBoxMargins } from "./erase-tool.js?v=1.4.0";
+import { TEMPLATES, activateTemplate, buildSymbolIcon, sizeIconViewBox } from "./templates.js?v=1.6.0-remediation-0929";
+import { listPersonalItems, insertPersonalItem } from "./personal-objects.js?v=1.6.0-remediation-0929";
+import { state } from "./state.js?v=1.6.0-remediation-0929";
+import { trimSelectedBoxMargins } from "./erase-tool.js?v=1.6.0-remediation-0929";
 
 const CATEGORY_ORDER = ["공통", "광학", "회로", "역학"];
-
-function isTypingTarget(target) {
-  return target instanceof HTMLElement && (
-    target.matches("input, textarea, select") || target.isContentEditable
-  );
-}
 
 /* 이미 있는 상단바/드롭다운 버튼을 그대로 누른다(핸들러는 요소에 붙어 있어 숨김 상태여도 동작). */
 function clickById(id) {
@@ -83,8 +80,8 @@ const COMMANDS = [
   { id: "lockToggle",  label: "잠금 토글",         keywords: ["lock", "잠금", "고정", "unlock"],   shortcutLabel: "K",            run: () => runIfSelectionOk(
     (s) => s.activeTool === "V" && (s.selectedIds || []).length >= 1,
     "선택 도구(V)에서 오브젝트를 선택해야 잠금을 토글할 수 있어요.", "k") },
-  { id: "projectSave", label: "프로젝트 저장",     keywords: ["save", "저장", "project"],          shortcutLabel: "",             run: () => clickById("project-save") },
-  { id: "projectOpen", label: "프로젝트 불러오기", keywords: ["open", "load", "불러오기", "열기"], shortcutLabel: "",             run: () => clickById("project-open") },
+  { id: "projectSave", label: "프로젝트 저장",     keywords: ["save", "저장", "project"],          shortcutLabel: "Ctrl+S",       run: () => clickById("project-save") },
+  { id: "projectOpen", label: "프로젝트 불러오기", keywords: ["open", "load", "불러오기", "열기"], shortcutLabel: "Ctrl+O",       run: () => clickById("project-open") },
   { id: "imageImport", label: "이미지 가져오기",   keywords: ["image", "import", "가져오기", "삽입"], shortcutLabel: "",           run: () => clickById("image-import") },
   { id: "imageExport", label: "이미지로 내보내기", keywords: ["export", "내보내기", "png", "svg"], shortcutLabel: "",             run: () => clickById("image-export") },
   { id: "gridToggle",  label: "격자 토글",         keywords: ["grid", "격자", "모눈"],             shortcutLabel: "",             run: () => clickById("grid-btn") },
@@ -92,9 +89,10 @@ const COMMANDS = [
   { id: "settingsExport", label: "설정 저장하기",  keywords: ["settings", "설정", "export", "저장"], shortcutLabel: "",            run: () => clickById("settings-export") },
   { id: "settingsImport", label: "설정 불러오기",  keywords: ["settings", "설정", "import", "불러오기"], shortcutLabel: "",        run: () => clickById("settings-import") },
   { id: "objectSearch", label: "오브젝트 검색 열기", keywords: ["object", "오브젝트", "검색", "찾기"], shortcutLabel: "Ctrl+F",     run: () => clickById("object-search-trigger") },
-  { id: "examSearch",  label: "기출 라이브러리 열기", keywords: ["exam", "기출", "문항", "검색"],     shortcutLabel: "Ctrl+Shift+F", run: () => clickById("exam-library-open") },
+  { id: "examSearch",  label: "라이브러리 열기", keywords: ["exam", "기출", "문항", "검색", "라이브러리"], shortcutLabel: "", run: () => clickById("exam-library-open") },
   { id: "bulkEdit",    label: "전체 통일 수정 열기", keywords: ["bulk", "통일", "일괄", "전체수정"], shortcutLabel: "",            run: () => clickById("bulk-edit-open") },
   { id: "imageObjectify", label: "이미지 객체화",  keywords: ["objectify", "객체화", "벡터", "이미지"], shortcutLabel: "",         run: () => clickById("image-objectify-open") },
+  { id: "aiImage", label: "AI 이미지 변환", keywords: ["ai", "인공지능", "이미지 변환", "변환"], shortcutLabel: "", run: () => clickById("ai-image-install-open") },
   // 자르기·지우기는 이미 자동으로 좁히지만, 옛 파일·여러 번 손댄 객체를 위한 손 경로.
   { id: "trimMargins", label: "이미지 여백 정리",  keywords: ["trim", "여백", "정리", "상자", "맞춤", "crop"], shortcutLabel: "",  run: () => {
     const n = trimSelectedBoxMargins();
@@ -112,20 +110,27 @@ export function initCommandPalette() {
     <section class="modal object-search-modal" role="dialog" aria-modal="true" aria-labelledby="command-palette-title">
       <h2 class="modal-title" id="command-palette-title">명령 팔레트</h2>
       <input class="modal-input object-search-input" type="text" autocomplete="off"
-             placeholder="명령 또는 오브젝트 검색 (Ctrl+K)" aria-label="명령 또는 오브젝트 검색">
-      <div class="object-search-results" role="listbox" aria-label="명령/검색 결과"></div>
+             placeholder="명령 또는 오브젝트 검색 (Ctrl+K)" aria-label="명령 또는 오브젝트 검색" aria-controls="command-palette-results">
+      <div class="object-search-results" id="command-palette-results" role="listbox" aria-label="명령/검색 결과"></div>
     </section>`;
   document.body.appendChild(overlay);
 
   const input = overlay.querySelector(".object-search-input");
+  input.placeholder = keyLabel(input.placeholder);
   const results = overlay.querySelector(".object-search-results");
   let matches = [];
   let highlighted = 0;
+  let returnFocus = null;
 
   function close() {
+    input.blur();
     overlay.hidden = true;
     input.value = "";
+    input.removeAttribute("aria-activedescendant");
+    (returnFocus?.isConnected && returnFocus !== document.body ? returnFocus : document.getElementById("canvas"))?.focus();
   }
+
+  registerEscapeLayer(overlay.querySelector('[role="dialog"]'), close);
 
   function pick(index) {
     const match = matches[index];
@@ -145,6 +150,8 @@ export function initCommandPalette() {
       row.classList.toggle("is-highlighted", active);
       row.setAttribute("aria-selected", String(active));
     });
+    if (rows[highlighted]) input.setAttribute("aria-activedescendant", rows[highlighted].id);
+    else input.removeAttribute("aria-activedescendant");
     if (scroll) rows[highlighted]?.scrollIntoView({ block: "nearest" });
   }
 
@@ -191,6 +198,7 @@ export function initCommandPalette() {
     if (commandRows.length) {
       const heading = document.createElement("div");
       heading.className = "object-search-category";
+      heading.setAttribute("role", "presentation");
       heading.textContent = "명령";
       results.appendChild(heading);
       for (const match of commandRows) {
@@ -198,13 +206,14 @@ export function initCommandPalette() {
         const row = document.createElement("button");
         row.type = "button";
         row.className = "object-search-row";
+        row.id = `command-palette-option-${index}`;
         row.dataset.index = String(index);
         row.setAttribute("role", "option");
 
         const iconBox = document.createElement("span");
         iconBox.className = "object-search-icon";
         const glyph = document.createElement("span");
-        glyph.textContent = "⌘";
+        glyph.textContent = IS_MAC ? "⌘" : "Ctrl";
         glyph.style.cssText = "font-weight:700;font-size: 13px;opacity:.65;";
         iconBox.appendChild(glyph);
 
@@ -212,7 +221,7 @@ export function initCommandPalette() {
         label.textContent = match.cmd.label;
         const badge = document.createElement("span");
         badge.className = "object-search-badge";
-        badge.textContent = match.cmd.shortcutLabel || "명령";
+        badge.textContent = keyLabel(match.cmd.shortcutLabel) || "명령";
         row.append(iconBox, label, badge);
         results.appendChild(row);
       }
@@ -227,6 +236,7 @@ export function initCommandPalette() {
 
       const heading = document.createElement("div");
       heading.className = "object-search-category";
+      heading.setAttribute("role", "presentation");
       heading.textContent = category;
       results.appendChild(heading);
 
@@ -235,6 +245,7 @@ export function initCommandPalette() {
         const row = document.createElement("button");
         row.type = "button";
         row.className = "object-search-row";
+        row.id = `command-palette-option-${index}`;
         row.dataset.index = String(index);
         row.setAttribute("role", "option");
 
@@ -265,6 +276,7 @@ export function initCommandPalette() {
   }
 
   function open() {
+    returnFocus = document.activeElement;
     overlay.hidden = false;
     input.value = "";
     renderResults();
@@ -273,6 +285,7 @@ export function initCommandPalette() {
 
   input.addEventListener("input", renderResults);
   input.addEventListener("keydown", (event) => {
+    if (isComposingKey(event)) return;
     if (event.key === "ArrowDown" || event.key === "ArrowUp") {
       event.preventDefault();
       if (!matches.length) return;
@@ -303,9 +316,10 @@ export function initCommandPalette() {
   });
   // Ctrl+K 전역 토글(캡처 단계 — Ctrl+F 패턴과 동일). Ctrl+F는 search.js가 그대로 유지.
   document.addEventListener("keydown", (event) => {
-    if (!(event.ctrlKey || event.metaKey) || event.shiftKey || event.altKey) return;
-    if (event.key.toLocaleLowerCase() !== "k") return;
-    if (isTypingTarget(event.target) && event.target !== input) return;
+    if (isComposingKey(event) || event.defaultPrevented || !modKey(event) || event.shiftKey || event.altKey) return;
+    if (shortcutKey(event) !== "k") return;
+    if (isEditingTarget(event.target) && event.target !== input) return;
+    if (overlay.hidden && document.querySelector(".modal-overlay:not([hidden])")) return;
     event.preventDefault();
     if (overlay.hidden) open();
     else input.focus();

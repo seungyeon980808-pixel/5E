@@ -6,6 +6,8 @@
 // toggles it; opening one closes the other; outside-click and Escape close
 // whichever is open.
 
+import { registerEscapeLayer } from './escape-layers.js?v=1.6.0-remediation-0929';
+
 const menus = new Map();      // name -> { btn, list, onOpen, onClose }
 let activeTopMenu = null;     // null | "file" | "settings"
 
@@ -32,11 +34,35 @@ function openMenu(name) {
 export function registerTopMenu(name, btn, list, opts = {}) {
   if (!btn || !list) return;
   menus.set(name, { btn, list, onOpen: opts.onOpen, onClose: opts.onClose });
+  registerEscapeLayer(list, () => { closeMenu(name); btn.focus(); });
 
   btn.addEventListener("click", (e) => {
     e.stopPropagation();
     if (activeTopMenu === name) closeMenu(name);
     else openMenu(name);
+  });
+
+  const items = () => [...list.querySelectorAll('[role="menuitem"]')]
+    .filter((item) => !item.disabled && !item.hidden && item.getAttribute("aria-disabled") !== "true");
+  btn.addEventListener("keydown", (e) => {
+    if (e.key !== "ArrowDown" && e.key !== "ArrowUp") return;
+    e.preventDefault();
+    e.stopPropagation();
+    openMenu(name);
+    const rows = items();
+    (e.key === "ArrowDown" ? rows[0] : rows.at(-1))?.focus();
+  });
+  list.addEventListener("keydown", (e) => {
+    if (e.key === "Tab") { closeMenu(name); return; }
+    if (!["ArrowDown", "ArrowUp", "Home", "End"].includes(e.key)) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const rows = items();
+    if (!rows.length) return;
+    const current = rows.indexOf(document.activeElement);
+    const index = e.key === "Home" ? 0 : e.key === "End" ? rows.length - 1 :
+      (current + (e.key === "ArrowDown" ? 1 : -1) + rows.length) % rows.length;
+    rows[index].focus();
   });
 
   // Any item click dismisses the menu.
@@ -50,5 +76,11 @@ document.addEventListener("click", (e) => {
   if (m && !m.list.contains(e.target) && e.target !== m.btn) closeMenu(activeTopMenu);
 });
 document.addEventListener("keydown", (e) => {
-  if (e.key === "Escape" && activeTopMenu) closeMenu(activeTopMenu);
+  if (e.key === "Escape" && activeTopMenu) {
+    e.preventDefault();
+    e.stopPropagation();
+    const trigger = menus.get(activeTopMenu).btn;
+    closeMenu(activeTopMenu);
+    trigger.focus();
+  }
 });

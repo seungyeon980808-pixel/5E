@@ -5,12 +5,14 @@
 // is automatically accounted for. Y labels are inverted (math Y: up = positive)
 // to match the inspector display.
 
-import { getRenderScale } from "./viewport.js?v=1.4.0";
+import { getRenderScale } from "./viewport.js?v=1.6.0-preview-lite-hybrid-0922";
 // Guide click-to-select over the artboard: objects always win, so the guide is
 // only picked when NO object sits under the point (pick.js is the same oracle
 // tools.js selection uses). tools.js also owns the Space-pan tracker.
-import { pickSelectableObjectAtPoint } from "./pick.js?v=1.4.0";
-import { isSpaceHeld } from "./tools.js?v=1.5.4";
+import { pickSelectableObjectAtPoint } from "./pick.js?v=1.6.0-remediation-0929";
+import { isSpaceHeld } from "./tools.js?v=1.6.0-remediation-0929";
+import { captureDocumentSnapshot, commitDocumentHistory } from "./document-history.js?v=1.6.0-preview-labeler-0917-1111";
+import { hasBlockingModal } from "./platform.js?v=1.6.0-remediation-0929";
 
 let _svg    = null;
 let _state  = null;
@@ -330,16 +332,21 @@ export function initRuler(svg, state) {
   });
 
   window.addEventListener("keydown", (e) => {
-    if (e.key !== "Delete") return;
+    if (e.isComposing) return;
+    if (e.key !== "Delete" && e.key !== "Backspace") return;
     const t = e.target;
-    if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
+    const tag = t && t.tagName;
+    if (t && (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || t.isContentEditable)) return;
+    if (hasBlockingModal()) return;
     const selectedGuideId = state.get().selectedGuideId;
-    if (!selectedGuideId) return;
+    if (!selectedGuideId || !(state.get().guides || []).some((guide) => guide.id === selectedGuideId)) return;
     e.preventDefault();
     e.stopImmediatePropagation();
     state.update((s) => {
+      const snapshot = captureDocumentSnapshot(s);
       s.guides = s.guides.filter((guide) => guide.id !== selectedGuideId);
       s.selectedGuideId = null;
+      commitDocumentHistory(s, snapshot);
     });
   }, true);
 
