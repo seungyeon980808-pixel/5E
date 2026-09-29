@@ -1,7 +1,7 @@
 const release = Object.freeze({
   modifiedAt: '2026.09.29',
-  sourceCommit: '3403a42e416fe671726acc8f59230efa04610683',
-  changes: '서버 모델 목록 연동 / 중복 오류 정리 / 필터 구분선 / GPT 표시',
+  sourceCommit: 'e310624a636e79c0aa4cbcbcff458f0d400b7665',
+  changes: '저장 실패 입력 보존 / 복구 창 Esc 보류 / 크롭 메모리 / 키보드 크롭 / 확대 허용 / GPT 배지 / 데스크톱 보안 / 서버 로그인 제한',
 });
 
 const panel = document.querySelector('#ai-image-panel .modal-ai');
