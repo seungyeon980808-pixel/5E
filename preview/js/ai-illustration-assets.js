@@ -16,7 +16,7 @@ import {
   FAST_SCENE_SCHEMA_ID,
   auditDiagramObjects,
   compileFastScene,
-} from "./ai-scene-fastpath.js?v=1.6.0-remediation-0929";
+} from "./ai-scene-fastpath.js?v=1.7.0-preview-0930";
 
 export const ILLUSTRATION_ASSET_CATALOG_VERSION = "5e-strict-illustration-assets@1";
 

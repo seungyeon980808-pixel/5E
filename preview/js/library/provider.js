@@ -1,10 +1,10 @@
-import { cropPrebuiltPreview } from "./prebuilt-preview-crop.js?v=1.6.0-preview-labeler-0917-1111";
-import { providedPagePreviews } from "../../assets/pdf-library/previews/manifest.js?v=1.6.0-preview-labeler-0917-1111";
-import { deriveExamMetadata, examMetadataMatches, isRecognizedExamSourceName, parseCompactExamCode } from "./exam-code.js?v=1.6.0-remediation-0929";
-import { createHierarchicalSourceNodes, normalizeSourceCategory } from "./source-tree.js?v=1.6.0-preview-labeler-0917-1111";
-import { createCropSource } from "../pdf-library/contract.js?v=1.6.0-preview-labeler-0917-1111";
-import { isAnswerChoiceBoxCandidate, textBeforeFooter, trimImageCandidateAtExternalCaption, trimQuestionRectAtFooter } from "../pdf-library/page-geometry.js?v=1.6.0-preview-labeler-0917-1111";
-import { mapQueryHighlights, queryHighlightTerms } from "../pdf-library/search.js?v=1.6.0-remediation-0929";
+import { cropPrebuiltPreview } from "./prebuilt-preview-crop.js?v=1.7.0-preview-0930";
+import { providedPagePreviews } from "../../assets/pdf-library/previews/manifest.js?v=1.7.0-preview-0930";
+import { deriveExamMetadata, examMetadataMatches, isRecognizedExamSourceName, parseCompactExamCode } from "./exam-code.js?v=1.7.0-preview-0930";
+import { createHierarchicalSourceNodes, normalizeSourceCategory } from "./source-tree.js?v=1.7.0-preview-0930";
+import { createCropSource } from "../pdf-library/contract.js?v=1.7.0-preview-0930";
+import { isAnswerChoiceBoxCandidate, textBeforeFooter, trimImageCandidateAtExternalCaption, trimQuestionRectAtFooter } from "../pdf-library/page-geometry.js?v=1.7.0-preview-0930";
+import { mapQueryHighlights, queryHighlightTerms } from "../pdf-library/search.js?v=1.7.0-preview-0930";
 
 const PREBUILT_PREVIEW_REVISION = "cropbox-v2";
 

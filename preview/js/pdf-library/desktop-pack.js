@@ -1,4 +1,4 @@
-import { loadRemotePack } from "./remote-pack.js?v=1.6.0-preview-labeler-0917-1111";
+import { loadRemotePack } from "./remote-pack.js?v=1.7.0-preview-0930";
 
 const BUNDLED_BASE_URL = "https://bundled-pdf-pack.5e.invalid/recent-three/";
 

@@ -9,12 +9,12 @@
  */
 
 import { rotPt, singleObjBBox, curveSamplePoints, pendulumGeometry, springGeometry, pulleyAnchors,
-         standingWaveGeometry } from "./render.js?v=1.6.0-remediation-0929";
+         standingWaveGeometry } from "./render.js?v=1.7.0-preview-0930";
 import {
   SHAPE_TYPES,
   SNAP_EDGE_TARGET_TYPES as EDGE_TARGET_TYPES,
   SNAP_LINE_LIKE_TYPES as LINE_LIKE_TYPES,
-} from "./object-types.js?v=1.6.0-preview-labeler-0917-1111";
+} from "./object-types.js?v=1.7.0-preview-0930";
 
 const ATTACH_PX = 40;
 const PREVIEW_PX = 80;

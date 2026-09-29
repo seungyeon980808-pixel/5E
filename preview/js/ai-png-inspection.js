@@ -1,4 +1,4 @@
-import { decodeScopedPng } from './ai-scoped-edit-png.js?v=1.6.0-remediation-0929';
+import { decodeScopedPng } from './ai-scoped-edit-png.js?v=1.7.0-preview-0930';
 /** Non-mutating pixel diagnostics. These numbers are NOT semantic/KICE scores. */
 export const PNG_INSPECTION_VERSION = "1.0.0";
 

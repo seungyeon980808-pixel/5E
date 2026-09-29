@@ -18,7 +18,7 @@
  * 않는다 — 기출도 그래서 그림자를 같이 그린다.
  */
 
-import { SVG_NS, grayHex } from "./core.js?v=1.6.0-remediation-0929";
+import { SVG_NS, grayHex } from "./core.js?v=1.7.0-preview-0930";
 
 export const DEFAULT_APEX_MM = 14;
 const SAMPLES = 48;

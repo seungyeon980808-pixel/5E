@@ -18,13 +18,13 @@
 // Both formats share buildExportSvg(); the dialog (export-dialog.js) decides
 // filename, format, and resolution and calls exportSvg() / exportPng().
 
-import { renderObject, makeFillPattern } from "./render.js?v=1.6.0-remediation-0929";
-import { getLineDecorationBounds } from "./render/shapes.js?v=1.6.0-remediation-0929";
+import { renderObject, makeFillPattern } from "./render.js?v=1.7.0-preview-0930";
+import { getLineDecorationBounds } from "./render/shapes.js?v=1.7.0-preview-0930";
 import {
   FS_DIR_SUPPORTED, loadSavedDir, ensureDirPermission, writeToDir,
-} from "./export-dir.js?v=1.6.0-remediation-0929";
-import { getObjectBBox } from "./pick.js?v=1.6.0-remediation-0929";
-import { zOrderObjects } from "./object-types.js?v=1.6.0-preview-labeler-0917-1111";
+} from "./export-dir.js?v=1.7.0-preview-0930";
+import { getObjectBBox } from "./pick.js?v=1.7.0-preview-0930";
+import { zOrderObjects } from "./object-types.js?v=1.7.0-preview-0930";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const MM_PER_INCH = 25.4;

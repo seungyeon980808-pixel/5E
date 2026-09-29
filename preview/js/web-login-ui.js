@@ -1,4 +1,4 @@
-import { DESKTOP_RELEASE_URL } from './ai-install-guide.js?v=1.6.0-remediation-0929';
+import { DESKTOP_RELEASE_URL } from './ai-install-guide.js?v=1.7.0-preview-0930';
 
 export function initWebLoginUi({ openAi }) {
   if (!window.fiveEWebAI) return null;

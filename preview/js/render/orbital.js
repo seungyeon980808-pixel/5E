@@ -25,8 +25,8 @@
  *   기본 크기: box 46 × 22 · shape 30 × 30 mm
  */
 
-import { SVG_NS, grayHex, applyDash, makeArrowHead } from "./core.js?v=1.6.0-remediation-0929";
-import { renderGraphLabel } from "./graph-label.js?v=1.6.0-remediation-0929";
+import { SVG_NS, grayHex, applyDash, makeArrowHead } from "./core.js?v=1.7.0-preview-0930";
+import { renderGraphLabel } from "./graph-label.js?v=1.7.0-preview-0930";
 
 export const ORBITAL_KINDS = ["box", "shape"];
 export const ORBITAL_SHAPES = ["s", "pz", "px", "py"];

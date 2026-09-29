@@ -25,13 +25,13 @@
 import {
   state, DEFAULT_TEXT_SIZE_MM, DEFAULT_TEXT_FONT,
   EQUATION_FONT_FAMILY, OBJECT_LABEL_TEXT_FONT_FAMILY,
-} from "./state.js?v=1.6.0-remediation-0929";
-import { makeLine, makePolyline, setActiveTool, DEFAULT_STROKE_WIDTH, getActiveSymbolId } from "./tools.js?v=1.6.0-remediation-0929";
-import { TEMPLATES } from "./templates.js?v=1.6.0-remediation-0929";
-import { NODE_DEFAULT_SIZE } from "./tools/node-placement.js?v=1.6.0-remediation-0929";
-import { applyNewObjectStyleDefaults } from "./style-mode.js?v=1.6.0-remediation-0929";
+} from "./state.js?v=1.7.0-preview-0930";
+import { makeLine, makePolyline, setActiveTool, DEFAULT_STROKE_WIDTH, getActiveSymbolId } from "./tools.js?v=1.7.0-preview-0930";
+import { TEMPLATES } from "./templates.js?v=1.7.0-preview-0930";
+import { NODE_DEFAULT_SIZE } from "./tools/node-placement.js?v=1.7.0-preview-0930";
+import { applyNewObjectStyleDefaults } from "./style-mode.js?v=1.7.0-preview-0930";
 
-import { localizeTutorialCourse } from "./tutorial-labels.js?v=1.6.0-remediation-0929";
+import { localizeTutorialCourse } from "./tutorial-labels.js?v=1.7.0-preview-0930";
 
 const objects = () => state.get().objects || [];
 

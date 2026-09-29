@@ -1,5 +1,6 @@
-import { decodeScopedPng, encodeScopedPng } from './ai-scoped-edit-png.js?v=1.6.0-remediation-0929';
-import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM } from './state.js?v=1.6.0-remediation-0929';
+import { decodeScopedPng, encodeScopedPng } from './ai-scoped-edit-png.js?v=1.7.0-preview-0930';
+import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM } from './state.js?v=1.7.0-preview-0930';
+import { createEditableImageLabelObjects } from './ai-editable-image-labels.js?v=1.7.0-preview-0930';
 
 export function effectiveAssetLabelMode(asset, labelsDisabled = false) {
   return labelsDisabled || !asset.label?.trim() || asset.labelMode === 'none' ? 'none' : asset.labelMode === 'text' ? 'text' : 'leader';
@@ -117,7 +118,7 @@ export function createUngroupedSplitOutputs(prepared, { idFactory = () => crypto
   });
 }
 
-export function insertEditableAssets(state, prepared, { isCurrent, aiTaskId, aiCandidateId, groupMode = 'independent' } = {}) {
+export function insertEditableAssets(state, prepared, { isCurrent, aiTaskId, aiCandidateId, groupMode = 'independent', editableLabelPlan = null } = {}) {
   if (typeof isCurrent !== 'function') throw new TypeError('삽입 대상 확인 함수가 필요합니다.');
   if (!prepared?.assets?.length || prepared.assets.length > 256 || !Number.isFinite(prepared.width) || prepared.width <= 0 || !Number.isFinite(prepared.height) || prepared.height <= 0) throw new TypeError('준비한 이미지 영역이 없습니다.');
   if ((aiTaskId != null || aiCandidateId != null) && ![aiTaskId, aiCandidateId].every(v => typeof v === 'string' && v.trim())) throw new TypeError('이미지 작업·버전 정보를 확인할 수 없습니다.');
@@ -153,6 +154,17 @@ export function insertEditableAssets(state, prepared, { isCurrent, aiTaskId, aiC
       memberIds.push(id);
     }
     if (sharedGroupId) sharedMemberIds.push(...memberIds);
+  }
+  if (editableLabelPlan?.labels?.length) {
+    const parentImage = objects.find(object => object.type === 'image');
+    let labelSerial = 0;
+    objects.push(...createEditableImageLabelObjects({
+      labels: editableLabelPlan.labels,
+      image: { id: parentImage.id, x: -prepared.width * scale / 2, y: -prepared.height * scale / 2,
+        w: prepared.width * scale, h: prepared.height * scale, rotation: 0 },
+      metadata: { aiTaskId, aiCandidateId },
+      idFactory: () => `obj_editable_${stamp}_auto_label_${++labelSerial}`,
+    }));
   }
   if (sharedGroupId) groups.push({ id: sharedGroupId, memberIds: sharedMemberIds });
   state.update(draft => {

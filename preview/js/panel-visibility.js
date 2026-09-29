@@ -1,4 +1,4 @@
-import { createPanelMotion, cycleFocusIndex } from './panel-motion.js?v=1.6.0-preview-panel-lock-0921';
+import { createPanelMotion, cycleFocusIndex } from './panel-motion.js?v=1.7.0-preview-0930';
 
 const narrow = window.matchMedia('(max-width: 767px)');
 const fixedLite = () => document.documentElement.dataset.mode === 'lite';

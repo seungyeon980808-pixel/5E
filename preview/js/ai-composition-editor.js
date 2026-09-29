@@ -1,5 +1,5 @@
-import {normalizeReferenceComposition} from "./ai-source-tasking.js?v=1.6.0-remediation-0929";
-import {planReferenceLayout} from "./ai-reference-composite.js?v=1.6.0-remediation-0929";
+import {normalizeReferenceComposition} from "./ai-source-tasking.js?v=1.7.0-preview-0930";
+import {planReferenceLayout} from "./ai-reference-composite.js?v=1.7.0-preview-0930";
 
 function imageFor(source) {
   return new Promise((resolve, reject) => {

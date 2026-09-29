@@ -3,7 +3,7 @@
  * split). Builds the section DOM and wires its events; mounting into the
  * inspector panel happens in js/inspector.js (the orchestrator). */
 
-import { makeSection } from "./widgets.js?v=1.6.0-preview-labeler-0917-1111";
+import { makeSection } from "./widgets.js?v=1.7.0-preview-0930";
 
 export function buildPendulumSection(ctx) {
   const { state } = ctx;

@@ -1,4 +1,4 @@
-import { previewStorage as localStorage } from '../preview-storage.js?v=1.6.0-remediation-0929';
+import { previewStorage as localStorage } from '../preview-storage.js?v=1.7.0-preview-0930';
 const STORAGE_KEY = "5e-pdf-crop-overrides-v1";
 const MAX_OVERRIDES = 1000;
 

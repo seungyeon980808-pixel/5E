@@ -2,8 +2,8 @@
  * 단진자 섹션과 같은 구조. 감은 수·반지름·끝단 길이·모양을 그 자리에서 고친다.
  * (요구: "도르래의 반지름, 감은수 등을 입력 가능한 객체로 — 단진자와 비슷한 느낌") */
 
-import { makeSection } from "./widgets.js?v=1.6.0-preview-labeler-0917-1111";
-import { SPRING_DEFAULTS } from "../render/spring.js?v=1.6.0-remediation-0929";
+import { makeSection } from "./widgets.js?v=1.7.0-preview-0930";
+import { SPRING_DEFAULTS } from "../render/spring.js?v=1.7.0-preview-0930";
 
 export function buildSpringSection(ctx) {
   const { state } = ctx;

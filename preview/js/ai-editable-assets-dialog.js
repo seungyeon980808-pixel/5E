@@ -1,9 +1,9 @@
-import { prepareEditableAssets, effectiveAssetLabelMode } from './ai-editable-assets.js?v=1.6.0-remediation-0929';
-import { refinePreparedAssets } from './ai-editable-assets-refinement.js?v=1.6.0-remediation-0929';
-import { decodeScopedPng } from './ai-scoped-edit-png.js?v=1.6.0-remediation-0929';
-import { renderLabeler } from './render/annotations.js?v=1.6.0-remediation-0929';
-import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM } from './state.js?v=1.6.0-remediation-0929';
-import { SEPARATION_LIMITS_HINT } from './ai-separation-mode.js?v=1.6.0-workbench-polish-0928-final';
+import { prepareEditableAssets, effectiveAssetLabelMode } from './ai-editable-assets.js?v=1.7.0-preview-0930';
+import { refinePreparedAssets } from './ai-editable-assets-refinement.js?v=1.7.0-preview-0930';
+import { decodeScopedPng } from './ai-scoped-edit-png.js?v=1.7.0-preview-0930';
+import { renderLabeler } from './render/annotations.js?v=1.7.0-preview-0930';
+import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM } from './state.js?v=1.7.0-preview-0930';
+import { SEPARATION_LIMITS_HINT } from './ai-separation-mode.js?v=1.7.0-preview-0930';
 export { refinePreparedAssets };
 
 const NS = 'http://www.w3.org/2000/svg';

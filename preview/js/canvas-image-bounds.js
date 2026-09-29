@@ -1,4 +1,4 @@
-import { createStore } from "./store.js?v=1.6.0-preview-labeler-0917-1111";
+import { createStore } from "./store.js?v=1.7.0-preview-0930";
 
 export function constrainImageToArtboard(image, artboard) {
   if (image.type !== "image" || image.locked || !(image.w > 0 && image.h > 0)) return;

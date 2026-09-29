@@ -1,5 +1,5 @@
-import { createPointerMagnifier, svgMagnifierSample } from "./pointer-magnifier.js?v=1.6.0-remediation-0929";
-export { magnifierPosition } from "./pointer-magnifier.js?v=1.6.0-remediation-0929";
+import { createPointerMagnifier, svgMagnifierSample } from "./pointer-magnifier.js?v=1.7.0-preview-0930";
+export { magnifierPosition } from "./pointer-magnifier.js?v=1.7.0-preview-0930";
 
 export function initLabelerMagnifier(svg, state) {
   const lens = createPointerMagnifier({

@@ -7,10 +7,10 @@
 // the projection stays anchored in world space through zoom/pan (the viewBox
 // alone changes what slice of that space is shown).
 
-import { getZoom, getRenderScale } from "../viewport.js?v=1.6.0-preview-lite-hybrid-0922";
-import { SVG_NS, rotPt, catmullRomPath } from "./core.js?v=1.6.0-remediation-0929";
-import { renderText } from "./labels.js?v=1.6.0-remediation-0929";
-import { makeFillPattern } from "./fill.js?v=1.6.0-remediation-0929";
+import { getZoom, getRenderScale } from "../viewport.js?v=1.7.0-preview-0930";
+import { SVG_NS, rotPt, catmullRomPath } from "./core.js?v=1.7.0-preview-0930";
+import { renderText } from "./labels.js?v=1.7.0-preview-0930";
+import { makeFillPattern } from "./fill.js?v=1.7.0-preview-0930";
 import {
   renderRect,
   renderEllipse,
@@ -20,44 +20,44 @@ import {
   renderCurve,
   renderImage,
   renderSvgAsset,
-} from "./shapes.js?v=1.6.0-remediation-0929";
-import { renderAxes, renderAngleArc, renderRightAngle, renderLabeler } from "./annotations.js?v=1.6.0-remediation-0929";
-import { renderCoordplane, renderFuncgraph } from "./coordplane.js?v=1.6.0-remediation-0929";
-import { renderCircuit } from "./circuit.js?v=1.6.0-remediation-0929";
-import { renderOptics, renderApparatus } from "./optics-apparatus.js?v=1.6.0-remediation-0929";
-import { renderPendulum, pendulumBBox } from "./pendulum.js?v=1.6.0-remediation-0929";
-import { renderSpring, springBBox } from "./spring.js?v=1.6.0-remediation-0929";
-import { renderChargeField, chargeFieldBBox, renderFieldLines, fieldLinesBBox } from "./field.js?v=1.6.0-remediation-0929";
-import { renderStandingWave, standingWaveBBox } from "./standing-wave.js?v=1.6.0-remediation-0929";
-import { renderGauge } from "./gauge.js?v=1.6.0-remediation-0929";
-import { renderSolid3d } from "./solid3d.js?v=1.6.0-remediation-0929";
-import { renderParabola, parabolaBBox } from "./parabola.js?v=1.6.0-remediation-0929";
-import { renderGroundArc, groundArcBBox } from "./groundarc.js?v=1.6.0-remediation-0929";
+} from "./shapes.js?v=1.7.0-preview-0930";
+import { renderAxes, renderAngleArc, renderRightAngle, renderLabeler } from "./annotations.js?v=1.7.0-preview-0930";
+import { renderCoordplane, renderFuncgraph } from "./coordplane.js?v=1.7.0-preview-0930";
+import { renderCircuit } from "./circuit.js?v=1.7.0-preview-0930";
+import { renderOptics, renderApparatus } from "./optics-apparatus.js?v=1.7.0-preview-0930";
+import { renderPendulum, pendulumBBox } from "./pendulum.js?v=1.7.0-preview-0930";
+import { renderSpring, springBBox } from "./spring.js?v=1.7.0-preview-0930";
+import { renderChargeField, chargeFieldBBox, renderFieldLines, fieldLinesBBox } from "./field.js?v=1.7.0-preview-0930";
+import { renderStandingWave, standingWaveBBox } from "./standing-wave.js?v=1.7.0-preview-0930";
+import { renderGauge } from "./gauge.js?v=1.7.0-preview-0930";
+import { renderSolid3d } from "./solid3d.js?v=1.7.0-preview-0930";
+import { renderParabola, parabolaBBox } from "./parabola.js?v=1.7.0-preview-0930";
+import { renderGroundArc, groundArcBBox } from "./groundarc.js?v=1.7.0-preview-0930";
 // 생명과학 부품 6종 (2026-07-31) — 규격은 docs/BIO_PARTS_SPEC.md
-import { renderBrace, braceBBox } from "./brace.js?v=1.6.0-remediation-0929";
-import { renderChromosome, chromosomeBBox } from "./chromosome.js?v=1.6.0-remediation-0929";
-import { renderBilayer, bilayerBBox } from "./bilayer.js?v=1.6.0-remediation-0929";
-import { renderNeuron, neuronBBox } from "./neuron.js?v=1.6.0-remediation-0929";
-import { renderLegend, legendBBox } from "./legend.js?v=1.6.0-remediation-0929";
-import { renderPedigree, pedigreeBBox } from "./pedigree.js?v=1.6.0-remediation-0929";
+import { renderBrace, braceBBox } from "./brace.js?v=1.7.0-preview-0930";
+import { renderChromosome, chromosomeBBox } from "./chromosome.js?v=1.7.0-preview-0930";
+import { renderBilayer, bilayerBBox } from "./bilayer.js?v=1.7.0-preview-0930";
+import { renderNeuron, neuronBBox } from "./neuron.js?v=1.7.0-preview-0930";
+import { renderLegend, legendBBox } from "./legend.js?v=1.7.0-preview-0930";
+import { renderPedigree, pedigreeBBox } from "./pedigree.js?v=1.7.0-preview-0930";
 // 화학 부품 10종 (2026-07-31) — 규격은 docs/CHEM_PARTS_SPEC.md
 // 전부 크기박스 계열이라 bbox 는 SIZE_TYPES 경로가 자동 처리한다 → 렌더 함수만 가져온다.
-import { renderVessel } from "./vessel.js?v=1.6.0-remediation-0929";
-import { renderChemModel } from "./chemmodel.js?v=1.6.0-remediation-0929";
-import { renderParticleBox } from "./particlebox.js?v=1.6.0-remediation-0929";
-import { renderOrbital } from "./orbital.js?v=1.6.0-remediation-0929";
-import { renderBondGroup } from "./bondgroup.js?v=1.6.0-remediation-0929";
-import { renderChemChart } from "./chemchart.js?v=1.6.0-remediation-0929";
-import { renderAxisBreak } from "./axisbreak.js?v=1.6.0-remediation-0929";
-import { renderChemGraph } from "./chemgraph.js?v=1.6.0-remediation-0929";
-import { renderElectrode } from "./electrode.js?v=1.6.0-remediation-0929";
-import { renderPeriodic } from "./periodic.js?v=1.6.0-remediation-0929";
-import { DEFAULT_TEXT_SIZE_MM, scaleBBoxForWidth } from "../state.js?v=1.6.0-remediation-0929";
+import { renderVessel } from "./vessel.js?v=1.7.0-preview-0930";
+import { renderChemModel } from "./chemmodel.js?v=1.7.0-preview-0930";
+import { renderParticleBox } from "./particlebox.js?v=1.7.0-preview-0930";
+import { renderOrbital } from "./orbital.js?v=1.7.0-preview-0930";
+import { renderBondGroup } from "./bondgroup.js?v=1.7.0-preview-0930";
+import { renderChemChart } from "./chemchart.js?v=1.7.0-preview-0930";
+import { renderAxisBreak } from "./axisbreak.js?v=1.7.0-preview-0930";
+import { renderChemGraph } from "./chemgraph.js?v=1.7.0-preview-0930";
+import { renderElectrode } from "./electrode.js?v=1.7.0-preview-0930";
+import { renderPeriodic } from "./periodic.js?v=1.7.0-preview-0930";
+import { DEFAULT_TEXT_SIZE_MM, scaleBBoxForWidth } from "../state.js?v=1.7.0-preview-0930";
 import { SIZE_TYPES, TEXT_MEASURED_TYPES, POINT_ARRAY_TYPES, ENDPOINT_HANDLE_TYPES,
-         zOrderObjects } from "../object-types.js?v=1.6.0-preview-labeler-0917-1111";
-import { resolveObjectStyle } from "../style-mode.js?v=1.6.0-remediation-0929";
-import { renderFormula } from "../formula.js?v=1.6.0-remediation-0929";
-import { IMAGE_EDIT_SESSION_ID } from "../image-cutout.js?v=1.6.0-preview-lite-hybrid-0922";
+         zOrderObjects } from "../object-types.js?v=1.7.0-preview-0930";
+import { resolveObjectStyle } from "../style-mode.js?v=1.7.0-preview-0930";
+import { renderFormula } from "../formula.js?v=1.7.0-preview-0930";
+import { IMAGE_EDIT_SESSION_ID } from "../image-cutout.js?v=1.7.0-preview-0930";
 import {
   SELECTION_COLOR,
   SELECTION_DASH_PX,
@@ -65,7 +65,7 @@ import {
   SELECTION_STROKE_PX,
   selectionScaleForSvg,
   selectionVisualMetrics,
-} from "../selection-visuals.js?v=1.6.0-preview-labeler-0917-1111";
+} from "../selection-visuals.js?v=1.7.0-preview-0930";
 
 function renderObjectById(state, id) {
   if (id === IMAGE_EDIT_SESSION_ID) return state.imageEditSession || null;

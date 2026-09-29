@@ -1,13 +1,13 @@
-import { readPageTextContent } from "./pdf-text-content.js?v=1.6.0-preview-labeler-0917-1111";
+import { readPageTextContent } from "./pdf-text-content.js?v=1.7.0-preview-0930";
 import {
   createCropSource,
   createDocumentRecord,
   createItemRecord,
   createPageRecord,
   createRenderResult,
-} from "./contract.js?v=1.6.0-preview-labeler-0917-1111";
-import { collectPageGraphicMarks, detectFigureCandidates as detectGraphics } from "./figure-candidates.js?v=1.6.0-preview-labeler-0917-1111";
-import { trimQuestionRectAtFooter } from "./page-geometry.js?v=1.6.0-preview-labeler-0917-1111";
+} from "./contract.js?v=1.7.0-preview-0930";
+import { collectPageGraphicMarks, detectFigureCandidates as detectGraphics } from "./figure-candidates.js?v=1.7.0-preview-0930";
+import { trimQuestionRectAtFooter } from "./page-geometry.js?v=1.7.0-preview-0930";
 
 const PDFJS_MODULE_URL = new URL("../../vendor/pdfjs/pdf.mjs", import.meta.url); const PDFJS_WORKER_URL = new URL("../../vendor/pdfjs/pdf.worker.mjs", import.meta.url);
 const DEFAULT_RENDER_PIXELS = 48_000_000; const DEFAULT_RENDER_DIMENSION = 16_384;
