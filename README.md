@@ -18,6 +18,12 @@
 <p align="center">
   <a href="https://www.5e.ai.kr/"><img src="https://img.shields.io/badge/웹에서_바로_쓰기-5e.ai.kr-18181b?style=for-the-badge" alt="웹에서 바로 쓰기"></a>
   <a href="https://github.com/seungyeon980808-pixel/5E/releases/latest"><img src="https://img.shields.io/badge/Windows-설치판_받기-18181b?style=for-the-badge&logo=windows&logoColor=white" alt="Windows 설치판"></a>
+  <a href="https://github.com/seungyeon980808-pixel/5E/releases/latest"><img src="https://img.shields.io/badge/macOS-설치판_받기-18181b?style=for-the-badge&logo=apple&logoColor=white" alt="macOS 설치판"></a>
+</p>
+
+<p align="center">
+  <img src="docs/media/readme/usage.gif" alt="5E 사용 영상: 교과서 PDF에서 크롭, AI 선화 변환, 배경 제거, 물체 분리, 라벨링" width="100%"><br>
+  <sub>16초 사용 영상 · <a href="docs/media/readme/5e-usage.mp4">고화질 MP4로 보기</a></sub>
 </p>
 
 <p align="center">
@@ -157,9 +163,12 @@
 | 운영체제 | 받는 곳 |
 |---|---|
 | Windows x64 | [릴리즈 페이지](https://github.com/seungyeon980808-pixel/5E/releases/latest)의 설치 파일 |
-| macOS | 준비 중 |
+| macOS (Apple Silicon) | [릴리즈 페이지](https://github.com/seungyeon980808-pixel/5E/releases/latest)의 `5E-1.6.0-macos-arm64.dmg` |
+| macOS (Intel) | [릴리즈 페이지](https://github.com/seungyeon980808-pixel/5E/releases/latest)의 `5E-1.6.0-macos-x64.dmg` |
 
 설치판은 내 컴퓨터의 Codex 로그인을 사용하고, 내 컴퓨터 폴더를 라이브러리에 연결할 수 있습니다.
+
+**Mac에서 처음 열 때** — DMG를 열어 5E를 응용 프로그램 폴더로 끌어 넣습니다. 처음 실행할 때 “확인되지 않은 개발자” 경고가 뜨면 Finder에서 5E를 **Control-클릭 → 열기**를 한 번 선택하세요. 이후에는 바로 열립니다.
 
 ### AI 연결
 
