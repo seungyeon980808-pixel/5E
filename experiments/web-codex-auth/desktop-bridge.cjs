@@ -51,6 +51,9 @@ class DesktopBridge {
       position: this.session.generations.queuePosition(job.jobId) || 1,
     }));
     if (job.state !== 'queued') events.push(event('item/started', { item: { id: job.jobId, type: 'imageGeneration' } }));
+    for (const [index, text] of (job.labelMessages || []).entries()) {
+      events.push(event('item/completed', { item: { id: `${job.jobId}-labels-${index}`, type: 'agentMessage', phase: 'commentary', text } }));
+    }
     if (job.state === 'completed' && job.imageDataUrl) events.push(event('item/completed', { item: { id: job.jobId, type: 'imageGeneration', imageDataUrl: job.imageDataUrl } }));
     if (['completed', 'failed', 'cancelled'].includes(job.state) && !job.launchPending && (!job.turnId || job.stopped)) events.push(event('turn/completed', { turn: { id: job.jobId, status: job.state === 'cancelled' ? 'interrupted' : job.state, ...(job.error ? { error: { message: job.error } } : {}) } }));
     return { events: events.slice(cursor), cursor: events.length };

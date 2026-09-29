@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const { EventEmitter } = require('node:events');
 const { createServer } = require('./server.cjs');
 const { Generation, validateInput } = require('./generation.cjs');
+const { DesktopBridge } = require('./desktop-bridge.cjs');
 const PNG = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/l9sAAAAASUVORK5CYII=';
 class Fake extends EventEmitter {
   constructor(directory) { super(); this.directory = directory; this.calls = []; this.signedIn = true; }
@@ -10,6 +11,28 @@ class Fake extends EventEmitter {
   async rpc(method, params) { this.calls.push({ method, params }); if (method === 'account/read') return { account: this.signedIn ? { type: 'chatgpt' } : null }; if (method === 'model/list') return { data: [{ model: 'gpt-5.6-sol', isDefault: true, defaultReasoningEffort: 'medium', supportedReasoningEfforts: [{ reasoningEffort: 'medium' }], serviceTiers: ['priority'] }] }; if (method === 'thread/start') return { thread: { id: 'thread' } }; if (method === 'turn/start') return { turn: { id: 'turn' } }; return {}; }
   close() { this.dead = true; this.emit('unavailable'); }
 }
+test('web image bridge forwards editable label commentary before the image', async () => {
+  const rt = new Fake('/tmp');
+  const gen = new Generation(rt);
+  const labelMessage = '<5e-editable-labels>{"version":1,"reviewRequired":true,"labels":[]}</5e-editable-labels>';
+  const prompt = `[5e-editable-labels version=1]\n${labelMessage}`;
+  const started = gen.start({ request: 'x' }, { text: prompt, images: [] });
+  await until(() => gen.job.turnId);
+  const bridge = new DesktopBridge({ generations: { queuePosition: () => 1 } });
+  const entry = { job: gen.job, generation: gen, scope: 'source-label-test' };
+  const before = bridge.events(entry, 0);
+  rt.emit('notification', { method: 'item/completed', params: { threadId: 'thread', turnId: 'turn', item: { type: 'agentMessage', phase: 'commentary', text: labelMessage } } });
+  await until(() => Array.isArray(gen.job.labelMessages) && gen.job.labelMessages.length === 1);
+  const received = bridge.events(entry, before.cursor);
+  assert.deepEqual(received.events.map(event => event.method), ['item/completed']);
+  assert.equal(received.events[0].params.item.text, labelMessage);
+  assert.match(rt.calls.find(call => call.method === 'thread/start').params.baseInstructions, /commentary/);
+  rt.emit('notification', { method: 'item/completed', params: { threadId: 'thread', turnId: 'turn', item: { type: 'imageGeneration', result: PNG } } });
+  await until(() => gen.snapshot(started.jobId).state === 'completed');
+  const after = bridge.events(entry, received.cursor);
+  assert.deepEqual(after.events.map(event => event.method), ['item/completed', 'turn/completed']);
+  gen.close();
+});
 async function until(predicate) { for (let i = 0; i < 100; i++) { if (predicate()) return; await new Promise(resolve => setTimeout(resolve, 5)); } assert.fail('Condition timed out'); }
 test('HTTP generation authentication, isolation, malformed request, concurrency, PNG and cancel', async t => {
   const runtimes = [];

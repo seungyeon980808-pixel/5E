@@ -81,7 +81,11 @@ class Generation {
     const { APPROVED_FIRST_PROMPT } = await import(pathToFileURL(path.resolve(__dirname, '../../js/ai-approved-first-png.js')).href);
     if (job.state !== 'running') return;
     const { model, effort, serviceTier } = prepared?.selection ?? { model: 'gpt-5.6-sol', effort: 'medium', serviceTier: 'priority' };
-    const thread = await this.runtime.rpc('thread/start', { model, serviceTier, ephemeral: true, cwd: this.runtime.directory, approvalPolicy: 'never', sandbox: 'read-only', config: { 'features.shell_tool': false, 'features.image_generation': true, web_search: 'disabled' }, baseInstructions: 'Use only the image generation tool once. Never execute commands, browse, inspect files, review, retry, or postprocess. Return the first PNG.', developerInstructions: '' });
+    const requestsEditableLabels = (prepared?.text || '').includes('[5e-editable-labels version=');
+    const baseInstructions = requestsEditableLabels
+      ? 'Before using the image generation tool, emit one commentary agent message containing the requested <5e-editable-labels> JSON plan. Then use the image generation tool exactly once. Never execute commands, browse, inspect files, review, retry, or postprocess. Return the first PNG.'
+      : 'Use only the image generation tool once. Never execute commands, browse, inspect files, review, retry, or postprocess. Return the first PNG.';
+    const thread = await this.runtime.rpc('thread/start', { model, serviceTier, ephemeral: true, cwd: this.runtime.directory, approvalPolicy: 'never', sandbox: 'read-only', config: { 'features.shell_tool': false, 'features.image_generation': true, web_search: 'disabled' }, baseInstructions, developerInstructions: '' });
     job.threadId = thread.thread?.id;
     if (!job.threadId) throw new Error('Missing thread');
     if (job.state !== 'running') return;
@@ -99,6 +103,12 @@ class Generation {
     if (turnId) job.turnId = turnId;
     if (method === 'turn/completed') job.stopped = true;
     if (job.state !== 'running') return;
+    if (method === 'item/completed' && params.item?.type === 'agentMessage'
+      && typeof params.item.text === 'string' && params.item.text.length <= 100000
+      && params.item.text.includes('<5e-editable-labels>')
+      && params.item.text.includes('</5e-editable-labels>')) {
+      (job.labelMessages ||= []).push(params.item.text);
+    }
     if (params.item?.type === 'imageGeneration') {
       if (job.imageItemId && params.item.id && params.item.id !== job.imageItemId) { await this.interrupt(job); return; }
       if (params.item.id) job.imageItemId = params.item.id;
