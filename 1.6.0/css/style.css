@@ -2671,6 +2671,11 @@ textarea.unified-text-input {
   flex: 0 0 auto;
 }
 .app-footer-main { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Release footer: left info | centred copyright | right save status, copyright fixed to the viewport centre. */
+.app-footer { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); column-gap: 16px; }
+.app-footer > .app-footer-main { grid-column: 1; justify-self: start; }
+.app-footer > .app-footer-copyright { grid-column: 2; justify-self: center; margin-inline: 0; }
+.app-footer > #project-save-status { grid-column: 3; justify-self: end; max-width: 100% !important; }
 
 @media (max-width: 1000px) {
   .app-footer-main .footer-badge { display: none; }
