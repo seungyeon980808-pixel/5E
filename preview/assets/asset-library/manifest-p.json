@@ -1122,6 +1122,316 @@
    "reference": "p1_2024_06_04",
    "referenceExam": "2024학년도 6월 모평 물리학Ⅰ 4번",
    "origin": "ai-generated"
+  },
+  {
+   "id": "p_student_seated_m",
+   "subject": "p",
+   "name": "학생(남, 앉아서 말하는)",
+   "category": "인물",
+   "keywords": [
+    "학생",
+    "남학생",
+    "토론",
+    "앉은"
+   ],
+   "file": "p/p_student_seated_m.png",
+   "thumb": "thumb/p/p_student_seated_m.png",
+   "format": "png",
+   "px": [
+    1142,
+    1239
+   ],
+   "defaultMm": [
+    22.0,
+    23.87
+   ],
+   "qa": "통과",
+   "qaNote": "원본 자세·의자 유지, 탁자·종이 제거",
+   "reference": "p2_2023_06_01",
+   "referenceExam": "2023학년도 6월 모평 물리학Ⅱ 1번",
+   "origin": "ai-generated",
+   "prompt": "the LEFT male student sitting on a chair at a round table, short-sleeved school shirt, gesturing with one open hand. Draw only the student and his chair; no table, no paper, no speech bubble."
+  },
+  {
+   "id": "p_student_bust_f",
+   "subject": "p",
+   "name": "학생(여, 상반신)",
+   "category": "인물",
+   "keywords": [
+    "학생",
+    "여학생",
+    "상반신"
+   ],
+   "file": "p/p_student_bust_f.png",
+   "thumb": "thumb/p/p_student_bust_f.png",
+   "format": "png",
+   "px": [
+    993,
+    983
+   ],
+   "defaultMm": [
+    16.0,
+    15.84
+   ],
+   "qa": "통과",
+   "qaNote": "상반신, 말풍선 제거",
+   "reference": "p1_2023_11_02",
+   "referenceExam": "2023학년도 수능 물리학Ⅰ 2번",
+   "origin": "ai-generated",
+   "prompt": "the LEFT female student shown from the chest up, school blazer with a tie, long hair. Draw only her upper body; no speech bubble, no board."
+  },
+  {
+   "id": "p_student_bust_m",
+   "subject": "p",
+   "name": "학생(남, 상반신)",
+   "category": "인물",
+   "keywords": [
+    "학생",
+    "남학생",
+    "상반신"
+   ],
+   "file": "p/p_student_bust_m.png",
+   "thumb": "thumb/p/p_student_bust_m.png",
+   "format": "png",
+   "px": [
+    985,
+    953
+   ],
+   "defaultMm": [
+    16.0,
+    15.48
+   ],
+   "qa": "통과",
+   "qaNote": "상반신, 말풍선 제거",
+   "reference": "p1_2023_11_02",
+   "referenceExam": "2023학년도 수능 물리학Ⅰ 2번",
+   "origin": "ai-generated",
+   "prompt": "the MIDDLE male student shown from the chest up, school blazer with a tie. Draw only his upper body; no speech bubble, no board."
+  },
+  {
+   "id": "p_student_backpack",
+   "subject": "p",
+   "name": "학생(백팩, 뒷모습)",
+   "category": "인물",
+   "keywords": [
+    "학생",
+    "가방",
+    "뒷모습",
+    "헤드폰"
+   ],
+   "file": "p/p_student_backpack.png",
+   "thumb": "thumb/p/p_student_backpack.png",
+   "format": "png",
+   "px": [
+    790,
+    1187
+   ],
+   "defaultMm": [
+    20.0,
+    30.05
+   ],
+   "qa": "통과",
+   "qaNote": "뒷모습·헤드폰·가방 유지, 지시선 제거",
+   "reference": "p1_2025_11_01",
+   "referenceExam": "2025학년도 수능 물리학Ⅰ 1번",
+   "origin": "ai-generated",
+   "prompt": "the girl seen from behind wearing headphones and a backpack with a toothbrush case and a flashlight in the side pocket. Draw only the girl and her backpack; no leader lines."
+  },
+  {
+   "id": "p_truck",
+   "subject": "p",
+   "name": "트럭",
+   "category": "역학 기구",
+   "keywords": [
+    "트럭",
+    "화물차",
+    "자동차"
+   ],
+   "file": "p/p_truck.png",
+   "thumb": "thumb/p/p_truck.png",
+   "format": "png",
+   "px": [
+    1166,
+    887
+   ],
+   "defaultMm": [
+    40.0,
+    30.43
+   ],
+   "qa": "통과",
+   "qaNote": "박스 트럭, 도로 제거",
+   "reference": "p1_2026_11_03",
+   "referenceExam": "2026학년도 수능 물리학Ⅰ 3번",
+   "origin": "ai-generated",
+   "prompt": "the box truck in the upper right, seen from the front-left. Draw only the truck; no road, no guard rail, no trees."
+  },
+  {
+   "id": "p_car_autonomous",
+   "subject": "p",
+   "name": "자율 주행 자동차",
+   "category": "역학 기구",
+   "keywords": [
+    "자동차",
+    "자율 주행",
+    "라이다"
+   ],
+   "file": "p/p_car_autonomous.png",
+   "thumb": "thumb/p/p_car_autonomous.png",
+   "format": "png",
+   "px": [
+    1422,
+    776
+   ],
+   "defaultMm": [
+    40.0,
+    21.83
+   ],
+   "qa": "통과",
+   "qaNote": "지붕 센서 달린 승용차",
+   "reference": "p1_2026_11_03",
+   "referenceExam": "2026학년도 수능 물리학Ⅰ 3번",
+   "origin": "ai-generated",
+   "prompt": "the passenger car with a roof sensor, seen from the front-left. Draw only the car; no road markings, no truck."
+  },
+  {
+   "id": "p_microwave",
+   "subject": "p",
+   "name": "전자레인지",
+   "category": "전기·에너지",
+   "keywords": [
+    "전자레인지",
+    "가전",
+    "전자기파"
+   ],
+   "file": "p/p_microwave.png",
+   "thumb": "thumb/p/p_microwave.png",
+   "format": "png",
+   "px": [
+    1213,
+    769
+   ],
+   "defaultMm": [
+    30.0,
+    19.02
+   ],
+   "qa": "통과",
+   "qaNote": "표시창 비움, A·B 지시선 제거",
+   "reference": "p1_2023_11_01",
+   "referenceExam": "2023학년도 수능 물리학Ⅰ 1번",
+   "origin": "ai-generated",
+   "prompt": "the microwave oven with a food dish inside and a display window. Leave the display window blank. No leader lines."
+  },
+  {
+   "id": "p_eye",
+   "subject": "p",
+   "name": "눈(관찰자)",
+   "category": "파동·광학",
+   "keywords": [
+    "눈",
+    "관찰자",
+    "굴절"
+   ],
+   "file": "p/p_eye.png",
+   "thumb": "thumb/p/p_eye.png",
+   "format": "png",
+   "px": [
+    825,
+    871
+   ],
+   "defaultMm": [
+    12.0,
+    12.67
+   ],
+   "qa": "통과",
+   "qaNote": "눈과 눈썹만",
+   "reference": "p1_2023_09_05",
+   "referenceExam": "2023학년도 9월 모평 물리학Ⅰ 5번",
+   "origin": "ai-generated",
+   "prompt": "the single eye with eyebrow, looking down to the lower left. Draw only the eye and eyebrow."
+  },
+  {
+   "id": "p_microphone",
+   "subject": "p",
+   "name": "마이크",
+   "category": "전기·에너지",
+   "keywords": [
+    "마이크",
+    "전자기 유도"
+   ],
+   "file": "p/p_microphone.png",
+   "thumb": "thumb/p/p_microphone.png",
+   "format": "png",
+   "px": [
+    395,
+    1342
+   ],
+   "defaultMm": [
+    8.0,
+    27.18
+   ],
+   "qa": "통과",
+   "qaNote": "확대 원 제거",
+   "reference": "p1_2023_06_01",
+   "referenceExam": "2023학년도 6월 모평 물리학Ⅰ 1번",
+   "origin": "ai-generated",
+   "prompt": "the handheld microphone only (the small object at the far left). Do not draw the dashed zoom circle or its contents."
+  },
+  {
+   "id": "p_toothbrush_charger",
+   "subject": "p",
+   "name": "무선 충전 칫솔",
+   "category": "전기·에너지",
+   "keywords": [
+    "칫솔",
+    "무선 충전",
+    "전자기 유도"
+   ],
+   "file": "p/p_toothbrush_charger.png",
+   "thumb": "thumb/p/p_toothbrush_charger.png",
+   "format": "png",
+   "px": [
+    445,
+    1436
+   ],
+   "defaultMm": [
+    10.0,
+    32.27
+   ],
+   "qa": "통과",
+   "qaNote": "충전 받침 칫솔, 확대 원 제거",
+   "reference": "p1_2023_06_01",
+   "referenceExam": "2023학년도 6월 모평 물리학Ⅰ 1번",
+   "origin": "ai-generated",
+   "prompt": "the electric toothbrush standing on its charger base. Do not draw the dashed zoom circle or its contents."
+  },
+  {
+   "id": "p_transformer",
+   "subject": "p",
+   "name": "변압기(철심·코일)",
+   "category": "전기·에너지",
+   "keywords": [
+    "변압기",
+    "철심",
+    "코일",
+    "전자기 유도"
+   ],
+   "file": "p/p_transformer.png",
+   "thumb": "thumb/p/p_transformer.png",
+   "format": "png",
+   "px": [
+    1084,
+    1147
+   ],
+   "defaultMm": [
+    35.0,
+    37.03
+   ],
+   "qa": "통과",
+   "qaNote": "철심·코일, 도선·전원 제거",
+   "reference": "p2_2024_06_08",
+   "referenceExam": "2024학년도 6월 모평 물리학Ⅱ 8번",
+   "origin": "ai-generated",
+   "prompt": "the rectangular gray iron core drawn in oblique 3D with a coil wound on the left leg and another coil on the right leg. Do not draw wires, the AC source or the resistor."
   }
  ]
 }
