@@ -9,8 +9,8 @@
  *   저장 파일이 라이브러리 폴더 없이도 열린다.
  * · manifest는 섹션을 처음 펼칠 때 1회만 불러온다(앱 시작 비용 0). */
 
-import { insertImageFromSrc } from "./image-paste.js?v=1.6.0-remediation-0929";
-import { showAlert } from "./ui-dialogs.js?v=1.6.0-remediation-0929";
+import { insertImageFromSrc } from "./image-paste.js?v=1.7.0-preview-0930";
+import { showAlert } from "./ui-dialogs.js?v=1.7.0-preview-0930";
 
 const LIB_BASE = "assets/asset-library/";
 const SUBJECTS = [["p", "물리"], ["c", "화학"], ["b", "생명"], ["e", "지구"]];

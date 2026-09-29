@@ -5,7 +5,7 @@ const test = require("node:test");
 
 const ROOT = path.resolve(__dirname, "..");
 const JS_ROOT = path.join(ROOT, "preview", "js");
-const CACHE_ID = "1.6.0-remediation-0929";
+const CACHE_ID = "1.7.0-preview-0930";
 const GUARDED_MODULES = new Set([
   "render.js",
   "render/annotations.js",

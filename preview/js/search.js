@@ -1,5 +1,5 @@
-import { registerEscapeLayer } from "./escape-layers.js?v=1.6.0-remediation-0929";
-import { modKey, shortcutKey, isComposingKey } from "./platform.js?v=1.6.0-remediation-0929";
+import { registerEscapeLayer } from "./escape-layers.js?v=1.7.0-preview-0930";
+import { modKey, shortcutKey, isComposingKey } from "./platform.js?v=1.7.0-preview-0930";
 
 /* ===== OBJECT SEARCH (registry filtering + modal interaction only) ===== */
 
@@ -8,8 +8,8 @@ import {
   activateTemplate,
   buildSymbolIcon,
   sizeIconViewBox,
-} from "./templates.js?v=1.6.0-remediation-0929";
-import { listPersonalItems, insertPersonalItem } from "./personal-objects.js?v=1.6.0-remediation-0929";
+} from "./templates.js?v=1.7.0-preview-0930";
+import { listPersonalItems, insertPersonalItem } from "./personal-objects.js?v=1.7.0-preview-0930";
 
 const CATEGORY_ORDER = ["공통", "광학", "회로", "역학"];
 

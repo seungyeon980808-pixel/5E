@@ -16,12 +16,12 @@ import {
   applyGlyphHalo,
   DIM_HALO_RATIO,
   LABEL_INK,
-} from "./core.js?v=1.6.0-remediation-0929";
-import { estimateLabelBlock, withBoxLabel, withLineLabel } from "./labels.js?v=1.6.0-remediation-0929";
-import { resolveFill } from "./fill.js?v=1.6.0-remediation-0929";
-import { getSvgAsset } from "../svg-assets.js?v=1.6.0-preview-labeler-0917-1111";
-import { normalizeSrcRect } from "../cut-geometry.js?v=1.6.0-preview-labeler-0917-1111";
-import { DEFAULT_TEXT_SIZE_MM } from "../state.js?v=1.6.0-remediation-0929";
+} from "./core.js?v=1.7.0-preview-0930";
+import { estimateLabelBlock, withBoxLabel, withLineLabel } from "./labels.js?v=1.7.0-preview-0930";
+import { resolveFill } from "./fill.js?v=1.7.0-preview-0930";
+import { getSvgAsset } from "../svg-assets.js?v=1.7.0-preview-0930";
+import { normalizeSrcRect } from "../cut-geometry.js?v=1.7.0-preview-0930";
+import { DEFAULT_TEXT_SIZE_MM } from "../state.js?v=1.7.0-preview-0930";
 
 // 직선/폴리라인 끝 화살표(요구): 원래 makeArrowHead 기본값(4.5/1.8/0.3)보다 더 크고, 아래쪽
 // (홈) 각도가 더 넓게. 위쪽(끝) 각도는 lenMul:widthMul 비율(0.4)을 그대로 유지해 그대로 둔다.

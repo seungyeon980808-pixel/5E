@@ -15,12 +15,12 @@ import {
   MAP_ASSET_DATA_VERSION,
   MAP_ASSET_SOURCE,
   MAP_ASSET_VARIANTS,
-} from "./ai-map-assets-data.js?v=1.6.0-preview-labeler-0917-1111";
+} from "./ai-map-assets-data.js?v=1.7.0-preview-0930";
 import {
   FAST_SCENE_SCHEMA_ID,
   auditDiagramObjects,
   compileFastScene,
-} from "./ai-scene-fastpath.js?v=1.6.0-remediation-0929";
+} from "./ai-scene-fastpath.js?v=1.7.0-preview-0930";
 
 export const VERIFIED_MAP_RUNTIME_VERSION = "5e-verified-map-runtime@1";
 export const VERIFIED_MAP_VARIANT_IDS = Object.freeze([

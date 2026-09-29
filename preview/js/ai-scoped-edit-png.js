@@ -1,5 +1,5 @@
 /** Strict browser PNG v1 adapter for byte-exact RGBA scoped edits. */
-import { compositeRgbaWithinMask, deriveRgbaChangeMask, isRgbaOutsideMaskUnchanged, validateRgbaImage, validateBinaryMask } from './ai-scoped-edit.js?v=1.6.0-preview-labeler-0917-1111';
+import { compositeRgbaWithinMask, deriveRgbaChangeMask, isRgbaOutsideMaskUnchanged, validateRgbaImage, validateBinaryMask } from './ai-scoped-edit.js?v=1.7.0-preview-0930';
 
 const SIGNATURE = Uint8Array.of(137,80,78,71,13,10,26,10);
 const MAX_PNG_BYTES = 64 * 1024 * 1024;

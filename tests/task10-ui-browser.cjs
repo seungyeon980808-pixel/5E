@@ -60,7 +60,7 @@ async function resetDatabases(page) {
 
 async function setProject(page, project) {
   await page.evaluate(async payload => {
-    const { state } = await import('./js/state.js?v=1.6.0-preview-labeler-0917-1111');
+    const { state } = await import('./js/state.js?v=1.7.0-preview-0930');
     const active = payload.pages.find(candidate => candidate.id === payload.activePageId);
     state.update(current => {
       current.pages = structuredClone(payload.pages);
@@ -80,8 +80,8 @@ async function setProject(page, project) {
 
 async function projectSnapshot(page) {
   return page.evaluate(async () => {
-    const { state } = await import('./js/state.js?v=1.6.0-preview-labeler-0917-1111');
-    const { serialize } = await import('./js/project-io.js?v=1.6.0-preview-lite-hybrid-0922');
+    const { state } = await import('./js/state.js?v=1.7.0-preview-0930');
+    const { serialize } = await import('./js/project-io.js?v=1.7.0-preview-0930');
     const data = serialize(state.get());
     return { pages: data.pages, activePageId: data.activePageId };
   });
@@ -191,7 +191,7 @@ async function run() {
     for (let save = 1; save <= 9; save += 1) {
       await page.evaluate(value => {
         window.dispatchEvent(new Event('keydown'));
-        return import('./js/state.js?v=1.6.0-preview-labeler-0917-1111').then(({ state }) => {
+        return import('./js/state.js?v=1.7.0-preview-0930').then(({ state }) => {
           state.update(current => { current.objects[0].p1.x = value; });
           window.dispatchEvent(new Event('pagehide'));
         });

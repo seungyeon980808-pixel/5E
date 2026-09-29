@@ -1,6 +1,6 @@
-import { planImageReferences } from "./ai-reference-roles.js?v=1.6.0-remediation-0929";
+import { planImageReferences } from "./ai-reference-roles.js?v=1.7.0-preview-0930";
 
-import { resolveAIModelSelection } from "./ai-model-capabilities.js?v=1.6.0-server-fixes-0929";
+import { resolveAIModelSelection } from "./ai-model-capabilities.js?v=1.7.0-preview-0930";
 
 export const AI_IMAGE_REVIEW_VERSION = "1.6.0";
 export const AI_IMAGE_MAX_GENERATIONS = 2;

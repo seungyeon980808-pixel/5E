@@ -6,7 +6,7 @@
 // toggles it; opening one closes the other; outside-click and Escape close
 // whichever is open.
 
-import { registerEscapeLayer } from './escape-layers.js?v=1.6.0-remediation-0929';
+import { registerEscapeLayer } from './escape-layers.js?v=1.7.0-preview-0930';
 
 const menus = new Map();      // name -> { btn, list, onOpen, onClose }
 let activeTopMenu = null;     // null | "file" | "settings"

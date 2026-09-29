@@ -1,37 +1,37 @@
 {
   "schemaVersion": 3,
   "candidate": {
-    "version": "1.6.0",
+    "version": "1.7.0",
     "desktopEntry": "preview/index.html",
-    "sourceBranch": "codex/release-160-remediation",
-    "tag": "v1.6.0",
+    "sourceBranch": "codex/1.7.0-development",
+    "tag": "v1.7.0",
     "status": "HOLD"
   },
   "channels": {
     "stableWeb": {
-      "version": "1.5.3",
+      "version": "1.6.0",
       "url": "https://www.5e.ai.kr/",
       "entry": "index.html",
       "pagesSourceBranch": "codex/preview-1.6.0",
-      "pagesSourceSha": "09f94d830a7cec15632aa5286f6cffbe58e5f39f"
+      "pagesSourceSha": "bf2d70942e115cb187d257c4bb0536ea33c00e7e"
     },
     "previewWeb": {
-      "version": "1.6.0",
+      "version": "1.7.0",
       "label": "Preview",
       "url": "https://www.5e.ai.kr/preview/",
       "entry": "preview/index.html",
       "pagesSourceBranch": "codex/preview-1.6.0",
-      "pagesSourceSha": "09f94d830a7cec15632aa5286f6cffbe58e5f39f"
+      "pagesSourceSha": "bf2d70942e115cb187d257c4bb0536ea33c00e7e"
     },
     "desktop": {
-      "version": "1.6.0",
+      "version": "1.7.0",
       "entry": "preview/index.html",
       "artifacts": [
-        "5E-1.6.0-windows-x64.exe",
-        "5E-1.6.0-macos-x64.dmg",
-        "5E-1.6.0-macos-arm64.dmg",
-        "5E-1.6.0-macos-x64.zip",
-        "5E-1.6.0-macos-arm64.zip"
+        "5E-1.7.0-windows-x64.exe",
+        "5E-1.7.0-macos-x64.dmg",
+        "5E-1.7.0-macos-arm64.dmg",
+        "5E-1.7.0-macos-x64.zip",
+        "5E-1.7.0-macos-arm64.zip"
       ]
     },
     "latestPublishedDesktop": {

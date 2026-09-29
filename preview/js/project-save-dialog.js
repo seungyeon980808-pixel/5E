@@ -1,4 +1,4 @@
-import { showPrompt } from './ui-dialogs.js?v=1.6.0-remediation-0929';
+import { showPrompt } from './ui-dialogs.js?v=1.7.0-preview-0930';
 
 export function projectFilename(value) {
   const name = String(value || '').trim().replace(/[<>:"/\\|?*\x00-\x1f]/g, '_').replace(/(?:\.(?:5e|json))+$/i, '').replace(/[. ]+$/, '');

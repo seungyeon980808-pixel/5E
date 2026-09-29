@@ -9,12 +9,12 @@ import {
   makeArrowHead,
   fillTextWithRomanRuns,
   applyObjectLabelFont,
-} from "./core.js?v=1.6.0-remediation-0929";
+} from "./core.js?v=1.7.0-preview-0930";
 import {
   CIRCUIT_BODY_MM, DEFAULT_TEXT_SIZE_MM,
   OBJECT_LABEL_QUANTITY_FONT_FAMILY, EQUATION_FONT_STYLE,
-} from "../state.js?v=1.6.0-remediation-0929";
-import { measureFormula, renderFormula } from "../formula.js?v=1.6.0-remediation-0929";
+} from "../state.js?v=1.7.0-preview-0930";
+import { measureFormula, renderFormula } from "../formula.js?v=1.7.0-preview-0930";
 
 /* ===== CIRCUIT: branch-B atomic symbol (two terminals p1/p2, like a line) =====
  *

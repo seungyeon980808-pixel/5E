@@ -1,6 +1,6 @@
-import { decodeScopedPng, encodeScopedPng } from './ai-scoped-edit-png.js?v=1.6.0-remediation-0929';
-import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM } from './state.js?v=1.6.0-remediation-0929';
-import { createEditableImageLabelObjects } from './ai-editable-image-labels.js?v=1.6.0-preview-source-labels-0927';
+import { decodeScopedPng, encodeScopedPng } from './ai-scoped-edit-png.js?v=1.7.0-preview-0930';
+import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM } from './state.js?v=1.7.0-preview-0930';
+import { createEditableImageLabelObjects } from './ai-editable-image-labels.js?v=1.7.0-preview-0930';
 
 export function effectiveAssetLabelMode(asset, labelsDisabled = false) {
   return labelsDisabled || !asset.label?.trim() || asset.labelMode === 'none' ? 'none' : asset.labelMode === 'text' ? 'text' : 'leader';

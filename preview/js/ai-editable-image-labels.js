@@ -1,4 +1,4 @@
-import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM } from './state.js?v=1.6.0-remediation-0929';
+import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM } from './state.js?v=1.7.0-preview-0930';
 
 export const EDITABLE_IMAGE_LABEL_PLAN_VERSION = 1;
 export const EDITABLE_IMAGE_LABEL_TAG = '5e-editable-labels';

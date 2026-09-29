@@ -5,7 +5,7 @@ const base = process.env.PREVIEW_URL || 'http://127.0.0.1:8798/preview/';
 const evidence = process.env.EVIDENCE_DIR || '/private/tmp/5e-mode-qa';
 fs.mkdirSync(evidence, { recursive: true });
 const stateSnapshot = page => page.evaluate(async () => {
-  const { state } = await import('./js/state.js?v=1.6.0-preview-labeler-0917-1111');
+  const { state } = await import('./js/state.js?v=1.7.0-preview-0930');
   const s = state.get();
   return JSON.parse(JSON.stringify({ objects: s.objects, pages: s.pages, undo: s.undoStack, redo: s.redoStack }));
 });
@@ -96,7 +96,7 @@ async function confirm(page, name) {
       assert.equal(await page.locator('html').evaluate(el => el.classList.contains('mode-transition')), false);
       // Object-free document setup must also survive the new-work checkpoint.
       await page.evaluate(async () => {
-        const { state } = await import('./js/state.js?v=1.6.0-preview-labeler-0917-1111');
+        const { state } = await import('./js/state.js?v=1.7.0-preview-0930');
         state.update(s => { s.artboard = { w: 120, h: 80 }; });
       });
       await confirm(page, '새 작업으로 전환');
@@ -104,7 +104,7 @@ async function confirm(page, name) {
       await page.getByRole('button', { name: '선택한 작업 복구', exact: true }).click();
       await page.waitForTimeout(1000);
       assert.deepEqual(await page.evaluate(async () => {
-        const { state } = await import('./js/state.js?v=1.6.0-preview-labeler-0917-1111');
+        const { state } = await import('./js/state.js?v=1.7.0-preview-0930');
         return state.get().artboard;
       }), { w: 120, h: 80 });
       await confirm(page, '유지하고 전환');

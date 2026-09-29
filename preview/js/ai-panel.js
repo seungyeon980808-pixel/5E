@@ -1,13 +1,13 @@
-import { mountAiErrorLog, safeAiErrorText } from './ai-error-log.js?v=1.6.0-server-fixes-0929';
-import { mountRevisionComparison } from './ai-comparison.js?v=1.6.0-ai-latest-fixes-0928';
-import { attachCropMagnifier } from './tools/pointer-magnifier.js?v=1.6.0-remediation-0929';
-import { readAIModelCatalog, resolveAIModelSelection, defaultAIModelSelection } from './ai-model-capabilities.js?v=1.6.0-server-fixes-0929';
-import { transitionSeparationMode, SEPARATION_BACKGROUND_HINT, SEPARATION_LIMITS_HINT } from './ai-separation-mode.js?v=1.6.0-workbench-polish-0928-final';
-import { createWorkbenchRequestState } from './ai-workbench-request-state.js?v=1.6.0-workbench-polish-0928-final';
-import { openAiCompositionEditor } from './ai-composition-editor.js?v=1.6.0-remediation-0929';
+import { mountAiErrorLog, safeAiErrorText } from './ai-error-log.js?v=1.7.0-preview-0930';
+import { mountRevisionComparison } from './ai-comparison.js?v=1.7.0-preview-0930';
+import { attachCropMagnifier } from './tools/pointer-magnifier.js?v=1.7.0-preview-0930';
+import { readAIModelCatalog, resolveAIModelSelection, defaultAIModelSelection } from './ai-model-capabilities.js?v=1.7.0-preview-0930';
+import { transitionSeparationMode, SEPARATION_BACKGROUND_HINT, SEPARATION_LIMITS_HINT } from './ai-separation-mode.js?v=1.7.0-preview-0930';
+import { createWorkbenchRequestState } from './ai-workbench-request-state.js?v=1.7.0-preview-0930';
+import { openAiCompositionEditor } from './ai-composition-editor.js?v=1.7.0-preview-0930';
 import { restrictSharedWorkspace } from './ai-sharing-access.js';
-import { registerEscapeLayer } from './escape-layers.js?v=1.6.0-remediation-0929';
-import { clearTaskWorkspaces, createTaskPersistence, createTaskWorkspaces, recoverTaskWorkspaceSnapshot } from './ai-task-workspaces.js?v=1.6.0-remediation-0929';
+import { registerEscapeLayer } from './escape-layers.js?v=1.7.0-preview-0930';
+import { clearTaskWorkspaces, createTaskPersistence, createTaskWorkspaces, recoverTaskWorkspaceSnapshot } from './ai-task-workspaces.js?v=1.7.0-preview-0930';
 import {
   advanceGenerationTiming,
   restoreGenerationTiming,
@@ -15,96 +15,96 @@ import {
   serializeGenerationTiming,
   startGenerationTiming,
 } from './ai-generation-timing.js';
-import { taskExportSelection } from './ai-task-export.js?v=1.6.0-remediation-0929';
-import { keyLabel, modKey } from './platform.js?v=1.6.0-remediation-0929';
+import { taskExportSelection } from './ai-task-export.js?v=1.7.0-preview-0930';
+import { keyLabel, modKey } from './platform.js?v=1.7.0-preview-0930';
 import {
   distributeSourcesToTaskTabs,
   groupSourcesInTaskTab,
   moveReferenceInComposition,
   normalizeReferenceComposition,
-} from './ai-source-tasking.js?v=1.6.0-remediation-0929';
-import { setupAiWorkbench } from './ai-workbench.js?v=1.6.0-remediation-0929';
-import { mountDurableBatchUi } from './ai-batch-ui.js?v=1.6.0-remediation-0929';
-import { createScopedEditSession, confirmScopedEditSession, prepareScopedEditProposal, acceptScopedEditProposal, invalidateScopedEditSession } from './ai-scoped-edit-session.js?v=1.6.0-remediation-0929';
-import { decodeScopedPng } from './ai-scoped-edit-png.js?v=1.6.0-remediation-0929';
-import { createScopedEditComparison } from './ai-scoped-edit-comparison.js?v=1.6.0-remediation-0929';
-import { createImageCommentController, buildCommentRequest, PRESERVE_UNREQUESTED } from "./ai-image-comments.js?v=1.6.0-comment-visibility-0928";
-import { IndexedDBOutputCacheBackend } from "./ai-output-cache-store.js?v=1.6.0-remediation-0929";
-import { insertImageFromSrc } from "./image-paste.js?v=1.6.0-remediation-0929";
-import { parseEditableImageLabelPlan, withEditableImageLabelPlan } from "./ai-editable-image-labels.js?v=1.6.0-preview-source-labels-0927";
-import { openEditableAssetsDialog } from "./ai-editable-assets-dialog.js?v=1.6.0-remediation-0929";
-import { insertEditableAssets } from "./ai-editable-assets.js?v=1.6.0-remediation-0929";
-import { prepareSeparatedAssets, SEPARATED_ASSETS_PROMPT } from "./ai-separated-assets.js?v=1.6.0-remediation-0929";
-import { buildDiscussionPrompt, buildImagePrompt } from "./ai-prompt.js?v=1.6.0-remediation-0929";
+} from './ai-source-tasking.js?v=1.7.0-preview-0930';
+import { setupAiWorkbench } from './ai-workbench.js?v=1.7.0-preview-0930';
+import { mountDurableBatchUi } from './ai-batch-ui.js?v=1.7.0-preview-0930';
+import { createScopedEditSession, confirmScopedEditSession, prepareScopedEditProposal, acceptScopedEditProposal, invalidateScopedEditSession } from './ai-scoped-edit-session.js?v=1.7.0-preview-0930';
+import { decodeScopedPng } from './ai-scoped-edit-png.js?v=1.7.0-preview-0930';
+import { createScopedEditComparison } from './ai-scoped-edit-comparison.js?v=1.7.0-preview-0930';
+import { createImageCommentController, buildCommentRequest, PRESERVE_UNREQUESTED } from "./ai-image-comments.js?v=1.7.0-preview-0930";
+import { IndexedDBOutputCacheBackend } from "./ai-output-cache-store.js?v=1.7.0-preview-0930";
+import { insertImageFromSrc } from "./image-paste.js?v=1.7.0-preview-0930";
+import { parseEditableImageLabelPlan, withEditableImageLabelPlan } from "./ai-editable-image-labels.js?v=1.7.0-preview-0930";
+import { openEditableAssetsDialog } from "./ai-editable-assets-dialog.js?v=1.7.0-preview-0930";
+import { insertEditableAssets } from "./ai-editable-assets.js?v=1.7.0-preview-0930";
+import { prepareSeparatedAssets, SEPARATED_ASSETS_PROMPT } from "./ai-separated-assets.js?v=1.7.0-preview-0930";
+import { buildDiscussionPrompt, buildImagePrompt } from "./ai-prompt.js?v=1.7.0-preview-0930";
 import { IMAGE_BACKGROUND_VERSION, transparentizeGeneratedImage } from "./image-background.js?v=1.5.4";
-import { parseAiEvent } from "./ai-events.js?v=1.6.0-preview-source-labels-0927";
+import { parseAiEvent } from "./ai-events.js?v=1.7.0-preview-0930";
 import {
   AI_IMAGE_TRANSPORT_VERSION,
   createCheapImageSignature,
   prepareAIImageForTransport,
-} from "./ai-image-transport.js?v=1.6.0-remediation-0929";
+} from "./ai-image-transport.js?v=1.7.0-preview-0930";
 import {
   compactConversation,
   markImagesSent,
   selectOutgoingImageItems,
 } from "./ai-request-plan.js?v=1.5.3";
-import { buildFastScenePrompt, FAST_SCENE_PROMPT_VERSION } from "./ai-scene-prompt.js?v=1.6.0-remediation-0929";
+import { buildFastScenePrompt, FAST_SCENE_PROMPT_VERSION } from "./ai-scene-prompt.js?v=1.7.0-preview-0930";
 import { chooseImageEngine, IMAGE_ENGINE_IDS } from "./ai-engine-router.js?v=1.5.3";
-import { compileFastScene } from "./ai-scene-fastpath.js?v=1.6.0-remediation-0929";
+import { compileFastScene } from "./ai-scene-fastpath.js?v=1.7.0-preview-0930";
 import {
   compileFastSceneWithMotifs,
   expandAiMotifScene,
   MOTIF_CATALOG_VERSION,
-} from "./ai-motif-catalog.js?v=1.6.0-remediation-0929";
+} from "./ai-motif-catalog.js?v=1.7.0-preview-0930";
 import {
   LOCAL_ASSET_ROUTER_VERSION,
   matchLocalAssetRequest,
 } from "./ai-local-asset-router.js?v=1.5.3";
-import { fastSceneToSvgDataUrl, insertFastSceneIntoState } from "./ai-scene-preview.js?v=1.6.0-remediation-0929";
+import { fastSceneToSvgDataUrl, insertFastSceneIntoState } from "./ai-scene-preview.js?v=1.7.0-preview-0930";
 import {
   buildExactOutputCacheDescriptor,
   createExactOutputCacheKey,
   createRemoteImageInputPlan,
   REMOTE_INPUT_PLAN_VERSION,
-} from "./ai-remote-input-plan.js?v=1.6.0-remediation-0929";
-import { composeReferenceImages } from './ai-reference-composite.js?v=1.6.0-remediation-0929';
+} from "./ai-remote-input-plan.js?v=1.7.0-preview-0930";
+import { composeReferenceImages } from './ai-reference-composite.js?v=1.7.0-preview-0930';
 import {
   composeRemoteImageInputPlan,
   REMOTE_COMPOSITOR_VERSION,
 } from "./ai-remote-compositor.js?v=1.5.3";
-import { createExactOutputCacheStore } from "./ai-output-cache-store.js?v=1.6.0-remediation-0929";
-import { openPdfReferencePicker } from "./pdf-library/reference-picker.js?v=1.6.0-preview-labeler-0917-1111";
-import { getReferenceRole, partitionReferenceItems, planImageReferences } from "./ai-reference-roles.js?v=1.6.0-remediation-0929";
+import { createExactOutputCacheStore } from "./ai-output-cache-store.js?v=1.7.0-preview-0930";
+import { openPdfReferencePicker } from "./pdf-library/reference-picker.js?v=1.7.0-preview-0930";
+import { getReferenceRole, partitionReferenceItems, planImageReferences } from "./ai-reference-roles.js?v=1.7.0-preview-0930";
 import { normalizeMarkPolicy, buildMarkPolicyContract } from "./ai-mark-policy.js?v=1";
-import { createStructureAnalysisController, formatStructureContract, STRUCTURE_SPEC_VERSION } from "./ai-structure-spec.js?v=1.6.0-server-fixes-0929";
-import { APPROVED_FIRST_PROMPT, APPROVED_FIRST_REQUEST, approvedFirstRequestText, approvedFirstRun, prepareApprovedFirstAttachment } from './ai-approved-first-png.js?v=1.6.0-remediation-0929';
-import { WHITE_PNG_VERSION, isWhitePngWorkflow, buildWhitePngPrompt } from "./ai-white-png.js?v=1.6.0-remediation-0929";
+import { createStructureAnalysisController, formatStructureContract, STRUCTURE_SPEC_VERSION } from "./ai-structure-spec.js?v=1.7.0-preview-0930";
+import { APPROVED_FIRST_PROMPT, APPROVED_FIRST_REQUEST, approvedFirstRequestText, approvedFirstRun, prepareApprovedFirstAttachment } from './ai-approved-first-png.js?v=1.7.0-preview-0930';
+import { WHITE_PNG_VERSION, isWhitePngWorkflow, buildWhitePngPrompt } from "./ai-white-png.js?v=1.7.0-preview-0930";
 import {
   parseImageReviewReport,
   buildImageCorrectionRequest,
   buildStructuralInventory,
   createAiImageReviewController,
-} from "./ai-image-review.js?v=1.6.0-remediation-0929";
+} from "./ai-image-review.js?v=1.7.0-preview-0930";
 import { resolveGeneratedRaster } from "./ai-raster-output.js?v=1";
 import {
   imageOutputOptionsKey,
   normalizeImageOutputOptions,
   resolveImageOutput,
 } from "./ai-output-processing.js?v=1";
-import { inspectPngDataUrl, enforcePngAcceptance } from "./ai-png-inspection.js?v=1.6.0-remediation-0929";
+import { inspectPngDataUrl, enforcePngAcceptance } from "./ai-png-inspection.js?v=1.7.0-preview-0930";
 import {
   enforceKiceImageRunInput,
   KICE_IMAGE_MODE,
   KICE_IMAGE_OUTPUT_ENGINE,
   kiceImageRequest,
-} from "./kice-image-workflow.js?v=1.6.0-remediation-0929";
+} from "./kice-image-workflow.js?v=1.7.0-preview-0930";
 import {
   AI_OUTPUT_ENGINES,
   AI_QUALITY_MODES,
   normalizeOutputEngine,
   normalizeQualityMode,
   qualityModeCacheVersion,
-} from "./ai-quality-mode.js?v=1.6.0-remediation-0929";
+} from "./ai-quality-mode.js?v=1.7.0-preview-0930";
 
 // This path never redraws a PNG through Canvas or registers a pending proposal.
 export function scopedPngBytes(data) {

@@ -31,7 +31,7 @@ async function drawLine(page, stateModule) {
     const report = [];
     for (const surface of [
       { name: 'root', url: 'index.html', stateModule: './js/state.js?v=1.4.0' },
-      { name: 'preview', url: 'preview/?mode=pro&mobile=0', stateModule: './js/state.js?v=1.6.0-preview-labeler-0917-1111' },
+      { name: 'preview', url: 'preview/?mode=pro&mobile=0', stateModule: './js/state.js?v=1.7.0-preview-0930' },
     ]) {
       const page = await context.newPage();
       const errors = [];

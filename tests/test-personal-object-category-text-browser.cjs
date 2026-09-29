@@ -42,14 +42,14 @@ async function waitForPersonalLibrary(page) {
 
 async function initPersonalLibrary(page) {
   await page.evaluate(async () => {
-    const { initPersonalObjects } = await import('./js/personal-objects.js?v=1.6.0-preview-lite-hybrid-0922');
+    const { initPersonalObjects } = await import('./js/personal-objects.js?v=1.7.0-preview-0930');
     await initPersonalObjects({ get: () => ({}) });
   });
 }
 
 async function importCategory(page, category) {
   await page.evaluate(async ({ category }) => {
-    const { importLibraryString } = await import('./js/personal-objects.js?v=1.6.0-preview-lite-hybrid-0922');
+    const { importLibraryString } = await import('./js/personal-objects.js?v=1.7.0-preview-0930');
     await importLibraryString(JSON.stringify([{
       id: 'qa-personal-category',
       name: 'CJK \'name\' «angle»',

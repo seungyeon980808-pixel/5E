@@ -1,4 +1,4 @@
-# 5E 1.6.0 Preview
+# 5E 1.7.0 Preview
 
 The public preview at <https://www.5e.ai.kr/preview/> was observed on 2026-09-26 from Pages source `codex/preview-1.6.0:/` at `09f94d830a7cec15632aa5286f6cffbe58e5f39f`.
 

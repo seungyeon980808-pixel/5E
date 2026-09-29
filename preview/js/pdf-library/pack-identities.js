@@ -1,4 +1,4 @@
-import { createDocumentRecord } from "./contract.js?v=1.6.0-preview-labeler-0917-1111";
+import { createDocumentRecord } from "./contract.js?v=1.7.0-preview-0930";
 
 function namespaced(packId, id) {
   return `${packId}::${id}`;

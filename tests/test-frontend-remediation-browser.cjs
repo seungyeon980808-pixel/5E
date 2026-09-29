@@ -189,7 +189,7 @@ for (const action of ['escape','outside','fresh']) test(`autosave boot ${action}
  await page.evaluate(async()=>{
   const db=await new Promise((resolve,reject)=>{const r=indexedDB.open('5e-preview-autosave',1);r.onupgradeneeded=()=>{r.result.createObjectStore('snapshots',{keyPath:'id',autoIncrement:true});r.result.createObjectStore('checkpoints',{keyPath:'id',autoIncrement:true});};r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});
   await new Promise((resolve,reject)=>{const tx=db.transaction('snapshots','readwrite');tx.objectStore('snapshots').put({id:1,ts:Date.now(),data:{pages:[{id:'saved',name:'saved',objects:[{id:'kept',type:'rect',x:0,y:0,w:10,h:10}]}],activePageId:'saved'}});tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});db.close();
-  const {state}=await import('/preview/js/state.js?v=1.6.0-remediation-0929');const {initAutosave}=await import('/preview/js/autosave.js?v=1.6.0-remediation-0929');window.bootState=state;window.bootRecovery='pending';void initAutosave(state).then(choice=>window.bootRecovery=choice);
+  const {state}=await import('/preview/js/state.js?v=1.7.0-preview-0930');const {initAutosave}=await import('/preview/js/autosave.js?v=1.7.0-preview-0930');window.bootState=state;window.bootRecovery='pending';void initAutosave(state).then(choice=>window.bootRecovery=choice);
  });
  await page.getByRole('button',{name:'새로 시작'}).waitFor();
  if(action==='escape')await page.keyboard.press('Escape');else if(action==='outside')await page.locator('.modal-overlay').dispatchEvent('mousedown');else await page.getByRole('button',{name:'새로 시작'}).click();

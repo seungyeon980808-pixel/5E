@@ -4,7 +4,7 @@ import {
   createExactOutputCacheEntry,
   evaluateExactOutputCacheEntry,
   pruneExactOutputCacheEntries,
-} from "./ai-remote-input-plan.js?v=1.6.0-remediation-0929";
+} from "./ai-remote-input-plan.js?v=1.7.0-preview-0930";
 
 export class MemoryOutputCacheBackend {
   constructor() {

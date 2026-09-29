@@ -191,7 +191,7 @@ test("packaged smoke follows the current source, library, state, and platform sh
   assert.match(mainSource, /document\.querySelector\("\[data-unilib-query\]"\)/);
   assert.doesNotMatch(mainSource, /\.ai-file-button input\[type=file\]/);
   assert.doesNotMatch(mainSource, /document\.querySelector\("\.ai-reference-search-dialog"\)/);
-  assert.match(mainSource, /import\("\.\/js\/state\.js\?v=1\.6\.0-preview-labeler-0917-1111"\)/);
+  assert.match(mainSource, /import\("\.\/js\/state\.js\?v=1\.7\.0-preview-0930"\)/);
   assert.doesNotMatch(mainSource, /ctrlKey: true, metaKey: true/);
   assert.match(mainSource, /navigator\.userAgentData\?\.platform \|\| navigator\.platform/);
   assert.match(mainSource, /\.\.\.shortcutModifiersForPlatform\(shortcutPlatform\)/);

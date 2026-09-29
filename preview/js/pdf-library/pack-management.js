@@ -1,4 +1,4 @@
-import { PackValidationError } from "./pack-store.js?v=1.6.0-preview-labeler-0917-1111";
+import { PackValidationError } from "./pack-store.js?v=1.7.0-preview-0930";
 
 const MAX_MANIFEST_BYTES = 1024 * 1024;
 const MAX_IMPORT_FILES = 512;

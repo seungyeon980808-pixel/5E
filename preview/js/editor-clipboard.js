@@ -1,6 +1,6 @@
-import { OBJECT_TYPE_IDS, SIZE_TYPES, TEXT_MEASURED_TYPES, ENDPOINT_HANDLE_TYPES } from "./object-types.js?v=1.6.0-preview-labeler-0917-1111";
-import { blocksCanvasShortcut } from "./platform.js?v=1.6.0-remediation-0929";
-import { showAlert } from "./ui-dialogs.js?v=1.6.0-remediation-0929";
+import { OBJECT_TYPE_IDS, SIZE_TYPES, TEXT_MEASURED_TYPES, ENDPOINT_HANDLE_TYPES } from "./object-types.js?v=1.7.0-preview-0930";
+import { blocksCanvasShortcut } from "./platform.js?v=1.7.0-preview-0930";
+import { showAlert } from "./ui-dialogs.js?v=1.7.0-preview-0930";
 
 const MIME = "application/x-5e-objects+json";
 const FORMAT = "5e-clipboard";
