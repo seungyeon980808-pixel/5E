@@ -1,5 +1,5 @@
 import { initPopupFocus } from "./popup-focus.js?v=1.6.0-preview-common-year-login-0918-1302";
-import { initEscapeLayers } from "./escape-layers.js?v=1.6.0-preview-labeler-0917-1111";
+import { initEscapeLayers } from "./escape-layers.js?v=1.6.0-remediation-0929";
 
 /* ===== MODAL DRAG =====
  * 모달(그래프 만들기, 함수 입력, 내보내기 …)을 화면 안에서 자유롭게 옮긴다.
@@ -16,6 +16,7 @@ import { initEscapeLayers } from "./escape-layers.js?v=1.6.0-preview-labeler-091
  */
 
 const HANDLE_CLASS = "modal-drag-handle";
+const activeDrags = new Map();
 const _offsets = new WeakMap(); // modalEl → { x, y }
 
 function _apply(modal, off) {
@@ -69,6 +70,9 @@ function makeModalDraggable(modal, opts = {}) {
     const cur = _offsets.get(modal) || { x: 0, y: 0 };
     start = { mx: e.clientX, my: e.clientY, ox: cur.x, oy: cur.y };
     handle.classList.add("is-dragging");
+    activeDrags.set(modal, endDrag);
+    window.addEventListener("mousemove", moveDrag);
+    window.addEventListener("mouseup", endDrag);
   };
 
   handle.addEventListener("mousedown", beginDrag);
@@ -84,18 +88,21 @@ function makeModalDraggable(modal, opts = {}) {
   }
 
   // move/up은 window에서 받는다 — 빠르게 끌어 커서가 손잡이를 벗어나도 계속 따라오게.
-  window.addEventListener("mousemove", (e) => {
+  const moveDrag = (e) => {
+    if (!modal.isConnected || modal.closest("[hidden]")) { endDrag(); return; }
     if (!start) return;
     const off = _clamp(modal, start.ox + (e.clientX - start.mx), start.oy + (e.clientY - start.my));
     _offsets.set(modal, off);
     _apply(modal, off);
-  });
+  };
 
-  window.addEventListener("mouseup", () => {
-    if (!start) return;
+  const endDrag = () => {
+    activeDrags.delete(modal);
+    window.removeEventListener("mousemove", moveDrag);
+    window.removeEventListener("mouseup", endDrag);
     start = null;
     handle.classList.remove("is-dragging");
-  });
+  };
 
   // 창을 어디 뒀는지 잃어버렸을 때의 탈출구.
   handle.addEventListener("dblclick", (e) => {
@@ -120,7 +127,10 @@ function initModalDrag(root = document.body) {
   scan(root);
   new MutationObserver((muts) => {
     muts.forEach((m) => m.addedNodes.forEach(scan));
-  }).observe(root, { childList: true, subtree: true });
+    activeDrags.forEach((endDrag, modal) => {
+      if (!modal.isConnected || modal.closest("[hidden]")) endDrag();
+    });
+  }).observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ["hidden"] });
 }
 
 export { initModalDrag, makeModalDraggable };

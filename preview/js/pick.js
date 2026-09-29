@@ -6,20 +6,20 @@
 // reference, assigned by initPick(svg) from initTools.
 
 import { screenToWorld, getRenderScale } from "./viewport.js?v=1.6.0-preview-lite-hybrid-0922";
-import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, scaleBBoxForWidth } from "./state.js?v=1.6.0-preview-labeler-0917-1111";
+import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, scaleBBoxForWidth } from "./state.js?v=1.6.0-remediation-0929";
 // Single-source circuit body geometry: hit-testing reuses the SAME polygon the
 // renderer draws, so the clickable box and the visible box can never diverge.
 import { circuitBodyPolygon, pendulumGeometry, pendulumBBox, springGeometry, springBBox,
          chargeFieldBBox, fieldLinesBBox, standingWaveGeometry, standingWaveBBox,
          parabolaPoints, parabolaBBox, groundArcPoints, groundArcBBox,
          bracePathPoints, braceBBox, chromosomeBBox, bilayerBBox, neuronBBox,
-         legendBBox, pedigreeBBox } from "./render.js?v=1.6.0-preview-lite-hybrid-0922";
+         legendBBox, pedigreeBBox } from "./render.js?v=1.6.0-remediation-0929";
 // Labeler hit-test reuses the SAME label block the renderer trims the leader to
 // (render/annotations.js:renderLabeler): estimateLabelBlock for plain-text labels,
 // measureFormula for formula labels (확정 항목 ①) — so the clickable label area
 // always matches the visible glyphs instead of a fixed one-glyph box.
-import { estimateLabelBlock } from "./render/labels.js?v=1.6.0-preview-labeler-0917-1111";
-import { measureFormula } from "./formula.js?v=1.6.0-preview-labeler-0917-1111";
+import { estimateLabelBlock } from "./render/labels.js?v=1.6.0-remediation-0929";
+import { measureFormula } from "./formula.js?v=1.6.0-remediation-0929";
 import {
   segDist, pointInPolygon, pointInTriangle, triangleVertices,
   localPointForSizeObject, curveBezierSeg, curveBezierSegClosed, evalBezier,

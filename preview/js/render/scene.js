@@ -8,9 +8,9 @@
 // alone changes what slice of that space is shown).
 
 import { getZoom, getRenderScale } from "../viewport.js?v=1.6.0-preview-lite-hybrid-0922";
-import { SVG_NS, rotPt, catmullRomPath } from "./core.js?v=1.6.0-preview-labeler-0917-1111";
-import { renderText } from "./labels.js?v=1.6.0-preview-labeler-0917-1111";
-import { makeFillPattern } from "./fill.js?v=1.6.0-preview-labeler-0917-1111";
+import { SVG_NS, rotPt, catmullRomPath } from "./core.js?v=1.6.0-remediation-0929";
+import { renderText } from "./labels.js?v=1.6.0-remediation-0929";
+import { makeFillPattern } from "./fill.js?v=1.6.0-remediation-0929";
 import {
   renderRect,
   renderEllipse,
@@ -20,43 +20,43 @@ import {
   renderCurve,
   renderImage,
   renderSvgAsset,
-} from "./shapes.js?v=1.6.0-preview-labeler-0917-1111";
-import { renderAxes, renderAngleArc, renderRightAngle, renderLabeler } from "./annotations.js?v=1.6.0-preview-lite-tools-0922b";
-import { renderCoordplane, renderFuncgraph } from "./coordplane.js?v=1.6.0-preview-labeler-0917-1111";
-import { renderCircuit } from "./circuit.js?v=1.6.0-preview-labeler-0917-1111";
-import { renderOptics, renderApparatus } from "./optics-apparatus.js?v=1.6.0-preview-labeler-0917-1111";
-import { renderPendulum, pendulumBBox } from "./pendulum.js?v=1.6.0-preview-labeler-0917-1111";
-import { renderSpring, springBBox } from "./spring.js?v=1.6.0-preview-labeler-0917-1111";
-import { renderChargeField, chargeFieldBBox, renderFieldLines, fieldLinesBBox } from "./field.js?v=1.6.0-preview-labeler-0917-1111";
-import { renderStandingWave, standingWaveBBox } from "./standing-wave.js?v=1.6.0-preview-labeler-0917-1111";
-import { renderGauge } from "./gauge.js?v=1.6.0-preview-labeler-0917-1111";
-import { renderSolid3d } from "./solid3d.js?v=1.6.0-preview-labeler-0917-1111";
-import { renderParabola, parabolaBBox } from "./parabola.js?v=1.6.0-preview-labeler-0917-1111";
-import { renderGroundArc, groundArcBBox } from "./groundarc.js?v=1.6.0-preview-labeler-0917-1111";
+} from "./shapes.js?v=1.6.0-remediation-0929";
+import { renderAxes, renderAngleArc, renderRightAngle, renderLabeler } from "./annotations.js?v=1.6.0-remediation-0929";
+import { renderCoordplane, renderFuncgraph } from "./coordplane.js?v=1.6.0-remediation-0929";
+import { renderCircuit } from "./circuit.js?v=1.6.0-remediation-0929";
+import { renderOptics, renderApparatus } from "./optics-apparatus.js?v=1.6.0-remediation-0929";
+import { renderPendulum, pendulumBBox } from "./pendulum.js?v=1.6.0-remediation-0929";
+import { renderSpring, springBBox } from "./spring.js?v=1.6.0-remediation-0929";
+import { renderChargeField, chargeFieldBBox, renderFieldLines, fieldLinesBBox } from "./field.js?v=1.6.0-remediation-0929";
+import { renderStandingWave, standingWaveBBox } from "./standing-wave.js?v=1.6.0-remediation-0929";
+import { renderGauge } from "./gauge.js?v=1.6.0-remediation-0929";
+import { renderSolid3d } from "./solid3d.js?v=1.6.0-remediation-0929";
+import { renderParabola, parabolaBBox } from "./parabola.js?v=1.6.0-remediation-0929";
+import { renderGroundArc, groundArcBBox } from "./groundarc.js?v=1.6.0-remediation-0929";
 // 생명과학 부품 6종 (2026-07-31) — 규격은 docs/BIO_PARTS_SPEC.md
-import { renderBrace, braceBBox } from "./brace.js?v=1.6.0-preview-labeler-0917-1111";
-import { renderChromosome, chromosomeBBox } from "./chromosome.js?v=1.6.0-preview-labeler-0917-1111";
-import { renderBilayer, bilayerBBox } from "./bilayer.js?v=1.6.0-preview-labeler-0917-1111";
-import { renderNeuron, neuronBBox } from "./neuron.js?v=1.6.0-preview-labeler-0917-1111";
-import { renderLegend, legendBBox } from "./legend.js?v=1.6.0-preview-labeler-0917-1111";
-import { renderPedigree, pedigreeBBox } from "./pedigree.js?v=1.6.0-preview-labeler-0917-1111";
+import { renderBrace, braceBBox } from "./brace.js?v=1.6.0-remediation-0929";
+import { renderChromosome, chromosomeBBox } from "./chromosome.js?v=1.6.0-remediation-0929";
+import { renderBilayer, bilayerBBox } from "./bilayer.js?v=1.6.0-remediation-0929";
+import { renderNeuron, neuronBBox } from "./neuron.js?v=1.6.0-remediation-0929";
+import { renderLegend, legendBBox } from "./legend.js?v=1.6.0-remediation-0929";
+import { renderPedigree, pedigreeBBox } from "./pedigree.js?v=1.6.0-remediation-0929";
 // 화학 부품 10종 (2026-07-31) — 규격은 docs/CHEM_PARTS_SPEC.md
 // 전부 크기박스 계열이라 bbox 는 SIZE_TYPES 경로가 자동 처리한다 → 렌더 함수만 가져온다.
-import { renderVessel } from "./vessel.js?v=1.6.0-preview-labeler-0917-1111";
-import { renderChemModel } from "./chemmodel.js?v=1.6.0-preview-labeler-0917-1111";
-import { renderParticleBox } from "./particlebox.js?v=1.6.0-preview-labeler-0917-1111";
-import { renderOrbital } from "./orbital.js?v=1.6.0-preview-labeler-0917-1111";
-import { renderBondGroup } from "./bondgroup.js?v=1.6.0-preview-labeler-0917-1111";
-import { renderChemChart } from "./chemchart.js?v=1.6.0-preview-labeler-0917-1111";
-import { renderAxisBreak } from "./axisbreak.js?v=1.6.0-preview-labeler-0917-1111";
-import { renderChemGraph } from "./chemgraph.js?v=1.6.0-preview-labeler-0917-1111";
-import { renderElectrode } from "./electrode.js?v=1.6.0-preview-labeler-0917-1111";
-import { renderPeriodic } from "./periodic.js?v=1.6.0-preview-labeler-0917-1111";
-import { DEFAULT_TEXT_SIZE_MM, scaleBBoxForWidth } from "../state.js?v=1.6.0-preview-labeler-0917-1111";
+import { renderVessel } from "./vessel.js?v=1.6.0-remediation-0929";
+import { renderChemModel } from "./chemmodel.js?v=1.6.0-remediation-0929";
+import { renderParticleBox } from "./particlebox.js?v=1.6.0-remediation-0929";
+import { renderOrbital } from "./orbital.js?v=1.6.0-remediation-0929";
+import { renderBondGroup } from "./bondgroup.js?v=1.6.0-remediation-0929";
+import { renderChemChart } from "./chemchart.js?v=1.6.0-remediation-0929";
+import { renderAxisBreak } from "./axisbreak.js?v=1.6.0-remediation-0929";
+import { renderChemGraph } from "./chemgraph.js?v=1.6.0-remediation-0929";
+import { renderElectrode } from "./electrode.js?v=1.6.0-remediation-0929";
+import { renderPeriodic } from "./periodic.js?v=1.6.0-remediation-0929";
+import { DEFAULT_TEXT_SIZE_MM, scaleBBoxForWidth } from "../state.js?v=1.6.0-remediation-0929";
 import { SIZE_TYPES, TEXT_MEASURED_TYPES, POINT_ARRAY_TYPES, ENDPOINT_HANDLE_TYPES,
          zOrderObjects } from "../object-types.js?v=1.6.0-preview-labeler-0917-1111";
-import { resolveObjectStyle } from "../style-mode.js?v=1.6.0-preview-labeler-0917-1111";
-import { renderFormula } from "../formula.js?v=1.6.0-preview-labeler-0917-1111";
+import { resolveObjectStyle } from "../style-mode.js?v=1.6.0-remediation-0929";
+import { renderFormula } from "../formula.js?v=1.6.0-remediation-0929";
 import { IMAGE_EDIT_SESSION_ID } from "../image-cutout.js?v=1.6.0-preview-lite-hybrid-0922";
 import {
   SELECTION_COLOR,

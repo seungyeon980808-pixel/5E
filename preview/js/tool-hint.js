@@ -1,4 +1,4 @@
-import { keyLabel, SNAP_LABEL } from "./platform.js?v=1.6.0-preview-labeler-0917-1111";
+import { keyLabel, SNAP_LABEL } from "./platform.js?v=1.6.0-remediation-0929";
 
 /* ===== TOOL HINT: 캔버스 하단 바의 도구별 조작 안내 =====
  *

@@ -9,7 +9,7 @@
  */
 
 import { makeSection } from "./widgets.js?v=1.6.0-preview-labeler-0917-1111";
-import { MOLECULES, VALENCE, CHEMMODEL_KINDS } from "../render/chemmodel.js?v=1.6.0-preview-labeler-0917-1111";
+import { MOLECULES, VALENCE, CHEMMODEL_KINDS } from "../render/chemmodel.js?v=1.6.0-remediation-0929";
 
 const KIND_LABELS = [
   ["atom", "원자 구슬"],

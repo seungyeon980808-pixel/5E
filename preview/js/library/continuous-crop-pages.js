@@ -1,14 +1,14 @@
 /* Keep one editable original page inside a lazily rendered continuous document. */
 export function createContinuousCropPages({ stage, canvas, loadPage, onPage }) {
-  let root = null, observer = null, pageCount = 0, activePage = 1, extent = 0;
+  let root = null, pageCount = 0, activePage = 1, extent = 0;
   let generation = 0, pageWidth = 0;
   const ratios = new Map();
   const slots = new Map();
+  const renders = new WeakMap();
+  let windowPage = 1;
   const reset = () => {
     generation += 1;
     ratios.clear();
-    observer?.disconnect();
-    observer = null;
     if (root) { stage.append(canvas); root.remove(); }
     root = null;
     slots.clear();
@@ -18,6 +18,9 @@ export function createContinuousCropPages({ stage, canvas, loadPage, onPage }) {
     if (slot.dataset.loaded) return;
     slot.dataset.loaded = "loading";
     const own = generation;
+    const token = {};
+    renders.set(slot, token);
+    const current = () => own === generation && renders.get(slot) === token;
     const placeholder = document.createElement("div");
     placeholder.className = "unilib-crop-page-placeholder";
     placeholder.setAttribute("aria-hidden", "true");
@@ -29,13 +32,13 @@ export function createContinuousCropPages({ stage, canvas, loadPage, onPage }) {
     slot.append(status);
     try {
       const src = await loadPage(page);
-      if (own !== generation) return;
+      if (!current()) return;
       const image = new Image();
       image.alt = `${page}쪽`;
       image.src = src;
       image.draggable = false;
       await image.decode();
-      if (own !== generation) return;
+      if (!current()) return;
       ratios.set(page, image.naturalHeight / image.naturalWidth);
       if (pageWidth) slot.style.height = `${pageWidth * ratios.get(page)}px`;
       slot.prepend(image);
@@ -43,7 +46,7 @@ export function createContinuousCropPages({ stage, canvas, loadPage, onPage }) {
       status.remove();
       slot.dataset.loaded = "ready";
     } catch (_) {
-      if (own === generation) {
+      if (current()) {
         slot.dataset.loaded = "error";
         status.replaceChildren(`${page}쪽을 불러오지 못했습니다.`);
         const retry = document.createElement("button");
@@ -73,12 +76,20 @@ export function createContinuousCropPages({ stage, canvas, loadPage, onPage }) {
       root.append(slot);
     }
     stage.append(root);
-    observer = new IntersectionObserver(entries => {
-      for (const entry of entries) if (entry.isIntersecting) void render(entry.target, Number(entry.target.dataset.page));
-    }, { root: stage, rootMargin: "100% 0px" });
-    slots.forEach(slot => observer.observe(slot));
     slots.get(page).append(canvas);
     slots.get(page).classList.add("is-active");
+  };
+  const updateWindow = page => {
+    windowPage = page;
+    slots.forEach((slot, number) => {
+      if (Math.abs(number - windowPage) <= 4) {
+        void render(slot, number);
+      } else if (slot.dataset.loaded && number !== activePage) {
+        renders.delete(slot);
+        delete slot.dataset.loaded;
+        slot.querySelectorAll(":scope > img, :scope > .unilib-crop-page-placeholder, :scope > .unilib-crop-page-status").forEach(node => node.remove());
+      }
+    });
   };
   const size = (width, height) => {
     if (!root) return;
@@ -87,6 +98,7 @@ export function createContinuousCropPages({ stage, canvas, loadPage, onPage }) {
     ratios.set(activePage, height / width);
     root.style.width = `${width}px`;
     slots.forEach((slot, page) => { slot.style.height = `${ratios.has(page) ? width * ratios.get(page) : height}px`; });
+    updateWindow(activePage);
   };
   const activate = (page, scroll = false) => {
     if (!root) return;
@@ -111,7 +123,9 @@ export function createContinuousCropPages({ stage, canvas, loadPage, onPage }) {
   };
   stage.addEventListener("scroll", () => {
     if (!root || !extent) return;
-    void request(pageAtScroll());
+    const page = pageAtScroll();
+    updateWindow(page);
+    void request(page);
   });
   stage.addEventListener("pointerdown", event => {
     if (event.target.closest("button")) return;

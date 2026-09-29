@@ -11,15 +11,15 @@
 //      with 취소 / 내보내기. On 내보내기 it delegates to svg-export.js's
 //      exportPng() or exportSvg(); the extension is appended from the format.
 
-import { exportPng, exportSvg, copyPngToClipboard, formatExportTimestamp, getContentBounds } from "./svg-export.js?v=1.6.0-preview-lite-hybrid-0922";
-import { openBatchExport } from "./export-batch.js?v=1.6.0-workbench-polish-0928-final";
+import { exportPng, exportSvg, copyPngToClipboard, formatExportTimestamp, getContentBounds } from "./svg-export.js?v=1.6.0-remediation-0929";
+import { openBatchExport } from "./export-batch.js?v=1.6.0-remediation-0929";
 import {
   FS_DIR_SUPPORTED, loadSavedDir, currentDirName, pickDir, clearDir,
-} from "./export-dir.js?v=1.6.0-preview-golden-export-save-0922";
-import { showAlert } from "./ui-dialogs.js?v=1.6.0-preview-labeler-0917-1111";
-import { registerTopMenu } from "./top-menu.js?v=1.6.0-preview-labeler-0917-1111";
+} from "./export-dir.js?v=1.6.0-remediation-0929";
+import { showAlert } from "./ui-dialogs.js?v=1.6.0-remediation-0929";
+import { registerTopMenu } from "./top-menu.js?v=1.6.0-remediation-0929";
 import { screenToWorld } from "./viewport.js?v=1.6.0-preview-lite-hybrid-0922";
-import { openExamPreview } from "./exam-preview.js?v=1.6.0-preview-lite-hybrid-0922";
+import { openExamPreview } from "./exam-preview.js?v=1.6.0-remediation-0929";
 
 // Default export filename base = local date/time to the minute (YYYYMMDD_HHmm),
 // recomputed each time the modal opens so it reflects the actual export time.

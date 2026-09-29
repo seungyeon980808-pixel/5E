@@ -290,7 +290,11 @@
   .toolbar-history { flex: 0 0 auto; }
   .toolbar-canvas { display: flex; flex: 1 1 100%; flex-wrap: wrap; gap: 6px; min-width: 0; }
   .toolbar-document { flex: 1 0 100%; flex-wrap: nowrap; gap: 4px; }
-  .toolbar-inspector-controls { display:none; }
+  .toolbar-inspector-controls { display:flex; flex:1 0 100%; container-type:normal; }
+  .app-shell-header .toolbar-inspector-controls .canvas-global-controls { display:flex; justify-content:flex-end; width:100%; }
+  .app-shell-header .web-account-status { min-width:0; max-width:none; padding-inline:6px; gap:5px; }
+  .app-shell-header .web-account-status [data-account-label] { font-size:0; flex:none; overflow:visible; }
+  .app-shell-header .web-account-status [data-account-label]::after { content:'GPT'; font-size:12px; }
   .app-shell-header .canvas-global-controls { margin-inline-start: 0; }
   .app-shell-header .panel-shell-toggles { align-items: start; padding-top: 8px; }
 }

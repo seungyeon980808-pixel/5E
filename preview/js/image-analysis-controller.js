@@ -1,4 +1,4 @@
-import { analyzeImageData } from "./image-analysis.js?v=1.6.0-preview-labeler-0917-1111";
+import { analyzeImageData } from "./image-analysis.js?v=1.6.0-remediation-0929";
 
 function controllerError(code, message) {
   const error = new Error(message);

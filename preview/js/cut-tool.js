@@ -1,4 +1,4 @@
-import { createPointerMagnifier, svgMagnifierSample, cropMagnifierEnabled, mountCropMagnifierToggle } from "./tools/pointer-magnifier.js?v=1.6.0-library-keyboard-magnifier-0928";
+import { createPointerMagnifier, svgMagnifierSample, cropMagnifierEnabled, mountCropMagnifierToggle } from "./tools/pointer-magnifier.js?v=1.6.0-remediation-0929";
 /* ===== CUT TOOL — 삽입(생성) 후 캔버스에서 객체 자르기 (가위 하나) =====
 //
 // activeTool === "CUT" 또는 "DELAYED_CUT" 일 때 동작한다.
@@ -16,11 +16,11 @@ import { screenToWorld, getRenderScale } from "./viewport.js?v=1.6.0-preview-lit
 import { cutObject, isCuttable, cutCrossingPoints, isBoxCuttable, cutBoxObject } from "./cut-geometry.js?v=1.6.0-preview-labeler-0917-1111";
 import { snapAngle } from "./geometry.js?v=1.6.0-preview-labeler-0917-1111";
 import { simplifyRDP } from "./geometry.js?v=1.6.0-preview-labeler-0917-1111";
-import { getObjectBBox } from "./pick.js?v=1.6.0-preview-lite-hybrid-0922";
-import { resolveEndpointSnap } from "./snap.js?v=1.6.0-preview-lite-hybrid-0922";
-import { setSnapPreview } from "./render.js?v=1.6.0-preview-lite-hybrid-0922";
+import { getObjectBBox } from "./pick.js?v=1.6.0-remediation-0929";
+import { resolveEndpointSnap } from "./snap.js?v=1.6.0-remediation-0929";
+import { setSnapPreview } from "./render.js?v=1.6.0-remediation-0929";
 
-import { snapKey } from "./platform.js?v=1.6.0-preview-labeler-0917-1111";
+import { snapKey } from "./platform.js?v=1.6.0-remediation-0929";
 const SVG_NS = "http://www.w3.org/2000/svg";
 const CUT_CURSOR = "crosshair";
 const MIN_STEP_PX = 2;   // 화면 2px 이상 움직여야 새 자유점 기록
