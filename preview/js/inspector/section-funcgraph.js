@@ -6,7 +6,7 @@
  * Mount + show/hide live in js/inspector.js. */
 
 import { makeSection } from "./widgets.js?v=1.6.0-preview-labeler-0917-1111";
-import { openGraphModal } from "../graph/graph-modal.js?v=1.6.0-preview-labeler-0917-1111";
+import { openGraphModal } from "../graph/graph-modal.js?v=1.6.0-remediation-0929";
 
 const BTN_CSS = "font-size: 11px;border:1px solid var(--border);border-radius:6px;padding:4px 8px;background:var(--bg-input);color:var(--text-primary);cursor:pointer;";
 

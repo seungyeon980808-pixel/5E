@@ -14,7 +14,7 @@
 
 import { screenToWorld } from "./viewport.js?v=1.6.0-preview-lite-hybrid-0922";
 import { simplifyRDP } from "./geometry.js?v=1.6.0-preview-labeler-0917-1111";
-import { getObjectBBox } from "./pick.js?v=1.6.0-preview-lite-hybrid-0922";
+import { getObjectBBox } from "./pick.js?v=1.6.0-remediation-0929";
 import { tightenBoxObject } from "./cut-geometry.js?v=1.6.0-preview-labeler-0917-1111";
 
 const SVG_NS = "http://www.w3.org/2000/svg";

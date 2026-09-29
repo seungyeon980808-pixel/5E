@@ -1,4 +1,4 @@
-import { planImageReferences } from "./ai-reference-roles.js?v=1.6.0-preview-labeler-0917-1111";
+import { planImageReferences } from "./ai-reference-roles.js?v=1.6.0-remediation-0929";
 
 import { resolveAIModelSelection } from "./ai-model-capabilities.js?v=1.6.0-server-fixes-0929";
 

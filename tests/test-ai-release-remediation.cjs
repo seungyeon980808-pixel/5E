@@ -256,6 +256,7 @@ function submitContext(statusPromise) {
     kiceImageRequest: (value) => value,
     compactConversation: () => '',
     conversationMessages: [],
+    recordConversationMessage: (role, text) => context.conversationMessages.push({ role, text }),
     snapshotImageItem: (value) => ({ ...value }),
     enforceKiceImageRunInput: (value) => value,
     normalizeReferenceComposition: (value) => value,

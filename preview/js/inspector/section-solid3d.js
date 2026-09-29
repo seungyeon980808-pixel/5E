@@ -1,4 +1,4 @@
-import { previewStorage as localStorage } from '../preview-storage.js?v=1.6.0-preview-labeler-0917-1111';
+import { previewStorage as localStorage } from '../preview-storage.js?v=1.6.0-remediation-0929';
 /* ===== INSPECTOR SECTION — 입체(solid3d) =====
  *
  * section-gauge.js와 같은 자체 구독형(self-subscribing) 섹션이다:

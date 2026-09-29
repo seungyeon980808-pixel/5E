@@ -20,7 +20,7 @@ import {
   FAST_SCENE_SCHEMA_ID,
   auditDiagramObjects,
   compileFastScene,
-} from "./ai-scene-fastpath.js?v=1.6.0-preview-labeler-0917-1111";
+} from "./ai-scene-fastpath.js?v=1.6.0-remediation-0929";
 
 export const VERIFIED_MAP_RUNTIME_VERSION = "5e-verified-map-runtime@1";
 export const VERIFIED_MAP_VARIANT_IDS = Object.freeze([

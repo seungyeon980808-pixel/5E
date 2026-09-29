@@ -9,7 +9,7 @@
  */
 
 import { makeSection } from "./widgets.js?v=1.6.0-preview-labeler-0917-1111";
-import { VESSEL_KINDS } from "../render/vessel.js?v=1.6.0-preview-labeler-0917-1111";
+import { VESSEL_KINDS } from "../render/vessel.js?v=1.6.0-remediation-0929";
 
 /* 한글 이름표 — 렌더러는 kind 문자열만 내보내므로 표시용 이름은 여기서 붙인다(명세 §1). */
 const KIND_KO = {

@@ -1,4 +1,4 @@
-import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-preview-labeler-0917-1111';
+import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-remediation-0929';
 /* ===== REFERENCE WINDOW (참고 문항 창) =====
  * 기출 문항을 최대 4개까지 별도 브라우저 창에 띄워 두고 보면서 문제를 만든다.
  *
@@ -20,8 +20,8 @@ import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-pre
  *   삭제        → 확인을 거쳐 칩까지 없앤다.
  */
 
-import { showConfirm } from "./ui-dialogs.js?v=1.6.0-preview-labeler-0917-1111";
-import { makeModalDraggable } from "./modal-drag.js?v=1.6.0-preview-common-year-login-0918-1302";
+import { showConfirm } from "./ui-dialogs.js?v=1.6.0-remediation-0929";
+import { makeModalDraggable } from "./modal-drag.js?v=1.6.0-remediation-0929";
 
 /* 문항별 메모는 창이 아니라 "문항"에 딸린다 — 같은 기출을 다음에 다시 열어도 남아야
    하기 때문. 기출 문항은 manifest의 item.id(예: b1_2027_06_01)가 안정적인 열쇠다.

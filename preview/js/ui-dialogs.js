@@ -1,4 +1,4 @@
-import { registerEscapeLayer } from "./escape-layers.js?v=1.6.0-preview-labeler-0917-1111";
+import { registerEscapeLayer } from "./escape-layers.js?v=1.6.0-remediation-0929";
 
 /* ===== 공용 다이얼로그: 프로그램 양식의 알림/확인 창 =====
  * 브라우저 기본 alert()/confirm() 대신 앱 모달과 같은 모양을 쓴다.
@@ -20,7 +20,7 @@ function dialogIdentity() {
   return { titleId: `${id}-title`, descriptionId: `${id}-description` };
 }
 
-function buildDialog({ title, message, buttons, wide = false }) {
+function buildDialog({ title, message, buttons, wide = false, dismissValue = buttons[0].value }) {
   return new Promise((resolve) => {
     const { titleId, descriptionId } = dialogIdentity();
     const overlay = document.createElement("div");
@@ -40,11 +40,11 @@ function buildDialog({ title, message, buttons, wide = false }) {
     const previousFocus = document.activeElement;
     const done = (value) => { overlay.remove(); previousFocus?.focus(); resolve(value); };
     const dialog = overlay.querySelector('[role="dialog"], [role="alertdialog"]');
-    registerEscapeLayer(dialog, () => done(buttons[0].value));
+    registerEscapeLayer(dialog, () => done(dismissValue));
     overlay.querySelectorAll(".modal-btn").forEach((b) => {
       b.addEventListener("click", () => done(buttons[Number(b.dataset.i)].value));
     });
-    overlay.addEventListener("mousedown", (e) => { if (e.target === overlay) done(buttons[0].value); });
+    overlay.addEventListener("mousedown", (e) => { if (e.target === overlay) done(dismissValue); });
     overlay.addEventListener("keydown", (e) => {
       if (wide && e.key === 'Tab') {
         const controls = [...overlay.querySelectorAll('.modal-btn')];
@@ -52,7 +52,7 @@ function buildDialog({ title, message, buttons, wide = false }) {
         e.preventDefault();
         controls[index < 0 ? (e.shiftKey ? controls.length - 1 : 0) : (index + (e.shiftKey ? -1 : 1) + controls.length) % controls.length].focus();
       }
-      if (e.key === "Escape") { e.stopPropagation(); done(buttons[0].value); }
+      if (e.key === "Escape") { e.stopPropagation(); done(dismissValue); }
       if (!wide && e.key === "Enter" && !e.target.closest("button")) { e.preventDefault(); done(buttons[buttons.length - 1].value); }
     });
     if (wide) dialog.focus({ preventScroll: true });
@@ -64,9 +64,9 @@ export function showAlert(message, { title = "안내" } = {}) {
   return buildDialog({ title, message, buttons: [{ label: "확인", value: undefined, primary: true }] });
 }
 
-export function showConfirm(message, { title = "확인", okText = "예", cancelText = "아니오" } = {}) {
+export function showConfirm(message, { title = "확인", okText = "예", cancelText = "아니오", dismissValue = false } = {}) {
   return buildDialog({
-    title, message,
+    title, message, dismissValue,
     buttons: [
       { label: cancelText, value: false },
       { label: okText, value: true, primary: true },
@@ -179,7 +179,7 @@ export function showRecoveryCheckpointDialog(checkpoints, { legacyStatus = "empt
       previousFocus?.focus();
       resolve(value);
     };
-    const cancel = () => done(null);
+    const cancel = () => done("deferred");
     registerEscapeLayer(dialog, cancel);
     overlay.querySelector('[data-act="cancel"]').addEventListener("click", cancel);
     overlay.querySelector('[data-act="restore"]').addEventListener("click", () => {

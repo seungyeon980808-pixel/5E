@@ -5,7 +5,7 @@ const test = require("node:test");
 
 const ROOT = path.resolve(__dirname, "..");
 const JS_ROOT = path.join(ROOT, "preview", "js");
-const CACHE_ID = "1.6.0-preview-lite-tools-0922b";
+const CACHE_ID = "1.6.0-remediation-0929";
 const GUARDED_MODULES = new Set([
   "render.js",
   "render/annotations.js",
@@ -41,7 +41,7 @@ test("Lite tool and leader-label render modules share one cache identity", () =>
   GUARDED_MODULES.forEach((modulePath) => {
     assert.deepEqual(
       [...(versionsByModule.get(modulePath) || [])],
-      [modulePath === "render/annotations.js" ? CACHE_ID : modulePath.startsWith("render") ? "1.6.0-preview-lite-hybrid-0922" : "1.6.0-workbench-polish-0928-final"],
+      [CACHE_ID],
       `${modulePath} must use only the current Lite cache identity`,
     );
   });

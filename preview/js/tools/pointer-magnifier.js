@@ -1,4 +1,4 @@
-import { previewStorage } from "../preview-storage.js";
+import { previewStorage } from "../preview-storage.js?v=1.6.0-remediation-0929";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const SIZE = 160;

@@ -6,8 +6,8 @@
  * 좌표평면을 더블클릭하거나 인스펙터 "상세 편집…" 버튼으로 연다.
  * 편집은 draft(깊은 복사)에 하고, 확인 시 실제 객체에 한 번에 반영(undo 1회). */
 
-import { state } from "../state.js?v=1.6.0-preview-labeler-0917-1111";
-import { renderCoordplane } from "../render/coordplane.js?v=1.6.0-preview-labeler-0917-1111";
+import { state } from "../state.js?v=1.6.0-remediation-0929";
+import { renderCoordplane } from "../render/coordplane.js?v=1.6.0-remediation-0929";
 import { sampleFunctionPoints } from "./sampler.js?v=1.6.0-preview-labeler-0917-1111";
 import { worldFromMath } from "./coords.js?v=1.6.0-preview-labeler-0917-1111";
 

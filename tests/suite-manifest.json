@@ -1,6 +1,7 @@
 {
   "schemaVersion": 1,
   "unit": [
+    { "path": "tests/test-preview-module-identity.cjs" },
     { "path": "tests/test-ai-error-log.cjs" },
     { "path": "tests/test-project-status-image-fingerprint.cjs" },
     { "path": "tests/test-ai-batch-source.cjs" },
@@ -32,6 +33,7 @@
     { "path": "tools/mcp-5e/test/server-pairing.test.mjs" }
   ],
   "browser": [
+    { "path": "tests/test-frontend-remediation-browser.cjs", "findingIds": ["FRONTEND-REMEDIATION-0929"] },
     { "path": "tests/test-ai-failure-log-browser.cjs", "findingIds": ["AI-MODEL-FAILURE-LOG"] },
     { "path": "tests/test-ai-batch-source-browser.cjs", "findingIds": ["AI-FOLLOWUP-BATCH"] },
     { "path": "tests/test-ai-compare-layout-browser.cjs", "findingIds": ["AI-FOLLOWUP-LAYOUT"] },

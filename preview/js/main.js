@@ -1,9 +1,9 @@
-import { initLiteShell } from "./lite-shell.js?v=lite-quick-help-0925";
-import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-preview-labeler-0917-1111';
-import { initWebLoginUi } from './web-login-ui.js?v=1.6.0-preview-mobile-golden-0922';
+import { initLiteShell } from "./lite-shell.js?v=1.6.0-remediation-0929";
+import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-remediation-0929';
+import { initWebLoginUi } from './web-login-ui.js?v=1.6.0-remediation-0929';
 import { initMobileImage } from './mobile-image.js?v=1.6.0-preview-mobile-golden-0922';
-import { showAlert, showRecoveryCheckpointDialog } from "./ui-dialogs.js?v=task10-recovery-160";
-import { initAiSharing } from './ai-sharing-ui.js?v=1.6.0-preview-emerald-polish-0921';
+import { showAlert, showRecoveryCheckpointDialog } from "./ui-dialogs.js?v=1.6.0-remediation-0929";
+import { initAiSharing } from './ai-sharing-ui.js?v=1.6.0-remediation-0929';
 /* ===== MAIN (wire modules; data-as-truth + viewBox zoom/pan) ===== */
 //
 // Responsibilities:
@@ -13,67 +13,67 @@ import { initAiSharing } from './ai-sharing-ui.js?v=1.6.0-preview-emerald-polish
 //   4. init tools (tool selection + the rectangle draw pipeline).
 
 // ?v= matches index.html so a version bump reloads every module, not just main.
-import { state } from "./state.js?v=1.6.0-preview-labeler-0917-1111";
-import { render } from "./render.js?v=1.6.0-preview-lite-hybrid-0922";
+import { state } from "./state.js?v=1.6.0-remediation-0929";
+import { render } from "./render.js?v=1.6.0-remediation-0929";
 import { initViewport, getZoom, screenToWorld, centerView, setCanvasLockMode } from "./viewport.js?v=1.6.0-preview-lite-hybrid-0922";
 import { initZoomReadoutLifecycle } from "./zoom-readout-lifecycle.js?v=task10-160";
-import { initTools } from "./tools.js?v=1.6.0-workbench-polish-0928-final";
-import { initCutTool } from "./cut-tool.js?v=1.6.0-library-keyboard-magnifier-0928";
-import { initEraseTool } from "./erase-tool.js?v=1.6.0-preview-lite-hybrid-0922";
-import { initTransform, undo, redo } from "./transform.js?v=1.6.0-workbench-polish-0928-final";
-import { initArtboardResize } from "./artboard-resize.js?v=1.6.0-workbench-polish-0928-final";
-import { initInspector } from "./inspector.js?v=1.6.0-workbench-polish-0928-final";
-import { initDesktopProjectCloseGuard, initProjectIO, initProjectFileOpening, saveProject } from "./project-io.js?v=1.6.0-ai-latest-fixes-0928";
-import { initExportDialog } from "./export-dialog.js?v=1.6.0-workbench-polish-0928-final";
-import { initRuler, setRulerVisible } from "./ruler.js?v=1.6.0-workbench-polish-0928-final";
-import { initSettings } from "./settings.js?v=1.6.0-ai-latest-fixes-0928";
-import { initImageObjectify } from "./image-objectify.js?v=1.6.0-preview-lite-hybrid-0922";
-import { initImagePaste } from "./image-paste.js?v=1.6.0-workbench-polish-0928-final";
+import { initTools } from "./tools.js?v=1.6.0-remediation-0929";
+import { initCutTool } from "./cut-tool.js?v=1.6.0-remediation-0929";
+import { initEraseTool } from "./erase-tool.js?v=1.6.0-remediation-0929";
+import { initTransform, undo, redo } from "./transform.js?v=1.6.0-remediation-0929";
+import { initArtboardResize } from "./artboard-resize.js?v=1.6.0-remediation-0929";
+import { initInspector } from "./inspector.js?v=1.6.0-remediation-0929";
+import { initDesktopProjectCloseGuard, initProjectIO, initProjectFileOpening, saveProject } from "./project-io.js?v=1.6.0-remediation-0929";
+import { initExportDialog } from "./export-dialog.js?v=1.6.0-remediation-0929";
+import { initRuler, setRulerVisible } from "./ruler.js?v=1.6.0-remediation-0929";
+import { initSettings } from "./settings.js?v=1.6.0-remediation-0929";
+import { initImageObjectify } from "./image-objectify.js?v=1.6.0-remediation-0929";
+import { initImagePaste } from "./image-paste.js?v=1.6.0-remediation-0929";
 import { initImageCutout } from "./image-cutout.js?v=1.6.0-preview-lite-hybrid-0922";
 import { renderSessionToDataUrl } from "./image-cutout.js?v=1.6.0-preview-lite-hybrid-0922";
 import { handSelectedCanvasImageToAi } from "./ai-canvas-handoff.js?v=1.6.0-preview-labeler-0917-1111";
-import { initExamLibrary } from "./exam-library.js?v=1.6.0-ai-latest-fixes-0928";
-import { initTemplates } from "./templates.js?v=1.6.0-workbench-polish-0928-final";
-import { initObjectSearch } from "./search.js?v=1.6.0-workbench-polish-0928-final";
-import { initCommandPalette } from "./command-palette.js?v=1.6.0-workbench-polish-0928-final";
-import { initSubjectObjects } from "./subject-objects.js?v=1.6.0-workbench-polish-0928-final";
-import { initToolHint } from "./tool-hint.js?v=1.6.0-preview-labeler-0917-1111";
+import { initExamLibrary } from "./exam-library.js?v=1.6.0-remediation-0929";
+import { initTemplates } from "./templates.js?v=1.6.0-remediation-0929";
+import { initObjectSearch } from "./search.js?v=1.6.0-remediation-0929";
+import { initCommandPalette } from "./command-palette.js?v=1.6.0-remediation-0929";
+import { initSubjectObjects } from "./subject-objects.js?v=1.6.0-remediation-0929";
+import { initToolHint } from "./tool-hint.js?v=1.6.0-remediation-0929";
 import { initTooltips } from "./tooltip.js?v=1.6.0-preview-labeler-0917-1111";
-import { initViewMode } from "./view-mode.js?v=1.6.0-ai-latest-fixes-0928";
-import { initPersonalObjects } from "./personal-objects.js?v=1.6.0-workbench-polish-0928-final";
-import { initBulkEdit } from "./bulk-edit.js?v=1.6.0-workbench-polish-0928-final";
-import { initDataPlot } from "./data-plot.js?v=1.6.0-workbench-polish-0928-final";
+import { initViewMode } from "./view-mode.js?v=1.6.0-remediation-0929";
+import { initPersonalObjects } from "./personal-objects.js?v=1.6.0-remediation-0929";
+import { initBulkEdit } from "./bulk-edit.js?v=1.6.0-remediation-0929";
+import { initDataPlot } from "./data-plot.js?v=1.6.0-remediation-0929";
 import { initGaugeSection } from "./inspector/section-gauge.js?v=1.6.0-preview-labeler-0917-1111";
-import { initSolid3dSection } from "./inspector/section-solid3d.js?v=1.6.0-preview-labeler-0917-1111";
+import { initSolid3dSection } from "./inspector/section-solid3d.js?v=1.6.0-remediation-0929";
 import { initParabolaSection } from "./inspector/section-parabola.js?v=1.6.0-preview-labeler-0917-1111";
-import { initGroundArcSection } from "./inspector/section-groundarc.js?v=1.6.0-preview-lite-hybrid-0922";
+import { initGroundArcSection } from "./inspector/section-groundarc.js?v=1.6.0-remediation-0929";
 // 생명과학 부품 6종 (2026-07-31) — 규격은 docs/BIO_PARTS_SPEC.md
 import { initBraceSection } from "./inspector/section-brace.js?v=1.6.0-preview-labeler-0917-1111";
 import { initChromosomeSection } from "./inspector/section-chromosome.js?v=1.6.0-preview-labeler-0917-1111";
-import { initBilayerSection } from "./inspector/section-bilayer.js?v=1.6.0-preview-labeler-0917-1111";
+import { initBilayerSection } from "./inspector/section-bilayer.js?v=1.6.0-remediation-0929";
 import { initNeuronSection } from "./inspector/section-neuron.js?v=1.6.0-preview-labeler-0917-1111";
-import { initLegendSection } from "./inspector/section-legend.js?v=1.6.0-preview-labeler-0917-1111";
+import { initLegendSection } from "./inspector/section-legend.js?v=1.6.0-remediation-0929";
 import { initPedigreeSection } from "./inspector/section-pedigree.js?v=1.6.0-preview-labeler-0917-1111";
 // 화학 부품 10종 (2026-07-31) — 규격은 docs/CHEM_PARTS_SPEC.md
-import { initVesselSection } from "./inspector/section-vessel.js?v=1.6.0-preview-labeler-0917-1111";
-import { initChemModelSection } from "./inspector/section-chemmodel.js?v=1.6.0-preview-labeler-0917-1111";
-import { initParticleBoxSection } from "./inspector/section-particlebox.js?v=1.6.0-preview-labeler-0917-1111";
-import { initOrbitalSection } from "./inspector/section-orbital.js?v=1.6.0-preview-labeler-0917-1111";
-import { initBondGroupSection } from "./inspector/section-bondgroup.js?v=1.6.0-preview-labeler-0917-1111";
-import { initChemChartSection } from "./inspector/section-chemchart.js?v=1.6.0-preview-labeler-0917-1111";
+import { initVesselSection } from "./inspector/section-vessel.js?v=1.6.0-remediation-0929";
+import { initChemModelSection } from "./inspector/section-chemmodel.js?v=1.6.0-remediation-0929";
+import { initParticleBoxSection } from "./inspector/section-particlebox.js?v=1.6.0-remediation-0929";
+import { initOrbitalSection } from "./inspector/section-orbital.js?v=1.6.0-remediation-0929";
+import { initBondGroupSection } from "./inspector/section-bondgroup.js?v=1.6.0-remediation-0929";
+import { initChemChartSection } from "./inspector/section-chemchart.js?v=1.6.0-remediation-0929";
 import { initAxisBreakSection } from "./inspector/section-axisbreak.js?v=1.6.0-preview-labeler-0917-1111";
-import { initChemGraphSection } from "./inspector/section-chemgraph.js?v=1.6.0-preview-labeler-0917-1111";
-import { initElectrodeSection } from "./inspector/section-electrode.js?v=1.6.0-preview-labeler-0917-1111";
+import { initChemGraphSection } from "./inspector/section-chemgraph.js?v=1.6.0-remediation-0929";
+import { initElectrodeSection } from "./inspector/section-electrode.js?v=1.6.0-remediation-0929";
 import { initPeriodicSection } from "./inspector/section-periodic.js?v=1.6.0-preview-labeler-0917-1111";
-import { initAutosave } from "./autosave.js?v=1.6.0-ai-latest-fixes-0928";
-import { initPages } from "./pages.js?v=1.6.0-workbench-polish-0928-final";
-import { localizeShortcutLabels } from "./platform.js?v=1.6.0-preview-labeler-0917-1111";
-import { initModalDrag } from "./modal-drag.js?v=1.6.0-preview-common-year-login-0918-1302";
+import { initAutosave } from "./autosave.js?v=1.6.0-remediation-0929";
+import { initPages } from "./pages.js?v=1.6.0-remediation-0929";
+import { localizeShortcutLabels } from "./platform.js?v=1.6.0-remediation-0929";
+import { initModalDrag } from "./modal-drag.js?v=1.6.0-remediation-0929";
 import { initSteppers } from "./stepper.js?v=1.6.0-preview-labeler-0917-1111";
-import { initReferenceWindows } from "./reference-window.js?v=1.6.0-preview-common-year-login-0918-1302";
-import { initTutorial } from "./tutorial.js?v=1.6.0-workbench-polish-0928-final";
-import { initAiInstallGuide } from "./ai-install-guide.js?v=1.6.0-preview-labeler-0917-1111";
-import { initAiPanel } from "./ai-panel.js?v=1.6.0-server-fixes-0929";
+import { initReferenceWindows } from "./reference-window.js?v=1.6.0-remediation-0929";
+import { initTutorial } from "./tutorial.js?v=1.6.0-remediation-0929";
+import { initAiInstallGuide } from "./ai-install-guide.js?v=1.6.0-remediation-0929";
+import { initAiPanel } from "./ai-panel.js?v=1.6.0-remediation-0929";
 
 const svg = document.getElementById("canvas");
 // Canvas interaction transfers keyboard ownership away from the last toolbar button.
@@ -415,13 +415,13 @@ initReferenceWindows(state);
    페이지(연습용 페이지 생성)와 view-mode(Pro 전환) 배선이 끝난 뒤에 켠다. */
 initTutorial();
 
-/* ----- 브라우저 기본 확대/축소 차단(Ctrl+휠, Ctrl +/−/0) -----
-   앱은 자체 캔버스 줌 + 환경 설정(화면 크기)을 쓰므로, 브라우저 전체 확대로
-   레이아웃이 깨지지 않게 막는다. 캔버스 위 Ctrl+휠(도형 줌)은 그대로 동작. */
-// Mac은 ⌘+휠로도 브라우저 확대가 되고, 트랙패드 핀치는 ctrlKey=true인 휠로 온다 — 둘 다 막는다.
-window.addEventListener("wheel", (e) => { if (e.ctrlKey || e.metaKey) e.preventDefault(); }, { passive: false });
+/* Canvas and crop views own their zoom; surrounding UI keeps browser zoom. */
+const ownsZoom = target => target instanceof Element && target.closest("#ruler-container, [data-unilib-crop-stage]");
+window.addEventListener("wheel", (e) => {
+  if ((e.ctrlKey || e.metaKey) && ownsZoom(e.target)) e.preventDefault();
+}, { passive: false });
 window.addEventListener("keydown", (e) => {
-  if ((e.ctrlKey || e.metaKey) && ["+", "-", "=", "0"].includes(e.key)) e.preventDefault();
+  if ((e.ctrlKey || e.metaKey) && ["+", "-", "=", "0"].includes(e.key) && ownsZoom(e.target)) e.preventDefault();
 });
 
 /* ----- 퍼스널 오브젝트: 선택 저장 → 좌측 라이브러리/검색에서 재사용 ----- */

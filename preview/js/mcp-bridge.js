@@ -1,4 +1,4 @@
-import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-preview-labeler-0917-1111';
+import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-remediation-0929';
 /* ===== MCP BRIDGE — 열려 있는 앱에 외부(Claude/MCP)에서 객체를 넣는 통로 =====
  *
  * 무엇을 하나: `tools/mcp-5e` MCP 서버가 로컬(127.0.0.1)에 열어 둔 통로에 붙어서,
@@ -19,15 +19,15 @@ import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-pre
  * 들어오는 모든 변경은 undoStack에 스냅샷을 남긴다. 마음에 안 들면 Ctrl+Z로 되돌린다.
  */
 
-import { state } from "./state.js?v=1.6.0-preview-labeler-0917-1111";
+import { state } from "./state.js?v=1.6.0-remediation-0929";
 import {
   serialize as serializeProject, migrate as migrateProject, applyLoaded as applyLoadedProject,
-} from "./project-io.js?v=1.6.0-ai-latest-fixes-0928";
-import { showAlert, showConfirm, showPrompt } from "./ui-dialogs.js?v=1.6.0-preview-labeler-0917-1111";
-import { switchPage, addPage } from "./pages.js?v=1.6.0-workbench-polish-0928-final";
+} from "./project-io.js?v=1.6.0-remediation-0929";
+import { showAlert, showConfirm, showPrompt } from "./ui-dialogs.js?v=1.6.0-remediation-0929";
+import { switchPage, addPage } from "./pages.js?v=1.6.0-remediation-0929";
 import { rasterizeExportCanvas, ensureEmbeddedFonts, insertPngPhys,
-         getContentBounds } from "./svg-export.js?v=1.6.0-preview-lite-hybrid-0922";
-import { translateObject } from "./transform.js?v=1.6.0-workbench-polish-0928-final";
+         getContentBounds } from "./svg-export.js?v=1.6.0-remediation-0929";
+import { translateObject } from "./transform.js?v=1.6.0-remediation-0929";
 import { captureDocumentSnapshot, commitDocumentHistory } from "./document-history.js?v=1.6.0-preview-labeler-0917-1111";
 import { MCP_BRIDGE_PORTS, parseMcpPairingRecord } from "./mcp-pairing.js?v=1.6.0-preview-labeler-0917-1111";
 

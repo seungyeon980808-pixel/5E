@@ -14,17 +14,17 @@
 // selects a new object ??just select, no move this press."
 
 import { screenToWorld, getRenderScale } from "./viewport.js?v=1.6.0-preview-lite-hybrid-0922";
-import { resolveSnap, resolveEndpointSnap, resolveRadialCenterSnap } from "./snap.js?v=1.6.0-preview-lite-hybrid-0922";
-import { setSnapPreview, setSmartGuides, pendulumBBox } from "./render.js?v=1.6.0-preview-lite-hybrid-0922";
-import { pickSelectableObjectFromEvent } from "./tools.js?v=1.6.0-workbench-polish-0928-final";
-import { isObjectSelectable } from "./pick.js?v=1.6.0-preview-lite-hybrid-0922";
+import { resolveSnap, resolveEndpointSnap, resolveRadialCenterSnap } from "./snap.js?v=1.6.0-remediation-0929";
+import { setSnapPreview, setSmartGuides, pendulumBBox } from "./render.js?v=1.6.0-remediation-0929";
+import { pickSelectableObjectFromEvent } from "./tools.js?v=1.6.0-remediation-0929";
+import { isObjectSelectable } from "./pick.js?v=1.6.0-remediation-0929";
 import { IMAGE_EDIT_SESSION_ID } from "./image-cutout.js?v=1.6.0-preview-lite-hybrid-0922";
 import { SHAPE_TYPES, SIZE_TYPES, FLIP_TYPES, POINT_ARRAY_TYPES,
          ENDPOINT_HANDLE_TYPES, TEXT_MEASURED_TYPES } from "./object-types.js?v=1.6.0-preview-labeler-0917-1111";
 
 import { isPageHistoryEntry, inversePageHistoryEntry, restorePageHistoryEntry } from "./page-history.js?v=1.6.0-preview-labeler-0917-1111";
-import { initObjectClipboard, cloneClipboardObjects } from "./editor-clipboard.js?v=1.6.0-preview-labeler-0917-1111";
-import { snapKey, modKey, IS_MAC, shortcutKey, blocksCanvasShortcut, hasBlockingModal } from "./platform.js?v=1.6.0-preview-labeler-0917-1111";
+import { initObjectClipboard, cloneClipboardObjects } from "./editor-clipboard.js?v=1.6.0-remediation-0929";
+import { snapKey, modKey, IS_MAC, shortcutKey, blocksCanvasShortcut, hasBlockingModal } from "./platform.js?v=1.6.0-remediation-0929";
 /* ----- shared lock guard: locked objects are excluded from mutating ops ----- */
 function isMutable(o) { return o && !o.locked; }
 function isPositionMovable(o) { return isMutable(o) && !o.positionLocked; }
