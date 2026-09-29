@@ -1,10 +1,10 @@
-import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-preview-labeler-0917-1111';
+import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-remediation-0929';
 import {
   TEMPLATES,
   renderSymbolsForCategories,
   renderSymbolsForIds,
   sizeIconViewBox,
-} from "./templates.js?v=1.6.0-workbench-polish-0928-final";
+} from "./templates.js?v=1.6.0-remediation-0929";
 
 const SUBJECTS = {
   p: {

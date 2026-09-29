@@ -1,4 +1,4 @@
-import { createBatchQueue } from './ai-batch-queue.js?v=1.6.0-ai-followup-0928';
+import { createBatchQueue } from './ai-batch-queue.js?v=1.6.0-remediation-0929';
 import { parseBatchSource } from './ai-batch-source.js?v=1.6.0-ai-followup-0928';
 
 const clone = value => structuredClone(value);

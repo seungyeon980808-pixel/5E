@@ -1,4 +1,4 @@
-import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-preview-labeler-0917-1111';
+import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-remediation-0929';
 /* ===== AUTOSAVE (자동 저장 · 크래시 복구) =====
  *
  * 작업 중인 도해를 디바운스(2.5초)로 IndexedDB에 자동 저장하고, 브라우저 강제
@@ -12,8 +12,8 @@ import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-pre
  * 스냅샷이 수 MB에 달할 수 있어 localStorage(≈5MB, 문자열 전용) 용량이 부족하다.
  */
 
-import { serialize, migrate, applyLoaded } from "./project-io.js?v=1.6.0-ai-latest-fixes-0928";
-import { showAlert, showConfirm } from "./ui-dialogs.js?v=1.6.0-preview-labeler-0917-1111";
+import { serialize, migrate, applyLoaded } from "./project-io.js?v=1.6.0-remediation-0929";
+import { showAlert, showConfirm } from "./ui-dialogs.js?v=1.6.0-remediation-0929";
 
 import { captureProjectStatus, markProjectStatus } from "./project-status.js?v=1.6.0-ai-latest-fixes-0928";
 
@@ -225,7 +225,8 @@ export async function initAutosave(state, { selectRecoveryCheckpoint } = {}) {
       const checkpoints = [...previewCheckpoints, ...legacy.checkpoints]
         .sort((a, b) => (b.ts || 0) - (a.ts || 0));
       const selected = await selectRecoveryCheckpoint(checkpoints, { legacyStatus: legacy.status });
-      if (selected) {
+      if (selected === "deferred") recoveryChoice = "deferred";
+      else if (selected) {
         await restoreRecoveryCheckpoint(state, selected);
         recoveryChoice = "restore";
         checkpointRecovered = true;
@@ -237,10 +238,10 @@ export async function initAutosave(state, { selectRecoveryCheckpoint } = {}) {
       if (latest && latest.data && snapshotHasWork(latest.data)) {
         const ok = await showConfirm(
           `이전에 작업하던 도해가 남아 있습니다.\n(${formatTime(latest.ts)})\n\n이전 작업을 복구할까요?`,
-          { title: "작업 복구", okText: "복구", cancelText: "새로 시작" }
+          { title: "작업 복구", okText: "복구", cancelText: "새로 시작", dismissValue: "deferred" }
         );
-        recoveryChoice = ok ? "restore" : "fresh";
-        if (ok) {
+        recoveryChoice = ok === "deferred" ? "deferred" : ok ? "restore" : "fresh";
+        if (ok === true) {
           applyLoaded(state, migrate(latest.data));
           markProjectStatus(state, captureProjectStatus(state), "recovery");
         }

@@ -10,27 +10,27 @@
 // source of truth, and the saved file never supplies a separate groups list.
 
 import { screenToWorld } from "./viewport.js?v=1.6.0-preview-lite-hybrid-0922";
-import { applyNewObjectStyleDefaults, migrateObjectStyleMode } from "./style-mode.js?v=1.6.0-preview-labeler-0917-1111";
-import { showProjectCloseDialog } from "./project-close-dialog.js?v=1.6.0-preview-labeler-0917-1111";
-import { showAlert, showConfirm } from "./ui-dialogs.js?v=1.6.0-preview-labeler-0917-1111";
-import { downscaleIfNeeded } from "./image-paste.js?v=1.6.0-workbench-polish-0928-final";
-import { DEFAULT_TEXT_SIZE_MM, DEFAULT_TEXT_FONT, normalizeTextRuns, textRunsToText } from "./state.js?v=1.6.0-preview-labeler-0917-1111";
+import { applyNewObjectStyleDefaults, migrateObjectStyleMode } from "./style-mode.js?v=1.6.0-remediation-0929";
+import { showProjectCloseDialog } from "./project-close-dialog.js?v=1.6.0-remediation-0929";
+import { showAlert, showConfirm } from "./ui-dialogs.js?v=1.6.0-remediation-0929";
+import { downscaleIfNeeded } from "./image-paste.js?v=1.6.0-remediation-0929";
+import { DEFAULT_TEXT_SIZE_MM, DEFAULT_TEXT_FONT, normalizeTextRuns, textRunsToText } from "./state.js?v=1.6.0-remediation-0929";
 import {
   ENDPOINT_HANDLE_TYPES, LABEL_CAPABLE_TYPES, OBJECT_TYPE_IDS,
   POINT_ARRAY_TYPES, SIZE_TYPES, TEXT_MEASURED_TYPES,
 } from "./object-types.js?v=1.6.0-preview-labeler-0917-1111";
-import { insertImageFromSrc } from "./image-paste.js?v=1.6.0-workbench-polish-0928-final";
-import { addPage } from "./pages.js?v=1.6.0-workbench-polish-0928-final";
+import { insertImageFromSrc } from "./image-paste.js?v=1.6.0-remediation-0929";
+import { addPage } from "./pages.js?v=1.6.0-remediation-0929";
 
 import { initProjectStatus, captureProjectStatus, markProjectStatus } from "./project-status.js?v=1.6.0-ai-latest-fixes-0928";
-import { modKey, shortcutKey, isEditingTarget, isComposingKey } from "./platform.js?v=1.6.0-preview-labeler-0917-1111";
-import { initProjectLaunch } from './project-launch.js?v=1.6.0-preview-web-native-project-0918-1617';
+import { modKey, shortcutKey, isEditingTarget, isComposingKey } from "./platform.js?v=1.6.0-remediation-0929";
+import { initProjectLaunch } from './project-launch.js?v=1.6.0-remediation-0929';
 import { extractWindowsProjectSource } from './windows-project-source.mjs?v=1.6.0-preview-project-launcher-0918-1508';
 
-import { chooseProjectSaveTarget, timestampProjectFilename } from './project-save-dialog.js?v=1.6.0-preview-golden-export-save-0922';
+import { chooseProjectSaveTarget, timestampProjectFilename } from './project-save-dialog.js?v=1.6.0-remediation-0929';
 import {
   FS_DIR_SUPPORTED, loadSavedProjectDir, currentProjectDirName, pickProjectDir, writeProjectToDir,
-} from './export-dir.js?v=1.6.0-preview-golden-export-save-0922';
+} from './export-dir.js?v=1.6.0-remediation-0929';
 let savingProject = false;
 
 // Schema version of the saved file. Distinct from the app UI version.

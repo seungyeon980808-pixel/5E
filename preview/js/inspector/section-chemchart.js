@@ -13,7 +13,7 @@
  */
 
 import { makeSection } from "./widgets.js?v=1.6.0-preview-labeler-0917-1111";
-import { CHEMCHART_PIE_COLORS } from "../render/chemchart.js?v=1.6.0-preview-labeler-0917-1111";
+import { CHEMCHART_PIE_COLORS } from "../render/chemchart.js?v=1.6.0-remediation-0929";
 
 const KINDS = [["bar", "막대그래프"], ["pie", "원그래프"]];
 

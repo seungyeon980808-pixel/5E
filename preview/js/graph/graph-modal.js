@@ -13,9 +13,9 @@
  * 평면 속성만 갱신(박스 위치·크기 보존)하고 계열은 전량 재생성한다 — 표시점/수선
  * 등 부속 객체는 funcgraph id가 아니라 planeId만 참조하므로 안전. */
 
-import { state, ptToMm, mmToPt } from "../state.js?v=1.6.0-preview-labeler-0917-1111";
+import { state, ptToMm, mmToPt } from "../state.js?v=1.6.0-remediation-0929";
 import { makeDefaultCoordplane } from "../function-graph/defaults.js?v=1.6.0-preview-labeler-0917-1111";
-import { renderCoordplane, renderFuncgraph, smoothSamplePts, catmullRomHandles, bezierSamplePts, markerRadius } from "../render/coordplane.js?v=1.6.0-preview-labeler-0917-1111";
+import { renderCoordplane, renderFuncgraph, smoothSamplePts, catmullRomHandles, bezierSamplePts, markerRadius } from "../render/coordplane.js?v=1.6.0-remediation-0929";
 import { sampleFunctionPoints } from "../function-graph/sampler.js?v=1.6.0-preview-labeler-0917-1111";
 import { worldFromMath, mathFromWorld, planeAsY2 } from "../function-graph/coords.js?v=1.6.0-preview-labeler-0917-1111";
 import { nextObjectId } from "../tools/id.js?v=1.6.0-preview-labeler-0917-1111";

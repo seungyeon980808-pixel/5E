@@ -1,4 +1,4 @@
-import { composeReferenceImages } from './ai-reference-composite.js?v=1.6.0-preview-labeler-0917-1111';
+import { composeReferenceImages } from './ai-reference-composite.js?v=1.6.0-remediation-0929';
 import { comparisonGeometry } from './ai-comparison.js?v=1.6.0-ai-latest-fixes-0928';
 const REVIEW_STATES = new Set([
   "idle", "generating", "reviewing", "correcting", "passed",

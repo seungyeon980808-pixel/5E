@@ -11,7 +11,7 @@
  */
 
 import { makeSection } from "./widgets.js?v=1.6.0-preview-labeler-0917-1111";
-import { ORBITAL_CAPACITY } from "../render/orbital.js?v=1.6.0-preview-labeler-0917-1111";
+import { ORBITAL_CAPACITY } from "../render/orbital.js?v=1.6.0-remediation-0929";
 
 const KINDS = [["box", "오비탈 상자"], ["shape", "오비탈 모양"]];
 const SHAPES = [

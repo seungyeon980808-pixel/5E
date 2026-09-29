@@ -1,10 +1,10 @@
-import { attachCropMagnifier } from "./tools/pointer-magnifier.js?v=1.6.0-library-keyboard-magnifier-0928";
+import { attachCropMagnifier } from "./tools/pointer-magnifier.js?v=1.6.0-remediation-0929";
 import { targetPageGeometry, fittedPageSize, createPreviewPaper } from "./library/page-loading.js?v=1.6.0-workbench-polish-0928-final";
-import { createContinuousCropPages } from "./library/continuous-crop-pages.js?v=1.6.0-ai-latest-fixes-0928";
-import { registerEscapeLayer } from "./escape-layers.js?v=1";
-import { DESKTOP_RELEASE_URL } from "./ai-install-guide.js?v=1.6.0-preview-labeler-0917-1111";
-import { safeExternalSourceUrl } from "./library-import-policy.js";
-import { queryHighlightTerms } from "./pdf-library/search.js";
+import { createContinuousCropPages } from "./library/continuous-crop-pages.js?v=1.6.0-remediation-0929";
+import { registerEscapeLayer } from "./escape-layers.js?v=1.6.0-remediation-0929";
+import { DESKTOP_RELEASE_URL } from "./ai-install-guide.js?v=1.6.0-remediation-0929";
+import { safeExternalSourceUrl } from "./library-import-policy.js?v=1.6.0-remediation-0929";
+import { queryHighlightTerms } from "./pdf-library/search.js?v=1.6.0-remediation-0929";
 import { chooseWorkbenchAssignment } from "./library/workbench-assignment.js?v=1.6.0-preview-emerald-polish-0921";
 
 const SOURCE_STORAGE_KEY = "5e.unified-library.sources.v1";
@@ -855,7 +855,7 @@ function buildShell() {
         </aside>
         <button class="unilib-scrim" data-unilib-scrim type="button" aria-label="열린 패널 닫기"></button>
       </div>
-      <div class="unilib-crop library-reader--expanded" data-unilib-crop hidden role="dialog" aria-modal="true" aria-labelledby="unilib-crop-title"><header><strong id="unilib-crop-title">여러 영역 크롭</strong><div class="unilib-crop-view-controls"><span class="unilib-crop-page-controls" data-unilib-crop-page-controls hidden><button type="button" class="unilib-button" data-unilib-crop-page-prev aria-label="이전 쪽">‹</button><output data-unilib-crop-page aria-label="현재 PDF 쪽"></output><button type="button" class="unilib-button" data-unilib-crop-page-next aria-label="다음 쪽">›</button></span><button type="button" class="unilib-button" data-unilib-crop-zoom-out aria-label="축소">−</button><output data-unilib-crop-zoom aria-label="확대 비율">100%</output><button type="button" class="unilib-button" data-unilib-crop-zoom-in aria-label="확대">＋</button><button type="button" class="unilib-button" data-unilib-crop-fit>좌우 맞춤</button></div></header><div class="unilib-crop-workspace library-reader-main"><div class="unilib-crop-stage-shell"><div class="unilib-crop-stage library-reader-preview" data-unilib-crop-stage tabindex="0" aria-label="PDF 페이지에서 자를 영역 선택"><div class="unilib-crop-canvas" data-unilib-crop-canvas><img data-unilib-crop-image draggable="false" alt="자를 원문 PDF 페이지"><div class="unilib-crop-accepted-layer" data-unilib-crop-accepted-layer aria-hidden="true"></div><div class="unilib-crop-draft" data-unilib-crop-box aria-hidden="true"></div></div></div><div class="unilib-crop-load-state" data-unilib-crop-load-state role="status" hidden><span class="unilib-crop-spinner" aria-hidden="true"></span><span data-unilib-crop-load-message>PDF 페이지를 불러오는 중입니다…</span><button type="button" class="unilib-button" data-unilib-crop-retry hidden>다시 시도</button></div></div><aside class="unilib-crop-preview library-reader-sidebar"><div class="unilib-crop-collection-heading"><strong data-unilib-crop-count>크롭 이미지 0개</strong></div><div class="unilib-crop-card-grid"><div class="unilib-crop-collection library-crop-collection" data-unilib-crop-collection aria-label="추가한 자르기 영역"></div><section class="unilib-crop-draft-review" data-unilib-crop-draft-review hidden aria-label="추가할 영역 미리보기"><canvas data-unilib-crop-preview aria-label="현재 선택 영역 미리보기"></canvas><div class="unilib-crop-draft-meta"><strong>추가할 영역</strong><div class="unilib-crop-confirm" data-unilib-crop-confirm hidden><strong>이 영역을 추가할까요?</strong><button type="button" class="unilib-button" data-unilib-crop-draft-cancel>취소</button><button type="button" class="unilib-button" data-unilib-crop-save title="Enter / Space" disabled>추가</button></div></div></section></div><p class="unilib-crop-selection" data-unilib-crop-selection>추가한 영역이 없습니다.</p></aside></div><footer class="unilib-crop-footer"><button type="button" class="unilib-button" data-unilib-crop-cancel>닫기</button><button type="button" class="unilib-primary" data-unilib-crop-workbench disabled>작업대에 넣기</button></footer></div>
+      <div class="unilib-crop library-reader--expanded" data-unilib-crop hidden role="dialog" aria-modal="true" aria-labelledby="unilib-crop-title"><header><strong id="unilib-crop-title">여러 영역 크롭</strong><div class="unilib-crop-view-controls"><span class="unilib-crop-page-controls" data-unilib-crop-page-controls hidden><button type="button" class="unilib-button" data-unilib-crop-page-prev aria-label="이전 쪽">‹</button><output data-unilib-crop-page aria-label="현재 PDF 쪽"></output><button type="button" class="unilib-button" data-unilib-crop-page-next aria-label="다음 쪽">›</button></span><button type="button" class="unilib-button" data-unilib-crop-zoom-out aria-label="축소">−</button><output data-unilib-crop-zoom aria-label="확대 비율">100%</output><button type="button" class="unilib-button" data-unilib-crop-zoom-in aria-label="확대">＋</button><button type="button" class="unilib-button" data-unilib-crop-fit>좌우 맞춤</button></div></header><div class="unilib-crop-workspace library-reader-main"><div class="unilib-crop-stage-shell"><div class="unilib-crop-stage library-reader-preview" data-unilib-crop-stage tabindex="0" aria-label="PDF 페이지에서 자를 영역 선택 · Enter로 첫 영역 만들기, 다음 영역은 Shift+Enter, 화살표로 이동, Shift와 화살표로 크기 조절"><div class="unilib-crop-canvas" data-unilib-crop-canvas><img data-unilib-crop-image draggable="false" alt="자를 원문 PDF 페이지"><div class="unilib-crop-accepted-layer" data-unilib-crop-accepted-layer aria-hidden="true"></div><div class="unilib-crop-draft" data-unilib-crop-box aria-hidden="true"></div></div></div><div class="unilib-crop-load-state" data-unilib-crop-load-state role="status" hidden><span class="unilib-crop-spinner" aria-hidden="true"></span><span data-unilib-crop-load-message>PDF 페이지를 불러오는 중입니다…</span><button type="button" class="unilib-button" data-unilib-crop-retry hidden>다시 시도</button></div></div><aside class="unilib-crop-preview library-reader-sidebar"><div class="unilib-crop-collection-heading"><strong data-unilib-crop-count>크롭 이미지 0개</strong></div><div class="unilib-crop-card-grid"><div class="unilib-crop-collection library-crop-collection" data-unilib-crop-collection aria-label="추가한 자르기 영역"></div><section class="unilib-crop-draft-review" data-unilib-crop-draft-review hidden aria-label="추가할 영역 미리보기"><canvas data-unilib-crop-preview aria-label="현재 선택 영역 미리보기"></canvas><div class="unilib-crop-draft-meta"><strong>추가할 영역</strong><div class="unilib-crop-confirm" data-unilib-crop-confirm hidden><strong>이 영역을 추가할까요?</strong><button type="button" class="unilib-button" data-unilib-crop-draft-cancel>취소</button><button type="button" class="unilib-button" data-unilib-crop-save title="Enter / Space" disabled>추가</button></div></div></section></div><p class="unilib-crop-selection" data-unilib-crop-selection role="status" aria-live="polite">추가한 영역이 없습니다.</p></aside></div><footer class="unilib-crop-footer"><button type="button" class="unilib-button" data-unilib-crop-cancel>닫기</button><button type="button" class="unilib-primary" data-unilib-crop-workbench disabled>작업대에 넣기</button></footer></div>
       <div class="unilib-dialog-backdrop" data-unilib-drive-settings hidden><section class="unilib-dialog" role="dialog" aria-modal="true" aria-labelledby="unilib-drive-settings-title"><header><h3 id="unilib-drive-settings-title">Drive 자료 연결</h3><button type="button" class="unilib-icon-button" data-unilib-drive-settings-close aria-label="Drive 자료 연결 닫기">${ICONS.close}</button></header><div data-unilib-folder-manager><p class="unilib-folder-guidance">공개 읽기 전용 폴더를 연결하면 파일 목록과 검색 색인을 먼저 읽고, PDF 원문은 필요할 때만 가져옵니다.</p><div data-unilib-drive-settings-body></div></div></section></div>
       <div class="unilib-dialog-backdrop" data-unilib-local-install hidden><section class="unilib-dialog unilib-local-install-dialog" role="dialog" aria-modal="true" aria-labelledby="unilib-local-install-title"><header><h3 id="unilib-local-install-title" tabindex="-1">설치형 5E에서 폴더 연결하기</h3><button type="button" class="unilib-icon-button" data-unilib-local-install-close aria-label="설치 안내 닫기">${ICONS.close}</button></header><div class="unilib-local-install-body"><p>내 컴퓨터의 폴더를 연결하려면 설치형 5E가 필요합니다.</p><a class="unilib-local-install-download ai-action-motion" data-ai-orbit="true" href="${DESKTOP_RELEASE_URL}" target="_blank" rel="noopener noreferrer"><span class="ai-action-motion-label">설치형 다운로드</span></a></div></section></div>
       <p class="unilib-status" data-unilib-status role="status" aria-live="polite" hidden></p>
@@ -3075,10 +3075,30 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     paintCrop();
     if (draftCrop) void paintExactCropPreview();
   });
+  const startsKeyboardCrop = (event) => event.key === "Enter" && !draftCrop && (event.shiftKey || !acceptedCrops.length);
   cropStage.addEventListener("keydown", (event) => {
-    if (!cropReady || !draftCrop || !["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) return;
-    event.preventDefault();
-    draftCrop = cropRectFromKeyboard(draftCrop, event.key, event.shiftKey);
+    if (!cropReady || cropSession?.viewOnly || event.target.closest("button, input, textarea")) return;
+    if (startsKeyboardCrop(event)) {
+      event.preventDefault();
+      event.stopPropagation();
+      const pageBounds = cropCanvas.getBoundingClientRect();
+      const viewport = cropStage.getBoundingClientRect();
+      const left = Math.max(pageBounds.left, viewport.left);
+      const top = Math.max(pageBounds.top, viewport.top);
+      const width = Math.max(0, Math.min(pageBounds.right, viewport.right) - left) / pageBounds.width;
+      const height = Math.max(0, Math.min(pageBounds.bottom, viewport.bottom) - top) / pageBounds.height;
+      if (!width || !height) return;
+      draftCrop = clampRect([(left - pageBounds.left) / pageBounds.width + width / 4,
+        (top - pageBounds.top) / pageBounds.height + height / 4, width / 2, height / 2]);
+      editingAcceptedId = null;
+      overlay.querySelector("[data-unilib-crop-selection]").textContent = "자를 영역을 만들었습니다. 화살표로 이동하고 Shift와 화살표로 크기를 조절하세요.";
+    } else {
+      if (!draftCrop || !["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) return;
+      event.preventDefault();
+      event.stopPropagation();
+      draftCrop = cropRectFromKeyboard(draftCrop, event.key, event.shiftKey);
+      overlay.querySelector("[data-unilib-crop-selection]").textContent = `선택 영역: 가로 ${Math.round(draftCrop[2] * 100)}%, 세로 ${Math.round(draftCrop[3] * 100)}%, 왼쪽 ${Math.round(draftCrop[0] * 100)}%, 위 ${Math.round(draftCrop[1] * 100)}%`;
+    }
     cropPreviewExact = false;
     cropExact = null;
     paintCrop();
@@ -3129,6 +3149,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     }
     if (cancelPlacementChoice) return;
     if (!cropDialog.hidden) {
+      if (startsKeyboardCrop(event) && cropStage.contains(event.target)) return;
       if (["Enter", " "].includes(event.key) && !editableTarget(event.target) && !event.isComposing && !event.ctrlKey && !event.metaKey && !event.altKey && !event.shiftKey) {
         event.preventDefault();
         event.stopImmediatePropagation();

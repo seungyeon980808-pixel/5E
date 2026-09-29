@@ -11,12 +11,12 @@
 //  - 삽입물 전체를 groupId 하나로 묶음 (Shift+G로 해제 가능; undo는 rebuildGroups로 안전)
 // 삽입은 반드시 state.update() 경유 — 스냅샷 1개 = Undo 1스텝. */
 
-import { applyNewObjectStyleDefaults } from "./style-mode.js?v=1.4.0";
-import { DEFAULT_TEXT_FONT } from "./state.js?v=1.4.0";
-import { MAX_PROCESS_DIMENSION } from "./image-analysis.js";
-import { createImageAnalysisController } from "./image-analysis-controller.js";
-import { measureFormula } from "./formula.js?v=1.4.0";
-import { modKey, shortcutKey, keyLabel } from "./platform.js?v=1.4.0";
+import { applyNewObjectStyleDefaults } from "./style-mode.js?v=1.6.0-remediation-0929";
+import { DEFAULT_TEXT_FONT } from "./state.js?v=1.6.0-remediation-0929";
+import { MAX_PROCESS_DIMENSION } from "./image-analysis.js?v=1.6.0-remediation-0929";
+import { createImageAnalysisController } from "./image-analysis-controller.js?v=1.6.0-remediation-0929";
+import { measureFormula } from "./formula.js?v=1.6.0-remediation-0929";
+import { modKey, shortcutKey, keyLabel } from "./platform.js?v=1.6.0-remediation-0929";
 import { selectedObjectifyImage, objectifyImageFile } from "./image-objectify-source.js";
 import { renderSessionToDataUrl } from "./image-cutout.js?v=1.6.0-preview-lite-hybrid-0922";
 

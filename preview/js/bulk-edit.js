@@ -1,4 +1,4 @@
-import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-preview-labeler-0917-1111';
+import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-remediation-0929';
 /* ===== 전체 통일/수정: 여러 오브젝트의 속성을 한 번에 =====
  *
  * 고급 기능 [전체 통일/수정] 버튼 → 모달.
@@ -12,11 +12,11 @@ import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-pre
  *   · 적용 = Undo 1스텝.
  */
 
-import { ptToMm, MIN_TEXT_PT, TEXT_FONTS, DEFAULT_TEXT_FONT } from "./state.js?v=1.6.0-preview-labeler-0917-1111";
+import { ptToMm, MIN_TEXT_PT, TEXT_FONTS, DEFAULT_TEXT_FONT } from "./state.js?v=1.6.0-remediation-0929";
 import { SHAPE_TYPES } from "./object-types.js?v=1.6.0-preview-labeler-0917-1111";
-import { showAlert } from "./ui-dialogs.js?v=1.6.0-preview-labeler-0917-1111";
-import { getObjectBBox } from "./pick.js?v=1.6.0-preview-lite-hybrid-0922";
-import { translateObject } from "./transform.js?v=1.6.0-workbench-polish-0928-final";
+import { showAlert } from "./ui-dialogs.js?v=1.6.0-remediation-0929";
+import { getObjectBBox } from "./pick.js?v=1.6.0-remediation-0929";
+import { translateObject } from "./transform.js?v=1.6.0-remediation-0929";
 
 let _state = null;
 let _overlay = null;

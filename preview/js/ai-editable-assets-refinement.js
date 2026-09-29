@@ -1,4 +1,4 @@
-import { decodeScopedPng, encodeScopedPng } from './ai-scoped-edit-png.js?v=1.6.0-preview-labeler-0917-1111';
+import { decodeScopedPng, encodeScopedPng } from './ai-scoped-edit-png.js?v=1.6.0-remediation-0929';
 
 const MAX_PIXELS = 16_000_000;
 const MAX_ASSETS = 128;

@@ -10,7 +10,7 @@
  */
 
 import { makeSection } from "./widgets.js?v=1.6.0-preview-labeler-0917-1111";
-import { BILAYER_DEFAULTS } from "../render/bilayer.js?v=1.6.0-preview-labeler-0917-1111";
+import { BILAYER_DEFAULTS } from "../render/bilayer.js?v=1.6.0-remediation-0929";
 
 function row(labelText) {
   const r = document.createElement("div");

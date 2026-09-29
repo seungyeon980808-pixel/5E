@@ -11,7 +11,7 @@
  */
 
 import { makeSection } from "./widgets.js?v=1.6.0-preview-labeler-0917-1111";
-import { PARTICLE_STATES, PARTICLE_MOTIONS, PARTICLE_SHAPES } from "../render/particlebox.js?v=1.6.0-preview-labeler-0917-1111";
+import { PARTICLE_STATES, PARTICLE_MOTIONS, PARTICLE_SHAPES } from "../render/particlebox.js?v=1.6.0-remediation-0929";
 
 const STATES = [["solid", "고체 (격자)"], ["liquid", "액체"], ["gas", "기체"]];
 const MOTIONS = [["none", "없음"], ["trail", "속도선(꼬리)"], ["arrow", "화살표"]];
