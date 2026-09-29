@@ -1,16 +1,17 @@
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const Module = require('node:module');
+const { pathToFileURL } = require('node:url');
 const { EventEmitter } = require('node:events');
 const { PassThrough, Writable } = require('node:stream');
 
 function harness(options = {}) {
   const handlers = new Map(), events = [], requests = [], children = [];
-  let ready;
+  let ready, mainWindow;
   class Window {
     static getAllWindows() { return []; }
-    constructor() { this.webContents = { send: (channel, payload) => events.push({channel, payload}), setWindowOpenHandler() {}, once() {} }; }
-    isDestroyed() { return false; } loadFile() {} on() {} once() {} setMenu() {} setMenuBarVisibility() {} show() {}
+    constructor() { mainWindow = this; this.webContents = { mainFrame: { url: '' }, on() {}, send: (channel, payload) => events.push({channel, payload}), setWindowOpenHandler() {}, once() {} }; }
+    isDestroyed() { return false; } loadFile(file) { this.webContents.mainFrame.url = pathToFileURL(file).href; } on() {} once() {} setMenu() {} setMenuBarVisibility() {} show() {}
   }
   const spawn = () => {
     const child = new EventEmitter(); children.push(child);
@@ -36,7 +37,7 @@ function harness(options = {}) {
   };
   try { delete require.cache[require.resolve('./main.cjs')]; require('./main.cjs'); ready(); }
   finally { Module._load=original; delete require.cache[require.resolve('./main.cjs')]; }
-  return { handlers,events,requests,children, call:(name,payload)=>handlers.get(`codex:${name}`)({},payload) };
+  return { handlers,events,requests,children, call:(name,payload)=>handlers.get(`codex:${name}`)({sender:mainWindow.webContents,senderFrame:mainWindow.webContents.mainFrame},payload) };
 }
 
 test('desktop workspace A/B/C concurrent turns route interleaved replies and only cancel B', async () => {

@@ -44,6 +44,7 @@ async function captureDesktopSmokeScript() {
       this.webContents = {
         once(event, callback) { if (event === "did-finish-load") didFinishLoad = callback; },
         setWindowOpenHandler() {},
+        on() {},
         async executeJavaScript(source) { smokeScript = source; return {}; },
       };
     }

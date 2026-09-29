@@ -119,10 +119,17 @@ function shortcutModifiersForPlatform(platform) {
   return /mac/i.test(String(platform || "")) ? { metaKey: true } : { ctrlKey: true };
 }
 
-function assertTrustedLocalImageSender(event) {
+function handleTrustedIpc(channel, handler) {
+  ipcMain.handle(channel, (event, ...args) => {
+    assertTrustedSender(event);
+    return handler(event, ...args);
+  });
+}
+
+function assertTrustedSender(event) {
   const expectedUrl = pathToFileURL(path.join(__dirname, "..", "preview", "index.html")).href;
   if (!isTrustedIpcSender(event, win, expectedUrl)) {
-    throw new Error("허용되지 않은 로컬 이미지 요청입니다.");
+    throw new Error("Untrusted IPC sender.");
   }
 }
 
@@ -284,6 +291,8 @@ function codexInvocation(args) {
 }
 function send(event, payload, trustedScope, targetScopes) {
   if (!win || win.isDestroyed()) return;
+  const expectedUrl = pathToFileURL(path.join(__dirname, "..", "preview", "index.html")).href;
+  if (!isTrustedIpcSender({ sender: win.webContents, senderFrame: win.webContents.mainFrame }, win, expectedUrl)) return;
   if (event === "codex:event") {
     const owner = eventOwner(payload);
     const { clientScope: untrustedScope, ...message } = payload;
@@ -684,8 +693,15 @@ function createWindow() {
   win.once("ready-to-show", revealMainWindow);
   win.webContents.once("did-fail-load", revealMainWindow);
   win.on("closed", () => { win = null; });
+  const entryUrl = pathToFileURL(path.join(__dirname, "..", "preview", "index.html")).href;
+  win.webContents.on("will-navigate", (event, url) => {
+    if (String(url).split(/[?#]/, 1)[0] !== entryUrl) event.preventDefault();
+  });
+  win.webContents.setWindowOpenHandler(({ url }) => {
+    if (/^https:\/\//i.test(String(url))) void shell.openExternal(url);
+    return { action: "deny" };
+  });
   win.loadFile(path.join(__dirname, "..", "preview", "index.html"));
-  win.webContents.setWindowOpenHandler(({ url }) => { if (/^https:\/\//i.test(url)) shell.openExternal(url); return { action: "deny" }; });
   if (process.env.FIVE_E_SMOKE_TEST === "1") {
     win.webContents.once("did-finish-load", async () => {
       try {
@@ -1234,12 +1250,12 @@ function createWindow() {
     });
   }
 }
-ipcMain.handle("codex:status", async () => ({ server: !!server, login: await loginStatus() }));
-ipcMain.handle("codex:start", () => startServer());
-ipcMain.handle("codex:stop", (_event, payload = {}) => workspaceScope(payload) ? interruptWorkspace(payload) : stopServer());
-ipcMain.handle("codex:models", () => listModels());
-ipcMain.handle("codex:account", () => accountOverview());
-ipcMain.handle("codex:send", (event, payload) => {
+handleTrustedIpc("codex:status", async () => ({ server: !!server, login: await loginStatus() }));
+handleTrustedIpc("codex:start", () => startServer());
+handleTrustedIpc("codex:stop", (_event, payload = {}) => workspaceScope(payload) ? interruptWorkspace(payload) : stopServer());
+handleTrustedIpc("codex:models", () => listModels());
+handleTrustedIpc("codex:account", () => accountOverview());
+handleTrustedIpc("codex:send", (event, payload) => {
   if (process.env.FIVE_E_SMOKE_TEST === "1") {
     if (!isValidSmokeFixtureRequest(event, payload)) {
       throw new Error("Invalid smoke fixture request.");
@@ -1256,9 +1272,9 @@ ipcMain.handle("codex:send", (event, payload) => {
   realSendCount += 1;
   return sendTurn(payload);
 });
-ipcMain.handle("codex:interrupt", (_event, payload = {}) => interruptWorkspace(payload));
-ipcMain.handle("codex:login", () => { const launch = codexInvocation(["login"]); execFile(launch.file, launch.args, { windowsHide: true }); return { ok: true }; });
-ipcMain.handle("capture:sources", async () => {
+handleTrustedIpc("codex:interrupt", (_event, payload = {}) => interruptWorkspace(payload));
+handleTrustedIpc("codex:login", () => { const launch = codexInvocation(["login"]); execFile(launch.file, launch.args, { windowsHide: true }); return { ok: true }; });
+handleTrustedIpc("capture:sources", async () => {
   const sources = await desktopCapturer.getSources({
     types: ["screen", "window"],
     thumbnailSize: { width: 1920, height: 1080 },
@@ -1266,8 +1282,7 @@ ipcMain.handle("capture:sources", async () => {
   });
   return sources.map((source) => ({ id: source.id, name: source.name, data: source.thumbnail.toDataURL() }));
 });
-ipcMain.handle("local-images:pick-folder", async (event) => {
-  assertTrustedLocalImageSender(event);
+handleTrustedIpc("local-images:pick-folder", async (event) => {
   const result = await dialog.showOpenDialog(win, {
     title: "검색할 로컬 이미지 폴더 선택",
     properties: ["openDirectory"],
@@ -1275,13 +1290,11 @@ ipcMain.handle("local-images:pick-folder", async (event) => {
   const folder = result.canceled ? "" : localImages.addRoot(result.filePaths[0] || "");
   return { folder };
 });
-ipcMain.handle("local-images:list", async (event, folder) => {
-  assertTrustedLocalImageSender(event);
+handleTrustedIpc("local-images:list", async (event, folder) => {
   const resolved = localImages.requireRoot(folder);
   return { folder: resolved, items: collectLocalImages(resolved) };
 });
-ipcMain.handle("local-images:thumbnail", async (event, filePath) => {
-  assertTrustedLocalImageSender(event);
+handleTrustedIpc("local-images:thumbnail", async (event, filePath) => {
   const image = localImages.read(filePath);
   if (image.extension === ".svg") return imageDataUrl(image);
   const source = nativeImage.createFromBuffer(image.bytes);
@@ -1294,8 +1307,7 @@ ipcMain.handle("local-images:thumbnail", async (event, filePath) => {
     quality: "good",
   }).toDataURL();
 });
-ipcMain.handle("local-images:read", async (event, filePath) => {
-  assertTrustedLocalImageSender(event);
+handleTrustedIpc("local-images:read", async (event, filePath) => {
   return imageDataUrl(localImages.read(filePath));
 });
 app.whenReady().then(() => {
