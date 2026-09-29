@@ -10,15 +10,12 @@
 <p align="center">
   <img src="https://img.shields.io/badge/version-1.6.0-3f3f46?style=flat-square&labelColor=18181b" alt="version 1.6.0">
   <img src="https://img.shields.io/badge/web-설치_없이-3f3f46?style=flat-square&labelColor=18181b" alt="web">
-  <img src="https://img.shields.io/badge/Windows-x64-3f3f46?style=flat-square&labelColor=18181b&logo=windows" alt="Windows">
-  <img src="https://img.shields.io/badge/macOS-Intel·Apple_Silicon-3f3f46?style=flat-square&labelColor=18181b&logo=apple" alt="macOS">
   <img src="https://img.shields.io/github/license/seungyeon980808-pixel/5E?style=flat-square&labelColor=18181b&color=3f3f46" alt="AGPL-3.0">
 </p>
 
 <p align="center">
   <a href="https://www.5e.ai.kr/"><img src="https://img.shields.io/badge/웹에서_바로_쓰기-5e.ai.kr-18181b?style=for-the-badge" alt="웹에서 바로 쓰기"></a>
-  <a href="https://github.com/seungyeon980808-pixel/5E/releases/latest"><img src="https://img.shields.io/badge/Windows-설치판_받기-18181b?style=for-the-badge&logo=windows&logoColor=white" alt="Windows 설치판"></a>
-  <a href="https://github.com/seungyeon980808-pixel/5E/releases/latest"><img src="https://img.shields.io/badge/macOS-설치판_받기-18181b?style=for-the-badge&logo=apple&logoColor=white" alt="macOS 설치판"></a>
+  <a href="https://github.com/seungyeon980808-pixel/5E/releases/tag/v1.6.0"><img src="https://img.shields.io/badge/1.6.0-릴리즈_노트-18181b?style=for-the-badge" alt="1.6.0 릴리즈 노트"></a>
 </p>
 
 <p align="center">
@@ -42,7 +39,7 @@
 - **자료를 찾는 곳과 그리는 곳이 같습니다.** 교과서·기출 PDF를 검색해서 바로 자릅니다.
 - **선을 직접 따지 않아도 됩니다.** AI가 평가원식 흑백 선화로 바꾸고, 마음에 안 드는 곳만 콕 집어 고칩니다.
 - **시험지 규칙에 맞춥니다.** 배경 제거, 무채색, 선 굵기, 라벨 표기를 시험 그림 기준으로 정리합니다.
-- **설치 없이 씁니다.** 웹에서 바로 열고, 필요하면 Windows·Mac 설치판을 씁니다.
+- **설치 없이 씁니다.** [5e.ai.kr](https://www.5e.ai.kr/)에서 바로 엽니다.
 
 ## 세 단계로 끝나는 시험용 그림
 
@@ -160,22 +157,16 @@
 
 ### 설치판
 
-| 운영체제 | 받는 곳 |
-|---|---|
-| Windows x64 | [릴리즈 페이지](https://github.com/seungyeon980808-pixel/5E/releases/latest)의 설치 파일 |
-| macOS (Apple Silicon) | [릴리즈 페이지](https://github.com/seungyeon980808-pixel/5E/releases/latest)의 `5E-1.6.0-macos-arm64.dmg` |
-| macOS (Intel) | [릴리즈 페이지](https://github.com/seungyeon980808-pixel/5E/releases/latest)의 `5E-1.6.0-macos-x64.dmg` |
+1.6.0은 **웹으로 먼저 출시**합니다. 1.6.0 설치판(Windows·Mac)은 웹 버전 검증을 마친 뒤 PDF 폴더 연결 기능과 함께 따로 내놓을 예정입니다.
 
-설치판은 내 컴퓨터의 Codex 로그인을 사용하고, 내 컴퓨터 폴더를 라이브러리에 연결할 수 있습니다.
-
-**Mac에서 처음 열 때** — DMG를 열어 5E를 응용 프로그램 폴더로 끌어 넣습니다. 처음 실행할 때 “확인되지 않은 개발자” 경고가 뜨면 Finder에서 5E를 **Control-클릭 → 열기**를 한 번 선택하세요. 이후에는 바로 열립니다.
+지금 받을 수 있는 설치판 최신 릴리즈 <strong>v1.5.8</strong>은 [릴리즈 페이지](https://github.com/seungyeon980808-pixel/5E/releases/tag/v1.5.8)에 있습니다. 설치판에는 1.6.0의 라이브러리와 AI 이미지 변환 작업대가 아직 들어 있지 않습니다.
 
 ### AI 연결
 
 | 환경 | 연결 방식 |
 |---|---|
 | 웹 | AI 이미지 변환 창에서 ChatGPT 계정으로 기기 로그인 |
-| 설치판 | 내 컴퓨터에 로그인된 Codex 사용 |
+| 설치판 (1.6.0 준비 중) | 내 컴퓨터에 로그인된 Codex 사용 |
 
 5E는 비밀번호나 인증 토큰을 저장하지 않습니다. AI 기능은 로그인한 계정의 기능과 이용 한도를 따르며, AI 연결 없이도 그리기와 편집은 모두 쓸 수 있습니다.
 
