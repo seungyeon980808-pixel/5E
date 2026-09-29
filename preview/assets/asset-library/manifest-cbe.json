@@ -4,5 +4,403 @@
   "b",
   "e"
  ],
- "items": []
+ "items": [
+  {
+   "id": "c_hand_sanitizer",
+   "subject": "c",
+   "name": "손 소독제(손으로 누름)",
+   "category": "생활 화학",
+   "keywords": [
+    "손 소독제",
+    "손",
+    "펌프병"
+   ],
+   "file": "c/c_hand_sanitizer.png",
+   "thumb": "thumb/c/c_hand_sanitizer.png",
+   "format": "png",
+   "px": [
+    970,
+    1254
+   ],
+   "defaultMm": [
+    25.0,
+    32.32
+   ],
+   "qa": "통과",
+   "qaNote": "상표 비움",
+   "reference": "c1_2024_11_01",
+   "referenceExam": "2024학년도 수능 화학Ⅰ 1번",
+   "origin": "ai-generated",
+   "prompt": "the two hands pressing the pump of a sanitizer bottle. Leave the bottle label area blank."
+  },
+  {
+   "id": "c_bus",
+   "subject": "c",
+   "name": "버스",
+   "category": "생활 화학",
+   "keywords": [
+    "버스",
+    "천연가스",
+    "자동차"
+   ],
+   "file": "c/c_bus.png",
+   "thumb": "thumb/c/c_bus.png",
+   "format": "png",
+   "px": [
+    1292,
+    992
+   ],
+   "defaultMm": [
+    40.0,
+    30.71
+   ],
+   "qa": "통과",
+   "qaNote": "로고·행선지 글자 제거",
+   "reference": "c1_2025_09_01",
+   "referenceExam": "2025학년도 9월 모평 화학Ⅰ 1번",
+   "origin": "ai-generated",
+   "prompt": "the city bus seen from the front-left. Remove every logo and letter on the body and the destination sign."
+  },
+  {
+   "id": "c_tweezers_hand",
+   "subject": "c",
+   "name": "핀셋 든 손",
+   "category": "실험",
+   "keywords": [
+    "손",
+    "핀셋",
+    "장갑"
+   ],
+   "file": "c/c_tweezers_hand.png",
+   "thumb": "thumb/c/c_tweezers_hand.png",
+   "format": "png",
+   "px": [
+    1001,
+    1062
+   ],
+   "defaultMm": [
+    22.0,
+    23.34
+   ],
+   "qa": "보통",
+   "qaNote": "팔 대신 종이 한 장 위로 바뀜",
+   "reference": "c1_2025_09_01",
+   "referenceExam": "2025학년도 9월 모평 화학Ⅰ 1번",
+   "origin": "ai-generated",
+   "prompt": "the gloved hand holding tweezers over a sheet. Draw only the hand, the tweezers and the part of the sheet it touches."
+  },
+  {
+   "id": "c_notebook",
+   "subject": "c",
+   "name": "스프링 공책(빈 쪽)",
+   "category": "실험",
+   "keywords": [
+    "공책",
+    "메모",
+    "스프링"
+   ],
+   "file": "c/c_notebook.png",
+   "thumb": "thumb/c/c_notebook.png",
+   "format": "png",
+   "px": [
+    1590,
+    909
+   ],
+   "defaultMm": [
+    40.0,
+    22.87
+   ],
+   "qa": "통과",
+   "qaNote": "빈 쪽. 흐릿한 얼룩을 후처리로 흰색 채움(v3)",
+   "reference": "c1_2024_09_04",
+   "referenceExam": "2024학년도 9월 모평 화학Ⅰ 4번",
+   "origin": "ai-generated",
+   "prompt": "the spiral-bound notebook. Draw the page completely BLANK: no table, no grid lines, no text."
+  },
+  {
+   "id": "c_vinegar_bottle",
+   "subject": "c",
+   "name": "식초 병",
+   "category": "생활 화학",
+   "keywords": [
+    "식초",
+    "병",
+    "페트병"
+   ],
+   "file": "c/c_vinegar_bottle.png",
+   "thumb": "thumb/c/c_vinegar_bottle.png",
+   "format": "png",
+   "px": [
+    701,
+    1717
+   ],
+   "defaultMm": [
+    10.0,
+    24.49
+   ],
+   "qa": "통과",
+   "qaNote": "상표 비움",
+   "reference": "c1_2025_11_01",
+   "referenceExam": "2025학년도 수능 화학Ⅰ 1번",
+   "origin": "ai-generated",
+   "prompt": "the plastic bottle with a handle. Leave the label area blank."
+  },
+  {
+   "id": "c_gas_canister",
+   "subject": "c",
+   "name": "캠핑용 가스통",
+   "category": "생활 화학",
+   "keywords": [
+    "가스통",
+    "부탄",
+    "캠핑"
+   ],
+   "file": "c/c_gas_canister.png",
+   "thumb": "thumb/c/c_gas_canister.png",
+   "format": "png",
+   "px": [
+    1123,
+    1242
+   ],
+   "defaultMm": [
+    14.0,
+    15.48
+   ],
+   "qa": "통과",
+   "qaNote": "상표 비움",
+   "reference": "c1_2025_11_01",
+   "referenceExam": "2025학년도 수능 화학Ⅰ 1번",
+   "origin": "ai-generated",
+   "prompt": "the round camping gas canister. Leave the label area blank."
+  },
+  {
+   "id": "c_led_power_box",
+   "subject": "c",
+   "name": "LED 전원 장치(전극)",
+   "category": "전기 화학",
+   "keywords": [
+    "LED",
+    "전원 장치",
+    "전극",
+    "전기 분해"
+   ],
+   "file": "c/c_led_power_box.png",
+   "thumb": "thumb/c/c_led_power_box.png",
+   "format": "png",
+   "px": [
+    482,
+    1393
+   ],
+   "defaultMm": [
+    18.0,
+    52.02
+   ],
+   "qa": "통과",
+   "qaNote": "글자·+/- 기호 제거",
+   "reference": "c1_2025_09_04",
+   "referenceExam": "2025학년도 9월 모평 화학Ⅰ 4번",
+   "origin": "ai-generated",
+   "prompt": "the box with two terminals on top, a round LED lamp on the front, + and - terminals and two electrode rods going down. Remove the text in the top box and the + and - signs."
+  },
+  {
+   "id": "b_pangolin",
+   "subject": "b",
+   "name": "천산갑",
+   "category": "생물",
+   "keywords": [
+    "천산갑",
+    "동물",
+    "포유류"
+   ],
+   "file": "b/b_pangolin.png",
+   "thumb": "thumb/b/b_pangolin.png",
+   "format": "png",
+   "px": [
+    1561,
+    841
+   ],
+   "defaultMm": [
+    40.0,
+    21.55
+   ],
+   "qa": "통과",
+   "qaNote": "개미·흙 제거",
+   "reference": "b1_2026_09_01",
+   "referenceExam": "2026학년도 9월 모평 생명과학Ⅰ 1번",
+   "origin": "ai-generated",
+   "prompt": "the pangolin. Keep its scales as clean outlines. Do not draw ants, soil or shadow."
+  },
+  {
+   "id": "b_bird",
+   "subject": "b",
+   "name": "새",
+   "category": "생물",
+   "keywords": [
+    "새",
+    "조류",
+    "동물"
+   ],
+   "file": "b/b_bird.png",
+   "thumb": "thumb/b/b_bird.png",
+   "format": "png",
+   "px": [
+    1371,
+    974
+   ],
+   "defaultMm": [
+    30.0,
+    21.31
+   ],
+   "qa": "통과",
+   "qaNote": "원본 세밀화 유지",
+   "reference": "b1_2026_11_01",
+   "referenceExam": "2026학년도 수능 생명과학Ⅰ 1번",
+   "origin": "ai-generated",
+   "prompt": "the perched bird. Do not draw a branch or shadow."
+  },
+  {
+   "id": "b_pipefish",
+   "subject": "b",
+   "name": "실고기",
+   "category": "생물",
+   "keywords": [
+    "실고기",
+    "물고기",
+    "동물"
+   ],
+   "file": "b/b_pipefish.png",
+   "thumb": "thumb/b/b_pipefish.png",
+   "format": "png",
+   "px": [
+    2028,
+    303
+   ],
+   "defaultMm": [
+    50.0,
+    7.47
+   ],
+   "qa": "통과",
+   "qaNote": "원본 비율 유지",
+   "reference": "b1_2026_06_01",
+   "referenceExam": "2026학년도 6월 모평 생명과학Ⅰ 1번",
+   "origin": "ai-generated",
+   "prompt": "the long thin pipefish with a tube snout."
+  },
+  {
+   "id": "b_animal_cell",
+   "subject": "b",
+   "name": "동물 세포(소기관)",
+   "category": "세포",
+   "keywords": [
+    "세포",
+    "소기관",
+    "미토콘드리아",
+    "핵",
+    "소포체",
+    "골지체"
+   ],
+   "file": "b/b_animal_cell.png",
+   "thumb": "thumb/b/b_animal_cell.png",
+   "format": "png",
+   "px": [
+    1274,
+    973
+   ],
+   "defaultMm": [
+    40.0,
+    30.55
+   ],
+   "qa": "통과",
+   "qaNote": "지시선·글자 제거",
+   "reference": "b2_2026_06_01",
+   "referenceExam": "2026학년도 6월 모평 생명과학Ⅱ 1번",
+   "origin": "ai-generated",
+   "prompt": "the cell diagram: rounded rectangle cell outline with mitochondrion, nucleus, endoplasmic reticulum, Golgi body, vesicles and a chloroplast-like organelle. No leader lines and no letters."
+  },
+  {
+   "id": "b_enzyme",
+   "subject": "b",
+   "name": "효소(활성 부위)",
+   "category": "세포",
+   "keywords": [
+    "효소",
+    "활성 부위",
+    "기질"
+   ],
+   "file": "b/b_enzyme.png",
+   "thumb": "thumb/b/b_enzyme.png",
+   "format": "png",
+   "px": [
+    1350,
+    834
+   ],
+   "defaultMm": [
+    20.0,
+    12.36
+   ],
+   "qa": "통과",
+   "qaNote": "활성 부위 3개",
+   "reference": "b2_2026_06_07",
+   "referenceExam": "2026학년도 6월 모평 생명과학Ⅱ 7번",
+   "origin": "ai-generated",
+   "prompt": "the gray enzyme body with notches (active sites) on its top edge. Only the enzyme, no substrate shapes, no arrows."
+  },
+  {
+   "id": "b_ribosome_trna",
+   "subject": "b",
+   "name": "리보솜과 tRNA",
+   "category": "유전",
+   "keywords": [
+    "리보솜",
+    "tRNA",
+    "번역"
+   ],
+   "file": "b/b_ribosome_trna.png",
+   "thumb": "thumb/b/b_ribosome_trna.png",
+   "format": "png",
+   "px": [
+    1064,
+    882
+   ],
+   "defaultMm": [
+    30.0,
+    24.87
+   ],
+   "qa": "통과",
+   "qaNote": "mRNA 선 제거(v2)",
+   "reference": "b2_2026_06_13",
+   "referenceExam": "2026학년도 6월 모평 생명과학Ⅱ 13번",
+   "origin": "ai-generated",
+   "prompt": "the gray ribosome with two cylindrical tRNA molecules docked on top. Do not draw the mRNA line, the amino acids or labels."
+  },
+  {
+   "id": "b_neuron_body",
+   "subject": "b",
+   "name": "뉴런 세포체(가지돌기)",
+   "category": "신경",
+   "keywords": [
+    "뉴런",
+    "세포체",
+    "가지돌기",
+    "신경"
+   ],
+   "file": "b/b_neuron_body.png",
+   "thumb": "thumb/b/b_neuron_body.png",
+   "format": "png",
+   "px": [
+    1040,
+    1014
+   ],
+   "defaultMm": [
+    14.0,
+    13.65
+   ],
+   "qa": "통과",
+   "qaNote": "세포체·가지돌기, 점선·끊김 표시 제거",
+   "reference": "b1_2026_06_13",
+   "referenceExam": "2026학년도 6월 모평 생명과학Ⅰ 13번",
+   "origin": "ai-generated",
+   "prompt": "the neuron cell body (with a black nucleus dot) and its branching dendrites, plus only a SHORT start of the thick axon on the right. Do not draw the dashed vertical line, the break mark, or any letter."
+  }
+ ]
 }
