@@ -78,6 +78,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.21.0
+      - name: Enforce release hold
+        run: node scripts/check-release-gate.cjs --tag "${{ github.ref_name }}"
       - uses: actions/download-artifact@v4
         with:
           pattern: 5e-*
@@ -91,7 +96,7 @@ jobs:
             | sort -z \
             | xargs -0 sha256sum \
             | sed 's#  \./#  #' > SHA256SUMS.txt
-      - name: Publish GitHub Release
+      - name: Create draft GitHub Release
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
@@ -102,7 +107,7 @@ jobs:
           if [[ -f "$notes_path" ]]; then
             parsed_title=$(sed -n 's/^<!-- release-title: \(.*\) -->$/\1/p' "$notes_path" | head -n 1)
             if [[ -n "$parsed_title" ]]; then release_title="$parsed_title"; fi
-            gh release create "$tag" release-assets/* --notes-file "$notes_path" --title "$release_title"
+            gh release create "$tag" release-assets/* --draft --notes-file "$notes_path" --title "$release_title"
           else
-            gh release create "$tag" release-assets/* --generate-notes --title "$release_title"
+            gh release create "$tag" release-assets/* --draft --generate-notes --title "$release_title"
           fi
