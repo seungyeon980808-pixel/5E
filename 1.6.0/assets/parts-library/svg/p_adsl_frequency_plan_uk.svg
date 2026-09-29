@@ -1,0 +1,207 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://web.resource.org/cc/"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   inkscape:export-ydpi="44.980000"
+   inkscape:export-xdpi="44.980000"
+   inkscape:export-filename="/home/bert/Desktop/SVG/ADSL frequency plan.png"
+   sodipodi:docname="ADSL_frequency_plan_uk.svg"
+   sodipodi:docbase="E:\Documents and Settings\Sasha\Рабочий стол"
+   inkscape:version="0.45"
+   sodipodi:version="0.32"
+   id="svg1301"
+   height="200.00000pt"
+   width="400.00000pt"
+   inkscape:output_extension="org.inkscape.output.svg.inkscape"
+   sodipodi:modified="true">
+  <defs
+     id="defs3" />
+  <sodipodi:namedview
+     inkscape:window-y="0"
+     inkscape:window-x="0"
+     inkscape:window-height="746"
+     inkscape:window-width="1024"
+     inkscape:current-layer="layer1"
+     inkscape:cy="102.64"
+     inkscape:cx="209.27758"
+     inkscape:zoom="1.2276786"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     borderopacity="1.0"
+     bordercolor="#666666"
+     pagecolor="#ffffff"
+     id="base"
+     inkscape:document-units="mm" />
+  <metadata
+     id="metadata4">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     id="layer1"
+     inkscape:groupmode="layer"
+     inkscape:label="Layer 1">
+    <rect
+       style="fill:none;fill-opacity:1.0000000;stroke:none;stroke-width:0.87500000;stroke-miterlimit:4.0000000;stroke-opacity:1.0000000"
+       id="rect1317"
+       width="492.50638"
+       height="245.04308"
+       x="5.4987164"
+       y="3.6623917"
+       inkscape:export-xdpi="120.56000"
+       inkscape:export-ydpi="120.56000" />
+    <path
+       id="path1311"
+       d="M 20.122864,219.35784 C 450.30515,219.35784 450.30515,219.35784 450.30515,219.35784"
+       style="fill:none;fill-opacity:0.75000000;fill-rule:evenodd;stroke:#000000;stroke-width:0.61025101px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000" />
+    <path
+       id="path1313"
+       d="M 20.071395,219.41004 C 20.071395,34.871421 20.071395,34.871421 20.071395,34.871421"
+       style="fill:none;fill-opacity:0.75000000;fill-rule:evenodd;stroke:#000000;stroke-width:0.50657922px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000" />
+    <rect
+       y="58.513565"
+       x="20.215265"
+       height="160.75275"
+       width="35.104996"
+       id="rect2027"
+       style="fill:#ff0000;fill-opacity:1.0000000;stroke:#000000;stroke-width:0.94983608;stroke-miterlimit:4.0000000;stroke-opacity:1.0000000" />
+    <path
+       id="path1315"
+       d="M 55.968723,219.41004 C 55.968723,34.871421 55.968723,34.871421 55.968723,34.871421"
+       style="fill:none;fill-opacity:0.75000000;fill-rule:evenodd;stroke:#000000;stroke-width:0.50458086px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000" />
+    <text
+       sodipodi:linespacing="100%"
+       id="text1317"
+       y="234.13953"
+       x="16.43997"
+       style="font-size:12.15790176px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:100%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       xml:space="preserve"><tspan
+         y="234.13953"
+         x="16.43997"
+         id="tspan1319"
+         sodipodi:role="line">ГОЛОС</tspan></text>
+    <path
+       id="path1323"
+       d="M 127.76736,219.41639 C 127.76736,40.410436 127.76736,40.410436 127.76736,40.410436"
+       style="fill:none;fill-opacity:0.75000000;fill-rule:evenodd;stroke:#000000;stroke-width:0.49816829px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000" />
+    <text
+       sodipodi:linespacing="100%"
+       id="text1325"
+       y="232.37195"
+       x="150.17715"
+       style="font-size:12.15790176px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:100%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       xml:space="preserve"><tspan
+         id="tspan1329"
+         sodipodi:role="line"
+         y="232.37195"
+         x="150.17715">Прийом</tspan></text>
+    <rect
+       y="58.433842"
+       x="127.83116"
+       height="160.91055"
+       width="89.118103"
+       id="rect2029"
+       style="fill:#93ff75;fill-opacity:1.0000000;stroke:#000000;stroke-width:0.94983608;stroke-miterlimit:4.0000000;stroke-opacity:1.0000000" />
+    <path
+       id="path1333"
+       d="M 217.51564,219.41435 C 217.51564,40.415973 217.51564,40.415973 217.51564,40.415973"
+       style="fill:none;fill-opacity:0.75000000;fill-rule:evenodd;stroke:#000000;stroke-width:0.50027555px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000" />
+    <rect
+       y="58.446659"
+       x="217.58733"
+       height="160.89279"
+       width="232.69957"
+       id="rect2789"
+       style="fill:#00c6ff;fill-opacity:1.0000000;stroke:#000000;stroke-width:0.94983608;stroke-miterlimit:4.0000000;stroke-opacity:1.0000000" />
+    <path
+       id="path1337"
+       d="M 450.86121,219.41154 C 450.86121,34.872918 450.86121,34.872918 450.86121,34.872918"
+       style="fill:none;fill-opacity:0.75000000;fill-rule:evenodd;stroke:#000000;stroke-width:0.50308728px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000" />
+    <text
+       sodipodi:linespacing="100%"
+       id="text1339"
+       y="234.13953"
+       x="309.38495"
+       style="font-size:12.15790176px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:100%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       xml:space="preserve"><tspan
+         id="tspan1343"
+         sodipodi:role="line"
+         y="234.13953"
+         x="309.38495">Передача</tspan></text>
+    <text
+       sodipodi:linespacing="100.00000%"
+       id="text1345"
+       y="27.864178"
+       x="17.599615"
+       style="font-size:12.157902px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:100.00000%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1.0000000;stroke:none;stroke-width:1.0000000px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000;font-family:Bitstream Vera Sans"
+       xml:space="preserve"><tspan
+         y="27.864178"
+         x="17.599615"
+         id="tspan1347"
+         sodipodi:role="line">0</tspan></text>
+    <text
+       sodipodi:linespacing="100%"
+       id="text1349"
+       y="28.036335"
+       x="47.412601"
+       style="font-size:12.15790176px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:100%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       xml:space="preserve"><tspan
+         id="tspan1373"
+         sodipodi:role="line"
+         y="28.036335"
+         x="47.412601">4 kГц</tspan></text>
+    <text
+       sodipodi:linespacing="100%"
+       id="text1355"
+       y="27.864178"
+       x="104.2868"
+       style="font-size:12.15790176px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:100%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       xml:space="preserve"><tspan
+         id="tspan1375"
+         sodipodi:role="line"
+         y="27.864178"
+         x="104.2868">25.875 kГц</tspan></text>
+    <text
+       sodipodi:linespacing="100%"
+       id="text1361"
+       y="27.864178"
+       x="198.67374"
+       style="font-size:12.15790176px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:100%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       xml:space="preserve"><tspan
+         id="tspan1377"
+         sodipodi:role="line"
+         y="27.864178"
+         x="198.67374">138 kГц</tspan></text>
+    <text
+       sodipodi:linespacing="100%"
+       id="text1367"
+       y="27.864178"
+       x="423.75034"
+       style="font-size:12.15790176px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:100%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       xml:space="preserve"><tspan
+         id="tspan1379"
+         sodipodi:role="line"
+         y="27.864178"
+         x="423.75034">1104 kГц</tspan></text>
+    <path
+       id="path1383"
+       d="M 20.065083,57.865693 C 55.463070,57.865693 55.463070,57.865693 55.463070,57.865693"
+       style="fill:none;fill-opacity:0.75000000;fill-rule:evenodd;stroke:#000000;stroke-width:0.50138170px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000" />
+    <path
+       id="path1385"
+       d="M 127.76613,57.866331 C 450.35983,57.866331 450.35983,57.866331 450.35983,57.866331"
+       style="fill:none;fill-opacity:0.75000000;fill-rule:evenodd;stroke:#000000;stroke-width:0.50014603px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000" />
+  </g>
+</svg>

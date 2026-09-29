@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   version="1.0"
+   width="420"
+   height="340"
+   id="svg2">
+  <defs
+     id="defs5">
+    <linearGradient
+       id="linearGradient2799">
+      <stop
+         style="stop-color:white;stop-opacity:1"
+         offset="0"
+         id="stop2801" />
+      <stop
+         style="stop-color:black;stop-opacity:1"
+         offset="1"
+         id="stop2803" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient2779">
+      <stop
+         style="stop-color:black;stop-opacity:1"
+         offset="0"
+         id="stop2781" />
+      <stop
+         style="stop-color:white;stop-opacity:1"
+         offset="1"
+         id="stop2783" />
+    </linearGradient>
+    <radialGradient
+       cx="184.8125"
+       cy="19.0625"
+       r="3.9138336"
+       fx="184.8125"
+       fy="19.0625"
+       id="radialGradient2785"
+       xlink:href="#linearGradient2779"
+       gradientUnits="userSpaceOnUse" />
+    <radialGradient
+       cx="248.62611"
+       cy="304.8761"
+       r="15"
+       fx="248.62611"
+       fy="304.8761"
+       id="radialGradient2797"
+       xlink:href="#linearGradient2799"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(2.001111,0,0,2.001111,-250.9034,-307.2159)" />
+  </defs>
+  <g
+     transform="translate(14,0)"
+     style="opacity:0.75"
+     id="g2933">
+    <path
+       d="M 388,116 L 253.25,116 L 219.93102,173.71017"
+       style="opacity:1;fill:none;fill-opacity:0.75;fill-rule:evenodd;stroke:blue;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       id="path2837" />
+    <path
+       d="M 223.09219 173.65312 A 3.3587573 3.3587573 0 1 1  216.37467,173.65312 A 3.3587573 3.3587573 0 1 1  223.09219 173.65312 z"
+       transform="matrix(1.052632,0,0,1.052632,-11.56492,-9.139638)"
+       style="opacity:1;fill:blue;fill-opacity:1;stroke:blue;stroke-width:2.375;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="path2847" />
+  </g>
+  <g
+     transform="translate(14,0)"
+     style="opacity:0.75"
+     id="g2929">
+    <path
+       d="M 0.70710678,232.51977 L 144.24978,232.51977 L 192.15909,315.50112"
+       style="opacity:1;fill:none;fill-opacity:0.75;fill-rule:evenodd;stroke:blue;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       id="path2833" />
+    <use
+       transform="translate(-27.93072,142.1285)"
+       style="opacity:1"
+       id="use2849"
+       x="0"
+       y="0"
+       width="400"
+       height="340"
+       xlink:href="#path2847" />
+  </g>
+  <path
+     d="M 198.8125,18.937499 L 264.58097,307.29631"
+     style="fill:none;fill-opacity:0.75;fill-rule:evenodd;stroke:black;stroke-width:1.875;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     id="path2787" />
+  <path
+     d="M 188 19.0625 A 3.1875 3.1875 0 1 1  181.625,19.0625 A 3.1875 3.1875 0 1 1  188 19.0625 z"
+     transform="matrix(1.720972,0,0,1.720972,-119.2446,-13.74352)"
+     style="fill:url(#radialGradient2785);fill-opacity:1;stroke:#3a3a3a;stroke-width:0.72633374;stroke-linecap:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+     id="path1891" />
+  <g
+     transform="translate(14,0)"
+     style="opacity:0.75"
+     id="g2812">
+    <path
+       d="M 385.51743,490.70606 C 254.43664,563.44999 108.05551,563.52521 -23.099967,490.91602"
+       transform="matrix(0.718121,0,0,0.718121,55.26823,-75.85986)"
+       style="opacity:1;fill:none;fill-opacity:0.46913578;stroke:black;stroke-width:3.48130751;stroke-linecap:round;stroke-miterlimit:4;stroke-dasharray:13.92522987, 13.92522987;stroke-dashoffset:0;stroke-opacity:1"
+       id="path2805" />
+    <path
+       d="M 46.625,273.25 C 42.962891,276.57406 41.259793,280.38786 40.25,284.375 L 30.875,271.75 L 46.625,273.25 z "
+       style="fill:black;fill-opacity:1;fill-rule:evenodd;stroke:black;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:round;stroke-opacity:1"
+       id="path2808" />
+    <use
+       transform="matrix(-1,0,0,1,370.9696,0)"
+       id="use2810"
+       x="0"
+       y="0"
+       width="400"
+       height="340"
+       xlink:href="#path2808" />
+  </g>
+  <path
+     d="M 265 306.875 A 14.375 14.375 0 1 1  236.25,306.875 A 14.375 14.375 0 1 1  265 306.875 z"
+     transform="translate(14,0.375)"
+     style="fill:url(#radialGradient2797);fill-opacity:1;stroke:#3a3a3a;stroke-width:1.25;stroke-linecap:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+     id="path2789" />
+  <text
+     x="154.00714"
+     y="228.27713"
+     style="font-size:12px;font-style:normal;font-weight:normal;text-align:end;text-anchor:end;opacity:0.75;fill:blue;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Arial"
+     id="text2817"
+     xml:space="preserve"><tspan
+       x="154.00714"
+       y="228.27713"
+       style="font-size:20px;fill:blue;fill-opacity:1"
+       id="tspan2819">מסלול המטוטלת</tspan></text>
+  <text
+     x="161.0473"
+     y="71.690186"
+     style="font-size:12px;font-style:normal;font-weight:normal;text-align:end;text-anchor:end;opacity:0.75;fill:blue;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Arial"
+     id="text2821"
+     xml:space="preserve"><tspan
+       x="161.0473"
+       y="71.690186"
+       style="font-size:20px;fill:blue;fill-opacity:1"
+       id="tspan2823">מסמר</tspan></text>
+  <text
+     x="267.92676"
+     y="112.10586"
+     style="font-size:12px;font-style:normal;font-weight:normal;text-align:start;text-anchor:start;opacity:0.75;fill:blue;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Arial"
+     id="text2825"
+     xml:space="preserve"><tspan
+       x="267.92676"
+       y="112.10586"
+       style="font-size:20px;text-align:start;text-anchor:start;fill:blue;fill-opacity:1"
+       id="tspan2827">חוט</tspan></text>
+  <text
+     x="295.1994"
+     y="250.25191"
+     style="font-size:12px;font-style:normal;font-weight:normal;text-align:start;text-anchor:start;opacity:0.75;fill:blue;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Arial"
+     id="text2829"
+     xml:space="preserve"><tspan
+       x="295.1994"
+       y="250.25191"
+       style="font-size:20px;text-align:start;text-anchor:start;fill:blue;fill-opacity:1"
+       id="tspan2831">משקולת</tspan></text>
+  <g
+     transform="translate(14,0)"
+     style="opacity:0.75"
+     id="g2937">
+    <path
+       d="M 54.5,75.5 L 148.5,75.5 L 173.58605,32.049682"
+       style="opacity:1;fill:none;fill-opacity:0.75;fill-rule:evenodd;stroke:blue;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       id="path2841" />
+    <path
+       d="M 175.82093,40.803043 C 172.49381,37.143698 168.67861,35.443765 164.69063,34.437288 L 177.30783,25.051797 L 175.82093,40.803043 z "
+       style="opacity:1;fill:blue;fill-opacity:1;fill-rule:evenodd;stroke:blue;stroke-width:1.00000048px;stroke-linecap:butt;stroke-linejoin:round;stroke-opacity:1"
+       id="path2843" />
+  </g>
+  <g
+     transform="translate(14,0)"
+     style="opacity:0.75"
+     id="g2925">
+    <path
+       d="M 396,253.75 L 280.25,253.75 L 262.65585,284.22396"
+       style="opacity:1;fill:none;fill-opacity:0.75;fill-rule:evenodd;stroke:blue;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       id="path2835" />
+    <use
+       transform="matrix(-1,8.852539e-8,-8.852539e-8,-1,437.1028,314.4941)"
+       style="opacity:1"
+       id="use2845"
+       x="0"
+       y="0"
+       width="400"
+       height="340"
+       xlink:href="#path2843" />
+  </g>
+</svg>

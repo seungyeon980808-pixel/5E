@@ -1,0 +1,363 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   version="1.0"
+   width="988.79639"
+   height="804.90851"
+   id="svg1923"
+   sodipodi:version="0.32"
+   inkscape:version="0.46"
+   sodipodi:docname="Diagram_of_a_two-photon_excitation_microscope.svg"
+   inkscape:output_extension="org.inkscape.output.svg.inkscape">
+  <metadata
+     id="metadata4085">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <sodipodi:namedview
+     inkscape:window-height="949"
+     inkscape:window-width="1279"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     guidetolerance="10.0"
+     gridtolerance="10.0"
+     objecttolerance="10.0"
+     borderopacity="1.0"
+     bordercolor="#666666"
+     pagecolor="#ffffff"
+     id="base"
+     showgrid="false"
+     inkscape:zoom="2"
+     inkscape:cx="701.82482"
+     inkscape:cy="206.02029"
+     inkscape:window-x="0"
+     inkscape:window-y="25"
+     inkscape:current-layer="svg1923" />
+  <defs
+     id="defs1926">
+    <inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="0 : 402.45425 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_z="988.79639 : 402.45425 : 1"
+       inkscape:persp3d-origin="494.39819 : 268.30284 : 1"
+       id="perspective2585" />
+  </defs>
+  <path
+     d="M 307.55766,800.61174 L 409.02533,577.38285 L 408.15561,547.52236 L 297.53701,61.587386 L 242.61834,56.128886 L 287.63291,50.951754 L 246.38714,547.52236 L 245.51741,577.38285 L 328.431,800.61174"
+     style="fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#b5b5b5;stroke-width:4.29999999999999982;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;font-family:Verdana"
+     id="path1932" />
+  <path
+     d="M 275.66781,689.86702 L 290.03304,697.56719 L 298.43787,683.21749"
+     style="fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#b5b5b5;stroke-width:4.29999999999999982;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;font-family:Verdana"
+     id="path2821" />
+  <path
+     d="M 344.46659,689.18587 L 351.1607,704.0466 L 366.57057,697.79433"
+     style="fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#b5b5b5;stroke-width:4.29999999999999982;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;font-family:Verdana"
+     id="path3708" />
+  <path
+     d="M 244.63586,426.90044 L 255.02766,439.45684 L 268.23063,429.34563"
+     style="fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#b5b5b5;stroke-width:4.29999999999999982;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;font-family:Verdana"
+     id="path3728" />
+  <path
+     d="M 368.64111,427.47257 L 383.00634,435.17274 L 391.41117,420.82304"
+     style="fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#b5b5b5;stroke-width:4.29999999999999982;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;font-family:Verdana"
+     id="path3730" />
+  <path
+     d="M 304.98995,148.57597 L 319.35518,156.27614 L 327.76001,141.92644"
+     style="fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#b5b5b5;stroke-width:4.29999999999999982;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;font-family:Verdana"
+     id="path3732" />
+  <path
+     d="M 268.38506,140.96417 L 279.4167,152.9623 L 292.07515,142.17718"
+     style="fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#b5b5b5;stroke-width:4.29999999999999982;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;font-family:Verdana"
+     id="path3734" />
+  <path
+     d="M 602.10383,297.91187 L 631.3845,421.41253"
+     style="fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#27ea24;stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;font-family:Verdana;stroke-dasharray:none"
+     id="path5513" />
+  <path
+     d="M 627.6157,321.97421 L 616.0194,421.41253"
+     style="fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#27ea24;stroke-width:4;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;font-family:Verdana;stroke-dasharray:none"
+     id="path5515" />
+  <path
+     d="M 595.58091,422.86207 L 655.30188,422.86207"
+     style="fill:none;fill-opacity:0.75000000000000000;fill-rule:evenodd;stroke:#27ea24;stroke-width:4.29999999999999982;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;font-family:Verdana"
+     id="path7299" />
+  <path
+     d="M 616.0194,422.86207 L 612.54051,448.95376"
+     style="fill:none;fill-opacity:0.75000000000000000;fill-rule:evenodd;stroke:#27ea24;stroke-width:4.29999999999999982;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;font-family:Verdana"
+     id="path7301" />
+  <path
+     d="M 633.55881,422.86207 L 637.61752,448.66385"
+     style="fill:none;fill-opacity:0.75000000000000000;fill-rule:evenodd;stroke:#27ea24;stroke-width:4.29999999999999982;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;font-family:Verdana"
+     id="path7303" />
+  <path
+     d="M 734.25865,289.01082 L 734.25865,352.14949"
+     style="fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#ff0000;stroke-width:4.29999999999999982;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;font-family:Verdana"
+     id="path9960" />
+  <path
+     d="M 765.41799,332.4699 L 735.89862,325.09006"
+     style="fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#ff0000;stroke-width:4.29999999999999982;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;font-family:Verdana"
+     id="path9962" />
+  <path
+     d="M 734.25865,309.51039 L 767.87794,305.41048"
+     style="fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#ff0000;stroke-width:4.29999999999999982;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;font-family:Verdana"
+     id="path9964" />
+  <path
+     d="M 265.63856,24.156423 L 327.13726,86.475106"
+     style="fill: none; fill-opacity: 0.75; fill-rule: evenodd; stroke: rgb(30, 244, 234); stroke-width: 4.3; stroke-linecap: butt; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-opacity: 1; font-family: Verdana;"
+     id="path9970" />
+  <path
+     d="M 454.77765,802.7585 L 206.72289,802.7585"
+     style="fill: none; fill-opacity: 1; fill-rule: evenodd; stroke: rgb(30, 244, 234); stroke-width: 4.3; stroke-linecap: butt; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-opacity: 1; font-family: Verdana;"
+     id="path17056" />
+  <path
+     d="M 2.1500001,2.1500001 L 241.58494,2.1500001 L 241.58494,110.38771 L 2.1500001,110.38771 L 2.1500001,2.1500001 z "
+     style="fill: none; fill-opacity: 1; fill-rule: evenodd; stroke: rgb(0, 0, 0); stroke-width: 4.3; stroke-linecap: square; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-dashoffset: 0pt; stroke-opacity: 1; font-family: Verdana;"
+     id="rect17060" />
+  <path
+     d="M 765.57198,283.24806 L 985.8393,283.24806 L 985.8393,348.89245 L 765.57198,348.89245 L 765.57198,283.24806 z "
+     style="fill:none;fill-opacity:1;fill-rule:evenodd;stroke:rgb(0, 0, 0);stroke-width:5.914;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dashoffset:0pt;stroke-opacity:1;font-family:Verdana;stroke-dasharray:none"
+     id="rect19805" />
+  <text
+     x="127.429"
+     y="40.0801"
+     transform="scale(0.949466, 1.05322)"
+     style="font-size: 33.2342px; font-style: normal; font-weight: normal; text-align: center; text-anchor: middle; fill: rgb(0, 0, 0); fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: Verdana;"
+     id="text1912"
+     xml:space="preserve"><tspan
+       x="127.429"
+       y="40.0801"
+       style="text-align: center; text-anchor: middle; font-family: Verdana;"
+       id="tspan1916">Infrarot Laser</tspan><tspan
+       x="127.429"
+       y="81.6229"
+       style="text-align: center; text-anchor: middle; font-family: Verdana;"
+       id="tspan1920">(Mode-locked)</tspan></text>
+  <text
+     x="325.593"
+     y="29.8905"
+     style="font-size: 36px; font-style: normal; font-weight: normal; fill: rgb(0, 0, 0); fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: Verdana;"
+     id="text1922"
+     xml:space="preserve"><tspan
+       x="325.593"
+       y="29.8905"
+       style="font-family: Verdana;"
+       id="tspan1924">Scan-Spiegel</tspan></text>
+  <text
+     x="125.801"
+     y="285.554"
+     style="font-size: 36px; font-style: normal; font-weight: normal; text-align: center; text-anchor: middle; fill: rgb(0, 0, 0); fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: Verdana;"
+     id="text1928"
+     xml:space="preserve"><tspan
+       x="125.801"
+       y="285.554"
+       style="font-size: 36px; text-align: center; line-height: 120%; text-anchor: middle; font-family: Verdana;"
+       id="tspan1930">dichroitischer</tspan></text>
+  <text
+     x="125.801"
+     y="316.293"
+     style="font-size: 36px; font-style: normal; font-weight: normal; text-align: center; text-anchor: middle; fill: rgb(0, 0, 0); fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: Verdana;"
+     id="text2225"
+     xml:space="preserve"><tspan
+       x="125.801"
+       y="316.293"
+       style="font-size: 36px; text-align: center; text-anchor: middle; font-family: Verdana;"
+       id="tspan2227">Strahlteiler</tspan><tspan
+       x="125.801"
+       y="316.293"
+       style="font-size: 36px; text-align: center; text-anchor: middle; font-family: Verdana;"
+       id="tspan2223" /></text>
+  <text
+     x="768.423"
+     y="324.796"
+     style="font-size: 36px; font-style: normal; font-weight: normal; fill: rgb(0, 0, 0); fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: Verdana;"
+     id="text1940"
+     xml:space="preserve"><tspan
+       x="768.423"
+       y="324.796"
+       style="font-size: 28px; font-family: Verdana;"
+       id="tspan1942">Photomultiplier</tspan></text>
+  <text
+     x="418.5079"
+     y="431.98083"
+     style="font-size:36px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Verdana"
+     id="text1944"
+     xml:space="preserve"><tspan
+       x="418.5079"
+       y="431.98083"
+       style="font-family:Verdana"
+       id="tspan1946">Grünfilter</tspan></text>
+  <text
+     x="861.07465"
+     y="392.8949"
+     style="font-size:36px;font-style:normal;font-weight:normal;text-anchor:end;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Verdana"
+     id="text1948"
+     xml:space="preserve"><tspan
+       x="861.07465"
+       y="392.8949"
+       style="text-anchor:end;font-family:Verdana"
+       id="tspan1950">Rotfilter</tspan></text>
+  <text
+     x="24.5529"
+     y="570.055"
+     style="font-size: 36px; font-style: normal; font-weight: normal; fill: rgb(0, 0, 0); fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: Verdana;"
+     id="text1956"
+     xml:space="preserve"><tspan
+       x="24.5529"
+       y="570.055"
+       style="font-family: Verdana;"
+       id="tspan1958">Objektiv</tspan></text>
+  <text
+     x="452.628"
+     y="786.761"
+     style="font-size: 36px; font-style: normal; font-weight: normal; fill: rgb(0, 0, 0); fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: Verdana;"
+     id="text1966"
+     xml:space="preserve"><tspan
+       x="452.628"
+       y="786.761"
+       style="font-family: Verdana;"
+       id="tspan1968">Fokusebene</tspan></text>
+  <text
+     x="108.998"
+     y="753.404"
+     style="overflow: visible; marker: none; font-size: 9.5px; font-style: normal; font-variant: normal; font-weight: normal; font-stretch: normal; text-align: center; line-height: 120%; text-anchor: middle; opacity: 1; color: rgb(0, 0, 0); fill: rgb(59, 18, 237); fill-opacity: 1; fill-rule: nonzero; stroke: rgb(255, 255, 255); stroke-width: 10.6299; stroke-linecap: butt; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-dasharray: none; stroke-dashoffset: 0pt; stroke-opacity: 1; visibility: visible; display: inline; font-family: Verdana;"
+     id="text2260"
+     xml:space="preserve"><tspan
+       x="108.998"
+       y="753.404"
+       style="font-size: 32px; fill: rgb(0, 0, 0); stroke: none; stroke-opacity: 1; font-family: Verdana;"
+       id="tspan2262">Fluoreszenz-</tspan><tspan
+       x="108.998"
+       y="791.804"
+       style="font-size: 32px; fill: rgb(0, 0, 0); stroke: none; stroke-opacity: 1; font-family: Verdana;"
+       id="tspan3235">farbstoff</tspan></text>
+  <text
+     x="637.573"
+     y="211.698"
+     style="font-size: 36px; font-style: normal; font-weight: normal; text-align: center; text-anchor: middle; fill: rgb(0, 0, 0); fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: Verdana;"
+     id="text3241"
+     xml:space="preserve"><tspan
+       x="637.573"
+       y="211.698"
+       style="font-size: 36px; text-align: center; line-height: 120%; text-anchor: middle; font-family: Verdana;"
+       id="tspan3243">dichroitischer</tspan></text>
+  <text
+     x="637.573"
+     y="242.437"
+     style="font-size: 36px; font-style: normal; font-weight: normal; text-align: center; text-anchor: middle; fill: rgb(0, 0, 0); fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: Verdana;"
+     id="text3245"
+     xml:space="preserve"><tspan
+       x="637.573"
+       y="242.437"
+       style="font-size: 36px; text-align: center; text-anchor: middle; font-family: Verdana;"
+       id="tspan3247">Strahlteiler</tspan><tspan
+       x="637.573"
+       y="242.437"
+       style="font-size: 36px; text-align: center; text-anchor: middle; font-family: Verdana;"
+       id="tspan3249" /></text>
+  <path
+     style="fill:none;fill-rule:evenodd;stroke:#ff0000;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none"
+     d="M 731.9791,324.62295 L 356.86203,251.60274 L 436.99039,549.66088 L 437.95969,574.86255 L 318.41333,778.73755 L 220.35301,572.76241 L 238.60806,362.74854 L 731.81756,308.62958"
+     id="path4600" />
+  <path
+     d="M 563.292,256.2118 L 670.70972,364.44951"
+     style="fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#1ef4ea;stroke-width:4.29999999999999982;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;font-family:Verdana;stroke-dasharray:none"
+     id="path4610" />
+  <path
+     d="M 268.40084,646.77122 L 253.2372,640.7949 L 246.5592,656.02512"
+     style="fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#27ea24;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;font-family:Verdana;stroke-dasharray:none"
+     id="path7295" />
+  <path
+     d="M 408.75779,649.71091 L 402.24003,634.772 L 386.75724,640.84145"
+     style="fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#27ea24;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;font-family:Verdana"
+     id="path4622" />
+  <path
+     d="M 424.79632,459.86698 L 410.19583,452.62283 L 402.24686,467.22999"
+     style="fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#27ea24;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;font-family:Verdana;stroke-dasharray:none"
+     id="path4625" />
+  <path
+     d="M 240.27652,482.36105 L 229.73069,469.93378 L 216.65341,480.20703"
+     style="fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#27ea24;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;font-family:Verdana;stroke-dasharray:none"
+     id="path4628" />
+  <path
+     d="M 471.16134,351.85176 L 480.14069,338.24942 L 466.61814,328.56976"
+     style="fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#27ea24;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;font-family:Verdana"
+     id="path7289" />
+  <path
+     d="M 482.05388,285.81502 L 496.23312,277.77752 L 488.58488,263.01068"
+     style="fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#27ea24;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;font-family:Verdana"
+     id="path4634" />
+  <path
+     style="fill:none;fill-rule:evenodd;stroke:#27ea24;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none"
+     d="M 624.62321,322.84744 L 240.80207,364.88499 L 222.9818,571.41732 L 318.48016,772.92341 L 434.99729,574.61583 L 434.54036,550.85547 L 353.20683,247.91093 L 600.40592,296.3455"
+     id="path3357" />
+  <path
+     d="M 212.878,773.21051 L 448.62302,773.21051"
+     style="fill:none;fill-opacity:0.75;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Verdana"
+     id="path3359" />
+  <path
+     d="M 228.252,767.4712 L 433.24766,767.4712 L 433.24766,800.27051 L 228.252,800.27051 L 228.252,767.4712 z"
+     style="fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#0b740d;stroke-width:4.30000019;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dashoffset:0;stroke-opacity:1;font-family:Verdana"
+     id="path3361" />
+  <path
+     d="M 456.54611,561.65566 C 456.54611,571.75773 400.40788,579.95651 331.23755,579.95651 C 262.06723,579.95651 205.929,571.75773 205.929,561.65566 C 205.929,551.5536 262.06723,543.35482 331.23755,543.35482 C 400.40788,543.35482 456.54611,551.5536 456.54611,561.65566 z"
+     style="fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#1ef4ea;stroke-width:4.30000019;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:4;stroke-dashoffset:0;stroke-opacity:1;font-family:Verdana"
+     id="path3363" />
+  <path
+     d="M 426.76547,172.57313 L 212.34,391.50851"
+     style="fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#1df4ed;stroke-width:4.29999999999999982;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;font-family:Verdana;stroke-dasharray:none"
+     id="path3365" />
+  <path
+     d="M 269.36835,649.12044 L 254.20471,643.14412 L 247.52671,658.37434"
+     style="fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#ff0000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;font-family:Verdana"
+     id="path4619" />
+  <path
+     d="M 407.68718,652.21828 L 401.16942,637.27937 L 385.68663,643.34882"
+     style="fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#ff0000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;font-family:Verdana"
+     id="path7297" />
+  <path
+     d="M 239.81156,484.62214 L 229.26573,472.19487 L 216.18845,482.46812"
+     style="fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#ff0000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;font-family:Verdana"
+     id="path7293" />
+  <path
+     d="M 425.52473,462.09908 L 410.92424,454.85493 L 402.97527,469.46209"
+     style="fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#ff0000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;font-family:Verdana"
+     id="path7291" />
+  <path
+     d="M 468.53193,352.29951 L 477.51128,338.69717 L 463.98873,329.01751"
+     style="fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#ff0000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;font-family:Verdana"
+     id="path4632" />
+  <path
+     d="M 479.41038,285.31068 L 493.58962,277.27318 L 485.94138,262.50634"
+     style="fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#ff0000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;font-family:Verdana"
+     id="path6402" />
+  <text
+     x="570.32318"
+     y="-489.38345"
+     style="font-size:36px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Verdana"
+     id="text4211"
+     xml:space="preserve"
+     transform="matrix(0.2020277,0.9793798,-0.9793798,0.2020277,0,0)"><tspan
+       x="570.32318"
+       y="-489.38345"
+       style="font-size:27.99999046px;font-family:Verdana"
+       id="tspan4213">Photomultiplier</tspan></text>
+  <path
+     d="M 656.50472,451.82941 L 656.13958,672.09642 L 590.49528,671.9876 L 590.86042,451.72059 L 656.50472,451.82941 z"
+     style="fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:5.91400003;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;font-family:Verdana"
+     id="path4215" />
+</svg>

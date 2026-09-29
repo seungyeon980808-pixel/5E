@@ -1,0 +1,264 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 21.1.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<svg version="1.1"
+	 id="svg2211" inkscape:output_extension="org.inkscape.output.svg.inkscape" inkscape:version="0.47pre4 " sodipodi:docname="Scheme_cat_anatomy-ko.svg" sodipodi:modified="true" sodipodi:version="0.32" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd" xmlns:svg="http://www.w3.org/2000/svg"
+	 xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px" viewBox="0 0 775 400"
+	 style="enable-background:new 0 0 775 400;" xml:space="preserve">
+<style type="text/css">
+	.st0{fill:url(#path2220_1_);stroke:#7D7D7D;}
+	.st1{fill:none;stroke:#7D7D7D;}
+	.st2{fill:none;stroke:#000000;stroke-width:1.0327;stroke-linecap:round;}
+	.st3{fill:none;stroke:#000000;}
+	.st4{fill:none;stroke:#000000;stroke-width:1.0587;}
+	.st5{fill:url(#path4255_1_);stroke:#686833;}
+	.st6{fill:url(#path4295_1_);stroke:#000000;}
+	.st7{fill:url(#path4334_1_);stroke:#000000;}
+	.st8{fill:url(#path2274_1_);stroke:#000000;}
+	.st9{fill:url(#path2307_1_);stroke:#000000;}
+	.st10{fill:url(#path2296_1_);stroke:#000000;}
+	.st11{fill:url(#path4321_1_);stroke:#000000;}
+	.st12{fill:url(#path4270_1_);stroke:#000000;}
+	.st13{fill:url(#path4272_1_);stroke:#000000;stroke-width:1.0144;}
+	.st14{fill:url(#path4274_1_);stroke:#000000;stroke-width:1.0333;}
+	.st15{fill:url(#path4310_1_);stroke:#000000;}
+	.st16{fill:url(#path2285_1_);stroke:#38352B;}
+	.st17{font-family:'NotoSansCJKjp-Regular-83pv-RKSJ-H';}
+	.st18{font-size:24px;}
+	.st19{font-family:'NotoSansCJKkr-Regular-KSCpc-EUC-H';}
+	.st20{fill:none;stroke:#000000;stroke-width:1.1569;}
+	.st21{fill:none;stroke:#000000;stroke-width:1.1381;}
+</style>
+<defs>
+	
+	
+		<inkscape:perspective  id="perspective147" inkscape:persp3d-origin="387.5 : 133.33333 : 1" inkscape:vp_x="0 : 200 : 1" inkscape:vp_y="0 : 1000 : 0" inkscape:vp_z="775 : 200 : 1" sodipodi:type="inkscape:persp3d">
+		</inkscape:perspective>
+</defs>
+<sodipodi:namedview  bordercolor="#666666" borderopacity="1.0" gridtolerance="10.0" guidetolerance="10.0" height="400px" id="base" inkscape:current-layer="g2494" inkscape:cx="414.57788" inkscape:cy="154.33348" inkscape:guide-bbox="true" inkscape:pageopacity="0.0" inkscape:pageshadow="2" inkscape:window-height="988" inkscape:window-maximized="0" inkscape:window-width="1016" inkscape:window-x="535" inkscape:window-y="6" inkscape:zoom="1.0865299" objecttolerance="10.0" pagecolor="#ffffff" showgrid="false" showguides="true" width="775px">
+	</sodipodi:namedview>
+<g id="g2494" transform="translate(-87.3514, -37.2423)">
+	<g id="g2317" transform="translate(138.939, -41.4163)">
+		<g id="g4236">
+			
+				<linearGradient id="path2220_1_" gradientUnits="userSpaceOnUse" x1="93.1251" y1="64.363" x2="391.1885" y2="-54.0814" gradientTransform="matrix(1 0 0 -1 122.159 336.0576)">
+				<stop  offset="0" style="stop-color:#DEDBDB"/>
+				<stop  offset="1" style="stop-color:#CFD0D1"/>
+			</linearGradient>
+			<path id="path2220" sodipodi:nodetypes="ccccccccscccccccccccccccccccccccccccccccccccccccccccccccccc" class="st0" d="
+				M189.4,169.9c13.5,7.5,27,13.5,42.3,9.8c36.9,2.9,74.4,3.5,111.3,0c16.5-0.9,33-0.6,49.5-1.3c33-3.2,65.6,3,97.6,10.4
+				c103.4,30.9,108.8,87.2,161.4,167.9c4.2,6.2,9.2,12.1,15,16.9c12.4,12.9,38.8,10.9,39,28c0,3.7-3.6,5.2-7.2,5.2
+				c-3.8,0-7.9-1-11.1-2.6c-8.3-5.4-17.9-7.8-26.7-12.4c-11.5-8.7-22.7-18.3-29.3-31.2c-25.1-38-46.7-109.8-93.1-119.7
+				c-7.4,32.5,0,68.9,15.6,98.3c2.8,6.1,7.6,8.4,13,11.7c5,5,4.1,12.5,5.2,18.9c6.4,20.1,13.1,40,9.8,61.2c-7,24.7-46.1,8-25.4-5.2
+				c9.2,2.7,7.3-14,6.5-20.2c-2-22.3-14.9-28.6-34.5-35.8c-13.8-6.7-30-10.2-39.7-22.8c-11.7-0.6-3.7,31.7-1.3,41
+				c1.6,13.5-6.7,22.2-15.6,30.6c-16.9,17.2-34.5,38.4-61.2,33.2c-4.8-1.2-5.7-3.3-10.4-3.3c-5.7-6.9-1-14.7,5.2-18.9
+				c7.8,0.2,12.4,4.1,20.2,0.7c6.6-2.9,10.9-8.6,15.6-13.7c4.1-4.7,7.1-9.6,8.5-15.6c-8.7-22.8-29.9-36.5-39-59.2
+				c-11.8-9.2-34.8-10.8-50.8-13.7c-14.6,5.1-44.4-10-55.3-0.7c-8.2,10.2-8.9,25-10.4,37.7c-0.3,16.6,2.3,34.4-5.9,49.5
+				c2.9,18.2-33.6,27.1-37.7,10.4c0-7.2,9.2-7.2,14.3-9.1c9.4-5.8,4.8-20.3,4.6-29.9c-1.2-14-3.3-28.5-6.5-42.3
+				c-12.6,10.1-27.5,26-33.2,41.7c-4.3,13.8-18,21.9-28.6,30.6c-8.5,7.2-12.9,15.4-16.3,25.4c-16,0.6-26.6,1-41-4.6
+				c-3.5-5.6,2.3-13.1,7.2-15.6c7.7,0,13,0.2,19.5-4.6c10.5-14.9,16.8-32.9,24.7-49.5c5.7-14,12.3-27.4,18.9-41
+				c3-27.6-37.2-30.9-43.6-54c-3.4-9.2-6.4-19.4-12.4-27.3c-10.6,0.9-20.7,6.8-30.6,11.1c-8.9,3-16.3-3.2-21.5-9.8
+				c-11.3-12.1-16.4-30.5-16.3-46.9c-0.7-9.9,4.4-20.8,5.9-29.3c0-3.6-3.7-6.9-4.6-10.4c-4.2-6.2-8.1-13.1-13-18.9
+				c-2.5-10.2,39.8,8.2,43.6,10.4c6.9,2.7,14,5.1,21.5,5.2c7.5-0.3,14.9-3,21.5-6.5c4.7-4.7,9.6-8.2,15.6-11.1
+				C196,140.8,192,158.4,189.4,169.9z"/>
+			<path id="path3236" sodipodi:nodetypes="ccc" class="st1" d="M217,289.6c-2.8,3.1-5.9,8-6,13.8c1,5.5,4.1,10.3,3.2,16.1"/>
+			<path id="path3238" sodipodi:nodetypes="ccccc" class="st2" d="M287.7,308.5c-4.1,13.3-14.3,24.3-24.1,34
+				c-0.3,0.2-0.3,0.6-0.5,0.9 M306.4,326c-8.9,1.9-17.6-2.3-26.5-0.9"/>
+			<path id="path3240" sodipodi:nodetypes="ccc" class="st3" d="M407.5,314.2c-3.6,6,0.4,19.1,2.3,25.8c0.2,0.8,0.8,1.5,0.9,1.8"/>
+			<path id="path3242" sodipodi:nodetypes="cc" class="st4" d="M535.5,274.8c-11.5,28.9-36.3,49.1-51.8,75.5"/>
+			<path id="path3244" class="st3" d="M252.9,428.5c-0.8,1.6,1-4.2,2.8-4.6c1.2-0.3,2.6-0.2,3.7-0.5"/>
+			<path id="path3246" class="st3" d="M258.4,432.6c0.7-0.2,2-4,5.1-4.6c0.5-0.1,0.9,0,1.4,0"/>
+			<path id="path3248" class="st3" d="M398.2,443.3c2-0.4,1.8-3.7,2.8-5.5c0.6-1.2,4.2-1.4,6-1.8"/>
+			<path id="path3250" class="st3" d="M405.1,449.2c2.6-0.6,2.5-4.9,4.6-6.4c1.6-1.2,3.5-2.4,5.1-2.8c0.3-0.1,0.6,0.3,0.9,0.5"/>
+			<path id="path3252" class="st3" d="M550.8,435.4c0.1,0,1.6-3.5,4.1-4.1c1.3-0.3,2.7-0.5,4.1-0.5"/>
+			<path id="path3254" class="st3" d="M553.6,439.3c1.6-0.4,2.4-3.7,6.4-3.7c0.5,0,0.9,0.3,1.4,0.5"/>
+			<path id="path3256" class="st3" d="M145.3,437c2.4,0,2.9-3.8,4.6-5.5c1.6-1.6,5.2-0.9,7.4-0.9"/>
+			<path id="path3258" class="st3" d="M157.7,440.4c2.2,0,2.6-3.5,4.1-5.1c1.6-1.6,3.7-1.4,6-1.4"/>
+			<path id="path3262" sodipodi:nodetypes="cc" class="st3" d="M158.2,244.7c5.4-1.7,10.3-4.5,15.2-7.4"/>
+			<path id="path3264" sodipodi:nodetypes="cc" class="st3" d="M187.9,181.1c-0.2-4-0.2-7.4,1.4-11"/>
+		</g>
+		
+			<linearGradient id="path4255_1_" gradientUnits="userSpaceOnUse" x1="68.0835" y1="195.6932" x2="629.8045" y2="192.9321" gradientTransform="matrix(1 0 0 -1 63.5876 476.6286)">
+			<stop  offset="0" style="stop-color:#8F8F09"/>
+			<stop  offset="1" style="stop-color:#BFBF1C"/>
+		</linearGradient>
+		<path id="path4255" sodipodi:nodetypes="ccccccccccccccccccccccc" class="st5" d="M555.4,235.2c55.4,33.5,64.7,140.5,125.2,156
+			c-58.6-39.4-69-113-119.2-161.1c-17.2-13.9-37.4-21.7-58-29c-23.5-7.6-48.6-10-73.2-12c-36.2-1.8-72.4-0.6-108.6-0.9
+			c-21,0.4-42.1,4.1-63,6.4c-17.1,0.7-34.4,0.8-51.5,0c-11.4-1.9-23.2-3.1-34.1-7.4c-4.1-6.6-6.8-11.9-15.2-13.3
+			c-8.7-1.2-16.5-1-23,5.5c-4,3.9-5.9,8.9-8.3,13.8c-3.7,4.6-4.7,9.8-4.6,15.6c2.5-1.8,8.4-4.8,12.4-6.9c4.8-0.3,8.4-1.1,12.9-2.8
+			c3.9-2,7.2-5,10.6-7.8c16.6-0.6,31.9,8.4,48.3,8.3c16.3,4.2,33.1,2,49.7,2.8c22.4-2.3,44.7-5.2,67.2-6.9
+			c36.4-5.7,73.1-1.3,109.5,0.5c12.4,0.1,25,1.1,37.3,3.2c14.9,1.7,29,6.9,43.3,11C529.3,215.4,541.7,226.2,555.4,235.2z"/>
+		
+			<linearGradient id="path4295_1_" gradientUnits="userSpaceOnUse" x1="-37.5637" y1="208.7337" x2="99.4283" y2="207.7575" gradientTransform="matrix(1 0 0 -1 171.2936 443.7635)">
+			<stop  offset="0" style="stop-color:#11931A"/>
+			<stop  offset="1" style="stop-color:#1CCA33"/>
+		</linearGradient>
+		<path id="path4295" sodipodi:nodetypes="cccccccccc" class="st6" d="M139.6,241.4c31.2-21.1,43.1-14.4,73.5-0.7
+			c12.9,5.9,24.9,13.7,38.7,17.2c2.9-1.3,5.5-3.3,7.8-5.5c1.1-1.1-2.5-3-2.9-3.3c-14.3-5.9-28.4-12.7-42.3-19.5
+			c-9.8-6.9-21.3-11.6-32.5-15.9c-8.3-1.2-16.7-0.4-25.1-0.3c-13.3,2-23.1,14-31.6,23.4C114.7,251.6,132.8,244.8,139.6,241.4z"/>
+		
+			<linearGradient id="path4334_1_" gradientUnits="userSpaceOnUse" x1="61.6168" y1="141.4429" x2="105.2958" y2="141.7683" gradientTransform="matrix(1 0 0 -1 290.0636 403.0889)">
+			<stop  offset="0" style="stop-color:#236B14"/>
+			<stop  offset="1" style="stop-color:#62CD5B"/>
+		</linearGradient>
+		<path id="path4334" sodipodi:nodetypes="cccccccc" class="st7" d="M370,221.3c-4.7,3.6-9.3,7.1-14,10.7c-4,5.7-6.4,12.8-9.4,19.2
+			c-11.3,18.2-7.8,35.2,8.8,48.5c6.6,2.7,13.6,2.9,20.2,0c11.1-8.2,7.1-27.8,4.6-39c-2.8-6.6-5.6-12.9-6.2-20.2
+			C371.4,234.2,376,225.4,370,221.3z"/>
+		
+			<linearGradient id="path2274_1_" gradientUnits="userSpaceOnUse" x1="252.6558" y1="86.9288" x2="378.259" y2="89.532" gradientTransform="matrix(1 0 0 -1 168.0396 348.4226)">
+			<stop  offset="0" style="stop-color:#139D0B"/>
+			<stop  offset="1" style="stop-color:#70D14F"/>
+		</linearGradient>
+		
+			<path id="path2274" sodipodi:nodetypes="csssssssssssssssssccccsssssssssssssssssssssssssssscsssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssc" class="st8" d="
+			M456.9,301c-0.3,0-0.7,0-1,0c-1.5,0-3.5,0.4-4.9,0c-1.5-0.4-3.6-0.7-5.2-0.7c-1.8,0-3.6,0.1-5.2-0.3c-1.9-0.5-3.9-0.3-5.9-0.3
+			c-1.9,0-3.6,0.7-5.2,0.3c-2.2-0.6-3-0.5-4.9-1c-1.5-0.4-3-0.7-4.2-1.3c-1-0.5-3.9-1.8-3.9-3.3c0-1.2-0.5-3.9,0-4.9
+			c0.6-1.2,1.3-2.3,1.6-3.6c0.3-1.3-0.2-2.3-1-3.9c-0.6-1.2-1.8-3.7-1-5.2c0.5-1.1,2.9-2.9,2.6-4.2c-0.3-1.1-0.7-3-1.6-3.9
+			c-0.7-0.7-2-2.2-2-3.6c0-2.3,1.1-2.3,1.6-4.2c0.9-3.5-0.8-1.2-2.9-0.7c-3,2.1-8.9,3.6-12.2,1.4c-0.5-1-1.8-5.8,1.2-6.5
+			c3.1-0.8,8.5,0.9,10.7-1.4c0-1.6-0.7-3.2-0.3-4.9c0.4-1.8,0-3.7,0-5.9c0-2.1,0.2-3.9,0.7-5.9c0.4-1.5-0.1-5.1,1-6.2
+			c1.2-1.2,1.9-3.6,3.6-4.6c1.6-1,2.9-1.8,4.6-2.6c2.2-1.1,4.1-0.8,6.8-1.3c2.3-0.5,4.1,0,6.5,0c2.3,0,4.5-0.3,7.2-0.3
+			c1.6,0,3.5-0.3,4.9-0.3c2,0,3.2-0.2,4.9-0.7c2-0.5,3.3-1.2,5.5-0.7c1.7,0.4,3,1.6,4.9,1.6c2,0,4-0.7,5.9-0.7c2.2,0,4,0.6,5.9,1
+			c1.4,0.3,3.4,2.3,4.9,2.3c2,0,3.6-0.7,5.5-0.7c2.3,0,4.3,0.7,6.5,0.7c0.2,0,0.4-0.1,0.7,0c2.3,0.6,2.9,1.5,4.9,2.3
+			c2,0.8,3.8,2.3,6.5,2.3c1.7,0,4.4-0.2,5.5,1c1.1,1.1,2.1,2.7,3.3,4.2c0.7,0.9,1.9,3.2,3.6,3.6c1.8,0.4,2.2,1.6,3.6,2.6
+			c1.2,0.9,2.7,2.2,4.2,2.9c1.3,0.7,2.6,2.5,4.2,2.9c1.4,0.3,2.7,1.8,4.2,2.6c0.8,0.4,2.1,1,2.9,1.4c0.8,0,0,4.9-0.1,5.1
+			c-0.5,0.9-4.5-3.4-4.7-3.6c-1.2-1.2-1.9-1.9-3.9-2.9c-2.2-1.1-4.3-1.8-5.9-2.6c-1.6-0.8-3.2-1.5-5.2-2.3c-1.7-0.7-3.6-0.7-5.5-0.7
+			c-2.2,0-3.6-0.2-5.2-1c-1.5-0.8-3.2-1.6-4.6-2c-2-0.5-2.7-1.7-3.9-2.3c-1.9-0.9-3.2-1.3-5.2-1.3c-1.7,0-3.6-0.7-5.5-0.7
+			c-2,0-4.1-0.1-5.9,0.3c-1.7,0.4-4.3,0-5.9-0.3c-1.8-0.4-3.4-1.3-4.9-1.6c-1.9-0.4-2.9-0.8-4.9-0.3c-2.1,0.5-2.9,1.6-5.2,1.6
+			c-1.9,0-3.1-0.5-4.9-1c-1.7-0.4-2.4-1-4.2-1c-1.3,0-3.1,1.3-4.9,1.3c-1.6,0-3.3,0-4.9,0c-2.4,0-4.6,0.8-6.2,1.6
+			c-1.4,0.7-2.8,1.3-4.2,2c-1.6,0.8-2,2.3-2,3.9c0,1.9,0,2.8,0,4.6c0,1.3,0.7,3.1,0.7,4.9c0,1.5-0.6,3.7-1,5.2
+			c-0.5,2.1,0,3.4,0.3,4.9c0.5,1.8,1.2,3.6,1.6,5.5c0.6,2.3-0.5,3-1,4.9c-0.6,2.5,0.2,3.2,0.7,5.2c0.4,1.6,1.3,1.9,1.3,4.2
+			c0,1.4-1,2.8-1,4.6c0,1.2,3.3,2.5,3.9,2.6c1.8,0.4,4.5,0.1,6.2-0.3c2.2-0.5-0.4-3.7-0.7-3.9c-1.1-1.1-2.4-2.8-3.3-3.9
+			c-0.8-1.1-0.3-4.3-0.3-5.9c0-2-0.6-2.8-1.3-4.6c-0.7-1.8-1.4-2.4-0.3-4.6c0.7-1.5,1.3-2.5,1.3-4.6c0-1.1-1.6-2.8-1.6-4.6
+			c0-2.3-0.8-3-1.3-4.9c-0.4-1.6,0.6-3.2,1-4.6c0.4-1.6,2.8-3.4,3.9-4.2c1.7-1.3,3.1-2.2,4.6-3.3c1.7-1.3,3.1-1.1,4.2,0
+			c1.3,1.3,2.1,2.1,2.9,2.9c1.2,1.2,3.8,0.1,4.6-0.7c1.8-1.8,3.4-2.8,5.5-2.3c1.7,0.4,2,1.5,3.9,2c1.6,0.4,3.2,0.3,4.9,0
+			c2.2-0.4,3.2,0.3,4.6,1.6c1,1,4.2,0,4.9-0.3c1.3-0.7,3.2-1.1,4.9-2c1.6-0.8,3.6-1,4.9-1.6c2.1-1,4.4,0.7,5.9,1.3
+			c1.4,0.6,3.5,1.9,4.9,2.6c1.4,0.7,4.4,1.6,5.9,2c2.2,0.6,2.8,1.7,3.6,3.3c0.9,1.8,0.8,2.5-0.7,3.9c-1.2,1.2-2.6,2-3.9,3.3
+			c-1.1,1.1-1.3,2.9-2.6,3.9c-1.8,1.4-4.1,1.1-6.2,0.3c-1.9-0.8-3.3-2-5.2-2.9c-2.1-1.1-2.8-0.9-4.9,0.7c-1.5,1.1-3.4,1-5.5,1
+			c-1.7,0-2.7-1.6-4.6-1.6c-1.8,0-3.7,0-5.5,0c-2.2,0-3.3,0.8-4.9,1.6c-1.7,0.8-3.1,1-5.2,1c-2,0-4.4,0.6-6.2,1
+			c-1.7,0.3-3.6,0.3-5.5,0.3c-2.4,0-3-0.8-4.2,1.6c-1,2,1.5,2.8,2.3,4.2c0.9,1.8-0.1,3.1-0.7,4.2c-1.1,2.1-0.4,3.4,2,3.9
+			c0.6,0.1,1.2,3.7,1.6,4.2c1.3,1.7,2.9-0.3,3.9-1.3c1.2-1.2,2.2-2,3.9-3.3c1.5-1.1,2.7-2.9,4.2-3.3c2-0.5,3.5-0.9,4.9-2.3
+			c1.4-1.4,2.3-2,3.3-2.9c1-1,3.3-1,4.6-1.3c2.2-0.6,2.7,1.7,4.9,0.7c1.8-0.9,2.1-1.6,4.9-1.6c1.8,0,2.4,2,4.9,2
+			c2,0,3.9,0.3,5.9,0.3c2,0,3.6-1.3,5.5-1.3c2.1,0,3.4,0.6,5.2-0.3c2.6-1.3,2.6-1.1,2.6,1.6c0,2,2.7,1.8-0.7,2.6
+			c-1.5,0.4-3,0.7-4.6,0.7c-2.3,0-3.7,0.2-5.2-1.3c-1.3-1.3-3.6-1-5.2-1.3c-1.9-0.4-3.9,0.2-5.5,0.7c-1.8,0.4-3.9,0.3-5.2,0
+			c-2-0.5-4-0.4-5.9,0c-1.7,0.3-3.1,0.9-4.6,2c-0.8,0.6-0.3,4.6-0.3,5.2c0,1.4,2.7,1.7,3.9,2c1.5,0.4,3.5-2.5,3.9-2.9
+			c1.3-1.3,2.8-2,4.2-2.3c1.6-0.3,3.4,1.9,4.9,2.3c1.7,0.4,3.4,0.6,5.2,1c2.2,0.4,3.3-0.7,5.2,0.7c0.9,0.7,4-1,5.2-1.3
+			c1.9-0.5,3.5-0.7,5.5-0.7c1.6,0,3.5-0.1,4.6-0.3c2-0.5,2.2-2,2.6-4.2c0.3-1.6,0-3.5,0-5.2c0-1.9-0.5-3.3-1.3-4.9
+			c-0.8-1.6-2.5-1.6-3.9-2c-0.5-0.1-1.8,0.2-2.6,0c-1.6-0.4-4.2,1.2-5.2,1.6c-1.7,0.7-1.3,2-3.9,2c-2.1,0-3.2-1.2-4.9-1.6
+			c-1.6-0.4-2.4-1.5-4.2-2c-2-0.5-3.4,0.7-4.6,1.6c-1.3,1-3.5,0.7-4.9,0.3c-1.8-0.4-2.8-1.1-3.9-1.6c-1.3-0.7-3.6-0.3-5.2-0.3
+			c-1.5,0-3.8,1-4.9,1.3c-1.6,0.4-3.2,1.2-4.9,1.6c-1.8,0.5-3,0.7-4.9,0.7c-1.3,0-3.2,1.6-3.9,2.3c-1,1-2.6,1.6-3.9,2.9
+			c-1.6,1.6-2.4,2.6-2.9,4.9c-0.6,2.4-0.9,3.1,1.3,4.2c1.5,0.7,1.5,2.3,2,3.9c0.5,2.1,0,2.7-1.6,3.9c-1.5,1.1-2.4,1.4-3.9,2.9
+			c-1.1,1.1-1.3,2.2-1.3,3.9c0,1.1,2.8,2.8,3.3,3.3c1,1,3.1,1.9,4.6,2.6c1.7,0.8,2.9,1,4.2,2.3C453.9,299.3,454.9,300.2,456.9,301z"
+			/>
+		
+			<linearGradient id="path2307_1_" gradientUnits="userSpaceOnUse" x1="579.3145" y1="205.2885" x2="665.685" y2="206.3166" gradientTransform="matrix(1 0 0 -1 -118.4124 476.6286)">
+			<stop  offset="0" style="stop-color:#C02020"/>
+			<stop  offset="1" style="stop-color:#8B0F0F"/>
+		</linearGradient>
+		<path id="path2307" sodipodi:nodetypes="cccccccccccc" class="st9" d="M474.6,265.6c-6.7-2.5-14.2-4.1-21.2-2.1
+			c-2.8,1.3-3.7,3.2-3.7,6.2c4.9,9.6,14.1,12,23.5,14.7c16.8,1.1,33.2-8.8,47.9-16.8c4-0.2,8-0.5,11.5-2.5c5.3-9.3-0.9-9.1-7.4-6.4
+			c-2.5,1.3-4.2,3.7-6,5.8c-13.3,9.7-28.3,14.5-44.6,13.8c-1.4,3.1-28.4-9.1-17.5-11.3c4.2-1.3,8.1,0.8,12.2,1.2
+			C471.6,268,473.2,267.3,474.6,265.6z"/>
+		
+			<linearGradient id="path2296_1_" gradientUnits="userSpaceOnUse" x1="340.4856" y1="87.8387" x2="361.9091" y2="87.9505" gradientTransform="matrix(1 0 0 -1 63.5876 368.6286)">
+			<stop  offset="0" style="stop-color:#6B141F"/>
+			<stop  offset="1" style="stop-color:#BD162B"/>
+		</linearGradient>
+		<path id="path2296" sodipodi:nodetypes="ccccscccc" class="st10" d="M402.9,261.4c1.8,1.5,3.1,2.4,4.6,3.9
+			c2.7,2.8,4.1,6.1,4.8,9.9c1.8,8.8-0.1,17.6-5.1,25.1c-0.7,0.7-3.5,0.6-4.6,0.9c-2,0.5-2.2-1.6-2.5-2.8c0.7-5.9-1.3-11.2-3.7-16.6
+			c-1.7-4.9-3.6-9.8-4.4-15C393.2,261.8,398,258.6,402.9,261.4z"/>
+		
+			<linearGradient id="path4321_1_" gradientUnits="userSpaceOnUse" x1="-2.35" y1="128.3979" x2="82.0241" y2="127.8632" gradientTransform="matrix(1 0 0 -1 332.3326 390.3447)">
+			<stop  offset="0" style="stop-color:#0D8202"/>
+			<stop  offset="1" style="stop-color:#73CE40"/>
+		</linearGradient>
+		<path id="path4321" sodipodi:nodetypes="cscccccccccccccc" class="st11" d="M318.9,257.3c0.1-0.2,1.8-3.4,2.5-4.8
+			c0.6-1.1,1.3-1.8,2.3-2.1c12.8-2.7,26.5,0.5,39.1-3c5.8-5.1,10.4-11.6,14-18.4c3.7-1.8,10.2-2.4,13.6,0.5
+			c5.2,6.6,10.2,14.1,10.6,22.8c3,12.7-2.7,25.3-12.2,33.6c-5.2,0.4-9.3,0.3-13.8,3c-3.7,0.9-13.7,11.7-17,6.9
+			c1.9-8.7,14.8-7.2,15.9-15.9c0.4-3.5-0.1-6.9,0.7-10.4c1.4-2.2,3.4-3.1,5.8-3.9c-6.7-5.1-12.3-9-20.7-9c-6.1,0.1-40.2,9.4-41,2.5
+			C318.7,258.4,318.7,258.2,318.9,257.3z"/>
+		<g id="g4276">
+			
+				<linearGradient id="path4270_1_" gradientUnits="userSpaceOnUse" x1="59.8314" y1="222.2284" x2="279.4097" y2="220.3877" gradientTransform="matrix(1 0 0 -1 63.5876 476.6286)">
+				<stop  offset="0" style="stop-color:#8A0A0A"/>
+				<stop  offset="1" style="stop-color:#DC3C3C"/>
+			</linearGradient>
+			<path id="path4270" sodipodi:nodetypes="cccccccccccccccccccc" class="st12" d="M111,232c5.5-5.3,9.1-10.9,16.3-14.3
+				c11.1-5.1,24.9-4.5,36.8-2c20.7,1.9,21.1,14,31.9,25.4c9.5,8.8,24.5,26,39.4,21.8c5.6-6,12.3-10.9,17.9-16.9
+				c3.5-3.6,7.6-6.8,11.7-9.8c7.7-5.6,17.3-6.9,25.7-10.7c9.3-5.2,19.9-8.8,30.6-6.8c10.3,5.2,1.8,14.4,4.2,22.1
+				c-0.7,8.6-9,20.2-3.9,28.3c4.3,4.9,10,9.3,8.8,16.3c-3.7,4.8-9.8,10.7-16.3,11.4c-5.7,0.2-10.1-4-15.3-5.5
+				c-20.5,1.9-57.1,3-71.6-14c0.5-2,1.3-3.3,2.3-4.2c-3.1-1.7-10.8-3.2-15.6-4.9c-6.4-5.1-14.6-7.2-20.5-13
+				c-20.6-39.2-46.6-34.7-81-15.9C109,238.7,110.8,234.3,111,232z"/>
+			
+				<linearGradient id="path4272_1_" gradientUnits="userSpaceOnUse" x1="59.8415" y1="223.4368" x2="279.4198" y2="221.5961" gradientTransform="matrix(1 0 0 -1 63.5876 476.6286)">
+				<stop  offset="0" style="stop-color:#8A0A0A"/>
+				<stop  offset="1" style="stop-color:#DC3C3C"/>
+			</linearGradient>
+			<path id="path4272" sodipodi:nodetypes="cccc" class="st13" d="M229.5,272.9c6.4-2.7,11.1-7.7,16.5-11.9
+				c16.6-9.2,41.9-20.5,59.7-24.8c6.6,0.1,12.9-1.3,19.1,1.3"/>
+			
+				<linearGradient id="path4274_1_" gradientUnits="userSpaceOnUse" x1="59.6593" y1="201.7061" x2="279.2377" y2="199.8654" gradientTransform="matrix(1 0 0 -1 63.5876 476.6286)">
+				<stop  offset="0" style="stop-color:#8A0A0A"/>
+				<stop  offset="1" style="stop-color:#DC3C3C"/>
+			</linearGradient>
+			<path id="path4274" sodipodi:nodetypes="ccc" class="st14" d="M300.2,291.9c-7.9-11.8-13.5-13.5-8.9-29.4
+				c10.6-4.8,20.8,1.6,30.1,6.5"/>
+		</g>
+		
+			<linearGradient id="path4310_1_" gradientUnits="userSpaceOnUse" x1="279.6948" y1="225.1784" x2="303.9487" y2="224.5276" gradientTransform="matrix(1 0 0 -1 63.5876 476.6286)">
+			<stop  offset="0" style="stop-color:#6B141F"/>
+			<stop  offset="1" style="stop-color:#C1162C"/>
+		</linearGradient>
+		<path id="path4310" sodipodi:nodetypes="ccccc" class="st15" d="M331.6,248c0.2,8.5-5,50.4,9.8,48.2c-3.1-31-8.1-55,11.4-82.7
+			c1.5-1.5,2.3-2.2,2.3-4.6C344.1,196.7,332.7,242.3,331.6,248z"/>
+		
+			<linearGradient id="path2285_1_" gradientUnits="userSpaceOnUse" x1="568.7433" y1="230.513" x2="692.2167" y2="230.0528" gradientTransform="matrix(1 0 0 -1 -153.6174 497.7969)">
+			<stop  offset="0" style="stop-color:#6A6B14"/>
+			<stop  offset="1" style="stop-color:#D0C652"/>
+		</linearGradient>
+		<path id="path2285" sodipodi:nodetypes="cccccccccscccccccccssccsccc" class="st16" d="M429.1,242.6c7.4-1.1,11.4-5.9,10.4-13.1
+			c-5.1-8.3-16-8.5-24.2-4.6c-4.5,2.7-9.5,5.4-11.7,10.4c-1.5,4.6-0.5,7.7,3.5,10.4c5.7,3.2,11,0,16.6-1.2c1.2-0.3,2.3,0.5,3,0.9
+			c5.1,5.3,12.3,7.7,17.7,12.7c6.3,4.9,10,11.9,8.3,19.8c0,0.2,0,0.3,0,0.5c0,1.3-1.6,2.7-2.3,3.5c-5.1,1.4-9.5,4.6-12.7,8.7
+			c-4.1,3.4-9.1,9.4-6,14.7c1.1,3.1,3,4.6,5.5,6.4c2.8,0.9,5.8,0.8,8.7,0.5c3-0.7,5.6-2.6,8.3-4.1c6.5-4.6,10.2-11.9,11.7-19.6
+			c15.5-10.3,34.3-6.4,50.4,0.9c2,0.7,7.8,7.8,8.7,5.1c0.2-1.2,2.3-2.5,0.9-4.6c-0.6-0.9-5.5-2.8-6.4-3c-0.5-0.1-0.9-0.3-1.4-0.5
+			c-18.5-8.6-36.7-8.1-56.4-3.7c-1.3,0.3-2.3-1.4-3.2-2.3c-0.9-0.9,0-2.2,0-3.5c2.9-16.8-15.9-25.7-28.1-32.7
+			C429.6,243.3,430.1,244.2,429.1,242.6z"/>
+	</g>
+	<text transform="matrix(1 0 0 1 170.0101 73.7672)" class="st17 st18">골(눼)</text>
+	<text transform="matrix(1 0 0 1 418.0374 74.6339)" class="st19 st18">ᄀᆞ로막</text>
+	<text transform="matrix(1 0 0 1 311.182 74.4212)" class="st19 st18">등골</text>
+	<text transform="matrix(1 0 0 1 522.7111 109.1293)" class="st19 st18">간</text>
+	<text transform="matrix(1 0 0 1 596.3589 67.7135)" class="st19 st18">위</text>
+	<text transform="matrix(1 0 0 1 624.4597 110.156)" class="st19 st18">콩ᄑᆞᆺ</text>
+	<text transform="matrix(1 0 0 1 747.2092 100.9352)" class="st19 st18">똥집</text>
+	<text transform="matrix(1 0 0 1 750.864 169.092)" class="st19 st18">밋구녁</text>
+	<text transform="matrix(1 0 0 1 759.6135 215.6031)" class="st19 st18">불ᄃᆞᆨ세기</text>
+	<text transform="matrix(1 0 0 1 738.5543 375.8557)" class="st19 st18">오좀길</text>
+	<text transform="matrix(1 0 0 1 631.0211 379.4189)" class="st19 st18">오좀보</text>
+	<text transform="matrix(1 0 0 1 596.483 424.814)" class="st19 st18">지레</text>
+	<text transform="matrix(1 0 0 1 498.3222 366.2463)" class="st19 st18">슬게</text>
+	<text transform="matrix(1 0 0 1 414.2148 422.973)" class="st19 st18">ᄆᆞ슴(심장)</text>
+	<text transform="matrix(1 0 0 1 348.9715 425.7341)" class="st19 st18">부에</text>
+	<text transform="matrix(1 0 0 1 267.8099 321.432)" class="st19 st18">밥줄 </text>
+	<text transform="matrix(1 0 0 1 219.2937 271.113)" class="st19 st18">숨통</text>
+	<text transform="matrix(1 0 0 1 131.711 215.894)" class="st19 st18">입안</text>
+	<text transform="matrix(1 0 0 1 152.6142 150.9029)" class="st19 st18">코안</text>
+	<path id="path2456" sodipodi:nodetypes="cc" class="st20" d="M202.1,81.6L288,144"/>
+	<path id="path2458" sodipodi:nodetypes="cc" class="st3" d="M339.1,82.2l45.5,73.8"/>
+	<path id="path2460" sodipodi:nodetypes="cc" class="st3" d="M456,80.9l17,132.2"/>
+	<path id="path2462" sodipodi:nodetypes="cc" class="st3" d="M500.6,222.3L535.2,116"/>
+	<path id="path2464" sodipodi:nodetypes="cc" class="st21" d="M607.8,75.6l-81.3,140.2"/>
+	<path id="path2466" sodipodi:nodetypes="cc" class="st3" d="M669.1,220.5l86-13.1"/>
+	<path id="path2468" sodipodi:nodetypes="cc" class="st3" d="M675.5,211.8l69.6-48.5"/>
+	<path id="path2470" sodipodi:nodetypes="cc" class="st3" d="M556.8,192.9l91.8-75"/>
+	<path id="path2472" sodipodi:nodetypes="cc" class="st3" d="M611.1,188.3l133.5-87.3"/>
+	<path id="path2474" sodipodi:nodetypes="cc" class="st3" d="M198.8,158.8l56.1,32.2"/>
+	<path id="path2476" sodipodi:nodetypes="cc" class="st3" d="M185.9,209.4l81.5-10.1"/>
+	<path id="path2478" class="st3" d="M251.2,249l58.9-67.2"/>
+	<path id="path2480" sodipodi:nodetypes="cc" class="st3" d="M294.9,298.3l34.5-115.5"/>
+	<path id="path2482" sodipodi:nodetypes="cc" class="st3" d="M416.9,226.9l-54.8,175.3"/>
+	<path id="path2484" sodipodi:nodetypes="cc" class="st3" d="M449.1,238l-1.8,162.4"/>
+	<path id="path2486" sodipodi:nodetypes="cc" class="st3" d="M505.2,249l19.1,95.3"/>
+	<path id="path2488" sodipodi:nodetypes="cc" class="st3" d="M660.8,249l98.8,107.5"/>
+	<path id="path2490" sodipodi:nodetypes="cc" class="st3" d="M585.3,254.5l68.8,103.9"/>
+	<path id="path2492" sodipodi:nodetypes="cc" class="st3" d="M543,240.7l75.7,158.6"/>
+</g>
+</svg>

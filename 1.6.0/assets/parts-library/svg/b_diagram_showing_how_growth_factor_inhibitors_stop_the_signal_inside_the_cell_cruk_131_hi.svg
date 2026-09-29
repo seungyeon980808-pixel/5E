@@ -1,0 +1,369 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Generator: Adobe Illustrator 16.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   version="1.1"
+   id="Layer_1"
+   x="0px"
+   y="0px"
+   width="375px"
+   height="318px"
+   viewBox="0 0 375 318"
+   enable-background="new 0 0 375 318"
+   xml:space="preserve"
+   sodipodi:docname="Diagram_showing_how_growth_factor_inhibitors_stop_the_signal_inside_the_cell_CRUK_131-hi.svg"
+   inkscape:version="0.92.3 (2405546, 2018-03-11)"><metadata
+   id="metadata105"><rdf:RDF><cc:Work
+       rdf:about=""><dc:format>image/svg+xml</dc:format><dc:type
+         rdf:resource="http://purl.org/dc/dcmitype/StillImage" /><dc:title></dc:title></cc:Work></rdf:RDF></metadata><defs
+   id="defs103" /><sodipodi:namedview
+   pagecolor="#ffffff"
+   bordercolor="#666666"
+   borderopacity="1"
+   objecttolerance="10"
+   gridtolerance="10"
+   guidetolerance="10"
+   inkscape:pageopacity="0"
+   inkscape:pageshadow="2"
+   inkscape:window-width="681"
+   inkscape:window-height="696"
+   id="namedview101"
+   showgrid="false"
+   inkscape:zoom="2.6587215"
+   inkscape:cx="164.68754"
+   inkscape:cy="172.65826"
+   inkscape:window-x="676"
+   inkscape:window-y="0"
+   inkscape:window-maximized="0"
+   inkscape:current-layer="Layer_1" />
+<radialGradient
+   id="SVGID_1_"
+   cx="135.3594"
+   cy="160.2988"
+   r="171.7383"
+   gradientTransform="matrix(1.0216 0 0 1.2018 -0.6714 -0.382)"
+   gradientUnits="userSpaceOnUse">
+	<stop
+   offset="0"
+   style="stop-color:#FFFFFF"
+   id="stop2" />
+	<stop
+   offset="1"
+   style="stop-color:#8AACDB"
+   id="stop4" />
+</radialGradient>
+<path
+   fill="url(#SVGID_1_)"
+   stroke="#1D1D1B"
+   stroke-linecap="round"
+   stroke-linejoin="round"
+   d="M77.135,92.363  c-9.285,7.512-17.283,16.947-24.488,27.107c-12.962,19.493-12.962,43.216-6.484,66.091c7.204,26.263,20.17,49.142,38.903,65.244  c18.003,16.098,46.816,23.719,68.417,17.789c45.368-12.709,72.016-71.167,56.89-122.858c-7.201-25.416-23.079-48.701-43.927-60.152  c-10.803-5.932-19.446-9.32-30.967-10.169C126.842,74.567,100.18,73.726,77.135,92.363z"
+   id="path7" />
+<path
+   fill="#FDECE4"
+   stroke="#E5AB97"
+   d="M76.924,88.827L76.924,88.827c-8.59,6.951-16.833,16.067-25.202,27.867  c-12.278,18.46-14.694,42.421-7.057,69.39c7.659,27.928,21.524,51.142,40.089,67.099c18.986,16.977,49.281,24.814,71.974,18.588  c20.49-5.742,38.247-20.584,50.015-41.8c14.224-25.635,17.797-57.731,9.568-85.86c-7.836-27.652-24.952-51.009-45.775-62.447  c-10.7-5.874-19.877-9.702-32.549-10.636C127.584,70.004,100.608,69.673,76.924,88.827z M137.31,78.914  c11.338,0.838,19.648,4.327,29.416,9.689c19.005,10.438,34.698,32.007,41.976,57.698c7.658,26.173,4.333,56.002-8.883,79.828  c-10.735,19.351-26.787,32.849-45.205,38.01c-20.264,5.561-47.451-1.547-64.639-16.91c-17.422-14.977-30.433-36.839-37.682-63.271  c-2.77-9.781-4.153-18.96-4.153-27.506c0-13.348,3.374-25.148,10.108-35.275c7.877-11.104,15.637-19.704,23.656-26.193  C103.91,77.186,129.875,78.184,137.31,78.914z"
+   id="path9" />
+<radialGradient
+   id="SVGID_2_"
+   cx="136.291"
+   cy="199.1563"
+   r="37.4185"
+   gradientUnits="userSpaceOnUse">
+	<stop
+   offset="0"
+   style="stop-color:#FFFFFF"
+   id="stop11" />
+	<stop
+   offset="1"
+   style="stop-color:#C591C1"
+   id="stop13" />
+</radialGradient>
+<ellipse
+   fill="url(#SVGID_2_)"
+   stroke="#BB93C3"
+   stroke-linecap="round"
+   stroke-linejoin="round"
+   cx="136.291"
+   cy="199.157"
+   rx="37.144"
+   ry="37.693"
+   id="ellipse16" />
+<path
+   fill="none"
+   stroke="#BB8FC0"
+   stroke-width="2.529"
+   stroke-linecap="round"
+   stroke-linejoin="round"
+   d="M123.943,182.373  c-4.167,3.647-7.816,7.813-8.336,13.547c-0.52,4.167,1.563,15.107,7.296,9.897c5.208-4.168,4.687-15.631,14.585-14.067  c3.126,0.521,3.648,2.606,5.208,4.689c2.085,2.604,3.128,2.604,5.213,4.688c7.291,5.731-0.521,16.15-8.337,16.673  c-2.605,0.52-8.856,0-10.419-2.607c-3.125-3.646,1.563-8.334,4.168-10.418c3.646-3.647,16.149-5.209,15.627-11.461  c-1.039-4.689-13.544-11.463-15.627-5.731c2.604,2.084,5.729,1.563,8.336,2.084c5.732,1.564,6.772,3.126,10.418,7.293  c2.084,2.083,8.336,3.647,7.295,6.252"
+   id="path18" />
+<path
+   fill="none"
+   stroke="#BB8FC0"
+   stroke-width="2.529"
+   stroke-linecap="round"
+   stroke-linejoin="round"
+   d="M119.776,221.445  c-2.606-7.294-11.461-10.938-12.503-19.796c-0.522-7.814,9.897-20.318,18.753-14.587c5.732,4.169,8.336,16.672,11.982,22.924  c2.084,4.165,5.729,15.105,12.504,14.063c9.376-1.041,6.25-20.838,7.291-27.09c1.043-6.773,3.126-15.629-3.645-20.838  c-3.646-3.125-18.755-6.251-22.921-2.604c-2.607,2.083-0.522,9.378,3.125,7.813c0,2.605,0.52,6.252,0,8.855  c-1.563,4.69-5.732,4.17-8.855,7.296c-3.125,3.646-1.042,13.024,5.208,11.461"
+   id="path20" />
+<path
+   fill="none"
+   stroke="#BB8FC0"
+   stroke-width="2.529"
+   stroke-linecap="round"
+   stroke-linejoin="round"
+   d="M133.32,226.136  c-5.73-3.127-7.294,3.646-0.521,4.167c7.294,1.041,5.21-5.731,0-4.689"
+   id="path22" />
+<path
+   fill="#EC6EA5"
+   d="M172.654,65.549c0-5.754,4.664-10.419,10.416-10.419c5.757,0,10.42,4.666,10.42,10.419  c0,5.755-4.663,10.418-10.42,10.418C177.318,75.967,172.654,71.304,172.654,65.549z"
+   id="path24" />
+<path
+   fill="#EC6EA5"
+   d="M142.831,42.607c0-5.753,4.664-10.419,10.416-10.419c5.757,0,10.42,4.666,10.42,10.419  c0,5.755-4.664,10.418-10.42,10.418C147.494,53.026,142.831,48.363,142.831,42.607z"
+   id="path26" />
+<path
+   fill="#EC6EA5"
+   d="M104.404,38.02c0-5.753,4.664-10.419,10.416-10.419c5.757,0,10.42,4.666,10.42,10.419  c0,5.755-4.664,10.418-10.42,10.418C109.067,48.438,104.404,43.774,104.404,38.02z"
+   id="path28" />
+<circle
+   fill="#EC6EA5"
+   cx="35.674"
+   cy="56.946"
+   r="10.418"
+   id="circle30" />
+<path
+   fill="#FFCB00"
+   stroke="#FFCA05"
+   d="M196.949,75.692c0.997-1.409,0.664-3.36-0.744-4.358c-1.409-0.996-3.359-0.663-4.356,0.746  c-3.162,4.463-9.323,5.753-14.023,2.941c-4.889-2.927-6.572-9.13-3.832-14.122c0.83-1.512,0.279-3.413-1.237-4.244  c-1.513-0.83-3.412-0.276-4.243,1.237c-3.851,7.013-2.211,15.523,3.572,20.633l-15.004,25.061c-0.886,1.482-0.405,3.401,1.078,4.288  c1.481,0.886,3.401,0.404,4.288-1.078l15.007-25.063C184.425,84.284,192.523,81.936,196.949,75.692z"
+   id="path32" />
+<path
+   fill="#FFFFFF"
+   stroke="#808285"
+   d="M64.114,75.376c-1.109-1.322-3.08-1.495-4.403-0.386c-1.321,1.109-1.496,3.081-0.386,4.404  c3.513,4.191,3.198,10.476-0.718,14.307c-4.072,3.986-10.5,4.038-14.631,0.121c-1.253-1.187-3.232-1.136-4.418,0.118  c-1.188,1.251-1.136,3.231,0.119,4.417c5.806,5.507,14.451,6.084,20.862,1.789l20.426,20.879c1.208,1.232,3.186,1.256,4.421,0.048  c1.233-1.207,1.256-3.187,0.048-4.419L65.003,95.771C69.243,89.671,69.029,81.242,64.114,75.376z"
+   id="path34" />
+<path
+   fill="#FFFFFF"
+   stroke="#808285"
+   d="M22.629,146.548c-1.68-0.398-3.365,0.641-3.762,2.32c-0.399,1.679,0.639,3.365,2.32,3.763  c5.321,1.262,8.823,6.49,7.971,11.903c-0.886,5.628-6.007,9.51-11.661,8.838c-1.714-0.207-3.27,1.019-3.474,2.733  c-0.205,1.713,1.02,3.27,2.733,3.474c7.946,0.946,15.224-3.757,17.8-11.031l28.853,4.542c1.705,0.268,3.307-0.898,3.574-2.604  c0.271-1.704-0.895-3.305-2.601-3.571l-28.858-4.543C35.279,154.947,30.073,148.315,22.629,146.548z"
+   id="path36" />
+<path
+   fill="#00ADEE"
+   stroke="#00ADEE"
+   d="M239.914,185.59c1.726-0.101,3.043-1.574,2.946-3.301c-0.099-1.723-1.576-3.04-3.301-2.942  c-5.459,0.311-10.311-3.697-11.038-9.127c-0.761-5.647,3.04-10.831,8.65-11.801c1.7-0.293,2.842-1.909,2.546-3.611  c-0.292-1.702-1.908-2.843-3.613-2.547c-7.885,1.362-13.514,7.948-13.902,15.655l-28.95,3.893c-1.711,0.23-2.912,1.806-2.679,3.513  c0.23,1.712,1.803,2.916,3.512,2.683l28.951-3.892C225.393,181.154,232.278,186.022,239.914,185.59z"
+   id="path38" />
+<path
+   fill="#FFCB00"
+   stroke="#FFCA05"
+   d="M216.436,262.704c1.405,1.001,3.357,0.672,4.362-0.734  c0.999-1.404,0.671-3.358-0.737-4.358c-4.456-3.174-5.734-9.332-2.906-14.029c2.938-4.881,9.143-6.551,14.13-3.799  c1.51,0.834,3.409,0.288,4.244-1.227c0.834-1.512,0.284-3.413-1.228-4.247c-7.005-3.864-15.516-2.244-20.641,3.523l-25.025-15.063  c-1.477-0.889-3.401-0.408-4.288,1.069c-0.893,1.479-0.414,3.398,1.063,4.289l25.029,15.067  C207.873,250.166,210.203,258.269,216.436,262.704z"
+   id="path40" />
+<path
+   fill="#EC6EA5"
+   stroke="#EC6EA5"
+   d="M126.689,299.248c-0.102,1.725,1.211,3.205,2.937,3.309  c1.721,0.102,3.203-1.211,3.305-2.937c0.325-5.46,4.868-9.813,10.348-9.907c5.696-0.101,10.405,4.274,10.718,9.962  c0.095,1.725,1.566,3.043,3.292,2.947c1.723-0.092,3.044-1.567,2.947-3.29c-0.439-7.991-6.328-14.346-13.937-15.63l-0.508-29.203  c-0.031-1.724-1.455-3.102-3.179-3.069c-1.728,0.028-3.103,1.453-3.072,3.179l0.505,29.21  C132.777,285.341,127.145,291.613,126.689,299.248z"
+   id="path42" />
+<path
+   fill="#FFCB00"
+   stroke="#FFCA05"
+   d="M30.759,225.709c-1.358,1.068-1.597,3.029-0.531,4.392  c1.066,1.354,3.031,1.593,4.391,0.526c4.301-3.376,10.57-2.863,14.277,1.176c3.853,4.199,3.7,10.625-0.349,14.628  c-1.229,1.213-1.241,3.192-0.026,4.417c1.214,1.23,3.193,1.244,4.42,0.025c5.689-5.625,6.541-14.245,2.456-20.792l21.523-19.749  c1.269-1.162,1.357-3.146,0.19-4.414c-1.169-1.272-3.145-1.359-4.417-0.19l-21.527,19.746  C45.206,221.043,36.777,220.985,30.759,225.709z"
+   id="path44" />
+<circle
+   fill="#EC1C24"
+   stroke="#EC1C24"
+   stroke-width="1.0868"
+   cx="159.471"
+   cy="105.635"
+   r="3.989"
+   id="circle46" />
+<circle
+   fill="#EC1C24"
+   stroke="#EC1C24"
+   stroke-width="1.0868"
+   cx="231.994"
+   cy="124.854"
+   r="3.99"
+   id="circle48" />
+<g
+   id="g54">
+	<path
+   fill="none"
+   stroke="#E3003A"
+   stroke-width="3.7935"
+   d="M225.104,128.117c-9.791,7.615-58.744,21.033-63.095-6.889"
+   id="path50" />
+	<polygon
+   fill="#E3003A"
+   points="160.59,112.12 167.833,124.138 162.116,121.909 157.348,125.771  "
+   id="polygon52" />
+</g>
+<text
+   transform="translate(263.5576,80.5142)"
+   font-size="14.1"
+   id="text56"
+   style="font-size:14.10000038px;font-family:'Liberation Sans', Helvetica, Arial, sans-serif;fill:#333333" />
+
+<text
+   transform="translate(265,120.8638)"
+   id="text64" />
+
+<text
+   transform="translate(71.9326,138.1069)"
+   id="text72" />
+
+<text
+   transform="scale(1.0034924,0.99651979)"
+   font-size="14.1"
+   id="text74"
+   style="font-size:11.80590725px;font-family:'Liberation Sans', Helvetica, Arial, sans-serif;fill:#333333;stroke-width:0.83729833"
+   x="260.64404"
+   y="209.37483">नाभिक</text>
+
+<text
+   id="text82"
+   x="264.55759"
+   y="23.6646" />
+
+<line
+   x1="173"
+   y1="204.5"
+   x2="255"
+   y2="204.5"
+   id="line84"
+   stroke="#333333"
+   fill="none" />
+<line
+   fill="none"
+   stroke="#333333"
+   x1="163"
+   y1="105.5"
+   x2="255"
+   y2="105.5"
+   id="line86" />
+<line
+   fill="none"
+   stroke="#333333"
+   x1="234"
+   y1="125.5"
+   x2="255"
+   y2="125.5"
+   id="line88" />
+<line
+   fill="none"
+   stroke="#333333"
+   x1="254.5"
+   y1="106"
+   x2="254.5"
+   y2="125"
+   id="line90" />
+<line
+   fill="none"
+   stroke="#333333"
+   x1="254"
+   y1="115.5"
+   x2="262"
+   y2="115.5"
+   id="line92" />
+<line
+   fill="none"
+   stroke="#333333"
+   x1="193"
+   y1="76.5"
+   x2="261"
+   y2="76.5"
+   id="line94" />
+<line
+   fill="none"
+   stroke="#333333"
+   x1="187.5"
+   y1="61"
+   x2="187.5"
+   y2="19"
+   id="line96" />
+<line
+   fill="none"
+   stroke="#333333"
+   x1="187"
+   y1="19.5"
+   x2="261"
+   y2="19.5"
+   id="line98" />
+<text
+   xml:space="preserve"
+   style="font-style:normal;font-weight:normal;font-size:11.73342037px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.29333556"
+   x="262.5755"
+   y="14.697975"
+   id="text109"
+   transform="scale(0.99700487,1.0030041)"><tspan
+     sodipodi:role="line"
+     id="tspan107"
+     x="262.5755"
+     y="14.697975"
+     style="stroke-width:0.29333556">विकास कारक कोशिका </tspan><tspan
+     sodipodi:role="line"
+     x="262.5755"
+     y="29.495836"
+     style="stroke-width:0.29333556"
+     id="tspan111">को विभाजित करने</tspan><tspan
+     sodipodi:role="line"
+     x="262.5755"
+     y="44.293697"
+     style="stroke-width:0.29333556"
+     id="tspan113">का संकेत देता है</tspan></text>
+<text
+   xml:space="preserve"
+   style="font-style:normal;font-weight:normal;font-size:10.9803381px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.27450848"
+   x="270.1553"
+   y="79.003548"
+   id="text117"
+   transform="scale(0.96965338,1.0312964)"><tspan
+     sodipodi:role="line"
+     id="tspan115"
+     x="270.1553"
+     y="79.003548"
+     style="stroke-width:0.27450848">रिसेप्टर</tspan></text>
+<text
+   xml:space="preserve"
+   style="font-style:normal;font-weight:normal;font-size:11.37801075px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.28445026"
+   x="265.68948"
+   y="109.67109"
+   id="text121"
+   transform="scale(0.98939862,1.010715)"><tspan
+     sodipodi:role="line"
+     id="tspan119"
+     x="265.68948"
+     y="109.67109"
+     style="stroke-width:0.28445026">टायरोसिन काइनेस</tspan><tspan
+     sodipodi:role="line"
+     x="265.68948"
+     y="124.02072"
+     style="stroke-width:0.28445026"
+     id="tspan123">अवरोधक संकेत रोकता है</tspan></text>
+<text
+   xml:space="preserve"
+   style="font-style:normal;font-weight:normal;font-size:10.59752178px;line-height:1.25;font-family:sans-serif;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.26493803"
+   x="81.340706"
+   y="135.8624"
+   id="text127"
+   transform="scale(1.0279841,0.9727777)"><tspan
+     sodipodi:role="line"
+     x="81.340706"
+     y="135.8624"
+     id="tspan129"
+     style="stroke-width:0.26493803">कोई संकेत नहीं</tspan><tspan
+     sodipodi:role="line"
+     x="81.340706"
+     y="149.22769"
+     style="stroke-width:0.26493803"
+     id="tspan135">इसलिए कोशिका</tspan><tspan
+     sodipodi:role="line"
+     x="81.340706"
+     y="162.59299"
+     id="tspan131"
+     style="stroke-width:0.26493803">विभाजित नहीं होती</tspan></text>
+</svg>

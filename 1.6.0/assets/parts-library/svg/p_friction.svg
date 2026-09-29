@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<!-- Creator: CorelDRAW; modified by Pieter Kuiper -->
+<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" width="500px" height="480px" style="shape-rendering:geometricPrecision; text-rendering:geometricPrecision; image-rendering:optimizeQuality; fill-rule:evenodd; clip-rule:evenodd"
+viewBox="0 0 500 480">
+ <defs>
+  <style type="text/css">
+   <![CDATA[
+    .str1 {stroke:#1F1A17;stroke-width:0.54}
+    .str0 {stroke:#2B2828;stroke-width:1.25008}
+    .fil5 {fill:none}
+    .fil0 {fill:white}
+    .fil2 {fill:#99AF69}
+    .fil1 {fill:#C1A160}
+    .fil4 {fill:black;fill-rule:nonzero}
+    .fil3 {fill:red;fill-rule:nonzero}
+   ]]>
+  </style>
+  <marker id="arrowHead" markerWidth="6" markerHeight="6" refX="2" refY="3" orient="auto">
+	<path d="M 0 0 L 3 3 L 0 6 Q 3,3 0,0 " style="fill: blue; stroke:blue;" />
+	</marker>
+ </defs>
+ <polygon class="fil0" points="0,0 600.001,0 600.001,480 0,480 "/>
+ <g id="Capa_x0020_1">
+
+  <metadata id="CorelCorpID_0Corel-Layer"/>
+  <rect id="lur" class="fil1 str0" x="-0.397577" y="300.043" width="600.001" height="179.912"/>
+  <rect id="objekt" class="fil2 str0" x="150" y="60" width="240" height="240"/>
+  
+  <path id="mgVector" d="M270,150 v135" style="marker-end: url(#arrowHead); fill:none; stroke:blue; stroke-width:6" />
+  <path id="N_Vector" d="M270,450 v-135" style="marker-end: url(#arrowHead); fill:none; stroke:blue; stroke-width:6" />
+  <path id="F_Vector" d="M470,180 h-70" style="marker-end: url(#arrowHead); fill:none; stroke:blue; stroke-width:6" />
+  <path id="F_Vector" d="M280,300 h70" style="marker-end: url(#arrowHead); fill:none; stroke:blue; stroke-width:6" />
+  
+  <text x='300' y='450' font-size='48' font-style='italic'>N</text>
+  <text x='300' y='350' font-size='48' font-style='italic'>F<tspan dy = "10" font-size='36'>f</tspan><tspan dy="-10"> &#8804; &#x00B5;N</tspan></text> 
+  <polyline id="kontak" class="fil5 str1" points="13.6821,188.454 24.1689,187.659 35.7676,185.75 45.6187,193.069 54.9936,188.296 61.0314,186.068 71.6769,187.659 77.5553,185.91 89.3134,191.955 97.4169,187.5 114.259,187.182 121.886,191.955 133.484,187.659 "/>
+  <circle id="zirk" class="fil5 str1" cx="193.347" cy="300" r="5.99989"/>
+  <line id="lin2" class="fil5 str1" x1="198.586" y1="297.071" x2="126.449" y2= "161.536" />
+  <line id="lin1" class="fil5 str1" x1="191.741" y1="305.781" x2="48.9622" y2= "244.495" />
+  <path id="rell2" class="fil2 str1" d="M133.593 189.952c0,-33.1314 -26.8696,-59.9996 -60.0003,-59.9996 -33.1307,0 -59.9996,26.8682 -59.9996,59.9996l5.33197 -1.97433 8.57977 3.81827 6.35599 0.15874 18.5896 1.7504 10.1693 -2.06858 6.0378 -4.45394 8.42103 4.13575 8.26229 -1.4315 2.06504 3.50008 9.0567 -1.43221 5.24339 -2.8637 6.19654 2.8637 11.9169 -1.27276 3.97205 2.54551 9.8015 -3.27544z"/>
+  <path id="rell1" class="fil1 str1" d="M13.5936 189.952c0.0559843,33.0839 27.027,59.8649 60.1576,59.8649 33.1307,0 59.8982,-26.7818 59.8423,-59.8649l-6.1278 7.29426 -8.53654 -3.68929 -11.0261 -1.60228 -11.0686 2.83252 -8.23749 -1.58811 -9.0241 0.669686 -8.8767 1.45276 -3.56953 -3.57166 -9.59103 0.921261 -7.41119 2.52709 -8.69245 -0.334488 -7.57064 -2.90906 -5.84788 3.4774 -5.29867 -4.17685 -9.12119 -1.30323z"/>
+ </g>
+
+</svg>

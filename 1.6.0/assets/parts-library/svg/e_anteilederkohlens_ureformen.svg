@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="1097.4" height="1047.6" xmlns="http://www.w3.org/2000/svg">
+ <path d="m0 0h1117.4v1116.7h-1117.4z" fill="#fff"/>
+ <path d="m266.09 900.94v-806.43h104v803.93h104v-803.93h104v804.43h104v-804.43h104v803.93h104v-803.93h104v803.93" fill="none" stroke="#000" stroke-width="2.04"/>
+ <path d="m168.59 94.507h877.5v786.43h-877.5z" fill="#fff"/>
+ <path d="m168.59 94.507h883.54v803.93h-883.54z" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+ <path d="m171.93 725.99c51.145-137.09 100.27-275.08 157.16-409.92 28.487-61.403 60.04-127.7 109.75-174.44 30.449-28.63 64.116-40.456 103.68-45.407 19.785-2.4756 8.1447-1.4396 64.348-1.4396 59.203 0 40.355-0.313 60.016 0.9626 49.198 3.3302 108.69 23.649 139.19 65.193 86.388 97.628 115.92 220.48 167.67 337.42 27.448 72.733 52.884 146.22 81.328 218.58" fill="none" stroke="#000" stroke-width="5"/>
+ <path d="m169.09 94.937c71 0 60.644 1.3495 91.288 3.3378 49.198 3.3302 108.69 23.649 139.19 65.193 86.388 97.628 115.92 220.48 167.67 337.42 27.448 72.733 126.59 326.8 155.03 399.16" fill="none" stroke="#000" stroke-dasharray="15,5" stroke-width="5"/>
+ <path d="m517.33 900.28c51.145-137.09 162.81-448.37 219.71-583.21 28.487-61.403 60.04-127.7 109.75-174.44 56.189-52.832 129.3-48.115 205.34-48.115" fill="none" stroke="#000" stroke-dasharray="5,5" stroke-width="5"/>
+ <text x="165.49" y="939.04" font-family="Liberation Serif" font-size="36" text-anchor="middle"><tspan x="165.49" y="939.04" font-family="Liberation Sans" font-weight="400">4</tspan></text>
+ <text x="274.22" y="939.04" font-family="Liberation Serif" font-size="36" text-anchor="middle"><tspan x="274.22" y="939.04" font-family="Liberation Sans" font-weight="400">5</tspan></text>
+ <text x="375.55" y="939.04" font-family="Liberation Serif" font-size="36" text-anchor="middle"><tspan x="375.55" y="939.04" font-family="Liberation Sans" font-weight="400">6</tspan></text>
+ <text x="479" y="939.04" font-family="Liberation Sans" font-size="36" font-weight="400" text-anchor="middle"><tspan x="479" y="939.04">7</tspan></text>
+ <text x="588.26" y="939.04" font-family="Liberation Sans" font-size="36" font-weight="400" text-anchor="middle"><tspan x="588.26" y="939.04">8</tspan></text>
+ <text x="688.34" y="939.04" font-family="Liberation Sans" font-size="36" font-weight="400" text-anchor="middle"><tspan x="688.34" y="939.04">9</tspan></text>
+ <text x="792.41" y="939.04" font-family="Liberation Sans" font-size="36" font-weight="400" text-anchor="middle"><tspan x="792.41" y="939.04">10</tspan></text>
+ <text x="889.19" y="939.04" font-family="Liberation Sans" font-size="36" font-weight="400" text-anchor="middle"><tspan x="889.19" y="939.04">11</tspan></text>
+ <text x="996.07" y="939.04" font-family="Liberation Sans" font-size="36" font-weight="400" text-anchor="middle"><tspan x="996.07" y="939.04">12</tspan></text>
+ <text x="616.09" y="1000.09" font-family="Liberation Sans" font-size="36" font-weight="400" text-anchor="middle"><tspan x="616.09" y="1000.09">pH-Wert</tspan></text>
+ <path d="m169.35 815.94h882.69m-883.99-106h882.84m1.2242-81h-882.76v-83h882.46v-107h-883.22v-80h883.54v-80h-883.54v-107h883.54" fill="none" stroke="#000" stroke-width="2"/>
+ <text x="155.67" y="114.26" font-family="Liberation Sans" font-size="36" font-weight="400" text-anchor="end"><tspan x="155.67" y="114.26">1.0</tspan></text>
+ <text x="156.98" y="185.93" font-family="Liberation Sans" font-size="36" font-weight="400" text-anchor="end"><tspan x="156.98" y="185.93">0.5</tspan></text>
+ <text x="154.43" y="292.5" font-family="Liberation Sans" font-size="36" font-weight="400" text-anchor="end"><tspan x="154.43" y="292.5">0.2</tspan></text>
+ <text x="154.43" y="372.66" font-family="Liberation Sans" font-size="36" font-weight="400" text-anchor="end"><tspan x="154.43" y="372.66">0.1</tspan></text>
+ <text x="154.89" y="457.42" font-family="Liberation Sans" font-size="36" font-weight="400" text-anchor="end"><tspan x="154.89" y="457.42">0.05</tspan></text>
+ <text x="155.35" y="558.77" font-family="Liberation Sans" font-size="36" font-weight="400" text-anchor="end"><tspan x="155.35" y="558.77">0.02</tspan></text>
+ <text x="155.81" y="644.45" font-family="Liberation Sans" font-size="36" font-weight="400" text-anchor="end"><tspan x="155.81" y="644.45">0.01</tspan></text>
+ <text x="155.81" y="727.83" font-family="Liberation Sans" font-size="36" font-weight="400" text-anchor="end"><tspan x="155.81" y="727.83">0.005</tspan></text>
+ <text x="153.97" y="831.48" font-family="Liberation Sans" font-size="36" font-weight="400" text-anchor="end"><tspan x="153.97" y="831.48">0.002</tspan></text>
+ <text x="155.81" y="902.89" font-family="Liberation Sans" font-size="36" font-weight="400" text-anchor="end"><tspan x="155.81" y="902.89">0.001</tspan></text>
+ <text x="226.09" y="140.94" font-family="Liberation Sans" font-size="36" font-weight="400"><tspan x="226.09" y="140.94">CO<tspan baseline-shift="sub" font-size="65%">2</tspan></tspan></text>
+ <text x="606.09" y="130.94" font-family="Liberation Sans" font-size="36" font-weight="400" text-anchor="middle"><tspan x="606.09" y="130.94">HCO<tspan baseline-shift="sub" font-size="65%">3</tspan><tspan baseline-shift="super" font-size="65%">-</tspan></tspan></text>
+ <text x="957.6" y="140.94" font-family="Liberation Sans" font-size="36" font-weight="400" text-anchor="middle"><tspan x="957.6" y="140.94">CO<tspan baseline-shift="sub" font-size="65%">3</tspan><tspan baseline-shift="super" font-size="65%">2-</tspan></tspan></text>
+ <text transform="rotate(-90)" x="-465.55" y="60.09" font-family="Liberation Sans" font-size="36" font-weight="400" text-anchor="end"><tspan x="-465.55" y="60.09" text-anchor="middle">Anteile der Kohlensäureformen</tspan></text>
+ <text transform="rotate(-90)" x="-200.58" y="416.09" font-family="Liberation Sans" font-size="36" font-weight="400" text-anchor="end"><tspan x="-200.58" y="416.09">pH=pK<tspan baseline-shift="sub" font-size="65%">1</tspan></tspan></text>
+ <text transform="rotate(-90)" x="-200.6" y="826.09" font-family="Liberation Sans" font-size="36" font-weight="400" text-anchor="end"><tspan x="-200.6" y="826.09">pH=pK<tspan baseline-shift="sub" font-size="65%">2</tspan></tspan></text>
+ <text transform="rotate(-90)" x="-460.94" y="626.09" font-family="Liberation Sans" font-size="36" font-weight="400" text-anchor="middle"><tspan x="-460.94" y="626.09">pH=(pK<tspan baseline-shift="sub" font-size="65%">1</tspan>+pK<tspan baseline-shift="sub" font-size="65%">2</tspan>)/2</tspan></text>
+ <text x="576.09" y="46.09" font-family="Liberation Sans" font-size="36" font-weight="400" text-anchor="middle"><tspan x="576.09" y="46.09">Anteil der Kohlensäureformen in Abhängigkeit vom pH-Wert</tspan></text>
+</svg>

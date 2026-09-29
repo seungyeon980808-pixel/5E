@@ -1,0 +1,921 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   version="1.1"
+   x="0px"
+   y="0px"
+   width="209.93579"
+   height="215.53076"
+   viewBox="0 0 209.93579 215.53076"
+   id="svg3332"
+   inkscape:version="0.48.1 "
+   sodipodi:docname="CoupeIntérieur.svg">
+  <metadata
+     id="metadata3677">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs3675" />
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1920"
+     inkscape:window-height="1138"
+     id="namedview3673"
+     showgrid="false"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0"
+     inkscape:zoom="2.1522434"
+     inkscape:cx="267.38311"
+     inkscape:cy="73.217633"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg3332"
+     showborder="true"
+     inkscape:showpageshadow="false" />
+  <title
+     id="title3334" />
+  <desc
+     id="desc3336">
+    <Title
+       id="Title3338" />
+    <Creator
+       id="Creator3340">FreeHEP Graphics2D Driver</Creator>
+    <Producer
+       id="Producer3342">geogebra.d.W Revision: 1.11 </Producer>
+    <Source
+       id="Source3344" />
+    <Date
+       id="Date3346">dimanche 14 octobre 2012 12 h 45 CEST</Date>
+  </desc>
+  <g
+     style="stroke-width:1;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-dashoffset:0"
+     id="g3350"
+     transform="matrix(0.34551,0,0,0.34551,-141.64088,-66.489757)">
+    <clipPath
+       id="clip1">
+      <path
+         inkscape:connector-curvature="0"
+         id="path3353"
+         d="m 0,0 0,995 1688,0 0,-995 z" />
+    </clipPath>
+    <g
+       id="g3355"
+       clip-path="url(#clip1)">
+      <g
+         style="fill:#ffffff;fill-opacity:1;stroke:none"
+         id="g3357"
+         fill-rule="nonzero;">
+        <path
+           inkscape:connector-curvature="0"
+           id="path3359"
+           d="m 0,0 1688,0 0,995 L 0,995 0,0 z" />
+      </g>
+      <!-- drawing style -->
+    </g>
+    <!-- clip1 -->
+  </g>
+  <g
+     style="stroke-width:1;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-dashoffset:0"
+     id="misc"
+     transform="translate(-141.64088,-66.489757)" />
+  <g
+     style="stroke-width:1;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:10;stroke-dasharray:none;stroke-dashoffset:0"
+     id="layer0"
+     transform="translate(-141.64088,-66.489757)">
+    <g
+       id="g3363"
+       transform="scale(0.34551,0.34551)">
+      <clipPath
+         id="clip2">
+        <path
+           inkscape:connector-curvature="0"
+           id="path3366"
+           d="m 0,0 0,995 1688,0 0,-995 z" />
+      </clipPath>
+      <g
+         id="g3368"
+         clip-path="url(#clip2)">
+        <g
+           style="fill:#993300;fill-opacity:0.10196001;stroke:none"
+           id="g3370"
+           fill-rule="nonzero;">
+          <path
+             inkscape:connector-curvature="0"
+             id="path3372"
+             d="m 996.67,272.41 c -156.06,-72.77 -336.31,-72.77 -492.36,0 l 246.18,527.93 z" />
+        </g>
+        <!-- drawing style -->
+      </g>
+      <!-- clip2 -->
+    </g>
+    <!-- transform -->
+    <g
+       id="g3374"
+       transform="scale(0.34551,0.34551)">
+      <clipPath
+         id="clip3">
+        <path
+           inkscape:connector-curvature="0"
+           id="path3377"
+           d="m 0,0 0,995 1688,0 0,-995 z" />
+      </clipPath>
+      <g
+         id="g3379"
+         clip-path="url(#clip3)">
+        <g
+           style="fill:none;stroke:#993300;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1"
+           id="g3381">
+          <path
+             inkscape:connector-curvature="0"
+             id="path3383"
+             d="m 996.67,272.41 c -156.06,-72.77 -336.31,-72.77 -492.36,0 l 246.18,527.93 z" />
+        </g>
+        <!-- drawing style -->
+      </g>
+      <!-- clip3 -->
+    </g>
+    <!-- transform -->
+    <g
+       id="g3385"
+       transform="scale(0.34551,0.34551)">
+      <clipPath
+         id="clip4">
+        <path
+           inkscape:connector-curvature="0"
+           id="path3388"
+           d="m 0,0 0,995 1688,0 0,-995 z" />
+      </clipPath>
+      <g
+         id="g3390"
+         clip-path="url(#clip4)">
+        <g
+           style="fill:#993300;fill-opacity:0.10196001;stroke:none"
+           id="g3392"
+           fill-rule="nonzero;">
+          <path
+             inkscape:connector-curvature="0"
+             id="path3394"
+             d="m 955.06,361.64 c -129.68,-60.47 -279.46,-60.47 -409.14,0 l 204.57,438.7 z" />
+        </g>
+        <!-- drawing style -->
+      </g>
+      <!-- clip4 -->
+    </g>
+    <!-- transform -->
+    <g
+       id="g3396"
+       transform="scale(0.34551,0.34551)">
+      <clipPath
+         id="clip5">
+        <path
+           inkscape:connector-curvature="0"
+           id="path3399"
+           d="m 0,0 0,995 1688,0 0,-995 z" />
+      </clipPath>
+      <g
+         id="g3401"
+         clip-path="url(#clip5)">
+        <g
+           style="fill:none;stroke:#993300;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1"
+           id="g3403">
+          <path
+             inkscape:connector-curvature="0"
+             id="path3405"
+             d="m 955.06,361.64 c -129.68,-60.47 -279.46,-60.47 -409.14,0 l 204.57,438.7 z" />
+        </g>
+        <!-- drawing style -->
+      </g>
+      <!-- clip5 -->
+    </g>
+    <!-- transform -->
+    <g
+       id="g3407"
+       transform="scale(0.34551,0.34551)">
+      <clipPath
+         id="clip6">
+        <path
+           inkscape:connector-curvature="0"
+           id="path3410"
+           d="m 0,0 0,995 1688,0 0,-995 z" />
+      </clipPath>
+      <g
+         id="g3412"
+         clip-path="url(#clip6)">
+        <g
+           style="fill:#993300;fill-opacity:0.10196001;stroke:none"
+           id="g3414"
+           fill-rule="nonzero;">
+          <path
+             inkscape:connector-curvature="0"
+             id="path3416"
+             d="m 799.03,696.24 c -30.77,-14.35 -66.31,-14.35 -97.08,0 l 48.54,104.1 z" />
+        </g>
+        <!-- drawing style -->
+      </g>
+      <!-- clip6 -->
+    </g>
+    <!-- transform -->
+    <g
+       id="g3418"
+       transform="scale(0.34551,0.34551)">
+      <clipPath
+         id="clip7">
+        <path
+           inkscape:connector-curvature="0"
+           id="path3421"
+           d="m 0,0 0,995 1688,0 0,-995 z" />
+      </clipPath>
+      <g
+         id="g3423"
+         clip-path="url(#clip7)">
+        <g
+           style="fill:none;stroke:#993300;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1"
+           id="g3425">
+          <path
+             inkscape:connector-curvature="0"
+             id="path3427"
+             d="m 799.03,696.24 c -30.77,-14.35 -66.31,-14.35 -97.08,0 l 48.54,104.1 z" />
+        </g>
+        <!-- drawing style -->
+      </g>
+      <!-- clip7 -->
+    </g>
+    <!-- transform -->
+    <defs
+       id="defs3429">
+      <pattern
+         patternTransform="matrix(1.0000,0.0,0.0,1.0000,0.0000,0.0000)"
+         patternUnits="userSpaceOnUse"
+         height="14.000"
+         width="14.000"
+         y="0"
+         x="0"
+         id="texture-0">
+        <g
+           id="g3432"
+           transform="matrix(.34551, 0.0000, 0.0000, .34551, 0.0000, 0.0000)">
+          <clipPath
+             id="clip8">
+            <path
+               id="path3435"
+               d="M 0.0000 0.0000 L 0.0000 995.00 L 1688.0 995.00 L 1688.0 0.0000 z" />
+          </clipPath>
+          <g
+             id="g3437"
+             clip-path="url(#clip8)">
+            <image
+               id="image3439"
+               xlink:href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAA4AAAAOCAYAAAAfSC3RAAAAWUlEQVR42mNgMDZ+z2Bk5MFACjA1 dWEgWZOhoQnQsucMJNsEcqGJSQjxmkAuA2kyNg4g3SYjIx9SbXpNjqb35GryoLEmSEDQw09kBTkk GZGYImB+IkkTAwMAXSYllavJi90AAAAASUVORK5CYII="
+               height="14"
+               width="14"
+               y="0"
+               x="0" />
+          </g>
+          <!-- clip8 -->
+        </g>
+        <!-- transform -->
+      </pattern>
+    </defs>
+    <g
+       style="stroke:url(#texture-0)"
+       id="g3441">
+      <g
+         id="g3443"
+         transform="scale(0.34551,0.34551)">
+        <clipPath
+           id="clip9">
+          <path
+             inkscape:connector-curvature="0"
+             id="path3446"
+             d="m 0,0 0,995 1688,0 0,-995 z" />
+        </clipPath>
+        <g
+           id="g3448"
+           clip-path="url(#clip9)">
+          <g
+             style="fill:url(#texture-0);fill-opacity:1;stroke:none"
+             id="g3450"
+             fill-rule="nonzero;">
+            <path
+               inkscape:connector-curvature="0"
+               id="path3452"
+               d="m 774.76,748.29 c -15.39,-7.17 -33.16,-7.17 -48.54,0 l 24.27,52.05 z" />
+          </g>
+          <!-- drawing style -->
+        </g>
+        <!-- clip9 -->
+      </g>
+      <!-- transform -->
+      <g
+         id="g3454"
+         transform="scale(0.34551,0.34551)">
+        <clipPath
+           id="clip10">
+          <path
+             inkscape:connector-curvature="0"
+             id="path3457"
+             d="m 0,0 0,995 1688,0 0,-995 z" />
+        </clipPath>
+        <g
+           id="g3459"
+           clip-path="url(#clip10)">
+          <g
+             style="fill:none;stroke:#003333;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1"
+             id="g3461">
+            <path
+               inkscape:connector-curvature="0"
+               id="path3463"
+               d="m 774.76,748.29 c -15.39,-7.17 -33.16,-7.17 -48.54,0 l 24.27,52.05 z" />
+          </g>
+          <!-- drawing style -->
+        </g>
+        <!-- clip10 -->
+      </g>
+      <!-- transform -->
+      <g
+         id="g3465"
+         transform="scale(0.34551,0.34551)">
+        <clipPath
+           id="clip11">
+          <path
+             inkscape:connector-curvature="0"
+             id="path3468"
+             d="m 0,0 0,995 1688,0 0,-995 z" />
+        </clipPath>
+        <g
+           id="g3470"
+           clip-path="url(#clip11)">
+          <g
+             id="g3472"
+             transform="translate(667,816)">
+            <text
+               style="font-size:20px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Helvetica"
+               id="text3474"
+               y="0"
+               x="0"
+               font-size="20.000"
+               font-weight="normal"
+               font-style="normal">17000 K 70 Mbar</text>
+          </g>
+          <!-- transform -->
+        </g>
+        <!-- clip11 -->
+      </g>
+      <!-- transform -->
+      <g
+         id="g3476"
+         transform="scale(0.34551,0.34551)">
+        <clipPath
+           id="clip12">
+          <path
+             inkscape:connector-curvature="0"
+             id="path3479"
+             d="m 0,0 0,995 1688,0 0,-995 z" />
+        </clipPath>
+        <g
+           id="g3481"
+           clip-path="url(#clip12)">
+          <g
+             id="g3483"
+             transform="translate(644,757)">
+            <text
+               style="font-size:20px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Helvetica"
+               id="text3485"
+               y="0"
+               x="0"
+               font-size="20.000"
+               font-weight="normal"
+               font-style="normal">7000 km</text>
+          </g>
+          <!-- transform -->
+        </g>
+        <!-- clip12 -->
+      </g>
+      <!-- transform -->
+      <g
+         id="g3487"
+         transform="scale(0.34551,0.34551)">
+        <clipPath
+           id="clip13">
+          <path
+             inkscape:connector-curvature="0"
+             id="path3490"
+             d="m 0,0 0,995 1688,0 0,-995 z" />
+        </clipPath>
+        <g
+           id="g3492"
+           clip-path="url(#clip13)">
+          <g
+             id="g3494"
+             transform="translate(604,706)">
+            <text
+               style="font-size:20px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Helvetica"
+               id="text3496"
+               y="0"
+               x="0"
+               font-size="20.000"
+               font-weight="normal"
+               font-style="normal">14000 km</text>
+          </g>
+          <!-- transform -->
+        </g>
+        <!-- clip13 -->
+      </g>
+      <!-- transform -->
+      <g
+         id="g3498"
+         transform="scale(0.34551,0.34551)">
+        <clipPath
+           id="clip14">
+          <path
+             inkscape:connector-curvature="0"
+             id="path3501"
+             d="m 0,0 0,995 1688,0 0,-995 z" />
+        </clipPath>
+        <g
+           id="g3503"
+           clip-path="url(#clip14)">
+          <g
+             id="g3505"
+             transform="translate(452,372)">
+            <text
+               style="font-size:20px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Helvetica"
+               id="text3507"
+               y="0"
+               x="0"
+               font-size="20.000"
+               font-weight="normal"
+               font-style="normal">59000 km</text>
+          </g>
+          <!-- transform -->
+        </g>
+        <!-- clip14 -->
+      </g>
+      <!-- transform -->
+      <g
+         id="g3509"
+         transform="scale(0.34551,0.34551)">
+        <clipPath
+           id="clip15">
+          <path
+             inkscape:connector-curvature="0"
+             id="path3512"
+             d="m 0,0 0,995 1688,0 0,-995 z" />
+        </clipPath>
+        <g
+           id="g3514"
+           clip-path="url(#clip15)">
+          <g
+             id="g3516"
+             transform="translate(409,281)">
+            <text
+               style="font-size:20px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Helvetica"
+               id="text3518"
+               y="0"
+               x="0"
+               font-size="20.000"
+               font-weight="normal"
+               font-style="normal">71000 km</text>
+          </g>
+          <!-- transform -->
+        </g>
+        <!-- clip15 -->
+      </g>
+      <!-- transform -->
+      <g
+         id="g3520"
+         transform="scale(0.34551,0.34551)">
+        <clipPath
+           id="clip16">
+          <path
+             inkscape:connector-curvature="0"
+             id="path3523"
+             d="m 0,0 0,995 1688,0 0,-995 z" />
+        </clipPath>
+        <g
+           id="g3525"
+           clip-path="url(#clip16)">
+          <g
+             id="g3527"
+             transform="translate(628,479)">
+            <text
+               style="font-size:20px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Helvetica"
+               id="text3529"
+               y="0"
+               x="0"
+               font-size="20.000"
+               font-weight="normal"
+               font-style="normal">Hydrogène métallique liquide</text>
+          </g>
+          <!-- transform -->
+        </g>
+        <!-- clip16 -->
+      </g>
+      <!-- transform -->
+      <g
+         id="g3531"
+         transform="scale(0.34551,0.34551)">
+        <clipPath
+           id="clip17">
+          <path
+             inkscape:connector-curvature="0"
+             id="path3534"
+             d="m 0,0 0,995 1688,0 0,-995 z" />
+        </clipPath>
+        <g
+           id="g3536"
+           clip-path="url(#clip17)">
+          <g
+             id="g3538"
+             transform="translate(614,282)">
+            <text
+               style="font-size:20px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Helvetica"
+               id="text3540"
+               y="0"
+               x="0"
+               font-size="20.000"
+               font-weight="normal"
+               font-style="normal">Hydrogène moléculaire liquide</text>
+          </g>
+          <!-- transform -->
+        </g>
+        <!-- clip17 -->
+      </g>
+      <!-- transform -->
+      <g
+         id="g3542"
+         transform="scale(0.34551,0.34551)">
+        <clipPath
+           id="clip18">
+          <path
+             inkscape:connector-curvature="0"
+             id="path3545"
+             d="m 0,0 0,995 1688,0 0,-995 z" />
+        </clipPath>
+        <g
+           id="g3547"
+           clip-path="url(#clip18)">
+          <g
+             id="g3549"
+             transform="translate(740,727)">
+            <text
+               style="font-size:20px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Helvetica"
+               id="text3551"
+               y="0"
+               x="0"
+               font-size="20.000"
+               font-weight="normal"
+               font-style="normal">Glace fondue</text>
+          </g>
+          <!-- transform -->
+        </g>
+        <!-- clip18 -->
+      </g>
+      <!-- transform -->
+      <g
+         id="g3553"
+         transform="scale(0.34551,0.34551)">
+        <clipPath
+           id="clip19">
+          <path
+             inkscape:connector-curvature="0"
+             id="path3556"
+             d="m 0,0 0,995 1688,0 0,-995 z" />
+        </clipPath>
+        <g
+           id="g3558"
+           clip-path="url(#clip19)">
+          <g
+             id="g3560"
+             transform="translate(744,775)">
+            <text
+               style="font-size:20px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Helvetica"
+               id="text3562"
+               y="0"
+               x="0"
+               font-size="20.000"
+               font-weight="normal"
+               font-style="normal">Roche fondue</text>
+          </g>
+          <!-- transform -->
+        </g>
+        <!-- clip19 -->
+      </g>
+      <!-- transform -->
+      <g
+         id="g3564"
+         transform="scale(0.34551,0.34551)">
+        <clipPath
+           id="clip20">
+          <path
+             inkscape:connector-curvature="0"
+             id="path3567"
+             d="m 0,0 0,995 1688,0 0,-995 z" />
+        </clipPath>
+        <g
+           id="g3569"
+           clip-path="url(#clip20)">
+          <g
+             id="g3571"
+             transform="translate(578,207)">
+            <text
+               style="font-size:20px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Helvetica"
+               id="text3573"
+               y="0"
+               x="0"
+               font-size="20.000"
+               font-weight="normal"
+               font-style="normal">Fine atmosphère gazeuse à 124 K / 1 bar</text>
+          </g>
+          <!-- transform -->
+        </g>
+        <!-- clip20 -->
+      </g>
+      <!-- transform -->
+      <g
+         id="g3575"
+         transform="scale(0.34551,0.34551)">
+        <clipPath
+           id="clip21">
+          <path
+             inkscape:connector-curvature="0"
+             id="path3578"
+             d="m 0,0 0,995 1688,0 0,-995 z" />
+        </clipPath>
+        <g
+           id="g3580"
+           clip-path="url(#clip21)">
+          <g
+             id="g3582"
+             transform="translate(955,395)">
+            <text
+               style="font-size:20px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Helvetica"
+               id="text3584"
+               y="0"
+               x="0"
+               font-size="20.000"
+               font-weight="normal"
+               font-style="normal">1 Mbar</text>
+          </g>
+          <!-- transform -->
+        </g>
+        <!-- clip21 -->
+      </g>
+      <!-- transform -->
+    </g>
+    <!-- layer0 -->
+    <defs
+       id="defs3586">
+      <font
+         vert-adv-y="90"
+         vert-origin-y="90"
+         vert-origin-x="45"
+         horiz-adv-x="90"
+         horiz-origin-y="0"
+         horiz-origin-x="0"
+         id="Helvetica">
+        <font-face
+           id="font-face3589"
+           desscent="21.972656"
+           ascent="100.53711"
+           units-per-em="100.00"
+           font-size="100.00"
+           font-style="normal"
+           font-weight="normal"
+           font-family="Helvetica" />
+        <missing-glyph
+           id="missing-glyph3591"
+           d=""
+           horiz-adv-x="50.000" />
+        <glyph
+           id="glyph3593"
+           d="M 42.094 16.703 L 51.172 15.578 Q 49.031 7.6250 43.219 3.2266 Q 37.406 -1.1719 28.375 -1.1719 Q 17.000 -1.1719 10.328 5.8359 Q 3.6562 12.844 3.6562 25.484 Q 3.6562 38.578 10.398 45.805 Q 17.141 53.031 27.875 53.031 Q 38.281 53.031 44.875 45.953 Q 51.469 38.875 51.469 26.031 Q 51.469 25.250 51.422 23.688 L 12.750 23.688 Q 13.234 15.141 17.578 10.602 Q 21.922 6.0625 28.422 6.0625 Q 33.250 6.0625 36.672 8.6016 Q 40.094 11.141 42.094 16.703 z M 13.234 30.906 L 42.188 30.906 Q 41.609 37.453 38.875 40.719 Q 34.672 45.797 27.984 45.797 Q 21.922 45.797 17.797 41.750 Q 13.672 37.703 13.234 30.906 z M 20.734 58.000 L 27.219 71.672 L 38.750 71.672 L 28.000 58.000 L 20.734 58.000 z"
+           horiz-adv-x="55.615"
+           unicode="é" />
+        <glyph
+           id="glyph3595"
+           d="M 42.094 16.703 L 51.172 15.578 Q 49.031 7.6250 43.219 3.2266 Q 37.406 -1.1719 28.375 -1.1719 Q 17.000 -1.1719 10.328 5.8359 Q 3.6562 12.844 3.6562 25.484 Q 3.6562 38.578 10.398 45.805 Q 17.141 53.031 27.875 53.031 Q 38.281 53.031 44.875 45.953 Q 51.469 38.875 51.469 26.031 Q 51.469 25.250 51.422 23.688 L 12.750 23.688 Q 13.234 15.141 17.578 10.602 Q 21.922 6.0625 28.422 6.0625 Q 33.250 6.0625 36.672 8.6016 Q 40.094 11.141 42.094 16.703 z M 13.234 30.906 L 42.188 30.906 Q 41.609 37.453 38.875 40.719 Q 34.672 45.797 27.984 45.797 Q 21.922 45.797 17.797 41.750 Q 13.672 37.703 13.234 30.906 z M 35.078 58.000 L 28.000 58.000 L 16.719 71.672 L 28.484 71.672 L 35.078 58.000 z"
+           horiz-adv-x="55.615"
+           unicode="è" />
+        <glyph
+           id="glyph3597"
+           d="M 6.5938 -0.0000 L 6.5938 51.859 L 14.453 51.859 L 14.453 44.578 Q 16.891 48.391 20.945 50.711 Q 25.000 53.031 30.172 53.031 Q 35.938 53.031 39.625 50.641 Q 43.312 48.250 44.828 43.953 Q 50.984 53.031 60.844 53.031 Q 68.562 53.031 72.711 48.758 Q 76.859 44.484 76.859 35.594 L 76.859 -0.0000 L 68.109 -0.0000 L 68.109 32.672 Q 68.109 37.938 67.258 40.258 Q 66.406 42.578 64.164 43.992 Q 61.922 45.406 58.891 45.406 Q 53.422 45.406 49.805 41.773 Q 46.188 38.141 46.188 30.125 L 46.188 -0.0000 L 37.406 -0.0000 L 37.406 33.688 Q 37.406 39.547 35.258 42.477 Q 33.109 45.406 28.219 45.406 Q 24.516 45.406 21.367 43.453 Q 18.219 41.500 16.797 37.742 Q 15.375 33.984 15.375 26.906 L 15.375 -0.0000 L 6.5938 -0.0000 z"
+           horiz-adv-x="83.301"
+           unicode="m" />
+        <glyph
+           id="glyph3599"
+           d="M 6.3906 -0.0000 L 6.3906 71.578 L 15.188 71.578 L 15.188 -0.0000 L 6.3906 -0.0000 z"
+           horiz-adv-x="22.217"
+           unicode="l" />
+        <glyph
+           id="glyph3601"
+           d="M 6.6406 -0.0000 L 6.6406 71.578 L 15.438 71.578 L 15.438 30.766 L 36.234 51.859 L 47.609 51.859 L 27.781 32.625 L 49.609 -0.0000 L 38.766 -0.0000 L 21.625 26.516 L 15.438 20.562 L 15.438 -0.0000 L 6.6406 -0.0000 z"
+           horiz-adv-x="50.000"
+           unicode="k" />
+        <glyph
+           id="glyph3603"
+           d="M 6.6406 61.469 L 6.6406 71.578 L 15.438 71.578 L 15.438 61.469 L 6.6406 61.469 z M 6.6406 -0.0000 L 6.6406 51.859 L 15.438 51.859 L 15.438 -0.0000 L 6.6406 -0.0000 z"
+           horiz-adv-x="22.217"
+           unicode="i" />
+        <glyph
+           id="glyph3605"
+           d="M 6.5938 -0.0000 L 6.5938 71.578 L 15.375 71.578 L 15.375 45.906 Q 21.531 53.031 30.906 53.031 Q 36.672 53.031 40.922 50.758 Q 45.172 48.484 47.000 44.484 Q 48.828 40.484 48.828 32.859 L 48.828 -0.0000 L 40.047 -0.0000 L 40.047 32.859 Q 40.047 39.453 37.188 42.453 Q 34.328 45.453 29.109 45.453 Q 25.203 45.453 21.758 43.430 Q 18.312 41.406 16.844 37.938 Q 15.375 34.469 15.375 28.375 L 15.375 -0.0000 L 6.5938 -0.0000 z"
+           horiz-adv-x="55.615"
+           unicode="h" />
+        <glyph
+           id="glyph3607"
+           d="M 5.4688 16.547 L 13.922 17.328 Q 14.984 11.375 18.016 8.6875 Q 21.047 6.0000 25.781 6.0000 Q 29.828 6.0000 32.883 7.8594 Q 35.938 9.7188 37.891 12.820 Q 39.844 15.922 41.164 21.195 Q 42.484 26.469 42.484 31.938 Q 42.484 32.516 42.438 33.688 Q 39.797 29.500 35.234 26.883 Q 30.672 24.266 25.344 24.266 Q 16.453 24.266 10.305 30.711 Q 4.1562 37.156 4.1562 47.703 Q 4.1562 58.594 10.578 65.234 Q 17.000 71.875 26.656 71.875 Q 33.641 71.875 39.430 68.117 Q 45.219 64.359 48.219 57.398 Q 51.219 50.438 51.219 37.250 Q 51.219 23.531 48.242 15.406 Q 45.266 7.2812 39.383 3.0312 Q 33.500 -1.2188 25.594 -1.2188 Q 17.188 -1.2188 11.867 3.4453 Q 6.5469 8.1094 5.4688 16.547 z M 41.453 48.141 Q 41.453 55.719 37.430 60.156 Q 33.406 64.594 27.734 64.594 Q 21.875 64.594 17.531 59.812 Q 13.188 55.031 13.188 47.406 Q 13.188 40.578 17.312 36.305 Q 21.438 32.031 27.484 32.031 Q 33.594 32.031 37.523 36.305 Q 41.453 40.578 41.453 48.141 z"
+           horiz-adv-x="55.615"
+           unicode="9" />
+        <glyph
+           id="glyph3609"
+           d="M 4.9844 -4.2969 L 13.531 -5.5625 Q 14.062 -9.5156 16.500 -11.328 Q 19.781 -13.766 25.438 -13.766 Q 31.547 -13.766 34.867 -11.328 Q 38.188 -8.8906 39.359 -4.5000 Q 40.047 -1.8125 39.984 6.7812 Q 34.234 -0.0000 25.641 -0.0000 Q 14.938 -0.0000 9.0781 7.7188 Q 3.2188 15.438 3.2188 26.219 Q 3.2188 33.641 5.9062 39.914 Q 8.5938 46.188 13.695 49.609 Q 18.797 53.031 25.688 53.031 Q 34.859 53.031 40.828 45.609 L 40.828 51.859 L 48.922 51.859 L 48.922 7.0312 Q 48.922 -5.0781 46.461 -10.133 Q 44.000 -15.188 38.648 -18.117 Q 33.297 -21.047 25.484 -21.047 Q 16.219 -21.047 10.500 -16.875 Q 4.7812 -12.703 4.9844 -4.2969 z M 12.250 26.859 Q 12.250 16.656 16.305 11.969 Q 20.359 7.2812 26.469 7.2812 Q 32.516 7.2812 36.617 11.945 Q 40.719 16.609 40.719 26.562 Q 40.719 36.078 36.500 40.914 Q 32.281 45.750 26.312 45.750 Q 20.453 45.750 16.352 40.992 Q 12.250 36.234 12.250 26.859 z"
+           horiz-adv-x="55.615"
+           unicode="g" />
+        <glyph
+           id="glyph3611"
+           d="M 8.6875 -0.0000 L 8.6875 45.016 L .92188 45.016 L .92188 51.859 L 8.6875 51.859 L 8.6875 57.375 Q 8.6875 62.594 9.6250 65.141 Q 10.891 68.562 14.086 70.680 Q 17.281 72.797 23.047 72.797 Q 26.766 72.797 31.250 71.922 L 29.938 64.266 Q 27.203 64.750 24.750 64.750 Q 20.750 64.750 19.094 63.039 Q 17.438 61.328 17.438 56.641 L 17.438 51.859 L 27.547 51.859 L 27.547 45.016 L 17.438 45.016 L 17.438 -0.0000 L 8.6875 -0.0000 z"
+           horiz-adv-x="27.783"
+           unicode="f" />
+        <glyph
+           id="glyph3613"
+           d="M 4.7344 62.203 L 4.7344 70.656 L 51.078 70.656 L 51.078 63.812 Q 44.234 56.547 37.523 44.484 Q 30.812 32.422 27.156 19.672 Q 24.516 10.688 23.781 -0.0000 L 14.750 -0.0000 Q 14.891 8.4531 18.062 20.414 Q 21.234 32.375 27.172 43.484 Q 33.109 54.594 39.797 62.203 L 4.7344 62.203 z"
+           horiz-adv-x="55.615"
+           unicode="7" />
+        <glyph
+           id="glyph3615"
+           d="M 42.094 16.703 L 51.172 15.578 Q 49.031 7.6250 43.219 3.2266 Q 37.406 -1.1719 28.375 -1.1719 Q 17.000 -1.1719 10.328 5.8359 Q 3.6562 12.844 3.6562 25.484 Q 3.6562 38.578 10.398 45.805 Q 17.141 53.031 27.875 53.031 Q 38.281 53.031 44.875 45.953 Q 51.469 38.875 51.469 26.031 Q 51.469 25.250 51.422 23.688 L 12.750 23.688 Q 13.234 15.141 17.578 10.602 Q 21.922 6.0625 28.422 6.0625 Q 33.250 6.0625 36.672 8.6016 Q 40.094 11.141 42.094 16.703 z M 13.234 30.906 L 42.188 30.906 Q 41.609 37.453 38.875 40.719 Q 34.672 45.797 27.984 45.797 Q 21.922 45.797 17.797 41.750 Q 13.672 37.703 13.234 30.906 z"
+           horiz-adv-x="55.615"
+           unicode="e" />
+        <glyph
+           id="glyph3617"
+           d="M 40.234 -0.0000 L 40.234 6.5469 Q 35.297 -1.1719 25.734 -1.1719 Q 19.531 -1.1719 14.328 2.2500 Q 9.1250 5.6719 6.2734 11.797 Q 3.4219 17.922 3.4219 25.875 Q 3.4219 33.641 6.0078 39.969 Q 8.5938 46.297 13.773 49.664 Q 18.953 53.031 25.344 53.031 Q 30.031 53.031 33.695 51.055 Q 37.359 49.078 39.656 45.906 L 39.656 71.578 L 48.391 71.578 L 48.391 -0.0000 L 40.234 -0.0000 z M 12.453 25.875 Q 12.453 15.922 16.648 10.992 Q 20.844 6.0625 26.562 6.0625 Q 32.328 6.0625 36.352 10.773 Q 40.375 15.484 40.375 25.141 Q 40.375 35.797 36.273 40.773 Q 32.172 45.750 26.172 45.750 Q 20.312 45.750 16.383 40.969 Q 12.453 36.188 12.453 25.875 z"
+           horiz-adv-x="55.615"
+           unicode="d" />
+        <glyph
+           id="glyph3619"
+           d="M 4.1562 18.750 L 13.375 19.531 Q 14.406 12.797 18.141 9.3984 Q 21.875 6.0000 27.156 6.0000 Q 33.500 6.0000 37.891 10.789 Q 42.281 15.578 42.281 23.484 Q 42.281 31.000 38.062 35.352 Q 33.844 39.703 27.000 39.703 Q 22.750 39.703 19.336 37.773 Q 15.922 35.844 13.969 32.766 L 5.7188 33.844 L 12.641 70.609 L 48.250 70.609 L 48.250 62.203 L 19.672 62.203 L 15.828 42.969 Q 22.266 47.469 29.344 47.469 Q 38.719 47.469 45.164 40.969 Q 51.609 34.469 51.609 24.266 Q 51.609 14.547 45.953 7.4688 Q 39.062 -1.2188 27.156 -1.2188 Q 17.391 -1.2188 11.211 4.2500 Q 5.0312 9.7188 4.1562 18.750 z"
+           horiz-adv-x="55.615"
+           unicode="5" />
+        <glyph
+           id="glyph3621"
+           d="M 32.328 -0.0000 L 32.328 17.141 L 1.2656 17.141 L 1.2656 25.203 L 33.938 71.578 L 41.109 71.578 L 41.109 25.203 L 50.781 25.203 L 50.781 17.141 L 41.109 17.141 L 41.109 -0.0000 L 32.328 -0.0000 z M 32.328 25.203 L 32.328 57.469 L 9.9062 25.203 L 32.328 25.203 z"
+           horiz-adv-x="55.615"
+           unicode="4" />
+        <glyph
+           id="glyph3623"
+           d="M 50.344 8.4531 L 50.344 -0.0000 L 3.0312 -0.0000 Q 2.9375 3.1719 4.0469 6.1094 Q 5.8594 10.938 9.8359 15.625 Q 13.812 20.312 21.344 26.469 Q 33.016 36.031 37.117 41.625 Q 41.219 47.219 41.219 52.203 Q 41.219 57.422 37.477 61.008 Q 33.734 64.594 27.734 64.594 Q 21.391 64.594 17.578 60.789 Q 13.766 56.984 13.719 50.250 L 4.6875 51.172 Q 5.6094 61.281 11.664 66.578 Q 17.719 71.875 27.938 71.875 Q 38.234 71.875 44.242 66.164 Q 50.250 60.453 50.250 52.000 Q 50.250 47.703 48.492 43.555 Q 46.734 39.406 42.656 34.812 Q 38.578 30.219 29.109 22.219 Q 21.188 15.578 18.945 13.211 Q 16.703 10.844 15.234 8.4531 L 50.344 8.4531 z"
+           horiz-adv-x="55.615"
+           unicode="2" />
+        <glyph
+           id="glyph3625"
+           d="M 7.8594 -0.0000 L 7.8594 71.578 L 39.594 71.578 Q 49.172 71.578 54.148 69.648 Q 59.125 67.719 62.109 62.836 Q 65.094 57.953 65.094 52.047 Q 65.094 44.438 60.156 39.211 Q 55.219 33.984 44.922 32.562 Q 48.688 30.766 50.641 29.000 Q 54.781 25.203 58.500 19.484 L 70.953 -0.0000 L 59.031 -0.0000 L 49.562 14.891 Q 45.406 21.344 42.727 24.758 Q 40.047 28.172 37.922 29.539 Q 35.797 30.906 33.594 31.453 Q 31.984 31.781 28.328 31.781 L 17.328 31.781 L 17.328 -0.0000 L 7.8594 -0.0000 z M 17.328 39.984 L 37.703 39.984 Q 44.188 39.984 47.852 41.328 Q 51.516 42.672 53.422 45.625 Q 55.328 48.578 55.328 52.047 Q 55.328 57.125 51.641 60.398 Q 47.953 63.672 39.984 63.672 L 17.328 63.672 L 17.328 39.984 z"
+           horiz-adv-x="72.217"
+           unicode="R" />
+        <glyph
+           id="glyph3627"
+           d="M 40.438 6.3906 Q 35.547 2.2500 31.031 .53906 Q 26.516 -1.1719 21.344 -1.1719 Q 12.797 -1.1719 8.2031 3.0000 Q 3.6094 7.1719 3.6094 13.672 Q 3.6094 17.484 5.3438 20.633 Q 7.0781 23.781 9.8906 25.688 Q 12.703 27.594 16.219 28.562 Q 18.797 29.250 24.031 29.891 Q 34.672 31.156 39.703 32.906 Q 39.750 34.719 39.750 35.203 Q 39.750 40.578 37.250 42.781 Q 33.891 45.750 27.250 45.750 Q 21.047 45.750 18.094 43.578 Q 15.141 41.406 13.719 35.891 L 5.1250 37.062 Q 6.2969 42.578 8.9844 45.969 Q 11.672 49.359 16.750 51.195 Q 21.828 53.031 28.516 53.031 Q 35.156 53.031 39.305 51.469 Q 43.453 49.906 45.406 47.539 Q 47.359 45.172 48.141 41.547 Q 48.578 39.312 48.578 33.453 L 48.578 21.734 Q 48.578 9.4688 49.141 6.2266 Q 49.703 2.9844 51.375 -0.0000 L 42.188 -0.0000 Q 40.828 2.7344 40.438 6.3906 z M 39.703 26.031 Q 34.906 24.078 25.344 22.703 Q 19.922 21.922 17.680 20.945 Q 15.438 19.969 14.211 18.094 Q 12.984 16.219 12.984 13.922 Q 12.984 10.406 15.648 8.0625 Q 18.312 5.7188 23.438 5.7188 Q 28.516 5.7188 32.469 7.9375 Q 36.422 10.156 38.281 14.016 Q 39.703 17.000 39.703 22.797 L 39.703 26.031 z M 36.078 58.000 L 29.000 58.000 L 17.719 71.672 L 29.484 71.672 L 36.078 58.000 z"
+           horiz-adv-x="55.615"
+           unicode="à" />
+        <glyph
+           id="glyph3629"
+           d="M 37.250 -0.0000 L 28.469 -0.0000 L 28.469 56.000 Q 25.297 52.984 20.141 49.953 Q 14.984 46.922 10.891 45.406 L 10.891 53.906 Q 18.266 57.375 23.781 62.305 Q 29.297 67.234 31.594 71.875 L 37.250 71.875 L 37.250 -0.0000 z"
+           horiz-adv-x="55.615"
+           unicode="1" />
+        <glyph
+           id="glyph3631"
+           d="M 4.1562 35.297 Q 4.1562 48.000 6.7656 55.742 Q 9.3750 63.484 14.523 67.680 Q 19.672 71.875 27.484 71.875 Q 33.250 71.875 37.594 69.555 Q 41.938 67.234 44.773 62.867 Q 47.609 58.500 49.219 52.227 Q 50.828 45.953 50.828 35.297 Q 50.828 22.703 48.242 14.969 Q 45.656 7.2344 40.508 3.0078 Q 35.359 -1.2188 27.484 -1.2188 Q 17.141 -1.2188 11.234 6.2031 Q 4.1562 15.141 4.1562 35.297 z M 13.188 35.297 Q 13.188 17.672 17.312 11.836 Q 21.438 6.0000 27.484 6.0000 Q 33.547 6.0000 37.672 11.859 Q 41.797 17.719 41.797 35.297 Q 41.797 52.984 37.672 58.789 Q 33.547 64.594 27.391 64.594 Q 21.344 64.594 17.719 59.469 Q 13.188 52.938 13.188 35.297 z"
+           horiz-adv-x="55.615"
+           unicode="0" />
+        <glyph
+           id="glyph3633"
+           d="M 0.0000 -1.2188 L 20.750 72.797 L 27.781 72.797 L 7.0781 -1.2188 L 0.0000 -1.2188 z"
+           horiz-adv-x="27.783"
+           unicode="/" />
+        <glyph
+           id="glyph3635"
+           d="M 7.4219 -0.0000 L 7.4219 71.578 L 21.688 71.578 L 38.625 20.906 Q 40.969 13.812 42.047 10.297 Q 43.266 14.203 45.844 21.781 L 62.984 71.578 L 75.734 71.578 L 75.734 -0.0000 L 66.609 -0.0000 L 66.609 59.906 L 45.797 -0.0000 L 37.250 -0.0000 L 16.547 60.938 L 16.547 -0.0000 L 7.4219 -0.0000 z"
+           horiz-adv-x="83.301"
+           unicode="M" />
+        <glyph
+           id="glyph3637"
+           d="M 1.9531 -0.0000 L 1.9531 7.1250 L 34.969 45.016 Q 29.344 44.734 25.047 44.734 L 3.9062 44.734 L 3.9062 51.859 L 46.297 51.859 L 46.297 46.047 L 18.219 13.141 L 12.797 7.1250 Q 18.703 7.5625 23.875 7.5625 L 47.859 7.5625 L 47.859 -0.0000 L 1.9531 -0.0000 z"
+           horiz-adv-x="50.000"
+           unicode="z" />
+        <glyph
+           id="glyph3639"
+           d="M 7.3281 -0.0000 L 7.3281 71.578 L 16.797 71.578 L 16.797 36.078 L 52.344 71.578 L 65.188 71.578 L 35.156 42.578 L 66.500 -0.0000 L 54.000 -0.0000 L 28.516 36.234 L 16.797 24.812 L 16.797 -0.0000 L 7.3281 -0.0000 z"
+           horiz-adv-x="66.699"
+           unicode="K" />
+        <glyph
+           id="glyph3641"
+           d="M 6.2031 -19.969 L 5.2188 -11.719 Q 8.1094 -12.500 10.250 -12.500 Q 13.188 -12.500 14.945 -11.523 Q 16.703 -10.547 17.828 -8.7969 Q 18.656 -7.4688 20.516 -2.2500 Q 20.750 -1.5156 21.297 -.093750 L 1.6094 51.859 L 11.078 51.859 L 21.875 21.828 Q 23.969 16.109 25.641 9.8125 Q 27.156 15.875 29.250 21.625 L 40.328 51.859 L 49.125 51.859 L 29.391 -.87500 Q 26.219 -9.4219 24.469 -12.641 Q 22.125 -17.000 19.094 -19.023 Q 16.062 -21.047 11.859 -21.047 Q 9.3281 -21.047 6.2031 -19.969 z"
+           horiz-adv-x="50.000"
+           unicode="y" />
+        <glyph
+           id="glyph3643"
+           d="M 8.0156 -0.0000 L 8.0156 71.578 L 17.484 71.578 L 17.484 42.188 L 54.688 42.188 L 54.688 71.578 L 64.156 71.578 L 64.156 -0.0000 L 54.688 -0.0000 L 54.688 33.734 L 17.484 33.734 L 17.484 -0.0000 L 8.0156 -0.0000 z"
+           horiz-adv-x="72.217"
+           unicode="H" />
+        <glyph
+           id="glyph3645"
+           d="M 41.219 28.078 L 41.219 36.469 L 71.531 36.531 L 71.531 9.9688 Q 64.547 4.3906 57.125 1.5859 Q 49.703 -1.2188 41.891 -1.2188 Q 31.344 -1.2188 22.727 3.2969 Q 14.109 7.8125 9.7188 16.359 Q 5.3281 24.906 5.3281 35.453 Q 5.3281 45.906 9.6953 54.961 Q 14.062 64.016 22.266 68.406 Q 30.469 72.797 41.156 72.797 Q 48.922 72.797 55.195 70.289 Q 61.469 67.781 65.039 63.289 Q 68.609 58.797 70.453 51.562 L 61.922 49.219 Q 60.297 54.688 57.906 57.812 Q 55.516 60.938 51.070 62.820 Q 46.625 64.703 41.219 64.703 Q 34.719 64.703 29.984 62.727 Q 25.250 60.750 22.344 57.523 Q 19.438 54.297 17.828 50.438 Q 15.094 43.797 15.094 36.031 Q 15.094 26.469 18.391 20.023 Q 21.688 13.578 27.984 10.453 Q 34.281 7.3281 41.359 7.3281 Q 47.516 7.3281 53.375 9.6953 Q 59.234 12.062 62.250 14.750 L 62.250 28.078 L 41.219 28.078 z"
+           horiz-adv-x="77.783"
+           unicode="G" />
+        <glyph
+           id="glyph3647"
+           d="M 8.2031 -0.0000 L 8.2031 71.578 L 56.500 71.578 L 56.500 63.141 L 17.672 63.141 L 17.672 40.969 L 51.266 40.969 L 51.266 32.516 L 17.672 32.516 L 17.672 -0.0000 L 8.2031 -0.0000 z"
+           horiz-adv-x="61.084"
+           unicode="F" />
+        <glyph
+           id="glyph3649"
+           d="M 40.578 -0.0000 L 40.578 7.6250 Q 34.516 -1.1719 24.125 -1.1719 Q 19.531 -1.1719 15.555 .58594 Q 11.578 2.3438 9.6484 5.0078 Q 7.7188 7.6719 6.9375 11.531 Q 6.3906 14.109 6.3906 19.734 L 6.3906 51.859 L 15.188 51.859 L 15.188 23.094 Q 15.188 16.219 15.719 13.812 Q 16.547 10.359 19.234 8.3750 Q 21.922 6.3906 25.875 6.3906 Q 29.828 6.3906 33.297 8.4219 Q 36.766 10.453 38.211 13.945 Q 39.656 17.438 39.656 24.078 L 39.656 51.859 L 48.438 51.859 L 48.438 -0.0000 L 40.578 -0.0000 z"
+           horiz-adv-x="55.615"
+           unicode="u" />
+        <glyph
+           id="glyph3651"
+           d="M 25.781 7.8594 L 27.047 .093750 Q 23.344 -.68750 20.406 -.68750 Q 15.625 -.68750 12.992 .82812 Q 10.359 2.3438 9.2812 4.8125 Q 8.2031 7.2812 8.2031 15.188 L 8.2031 45.016 L 1.7656 45.016 L 1.7656 51.859 L 8.2031 51.859 L 8.2031 64.703 L 16.938 69.969 L 16.938 51.859 L 25.781 51.859 L 25.781 45.016 L 16.938 45.016 L 16.938 14.703 Q 16.938 10.938 17.406 9.8672 Q 17.875 8.7969 18.922 8.1562 Q 19.969 7.5156 21.922 7.5156 Q 23.391 7.5156 25.781 7.8594 z"
+           horiz-adv-x="27.783"
+           unicode="t" />
+        <glyph
+           id="glyph3653"
+           d="M 3.0781 15.484 L 11.766 16.844 Q 12.500 11.625 15.844 8.8438 Q 19.188 6.0625 25.203 6.0625 Q 31.250 6.0625 34.180 8.5234 Q 37.109 10.984 37.109 14.312 Q 37.109 17.281 34.516 19.000 Q 32.719 20.172 25.531 21.969 Q 15.875 24.422 12.141 26.203 Q 8.4062 27.984 6.4766 31.133 Q 4.5469 34.281 4.5469 38.094 Q 4.5469 41.547 6.1328 44.508 Q 7.7188 47.469 10.453 49.422 Q 12.500 50.922 16.039 51.977 Q 19.578 53.031 23.641 53.031 Q 29.734 53.031 34.352 51.273 Q 38.969 49.516 41.164 46.508 Q 43.359 43.500 44.188 38.484 L 35.594 37.312 Q 35.016 41.312 32.203 43.555 Q 29.391 45.797 24.266 45.797 Q 18.219 45.797 15.625 43.797 Q 13.031 41.797 13.031 39.109 Q 13.031 37.406 14.109 36.031 Q 15.188 34.625 17.484 33.688 Q 18.797 33.203 25.250 31.453 Q 34.578 28.953 38.258 27.367 Q 41.938 25.781 44.039 22.758 Q 46.141 19.734 46.141 15.234 Q 46.141 10.844 43.578 6.9609 Q 41.016 3.0781 36.180 .95312 Q 31.344 -1.1719 25.250 -1.1719 Q 15.141 -1.1719 9.8438 3.0312 Q 4.5469 7.2344 3.0781 15.484 z"
+           horiz-adv-x="50.000"
+           unicode="s" />
+        <glyph
+           id="glyph3655"
+           d="M 6.5000 -0.0000 L 6.5000 51.859 L 14.406 51.859 L 14.406 44.000 Q 17.438 49.516 20.000 51.273 Q 22.562 53.031 25.641 53.031 Q 30.078 53.031 34.672 50.203 L 31.641 42.047 Q 28.422 43.953 25.203 43.953 Q 22.312 43.953 20.016 42.219 Q 17.719 40.484 16.750 37.406 Q 15.281 32.719 15.281 27.156 L 15.281 -0.0000 L 6.5000 -0.0000 z"
+           horiz-adv-x="33.301"
+           unicode="r" />
+        <glyph
+           id="glyph3657"
+           d="M 39.656 -19.875 L 39.656 5.5156 Q 37.594 2.6406 33.906 .73438 Q 30.219 -1.1719 26.078 -1.1719 Q 16.844 -1.1719 10.180 6.2031 Q 3.5156 13.578 3.5156 26.422 Q 3.5156 34.234 6.2266 40.430 Q 8.9375 46.625 14.086 49.828 Q 19.234 53.031 25.391 53.031 Q 35.016 53.031 40.531 44.922 L 40.531 51.859 L 48.438 51.859 L 48.438 -19.875 L 39.656 -19.875 z M 12.547 26.078 Q 12.547 16.062 16.750 11.062 Q 20.953 6.0625 26.812 6.0625 Q 32.422 6.0625 36.477 10.820 Q 40.531 15.578 40.531 25.297 Q 40.531 35.641 36.258 40.867 Q 31.984 46.094 26.219 46.094 Q 20.516 46.094 16.531 41.234 Q 12.547 36.375 12.547 26.078 z"
+           horiz-adv-x="55.615"
+           unicode="q" />
+        <glyph
+           id="glyph3659"
+           d="M 40.438 19.000 L 49.078 17.875 Q 47.656 8.9375 41.820 3.8828 Q 35.984 -1.1719 27.484 -1.1719 Q 16.844 -1.1719 10.375 5.7891 Q 3.9062 12.750 3.9062 25.734 Q 3.9062 34.125 6.6875 40.430 Q 9.4688 46.734 15.156 49.883 Q 20.844 53.031 27.547 53.031 Q 35.984 53.031 41.359 48.758 Q 46.734 44.484 48.250 36.625 L 39.703 35.297 Q 38.484 40.531 35.383 43.164 Q 32.281 45.797 27.875 45.797 Q 21.234 45.797 17.086 41.039 Q 12.938 36.281 12.938 25.984 Q 12.938 15.531 16.945 10.797 Q 20.953 6.0625 27.391 6.0625 Q 32.562 6.0625 36.031 9.2344 Q 39.500 12.406 40.438 19.000 z"
+           horiz-adv-x="50.000"
+           unicode="c" />
+        <glyph
+           id="glyph3661"
+           d="M 6.5938 -19.875 L 6.5938 51.859 L 14.594 51.859 L 14.594 45.125 Q 17.438 49.078 21.000 51.055 Q 24.562 53.031 29.641 53.031 Q 36.281 53.031 41.359 49.609 Q 46.438 46.188 49.023 39.961 Q 51.609 33.734 51.609 26.312 Q 51.609 18.359 48.758 11.984 Q 45.906 5.6094 40.461 2.2188 Q 35.016 -1.1719 29.000 -1.1719 Q 24.609 -1.1719 21.117 .68750 Q 17.625 2.5469 15.375 5.3750 L 15.375 -19.875 L 6.5938 -19.875 z M 14.547 25.641 Q 14.547 15.625 18.602 10.844 Q 22.656 6.0625 28.422 6.0625 Q 34.281 6.0625 38.453 11.016 Q 42.625 15.969 42.625 26.375 Q 42.625 36.281 38.547 41.211 Q 34.469 46.141 28.812 46.141 Q 23.188 46.141 18.867 40.891 Q 14.547 35.641 14.547 25.641 z"
+           horiz-adv-x="55.615"
+           unicode="p" />
+        <glyph
+           id="glyph3663"
+           d="M 14.703 -0.0000 L 6.5469 -0.0000 L 6.5469 71.578 L 15.328 71.578 L 15.328 46.047 Q 20.906 53.031 29.547 53.031 Q 34.328 53.031 38.602 51.102 Q 42.875 49.172 45.633 45.680 Q 48.391 42.188 49.953 37.258 Q 51.516 32.328 51.516 26.703 Q 51.516 13.375 44.922 6.1016 Q 38.328 -1.1719 29.109 -1.1719 Q 19.922 -1.1719 14.703 6.5000 L 14.703 -0.0000 z M 14.594 26.312 Q 14.594 17.000 17.141 12.844 Q 21.297 6.0625 28.375 6.0625 Q 34.125 6.0625 38.328 11.062 Q 42.531 16.062 42.531 25.984 Q 42.531 36.141 38.500 40.969 Q 34.469 45.797 28.766 45.797 Q 23.000 45.797 18.797 40.797 Q 14.594 35.797 14.594 26.312 z"
+           horiz-adv-x="55.615"
+           unicode="b" />
+        <glyph
+           id="glyph3665"
+           d="M 3.3281 25.922 Q 3.3281 40.328 11.328 47.266 Q 18.016 53.031 27.641 53.031 Q 38.328 53.031 45.117 46.023 Q 51.906 39.016 51.906 26.656 Q 51.906 16.656 48.906 10.914 Q 45.906 5.1719 40.164 2.0000 Q 34.422 -1.1719 27.641 -1.1719 Q 16.750 -1.1719 10.039 5.8125 Q 3.3281 12.797 3.3281 25.922 z M 12.359 25.922 Q 12.359 15.969 16.703 11.016 Q 21.047 6.0625 27.641 6.0625 Q 34.188 6.0625 38.531 11.039 Q 42.875 16.016 42.875 26.219 Q 42.875 35.844 38.500 40.797 Q 34.125 45.750 27.641 45.750 Q 21.047 45.750 16.703 40.820 Q 12.359 35.891 12.359 25.922 z"
+           horiz-adv-x="55.615"
+           unicode="o" />
+        <glyph
+           id="glyph3667"
+           d="M 40.438 6.3906 Q 35.547 2.2500 31.031 .53906 Q 26.516 -1.1719 21.344 -1.1719 Q 12.797 -1.1719 8.2031 3.0000 Q 3.6094 7.1719 3.6094 13.672 Q 3.6094 17.484 5.3438 20.633 Q 7.0781 23.781 9.8906 25.688 Q 12.703 27.594 16.219 28.562 Q 18.797 29.250 24.031 29.891 Q 34.672 31.156 39.703 32.906 Q 39.750 34.719 39.750 35.203 Q 39.750 40.578 37.250 42.781 Q 33.891 45.750 27.250 45.750 Q 21.047 45.750 18.094 43.578 Q 15.141 41.406 13.719 35.891 L 5.1250 37.062 Q 6.2969 42.578 8.9844 45.969 Q 11.672 49.359 16.750 51.195 Q 21.828 53.031 28.516 53.031 Q 35.156 53.031 39.305 51.469 Q 43.453 49.906 45.406 47.539 Q 47.359 45.172 48.141 41.547 Q 48.578 39.312 48.578 33.453 L 48.578 21.734 Q 48.578 9.4688 49.141 6.2266 Q 49.703 2.9844 51.375 -0.0000 L 42.188 -0.0000 Q 40.828 2.7344 40.438 6.3906 z M 39.703 26.031 Q 34.906 24.078 25.344 22.703 Q 19.922 21.922 17.680 20.945 Q 15.438 19.969 14.211 18.094 Q 12.984 16.219 12.984 13.922 Q 12.984 10.406 15.648 8.0625 Q 18.312 5.7188 23.438 5.7188 Q 28.516 5.7188 32.469 7.9375 Q 36.422 10.156 38.281 14.016 Q 39.703 17.000 39.703 22.797 L 39.703 26.031 z"
+           horiz-adv-x="55.615"
+           unicode="a" />
+        <glyph
+           id="glyph3669"
+           d="M 6.5938 -0.0000 L 6.5938 51.859 L 14.500 51.859 L 14.500 44.484 Q 20.219 53.031 31.000 53.031 Q 35.688 53.031 39.625 51.344 Q 43.562 49.656 45.516 46.922 Q 47.469 44.188 48.250 40.438 Q 48.734 37.984 48.734 31.891 L 48.734 -0.0000 L 39.938 -0.0000 L 39.938 31.547 Q 39.938 36.922 38.914 39.578 Q 37.891 42.234 35.281 43.820 Q 32.672 45.406 29.156 45.406 Q 23.531 45.406 19.453 41.844 Q 15.375 38.281 15.375 28.328 L 15.375 -0.0000 L 6.5938 -0.0000 z"
+           horiz-adv-x="55.615"
+           unicode="n" />
+        <glyph
+           id="glyph3671"
+           d=""
+           horiz-adv-x="27.783"
+           unicode=" " />
+      </font>
+    </defs>
+    <!-- font definitions -->
+  </g>
+  <!-- default stroke -->
+</svg>
+<!-- bounding box -->
+

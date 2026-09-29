@@ -1,0 +1,114 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   version="1.0"
+   width="475.25031"
+   height="270.07315"
+   id="svg2">
+  <defs
+     id="defs4">
+    <marker
+       refX="0"
+       refY="0"
+       orient="auto"
+       style="overflow:visible"
+       id="Arrow1Mend">
+      <path
+         d="M 0,0 L 5,-5 L -12.5,0 L 5,5 L 0,0 z "
+         transform="matrix(-0.4,0,0,-0.4,-4,0)"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;marker-start:none"
+         id="path3146" />
+    </marker>
+  </defs>
+  <g
+     transform="translate(8.4542408,-784.21765)"
+     id="layer1">
+    <path
+       d="M 9.2857143,1044.505 L 434.28571,1044.505"
+       style="font-size:12px;fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;marker-end:url(#Arrow1Mend);stroke-opacity:1"
+       id="path2160" />
+    <text
+       x="438.57144"
+       y="1046.6478"
+       style="font-size:12px;font-style:normal;font-weight:normal;text-align:start;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Times New Roman"
+       id="text3332"
+       xml:space="preserve"><tspan
+         x="438.57144"
+         y="1046.6478"
+         id="tspan3334">temps</tspan></text>
+    <path
+       d="M 19.285714,1053.7908 L 19.285714,801.6479"
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;marker-end:url(#Arrow1Mend);stroke-opacity:1"
+       id="path3336" />
+    <text
+       x="-8.5714283"
+       y="792.36218"
+       style="font-size:12px;font-style:normal;font-weight:normal;text-align:start;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Times New Roman"
+       id="text3338"
+       xml:space="preserve"><tspan
+         x="-8.5714283"
+         y="792.36218"
+         id="tspan3340">température</tspan></text>
+    <path
+       d="M 19.285714,1044.505 C 39.415583,1012.6868 63.085775,990.75269 95.857143,970.93361 L 174.28571,970.93361 C 205.69593,933.59293 240.20985,897.06517 273.57143,873.79075 L 370.71429,873.79075 C 393.18396,844.66844 417.92447,818.11012 443.57143,798.79075"
+       style="fill:none;fill-rule:evenodd;stroke:#0000ff;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       id="path3342" />
+    <text
+       x="24.285715"
+       y="997.36218"
+       style="font-size:12px;font-style:normal;font-weight:normal;text-align:start;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Times New Roman"
+       id="text3344"
+       xml:space="preserve"><tspan
+         x="24.285715"
+         y="997.36218"
+         id="tspan3346">échauffement</tspan><tspan
+         x="24.285715"
+         y="1012.3622"
+         id="tspan3348">du solide</tspan></text>
+    <text
+       x="112.85714"
+       y="963.79071"
+       style="font-size:12px;font-style:normal;font-weight:normal;text-align:start;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Times New Roman"
+       id="text3350"
+       xml:space="preserve"><tspan
+         x="112.85714"
+         y="963.79071"
+         id="tspan3352">fusion</tspan></text>
+    <text
+       x="172.85715"
+       y="897.36224"
+       style="font-size:12px;font-style:normal;font-weight:normal;text-align:start;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Times New Roman"
+       id="text3354"
+       xml:space="preserve"><tspan
+         x="172.85715"
+         y="897.36224"
+         id="tspan3356">échauffement</tspan><tspan
+         x="172.85715"
+         y="912.36224"
+         id="tspan3358">du liquide</tspan></text>
+    <text
+       x="355"
+       y="813.79077"
+       style="font-size:12px;font-style:normal;font-weight:normal;text-align:start;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Times New Roman"
+       id="text3360"
+       xml:space="preserve"><tspan
+         x="355"
+         y="813.79077"
+         id="tspan3362">échauffement</tspan><tspan
+         x="355"
+         y="828.79077"
+         id="tspan3364">du gaz</tspan></text>
+    <text
+       x="300.71429"
+       y="83.644577"
+       transform="translate(-8.4542408,784.21765)"
+       style="font-size:12px;font-style:normal;font-weight:normal;text-align:start;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Times New Roman"
+       id="text3366"
+       xml:space="preserve"><tspan
+         x="300.71429"
+         y="83.644577"
+         id="tspan3368">ébullition</tspan></text>
+  </g>
+</svg>

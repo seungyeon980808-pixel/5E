@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="100%" height="100%" viewBox="0 0 83 83" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" style="fill-rule:evenodd;clip-rule:evenodd;stroke-linecap:round;stroke-miterlimit:1.41421;">
+    <g transform="matrix(0.46817,0,0,0.575972,11.9736,11.9555)">
+        <g id="Experimentieren">
+            <g id="Material">
+                <g id="Elenmeyer">
+                    <path id="rect3162" d="M42.036,4.415C48.569,10.83 47.583,15.679 47.654,23.444L47.879,47.965L16.056,95.635C8.354,108.474 13.564,121.036 26.196,120.295L99.239,120.369C112.892,120.312 117.877,107.66 107.296,94.329L77.11,48.084L76.542,23.523C76.471,15.758 75.396,10.928 81.811,4.394L42.036,4.414L42.036,4.415Z" style="fill:none;stroke-width:4px;stroke:black;"/>
+                    <g>
+                        <path id="path3180" d="M75.494,23.175L64.589,23.175" style="fill:none;stroke-width:4px;stroke:black;"/>
+                        <path id="path3182" d="M75.494,42.409L64.589,42.409" style="fill:none;stroke-width:4px;stroke:black;"/>
+                        <path id="path3184" d="M83.676,62.33L72.771,62.33" style="fill:none;stroke-width:4px;stroke:black;"/>
+                        <path id="path3186" d="M93.324,77.786L82.419,77.786" style="fill:none;stroke-width:4px;stroke:black;"/>
+                        <path id="path3188" d="M103.97,93.243L93.065,93.243" style="fill:none;stroke-width:4px;stroke:black;"/>
+                    </g>
+                </g>
+            </g>
+        </g>
+    </g>
+</svg>

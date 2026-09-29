@@ -1,0 +1,555 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="1220"
+   height="650"
+   id="svg2410"
+   sodipodi:version="0.32"
+   inkscape:version="0.46"
+   version="1.0"
+   sodipodi:docname="SERCOS III Control Interface Telegram Structure Diagram.svg"
+   inkscape:output_extension="org.inkscape.output.svg.inkscape">
+  <defs
+     id="defs2412">
+    <marker
+       inkscape:stockid="Arrow1Lstart"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="Arrow1Lstart"
+       style="overflow:visible">
+      <path
+         id="path3311"
+         d="M 0,0 L 5,-5 L -12.5,0 L 5,5 L 0,0 z"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;marker-start:none"
+         transform="matrix(0.8,0,0,0.8,10,0)" />
+    </marker>
+    <marker
+       inkscape:stockid="Arrow1Lend"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="Arrow1Lend"
+       style="overflow:visible">
+      <path
+         id="path3163"
+         d="M 0,0 L 5,-5 L -12.5,0 L 5,5 L 0,0 z"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;marker-start:none"
+         transform="matrix(-0.8,0,0,-0.8,-10,0)" />
+    </marker>
+    <inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="0 : 526.18109 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_z="744.09448 : 526.18109 : 1"
+       inkscape:persp3d-origin="372.04724 : 350.78739 : 1"
+       id="perspective2418" />
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     gridtolerance="10000"
+     guidetolerance="10"
+     objecttolerance="10"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.95218052"
+     inkscape:cx="608.38031"
+     inkscape:cy="306.63341"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="true"
+     inkscape:window-width="1280"
+     inkscape:window-height="998"
+     inkscape:window-x="0"
+     inkscape:window-y="0">
+    <inkscape:grid
+       type="xygrid"
+       id="grid2420"
+       visible="true"
+       enabled="true"
+       spacingx="2px"
+       spacingy="2px" />
+  </sodipodi:namedview>
+  <metadata
+     id="metadata2415">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2.56530857;stroke-linecap:butt;stroke-linejoin:miter;marker-end:url(#Arrow1Lend);stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="M 13.987434,240 L 1204.0673,240"
+       id="path2385" />
+    <rect
+       style="fill:#b3bbc4;fill-opacity:0.81976737;fill-rule:evenodd;stroke:#000000;stroke-width:2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       id="rect5908"
+       width="120.16563"
+       height="79.778465"
+       x="23.622953"
+       y="159.62297" />
+    <text
+       xml:space="preserve"
+       style="font-size:32px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="24"
+       y="210"
+       id="text2384"><tspan
+         sodipodi:role="line"
+         id="tspan2386"
+         x="24"
+         y="210"
+         style="font-size:24px">Preamble</tspan></text>
+    <rect
+       style="fill:#b3bbc4;fill-opacity:0.81976737;fill-rule:evenodd;stroke:#000000;stroke-width:2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       id="rect2388"
+       width="59.684349"
+       height="80.112892"
+       x="144.31564"
+       y="159.88712" />
+    <text
+       xml:space="preserve"
+       style="font-size:32px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="150.32478"
+       y="209.02319"
+       id="text2390"><tspan
+         sodipodi:role="line"
+         id="tspan2392"
+         x="150.32478"
+         y="209.02319"
+         style="font-size:24px">SFD</tspan></text>
+    <rect
+       style="fill:#b3bbc4;fill-opacity:0.81976737;fill-rule:evenodd;stroke:#000000;stroke-width:2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       id="rect2394"
+       width="140.30481"
+       height="79.631081"
+       x="203.69519"
+       y="160" />
+    <text
+       xml:space="preserve"
+       style="font-size:32px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="272.88281"
+       y="190"
+       id="text3172"><tspan
+         sodipodi:role="line"
+         id="tspan3174"
+         x="272.88281"
+         y="190"
+         style="font-size:24px;text-align:center;text-anchor:middle">Destination</tspan><tspan
+         sodipodi:role="line"
+         x="272.88281"
+         y="220"
+         id="tspan3176"
+         style="font-size:24px;text-align:center;text-anchor:middle">Address</tspan></text>
+    <rect
+       style="fill:#b3bbc4;fill-opacity:0.81976737;fill-rule:evenodd;stroke:#000000;stroke-width:2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       id="rect3178"
+       width="110.00165"
+       height="79.857666"
+       x="344.00082"
+       y="160.00082" />
+    <text
+       xml:space="preserve"
+       style="font-size:32px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="395.50781"
+       y="190"
+       id="text3180"><tspan
+         sodipodi:role="line"
+         id="tspan3182"
+         x="395.50781"
+         y="190"
+         style="font-size:24px;text-align:center;text-anchor:middle">Source</tspan><tspan
+         sodipodi:role="line"
+         x="395.50781"
+         y="220"
+         id="tspan3184"
+         style="font-size:24px;text-align:center;text-anchor:middle">Address</tspan></text>
+    <rect
+       style="fill:#b3bbc4;fill-opacity:0.81976737;fill-rule:evenodd;stroke:#000000;stroke-width:2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       id="rect3186"
+       width="110.00165"
+       height="79.857666"
+       x="454"
+       y="160.14233" />
+    <text
+       xml:space="preserve"
+       style="font-size:32px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="508.43738"
+       y="190.14151"
+       id="text3188"><tspan
+         sodipodi:role="line"
+         id="tspan3190"
+         x="508.43738"
+         y="190.14151"
+         style="font-size:24px;text-align:center;text-anchor:middle">Ethernet</tspan><tspan
+         sodipodi:role="line"
+         x="508.43738"
+         y="220.14151"
+         id="tspan3192"
+         style="font-size:24px;text-align:center;text-anchor:middle">Type</tspan></text>
+    <rect
+       style="fill:#ff9900;fill-opacity:0.81960784;fill-rule:evenodd;stroke:#000000;stroke-width:2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       id="rect3218"
+       width="110.00165"
+       height="79.857666"
+       x="564"
+       y="160.14233" />
+    <text
+       xml:space="preserve"
+       style="font-size:32px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="615.50696"
+       y="190.14151"
+       id="text3220"><tspan
+         sodipodi:role="line"
+         x="615.50696"
+         y="190.14151"
+         id="tspan3224"
+         style="font-size:24px;text-align:center;text-anchor:middle">MST</tspan><tspan
+         sodipodi:role="line"
+         x="615.50696"
+         y="220.14151"
+         style="font-size:24px;text-align:center;text-anchor:middle"
+         id="tspan3228">(S3H)</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:32px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="765.81195"
+       y="258.85226"
+       id="text3230"><tspan
+         sodipodi:role="line"
+         id="tspan3232"
+         x="765.81195"
+         y="258.85226" /></text>
+    <rect
+       style="fill:#32fa00;fill-opacity:0.81960784;fill-rule:evenodd;stroke:#000000;stroke-width:1.84778345;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       id="rect3236"
+       width="239.44591"
+       height="78.967133"
+       x="674.55408"
+       y="160" />
+    <text
+       xml:space="preserve"
+       style="font-size:32px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="795.05469"
+       y="210"
+       id="text3238"><tspan
+         sodipodi:role="line"
+         x="795.05469"
+         y="210"
+         style="font-size:24px;text-align:center;text-anchor:middle"
+         id="tspan3242">Data Field</tspan></text>
+    <rect
+       style="fill:#b3bbc4;fill-opacity:0.81976737;fill-rule:evenodd;stroke:#000000;stroke-width:2.60107207;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       id="rect3246"
+       width="98.79464"
+       height="79.540367"
+       x="914"
+       y="160.45963" />
+    <text
+       xml:space="preserve"
+       style="font-size:32px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="944"
+       y="210"
+       id="text3248"><tspan
+         sodipodi:role="line"
+         id="tspan3250"
+         x="944"
+         y="210"
+         style="font-size:24px">FCS</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:32px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="884.00488"
+       y="412.21002"
+       id="text3252"><tspan
+         sodipodi:role="line"
+         id="tspan3254"
+         x="884.00488"
+         y="412.21002" /></text>
+    <rect
+       style="fill:#000000;fill-opacity:0;fill-rule:evenodd;stroke:#000000;stroke-width:2.50128031;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       id="rect3256"
+       width="142.0341"
+       height="79.15937"
+       x="1013.2062"
+       y="160.15193" />
+    <text
+       xml:space="preserve"
+       style="font-size:32px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="1064"
+       y="210"
+       id="text3258"><tspan
+         sodipodi:role="line"
+         id="tspan3260"
+         x="1064"
+         y="210"
+         style="font-size:24px">IFG</tspan></text>
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="M 24,244 L 24,594"
+       id="path3262" />
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="M 1154,244 L 1154,594"
+       id="path3264" />
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="M 1014,244.10876 L 1014,484.03499"
+       id="path3266" />
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="M 914,244 L 914,374"
+       id="path3268" />
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="M 204,244 L 204,374"
+       id="path3270" />
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="M 563.5116,243.71872 L 563.5116,313.71872"
+       id="path3272" />
+    <text
+       xml:space="preserve"
+       style="font-size:32px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="54"
+       y="270"
+       id="text3274"><tspan
+         sodipodi:role="line"
+         id="tspan3276"
+         x="54"
+         y="270"
+         style="font-size:22px">7 + 1 Bytes</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:32px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="234"
+       y="270"
+       id="text3278"><tspan
+         sodipodi:role="line"
+         id="tspan3280"
+         x="234"
+         y="270"
+         style="font-size:22px">6 Bytes</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:32px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="354"
+       y="270"
+       id="text3282"><tspan
+         sodipodi:role="line"
+         id="tspan3284"
+         x="354"
+         y="270"
+         style="font-size:22px">6 Bytes</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:32px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="464"
+       y="270"
+       id="text3286"><tspan
+         sodipodi:role="line"
+         id="tspan3288"
+         x="464"
+         y="270"
+         style="font-size:22px">2 Bytes</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:32px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="744.37305"
+       y="260"
+       id="text3290"><tspan
+         sodipodi:role="line"
+         id="tspan3292"
+         x="744.37305"
+         y="260"
+         style="font-size:22px;text-align:center;text-anchor:middle">46-1500 Bytes</tspan><tspan
+         sodipodi:role="line"
+         x="744.37305"
+         y="287.5"
+         style="font-size:22px;text-align:center;text-anchor:middle"
+         id="tspan3302">SERCOS III Data</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:32px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="924"
+       y="270"
+       id="text3294"><tspan
+         sodipodi:role="line"
+         id="tspan3296"
+         x="924"
+         y="270"
+         style="font-size:22px">4 Bytes</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:22px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="1024"
+       y="270"
+       id="text3298"><tspan
+         sodipodi:role="line"
+         id="tspan3300"
+         x="1024"
+         y="270">≥12 Bytes</tspan></text>
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1.25;stroke-linecap:butt;stroke-linejoin:miter;marker-start:url(#Arrow1Lstart);stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="M 563.94444,260 L 643.94444,260"
+       id="path3304" />
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1.25;stroke-linecap:butt;stroke-linejoin:miter;marker-end:url(#Arrow1Lend);stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="M 834.05556,260 L 914.05556,260"
+       id="path3306" />
+    <text
+       xml:space="preserve"
+       style="font-size:32px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="564.00391"
+       y="360"
+       id="text4613"><tspan
+         sodipodi:role="line"
+         x="564.00391"
+         y="360"
+         style="font-size:22px;text-align:center;text-anchor:middle"
+         id="tspan4617">Included in FCS Calculation</tspan></text>
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1.28136599;stroke-linecap:butt;stroke-linejoin:miter;marker-start:url(#Arrow1Lstart);stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="M 203.94827,350 L 403.92334,350"
+       id="path4619" />
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1.25;stroke-linecap:butt;stroke-linejoin:miter;marker-end:url(#Arrow1Lend);stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="M 724.11952,350 L 914,350"
+       id="path4621" />
+    <text
+       xml:space="preserve"
+       style="font-size:32px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="204"
+       y="440"
+       id="text4625"><tspan
+         sodipodi:role="line"
+         id="tspan4627"
+         x="204"
+         y="440"
+         style="font-size:22px"><tspan
+   style="font-weight:bold;-inkscape-font-specification:Bitstream Vera Sans Bold"
+   id="tspan4330">MAC Layer</tspan> (Overhead = 26 bytes)</tspan><tspan
+         sodipodi:role="line"
+         x="204"
+         y="467.5"
+         id="tspan4629"
+         style="font-size:22px">• Minimum Telegram Length:       72 bytes  »       5.8 µsec</tspan><tspan
+         sodipodi:role="line"
+         x="204"
+         y="495"
+         style="font-size:22px"
+         id="tspan2454">• Maximum Telegram Length:  1526 bytes  »   122.1 µsec</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:32px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="693.52869"
+       y="556.77655"
+       id="text2450"><tspan
+         sodipodi:role="line"
+         id="tspan2452"
+         x="693.52869"
+         y="556.77655"
+         style="font-size:22px" /></text>
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1.25;stroke-linecap:butt;stroke-linejoin:miter;marker-end:url(#Arrow1Lend);stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="M 843.93772,460 L 1013.9649,460"
+       id="path2456" />
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1.25;stroke-linecap:butt;stroke-linejoin:miter;marker-start:url(#Arrow1Lstart);marker-end:none;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="M 24.018473,460 L 194.06103,460"
+       id="path2458" />
+    <text
+       xml:space="preserve"
+       style="font-size:32px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="274.50537"
+       y="559.39227"
+       id="text4284"><tspan
+         sodipodi:role="line"
+         id="tspan4286"
+         x="274.50537"
+         y="559.39227"
+         style="font-size:22px"><tspan
+   style="font-weight:bold;-inkscape-font-specification:Bitstream Vera Sans Bold"
+   id="tspan4332">Media Layer</tspan> (Overhead = 38 bytes)</tspan><tspan
+         sodipodi:role="line"
+         x="274.50537"
+         y="586.89227"
+         id="tspan4288"
+         style="font-size:22px">• Minimum Telegram Length:       84 bytes  »       6.8 µsec</tspan><tspan
+         sodipodi:role="line"
+         x="274.50537"
+         y="614.39227"
+         style="font-size:22px"
+         id="tspan4290">• Maximum Telegram Length:  1538 bytes  »   123.1 µsec</tspan></text>
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1.25;stroke-linecap:butt;stroke-linejoin:miter;marker-end:url(#Arrow1Lend);stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="M 914.55977,579.39229 L 1154.4295,579.39229"
+       id="path4292" />
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1.25;stroke-linecap:butt;stroke-linejoin:miter;marker-start:url(#Arrow1Lstart);marker-end:none;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="M 23.950718,579.39229 L 264.4486,579.39229"
+       id="path4294" />
+    <path
+       style="opacity:1;fill:#000000;fill-opacity:0;fill-rule:evenodd;stroke:#df0000;stroke-width:1.17242706;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="M 733.94852,80.03851 C 688.37034,80.03851 651.37935,94.01433 651.37935,111.23457 C 651.37935,116.41843 654.73893,121.30394 660.66838,125.60705 C 661.74705,126.38985 662.91485,127.14878 664.15936,127.89103 L 646.52234,160.25694 L 680.79462,135.10512 C 695.15932,139.6801 713.70508,142.43062 733.94852,142.43062 C 779.52671,142.43062 816.51769,128.45478 816.51769,111.23457 C 816.51769,94.01433 779.52671,80.03851 733.94852,80.03851 z"
+       id="path4298" />
+    <text
+       xml:space="preserve"
+       style="font-size:32px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="733.83093"
+       y="106.83762"
+       id="text4300"><tspan
+         sodipodi:role="line"
+         id="tspan4302"
+         x="733.83093"
+         y="106.83762"
+         style="font-size:22px;text-align:center;text-anchor:middle">SERCOS III</tspan><tspan
+         sodipodi:role="line"
+         x="733.83093"
+         y="134.33762"
+         id="tspan4304"
+         style="font-size:22px;text-align:center;text-anchor:middle">Header</tspan></text>
+    <path
+       style="opacity:1;fill:#000000;fill-opacity:0;fill-rule:evenodd;stroke:#df0000;stroke-width:1.4955411;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="M 553.99845,34.51774 C 506.17347,34.51774 467.35899,56.19003 467.35899,82.8934 C 467.35899,90.93198 470.88417,98.50796 477.10594,105.18074 C 478.23778,106.39465 479.46315,107.57153 480.769,108.72253 L 462.26256,158.91228 L 498.22429,119.90941 C 513.29712,127.00382 532.7571,131.26905 553.99845,131.26905 C 601.82343,131.26905 640.6379,109.59676 640.6379,82.8934 C 640.6379,56.19003 601.82343,34.51774 553.99845,34.51774 z"
+       id="path4316" />
+    <text
+       xml:space="preserve"
+       style="font-size:32px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="552.1582"
+       y="65.579971"
+       id="text4318"><tspan
+         sodipodi:role="line"
+         x="552.1582"
+         y="65.579971"
+         id="tspan4322"
+         style="font-size:22px;text-align:center;text-anchor:middle">SERCOS III</tspan><tspan
+         sodipodi:role="line"
+         x="552.1582"
+         y="93.079971"
+         style="font-size:22px;text-align:center;text-anchor:middle"
+         id="tspan4326">Ethernet Type</tspan><tspan
+         sodipodi:role="line"
+         x="552.1582"
+         y="120.57997"
+         style="font-size:22px;text-align:center;text-anchor:middle"
+         id="tspan4328">= 0x88CD</tspan></text>
+  </g>
+</svg>

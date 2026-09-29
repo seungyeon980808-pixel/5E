@@ -1,0 +1,446 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://web.resource.org/cc/"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   id="svg2"
+   sodipodi:version="0.32"
+   inkscape:version="0.45"
+   width="750"
+   height="577"
+   version="1.0"
+   sodipodi:docbase="/home/rugby471/Desktop"
+   sodipodi:docname="Greenhouse_Effect.svg"
+   inkscape:output_extension="org.inkscape.output.svg.inkscape"
+   sodipodi:modified="true">
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <cc:license
+           rdf:resource="http://www.gnu.org/copyleft/fdl.html" />
+        <dc:description>This figure is a simplified, schematic representation of the flows of energy between space, the atmosphere, and the Earth's surface, and shows how these flows combine to trap heat near the surface and create the greenhouse effect. Energy exchanges are expressed in watts per square meter (W/m2) and derived from Kiehl &amp; Trenberth (1997).
+
+The sun is ultimately responsible for virtually all energy that reaches the Earth's surface. Direct overhead sunlight at the top of the atmosphere provides 1366 W/m2; however, geometric effects and reflective surfaces limit the light which is absorbed at the typical location to an annual average of ~235 W/m2. If this were the total heat received at the surface, then, neglecting changes in albedo, the Earth's surface would be expected to have an average temperature of -18 °C (Lashof 1989). Instead, the Earth's atmosphere recycles heat coming from the surface and delivers an additional 324 W/m2, which results in an average surface temperature of roughly +14 °C .
+
+Of the surface heat captured by the atmosphere, more than 75% can be attributed to the action of greenhouse gases that absorb thermal radiation emitted by the Earth's surface. The atmosphere in turn transfers the energy it receives both into space (38%) and back to the Earth's surface (62%), where the amount transferred in each direction depends on the thermal and density structure of the atmosphere.
+
+This process by which energy is recycled in the atmosphere to warm the Earth's surface is known as the greenhouse effect and is an essential piece of Earth's climate. Under stable conditions, the total amount of energy entering the system from solar radiation will exactly balance the amount being radiated into space, thus allowing the Earth maintain a constant average temperature over time. However, recent measurements indicate that the Earth is presently absorbing 0.85 ± 0.15 W/m2 more than it emits into space (Hansen et al. 2005). This increase, associated with global warming, is believed to have been caused by the recent increase in greenhouse gas concentrations.</dc:description>
+        <dc:title>Greenhouse Effect</dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs5" />
+  <sodipodi:namedview
+     inkscape:window-height="717"
+     inkscape:window-width="1024"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     guidetolerance="10.0"
+     gridtolerance="10.0"
+     objecttolerance="10.0"
+     borderopacity="1.0"
+     bordercolor="#666666"
+     pagecolor="#ffffff"
+     id="base"
+     inkscape:zoom="1.995095"
+     inkscape:cx="681.33991"
+     inkscape:cy="261.37015"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:current-layer="layer2"
+     showguides="true"
+     inkscape:guide-bbox="true" />
+  <g
+     inkscape:groupmode="layer"
+     id="layer2"
+     style="opacity:1">
+    <rect
+       style="opacity:1;fill:#c7d7ff;fill-opacity:1;stroke:none;stroke-width:8.39999962;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="rect17097"
+       width="826.02582"
+       height="611.49969"
+       x="-28.068838"
+       y="-12.445602" />
+    <path
+       style="opacity:1;fill:#b59661;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 520.18298,230.65039 L 597.9669,230.65039 C 723.27421,236.66514 712.24717,385.029 712.24717,385.029 L 637.56401,385.029 C 629.04311,319.8692 573.90789,303.07802 569.39683,303.82986 L 520.14,303.82986"
+       id="path18098"
+       sodipodi:nodetypes="cccccc" />
+    <rect
+       style="opacity:1;fill:#d7ba8b;fill-opacity:1;stroke:none;stroke-width:8.39999962;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="rect17095"
+       width="824.02094"
+       height="138.33928"
+       x="-28.068842"
+       y="480.76398" />
+    <rect
+       style="opacity:1;fill:#999999;fill-opacity:1;stroke:none;stroke-width:8.39999962;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="rect17093"
+       width="824.02094"
+       height="186.45729"
+       x="-26.063892"
+       y="-32.494774" />
+    <path
+       style="opacity:1;fill:#ffff00;fill-rule:evenodd;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M -1.8364019e-06,37.176093 C 121.79871,76.773204 190.96834,1.5888158 190.96834,1.5888158 L 191.97084,0.085127788 L -1.8364019e-06,0.085127788 L -1.8364019e-06,37.176093 z "
+       id="path16122"
+       sodipodi:nodetypes="ccccc" />
+    <text
+       xml:space="preserve"
+       x="35.412102"
+       y="530.23346"
+       id="text2183"
+       style="font-size:24px;opacity:1;font-family:Liberation Sans,sans-serif"><tspan
+         sodipodi:role="line"
+         x="35.412102"
+         y="530.23346"
+         id="tspan2207"><tspan
+           x="35.412102"
+           y="530.23346"
+           style="font-size:24px"
+           id="tspan2187">La surface terrestre et océanique</tspan></tspan><tspan
+         sodipodi:role="line"
+         id="tspan2189"
+         x="35.412102"
+         y="530.23346"><tspan
+           x="35.412102"
+           y="556.27429"
+           style="font-size:24px"
+           id="tspan2191" /></tspan></text>
+    <text
+       xml:space="preserve"
+       x="41.710186"
+       y="535.10339"
+       id="text2226"
+       style="font-size:24px;opacity:1;font-family:Liberation Sans,sans-serif"><tspan
+         sodipodi:role="line"
+         x="41.710186"
+         y="535.10339"
+         id="tspan2228"><tspan
+           x="41.710186"
+           y="535.10339"
+           style="font-size:24px"
+           id="tspan2230"> </tspan></tspan><tspan
+         sodipodi:role="line"
+         id="tspan2232"
+         x="41.710186"
+         y="561.14423"><tspan
+           x="34.710186"
+           y="561.14423"
+           style="font-size:24px"
+           id="tspan2234">de la Terre chauffée de 14℃ en moyenne</tspan></tspan></text>
+    <text
+       xml:space="preserve"
+       x="243.55382"
+       y="256.80576"
+       id="text2236"
+       style="font-size:24px;opacity:1;font-family:Liberation Sans,sans-serif"><tspan
+         sodipodi:role="line"
+         id="tspan2242"
+         x="243.55382"
+         y="256.80576">Chaleur et énergie</tspan></text>
+    <text
+       xml:space="preserve"
+       x="233.86076"
+       y="286.18057"
+       id="text2258"
+       style="font-size:24px;opacity:1;font-family:Liberation Sans,sans-serif"><tspan
+         sodipodi:role="line"
+         x="244.86076"
+         y="286.18057"
+         id="tspan2273">dans l'atmosphère</tspan></text>
+    <text
+       xml:space="preserve"
+       x="527.58112"
+       y="175.92979"
+       id="text2279"
+       style="font-size:24px;opacity:1;font-family:Liberation Sans,sans-serif"><tspan
+         sodipodi:role="line"
+         id="tspan2285"
+         x="470.58112"
+         y="183.92979">Absorption par les gaz</tspan></text>
+    <text
+       xml:space="preserve"
+       x="529.586"
+       y="214.00357"
+       id="text2292"
+       style="font-size:24px;opacity:1;font-family:Liberation Sans,sans-serif"><tspan
+         sodipodi:role="line"
+         id="tspan2298"
+         x="475.586"
+         y="214.00357"> à effet de serre : 350</tspan></text>
+    <text
+       xml:space="preserve"
+       x="17.329712"
+       y="76.666725"
+       id="text2305"
+       style="font-size:24px;opacity:1;font-family:Liberation Sans,sans-serif"><tspan
+         sodipodi:role="line"
+         id="tspan2311"
+         x="17.329712"
+         y="76.666725">Rayonnement solaire</tspan></text>
+    <text
+       xml:space="preserve"
+       x="18.332172"
+       y="105.73801"
+       id="text2326"
+       style="font-size:24px;opacity:1;font-family:Liberation Sans,sans-serif"><tspan
+         sodipodi:role="line"
+         id="tspan2332"
+         x="18.332172"
+         y="105.73801">absorbé par la Terre</tspan></text>
+    <text
+       xml:space="preserve"
+       x="103.54115"
+       y="136.81422"
+       id="text2347"
+       style="font-size:24px;opacity:1;font-family:Liberation Sans,sans-serif"><tspan
+         sodipodi:role="line"
+         id="tspan2353"
+         x="103.54115"
+         y="136.81422">235 W/m²</tspan></text>
+    <text
+       xml:space="preserve"
+       x="239.8755"
+       y="34.563477"
+       id="text2368"
+       style="font-size:24px;opacity:1;font-family:Liberation Sans,sans-serif"><tspan
+         sodipodi:role="line"
+         id="tspan2374"
+         x="225.8755"
+         y="34.563477">Rayonnement thermique</tspan></text>
+    <text
+       xml:space="preserve"
+       x="256.9173"
+       y="65.639679"
+       id="text2389"
+       style="font-size:24px;opacity:1;font-family:Liberation Sans,sans-serif"><tspan
+         sodipodi:role="line"
+         id="tspan2395"
+         x="256.9173"
+         y="65.639679">dans l'espace : 195</tspan></text>
+    <text
+       xml:space="preserve"
+       x="562.66711"
+       y="58.622475"
+       id="text2402"
+       style="font-size:24px;opacity:1;font-family:Liberation Sans,sans-serif"><tspan
+         sodipodi:role="line"
+         id="tspan2408"
+         x="537.66223"
+         y="58.622475">Directement émis</tspan></text>
+    <text
+       xml:space="preserve"
+       x="560.66223"
+       y="88.696236"
+       id="text2415"
+       style="font-size:24px;opacity:1;font-family:Liberation Sans,sans-serif"><tspan
+         sodipodi:role="line"
+         id="tspan2421"
+         x="535.66223"
+         y="88.696236">par la surface : 40</tspan></text>
+    <text
+       xml:space="preserve"
+       x="94.51902"
+       y="451.58624"
+       id="text2428"
+       style="font-size:24px;opacity:1;font-family:Liberation Sans,sans-serif"><tspan
+         sodipodi:role="line"
+         x="94.51902"
+         y="451.58624"
+         id="tspan2430"><tspan
+           x="94.51902"
+           y="451.58624"
+           style="font-size:24px"
+           id="tspan2432">168</tspan></tspan><tspan
+         sodipodi:role="line"
+         id="tspan2434"
+         x="94.51902"
+         y="451.58624"><tspan
+           x="94.51902"
+           y="477.62708"
+           style="font-size:24px"
+           id="tspan2436" /></tspan></text>
+    <text
+       xml:space="preserve"
+       x="256.7648"
+       y="442.08118"
+       id="text2438"
+       style="font-size:24px;opacity:1;font-family:Liberation Sans,sans-serif"><tspan
+         sodipodi:role="line"
+         id="tspan2444"
+         x="246.7648"
+         y="442.08118">324</tspan></text>
+    <text
+       xml:space="preserve"
+       x="658.75067"
+       y="472.15497"
+       id="text2451"
+       style="font-size:24px;opacity:1;font-family:Liberation Sans,sans-serif"><tspan
+         sodipodi:role="line"
+         id="tspan2457"
+         x="658.75067"
+         y="472.15497">492</tspan></text>
+    <text
+       xml:space="preserve"
+       x="132.45996"
+       y="243.59436"
+       id="text2464"
+       style="font-size:24px;opacity:1;font-family:Liberation Sans,sans-serif"><tspan
+         sodipodi:role="line"
+         id="tspan2470"
+         x="132.45996"
+         y="243.59436">67</tspan></text>
+    <path
+       style="opacity:1;fill:#846425;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 520.18298,230.65039 L 597.9669,230.65039 C 723.27421,236.66514 712.24717,371.49581 712.24717,371.49581 L 658.58182,371.49581 C 657.06336,302.03077 588.93612,286.78934 584.42506,287.54118 L 520.14,287.83479"
+       id="path17127"
+       sodipodi:nodetypes="cccccc" />
+    <text
+       xml:space="preserve"
+       x="476.30322"
+       y="387.94843"
+       id="text2485"
+       style="font-size:28px;font-weight:bold;opacity:1;font-family:Liberation Sans,sans-serif"><tspan
+         sodipodi:role="line"
+         id="tspan2491"
+         x="467.30322"
+         y="410.94843">L'effet</tspan></text>
+    <text
+       xml:space="preserve"
+       x="408.91776"
+       y="427.0451"
+       id="text2498"
+       style="font-size:28px;font-weight:bold;opacity:1;font-family:Liberation Sans,sans-serif"><tspan
+         sodipodi:role="line"
+         id="tspan2500"
+         x="450.91776"
+         y="450.0451">de serre</tspan></text>
+    <path
+       style="opacity:1;fill:none;fill-opacity:1;stroke:#269931;stroke-width:9.35192108;stroke-miterlimit:4;stroke-dasharray:18.70384216, 18.70384216;stroke-dashoffset:0;stroke-opacity:1"
+       d="M 426.20154,340.19577 L 584.27662,340.19577 C 600.6658,340.19577 613.85997,353.38994 613.85997,369.77912 L 613.85997,472.45634 C 613.85997,488.84552 600.6658,502.03969 584.27662,502.03969 L 426.20154,502.03969 C 409.81237,502.03969 396.61819,488.84552 396.61819,472.45634 L 396.61819,369.77912 C 396.61819,353.38994 409.81237,340.19577 426.20154,340.19577 z "
+       id="rect2524"
+       sodipodi:nodetypes="ccccccccc" />
+    <path
+       style="opacity:1;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#195524;stroke-width:8.39999962;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="M 454.38645,323.79323 L 438.34711,339.83257 L 454.38645,355.8719"
+       id="path4465" />
+    <path
+       style="opacity:1;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#195524;stroke-width:8.39999962;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="M 535.22074,487.07234 L 551.26008,503.11168 L 535.22074,519.15101"
+       id="path5436" />
+    <text
+       xml:space="preserve"
+       x="659.75311"
+       y="466.14017"
+       id="text17114"
+       style="font-size:24px;opacity:1;font-family:Liberation Sans,sans-serif"><tspan
+         sodipodi:role="line"
+         id="tspan17120"
+         x="659.75311"
+         y="466.14017">492</tspan></text>
+    <g
+       id="g17110"
+       style="opacity:1;fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1">
+      <path
+         sodipodi:nodetypes="cccc"
+         id="rect5438"
+         d="M 305.75143,461.71568 L 305.75143,305.33533 L 359.88101,305.33533 L 359.88101,461.71568"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:2;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
+      <path
+         sodipodi:nodetypes="ccccc"
+         id="path2163"
+         d="M 306.25107,454.84738 L 280.50097,454.84738 L 333.15219,507.52031 L 384.80051,454.84738 L 359.38138,454.84738"
+         style="fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+    </g>
+    <g
+       id="g17106"
+       style="opacity:1;fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1">
+      <path
+         sodipodi:nodetypes="cccc"
+         id="rect6412"
+         d="M 348.84021,107.86477 L 348.84021,225.12172 L 316.79224,225.12172 L 316.79224,107.86477"
+         style="fill:#ffffff;fill-opacity:1;stroke:#000000;stroke-width:2;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
+      <path
+         sodipodi:nodetypes="ccccc"
+         id="path2173"
+         d="M 317.30853,115.07563 L 299.21183,115.07563 L 333.30999,81.111149 L 366.75865,115.07563 L 348.32394,115.07563"
+         style="fill:#ffffff;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+    </g>
+    <g
+       id="g17099"
+       style="opacity:1;fill:#fff75f;fill-opacity:1;stroke:#000000;stroke-width:2;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1">
+      <path
+         sodipodi:nodetypes="cccc"
+         id="rect6414"
+         d="M 78.170057,187.06535 L 78.170057,476.73247 L 50.144634,476.73247 L 50.144634,187.06535"
+         style="fill:#fff75f;fill-opacity:1;stroke:#000000;stroke-width:2;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
+      <path
+         sodipodi:nodetypes="ccccc"
+         id="path2169"
+         d="M 50.655481,468.22995 L 32.374878,468.22995 L 64.992782,500.76144 L 96.989378,468.22995 L 77.659207,468.22995"
+         style="fill:#fff75f;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+      <path
+         sodipodi:nodetypes="ccccc"
+         id="rect6416"
+         d="M 50.122925,202.08053 L 50.122925,123.88876 L 88.216347,123.88876 L 88.216347,202.08053"
+         style="fill:#fff75f;fill-opacity:1;stroke:#000000;stroke-width:2;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
+      <path
+         sodipodi:nodetypes="csccccc"
+         id="path6422"
+         d="M 78.222168,201.49068 C 78.222168,201.49068 77.824394,207.27056 78.341288,215.38702 C 79.539903,234.20816 88.515603,266.07012 134.89148,270.2477 L 169.4763,270.2477 L 169.4763,258.71942 L 135.39271,258.71942 C 86.206215,255.42365 88.277158,202.08052 88.277158,202.08052"
+         style="fill:#fff75f;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+      <path
+         sodipodi:nodetypes="ccccc"
+         id="path2167"
+         d="M 164.75329,259.22065 L 164.75329,243.16541 L 187.54279,265.49801 L 164.75329,287.40523 L 164.75329,269.74646"
+         style="fill:#fff75f;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+    </g>
+    <path
+       style="opacity:1;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="M 520.18258,230.65059 L 597.9665,230.65059 C 727.28364,234.66042 712.24677,385.0292 712.24677,385.0292 L 637.56361,385.0292 C 633.55378,322.87677 573.90749,303.07822 569.39643,303.83006 L 520.1396,303.83006"
+       id="path6424"
+       sodipodi:nodetypes="cccccc" />
+    <path
+       style="opacity:1;fill:#b59661;fill-opacity:1;stroke:#000000;stroke-width:2;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       d="M 711.76404,126.58573 C 714.68803,122.50987 717.74173,126.58574 717.74173,126.58574 L 717.74173,385.51189 L 711.76404,385.51189 L 711.76404,126.58573 z "
+       id="rect6420"
+       sodipodi:nodetypes="ccccc" />
+    <path
+       style="opacity:1;fill:#b59661;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="M 712.26825,126.76294 L 695.96617,126.76294 L 714.76318,106.56874 L 733.20215,126.76294 L 717.28056,126.76294"
+       id="path2165"
+       sodipodi:nodetypes="ccccc" />
+    <path
+       style="opacity:1;fill:#b59661;fill-opacity:1;stroke:#000000;stroke-width:2.01333499;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       d="M 717.77675,382.28417 L 717.77675,513.86162 L 637.54708,513.86162 L 637.54708,382.28417"
+       id="rect6418"
+       sodipodi:nodetypes="cccc" />
+    <path
+       style="opacity:1;fill:#e8d162;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="M 520.75925,320.07133 L 463.11789,267.44225 L 520.75925,215.81565 L 520.75925,320.07133 z "
+       id="path2171"
+       sodipodi:nodetypes="cccc" />
+    <text
+       xml:space="preserve"
+       x="478.2525"
+       y="273.66812"
+       id="text20038"
+       style="font-size:24px;opacity:1;font-family:Liberation Sans,sans-serif"><tspan
+         sodipodi:role="line"
+         id="tspan20040"
+         x="476"
+         y="275">452</tspan></text>
+  </g>
+</svg>

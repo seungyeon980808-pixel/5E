@@ -1,0 +1,57 @@
+{
+  "schemaVersion": "pdf-ocr-assets-v1",
+  "packages": [
+    {
+      "name": "tesseract.js",
+      "version": "7.0.0",
+      "license": "Apache-2.0"
+    },
+    {
+      "name": "tesseract.js-core",
+      "version": "7.0.0",
+      "license": "Apache-2.0"
+    },
+    {
+      "name": "@tesseract.js-data/eng",
+      "version": "1.0.0",
+      "license": "MIT"
+    },
+    {
+      "name": "@tesseract.js-data/kor",
+      "version": "1.0.0",
+      "license": "MIT"
+    }
+  ],
+  "assets": [
+    {
+      "path": "tesseract.esm.min.js",
+      "bytes": 63220,
+      "sha256": "64871d76c75609fd5413b88a8171e2ef40deedd77d5875ba23df104b2d05eb29"
+    },
+    {
+      "path": "worker.min.js",
+      "bytes": 111307,
+      "sha256": "576b7df7e3393e137e51849357c9adb53fe7ac1bb69bfa06cf3d61520f182c6d"
+    },
+    {
+      "path": "tesseract-core-simd-lstm.wasm.js",
+      "bytes": 3899472,
+      "sha256": "c58b46a4c796c0b8afccf77591d5b875b6896b45d402bbce8caa6f5362447b38"
+    },
+    {
+      "path": "tesseract-core-simd-lstm.wasm",
+      "bytes": 2857601,
+      "sha256": "34e8d50cac216427d86bf397d610fdd9f49492539bbcdfbfccc4eda20c810bea"
+    },
+    {
+      "path": "lang/eng.traineddata.gz",
+      "bytes": 2952873,
+      "sha256": "45b4cb346724ac1774f1c36f42f182b887bcdb28ebe63e6fff90ac41f3fcff91"
+    },
+    {
+      "path": "lang/kor.traineddata.gz",
+      "bytes": 1572336,
+      "sha256": "78c21276ab14c9bb734d83be1055d9fe5469a4e7e977c51ad385be5737e61126"
+    }
+  ]
+}

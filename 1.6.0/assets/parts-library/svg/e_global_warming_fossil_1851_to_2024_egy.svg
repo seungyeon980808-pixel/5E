@@ -1,0 +1,300 @@
+<svg xmlns="http://www.w3.org/2000/svg" height="877.6" style="font-family: Lato, &#34;Helvetica Neue&#34;, Helvetica, Arial, &#34;Liberation Sans&#34;, sans-serif; font-feature-settings: &#34;liga&#34;, &#34;kern&#34;, &#34;calt&#34;, &#34;lnum&#34;; text-rendering: geometricprecision; -webkit-font-smoothing: antialiased; font-size: 18px; background-color: rgb(255, 255, 255);" version="1.1" viewBox="0 0 850 877.6" width="850">
+  <defs>
+    
+  </defs>
+  <defs>
+    <pattern height="4" id="noDataPattern" patternTransform="rotate(-45 2 2)" patternUnits="userSpaceOnUse" width="4">
+      <path d="M -1,2 l 6,0" stroke="#ccc" stroke-width="0.7"></path>
+    </pattern>
+  </defs>
+  <g class="HeaderView" id="header">
+    <g id="logo" transform="translate(769, 16) scale(1)">
+      <svg xmlns="http://www.w3.org/2000/svg" classname="owidLogo" fill="none" height="36" viewBox="0 0 65 36" width="65">
+        <path d="M0 0h64.8v36H0z" fill="#002147"></path>
+        <path d="M0 33.3h64.8V36H0z" fill="#CE261E"></path>
+        <path d="M13.796 10.575c0 .636-.106 1.226-.318 1.77a4.193 4.193 0 0 1-.894 1.404 4.084 4.084 0 0 1-1.386.93c-.54.22-1.138.33-1.794.33-.656 0-1.256-.11-1.8-.33a4.149 4.149 0 0 1-1.392-.93 4.193 4.193 0 0 1-.894-1.404A4.833 4.833 0 0 1 5 10.575c0-.636.106-1.224.318-1.764a4.18 4.18 0 0 1 .894-1.41 4.076 4.076 0 0 1 1.392-.924 4.684 4.684 0 0 1 1.8-.336c.656 0 1.254.112 1.794.336.54.224 1.002.534 1.386.93.384.392.682.86.894 1.404.212.54.318 1.128.318 1.764Zm-1.656 0c0-.476-.064-.902-.192-1.278a2.671 2.671 0 0 0-.54-.966 2.332 2.332 0 0 0-.864-.606 2.94 2.94 0 0 0-1.14-.21c-.424 0-.806.07-1.146.21-.34.14-.63.342-.87.606a2.742 2.742 0 0 0-.546.966 3.955 3.955 0 0 0-.192 1.278c0 .476.064.904.192 1.284.128.376.31.696.546.96.24.26.53.46.87.6.34.14.722.21 1.146.21.424 0 .804-.07 1.14-.21.34-.14.628-.34.864-.6.236-.264.416-.584.54-.96a4.01 4.01 0 0 0 .192-1.284ZM16.104 8.757v3.912c0 .376.086.668.258.876.176.204.438.306.786.306.256 0 .496-.056.72-.168a2.58 2.58 0 0 0 .636-.474V8.757h1.482v6.156h-.906c-.192 0-.318-.09-.378-.27l-.102-.492a4.65 4.65 0 0 1-.396.354 2.577 2.577 0 0 1-.438.27 2.35 2.35 0 0 1-.498.168 2.345 2.345 0 0 1-.57.066c-.336 0-.634-.056-.894-.168a1.821 1.821 0 0 1-.648-.486 2.157 2.157 0 0 1-.402-.738 3.233 3.233 0 0 1-.132-.948V8.757h1.482ZM21.328 14.913V8.757h.87c.152 0 .258.028.318.084.06.056.1.152.12.288l.09.744c.22-.38.478-.68.774-.9.296-.22.628-.33.996-.33.304 0 .556.07.756.21l-.192 1.11c-.012.072-.038.124-.078.156a.278.278 0 0 1-.162.042 1.01 1.01 0 0 1-.246-.042 1.646 1.646 0 0 0-.414-.042c-.308 0-.572.086-.792.258-.22.168-.406.416-.558.744v3.834h-1.482ZM27.347 6.237h1.356a.57.57 0 0 1 .348.102c.096.064.16.152.192.264l1.476 5.19c.036.128.068.268.096.42.032.148.062.306.09.474a5.968 5.968 0 0 1 .228-.894l1.704-5.19a.575.575 0 0 1 .186-.252.543.543 0 0 1 .348-.114h.474a.57.57 0 0 1 .348.102.497.497 0 0 1 .192.264l1.692 5.19c.088.256.164.54.228.852.028-.156.056-.306.084-.45.032-.144.064-.278.096-.402l1.476-5.19c.028-.1.09-.186.186-.258a.563.563 0 0 1 .348-.108h1.266l-2.694 8.676h-1.458l-1.896-5.928-.078-.246a9.504 9.504 0 0 1-.072-.282c-.024.1-.05.194-.078.282-.024.088-.048.17-.072.246l-1.914 5.928H30.04l-2.694-8.676ZM42.771 8.661c.46 0 .876.074 1.248.222.376.148.696.358.96.63s.468.604.612.996c.144.392.216.83.216 1.314 0 .488-.072.928-.216 1.32a2.85 2.85 0 0 1-.612 1.002 2.653 2.653 0 0 1-.96.636 3.35 3.35 0 0 1-1.248.222c-.46 0-.878-.074-1.254-.222a2.712 2.712 0 0 1-.966-.636 2.922 2.922 0 0 1-.618-1.002 3.807 3.807 0 0 1-.216-1.32c0-.484.072-.922.216-1.314.148-.392.354-.724.618-.996.268-.272.59-.482.966-.63a3.397 3.397 0 0 1 1.254-.222Zm0 5.202c.512 0 .89-.172 1.134-.516.248-.344.372-.848.372-1.512s-.124-1.17-.372-1.518c-.244-.348-.622-.522-1.134-.522-.52 0-.904.176-1.152.528-.248.348-.372.852-.372 1.512s.124 1.164.372 1.512c.248.344.632.516 1.152.516ZM46.723 14.913V8.757h.87c.152 0 .258.028.318.084.06.056.1.152.12.288l.09.744c.22-.38.478-.68.774-.9.296-.22.628-.33.996-.33.304 0 .556.07.756.21l-.192 1.11c-.012.072-.038.124-.078.156a.278.278 0 0 1-.162.042 1.01 1.01 0 0 1-.246-.042 1.646 1.646 0 0 0-.414-.042c-.308 0-.572.086-.792.258-.22.168-.406.416-.558.744v3.834h-1.482ZM52.96 5.997v8.916h-1.482V5.997h1.482ZM58.732 14.913c-.192 0-.318-.09-.378-.27l-.12-.594a3.68 3.68 0 0 1-.402.39c-.14.116-.292.216-.456.3-.16.084-.334.148-.522.192a2.372 2.372 0 0 1-.6.072c-.336 0-.644-.07-.924-.21a2.098 2.098 0 0 1-.726-.606 3.033 3.033 0 0 1-.468-.99 5.072 5.072 0 0 1-.162-1.344c0-.456.062-.88.186-1.272s.302-.732.534-1.02c.232-.288.51-.512.834-.672a2.384 2.384 0 0 1 1.092-.246 2.103 2.103 0 0 1 1.536.606V5.997h1.482v8.916h-.906Zm-1.974-1.086c.308 0 .57-.064.786-.192.216-.128.42-.31.612-.546v-2.76a1.452 1.452 0 0 0-.552-.432 1.597 1.597 0 0 0-.636-.126c-.224 0-.428.042-.612.126a1.21 1.21 0 0 0-.462.384c-.124.168-.22.384-.288.648-.068.26-.102.568-.102.924 0 .36.028.666.084.918.06.248.144.452.252.612.108.156.24.27.396.342.156.068.33.102.522.102ZM16.331 20.757v6.156H14.85v-6.156h1.481Zm.223-1.794a.844.844 0 0 1-.078.36.963.963 0 0 1-.21.294.995.995 0 0 1-.3.204.963.963 0 0 1-.372.072.948.948 0 0 1-.367-.072 1.018 1.018 0 0 1-.498-.498.963.963 0 0 1 0-.732.995.995 0 0 1 .205-.3.929.929 0 0 1 .293-.198.899.899 0 0 1 .738 0 .912.912 0 0 1 .3.198.943.943 0 0 1 .288.672ZM17.771 26.913v-6.156h.906c.192 0 .318.09.378.27l.102.486a2.934 2.934 0 0 1 .828-.618c.156-.076.322-.134.498-.174.176-.04.368-.06.576-.06.336 0 .634.058.894.174.26.112.476.272.648.48.176.204.308.45.396.738.092.284.138.598.138.942v3.918h-1.482v-3.918c0-.376-.088-.666-.264-.87-.172-.208-.432-.312-.78-.312-.256 0-.496.058-.72.174a2.58 2.58 0 0 0-.636.474v4.452h-1.482ZM34.22 22.575c0 .636-.106 1.22-.318 1.752-.212.532-.51.99-.894 1.374a4 4 0 0 1-1.386.894 4.87 4.87 0 0 1-1.794.318h-3.312v-8.676h3.312a4.79 4.79 0 0 1 1.794.324 4 4 0 0 1 1.386.894c.384.38.682.836.894 1.368.212.532.318 1.116.318 1.752Zm-1.65 0c0-.476-.064-.902-.192-1.278a2.68 2.68 0 0 0-.546-.96 2.332 2.332 0 0 0-.864-.606 2.94 2.94 0 0 0-1.14-.21h-1.686v6.108h1.686c.424 0 .804-.07 1.14-.21.34-.14.628-.34.864-.6a2.75 2.75 0 0 0 .546-.96 4.01 4.01 0 0 0 .192-1.284ZM39.98 26.913h-.665c-.14 0-.25-.02-.33-.06-.08-.044-.14-.13-.18-.258l-.132-.438c-.156.14-.31.264-.462.372a2.804 2.804 0 0 1-.462.264c-.16.072-.33.126-.51.162-.18.036-.38.054-.6.054-.26 0-.5-.034-.72-.102a1.618 1.618 0 0 1-.57-.318 1.448 1.448 0 0 1-.366-.522 1.852 1.852 0 0 1-.132-.726c0-.232.06-.46.18-.684.124-.228.328-.432.612-.612.284-.184.662-.336 1.134-.456.472-.12 1.058-.188 1.758-.204v-.36c0-.412-.088-.716-.264-.912-.172-.2-.424-.3-.756-.3a1.837 1.837 0 0 0-1.02.276c-.116.068-.224.13-.324.186a.664.664 0 0 1-.33.084.429.429 0 0 1-.258-.078.614.614 0 0 1-.174-.192l-.27-.474c.708-.648 1.562-.972 2.562-.972.36 0 .68.06.96.18.284.116.524.28.72.492.196.208.344.458.444.75.104.292.156.612.156.96v3.888Zm-2.88-.924c.153 0 .293-.014.42-.042.129-.028.249-.07.36-.126.117-.056.227-.124.33-.204.109-.084.217-.182.325-.294v-1.038c-.432.02-.794.058-1.086.114-.288.052-.52.12-.696.204a.923.923 0 0 0-.378.294.664.664 0 0 0-.108.366c0 .26.076.446.228.558.156.112.358.168.606.168ZM43.22 27.01c-.532 0-.942-.15-1.23-.45-.288-.305-.432-.723-.432-1.255v-3.438h-.624a.31.31 0 0 1-.21-.078c-.056-.052-.084-.13-.084-.234v-.588l.99-.162.312-1.68a.302.302 0 0 1 .108-.186.365.365 0 0 1 .222-.066h.768v1.938h1.62v1.056h-1.62v3.336c0 .192.048.342.144.45a.488.488 0 0 0 .384.162c.092 0 .168-.01.228-.03.064-.024.118-.048.162-.072.048-.024.09-.046.126-.066a.194.194 0 0 1 .108-.036.16.16 0 0 1 .108.036c.028.02.058.052.09.096l.444.72c-.216.18-.464.316-.744.408a2.77 2.77 0 0 1-.87.138ZM50.423 26.913h-.666c-.14 0-.25-.02-.33-.06-.08-.044-.14-.13-.18-.258l-.132-.438c-.156.14-.31.264-.462.372a2.804 2.804 0 0 1-.462.264c-.16.072-.33.126-.51.162-.18.036-.38.054-.6.054-.26 0-.5-.034-.72-.102a1.618 1.618 0 0 1-.57-.318 1.448 1.448 0 0 1-.366-.522 1.852 1.852 0 0 1-.132-.726c0-.232.06-.46.18-.684.124-.228.328-.432.612-.612.284-.184.662-.336 1.134-.456.472-.12 1.058-.188 1.758-.204v-.36c0-.412-.088-.716-.264-.912-.172-.2-.424-.3-.756-.3a1.837 1.837 0 0 0-1.02.276c-.116.068-.224.13-.324.186a.664.664 0 0 1-.33.084.429.429 0 0 1-.258-.078.614.614 0 0 1-.174-.192l-.27-.474c.708-.648 1.562-.972 2.562-.972.36 0 .68.06.96.18.284.116.524.28.72.492.196.208.344.458.444.75.104.292.156.612.156.96v3.888Zm-2.88-.924c.152 0 .292-.014.42-.042.128-.028.248-.07.36-.126.116-.056.226-.124.33-.204.108-.084.216-.182.324-.294v-1.038c-.432.02-.794.058-1.086.114-.288.052-.52.12-.696.204a.923.923 0 0 0-.378.294.664.664 0 0 0-.108.366c0 .26.076.446.228.558.156.112.358.168.606.168Z" fill="#fff"></path>
+      </svg>
+    </g>
+    <a href="https://ourworldindata.org/grapher/global-warming-fossil?tab=line&amp;time=1851..2024&amp;country=~EGY&amp;overlay=download-vis" id="title" style="font-family: &#34;Playfair Display&#34;, Georgia, &#34;Times New Roman&#34;, &#34;Liberation Serif&#34;, serif;">
+      <text fill="#2d2e2d" font-size="21.50" font-weight="600" x="16.0" y="36.9">
+        <tspan x="16" y="36.855000000000004">Contribution to global mean surface temperature rise from fossil</tspan>
+        <tspan x="16" y="62.655">sources, 1851 to 2024</tspan>
+      </text>
+    </a>
+    <g class="markdown-text-wrap" id="subtitle">
+      <text fill="#5b5b5b" style="font-size: 15px; line-height: 1.2;" x="16.0" y="88.1">
+        <tspan x="16" y="88.1">The global mean surface temperature change as a result of a country or region&#39;s cumulative emissions of carbon dioxide,</tspan>
+        <tspan x="16" y="106.1">methane, and nitrous oxide. This is for fossil fuel and industry¹ emissions only – it does not include land use² or agriculture.</tspan>
+      </text>
+    </g>
+  </g>
+  <g id="chart-area" style="pointer-events: none;">
+    <g class="HorizontalAxis" id="horizontal-axis">
+      <g id="tick-marks">
+        <line id="1851" stroke="#999" stroke-width="1" x1="71.7" x2="71.7" y1="531.9" y2="537.4"></line>
+        <line id="2024" stroke="#999" stroke-width="1" x1="772" x2="772" y1="531.9" y2="537.4"></line>
+        <line id="1880" stroke="#999" stroke-width="1" x1="189.1" x2="189.1" y1="531.9" y2="537.4"></line>
+        <line id="1900" stroke="#999" stroke-width="1" x1="270" x2="270" y1="531.9" y2="537.4"></line>
+        <line id="1920" stroke="#999" stroke-width="1" x1="351" x2="351" y1="531.9" y2="537.4"></line>
+        <line id="1940" stroke="#999" stroke-width="1" x1="432" x2="432" y1="531.9" y2="537.4"></line>
+        <line id="1960" stroke="#999" stroke-width="1" x1="512.9" x2="512.9" y1="531.9" y2="537.4"></line>
+        <line id="1980" stroke="#999" stroke-width="1" x1="593.9" x2="593.9" y1="531.9" y2="537.4"></line>
+        <line id="2000" stroke="#999" stroke-width="1" x1="674.8" x2="674.8" y1="531.9" y2="537.4"></line>
+      </g>
+      <g id="tick-labels">
+        <text fill="#5b5b5b" font-size="13" text-anchor="start" x="71.7" y="550.4">1851</text>
+        <text fill="#5b5b5b" font-size="13" text-anchor="end" x="771.98" y="550.4">2024</text>
+        <text fill="#5b5b5b" font-size="13" text-anchor="middle" x="189.1" y="550.4">1880</text>
+        <text fill="#5b5b5b" font-size="13" text-anchor="middle" x="270" y="550.4">1900</text>
+        <text fill="#5b5b5b" font-size="13" text-anchor="middle" x="351" y="550.4">1920</text>
+        <text fill="#5b5b5b" font-size="13" text-anchor="middle" x="432" y="550.4">1940</text>
+        <text fill="#5b5b5b" font-size="13" text-anchor="middle" x="512.9" y="550.4">1960</text>
+        <text fill="#5b5b5b" font-size="13" text-anchor="middle" x="593.9" y="550.4">1980</text>
+        <text fill="#5b5b5b" font-size="13" text-anchor="middle" x="674.8" y="550.4">2000</text>
+      </g>
+    </g>
+    <g class="VerticalAxis" id="vertical-axis">
+      <g id="tick-labels">
+        <text dy=".32em" fill="#5b5b5b" font-size="13" text-anchor="end" x="66.70" y="532.4">0 °C</text>
+        <text dy=".32em" fill="#5b5b5b" font-size="13" text-anchor="end" x="66.70" y="453.7">0.001 °C</text>
+        <text dy=".32em" fill="#5b5b5b" font-size="13" text-anchor="end" x="66.70" y="375">0.002 °C</text>
+        <text dy=".32em" fill="#5b5b5b" font-size="13" text-anchor="end" x="66.70" y="296.3">0.003 °C</text>
+        <text dy=".32em" fill="#5b5b5b" font-size="13" text-anchor="end" x="66.70" y="217.6">0.004 °C</text>
+        <text dy=".32em" fill="#5b5b5b" font-size="13" text-anchor="end" x="66.70" y="138.9">0.005 °C</text>
+      </g>
+    </g>
+    <g class="AxisGridLines horizontalLines" id="horizontal-grid-lines">
+      <line class="zero-line" id="0-°C" stroke="#999" x1="71.70" x2="771.98" y1="532.4" y2="532.4"></line>
+      <line id="0.001-°C" stroke="#ddd" stroke-dasharray="4,4" x1="71.70" x2="771.98" y1="453.7" y2="453.7"></line>
+      <line id="0.002-°C" stroke="#ddd" stroke-dasharray="4,4" x1="71.70" x2="771.98" y1="375" y2="375"></line>
+      <line id="0.003-°C" stroke="#ddd" stroke-dasharray="4,4" x1="71.70" x2="771.98" y1="296.3" y2="296.3"></line>
+      <line id="0.004-°C" stroke="#ddd" stroke-dasharray="4,4" x1="71.70" x2="771.98" y1="217.6" y2="217.6"></line>
+      <line id="0.005-°C" stroke="#ddd" stroke-dasharray="4,4" x1="71.70" x2="771.98" y1="138.9" y2="138.9"></line>
+    </g>
+    <g class="LineLabels" id="line-labels">
+      <g id="text-annotations"></g>
+      <g id="text-labels">
+        <text fill="#4c6a9c" font-size="13.00" font-weight="400" id="label__Egypt" opacity="1" text-anchor="start" x="776.0" y="137.6">
+          <tspan x="775.98" y="137.56">Egypt</tspan>
+        </text>
+      </g>
+    </g>
+    <g id="lines">
+      <path d="M71.7 532.4L75.7 532.3L79.8 532.2L83.8 532.2L87.9 532.1L91.9 532L96 532L100 531.9L104.1 531.8L108.1 531.7L112.2 531.7L116.2 531.6L120.3 531.5L124.3 531.3L128.4 531.2L132.4 531.1L136.5 531L140.5 530.9L144.6 530.7L148.6 530.6L152.7 530.4L156.7 530.3L160.8 530.1L164.8 530L168.8 529.8L172.9 529.6L176.9 529.5L181 529.3L185 529.1L189.1 528.9L193.1 528.8L197.2 528.6L201.2 528.4L205.3 528.2L209.3 528L213.4 527.8L217.4 527.5L221.5 527.3L225.5 527.1L229.6 526.9L233.6 526.7L237.7 526.4L241.7 526.2L245.8 526L249.8 525.7L253.9 525.5L257.9 525.2L261.9 524.9L266 524.7L270 524.4L274.1 524.2L278.1 523.9L282.2 523.6L286.2 523.4L290.3 523.1L294.3 522.8L298.4 522.6L302.4 522.3L306.5 522L310.5 521.7L314.6 521.5L318.6 521.2L322.7 520.9L326.7 520.6L330.8 520.4L334.8 520.1L338.9 519.8L342.9 519.4L347 519.1L351 518.8L355.1 518.5L359.1 518.2L363.1 517.9L367.2 517.6L371.2 517.2L375.3 516.9L379.3 516.6L383.4 516.3L387.4 515.9L391.5 515.6L395.5 515.3L399.6 514.9L403.6 514.6L407.7 514.3L411.7 513.9L415.8 513.6L419.8 513.3L423.9 513L427.9 512.6L432 512.2L436 511.6L440.1 511.1L444.1 510.6L448.2 510.1L452.2 509.7L456.2 509.2L460.3 508.8L464.3 508.3L468.4 507.8L472.4 506.8L476.5 505.7L480.5 504.7L484.6 503.8L488.6 502.8L492.7 502L496.7 501.2L500.8 500.2L504.8 498.9L508.9 498L512.9 496.6L517 495.1L521 493.4L525.1 491.3L529.1 488.7L533.2 485.8L537.2 483L541.3 480.8L545.3 478.3L549.3 476.1L553.4 474.5L557.4 472.9L561.5 471.3L565.5 469.8L569.6 468.3L573.6 466.3L577.7 463.7L581.7 460.9L585.8 457.9L589.8 454.4L593.9 450.9L597.9 447.3L602 443.3L606 439.3L610.1 435.1L614.1 430.8L618.2 426.2L622.2 421L626.3 416.1L630.3 411L634.4 405.5L638.4 399L642.4 392.8L646.5 385.9L650.5 379.1L654.6 372L658.6 365.1L662.7 358.1L666.7 351.3L670.8 344.4L674.8 337.4L678.9 331L682.9 324.7L687 317.8L691 311.1L695.1 304.1L699.1 296.4L703.2 288.7L707.2 280.6L711.3 271.9L715.3 263.6L719.4 255.5L723.4 247.1L727.5 238.6L731.5 229.8L735.5 221.3L739.6 212.3L743.6 202.7L747.7 192.9L751.7 183.6L755.8 173.5L759.8 162.7L763.9 152.4L767.9 142.2L772 131.6" fill="none" id="outline__Egypt" stroke="#ffffff" stroke-linecap="butt" stroke-linejoin="round" stroke-width="2.5"></path>
+      <path d="M71.7 532.4L75.7 532.3L79.8 532.2L83.8 532.2L87.9 532.1L91.9 532L96 532L100 531.9L104.1 531.8L108.1 531.7L112.2 531.7L116.2 531.6L120.3 531.5L124.3 531.3L128.4 531.2L132.4 531.1L136.5 531L140.5 530.9L144.6 530.7L148.6 530.6L152.7 530.4L156.7 530.3L160.8 530.1L164.8 530L168.8 529.8L172.9 529.6L176.9 529.5L181 529.3L185 529.1L189.1 528.9L193.1 528.8L197.2 528.6L201.2 528.4L205.3 528.2L209.3 528L213.4 527.8L217.4 527.5L221.5 527.3L225.5 527.1L229.6 526.9L233.6 526.7L237.7 526.4L241.7 526.2L245.8 526L249.8 525.7L253.9 525.5L257.9 525.2L261.9 524.9L266 524.7L270 524.4L274.1 524.2L278.1 523.9L282.2 523.6L286.2 523.4L290.3 523.1L294.3 522.8L298.4 522.6L302.4 522.3L306.5 522L310.5 521.7L314.6 521.5L318.6 521.2L322.7 520.9L326.7 520.6L330.8 520.4L334.8 520.1L338.9 519.8L342.9 519.4L347 519.1L351 518.8L355.1 518.5L359.1 518.2L363.1 517.9L367.2 517.6L371.2 517.2L375.3 516.9L379.3 516.6L383.4 516.3L387.4 515.9L391.5 515.6L395.5 515.3L399.6 514.9L403.6 514.6L407.7 514.3L411.7 513.9L415.8 513.6L419.8 513.3L423.9 513L427.9 512.6L432 512.2L436 511.6L440.1 511.1L444.1 510.6L448.2 510.1L452.2 509.7L456.2 509.2L460.3 508.8L464.3 508.3L468.4 507.8L472.4 506.8L476.5 505.7L480.5 504.7L484.6 503.8L488.6 502.8L492.7 502L496.7 501.2L500.8 500.2L504.8 498.9L508.9 498L512.9 496.6L517 495.1L521 493.4L525.1 491.3L529.1 488.7L533.2 485.8L537.2 483L541.3 480.8L545.3 478.3L549.3 476.1L553.4 474.5L557.4 472.9L561.5 471.3L565.5 469.8L569.6 468.3L573.6 466.3L577.7 463.7L581.7 460.9L585.8 457.9L589.8 454.4L593.9 450.9L597.9 447.3L602 443.3L606 439.3L610.1 435.1L614.1 430.8L618.2 426.2L622.2 421L626.3 416.1L630.3 411L634.4 405.5L638.4 399L642.4 392.8L646.5 385.9L650.5 379.1L654.6 372L658.6 365.1L662.7 358.1L666.7 351.3L670.8 344.4L674.8 337.4L678.9 331L682.9 324.7L687 317.8L691 311.1L695.1 304.1L699.1 296.4L703.2 288.7L707.2 280.6L711.3 271.9L715.3 263.6L719.4 255.5L723.4 247.1L727.5 238.6L731.5 229.8L735.5 221.3L739.6 212.3L743.6 202.7L747.7 192.9L751.7 183.6L755.8 173.5L759.8 162.7L763.9 152.4L767.9 142.2L772 131.6" fill="none" id="line__Egypt" stroke="#4c6a9c" stroke-linecap="butt" stroke-linejoin="round" stroke-opacity="1" stroke-width="1.5"></path>
+      <g id="datapoints__Egypt">
+        <circle cx="71.7" cy="532.4" fill="#4c6a9c" id="1851" opacity="1" r="1.8"></circle>
+        <circle cx="75.7" cy="532.3" fill="#4c6a9c" id="1852" opacity="1" r="1.8"></circle>
+        <circle cx="79.8" cy="532.2" fill="#4c6a9c" id="1853" opacity="1" r="1.8"></circle>
+        <circle cx="83.8" cy="532.2" fill="#4c6a9c" id="1854" opacity="1" r="1.8"></circle>
+        <circle cx="87.9" cy="532.1" fill="#4c6a9c" id="1855" opacity="1" r="1.8"></circle>
+        <circle cx="91.9" cy="532" fill="#4c6a9c" id="1856" opacity="1" r="1.8"></circle>
+        <circle cx="96" cy="532" fill="#4c6a9c" id="1857" opacity="1" r="1.8"></circle>
+        <circle cx="100" cy="531.9" fill="#4c6a9c" id="1858" opacity="1" r="1.8"></circle>
+        <circle cx="104.1" cy="531.8" fill="#4c6a9c" id="1859" opacity="1" r="1.8"></circle>
+        <circle cx="108.1" cy="531.7" fill="#4c6a9c" id="1860" opacity="1" r="1.8"></circle>
+        <circle cx="112.2" cy="531.7" fill="#4c6a9c" id="1861" opacity="1" r="1.8"></circle>
+        <circle cx="116.2" cy="531.6" fill="#4c6a9c" id="1862" opacity="1" r="1.8"></circle>
+        <circle cx="120.3" cy="531.5" fill="#4c6a9c" id="1863" opacity="1" r="1.8"></circle>
+        <circle cx="124.3" cy="531.3" fill="#4c6a9c" id="1864" opacity="1" r="1.8"></circle>
+        <circle cx="128.4" cy="531.2" fill="#4c6a9c" id="1865" opacity="1" r="1.8"></circle>
+        <circle cx="132.4" cy="531.1" fill="#4c6a9c" id="1866" opacity="1" r="1.8"></circle>
+        <circle cx="136.5" cy="531" fill="#4c6a9c" id="1867" opacity="1" r="1.8"></circle>
+        <circle cx="140.5" cy="530.9" fill="#4c6a9c" id="1868" opacity="1" r="1.8"></circle>
+        <circle cx="144.6" cy="530.7" fill="#4c6a9c" id="1869" opacity="1" r="1.8"></circle>
+        <circle cx="148.6" cy="530.6" fill="#4c6a9c" id="1870" opacity="1" r="1.8"></circle>
+        <circle cx="152.7" cy="530.4" fill="#4c6a9c" id="1871" opacity="1" r="1.8"></circle>
+        <circle cx="156.7" cy="530.3" fill="#4c6a9c" id="1872" opacity="1" r="1.8"></circle>
+        <circle cx="160.8" cy="530.1" fill="#4c6a9c" id="1873" opacity="1" r="1.8"></circle>
+        <circle cx="164.8" cy="530" fill="#4c6a9c" id="1874" opacity="1" r="1.8"></circle>
+        <circle cx="168.8" cy="529.8" fill="#4c6a9c" id="1875" opacity="1" r="1.8"></circle>
+        <circle cx="172.9" cy="529.6" fill="#4c6a9c" id="1876" opacity="1" r="1.8"></circle>
+        <circle cx="176.9" cy="529.5" fill="#4c6a9c" id="1877" opacity="1" r="1.8"></circle>
+        <circle cx="181" cy="529.3" fill="#4c6a9c" id="1878" opacity="1" r="1.8"></circle>
+        <circle cx="185" cy="529.1" fill="#4c6a9c" id="1879" opacity="1" r="1.8"></circle>
+        <circle cx="189.1" cy="528.9" fill="#4c6a9c" id="1880" opacity="1" r="1.8"></circle>
+        <circle cx="193.1" cy="528.8" fill="#4c6a9c" id="1881" opacity="1" r="1.8"></circle>
+        <circle cx="197.2" cy="528.6" fill="#4c6a9c" id="1882" opacity="1" r="1.8"></circle>
+        <circle cx="201.2" cy="528.4" fill="#4c6a9c" id="1883" opacity="1" r="1.8"></circle>
+        <circle cx="205.3" cy="528.2" fill="#4c6a9c" id="1884" opacity="1" r="1.8"></circle>
+        <circle cx="209.3" cy="528" fill="#4c6a9c" id="1885" opacity="1" r="1.8"></circle>
+        <circle cx="213.4" cy="527.8" fill="#4c6a9c" id="1886" opacity="1" r="1.8"></circle>
+        <circle cx="217.4" cy="527.5" fill="#4c6a9c" id="1887" opacity="1" r="1.8"></circle>
+        <circle cx="221.5" cy="527.3" fill="#4c6a9c" id="1888" opacity="1" r="1.8"></circle>
+        <circle cx="225.5" cy="527.1" fill="#4c6a9c" id="1889" opacity="1" r="1.8"></circle>
+        <circle cx="229.6" cy="526.9" fill="#4c6a9c" id="1890" opacity="1" r="1.8"></circle>
+        <circle cx="233.6" cy="526.7" fill="#4c6a9c" id="1891" opacity="1" r="1.8"></circle>
+        <circle cx="237.7" cy="526.4" fill="#4c6a9c" id="1892" opacity="1" r="1.8"></circle>
+        <circle cx="241.7" cy="526.2" fill="#4c6a9c" id="1893" opacity="1" r="1.8"></circle>
+        <circle cx="245.8" cy="526" fill="#4c6a9c" id="1894" opacity="1" r="1.8"></circle>
+        <circle cx="249.8" cy="525.7" fill="#4c6a9c" id="1895" opacity="1" r="1.8"></circle>
+        <circle cx="253.9" cy="525.5" fill="#4c6a9c" id="1896" opacity="1" r="1.8"></circle>
+        <circle cx="257.9" cy="525.2" fill="#4c6a9c" id="1897" opacity="1" r="1.8"></circle>
+        <circle cx="261.9" cy="524.9" fill="#4c6a9c" id="1898" opacity="1" r="1.8"></circle>
+        <circle cx="266" cy="524.7" fill="#4c6a9c" id="1899" opacity="1" r="1.8"></circle>
+        <circle cx="270" cy="524.4" fill="#4c6a9c" id="1900" opacity="1" r="1.8"></circle>
+        <circle cx="274.1" cy="524.2" fill="#4c6a9c" id="1901" opacity="1" r="1.8"></circle>
+        <circle cx="278.1" cy="523.9" fill="#4c6a9c" id="1902" opacity="1" r="1.8"></circle>
+        <circle cx="282.2" cy="523.6" fill="#4c6a9c" id="1903" opacity="1" r="1.8"></circle>
+        <circle cx="286.2" cy="523.4" fill="#4c6a9c" id="1904" opacity="1" r="1.8"></circle>
+        <circle cx="290.3" cy="523.1" fill="#4c6a9c" id="1905" opacity="1" r="1.8"></circle>
+        <circle cx="294.3" cy="522.8" fill="#4c6a9c" id="1906" opacity="1" r="1.8"></circle>
+        <circle cx="298.4" cy="522.6" fill="#4c6a9c" id="1907" opacity="1" r="1.8"></circle>
+        <circle cx="302.4" cy="522.3" fill="#4c6a9c" id="1908" opacity="1" r="1.8"></circle>
+        <circle cx="306.5" cy="522" fill="#4c6a9c" id="1909" opacity="1" r="1.8"></circle>
+        <circle cx="310.5" cy="521.7" fill="#4c6a9c" id="1910" opacity="1" r="1.8"></circle>
+        <circle cx="314.6" cy="521.5" fill="#4c6a9c" id="1911" opacity="1" r="1.8"></circle>
+        <circle cx="318.6" cy="521.2" fill="#4c6a9c" id="1912" opacity="1" r="1.8"></circle>
+        <circle cx="322.7" cy="520.9" fill="#4c6a9c" id="1913" opacity="1" r="1.8"></circle>
+        <circle cx="326.7" cy="520.6" fill="#4c6a9c" id="1914" opacity="1" r="1.8"></circle>
+        <circle cx="330.8" cy="520.4" fill="#4c6a9c" id="1915" opacity="1" r="1.8"></circle>
+        <circle cx="334.8" cy="520.1" fill="#4c6a9c" id="1916" opacity="1" r="1.8"></circle>
+        <circle cx="338.9" cy="519.8" fill="#4c6a9c" id="1917" opacity="1" r="1.8"></circle>
+        <circle cx="342.9" cy="519.4" fill="#4c6a9c" id="1918" opacity="1" r="1.8"></circle>
+        <circle cx="347" cy="519.1" fill="#4c6a9c" id="1919" opacity="1" r="1.8"></circle>
+        <circle cx="351" cy="518.8" fill="#4c6a9c" id="1920" opacity="1" r="1.8"></circle>
+        <circle cx="355.1" cy="518.5" fill="#4c6a9c" id="1921" opacity="1" r="1.8"></circle>
+        <circle cx="359.1" cy="518.2" fill="#4c6a9c" id="1922" opacity="1" r="1.8"></circle>
+        <circle cx="363.1" cy="517.9" fill="#4c6a9c" id="1923" opacity="1" r="1.8"></circle>
+        <circle cx="367.2" cy="517.6" fill="#4c6a9c" id="1924" opacity="1" r="1.8"></circle>
+        <circle cx="371.2" cy="517.2" fill="#4c6a9c" id="1925" opacity="1" r="1.8"></circle>
+        <circle cx="375.3" cy="516.9" fill="#4c6a9c" id="1926" opacity="1" r="1.8"></circle>
+        <circle cx="379.3" cy="516.6" fill="#4c6a9c" id="1927" opacity="1" r="1.8"></circle>
+        <circle cx="383.4" cy="516.3" fill="#4c6a9c" id="1928" opacity="1" r="1.8"></circle>
+        <circle cx="387.4" cy="515.9" fill="#4c6a9c" id="1929" opacity="1" r="1.8"></circle>
+        <circle cx="391.5" cy="515.6" fill="#4c6a9c" id="1930" opacity="1" r="1.8"></circle>
+        <circle cx="395.5" cy="515.3" fill="#4c6a9c" id="1931" opacity="1" r="1.8"></circle>
+        <circle cx="399.6" cy="514.9" fill="#4c6a9c" id="1932" opacity="1" r="1.8"></circle>
+        <circle cx="403.6" cy="514.6" fill="#4c6a9c" id="1933" opacity="1" r="1.8"></circle>
+        <circle cx="407.7" cy="514.3" fill="#4c6a9c" id="1934" opacity="1" r="1.8"></circle>
+        <circle cx="411.7" cy="513.9" fill="#4c6a9c" id="1935" opacity="1" r="1.8"></circle>
+        <circle cx="415.8" cy="513.6" fill="#4c6a9c" id="1936" opacity="1" r="1.8"></circle>
+        <circle cx="419.8" cy="513.3" fill="#4c6a9c" id="1937" opacity="1" r="1.8"></circle>
+        <circle cx="423.9" cy="513" fill="#4c6a9c" id="1938" opacity="1" r="1.8"></circle>
+        <circle cx="427.9" cy="512.6" fill="#4c6a9c" id="1939" opacity="1" r="1.8"></circle>
+        <circle cx="432" cy="512.2" fill="#4c6a9c" id="1940" opacity="1" r="1.8"></circle>
+        <circle cx="436" cy="511.6" fill="#4c6a9c" id="1941" opacity="1" r="1.8"></circle>
+        <circle cx="440.1" cy="511.1" fill="#4c6a9c" id="1942" opacity="1" r="1.8"></circle>
+        <circle cx="444.1" cy="510.6" fill="#4c6a9c" id="1943" opacity="1" r="1.8"></circle>
+        <circle cx="448.2" cy="510.1" fill="#4c6a9c" id="1944" opacity="1" r="1.8"></circle>
+        <circle cx="452.2" cy="509.7" fill="#4c6a9c" id="1945" opacity="1" r="1.8"></circle>
+        <circle cx="456.2" cy="509.2" fill="#4c6a9c" id="1946" opacity="1" r="1.8"></circle>
+        <circle cx="460.3" cy="508.8" fill="#4c6a9c" id="1947" opacity="1" r="1.8"></circle>
+        <circle cx="464.3" cy="508.3" fill="#4c6a9c" id="1948" opacity="1" r="1.8"></circle>
+        <circle cx="468.4" cy="507.8" fill="#4c6a9c" id="1949" opacity="1" r="1.8"></circle>
+        <circle cx="472.4" cy="506.8" fill="#4c6a9c" id="1950" opacity="1" r="1.8"></circle>
+        <circle cx="476.5" cy="505.7" fill="#4c6a9c" id="1951" opacity="1" r="1.8"></circle>
+        <circle cx="480.5" cy="504.7" fill="#4c6a9c" id="1952" opacity="1" r="1.8"></circle>
+        <circle cx="484.6" cy="503.8" fill="#4c6a9c" id="1953" opacity="1" r="1.8"></circle>
+        <circle cx="488.6" cy="502.8" fill="#4c6a9c" id="1954" opacity="1" r="1.8"></circle>
+        <circle cx="492.7" cy="502" fill="#4c6a9c" id="1955" opacity="1" r="1.8"></circle>
+        <circle cx="496.7" cy="501.2" fill="#4c6a9c" id="1956" opacity="1" r="1.8"></circle>
+        <circle cx="500.8" cy="500.2" fill="#4c6a9c" id="1957" opacity="1" r="1.8"></circle>
+        <circle cx="504.8" cy="498.9" fill="#4c6a9c" id="1958" opacity="1" r="1.8"></circle>
+        <circle cx="508.9" cy="498" fill="#4c6a9c" id="1959" opacity="1" r="1.8"></circle>
+        <circle cx="512.9" cy="496.6" fill="#4c6a9c" id="1960" opacity="1" r="1.8"></circle>
+        <circle cx="517" cy="495.1" fill="#4c6a9c" id="1961" opacity="1" r="1.8"></circle>
+        <circle cx="521" cy="493.4" fill="#4c6a9c" id="1962" opacity="1" r="1.8"></circle>
+        <circle cx="525.1" cy="491.3" fill="#4c6a9c" id="1963" opacity="1" r="1.8"></circle>
+        <circle cx="529.1" cy="488.7" fill="#4c6a9c" id="1964" opacity="1" r="1.8"></circle>
+        <circle cx="533.2" cy="485.8" fill="#4c6a9c" id="1965" opacity="1" r="1.8"></circle>
+        <circle cx="537.2" cy="483" fill="#4c6a9c" id="1966" opacity="1" r="1.8"></circle>
+        <circle cx="541.3" cy="480.8" fill="#4c6a9c" id="1967" opacity="1" r="1.8"></circle>
+        <circle cx="545.3" cy="478.3" fill="#4c6a9c" id="1968" opacity="1" r="1.8"></circle>
+        <circle cx="549.3" cy="476.1" fill="#4c6a9c" id="1969" opacity="1" r="1.8"></circle>
+        <circle cx="553.4" cy="474.5" fill="#4c6a9c" id="1970" opacity="1" r="1.8"></circle>
+        <circle cx="557.4" cy="472.9" fill="#4c6a9c" id="1971" opacity="1" r="1.8"></circle>
+        <circle cx="561.5" cy="471.3" fill="#4c6a9c" id="1972" opacity="1" r="1.8"></circle>
+        <circle cx="565.5" cy="469.8" fill="#4c6a9c" id="1973" opacity="1" r="1.8"></circle>
+        <circle cx="569.6" cy="468.3" fill="#4c6a9c" id="1974" opacity="1" r="1.8"></circle>
+        <circle cx="573.6" cy="466.3" fill="#4c6a9c" id="1975" opacity="1" r="1.8"></circle>
+        <circle cx="577.7" cy="463.7" fill="#4c6a9c" id="1976" opacity="1" r="1.8"></circle>
+        <circle cx="581.7" cy="460.9" fill="#4c6a9c" id="1977" opacity="1" r="1.8"></circle>
+        <circle cx="585.8" cy="457.9" fill="#4c6a9c" id="1978" opacity="1" r="1.8"></circle>
+        <circle cx="589.8" cy="454.4" fill="#4c6a9c" id="1979" opacity="1" r="1.8"></circle>
+        <circle cx="593.9" cy="450.9" fill="#4c6a9c" id="1980" opacity="1" r="1.8"></circle>
+        <circle cx="597.9" cy="447.3" fill="#4c6a9c" id="1981" opacity="1" r="1.8"></circle>
+        <circle cx="602" cy="443.3" fill="#4c6a9c" id="1982" opacity="1" r="1.8"></circle>
+        <circle cx="606" cy="439.3" fill="#4c6a9c" id="1983" opacity="1" r="1.8"></circle>
+        <circle cx="610.1" cy="435.1" fill="#4c6a9c" id="1984" opacity="1" r="1.8"></circle>
+        <circle cx="614.1" cy="430.8" fill="#4c6a9c" id="1985" opacity="1" r="1.8"></circle>
+        <circle cx="618.2" cy="426.2" fill="#4c6a9c" id="1986" opacity="1" r="1.8"></circle>
+        <circle cx="622.2" cy="421" fill="#4c6a9c" id="1987" opacity="1" r="1.8"></circle>
+        <circle cx="626.3" cy="416.1" fill="#4c6a9c" id="1988" opacity="1" r="1.8"></circle>
+        <circle cx="630.3" cy="411" fill="#4c6a9c" id="1989" opacity="1" r="1.8"></circle>
+        <circle cx="634.4" cy="405.5" fill="#4c6a9c" id="1990" opacity="1" r="1.8"></circle>
+        <circle cx="638.4" cy="399" fill="#4c6a9c" id="1991" opacity="1" r="1.8"></circle>
+        <circle cx="642.4" cy="392.8" fill="#4c6a9c" id="1992" opacity="1" r="1.8"></circle>
+        <circle cx="646.5" cy="385.9" fill="#4c6a9c" id="1993" opacity="1" r="1.8"></circle>
+        <circle cx="650.5" cy="379.1" fill="#4c6a9c" id="1994" opacity="1" r="1.8"></circle>
+        <circle cx="654.6" cy="372" fill="#4c6a9c" id="1995" opacity="1" r="1.8"></circle>
+        <circle cx="658.6" cy="365.1" fill="#4c6a9c" id="1996" opacity="1" r="1.8"></circle>
+        <circle cx="662.7" cy="358.1" fill="#4c6a9c" id="1997" opacity="1" r="1.8"></circle>
+        <circle cx="666.7" cy="351.3" fill="#4c6a9c" id="1998" opacity="1" r="1.8"></circle>
+        <circle cx="670.8" cy="344.4" fill="#4c6a9c" id="1999" opacity="1" r="1.8"></circle>
+        <circle cx="674.8" cy="337.4" fill="#4c6a9c" id="2000" opacity="1" r="1.8"></circle>
+        <circle cx="678.9" cy="331" fill="#4c6a9c" id="2001" opacity="1" r="1.8"></circle>
+        <circle cx="682.9" cy="324.7" fill="#4c6a9c" id="2002" opacity="1" r="1.8"></circle>
+        <circle cx="687" cy="317.8" fill="#4c6a9c" id="2003" opacity="1" r="1.8"></circle>
+        <circle cx="691" cy="311.1" fill="#4c6a9c" id="2004" opacity="1" r="1.8"></circle>
+        <circle cx="695.1" cy="304.1" fill="#4c6a9c" id="2005" opacity="1" r="1.8"></circle>
+        <circle cx="699.1" cy="296.4" fill="#4c6a9c" id="2006" opacity="1" r="1.8"></circle>
+        <circle cx="703.2" cy="288.7" fill="#4c6a9c" id="2007" opacity="1" r="1.8"></circle>
+        <circle cx="707.2" cy="280.6" fill="#4c6a9c" id="2008" opacity="1" r="1.8"></circle>
+        <circle cx="711.3" cy="271.9" fill="#4c6a9c" id="2009" opacity="1" r="1.8"></circle>
+        <circle cx="715.3" cy="263.6" fill="#4c6a9c" id="2010" opacity="1" r="1.8"></circle>
+        <circle cx="719.4" cy="255.5" fill="#4c6a9c" id="2011" opacity="1" r="1.8"></circle>
+        <circle cx="723.4" cy="247.1" fill="#4c6a9c" id="2012" opacity="1" r="1.8"></circle>
+        <circle cx="727.5" cy="238.6" fill="#4c6a9c" id="2013" opacity="1" r="1.8"></circle>
+        <circle cx="731.5" cy="229.8" fill="#4c6a9c" id="2014" opacity="1" r="1.8"></circle>
+        <circle cx="735.5" cy="221.3" fill="#4c6a9c" id="2015" opacity="1" r="1.8"></circle>
+        <circle cx="739.6" cy="212.3" fill="#4c6a9c" id="2016" opacity="1" r="1.8"></circle>
+        <circle cx="743.6" cy="202.7" fill="#4c6a9c" id="2017" opacity="1" r="1.8"></circle>
+        <circle cx="747.7" cy="192.9" fill="#4c6a9c" id="2018" opacity="1" r="1.8"></circle>
+        <circle cx="751.7" cy="183.6" fill="#4c6a9c" id="2019" opacity="1" r="1.8"></circle>
+        <circle cx="755.8" cy="173.5" fill="#4c6a9c" id="2020" opacity="1" r="1.8"></circle>
+        <circle cx="759.8" cy="162.7" fill="#4c6a9c" id="2021" opacity="1" r="1.8"></circle>
+        <circle cx="763.9" cy="152.4" fill="#4c6a9c" id="2022" opacity="1" r="1.8"></circle>
+        <circle cx="767.9" cy="142.2" fill="#4c6a9c" id="2023" opacity="1" r="1.8"></circle>
+        <circle cx="772" cy="131.6" fill="#4c6a9c" id="2024" opacity="1" r="1.8"></circle>
+      </g>
+    </g>
+  </g>
+  <g class="SourcesFooter" id="footer" style="fill: rgb(118, 118, 118);">
+    <g class="markdown-text-wrap" id="sources">
+      <text style="font-size: 13px; line-height: 1.2;" x="16.0" y="581.0">
+        <tspan x="16" y="581.0">Data source: Jones et al. (2025)</tspan>
+      </text>
+    </g>
+    <text font-size="13.00" id="origin-url" x="460.0" y="581.0">
+      <tspan x="459.99" y="581.01">OurWorldinData.org/co2-and-greenhouse-gas-emissions | CC BY</tspan>
+    </text>
+  </g>
+  <line id="separator-line" stroke="#e7e7e7" x1="16" x2="834" y1="600" y2="600"></line>
+  <g id="details" transform="translate(15, 616)">
+    <g class="markdown-text-wrap">
+      <text style="font-size: 12.375px; fill: rgb(118, 118, 118); line-height: 1.2;" x="0.0" y="12.0">
+        <tspan x="0" y="12.0">1. Fossil CO₂ emissions This refers to the carbon dioxide released when burning fossil fuels or from certain industrial activities.</tspan>
+        <tspan x="0" y="26.9">Burning fossil fuels — coal, oil, and gas — produces CO₂ during transport (cars, trucks, planes), electricity generation, heating, and energy use in</tspan>
+        <tspan x="0" y="41.7">industry. This also includes flaring, which is the burning of extra gas during oil and gas extraction.</tspan>
+        <tspan x="0" y="56.6">Some industrial processes also release CO₂. This happens especially in cement and steel production, where chemical reactions (unrelated to burning</tspan>
+        <tspan x="0" y="71.4">fuel) produce carbon dioxide.</tspan>
+        <tspan x="0" y="86.3">These figures don&#39;t include CO₂ emissions from changes in land use, like deforestation or reforestation.</tspan>
+      </text>
+    </g>
+    <g class="markdown-text-wrap">
+      <text style="font-size: 12.375px; fill: rgb(118, 118, 118); line-height: 1.2;" x="0.0" y="109.1">
+        <tspan x="0" y="109.1">2. Land-use change emissions Land-use change emissions are the carbon dioxide (CO₂) released or removed when land use changes.</tspan>
+        <tspan x="0" y="124.0">They mostly come from deforestation, forest degradation, turning forests or other ecosystems into cropland or pasture, and draining peatlands. When</tspan>
+        <tspan x="0" y="138.8">vegetation is cleared or burned, the carbon stored in plants and soil is released as CO₂.</tspan>
+        <tspan x="0" y="153.7">Land-use change can also remove CO₂ from the atmosphere when vegetation grows back, for example, when forests regrow. This can lead to negative</tspan>
+        <tspan x="0" y="168.5">emissions in the data.</tspan>
+        <tspan x="0" y="183.4">In scientific and policy discussions, these emissions are sometimes grouped under the broader term &#34;LULUCF&#34; (land use, land-use change, and</tspan>
+        <tspan x="0" y="198.2">forestry).</tspan>
+        <tspan x="0" y="213.1">These estimates are uncertain because they depend on limited data and assumptions about land cover, how much carbon is stored in ecosystems, and</tspan>
+        <tspan x="0" y="227.9">how land is managed.</tspan>
+        <tspan x="0" y="242.8">They are separate from fossil CO₂ emissions from burning fossil fuels and certain industrial processes.</tspan>
+      </text>
+    </g>
+  </g>
+</svg>

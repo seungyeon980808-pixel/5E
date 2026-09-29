@@ -1,0 +1,234 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="744.09448819"
+   height="1052.3622047"
+   id="svg2"
+   sodipodi:version="0.32"
+   inkscape:version="0.45+0.46pre3"
+   sodipodi:docname="Lifter base version 0.1.svg"
+   inkscape:output_extension="org.inkscape.output.svg.inkscape"
+   inkscape:export-filename="/home/abassign/Documenti/Free energy - documenti/Lifter/Lifter base version 0.1.png"
+   inkscape:export-xdpi="300"
+   inkscape:export-ydpi="300">
+  <defs
+     id="defs4">
+    <marker
+       inkscape:stockid="Arrow1Lstart"
+       orient="auto"
+       refY="0.0"
+       refX="0.0"
+       id="Arrow1Lstart"
+       style="overflow:visible">
+      <path
+         id="path3196"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1.0pt;marker-start:none"
+         transform="scale(0.8) translate(12.5,0)" />
+    </marker>
+    <marker
+       inkscape:stockid="Arrow1Mstart"
+       orient="auto"
+       refY="0.0"
+       refX="0.0"
+       id="Arrow1Mstart"
+       style="overflow:visible">
+      <path
+         id="path3202"
+         d="M 0.0,0.0 L 5.0,-5.0 L -12.5,0.0 L 5.0,5.0 L 0.0,0.0 z "
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1.0pt;marker-start:none"
+         transform="scale(0.4) translate(10,0)" />
+    </marker>
+    <inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="0 : 526.18109 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_z="744.09448 : 526.18109 : 1"
+       inkscape:persp3d-origin="372.04724 : 350.78739 : 1"
+       id="perspective10" />
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.79060234"
+     inkscape:cx="423.44048"
+     inkscape:cy="459.30599"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     showguides="true"
+     inkscape:guide-bbox="true"
+     inkscape:window-width="1104"
+     inkscape:window-height="1020"
+     inkscape:window-x="235"
+     inkscape:window-y="0">
+    <sodipodi:guide
+       orientation="1,0"
+       position="387.04667,651.40207"
+       id="guide3181" />
+    <sodipodi:guide
+       orientation="0,1"
+       position="392.1061,597.01316"
+       id="guide3183" />
+    <sodipodi:guide
+       orientation="1,0"
+       position="134.07499,280.79856"
+       id="guide5385" />
+    <sodipodi:guide
+       orientation="1,0"
+       position="575.51057,355.42521"
+       id="guide5387" />
+  </sodipodi:namedview>
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Livello 1"
+     inkscape:groupmode="layer"
+     id="layer1">
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1;stroke-linecap:butt;stroke-linejoin:miter;marker-start:url(#Arrow1Lstart);stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="M 163.14867,624.18435 L 163.14867,765.21849"
+       id="path4494" />
+    <path
+       sodipodi:type="arc"
+       style="opacity:1;fill:#0000ff;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="path4498"
+       sodipodi:cx="187.19904"
+       sodipodi:cy="670.37494"
+       sodipodi:rx="13.913443"
+       sodipodi:ry="13.913443"
+       d="M 201.11248,670.37494 A 13.913443,13.913443 0 1 1 173.28559,670.37494 A 13.913443,13.913443 0 1 1 201.11248,670.37494 z"
+       transform="matrix(0.7071068,-0.7071068,0.7071068,0.7071068,-445.03648,421.91249)" />
+    <text
+       xml:space="preserve"
+       style="font-size:40px;font-style:normal;font-weight:bold;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans;-inkscape-font-specification:Bitstream Vera Sans Bold"
+       x="87.590637"
+       y="841.95697"
+       id="text4500"><tspan
+         sodipodi:role="line"
+         id="tspan4502"
+         x="87.590637"
+         y="841.95697">10-100 Kv</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:32px;font-style:normal;font-weight:bold;text-align:start;text-anchor:start;fill:#004c00;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans;-inkscape-font-specification:Bitstream Vera Sans Bold"
+       x="385.78183"
+       y="722.23413"
+       id="text4509"><tspan
+         sodipodi:role="line"
+         id="tspan4511"
+         x="385.78183"
+         y="722.23413">Direzione</tspan><tspan
+         sodipodi:role="line"
+         x="385.78183"
+         y="762.23413"
+         id="tspan4513">di</tspan><tspan
+         sodipodi:role="line"
+         x="385.78183"
+         y="802.23413"
+         id="tspan4515">spinta</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:32px;font-style:normal;font-weight:bold;fill:#aa0000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans;-inkscape-font-specification:Bitstream Vera Sans Bold"
+       id="text4525"
+       y="342.29547"
+       x="160.79517"><tspan
+         sodipodi:role="line"
+         x="160.79517"
+         y="342.29547"
+         id="tspan4538">Sottile filo conduttore</tspan></text>
+    <rect
+       style="opacity:1;fill:#b3b3b3;fill-opacity:1;stroke:#000000;stroke-width:0.93390428999999997;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="rect5383"
+       width="440.83463"
+       height="119.12871"
+       x="135.00792"
+       y="494.55307" />
+    <path
+       style="opacity:1;fill:#008000;fill-opacity:1;stroke:#000000;stroke-width:0.56766933;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       d="M 359.84834,722.12098 L 377.2332,691.98128 L 394.63582,661.85932 L 373.49013,661.85932 L 373.49015,588.59449 L 346.20653,588.59449 L 346.20653,661.85932 L 325.06084,661.85932 L 342.44572,691.98127 L 359.84834,722.12098 z"
+       id="rect4504" />
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#ff0000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+       d="M 134.07499,376.9278 L 575.51057,376.9278 L 575.51057,389.57638"
+       id="path5389" />
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1.22591174px;stroke-linecap:butt;stroke-linejoin:miter;marker-start:url(#Arrow1Lstart);stroke-opacity:1"
+       d="M 228.37745,379.4588 L 228.37745,765.37239"
+       id="path3189" />
+    <path
+       sodipodi:type="arc"
+       style="opacity:1;fill:#d40000;fill-opacity:1;stroke:#000000;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="path4496"
+       sodipodi:cx="187.19904"
+       sodipodi:cy="670.37494"
+       sodipodi:rx="13.913443"
+       sodipodi:ry="13.913443"
+       d="M 201.11248,670.37494 A 13.913443,13.913443 0 1 1 173.28559,670.37494 A 13.913443,13.913443 0 1 1 201.11248,670.37494 z"
+       transform="matrix(0.7071068,-0.7071068,0.7071068,0.7071068,-377.12454,425.61717)" />
+    <rect
+       style="opacity:1;fill:#333333;fill-opacity:1;stroke:none;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="rect5391"
+       width="12.648584"
+       height="254.23654"
+       x="129.01555"
+       y="360.48465" />
+    <rect
+       style="opacity:1;fill:#333333;fill-opacity:1;stroke:none;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="rect5393"
+       width="12.648584"
+       height="254.23654"
+       x="567.92145"
+       y="361.11707" />
+    <text
+       xml:space="preserve"
+       style="font-size:32px;font-style:normal;font-weight:bold;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans;-inkscape-font-specification:Bitstream Vera Sans Bold"
+       x="233.99881"
+       y="545.15399"
+       id="text5395"><tspan
+         sodipodi:role="line"
+         id="tspan5397"
+         x="233.99881"
+         y="545.15399">Foglio alluminio</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:40px;font-style:normal;font-weight:bold;fill:#d40000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans;-inkscape-font-specification:Bitstream Vera Sans Bold"
+       x="322.53888"
+       y="416.13843"
+       id="text5403"><tspan
+         sodipodi:role="line"
+         id="tspan5405"
+         x="322.53888"
+         y="416.13843">(+)</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:40px;font-style:normal;font-weight:bold;fill:#0000ff;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans;-inkscape-font-specification:Bitstream Vera Sans Bold"
+       x="454.46112"
+       y="589.31445"
+       id="text5407"><tspan
+         sodipodi:role="line"
+         id="tspan5409"
+         x="454.46112"
+         y="589.31445">(-)</tspan></text>
+  </g>
+</svg>

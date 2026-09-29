@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="400" height="300">
+  <g transform="translate(0, 150)">
+    <line x1="0" x2="400" stroke="black"/>
+    <path d="m46-137a350 350 0 0 0 0 274l35 0l0-37a130 130 0 0 1 0-200l0-37"/>
+    <path d="m199-75a300 300 0 0 0 0 150l12 0a300 300 0 0 0 0-150"/>
+    <line x1="261" x2="261" y1="-120" y2="-64" stroke="black"/>
+    <line x1="261" x2="261" y1="64" y2="120" stroke="black"/>
+    <path d="m290-69l0 14a150 150 0 0 1 0 110l0 14 48 0a350 350 0 0 1 0-138"/>
+    <path d="m338-69l0 138 9 0a175 175 0 0 0 0-138"/>
+    <path d="m361.5-80l0 160 9 0a320 320 0 0 0 0-160"/>
+  </g>
+  <g transform="translate(90,260)">
+    <text font-family="Times New Roman" font-size="20px"><tspan>U.S. Pat. 4,203,653 (1980)</tspan><tspan x="0" dy="22">(Mori / Nippon Kogaku K.K., 1978)</tspan></text>
+  </g>
+</svg>

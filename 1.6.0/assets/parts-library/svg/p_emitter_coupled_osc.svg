@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+ 
+<svg xmlns="http://www.w3.org/2000/svg" 
+     xmlns:svg="http://www.w3.org/2000/svg" 
+     xmlns:xlink="http://www.w3.org/1999/xlink" 
+     xmlns:ev="http://www.w3.org/2001/xml-events" 
+     version="1.1" baseProfile="full" 
+     width="600" height="400"> 
+	<g id="drawing"  style="opacity: 1; fill: none; fill-opacity: 1; fill-rule: evenodd; stroke: black; stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: miter; stroke-miterlimit: 5; stroke-dasharray: none; stroke-opacity: 1; display: inline; font-size: 18.0; font-style: normal; font-family: Bitstream Vera Sans"> 
+        <rect fill="white" fill-opacity="0.8" x="0" y="0" width="600" height="400" />
+		<symbol id="tpnpleft"> 
+			<!-- Basisanschluß --> 
+			<path d="M 100.0,100.0 l 30.0,0.0" /> 
+			<!-- Substrat -->
+			<path style="stroke: black; stroke-width: 4.5; stroke-linecap: square; " d="M 130.0,86.0 L 130.0,114.0" /> 
+			<!-- Linien Emitteranschluß --> 
+			<path d="M 130.0,105.0 L 150.0,125.0" /> 
+			<!-- Linien Kollektoranschluß --> 
+			<path d="M 130.0,95.0 L 150.0,75.0" /> 
+			<!-- Emitterpfeil --> 
+			<path style="opacity: 1; color: black; fill: black; fill-opacity: 1; fill-rule: nonzero; " d="M 135.0,90.0 L 140.0,80.0 L 145.0,85.0 z " /> 
+		</symbol> 
+		<symbol id="tpnpright"> 
+			<!-- Basisanschluß --> 
+			<path d="M 150.0,100.0 l -30.0,0.0" /> 
+			<!-- Substrat -->
+			<path style="stroke: black; stroke-width: 4.5; stroke-linecap: square; " d="M 120.0,86.0 L 120.0,114.0" /> 
+			<!-- Linien Emitteranschluß --> 
+			<path d="M 120.0,105.0 L 100.0,125.0" /> 
+			<!-- Linien Kollektoranschluß --> 
+			<path d="M 120.0,95.0 L 100.0,75.0" /> 
+			<!-- Emitterpfeil --> 
+			<path style="opacity: 1; color: black; fill: black; fill-opacity: 1; fill-rule: nonzero; " d="M 115.0,90.0 L 110.0,80.0 L 105.0,85.0 z " /> 
+		</symbol> 
+		<symbol id="resv"> 
+			<!-- Anschluß oben --> 
+			<path d="M 100.0,100.0 L 100.0,130.0" /> 
+			<!-- Anschluß unten --> 
+			<path d="M 100.0,200.0 L 100.0,170.0" /> 
+			<!-- Widerstand -->
+			<path style="stroke-linejoin: miter; stroke-linecap: square; " d="M 92.0,130.0 L 108.0,130.0 L 108.0,170.0 L 92.0,170.0 z" /> 
+		</symbol> 
+		<symbol id="indv"> 
+			<!-- Anschluß oben --> 
+			<path d="M 100.0,100.0 L 100.0,130.0" /> 
+			<!-- Anschluß unten --> 
+			<path d="M 100.0,200.0 L 100.0,170.0" /> 
+			<!-- Induktivität -->
+			<path style="opacity: 1; fill: black; fill-opacity: 1; fill-rule: evenodd; stroke: black; stroke-linejoin: miter; stroke-linecap: square; " d="M 92.0,130.0 L 108.0,130.0 L 108.0,170.0 L 92.0,170.0 z" /> 
+		</symbol> 
+		<symbol id="capv"> 
+			<!-- Anschluß oben --> 
+			<path d="M 100.0,100.0 L 100.0,145.0" /> 
+			<!-- Anschluß unten --> 
+			<path d="M 100.0,200.0 L 100.0,155.0" /> 
+			<!-- Kondensator -->
+			<path style="stroke-width: 5.0;  stroke-linejoin: miter; stroke-linecap: square; " d="M 86.0,145.0 L 114.0,145.0 M 86.0,155.0 L 114.0,155.0" /> 
+		</symbol> 
+		<use x="225" y="125" xlink:href="#tpnpleft" /> 
+		<text x="300" y="200" style="stroke-width: 1.0; fill: black"> T1 </text> 
+		<use x="325" y="125" xlink:href="#tpnpright" /> 
+		<text x="475" y="200" style="stroke-width: 1.0; fill: black"> T2 </text> 
+		<use x="300" y="0" xlink:href="#resv" /> 
+		<text x="350" y="150" style="stroke-width: 1.0; fill: black"> R1 </text> 
+		<use x="0" y="175" xlink:href="#indv" /> 
+		<text x="50" y="325" style="stroke-width: 1.0; fill: black"> L1 </text> 
+		<use x="100" y="175" xlink:href="#capv" /> 
+		<text x="150" y="325" style="stroke-width: 1.0; fill: black"> C1 </text> 
+		<circle cx="550" cy="100" r="7" fill="none" /> 
+		<text x="530" y="80" style="stroke-width: 1.0; fill: black"> +UB </text> 
+		<circle cx="550" cy="275" r="7" fill="none" /> 
+		<text x="530" y="255" style="stroke-width: 1.0; fill: black"> OUT </text> 
+		<circle cx="550" cy="375" r="7" fill="none" /> 
+		<text x="530" y="355" style="stroke-width: 1.0; fill: black"> GND </text> 
+		<circle cx="250" cy="275" r="7" fill="none" /> 
+		<text x="230" y="255" style="stroke-width: 1.0; fill: black"> OUT </text> 
+		<circle cx="250" cy="375" r="7" fill="none" /> 
+		<text x="230" y="355" style="stroke-width: 1.0; fill: black"> GND </text> 
+		<!-- UB --> 
+		<path d="M 400.0,100.0 L 543.0,100.0" /> 
+		<!-- Emitter --> 
+		<path d="M 375.0,200.0 L 425.0,200.0" /> 
+		<circle cx="400" cy="200" r="3.8" fill="black" /> 
+		<!-- Masse --> 
+		<path d="M 257.0,375.0 L 543.0,375.0" /> 
+		<path d="M 475.0,225.0 L 500.0,225.0 L 500.0,375.0" />
+		<path d="M 375.0,250.0 L 375.0,375.0" /> 
+		<circle cx="375" cy="375" r="3.8" fill="black" /> 
+		<circle cx="500" cy="375" r="3.8" fill="black" /> 
+		<!-- Ausgang --> 
+		<path d="M 257.0,275.0 L 543.0,275.0" /> 
+		<path d="M 300.0,275.0 L 300.0,225.0 L 325.0,225.0" /> 
+		<path d="M 425.0,275.0 L 425.0,250.0" /> 
+		<circle cx="300" cy="275" r="3.8" fill="black" /> 
+		<circle cx="425" cy="275" r="3.8" fill="black" /> 
+		<!-- Schwingkreis heiss --> 
+		<path d="M 100.0,275.0 L 243.0,275.0" /> 
+		<circle cx="200" cy="275" r="3.8" fill="black" /> 
+		<!-- Schwingkreis kalt --> 
+		<path d="M 100.0,375.0 L 243.0,375.0" /> 
+		<circle cx="200" cy="375" r="3.8" fill="black" /> 
+	</g>
+</svg>
+

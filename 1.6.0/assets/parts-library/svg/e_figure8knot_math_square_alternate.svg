@@ -1,0 +1,16 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 20010904//EN" "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd">
+<svg xmlns="http://www.w3.org/2000/svg" width="576" height="576" viewBox="0 0 576 576">
+<title>Figure-eight knot of mathematical knot theory (alternate).</title>
+<g transform="translate(0,576) scale(1,-1)">
+<path d="M24,552 h432 v-96 h96 v-432 h-432 v96 h-96 v432Z
+M264,408 v-48 h96 v-96 h48 v144 h-144Z
+M456,408 v-192 h-96 v-96 h-192 v-48 h336 v336 h-48Z
+M72,504 v-336 h48 v192 h96 v96 h192 v48 h-336Z
+M168,312 v-144 h144 v48 h-96 v96 h-48Z
+M264,312 v-48 h48 v48 h-48Z"/>
+<path style="fill:#ebf5ff" d="M36,540 v-408 h312 v84 h-24 v-60 h-264 v360 h360 v-60 h24 v84 h-408Z
+M228,444 v-84 h24 v60 h264 v-360 h-360 v60 h-24 v-84 h408 v408 h-312Z
+M420,408 v-156 h-168 v60 h-24 v-84 h216 v180 h-24Z
+M132,348 v-180 h24 v156 h168 v-60 h24 v84 h-216Z"/>
+</g></svg>

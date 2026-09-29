@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg width="297mm" height="420mm" viewBox="0 0 297 420" version="1.1" xmlns="http://www.w3.org/2000/svg">
+  <rect id="background" fill="black" x="0" y="0" width="297" height="420" />
+  <g id="planets" fill="#ff5555">
+    <circle id="sun"     r="109"  cx="148.5" cy="190.833" />
+    <circle id="mercury" r="0.38" cx="45.148" cy="360" />
+    <circle id="venus"   r="0.95" cx="67.184" cy="360" />
+    <circle id="earth"   r="1"    cx="89.841" cy="360" />
+    <circle id="mars"    r="0.53" cx="112.077" cy="360" />
+    <circle id="jupiter" r="11.1" cx="144.413" cy="360" />
+    <circle id="saturn"  r="9.4"  cx="185.619" cy="360" />
+    <ellipse id="saturn-rings" cx="-19.213" cy="404.516" rx="20" ry="3" transform="rotate(-30)" />
+    <circle id="uranus"  r="4"    cx="219.726" cy="360" />
+    <circle id="neptune" r="3.9"  cx="248.332" cy="360" />
+  </g>
+  <g id="text" fill="silver" font-size="3px" text-anchor="middle" font-family="sans-serif">
+    <text id="title-text" font-size="20px" font-weight="bold" letter-spacing="2px" x="148.627" y="40">
+      O SOL É ENORME
+    </text>
+    <text id="sun-text"     x="148.558" y="313">Sol</text>
+    <text id="mercury-text" x="45.055"  y="380">Mercúrio</text>
+    <text id="venus-text"   x="67.272"  y="380">Vénus</text>
+    <text id="earth-text"   x="90.040"  y="380">Terra</text>
+    <text id="mars-text"    x="111.982" y="380">Marte</text>
+    <text id="jupiter-text" x="144.525" y="380">Júpiter</text>
+    <text id="saturn-text"  x="185.595" y="380">Saturno</text>
+    <text id="uranus-text"  x="219.656" y="380">Urano</text>
+    <text id="neptune-text" x="248.239" y="380">Neptuno</text>
+  </g>
+</svg>

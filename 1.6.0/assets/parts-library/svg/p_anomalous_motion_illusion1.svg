@@ -1,0 +1,54 @@
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="100%" height="100%" viewBox="290 -10 400 300">
+ <title>Anomalous motion illusion1</title>
+ <desc>An anomalous-motion optical illusion, drawn by CMG Lee based on http://commons.wikimedia.org/wiki/File:Anomalous_motion_illusion1.png .</desc>
+ <defs>
+  <g id="blob_1">
+   <ellipse cx="0" cy="-1" rx="7" ry="8" fill="#000000"/>
+   <ellipse cx="0"  cy="1" rx="7" ry="8" fill="#ffffff"/>
+   <circle  cx="0"  cy="0"  r="7"        fill="#0000ff"/>
+  </g>
+  <g id="blob_18">
+   <use xlink:href="#blob_1"/>
+   <use xlink:href="#blob_1" transform="translate( 20,0) rotate( -20)"/>
+   <use xlink:href="#blob_1" transform="translate( 40,0) rotate( -40)"/>
+   <use xlink:href="#blob_1" transform="translate( 60,0) rotate( -60)"/>
+   <use xlink:href="#blob_1" transform="translate( 80,0) rotate( -80)"/>
+   <use xlink:href="#blob_1" transform="translate(100,0) rotate(-100)"/>
+   <use xlink:href="#blob_1" transform="translate(120,0) rotate(-120)"/>
+   <use xlink:href="#blob_1" transform="translate(140,0) rotate(-140)"/>
+   <use xlink:href="#blob_1" transform="translate(160,0) rotate(-160)"/>
+   <use xlink:href="#blob_1" transform="translate(180,0) rotate(-180)"/>
+   <use xlink:href="#blob_1" transform="translate(200,0) rotate(-200)"/>
+   <use xlink:href="#blob_1" transform="translate(220,0) rotate(-220)"/>
+   <use xlink:href="#blob_1" transform="translate(240,0) rotate(-240)"/>
+   <use xlink:href="#blob_1" transform="translate(260,0) rotate(-260)"/>
+   <use xlink:href="#blob_1" transform="translate(280,0) rotate(-280)"/>
+   <use xlink:href="#blob_1" transform="translate(300,0) rotate(-300)"/>
+   <use xlink:href="#blob_1" transform="translate(320,0) rotate(-320)"/>
+   <use xlink:href="#blob_1" transform="translate(340,0) rotate(-340)"/>
+  </g>
+  <g id="blob_36">
+   <use xlink:href="#blob_18"/>
+   <use xlink:href="#blob_18" transform="translate(360,0)"/>
+  </g>
+ </defs>
+ <g stroke="none">
+  <circle cx="0" cy="0" r="9999" fill="#80b300"/>
+  <use xlink:href="#blob_36"/>
+  <use xlink:href="#blob_36" transform="translate( 20, 20)"/>
+  <use xlink:href="#blob_36" transform="translate( 40, 40)"/>
+  <use xlink:href="#blob_36" transform="translate( 60, 60)"/>
+  <use xlink:href="#blob_36" transform="translate( 80, 80)"/>
+  <use xlink:href="#blob_36" transform="translate(100,100)"/>
+  <use xlink:href="#blob_36" transform="translate(120,120)"/>
+  <use xlink:href="#blob_36" transform="translate(140,140)"/>
+  <use xlink:href="#blob_36" transform="translate(160,160)"/>
+  <use xlink:href="#blob_36" transform="translate(180,180)"/>
+  <use xlink:href="#blob_36" transform="translate(200,200)"/>
+  <use xlink:href="#blob_36" transform="translate(220,220)"/>
+  <use xlink:href="#blob_36" transform="translate(240,240)"/>
+  <use xlink:href="#blob_36" transform="translate(260,260)"/>
+  <use xlink:href="#blob_36" transform="translate(280,280)"/>
+ </g>
+</svg>

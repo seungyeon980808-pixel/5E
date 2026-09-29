@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   version="1.0"
+   x="0.0000000"
+   y="0.0000000"
+   width="244.31250"
+   height="219.68504"
+   id="svg3809">
+  <defs
+     id="defs3811" />
+  <g
+     id="layer1">
+    <g
+       transform="translate(-396.5000,-138.4392)"
+       id="g3888">
+      <g
+         transform="translate(33.04688,183.8457)"
+         id="g1361">
+        <text
+           x="386.95312"
+           y="144.54968"
+           style="font-size:18.000000px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125.00000%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1.0000000;stroke:none;stroke-width:1.0000000px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000;font-family:Luxi Sans"
+           id="text1326"
+           xml:space="preserve"><tspan
+             x="386.95312"
+             y="144.54968"
+             id="tspan1328">I</tspan></text>
+        <text
+           x="392.90625"
+           y="148.29968"
+           style="font-size:12.000000px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125.00000%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1.0000000;stroke:none;stroke-width:1.0000000px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000;font-family:Luxi Sans"
+           id="text1330"
+           xml:space="preserve"><tspan
+             x="392.90625"
+             y="148.29968"
+             id="tspan1332">C</tspan></text>
+      </g>
+      <g
+         id="g3783">
+        <path
+           d="M 590.00000,152.36218 L 590.00000,302.36218"
+           style="fill:none;fill-opacity:0.75000000;fill-rule:evenodd;stroke:#0000ff;stroke-width:2.0000000;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4.0000000;stroke-dasharray:none;stroke-opacity:1.0000000"
+           id="path2871" />
+        <path
+           d="M 583.00000,166.36218 L 590.00000,152.36218 L 597.00000,166.36218"
+           style="fill:none;fill-opacity:0.75000000;fill-rule:evenodd;stroke:#0000ff;stroke-width:2.0000000;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4.0000000;stroke-dasharray:none;stroke-opacity:1.0000000"
+           id="path2873" />
+      </g>
+      <text
+         x="604.46875"
+         y="164.03699"
+         style="font-size:18.000000px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125.00000%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1.0000000;stroke:none;stroke-width:1.0000000px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000;font-family:Luxi Sans"
+         id="text2877"
+         xml:space="preserve"><tspan
+           x="604.46875"
+           y="164.03699"
+           id="tspan2879">U</tspan></text>
+      <g
+         id="g3787">
+        <path
+           d="M 432.00000,309.36218 L 418.00000,302.36218 L 432.00000,295.36218"
+           style="fill:none;fill-opacity:0.75000000;fill-rule:evenodd;stroke:#cb0000;stroke-width:2.0000000;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4.0000000;stroke-dasharray:none;stroke-opacity:1.0000000"
+           id="path2875" />
+        <path
+           d="M 590.00000,302.36218 L 420.00000,302.36218"
+           style="fill:none;fill-opacity:0.75000000;fill-rule:evenodd;stroke:#cb0000;stroke-width:2.0000000;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4.0000000;stroke-dasharray:none;stroke-opacity:1.0000000"
+           id="path2891" />
+      </g>
+      <path
+         d="M 149.71383,253.33240 A 47.616451,49.030666 0 0 1 197.61645,302.37952"
+         transform="matrix(-1.181414,0.000000,0.000000,1.149174,767.2121,-45.10458)"
+         style="fill:none;fill-opacity:1.0000000;stroke:#000000;stroke-width:0.85823458;stroke-linecap:butt;stroke-linejoin:bevel;stroke-miterlimit:4.0000000;stroke-dasharray:none;stroke-dashoffset:0.0000000;stroke-opacity:1.0000000"
+         id="path2893" />
+      <g
+         transform="translate(277.4707,-38.99219)"
+         id="g2895">
+        <text
+           x="273.79102"
+           y="322.69617"
+           style="font-size:18.000000px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125.00000%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1.0000000;stroke:none;stroke-width:1.0000000px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000;font-family:Luxi Sans"
+           id="text2897"
+           xml:space="preserve"><tspan
+             x="273.79102"
+             y="322.69617"
+             id="tspan2899">90°</tspan></text>
+      </g>
+    </g>
+  </g>
+</svg>

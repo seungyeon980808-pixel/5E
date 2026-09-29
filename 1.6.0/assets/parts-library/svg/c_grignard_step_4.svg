@@ -1,0 +1,75 @@
+<?xml version="1.0" standalone="no" ?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="370px" height="60px" viewBox="0 0 370 60" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" >
+<text x="0" y="0" stroke="transparent" fill="#000000" transform="matrix(0.0666667 0 0 0.0666667 3.32749 34.475)" style="font:normal normal normal 200px 'Arial'" >
+(CH</text>
+<text x="0" y="0" stroke="transparent" fill="#000000" transform="matrix(0.0666667 0 0 0.0666667 27.052 37.4083)" style="font:normal normal normal 150px 'Arial'" >
+3</text>
+<text x="0" y="0" stroke="transparent" fill="#000000" transform="matrix(0.0666667 0 0 0.0666667 32.6135 34.475)" style="font:normal normal normal 200px 'Arial'" >
+)</text>
+<text x="0" y="0" stroke="transparent" fill="#000000" transform="matrix(0.0666667 0 0 0.0666667 37.0802 37.4083)" style="font:normal normal normal 150px 'Arial'" >
+3</text>
+<text x="0" y="0" stroke="transparent" fill="#000000" transform="matrix(0.0666667 0 0 0.0666667 42.6417 34.475)" style="font:normal normal normal 200px 'Arial'" >
+Si</text>
+<text x="0" y="0" stroke="transparent" fill="#ff00ff" transform="matrix(0.0666667 0 0 0.0666667 54.4971 34.475)" style="font:normal normal normal 200px 'Arial'" >
+O</text>
+<text x="0" y="0" stroke="transparent" fill="#000000" transform="matrix(0.0666667 0 0 0.0666667 64.8971 34.475)" style="font:normal normal normal 200px 'Arial'" >
+CH</text>
+<text x="0" y="0" stroke="transparent" fill="#000000" transform="matrix(0.0666667 0 0 0.0666667 84.155 37.4083)" style="font:normal normal normal 150px 'Arial'" >
+2</text>
+<text x="0" y="0" stroke="transparent" fill="#000000" transform="matrix(0.0666667 0 0 0.0666667 89.7165 34.475)" style="font:normal normal normal 200px 'Arial'" >
+CH</text>
+<text x="0" y="0" stroke="transparent" fill="#000000" transform="matrix(0.0666667 0 0 0.0666667 108.974 37.4083)" style="font:normal normal normal 150px 'Arial'" >
+2</text>
+<text x="0" y="0" stroke="transparent" fill="#000000" transform="matrix(0.0666667 0 0 0.0666667 122.027 34.475)" style="font:normal normal normal 200px 'Arial'" >
+C</text>
+<path stroke="transparent" fill="#000000" transform="matrix(0.0666667 0 0 0.0666667 -32.2044 -390.733)" d="M 2298.46,6292.13 L 2298.46,6308.12 L 2218.98,6308.12 L 2218.98,6292.13 L 2298.46,6292.13 Z " />
+<text x="0" y="0" stroke="transparent" fill="#ff00ff" transform="matrix(0.0666667 0 0 0.0666667 132.96 14.8451)" style="font:normal normal normal 200px 'Arial'" >
+OH</text>
+<path stroke="transparent" fill="#000000" transform="matrix(0.0666667 0 0 0.0666667 -32.2044 -390.733)" d="M 2495.18,6094.09 L 2509.04,6102.09 L 2439.51,6222.51 L 2425.66,6214.51 L 2495.18,6094.09 Z " />
+<text x="0" y="0" stroke="transparent" fill="#000000" transform="matrix(0.0666667 0 0 0.0666667 133.36 54.1049)" style="font:normal normal normal 200px 'Arial'" >
+CH</text>
+<text x="0" y="0" stroke="transparent" fill="#000000" transform="matrix(0.0666667 0 0 0.0666667 152.618 57.0382)" style="font:normal normal normal 150px 'Arial'" >
+3</text>
+<path stroke="transparent" fill="#000000" transform="matrix(0.0666667 0 0 0.0666667 -32.2044 -390.733)" d="M 2517.57,6512.94 L 2503.72,6520.94 L 2432.94,6398.35 L 2446.8,6390.35 L 2517.57,6512.94 Z " />
+<text x="0" y="0" stroke="transparent" fill="#000000" transform="matrix(0.0666667 0 0 0.0666667 144.693 34.475)" style="font:normal normal normal 200px 'Arial'" >
+H</text>
+<path stroke="transparent" fill="#000000" transform="matrix(0.0666667 0 0 0.0666667 -32.2044 -390.733)" d="M 2644.46,6292.13 L 2644.46,6308.12 L 2475.46,6308.12 L 2475.46,6292.13 L 2644.46,6292.13 Z " />
+<text x="0" y="0" stroke="transparent" fill="#ff00ff" transform="matrix(0.0666667 0 0 0.0666667 187.135 22.2667)" style="font:normal normal normal 200px 'Arial'" >
+H</text>
+<text x="0" y="0" stroke="transparent" fill="#ff00ff" transform="matrix(0.0666667 0 0 0.0666667 196.764 25.2)" style="font:normal normal normal 150px 'Arial'" >
+3</text>
+<text x="0" y="0" stroke="transparent" fill="#ff00ff" transform="matrix(0.0666667 0 0 0.0666667 202.325 22.2667)" style="font:normal normal normal 200px 'Arial'" >
+O</text>
+<text x="0" y="0" stroke="transparent" fill="#ff00ff" transform="matrix(0.0666667 0 0 0.0666667 212.725 17.0667)" style="font:normal normal normal 150px 'Arial'" >
++</text>
+<path stroke="transparent" fill="#000000" transform="matrix(0.0666667 0 0 0.0666667 -32.2044 -390.733)" d="M 3840.64,6328.29 L 3072.14,6328.29 L 3072.14,6312.29 L 3840.64,6312.29 Z " />
+<path stroke="transparent" fill="#000000" transform="matrix(0.0666667 0 0 0.0666667 -32.2044 -390.733)" d="M 3979.64,6320.29 C 3979.64,6320.29 3819.64,6361.29 3819.64,6361.29 C 3819.64,6361.29 3839.64,6338.23 3839.64,6320.29 C 3839.64,6301.92 3819.64,6278.29 3819.64,6278.29 C 3819.64,6278.29 3979.64,6320.29 3979.64,6320.29 C 3979.64,6320.29 3979.64,6320.29 3979.64,6320.29 " />
+<path stroke="#000000" stroke-width="1" fill="transparent" transform="matrix(0.0666667 0 0 0.0666667 -32.2044 -390.733)" d="M 3979.64,6320.29 C 3979.64,6320.29 3819.64,6361.29 3819.64,6361.29 C 3819.64,6361.29 3839.64,6338.23 3839.64,6320.29 C 3839.64,6301.92 3819.64,6278.29 3819.64,6278.29 C 3819.64,6278.29 3979.64,6320.29 3979.64,6320.29 C 3979.64,6320.29 3979.64,6320.29 3979.64,6320.29 " />
+<text x="0" y="0" stroke="transparent" fill="#000000" transform="matrix(0.0666667 0 0 0.0666667 247.531 34.475)" style="font:normal normal normal 200px 'Arial'" >
+H</text>
+<text x="0" y="0" stroke="transparent" fill="#ff00ff" transform="matrix(0.0666667 0 0 0.0666667 257.16 34.475)" style="font:normal normal normal 200px 'Arial'" >
+O</text>
+<text x="0" y="0" stroke="transparent" fill="#000000" transform="matrix(0.0666667 0 0 0.0666667 267.56 34.475)" style="font:normal normal normal 200px 'Arial'" >
+CH</text>
+<text x="0" y="0" stroke="transparent" fill="#000000" transform="matrix(0.0666667 0 0 0.0666667 286.817 37.4083)" style="font:normal normal normal 150px 'Arial'" >
+2</text>
+<text x="0" y="0" stroke="transparent" fill="#000000" transform="matrix(0.0666667 0 0 0.0666667 292.379 34.475)" style="font:normal normal normal 200px 'Arial'" >
+CH</text>
+<text x="0" y="0" stroke="transparent" fill="#000000" transform="matrix(0.0666667 0 0 0.0666667 311.637 37.4083)" style="font:normal normal normal 150px 'Arial'" >
+2</text>
+<text x="0" y="0" stroke="transparent" fill="#000000" transform="matrix(0.0666667 0 0 0.0666667 330.796 34.475)" style="font:normal normal normal 200px 'Arial'" >
+C</text>
+<text x="0" y="0" stroke="transparent" fill="#ff00ff" transform="matrix(0.0666667 0 0 0.0666667 341.73 14.8451)" style="font:normal normal normal 200px 'Arial'" >
+OH</text>
+<path stroke="transparent" fill="#000000" transform="matrix(0.0666667 0 0 0.0666667 -32.2044 -390.733)" d="M 5626.73,6094.09 L 5640.58,6102.09 L 5571.06,6222.51 L 5557.2,6214.51 L 5626.73,6094.09 Z " />
+<text x="0" y="0" stroke="transparent" fill="#000000" transform="matrix(0.0666667 0 0 0.0666667 342.13 54.1049)" style="font:normal normal normal 200px 'Arial'" >
+CH</text>
+<text x="0" y="0" stroke="transparent" fill="#000000" transform="matrix(0.0666667 0 0 0.0666667 361.387 57.0382)" style="font:normal normal normal 150px 'Arial'" >
+3</text>
+<path stroke="transparent" fill="#000000" transform="matrix(0.0666667 0 0 0.0666667 -32.2044 -390.733)" d="M 5649.12,6512.94 L 5635.26,6520.94 L 5564.49,6398.35 L 5578.34,6390.35 L 5649.12,6512.94 Z " />
+<text x="0" y="0" stroke="transparent" fill="#000000" transform="matrix(0.0666667 0 0 0.0666667 353.463 34.475)" style="font:normal normal normal 200px 'Arial'" >
+H</text>
+<path stroke="transparent" fill="#000000" transform="matrix(0.0666667 0 0 0.0666667 -32.2044 -390.733)" d="M 5776.01,6292.13 L 5776.01,6308.12 L 5607.01,6308.12 L 5607.01,6292.13 L 5776.01,6292.13 Z " />
+<path stroke="transparent" fill="#000000" transform="matrix(0.0666667 0 0 0.0666667 -32.2044 -390.733)" d="M 5425.4,6292.13 L 5425.4,6308.12 L 5258.03,6308.12 L 5258.03,6292.13 L 5425.4,6292.13 Z " />
+</svg>

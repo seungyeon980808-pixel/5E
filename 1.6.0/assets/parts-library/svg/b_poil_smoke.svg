@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://web.resource.org/cc/"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="800.11646"
+   height="1099.8801"
+   id="svg2"
+   sodipodi:version="0.32"
+   inkscape:version="0.45"
+   version="1.0"
+   sodipodi:docbase="C:\Dokumente und Einstellungen\Gerad\Eigene Dateien\svg"
+   sodipodi:docname="Poil_smoke.svg"
+   inkscape:output_extension="org.inkscape.output.svg.inkscape"
+   sodipodi:modified="true">
+  <defs
+     id="defs4" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.5"
+     inkscape:cx="297.83896"
+     inkscape:cy="525.64614"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     inkscape:window-width="1627"
+     inkscape:window-height="994"
+     inkscape:window-x="-4"
+     inkscape:window-y="-4"
+     height="1085px"
+     width="850px" />
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Ebene 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(84.204577,10.130712)">
+    <g
+       id="g10996"
+       transform="matrix(0.9411767,0,0,1,-4.949764,0)">
+      <path
+         sodipodi:nodetypes="ccccc"
+         id="path4182"
+         d="M 274.59525,1084.7007 C 267.59401,1043.9507 255.53337,929.48838 256.65813,830.55961 L 328.53255,833.96889 C 322.27563,928.46077 332.37342,1003.5117 347.35981,1085.2133 L 274.59525,1084.7007 z "
+         style="fill:#cccccc;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+      <path
+         sodipodi:nodetypes="cc"
+         id="path3207"
+         d="M -82.135808,1087.0304 L 763.8429,1087.7989"
+         style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:4.0210681;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+      <path
+         sodipodi:nodetypes="ccccc"
+         id="path3211"
+         d="M 255.49534,833.06637 C 249.54167,590.92591 315.5846,258.35451 514.2645,12.871715 C 540.7736,-15.076624 543.13132,-19.980803 525.56452,24.417184 C 355.04378,396.96608 330.88564,655.50339 328.50927,833.93036 L 255.49534,833.06637 z "
+         style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1" />
+      <path
+         sodipodi:nodetypes="cccc"
+         id="path3209"
+         d="M 348.92135,1085.9554 C 287.54127,756.42093 353.41297,383.01282 537.48038,-6.0187074 L 534.04728,-8.1802072 C 270.59476,284.6912 220.00233,758.97518 275.50729,1085.9224"
+         style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:4.0210681;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+    </g>
+  </g>
+</svg>

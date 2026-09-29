@@ -1,0 +1,69 @@
+<?xml version="1.0" standalone="no"?><svg width="600.000" height="500.000" viewBox="0.0 0.0 600.000 500.000">
+  <title>Thompson bridge</title>
+  <desc>Electric schematic of Thompson bridge</desc>
+  <author>PieterJanR</author>
+<path d="M66.08 184.87L66.08 34.62L266.41 34.62L266.41 84.7"
+fill="none" stroke="black" stroke-width="2.5"/>
+<path d="M266.41 184.87L266.41 318.42"
+fill="none" stroke="black" stroke-width="2.5"/>
+<path d="M266.41 418.59L266.41 468.67L66.08 468.67L66.08 301.73"
+fill="none" stroke="black" stroke-width="2.5"/>
+<path d="M249.72 84.7L283.11 84.7L283.11 184.87L249.72 184.87Z"
+fill="none" stroke="black" stroke-width="2.5"/>
+<path d="M249.72 318.42L283.11 318.42L283.11 418.59L249.72 418.59Z"
+fill="none" stroke="black" stroke-width="2.5"/>
+<path d="M266.41 318.42L299.8 285.03L333.19 285.03"
+fill="none" stroke="black" stroke-width="1.5"/>
+<path d="M266.41 418.59L299.8 451.98L333.19 451.98"
+fill="none" stroke="black" stroke-width="1.5"/>
+<path d="M266.41 184.87L299.8 218.26L333.19 218.26"
+fill="none" stroke="black" stroke-width="1.5"/>
+<path d="M266.41 84.7L299.8 51.31L333.19 51.31"
+fill="none" stroke="black" stroke-width="1.5"/>
+<path d="M333.19 62.44L333.19 40.18L399.97 40.18L399.97 62.44Z"
+fill="none" stroke="black" stroke-width="1.5"/>
+<path d="M333.19 229.38L333.19 207.13L399.97 207.13L399.97 229.38Z"
+fill="none" stroke="black" stroke-width="1.5"/>
+<path d="M333.19 296.16L333.19 273.9L399.97 273.9L399.97 296.16Z"
+fill="none" stroke="black" stroke-width="1.5"/>
+<path d="M333.19 463.11L333.19 440.85L399.97 440.85L399.97 463.11Z"
+fill="none" stroke="black" stroke-width="1.5"/>
+<path d="M433.36 251.64L466.74 251.64"
+fill="none" stroke="black" stroke-width="1.5"/>
+<path d="M399.97 51.31L566.91 51.31L566.91 451.98L399.97 451.98"
+fill="none" stroke="black" stroke-width="1.5"/>
+<path d="M399.97 218.26L433.36 218.26L433.36 285.03L399.97 285.03"
+fill="none" stroke="black" stroke-width="1.5"/>
+<circle cx="500.13" cy="251.64" r="33.389"
+fill="none" stroke="black" stroke-width="1.5"/>
+<path d="M566.91 251.64L533.52 251.64"
+fill="none" stroke="black" stroke-width="1.5"/>
+<path d="M32.69 184.87L99.47 184.87"
+fill="none" stroke="black" stroke-width="2.5"/>
+<path d="M49.38 201.56L82.77 201.56"
+fill="none" stroke="black" stroke-width="8.0"/>
+<path d="M32.69 218.26L99.47 218.26"
+fill="none" stroke="black" stroke-width="2.5"/>
+<path d="M49.38 234.95L82.77 234.95"
+fill="none" stroke="black" stroke-width="8.0"/>
+<path d="M32.69 251.64L99.47 251.64"
+fill="none" stroke="black" stroke-width="2.5"/>
+<path d="M49.38 268.34L82.77 268.34"
+fill="none" stroke="black" stroke-width="8.0"/>
+<path d="M32.69 285.03L99.47 285.03"
+fill="none" stroke="black" stroke-width="2.5"/>
+<path d="M49.38 301.73L82.77 301.73"
+fill="none" stroke="black" stroke-width="8.0"/>
+<path d="M487.61 239.12L500.13 264.16L512.65 239.12"
+fill="none" stroke="black" stroke-width="1.5"/>
+<path d="M307.73 327.19L307.73 327.19 299.46 342.53 292.38 335.45 307.73 327.19Z"
+fill-rule="evenodd" fill="black"/>
+<path d="M233.02 401.89L305.7 329.21"
+fill="none" stroke="black" stroke-width="1.5"/>
+<text x="350" y="34" font-family="Arial" font-size="28" fill="black">R1</text>
+<text x="350" y="435" font-family="Arial" font-size="28" fill="black">R2</text>
+<text x="350" y="200" font-family="Arial" font-size="28" fill="black">R3</text>
+<text x="350" y="268" font-family="Arial" font-size="28" fill="black">R4</text>
+<text x="290" y="380" font-family="Arial" font-size="28" fill="black">Ra</text>
+<text x="290" y="145" font-family="Arial" font-size="28" fill="black">Rx</text>
+</svg>

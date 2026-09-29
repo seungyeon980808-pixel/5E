@@ -1,0 +1,6 @@
+<svg width="167mm" height="100mm" version="1.1" viewBox="0 0 167 100" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><rect width="167" height="100" fill="#fff"/><circle cx="81" cy="29" r="2"/>
+ <g stroke="#000"><path id="a" d="m31 29 3-8 6 16 6-16 6 16 6-16 6 16 3-8" fill="none" stroke-linecap="round"/><use transform="rotate(90 48 62)" xlink:href="#a"/>
+ <g id="b"><path d="m31 60 12 3-12 3 3-3" stroke="none"/><path d="m24 63h10"/></g>
+ <use transform="matrix(-1 0 0 1 171 0)" xlink:href="#b"/><path d="m72 96h18" stroke-width="2"/><use transform="translate(63)" xlink:href="#a"/><path d="m81 81v15m0-67v16m-14-16h27m36 0h17m-131 0h15" fill="none"/>
+ <g fill="#fff"><circle cx="17" cy="29" r="3"/><circle cx="148" cy="29" r="3"/></g></g>
+ <g font-family="Times" font-size="17px" font-style="italic"><text x="55" y="66">R<tspan dy="4" font-size="13px" font-style="normal">p</tspan></text><text x="103" y="15">R<tspan dy="4" font-size="13px" font-style="normal">s2</tspan></text><text x="8" y="68">Z<tspan dy="4" font-size="13px" font-style="normal">1</tspan> </text><text x="149" y="68">Z<tspan dy="4" font-size="13px" font-style="normal">2</tspan> </text><text x="42" y="15">R<tspan dy="4" font-size="13px" font-style="normal">s1</tspan></text></g></svg>

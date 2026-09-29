@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   version="1.1"
+   width="290"
+   height="290">
+  <defs>
+    <linearGradient
+       id="verlauf">
+      <stop
+         style="stop-color:#898989;"
+         offset="0" />
+      <stop
+         style="stop-color:#000000;"
+         offset="1" />
+    </linearGradient>
+    <radialGradient
+       cx="241.75439"
+       cy="467.81042"
+       r="10.148964"
+       fx="241.75439"
+       fy="467.81042"
+       id="kugel"
+       xlink:href="#verlauf"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="translate(-81.824916,-322.98355)" />
+  </defs>
+  <rect
+     width="290"
+     height="290"
+     id="bg"
+     style="fill:#ffffff" />
+     
+ <g style="fill:none;stroke:#000;stroke-width:1">
+  <circle cx="145" cy="145" r="56" />
+  <circle cx="145" cy="145" r="95" />
+  <circle cx="145" cy="145" r="134" />
+  </g>
+  <circle id="e" cx="161.6" cy="142.3" r="10" style="fill:url(#kugel);stroke:none;" />
+  <use transform="translate(-34,0)" xlink:href="#e" />
+  <use transform="translate(-82,-25)" xlink:href="#e" />
+  <use transform="translate(-120,-26)" xlink:href="#e" />
+  <use transform="translate(-82,32)" xlink:href="#e" />
+  <use transform="translate(-120,49)" xlink:href="#e" />
+  <use transform="translate(-33,67)" xlink:href="#e" />
+  <use transform="translate(21,60)" xlink:href="#e" />
+  <use transform="translate(51,25)" xlink:href="#e" />
+  <use transform="translate(75,63)" xlink:href="#e" />
+  <use transform="translate(93,-8)" xlink:href="#e" />
+  <use transform="translate(44,-30)" xlink:href="#e" />
+  <use transform="translate(3,-67)" xlink:href="#e" />
+  <use transform="translate(-39,-68)" xlink:href="#e" />
+  <use transform="translate(55,-84)" xlink:href="#e" />
+  <use transform="translate(12,110)" xlink:href="#e" />
+  <use transform="translate(-72,100)" xlink:href="#e" />
+  <path
+     d="m 88.52405,49.59398 6.18832,-15.26453 17.53358,0 -6.70401,4.12555 14.95511,22.07168 6.60087,-3.91927 -7.21971,15.05825 -16.39905,0.10314 6.18832,-3.91927 -14.85197,-22.3811 -6.29146,4.12555 z"
+     id="arrow"
+     style="fill:#00ff00;stroke:#000000;stroke-width:1px;" />
+</svg>

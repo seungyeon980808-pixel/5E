@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   id="svg2440"
+   sodipodi:version="0.32"
+   inkscape:version="0.46"
+   width="771"
+   height="340"
+   version="1.0"
+   sodipodi:docname="ADSR-envelope.svg"
+   inkscape:output_extension="org.inkscape.output.svg.inkscape">
+  <metadata
+     id="metadata2445">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs2443">
+    <inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="0 : 526.18109 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_z="744.09448 : 526.18109 : 1"
+       inkscape:persp3d-origin="372.04724 : 350.78739 : 1"
+       id="perspective2447" />
+  </defs>
+  <sodipodi:namedview
+     inkscape:window-height="750"
+     inkscape:window-width="1280"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     guidetolerance="10.0"
+     gridtolerance="10.0"
+     objecttolerance="10.0"
+     borderopacity="1.0"
+     bordercolor="#666666"
+     pagecolor="#ffffff"
+     id="base"
+     showgrid="false"
+     inkscape:zoom="0.99783681"
+     inkscape:cx="380.63662"
+     inkscape:cy="232.69261"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:current-layer="svg2440" />
+  <rect
+     style="fill:#ffffff;fill-opacity:1;stroke:none;stroke-width:1.89999998;stroke-miterlimit:4;stroke-dasharray:3.8, 3.8;stroke-dashoffset:0;stroke-opacity:1"
+     id="rect3253"
+     width="771"
+     height="340"
+     x="0"
+     y="0" />
+  <path
+     id="path3247"
+     d="M 569.13647,125.69598 L 569.13647,287.26583"
+     style="fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#a9a9a9;stroke-width:1.89999998;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:3.8, 3.8;stroke-dashoffset:0;stroke-opacity:1" />
+  <path
+     style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:1.89999998;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+     d="M 77.861788,288.44646 L 150.5103,17.318528 L 255.19887,125.01643 L 567.88615,123.95347 L 740.08559,286.9406"
+     id="path2451" />
+  <text
+     xml:space="preserve"
+     style="font-size:18px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Arial;-inkscape-font-specification:Arial"
+     x="337.3125"
+     y="116.95565"
+     id="text3223"
+     sodipodi:linespacing="125%"><tspan
+       sodipodi:role="line"
+       id="tspan3225"
+       x="337.3125"
+       y="116.95565"
+       style="font-size:18px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;font-family:Arial;-inkscape-font-specification:Arial">Sustain Level</tspan></text>
+  <text
+     xml:space="preserve"
+     style="font-size:18.00000076px;font-style:normal;font-weight:normal;line-height:125%;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Arial;-inkscape-font-specification:Arial;font-stretch:normal;font-variant:normal;text-anchor:start;text-align:start;writing-mode:lr"
+     x="163.52254"
+     y="-113.28219"
+     id="text3227"
+     sodipodi:linespacing="125%"
+     transform="matrix(0.6740824,0.7386561,-0.7386561,0.6740824,0,0)"><tspan
+       sodipodi:role="line"
+       id="tspan3229"
+       x="163.52254"
+       y="-113.28219"
+       style="font-size:18.00000076px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr;text-anchor:start;font-family:Arial;-inkscape-font-specification:Arial">Decay</tspan></text>
+  <text
+     xml:space="preserve"
+     style="font-size:18.00000056px;font-style:normal;font-weight:normal;line-height:125%;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Arial;-inkscape-font-specification:Arial;font-stretch:normal;font-variant:normal;text-anchor:start;text-align:start;writing-mode:lr"
+     x="-137.44954"
+     y="139.29918"
+     id="text3231"
+     sodipodi:linespacing="125%"
+     transform="matrix(0.2985502,-0.9543939,0.9543939,0.2985502,0,0)"><tspan
+       sodipodi:role="line"
+       id="tspan3233"
+       x="-137.44954"
+       y="139.29918"
+       style="font-size:18.00000056px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr;text-anchor:start;font-family:Arial;-inkscape-font-specification:Arial">Attack</tspan></text>
+  <text
+     xml:space="preserve"
+     style="font-size:18.00000034px;font-style:normal;font-weight:normal;line-height:125%;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Arial;-inkscape-font-specification:Arial;font-stretch:normal;font-variant:normal;text-anchor:start;text-align:start;writing-mode:lr"
+     x="583.69897"
+     y="-337.64792"
+     id="text3235"
+     sodipodi:linespacing="125%"
+     transform="matrix(0.6968229,0.7172432,-0.7172432,0.6968229,0,0)"><tspan
+       sodipodi:role="line"
+       id="tspan3237"
+       x="583.69897"
+       y="-337.64792"
+       style="font-size:18.00000034px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr;text-anchor:start;font-family:Arial;-inkscape-font-specification:Arial">Release</tspan></text>
+  <text
+     xml:space="preserve"
+     style="font-size:40px;font-style:normal;font-weight:normal;line-height:125%;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+     x="483.06204"
+     y="310.29605"
+     id="text3239"
+     sodipodi:linespacing="125%"
+     transform="matrix(0.9999235,1.2366904e-2,-1.2366904e-2,0.9999235,0,0)"><tspan
+       sodipodi:role="line"
+       id="tspan3241"
+       x="483.06204"
+       y="310.29605"
+       style="font-size:20px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;font-family:Arial;-inkscape-font-specification:Arial">&quot;Taste losgelassen&quot;</tspan></text>
+  <text
+     xml:space="preserve"
+     style="font-size:18px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Arial;-inkscape-font-specification:Arial"
+     x="18.819769"
+     y="314.37302"
+     id="text3249"
+     sodipodi:linespacing="125%"><tspan
+       sodipodi:role="line"
+       id="tspan3251"
+       x="18.819769"
+       y="314.37302"
+       style="font-size:18px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;font-family:Arial;-inkscape-font-specification:Arial">&quot;Tastendruck&quot;</tspan></text>
+</svg>

@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="45.471703mm"
+   height="187.06824mm"
+   viewBox="0 0 45.471703 187.06824"
+   version="1.1"
+   id="svg5"
+   inkscape:version="1.1.2 (0a00cf5339, 2022-02-04)"
+   sodipodi:docname="Thermometer simple.svg"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview7"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:document-units="mm"
+     showgrid="false"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0"
+     inkscape:zoom="1.0985947"
+     inkscape:cx="207.08273"
+     inkscape:cy="351.81308"
+     inkscape:window-width="1920"
+     inkscape:window-height="1043"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="g1154" />
+  <defs
+     id="defs2">
+    <linearGradient
+       inkscape:collect="always"
+       id="linearGradient2156-3">
+      <stop
+         style="stop-color:#1300ff;stop-opacity:1"
+         offset="0"
+         id="stop2152" />
+      <stop
+         style="stop-color:#ff0000;stop-opacity:1"
+         offset="0.99995971"
+         id="stop3103" />
+      <stop
+         style="stop-color:#ffffff;stop-opacity:1"
+         offset="1"
+         id="stop2154" />
+    </linearGradient>
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient2156-3"
+       id="linearGradient2160"
+       x1="361.44531"
+       y1="773.63672"
+       x2="361.64417"
+       y2="134.44261"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.26458333,0,0,0.26458333,-55.489457,17.64613)" />
+  </defs>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-17.407096,-35.769279)">
+    <g
+       id="g1154">
+      <path
+         id="path846"
+         style="fill:url(#linearGradient2160);fill-opacity:1;stroke:#000000;stroke-width:1;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         d="m 40.142946,36.269282 a 10.938352,10.938352 0 0 0 -10.938348,10.938351 10.938352,10.938352 0 0 0 0.0026,0.06408 h -0.0026 V 180.74987 a 22.235874,22.235874 0 0 0 -11.297502,19.35179 22.235874,22.235874 0 0 0 22.23585,22.23585 22.235874,22.235874 0 0 0 22.235853,-22.23585 22.235874,22.235874 0 0 0 -11.296986,-19.35903 V 47.27171 h -0.0031 a 10.938352,10.938352 0 0 0 0.0026,-0.06408 10.938352,10.938352 0 0 0 -10.938351,-10.938351 z" />
+      <g
+         id="g48793" />
+    </g>
+  </g>
+</svg>

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="600" height="600" version="1.1">
+ <g fill="none" stroke-linecap="round">
+  <g stroke="#f0f">
+   <circle cx="302.9" cy="303.66" r="272.56"/>
+   <circle cx="300.9" cy="292.2" r="174.03"/>
+   <circle cx="304.9" cy="300.19" r="86.324"/>
+   <circle cx="300.5" cy="302.31" r="47.172"/>
+  </g>
+  <g stroke="#00f">
+   <path d="m503.4 118.98a272.56 272.56 0 0 1 72.105 184.68 272.56 272.56 0 0 1-272.56 272.56 272.56 272.56 0 0 1-206.16-94.267"/>
+   <path d="m465.7 348.04a174.03 174.03 0 0 1-164.82 118.19 174.03 174.03 0 0 1-174.03-174.03 174.03 174.03 0 0 1 4.8079-40.624"/>
+   <path d="m383.3 263.98a86.324 86.324 0 0 1 7.9611 36.209 86.324 86.324 0 0 1-86.324 86.324 86.324 86.324 0 0 1-79.788-53.375"/>
+   <path d="m346.4 291.73a47.172 47.172 0 0 1 1.2017 10.58 47.172 47.172 0 0 1-47.172 47.172 47.172 47.172 0 0 1-46.713-40.603"/>
+  </g>
+ </g>
+ <circle cx="300.3" cy="300.27" r="6" fill="#e4e400"/>
+ <circle cx="313.4" cy="347.66" r="6" fill="#ff8080"/>
+ <circle cx="391.2" cy="300.27" r="6" fill="#ff8080"/>
+ <g fill="#00ef00">
+  <circle cx="218.6" cy="300.27" r="6"/>
+  <circle cx="288.2" cy="256.76" r="6"/>
+  <circle cx="272.9" cy="463.96" r="6"/>
+ </g>
+ <circle cx="330.3" cy="120.68" r="6" fill="#ff8080"/>
+ <circle cx="137.6" cy="86.911" r="6" fill="#00ef00"/>
+ <circle cx="468.1" cy="520.45" r="6" fill="#ff8080"/>
+ <g fill="#e4e400" stroke="#000" stroke-linecap="round" stroke-width="2">
+  <path d="m505.5 117.01-4.4224 3.9486"/>
+  <path d="m98.9 479.98-4.4224 3.9486"/>
+  <path d="m462.9 347.27 5.6962 1.6438"/>
+  <path d="m128.8 250.76 5.6962 1.6438"/>
+  <path d="m222.4 334.31 5.432-2.3754"/>
+  <path d="m380.6 265.21 5.432-2.3754"/>
+  <path d="m343.5 292.29 5.8297-1.0782"/>
+  <path d="m250.8 309.39 5.8297-1.0782"/>
+ </g>
+ <g font-family="DejaVu Sans" font-size="15" font-weight="bold">
+  <switch transform="translate(299,250)"><text id="trsvg15-pt-br" systemLanguage="pt-br"><tspan id="trsvg3-pt-br">Júpiter</tspan></text>
+   <text systemLanguage="en" id="trsvg13"><tspan id="trsvg1">Jupiter</tspan></text>
+   <text systemLanguage="de" id="trsvg14"><tspan id="trsvg2">Jupiter</tspan></text>
+   
+  <text id="trsvg15"><tspan id="trsvg3">Jupiter</tspan></text></switch>
+  <switch transform="translate(318,212)"><text id="trsvg18-pt-br" systemLanguage="pt-br"><tspan id="trsvg6-pt-br">Saturno</tspan></text>
+   <text systemLanguage="en" id="trsvg16"><tspan id="trsvg4">Saturn</tspan></text>
+   <text systemLanguage="de" id="trsvg17"><tspan id="trsvg5">Saturn</tspan></text>
+   
+  <text id="trsvg18"><tspan id="trsvg6">Saturn</tspan></text></switch>
+  <switch transform="translate(362,128)"><text id="trsvg21-pt-br" systemLanguage="pt-br"><tspan id="trsvg9-pt-br">Urano</tspan></text>
+   <text systemLanguage="en" id="trsvg19"><tspan id="trsvg7">Uranus</tspan></text>
+   <text systemLanguage="de" id="trsvg20"><tspan id="trsvg8">Uranus</tspan></text>
+   
+  <text id="trsvg21"><tspan id="trsvg9">Uranus</tspan></text></switch>
+  <switch transform="translate(407,47)"><text id="trsvg24-pt-br" systemLanguage="pt-br"><tspan id="trsvg12-pt-br">Netuno</tspan></text>
+   <text systemLanguage="en" id="trsvg22"><tspan id="trsvg10">Neptune</tspan></text>
+   <text systemLanguage="de" id="trsvg23"><tspan id="trsvg11">Neptun</tspan></text>
+   
+  <text id="trsvg24"><tspan id="trsvg12">Neptune</tspan></text></switch>
+ </g>
+</svg>

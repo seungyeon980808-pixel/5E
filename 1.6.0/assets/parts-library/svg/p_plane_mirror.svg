@@ -1,0 +1,104 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" 
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="600px" height="480px" 
+     viewBox="0 0 1200 960" version="1.1"
+     xmlns="http://www.w3.org/2000/svg"
+     xmlns:xlink="http://www.w3.org/1999/xlink" >
+<title>Plane mirror</title>
+<desc>Plane mirror</desc>
+  <defs>
+  	<symbol id="eyelash" >
+	  <path stroke="black" stroke-width="1" fill="black"
+	        d="M0,0 l 6,7" /> 
+	</symbol>
+	<symbol id="Eye_symb" viewBox="0 0 105 200" >
+	  <desc>Eye symbol</desc>
+	  <path stroke="black" stroke-width="2" fill="none"
+	     d="M0,100 a 100,70 0 0,0 95.831,-50" /> 
+	  <path stroke="black" stroke-width="2" fill="none"
+	     d="M0,100 a 100,70 0 0,1 95.831,50" /> 
+	  <path stroke="black" stroke-width="2" fill="none"
+	     d="M90,60.512 a 30,65 0 0,1 0,78.975" /> 
+	  <path id="pupil" stroke="black" stroke-width="2" fill="black"
+	     d="M96,93 a 9,7 0 0,0 0,14" /> 
+          <g id="eyelashs">
+	     <use id="eyelash1" x="95" y="51.857" xlink:href="#eyelash" /> 
+	     <use id="eyelash2" x="94" y="53.882" xlink:href="#eyelash" /> 
+	     <use id="eyelash3" x="93" y="55.729" xlink:href="#eyelash" /> 
+	     <use id="eyelash4" x="92" y="57.434" xlink:href="#eyelash" /> 
+          </g>
+	</symbol>
+	<symbol id="dash-a">
+		<path stroke="black" stroke-width="2" fill="none"
+		   d="M51.9615,0 L 0,30" />
+	</symbol>
+	<symbol id="dash-b">
+		<path stroke="black" stroke-width="2" fill="none"
+		   d="M30,0 l -30,30" />
+	</symbol>
+	<pattern id="dash_pattern_2" viewBox="0 0 52 30" 
+         x="0" y="0" width=".5" height=".5" >
+		 <use xlink:href="#dash-a" />	
+	</pattern>
+	<pattern id="dash_pattern" viewBox="0 0 52 30" 
+         patternUnits="userSpaceOnUse"
+	 x="30" y="480" width="40" height="31" >
+		 <use xlink:href="#dash-a" />	
+	</pattern>
+	<marker id="Arrow"
+	  viewBox="0 0 10 10"  refX="10" refY="5"
+	  markerUnits="strokeWidth"
+	  markerWidth="15" markerHeight="18"
+	  stroke="red" fill="red"  orient="auto" >
+		<polygon points="5,5 3.75,2.835 10,5 3.75,7.165" />
+	</marker>
+  </defs>
+
+<g id="mirror">
+	<rect x="30" y="480" width="1140" height="30" stroke="none"
+	  fill="url(#dash_pattern)"/>
+	<line x1="30" y1="480" x2="1170" y2="480" stroke="black"
+	fill="none" stroke-width="8" />
+</g>
+<!-- starting point x=200 y=130 height=350 -->
+
+<g id="rays">
+	<path id="ray45deg" stroke="red" fill="none" stroke-width="2"
+	  d="M250,130 l 350,350 l 350,-350" marker-end="url(#Arrow)" />
+	<path id="ray60deg" stroke="red" fill="none" stroke-width="2"
+	  d="M250,130 l 200.073,350 l 200.073,-350" marker-end="url(#Arrow)" />
+	<path id="ray30deg_cut" stroke="red" fill="none" stroke-width="2"
+	  d="M250,130 l 606.218,350 l 250,-144.338" marker-end="url(#Arrow)" />
+	<path id="ray37_5deg_cut" stroke="red" fill="none" stroke-width="2"
+	  d="M250,130 l 456.129,350 l 400.089,-306.999"
+	  marker-end="url(#Arrow)" />
+	<path id="ray52_5deg" stroke="red" fill="none" stroke-width="2"
+	  d="M250,130 l 268.564,350 l 268.564,-350" marker-end="url(#Arrow)" />
+</g>
+<g id="rays_virtual">
+	<path id="rayv45deg" stroke="red" fill="none" stroke-width="2"
+	  stroke-dasharray="6 5" d="M250,830 l 350,-350"/>
+	<path id="rayv60deg" stroke="red" fill="none" stroke-width="2"
+	  stroke-dasharray="6 5" d="M250,830 l 200.073,-350" />
+	<path id="rayv30deg" stroke="red" fill="none" stroke-width="2"
+	  stroke-dasharray="6 5" d="M250,830 l 606.218,-350" />
+	<path id="rayv37_5deg" stroke="red" fill="none" stroke-width="2"
+	  stroke-dasharray="6 5" d="M250,830 l 456.129,-350" />
+	<path id="rayv52_5deg" stroke="red" fill="none" stroke-width="2"
+	  stroke-dasharray="6 5" d="M250,830 l 268.564,-350" />
+</g>
+
+<use id="eye1" xlink:href="#Eye_symb" width="52.5" height="100"
+  transform="translate(1000,80) scale(-1 1) rotate(45) translate(0,-50) " /> 
+<g id="all_text" writing-mode="lr" font-size="40"
+ font-family="Lucida, Verdana, Times New Roman, FreeSans, sans-serif, serif">
+	<text x="250" y="130" text-anchor="start" font-weight="bold"
+	   transform="translate(10,-15)">A</text>
+	<text x="250" y="830" text-anchor="start" font-weight="bold"
+	transform="translate(10,+55)">A'</text>
+
+</g>
+
+</svg>
+

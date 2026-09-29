@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   version="1.1"
+   width="450"
+   height="800"
+   id="svg2">
+  <defs
+     id="defs4">
+    <marker
+       refX="0"
+       refY="0"
+       orient="auto"
+       id="Arrow2Lstart-1"
+       style="overflow:visible">
+      <path
+         d="M 8.7185878,4.0337352 -2.2072895,0.01601326 8.7185884,-4.0017078 c -1.7454984,2.3720609 -1.7354408,5.6174519 -6e-7,8.035443 z"
+         transform="matrix(1.1,0,0,1.1,1.1,0)"
+         id="path3787-7"
+         style="font-size:12px;fill-rule:evenodd;stroke-width:0.625;stroke-linejoin:round" />
+    </marker>
+    <marker
+       refX="0"
+       refY="0"
+       orient="auto"
+       id="Arrow2Lend-4"
+       style="overflow:visible">
+      <path
+         d="M 8.7185878,4.0337352 -2.2072895,0.01601326 8.7185884,-4.0017078 c -1.7454984,2.3720609 -1.7354408,5.6174519 -6e-7,8.035443 z"
+         transform="matrix(-1.1,0,0,-1.1,-1.1,0)"
+         id="path3790-0"
+         style="font-size:12px;fill-rule:evenodd;stroke-width:0.625;stroke-linejoin:round" />
+    </marker>
+  </defs>
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <rect
+     width="82.840141"
+     height="262.18903"
+     x="34.294529"
+     y="100.11781"
+     id="rect5091"
+     style="color:#000000;fill:none;stroke:#000000;stroke-width:3.28030205;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate" />
+  <rect
+     width="82.840141"
+     height="262.18903"
+     x="34.294529"
+     y="473.56848"
+     id="rect5091-0"
+     style="color:#000000;fill:none;stroke:#000000;stroke-width:3.28030205;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;stroke-dashoffset:0;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate" />
+  <path
+     d="m 75.714585,362.30675 0,111.6271"
+     id="path3807"
+     style="fill:none;stroke:#000000;stroke-width:3.27999997;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-end:none" />
+  <path
+     d="m 75.714585,736.33006 0,47.08377 351.213525,0"
+     id="path3805"
+     style="fill:none;stroke:#000000;stroke-width:3.27999997;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-end:none" />
+  <path
+     d="m 75.714585,100.73901 0,-59.78626 318.077455,0"
+     id="path5111"
+     style="fill:none;stroke:#000000;stroke-width:3.27999997;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none;marker-end:url(#Arrow2Lstart-1)" />
+  <path
+     d="m 75.893001,415.11735 351.035109,0"
+     id="path5113"
+     style="fill:none;stroke:#000000;stroke-width:3.28030205px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;marker-end:url(#Arrow2Lend-4)" />
+  <path
+     d="m 81.174045,415.11728 a 5.3846088,5.3846088 0 1 1 -10.769198,0 5.3846088,5.3846088 0 1 1 10.769198,0 z"
+     id="path5115"
+     style="color:#000000;fill:#000000;stroke:none;stroke-width:1;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate" />
+  <text
+     x="140.62805"
+     y="761.18195"
+     id="text5117"
+     xml:space="preserve"
+     style="font-size:45.92422867px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Arial;-inkscape-font-specification:Arial"><tspan
+       x="140.62805"
+       y="761.18195"
+       id="tspan5119">0V (Masse)</tspan></text>
+  <text
+     x="-696.00653"
+     y="91.93837"
+     transform="matrix(0,-1,1,0,0,0)"
+     id="text5121"
+     xml:space="preserve"
+     style="font-size:45.92422867px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Arial;-inkscape-font-specification:Arial"><tspan
+       x="-696.00653"
+       y="91.93837"
+       id="tspan5123">KTY11-6</tspan></text>
+  <text
+     x="-278.88544"
+     y="92.151398"
+     transform="matrix(0,-1,1,0,0,0)"
+     id="text5125"
+     xml:space="preserve"
+     style="font-size:45.92422867px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Arial;-inkscape-font-specification:Arial"><tspan
+       x="-278.88544"
+       y="92.151398"
+       id="tspan5131">5 kΩ</tspan></text>
+  <text
+     x="140.62805"
+     y="93.490524"
+     id="text5133"
+     xml:space="preserve"
+     style="font-size:45.92422867px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Arial;-inkscape-font-specification:Arial"><tspan
+       x="140.62805"
+       y="93.490524"
+       id="tspan5135">+5V</tspan><tspan
+       x="140.62805"
+       y="150.8958"
+       id="tspan5137">(stabilisiert)</tspan></text>
+  <text
+     x="140.62805"
+     y="402.78229"
+     id="text5133-7"
+     xml:space="preserve"
+     style="font-size:45.92422867px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:Arial;-inkscape-font-specification:Arial"><tspan
+       x="140.62805"
+       y="402.78229"
+       id="tspan5135-9">Messwert</tspan><tspan
+       x="140.62805"
+       y="460.18756"
+       id="tspan5163">(zum ADC)</tspan><tspan
+       x="140.62805"
+       y="517.59283"
+       id="tspan5137-7" /></text>
+</svg>

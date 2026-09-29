@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:xlink='http://www.w3.org/1999/xlink'
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="136px"
+   height="128px"
+   >
+   
+  <metadata >    
+  </metadata>
+   
+   <!-- activate this for grey background: rect width="200" height="138" fill="#ddd" /  -->
+    
+  <g style="stroke:#000; fill:none; stroke-width:1.3" transform="translate(47, 42)" >
+    
+	      <!--path d="M 0, 0  L 120, 60  L 0, 120 z" 
+	               transform="translate(70, 40)" />
+	      <circle cx="63" cy="62" r="6.4" / -->
+	  
+		  <!-- OP AMP -->
+		  <path d ="M 0 -26  L 52 0  L 0 26  z" />
+		  <line x1="-16" y1="-15" x2="-1" y2="-15" />
+		  <line x1="-16" y1="15"  x2="-1" y2="15" />
+          <line x1="52" y1="0"  x2="68" y2="0" />
+		  
+		  <!-- LABELS -->
+          <g style="font-family:Lucida Sans; font-size:12px; stroke:black; stroke-width:0; fill:black" >
+            <g transform="translate(56 -9)">
+              <text>V</text>
+              <text x="9" y="3" style="font-size:9px">out</text> 
+            </g>
+			<g transform="translate(-34, -24)" >
+			  <text>V</text>
+			  <text x="9" y="3" style="font-size:9.4px">in</text>
+			</g>
+			<g transform="translate(-15 48)" >
+			  <text>R</text>
+			  <text x="9" y="3" style="font-size:9.4px">g</text>
+			</g>
+			<line x1="4" y1="-13" x2="11" y2="-13" stroke-width="1" />
+			<line x1="7.5" y1="-16.5" x2="7.5" y2="-9.5" stroke-width="1" />
+			<line x1="4" y1="13" x2="10" y2="13" stroke-width="1" />
+          </g>
+
+          <!-- RESISTOR -->
+          <g transform="translate(-24 28)">
+            <path d="M 0 0 L 0 6  l 4 2  l -8 3.44  l 8 3.44  l -8 3.44  l 8 3.44  l -8 3.44  l 4 2  l 0 6"
+			      style="stroke-width:1.35" />
+          </g>
+
+		  <!-- WIRING -->
+          <g >
+            <line x1="-16" y1="-15" x2="-33" y2="-15" />
+            <line x1="-16" y1="15" x2="-24" y2="15" />
+            <line x1="-24" y1="14.4" x2="-24" y2="28" />
+			<line x1="-24" y1="56" x2="-24" y2="67" />
+			<line x1="68" y1="0" x2="72" y2="0" />
+			<circle cx="74" cy="0" r="2.7" />
+			<circle cx="-34.5" cy="-15" r="2.7" />
+          </g>
+
+          <g transform="translate(-24 67.4)" >
+            <line x1="-6" y1="0" x2="6" y2="0" />
+            <line x1="-3.25" y1="3" x2="3.25" y2="3" />
+            <line x1="-1.13" y1="6" x2="1.13" y2="6" />
+          </g>  
+		
+	   
+  </g>
+</svg>

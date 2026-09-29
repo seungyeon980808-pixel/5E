@@ -1,0 +1,26 @@
+{
+  "name": "5E",
+  "short_name": "5E",
+  "description": "과학교사를 위한 시험용 이미지 제작기 · 어떤 그림이든 가져와서 시험용 이미지로 변환합니다.",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0a1230",
+  "theme_color": "#0d1117",
+  "icons": [
+    {
+      "src": "assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,0 +1,167 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" height="675" width="1125" version="1.1" viewBox="0 0 2250 1350">
+	<defs>
+		<marker id="r" overflow="visible" orient="auto">
+			<path stroke-linejoin="round" stroke="#000" d="m-5.2-2.4l6.5 2.4-6.5 2.4c1.1-1.8 1.1-3 0-4.8z" />
+		</marker>
+	</defs>
+	<rect width="100%" height="100%" fill="#fff" />
+	<g stroke-linejoin="round" stroke="#000" stroke-linecap="round" stroke-width="5" fill="none">
+		<g id="c" stroke-width="5" fill="#fff">
+			<path d="m1981 223l-39 15.5c-30.4 14.2-48 51-40 89 9 44 48 73 88 65l10.8-2.2 37.5-18.9c24.8-16.8 37.7-50 30.7-84-9-44-48-73-88-65z" />
+			<path id="i" d="m2044 299c9 44-15.7 86-54.9 94-39.7 8.1-79-21-88-65s15.7-86 55-94c39-8 78 21 88 65z" />
+			<use xlink:href="#i" />
+			<path d="m1914 261v-155m142 194v-170" />
+			<path stroke="none" fill="#39c" d="m2093 148v-71l-206-40v69z" />
+		</g>
+		<g stroke-width="20">
+			<path d="m1960 321l-340 265" />
+			<use xlink:href="#c" transform="matrix(-1 0 0 1 2138 268)" />
+			<path d="m172 580l605 140" />
+			<use xlink:href="#c" transform="matrix(-1 0 0 1 2839 428)" />
+			<path d="m870 740l376 86" />
+			<path d="m1246 826 505 120" stroke="#666" />
+			<use xlink:href="#c" transform="matrix(1.03 0 0 1.03 -450 291)" />
+			<path d="m1575 620-275 215" />
+			<g transform="matrix(.8324 0 0 1.001 231.1 -17.39)">
+				<g stroke-width="5" fill="#fff">
+					<path d="m1220 778.5c-32.35 16.22-51.07 58.26-42.56 101.7 9.576 50.27 51.07 83.4 93.63 74.26l11.49-2.513 52.2-17.35c26.39-19.19 40.11-57.12 32.66-95.96-9.576-50.27-51.07-83.4-93.63-74.26z" />
+					<use xlink:href="#i" transform="matrix(1.064,0,0,1.142,-846.4,506.1)" />
+					<path d="m1208 785.8v-178.6m141.2 257.6v-190.4" />
+				</g>
+				<path fill="#39c" d="m1369 708.4v-79.52l-179-74.4v77.28z" stroke="none" />
+			</g>
+			<path d="m1272 853.8-417 322.2" />
+		</g>
+		<path stroke-width="8" marker-end="url(#r)" d="m1639 919.9 490 113.1" />
+		<path d="m730 84c9 0 775 165 775 165" />
+		<path d="m835 278l570-258" />
+		<g stroke-width="8" fill="#fff">
+			<path d="m1660 990c-43.5-14.5-21-146 40.5-140l171 125-211 15z" />
+			<path d="m665 1230v71l108 33.6 15-93z" />
+			<path d="m922 1155v63l-150 117v-94z" />
+			<path d="m665 1230l108 30 148-107-105-25z" />
+			<g marker-end="url(#r)">
+				<path d="m472 479v135" />
+				<path d="m1795 606v-115" />
+				<path d="m1094 162v248" />
+			</g>
+		</g>
+		<g marker-end="url(#r)">
+			<path d="m1432 31.6l-9.7 4.3c-112 49.6-257 117 48 181l44 9.3" />
+			<path d="m862 290l16.6-7.5c63-28.5 215-105 554-21.4l36 8.9" />
+			<path d="m1382 6.6l-34 15.2c-94 42.7-229 121-563 48l-33-7.2" />
+			<path d="m810 266l19-8.8c82-38 215-78-74-140l-42-9" />
+		</g>
+	</g>
+	<g font-size="58" font-family="DejaVu Sans, sans-serif" text-anchor="middle">
+		<switch>
+			<text y="740" x="215" id="trsvg150-cs" systemLanguage="cs"><tspan y="720" x="215" id="trsvg79-cs-1">testovací</tspan><tspan y="780" x="215" id="trsvg79-cs-2">těleso</tspan></text>
+		<text y="740" x="215" id="trsvg89" systemLanguage="de"><tspan id="trsvg1">Probemasse</tspan></text>
+			<text id="mk" text-anchor="start" font-size="54" systemLanguage="mk"><tspan y="720" x="70" id="trsvg11">Пробно тело</tspan></text>
+			<text text-anchor="start" font-size="54" id="trsvg109" systemLanguage="pl"><tspan y="720" x="60" id="trsvg24">masa testowa</tspan><tspan y="780" x="60" id="trsvg25">(lustro</tspan><tspan y="840" x="60" id="trsvg26">półprzepuszczalne)</tspan></text>
+			<text id="ru" text-anchor="start" font-size="54" systemLanguage="ru"><tspan y="720" x="70" id="trsvg41">Пробное тело</tspan><tspan y="780" x="100" id="trsvg42">(зеркало</tspan><tspan y="840" x="74" id="trsvg43">резонатора)</tspan></text>
+			<text y="740" x="215" font-size="54" id="trsvg129" systemLanguage="uk"><tspan id="trsvg56">Пробна маса</tspan></text>
+			<text y="740" x="215" font-size="68" id="trsvg141" systemLanguage="zh, zh-hk"><tspan id="trsvg70">測試質量</tspan></text>
+			<text y="740" x="215" id="trsvg150" systemLanguage="en"><tspan id="trsvg79">test mass</tspan></text>
+			<text y="740" x="215" id="trsvg150-fr" systemLanguage="fr"><tspan id="trsvg79-fr">Masse de test</tspan></text>
+			<text y="740" x="215" id="trsvg150-fallback"><tspan id="trsvg79-fallback">test mass</tspan></text>
+			</switch>
+		<switch>
+			<text y="887" x="883" id="trsvg151-cs" systemLanguage="cs"><tspan y="867" x="883" id="trsvg80-cs-1">testovací</tspan><tspan y="927" x="883" id="trsvg80-cs-2">těleso</tspan></text>
+		<text y="887" x="883" id="trsvg90" systemLanguage="de"><tspan id="trsvg2">Probemasse</tspan></text>
+			<text text-anchor="start" font-size="54" id="mk-2" systemLanguage="mk"><tspan y="880" x="660" id="trsvg11-mk-2">Пробно тело</tspan></text>
+			<text y="160" x="1486" text-anchor="end" font-size="54" id="trsvg110" systemLanguage="pl"><tspan y="880" x="1035" text-align="end" id="trsvg27">masa testowa</tspan><tspan y="940" x="1035" text-align="end" id="trsvg28">(lustro</tspan><tspan y="1000" x="1035" text-align="end" id="trsvg29">półprzepuszczalne)</tspan></text>
+			<text text-anchor="start" font-size="54" id="ru-2" systemLanguage="ru"><tspan y="880" x="660" id="trsvg41-ru-2">Пробное тело</tspan><tspan y="940" x="690" id="trsvg42-ru-2">(зеркало</tspan><tspan y="1000" x="664" id="trsvg43-ru-2">резонатора)</tspan></text>
+			<text y="887" x="880" font-size="54" id="trsvg130" systemLanguage="uk"><tspan id="trsvg57">Пробна маса</tspan></text>
+			<text y="887" x="883" font-size="68" id="trsvg142" systemLanguage="zh, zh-hk"><tspan id="trsvg71">測試質量</tspan></text>
+			<text y="887" x="883" id="trsvg151" systemLanguage="en"><tspan id="trsvg80">test mass</tspan></text>
+			<text y="887" x="883" id="trsvg151-fr" systemLanguage="fr"><tspan id="trsvg80-fr">Masse de test</tspan></text>
+			<text y="887" x="883" id="trsvg151-fallback"><tspan id="trsvg80-fallback">test mass</tspan></text>
+			</switch>
+		<switch>
+			<text y="764" x="1650" id="trsvg152-cs" systemLanguage="cs"><tspan y="744" x="1650" id="trsvg81-cs-1">testovací</tspan><tspan y="804" x="1650" id="trsvg81-cs-2">těleso</tspan></text>
+		<text y="766" x="1652" id="trsvg91" systemLanguage="de"><tspan id="trsvg3">Probemasse</tspan></text>
+			<text y="770" x="1600" font-size="54" id="trsvg99" systemLanguage="mk"><tspan id="trsvg12">Пробно</tspan><tspan y="830" x="1600" id="trsvg13">тело</tspan></text>
+			<text y="760" x="1600" font-size="54" id="trsvg111" systemLanguage="pl"><tspan id="trsvg30">masa</tspan><tspan y="820" x="1600" id="trsvg31">testowa</tspan></text>
+			<text y="770" x="1600" font-size="54" id="trsvg119" systemLanguage="ru"><tspan id="trsvg44">Пробное</tspan><tspan y="830" x="1600" id="trsvg45">тело</tspan></text>
+			<text y="770" x="1600" font-size="54" id="trsvg131" systemLanguage="uk"><tspan id="trsvg58">Пробна</tspan><tspan y="830" x="1600" id="trsvg59">маса</tspan></text>
+			<text y="764" x="1634" font-size="68" id="trsvg143" systemLanguage="zh, zh-hk"><tspan id="trsvg72">測試質量</tspan></text>
+			<text y="764" x="1650" id="trsvg152" systemLanguage="en"><tspan id="trsvg81">test mass</tspan></text>
+			<text y="764" x="1650" id="trsvg152-fr" systemLanguage="fr"><tspan id="trsvg81-fr">Masse de test</tspan></text>
+			<text y="764" x="1650" id="trsvg152-fallback"><tspan id="trsvg81-fallback">test mass</tspan></text>
+			</switch>
+		<switch>
+			<text y="455" x="2047" id="trsvg153-cs" systemLanguage="cs"><tspan y="435" x="2047" id="trsvg82-cs-1">testovací</tspan><tspan y="495" x="2047" id="trsvg82-cs-2">těleso</tspan></text>
+		<text y="462" x="2046" id="trsvg92" systemLanguage="de"><tspan id="trsvg4">Probemasse</tspan></text>
+			<text y="460" x="2000" font-size="54" id="trsvg101" systemLanguage="mk"><tspan id="trsvg14">Пробно</tspan><tspan y="520" x="2000" id="trsvg15">тело</tspan></text>
+			<text y="460" x="2000" font-size="54" id="trsvg113" systemLanguage="pl"><tspan id="trsvg32">masa</tspan><tspan y="520" x="2000" id="trsvg33">testowa</tspan></text>
+			<text y="460" x="2000" font-size="54" id="trsvg121" systemLanguage="ru"><tspan id="trsvg46">Пробное</tspan><tspan y="520" x="2000" id="trsvg47">тело</tspan></text>
+			<text y="460" x="2000" font-size="54" id="trsvg133" systemLanguage="uk"><tspan id="trsvg60">Пробна</tspan><tspan y="520" x="2000" id="trsvg61">маса</tspan></text>
+			<text y="460" x="2044" font-size="68" id="trsvg144" systemLanguage="zh, zh-hk"><tspan id="trsvg73">測試質量</tspan></text>
+			<text y="455" x="2047" id="trsvg153" systemLanguage="en"><tspan id="trsvg82">test mass</tspan></text>
+			<text y="455" x="2047" id="trsvg153-fr" systemLanguage="fr"><tspan id="trsvg82-fr">Masse de test</tspan></text>
+			<text y="455" x="2047" id="trsvg153-fallback"><tspan id="trsvg82-fallback">test mass</tspan></text>
+			</switch>
+		<switch>
+			<text y="454" x="523" id="trsvg154-cs" systemLanguage="cs"><tspan y="424" x="523" id="trsvg83-cs-1">rameno</tspan><tspan y="484" x="523" id="trsvg83-cs-2">interferometru</tspan></text>
+		<text y="454" x="523" id="trsvg93" systemLanguage="de"><tspan id="trsvg5">Lichtspeicherarm</tspan></text>
+			<text font-size="54" id="trsvg103" systemLanguage="mk"><tspan y="390" x="490" id="trsvg16">Фабри-Пероов</tspan><tspan y="450" x="490" id="trsvg17">интерфером.</tspan></text>
+			<text font-size="54" id="pl" systemLanguage="pl"><tspan y="330" x="490" id="trsvg34">obszar</tspan><tspan y="390" x="490" id="trsvg35">wzmocnienia</tspan><tspan y="450" x="490" id="trsvg36">wiązki</tspan></text>
+			<text font-size="54" id="trsvg123" systemLanguage="ru"><tspan y="390" x="490" id="trsvg48">Резонатор</tspan><tspan y="450" x="490" id="trsvg49">Фабри-Перо</tspan></text>
+			<text font-size="54" id="trsvg135" systemLanguage="uk"><tspan y="390" x="490" id="trsvg62">Плече</tspan><tspan y="450" x="500" id="trsvg63">інтерферометра</tspan></text>
+			<text y="454" x="468" font-size="68" id="trsvg145" systemLanguage="zh, zh-hk"><tspan id="trsvg74">光儲存臂</tspan></text>
+			<text y="454" x="523" id="trsvg154" systemLanguage="en"><tspan id="trsvg83">light storage arm</tspan></text>
+			<text y="454" x="523" id="trsvg154-fr" systemLanguage="fr"><tspan id="trsvg83-fr">Stockage de la lumière</tspan></text>
+			<text y="454" x="523" id="trsvg154-fallback"><tspan id="trsvg83-fallback">light storage arm</tspan></text>
+			</switch>
+		<switch>
+			<text y="662" x="1963" id="trsvg155-cs" systemLanguage="cs"><tspan y="632" x="1963" id="trsvg84-cs-1">rameno</tspan><tspan y="692" x="1963" id="trsvg84-cs-2">interferometru</tspan></text>
+		<text y="662" x="1963" id="trsvg94" systemLanguage="de"><tspan id="trsvg6">Lichtspeicherarm</tspan></text>
+			<text font-size="54" id="trsvg104" systemLanguage="mk"><tspan y="656" x="1890" id="trsvg18">Фабри-Пероов</tspan><tspan y="716" x="1890" id="trsvg19">интерфером.</tspan></text>
+			<text font-size="54" id="pl-2" systemLanguage="pl"><tspan y="630" x="1900" id="trsvg34-pl-2">obszar</tspan><tspan y="690" x="1900" id="trsvg35-pl-2">wzmocnienia</tspan><tspan y="750" x="1900" id="trsvg36-pl-2">wiązki</tspan></text>
+			<text font-size="54" id="trsvg124" systemLanguage="ru"><tspan y="656" x="1890" id="trsvg50">Резонатор</tspan><tspan y="716" x="1890" id="trsvg51">Фабри-Перо</tspan></text>
+			<text font-size="54" id="trsvg136" systemLanguage="uk"><tspan y="640" x="1910" id="trsvg64">Плече</tspan><tspan y="704" x="1910" id="trsvg65">інтерферометра</tspan></text>
+			<text y="662" x="1863" font-size="68" id="trsvg146" systemLanguage="zh, zh-hk"><tspan id="trsvg75">光儲存臂</tspan></text>
+			<text y="662" x="1963" id="trsvg155" systemLanguage="en"><tspan id="trsvg84">light storage arm</tspan></text>
+			<text y="662" x="1963" id="trsvg155-fr" systemLanguage="fr"><tspan id="trsvg84-fr">Stockage de la lumière</tspan></text>
+			<text y="662" x="1963" id="trsvg155-fallback"><tspan id="trsvg84-fallback">light storage arm</tspan></text>
+			</switch>
+		<switch>
+			<text y="1092" x="1790" id="trsvg156-cs" systemLanguage="cs"><tspan id="trsvg85-cs">fotodetektor</tspan></text>
+		<text y="1092" x="1790" id="trsvg95" systemLanguage="de"><tspan id="trsvg7">Photodetektor</tspan></text>
+			<text y="1060" x="1790" font-size="54" id="trsvg105" systemLanguage="mk"><tspan id="trsvg20">Забележувач</tspan></text>
+			<text y="1060" x="1790" font-size="54" id="trsvg115" systemLanguage="pl"><tspan id="trsvg37">fotodetektor</tspan></text>
+			<text y="1060" x="1790" font-size="54" id="trsvg125" systemLanguage="ru"><tspan id="trsvg52">Детектор</tspan></text>
+			<text y="1092" x="1790" font-size="54" id="trsvg137" systemLanguage="uk"><tspan id="trsvg66">Фотодетектор</tspan></text>
+			<text y="1082" x="1771" font-size="68" id="trsvg147" systemLanguage="zh, zh-hk"><tspan id="trsvg76">光探測器</tspan></text>
+			<text y="1092" x="1790" id="trsvg156" systemLanguage="en"><tspan id="trsvg85">photodetector</tspan></text>
+			<text y="1092" x="1790" id="trsvg156-fr" systemLanguage="fr"><tspan id="trsvg85-fr">Photodétecteur</tspan></text>
+			<text y="1092" x="1790" id="trsvg156-fallback"><tspan id="trsvg85-fallback">photodetector</tspan></text>
+			</switch>
+		<switch>
+			<text y="1299" x="988" id="trsvg157-cs" systemLanguage="cs"><tspan id="trsvg86-cs">laser</tspan></text>
+		<text y="1299" x="988" id="trsvg96" systemLanguage="de"><tspan id="trsvg8">Laser</tspan></text>
+			<text y="1299" x="988" font-size="54" id="trsvg106" systemLanguage="mk"><tspan id="trsvg21">Ласер</tspan></text>
+			<text y="1299" x="984" font-size="54" id="trsvg116" systemLanguage="pl"><tspan id="trsvg38">laser</tspan></text>
+			<text y="1299" x="988" font-size="54" id="trsvg126" systemLanguage="ru"><tspan id="trsvg53">Лазер</tspan></text>
+			<text y="1299" x="988" font-size="54" id="trsvg138" systemLanguage="uk"><tspan id="trsvg67">Лазер</tspan></text>
+			<text y="1299" x="988" font-size="68" id="trsvg148" systemLanguage="zh, zh-hk"><tspan id="trsvg77">激光</tspan></text>
+			<text y="1299" x="988" id="trsvg157" systemLanguage="en"><tspan id="trsvg86">laser</tspan></text>
+			<text y="1299" x="988" id="trsvg157-fr" systemLanguage="fr"><tspan id="trsvg86-fr">Laser</tspan></text>
+			<text y="1299" x="988" id="trsvg157-fallback"><tspan id="trsvg86-fallback">laser</tspan></text>
+			</switch>
+		<switch>
+			<text id="trsvg158-cs" systemLanguage="cs"><tspan y="1032" x="1290" id="trsvg87-cs">dělič</tspan><tspan y="1092" x="1298" id="trsvg88-cs">svazku</tspan></text>
+		<text id="trsvg97" systemLanguage="de"><tspan y="1032" x="1294" id="trsvg9">Strahl-</tspan><tspan y="1092" x="1290" id="trsvg10">teiler</tspan></text>
+			<text font-size="54" id="trsvg107" systemLanguage="mk"><tspan y="1032" x="1294" id="trsvg22">Зрако-</tspan><tspan y="1092" x="1298" id="trsvg23">раздвојник</tspan></text>
+			<text font-size="54" id="trsvg117" systemLanguage="pl"><tspan y="1032" x="1294" id="trsvg39">rozdzielacz</tspan><tspan y="1092" x="1298" id="trsvg40">wiązki</tspan></text>
+			<text font-size="54" id="trsvg127" systemLanguage="ru"><tspan y="1032" x="1294" id="trsvg54">Полупро-</tspan><tspan y="1092" x="1298" id="trsvg55">зрачное зеркало</tspan></text>
+			<text font-size="54" id="trsvg139" systemLanguage="uk"><tspan y="1032" x="1290" id="trsvg68">Світлопо-</tspan><tspan y="1092" x="1298" id="trsvg69">ділювач</tspan></text>
+			<text font-size="68" id="trsvg149" systemLanguage="zh, zh-hk"><tspan y="1034" x="1288" id="trsvg78">分束器</tspan></text>
+			<text id="trsvg158" systemLanguage="en"><tspan y="1032" x="1290" id="trsvg87">beam</tspan><tspan y="1092" x="1298" id="trsvg88">splitter</tspan></text>
+			<text id="trsvg158-fr" systemLanguage="fr"><tspan y="1032" x="1290" id="trsvg87-fr">Lame</tspan><tspan y="1092" x="1298" id="trsvg88-fr">séparatrice</tspan></text>
+			<text id="trsvg158-fallback"><tspan y="1032" x="1290" id="trsvg87-fallback">beam</tspan><tspan y="1092" x="1298" id="trsvg88-fallback">splitter</tspan></text>
+			</switch>
+	</g>
+</svg>

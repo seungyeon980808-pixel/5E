@@ -1,0 +1,1604 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   width="174.99998mm"
+   height="105.83333mm"
+   viewBox="0 0 174.99998 105.83333"
+   version="1.1"
+   id="svg8">
+  <defs
+     id="defs2">
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath26">
+      <path
+         d="M 0,0 H 595.275 V 841.89 H 0 Z"
+         id="path24" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath38">
+      <path
+         d="M 0,0 H 595.275 V 841.89 H 0 Z"
+         id="path36" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath62">
+      <path
+         d="M 0,0 H 595.275 V 841.89 H 0 Z"
+         id="path60" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath304">
+      <path
+         d="M 0,0 H 595.275 V 841.89 H 0 Z"
+         id="path302" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath322">
+      <path
+         d="M 0,0 H 595.275 V 841.89 H 0 Z"
+         id="path320" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath340">
+      <path
+         d="M 0,0 H 595.275 V 841.89 H 0 Z"
+         id="path338" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath358">
+      <path
+         d="M 0,0 H 595.275 V 841.89 H 0 Z"
+         id="path356" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath376">
+      <path
+         d="M 0,0 H 595.275 V 841.89 H 0 Z"
+         id="path374" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath394">
+      <path
+         d="M 0,0 H 595.275 V 841.89 H 0 Z"
+         id="path392" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath412">
+      <path
+         d="M 0,0 H 595.275 V 841.89 H 0 Z"
+         id="path410" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath430">
+      <path
+         d="M 0,0 H 595.275 V 841.89 H 0 Z"
+         id="path428" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath448">
+      <path
+         d="M 0,0 H 595.275 V 841.89 H 0 Z"
+         id="path446" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath466">
+      <path
+         d="M 0,0 H 595.275 V 841.89 H 0 Z"
+         id="path464" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath484">
+      <path
+         d="M 0,0 H 595.275 V 841.89 H 0 Z"
+         id="path482" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath502">
+      <path
+         d="M 0,0 H 595.275 V 841.89 H 0 Z"
+         id="path500" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath520">
+      <path
+         d="M 0,0 H 595.275 V 841.89 H 0 Z"
+         id="path518" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath538">
+      <path
+         d="M 0,0 H 595.275 V 841.89 H 0 Z"
+         id="path536" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath558">
+      <path
+         d="M 0,0 H 595.275 V 841.89 H 0 Z"
+         id="path556" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath572">
+      <path
+         d="M 0,0 H 595.275 V 841.89 H 0 Z"
+         id="path570" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath590">
+      <path
+         d="M 0,0 H 595.275 V 841.89 H 0 Z"
+         id="path588" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath608">
+      <path
+         d="M 0,0 H 595.275 V 841.89 H 0 Z"
+         id="path606" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath626">
+      <path
+         d="M 0,0 H 595.275 V 841.89 H 0 Z"
+         id="path624" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath644">
+      <path
+         d="M 0,0 H 595.275 V 841.89 H 0 Z"
+         id="path642" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath662">
+      <path
+         d="M 0,0 H 595.275 V 841.89 H 0 Z"
+         id="path660" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath680">
+      <path
+         d="M 0,0 H 595.275 V 841.89 H 0 Z"
+         id="path678" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath710">
+      <path
+         d="M 0,0 H 595.275 V 841.89 H 0 Z"
+         id="path708" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath746">
+      <path
+         d="M 0,0 H 595.275 V 841.89 H 0 Z"
+         id="path744" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath764">
+      <path
+         d="M 0,0 H 595.275 V 841.89 H 0 Z"
+         id="path762" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath782">
+      <path
+         d="M 0,0 H 595.275 V 841.89 H 0 Z"
+         id="path780" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath800">
+      <path
+         d="M 0,0 H 595.275 V 841.89 H 0 Z"
+         id="path798" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath828">
+      <path
+         d="M 0,0 H 595.275 V 841.89 H 0 Z"
+         id="path826" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath842">
+      <path
+         d="M 0,0 H 595.275 V 841.89 H 0 Z"
+         id="path840" />
+    </clipPath>
+  </defs>
+  <metadata
+     id="metadata5">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     id="layer1"
+     transform="translate(-10.77381,-117.17261)">
+    <g
+       id="g18"
+       transform="matrix(0.35277777,0,0,-0.35277777,-9.2262199,399.17258)">
+      <g
+         id="g20">
+        <g
+           id="g22"
+           clip-path="url(#clipPath26)">
+          <text
+             transform="matrix(1,0,0,-1,536.4758,870.3135)"
+             style="font-variant:normal;font-weight:bold;font-stretch:condensed;font-size:70px;font-family:'Benton Sans Cond';-inkscape-font-specification:BentonSansCond-Black;writing-mode:lr-tb;fill:#e5007d;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="text30"><tspan
+               x="0 29.4"
+               y="0"
+               id="tspan28">11</tspan></text>
+        </g>
+      </g>
+      <g
+         id="g32">
+        <g
+           id="g34"
+           clip-path="url(#clipPath38)">
+          <path
+             d="m 56.693,499.37 h 496.063 v 300 H 56.693 Z"
+             style="fill:#e8ebec;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path40" />
+        </g>
+      </g>
+      <text
+         transform="matrix(1,0,0,-1,70.8661,780.6741)"
+         style="font-variant:normal;font-weight:bold;font-stretch:condensed;font-size:9px;font-family:'Benton Sans Cond';-inkscape-font-specification:BentonSansCond-Bold;writing-mode:lr-tb;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         id="text44"><tspan
+           x="0 2.5650001 7.1279998 8.8731003 14.2911 18.899099 23.2083 25.2243 30.6513 35.196301 40.847401 46.2654 52.1334 54.149399 56.714401 62.582401 64.327499 69.1605 74.983498 79.717499 81.733498 86.951698 92.369698 97.706703 103.1049 108.9729 114.8409 117.4059 121.8519 126.5859 131.85899 137.7072 143.1162"
+           y="0"
+           id="tspan42">IT ALL BEGAN IN THE CARBONIFEROUS</tspan></text>
+      <text
+         transform="matrix(1,0,0,-1,70.8661,770.6741)"
+         style="font-variant:normal;font-weight:normal;font-stretch:condensed;font-size:8px;font-family:'Benton Sans Cond';-inkscape-font-specification:BentonSansCond-Regular;writing-mode:lr-tb;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         id="text50"><tspan
+           x="0 3.3183999 7.2783999 10.0384 16.270399 20.038401 22.638399 24.398399 28.3584 32.374401 33.9664 38.030399 41.790401 44.5504 46.310398 50.270401 54.3344 57.8144 59.406399 63.3008 65.676804 67.268799 69.868797 73.884804 77.644798 79.236801 85.468803 89.363998 92.763199 95.363197 96.9552 98.715202 104.9472 109.0112 112.9712 115.7392 118.2904 122.0584 126.0744 128.67439"
+           y="0"
+           id="tspan46">Formation periods of the most important</tspan><tspan
+           x="0 3.5912001 7.4712 11.2392 12.9992 14.5912 18.655199 22.415199 26.4792 30.374399 33.854401 35.614399 38.149601 41.629601 43.188 48.1712 52.131199 54.891201 56.651199 60.715199 65.819199 67.579201 71.643204"
+           y="10"
+           id="tspan48">coal deposits worldwide</tspan></text>
+      <text
+         transform="matrix(1,0,0,-1,65.0834,529.132)"
+         style="font-variant:normal;font-weight:normal;font-stretch:condensed;font-size:6px;font-family:'Benton Sans Cond';-inkscape-font-specification:BentonSansCond-Regular;writing-mode:lr-tb;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         id="text54"><tspan
+           x="0 4.4099998 5.73 7.0500002 8.3699999 9.6899996 12.66 15.672 16.840799 19.4256 22.202999 25.028999 27.002399 29.6124 30.8064 33.632401 36.487202 44.478001 47.543999 50.568001 74.136002 77.202003 80.225998 103.26 106.326 109.704 133.332 136.2654 138.9534 162.42 165.444 168.468 192.078 195.10201 198.12601 221.226 224.20799 227.586 251.634 253.8 256.48801 280.716 282.98401 286.008 310.362 312.64801 315.672 339.51599 341.742 345.12 370.63199 373.32001 399.76801 402.79199 429.42599 432.45001 460.242"
+           y="0"
+           id="tspan52">Million years ago3503253002752502252001751501251007550250</tspan></text>
+      <g
+         id="g56">
+        <g
+           id="g58"
+           clip-path="url(#clipPath62)">
+          <g
+             id="g64"
+             transform="translate(84.9531,535.5814)">
+            <path
+               d="M 0,0 V 2.835 H -0.5 V 0"
+               style="fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path66" />
+          </g>
+          <g
+             id="g68"
+             transform="translate(114.4336,535.5814)">
+            <path
+               d="M 0,0 V 2.835 H -0.5 V 0"
+               style="fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path70" />
+          </g>
+          <g
+             id="g72"
+             transform="translate(143.9141,535.5814)">
+            <path
+               d="M 0,0 V 2.835 H -0.5 V 0"
+               style="fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path74" />
+          </g>
+          <g
+             id="g76"
+             transform="translate(173.394,535.5814)">
+            <path
+               d="M 0,0 V 2.835 H -0.5 V 0"
+               style="fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path78" />
+          </g>
+          <g
+             id="g80"
+             transform="translate(202.8745,535.5814)">
+            <path
+               d="M 0,0 V 2.835 H -0.5 V 0"
+               style="fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path82" />
+          </g>
+          <g
+             id="g84"
+             transform="translate(232.355,535.5814)">
+            <path
+               d="M 0,0 V 2.835 H -0.5 V 0"
+               style="fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path86" />
+          </g>
+          <g
+             id="g88"
+             transform="translate(261.835,535.5814)">
+            <path
+               d="M 0,0 V 2.835 H -0.5 V 0"
+               style="fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path90" />
+          </g>
+          <g
+             id="g92"
+             transform="translate(291.3154,535.5814)">
+            <path
+               d="M 0,0 V 2.835 H -0.5 V 0"
+               style="fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path94" />
+          </g>
+          <g
+             id="g96"
+             transform="translate(320.7959,535.5814)">
+            <path
+               d="M 0,0 V 2.835 H -0.5 V 0"
+               style="fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path98" />
+          </g>
+          <g
+             id="g100"
+             transform="translate(350.2759,535.5814)">
+            <path
+               d="M 0,0 V 2.835 H -0.5 V 0"
+               style="fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path102" />
+          </g>
+          <g
+             id="g104"
+             transform="translate(379.7563,535.5814)">
+            <path
+               d="M 0,0 V 2.835 H -0.5 V 0"
+               style="fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path106" />
+          </g>
+          <g
+             id="g108"
+             transform="translate(409.2368,535.5814)">
+            <path
+               d="M 0,0 V 2.835 H -0.5 V 0"
+               style="fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path110" />
+          </g>
+          <g
+             id="g112"
+             transform="translate(438.7173,535.5814)">
+            <path
+               d="M 0,0 V 2.835 H -0.5 V 0"
+               style="fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path114" />
+          </g>
+          <g
+             id="g116"
+             transform="translate(468.1973,535.5814)">
+            <path
+               d="M 0,0 V 2.835 H -0.5 V 0"
+               style="fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path118" />
+          </g>
+          <g
+             id="g120"
+             transform="translate(497.6777,535.5814)">
+            <path
+               d="M 0,0 V 2.835 H -0.5 V 0"
+               style="fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path122" />
+          </g>
+          <g
+             id="g124"
+             transform="translate(527.1582,535.5814)">
+            <path
+               d="M 0,0 V 2.835 H -0.5 V 0"
+               style="fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path126" />
+          </g>
+          <g
+             id="g128"
+             transform="translate(84.4533,584.4424)">
+            <path
+               d="M 0,0 H 442.704 V 0.5 H 0"
+               style="fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path130" />
+          </g>
+          <g
+             id="g132"
+             transform="translate(84.4533,598.0488)">
+            <path
+               d="M 0,0 H 442.704 V 0.5 H 0"
+               style="fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path134" />
+          </g>
+          <g
+             id="g136"
+             transform="translate(84.4533,611.6553)">
+            <path
+               d="M 0,0 H 442.704 V 0.5 H 0"
+               style="fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path138" />
+          </g>
+          <g
+             id="g140"
+             transform="translate(84.4533,625.2617)">
+            <path
+               d="M 0,0 H 442.704 V 0.5 H 0"
+               style="fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path142" />
+          </g>
+          <g
+             id="g144"
+             transform="translate(84.4533,638.8677)">
+            <path
+               d="M 0,0 H 442.704 V 0.5 H 0"
+               style="fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path146" />
+          </g>
+          <g
+             id="g148"
+             transform="translate(84.4533,652.4741)">
+            <path
+               d="M 0,0 H 442.704 V 0.5 H 0"
+               style="fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path150" />
+          </g>
+          <g
+             id="g152"
+             transform="translate(84.4533,666.0806)">
+            <path
+               d="M 0,0 H 442.704 V 0.5 H 0"
+               style="fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path154" />
+          </g>
+          <g
+             id="g156"
+             transform="translate(84.4533,679.6865)">
+            <path
+               d="M 0,0 H 442.704 V 0.5 H 0"
+               style="fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path158" />
+          </g>
+          <g
+             id="g160"
+             transform="translate(84.4533,693.293)">
+            <path
+               d="M 0,0 H 442.704 V 0.5 H 0"
+               style="fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path162" />
+          </g>
+          <g
+             id="g164"
+             transform="translate(84.4533,706.8994)">
+            <path
+               d="M 0,0 H 442.704 V 0.5 H 0"
+               style="fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path166" />
+          </g>
+          <g
+             id="g168"
+             transform="translate(84.4533,720.5054)">
+            <path
+               d="M 0,0 H 442.704 V 0.5 H 0"
+               style="fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path170" />
+          </g>
+          <g
+             id="g172"
+             transform="translate(84.4533,734.1118)">
+            <path
+               d="M 0,0 H 442.704 V 0.5 H 0"
+               style="fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path174" />
+          </g>
+          <path
+             d="m 143.773,580.441 h 58.904 v 8.504 h -58.904 z"
+             style="fill:#de1c73;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path176" />
+          <path
+             d="m 262.205,580.441 h 58.11 v 8.504 h -58.11 z"
+             style="fill:#de1c73;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path178" />
+          <path
+             d="m 456.945,580.441 h 50.457 v 8.504 h -50.457 z"
+             style="fill:#774427;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path180" />
+          <path
+             d="m 181.984,594.047 h 43.37 v 8.504 h -43.37 z"
+             style="fill:#de1c73;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path182" />
+          <path
+             d="m 262.205,594.047 h 246.614 v 8.504 H 262.205 Z"
+             style="fill:#de1c73;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path184" />
+          <path
+             d="m 161.575,607.653 h 41.102 v 8.504 h -41.102 z"
+             style="fill:#de1c73;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path186" />
+          <path
+             d="m 342.425,607.653 h 121.323 v 8.504 H 342.425 Z"
+             style="fill:#de1c73;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path188" />
+          <path
+             d="m 181.984,621.26 h 42.52 v 8.504 h -42.52 z"
+             style="fill:#de1c73;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path190" />
+          <path
+             d="m 181.984,634.866 h 42.52 v 8.504 h -42.52 z"
+             style="fill:#de1c73;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path192" />
+          <path
+             d="m 494.929,634.866 h 22.677 v 8.504 h -22.677 z"
+             style="fill:#774427;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path194" />
+          <path
+             d="m 181.984,648.472 h 42.52 v 8.504 h -42.52 z"
+             style="fill:#de1c73;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path196" />
+          <path
+             d="m 456.945,648.472 h 46.205 v 8.504 h -46.205 z"
+             style="fill:#774427;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path198" />
+          <path
+             d="m 140.229,662.079 h 84.275 v 8.504 h -84.275 z"
+             style="fill:#de1c73;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path200" />
+          <path
+             d="m 456.945,662.079 h 46.205 v 8.504 h -46.205 z"
+             style="fill:#774427;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path202" />
+          <path
+             d="M 263.253,662.079 H 439.37 v 8.504 H 263.253 Z"
+             style="fill:#de1c73;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path204" />
+          <path
+             d="m 140.229,675.685 h 84.275 v 8.504 h -84.275 z"
+             style="fill:#de1c73;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path206" />
+          <path
+             d="m 456.945,675.685 h 46.205 v 8.504 h -46.205 z"
+             style="fill:#774427;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path208" />
+          <path
+             d="M 286.299,675.685 H 439.37 v 8.504 H 286.299 Z"
+             style="fill:#de1c73;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path210" />
+          <path
+             d="m 140.229,689.291 h 35.519 v 8.504 h -35.519 z"
+             style="fill:#de1c73;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path212" />
+          <path
+             d="m 456.945,689.291 h 46.488 v 8.504 h -46.488 z"
+             style="fill:#774427;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path214" />
+          <path
+             d="m 140.229,702.897 h 35.519 v 8.504 h -35.519 z"
+             style="fill:#de1c73;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path216" />
+          <path
+             d="m 456.945,702.897 h 65.197 v 8.504 h -65.197 z"
+             style="fill:#774427;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path218" />
+          <path
+             d="m 140.229,716.504 h 35.519 v 8.504 h -35.519 z"
+             style="fill:#de1c73;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path220" />
+          <path
+             d="m 456.945,716.504 h 45.354 v 8.504 h -45.354 z"
+             style="fill:#774427;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path222" />
+          <path
+             d="m 140.229,730.11 h 46.857 v 8.504 h -46.857 z"
+             style="fill:#de1c73;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path224" />
+          <path
+             d="m 418.11,730.11 h 65.48 v 8.504 h -65.48 z"
+             style="fill:#de1c73;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path226" />
+          <g
+             id="g228"
+             transform="translate(84.9531,538.8189)">
+            <path
+               d="M 0,0 V 201.449 H -0.5 V 0"
+               style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path230" />
+          </g>
+          <g
+             id="g232"
+             transform="translate(114.4336,538.8189)">
+            <path
+               d="M 0,0 V 201.449 H -0.5 V 0"
+               style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path234" />
+          </g>
+          <g
+             id="g236"
+             transform="translate(143.9141,538.8189)">
+            <path
+               d="M 0,0 V 201.449 H -0.5 V 0"
+               style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path238" />
+          </g>
+          <g
+             id="g240"
+             transform="translate(173.394,538.8189)">
+            <path
+               d="M 0,0 V 201.449 H -0.5 V 0"
+               style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path242" />
+          </g>
+          <g
+             id="g244"
+             transform="translate(202.8745,538.8189)">
+            <path
+               d="M 0,0 V 201.449 H -0.5 V 0"
+               style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path246" />
+          </g>
+          <g
+             id="g248"
+             transform="translate(232.355,538.8189)">
+            <path
+               d="M 0,0 V 201.449 H -0.5 V 0"
+               style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path250" />
+          </g>
+          <g
+             id="g252"
+             transform="translate(261.835,538.8189)">
+            <path
+               d="M 0,0 V 201.449 H -0.5 V 0"
+               style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path254" />
+          </g>
+          <g
+             id="g256"
+             transform="translate(291.3154,538.8189)">
+            <path
+               d="M 0,0 V 201.449 H -0.5 V 0"
+               style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path258" />
+          </g>
+          <g
+             id="g260"
+             transform="translate(320.7959,538.8189)">
+            <path
+               d="M 0,0 V 201.449 H -0.5 V 0"
+               style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path262" />
+          </g>
+          <g
+             id="g264"
+             transform="translate(350.2759,538.8189)">
+            <path
+               d="M 0,0 V 201.449 H -0.5 V 0"
+               style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path266" />
+          </g>
+          <g
+             id="g268"
+             transform="translate(379.7563,538.8189)">
+            <path
+               d="M 0,0 V 201.449 H -0.5 V 0"
+               style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path270" />
+          </g>
+          <g
+             id="g272"
+             transform="translate(409.2368,538.8189)">
+            <path
+               d="M 0,0 V 201.449 H -0.5 V 0"
+               style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path274" />
+          </g>
+          <g
+             id="g276"
+             transform="translate(438.7173,538.8189)">
+            <path
+               d="M 0,0 V 201.449 H -0.5 V 0"
+               style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path278" />
+          </g>
+          <g
+             id="g280"
+             transform="translate(468.1973,538.8189)">
+            <path
+               d="M 0,0 V 201.449 H -0.5 V 0"
+               style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path282" />
+          </g>
+          <g
+             id="g284"
+             transform="translate(497.6777,538.8189)">
+            <path
+               d="M 0,0 V 201.449 H -0.5 V 0"
+               style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path286" />
+          </g>
+          <g
+             id="g288"
+             transform="translate(527.1582,538.8189)">
+            <path
+               d="M 0,0 V 201.449 H -0.5 V 0"
+               style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path290" />
+          </g>
+          <path
+             d="m 363.085,728.896 h 50.524 v 10.839 h -50.524 z"
+             style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path292" />
+        </g>
+      </g>
+      <text
+         transform="matrix(1,0,0,-1,366.6807,731.3389)"
+         style="font-variant:normal;font-weight:bold;font-stretch:condensed;font-size:8px;font-family:'Benton Sans Cond';-inkscape-font-specification:BentonSansCond-Bold;writing-mode:lr-tb;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         id="text296"><tspan
+           x="0 6.0144 9.9104004 13.5496 16.444799 20.396799 23.348801 27.604799 29.396799 34.203999 38.756001"
+           y="0"
+           id="tspan294">Western USA</tspan></text>
+      <g
+         id="g298">
+        <g
+           id="g300"
+           clip-path="url(#clipPath304)">
+          <g
+             id="g306"
+             transform="translate(363.0846,739.7343)">
+            <path
+               d="M 0,0 H -0.25 V -11.089 H 50.774 V 0.25 H -0.25 V 0 H 0 V -0.25 H 50.274 V -10.589 H 0.25 V 0 H 0 v -0.25 z"
+               style="fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path308" />
+          </g>
+          <path
+             d="m 204.344,728.896 h 50.524 v 10.839 h -50.524 z"
+             style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path310" />
+        </g>
+      </g>
+      <text
+         transform="matrix(1,0,0,-1,208.8359,731.3389)"
+         style="font-variant:normal;font-weight:bold;font-stretch:condensed;font-size:8px;font-family:'Benton Sans Cond';-inkscape-font-specification:BentonSansCond-Bold;writing-mode:lr-tb;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         id="text314"><tspan
+           x="0 4.1431999 8.1191998 11.7592 14.6536 18.6056 21.5576 25.813601 27.6056 32.413601 36.964802"
+           y="0"
+           id="tspan312">Eastern USA</tspan></text>
+      <g
+         id="g316">
+        <g
+           id="g318"
+           clip-path="url(#clipPath322)">
+          <g
+             id="g324"
+             transform="translate(204.3445,739.7343)">
+            <path
+               d="M 0,0 H -0.25 V -11.089 H 50.774 V 0.25 H -0.25 V 0 H 0 V -0.25 H 50.274 V -10.589 H 0.25 V 0 H 0 v -0.25 z"
+               style="fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path326" />
+          </g>
+          <path
+             d="m 281.163,715.289 h 50.524 v 10.839 h -50.524 z"
+             style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path328" />
+        </g>
+      </g>
+      <text
+         transform="matrix(1,0,0,-1,284.6471,717.7327)"
+         style="font-variant:normal;font-weight:bold;font-stretch:condensed;font-size:8px;font-family:'Benton Sans Cond';-inkscape-font-specification:BentonSansCond-Bold;writing-mode:lr-tb;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         id="text332"><tspan
+           x="0 5.0879998 7.8800001 11.7984 15.7744 18.7104 20.502399 25.326401 28.2784 30.3424 33.259998 37.236 39.299999"
+           y="0"
+           id="tspan330">Great Britain</tspan></text>
+      <g
+         id="g334">
+        <g
+           id="g336"
+           clip-path="url(#clipPath340)">
+          <g
+             id="g342"
+             transform="translate(281.1634,726.128)">
+            <path
+               d="M 0,0 H -0.25 V -11.089 H 50.774 V 0.25 H -0.25 V 0 H 0 V -0.25 H 50.274 V -10.589 H 0.25 V 0 H 0 v -0.25 z"
+               style="fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path344" />
+          </g>
+          <path
+             d="m 276.911,701.683 h 59.028 v 10.839 h -59.028 z"
+             style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path346" />
+        </g>
+      </g>
+      <text
+         transform="matrix(1,0,0,-1,279.9122,704.1263)"
+         style="font-variant:normal;font-weight:bold;font-stretch:condensed;font-size:8px;font-family:'Benton Sans Cond';-inkscape-font-specification:BentonSansCond-Bold;writing-mode:lr-tb;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         id="text350"><tspan
+           x="0 6.0144 9.9104004 13.5496 16.444799 20.396799 23.348801 27.604799 29.396799 33.548 37.804001 40.642399 44.802399 49.074402"
+           y="0"
+           id="tspan348">Western Europe</tspan></text>
+      <g
+         id="g352">
+        <g
+           id="g354"
+           clip-path="url(#clipPath358)">
+          <g
+             id="g360"
+             transform="translate(276.9114,712.5217)">
+            <path
+               d="M 0,0 H -0.25 V -11.089 H 59.278 V 0.25 H -0.25 V 0 H 0 V -0.25 H 58.778 V -10.589 H 0.25 V 0 H 0 v -0.25 z"
+               style="fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path362" />
+          </g>
+          <path
+             d="m 278.329,688.077 h 56.193 v 10.839 h -56.193 z"
+             style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path364" />
+        </g>
+      </g>
+      <text
+         transform="matrix(1,0,0,-1,280.8075,690.52)"
+         style="font-variant:normal;font-weight:bold;font-stretch:condensed;font-size:8px;font-family:'Benton Sans Cond';-inkscape-font-specification:BentonSansCond-Bold;writing-mode:lr-tb;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         id="text368"><tspan
+           x="0 4.1431999 8.1191998 11.7592 14.6536 18.6056 21.5576 25.813601 27.6056 31.7568 36.012798 38.852001 43.012001 47.284"
+           y="0"
+           id="tspan366">Eastern Europe</tspan></text>
+      <g
+         id="g370">
+        <g
+           id="g372"
+           clip-path="url(#clipPath376)">
+          <g
+             id="g378"
+             transform="translate(278.3287,698.9153)">
+            <path
+               d="M 0,0 H -0.25 V -11.089 H 56.443 V 0.25 H -0.25 V 0 H 0 V -0.25 H 55.943 V -10.589 H 0.25 V 0 H 0 v -0.25 z"
+               style="fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path380" />
+          </g>
+          <path
+             d="m 241.195,674.47 h 19.342 v 10.839 h -19.342 z"
+             style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path382" />
+        </g>
+      </g>
+      <text
+         transform="matrix(1,0,0,-1,243.0262,676.9138)"
+         style="font-variant:normal;font-weight:bold;font-stretch:condensed;font-size:8px;font-family:'Benton Sans Cond';-inkscape-font-specification:BentonSansCond-Bold;writing-mode:lr-tb;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         id="text386"><tspan
+           x="0 4.8400002 7.1199999 11.824"
+           y="0"
+           id="tspan384">CIS*</tspan></text>
+      <g
+         id="g388">
+        <g
+           id="g390"
+           clip-path="url(#clipPath394)">
+          <g
+             id="g396"
+             transform="translate(241.1949,685.3091)">
+            <path
+               d="M 0,0 H -0.25 V -11.089 H 19.592 V 0.25 H -0.25 V 0 H 0 V -0.25 H 19.092 V -10.589 H 0.25 V 0 H 0 v -0.25 z"
+               style="fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path398" />
+          </g>
+          <path
+             d="m 231.982,660.864 h 22.177 v 10.839 h -22.177 z"
+             style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path400" />
+        </g>
+      </g>
+      <text
+         transform="matrix(1,0,0,-1,233.375,663.3074)"
+         style="font-variant:normal;font-weight:bold;font-stretch:condensed;font-size:8px;font-family:'Benton Sans Cond';-inkscape-font-specification:BentonSansCond-Bold;writing-mode:lr-tb;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         id="text404"><tspan
+           x="0 4.8400002 9.0959997 11.16 15.416"
+           y="0"
+           id="tspan402">China</tspan></text>
+      <g
+         id="g406">
+        <g
+           id="g408"
+           clip-path="url(#clipPath412)">
+          <g
+             id="g414"
+             transform="translate(231.9823,671.7028)">
+            <path
+               d="M 0,0 H -0.25 V -11.089 H 22.427 V 0.25 H -0.25 V 0 H 0 V -0.25 H 21.927 V -10.589 H 0.25 V 0 H 0 v -0.25 z"
+               style="fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path416" />
+          </g>
+          <path
+             d="m 286.549,647.258 h 39.185 v 10.839 h -39.185 z"
+             style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path418" />
+        </g>
+      </g>
+      <text
+         transform="matrix(1,0,0,-1,290.8988,649.7012)"
+         style="font-variant:normal;font-weight:bold;font-stretch:condensed;font-size:8px;font-family:'Benton Sans Cond';-inkscape-font-specification:BentonSansCond-Bold;writing-mode:lr-tb;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         id="text422"><tspan
+           x="0 4.7592001 9.0151997 12.6552 15.5912 18.406401 22.382401 24.4464 26.510401"
+           y="0"
+           id="tspan420">Australia</tspan></text>
+      <g
+         id="g424">
+        <g
+           id="g426"
+           clip-path="url(#clipPath430)">
+          <g
+             id="g432"
+             transform="translate(286.5492,658.0965)">
+            <path
+               d="M 0,0 H -0.25 V -11.089 H 39.435 V 0.25 H -0.25 V 0 H 0 V -0.25 H 38.935 V -10.589 H 0.25 V 0 H 0 v -0.25 z"
+               style="fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path434" />
+          </g>
+          <path
+             d="m 304.266,633.652 h 25.012 v 10.839 h -25.012 z"
+             style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path436" />
+        </g>
+      </g>
+      <text
+         transform="matrix(1,0,0,-1,308.3478,636.0948)"
+         style="font-variant:normal;font-weight:bold;font-stretch:condensed;font-size:8px;font-family:'Benton Sans Cond';-inkscape-font-specification:BentonSansCond-Bold;writing-mode:lr-tb;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         id="text440"><tspan
+           x="0 2.28 6.5359998 10.808 12.872"
+           y="0"
+           id="tspan438">India</tspan></text>
+      <g
+         id="g442">
+        <g
+           id="g444"
+           clip-path="url(#clipPath448)">
+          <g
+             id="g450"
+             transform="translate(304.2657,644.4902)">
+            <path
+               d="M 0,0 H -0.25 V -11.089 H 25.262 V 0.25 H -0.25 V 0 H 0 V -0.25 H 24.762 V -10.589 H 0.25 V 0 H 0 v -0.25 z"
+               style="fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path452" />
+          </g>
+          <path
+             d="m 235.526,620.045 h 47.689 v 10.839 h -47.689 z"
+             style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path454" />
+        </g>
+      </g>
+      <text
+         transform="matrix(1,0,0,-1,238.3192,622.4885)"
+         style="font-variant:normal;font-weight:bold;font-stretch:condensed;font-size:8px;font-family:'Benton Sans Cond';-inkscape-font-specification:BentonSansCond-Bold;writing-mode:lr-tb;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         id="text458"><tspan
+           x="0 4.6472001 8.8072004 13.0632 15.9992 20.255199 21.807199 26.5424 29.318399 32.270401 34.3344 38.125599"
+           y="0"
+           id="tspan456">South Africa</tspan></text>
+      <g
+         id="g460">
+        <g
+           id="g462"
+           clip-path="url(#clipPath466)">
+          <g
+             id="g468"
+             transform="translate(235.5256,630.8839)">
+            <path
+               d="M 0,0 H -0.25 V -11.089 H 47.939 V 0.25 H -0.25 V 0 H 0 V -0.25 H 47.439 V -10.589 H 0.25 V 0 H 0 v -0.25 z"
+               style="fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path470" />
+          </g>
+          <path
+             d="m 96.628,606.439 h 59.028 v 10.839 H 96.628 Z"
+             style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path472" />
+        </g>
+      </g>
+      <text
+         transform="matrix(1,0,0,-1,99.691,608.8823)"
+         style="font-variant:normal;font-weight:bold;font-stretch:condensed;font-size:8px;font-family:'Benton Sans Cond';-inkscape-font-specification:BentonSansCond-Bold;writing-mode:lr-tb;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         id="text476"><tspan
+           x="0 4.1431999 8.1191998 11.7592 14.6536 18.6056 21.5576 25.813601 27.6056 32.445599 36.4216 40.677601 44.653599 48.925598"
+           y="0"
+           id="tspan474">Eastern Canada</tspan></text>
+      <g
+         id="g478">
+        <g
+           id="g480"
+           clip-path="url(#clipPath484)">
+          <g
+             id="g486"
+             transform="translate(96.6279,617.2776)">
+            <path
+               d="M 0,0 H -0.25 V -11.089 H 59.278 V 0.25 H -0.25 V 0 H 0 V -0.25 H 58.778 V -10.589 H 0.25 V 0 H 0 v -0.25 z"
+               style="fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path488" />
+          </g>
+          <path
+             d="m 277.337,606.439 h 61.862 v 10.839 h -61.862 z"
+             style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path490" />
+        </g>
+      </g>
+      <text
+         transform="matrix(1,0,0,-1,280.9216,608.8823)"
+         style="font-variant:normal;font-weight:bold;font-stretch:condensed;font-size:8px;font-family:'Benton Sans Cond';-inkscape-font-specification:BentonSansCond-Bold;writing-mode:lr-tb;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         id="text494"><tspan
+           x="0 6.0144 9.9104004 13.5496 16.444799 20.396799 23.348801 27.604799 29.396799 34.236801 38.212799 42.4688 46.444801 50.716801"
+           y="0"
+           id="tspan492">Western Canada</tspan></text>
+      <g
+         id="g496">
+        <g
+           id="g498"
+           clip-path="url(#clipPath502)">
+          <g
+             id="g504"
+             transform="translate(277.3366,617.2776)">
+            <path
+               d="M 0,0 H -0.25 V -11.089 H 62.112 V 0.25 H -0.25 V 0 H 0 V -0.25 H 61.612 V -10.589 H 0.25 V 0 H 0 v -0.25 z"
+               style="fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path506" />
+          </g>
+          <path
+             d="m 124.266,592.833 h 53.358 v 10.839 h -53.358 z"
+             style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path508" />
+        </g>
+      </g>
+      <text
+         transform="matrix(1,0,0,-1,126.058,595.2759)"
+         style="font-variant:normal;font-weight:bold;font-stretch:condensed;font-size:8px;font-family:'Benton Sans Cond';-inkscape-font-specification:BentonSansCond-Bold;writing-mode:lr-tb;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         id="text512"><tspan
+           x="0 4.6472001 8.8072004 13.0632 15.9992 20.255199 21.807199 26.623199 33.0392 36.991199 39.943199 42.007198 45.7976"
+           y="0"
+           id="tspan510">South America</tspan></text>
+      <g
+         id="g514">
+        <g
+           id="g516"
+           clip-path="url(#clipPath520)">
+          <g
+             id="g522"
+             transform="translate(124.2657,603.6713)">
+            <path
+               d="M 0,0 H -0.25 V -11.089 H 53.608 V 0.25 H -0.25 V 0 H 0 V -0.25 H 53.108 V -10.589 H 0.25 V 0 H 0 v -0.25 z"
+               style="fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path524" />
+          </g>
+          <path
+             d="m 338.99,579.226 h 95.878 v 10.839 H 338.99 Z"
+             style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path526" />
+        </g>
+      </g>
+      <text
+         transform="matrix(1,0,0,-1,341.9516,581.6697)"
+         style="font-variant:normal;font-weight:bold;font-stretch:condensed;font-size:8px;font-family:'Benton Sans Cond';-inkscape-font-specification:BentonSansCond-Bold;writing-mode:lr-tb;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         id="text530"><tspan
+           x="0 5.2160001 8.1520004 12.408 16.360001 19.312 21.104 25.2472 29.2232 32.8624 35.798401 37.350399 42.1096 45.821602 47.885601 51.861599 56.117599 57.909599 61.723999 65.884003 70.139999 74.396004 77.332001 80.283997 82.348 86.243202"
+           y="0"
+           id="tspan528">Other East Asian countries</tspan></text>
+      <g
+         id="g532">
+        <g
+           id="g534"
+           clip-path="url(#clipPath538)">
+          <g
+             id="g540"
+             transform="translate(338.9901,590.065)">
+            <path
+               d="M 0,0 H -0.25 V -11.089 H 96.128 V 0.25 H -0.25 V 0 H 0 V -0.25 H 95.628 V -10.589 H 0.25 V 0 H 0 v -0.25 z"
+               style="fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path542" />
+          </g>
+          <g
+             id="g544"
+             transform="translate(84.4545,538.2349)">
+            <path
+               d="M 0,0 H 442.703 V 0.5 H 0"
+               style="fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path546" />
+          </g>
+        </g>
+      </g>
+      <text
+         transform="matrix(1,0,0,-1,254.8819,517.1107)"
+         style="font-variant:normal;font-weight:normal;font-stretch:condensed;font-size:6px;font-family:'Benton Sans Cond';-inkscape-font-specification:BentonSansCond-Regular;writing-mode:lr-tb;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         id="text550"><tspan
+           x="0 2.7780001 3.9719999 7.4513998 10.4214 15.0954 19.7694 22.739401 25.708799 29.445601 32.223 35.049 36.368999 38.319 41.331001 42.525002 45.4464 47.228401 48.422401 49.9104 52.922401 55.970402 58.790401 61.838402 64.658401 67.670403 70.718399 73.538399 76.5504 78.500397 79.694397 82.976402 84.889198 87.715202 89.605202 92.376602 94.986603 96.180603 98.274597 99.594597 102.6066 105.3426 106.6626 107.8986 109.0926 112.4334 115.4454 117.9954 120.6054 121.9254 124.7514"
+           y="0"
+           id="tspan548">* Commonwealth of Independent States (incl. Russia)</tspan></text>
+      <g
+         id="g552">
+        <g
+           id="g554"
+           clip-path="url(#clipPath558)">
+          <path
+             d="m 84.705,561.064 h 145.502 v 10.839 H 84.705 Z"
+             style="fill:#d51130;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path560" />
+        </g>
+      </g>
+      <text
+         transform="matrix(1,0,0,-1,139.5373,563.5074)"
+         style="font-variant:normal;font-weight:bold;font-stretch:condensed;font-size:8px;font-family:'Benton Sans Cond';-inkscape-font-specification:BentonSansCond-Bold;writing-mode:lr-tb;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         id="text564"><tspan
+           x="0 4.4159999 8.3920002 10.456 14.432 18.384001 22.350401 25.764799 29.924801 31.9888"
+           y="0"
+           id="tspan562">Palaeozoic</tspan></text>
+      <g
+         id="g566">
+        <g
+           id="g568"
+           clip-path="url(#clipPath572)">
+          <g
+             id="g574"
+             transform="translate(84.7045,571.9028)">
+            <path
+               d="M 0,0 H -0.25 V -11.089 H 145.752 V 0.25 H -0.25 V 0 H 0 V -0.25 H 145.252 V -10.589 H 0.25 V 0 H 0 v -0.25 z"
+               style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path576" />
+          </g>
+          <path
+             d="m 356.281,550.171 h 94.291 v 10.839 h -94.291 z"
+             style="fill:#c0c5e5;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path578" />
+        </g>
+      </g>
+      <text
+         transform="matrix(1,0,0,-1,384.2455,552.6145)"
+         style="font-variant:normal;font-weight:bold;font-stretch:condensed;font-size:8px;font-family:'Benton Sans Cond';-inkscape-font-specification:BentonSansCond-Bold;writing-mode:lr-tb;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         id="text582"><tspan
+           x="0 4.8400002 7.632 11.5736 14.492 18.468 22.283199 26.235201 30.395201 34.651199"
+           y="0"
+           id="tspan580">Cretaceous</tspan></text>
+      <g
+         id="g584">
+        <g
+           id="g586"
+           clip-path="url(#clipPath590)">
+          <g
+             id="g592"
+             transform="translate(356.2815,561.0098)">
+            <path
+               d="M 0,0 H -0.25 V -11.089 H 94.541 V 0.25 H -0.25 V 0 H 0 V -0.25 H 94.041 V -10.589 H 0.25 V 0 H 0 v -0.25 z"
+               style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path594" />
+          </g>
+          <path
+             d="m 290.234,550.171 h 66.047 v 10.839 h -66.047 z"
+             style="fill:#aab2db;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path596" />
+        </g>
+      </g>
+      <text
+         transform="matrix(1,0,0,-1,309.2708,552.6145)"
+         style="font-variant:normal;font-weight:bold;font-stretch:condensed;font-size:8px;font-family:'Benton Sans Cond';-inkscape-font-specification:BentonSansCond-Bold;writing-mode:lr-tb;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         id="text600"><tspan
+           x="0 3.6559999 7.9120002 10.7272 14.7032 18.350401 22.062401 24.1264"
+           y="0"
+           id="tspan598">Jurassic</tspan></text>
+      <g
+         id="g602">
+        <g
+           id="g604"
+           clip-path="url(#clipPath608)">
+          <g
+             id="g610"
+             transform="translate(290.2343,561.0098)">
+            <path
+               d="M 0,0 H -0.25 V -11.089 H 66.297 V 0.25 H -0.25 V 0 H 0 V -0.25 H 65.797 V -10.589 H 0.25 V 0 H 0 v -0.25 z"
+               style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path612" />
+          </g>
+          <path
+             d="m 230.423,550.171 h 59.878 v 10.839 h -59.878 z"
+             style="fill:#7d8ec7;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path614" />
+        </g>
+      </g>
+      <text
+         transform="matrix(1,0,0,-1,247.4753,552.6145)"
+         style="font-variant:normal;font-weight:bold;font-stretch:condensed;font-size:8px;font-family:'Benton Sans Cond';-inkscape-font-specification:BentonSansCond-Bold;writing-mode:lr-tb;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         id="text618"><tspan
+           x="0 3.5104001 6.4624 8.5263996 12.5024 16.149599 19.861601 21.9256"
+           y="0"
+           id="tspan616">Triassic</tspan></text>
+      <g
+         id="g620">
+        <g
+           id="g622"
+           clip-path="url(#clipPath626)">
+          <g
+             id="g628"
+             transform="translate(230.4232,561.0098)">
+            <path
+               d="M 0,0 H -0.25 V -11.089 H 60.128 V 0.25 H -0.25 V 0 H 0 V -0.25 H 59.628 V -10.589 H 0.25 V 0 H 0 v -0.25 z"
+               style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path630" />
+          </g>
+          <path
+             d="m 175.431,550.171 h 54.776 v 10.839 h -54.776 z"
+             style="fill:#4e6db3;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path632" />
+        </g>
+      </g>
+      <text
+         transform="matrix(1,0,0,-1,188.8314,552.6145)"
+         style="font-variant:normal;font-weight:bold;font-stretch:condensed;font-size:8px;font-family:'Benton Sans Cond';-inkscape-font-specification:BentonSansCond-Bold;writing-mode:lr-tb;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         id="text636"><tspan
+           x="0 4.3592 8.3112001 11.2632 17.679199 19.7432 23.7192"
+           y="0"
+           id="tspan634">Permian</tspan></text>
+      <g
+         id="g638">
+        <g
+           id="g640"
+           clip-path="url(#clipPath644)">
+          <g
+             id="g646"
+             transform="translate(175.4311,561.0098)">
+            <path
+               d="M 0,0 H -0.25 V -11.089 H 55.026 V 0.25 H -0.25 V 0 H 0 V -0.25 H 54.526 V -10.589 H 0.25 V 0 H 0 v -0.25 z"
+               style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path648" />
+          </g>
+          <path
+             d="m 451.129,561.064 h 75.724 v 10.839 h -75.724 z"
+             style="fill:#f9b000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path650" />
+        </g>
+      </g>
+      <text
+         transform="matrix(1,0,0,-1,473.7568,563.5074)"
+         style="font-variant:normal;font-weight:bold;font-stretch:condensed;font-size:8px;font-family:'Benton Sans Cond';-inkscape-font-specification:BentonSansCond-Bold;writing-mode:lr-tb;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         id="text654"><tspan
+           x="0 4.8072 8.7592001 13.0152 16.9816 20.396 24.556 26.620001"
+           y="0"
+           id="tspan652">Cenozoic</tspan></text>
+      <g
+         id="g656">
+        <g
+           id="g658"
+           clip-path="url(#clipPath662)">
+          <g
+             id="g664"
+             transform="translate(451.1288,571.9028)">
+            <path
+               d="M 0,0 H -0.25 V -11.089 H 75.974 V 0.25 H -0.25 V 0 H 0 V -0.25 H 75.474 V -10.589 H 0.25 V 0 H 0 v -0.25 z"
+               style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path666" />
+          </g>
+          <path
+             d="m 451.072,550.171 h 50.977 v 10.839 h -50.977 z"
+             style="fill:#3a763f;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path668" />
+        </g>
+      </g>
+      <text
+         transform="matrix(1,0,0,-1,457.1694,552.6145)"
+         style="font-variant:normal;font-weight:bold;font-stretch:condensed;font-size:8px;font-family:'Benton Sans Cond';-inkscape-font-specification:BentonSansCond-Bold;writing-mode:lr-tb;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         id="text672"><tspan
+           x="0 4.4159999 8.3920002 10.456 14.432 18.384001 22.544001 26.6224 30.5744 34.830399"
+           y="0"
+           id="tspan670">Palaeogene</tspan></text>
+      <g
+         id="g674">
+        <g
+           id="g676"
+           clip-path="url(#clipPath680)">
+          <g
+             id="g682"
+             transform="translate(451.0721,561.0098)">
+            <path
+               d="M 0,0 H -0.25 V -11.089 H 51.227 V 0.25 H -0.25 V 0 H 0 V -0.25 H 50.727 V -10.589 H 0.25 V 0 H 0 v -0.25 z"
+               style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path684" />
+          </g>
+          <path
+             d="m 520.974,550.171 h 5.934 v 10.839 h -5.934 z"
+             style="fill:#95c11f;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path686" />
+          <g
+             id="g688"
+             transform="translate(520.9744,561.0098)">
+            <path
+               d="M 0,0 H -0.25 V -11.089 H 6.184 V 0.25 H -0.25 V 0 H 0 V -0.25 H 5.684 V -10.589 H 0.25 V 0 H 0 v -0.25 z"
+               style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path690" />
+          </g>
+          <path
+             d="m 502.299,550.171 h 18.675 v 10.839 h -18.675 z"
+             style="fill:#009770;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path692" />
+          <g
+             id="g694"
+             transform="translate(502.2992,561.0098)">
+            <path
+               d="M 0,0 H -0.25 V -11.089 H 18.925 V 0.25 H -0.25 V 0 H 0 V -0.25 H 18.425 V -10.589 H 0.25 V 0 H 0 v -0.25 z"
+               style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path696" />
+          </g>
+          <path
+             d="m 111.368,550.171 h 64.13 v 10.839 h -64.13 z"
+             style="fill:#1951a0;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path698" />
+        </g>
+      </g>
+      <text
+         transform="matrix(1,0,0,-1,119.3945,552.6145)"
+         style="font-variant:normal;font-weight:bold;font-stretch:condensed;font-size:8px;font-family:'Benton Sans Cond';-inkscape-font-specification:BentonSansCond-Bold;writing-mode:lr-tb;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         id="text702"><tspan
+           x="0 4.8400002 8.816 11.768 16.040001 20.200001 24.455999 26.52 29.159201 33.111198 35.9496 40.1096 44.365601"
+           y="0"
+           id="tspan700">Carboniferous</tspan></text>
+      <g
+         id="g704">
+        <g
+           id="g706"
+           clip-path="url(#clipPath710)">
+          <g
+             id="g712"
+             transform="translate(111.3681,561.0098)">
+            <path
+               d="M 0,0 H -0.25 V -11.089 H 64.38 V 0.25 H -0.25 V 0 H 0 V -0.25 H 63.88 V -10.589 H 0.25 V 0 H 0 v -0.25 z"
+               style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path714" />
+          </g>
+          <path
+             d="m 84.722,550.171 h 26.746 V 561.01 H 84.722 Z"
+             style="fill:#1951a0;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path716" />
+          <g
+             id="g718"
+             transform="translate(84.7224,561.0098)">
+            <path
+               d="M 0,0 H -0.25 V -11.089 H 26.996 V 0.25 H -0.25 V 0 H 0 V -0.25 H 26.496 V -10.589 H 0.25 V 0 H 0 v -0.25 z"
+               style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path720" />
+          </g>
+          <g
+             id="g722"
+             transform="translate(503.3248,558.8838)">
+            <path
+               d="m 0,0 v -21.543 c 0,-0.138 0.112,-0.25 0.25,-0.25 0.138,0 0.25,0.112 0.25,0.25 V 0 C 0.5,0.138 0.388,0.25 0.25,0.25 0.112,0.25 0,0.138 0,0"
+               style="fill:#009770;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path724" />
+          </g>
+          <g
+             id="g726"
+             transform="translate(96.1201,558.8838)">
+            <path
+               d="m 0,0 v -21.543 c 0,-0.138 0.112,-0.25 0.25,-0.25 0.138,0 0.25,0.112 0.25,0.25 V 0 C 0.5,0.138 0.388,0.25 0.25,0.25 0.112,0.25 0,0.138 0,0"
+               style="fill:#1951a0;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path728" />
+          </g>
+          <g
+             id="g730"
+             transform="translate(523.4174,558.8838)">
+            <path
+               d="m 0,0 v -21.543 c 0,-0.138 0.112,-0.25 0.25,-0.25 0.138,0 0.25,0.112 0.25,0.25 V 0 C 0.5,0.138 0.388,0.25 0.25,0.25 0.112,0.25 0,0.138 0,0"
+               style="fill:#95c11f;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path732" />
+          </g>
+          <path
+             d="m 472.51,535.148 h 33.516 v 10.839 H 472.51 Z"
+             style="fill:#009770;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path734" />
+        </g>
+      </g>
+      <text
+         transform="matrix(1,0,0,-1,474.4844,537.5909)"
+         style="font-variant:normal;font-weight:bold;font-stretch:condensed;font-size:8px;font-family:'Benton Sans Cond';-inkscape-font-specification:BentonSansCond-Bold;writing-mode:lr-tb;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         id="text738"><tspan
+           x="0 5.2160001 9.1680002 13.328 17.406401 21.3584 25.614401"
+           y="0"
+           id="tspan736">Neogene</tspan></text>
+      <g
+         id="g740">
+        <g
+           id="g742"
+           clip-path="url(#clipPath746)">
+          <g
+             id="g748"
+             transform="translate(472.5098,545.9862)">
+            <path
+               d="M 0,0 H -0.25 V -11.089 H 33.766 V 0.25 H -0.25 V 0 H 0 V -0.25 H 33.266 V -10.589 H 0.25 V 0 H 0 v -0.25 z"
+               style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path750" />
+          </g>
+          <path
+             d="m 65.305,535.148 h 33.516 v 10.839 H 65.305 Z"
+             style="fill:#1951a0;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path752" />
+        </g>
+      </g>
+      <text
+         transform="matrix(1,0,0,-1,66.5201,537.5909)"
+         style="font-variant:normal;font-weight:bold;font-stretch:condensed;font-size:8px;font-family:'Benton Sans Cond';-inkscape-font-specification:BentonSansCond-Bold;writing-mode:lr-tb;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         id="text756"><tspan
+           x="0 4.9512 8.7896004 12.3736 16.5336 20.7896 22.8536 26.829599"
+           y="0"
+           id="tspan754">Devonian</tspan></text>
+      <g
+         id="g758">
+        <g
+           id="g760"
+           clip-path="url(#clipPath764)">
+          <g
+             id="g766"
+             transform="translate(65.3051,545.9862)">
+            <path
+               d="M 0,0 H -0.25 V -11.089 H 33.766 V 0.25 H -0.25 V 0 H 0 V -0.25 H 33.266 V -10.589 H 0.25 V 0 H 0 v -0.25 z"
+               style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path768" />
+          </g>
+          <path
+             d="m 505.526,535.148 h 42.02 v 10.839 h -42.02 z"
+             style="fill:#95c11f;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path770" />
+        </g>
+      </g>
+      <text
+         transform="matrix(1,0,0,-1,507.3973,537.5909)"
+         style="font-variant:normal;font-weight:bold;font-stretch:condensed;font-size:8px;font-family:'Benton Sans Cond';-inkscape-font-specification:BentonSansCond-Bold;writing-mode:lr-tb;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         id="text774"><tspan
+           x="0 5.1592002 9.4152002 13.3912 16.2864 20.2384 23.190399 27.4464 31.4224 34.4776"
+           y="0"
+           id="tspan772">Quaternary</tspan></text>
+      <g
+         id="g776">
+        <g
+           id="g778"
+           clip-path="url(#clipPath782)">
+          <g
+             id="g784"
+             transform="translate(505.5256,545.9862)">
+            <path
+               d="M 0,0 H -0.25 V -11.089 H 42.27 V 0.25 H -0.25 V 0 H 0 V -0.25 H 41.77 V -10.589 H 0.25 V 0 H 0 v -0.25 z"
+               style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path786" />
+          </g>
+          <path
+             d="m 230.423,561.064 h 220.149 v 10.839 H 230.423 Z"
+             style="fill:#ec6725;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path788" />
+        </g>
+      </g>
+      <text
+         transform="matrix(1,0,0,-1,324.9162,563.5074)"
+         style="font-variant:normal;font-weight:bold;font-stretch:condensed;font-size:8px;font-family:'Benton Sans Cond';-inkscape-font-specification:BentonSansCond-Bold;writing-mode:lr-tb;fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         id="text792"><tspan
+           x="0 6.1360002 10.0312 13.7104 17.6768 21.0912 25.2512 27.315201"
+           y="0"
+           id="tspan790">Mesozoic</tspan></text>
+      <g
+         id="g794">
+        <g
+           id="g796"
+           clip-path="url(#clipPath800)">
+          <g
+             id="g802"
+             transform="translate(230.4232,571.9028)">
+            <path
+               d="M 0,0 H -0.25 V -11.089 H 220.399 V 0.25 H -0.25 V 0 H 0 V -0.25 H 219.899 V -10.589 H 0.25 V 0 H 0 v -0.25 z"
+               style="fill:#ffffff;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path804" />
+          </g>
+          <g
+             id="g806"
+             transform="translate(455.6693,602.5513)">
+            <path
+               d="M 0,0 -4.961,-8.504 H 53.15 V 0 Z"
+               style="fill:#774427;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path808" />
+          </g>
+          <g
+             id="g810"
+             transform="translate(455.6693,738.6143)">
+            <path
+               d="M 0,0 -4.961,-8.504 H 27.921 V 0 Z"
+               style="fill:#774427;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path812" />
+          </g>
+          <g
+             id="g814"
+             transform="translate(455.7827,616.1572)">
+            <path
+               d="M 0,0 -4.961,-8.504 H 7.965 V 0 Z"
+               style="fill:#774427;fill-opacity:1;fill-rule:nonzero;stroke:none"
+               id="path816" />
+          </g>
+        </g>
+      </g>
+      <text
+         transform="matrix(1,0,0,-1,427.8897,771.0952)"
+         style="font-variant:normal;font-weight:normal;font-stretch:condensed;font-size:8px;font-family:'Benton Sans Cond';-inkscape-font-specification:BentonSansCond-Regular;writing-mode:lr-tb;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         id="text820"><tspan
+           x="0 4.96 8.7279997 11.2944 15.3584 16.950399 20.541599 24.4216 28.1896"
+           y="0"
+           id="tspan818">Hard coal</tspan></text>
+      <g
+         id="g822">
+        <g
+           id="g824"
+           clip-path="url(#clipPath828)">
+          <path
+             d="m 417.969,770.312 h 7.087 v 7.088 h -7.087 z"
+             style="fill:#de1c73;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path830" />
+        </g>
+      </g>
+      <text
+         transform="matrix(1,0,0,-1,479.9055,771.0952)"
+         style="font-variant:normal;font-weight:normal;font-stretch:condensed;font-size:8px;font-family:'Benton Sans Cond';-inkscape-font-specification:BentonSansCond-Regular;writing-mode:lr-tb;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         id="text834"><tspan
+           x="0 3.872 5.632 9.5760002 13.592 15.352 17.871201"
+           y="0"
+           id="tspan832">Lignite</tspan></text>
+      <g
+         id="g836">
+        <g
+           id="g838"
+           clip-path="url(#clipPath842)">
+          <path
+             d="m 469.984,770.312 h 7.087 v 7.088 h -7.087 z"
+             style="fill:#774427;fill-opacity:1;fill-rule:nonzero;stroke:none"
+             id="path844" />
+        </g>
+      </g>
+      <text
+         transform="matrix(0,1,1,0,547.972,726.7038)"
+         style="font-variant:normal;font-weight:normal;font-stretch:condensed;font-size:5px;font-family:'Benton Sans Cond';-inkscape-font-specification:BentonSansCond-Regular;writing-mode:lr-tb;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         id="text848"><tspan
+           x="0"
+           y="0"
+           id="tspan846">C</tspan></text>
+      <text
+         transform="matrix(0,1,1,0,547.972,729.5888)"
+         style="font-variant:normal;font-weight:normal;font-stretch:condensed;font-size:5px;font-family:'Benton Sans Cond';-inkscape-font-specification:BentonSansCond-Regular;writing-mode:lr-tb;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none"
+         id="text852"><tspan
+           x="0 2.9690001 5.789 8.0430002 8.8874998 11.3425 13.9375 16.367001 19.091999 21.827 22.822001 25.306499 28.105499 29.994499 32.5145 33.139999 35.555 36.179501 38.6045 39.634499 40.4795 43.074501 46.1745 49.309502 52.984501 55.709 58.444"
+           y="0"
+           id="tspan850">OAL ATLAS 2015 / L. THOMAS</tspan></text>
+    </g>
+  </g>
+</svg>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="372px" height="351px" viewBox="-5 -5 124 117" enable-background="new">
+	<g style="fill: none; stroke: #000000">
+		<polyline stroke-linecap="round" points="38.494,91.712 23.917,105.246 4.916,99.373 0.5,80.011 15.077,66.458 34.078,72.351" />
+		<polyline stroke-linecap="round" points="38.494,91.712 56.391,100.341 74.295,91.742" />
+		<polyline points="74.295,91.742 88.865,105.283 107.88,99.425 112.312,80.056 97.736,66.515 78.726,72.374" />
+		<polyline points="46.47,56.827 36.542,39.606 43.09,28.248" />
+		<polyline points="51.727,22.386 66.342,22.386 76.27,39.606 69.913,50.633" />
+		
+		<line stroke-linecap="round" x1="34.078" y1="72.351" x2="46.47" y2="56.827" />
+		<line stroke-linecap="round" x1="78.726" y1="72.374" x2="74.295" y2="91.742" />
+		<line stroke-linecap="round" x1="38.494" y1="91.712" x2="34.078" y2="72.351" />
+		<line x1="4.368" y1="80.522" x2="15.295" y2="70.376" />
+		<line x1="81.099" y1="75.468" x2="77.772" y2="89.992" />
+		<line x1="46.47" y1="56.827" x2="61.083" y2="56.827" />
+		<line x1="70.647" y1="62.231" x2="78.726" y2="72.374" />
+		<line x1="42.893" y1="16.193" x2="39.656" y2="10.587" />
+		<line x1="35.009" y1="89.962" x2="31.697" y2="75.445" />
+		<line x1="97.509" y1="70.405" x2="108.444" y2="80.567" />
+		<line x1="22.43" y1="101.64" x2="8.175" y2="97.24" />
+		<line x1="104.613" y1="97.285" x2="90.359" y2="101.685" />
+	</g>
+	<g style="fill: #000000">
+		<text text-anchor="middle" x="66.342" y="60.877" font-family="DejaVu Sans" font-size="11.5">N</text>
+		<text text-anchor="middle" x="26.621" y="60.877" font-family="DejaVu Sans" font-size="11.5">H</text>
+		<text text-anchor="middle" x="46.32" y="26.336" font-family="DejaVu Sans" font-size="11.5">N</text>
+		<text text-anchor="end" x="40" y="9.245" font-family="DejaVu Sans" font-size="11.5">
+			<tspan>H</tspan><tspan dy="3" font-size="8">3</tspan><tspan dy="-3">C</tspan>
+		</text>
+	</g>
+	<polygon id="cone" fill="#000000" points="31.9,55.149 46.47,56.452 46.47,57.203 31.9,58.506" />
+</svg>

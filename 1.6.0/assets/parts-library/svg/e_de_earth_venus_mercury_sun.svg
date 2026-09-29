@@ -1,0 +1,46 @@
+<?xml version="1.0" standalone="no" ?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 20010904//EN"
+  "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd">
+<svg width="800px" height="50px" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+    <symbol id="arrow">
+    <polyline stroke="#FFFFFF" stroke-width="1" points="0.5 1.5, 2 0, 3.5 1.5"/>
+    <line stroke="#FFFFFF" stroke-width="1" x1="2" y1="0" x2="2" y2="5"/>
+    </symbol>
+  </defs>
+
+  <!-- background -->
+  <rect cx="0" cy="0" width="800" height="50" fill="#000000"/>
+
+  <!-- earth (and moon) -->
+  <circle cx="20.5" cy="13.5" r="0.5" fill="#666699"/>
+  <circle cx="22.5" cy="13.5" r="0.5" fill="#333333"/>
+  <polyline stroke="#666666" stroke-width="1" points="8.5 15.5, 8.5 17.5, 33.5 17.5, 33.5 15.5"/>
+  <use xlink:href="#arrow" transform="translate(18.5,19.5)"/>
+  <text x="20.5" y="34.5" fill="#FFFFFF" font-family="sans-serif" font-size="12px" text-anchor="middle">
+    Erde
+  </text>
+
+  <!-- venus -->
+  <circle cx="227.5" cy="13.5" r="0.5" fill="#999966"/>
+  <polyline stroke="#666666" stroke-width="1" points="223.5 15.5, 223.5 17.5, 231.5 17.5, 231.5 15.5"/>
+  <use xlink:href="#arrow" transform="translate(225.5,19.5)"/>
+  <text x="227.5" y="34.5" fill="#FFFFFF" font-family="sans-serif" font-size="12px" text-anchor="middle">
+    Venus
+  </text>
+
+  <!-- mercury -->
+  <circle cx="478.5" cy="13.5" r="0.5" fill="#666666"/>
+  <polyline stroke="#666666" stroke-width="1" points="418.5 15.5, 418.5 17.5, 538.5 17.5, 538.5 15.5"/>
+  <use xlink:href="#arrow" transform="translate(476.5,19.5)"/>
+  <text x="478.5" y="34.5" fill="#FFFFFF" font-family="sans-serif" font-size="12px" text-anchor="middle">
+    Merkur
+  </text>
+
+  <!-- sun -->
+  <circle cx="768.5" cy="14.5" r="3.5" fill="#FFFFCC"/>
+  <text x="768.5" y="34.5" fill="#FFFFFF" font-family="sans-serif" font-size="12px" text-anchor="middle">
+    Sonne
+  </text>
+
+</svg>

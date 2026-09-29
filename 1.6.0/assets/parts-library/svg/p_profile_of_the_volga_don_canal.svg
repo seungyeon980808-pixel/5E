@@ -1,0 +1,296 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+	width="750" height="525"
+	viewBox="-118 -91 150 105">
+  <title>Profile of the Volga–Don Canal</title>
+  <metadata>
+    <rdf:RDF>
+      <cc:Work>
+        <dc:format>
+          image/svg+xml
+        </dc:format>
+        <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+        <dc:title>
+          Profile of the Volga–Don Canal
+        </dc:title>
+        <dc:creator>
+          <cc:Agent>
+            <dc:title>
+              MagentaGreen
+            </dc:title>
+          </cc:Agent>
+        </dc:creator>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+<defs id="defs1">
+	<marker id="a" overflow="visible" orient="auto">
+		<path id="path_marker_a" d="M5.231 2.42L-1.324.01 5.23-2.401C4.184-.978 4.19.969 5.231 2.42z" fill-rule="evenodd" stroke="#000" stroke-linejoin="round" stroke-width=".375" />
+	</marker>
+	<marker id="b" overflow="visible" orient="auto">
+		<path id="path_marker_b" d="M-5.231-2.42L1.324-.01-5.23 2.401c1.047-1.423 1.041-3.37 0-4.821z" fill-rule="evenodd" stroke="#000" stroke-linejoin="round" stroke-width=".375" />
+	</marker>
+</defs>
+<rect id="background"
+	style="fill:#fff;"
+	x="-118" y="-91" width="150" height="105" />
+<g id="pixel_here_is_one_kilometer_long_or_one_meter_high"
+	transform="scale(-1)translate(0,0)">
+	<g id="rect_background"
+		transform="translate(-30,-2)"
+		style="fill:#e6e6e6;">
+		<rect x="0" y="0" width="146" height="10" />
+		<rect x="0" y="20" width="146" height="10" />
+		<rect x="0" y="40" width="146" height="10" />
+		<rect x="0" y="60" width="146" height="10" />
+		<rect x="0" y="80" width="146" height="10" />
+	</g>
+	<g id="rect_no"
+		style="fill:#afffaf;stroke:#00ff00;stroke-width:0.2px;">
+		<rect id="rect_no_01" x="0" y="0" width="3" height="10" />
+		<rect id="rect_no_02" x="3" y="0" width="2" height="20" />
+		<rect id="rect_no_03" x="5" y="0" width="6" height="30" />
+		<rect id="rect_no_04" x="11" y="0" width="2" height="40" />
+		<rect id="rect_no_05" x="13" y="0" width="2" height="50" />
+		<rect id="rect_no_06" x="15" y="0" width="1.5" height="63" />
+		<rect id="rect_no_07" x="16.5" y="0" width="1.5" height="72" />
+		<rect id="rect_no_08" x="18" y="0" width="2" height="78" />
+
+		<rect id="rect_no_09" x="20" y="0" width="26" height="88" />
+		<rect id="rect_no_10" x="46" y="0" width="35" height="76" />
+		<rect id="rect_no_11" x="81" y="0" width="7" height="66" />
+		<rect id="rect_no_12" x="88" y="0" width="13" height="56" />
+		<rect id="rect_don" x="101" y="0" width="15" height="44" />
+		<rect id="baseline" x="-15" y="-7" width="131" height="7" />
+	</g>
+	<g id="path_river"
+		style="fill:#46bcfc;stroke:#0000ff;stroke-width:0.1px;">
+		<path id="path_volga_river"
+			style="fill:#93dafd;stroke:#000000;stroke-width:0.2px;"
+			d="m0 0 h-15 v-7 h7 l8 3 z" />
+		<rect id="rect_l_no_01" x="0" y="6" width="3" height="4" />
+		<rect id="rect_l_no_02" x="3" y="16" width="2" height="4" />
+		<rect id="rect_l_no_03" x="5" y="26" width="6" height="4" />
+		<rect id="rect_l_no_04" x="11" y="36" width="2" height="4" />
+		<rect id="rect_l_no_05" x="13" y="46" width="2" height="4" />
+		<rect id="rect_l_no_06" x="15" y="59" width="1.5" height="4" />
+		<rect id="rect_l_no_07" x="16.5" y="68" width="1.5" height="4" />
+		<rect id="rect_l_no_08" x="18" y="74" width="2" height="4" />
+		<rect id="rect_l_no_09" x="20" y="84" width="26" height="4" />
+		<rect id="rect_l_no_10" x="46" y="72" width="35" height="4" />
+		<rect id="rect_l_no_11" x="81" y="62" width="7" height="4" />
+		<rect id="rect_l_no_12" x="88" y="52" width="13" height="4" />
+		<path id="path_don_river"
+			style="fill:#93dafd;stroke:#000000;stroke-width:0.2px;"
+			d="m101 44 h15 v-7 h-7 l-8 3 z" />
+	</g>
+	<g id="line_river"
+		style="stroke:#1100ec;stroke-width:0.4px;">
+		<line id="line_volga_river"
+			x1="-15" y1="0" x2="0" y2="0" />
+		<line id="line_don_river"
+			x1="101" y1="44" x2="116" y2="44" />
+	</g>
+	<g id="line_locks"
+		style="stroke:red;stroke-width:0.4px;">
+		<line id="line_lock-01"
+			x1="0" y1="6" x2="0" y2="10" />
+		<line id="line_lock-02"
+			x1="3" y1="16" x2="3" y2="20" />
+		<line id="line_lock-03"
+			x1="5" y1="26" x2="5" y2="30" />
+		<line id="line_lock-04"
+			x1="11" y1="36" x2="11" y2="40" />
+		<line id="line_lock-05"
+			x1="13" y1="46" x2="13" y2="50" />
+		<line id="line_lock-06"
+			x1="15" y1="59" x2="15" y2="63" />
+		<line id="line_lock-07"
+			x1="16.5" y1="68" x2="16.5" y2="72" />
+		<line id="line_lock-08"
+			x1="18" y1="74" x2="18" y2="78" />
+		<line id="line_lock-09"
+			x1="20" y1="84" x2="20" y2="88" />
+		<line id="line_lock-10"
+			x1="46" y1="84" x2="46" y2="88" />
+		<line id="line_lock-11"
+			x1="81" y1="72" x2="81" y2="76" />
+		<line id="line_lock-12"
+			x1="88" y1="62" x2="88" y2="66" />
+		<line id="line_lock-13"
+			x1="101" y1="52" x2="101" y2="56" />
+	</g>
+</g>
+<g transform="scale(1)translate(0,-100)"
+	style="font-family:'DejaVu Sans';font-size:4px;">
+	<g id="km-scale"
+		transform="translate(28,13.4)"
+		text-anchor="end">
+		<text id="km-scale-0" x="0" y="0">0</text>
+		<text id="km-scale-10" x="0" y="10">10</text>
+		<text id="km-scale-20" x="0" y="20">20</text>
+		<text id="km-scale-30" x="0" y="30">30</text>
+		<text id="km-scale-40" x="0" y="40">40</text>
+		<text id="km-scale-50" x="0" y="50">50</text>
+		<text id="km-scale-60" x="0" y="60">60</text>
+		<text id="km-scale-70" x="0" y="70">70</text>
+		<text id="km-scale-80" x="0" y="80">80</text>
+		<text id="km-scale-90" x="0" y="88">88</text>
+	</g>
+	<g id="text_elements_no"
+		style="font-size:3px"
+		text-anchor="start">
+		<text x="0" y="89">№ 1</text>
+		<text x="-3" y="79">№ 2</text>
+		<text x="-5" y="69">№ 3</text>
+		<text x="-11" y="59">№ 4</text>
+		<text x="-13" y="49">№ 5</text>
+		<text x="-15" y="36">№ 6</text>
+		<text x="-17" y="27">№ 7</text>
+		<text x="-18" y="21">№ 8</text>
+		<text x="-19" y="13">№ 9</text>
+		<text x="-47" y="13" text-anchor="end">№ 10</text>
+		<text x="-82" y="25" text-anchor="end">№ 11</text>
+		<text x="-89" y="35" text-anchor="end">№ 12</text>
+		<text x="-102" y="45" text-anchor="end">№ 13</text>
+	</g>
+	<g id="dashed_lines"
+		transform="translate(0,12)"
+		style="stroke:#000;stroke-dasharray:.8, .9;stroke-width:.08">
+		<line id="dashed_line-1-a"
+			x1="20" y1="0" x2="-11" y2="0" />
+		<line id="dashed_line-1-b"
+			x1="-82" y1="0" x2="-116" y2="0" />
+		<line id="dashed_line-2-a"
+			x1="25" y1="44" x2="-64" y2="44" />
+		<line id="dashed_line-2-b"
+			x1="-96" y1="44" x2="-116" y2="44" />
+		<line id="dashed_line-3-a"
+			x1="20" y1="88" x2="-5" y2="88" />
+		<line id="dashed_line-3-b"
+			x1="-45" y1="88" x2="-116" y2="88" />
+	</g>
+</g>
+<g id="text_elements_and_arrows"
+	style="font-family:'DejaVu Sans';font-size:4px">
+	<switch id="text_elements" text-anchor="middle">
+		<g id="text_elements-de" systemLanguage="de">
+			<text x="-109" y="-40">Don</text>
+			<text x="-81" y="-87" style="font-size:3px;text-anchor:start">Scheitelpunkt</text>
+			<text transform="rotate(-90)translate(21.5,-93)"
+				x="0" y="0">Karpowskj-Stausee</text>
+			<text x="-95" y="-43" style="font-size:3px;text-anchor:start">Pegel Don: 44 Meter</text>
+			<text x="-63.5" y="-67"><tspan
+				x="-63.5" dy="0">Bereslawskj-</tspan><tspan
+				x="-63.5" dy="4">Stausee</tspan></text>
+			<text x="-33" y="-79"><tspan
+				x="-33" dy="0">Barbarian-</tspan><tspan
+				x="-33" dy="4">Stausee</tspan></text>
+			<text x="-7" y="1" style="font-size:3px;text-anchor:end">Pegel Wolgau: 88 Meter</text>
+			<text x="-50.5" y="11.5">Profil des Wolga-Don-Kanals</text>
+			<text x="8" y="4">Wolga</text>
+		</g>
+		<g id="text_elements-fi" systemLanguage="fi">
+			<text x="-109" y="-40">Don</text>
+			<text x="-81" y="-87" style="font-size:3px;text-anchor:start">Korkein kohta</text>
+			<text transform="rotate(-90)translate(21.5,-93)"
+				x="0" y="0">Karpovskin tekojärvi</text>
+			<text x="-95" y="-43" style="font-size:3px;text-anchor:start">Don-joen pinta 44 metriä</text>
+			<text x="-63.5" y="-67"><tspan
+				x="-63.5" dy="0">Bereslavskin </tspan><tspan
+				x="-63.5" dy="4">tekojärvi</tspan></text>
+			<text x="-33" y="-79"><tspan
+				x="-33" dy="0">Barbaarin </tspan><tspan
+				x="-33" dy="4">tekojärvi</tspan></text>
+			<text x="-7" y="1" style="font-size:3px;text-anchor:end">Volga-joen pinta 88 metriä</text>
+			<text x="-50.5" y="11.5">Volgan–Donin kanavan profiili</text>
+			<text x="8" y="4">Volga</text>
+		</g>
+		<g id="text_elements-fr" systemLanguage="fr">
+			<text x="-109" y="-40">Don</text>
+			<text x="-81" y="-87" style="font-size:3px;text-anchor:start">Point le plus haut</text>
+			<text transform="rotate(-90)translate(21.5,-93)"
+				x="0" y="0"><tspan
+				x="0" dy="-2">Réservoir de </tspan><tspan
+				x="0" dy="4">Karpovsky</tspan></text>
+			<text x="-95" y="-43" style="font-size:3px;text-anchor:start">Le niveau du rivière Don 44 mètres</text>
+			<text x="-63.5" y="-67"><tspan
+				x="-63.5" dy="0">Réservoir de </tspan><tspan
+				x="-63.5" dy="4">Bereslavsky</tspan></text>
+			<text x="-33" y="-79"><tspan
+				x="-33" dy="0">Réservoir de </tspan><tspan
+				x="-33" dy="4">Barbarian</tspan></text>
+			<text x="-7" y="1" style="font-size:3px;text-anchor:end">Le niveau du rivière Volga 88 mètres</text>
+			<text x="-50.5" y="11.5">Profil du Canal Don-Volga</text>
+			<text x="8" y="4">Volga</text>
+		</g>
+		<g id="text_elements-ru" systemLanguage="ru" style="font-family:DejaVuSans-Oblique">
+			<text x="-109" y="-40">Дон</text>
+			<text x="-81" y="-87" style="font-size:2.5px;text-anchor:start">Самая высокая точка</text>
+			<text transform="rotate(-90)translate(21.5,-93)"
+				x="0" y="0"><tspan
+				x="0" dy="-2">Карповское </tspan><tspan
+				x="0" dy="4">водохранилище</tspan></text>
+			<text x="-95" y="-43" style="font-size:3px;text-anchor:start">Уровень реки Дон 44 метра</text>
+			<text x="-63.5" y="-67" style="font-size:3px"><tspan
+				x="-63.5" dy="0">Береславское </tspan><tspan
+				x="-63.5" dy="4">водохранилище</tspan></text>
+			<text x="-33" y="-79" style="font-size:3px"><tspan
+				x="-33" dy="0">Варваровское </tspan><tspan
+				x="-33" dy="4">водохранилище</tspan></text>
+			<text x="-7" y="1" style="font-size:3px;text-anchor:end">Уровень реки Волга 88 метра</text>
+			<text x="-50.5" y="11.5">Профиль Волго-Донского судоходного канала</text>
+			<text x="8" y="4">Волга</text>
+		</g>
+		<g id="text_elements-other">
+			<text x="-109" y="-40">Don</text>
+			<text x="-81" y="-87" style="font-size:3px;text-anchor:start">Highest point</text>
+			<text transform="rotate(-90)translate(21.5,-93)"
+				x="0" y="0">Karpovsky Reservoir</text>
+			<text x="-95" y="-43" style="font-size:3px;text-anchor:start">Level River Don 44 meters</text>
+			<text x="-63.5" y="-67"><tspan
+				x="-63.5" dy="0">Bereslavsky </tspan><tspan
+				x="-63.5" dy="4">Reservoir</tspan></text>
+			<text x="-33" y="-79"><tspan
+				x="-33" dy="0">Barbarian </tspan><tspan
+				x="-33" dy="4">Reservoir</tspan></text>
+			<text x="-7" y="1" style="font-size:3px;text-anchor:end">Level River Volga 88 meters</text>
+			<text x="-50.5" y="11.5">Profile of the Volga–Don Canal</text>
+			<text x="8" y="4">Volga</text>
+		</g>
+	</switch>
+	<switch id="text_elements_m_and_km"
+		text-anchor="middle">
+		<g id="text_elements_number-ru" systemLanguage="ru" style="font-family:DejaVuSans-Oblique">
+			<text x="-94.5" y="5.3">13</text>
+			<text x="-84.5" y="5.3">7</text>
+			<text x="-63.5" y="5.3">35 км</text>
+			<text x="-33" y="5.3">26</text>
+			<text x="-10" y="5.3">20</text>
+			<text transform="rotate(-90)translate(66,-112)"
+				x="0" y="0">44 м</text>
+			<text transform="rotate(-90)translate(55,14)"
+				x="0" y="0">88 м</text>
+		</g>
+		<g id="text_elements_number-other">
+			<text x="-94.5" y="5.3">13</text>
+			<text x="-84.5" y="5.3">7</text>
+			<text x="-63.5" y="5.3">35 km</text>
+			<text x="-33" y="5.3">26</text>
+			<text x="-10" y="5.3">20</text>
+			<text transform="rotate(-90)translate(66,-112)"
+				x="0" y="0">44 m</text>
+			<text transform="rotate(-90)translate(55,14)"
+				x="0" y="0">88 m</text>
+		</g>
+	</switch>
+	<g id="arrows" style="stroke:#000;stroke-width:.3px;">
+		<path id="arrow-1" d="m-100.5 4h3 m6 0h3" marker-end="url(#b)" marker-start="url(#a)"/>
+		<path id="arrow-2" d="m-80.5 4h10 m14 0h10" marker-end="url(#b)" marker-start="url(#a)"/>
+		<path id="arrow-3" d="m-45.5 4h8 m9 0h8" marker-end="url(#b)" marker-start="url(#a)"/>
+		<path id="arrow-4" d="m-19.5 4h6 m7 0h6" marker-end="url(#b)" marker-start="url(#a)"/>
+		<path id="arrow-5" d="m-113 -87v15m0 12v15" marker-end="url(#b)" marker-start="url(#a)"/>
+		<path id="arrow-6" d="m13 -87v26m0 12v48" marker-end="url(#b)" marker-start="url(#a)"/>
+	</g>
+</g>
+</svg>

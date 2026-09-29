@@ -1,0 +1,886 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   version="1.0"
+   id="svg2"
+   sodipodi:version="0.32"
+   inkscape:version="0.46"
+   width="300"
+   height="250"
+   sodipodi:docname="Circular aperture variables.svg"
+   inkscape:output_extension="org.inkscape.output.svg.inkscape"
+   sodipodi:docbase="C:\Documents and Settings\JJB\My Documents\My Pictures\Electronics\Illustrations\Maths\Functions">
+  <sodipodi:namedview
+     inkscape:window-height="874"
+     inkscape:window-width="1404"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     guidetolerance="10.0"
+     gridtolerance="10000"
+     objecttolerance="10.0"
+     borderopacity="1.0"
+     bordercolor="#666666"
+     pagecolor="#ffffff"
+     id="base"
+     inkscape:zoom="2"
+     inkscape:cx="207.53846"
+     inkscape:cy="112.65897"
+     inkscape:window-x="28"
+     inkscape:window-y="0"
+     inkscape:current-layer="layer8"
+     width="720px"
+     height="460px"
+     showgrid="false"
+     inkscape:grid-points="true"
+     showguides="true"
+     inkscape:guide-bbox="true">
+    <inkscape:grid
+       id="GridFromPre046Settings"
+       type="xygrid"
+       originx="0px"
+       originy="0px"
+       spacingx="5px"
+       spacingy="5px"
+       color="#0000ff"
+       empcolor="#0000ff"
+       opacity="0.2"
+       empopacity="0.4"
+       empspacing="5"
+       visible="true"
+       enabled="true" />
+  </sodipodi:namedview>
+  <metadata
+     id="metadata2112">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs2102">
+    <linearGradient
+       inkscape:collect="always"
+       id="linearGradient5212">
+      <stop
+         style="stop-color:#000000;stop-opacity:1;"
+         offset="0"
+         id="stop5214" />
+      <stop
+         style="stop-color:#000000;stop-opacity:0;"
+         offset="1"
+         id="stop5216" />
+    </linearGradient>
+    <inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="-50 : 600 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_z="700 : 600 : 1"
+       inkscape:persp3d-origin="300 : 400 : 1"
+       id="perspective4243" />
+    <font
+       id="SVGTimesFont"
+       horiz-adv-x="1024">
+      <font-face
+         font-family="SVGTimes"
+         id="font-face2105"
+         font-weight="normal"
+         units-per-em="2048" />
+      <missing-glyph
+         d="M128 0V1638H896V0H128ZM256 128H768V1510H256V128Z"
+         id="missing-glyph2107" />
+      <glyph
+         unicode="-"
+         id="glyph2109"
+         d="M1184 469H135V584H1184V469Z"
+         horiz-adv-x="1319" />
+    </font>
+    <clipPath
+       id="cp22">
+      <polygon
+         id="polygon2006"
+         points="74,13 74,364 434,364 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="cp1">
+      <polygon
+         id="polygon9"
+         points="-33554400,-33554400 -33554400,33554400 33554400,33554400 33554400,-33554400 -33554400,-33554400 " />
+    </clipPath>
+    <clipPath
+       id="cp3">
+      <polygon
+         id="polygon1797"
+         points="73,190 73,203.563 95,203.563 95,190 73,190 " />
+    </clipPath>
+    <clipPath
+       id="cp4">
+      <polygon
+         id="polygon1806"
+         points="74,13 74,364 434,364 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="cp5">
+      <polygon
+         id="polygon1821"
+         points="73,190 73,203.563 95,203.563 95,190 73,190 " />
+    </clipPath>
+    <clipPath
+       id="cp6">
+      <polygon
+         id="polygon1830"
+         points="74,13 74,364 434,364 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="cp7">
+      <polygon
+         id="polygon1845"
+         points="73,190 73,203.563 88,203.563 88,190 73,190 " />
+    </clipPath>
+    <clipPath
+       id="cp8">
+      <polygon
+         id="polygon1852"
+         points="74,13 74,364 434,364 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="cp9">
+      <polygon
+         id="polygon1867"
+         points="73,190 73,203.563 88,203.563 88,190 73,190 " />
+    </clipPath>
+    <clipPath
+       id="cp10">
+      <polygon
+         id="polygon1874"
+         points="74,13 74,364 434,364 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="cp11">
+      <polygon
+         id="polygon1889"
+         points="73,190 73,203.563 88,203.563 88,190 73,190 " />
+    </clipPath>
+    <clipPath
+       id="cp12">
+      <polygon
+         id="polygon1896"
+         points="74,13 74,364 434,364 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="cp13">
+      <polygon
+         id="polygon1907"
+         points="74,190 74,204 95,204 95,190 74,190 " />
+    </clipPath>
+    <clipPath
+       id="cp14">
+      <polygon
+         id="polygon1916"
+         points="74,13 74,364 434,364 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="cp15">
+      <polygon
+         id="polygon1931"
+         points="74,190 74,204 95,204 95,190 74,190 " />
+    </clipPath>
+    <clipPath
+       id="cp16">
+      <polygon
+         id="polygon1940"
+         points="74,13 74,364 434,364 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="cp17">
+      <polygon
+         id="polygon1955"
+         points="73,190 73,204 88,204 88,190 73,190 " />
+    </clipPath>
+    <clipPath
+       id="cp18">
+      <polygon
+         id="polygon1962"
+         points="74,13 74,364 434,364 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="cp19">
+      <polygon
+         id="polygon1977"
+         points="73,190 73,204 88,204 88,190 73,190 " />
+    </clipPath>
+    <clipPath
+       id="cp20">
+      <polygon
+         id="polygon1984"
+         points="74,13 74,364 434,364 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="cp21">
+      <polygon
+         id="polygon1999"
+         points="73,190 73,204 88,204 88,190 73,190 " />
+    </clipPath>
+    <font
+       id="font3074"
+       horiz-adv-x="1024">
+      <font-face
+         font-family="SVGTimes"
+         id="font-face3065"
+         font-weight="normal"
+         units-per-em="2048" />
+      <missing-glyph
+         id="missing-glyph3067"
+         d="M128 0V1638H896V0H128ZM256 128H768V1510H256V128Z" />
+      <glyph
+         horiz-adv-x="1319"
+         id="glyph3069"
+         d="M1184 469H135V584H1184V469Z"
+         unicode="-" />
+    </font>
+    <clipPath
+       id="clipPath3082">
+      <polygon
+         id="polygon2799"
+         points="90,14 90,227 433,227 433,14 90,14 " />
+    </clipPath>
+    <font
+       id="font4654"
+       horiz-adv-x="1024">
+      <font-face
+         font-family="SVGTimes"
+         id="font-face4645"
+         font-weight="normal"
+         units-per-em="2048" />
+      <missing-glyph
+         id="missing-glyph4647"
+         d="M128 0V1638H896V0H128ZM256 128H768V1510H256V128Z" />
+      <glyph
+         horiz-adv-x="1319"
+         id="glyph4649"
+         d="M1184 469H135V584H1184V469Z"
+         unicode="-" />
+    </font>
+    <font
+       id="font5037"
+       horiz-adv-x="1024">
+      <font-face
+         font-family="SVGTimes"
+         id="font-face5028"
+         font-weight="normal"
+         units-per-em="2048" />
+      <missing-glyph
+         id="missing-glyph5030"
+         d="M128 0V1638H896V0H128ZM256 128H768V1510H256V128Z" />
+      <glyph
+         horiz-adv-x="1319"
+         id="glyph5032"
+         d="M1184 469H135V584H1184V469Z"
+         unicode="-" />
+    </font>
+    <font
+       id="font4163"
+       horiz-adv-x="1024">
+      <font-face
+         font-family="SVGTimes"
+         id="font-face4154"
+         font-weight="normal"
+         units-per-em="2048" />
+      <missing-glyph
+         id="missing-glyph4156"
+         d="M128 0V1638H896V0H128ZM256 128H768V1510H256V128Z" />
+      <glyph
+         horiz-adv-x="1319"
+         id="glyph4158"
+         d="M1184 469H135V584H1184V469Z"
+         unicode="-" />
+    </font>
+    <font
+       id="SVGCourierFont"
+       horiz-adv-x="1024">
+      <font-face
+         font-family="SVGCourier"
+         id="font-face6313"
+         font-weight="normal"
+         units-per-em="2048" />
+      <missing-glyph
+         id="missing-glyph6315"
+         d="M128 0V1638H896V0H128ZM256 128H768V1510H256V128Z" />
+      <glyph
+         horiz-adv-x="1319"
+         id="glyph6317"
+         d="M1184 469H717V0H602V469H135V584H602V1047H717V584H1184V469Z"
+         unicode="+" />
+    </font>
+    <font
+       id="font6598"
+       horiz-adv-x="1024">
+      <font-face
+         font-family="SVGTimes"
+         id="font-face6589"
+         font-weight="normal"
+         units-per-em="2048" />
+      <missing-glyph
+         id="missing-glyph6591"
+         d="M128 0V1638H896V0H128ZM256 128H768V1510H256V128Z" />
+      <glyph
+         horiz-adv-x="1319"
+         id="glyph6593"
+         d="M1184 469H135V584H1184V469Z"
+         unicode="-" />
+    </font>
+    <clipPath
+       id="clipPath6606">
+      <polygon
+         id="polygon6345"
+         points="74,14 74,237 433,237 433,14 74,14 " />
+    </clipPath>
+    <clipPath
+       id="clipPath3093">
+      <polygon
+         id="polygon2817"
+         points="74,13 74,229 434,229 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="clipPath3107">
+      <polygon
+         id="polygon2839"
+         points="74,13 74,229 434,229 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="clipPath3121">
+      <polygon
+         id="polygon2861"
+         points="74,13 74,229 434,229 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="clipPath3135">
+      <polygon
+         id="polygon2883"
+         points="74,13 74,229 434,229 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="clipPath3149">
+      <polygon
+         id="polygon2905"
+         points="74,13 74,229 434,229 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="clipPath3161">
+      <polygon
+         id="polygon2923"
+         points="74,13 74,229 434,229 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="clipPath3175">
+      <polygon
+         id="polygon2945"
+         points="74,13 74,229 434,229 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="clipPath3191">
+      <polygon
+         id="polygon2971"
+         points="73,122 73,136 88,136 88,122 73,122 " />
+    </clipPath>
+    <clipPath
+       id="clipPath3204">
+      <polygon
+         id="polygon2991"
+         points="73,122 73,136 88,136 88,122 73,122 " />
+    </clipPath>
+    <clipPath
+       id="clipPath3217">
+      <polygon
+         id="polygon3011"
+         points="73,122 73,136 88,136 88,122 73,122 " />
+    </clipPath>
+    <clipPath
+       id="clipPath6613">
+      <polygon
+         id="polygon6356"
+         points="74,13 74,239 434,239 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="clipPath6618">
+      <polygon
+         id="polygon6363"
+         points="73,127 73,141 87,141 87,127 73,127 " />
+    </clipPath>
+    <clipPath
+       id="clipPath6632">
+      <polygon
+         id="polygon6385"
+         points="73,127 73,141 87,141 87,127 73,127 " />
+    </clipPath>
+    <clipPath
+       id="clipPath6646">
+      <polygon
+         id="polygon6407"
+         points="74,13 74,239 434,239 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="clipPath6659">
+      <polygon
+         id="polygon6427"
+         points="74,13 74,239 434,239 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="clipPath6684">
+      <polygon
+         id="polygon6465"
+         points="74,13 74,239 434,239 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="clipPath6698">
+      <polygon
+         id="polygon6487"
+         points="74,13 74,239 434,239 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="clipPath6712">
+      <polygon
+         id="polygon6509"
+         points="74,13 74,239 434,239 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="clipPath6728">
+      <polygon
+         id="polygon6535"
+         points="73,127 73,141 88,141 88,127 73,127 " />
+    </clipPath>
+    <clipPath
+       id="clipPath6741">
+      <polygon
+         id="polygon6555"
+         points="73,127 73,141 88,141 88,127 73,127 " />
+    </clipPath>
+    <font
+       id="font7718"
+       horiz-adv-x="1024">
+      <font-face
+         font-family="SVGTimes"
+         id="font-face7709"
+         font-weight="normal"
+         units-per-em="2048" />
+      <missing-glyph
+         id="missing-glyph7711"
+         d="M128 0V1638H896V0H128ZM256 128H768V1510H256V128Z" />
+      <glyph
+         horiz-adv-x="1319"
+         id="glyph7713"
+         d="M1184 469H135V584H1184V469Z"
+         unicode="-" />
+    </font>
+    <clipPath
+       id="clipPath7904">
+      <polygon
+         id="polygon7884"
+         points="74,13 74,236 434,236 434,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="cp2">
+      <polygon
+         id="polygon8435"
+         points="74,13 74,236 434,236 434,13 74,13 " />
+    </clipPath>
+    <font
+       id="font9179"
+       horiz-adv-x="1024">
+      <font-face
+         font-family="SVGTimes"
+         id="font-face9170"
+         font-weight="normal"
+         units-per-em="2048" />
+      <missing-glyph
+         id="missing-glyph9172"
+         d="M128 0V1638H896V0H128ZM256 128H768V1510H256V128Z" />
+      <glyph
+         horiz-adv-x="1319"
+         id="glyph9174"
+         d="M1184 469H135V584H1184V469Z"
+         unicode="-" />
+    </font>
+    <clipPath
+       id="clipPath9187">
+      <polygon
+         id="polygon8852"
+         points="74,13 74,235 433,235 433,13 74,13 " />
+    </clipPath>
+    <font
+       id="font10460"
+       horiz-adv-x="1024">
+      <font-face
+         font-family="SVGTimes"
+         id="font-face10451"
+         font-weight="normal"
+         units-per-em="2048" />
+      <missing-glyph
+         id="missing-glyph10453"
+         d="M128 0V1638H896V0H128ZM256 128H768V1510H256V128Z" />
+      <glyph
+         horiz-adv-x="1319"
+         id="glyph10455"
+         d="M1184 469H135V584H1184V469Z"
+         unicode="-" />
+    </font>
+    <clipPath
+       id="clipPath10472">
+      <polygon
+         id="polygon10121"
+         points="74,13 74,235 433,235 433,13 74,13 " />
+    </clipPath>
+    <clipPath
+       id="clipPath6583">
+      <polygon
+         id="polygon6562"
+         points="74,13 74,236 434,236 434,13 74,13 " />
+    </clipPath>
+    <font
+       horiz-adv-x="1024"
+       id="font3932">
+      <font-face
+         id="font-face3920"
+         font-weight="normal"
+         units-per-em="2048"
+         font-family="SVGTimes" />
+      <missing-glyph
+         id="missing-glyph3922"
+         d="M128 0V1638H896V0H128ZM256 128H768V1510H256V128Z" />
+      <glyph
+         id="glyph3924"
+         d="M1184 469H135V584H1184V469Z"
+         horiz-adv-x="1319"
+         unicode="-" />
+    </font>
+    <inkscape:perspective
+       id="perspective3929"
+       inkscape:persp3d-origin="372.04724 : 350.78739 : 1"
+       inkscape:vp_z="744.09448 : 526.18109 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 526.18109 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <font
+       horiz-adv-x="1024"
+       id="font4617">
+      <font-face
+         id="font-face4605"
+         font-weight="normal"
+         units-per-em="2048"
+         font-family="SVGTimes" />
+      <missing-glyph
+         id="missing-glyph4607"
+         d="M128 0V1638H896V0H128ZM256 128H768V1510H256V128Z" />
+      <glyph
+         id="glyph4609"
+         d="M1184 469H135V584H1184V469Z"
+         horiz-adv-x="1319"
+         unicode="-" />
+    </font>
+    <inkscape:perspective
+       id="perspective4614"
+       inkscape:persp3d-origin="372.04724 : 350.78739 : 1"
+       inkscape:vp_z="744.09448 : 526.18109 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 526.18109 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <clipPath
+       id="clipPath4629">
+      <polygon
+         points="74,14 74,237 433,237 433,14 74,14 "
+         id="polygon4199" />
+    </clipPath>
+    <inkscape:perspective
+       id="perspective5206"
+       inkscape:persp3d-origin="372.04724 : 350.78739 : 1"
+       inkscape:vp_z="744.09448 : 526.18109 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 526.18109 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient5212"
+       id="linearGradient5218"
+       x1="25"
+       y1="300"
+       x2="25"
+       y2="-5.6843419e-14"
+       gradientUnits="userSpaceOnUse" />
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient5212"
+       id="linearGradient5240"
+       gradientUnits="userSpaceOnUse"
+       x1="25"
+       y1="300"
+       x2="25"
+       y2="-5.6843419e-14"
+       gradientTransform="matrix(1,0,0,0.5966667,-55,10.499993)" />
+    <inkscape:perspective
+       id="perspective2454"
+       inkscape:persp3d-origin="24 : 16 : 1"
+       inkscape:vp_z="48 : 24 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 24 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective6616"
+       inkscape:persp3d-origin="24 : 16 : 1"
+       inkscape:vp_z="48 : 24 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 24 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <inkscape:perspective
+       id="perspective6668"
+       inkscape:persp3d-origin="24 : 16 : 1"
+       inkscape:vp_z="48 : 24 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 24 : 1"
+       sodipodi:type="inkscape:persp3d" />
+  </defs>
+  <g
+     inkscape:groupmode="layer"
+     id="layer5"
+     inkscape:label="SideBar" />
+  <g
+     inkscape:groupmode="layer"
+     id="layer7"
+     inkscape:label="MajorTicks"
+     style="display:inline" />
+  <g
+     inkscape:groupmode="layer"
+     id="layer8"
+     inkscape:label="MinorTicks">
+    <g
+       inkscape:label="Layer 1"
+       id="g6630"
+       transform="matrix(0.9928206,0.1196124,-0.1196124,0.9928206,224.14233,116.23583)"
+       style="-inkscape-font-specification:DejaVu Serif;font-family:DejaVu Serif;font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:16.00000104px;text-anchor:end;text-align:end;writing-mode:lr;line-height:100%">
+      <path
+         id="path6632"
+         d="M 15.142857,18.285714 L 15.142857,22.285714 L 23.142857,20.285714 L 15.142857,18.285714"
+         style="opacity:1;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:2.00000023999999990;marker:none;stroke-opacity:1;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;-inkscape-font-specification:DejaVu Serif;font-family:DejaVu Serif;font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:16.00000104px;text-anchor:end;text-align:end;writing-mode:lr;line-height:100%" />
+    </g>
+    <path
+       style="opacity:1;fill:#729fcf;fill-opacity:1;stroke:#000000;stroke-width:2;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       d="M 103.84375,14.020579 L 4,63.989329 L 4,213.98933 L 103.84375,164.02058 L 103.84375,14.020579 z M 64.46875,71.176829 C 76.224303,70.90177 84.625,81.395579 84.625,98.645579 C 84.625,120.72558 70.855927,145.53438 53.90625,154.02058 C 36.956574,162.50677 23.1875,151.47558 23.1875,129.39558 C 23.187501,107.31557 36.956573,82.506777 53.90625,74.020579 C 57.613992,72.164224 61.177195,71.253846 64.46875,71.176829 z"
+       id="rect6472" />
+    <path
+       sodipodi:nodetypes="cc"
+       id="path6548"
+       d="M 139.08669,109.68063 C 143.42145,115.63927 142.87782,123.89507 142.87782,123.89507 L 143.37108,124.61825 L 53.96875,114.02058 L 139.08669,109.68063 z"
+       style="opacity:0.50000000000000000;fill:#cc0000;fill-opacity:1;stroke:none;stroke-width:2;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-font-specification:DejaVu Serif;font-family:DejaVu Serif;font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:16px;text-anchor:end;text-align:end;writing-mode:lr;line-height:100%" />
+    <path
+       style="opacity:1;fill:none;fill-opacity:1;stroke:#000000;stroke-width:2;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-font-specification:DejaVu Serif;font-family:DejaVu Serif;font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:16px;text-anchor:end;text-align:end;writing-mode:lr;line-height:100%"
+       d="M 53.96875,114.02058 L 246.09375,139.27058"
+       id="path6554"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="opacity:1;fill:none;fill-opacity:1;stroke:#000000;stroke-width:2;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-font-specification:DejaVu Serif;font-family:DejaVu Serif;font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:16px;text-anchor:end;text-align:end;writing-mode:lr;line-height:100%"
+       d="M 216.71875,104.02058 L 53.96875,114.02058"
+       id="path6480"
+       sodipodi:nodetypes="cc" />
+    <g
+       inkscape:label="Layer 1"
+       id="g6626"
+       transform="matrix(0.9991332,-4.1627391e-2,-4.1627391e-2,-0.9991332,192.87519,125.34983)"
+       style="-inkscape-font-specification:DejaVu Serif Italic;font-family:DejaVu Serif;font-weight:normal;font-style:italic;font-stretch:normal;font-variant:normal;font-size:16.00000006999999900px;text-anchor:end;text-align:end;writing-mode:lr;line-height:100%">
+      <path
+         id="path6628"
+         d="M 15.142857,18.285714 L 15.142857,22.285714 L 23.142857,20.285714 L 15.142857,18.285714"
+         style="opacity:1;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:2.00000023999999990;marker:none;stroke-opacity:1;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;-inkscape-font-specification:DejaVu Serif Italic;font-family:DejaVu Serif;font-weight:normal;font-style:italic;font-stretch:normal;font-variant:normal;font-size:16.00000006999999900px;text-anchor:end;text-align:end;writing-mode:lr;line-height:100%" />
+    </g>
+    <rect
+       y="187.15196"
+       x="219.2394"
+       height="150"
+       width="111.63768"
+       id="rect6464"
+       style="opacity:1;fill:#fcea4f;fill-opacity:0.21693121;stroke:#000000;stroke-width:2.11502624;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       transform="matrix(0.8941873,-0.447693,0,1,0,0)" />
+    <path
+       sodipodi:end="4.0489167"
+       sodipodi:start="3.1457008"
+       transform="matrix(0.7676484,-0.3843387,0,1,23.320228,100.4762)"
+       d="M 250.00034,149.83567 A 40,40 0 0 1 265.36575,118.48566 L 290,150 z"
+       sodipodi:ry="40"
+       sodipodi:rx="40"
+       sodipodi:cy="150"
+       sodipodi:cx="290"
+       id="path6550"
+       style="opacity:1;fill:#4e9a06;fill-opacity:0.44444447999999998;stroke:none;stroke-width:2.28269981999999990;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-font-specification:DejaVu Serif;font-family:DejaVu Serif;font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:18.26159926px;text-anchor:end;text-align:end;writing-mode:lr;line-height:100%"
+       sodipodi:type="arc" />
+    <path
+       sodipodi:type="arc"
+       style="opacity:1;fill:none;fill-opacity:1;stroke:#000000;stroke-width:2.28269981999999990;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-font-specification:DejaVu Serif;font-family:DejaVu Serif;font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:18.26159926px;text-anchor:end;text-align:end;writing-mode:lr;line-height:100%"
+       id="path6466"
+       sodipodi:cx="290"
+       sodipodi:cy="150"
+       sodipodi:rx="40"
+       sodipodi:ry="40"
+       d="M 250.00145,149.65981 A 40,40 0 0 1 265.23897,118.58517"
+       transform="matrix(0.7676484,-0.3843387,0,1,23.320228,100.4762)"
+       sodipodi:start="3.1500975"
+       sodipodi:end="4.0448873"
+       sodipodi:open="true" />
+    <path
+       style="opacity:1;fill:none;fill-opacity:1;stroke:#000000;stroke-width:1.99999988;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       d="M 245.93827,39.679152 L 245.93827,213.8568"
+       id="path6468" />
+    <path
+       style="opacity:1;fill:none;fill-opacity:1;stroke:#000000;stroke-width:2;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       d="M 295.1814,114.62822 L 176.84597,174.05667"
+       id="path6470"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="opacity:1;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:2;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-font-specification:DejaVu Serif;font-family:DejaVu Serif;font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:16px;text-anchor:end;text-align:end;writing-mode:lr;line-height:100%"
+       d="M 246.05358,139.02058 L 216.05358,104.02058"
+       id="path6484" />
+    <g
+       inkscape:label="Layer 1"
+       id="layer1"
+       transform="matrix(-0.6948829,-0.7191229,0.7191229,-0.6948829,218.42642,136.11659)"
+       style="-inkscape-font-specification:DejaVu Serif;font-family:DejaVu Serif;font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:16.00000008px;text-anchor:end;text-align:end;writing-mode:lr;line-height:100%">
+      <path
+         id="path2444"
+         d="M 15.142857,18.285714 L 15.142857,22.285714 L 23.142857,20.285714 L 15.142857,18.285714"
+         style="opacity:1;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:2.00000023999999990;marker:none;stroke-opacity:1;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;-inkscape-font-specification:DejaVu Serif;font-family:DejaVu Serif;font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:16.00000008px;text-anchor:end;text-align:end;writing-mode:lr;line-height:100%" />
+    </g>
+    <path
+       style="opacity:1;fill:none;fill-opacity:1;stroke:#000000;stroke-width:2;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-font-specification:DejaVu Serif;font-family:DejaVu Serif;font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:16px;text-anchor:end;text-align:end;writing-mode:lr;line-height:100%"
+       d="M 139.08669,109.68063 C 143.42145,115.63927 142.87782,123.89507 142.87782,123.89507"
+       id="path6546"
+       sodipodi:nodetypes="cc" />
+    <text
+       xml:space="preserve"
+       style="font-size:16px;font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:end;line-height:100%;writing-mode:lr;text-anchor:end;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:DejaVu Serif;-inkscape-font-specification:DejaVu Serif Italic"
+       x="220.18195"
+       y="127.63059"
+       id="text6556"
+       sodipodi:linespacing="100%"><tspan
+         sodipodi:role="line"
+         id="tspan6558"
+         x="220.18195"
+         y="127.63059">φ</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:16px;font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:end;line-height:100%;writing-mode:lr;text-anchor:end;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:DejaVu Serif;-inkscape-font-specification:DejaVu Serif Italic"
+       x="154.75002"
+       y="123.52058"
+       id="text6560"
+       sodipodi:linespacing="100%"><tspan
+         sodipodi:role="line"
+         id="tspan6562"
+         x="154.75002"
+         y="123.52058">θ</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:16px;font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:end;line-height:100%;writing-mode:lr;text-anchor:end;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:DejaVu Serif;-inkscape-font-specification:DejaVu Serif Italic"
+       x="180.09377"
+       y="104.02058"
+       id="text6564"
+       sodipodi:linespacing="100%"><tspan
+         sodipodi:role="line"
+         id="tspan6566"
+         x="180.09377"
+         y="104.02058">R</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:16px;font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:end;line-height:100%;writing-mode:lr;text-anchor:end;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:DejaVu Serif;-inkscape-font-specification:DejaVu Serif Italic"
+       x="177.87502"
+       y="144.02057"
+       id="text6568"
+       sodipodi:linespacing="100%"><tspan
+         sodipodi:role="line"
+         id="tspan6570"
+         x="177.87502"
+         y="144.02057">L</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:16px;font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:end;line-height:100%;writing-mode:lr-tb;text-anchor:end;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:DejaVu Serif;-inkscape-font-specification:DejaVu Serif Italic"
+       x="41.281246"
+       y="133.52057"
+       id="text6572"
+       sodipodi:linespacing="100%"><tspan
+         sodipodi:role="line"
+         id="tspan6574"
+         x="41.281246"
+         y="133.52057">a</tspan></text>
+    <path
+       style="opacity:1;fill:#4e9a06;fill-opacity:1;stroke:#000000;stroke-width:2;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-font-specification:DejaVu Serif;font-family:DejaVu Serif;font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:16px;text-anchor:end;text-align:end;writing-mode:lr;line-height:100%"
+       d="M 53.96875,114.02058 L 33.96875,154.02058"
+       id="path6576" />
+    <g
+       inkscape:label="Layer 1"
+       id="g6618"
+       transform="matrix(0.4484638,-0.893801,0.893801,0.4484638,24.758733,127.06094)"
+       style="-inkscape-font-specification:DejaVu Serif;font-family:DejaVu Serif;font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:15.99999994px;text-anchor:end;text-align:end;writing-mode:lr;line-height:100%">
+      <path
+         id="path6620"
+         d="M 15.142857,18.285714 L 15.142857,22.285714 L 23.142857,20.285714 L 15.142857,18.285714"
+         style="opacity:1;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:2.00000023999999990;marker:none;stroke-opacity:1;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;-inkscape-font-specification:DejaVu Serif;font-family:DejaVu Serif;font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:15.99999994px;text-anchor:end;text-align:end;writing-mode:lr;line-height:100%" />
+    </g>
+    <g
+       transform="matrix(-0.4484638,0.893801,-0.893801,-0.4484638,62.478875,142.43288)"
+       id="g6622"
+       inkscape:label="Layer 1"
+       style="-inkscape-font-specification:DejaVu Serif;font-family:DejaVu Serif;font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:15.99999994px;text-anchor:end;text-align:end;writing-mode:lr;line-height:100%">
+      <path
+         style="opacity:1;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:2.00000023999999990;marker:none;stroke-opacity:1;visibility:visible;display:inline;overflow:visible;enable-background:accumulate;-inkscape-font-specification:DejaVu Serif;font-family:DejaVu Serif;font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:15.99999994px;text-anchor:end;text-align:end;writing-mode:lr;line-height:100%"
+         d="M 15.142857,18.285714 L 15.142857,22.285714 L 23.142857,20.285714 L 15.142857,18.285714"
+         id="path6624" />
+    </g>
+    <path
+       sodipodi:type="arc"
+       style="opacity:1;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-font-specification:DejaVu Serif;font-family:DejaVu Serif;font-weight:normal;font-style:normal;font-stretch:normal;font-variant:normal;font-size:20px;text-anchor:end;text-align:end;writing-mode:lr;line-height:100%"
+       id="path6580"
+       sodipodi:cx="247.5"
+       sodipodi:cy="112.5"
+       sodipodi:rx="2.5"
+       sodipodi:ry="2.5"
+       d="M 250,112.5 A 2.5,2.5 0 1 1 245,112.5 A 2.5,2.5 0 1 1 250,112.5 z"
+       transform="matrix(0.8,0,0,0.8,-144.03125,24.020579)" />
+    <path
+       sodipodi:type="arc"
+       style="opacity:1;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1;stroke-linecap:square;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;-inkscape-font-specification:DejaVu Serif Italic;font-family:DejaVu Serif;font-weight:normal;font-style:italic;font-stretch:normal;font-variant:normal;font-size:20px;text-anchor:end;text-align:end;writing-mode:lr;line-height:100%"
+       id="path6482"
+       sodipodi:cx="247.5"
+       sodipodi:cy="112.5"
+       sodipodi:rx="2.5"
+       sodipodi:ry="2.5"
+       d="M 250,112.5 A 2.5,2.5 0 1 1 245,112.5 A 2.5,2.5 0 1 1 250,112.5 z"
+       transform="matrix(0.8,0,0,0.8,18.053574,14.020579)" />
+    <g
+       inkscape:label="Layer 1"
+       id="g6670"
+       transform="matrix(0,-1,1,0,225.76787,57.163436)">
+      <path
+         id="path6672"
+         d="M 15.142857,18.285714 L 15.142857,22.285714 L 23.142857,20.285714 L 15.142857,18.285714"
+         style="opacity:1;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:2.00000024;marker:none;stroke-opacity:1;visibility:visible;display:inline;overflow:visible;enable-background:accumulate" />
+    </g>
+    <g
+       inkscape:label="Layer 1"
+       id="g6674"
+       transform="matrix(-0.9152617,0.4028597,-0.4028597,-0.9152617,201.35407,185.26399)">
+      <path
+         id="path6676"
+         d="M 15.142857,18.285714 L 15.142857,22.285714 L 23.142857,20.285714 L 15.142857,18.285714"
+         style="opacity:1;fill:#000000;fill-opacity:1;stroke:#000000;stroke-width:2.00000024;marker:none;stroke-opacity:1;visibility:visible;display:inline;overflow:visible;enable-background:accumulate" />
+    </g>
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer6"
+     inkscape:label="Labels" />
+</svg>

@@ -1,0 +1,465 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   width="1280"
+   height="720"
+   overflow="hidden"
+   version="1.1"
+   id="svg19"
+   sodipodi:docname="Slide1+2.svg"
+   inkscape:version="1.3.1 (91b66b0783, 2023-11-16)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg">
+  <sodipodi:namedview
+     id="namedview19"
+     pagecolor="#ffffff"
+     bordercolor="#000000"
+     borderopacity="0.25"
+     inkscape:showpageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     inkscape:deskcolor="#d1d1d1"
+     showguides="false"
+     inkscape:zoom="0.59530566"
+     inkscape:cx="595.49241"
+     inkscape:cy="331.76234"
+     inkscape:window-width="1920"
+     inkscape:window-height="1166"
+     inkscape:window-x="-11"
+     inkscape:window-y="-11"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg19" />
+  <defs
+     id="defs1">
+    <clipPath
+       id="clip0">
+      <rect
+         x="0"
+         y="0"
+         width="1280"
+         height="720"
+         id="rect1" />
+    </clipPath>
+    <clipPath
+       id="clip0-3">
+      <rect
+         x="0"
+         y="0"
+         width="1280"
+         height="720"
+         id="rect1-3" />
+    </clipPath>
+    <clipPath
+       id="clip0-0">
+      <rect
+         x="0"
+         y="0"
+         width="1280"
+         height="720"
+         id="rect1-2" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath19">
+      <rect
+         style="fill:#ff2a2a;fill-opacity:0.257218;stroke-width:0.763044"
+         id="rect20"
+         width="628.06659"
+         height="631.91187"
+         x="264.48438"
+         y="19.573004" />
+    </clipPath>
+    <clipPath
+       clipPathUnits="userSpaceOnUse"
+       id="clipPath21">
+      <rect
+         style="fill:#ff2a2a;fill-opacity:0.257218;stroke-width:0.763044"
+         id="rect22"
+         width="522.96155"
+         height="572.9505"
+         x="329.7944"
+         y="40.081299" />
+    </clipPath>
+  </defs>
+  <g
+     clip-path="url(#clip0-3)"
+     id="g19-8"
+     transform="matrix(1.3084025,0,0,1.3084025,170.59142,-70.415186)">
+    <rect
+       x="0"
+       y="0"
+       width="1280"
+       height="720"
+       fill="#ffffff"
+       id="rect2-0" />
+    <path
+       d="m 407.5,331 c 0,-107.972 87.528,-195.5 195.5,-195.5 107.972,0 195.5,87.528 195.5,195.5 0,107.972 -87.528,195.5 -195.5,195.5 -107.972,0 -195.5,-87.528 -195.5,-195.5 z"
+       stroke="#000000"
+       stroke-width="1.33333"
+       stroke-miterlimit="8"
+       fill="#ffffff"
+       fill-rule="evenodd"
+       id="path2-2" />
+    <rect
+       x="556.5"
+       y="115.5"
+       width="94"
+       height="40"
+       stroke="#2f528f"
+       stroke-width="1.33333"
+       stroke-miterlimit="8"
+       fill="#4472c4"
+       id="rect3-7" />
+    <rect
+       x="387.5"
+       y="283.5"
+       width="40"
+       height="95"
+       stroke="#2f528f"
+       stroke-width="1.33333"
+       stroke-miterlimit="8"
+       fill="#4472c4"
+       id="rect4-7" />
+    <rect
+       x="778.5"
+       y="283.5"
+       width="40"
+       height="95"
+       stroke="#2f528f"
+       stroke-width="1.33333"
+       stroke-miterlimit="8"
+       fill="#4472c4"
+       id="rect5-7" />
+    <rect
+       x="556.5"
+       y="506.5"
+       width="94"
+       height="40"
+       stroke="#2f528f"
+       stroke-width="1.33333"
+       stroke-miterlimit="8"
+       fill="#4472c4"
+       id="rect6-8" />
+    <path
+       d="m 381.5,331 c 0,-122.883 99.393,-222.5 222,-222.5 122.607,0 222,99.617 222,222.5 0,122.883 -99.393,222.5 -222,222.5 -122.607,0 -222,-99.617 -222,-222.5 z"
+       stroke="#000000"
+       stroke-width="1.33333"
+       stroke-miterlimit="8"
+       stroke-dasharray="5.33333, 4"
+       fill="none"
+       fill-rule="evenodd"
+       id="path6-6" />
+    <path
+       d="m 386.5,377 c 0,-1.381 1.119,-2.5 2.5,-2.5 1.381,0 2.5,1.119 2.5,2.5 0,1.381 -1.119,2.5 -2.5,2.5 -1.381,0 -2.5,-1.119 -2.5,-2.5 z"
+       stroke="#ff0000"
+       stroke-width="1.33333"
+       stroke-miterlimit="8"
+       fill="#ff0000"
+       fill-rule="evenodd"
+       id="path7-4" />
+    <path
+       d="m 553.5,116 c 0,-1.381 1.119,-2.5 2.5,-2.5 1.381,0 2.5,1.119 2.5,2.5 0,1.381 -1.119,2.5 -2.5,2.5 -1.381,0 -2.5,-1.119 -2.5,-2.5 z"
+       stroke="#ff0000"
+       stroke-width="1.33333"
+       stroke-miterlimit="8"
+       fill="#ff0000"
+       fill-rule="evenodd"
+       id="path8-0" />
+    <path
+       d="m 818.5,284 c 0,-1.381 0.896,-2.5 2,-2.5 1.105,0 2,1.119 2,2.5 0,1.381 -0.895,2.5 -2,2.5 -1.104,0 -2,-1.119 -2,-2.5 z"
+       stroke="#ff0000"
+       stroke-width="1.33333"
+       stroke-miterlimit="8"
+       fill="#ff0000"
+       fill-rule="evenodd"
+       id="path9-2" />
+    <path
+       d="m 647.5,546 c 0,-1.381 1.119,-2.5 2.5,-2.5 1.381,0 2.5,1.119 2.5,2.5 0,1.381 -1.119,2.5 -2.5,2.5 -1.381,0 -2.5,-1.119 -2.5,-2.5 z"
+       stroke="#ff0000"
+       stroke-width="1.33333"
+       stroke-miterlimit="8"
+       fill="#ff0000"
+       fill-rule="evenodd"
+       id="path10-0" />
+    <path
+       d="m 405.5,331 c 0,-1.381 1.119,-2.5 2.5,-2.5 1.381,0 2.5,1.119 2.5,2.5 0,1.381 -1.119,2.5 -2.5,2.5 -1.381,0 -2.5,-1.119 -2.5,-2.5 z"
+       stroke="#ffff00"
+       stroke-width="1.33333"
+       stroke-miterlimit="8"
+       fill="#ffff00"
+       fill-rule="evenodd"
+       id="path11-1" />
+    <path
+       d="m 603.5,526.5 c 0,-1.104 1.119,-2 2.5,-2 1.381,0 2.5,0.896 2.5,2 0,1.105 -1.119,2 -2.5,2 -1.381,0 -2.5,-0.895 -2.5,-2 z"
+       stroke="#ffff00"
+       stroke-width="1.33333"
+       stroke-miterlimit="8"
+       fill="#ffff00"
+       fill-rule="evenodd"
+       id="path12-4" />
+    <path
+       d="m 796.5,333.5 c 0,-1.105 0.896,-2 2,-2 1.105,0 2,0.895 2,2 0,1.105 -0.895,2 -2,2 -1.104,0 -2,-0.895 -2,-2 z"
+       stroke="#ffff00"
+       stroke-width="1.33333"
+       stroke-miterlimit="8"
+       fill="#ffff00"
+       fill-rule="evenodd"
+       id="path13-4" />
+    <path
+       d="m 603.5,138 c 0,-1.381 1.119,-2.5 2.5,-2.5 1.381,0 2.5,1.119 2.5,2.5 0,1.381 -1.119,2.5 -2.5,2.5 -1.381,0 -2.5,-1.119 -2.5,-2.5 z"
+       stroke="#ffff00"
+       stroke-width="1.33333"
+       stroke-miterlimit="8"
+       fill="#ffff00"
+       fill-rule="evenodd"
+       id="path14-5" />
+    <rect
+       x="603.5"
+       y="328.5"
+       width="5"
+       height="5"
+       stroke="#0070c0"
+       stroke-width="1.33333"
+       stroke-miterlimit="8"
+       fill="#ffff00"
+       id="rect14-1" />
+    <rect
+       x="602.5"
+       y="326.5"
+       width="5"
+       height="5"
+       stroke="#0070c0"
+       stroke-width="1.33333"
+       stroke-miterlimit="8"
+       fill="#ff0000"
+       id="rect15-6" />
+    <text
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="14px"
+       transform="translate(551.948,103)"
+       id="text15-5">P1</text>
+    <text
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="14px"
+       transform="translate(604.835,175)"
+       id="text16-4">P2</text>
+    <text
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="14px"
+       transform="translate(592.435,321)"
+       id="text17-5">COC2</text>
+    <text
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="14px"
+       transform="translate(591.104,350)"
+       id="text18-2">COC1</text>
+    <path
+       d="m 655,86.5001 c 103.001,0 186.5,83.2749 186.5,185.9999"
+       stroke="#4472c4"
+       stroke-width="0.666667"
+       stroke-miterlimit="8"
+       fill="none"
+       fill-rule="evenodd"
+       id="path18-9" />
+    <path
+       d="M 3.57691,-6.6438 0.103832,1.59864 -4.40627,-6.12529 Z"
+       fill="#4472c4"
+       transform="matrix(-1,0,0,1,841.604,272.5)"
+       id="path19-6" />
+  </g>
+  <g
+     clip-path="url(#clipPath21)"
+     id="g19"
+     transform="matrix(1.3105403,0,0,1.3105403,-456.68675,-71.006061)">
+    <rect
+       x="0"
+       y="0"
+       width="1280"
+       height="720"
+       fill="#ffffff"
+       id="rect2" />
+    <path
+       d="m 407.5,331 c 0,-107.972 87.528,-195.5 195.5,-195.5 107.972,0 195.5,87.528 195.5,195.5 0,107.972 -87.528,195.5 -195.5,195.5 -107.972,0 -195.5,-87.528 -195.5,-195.5 z"
+       stroke="#000000"
+       stroke-width="1.33333"
+       stroke-miterlimit="8"
+       fill="#ffffff"
+       fill-rule="evenodd"
+       id="path2" />
+    <rect
+       x="556.5"
+       y="115.5"
+       width="94"
+       height="40"
+       stroke="#2f528f"
+       stroke-width="1.33333"
+       stroke-miterlimit="8"
+       fill="#4472c4"
+       id="rect3" />
+    <rect
+       x="360.5"
+       y="311.5"
+       width="95"
+       height="40"
+       stroke="#2f528f"
+       stroke-width="1.33333"
+       stroke-miterlimit="8"
+       fill="#4472c4"
+       id="rect4" />
+    <rect
+       x="751.5"
+       y="311.5"
+       width="94"
+       height="40"
+       stroke="#2f528f"
+       stroke-width="1.33333"
+       stroke-miterlimit="8"
+       fill="#4472c4"
+       id="rect5" />
+    <rect
+       x="556.5"
+       y="506.5"
+       width="94"
+       height="40"
+       stroke="#2f528f"
+       stroke-width="1.33333"
+       stroke-miterlimit="8"
+       fill="#4472c4"
+       id="rect6" />
+    <path
+       d="m 360.5,311 c 0,-107.972 87.528,-195.5 195.5,-195.5 107.972,0 195.5,87.528 195.5,195.5 0,107.972 -87.528,195.5 -195.5,195.5 -107.972,0 -195.5,-87.528 -195.5,-195.5 z"
+       stroke="#000000"
+       stroke-width="1.33333"
+       stroke-miterlimit="8"
+       stroke-dasharray="5.33333, 4"
+       fill="none"
+       fill-rule="evenodd"
+       id="path6" />
+    <path
+       d="m 358.5,311 c 0,-1.381 1.119,-2.5 2.5,-2.5 1.381,0 2.5,1.119 2.5,2.5 0,1.381 -1.119,2.5 -2.5,2.5 -1.381,0 -2.5,-1.119 -2.5,-2.5 z"
+       stroke="#ff0000"
+       stroke-width="1.33333"
+       stroke-miterlimit="8"
+       fill="#ff0000"
+       fill-rule="evenodd"
+       id="path7" />
+    <path
+       d="m 553.5,116 c 0,-1.381 1.119,-2.5 2.5,-2.5 1.381,0 2.5,1.119 2.5,2.5 0,1.381 -1.119,2.5 -2.5,2.5 -1.381,0 -2.5,-1.119 -2.5,-2.5 z"
+       stroke="#ff0000"
+       stroke-width="1.33333"
+       stroke-miterlimit="8"
+       fill="#ff0000"
+       fill-rule="evenodd"
+       id="path8" />
+    <path
+       d="m 748.5,311 c 0,-1.381 1.119,-2.5 2.5,-2.5 1.381,0 2.5,1.119 2.5,2.5 0,1.381 -1.119,2.5 -2.5,2.5 -1.381,0 -2.5,-1.119 -2.5,-2.5 z"
+       stroke="#ff0000"
+       stroke-width="1.33333"
+       stroke-miterlimit="8"
+       fill="#ff0000"
+       fill-rule="evenodd"
+       id="path9" />
+    <path
+       d="m 553.5,506 c 0,-1.381 1.119,-2.5 2.5,-2.5 1.381,0 2.5,1.119 2.5,2.5 0,1.381 -1.119,2.5 -2.5,2.5 -1.381,0 -2.5,-1.119 -2.5,-2.5 z"
+       stroke="#ff0000"
+       stroke-width="1.33333"
+       stroke-miterlimit="8"
+       fill="#ff0000"
+       fill-rule="evenodd"
+       id="path10" />
+    <path
+       d="m 405.5,331 c 0,-1.381 1.119,-2.5 2.5,-2.5 1.381,0 2.5,1.119 2.5,2.5 0,1.381 -1.119,2.5 -2.5,2.5 -1.381,0 -2.5,-1.119 -2.5,-2.5 z"
+       stroke="#ffff00"
+       stroke-width="1.33333"
+       stroke-miterlimit="8"
+       fill="#ffff00"
+       fill-rule="evenodd"
+       id="path11" />
+    <path
+       d="m 603.5,526.5 c 0,-1.104 1.119,-2 2.5,-2 1.381,0 2.5,0.896 2.5,2 0,1.105 -1.119,2 -2.5,2 -1.381,0 -2.5,-0.895 -2.5,-2 z"
+       stroke="#ffff00"
+       stroke-width="1.33333"
+       stroke-miterlimit="8"
+       fill="#ffff00"
+       fill-rule="evenodd"
+       id="path12" />
+    <path
+       d="m 796.5,333.5 c 0,-1.105 0.896,-2 2,-2 1.105,0 2,0.895 2,2 0,1.105 -0.895,2 -2,2 -1.104,0 -2,-0.895 -2,-2 z"
+       stroke="#ffff00"
+       stroke-width="1.33333"
+       stroke-miterlimit="8"
+       fill="#ffff00"
+       fill-rule="evenodd"
+       id="path13" />
+    <path
+       d="m 603.5,138 c 0,-1.381 1.119,-2.5 2.5,-2.5 1.381,0 2.5,1.119 2.5,2.5 0,1.381 -1.119,2.5 -2.5,2.5 -1.381,0 -2.5,-1.119 -2.5,-2.5 z"
+       stroke="#ffff00"
+       stroke-width="1.33333"
+       stroke-miterlimit="8"
+       fill="#ffff00"
+       fill-rule="evenodd"
+       id="path14" />
+    <rect
+       x="603.5"
+       y="328.5"
+       width="5"
+       height="5"
+       stroke="#0070c0"
+       stroke-width="1.33333"
+       stroke-miterlimit="8"
+       fill="#ffff00"
+       id="rect14" />
+    <rect
+       x="551.5"
+       y="308.5"
+       width="5"
+       height="5"
+       stroke="#0070c0"
+       stroke-width="1.33333"
+       stroke-miterlimit="8"
+       fill="#ff0000"
+       id="rect15" />
+    <text
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="14px"
+       transform="translate(551.948,103)"
+       id="text15">P1</text>
+    <text
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="14px"
+       transform="translate(604.835,175)"
+       id="text16">P2</text>
+    <text
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="14px"
+       transform="translate(537.365,331)"
+       id="text17">COC2</text>
+    <text
+       font-family="Calibri, Calibri_MSFontService, sans-serif"
+       font-weight="400"
+       font-size="14px"
+       transform="translate(591.104,350)"
+       id="text18">COC1</text>
+    <path
+       d="m 655,86.5001 c 103.001,0 186.5,83.2749 186.5,185.9999"
+       stroke="#4472c4"
+       stroke-width="0.666667"
+       stroke-miterlimit="8"
+       fill="none"
+       fill-rule="evenodd"
+       id="path18" />
+    <path
+       d="M 3.57691,-6.6438 0.103832,1.59864 -4.40627,-6.12529 Z"
+       fill="#4472c4"
+       transform="matrix(-1,0,0,1,841.604,272.5)"
+       id="path19" />
+  </g>
+</svg>

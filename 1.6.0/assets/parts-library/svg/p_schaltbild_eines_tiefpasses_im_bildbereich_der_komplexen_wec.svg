@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg"
+      xmlns:xlink="http://www.w3.org/1999/xlink"
+      xmlns:ev="http://www.w3.org/2001/xml-events"
+      version="1.1" baseProfile="full"
+      width="630px" height="250px" viewBox="0 0 1260 500">
+<title>Beispiel eines Tiefpasses</title>
+<g fill="white" stroke="black" stroke-width="10px" font-family="sans-serif" font-size="60px" font-style="italic">
+ <!-- Leitungen -->
+ <rect x ="200" y ="150" width ="750" height ="300" fill="none"/>
+ <line x1="800" y1="150" x2="800" y2="290"/>
+ <line x1="800" y1="310" x2="800" y2="450"/>
+ <!-- Loetstellen -->
+ <circle cx ="800" cy ="150" r ="10" fill="black"/>
+ <circle cx ="800" cy ="450" r ="10" fill="black"/>
+ <!-- UG -->
+ <circle cx ="200" cy ="300" r ="50" fill="none"/>
+ <g fill="green" stroke="green" stroke-width="1px">
+  <line x1="120" y1="180" x2="120" y2="381" stroke-width="5px"/>
+  <polygon points="110 380, 130 380, 120 420"/>
+  <text x="30" y="310"><tspan style="text-decoration:underline">U</tspan><tspan dy="8px" style="font-size:30px"> G</tspan></text>
+ </g>
+ <!-- RG -->
+ <rect x ="300" y ="125" width ="150" height ="50"/>
+ <text x="345" y="100" fill="black" stroke-width="1px">R<tspan dy="10px" style="font-size:40px">G</tspan></text>
+ <!-- L -->
+ <rect x ="550" y ="125" width ="150" height ="50" fill="black"/>
+ <text x="585" y="100" fill="black" stroke-width="1px">j&#x3C9;L</text>
+ <!-- C -->
+ <rect x ="750" y ="280" width ="100" height ="10" fill="black"/>
+ <rect x ="750" y ="310" width ="100" height ="10" fill="black"/>
+ <text x="655" y="285" fill="black" stroke-width="1px">1</text>
+ <text x="620" y="350" fill="black" stroke-width="1px">j&#x3C9;C</text>
+ <line x1="625" y1="295" x2="735" y2="295"/>
+ <!-- RL -->
+ <rect x ="925" y ="225" width ="50" height ="150"/>
+ <text x="1000" y="320" fill="black" stroke-width="1px">R<tspan dy="10px" style="font-size:40px">L</tspan></text>
+ <g fill="green" stroke="green" stroke-width="1px">
+  <line x1="1100" y1="180" x2="1100" y2="381" stroke-width="5px"/>
+  <polygon points="1090 380, 1110 380, 1100 420"/>
+  <text x="1125" y="310"><tspan style="text-decoration:underline">U</tspan><tspan dy="8px" style="font-size:30px"> RL</tspan></text>
+ </g>
+</g>
+</svg>

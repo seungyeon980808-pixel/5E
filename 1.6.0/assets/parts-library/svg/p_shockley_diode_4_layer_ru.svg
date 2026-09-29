@@ -1,0 +1,9 @@
+<svg width="134mm" height="117mm" version="1.1" viewBox="0 0 134 117" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <rect width="134" height="117" fill="#fff"/>
+ <g style="font-family:'Times New Roman';-inkscape-font-specification:'Times New Roman'" font-size="10px" text-anchor="middle" stroke="#000" fill="none"><path d="m14 104v-97"/>
+ <g id="c" transform="matrix(.789 0 0 .789-95.6-18.2)"><rect x="126" y="50.7" width="24" height="21.5" fill="#fdd"/><rect x="126" y="72.2" width="24" height="20.3" fill="#ddf"/>
+ <g stroke="none" fill="#000"><text x="139" y="66">P</text><text x="139" y="87">N</text></g></g>
+ <use transform="translate(0 33)" width="290" height="199" xlink:href="#c"/>
+ <g id="b" transform="matrix(.7894 0 0 .7894-241.9-15.4)"><path d="m376.2 82.6 0-29.3" stroke-width="2.5"/><path d="m376.2 72.5-11.4 10.1v22.8m41.8-36.7h-30.4m0-5.1-11.4-10.1v-24.1"/></g>
+ <path id="a" d="m51.3 29.2-2 2 5.4 3.3z" stroke="none" fill="#000"/><use transform="rotate(180 62.5 53.3)" width="290" height="199" xlink:href="#b"/><path d="m109.4 8.8v90m-11.4-55 11.4 19 11.6-19zm23 19h-23" stroke-width="1.5"/><use transform="translate(24.7 45.6)" xlink:href="#a"/><path d="m109.4 8.8v90m-11.4-55 11.38 19 11.6-19zm23 19h-23m23-11-23 0" stroke-width="1.5"/>
+ <g stroke="none" fill="#000"><text x="44" y="7">Анод</text><text x="78" y="105">Катод</text><text x="8" y="20">а.</text><text x="40" y="20">б.</text><text x="104" y="20">в.</text></g></g></svg>

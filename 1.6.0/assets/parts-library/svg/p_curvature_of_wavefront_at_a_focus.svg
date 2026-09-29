@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<svg
+ xmlns="http://www.w3.org/2000/svg"
+ width="100%" height="100%"
+ viewBox="-80 -50 160 100">
+
+ <desc>Vergence: Curvature of wavefront near to a focus according to geometric and wave optics.</desc>
+ <g fill="none">
+  <path stroke="black" stroke-width="0.3" d="M-80,0 H80 M0,-80 V80" />
+  <path stroke-width="0.6" stroke="red"
+	d="M-80,-5 C-48,-7 -30,-10 -20,-20 S-7,-48 -5,-80 M80,5 C48,7 30,10 20,20 S7,48 5,80" />
+  <path stroke-width="0.6" stroke="blue"
+	d="M-80,-4.5 C-18,-8 -16.5,-17 0,0 S18,8 80,4.5" />
+  <rect stroke="black" stroke-width="0.3" x="-80" y="-50" width="160" height="100" />
+ </g>
+</svg>

@@ -1,0 +1,721 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   viewBox="0 0 695 1000"
+   version="1.1"
+   id="svg1702"
+   sodipodi:docname="sydney.svg"
+   inkscape:version="1.1.2 (b8e25be833, 2022-02-05)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"><defs
+   id="defs1706" />
+<sodipodi:namedview
+   id="namedview1704"
+   pagecolor="#ffffff"
+   bordercolor="#666666"
+   borderopacity="1.0"
+   inkscape:pageshadow="2"
+   inkscape:pageopacity="0.0"
+   inkscape:pagecheckerboard="0"
+   showgrid="false"
+   inkscape:zoom="0.8"
+   inkscape:cx="346.875"
+   inkscape:cy="500"
+   inkscape:window-width="1920"
+   inkscape:window-height="1009"
+   inkscape:window-x="-8"
+   inkscape:window-y="-8"
+   inkscape:window-maximized="1"
+   inkscape:current-layer="svg1702" />
+<rect
+   x="10"
+   y="10"
+   rx="5"
+   ry="5"
+   width="670"
+   height="980"
+   style="fill:none;stroke:firebrick; stroke-width:6;"
+   id="rect1440" />
+<text
+   text-anchor="middle"
+   x="300"
+   y="50"
+   font-family="Verdana"
+   font-size="32"
+   id="text1442">Klimadiagramm von  Sydney </text>
+<rect
+   x="15"
+   y="15"
+   rx="3"
+   ry="3"
+   width="660"
+   height="50"
+   style="fill:none;stroke:maroon; stroke-width:5;"
+   id="rect1444" />
+<line
+   x1="650"
+   y1="60"
+   x2="650"
+   y2="930"
+   style="stroke:rgb(100,100,100);stroke-width:2"
+   id="line1446" />
+&gt;
+<line
+   x1="40"
+   y1="120"
+   x2="650"
+   y2="120"
+   style="stroke:rgb(100,100,100);stroke-width:2"
+   id="line1448" />
+<line
+   x1="40"
+   y1="520"
+   x2="650"
+   y2="520"
+   style="stroke:rgb(100,100,100);stroke-width:2"
+   id="line1450" />
+<line
+   x1="40"
+   y1="930"
+   x2="650"
+   y2="930"
+   style="stroke:rgb(100,100,100);stroke-width:2"
+   id="line1452" />
+<line
+   x1="40"
+   y1="100"
+   x2="40"
+   y2="720"
+   style="stroke:rgb(100,100,100);stroke-width:2"
+   id="line1454" />
+<line
+   x1="40"
+   y1="230"
+   x2="650"
+   y2="230"
+   style="stroke:rgb(100,100,100);stroke-width:2"
+   id="line1456" />
+<line
+   x1="40"
+   y1="60"
+   x2="40"
+   y2="930"
+   style="stroke:rgb(100,100,100);stroke-width:2"
+   id="line1458" />
+<line
+   x1="40"
+   y1="670"
+   x2="650"
+   y2="670"
+   style="stroke:rgb(100,100,100);stroke-width:2"
+   id="line1460" />
+<line
+   x1="120"
+   y1="50"
+   x2="350"
+   y2="100"
+   font-family="Verdana"
+   font-size="32"
+   style="fill:black;stroke-width:4;"
+   id="line1462" />
+<!-- ueberschrift -->
+<text
+   x="60"
+   y="105"
+   font-family="Verdana"
+   font-size="32"
+   style="fill:black"
+   id="text1486">J
+    <tspan
+   x="110"
+   y="105"
+   id="tspan1464">F</tspan><tspan
+   x="160"
+   y="105"
+   id="tspan1466">M</tspan><tspan
+   x="210"
+   y="105"
+   id="tspan1468">A</tspan><tspan
+   x="260"
+   y="105"
+   id="tspan1470">M</tspan><tspan
+   x="310"
+   y="105"
+   id="tspan1472">J</tspan><tspan
+   x="360"
+   y="105"
+   id="tspan1474">J</tspan><tspan
+   x="410"
+   y="105"
+   id="tspan1476">A</tspan><tspan
+   x="460"
+   y="105"
+   id="tspan1478">S</tspan><tspan
+   x="510"
+   y="105"
+   id="tspan1480">O</tspan><tspan
+   x="560"
+   y="105"
+   id="tspan1482">N</tspan><tspan
+   x="610"
+   y="105"
+   id="tspan1484">D</tspan></text>
+<line
+   x1="50"
+   y1="135"
+   x2="650"
+   y2="135"
+   style="fill:blue;stroke-width:5"
+   id="line1488" />
+<!-- linien -->
+<line
+   x1="50"
+   y1="270"
+   x2="650"
+   y2="250"
+   style="fill:salmon;stroke-width:2"
+   id="line1490" />
+<line
+   x1="40"
+   y1="255"
+   x2="650"
+   y2="215"
+   style="fill:blue;stroke-width:2"
+   id="line1492" />
+<text
+   x="60"
+   y="140"
+   font-family="Verdana"
+   font-size="20"
+   fill="black"
+   id="text1516">26
+    <tspan
+   x="110"
+   y="140"
+   id="tspan1494">26</tspan><tspan
+   x="160"
+   y="140"
+   id="tspan1496">25</tspan><tspan
+   x="210"
+   y="140"
+   id="tspan1498">22</tspan><tspan
+   x="260"
+   y="140"
+   id="tspan1500">20</tspan><tspan
+   x="310"
+   y="140"
+   id="tspan1502">17</tspan><tspan
+   x="360"
+   y="140"
+   id="tspan1504">16</tspan><tspan
+   x="410"
+   y="140"
+   id="tspan1506">17</tspan><tspan
+   x="460"
+   y="140"
+   id="tspan1508">20</tspan><tspan
+   x="510"
+   y="140"
+   id="tspan1510">22</tspan><tspan
+   x="560"
+   y="140"
+   id="tspan1512">23</tspan><tspan
+   x="610"
+   y="140"
+   id="tspan1514">25</tspan></text>
+<text
+   x="60"
+   y="220"
+   font-family="Verdana"
+   font-size="20"
+   fill="black"
+   id="text1540">16
+    <tspan
+   x="110"
+   y="220"
+   id="tspan1518">16</tspan><tspan
+   x="160"
+   y="220"
+   id="tspan1520">17</tspan><tspan
+   x="210"
+   y="220"
+   id="tspan1522">13</tspan><tspan
+   x="260"
+   y="220"
+   id="tspan1524">10</tspan><tspan
+   x="310"
+   y="220"
+   id="tspan1526">8</tspan><tspan
+   x="360"
+   y="220"
+   id="tspan1528">6</tspan><tspan
+   x="410"
+   y="220"
+   id="tspan1530">7</tspan><tspan
+   x="460"
+   y="220"
+   id="tspan1532">10</tspan><tspan
+   x="510"
+   y="220"
+   id="tspan1534">12</tspan><tspan
+   x="560"
+   y="220"
+   id="tspan1536">15</tspan><tspan
+   x="610"
+   y="220"
+   id="tspan1538">17</tspan></text>
+<rect
+   x="50"
+   y="148"
+   width="40"
+   height="29"
+   style="fill:rgb(200,50,50);stroke:rgb(255,0,0);stroke-width:1;"
+   id="rect1542" />
+<rect
+   x="100"
+   y="148"
+   width="40"
+   height="31"
+   style="fill:rgb(200,50,50);stroke:rgb(255,0,0);stroke-width:1;"
+   id="rect1544" />
+<rect
+   x="150"
+   y="150"
+   width="45"
+   height="31"
+   style="fill:rgb(200,50,50);stroke:rgb(255,0,0);stroke-width:1;"
+   id="rect1546" />
+<rect
+   x="200"
+   y="156"
+   width="45"
+   height="31"
+   style="fill:rgb(200,50,50);stroke:rgb(255,0,0);stroke-width:1;"
+   id="rect1548" />
+<rect
+   x="250"
+   y="160"
+   width="45"
+   height="31"
+   style="fill:rgb(200,50,50);stroke:rgb(255,0,0);stroke-width:1;"
+   id="rect1550" />
+<rect
+   x="300"
+   y="166"
+   width="45"
+   height="31"
+   style="fill:rgb(200,50,50);stroke:rgb(255,0,0);stroke-width:1;"
+   id="rect1552" />
+<rect
+   x="350"
+   y="168"
+   width="45"
+   height="31"
+   style="fill:rgb(200,50,50);stroke:rgb(255,0,0);stroke-width:1;"
+   id="rect1554" />
+<rect
+   x="400"
+   y="168"
+   width="45"
+   height="31"
+   style="fill:rgb(200,50,50);stroke:rgb(255,0,0);stroke-width:1;"
+   id="rect1556" />
+<rect
+   x="450"
+   y="166"
+   width="45"
+   height="31"
+   style="fill:rgb(200,50,50);stroke:rgb(255,0,0);stroke-width:1;"
+   id="rect1558" />
+<rect
+   x="500"
+   y="156"
+   width="45"
+   height="31"
+   style="fill:rgb(200,50,50);stroke:rgb(255,0,0);stroke-width:1;"
+   id="rect1560" />
+<rect
+   x="550"
+   y="154"
+   width="45"
+   height="31"
+   style="fill:rgb(200,50,50);stroke:rgb(255,0,0);stroke-width:1;"
+   id="rect1562" />
+<rect
+   x="600"
+   y="150"
+   width="45"
+   height="31"
+   style="fill:rgb(200,50,50);stroke:rgb(255,0,0);stroke-width:1;"
+   id="rect1564" />
+<rect
+   x="50"
+   y="350"
+   width="45"
+   height="100"
+   style="fill:teal;stroke:rgb(255,0,0);stroke-width:1;"
+   id="rect1566" />
+<rect
+   x="100"
+   y="340"
+   width="45"
+   height="110"
+   style="fill:teal;stroke:rgb(255,0,0);stroke-width:1;"
+   id="rect1568" />
+<rect
+   x="150"
+   y="320"
+   width="45"
+   height="130"
+   style="fill:teal;stroke:rgb(255,0,0);stroke-width:1;"
+   id="rect1570" />
+<rect
+   x="200"
+   y="350"
+   width="45"
+   height="100"
+   style="fill:teal;stroke:rgb(255,0,0);stroke-width:1;"
+   id="rect1572" />
+<rect
+   x="250"
+   y="360"
+   width="45"
+   height="90"
+   style="fill:teal;stroke:rgb(255,0,0);stroke-width:1;"
+   id="rect1574" />
+<rect
+   x="300"
+   y="320"
+   width="45"
+   height="130"
+   style="fill:teal;stroke:rgb(255,0,0);stroke-width:1;"
+   id="rect1576" />
+<rect
+   x="350"
+   y="390"
+   width="45"
+   height="60"
+   style="fill:teal;stroke:rgb(255,0,0);stroke-width:1;"
+   id="rect1578" />
+<rect
+   x="400"
+   y="370"
+   width="45"
+   height="80"
+   style="fill:teal;stroke:rgb(255,0,0);stroke-width:1;"
+   id="rect1580" />
+<rect
+   x="450"
+   y="400"
+   width="45"
+   height="50"
+   style="fill:teal;stroke:rgb(255,0,0);stroke-width:1;"
+   id="rect1582" />
+<rect
+   x="500"
+   y="380"
+   width="45"
+   height="70"
+   style="fill:teal;stroke:rgb(255,0,0);stroke-width:1;"
+   id="rect1584" />
+<rect
+   x="550"
+   y="370"
+   width="45"
+   height="80"
+   style="fill:teal;stroke:rgb(255,0,0);stroke-width:1;"
+   id="rect1586" />
+<rect
+   x="600"
+   y="380"
+   width="45"
+   height="70"
+   style="fill:teal;stroke:rgb(255,0,0);stroke-width:1;"
+   id="rect1588" />
+<!--
+<rect x = "50" y ="590" width = "45" height = "60"   style="fill:gold;stroke:rgb(255,0,0);stroke-width:1;" />
+<rect x = "100" y ="600" width ="45" height = "50"  style="fill:gold;stroke:rgb(255,0,0);stroke-width:1;" />
+<rect x = "150" y ="596" width = "45" height = "56"  style="fill:gold;stroke:rgb(255,0,0);stroke-width:1;" />
+<rect x = "200" y ="590" width = "45" height = "60"  style="fill:gold;stroke:rgb(255,0,0);stroke-width:1;" />
+<rect x = "250" y ="566" width = "45" height = "84"  style="fill:gold;stroke:rgb(255,0,0);stroke-width:1;" />
+<rect x = "300" y ="578" width = "45" height = "72"  style="fill:gold;stroke:rgb(255,0,0);stroke-width:1;" />
+<rect x = "350" y ="568" width = "45" height = "82"  style="fill:gold;stroke:rgb(255,0,0);stroke-width:1;" />
+<rect x = "400" y ="582" width = "45" height = "68"  style="fill:gold;stroke:rgb(255,0,0);stroke-width:1;" />
+<rect x = "450" y ="574" width = "45" height = "76"  style="fill:gold;stroke:rgb(255,0,0);stroke-width:1;" />
+<rect x = "500" y ="596" width = "45" height = "56"  style="fill:gold;stroke:rgb(255,0,0);stroke-width:1;" />
+<rect x = "550" y ="594" width = "45" height = "56"  style="fill:gold;stroke:rgb(255,0,0);stroke-width:1;" />
+<rect x = "600" y ="594" width = "45" height = "56"  style="fill:gold;stroke:rgb(255,0,0);stroke-width:1;" />
+-->
+<text
+   x="60"
+   y="425"
+   font-family="Verdana"
+   font-size="20"
+   style="fill:white"
+   id="text1612">100
+    <tspan
+   x="110"
+   y="425"
+   id="tspan1590">110</tspan><tspan
+   x="160"
+   y="425"
+   id="tspan1592">130</tspan><tspan
+   x="210"
+   y="425"
+   id="tspan1594">100</tspan><tspan
+   x="260"
+   y="425"
+   id="tspan1596">90</tspan><tspan
+   x="310"
+   y="425"
+   id="tspan1598">130</tspan><tspan
+   x="360"
+   y="425"
+   id="tspan1600">60</tspan><tspan
+   x="410"
+   y="425"
+   id="tspan1602">80</tspan><tspan
+   x="460"
+   y="425"
+   id="tspan1604">50</tspan><tspan
+   x="510"
+   y="425"
+   id="tspan1606">70</tspan><tspan
+   x="560"
+   y="425"
+   id="tspan1608">80</tspan><tspan
+   x="610"
+   y="425"
+   id="tspan1610">70</tspan></text>
+<text
+   x="60"
+   y="500"
+   font-family="Verdana"
+   font-size="20"
+   style="fill:black"
+   id="text1636">12
+    <tspan
+   x="110"
+   y="500"
+   id="tspan1614">12</tspan><tspan
+   x="160"
+   y="500"
+   id="tspan1616">13</tspan><tspan
+   x="210"
+   y="500"
+   id="tspan1618">11</tspan><tspan
+   x="260"
+   y="500"
+   id="tspan1620">11</tspan><tspan
+   x="310"
+   y="500"
+   id="tspan1622">11</tspan><tspan
+   x="360"
+   y="500"
+   id="tspan1624">9</tspan><tspan
+   x="410"
+   y="500"
+   id="tspan1626">9</tspan><tspan
+   x="460"
+   y="500"
+   id="tspan1628">9</tspan><tspan
+   x="510"
+   y="500"
+   id="tspan1630">11</tspan><tspan
+   x="560"
+   y="500"
+   id="tspan1632">11</tspan><tspan
+   x="610"
+   y="500"
+   id="tspan1634">11</tspan></text>
+<path
+   d="M 65,600 l 0,-50  50,-10 50,+6  50,+4  50,+24  50,-12 50,+10 50,-6 50,0 50,+1 50,0 50,0 0,40 z"
+   style="fill:gold;stroke:black;stroke-width:0"
+   id="path1638" />
+<path
+   d="M 65,600 l 0,-50  50,-10 50,+6  50,+4  50,+24  50,-12 50,+10 50,-6 50,0 50,+1 50,0 50,0 0,40"
+   style="fill:gold;stroke:maroon;stroke-width:3"
+   id="path1640" />
+<text
+   x="60"
+   y="625"
+   font-family="Verdana"
+   font-size="20"
+   style="fill:black"
+   id="text1664">20
+    <tspan
+   x="110"
+   y="625"
+   id="tspan1642">25</tspan><tspan
+   x="160"
+   y="625"
+   id="tspan1644">22</tspan><tspan
+   x="210"
+   y="625"
+   id="tspan1646">20</tspan><tspan
+   x="260"
+   y="625"
+   id="tspan1648">8</tspan><tspan
+   x="310"
+   y="625"
+   id="tspan1650">14</tspan><tspan
+   x="360"
+   y="625"
+   id="tspan1652">9</tspan><tspan
+   x="410"
+   y="625"
+   id="tspan1654">12</tspan><tspan
+   x="460"
+   y="625"
+   id="tspan1656">12</tspan><tspan
+   x="510"
+   y="625"
+   id="tspan1658">11</tspan><tspan
+   x="560"
+   y="625"
+   id="tspan1660">11</tspan><tspan
+   x="610"
+   y="625"
+   id="tspan1662">11</tspan></text>
+<!--
+
+
+<text x="60" y="680" font-family="Verdana" font-size="20" style="fill:gold">20
+    <tspan x="110" y="675">25</tspan>
+    <tspan x="160" y="678">22</tspan>
+    <tspan x="210" y="660">20</tspan>
+    <tspan x="260" y="692">8</tspan>
+    <tspan x="310" y="686">14</tspan>
+    <tspan x="360" y="691">9</tspan>
+    <tspan x="410" y="691">9</tspan>
+    <tspan x="460" y="684">16</tspan>
+    <tspan x="510" y="689">11</tspan>
+    <tspan x="560" y="689">11</tspan>
+    <tspan x="610" y="689">11</tspan>
+  </text>
+
+  -->
+<rect
+   x="50"
+   y="695"
+   width="55"
+   height="30"
+   style="fill:rgb(200,50,50);stroke:rgb(20,50,50);"
+   id="rect1666" />
+<rect
+   x="50"
+   y="740"
+   width="55"
+   height="30"
+   style="fill:rgb(200,50,50);stroke:rgb(20,50,50);"
+   id="rect1668" />
+<rect
+   x="50"
+   y="785"
+   width="55"
+   height="30"
+   style="fill:teal;stroke:rgb(25,25,200);"
+   id="rect1670" />
+<rect
+   x="50"
+   y="830"
+   width="55"
+   height="30"
+   style="fill:teal;stroke:rgb(25,25,200);"
+   id="rect1672" />
+<rect
+   x="50"
+   y="875"
+   width="55"
+   height="30"
+   style="fill:gold;stroke:rgb(25,25,200);"
+   id="rect1674" />
+<text
+   x="60"
+   y="715"
+   font-family="Verdana"
+   font-size="18"
+   fill="white"
+   id="text1676">22</text>
+<text
+   x="60"
+   y="757"
+   font-family="Verdana"
+   font-size="18"
+   fill="white"
+   id="text1678">12</text>
+<text
+   x="60"
+   y="810"
+   font-family="Verdana"
+   font-size="18"
+   fill="white"
+   id="text1680">130</text>
+<text
+   x="60"
+   y="855"
+   font-family="Verdana"
+   font-size="18"
+   fill="white"
+   id="text1682">1130</text>
+<text
+   x="58"
+   y="898"
+   font-family="Verdana"
+   font-size="18"
+   fill="black"
+   id="text1684">22</text>
+<text
+   x="150"
+   y="725"
+   font-family="Verdana"
+   font-size="18"
+   fill="black"
+   id="text1686"> Mittlere Jahreshöchsttemperaturen in °C</text>
+<text
+   x="150"
+   y="765"
+   font-family="Verdana"
+   font-size="18"
+   fill="black"
+   id="text1688"> Mittlere Jahrestiefsttemperaturen in °C</text>
+<text
+   x="150"
+   y="810"
+   font-family="Verdana"
+   font-size="18"
+   fill="black"
+   id="text1690">Anzahl der Regentage </text>
+<text
+   x="150"
+   y="855"
+   font-family="Verdana"
+   font-size="18"
+   fill="black"
+   id="text1692">Summe der Niederschläge in mm</text>
+<text
+   x="150"
+   y="900"
+   font-family="Verdana"
+   font-size="18"
+   fill="black"
+   id="text1694">Durchschnitt Windgeschwindigkeit in km/h</text>
+<a
+   href="https://www.weatherbase.com/"
+   id="a1700">
+  <circle
+     cx="550"
+     cy="828"
+     r="35"
+     style="fill:#89bcde;stroke:rgb(20,50,50);"
+     id="circle1696" />
+  <text
+     x="520"
+     y="848"
+     font-family="Verdana"
+     font-size="70"
+     fill="red"
+     id="text1698">✵</text>
+</a>
+</svg>

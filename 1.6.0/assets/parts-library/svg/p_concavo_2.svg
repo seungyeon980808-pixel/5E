@@ -1,0 +1,331 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 20010904//EN"
+"http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd">
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   id="svg1"
+   sodipodi:version="0.32"
+   inkscape:version="0.39cvs"
+   width="500.00000pt"
+   height="500.00000pt"
+   sodipodi:docname="concavo_2.svg"
+   inkscape:export-filename="d:\concavo_2.png"
+   inkscape:export-xdpi="146.85001"
+   inkscape:export-ydpi="146.85001"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:cc="http://web.resource.org/cc/"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:xml="http://www.w3.org/XML/1998/namespace"
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   sodipodi:docbase="D:">
+  <defs
+     id="defs3">
+    <marker
+       style="overflow:visible;"
+       id="Arrow2L"
+       refX="0.0"
+       refY="0.0"
+       orient="auto"
+       inkscape:stockid="Arrow2L">
+      <path
+         transform="scale(1.1) translate(-5,0)"
+         d="M 8.7185878,4.0337352 L -2.2072895,0.016013256 L 8.7185884,-4.0017078 C 6.9730900,-1.6296469 6.9831476,1.6157441 8.7185878,4.0337352 z "
+         style="font-size:12.0;fill-rule:evenodd;stroke-width:0.62500000;stroke-linejoin:round;"
+         id="path6668"
+         sodipodi:nodetypes="cccc" />
+    </marker>
+    <marker
+       style="overflow:visible;"
+       id="DiamondS"
+       refX="0.0"
+       refY="0.0"
+       orient="auto"
+       inkscape:stockid="DiamondS">
+      <path
+         transform="scale(0.2)"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1.0pt;marker-start:none;"
+         d="M -2.1579186e-005,-7.0710768 L -7.0710894,-8.9383918e-006 L -2.1579186e-005,7.0710589 L 7.0710462,-8.9383918e-006 L -2.1579186e-005,-7.0710768 z "
+         id="path840" />
+    </marker>
+    <marker
+       style="overflow:visible;"
+       id="TriangleInL"
+       refX="0.0"
+       refY="0.0"
+       orient="auto"
+       inkscape:stockid="TriangleInL">
+      <path
+         transform="scale(-0.8)"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1.0pt;marker-start:none;"
+         d="M 5.77,0.0 L -2.88,5.0 L -2.88,-5.0 L 5.77,0.0 z "
+         id="path6628"
+         sodipodi:nodetypes="cccc" />
+    </marker>
+    <linearGradient
+       id="linearGradient5320">
+      <stop
+         style="stop-color:#2c63a0;stop-opacity:1.0000000;"
+         offset="0.00000000"
+         id="stop5321" />
+      <stop
+         style="stop-color:#e0e1e2;stop-opacity:1.0000000;"
+         offset="0.50000000"
+         id="stop5323" />
+      <stop
+         style="stop-color:#ffffff;stop-opacity:1.0000000;"
+         offset="1.0000000"
+         id="stop5322" />
+    </linearGradient>
+    <radialGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient2171"
+       id="radialGradient2175"
+       cx="0.44067797"
+       cy="0.80468750"
+       r="0.33898306"
+       fx="0.45762712"
+       fy="0.80468750" />
+    <linearGradient
+       id="linearGradient2171">
+      <stop
+         style="stop-color:#a05b2c;stop-opacity:0.39215687;"
+         offset="0.00000000"
+         id="stop2172" />
+      <stop
+         style="stop-color:#fff75c;stop-opacity:0.39215687;"
+         offset="1.0000000"
+         id="stop2173" />
+    </linearGradient>
+    <radialGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient2171"
+       id="radialGradient1598"
+       cx="0.44067797"
+       cy="0.13281250"
+       r="0.43750000"
+       fx="0.45762712"
+       fy="0.14062500" />
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.78200000"
+     inkscape:cx="250.00000"
+     inkscape:cy="250.00000"
+     inkscape:window-width="800"
+     inkscape:window-height="553"
+     inkscape:window-x="-4"
+     inkscape:window-y="-4"
+     showguides="true"
+     inkscape:guide-bbox="true" />
+  <metadata
+     id="metadata4">
+    <rdf:RDF
+       id="RDF5">
+      <cc:Work
+         rdf:about=""
+         id="Work6">
+        <dc:format
+           id="format7">image/svg+xml</dc:format>
+        <dc:type
+           id="type9"
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <path
+     sodipodi:type="arc"
+     style="fill:none;fill-opacity:0.75000000;fill-rule:evenodd;stroke:#000000;stroke-width:8.4530506;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4.0000000;stroke-opacity:1.0000000;"
+     id="path909"
+     sodipodi:cx="79.176178"
+     sodipodi:cy="240.44646"
+     sodipodi:rx="133.87971"
+     sodipodi:ry="166.98976"
+     d="M 146.11603,95.829077 A 133.87971,166.98976 0 0 1 146.11603,385.06384"
+     sodipodi:start="5.2359877"
+     sodipodi:end="7.3303829"
+     sodipodi:open="true"
+     transform="matrix(0.787219,0.000000,0.000000,1.000000,300.5709,63.15000)"
+     inkscape:export-filename="d:\espconico1.png"
+     inkscape:export-xdpi="128.11000"
+     inkscape:export-ydpi="128.11000" />
+  <path
+     style="fill:none;fill-opacity:0.75000000;fill-rule:evenodd;stroke:#3f6185;stroke-width:1.7500000;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4.0000000;stroke-opacity:1.0000000;marker-mid:url(#TriangleInL);"
+     d="M 241.88645,193.92736 L 466.93366,302.27661"
+     id="path3424"
+     sodipodi:nodetypes="cc"
+     inkscape:export-filename="d:\espconico1.png"
+     inkscape:export-xdpi="128.11000"
+     inkscape:export-ydpi="128.11000" />
+  <path
+     style="fill:none;fill-opacity:0.75000000;fill-rule:evenodd;stroke:#3f6185;stroke-width:1.7500000;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4.0000000;stroke-opacity:1.0000000;marker-mid:url(#TriangleInL);"
+     d="M 436.94099,192.29837 L 242.06300,414.74910"
+     id="path3427"
+     sodipodi:nodetypes="cc"
+     inkscape:export-filename="d:\espconico1.png"
+     inkscape:export-xdpi="128.11000"
+     inkscape:export-ydpi="128.11000" />
+  <path
+     style="fill:#c2c2e7;fill-opacity:1.0000000;fill-rule:evenodd;stroke:#000000;stroke-width:1.0105084pt;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000;"
+     d="M 234.53014,304.70696 L 234.53014,217.82659 L 245.85148,217.82659 L 245.85148,304.53056 L 234.53014,304.70696 z "
+     id="path1532"
+     sodipodi:nodetypes="ccccc"
+     inkscape:export-filename="d:\espconico1.png"
+     inkscape:export-xdpi="128.11000"
+     inkscape:export-ydpi="128.11000" />
+  <text
+     xml:space="preserve"
+     style="font-size:12.000000;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1.0000000;stroke:none;stroke-width:1.0000000pt;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000;font-family:Bitstream Vera Sans;"
+     x="94.024635"
+     y="118.76432"
+     id="text5328"
+     transform="scale(2.442633,2.442633)"
+     inkscape:export-filename="d:\espconico1.png"
+     inkscape:export-xdpi="128.11000"
+     inkscape:export-ydpi="128.11000"><tspan
+       id="tspan5329">C</tspan></text>
+  <path
+     style="fill:#c2c2e7;fill-opacity:0.32203391;fill-rule:evenodd;stroke:#b3b3b3;stroke-width:1.0105084pt;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000;"
+     d="M 234.53014,305.69938 L 234.53014,392.57975 L 245.85148,392.57975 L 245.85148,305.87578 L 234.53014,305.69938 z "
+     id="path956"
+     sodipodi:nodetypes="ccccc"
+     inkscape:export-filename="d:\espconico1.png"
+     inkscape:export-xdpi="128.11000"
+     inkscape:export-ydpi="128.11000" />
+  <path
+     style="fill:none;fill-opacity:0.75000000;fill-rule:evenodd;stroke:#000000;stroke-width:1.0000000pt;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000;"
+     d="M 238.17062,311.27678 L 238.17062,297.61403"
+     id="path5331"
+     inkscape:export-filename="d:\espconico1.png"
+     inkscape:export-xdpi="128.11000"
+     inkscape:export-ydpi="128.11000" />
+  <path
+     style="fill:none;fill-opacity:0.75000000;fill-rule:evenodd;stroke:#3f6185;stroke-width:1.7500000;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4.0000000;stroke-opacity:1.0000000;marker-start:none;marker-mid:url(#Arrow2L);"
+     d="M 240.62954,193.09537 L 436.36813,193.09537"
+     id="path5955"
+     sodipodi:nodetypes="cc" />
+  <path
+     style="fill:#5d7a98;fill-opacity:1.0000000;fill-rule:evenodd;stroke:none;stroke-width:1.0000000pt;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000;"
+     d="M 330.68825,199.70700 L 330.68825,186.48373 L 354.28206,193.01891 L 330.68825,199.70700 z "
+     id="path7315"
+     sodipodi:nodetypes="cccc" />
+  <text
+     xml:space="preserve"
+     style="font-size:12.000000;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1.0000000;stroke:none;stroke-width:1.0000000pt;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000;font-family:Bitstream Vera Sans;"
+     x="134.77295"
+     y="120.31252"
+     id="text5325"
+     transform="scale(2.442633,2.442633)"
+     inkscape:export-filename="d:\espconico1.png"
+     inkscape:export-xdpi="128.11000"
+     inkscape:export-ydpi="128.11000"><tspan
+       id="tspan5326">F</tspan></text>
+  <path
+     style="fill:none;fill-opacity:0.75000000;fill-rule:evenodd;stroke:#000000;stroke-width:1.0000000pt;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000;"
+     d="M 338.17062,311.27678 L 338.17062,297.61403"
+     id="path5333"
+     inkscape:export-filename="d:\espconico1.png"
+     inkscape:export-xdpi="128.11000"
+     inkscape:export-ydpi="128.11000" />
+  <path
+     style="fill:url(#radialGradient2175);fill-opacity:1.0000000;fill-rule:evenodd;stroke:#000000;stroke-width:1.2880323;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4.0000000;stroke-opacity:1.0000000;"
+     d="M 240.95908,216.87306 C 228.48152,216.87306 238.62578,200.94653 240.38412,195.00076 C 241.61069,188.77931 241.12627,200.44540 243.40264,204.72178 C 245.45214,209.34200 245.44557,215.18739 240.95908,216.87306 z "
+     id="path1547"
+     inkscape:export-filename="d:\espconico1.png"
+     inkscape:export-xdpi="128.11000"
+     inkscape:export-ydpi="128.11000" />
+  <path
+     style="fill:url(#radialGradient1598);fill-opacity:1.0000000;fill-rule:evenodd;stroke:#aaaaaa;stroke-width:1.2880323;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4.0000000;stroke-opacity:1.0000000;"
+     d="M 240.95908,393.53328 C 228.48152,393.53328 238.62578,409.45981 240.38412,415.40558 C 241.61069,421.62703 241.12627,409.96094 243.40264,405.68456 C 245.45214,401.06434 245.44557,395.21895 240.95908,393.53328 z "
+     id="path957"
+     inkscape:export-filename="d:\espconico1.png"
+     inkscape:export-xdpi="128.11000"
+     inkscape:export-ydpi="128.11000" />
+  <path
+     style="fill:none;fill-opacity:0.75000000;fill-rule:evenodd;stroke:#3f6185;stroke-width:1.7500000;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4.0000000;stroke-opacity:1.0000000;marker-mid:url(#TriangleInL);"
+     d="M 240.52823,416.05526 L 466.93366,303.92736"
+     id="path955"
+     sodipodi:nodetypes="cc"
+     inkscape:export-filename="d:\espconico1.png"
+     inkscape:export-xdpi="128.11000"
+     inkscape:export-ydpi="128.11000" />
+  <path
+     style="fill:#5d7a98;fill-opacity:1.0000000;fill-rule:evenodd;stroke:none;stroke-width:1.0000000pt;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000;"
+     d="M 307.11225,232.26882 L 312.87276,220.36624 L 331.26315,236.52700 L 307.11225,232.26882 z "
+     id="path2238"
+     sodipodi:nodetypes="cccc" />
+  <path
+     style="fill:#5d7a98;fill-opacity:1.0000000;fill-rule:evenodd;stroke:none;stroke-width:1.0000000pt;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000;"
+     d="M 393.73259,347.86839 L 387.97208,335.96581 L 369.58169,352.12657 L 393.73259,347.86839 z "
+     id="path2239"
+     sodipodi:nodetypes="cccc" />
+  <path
+     style="fill:#5d7a98;fill-opacity:1.0000000;fill-rule:evenodd;stroke:none;stroke-width:1.0000000pt;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000;"
+     d="M 363.96290,265.37879 L 374.02977,273.95275 L 353.75632,287.67731 L 363.96290,265.37879 z "
+     id="path2240"
+     sodipodi:nodetypes="cccc" />
+  <path
+     style="fill:none;fill-opacity:0.75000000;fill-rule:evenodd;stroke:#000000;stroke-width:1.0000000pt;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000;"
+     d="M 439.74106,186.14610 L 463.71804,173.35838"
+     id="path2983" />
+  <path
+     style="fill:none;fill-opacity:0.75000000;fill-rule:evenodd;stroke:#000000;stroke-width:1.0000000pt;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000;"
+     d="M 444.53645,197.33536 L 468.51343,184.54763"
+     id="path2984" />
+  <path
+     style="fill:none;fill-opacity:0.75000000;fill-rule:evenodd;stroke:#000000;stroke-width:1.0000000pt;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000;"
+     d="M 450.93031,207.82769 L 476.71036,194.13843"
+     id="path2985"
+     sodipodi:nodetypes="cc" />
+  <path
+     style="fill:none;fill-opacity:0.75000000;fill-rule:evenodd;stroke:#000000;stroke-width:1.0000000pt;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000;"
+     d="M 444.58121,414.00736 L 468.55819,426.79508"
+     id="path2989" />
+  <path
+     style="fill:none;fill-opacity:0.75000000;fill-rule:evenodd;stroke:#000000;stroke-width:1.0000000pt;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000;"
+     d="M 449.37660,402.81810 L 473.35358,415.60583"
+     id="path2990" />
+  <path
+     style="fill:none;fill-opacity:0.75000000;fill-rule:evenodd;stroke:#000000;stroke-width:1.0000000pt;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000;"
+     d="M 455.77046,392.32577 L 481.55051,406.01503"
+     id="path2991"
+     sodipodi:nodetypes="cc" />
+  <path
+     style="fill:none;fill-opacity:0.75000000;fill-rule:evenodd;stroke:#3f6185;stroke-width:1.7500000;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4.0000000;stroke-opacity:1.0000000;marker-mid:url(#TriangleInL);"
+     d="M 241.88645,193.92736 L 438.93803,415.13400"
+     id="path1015"
+     sodipodi:nodetypes="cc"
+     inkscape:export-filename="d:\espconico1.png"
+     inkscape:export-xdpi="128.11000"
+     inkscape:export-ydpi="128.11000" />
+  <path
+     style="fill:none;fill-opacity:0.75000000;fill-rule:evenodd;stroke:#3f6185;stroke-width:1.7500000;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4.0000000;stroke-opacity:1.0000000;marker-start:none;marker-mid:url(#Arrow2L);"
+     d="M 240.62954,417.22051 L 436.36813,417.22051"
+     id="path1016"
+     sodipodi:nodetypes="cc" />
+  <path
+     style="fill:#5d7a98;fill-opacity:1.0000000;fill-rule:evenodd;stroke:none;stroke-width:1.0000000pt;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000;"
+     d="M 288.68276,257.92797 L 298.40902,248.96946 L 309.58646,270.75114 L 288.68276,257.92797 z "
+     id="path1017"
+     sodipodi:nodetypes="cccc" />
+  <path
+     style="fill:#5d7a98;fill-opacity:1.0000000;fill-rule:evenodd;stroke:none;stroke-width:1.0000000pt;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1.0000000;"
+     d="M 338.68526,423.83480 L 338.68526,410.61153 L 315.09145,417.14671 L 338.68526,423.83480 z "
+     id="path1659"
+     sodipodi:nodetypes="cccc" />
+  <path
+     style="fill:none;fill-opacity:0.75000000;fill-rule:evenodd;stroke:#000000;stroke-width:3.9188509;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4.0000000;stroke-opacity:1.0000000;"
+     d="M 45.581500,304.49624 L 604.76062,304.49624"
+     id="path908"
+     sodipodi:nodetypes="cc"
+     inkscape:export-filename="d:\espconico1.png"
+     inkscape:export-xdpi="128.11000"
+     inkscape:export-ydpi="128.11000" />
+</svg>

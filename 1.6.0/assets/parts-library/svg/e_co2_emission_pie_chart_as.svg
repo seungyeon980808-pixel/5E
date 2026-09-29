@@ -1,0 +1,162 @@
+﻿<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with matplotlib (http://matplotlib.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   height="432pt"
+   version="1.1"
+   viewBox="0 0 432 432"
+   width="432pt"
+   id="svg2"
+   inkscape:version="0.48.4 r9939"
+   sodipodi:docname="CO2_emission_pie_chart.svg">
+  <metadata
+     id="metadata260">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1920"
+     inkscape:window-height="1096"
+     id="namedview258"
+     showgrid="false"
+     inkscape:zoom="0.89937801"
+     inkscape:cx="190.56968"
+     inkscape:cy="224.27209"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg2" />
+  <defs
+     id="defs4">
+    <style
+       type="text/css"
+       id="style6">
+*{stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:100000;}
+  </style>
+  </defs>
+  <g
+     id="g3220"
+     transform="translate(-5.8447199,12.154931)"
+     style="stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:100000">
+    <g
+       id="figure_1"
+       style="stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:100000">
+      <g
+         id="patch_1"
+         style="stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:100000" />
+      <g
+         id="axes_1"
+         style="stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:100000">
+        <g
+           id="matplotlib.axis_1"
+           style="stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:100000" />
+        <g
+           id="matplotlib.axis_2"
+           style="stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:100000" />
+        <g
+           id="patch_2"
+           style="stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:100000">
+          <path
+             id="path16"
+             style="fill:#de2910;stroke:#000000;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:100000"
+             d="m 216.04727,27.328308 c -25.65024,0 -50.95522,5.941699 -73.92491,17.357825 C 119.15267,56.10226 99.13661,72.685495 83.648302,93.131693 68.159995,113.57789 57.616378,137.33664 52.846626,162.5395 c -4.769751,25.20286 -3.637236,51.17137 3.308483,75.86331 l 159.892161,-44.97687 0,-166.097632 z"
+             inkscape:connector-curvature="0" />
+        </g>
+        <g
+           id="patch_3"
+           style="stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:100000">
+          <path
+             id="path19"
+             style="fill:#4169e1;stroke:#000000;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:100000"
+             d="m 56.155109,238.40281 c 6.750173,23.99677 18.816737,46.16893 35.302288,64.8675 16.485553,18.69857 36.971013,33.44822 59.932863,43.15201 L 216.04727,193.42594 56.155109,238.40281 z"
+             inkscape:connector-curvature="0" />
+        </g>
+        <g
+           id="patch_4"
+           style="stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:100000">
+          <path
+             id="path22"
+             style="fill:#0039e6;stroke:#000000;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:100000"
+             d="m 151.39026,346.42232 c 15.75602,6.65857 32.4465,10.84346 49.48017,12.40641 17.03368,1.56296 34.20703,0.48531 50.9117,-3.19477 L 216.04727,193.42594 151.39026,346.42232 z"
+             inkscape:connector-curvature="0" />
+        </g>
+        <g
+           id="patch_5"
+           style="stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:100000">
+          <path
+             id="path25"
+             style="fill:#128807;stroke:#000000;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:100000"
+             d="m 251.78213,355.63396 c 11.51752,-2.53734 22.73212,-6.29418 33.4539,-11.2069 10.72178,-4.91273 20.88989,-10.95345 30.33218,-18.0199 l -99.52094,-132.98122 35.73486,162.20802 z"
+             inkscape:connector-curvature="0" />
+        </g>
+        <g
+           id="patch_6"
+           style="stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:100000">
+          <path
+             id="path28"
+             style="fill:#ffd700;stroke:#000000;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:100000"
+             d="m 315.56821,326.40716 c 6.76965,-5.0663 13.14257,-10.64214 19.06315,-16.67887 5.92058,-6.03674 11.37156,-12.51678 16.30539,-19.38357 l -134.88948,-96.91878 99.52094,132.98122 z"
+             inkscape:connector-curvature="0" />
+        </g>
+        <g
+           id="patch_7"
+           style="stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:100000">
+          <path
+             id="path31"
+             style="fill:#ffb6c1;stroke:#000000;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:100000"
+             d="m 350.93675,290.34472 c 3.50961,-4.88461 6.75132,-9.95624 9.71078,-15.19249 2.95947,-5.23625 5.63233,-10.62939 8.00677,-16.15558 l -152.60703,-65.57071 134.88948,96.91878 z"
+             inkscape:connector-curvature="0" />
+        </g>
+        <g
+           id="patch_8"
+           style="stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:100000">
+          <path
+             id="path34"
+             style="fill:#d3d3d3;stroke:#000000;stroke-width:0.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:100000"
+             d="m 368.6543,258.99665 c 10.85532,-25.2643 15.26883,-52.83327 12.843,-80.22375 -2.42583,-27.39047 -11.61591,-53.75464 -26.74249,-76.71786 C 339.62823,79.091819 319.03338,60.240326 294.82523,47.198528 270.61708,34.15673 243.54496,27.32831 216.04728,27.328308 l -1e-5,166.097632 152.60703,65.57071 z"
+             inkscape:connector-curvature="0" />
+        </g>
+<g id="text_1" style="stroke-linecap:butt;stroke-linejoin:round;stroke-miterlimit:100000">
+    <text x="50" y="90" font-family="Noto Serif Bengali" font-size="20">চীন</text>
+	<text x="90" y="120" font-family="Noto Sans Bengali UI" font-size="18">২৯.৪%</text>
+	<text x="360" y="100" font-family="Noto Serif Bengali" font-size="20">অন্যান্য</text>
+	<text x="300" y="130" font-family="Noto Sans Bengali UI" font-size="18">৩১.৫%</text>
+	<text x="370" y="290" font-family="Noto Serif Bengali" font-size="20">জাপান</text>
+	<text x="315" y="265" font-family="Noto Sans Bengali UI" font-size="18">৩.৫%</text>
+	<text x="340" y="330" font-family="Noto Serif Bengali" font-size="20">ৰাছিয়া</text>
+	<text x="295" y="295" font-family="Noto Sans Bengali UI" font-size="18">৪.৯%</text>
+	<text x="285" y="365" font-family="Noto Serif Bengali" font-size="20">ভাৰত</text>
+	<text x="250" y="320" font-family="Noto Sans Bengali UI" font-size="18">৬.৮%</text>
+	<text x="170" y="385" font-family="Noto Serif Bengali" font-size="20">ইউৰোপ</text>
+	<text x="175" y="405" font-family="Noto Serif Bengali" font-size="15">(ই.ই.এ.)</text>
+	<text x="180" y="330" font-family="Noto Sans Bengali UI" font-size="18">৯.৮%</text>
+	<text x="20" y="320" font-family="Noto Serif Bengali" font-size="20">আমেৰিকা</text>
+	<text x="30" y="340" font-family="Noto Serif Bengali" font-size="20">যুক্তৰাষ্ট্ৰ</text>
+	<text x="90" y="290" font-family="Noto Sans Bengali UI" font-size="18">১৪.৩%</text></g>
+
+</g>
+</g>
+</g>   
+</svg>
