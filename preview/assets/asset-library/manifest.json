@@ -1,0 +1,1135 @@
+{
+ "version": 1,
+ "generated": "2026-09-29",
+ "subjects": {
+  "p": "물리",
+  "c": "화학",
+  "b": "생명",
+  "e": "지구"
+ },
+ "note": "AI가 기출 도판을 참고해 새로 그린 투명 PNG. 기출 원본 그림이 아니다.",
+ "items": [
+  {
+   "id": "p_spaceship_h",
+   "subject": "p",
+   "name": "우주선(가로)",
+   "category": "현대 물리",
+   "keywords": [
+    "우주선",
+    "상대성",
+    "빛 시계"
+   ],
+   "file": "p/p_spaceship_h.png",
+   "thumb": "thumb/p/p_spaceship_h.png",
+   "format": "png",
+   "px": [
+    1525,
+    728
+   ],
+   "defaultMm": [
+    40.0,
+    19.02
+   ],
+   "qa": "통과",
+   "qaNote": "객실을 비운 절단면 우주선. 원본 시점·비율 유지",
+   "reference": "p1_2021_09_11",
+   "referenceExam": "2021학년도 9월 모평 물리학Ⅰ 11번",
+   "origin": "ai-generated"
+  },
+  {
+   "id": "p_rocket_v",
+   "subject": "p",
+   "name": "우주선(세로 로켓)",
+   "category": "현대 물리",
+   "keywords": [
+    "우주선",
+    "로켓",
+    "상대성"
+   ],
+   "file": "p/p_rocket_v.png",
+   "thumb": "thumb/p/p_rocket_v.png",
+   "format": "png",
+   "px": [
+    574,
+    1429
+   ],
+   "defaultMm": [
+    12.0,
+    30.0
+   ],
+   "qa": "통과",
+   "qaNote": "객실을 비운 세로 로켓",
+   "reference": "p2_2022_11_05",
+   "referenceExam": "2022학년도 수능 물리학Ⅱ 5번",
+   "origin": "ai-generated"
+  },
+  {
+   "id": "p_astronaut",
+   "subject": "p",
+   "name": "관찰자(우주복)",
+   "category": "현대 물리",
+   "keywords": [
+    "관찰자",
+    "우주인",
+    "상대성"
+   ],
+   "file": "p/p_astronaut.png",
+   "thumb": "thumb/p/p_astronaut.png",
+   "format": "png",
+   "px": [
+    463,
+    1302
+   ],
+   "defaultMm": [
+    4.24,
+    12.0
+   ],
+   "qa": "보통",
+   "qaNote": "윤곽은 맞지만 얼굴·장비 묘사가 원본보다 세밀함",
+   "reference": "p1_2020_06_12",
+   "referenceExam": "2020학년도 6월 모평 물리학Ⅰ 12번",
+   "origin": "ai-generated"
+  },
+  {
+   "id": "p_space_station",
+   "subject": "p",
+   "name": "우주 정거장",
+   "category": "현대 물리",
+   "keywords": [
+    "우주 정거장",
+    "상대성"
+   ],
+   "file": "p/p_space_station.png",
+   "thumb": "thumb/p/p_space_station.png",
+   "format": "png",
+   "px": [
+    1008,
+    1036
+   ],
+   "defaultMm": [
+    19.47,
+    20.0
+   ],
+   "qa": "보통",
+   "qaNote": "고리형 정거장. 원본보다 세부가 많고 크게 그려짐",
+   "reference": "p1_2019_06_09",
+   "referenceExam": "2019학년도 6월 모평 물리학Ⅰ 9번",
+   "origin": "ai-generated"
+  },
+  {
+   "id": "p_student_m1",
+   "subject": "p",
+   "name": "학생(남, 설명)",
+   "category": "인물",
+   "keywords": [
+    "학생",
+    "남학생",
+    "사람",
+    "인물"
+   ],
+   "file": "p/p_student_m1.png",
+   "thumb": "thumb/p/p_student_m1.png",
+   "format": "png",
+   "px": [
+    659,
+    1497
+   ],
+   "defaultMm": [
+    13.17,
+    30.0
+   ],
+   "qa": "통과",
+   "qaNote": "원본 인물 화풍과 자세 유지",
+   "reference": "p1_2018_09_01",
+   "referenceExam": "2018학년도 9월 모평 물리학Ⅰ 1번",
+   "origin": "ai-generated"
+  },
+  {
+   "id": "p_student_f",
+   "subject": "p",
+   "name": "학생(여)",
+   "category": "인물",
+   "keywords": [
+    "학생",
+    "여학생",
+    "사람",
+    "인물"
+   ],
+   "file": "p/p_student_f.png",
+   "thumb": "thumb/p/p_student_f.png",
+   "format": "png",
+   "px": [
+    538,
+    1494
+   ],
+   "defaultMm": [
+    10.77,
+    30.0
+   ],
+   "qa": "통과",
+   "qaNote": "원본 인물 화풍 유지, 휴대폰 제거됨",
+   "reference": "p1_2018_09_01",
+   "referenceExam": "2018학년도 9월 모평 물리학Ⅰ 1번",
+   "origin": "ai-generated"
+  },
+  {
+   "id": "p_student_m2",
+   "subject": "p",
+   "name": "학생(남, 서 있는)",
+   "category": "인물",
+   "keywords": [
+    "학생",
+    "남학생",
+    "사람",
+    "인물"
+   ],
+   "file": "p/p_student_m2.png",
+   "thumb": "thumb/p/p_student_m2.png",
+   "format": "png",
+   "px": [
+    634,
+    1511
+   ],
+   "defaultMm": [
+    12.53,
+    30.0
+   ],
+   "qa": "통과",
+   "qaNote": "원본 인물 화풍과 손동작 유지",
+   "reference": "p1_2018_09_01",
+   "referenceExam": "2018학년도 9월 모평 물리학Ⅰ 1번",
+   "origin": "ai-generated"
+  },
+  {
+   "id": "p_dial_scale",
+   "subject": "p",
+   "name": "바늘 저울",
+   "category": "역학 기구",
+   "keywords": [
+    "저울",
+    "바늘 저울",
+    "무게"
+   ],
+   "file": "p/p_dial_scale.png",
+   "thumb": "thumb/p/p_dial_scale.png",
+   "format": "png",
+   "px": [
+    1088,
+    985
+   ],
+   "defaultMm": [
+    18.0,
+    16.28
+   ],
+   "qa": "통과",
+   "qaNote": "바늘 저울, 눈금 숫자 없음",
+   "reference": "p1_2021_11_10",
+   "referenceExam": "2021학년도 수능 물리학Ⅰ 10번",
+   "origin": "ai-generated"
+  },
+  {
+   "id": "p_cyl_weight",
+   "subject": "p",
+   "name": "원기둥 추(고리)",
+   "category": "역학 기구",
+   "keywords": [
+    "추",
+    "고리",
+    "질량"
+   ],
+   "file": "p/p_cyl_weight.png",
+   "thumb": "thumb/p/p_cyl_weight.png",
+   "format": "png",
+   "px": [
+    441,
+    722
+   ],
+   "defaultMm": [
+    4.26,
+    7.0
+   ],
+   "qa": "통과",
+   "qaNote": "고리 달린 원기둥 추",
+   "reference": "p2_2021_09_05",
+   "referenceExam": "2021학년도 9월 모평 물리학Ⅱ 5번",
+   "origin": "ai-generated"
+  },
+  {
+   "id": "p_stand",
+   "subject": "p",
+   "name": "스탠드",
+   "category": "역학 기구",
+   "keywords": [
+    "스탠드",
+    "클램프",
+    "실험대"
+   ],
+   "file": "p/p_stand.png",
+   "thumb": "thumb/p/p_stand.png",
+   "format": "png",
+   "px": [
+    912,
+    1225
+   ],
+   "defaultMm": [
+    26.02,
+    35.0
+   ],
+   "qa": "통과",
+   "qaNote": "스탠드와 클램프, 실 제거됨",
+   "reference": "p1_2022_09_05",
+   "referenceExam": "2022학년도 9월 모평 물리학Ⅰ 5번",
+   "origin": "ai-generated"
+  },
+  {
+   "id": "p_power_supply",
+   "subject": "p",
+   "name": "전원 장치",
+   "category": "전기·에너지",
+   "keywords": [
+    "전원 장치",
+    "직류 전원"
+   ],
+   "file": "p/p_power_supply.png",
+   "thumb": "thumb/p/p_power_supply.png",
+   "format": "png",
+   "px": [
+    1174,
+    768
+   ],
+   "defaultMm": [
+    25.0,
+    16.33
+   ],
+   "qa": "통과",
+   "qaNote": "계기 2개와 단자, 글자 대신 (+)(-) 기호만 남음",
+   "reference": "p2_2022_09_12",
+   "referenceExam": "2022학년도 9월 모평 물리학Ⅱ 12번",
+   "origin": "ai-generated"
+  },
+  {
+   "id": "p_galvanometer",
+   "subject": "p",
+   "name": "검류계",
+   "category": "전기·에너지",
+   "keywords": [
+    "검류계",
+    "유도 전류"
+   ],
+   "file": "p/p_galvanometer.png",
+   "thumb": "thumb/p/p_galvanometer.png",
+   "format": "png",
+   "px": [
+    977,
+    987
+   ],
+   "defaultMm": [
+    17.82,
+    18.0
+   ],
+   "qa": "통과",
+   "qaNote": "검류계, 눈금 숫자 없음",
+   "reference": "p1_2021_06_05",
+   "referenceExam": "2021학년도 6월 모평 물리학Ⅰ 5번",
+   "origin": "ai-generated"
+  },
+  {
+   "id": "p_multimeter",
+   "subject": "p",
+   "name": "멀티미터",
+   "category": "전기·에너지",
+   "keywords": [
+    "멀티미터",
+    "저항 측정"
+   ],
+   "file": "p/p_multimeter.png",
+   "thumb": "thumb/p/p_multimeter.png",
+   "format": "png",
+   "px": [
+    689,
+    1391
+   ],
+   "defaultMm": [
+    8.88,
+    18.0
+   ],
+   "qa": "통과",
+   "qaNote": "표시창 비움",
+   "reference": "p1_2021_11_04",
+   "referenceExam": "2021학년도 수능 물리학Ⅰ 4번",
+   "origin": "ai-generated"
+  },
+  {
+   "id": "p_coil_stand",
+   "subject": "p",
+   "name": "코일(받침대)",
+   "category": "전기·에너지",
+   "keywords": [
+    "코일",
+    "솔레노이드",
+    "전자기 유도"
+   ],
+   "file": "p/p_coil_stand.png",
+   "thumb": "thumb/p/p_coil_stand.png",
+   "format": "png",
+   "px": [
+    971,
+    971
+   ],
+   "defaultMm": [
+    15.0,
+    15.0
+   ],
+   "qa": "통과",
+   "qaNote": "받침대 코일",
+   "reference": "p1_2021_06_05",
+   "referenceExam": "2021학년도 6월 모평 물리학Ⅰ 5번",
+   "origin": "ai-generated"
+  },
+  {
+   "id": "p_phototube",
+   "subject": "p",
+   "name": "광전관",
+   "category": "현대 물리",
+   "keywords": [
+    "광전관",
+    "광전 효과"
+   ],
+   "file": "p/p_phototube.png",
+   "thumb": "thumb/p/p_phototube.png",
+   "format": "png",
+   "px": [
+    557,
+    1262
+   ],
+   "defaultMm": [
+    7.92,
+    18.0
+   ],
+   "qa": "통과",
+   "qaNote": "광전관, 화살표·글자 제거됨",
+   "reference": "p1_2019_09_14",
+   "referenceExam": "2019학년도 9월 모평 물리학Ⅰ 14번",
+   "origin": "ai-generated"
+  },
+  {
+   "id": "p_laser",
+   "subject": "p",
+   "name": "레이저 장치",
+   "category": "파동·광학",
+   "keywords": [
+    "레이저",
+    "광원",
+    "간섭"
+   ],
+   "file": "p/p_laser.png",
+   "thumb": "thumb/p/p_laser.png",
+   "format": "png",
+   "px": [
+    637,
+    624
+   ],
+   "defaultMm": [
+    12.0,
+    11.75
+   ],
+   "qa": "통과",
+   "qaNote": "레이저 장치와 레일 받침",
+   "reference": "p2_2021_11_07",
+   "referenceExam": "2021학년도 수능 물리학Ⅱ 7번",
+   "origin": "ai-generated"
+  },
+  {
+   "id": "p_slit_holder",
+   "subject": "p",
+   "name": "슬릿(받침대)",
+   "category": "파동·광학",
+   "keywords": [
+    "슬릿",
+    "이중 슬릿",
+    "간섭"
+   ],
+   "file": "p/p_slit_holder.png",
+   "thumb": "thumb/p/p_slit_holder.png",
+   "format": "png",
+   "px": [
+    413,
+    979
+   ],
+   "defaultMm": [
+    5.04,
+    12.0
+   ],
+   "qa": "통과",
+   "qaNote": "이중 슬릿 받침",
+   "reference": "p2_2021_11_07",
+   "referenceExam": "2021학년도 수능 물리학Ⅱ 7번",
+   "origin": "ai-generated"
+  },
+  {
+   "id": "p_screen_holder",
+   "subject": "p",
+   "name": "스크린(받침대)",
+   "category": "파동·광학",
+   "keywords": [
+    "스크린",
+    "간섭"
+   ],
+   "file": "p/p_screen_holder.png",
+   "thumb": "thumb/p/p_screen_holder.png",
+   "format": "png",
+   "px": [
+    500,
+    1044
+   ],
+   "defaultMm": [
+    8.58,
+    18.0
+   ],
+   "qa": "통과",
+   "qaNote": "스크린 받침",
+   "reference": "p2_2021_11_07",
+   "referenceExam": "2021학년도 수능 물리학Ⅱ 7번",
+   "origin": "ai-generated"
+  },
+  {
+   "id": "p_optical_rail",
+   "subject": "p",
+   "name": "광학대 레일",
+   "category": "파동·광학",
+   "keywords": [
+    "광학대",
+    "레일"
+   ],
+   "file": "p/p_optical_rail.png",
+   "thumb": "thumb/p/p_optical_rail.png",
+   "format": "png",
+   "px": [
+    2084,
+    186
+   ],
+   "defaultMm": [
+    70.0,
+    6.14
+   ],
+   "qa": "통과",
+   "qaNote": "광학대 레일(가로로 긴 비율)",
+   "reference": "p2_2021_11_07",
+   "referenceExam": "2021학년도 수능 물리학Ⅱ 7번",
+   "origin": "ai-generated"
+  },
+  {
+   "id": "p_sound_cart",
+   "subject": "p",
+   "name": "음원(수레)",
+   "category": "파동·광학",
+   "keywords": [
+    "음원",
+    "스피커",
+    "도플러"
+   ],
+   "file": "p/p_sound_cart.png",
+   "thumb": "thumb/p/p_sound_cart.png",
+   "format": "png",
+   "px": [
+    677,
+    896
+   ],
+   "defaultMm": [
+    10.56,
+    14.0
+   ],
+   "qa": "통과",
+   "qaNote": "스피커 달린 음원 수레",
+   "reference": "p2_2020_06_09",
+   "referenceExam": "2020학년도 6월 모평 물리학Ⅱ 9번",
+   "origin": "ai-generated"
+  },
+  {
+   "id": "p_sound_meter",
+   "subject": "p",
+   "name": "음파 측정기",
+   "category": "파동·광학",
+   "keywords": [
+    "음파 측정기",
+    "도플러"
+   ],
+   "file": "p/p_sound_meter.png",
+   "thumb": "thumb/p/p_sound_meter.png",
+   "format": "png",
+   "px": [
+    594,
+    544
+   ],
+   "defaultMm": [
+    10.0,
+    9.15
+   ],
+   "qa": "통과",
+   "qaNote": "음파 측정기",
+   "reference": "p2_2021_09_15",
+   "referenceExam": "2021학년도 9월 모평 물리학Ⅱ 15번",
+   "origin": "ai-generated"
+  },
+  {
+   "id": "p_car",
+   "subject": "p",
+   "name": "자동차",
+   "category": "역학 기구",
+   "keywords": [
+    "자동차",
+    "승용차",
+    "도플러"
+   ],
+   "file": "p/p_car.png",
+   "thumb": "thumb/p/p_car.png",
+   "format": "png",
+   "px": [
+    1690,
+    549
+   ],
+   "defaultMm": [
+    30.0,
+    9.7
+   ],
+   "qa": "통과",
+   "qaNote": "승용차",
+   "reference": "p2_2021_09_15",
+   "referenceExam": "2021학년도 9월 모평 물리학Ⅱ 15번",
+   "origin": "ai-generated"
+  },
+  {
+   "id": "p_van",
+   "subject": "p",
+   "name": "승합차",
+   "category": "역학 기구",
+   "keywords": [
+    "승합차",
+    "자동차",
+    "도플러"
+   ],
+   "file": "p/p_van.png",
+   "thumb": "thumb/p/p_van.png",
+   "format": "png",
+   "px": [
+    1550,
+    634
+   ],
+   "defaultMm": [
+    30.0,
+    12.23
+   ],
+   "qa": "통과",
+   "qaNote": "승합차",
+   "reference": "p2_2020_09_11",
+   "referenceExam": "2020학년도 9월 모평 물리학Ⅱ 11번",
+   "origin": "ai-generated"
+  },
+  {
+   "id": "p_power_plant",
+   "subject": "p",
+   "name": "발전소",
+   "category": "전기·에너지",
+   "keywords": [
+    "발전소",
+    "수력",
+    "송전"
+   ],
+   "file": "p/p_power_plant.png",
+   "thumb": "thumb/p/p_power_plant.png",
+   "format": "png",
+   "px": [
+    1316,
+    772
+   ],
+   "defaultMm": [
+    40.0,
+    23.42
+   ],
+   "qa": "통과",
+   "qaNote": "수력 발전소 단면",
+   "reference": "p1_2020_06_02",
+   "referenceExam": "2020학년도 6월 모평 물리학Ⅰ 2번",
+   "origin": "ai-generated"
+  },
+  {
+   "id": "p_substation_b",
+   "subject": "p",
+   "name": "변전소(건물형)",
+   "category": "전기·에너지",
+   "keywords": [
+    "변전소",
+    "변압기",
+    "송전"
+   ],
+   "file": "p/p_substation_b.png",
+   "thumb": "thumb/p/p_substation_b.png",
+   "format": "png",
+   "px": [
+    941,
+    705
+   ],
+   "defaultMm": [
+    25.0,
+    18.69
+   ],
+   "qa": "통과",
+   "qaNote": "건물형 변전소와 변압기",
+   "reference": "p1_2020_06_02",
+   "referenceExam": "2020학년도 6월 모평 물리학Ⅰ 2번",
+   "origin": "ai-generated"
+  },
+  {
+   "id": "p_tower",
+   "subject": "p",
+   "name": "송전탑",
+   "category": "전기·에너지",
+   "keywords": [
+    "송전탑",
+    "송전선"
+   ],
+   "file": "p/p_tower.png",
+   "thumb": "thumb/p/p_tower.png",
+   "format": "png",
+   "px": [
+    503,
+    1099
+   ],
+   "defaultMm": [
+    11.39,
+    25.0
+   ],
+   "qa": "통과",
+   "qaNote": "송전탑",
+   "reference": "p1_2019_06_13",
+   "referenceExam": "2019학년도 6월 모평 물리학Ⅰ 13번",
+   "origin": "ai-generated"
+  },
+  {
+   "id": "p_factory",
+   "subject": "p",
+   "name": "공장",
+   "category": "전기·에너지",
+   "keywords": [
+    "공장",
+    "송전"
+   ],
+   "file": "p/p_factory.png",
+   "thumb": "thumb/p/p_factory.png",
+   "format": "png",
+   "px": [
+    937,
+    672
+   ],
+   "defaultMm": [
+    22.0,
+    15.74
+   ],
+   "qa": "보통",
+   "qaNote": "공장. 원본보다 단순화됨",
+   "reference": "p1_2019_11_16",
+   "referenceExam": "2019학년도 수능 물리학Ⅰ 16번",
+   "origin": "ai-generated"
+  },
+  {
+   "id": "p_house",
+   "subject": "p",
+   "name": "가정집",
+   "category": "전기·에너지",
+   "keywords": [
+    "가정",
+    "집",
+    "송전"
+   ],
+   "file": "p/p_house.png",
+   "thumb": "thumb/p/p_house.png",
+   "format": "png",
+   "px": [
+    935,
+    671
+   ],
+   "defaultMm": [
+    18.0,
+    12.9
+   ],
+   "qa": "통과",
+   "qaNote": "울타리 있는 가정집",
+   "reference": "p1_2020_06_02",
+   "referenceExam": "2020학년도 6월 모평 물리학Ⅰ 2번",
+   "origin": "ai-generated"
+  },
+  {
+   "id": "p_joule_vessel",
+   "subject": "p",
+   "name": "열량계(회전 날개)",
+   "category": "열",
+   "keywords": [
+    "열량계",
+    "열의 일당량",
+    "회전 날개"
+   ],
+   "file": "p/p_joule_vessel.png",
+   "thumb": "thumb/p/p_joule_vessel.png",
+   "format": "png",
+   "px": [
+    458,
+    1205
+   ],
+   "defaultMm": [
+    11.33,
+    30.0
+   ],
+   "qa": "통과",
+   "qaNote": "회전 날개 열량계 단면",
+   "reference": "p2_2021_09_05",
+   "referenceExam": "2021학년도 9월 모평 물리학Ⅱ 5번",
+   "origin": "ai-generated"
+  },
+  {
+   "id": "p_loudspeaker",
+   "subject": "p",
+   "name": "스피커(확성기)",
+   "category": "파동·광학",
+   "keywords": [
+    "스피커",
+    "확성기",
+    "간섭"
+   ],
+   "file": "p/p_loudspeaker.png",
+   "thumb": "thumb/p/p_loudspeaker.png",
+   "format": "png",
+   "px": [
+    780,
+    650
+   ],
+   "defaultMm": [
+    12.0,
+    9.99
+   ],
+   "qa": "보통",
+   "qaNote": "확성기형 스피커. 방향이 원본보다 아래쪽을 향함",
+   "reference": "p1_2022_06_15",
+   "referenceExam": "2022학년도 6월 모평 물리학Ⅰ 15번",
+   "origin": "ai-generated"
+  },
+  {
+   "id": "p_teacher",
+   "subject": "p",
+   "name": "교사(설명)",
+   "category": "인물",
+   "keywords": [
+    "교사",
+    "선생님",
+    "사람",
+    "인물"
+   ],
+   "file": "p/p_teacher.png",
+   "thumb": "thumb/p/p_teacher.png",
+   "format": "png",
+   "px": [
+    985,
+    1328
+   ],
+   "defaultMm": [
+    22.23,
+    30.0
+   ],
+   "qa": "통과",
+   "qaNote": "원본 교사 화풍 유지",
+   "reference": "p1_2023_09_01",
+   "referenceExam": "2023학년도 9월 모평 물리학Ⅰ 1번",
+   "origin": "ai-generated"
+  },
+  {
+   "id": "p_blackboard_v3",
+   "subject": "p",
+   "name": "칠판(2차+구멍 채움)",
+   "category": "인물",
+   "keywords": [
+    "칠판",
+    "교실"
+   ],
+   "file": "p/p_blackboard_v3.png",
+   "thumb": "thumb/p/p_blackboard_v3.png",
+   "format": "png",
+   "px": [
+    1617,
+    783
+   ],
+   "defaultMm": [
+    60.0,
+    29.0
+   ],
+   "qa": "통과",
+   "qaNote": "판 면을 불투명 흰색으로 후처리(fill_holes.py)",
+   "reference": "p1_2023_09_01",
+   "referenceExam": "2023학년도 9월 모평 물리학Ⅰ 1번",
+   "origin": "ai-generated"
+  },
+  {
+   "id": "p_student_seated",
+   "subject": "p",
+   "name": "학생(앉아서 토론)",
+   "category": "인물",
+   "keywords": [
+    "학생",
+    "여학생",
+    "토론",
+    "사람",
+    "인물"
+   ],
+   "file": "p/p_student_seated.png",
+   "thumb": "thumb/p/p_student_seated.png",
+   "format": "png",
+   "px": [
+    1258,
+    1080
+   ],
+   "defaultMm": [
+    25.0,
+    21.44
+   ],
+   "qa": "보통",
+   "qaNote": "앉은 학생. 의자 일부가 함께 그려짐",
+   "reference": "p1_2023_06_02",
+   "referenceExam": "2023학년도 6월 모평 물리학Ⅰ 2번",
+   "origin": "ai-generated"
+  },
+  {
+   "id": "p_lab_cart",
+   "subject": "p",
+   "name": "역학 수레",
+   "category": "역학 기구",
+   "keywords": [
+    "수레",
+    "역학 수레",
+    "운동"
+   ],
+   "file": "p/p_lab_cart.png",
+   "thumb": "thumb/p/p_lab_cart.png",
+   "format": "png",
+   "px": [
+    817,
+    360
+   ],
+   "defaultMm": [
+    14.0,
+    6.13
+   ],
+   "qa": "통과",
+   "qaNote": "역학 수레",
+   "reference": "p1_2025_09_10",
+   "referenceExam": "2025학년도 9월 모평 물리학Ⅰ 10번",
+   "origin": "ai-generated"
+  },
+  {
+   "id": "p_speed_gate",
+   "subject": "p",
+   "name": "속도 측정 장치",
+   "category": "역학 기구",
+   "keywords": [
+    "속도 측정",
+    "포토게이트"
+   ],
+   "file": "p/p_speed_gate.png",
+   "thumb": "thumb/p/p_speed_gate.png",
+   "format": "png",
+   "px": [
+    594,
+    844
+   ],
+   "defaultMm": [
+    8.43,
+    12.0
+   ],
+   "qa": "통과",
+   "qaNote": "속도 측정 장치",
+   "reference": "p1_2025_09_10",
+   "referenceExam": "2025학년도 9월 모평 물리학Ⅰ 10번",
+   "origin": "ai-generated"
+  },
+  {
+   "id": "p_force_sensor",
+   "subject": "p",
+   "name": "힘 센서",
+   "category": "역학 기구",
+   "keywords": [
+    "힘 센서",
+    "충격량"
+   ],
+   "file": "p/p_force_sensor.png",
+   "thumb": "thumb/p/p_force_sensor.png",
+   "format": "png",
+   "px": [
+    434,
+    544
+   ],
+   "defaultMm": [
+    6.37,
+    8.0
+   ],
+   "qa": "통과",
+   "qaNote": "힘 센서",
+   "reference": "p1_2025_09_10",
+   "referenceExam": "2025학년도 9월 모평 물리학Ⅰ 10번",
+   "origin": "ai-generated"
+  },
+  {
+   "id": "p_laptop",
+   "subject": "p",
+   "name": "노트북",
+   "category": "실험 기구",
+   "keywords": [
+    "노트북",
+    "컴퓨터",
+    "그래프"
+   ],
+   "file": "p/p_laptop.png",
+   "thumb": "thumb/p/p_laptop.png",
+   "format": "png",
+   "px": [
+    1024,
+    788
+   ],
+   "defaultMm": [
+    16.0,
+    12.3
+   ],
+   "qa": "통과",
+   "qaNote": "노트북. 화면 그래프는 선만 남음",
+   "reference": "p1_2025_09_10",
+   "referenceExam": "2025학년도 9월 모평 물리학Ⅰ 10번",
+   "origin": "ai-generated"
+  },
+  {
+   "id": "p_digital_thermometer",
+   "subject": "p",
+   "name": "디지털 온도계",
+   "category": "열",
+   "keywords": [
+    "온도계",
+    "디지털"
+   ],
+   "file": "p/p_digital_thermometer.png",
+   "thumb": "thumb/p/p_digital_thermometer.png",
+   "format": "png",
+   "px": [
+    436,
+    1101
+   ],
+   "defaultMm": [
+    4.72,
+    12.0
+   ],
+   "qa": "통과",
+   "qaNote": "디지털 온도계, 표시창 비움",
+   "reference": "p2_2023_06_07",
+   "referenceExam": "2023학년도 6월 모평 물리학Ⅱ 7번",
+   "origin": "ai-generated"
+  },
+  {
+   "id": "p_motor",
+   "subject": "p",
+   "name": "전동기",
+   "category": "역학 기구",
+   "keywords": [
+    "전동기",
+    "모터"
+   ],
+   "file": "p/p_motor.png",
+   "thumb": "thumb/p/p_motor.png",
+   "format": "png",
+   "px": [
+    840,
+    516
+   ],
+   "defaultMm": [
+    12.0,
+    7.35
+   ],
+   "qa": "통과",
+   "qaNote": "전동기",
+   "reference": "p2_2026_09_13",
+   "referenceExam": "2026학년도 9월 모평 물리학Ⅱ 13번",
+   "origin": "ai-generated"
+  },
+  {
+   "id": "p_sound_meter_stand",
+   "subject": "p",
+   "name": "음파 측정기(스탠드)",
+   "category": "파동·광학",
+   "keywords": [
+    "음파 측정기",
+    "도플러"
+   ],
+   "file": "p/p_sound_meter_stand.png",
+   "thumb": "thumb/p/p_sound_meter_stand.png",
+   "format": "png",
+   "px": [
+    559,
+    1223
+   ],
+   "defaultMm": [
+    6.38,
+    14.0
+   ],
+   "qa": "통과",
+   "qaNote": "스탠드형 음파 측정기",
+   "reference": "p2_2025_09_09",
+   "referenceExam": "2025학년도 9월 모평 물리학Ⅱ 9번",
+   "origin": "ai-generated"
+  },
+  {
+   "id": "p_sound_source_cart",
+   "subject": "p",
+   "name": "음원(공 달린 수레)",
+   "category": "파동·광학",
+   "keywords": [
+    "음원",
+    "도플러"
+   ],
+   "file": "p/p_sound_source_cart.png",
+   "thumb": "thumb/p/p_sound_source_cart.png",
+   "format": "png",
+   "px": [
+    557,
+    798
+   ],
+   "defaultMm": [
+    9.75,
+    14.0
+   ],
+   "qa": "통과",
+   "qaNote": "공 모양 음원 수레",
+   "reference": "p2_2025_09_09",
+   "referenceExam": "2025학년도 9월 모평 물리학Ⅱ 9번",
+   "origin": "ai-generated"
+  },
+  {
+   "id": "p_camera",
+   "subject": "p",
+   "name": "카메라",
+   "category": "실험 기구",
+   "keywords": [
+    "카메라",
+    "촬영"
+   ],
+   "file": "p/p_camera.png",
+   "thumb": "thumb/p/p_camera.png",
+   "format": "png",
+   "px": [
+    623,
+    1147
+   ],
+   "defaultMm": [
+    9.74,
+    18.0
+   ],
+   "qa": "통과",
+   "qaNote": "삼각대 카메라",
+   "reference": "p1_2024_06_04",
+   "referenceExam": "2024학년도 6월 모평 물리학Ⅰ 4번",
+   "origin": "ai-generated"
+  }
+ ]
+}

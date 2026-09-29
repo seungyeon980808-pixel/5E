@@ -46,6 +46,7 @@
   <link rel="stylesheet" href="css/exam-library.css?v=1.6.0-preview-labeler-0917-1111" />
   <link rel="stylesheet" href="css/unified-library.css?v=1.6.0-server-fixes-0929" />
   <link rel="stylesheet" href="css/parts-library.css?v=1.6.0-preview-labeler-0917-1111" />
+  <link rel="stylesheet" href="css/asset-library.css?v=1.6.0-asset-dev-0929" />
   <link rel="stylesheet" href="css/tutorial.css?v=1.6.0-preview-labeler-0917-1111" />
   <link rel="stylesheet" href="css/ai-panel.css?v=1.6.0-small-fixes-0928" />
   <link rel="stylesheet" href="css/ai-comparison.css?v=1.6.0-ai-latest-fixes-0928" />
@@ -296,6 +297,16 @@
           <div class="tool-section-header">내 오브젝트 <span class="toggle-icon">▾</span></div>
           <div class="tool-section-body tool-section-body-wide">
             <div id="personal-parts"><p class="subject-part-empty">저장된 오브젝트가 없습니다.</p></div>
+          </div>
+        </div>
+        <div class="tool-section is-collapsed" id="asset-library-section">
+          <div class="tool-section-header">에셋 라이브러리 <span class="toggle-icon">▾</span></div>
+          <div class="tool-section-body tool-section-body-wide">
+            <div class="asset-library-tabs" id="asset-library-tabs" role="tablist" aria-label="에셋 과목"></div>
+            <input id="asset-library-query" class="asset-library-query" type="search" autocomplete="off"
+                   placeholder="이름·검색어: 학생 / 추 / 도플러" aria-label="에셋 검색" />
+            <p id="asset-library-status" class="asset-library-status" role="status"></p>
+            <div id="asset-library-grid" class="asset-library-grid"></div>
           </div>
         </div>
         <div class="tool-section" id="advanced-section">

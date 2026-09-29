@@ -41,6 +41,7 @@ import { initToolHint } from "./tool-hint.js?v=1.6.0-remediation-0929";
 import { initTooltips } from "./tooltip.js?v=1.6.0-preview-labeler-0917-1111";
 import { initViewMode } from "./view-mode.js?v=1.6.0-remediation-0929";
 import { initPersonalObjects } from "./personal-objects.js?v=1.6.0-remediation-0929";
+import { initAssetLibrary } from "./asset-library.js?v=1.6.0-asset-dev-0929";
 import { initBulkEdit } from "./bulk-edit.js?v=1.6.0-remediation-0929";
 import { initDataPlot } from "./data-plot.js?v=1.6.0-remediation-0929";
 import { initGaugeSection } from "./inspector/section-gauge.js?v=1.6.0-preview-labeler-0917-1111";
@@ -426,6 +427,9 @@ window.addEventListener("keydown", (e) => {
 
 /* ----- 퍼스널 오브젝트: 선택 저장 → 좌측 라이브러리/검색에서 재사용 ----- */
 initPersonalObjects(state);
+
+/* ----- 에셋 라이브러리: 과목별 투명 PNG 에셋 검색·삽입 (개발용) ----- */
+initAssetLibrary(state);
 
 /* ----- 전체 수정: 선택(없으면 전체) 오브젝트 속성 일괄 통일/증감 ----- */
 initBulkEdit(state);
