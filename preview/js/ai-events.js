@@ -36,7 +36,7 @@ export function parseAiEvent(message) {
     };
   }
   if (method === "item/completed" && item?.type === "agentMessage") {
-    if (item.phase === "commentary") return { kind: "ignore" };
+    if (item.phase === "commentary" && !String(item.text || "").includes("<5e-editable-labels>")) return { kind: "ignore" };
     return { kind: "assistant", turnId, text: typeof item.text === "string" ? item.text.trim() : "" };
   }
   if (method === "turn/completed") {

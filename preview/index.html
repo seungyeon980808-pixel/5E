@@ -571,6 +571,10 @@
             <button type="button" data-ai-side-tab="chat" aria-pressed="false">Codex 대화</button>
             <button type="button" class="ai-comment-visibility" data-ai-comment-visibility aria-pressed="true" title="이미지 위의 코멘트 표시를 켜거나 끕니다">코멘트 표시</button>
           </nav>
+          <div class="ai-source-label-control">
+            <label class="ai-review-toggle"><input type="checkbox" data-ai-preserve-source-labels data-ai-input-mutator aria-describedby="ai-source-label-note"> 원본 라벨을 편집 가능한 객체로 생성</label>
+            <p id="ai-source-label-note" class="ai-mark-policy-note" data-ai-source-label-note hidden>원본에서 읽히는 글자·숫자와 지시선을 별도 라벨로 만듭니다. 옮긴 내용과 위치를 확인해 주세요.</p>
+          </div>
           <section class="ai-output-processing" data-ai-output-processing aria-label="생성 결과 처리">
             <label class="ai-output-processing-row ai-output-option-background">
               <span>배경</span>

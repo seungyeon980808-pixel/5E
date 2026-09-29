@@ -225,6 +225,19 @@ export function createAiImageReviewController({ transport, onState = () => {}, n
     issues: [...(report?.issues || []), { message: text(message) || "독립 검수 작업 실패", severity: "major" }],
   });
 
+  const deliverCorrectionAssistant = async (owner, turn) => {
+    if (!isCurrent(owner, turn) || turn.closed || !turn.pendingCandidate) return false;
+    if (turn.assistantDeliveryPromise) return turn.assistantDeliveryPromise;
+    turn.assistantDeliveryPromise = Promise.resolve()
+      .then(() => owner.acceptCorrectionAssistant?.(turn.pendingCandidate, turn.assistantText))
+      .then(() => true)
+      .catch((error) => {
+        if (isCurrent(owner, turn) && !turn.closed) turn.errorText = error?.message || String(error);
+        return false;
+      });
+    return turn.assistantDeliveryPromise;
+  };
+
   function route(owner, turn, event) {
     if (!isCurrent(owner, turn) || turn.closed) return;
     // Desktop stops trailing narration after a completed image. This scoped
@@ -233,8 +246,12 @@ export function createAiImageReviewController({ transport, onState = () => {}, n
       if (event.state === "interrupting") turn.autoImageFinalization = true;
       if (event.state === "recovering" && turn.autoImageFinalization) turn.recoveringImage = true;
     }
-    if (event.kind === "assistant" && turn.kind === "review") {
+    if (event.kind === "assistant" && ["review", "correction"].includes(turn.kind)) {
+      if (turn.kind === "correction" && turn.assistantText.includes("<5e-editable-labels>")
+        && !text(event.text).includes("<5e-editable-labels>")) return;
       turn.assistantText = text(event.text);
+      turn.assistantReceived = true;
+      if (turn.kind === "correction" && turn.pendingCandidate) void deliverCorrectionAssistant(owner, turn);
       return;
     }
     if (event.kind === "error") {
@@ -253,12 +270,13 @@ export function createAiImageReviewController({ transport, onState = () => {}, n
         const capturedTurn = turn;
         turn.pendingCandidatePromise = Promise.resolve()
           .then(() => capturedRun.acceptCorrectionImage(event.src, capturedRun.generationCount, { rendererPrompt: event.rendererPrompt }))
-          .then((candidate) => {
+          .then(async (candidate) => {
             if (!isCurrent(capturedRun, capturedTurn) || capturedTurn.closed || !candidate?.id) return null;
             if (!candidateUnchanged(capturedRun)) return null;
             capturedTurn.pendingCandidate = candidate;
             capturedRun.candidate = candidate;
             capturedRun.candidateBinding = candidateBinding(candidate);
+            if (capturedTurn.assistantReceived) await deliverCorrectionAssistant(capturedRun, capturedTurn);
             capturedRun.report = emptyReport();
             emit(capturedRun, "correcting");
             return candidate;
@@ -299,6 +317,8 @@ export function createAiImageReviewController({ transport, onState = () => {}, n
       awaiting: true,
       queued: [],
       assistantText: "",
+      assistantReceived: false,
+      assistantDeliveryPromise: null,
       errorText: "",
       pendingCandidate: null,
       pendingCandidatePromise: null,
@@ -453,6 +473,8 @@ export function createAiImageReviewController({ transport, onState = () => {}, n
     const pending = turn.pendingCandidatePromise;
     if (pending) await pending;
     if (!isCurrent(owner, turn) || turn.closed) return;
+    if (turn.pendingCandidate) await deliverCorrectionAssistant(owner, turn);
+    if (!isCurrent(owner, turn) || turn.closed) return;
     const status = text(event.status).toLowerCase();
     const completedImageStop = status === "interrupted" && turn.autoImageFinalization && turn.pendingCandidate && !turn.errorText;
     if (["cancelled", "canceled", "interrupted"].includes(status) && !completedImageStop) {
@@ -526,6 +548,7 @@ export function createAiImageReviewController({ transport, onState = () => {}, n
       prepareCandidateAttachment: options.prepareCandidateAttachment,
       makeCorrectionPayload: options.makeCorrectionPayload,
       acceptCorrectionImage: options.acceptCorrectionImage,
+      acceptCorrectionAssistant: typeof options.acceptCorrectionAssistant === "function" ? options.acceptCorrectionAssistant : null,
       selection: { model: options.model, effort: options.effort, serviceTier: options.serviceTier ?? null },
       generationCount: Math.max(1, Number(options.generationCount || 1)),
       reviewCount: 0,

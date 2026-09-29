@@ -3,6 +3,7 @@ import { showAlert } from "./ui-dialogs.js?v=1.6.0-remediation-0929";
 /* ===== IMAGE PASTE (Ctrl+V system-clipboard image -> normal image object) ===== */
 
 import { getLastMouseWorld } from "./transform.js?v=1.6.0-remediation-0929";
+import { createEditableImageLabelObjects } from "./ai-editable-image-labels.js?v=1.6.0-preview-source-labels-0927";
 
 // 왜: png/jpeg만 허용하면 webp/gif/bmp를 클립보드로 붙여넣을 때 조용히 무시된다.
 const ACCEPTED_TYPES = new Set(["image/png", "image/jpeg", "image/webp", "image/gif", "image/bmp"]);
@@ -98,6 +99,22 @@ function cloneSourceMetadata(value) {
   return Object.keys(metadata).length ? metadata : undefined;
 }
 
+function autoLabelsForImage(image, place) {
+  const labels = place?.editableLabelPlan?.labels;
+  if (!Array.isArray(labels) || !labels.length) return [];
+  let serial = 0;
+  try {
+    return createEditableImageLabelObjects({
+      labels,
+      image,
+      metadata: { aiTaskId: place.aiTaskId, aiCandidateId: place.aiCandidateId },
+      idFactory: () => `${image.id}_auto_label_${++serial}`,
+    });
+  } catch {
+    return [];
+  }
+}
+
 function insertImageObject(state, src, size, place) {
   const s0 = state.get();
   const fitted = fitToArtboard(size, s0.artboard);
@@ -111,33 +128,35 @@ function insertImageObject(state, src, size, place) {
   const y = target.y - fitted.h / 2 + off.dy;
   const id = `obj_${Date.now().toString(36)}_img${++_idCounter}`;
 
+  const image = {
+    id,
+    type: "image",
+    src,
+    x,
+    y,
+    w: fitted.w,
+    h: fitted.h,
+    rotation: 0,
+    mode: "edit",
+    opacity: 1,
+    aspectLocked: true,
+    exportable: true,
+    locked: false,
+    positionLocked: false,
+    imageSelectionLocked: false,
+    cutouts: [],
+    ...(place?.aiTaskId ? {aiTaskId:place.aiTaskId,aiCandidateId:place.aiCandidateId} : {}),
+    ...(place?.sourceMetadata ? {sourceMetadata:place.sourceMetadata} : {}),
+    ...(place?.editableLabelPlan ? {aiEditableLabelPlan: structuredClone(place.editableLabelPlan)} : {}),
+  };
+  const labels = autoLabelsForImage(image, place);
   state.update((s) => {
     s.undoStack.push(JSON.parse(JSON.stringify(s.objects)));
     if (s.undoStack.length > MAX_UNDO) s.undoStack.splice(0, s.undoStack.length - MAX_UNDO);
     s.redoStack = [];
-    s.objects.push({
-      id,
-      type: "image",
-      src,
-      x,
-      y,
-      w: fitted.w,
-      h: fitted.h,
-      rotation: 0,
-      mode: "edit",
-      opacity: 1,
-      aspectLocked: true,
-      exportable: true,
-      locked: false,
-      positionLocked: false,
-      imageSelectionLocked: false,
-      layerId: s.activeLayerId,
-      order: s.objects.length,
-      cutouts: [],
-      ...(place?.aiTaskId ? {aiTaskId:place.aiTaskId,aiCandidateId:place.aiCandidateId} : {}),
-      ...(place?.sourceMetadata ? {sourceMetadata:place.sourceMetadata} : {}),
-    });
-    s.selectedIds = [id];
+    s.objects.push({ ...image, layerId: s.activeLayerId, order: s.objects.length });
+    for (const label of labels) s.objects.push({ ...label, layerId: s.activeLayerId, order: s.objects.length });
+    s.selectedIds = [id, ...labels.map(label => label.id)];
     s.targetedId = null;
     s.activeTool = "V";
   });
@@ -155,6 +174,7 @@ export async function insertImageFromSrc(state, src, opts = {}) {
     ...(opts?.at ? { at: { ...opts.at } } : {}),
     ...(opts?.offset ? { offset: { ...opts.offset } } : {}),
     ...(opts?.sourceMetadata ? { sourceMetadata: cloneSourceMetadata(opts.sourceMetadata) } : {}),
+    ...(opts?.editableLabelPlan ? { editableLabelPlan: structuredClone(opts.editableLabelPlan) } : {}),
   };
   delete options.isCurrent;
   if (typeof src !== "string" || !src.trim()) throw new Error("삽입할 이미지가 없습니다.");
@@ -215,7 +235,15 @@ export async function insertImageFromSrc(state, src, opts = {}) {
         // Geometry, layer, grouping, clipping and other image settings remain.
         target.src = src;
         target.aiCandidateId = options.aiCandidateId;
-        s.selectedIds = [target.id];
+        if (options.editableLabelPlan) target.aiEditableLabelPlan = structuredClone(options.editableLabelPlan);
+        else delete target.aiEditableLabelPlan;
+        for (let index = s.objects.length - 1; index >= 0; index -= 1) {
+          const object = s.objects[index];
+          if (object.aiAutoLabel === true && object.aiParentImageId === target.id) s.objects.splice(index, 1);
+        }
+        const labels = autoLabelsForImage(target, options);
+        for (const label of labels) s.objects.push({ ...label, layerId: target.layerId, order: s.objects.length });
+        s.selectedIds = [target.id, ...labels.map(label => label.id)];
         s.targetedId = null;
         s.activeTool = "V";
       });

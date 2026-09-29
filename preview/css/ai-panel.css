@@ -1346,6 +1346,9 @@
 #ai-image-panel .ai-input-heading strong { font-size: 12px; }
 #ai-image-panel .ai-review-toggle { display: flex; align-items: center; gap: 5px; color: var(--text-label); font-size: 11px; }
 #ai-image-panel .ai-review-toggle input { accent-color: var(--accent); }
+#ai-image-panel .ai-source-label-control { display:grid; gap:4px; padding:8px 12px; border-bottom:1px solid var(--border); background:var(--bg-input); }
+#ai-image-panel .ai-source-label-control .ai-review-toggle { font-size:11px; }
+#ai-image-panel .ai-source-label-control .ai-mark-policy-note { margin:0; }
 #ai-image-panel .ai-review-model { margin: 7px 0 0; color: var(--text-secondary); font-size: 10px; }
 #ai-image-panel .ai-review-summary {
   display: flex;

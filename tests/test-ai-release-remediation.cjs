@@ -262,6 +262,7 @@ function submitContext(statusPromise) {
     normalizeReferenceComposition: (value) => value,
     normalizeMarkPolicy: (value) => value,
     readMarkPolicy: () => ({}),
+    readPreserveSourceLabels: () => false,
     partitionReferenceItems: (inputs) => ({ inputs, styleReferences: [] }),
     orderedInputReferences: (value) => value,
     commentPrompt: () => '',
