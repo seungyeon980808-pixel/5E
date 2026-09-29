@@ -19,12 +19,6 @@
     "build:unpacked": "electron-builder --dir --publish never",
     "test:desktop": "node desktop/run-smoke.cjs",
     "test:image": "node desktop/run-smoke.cjs --image",
-    "benchmark:image": "node desktop/benchmark-image-turn.cjs",
-    "benchmark:scene": "node desktop/benchmark-scene-turn.cjs",
-    "benchmark:scene:repeatability": "node desktop/benchmark-scene-repeatability.cjs",
-    "verify:scene:repeatability": "node desktop/benchmark-scene-repeatability.cjs --verify",
-    "benchmark:local-assets": "node desktop/benchmark-local-assets.cjs",
-    "verify:local-assets": "node desktop/benchmark-local-assets.cjs --verify",
     "audit:exam-motifs": "node scripts/engine-v2/audit-exam-motifs.mjs --check",
     "package:win": "electron-builder --win nsis --x64 --publish never",
     "package:mac": "electron-builder --mac dmg zip --x64 --arm64 --publish never"
