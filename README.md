@@ -24,9 +24,9 @@
 </p>
 
 <p align="center">
-  <a href="#세-단계로-끝나는-시험용-그림">세 단계</a> ·
-  <a href="#시작하기">시작하기</a> ·
   <a href="#이런-그림을-만듭니다">결과 예시</a> ·
+  <a href="#시작하기">시작하기</a> ·
+  <a href="#세-단계로-끝나는-시험용-그림">세 단계</a> ·
   <a href="#기능">기능</a> ·
   <a href="#자주-묻는-질문">자주 묻는 질문</a> ·
   <a href="#구조-한눈에">구조</a> ·
@@ -43,27 +43,55 @@
 - **시험지 규칙에 맞춥니다.** 배경 제거, 무채색, 선 굵기, 라벨 표기를 시험 그림 기준으로 정리합니다.
 - **설치 없이 씁니다.** [5e.ai.kr](https://www.5e.ai.kr/)에서 바로 엽니다.
 
-## 세 단계로 끝나는 시험용 그림
+## 이런 그림을 만듭니다
 
-### ① 라이브러리에서 이미지 크롭
+**사진의 질감부터 복잡한 생물 구조까지, 선화로 바꾸고 필요한 물체만 꺼내 씁니다.** 실제 교과서 그림으로 만든 세 가지 사례입니다.
 
-교과서·기출 PDF를 **본문 글자까지** 검색하고, 필요한 그림을 드래그로 자릅니다. 여러 그림을 크롭 보관함에 모아 한 번에 작업대로 보낼 수 있습니다.
+### 돌의 질감은 선화로, 암석은 하나씩
 
-![교과서 PDF에서 필요한 그림을 선택해 작업대로 보내는 크롭 화면](docs/media/readme/step-crop.png)
+색과 사진으로 표현된 암석을 흑백 선화로 바꾸고, 네 암석을 각각의 투명 PNG로 나눴습니다.
 
-### ② AI 이미지 변환
+<table>
+<tr><th width="35%">교과서 원본</th><th width="65%">AI 선화 변환</th></tr>
+<tr><td valign="top"><img src="docs/media/readme/examples/rock-before.png" alt="유문암·현무암·화강암·반려암 교과서 사진" width="100%"></td><td valign="top"><img src="docs/media/readme/examples/rock-after.png" alt="네 암석의 질감을 표현한 흑백 선화" width="100%"></td></tr>
+</table>
 
-사진과 컬러 그림을 **평가원식 흑백 선화**로 바꿉니다. 아래는 가열 → 온도 측정 → 거름 그림의 원본과 변환 결과입니다. 원본과 겹쳐 비교하고, 고칠 부분에 코멘트를 남겨 다시 요청합니다.
+**한 장에서 꺼낸 암석 4개** · 아래 결과는 각각 따로 캔버스에 넣고 크기와 위치를 조절할 수 있습니다.
 
-![가열·온도 측정·거름 실험 순서: 교과서 원본과 AI 선화](docs/media/readme/steps-flow.png)
+<table>
+<tr><td width="25%" valign="middle" align="center"><img src="docs/media/readme/examples/rock-02.png" alt="분리된 유문암" width="100%"><br><sub>유문암</sub></td><td width="25%" valign="middle" align="center"><img src="docs/media/readme/examples/rock-03.png" alt="분리된 현무암" width="100%"><br><sub>현무암</sub></td><td width="25%" valign="middle" align="center"><img src="docs/media/readme/examples/rock-01.png" alt="분리된 화강암" width="100%"><br><sub>화강암</sub></td><td width="25%" valign="middle" align="center"><img src="docs/media/readme/examples/rock-04.png" alt="분리된 반려암" width="100%"><br><sub>반려암</sub></td></tr>
+</table>
 
-### ③ 후처리 및 라벨링
+### 복잡한 심장 그림도 시험용 선화로
 
-선화의 배경을 지우고, 필요한 물체만 따로 꺼냅니다. 캔버스에서 (가)(나)(다)와 지시선을 붙인 뒤 PNG·SVG로 내보내 시험지에 넣습니다.
+컬러, 설명 글자와 지시선이 함께 있는 심장 단면을 흑백 선화로 변환한 사례입니다. 시험지에 사용할 때는 원본과 구조를 비교하고, 출제할 부분에 라벨을 붙입니다.
 
-![물질 모음 그림: 교과서 원본, 선화, 배경 제거, 물체별 분리](docs/media/readme/mix-flow.png)
+<table>
+<tr><th width="50%">교과서 원본</th><th width="50%">AI 선화 변환</th></tr>
+<tr><td valign="top"><img src="docs/media/readme/examples/heart-before.png" alt="혈관·심방·심실 이름과 색이 포함된 복잡한 심장 단면 원본" width="100%"></td><td valign="top"><img src="docs/media/readme/examples/heart-after.png" alt="설명 글자를 덜어낸 복잡한 심장 단면의 흑백 선화" width="100%"></td></tr>
+</table>
 
-<sub>위 이미지는 배경 제거와 물체별 분리 예시입니다. 라벨링 결과는 아래의 ‘라벨링과 원본 비교’에서 볼 수 있습니다.</sub>
+[심장에 (가)(나)(다)를 붙인 결과 보기](docs/EXAMPLES_v1.6.0.md#user-content-심장에-라벨-붙이기)
+
+### 주스가 있는 복잡한 그림, 물체 10개를 각각
+
+소화기·금속박·소금·모래·돌·컵·병과 주스를 마시는 인물이 섞여 있는 한 장입니다. 전체를 선화로 바꾼 뒤, **필요한 물체를 각각의 투명 PNG로 꺼냈습니다.**
+
+<table>
+<tr><th width="50%">교과서 원본</th><th width="50%">AI 선화 변환</th></tr>
+<tr><td valign="top"><img src="docs/media/readme/examples/mixture-before.png" alt="순물질과 혼합물 교과서 그림: 소화기·컵·우유·암석·주스를 마시는 인물" width="100%"></td><td valign="top"><img src="docs/media/readme/examples/mixture-after.png" alt="한 장의 복잡한 물질 모음 전체를 변환한 흑백 선화" width="100%"></td></tr>
+</table>
+
+**전체 그림 → 따로 쓸 수 있는 그림 10개**
+
+<table>
+<tr><td width="20%" valign="middle" align="center"><img src="docs/media/readme/examples/mixture-01.png" alt="분리된 소화기" width="100%"><br><sub>소화기</sub></td><td width="20%" valign="middle" align="center"><img src="docs/media/readme/examples/mixture-03.png" alt="분리된 금속박" width="100%"><br><sub>금속박</sub></td><td width="20%" valign="middle" align="center"><img src="docs/media/readme/examples/mixture-04.png" alt="분리된 소금" width="100%"><br><sub>소금</sub></td><td width="20%" valign="middle" align="center"><img src="docs/media/readme/examples/mixture-02.png" alt="분리된 비커" width="100%"><br><sub>비커</sub></td><td width="20%" valign="middle" align="center"><img src="docs/media/readme/examples/mixture-07.png" alt="분리된 물컵" width="100%"><br><sub>물컵</sub></td></tr>
+<tr><td width="20%" valign="middle" align="center"><img src="docs/media/readme/examples/mixture-09.png" alt="분리된 모래" width="100%"><br><sub>모래</sub></td><td width="20%" valign="middle" align="center"><img src="docs/media/readme/examples/mixture-08.png" alt="분리된 암석" width="100%"><br><sub>암석</sub></td><td width="20%" valign="middle" align="center"><img src="docs/media/readme/examples/mixture-06.png" alt="분리된 비눗방울과 손" width="100%"><br><sub>비눗방울과 손</sub></td><td width="20%" valign="middle" align="center"><img src="docs/media/readme/examples/mixture-05.png" alt="분리된 우유병" width="100%"><br><sub>우유병</sub></td><td width="20%" valign="middle" align="center"><img src="docs/media/readme/examples/mixture-10.png" alt="분리된 주스를 마시는 인물" width="100%"><br><sub>주스를 마시는 인물</sub></td></tr>
+</table>
+
+분리한 그림은 필요한 것만 골라 새 문항에 배치합니다. 컵·병·인물을 각각 옮길 수 있고, 맞닿거나 겹친 물체는 함께 묶일 수 있어 분리 결과를 확인한 뒤 사용하세요.
+
+**[실험 장치·회로·호흡계와 다른 분리 사례도 보기 →](docs/EXAMPLES_v1.6.0.md)**
 
 ## 시작하기
 
@@ -91,63 +119,15 @@
 
 5E는 ChatGPT 비밀번호를 받지 않고, 웹에서는 로그인한 브라우저 탭에만 5E 세션 토큰을 둡니다([자세히](#내-데이터는-어디로-가나요)). AI 기능은 로그인한 계정의 기능과 이용 한도를 따르며, AI 연결 없이도 그리기와 편집은 모두 쓸 수 있습니다.
 
-## 이런 그림을 만듭니다
+## 세 단계로 끝나는 시험용 그림
 
-위의 대표 사례 외에도 실험 장치·생물 구조·회로·암석을 변환할 수 있습니다. 관심 있는 예시만 펼쳐 보세요. 아래는 실제 중학교 과학 2 교과서 그림으로 만든 결과입니다.
+| 단계 | 할 일 |
+|---|---|
+| **① 찾고 자르기** | 라이브러리에서 교과서·기출 PDF를 본문 글자까지 검색하고, 필요한 그림을 크롭해 작업대로 보냅니다. |
+| **② 선화로 바꾸기** | AI 이미지 변환을 실행하고 원본과 겹쳐 비교합니다. 고칠 부분에는 점·영역 코멘트를 남겨 다시 요청합니다. |
+| **③ 꺼내 쓰기** | 배경을 지우고 물체별로 나눕니다. 캔버스에서 라벨을 붙인 뒤 PNG·SVG로 내보냅니다. |
 
-<details>
-<summary><b>여러 종류의 교과서 그림과 동시 변환</b> — 실험 장치·생물·회로·암석</summary>
-
-교과서 그림 8장을 각각의 작업으로 나누어 동시에 요청했습니다. 이 사례에서는 8장 모두 약 2분 만에 끝났으며, 손으로 고치지 않은 AI 결과입니다.
-
-<sub>2026-09-30 제작 기록 · GPT-6-Astra · 사고 수준 낮음(low) · 작업별 약 67~102초. 여러 작업을 동시에 요청한 사례이며, 모델·이미지·서버 대기 상황에 따라 달라집니다.</sub>
-
-![교과서 원본과 AI 선화: 여러 액체의 밀도 층, 분별 깔때기, 빛의 굴절 실험 장치, 밀폐된 유리병 속 식물](docs/media/readme/gallery-tall.png)
-
-![교과서 원본과 AI 선화: 전압·전류 측정 회로, 전동기의 원리, 호흡계의 구조, 화산암·심성암](docs/media/readme/gallery-wide.png)
-
-그림마다 작업과 경과 시간이 따로 표시됩니다. 변환이 끝난 작업부터 확인할 수 있습니다.
-
-![교과서 그림 5장을 동시에 변환하는 AI 작업대: 변환 중, 모두 완료, 전체 화면](docs/media/readme/parallel-run.png)
-
-</details>
-
-<details>
-<summary><b>물체별 분리 결과</b> — 한 장에서 나눈 물체 10개와 다른 사례</summary>
-
-위의 물질 모음 그림에서 나눈 물체 10개입니다.
-
-![한 장에서 나눈 물체 10개](docs/media/readme/sep-grid.png)
-
-물체가 여럿 모인 다른 그림도 같은 방식으로 나눕니다. 맞닿은 물체는 하나로 묶일 수 있어서, 분리 결과 확인 창에서 영역을 고친 뒤 캔버스에 넣습니다.
-
-![반지·컵·병·캔 그림과 광물 표본 그림을 자동 분리한 결과](docs/media/readme/sep-more.png)
-
-</details>
-
-<details>
-<summary><b>배경 유지와 배경 제거</b> — 비커·회로·전동기</summary>
-
-같은 결과를 흰 배경 그대로, 또는 투명 배경으로 받을 수 있습니다.
-
-![얼음 비커 가열: 원본, 선화 배경 유지, 선화 배경 제거](docs/media/readme/beaker-flow.png)
-
-![전압·전류 측정 회로와 전동기의 원리: 원본, 선화 배경 유지, 선화 배경 제거](docs/media/readme/bg-options.png)
-
-</details>
-
-<details>
-<summary><b>라벨링과 원본 비교</b> — 심장·호흡계</summary>
-
-선화에 (가)(나)(다)와 지시선을 붙여 시험용 그림으로 정리합니다.
-
-![심장 단면: 교과서 원본, AI 선화, 라벨을 붙인 시험용 그림](docs/media/readme/step-label.png)
-
-경계선을 좌우로 끌어 선화와 교과서 원본을 한 화면에서 겹쳐 봅니다. 원본의 물체 수·배치·과학적 표현을 확인한 뒤 사용하세요.
-
-![호흡계의 구조: 선화, 경계선으로 겹쳐 보기, 교과서 원본](docs/media/readme/wipe-strip.png)
-
-</details>
+[로그인부터 저장까지 따라 하기 →](docs/USER_GUIDE_v1.6.0.md)
 
 ## 기능
 
