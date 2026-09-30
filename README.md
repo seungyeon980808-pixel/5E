@@ -19,8 +19,8 @@
 </p>
 
 <p align="center">
-  <img src="docs/media/readme/usage.gif" alt="5E 사용 영상: 교과서 PDF에서 크롭, AI 선화 변환, 배경 제거, 물체 분리, 라벨링" width="100%"><br>
-  <sub>16초 사용 영상 · <a href="docs/media/readme/5e-usage.mp4">고화질 MP4로 보기</a></sub>
+  <a href="https://github.com/seungyeon980808-pixel/5E/releases/download/v1.6.0/5E-promo-v9-1080p.mp4"><img src="docs/media/readme/promo-v9-thumbnail.jpg" alt="5E 소개 영상: 어떤 그림이든, 시험용 그림으로. 변환 전후 비교와 크롭, 동시 변환, 분리, 라벨링 시연" width="100%"></a><br>
+  <sub>확정 소개 영상 · 46.9초 · <a href="https://github.com/seungyeon980808-pixel/5E/releases/download/v1.6.0/5E-promo-v9-1080p.mp4">1080p MP4로 보기</a> · <a href="https://github.com/seungyeon980808-pixel/5E/releases/download/v1.6.0/5E-promo-v9-source.zip">편집 원본 다운로드</a></sub>
 </p>
 
 <p align="center">
