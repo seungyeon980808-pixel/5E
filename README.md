@@ -482,7 +482,7 @@ GitHub Actions:
 <details>
 <summary><b>AI 에이전트 연동 (MCP)</b></summary>
 
-Claude 같은 AI 에이전트가 열려 있는 5E 편집기에 회로, 그래프, 과학 부품을 직접 그려 넣게 할 수 있습니다. [tools/mcp-5e](tools/mcp-5e/)는 의존성 없는 MCP 서버(Node 18 이상)입니다.
+Claude 같은 AI 에이전트가 열려 있는 5E 편집기에 회로, 그래프, 과학 부품을 직접 그려 넣게 할 수 있습니다. [tools/mcp-5e](https://github.com/seungyeon980808-pixel/5E/tree/main/tools/mcp-5e)는 의존성 없는 MCP 서버(Node 18 이상)입니다.
 
 ```sh
 claude mcp add 5e -- node "/절대경로/5E/tools/mcp-5e/server.js"
