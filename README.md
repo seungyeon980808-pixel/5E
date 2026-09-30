@@ -521,5 +521,5 @@ claude mcp list
 
 5E는 [GNU AGPL v3](LICENSE)로 배포됩니다. 수정한 버전을 배포하거나 웹 서비스로 제공할 때는 소스 코드를 공개해야 합니다.
 
-개발 박승연 (SMOE) · Copyright © 2026 박승연
+개발 박승연 (SMOE) · AI 개발 도구: OpenAI Codex · Copyright © 2026 박승연
 
