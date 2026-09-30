@@ -36,13 +36,13 @@
 
 아래 링크는 GitHub에서 제목 이동을 지원하는 **상세 변경 문서**의 해당 항목을 엽니다.
 
-- [라이브러리 검색·읽기·크롭](https://github.com/seungyeon980808-pixel/5E/blob/codex/docs-160-review-preview/docs/RELEASE_NOTES_v1.6.0.md#1단계--라이브러리에서-이미지-크롭)
-- [AI 변환·부분 수정·비교·동시 실행](https://github.com/seungyeon980808-pixel/5E/blob/codex/docs-160-review-preview/docs/RELEASE_NOTES_v1.6.0.md#2단계--ai-이미지-변환)
-- [후처리·물체별 분리·라벨링](https://github.com/seungyeon980808-pixel/5E/blob/codex/docs-160-review-preview/docs/RELEASE_NOTES_v1.6.0.md#3단계--후처리-및-라벨링)
-- [편집 화면과 캔버스](https://github.com/seungyeon980808-pixel/5E/blob/codex/docs-160-review-preview/docs/RELEASE_NOTES_v1.6.0.md#편집-화면과-캔버스)
-- [작업 보존과 복구](https://github.com/seungyeon980808-pixel/5E/blob/codex/docs-160-review-preview/docs/RELEASE_NOTES_v1.6.0.md#작업-보존과-복구)
-- [저장과 내보내기](https://github.com/seungyeon980808-pixel/5E/blob/codex/docs-160-review-preview/docs/RELEASE_NOTES_v1.6.0.md#저장과-내보내기)
-- [알려진 제한과 업데이트 전 백업](https://github.com/seungyeon980808-pixel/5E/blob/codex/docs-160-review-preview/docs/RELEASE_NOTES_v1.6.0.md#알려진-제한)
+- [라이브러리 검색·읽기·크롭](https://github.com/seungyeon980808-pixel/5E/blob/codex/docs-160-review-preview/docs/RELEASE_NOTES_v1.6.0.md#user-content-1단계--라이브러리에서-이미지-크롭)
+- [AI 변환·부분 수정·비교·동시 실행](https://github.com/seungyeon980808-pixel/5E/blob/codex/docs-160-review-preview/docs/RELEASE_NOTES_v1.6.0.md#user-content-2단계--ai-이미지-변환)
+- [후처리·물체별 분리·라벨링](https://github.com/seungyeon980808-pixel/5E/blob/codex/docs-160-review-preview/docs/RELEASE_NOTES_v1.6.0.md#user-content-3단계--후처리-및-라벨링)
+- [편집 화면과 캔버스](https://github.com/seungyeon980808-pixel/5E/blob/codex/docs-160-review-preview/docs/RELEASE_NOTES_v1.6.0.md#user-content-편집-화면과-캔버스)
+- [작업 보존과 복구](https://github.com/seungyeon980808-pixel/5E/blob/codex/docs-160-review-preview/docs/RELEASE_NOTES_v1.6.0.md#user-content-작업-보존과-복구)
+- [저장과 내보내기](https://github.com/seungyeon980808-pixel/5E/blob/codex/docs-160-review-preview/docs/RELEASE_NOTES_v1.6.0.md#user-content-저장과-내보내기)
+- [알려진 제한과 업데이트 전 백업](https://github.com/seungyeon980808-pixel/5E/blob/codex/docs-160-review-preview/docs/RELEASE_NOTES_v1.6.0.md#user-content-알려진-제한)
 - [전체 변경 내용](https://github.com/seungyeon980808-pixel/5E/blob/codex/docs-160-review-preview/docs/RELEASE_NOTES_v1.6.0.md)
 
 ## 사용 전에 알아둘 점
