@@ -463,7 +463,7 @@ claude mcp add 5e -- node "/절대경로/5E/tools/mcp-5e/server.js"
 claude mcp list
 ```
 
-1. 편집기를 로컬 서버(`http://localhost:…/preview/`)로 엽니다. 배포 주소에서는 주소 끝에 `?mcp=1`을 붙여 한 번 켭니다(끄기: `?mcp=0`).
+1. 편집기를 로컬 서버(`http://localhost:…/preview/`)로 엽니다. 로컬에서는 MCP 배지가 자동으로 켜집니다(끄기: 주소 끝에 `?mcp=0`).
 2. 에이전트에게 연결을 요청하면 `app_pairing`이 연결 코드(`mcp-5e://127.0.0.1:포트/#…`)를 줍니다.
 3. 편집기 상단의 **MCP** 배지를 눌러 코드를 붙여 넣고, `app_status`로 연결된 창을 확인합니다.
 
@@ -471,7 +471,7 @@ claude mcp list
 
 - MCP 서버는 내 컴퓨터(127.0.0.1)에서만 열리고, 실행할 때마다 새로 만드는 연결 코드가 있어야 명령을 받습니다.
 - 한 번에 편집기 창 하나만 연결되고, 다른 창으로 옮기려면 직접 넘겨야 합니다.
-- 현재 연결을 허용하는 주소는 로컬 서버와 GitHub Pages 기본 주소입니다. **www.5e.ai.kr에서의 연결은 아직 지원하지 않습니다.**
+- 지금은 **로컬 서버에서 연 편집기만 연결됩니다.** MCP 서버가 허용하는 배포 주소가 옛 GitHub Pages 주소(`seungyeon980808-pixel.github.io`)로 남아 있어, www.5e.ai.kr에서는 연결이 거부됩니다.
 
 </details>
 
