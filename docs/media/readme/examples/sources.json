@@ -1,0 +1,105 @@
+{
+  "source": "5E promotional video v4, 2026-09-30, original source assets",
+  "assets": [
+    {
+      "file": "rock-before.png",
+      "source": "media/025-rock-o.png",
+      "sha256": "46cf5324c9e062d1abe6f65b2d18da5f21059f204647de726c4ab564da4cc822"
+    },
+    {
+      "file": "rock-after.png",
+      "source": "media/032-rock-matched.png",
+      "sha256": "cb44abaf275954409adf5308408ea80623939a60b3ec0fe47f4484f262e061e0"
+    },
+    {
+      "file": "heart-before.png",
+      "source": "media/005-heart-o.png",
+      "sha256": "71cae6713ebd391eccbf61c5507f836a1ebf8fcecb1b528f395e227f5acb84fb"
+    },
+    {
+      "file": "heart-after.png",
+      "source": "media/004-heart-g.png",
+      "sha256": "1b0fe3c1c875cc552d88106d8ad0e2c9e186736b3751366a1ba54a899872bc26"
+    },
+    {
+      "file": "mixture-before.png",
+      "source": "media/018-pure-o.png",
+      "sha256": "bc73ca5fe8607503d77e6574a4e3e0988d87be7daeca7e8c9398c702f389b980"
+    },
+    {
+      "file": "mixture-after.png",
+      "source": "media/038-pure-white.png",
+      "sha256": "1df51f09e8e754366112409d0e09bcaddd82ae745ef637f447ceeb229f1b6872"
+    },
+    {
+      "file": "rock-01.png",
+      "source": "media/069-01.png",
+      "sha256": "218df6a99224eb319cc3cd0da8cc60e70de2b359da1d5f3eadcdf3fec75ae641"
+    },
+    {
+      "file": "rock-02.png",
+      "source": "media/070-02.png",
+      "sha256": "ecf5e366a774e88caff0127855f2838ecbb62b8d55c8ba47cfffd61adb130251"
+    },
+    {
+      "file": "rock-03.png",
+      "source": "media/071-03.png",
+      "sha256": "25ff526f081ebeefef2bf976e89730eaabdcbef05bc82538f57683c75443c19d"
+    },
+    {
+      "file": "rock-04.png",
+      "source": "media/072-04.png",
+      "sha256": "ce08f4493114acca74911b054e622c3c253200fd59da93b5a8707bf47f89487a"
+    },
+    {
+      "file": "mixture-01.png",
+      "source": "media/082-01.png",
+      "sha256": "b6e5092281a669f8708038d59b0be9a53048d6832add86f0e385bb03ad7a5056"
+    },
+    {
+      "file": "mixture-02.png",
+      "source": "media/083-02.png",
+      "sha256": "01f55a7fdddcebfb637eaf8b81060b3d83b11bddc0e6b0eded7985a45f73814d"
+    },
+    {
+      "file": "mixture-03.png",
+      "source": "media/084-03.png",
+      "sha256": "796c5512d09d23d07dc4a596004b9c6a2a30d403849528ac44e39be6ffe406cb"
+    },
+    {
+      "file": "mixture-04.png",
+      "source": "media/085-04.png",
+      "sha256": "384412780d1e0261b11c214b8e19e6411cb8408118b07adf21e52c754a56bd88"
+    },
+    {
+      "file": "mixture-05.png",
+      "source": "media/086-05.png",
+      "sha256": "2a2dbd11adc697003559cfe182635cf31c06b94b45bdc2e8a4f0efc58393c6a1"
+    },
+    {
+      "file": "mixture-06.png",
+      "source": "media/087-06.png",
+      "sha256": "6e066f8a5b6fb4445d1ea3cb53c8bc5d1759e58711592f232d79b46b9cf101b5"
+    },
+    {
+      "file": "mixture-07.png",
+      "source": "media/088-07.png",
+      "sha256": "b93345cc38a81419fd9cc5dbb918d26a98fe93388f4ce14e43c794b719f5825e"
+    },
+    {
+      "file": "mixture-08.png",
+      "source": "media/089-08.png",
+      "sha256": "7401d555d97588fc9da5a248f458983e25ae3ffccab11ede4e194a0cfc4dfd2c"
+    },
+    {
+      "file": "mixture-09.png",
+      "source": "media/090-09.png",
+      "sha256": "24f5a827ab31a809ee67df9739c77b6eee7d334e6cce69a33448627019c6e47b"
+    },
+    {
+      "file": "mixture-10.png",
+      "source": "media/091-10.png",
+      "sha256": "2b0e872b83c4e76587ffced82383c8298ba0c1a8e34e026f319987b94ec69488"
+    }
+  ]
+}

@@ -24,10 +24,10 @@
 </p>
 
 <p align="center">
-  <a href="#세-단계로-끝나는-시험용-그림">세 단계</a> ·
   <a href="#이런-그림을-만듭니다">결과 예시</a> ·
-  <a href="#기능">기능</a> ·
   <a href="#시작하기">시작하기</a> ·
+  <a href="#세-단계로-끝나는-시험용-그림">세 단계</a> ·
+  <a href="#기능">기능</a> ·
   <a href="#자주-묻는-질문">자주 묻는 질문</a> ·
   <a href="#구조-한눈에">구조</a> ·
   <a href="#내-데이터는-어디로-가나요">데이터</a> ·
@@ -43,92 +43,96 @@
 - **시험지 규칙에 맞춥니다.** 배경 제거, 무채색, 선 굵기, 라벨 표기를 시험 그림 기준으로 정리합니다.
 - **설치 없이 씁니다.** [5e.ai.kr](https://www.5e.ai.kr/)에서 바로 엽니다.
 
-## 세 단계로 끝나는 시험용 그림
-
-<table>
-<tr>
-<td width="42%" valign="middle">
-
-### ① 라이브러리에서 이미지 크롭
-
-교과서·기출 PDF를 **본문 글자까지** 검색하고, 문서 전체를 넘겨 보며 필요한 그림을 드래그로 자릅니다. 한 쪽에서 여러 영역을 자르고, 여러 PDF에서 자른 그림을 보관함에 모았다가 한 번에 작업대로 보냅니다.
-
-</td>
-<td width="58%"><img src="docs/media/readme/step-crop.png" alt="교과서 PDF 38쪽에서 증류 장치 그림을 자르는 크롭 화면" width="100%"></td>
-</tr>
-<tr>
-<td width="42%" valign="middle">
-
-### ② AI 이미지 변환
-
-사진과 컬러 그림을 **평가원식 흑백 선화**로 바꿉니다. 원본과 겹쳐 비교하고, 고치고 싶은 곳에 점이나 영역 코멘트를 남기면 그 부분만 다시 그립니다.
-
-</td>
-<td width="58%"><img src="docs/media/readme/step-convert.png" alt="얼음을 담은 비커 가열 사진을 흑백 선화로 변환한 결과" width="100%"></td>
-</tr>
-<tr>
-<td width="42%" valign="middle">
-
-### ③ 후처리 및 라벨링
-
-배경을 지우고, 물체별로 나누고, 라벨러로 (가)(나)(다)와 지시선을 붙입니다. PNG·SVG로 내보내 시험지에 바로 넣습니다.
-
-</td>
-<td width="58%"><img src="docs/media/readme/step-label.png" alt="심장 단면 원본, 선화, 라벨을 붙인 결과" width="100%"></td>
-</tr>
-</table>
-
 ## 이런 그림을 만듭니다
 
-모두 실제 중학교 과학 2 교과서 그림을 5E로 변환한 결과입니다. 손으로 고치지 않은 AI 결과 그대로입니다.
+**사진의 질감부터 복잡한 생물 구조까지, 선화로 바꾸고 필요한 물체만 꺼내 씁니다.** 실제 교과서 그림으로 만든 세 가지 사례입니다.
 
-### 교과서 그림 8장을 한 번에
+### 돌의 질감은 선화로, 암석은 하나씩
 
-실험 장치, 생물 구조, 회로, 암석처럼 성격이 다른 그림 8장을 한 번에 요청했습니다. 여러 작업이 동시에 돌아서 8장 모두 약 2분 만에 끝났습니다.
+색과 사진으로 표현된 암석을 흑백 선화로 바꾸고, 네 암석을 각각의 투명 PNG로 나눴습니다.
 
-![교과서 원본과 AI 선화: 여러 액체의 밀도 층, 분별 깔때기, 빛의 굴절 실험 장치, 밀폐된 유리병 속 식물](docs/media/readme/gallery-tall.png)
+<table>
+<tr><th width="35%">교과서 원본</th><th width="65%">AI 선화 변환</th></tr>
+<tr><td valign="top"><img src="docs/media/readme/examples/rock-before.png" alt="유문암·현무암·화강암·반려암 교과서 사진" width="100%"></td><td valign="top"><img src="docs/media/readme/examples/rock-after.png" alt="네 암석의 질감을 표현한 흑백 선화" width="100%"></td></tr>
+</table>
 
-![교과서 원본과 AI 선화: 전압·전류 측정 회로, 전동기의 원리, 호흡계의 구조, 화산암·심성암](docs/media/readme/gallery-wide.png)
+**한 장에서 꺼낸 암석 4개** · 아래 결과는 각각 따로 캔버스에 넣고 크기와 위치를 조절할 수 있습니다.
 
-### 한 장에서 물체 10개까지
+<table>
+<tr><td width="25%" valign="middle" align="center"><img src="docs/media/readme/examples/rock-02.png" alt="분리된 유문암" width="100%"><br><sub>유문암</sub></td><td width="25%" valign="middle" align="center"><img src="docs/media/readme/examples/rock-03.png" alt="분리된 현무암" width="100%"><br><sub>현무암</sub></td><td width="25%" valign="middle" align="center"><img src="docs/media/readme/examples/rock-01.png" alt="분리된 화강암" width="100%"><br><sub>화강암</sub></td><td width="25%" valign="middle" align="center"><img src="docs/media/readme/examples/rock-04.png" alt="분리된 반려암" width="100%"><br><sub>반려암</sub></td></tr>
+</table>
 
-교과서의 물질 모음 그림 한 장을 선화로 바꾼 뒤, 배경을 지우고 물체별로 나눴습니다.
+### 복잡한 심장 그림도 시험용 선화로
 
-![혼합물 물질 모음: 교과서 원본, 선화 배경 유지, 선화 배경 제거, 물체별 분리](docs/media/readme/mix-flow.png)
+컬러, 설명 글자와 지시선이 함께 있는 심장 단면을 흑백 선화로 변환한 사례입니다. 시험지에 사용할 때는 원본과 구조를 비교하고, 출제할 부분에 라벨을 붙입니다.
 
-![한 장에서 나눈 물체 10개](docs/media/readme/sep-grid.png)
+<table>
+<tr><th width="50%">교과서 원본</th><th width="50%">AI 선화 변환</th></tr>
+<tr><td valign="top"><img src="docs/media/readme/examples/heart-before.png" alt="혈관·심방·심실 이름과 색이 포함된 복잡한 심장 단면 원본" width="100%"></td><td valign="top"><img src="docs/media/readme/examples/heart-after.png" alt="설명 글자를 덜어낸 복잡한 심장 단면의 흑백 선화" width="100%"></td></tr>
+</table>
 
-물체가 여럿 모인 다른 그림도 같은 방식으로 나눕니다. 맞닿은 물체는 하나로 묶일 수 있어서, 분리 결과 확인 창에서 영역을 고친 뒤 캔버스에 넣습니다.
+[심장에 (가)(나)(다)를 붙인 결과 보기](docs/EXAMPLES_v1.6.0.md#user-content-심장에-라벨-붙이기)
 
-![반지·컵·병·캔 그림과 광물 표본 그림을 자동 분리한 결과](docs/media/readme/sep-more.png)
+### 주스가 있는 복잡한 그림, 물체 10개를 각각
 
-### 배경 유지와 배경 제거
+소화기·금속박·소금·모래·돌·컵·병과 주스를 마시는 인물이 섞여 있는 한 장입니다. 전체를 선화로 바꾼 뒤, **필요한 물체를 각각의 투명 PNG로 꺼냈습니다.**
 
-같은 결과를 흰 배경 그대로, 또는 투명 배경으로 받을 수 있습니다.
+<table>
+<tr><th width="50%">교과서 원본</th><th width="50%">AI 선화 변환</th></tr>
+<tr><td valign="top"><img src="docs/media/readme/examples/mixture-before.png" alt="순물질과 혼합물 교과서 그림: 소화기·컵·우유·암석·주스를 마시는 인물" width="100%"></td><td valign="top"><img src="docs/media/readme/examples/mixture-after.png" alt="한 장의 복잡한 물질 모음 전체를 변환한 흑백 선화" width="100%"></td></tr>
+</table>
 
-![얼음 비커 가열: 원본, 선화 배경 유지, 선화 배경 제거](docs/media/readme/beaker-flow.png)
+**전체 그림 → 따로 쓸 수 있는 그림 10개**
 
-![전압·전류 측정 회로와 전동기의 원리: 원본, 선화 배경 유지, 선화 배경 제거](docs/media/readme/bg-options.png)
+<table>
+<tr><td width="20%" valign="middle" align="center"><img src="docs/media/readme/examples/mixture-01.png" alt="분리된 소화기" width="100%"><br><sub>소화기</sub></td><td width="20%" valign="middle" align="center"><img src="docs/media/readme/examples/mixture-03.png" alt="분리된 금속박" width="100%"><br><sub>금속박</sub></td><td width="20%" valign="middle" align="center"><img src="docs/media/readme/examples/mixture-04.png" alt="분리된 소금" width="100%"><br><sub>소금</sub></td><td width="20%" valign="middle" align="center"><img src="docs/media/readme/examples/mixture-02.png" alt="분리된 비커" width="100%"><br><sub>비커</sub></td><td width="20%" valign="middle" align="center"><img src="docs/media/readme/examples/mixture-07.png" alt="분리된 물컵" width="100%"><br><sub>물컵</sub></td></tr>
+<tr><td width="20%" valign="middle" align="center"><img src="docs/media/readme/examples/mixture-09.png" alt="분리된 모래" width="100%"><br><sub>모래</sub></td><td width="20%" valign="middle" align="center"><img src="docs/media/readme/examples/mixture-08.png" alt="분리된 암석" width="100%"><br><sub>암석</sub></td><td width="20%" valign="middle" align="center"><img src="docs/media/readme/examples/mixture-06.png" alt="분리된 비눗방울과 손" width="100%"><br><sub>비눗방울과 손</sub></td><td width="20%" valign="middle" align="center"><img src="docs/media/readme/examples/mixture-05.png" alt="분리된 우유병" width="100%"><br><sub>우유병</sub></td><td width="20%" valign="middle" align="center"><img src="docs/media/readme/examples/mixture-10.png" alt="분리된 주스를 마시는 인물" width="100%"><br><sub>주스를 마시는 인물</sub></td></tr>
+</table>
 
-### 여러 장치가 이어진 실험 순서
+분리한 그림은 필요한 것만 골라 새 문항에 배치합니다. 컵·병·인물을 각각 옮길 수 있고, 맞닿거나 겹친 물체는 함께 묶일 수 있어 분리 결과를 확인한 뒤 사용하세요.
 
-가열 → 온도 측정 → 거름처럼 장치가 이어진 그림도 구도와 순서를 그대로 유지합니다.
+**[실험 장치·회로·호흡계와 다른 분리 사례도 보기 →](docs/EXAMPLES_v1.6.0.md)**
 
-![실험 순서 그림 원본과 선화](docs/media/readme/steps-flow.png)
+## 시작하기
 
-### 여러 작업을 동시에
+### 웹에서 바로
 
-그림마다 작업이 하나씩 생기고, 작업마다 경과 시간이 따로 보입니다. 변환이 끝난 작업부터 차례로 완료됩니다.
+**현재 정식판은 웹 1.6.0입니다.** [1.6.0 웹 사용 가이드](docs/USER_GUIDE_v1.6.0.md)에서 로그인부터 저장까지 순서대로 볼 수 있습니다.
 
-![교과서 그림 5장을 동시에 변환하는 AI 작업대: 변환 중, 모두 완료, 전체 화면](docs/media/readme/parallel-run.png)
+1. [5e.ai.kr](https://www.5e.ai.kr/)을 엽니다. 설치는 필요 없습니다.
+2. 캔버스 아래의 **라이브러리**에서 교과서·기출 PDF를 검색하고, 필요한 그림을 잘라 **작업대에 넣기**를 누릅니다.
+3. **AI 이미지 변환**에서 ChatGPT 계정으로 로그인하고 **변환**을 누릅니다.
+4. 결과를 확인하고 **캔버스에 삽입**으로 가져와 라벨을 붙인 뒤 PNG·SVG로 내보냅니다.
 
-### 원본과 겹쳐 비교
+### 설치판
 
-경계선을 좌우로 끌어 선화와 교과서 원본을 한 화면에서 겹쳐 봅니다. 크기가 달라도 같은 기준 위치에 맞춰 보여 줍니다.
+1.6.0은 **웹으로 먼저 출시**합니다. 1.6.0 설치판(Windows·Mac)은 웹 버전 검증을 마친 뒤 PDF 폴더 연결 기능과 함께 따로 내놓을 예정입니다.
 
-![호흡계의 구조: 선화, 경계선으로 겹쳐 보기, 교과서 원본](docs/media/readme/wipe-strip.png)
+지금 받을 수 있는 설치판 최신 릴리즈 <strong>v1.5.8</strong>은 [릴리즈 페이지](https://github.com/seungyeon980808-pixel/5E/releases/tag/v1.5.8)에 있습니다. 설치판에는 1.6.0의 라이브러리와 AI 이미지 변환 작업대가 아직 들어 있지 않습니다.
+
+### AI 연결
+
+| 환경 | 연결 방식 |
+|---|---|
+| 웹 | AI 이미지 변환 창에서 ChatGPT 계정으로 기기 로그인 |
+| 설치판 (1.6.0 준비 중) | 내 컴퓨터에 로그인된 Codex 사용 |
+
+5E는 ChatGPT 비밀번호를 받지 않고, 웹에서는 로그인한 브라우저 탭에만 5E 세션 토큰을 둡니다([자세히](#내-데이터는-어디로-가나요)). AI 기능은 로그인한 계정의 기능과 이용 한도를 따르며, AI 연결 없이도 그리기와 편집은 모두 쓸 수 있습니다.
+
+## 세 단계로 끝나는 시험용 그림
+
+| 단계 | 할 일 |
+|---|---|
+| **① 찾고 자르기** | 라이브러리에서 교과서·기출 PDF를 본문 글자까지 검색하고, 필요한 그림을 크롭해 작업대로 보냅니다. |
+| **② 선화로 바꾸기** | AI 이미지 변환을 실행하고 원본과 겹쳐 비교합니다. 고칠 부분에는 점·영역 코멘트를 남겨 다시 요청합니다. |
+| **③ 꺼내 쓰기** | 배경을 지우고 물체별로 나눕니다. 캔버스에서 라벨을 붙인 뒤 PNG·SVG로 내보냅니다. |
+
+[로그인부터 저장까지 따라 하기 →](docs/USER_GUIDE_v1.6.0.md)
 
 ## 기능
+
+<details>
+<summary><b>라이브러리·AI 변환·후처리·캔버스의 상세 기능 보기</b></summary>
 
 ### 라이브러리
 
@@ -172,31 +176,9 @@
 | 과학 부품 | 비커·플라스크·회로 소자·용수철·전극·세포막·염색체·주기율표 등 |
 | 그래프 | 좌표평면, 함수 그래프(불연속 구간 보존), 데이터 그래프 |
 | Lite / Pro | 자주 쓰는 도구만 보는 Lite, 모든 도구를 쓰는 Pro |
-| 저장과 복구 | 프로젝트 파일로 저장하고, 갑자기 닫혀도 자동 저장에서 복구합니다 |
+| 저장과 복구 | 프로젝트 파일로 저장하고, 갑자기 닫히면 마지막으로 성공한 자동 저장에서 복구합니다 |
 
-## 시작하기
-
-### 웹에서 바로
-
-1. [5e.ai.kr](https://www.5e.ai.kr/)을 엽니다. 설치는 필요 없습니다.
-2. 캔버스 아래의 **라이브러리**에서 교과서·기출 PDF를 검색하고, 필요한 그림을 잘라 **작업대에 넣기**를 누릅니다.
-3. **AI 이미지 변환**에서 ChatGPT 계정으로 로그인하고 **변환**을 누릅니다.
-4. 결과를 확인하고 **캔버스에 삽입**으로 가져와 라벨을 붙인 뒤 PNG·SVG로 내보냅니다.
-
-### 설치판
-
-1.6.0은 **웹으로 먼저 출시**합니다. 1.6.0 설치판(Windows·Mac)은 웹 버전 검증을 마친 뒤 PDF 폴더 연결 기능과 함께 따로 내놓을 예정입니다.
-
-지금 받을 수 있는 설치판 최신 릴리즈 <strong>v1.5.8</strong>은 [릴리즈 페이지](https://github.com/seungyeon980808-pixel/5E/releases/tag/v1.5.8)에 있습니다. 설치판에는 1.6.0의 라이브러리와 AI 이미지 변환 작업대가 아직 들어 있지 않습니다.
-
-### AI 연결
-
-| 환경 | 연결 방식 |
-|---|---|
-| 웹 | AI 이미지 변환 창에서 ChatGPT 계정으로 기기 로그인 |
-| 설치판 (1.6.0 준비 중) | 내 컴퓨터에 로그인된 Codex 사용 |
-
-5E는 ChatGPT 비밀번호를 받지 않고, 웹에서는 로그인한 브라우저 탭에만 5E 세션 토큰을 둡니다([자세히](#내-데이터는-어디로-가나요)). AI 기능은 로그인한 계정의 기능과 이용 한도를 따르며, AI 연결 없이도 그리기와 편집은 모두 쓸 수 있습니다.
+</details>
 
 ## 단축키
 
@@ -244,7 +226,7 @@
 
 ## 구조 한눈에
 
-5E는 빌드 과정이 없는 정적 웹앱입니다. 편집기, 라이브러리, AI 작업대가 모두 브라우저 안에서 돌아가고, 서버가 필요한 일은 **AI 변환과 작업 공유 두 가지뿐**입니다. 그래서 AI를 쓰지 않으면 인터넷 연결이 끊겨도 그리기와 편집을 계속할 수 있습니다.
+5E는 빌드 과정이 없는 정적 웹앱입니다. 편집기, 라이브러리, AI 작업대의 화면과 후처리는 브라우저 안에서 돌아갑니다. AI 로그인·변환·작업 공유와 온라인 자료 불러오기에는 네트워크가 필요합니다. 이미 불러온 화면에서는 연결이 끊겨도 그리기와 편집을 계속할 수 있지만, 새 PDF나 자료를 받으려면 다시 연결해야 합니다.
 
 ```mermaid
 flowchart LR
@@ -283,6 +265,7 @@ sequenceDiagram
   autonumber
   participant L as 라이브러리
   participant W as AI 작업대
+  participant E as 편집기
   participant R as 웹 AI 연결 서버
   participant M as AI 이미지 모델
   L->>W: 자른 그림을 작업대에 넣기
@@ -294,7 +277,8 @@ sequenceDiagram
     R-->>W: 진행 상황 · 완료되면 결과 이미지
   end
   W->>W: 배경 제거 · 무채색 · 선 굵기 · 물체별 분리 (브라우저 안에서)
-  W->>W: 캔버스에 삽입하고 라벨 붙이기
+  W->>E: 처리한 이미지를 캔버스에 삽입
+  E->>E: 라벨 붙이기 · 파일로 내보내기
 ```
 
 - **요청에 들어가는 것**: 작업대에 넣은 원본 이미지(한 작업에 최대 8장), 변환 규칙이 담긴 요청 문장, 내가 남긴 점·영역 코멘트, 고른 모델과 추론·속도 설정.
@@ -316,13 +300,13 @@ sequenceDiagram
 |---|---|---|
 | 편집 중인 작업 | 브라우저 IndexedDB 자동 저장 (최근 8개) | 나가지 않습니다 |
 | 프로젝트 파일 | 내가 내려받은 `.5e` 파일 (UTF-8 JSON) | 직접 옮길 때만 |
-| 크롭·AI 작업·결과 | 브라우저 IndexedDB | 변환을 누를 때 원본과 코멘트만 웹 AI 연결 서버로 |
+| 크롭·AI 작업·결과 | 브라우저 IndexedDB | 생성·수정을 실행하면 필요한 입력 이미지, 요청 문장·코멘트, 모델·추론·속도 설정이 웹 AI 연결 서버를 거쳐 AI 서비스로 전달됩니다 |
 | 웹 AI 로그인 | 브라우저 탭의 sessionStorage에 5E 세션 토큰 하나 | ChatGPT 인증 정보는 서버의 임시 공간에만 있고, 30분 동안 쓰지 않으면 끝납니다 |
 | 작업 공유 | 서버 임시 저장소, **1시간 뒤 만료** | 링크를 받은 사람만 열 수 있고, **공유 중지**로 바로 지울 수 있습니다 |
 | 설치판 AI | 내 컴퓨터의 Codex 로그인 | 내 컴퓨터에서 AI 서비스로 바로 |
 
 - 5E는 ChatGPT 비밀번호를 받지 않습니다. 로그인은 OpenAI 인증 창에서 기기 인증 코드로 합니다.
-- 서버가 다시 시작되면 로그인과 공유 링크가 사라질 수 있습니다. 이때는 다시 로그인하면 됩니다.
+- 서버가 다시 시작되면 로그인과 공유 링크가 사라질 수 있습니다. AI 연결은 다시 로그인하고, 만료된 공유 링크는 브라우저에 남은 작업에서 새로 만들어 전달하세요. 재로그인만으로 이전 공유 링크가 복원되지는 않습니다.
 - 공유 문서에는 원본, 크롭, 생성 버전, 작업 설정이 담기고, 로그인 쿠키와 인증 정보는 담기지 않습니다.
 
 <details>
@@ -422,7 +406,7 @@ GitHub Actions:
 - 웹사이트는 GitHub Pages로 배포합니다. 배포용 브랜치의 저장소 루트를 그대로 올립니다.
 - 1.6.0은 웹을 먼저 출시했습니다. 설치판은 서명·실기기 검증 등 [출시 보류 항목](docs/RELEASE_HOLD.md)을 모두 풀어야 게시합니다.
 - 문제가 생기면 기록해 둔 정상 버전으로 되돌립니다. 이미 올린 설치 파일은 바꿔치기하지 않고 새 패치 버전을 냅니다. 자세한 절차는 [되돌리기 절차](docs/RELEASE_ROLLBACK.md)에 있습니다.
-- 채널 기록: [RELEASE_CHANNELS.md](docs/RELEASE_CHANNELS.md) · [release-channels.json](release-channels.json) · [GitHub 릴리즈 절차](docs/GITHUB_RELEASES.md)
+- 현재 채널 안내: [RELEASE_CHANNELS.md](docs/RELEASE_CHANNELS.md). [release-channels.json](release-channels.json)은 9월 26일 후보 검증 당시의 기계 판독 기록이며, 현재 공개 웹 버전을 나타내는 자료로 사용하지 않습니다. 게시 절차는 [GitHub 릴리즈 절차](docs/GITHUB_RELEASES.md)를 참고하세요.
 
 </details>
 
@@ -474,7 +458,7 @@ GitHub Actions:
 <details>
 <summary>"자동 저장에 실패했습니다"</summary>
 
-브라우저 저장 공간이 부족할 때 나올 수 있습니다. 5E가 자동으로 다시 시도하지만, 작업이 끝나면 **프로젝트 파일로도 저장** 해 두세요. 다음에 열 때 **작업 복구** 창에서 **복구** 를 누르면 이전 작업을 되살립니다.
+브라우저 저장 공간이 부족할 때 나올 수 있습니다. 창을 닫기 전에 **프로젝트 파일로 즉시 저장** 해 두세요. 자동 저장은 다시 시도하지만, **작업 복구**는 마지막으로 저장에 성공한 내용까지만 되살립니다. 실패 이후의 최신 변경까지 복구된다고 보장할 수는 없습니다.
 </details>
 
 </details>
@@ -522,7 +506,8 @@ claude mcp list
 ## 문서
 
 - [1.6.0 변경 내용](docs/RELEASE_NOTES_v1.6.0.md)
-- [사용 가이드](docs/USER_GUIDE.md)
+- [1.6.0 웹 사용 가이드](docs/USER_GUIDE_v1.6.0.md)
+- [이전 편집기 사용 가이드 (1.1.0 기준)](docs/USER_GUIDE.md)
 - [릴리즈 이력](https://github.com/seungyeon980808-pixel/5E/releases)
 - [이미지 출처](docs/credits.html)
 
@@ -536,5 +521,5 @@ claude mcp list
 
 5E는 [GNU AGPL v3](LICENSE)로 배포됩니다. 수정한 버전을 배포하거나 웹 서비스로 제공할 때는 소스 코드를 공개해야 합니다.
 
-개발 박승연 (SMOE) · Copyright © 2026 박승연
+개발 박승연 (SMOE) · AI 개발 도구: OpenAI Codex · Copyright © 2026 박승연
 
