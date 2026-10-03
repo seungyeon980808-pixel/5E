@@ -8,11 +8,13 @@ const previewUrl = process.env.PREVIEW_URL || 'http://127.0.0.1:8765/';
   try {
     const context = await browser.newContext({ viewport: { width: 375, height: 900 } });
     await context.addInitScript(() => {
+      localStorage.setItem('5e.preview:5e.tutorial.bannerSeen', 'true');
+      localStorage.setItem('5e.tutorial.bannerSeen', 'true');
       Object.defineProperty(window, 'showSaveFilePicker', { configurable: true, value: undefined });
     });
     const page = await context.newPage();
     await page.goto(previewUrl, { waitUntil: 'load' });
-    await page.evaluate(() => document.querySelector('.tut-welcome-overlay')?.remove());
+    await page.locator('#canvas').waitFor({ state: 'visible' });
     assert.match(await page.evaluate(() => Function.prototype.toString.call(window.showDirectoryPicker)), /\[native code\]/);
     assert.equal(await page.evaluate(() => typeof window.showSaveFilePicker), 'undefined');
     await page.locator('#file-menu-btn').click();

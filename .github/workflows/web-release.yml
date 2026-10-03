@@ -18,7 +18,32 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  source-test:
+    name: Source Browser Regression
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.21.0
+          cache: npm
+      - run: npm ci --no-audit
+      - run: npx playwright install --with-deps chromium webkit
+      - name: Run the complete source regression suite on native WebKit
+        env:
+          EVIDENCE_DIR: ${{ github.workspace }}/_work/web-release/evidence/source
+          OUTPUT_EVIDENCE: ${{ github.workspace }}/_work/web-release/evidence/source/output
+          TASK2_EVIDENCE: ${{ github.workspace }}/_work/web-release/evidence/source/lifecycle
+          TASK9_EVIDENCE: ${{ github.workspace }}/_work/web-release/evidence/source/polish
+        run: npm run test:browser
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: source-browser-${{ github.sha }}
+          path: _work/web-release/evidence/source
+
   validate:
+    needs: source-test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -45,10 +70,6 @@ jobs:
       - name: Stage the exact candidate while preserving preview/mobile and the fixed 1.6.0 route
         run: node scripts/web-release.cjs --site _work/web-release/site --receipt _work/web-release/receipt.json --preserved-root _work/preserved-web
       - run: npm run test:unit
-      - name: Run the complete source regression suite
-        env:
-          EVIDENCE_DIR: ${{ github.workspace }}/_work/web-release/evidence/source
-        run: npm run test:browser
       - name: Test the files that will actually be published
         env:
           FIVE_E_SITE_ROOT: ${{ github.workspace }}/_work/web-release/site

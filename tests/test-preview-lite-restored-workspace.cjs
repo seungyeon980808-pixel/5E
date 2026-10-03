@@ -21,6 +21,8 @@ async function run(engine) {
     const errors = [];
     page.on("pageerror", (error) => errors.push(error.message));
     await page.goto(liteUrl(), { waitUntil: "load" });
+    await page.locator('html[data-mode="lite"]').waitFor({ state: "attached" });
+    await page.locator('#canvas').waitFor({ state: "visible" });
 
     assert.equal(await page.locator("html").getAttribute("data-mode"), "lite");
     assert.equal(await page.locator("#canvas").isVisible(), true, "Lite keeps the shared main canvas");

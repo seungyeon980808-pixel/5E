@@ -10,7 +10,9 @@ permissions:
 jobs:
   test:
     name: Test
-    runs-on: ubuntu-latest
+    # Native WebKit is the reference for the existing rendering/performance gate.
+    # This suite also exercises headed browser interactions.
+    runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

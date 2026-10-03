@@ -100,6 +100,9 @@ test('web publication requires successful validation and a separate manual main-
   assert.equal(workflow.jobs.publish.needs, 'validate');
   assert.match(workflow.jobs.publish.if, /inputs\.publish.*refs\/heads\/main/);
   assert.equal(workflow.jobs.publish.environment.name, 'github-pages');
+  assert.equal(workflow.jobs.validate.needs, 'source-test');
+  assert.equal(workflow.jobs['source-test']['runs-on'], 'macos-latest');
+  assert.equal(workflow.jobs.validate['runs-on'], 'ubuntu-latest');
   const steps = workflow.jobs.validate.steps;
   const build = steps.findIndex(step => /--preserved-root/.test(step.run || ''));
   const browser = steps.findIndex(step => /npm run test:web-artifact/.test(step.run || ''));
@@ -107,7 +110,7 @@ test('web publication requires successful validation and a separate manual main-
   const upload = steps.findIndex(step => step.uses === 'actions/upload-pages-artifact@v3');
   assert.ok(build >= 0 && browser > build && verify > browser && upload > verify);
   assert.ok(steps.some(step => step.run === 'npm run test:unit'));
-  assert.ok(steps.some(step => step.run === 'npm run test:browser'));
+  assert.ok(workflow.jobs['source-test'].steps.some(step => step.run === 'npm run test:browser'));
   assert.match(steps[browser].env.FIVE_E_SITE_ROOT, /web-release\/site$/);
   assert.deepEqual(workflow.jobs.publish.steps.map(step => step.uses), ['actions/deploy-pages@v4']);
 });

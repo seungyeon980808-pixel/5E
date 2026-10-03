@@ -51,6 +51,13 @@ function assertProjection(before, after, label) {
   assertNear(after.artboardMidpointX, before.artboardMidpointX, `${label} artboard midpoint`);
 }
 
+async function waitForProjection(page, expected) {
+  await page.waitForFunction(({ ctm, tolerance }) => {
+    const actual = document.querySelector('#canvas')?.getScreenCTM();
+    return actual && ['a', 'd', 'e', 'f'].every(key => Math.abs(actual[key] - ctm[key]) < tolerance);
+  }, { ctm: expected.ctm, tolerance });
+}
+
 function assertAligned(snapshotValue, expectedOffsetMm, rulersVisible, label) {
   const expectedProjectionX = snapshotValue.canvasMidpointX + expectedOffsetMm * snapshotValue.ctm.a;
   assertNear(snapshotValue.artboardMidpointX, expectedProjectionX, `${label} artboard midpoint`);
@@ -89,7 +96,8 @@ async function togglePanel(page, side) {
 
       for (const preset of presets) {
         await page.evaluate(value => document.documentElement.setAttribute('data-screen', value), preset);
-        await page.waitForTimeout(100);
+        await page.waitForTimeout(360);
+        await waitForProjection(page, baseline);
         const afterPreset = await snapshot(page);
         assertProjection(baseline, afterPreset, `${engine.name()} ${preset} preset`);
         assertNear(afterPreset.pointerRoundTripError.x, 0, `${engine.name()} ${preset} pointer round-trip X`);
