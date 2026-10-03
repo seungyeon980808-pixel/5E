@@ -44,7 +44,7 @@ const requiredDocs = [
   "docs/BRANCH_MAP.md",
   "docs/RELEASE_CHANNELS.md",
   "docs/RELEASE_HOLD.md",
-  "docs/RELEASE_NOTES_v1.6.0.md",
+  `docs/RELEASE_NOTES_v${channels.candidate.version}.md`,
   "docs/RELEASE_ROLLBACK.md",
   "preview/PREVIEW.md",
 ];

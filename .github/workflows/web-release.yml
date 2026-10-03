@@ -42,7 +42,7 @@ jobs:
         with:
           ref: ${{ steps.preserved.outputs.sha }}
           path: _work/preserved-web
-      - name: Stage the exact candidate while preserving published preview/mobile routes
+      - name: Stage the exact candidate while preserving preview/mobile and the fixed 1.6.0 route
         run: node scripts/web-release.cjs --site _work/web-release/site --receipt _work/web-release/receipt.json --preserved-root _work/preserved-web
       - run: npm run test:unit
       - name: Run the complete source regression suite

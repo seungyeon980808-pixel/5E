@@ -1,9 +1,9 @@
 import { animateModeChange } from './mode-transition.js?v=calm-blur-0925';
-import { checkpointBeforeModeSwitch } from './autosave.js?v=1.6.0-remediation-0929';
-import { serialize, applyLoaded } from './project-io.js?v=1.6.0-remediation-0929';
-import { showModeSwitch, showAlert } from './ui-dialogs.js?v=1.6.0-remediation-0929';
-import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-remediation-0929';
-import { setActiveTool } from './tools.js?v=1.6.0-remediation-0929';
+import { checkpointBeforeModeSwitch } from './autosave.js?v=1.6.1-remediation-0929';
+import { serialize, applyLoaded } from './project-io.js?v=1.6.1-remediation-0929';
+import { showModeSwitch, showAlert } from './ui-dialogs.js?v=1.6.1-remediation-0929';
+import { previewStorage as localStorage } from './preview-storage.js?v=1.6.1-remediation-0929';
+import { setActiveTool } from './tools.js?v=1.6.1-remediation-0929';
 /* ===== VIEW MODE: Pro / Lite 모드 전환 =====
  *
  * 단축키를 모르면 쓰기 어려운 기능이 많아, 입문용 'Lite' 모드를 둔다.

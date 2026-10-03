@@ -1,4 +1,4 @@
-import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-remediation-0929';
+import { previewStorage as localStorage } from './preview-storage.js?v=1.6.1-remediation-0929';
 /* ===== AUTOSAVE (자동 저장 · 크래시 복구) =====
  *
  * 작업 중인 도해를 디바운스(2.5초)로 IndexedDB에 자동 저장하고, 브라우저 강제
@@ -12,10 +12,10 @@ import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-rem
  * 스냅샷이 수 MB에 달할 수 있어 localStorage(≈5MB, 문자열 전용) 용량이 부족하다.
  */
 
-import { serialize, migrate, applyLoaded } from "./project-io.js?v=1.6.0-remediation-0929";
-import { showAlert, showConfirm } from "./ui-dialogs.js?v=1.6.0-remediation-0929";
+import { serialize, migrate, applyLoaded } from "./project-io.js?v=1.6.1-remediation-0929";
+import { showAlert, showConfirm } from "./ui-dialogs.js?v=1.6.1-remediation-0929";
 
-import { captureProjectStatus, markProjectStatus } from "./project-status.js?v=1.6.0-ai-latest-fixes-0928";
+import { captureProjectStatus, markProjectStatus } from "./project-status.js?v=1.6.1-ai-latest-fixes-0928";
 
 const DB_NAME = "5e-preview-autosave";
 const DB_VERSION = 1;

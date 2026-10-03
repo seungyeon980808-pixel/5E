@@ -1,14 +1,14 @@
-import { insertImageFromSrc } from "./image-paste.js?v=1.6.0-remediation-0929";
-import { openObjectifyWithFile } from "./image-objectify.js?v=1.6.0-remediation-0929";
+import { insertImageFromSrc } from "./image-paste.js?v=1.6.1-remediation-0929";
+import { openObjectifyWithFile } from "./image-objectify.js?v=1.6.1-remediation-0929";
 
-import { createPdfLibraryUi } from "./pdf-library/pdf-library-ui.js?v=1.6.0-remediation-0929";
-import { defaultRecentThreePack } from "./pdf-library/default-pack-config.js?v=1.6.0-preview-labeler-0917-1111";
-import { loadBundledDesktopPack } from "./pdf-library/desktop-pack.js?v=1.6.0-preview-labeler-0917-1111";
-import { registerPdfReferencePicker } from "./pdf-library/reference-picker.js?v=1.6.0-preview-labeler-0917-1111";
-import { mergePreferredCatalogs } from "./pdf-library/catalog-merge.js?v=1.6.0-preview-labeler-0917-1111";
-import { createUnifiedLibraryProvider } from "./library/provider.js?v=1.6.0-remediation-0929";
-import { createUnifiedLibraryUi, unifiedLibrarySourceMetadata, unifiedLibraryTransfer } from "./unified-library-ui.js?v=1.6.0-remediation-0929";
-import { insertPartsAsset, loadPartsManifest, materializePartsAsset } from "./parts-library.js?v=1.6.0-preview-labeler-0917-1111";
+import { createPdfLibraryUi } from "./pdf-library/pdf-library-ui.js?v=1.6.1-remediation-0929";
+import { defaultRecentThreePack } from "./pdf-library/default-pack-config.js?v=1.6.1-preview-labeler-0917-1111";
+import { loadBundledDesktopPack } from "./pdf-library/desktop-pack.js?v=1.6.1-preview-labeler-0917-1111";
+import { registerPdfReferencePicker } from "./pdf-library/reference-picker.js?v=1.6.1-preview-labeler-0917-1111";
+import { mergePreferredCatalogs } from "./pdf-library/catalog-merge.js?v=1.6.1-preview-labeler-0917-1111";
+import { createUnifiedLibraryProvider } from "./library/provider.js?v=1.6.1-remediation-0929";
+import { createUnifiedLibraryUi, unifiedLibrarySourceMetadata, unifiedLibraryTransfer } from "./unified-library-ui.js?v=1.6.1-remediation-0929";
+import { insertPartsAsset, loadPartsManifest, materializePartsAsset } from "./parts-library.js?v=1.6.1-preview-labeler-0917-1111";
 const MAX_RENDER = 60; // 그리드에 한 번에 그리는 카드 수 (초과분은 안내문으로 표시)
 
 export function unifiedImageInsertionOptions(result, asset) {
@@ -68,7 +68,7 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
   });
   const ensurePdfSearchWorker = () => {
     if (pdfSearchWorker) return pdfSearchWorker;
-    pdfSearchWorker = new Worker(new URL("./pdf-library/search-worker.js?v=1.6.0-preview-common-year-login-0918-1302", import.meta.url), { type: "module" });
+    pdfSearchWorker = new Worker(new URL("./pdf-library/search-worker.js?v=1.6.1-preview-common-year-login-0918-1302", import.meta.url), { type: "module" });
     pdfSearchWorker.addEventListener("message", (event) => {
       const request = pdfSearchRequests.get(event.data?.id);
       if (!request) return;
@@ -87,7 +87,7 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
     state,
     host: pdfPanel,
     loadRuntime: async () => {
-      const { createPdfRuntime } = await import("./pdf-library/pdf-runtime.js?v=1.6.0-preview-crop-quality-0920-1806");
+      const { createPdfRuntime } = await import("./pdf-library/pdf-runtime.js?v=1.6.1-preview-crop-quality-0920-1806");
       return createPdfRuntime();
     },
     searchDocuments: async (documents, query, { filters = {}, prebuiltIndexes = [], limit = MAX_RENDER } = {}) => {
@@ -114,7 +114,7 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
     insertImage: insertImageFromSrc,
     openIndependentReferences,
     loadDesktopAdapter: async (runtime) => {
-      const { createDesktopPdfLibraryAdapter, hasDesktopPdfLibrary } = await import("./pdf-library/desktop-adapter.js?v=1.6.0-preview-crop-quality-0920-1806");
+      const { createDesktopPdfLibraryAdapter, hasDesktopPdfLibrary } = await import("./pdf-library/desktop-adapter.js?v=1.6.1-preview-crop-quality-0920-1806");
       return hasDesktopPdfLibrary() ? createDesktopPdfLibraryAdapter({ runtime }) : null;
     },
     onCatalogChange: () => void unifiedUi?.refresh(),
@@ -134,10 +134,10 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
       { loadRemotePack },
       { configuredGoogleDriveGatewayUrl, createGoogleDriveConnection, PROVIDED_DRIVE_FOLDER_URL, driveFolderPack, parseGoogleDriveFolderUrl },
     ] = await Promise.all([
-      import("./pdf-library/pack-store.js?v=1.6.0-preview-labeler-0917-1111"),
-      import("./pdf-library/pack-management.js?v=1.6.0-preview-library-popup-0919-1630"),
-      import("./pdf-library/remote-pack.js?v=1.6.0-preview-labeler-0917-1111"),
-      import("./pdf-library/google-drive.js?v=1.6.0-remediation-0929"),
+      import("./pdf-library/pack-store.js?v=1.6.1-preview-labeler-0917-1111"),
+      import("./pdf-library/pack-management.js?v=1.6.1-preview-library-popup-0919-1630"),
+      import("./pdf-library/remote-pack.js?v=1.6.1-preview-labeler-0917-1111"),
+      import("./pdf-library/google-drive.js?v=1.6.1-remediation-0929"),
     ]);
     const store = createPackStore({ adapter: createIndexedDbPackAdapter() });
     const configured = defaultRecentThreePack();

@@ -30,7 +30,7 @@ async function drawLine(page, stateModule) {
     });
     const report = [];
     for (const surface of [
-      { name: 'root', url: 'index.html?mode=pro&mobile=0', stateModule: './js/state.js?v=1.6.0-remediation-0929' },
+      { name: 'root', url: 'index.html?mode=pro&mobile=0', stateModule: './js/state.js?v=1.6.1-remediation-0929' },
       { name: 'preview', url: 'preview/?mode=pro&mobile=0', stateModule: './js/state.js?v=1.6.0-remediation-0929' },
     ]) {
       const page = await context.newPage();

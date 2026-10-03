@@ -12,10 +12,10 @@ import {
   oDot,
   hatchVLine,
   oDashV,
-} from "./core.js?v=1.6.0-remediation-0929";
-import { resolveFill } from "./fill.js?v=1.6.0-remediation-0929";
-import { makeLabelEl } from "./labels.js?v=1.6.0-remediation-0929";
-import { DEFAULT_TEXT_SIZE_MM } from "../state.js?v=1.6.0-remediation-0929";
+} from "./core.js?v=1.6.1-remediation-0929";
+import { resolveFill } from "./fill.js?v=1.6.1-remediation-0929";
+import { makeLabelEl } from "./labels.js?v=1.6.1-remediation-0929";
+import { DEFAULT_TEXT_SIZE_MM } from "../state.js?v=1.6.1-remediation-0929";
 
 /* ===== OPTICS: branch-A box symbol (x/y/w/h/rotation), kind-dispatched =====
  *

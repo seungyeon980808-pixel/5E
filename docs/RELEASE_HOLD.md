@@ -1,4 +1,10 @@
-# v1.6.0 release hold
+# Release hold
+
+The 1.6.1 candidate remains **HOLD**. This patch prepares canonical source recovery, PDF page-cache cleanup, and validation of the exact web artifact. It does not clear the existing signing, native Windows, server authentication, or live AI release gates.
+
+The web candidate is separate from desktop publication. The public stable web remains 1.6.0 until the separately approved main integration and Pages cutover. The 1.7.0 preview, mobile route, fixed `/1.6.0/` route, and existing v1.6.0 tag are retained. A local v1.6.1 tag alone neither changes Pages nor publishes an installer.
+
+## v1.6.0 historical decision
 
 The 1.6.0 candidate remains **HOLD**. Documentation preparation and implementation review do not satisfy the external release gates.
 

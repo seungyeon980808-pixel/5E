@@ -3,11 +3,11 @@
  * split). Builds the section DOM and wires its events; mounting into the
  * inspector panel happens in js/inspector.js (the orchestrator). */
 
-import { openAngleArcLabelEditor } from "../tools.js?v=1.6.0-remediation-0929";
-import { boxLabelSlots } from "../render.js?v=1.6.0-remediation-0929";
-import { makeSection } from "./widgets.js?v=1.6.0-preview-labeler-0917-1111";
-import { nodeBoxFromDiameter, nodeDiameterFromBox } from "../tools/node-placement.js?v=1.6.0-remediation-0929";
-import { beginLabelerBranches, labelerAnchorCount, labelerBranchStatus } from "../tools/labeler-branches.js?v=1.6.0-preview-lite-hybrid-0922";
+import { openAngleArcLabelEditor } from "../tools.js?v=1.6.1-remediation-0929";
+import { boxLabelSlots } from "../render.js?v=1.6.1-remediation-0929";
+import { makeSection } from "./widgets.js?v=1.6.1-preview-labeler-0917-1111";
+import { nodeBoxFromDiameter, nodeDiameterFromBox } from "../tools/node-placement.js?v=1.6.1-remediation-0929";
+import { beginLabelerBranches, labelerAnchorCount, labelerBranchStatus } from "../tools/labeler-branches.js?v=1.6.1-preview-lite-hybrid-0922";
 
 export function buildGeometrySection(ctx) {
   const { state, makeLabelSizeRow, makeLabelTypeRow, commitSelectedObject } = ctx;
@@ -141,7 +141,7 @@ export function buildGeometrySection(ctx) {
   trimRow.appendChild(trimBtn);
   sec3Body.appendChild(trimRow);
   trimBtn.addEventListener("click", async () => {
-    const mod = await import("../erase-tool.js?v=1.6.0-remediation-0929");
+    const mod = await import("../erase-tool.js?v=1.6.1-remediation-0929");
     const n = mod.trimSelectedBoxMargins();
     const orig = trimBtn.textContent;
     trimBtn.textContent = n > 0 ? "정리했습니다" : "좁힐 여백 없음";

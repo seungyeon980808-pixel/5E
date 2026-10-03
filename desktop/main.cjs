@@ -845,7 +845,7 @@ function createWindow() {
             await waitFor(() => !document.querySelector(".tut-welcome-overlay") &&
               !Array.from(document.querySelectorAll(".modal-overlay .modal-title"))
                 .some((title) => startupDialogTitles.has(title.textContent?.trim())), 2000);
-            const stateModule = await import("./js/state.js?v=1.6.0-remediation-0929");
+            const stateModule = await import("./js/state.js?v=1.6.1-remediation-0929");
             const textChooser = document.getElementById("chooser-text");
             const textChooserButton = document.getElementById("tool-text-merged");
             const angleChooser = document.getElementById("chooser-angle");

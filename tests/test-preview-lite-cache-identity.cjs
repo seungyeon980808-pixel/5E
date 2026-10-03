@@ -4,8 +4,10 @@ const path = require("node:path");
 const test = require("node:test");
 
 const ROOT = path.resolve(__dirname, "..");
-const JS_ROOT = path.join(ROOT, "preview", "js");
-const CACHE_ID = "1.6.0-remediation-0929";
+const SURFACES = [
+  { label: 'historical preview', jsRoot: path.join(ROOT, 'preview', 'js'), cacheId: '1.6.0-remediation-0929' },
+  { label: 'canonical 1.6.1', jsRoot: path.join(ROOT, 'js'), cacheId: '1.6.1-remediation-0929' },
+];
 const GUARDED_MODULES = new Set([
   "render.js",
   "render/annotations.js",
@@ -24,11 +26,12 @@ function javascriptFiles(dir) {
   });
 }
 
-test("Lite tool and leader-label render modules share one cache identity", () => {
+for (const { label, jsRoot, cacheId } of SURFACES) {
+test(`${label}: Lite tool and leader-label render modules share one cache identity`, () => {
   const versionsByModule = new Map();
   const importPattern = /["']((?:\.\.\/|\.\/)+(?:render(?:\/scene|\/annotations)?|text-editor|tools(?:\/(?:click-placement|free-draw|node-placement))?)\.js)\?v=([^"']+)["']/g;
 
-  javascriptFiles(JS_ROOT).forEach((file) => {
+  javascriptFiles(jsRoot).forEach((file) => {
     const source = fs.readFileSync(file, "utf8");
     for (const match of source.matchAll(importPattern)) {
       const modulePath = match[1].replace(/^(?:\.\.\/|\.\/)+/, "");
@@ -41,8 +44,9 @@ test("Lite tool and leader-label render modules share one cache identity", () =>
   GUARDED_MODULES.forEach((modulePath) => {
     assert.deepEqual(
       [...(versionsByModule.get(modulePath) || [])],
-      [CACHE_ID],
+      [cacheId],
       `${modulePath} must use only the current Lite cache identity`,
     );
   });
 });
+}

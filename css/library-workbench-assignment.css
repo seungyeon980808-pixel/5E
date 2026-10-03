@@ -1,4 +1,4 @@
-@import url("./ai-action-motion.css?v=1.6.0-preview-emerald-polish-0921");
+@import url("./ai-action-motion.css?v=1.6.1-preview-emerald-polish-0921");
 
 .workbench-assignment-overlay {
   --workbench-bg: var(--unilib-bg, var(--bg-app));

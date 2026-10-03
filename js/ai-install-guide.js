@@ -1,5 +1,5 @@
-import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-remediation-0929';
-import { showConfirm } from "./ui-dialogs.js?v=1.6.0-remediation-0929";
+import { previewStorage as localStorage } from './preview-storage.js?v=1.6.1-remediation-0929';
+import { showConfirm } from "./ui-dialogs.js?v=1.6.1-remediation-0929";
 
 export const DESKTOP_RELEASE_URL = "https://github.com/seungyeon980808-pixel/5E/releases/latest";
 const STORAGE_KEY = "5e.desktopHandoff.v1";

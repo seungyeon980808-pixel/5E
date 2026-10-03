@@ -1,12 +1,12 @@
-import { createWorkspaceBatch, createWorkspaceSelection } from './ai-workspace-batch.js?v=1.6.0-remediation-0929';
-import { createBatchStore } from './ai-batch-store.js?v=1.6.0-remediation-0929';
+import { createWorkspaceBatch, createWorkspaceSelection } from './ai-workspace-batch.js?v=1.6.1-remediation-0929';
+import { createBatchStore } from './ai-batch-store.js?v=1.6.1-remediation-0929';
 import {
   chooseTaskExportDestination,
   normalizeTaskExportMode,
   writeTaskExports,
-} from './ai-task-export.js?v=1.6.0-remediation-0929';
+} from './ai-task-export.js?v=1.6.1-remediation-0929';
 import { restoreGenerationTiming } from './ai-generation-timing.js';
-import { idbGet, idbSet } from './idb-store.js?v=1.6.0-remediation-0929';
+import { idbGet, idbSet } from './idb-store.js?v=1.6.1-remediation-0929';
 
 const CANCELLABLE_TASK_STATES = new Set(['busy', 'running']);
 

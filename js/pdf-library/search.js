@@ -1,6 +1,6 @@
-import { createCropSource } from "./contract.js?v=1.6.0-preview-labeler-0917-1111";
-import { deriveExamMetadata } from "../library/exam-code.js?v=1.6.0-remediation-0929";
-export { applyItemCorrections, resolveItemOrPageResult } from "./corrections.js?v=1.6.0-preview-labeler-0917-1111";
+import { createCropSource } from "./contract.js?v=1.6.1-preview-labeler-0917-1111";
+import { deriveExamMetadata } from "../library/exam-code.js?v=1.6.1-remediation-0929";
+export { applyItemCorrections, resolveItemOrPageResult } from "./corrections.js?v=1.6.1-preview-labeler-0917-1111";
 
 function normalizedText(value) {
   return String(value ?? "").normalize("NFKC").toLocaleLowerCase().replace(/\s+/gu, " ").trim();

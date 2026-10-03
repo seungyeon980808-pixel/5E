@@ -18,7 +18,7 @@ test("public release documentation identifies the observed v1.5.8 release", () =
 test("release documentation and channel provenance are internally consistent", () => {
   const result = spawnSync(process.execPath, [validator], { cwd: root, encoding: "utf8" });
   assert.equal(result.status, 0, result.stderr || result.stdout);
-  assert.match(result.stdout, /Release docs OK: candidate 1\.6\.0 HOLD/);
+  assert.match(result.stdout, /Release docs OK: candidate 1\.6\.1 HOLD/);
   assert.match(result.stdout, /PDF\/Drive metadata schema 1/);
   const channels = JSON.parse(fs.readFileSync(path.join(root, "release-channels.json"), "utf8"));
   assert.equal(Object.hasOwn(channels.candidate, "sourceSha"), false);

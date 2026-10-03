@@ -1,4 +1,4 @@
-import { isBatchRecord, parseBatchSource } from './ai-batch-source.js?v=1.6.0-ai-followup-0928';
+import { isBatchRecord, parseBatchSource } from './ai-batch-source.js?v=1.6.1-ai-followup-0928';
 
 const STATES = new Set(['queued', 'running', 'completed', 'failed', 'cancelled']);
 const TERMINAL_STATES = new Set(['completed', 'failed', 'cancelled']);

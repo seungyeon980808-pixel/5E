@@ -1,10 +1,10 @@
-import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-remediation-0929';
+import { previewStorage as localStorage } from './preview-storage.js?v=1.6.1-remediation-0929';
 import {
   TEMPLATES,
   renderSymbolsForCategories,
   renderSymbolsForIds,
   sizeIconViewBox,
-} from "./templates.js?v=1.6.0-remediation-0929";
+} from "./templates.js?v=1.6.1-remediation-0929";
 
 const SUBJECTS = {
   p: {

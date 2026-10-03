@@ -1,4 +1,4 @@
-import { registerEscapeLayer } from "./escape-layers.js?v=1.6.0-remediation-0929";
+import { registerEscapeLayer } from "./escape-layers.js?v=1.6.1-remediation-0929";
 
 export function showProjectCloseDialog({ aiHasWork = false } = {}) {
   return new Promise((resolve) => {

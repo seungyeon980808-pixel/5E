@@ -9,6 +9,7 @@ const site = process.env.FIVE_E_SITE_ROOT;
 const evidence = path.resolve(process.env.EVIDENCE_DIR || '_work/web-artifact-evidence');
 const fixture = path.join(root, 'tests/fixtures/rights-clear-smoke.png');
 const fixtureSource = `data:image/png;base64,${fs.readFileSync(fixture).toString('base64')}`;
+const candidateVersion = require('../release-channels.json').candidate.version;
 
 function moduleUrl(directory, moduleName) {
   const source = fs.readFileSync(path.join(directory, 'js/main.js'), 'utf8');
@@ -179,8 +180,8 @@ async function freshContext(browser, errors, origin) {
         page = await context.newPage();
         await page.goto(`${server.origin}/?mode=pro&mobile=0`, { waitUntil: 'load' });
         await page.locator('#canvas').waitFor({ state: 'visible' });
-        assert.match(await page.title(), /1\.6\.0/);
-        assert.match(await page.locator('[data-release-version]').textContent(), /v1\.6\.0/);
+        assert.ok((await page.title()).includes(candidateVersion));
+        assert.ok((await page.locator('[data-release-version]').textContent()).includes(`v${candidateVersion}`));
         const stampedSource = fs.readFileSync(path.join(site, 'js/release-receipt.js'), 'utf8')
           .match(/sourceCommit: '([a-f0-9]{40})'/)?.[1];
         assert.ok(stampedSource, 'the artifact contains its exact source commit');
@@ -207,7 +208,17 @@ async function freshContext(browser, errors, origin) {
         assert.equal((await documentData(preview, previewModules)).pages[0].objects.length, 0);
         await preview.screenshot({ path: path.join(evidence, `${engine.name()}-preserved-preview.png`), fullPage: true });
         assert.deepEqual(errors, [], `${engine.name()} has no runtime or local resource failures`);
-        results.push({ engine: engine.name(), stable: '1.6.0', preview: '1.7.0', drawingUndoRedo: true, savedReopened: true, exports, errors, passed: true });
+        const pinnedStable = await (await freshContext(browser, errors, server.origin)).newPage();
+        await pinnedStable.goto(`${server.origin}/1.6.0/?mode=pro&mobile=0`, { waitUntil: 'load' });
+        await pinnedStable.locator('#canvas').waitFor({ state: 'visible' });
+        assert.match(await pinnedStable.locator('[data-release-version]').textContent(), /v1\.6\.0/);
+        const pinnedModules = { state: moduleUrl(path.join(site, '1.6.0'), 'state'), project: moduleUrl(path.join(site, '1.6.0'), 'project-io') };
+        await drawLine(pinnedStable);
+        assert.equal((await documentData(pinnedStable, pinnedModules)).pages[0].objects.length, 1);
+        await pinnedStable.locator('#undo-btn').click();
+        assert.equal((await documentData(pinnedStable, pinnedModules)).pages[0].objects.length, 0);
+        assert.deepEqual(errors, [], `${engine.name()} has no runtime or local resource failures`);
+        results.push({ engine: engine.name(), stable: candidateVersion, preview: '1.7.0', pinnedStable: '1.6.0', drawingUndoRedo: true, savedReopened: true, exports, errors, passed: true });
       } catch (error) {
         if (page && !page.isClosed()) await page.screenshot({ path: path.join(evidence, `${engine.name()}-failure.png`), fullPage: true }).catch(() => {});
         results.push({ engine: engine.name(), passed: false, error: error.stack, errors });

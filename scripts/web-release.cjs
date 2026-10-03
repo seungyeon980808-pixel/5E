@@ -36,7 +36,10 @@ function inventory(site) {
   }));
 }
 
-function verifyArtifact(site, receipt, { expectedSha, requireClean = false } = {}) {
+function verifyArtifact(site, receipt, { expectedSha, expectedVersion, requireClean = false } = {}) {
+  const version = receipt.version;
+  if (!/^\d+\.\d+\.\d+$/.test(version || '')) throw new Error('Receipt requires a stable release version');
+  if (expectedVersion && version !== expectedVersion) throw new Error('Artifact version differs from the publication candidate');
   if (!/^[a-f0-9]{40}$/.test(receipt.sourceCommit || '')) throw new Error('Receipt requires a full source SHA');
   if (expectedSha && receipt.sourceCommit !== expectedSha) throw new Error('Artifact does not belong to this workflow SHA');
   if (requireClean && receipt.sourceDirty !== false) throw new Error('Dirty or unverified review builds cannot be published');
@@ -49,8 +52,10 @@ function verifyArtifact(site, receipt, { expectedSha, requireClean = false } = {
     if (recorded[file] !== hash) throw new Error(`Publication file changed after validation: ${file}`);
   }
   const html = fs.readFileSync(path.join(site, 'index.html'), 'utf8');
-  if (!/<title>[^<]*1\.6\.0/.test(html) || !/data-release-version[^>]*>v1\.6\.0/.test(html)) {
-    throw new Error('Canonical root must be the stable 1.6.0 entry');
+  const escapedVersion = version.replaceAll('.', '\\.');
+  if (!new RegExp(`<title>[^<]*${escapedVersion}\\b`).test(html)
+      || !new RegExp(`data-release-version[^>]*>v${escapedVersion}\\b`).test(html)) {
+    throw new Error(`Canonical root must be the stable ${version} entry`);
   }
   const releaseReceipt = path.join(site, 'js/release-receipt.js');
   if (fs.existsSync(releaseReceipt)) {
@@ -62,6 +67,8 @@ function verifyArtifact(site, receipt, { expectedSha, requireClean = false } = {
 
 function stage({ output, preservedRoot, allowDirty = false, sourceRoot = root }) {
   const channels = JSON.parse(fs.readFileSync(path.join(sourceRoot, 'release-channels.json'), 'utf8'));
+  const version = channels.candidate?.version;
+  if (!/^\d+\.\d+\.\d+$/.test(version || '')) throw new Error('A stable candidate version is required');
   const sha = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: sourceRoot, encoding: 'utf8' }).trim();
   const dirty = Boolean(execFileSync('git', ['status', '--porcelain'], { cwd: sourceRoot, encoding: 'utf8' }).trim());
   if (dirty && !allowDirty) throw new Error('Commit and validate an exact source revision before publication');
@@ -70,7 +77,7 @@ function stage({ output, preservedRoot, allowDirty = false, sourceRoot = root })
   const preservedSha = channels.webPublication?.preservePreviewSourceSha;
   if (!/^[a-f0-9]{40}$/.test(preservedSha || '')) throw new Error('Preserved routes require a full SHA');
   const objectRepo = fs.existsSync(path.join(preservedRoot, '.git')) ? preservedRoot : sourceRoot;
-  const tree = execFileSync('git', ['ls-tree', '-r', '-z', preservedSha, '--', 'preview', 'mobile'], { cwd: objectRepo, maxBuffer: 64 * 1024 * 1024 });
+  const tree = execFileSync('git', ['ls-tree', '-r', '-z', preservedSha, '--', 'preview', 'mobile', '1.6.0'], { cwd: objectRepo, maxBuffer: 64 * 1024 * 1024 });
   const retained = tree.toString().split('\0').filter(Boolean).map(line => {
     const [metadata, relative] = line.split('\t');
     const [mode, type, blob] = metadata.split(' ');
@@ -114,9 +121,9 @@ function stage({ output, preservedRoot, allowDirty = false, sourceRoot = root })
   }
   copy('CNAME', sourceRoot, allowDirty ? null : execFileSync('git', ['rev-parse', `${sha}:CNAME`], { cwd: sourceRoot, encoding: 'utf8' }).trim());
   fs.writeFileSync(path.join(output, '.nojekyll'), '');
-  const receipt = { schemaVersion: 1, sourceCommit: sha, sourceDirty: dirty || allowDirty,
+  const receipt = { schemaVersion: 1, version, sourceCommit: sha, sourceDirty: dirty || allowDirty,
     preservedRoutesCommit: preservedSha, files: inventory(output) };
-  verifyArtifact(output, receipt, { expectedSha: sha, requireClean: !allowDirty });
+  verifyArtifact(output, receipt, { expectedSha: sha, expectedVersion: version, requireClean: !allowDirty });
   return receipt;
 }
 
@@ -132,7 +139,8 @@ if (require.main === module) {
     const receiptFile = path.resolve(option('--receipt'));
     if (args.includes('--verify')) {
       const receipt = JSON.parse(fs.readFileSync(receiptFile, 'utf8'));
-      const count = verifyArtifact(output, receipt, { expectedSha: process.env.GITHUB_SHA,
+      const expectedVersion = JSON.parse(fs.readFileSync(path.join(root, 'release-channels.json'), 'utf8')).candidate.version;
+      const count = verifyArtifact(output, receipt, { expectedSha: process.env.GITHUB_SHA, expectedVersion,
         requireClean: !args.includes('--allow-dirty') });
       console.log(`Web artifact verified: ${count} files at ${receipt.sourceCommit}`);
     } else {
@@ -140,7 +148,7 @@ if (require.main === module) {
         allowDirty: args.includes('--allow-dirty') });
       fs.mkdirSync(path.dirname(receiptFile), { recursive: true });
       fs.writeFileSync(receiptFile, JSON.stringify(receipt, null, 2) + '\n');
-      console.log(`Web artifact staged: ${Object.keys(receipt.files).length} files; root 1.6.0 and preserved preview/mobile`);
+      console.log(`Web artifact staged: ${Object.keys(receipt.files).length} files; root ${receipt.version} and preserved preview/mobile/1.6.0`);
     }
   } catch (error) { console.error(error.message); process.exitCode = 1; }
 }

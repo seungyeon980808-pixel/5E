@@ -1,5 +1,5 @@
-import { initPopupFocus } from "./popup-focus.js?v=1.6.0-preview-common-year-login-0918-1302";
-import { initEscapeLayers } from "./escape-layers.js?v=1.6.0-remediation-0929";
+import { initPopupFocus } from "./popup-focus.js?v=1.6.1-preview-common-year-login-0918-1302";
+import { initEscapeLayers } from "./escape-layers.js?v=1.6.1-remediation-0929";
 
 /* ===== MODAL DRAG =====
  * 모달(그래프 만들기, 함수 입력, 내보내기 …)을 화면 안에서 자유롭게 옮긴다.

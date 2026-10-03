@@ -2,18 +2,27 @@
   "schemaVersion": 1,
   "repository": "seungyeon980808-pixel/5E",
   "apply": false,
-  "requiredStatusChecks": ["Test", "Release Identity"],
+  "requiredStatusChecks": [
+    "Test",
+    "Release Identity"
+  ],
   "requiredStatusChecksStrict": true,
   "enforceAdmins": true,
   "requireObservedCheckContextsBeforeApply": true,
-  "protectedBranches": ["main", "codex/preview-1.6.0"],
+  "protectedBranches": [
+    "main",
+    "codex/preview-1.6.0"
+  ],
   "pages": {
-    "buildType": "legacy",
-    "sourceBranch": "codex/preview-1.6.0",
+    "buildType": "workflow",
+    "sourceBranch": "main",
     "sourcePath": "/"
   },
   "rollback": {
-    "removeRequiredStatusChecks": ["Test", "Release Identity"],
+    "removeRequiredStatusChecks": [
+      "Test",
+      "Release Identity"
+    ],
     "restorePagesSourceFromRecordedPreApplyState": true
   }
 }

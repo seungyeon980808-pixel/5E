@@ -1,4 +1,4 @@
-import { isWhitePngWorkflow } from "./ai-white-png.js?v=1.6.0-remediation-0929";
+import { isWhitePngWorkflow } from "./ai-white-png.js?v=1.6.1-remediation-0929";
 export const KICE_IMAGE_WORKFLOW_VERSION = "kice-white-png-v1";
 export const KICE_IMAGE_MODE = "diagram";
 export const KICE_IMAGE_OUTPUT_ENGINE = "raster";

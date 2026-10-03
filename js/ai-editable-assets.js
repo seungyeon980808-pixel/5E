@@ -1,5 +1,5 @@
-import { decodeScopedPng, encodeScopedPng } from './ai-scoped-edit-png.js?v=1.6.0-remediation-0929';
-import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM } from './state.js?v=1.6.0-remediation-0929';
+import { decodeScopedPng, encodeScopedPng } from './ai-scoped-edit-png.js?v=1.6.1-remediation-0929';
+import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM } from './state.js?v=1.6.1-remediation-0929';
 
 export function effectiveAssetLabelMode(asset, labelsDisabled = false) {
   return labelsDisabled || !asset.label?.trim() || asset.labelMode === 'none' ? 'none' : asset.labelMode === 'text' ? 'text' : 'leader';

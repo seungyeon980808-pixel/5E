@@ -1,6 +1,6 @@
-import { registerEscapeLayer } from "./escape-layers.js?v=1.6.0-remediation-0929";
+import { registerEscapeLayer } from "./escape-layers.js?v=1.6.1-remediation-0929";
 
-import { modKey, shortcutKey, isEditingTarget, isComposingKey, keyLabel, IS_MAC } from "./platform.js?v=1.6.0-remediation-0929";
+import { modKey, shortcutKey, isEditingTarget, isComposingKey, keyLabel, IS_MAC } from "./platform.js?v=1.6.1-remediation-0929";
 /* ===== COMMAND PALETTE (Ctrl+K unified runner: 명령 + 오브젝트 검색) =====
  *
  * Ctrl+F는 오브젝트만 찾는다. 이 팔레트는 같은 창에서 "명령"(실행취소·그룹묶기·
@@ -16,10 +16,10 @@ import { modKey, shortcutKey, isEditingTarget, isComposingKey, keyLabel, IS_MAC 
  *   - 오브젝트는 search.js와 동일한 데이터(TEMPLATES/퍼스널)를 재사용해 생성한다.
  */
 
-import { TEMPLATES, activateTemplate, buildSymbolIcon, sizeIconViewBox } from "./templates.js?v=1.6.0-remediation-0929";
-import { listPersonalItems, insertPersonalItem } from "./personal-objects.js?v=1.6.0-remediation-0929";
-import { state } from "./state.js?v=1.6.0-remediation-0929";
-import { trimSelectedBoxMargins } from "./erase-tool.js?v=1.6.0-remediation-0929";
+import { TEMPLATES, activateTemplate, buildSymbolIcon, sizeIconViewBox } from "./templates.js?v=1.6.1-remediation-0929";
+import { listPersonalItems, insertPersonalItem } from "./personal-objects.js?v=1.6.1-remediation-0929";
+import { state } from "./state.js?v=1.6.1-remediation-0929";
+import { trimSelectedBoxMargins } from "./erase-tool.js?v=1.6.1-remediation-0929";
 
 const CATEGORY_ORDER = ["공통", "광학", "회로", "역학"];
 

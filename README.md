@@ -31,7 +31,8 @@
   <a href="#자주-묻는-질문">자주 묻는 질문</a> ·
   <a href="#구조-한눈에">구조</a> ·
   <a href="#내-데이터는-어디로-가나요">데이터</a> ·
-  <a href="docs/RELEASE_NOTES_v1.6.0.md">1.6.0 변경 내용</a>
+  <a href="docs/RELEASE_NOTES_v1.6.0.md">1.6.0 변경 내용</a> ·
+  <a href="docs/RELEASE_NOTES_v1.6.1.md">1.6.1 패치 변경 내용</a>
 </p>
 
 ## 왜 5E인가요
@@ -185,7 +186,7 @@
 
 ### 설치판
 
-1.6.0은 **웹으로 먼저 출시**합니다. 1.6.0 설치판(Windows·Mac)은 웹 버전 검증을 마친 뒤 PDF 폴더 연결 기능과 함께 따로 내놓을 예정입니다.
+1.6.0은 **웹으로 먼저 출시**했습니다. 1.6.1 설치판(Windows·Mac)은 웹 버전 검증을 마친 뒤 PDF 폴더 연결 기능과 함께 따로 내놓을 예정입니다.
 
 지금 받을 수 있는 설치판 최신 릴리즈 <strong>v1.5.8</strong>은 [릴리즈 페이지](https://github.com/seungyeon980808-pixel/5E/releases/tag/v1.5.8)에 있습니다. 설치판에는 1.6.0의 라이브러리와 AI 이미지 변환 작업대가 아직 들어 있지 않습니다.
 
@@ -194,7 +195,7 @@
 | 환경 | 연결 방식 |
 |---|---|
 | 웹 | AI 이미지 변환 창에서 ChatGPT 계정으로 기기 로그인 |
-| 설치판 (1.6.0 준비 중) | 내 컴퓨터에 로그인된 Codex 사용 |
+| 설치판 (1.6.1 준비 중) | 내 컴퓨터에 로그인된 Codex 사용 |
 
 5E는 ChatGPT 비밀번호를 받지 않고, 웹에서는 로그인한 브라우저 탭에만 5E 세션 토큰을 둡니다([자세히](#내-데이터는-어디로-가나요)). AI 기능은 로그인한 계정의 기능과 이용 한도를 따르며, AI 연결 없이도 그리기와 편집은 모두 쓸 수 있습니다.
 
@@ -331,7 +332,7 @@ sequenceDiagram
 ```text
 5E/
 ├── index.html · css/ · js/   루트 편집기 (1.5 계열 소스)
-├── preview/                  1.6 편집기 소스 · 웹 1.6.0과 설치판이 이 편집기를 씁니다
+├── preview/                  기존 1.6 회귀 검사 소스 · 공개 1.7 프리뷰는 고정 배포 SHA에서 보존합니다
 │   ├── js/                   편집기 · 라이브러리 · AI 작업대 모듈
 │   │   ├── render/  inspector/  tools/  function-graph/  graph/
 │   │   ├── library/  pdf-library/          라이브러리 · PDF 검색 · 크롭
@@ -417,9 +418,9 @@ GitHub Actions:
 | [www.5e.ai.kr/1.6.0/](https://www.5e.ai.kr/1.6.0/) | 1.6.0 | 버전을 고정한 주소 |
 | [www.5e.ai.kr/mobile/](https://www.5e.ai.kr/mobile/) | 1.6.0 Mobile Preview | 모바일 미리보기 |
 | [www.5e.ai.kr/preview/](https://www.5e.ai.kr/preview/) | 1.7.0 Preview | 다음 버전 미리보기 |
-| [GitHub Releases](https://github.com/seungyeon980808-pixel/5E/releases) | 설치판 1.5.8 | Windows 설치판 (1.6.0 설치판은 준비 중) |
+| [GitHub Releases](https://github.com/seungyeon980808-pixel/5E/releases) | 설치판 1.5.8 | Windows 설치판 (1.6.1 설치판은 준비 중) |
 
-- 웹사이트는 GitHub Pages로 배포합니다. 배포용 브랜치의 저장소 루트를 그대로 올립니다.
+- 현재 공개 웹은 기존 브랜치 기반 GitHub Pages 배포입니다. 1.6.1 후보는 루트 `index.html`을 정본으로 사용하고, 검증한 동일 산출물만 배포하는 Actions 경로를 준비했습니다. 전환·배포 전까지 공개 버전은 1.6.0입니다.
 - 1.6.0은 웹을 먼저 출시했습니다. 설치판은 서명·실기기 검증 등 [출시 보류 항목](docs/RELEASE_HOLD.md)을 모두 풀어야 게시합니다.
 - 문제가 생기면 기록해 둔 정상 버전으로 되돌립니다. 이미 올린 설치 파일은 바꿔치기하지 않고 새 패치 버전을 냅니다. 자세한 절차는 [되돌리기 절차](docs/RELEASE_ROLLBACK.md)에 있습니다.
 - 채널 기록: [RELEASE_CHANNELS.md](docs/RELEASE_CHANNELS.md) · [release-channels.json](release-channels.json) · [GitHub 릴리즈 절차](docs/GITHUB_RELEASES.md)
@@ -522,6 +523,7 @@ claude mcp list
 ## 문서
 
 - [1.6.0 변경 내용](docs/RELEASE_NOTES_v1.6.0.md)
+- [1.6.1 패치 변경 내용](docs/RELEASE_NOTES_v1.6.1.md)
 - [사용 가이드](docs/USER_GUIDE.md)
 - [릴리즈 이력](https://github.com/seungyeon980808-pixel/5E/releases)
 - [이미지 출처](docs/credits.html)

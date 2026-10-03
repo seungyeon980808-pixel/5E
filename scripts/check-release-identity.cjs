@@ -32,7 +32,9 @@ function checkReleaseIdentity({ tag = null, sha = null } = {}) {
   assert.equal(lock.version, version, "package-lock.version must equal candidate version");
   assert.equal(lock.packages?.[""]?.version, version, "package-lock root version must equal candidate version");
   assert.equal(metadata.channels?.desktop?.version, version, "desktop channel must equal candidate version");
-  assert.equal(metadata.channels?.stableWeb?.version, version, "stable web channel must equal candidate version");
+  assert.equal(metadata.webPublication?.candidateVersion, version, "web publication candidate must equal package version");
+  assert.equal(metadata.candidate.tag, `v${version}`, "candidate tag must match package version");
+  assert.ok(json("manifest.json").name.includes(version), "PWA name must show candidate version");
   assert.equal(metadata.candidate.desktopEntry, "index.html", "desktop must use the canonical root entry");
   assert.equal(metadata.channels.desktop.entry, metadata.candidate.desktopEntry, "desktop entry must match candidate entry");
   assert.equal(pkg.engines?.node, ">=24.21.0 <25", "Node engine must stay on the pinned Node 24 LTS line");

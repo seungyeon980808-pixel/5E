@@ -1,9 +1,9 @@
 const release = Object.freeze({
-  version: '1.6.0',
-  releasedAt: '2026.09.29',
+  version: '1.6.1',
+  releasedAt: '2026.10.03',
   // Publication stamps the validated commit after copying its tracked source.
   sourceCommit: null,
-  sourceBaseline: 'e310624a636e79c0aa4cbcbcff458f0d400b7665',
+  sourceBaseline: '751b1ed4622058497a6f3ba43f92333eb15268eb',
 });
 
 // Release builds show only the version line; the source commit stays available on hover.

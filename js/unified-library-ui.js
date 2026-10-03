@@ -1,11 +1,11 @@
-import { attachCropMagnifier } from "./tools/pointer-magnifier.js?v=1.6.0-remediation-0929";
-import { targetPageGeometry, fittedPageSize, createPreviewPaper } from "./library/page-loading.js?v=1.6.0-workbench-polish-0928-final";
-import { createContinuousCropPages } from "./library/continuous-crop-pages.js?v=1.6.0-remediation-0929";
-import { registerEscapeLayer } from "./escape-layers.js?v=1.6.0-remediation-0929";
-import { DESKTOP_RELEASE_URL } from "./ai-install-guide.js?v=1.6.0-remediation-0929";
-import { safeExternalSourceUrl } from "./library-import-policy.js?v=1.6.0-remediation-0929";
-import { queryHighlightTerms } from "./pdf-library/search.js?v=1.6.0-remediation-0929";
-import { chooseWorkbenchAssignment } from "./library/workbench-assignment.js?v=1.6.0-preview-emerald-polish-0921";
+import { attachCropMagnifier } from "./tools/pointer-magnifier.js?v=1.6.1-remediation-0929";
+import { targetPageGeometry, fittedPageSize, createPreviewPaper } from "./library/page-loading.js?v=1.6.1-workbench-polish-0928-final";
+import { createContinuousCropPages } from "./library/continuous-crop-pages.js?v=1.6.1-remediation-0929";
+import { registerEscapeLayer } from "./escape-layers.js?v=1.6.1-remediation-0929";
+import { DESKTOP_RELEASE_URL } from "./ai-install-guide.js?v=1.6.1-remediation-0929";
+import { safeExternalSourceUrl } from "./library-import-policy.js?v=1.6.1-remediation-0929";
+import { queryHighlightTerms } from "./pdf-library/search.js?v=1.6.1-remediation-0929";
+import { chooseWorkbenchAssignment } from "./library/workbench-assignment.js?v=1.6.1-preview-emerald-polish-0921";
 
 const SOURCE_STORAGE_KEY = "5e.unified-library.sources.v1";
 const TREE_STORAGE_KEY = "5e.unified-library.tree-expanded.v1";

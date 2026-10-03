@@ -1,4 +1,4 @@
-import { createPointerMagnifier, svgMagnifierSample, cropMagnifierEnabled, mountCropMagnifierToggle } from "./tools/pointer-magnifier.js?v=1.6.0-remediation-0929";
+import { createPointerMagnifier, svgMagnifierSample, cropMagnifierEnabled, mountCropMagnifierToggle } from "./tools/pointer-magnifier.js?v=1.6.1-remediation-0929";
 /* ===== CUT TOOL — 삽입(생성) 후 캔버스에서 객체 자르기 (가위 하나) =====
 //
 // activeTool === "CUT" 또는 "DELAYED_CUT" 일 때 동작한다.
@@ -12,15 +12,15 @@ import { createPointerMagnifier, svgMagnifierSample, cropMagnifierEnabled, mount
 // 분할 수학은 cut-geometry.js(순수 함수, Node 테스트 완료). 여기선 UI·포인터·
 // 스토어 교체(Undo 1스텝)만 담당. */
 
-import { screenToWorld, getRenderScale } from "./viewport.js?v=1.6.0-preview-lite-hybrid-0922";
-import { cutObject, isCuttable, cutCrossingPoints, isBoxCuttable, cutBoxObject } from "./cut-geometry.js?v=1.6.0-preview-labeler-0917-1111";
-import { snapAngle } from "./geometry.js?v=1.6.0-preview-labeler-0917-1111";
-import { simplifyRDP } from "./geometry.js?v=1.6.0-preview-labeler-0917-1111";
-import { getObjectBBox } from "./pick.js?v=1.6.0-remediation-0929";
-import { resolveEndpointSnap } from "./snap.js?v=1.6.0-remediation-0929";
-import { setSnapPreview } from "./render.js?v=1.6.0-remediation-0929";
+import { screenToWorld, getRenderScale } from "./viewport.js?v=1.6.1-preview-lite-hybrid-0922";
+import { cutObject, isCuttable, cutCrossingPoints, isBoxCuttable, cutBoxObject } from "./cut-geometry.js?v=1.6.1-preview-labeler-0917-1111";
+import { snapAngle } from "./geometry.js?v=1.6.1-preview-labeler-0917-1111";
+import { simplifyRDP } from "./geometry.js?v=1.6.1-preview-labeler-0917-1111";
+import { getObjectBBox } from "./pick.js?v=1.6.1-remediation-0929";
+import { resolveEndpointSnap } from "./snap.js?v=1.6.1-remediation-0929";
+import { setSnapPreview } from "./render.js?v=1.6.1-remediation-0929";
 
-import { snapKey } from "./platform.js?v=1.6.0-remediation-0929";
+import { snapKey } from "./platform.js?v=1.6.1-remediation-0929";
 const SVG_NS = "http://www.w3.org/2000/svg";
 const CUT_CURSOR = "crosshair";
 const MIN_STEP_PX = 2;   // 화면 2px 이상 움직여야 새 자유점 기록

@@ -18,11 +18,11 @@ import {
   catmullRomPath,
   applyDash,
   makeArrowHead,
-} from "./core.js?v=1.6.0-remediation-0929";
-import { worldXFromMathX, worldYFromMathY, worldYFromMathY2, y2RangeOf } from "../function-graph/coords.js?v=1.6.0-preview-labeler-0917-1111";
-import { renderGraphLabel, measureGraphLabel } from "./graph-label.js?v=1.6.0-remediation-0929";
-import { renderPolyline } from "./shapes.js?v=1.6.0-remediation-0929";
-import { resolveFill, makeFillPattern } from "./fill.js?v=1.6.0-remediation-0929";
+} from "./core.js?v=1.6.1-remediation-0929";
+import { worldXFromMathX, worldYFromMathY, worldYFromMathY2, y2RangeOf } from "../function-graph/coords.js?v=1.6.1-preview-labeler-0917-1111";
+import { renderGraphLabel, measureGraphLabel } from "./graph-label.js?v=1.6.1-remediation-0929";
+import { renderPolyline } from "./shapes.js?v=1.6.1-remediation-0929";
+import { resolveFill, makeFillPattern } from "./fill.js?v=1.6.1-remediation-0929";
 
 // dominant-baseline(구식 addName) → renderGraphLabel vAlign 매핑.
 function baselineToVAlign(b) {

@@ -7,7 +7,7 @@
  * returned crop/contact-sheet descriptors with Canvas or OffscreenCanvas.
  */
 
-import { getReferenceRole } from "./ai-reference-roles.js?v=1.6.0-remediation-0929";
+import { getReferenceRole } from "./ai-reference-roles.js?v=1.6.1-remediation-0929";
 
 export const REMOTE_INPUT_PLAN_VERSION = "remote-input-v4";
 export const EXACT_OUTPUT_CACHE_SCHEMA = "5e-ai-output-v3";
