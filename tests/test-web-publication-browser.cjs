@@ -39,6 +39,16 @@ async function documentData(page, modules) {
   }, modules);
 }
 
+async function waitForDocument(page, modules, predicate, message) {
+  let document;
+  for (let attempt = 0; attempt < 100; attempt++) {
+    document = await documentData(page, modules);
+    if (predicate(document)) return document;
+    await new Promise(resolve => setTimeout(resolve, 100));
+  }
+  assert.ok(predicate(document), message);
+}
+
 async function drawLine(page) {
   await page.locator('[data-tool="L"]').click();
   const canvas = await page.locator('#canvas').boundingBox();
@@ -54,11 +64,8 @@ async function saveAndReopen(page, origin, modules, label, createContext) {
   const imageChooser = page.waitForEvent('filechooser');
   await page.locator('.file-submenu [data-mode="single-page"]').click();
   await (await imageChooser).setFiles(fixture);
-  await page.waitForFunction(async modules => {
-    const { state } = await import(modules.state);
-    return state.get().objects.some(object => object.type === 'image');
-  }, modules);
-  const before = await documentData(page, modules);
+  const before = await waitForDocument(page, modules,
+    document => document.pages[0].objects.some(object => object.type === 'image'), 'image import completes');
   assert.equal(before.pages[0].objects.length, 2, 'the line and source image are present');
   assert.equal(before.pages[0].objects.find(object => object.type === 'image').src, fixtureSource, 'original PNG bytes survive import');
 
@@ -85,10 +92,7 @@ async function saveAndReopen(page, origin, modules, label, createContext) {
   await reopened.locator('#project-open').click();
   await (await opening).setFiles(projectFile);
   await reopened.getByRole('button', { name: '열기', exact: true }).click();
-  await reopened.waitForFunction(async modules => {
-    const { state } = await import(modules.state);
-    return state.get().objects.length === 2;
-  }, modules);
+  await waitForDocument(reopened, modules, document => document.pages[0].objects.length === 2, 'project open completes');
   const normalizedSaved = await reopened.evaluate(async ({ project, saved }) => {
     const { migrate } = await import(project);
     return migrate(saved);
@@ -177,6 +181,11 @@ async function freshContext(browser, errors, origin) {
         await page.locator('#canvas').waitFor({ state: 'visible' });
         assert.match(await page.title(), /1\.6\.0/);
         assert.match(await page.locator('[data-release-version]').textContent(), /v1\.6\.0/);
+        const stampedSource = fs.readFileSync(path.join(site, 'js/release-receipt.js'), 'utf8')
+          .match(/sourceCommit: '([a-f0-9]{40})'/)?.[1];
+        assert.ok(stampedSource, 'the artifact contains its exact source commit');
+        await page.waitForFunction(sha => document.querySelector('[data-release-version]')?.dataset.sourceCommit === sha, stampedSource);
+        if (process.env.GITHUB_SHA) assert.equal(stampedSource, process.env.GITHUB_SHA);
         await drawLine(page);
         assert.equal((await documentData(page, modules)).pages[0].objects.length, 1);
         await page.locator('#undo-btn').click();

@@ -52,6 +52,7 @@ test('production staging uses committed blobs and excludes ignored files while p
   write('index.html', '<title>5E 1.6.0</title><strong data-release-version>v1.6.0</strong>');
   write('CNAME', 'www.5e.ai.kr\n');
   write('js/app.js', 'const stable = true;');
+  write('js/release-receipt.js', 'const release = { sourceCommit: null };');
   write('assets/public.txt', 'public');
   write('.gitignore', 'assets/private.txt\n');
   write('preview/index.html', '<title>5E 1.7.0</title>');
@@ -70,10 +71,13 @@ test('production staging uses committed blobs and excludes ignored files while p
   assert.equal(receipt.sourceDirty, false);
   assert.equal(receipt.preservedRoutesCommit, preservedSha);
   assert.equal(receipt.sourceCommit, git(['rev-parse', 'HEAD']));
+  assert.equal(fs.readFileSync(path.join(site, 'js/release-receipt.js'), 'utf8'), `const release = { sourceCommit: '${receipt.sourceCommit}' };`);
   assert.equal(fs.existsSync(path.join(site, 'assets/private.txt')), false);
   assert.equal(fs.readFileSync(path.join(site, 'preview/index.html'), 'utf8'), '<title>5E 1.7.0</title>');
   assert.equal(fs.readFileSync(path.join(site, 'mobile/index.html'), 'utf8'), '<title>5E mobile</title>');
   verifyArtifact(site, receipt, { expectedSha: receipt.sourceCommit, requireClean: true });
+  fs.writeFileSync(path.join(site, 'js/release-receipt.js'), `const release = { sourceCommit: '${'a'.repeat(40)}' };`);
+  assert.throws(() => verifyArtifact(site, { ...receipt, files: inventory(site) }), /Displayed source commit/);
   write('js/app.js', 'const stable = false;');
   assert.throws(() => stage({ output: path.join(temporary, 'dirty'), preservedRoot: sourceRoot, sourceRoot }), /exact source revision/);
   git(['restore', 'js/app.js']);

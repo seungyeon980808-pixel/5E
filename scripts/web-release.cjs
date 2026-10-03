@@ -52,6 +52,11 @@ function verifyArtifact(site, receipt, { expectedSha, requireClean = false } = {
   if (!/<title>[^<]*1\.6\.0/.test(html) || !/data-release-version[^>]*>v1\.6\.0/.test(html)) {
     throw new Error('Canonical root must be the stable 1.6.0 entry');
   }
+  const releaseReceipt = path.join(site, 'js/release-receipt.js');
+  if (fs.existsSync(releaseReceipt)) {
+    const displayedSha = fs.readFileSync(releaseReceipt, 'utf8').match(/sourceCommit: '([a-f0-9]{40})'/)?.[1];
+    if (displayedSha !== receipt.sourceCommit) throw new Error('Displayed source commit does not match the validated artifact');
+  }
   return Object.keys(actual).length;
 }
 
@@ -101,6 +106,12 @@ function stage({ output, preservedRoot, allowDirty = false, sourceRoot = root })
     }
   }
   for (const { relative, blob } of retained) copy(relative, preservedRoot, blob);
+  const releaseReceipt = path.join(output, 'js/release-receipt.js');
+  if (fs.existsSync(releaseReceipt)) {
+    const source = fs.readFileSync(releaseReceipt, 'utf8');
+    if ((source.match(/sourceCommit: null/g) || []).length !== 1) throw new Error('Canonical release receipt requires one source SHA placeholder');
+    fs.writeFileSync(releaseReceipt, source.replace('sourceCommit: null', `sourceCommit: '${sha}'`));
+  }
   copy('CNAME', sourceRoot, allowDirty ? null : execFileSync('git', ['rev-parse', `${sha}:CNAME`], { cwd: sourceRoot, encoding: 'utf8' }).trim());
   fs.writeFileSync(path.join(output, '.nojekyll'), '');
   const receipt = { schemaVersion: 1, sourceCommit: sha, sourceDirty: dirty || allowDirty,
