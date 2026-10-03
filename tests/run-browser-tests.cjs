@@ -51,6 +51,7 @@ async function startServer() {
       const evidenceBase = process.env.EVIDENCE_DIR;
       const environment = {
         ...process.env,
+        PLAYWRIGHT_MODULE: process.env.PLAYWRIGHT_MODULE || require.resolve('playwright'),
         PREVIEW_URL: `${server.origin}/preview/`,
         RELEASE_URL: `${server.origin}/`,
       };
