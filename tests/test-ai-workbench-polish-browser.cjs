@@ -77,7 +77,16 @@ async function fixture(t, engine, name, count = null) {
     await page.click('#ai-image-install-open');
     await selected(page, 0);
   }
-  return { page, evidence, errors, origin };
+  return { page, evidence, errors, origin,
+    async pauseTracing() {
+      await context.tracing.stop({ path: path.join(evidence, 'before-performance-trace.zip') });
+      tracing = false;
+    },
+    async resumeTracing() {
+      await context.tracing.start({ screenshots: true, snapshots: true });
+      tracing = true;
+    },
+  };
 }
 async function selected(page, index) {
   await page.waitForFunction(index => {
@@ -100,7 +109,7 @@ async function content(page, count) {
 
 for (const engine of ['chromium', 'webkit']) for (const count of [1, 10, 30]) {
   test(`${engine}: populated ${count} tasks retain visible content and cached click-to-paint performance across visual modes`, { timeout: 180000 }, async t => {
-    const { page, evidence, errors } = await fixture(t, engine, `tasks-${count}`, count);
+    const { page, evidence, errors, pauseTracing, resumeTracing } = await fixture(t, engine, `tasks-${count}`, count);
     // Given: every fixture task has an original, revision and area comment; warm every task through the real controls.
     const before = await content(page, count);
     const cold = [];
@@ -111,6 +120,10 @@ for (const engine of ['chromium', 'webkit']) for (const count of [1, 10, 30]) {
     const screenshots = [];
     const capture = async name => { const file = path.join(evidence, `${name}.png`); await page.screenshot({ path: file }); screenshots.push({ file, content: await content(page, count) }); };
     await capture('populated-light');
+    // DOM snapshots and screenshot capture are diagnostic work, not application
+    // click-to-paint latency. Preserve traces on either side of the benchmark.
+    await pauseTracing();
+    await page.waitForTimeout(100);
     await page.evaluate(() => {
       window.__polish = { samples: [], gaps: [], stop: false, last: performance.now(), started: performance.now() };
       window.__task2.longTasks = [];
@@ -135,6 +148,7 @@ for (const engine of ['chromium', 'webkit']) for (const count of [1, 10, 30]) {
       await page.waitForFunction(n => window.__polish.samples.length >= n, sample + 1);
     }
     const perf = await page.evaluate(() => { window.__polish.stop = true; return { ...window.__polish, longTaskSupported: window.__task2.longTaskSupported, longTasks: window.__task2.longTasks.filter(entry => entry.start >= window.__polish.started), dpr: devicePixelRatio }; });
+    await resumeTracing();
     const times = perf.samples.map(row => row.ms).sort((a, b) => a - b);
     const report = { count, engine, coldSelectionIncludingAutomationMs: cold, ...perf, minimumMs: times[0], medianMs: times[10], p95Ms: times[18], maximumMs: times.at(-1), over100ms: times.filter(ms => ms >= 100).length, longTasksOver50ms: perf.longTasks.filter(row => row.duration > 50), rafGapsOver50ms: perf.gaps.filter(ms => ms > 50), webkitLimitation: engine === 'webkit' ? 'Long Tasks API unavailable: RAF gaps are rendering-stall observations, not proof of main-thread task duration.' : null };
     write(evidence, 'performance.json', report);
@@ -169,7 +183,7 @@ for (const engine of ['chromium', 'webkit']) for (const count of [1, 10, 30]) {
 }
 
 for (const engine of ['chromium', 'webkit']) test(`${engine}: dark reduced-motion crop preserves target geometry through slow decode, retry and reopen`, { timeout: 90000 }, async t => {
-  const { page, evidence, errors, origin } = await fixture(t, engine, 'loading');
+  const { page, evidence, errors, origin, pauseTracing, resumeTracing } = await fixture(t, engine, 'loading');
   process.env.PREVIEW_URL = origin;
   const ui = await installCropFixture(page);
   await page.evaluate(() => document.documentElement.setAttribute('data-theme', 'dark'));
@@ -186,6 +200,7 @@ for (const engine of ['chromium', 'webkit']) test(`${engine}: dark reduced-motio
   await ui.locator('[data-unilib-crop-canvas]').evaluate(node => Promise.all(node.getAnimations().map(animation => animation.finished)));
   await page.screenshot({ path: path.join(evidence, 'dark-zoom-edge-lens.png') });
   await page.evaluate(() => { window.holdCrop('original-2'); window.holdCrop('thumbnail-2'); });
+  await pauseTracing();
   await ui.locator('[data-unilib-crop-page-next]').click(); await load.waitFor({ state: 'visible' });
   await ui.locator('.unilib-crop-load-paper').waitFor({ state: 'visible' });
   const transition = await ui.locator('[data-unilib-crop-canvas]').evaluate(async node => {
@@ -194,6 +209,7 @@ for (const engine of ['chromium', 'webkit']) test(`${engine}: dark reduced-motio
     await Promise.all(animations.map(animation => animation.finished));
     return { timings, settledMs: performance.now() - start };
   });
+  await resumeTracing();
   write(evidence, 'loading-transition.json', transition);
   assert.ok(transition.timings.every(item => item.timing.duration <= 1), 'reduced motion must not animate loading geometry for more than 1ms');
   assert.ok(transition.settledMs < 100, 'loading skeleton settles within 100ms');

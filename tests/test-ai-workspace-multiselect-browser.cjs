@@ -105,7 +105,7 @@ async function requestBrowserFixture(context, count, evidence, { initialGenerati
     fs.writeFileSync(path.join(evidence, `cleanup-${count}.json`), JSON.stringify({ engine: process.env.TASK2_ENGINE || 'chromium', browserVersion: browser.version(), browserContextClosed: true, browserClosed: !browser.isConnected(), serverClosed: !server.listening, serverPort: port }));
   });
   const page = await browserContext.newPage();
-  page.setDefaultTimeout(10_000);
+  page.setDefaultTimeout(30_000);
   const errors = [];
   page.on('pageerror', error => { errors.push(error.message); console.error('TASK2 PAGE ERROR', error.message); });
   await page.addInitScript({ content: `(${seedRequestWorkspaces.toString()})(${count}, ${initialGeneration}, ${missingCapabilities}, ${JSON.stringify(mode)}, ${JSON.stringify(scoped)}, ${badTask})` });

@@ -127,9 +127,9 @@ for (const engine of ['chromium', 'webkit']) {
     await page.click('.aea-dialog [data-action="cancel"]');
     await page.selectOption(separation, 'grid');
     await page.selectOption(separation, 'off');
-    await page.click(`${panel} [data-tab-id="task-1"] .ai-task-tab-select`);
+    await page.locator(`${panel} [data-tab-id="task-1"] .ai-task-tab-select:visible`).click();
     assert.equal(await groups.getAttribute('data-ai-separation-state'), '');
-    await page.click(`${panel} [data-tab-id="task-0"] .ai-task-tab-select`);
+    await page.locator(`${panel} [data-tab-id="task-0"] .ai-task-tab-select:visible`).click();
     await page.selectOption(separation, 'auto');
     await page.waitForFunction(() => document.querySelector('#ai-image-panel [data-ai-editable-groups]')?.dataset.aiSeparationState === 'ready');
     const sends = await page.evaluate(() => window.__task2.sends.length);

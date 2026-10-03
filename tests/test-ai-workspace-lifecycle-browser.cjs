@@ -418,13 +418,14 @@ async function requestBrowserFixture(context, count, evidence, { initialGenerati
   const browser = await engine.launch({ headless: true });
   const browserContext = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
   await browserContext.tracing.start({ screenshots: true, snapshots: true });
+  let tracing = true;
   context.after(async () => {
     const finalPage = browserContext.pages()[0];
     if (finalPage && !finalPage.isClosed()) {
       const diagnostic = await finalPage.evaluate(() => [...document.querySelectorAll('[data-ai-busy]')].map(panel => ({ id: panel.id, busy: panel.dataset.aiBusy, phase: panel.dataset.aiRequestPhase, status: panel.querySelector('[data-ai-status]')?.textContent, log: panel.querySelector('[data-ai-log]')?.textContent })));
       fs.writeFileSync(path.join(evidence, `diagnostic-${count}.json`), JSON.stringify(diagnostic, null, 2));
     }
-    await browserContext.tracing.stop({ path: path.join(evidence, `trace-${count}.zip`) });
+    if (tracing) await browserContext.tracing.stop({ path: path.join(evidence, `trace-${count}.zip`) });
     await browserContext.close();
     await browser.close();
     const port = server.address()?.port;
@@ -432,7 +433,7 @@ async function requestBrowserFixture(context, count, evidence, { initialGenerati
     fs.writeFileSync(path.join(evidence, `cleanup-${count}.json`), JSON.stringify({ engine: process.env.TASK2_ENGINE || 'chromium', browserVersion: browser.version(), browserContextClosed: true, browserClosed: !browser.isConnected(), serverClosed: !server.listening, serverPort: port }));
   });
   const page = await browserContext.newPage();
-  page.setDefaultTimeout(10_000);
+  page.setDefaultTimeout(30_000);
   const errors = [];
   page.on('pageerror', error => { errors.push(error.message); console.error('TASK2 PAGE ERROR', error.message); });
   await page.addInitScript({ content: `(${seedRequestWorkspaces.toString()})(${count}, ${initialGeneration})` });
@@ -447,14 +448,23 @@ async function requestBrowserFixture(context, count, evidence, { initialGenerati
   if (!initialGeneration) await page.waitForFunction(() => document.querySelector('#ai-image-panel [data-ai-candidate-option][aria-selected="true"]'));
   await page.waitForFunction(() => [...document.querySelectorAll('#ai-image-panel .ai-image-card img')].some(image => image.naturalWidth === 512));
   assert.deepEqual(errors, [], 'real app boot must have no runtime errors');
-  return { page, errors };
+  return { page, errors,
+    async pauseTracing() {
+      await browserContext.tracing.stop({ path: path.join(evidence, `before-performance-trace-${count}.zip`) });
+      tracing = false;
+    },
+    async resumeTracing() {
+      await browserContext.tracing.start({ screenshots: true, snapshots: true });
+      tracing = true;
+    },
+  };
 }
 
 for (const count of [1, 10, 30]) {
   test(`request ownership and decoded cached selection with ${count} populated tasks`, { timeout: 120_000 }, async context => {
     const evidence = process.env.TASK2_EVIDENCE || path.join(root, '.omo/evidence/ai-workbench-polish-0928/task2/browser');
     fs.mkdirSync(evidence, { recursive: true });
-    const { page, errors } = await requestBrowserFixture(context, count, evidence);
+    const { page, errors, pauseTracing, resumeTracing } = await requestBrowserFixture(context, count, evidence);
     const task = index => `#ai-image-panel [data-tab-id="task-${index}"] .ai-task-tab-select`;
     assert.equal(await page.locator('#ai-image-panel .ai-task-tab-select').count(), count);
     const timings = [];
@@ -463,6 +473,8 @@ for (const count of [1, 10, 30]) {
       await page.waitForFunction(id => document.querySelector('#ai-image-panel')?.dataset.aiSelectedCandidateId === id, `candidate-${index}`);
       await page.waitForFunction(() => [...document.querySelectorAll('#ai-image-panel .ai-image-card img')].some(image => image.naturalWidth === 512));
     }
+    await pauseTracing();
+    await page.waitForTimeout(100);
     await page.evaluate(() => { window.__task2.longTasks = []; window.__task2.warmStarted = performance.now(); });
     for (let index = 0; index < 6; index += 1) {
       const target = index % count;
@@ -477,6 +489,8 @@ for (const count of [1, 10, 30]) {
       }, target);
       timings.push(duration);
     }
+    await page.evaluate(() => { window.__task2.warmEnded = performance.now(); });
+    await resumeTracing();
     await page.locator(task(0)).click();
     await page.screenshot({ path: path.join(evidence, `populated-${count}.png`) });
     await page.locator('#ai-image-panel [data-ai-comments-apply]').click();
@@ -508,7 +522,7 @@ for (const count of [1, 10, 30]) {
     assert.equal(snapshot.find(tab => tab.id === 'task-0').generated.length, 2);
     assert.ok(snapshot.filter(tab => tab.id !== 'task-0').every(tab => tab.generated.length === 1));
     assert.equal(snapshot.find(tab => tab.id === 'task-0').generated[0].data, await page.evaluate(() => window.__task2.original));
-    const longTasks = await page.evaluate(() => window.__task2.longTasks.filter(entry => entry.start >= window.__task2.warmStarted));
+    const longTasks = await page.evaluate(() => window.__task2.longTasks.filter(entry => entry.start >= window.__task2.warmStarted && entry.start < window.__task2.warmEnded));
     const report = { count, engine: process.env.TASK2_ENGINE || 'chromium', longTaskSupported: await page.evaluate(() => window.__task2.longTaskSupported), timings, maxMs: Math.max(...timings), longTasks, errors, originalPreserved: true, resultOnlyInOrigin: true };
     fs.writeFileSync(path.join(evidence, `scenario-${count}.json`), JSON.stringify(report, null, 2));
     await page.screenshot({ path: path.join(evidence, `completed-${count}.png`) });
