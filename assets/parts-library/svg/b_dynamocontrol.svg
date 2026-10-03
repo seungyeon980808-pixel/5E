@@ -1,0 +1,78 @@
+<?xml version="1.0" standalone="no"?><svg width="600.000" height="260.000" viewBox="0.0 0.0 600.000 260.000">
+  <title>DynamoControl</title>
+  <desc>Dynamo Voltage Control Schematic</desc>  <author>PiterJanR</author>
+
+
+<circle cx="433.92" cy="134.14" r="49.971"
+fill="none" stroke="black" stroke-width="1.5"/>
+<path d="M446.41 85.76L446.41 71.68L421.42 71.68L421.42 85.76L425.54 84.88L429.71 84.35L433.92 84.17L438.12 84.35L442.29 84.88Z"
+fill="solid" stroke="black" stroke-width="1.5"/>
+<path d="M446.41 182.52L446.41 196.6L421.42 196.6L421.42 182.52L425.54 183.4L429.71 183.93L433.92 184.11L438.12 183.93L442.29 183.4Z"
+fill="solid" stroke="black" stroke-width="1.5"/>
+<path d="M448.91 151.63L418.93 151.63"
+fill="none" stroke="black" stroke-width="1.5"/>
+<path d="M448.91 156.63L441.41 156.63 M437.66 156.63L430.17 156.63 M426.42 156.63L418.93 156.63"
+fill="none" stroke="black" stroke-width="1.5"/>
+<path d="M67.47 75.84L67.47 34.2L200.72 34.2L200.72 84.17"
+fill="none" stroke="black" stroke-width="1.5"/>
+<path d="M433.92 196.6L433.92 234.08L550.51 234.08"
+fill="none" stroke="black" stroke-width="1.5"/>
+<path d="M184.06 184.11L184.06 84.17L217.38 84.17L217.38 184.11Z"
+fill="none" stroke="black" stroke-width="1.5"/>
+<path d="M34.15 75.84L100.78 75.84"
+fill="none" stroke="black" stroke-width="1.5"/>
+<path d="M50.81 92.5L84.12 92.5"
+fill="none" stroke="black" stroke-width="4.5"/>
+<path d="M34.15 109.15L100.78 109.15"
+fill="none" stroke="black" stroke-width="1.5"/>
+<path d="M50.81 125.81L84.12 125.81"
+fill="none" stroke="black" stroke-width="4.5"/>
+<path d="M34.15 142.47L100.78 142.47"
+fill="none" stroke="black" stroke-width="1.5"/>
+<path d="M50.81 159.13L84.12 159.13"
+fill="none" stroke="black" stroke-width="4.5"/>
+<path d="M34.15 175.78L100.78 175.78"
+fill="none" stroke="black" stroke-width="1.5"/>
+<path d="M50.81 192.44L84.12 192.44"
+fill="none" stroke="black" stroke-width="3.5"/>
+<path d="M184.06 192.44L217.38 192.44"
+fill="none" stroke="black" stroke-width="2.5"/>
+<path d="M200.72 192.44L200.72 234.08"
+fill="none" stroke="black" stroke-width="1.5"/>
+<path d="M433.92 71.68L433.92 34.2L550.51 34.2"
+fill="none" stroke="black" stroke-width="1.5"/>
+<path d="M443.91 105.16L432.58 105.16L430.98 105.34L429.46 105.89L428.11 106.77L426.99 107.94L426.18 109.33L425.7 110.88L425.59 112.49L425.59 130.81L425.77 132.47L426.31 134.05L427.17 135.48L428.33 136.68L429.71 137.61L431.27 138.22L432.92 138.47L443.91 138.47L443.91 119.82L438.25 119.82"
+fill="none" stroke="black" stroke-width="2.5"/>
+<path d="M217.38 117.48L217.38 117.48 234.03 113.32 234.03 121.65 217.38 117.48Z"
+fill-rule="evenodd" fill="black"/>
+<path d="M234.03 117.48L267.35 117.48L267.35 34.2L333.98 34.2L333.98 67.51L336.46 67.7L338.88 68.25L341.2 69.16L343.36 70.41L345.3 71.96L347 73.78L348.4 75.84L349.48 78.08L350.21 80.46L350.59 82.92L350.59 85.41L350.21 87.88L349.48 90.25L348.4 92.5L347 94.55L345.3 96.38L343.36 97.93L341.2 99.18L338.88 100.09L336.46 100.64L333.98 100.83L336.46 101.01L338.88 101.57L341.2 102.48L343.36 103.72L345.3 105.27L347 107.1L348.4 109.15L349.48 111.4L350.21 113.78L350.59 116.24L350.59 118.73L350.21 121.19L349.48 123.57L348.4 125.81L347 127.87L345.3 129.69L343.36 131.25L341.2 132.49L338.88 133.4L336.46 133.95L333.98 134.14L336.46 134.33L338.88 134.88L341.2 135.79L343.36 137.03L345.3 138.59L347 140.41L348.4 142.47L349.48 144.71L350.21 147.09L350.59 149.55L350.59 154.5L349.48 156.88L348.4 159.13L347 161.18L345.3 163.01L343.36 164.56L341.2 165.8L338.88 166.71L336.46 167.27L333.98 167.45L336.46 167.64L338.88 168.19L341.2 169.1L343.36 170.35L345.3 171.9L347 173.73L348.4 175.78L349.48 178.03L350.21 180.4L350.59 182.87L350.59 185.36L350.21 187.82L349.48 190.2L348.4 192.44L347 194.5L345.3 196.32L343.36 197.87L341.2 199.12L338.88 200.03L336.46 200.58L333.98 200.77L333.98 234.08L67.47 234.08L67.47 192.44"
+fill="none" stroke="black" stroke-width="1.5"/>
+
+<text x="440.56" y="60.85" font-family="Arial" font-size="20" fill="black">A1</text>
+
+
+<text x="440.56" y="220.76" font-family="Arial" font-size="20" fill="black">A2</text>
+
+
+<text x="307.01" y="60.85" font-family="Arial" font-size="20" fill="black">F1</text>
+
+
+<text x="305.01" y="220.76" font-family="Arial" font-size="20" fill="black">F2</text>
+
+
+<text x="42.39" y="69.96" font-family="Arial" font-size="30" fill="black">+</text>
+
+
+<text x="45.39" y="217.76" font-family="Arial" font-size="40" fill="black">-</text>
+
+
+<text x="558.84" y="44.97" font-family="Arial" font-size="30" fill="black">+</text>
+
+
+<text x="558.72" y="242.76" font-family="Arial" font-size="40" fill="black">-</text>
+
+
+<text x="226.9" y="164.12" font-family="Arial" font-size="25" fill="black">Rv</text>
+
+
+</svg>

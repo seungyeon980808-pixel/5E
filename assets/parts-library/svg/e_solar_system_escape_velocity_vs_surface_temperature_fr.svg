@@ -1,0 +1,103 @@
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="100%" height="100%" viewBox="130 -205 180 225">
+ <title>Solar system escape velocity vs surface temperature</title>
+ <desc>Graphs of escape velocity against surface temperature of some Solar System objects showing which gases are retained, by CMG Lee. The objects are drawn to scale, and their data points are at the black dots in the middle. Data is based on http://ircamera.as.arizona.edu/astr_250/Lectures/Lec_05sml.htm and http://www-spof.gsfc.nasa.gov/stargaze/StarFAQ12.htm .</desc>
+ <defs>
+  <linearGradient id="grad_xe" x1="0%" x2="0%" y1="0%" y2="100%"><stop offset="0%" stop-color="#ffffff" stop-opacity="0"/><stop offset="100%" stop-color="#9966cc" stop-opacity="0.5"/></linearGradient>
+  <linearGradient id="grad_cd" x1="0%" x2="0%" y1="0%" y2="100%"><stop offset="0%" stop-color="#ffffff" stop-opacity="0"/><stop offset="100%" stop-color="#666666" stop-opacity="0.5"/></linearGradient>
+  <linearGradient id="grad_on" x1="0%" x2="0%" y1="0%" y2="100%"><stop offset="0%" stop-color="#ffffff" stop-opacity="0"/><stop offset="100%" stop-color="#00cc00" stop-opacity="0.5"/></linearGradient>
+  <linearGradient id="grad_wa" x1="0%" x2="0%" y1="0%" y2="100%"><stop offset="0%" stop-color="#ffffff" stop-opacity="0"/><stop offset="100%" stop-color="#0066ff" stop-opacity="0.5"/></linearGradient>
+  <linearGradient id="grad_he" x1="0%" x2="0%" y1="0%" y2="100%"><stop offset="0%" stop-color="#ffffff" stop-opacity="0"/><stop offset="100%" stop-color="#cc9900" stop-opacity="0.5"/></linearGradient>
+  <linearGradient id="grad_h2" x1="0%" x2="0%" y1="0%" y2="100%"><stop offset="0%" stop-color="#ffffff" stop-opacity="0"/><stop offset="100%" stop-color="#ff6699" stop-opacity="0.5"/></linearGradient>
+  <radialGradient id="grad_object" cx="50%" cy="50%" r="50%" fx="25%" fy="25%">
+   <stop offset="0%"   stop-color="#ffffff" stop-opacity="0"/>
+   <stop offset="100%" stop-color="#000000" stop-opacity="0.5"/>
+  </radialGradient>
+  <circle id="object_base" cx="0" cy="0" r="2" stroke="#000000"/>
+  <g id="object_shade">
+   <use xlink:href="#object_base"/>
+   <use xlink:href="#object_base" fill="url(#grad_object)"/>
+  </g>
+  <g id="object_2" stroke-width="0.02" fill-opacity="0.5">
+   <use xlink:href="#object_shade"/>
+   <circle cx="0" cy="0" r="0.1" fill="#000000" fill-opacity="1"/>
+  </g>
+  <g id="object_1" stroke-width="0.5">
+   <use xlink:href="#object_shade"/>
+   <circle cx="0" cy="0" r="0.25" fill="#000000"/>
+  </g>
+  <rect id="gas" x="-200" y="-50" width="250" height="50"/>
+  <rect id="frame" x="160" y="-200" width="140" height="200"/>
+  <clipPath id="clip_frame"><use xlink:href="#frame"/></clipPath>
+  <g id="grid_log" stroke="#cccccc">
+   <path d="M 30.1,0 V 100 M 47.71,0 V 100 M 60.2,0 V 100 M 77.82,0 V 100 M 84.51,0 V 100 M 90.3,0 V 100 M 95.42,0 V 100" stroke-width="0.4"/>
+   <path d="M 0,0 V 100 M 69.9,0 V 100 M 100,0 V 100" stroke-width="1"/>
+  </g>
+  <pattern id="pattern_grid_log_log" patternUnits="userSpaceOnUse" width="100" height="100">
+   <use xlink:href="#grid_log"/>
+   <use xlink:href="#grid_log" transform="translate(0,100) rotate(270)"/>
+  </pattern>
+ </defs>
+ <circle cx="0" cy="0" r="99999" fill="#ffffff"/>
+ <g font-family="Helvetica,Arial,sans-serif" font-size="8px" text-anchor="middle" stroke-linejoin="round" stroke="none" fill="#000000">
+  <g clip-path="url(#clip_frame)">
+   <use xlink:href="#frame" fill="url(#pattern_grid_log_log)"/>
+   <g transform="translate(300,0)" font-weight="bold" text-anchor="end">
+    <g transform="translate(0, -59) rotate(-28)"><use xlink:href="#gas" fill="url(#grad_xe)"/><text transform="matrix(0.9,0 -0.5,1 -1,-2)" x="0" y="0">xénon</text></g>
+    <g transform="translate(0, -86) rotate(-28)"><use xlink:href="#gas" fill="url(#grad_cd)"/><text transform="matrix(0.9,0 -0.5,1 -1,-2)" x="0" y="0">dioxyde de carbone</text></g>
+    <g transform="translate(0, -97) rotate(-28)"><use xlink:href="#gas" fill="url(#grad_on)"/><text transform="matrix(0.9,0 -0.5,1 -1,-2)" x="0" y="0">oxygène, azote</text></g>
+    <g transform="translate(0,-112) rotate(-28)"><use xlink:href="#gas" fill="url(#grad_wa)"/><text transform="matrix(0.9,0 -0.5,1 -1,-2)" x="0" y="0">eau (vapeur), ammoniac, méthane</text></g>
+    <g transform="translate(0,-143) rotate(-28)"><use xlink:href="#gas" fill="url(#grad_he)"/><text transform="matrix(0.9,0 -0.5,1 -1,-2)" x="0" y="0">hélium</text></g>
+    <g transform="translate(0,-156) rotate(-28)"><use xlink:href="#gas" fill="url(#grad_h2)"/><text transform="matrix(0.9,0 -0.5,1 -1,-2)" x="0" y="0">hydrogène</text></g>
+   </g>
+   <use xlink:href="#frame" stroke="#000000" fill="none"/>
+  </g>
+  <g transform="translate(150,3)">
+   <text x="0" y="0">1</text>
+   <text x="0" y="-30">2</text>
+   <text x="0" y="-48">3</text>
+   <text x="0" y="-60">4</text>
+   <text x="0" y="-70">5</text>
+   <text x="0" y="-80">6</text>
+   <text x="0" y="-90">8</text>
+   <text x="0" y="-100">10</text>
+   <text x="0" y="-130">20</text>
+   <text x="0" y="-148">30</text>
+   <text x="0" y="-160">40</text>
+   <text x="0" y="-170">50</text>
+   <text x="0" y="-180">60</text>
+   <text x="0" y="-190">80</text>
+   <text x="0" y="-200">100</text>
+   <text transform="rotate(-90)" x="120" y="-10">Vitesse de libération (km/s)</text>
+  </g>
+  <g transform="translate(0,10)">
+   <text x="160" y="0">40</text>
+   <text x="178" y="0">60</text>
+   <text x="200" y="0">100</text>
+   <text x="230" y="0">200</text>
+   <text x="260" y="0">400</text>
+   <text x="278" y="0">600</text>
+   <text x="300" y="0">1000</text>
+   <text x="235" y="8">Température (K)</text>
+  </g>
+  <g>
+   <g transform="translate(211,-178)"><use xlink:href="#object_2" transform="scale(10.97)" fill="#ffcc66"/><text x="0"  y="-4">Jupiter</text></g>
+   <g transform="translate(196,-156)"><use xlink:href="#object_2" transform="scale(9.140)" fill="#ffcc00"/><text x="0"  y="8" >Saturne</text><circle transform="rotate(130) scale(0.2,1)" cx="0" cy="0" r="35" stroke-width="17" stroke-opacity="0.25" stroke="#cc9900" fill="none"/></g>
+   <g transform="translate(188,-134)"><use xlink:href="#object_2" transform="scale(3.981)" fill="#66ffff"/><text x="21" y="3" >Uranus</text></g>
+   <g transform="translate(181,-136)"><use xlink:href="#object_2" transform="scale(3.865)" fill="#6666ff"/><text x="-4" y="13">Neptune</text></g>
+   <g transform="translate(245,-107)"><use xlink:href="#object_1" transform="scale(1.000)" fill="#0099ff"/><text x="-9" y="8" >Terre</text></g>
+   <g transform="translate(251,-103)"><use xlink:href="#object_1" transform="scale(.9499)" fill="#ffcc00"/><text x="10" y="-4">Vénus</text></g>
+   <g transform="translate(233, -71)"><use xlink:href="#object_1" transform="scale(.5320)" fill="#ff6666"/><text x="-3" y="7" >Mars</text></g>
+   <g transform="translate(208, -50)"><use xlink:href="#object_1" transform="scale(.4135)" fill="#996600"/><text x="8" y="-3">Ganymède</text></g>
+   <g transform="translate(196, -48)"><use xlink:href="#object_1" transform="scale(.4043)" fill="#ff9900"/><text x="-9" y="7" >Titan</text></g>
+   <g transform="translate(267, -62)"><use xlink:href="#object_1" transform="scale(.3829)" fill="#999999"/><text x="-5" y="8" >Mercure</text></g>
+   <g transform="translate(213, -39)"><use xlink:href="#object_1" transform="scale(.3783)" fill="#996600"/><text x="10" y="7" >Callisto</text></g>
+   <g transform="translate(204, -41)"><use xlink:href="#object_1" transform="scale(.2859)" fill="#996600"/><text x="4"  y="1" >Io</text></g>
+   <g transform="translate(243, -36)"><use xlink:href="#object_1" transform="scale(.2727)" fill="#000000"/><text x="5"  y="-3">Lune</text></g>
+   <g transform="translate(201, -31)"><use xlink:href="#object_1" transform="scale(.2450)" fill="#996600"/><text x="13" y="7" >Europe</text></g>
+   <g transform="translate(178, -16)"><use xlink:href="#object_1" transform="scale(.2124)" fill="#cc9999"/><text x="12" y="3" >Triton</text></g>
+   <g transform="translate(164,  -8)"><use xlink:href="#object_1" transform="scale(.1860)" fill="#666666"/><text x="14" y="3" >Pluton</text></g>
+   <g transform="translate(163, -14)"><use xlink:href="#object_1" transform="scale(.1825)" fill="#996666"/><text x="5"  y="-3">Éris</text></g>
+  </g>
+ </g>
+</svg>

@@ -7,11 +7,11 @@
 
 /* ----- module geometry helpers (depend only on the SVG box + viewBox) ----- */
 
-// zoom factor = screen pixels per world unit (uniform; we keep aspect square).
-// Derived from how many on-screen pixels one viewBox-width currently spans.
 function currentZoom(svg, vb) {
+  const matrix = svg.getScreenCTM();
+  if (matrix && Number.isFinite(matrix.a) && matrix.a > 0) return matrix.a;
   const rect = svg.getBoundingClientRect();
-  return rect.width / vb.w;
+  return Math.min(rect.width / vb.w, rect.height / vb.h);
 }
 
 // world (viewBox) coords -> screen (client) pixels
@@ -43,19 +43,60 @@ export function getZoom() {
   return currentZoom(_svgRef, _stateRef.get().viewBox);
 }
 
-// TRUE on-screen scale (px per world unit) honouring preserveAspectRatio="xMidYMid
-// meet" letterboxing. getZoom() uses rect.width/vb.w, which is wrong whenever the
-// SVG box aspect ratio differs from the viewBox — that mismatch is what made
-// committed text resize on commit. The screen CTM's .a is the real meet scale.
 export function getRenderScale() {
   if (!_svgRef) return getZoom();
   const m = _svgRef.getScreenCTM();
   return (m && m.a) ? m.a : getZoom();
 }
 
-/* ----- center lock: when true, drag-pan is suppressed ----- */
-let centerLocked = false;
-export function setCenterLocked(val) { centerLocked = val; }
+const VIEW_CENTER_OFFSET_X_MM = 5;
+
+let canvasLock = { mode: "free", worldX: 0, worldY: 0, screenX: 0, screenY: 0 };
+
+function liteMode() {
+  return document.documentElement.dataset.mode === "lite";
+}
+
+function canvasLocked() {
+  return liteMode() || canvasLock.mode !== "free";
+}
+
+function placeLockAnchor(state, scale = getRenderScale()) {
+  if (!_svgRef || !canvasLocked() || !(scale > 0)) return;
+  const rect = _svgRef.getBoundingClientRect();
+  state.update((s) => {
+    const vb = s.viewBox;
+    vb.w = rect.width / scale;
+    vb.h = rect.height / scale;
+    vb.x = canvasLock.worldX - (canvasLock.screenX - rect.left) / scale;
+    vb.y = canvasLock.worldY - (canvasLock.screenY - rect.top) / scale;
+  });
+}
+
+export function setCanvasLockMode(mode, state, point = { x: 0, y: 0 }) {
+  if (liteMode() || !_svgRef || !["free", "current", "coordinate"].includes(mode)) return;
+  if (mode === "free") {
+    canvasLock = { ...canvasLock, mode };
+    return;
+  }
+  const vb = state.get().viewBox;
+  const rect = _svgRef.getBoundingClientRect();
+  if (mode === "current") {
+    const worldX = vb.x + vb.w / 2;
+    const worldY = vb.y + vb.h / 2;
+    const screen = worldToScreen(_svgRef, vb, worldX, worldY);
+    canvasLock = { mode, worldX, worldY, screenX: screen.x, screenY: screen.y };
+    return;
+  }
+  canvasLock = {
+    mode,
+    worldX: Number(point.x) || 0,
+    worldY: Number(point.y) || 0,
+    screenX: rect.left + rect.width / 2,
+    screenY: rect.top + rect.height / 2,
+  };
+  placeLockAnchor(state);
+}
 
 /* ===== ZOOM LIMITS (easy-to-tune) =====================================
  * MAX_ZOOM        — maximum zoom-IN factor (readout ×). 100 = 10000%.
@@ -119,6 +160,7 @@ function clampZoom(svg, s) {
 export function initViewport(svg, state, onChange) {
   _svgRef = svg;
   _stateRef = state;
+  centerView(state);
 
   const ZOOM_STEP = 1.0015; // per wheel delta unit; >1 so deltaY<0 zooms in
 
@@ -130,6 +172,58 @@ export function initViewport(svg, state, onChange) {
 
   // notify caller (main) that viewBox changed → it writes SVG + re-renders
   const commit = () => onChange();
+
+  const readProjection = () => {
+    const rect = svg.getBoundingClientRect();
+    const vb = state.get().viewBox;
+    const scale = Math.min(rect.width / vb.w, rect.height / vb.h);
+    return { left: rect.left, top: rect.top, width: rect.width, height: rect.height,
+      scale, x: rect.left + rect.width / 2 - (vb.x + vb.w / 2) * scale,
+      y: rect.top + rect.height / 2 - (vb.y + vb.h / 2) * scale };
+  };
+  let projection = readProjection();
+  let retainModeProjection = false;
+  window.addEventListener('5e:mode-switch-start', event => {
+    retainModeProjection = event.detail?.preserveWork === true;
+    const current = readProjection();
+    if (current.width > 0 && current.height > 0) projection = current;
+  });
+  const sameBox = (a, b) => a.left === b.left && a.top === b.top
+    && a.width === b.width && a.height === b.height;
+  state.subscribe(() => {
+    const vb = state.get().viewBox;
+    if (liteMode() && !retainModeProjection && (Math.abs(vb.x + vb.w / 2) > 1e-8 || Math.abs(vb.y + vb.h / 2) > 1e-8)) {
+      centerView(state);
+      return;
+    }
+    const next = readProjection();
+    if (sameBox(projection, next)) projection = next;
+  });
+  const preserveProjection = () => {
+    const next = readProjection();
+    if (sameBox(projection, next)) return;
+    const previous = projection;
+    if (next.width <= 0 || next.height <= 0) return;
+    if (!(previous.scale > 0)) {
+      projection = next;
+      return;
+    }
+    state.update((s) => {
+      s.viewBox.w = next.width / previous.scale;
+      s.viewBox.h = next.height / previous.scale;
+      s.viewBox.x = liteMode() && !retainModeProjection ? -s.viewBox.w / 2 : (next.left - previous.x) / previous.scale;
+      s.viewBox.y = liteMode() && !retainModeProjection ? -s.viewBox.h / 2 : (next.top - previous.y) / previous.scale;
+    });
+    projection = readProjection();
+    commit();
+  };
+  const layoutObserver = new ResizeObserver(preserveProjection);
+  layoutObserver.observe(svg);
+  window.addEventListener("5e:panel-layout-did-change", preserveProjection);
+  window.addEventListener("5e:view-mode-change", () => {
+    if (liteMode() && !retainModeProjection) centerView(state);
+    requestAnimationFrame(preserveProjection);
+  });
 
   /* --- wheel: plain = vertical pan, Shift = horizontal pan, Ctrl/⌘ = zoom ---
    * 휠 이벤트의 단위는 브라우저·기기마다 다르다. deltaMode가 0이면 픽셀,
@@ -152,7 +246,7 @@ export function initViewport(svg, state, onChange) {
       if (!zooming && !e.shiftKey) {
         // plain scroll → pan vertically (blocked when centerLocked)
         e.preventDefault();
-        if (!centerLocked) {
+        if (!canvasLocked()) {
           state.update((s) => {
             const _rect = svg.getBoundingClientRect();
             s.viewBox.y += (d.y / _rect.height) * s.viewBox.h;
@@ -167,7 +261,7 @@ export function initViewport(svg, state, onChange) {
         // Mac 트랙패드의 가로 스와이프는 deltaX로 오고, Shift+휠은 deltaY로 온다.
         // 둘 중 실제로 값이 있는 쪽을 쓴다.
         e.preventDefault();
-        if (!centerLocked) {
+        if (!canvasLocked()) {
           state.update((s) => {
             const _rect = svg.getBoundingClientRect();
             const amount = Math.abs(d.x) > Math.abs(d.y) ? d.x : d.y;
@@ -189,11 +283,13 @@ export function initViewport(svg, state, onChange) {
         const newW = vb.w * k;
         const newH = vb.h * k;
 
-        if (centerLocked) {
-          vb.w = newW;
-          vb.h = newH;
-          vb.x = -newW / 2;
-          vb.y = -newH / 2;
+        if (canvasLocked()) {
+          const rect = svg.getBoundingClientRect();
+          const newScale = getRenderScale() / k;
+          vb.w = rect.width / newScale;
+          vb.h = rect.height / newScale;
+          vb.x = liteMode() ? -vb.w / 2 : canvasLock.worldX - (canvasLock.screenX - rect.left) / newScale;
+          vb.y = liteMode() ? -vb.h / 2 : canvasLock.worldY - (canvasLock.screenY - rect.top) / newScale;
         } else {
           const before = screenToWorld(svg, vb, e.clientX, e.clientY);
           // rect 기준 fx/fy는 preserveAspectRatio="xMidYMid meet"의 레터박스를 무시해
@@ -220,7 +316,7 @@ export function initViewport(svg, state, onChange) {
     if (!isMiddle && !isSpaceLeft) return;
 
     e.preventDefault(); // always suppress middle-click autoscroll
-    if (centerLocked) return;
+    if (canvasLocked()) return;
     if (isSpaceLeft) spaceDragged = true; // 스페이스+드래그 팬 → 탭이 아님(중앙복귀 억제)
     panning = true;
     const vb = state.get().viewBox;
@@ -231,7 +327,7 @@ export function initViewport(svg, state, onChange) {
   window.addEventListener("mousemove", (e) => {
     if (!panning) return;
     if (!panStart || e.buttons === 0) { panning = false; panStart = null; svg.classList.remove("is-panning"); return; }
-    if (centerLocked) return;
+    if (canvasLocked()) return;
     const rect = svg.getBoundingClientRect();
     const start = panStart.vb;
     // convert pixel delta into world delta using the *start* viewBox scale
@@ -274,9 +370,18 @@ export function initViewport(svg, state, onChange) {
     spaceHeld = false;
     svg.classList.remove("space-held");
     // 드래그 없이 캔버스에서 탭 → 1회 중앙 복귀 (고정 상태면 이미 중앙이라 생략)
-    if (spaceOnCanvas && !spaceDragged && !centerLocked) {
+    if (spaceOnCanvas && !spaceDragged && !canvasLocked()) {
       centerView(state); // state.update → applyViewBox+render 구독자 자동 호출
     }
+  });
+
+  window.addEventListener("blur", () => {
+    spaceHeld = false;
+    spaceDragged = false;
+    spaceOnCanvas = false;
+    panning = false;
+    panStart = null;
+    svg.classList.remove("space-held", "is-panning");
   });
 
   // suppress middle-click autoscroll / context menu on the canvas
@@ -284,25 +389,13 @@ export function initViewport(svg, state, onChange) {
     if (e.button === 1) e.preventDefault();
   });
 
-  /* --- window resize: zoom bounds depend on viewport size, so re-clamp both
-         the zoom level and the pan offset whenever the SVG box changes. --- */
-  window.addEventListener("resize", () => {
-    state.update((s) => {
-      clampZoom(svg, s);
-      if (centerLocked) {
-        s.viewBox.x = -s.viewBox.w / 2;
-        s.viewBox.y = -s.viewBox.h / 2;
-      }
-      clampViewBox(s);
-    });
-    commit();
-  });
+  window.addEventListener("resize", preserveProjection);
 }
 
-/* ----- centerView: reposition so artboard (world origin) is centered in view ----- */
+/* ----- centerView: restore the default visual alignment ----- */
 export function centerView(state) {
   state.update((s) => {
-    s.viewBox.x = -s.viewBox.w / 2;
+    s.viewBox.x = -s.viewBox.w / 2 - (liteMode() ? 0 : VIEW_CENTER_OFFSET_X_MM);
     s.viewBox.y = -s.viewBox.h / 2;
   });
 }

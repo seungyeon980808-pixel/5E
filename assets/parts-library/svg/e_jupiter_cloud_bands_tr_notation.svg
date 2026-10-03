@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 12.0.1, SVG Export Plug-In . SVG Version: 6.00 Build 51448)  -->
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd" [
+	<!ENTITY ns_svg "http://www.w3.org/2000/svg">
+	<!ENTITY ns_xlink "http://www.w3.org/1999/xlink">
+]>
+<svg  version="1.1" xmlns="&ns_svg;" xmlns:xlink="&ns_xlink;" width="521.878" height="382.402" viewBox="0 0 521.878 382.402"
+	 style="overflow:visible;enable-background:new 0 0 521.878 382.402;" xml:space="preserve">
+<filter  x="0%" y="0%" filterUnits="objectBoundingBox" id="AI_Turbulence_5" height="100%" width="100%">
+	<feTurbulence  type="fractalNoise" stitchTiles="noStitch" numOctaves="3" baseFrequency="0.2" result="turb"></feTurbulence>
+	<feComposite  in="turb" in2="SourceGraphic" operator="in"></feComposite>
+</filter>
+<g id="Layer_1">
+</g>
+<g id="Layer_2">
+	<g>
+		<rect style="fill:none;" width="521.878" height="382.402"/>
+		<g>
+			<linearGradient id="XMLID_7_" gradientUnits="userSpaceOnUse" x1="114" y1="191.2012" x2="407.8779" y2="191.2012">
+				<stop  offset="0" style="stop-color:#805934"/>
+				<stop  offset="1" style="stop-color:#C2AB63"/>
+			</linearGradient>
+			<ellipse style="fill:url(#XMLID_7_);" cx="260.939" cy="191.201" rx="146.939" ry="130"/>
+			<linearGradient id="XMLID_8_" gradientUnits="userSpaceOnUse" x1="115.918" y1="191.2012" x2="405.96" y2="191.2012">
+				<stop  offset="0" style="stop-color:#401C10"/>
+				<stop  offset="1" style="stop-color:#8C643C"/>
+			</linearGradient>
+			<path style="fill:url(#XMLID_8_);" d="M363.595,284.201c-26.486,22.889-62.705,37-102.656,37c-39.95,0-76.168-14.111-102.656-37
+				H363.595z M129.973,250.201c2.59,4.491,5.471,8.829,8.613,13h244.706c3.143-4.171,6.023-8.509,8.613-13H129.973z
+				 M151.762,104.201h218.354c-26.895-26.4-65.843-43-109.177-43C217.605,61.201,178.656,77.801,151.762,104.201z M146.014,272.201
+				c2.167,2.404,4.429,4.739,6.78,7h216.29c2.352-2.261,4.613-4.596,6.78-7H146.014z M146.924,109.201
+				c-1.846,2.007-3.627,4.063-5.338,6.167h238.706c-1.711-2.104-3.491-4.16-5.338-6.167H146.924z M133.663,126.201
+				c-1.707,2.61-3.311,5.279-4.813,8h264.18c-1.503-2.721-3.107-5.39-4.813-8H133.663z M122.904,146.535
+				c-3.136,7.583-5.486,15.498-6.986,23.667H405.96c-1.5-8.169-3.85-16.084-6.985-23.667H122.904z M387.3,237.201h11.103
+				c3.285-7.68,5.771-15.705,7.37-24H116.105c1.598,8.295,4.085,16.32,7.37,24H315.55h1.693c2.356,0,4.328-1.645,4.829-3.849
+				l0.149-0.64c2.151-7.664,14.183-13.179,29.656-13.179c15.367,0,27.34,5.438,29.61,13.021l0.171,0.739
+				c0.48,2.232,2.467,3.906,4.843,3.906H387.3z"/>
+			<radialGradient id="XMLID_9_" cx="366.7441" cy="222.52" r="27.791" gradientUnits="userSpaceOnUse">
+				<stop  offset="0" style="stop-color:#FFC1BD"/>
+				<stop  offset="1" style="stop-color:#FF9191"/>
+			</radialGradient>
+			<ellipse style="fill:url(#XMLID_9_);stroke:#000000;stroke-width:0.25;" cx="351.878" cy="235.201" rx="26" ry="11.667"/>
+			<radialGradient id="XMLID_10_" cx="327.3643" cy="252.3267" r="11.3233" gradientUnits="userSpaceOnUse">
+				<stop  offset="0" style="stop-color:#FFC1BD"/>
+				<stop  offset="1" style="stop-color:#FF9191"/>
+			</radialGradient>
+			<ellipse style="fill:url(#XMLID_10_);stroke:#000000;stroke-width:0.25;" cx="318.711" cy="256.701" rx="11.833" ry="5.167"/>
+			<g style="opacity:0.29;filter:url(#AI_Turbulence_5);">
+				<ellipse cx="260.939" cy="191.201" rx="146.939" ry="130"/>
+			</g>
+			<ellipse style="fill:none;stroke:#000000;" cx="260.939" cy="191.201" rx="146.939" ry="130"/>
+		</g>
+		<g>
+			<text transform="matrix(1 0 0 1 453.001 64.4028)" style="font-family:'Helvetica'; font-size:16;">NNTZ</text>
+			<text transform="matrix(1 0 0 1 453.001 95.4028)" style="font-family:'Helvetica'; font-size:16;">NTZ</text>
+			<text transform="matrix(1 0 0 1 453.001 266.4028)"><tspan x="0" y="0" style="font-family:'Helvetica'; font-size:16;">S</tspan><tspan x="10.672" y="0" style="font-family:'Helvetica'; font-size:16;">T</tspan><tspan x="19.859" y="0" style="font-family:'Helvetica'; font-size:16;">rZ</tspan></text>
+			<text transform="matrix(1 0 0 1 453.001 130.4023)"><tspan x="0" y="0" style="font-family:'Helvetica'; font-size:16;">N</tspan><tspan x="11.555" y="0" style="font-family:'Helvetica'; font-size:16;">T</tspan><tspan x="20.742" y="0" style="font-family:'Helvetica'; font-size:16;">rZ</tspan></text>
+			<text transform="matrix(1 0 0 1 453.001 313.4028)" style="font-family:'Helvetica'; font-size:16;">STZ</text>
+			<text transform="matrix(1 0 0 1 392.0996 334.7358)" style="font-family:'Helvetica'; font-size:16;">SSTZ</text>
+			<text transform="matrix(1 0 0 1 453.001 196.2017)" style="font-family:'Helvetica'; font-size:16;">EZ</text>
+			<text transform="matrix(1 0 0 1 25.3228 77.4028)" style="font-family:'Helvetica'; font-size:16;">NNTB</text>
+			<text transform="matrix(1 0 0 1 36.8774 113.4028)" style="font-family:'Helvetica'; font-size:16;">NTB</text>
+			<text transform="matrix(1 0 0 1 37.7603 287.4028)" style="font-family:'Helvetica'; font-size:16;">STB</text>
+			<text transform="matrix(1 0 0 1 27.0884 331.4028)" style="font-family:'Helvetica'; font-size:16;">SSTB</text>
+			<text transform="matrix(1 0 0 1 82.9795 356.9023)" style="font-family:'Helvetica'; font-size:16;">SPR</text>
+			<text transform="matrix(1 0 0 1 82.0967 34.4023)" style="font-family:'Helvetica'; font-size:16;">NPR</text>
+			<text transform="matrix(1 0 0 1 255.1616 31.5977)" style="font-family:'Helvetica'; font-size:16;">N</text>
+			<text transform="matrix(1 0 0 1 255.603 364.8057)" style="font-family:'Helvetica'; font-size:16;">S</text>
+			<text transform="matrix(1 0 0 1 35.979 154.4028)" style="font-family:'Helvetica'; font-size:16;">NEB</text>
+			<text transform="matrix(1 0 0 1 36.8618 237.4028)" style="font-family:'Helvetica'; font-size:16;">SEB</text>
+		</g>
+		<g>
+			<polyline style="fill:none;stroke:#000000;stroke-width:0.5;" points="383.405,273.719 434.88,308.402 450.001,308.402 			"/>
+			<polyline style="fill:none;stroke:#000000;stroke-width:0.5;" points="401.02,247.737 434.88,261.402 450.001,261.402 			"/>
+			<line style="fill:none;stroke:#000000;stroke-width:0.5;" x1="414.878" y1="191.201" x2="450.001" y2="191.201"/>
+			<polyline style="fill:none;stroke:#000000;stroke-width:0.5;" points="402.513,137.646 434.88,125.402 450.001,125.402 			"/>
+			<polyline style="fill:none;stroke:#000000;stroke-width:0.5;" points="389.718,116.573 434.88,90.402 450.001,90.402 			"/>
+			<polyline style="fill:none;stroke:#000000;stroke-width:0.5;" points="377.855,102.611 434.88,59.402 450.001,59.402 			"/>
+			<polyline style="fill:none;stroke:#000000;stroke-width:0.5;" points="125.356,126.661 86.999,108.402 71.877,108.402 			"/>
+			<polyline style="fill:none;stroke:#000000;stroke-width:0.5;" points="71.877,72.402 86.999,72.402 139.087,107.978 			"/>
+			<polyline style="fill:none;stroke:#000000;stroke-width:0.5;" points="112.21,226.431 86.999,232.402 71.877,232.402 			"/>
+			<polyline style="fill:none;stroke:#000000;stroke-width:0.5;" points="71.877,149.402 86.999,149.402 112.357,155.496 			"/>
+			<polyline style="fill:none;stroke:#000000;stroke-width:0.5;" points="145.297,281.088 86.999,326.402 71.877,326.402 			"/>
+			<polyline style="fill:none;stroke:#000000;stroke-width:0.5;" points="71.877,282.402 86.999,282.402 128.498,260.644 			"/>
+			<line style="fill:none;stroke:#000000;stroke-width:0.5;" x1="164.794" y1="85.017" x2="119.561" y2="35.059"/>
+			<line style="fill:none;stroke:#000000;stroke-width:0.5;" x1="119.561" y1="347.344" x2="164.794" y2="297.387"/>
+			<line style="fill:none;stroke:#000000;stroke-width:0.5;" x1="260.939" y1="327.262" x2="260.939" y2="347.805"/>
+			<line style="fill:none;stroke:#000000;stroke-width:0.5;" x1="260.939" y1="34.598" x2="260.939" y2="55.141"/>
+			<line style="fill:none;stroke:#000000;stroke-width:0.5;" x1="370.75" y1="288.879" x2="403.878" y2="318.347"/>
+		</g>
+	</g>
+</g>
+</svg>

@@ -13,16 +13,18 @@
 // we can distinguish "click on already-selected ??move allowed" from "click
 // selects a new object ??just select, no move this press."
 
-import { screenToWorld, getRenderScale } from "./viewport.js?v=1.4.0";
-import { resolveSnap, resolveEndpointSnap, resolveRadialCenterSnap } from "./snap.js?v=1.4.0";
-import { setSnapPreview, setSmartGuides, pendulumBBox } from "./render.js?v=1.4.0";
-import { pickSelectableObjectFromEvent } from "./tools.js?v=1.5.4";
-import { isObjectSelectable } from "./pick.js?v=1.4.0";
-import { IMAGE_EDIT_SESSION_ID } from "./image-cutout.js?v=1.4.0";
+import { screenToWorld, getRenderScale } from "./viewport.js?v=1.6.0-preview-lite-hybrid-0922";
+import { resolveSnap, resolveEndpointSnap, resolveRadialCenterSnap } from "./snap.js?v=1.6.0-remediation-0929";
+import { setSnapPreview, setSmartGuides, pendulumBBox } from "./render.js?v=1.6.0-remediation-0929";
+import { pickSelectableObjectFromEvent } from "./tools.js?v=1.6.0-remediation-0929";
+import { isObjectSelectable } from "./pick.js?v=1.6.0-remediation-0929";
+import { IMAGE_EDIT_SESSION_ID } from "./image-cutout.js?v=1.6.0-preview-lite-hybrid-0922";
 import { SHAPE_TYPES, SIZE_TYPES, FLIP_TYPES, POINT_ARRAY_TYPES,
-         ENDPOINT_HANDLE_TYPES, TEXT_MEASURED_TYPES } from "./object-types.js?v=1.4.0";
+         ENDPOINT_HANDLE_TYPES, TEXT_MEASURED_TYPES } from "./object-types.js?v=1.6.0-preview-labeler-0917-1111";
 
-import { snapKey, modKey } from "./platform.js?v=1.4.0";
+import { isPageHistoryEntry, inversePageHistoryEntry, restorePageHistoryEntry } from "./page-history.js?v=1.6.0-preview-labeler-0917-1111";
+import { initObjectClipboard, cloneClipboardObjects } from "./editor-clipboard.js?v=1.6.0-remediation-0929";
+import { snapKey, modKey, IS_MAC, shortcutKey, blocksCanvasShortcut, hasBlockingModal } from "./platform.js?v=1.6.0-remediation-0929";
 /* ----- shared lock guard: locked objects are excluded from mutating ops ----- */
 function isMutable(o) { return o && !o.locked; }
 function isPositionMovable(o) { return isMutable(o) && !o.positionLocked; }
@@ -81,9 +83,22 @@ function rotPt(px, py, cx, cy, deg) {
            y: cy + (px - cx) * sin + (py - cy) * cos };
 }
 
+function rightAngleBounds(obj) {
+  const size = Math.max(obj.size || 4, 0.1);
+  const angle = (obj.angle || 0) * Math.PI / 180;
+  const side = (obj.orientation ?? 1) >= 0 ? 1 : -1;
+  const ux = Math.cos(angle), uy = Math.sin(angle);
+  const vx = -uy * side, vy = ux * side;
+  const xs = [obj.x, obj.x + ux * size, obj.x + (ux + vx) * size, obj.x + vx * size];
+  const ys = [obj.y, obj.y + uy * size, obj.y + (uy + vy) * size, obj.y + vy * size];
+  const x = Math.min(...xs), y = Math.min(...ys);
+  return { x, y, w: Math.max(...xs) - x, h: Math.max(...ys) - y };
+}
+
 /* ----- world position of the corner diagonally opposite to `corner` ----- */
 function getRotPivot(obj, corner) {
-  const { x, y, w, h, rotation } = obj;
+  const box = obj.type === "rightangle" ? rightAngleBounds(obj) : obj;
+  const { x, y, w, h, rotation } = box;
   const cx = x + w / 2, cy = y + h / 2;
   const deg = rotation || 0;
   switch (corner) {
@@ -101,26 +116,71 @@ function cloneObjects(objects) {
   return JSON.parse(JSON.stringify(objects));
 }
 
+function isDocumentHistoryEntry(entry) {
+  return entry?.kind === "document"
+    && Array.isArray(entry.objects)
+    && Array.isArray(entry.guides)
+    && entry.artboard !== null
+    && typeof entry.artboard === "object"
+    && Array.isArray(entry.layers);
+}
+
+function cloneDocumentHistoryEntry(s) {
+  return {
+    kind: "document",
+    objects: cloneObjects(s.objects),
+    guides: cloneObjects(s.guides || []),
+    artboard: JSON.parse(JSON.stringify(s.artboard)),
+    layers: cloneObjects(s.layers || []),
+  };
+}
+
+function inverseForHistoryEntry(s, entry) {
+  if (isPageHistoryEntry(entry)) return inversePageHistoryEntry(s, entry);
+  return isDocumentHistoryEntry(entry) ? cloneDocumentHistoryEntry(s) : cloneObjects(s.objects);
+}
+
+function restoreHistoryEntry(s, entry) {
+  if (isPageHistoryEntry(entry)) return restorePageHistoryEntry(s, entry);
+  if (Array.isArray(entry)) {
+    s.objects = entry;
+    return true;
+  }
+  if (!isDocumentHistoryEntry(entry)) return false;
+  s.objects = entry.objects;
+  s.guides = entry.guides;
+  s.artboard = entry.artboard;
+  s.layers = entry.layers;
+  return true;
+}
+
 export function rebuildGroups(s) {
-  const map = {};
+  const map = new Map();
   s.objects.forEach(o => {
     if (o.groupId) {
-      if (!map[o.groupId]) map[o.groupId] = [];
-      map[o.groupId].push(o.id);
+      const members = map.get(o.groupId);
+      if (members) members.push(o.id);
+      else map.set(o.groupId, [o.id]);
     }
   });
-  s.groups = Object.entries(map).map(([id, memberIds]) => ({ id, memberIds }));
+  s.groups = Array.from(map, ([id, memberIds]) => ({ id, memberIds }));
 }
 
 export function undo(state) {
   if (state.get().undoStack.length === 0) return;
   state.update((s) => {
-    const current = cloneObjects(s.objects);
-    const prev = s.undoStack.pop();
+    const sourceStack = s.undoStack;
+    const prev = sourceStack[sourceStack.length - 1];
+    if (!Array.isArray(prev) && !isDocumentHistoryEntry(prev) && !isPageHistoryEntry(prev)) return;
+    const current = inverseForHistoryEntry(s, prev);
+    if (!restoreHistoryEntry(s, prev)) return;
+    sourceStack.pop();
     s.redoStack.push(current);
-    s.objects = prev;
     s.targetedId = null;
     s.selectedIds = (s.selectedIds || []).filter(id => s.objects.find((o) => o.id === id));
+    if (s.selectedGuideId != null && !(s.guides || []).some((guide) => guide.id === s.selectedGuideId)) {
+      s.selectedGuideId = null;
+    }
     rebuildGroups(s);
   });
 }
@@ -128,12 +188,18 @@ export function undo(state) {
 export function redo(state) {
   if (state.get().redoStack.length === 0) return;
   state.update((s) => {
-    const current = cloneObjects(s.objects);
-    const next = s.redoStack.pop();
+    const sourceStack = s.redoStack;
+    const next = sourceStack[sourceStack.length - 1];
+    if (!Array.isArray(next) && !isDocumentHistoryEntry(next) && !isPageHistoryEntry(next)) return;
+    const current = inverseForHistoryEntry(s, next);
+    if (!restoreHistoryEntry(s, next)) return;
+    sourceStack.pop();
     s.undoStack.push(current);
-    s.objects = next;
     s.targetedId = null;
     s.selectedIds = (s.selectedIds || []).filter(id => s.objects.find((o) => o.id === id));
+    if (s.selectedGuideId != null && !(s.guides || []).some((guide) => guide.id === s.selectedGuideId)) {
+      s.selectedGuideId = null;
+    }
     rebuildGroups(s);
   });
 }
@@ -151,11 +217,6 @@ let _pendingSnapshot = null; // full objects clone for undo; committed only if m
 let _didMove = false;        // true once the threshold is crossed
 let _prevSelectedIds = [];   // selectedIds captured BEFORE tools.js's handler fires
 let _spaceHeld = false;
-// 연속 Ctrl+V id 중복 방지용 카운터 — Date.now()만 쓰면 같은 ms 안에 빠르게 여러 번
-// 붙여넣을 때 앞선 붙여넣기와 id 구간이 겹칠 수 있다(text-editor.js의 obj_${stamp}_${++counter}
-// 패턴과 동일하게 모듈 스코프 카운터로 유일성을 보장).
-let _pasteCounter = 0;
-
 /* handle-drag state (resize branch A / endpoint branch B) */
 let _handleDragging   = false;
 let _handleId         = null;
@@ -180,18 +241,10 @@ let _rotPendingSnap  = null;
 let _rotDidMove      = false;
 
 /* clipboard, mouse position, and arrow-key hold tracking */
-let _clipboard = null;
 let _propertyClipboard = null;
 let _lastMouseWorld = null; // latest pointer world coord (set on first mousemove); null until then
 const _arrowKeysHeld = new Set();
 
-/* External modules (image-paste.js) share this same clipboard/mouse state so a
- * single Ctrl+V never double-handles: object paste wins when internal objects are
- * copied; only when NOTHING is copied does the system-clipboard image path run.
- * The image paste also reuses the exact paste-target (last mouse world) as objects. */
-export function hasInternalClipboard() {
-  return !!(_clipboard && _clipboard.length);
-}
 export function getLastMouseWorld() {
   return _lastMouseWorld ? { ...(_lastMouseWorld) } : null;
 }
@@ -346,18 +399,10 @@ export function instantiateObjectsAt(state, srcObjs, target) {
   const cx = bbox ? bbox.x + bbox.w / 2 : target.x;
   const cy = bbox ? bbox.y + bbox.h / 2 : target.y;
   const dx = target.x - cx, dy = target.y - cy;
-  const stamp = Date.now().toString(36);
-  const gmap = new Map();
-  let gi = 0;
-  const newObjs = srcObjs.map((src, i) => {
-    const o = JSON.parse(JSON.stringify(src));
-    o.id = `obj_${stamp}_p${i}`;
-    if (o.groupId) {
-      if (!gmap.has(o.groupId)) gmap.set(o.groupId, `grp_${stamp}_${++gi}`);
-      o.groupId = gmap.get(o.groupId);
-    }
-    applyDelta(o, src, dx, dy);
-    return o;
+  const newObjs = cloneClipboardObjects(srcObjs);
+  newObjs.forEach((obj, i) => {
+    applyDelta(obj, srcObjs[i], dx, dy);
+    obj.layerId = state.get().activeLayerId;
   });
   state.update((s2) => {
     s2.undoStack.push(JSON.parse(JSON.stringify(s2.objects)));
@@ -365,6 +410,9 @@ export function instantiateObjectsAt(state, srcObjs, target) {
     newObjs.forEach((o) => s2.objects.push(o));
     s2.selectedIds = newObjs.map((o) => o.id);
     s2.targetedId = null;
+    s2.activeTool = "V";
+    s2.draft = null;
+    rebuildGroups(s2);
   });
 }
 
@@ -384,6 +432,11 @@ function clipboardBBox(objs) {
       acc(o.x, o.y);
     } else if (ENDPOINT_HANDLE_TYPES.has(o.type)) {
       acc(o.p1.x, o.p1.y); acc(o.p2.x, o.p2.y);
+      if (o.type === "labeler") {
+        if (o.elbow) acc(o.elbow.x, o.elbow.y);
+        if (o.p3) acc(o.p3.x, o.p3.y);
+        (o.extraAnchors || []).forEach(point => acc(point.x, point.y));
+      }
     } else if (o.type === "polyline" || o.type === "curve" || o.type === "funcgraph") {
       (o.points || []).forEach((p) => acc(p.x, p.y));
     }
@@ -446,6 +499,11 @@ function applyDelta(obj, orig, dx, dy) {
     // pivot + bob; ghosts follow because they're derived from these at render).
     obj.p1 = { x: orig.p1.x + dx, y: orig.p1.y + dy };
     obj.p2 = { x: orig.p2.x + dx, y: orig.p2.y + dy };
+    if (obj.type === "labeler") {
+      if (orig.elbow) obj.elbow = { x: orig.elbow.x + dx, y: orig.elbow.y + dy };
+      if (orig.p3) obj.p3 = { x: orig.p3.x + dx, y: orig.p3.y + dy };
+      if (orig.extraAnchors) obj.extraAnchors = orig.extraAnchors.map(point => ({ x: point.x + dx, y: point.y + dy }));
+    }
   } else if (obj.type === "polyline" || obj.type === "curve" || obj.type === "funcgraph") {
     const tr = (p) => ({ x: p.x + dx, y: p.y + dy });
     obj.points = orig.points.map(tr);
@@ -455,6 +513,9 @@ function applyDelta(obj, orig, dx, dy) {
 
 /* ----- line-like endpoint handle <-> point bridge (for endpoint-priority snap) ----- */
 function handleEndpointPoint(obj, handle) {
+  if (obj.type === "labeler" && handle?.startsWith("anchor-")) return obj.extraAnchors?.[Number(handle.slice(7))];
+  if (obj.type === "labeler" && handle === "elbow") return obj.elbow;
+  if (obj.type === "labeler" && handle === "p2") return obj.p3;
   if (ENDPOINT_HANDLE_TYPES.has(obj.type)) {   // was: line|circuit|labeler|pendulum
     return handle === "p0" ? obj.p1 : obj.p2;
   }
@@ -468,6 +529,9 @@ function handleEndpointPoint(obj, handle) {
 
 function setHandleEndpointPoint(obj, handle, pt) {
   const next = { x: pt.x, y: pt.y };
+  if (obj.type === "labeler" && handle?.startsWith("anchor-")) { obj.extraAnchors[Number(handle.slice(7))] = next; return; }
+  if (obj.type === "labeler" && handle === "elbow") { obj.elbow = next; return; }
+  if (obj.type === "labeler" && handle === "p2") { obj.p3 = next; return; }
   if (ENDPOINT_HANDLE_TYPES.has(obj.type)) {   // was: line|circuit|labeler|pendulum
     if (handle === "p0") obj.p1 = next; else obj.p2 = next;
     return;
@@ -590,19 +654,31 @@ function applyHandleDeltaBase(obj, orig, handle, dx, dy, shiftKey, ctrlKey) {
   // 목록은 object-types.js의 endpointHandles가 정본이다(용수철·장 그림·정상파·포물선·
   // 원호까지 전부 그 표에서 온다). 예전엔 이 리터럴 목록이 네 벌 복사돼 있었다.
   if (ENDPOINT_HANDLE_TYPES.has(obj.type)) {
+    if (obj.type === "labeler" && handle?.startsWith("anchor-")) {
+      const index = Number(handle.slice(7));
+      const base = orig.extraAnchors[index];
+      const dragged = { x: base.x + dx, y: base.y + dy };
+      obj.extraAnchors[index] = ctrlKey ? snapLineEndpoint(orig.elbow || orig.p2, dragged) : dragged;
+      return;
+    }
     // 라벨러의 두 번째 지시선 끝점(p3)은 별도 핸들.
+    if (handle === "elbow" && obj.type === "labeler" && orig.elbow) {
+      const dragged = { x: orig.elbow.x + dx, y: orig.elbow.y + dy };
+      obj.elbow = ctrlKey ? snapLineEndpoint(orig.p1, dragged) : dragged;
+      return;
+    }
     if (handle === "p2" && obj.type === "labeler") {
       const base = orig.p3 || orig.p1;
       const dragged = { x: base.x + dx, y: base.y + dy };
-      obj.p3 = ctrlKey ? snapLineEndpoint(orig.p2, dragged) : dragged;
+      obj.p3 = ctrlKey ? snapLineEndpoint(orig.elbow || orig.p2, dragged) : dragged;
       return;
     }
     if (handle === "p0") {
       const dragged = { x: orig.p1.x + dx, y: orig.p1.y + dy };
-      obj.p1 = ctrlKey ? snapLineEndpoint(orig.p2, dragged) : dragged;
+      obj.p1 = ctrlKey ? snapLineEndpoint(orig.elbow || orig.p2, dragged) : dragged;
     } else {
       const dragged = { x: orig.p2.x + dx, y: orig.p2.y + dy };
-      obj.p2 = ctrlKey ? snapLineEndpoint(orig.p1, dragged) : dragged;
+      obj.p2 = ctrlKey ? snapLineEndpoint(orig.elbow || orig.p1, dragged) : dragged;
     }
     return;
   }
@@ -923,6 +999,11 @@ function applyGroupResize(objs, origObjs, box0, handle, dx, dy) {
     } else if (orig.type === "line" || orig.type === "circuit" || orig.type === "labeler") {
       obj.p1 = mapPt(orig.p1.x, orig.p1.y);
       obj.p2 = mapPt(orig.p2.x, orig.p2.y);
+      if (orig.type === "labeler") {
+        if (orig.elbow) obj.elbow = mapPt(orig.elbow.x, orig.elbow.y);
+        if (orig.p3) obj.p3 = mapPt(orig.p3.x, orig.p3.y);
+        if (orig.extraAnchors) obj.extraAnchors = orig.extraAnchors.map(point => mapPt(point.x, point.y));
+      }
     } else if (orig.type === "pendulum") {
       obj.p1 = mapPt(orig.p1.x, orig.p1.y);
       obj.p2 = mapPt(orig.p2.x, orig.p2.y);
@@ -941,24 +1022,26 @@ function applyGroupResize(objs, origObjs, box0, handle, dx, dy) {
 
 /* ===== PUBLIC: wire all event listeners ===== */
 export function initTransform(svg, state) {
+  initObjectClipboard(state, objects => {
+    const s = state.get();
+    const target = getLastMouseWorld() || { x: s.viewBox.x + s.viewBox.w / 2, y: s.viewBox.y + s.viewBox.h / 2 };
+    instantiateObjectsAt(state, objects, target);
+  }, rebuildGroups);
 
   /* -- Space tracking (mirror viewport.js/tools.js; keep independent) -- */
   window.addEventListener("keydown", (e) => { if (e.code === "Space") _spaceHeld = true; });
   window.addEventListener("keyup",   (e) => { if (e.code === "Space") _spaceHeld = false; });
 
+  window.addEventListener("blur", () => { _spaceHeld = false; _arrowKeysHeld.clear(); });
+
   /* -- Undo/Redo keyboard: Ctrl+Z / Ctrl+Shift+Z (다시 실행은 이 하나로만) -- */
   window.addEventListener("keydown", (e) => {
-    if (!e.ctrlKey && !e.metaKey) return;
-    const t = e.target;
-    if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
-    // 모달이 열린 동안(다중 함수 입력 등, 포커스가 input이 아닌 버튼/배경일 때)
-    // Ctrl+Z가 뒤편 캔버스를 몰래 undo하지 않게 차단(아래 Delete 가드와 동일 패턴).
-    if (document.querySelector(".modal-overlay:not([hidden])")) return;
-    const key = e.key.toLowerCase();
+    if (!modKey(e) || e.altKey || blocksCanvasShortcut(e)) return;
+    const key = shortcutKey(e);
     if (key === "z" && !e.shiftKey) {
       e.preventDefault();
       undo(state);
-    } else if (key === "z" && e.shiftKey) {
+    } else if ((key === "z" && e.shiftKey) || (!IS_MAC && key === "y" && !e.shiftKey)) {
       e.preventDefault();
       redo(state);
     }
@@ -967,16 +1050,16 @@ export function initTransform(svg, state) {
   /* -- Keyboard shortcuts: Delete, Arrow nudge, Ctrl+C/V, PageUp/Down, F (flipY) -- */
   window.addEventListener("keydown", (e) => {
     const t = e.target;
-    if (isEditingFieldTarget(t)) return;
+    if (isEditingFieldTarget(t) || blocksCanvasShortcut(e)) return;
     // 모달(전체 통일/수정 등)이 열려 있으면 Delete가 뒤편 캔버스 선택을 지우는 등
     // 단축키가 새어 들어가지 않게 차단한다.
-    if (document.querySelector(".modal-overlay:not([hidden])")) return;
+    if (hasBlockingModal()) return;
 
     const s = state.get();
     const selectedIds = s.selectedIds || [];
 
     // Shift+C — 선택 1개의 스타일 속성 + 각도를 복사 (외부 레이아웃/내용 제외)
-    if (!e.ctrlKey && !e.metaKey && !e.altKey && e.shiftKey && e.key.toLowerCase() === "c") {
+    if (!e.ctrlKey && !e.metaKey && !e.altKey && e.shiftKey && shortcutKey(e) === "c") {
       if (selectedIds.length !== 1) return;
       const obj = s.objects.find((o) => o.id === selectedIds[0]);
       if (!obj) return;
@@ -996,7 +1079,7 @@ export function initTransform(svg, state) {
 
     // Shift+V — 선택 객체들에 스타일 + 각도를 적용 (존재하는 속성만). 구버전 angle
     // 클립보드와도 호환. undo 스냅샷 push + redo clear 유지.
-    if (!e.ctrlKey && !e.metaKey && !e.altKey && e.shiftKey && e.key.toLowerCase() === "v") {
+    if (!e.ctrlKey && !e.metaKey && !e.altKey && e.shiftKey && shortcutKey(e) === "v") {
       if (!_propertyClipboard || !selectedIds.length) return;
       const clip = _propertyClipboard;
       // 하위호환: 구 {kind:"angle", value} 형태를 style 형태로 정규화
@@ -1030,58 +1113,16 @@ export function initTransform(svg, state) {
      * 활성 레이어 · 보이는 레이어 · 선택금지가 아닌 것. 다른 기준을 새로 세우면
      * "클릭으로는 안 골라지는데 Ctrl+A로는 골라지는" 물건이 생긴다.
      * 브라우저 기본 동작(문서 전체 선택)은 막는다. */
-    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "a" && !e.shiftKey && !e.altKey) {
+    if (modKey(e) && shortcutKey(e) === "a" && !e.shiftKey && !e.altKey) {
       e.preventDefault();
       const ids = (s.objects || []).filter((o) => isObjectSelectable(s, o)).map((o) => o.id);
       state.update((s2) => { s2.selectedIds = ids; });
       return;
     }
 
-    // Ctrl+C ??copy selected objects into module-level clipboard
-    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "c" && !e.shiftKey) {
-      if (!selectedIds.length) return;
-      _clipboard = selectedIds
-        .map(id => s.objects.find(o => o.id === id))
-        .filter(Boolean)
-        .map(obj => JSON.parse(JSON.stringify(obj)));
-      return;
-    }
-
-    // Ctrl+V ??paste the copied selection CENTERED at the latest mouse world
-    // position (fallback: current viewport center). Relative positions within a
-    // multi-object paste are preserved; every clone gets a fresh id; one undo entry.
-    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "v" && !e.shiftKey) {
-      if (!_clipboard || !_clipboard.length) return;
-      e.preventDefault();
-      const snap = JSON.parse(JSON.stringify(s.objects));
-      // Target = mouse world coord, or viewport center if the mouse is unknown.
-      const target = _lastMouseWorld
-        ? _lastMouseWorld
-        : { x: s.viewBox.x + s.viewBox.w / 2, y: s.viewBox.y + s.viewBox.h / 2 };
-      const bbox = clipboardBBox(_clipboard);
-      const cx = bbox ? bbox.x + bbox.w / 2 : target.x;
-      const cy = bbox ? bbox.y + bbox.h / 2 : target.y;
-      const dx = target.x - cx;
-      const dy = target.y - cy;
-      const newObjs = _clipboard.map((src, i) => {
-        const newObj = JSON.parse(JSON.stringify(src));
-        // Date.now()+i만 쓰면 연속 Ctrl+V가 같은 ms 안에 겹쳐 id 중복이 날 수 있어
-        // 모듈 카운터를 덧붙인다(같은 타임스탬프라도 항상 유일).
-        newObj.id = String(Date.now() + i) + "_" + (++_pasteCounter);
-        applyDelta(newObj, src, dx, dy); // handles every shape type incl. image
-        return newObj;
-      });
-      state.update((s2) => {
-        s2.undoStack.push(snap);
-        s2.redoStack = [];
-        newObjs.forEach(o => s2.objects.push(o));
-        s2.selectedIds = newObjs.map(o => o.id);
-      });
-      return;
-    }
-
     // Delete ??remove all selected objects with undo snapshot
-    if (e.key === "Delete") {
+    if (e.isComposing) return;
+    if (e.key === "Delete" || e.key === "Backspace") {
       if (!selectedIds.length) return;
       e.preventDefault();
       const snap = JSON.parse(JSON.stringify(s.objects));
@@ -1209,6 +1250,11 @@ export function initTransform(svg, state) {
                 if (ENDPOINT_HANDLE_TYPES.has(obj.type)) {   // was: line|circuit|labeler|pendulum
                   obj.p1 = rot(obj.p1.x, obj.p1.y);
                   obj.p2 = rot(obj.p2.x, obj.p2.y);
+                  if (obj.type === "labeler") {
+                    if (obj.elbow) obj.elbow = rot(obj.elbow.x, obj.elbow.y);
+                    if (obj.p3) obj.p3 = rot(obj.p3.x, obj.p3.y);
+                    if (obj.extraAnchors) obj.extraAnchors = obj.extraAnchors.map(point => rot(point.x, point.y));
+                  }
                 } else if (POINT_ARRAY_TYPES.has(obj.type)) {
                   // polyline/curve/funcgraph는 x/y/w/h가 없는 points 기반 객체라, 아래
                   // else의 박스 회전(obj.x+obj.w/2 등)을 타면 funcgraph에 NaN이 기록되고
@@ -1309,6 +1355,11 @@ export function initTransform(svg, state) {
                 if (ENDPOINT_HANDLE_TYPES.has(obj.type)) {   // was: line|circuit|labeler|pendulum
                   obj.p1 = rot(obj.p1.x, obj.p1.y);
                   obj.p2 = rot(obj.p2.x, obj.p2.y);
+                  if (obj.type === "labeler") {
+                    if (obj.elbow) obj.elbow = rot(obj.elbow.x, obj.elbow.y);
+                    if (obj.p3) obj.p3 = rot(obj.p3.x, obj.p3.y);
+                    if (obj.extraAnchors) obj.extraAnchors = obj.extraAnchors.map(point => rot(point.x, point.y));
+                  }
                 } else if (POINT_ARRAY_TYPES.has(obj.type)) {
                   // polyline/curve/funcgraph는 x/y/w/h가 없는 points 기반 객체라, 아래
                   // else의 박스 회전(obj.x+obj.w/2 등)을 타면 funcgraph에 NaN이 기록되고
@@ -1375,7 +1426,7 @@ export function initTransform(svg, state) {
     }
 
     // F ??toggle flipY on selected triangle(s)
-    if (!e.ctrlKey && !e.metaKey && e.key.toLowerCase() === "f") {
+    if (!e.ctrlKey && !e.metaKey && shortcutKey(e) === "f") {
       if (!selectedIds.length) return;
       const triangleIds = selectedIds.filter(id => {
         const o = s.objects.find(ob => ob.id === id);
@@ -1396,7 +1447,7 @@ export function initTransform(svg, state) {
     }
 
     // K ??toggle locked on all selected shape-based objects (V tool only)
-    if (!e.ctrlKey && !e.metaKey && e.key.toLowerCase() === "k") {
+    if (!e.ctrlKey && !e.metaKey && shortcutKey(e) === "k") {
       if (!selectedIds.length || s.activeTool !== "V") return;
       e.preventDefault();
       const snap = JSON.parse(JSON.stringify(s.objects));
@@ -1413,7 +1464,7 @@ export function initTransform(svg, state) {
     }
 
     // G ??group selected objects (V tool, ?? selected)
-    if (!e.ctrlKey && !e.metaKey && !e.shiftKey && e.key.toLowerCase() === "g") {
+    if (!e.ctrlKey && !e.metaKey && !e.shiftKey && shortcutKey(e) === "g") {
       if (s.activeTool !== "V" || selectedIds.length < 2) return;
       e.preventDefault();
       const snap = JSON.parse(JSON.stringify(s.objects));
@@ -1435,7 +1486,7 @@ export function initTransform(svg, state) {
     }
 
     // Shift+G ??ungroup (V tool, all selected objects share the same groupId)
-    if (!e.ctrlKey && !e.metaKey && e.shiftKey && e.key.toLowerCase() === "g") {
+    if (!e.ctrlKey && !e.metaKey && e.shiftKey && shortcutKey(e) === "g") {
       if (s.activeTool !== "V" || !selectedIds.length) return;
       const _refId = s.targetedId || selectedIds[0];
       const _refObj = s.objects.find((o) => o.id === _refId);
@@ -1500,18 +1551,10 @@ export function initTransform(svg, state) {
     const s0 = state.get();
     const selectedIds0 = s0.selectedIds || [];
 
-    // Whole-group handle drag (green state): every selected object shares one
-    // groupId and handles are drawn on the combined bbox (render id "__group__").
-    //  - V tool       ??uniform resize, aspect FORCED (DESIGN 6-2).
-    //  - rotate tool  ??rotate ALL members about the combined-bbox center.
-    // targeted (orange) already returned above so it can never reach here.
     if (hLabel && (activeTool === "V" || activeTool === "rotate") && selectedIds0.length > 1) {
-      const gFirst = s0.objects.find((o) => o.id === selectedIds0[0]);
-      const gGid = gFirst && gFirst.groupId &&
-        selectedIds0.every((id) => s0.objects.find((o) => o.id === id)?.groupId === gFirst.groupId)
-        ? gFirst.groupId : null;
-      if (gGid) {
-        const members = selectedIds0.map((id) => s0.objects.find((o) => o.id === id)).filter(Boolean);
+      const members = selectedIds0.map((id) => s0.objects.find((o) => o.id === id)).filter(Boolean);
+      _groupMemberIds = selectedIds0.filter((id) => members.some((o) => o.id === id));
+      if (members.length === selectedIds0.length) {
         if (members.some((o) => !isMutable(o))) return;
         const box0 = groupBBox(members, svg);
         if (box0) {
@@ -1678,6 +1721,9 @@ export function initTransform(svg, state) {
           if (!obj) return;
           obj.p1 = rp(_rotOrigObj.p1);
           obj.p2 = rp(_rotOrigObj.p2);
+          if (_rotOrigObj.elbow) obj.elbow = rp(_rotOrigObj.elbow);
+          if (_rotOrigObj.p3) obj.p3 = rp(_rotOrigObj.p3);
+          if (_rotOrigObj.extraAnchors) obj.extraAnchors = _rotOrigObj.extraAnchors.map(rp);
         });
         if (!_rotDidMove && Math.abs(deltaDeg) > 0.1) _rotDidMove = true;
         return;
@@ -1756,6 +1802,11 @@ export function initTransform(svg, state) {
           if (orig.type === "line" || orig.type === "circuit" || orig.type === "labeler" || orig.type === "pendulum") {
             obj.p1 = memberRot(orig.p1.x, orig.p1.y);
             obj.p2 = memberRot(orig.p2.x, orig.p2.y);
+            if (orig.type === "labeler") {
+              if (orig.elbow) obj.elbow = memberRot(orig.elbow.x, orig.elbow.y);
+              if (orig.p3) obj.p3 = memberRot(orig.p3.x, orig.p3.y);
+              if (orig.extraAnchors) obj.extraAnchors = orig.extraAnchors.map(point => memberRot(point.x, point.y));
+            }
           } else if (POINT_ARRAY_TYPES.has(orig.type)) { // polyline / curve / funcgraph
             obj.points = orig.points.map((p) => memberRot(p.x, p.y));
             mapFgElements(obj, orig, (p) => memberRot(p.x, p.y)); // 그래프 요소도 함께 회전(분리 방지)

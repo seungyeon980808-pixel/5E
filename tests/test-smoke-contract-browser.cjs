@@ -307,8 +307,50 @@ test('TPK-005: current library and task workspace smoke contract has real contro
       assert.ok(referenceId && selectedRevisionId && originalSource, 'comparison has an identified original and selected revision');
       assert.equal(await panel.locator('.ai-generated-card').getAttribute('data-ai-candidate-id'), selectedRevisionId,
         'the rendered result is the selected revision');
-      assert.equal(await generatedImage.getAttribute('src'), generatedFixtureDataUrl,
-        'the selected revision contains the generated fixture bytes');
+      const selectedDisplaySource = await generatedImage.getAttribute('src');
+      if (mode === 'pro') {
+        assert.equal(selectedDisplaySource, generatedFixtureDataUrl, 'Pro displays the unprocessed generated PNG bytes');
+      } else {
+        const display = await generatedImage.evaluate(image => {
+          const canvas = document.createElement('canvas'); canvas.width = image.naturalWidth; canvas.height = image.naturalHeight;
+          const context = canvas.getContext('2d'); context.drawImage(image, 0, 0);
+          const pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+          let ink = 0;
+          for (let i = 0; i < pixels.length; i += 4) {
+            if (pixels[i + 3] === 0) continue;
+            if (pixels[i] < 255) ink++;
+          }
+          return { width: canvas.width, height: canvas.height, ink };
+        });
+        assert.equal(display.width, 1005); assert.equal(display.height, 399);
+        assert.ok(display.ink > 100, 'the rendered diagram remains visible');
+      }
+      const readRawPersistence = () => page.evaluate(async ({ taskId, candidateId, source }) => {
+        const databases = await indexedDB.databases();
+        const results = [];
+        for (const { name } of databases.filter(entry => entry.name.includes('5e-ai-image-tasks'))) {
+          const db = await new Promise((resolve, reject) => {
+            const request = indexedDB.open(name); request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error);
+          });
+          try {
+            const snapshot = await new Promise((resolve, reject) => {
+              const request = db.transaction('tasks', 'readonly').objectStore('tasks').get('workspace');
+              request.onsuccess = () => resolve(request.result); request.onerror = () => reject(request.error);
+            });
+            const candidate = snapshot?.tabs?.find(tab => tab.id === taskId)?.generated?.find(item => item.id === candidateId);
+            results.push({ name, tabIds: snapshot?.tabs?.map(tab => tab.id), candidateId: candidate?.id, bytes: candidate?.data?.length, matches: candidate?.data === source });
+          } finally { db.close(); }
+        }
+        return results;
+      }, { taskId: original, candidateId: selectedRevisionId, source: generatedFixtureDataUrl });
+      let rawPersistence = [];
+      for (let attempt = 0; attempt < 50; attempt++) {
+        rawPersistence = await readRawPersistence();
+        if (rawPersistence.some(result => result.matches)) break;
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      traceLibrary('raw-persistence', { mode, engine: engine.name(), results: rawPersistence });
+      assert.ok(rawPersistence.some(result => result.matches), 'original generated PNG bytes survive persistence independently from Lite display processing');
       await panel.locator('[data-ai-compare]').click();
       const comparisonDialog = panel.locator('.ai-inline-comparison .ai-comparison');
       await comparisonDialog.waitFor({ state: 'visible' });
@@ -322,7 +364,7 @@ test('TPK-005: current library and task workspace smoke contract has real contro
         'comparison defaults its right side to the selected revision');
       assert.equal(await comparisonDialog.locator('.ai-comparison-left image').getAttribute('href'), originalSource,
         'the comparison left side displays the original image content');
-      assert.equal(await comparisonDialog.locator('.ai-comparison-right image').getAttribute('href'), generatedFixtureDataUrl,
+      assert.equal(await comparisonDialog.locator('.ai-comparison-right image').getAttribute('href'), selectedDisplaySource,
         'the comparison right side displays the selected generated content');
       await page.screenshot({ path: path.join(evidenceDir, `${engine.name()}-${mode}-comparison.png`), fullPage: true });
       await panel.locator('[data-ai-compare]').click();

@@ -1,0 +1,165 @@
+<svg width="800" height="620" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<defs>
+<marker id="dot" viewBox="-1 -1 2 2" markerWidth="2.1" markerHeight="2.1">
+	<circle r="1" fill="#000" stroke="none"/>
+</marker>
+</defs>
+<path d="M374.09 442.71c8.97-25.45 44.84-49.53 124.87-46.09 80.02 3.44 199.37 14.44 214.55 43.34 15.17 28.89-23.58 89.37-48.29 77.05-143.5-71.55-184.89-93.56-257.32-30.27-30.71 26.83-34.5-24.77-33.81-44.03Z" fill="#FD5"/>
+<path d="M155.8 79.79c72.81 3.97 155.99 40.25 162.17 65.53 7.28 29.79-5.19 84.85-39.72 93.33-37.77 9.27-146.94 43.02-179.37-70.16-10.84-37.84 23.17-72.81 39.05-81.42 15.89-8.6 1.99-4.63 17.87-7.28Z" fill="#00ECA7"/>
+<path d="M154.48 79.13c72.81 3.97 160.18 40.38 163.49 66.19 3.31 25.81-3.97 33.1-18.53 33.1-14.57 0-140.33 16.54-153.57-20.52-13.23-37.07-24.82-63.22-8.94-71.83 15.89-8.6 17.65-6.89 17.55-6.94Z" fill="#00B681"/>
+
+<circle cx="97.72" cy="157.05" r="2.1"/>
+<g fill="none" stroke="#000" stroke-width="2.1" marker-start="url(#dot)" marker-mid="url(#dot)" marker-end="url(#dot)">
+<path d="M114.22 249.44l6.28 29.43 8.12-20.41 6-48.32 7.2 45.02 7.48-143.71 8.1 94.49"/>
+<path d="M171.21 157.06l8.1 13.19 6.61-24.61 7.2-19.49 8.38 88.81 7.2 17.1 7.51 12.29"/>
+<path d="M230.02 165.15l6.59.9 8.99 119.12 6.31-85.53 7.51 61.82 8.09 7.5 7.51-38.41 5.69-61.2 7.2 120.91 8.99-10.8 6.61-.59 7.2-15.62 7.49 21.3 7.2 34.21 7.51 3.31 8.1 51.29 7.19-29.4"/>
+<path d="M362.91 259.95l8.41-16.19L377 284.55l8.1-30.29 7.21 29.4 6.61 40.79"/>
+<path d="M414.5 434.56l6.61 24.61 7.2-12.29 7.51-68.71 8.09-8.7 5.69 8.09 9-65.4 6.61 46.5 7.2 55.52 8.99-48.91"/>
+<path d="M494.6 316.36l8.71-72.6L509 284.55l7.51-8.4 8.1 32.7 7.51-19.48"/>
+<path d="M546.8 316.97l8.1 23.69 5.71-21 7.2 26.71 9-24.3 6.58 19.49 7.51-13.19 7.2 27.88 7.51-26.99 6.3 27.91 8.38-41.71 8.12 13.8 6.59 1.8 8.1 123.91 6.3 22.81 6.6 23.69 8.11-56.11 7.48-7.5 6.61-51.29 8.1-37.51 7.2-50.7 7.5 75"/>
+</g>
+<circle cx="751.7" cy="310.65" r="2.1"/>
+<circle cx="767" cy="329.26" r="2.1"/>
+
+<path d="M297.31 262.9l4.63 11.91M303.27 290.04l-4.64-7.28M561.41 313.87l1.32-15.89M590.53 321.81l1.32-12.58M262.24 76.93c0 0 3.21 19.22-4.86 31.01-8.07 11.78-22.04 19.73-22.04 19.73l1.67-10.25-1.54 10.12 9.99.13M499.97 484.68c0 0-3.21-19.22 4.86-31.01 8.07-11.78 22.04-19.73 22.04-19.73l-1.67 10.25 1.54-10.12-9.99-.13" fill="none" stroke="#000"/>
+
+<g fill="none" stroke="#000" stroke-width="2.1" stroke-linecap="round">
+<path id="hTicks" d="M129.67 535.22v-5.1m36.6 5.1v-10.2m36.59 10.2v-5.1m36.59 5.1v-10.2m36.9 10.2v-5.1m36.62 5.1v-10.2m36.59 10.2v-5.1m36.59 5.1v-10.2m36.59 10.2v-5.1m36.62 5.1v-10.2m36.6 10.2v-5.1m36.59 5.1v-10.2m36.59 10.2v-5.1m36.62 5.1v-10.2m36.9 10.2v-5.1m36.59 5.1v-10.2m36.59 10.2v-5.1m36.6 5.1v-10.2"/>
+<use xlink:href="#hTicks" transform="matrix(1,0,0,-1,0,558.61)"/>
+<path d="M93.05 535.22h696V23.39h-696z"/>
+<g id="vTicks15">
+<g id="vTicks5">
+<path id="vTicks" d="M93.05 535.22h10.2m-10.2-10.2h5.1m-5.1-5.99h5.1m-5.1-4.19h5.1m-5.1-3.31h5.1m-5.1-2.99h5.1m-5.1-2.1h5.1m-5.1-2.1h5.1m-5.1-1.82h5.1"/>
+<g id="vTicks2">
+<use xlink:href="#vTicks" y="-34.12"/>
+<use xlink:href="#vTicks" y="-68.24"/>
+</g>
+<use xlink:href="#vTicks2" y="-68.24"/>
+</g>
+<use xlink:href="#vTicks5" y="-170.61"/>
+<use xlink:href="#vTicks5" y="-341.22"/>
+</g>
+<use xlink:href="#vTicks15" transform="matrix(-1,0,0,1,882.1,0)"/>
+</g>
+
+<g font-family="Arial" font-size="20">
+<text x="87.36" y="562.53">0</text>
+<text x="154.86" y="562.53">10</text>
+<text x="228.06" y="562.53">20</text>
+<text x="301.56" y="562.53">30</text>
+<text x="374.76" y="562.53">40</text>
+<text x="447.96" y="562.53">50</text>
+<text x="521.15" y="562.53">60</text>
+<text x="594.35" y="562.53">70</text>
+<text x="667.85" y="562.53">80</text>
+<text x="741.05" y="562.53">90</text>
+<text x="48.66" y="543.03">10<tspan dy="-11" font-size="12">−6</tspan></text>
+<text x="48.66" y="440.72">10<tspan dy="-11" font-size="12">−3</tspan></text>
+<text x="52.56" y="338.41">10<tspan dy="-11" font-size="12">0</tspan></text>
+<text x="52.56" y="235.8">10<tspan dy="-11" font-size="12">3</tspan></text>
+<text x="52.56" y="133.5">10<tspan dy="-11" font-size="12">6</tspan></text>
+<text x="52.56" y="31.19">10<tspan dy="-11" font-size="12">9</tspan></text>
+
+<g font-size="25.2">
+<text transform="matrix(0,-1,1,0,30.37,576)">Abundance, atoms of element per 10<tspan dy="-13.8" font-size="14.7">6</tspan><tspan dy="13.8"> atoms of Si</tspan></text>
+<text x="341.46" y="602.43">Atomic number, Z</text>
+</g>
+</g>
+
+<g font-family="Bitstream Vera Sans" font-size="17.6">
+<g font-size="17.49">
+<text x="118.8" y="464.64">Major industrial metals in <tspan fill="#F00">red</tspan></text>
+<text x="118.8" y="486.5">Precious metals in <tspan fill="#800080">purple</tspan></text>
+<text x="118.8" y="508.37">Rare-earth elements in <tspan fill="#00F">blue</tspan></text>
+</g>
+<g font-size="18.96">
+<text x="176.65" y="70.47">Rock-forming elements</text>
+<text x="446.26" y="502.78">Rarest "metals"</text>
+</g>
+<text x="102.52" y="156.12">H</text>
+<text x="108.27" y="244.05">Li</text>
+<text x="114.23" y="299.65">Be</text>
+<text x="130.11" y="275.16">B</text>
+<text x="146" y="262.58">N</text>
+<text x="126.8" y="204.33">C</text>
+<text x="142.01" y="104.39">O</text>
+<text x="153.94" y="224.21">F</text>
+<text x="155.18" y="151.28">Na</text>
+<text x="184.31" y="118.85">Si</text>
+<text x="206.16" y="214.16">P</text>
+<text x="212.12" y="231.38">S</text>
+<text x="220.73" y="247.92">Cl</text>
+<text x="213.45" y="169.15">K</text>
+<text x="228.67" y="157.24">Ca</text>
+<text x="250.51" y="280.35">V</text>
+<text x="270.83" y="306.27">Co</text>
+<text x="322.46" y="285.75">Ga</text>
+<text x="299.95" y="330.76">Ge</text>
+<text x="334.36" y="318.2">As</text>
+<text x="326.43" y="389.01">Se</text>
+<text x="345.62" y="339.36">Br</text>
+<text x="346.88" y="275.82">Rb</text>
+<text x="360.78" y="238.75">Sr</text>
+<text x="378.65" y="248.02">Zr</text>
+<text x="395.86" y="285.75">Nb</text>
+<text x="460.49" y="430.6">Te</text>
+<text x="467.77" y="352.5">Sb</text>
+<text x="424.74" y="361.76">Cd</text>
+<text x="485.64" y="371.03">I</text>
+<text x="443.28" y="392.86">In</text>
+<text x="490.27" y="237.33">Ba</text>
+<text x="484.98" y="333.3">Cs</text>
+<text x="614.71" y="458.4">Re</text>
+<text x="618.02" y="307.49">Hf</text>
+<text x="629.27" y="322.71">Ta</text>
+<text x="653.1" y="382.28">Hg</text>
+<text x="667.66" y="348.53">Tl</text>
+<text x="696.78" y="390.89">Bi</text>
+<text x="737.82" y="304.18">Th</text>
+<text x="761.65" y="322.71">U</text>
+<g fill="red">
+<text x="167.77" y="193.01">Mg</text>
+<text x="170.44" y="137.39">Al</text>
+<text x="245.22" y="194.98">Ti</text>
+<text x="259.78" y="286.97">Cr</text>
+<rect x="270.83" y="210.6" width="10.59" height="15.22" fill="#00ECA7"/>
+<text x="257.13" y="223.41">Mn</text>
+<text x="271.84" y="161.99">Fe</text>
+<text x="297.97" y="304.28">Ni</text>
+<text x="288.71" y="259.95">Cu</text>
+<text x="315.85" y="264.57">Zn</text>
+<text x="388.58" y="342.67">Mo</text>
+<text x="447.91" y="305.5">Sn</text>
+<text x="639.2" y="340.58">W</text>
+<text x="682.88" y="290.94">Pb</text>
+</g>
+<g fill="blue">
+<text x="233.3" y="302.19">Sc</text>
+<text x="371.37" y="300.97">Y</text>
+<text x="499.54" y="302.86">La</text>
+<text x="533.96" y="284.98">Nd</text>
+<text x="508.8" y="269.76">Ce</text>
+<text x="516.75" y="326.02">Pr</text>
+<text x="583.6" y="375">Tm</text>
+<text x="572.35" y="357.79">Ho</text>
+<text x="594.85" y="323.37">Yb</text>
+<text x="614.05" y="370.37">Lu</text>
+<text x="586.91" y="305.5">Er</text>
+<text x="557.12" y="295.57">Gd</text>
+<text x="529.99" y="347.86">Eu</text>
+<text x="565.73" y="314.77">Dy</text>
+<text x="549.84" y="362.43">Tb</text>
+<text x="529.99" y="312.78">Sm</text>
+</g>
+<g fill="#800080">
+<text x="432.69" y="450.46">Pd</text>
+<text x="408.86" y="380.3">Ag</text>
+<text x="394.3" y="466.35">Rh</text>
+<text x="400.28" y="428.62">Ru</text>
+<text x="660.38" y="508.71">Ir</text>
+<text x="622.65" y="484.88">Os</text>
+<text x="667.66" y="458.4">Pt</text>
+<text x="677.59" y="443.18">Au</text>
+</g>
+</g>
+</svg>

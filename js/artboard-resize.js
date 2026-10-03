@@ -2,14 +2,17 @@
  * 내보내기 영역 지정과 동일한 오버레이에서 고른 world 사각형의 크기를 새 아트보드로
  * 쓰고, 그 중심이 원점에 오도록 모든 객체와 가이드를 평행이동한다. */
 
-import { runAreaCapture } from "./export-dialog.js?v=1.4.3";
-import { translateObject } from "./transform.js?v=1.4.0";
-import { artboardChangeFromBounds } from "./artboard-area.js?v=1.4.3";
+import { runAreaCapture } from "./export-dialog.js?v=1.6.0-remediation-0929";
+import { translateObject } from "./transform.js?v=1.6.0-remediation-0929";
+import { artboardChangeFromBounds } from "./artboard-area.js?v=1.6.0-preview-labeler-0917-1111";
+import { captureDocumentSnapshot, commitDocumentHistory } from "./document-history.js?v=1.6.0-preview-labeler-0917-1111";
 
 export function applyArtboardBounds(state, bounds) {
   const change = artboardChangeFromBounds(bounds);
   if (!change) return false;
+  let changed = false;
   state.update((s) => {
+    const snapshot = captureDocumentSnapshot(s);
     for (const obj of s.objects) translateObject(obj, change.dx, change.dy);
     for (const guide of s.guides || []) {
       if (guide.axis === "x") guide.position += change.dx;
@@ -17,8 +20,9 @@ export function applyArtboardBounds(state, bounds) {
     }
     s.artboard = change.artboard;
     s.artboardResizeMode = false;
+    changed = commitDocumentHistory(s, snapshot);
   });
-  return true;
+  return changed;
 }
 
 export function initArtboardResize(svg, state) {

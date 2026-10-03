@@ -1,0 +1,6 @@
+<svg width="185mm" height="75mm" version="1.1" viewBox="0 0 185 75" xmlns="http://www.w3.org/2000/svg"><rect width="185" height="75" fill="#fff"/>
+ <g stroke-dasharray="3 1" stroke="#000"><rect x="83" y="11" width="31" height="62" fill="#dff"/><rect x="2" y="23" width="38" height="38" fill="#fcd"/><rect x="142" y="11" width="31" height="62" fill="#ddd"/></g>
+ <path d="m21 42 19-4 25-11 45 0" fill="none" stroke="#cc0"/><path d="m21 42 19 4 25 11 45 0" fill="none" stroke="#f00"/><path d="m110 27h39l8 4v22l-8 4h-39" fill="none" stroke="#a22"/>
+ <g fill="#666"><circle cx="21" cy="42" r="3"/><circle cx="98" cy="27" r="3"/><circle cx="98" cy="57" r="3"/><circle cx="157" cy="31" r="3"/><circle cx="157" cy="53" r="3"/></g>
+ <circle cx="157" cy="42" r="7" fill="#fff" stroke="#000"/>
+ <g font-family="Times" font-size="10px" text-anchor="middle"><text x="128" y="24">медь</text><text x="128" y="65">медь</text><text x="63" y="23">хромель</text><text x="62" y="64">алюмель</text><text x="21" y="34" font-style="italic">T</text><text x="99" y="20"><tspan font-style="italic">T</tspan><tspan dy="2" font-size="7px">ref</tspan></text><text x="157" y="8">Измеритель</text><text x="157" y="45" font-style="italic">V</text><text x="21" y="20">Объект</text><text x="99" y="68"><tspan font-style="italic">T</tspan><tspan dy="2" font-size="7px">ref</tspan></text></g></svg>

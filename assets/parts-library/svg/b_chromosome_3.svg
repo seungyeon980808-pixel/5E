@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN" "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd">
+<svg version="1.0" xmlns="http://www.w3.org/2000/svg" width="175" height="605">
+  <defs>
+    <clipPath id="clip1">
+      <path d="M5 582c0 22.7 34 22.7 34 0v-289c0 -22.7 -34 -22.7 -34 0z m0 -323c0 22.7 34 22.7 34 0v-231c0 -22.7 -34 -22.7 -34 0z"/>
+    </clipPath>
+    <style type="text/css">
+      .locus { fill:url(#lograd); }
+      .dark1 { fill:url(#d1grad); }
+      .dark2 { fill:url(#d2grad); }
+      .line  { stroke:#f00; stroke-width:1; }
+      .text  { font-size: 12px; fill: #000; font-family: DejaVu Sans Condensed; }
+    </style>
+    <linearGradient id="lograd" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   style="stop-color:#BBA"/>
+      <stop offset="50%"  style="stop-color:#FFE"/>
+      <stop offset="100%" style="stop-color:#BBA"/>
+    </linearGradient>
+    <linearGradient id="d1grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   style="stop-color:#877"/>
+      <stop offset="50%"  style="stop-color:#CBB"/>
+      <stop offset="100%" style="stop-color:#877"/>
+    </linearGradient>
+    <linearGradient id="d2grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   style="stop-color:#433"/>
+      <stop offset="50%"  style="stop-color:#988"/>
+      <stop offset="100%" style="stop-color:#433"/>
+    </linearGradient>
+    <linearGradient id="bgrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%"   style="stop-color:#000"/>
+      <stop offset="50%"  style="stop-color:#666"/>
+      <stop offset="100%" style="stop-color:#000"/>
+    </linearGradient>
+  </defs>
+ <g id="Layer 1">
+
+     <g id="locii" clip-path="url(#clip1)">
+	 <rect x="0" y="0" width="40" height="773" fill="url(#bgrad)"/>
+	 <path class="locus" d="M0 577.54h40v-15.12h-40z"/>
+	 <path class="locus" d="M0 554.86h40v-6.3h-40z"/>
+	 <path class="locus" d="M0 542.26h40v-7.56h-40z"/>
+	 <path class="locus" d="M0 527.14h40v-11.34h-40z"/>
+	 <path class="locus" d="M0 508.24h40v-18.9h-40z"/>
+	 <path class="locus" d="M0 485.56h40v-5.04h-40z"/>
+	 <path class="locus" d="M0 475.48h40v-7.56h-40z"/>
+	 <path class="locus" d="M0 457.84h40v-17.64h-40z"/>
+	 <path class="locus" d="M0 428.86h40v-8.82h-40z"/>
+	 <path class="locus" d="M0 413.74h40v-12.6h-40z"/>
+	 <path class="locus" d="M0 389.8h40v-7.56h-40z"/>
+	 <path class="locus" d="M0 374.68h40v-8.82h-40z"/>
+	 <path class="locus" d="M0 360.82h40v-10.08h-40z"/>
+	 <path class="locus" d="M0 345.7h40v-11.34h-40z"/>
+	 <path class="locus" d="M0 328.06h40v-10.08h-40z"/>
+	 <path class="locus" d="M0 309.16h40v-5.04h-40z"/>
+	 <path class="dark1" d="M0 296.56h40v-7.56h-40z"/>
+	 <path class="dark2" d="M0 289h40v-15.12h-40z"/>
+	 <path class="locus" d="M0 271.36h40v-6.3h-40z"/>
+	 <path class="locus" d="M0 258.76h40v-12.6h-40z"/>
+	 <path class="locus" d="M0 236.08h40v-11.34h-40z"/>
+	 <path class="locus" d="M0 213.4h40v-11.34h-40z"/>
+	 <path class="locus" d="M0 186.94h40v-7.56h-40z"/>
+	 <path class="locus" d="M0 147.88h40v-8.82h-40z"/>
+	 <path class="locus" d="M0 125.2h40v-8.82h-40z"/>
+	 <path class="locus" d="M0 112.6h40v-8.82h-40z"/>
+	 <path class="locus" d="M0 93.7h40v-10.08h-40z"/>
+	 <path class="locus" d="M0 78.58h40v-15.12h-40z"/>
+	 <path class="locus" d="M0 53.38h40v-6.3h-40z"/>
+	 <path class="locus" d="M0 35.74h40v-7.56h-40z"/>
+	 <path class="locus" d="M0 23.14h40v-13h-40z"/>
+</g>
+
+<path class="line" d="M30 569.98h68"/>
+<text class="text" x="102" y="574.98">3q28</text>
+<path class="line" d="M30 551.71h15"/>
+<text class="text" x="49" y="556.71">3q27.2</text>
+<path class="line" d="M30 538.48h68"/>
+<text class="text" x="102" y="543.48">3q26.33</text>
+<path class="line" d="M30 521.47h15"/>
+<text class="text" x="49" y="526.47">3q26.31</text>
+<path class="line" d="M30 498.79h68"/>
+<text class="text" x="102" y="503.79">3q26.1</text>
+<path class="line" d="M30 483.04h15"/>
+<text class="text" x="49" y="488.04">3q25.32</text>
+<path class="line" d="M30 471.7h68"/>
+<text class="text" x="102" y="476.7">3q25.2</text>
+<path class="line" d="M30 449.02h15"/>
+<text class="text" x="49" y="454.02">3q24</text>
+<path class="line" d="M30 424.45h68"/>
+<text class="text" x="102" y="429.45">3q22.3</text>
+<path class="line" d="M30 407.44h15"/>
+<text class="text" x="49" y="412.44">3q22.1</text>
+<path class="line" d="M30 386.02h68"/>
+<text class="text" x="102" y="391.02">3q21.2</text>
+<path class="line" d="M30 370.27h15"/>
+<text class="text" x="49" y="375.27">3q13.33</text>
+<path class="line" d="M30 355.78h68"/>
+<text class="text" x="102" y="360.78">3q13.31</text>
+<path class="line" d="M30 340.03h15"/>
+<text class="text" x="49" y="345.03">3q13.13</text>
+<path class="line" d="M30 323.02h68"/>
+<text class="text" x="102" y="328.02">3q13.11</text>
+<path class="line" d="M30 306.64h15"/>
+<text class="text" x="49" y="311.64">3q12.2</text>
+<path class="line" d="M30 292.78h68"/>
+<text class="text" x="102" y="297.78">3q11.2</text>
+<path class="line" d="M30 268.21h15"/>
+<text class="text" x="49" y="273.21">3p12.1</text>
+<path class="line" d="M30 252.46h68"/>
+<text class="text" x="102" y="257.46">3p12.3</text>
+<path class="line" d="M30 230.41h15"/>
+<text class="text" x="49" y="235.41">3p14.1</text>
+<path class="line" d="M30 207.73h68"/>
+<text class="text" x="102" y="212.73">3p14.3</text>
+<path class="line" d="M30 183.16h15"/>
+<text class="text" x="49" y="188.16">3p21.2</text>
+<path class="line" d="M30 143.47h68"/>
+<text class="text" x="102" y="148.47">3p21.32</text>
+<path class="line" d="M30 120.79h15"/>
+<text class="text" x="49" y="125.79">3p22.1</text>
+<path class="line" d="M30 108.19h68"/>
+<text class="text" x="102" y="113.19">3p22.3</text>
+<path class="line" d="M30 88.66h15"/>
+<text class="text" x="49" y="93.66">3p24.1</text>
+<path class="line" d="M30 71.02h68"/>
+<text class="text" x="102" y="76.02">3p24.3</text>
+<path class="line" d="M30 50.23h15"/>
+<text class="text" x="49" y="55.23">3p25.2</text>
+<path class="line" d="M30 31.96h68"/>
+<text class="text" x="102" y="36.96">3p26.1</text>
+<path class="line" d="M30 18.73h15"/>
+<text class="text" x="49" y="23.73">3p26.3</text>
+ </g>
+</svg>

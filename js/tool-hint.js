@@ -1,3 +1,5 @@
+import { keyLabel, SNAP_LABEL } from "./platform.js?v=1.6.0-remediation-0929";
+
 /* ===== TOOL HINT: 캔버스 하단 바의 도구별 조작 안내 =====
  *
  * 캔버스를 가리는 플로팅 안내는 사용하지 않습니다. 현재 도구의 핵심 동작과
@@ -8,11 +10,11 @@ const HINTS = {
   V: {
     title: "선택",
     action: "오브젝트를 클릭해 선택하고, 선택한 오브젝트를 드래그해 이동하세요.",
-    keys: "Shift+드래그: 스냅 · 빈 곳 클릭: 선택 해제", activeKeys: ["Shift+드래그"],
+    keys: "드래그 중 Shift: 스냅 · 빈 곳 클릭: 선택 해제", activeKeys: ["Shift"],
   },
   rotate: {
     title: "회전",
-    action: "선택한 오브젝트를 마우스로 드래그해 원하는 각도로 회전하세요.",
+    action: "선택한 오브젝트의 모서리 회전 손잡이를 드래그하세요.",
     keys: "마우스를 놓으면 회전 완료",
   },
   CUT: {
@@ -68,7 +70,12 @@ const HINTS = {
   T: {
     title: "텍스트",
     action: "글자를 넣을 위치를 클릭한 뒤 내용을 입력하세요.",
-    keys: "Ctrl+Enter: 입력 완료 · Esc: 취소", activeKeys: ["Ctrl+Enter"],
+    keys: "Enter: 입력 완료 · Esc: 취소", activeKeys: ["Enter"],
+  },
+  LABELER: {
+    title: "라벨러",
+    action: "시작점 → 꺾임점 → 라벨 위치를 클릭하세요.",
+    keys: "직선: Enter/Space · Esc: 취소", activeKeys: ["Enter", "Space"],
   },
 };
 
@@ -102,7 +109,7 @@ function injectStyles() {
     }
     #tool-hint .tool-hint-key { color:var(--text-secondary); font-weight:600; }
     #tool-hint .tool-hint-key.is-active {
-      display:inline-flex; align-items:center; min-height:19px; padding:0 5px;
+      display:inline-flex; align-items:center; flex:none; min-height:19px; padding:0 5px;
       border:1px solid color-mix(in srgb, var(--accent) 72%, var(--c-border));
       border-radius:4px; background:color-mix(in srgb, var(--accent) 16%, var(--bg-panel));
       color:var(--accent); font-weight:750;
@@ -112,7 +119,8 @@ function injectStyles() {
       #tool-hint { max-width:58vw; gap:6px; }
       #tool-hint .tool-hint-title { font-size:11.5px; }
       #tool-hint .tool-hint-action { font-size:11px; }
-      #tool-hint .tool-hint-keys { font-size:10px; }
+      #tool-hint .tool-hint-keys { flex:0 0 auto; max-width:none; overflow:visible; font-size:10px; }
+      #tool-hint .tool-hint-keys > span:not(.is-active) { display:none; }
     }
   `;
   document.head.appendChild(st);
@@ -124,11 +132,11 @@ function renderHint(hint) {
   _action.textContent = hint.action || "";
   _keys.replaceChildren();
   const activeKeys = new Set(hint.activeKeys || []);
-  const parts = String(hint.keys || "").split(/(Shift\+드래그|Shift\+E|Ctrl\+Enter|Ctrl\+E|Enter\/더블클릭|Shift|Ctrl|Esc|E)/g);
+  const parts = String(hint.keys || "").split(/(Shift\+드래그|Shift\+E|Ctrl\+Enter|Ctrl\+E|Enter\/더블클릭|Shift|Ctrl|Enter|Esc|E)/g);
   for (const part of parts) {
     if (!part) continue;
     const span = document.createElement("span");
-    span.textContent = part;
+    span.textContent = part === "Ctrl" ? SNAP_LABEL : keyLabel(part);
     if (activeKeys.has(part)) span.className = "tool-hint-key is-active";
     else if (/^(Shift|Ctrl|Esc|Enter|E)/.test(part)) span.className = "tool-hint-key";
     _keys.appendChild(span);
@@ -166,6 +174,7 @@ export function initToolHint(state) {
     };
     sync(state.get());
   });
+  window.addEventListener("5e:shortcut-platform-change", () => sync(state.get()));
   state.subscribe((s) => {
     if (s.activeTool !== "CUT" && s.activeTool !== "DELAYED_CUT") _modeHint = null;
     sync(s);

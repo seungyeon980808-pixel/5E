@@ -4,7 +4,7 @@ import {
   createExactOutputCacheEntry,
   evaluateExactOutputCacheEntry,
   pruneExactOutputCacheEntries,
-} from "./ai-remote-input-plan.js";
+} from "./ai-remote-input-plan.js?v=1.6.0-remediation-0929";
 
 export class MemoryOutputCacheBackend {
   constructor() {
@@ -36,7 +36,7 @@ export class IndexedDBOutputCacheBackend {
   open() {
     if (this.openPromise) return this.openPromise;
     this.openPromise = new Promise((resolve, reject) => {
-      const request = this.indexedDB.open(this.databaseName, this.version);
+      const request = this.indexedDB.open("5e.preview:" + this.databaseName, this.version);
       request.onupgradeneeded = () => {
         const database = request.result;
         if (!database.objectStoreNames.contains(this.storeName)) {

@@ -2,30 +2,32 @@
   "schemaVersion": 3,
   "candidate": {
     "version": "1.6.0",
-    "desktopEntry": "preview/index.html",
-    "sourceBranch": "codex/release-160-remediation",
+    "desktopEntry": "index.html",
+    "sourceBranch": "main",
     "tag": "v1.6.0",
     "status": "HOLD"
   },
   "channels": {
     "stableWeb": {
-      "version": "1.5.3",
+      "version": "1.6.0",
       "url": "https://www.5e.ai.kr/",
       "entry": "index.html",
       "pagesSourceBranch": "codex/preview-1.6.0",
-      "pagesSourceSha": "09f94d830a7cec15632aa5286f6cffbe58e5f39f"
+      "pagesSourceSha": "751b1ed4622058497a6f3ba43f92333eb15268eb",
+      "observedOn": "2026-10-03"
     },
     "previewWeb": {
-      "version": "1.6.0",
+      "version": "1.7.0",
       "label": "Preview",
       "url": "https://www.5e.ai.kr/preview/",
       "entry": "preview/index.html",
       "pagesSourceBranch": "codex/preview-1.6.0",
-      "pagesSourceSha": "09f94d830a7cec15632aa5286f6cffbe58e5f39f"
+      "pagesSourceSha": "751b1ed4622058497a6f3ba43f92333eb15268eb",
+      "observedOn": "2026-10-03"
     },
     "desktop": {
       "version": "1.6.0",
-      "entry": "preview/index.html",
+      "entry": "index.html",
       "artifacts": [
         "5E-1.6.0-windows-x64.exe",
         "5E-1.6.0-macos-x64.dmg",
@@ -54,5 +56,15 @@
     "worktreeRetention": "PENDING_OWNER_APPROVAL",
     "sample7Rights": "UNVERIFIED",
     "publishedV158Checksum": "OPEN_PENDING_PUBLICATION"
+  },
+  "webPublication": {
+    "status": "PENDING_EXTERNAL",
+    "currentBuildType": "legacy",
+    "proposedBuildType": "workflow",
+    "canonicalSourceBranch": "main",
+    "preservePreviewSourceSha": "751b1ed4622058497a6f3ba43f92333eb15268eb",
+    "preservePreviewPath": "preview",
+    "workflow": ".github/workflows/web-release.yml",
+    "requiresSeparateDeploymentApproval": true
   }
 }

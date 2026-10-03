@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="270" height="150" viewBox="-2 -2 27 15">
+    
+    <defs>
+        
+        <g id="grid_4x4" stroke="black">
+            <rect height="4" width="4" fill="none" stroke-width=".25"/>
+            <g stroke-width="4">
+                <path stroke-dasharray=".03, .97" d="M 2, -.015 v 5"/>
+                <path stroke-dasharray=".25, 3.75" d="M 2, -.125 v 5"/>
+            </g>
+            <g stroke-width="4">
+                <path stroke-dasharray=".03, .97" d="M -.015, 2 h 5"/>
+                <path stroke-dasharray=".07, 3.93" d="M -.035, 2 h 5"/>
+                <path stroke-dasharray=".15, 15.85" d="M -.075, 2 h 5"/>
+            </g>
+        </g>
+        
+        <g id="grid_4x16" stroke="black">
+            <rect height="4" width="16" fill="none" stroke-width=".25"/>
+            <g stroke-width="16">
+                <path stroke-dasharray=".03, .97" d="M 8, -.015 v 5"/>
+                <path stroke-dasharray=".07, 3.93" d="M 8, -.035 v 5"/>
+                <path stroke-dasharray=".25, 3.75" d="M 8, -.125 v 5"/>
+            </g>
+            <g stroke-width="4">
+                <path stroke-dasharray=".03, .97" d="M -.015, 2 h 17"/>
+                <path stroke-dasharray=".07, 3.93" d="M -.035, 2 h 17"/>
+            </g>
+        </g>
+        
+        <path id="fixed" fill="#079" opacity=".5" d="M0,0h1v4h-1M6,0h1v4h-1M8,0h1v4h-1M14,0h1v4h-1"/>
+        
+    </defs>
+    
+    
+    <!-- upper long matrix -->
+    <g transform="translate(7)" opacity=".7">
+        <rect fill="#fff" height="4" width="16"/>
+        <path fill="#f55" d="M1,0h1v1h-1M3,0h1v2h-2v-1h1M5,0h1v1h-1M7,0h1v3h-4v-1h2v-1h1M9,0h1v1h-1M11,0h1v2h-2v-1h1M13,0h1v1h-1M15,0h1v4h-8v-1h4v-1h2v-1h1"/>
+        <use xlink:href="#fixed"/>
+        <use xlink:href="#grid_4x16" stroke="#000"/>
+    </g>
+
+    <!-- square matrix -->
+    <g transform="translate(0, 7)">
+        <rect fill="#fff" width="4" height="4"/>
+        <path fill="#f55" d="M0,0h1v1h1v1h-1v1h1v-1h1v1h1v1h-4"/>
+        <use xlink:href="#grid_4x4"/>
+    </g>
+
+    <!-- lower long matrix -->
+    <g transform="translate(7, 7)">
+        <rect fill="#fff" height="4" width="16"/>
+        <path fill="#f55" d="M1,0h1v1h1v1h-1v1h1v1h-2M3,0h1v1h-1M5,0h1v1h1v2h-1v-1h-1M7,0h1v1h-1M9,0h1v1h1v1h-1v1h-1M11,0h1v1h-1M13,0h1v1h1v3h-2v-1h1v-1h-1M15,0h1v1h-1M3,2h2v2h-1v-1h-1M11,2h2v1h-1v1h-1M7,3h2v1h-2"/>
+        <use xlink:href="#fixed"/>
+        <use xlink:href="#grid_4x16" stroke="#000"/>
+    </g>
+    
+    
+</svg>

@@ -7,7 +7,7 @@
  * 구조는 section-groundarc.js 의 selected() / commit() / sync() 3함수 패턴 그대로.
  */
 
-import { makeSection } from "./widgets.js?v=1.4.0";
+import { makeSection } from "./widgets.js?v=1.6.0-preview-labeler-0917-1111";
 
 function row(labelText) {
   const r = document.createElement("div");

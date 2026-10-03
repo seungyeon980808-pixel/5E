@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN" "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd">
+<svg
+ xmlns="http://www.w3.org/2000/svg"
+ width="200" height="175">
+ <defs>
+  <radialGradient id="b" fx=".5" fy=".5">
+	<stop offset="0%" stop-color="blue" stop-opacity=".1" />
+	<stop offset="80%" stop-color="blue" stop-opacity=".2" />
+	<stop offset="100%" stop-color="blue" stop-opacity="0" />
+  </radialGradient>
+  <radialGradient id="B" fx=".4" fy=".4">
+	<stop offset="0%" stop-color="#77f"/>
+	<stop offset="40%" stop-color="#00f"/>
+	<stop offset="99%" stop-color="#00f"/>
+	<stop offset="100%" stop-color="#00e"/>
+  </radialGradient>
+  <radialGradient id="r" fx=".5" fy=".5">
+	<stop offset="0%" stop-color="red" stop-opacity=".1" />
+	<stop offset="80%" stop-color="red" stop-opacity=".2" />
+	<stop offset="100%" stop-color="red" stop-opacity="0" />
+  </radialGradient>
+  <radialGradient id="R" fx=".4" fy=".4">
+	<stop offset="0%" stop-color="#f77"/>
+	<stop offset="40%" stop-color="#f00"/>
+	<stop offset="80%" stop-color="#f00"/>
+	<stop offset="100%" stop-color="#e00"/>
+  </radialGradient>
+ </defs>
+ <g fill="url(#b)">
+	<circle cx="107" cy= "45" r="21"/>
+	<circle cx="107" cy= "55" r="21"/>
+	<circle cx="107" cy= "65" r="21"/>
+	<circle cx="107" cy= "75" r="21"/>
+	<circle cx="109" cy= "85" r="21"/>
+	<circle cx="115" cy= "91" r="21"/>
+	<circle cx="125" cy= "93" r="21"/>
+	<circle cx="135" cy= "93" r="21"/>
+	<circle cx="145" cy= "93" r="21"/>
+	<circle cx="155" cy= "93" r="21"/>
+	<circle cx="165" cy= "93" r="21"/>
+ </g>
+	<circle cx="175" cy= "93" r="20" fill="url(#B)"/>
+ <g fill="url(#r)">
+	<circle cx="93" cy= "155" r="21"/>
+	<circle cx="93" cy= "145" r="21"/>
+	<circle cx="93" cy= "135" r="21"/>
+	<circle cx="93" cy= "125" r="21"/>
+	<circle cx="91" cy= "115" r="21"/>
+	<circle cx="85" cy= "109" r="21"/>
+	<circle cx="75" cy= "107" r="21"/>
+	<circle cx="65" cy= "107" r="21"/>
+	<circle cx="55" cy= "107" r="21"/>
+	<circle cx="45" cy= "107" r="21"/>
+	<circle cx="35" cy= "107" r="21"/>
+ </g>
+	<circle cx="25" cy= "107" r="20" fill="url(#R)"/>
+ <g style="fill:#fff;stroke-width:2">
+	<rect x="37" y="3" width="160" height="28" rx="14" style="stroke:#eee;stroke-width:3"/>
+	<rect x="27" y="2" width="160" height="30" rx="14" style="stroke:#ddd"/>
+	<rect x="17" y="2" width="160" height="30" rx="14" style="stroke:#aaa"/>
+	<rect x= "7" y="2" width="160" height="30" rx="14" style="stroke:#000"/>
+ </g>
+</svg>
+

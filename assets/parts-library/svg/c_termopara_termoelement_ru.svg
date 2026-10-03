@@ -1,0 +1,9 @@
+<svg width="204mm" height="85mm" version="1.1" viewBox="0 0 204 85" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <defs><radialGradient id="a" cx="52" cy="43" r="6" gradientTransform="matrix(1 0 0 1-18-7)" gradientUnits="userSpaceOnUse"><stop stop-color="#ccc" offset="0"/><stop offset="1"/></radialGradient><linearGradient id="b" x1="32" x2="193" y1="53" y2="53" gradientTransform="translate(1-4)" gradientUnits="userSpaceOnUse"><stop stop-color="#080" offset="0"/><stop stop-color="#333" offset="1"/></linearGradient></defs>
+ <rect width="204" height="85" fill="#fff"/>
+ <g stroke-width="2"><path d="m194 83v-14m-7 7h14" stroke="#f00"/><path d="m187 6h14" stroke="#00f"/></g>
+<g font-family="Times" font-size="9px"><text x="82" y="8">Хромель</text><text x="82" y="74">Алюмель</text>
+ <g text-anchor="end"><text x="29" y="41">300 °C</text><text x="200" y="47">12,2 мВ</text><text x="200" y="36">0 °C</text></g></g>
+ <g fill="none" stroke="#000" stroke-width="4"><path d="m35 38 24-23h135"/><path d="m35 38 24 23h135" stroke="url(#b)"/></g>
+ <g fill="#fff" stroke="#000"><circle cx="194" cy="15" r="5"/><circle cx="194" cy="61" r="5"/></g>
+ <circle cx="35" cy="38" r="5" fill="url(#a)"/></svg>

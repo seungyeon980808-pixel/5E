@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="600" height="400" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <defs>
+  <radialGradient id="u" cx="159.33" cy="112.17" r="42.172" gradientTransform="matrix(.52538 0 0 .52538 -21.848 -31.03)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#fff" offset="0"/>
+   <stop stop-color="#a3ceeb" stop-opacity=".99608" offset="1"/>
+  </radialGradient>
+  <radialGradient id="g" cx="193.55" cy="584.45" r="11.463" gradientTransform="matrix(2.4282 -2.4281 -.093791 -.093791 -366.17 577.06)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#fff" stop-opacity=".99608" offset="0"/>
+   <stop stop-color="#b3b3b3" stop-opacity=".99608" offset="1"/>
+  </radialGradient>
+  <radialGradient id="w" cx="159.33" cy="112.17" r="42.172" gradientTransform="matrix(.52538 0 0 .52538 174.16 -11.46)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#fff" offset="0"/>
+   <stop stop-color="#f9c871" offset="1"/>
+  </radialGradient>
+  <linearGradient id="o" x1="175.72" x2="150.5" y1="914.03" y2="947.15" gradientTransform="matrix(-1,0,0,1,299.79,-828.25)" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#858585" offset="0"/>
+   <stop stop-color="#858585" stop-opacity=".22911" offset=".71879"/>
+   <stop stop-color="#858585" stop-opacity="0" offset="1"/>
+  </linearGradient>
+ </defs>
+ <use transform="translate(-4.3346 174.8)" xlink:href="#j"/>
+ <use transform="translate(495.68 36.69)" xlink:href="#a"/>
+ <use transform="rotate(77.981 290.26 363.19)" xlink:href="#b"/>
+ <circle id="j" cx="264.18" cy="58.5" r="20.578" fill="url(#w)"/>
+ <rect x="121.88" y="304.56" width="269.95" height="76.514" fill="#e2dfe8"/>
+ <g id="f">
+  <path d="m257.07 96.8 15.311 5.8378-15.485 5.3609c1.4251-1.6091 2.1557-3.579 2.1864-5.5616 0.0307-1.9825-0.63848-3.9776-2.013-5.6371z" fill="#f68712"/>
+  <path d="m254.75 192.36a45.751 45.751 0 0 1-35.384-47.127 45.751 45.751 0 0 1 40.408-42.897" fill="none" stroke="#f68712" stroke-linecap="round" stroke-width="2"/>
+ </g>
+ <g fill="none" stroke="#000" stroke-linecap="round">
+  <path d="m383.31 354.56h-255.07" stroke-width="2"/>
+  <path d="m161.39 168.6v151.65h18.612" marker-end=""/>
+  <path d="m378.56 168.6v171.43h-4.805" marker-end=""/>
+ </g>
+ <path d="m178.6 317.46 7.7 2.8-7.7 2.8c1.4-1.631 1.4-3.962 0-5.6z"/>
+ <path d="m375.16 342.86-7.7-2.8 7.7-2.8c-1.4 1.631-1.4 3.962 0 5.6z"/>
+ <g id="d">
+  <path d="m256.07 320.16h23.153" fill="none" marker-end="" stroke="#000" stroke-linecap="round" stroke-width="2"/>
+  <path d="m276.42 314.56 15.4 5.6-15.4 5.6c2.8-3.262 2.8-7.924 0-11.2z"/>
+ </g>
+ <use transform="translate(-2.28 204.73)" xlink:href="#a"/>
+ <use transform="rotate(-87.935 265.34 34.018)" xlink:href="#b"/>
+ <g id="c">
+  <circle id="a" cx="68.167" cy="38.93" r="20.578" fill="url(#u)"/>
+  <path id="b" d="m54.126 47.89c0.53946 0.5473 0.88319 1.2573 0.9778 2.02l-15.958 15.958-2.9978-2.9978 15.97-15.97c0.7598 0.10054 1.4654 0.44849 2.0077 0.99005z" fill="url(#g)"/>
+  <use transform="translate(5.089,5.08)" xlink:href="#b"/>
+  <use transform="translate(-33.537 33.54)" xlink:href="#a"/>
+ </g>
+ <use transform="translate(427.37 195.8)" xlink:href="#c"/>
+ <use transform="rotate(11.573 242.17 2251.3)" xlink:href="#c"/>
+ <use transform="translate(224.28 228.47)" xlink:href="#a"/>
+ <path d="m468.92 102.67a45.751 45.751 0 0 0-35.384 47.127 45.751 45.751 0 0 0 40.408 42.897" fill="none" stroke="#293d9b" stroke-linecap="round" stroke-width="2"/>
+ <path d="m471.23 198.26 15.311-5.8378-15.485-5.3608c1.4251 1.6091 2.1557 3.579 2.1864 5.5615s-0.63848 3.9776-2.013 5.6371z" fill="#293d9b"/>
+ <use transform="rotate(180 268.19 150.89)" xlink:href="#h"/>
+ <g id="h">
+  <rect x="122.66" y="131.31" width="77.452" height="37.285" fill="#e2dfe8"/>
+  <g id="i">
+   <path id="e" d="m89.487 54.87 18.785 2.3261-4.8301 3.6485c5.3306 2.5846 10.558 5.489 15.602 8.8027 5.9496 3.9143 11.669 8.3807 16.877 13.617 5.225 5.2015 9.9837 11.173 13.777 18.002 3.7938 6.8072 6.6333 14.492 7.8691 22.717l-22.039 1.1739c0.51739-5.4894-0.0743-11.308-1.6894-17.102-1.5923-5.7947-4.2236-11.541-7.6035-17.008-3.3511-5.4948-7.4735-10.692-12.055-15.561-3.8594-4.0965-8.0786-7.9391-12.52-11.57l-0.73437 6.0352z" fill="url(#o)"/>
+   <use transform="rotate(81.835 52.62 148.34)" xlink:href="#e"/>
+  </g>
+  <use transform="matrix(-1 0 0 1 322.78 0)" xlink:href="#i"/>
+ </g>
+ <use transform="rotate(180,265.05,147.79)" xlink:href="#f"/>
+ <use transform="translate(0,19.9)" xlink:href="#d"/>
+ <use transform="translate(0,48.5)" xlink:href="#d"/>
+ <g font-family="'Liberation Sans'" font-weight="bold">
+  <g font-size="17">
+   <g>
+    <g text-anchor="end">
+     <text x="251.53113" y="326.28387"><tspan x="251.53113" y="326.28387">ClO + O</tspan></text>
+     <text x="251.82166" y="374.37396"><tspan x="251.82166" y="374.37396">O + O₃</tspan></text>
+     <text x="251.82166" y="345.92487"><tspan x="251.82166" y="345.92487">Cl + O₃</tspan></text>
+    </g>
+    <g>
+     <text x="295.37805" y="326.10126"><tspan x="295.37805" y="326.10126">Cl + O₂</tspan></text>
+     <text x="295.48596" y="374.37396"><tspan x="295.48596" y="374.37396">2O₂</tspan></text>
+     <text x="295.37805" y="345.92487"><tspan x="295.37805" y="345.92487">ClO + O₂</tspan></text>
+    </g>
+   </g>
+   <g text-anchor="middle">
+    <g>
+     <text x="158.17448" y="148.388"><tspan x="158.17448" y="148.388">ClO + O</tspan></text>
+     <text x="376.00742" y="148.388"><tspan x="376.00742" y="148.388">Cl + O₃</tspan></text>
+    </g>
+    <switch transform="translate(265 137)" fill="#f68712">
+     <text systemLanguage="de"><tspan x="0" y="0">Chlor-</tspan><tspan x="0" y="17">Katalyse-</tspan><tspan x="0" y="34">Zyklus</tspan></text>
+     <text systemLanguage="en"><tspan x="0" y="0">Chlorine</tspan><tspan x="0" y="17">catalytic</tspan><tspan x="0" y="34">cycle</tspan></text>
+     <text><tspan x="0" y="0">Chlorine</tspan><tspan x="0" y="17">catalytic</tspan><tspan x="0" y="34">cycle</tspan></text>
+    </switch>
+    <g fill="#293d9b">
+     <text x="536.64044" y="244.85321"><tspan x="536.64044" y="244.85321" fill="#293d9b">O₂</tspan></text>
+     <text x="72.82383" y="93.156311"><tspan x="72.82383" y="93.156311" fill="#293d9b">O₂</tspan></text>
+     <text x="93.37114" y="274.49554"><tspan x="93.37114" y="274.49554" fill="#293d9b">O</tspan></text>
+     <text x="250.35509" y="280.10907"><tspan x="250.35509" y="280.10907" fill="#293d9b">ClO</tspan></text>
+     <text x="264.43341" y="25.873903"><tspan x="264.43341" y="25.873903" fill="#293d9b">Cl</tspan></text>
+     <text x="539.18774" y="108.2934"><tspan x="539.18774" y="108.2934" fill="#293d9b">O₃</tspan></text>
+     <switch transform="translate(494 145)">
+      <text systemLanguage="de"><tspan x="0" y="0">Ozon-</tspan><tspan x="0" y="17">abbau</tspan></text>
+      <text systemLanguage="en"><tspan x="0" y="0">Ozone</tspan><tspan x="0" y="17">destruction</tspan></text>
+      <text><tspan x="0" y="0">Ozone</tspan><tspan x="0" y="17">destruction</tspan></text>
+     </switch>
+    </g>
+   </g>
+   <switch transform="translate(184 374)" fill="#000000" text-anchor="end">
+    <text systemLanguage="de"><tspan x="0" y="0">Netto:</tspan></text>
+    <text systemLanguage="en"><tspan x="0" y="0">NET:</tspan></text>
+    <text><tspan x="0" y="0">NET:</tspan></text>
+   </switch>
+   <g font-size="13px" text-anchor="middle">
+    <switch transform="translate(162 164)">
+     <text systemLanguage="de"><tspan x="0" y="0">Reaktion</tspan></text>
+     <text systemLanguage="en"><tspan x="0" y="0">REACTION</tspan></text>
+     <text><tspan x="0" y="0">REACTION</tspan></text>
+    </switch>
+    <switch transform="translate(376 164)">
+     <text systemLanguage="de"><tspan x="0" y="0">Reaktion</tspan></text>
+     <text systemLanguage="en"><tspan x="0" y="0">REACTION</tspan></text>
+     <text><tspan x="0" y="0">REACTION</tspan></text>
+    </switch>
+   </g>
+  </g>
+ </g>
+</svg>

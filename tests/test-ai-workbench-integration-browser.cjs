@@ -251,7 +251,14 @@ for (const engine of ['chromium','webkit']) {
     await page.selectOption(`${active} [data-ai-model]`,'catalog-sol');
     await page.selectOption(`${active} [data-ai-effort]`,'ultra');
     await page.selectOption(`${active} [data-ai-model]`,'catalog-luna');
-    assert.equal(await page.locator(`${active} [data-ai-effort]`).inputValue(),'ultra','unsupported saved effort stays visible');
+    assert.equal(await page.locator(`${active} [data-ai-effort]`).inputValue(),'medium','an explicit model switch chooses its supported default effort');
+    assert.equal(await page.locator(`${active} [data-ai-model-warning]`).isVisible(),false);
+    // Simulate an obsolete persisted preference without an explicit model switch.
+    await page.locator(`${active} [data-ai-effort]`).evaluate(select => {
+      select.add(new Option('ultra · 사용할 수 없음', 'ultra'));
+      select.value = 'ultra';
+      select.dispatchEvent(new Event('change', { bubbles: true }));
+    });
     assert.match(await page.locator(`${active} [data-ai-model-warning]`).textContent(),/ultra/);
     await page.click(`${active} [data-ai-comments-apply]`);
     await page.waitForFunction(()=>document.querySelector('#ai-image-panel').dataset.aiBusy==='false');

@@ -1,0 +1,28 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN" "http://www.w3.org/TR/2001/REC-SVG-20010904/DTD/svg10.dtd">
+<svg width="680" height="280" viewBox="0 0 680 280" xmlns="http://www.w3.org/2000/svg">
+<title>Brunnian link (six loops).</title>
+<g transform="translate(-4,284)scale(1,-1)" fill="none" stroke-width="8" stroke="rgb(0,0,0)">
+<rect x="16" y="32" width="656" height="240"/>
+<rect stroke-width="4" stroke="rgb(0,0,255)" x="16" y="32" width="656" height="240"/>
+<rect x="32" y="64" width="624" height="192"/>
+<rect stroke-width="4" stroke="rgb(0,153,0)" x="32" y="64" width="624" height="192"/>
+<rect x="48" y="96" width="592" height="144"/>
+<rect stroke-width="4" stroke="rgb(255,153,0)" x="48" y="96" width="592" height="144"/>
+<rect x="64" y="128" width="560" height="96"/>
+<rect stroke-width="4" stroke="rgb(204,0,0)" x="64" y="128" width="560" height="96"/>
+<rect x="80" y="160" width="528" height="48"/>
+<rect stroke-width="4" stroke="rgb(230,0,191)" x="80" y="160" width="528" height="48"/>
+<path d="M96,16H112V80H128V16H144V112H160V16H176V80H192V16H208V144H224V16H240V80H256V16H272V112H288V16H304V80H320V16H336V176H352V16H368V80H384V16H400V112H416V16H432V80H448V16H464V144H480V16H496V80H512V16H528V112H544V16H560V80H576V16H592V192H96V16Z"/>
+<path stroke-width="4" stroke="rgb(243,243,0)" d="M96,16H112V80H128V16H144V112H160V16H176V80H192V16H208V144H224V16H240V80H256V16H272V112H288V16H304V80H320V16H336V176H352V16H368V80H384V16H400V112H416V16H432V80H448V16H464V144H480V16H496V80H512V16H528V112H544V16H560V80H576V16H592V192H96V16Z"/>
+<path d="M104,32H136 M168,32H200 M232,32H264 M296,32H328 M360,32H392 M424,32H456 M488,32H520 M552,32H584"/>
+<path stroke-width="4" stroke="rgb(0,0,255)" d="M104,32H136 M168,32H200 M232,32H264 M296,32H328 M360,32H392 M424,32H456 M488,32H520 M552,32H584"/>
+<path d="M120,64H184 M248,64H312 M376,64H440 M504,64H568"/>
+<path stroke-width="4" stroke="rgb(0,153,0)" d="M120,64H184 M248,64H312 M376,64H440 M504,64H568"/>
+<path d="M152,96H280 M408,96H536"/>
+<path stroke-width="4" stroke="rgb(255,153,0)" d="M152,96H280 M408,96H536"/>
+<path d="M216,128H472"/>
+<path stroke-width="4" stroke="rgb(204,0,0)" d="M216,128H472"/>
+<path d="M344,160H600"/>
+<path stroke-width="4" stroke="rgb(230,0,190)" d="M344,160H600"/>
+</g></svg>

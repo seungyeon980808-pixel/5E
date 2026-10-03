@@ -146,7 +146,7 @@ test("packaged smoke accepts the legacy empty primary scope without weakening se
   const { createSmokeFixtureTurn, isValidSmokeFixtureRequest } = loadMainTestSeam();
   assert.equal(typeof isValidSmokeFixtureRequest, "function", "main process exposes the smoke request validation seam");
 
-  const expectedUrl = pathToFileURL(path.join(__dirname, "..", "preview", "index.html")).href;
+  const expectedUrl = pathToFileURL(path.join(__dirname, "..", "index.html")).href;
   const mainFrame = { url: expectedUrl };
   const webContents = { mainFrame };
   const expectedWindow = { isDestroyed: () => false, webContents };
@@ -191,7 +191,7 @@ test("packaged smoke follows the current source, library, state, and platform sh
   assert.match(mainSource, /document\.querySelector\("\[data-unilib-query\]"\)/);
   assert.doesNotMatch(mainSource, /\.ai-file-button input\[type=file\]/);
   assert.doesNotMatch(mainSource, /document\.querySelector\("\.ai-reference-search-dialog"\)/);
-  assert.match(mainSource, /import\("\.\/js\/state\.js\?v=1\.6\.0-preview-labeler-0917-1111"\)/);
+  assert.match(mainSource, /import\("\.\/js\/state\.js\?v=1\.6\.0-remediation-0929"\)/);
   assert.doesNotMatch(mainSource, /ctrlKey: true, metaKey: true/);
   assert.match(mainSource, /navigator\.userAgentData\?\.platform \|\| navigator\.platform/);
   assert.match(mainSource, /\.\.\.shortcutModifiersForPlatform\(shortcutPlatform\)/);

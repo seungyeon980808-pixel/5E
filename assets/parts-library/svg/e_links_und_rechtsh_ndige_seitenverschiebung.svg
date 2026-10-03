@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   version="1.0"
+   width="734.14288"
+   height="335.99216"
+   id="svg2">
+  <defs
+     id="defs4" />
+  <g
+     style="display:inline"
+     id="layer2" />
+  <g
+     id="layer3">
+    <text
+       x="146.3839"
+       y="46.063442"
+       style="font-size:24px;font-style:normal;font-weight:normal;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;font-family:Arial"
+       id="text3222"
+       xml:space="preserve"><tspan
+         x="146.3839"
+         y="46.063442"
+         id="tspan3224">Linkshändige</tspan><tspan
+         x="146.3839"
+         y="76.063438"
+         id="tspan3226">Seitenverschiebung</tspan></text>
+    <text
+       x="578.38531"
+       y="45.309471"
+       style="font-size:24px;font-style:normal;font-weight:normal;text-align:center;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;font-family:Arial"
+       id="text3228"
+       xml:space="preserve"><tspan
+         x="578.38531"
+         y="45.309471"
+         id="tspan3230">Rechtshändige</tspan><tspan
+         x="578.38531"
+         y="75.309471"
+         id="tspan3232">Seitenverschiebung</tspan></text>
+    <text
+       x="185.48997"
+       y="316.27087"
+       style="font-size:18px;font-style:italic;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;display:inline;font-family:Arial"
+       id="text5195"
+       xml:space="preserve"><tspan
+         x="185.48997"
+         y="316.27087"
+         id="tspan5199">Ansicht von oben auf die Erdoberfläche</tspan></text>
+  </g>
+  <g
+     transform="translate(-7.2142987,-6.6478992)"
+     id="layer1">
+    <rect
+       width="715.33813"
+       height="315.21844"
+       x="9.9352522"
+       y="9.9352522"
+       transform="translate(7.2142987,6.6478992)"
+       style="opacity:1;color:#000000;fill:none;fill-opacity:0;fill-rule:evenodd;stroke:#000000;stroke-width:5;stroke-linecap:butt;stroke-linejoin:miter;marker:none;marker-start:none;marker-mid:none;marker-end:none;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
+       id="rect2238" />
+    <rect
+       width="213.15631"
+       height="72.256378"
+       x="43.407238"
+       y="101.48439"
+       style="opacity:1;color:#000000;fill:none;fill-opacity:0;fill-rule:evenodd;stroke:#000000;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;marker:none;marker-start:none;marker-mid:none;marker-end:none;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
+       id="rect3214" />
+    <rect
+       width="213.15631"
+       height="72.256378"
+       x="72.309799"
+       y="173.74077"
+       style="opacity:1;color:#000000;fill:none;fill-opacity:0;fill-rule:evenodd;stroke:#000000;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;marker:none;marker-start:none;marker-mid:none;marker-end:none;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
+       id="rect3216" />
+    <rect
+       width="213.15631"
+       height="72.256378"
+       x="461.591"
+       y="173.74078"
+       style="opacity:1;color:#000000;fill:none;fill-opacity:0;fill-rule:evenodd;stroke:#000000;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;marker:none;marker-start:none;marker-mid:none;marker-end:none;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
+       id="rect3218" />
+    <rect
+       width="213.15631"
+       height="72.256378"
+       x="489.59036"
+       y="100.58119"
+       style="opacity:1;color:#000000;fill:none;fill-opacity:0;fill-rule:evenodd;stroke:#000000;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;marker:none;marker-start:none;marker-mid:none;marker-end:none;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
+       id="rect3220" />
+    <path
+       d="M 575.15848,159.56116 L 661.00509,159.56116 C 648.23185,148.49388 646.31586,144.02324 646.31586,144.02324"
+       style="fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;display:inline"
+       id="path5183" />
+    <path
+       d="M 660.5324,187.92039 L 574.6858,187.92039 C 587.45904,198.98767 589.37502,203.45831 589.37502,203.45831"
+       style="fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;display:inline"
+       id="path5185" />
+    <path
+       d="M 170.7591,160.1927 L 84.912491,160.1927 C 97.685734,149.12542 99.60172,144.65478 99.60172,144.65478"
+       style="fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;display:inline"
+       id="path3234" />
+    <path
+       d="M 85.385183,188.55193 L 171.23178,188.55193 C 158.45854,199.61921 156.54256,204.08985 156.54256,204.08985"
+       style="fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1;display:inline"
+       id="path5181" />
+  </g>
+</svg>

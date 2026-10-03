@@ -1,0 +1,1322 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   version="1.0"
+   width="400"
+   height="300"
+   id="svg2">
+  <defs
+     id="defs4">
+ 
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+ <style
+   type="text/css"
+   id="style49" />
+
+  <font
+   font-weight="400"
+   font-style="normal"
+   style="fill-rule:nonzero"
+   font-variant="normal"
+   id="FontID0">
+	<font-face
+   id="font-face7"
+   font-family="Arial">
+	</font-face>
+
+   <missing-glyph
+   id="missing-glyph9">
+  <path
+     id="path11"
+     d="M0 0z" />
+</missing-glyph>
+
+   <glyph
+   id="glyph13"
+   horiz-adv-x="584"
+   unicode="+">
+  <path
+     id="path15"
+     d="M250.497 115.667l0 196.342 -194.828 0 0 82.0006 194.828 0 0 194.828 82.9942 0 0 -194.828 194.852 0 0 -82.0006 -194.852 0 0 -196.342 -82.9942 0z" />
+</glyph>
+
+   <glyph
+   id="glyph17"
+   horiz-adv-x="556"
+   unicode="2">
+  <path
+     id="path19"
+     d="M503.501 84.5084l0 -84.5084 -473.171 0c-0.66244,21.1744 2.67342,41.4971 10.1732,60.9918 11.9949,32.3413 31.3239,64.0201 57.8215,95.344 26.6869,31.1583 65.0137,67.3323 115.004,108.333 77.8367,63.8308 130.501,114.342 157.826,151.675 27.3493,37.1676 41.0003,72.4898 41.0003,105.659 0,34.8254 -12.4917,64.162 -37.3332,88.1755 -24.9834,23.8242 -57.4903,35.8191 -97.4969,35.8191 -42.3252,0 -76.1569,-12.6573 -101.495,-38.1613 -25.5039,-25.3383 -38.3269,-60.4949 -38.6581,-105.328l-90.3284 9.15586c6.15123,67.4979 29.4786,118.837 69.8164,154.159 40.3378,35.3459 94.6816,53.0188 162.676,53.0188 68.6571,0 123.001,-19.1634 163.007,-57.1827 40.1486,-38.1613 60.1637,-85.3364 60.1637,-141.667 0,-28.6505 -5.84366,-56.8279 -17.6729,-84.4847 -11.6637,-27.6805 -31.1583,-56.8515 -58.342,-87.3474 -27.16,-30.6615 -72.3242,-72.6554 -135.493,-125.982 -52.664,-44.3361 -86.4957,-74.3352 -101.495,-90.1864 -14.9995,-15.662 -27.3493,-31.4895 -37.1676,-47.4827l351.164 0z" />
+</glyph>
+
+   <glyph
+   id="glyph21"
+   horiz-adv-x="556"
+   unicode="1">
+  <path
+     id="path23"
+     d="M372.504 0l-87.8442 0 0 559.998c-21.1508,-20.1571 -48.8313,-40.3378 -83.1598,-60.4949 -34.4942,-20.1808 -65.3449,-35.3459 -92.6706,-45.3298l0 84.8159c49.1625,23.1854 92.1737,51.1735 129.01,84.0115 36.6708,33.0037 62.8371,64.8245 78.1679,95.8408l56.4966 0 0 -718.842z" />
+</glyph>
+
+   <glyph
+   id="glyph25"
+   horiz-adv-x="722"
+   unicode="H">
+  <path
+     id="path27"
+     d="M79.9896 0l0 715.837 94.8472 0 0 -294.005 372.007 0 0 294.005 94.8235 0 0 -715.837 -94.8235 0 0 337.324 -372.007 0 0 -337.324 -94.8472 0z" />
+</glyph>
+
+   <glyph
+   id="glyph29"
+   horiz-adv-x="777"
+   unicode="O">
+  <path
+     id="path31"
+     d="M48.3344 348.656c0,118.837 31.8208,211.839 95.6752,279.005 63.8308,67.1667 146.163,100.833 247.161,100.833 66.0074,0 125.674,-15.8276 178.669,-47.3171 52.9952,-31.6788 93.4986,-75.6837 121.321,-132.18 27.8461,-56.331 41.6627,-120.493 41.6627,-191.989 0,-72.6791 -14.479,-137.669 -43.8157,-194.852 -29.3366,-57.3247 -70.8337,-100.667 -124.515,-130.146 -53.8232,-29.5022 -111.668,-44.1705 -173.819,-44.1705 -67.4979,0 -127.685,16.1588 -180.68,48.8313 -53.1608,32.5069 -93.333,76.985 -120.659,133.34 -27.3256,56.1654 -41.0003,115.832 -41.0003,178.646zm97.6625 -1.49049c0,-86.3301 23.1617,-154.159 69.5088,-203.842 46.4891,-49.6593 104.665,-74.5008 174.671,-74.5008 71.3306,0 129.98,25.0071 175.996,75.1869 45.9922,50.1561 69.154,121.321 69.154,213.495 0,58.1527 -9.98391,108.995 -29.6678,152.503 -19.6603,43.4844 -48.5,77.1506 -86.3301,101.164 -37.9956,23.8242 -80.4864,35.8191 -127.662,35.8191 -67.1667,0 -124.823,-22.9961 -173.157,-69.154 -48.3344,-45.9922 -72.5135,-123.001 -72.5135,-230.671z" />
+</glyph>
+
+   <glyph
+   id="glyph33"
+   horiz-adv-x="556"
+   unicode="a">
+  <path
+     id="path35"
+     d="M404.325 63.9964c-32.6488,-27.6569 -63.9964,-47.1515 -93.9955,-58.6732 -30.1647,-11.3325 -62.5059,-16.9868 -97.0001,-16.9868 -56.9935,0 -100.667,13.8403 -131.329,41.6627 -30.4959,27.8225 -45.8266,63.4996 -45.8266,106.676 0,25.4803 5.6544,48.6657 17.3181,69.6508 11.4981,21.0088 26.6632,37.83 45.3298,50.511 18.8559,12.6573 39.841,22.3337 63.334,28.8398 17.1761,4.49513 43.1769,8.99025 78.0023,13.1542 70.9993,8.49342 123.332,18.501 156.833,30.3303 0.33122,11.9949 0.520488,19.6603 0.520488,22.8305 0,35.8427 -8.35147,61.181 -25.0071,75.6837 -22.3337,19.9915 -55.8342,29.8334 -100.005,29.8334 -41.3315,0 -71.8274,-7.16854 -91.6769,-21.6712 -19.6603,-14.5027 -34.163,-40.1722 -43.65,-77.0086l-85.8333 11.8293c7.83098,36.6708 20.6539,66.5042 38.4925,89.0035 17.8386,22.6649 43.8393,40.1722 77.6711,52.3327 33.8317,12.1605 72.9867,18.3354 117.654,18.3354 44.3361,0 80.1789,-5.32318 107.836,-15.662 27.6805,-10.5044 48.0032,-23.4929 61.181,-39.3442 12.9885,-15.8276 22.0025,-35.6534 27.3256,-59.8325 2.83903,-14.9995 4.32952,-41.9939 4.32952,-80.9832l0 -117.181c0,-81.835 1.84537,-133.505 5.67805,-154.987 3.66708,-21.6712 11.1668,-42.5144 22.1681,-62.3403l-91.8425 0c-8.99025,18.1698 -14.9995,39.5098 -17.5073,63.9964zm-7.33415 196.342c-31.9864,-13.1778 -79.824,-24.179 -143.489,-33.3349 -36.1739,-5.18122 -61.8435,-11.0012 -76.6774,-17.5073 -14.9995,-6.5061 -26.6632,-15.9932 -34.6598,-28.6742 -8.1622,-12.4917 -12.3261,-26.332 -12.3261,-41.6627 0,-23.4929 8.99025,-42.9876 26.6632,-58.6496 17.6729,-15.52 43.6737,-23.351 77.8367,-23.351 33.8317,0 63.9964,7.33415 90.3284,22.1681 26.332,14.8339 45.8266,35.1803 58.1764,60.8498 9.48708,19.8259 14.1478,49.1625 14.1478,87.8206l0 32.3413z" />
+</glyph>
+
+   <glyph
+   id="glyph37"
+   horiz-adv-x="556"
+   unicode="d">
+  <path
+     id="path39"
+     d="M402.337 0l0 65.5106c-32.8381,-51.5047 -81.1725,-77.1742 -145.003,-77.1742 -41.3315,0 -79.3272,11.3325 -114.011,34.163 -34.6598,22.6649 -61.4886,54.5093 -80.652,95.5096 -18.9978,40.8347 -28.5086,87.655 -28.5086,140.816 0,51.6703 8.65903,98.6799 25.8351,140.839 17.3417,42.1596 43.1769,74.5008 77.6711,96.8345 34.4942,22.4993 73.1759,33.8317 115.832,33.8317 31.1583,0 59.0044,-6.67171 83.3254,-19.8259 24.5103,-13.1778 44.3361,-30.3303 59.6669,-51.5047l0 256.837 87.3474 0 0 -715.837 -81.5037 0zm-277.846 258.825c0,-66.4806 14.0059,-116.164 42.0176,-149.002 27.9881,-32.8144 60.9918,-49.3281 99.153,-49.3281 38.3269,0 70.9993,15.8276 97.8281,47.1752 26.8525,31.3239 40.3378,79.3272 40.3378,143.82 0,70.9993 -13.651,123.001 -41.0003,156.17 -27.3256,33.3349 -60.9918,49.8486 -101.164,49.8486 -38.9893,0 -71.6618,-16.0168 -97.8281,-47.8376 -26.1664,-31.8444 -39.3442,-82.1662 -39.3442,-150.847z" />
+</glyph>
+
+   <glyph
+   id="glyph41"
+   horiz-adv-x="500"
+   unicode="c">
+  <path
+     id="path43"
+     d="M404.325 190.002l86.3301 -11.3325c-9.32147,-59.5013 -33.4769,-106.18 -72.4898,-139.846 -38.8237,-33.6661 -86.6613,-50.4874 -143.324,-50.4874 -70.8337,0 -128.016,23.1617 -171.004,69.4852 -43.1769,46.3471 -64.8481,112.851 -64.8481,199.513 0,55.9998 9.34513,104.997 27.8461,146.991 18.6666,42.0176 46.8203,73.5071 84.8396,94.5159 37.83,20.9851 79.1615,31.4895 123.663,31.4895 56.331,0 102.489,-14.3371 138.166,-42.822 35.8191,-28.5086 58.8388,-68.8464 68.9884,-121.345l-85.502 -13.1542c-8.1622,34.8254 -22.4993,60.9918 -43.1532,78.6647 -20.6776,17.4837 -45.661,26.332 -74.9976,26.332 -44.3361,0 -80.3445,-15.8276 -108.001,-47.672 -27.6805,-31.6788 -41.4971,-81.835 -41.4971,-150.492 0,-69.6745 13.3198,-120.351 40.1486,-152.006 26.6869,-31.5132 61.5123,-47.3408 104.5,-47.3408 34.5178,0 63.1684,10.67 86.3537,31.8444 23.1617,21.1508 37.83,53.6576 43.9813,97.6625z" />
+</glyph>
+
+   <glyph
+   id="glyph45"
+   horiz-adv-x="556"
+   unicode="b">
+  <path
+     id="path47"
+     d="M146.991 0l-81.4801 0 0 715.837 87.8206 0 0 -255.347c37.1676,46.5127 84.5084,69.8401 141.999,69.8401 32.01,0 62.1747,-6.5061 90.6596,-19.329 28.5086,-12.8229 51.8359,-30.9927 70.3369,-54.1781 18.3354,-23.3273 32.8381,-51.3154 43.1769,-84.3191 10.5044,-32.8381 15.662,-67.9947 15.662,-105.328 0,-89.0035 -22.0025,-157.684 -66.0074,-206.184 -43.8157,-48.5 -96.6689,-72.6554 -158.157,-72.6554 -61.1574,0 -109.161,25.5039 -144.01,76.6537l0 -64.9901zm-0.99366 263.178c0,-62.1747 8.49342,-107.008 25.3383,-134.688 27.6569,-45.3298 65.1557,-67.9947 112.331,-67.9947 38.4925,0 71.6618,16.6793 99.6735,50.1798 27.9881,33.3349 41.9939,82.9942 41.9939,149.167 0,67.6635 -13.509,117.654 -40.3378,149.83 -26.8288,32.152 -59.3357,48.3344 -97.3313,48.3344 -38.4925,0 -71.6618,-16.6793 -99.6735,-50.0142 -27.9881,-33.3349 -41.9939,-81.6693 -41.9939,-144.814z" />
+</glyph>
+
+  </font>
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</defs>
+  <g
+     transform="translate(-55.46203,-47.44216)"
+     id="layer1">
+    <line
+       class="fil0 str0"
+       x1="72.467773"
+       y1="116.77321"
+       x2="72.467773"
+       y2="136.70978"
+       id="line53"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="75.974136"
+       y1="119.07732"
+       x2="75.974136"
+       y2="134.40567"
+       id="line55"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="72.467773"
+       y1="136.70978"
+       x2="89.599091"
+       y2="146.62814"
+       id="line57"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="89.599091"
+       y1="146.62814"
+       x2="106.83081"
+       y2="136.70978"
+       id="line59"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="106.83081"
+       y1="136.70978"
+       x2="106.83081"
+       y2="116.77321"
+       id="line61"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="106.83081"
+       y1="116.77321"
+       x2="89.599091"
+       y2="106.85483"
+       id="line63"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="103.02382"
+       y1="118.57644"
+       x2="89.799614"
+       y2="110.96246"
+       id="line65"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="89.599091"
+       y1="106.85483"
+       x2="72.467773"
+       y2="116.77321"
+       id="line67"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <text
+       x="84.990593"
+       y="91.726982"
+       style="font-size:12.02195835px;font-weight:normal;fill:#131516;fill-rule:evenodd;font-family:Arial"
+       id="text69">O</text>
+    <line
+       class="fil0 str0"
+       x1="89.599091"
+       y1="106.85483"
+       x2="89.599091"
+       y2="93.129471"
+       id="line71"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <text
+       x="95.109207"
+       y="168.46806"
+       style="font-size:12.02195835px;font-weight:normal;fill:#131516;fill-rule:evenodd;font-family:Arial"
+       id="text73">H</text>
+    <line
+       class="fil0 str0"
+       x1="89.599091"
+       y1="146.62814"
+       x2="96.011108"
+       y2="157.74849"
+       id="line75"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <text
+       x="75.272751"
+       y="168.46806"
+       style="font-size:12.02195835px;font-weight:normal;fill:#131516;fill-rule:evenodd;font-family:Arial"
+       id="text77">H</text>
+    <line
+       class="fil0 str0"
+       x1="89.599091"
+       y1="146.62814"
+       x2="82.987129"
+       y2="157.74849"
+       id="line79"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="95.509956"
+       y1="83.311493"
+       x2="106.63058"
+       y2="76.999878"
+       id="line81"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="190.08405"
+       y1="110.36118"
+       x2="190.08405"
+       y2="130.29805"
+       id="line83"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="193.59039"
+       y1="112.66557"
+       x2="193.59039"
+       y2="127.99366"
+       id="line85"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="190.08405"
+       y1="130.29805"
+       x2="207.21565"
+       y2="140.21613"
+       id="line87"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="207.21565"
+       y1="140.21613"
+       x2="224.44737"
+       y2="130.29805"
+       id="line89"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="224.44737"
+       y1="130.29805"
+       x2="224.44737"
+       y2="110.36118"
+       id="line91"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="220.94072"
+       y1="127.99366"
+       x2="220.94072"
+       y2="112.66557"
+       id="line93"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="224.44737"
+       y1="110.36118"
+       x2="207.21565"
+       y2="100.4431"
+       id="line95"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="207.21565"
+       y1="100.4431"
+       x2="190.08405"
+       y2="110.36118"
+       id="line97"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <text
+       x="202.60715"
+       y="85.315247"
+       style="font-size:12.02195835px;font-weight:normal;fill:#131516;fill-rule:evenodd;font-family:Arial"
+       id="text99">O</text>
+    <line
+       class="fil0 str0"
+       x1="207.21565"
+       y1="100.4431"
+       x2="207.21565"
+       y2="86.717743"
+       id="line101"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <text
+       x="212.72577"
+       y="162.05635"
+       style="font-size:12.02195835px;font-weight:normal;fill:#131516;fill-rule:evenodd;font-family:Arial"
+       id="text103">H</text>
+    <line
+       class="fil0 str0"
+       x1="207.21565"
+       y1="140.21613"
+       x2="213.62737"
+       y2="151.33676"
+       id="line105"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <text
+       x="192.8893"
+       y="162.05635"
+       style="font-size:12.02195835px;font-weight:normal;fill:#131516;fill-rule:evenodd;font-family:Arial"
+       id="text107">H</text>
+    <line
+       class="fil0 str0"
+       x1="207.21565"
+       y1="140.21613"
+       x2="200.60341"
+       y2="151.33676"
+       id="line109"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="212.72577"
+       y1="74.695778"
+       x2="221.14122"
+       y2="66.48053"
+       id="line111"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="306.39822"
+       y1="112.16471"
+       x2="306.39822"
+       y2="132.10129"
+       id="line113"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="306.39822"
+       y1="132.10129"
+       x2="323.52896"
+       y2="142.01965"
+       id="line115"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="323.52896"
+       y1="142.01965"
+       x2="340.76212"
+       y2="132.10129"
+       id="line117"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="340.76212"
+       y1="132.10129"
+       x2="340.76212"
+       y2="112.16471"
+       id="line119"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="337.25516"
+       y1="129.79718"
+       x2="337.25516"
+       y2="114.46882"
+       id="line121"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="340.76212"
+       y1="112.16471"
+       x2="323.52896"
+       y2="102.24634"
+       id="line123"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="323.52896"
+       y1="102.24634"
+       x2="306.39822"
+       y2="112.16471"
+       id="line125"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="323.32986"
+       y1="106.45408"
+       x2="310.20663"
+       y2="113.96794"
+       id="line127"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <text
+       x="318.92133"
+       y="87.118492"
+       style="font-size:12.02195835px;font-weight:normal;fill:#131516;fill-rule:evenodd;font-family:Arial"
+       id="text129">O</text>
+    <line
+       class="fil0 str0"
+       x1="323.52896"
+       y1="102.24634"
+       x2="323.52896"
+       y2="88.520973"
+       id="line131"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <text
+       x="329.04105"
+       y="163.85957"
+       style="font-size:12.02195835px;font-weight:normal;fill:#131516;fill-rule:evenodd;font-family:Arial"
+       id="text133">H</text>
+    <line
+       class="fil0 str0"
+       x1="323.52896"
+       y1="142.01965"
+       x2="329.94269"
+       y2="153.14"
+       id="line135"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <text
+       x="309.20264"
+       y="163.85957"
+       style="font-size:12.02195835px;font-weight:normal;fill:#131516;fill-rule:evenodd;font-family:Arial"
+       id="text137">H</text>
+    <line
+       class="fil0 str0"
+       x1="323.52896"
+       y1="142.01965"
+       x2="316.91901"
+       y2="153.14"
+       id="line139"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="329.04105"
+       y1="76.499023"
+       x2="337.45428"
+       y2="68.283768"
+       id="line141"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="410.69016"
+       y1="112.16471"
+       x2="410.69016"
+       y2="132.10129"
+       id="line143"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="414.19711"
+       y1="114.46882"
+       x2="414.19711"
+       y2="129.79718"
+       id="line145"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="410.69016"
+       y1="132.10129"
+       x2="427.82092"
+       y2="142.01965"
+       id="line147"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="427.82092"
+       y1="142.01965"
+       x2="445.05408"
+       y2="132.10129"
+       id="line149"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="445.05408"
+       y1="132.10129"
+       x2="445.05408"
+       y2="112.16471"
+       id="line151"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="441.54715"
+       y1="129.79718"
+       x2="441.54715"
+       y2="114.46882"
+       id="line153"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="445.05408"
+       y1="112.16471"
+       x2="427.82092"
+       y2="102.24634"
+       id="line155"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="427.82092"
+       y1="102.24634"
+       x2="410.69016"
+       y2="112.16471"
+       id="line157"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <text
+       x="423.21329"
+       y="87.118492"
+       style="font-size:12.02195835px;font-weight:normal;fill:#131516;fill-rule:evenodd;font-family:Arial"
+       id="text159">O</text>
+    <line
+       class="fil0 str0"
+       x1="427.82092"
+       y1="102.24634"
+       x2="427.82092"
+       y2="88.520973"
+       id="line161"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="431.32785"
+       y1="99.94223"
+       x2="431.32785"
+       y2="88.520973"
+       id="line163"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <text
+       x="433.33304"
+       y="163.85957"
+       style="font-size:12.02195835px;font-weight:normal;fill:#131516;fill-rule:evenodd;font-family:Arial"
+       id="text165">H</text>
+    <line
+       class="fil0 str0"
+       x1="427.82092"
+       y1="142.01965"
+       x2="434.23178"
+       y2="153.14"
+       id="line167"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <text
+       x="413.49454"
+       y="163.85957"
+       style="font-size:12.02195835px;font-weight:normal;fill:#131516;fill-rule:evenodd;font-family:Arial"
+       id="text169">H</text>
+    <line
+       class="fil0 str0"
+       x1="427.82092"
+       y1="142.01965"
+       x2="421.2081"
+       y2="153.14"
+       id="line171"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="433.33304"
+       y1="76.499023"
+       x2="441.74622"
+       y2="68.283768"
+       id="line173"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="88.9981"
+       y1="79.905251"
+       x2="83.087257"
+       y2="83.612137"
+       id="line175"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="83.087257"
+       y1="85.816116"
+       x2="85.391357"
+       y2="92.628593"
+       id="line177"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="200.50328"
+       y1="74.996132"
+       x2="205.81316"
+       y2="72.792137"
+       id="line179"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="199.80191"
+       y1="79.504501"
+       x2="202.00587"
+       y2="85.51548"
+       id="line181"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="317.51913"
+       y1="78.001617"
+       x2="323.52896"
+       y2="74.996132"
+       id="line183"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="316.11691"
+       y1="81.708496"
+       x2="320.625"
+       y2="87.719757"
+       id="line185"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="423.31281"
+       y1="76.599129"
+       x2="421.81107"
+       y2="83.411606"
+       id="line187"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="145.00113"
+       y1="123.08481"
+       x2="169.74672"
+       y2="123.08481"
+       id="line189"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <polygon
+       points="65.2357,57.7978 66.0106,57.7978 65.2357,57.199 67.8775,57.7978 65.2357,58.3966 66.0106,57.7978 65.2357,57.7978 "
+       transform="matrix(2.844222,0,0,2.844222,-15.7981,-41.30497)"
+       style="fill:#131516;fill-rule:evenodd;stroke:#131516;stroke-width:0.2465"
+       id="polygon191" />
+    <polygon
+       points="56.5354,57.7978 55.7605,57.7978 56.5354,58.3966 53.8936,57.7978 56.5354,57.199 55.7605,57.7978 56.5354,57.7978 "
+       transform="matrix(2.844222,0,0,2.844222,-15.7981,-41.30497)"
+       style="fill:#131516;fill-rule:evenodd;stroke:#131516;stroke-width:0.2465"
+       id="polygon193" />
+    <line
+       class="fil0 str0"
+       x1="244.7847"
+       y1="122.38344"
+       x2="284.85892"
+       y2="122.38344"
+       id="line195"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <polygon
+       points="105.708,57.5512 106.483,57.5512 105.708,56.9524 108.35,57.5512 105.708,58.15 106.483,57.5512 105.708,57.5512 "
+       transform="matrix(2.844222,0,0,2.844222,-15.7981,-41.30497)"
+       style="fill:#131516;fill-rule:evenodd;stroke:#131516;stroke-width:0.2465"
+       id="polygon197" />
+    <polygon
+       points="91.6183,57.5512 90.8434,57.5512 91.6183,58.15 88.9765,57.5512 91.6183,56.9524 90.8434,57.5512 91.6183,57.5512 "
+       transform="matrix(2.844222,0,0,2.844222,-15.7981,-41.30497)"
+       style="fill:#131516;fill-rule:evenodd;stroke:#131516;stroke-width:0.2465"
+       id="polygon199" />
+    <line
+       class="fil0 str0"
+       x1="364.90674"
+       y1="121.58194"
+       x2="389.65146"
+       y2="121.58194"
+       id="line201"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <polygon
+       points="142.552,57.2694 143.327,57.2694 142.552,56.6706 145.194,57.2694 142.552,57.8682 143.327,57.2694 142.552,57.2694 "
+       transform="matrix(2.844222,0,0,2.844222,-15.7981,-41.30497)"
+       style="fill:#131516;fill-rule:evenodd;stroke:#131516;stroke-width:0.2465"
+       id="polygon203" />
+    <polygon
+       points="133.852,57.2694 133.077,57.2694 133.852,57.8682 131.21,57.2694 133.852,56.6706 133.077,57.2694 133.852,57.2694 "
+       transform="matrix(2.844222,0,0,2.844222,-15.7981,-41.30497)"
+       style="fill:#131516;fill-rule:evenodd;stroke:#131516;stroke-width:0.2465"
+       id="polygon205" />
+    <line
+       class="fil0 str0"
+       x1="70.964882"
+       y1="262.54044"
+       x2="70.964882"
+       y2="282.47842"
+       id="line207"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="74.471245"
+       y1="264.84424"
+       x2="74.471245"
+       y2="280.17462"
+       id="line209"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="70.964882"
+       y1="282.47842"
+       x2="88.096489"
+       y2="292.39624"
+       id="line211"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="88.096489"
+       y1="292.39624"
+       x2="105.32821"
+       y2="282.47842"
+       id="line213"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="105.32821"
+       y1="282.47842"
+       x2="105.32821"
+       y2="262.54044"
+       id="line215"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="105.32821"
+       y1="262.54044"
+       x2="88.096489"
+       y2="252.62265"
+       id="line217"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="101.52122"
+       y1="264.34366"
+       x2="88.29673"
+       y2="256.72971"
+       id="line219"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="88.096489"
+       y1="252.62265"
+       x2="70.964882"
+       y2="262.54044"
+       id="line221"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <text
+       x="83.487999"
+       y="237.49509"
+       style="font-size:12.02195835px;font-weight:normal;fill:#131516;fill-rule:evenodd;font-family:Arial"
+       id="text223">O</text>
+    <line
+       class="fil0 str0"
+       x1="88.096489"
+       y1="252.62265"
+       x2="88.096489"
+       y2="238.89784"
+       id="line225"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="94.007347"
+       y1="229.07959"
+       x2="105.12769"
+       y2="222.76797"
+       id="line227"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <text
+       x="120.15543"
+       y="281.97784"
+       style="font-size:12.02195835px;font-weight:normal;fill:#131516;fill-rule:evenodd;font-family:Arial"
+       id="text229">H</text>
+    <line
+       class="fil0 str0"
+       x1="105.32821"
+       y1="282.47842"
+       x2="118.75294"
+       y2="278.77243"
+       id="line231"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <text
+       x="110.83833"
+       y="304.31921"
+       style="font-size:12.02195835px;font-weight:normal;fill:#131516;fill-rule:evenodd;font-family:Arial"
+       id="text233">H</text>
+    <line
+       class="fil0 str0"
+       x1="105.32821"
+       y1="282.47842"
+       x2="111.73994"
+       y2="293.59933"
+       id="line235"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="87.495216"
+       y1="225.67334"
+       x2="81.584366"
+       y2="229.38022"
+       id="line237"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="81.584366"
+       y1="231.58421"
+       x2="83.888756"
+       y2="238.39699"
+       id="line239"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="185.77618"
+       y1="267.04852"
+       x2="185.77618"
+       y2="286.98654"
+       id="line241"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="185.77618"
+       y1="286.98654"
+       x2="202.90778"
+       y2="296.90433"
+       id="line243"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="189.58318"
+       y1="285.18329"
+       x2="202.70728"
+       y2="292.69772"
+       id="line245"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="202.90778"
+       y1="296.90433"
+       x2="220.13951"
+       y2="286.98654"
+       id="line247"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="220.13951"
+       y1="286.98654"
+       x2="220.13951"
+       y2="267.04852"
+       id="line249"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="220.13951"
+       y1="267.04852"
+       x2="202.90778"
+       y2="257.13074"
+       id="line251"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="216.3325"
+       y1="268.85178"
+       x2="203.10802"
+       y2="261.23779"
+       id="line253"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="202.90778"
+       y1="257.13074"
+       x2="185.77618"
+       y2="267.04852"
+       id="line255"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <text
+       x="198.29929"
+       y="242.00345"
+       style="font-size:12.02195835px;font-weight:normal;fill:#131516;fill-rule:evenodd;font-family:Arial"
+       id="text257">O</text>
+    <line
+       class="fil0 str0"
+       x1="202.90778"
+       y1="257.13074"
+       x2="202.90778"
+       y2="243.40736"
+       id="line259"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="208.81865"
+       y1="233.58795"
+       x2="219.93898"
+       y2="227.27635"
+       id="line261"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <text
+       x="234.96671"
+       y="286.48593"
+       style="font-size:12.02195835px;font-weight:normal;fill:#131516;fill-rule:evenodd;font-family:Arial"
+       id="text263">H</text>
+    <line
+       class="fil0 str0"
+       x1="220.13951"
+       y1="286.98654"
+       x2="233.56395"
+       y2="283.28052"
+       id="line265"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <text
+       x="225.64963"
+       y="308.8273"
+       style="font-size:12.02195835px;font-weight:normal;fill:#131516;fill-rule:evenodd;font-family:Arial"
+       id="text267">H</text>
+    <line
+       class="fil0 str0"
+       x1="220.13951"
+       y1="286.98654"
+       x2="226.55124"
+       y2="298.10745"
+       id="line269"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="202.30652"
+       y1="230.18173"
+       x2="196.39566"
+       y2="233.88861"
+       id="line271"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="196.39566"
+       y1="236.09259"
+       x2="198.70003"
+       y2="242.90508"
+       id="line273"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="289.367"
+       y1="274.56296"
+       x2="289.367"
+       y2="294.50098"
+       id="line275"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="289.367"
+       y1="294.50098"
+       x2="306.49777"
+       y2="304.41876"
+       id="line277"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="293.17258"
+       y1="292.69772"
+       x2="306.29868"
+       y2="300.21216"
+       id="line279"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="306.49777"
+       y1="304.41876"
+       x2="323.7309"
+       y2="294.50098"
+       id="line281"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="323.7309"
+       y1="294.50098"
+       x2="323.7309"
+       y2="274.56296"
+       id="line283"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="323.7309"
+       y1="274.56296"
+       x2="306.49777"
+       y2="264.64517"
+       id="line285"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="306.49777"
+       y1="264.64517"
+       x2="289.367"
+       y2="274.56296"
+       id="line287"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="306.29868"
+       y1="268.85178"
+       x2="293.17258"
+       y2="276.36621"
+       id="line289"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <text
+       x="301.89011"
+       y="249.51674"
+       style="font-size:12.02195835px;font-weight:normal;fill:#131516;fill-rule:evenodd;font-family:Arial"
+       id="text291">O</text>
+    <line
+       class="fil0 str0"
+       x1="306.49777"
+       y1="264.64517"
+       x2="306.49777"
+       y2="250.91893"
+       id="line293"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="312.40805"
+       y1="241.10184"
+       x2="323.52896"
+       y2="234.79024"
+       id="line295"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <text
+       x="338.55783"
+       y="294.00037"
+       style="font-size:12.02195835px;font-weight:normal;fill:#131516;fill-rule:evenodd;font-family:Arial"
+       id="text297">H</text>
+    <line
+       class="fil0 str0"
+       x1="323.7309"
+       y1="294.50098"
+       x2="337.15564"
+       y2="290.79211"
+       id="line299"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <text
+       x="329.24017"
+       y="316.34174"
+       style="font-size:12.02195835px;font-weight:normal;fill:#131516;fill-rule:evenodd;font-family:Arial"
+       id="text301">H</text>
+    <line
+       class="fil0 str0"
+       x1="323.7309"
+       y1="294.50098"
+       x2="330.14178"
+       y2="305.62189"
+       id="line303"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="305.89764"
+       y1="237.69562"
+       x2="299.98734"
+       y2="241.40248"
+       id="line305"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <line
+       class="fil0 str0"
+       x1="299.98734"
+       y1="243.60645"
+       x2="302.29114"
+       y2="250.41838"
+       id="line307"
+       style="fill:none;fill-rule:evenodd;stroke:#131516;stroke-width:0.70110077" />
+    <text
+       x="205.11177"
+       y="114.26859"
+       style="font-size:12.02195835px;font-weight:normal;fill:#131516;fill-rule:evenodd;font-family:Arial"
+       id="text309">+</text>
+    <text
+       x="111.63982"
+       y="144.7245"
+       style="font-size:12.02195835px;font-weight:normal;fill:#131516;fill-rule:evenodd;font-family:Arial"
+       id="text313">+</text>
+    <text
+       x="298.88379"
+       y="141.6189"
+       style="font-size:12.02195835px;font-weight:normal;fill:#131516;fill-rule:evenodd;font-family:Arial"
+       id="text315">+</text>
+    <text
+       x="415.90082"
+       y="80.005379"
+       style="font-size:12.02195835px;font-weight:normal;fill:#131516;fill-rule:evenodd;font-family:Arial"
+       id="text317">+</text>
+    <text
+       x="208.81865"
+       y="204.53453"
+       style="font-size:12.02195835px;font-weight:normal;fill:#131516;fill-rule:evenodd;font-family:Arial"
+       id="text321">1b</text>
+    <text
+       x="322.7269"
+       y="205.2359"
+       style="font-size:12.02195835px;font-weight:normal;fill:#131516;fill-rule:evenodd;font-family:Arial"
+       id="text325">1c</text>
+    <text
+       x="421.81107"
+       y="203.83315"
+       style="font-size:12.02195835px;font-weight:normal;fill:#131516;fill-rule:evenodd;font-family:Arial"
+       id="text329">1d</text>
+    <text
+       x="84.990593"
+       y="305.32037"
+       style="font-size:12.02195835px;font-weight:normal;fill:#131516;fill-rule:evenodd;font-family:Arial"
+       id="text331">+</text>
+    <text
+       x="175.75769"
+       y="269.25281"
+       style="font-size:12.02195835px;font-weight:normal;fill:#131516;fill-rule:evenodd;font-family:Arial"
+       id="text333">+</text>
+    <text
+       x="333.3472"
+       y="276.86679"
+       style="font-size:12.02195835px;font-weight:normal;fill:#131516;fill-rule:evenodd;font-family:Arial"
+       id="text335">+</text>
+    <text
+       x="91.702957"
+       y="206.73851"
+       style="font-size:12.02195835px;font-weight:normal;fill:#131516;fill-rule:evenodd;font-family:Arial"
+       id="text339">1a</text>
+    <text
+       x="86.293251"
+       y="329.86603"
+       style="font-size:12.02195835px;font-weight:normal;fill:#131516;fill-rule:evenodd;font-family:Arial"
+       id="text343">2a</text>
+    <text
+       x="196.7964"
+       y="332.97189"
+       style="font-size:12.02195835px;font-weight:normal;fill:#131516;fill-rule:evenodd;font-family:Arial"
+       id="text347">2b</text>
+    <text
+       x="303.19278"
+       y="331.46732"
+       style="font-size:12.02195835px;font-weight:normal;fill:#131516;fill-rule:evenodd;font-family:Arial"
+       id="text351">2c</text>
+  </g>
+</svg>

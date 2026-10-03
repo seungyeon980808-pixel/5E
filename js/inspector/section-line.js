@@ -3,9 +3,12 @@
  * split). Builds the section DOM and wires its events; mounting into the
  * inspector panel happens in js/inspector.js (the orchestrator). */
 
-import { makeColorPicker, makeSection, supportsDash, DASH_PRESETS } from "./widgets.js?v=1.4.0";
+import { makeColorPicker, makeSection, supportsDash, DASH_PRESETS } from "./widgets.js?v=1.6.0-preview-labeler-0917-1111";
 // 패턴 유효성 판정은 렌더러(applyDash)와 같은 함수를 써야 인스펙터 표시와 실제 그림이 안 어긋난다.
-import { normalizeDashPattern } from "../render/core.js?v=1.4.0";
+import { normalizeDashPattern } from "../render/core.js?v=1.6.0-remediation-0929";
+import { openLabelerTextEditor } from "../tools.js?v=1.6.0-remediation-0929";
+
+const supportsLineStyle = (obj) => supportsDash(obj) || obj?.type === "labeler";
 
 export function buildLineSection(ctx) {
   const { state, snapBefore, pushSnap, makeLabelSizeRow, makeLabelTypeRow } = ctx;
@@ -30,11 +33,13 @@ export function buildLineSection(ctx) {
     () => { _strokeSnap = snapBefore(); },
     () => { pushSnap(_strokeSnap); _strokeSnap = null; }
   );
+  strokeCP.el.dataset.liteControl = "color";
   sec1Body.appendChild(strokeCP.el);
 
   // Stroke width row
   const widthRow = document.createElement("div");
   widthRow.className = "insp-row";
+  widthRow.dataset.liteControl = "stroke-width";
   const widthLbl = document.createElement("label");
   widthLbl.className = "insp-field-label";
   widthLbl.textContent = "선 굵기";
@@ -62,6 +67,7 @@ export function buildLineSection(ctx) {
   // Arrow head control (line objects only)
   const arrowRow = document.createElement("div");
   arrowRow.className = "insp-row";
+  arrowRow.dataset.liteControl = "arrow-direction";
   const arrowLbl = document.createElement("label");
   arrowLbl.className = "insp-field-label";
   arrowLbl.textContent = "화살표";
@@ -113,6 +119,11 @@ export function buildLineSection(ctx) {
       if (o && (o.type === "line" || o.type === "polyline")) {
         const current = ARROW_CYCLE.includes(o.arrowHead) ? o.arrowHead : "none";
         o.arrowHead = ARROW_CYCLE[(ARROW_CYCLE.indexOf(current) + 1) % ARROW_CYCLE.length];
+        if (o.type === "line") {
+          o.arrowVariant = ({ end: "right", start: "left", both: "both" })[o.arrowHead];
+          o.lineMode = o.arrowHead === "none" ? "solid" : "arrow";
+          o.lineStyle = o.lineMode;
+        }
         s2.undoStack.push(snap);
         s2.redoStack = [];
       }
@@ -297,6 +308,7 @@ export function buildLineSection(ctx) {
   lineLabelRow.appendChild(lineLabelLbl);
   lineLabelRow.appendChild(lineLabelInp);
   sec1Body.appendChild(lineLabelRow);
+
   const lineLabelTypeRow = makeLabelTypeRow((o) => o.type === "line");
   sec1Body.appendChild(lineLabelTypeRow.row);
 
@@ -362,6 +374,7 @@ export function buildLineSection(ctx) {
   // ---- Dash presets + length/gap sliders (line/polyline/curve) ----
   const dashRow = document.createElement("div");
   dashRow.className = "insp-row";
+  dashRow.dataset.liteControl = "line-style";
   const dashLbl = document.createElement("label");
   dashLbl.className = "insp-field-label";
   dashLbl.textContent = "선 종류";
@@ -390,7 +403,7 @@ export function buildLineSection(ctx) {
       const snap = JSON.parse(JSON.stringify(s.objects));
       state.update((s2) => {
         const o = s2.objects.find((o) => o.id === ids[0]);
-        if (supportsDash(o)) {
+        if (supportsLineStyle(o)) {
           if (Array.isArray(preset.dashPattern)) {
             // 패턴 프리셋: dashPattern 이 켜지면 2값은 solid(0,0)로 내려 상호배타를 지킨다.
             o.dashPattern = preset.dashPattern.slice();
@@ -444,6 +457,25 @@ export function buildLineSection(ctx) {
   dashRow.appendChild(dashBtns);
   sec1Body.appendChild(dashRow);
 
+  const leaderLabelRow = document.createElement("div");
+  leaderLabelRow.className = "insp-row";
+  leaderLabelRow.dataset.liteControl = "leader-label";
+  leaderLabelRow.style.display = "none";
+  const leaderLabelLbl = document.createElement("label");
+  leaderLabelLbl.className = "insp-field-label";
+  leaderLabelLbl.textContent = "라벨";
+  const leaderLabelBtn = document.createElement("button");
+  leaderLabelBtn.type = "button";
+  leaderLabelBtn.textContent = "편집";
+  leaderLabelBtn.title = "지시선 라벨 편집";
+  leaderLabelBtn.style.cssText = "padding:4px 10px;font-size:11px;cursor:pointer;border:1px solid var(--border);border-radius:6px;background:var(--bg-input);color:var(--text-primary);";
+  leaderLabelBtn.addEventListener("click", () => {
+    const id = (state.get().selectedIds || [])[0];
+    if (id) openLabelerTextEditor(id);
+  });
+  leaderLabelRow.append(leaderLabelLbl, leaderLabelBtn);
+  sec1Body.appendChild(leaderLabelRow);
+
   // Length/gap sliders — visible only when a dashed preset is active (dashLength > 0).
   function makeDashSliderRow(labelText, prop) {
     const row = document.createElement("div");
@@ -477,7 +509,7 @@ export function buildLineSection(ctx) {
       if (ids.length !== 1) return;
       state.update((s2) => {
         const o = s2.objects.find((o) => o.id === ids[0]);
-        if (supportsDash(o)) o[prop] = val;
+        if (supportsLineStyle(o)) o[prop] = val;
       });
     }
 
@@ -959,6 +991,7 @@ export function buildLineSection(ctx) {
   angleInp.addEventListener("blur", commitAngle);
 
   const sec1 = makeSection("선", sec1Body);
+  sec1.dataset.liteSection = "line";
 
   return {
     sec1, strokeCP, widthRange, widthNum,
@@ -966,7 +999,7 @@ export function buildLineSection(ctx) {
     lineModeRow, lineModeBtnEls,
     dimensionLabelRow, dimensionLabelInp, dimensionLabelTypeRow, dimensionLabelSizeRow,
     waveLengthRow, waveAmpRow, waveTailRow,
-    lineLabelRow, lineLabelInp, lineLabelTypeRow, lineLabelShowRow, lineLabelShowCb,
+    lineLabelRow, lineLabelInp, leaderLabelRow, leaderLabelBtn, lineLabelTypeRow, lineLabelShowRow, lineLabelShowCb,
     lineLabelFlipRow, lineLabelSizeRow,
     dashRow, _dashBtnEls, partialDashBtn, dashSliders, dashLenSlider, dashGapSlider,
     partialControls, ratioRange, ratioNum, flipBtn,

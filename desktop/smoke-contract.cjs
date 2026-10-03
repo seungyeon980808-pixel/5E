@@ -1,7 +1,7 @@
 const requiredTruthy = Object.freeze([
   "panelOpened", "modelCatalogReadable", "captureSourcesReadable", "aiUsesCentralModal",
   "aiAutoConnectControlsSimplified", "aiProgressUiReady", "aiResultsPlacedLeft",
-  "aiSourceEntrypointsReady", "aiLoadMenuReady", "aiCaptureCropReady", "aiCancelIsContextual",
+  "aiSourceEntrypointsReady", "aiLoadMenuReady", "aiClipboardSourceReady", "aiCancelIsContextual",
   "aiReturnsAfterLibraryClose", "cutChooserVisible", "cutChooserInToolPanel", "textChooserBehavior",
   "angleChooserBehavior", "angleTabToggleWorks", "chooserPanelSwitchingWorks", "cutChooserPersistsAfterChoice",
   "chooserClosesOnOtherTool", "eraseToolReachable", "cutToolReachable", "delayedCutUiReachable",

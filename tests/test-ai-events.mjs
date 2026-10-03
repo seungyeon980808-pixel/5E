@@ -6,7 +6,7 @@ assert.deepEqual(parseAiEvent({ method: "item/reasoning/summaryTextDelta", param
 assert.deepEqual(parseAiEvent({ method: "item/completed", params: { item: { type: "agentMessage", phase: "commentary", text: "진행 중" } } }), { kind: "ignore" });
 assert.deepEqual(parseAiEvent({ method: "item/completed", params: { turnId: "turn-1", item: { type: "agentMessage", phase: "final_answer", text: "완료했습니다." } } }), { kind: "assistant", turnId: "turn-1", text: "완료했습니다." });
 assert.equal(parseAiEvent({ method: "item/started", params: { item: { type: "imageGeneration" } } }).kind, "progress");
-assert.deepEqual(parseAiEvent({ method: "item/completed", params: { turnId: "turn-1", item: { type: "imageGeneration", imageDataUrl: "data:image/png;base64,AA==" } } }), { kind: "image", turnId: "turn-1", src: "data:image/png;base64,AA==" });
+assert.deepEqual(parseAiEvent({ method: "item/completed", params: { turnId: "turn-1", item: { type: "imageGeneration", imageDataUrl: "data:image/png;base64,AA==" } } }), { kind: "image", turnId: "turn-1", src: "data:image/png;base64,AA==", rendererPrompt: "" });
 assert.deepEqual(parseAiEvent({ method: "turn/completed", params: { turn: { id: "turn-1", status: "completed", error: null } } }), { kind: "done", turnId: "turn-1", status: "completed", error: null });
 assert.deepEqual(
   parseAiEvent({ method: "thread/tokenUsage/updated", params: { threadId: "thread-1", turnId: "turn-1", tokenUsage: { last: { totalTokens: 1200 } } } }),

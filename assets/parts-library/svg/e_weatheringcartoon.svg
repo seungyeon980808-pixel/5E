@@ -1,0 +1,783 @@
+<svg width="209mm" height="142mm" version="1.1" viewBox="0 0 209 142" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+ <defs>
+ <marker id="e" overflow="visible" orient="auto">
+ <path transform="matrix(-.8 0 0-.8-10 0)" d="m0 0 5-5-17.5 5 17.5 5z" fill="#00f"/>
+ </marker>
+ <marker id="f" overflow="visible" orient="auto">
+ <path transform="matrix(-.8 0 0-.8-10 0)" d="m0 0 5-5-17.5 5 17.5 5z"/>
+ </marker>
+ <marker id="g" overflow="visible" orient="auto">
+ <path transform="matrix(-.8 0 0-.8-10 0)" d="m0 0 5-5-17.5 5 17.5 5z" fill="#f00"/>
+ </marker>
+ <marker id="h" overflow="visible" orient="auto">
+ <path transform="matrix(-.8 0 0-.8-10 0)" d="m0 0 5-5-17.5 5 17.5 5z" fill="#f00"/>
+ </marker>
+ <marker id="Arrow1Lend" overflow="visible" orient="auto">
+ <path transform="matrix(-.8 0 0-.8-10 0)" d="m0 0 5-5-17.5 5 17.5 5z" fill="#f00"/>
+ </marker>
+ </defs>
+ <rect width="209" height="142" fill="#fff"/>
+ <use transform="matrix(.9976-.05815 .05755 .9873 129.8-13.68)" xlink:href="#d"/>
+ <use transform="matrix(.9976-.05815 .05755 .9873 33.6-17.96)" xlink:href="#d"/>
+ <use transform="rotate(251.3 14.53 108.2)" xlink:href="#c"/>
+ <use transform="matrix(-.08214 1.009-.9801-.07975 173.5 89.74)" xlink:href="#d"/>
+ <use transform="matrix(.6073 .7972-.782 .5958 119.4 17.08)" xlink:href="#d"/>
+ <use transform="matrix(.8562-.521 .5096 .8375 31.26-1.515)" xlink:href="#d"/>
+ <use transform="matrix(.8741-.4687 .4776 .8907 101.2-16.19)" xlink:href="#d"/>
+ <use transform="rotate(134.9 30.94 132.9)" xlink:href="#c"/>
+ <use transform="rotate(103 36.24 136.7)" xlink:href="#c"/>
+ <use transform="matrix(.01613 1.019-.9884 .01566 231.5 71.41)" xlink:href="#d"/>
+ <use transform="matrix(-.08214 1.009-.9801-.07975 234.9 97.44)" xlink:href="#d"/>
+ <use transform="matrix(.6073 .7972-.782 .5958 168.4 2.038)" xlink:href="#d"/>
+ <use transform="matrix(1.011 0 0 .9995 4.119-12.19)" xlink:href="#a"/>
+ <use transform="matrix(.9927 0 0 .991-5.607-16.15)" xlink:href="#a"/>
+ <use transform="matrix(1.013 0 0 1.005-11.55-5.664)" xlink:href="#a"/>
+ <use transform="matrix(1.012 0 0 .9897 14.96-6.732)" xlink:href="#a"/>
+ <use transform="matrix(1.003 0 0 .9916 19.44-5.489)" xlink:href="#a"/>
+ <use transform="matrix(1.006 0 0 1.005 16.12-10.94)" xlink:href="#a"/>
+ <use transform="matrix(.9926 0 0 1.004-22.33-18.11)" xlink:href="#a"/>
+ <use transform="matrix(.8071 .5731-.5814 .8187 109.6 3.336)" xlink:href="#d"/>
+ <use transform="matrix(1.013-.07174 .07017 .9905 .8738-7.473)" xlink:href="#d"/>
+ <use transform="matrix(-.0693-.9821 1.003-.07075-123.4 163.2)" xlink:href="#d"/>
+ <use transform="rotate(200.9 22.54 133.3)" xlink:href="#c"/>
+ <use transform="rotate(154.2 26.94 139)" xlink:href="#c"/>
+ <use transform="rotate(20.98 72.74 154.7)" xlink:href="#c"/>
+ <use transform="rotate(205.5 18.11 132.4)" xlink:href="#c"/>
+ <use transform="rotate(-1.872-575.5-309.6)" xlink:href="#c"/>
+ <use transform="matrix(.8989 .4637-.4601 .8918 69.73-30.54)" xlink:href="#d"/>
+ <use transform="matrix(.9942 0 0 .9825 19.4-32.67)" xlink:href="#a"/>
+ <use transform="matrix(.9881 0 0 1.015 15.99-36.8)" xlink:href="#a"/>
+ <use transform="matrix(1.005 0 0 .9846 20.37-29.51)" xlink:href="#a"/>
+ <use transform="matrix(.9898 0 0 .9829-25.22-26.45)" xlink:href="#a"/>
+ <use transform="matrix(1 0 0 1.014-19.62-32.29)" xlink:href="#a"/>
+ <use transform="matrix(.9977 0 0 .9934-13.08-44.59)" xlink:href="#a"/>
+ <use transform="matrix(1.018 0 0 .9854-22.79-31.68)" xlink:href="#a"/>
+ <use transform="matrix(1.004 0 0 1.017-8.185-38.76)" xlink:href="#a"/>
+ <use transform="matrix(.9946 0 0 1.009-22.1-42.93)" xlink:href="#a"/>
+ <use transform="matrix(.7728-.6332 .6221 .7592-47.26 5.967)" xlink:href="#d"/>
+ <use transform="matrix(.5696-.8269 .8395 .5782-84.26 42.32)" xlink:href="#d"/>
+ <use transform="rotate(31.57 67.74 136.1)" xlink:href="#c"/>
+ <use transform="rotate(223.2 31.54 112.1)" xlink:href="#c"/>
+ <use transform="rotate(102.3 46.24 136)" xlink:href="#c"/>
+ <use transform="rotate(177.4 19.51 124)" xlink:href="#c"/>
+ <use transform="matrix(.9527 .3172-.3164 .9504 39.42-27.29)" xlink:href="#d"/>
+ <use transform="matrix(1.008 0 0 .9934 98.25-41.79)" xlink:href="#a"/>
+ <use transform="matrix(.9842 0 0 1.006 97.88-39.79)" xlink:href="#a"/>
+ <use transform="matrix(1.004 0 0 1.011 37.06-31.92)" xlink:href="#a"/>
+ <use transform="matrix(.9951 0 0 .9815 33.47-32.59)" xlink:href="#a"/>
+ <use transform="matrix(.9812 0 0 1.006 42.53-44.64)" xlink:href="#a"/>
+ <use transform="matrix(1.015 0 0 1.016 56.09-44.07)" xlink:href="#a"/>
+ <use transform="matrix(1.006 0 0 .9897 59.92-33.19)" xlink:href="#a"/>
+ <use transform="matrix(.9882 0 0 1.016 55.01-47.26)" xlink:href="#a"/>
+ <use transform="matrix(.9946 0 0 1.015 79.82-32.66)" xlink:href="#a"/>
+ <use transform="matrix(1.017 0 0 1.003 57.49-34.19)" xlink:href="#a"/>
+ <use transform="matrix(1.01 0 0 .987 54.11-28.73)" xlink:href="#a"/>
+ <use transform="matrix(.9815 0 0 1.007 91.55-42.51)" xlink:href="#a"/>
+ <use transform="matrix(1.005 0 0 1.003 74.76-42.57)" xlink:href="#a"/>
+ <use transform="matrix(1.004 0 0 1.018 80.64-42.3)" xlink:href="#a"/>
+ <use transform="matrix(1.004 0 0 .9889 92.6-41.89)" xlink:href="#a"/>
+ <use transform="matrix(1.012 0 0 .9982 65.07-33.41)" xlink:href="#a"/>
+ <use transform="matrix(1.009 0 0 .9991 76.49-27.53)" xlink:href="#a"/>
+ <use transform="matrix(.999 0 0 1.017 83.62-38.47)" xlink:href="#a"/>
+ <use transform="rotate(251.3 59.54 78.63)" xlink:href="#c"/>
+ <use transform="rotate(71.78 82.14 181.7)" xlink:href="#c"/>
+ <use transform="rotate(-34.14 10.71-31.86)" xlink:href="#c"/>
+ <use transform="rotate(251.3 40.74 96.03)" xlink:href="#c"/>
+ <use transform="rotate(251.3 45.04 91.13)" xlink:href="#c"/>
+ <use transform="rotate(251.3 32.74 93.13)" xlink:href="#c"/>
+ <use transform="matrix(.9815-.05206 .05199 .9803 45.42-12.56)" xlink:href="#d"/>
+ <use transform="matrix(.4583-.9079 .8973 .4529-47.53 92.47)" xlink:href="#d"/>
+ <use transform="matrix(1.007 0 0 1.017 27.71-14.96)" xlink:href="#a"/>
+ <use transform="matrix(.9817 0 0 1.011 34.77-9.434)" xlink:href="#a"/>
+ <use transform="matrix(1.014 0 0 .9942 47.36-1.609)" xlink:href="#a"/>
+ <use transform="matrix(.9863 0 0 1.007 64.95-9.933)" xlink:href="#a"/>
+ <use transform="matrix(1.018 0 0 1 37.73-17.14)" xlink:href="#a"/>
+ <use transform="matrix(.9858 0 0 .9864 93.02-1.021)" xlink:href="#a"/>
+ <use transform="matrix(1.007 0 0 .9984 52.45-11.97)" xlink:href="#a"/>
+ <use transform="matrix(1.017 0 0 1.02 75.11-24.94)" xlink:href="#a"/>
+ <use transform="matrix(1.013 0 0 .9965 83.65-6.534)" xlink:href="#a"/>
+ <use transform="matrix(1.001 0 0 1.012 58.04-2.636)" xlink:href="#a"/>
+ <use transform="matrix(1.017 0 0 .9976 55.6-18.17)" xlink:href="#a"/>
+ <use transform="matrix(1.004 0 0 .992 90.55-12.19)" xlink:href="#a"/>
+ <use transform="matrix(1.005 0 0 .9829 75.57-11.78)" xlink:href="#a"/>
+ <use transform="matrix(1.005 0 0 .9841 79.13-5.459)" xlink:href="#a"/>
+ <use transform="matrix(.9966 0 0 1.006 94.69-1.839)" xlink:href="#a"/>
+ <use transform="matrix(.993 0 0 1.01 69.11-6.885)" xlink:href="#a"/>
+ <use transform="matrix(.9816 0 0 .9814 72.86-22.88)" xlink:href="#a"/>
+ <use transform="matrix(.985 0 0 .9807 93.25-15.46)" xlink:href="#a"/>
+ <use transform="matrix(.987 0 0 1.019 97.56-12.56)" xlink:href="#a"/>
+ <use transform="matrix(1.007 0 0 .9935 62.15-.4764)" xlink:href="#a"/>
+ <use transform="matrix(.9985 0 0 .9902 76.08 .2868)" xlink:href="#a"/>
+ <use transform="matrix(1.015 0 0 .9812 83.33-12.84)" xlink:href="#a"/>
+ <use transform="matrix(1.012 0 0 .9876 73.12-10.23)" xlink:href="#a"/>
+ <use transform="matrix(1.003 0 0 1.011 84.72-4.098)" xlink:href="#a"/>
+ <use transform="matrix(1.016 0 0 .9918 65.73-19.03)" xlink:href="#a"/>
+ <use transform="matrix(1.012 0 0 1.015 70.83-6.681)" xlink:href="#a"/>
+ <use transform="matrix(1.012 0 0 .996 47.9-4.004)" xlink:href="#a"/>
+ <use transform="matrix(.5742 .799-.8239 .5921 221.8 25.34)" xlink:href="#d"/>
+ <use transform="matrix(.9527 .3172-.3164 .9504 126.4-5.648)" xlink:href="#d"/>
+ <use transform="rotate(109 46.34 148.1)" xlink:href="#c"/>
+ <use transform="rotate(137.9 64.54 147.8)" xlink:href="#c"/>
+ <use transform="rotate(72.23 66.44 175.1)" xlink:href="#c"/>
+ <use transform="rotate(55.56 58.94 195)" xlink:href="#c"/>
+ <use transform="rotate(251.3 60.34 95.83)" xlink:href="#c"/>
+ <use transform="rotate(251.3 48.94 103.1)" xlink:href="#c"/>
+ <use transform="matrix(.9934-.2248 .2205 .9742 90.45-9.858)" xlink:href="#d"/>
+ <use transform="matrix(.9947 0 0 .9921 149.5-17.34)" xlink:href="#a"/>
+ <use transform="matrix(.9945 0 0 .9946 132.9-14.52)" xlink:href="#a"/>
+ <use transform="matrix(.9941 0 0 .9846 143.6-8.396)" xlink:href="#a"/>
+ <use transform="matrix(.9821 0 0 .9979 125.4-5.393)" xlink:href="#a"/>
+ <use transform="matrix(1.007 0 0 .9952 107.1-4.584)" xlink:href="#a"/>
+ <use transform="matrix(.9955 0 0 .9838 139.6-6.577)" xlink:href="#a"/>
+ <use transform="matrix(1.008 0 0 .995 119.2-8.026)" xlink:href="#a"/>
+ <use transform="matrix(1.008 0 0 1.01 105.7-4.751)" xlink:href="#a"/>
+ <use transform="matrix(.997 0 0 1.009 134.9-15.74)" xlink:href="#a"/>
+ <use transform="matrix(.999 0 0 .9966 133-9.23)" xlink:href="#a"/>
+ <use transform="matrix(1.003 0 0 1.006 99.36-3.587)" xlink:href="#a"/>
+ <use transform="matrix(1.003 0 0 .9863 128.6-.7683)" xlink:href="#a"/>
+ <use transform="matrix(1.014 0 0 1.009 134.7-1.754)" xlink:href="#a"/>
+ <use transform="matrix(-.09657 1.006-1.014-.09732 294.1 120.1)" xlink:href="#d"/>
+ <use transform="matrix(.5654 .8272-.8288 .5665 252.3 27.48)" xlink:href="#d"/>
+ <use transform="rotate(127.5 78.24 161.4)" xlink:href="#c"/>
+ <use transform="rotate(251.3 76.54 90.23)" xlink:href="#c"/>
+ <use transform="matrix(1.013 0 0 1.009 146.2-40.24)" xlink:href="#a"/>
+ <use transform="matrix(1.019 0 0 .9853 124.4-34.4)" xlink:href="#a"/>
+ <use transform="matrix(1.016 0 0 1 30.45-35.63)" xlink:href="#a"/>
+ <use transform="matrix(1.009 0 0 .9874 112.8-36.45)" xlink:href="#a"/>
+ <use transform="matrix(.9857 0 0 .9842 115.4-35.42)" xlink:href="#a"/>
+ <use transform="matrix(.9957 0 0 .9807 143.7-39.38)" xlink:href="#a"/>
+ <use transform="matrix(.9836 0 0 1.002 105.8-39.86)" xlink:href="#a"/>
+ <use transform="matrix(1.001 0 0 .9822 105.3-39.96)" xlink:href="#a"/>
+ <use transform="matrix(.222-.9619 .9761 .2253 11.59 90.62)" xlink:href="#d"/>
+ <use transform="rotate(113.1 89.64 159.1)" xlink:href="#c"/>
+ <use transform="rotate(-87.44 54.94 55.03)" xlink:href="#c"/>
+ <use transform="rotate(251.3 76.84 67.13)" xlink:href="#c"/>
+ <use transform="matrix(.9527 .3172-.3164 .9504 196.5-41.43)" xlink:href="#d"/>
+ <use transform="matrix(.9907 0 0 1.014 167.9-41.07)" xlink:href="#a"/>
+ <use transform="matrix(1.007 0 0 1.013 167.3-34.87)" xlink:href="#a"/>
+ <use transform="matrix(1.002 0 0 1.014 147.5-42.54)" xlink:href="#a"/>
+ <use transform="matrix(.9832 0 0 .9912 157.5-36.11)" xlink:href="#a"/>
+ <use transform="matrix(.9905 0 0 .9927 171.1-27.3)" xlink:href="#a"/>
+ <use transform="matrix(.985 0 0 1.01 174-31.73)" xlink:href="#a"/>
+ <use transform="matrix(1.008 0 0 1.02 162.9-44.87)" xlink:href="#a"/>
+ <use transform="matrix(.9954 0 0 .9801 150.4-40.24)" xlink:href="#a"/>
+ <use transform="matrix(1.014 0 0 1.016 160.5-42.71)" xlink:href="#a"/>
+ <use transform="rotate(251.3 95.34 56.03)" xlink:href="#c"/>
+ <use transform="matrix(1.005 0 0 1.02 147.7-18.37)" xlink:href="#a"/>
+ <use transform="matrix(.9841 0 0 1.008 162.8-.756)" xlink:href="#a"/>
+ <use transform="rotate(251.3 98.24 65.53)" xlink:href="#c"/>
+ <use transform="matrix(.9882 0 0 1.015 170-10.38)" xlink:href="#a"/>
+ <use transform="matrix(.9867 0 0 1.018 151-12.94)" xlink:href="#a"/>
+ <use transform="matrix(1.006 0 0 1.014 158.2-10.13)" xlink:href="#a"/>
+ <use transform="matrix(.9812 0 0 .9938 165.6-23.75)" xlink:href="#a"/>
+ <use transform="matrix(.9858 0 0 .9963 162.5-16.42)" xlink:href="#a"/>
+ <use transform="matrix(1.014 0 0 1 158.9-4.71)" xlink:href="#a"/>
+ <use transform="matrix(.9864 0 0 .9909 163.3-4.601)" xlink:href="#a"/>
+ <use transform="matrix(1.012 0 0 .9815 166-.02472)" xlink:href="#a"/>
+ <use transform="matrix(1.006 0 0 .988 167.3-13.62)" xlink:href="#a"/>
+ <use transform="matrix(.4891 .8846-.8901 .4921 295.3 37.89)" xlink:href="#d"/>
+ <use transform="rotate(-48.84 98.24-58.66)" xlink:href="#c"/>
+ <path id="b" d="m8.903 137.2c0.1022-2.862 4.563-2.804 4.688 0 .1393 3.132-4.813 3.489-4.688 0z" fill="#f2f2f2" stroke="#000" stroke-width=".3744"/>
+ <use transform="matrix(1.008 0 0 1.014-1.425-46.56)" xlink:href="#b"/>
+ <use transform="matrix(1.001 0 0 .9888-2.659-36.46)" xlink:href="#b"/>
+ <use transform="matrix(.9943 0 0 .988-5.197-30.9)" xlink:href="#b"/>
+ <use transform="matrix(1.003 0 0 1.007-3.218-31.52)" xlink:href="#b"/>
+ <use transform="matrix(1.006 0 0 1.02-.9194-26.84)" xlink:href="#b"/>
+ <use transform="matrix(1.007 0 0 1.013-4.175-22.07)" xlink:href="#b"/>
+ <use transform="matrix(1.005 0 0 .9919-5.155-11.42)" xlink:href="#b"/>
+ <use transform="matrix(1.007 0 0 .9844-1.973-7.148)" xlink:href="#b"/>
+ <use transform="matrix(.9862 0 0 1.005-2.109-2.96)" xlink:href="#b"/>
+ <use transform="matrix(1.011 0 0 .9954 41.13-20.54)" xlink:href="#b"/>
+ <use transform="matrix(1.014 0 0 .997 3.966-44.21)" xlink:href="#b"/>
+ <use transform="matrix(1.015 0 0 1.006 .6885-41.2)" xlink:href="#b"/>
+ <use transform="matrix(.9886 0 0 .9923 2.441-31.57)" xlink:href="#b"/>
+ <use transform="matrix(.9876 0 0 .9826 1.93-24.69)" xlink:href="#b"/>
+ <use transform="matrix(.9911 0 0 .9978 1.102-23.02)" xlink:href="#b"/>
+ <use transform="matrix(1.015 0 0 .9814 3.745-17.31)" xlink:href="#b"/>
+ <use transform="matrix(.9968 0 0 1.01 .2678-17.85)" xlink:href="#b"/>
+ <use transform="matrix(1.008 0 0 1.019 3.634-13.64)" xlink:href="#b"/>
+ <use transform="matrix(1.019 0 0 .9961 2.51-3.281)" xlink:href="#b"/>
+ <use transform="matrix(1.016 0 0 1.006 12.78-1.774)" xlink:href="#b"/>
+ <use transform="matrix(1.005 0 0 1.008 9.247-44.1)" xlink:href="#b"/>
+ <use transform="matrix(1.011 0 0 .9887 6.2-34.94)" xlink:href="#b"/>
+ <use transform="matrix(.9976 0 0 1.007 7.627-33.75)" xlink:href="#b"/>
+ <use transform="matrix(.9898 0 0 .9812 5.887-26.3)" xlink:href="#b"/>
+ <use transform="matrix(.9817 0 0 1.008 8.194-22.93)" xlink:href="#b"/>
+ <use transform="matrix(.998 0 0 1.013 4.8-18.44)" xlink:href="#b"/>
+ <use transform="matrix(1.018 0 0 1.01 7.978-16.84)" xlink:href="#b"/>
+ <use transform="matrix(.9996 0 0 .9891 5.475-6.065)" xlink:href="#b"/>
+ <use transform="matrix(.9869 0 0 1.015 6.773-4.041)" xlink:href="#b"/>
+ <use transform="matrix(1.018 0 0 .9825 50.66-39.95)" xlink:href="#b"/>
+ <use transform="matrix(1.019 0 0 .983 13.77-42.1)" xlink:href="#b"/>
+ <use transform="matrix(1.006 0 0 .996 11.52-38.63)" xlink:href="#b"/>
+ <use transform="matrix(1.001 0 0 1.019 13.01-35.81)" xlink:href="#b"/>
+ <use transform="matrix(1.009 0 0 1.016 11.31-31.21)" xlink:href="#b"/>
+ <use transform="matrix(.987 0 0 1.007 10.94-25.06)" xlink:href="#b"/>
+ <use transform="matrix(1.004 0 0 1.003 10.86-19.07)" xlink:href="#b"/>
+ <use transform="matrix(1 0 0 1.017 11.09-13.69)" xlink:href="#b"/>
+ <use transform="matrix(.9849 0 0 1.016 15.24-10.14)" xlink:href="#b"/>
+ <use transform="matrix(1.013 0 0 .9968 11.81-5.055)" xlink:href="#b"/>
+ <use transform="matrix(1.011 0 0 1 17.44-45.17)" xlink:href="#b"/>
+ <use transform="matrix(1.003 0 0 1.019 15.51-40.49)" xlink:href="#b"/>
+ <use transform="matrix(1.01 0 0 .9805 18.99-29.25)" xlink:href="#b"/>
+ <use transform="matrix(1.006 0 0 1 15.72-31.14)" xlink:href="#b"/>
+ <use transform="matrix(.9858 0 0 .9859 15.56-21.1)" xlink:href="#b"/>
+ <use transform="matrix(1.015 0 0 1.014 17.75-20.18)" xlink:href="#b"/>
+ <use transform="matrix(1.003 0 0 .9851 15.08-11.98)" xlink:href="#b"/>
+ <use transform="matrix(1.007 0 0 .9931 19.24-9.884)" xlink:href="#b"/>
+ <use transform="matrix(.9832 0 0 .9817 17.79 .5858)" xlink:href="#b"/>
+ <use transform="matrix(.9867 0 0 1.005 22.59-44.72)" xlink:href="#b"/>
+ <use transform="matrix(.9814 0 0 .9802 24.32-37.04)" xlink:href="#b"/>
+ <use transform="matrix(.984 0 0 .9813 22.04-32.69)" xlink:href="#b"/>
+ <use transform="matrix(.9895 0 0 .981 21.67-25.57)" xlink:href="#b"/>
+ <use transform="matrix(.9928 0 0 .9859 23.66-15.52)" xlink:href="#b"/>
+ <use transform="matrix(.9894 0 0 .9858 22.44-12.97)" xlink:href="#b"/>
+ <use transform="matrix(.9956 0 0 .9872 23.91-6.986)" xlink:href="#b"/>
+ <use transform="matrix(.9848 0 0 1.013 21.1-7.812)" xlink:href="#b"/>
+ <use transform="matrix(.9812 0 0 1.016 21.5-3.396)" xlink:href="#b"/>
+ <use transform="matrix(.995 0 0 1.015 26.67-46.15)" xlink:href="#b"/>
+ <use transform="matrix(.9908 0 0 .9978 26.89-37.13)" xlink:href="#b"/>
+ <use transform="matrix(1.015 0 0 .9884 27.04-30.59)" xlink:href="#b"/>
+ <use transform="matrix(.9861 0 0 1.015 18.39-27.92)" xlink:href="#b"/>
+ <use transform="matrix(1.011 0 0 1.015 25.61-23.51)" xlink:href="#b"/>
+ <use transform="matrix(1.014 0 0 .9864 26.81-12.14)" xlink:href="#b"/>
+ <use transform="matrix(1.005 0 0 1.008 28.61-10.35)" xlink:href="#b"/>
+ <use transform="matrix(.9983 0 0 .9855 27.52-.7092)" xlink:href="#b"/>
+ <use transform="matrix(1.004 0 0 .9929 33.48-41)" xlink:href="#b"/>
+ <use transform="matrix(1.017 0 0 .9881 30.43-37.38)" xlink:href="#b"/>
+ <use transform="matrix(1.003 0 0 .9861 33.11-33.69)" xlink:href="#b"/>
+ <use transform="matrix(1.017 0 0 1.006 30.31-29.48)" xlink:href="#b"/>
+ <use transform="matrix(1.017 0 0 .9917 32.38-17.23)" xlink:href="#b"/>
+ <use transform="matrix(1.006 0 0 1.011 34.58-14.67)" xlink:href="#b"/>
+ <use transform="matrix(1.007 0 0 .9879 31.95-6.708)" xlink:href="#b"/>
+ <use transform="matrix(1.016 0 0 .9999 33.57-3.833)" xlink:href="#b"/>
+ <use transform="matrix(1.016 0 0 1.019 31.01-3.923)" xlink:href="#b"/>
+ <use transform="matrix(.9843 0 0 1.003 37.34-43.08)" xlink:href="#b"/>
+ <use transform="matrix(1.014 0 0 1.006 35.43-39.13)" xlink:href="#b"/>
+ <use transform="matrix(1.013 0 0 .9807 37.76-30)" xlink:href="#b"/>
+ <use transform="matrix(.9852 0 0 .9937 37.36-27.95)" xlink:href="#b"/>
+ <use transform="matrix(1.016 0 0 .9978 36.74-19.86)" xlink:href="#b"/>
+ <use transform="matrix(1.01 0 0 .9959 38.14-14.91)" xlink:href="#b"/>
+ <use transform="matrix(.9902 0 0 1.003 31.26-15.24)" xlink:href="#b"/>
+ <use transform="matrix(.9884 0 0 .9963 38.99-1.738)" xlink:href="#b"/>
+ <use transform="matrix(1 0 0 1.017 48.86-22.24)" xlink:href="#b"/>
+ <use transform="matrix(1.007 0 0 1.012 40.47-45.75)" xlink:href="#b"/>
+ <use transform="matrix(.9842 0 0 .984 44.08-38.01)" xlink:href="#b"/>
+ <use transform="matrix(1.001 0 0 .9806 44.65-33.53)" xlink:href="#b"/>
+ <use transform="matrix(1.005 0 0 .9909 42.66-27.98)" xlink:href="#b"/>
+ <use transform="matrix(.9852 0 0 1.007 44.39-19.7)" xlink:href="#b"/>
+ <use transform="matrix(1.001 0 0 .9958 42.57-12.96)" xlink:href="#b"/>
+ <use transform="matrix(.9882 0 0 1.002 40.28-10.13)" xlink:href="#b"/>
+ <use transform="matrix(.9977 0 0 .9816 41.34-1.603)" xlink:href="#b"/>
+ <use transform="matrix(.9945 0 0 1.012 117.6-45.27)" xlink:href="#b"/>
+ <use transform="matrix(1.015 0 0 .9875 46.86-42.56)" xlink:href="#b"/>
+ <use transform="matrix(1.011 0 0 .9943 40.81-36.67)" xlink:href="#b"/>
+ <use transform="matrix(.9824 0 0 .9954 50.16-37.96)" xlink:href="#b"/>
+ <use transform="matrix(1.019 0 0 1.016 45.61-33.71)" xlink:href="#b"/>
+ <use transform="matrix(1.015 0 0 1.016 55.1-18.57)" xlink:href="#b"/>
+ <use transform="matrix(.9812 0 0 .9943 46.3-15.24)" xlink:href="#b"/>
+ <use transform="matrix(1.001 0 0 .9866 46.04-8.65)" xlink:href="#b"/>
+ <use transform="matrix(1.01 0 0 .9924 46.8-4.565)" xlink:href="#b"/>
+ <use transform="matrix(.9855 0 0 .9861 47.72 .3542)" xlink:href="#b"/>
+ <use transform="matrix(1.012 0 0 .9978 54.78-45.4)" xlink:href="#b"/>
+ <use transform="matrix(1.007 0 0 .9821 54.1-35.72)" xlink:href="#b"/>
+ <use transform="matrix(.986 0 0 .9891 50.51-31.27)" xlink:href="#b"/>
+ <use transform="matrix(.9898 0 0 1.009 54.04-29.65)" xlink:href="#b"/>
+ <use transform="matrix(.9905 0 0 1.015 51.36-20.09)" xlink:href="#b"/>
+ <use transform="matrix(1.017 0 0 .988 49.94-12.98)" xlink:href="#b"/>
+ <use transform="matrix(1.018 0 0 .9806 51.13-7.449)" xlink:href="#b"/>
+ <use transform="matrix(1.001 0 0 .9929 51.8-.1297)" xlink:href="#b"/>
+ <use transform="matrix(1.017 0 0 .9976 53.69-5.016)" xlink:href="#b"/>
+ <use transform="matrix(.9995 0 0 1.003 58.57-43.04)" xlink:href="#b"/>
+ <use transform="matrix(.9844 0 0 1.014 60.01-43.43)" xlink:href="#b"/>
+ <use transform="matrix(1.015 0 0 1 57.88-36.3)" xlink:href="#b"/>
+ <use transform="matrix(1.002 0 0 1.012 58.35-21.54)" xlink:href="#b"/>
+ <use transform="matrix(1.009 0 0 1.004 58.8-13.85)" xlink:href="#b"/>
+ <use transform="matrix(.9932 0 0 1 56.58-10.51)" xlink:href="#b"/>
+ <use transform="matrix(.9811 0 0 1 59.89-2.711)" xlink:href="#b"/>
+ <use transform="matrix(1.01 0 0 .9912 55.66-32.03)" xlink:href="#b"/>
+ <use transform="matrix(1.01 0 0 1.013 69.05-37.31)" xlink:href="#b"/>
+ <use transform="matrix(.989 0 0 1.019 62.28-40.83)" xlink:href="#b"/>
+ <use transform="matrix(1.001 0 0 .9955 60.92-31.86)" xlink:href="#b"/>
+ <use transform="matrix(.9827 0 0 1.016 63.61-23.09)" xlink:href="#b"/>
+ <use transform="matrix(.9993 0 0 1.011 61.73-18.71)" xlink:href="#b"/>
+ <use transform="matrix(1.017 0 0 .9924 61.7-11.24)" xlink:href="#b"/>
+ <use transform="matrix(1.012 0 0 1.004 62.56-7.793)" xlink:href="#b"/>
+ <use transform="matrix(1.001 0 0 1.005 19.43-40.38)" xlink:href="#b"/>
+ <use transform="matrix(1.004 0 0 .9986 63.81-1.241)" xlink:href="#b"/>
+ <use transform="matrix(.9933 0 0 .9907 65.75-43.08)" xlink:href="#b"/>
+ <use transform="matrix(1.006 0 0 1.015 68.46-41.71)" xlink:href="#b"/>
+ <use transform="matrix(1.004 0 0 1.003 65.97-32.43)" xlink:href="#b"/>
+ <use transform="matrix(1.006 0 0 1.018 69.51-21.43)" xlink:href="#b"/>
+ <use transform="matrix(1.01 0 0 1.004 66.55-15.5)" xlink:href="#b"/>
+ <use transform="matrix(.9841 0 0 1.019 67.63-11.45)" xlink:href="#b"/>
+ <use transform="matrix(1.012 0 0 .9927 66-5.344)" xlink:href="#b"/>
+ <use transform="matrix(.9837 0 0 1.004 147.7-35.28)" xlink:href="#b"/>
+ <use transform="matrix(1 0 0 .9859 71.78-42.82)" xlink:href="#b"/>
+ <use transform="matrix(.9889 0 0 1.005 73.87-40.54)" xlink:href="#b"/>
+ <use transform="matrix(.992 0 0 1.019 74.93-38.7)" xlink:href="#b"/>
+ <use transform="matrix(1.015 0 0 .9902 71.45-29.15)" xlink:href="#b"/>
+ <use transform="matrix(1.01 0 0 .9905 73.48-18.93)" xlink:href="#b"/>
+ <use transform="matrix(1.006 0 0 .9987 70.32-13.31)" xlink:href="#b"/>
+ <use transform="matrix(1 0 0 1.019 75.09-12.28)" xlink:href="#b"/>
+ <use transform="matrix(1.014 0 0 .9995 71.98-5.236)" xlink:href="#b"/>
+ <use transform="matrix(1.009 0 0 1.001 72.18-1.233)" xlink:href="#b"/>
+ <use transform="matrix(.9954 0 0 1.013 78.5-45.48)" xlink:href="#b"/>
+ <use transform="matrix(1.012 0 0 1.013 78.72-33.62)" xlink:href="#b"/>
+ <use transform="matrix(1.009 0 0 1.018 79.71-21.72)" xlink:href="#b"/>
+ <use transform="matrix(.9932 0 0 .9845 78.77-10.29)" xlink:href="#b"/>
+ <use transform="matrix(1.004 0 0 1.006 75.31-16.4)" xlink:href="#b"/>
+ <use transform="matrix(.9818 0 0 1.016 79.94-4.619)" xlink:href="#b"/>
+ <use transform="matrix(.9986 0 0 .9968 31.9-32.02)" xlink:href="#b"/>
+ <use transform="matrix(.983 0 0 1.004 81.85-43.97)" xlink:href="#b"/>
+ <use transform="matrix(1.006 0 0 .9865 81.65-36.61)" xlink:href="#b"/>
+ <use transform="matrix(.9981 0 0 .9992 83.13-35.56)" xlink:href="#b"/>
+ <use transform="matrix(.9941 0 0 .9908 83.72-26.63)" xlink:href="#b"/>
+ <use transform="matrix(1.009 0 0 1.008 83.55-23.26)" xlink:href="#b"/>
+ <use transform="matrix(1.005 0 0 .9854 83.17-15.19)" xlink:href="#b"/>
+ <use transform="matrix(.9874 0 0 1.016 81.67-14.08)" xlink:href="#b"/>
+ <use transform="matrix(1.002 0 0 .9948 85.93-11.56)" xlink:href="#b"/>
+ <use transform="matrix(1.004 0 0 1.014 79.8-8.346)" xlink:href="#b"/>
+ <use transform="matrix(1.01 0 0 1.007-5.625-26.59)" xlink:href="#b"/>
+ <use transform="matrix(1.011 0 0 1.019 86.4-45.71)" xlink:href="#b"/>
+ <use transform="matrix(1.006 0 0 .9969 88.61-38.89)" xlink:href="#b"/>
+ <use transform="matrix(.9955 0 0 .9955 89.48-33.66)" xlink:href="#b"/>
+ <use transform="matrix(.9925 0 0 .9843 86.19-28.23)" xlink:href="#b"/>
+ <use transform="matrix(1.015 0 0 .98 88.26-20.45)" xlink:href="#b"/>
+ <use transform="matrix(1.014 0 0 1.014 88.46-20.4)" xlink:href="#b"/>
+ <use transform="matrix(.9962 0 0 .9823 92.99-13.99)" xlink:href="#b"/>
+ <use transform="matrix(.9878 0 0 .9993 96.74-5.728)" xlink:href="#b"/>
+ <use transform="matrix(.9824 0 0 1.005 85.73-6.82)" xlink:href="#b"/>
+ <use transform="matrix(1.016 0 0 .9956 88.15-1.859)" xlink:href="#b"/>
+ <use transform="matrix(1.007 0 0 .9952 91.98-43.42)" xlink:href="#b"/>
+ <use transform="matrix(.9924 0 0 .9824 93.87-37.11)" xlink:href="#b"/>
+ <use transform="matrix(.986 0 0 .9867 94.78-32.36)" xlink:href="#b"/>
+ <use transform="matrix(1 0 0 .9841 90.65-26)" xlink:href="#b"/>
+ <use transform="matrix(1.007 0 0 .9945 95.16-24.49)" xlink:href="#b"/>
+ <use transform="matrix(1 0 0 1.005 93.4-21.28)" xlink:href="#b"/>
+ <use transform="matrix(1.009 0 0 .9841 90.53-9.36)" xlink:href="#b"/>
+ <use transform="matrix(1.017 0 0 .9911 91.07-5.954)" xlink:href="#b"/>
+ <use transform="matrix(.9871 0 0 .9908 93.33-.9773)" xlink:href="#b"/>
+ <use transform="matrix(.9923 0 0 .9812 130.7-3.667)" xlink:href="#b"/>
+ <use transform="matrix(1.01 0 0 .9999 98.86-42.5)" xlink:href="#b"/>
+ <use transform="matrix(.9824 0 0 1.006 100-37.53)" xlink:href="#b"/>
+ <use transform="matrix(.9996 0 0 1.01 97.89-36.26)" xlink:href="#b"/>
+ <use transform="matrix(1.004 0 0 1.016 100.6-30.28)" xlink:href="#b"/>
+ <use transform="matrix(1.004 0 0 .9936 98.61-22.74)" xlink:href="#b"/>
+ <use transform="matrix(1.007 0 0 .9862 99.13-18.84)" xlink:href="#b"/>
+ <use transform="matrix(1.016 0 0 .9887 95.4-8.664)" xlink:href="#b"/>
+ <use transform="matrix(1.008 0 0 1.001 102-11.34)" xlink:href="#b"/>
+ <use transform="matrix(.9863 0 0 1.003 100.1-2.241)" xlink:href="#b"/>
+ <use transform="matrix(.9814 0 0 1.017 16.16-29.71)" xlink:href="#b"/>
+ <use transform="matrix(.9839 0 0 1.001 102.1-43.06)" xlink:href="#b"/>
+ <use transform="matrix(1.01 0 0 1.01 97-32.68)" xlink:href="#b"/>
+ <use transform="matrix(.9965 0 0 .993 105.8-33.05)" xlink:href="#b"/>
+ <use transform="matrix(.989 0 0 .9932 104.5-30.01)" xlink:href="#b"/>
+ <use transform="matrix(.9877 0 0 .9812 104.5-22.69)" xlink:href="#b"/>
+ <use transform="matrix(1.016 0 0 1.014 102.6-20.65)" xlink:href="#b"/>
+ <use transform="matrix(.9859 0 0 .9858 99.5-12.9)" xlink:href="#b"/>
+ <use transform="matrix(1.012 0 0 1.014 107.7-12.88)" xlink:href="#b"/>
+ <use transform="matrix(1.008 0 0 .9954 101.8-5.214)" xlink:href="#b"/>
+ <use transform="matrix(.9872 0 0 .9882 102.9 .6891)" xlink:href="#b"/>
+ <use transform="matrix(.9846 0 0 1.006 108.5-43.86)" xlink:href="#b"/>
+ <use transform="matrix(1.009 0 0 1.004 109.2-39.09)" xlink:href="#b"/>
+ <use transform="matrix(1.004 0 0 .9863 106.6-19.96)" xlink:href="#b"/>
+ <use transform="matrix(1.007 0 0 .9804 109.1-15.18)" xlink:href="#b"/>
+ <use transform="matrix(.9908 0 0 .987 107-13.34)" xlink:href="#b"/>
+ <use transform="matrix(.9936 0 0 1.011 119.7-13.3)" xlink:href="#b"/>
+ <use transform="matrix(1.007 0 0 1.01 106.4-7.041)" xlink:href="#b"/>
+ <use transform="matrix(.9939 0 0 .9889 108.2 .3398)" xlink:href="#b"/>
+ <use transform="matrix(1.014 0 0 .9972 115.3-41.33)" xlink:href="#b"/>
+ <use transform="matrix(.9996 0 0 1.005 114.1-39.58)" xlink:href="#b"/>
+ <use transform="matrix(1.011 0 0 .9845 111.8-13.71)" xlink:href="#b"/>
+ <use transform="matrix(1.002 0 0 1.003 113.5-8.938)" xlink:href="#b"/>
+ <use transform="matrix(.9986 0 0 1.005 113-6.22)" xlink:href="#b"/>
+ <use transform="matrix(.9811 0 0 1.007 111.3-1.213)" xlink:href="#b"/>
+ <use transform="matrix(.9929 0 0 1.007 103.9-40.56)" xlink:href="#b"/>
+ <use transform="matrix(.992 0 0 1.01 120.8-41.76)" xlink:href="#b"/>
+ <use transform="matrix(1.016 0 0 .9816 119.1-32.39)" xlink:href="#b"/>
+ <use transform="matrix(.9895 0 0 .9859 115.4-11)" xlink:href="#b"/>
+ <use transform="matrix(1.013 0 0 .9932 119.9-13.73)" xlink:href="#b"/>
+ <use transform="matrix(.9891 0 0 .9956 117.2-6.033)" xlink:href="#b"/>
+ <use transform="matrix(1.015 0 0 .9944 120.8-5.106)" xlink:href="#b"/>
+ <use transform="matrix(.9822 0 0 1.016 118-3.159)" xlink:href="#b"/>
+ <use transform="matrix(1.017 0 0 .9843 122.6-40.96)" xlink:href="#b"/>
+ <use transform="matrix(1.014 0 0 .9822 123.3-34.75)" xlink:href="#b"/>
+ <use transform="matrix(1 0 0 .9915 124.3-17.82)" xlink:href="#b"/>
+ <use transform="matrix(1.005 0 0 1.011 124.3-15.9)" xlink:href="#b"/>
+ <use transform="matrix(.9968 0 0 .9946 125.1-5.875)" xlink:href="#b"/>
+ <use transform="matrix(.9951 0 0 .9801 123.6 .4089)" xlink:href="#b"/>
+ <use transform="matrix(1.005 0 0 1.004 129.2-44.13)" xlink:href="#b"/>
+ <use transform="matrix(.996 0 0 1.013 130.3-40.81)" xlink:href="#b"/>
+ <use transform="matrix(1.002 0 0 .989 129.9-34.42)" xlink:href="#b"/>
+ <use transform="matrix(1.003 0 0 1.013 127.5-19.3)" xlink:href="#b"/>
+ <use transform="matrix(1.003 0 0 .9924 127.6-11.95)" xlink:href="#b"/>
+ <use transform="matrix(1.012 0 0 1.018 126.2-12.03)" xlink:href="#b"/>
+ <use transform="matrix(.9984 0 0 .9986 128.9-2.157)" xlink:href="#b"/>
+ <use transform="matrix(1.007 0 0 1.001 21.67-22.47)" xlink:href="#b"/>
+ <use transform="matrix(1.003 0 0 .9997 134.9-42.59)" xlink:href="#b"/>
+ <use transform="matrix(.9931 0 0 1.009 135.9-40.9)" xlink:href="#b"/>
+ <use transform="matrix(.9885 0 0 1.008 136-19.4)" xlink:href="#b"/>
+ <use transform="matrix(.9965 0 0 1.019 135.6-18.04)" xlink:href="#b"/>
+ <use transform="matrix(1.01 0 0 .989 132.8-8.116)" xlink:href="#b"/>
+ <use transform="matrix(1.019 0 0 1.011 134-5.463)" xlink:href="#b"/>
+ <use transform="matrix(1.007 0 0 1.018 140.1-19.57)" xlink:href="#b"/>
+ <use transform="matrix(1 0 0 1.005 138.4-44.37)" xlink:href="#b"/>
+ <use transform="matrix(.9903 0 0 1.005 142.3-37.69)" xlink:href="#b"/>
+ <use transform="matrix(.9888 0 0 1.012 138.8-37.6)" xlink:href="#b"/>
+ <use transform="matrix(.9848 0 0 1.005 132.4-15.77)" xlink:href="#b"/>
+ <use transform="matrix(.9973 0 0 1.004 137.6-12.79)" xlink:href="#b"/>
+ <use transform="matrix(.9943 0 0 1.013 137.1-9.219)" xlink:href="#b"/>
+ <use transform="matrix(.9944 0 0 .9986 139.7-3.693)" xlink:href="#b"/>
+ <use transform="matrix(1.009 0 0 .9957 142.8-8.009)" xlink:href="#b"/>
+ <use transform="matrix(.9863 0 0 1.017 143.5-45.98)" xlink:href="#b"/>
+ <use transform="matrix(1.003 0 0 .9978 145.9-39.68)" xlink:href="#b"/>
+ <use transform="matrix(.987 0 0 1.017 145.5-19.71)" xlink:href="#b"/>
+ <use transform="matrix(.9986 0 0 .9972 143.8-12.95)" xlink:href="#b"/>
+ <use transform="matrix(.9963 0 0 1.016 146.1-10.98)" xlink:href="#b"/>
+ <use transform="matrix(1.002 0 0 .995 170.8-12.86)" xlink:href="#b"/>
+ <use transform="matrix(1.01 0 0 .9994 148.3-42.69)" xlink:href="#b"/>
+ <use transform="matrix(1.011 0 0 1.008 150.7-40.58)" xlink:href="#b"/>
+ <use transform="matrix(.999 0 0 1.015 147-16.73)" xlink:href="#b"/>
+ <use transform="matrix(.9858 0 0 .9879 150.3-6.771)" xlink:href="#b"/>
+ <use transform="matrix(1.014 0 0 1.011 146.4-4.788)" xlink:href="#b"/>
+ <use transform="matrix(.999 0 0 1.007 158.3-2.98)" xlink:href="#b"/>
+ <use transform="matrix(.9863 0 0 1.018 154.9-45.32)" xlink:href="#b"/>
+ <use transform="matrix(1.003 0 0 .9815 154.9-35.45)" xlink:href="#b"/>
+ <use transform="matrix(.9857 0 0 1.004 152.7-19.15)" xlink:href="#b"/>
+ <use transform="matrix(.9923 0 0 1.018 151.2-14.94)" xlink:href="#b"/>
+ <use transform="matrix(.9923 0 0 1.019 155.9-11.15)" xlink:href="#b"/>
+ <use transform="matrix(1.008 0 0 1 154.1-3.049)" xlink:href="#b"/>
+ <use transform="matrix(1.005 0 0 1.003 150.6-5.013)" xlink:href="#b"/>
+ <use transform="matrix(.9865 0 0 1.011 159.6-43.46)" xlink:href="#b"/>
+ <use transform="matrix(.9847 0 0 .9888 157.9-35.76)" xlink:href="#b"/>
+ <use transform="matrix(.9991 0 0 .9892 159.9-16.39)" xlink:href="#b"/>
+ <use transform="matrix(1.017 0 0 .9954 157.3-12.62)" xlink:href="#b"/>
+ <use transform="matrix(1.014 0 0 .997 160.9-10.3)" xlink:href="#b"/>
+ <use transform="matrix(.984 0 0 .9934 158.8-5.079)" xlink:href="#b"/>
+ <use transform="matrix(1.01 0 0 .986 163-42.87)" xlink:href="#b"/>
+ <use transform="matrix(1.011 0 0 .9825 161.4-37)" xlink:href="#b"/>
+ <use transform="matrix(1.001 0 0 .9802 166.3-33.48)" xlink:href="#b"/>
+ <use transform="matrix(.9813 0 0 1.012 165.6-18.24)" xlink:href="#b"/>
+ <use transform="matrix(.9903 0 0 .9942 163.1-13.76)" xlink:href="#b"/>
+ <use transform="matrix(.9992 0 0 1.013 163.6-8.629)" xlink:href="#b"/>
+ <use transform="matrix(.9931 0 0 .9874 164.8-1.325)" xlink:href="#b"/>
+ <use transform="matrix(1.01 0 0 1.018 167.5-45.93)" xlink:href="#b"/>
+ <use transform="matrix(1.017 0 0 .9876 171.1-38.55)" xlink:href="#b"/>
+ <use transform="matrix(1.007 0 0 1.006 170.5-36.72)" xlink:href="#b"/>
+ <use transform="matrix(1.003 0 0 .9817 166.7-10.37)" xlink:href="#b"/>
+ <use transform="matrix(.9902 0 0 .9915 167.7-8.927)" xlink:href="#b"/>
+ <use transform="matrix(.9922 0 0 .9855 170.6-.7672)" xlink:href="#b"/>
+ <use transform="matrix(1 0 0 .9886 167.3 1.268)" xlink:href="#b"/>
+ <use transform="matrix(.9931 0 0 .9898 174.8-41.93)" xlink:href="#b"/>
+ <use transform="matrix(1.017 0 0 .9984 173.8-36.54)" xlink:href="#b"/>
+ <use transform="matrix(1.009 0 0 .9982 174-16.71)" xlink:href="#b"/>
+ <use transform="matrix(1.002 0 0 .9917 177.3-18.96)" xlink:href="#b"/>
+ <use transform="matrix(1.005 0 0 .9832 175.8-8.058)" xlink:href="#b"/>
+ <use transform="matrix(.9954 0 0 .9901 174.9-1.16)" xlink:href="#b"/>
+ <use transform="matrix(.9879 0 0 1.007 181.4-45.8)" xlink:href="#b"/>
+ <use transform="matrix(1.002 0 0 1.003 178.6-41.24)" xlink:href="#b"/>
+ <use transform="matrix(.9983 0 0 .9897 177.1-33.26)" xlink:href="#b"/>
+ <use transform="matrix(.9915 0 0 .9806 181.2-28.05)" xlink:href="#b"/>
+ <use transform="matrix(1.006 0 0 1.003 181.9-24.97)" xlink:href="#b"/>
+ <use transform="matrix(1.001 0 0 1.009 181.7-22.47)" xlink:href="#b"/>
+ <use transform="matrix(1.006 0 0 .9904 177.7-14.27)" xlink:href="#b"/>
+ <use transform="matrix(.9908 0 0 1.001 172.2-7.366)" xlink:href="#b"/>
+ <use transform="matrix(1.019 0 0 .9947 177-4.798)" xlink:href="#b"/>
+ <use transform="matrix(1.008 0 0 1.01 156.6-17.95)" xlink:href="#b"/>
+ <use transform="matrix(.9938 0 0 1.01 185.5-43.47)" xlink:href="#b"/>
+ <use transform="matrix(.9896 0 0 1.01 183.7-40.04)" xlink:href="#b"/>
+ <use transform="matrix(.9826 0 0 .9964 182.9-34.63)" xlink:href="#b"/>
+ <use transform="matrix(.9937 0 0 1.008 185.6-31.92)" xlink:href="#b"/>
+ <use transform="matrix(1.012 0 0 .9998 185.4-20.74)" xlink:href="#b"/>
+ <use transform="matrix(.9849 0 0 1.001 182-13.34)" xlink:href="#b"/>
+ <use transform="matrix(.9986 0 0 .9831 183-6.406)" xlink:href="#b"/>
+ <use transform="matrix(.9923 0 0 .9858 182.8-.5795)" xlink:href="#b"/>
+ <use transform="matrix(.9874 0 0 1.007 179.8-1.315)" xlink:href="#b"/>
+ <use transform="matrix(.9995 0 0 1.014 190.9-45.37)" xlink:href="#b"/>
+ <use transform="matrix(.9995 0 0 .9915 190.7-39.26)" xlink:href="#b"/>
+ <use transform="matrix(1.013 0 0 .9814 188.3-33.77)" xlink:href="#b"/>
+ <use transform="matrix(.9901 0 0 1.011 187.2-27.96)" xlink:href="#b"/>
+ <use transform="matrix(.9962 0 0 .9999 191.2-25.03)" xlink:href="#b"/>
+ <use transform="matrix(.9816 0 0 1.009 188.4-19.07)" xlink:href="#b"/>
+ <use transform="matrix(1.003 0 0 .9921 186.8-11.32)" xlink:href="#b"/>
+ <use transform="matrix(1.008 0 0 1.014 189.8-13.07)" xlink:href="#b"/>
+ <use transform="matrix(1.003 0 0 1.014 187.3-7.431)" xlink:href="#b"/>
+ <use transform="matrix(1.019 0 0 1.013 184.7-18.29)" xlink:href="#b"/>
+ <use transform="matrix(1.011 0 0 .9896 190.9-31.36)" xlink:href="#b"/>
+ <use transform="matrix(.9939 0 0 .9967 191.5-3.742)" xlink:href="#b"/>
+ <use transform="matrix(.9881 0 0 1.007 193.6-28.46)" xlink:href="#b"/>
+ <use transform="matrix(1.015 0 0 .9849 192.4-19.64)" xlink:href="#b"/>
+ <use transform="matrix(.9815 0 0 1.012 192.3-18.86)" xlink:href="#b"/>
+ <use transform="matrix(.9832 0 0 1.013 78.02-39.76)" xlink:href="#b"/>
+ <use transform="matrix(1.004 0 0 .9921 .6163-35.63)" xlink:href="#b"/>
+ <use transform="matrix(.9918 0 0 1.016 188.9-2.898)" xlink:href="#b"/>
+ <path id="a" d="m30.54 137.4c0.035-.9768 1.558-.9568 1.6 0 .048 1.07-1.643 1.191-1.6 0z" fill="#fff" stroke="#000" stroke-width=".2"/>
+ <use transform="matrix(1.003 0 0 1.002 155-40.13)" xlink:href="#a"/>
+ <use transform="matrix(.9866 0 0 .9918 159-10.77)" xlink:href="#a"/>
+ <use transform="matrix(1.006 0 0 .9866 170-29.15)" xlink:href="#a"/>
+ <use transform="matrix(.9973 0 0 1.014 160.2-39.82)" xlink:href="#a"/>
+ <use transform="matrix(.9941 0 0 .9925 148.6-6.036)" xlink:href="#a"/>
+ <use transform="matrix(.9856 0 0 1.004 150.7-17.36)" xlink:href="#a"/>
+ <use transform="matrix(.9813 0 0 .9922 169.3-28.51)" xlink:href="#a"/>
+ <use transform="matrix(.999 0 0 .9933 136.9-39.69)" xlink:href="#a"/>
+ <use transform="matrix(1.006 0 0 .9895 154.8-12.45)" xlink:href="#a"/>
+ <use transform="matrix(1.015 0 0 .9914 141.2-.2233)" xlink:href="#a"/>
+ <use transform="matrix(.9996 0 0 1 169.4-21.4)" xlink:href="#a"/>
+ <use transform="matrix(1.013 0 0 1.003 146.9-5.995)" xlink:href="#a"/>
+ <use transform="matrix(1.009 0 0 1.009 127.3-39.19)" xlink:href="#a"/>
+ <use transform="matrix(1.001 0 0 1 133.4-6.5)" xlink:href="#a"/>
+ <use transform="matrix(.9842 0 0 1.015 168.5-25.28)" xlink:href="#a"/>
+ <use transform="matrix(.981 0 0 .9934 132.2-41.88)" xlink:href="#a"/>
+ <use transform="matrix(.9998 0 0 1.003 128.3-18.55)" xlink:href="#a"/>
+ <use transform="matrix(1.016 0 0 .9948 129.5-15.48)" xlink:href="#a"/>
+ <use transform="matrix(.9962 0 0 1.003 134.6-11.77)" xlink:href="#a"/>
+ <use transform="matrix(.9842 0 0 1.016 172.3-9.832)" xlink:href="#a"/>
+ <use transform="matrix(1.018 0 0 .987 140.7-1.713)" xlink:href="#a"/>
+ <use transform="matrix(.9837 0 0 .9918 163.9-26.15)" xlink:href="#a"/>
+ <use transform="matrix(.9994 0 0 .9866 137-41.95)" xlink:href="#a"/>
+ <use transform="matrix(1.008 0 0 1.007 119.7-41.77)" xlink:href="#a"/>
+ <use transform="matrix(.9875 0 0 1.019 122.6-43.1)" xlink:href="#a"/>
+ <use transform="matrix(.9859 0 0 1 123.1-4.967)" xlink:href="#a"/>
+ <use transform="matrix(.9944 0 0 1.003 122.8-2.539)" xlink:href="#a"/>
+ <use transform="matrix(.9998 0 0 1.004 131.2-2.045)" xlink:href="#a"/>
+ <use transform="matrix(1.011 0 0 1.009 135.8-30.93)" xlink:href="#a"/>
+ <use transform="matrix(1.012 0 0 .9938 171.4-13.34)" xlink:href="#a"/>
+ <use transform="matrix(1.012 0 0 .9886 119.7-8.94)" xlink:href="#a"/>
+ <use transform="matrix(.9927 0 0 1.014 151.9-46.28)" xlink:href="#a"/>
+ <use transform="matrix(.9897 0 0 1.005 172-37.64)" xlink:href="#a"/>
+ <use transform="matrix(1.011 0 0 .996 116.7-1.498)" xlink:href="#a"/>
+ <use transform="matrix(.9908 0 0 .9847 126.4-9.354)" xlink:href="#a"/>
+ <use transform="matrix(1.011 0 0 .9947 127.8-10.45)" xlink:href="#a"/>
+ <use transform="matrix(.9872 0 0 .9863 143-34.79)" xlink:href="#a"/>
+ <use transform="matrix(.9812 0 0 .9987 113.2-40.21)" xlink:href="#a"/>
+ <use transform="matrix(.9988 0 0 1.016 109.4-11.81)" xlink:href="#a"/>
+ <use transform="matrix(1.01 0 0 .9993 110.4-12.25)" xlink:href="#a"/>
+ <use transform="matrix(.9929 0 0 .993 127.7-5.488)" xlink:href="#a"/>
+ <use transform="matrix(1.004 0 0 .9952 111.8-44.58)" xlink:href="#a"/>
+ <use transform="matrix(.9997 0 0 .9836 114.4-10.16)" xlink:href="#a"/>
+ <use transform="matrix(.9986 0 0 .9976 113.9-6.695)" xlink:href="#a"/>
+ <use transform="matrix(1.004 0 0 .9859 102-9.932)" xlink:href="#a"/>
+ <use transform="matrix(.9849 0 0 .9866 102.4-15.01)" xlink:href="#a"/>
+ <use transform="matrix(1.012 0 0 .995 139.7-13.01)" xlink:href="#a"/>
+ <use transform="matrix(.9941 0 0 1.001 107.1-38)" xlink:href="#a"/>
+ <use transform="matrix(.9867 0 0 1.015 107.2-43.04)" xlink:href="#a"/>
+ <use transform="matrix(.9958 0 0 .9947 169.9-13.88)" xlink:href="#a"/>
+ <use transform="matrix(1.015 0 0 1.013 94.56-19.12)" xlink:href="#a"/>
+ <use transform="matrix(1.009 0 0 .9836 111.8 .7912)" xlink:href="#a"/>
+ <use transform="matrix(.9899 0 0 1.015 126.4-47.6)" xlink:href="#a"/>
+ <use transform="matrix(.9857 0 0 .9985 121.2-13.89)" xlink:href="#a"/>
+ <use transform="matrix(1.009 0 0 1.018 100.9-11.47)" xlink:href="#a"/>
+ <use transform="matrix(1.01 0 0 .9925 98.6-16.74)" xlink:href="#a"/>
+ <use transform="matrix(1.015 0 0 .9922 103.6-10.78)" xlink:href="#a"/>
+ <use transform="matrix(1.009 0 0 1.01 29.93-8.073)" xlink:href="#a"/>
+ <use transform="matrix(1.006 0 0 1.004 109.5-15.78)" xlink:href="#a"/>
+ <use transform="matrix(.9887 0 0 .999 10.28-35.29)" xlink:href="#a"/>
+ <use transform="matrix(.9857 0 0 .9862 92.34-34.12)" xlink:href="#a"/>
+ <use transform="matrix(1.018 0 0 1.015 25.08-3.19)" xlink:href="#a"/>
+ <use transform="matrix(1.006 0 0 1.006 105.6-45.68)" xlink:href="#a"/>
+ <use transform="matrix(.9909 0 0 1.005 96.87-16.55)" xlink:href="#a"/>
+ <use transform="matrix(.9833 0 0 1.001-19.37-19.92)" xlink:href="#a"/>
+ <use transform="matrix(1.016 0 0 .9982 37.46-6.073)" xlink:href="#a"/>
+ <use transform="matrix(1.006 0 0 .9841-24.87-39.3)" xlink:href="#a"/>
+ <use transform="matrix(1.014 0 0 1.011 137.2-12.06)" xlink:href="#a"/>
+ <use transform="matrix(1 0 0 1.01-22.54-16.07)" xlink:href="#a"/>
+ <use transform="matrix(1.019 0 0 .9851 22.28-31.06)" xlink:href="#a"/>
+ <use transform="matrix(.9857 0 0 1.012 24.63-5.067)" xlink:href="#a"/>
+ <use transform="matrix(.9831 0 0 1.007 4.389-5.588)" xlink:href="#a"/>
+ <use transform="matrix(1.002 0 0 .9886-25.6-34.43)" xlink:href="#a"/>
+ <use transform="matrix(.9845 0 0 .9947-12.93-3.882)" xlink:href="#a"/>
+ <use transform="matrix(.9827 0 0 .9802-8.944-43.2)" xlink:href="#a"/>
+ <use transform="matrix(.9822 0 0 .9883 35.45-.08566)" xlink:href="#a"/>
+ <use transform="matrix(1.004 0 0 1.001 40.03-9.457)" xlink:href="#a"/>
+ <use transform="matrix(.9861 0 0 1.005-12.85-12.69)" xlink:href="#a"/>
+ <use transform="matrix(.9922 0 0 1.006-12.49-41.13)" xlink:href="#a"/>
+ <use transform="matrix(1.001 0 0 1.019 16.15-9.265)" xlink:href="#a"/>
+ <use transform="matrix(1.016 0 0 .9899-5.772-40.27)" xlink:href="#a"/>
+ <use transform="matrix(1.013 0 0 .9925-13.08-17.23)" xlink:href="#a"/>
+ <use transform="matrix(.9857 0 0 .9846 38.34-6.337)" xlink:href="#a"/>
+ <use transform="matrix(.9935 0 0 .9929-26-14.98)" xlink:href="#a"/>
+ <use transform="matrix(1.006 0 0 1 8.15-.5574)" xlink:href="#a"/>
+ <use transform="matrix(.9925 0 0 1.013-7.255-22.7)" xlink:href="#a"/>
+ <use transform="matrix(1.004 0 0 .9965 21.22-40.38)" xlink:href="#a"/>
+ <use transform="matrix(1.017 0 0 1.012-8.38-17.34)" xlink:href="#a"/>
+ <use transform="matrix(1.01 0 0 1.011 44.7-13.11)" xlink:href="#a"/>
+ <use transform="matrix(1.015 0 0 .9827-10.87-33.12)" xlink:href="#a"/>
+ <use transform="matrix(.9979 0 0 .9896-18.85 .3404)" xlink:href="#a"/>
+ <use transform="matrix(.9967 0 0 .9816-19.46-10)" xlink:href="#a"/>
+ <use transform="matrix(.9958 0 0 1.001-5.147-20.18)" xlink:href="#a"/>
+ <use transform="matrix(.9983 0 0 1.018 14.74-3.168)" xlink:href="#a"/>
+ <use transform="matrix(1.014 0 0 .9961 5.124-5.851)" xlink:href="#a"/>
+ <use transform="matrix(.9993 0 0 .9817 36.58-.8021)" xlink:href="#a"/>
+ <use transform="matrix(1.008 0 0 .9825 33.94-39.37)" xlink:href="#a"/>
+ <use transform="matrix(1.004 0 0 1.018 2.688-34.89)" xlink:href="#a"/>
+ <use transform="matrix(1.018 0 0 .9828 4.121-27.55)" xlink:href="#a"/>
+ <use transform="matrix(1.004 0 0 1.002-4.639-10.95)" xlink:href="#a"/>
+ <use transform="matrix(1 0 0 .9891-23.84-3.867)" xlink:href="#a"/>
+ <use transform="matrix(1 0 0 1.014 10.12-46.27)" xlink:href="#a"/>
+ <use transform="matrix(.9941 0 0 1.012 20.89-20.15)" xlink:href="#a"/>
+ <use transform="matrix(.9971 0 0 .9924-14.12-40.72)" xlink:href="#a"/>
+ <use transform="matrix(.9913 0 0 .9879-.897-13.15)" xlink:href="#a"/>
+ <use transform="matrix(.9868 0 0 1.01-4.409-5.746)" xlink:href="#a"/>
+ <use transform="matrix(1.019 0 0 1.008-1.92-22.83)" xlink:href="#a"/>
+ <use transform="matrix(1.016 0 0 1.016 7.573-43.59)" xlink:href="#a"/>
+ <use transform="matrix(1.014 0 0 1.001 12.59-45.59)" xlink:href="#a"/>
+ <use transform="matrix(.9865 0 0 1.01 28.53-38.06)" xlink:href="#a"/>
+ <use transform="matrix(.9823 0 0 1 39.09-46.2)" xlink:href="#a"/>
+ <use transform="matrix(1.012 0 0 1.002-2.058-36.13)" xlink:href="#a"/>
+ <use transform="matrix(1.016 0 0 1.011-14.84-24.8)" xlink:href="#a"/>
+ <use transform="matrix(.9899 0 0 .9848 33.3-10.45)" xlink:href="#a"/>
+ <use transform="matrix(.9987 0 0 .9906 62.66-31.07)" xlink:href="#a"/>
+ <use transform="matrix(.9983 0 0 .9905 49.98-2.534)" xlink:href="#a"/>
+ <use transform="matrix(.9983 0 0 .9969 50.46-41.77)" xlink:href="#a"/>
+ <use transform="matrix(.9975 0 0 .9889 43.65-40.13)" xlink:href="#a"/>
+ <use transform="matrix(.9866 0 0 .9951 51.03-9.659)" xlink:href="#a"/>
+ <use transform="matrix(.9968 0 0 1.002 55.41-7.195)" xlink:href="#a"/>
+ <use transform="matrix(1.014 0 0 1.015 63.25-46.95)" xlink:href="#a"/>
+ <use transform="matrix(.9813 0 0 .9881 36.46-17.12)" xlink:href="#a"/>
+ <use transform="matrix(.9877 0 0 1.018 56.74-15.22)" xlink:href="#a"/>
+ <use transform="matrix(.9937 0 0 1.009 62.66-5.075)" xlink:href="#a"/>
+ <use transform="matrix(1.014 0 0 1.02 36.63-41.51)" xlink:href="#a"/>
+ <use transform="matrix(.9913 0 0 1.005 75.57-45.32)" xlink:href="#a"/>
+ <use transform="matrix(1.002 0 0 1.016 56.51-7.672)" xlink:href="#a"/>
+ <use transform="matrix(.9911 0 0 .9811 43.35-11.81)" xlink:href="#a"/>
+ <use transform="matrix(1.012 0 0 .9921 48.84-31.48)" xlink:href="#a"/>
+ <use transform="matrix(.986 0 0 .9811 52.11-13.54)" xlink:href="#a"/>
+ <use transform="matrix(1.006 0 0 .9937 45.63-40.45)" xlink:href="#a"/>
+ <use transform="matrix(1.001 0 0 .9956 64.24-1.841)" xlink:href="#a"/>
+ <use transform="matrix(.9942 0 0 .9805 46.15-14.69)" xlink:href="#a"/>
+ <use transform="matrix(.9865 0 0 1.019 95.71-39.57)" xlink:href="#a"/>
+ <use transform="matrix(.9921 0 0 1.013 56.97-37.15)" xlink:href="#a"/>
+ <use transform="matrix(.9981 0 0 1.01 43.54-31.65)" xlink:href="#a"/>
+ <use transform="matrix(.9974 0 0 1.013 63.7-15.98)" xlink:href="#a"/>
+ <use transform="matrix(.9855 0 0 .9969 45.97-34.94)" xlink:href="#a"/>
+ <use transform="matrix(1.006 0 0 1.01 51.42-38.8)" xlink:href="#a"/>
+ <use transform="matrix(1.016 0 0 1.014 66.21-12.02)" xlink:href="#a"/>
+ <use transform="matrix(.9823 0 0 1.016 41.46-37.45)" xlink:href="#a"/>
+ <use transform="matrix(1 0 0 .9829 72.62-11.67)" xlink:href="#a"/>
+ <use transform="matrix(.9987 0 0 1.011 71.03-21.85)" xlink:href="#a"/>
+ <use transform="matrix(.9872 0 0 1.001 61.23-29.91)" xlink:href="#a"/>
+ <use transform="matrix(.987 0 0 1.013 71.96-38.65)" xlink:href="#a"/>
+ <use transform="matrix(.9825 0 0 .988 165.5-34.89)" xlink:href="#a"/>
+ <use transform="matrix(1.009 0 0 .9813 69.03-42.37)" xlink:href="#a"/>
+ <use transform="matrix(.9903 0 0 .9804 160-7.233)" xlink:href="#a"/>
+ <use transform="matrix(1.006 0 0 .9883 69.38-13.59)" xlink:href="#a"/>
+ <use transform="matrix(1.014 0 0 .9997 47.73-42.98)" xlink:href="#a"/>
+ <use transform="matrix(1.008 0 0 .9873 66.11-35.5)" xlink:href="#a"/>
+ <use transform="matrix(1.005 0 0 .9982 70.56-41.21)" xlink:href="#a"/>
+ <use transform="matrix(.9887 0 0 1.014 56.62-47.37)" xlink:href="#a"/>
+ <use transform="matrix(1.012 0 0 .9975 81.28-29.87)" xlink:href="#a"/>
+ <use transform="matrix(.9971 0 0 1.003 54.59-33.37)" xlink:href="#a"/>
+ <use transform="matrix(1.01 0 0 .9855 8.193-15.59)" xlink:href="#a"/>
+ <use transform="matrix(1.019 0 0 .9802 57.34-6.479)" xlink:href="#a"/>
+ <use transform="matrix(.9979 0 0 .9908-21.83-4.748)" xlink:href="#a"/>
+ <use transform="matrix(.9855 0 0 .9954 72.69-31.71)" xlink:href="#a"/>
+ <use transform="matrix(.9993 0 0 1.005 36.46-41.77)" xlink:href="#a"/>
+ <use transform="matrix(1.002 0 0 1.016 81.87-24.64)" xlink:href="#a"/>
+ <use transform="matrix(.9853 0 0 .9811 78.86-9.267)" xlink:href="#a"/>
+ <use transform="matrix(1.019 0 0 .9865 100.1 1.164)" xlink:href="#a"/>
+ <use transform="matrix(.9852 0 0 .983 80.87-15.4)" xlink:href="#a"/>
+ <use transform="matrix(.9852 0 0 1.013 49.6-8.779)" xlink:href="#a"/>
+ <use transform="matrix(1.001 0 0 1.003 84.15-44.16)" xlink:href="#a"/>
+ <use transform="matrix(1.003 0 0 1.016 76.69-4.828)" xlink:href="#a"/>
+ <use transform="matrix(.9889 0 0 1.013 165.4-46.43)" xlink:href="#a"/>
+ <use transform="matrix(1.01 0 0 .9834 166.9-42.09)" xlink:href="#a"/>
+ <use transform="matrix(.9907 0 0 .9831 69.73-29.38)" xlink:href="#a"/>
+ <use transform="matrix(1.011 0 0 1.019 80.31-28.09)" xlink:href="#a"/>
+ <use transform="matrix(1.003 0 0 1.011 95.24-4.901)" xlink:href="#a"/>
+ <use transform="matrix(.9953 0 0 .9811 165.7-6.034)" xlink:href="#a"/>
+ <use transform="matrix(.998 0 0 .9903 86.56-39.05)" xlink:href="#a"/>
+ <use transform="matrix(.994 0 0 1.006 84.47-14.09)" xlink:href="#a"/>
+ <use transform="matrix(1.017 0 0 .9998 17.67-38.88)" xlink:href="#a"/>
+ <use transform="matrix(.9986 0 0 .9947 41.61 .04125)" xlink:href="#a"/>
+ <use transform="matrix(.9978 0 0 1.014 66.07-17.71)" xlink:href="#a"/>
+ <use transform="matrix(1.014 0 0 1.019 75.83-21)" xlink:href="#a"/>
+ <use transform="matrix(1.006 0 0 1.002 73.87-28.65)" xlink:href="#a"/>
+ <use transform="matrix(1.016 0 0 .9913 89.65-3.259)" xlink:href="#a"/>
+ <use transform="matrix(.9964 0 0 .9854 66.21 .9985)" xlink:href="#a"/>
+ <use transform="matrix(1.018 0 0 .9867 88.95-6.141)" xlink:href="#a"/>
+ <use transform="matrix(1.005 0 0 1.003 84.67-9.491)" xlink:href="#a"/>
+ <use transform="matrix(1.018 0 0 .9826 58.12-13.94)" xlink:href="#a"/>
+ <use transform="matrix(1 0 0 1.009 86.48-38.3)" xlink:href="#a"/>
+ <use transform="matrix(.9862 0 0 1.017 93.24-13.93)" xlink:href="#a"/>
+ <use transform="matrix(1.012 0 0 .9935 125.6-.3963)" xlink:href="#a"/>
+ <use transform="matrix(.9995 0 0 .9963 55.66-.6218)" xlink:href="#a"/>
+ <use transform="matrix(1.005 0 0 1.01 45.84-21.34)" xlink:href="#a"/>
+ <use transform="matrix(1.003 0 0 1.004 65.59-26.01)" xlink:href="#a"/>
+ <use transform="matrix(.9936 0 0 .9842 71.73-21.36)" xlink:href="#a"/>
+ <use transform="matrix(.9833 0 0 1.002 59.41-40.75)" xlink:href="#a"/>
+ <use transform="matrix(.9825 0 0 1.005 54.84-43.25)" xlink:href="#a"/>
+ <use transform="matrix(1.009 0 0 .9809 42.56-1.274)" xlink:href="#a"/>
+ <use transform="matrix(1.001 0 0 .9814 67.49-6.143)" xlink:href="#a"/>
+ <use transform="matrix(1.005 0 0 .9828 85.45-15.9)" xlink:href="#a"/>
+ <use transform="matrix(1.006 0 0 .993 76.92-38.43)" xlink:href="#a"/>
+ <use transform="matrix(1.009 0 0 .9807 106 1.633)" xlink:href="#a"/>
+ <use transform="matrix(.9971 0 0 1 114.8-1.571)" xlink:href="#a"/>
+ <use transform="matrix(1.005 0 0 1.008 45.1-39.76)" xlink:href="#a"/>
+ <use transform="matrix(.9909 0 0 .9979 82.24-33.25)" xlink:href="#a"/>
+ <use transform="matrix(1.008 0 0 .9871-11.82-6.222)" xlink:href="#a"/>
+ <use transform="matrix(1.017 0 0 .9804 43.5-6.772)" xlink:href="#a"/>
+ <path id="d" d="m25.04 138.6c-.4285 .1759-.9302 .1703-1.015 .7106-.5525 .6209-2.039-1.041-1.406-1.68 .6507-3.033 1.086-1.858 2.198-1.222 .2499 .669-.5443 .4927-.9158 1.531 .2837 .2864 1.597 .1085 1.143 .6629z" stroke="#000" stroke-width=".2"/>
+ <path d="m-77.75-162.4" />
+ <path id="c" d="m18.19 138.4c-.4285 .176-.5985-.3935-.6836 .1461-.0616-1.058-1.149-1.315-1.074-1.448 .9248-.2331 .4227 .2822 1.314-.4806 .2499 .669 .3403-.2481-.0313 .7903 .2838 .2864 .7235 0 .2699 .5633z" stroke="#000" stroke-width=".2"/>
+ <use transform="rotate(62.13 56.54 125.3)" xlink:href="#c"/>
+ <use transform="rotate(74.87 45.64 152.6)" xlink:href="#c"/>
+ <use transform="rotate(-70.98 36.24 104.1)" xlink:href="#c"/>
+ <use transform="rotate(-40.61 25.34 83.73)" xlink:href="#c"/>
+ <use transform="rotate(174.2 103 141.3)" xlink:href="#c"/>
+ <use transform="rotate(191.9 14.41 117.5)" xlink:href="#c"/>
+ <use transform="rotate(19.81 83.14 119.9)" xlink:href="#c"/>
+ <use transform="rotate(-42.34 23.14 103.4)" xlink:href="#c"/>
+ <use transform="rotate(229.5 24.24 116)" xlink:href="#c"/>
+ <use transform="rotate(114.3 30.64 141.2)" xlink:href="#c"/>
+ <use transform="rotate(267.6 .2432 113.7)" xlink:href="#c"/>
+ <use transform="rotate(251.3 57.74 91.33)" xlink:href="#c"/>
+ <use transform="rotate(251.3 27.44 106.9)" xlink:href="#c"/>
+ <use transform="rotate(251.3 76.84 67.13)" xlink:href="#c"/>
+ <use transform="rotate(251.3 42.34 118.4)" xlink:href="#c"/>
+ <use transform="rotate(251.3 31.34 96.53)" xlink:href="#c"/>
+ <use transform="rotate(251.3 84.64 59.73)" xlink:href="#c"/>
+ <use transform="rotate(251.3 51.54 80.63)" xlink:href="#c"/>
+ <use transform="matrix(.9979 0 0 .9908-25.87-21.69)" xlink:href="#a"/>
+ <use transform="matrix(.9979 0 0 .9908-1.11-28.06)" xlink:href="#a"/>
+ <use transform="matrix(.9979 0 0 .9908 14.99-15.32)" xlink:href="#a"/>
+ <use transform="matrix(.9979 0 0 .9908-10.31 .5942)" xlink:href="#a"/>
+ <use transform="matrix(.9979 0 0 .9908 .8356-40.8)" xlink:href="#a"/>
+ <use transform="matrix(.9979 0 0 .9908-24.64-7.719)" xlink:href="#a"/>
+ <use transform="matrix(.9979 0 0 .9908-9.425-30.18)" xlink:href="#a"/>
+ <use transform="rotate(251.3 15.13 115.7)" xlink:href="#c"/>
+ <use transform="matrix(.9898 0 0 .9829-21.85-32.57)"  xlink:href="#a"/>
+ <use transform="matrix(.9935 0 0 .9929-24.05-15.84)"  xlink:href="#a"/>
+ <rect x="4.713" y="136" width="201.3" height="3.906" fill="#fff" stroke-width=".9999"/>
+ <g fill="none">
+ <path d="m102.1 46.73c13.32 6.314-14.28 6.314 0 13.42 13.32 6.314-14.28 6.314 0 13.42 13.32 6.314-14.28 6.314 0 13.42 13.32 6.314-14.28 6.314 0 13.42" stroke="#080" />
+ <g stroke="#f00" stroke-width=".6">
+ <path d="m181.3 40.13-30.17 52.25" marker-end="url(#Arrow1Lend)"/>
+ <path d="m184.9 52.73-22.94 39.73" marker-end="url(#h)"/>
+ <path d="m188 64.53-16.1 27.88" marker-end="url(#g)"/>
+ </g>
+ </g>
+ <path d="m151.1 92.43-20.16-34.91" marker-end="url(#f)" stroke="#000" stroke-width=".6"/>
+ <g stroke="#00f" fill="none" stroke-width=".6">
+ <path d="m37.34 51.13 23.23 40.23" fill="#00f" marker-end="url(#e)" />
+ <path d="m70.44 75.63c4.379 4.316-6.297-1.847-1.646 2.851 4.379 4.316-6.297-1.848-1.646 2.851 4.379 4.316-6.297-1.847-1.646 2.851 4.379 4.316-6.297-1.847-1.646 2.851 4.379 4.316-6.296-1.848-1.646 2.851"/>
+ <path d="m41.34 81.53c4.316-4.379-1.847 6.297 2.851 1.646 4.316-4.379-1.847 6.297 2.851 1.646 4.316-4.379-1.847 6.297 2.851 1.646 4.316-4.379-1.847 6.297 2.851 1.646 4.316-4.379-1.848 6.296 2.851 1.646"/>
+ </g>
+ <rect x="30.34" y="107.1" width="64" height="10" ry="5.147" fill="#fff" />
+ <rect x="115.6" y="101" width="77" height="18" ry="5.534" fill="#fff" />
+ <circle cx="34.94" cy="47.13" r="2.8" stroke="#000" stroke-width=".4"/>
+ <g fill="#00f" stroke="#00f" stroke-width=".6">
+ <path d="m20.01 22.04 12.9 21.47"/>
+ <path d="m28.04 19.04 6.648 23.56"/>
+ <path d="m14.24 26.64 17.09 17.78"/>
+ </g>
+ <g style="font-family:'Arial';-inkscape-font-specification:'Arial'" text-anchor="middle" font-size="9px">
+ <text x="141" y="55">Распыление</text>
+ <text x="46" y="9">Бомбардировка<tspan x="46" y="17">микрометеоритами</tspan></text>
+ <text x="100" y="28">Космическое<tspan x="100" y="37">и солнечное</tspan><tspan x="100" y="45">излучение</tspan></text>
+ <text x="176" y="22">Имплантация<tspan x="176" y="30">солнечного</tspan><tspan x="176" y="39">ветра</tspan></text>
+ <text x="73" y="69">Испарение</text>
+ <text x="62" y="115">Измельчение</text>
+ <text x="154" y="109">Агглютинативное<tspan x="154" y="117">образование</tspan></text>
+ </g>
+</svg>

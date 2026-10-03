@@ -1,0 +1,371 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns="http://www.w3.org/2000/svg" width="1440px" height="1000px" viewBox="-120 -200 1440 1050" version="1.2">
+  <title>Global Average Temperature</title>
+  <desc>Land-ocean temperature index, 1880 to present, with base period 1951-1980. The solid black line is the global annual mean and the solid red line is the five-year lowess smooth. The blue uncertainty bars represents the total (LSAT and SST) annual uncertainty at a 95% confidence interval. [More information on the updated uncertainty model can be found here: Lenssen et al. (2019).]</desc>
+  <!-- Data for the graph from: https://data.giss.nasa.gov/gistemp/graphs_v4/ -->
+  <style type="text/css"><![CDATA[
+    path, line, rect {
+       fill: none;
+       stroke: black;
+       stroke-width: 2;
+       stroke-linecap: butt;
+    }
+    text {
+      font-family:Liberation Sans,Arial,Nimbus Sans L,Helvetica,sans-serif;
+      font-face-name: arial;
+      font-size: 54px;
+      fill: black;
+    }
+    .graticule {
+       stroke: gray;
+    }
+    .title {
+      font-size: 54px;
+    }
+    .x, .y-label, .y-label text {
+      font-family:Liberation Sans,Arial,Nimbus Sans L,Helvetica,sans-serif;
+      font-face-name: arial;
+      font-size: 54px;
+      text-anchor: middle;
+    }
+    .y {
+      text-anchor: end;
+    }
+    .whiteBox {
+      fill: white;
+    }
+    .annual_points {
+       stroke-width: 8;
+    }
+    .five-year_line {
+       stroke: red;
+       stroke-width: 4;
+       stroke-linejoin: round;
+    }
+    .error_bar {
+       stroke: blue;
+       stroke-width: 4;
+    }
+  ]]></style>
+  <!-- outline graph -->
+  <!--<rect id="outline" class="whiteBox" x="-120" y="-150" width="1440" height="1000"/>-->
+  <rect id="outline" class="whiteBox" x="80" y="-105" width="1160" height="860"/>
+
+  <g class="x" transform="translate(640,-135)">
+    <switch>
+	<text class="title" systemLanguage="ar" id="trsvg212"><tspan id="trsvg119">مؤشر عالمي درجة الحرارة لاند-المحيط</tspan></text>
+	<text class="title" systemLanguage="cs" id="trsvg213"><tspan id="trsvg120">Globální teplotní index pevnina–oceán</tspan></text>
+	<text class="title" systemLanguage="da" id="trsvg102"><tspan id="trsvg3">Global middeltemperatur</tspan></text>
+	<text class="title" systemLanguage="de" id="trsvg214"><tspan id="trsvg121">Weltweiter Land-Ozean Temperaturindex</tspan></text>
+	<text class="title" systemLanguage="es" id="trsvg215"><tspan id="trsvg122">Temperatura media global en superficie</tspan></text>
+	<text class="title" systemLanguage="eu" id="trsvg216"><tspan id="trsvg123">Lurreko batezbesteko tenperatura lurrazalean eta ozeanoetan</tspan></text>
+	<text class="title" systemLanguage="fi" id="trsvg217"><tspan id="trsvg124">Maailmanlaajuinen maa-merilämpötilaindeksi</tspan></text>
+	<text class="title" systemLanguage="fr" id="trsvg218"><tspan id="trsvg125">Indice mondial de température terre-océan</tspan></text>
+	<text class="title" systemLanguage="it" id="trsvg219"><tspan id="trsvg126">Temperatura media globale</tspan></text>
+	<text class="title" systemLanguage="ja" id="trsvg220"><tspan id="trsvg127">グローバル土地海洋温度指標</tspan></text>
+	<text class="title" systemLanguage="nl" id="trsvg221"><tspan id="trsvg128">Wereldwijde land–oceaan temperatuurindex</tspan></text>
+	<text class="title" systemLanguage="no" id="trsvg222"><tspan id="trsvg129">Global land-hav temperaturindeks</tspan></text>
+	<text class="title" systemLanguage="pl" id="trsvg223"><tspan id="trsvg130">Global index temperatura land-ocean</tspan></text>
+	<text class="title" systemLanguage="pt" id="trsvg102" ><tspan id="trsvg14">Índice da temperatura global terra-oceano</tspan></text>
+	<text class="title" systemLanguage="ru" id="trsvg224"><tspan id="trsvg131">Глобальный индекс температуры суши и океанов</tspan></text>
+	<text class="title" systemLanguage="sv" id="trsvg225"><tspan id="trsvg132">Global land-ocean temperatur index</tspan></text>
+	<text class="title" systemLanguage="tr" id="trsvg226"><tspan id="trsvg133">Küresel yer-okyanus sıcaklık indeksi</tspan></text>
+	<text class="title" systemLanguage="zh" id="trsvg227"><tspan id="trsvg134">全球土地，海溫指數</tspan></text>
+  <text class="title" id="trsvg118-ca" systemLanguage="ca"><tspan id="trsvg19-ca">Índex de temperatura global terra-oceà</tspan></text>
+  <text class="title" id="trsvg228-ro" systemLanguage="ro"><tspan id="trsvg135-ro">Temperatura medie globală</tspan></text>
+  <text class="title" id="trsvg228-bn" systemLanguage="bn"><tspan id="trsvg135-bn">বৈশ্বিক গড় তাপমাত্রা</tspan></text>
+  <text class="title" id="trsvg228"><tspan id="trsvg135">Global Average Temperature</tspan></text>
+</switch>
+  </g>
+  <!-- x-axis: pixel scale is 8*year -->
+  <switch><text class="scale x" x="80" y="820" id="trsvg229-ro" systemLanguage="ro"><tspan id="trsvg136-ro">1880</tspan></text><text class="scale x" x="80" y="820" id="trsvg229-bn" systemLanguage="bn"><tspan id="trsvg136-bn">১৮৮০</tspan></text><text class="scale x" x="80" y="820" id="trsvg229"><tspan id="trsvg136">1880</tspan></text></switch>
+  <line class="graticule" x1="160" x2="160" y1="-105" y2="755"/>
+  <line class="graticule" x1="240" x2="240" y1="-105" y2="755"/>
+  <switch><text class="scale x" x="240" y="820" id="trsvg230-ro" systemLanguage="ro"><tspan id="trsvg137-ro">1900</tspan></text><text class="scale x" x="240" y="820" id="trsvg230-bn" systemLanguage="bn"><tspan id="trsvg137-bn">১৯০০</tspan></text><text class="scale x" x="240" y="820" id="trsvg230"><tspan id="trsvg137">1900</tspan></text></switch>
+  <line class="graticule" x1="320" x2="320" y1="-105" y2="755"/>
+  <line class="graticule" x1="400" x2="400" y1="-105" y2="755"/>
+  <switch><text class="scale x" x="400" y="820" id="trsvg231-ro" systemLanguage="ro"><tspan id="trsvg138-ro">1920</tspan></text><text class="scale x" x="400" y="820" id="trsvg231-bn" systemLanguage="bn"><tspan id="trsvg138-bn">১৯২০</tspan></text><text class="scale x" x="400" y="820" id="trsvg231"><tspan id="trsvg138">1920</tspan></text></switch>
+  <line class="graticule" x1="480" x2="480" y1="-105" y2="755"/>
+  <line class="graticule" x1="560" x2="560" y1="-105" y2="755"/>
+  <switch><text class="scale x" x="560" y="820" id="trsvg232-ro" systemLanguage="ro"><tspan id="trsvg139-ro">1940</tspan></text><text class="scale x" x="560" y="820" id="trsvg232-bn" systemLanguage="bn"><tspan id="trsvg139-bn">১৯৪০</tspan></text><text class="scale x" x="560" y="820" id="trsvg232"><tspan id="trsvg139">1940</tspan></text></switch>
+  <line class="graticule" x1="640" x2="640" y1="-105" y2="755"/>
+  <line class="graticule" x1="720" x2="720" y1="-105" y2="755"/>
+  <switch><text class="scale x" x="720" y="820" id="trsvg233-ro" systemLanguage="ro"><tspan id="trsvg140-ro">1960</tspan></text><text class="scale x" x="720" y="820" id="trsvg233-bn" systemLanguage="bn"><tspan id="trsvg140-bn">১৯৬০</tspan></text><text class="scale x" x="720" y="820" id="trsvg233"><tspan id="trsvg140">1960</tspan></text></switch>
+  <line class="graticule" x1="800" x2="800" y1="-105" y2="755"/>
+  <line class="graticule" x1="880" x2="880" y1="-105" y2="755"/>
+  <switch><text class="scale x" x="880" y="820" id="trsvg234-ro" systemLanguage="ro"><tspan id="trsvg141-ro">1980</tspan></text><text class="scale x" x="880" y="820" id="trsvg234-bn" systemLanguage="bn"><tspan id="trsvg141-bn">১৯৮০</tspan></text><text class="scale x" x="880" y="820" id="trsvg234"><tspan id="trsvg141">1980</tspan></text></switch>
+  <line class="graticule" x1="960" x2="960" y1="-105" y2="755"/>
+  <line class="graticule" x1="1040" x2="1040" y1="-105" y2="755"/>
+  <switch><text class="scale x" x="1040" y="820" id="trsvg235-ro" systemLanguage="ro"><tspan id="trsvg142-ro">2000</tspan></text><text class="scale x" x="1040" y="820" id="trsvg235-bn" systemLanguage="bn"><tspan id="trsvg142-bn">২০০০</tspan></text><text class="scale x" x="1040" y="820" id="trsvg235"><tspan id="trsvg142">2000</tspan></text></switch>
+  <line class="graticule" x1="1120" x2="1120" y1="-105" y2="755"/>
+  <switch><text class="scale x" x="1200" y="820" id="trsvg236-ro" systemLanguage="ro"><tspan id="trsvg143-ro">2020</tspan></text><text class="scale x" x="1200" y="820" id="trsvg236-bn" systemLanguage="bn"><tspan id="trsvg143-bn">২০২০</tspan></text><text class="scale x" x="1200" y="820" id="trsvg236"><tspan id="trsvg143">2020</tspan></text></switch>
+  <line class="graticule" x1="1200" x2="1200" y1="-105" y2="755"/>
+
+  <g class="y-label" transform="rotate(-90, -10, 391) translate(50,326)">
+    <switch>
+	<text systemLanguage="ar" id="trsvg237"><tspan id="trsvg144">‎(C°) درجة حرارة الشذوذ</tspan></text>
+	<text systemLanguage="cs" id="trsvg238"><tspan id="trsvg145">odchylka teploty (°C)</tspan></text>
+	<text systemLanguage="da" id="trsvg239"><tspan id="trsvg146">Afvigelse i temperatur (°C)</tspan></text>
+	<text systemLanguage="de" id="trsvg240"><tspan id="trsvg147">Temperaturanomalie (°C)</tspan></text>
+	<text systemLanguage="es" id="trsvg241"><tspan id="trsvg148">Anomalía térmica (°C)</tspan></text>
+	<text systemLanguage="eu" id="trsvg242"><tspan id="trsvg149">Anomalia termikoa (°C)</tspan></text>
+	<text systemLanguage="fi" id="trsvg243"><tspan id="trsvg150">Lämpötila-anomalia (°C)</tspan></text>
+	<text systemLanguage="fr" id="trsvg244"><tspan id="trsvg151">Anomalie de température (°C)</tspan></text>
+	<text systemLanguage="it" id="trsvg245"><tspan id="trsvg152" font-size="40px">Scostamento dalla temperatura di riferimento (°C)</tspan></text>
+	<text systemLanguage="ja" id="trsvg246"><tspan id="trsvg153">温度異常（°C）</tspan></text>
+	<text systemLanguage="nl" id="trsvg247"><tspan id="trsvg154">Temperatuuranomalie (°C)</tspan></text>
+	<text systemLanguage="no" id="trsvg248"><tspan id="trsvg155">Temperaturavvik (°C)</tspan></text>
+	<text systemLanguage="pl" id="trsvg249"><tspan id="trsvg156">Anomalia temperatury (°C)</tspan></text>
+	<text systemLanguage="pt" id="trsvg250"><tspan id="trsvg157">Anomalia térmica (°C)</tspan></text>
+	<text systemLanguage="ru" id="trsvg251"><tspan id="trsvg158">Отклонение темп-ры от нормы (°C)</tspan></text>
+	<text systemLanguage="sv" id="trsvg252"><tspan id="trsvg159">Temperatur anomaly (°C)</tspan></text>
+	<text systemLanguage="tr" id="trsvg253"><tspan id="trsvg160">Sıcaklık anomalisi (°C)</tspan></text>
+	<text systemLanguage="zh" id="trsvg254"><tspan id="trsvg161">溫度異常（°C）</tspan></text>
+	<text systemLanguage="ca" id="trsvg255"><tspan id="trsvg162">Anomalia de temperatura [°C]</tspan></text>
+	<text systemLanguage="ro" id="trsvg256-ro"><tspan id="trsvg163-ro">Temperatura față de referință (°C)</tspan></text>
+	<text systemLanguage="bn" id="trsvg256-bn" ><tspan id="trsvg163-bn">তাপমাত্রা ব ভিত্তিরেখা (°সে)</tspan></text>
+  <text id="trsvg256"><tspan id="trsvg163">Temperature vs baseline (°C)</tspan></text></switch>
+  </g>
+  <!-- y-axis: pixels = −500*temp, default systemLanguage must be en for less buggy behavior -->
+  <line class="graticule" x1="80" x2="1240" y1="750" y2="750"/>
+  <line class="graticule" x1="80" x2="1240" y1="700" y2="700"/>
+
+<switch><text class="scale y" x="68" y="715" id="trsvg257-bn" systemLanguage="bn"><tspan id="trsvg164-bn">–০.৪</tspan></text><text class="scale y" x="68" y="715" id="trsvg257"><tspan id="trsvg164">−0.4</tspan></text></switch>
+  <line class="graticule" x1="80" x2="1240" y1="650" y2="650"/>
+  <line class="graticule" x1="80" x2="1240" y1="600" y2="600"/>
+<switch><text class="scale y" x="68" y="615" id="trsvg258-bn" systemLanguage="bn"><tspan id="trsvg165-bn">–০.২</tspan></text><text class="scale y" x="68" y="615" id="trsvg258"><tspan id="trsvg165">−0.2</tspan></text></switch>
+  <line class="graticule" x1="80" x2="1240" y1="550" y2="550"/>
+  <line class="graticule" x1="80" x2="1240" y1="500" y2="500"/>
+<switch><text class="scale y" x="68" y="515" id="trsvg259-bn" systemLanguage="bn"><tspan id="trsvg166-bn">০</tspan></text><text class="scale y" x="68" y="515" id="trsvg259"><tspan id="trsvg166">0</tspan></text></switch>
+  <line class="graticule" x1="80" x2="1240" y1="450" y2="450"/>
+  <line class="graticule" x1="80" x2="1240" y1="400" y2="400"/>
+<switch><text class="scale y" x="68" y="415" id="trsvg260-bn" systemLanguage="bn"><tspan id="trsvg167-bn">০.২</tspan></text><text class="scale y" x="68" y="415" id="trsvg260"><tspan id="trsvg167">0.2</tspan></text></switch>
+  <line class="graticule" x1="80" x2="1240" y1="350" y2="350"/>
+  <line class="graticule" x1="80" x2="1240" y1="300" y2="300"/>
+<switch><text class="scale y" x="68" y="315" id="trsvg261-bn" systemLanguage="bn"><tspan id="trsvg168-bn">০.৪</tspan></text><text class="scale y" x="68" y="315" id="trsvg261"><tspan id="trsvg168">0.4</tspan></text></switch>
+  <line class="graticule" x1="80" x2="1240" y1="250" y2="250"/>
+  <line class="graticule" x1="80" x2="1240" y1="200" y2="200"/>
+<switch><text class="scale y" x="68" y="215" id="trsvg262-bn" systemLanguage="bn"><tspan id="trsvg169-bn">০.৬</tspan></text><text class="scale y" x="68" y="215" id="trsvg262"><tspan id="trsvg169">0.6</tspan></text></switch>
+  <line class="graticule" x1="80" x2="1240" y1="150" y2="150"/>
+  <line class="graticule" x1="80" x2="1240" y1="100" y2="100"/>
+<switch><text class="scale y" x="68" y="115" id="trsvg263-bn" systemLanguage="bn"><tspan id="trsvg170-bn">০.৮</tspan></text><text class="scale y" x="68" y="115" id="trsvg263"><tspan id="trsvg170">0.8</tspan></text></switch>
+  <line class="graticule" x1="80" x2="1240" y1="50" y2="50"/>
+  <line class="graticule" x1="80" x2="1240" y1="0" y2="0"/>
+<switch><text class="scale y" x="68" y="15" id="trsvg264-bn" systemLanguage="bn"><tspan id="trsvg171-bn">১.০</tspan></text><text class="scale y" x="68" y="15" id="trsvg264"><tspan id="trsvg171">1.0</tspan></text></switch>
+  <line class="graticule" x1="80" x2="1240" y1="-50" y2="-50"/>
+  <line class="graticule" x1="80" x2="1240" y1="-100" y2="-100"/>
+<switch><text class="scale y" x="68" y="-85" id="trsvg264-bn" systemLanguage="bn"><tspan id="trsvg171-bn">১.২</tspan></text><text class="scale y" x="68" y="-85" id="trsvg264"><tspan id="trsvg171">1.2</tspan></text></switch>
+
+  <!-- error bars -->
+  <!-- 2009 -->
+  <path class="error_bar" d="M1112 149v42  M1106 149h12 M1106 191h12"/>
+  <!-- 1948 -->
+  <path class="error_bar" d="M624 515v80  M618 515h12 M618 595h12"/>
+  <!-- 1892 -->
+  <path class="error_bar" d="M176 572.5v125 M170 572.5h12 M170 697.5h12"/>
+
+  <!-- legend -->
+  <rect class="whiteBox graticule" x="110" y="10" width="860" height="150"/>
+  <path class="annual_line" d="M135 55 h70"/>
+  <path class="annual_points" d="M166 55h8"/>
+<switch class="label" transform="translate(220,60)">
+	<text dy="0.5ex" systemLanguage="ar" id="trsvg265"><tspan id="trsvg172">متوسط السنوي</tspan></text>
+	<text dy="0.5ex" systemLanguage="cs" id="trsvg266"><tspan id="trsvg173">roční průměr</tspan></text>
+	<text dy="0.5ex" systemLanguage="da" id="trsvg267"><tspan id="trsvg174">Årligt gennemsnit</tspan></text>
+	<text dy="0.5ex" systemLanguage="de" id="trsvg268"><tspan id="trsvg175">Jahresmittel</tspan></text>
+	<text dy="0.5ex" systemLanguage="es" id="trsvg269"><tspan id="trsvg176">Media anual</tspan></text>
+	<text dy="0.5ex" systemLanguage="eu" id="trsvg270"><tspan id="trsvg177">Urteko batezbestekoa</tspan></text>
+	<text dy="0.5ex" systemLanguage="fi" id="trsvg271"><tspan id="trsvg178">Vuosikeskiarvo</tspan></text>
+	<text dy="0.5ex" systemLanguage="fr" id="trsvg272"><tspan id="trsvg179">Moyenne annuelle</tspan></text>
+	<text dy="0.5ex" systemLanguage="it" id="trsvg273"><tspan id="trsvg180">Media annuale</tspan></text>
+	<text dy="0.5ex" systemLanguage="ja" id="trsvg274"><tspan id="trsvg181">年平均</tspan></text>
+	<text dy="0.5ex" systemLanguage="nl" id="trsvg275"><tspan id="trsvg182">Jaarlijks gemiddelde</tspan></text>
+	<text dy="0.5ex" systemLanguage="no" id="trsvg276"><tspan id="trsvg183">Årsgjennomsnitt</tspan></text>
+	<text dy="0.5ex" systemLanguage="pl" id="trsvg277"><tspan id="trsvg184">Średni roczny</tspan></text>
+	<text dy="0.5ex" systemLanguage="pt" id="trsvg278"><tspan id="trsvg185">Média anual</tspan></text>
+	<text dy="0.5ex" systemLanguage="ru" id="trsvg279"><tspan id="trsvg186">Средняя годовая</tspan></text>
+	<text dy="0.5ex" systemLanguage="sv" id="trsvg280"><tspan id="trsvg187">Årsmedelvärde</tspan></text>
+	<text dy="0.5ex" systemLanguage="tr" id="trsvg281"><tspan id="trsvg188">Yıllık ortalama</tspan></text>
+	<text dy="0.5ex" systemLanguage="zh" id="trsvg282"><tspan id="trsvg189">年平均</tspan></text>
+	<text dy="0.5ex" systemLanguage="ca" id="trsvg283"><tspan id="trsvg190">Mitjana anual</tspan></text>
+	<text dy="0.5ex" id="trsvg284-ro" systemLanguage="ro"><tspan id="trsvg191-ro">Media anuală</tspan></text>
+	<text dy="0.5ex" id="trsvg284-bn" systemLanguage="bn"><tspan id="trsvg191-bn">বার্ষিক গড়</tspan></text><text dy="0.5ex" id="trsvg284"><tspan id="trsvg191">Annual mean</tspan></text></switch>
+  <path class="five-year_line" d="M135 115 h70"/>
+<switch class="label" transform="translate(220,120)">
+	<text dy="0.5ex" systemLanguage="ar" id="trsvg285"><tspan id="trsvg192">لمدة 5 سنوات الجري المتوسط</tspan></text>
+	<text dy="0.5ex" systemLanguage="cs" id="trsvg286"><tspan id="trsvg193">pětiletý klouzavý průměr</tspan></text>
+	<text dy="0.5ex" systemLanguage="da" id="trsvg287"><tspan id="trsvg194">5-års glidende gennemsnit</tspan></text>
+	<text dy="0.5ex" systemLanguage="de" id="trsvg288"><tspan id="trsvg195">Glättung über fünf Jahre</tspan></text>
+	<text dy="0.5ex" systemLanguage="es" id="trsvg289"><tspan id="trsvg196">Curva suavizada</tspan></text>
+	<text dy="0.5ex" systemLanguage="eu" id="trsvg290"><tspan id="trsvg197">Lowess leunketa (5 urte)</tspan></text>
+	<text dy="0.5ex" systemLanguage="fi" id="trsvg291"><tspan id="trsvg198">5 vuoden liukuva keskiarvo</tspan></text>
+	<text dy="0.5ex" systemLanguage="fr" id="trsvg292"><tspan id="trsvg199">Courbe lissée sur 5 ans</tspan></text>
+	<text dy="0.5ex" systemLanguage="it" id="trsvg293"><tspan id="trsvg200">Media mobile su 5 anni</tspan></text>
+	<text dy="0.5ex" systemLanguage="ja" id="trsvg294"><tspan id="trsvg201">平均を実行している5年</tspan></text>
+	<text dy="0.5ex" systemLanguage="nl" id="trsvg295"><tspan id="trsvg202">5‐jaar lopend gemiddelde</tspan></text>
+	<text dy="0.5ex" systemLanguage="no" id="trsvg296"><tspan id="trsvg203">Årsgjennomsnitt</tspan></text>
+	<text dy="0.5ex" systemLanguage="pl" id="trsvg297"><tspan id="trsvg204">5-letnią średnią</tspan></text>
+	<text dy="0.5ex" systemLanguage="pt" id="trsvg298"><tspan id="trsvg205">Curva suavizada em 5 anos</tspan></text>
+	<text dy="0.5ex" systemLanguage="ru" id="trsvg299"><tspan id="trsvg206">Наименьшая сглаженная за 5 лет</tspan></text>
+	<text dy="0.5ex" systemLanguage="sv" id="trsvg300"><tspan id="trsvg207">5-års running mean</tspan></text>
+	<text dy="0.5ex" systemLanguage="tr" id="trsvg301"><tspan id="trsvg208">5 yıllık yumuşatma</tspan></text>
+	<text dy="0.5ex" systemLanguage="zh" id="trsvg302"><tspan id="trsvg209">5年的平均運行</tspan></text>
+	<text dy="0.5ex" systemLanguage="ca" id="trsvg303"><tspan id="trsvg210">Mitjana mòbil de 5 anys</tspan></text>
+	<text dy="0.5ex" systemLanguage="ro" id="trsvg304-ro"><tspan id="trsvg211-ro">Media a 5 ani</tspan></text>
+	<text dy="0.5ex" id="trsvg304-bn" systemLanguage="bn"><tspan id="trsvg211-bn">পঞ্চবার্ষিক মসৃণায়ন</tspan></text><text dy="0.5ex" id="trsvg304"><tspan id="trsvg211">Five-year smoothing</tspan></text></switch>
+ 
+  <!-- annual mean line graph -->
+  <path class="annual_line" d="M80 585L88 545L96 555L104 585L112 640L120 665L128 655L136 680L144 585L152 550L160 675L168 610L176 635L184 655L192 655L200 615L208 555L216 555L224 635L232 585L240 540L248 575L256 640L264 685L272 735L280 630L288 610L296 695L304 715L312 740L320 720L328 720L336 685L344 670L352 575L360 570L368 680L376 730L384 645L392 635L400 635L408 595L416 640L424 630L432 635L440 610L448 555L456 610L464 600L472 680L480 580L488 545L496 580L504 645L512 560L520 600L528 575L536 515L544 500L552 510L560 440L568 410L576 470L584 455L592 400L600 455L608 535L616 515L624 555L632 555L640 585L648 535L656 495L664 460L672 565L680 570L688 595L696 475L704 470L712 485L720 515L728 470L736 485L744 475L752 600L760 555L768 530L776 510L784 540L792 475L800 485L808 540L816 495L824 420L832 535L840 505L848 550L856 410L864 465L872 420L880 370L888 340L896 430L904 345L912 420L920 440L928 410L936 340L944 305L952 365L960 275L968 295L976 390L984 385L992 345L1000 275L1008 335L1016 270L1024 195L1032 310L1040 305L1048 230L1056 185L1064 190L1072 235L1080 160L1088 180L1096 170L1104 230L1112 170L1120 140L1128 195L1136 175L1144 160L1152 130L1160 50L1168 -5L1176 40L1184 75L1192 10L1200 -5L1208 75L1216 55L1224 -85"/>
+
+  <!-- annual mean data points -->
+<path class="annual_points" d="M80 585 h4"/>
+  <!-- d="M(8*year-14964) (500-500*temp)h8" -->
+<path class="annual_points" d="M84 545h8"/>
+<path class="annual_points" d="M92 555h8"/>
+<path class="annual_points" d="M100 585h8"/>
+<path class="annual_points" d="M108 640h8"/>
+<path class="annual_points" d="M116 665h8"/>
+<path class="annual_points" d="M124 655h8"/>
+<path class="annual_points" d="M132 680h8"/>
+<path class="annual_points" d="M140 585h8"/>
+<path class="annual_points" d="M148 550h8"/>
+<path class="annual_points" d="M156 675h8"/>
+<path class="annual_points" d="M164 610h8"/>
+<path class="annual_points" d="M172 635h8"/>
+<path class="annual_points" d="M180 655h8"/>
+<path class="annual_points" d="M188 655h8"/>
+<path class="annual_points" d="M196 615h8"/>
+<path class="annual_points" d="M204 555h8"/>
+<path class="annual_points" d="M212 555h8"/>
+<path class="annual_points" d="M220 635h8"/>
+<path class="annual_points" d="M228 585h8"/>
+<path class="annual_points" d="M236 540h8"/>
+<path class="annual_points" d="M244 575h8"/>
+<path class="annual_points" d="M252 640h8"/>
+<path class="annual_points" d="M260 685h8"/>
+<path class="annual_points" d="M268 735h8"/>
+<path class="annual_points" d="M276 630h8"/>
+<path class="annual_points" d="M284 610h8"/>
+<path class="annual_points" d="M292 695h8"/>
+<path class="annual_points" d="M300 715h8"/>
+<path class="annual_points" d="M308 740h8"/>
+<path class="annual_points" d="M316 720h8"/>
+<path class="annual_points" d="M324 720h8"/>
+<path class="annual_points" d="M332 685h8"/>
+<path class="annual_points" d="M340 670h8"/>
+<path class="annual_points" d="M348 575h8"/>
+<path class="annual_points" d="M356 570h8"/>
+<path class="annual_points" d="M364 680h8"/>
+<path class="annual_points" d="M372 730h8"/>
+<path class="annual_points" d="M380 645h8"/>
+<path class="annual_points" d="M388 635h8"/>
+<path class="annual_points" d="M396 635h8"/>
+<path class="annual_points" d="M404 595h8"/>
+<path class="annual_points" d="M412 640h8"/>
+<path class="annual_points" d="M420 630h8"/>
+<path class="annual_points" d="M428 635h8"/>
+<path class="annual_points" d="M436 610h8"/>
+<path class="annual_points" d="M444 555h8"/>
+<path class="annual_points" d="M452 610h8"/>
+<path class="annual_points" d="M460 600h8"/>
+<path class="annual_points" d="M468 680h8"/>
+<path class="annual_points" d="M476 580h8"/>
+<path class="annual_points" d="M484 545h8"/>
+<path class="annual_points" d="M492 580h8"/>
+<path class="annual_points" d="M500 645h8"/>
+<path class="annual_points" d="M508 560h8"/>
+<path class="annual_points" d="M516 600h8"/>
+<path class="annual_points" d="M524 575h8"/>
+<path class="annual_points" d="M532 515h8"/>
+<path class="annual_points" d="M540 500h8"/>
+<path class="annual_points" d="M548 510h8"/>
+<path class="annual_points" d="M556 440h8"/>
+<path class="annual_points" d="M564 410h8"/>
+<path class="annual_points" d="M572 470h8"/>
+<path class="annual_points" d="M580 455h8"/>
+<path class="annual_points" d="M588 400h8"/>
+<path class="annual_points" d="M596 455h8"/>
+<path class="annual_points" d="M604 535h8"/>
+<path class="annual_points" d="M612 515h8"/>
+<path class="annual_points" d="M620 555h8"/>
+<path class="annual_points" d="M628 555h8"/>
+<path class="annual_points" d="M636 585h8"/>
+<path class="annual_points" d="M644 535h8"/>
+<path class="annual_points" d="M652 495h8"/>
+<path class="annual_points" d="M660 460h8"/>
+<path class="annual_points" d="M668 565h8"/>
+<path class="annual_points" d="M676 570h8"/>
+<path class="annual_points" d="M684 595h8"/>
+<path class="annual_points" d="M692 475h8"/>
+<path class="annual_points" d="M700 470h8"/>
+<path class="annual_points" d="M708 485h8"/>
+<path class="annual_points" d="M716 515h8"/>
+<path class="annual_points" d="M724 470h8"/>
+<path class="annual_points" d="M732 485h8"/>
+<path class="annual_points" d="M740 475h8"/>
+<path class="annual_points" d="M748 600h8"/>
+<path class="annual_points" d="M756 555h8"/>
+<path class="annual_points" d="M764 530h8"/>
+<path class="annual_points" d="M772 510h8"/>
+<path class="annual_points" d="M780 540h8"/>
+<path class="annual_points" d="M788 475h8"/>
+<path class="annual_points" d="M796 485h8"/>
+<path class="annual_points" d="M804 540h8"/>
+<path class="annual_points" d="M812 495h8"/>
+<path class="annual_points" d="M820 420h8"/>
+<path class="annual_points" d="M828 535h8"/>
+<path class="annual_points" d="M836 505h8"/>
+<path class="annual_points" d="M844 550h8"/>
+<path class="annual_points" d="M852 410h8"/>
+<path class="annual_points" d="M860 465h8"/>
+<path class="annual_points" d="M868 420h8"/>
+<path class="annual_points" d="M876 370h8"/>
+<path class="annual_points" d="M884 340h8"/>
+<path class="annual_points" d="M892 430h8"/>
+<path class="annual_points" d="M900 345h8"/>
+<path class="annual_points" d="M908 420h8"/>
+<path class="annual_points" d="M916 440h8"/>
+<path class="annual_points" d="M924 410h8"/>
+<path class="annual_points" d="M932 340h8"/>
+<path class="annual_points" d="M940 305h8"/>
+<path class="annual_points" d="M948 365h8"/>
+<path class="annual_points" d="M956 275h8"/>
+<path class="annual_points" d="M964 295h8"/>
+<path class="annual_points" d="M972 390h8"/>
+<path class="annual_points" d="M980 385h8"/>
+<path class="annual_points" d="M988 345h8"/>
+<path class="annual_points" d="M996 275h8"/>
+<path class="annual_points" d="M1004 335h8"/>
+<path class="annual_points" d="M1012 270h8"/>
+<path class="annual_points" d="M1020 195h8"/>
+<path class="annual_points" d="M1028 310h8"/>
+<path class="annual_points" d="M1036 305h8"/>
+<path class="annual_points" d="M1044 230h8"/>
+<path class="annual_points" d="M1052 185h8"/>
+<path class="annual_points" d="M1060 190h8"/>
+<path class="annual_points" d="M1068 235h8"/>
+<path class="annual_points" d="M1076 160h8"/>
+<path class="annual_points" d="M1084 180h8"/>
+<path class="annual_points" d="M1092 170h8"/>
+<path class="annual_points" d="M1100 230h8"/>
+<path class="annual_points" d="M1108 170h8"/>
+<path class="annual_points" d="M1116 140h8"/>
+<path class="annual_points" d="M1124 195h8"/>
+<path class="annual_points" d="M1132 175h8"/>
+<path class="annual_points" d="M1140 160h8"/>
+<path class="annual_points" d="M1148 130h8"/>
+<path class="annual_points" d="M1156 50h8"/>
+<path class="annual_points" d="M1164 -5h8"/>
+<path class="annual_points" d="M1172 40h8"/>
+<path class="annual_points" d="M1180 75h8"/>
+<path class="annual_points" d="M1188 10h8"/>
+<path class="annual_points" d="M1196 -5h8"/>
+<path class="annual_points" d="M1204 75h8"/>
+<path class="annual_points" d="M1212 55h8"/>
+<path class="annual_points" d="M1220 -85h8"/>
+
+  <!-- Lowess smooth line graph -->
+  <path class="five-year_line" d="M80 550L88 565L96 585L104 600L112 620L120 630L128 635L136 635L144 630L152 625L160 625L168 630L176 630L184 630L192 620L200 610L208 605L216 590L224 585L232 585L240 600L248 615L256 630L264 640L272 655L280 670L288 680L296 685L304 695L312 705L320 705L328 695L336 675L344 660L352 655L360 650L368 645L376 645L384 650L392 645L400 635L408 630L416 625L424 620L432 615L440 610L448 610L456 605L464 600L472 595L480 595L488 595L496 590L504 585L512 580L520 570L528 555L536 530L544 510L552 485L560 470L568 455L576 450L584 450L592 465L600 480L608 500L616 520L624 535L632 540L640 540L648 535L656 535L664 535L672 535L680 530L688 525L696 520L704 505L712 495L720 485L728 495L736 505L744 515L752 520L760 525L768 530L776 525L784 515L792 510L800 500L808 500L816 500L824 500L832 495L840 490L848 480L856 465L864 440L872 420L880 400L888 395L896 390L904 395L912 395L920 390L928 380L936 365L944 345L952 335L960 335L968 335L976 335L984 335L992 330L1000 315L1008 300L1016 290L1024 280L1032 265L1040 250L1048 240L1056 225L1064 210L1072 195L1080 190L1088 190L1096 185L1104 180L1112 180L1120 175L1128 170L1136 150L1144 130L1152 110L1160 85L1168 65L1176 45L1184 35L1192 35L1200 25L1208 15L1216 5L1224 -5"/>
+
+</svg>

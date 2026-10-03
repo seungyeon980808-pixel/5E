@@ -9,12 +9,12 @@ import {
   makeArrowHead,
   fillTextWithRomanRuns,
   applyObjectLabelFont,
-} from "./core.js?v=1.4.0";
+} from "./core.js?v=1.6.0-remediation-0929";
 import {
   CIRCUIT_BODY_MM, DEFAULT_TEXT_SIZE_MM,
   OBJECT_LABEL_QUANTITY_FONT_FAMILY, EQUATION_FONT_STYLE,
-} from "../state.js?v=1.4.0";
-import { measureFormula, renderFormula } from "../formula.js?v=1.4.0";
+} from "../state.js?v=1.6.0-remediation-0929";
+import { measureFormula, renderFormula } from "../formula.js?v=1.6.0-remediation-0929";
 
 /* ===== CIRCUIT: branch-B atomic symbol (two terminals p1/p2, like a line) =====
  *
@@ -60,13 +60,14 @@ function circuitGeom(obj) {
   const px = -uy, py = ux;              // unit vector perpendicular to the axis
   const mid = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
   const k = bodyK(obj);
-  const half = Math.min(CIRCUIT_BODY_MM * k, L) / 2;
+  const nominalHalf = CIRCUIT_BODY_MM * k / 2;
+  const half = Math.min(nominalHalf, L / 2);
   // heightScale 은 "배율 적용된 기본 높이 대비" 비율 — bodyScale 기본(1)에서 1이 되고,
   // 사용자가 height 를 따로 주면 그 비율만큼만 세로가 변한다(기존 의미 유지).
   const heightScale = circuitHalfHeight(obj) / (CIRCUIT_BODY_HALF_H * k);
   const bodyStart = { x: mid.x - ux * half, y: mid.y - uy * half };
   const bodyEnd   = { x: mid.x + ux * half, y: mid.y + uy * half };
-  return { p1, p2, dx, dy, L, ux, uy, px, py, mid, half, heightScale, bodyStart, bodyEnd,
+  return { p1, p2, dx, dy, L, ux, uy, px, py, mid, half, nominalHalf, heightScale, bodyStart, bodyEnd,
            k, H: CIRCUIT_BODY_HALF_H * k, circleR: CIRCUIT_CIRCLE_R * k };
 }
 
@@ -118,8 +119,8 @@ const CIRCUIT_ELEMENTS = {
   // cleanly. ux/uy (axis) and px/py (perp) already encode the tilt, so the points
   // come out rotated with no transform needed. No fill.
   resistor(g, geo, sw, color) {
-    const { mid, ux, uy, px, py, half } = geo;
-    const amp = half * 0.35 * geo.heightScale;            // peak amplitude, perp to axis
+    const { mid, ux, uy, px, py, half, nominalHalf } = geo;
+    const amp = nominalHalf * 0.35 * geo.heightScale;     // peak amplitude, perp to axis
     const ts   = [0, 1/12, 3/12, 5/12, 7/12, 9/12, 11/12, 1];
     const offs = [0,  amp, -amp,  amp, -amp,  amp, -amp,  0]; // alternating peaks
     const pts = ts.map((t, i) => {
@@ -181,13 +182,14 @@ const CIRCUIT_ELEMENTS = {
   inductor(g, geo, sw, color) {
     const half = geo.half, bumps = 4;
     const R = (2 * half) / bumps / 2;                             // bump radius
+    const nominalR = (2 * geo.nominalHalf) / bumps / 2;
     const pts = [];
     for (let b = 0; b < bumps; b++) {
       const ac = -half + R * (2 * b + 1);                         // bump center along axis
       const steps = 10;
       for (let s = (b === 0 ? 0 : 1); s <= steps; s++) {
         const th = Math.PI * (s / steps);                        // 0 → π semicircle
-        const p = circuitPt(geo, ac - R * Math.cos(th), R * Math.sin(th) * geo.heightScale);
+        const p = circuitPt(geo, ac - R * Math.cos(th), nominalR * Math.sin(th) * geo.heightScale);
         pts.push(`${p.x},${p.y}`);
       }
     }

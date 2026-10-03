@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   version="1.0"
+   width="641.44696"
+   height="434.36554"
+   id="svg2">
+  <defs
+     id="defs4">
+    <marker
+       refX="0"
+       refY="0"
+       orient="auto"
+       id="Arrow2Lend"
+       style="overflow:visible">
+      <path
+         d="M 8.7185878,4.0337352 -2.2072895,0.01601326 8.7185884,-4.0017078 c -1.7454984,2.3720609 -1.7354408,5.6174519 -6e-7,8.035443 z"
+         transform="matrix(-1.1,0,0,-1.1,-1.1,0)"
+         id="path8101"
+         style="font-size:12px;fill-rule:evenodd;stroke-width:0.625;stroke-linejoin:round" />
+    </marker>
+    <linearGradient
+       id="linearGradient3148">
+      <stop
+         id="stop3150"
+         style="stop-color:#01004a;stop-opacity:1"
+         offset="0" />
+      <stop
+         id="stop3152"
+         style="stop-color:#721e00;stop-opacity:1"
+         offset="1" />
+    </linearGradient>
+    <linearGradient
+       id="linearGradient3134">
+      <stop
+         id="stop3136"
+         style="stop-color:#714007;stop-opacity:1"
+         offset="0" />
+      <stop
+         id="stop3144"
+         style="stop-color:#b87903;stop-opacity:1"
+         offset="1" />
+    </linearGradient>
+    <linearGradient
+       x1="561.64484"
+       y1="697.12238"
+       x2="560.6347"
+       y2="533.98273"
+       id="linearGradient3140"
+       xlink:href="#linearGradient3134"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.609405,0,0,0.5450237,1.0101089,26.776849)" />
+    <linearGradient
+       x1="563.6651"
+       y1="193.56134"
+       x2="563.6651"
+       y2="445.08932"
+       id="linearGradient3154"
+       xlink:href="#linearGradient3148"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="matrix(0.6070746,0,0,0.837766,1.6233889,-55.07058)" />
+    <filter
+       x="-0.038713381"
+       y="-0.1332894"
+       width="1.0774268"
+       height="1.2665788"
+       color-interpolation-filters="sRGB"
+       id="filter3168">
+      <feGaussianBlur
+         id="feGaussianBlur3170"
+         stdDeviation="3.0285156" />
+    </filter>
+  </defs>
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     transform="translate(-1.0101033,0.3879396)"
+     id="layer1">
+    <rect
+       width="641.44684"
+       height="318.19806"
+       x="1.0101491"
+       y="-0.38793957"
+       id="rect3146"
+       style="fill:url(#linearGradient3154);fill-opacity:1;stroke:none" />
+    <path
+       d="m 201.12421,53.509809 c -5.8095,-0.0399 -10.32218,1.41015 -13.375,4.46875 -24.42258,24.46882 54.23628,142.621861 175.59375,263.750001 1.40577,1.40311 2.81394,2.76468 4.21875,4.15625 l 169.625,0 C 512.36299,296.22687 483.59088,264.76023 451.84296,233.07231 345.65517,127.08519 241.79071,53.789129 201.12421,53.509809 z"
+       id="path3178"
+       style="fill:none;stroke:#ffffff;stroke-width:0.81100005;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:4.866, 4.866;stroke-dashoffset:0" />
+    <rect
+       width="642.45709"
+       height="117.17765"
+       x="-4.9203372e-005"
+       y="316.7999"
+       id="rect2160"
+       style="fill:url(#linearGradient3140);fill-opacity:1;stroke:none" />
+    <path
+       d="m 326.12307,251.27788 c 2.0185,3.53711 3.1875,7.60736 3.1875,11.96875 0,13.38251 -10.8675,24.25 -24.25,24.25 -4.35354,0 -8.436,-1.14449 -11.96875,-3.15625 4.17426,7.31922 12.03912,12.25 21.0625,12.25 13.3825,0 24.25,-10.8675 24.25,-24.25 0,-9.02896 -4.95456,-16.89025 -12.28125,-21.0625 z"
+       id="path5125"
+       style="fill:#ffe680;fill-opacity:1;stroke:none" />
+    <path
+       d="m 192.56102,38.678459 -20.7294,27.90065 c 2.96415,2.34776 6.70716,3.7425 10.77929,3.7425 9.59692,0 17.39028,-7.79336 17.39028,-17.39028 0,-5.90179 -2.93991,-11.10961 -7.44017,-14.25287 z"
+       id="path5129"
+       style="fill:#ffe680;fill-opacity:1;stroke:none" />
+    <path
+       d="m -216.17264,462.26193 a 24.243662,24.243662 0 1 1 -48.48733,0 24.243662,24.243662 0 1 1 48.48733,0 z"
+       transform="matrix(0.27083334,0,0,0.27083334,478.77023,69.880622)"
+       id="path5131"
+       style="fill:#ffe680;fill-opacity:1;stroke:none" />
+    <text
+       x="147.48227"
+       y="273.36337"
+       id="text7088"
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"><tspan
+         x="147.48227"
+         y="273.36337"
+         id="tspan7090"
+         style="font-size:18px;fill:#ffffff">Estrela Vespertina</tspan><tspan
+         x="147.48227"
+         y="295.86337"
+         id="tspan7092"
+         style="font-size:18px;fill:#ffffff">(Vênus)</tspan></text>
+    <text
+       x="100.17708"
+       y="85.844452"
+       id="text7094"
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"><tspan
+         x="100.17708"
+         y="85.844452"
+         id="tspan7098"
+         style="font-size:18px;text-align:center;text-anchor:middle;fill:#ffffff">Máxima elongação</tspan><tspan
+         x="100.17708"
+         y="108.34445"
+         id="tspan9827"
+         style="font-size:18px;text-align:center;text-anchor:middle;fill:#ffffff">a oeste</tspan></text>
+    <text
+       x="401.03055"
+       y="394.58167"
+       id="text7102"
+       xml:space="preserve"
+       style="font-size:12px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"><tspan
+         x="401.03055"
+         y="394.58167"
+         id="tspan7104"
+         style="font-size:36px;fill:#ffffff">Oeste</tspan></text>
+    <path
+       d="M 3.0304576,320.2183 C 59.599,302.03556 42.426407,296.98479 91.923882,304.05586 c 49.497478,7.07107 3.030458,10.10153 149.502578,6.06092 146.47212,-4.04061 72.73098,-22.22336 199.00005,-11.11168 126.26907,11.11168 201.02036,21.2132 201.02036,21.2132"
+       transform="translate(1.0101033,-0.3879396)"
+       id="path9307"
+       style="color:#000000;fill:#af7204;fill-opacity:1;stroke:none;stroke-width:1px;marker:none;visibility:visible;display:inline;overflow:visible;enable-background:accumulate" />
+    <path
+       d="m 467.70062,315.16754 a 19.192898,19.192898 0 1 1 -38.3858,0 19.192898,19.192898 0 1 1 38.3858,0 z"
+       transform="translate(7.0710186,10.723738)"
+       id="path9309"
+       style="fill:none;stroke:#ffff00;stroke-width:1;stroke-miterlimit:4;stroke-dasharray:1, 2;stroke-dashoffset:0" />
+    <text
+       x="433.23822"
+       y="377.92276"
+       transform="scale(1.1145207,0.89724668)"
+       id="text3172"
+       xml:space="preserve"
+       style="font-size:10.76696014px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"><tspan
+         x="433.23822"
+         y="377.92276"
+         id="tspan3174"
+         style="font-size:25.12290764px;fill:#ffffff">Sol </tspan><tspan
+         x="433.23822"
+         y="398.36124"
+         id="tspan9825"
+         style="font-size:12px;fill:#ffffff">(abaixo do horizonte)</tspan></text>
+  </g>
+</svg>

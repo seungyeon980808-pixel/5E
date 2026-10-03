@@ -1,0 +1,115 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="110mm"
+   height="110mm"
+   viewBox="0 0 110 110"
+   version="1.1"
+   id="svg4348"
+   inkscape:version="0.92.1 r15371"
+   sodipodi:docname="CelluleXX.svg">
+  <defs
+     id="defs4342" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="1"
+     inkscape:cx="184.74844"
+     inkscape:cy="204.51289"
+     inkscape:document-units="mm"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     inkscape:window-width="1440"
+     inkscape:window-height="838"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1" />
+  <metadata
+     id="metadata4345">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Calque 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(0,-187)">
+    <g
+       id="g5257">
+      <circle
+         r="49.746769"
+         style="fill:#e6e6e6;stroke:#bebebe;stroke-width:0.50646329;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         cy="241.93031"
+         cx="55.069664"
+         id="path4350" />
+      <ellipse
+         ry="25.065788"
+         rx="25.413925"
+         cy="238.94418"
+         cx="54.342369"
+         id="path5157"
+         style="fill:#cccccc;stroke:#bebebe;stroke-width:1.5;stroke-miterlimit:4;stroke-dasharray:9, 1.5;stroke-dashoffset:0;stroke-opacity:1" />
+      <rect
+         ry="2.3863044"
+         rx="1.9848551"
+         y="224.36314"
+         x="43.718323"
+         height="24.901434"
+         width="3.9014347"
+         id="rect5159"
+         style="fill:#ffaaaa;stroke:#bebebe;stroke-width:0.09856537;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
+      <text
+         transform="scale(1.0444012,0.95748646)"
+         id="text5180"
+         y="265.27911"
+         x="41.740784"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:5.83610821px;line-height:1.25;font-family:Arial;-inkscape-font-specification:Arial;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.14590269"
+         xml:space="preserve"><tspan
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Arial;-inkscape-font-specification:Arial;stroke-width:0.14590269"
+           y="265.27911"
+           x="41.740784"
+           id="tspan5178"
+           sodipodi:role="line">X</tspan></text>
+      <rect
+         ry="2.3863044"
+         rx="1.9848551"
+         y="224.36314"
+         x="51.853096"
+         height="24.901434"
+         width="3.9014347"
+         id="rect5159-0"
+         style="fill:#ffaaaa;stroke:#bebebe;stroke-width:0.09856538;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
+      <text
+         transform="scale(1.0444012,0.95748646)"
+         id="text5180-3"
+         y="265.27911"
+         x="49.529705"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:5.83610821px;line-height:1.25;font-family:Arial;-inkscape-font-specification:Arial;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.14590271"
+         xml:space="preserve"><tspan
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Arial;-inkscape-font-specification:Arial;stroke-width:0.14590271"
+           y="265.27911"
+           x="49.529705"
+           id="tspan5178-9"
+           sodipodi:role="line">X</tspan></text>
+    </g>
+  </g>
+</svg>

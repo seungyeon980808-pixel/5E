@@ -1,0 +1,304 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="800"
+   height="600"
+   id="svg2"
+   sodipodi:version="0.32"
+   inkscape:version="0.46"
+   version="1.0"
+   sodipodi:docbase="C:\Dokumente und Einstellungen\Tommy\Desktop"
+   sodipodi:docname="Arbeitspunkt_Auswahl.svg"
+   inkscape:output_extension="org.inkscape.output.svg.inkscape">
+  <defs
+     id="defs4">
+    <inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="0 : 300 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_z="700 : 300 : 1"
+       inkscape:persp3d-origin="350 : 200 : 1"
+       id="perspective22" />
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="1.37"
+     inkscape:cx="383.56976"
+     inkscape:cy="244.77045"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="true"
+     showguides="true"
+     inkscape:guide-bbox="true"
+     width="700px"
+     height="600px"
+     inkscape:window-width="1600"
+     inkscape:window-height="1095"
+     inkscape:window-x="0"
+     inkscape:window-y="0" />
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title>Arbeitspunkt Motor</dc:title>
+        <dc:date>10.11.2007</dc:date>
+        <dc:creator>
+          <cc:Agent>
+            <dc:title>Tommy Sparber</dc:title>
+          </cc:Agent>
+        </dc:creator>
+        <dc:description>Arbeitspunkt eines Elektromotors</dc:description>
+        <dc:source>http://de.wikipedia.org/wiki/Bild:Arbeitspunkt_Motor.png</dc:source>
+        <dc:language>Deutsch</dc:language>
+        <cc:license
+           rdf:resource="http://web.resource.org/cc/PublicDomain" />
+      </cc:Work>
+      <cc:License
+         rdf:about="http://web.resource.org/cc/PublicDomain">
+        <cc:permits
+           rdf:resource="http://web.resource.org/cc/Reproduction" />
+        <cc:permits
+           rdf:resource="http://web.resource.org/cc/Distribution" />
+        <cc:permits
+           rdf:resource="http://web.resource.org/cc/DerivativeWorks" />
+      </cc:License>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Ebene 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-254.62233,-450.86218)">
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#2d00a0;stroke-width:4.13913441;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="M 294.51376,831.78351 C 549.09766,832.38869 719.07476,830.9314 987.38414,832.52789"
+       id="path4115"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#731e23;stroke-width:8.71722984;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="M 291.02684,816.27992 C 547.06467,934.86731 622.63932,786.36368 673.37972,693.48305 C 871.39075,331.02243 905.85122,596.86329 965.03378,1007.3486"
+       id="path5086"
+       sodipodi:nodetypes="csc" />
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:7.76391745;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="M 1020.6049,1008.8115 L 288.61992,1008.8115 L 288.61992,466.74414"
+       id="path2172" />
+    <path
+       sodipodi:type="arc"
+       style="opacity:1;fill:#ff0000;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       id="path8964"
+       sodipodi:cx="455.98215"
+       sodipodi:cy="539.72827"
+       sodipodi:rx="5.7589283"
+       sodipodi:ry="5.7589283"
+       d="M 461.74108,539.72827 A 5.7589283,5.7589283 0 1 1 450.22322,539.72827 A 5.7589283,5.7589283 0 1 1 461.74108,539.72827 z"
+       transform="matrix(2.4656107,0,0,2.4656107,-797.99964,-498.2631)" />
+    <text
+       xml:space="preserve"
+       style="font-size:29.58732796px;font-style:normal;font-weight:normal;text-align:center;text-anchor:middle;fill:#731e23;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="916.63037"
+       y="498.20007"
+       id="text13811"><tspan
+         sodipodi:role="line"
+         id="tspan13813"
+         x="916.63037"
+         y="498.20007">Antriebsmaschine</tspan><tspan
+         sodipodi:role="line"
+         x="916.63037"
+         y="535.1842"
+         id="tspan2431">(Motor)</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:29.58732224px;font-style:normal;font-weight:normal;text-align:center;text-anchor:middle;fill:#2d00a0;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="734.53973"
+       y="866.2326"
+       id="text13815"
+       transform="matrix(0.9999991,1.3211854e-3,-1.3211854e-3,0.9999991,0,0)"
+       inkscape:transform-center-x="-81.894879"
+       inkscape:transform-center-y="42.456162"><tspan
+         sodipodi:role="line"
+         id="tspan13817"
+         x="734.53973"
+         y="866.2326">Arbeitsmaschine</tspan><tspan
+         sodipodi:role="line"
+         x="734.53973"
+         y="903.21674"
+         id="tspan2402">(Förderband)</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:29.58732796px;font-style:normal;font-weight:normal;text-align:center;text-anchor:middle;fill:#00963c;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="806.36658"
+       y="720.11426"
+       id="text13819"><tspan
+         sodipodi:role="line"
+         x="806.36658"
+         y="720.11426"
+         id="tspan2406">erwünschter</tspan><tspan
+         sodipodi:role="line"
+         x="806.36658"
+         y="757.09839"
+         id="tspan2399">Arbeitspunkt</tspan><tspan
+         sodipodi:role="line"
+         x="806.36658"
+         y="794.08258"
+         id="tspan3267">(stabil)</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:29.58732796px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="846.98169"
+       y="1042.3734"
+       id="text13825"><tspan
+         sodipodi:role="line"
+         id="tspan13827"
+         x="846.98169"
+         y="1042.3734">Drehzahl n</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:29.58732796px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="-650.2851"
+       y="280.52917"
+       id="text13829"
+       transform="matrix(0,-1,1,0,0,0)"><tspan
+         sodipodi:role="line"
+         id="tspan13831"
+         x="-650.2851"
+         y="280.52917">Moment M</tspan></text>
+    <path
+       sodipodi:type="star"
+       id="path2425"
+       sodipodi:sides="3"
+       sodipodi:cx="159.854"
+       sodipodi:cy="47.445255"
+       sodipodi:r1="13.399679"
+       sodipodi:r2="6.6998391"
+       sodipodi:arg1="0.51238946"
+       sodipodi:arg2="1.559587"
+       inkscape:flatsided="false"
+       inkscape:rounded="0"
+       inkscape:randomized="0"
+       d="M 171.53284,54.014599 L 159.9291,54.144673 L 148.32537,54.274749 L 154.01459,44.160584 L 159.70381,34.046418 L 165.61832,44.030508 L 171.53284,54.014599 z"
+       transform="matrix(1,0,0,1.5051815,128.69696,403.73583)" />
+    <path
+       sodipodi:type="star"
+       id="path2429"
+       sodipodi:sides="3"
+       sodipodi:cx="159.854"
+       sodipodi:cy="47.445255"
+       sodipodi:r1="13.399679"
+       sodipodi:r2="6.6998391"
+       sodipodi:arg1="0.51238946"
+       sodipodi:arg2="1.559587"
+       inkscape:flatsided="false"
+       inkscape:rounded="0"
+       inkscape:randomized="0"
+       d="M 171.53284,54.014599 L 159.9291,54.144673 L 148.32537,54.274749 L 154.01459,44.160584 L 159.70381,34.046418 L 165.61832,44.030508 L 171.53284,54.014599 z"
+       transform="matrix(1.427884e-2,0.9998981,-1.505028,2.1492247e-2,1093.9841,847.66451)" />
+    <path
+       sodipodi:type="arc"
+       style="opacity:1;fill:#ff00ff;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:0.81115806000000001;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       id="path2410"
+       sodipodi:cx="455.98215"
+       sodipodi:cy="539.72827"
+       sodipodi:rx="5.7589283"
+       sodipodi:ry="5.7589283"
+       d="M 461.74108,539.72827 A 5.7589283,5.7589283 0 1 1 450.22322,539.72827 A 5.7589283,5.7589283 0 1 1 461.74108,539.72827 z"
+       transform="matrix(2.4656107,0,0,2.4656107,-560.16308,-499.60565)" />
+    <text
+       xml:space="preserve"
+       style="font-size:29.58732796px;font-style:normal;font-weight:normal;text-align:center;text-anchor:middle;fill:#ff0000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="452.67816"
+       y="639.80261"
+       id="text2412"><tspan
+         sodipodi:role="line"
+         x="452.67816"
+         y="639.80261"
+         id="tspan2414">unerwünschter</tspan><tspan
+         sodipodi:role="line"
+         x="452.67816"
+         y="676.78674"
+         id="tspan3253">Arbeitspunkt</tspan><tspan
+         sodipodi:role="line"
+         x="452.67816"
+         y="713.77094"
+         id="tspan3273">(stabil)</tspan></text>
+    <path
+       sodipodi:type="arc"
+       style="opacity:1;fill:#00963c;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       id="path2418"
+       sodipodi:cx="455.98215"
+       sodipodi:cy="539.72827"
+       sodipodi:rx="5.7589283"
+       sodipodi:ry="5.7589283"
+       d="M 461.74108,539.72827 A 5.7589283,5.7589283 0 1 1 450.22322,539.72827 A 5.7589283,5.7589283 0 1 1 461.74108,539.72827 z"
+       transform="matrix(2.4656107,0,0,2.4656107,-184.25067,-498.14579)" />
+    <text
+       xml:space="preserve"
+       style="font-size:144px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:100%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:EurostileTBlaExt"
+       x="292.70074"
+       y="477.37225"
+       id="text3229"
+       sodipodi:linespacing="100%"
+       transform="translate(254.62233,450.86218)"><tspan
+         sodipodi:role="line"
+         id="tspan3231"
+         x="292.70074"
+         y="477.37225" /></text>
+    <text
+       xml:space="preserve"
+       style="font-size:144px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;line-height:100%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:EurostileTBlaExt"
+       x="287.59125"
+       y="516.78833"
+       id="text3233"
+       sodipodi:linespacing="100%"
+       transform="translate(254.62233,450.86218)"><tspan
+         sodipodi:role="line"
+         id="tspan3235"></tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:29.58732223999999889px;font-style:normal;font-weight:normal;text-align:center;text-anchor:middle;fill:#ff00ff;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="565.29071"
+       y="944.55957"
+       id="text3239"
+       transform="matrix(0.9999991,1.3211854e-3,-1.3211854e-3,0.9999991,0,0)"
+       inkscape:transform-center-x="-81.894879"
+       inkscape:transform-center-y="42.456162"><tspan
+         sodipodi:role="line"
+         x="565.29071"
+         y="944.55957"
+         id="tspan3243"
+         style="stroke-width:1;fill:#ff00ff;stroke:none">instabiler</tspan><tspan
+         sodipodi:role="line"
+         x="565.29071"
+         y="981.5437"
+         id="tspan3249"
+         style="stroke-width:1;fill:#ff00ff;stroke:none">(Arbeits-)punkt</tspan></text>
+    <path
+       style="opacity:1;fill:#ff0000;fill-opacity:1;fill-rule:evenodd;stroke:#ff0000;stroke-width:1.19342875;marker:none;marker-start:none;marker-mid:none;marker-end:none;stroke-opacity:1;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
+       d="M 388.92639,702.60315 L 334.91679,810.07011"
+       id="path3263" />
+    <path
+       style="opacity:1;fill:#ff00ff;fill-opacity:1;fill-rule:evenodd;stroke:#ff00ff;stroke-width:1.01036251;marker:none;marker-start:none;marker-mid:none;marker-end:none;stroke-opacity:1;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
+       d="M 564.40096,849.7569 L 563.8218,914.01124"
+       id="path3279" />
+    <path
+       style="opacity:1;fill:#008000;fill-opacity:1;fill-rule:evenodd;stroke:#008000;stroke-width:0.76834327;marker:none;marker-start:none;marker-mid:none;marker-end:none;stroke-opacity:1;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
+       d="M 870.61473,771.29657 L 921.11168,818.74897"
+       id="path3281" />
+  </g>
+</svg>

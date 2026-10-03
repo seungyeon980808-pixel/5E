@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" version="1.1" viewBox="-90 -60 170 128">
+<title>Gaussian wave packet</title>
+<defs>
+	<pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+		<path d="M0,20v-20h20v20h-20" fill="none" stroke="#555" stroke-width=".25"/>
+	</pattern>
+</defs>
+<rect x="-80" y="-60" width="160" height="120" fill="url(#grid)" stroke="black"/>
+<g font-size="5" fill="black" text-anchor="middle" font-family="times">
+	<text y="-48" font-size="7"><tspan font-style="italic">e</tspan><tspan dy="-3" font-size="6" font-style="italic">−x</tspan>
+	<tspan dx="-1" dy="-2" font-size="4">2</tspan><tspan dy="2" font-size="5">/2</tspan>
+	<tspan dx="-1" dy="3">· sin(2π·4</tspan><tspan font-style="italic">x</tspan>)
+	</text>
+	<text y="65">
+		<tspan x="-80">−4</tspan><tspan x="-60">−3</tspan><tspan x="-40">−2</tspan>
+		<tspan x="78">4</tspan><tspan x="60">3</tspan><tspan x="40">2</tspan>
+		<tspan x="-20">−1</tspan><tspan x="0">0</tspan><tspan x="20">1</tspan>
+	</text>
+	<g transform="translate(-85)">
+	<text y="60">−1.5</text><text y="41">−1.0</text><text y="21">−0.5</text>
+	<text y="1">0.0</text>
+	<text y="-19">0.5</text><text y="-57">1.5</text><text y="-39">1.0</text>
+	</g>
+</g>
+<path id="g" d="M0,-0 Q 0.9,-53.3 1.7,-33.6 2.6,4.2 3.4,35.8 4.3,47.7 5.1,-5.2 
+	6,-54.4 6.8,-28.8 7.7,11.8 8.5,34.9 9.4,38.7 10.2,-9.3 11.1,-50.9 11.9,-22.5 
+	12.8,17 13.6,31.3 14.5,28.3 15.3,-11.6 16.2,-43.7 17,-15.8 17.9,19.2 18.7,25.8 
+	19.6,18.4 20.4,-12.1 21.3,-34.5 22.1,-9.8 23,18.5 23.8,19.6 24.7,10.3 25.5,-11 
+	26.4,-25 27.2,-5.2 28.1,15.8 28.9,13.7 29.8,4.6 30.6,-8.9 31.5,-16.6 32.3,-2.2 
+	33.2,12.1 34,8.8 34.9,1.2 35.7,-6.5 36.6,-10.1 37.4,-0.5 38.3,8.4 39.1,5.2 40,-0.4
+	40.9,-4.4 41.7,-5.6 42.6,0.3 43.4,5.4 44.3,2.8 45.1,-0.9 46,-2.7 46.8,-2.9 47.7,0.5 
+	48.5,3.1 49.4,1.4 50.2,-0.8 51.1,-1.5 51.9,-1.3 52.8,0.4 53.6,1.7 54.5,0.6 55.3,-0.6 
+	56.2,-0.8 57,-0.5 57.9,0.3 58.7,0.8 59.6,0.2 60.4,-0.4 61.3,-0.4 62.1,-0.2 63,0.2 
+	63.8,0.4 64.7,0.1 65.5,-0.2 66.4,-0.2 67.2,-0.1 68.1,0.1 68.9,0.2 69.8,0 70.6,-0.1 
+	71.5,-0.1 72.3,-0 73.2,0 74,0.1 74.9,0 75.7,-0 76.6,-0 77.4,0 78.3,0 
+	79.1,0 80,0" stroke="blue" fill="none"/>
+<use xlink:href="#g" transform="scale(-1,-1)"/>
+</svg>

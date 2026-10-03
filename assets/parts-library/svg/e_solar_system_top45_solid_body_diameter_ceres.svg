@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg PUBLIC '-//W3C//DTD SVG 1.1//EN' "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink"
+     width='1020' height='810'>
+
+<style type="text/css" ><![CDATA[
+  .in-prime    { stroke: #700; }
+  .in-sat      { stroke: #b00; }
+  .mid-prime   { stroke: #050; }
+  .mid-sat     { stroke: #0a0; }
+  .out-prime   { stroke: #88f; }
+  .out-sat     { stroke: #bbf; }
+  .mark-fill   { fill:   #a0a; }
+  .mark-stroke { stroke: #a0a; }
+]]></style>
+
+<rect width="1020" height="810" x="0" y="0" fill="white" stroke="black"/>
+
+<!-- regular chart -->
+<g transform="translate(10,700) scale(1,-0.05)"><!-- 0.05 = 1/20 -->
+  <!-- background size grid -->
+  <g stroke="#aaa" stroke-width="10" transform="scale(20,1)">
+    <!-- y is diameter -->
+    <line x1="0" x2="46" y1="0000"  y2="0000" />
+    <line x1="0" x2="46" y1="1000"  y2="1000" />
+    <line x1="0" x2="46" y1="2000"  y2="2000" />
+    <line x1="0" x2="46" y1="3000"  y2="3000" />
+    <line x1="0" x2="46" y1="4000"  y2="4000" />
+    <line x1="0" x2="46" y1="5000"  y2="5000" />
+    <line x1="0" x2="46" y1="6000"  y2="6000" />
+    <line x1="0" x2="46" y1="7000"  y2="7000" />
+    <line x1="0" x2="46" y1="8000"  y2="8000" />
+    <line x1="0" x2="46" y1="9000"  y2="9000" />
+    <line x1="0" x2="46" y1="10000" y2="10000" />
+    <line x1="0" x2="46" y1="11000" y2="11000" />
+    <line x1="0" x2="46" y1="12000" y2="12000" />
+    <line x1="0" x2="46" y1="13000" y2="13000" />
+  </g>
+  <g transform="translate(925,0)">
+    <text x="0" y="0" text-anchor="start" font-size="200" font-weight="bold" stroke-width="1" fill="black" font-family="calibri" transform="scale(0.1,-2)">
+      <tspan x="110" dy="-10"  >km</tspan>
+	  <tspan x="0" dy="-440" >1</tspan><tspan dx="1" font-size="175" font-weight="normal">,000</tspan>
+      <tspan x="0" dy="-500" >2</tspan><tspan dx="1" font-size="175" font-weight="normal">,000</tspan>
+      <tspan x="0" dy="-500" >3</tspan><tspan dx="1" font-size="175" font-weight="normal">,000</tspan>
+      <tspan x="0" dy="-500" >4</tspan><tspan dx="1" font-size="175" font-weight="normal">,000</tspan>
+      <tspan x="0" dy="-500" >5</tspan><tspan dx="1" font-size="175" font-weight="normal">,000</tspan>
+      <tspan x="0" dy="-500" >6</tspan><tspan dx="1" font-size="175" font-weight="normal">,000</tspan>
+      <tspan x="0" dy="-500" >7</tspan><tspan dx="1" font-size="175" font-weight="normal">,000</tspan>
+      <tspan x="0" dy="-500" >8</tspan><tspan dx="1" font-size="175" font-weight="normal">,000</tspan>
+      <tspan x="0" dy="-500" >9</tspan><tspan dx="1" font-size="175" font-weight="normal">,000</tspan>
+      <tspan x="0" dy="-500">10</tspan><tspan dx="1" font-size="175" font-weight="normal">,000</tspan>
+      <tspan x="0" dy="-500">11</tspan><tspan dx="1" font-size="175" font-weight="normal">,000</tspan>
+      <tspan x="0" dy="-500">12</tspan><tspan dx="1" font-size="175" font-weight="normal">,000</tspan>
+      <tspan x="0" dy="-500">13</tspan><tspan dx="1" font-size="175" font-weight="normal">,000</tspan>
+    </text>
+  </g>
+  <!-- the objects -->
+  <g stroke-width="0.8" stroke="#006" transform="scale(20,1) translate(-5,0)">
+    <!-- x1=x2 = rank -->
+    <!-- y2 = diameter -->
+    <line x1="6"  x2="6"  y1="0" y2="12742" class="in-prime"  id="Earth"      title="Earth 12742 km #6"/>
+    <line x1="7"  x2="7"  y1="0" y2="12104" class="in-prime"  id="Venus"      title="Venus 12104 km #7"/>
+    <line x1="8"  x2="8"  y1="0" y2="6779"  class="in-prime"  id="Mars"       title="Mars 6779 km #8"/>
+    <line x1="9"  x2="9"  y1="0" y2="5268"  class="mid-sat"   id="Ganymede"   title="Ganymede 5268 km #9"/>
+    <line x1="10" x2="10" y1="0" y2="5152"  class="mid-sat"   id="Titan"      title="Titan 5152 km #10"/>
+    <line x1="11" x2="11" y1="0" y2="4879"  class="in-prime"  id="Mercury"    title="Mercury 4879 km #11"/>
+    <line x1="12" x2="12" y1="0" y2="4821"  class="mid-sat"   id="Callisto"   title="Callisto 4821 km #12"/>
+    <line x1="13" x2="13" y1="0" y2="3643"  class="mid-sat"   id="Io"         title="Io 3643 km #13"/>
+    <line x1="14" x2="14" y1="0" y2="3474"  class="in-sat"    id="Moon"       title="Moon 3474 km #14"/>
+    <line x1="15" x2="15" y1="0" y2="3121"  class="mid-sat"   id="Europa"     title="Europa 3121 km #15"/>
+    <line x1="16" x2="16" y1="0" y2="2706"  class="mid-sat"   id="Triton"     title="Triton 2706 km #16"/>
+    <line x1="17" x2="17" y1="0" y2="2368"  class="out-prime" id="Pluto"      title="Pluto 2368 km #17"/>
+    <line x1="18" x2="18" y1="0" y2="2326"  class="out-prime" id="Eris"       title="Eris 2326 km #18"/>
+    <line x1="19" x2="19" y1="0" y2="1577"  class="mid-sat"   id="Titania"    title="Titania 1577 km #19"/>
+    <line x1="20" x2="20" y1="0" y2="1528"  class="mid-sat"   id="Rhea"       title="Rhea 1528 km #20"/>
+    <line x1="21" x2="21" y1="0" y2="1523"  class="mid-sat"   id="Oberon"     title="Oberon 1523 km #21"/>
+    <line x1="22" x2="22" y1="0" y2="1469"  class="mid-sat"   id="Iapetus"    title="Iapetus 1469 km #22"/>
+    <line x1="23" x2="23" y1="0" y2="1430"  class="out-prime" id="Makemake"   title="Makemake 1430 km #23"/>
+    <line x1="24" x2="24" y1="0" y2="1328"  class="out-prime" id="Haumea"     title="Haumea 1328 km #24"/>
+    <line x1="25" x2="25" y1="0" y2="1280"  class="out-prime" id="2007 OR10"  title="2007 OR10 1280 km #25"/>
+    <line x1="26" x2="26" y1="0" y2="1207"  class="out-sat"   id="Charon"     title="Charon 1207 km #26"/>
+    <line x1="27" x2="27" y1="0" y2="1169"  class="mid-sat"   id="Umbriel"    title="Umbriel 1169 km #27"/>
+    <line x1="28" x2="28" y1="0" y2="1158"  class="mid-sat"   id="Ariel"      title="Ariel 1158 km #28"/>
+    <line x1="29" x2="29" y1="0" y2="1123"  class="mid-sat"   id="Dione"      title="Dione 1123 km #29"/>
+    <line x1="30" x2="30" y1="0" y2="1074"  class="out-prime" id="Quaoar"     title="Quaoar 1074 km #30"/>
+    <line x1="31" x2="31" y1="0" y2="1062"  class="mid-sat"   id="Tethys"     title="Tethys 1062 km #31"/>
+    <line x1="32" x2="32" y1="0" y2="995"   class="out-prime" id="Sedna"      title="Sedna 995 km #32"/>
+	<line x1="33" x2="33" y1="0" y2="938"   class="in-prime"  id="Ceres"      title="Ceres 938 km #33"/>
+    <line x1="34" x2="34" y1="0" y2="934"   class="out-prime" id="2002 MS4"   title="2002 MS4 934 km #34"/>
+    <line x1="35" x2="35" y1="0" y2="917"   class="out-prime" id="Orcus"      title="Orcus 917 km #35"/>
+    <line x1="36" x2="36" y1="0" y2="854"   class="out-prime" id="Salacia"    title="Salacia 854 km #36"/>
+    <line x1="37" x2="37" y1="0" y2="768"   class="out-prime" id="2002 AW197" title="2002 AW197 768 km #37"/>
+    <line x1="38" x2="38" y1="0" y2="759"   class="out-prime" id="2013 FY27"  title="2013 FY27 759 km #38"/>
+    <line x1="39" x2="39" y1="0" y2="727"   class="out-prime" id="2003 AZ84"  title="2003 AZ84 727 km #39"/>
+    <line x1="40" x2="40" y1="0" y2="705"   class="out-prime" id="Varda"      title="Varda 705 km #40"/>
+    <line x1="41" x2="41" y1="0" y2="697"   class="out-prime" id="2005 UX25"  title="2005 UX25 697 km #41"/>
+    <line x1="42" x2="42" y1="0" y2="684"   class="out-sat"   id="Dysnomia"   title="Dysnomia 684 km #42"/>
+    <line x1="43" x2="43" y1="0" y2="680"   class="out-prime" id="2004 GV9"   title="2004 GV9 680 km #43"/>
+    <line x1="44" x2="44" y1="0" y2="679"   class="out-prime" id="2005 RN43"  title="2005 RN43 679 km #44"/>
+	<line x1="45" x2="45" y1="0" y2="668"   class="out-prime" id="Varuna"     title="Varuna 668 km #45"/>
+    <line x1="46" x2="46" y1="0" y2="650"   class="out-prime" id="Ixion"      title="Ixion 650 km #46"/>
+    <line x1="47" x2="47" y1="0" y2="600"   class="out-prime" id="2007 JJ43"  title="2007 JJ43 600 km #47"/>
+    <line x1="48" x2="48" y1="0" y2="600"   class="out-prime" id="2007 UK126" title="2007 UK126 600 km #48"/>
+    <line x1="49" x2="49" y1="0" y2="600"   class="out-prime" id="Chaos"      title="Chaos 600 km #49"/>
+    <line x1="50" x2="50" y1="0" y2="600"   class="out-prime" id="2010 KZ39"  title="2010 KZ39 600 km #50"/>
+  </g>
+  <!-- names -->
+  <g text-anchor="end" font-family="verdana" font-size="12" transform="translate(-7,0) scale(1,-20) rotate(-90,0,0)">
+    <text x="0" y="10">
+      <tspan x="0" dy="20">Earth</tspan>
+      <tspan x="0" dy="20">Venus</tspan>
+      <tspan x="0" dy="20">Mars</tspan>
+      <tspan x="0" dy="20">Ganymede</tspan>
+      <tspan x="0" dy="20">Titan</tspan>
+      <tspan x="0" dy="20">Mercury</tspan>
+      <tspan x="0" dy="20">Callisto</tspan>
+      <tspan x="0" dy="20">Io</tspan>
+      <tspan x="0" dy="20">Moon</tspan>
+      <tspan x="0" dy="20">Europa</tspan>
+      <tspan x="0" dy="20">Triton</tspan>
+      <tspan x="0" dy="20">Pluto</tspan>
+      <tspan x="0" dy="20">Eris</tspan>
+      <tspan x="0" dy="20">Titania</tspan>
+      <tspan x="0" dy="20">Rhea</tspan>
+      <tspan x="0" dy="20">Oberon</tspan>
+      <tspan x="0" dy="20">Iapetus</tspan>
+      <tspan x="0" dy="20">Makemake</tspan>
+      <tspan x="0" dy="20">2007 OR10</tspan>
+      <tspan x="0" dy="20">Haumea</tspan>
+      <tspan x="0" dy="20">Charon</tspan>
+      <tspan x="0" dy="20">Umbriel</tspan>
+      <tspan x="0" dy="20">Ariel</tspan>
+      <tspan x="0" dy="20">Dione</tspan>
+      <tspan x="0" dy="20">Quaoar</tspan>
+      <tspan x="0" dy="20">Tethys</tspan>
+      <tspan x="0" dy="20">Sedna</tspan>
+      <tspan x="0" dy="20">Ceres</tspan>
+      <tspan x="0" dy="20">2002 MS4</tspan>
+      <tspan x="0" dy="20">Orcus</tspan>
+      <tspan x="0" dy="20">Salacia</tspan>
+      <tspan x="0" dy="20">2002 AW197</tspan>
+      <tspan x="0" dy="20">2013 FY27</tspan>
+      <tspan x="0" dy="20">2003 AZ84</tspan>
+      <tspan x="0" dy="20">Varda</tspan>
+      <tspan x="0" dy="20">2005 UX25</tspan>
+      <tspan x="0" dy="20">Dysnomia</tspan>
+      <tspan x="0" dy="20">2004 GV9</tspan>
+      <tspan x="0" dy="20">2005 RN43</tspan>
+      <tspan x="0" dy="20">Varuna</tspan>
+      <tspan x="0" dy="20">Ixion</tspan>
+      <tspan x="0" dy="20">2007 JJ43</tspan>
+      <tspan x="0" dy="20">2007 UK126</tspan>
+      <tspan x="0" dy="20">Chaos</tspan>
+      <tspan x="0" dy="20">2010 KZ39</tspan>
+    </text>
+  </g>
+  <!-- colour legend -->
+  <g transform="scale(1,20) translate(350,560)">
+    <rect width="280" height="85" x="0" y="0" fill="white"  stroke="white"/>
+    <line x1="5"  y1="25" x2="85"  y2="25" class="in-prime"  stroke-width="12" title="inside Jupiter"/>
+    <line x1="85" y1="25" x2="165" y2="25" class="in-sat"    stroke-width="12" title="moons inside Jupiter"/>
+    <!--line x1="5"  y1="40" x2="85"  y2="40" class="mid-prime" stroke-width="12" title="giant planets"/-->
+    <line x1="85" y1="40" x2="165" y2="40" class="mid-sat"   stroke-width="12" title="moons of giant planets"/>
+	<line x1="5"  y1="55" x2="85"  y2="55" class="out-prime" stroke-width="12" title="beyond Neptune"/>
+    <line x1="85" y1="55" x2="165" y2="55" class="out-sat"   stroke-width="12" title="moons beyond Neptune"/>
+    <g transform="translate(0,51) scale(1,-1)" font-family="verdana" font-size="12">
+      <text x="85"  y="-16" text-anchor="middle" font-size="14" font-weight="bold">Legend</text>
+      <text y="0" transform="translate(167,-15)">
+        <tspan x="0" dy="15">transneptunian</tspan>
+        <tspan x="0" dy="15">giant planets</tspan>
+        <tspan x="0" dy="15">inner system</tspan>
+      </text>
+      <text x="75" y="45" text-anchor="end">solar orbit</text>
+      <text x="93" y="45">satellite</text>
+    </g>
+  </g>
+  <!-- title and labels -->
+  <g transform="scale(1,-20)">
+    <text x="480" y="-665" font-size="30" text-anchor="middle" fill="#006" title="excludes the Sun and four giant planets">Solid Bodies of the Solar System</text>
+    <text x="990" y="-670" font-size="20" text-anchor="end" font-family="calibri" fill="black">diameter</text>
+    <g transform="translate(560,-380)">
+      <defs>
+        <marker id="arrowhead" markerUnits="strokeWidth" orient="auto" viewBox="0 0 10 10" refX="2" refY="5">
+          <polyline points="0,0 10,5 0,10 2,5" class="mark-fill"/>
+        </marker>
+      </defs>
+	  <rect x="-120" y="-40" width="240" height="130" fill="white" stroke="white"/>
+      <line x1="0" x2="0" y1="90" y2="320" stroke-width="3" class="mark-stroke" marker-end="url(#arrowhead)"/>
+      <text x="0" y="35" text-anchor="middle" font-size="100" class="mark-fill" >Ceres</text>
+      <text x="0" y="80" text-anchor="middle" font-size="50"  class="mark-fill" >938 km #33</text>
+    </g>
+  </g>
+</g>
+
+</svg>

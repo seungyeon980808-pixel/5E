@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Creator: CorelDRAW -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xml:space="preserve"
+   width="84.0762mm"
+   height="29.076mm"
+   style="shape-rendering:geometricPrecision; text-rendering:geometricPrecision; image-rendering:optimizeQuality; fill-rule:evenodd; clip-rule:evenodd"
+   viewBox="0 0 84.0762 29.076"
+   id="svg2"
+   version="1.1"
+   inkscape:version="0.48.1 "
+   sodipodi:docname="Reflexie.svg"><metadata
+   id="metadata34"><rdf:RDF><cc:Work
+       rdf:about=""><dc:format>image/svg+xml</dc:format><dc:type
+         rdf:resource="http://purl.org/dc/dcmitype/StillImage" /></cc:Work></rdf:RDF></metadata><sodipodi:namedview
+   pagecolor="#ffffff"
+   bordercolor="#666666"
+   borderopacity="1"
+   objecttolerance="10"
+   gridtolerance="10"
+   guidetolerance="10"
+   inkscape:pageopacity="0"
+   inkscape:pageshadow="2"
+   inkscape:window-width="1920"
+   inkscape:window-height="1005"
+   id="namedview32"
+   showgrid="false"
+   inkscape:zoom="4.5572657"
+   inkscape:cx="155.43836"
+   inkscape:cy="42.302896"
+   inkscape:window-x="-9"
+   inkscape:window-y="-9"
+   inkscape:window-maximized="1"
+   inkscape:current-layer="svg2" />
+ <defs
+   id="defs4">
+  <style
+   type="text/css"
+   id="style6">
+   
+    .str2 {stroke:fuchsia;stroke-width:0.0762}
+    .str0 {stroke:black;stroke-width:0.2}
+    .str3 {stroke:black;stroke-width:0.35;stroke-linejoin:round}
+    .str1 {stroke:black;stroke-width:0.5;stroke-linejoin:round}
+    .fil0 {fill:none}
+    .fil3 {fill:none}
+    .fil1 {fill:black}
+    .fil2 {fill:#E5E5E5}
+    .fnt0 {font-weight:normal;font-size:3.5278;font-family:'Arial'}
+   
+  </style>
+ 
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+ </defs>
+ <line
+   style="fill:none;stroke:#000000;stroke-width:0.2"
+   id="line10"
+   y2="22.038"
+   x2="42.038101"
+   y1="2.0380001"
+   x1="42.038101"
+   class="fil0 str0" /><polyline
+   style="fill:none;stroke:#000000;stroke-width:0.5;stroke-linejoin:round"
+   id="polyline12"
+   points="76.6783,2.0386 42.0381,22.038 7.398,2.0386 "
+   class="fil0 str1" /><path
+   style="fill:none;stroke:#000000;stroke-width:0.2"
+   inkscape:connector-curvature="0"
+   id="path14"
+   d="M 37.7077,19.5377 C 38.6008,17.9909 40.252,17.038 42.0381,17.038"
+   class="fil0 str0" /><text
+   style="font-size:3.52780008px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;font-family:Arial;-inkscape-font-specification:Arial"
+   id="text16"
+   class="fil1 fnt0"
+   y="16.463301"
+   x="38.702545"
+   sodipodi:linespacing="125%">i</text>
+<text
+   style="font-size:3.52780008px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:125%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;font-family:Arial;-inkscape-font-specification:Arial"
+   id="text18"
+   class="fil1 fnt0"
+   y="16.463301"
+   x="45.567345"
+   sodipodi:linespacing="125%">r</text>
+<path
+   style="fill:none;stroke:#000000;stroke-width:0.2"
+   inkscape:connector-curvature="0"
+   id="path20"
+   d="m 42.0381,17.038 c 1.7861,0 3.4379,0.9535 4.3304,2.5003"
+   class="fil0 str0" /><polygon
+   style="fill:#e5e5e5"
+   id="polygon24"
+   points="2.0381,22.038 2.0381,27.038 82.0381,27.038 82.0381,22.038 "
+   class="fil2" /><line
+   style="fill:none;stroke:#000000;stroke-width:0.34999999;stroke-linejoin:round"
+   id="line26"
+   y2="22.038"
+   x2="2.0381"
+   y1="22.038"
+   x1="82.038101"
+   class="fil3 str3" /><polygon
+   style="fill:#000000"
+   id="polygon28"
+   points="23.3496,12.4029 26.4477,13.0369 24.3496,10.6709 23.8496,11.5369 "
+   class="fil1" /><polygon
+   style="fill:#000000"
+   id="polygon30"
+   points="58.995,13.4027 61.0931,11.0367 57.995,11.6707 58.495,12.5367 "
+   class="fil1" />
+</svg>

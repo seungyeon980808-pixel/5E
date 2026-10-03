@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Created with "sPlan" (http://www.abacom-online.de) -->
+<svg version="1.1" baseProfile="full"
+xmlns="http://www.w3.org/2000/svg"
+width="424" height="450">
+<title>sPlan</title>
+<defs>
+<style type="text/css">
+<![CDATA[
+polyline {stroke-linecap:round; stroke-linejoin:round}
+polygon {stroke-linecap:round; stroke-linejoin:round}
+path {stroke-linecap:round; stroke-linejoin:round}
+circle {stroke-linecap:round; stroke-linejoin:round}
+]]>
+</style>
+</defs>
+<circle cx="110.33" cy="250.07" r="29.71" fill="none" stroke="rgb(0,0,0)" stroke-width="2" />
+<polyline points="100.43 269.88 100.43 230.26" fill="none" stroke="rgb(0,0,0)" stroke-width="2" />
+<polyline points="100.43 259.97 125.19 274.83 125.19 294.64" fill="none" stroke="rgb(0,0,0)" stroke-width="2" />
+<polyline points="100.43 240.16 125.19 225.31 125.19 200.54" fill="none" stroke="rgb(0,0,0)" stroke-width="2" />
+<polyline points="90.52 240.16 55.86 240.16" fill="none" stroke="rgb(0,0,0)" stroke-width="2" />
+<polyline points="90.52 240.16 90.52 259.97" fill="none" stroke="rgb(0,0,0)" stroke-width="2" />
+<text x="128.22" y="281.85" font-family ="ARIAL" font-size ="7pt" font-weight="normal" font-style="normal" fill="rgb(0,0,0)" transform=" rotate(0.000) scale(0.992,1.000)"></text>
+<text x="129.45" y="223.31" font-family ="ARIAL" font-size ="8pt" font-weight="normal" font-style="normal" fill="rgb(0,0,0)" transform=" rotate(0.000) scale(0.983,1.000)"></text>
+<polygon points="115 235 112 229 121 227" fill="rgb(0,0,0)" stroke="rgb(0,0,0)" stroke-width="1" />
+<text x="39.58" y="210.53" font-family ="ARIAL" font-size ="21pt" font-weight="normal" font-style="normal" fill="rgb(0,0,0)" transform=" rotate(0.000) scale(1.011,1.000)">VT</text>
+<text x="81.28" y="294.77" font-family ="ARIAL" font-size ="8pt" font-weight="normal" font-style="normal" fill="rgb(0,0,0)" transform=" rotate(0.000) scale(0.992,1.000)"></text>
+<polyline points="245.18 290.00 245.18 320.00 225.18 320.00 265.18 320.00" fill="none" stroke="rgb(0,0,0)" stroke-width="2" />
+<polyline points="225.18 330.00 265.18 330.00 245.18 330.00 245.18 360.00" fill="none" stroke="rgb(0,0,0)" stroke-width="2" />
+<text x="250.18" y="309.00" font-family ="Arial" font-size ="17pt" font-weight="normal" font-style="italic" fill="rgb(0,0,0)" transform=" rotate(0.000) scale(1.000,1.000)">C</text>
+<polyline points="245.18 360.00 245.18 410.00" fill="none" stroke="rgb(0,0,0)" stroke-width="2" />
+<polyline points="245.18 90.00 245.18 40.00" fill="none" stroke="rgb(0,0,0)" stroke-width="2" />
+<circle cx="245" cy="90" r="6" fill="rgb(0,0,0)" stroke="none" stroke-width="2" />
+<circle cx="245" cy="360" r="6" fill="rgb(0,0,0)" stroke="none" stroke-width="2" />
+<polygon points="245 200 225 170 265 170" fill="rgb(255,255,255)" stroke="rgb(0,0,0)" stroke-width="2" />
+<polyline points="245.18 230.00 245.18 140.00" fill="none" stroke="rgb(0,0,0)" stroke-width="2" />
+<polyline points="265.18 200.00 225.18 200.00" fill="none" stroke="rgb(0,0,0)" stroke-width="2" />
+<text x="275.18" y="184.00" font-family ="Arial" font-size ="17pt" font-weight="normal" font-style="italic" fill="rgb(0,0,0)" transform=" rotate(0.000) scale(1.000,1.000)">VD</text>
+<text x="265.18" y="164.00" font-family ="Arial" font-size ="17pt" font-weight="normal" font-style="italic" fill="rgb(0,0,0)" transform=" rotate(0.000) scale(1.000,1.000)"></text>
+<path fill="rgb(255,255,255)" stroke="rgb(0,0,0)" stroke-width="2" style="stroke-linecap:square; stroke-linejoin:miter" d=" M 345 160 L 365 160 365 210 345 210 345 160" />
+<polyline points="355.18 140.00 355.18 160.00" fill="none" stroke="rgb(0,0,0)" stroke-width="2" />
+<polyline points="355.18 210.00 355.18 230.00" fill="none" stroke="rgb(0,0,0)" stroke-width="2" />
+<text x="368.18" y="185.00" font-family ="Arial" font-size ="17pt" font-weight="normal" font-style="italic" fill="rgb(0,0,0)" transform=" rotate(0.000) scale(1.000,1.000)">R</text>
+<polyline points="245.18 230.00 245.18 290.00" fill="none" stroke="rgb(0,0,0)" stroke-width="2" />
+<polyline points="245.18 140.00 245.18 90.00 355.18 90.00 355.18 140.00" fill="none" stroke="rgb(0,0,0)" stroke-width="2" />
+<polyline points="355.18 230.00 355.18 250.00 245.18 250.00" fill="none" stroke="rgb(0,0,0)" stroke-width="2" />
+<polyline points="245.18 90.00 125.18 90.00 125.19 200.54" fill="none" stroke="rgb(0,0,0)" stroke-width="2" />
+<polyline points="245.18 360.00 125.18 360.00 125.19 294.64" fill="none" stroke="rgb(0,0,0)" stroke-width="2" />
+<circle cx="245" cy="250" r="6" fill="rgb(0,0,0)" stroke="none" stroke-width="2" />
+</svg>

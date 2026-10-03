@@ -8,7 +8,7 @@ const { spawnSync } = require("node:child_process");
 const root = path.resolve(__dirname, "..");
 const validator = path.join(root, "scripts", "check-release-identity.cjs");
 
-test("release identity binds the 1.6.0 package, lock, preview UI, and artifact names", () => {
+test("release identity binds the 1.6.0 package, lock, canonical UI, and artifact names", () => {
   const result = spawnSync(process.execPath, [validator], { cwd: root, encoding: "utf8" });
   assert.equal(result.status, 0, result.stderr || result.stdout);
   assert.match(result.stdout, /Release identity OK: 1\.6\.0/);
@@ -17,7 +17,7 @@ test("release identity binds the 1.6.0 package, lock, preview UI, and artifact n
 test("tag mismatch fails before a build can start", (t) => {
   const fixture = fs.mkdtempSync(path.join(os.tmpdir(), "5e-release-identity-"));
   t.after(() => fs.rmSync(fixture, { recursive: true, force: true }));
-  for (const relativePath of ["package.json", "package-lock.json", "release-channels.json", "preview/index.html"]) {
+  for (const relativePath of ["package.json", "package-lock.json", "release-channels.json", "index.html"]) {
     const destination = path.join(fixture, relativePath);
     fs.mkdirSync(path.dirname(destination), { recursive: true });
     fs.copyFileSync(path.join(root, relativePath), destination);

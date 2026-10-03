@@ -61,11 +61,11 @@ test("AI panel auto-connects, shows progress, and filters image-generation event
   const events = fs.readFileSync(path.join(__dirname, "..", "js", "ai-events.js"), "utf8");
   const markup = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
   const styles = fs.readFileSync(path.join(__dirname, "..", "css", "ai-panel.css"), "utf8");
-  const examLibrary = fs.readFileSync(path.join(__dirname, "..", "js", "exam-library.js"), "utf8");
+  const examLibrary = fs.readFileSync(path.join(__dirname, "..", "js", "exam-library.js"), "utf8") + fs.readFileSync(path.join(__dirname, "..", "js", "unified-library-ui.js"), "utf8");
   const imageLibrary = fs.readFileSync(path.join(__dirname, "..", "js", "parts-library.js"), "utf8");
   assert.match(panel, /5e\.aiConversationId/);
-  assert.match(panel, /fiveEDesktop\.start\(\)/);
-  assert.match(panel, /fiveEDesktop\.models\(\)/);
+  assert.match(panel, /desktop\.start\(\)/);
+  assert.match(panel, /desktop\.models\(\)/);
   assert.match(panel, /model: modelSelect\.value/);
   assert.match(panel, /effort: effortSelect\.value/);
   assert.match(panel, /serviceTier: speedSelect\.value/);
@@ -82,7 +82,7 @@ test("AI panel auto-connects, shows progress, and filters image-generation event
   assert.match(panel, /이미지가 완성되었습니다/);
   assert.doesNotMatch(examLibrary, /prompt:\s*"이 기출문제 이미지를 참고하여/);
   assert.doesNotMatch(imageLibrary, /prompt:\s*"이 참고 이미지의 핵심 구조와 비율은 유지하고/);
-  assert.match(examLibrary, /references:\s*items\.map/);
+  assert.match(examLibrary, /unifiedLibraryTransfer\(/);
   assert.match(imageLibrary, /selectedIds\.map/);
   assert.match(examLibrary, /5e:library-closed/);
   assert.match(imageLibrary, /5e:library-closed/);
@@ -94,28 +94,28 @@ test("AI panel auto-connects, shows progress, and filters image-generation event
   assert.match(events, /imageDataUrl/);
   assert.match(events, /thread\/tokenUsage\/updated/);
   assert.match(markup, /data-ai-reference-search/);
-  assert.match(markup, /이미지 검색…/);
-  assert.match(markup, /화면 캡처/);
-  assert.match(markup, /이미지 불러오기/);
+  assert.match(markup, /자료 라이브러리에서 찾기/);
+  assert.match(panel, /openCaptureCrop/);
+  assert.match(markup, /파일에서 추가/);
   assert.match(markup, /작업 취소/);
   assert.match(markup, /data-ai-chat-send/);
   assert.match(markup, /data-ai-mode="diagram"/);
   assert.match(markup, />그림형<\/button>/);
-  assert.match(markup, /v1\.5\.3 · 2026\.08\.11/);
+  assert.match(markup, /data-release-version[^>]*>v1\.6\.0/);
   assert.doesNotMatch(markup, /업데이트 2026\.08\.09/);
   assert.match(panel, /openCaptureCrop/);
   assert.match(panel, /references = \[\]/);
-  assert.match(panel, /createAiReferenceSearch/);
+  assert.match(panel, /openPdfReferencePicker/);
   assert.match(panel, /클립보드 이미지/);
   assert.match(markup, /data-ai-speed/);
-  assert.match(markup, /기출문제 라이브러리/);
+  assert.match(markup, /자료 라이브러리에서 찾기/);
   assert.match(markup, /data-ai-compare/);
-  assert.match(markup, /data-ai-capture/);
-  assert.match(markup, /파일 탐색기/);
+  assert.match(panel, /captureButton\.onclick/);
+  assert.match(markup, /파일에서 원본 이미지 추가/);
   assert.match(markup, /multiple/);
   assert.ok(
-    markup.indexOf('data-ai-previews') < markup.indexOf('class="ai-reference-section"'),
-    "generated results must stay above the collapsible reference images",
+    markup.includes('class="ai-original-pane"') || (markup.includes('ai-original-pane') && markup.includes('ai-result-pane')),
+    "original and generated results have separate comparison panes",
   );
   assert.match(styles, /grid-template-areas: "results conversation"/);
   assert.match(styles, /\.ai-status\[data-kind="ok"\].*var\(--accent/);

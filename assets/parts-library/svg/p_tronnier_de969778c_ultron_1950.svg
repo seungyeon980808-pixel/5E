@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg width="650" height="500" version="1.1" viewBox="0 0 650 500" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+ <metadata>
+  <rdf:RDF>
+   <cc:Work rdf:about="">
+    <dc:format>image/svg+xml</dc:format>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:title/>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <g transform="translate(0 -622.52)" stroke="#000">
+  <g fill="#08f" fill-opacity=".26667" stroke-linecap="round" stroke-linejoin="bevel" stroke-opacity=".53333" stroke-width=".5">
+   <path d="m58.02 632.52a641.74 641.74 0 0 0-48.02 240 641.74 641.74 0 0 0 47.514 240h32.939a1784.2 1784.2 0 0 1-19.373-240 1784.2 1784.2 0 0 1 18.59-240z"/>
+   <path d="m134 652.52a445.11 445.11 0 0 0-58.977 220 445.11 445.11 0 0 0 58.988 220h37.672a1089.6 1089.6 0 0 1-23.76-220 1089.6 1089.6 0 0 1 23.291-220z"/>
+   <path d="m236.18 712.52a972.78 972.78 0 0 0-15.361 160 972.78 972.78 0 0 0 14.625 160h44.555l20.602-20.602a275.4 275.4 0 0 1-38.402-139.4 275.4 275.4 0 0 1 38.518-139.28l-20.717-20.717z"/>
+  </g>
+  <g stroke-linecap="round" stroke-linejoin="bevel" stroke-opacity=".53333" stroke-width=".5">
+   <path d="m430 712.52-21.436 21.436a275.4 275.4 0 0 1 37.865 138.56 275.4 275.4 0 0 1-37.994 138.44l21.564 21.564h66.332a1784.2 1784.2 0 0 1-10.492-160 1784.2 1784.2 0 0 1 8.7852-160z" fill="#0af" fill-opacity=".26667"/>
+   <path d="m496.24 712.52a1784.2 1784.2 0 0 0-10.404 160 1784.2 1784.2 0 0 0 9.6289 160h37.559a406.89 406.89 0 0 0 33.604-160 406.89 406.89 0 0 0-32.926-160z" fill="#08f" fill-opacity=".26667"/>
+   <path d="m577.11 702.52a3663.4 3663.4 0 0 0-8.5078 170 3663.4 3663.4 0 0 0 6.0215 170h28.715a623.43 623.43 0 0 0 24.375-170 623.43 623.43 0 0 0-24.568-170z" fill="#08f" fill-opacity=".26667"/>
+  </g>
+  <g fill="none">
+   <path d="m350.87 1122.5v-110" stroke-width="7.5"/>
+   <path d="m350 732.52v-110" stroke-width="7.5"/>
+   <path d="m-50 872.52h750" stroke-dasharray="40, 10, 5, 10" stroke-width="5"/>
+  </g>
+ </g>
+</svg>

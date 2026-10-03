@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="100%" height="100%" viewBox="0 0 900 675">
+ <title>Abbe error</title>
+ <desc>Comparison of Abbe error for Vernier calipers and a micrometer by CMG Lee using imagery from http://commons.wikimedia.org/wiki/File:Calibre_A50_1_03.svg and http://commons.wikimedia.org/wiki/File:Micrometer.svg .</desc>
+ <style type="text/css">
+svg  { font-family:'Liberation Sans',Helvetica,Arial,sans-serif; font-size:32px; text-anchor:start; fill:#000; stroke:#000; }
+text { stroke:none; }
+.var { font-style:italic; }
+.dim { stroke:#c00; marker-start:url(#marker_start); marker-end:url(#marker_end); }
+ </style>
+ <defs>
+  <filter id="filter_blur"><feGaussianBlur stdDeviation="4"/></filter>
+  <radialGradient id="grad_sphere" cx="50%" cy="50%" r="50%" fx="50%" fy="90%">
+   <stop offset="0%"  stop-color="#000000" stop-opacity="0"/>
+   <stop offset="99%" stop-color="#000000" stop-opacity="0.3"/>
+  </radialGradient>
+  <linearGradient id="grad_highlight" x1="0%" y1="0%" x2="0%" y2="100%">
+   <stop offset="10%" stop-color="#ffffff" stop-opacity="0.9"/>
+   <stop offset="99%" stop-color="#ffffff" stop-opacity="0"/>
+  </linearGradient>
+  <g id="orb" stroke="none" fill="#6cf">
+   <circle  cx="0" cy="0" r="100"/>
+   <circle  cx="0" cy="0" r="100" fill="url(#grad_sphere)"/>
+   <ellipse cx="0" cy="-45" rx="70" ry="50" fill="url(#grad_highlight)" filter="url(#filter_blur)"/>
+  </g>
+  <g id="axis">
+   <path d="M 10,0 h 885" stroke="#c00" stroke-width="4" stroke-dasharray="16,4,4,4"/>
+   <text transform="translate(505,30)" x="0" y="0.6ex" fill="#c00">Measurement axis</text>
+  </g>
+  <marker id="marker_start" markerWidth="8" markerHeight="8" refX="0" refY="4" orient="auto">
+   <path d="M 8,0 Q 2,4 0,4 Q 2,4 8,8" fill="none" stroke="#c00"/>
+  </marker>
+  <marker id="marker_end" markerWidth="8" markerHeight="8" refX="8" refY="4" orient="auto">
+   <path d="M 0,0 Q 6,4 8,4 Q 6,4 0,8" fill="none" stroke="#c00"/>
+  </marker>
+ </defs>
+ <circle cx="0" cy="0" r="99999" fill="#ffffff"/>
+ <g id="Calibre_A50_1_03" transform="translate(-8,-20) scale(0.5)">
+  <text x="-230" y="0">1</text>
+  <path fill="#eee" stroke="#000" stroke-width="2" stroke-linejoin="round" d="M215,350v40l10,10v300h-50L75,400V180h110v-20l-10-10V50c0,0,50,20,50,130v20h1550v150H215z"/>
+  <g stroke="#000">
+    <path stroke-width="30" stroke-dasharray="2,8" d="M284,314H1770"/>
+    <path stroke="#eee" stroke-width="50" stroke-dasharray="4,46" d="M273,304H1763"/>
+    <path stroke-width="40" stroke-dasharray="2,98" d="M324,309H1730"/>
+    <path stroke-width="50" stroke-dasharray="2,98" d="M274,304H1680"/>
+  </g>
+  <path fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" d="M279,246h-8 M279,270h-8 M269,248v8 M269,260v8 M281,248v8 M281,260v8 M381,248v8 M381,260v8 M479,246h-8 M479,258h-8 M479,270h-8 M469,260v8 M481,248v8 M579,246h-8 M579,258h-8 M579,270h-8 M581,248v8 M581,260v8 M679,258h-8 M669,248v8 M681,248v8 M681,260v8 M779,246h-8 M779,258h-8 M779,270h-8 M769,248v8 M781,260v8 M879,246h-8 M879,258h-8 M879,270h-8 M869,248v8 M869,260v8 M881,260v8 M979,246h-8 M981,248v8 M981,260v8 M1079,246h-8 M1079,258h-8 M1079,270h-8 M1069,248v8 M1069,260v8 M1081,248v8 M1081,260v8 M1179,246h-8 M1179,258h-8 M1169,248v8 M1181,248v8 M1181,260v8 M1279,246h-8 M1279,270h-8 M1269,248v8 M1269,260v8 M1281,248v8 M1281,260v8 M1261,248v8 M1261,260v8 M1381,248v8 M1381,260v8 M1361,248v8 M1361,260v8 M1479,246h-8 M1479,258h-8 M1479,270h-8 M1469,260v8 M1481,248v8 M1461,248v8 M1461,260v8 M1579,246h-8 M1579,258h-8 M1579,270h-8 M1581,248v8 M1581,260v8 M1561,248v8 M1561,260v8 M1679,258h-8 M1669,248v8 M1681,248v8 M1681,260v8 M1661,248v8 M1661,260v8"/>
+  <g id="movable" transform="translate(120,0)" fill="#ccc" stroke="#000" stroke-width="2" stroke-linejoin="round">
+    <path d="M125,200v-20c0-110,50-130,50-130v100l-10,10v20h640v20"/>
+    <path id="error" d="M225,700V400l10-10h140v10L275,700H225z"/>
+    <use xlink:href="#error" transform="translate(30,-15) rotate(5)" fill-opacity="0.1" fill="#000" stroke-dasharray="8,8"/>
+    <ellipse cx="745" cy="430" rx="70" ry="50"/>
+    <path d="M235,220v-40h580v40H235z"/>
+    <path d="M235,430V330h580v100H235z"/>
+    <g>
+      <path stroke-width="22" stroke-dasharray="2,7.8" d="M274,340H758"/>
+      <path stroke="#ccc" stroke-width="31" stroke-dasharray="4,45" d="M273,346.5H720"/>
+      <path stroke-width="31" stroke-dasharray="2,47" d="M274,345.5H720"/>
+      <path stroke="#ccc" stroke-width="51" stroke-dasharray="4,94" d="M272,356.5H768"/>
+      <path stroke-width="51" stroke-dasharray="2,96" d="M274,355.5H770"/>
+    </g>
+    <path fill="none" stroke="#000" stroke-width="2" stroke-linecap="round" d="M279,390h-8 M279,414h-8 M269,392v8 M269,404v8 M281,392v8 M281,404v8 M773,390h-8 M773,414h-8 M763,392v8 M763,404v8 M775,392v8 M775,404v8 M755,392v8 M755,404v8"/>
+  </g>
+  <polygon fill="#ddd" points="224,201 124,201 124,179 186,179 186,177 223,177 224,179"/>
+  <path fill="none" stroke="#000" stroke-width="2" stroke-linejoin="round" d="M185,160v20h-62 M225,180v20l10,0"/>
+  <use xlink:href="#orb" transform="translate(269,700) scale(0.43)"/>
+ </g>
+ <g id="micrometer" transform="translate(0,245) scale(0.42)">
+  <marker id="h" overflow="visible" orient="auto">
+   <path transform="matrix(.8 0 0 .8 5.92 .8)" d="m-2.5-1c0 2.76-2.24 5-5 5s-5-2.24-5-5 2.24-5 5-5 5 2.24 5 5z" fill-rule="evenodd" stroke="#000" stroke-width="1pt"/>
+  </marker>
+  <marker id="g" overflow="visible" orient="auto">
+   <path transform="matrix(.8 0 0 .8 5.92 .8)" d="m-2.5-1c0 2.76-2.24 5-5 5s-5-2.24-5-5 2.24-5 5-5 5 2.24 5 5z" fill-rule="evenodd" stroke="#000" stroke-width="1pt"/>
+  </marker>
+  <marker id="a" overflow="visible" orient="auto">
+   <path transform="matrix(.8 0 0 .8 5.92 .8)" d="m-2.5-1c0 2.76-2.24 5-5 5s-5-2.24-5-5 2.24-5 5-5 5 2.24 5 5z" fill-rule="evenodd" stroke="#000" stroke-width="1pt"/>
+  </marker>
+  <marker id="d" overflow="visible" orient="auto">
+   <path transform="matrix(.8 0 0 .8 5.92 .8)" d="m-2.5-1c0 2.76-2.24 5-5 5s-5-2.24-5-5 2.24-5 5-5 5 2.24 5 5z" fill-rule="evenodd" stroke="#000" stroke-width="1pt"/>
+  </marker>
+  <marker id="b" overflow="visible" orient="auto">
+   <path transform="matrix(.8 0 0 .8 5.92 .8)" d="m-2.5-1c0 2.76-2.24 5-5 5s-5-2.24-5-5 2.24-5 5-5 5 2.24 5 5z" fill-rule="evenodd" stroke="#000" stroke-width="1pt"/>
+  </marker>
+  <marker id="c" overflow="visible" orient="auto">
+   <path transform="matrix(.8 0 0 .8 5.92 .8)" d="m-2.5-1c0 2.76-2.24 5-5 5s-5-2.24-5-5 2.24-5 5-5 5 2.24 5 5z" fill-rule="evenodd" stroke="#000" stroke-width="1pt"/>
+  </marker>
+  <marker id="f" overflow="visible" orient="auto">
+   <path transform="matrix(.8 0 0 .8 5.92 .8)" d="m-2.5-1c0 2.76-2.24 5-5 5s-5-2.24-5-5 2.24-5 5-5 5 2.24 5 5z" fill-rule="evenodd" stroke="#000" stroke-width="1pt"/>
+  </marker>
+  <marker id="e" overflow="visible" orient="auto">
+   <path transform="matrix(.8 0 0 .8 5.92 .8)" d="m-2.5-1c0 2.76-2.24 5-5 5s-5-2.24-5-5 2.24-5 5-5 5 2.24 5 5z" fill-rule="evenodd" stroke="#000" stroke-width="1pt"/>
+  </marker>
+  <g transform="translate(-39.267 -1613.7)" font-family="Calibri" stroke-width="3">
+   <path d="m1955 1875 10-10c10 0 10 150 1e-4 150 9.9999 0 9.9999-150-1e-4 -150l180 10c10 0 10 130 0 130l-180 10-10-10z" fill="#b2b2b2" stroke="#000"/>
+   <path d="m1065 1840h-150v200h150v-110h-150 150z" fill="#e5e5e5" stroke="#000"/>
+   <text transform="scale(1.1481 .87103)" x="887.21857" y="2150.8848" font-size="37">5</text>
+   <text x="942.32965" y="1873.4469" font-size="42">o</text>
+   <path d="m165 1900v50c0 40-60 180-80 260-30 120 100 410 400 410 320 0 410-290 410-390s10-140 20-160v-40h-220 220v-190c0.0839-5.5617-6.3688-5.3283-10-5h-200c-5 0-10 5-10 10v255c0 120-80 240-210 240-150 0-230-110-230-230v-125c-10 0-10-95 0-95h-80c-5 0-10 5-10 10z" fill="#ccc" stroke="#000"/>
+   <path d="m1065 1840c0-5 0-5 5-6l95-19h250v250h-250l-95-19c-5-1-5-1-5-6z" fill="#ccc" stroke="#000"/>
+   <path d="m780 1820-10 10v230l10 10h35l10-10v-230l-10-10v250-250h-35v250z" fill="#b2b2b2" stroke="#000"/>
+   <path d="m290 1890h-35c-10 0-10 95 0 95h35c-10 0-10-95 0-95-10 0-10 95 0 95s10-95 0-95z" fill="#e5e5e5" stroke="#000"/>
+   <use xlink:href="#orb" transform="translate(341,1934) scale(0.52)"/>
+   <path d="m695 1890h-300c-10 0-10 95 0 95h300z" fill="#e5e5e5" stroke="#000"/>
+   <path d="m955 1880v35zm75 0v35zm-60 15v20zm15 0v20zm15 0v20zm15 0v20zm30 0v20zm15 0v20z" fill="none" stroke="#000" stroke-width="2"/>
+   <path d="m963 1940v25zm15 0v25zm15 0v25zm15 0v25zm15 0v25zm15 0v25zm15 0v25z" fill="none" stroke="#000" stroke-width="2"/>
+   <path d="m1099 1833-34 7zm0 6-34 7zm3 8-37 7zm17 7-54 9zm-19 14-35 5zm2 12-37 5zm1 13-38 4zm0 14-38 3zm19 14-57 2zm-57 16h40zm0 14h40zm0 14h40zm0 13 39 2zm0 13 60 4zm0 12 38 3zm0 10 39 4zm0 9 38 6zm0 8 38 6zm0 7 55 10zm0 5 35 7z" fill="none" stroke="#000" stroke-width="2"/>
+   <path d="m1410 1815 10-10v270-270h55c5 0 5 270 0 270 5 0 5-270 0-270 1 0 6.5482 10 6.5482 10h8.4518c5 0 5 250 0 250 5 0 5-250 0-250l10-10c5 0 5 270 0 270 5 0 5-270 0-270h380c5 0 5 270 0 270 5 0 5-270 0-270h25c5 0 5 270 0 270 5 0 5-270 0-270 2 0 4 70 4 70h46c5 0 5.0001 130 0 130h-46s-2.0001 70-4.0001 70h-405l-10-10h-8.4781s-5.5218 10-6.5219 10h-55l-10-10z" fill="#b2b2b2" stroke="#000"/>
+   <text x="1174.3502" y="1931.1885" font-size="42">15</text>
+   <text transform="scale(1.4484 .69043)" x="805.93475" y="2979.6814" font-size="29">5</text>
+   <text transform="scale(1.0311 .96981)" x="1139.3951" y="2071.9136" font-size="41">10</text>
+   <text transform="scale(1.128 .88652)" x="1036.3813" y="2096.2886" font-size="37">20</text>
+  </g>
+ </g>
+ <use xlink:href="#axis" transform="translate(0,145)"/>
+ <use xlink:href="#axis" transform="translate(0,378)"/>
+ <text transform="translate(325,245)" x="0" y="0.6ex" font-size="40"
+  >=<tspan x="-4.5ex">sin</tspan
+  ><tspan dx="0.2ex" class="var">&#952;</tspan
+  ><tspan x="2ex" dy="-1ex" class="var">&#1013;</tspan
+  ><tspan x="2ex">_</tspan
+  ><tspan x="2ex" dy="2ex" class="var">h</tspan
+  ><tspan x="0" dy="2ex">=</tspan
+  ><tspan x="-3.5ex">&#8756;</tspan
+  ><tspan dx="0.5ex" class="var">&#1013;</tspan
+  ><tspan x="2ex" class="var">h</tspan
+  ><tspan dx="0.5ex">sin</tspan
+  ><tspan dx="0.2ex" class="var">&#952;</tspan></text>
+ <g fill="#c00">
+  <text transform="translate(135,420)" x="0" y="0.6ex"
+   ><tspan class="var">h</tspan><tspan dx="0.5ex">=&#8201;0</tspan
+   ><tspan x="-1.5ex" dy="2ex">&#8756;</tspan><tspan dx="0.4ex" class="var">&#1013;</tspan><tspan dx="0.5ex">=&#8201;0</tspan></text>
+  <text transform="translate(125,240)" x="0" y="0.6ex" class="var">h</text>
+  <text transform="translate(165,345)" x="0" y="0.6ex" class="var">&#1013;</text>
+  <text transform="translate(170,225)" x="0" y="0.6ex" class="var">&#952;</text>
+  <path d="M 155,250 L 165,145 V 250" fill-opacity="0.5" stroke="none"/>
+ </g>
+ <path class="dim" d="M 142,331 l 16,-185"/>
+ <path class="dim" d="M 147,340 h 17"/>
+</svg>

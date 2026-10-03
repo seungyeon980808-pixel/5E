@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Generator: Adobe Illustrator 18.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" id="Image" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0px" y="0px"
+	 viewBox="0 0 600 197" enable-background="new 0 0 600 197" xml:space="preserve">
+<g id="Labels">
+	<text transform="matrix(1 0 0 1 47.4575 119.6323)" font-family="'DejaVuSans'" font-size="34">N</text>
+	<text transform="matrix(0.583 0 0 0.583 72.8911 108.3101)" font-family="'DejaVuSans'" font-size="34">+</text>
+	<text transform="matrix(1 0 0 1 193.5395 93.2134)" font-family="'DejaVuSans'" font-size="34">O</text>
+	<text transform="matrix(1 0 0 1 213.5991 164.8413)" font-family="'DejaVuSans'" font-size="34">O</text>
+	<text transform="matrix(1 0 0 1 267.8491 165.688)" font-family="'DejaVuSans'" font-size="34">OH</text>
+	<text transform="matrix(1 0 0 1 244.5385 119.4907)" font-family="'DejaVuSans'" font-size="34">P</text>
+	<text transform="matrix(1 0 0 1 288.1928 92.3677)" font-family="'DejaVuSans'" font-size="34">O</text>
+	<text transform="matrix(1 0 0 1 380.1664 39.3872)" font-family="'DejaVuSans'" font-size="34">OH</text>
+	<text transform="matrix(1 0 0 1 474.2534 93.2134)" font-family="'DejaVuSans'" font-size="34">O</text>
+	<text transform="matrix(1 0 0 1 566.6498 92.7905)" font-family="'DejaVuSans'" font-size="34">R</text>
+	<text transform="matrix(1 0 0 1 520.8764 172.894)" font-family="'DejaVuSans'" font-size="34">O</text>
+</g>
+<g id="Tracés">
+	<line stroke="#000000" stroke-width="1.6953" stroke-miterlimit="10" x1="10.2" y1="78.8" x2="39.6" y2="96.4"/>
+	<line stroke="#000000" stroke-width="1.6953" stroke-miterlimit="10" x1="28.8" y1="152.8" x2="44.9" y2="125.4"/>
+	<line stroke="#000000" stroke-width="1.6953" stroke-miterlimit="10" x1="68.2" y1="127.5" x2="82.8" y2="152.3"/>
+	<polyline fill="none" stroke="#000000" stroke-width="1.6953" stroke-miterlimit="10" points="86.7,94.3 112.7,79 158.9,105.7 
+		189.9,88.3 	"/>
+	<line fill="none" stroke="#000000" stroke-width="1.6953" stroke-miterlimit="10" x1="223.6" y1="89.2" x2="236.3" y2="96.2"/>
+	<line fill="none" stroke="#000000" stroke-width="1.6953" stroke-miterlimit="10" x1="234" y1="134.3" x2="239.7" y2="125"/>
+	<line fill="none" stroke="#000000" stroke-width="1.6953" stroke-miterlimit="10" x1="258.9" y1="116.9" x2="270.2" y2="136.4"/>
+	<line fill="none" stroke="#000000" stroke-width="1.6953" stroke-miterlimit="10" x1="270" y1="95.8" x2="282.9" y2="88.3"/>
+	<polyline fill="none" stroke="#000000" stroke-width="1.6953" stroke-miterlimit="10" points="316.8,89.4 345.6,105.9 392.2,79.2 
+		439.1,105.9 469.4,88.1 	"/>
+	<line fill="none" stroke="#000000" stroke-width="1.6953" stroke-miterlimit="10" x1="389.1" y1="69.5" x2="395" y2="69.5"/>
+	<line fill="none" stroke="#000000" stroke-width="1.6953" stroke-miterlimit="10" x1="386.3" y1="57.4" x2="397.5" y2="57.4"/>
+	<line fill="none" stroke="#000000" stroke-width="1.6953" stroke-miterlimit="10" x1="383.6" y1="46" x2="400.5" y2="46"/>
+	<polyline fill="none" stroke="#000000" stroke-width="1.6953" stroke-miterlimit="10" points="503.7,89.2 526.5,102.8 531.5,105.7 
+		536.7,102.7 560.7,89.2 	"/>
+	<line fill="none" stroke="#000000" stroke-width="1.6953" stroke-miterlimit="10" x1="526.5" y1="102.8" x2="526.5" y2="140.3"/>
+	<line fill="none" stroke="#000000" stroke-width="1.6953" stroke-miterlimit="10" x1="536.7" y1="102.7" x2="536.7" y2="140.3"/>
+	<line fill="none" stroke="#000000" stroke-width="1.6953" stroke-miterlimit="10" x1="239.5" y1="137.3" x2="245.2" y2="128"/>
+</g>
+</svg>

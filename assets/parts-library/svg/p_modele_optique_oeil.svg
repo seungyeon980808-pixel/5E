@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://web.resource.org/cc/"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://inkscape.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   id="svg2"
+   sodipodi:version="0.32"
+   inkscape:version="0.43"
+   width="841.88977pt"
+   height="595.27557pt"
+   sodipodi:docbase="D:\Documents\These\Rapports\redaction\images\oeil"
+   sodipodi:docname="optique.svg"
+   version="1.0"
+   inkscape:export-filename="D:\Documents\These\Rapports\redaction\images\oeil\optique.png"
+   inkscape:export-xdpi="999.72095"
+   inkscape:export-ydpi="999.72095">
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs5" />
+  <sodipodi:namedview
+     inkscape:window-height="957"
+     inkscape:window-width="1680"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     borderopacity="1.0"
+     bordercolor="#666666"
+     pagecolor="#ffffff"
+     id="base"
+     showgrid="true"
+     showguides="true"
+     inkscape:grid-points="true"
+     inkscape:zoom="0.79713123"
+     inkscape:cx="716.36207"
+     inkscape:cy="457.07306"
+     inkscape:window-x="-4"
+     inkscape:window-y="-4"
+     inkscape:current-layer="layer3" />
+  <path
+     style="fill:none;fill-opacity:0.75;fill-rule:evenodd;stroke:#000000;stroke-width:0.2;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:0.40000001, 1.20000002;stroke-dashoffset:0;stroke-opacity:1;display:none"
+     d="M 95,82.362183 L 210,82.362183"
+     id="path9337" />
+  <g
+     inkscape:groupmode="layer"
+     id="layer1"
+     inkscape:label="cristallin" />
+  <g
+     inkscape:groupmode="layer"
+     id="layer2"
+     inkscape:label="iris"
+     style="display:inline" />
+  <g
+     inkscape:groupmode="layer"
+     id="layer3"
+     inkscape:label="cornee"
+     style="display:inline">
+    <g
+       id="g15627"
+       transform="matrix(6.596417,0,0,6.596417,-460.844,-168.2189)">
+      <g
+         id="g14741"
+         style="display:inline">
+        <path
+           sodipodi:nodetypes="ccccc"
+           style="fill:#d4e7ee;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+           d="M 150,52.424683 C 145,72.362183 145,92.362183 150,112.42468 L 153,112.42468 C 158,92.362183 158,72.362183 153,52.424683 L 150,52.424683 z "
+           id="path10226" />
+        <path
+           style="fill:none;fill-opacity:0.75;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+           d="M 140,52.362186 C 140,67.362186 140,70.362186 140,70.362186"
+           id="path12059"
+           sodipodi:nodetypes="cc" />
+        <path
+           style="fill:none;fill-opacity:0.75;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+           d="M 140,94.362186 C 140,112.36218 140,112.36218 140,112.36218 L 140,112.36218"
+           id="path12061" />
+      </g>
+      <path
+         sodipodi:nodetypes="cccc"
+         id="path14746"
+         d="M 130,52.362183 C 110,72.362183 110,92.362183 130,112.36218 L 135,112.36218 C 115,92.362183 115,72.362183 135,52.362183 C 130,52.362183 129.95494,52.418769 130,52.362183 z "
+         style="fill:#b1e8c8;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:0.1;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+    </g>
+    <path
+       style="fill:none;fill-opacity:0.75;fill-rule:evenodd;stroke:#d92e1b;stroke-width:5.93677521;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="M 734.46417,111.45358 C 998.08695,149.11398 998.08695,601.03872 734.46417,638.6991"
+       id="path15621"
+       sodipodi:nodetypes="cc" />
+    <path
+       style="fill:#deea0c;fill-opacity:0.2479339;fill-rule:evenodd;stroke:#000000;stroke-width:0;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="M 33.887283,243.38192 L 340.80426,243.38192 L 363.70815,260.51041 L 502.2329,322.53892 L 571.20497,322.53892 L 931,375.31027 L 571.20497,428.08159 L 502.2329,428.08159 L 363.70815,487.44936 L 343.91889,507.2386 L 33.887283,507.2386 L 33.887283,243.38192 z "
+       id="path16507"
+       inkscape:export-xdpi="1000"
+       inkscape:export-ydpi="1000" />
+    <path
+       style="fill:none;fill-opacity:0.75;fill-rule:evenodd;stroke:#000000;stroke-width:0.65964174;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="M 33.887283,243.38192 L 340.80426,243.38192 L 363.70815,260.51041 L 502.2329,322.53892 L 571.93644,322.53892 L 931,375.31027 L 571.20497,428.08159 L 502.2329,428.08159 L 363.70815,487.44936 L 343.91889,507.2386 L 33.887283,507.2386"
+       id="path17382" />
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer4"
+     inkscape:label="texte">
+    <text
+       xml:space="preserve"
+       style="font-size:46.17491913px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="40.483704"
+       y="427.36642"
+       id="text18258"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan18260"
+         x="40.483704"
+         y="427.36642">lumière</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:32.98208618px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="282.51501"
+       y="216.47371"
+       id="text18262"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan18264"
+         x="282.51501"
+         y="216.47371">cornée</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:32.98208618px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="526.67145"
+       y="480.35327"
+       id="text18266"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan18268"
+         x="526.67145"
+         y="480.35327">cristallin</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:32.98208618px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="452.9498"
+       y="169.49434"
+       id="text18270"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan18272"
+         x="452.9498"
+         y="169.49434">iris</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:32.98208618px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="782.7771"
+       y="240.03033"
+       id="text18274"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan18276"
+         x="782.7771"
+         y="240.03033">rétine</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:32.98208618px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Bitstream Vera Sans"
+       x="937.59644"
+       y="400.36896"
+       id="text18278"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan18280"
+         x="937.59644"
+         y="400.36896">fovea</tspan></text>
+  </g>
+</svg>

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="100%" height="100%" viewBox="0 0 24895 11321" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" xml:space="preserve" xmlns:serif="http://www.serif.com/" style="fill-rule:evenodd;clip-rule:evenodd;">
+    <path d="M585,8340L24895,8340" style="fill:none;stroke:rgb(128,128,128);stroke-width:20px;"/>
+    <path d="M585,2982L24895,2982" style="fill:none;stroke:rgb(128,128,128);stroke-width:20px;"/>
+    <path d="M2104,1794L2104,7152" style="fill:none;stroke:rgb(128,128,128);stroke-width:20px;stroke-dasharray:100,60;"/>
+    <path d="M5143,2721L5143,8079" style="fill:none;stroke:rgb(128,128,128);stroke-width:20px;stroke-dasharray:100,60;"/>
+    <path d="M8182,4055L8182,9413" style="fill:none;stroke:rgb(128,128,128);stroke-width:20px;stroke-dasharray:100,60;"/>
+    <path d="M11221,3722L11221,9080" style="fill:none;stroke:rgb(128,128,128);stroke-width:20px;stroke-dasharray:100,60;"/>
+    <path d="M14260,2255L14260,7645" style="fill:none;stroke:rgb(128,128,128);stroke-width:20px;stroke-dasharray:100,60;"/>
+    <path d="M17298,1915L17298,7273" style="fill:none;stroke:rgb(128,128,128);stroke-width:20px;stroke-dasharray:100,60;"/>
+    <path d="M20337,3252L20337,8610" style="fill:none;stroke:rgb(128,128,128);stroke-width:20px;stroke-dasharray:100,60;"/>
+    <path d="M23376,4169L23376,9527" style="fill:none;stroke:rgb(128,128,128);stroke-width:20px;stroke-dasharray:100,60;"/>
+    <path d="M1141,2982C1581,2110 1860,1794 2095,1794C2330,1794 2583,2017 3072,2982C3561,3946 3796,4169 4043,4169C4290,4169 4569,3891 5008,2982M20473,2982C20912,2110 21191,1794 21426,1794C21661,1794 21915,2017 22403,2982C22892,3946 23127,4169 23374,4169C23622,4169 23900,3891 24339,2982M16607,2982C17046,2110 17325,1794 17560,1794C17795,1794 18049,2017 18537,2982C19026,3946 19261,4169 19508,4169C19755,4169 20034,3891 20473,2982M12740,2982C13179,2110 13459,1794 13694,1794C13929,1794 14182,2017 14671,2982C15159,3946 15394,4169 15642,4169C15889,4169 16167,3891 16607,2982M8874,2982C9313,2110 9592,1794 9827,1794C10062,1794 10316,2017 10805,2982C11293,3946 11528,4169 11775,4169C12023,4169 12301,3891 12740,2982M5008,2982C5447,2110 5726,1794 5961,1794C6196,1794 6450,2017 6938,2982C7427,3946 7662,4169 7909,4169C8157,4169 8435,3891 8874,2982" style="fill:none;stroke:rgb(232,6,94);stroke-width:75px;"/>
+    <path d="M585,4272L585,1691" style="fill:none;stroke:rgb(128,128,128);stroke-width:20px;"/>
+    <text x="-9.66px" y="1817.72px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:353px;">+1</text>
+    <text x="197.349px" y="3106.69px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:353px;">0</text>
+    <text x="0.165px" y="4399px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:353px;">‒1</text>
+    <path d="M483,1691L687,1691" style="fill:none;stroke:rgb(128,128,128);stroke-width:20px;"/>
+    <path d="M483,4272L687,4272" style="fill:none;stroke:rgb(128,128,128);stroke-width:20px;"/>
+    <path d="M24339,9476C24045,9520 23723,9541 23374,9527C21846,9466 20792,8796 20337,8610C19882,8424 18905,7518 17298,7273C15692,7028 14828,7408 14281,7645C13643,7922 12629,8564 11221,9080C9813,9596 9087,9557 8182,9413C7277,9268 5723,8309 5143,8079C4563,7848 3265,7152 2104,7152C1746,7152 1424,7180 1141,7231" style="fill:none;stroke:black;stroke-width:75px;"/>
+    <path d="M585,9630L585,7049" style="fill:none;stroke:rgb(128,128,128);stroke-width:20px;"/>
+    <text x="-9.66px" y="7176.22px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:353px;">+1</text>
+    <text x="197.349px" y="8465.19px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:353px;">0</text>
+    <text x="0.165px" y="9757.5px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:353px;">‒1</text>
+    <path d="M483,7049L687,7049" style="fill:none;stroke:rgb(128,128,128);stroke-width:20px;"/>
+    <path d="M483,9630L687,9630" style="fill:none;stroke:rgb(128,128,128);stroke-width:20px;"/>
+    <circle cx="2095" cy="1794" r="127"/>
+    <circle cx="5143" cy="2721" r="127"/>
+    <circle cx="8182" cy="4055" r="127"/>
+    <circle cx="11221" cy="3722" r="127"/>
+    <circle cx="14260" cy="2255" r="127"/>
+    <circle cx="17298" cy="1915" r="127"/>
+    <circle cx="20337" cy="3252" r="127"/>
+    <circle cx="23374" cy="4169" r="127"/>
+    <circle cx="2095" cy="7152" r="127"/>
+    <circle cx="5143" cy="8079" r="127"/>
+    <circle cx="8182" cy="9413" r="127"/>
+    <circle cx="11221" cy="9080" r="127"/>
+    <circle cx="14260" cy="7654" r="127"/>
+    <circle cx="17298" cy="7273" r="127"/>
+    <circle cx="20337" cy="8610" r="127"/>
+    <circle cx="23376" cy="9527" r="127"/>
+    <path d="M2095,1236L2095,1033L5143,1033L5143,1236" style="fill:none;stroke:black;stroke-width:50px;"/>
+    <text x="1727.54px" y="661.865px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:494.822px;">Sampling interval</text>
+    <text x="10745.4px" y="460.225px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:631.73px;fill:rgb(232,6,94);">Original signal</text>
+    <text x="10464.2px" y="11188.1px" style="font-family:'ArialMT', 'Arial', sans-serif;font-size:631.73px;">Recorded signal</text>
+</svg>

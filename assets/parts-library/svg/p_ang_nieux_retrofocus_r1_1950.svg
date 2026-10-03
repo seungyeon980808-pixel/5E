@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" x="0" y="0" width="440"
+	 height="340" viewBox="0 0 440 340" style="enable-background:new 0 0 440 340;">
+<style type="text/css">
+	.st0{fill:none;stroke:#000;stroke-width:2;}
+	.st1{fill:none;stroke:#000;stroke-width:2;stroke-linejoin:round;}
+	.st2{font-family:Liberation Sans,Arial;}
+	.st3{font-size:24px;}
+</style>
+<g id="lenses">
+	<path class="st0" d="M93,250.4H71.5c0,0-20.5-34.9-20.5-113.8S71.5,20.6,71.5,20.6H93l11.8,14c0,0-42.1,29.1-42.1,101.9
+		s42.1,99.8,42.1,99.8L93,250.4z"/>
+	<path class="st0" d="M239.8,190.6h-6.2c0,0-6.6-16.3-6.6-54.9s6.6-55.4,6.6-55.4h6.2c0,0,4.4,16.9,4.4,55.1
+		S239.8,190.6,239.8,190.6z"/>
+	<path class="st0" d="M263.8,135.7"/>
+	<path class="st0" d="M305.8,177.3h-14.4l-4.6-11c0,0,6.2-10.8,6.2-31.2s-6.2-30.4-6.2-30.4l4.6-11h14.4l5.5,5.4
+		c0,0-8.5,12.9-8.5,36.4s8.5,34,8.5,34L305.8,177.3z"/>
+	<path class="st0" d="M348.4,178.8h-7.6c0,0-11.7-16-11.7-43.3s11.7-43.3,11.7-43.3h7.6c0,0,9.2,12.4,9.2,43.3
+		S348.4,178.8,348.4,178.8z"/>
+	<path class="st1" d="M263.8,182.7h-8.7c0,0-10.8-10.7-10.8-47.1s10.8-47.2,10.8-47.2h8.7l11.6,11l0,0c0,0-4.3,14.3-4.3,36.2
+		s4.3,36.2,4.3,36.2l0,0L263.8,182.7z"/>
+	<polyline class="st0" points="340.8,178.8 329.9,178.8 325.3,173.8 325.3,97.2 329.9,92.2 340.8,92.2 	"/>
+	<line class="st0" x1="357.6" y1="135.5" x2="392" y2="135.5"/>
+	<path class="st0" d="M359.3,135.5"/>
+	<line class="st0" x1="301.9" y1="135.5" x2="325.3" y2="135.5"/>
+	<path class="st0" d="M301.9,135.5"/>
+	<path class="st0" d="M294.4,135.5"/>
+	<line class="st0" x1="271" y1="135.5" x2="293" y2="135.5"/>
+	<line class="st0" x1="62.8" y1="135.5" x2="227.1" y2="135.5"/>
+	<line class="st0" x1="34.1" y1="135.5" x2="51" y2="135.5"/>
+	<line class="st0" x1="281.7" y1="161.5" x2="281.7" y2="220.1"/>
+	<line class="st0" x1="281.7" y1="55" x2="281.7" y2="112"/>
+</g>
+<g id="text">
+	<text transform="matrix(1 0 0 1 101.9277 289.8203)"><tspan x="0" y="0" class="st2 st3">Angénieux Retrofocus</tspan><tspan x="-20.7" y="28.8" class="st2 st3">Type R1 35mm f2.5, 1950</tspan></text>
+</g>
+</svg>

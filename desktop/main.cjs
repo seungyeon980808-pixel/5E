@@ -99,7 +99,7 @@ function readSmokeFixtureImageDataUrl() {
 }
 
 function isValidSmokeFixtureRequest(event, payload, expectedWindow = win) {
-  const expectedUrl = pathToFileURL(path.join(__dirname, "..", "preview", "index.html")).href;
+  const expectedUrl = pathToFileURL(path.join(__dirname, "..", "index.html")).href;
   return isTrustedIpcSender(event, expectedWindow, expectedUrl) &&
     typeof payload?.clientScope === "string" && payload.clientScope.length <= 256;
 }
@@ -127,7 +127,7 @@ function handleTrustedIpc(channel, handler) {
 }
 
 function assertTrustedSender(event) {
-  const expectedUrl = pathToFileURL(path.join(__dirname, "..", "preview", "index.html")).href;
+  const expectedUrl = pathToFileURL(path.join(__dirname, "..", "index.html")).href;
   if (!isTrustedIpcSender(event, win, expectedUrl)) {
     throw new Error("Untrusted IPC sender.");
   }
@@ -291,7 +291,7 @@ function codexInvocation(args) {
 }
 function send(event, payload, trustedScope, targetScopes) {
   if (!win || win.isDestroyed()) return;
-  const expectedUrl = pathToFileURL(path.join(__dirname, "..", "preview", "index.html")).href;
+  const expectedUrl = pathToFileURL(path.join(__dirname, "..", "index.html")).href;
   if (!isTrustedIpcSender({ sender: win.webContents, senderFrame: win.webContents.mainFrame }, win, expectedUrl)) return;
   if (event === "codex:event") {
     const owner = eventOwner(payload);
@@ -693,7 +693,7 @@ function createWindow() {
   win.once("ready-to-show", revealMainWindow);
   win.webContents.once("did-fail-load", revealMainWindow);
   win.on("closed", () => { win = null; });
-  const entryUrl = pathToFileURL(path.join(__dirname, "..", "preview", "index.html")).href;
+  const entryUrl = pathToFileURL(path.join(__dirname, "..", "index.html")).href;
   win.webContents.on("will-navigate", (event, url) => {
     if (String(url).split(/[?#]/, 1)[0] !== entryUrl) event.preventDefault();
   });
@@ -701,7 +701,7 @@ function createWindow() {
     if (/^https:\/\//i.test(String(url))) void shell.openExternal(url);
     return { action: "deny" };
   });
-  win.loadFile(path.join(__dirname, "..", "preview", "index.html"));
+  win.loadFile(path.join(__dirname, "..", "index.html"));
   if (process.env.FIVE_E_SMOKE_TEST === "1") {
     win.webContents.once("did-finish-load", async () => {
       try {
@@ -826,7 +826,7 @@ function createWindow() {
             const aiResultsPlacedLeft = !!resultRect && !!conversationRect && resultRect.left < conversationRect.left;
             const aiSourceEntrypointsReady = !!panel?.querySelector("[data-ai-source-file]") &&
               !!panel?.querySelector('[data-ai-source-action="library"]') &&
-              !!panel?.querySelector('[data-ai-source-action="capture"]');
+              !!panel?.querySelector('[data-ai-source-action="clipboard"]');
             panel?.querySelector('[data-ai-source-action="library"]')?.click();
             const aiLoadMenuReady = await waitFor(() => {
               const library = document.querySelector(".unified-library-overlay:not([hidden])");
@@ -835,16 +835,7 @@ function createWindow() {
             }, 4000);
             document.querySelector("[data-unilib-close]")?.click();
             await waitFor(() => !document.querySelector(".unified-library-overlay:not([hidden])"), 2000);
-            panel?.querySelector("[data-ai-capture]")?.click();
-            await waitFor(() => document.querySelector(".ai-capture-source"), 5000);
-            document.querySelector(".ai-capture-source")?.click();
-            await waitFor(() => document.querySelector(".ai-crop-dialog"), 3000);
-            const cropDialog = document.querySelector(".ai-crop-dialog");
-            const aiCaptureCropReady = cropDialog?.closest(".ai-compare-overlay")?.parentElement === document.documentElement &&
-              !!cropDialog?.querySelector(".ai-crop-image-wrap") &&
-              cropDialog.querySelectorAll(".ai-crop-mask").length === 4 &&
-              !!cropDialog.querySelector("[data-ai-crop-apply]");
-            cropDialog?.querySelector(".ai-crop-foot button")?.click();
+            let aiClipboardSourceReady = false;
             const cancelButton = panel?.querySelector("[data-ai-interrupt]");
             const aiCancelIsContextual = cancelButton?.textContent?.trim() === "작업 취소" && cancelButton.hidden;
             const aiReturnsAfterLibraryClose = panel?.hidden === false &&
@@ -854,7 +845,7 @@ function createWindow() {
             await waitFor(() => !document.querySelector(".tut-welcome-overlay") &&
               !Array.from(document.querySelectorAll(".modal-overlay .modal-title"))
                 .some((title) => startupDialogTitles.has(title.textContent?.trim())), 2000);
-            const stateModule = await import("./js/state.js?v=1.6.0-preview-labeler-0917-1111");
+            const stateModule = await import("./js/state.js?v=1.6.0-remediation-0929");
             const textChooser = document.getElementById("chooser-text");
             const textChooserButton = document.getElementById("tool-text-merged");
             const angleChooser = document.getElementById("chooser-angle");
@@ -1021,6 +1012,7 @@ function createWindow() {
             let aiQualityControlsReady = false;
             let aiOutputControlsReady = false;
             let aiTaskIsolationWorks = false;
+            let aiTaskIsolationDetails = null;
             let aiWorkspaceControlsReady = false;
             button?.click();
             if (await waitFor(() => panel?.hidden === false, 2000)) {
@@ -1090,6 +1082,7 @@ function createWindow() {
                       (before.imageWidth !== after.imageWidth || before.imageHeight !== after.imageHeight) &&
                       ['x', 'y', 'w', 'h'].every((key) => Math.abs(before[key] - after[key]) < .002);
                   }
+                  await waitFor(() => panel.dataset.aiBusy === 'false', 4000);
                   const originalReferenceCount = panel.querySelectorAll('[data-ai-reference-id]').length;
                   const originalResultCount = panel.querySelectorAll('.ai-generated-card').length;
                   attachFixture();
@@ -1100,14 +1093,30 @@ function createWindow() {
                       panel.querySelectorAll('.ai-generated-card').length === 0;
                   }, 4000);
                   taskList?.querySelector('[data-tab-id="' + originalTaskId + '"] .ai-task-tab-select')?.click();
-                  const originalTaskRestored = await waitFor(() =>
-                    taskList?.querySelector('.ai-task-tab.is-on')?.dataset.tabId === originalTaskId &&
-                    panel.querySelectorAll('[data-ai-reference-id]').length === originalReferenceCount &&
-                    panel.querySelectorAll('.ai-generated-card').length === originalResultCount, 4000);
+                  const originalTaskRestored = await waitFor(() => {
+                    const restoredPanel = document.getElementById('ai-image-panel');
+                    return restoredPanel?.querySelector('[data-ai-tab-list] .ai-task-tab.is-on')?.dataset.tabId === originalTaskId &&
+                      restoredPanel.querySelectorAll('[data-ai-reference-id]').length === originalReferenceCount &&
+                      restoredPanel.querySelectorAll('.ai-generated-card').length === originalResultCount;
+                  }, 4000);
                   aiTaskIsolationWorks = isolatedTaskReady && originalTaskRestored;
+                  aiTaskIsolationDetails = { isolatedTaskReady, originalTaskRestored, originalTaskId };
+                  const pasteTransfer = new DataTransfer();
+                  pasteTransfer.items.add(new File([fixtureBlob], 'clipboard-smoke.png', { type: 'image/png' }));
+                  document.getElementById('ai-image-panel')?.dispatchEvent(new ClipboardEvent('paste', {
+                    bubbles: true, cancelable: true, clipboardData: pasteTransfer,
+                  }));
+                  aiClipboardSourceReady = await waitFor(() => {
+                    const currentPanel = document.getElementById('ai-image-panel');
+                    const activeId = currentPanel?.querySelector('[data-ai-tab-list] .ai-task-tab.is-on')?.dataset.tabId;
+                    return currentPanel?.hidden === false && !!activeId && activeId !== originalTaskId &&
+                      currentPanel.querySelectorAll('[data-ai-reference-id]').length === 1 &&
+                      currentPanel.querySelector('.ai-reference-card img')?.src === ${JSON.stringify(smokeFixtureImageDataUrl)} &&
+                      currentPanel.querySelectorAll('.ai-generated-card').length === 0;
+                  }, 4000);
                 }
               }
-              panel.querySelector('[data-ai-close]')?.click();
+              document.getElementById('ai-image-panel')?.querySelector('[data-ai-close]')?.click();
             }
             if (${process.env.FIVE_E_SMOKE_CUT_SCREENSHOT === "1" ? "true" : "false"}) {
               dismissStartupDialogs();
@@ -1131,7 +1140,7 @@ function createWindow() {
               aiResultsPlacedLeft,
               aiSourceEntrypointsReady,
               aiLoadMenuReady,
-              aiCaptureCropReady,
+              aiClipboardSourceReady,
               aiCancelIsContextual,
               aiReturnsAfterLibraryClose,
               cutChooserVisible,
@@ -1171,6 +1180,7 @@ function createWindow() {
               aiQualityControlsReady,
               aiOutputControlsReady,
               aiTaskIsolationWorks,
+              aiTaskIsolationDetails,
               aiWorkspaceControlsReady,
               aiComposerDockedRight: !!panel.querySelector(".ai-conversation [data-ai-input]") &&
                 panel.querySelector("[data-ai-chat-send]")?.textContent?.trim() === "",

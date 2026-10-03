@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" 
+ "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width="76" height="138" xmlns="http://www.w3.org/2000/svg" version="1.1" >
+  <title>PMOS symbol</title>
+  <desc>File is easily edited with text editor.</desc>
+  <g stroke="#000" fill="none" transform="scale(6,6)translate(0.5,11.5)" >
+    <path stroke-width="1" d="M5,-8 v16 m6,3 v-3.5 h-4 v-15 h4 v-3.5" />
+    <circle r="1.75" cx="2.5" cy="0" />
+  </g>
+</svg>

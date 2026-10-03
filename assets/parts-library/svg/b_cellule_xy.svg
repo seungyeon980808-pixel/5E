@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="110mm"
+   height="110mm"
+   viewBox="0 0 110 110"
+   version="1.1"
+   id="svg4348"
+   inkscape:version="0.92.1 r15371"
+   sodipodi:docname="CelluleXY.svg">
+  <defs
+     id="defs4342" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="1"
+     inkscape:cx="184.74844"
+     inkscape:cy="204.51289"
+     inkscape:document-units="mm"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     inkscape:window-width="1440"
+     inkscape:window-height="838"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1" />
+  <metadata
+     id="metadata4345">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Calque 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(0,-187)">
+    <g
+       id="g5215"
+       transform="translate(-20.15873,161.26984)">
+      <circle
+         r="49.746769"
+         style="fill:#e6e6e6;stroke:#bebebe;stroke-width:0.50646329;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+         cy="80.660477"
+         cx="75.228394"
+         id="path4350" />
+      <ellipse
+         ry="25.065788"
+         rx="25.413925"
+         cy="77.674339"
+         cx="74.501099"
+         id="path5157"
+         style="fill:#cccccc;stroke:#bebebe;stroke-width:1.5;stroke-miterlimit:4;stroke-dasharray:9, 1.5;stroke-dashoffset:0;stroke-opacity:1" />
+      <rect
+         ry="2.3863044"
+         rx="1.9848551"
+         y="63.093307"
+         x="63.877052"
+         height="24.901434"
+         width="3.9014347"
+         id="rect5159"
+         style="fill:#ffaaaa;stroke:#bebebe;stroke-width:0.09856537;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
+      <rect
+         ry="1.4301172"
+         rx="1.996071"
+         y="72.705009"
+         x="73.957718"
+         height="14.923481"
+         width="3.9234807"
+         id="rect5159-4"
+         style="fill:#ffaaaa;stroke:#bebebe;stroke-width:0.07651927;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
+      <rect
+         ry="0"
+         rx="0"
+         y="74.292511"
+         x="73.881195"
+         height="2"
+         width="4"
+         id="rect5176"
+         style="fill:#c6e9af;stroke:#bebebe;stroke-width:0.1;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1" />
+      <text
+         transform="scale(1.0444012,0.95748647)"
+         id="text5180"
+         y="96.848701"
+         x="61.042496"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:5.83610821px;line-height:1.25;font-family:Arial;-inkscape-font-specification:Arial;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.14590269"
+         xml:space="preserve"><tspan
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Arial;-inkscape-font-specification:Arial;stroke-width:0.14590269"
+           y="96.848701"
+           x="61.042496"
+           id="tspan5178"
+           sodipodi:role="line">X</tspan></text>
+      <text
+         transform="scale(1.0444012,0.95748646)"
+         id="text5180-7"
+         y="97.130981"
+         x="70.978714"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:5.83610821px;line-height:1.25;font-family:Arial;-inkscape-font-specification:Arial;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.14590271"
+         xml:space="preserve"><tspan
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Arial;-inkscape-font-specification:Arial;stroke-width:0.14590271"
+           y="97.130981"
+           x="70.978714"
+           id="tspan5178-1"
+           sodipodi:role="line">Y</tspan></text>
+      <text
+         transform="scale(0.99663645,1.0033749)"
+         id="text5202"
+         y="76.418175"
+         x="78.81427"
+         style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:4.03913879px;line-height:1.25;font-family:Arial;-inkscape-font-specification:Arial;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;stroke-width:0.10097846"
+         xml:space="preserve"><tspan
+           style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-family:Arial;-inkscape-font-specification:Arial;stroke-width:0.10097846"
+           y="76.418175"
+           x="78.81427"
+           id="tspan5200"
+           sodipodi:role="line">SRY</tspan></text>
+    </g>
+  </g>
+</svg>

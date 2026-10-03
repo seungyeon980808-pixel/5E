@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1e3" height="1100" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+	<defs>
+		<linearGradient id="f" x1="164.65" x2="616.19" y1="560.74" y2="560.74" gradientTransform="matrix(1.1668 0 0 1.1668 80.4 153)" gradientUnits="userSpaceOnUse">
+			<stop stop-color="#fff" offset="0"/>
+			<stop stop-color="#fe9319" offset="1"/>
+		</linearGradient>
+		<linearGradient id="g" x1="178.39" x2="358.59" y1="554.35" y2="172.51" gradientTransform="matrix(1.1668 0 0 1.1668 80.4 153)" gradientUnits="userSpaceOnUse">
+			<stop stop-color="#fff" offset="0"/>
+			<stop stop-color="#ed972f" offset="1"/>
+		</linearGradient>
+		<linearGradient id="e" x1="363.67" x2="624.94" y1="335.66" y2="335.66" gradientTransform="matrix(1.1668 0 0 1.1668 80.4 153)" gradientUnits="userSpaceOnUse">
+			<stop stop-color="#fd8d15" offset="0"/>
+			<stop stop-color="#fff" offset="1"/>
+		</linearGradient>
+		<radialGradient id="b" cx="344.87" cy="364.52" r="185.39" gradientTransform="matrix(1.3265 -.0098989 .0095647 1.2817 21.8 115.12)" gradientUnits="userSpaceOnUse">
+			<stop stop-color="#fff" offset="0"/>
+			<stop stop-color="#cdc8bb" offset=".2963"/>
+			<stop stop-color="#9c9178" offset="1"/>
+		</radialGradient>
+		<radialGradient id="d" cx="440.99" cy="252.26" r="292.91" gradientTransform="matrix(1.8831 .018107 -.016096 1.6739 -199.1 -25.41)" gradientUnits="userSpaceOnUse" xlink:href="#a"/>
+		<linearGradient id="a">
+			<stop stop-color="#fff" offset="0"/>
+			<stop stop-color="#fcaf28" offset="1"/>
+		</linearGradient>
+		<radialGradient id="c" cx="440.99" cy="252.26" r="292.91" gradientTransform="matrix(1.6027 .015411 -.0137 1.4247 -257.59 -124.62)" gradientUnits="userSpaceOnUse" xlink:href="#a"/>
+		<filter id="h" x="-.047396" y="-.047396" width="1.0948" height="1.0948">
+			<feGaussianBlur stdDeviation="11.490624"/>
+		</filter>
+	</defs>
+	<path transform="matrix(1.2326 0 0 1.2326 84.081 94.584)" d="m628.31 458.26a290.92 290.92 0 1 1-581.85 0 290.92 290.92 0 1 1 581.85 0z" fill="url(#c)" filter="url(#h)" opacity=".45741"/>
+	<path d="m841.81 659.43a341.82 341.82 0 1 1-683.64 0 341.82 341.82 0 1 1 683.64 0z" fill="url(#d)"/>
+	<path d="m499.99 402.48c180.43 10.677 335.65 257.5 195.66 365.39-102.41 74.827-220.77 64.612-341.82 40.075-50.127-30.456-75.924-296.99 146.16-405.47z" fill="url(#b)" stroke="#f00" stroke-width="2"/>
+	<path d="m505.88 340.01c278.27 38.99 325.96 291.15 293.79 409.3l-40.37-14.439c7.3398-161.76-81.804-280.1-252.24-361.86z" fill="url(#e)" stroke="#fff" stroke-width="2"/>
+	<path d="m508.83 353.86c177.33 16.677 314.19 197.4 278.32 392.16l-69.694-26.47c10.129-166.71-79.78-260.66-208.63-292.31z" fill="#19b3f3"/>
+	<path d="m505.67 340.29c-220.84 56.724-263.67 323.77-233.17 490.05l49.505-37.718c-17.533-169.78 74.371-290.04 187.41-400.75z" fill="url(#g)" stroke="#fff" stroke-width="2"/>
+	<path d="m345.6 776.12c2.8497-110.5 19.027-262.14 165.02-347.71l-3.536-75.436c-167.79 59.462-251.27 210.16-220.41 467.94z" fill="#95d8f7"/>
+	<path d="m345.6 776.12c2.8497-110.5 19.027-262.14 165.02-347.71l-2.3574-64.827c-157.18 53.569-240.66 230.2-213.34 446.72z" fill="#70a2d5"/>
+	<path d="m273.8 831.96c228.65 85.573 403.76 58.96 525.54-81.771l-35.36-15.323c-120.8 140.48-286.61 131.72-466.76 75.436z" fill="url(#f)" stroke="#fff" stroke-width="2"/>
+	<path d="m343.4 775.53c129.55 45.949 254.16 35.568 371.14-57.166l71.9 27.11c-115.53 120.62-309.16 151.05-500.5 74.11z" fill="#89d5f7"/>
+	<path d="m344.4 776.12c129.55 45.949 253.13 34.979 370.11-57.755l61.291 23.574c-113.17 106.48-288.38 144.12-479.72 67.185z" fill="#5c81bf"/>
+	<path d="m344.4 776.12c129.55 45.949 253.13 34.979 370.11-57.755l31.824 10.608c-113.17 106.48-256.56 120.55-423.15 63.649z" fill="#76d0eb"/>
+	<path d="m508.83 364.47c170.25 17.856 290.64 189.27 267.14 377.54l-58.517-22.466c10.129-166.71-79.78-260.66-208.63-292.31z" fill="#0a6db9"/>
+	<path d="m345.6 776.12c2.8497-110.5 19.027-262.14 165.02-347.71l-3.536-33.003c-148.93 79.5-199.4 219.59-185.05 399.57z" fill="#91d5f8"/>
+	<path d="m508.83 397.47c170.25 20.213 255.82 182.06 235.87 332.61l-29.741-12.204c10.129-166.71-75.613-257.74-204.46-289.4z" fill="#05baf3"/>
+	<g fill="none" stroke="#fff">
+		<g stroke-opacity=".8" stroke-width="2">
+			<path d="m286.6 818.56 58.934-43.022"/>
+			<path d="m510.01 428.5-3.575-87.612"/>
+			<path d="m799.22 749.8-84.42-31.77"/>
+		</g>
+	</g>
+	<g stroke-linecap="round" stroke-linejoin="round" stroke-width="5">
+		<path d="m528.94 384.75-0.74501-180.22h12.667" fill="none" stroke="#000"/>
+		<circle cx="528.94" cy="384.75" r="7"/>
+		<path d="m540.86 164.17v80.714" fill="none" stroke="#000"/>
+		<path d="m485.65 366.76v-287.58h40.075" fill="none" stroke="#000"/>
+		<circle cx="485.65" cy="366.76" r="7"/>
+		<path d="m525.73 38.83v80.714" fill="none" stroke="#000"/>
+		<path d="m572.22 431.35-1.4233-138.26h24.195" fill="none" stroke="#000"/>
+		<circle cx="572.22" cy="431.35" r="7"/>
+		<path d="m594.99 274.61v36.958" fill="none" stroke="#000"/>
+		<path d="m437.87 340.39v-165.64h-59.383" fill="none" stroke="#000"/>
+		<circle cx="437.87" cy="340.39" r="7"/>
+		<path d="m378.48 156.27v36.958" fill="none" stroke="#000"/>
+		<path d="m394.58 607.07v-333.74h-59.382" fill="none" stroke="#000"/>
+		<circle cx="394.58" cy="607.07" r="7"/>
+		<path d="m335.2 232.97v80.714" fill="none" stroke="#000"/>
+	</g>
+	<g fill="#000000" font-family="'DejaVu Sans'" font-size="42px" font-weight="bold">
+		<text><tspan x="548" y="197" font-weight="bold">Flüssiges Wasser</tspan><tspan x="548" y="239">(+ Amoniak)</tspan></text>
+		<text><tspan x="530" y="74">Eis und</tspan><tspan x="530" y="116">Methanhydrat</tspan></text>
+		<text><tspan x="599" y="308">Hochdruckeis</tspan><tspan x="599" y="355"/></text>
+		<text x="372" y="186" text-anchor="end">Atmosphäre</text>
+		<text text-anchor="end"><tspan x="328" y="265">Silikatkern</tspan><tspan x="328" y="307">(Gestein)</tspan></text>
+	</g>
+</svg>

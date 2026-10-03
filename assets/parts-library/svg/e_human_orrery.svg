@@ -1,0 +1,439 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+""" To recover the Python script to generate this SVG, delete the line above -->
+<svg version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="100%" height="100%" viewBox="-240 -240 480 480">
+ <title>human orrery</title>
+ <desc>Template for a human orrery of the inner planets by CMG Lee. Each step represents around 4.4 Earth days. Distances from the sun are to scale.</desc>
+ <style type="text/css">
+svg  { font-family:'Liberation Sans',Helvetica,Arial,sans-serif; font-weight:bold; font-size:7px; letter-spacing:-0.5px; text-anchor:middle; fill:#000; stroke:none; stroke-linecap:round; stroke-linejoin:round; }
+text { stroke:none; }
+.title { font-size:10px; letter-spacing:0; }
+ </style>
+ <defs>
+<!-- BEGIN_DYNAMIC_DEFS -->
+  <circle id="Mercury" cx="0" cy="0" r="6" fill="#ccc"/>
+  <circle id="Venus" cx="0" cy="0" r="6" fill="#fc0"/>
+  <circle id="Earth" cx="0" cy="0" r="6" fill="#6cf"/>
+  <circle id="Mars" cx="0" cy="0" r="6" fill="#f99"/>
+<!--   END_DYNAMIC_DEFS -->
+ </defs>
+ <circle cx="0" cy="0" r="99999" fill="#fff"/>
+ <circle cx="0" cy="0" r="20"    fill="#ff0"/>
+ <text class="title" x="0" y="0.6ex">Sun</text>
+<!-- BEGIN_DYNAMIC_MAIN -->
+ <path d="M 0,-50.9 v 6" stroke="#ccc"/>
+ <text class="title" transform="translate(0,-57.9)" x="0" y="4ex">Mercury</text>
+ <g transform="translate(0,-57.9)"><use xlink:href="#Mercury"/><text transform="rotate(270)" x="-0.5" y="0.7ex">0</text></g>
+ <g transform="translate(-17.89,-55.07)"><use xlink:href="#Mercury"/><text transform="rotate(252)" x="-0.5" y="0.7ex">1</text></g>
+ <g transform="translate(-34.03,-46.84)"><use xlink:href="#Mercury"/><text transform="rotate(234)" x="-0.5" y="0.7ex">2</text></g>
+ <g transform="translate(-46.84,-34.03)"><use xlink:href="#Mercury"/><text transform="rotate(216)" x="-0.5" y="0.7ex">3</text></g>
+ <g transform="translate(-55.07,-17.89)"><use xlink:href="#Mercury"/><text transform="rotate(198)" x="-0.5" y="0.7ex">4</text></g>
+ <g transform="translate(-57.9,0)"><use xlink:href="#Mercury"/><text transform="rotate(180)" x="-0.5" y="0.7ex">5</text></g>
+ <g transform="translate(-55.07,17.89)"><use xlink:href="#Mercury"/><text transform="rotate(162)" x="-0.5" y="0.7ex">6</text></g>
+ <g transform="translate(-46.84,34.03)"><use xlink:href="#Mercury"/><text transform="rotate(144)" x="-0.5" y="0.7ex">7</text></g>
+ <g transform="translate(-34.03,46.84)"><use xlink:href="#Mercury"/><text transform="rotate(126)" x="-0.5" y="0.7ex">8</text></g>
+ <g transform="translate(-17.89,55.07)"><use xlink:href="#Mercury"/><text transform="rotate(108)" x="-0.5" y="0.7ex">9</text></g>
+ <g transform="translate(0,57.9)"><use xlink:href="#Mercury"/><text transform="rotate(90)" x="-0.5" y="0.7ex">10</text></g>
+ <g transform="translate(17.89,55.07)"><use xlink:href="#Mercury"/><text transform="rotate(72)" x="-0.5" y="0.7ex">11</text></g>
+ <g transform="translate(34.03,46.84)"><use xlink:href="#Mercury"/><text transform="rotate(54)" x="-0.5" y="0.7ex">12</text></g>
+ <g transform="translate(46.84,34.03)"><use xlink:href="#Mercury"/><text transform="rotate(36)" x="-0.5" y="0.7ex">13</text></g>
+ <g transform="translate(55.07,17.89)"><use xlink:href="#Mercury"/><text transform="rotate(18)" x="-0.5" y="0.7ex">14</text></g>
+ <g transform="translate(57.9,0)"><use xlink:href="#Mercury"/><text transform="rotate(0)" x="-0.5" y="0.7ex">15</text></g>
+ <g transform="translate(55.07,-17.89)"><use xlink:href="#Mercury"/><text transform="rotate(342)" x="-0.5" y="0.7ex">16</text></g>
+ <g transform="translate(46.84,-34.03)"><use xlink:href="#Mercury"/><text transform="rotate(324)" x="-0.5" y="0.7ex">17</text></g>
+ <g transform="translate(34.03,-46.84)"><use xlink:href="#Mercury"/><text transform="rotate(306)" x="-0.5" y="0.7ex">18</text></g>
+ <g transform="translate(17.89,-55.07)"><use xlink:href="#Mercury"/><text transform="rotate(288)" x="-0.5" y="0.7ex">19</text></g>
+ <path d="M 0,-101.2 v 6" stroke="#fc0"/>
+ <text class="title" transform="translate(0,-108.2)" x="0" y="4ex">Venus</text>
+ <g transform="translate(0,-108.2)"><use xlink:href="#Venus"/><text transform="rotate(270)" x="-0.5" y="0.7ex">0</text></g>
+ <g transform="translate(-13.3,-107.38)"><use xlink:href="#Venus"/><text transform="rotate(263)" x="-0.5" y="0.7ex">1</text></g>
+ <g transform="translate(-26.39,-104.93)"><use xlink:href="#Venus"/><text transform="rotate(256)" x="-0.5" y="0.7ex">2</text></g>
+ <g transform="translate(-39.09,-100.89)"><use xlink:href="#Venus"/><text transform="rotate(249)" x="-0.5" y="0.7ex">3</text></g>
+ <g transform="translate(-51.19,-95.33)"><use xlink:href="#Venus"/><text transform="rotate(242)" x="-0.5" y="0.7ex">4</text></g>
+ <g transform="translate(-62.52,-88.31)"><use xlink:href="#Venus"/><text transform="rotate(235)" x="-0.5" y="0.7ex">5</text></g>
+ <g transform="translate(-72.89,-79.96)"><use xlink:href="#Venus"/><text transform="rotate(228)" x="-0.5" y="0.7ex">6</text></g>
+ <g transform="translate(-82.17,-70.4)"><use xlink:href="#Venus"/><text transform="rotate(221)" x="-0.5" y="0.7ex">7</text></g>
+ <g transform="translate(-90.2,-59.77)"><use xlink:href="#Venus"/><text transform="rotate(214)" x="-0.5" y="0.7ex">8</text></g>
+ <g transform="translate(-96.86,-48.23)"><use xlink:href="#Venus"/><text transform="rotate(206)" x="-0.5" y="0.7ex">9</text></g>
+ <g transform="translate(-102.05,-35.96)"><use xlink:href="#Venus"/><text transform="rotate(199)" x="-0.5" y="0.7ex">10</text></g>
+ <g transform="translate(-105.69,-23.15)"><use xlink:href="#Venus"/><text transform="rotate(192)" x="-0.5" y="0.7ex">11</text></g>
+ <g transform="translate(-107.74,-9.98)"><use xlink:href="#Venus"/><text transform="rotate(185)" x="-0.5" y="0.7ex">12</text></g>
+ <g transform="translate(-108.15,3.33)"><use xlink:href="#Venus"/><text transform="rotate(178)" x="-0.5" y="0.7ex">13</text></g>
+ <g transform="translate(-106.92,16.6)"><use xlink:href="#Venus"/><text transform="rotate(171)" x="-0.5" y="0.7ex">14</text></g>
+ <g transform="translate(-104.07,29.61)"><use xlink:href="#Venus"/><text transform="rotate(164)" x="-0.5" y="0.7ex">15</text></g>
+ <g transform="translate(-99.64,42.17)"><use xlink:href="#Venus"/><text transform="rotate(157)" x="-0.5" y="0.7ex">16</text></g>
+ <g transform="translate(-93.7,54.1)"><use xlink:href="#Venus"/><text transform="rotate(150)" x="-0.5" y="0.7ex">17</text></g>
+ <g transform="translate(-86.35,65.21)"><use xlink:href="#Venus"/><text transform="rotate(143)" x="-0.5" y="0.7ex">18</text></g>
+ <g transform="translate(-77.68,75.32)"><use xlink:href="#Venus"/><text transform="rotate(136)" x="-0.5" y="0.7ex">19</text></g>
+ <g transform="translate(-67.83,84.3)"><use xlink:href="#Venus"/><text transform="rotate(129)" x="-0.5" y="0.7ex">20</text></g>
+ <g transform="translate(-56.96,91.99)"><use xlink:href="#Venus"/><text transform="rotate(122)" x="-0.5" y="0.7ex">21</text></g>
+ <g transform="translate(-45.22,98.3)"><use xlink:href="#Venus"/><text transform="rotate(115)" x="-0.5" y="0.7ex">22</text></g>
+ <g transform="translate(-32.8,103.11)"><use xlink:href="#Venus"/><text transform="rotate(108)" x="-0.5" y="0.7ex">23</text></g>
+ <g transform="translate(-19.88,106.36)"><use xlink:href="#Venus"/><text transform="rotate(101)" x="-0.5" y="0.7ex">24</text></g>
+ <g transform="translate(-6.66,107.99)"><use xlink:href="#Venus"/><text transform="rotate(94)" x="-0.5" y="0.7ex">25</text></g>
+ <g transform="translate(6.66,107.99)"><use xlink:href="#Venus"/><text transform="rotate(86)" x="-0.5" y="0.7ex">26</text></g>
+ <g transform="translate(19.88,106.36)"><use xlink:href="#Venus"/><text transform="rotate(79)" x="-0.5" y="0.7ex">27</text></g>
+ <g transform="translate(32.8,103.11)"><use xlink:href="#Venus"/><text transform="rotate(72)" x="-0.5" y="0.7ex">28</text></g>
+ <g transform="translate(45.22,98.3)"><use xlink:href="#Venus"/><text transform="rotate(65)" x="-0.5" y="0.7ex">29</text></g>
+ <g transform="translate(56.96,91.99)"><use xlink:href="#Venus"/><text transform="rotate(58)" x="-0.5" y="0.7ex">30</text></g>
+ <g transform="translate(67.83,84.3)"><use xlink:href="#Venus"/><text transform="rotate(51)" x="-0.5" y="0.7ex">31</text></g>
+ <g transform="translate(77.68,75.32)"><use xlink:href="#Venus"/><text transform="rotate(44)" x="-0.5" y="0.7ex">32</text></g>
+ <g transform="translate(86.35,65.21)"><use xlink:href="#Venus"/><text transform="rotate(37)" x="-0.5" y="0.7ex">33</text></g>
+ <g transform="translate(93.7,54.1)"><use xlink:href="#Venus"/><text transform="rotate(30)" x="-0.5" y="0.7ex">34</text></g>
+ <g transform="translate(99.64,42.17)"><use xlink:href="#Venus"/><text transform="rotate(23)" x="-0.5" y="0.7ex">35</text></g>
+ <g transform="translate(104.07,29.61)"><use xlink:href="#Venus"/><text transform="rotate(16)" x="-0.5" y="0.7ex">36</text></g>
+ <g transform="translate(106.92,16.6)"><use xlink:href="#Venus"/><text transform="rotate(9)" x="-0.5" y="0.7ex">37</text></g>
+ <g transform="translate(108.15,3.33)"><use xlink:href="#Venus"/><text transform="rotate(2)" x="-0.5" y="0.7ex">38</text></g>
+ <g transform="translate(107.74,-9.98)"><use xlink:href="#Venus"/><text transform="rotate(355)" x="-0.5" y="0.7ex">39</text></g>
+ <g transform="translate(105.69,-23.15)"><use xlink:href="#Venus"/><text transform="rotate(348)" x="-0.5" y="0.7ex">40</text></g>
+ <g transform="translate(102.05,-35.96)"><use xlink:href="#Venus"/><text transform="rotate(341)" x="-0.5" y="0.7ex">41</text></g>
+ <g transform="translate(96.86,-48.23)"><use xlink:href="#Venus"/><text transform="rotate(334)" x="-0.5" y="0.7ex">42</text></g>
+ <g transform="translate(90.2,-59.77)"><use xlink:href="#Venus"/><text transform="rotate(326)" x="-0.5" y="0.7ex">43</text></g>
+ <g transform="translate(82.17,-70.4)"><use xlink:href="#Venus"/><text transform="rotate(319)" x="-0.5" y="0.7ex">44</text></g>
+ <g transform="translate(72.89,-79.96)"><use xlink:href="#Venus"/><text transform="rotate(312)" x="-0.5" y="0.7ex">45</text></g>
+ <g transform="translate(62.52,-88.31)"><use xlink:href="#Venus"/><text transform="rotate(305)" x="-0.5" y="0.7ex">46</text></g>
+ <g transform="translate(51.19,-95.33)"><use xlink:href="#Venus"/><text transform="rotate(298)" x="-0.5" y="0.7ex">47</text></g>
+ <g transform="translate(39.09,-100.89)"><use xlink:href="#Venus"/><text transform="rotate(291)" x="-0.5" y="0.7ex">48</text></g>
+ <g transform="translate(26.39,-104.93)"><use xlink:href="#Venus"/><text transform="rotate(284)" x="-0.5" y="0.7ex">49</text></g>
+ <g transform="translate(13.3,-107.38)"><use xlink:href="#Venus"/><text transform="rotate(277)" x="-0.5" y="0.7ex">50</text></g>
+ <path d="M 0,-142.6 v 6" stroke="#6cf"/>
+ <text class="title" transform="translate(0,-149.6)" x="0" y="4ex">Earth</text>
+ <g transform="translate(0,-149.6)"><use xlink:href="#Earth"/><text transform="rotate(270)" x="-0.5" y="0.7ex">0</text></g>
+ <g transform="translate(-11.31,-149.17)"><use xlink:href="#Earth"/><text transform="rotate(266)" x="-0.5" y="0.7ex">1</text></g>
+ <g transform="translate(-22.56,-147.89)"><use xlink:href="#Earth"/><text transform="rotate(261)" x="-0.5" y="0.7ex">2</text></g>
+ <g transform="translate(-33.68,-145.76)"><use xlink:href="#Earth"/><text transform="rotate(257)" x="-0.5" y="0.7ex">3</text></g>
+ <g transform="translate(-44.61,-142.79)"><use xlink:href="#Earth"/><text transform="rotate(253)" x="-0.5" y="0.7ex">4</text></g>
+ <g transform="translate(-55.28,-139.01)"><use xlink:href="#Earth"/><text transform="rotate(248)" x="-0.5" y="0.7ex">5</text></g>
+ <g transform="translate(-65.64,-134.43)"><use xlink:href="#Earth"/><text transform="rotate(244)" x="-0.5" y="0.7ex">6</text></g>
+ <g transform="translate(-75.62,-129.08)"><use xlink:href="#Earth"/><text transform="rotate(240)" x="-0.5" y="0.7ex">7</text></g>
+ <g transform="translate(-85.16,-122.99)"><use xlink:href="#Earth"/><text transform="rotate(235)" x="-0.5" y="0.7ex">8</text></g>
+ <g transform="translate(-94.22,-116.2)"><use xlink:href="#Earth"/><text transform="rotate(231)" x="-0.5" y="0.7ex">9</text></g>
+ <g transform="translate(-102.74,-108.74)"><use xlink:href="#Earth"/><text transform="rotate(227)" x="-0.5" y="0.7ex">10</text></g>
+ <g transform="translate(-110.67,-100.66)"><use xlink:href="#Earth"/><text transform="rotate(222)" x="-0.5" y="0.7ex">11</text></g>
+ <g transform="translate(-117.96,-92)"><use xlink:href="#Earth"/><text transform="rotate(218)" x="-0.5" y="0.7ex">12</text></g>
+ <g transform="translate(-124.58,-82.82)"><use xlink:href="#Earth"/><text transform="rotate(214)" x="-0.5" y="0.7ex">13</text></g>
+ <g transform="translate(-130.49,-73.16)"><use xlink:href="#Earth"/><text transform="rotate(209)" x="-0.5" y="0.7ex">14</text></g>
+ <g transform="translate(-135.65,-63.08)"><use xlink:href="#Earth"/><text transform="rotate(205)" x="-0.5" y="0.7ex">15</text></g>
+ <g transform="translate(-140.03,-52.64)"><use xlink:href="#Earth"/><text transform="rotate(201)" x="-0.5" y="0.7ex">16</text></g>
+ <g transform="translate(-143.61,-41.9)"><use xlink:href="#Earth"/><text transform="rotate(196)" x="-0.5" y="0.7ex">17</text></g>
+ <g transform="translate(-146.37,-30.92)"><use xlink:href="#Earth"/><text transform="rotate(192)" x="-0.5" y="0.7ex">18</text></g>
+ <g transform="translate(-148.29,-19.76)"><use xlink:href="#Earth"/><text transform="rotate(188)" x="-0.5" y="0.7ex">19</text></g>
+ <g transform="translate(-149.36,-8.49)"><use xlink:href="#Earth"/><text transform="rotate(183)" x="-0.5" y="0.7ex">20</text></g>
+ <g transform="translate(-149.57,2.83)"><use xlink:href="#Earth"/><text transform="rotate(179)" x="-0.5" y="0.7ex">21</text></g>
+ <g transform="translate(-148.93,14.13)"><use xlink:href="#Earth"/><text transform="rotate(175)" x="-0.5" y="0.7ex">22</text></g>
+ <g transform="translate(-147.44,25.36)"><use xlink:href="#Earth"/><text transform="rotate(170)" x="-0.5" y="0.7ex">23</text></g>
+ <g transform="translate(-145.1,36.44)"><use xlink:href="#Earth"/><text transform="rotate(166)" x="-0.5" y="0.7ex">24</text></g>
+ <g transform="translate(-141.92,47.3)"><use xlink:href="#Earth"/><text transform="rotate(162)" x="-0.5" y="0.7ex">25</text></g>
+ <g transform="translate(-137.94,57.9)"><use xlink:href="#Earth"/><text transform="rotate(157)" x="-0.5" y="0.7ex">26</text></g>
+ <g transform="translate(-133.17,68.17)"><use xlink:href="#Earth"/><text transform="rotate(153)" x="-0.5" y="0.7ex">27</text></g>
+ <g transform="translate(-127.63,78.05)"><use xlink:href="#Earth"/><text transform="rotate(149)" x="-0.5" y="0.7ex">28</text></g>
+ <g transform="translate(-121.36,87.47)"><use xlink:href="#Earth"/><text transform="rotate(144)" x="-0.5" y="0.7ex">29</text></g>
+ <g transform="translate(-114.4,96.4)"><use xlink:href="#Earth"/><text transform="rotate(140)" x="-0.5" y="0.7ex">30</text></g>
+ <g transform="translate(-106.78,104.78)"><use xlink:href="#Earth"/><text transform="rotate(136)" x="-0.5" y="0.7ex">31</text></g>
+ <g transform="translate(-98.55,112.55)"><use xlink:href="#Earth"/><text transform="rotate(131)" x="-0.5" y="0.7ex">32</text></g>
+ <g transform="translate(-89.75,119.68)"><use xlink:href="#Earth"/><text transform="rotate(127)" x="-0.5" y="0.7ex">33</text></g>
+ <g transform="translate(-80.45,126.13)"><use xlink:href="#Earth"/><text transform="rotate(123)" x="-0.5" y="0.7ex">34</text></g>
+ <g transform="translate(-70.68,131.85)"><use xlink:href="#Earth"/><text transform="rotate(118)" x="-0.5" y="0.7ex">35</text></g>
+ <g transform="translate(-60.5,136.82)"><use xlink:href="#Earth"/><text transform="rotate(114)" x="-0.5" y="0.7ex">36</text></g>
+ <g transform="translate(-49.98,141)"><use xlink:href="#Earth"/><text transform="rotate(110)" x="-0.5" y="0.7ex">37</text></g>
+ <g transform="translate(-39.17,144.38)"><use xlink:href="#Earth"/><text transform="rotate(105)" x="-0.5" y="0.7ex">38</text></g>
+ <g transform="translate(-28.14,146.93)"><use xlink:href="#Earth"/><text transform="rotate(101)" x="-0.5" y="0.7ex">39</text></g>
+ <g transform="translate(-16.95,148.64)"><use xlink:href="#Earth"/><text transform="rotate(97)" x="-0.5" y="0.7ex">40</text></g>
+ <g transform="translate(-5.66,149.49)"><use xlink:href="#Earth"/><text transform="rotate(92)" x="-0.5" y="0.7ex">41</text></g>
+ <g transform="translate(5.66,149.49)"><use xlink:href="#Earth"/><text transform="rotate(88)" x="-0.5" y="0.7ex">42</text></g>
+ <g transform="translate(16.95,148.64)"><use xlink:href="#Earth"/><text transform="rotate(83)" x="-0.5" y="0.7ex">43</text></g>
+ <g transform="translate(28.14,146.93)"><use xlink:href="#Earth"/><text transform="rotate(79)" x="-0.5" y="0.7ex">44</text></g>
+ <g transform="translate(39.17,144.38)"><use xlink:href="#Earth"/><text transform="rotate(75)" x="-0.5" y="0.7ex">45</text></g>
+ <g transform="translate(49.98,141)"><use xlink:href="#Earth"/><text transform="rotate(70)" x="-0.5" y="0.7ex">46</text></g>
+ <g transform="translate(60.5,136.82)"><use xlink:href="#Earth"/><text transform="rotate(66)" x="-0.5" y="0.7ex">47</text></g>
+ <g transform="translate(70.68,131.85)"><use xlink:href="#Earth"/><text transform="rotate(62)" x="-0.5" y="0.7ex">48</text></g>
+ <g transform="translate(80.45,126.13)"><use xlink:href="#Earth"/><text transform="rotate(57)" x="-0.5" y="0.7ex">49</text></g>
+ <g transform="translate(89.75,119.68)"><use xlink:href="#Earth"/><text transform="rotate(53)" x="-0.5" y="0.7ex">50</text></g>
+ <g transform="translate(98.55,112.55)"><use xlink:href="#Earth"/><text transform="rotate(49)" x="-0.5" y="0.7ex">51</text></g>
+ <g transform="translate(106.78,104.78)"><use xlink:href="#Earth"/><text transform="rotate(44)" x="-0.5" y="0.7ex">52</text></g>
+ <g transform="translate(114.4,96.4)"><use xlink:href="#Earth"/><text transform="rotate(40)" x="-0.5" y="0.7ex">53</text></g>
+ <g transform="translate(121.36,87.47)"><use xlink:href="#Earth"/><text transform="rotate(36)" x="-0.5" y="0.7ex">54</text></g>
+ <g transform="translate(127.63,78.05)"><use xlink:href="#Earth"/><text transform="rotate(31)" x="-0.5" y="0.7ex">55</text></g>
+ <g transform="translate(133.17,68.17)"><use xlink:href="#Earth"/><text transform="rotate(27)" x="-0.5" y="0.7ex">56</text></g>
+ <g transform="translate(137.94,57.9)"><use xlink:href="#Earth"/><text transform="rotate(23)" x="-0.5" y="0.7ex">57</text></g>
+ <g transform="translate(141.92,47.3)"><use xlink:href="#Earth"/><text transform="rotate(18)" x="-0.5" y="0.7ex">58</text></g>
+ <g transform="translate(145.1,36.44)"><use xlink:href="#Earth"/><text transform="rotate(14)" x="-0.5" y="0.7ex">59</text></g>
+ <g transform="translate(147.44,25.36)"><use xlink:href="#Earth"/><text transform="rotate(10)" x="-0.5" y="0.7ex">60</text></g>
+ <g transform="translate(148.93,14.13)"><use xlink:href="#Earth"/><text transform="rotate(5)" x="-0.5" y="0.7ex">61</text></g>
+ <g transform="translate(149.57,2.83)"><use xlink:href="#Earth"/><text transform="rotate(1)" x="-0.5" y="0.7ex">62</text></g>
+ <g transform="translate(149.36,-8.49)"><use xlink:href="#Earth"/><text transform="rotate(357)" x="-0.5" y="0.7ex">63</text></g>
+ <g transform="translate(148.29,-19.76)"><use xlink:href="#Earth"/><text transform="rotate(352)" x="-0.5" y="0.7ex">64</text></g>
+ <g transform="translate(146.37,-30.92)"><use xlink:href="#Earth"/><text transform="rotate(348)" x="-0.5" y="0.7ex">65</text></g>
+ <g transform="translate(143.61,-41.9)"><use xlink:href="#Earth"/><text transform="rotate(344)" x="-0.5" y="0.7ex">66</text></g>
+ <g transform="translate(140.03,-52.64)"><use xlink:href="#Earth"/><text transform="rotate(339)" x="-0.5" y="0.7ex">67</text></g>
+ <g transform="translate(135.65,-63.08)"><use xlink:href="#Earth"/><text transform="rotate(335)" x="-0.5" y="0.7ex">68</text></g>
+ <g transform="translate(130.49,-73.16)"><use xlink:href="#Earth"/><text transform="rotate(331)" x="-0.5" y="0.7ex">69</text></g>
+ <g transform="translate(124.58,-82.82)"><use xlink:href="#Earth"/><text transform="rotate(326)" x="-0.5" y="0.7ex">70</text></g>
+ <g transform="translate(117.96,-92)"><use xlink:href="#Earth"/><text transform="rotate(322)" x="-0.5" y="0.7ex">71</text></g>
+ <g transform="translate(110.67,-100.66)"><use xlink:href="#Earth"/><text transform="rotate(318)" x="-0.5" y="0.7ex">72</text></g>
+ <g transform="translate(102.74,-108.74)"><use xlink:href="#Earth"/><text transform="rotate(313)" x="-0.5" y="0.7ex">73</text></g>
+ <g transform="translate(94.22,-116.2)"><use xlink:href="#Earth"/><text transform="rotate(309)" x="-0.5" y="0.7ex">74</text></g>
+ <g transform="translate(85.16,-122.99)"><use xlink:href="#Earth"/><text transform="rotate(305)" x="-0.5" y="0.7ex">75</text></g>
+ <g transform="translate(75.62,-129.08)"><use xlink:href="#Earth"/><text transform="rotate(300)" x="-0.5" y="0.7ex">76</text></g>
+ <g transform="translate(65.64,-134.43)"><use xlink:href="#Earth"/><text transform="rotate(296)" x="-0.5" y="0.7ex">77</text></g>
+ <g transform="translate(55.28,-139.01)"><use xlink:href="#Earth"/><text transform="rotate(292)" x="-0.5" y="0.7ex">78</text></g>
+ <g transform="translate(44.61,-142.79)"><use xlink:href="#Earth"/><text transform="rotate(287)" x="-0.5" y="0.7ex">79</text></g>
+ <g transform="translate(33.68,-145.76)"><use xlink:href="#Earth"/><text transform="rotate(283)" x="-0.5" y="0.7ex">80</text></g>
+ <g transform="translate(22.56,-147.89)"><use xlink:href="#Earth"/><text transform="rotate(279)" x="-0.5" y="0.7ex">81</text></g>
+ <g transform="translate(11.31,-149.17)"><use xlink:href="#Earth"/><text transform="rotate(274)" x="-0.5" y="0.7ex">82</text></g>
+ <path d="M 0,-221 v 6" stroke="#f99"/>
+ <text class="title" transform="translate(0,-228)" x="0" y="4ex">Mars</text>
+ <g transform="translate(0,-228)"><use xlink:href="#Mars"/><text transform="rotate(270)" x="-0.5" y="0.7ex">0</text></g>
+ <g transform="translate(-9.18,-227.82)"><use xlink:href="#Mars"/><text transform="rotate(268)" x="-0.5" y="0.7ex">1</text></g>
+ <g transform="translate(-18.35,-227.26)"><use xlink:href="#Mars"/><text transform="rotate(265)" x="-0.5" y="0.7ex">2</text></g>
+ <g transform="translate(-27.48,-226.34)"><use xlink:href="#Mars"/><text transform="rotate(263)" x="-0.5" y="0.7ex">3</text></g>
+ <g transform="translate(-36.57,-225.05)"><use xlink:href="#Mars"/><text transform="rotate(261)" x="-0.5" y="0.7ex">4</text></g>
+ <g transform="translate(-45.61,-223.39)"><use xlink:href="#Mars"/><text transform="rotate(258)" x="-0.5" y="0.7ex">5</text></g>
+ <g transform="translate(-54.56,-221.37)"><use xlink:href="#Mars"/><text transform="rotate(256)" x="-0.5" y="0.7ex">6</text></g>
+ <g transform="translate(-63.43,-219)"><use xlink:href="#Mars"/><text transform="rotate(254)" x="-0.5" y="0.7ex">7</text></g>
+ <g transform="translate(-72.2,-216.27)"><use xlink:href="#Mars"/><text transform="rotate(252)" x="-0.5" y="0.7ex">8</text></g>
+ <g transform="translate(-80.85,-213.18)"><use xlink:href="#Mars"/><text transform="rotate(249)" x="-0.5" y="0.7ex">9</text></g>
+ <g transform="translate(-89.37,-209.76)"><use xlink:href="#Mars"/><text transform="rotate(247)" x="-0.5" y="0.7ex">10</text></g>
+ <g transform="translate(-97.74,-205.99)"><use xlink:href="#Mars"/><text transform="rotate(245)" x="-0.5" y="0.7ex">11</text></g>
+ <g transform="translate(-105.96,-201.88)"><use xlink:href="#Mars"/><text transform="rotate(242)" x="-0.5" y="0.7ex">12</text></g>
+ <g transform="translate(-114,-197.45)"><use xlink:href="#Mars"/><text transform="rotate(240)" x="-0.5" y="0.7ex">13</text></g>
+ <g transform="translate(-121.86,-192.7)"><use xlink:href="#Mars"/><text transform="rotate(238)" x="-0.5" y="0.7ex">14</text></g>
+ <g transform="translate(-129.52,-187.64)"><use xlink:href="#Mars"/><text transform="rotate(235)" x="-0.5" y="0.7ex">15</text></g>
+ <g transform="translate(-136.97,-182.27)"><use xlink:href="#Mars"/><text transform="rotate(233)" x="-0.5" y="0.7ex">16</text></g>
+ <g transform="translate(-144.2,-176.61)"><use xlink:href="#Mars"/><text transform="rotate(231)" x="-0.5" y="0.7ex">17</text></g>
+ <g transform="translate(-151.19,-170.66)"><use xlink:href="#Mars"/><text transform="rotate(228)" x="-0.5" y="0.7ex">18</text></g>
+ <g transform="translate(-157.94,-164.43)"><use xlink:href="#Mars"/><text transform="rotate(226)" x="-0.5" y="0.7ex">19</text></g>
+ <g transform="translate(-164.43,-157.94)"><use xlink:href="#Mars"/><text transform="rotate(224)" x="-0.5" y="0.7ex">20</text></g>
+ <g transform="translate(-170.66,-151.19)"><use xlink:href="#Mars"/><text transform="rotate(222)" x="-0.5" y="0.7ex">21</text></g>
+ <g transform="translate(-176.61,-144.2)"><use xlink:href="#Mars"/><text transform="rotate(219)" x="-0.5" y="0.7ex">22</text></g>
+ <g transform="translate(-182.27,-136.97)"><use xlink:href="#Mars"/><text transform="rotate(217)" x="-0.5" y="0.7ex">23</text></g>
+ <g transform="translate(-187.64,-129.52)"><use xlink:href="#Mars"/><text transform="rotate(215)" x="-0.5" y="0.7ex">24</text></g>
+ <g transform="translate(-192.7,-121.86)"><use xlink:href="#Mars"/><text transform="rotate(212)" x="-0.5" y="0.7ex">25</text></g>
+ <g transform="translate(-197.45,-114)"><use xlink:href="#Mars"/><text transform="rotate(210)" x="-0.5" y="0.7ex">26</text></g>
+ <g transform="translate(-201.88,-105.96)"><use xlink:href="#Mars"/><text transform="rotate(208)" x="-0.5" y="0.7ex">27</text></g>
+ <g transform="translate(-205.99,-97.74)"><use xlink:href="#Mars"/><text transform="rotate(205)" x="-0.5" y="0.7ex">28</text></g>
+ <g transform="translate(-209.76,-89.37)"><use xlink:href="#Mars"/><text transform="rotate(203)" x="-0.5" y="0.7ex">29</text></g>
+ <g transform="translate(-213.18,-80.85)"><use xlink:href="#Mars"/><text transform="rotate(201)" x="-0.5" y="0.7ex">30</text></g>
+ <g transform="translate(-216.27,-72.2)"><use xlink:href="#Mars"/><text transform="rotate(198)" x="-0.5" y="0.7ex">31</text></g>
+ <g transform="translate(-219,-63.43)"><use xlink:href="#Mars"/><text transform="rotate(196)" x="-0.5" y="0.7ex">32</text></g>
+ <g transform="translate(-221.37,-54.56)"><use xlink:href="#Mars"/><text transform="rotate(194)" x="-0.5" y="0.7ex">33</text></g>
+ <g transform="translate(-223.39,-45.61)"><use xlink:href="#Mars"/><text transform="rotate(192)" x="-0.5" y="0.7ex">34</text></g>
+ <g transform="translate(-225.05,-36.57)"><use xlink:href="#Mars"/><text transform="rotate(189)" x="-0.5" y="0.7ex">35</text></g>
+ <g transform="translate(-226.34,-27.48)"><use xlink:href="#Mars"/><text transform="rotate(187)" x="-0.5" y="0.7ex">36</text></g>
+ <g transform="translate(-227.26,-18.35)"><use xlink:href="#Mars"/><text transform="rotate(185)" x="-0.5" y="0.7ex">37</text></g>
+ <g transform="translate(-227.82,-9.18)"><use xlink:href="#Mars"/><text transform="rotate(182)" x="-0.5" y="0.7ex">38</text></g>
+ <g transform="translate(-228,0)"><use xlink:href="#Mars"/><text transform="rotate(180)" x="-0.5" y="0.7ex">39</text></g>
+ <g transform="translate(-227.82,9.18)"><use xlink:href="#Mars"/><text transform="rotate(178)" x="-0.5" y="0.7ex">40</text></g>
+ <g transform="translate(-227.26,18.35)"><use xlink:href="#Mars"/><text transform="rotate(175)" x="-0.5" y="0.7ex">41</text></g>
+ <g transform="translate(-226.34,27.48)"><use xlink:href="#Mars"/><text transform="rotate(173)" x="-0.5" y="0.7ex">42</text></g>
+ <g transform="translate(-225.05,36.57)"><use xlink:href="#Mars"/><text transform="rotate(171)" x="-0.5" y="0.7ex">43</text></g>
+ <g transform="translate(-223.39,45.61)"><use xlink:href="#Mars"/><text transform="rotate(168)" x="-0.5" y="0.7ex">44</text></g>
+ <g transform="translate(-221.37,54.56)"><use xlink:href="#Mars"/><text transform="rotate(166)" x="-0.5" y="0.7ex">45</text></g>
+ <g transform="translate(-219,63.43)"><use xlink:href="#Mars"/><text transform="rotate(164)" x="-0.5" y="0.7ex">46</text></g>
+ <g transform="translate(-216.27,72.2)"><use xlink:href="#Mars"/><text transform="rotate(162)" x="-0.5" y="0.7ex">47</text></g>
+ <g transform="translate(-213.18,80.85)"><use xlink:href="#Mars"/><text transform="rotate(159)" x="-0.5" y="0.7ex">48</text></g>
+ <g transform="translate(-209.76,89.37)"><use xlink:href="#Mars"/><text transform="rotate(157)" x="-0.5" y="0.7ex">49</text></g>
+ <g transform="translate(-205.99,97.74)"><use xlink:href="#Mars"/><text transform="rotate(155)" x="-0.5" y="0.7ex">50</text></g>
+ <g transform="translate(-201.88,105.96)"><use xlink:href="#Mars"/><text transform="rotate(152)" x="-0.5" y="0.7ex">51</text></g>
+ <g transform="translate(-197.45,114)"><use xlink:href="#Mars"/><text transform="rotate(150)" x="-0.5" y="0.7ex">52</text></g>
+ <g transform="translate(-192.7,121.86)"><use xlink:href="#Mars"/><text transform="rotate(148)" x="-0.5" y="0.7ex">53</text></g>
+ <g transform="translate(-187.64,129.52)"><use xlink:href="#Mars"/><text transform="rotate(145)" x="-0.5" y="0.7ex">54</text></g>
+ <g transform="translate(-182.27,136.97)"><use xlink:href="#Mars"/><text transform="rotate(143)" x="-0.5" y="0.7ex">55</text></g>
+ <g transform="translate(-176.61,144.2)"><use xlink:href="#Mars"/><text transform="rotate(141)" x="-0.5" y="0.7ex">56</text></g>
+ <g transform="translate(-170.66,151.19)"><use xlink:href="#Mars"/><text transform="rotate(138)" x="-0.5" y="0.7ex">57</text></g>
+ <g transform="translate(-164.43,157.94)"><use xlink:href="#Mars"/><text transform="rotate(136)" x="-0.5" y="0.7ex">58</text></g>
+ <g transform="translate(-157.94,164.43)"><use xlink:href="#Mars"/><text transform="rotate(134)" x="-0.5" y="0.7ex">59</text></g>
+ <g transform="translate(-151.19,170.66)"><use xlink:href="#Mars"/><text transform="rotate(132)" x="-0.5" y="0.7ex">60</text></g>
+ <g transform="translate(-144.2,176.61)"><use xlink:href="#Mars"/><text transform="rotate(129)" x="-0.5" y="0.7ex">61</text></g>
+ <g transform="translate(-136.97,182.27)"><use xlink:href="#Mars"/><text transform="rotate(127)" x="-0.5" y="0.7ex">62</text></g>
+ <g transform="translate(-129.52,187.64)"><use xlink:href="#Mars"/><text transform="rotate(125)" x="-0.5" y="0.7ex">63</text></g>
+ <g transform="translate(-121.86,192.7)"><use xlink:href="#Mars"/><text transform="rotate(122)" x="-0.5" y="0.7ex">64</text></g>
+ <g transform="translate(-114,197.45)"><use xlink:href="#Mars"/><text transform="rotate(120)" x="-0.5" y="0.7ex">65</text></g>
+ <g transform="translate(-105.96,201.88)"><use xlink:href="#Mars"/><text transform="rotate(118)" x="-0.5" y="0.7ex">66</text></g>
+ <g transform="translate(-97.74,205.99)"><use xlink:href="#Mars"/><text transform="rotate(115)" x="-0.5" y="0.7ex">67</text></g>
+ <g transform="translate(-89.37,209.76)"><use xlink:href="#Mars"/><text transform="rotate(113)" x="-0.5" y="0.7ex">68</text></g>
+ <g transform="translate(-80.85,213.18)"><use xlink:href="#Mars"/><text transform="rotate(111)" x="-0.5" y="0.7ex">69</text></g>
+ <g transform="translate(-72.2,216.27)"><use xlink:href="#Mars"/><text transform="rotate(108)" x="-0.5" y="0.7ex">70</text></g>
+ <g transform="translate(-63.43,219)"><use xlink:href="#Mars"/><text transform="rotate(106)" x="-0.5" y="0.7ex">71</text></g>
+ <g transform="translate(-54.56,221.37)"><use xlink:href="#Mars"/><text transform="rotate(104)" x="-0.5" y="0.7ex">72</text></g>
+ <g transform="translate(-45.61,223.39)"><use xlink:href="#Mars"/><text transform="rotate(102)" x="-0.5" y="0.7ex">73</text></g>
+ <g transform="translate(-36.57,225.05)"><use xlink:href="#Mars"/><text transform="rotate(99)" x="-0.5" y="0.7ex">74</text></g>
+ <g transform="translate(-27.48,226.34)"><use xlink:href="#Mars"/><text transform="rotate(97)" x="-0.5" y="0.7ex">75</text></g>
+ <g transform="translate(-18.35,227.26)"><use xlink:href="#Mars"/><text transform="rotate(95)" x="-0.5" y="0.7ex">76</text></g>
+ <g transform="translate(-9.18,227.82)"><use xlink:href="#Mars"/><text transform="rotate(92)" x="-0.5" y="0.7ex">77</text></g>
+ <g transform="translate(0,228)"><use xlink:href="#Mars"/><text transform="rotate(90)" x="-0.5" y="0.7ex">78</text></g>
+ <g transform="translate(9.18,227.82)"><use xlink:href="#Mars"/><text transform="rotate(88)" x="-0.5" y="0.7ex">79</text></g>
+ <g transform="translate(18.35,227.26)"><use xlink:href="#Mars"/><text transform="rotate(85)" x="-0.5" y="0.7ex">80</text></g>
+ <g transform="translate(27.48,226.34)"><use xlink:href="#Mars"/><text transform="rotate(83)" x="-0.5" y="0.7ex">81</text></g>
+ <g transform="translate(36.57,225.05)"><use xlink:href="#Mars"/><text transform="rotate(81)" x="-0.5" y="0.7ex">82</text></g>
+ <g transform="translate(45.61,223.39)"><use xlink:href="#Mars"/><text transform="rotate(78)" x="-0.5" y="0.7ex">83</text></g>
+ <g transform="translate(54.56,221.37)"><use xlink:href="#Mars"/><text transform="rotate(76)" x="-0.5" y="0.7ex">84</text></g>
+ <g transform="translate(63.43,219)"><use xlink:href="#Mars"/><text transform="rotate(74)" x="-0.5" y="0.7ex">85</text></g>
+ <g transform="translate(72.2,216.27)"><use xlink:href="#Mars"/><text transform="rotate(72)" x="-0.5" y="0.7ex">86</text></g>
+ <g transform="translate(80.85,213.18)"><use xlink:href="#Mars"/><text transform="rotate(69)" x="-0.5" y="0.7ex">87</text></g>
+ <g transform="translate(89.37,209.76)"><use xlink:href="#Mars"/><text transform="rotate(67)" x="-0.5" y="0.7ex">88</text></g>
+ <g transform="translate(97.74,205.99)"><use xlink:href="#Mars"/><text transform="rotate(65)" x="-0.5" y="0.7ex">89</text></g>
+ <g transform="translate(105.96,201.88)"><use xlink:href="#Mars"/><text transform="rotate(62)" x="-0.5" y="0.7ex">90</text></g>
+ <g transform="translate(114,197.45)"><use xlink:href="#Mars"/><text transform="rotate(60)" x="-0.5" y="0.7ex">91</text></g>
+ <g transform="translate(121.86,192.7)"><use xlink:href="#Mars"/><text transform="rotate(58)" x="-0.5" y="0.7ex">92</text></g>
+ <g transform="translate(129.52,187.64)"><use xlink:href="#Mars"/><text transform="rotate(55)" x="-0.5" y="0.7ex">93</text></g>
+ <g transform="translate(136.97,182.27)"><use xlink:href="#Mars"/><text transform="rotate(53)" x="-0.5" y="0.7ex">94</text></g>
+ <g transform="translate(144.2,176.61)"><use xlink:href="#Mars"/><text transform="rotate(51)" x="-0.5" y="0.7ex">95</text></g>
+ <g transform="translate(151.19,170.66)"><use xlink:href="#Mars"/><text transform="rotate(48)" x="-0.5" y="0.7ex">96</text></g>
+ <g transform="translate(157.94,164.43)"><use xlink:href="#Mars"/><text transform="rotate(46)" x="-0.5" y="0.7ex">97</text></g>
+ <g transform="translate(164.43,157.94)"><use xlink:href="#Mars"/><text transform="rotate(44)" x="-0.5" y="0.7ex">98</text></g>
+ <g transform="translate(170.66,151.19)"><use xlink:href="#Mars"/><text transform="rotate(42)" x="-0.5" y="0.7ex">99</text></g>
+ <g transform="translate(176.61,144.2)"><use xlink:href="#Mars"/><text transform="rotate(39)" x="-0.5" y="0.7ex">100</text></g>
+ <g transform="translate(182.27,136.97)"><use xlink:href="#Mars"/><text transform="rotate(37)" x="-0.5" y="0.7ex">101</text></g>
+ <g transform="translate(187.64,129.52)"><use xlink:href="#Mars"/><text transform="rotate(35)" x="-0.5" y="0.7ex">102</text></g>
+ <g transform="translate(192.7,121.86)"><use xlink:href="#Mars"/><text transform="rotate(32)" x="-0.5" y="0.7ex">103</text></g>
+ <g transform="translate(197.45,114)"><use xlink:href="#Mars"/><text transform="rotate(30)" x="-0.5" y="0.7ex">104</text></g>
+ <g transform="translate(201.88,105.96)"><use xlink:href="#Mars"/><text transform="rotate(28)" x="-0.5" y="0.7ex">105</text></g>
+ <g transform="translate(205.99,97.74)"><use xlink:href="#Mars"/><text transform="rotate(25)" x="-0.5" y="0.7ex">106</text></g>
+ <g transform="translate(209.76,89.37)"><use xlink:href="#Mars"/><text transform="rotate(23)" x="-0.5" y="0.7ex">107</text></g>
+ <g transform="translate(213.18,80.85)"><use xlink:href="#Mars"/><text transform="rotate(21)" x="-0.5" y="0.7ex">108</text></g>
+ <g transform="translate(216.27,72.2)"><use xlink:href="#Mars"/><text transform="rotate(18)" x="-0.5" y="0.7ex">109</text></g>
+ <g transform="translate(219,63.43)"><use xlink:href="#Mars"/><text transform="rotate(16)" x="-0.5" y="0.7ex">110</text></g>
+ <g transform="translate(221.37,54.56)"><use xlink:href="#Mars"/><text transform="rotate(14)" x="-0.5" y="0.7ex">111</text></g>
+ <g transform="translate(223.39,45.61)"><use xlink:href="#Mars"/><text transform="rotate(12)" x="-0.5" y="0.7ex">112</text></g>
+ <g transform="translate(225.05,36.57)"><use xlink:href="#Mars"/><text transform="rotate(9)" x="-0.5" y="0.7ex">113</text></g>
+ <g transform="translate(226.34,27.48)"><use xlink:href="#Mars"/><text transform="rotate(7)" x="-0.5" y="0.7ex">114</text></g>
+ <g transform="translate(227.26,18.35)"><use xlink:href="#Mars"/><text transform="rotate(5)" x="-0.5" y="0.7ex">115</text></g>
+ <g transform="translate(227.82,9.18)"><use xlink:href="#Mars"/><text transform="rotate(2)" x="-0.5" y="0.7ex">116</text></g>
+ <g transform="translate(228,0)"><use xlink:href="#Mars"/><text transform="rotate(0)" x="-0.5" y="0.7ex">117</text></g>
+ <g transform="translate(227.82,-9.18)"><use xlink:href="#Mars"/><text transform="rotate(358)" x="-0.5" y="0.7ex">118</text></g>
+ <g transform="translate(227.26,-18.35)"><use xlink:href="#Mars"/><text transform="rotate(355)" x="-0.5" y="0.7ex">119</text></g>
+ <g transform="translate(226.34,-27.48)"><use xlink:href="#Mars"/><text transform="rotate(353)" x="-0.5" y="0.7ex">120</text></g>
+ <g transform="translate(225.05,-36.57)"><use xlink:href="#Mars"/><text transform="rotate(351)" x="-0.5" y="0.7ex">121</text></g>
+ <g transform="translate(223.39,-45.61)"><use xlink:href="#Mars"/><text transform="rotate(348)" x="-0.5" y="0.7ex">122</text></g>
+ <g transform="translate(221.37,-54.56)"><use xlink:href="#Mars"/><text transform="rotate(346)" x="-0.5" y="0.7ex">123</text></g>
+ <g transform="translate(219,-63.43)"><use xlink:href="#Mars"/><text transform="rotate(344)" x="-0.5" y="0.7ex">124</text></g>
+ <g transform="translate(216.27,-72.2)"><use xlink:href="#Mars"/><text transform="rotate(342)" x="-0.5" y="0.7ex">125</text></g>
+ <g transform="translate(213.18,-80.85)"><use xlink:href="#Mars"/><text transform="rotate(339)" x="-0.5" y="0.7ex">126</text></g>
+ <g transform="translate(209.76,-89.37)"><use xlink:href="#Mars"/><text transform="rotate(337)" x="-0.5" y="0.7ex">127</text></g>
+ <g transform="translate(205.99,-97.74)"><use xlink:href="#Mars"/><text transform="rotate(335)" x="-0.5" y="0.7ex">128</text></g>
+ <g transform="translate(201.88,-105.96)"><use xlink:href="#Mars"/><text transform="rotate(332)" x="-0.5" y="0.7ex">129</text></g>
+ <g transform="translate(197.45,-114)"><use xlink:href="#Mars"/><text transform="rotate(330)" x="-0.5" y="0.7ex">130</text></g>
+ <g transform="translate(192.7,-121.86)"><use xlink:href="#Mars"/><text transform="rotate(328)" x="-0.5" y="0.7ex">131</text></g>
+ <g transform="translate(187.64,-129.52)"><use xlink:href="#Mars"/><text transform="rotate(325)" x="-0.5" y="0.7ex">132</text></g>
+ <g transform="translate(182.27,-136.97)"><use xlink:href="#Mars"/><text transform="rotate(323)" x="-0.5" y="0.7ex">133</text></g>
+ <g transform="translate(176.61,-144.2)"><use xlink:href="#Mars"/><text transform="rotate(321)" x="-0.5" y="0.7ex">134</text></g>
+ <g transform="translate(170.66,-151.19)"><use xlink:href="#Mars"/><text transform="rotate(318)" x="-0.5" y="0.7ex">135</text></g>
+ <g transform="translate(164.43,-157.94)"><use xlink:href="#Mars"/><text transform="rotate(316)" x="-0.5" y="0.7ex">136</text></g>
+ <g transform="translate(157.94,-164.43)"><use xlink:href="#Mars"/><text transform="rotate(314)" x="-0.5" y="0.7ex">137</text></g>
+ <g transform="translate(151.19,-170.66)"><use xlink:href="#Mars"/><text transform="rotate(312)" x="-0.5" y="0.7ex">138</text></g>
+ <g transform="translate(144.2,-176.61)"><use xlink:href="#Mars"/><text transform="rotate(309)" x="-0.5" y="0.7ex">139</text></g>
+ <g transform="translate(136.97,-182.27)"><use xlink:href="#Mars"/><text transform="rotate(307)" x="-0.5" y="0.7ex">140</text></g>
+ <g transform="translate(129.52,-187.64)"><use xlink:href="#Mars"/><text transform="rotate(305)" x="-0.5" y="0.7ex">141</text></g>
+ <g transform="translate(121.86,-192.7)"><use xlink:href="#Mars"/><text transform="rotate(302)" x="-0.5" y="0.7ex">142</text></g>
+ <g transform="translate(114,-197.45)"><use xlink:href="#Mars"/><text transform="rotate(300)" x="-0.5" y="0.7ex">143</text></g>
+ <g transform="translate(105.96,-201.88)"><use xlink:href="#Mars"/><text transform="rotate(298)" x="-0.5" y="0.7ex">144</text></g>
+ <g transform="translate(97.74,-205.99)"><use xlink:href="#Mars"/><text transform="rotate(295)" x="-0.5" y="0.7ex">145</text></g>
+ <g transform="translate(89.37,-209.76)"><use xlink:href="#Mars"/><text transform="rotate(293)" x="-0.5" y="0.7ex">146</text></g>
+ <g transform="translate(80.85,-213.18)"><use xlink:href="#Mars"/><text transform="rotate(291)" x="-0.5" y="0.7ex">147</text></g>
+ <g transform="translate(72.2,-216.27)"><use xlink:href="#Mars"/><text transform="rotate(288)" x="-0.5" y="0.7ex">148</text></g>
+ <g transform="translate(63.43,-219)"><use xlink:href="#Mars"/><text transform="rotate(286)" x="-0.5" y="0.7ex">149</text></g>
+ <g transform="translate(54.56,-221.37)"><use xlink:href="#Mars"/><text transform="rotate(284)" x="-0.5" y="0.7ex">150</text></g>
+ <g transform="translate(45.61,-223.39)"><use xlink:href="#Mars"/><text transform="rotate(282)" x="-0.5" y="0.7ex">151</text></g>
+ <g transform="translate(36.57,-225.05)"><use xlink:href="#Mars"/><text transform="rotate(279)" x="-0.5" y="0.7ex">152</text></g>
+ <g transform="translate(27.48,-226.34)"><use xlink:href="#Mars"/><text transform="rotate(277)" x="-0.5" y="0.7ex">153</text></g>
+ <g transform="translate(18.35,-227.26)"><use xlink:href="#Mars"/><text transform="rotate(275)" x="-0.5" y="0.7ex">154</text></g>
+ <g transform="translate(9.18,-227.82)"><use xlink:href="#Mars"/><text transform="rotate(272)" x="-0.5" y="0.7ex">155</text></g>
+<!--   END_DYNAMIC_MAIN -->
+</svg>
+<!-- Please retain this and other comments, which contain Python code to generate this SVG. """
+import re, math
+# class dict2class(dict):
+#  def __getattr__(self, k): return dict2class(self[k]) if isinstance(self[k], dict) else self[k]
+def fmt(string): ## string.format(**vars()) using tags {expression!format} by CMG Lee
+ def f(tag): i_sep = tag.rfind('!'); return (re.sub('\.0$', '', str(eval(tag[1:-1])))
+  if (i_sep < 0) else ('{:%s}' % tag[i_sep + 1:-1]).format(eval(tag[1:i_sep])))
+ return (re.sub(r'(?<!{){[^{}]+}', lambda m:f(m.group()), string)
+         .replace('{{', '{').replace('}}', '}'))
+def append(obj, string): return obj.append(fmt(string))
+def tabbify(cellss, separator='|'):
+ cellpadss = [list(rows) + [''] * (len(max(cellss, key=len)) - len(rows)) for rows in cellss]
+ fmts = ['%%%ds' % (max([len(str(cell)) for cell in cols])) for cols in zip(*cellpadss)]
+ return '\n'.join([separator.join(fmts) % tuple(rows) for rows in cellpadss])
+def roundm(x, multiple=1):
+ if   (isinstance(x, tuple)): return tuple(roundm(list(x), multiple))
+ elif (isinstance(x, list )): return [roundm(x_i, multiple) for x_i in x]
+ else: return int(math.floor(float(x) / multiple + 0.5)) * multiple
+def try_parse_int_float(x, invalidTo=str):
+ try:               return int(x.replace(',', ''))
+ except Exception:
+  try:              return float(x.replace(',', ''))
+  except Exception: return x if invalidTo is str else invalidTo
+def parse_data_table(data_table_string, delimiter='|'):
+ return [{datass[0][i].lower():datas[i] for (i, data) in enumerate(datas)}
+         for datass in [ [[try_parse_int_float(cell.strip())
+                           for cell in row.strip().split(delimiter)]
+                          for row in data_table_string.strip().split('\n')] ]
+         for datas in datass[1:]]
+
+(out_defs, out_mains) = ([], [])
+datass = parse_data_table('''
+NAME   |DAY    | GM  | D_KM|COLOUR
+Mercury| 87.97 | 57.9| 4879|#ccc
+Venus  |224.7  |108.2|12104|#fc0
+Earth  |365.256|149.6|12756|#6cf
+Mars   |686.93 |228.0| 6792|#f99
+''')
+print(datass)
+
+## Find best step (in days)
+periods  = [datas['day'] for datas in datass]
+n_k      = int(1e3)
+k_datass = []
+for i in range(9, n_k, 1): ## skip first 9 to avoid k near 0
+ k       = (i + 1.0) / n_k
+ foms    = [abs(k_period - int(k_period) - 0.5) for period in periods for k_period in [k * period]]
+ fom_min = min(foms)
+ k_datass.append([fom_min, k] + ['%.4f' % (k * period) for period in periods])
+k_datass = sorted(k_datass)[::-1]
+print(tabbify(k_datass[:9]))
+step = 1 / k_datass[0][1]
+print(step)
+"""
+0.461642  |0.22714|19.98151|51.03836|82.96425|156.02928
+0.46059528|0.22713|19.98063|51.03611|82.96060|156.02241
+0.459395  |0.22715|19.98239|51.04060|82.96790|156.03615
+0.4569812 |0.22716|19.98327|51.04285|82.97155|156.04302
+"""
+## Plot
+pi2 = math.pi * 2
+for datas in datass:
+ name      = datas['name']
+ colour    = datas['colour']
+ r_orbit   = datas['gm']
+ r_planet  = 6 # roundm(datas['d_km'] / 2 * 1e-3, 1e-3)
+ n_step    = roundm(datas['day'] / step)
+ append(out_defs, '''\
+  <circle id="{name}" cx="0" cy="0" r="{r_planet}" fill="{colour}"/>''')
+ append(out_mains, '''\
+ <path d="M 0,{7 - r_orbit} v 6" stroke="{colour}"/>
+ <text class="title" transform="translate(0,{-r_orbit})" x="0" y="4ex">{name.title()}</text>''')
+ for i in range(n_step): # - 1, -1, -1):
+  x   = roundm(-r_orbit * math.sin(pi2 * i / n_step), 1e-2)
+  y   = roundm(-r_orbit * math.cos(pi2 * i / n_step), 1e-2)
+  deg = roundm(            630 - 360.0 * i / n_step       ) % 360
+  append(out_mains, '''\
+ <g transform="translate({x},{y})"><use xlink:href="#{name}"/><text transform="rotate({deg})" x="-0.5" y="0.7ex">{i}</text></g>''')
+
+out_p = fmt('width="100%" height="100%" viewBox="-240 -240 480 480"')
+
+## Compile everything into an .svg file
+myself   = open(__file__, 'r').read() ## the contents of this very file
+path_out = __file__[:__file__.rfind('.')] + '.svg' ## *.* -> *.svg
+with open(path_out, 'w') as file_out:
+ file_out.write('''<?xml version="1.0" encoding="utf-8"?><!%s%s
+%s%s%s\n%s%s\n%s%s''' % ('-', '-', ## because SVG comments cannot have 2 consecutive '-'s
+  myself[:myself.find('width',myself.find('<svg'))], ## assume width specified before height/viewBox
+  out_p, ## replace SVG width/height/viewBox with {out_p} & dynamic SVG blocks with {out*s} contents
+  myself[myself.find ('>',myself.find('<svg')):
+         myself.find ('\n',myself.find('BEGIN_'+'DYNAMIC_DEFS'))], '\n'.join(out_defs),
+  myself[myself.rfind('\n',0,myself.find('END_'+'DYNAMIC_DEFS')):
+         myself.find ('\n',myself.find('BEGIN_'+'DYNAMIC_MAIN'))], '\n'.join(out_mains),
+  myself[myself.rfind('\n',0,myself.find('END_'+'DYNAMIC_MAIN')):]))
+ print('Output %s' % (path_out))
+
+## SVG-Python near-polyglot framework version 3.1 by CMG Lee (December 2023) -->

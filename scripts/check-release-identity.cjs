@@ -32,7 +32,8 @@ function checkReleaseIdentity({ tag = null, sha = null } = {}) {
   assert.equal(lock.version, version, "package-lock.version must equal candidate version");
   assert.equal(lock.packages?.[""]?.version, version, "package-lock root version must equal candidate version");
   assert.equal(metadata.channels?.desktop?.version, version, "desktop channel must equal candidate version");
-  assert.equal(metadata.channels?.previewWeb?.version, version, "preview channel must equal candidate version");
+  assert.equal(metadata.channels?.stableWeb?.version, version, "stable web channel must equal candidate version");
+  assert.equal(metadata.candidate.desktopEntry, "index.html", "desktop must use the canonical root entry");
   assert.equal(metadata.channels.desktop.entry, metadata.candidate.desktopEntry, "desktop entry must match candidate entry");
   assert.equal(pkg.engines?.node, ">=24.21.0 <25", "Node engine must stay on the pinned Node 24 LTS line");
   assert.equal(read(".nvmrc").trim(), "24.21.0", ".nvmrc must pin Node 24.21.0");
@@ -48,8 +49,8 @@ function checkReleaseIdentity({ tag = null, sha = null } = {}) {
     `5E-${version}-macos-arm64.zip`,
   ]);
   const preview = read(metadata.candidate.desktopEntry);
-  assert.ok(visibleVersion(preview, "title", version), "preview title must show candidate version");
-  assert.ok(visibleVersion(preview, "footer", version), "preview footer must show candidate version");
+  assert.ok(visibleVersion(preview, "title", version), "canonical title must show candidate version");
+  assert.ok(visibleVersion(preview, "footer", version), "canonical footer must show candidate version");
   if (tag) assert.equal(tag, `v${version}`, `release tag ${tag} must equal candidate tag v${version}`);
   if (sha) {
     assert.match(sha, /^[0-9a-f]{40}$/, "--sha must be a full commit SHA");

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="996px" height="306px" viewBox="-251 -51 332 102" version="1.1">
+<title>Gregorian telescope</title>
+<desc>Diagram of the lightpath through a Gregorian telescope.</desc>
+<g style="stroke:#000;stroke-width:.5;fill:none">
+    <path d="M-235,0 h320" stroke-dasharray="10,3,5,2" /> <!-- scope axis -->
+    <path d="M-240,-45 H30 v30 h20 M-240,45 H30 v-30 h20" stroke-width="1" /> <!-- scope body -->
+    <path d="M5,-40 a9,40 0 0,1 8,25 h12 v-25 z M5,40 a9,40 0 0,0 8,-25 h12 v25 z M-215,-17 h-5 v34 h5 a4,20 0 0,1 0,-34" 
+        fill="cyan" stroke="none" /> <!-- lens fill -->
+    <path d="M25,-40 V40 h-20 a9,40 0 0,0 0,-80 z" stroke="gray" />  <!-- gray lens -->
+    <path d="M-161.8,-3.535 l7.07,7.07 M-161.8,3.535 l7.07,-7.07" stroke="gray" />  <!-- gray focus -->
+    <path d="M5,-40 h20 v25 h-12 M5,40 h20 v-25 h-12 M-215,-17 h-5 v34 h5" /> <!-- dark lens -->
+    <path d="M5.5,-40 a9,40 0 0,1 8,25 M5.5,40 a9,40 0 0,0 8,-25 M-215,-17 a5,20 0 0,0 0,34 
+        M65,-15 h10 h-5 v30 h-5 h10 
+        M66.465,-3.535 l7.07,7.07 M66.465,3.535 l7.07,-7.07" 
+        stroke="#F00" stroke-width="1" /> <!-- red part of lens, eyepiece, cross --> 
+    <g stroke="#7F00FF">
+        <path d="M-250,-35 h260 L-216,12 L70,0
+            M-250,35 h260 L-216,-12 L70,0" 
+        /> <!-- purple rays: top, bottom -->
+        <path d="M-215,-37.5 l4.33,2.5 l-4.33,2.5 M-215,37.5 l4.33,-2.5 l-4.33,-2.5" /> <!-- arrow marks -->
+    </g>
+    <path d="M-250,-30 l260,-5 L-216.5,8 L70,15
+        M-250,40 l260,-5 L-215,-16 L70,15" stroke="#00A700" />
+</g>
+</svg>

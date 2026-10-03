@@ -1,0 +1,293 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   id="svg2816"
+   viewBox="0 0 430 290"
+   width="430"
+   height="290"
+   version="1.1"
+   sodipodi:docname="Stokes-Verschiebung.svg"
+   inkscape:version="1.1.2 (b8e25be8, 2022-02-05)"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <sodipodi:namedview
+     id="namedview860"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     inkscape:pagecheckerboard="0"
+     showgrid="false"
+     inkscape:zoom="1.6937685"
+     inkscape:cx="264.20376"
+     inkscape:cy="153.20866"
+     inkscape:window-width="1312"
+     inkscape:window-height="847"
+     inkscape:window-x="0"
+     inkscape:window-y="25"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="svg2816" />
+  <metadata
+     id="metadata2822">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs2820">
+    <linearGradient
+       id="linearGradient3673">
+      <stop
+         id="stop3675"
+         stop-color="#58008e"
+         stop-opacity="0.50196081"
+         offset="0" />
+      <stop
+         id="stop3677"
+         stop-color="#00F"
+         stop-opacity="0.50196081"
+         offset="0.22424" />
+      <stop
+         id="stop3687"
+         stop-color="#007fd6"
+         stop-opacity="0.50196081"
+         offset="0.27663" />
+      <stop
+         id="stop3679"
+         stop-color="#01ffae"
+         stop-opacity="0.50196081"
+         offset="0.42953" />
+      <stop
+         id="stop3681"
+         stop-color="#01ff01"
+         stop-opacity="0.50196081"
+         offset="0.56525" />
+      <stop
+         id="stop3689"
+         stop-color="#7eff01"
+         stop-opacity="0.50196081"
+         offset="0.61156" />
+      <stop
+         id="stop3683"
+         stop-color="#faff01"
+         stop-opacity="0.50196081"
+         offset="0.77189" />
+      <stop
+         id="stop3685"
+         stop-color="#ff4141"
+         stop-opacity="0.50196081"
+         offset="1" />
+    </linearGradient>
+    <marker
+       id="Arrow2Mend"
+       refY="0"
+       refX="0"
+       orient="auto"
+       style="overflow:visible">
+      <path
+         id="path3632"
+         stroke-linejoin="round"
+         d="M8.7186,4.0337-2.2073,0.016013,8.7186-4.0017c-1.7455,2.3721-1.7354,5.6175-6E-7,8.0354z"
+         fill-rule="evenodd"
+         transform="scale(-0.6,-0.6)"
+         stroke-width="0.625" />
+    </marker>
+    <marker
+       id="Arrow2Lend"
+       refY="0"
+       refX="0"
+       orient="auto"
+       style="overflow:visible">
+      <path
+         id="path3626"
+         stroke-linejoin="round"
+         d="M8.7186,4.0337-2.2073,0.016013,8.7186-4.0017c-1.7455,2.3721-1.7354,5.6175-6E-7,8.0354z"
+         fill-rule="evenodd"
+         transform="matrix(-1.1,0,0,-1.1,-1.1,0)"
+         stroke-width="0.625" />
+    </marker>
+    <marker
+       id="Arrow2Lstart"
+       refY="0"
+       refX="0"
+       orient="auto"
+       style="overflow:visible">
+      <path
+         id="path3623"
+         stroke-linejoin="round"
+         d="M8.7186,4.0337-2.2073,0.016013,8.7186-4.0017c-1.7455,2.3721-1.7354,5.6175-6E-7,8.0354z"
+         fill-rule="evenodd"
+         transform="matrix(1.1,0,0,1.1,1.1,0)"
+         stroke-width="0.625" />
+    </marker>
+    <linearGradient
+       id="linearGradient3654"
+       y2="203.02"
+       xlink:href="#linearGradient3673"
+       gradientUnits="userSpaceOnUse"
+       x2="337.51"
+       gradientTransform="translate(-3.1139634,-40.665544)"
+       y1="203.02"
+       x1="112.17" />
+    <linearGradient
+       id="linearGradient3660"
+       y2="203.01"
+       xlink:href="#linearGradient3673"
+       gradientUnits="userSpaceOnUse"
+       x2="299.86"
+       gradientTransform="translate(-3.1139634,-40.665544)"
+       y1="203.02"
+       x1="112.17" />
+  </defs>
+  <text
+     id="text4428"
+     style="text-anchor:middle;text-align:center;"
+     font-weight="normal"
+     xml:space="preserve"
+     font-size="24px"
+     font-style="normal"
+     font-stretch="normal"
+     font-variant="normal"
+     y="104.88902"
+     x="102.81037"
+     font-family="DejaVu Sans"
+     fill="#000000"><tspan
+       id="tspan4430"
+       font-size="22px"
+       y="104.88902"
+       x="102.81037">Absorption</tspan></text>
+  <text
+     id="text4432"
+     style="text-align:center;text-anchor:middle"
+     font-weight="normal"
+     xml:space="preserve"
+     font-size="24px"
+     font-style="normal"
+     font-stretch="normal"
+     font-variant="normal"
+     y="167.74123"
+     x="317.59509"
+     font-family="'DejaVu Sans'"
+     fill="#000000"><tspan
+       id="tspan4434"
+       font-size="22px"
+       y="167.74123"
+       x="317.59509">Emission</tspan></text>
+  <text
+     id="text4436"
+     style="text-align:center;text-anchor:middle"
+     font-weight="normal"
+     xml:space="preserve"
+     font-size="24px"
+     font-style="normal"
+     font-stretch="normal"
+     font-variant="normal"
+     y="44.370918"
+     x="206.71208"
+     font-family="'DejaVu Sans'"
+     fill="#000000"><tspan
+       id="tspan4438"
+       x="206.71208"
+       y="44.370918">Stokes shift</tspan></text>
+  <path
+     id="path4448"
+     stroke-linejoin="miter"
+     style="stroke-dasharray:none;"
+     d="m69.878,254.82c62.734,0,89.015-171.07,112.29-171.07,26.756,0.00076,47.636,171.07,117.58,171.07"
+     stroke="#000080"
+     stroke-linecap="round"
+     stroke-miterlimit="4"
+     stroke-width="2"
+     fill="url(#linearGradient3660)" />
+  <path
+     id="path4452"
+     stroke-linejoin="miter"
+     style="marker-end:url(#Arrow2Mend);marker-start:none;stroke-dasharray:none;"
+     d="m184.67,66.41,45.932,0"
+     stroke="#000"
+     stroke-linecap="butt"
+     stroke-miterlimit="4"
+     stroke-width="1.50000000000000000"
+     fill="none" />
+  <path
+     id="path5022"
+     stroke-linejoin="miter"
+     d="m182.06,83.324,0-26.189"
+     stroke="#000"
+     stroke-linecap="butt"
+     stroke-width="1px"
+     fill="none" />
+  <path
+     id="path5024"
+     stroke-linejoin="miter"
+     d="m233.74,83.324,0-26.189"
+     stroke="#000"
+     stroke-linecap="butt"
+     stroke-width="1px"
+     fill="none" />
+  <path
+     id="path3649"
+     stroke-linejoin="miter"
+     style="stroke-dasharray:none;"
+     d="m119.88,254.82c94.501-0.46716,89.084-171.07,112.29-171.07,23.208,0,18.205,167.8,117.58,171.07"
+     stroke="#068000"
+     stroke-linecap="round"
+     stroke-miterlimit="4"
+     stroke-width="2"
+     fill="url(#linearGradient3654)" />
+  <path
+     id="path2828"
+     stroke-linejoin="miter"
+     style="marker-end:url(#Arrow2Lend);marker-start:url(#Arrow2Lstart);stroke-dasharray:none;"
+     d="m31.37,9.5021,0,245.64,391.97,0"
+     stroke="#000"
+     stroke-linecap="butt"
+     stroke-miterlimit="4"
+     stroke-width="1.99999988"
+     fill="none" />
+  <text
+     id="text4440"
+     style="text-align:center;text-anchor:middle"
+     font-weight="normal"
+     xml:space="preserve"
+     font-size="24px"
+     font-style="normal"
+     font-stretch="normal"
+     font-variant="normal"
+     y="278.16177"
+     x="210.80478"
+     font-family="'DejaVu Sans'"
+     fill="#000000"><tspan
+       id="tspan4442"
+       x="210.80478"
+       y="278.16177">Wavelength</tspan></text>
+  <text
+     id="text4444"
+     style="text-align:center;text-anchor:middle"
+     font-weight="normal"
+     xml:space="preserve"
+     transform="rotate(-90)"
+     font-style="normal"
+     font-stretch="normal"
+     font-size="24px"
+     font-variant="normal"
+     y="22.236021"
+     x="-143.4482"
+     font-family="'DejaVu Sans'"
+     fill="#000000"><tspan
+       id="tspan4446"
+       x="-143.4482"
+       y="22.236021">Light intensitiy</tspan></text>
+</svg>

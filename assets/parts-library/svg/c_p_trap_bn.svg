@@ -1,0 +1,288 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   version="1.1"
+   x="0"
+   y="0"
+   width="800"
+   height="634"
+   viewBox="0 0 800 634"
+   id="svg104"
+   sodipodi:docname="P-trap-bn.svg"
+   inkscape:version="0.92.4 (33fec40, 2019-01-16)">
+  <metadata
+     id="metadata110">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs108" />
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1309"
+     inkscape:window-height="744"
+     id="namedview106"
+     showgrid="false"
+     inkscape:zoom="0.5264265"
+     inkscape:cx="65.063391"
+     inkscape:cy="317"
+     inkscape:window-x="57"
+     inkscape:window-y="24"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg104" />
+  <style
+     type="text/css"
+     id="style2">
+	.st0{fill:#00FFFF;fill-opacity:0.4;}
+	.st1{fill:none;stroke:#0071BC;stroke-width:2;}
+	.st2{fill:none;stroke:#000;stroke-width:4;}
+	.st3{fill:none;stroke:#000;stroke-width:2;}
+	.st4{fill:none;stroke:#000;stroke-width:3;}
+	.st5{fill:#FF0000;fill-opacity:0.2;stroke:#000;stroke-width:3;stroke-linejoin:round;}
+	.st6{fill:none;stroke:#000;stroke-width:3;stroke-linejoin:round;}
+	.st7{fill:none;stroke:#000;stroke-width:3;stroke-linejoin:round;}
+	.st8{font-family:Liberation Sans,Arial;}
+	.st9{font-size:33px;}
+</style>
+  <g
+     id="trap">
+    <path
+       class="st0"
+       d="M207,259v185c0,7.8-9.2,14.1-20.5,14.1S166,451.8,166,444V244.2H31V444c0,76.4,69.5,138.3,155.5,138.3   S342,520.4,342,444V259c0-8.2,5.3-14.8,11.8-14.8H207.7C207.2,249.1,207,254,207,259z"
+       id="path4" />
+    <line
+       class="st1"
+       x1="31"
+       y1="244.2"
+       x2="166"
+       y2="244.2"
+       id="line6" />
+    <line
+       class="st1"
+       x1="207"
+       y1="244.2"
+       x2="352.2"
+       y2="244.2"
+       id="line8" />
+    <path
+       class="st2"
+       d="M800,109.2H353.8c-81.1,0-146.8,67-146.8,149.8v185c0,7.8-9.2,14.1-20.5,14.1S166,451.8,166,444V128.8   c0-5.2,2-10.1,5.6-13.8l1.3-1.3H24.1l0.8,0.8c3.9,3.8,6,8.9,6,14.3V444c0,76.4,69.5,138.3,155.5,138.3S342,520.4,342,444V259   c0-8.2,5.3-14.8,11.8-14.8h399.9"
+       id="path10" />
+    <path
+       class="st3"
+       d="M186.5,582.3c-9.1,0-18.1-0.7-26.8-2v18.7c0,2.5,2.1,4.6,4.6,4.6h44.3c2.5,0,4.6-2.1,4.6-4.6v-18.7   C204.6,581.6,195.6,582.3,186.5,582.3z"
+       id="path12" />
+    <path
+       class="st3"
+       d="M201.5,624.1h-30.1c-1.9,0-3.5-1.6-3.5-3.5v-17h37v17C205,622.5,203.5,624.1,201.5,624.1z"
+       id="path14" />
+    <line
+       class="st4"
+       x1="186.5"
+       y1="458.1"
+       x2="405.5"
+       y2="458.1"
+       id="line16" />
+    <g
+       id="g30">
+      <g
+         id="g28">
+        <line
+           class="st3"
+           x1="367"
+           y1="253.4"
+           x2="367"
+           y2="448.9"
+           id="line18" />
+        <g
+           id="g22">
+          <polygon
+             points="367,244.2 361.7,257.2 367,254.1 372.3,257.2     "
+             id="polygon20" />
+        </g>
+        <g
+           id="g26">
+          <polygon
+             points="367,458.1 361.7,445.1 367,448.2 372.3,445.1     "
+             id="polygon24" />
+        </g>
+      </g>
+    </g>
+    <polygon
+       class="st5"
+       points="292,211.4 273,244.2 254,211.4  "
+       id="polygon32" />
+    <polygon
+       class="st5"
+       points="117.5,211.4 98.5,244.2 79.5,211.4  "
+       id="polygon34" />
+    <g
+       id="g44">
+      <g
+         id="g42">
+        <line
+           class="st6"
+           x1="321.8"
+           y1="236.2"
+           x2="371"
+           y2="196.2"
+           id="line36" />
+        <g
+           id="g40">
+          <polygon
+             points="312,244.2 330.5,238.6 322.6,235.6 321.2,227.3     "
+             id="polygon38" />
+        </g>
+      </g>
+    </g>
+    <g
+       id="g54">
+      <g
+         id="g52">
+        <line
+           class="st6"
+           x1="98.5"
+           y1="70.1"
+           x2="98.5"
+           y2="43.1"
+           id="line46" />
+        <g
+           id="g50">
+          <polygon
+             points="98.5,83.9 106.4,64.5 98.5,69.1 90.6,64.5     "
+             id="polygon48" />
+        </g>
+      </g>
+    </g>
+    <g
+       id="g64">
+      <g
+         id="g62">
+        <line
+           class="st6"
+           x1="286.2"
+           y1="108.9"
+           x2="268.5"
+           y2="74"
+           id="line56" />
+        <g
+           id="g60">
+          <polygon
+             points="292,120.3 290.4,101 285.8,108.1 277.3,107.6     "
+             id="polygon58" />
+        </g>
+      </g>
+    </g>
+    <g
+       id="g74">
+      <g
+         id="g72">
+        <line
+           class="st6"
+           x1="198.1"
+           y1="594.2"
+           x2="371"
+           y2="594.2"
+           id="line66" />
+        <g
+           id="g70">
+          <polygon
+             points="185.4,594.2 203.3,601.5 199,594.2 203.3,586.9     "
+             id="polygon68" />
+        </g>
+      </g>
+    </g>
+    <g
+       id="g84">
+      <g
+         id="g82">
+        <polyline
+           class="st6"
+           points="194.1,468.3 218.5,500.8 371,500.8    "
+           id="polyline76" />
+        <g
+           id="g80">
+          <polygon
+             points="186.5,458.1 191.4,476.8 194.7,469 203.1,468     "
+             id="polygon78" />
+        </g>
+      </g>
+    </g>
+    <path
+       class="st7"
+       d="M172.9,113.6H24.1c-2.5,0-4.6-2.1-4.6-4.6V89.6c0-2.5,2.1-4.6,4.6-4.6h148.7c2.5,0,4.6,2.1,4.6,4.6V109   C177.5,111.5,175.4,113.6,172.9,113.6z"
+       id="path86" />
+  </g>
+  <text
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:33px;font-family:'Lohit Bengali';-inkscape-font-specification:'Lohit Bengali'"
+     id="text89"
+     class="st8 st9"
+     x="38.505993"
+     y="36">প্রবেশদ্বার</text>
+  <text
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:33px;font-family:'Lohit Bengali';-inkscape-font-specification:'Lohit Bengali'"
+     id="text91"
+     class="st8 st9"
+     x="215"
+     y="65">শীর্ষ</text>
+  <text
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:33px;font-family:'Lohit Bengali';-inkscape-font-specification:'Lohit Bengali'"
+     id="text93"
+     class="st8 st9"
+     x="379"
+     y="187">অতিপ্রবাহ</text>
+  <text
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:33px;font-family:'Lohit Bengali';-inkscape-font-specification:'Lohit Bengali'"
+     id="text95"
+     class="st8 st9"
+     x="662"
+     y="187">নির্গমদ্বার</text>
+  <text
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:33px;font-family:'Lohit Bengali';-inkscape-font-specification:'Lohit Bengali'"
+     id="text97"
+     class="st8 st9"
+     x="382"
+     y="360">বাঁধা</text>
+  <text
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:33px;font-family:'Lohit Bengali';-inkscape-font-specification:'Lohit Bengali'"
+     id="text99"
+     class="st8 st9"
+     x="382"
+     y="510">ক্লিপ/ ছাঁটা</text>
+  <text
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:33px;font-family:'Lohit Bengali';-inkscape-font-specification:'Lohit Bengali'"
+     id="text101"
+     class="st8 st9"
+     x="377"
+     y="603" />
+  <text
+     xml:space="preserve"
+     style="font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;font-size:34.56000137px;line-height:1.25;font-family:'Lohit Bengali';-inkscape-font-specification:'Lohit Bengali';font-variant-ligatures:normal;font-variant-caps:normal;font-variant-numeric:normal;font-feature-settings:normal;text-align:start;writing-mode:lr-tb;text-anchor:start;opacity:1;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:3.2692914;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;paint-order:stroke markers fill"
+     x="393.21729"
+     y="603.60638"
+     id="text926"><tspan
+       sodipodi:role="line"
+       id="tspan924"
+       x="393.21729"
+       y="603.60638">পরিষ্কারকরণ</tspan></text>
+</svg>

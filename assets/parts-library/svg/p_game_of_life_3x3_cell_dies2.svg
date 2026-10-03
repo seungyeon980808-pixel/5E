@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg version="1.0" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="50" height="50">
+  <!-- width  = 16 * number of cells wide + 2 -->
+  <!-- height = 16 * number of cells tall + 2 -->
+  <defs>
+    <!-- 2/16 = 0.125 -->
+    <rect id="alive" x="0" y="0" width="1" height="1" fill="black" stroke="#c0c0c0" stroke-width="0.125" />
+    <rect id="dead" x="0" y="0" width="1" height="1" fill="white" stroke="#c0c0c0" stroke-width="0.125" />
+  </defs>
+  <g transform="translate(1,1) scale(16)">
+    <use x="0" y="0" xlink:href="#dead" />
+    <use x="1" y="0" xlink:href="#dead" />
+    <use x="2" y="0" xlink:href="#dead" />
+    
+    <use x="0" y="1" xlink:href="#dead" />
+    <use x="1" y="1" xlink:href="#alive" />
+    <use x="2" y="1" xlink:href="#alive" />
+    
+    <use x="0" y="2" xlink:href="#dead" />
+    <use x="1" y="2" xlink:href="#dead" />
+    <use x="2" y="2" xlink:href="#dead" />
+  </g>
+</svg>

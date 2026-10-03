@@ -1,3 +1,9 @@
+import { initLiteShell } from "./lite-shell.js?v=1.6.0-remediation-0929";
+import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-remediation-0929';
+import { initWebLoginUi } from './web-login-ui.js?v=1.6.0-remediation-0929';
+import { initMobileImage } from './mobile-image.js?v=1.6.0-preview-mobile-golden-0922';
+import { showAlert, showRecoveryCheckpointDialog } from "./ui-dialogs.js?v=1.6.0-remediation-0929";
+import { initAiSharing } from './ai-sharing-ui.js?v=1.6.0-remediation-0929';
 /* ===== MAIN (wire modules; data-as-truth + viewBox zoom/pan) ===== */
 //
 // Responsibilities:
@@ -7,105 +13,171 @@
 //   4. init tools (tool selection + the rectangle draw pipeline).
 
 // ?v= matches index.html so a version bump reloads every module, not just main.
-import { state } from "./state.js?v=1.4.0";
-import { render } from "./render.js?v=1.4.3";
-import { initViewport, getZoom, screenToWorld, centerView, setCenterLocked } from "./viewport.js?v=1.4.0";
-import { initTools } from "./tools.js?v=1.5.4";
-import { initCutTool } from "./cut-tool.js?v=1.5.3";
-import { initEraseTool } from "./erase-tool.js?v=1.4.0";
-import { initTransform, undo, redo } from "./transform.js?v=1.4.2";
-import { initArtboardResize } from "./artboard-resize.js?v=1.4.3";
-import { initInspector } from "./inspector.js?v=1.4.3";
-import { initProjectIO } from "./project-io.js?v=1.4.0";
-import { initExportDialog } from "./export-dialog.js?v=1.4.11";
-import { initRuler, setRulerVisible } from "./ruler.js?v=1.4.0";
-import { initSettings } from "./settings.js?v=1.4.0";
-import { initImageObjectify } from "./image-objectify.js?v=1.4.0";
-import { initImagePaste } from "./image-paste.js?v=1.4.0";
-import { initImageCutout } from "./image-cutout.js?v=1.4.0";
-import { initExamLibrary } from "./exam-library.js?v=1.4.12";
-// 이미지 라이브러리 [베타] — 퍼블릭 도메인 도해를 선화·원본으로 넣는 창. 기출 라이브러리와 같은
-// 성능 규약(앱 시작 로드 0, 첫 열 때 manifest 1회)으로 만들었다.
-import { initPartsLibrary } from "./parts-library.js?v=1.4.12";
-import { initTemplates } from "./templates.js?v=1.4.0";
-import { initObjectSearch } from "./search.js?v=1.4.0";
-import { initCommandPalette } from "./command-palette.js?v=1.4.0";
-import { initSubjectObjects } from "./subject-objects.js?v=1.4.0";
-import { initToolHint } from "./tool-hint.js?v=1.5.2";
-import { initTooltips } from "./tooltip.js?v=1.4.0";
-import { initViewMode } from "./view-mode.js?v=1.4.0";
-import { initPersonalObjects } from "./personal-objects.js?v=1.4.0";
-import { initBulkEdit } from "./bulk-edit.js?v=1.4.0";
-import { initDataPlot } from "./data-plot.js?v=1.4.0";
-import { initGaugeSection } from "./inspector/section-gauge.js?v=1.4.0";
-import { initSolid3dSection } from "./inspector/section-solid3d.js?v=1.4.0";
-import { initParabolaSection } from "./inspector/section-parabola.js?v=1.4.0";
-import { initGroundArcSection } from "./inspector/section-groundarc.js?v=1.4.0";
+import { state } from "./state.js?v=1.6.0-remediation-0929";
+import { render } from "./render.js?v=1.6.0-remediation-0929";
+import { initViewport, getZoom, screenToWorld, centerView, setCanvasLockMode } from "./viewport.js?v=1.6.0-preview-lite-hybrid-0922";
+import { initZoomReadoutLifecycle } from "./zoom-readout-lifecycle.js?v=task10-160";
+import { initTools } from "./tools.js?v=1.6.0-remediation-0929";
+import { initCutTool } from "./cut-tool.js?v=1.6.0-remediation-0929";
+import { initEraseTool } from "./erase-tool.js?v=1.6.0-remediation-0929";
+import { initTransform, undo, redo } from "./transform.js?v=1.6.0-remediation-0929";
+import { initArtboardResize } from "./artboard-resize.js?v=1.6.0-remediation-0929";
+import { initInspector } from "./inspector.js?v=1.6.0-remediation-0929";
+import { initDesktopProjectCloseGuard, initProjectIO, initProjectFileOpening, saveProject } from "./project-io.js?v=1.6.0-remediation-0929";
+import { initExportDialog } from "./export-dialog.js?v=1.6.0-remediation-0929";
+import { initRuler, setRulerVisible } from "./ruler.js?v=1.6.0-remediation-0929";
+import { initSettings } from "./settings.js?v=1.6.0-remediation-0929";
+import { initImageObjectify } from "./image-objectify.js?v=1.6.0-remediation-0929";
+import { initImagePaste } from "./image-paste.js?v=1.6.0-remediation-0929";
+import { initImageCutout } from "./image-cutout.js?v=1.6.0-preview-lite-hybrid-0922";
+import { renderSessionToDataUrl } from "./image-cutout.js?v=1.6.0-preview-lite-hybrid-0922";
+import { handSelectedCanvasImageToAi } from "./ai-canvas-handoff.js?v=1.6.0-preview-labeler-0917-1111";
+import { initExamLibrary } from "./exam-library.js?v=1.6.0-remediation-0929";
+import { initTemplates } from "./templates.js?v=1.6.0-remediation-0929";
+import { initObjectSearch } from "./search.js?v=1.6.0-remediation-0929";
+import { initCommandPalette } from "./command-palette.js?v=1.6.0-remediation-0929";
+import { initSubjectObjects } from "./subject-objects.js?v=1.6.0-remediation-0929";
+import { initToolHint } from "./tool-hint.js?v=1.6.0-remediation-0929";
+import { initTooltips } from "./tooltip.js?v=1.6.0-preview-labeler-0917-1111";
+import { initViewMode } from "./view-mode.js?v=1.6.0-remediation-0929";
+import { initPersonalObjects } from "./personal-objects.js?v=1.6.0-remediation-0929";
+import { initBulkEdit } from "./bulk-edit.js?v=1.6.0-remediation-0929";
+import { initDataPlot } from "./data-plot.js?v=1.6.0-remediation-0929";
+import { initGaugeSection } from "./inspector/section-gauge.js?v=1.6.0-preview-labeler-0917-1111";
+import { initSolid3dSection } from "./inspector/section-solid3d.js?v=1.6.0-remediation-0929";
+import { initParabolaSection } from "./inspector/section-parabola.js?v=1.6.0-preview-labeler-0917-1111";
+import { initGroundArcSection } from "./inspector/section-groundarc.js?v=1.6.0-remediation-0929";
 // 생명과학 부품 6종 (2026-07-31) — 규격은 docs/BIO_PARTS_SPEC.md
-import { initBraceSection } from "./inspector/section-brace.js?v=1.4.0";
-import { initChromosomeSection } from "./inspector/section-chromosome.js?v=1.4.0";
-import { initBilayerSection } from "./inspector/section-bilayer.js?v=1.4.0";
-import { initNeuronSection } from "./inspector/section-neuron.js?v=1.4.0";
-import { initLegendSection } from "./inspector/section-legend.js?v=1.4.0";
-import { initPedigreeSection } from "./inspector/section-pedigree.js?v=1.4.0";
+import { initBraceSection } from "./inspector/section-brace.js?v=1.6.0-preview-labeler-0917-1111";
+import { initChromosomeSection } from "./inspector/section-chromosome.js?v=1.6.0-preview-labeler-0917-1111";
+import { initBilayerSection } from "./inspector/section-bilayer.js?v=1.6.0-remediation-0929";
+import { initNeuronSection } from "./inspector/section-neuron.js?v=1.6.0-preview-labeler-0917-1111";
+import { initLegendSection } from "./inspector/section-legend.js?v=1.6.0-remediation-0929";
+import { initPedigreeSection } from "./inspector/section-pedigree.js?v=1.6.0-preview-labeler-0917-1111";
 // 화학 부품 10종 (2026-07-31) — 규격은 docs/CHEM_PARTS_SPEC.md
-import { initVesselSection } from "./inspector/section-vessel.js?v=1.4.0";
-import { initChemModelSection } from "./inspector/section-chemmodel.js?v=1.4.0";
-import { initParticleBoxSection } from "./inspector/section-particlebox.js?v=1.4.0";
-import { initOrbitalSection } from "./inspector/section-orbital.js?v=1.4.0";
-import { initBondGroupSection } from "./inspector/section-bondgroup.js?v=1.4.0";
-import { initChemChartSection } from "./inspector/section-chemchart.js?v=1.4.0";
-import { initAxisBreakSection } from "./inspector/section-axisbreak.js?v=1.4.0";
-import { initChemGraphSection } from "./inspector/section-chemgraph.js?v=1.4.0";
-import { initElectrodeSection } from "./inspector/section-electrode.js?v=1.4.0";
-import { initPeriodicSection } from "./inspector/section-periodic.js?v=1.4.0";
-import { initAutosave } from "./autosave.js?v=1.4.0";
-import { initPages } from "./pages.js?v=1.4.0";
-import { localizeShortcutLabels } from "./platform.js?v=1.4.0";
-import { initModalDrag } from "./modal-drag.js?v=1.4.0";
-import { initSteppers } from "./stepper.js?v=1.4.0";
-import { initReferenceWindows } from "./reference-window.js?v=1.4.0";
-import { initTutorial } from "./tutorial.js?v=1.5.2";
-import { initAiInstallGuide } from "./ai-install-guide.js?v=1.4.11";
-import { initAiPanel } from "./ai-panel.js?v=1.5.7";
+import { initVesselSection } from "./inspector/section-vessel.js?v=1.6.0-remediation-0929";
+import { initChemModelSection } from "./inspector/section-chemmodel.js?v=1.6.0-remediation-0929";
+import { initParticleBoxSection } from "./inspector/section-particlebox.js?v=1.6.0-remediation-0929";
+import { initOrbitalSection } from "./inspector/section-orbital.js?v=1.6.0-remediation-0929";
+import { initBondGroupSection } from "./inspector/section-bondgroup.js?v=1.6.0-remediation-0929";
+import { initChemChartSection } from "./inspector/section-chemchart.js?v=1.6.0-remediation-0929";
+import { initAxisBreakSection } from "./inspector/section-axisbreak.js?v=1.6.0-preview-labeler-0917-1111";
+import { initChemGraphSection } from "./inspector/section-chemgraph.js?v=1.6.0-remediation-0929";
+import { initElectrodeSection } from "./inspector/section-electrode.js?v=1.6.0-remediation-0929";
+import { initPeriodicSection } from "./inspector/section-periodic.js?v=1.6.0-preview-labeler-0917-1111";
+import { initAutosave } from "./autosave.js?v=1.6.0-remediation-0929";
+import { initPages } from "./pages.js?v=1.6.0-remediation-0929";
+import { localizeShortcutLabels } from "./platform.js?v=1.6.0-remediation-0929";
+import { initModalDrag } from "./modal-drag.js?v=1.6.0-remediation-0929";
+import { initSteppers } from "./stepper.js?v=1.6.0-preview-labeler-0917-1111";
+import { initReferenceWindows } from "./reference-window.js?v=1.6.0-remediation-0929";
+import { initTutorial } from "./tutorial.js?v=1.6.0-remediation-0929";
+import { initAiInstallGuide } from "./ai-install-guide.js?v=1.6.0-remediation-0929";
+import { initAiPanel } from "./ai-panel.js?v=1.6.0-remediation-0929";
 
 const svg = document.getElementById("canvas");
+// Canvas interaction transfers keyboard ownership away from the last toolbar button.
+svg.setAttribute("tabindex", "0");
+svg.addEventListener("pointerdown", (event) => {
+  if (event.button === 0 && !event.target.closest("input, textarea, [contenteditable]")) {
+    svg.classList.add("pointer-focused");
+    svg.focus({ preventScroll: true });
+  }
+});
+svg.addEventListener("blur", () => svg.classList.remove("pointer-focused"));
 const zoomReadout = document.getElementById("zoom-readout");
 
-/* ===== APP FULLSCREEN (workspace only; artboard state remains unchanged) ===== */
+/* ===== APP FULLSCREEN (native browser or desktop window; artboard state remains unchanged) ===== */
 (function initFullscreen() {
   const btn = document.getElementById("fullscreen-toggle");
   if (!btn) return;
 
-  // 전체화면 대상은 .app이 아니라 "문서 전체"(documentElement)여야 한다.
-  // 모든 모달·오버레이·컨텍스트 메뉴는 document.body에 append되는데, .app만
-  // 전체화면으로 만들면 이 위젯들이 전체화면 요소(top layer) 뒤에 깔려 안 보인다
-  // (z-index로도 못 이긴다). 문서 전체를 전체화면으로 하면 body의 위젯이 전부
-  // 전체화면 안에 포함돼 정상적으로 뜬다.
-  const target = document.documentElement;
+  const nativeFullscreen = window.fiveEDesktop?.fullscreen;
+  const browserFullscreenElement = () => document.fullscreenElement || document.webkitFullscreenElement || null;
 
-  const syncButton = () => {
-    const active = document.fullscreenElement === target;
+  const syncButton = (active) => {
+    if (nativeFullscreen) document.documentElement.classList.toggle("is-native-fullscreen", Boolean(active));
     btn.setAttribute("aria-pressed", String(active));
-    btn.setAttribute("aria-label", active ? "전체화면 해제" : "전체화면");
-    btn.title = active ? "전체화면 해제 (Alt+Enter)" : "전체화면 (Alt+Enter)";
+    const label = active ? "전체화면 해제" : "전체화면";
+    btn.setAttribute("aria-label", label);
+    btn.title = `${label} (Alt+Enter)`;
+  };
+  const syncBrowserFullscreen = () => syncButton(Boolean(browserFullscreenElement()));
+  const showBrowserFullscreenError = (operation) => {
+    syncBrowserFullscreen();
+    const message = operation === "exit" ? "전체화면을 해제하지 못했습니다. 다시 시도해 주세요." : "전체화면을 시작하지 못했습니다. 다시 시도해 주세요.";
+    btn.setAttribute("aria-label", message);
+    btn.title = message;
+    void showAlert(message, { title: "전체화면" });
   };
   const toggleFullscreen = async () => {
+    if (document.documentElement.dataset.mode === "lite") return;
+    let browserOperation = "enter";
     try {
-      if (document.fullscreenElement) await document.exitFullscreen();
-      else await target.requestFullscreen();
+      if (nativeFullscreen) {
+        await nativeFullscreen.toggle();
+        return;
+      }
+      if (browserFullscreenElement()) {
+        browserOperation = "exit";
+        const exit = document.exitFullscreen || document.webkitExitFullscreen;
+        if (!exit) throw new Error("Fullscreen exit is unavailable");
+        await exit.call(document);
+        return;
+      }
+      const request = document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen;
+      if (!request) throw new Error("Fullscreen is unavailable");
+      await request.call(document.documentElement);
     } catch (error) {
       console.error("Unable to toggle fullscreen", error);
+      if (!nativeFullscreen) showBrowserFullscreenError(browserOperation);
     }
   };
 
   btn.addEventListener("click", toggleFullscreen);
-  document.addEventListener("fullscreenchange", syncButton);
+  if (nativeFullscreen) {
+    nativeFullscreen.onChange(syncButton);
+    nativeFullscreen.get().then(syncButton).catch((error) => {
+      console.error("Unable to read fullscreen state", error);
+    });
+  } else {
+    document.addEventListener("fullscreenchange", syncBrowserFullscreen);
+    document.addEventListener("webkitfullscreenchange", syncBrowserFullscreen);
+    syncBrowserFullscreen();
+  }
   window.addEventListener("keydown", (e) => {
     if (!e.altKey || e.key !== "Enter" || e.repeat) return;
     e.preventDefault();
     toggleFullscreen();
   });
+})();
+
+(function initGraphLauncherState() {
+  const btn = document.getElementById("graph-tool-open");
+  if (!btn) return;
+
+  const syncButton = () => {
+    const active = Boolean(document.querySelector("#graph-modal-overlay:not([hidden])"));
+    btn.classList.toggle("is-open", active);
+    btn.setAttribute("aria-expanded", String(active));
+  };
+
+  const observeOverlay = () => {
+    const overlay = document.getElementById("graph-modal-overlay");
+    if (!overlay) return false;
+    new MutationObserver(syncButton).observe(overlay, { attributes: true, attributeFilter: ["hidden"] });
+    syncButton();
+    return true;
+  };
+  if (!observeOverlay()) {
+    const bodyObserver = new MutationObserver((records) => {
+      if (!records.some((record) => Array.from(record.addedNodes).some((node) => node.id === "graph-modal-overlay"))) return;
+      bodyObserver.disconnect();
+      observeOverlay();
+    });
+    bodyObserver.observe(document.body, { childList: true });
+  }
+  btn.addEventListener("click", () => requestAnimationFrame(syncButton));
   syncButton();
 })();
 
@@ -127,6 +199,7 @@ const zoomReadout = document.getElementById("zoom-readout");
 
   if (btn) {
     btn.addEventListener("click", () => {
+      if (root.dataset.mode === "lite") return;
       const next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
       root.setAttribute("data-theme", next);
       localStorage.setItem("theme", next);
@@ -152,17 +225,7 @@ state.subscribe(applyViewBox);
 // state.update(), which already fires the applyViewBox + render subscribers.
 initViewport(svg, state, () => {});
 
-/* zoom readout is derived from the SVG's on-screen width, which is 0 until the
-   3-panel grid finishes its first layout pass. The last applyViewBox at init
-   therefore burns in a stale "0.00×"; refresh once the box has real width so the
-   readout shows the true fit-zoom. */
-requestAnimationFrame(function refreshZoomReadout() {
-  if (svg.getBoundingClientRect().width === 0) {
-    requestAnimationFrame(refreshZoomReadout);
-    return;
-  }
-  applyViewBox(state.get());
-});
+initZoomReadoutLifecycle({ target: svg, refresh: () => applyViewBox(state.get()) });
 
 /* ----- tools: V/R selection + rectangle drawing (mouse ??store.update) ----- */
 initTools(svg, state);
@@ -241,9 +304,51 @@ initPages(state);
 
 /* ----- autosave: 2.5초 디바운스로 IndexedDB에 자동 저장 + 부팅 시 크래시 복구 -----
  * pages[] 채운 뒤에 초기화해야 첫 저장부터 유효한 다중 페이지 스냅샷이 된다. */
-initAutosave(state);
-const aiPanel = initAiPanel(state);
-initAiInstallGuide({ openDesktopPanel: () => aiPanel?.open() });
+const autosaveReady = initAutosave(state, { selectRecoveryCheckpoint: showRecoveryCheckpointDialog });
+initProjectFileOpening(state, autosaveReady);
+const recoveryChoice = await autosaveReady;
+const aiPanel = initAiPanel(state, { freshStart: recoveryChoice === "fresh" });
+window.addEventListener('5e:lite-ai-open', async () => {
+  await aiPanel?.open();
+  window.dispatchEvent(new Event('5e:lite-ai-opened'));
+});
+initMobileImage(aiPanel);
+initAiSharing(aiPanel);
+initDesktopProjectCloseGuard(state, () => aiPanel?.checkpointForClose());
+const aiEntryButton = document.getElementById("ai-image-install-open");
+const openSelectedAi = () => {
+  if (document.documentElement.classList.contains("mobile-image-mode")) {
+    void aiPanel?.open();
+    return;
+  }
+  void handSelectedCanvasImageToAi(state, {
+    renderImage: renderSessionToDataUrl,
+    openPanel: options => aiPanel?.open(options),
+  reportError: error => window.alert(`AI 이미지 변환을 열 수 없습니다.\n${error.message}`),
+    });
+};
+const webLogin = initWebLoginUi({ openAi: openSelectedAi });
+if (aiEntryButton) {
+  aiEntryButton.title = "AI 이미지 변환";
+  aiEntryButton.setAttribute("aria-label", "AI 이미지 변환");
+  const label = aiEntryButton.querySelector(".search-trigger-label");
+  if (label) label.textContent = "AI 이미지 변환";
+  aiEntryButton.addEventListener("click", () => webLogin ? webLogin.openAi() : openSelectedAi());
+}
+const desktopHandoff = initAiInstallGuide({
+  saveProject: () => saveProject(state),
+  openDesktopPanel: () => aiPanel?.open(),
+  openProjectChooser: () => document.getElementById("project-open")?.click(),
+});
+const projectTransferButton = document.querySelector("[data-ai-project-transfer]");
+if (projectTransferButton && window.fiveEDesktop) {
+  projectTransferButton.hidden = false;
+  projectTransferButton.addEventListener("click", () => desktopHandoff.openProjectChooser());
+}
+window.addEventListener("5e:ai-output-success", () => {
+  if (!document.documentElement.classList.contains("mobile-image-mode")) desktopHandoff.reportAiSuccess();
+});
+window.addEventListener("5e:local-folder-intent", () => desktopHandoff.reportLocalFolderIntent());
 
 /* ----- export dialog: 파일 dropdown → 내보내기/미리보기 (PNG/SVG) ----- */
 initExportDialog(state, svg);
@@ -261,9 +366,13 @@ initImageObjectify(state);
 initImagePaste(state, svg);
 
 /* ----- exam library: 기출 문항 검색 → 이미지 삽입/객체 변환 (지연 로딩) ----- */
-const openAiWithReference = (options) => aiPanel?.open(options);
-initExamLibrary(state, { openAi: openAiWithReference });
-initPartsLibrary(state, { openAi: openAiWithReference });
+const openAiWithReference = (options) => webLogin
+  ? webLogin.requireAi(() => aiPanel?.open(options))
+  : aiPanel?.open(options);
+const openIndependentAiReferences = (options) => webLogin
+  ? webLogin.requireAi(() => aiPanel?.openIndependentReferences(options))
+  : aiPanel?.openIndependentReferences(options);
+initExamLibrary(state, { openAi: openAiWithReference, openIndependentReferences: openIndependentAiReferences });
 
 /* ----- image cutout editing: edit-mode image 오려내기 (사각형/자유 영역 지우기) ----- */
 initImageCutout(state, svg);
@@ -287,7 +396,7 @@ initToolHint(state);
 initTooltips();
 
 /* ----- Pro/Lite 모드: 5E 옆 전환 버튼 + Lite 간소화(도구 확대·기능 숨김) ----- */
-initViewMode(state);
+initViewMode(state, { prepareNewAiWork: () => aiPanel.prepareNewWork() });
 
 /* ----- Mac 표기 정리: 화면에 박힌 "Ctrl"을 ⌘로 바꾼다(Windows에선 무동작) -----
    UI가 다 만들어진 뒤 한 번만 훑는다. 이후 동적으로 생기는 문구는 각자 keyLabel()을 쓴다. */
@@ -306,13 +415,13 @@ initReferenceWindows(state);
    페이지(연습용 페이지 생성)와 view-mode(Pro 전환) 배선이 끝난 뒤에 켠다. */
 initTutorial();
 
-/* ----- 브라우저 기본 확대/축소 차단(Ctrl+휠, Ctrl +/−/0) -----
-   앱은 자체 캔버스 줌 + 환경 설정(화면 크기)을 쓰므로, 브라우저 전체 확대로
-   레이아웃이 깨지지 않게 막는다. 캔버스 위 Ctrl+휠(도형 줌)은 그대로 동작. */
-// Mac은 ⌘+휠로도 브라우저 확대가 되고, 트랙패드 핀치는 ctrlKey=true인 휠로 온다 — 둘 다 막는다.
-window.addEventListener("wheel", (e) => { if (e.ctrlKey || e.metaKey) e.preventDefault(); }, { passive: false });
+/* Canvas and crop views own their zoom; surrounding UI keeps browser zoom. */
+const ownsZoom = target => target instanceof Element && target.closest("#ruler-container, [data-unilib-crop-stage]");
+window.addEventListener("wheel", (e) => {
+  if ((e.ctrlKey || e.metaKey) && ownsZoom(e.target)) e.preventDefault();
+}, { passive: false });
 window.addEventListener("keydown", (e) => {
-  if ((e.ctrlKey || e.metaKey) && ["+", "-", "=", "0"].includes(e.key)) e.preventDefault();
+  if ((e.ctrlKey || e.metaKey) && ["+", "-", "=", "0"].includes(e.key) && ownsZoom(e.target)) e.preventDefault();
 });
 
 /* ----- 퍼스널 오브젝트: 선택 저장 → 좌측 라이브러리/검색에서 재사용 ----- */
@@ -328,10 +437,20 @@ initDataPlot();
 (function initToolSections() {
   const panel = document.getElementById("tool-list");
   if (!panel) return;
+  const key = "5e.toolSections.v1";
+  let saved = {};
+  try { saved = JSON.parse(localStorage.getItem(key) || "{}"); } catch (_) {}
+  for (const section of panel.querySelectorAll(".tool-section[id]")) {
+    if (typeof saved[section.id] === "boolean") section.classList.toggle("is-collapsed", saved[section.id]);
+  }
   panel.addEventListener("click", (e) => {
     const header = e.target.closest(".tool-section-header");
     if (!header) return;
-    header.closest(".tool-section").classList.toggle("is-collapsed");
+    const section = header.closest(".tool-section");
+    section.classList.toggle("is-collapsed");
+    if (!section.id) return;
+    saved[section.id] = section.classList.contains("is-collapsed");
+    try { localStorage.setItem(key, JSON.stringify(saved)); } catch (_) {}
   });
 })();
 
@@ -350,6 +469,7 @@ initDataPlot();
     if (detail) detail.hidden = !on;
   };
   gridBtn.addEventListener("click", () => {
+    if (document.documentElement.dataset.mode === "lite") return;
     const on = !state.get().grid.visible;
     state.update((s) => { s.grid.visible = on; });
     syncGridBtn(on);
@@ -365,31 +485,65 @@ initDataPlot();
     });
   }
   if (centerBtn) {
-    // 스타일은 CSS(.is-active = 과목 강조색)에 위임 — 인라인 하드코딩 제거
-    const applyCenterLock = (locked) => {
-      centerBtn.classList.toggle("is-active", locked);
-      centerBtn.setAttribute("aria-pressed", String(locked));
-      setCenterLocked(locked);
-      if (locked) centerView(state); // state.update → applyViewBox+render 구독자 자동 호출
+    const control = centerBtn.closest(".canvas-lock-control");
+    const menu = document.getElementById("canvas-lock-menu");
+    const xInput = document.getElementById("canvas-lock-x");
+    const yInput = document.getElementById("canvas-lock-y");
+    const options = [...menu.querySelectorAll("[data-canvas-lock-mode]")];
+    const labels = {
+      free: "자유 이동",
+      current: "현재 위치 고정",
+      coordinate: "기준 좌표 고정",
+    };
+    let mode = "coordinate";
+    const point = () => ({ x: Number(xInput.value) || 0, y: Number(yInput.value) || 0 });
+    const closeMenu = () => {
+      menu.hidden = true;
+      centerBtn.setAttribute("aria-expanded", "false");
+    };
+    const applyCanvasLock = (next) => {
+      mode = next;
+      setCanvasLockMode(mode, state, point());
+      centerBtn.dataset.mode = mode;
+      centerBtn.classList.toggle("is-active", mode !== "free");
+      centerBtn.setAttribute("aria-pressed", String(mode !== "free"));
+      centerBtn.setAttribute("aria-label", labels[mode]);
+      centerBtn.title = `${labels[mode]} (Ctrl+Space)`;
+      for (const option of options) {
+        option.setAttribute("aria-checked", String(option.dataset.canvasLockMode === mode));
+      }
+      closeMenu();
     };
     centerBtn.addEventListener("click", () => {
-      applyCenterLock(!centerBtn.classList.contains("is-active"));
+      if (document.documentElement.dataset.mode === "lite") return;
+      menu.hidden = !menu.hidden;
+      centerBtn.setAttribute("aria-expanded", String(!menu.hidden));
     });
-    // 단축키: Ctrl+Space = 중앙 고정 토글 (텍스트 입력 중에는 무시).
-    // 캡처 단계로 등록해 다른 핸들러의 stopPropagation 영향을 받지 않게 한다.
-    // 참고: Windows에서 Ctrl+Space가 '입력 방법 전환' OS 단축키로 예약돼 있으면
-    //       브라우저에 이벤트가 도달하지 않을 수 있다(그 경우 Windows 키보드 설정에서 해제).
+    for (const option of options) {
+      option.addEventListener("click", () => applyCanvasLock(option.dataset.canvasLockMode));
+    }
+    for (const input of [xInput, yInput]) {
+      input.addEventListener("change", () => {
+        if (mode === "coordinate") applyCanvasLock(mode);
+      });
+    }
+    document.addEventListener("pointerdown", (event) => {
+      if (!menu.hidden && !control.contains(event.target)) closeMenu();
+    });
     document.addEventListener("keydown", (e) => {
       if (e.code !== "Space" || !(e.ctrlKey || e.metaKey)) return;
       const t = e.target;
       if (t && (t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable)) return;
       e.preventDefault();
-      applyCenterLock(!centerBtn.classList.contains("is-active"));
+      centerBtn.click();
     }, true);
+    applyCanvasLock("coordinate");
   }
   // 눈금자는 항상 켜짐(토글 UI 제거) — 명시적으로 한 번 켜 둔다.
   setRulerVisible(true);
 })();
+
+initLiteShell(state);
 
 /* ----- initial paint ----- */
 applyViewBox(state.get());

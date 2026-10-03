@@ -1,0 +1,961 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   version="1.2"
+   width="1409"
+   height="1031"
+   viewBox="-0.425 -0.036 1409 1031"
+   id="svg2"
+   xml:space="preserve"
+   style="overflow:visible"><metadata
+   id="metadata371"><rdf:RDF><cc:Work
+       rdf:about=""><dc:format>image/svg+xml</dc:format><dc:type
+         rdf:resource="http://purl.org/dc/dcmitype/StillImage" /><dc:title></dc:title></cc:Work></rdf:RDF></metadata><defs
+   id="defs369">
+		
+	</defs>
+	<style
+   type="text/css"
+   id="style4" />
+	<g
+   id="DryBulbTemperature">
+		<path
+   d="m 215.08,884.964 -0.32,-94.896"
+   id="path7"
+   style="fill:none;stroke:#008837" />
+		<path
+   d="M 317.814,884.964 317.539,747.815"
+   id="path9"
+   style="fill:none;stroke:#008837" />
+		<path
+   d="m 418.054,884.964 0.115,-195.418"
+   id="path11"
+   style="fill:none;stroke:#008837" />
+		<path
+   d="m 517.963,885.294 0.011,-270.271"
+   id="path13"
+   style="fill:none;stroke:#008837" />
+		<path
+   d="M 620.129,884.964 619.565,512.207"
+   id="path15"
+   style="fill:none;stroke:#008837" />
+		<path
+   d="m 721.721,884.964 -1.786,-507.27"
+   id="path17"
+   style="fill:none;stroke:#008837" />
+		<path
+   d="M 823.01,884.964 821.153,195.871"
+   id="path19"
+   style="fill:none;stroke:#008837" />
+		<path
+   d="M 924.249,884.964 921.65,52.617"
+   id="path21"
+   style="fill:none;stroke:#008837" />
+		<path
+   d="m 1025.489,884.964 -2.8,-832.304"
+   id="path23"
+   style="fill:none;stroke:#008837" />
+		<path
+   d="M 1126.727,884.964 1123.54,52.805"
+   id="path25"
+   style="fill:none;stroke:#008837" />
+		<path
+   d="m 1226.949,884.964 -2.44,-831.427"
+   id="path27"
+   style="fill:none;stroke:#008837" />
+		<path
+   d="M 1328.065,884.716 1325.5,54.123"
+   id="path29"
+   style="fill:none;stroke:#008837" />
+		<path
+   d="M 112.172,884.964 111.89,821.465"
+   id="path31"
+   style="fill:none;stroke:#008837" />
+		<path
+   d="M 11.553,884.964 11.332,843.393"
+   id="path33"
+   style="fill:none;stroke:#008837" />
+		<text
+   transform="translate(0,900.8896)"
+   id="text35">    <tspan
+   x="0"
+   y="0"
+   id="tspan37"
+   style="fill:#008837;font-family:DejaVu Sans">–10</tspan>    <tspan
+   x="106.6401"
+   y="0"
+   id="tspan39"
+   style="fill:#008837;font-family:DejaVu Sans">–5</tspan>    <tspan
+   x="211.0537"
+   y="0"
+   id="tspan41"
+   style="fill:#008837;font-family:DejaVu Sans">0</tspan>    <tspan
+   x="311.60889"
+   y="0"
+   id="tspan43"
+   style="fill:#008837;font-family:DejaVu Sans">5</tspan>    <tspan
+   x="408.30521"
+   y="0"
+   id="tspan45"
+   style="fill:#008837;font-family:DejaVu Sans">10</tspan>    <tspan
+   x="508.86041"
+   y="0"
+   id="tspan47"
+   style="fill:#008837;font-family:DejaVu Sans">15</tspan>    <tspan
+   x="609.41498"
+   y="0"
+   id="tspan49"
+   style="fill:#008837;font-family:DejaVu Sans">20</tspan>    <tspan
+   x="713.86182"
+   y="0"
+   id="tspan51"
+   style="fill:#008837;font-family:DejaVu Sans">25</tspan>    <tspan
+   x="814.4165"
+   y="0"
+   id="tspan53"
+   style="fill:#008837;font-family:DejaVu Sans">30</tspan>    <tspan
+   x="914.97119"
+   y="0"
+   id="tspan55"
+   style="fill:#008837;font-family:DejaVu Sans">35</tspan>    <tspan
+   x="1019.8452"
+   y="0"
+   id="tspan57"
+   style="fill:#008837;font-family:DejaVu Sans">40</tspan>    <tspan
+   x="1120.4009"
+   y="0"
+   id="tspan59"
+   style="fill:#008837;font-family:DejaVu Sans">45</tspan>    <tspan
+   x="1219.7661"
+   y="0"
+   id="tspan61"
+   style="fill:#008837;font-family:DejaVu Sans">50</tspan>    <tspan
+   x="1321.7397"
+   y="0"
+   id="tspan63"
+   style="fill:#008837;font-family:DejaVu Sans">55</tspan>    <tspan
+   x="645.89313"
+   y="27.2969"
+   id="tspan65"
+   style="fill:#008837;font-family:DejaVu Sans">Dry Bulb Temperature (°C)</tspan>   </text>
+
+
+	</g>
+	<g
+   id="HumidityRatio">
+		<path
+   d="M 1328.065,884.716 11.553,884.964"
+   id="_x0030_.000_3_"
+   style="fill:none;stroke:#13007c" />
+		<path
+   d="M 294.492,758.81 1328.14,757.962"
+   id="_x0030_.005_3_"
+   style="fill:none;stroke:#13007c" />
+		<path
+   d="m 497.575,631.193 830.64,0.892"
+   id="_x0030_.010_3_"
+   style="fill:none;stroke:#13007c" />
+		<path
+   d="m 624.264,506.568 704.023,-0.247"
+   id="_x0030_.015_3_"
+   style="fill:none;stroke:#13007c" />
+		<path
+   d="m 718.055,381.104 610.307,-1.25"
+   id="_x0030_.020_3_"
+   style="fill:none;stroke:#13007c" />
+		<path
+   d="m 791.428,254.89 534.691,-0.349"
+   id="_x0030_.025_3_"
+   style="fill:none;stroke:#13007c" />
+		<path
+   d="m 849.9,129.002 475.835,1.069"
+   id="_x0030_.030_7_"
+   style="fill:none;stroke:#13007c" />
+		<path
+   d="m 882.689,52.575 442.812,1.548"
+   id="_x0030_.030_6_"
+   style="fill:none;stroke:#13007c" />
+		<text
+   transform="translate(1344.2407,131.5195)"
+   id="text76">    <tspan
+   x="0"
+   y="757.77441"
+   id="tspan78"
+   style="fill:#13007c;font-family:DejaVu Sans">0.000</tspan>    <tspan
+   x="0"
+   y="630.9873"
+   id="tspan80"
+   style="fill:#13007c;font-family:DejaVu Sans">0.005</tspan>    <tspan
+   x="0"
+   y="505.30179"
+   id="tspan82"
+   style="fill:#13007c;font-family:DejaVu Sans">0.010</tspan>    <tspan
+   x="0"
+   y="379.61621"
+   id="tspan84"
+   style="fill:#13007c;font-family:DejaVu Sans">0.015</tspan>    <tspan
+   x="0"
+   y="253.9317"
+   id="tspan86"
+   style="fill:#13007c;font-family:DejaVu Sans">0.020</tspan>    <tspan
+   x="0"
+   y="128.2471"
+   id="tspan88"
+   style="fill:#13007c;font-family:DejaVu Sans">0.025</tspan>    <tspan
+   x="0"
+   y="0"
+   id="tspan90"
+   style="fill:#13007c;font-family:DejaVu Sans">0.030</tspan>   </text>
+
+
+		<text
+   transform="matrix(0,-1,1,0,1405.353,570.7549)"
+   id="text92">    <tspan
+   x="0"
+   y="0"
+   id="tspan94"
+   style="fill:#13007c;font-family:DejaVu Sans">Humidity Ratio (gm Water / gm of Dry Air)</tspan>   </text>
+
+
+	</g>
+	<g
+   id="RelativeHumidity">
+		<path
+   d="M 11.553,884.964 H 1328.065"
+   id="_x0030_0_x0025__3_"
+   style="fill:none;stroke:#fa0000" />
+		<path
+   d="M 1327.298,636.291 C 1159.672,738.722 994.081,790.435 788.53,827.054 557.932,868.134 298.792,877.179 11.507,880.628"
+   id="_x0031_0_x0025__3_"
+   style="fill:none;stroke:#fa0000" />
+		<path
+   d="M 1326.518,383.673 C 1158.892,588.535 994.081,691.758 788.531,764.994 557.933,847.154 298.793,869.394 11.508,876.293"
+   id="_x0032_0_x0025__3_"
+   style="fill:none;stroke:#fa0000" />
+		<path
+   d="M 1325.726,123.498 C 1263.373,236.148 1179.527,383.624 1036.28,524.132 945.431,613.245 873.139,660.647 782.042,708.87 589.169,810.966 325.797,855.062 11.465,872.428"
+   id="_x0033_0_x0025__3_"
+   style="fill:none;stroke:#fa0000" />
+		<path
+   d="M 1237.03,53.818 C 1172.061,195.444 1106.358,302.86 1034.818,397.173 951.511,506.997 883.142,572.02 780.62,644.958 584.56,784.444 375.716,841.315 11.465,868.362"
+   id="_x0034_0_x0025__3_"
+   style="fill:none;stroke:#fa0000" />
+		<path
+   d="m 1149.114,53.052 c -37.447,82.887 -74.347,156.369 -114.296,222.202 C 951.511,412.534 883.142,493.812 780.62,584.985 584.56,759.342 375.716,830.431 11.465,864.239"
+   id="_x0035_0_x0025__3_"
+   style="fill:none;stroke:#fa0000" />
+		<path
+   d="M 1077.36,52.846 C 969.292,298.116 848.813,471.863 711.621,594.006 520.44,764.216 272.959,838.363 11.417,859.407"
+   id="_x0036_0_x0025__3_"
+   style="fill:none;stroke:#fa0000" />
+		<path
+   d="M 1019.025,52.491 C 925.942,266.673 825.16,426.293 711.621,544.561 520.44,743.707 272.959,830.46 11.417,855.081"
+   id="_x0037_0_x0025__3_"
+   style="fill:none;stroke:#fa0000" />
+		<path
+   d="M 968.959,52.771 C 821.133,397.417 594.158,787.104 11.417,850.466"
+   id="_x0038_0_x0025__3_"
+   style="fill:none;stroke:#fa0000" />
+		<path
+   d="M 924.466,52.536 C 775.637,403.969 549.987,780.562 11.417,846.862"
+   id="_x0039_0_x0025__3_"
+   style="fill:none;stroke:#fa0000" />
+		<path
+   d="M 882.689,52.575 C 811.163,229.964 735.102,389.937 577.687,556.732 514.766,623.402 439.267,683.585 348.888,732.709 273.07,773.919 128.845,825.716 11.466,843.979"
+   id="_x0040_0_x0025__3_"
+   style="fill:none;stroke:#fa0000" />
+		<text
+   transform="matrix(0.9997,0.025,-0.025,0.9997,898.686,880.0752)"
+   id="text108"><tspan
+     x="0"
+     y="0"
+     id="tspan110"
+     style="fill:#fb0f0c;font-family:DejaVu Sans">0%</tspan></text>
+
+
+		<text
+   transform="matrix(0.9433,-0.3319,0.3319,0.9433,894.4634,801.8525)"
+   id="text112"><tspan
+     x="0"
+     y="0"
+     id="tspan114"
+     style="fill:#fb0f0c;font-family:DejaVu Sans">10%</tspan></text>
+
+
+		<text
+   transform="matrix(0.9171,-0.3987,0.3987,0.9171,882.1167,722.4414)"
+   id="text116"><tspan
+     x="0"
+     y="0"
+     id="tspan118"
+     style="fill:#fb0f0c;font-family:DejaVu Sans">20%</tspan></text>
+
+
+		<text
+   transform="matrix(0.8301,-0.5576,0.5576,0.8301,870.019,650.9639)"
+   id="text120"><tspan
+     x="0"
+     y="0"
+     id="tspan122"
+     style="fill:#fb0f0c;font-family:DejaVu Sans">30%</tspan></text>
+
+
+		<text
+   transform="matrix(0.8581,-0.5134,0.5134,0.8581,835.7974,595.6309)"
+   id="text124"><tspan
+     x="0"
+     y="0"
+     id="tspan126"
+     style="fill:#fb0f0c;font-family:DejaVu Sans">40%</tspan></text>
+
+
+		<text
+   transform="matrix(0.694,-0.7199,0.7199,0.694,808.4224,551.3555)"
+   id="text128"><tspan
+     x="0"
+     y="0"
+     id="tspan130"
+     style="fill:#fb0f0c;font-family:DejaVu Sans">50% Relative Humidity</tspan></text>
+
+
+		<text
+   transform="matrix(0.682,-0.7314,0.7314,0.682,779.3833,516.6611)"
+   id="text132"><tspan
+     x="0"
+     y="0"
+     id="tspan134"
+     style="fill:#fb0f0c;font-family:DejaVu Sans">60%</tspan></text>
+
+
+		<text
+   transform="matrix(0.6308,-0.776,0.776,0.6308,750.6079,492.8857)"
+   id="text136"><tspan
+     x="0"
+     y="0"
+     id="tspan138"
+     style="fill:#fb0f0c;font-family:DejaVu Sans">70%</tspan></text>
+
+
+		<text
+   transform="matrix(0.5791,-0.8152,0.8152,0.5791,722.019,472.6304)"
+   id="text140"><tspan
+     x="0"
+     y="0"
+     id="tspan142"
+     style="fill:#fb0f0c;font-family:DejaVu Sans">80%</tspan></text>
+
+
+		<text
+   transform="matrix(0.6033,-0.7975,0.7975,0.6033,691.3101,460.1436)"
+   id="text144"><tspan
+     x="0"
+     y="0"
+     id="tspan146"
+     style="fill:#fb0f0c;font-family:DejaVu Sans">90%</tspan></text>
+
+
+		<text
+   transform="matrix(0.6033,-0.7975,0.7975,0.6033,657.1108,455.021)"
+   id="text148"><tspan
+     x="0"
+     y="0"
+     id="tspan150"
+     style="fill:#fb0f0c;font-family:DejaVu Sans">100%</tspan></text>
+
+
+	</g>
+	<g
+   id="Enthalpy">
+		<path
+   d="M 1327.969,853.748 555.242,455.964"
+   id="_x0032_0_23_"
+   style="fill:none;stroke:#000000" />
+		<path
+   d="M 1003.058,884.964 425.173,587.659"
+   id="_x0032_0_22_"
+   style="fill:none;stroke:#000000" />
+		<path
+   d="M 608.439,884.85 278.109,715.867"
+   id="_x0032_0_21_"
+   style="fill:none;stroke:#000000" />
+		<path
+   d="M 228.586,884.965 63.803,809.825"
+   id="_x0032_0_20_"
+   style="fill:none;stroke:#000000" />
+		<path
+   d="m 745.655,155.542 581.117,310.421"
+   id="_x0033_0_11_"
+   style="fill:none;stroke:#000000" />
+		<path
+   d="M 868.682,21.525 1326.159,265.9"
+   id="_x0033_0_10_"
+   style="fill:none;stroke:#000000" />
+		<path
+   d="m 1226.611,23.224 98.966,55.533"
+   id="_x0033_5_7_"
+   style="fill:none;stroke:#000000" />
+		<path
+   d="M 1327.386,663.577 654.812,308.216"
+   id="_x0032_0_19_"
+   style="fill:none;stroke:#000000" />
+		<text
+   transform="matrix(0.8817,0.4718,-0.4718,0.8817,51.9565,809.9756)"
+   id="text161"><tspan
+     x="0"
+     y="0"
+     id="tspan163"
+     style="font-family:DejaVu Sans">0</tspan></text>
+
+
+		<text
+   transform="matrix(0.8817,0.4718,-0.4718,0.8817,258.5464,714.5439)"
+   id="text165"><tspan
+     x="0"
+     y="0"
+     id="tspan167"
+     style="font-family:DejaVu Sans">20</tspan></text>
+
+
+		<text
+   transform="matrix(0.8817,0.4718,-0.4718,0.8817,406.3242,585.6543)"
+   id="text169"><tspan
+     x="0"
+     y="0"
+     id="tspan171"
+     style="font-family:DejaVu Sans">40</tspan></text>
+
+
+		<text
+   transform="matrix(0.8817,0.4718,-0.4718,0.8817,538.2202,451.1694)"
+   id="text173"><tspan
+     x="0"
+     y="0"
+     id="tspan175"
+     style="font-family:DejaVu Sans">60</tspan></text>
+
+
+		<text
+   transform="matrix(0.8817,0.4718,-0.4718,0.8817,627.9175,306.5234)"
+   id="text177"><tspan
+     x="0"
+     y="0"
+     id="tspan179"
+     style="font-family:DejaVu Sans">80</tspan></text>
+
+
+		<text
+   transform="matrix(0.8817,0.4718,-0.4718,0.8817,717.3618,143.4863)"
+   id="text181"><tspan
+     x="0"
+     y="0"
+     id="tspan183"
+     style="font-family:DejaVu Sans">100</tspan></text>
+
+
+		<text
+   transform="matrix(0.8817,0.4718,-0.4718,0.8817,847.6284,11.1685)"
+   id="text185"><tspan
+     x="0"
+     y="0"
+     id="tspan187"
+     style="font-family:DejaVu Sans">120</tspan></text>
+
+
+		<text
+   transform="matrix(0.8817,0.4718,-0.4718,0.8817,1202.0728,11.1689)"
+   id="text189"><tspan
+     x="0"
+     y="0"
+     id="tspan191"
+     style="font-family:DejaVu Sans">140</tspan></text>
+
+
+		<text
+   transform="matrix(0.4825,-0.8759,0.8759,0.4825,596.4326,303.959)"
+   id="text193"><tspan
+     x="0"
+     y="0"
+     id="tspan195"
+     style="font-family:DejaVu Sans">Enthalpy at Saturation (J ⁄ g Dry Air)</tspan></text>
+
+
+	</g>
+	<g
+   id="WetBulbTemperature">
+		<path
+   d="m 111.891,821.465 143.505,63.453"
+   id="_x002D_5_3_"
+   style="fill:none;stroke:#2986bb" />
+		<path
+   d="M 215.743,790.087 406.888,884.89"
+   id="_x0030__3_"
+   style="fill:none;stroke:#2986bb" />
+		<path
+   d="M 317.539,747.814 585.463,884.855"
+   id="_x0035__3_"
+   style="fill:none;stroke:#2986bb" />
+		<path
+   d="m 418.169,689.094 377.69,196.413"
+   id="_x0031_0_3_"
+   style="fill:none;stroke:#2986bb" />
+		<path
+   d="m 517.974,615.022 530.089,269.941"
+   id="_x0031_5_3_"
+   style="fill:none;stroke:#2986bb" />
+		<path
+   d="m 619.565,512.207 708.471,363.32"
+   id="_x0032_0_18_"
+   style="fill:none;stroke:#2986bb" />
+		<path
+   d="m 719.935,377.694 607.544,317.163"
+   id="_x0032_5_3_"
+   style="fill:none;stroke:#2986bb" />
+		<path
+   d="m 821.153,195.871 505.619,270.092"
+   id="_x0033_0_9_"
+   style="fill:none;stroke:#2986bb" />
+		<path
+   d="m 1094.515,53.315 231.396,129.844"
+   id="_x0033_5_6_"
+   style="fill:none;stroke:#2986bb" />
+		<text
+   transform="matrix(0.6691,0.7431,-0.7431,0.6691,94.3896,801.1836)"
+   id="text207"><tspan
+     x="0"
+     y="0"
+     id="tspan209"
+     style="fill:#2986bb;font-family:DejaVu Sans">–5</tspan></text>
+
+
+		<text
+   transform="matrix(0.5,0.866,-0.866,0.5,202.3516,776.1621)"
+   id="text211"><tspan
+     x="0"
+     y="0"
+     id="tspan213"
+     style="fill:#2986bb;font-family:DejaVu Sans">0</tspan></text>
+
+
+		<text
+   transform="matrix(0.6691,0.7431,-0.7431,0.6691,302.7827,736.8027)"
+   id="text215"><tspan
+     x="0"
+     y="0"
+     id="tspan217"
+     style="fill:#2986bb;font-family:DejaVu Sans">5</tspan></text>
+
+
+		<text
+   transform="matrix(0.7193,0.6947,-0.6947,0.7193,393.8657,669.6445)"
+   id="text219"><tspan
+     x="0"
+     y="0"
+     id="tspan221"
+     style="fill:#2986bb;font-family:DejaVu Sans">10</tspan></text>
+
+
+		<text
+   transform="matrix(0.766,0.6428,-0.6428,0.766,495.2661,600.583)"
+   id="text223"><tspan
+     x="0"
+     y="0"
+     id="tspan225"
+     style="fill:#2986bb;font-family:DejaVu Sans">15</tspan></text>
+
+
+		<text
+   transform="matrix(0.866,0.5,-0.5,0.866,592.5957,502.4873)"
+   id="text227"><tspan
+     x="0"
+     y="0"
+     id="tspan229"
+     style="fill:#2986bb;font-family:DejaVu Sans">20</tspan></text>
+
+
+		<text
+   transform="matrix(0.9272,0.3746,-0.3746,0.9272,692.2817,371.3486)"
+   id="text231"><tspan
+     x="0"
+     y="0"
+     id="tspan233"
+     style="fill:#2986bb;font-family:DejaVu Sans">25</tspan></text>
+
+
+		<text
+   transform="matrix(0.9397,0.342,-0.342,0.9397,792.2505,187.4575)"
+   id="text235"><tspan
+     x="0"
+     y="0"
+     id="tspan237"
+     style="fill:#2986bb;font-family:DejaVu Sans">30</tspan></text>
+
+
+		<text
+   transform="matrix(0.9397,0.342,-0.342,0.9397,1066.48,42.1167)"
+   id="text239"><tspan
+     x="0"
+     y="0"
+     id="tspan241"
+     style="fill:#2986bb;font-family:DejaVu Sans">35</tspan></text>
+
+
+			<path
+   d="M 386.506,659.722 C 446.313,620.25 498.573,575.465 544.241,527.076 595.517,472.745 638.16,419.138 674.827,365.417"
+   id="_x0031_00_x0025__6_"
+   style="fill:none" />
+			<text
+   transform="matrix(0.7842,-0.6205,0.6205,0.7842,443.519,620.8164)"
+   id="text244">     <tspan
+   x="0"
+   y="-0"
+   rotate="-0"
+   id="tspan246"
+   style="fill:#2986bb;font-family:DejaVu Sans">W</tspan>     <tspan
+   x="12.666"
+   y="-0.014"
+   rotate="-0.64700001"
+   id="tspan248"
+   style="fill:#2986bb;font-family:DejaVu Sans">e</tspan>     <tspan
+   x="20.233999"
+   y="-0.106"
+   rotate="-1.013"
+   id="tspan250"
+   style="fill:#2986bb;font-family:DejaVu Sans">t</tspan>     <tspan
+   x="24.014999"
+   y="-0.17200001"
+   rotate="-1.257"
+   id="tspan252"
+   style="fill:#2986bb;font-family:DejaVu Sans"> </tspan>     <tspan
+   x="27.799"
+   y="-0.24600001"
+   rotate="-1.6720001"
+   id="tspan254"
+   style="fill:#2986bb;font-family:DejaVu Sans">B</tspan>     <tspan
+   x="36.875999"
+   y="-0.514"
+   rotate="-2.2079999"
+   id="tspan256"
+   style="fill:#2986bb;font-family:DejaVu Sans">u</tspan>     <tspan
+   x="44.438"
+   y="-0.81300002"
+   rotate="-2.549"
+   id="tspan258"
+   style="fill:#2986bb;font-family:DejaVu Sans">l</tspan>     <tspan
+   x="47.460999"
+   y="-0.94"
+   rotate="-2.8900001"
+   id="tspan260"
+   style="fill:#2986bb;font-family:DejaVu Sans">b</tspan>     <tspan
+   x="55.019001"
+   y="-1.3279999"
+   rotate="-3.2539999"
+   id="tspan262"
+   style="fill:#2986bb;font-family:DejaVu Sans"> </tspan>     <tspan
+   x="58.797001"
+   y="-1.5369999"
+   rotate="-3.619"
+   id="tspan264"
+   style="fill:#2986bb;font-family:DejaVu Sans">o</tspan>     <tspan
+   x="66.349998"
+   y="-2.02"
+   rotate="-4.007"
+   id="tspan266"
+   style="fill:#2986bb;font-family:DejaVu Sans">r</tspan>     <tspan
+   x="70.869003"
+   y="-2.3369999"
+   rotate="-4.2729998"
+   id="tspan268"
+   style="fill:#2986bb;font-family:DejaVu Sans"> </tspan>     <tspan
+   x="74.643997"
+   y="-2.6110001"
+   rotate="-4.6849999"
+   id="tspan270"
+   style="fill:#2986bb;font-family:DejaVu Sans">S</tspan>     <tspan
+   x="83.694"
+   y="-3.355"
+   rotate="-5.217"
+   id="tspan272"
+   style="fill:#2986bb;font-family:DejaVu Sans">a</tspan>     <tspan
+   x="91.228996"
+   y="-4.0489998"
+   rotate="-5.579"
+   id="tspan274"
+   style="fill:#2986bb;font-family:DejaVu Sans">t</tspan>     <tspan
+   x="94.995003"
+   y="-4.4109998"
+   rotate="-5.9390001"
+   id="tspan276"
+   style="fill:#2986bb;font-family:DejaVu Sans">u</tspan>     <tspan
+   x="102.521"
+   y="-5.1999998"
+   rotate="-6.3239999"
+   id="tspan278"
+   style="fill:#2986bb;font-family:DejaVu Sans">r</tspan>     <tspan
+   x="107.028"
+   y="-5.6939998"
+   rotate="-6.7080002"
+   id="tspan280"
+   style="fill:#2986bb;font-family:DejaVu Sans">a</tspan>     <tspan
+   x="114.542"
+   y="-6.5830002"
+   rotate="-7.0669999"
+   id="tspan282"
+   style="fill:#2986bb;font-family:DejaVu Sans">t</tspan>     <tspan
+   x="118.293"
+   y="-7.0489998"
+   rotate="-7.2810001"
+   id="tspan284"
+   style="fill:#2986bb;font-family:DejaVu Sans">i</tspan>     <tspan
+   x="121.295"
+   y="-7.4260001"
+   rotate="-7.6160002"
+   id="tspan286"
+   style="fill:#2986bb;font-family:DejaVu Sans">o</tspan>     <tspan
+   x="128.799"
+   y="-8.4280005"
+   rotate="-8.0909996"
+   id="tspan288"
+   style="fill:#2986bb;font-family:DejaVu Sans">n</tspan>     <tspan
+   x="136.297"
+   y="-9.5030003"
+   rotate="-8.3950005"
+   id="tspan290"
+   style="fill:#2986bb;font-family:DejaVu Sans"> </tspan>     <tspan
+   x="139.814"
+   y="-10.016"
+   rotate="-8.6269999"
+   id="tspan292"
+   style="fill:#2986bb;font-family:DejaVu Sans">T</tspan>     <tspan
+   x="146.57401"
+   y="-11.04"
+   rotate="-8.8859997"
+   id="tspan294"
+   style="fill:#2986bb;font-family:DejaVu Sans">e</tspan>     <tspan
+   x="154.07899"
+   y="-12.207"
+   rotate="-9.2700005"
+   id="tspan296"
+   style="fill:#2986bb;font-family:DejaVu Sans">m</tspan>     <tspan
+   x="165.28999"
+   y="-14.043"
+   rotate="-9.658"
+   id="tspan298"
+   style="fill:#2986bb;font-family:DejaVu Sans">p</tspan>     <tspan
+   x="172.76601"
+   y="-15.315"
+   rotate="-9.9720001"
+   id="tspan300"
+   style="fill:#2986bb;font-family:DejaVu Sans">e</tspan>     <tspan
+   x="180.22701"
+   y="-16.629999"
+   rotate="-10.225"
+   id="tspan302"
+   style="fill:#2986bb;font-family:DejaVu Sans">r</tspan>     <tspan
+   x="184.698"
+   y="-17.433001"
+   rotate="-10.478"
+   id="tspan304"
+   style="fill:#2986bb;font-family:DejaVu Sans">a</tspan>     <tspan
+   x="192.145"
+   y="-18.813999"
+   rotate="-10.718"
+   id="tspan306"
+   style="fill:#2986bb;font-family:DejaVu Sans">t</tspan>     <tspan
+   x="195.868"
+   y="-19.514999"
+   rotate="-10.959"
+   id="tspan308"
+   style="fill:#2986bb;font-family:DejaVu Sans">u</tspan>     <tspan
+   x="203.30499"
+   y="-20.959"
+   rotate="-11.217"
+   id="tspan310"
+   style="fill:#2986bb;font-family:DejaVu Sans">r</tspan>     <tspan
+   x="207.75999"
+   y="-21.839001"
+   rotate="-11.477"
+   id="tspan312"
+   style="fill:#2986bb;font-family:DejaVu Sans">e</tspan>     <tspan
+   x="215.18201"
+   y="-23.35"
+   rotate="-11.722"
+   id="tspan314"
+   style="fill:#2986bb;font-family:DejaVu Sans"> </tspan>     <tspan
+   x="218.886"
+   y="-24.118"
+   rotate="-11.902"
+   id="tspan316"
+   style="fill:#2986bb;font-family:DejaVu Sans">(</tspan>     <tspan
+   x="223.326"
+   y="-25.052999"
+   rotate="-12.119"
+   id="tspan318"
+   style="fill:#2986bb;font-family:DejaVu Sans">°</tspan>     <tspan
+   x="228.664"
+   y="-26.191999"
+   rotate="-12.452"
+   id="tspan320"
+   style="fill:#2986bb;font-family:DejaVu Sans">C</tspan>     <tspan
+   x="238.26801"
+   y="-28.320999"
+   rotate="-12.768"
+   id="tspan322"
+   style="fill:#2986bb;font-family:DejaVu Sans">)</tspan>    </text>
+
+
+	</g>
+	<g
+   id="SpecificVolume">
+		<path
+   d="m 1127.802,53.432 199.21,490.461"
+   id="_x0030_.95_3_"
+   style="fill:none;stroke:#56b257" />
+		<path
+   d="m 834.148,167.065 281.927,717.898"
+   id="_x0030_.90_3_"
+   style="fill:none;stroke:#56b257" />
+		<path
+   d="M 618.869,511.149 760.538,884.963"
+   id="_x0030_.85_3_"
+   style="fill:none;stroke:#56b257" />
+		<path
+   d="m 348.955,731.707 54.12,153.257"
+   id="_x0030_.80_3_"
+   style="fill:none;stroke:#56b257" />
+		<path
+   d="m 30.241,840.631 15,44.333"
+   id="_x0030_.75_4_"
+   style="fill:none;stroke:#56b257" />
+		<text
+   transform="matrix(0.3636,0.9315,-0.9315,0.3636,1196.0962,196.9707)"
+   id="text330"><tspan
+     x="0"
+     y="0"
+     id="tspan332"
+     style="fill:#56b257;font-family:DejaVu Sans">0.95</tspan></text>
+
+
+		<text
+   transform="matrix(0.3636,0.9315,-0.9315,0.3636,687.207,666.9717)"
+   id="text334"><tspan
+     x="0"
+     y="0"
+     id="tspan336"
+     style="fill:#56b257;font-family:DejaVu Sans">0.85</tspan></text>
+
+
+		<text
+   transform="matrix(0.3636,0.9315,-0.9315,0.3636,375.6885,789.9531)"
+   id="text338"><tspan
+     x="0"
+     y="0"
+     id="tspan340"
+     style="fill:#56b257;font-family:DejaVu Sans">0.80</tspan></text>
+
+
+		<text
+   transform="matrix(0.3636,0.9315,-0.9315,0.3636,41.2441,850.1289)"
+   id="text342"><tspan
+     x="0"
+     y="0"
+     id="tspan344"
+     style="fill:#56b257;font-family:DejaVu Sans">0.75</tspan></text>
+
+
+		<text
+   transform="matrix(0.3636,0.9315,-0.9315,0.3636,923.3745,367.6997)"
+   id="text346">    <tspan
+   x="0"
+   y="0"
+   id="tspan348"
+   style="fill:#56b257;font-family:DejaVu Sans">Specific Volume 0.90 (m</tspan>    <tspan
+   x="154.634"
+   y="-3"
+   id="tspan350"
+   style="font-size:11px;fill:#56b257;font-family:DejaVu Sans">3</tspan>    <tspan
+   x="165.008"
+   y="0"
+   id="tspan352"
+   style="fill:#56b257;font-family:DejaVu Sans"> ⁄ kg Dry Air)</tspan>   </text>
+
+
+	</g>
+	
+<text
+   x="96.142868"
+   y="209.44901"
+   id="text3216"
+   xml:space="preserve"
+   style="font-size:24px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"><tspan
+     x="363.54132"
+     y="0"
+     id="tspan3218"
+     style="font-family:DejaVu Sans"><tspan
+       x="96.142868"
+       y="209.44901"
+       id="tspan3220"
+       style="font-size:36px;line-height:125%;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans">Psychrometric </tspan><tspan
+       x="363.54132"
+       y="209.44901"
+       id="tspan3222"
+       style="font-size:32px;line-height:125%;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans">Chart</tspan></tspan></text>
+<text
+   x="-20.285339"
+   y="233.91849"
+   id="text3192"
+   xml:space="preserve"
+   style="font-size:18px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;letter-spacing:0px;word-spacing:0px;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:DejaVu Sans;-inkscape-font-specification:DejaVu Sans"><tspan
+     x="218.63751"
+     y="233.91849"
+     id="tspan3194"
+     style="text-align:start;text-anchor:start;font-family:DejaVu Sans"><tspan
+       x="218.63751"
+       y="233.91849"
+       id="tspan3196"
+       style="font-size:14px;text-align:start;text-anchor:start;font-family:DejaVu Sans">SI (metric) units</tspan><tspan
+       x="331.07501"
+       y="233.91849"
+       dx="0"
+       id="tspan3198"
+       style="font-size:14px;text-align:start;text-anchor:start;font-family:DejaVu Sans" /></tspan><tspan
+     x="118.73711"
+     y="251.41849"
+     id="tspan3200"
+     style="text-align:start;text-anchor:start;font-family:DejaVu Sans"><tspan
+       x="118.73711"
+       y="251.41849"
+       id="tspan3202"
+       style="font-size:14px;text-align:start;text-anchor:start;font-family:DejaVu Sans">Barometric Pressure 101.325 kPa (Sea level)</tspan><tspan
+       x="430.9754"
+       y="251.41849"
+       dx="0"
+       id="tspan3204"
+       style="font-size:14px;text-align:start;text-anchor:start;font-family:DejaVu Sans" /></tspan><tspan
+     x="206.23712"
+     y="268.91849"
+     id="tspan3206"
+     style="text-align:start;text-anchor:start;font-family:DejaVu Sans"><tspan
+       x="206.23712"
+       y="268.91849"
+       id="tspan3208"
+       style="font-size:14px;text-align:start;text-anchor:start;font-family:DejaVu Sans">based on data from</tspan><tspan
+       x="343.4754"
+       y="268.91849"
+       dx="0"
+       id="tspan3210"
+       style="font-size:14px;text-align:start;text-anchor:start;font-family:DejaVu Sans" /></tspan><tspan
+     x="96.342583"
+     y="286.41849"
+     id="tspan3212"
+     style="text-align:start;text-anchor:start;font-family:DejaVu Sans"><tspan
+       x="96.342583"
+       y="286.41849"
+       id="tspan3214"
+       style="font-size:14px;text-align:start;text-anchor:start;font-family:DejaVu Sans">Carrier Corporation Cat. No. 794-001, dated 1975   </tspan></tspan></text>
+</svg>

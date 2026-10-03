@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="137" height="110" version="1.1" xmlns="http://www.w3.org/2000/svg">
+ <defs>
+  <linearGradient id="a" x1="110.88" x2="7.471" y1="56.635" y2="56.936" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#07ff07" offset="0"/>
+   <stop stop-color="#07ff07" stop-opacity="0" offset="1"/>
+  </linearGradient>
+  <linearGradient id="b" x1="42.5" x2="111.25" y1="57.125" y2="57.125" gradientUnits="userSpaceOnUse">
+   <stop stop-color="#2f8c5e" offset="0"/>
+   <stop stop-color="#396" offset="1"/>
+  </linearGradient>
+  <marker id="c" overflow="visible" markerHeight=".8" markerWidth="1.3" orient="auto-start-reverse" preserveAspectRatio="none" viewBox="0 0 1 1">
+   <path d="M2.885 0-1.44 2.5v-5z" fill="context-stroke" fill-rule="evenodd" stroke="context-stroke" stroke-width=".5pt"/>
+  </marker>
+ </defs>
+ <path d="M111.65 52.734 31.862 1.099c-43.711 33.738-31.65 75.244-2.884 107.39l82.534-47.928z" fill="url(#a)"/>
+ <path d="M42.5 55.25h68.75V59H42.5z" fill="url(#b)"/>
+ 
+  <path d="M111.51 38.177h25.489v24.444H111.51zm-93.89 1.648h22.605V62.21H17.62zM40.225 62v12m71.285-12v12" fill="#fff" stroke="#000"/>
+  <path d="m47.378 72.097 56.854.137" fill="#07ff07" marker-end="url(#c)" marker-start="url(#c)" stroke="#000" stroke-width="1.4"/>
+  <g font-family="'Liberation Sans'" font-size="10">
+   <text x="73.021" y="69.763">d</text>
+   <text x="31.586" y="47.928">o</text>
+   <text x="31.934" y="60.254">z</text>
+  </g>
+  <path d="M40.396 42.144h2.185v7.574h-2.185zm.097 11.361h2.088v7.234h-2.088z" fill="#fff" stroke="#000" stroke-width=".7"/>
+</svg>

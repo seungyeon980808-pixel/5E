@@ -1,0 +1,379 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:ns="http://creativecommons.org/ns#"
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://web.resource.org/cc/"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="470"
+   height="470"
+   id="svg6956"
+   version="1.0"
+   inkscape:version="0.45pre1"
+   sodipodi:docname="Solar_system_barycenter-it.svg"
+   sodipodi:version="0.32"
+   inkscape:output_extension="org.inkscape.output.svg.inkscape"
+   sodipodi:docbase="C:\Users\Joy\Desktop"
+   sodipodi:modified="true">
+  <defs
+     id="defs6958">
+    <inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="0 : 526.18109 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_z="744.09448 : 526.18109 : 1"
+       inkscape:persp3d-origin="372.04724 : 350.78739 : 1"
+       id="perspective6964" />
+    <inkscape:perspective
+       id="perspective6899"
+       inkscape:persp3d-origin="0.5 : 0.33333333 : 1"
+       inkscape:vp_z="1 : 0.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_x="0 : 0.5 : 1"
+       sodipodi:type="inkscape:persp3d" />
+    <marker
+       inkscape:stockid="Arrow1Lend"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="Arrow1Lend"
+       style="overflow:visible">
+      <path
+         id="path3639"
+         d="M 0,0 L 5,-5 L -12.5,0 L 5,5 L 0,0 z "
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;marker-start:none"
+         transform="matrix(-0.8,0,0,-0.8,-10,0)" />
+    </marker>
+    <marker
+       inkscape:stockid="DotM"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="DotM"
+       style="overflow:visible">
+      <path
+         id="path3701"
+         d="M -2.5,-1 C -2.5,1.76 -4.74,4 -7.5,4 C -10.26,4 -12.5,1.76 -12.5,-1 C -12.5,-3.76 -10.26,-6 -7.5,-6 C -4.74,-6 -2.5,-3.76 -2.5,-1 z "
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;marker-start:none;marker-end:none"
+         transform="matrix(0.4,0,0,0.4,2.96,0.4)" />
+    </marker>
+    <marker
+       inkscape:stockid="Arrow1Lend"
+       orient="auto"
+       refY="0"
+       refX="0"
+       id="marker6907"
+       style="overflow:visible">
+      <path
+         id="path6909"
+         d="M 0,0 L 5,-5 L -12.5,0 L 5,5 L 0,0 z "
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;marker-start:none"
+         transform="matrix(-0.8,0,0,-0.8,-10,0)" />
+    </marker>
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="1.161081"
+     inkscape:cx="231.94256"
+     inkscape:cy="307.96805"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     inkscape:window-width="1366"
+     inkscape:window-height="718"
+     inkscape:window-x="-8"
+     inkscape:window-y="-8"
+     inkscape:window-maximized="1" />
+  <metadata
+     id="metadata6961">
+    <rdf:RDF>
+      <ns:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+      </ns:Work>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-228.468,-251.338)">
+    <path
+       transform="matrix(4.925,0,0,4.925,-1166.3904,-1745.6614)"
+       d="M 346.13503 463.37433 A 27.914116 27.914116 0 1 1  290.3068,463.37433 A 27.914116 27.914116 0 1 1  346.13503 463.37433 z"
+       sodipodi:ry="27.914116"
+       sodipodi:rx="27.914116"
+       sodipodi:cy="463.37433"
+       sodipodi:cx="318.22092"
+       id="path2857"
+       style="color:#000000;fill:#ffe680;stroke:#000000;stroke-width:0.20304599;stroke-linecap:round;stroke-linejoin:round;marker:none;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;visibility:visible;display:inline;overflow:visible"
+       sodipodi:type="arc" />
+    <path
+       sodipodi:type="arc"
+       style="color:#000000;fill:#ffcc00;stroke:#000000;stroke-width:1.37931001;stroke-linecap:round;stroke-linejoin:round;marker:none;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;visibility:visible;display:inline;overflow:visible"
+       id="path2853"
+       sodipodi:cx="318.22092"
+       sodipodi:cy="463.37433"
+       sodipodi:rx="27.914116"
+       sodipodi:ry="27.914116"
+       d="M 346.13503 463.37433 A 27.914116 27.914116 0 1 1  290.3068,463.37433 A 27.914116 27.914116 0 1 1  346.13503 463.37433 z"
+       transform="matrix(0.725,0,0,0.725,170.13963,200.50865)" />
+    <path
+       style="color:#000000;fill:none;stroke:#000000;stroke-width:1.5;stroke-linecap:butt;stroke-linejoin:miter;marker-start:url(#Arrow1Lend);marker-mid:url(#DotM);marker-end:url(#Arrow1Lend);stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;visibility:visible;display:inline;overflow:visible"
+       d="M 581.24493,691.02933 C 581.24493,691.02933 589.42959,682.05617 596.94663,669.3959 C 604.46367,656.73563 621.05086,616.50606 622.06933,589.84067 C 623.0878,563.17528 616.45517,537.14383 604.62301,515.17041 C 592.79085,493.19699 574.45816,474.1027 554.3776,462.13358 C 534.29704,450.16446 511.73606,443.91782 489.47728,444.68726 C 467.2185,445.4567 443.00393,453.89289 426.67052,466.3207 C 410.33711,478.74851 400.15572,493.94981 394.56928,513.07685 C 388.98284,532.20389 388.90908,555.61394 396.66284,575.88361 C 404.4166,596.15328 420.87639,615.53428 439.92972,627.52472 C 458.98305,639.51516 481.89861,645.0511 505.52789,644.27319 C 529.15717,643.49528 554.51123,635.00472 576.01104,621.24405 C 597.51085,607.48338 616.87919,587.01657 629.74571,563.32226 C 642.61223,539.62795 650.39483,511.36689 649.98345,483.06917 C 649.57207,454.77145 640.47507,424.68772 626.25645,399.32682 C 612.03783,373.96592 590.59493,352.57293 566.93895,335.12436 C 543.28297,317.67579 516.33371,302.53004 486.68587,296.74245 C 457.03803,290.95486 424.19218,293.52058 394.56928,302.32527 C 364.94638,311.12996 335.30801,327.44863 313.61834,348.38356 C 291.92867,369.31849 276.94655,394.5305 267.56005,423.05382 C 258.17355,451.57714 254.1343,485.59782 259.88367,515.17041 C 265.63304,544.743 280.29355,573.27828 299.66129,594.02778 C 319.02903,614.77728 345.11223,628.89728 370.14443,635.89896 C 395.17663,642.90064 421.26827,642.15756 444.11684,636.59681 C 466.96541,631.03606 487.2902,621.27879 503.43434,605.19343 C 519.57848,589.10807 531.07978,564.88524 536.23342,543.78237 C 541.38706,522.6795 541.80603,502.93302 535.53557,483.06917 C 529.26511,463.20532 515.23969,442.438 499.24722,430.03235 C 483.25475,417.6267 465.51648,412.09654 445.51254,410.49247 C 425.5086,408.8884 402.38672,412.48541 383.40364,422.35597 C 364.42056,432.22653 347.66071,447.68911 336.64749,467.71641 C 325.63427,487.74371 319.91997,513.91358 321.99258,538.19955 C 324.06519,562.48552 333.87143,586.17953 349.20884,607.28699 C 364.54625,628.39445 386.51329,648.90089 412.71346,659.62596 C 438.91363,670.35103 471.08525,672.21008 499.94507,667.30234 C 528.80489,662.3946 559.99753,645.10739 580.19816,631.01399 C 600.39879,616.92059 612.08135,600.59226 622.06933,588.44496 C 632.05731,576.29766 633.34388,578.90609 641.60921,559.83299 C 649.87454,540.75989 661.31842,503.27867 661.14909,471.90352 C 660.97976,440.52837 652.68296,405.06059 638.8178,376.29768 C 624.95264,347.53477 605.88917,322.28995 580.89601,303.02312 C 555.90285,283.75629 523.3566,270.73951 492.96654,264.64121 C 462.57648,258.54291 430.95439,258.47374 402.94352,266.03692 C 374.93265,273.6001 350.00816,288.14117 329.66896,307.21024 C 309.32976,326.27931 291.78822,351.7638 284.30852,376.99553 C 276.82882,402.22726 277.34621,429.14243 284.30852,451.66579 C 291.27083,474.18915 305.07804,493.69532 321.99258,506.79617 C 338.90712,519.89702 359.72181,527.10453 379.91437,527.73176 C 400.10693,528.35899 421.10285,522.23946 437.13831,510.98329 C 453.17377,499.72712 465.55851,482.65429 471.3331,464.22714 C 477.10769,445.79999 475.51591,426.08219 469.9374,406.30535 C 464.35889,386.52851 453.23675,365.7323 437.13831,349.77927 C 421.03987,333.82624 404.80631,322.67833 375.72725,314.88662 C 329.94816,302.62015 280.81926,319.07374 264.76864,323.95871"
+       id="path2859"
+       sodipodi:nodetypes="czzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzzsz" />
+    <g
+       transform="translate(81.931135,72.033845)"
+       style="display:inline"
+       id="g6790">
+      <text
+         sodipodi:linespacing="100%"
+         id="text6778"
+         y="471.224"
+         x="343.31"
+         style="font-size:12px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:100%;text-anchor:start;fill:#000000;stroke:none;stroke-width:1.5;marker:none;visibility:visible;display:inline;overflow:visible;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           y="471.224"
+           x="343.31"
+           id="tspan6780"
+           sodipodi:role="line">Nucleo solare</tspan></text>
+      <text
+         xml:space="preserve"
+         style="font-size:12px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:100%;text-anchor:start;fill:#000000;stroke:none;stroke-width:1.5;marker:none;visibility:visible;display:inline;overflow:visible;font-family:Bitstream Vera Sans"
+         x="216.828"
+         y="614.672"
+         id="text6782"
+         sodipodi:linespacing="100%"><tspan
+           sodipodi:role="line"
+           id="tspan6784"
+           x="216.828"
+           y="614.672">Limite della fotosfera</tspan></text>
+      <text
+         sodipodi:linespacing="100%"
+         id="text6786"
+         y="224.155"
+         x="155.276"
+         style="font-size:12px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:100%;text-anchor:start;fill:#000000;stroke:none;stroke-width:1.5;marker:none;visibility:visible;display:inline;overflow:visible;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           y="224.155"
+           x="155.276"
+           id="tspan6788"
+           sodipodi:role="line">Moto del </tspan><tspan
+           y="236.155"
+           x="155.276"
+           sodipodi:role="line"
+           id="tspan2431">baricentro</tspan></text>
+    </g>
+    <g
+       transform="translate(81.931135,72.033845)"
+       style="display:inline"
+       id="g6802">
+      <text
+         sodipodi:linespacing="100%"
+         id="text6798"
+         y="606.19"
+         x="521.51703"
+         style="font-size:10px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:100%;text-anchor:start;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1.5;marker:none;visibility:visible;display:inline;overflow:visible;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           y="606.19"
+           x="521.51703"
+           id="tspan6800"
+           sodipodi:role="line">1945</tspan></text>
+      <text
+         xml:space="preserve"
+         style="font-size:10px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:100%;text-anchor:start;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1.5;marker:none;visibility:visible;display:inline;overflow:visible;font-family:Bitstream Vera Sans"
+         x="478.931"
+         y="384.086"
+         id="text6806"
+         sodipodi:linespacing="100%"><tspan
+           sodipodi:role="line"
+           id="tspan6808"
+           x="478.931"
+           y="384.086">1948</tspan></text>
+      <text
+         sodipodi:linespacing="100%"
+         id="text6810"
+         y="389.983"
+         x="315.793"
+         style="font-size:10px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:100%;text-anchor:start;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1.5;marker:none;visibility:visible;display:inline;overflow:visible;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           y="389.983"
+           x="315.793"
+           id="tspan6812"
+           sodipodi:role="line">1950</tspan></text>
+      <text
+         xml:space="preserve"
+         style="font-size:10px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:100%;text-anchor:start;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1.5;marker:none;visibility:visible;display:inline;overflow:visible;font-family:Bitstream Vera Sans"
+         x="287.621"
+         y="433.439"
+         id="text6814"
+         sodipodi:linespacing="100%"><tspan
+           sodipodi:role="line"
+           id="tspan6816"
+           x="287.621"
+           y="433.439">1951</tspan></text>
+      <text
+         sodipodi:linespacing="100%"
+         id="text6818"
+         y="507.914"
+         x="322.345"
+         style="font-size:10px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:100%;text-anchor:start;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1.5;marker:none;visibility:visible;display:inline;overflow:visible;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           y="507.914"
+           x="322.345"
+           id="tspan6820"
+           sodipodi:role="line">1952</tspan></text>
+      <text
+         xml:space="preserve"
+         style="font-size:10px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:100%;text-anchor:start;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1.5;marker:none;visibility:visible;display:inline;overflow:visible;font-family:Bitstream Vera Sans"
+         x="464.517"
+         y="546.56897"
+         id="text6822"
+         sodipodi:linespacing="100%"><tspan
+           sodipodi:role="line"
+           id="tspan6824"
+           x="464.517"
+           y="546.56897">1955</tspan></text>
+      <text
+         sodipodi:linespacing="100%"
+         id="text6826"
+         y="277.948"
+         x="460.586"
+         style="font-size:10px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:100%;text-anchor:start;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1.5;marker:none;visibility:visible;display:inline;overflow:visible;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           y="277.948"
+           x="460.586"
+           id="tspan6828"
+           sodipodi:role="line">1959</tspan></text>
+      <text
+         xml:space="preserve"
+         style="font-size:10px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:100%;text-anchor:start;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1.5;marker:none;visibility:visible;display:inline;overflow:visible;font-family:Bitstream Vera Sans"
+         x="145.448"
+         y="453.535"
+         id="text6830"
+         sodipodi:linespacing="100%"><tspan
+           sodipodi:role="line"
+           id="tspan6832"
+           x="145.448"
+           y="453.535">1964</tspan></text>
+      <text
+         sodipodi:linespacing="100%"
+         id="text6834"
+         y="526.49701"
+         x="392.448"
+         style="font-size:10px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:100%;text-anchor:start;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1.5;marker:none;visibility:visible;display:inline;overflow:visible;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           y="526.49701"
+           x="392.448"
+           id="tspan6836"
+           sodipodi:role="line">1968</tspan></text>
+      <text
+         xml:space="preserve"
+         style="font-size:10px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:100%;text-anchor:start;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1.5;marker:none;visibility:visible;display:inline;overflow:visible;font-family:Bitstream Vera Sans"
+         x="269.276"
+         y="346.086"
+         id="text6838"
+         sodipodi:linespacing="100%"><tspan
+           sodipodi:role="line"
+           id="tspan6840"
+           x="269.276"
+           y="346.086">1973</tspan></text>
+      <text
+         sodipodi:linespacing="100%"
+         id="text6842"
+         y="608.81"
+         x="404.241"
+         style="font-size:10px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:100%;text-anchor:start;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1.5;marker:none;visibility:visible;display:inline;overflow:visible;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           y="608.81"
+           x="404.241"
+           id="tspan6844"
+           sodipodi:role="line">1978</tspan></text>
+      <text
+         xml:space="preserve"
+         style="font-size:10px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:100%;text-anchor:start;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1.5;marker:none;visibility:visible;display:inline;overflow:visible;font-family:Bitstream Vera Sans"
+         x="585.06897"
+         y="403.741"
+         id="text6846"
+         sodipodi:linespacing="100%"><tspan
+           sodipodi:role="line"
+           id="tspan6848"
+           x="585.06897"
+           y="403.741">1981</tspan></text>
+      <text
+         sodipodi:linespacing="100%"
+         id="text6850"
+         y="187.535"
+         x="417.345"
+         style="font-size:10px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:100%;text-anchor:start;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1.5;marker:none;visibility:visible;display:inline;overflow:visible;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           y="187.535"
+           x="417.345"
+           id="tspan6852"
+           sodipodi:role="line">1984</tspan></text>
+      <text
+         xml:space="preserve"
+         style="font-size:10px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:100%;text-anchor:start;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1.5;marker:none;visibility:visible;display:inline;overflow:visible;font-family:Bitstream Vera Sans"
+         x="207.69"
+         y="382.33499"
+         id="text6854"
+         sodipodi:linespacing="100%"><tspan
+           sodipodi:role="line"
+           id="tspan6856"
+           x="207.69"
+           y="382.33499">1988</tspan></text>
+      <text
+         sodipodi:linespacing="100%"
+         id="text6858"
+         y="466.638"
+         x="268.621"
+         style="font-size:10px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:100%;text-anchor:start;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1.5;marker:none;visibility:visible;display:inline;overflow:visible;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           y="466.638"
+           x="268.621"
+           id="tspan6860"
+           sodipodi:role="line">1990</tspan></text>
+      <text
+         xml:space="preserve"
+         style="font-size:10px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:100%;text-anchor:start;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1.5;marker:none;visibility:visible;display:inline;overflow:visible;font-family:Bitstream Vera Sans"
+         x="364.276"
+         y="445.017"
+         id="text6862"
+         sodipodi:linespacing="100%"><tspan
+           sodipodi:role="line"
+           id="tspan6864"
+           x="364.276"
+           y="445.017">1991</tspan></text>
+      <text
+         sodipodi:linespacing="100%"
+         id="text6866"
+         y="276.638"
+         x="359.034"
+         style="font-size:10px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:100%;text-anchor:start;color:#000000;fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:none;stroke-width:1.5;marker:none;visibility:visible;display:inline;overflow:visible;font-family:Bitstream Vera Sans"
+         xml:space="preserve"><tspan
+           y="276.638"
+           x="359.034"
+           id="tspan6868"
+           sodipodi:role="line">1994</tspan></text>
+    </g>
+  </g>
+</svg>

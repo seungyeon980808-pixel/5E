@@ -49,7 +49,7 @@ async function exportDownload(page, format, filename) {
     await page.goto(`${base}?mode=pro&mobile=0`, { waitUntil: "networkidle" });
     await page.locator("#canvas").waitFor({ state: "visible" });
     await page.evaluate(async () => {
-      const { state } = await import("./js/state.js?v=1.6.0-preview-labeler-0917-1111");
+      const { state } = await import("./js/state.js?v=1.6.0-remediation-0929");
       state.update((s) => {
         s.objects = [{
           id: "scale-resistor",
@@ -77,7 +77,7 @@ async function exportDownload(page, format, filename) {
     await input.fill("1.6");
     await input.press("Enter");
     await input.blur();
-    await page.waitForFunction(() => import("./js/state.js?v=1.6.0-preview-labeler-0917-1111").then(({ state }) => state.get().objects[0].bodyScale === 1.6));
+    await page.waitForFunction(() => import("./js/state.js?v=1.6.0-remediation-0929").then(({ state }) => state.get().objects[0].bodyScale === 1.6));
     await twoFrames(page);
     const after = await body.evaluate((node) => node.outerHTML);
     assert.notEqual(after, before, "short resistor bodyScale 1→1.6 must change rendered geometry");
@@ -134,7 +134,7 @@ async function exportDownload(page, format, filename) {
     const chooser = await chooserPromise;
     await chooser.setFiles(savedPath);
     await reopened.getByRole("button", { name: "열기", exact: true }).click();
-    await reopened.waitForFunction(() => import("./js/state.js?v=1.6.0-preview-labeler-0917-1111").then(({ state }) => {
+    await reopened.waitForFunction(() => import("./js/state.js?v=1.6.0-remediation-0929").then(({ state }) => {
       const object = state.get().objects.find((candidate) => candidate.id === "scale-resistor");
       return object?.bodyScale === 1.6;
     }));

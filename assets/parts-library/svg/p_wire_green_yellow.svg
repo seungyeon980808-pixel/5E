@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-11 -12 80 24" width="1000" height="300">
+<defs>
+<clipPath id="shape">
+<path d="m0,9h60a6,9,0 0,0 0-18H0a6,9,0 0,1 0,18"/>
+</clipPath>
+<linearGradient id="shine" x2="0" y2="1">
+<stop offset="0" stop-color="white" stop-opacity="0"/>
+<stop offset=".1" stop-color="white" stop-opacity="0.2" />
+<stop offset=".12" stop-color="white" stop-opacity="0.2" />
+<stop offset=".22" stop-color="white" stop-opacity="0" />
+<stop offset="1" stop-color="black" stop-opacity="0" />
+</linearGradient>
+<linearGradient id="shadow" x2="0" y2="1">
+<stop offset="0" stop-color="black" stop-opacity=".2"/>
+<stop offset=".2" stop-color="black" stop-opacity="0" />
+<stop offset=".8" stop-color="black" stop-opacity="0" />
+<stop offset="1" stop-color="black" stop-opacity=".4" />
+</linearGradient>
+</defs>
+<path d="m0,9h60a6,9 0 0,0 0-18h-60a6,9,0 0,0 0,18" fill="#0D0"/>
+<path d="m-3,1 96-12H0" fill="#FF0" clip-path="url(#shape)"/>
+<path d="m-6,0a6,9 0 0,1 12,0" fill="#FF0"/>
+<rect x="-5" y="-9" width="80" height="18" fill="url(#shadow)" clip-path="url(#shape)"/>
+<rect x="-5" y="-9" width="80" height="18" fill="url(#shine)" clip-path="url(#shape)"/>
+<ellipse rx="6" ry="9" fill-opacity=".2" stroke="#000"/>
+<path d="M0,9h60a6,9 0 0,0 0-18h-60a6,9 0 0,0 0,18" stroke="#000" fill="none"/>
+<path d="m-6,6h5a4,6 0 0,0 0-12h-5a4,6 0 0,0 0,12" stroke="maroon" fill="#F4A460"/>
+<path d="m-6,6h5a4,6 0 0,0 0-12h-5a4,6 0 0,1 0,12" fill="url(#shadow)" stroke="maroon"/>
+<path d="m-6,6h5a4,6 0 0,0 0-12h-5a4,6 0 0,1 0,12" fill="url(#shine)" stroke="maroon"/>
+</svg>

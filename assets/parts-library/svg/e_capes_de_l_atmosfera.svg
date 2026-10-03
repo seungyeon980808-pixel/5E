@@ -1,0 +1,222 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="800.052"
+   height="478"
+   id="svg2"
+   sodipodi:version="0.32"
+   inkscape:version="0.48.4 r9939"
+   version="1.0"
+   sodipodi:docname="Atmo_camadas.svg">
+  <defs
+     id="defs4">
+    <linearGradient
+       inkscape:collect="always"
+       id="linearGradient2195">
+      <stop
+         style="stop-color:#0000c3;stop-opacity:1;"
+         offset="0"
+         id="stop2197" />
+      <stop
+         style="stop-color:#0000c3;stop-opacity:0;"
+         offset="1"
+         id="stop2199" />
+    </linearGradient>
+    <linearGradient
+       inkscape:collect="always"
+       xlink:href="#linearGradient2195"
+       id="linearGradient2201"
+       x1="392.20169"
+       y1="729.05939"
+       x2="392.20169"
+       y2="1207.3043"
+       gradientUnits="userSpaceOnUse"
+       gradientTransform="translate(-15.00001,-549.9999)" />
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     gridtolerance="10000"
+     guidetolerance="10"
+     objecttolerance="10"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.98994949"
+     inkscape:cx="379.07752"
+     inkscape:cy="277.62074"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     inkscape:window-width="1366"
+     inkscape:window-height="705"
+     inkscape:window-x="1912"
+     inkscape:window-y="28"
+     showguides="true"
+     inkscape:guide-bbox="true"
+     showgrid="false"
+     inkscape:window-maximized="1" />
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(54.31172,-179.0765)">
+    <rect
+       style="opacity:1;fill:white;fill-opacity:1;stroke-width:6;stroke-miterlimit:4;stroke-dasharray:none"
+       id="rect2173"
+       width="800"
+       height="478"
+       x="-54.285728"
+       y="179.07651" />
+    <rect
+       style="opacity:1;fill:url(#linearGradient2201);fill-opacity:1;stroke-width:6;stroke-miterlimit:4;stroke-dasharray:none"
+       id="rect2193"
+       width="800"
+       height="478"
+       x="-54.285728"
+       y="179.07651" />
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:black;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:12, 6;stroke-dashoffset:0;stroke-opacity:1"
+       d="M -52.78573,552.5765 L 742.14556,552.5765"
+       id="path3977" />
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:black;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:12, 6;stroke-dashoffset:0;stroke-opacity:1"
+       d="M -52.78573,441.5765 L 742.14556,441.5765"
+       id="path4864" />
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:black;stroke-width:3;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:12, 6;stroke-dashoffset:0;stroke-opacity:1"
+       d="M -52.78573,297.5765 L 742.14556,297.5765"
+       id="path4866" />
+    <rect
+       style="opacity:1;fill:#4b2b13;fill-opacity:1;stroke:black;stroke-width:0;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1"
+       id="rect4868"
+       width="800"
+       height="70.034836"
+       x="-54.285728"
+       y="587.04169" />
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:black;stroke-width:8.06648731;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="M -54.31909,589.05937 L 746.07445,589.05937"
+       id="path2203" />
+    <text
+       xml:space="preserve"
+       style="font-size:20px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       x="-46.64315"
+       y="282.30991"
+       id="text5755"><tspan
+         sodipodi:role="line"
+         id="tspan5757"
+         x="-46.64315"
+         y="282.30991">80 km</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:20px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       x="-46.64315"
+       y="427.1467"
+       id="text5759"><tspan
+         sodipodi:role="line"
+         id="tspan5761"
+         x="-46.64315"
+         y="427.1467">50 km</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:20px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       x="-46.64315"
+       y="537.25336"
+       id="text5763"><tspan
+         sodipodi:role="line"
+         id="tspan5765"
+         x="-46.64315"
+         y="537.25336">15 km</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:24px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       x="281.06973"
+       y="238.50507"
+       id="text5767"><tspan
+         sodipodi:role="line"
+         id="tspan5769"
+         x="281.06973"
+         y="238.50507">termosfera</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:24px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       x="281.53458"
+       y="381.73804"
+       id="text5771"><tspan
+         sodipodi:role="line"
+         id="tspan5773"
+         x="281.53458"
+         y="381.73804">mesosfera</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:24px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       x="276.39005"
+       y="503.88089"
+       id="text5775"><tspan
+         sodipodi:role="line"
+         id="tspan5777"
+         x="276.39005"
+         y="503.88089">estratosfera</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:24px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       x="283.06973"
+       y="574.59515"
+       id="text5779"><tspan
+         sodipodi:role="line"
+         id="tspan5781"
+         x="283.06973"
+         y="574.59515">troposfera</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:20px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       x="598.99554"
+       y="316.93365"
+       id="text5783"><tspan
+         sodipodi:role="line"
+         id="tspan5785"
+         x="598.99554"
+         y="316.93365">(mesopausa)</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:20px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       x="598.99554"
+       y="463.87003"
+       id="text5787"><tspan
+         sodipodi:role="line"
+         id="tspan5789"
+         x="598.99554"
+         y="463.87003">(estratopausa)</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:20px;font-style:normal;font-weight:normal;fill:#000000;fill-opacity:1;stroke:none;font-family:Bitstream Vera Sans"
+       x="600.99554"
+       y="573.15576"
+       id="text5791"><tspan
+         sodipodi:role="line"
+         id="tspan5793"
+         x="600.99554"
+         y="573.15576">(tropopausa)</tspan></text>
+  </g>
+</svg>

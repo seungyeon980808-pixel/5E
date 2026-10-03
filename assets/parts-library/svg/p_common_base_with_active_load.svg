@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns="http://www.w3.org/2000/svg" xml:space="preserve" width="1.77449in" height="2.65287in" version="1.1" style="shape-rendering:geometricPrecision; text-rendering:geometricPrecision; image-rendering:optimizeQuality; fill-rule:evenodd; clip-rule:evenodd"
+viewBox="0 0 1682 2515"
+ xmlns:xlink="http://www.w3.org/1999/xlink">
+ <defs>
+  <style type="text/css">
+   <![CDATA[
+    .str0 {stroke:black;stroke-width:11.1952;stroke-linecap:round;stroke-linejoin:round}
+    .fil2 {fill:none}
+    .fil1 {fill:black}
+    .fil0 {fill:white}
+    .fil3 {fill:black;fill-rule:nonzero}
+    .fnt1 {font-weight:normal;font-size:118.483px;font-family:'DejaVu Sans'}
+    .fnt2 {font-weight:normal;font-size:157.976px;font-family:'DejaVu Sans'}
+    .fnt0 {font-style:italic;font-weight:normal;font-size:157.976px;font-family:'DejaVu Sans'}
+   ]]>
+  </style>
+ </defs>
+ <g>
+  <rect class="fil0" width="1682" height="2515"/>
+  <circle class="fil0 str0" cx="821" cy="328" r="24"/>
+  <text x="719" y="216"  class="fil1 fnt0">V</text>
+  <text x="827" y="252"  class="fil1 fnt1">CC</text>
+  <circle class="fil0 str0" cx="821" cy="2192" r="24"/>
+  <text x="712" y="2384"  class="fil1 fnt0">V</text>
+  <text x="820" y="2420"  class="fil1 fnt1">in</text>
+  <circle class="fil2 str0" cx="728" cy="1633" r="187"/>
+  <line class="fil2 str0" x1="634" y1="1540" x2="634" y2= "1727" />
+  <polyline class="fil2 str0" points="634,1633 541,1633 168,1633 168,1820 "/>
+  <polyline class="fil2 str0" points="821,1099 821,1472 634,1580 "/>
+  <polyline class="fil2 str0" points="634,1687 821,1795 821,2168 "/>
+  <polygon class="fil1" points="686,1750 792,1778 715,1701 "/>
+  <polyline class="fil2 str0" points="821,912 821,1099 1194,1099 "/>
+  <line class="fil2 str0" x1="821" y1="352" x2="821" y2= "539" />
+  <text x="1075" y="764"  class="fil1 fnt0">I</text>
+  <text x="1121" y="800"  class="fil1 fnt1">C</text>
+  <circle class="fil1 str0" cx="821" cy="1099" r="19"/>
+  <circle class="fil0 str0" cx="1218" cy="1099" r="24"/>
+  <text x="1287" y="1138"  class="fil1 fnt0">V</text>
+  <text x="1395" y="1173"  class="fil1 fnt1">out</text>
+  <polygon class="fil2 str0" points="168,1949 243,1820 93,1820 "/>
+  <text x="651" y="1378"  class="fil1 fnt2">C</text>
+  <text x="398" y="1577"  class="fil1 fnt2">B</text>
+  <text x="654" y="2001"  class="fil1 fnt2">E</text>
+  <g id="_660426992">
+   <path class="fil2 str0" d="M1008 725c0,-103 -84,-187 -187,-187 -103,0 -187,84 -187,187 0,103 84,187 187,187 103,0 187,-84 187,-187z"/>
+   <g>
+    <path class="fil3" d="M827 613l-11 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0zm-11 154l0 -154 11 0 0 154 -11 0zm-23 -37l57 0 -28 106 -28 -106zm23 37l11 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0z"/>
+   </g>
+  </g>
+ </g>
+</svg>

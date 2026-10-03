@@ -11,8 +11,9 @@
  * (meta 필드는 하위호환을 위해 로드/저장 시 보존만 하고 UI에는 노출하지 않는다.)
  */
 
-import { showPrompt, showConfirm } from "./ui-dialogs.js?v=1.4.0";
-import { rebuildGroups } from "./transform.js?v=1.4.0";
+import { showPrompt, showConfirm } from "./ui-dialogs.js?v=1.6.0-remediation-0929";
+import { rebuildGroups } from "./transform.js?v=1.6.0-remediation-0929";
+import { savePageRuntime, restorePageRuntime } from "./page-history.js?v=1.6.0-preview-labeler-0917-1111";
 
 let _seq = 0;
 function newPageId() {
@@ -93,6 +94,7 @@ export function switchPage(state, targetId) {
     const t = findPage(s, targetId);
     if (!t) return;
     writeBackActive(s);
+    savePageRuntime(s, findPage(s, s.activePageId));
     s.objects = t.objects;
     s.guides = t.guides;
     s.layers = t.layers;
@@ -102,11 +104,7 @@ export function switchPage(state, targetId) {
     // 쓰는 것과 같은 헬퍼)를 안 부르면 이전 페이지 기준 그룹이 그대로 남아 새 페이지의
     // 그룹 객체를 클릭해도 낱개로만 선택된다 — 전환마다 새 페이지 objects 기준으로 재구축.
     rebuildGroups(s);
-    // v1: 전환은 undo 대상이 아니다 → 히스토리/선택/드래프트를 새 페이지 기준으로 초기화.
-    s.undoStack = [];
-    s.redoStack = [];
-    s.selectedIds = [];
-    s.selectedGuideId = null;
+    restorePageRuntime(s, t);
     s.targetedId = null;
     s.draft = null;
     s.draftText = null;
@@ -161,12 +159,12 @@ function duplicatePage(state) {
 }
 
 /* ----- 삭제(최소 1개 유지) ----- */
-async function deletePage(state, id) {
+export async function deletePage(state, id) {
   const s0 = state.get();
   if ((s0.pages || []).length <= 1) return;
   const p0 = findPage(s0, id);
   if (!p0) return;
-  const ok = await showConfirm(`'${p0.name}' 페이지를 삭제할까요?\n되돌릴 수 없습니다.`, {
+  const ok = await showConfirm(`'${p0.name}' 페이지를 삭제할까요?\n실행 취소로 복구할 수 있습니다.`, {
     title: "페이지 삭제", okText: "삭제", cancelText: "취소",
   });
   if (!ok) return;
@@ -177,6 +175,7 @@ async function deletePage(state, id) {
   const p = findPage(s, id);
   if (!p) return;
   const wasActive = s.activePageId === id;
+  const activePageIdBefore = s.activePageId;
   const idx = s.pages.indexOf(p);
   const neighbor = s.pages[idx + 1] || s.pages[idx - 1];
 
@@ -185,6 +184,11 @@ async function deletePage(state, id) {
     switchPage(state, neighbor.id);
   }
   state.update((st) => {
+    st.undoStack.push({
+      kind: "page-presence", page: p, index: idx, present: true, activePageIdBefore,
+    });
+    if (st.undoStack.length > 100) st.undoStack.shift();
+    st.redoStack = [];
     st.pages = st.pages.filter((pg) => pg.id !== id);
     if (!findPage(st, st.activePageId)) st.activePageId = st.pages[0] ? st.pages[0].id : null;
   });
@@ -233,18 +237,38 @@ function buildBar(state) {
   // 탭 클릭=전환, 더블클릭=이름 변경, 우클릭=컨텍스트 메뉴(엑셀식).
   _tabsEl.addEventListener("click", (e) => {
     const tab = e.target.closest(".page-tab");
-    if (tab) switchPage(state, tab.dataset.id);
+    if (!tab) return;
+    switchPage(state, tab.dataset.id);
   });
   _tabsEl.addEventListener("dblclick", (e) => {
     const tab = e.target.closest(".page-tab");
-    if (tab) renamePage(state, tab.dataset.id);
+    if (tab) {
+      const rect = tab.getBoundingClientRect();
+      openContextMenu(state, tab.dataset.id, tab, rect.left);
+    }
+  });
+  _tabsEl.addEventListener("keydown", (e) => {
+    const tab = e.target.closest('.page-tab');
+    if (!tab) return;
+    if (e.key === 'Enter' || e.key === ' ' || e.key === 'F2') {
+      e.preventDefault();
+      const rect = tab.getBoundingClientRect();
+      openContextMenu(state, tab.dataset.id, tab, rect.left);
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
+      e.preventDefault();
+      const pages = state.get().pages;
+      const index = pages.findIndex(p => p.id === tab.dataset.id);
+      const next = pages[(index + (e.key === 'ArrowLeft' ? -1 : 1) + pages.length) % pages.length];
+      switchPage(state, next.id);
+      [..._tabsEl.children].find(el => el.dataset.id === next.id)?.focus();
+    }
   });
   _tabsEl.addEventListener("contextmenu", (e) => {
     const tab = e.target.closest(".page-tab");
     if (!tab) return;
     e.preventDefault();
     switchPage(state, tab.dataset.id);       // 우클릭한 탭을 활성화한 뒤 메뉴를 연다.
-    openContextMenu(state, tab.dataset.id, e.clientX, e.clientY);
+    openContextMenu(state, tab.dataset.id, tab, e.clientX);
   });
 }
 
@@ -252,27 +276,39 @@ function renderTabs(state) {
   if (!_tabsEl) return;
   const s = state.get();
   const active = s.activePageId;
-  _tabsEl.innerHTML = (s.pages || []).map((p) => {
+  const tabs = (s.pages || []).map((p) => {
     const isActive = p.id === active;
-    return `<div class="page-tab${isActive ? " is-active" : ""}" data-id="${p.id}"
-        role="tab" aria-selected="${isActive}" title="${escapeHtml(p.name)} · 더블클릭 이름 변경 · 우클릭 메뉴">
-        <span class="page-tab-name">${escapeHtml(p.name)}</span>
-      </div>`;
-  }).join("");
+    const tab = document.createElement("div");
+    tab.className = `page-tab${isActive ? " is-active" : ""}`;
+    tab.dataset.id = p.id;
+    tab.setAttribute("role", "tab");
+    tab.setAttribute("aria-selected", String(isActive));
+    tab.title = `${p.name} · 더블클릭 또는 Enter로 이름 변경·삭제`;
+    const name = document.createElement("span");
+    name.className = "page-tab-name";
+    name.textContent = p.name;
+    tab.tabIndex = isActive ? 0 : -1;
+    tab.append(name);
+    return tab;
+  });
+  _tabsEl.replaceChildren(...tabs);
 }
 
 /* ===== 우클릭 컨텍스트 메뉴 (복제·순서·삭제) ===== */
 let _menuEl = null;
+let _menuTabId = null;
 function closeContextMenu() {
   if (_menuEl) { _menuEl.remove(); _menuEl = null; }
   document.removeEventListener("mousedown", _onDocDown, true);
   document.removeEventListener("keydown", _onDocKey, true);
   window.removeEventListener("blur", closeContextMenu);
+  if (_menuTabId) [...(_tabsEl?.children || [])].find(tab => tab.dataset.id === _menuTabId)?.focus();
+  _menuTabId = null;
 }
 function _onDocDown(e) { if (_menuEl && !_menuEl.contains(e.target)) closeContextMenu(); }
 function _onDocKey(e) { if (e.key === "Escape") closeContextMenu(); }
 
-function openContextMenu(state, id, x, y) {
+function openContextMenu(state, id, tab, x) {
   closeContextMenu();
   const s = state.get();
   const idx = (s.pages || []).findIndex((p) => p.id === id);
@@ -295,12 +331,15 @@ function openContextMenu(state, id, x, y) {
   ).join("");
   document.body.appendChild(menu);
 
-  // 화면 밖으로 나가지 않게 위치 보정.
+  // 하단 탭 위로 열고, 작은 화면이나 큰 UI 배율에서도 화면 안에 가둔다.
+  const tabRect = tab.getBoundingClientRect();
+  const scale = Number.parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--ui-zoom")) || 1;
+  menu.style.maxHeight = `${Math.max(96, tabRect.top - 16) / scale}px`;
   const r = menu.getBoundingClientRect();
-  const px = Math.min(x, window.innerWidth - r.width - 8);
-  const py = Math.min(y, window.innerHeight - r.height - 8);
-  menu.style.left = `${Math.max(8, px)}px`;
-  menu.style.top = `${Math.max(8, py)}px`;
+  const px = Math.min(Math.max(8, x), Math.max(8, window.innerWidth - r.width - 8));
+  const py = Math.max(8, tabRect.top - r.height - 8);
+  menu.style.left = `${px / scale}px`;
+  menu.style.top = `${py / scale}px`;
 
   menu.addEventListener("click", (e) => {
     const btn = e.target.closest(".text-ctx-item");
@@ -309,13 +348,21 @@ function openContextMenu(state, id, x, y) {
     closeContextMenu();
     it.act();
   });
+  menu.setAttribute('role', 'menu');
+  menu.setAttribute('aria-label', '페이지 관리');
+  menu.querySelectorAll('button').forEach(button => button.setAttribute('role', 'menuitem'));
+  menu.addEventListener('keydown', event => {
+    if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return;
+    event.preventDefault();
+    const buttons = [...menu.querySelectorAll('button:not(:disabled)')];
+    const index = buttons.indexOf(document.activeElement);
+    const next = event.key === 'Home' ? 0 : event.key === 'End' ? buttons.length - 1 : (index + (event.key === 'ArrowUp' ? -1 : 1) + buttons.length) % buttons.length;
+    buttons[next]?.focus();
+  });
+  _menuTabId = id;
   _menuEl = menu;
+  menu.querySelector('button:not(:disabled)')?.focus();
   document.addEventListener("mousedown", _onDocDown, true);
   document.addEventListener("keydown", _onDocKey, true);
   window.addEventListener("blur", closeContextMenu);
-}
-
-function escapeHtml(str) {
-  return String(str).replace(/[&<>"']/g, (c) =>
-    ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }

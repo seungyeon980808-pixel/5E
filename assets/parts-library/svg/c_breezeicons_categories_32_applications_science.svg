@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32">
+  <defs>
+    <linearGradient id="d" x2="0" y1="541.03632" y2="538.60559" gradientTransform="translate(.000008 -.007763)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#bd8d48"/>
+      <stop offset="1" stop-color="#e8b971"/>
+    </linearGradient>
+    <linearGradient id="e" x2="0" y1="540.79797" y2="545.23547" gradientTransform="translate(.000008 -.023444)" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#232629" stop-opacity=".203922"/>
+      <stop offset="1" stop-color="#232629" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="b" x1="17" x2="30" y1="12" y2="25" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#383e51"/>
+      <stop offset="1" stop-color="#655c6f" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="a" x2="0" y1="545.79797" y2="517.79797" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#343b40"/>
+      <stop offset="1" stop-color="#555e63"/>
+    </linearGradient>
+    <linearGradient id="c" x2="0" y1="538.79797" y2="522.79797" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#c6cdd1"/>
+      <stop offset="1" stop-color="#e0e5e7"/>
+    </linearGradient>
+    <linearGradient id="f" x2="0" y1="22" y2="15" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#42a603"/>
+      <stop offset="1" stop-color="#78da06"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(-384.57143 -515.798)">
+    <circle cx="400.57138" cy="531.79016" r="13.999958" fill="url(#a)"/>
+    <path fill="url(#b)" fill-rule="evenodd" d="M17 7v9l6 6v1h5.103516a13.999958 13.999958 0 0 0 1.755859-5.140625L19 7z" opacity=".2" transform="translate(384.57143 515.798)"/>
+    <path fill="url(#c)" fill-rule="evenodd" d="M393.57144 537.798v1h14.00003v-1l-5.00004-8v-6h1v-1h-6v.99973h1v6.00027z"/>
+    <path fill="url(#d)" d="M386.57144 538.79022h28v2h-28z"/>
+    <g fill-rule="evenodd">
+      <path fill="url(#e)" d="m389.85269 540.75893 21.40419.0156s-3.62157 4.98286-10.68545 5.01559c-7.23437-.3125-10.71874-5.03125-10.71874-5.03125z"/>
+      <path fill="url(#f)" d="m14 16-3.7 6h11.4L18 16h-2z" transform="translate(384.57143 515.798)"/>
+    </g>
+  </g>
+</svg>

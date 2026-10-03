@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   version="1.1"
+   x="0px"
+   y="0px"
+   width="720px"
+   height="540px"
+   viewBox="0 0 720 540"
+   style="enable-background:new 0 0 720 540;"
+   xml:space="preserve"
+   id="svg2"
+   inkscape:version="0.48.0 r9654"
+   sodipodi:docname="Inside_of_Urano.svg"><metadata
+   id="metadata109"><rdf:RDF><cc:Work
+       rdf:about=""><dc:format>image/svg+xml</dc:format><dc:type
+         rdf:resource="http://purl.org/dc/dcmitype/StillImage" /></cc:Work></rdf:RDF></metadata><defs
+   id="defs107" /><sodipodi:namedview
+   pagecolor="#ffffff"
+   bordercolor="#666666"
+   borderopacity="1"
+   objecttolerance="10"
+   gridtolerance="10"
+   guidetolerance="10"
+   inkscape:pageopacity="0"
+   inkscape:pageshadow="2"
+   inkscape:window-width="1280"
+   inkscape:window-height="962"
+   id="namedview105"
+   showgrid="false"
+   inkscape:zoom="0.48333333"
+   inkscape:cx="716.89655"
+   inkscape:cy="116.89655"
+   inkscape:window-x="-8"
+   inkscape:window-y="-8"
+   inkscape:window-maximized="1"
+   inkscape:current-layer="Layer_3" />
+
+<g
+   inkscape:groupmode="layer"
+   id="Layer_4"
+   sodipodi:insensitive="true">
+	<rect
+   width="720"
+   height="540"
+   id="rect8"
+   x="0"
+   y="0" />
+</g>
+<g
+   inkscape:groupmode="layer"
+   id="Layer_2"
+   style="display:inline">
+	<radialGradient
+   id="SVGID_1_"
+   cx="206.60941"
+   cy="240.16409"
+   r="244.36349"
+   gradientUnits="userSpaceOnUse">
+		<stop
+   offset="0"
+   style="stop-color:#9DC0D1"
+   id="stop12" />
+		<stop
+   offset="0.1644"
+   style="stop-color:#9ABDCD"
+   id="stop14" />
+		<stop
+   offset="0.3251"
+   style="stop-color:#92B2C1"
+   id="stop16" />
+		<stop
+   offset="0.4844"
+   style="stop-color:#85A1AE"
+   id="stop18" />
+		<stop
+   offset="0.6428"
+   style="stop-color:#728892"
+   id="stop20" />
+		<stop
+   offset="0.8006"
+   style="stop-color:#59696F"
+   id="stop22" />
+		<stop
+   offset="0.9559"
+   style="stop-color:#3B4344"
+   id="stop24" />
+		<stop
+   offset="1"
+   style="stop-color:#323736"
+   id="stop26" />
+	</radialGradient>
+	<circle
+   style="fill:url(#SVGID_1_);stroke:#000000;stroke-miterlimit:10"
+   cx="269.16101"
+   cy="269.034"
+   r="244.364"
+   id="circle28"
+   sodipodi:cx="269.16101"
+   sodipodi:cy="269.034"
+   sodipodi:rx="244.364"
+   sodipodi:ry="244.364" />
+	<g
+   id="g3911"><path
+     inkscape:connector-curvature="0"
+     id="path34"
+     d="m 269.183,25.167 c 134.958,0 244.342,109.909 244.342,244.867 v -1 H 269.161 l 0.022,-243.867 z"
+     style="fill:#bce1e4" /><path
+     inkscape:connector-curvature="0"
+     id="path38"
+     d="m 269.193,268.779 -75.539,75.649 c -2.509,-23.785 -3.854,-49.29 -3.854,-75.65 0,-26.359 1.361,-51.737 3.871,-75.522 C 204.008,95.264 233.9,25.167 269.183,25.167 l 0,0 0.01,243.612 z"
+     style="fill:#697d80" /><path
+     inkscape:connector-curvature="0"
+     id="path42"
+     d="m 193.655,344.429 c 23.785,2.51 49.146,3.999 75.506,3.999 26.359,0 51.736,-1.361 75.522,-3.87 97.991,-10.337 168.841,-40.239 168.841,-75.523 H 269.161 l -75.506,75.394 z"
+     style="fill:#9ebdbf" /></g>
+	<g
+   id="g3925"><path
+     inkscape:connector-curvature="0"
+     id="path48"
+     d="m 269.686,66.525 c 112.031,0 201.888,91.073 201.888,203.103 v -0.829 H 268.725 l 0.961,-202.274 z"
+     style="fill:#8e9cc0" /><path
+     inkscape:connector-curvature="0"
+     id="path52"
+     d="m 270.166,268.832 -63.412,62.675 c -2.083,-19.745 -2.492,-40.793 -2.492,-62.676 0,-21.88 1.13,-42.947 3.213,-62.691 8.581,-81.344 32.923,-139.614 62.21,-139.614 l 0,0 0.481,202.306 z"
+     style="fill:#4b5366" /><path
+     inkscape:connector-curvature="0"
+     id="path56"
+     d="m 206.754,331.507 c 19.744,2.083 40.089,3.195 61.97,3.195 21.882,0 42.947,-1.129 62.691,-3.211 81.345,-8.58 140.157,-33.404 140.157,-62.692 H 268.725 l -61.971,62.708 z"
+     style="fill:#717c99" /></g>
+	<g
+   id="g3939"><path
+     inkscape:connector-curvature="0"
+     id="path62"
+     d="m 269.003,194.349 c 41.327,0 74.829,32.938 74.829,74.265 v -0.306 h -74.829 v -73.959 z"
+     style="fill:#af521f" /><path
+     inkscape:connector-curvature="0"
+     id="path66"
+     d="m 269.003,269.308 -23.127,22.626 c -0.768,-7.283 -1.185,-14.555 -1.185,-22.626 0,-8.072 0.416,-15.843 1.185,-23.126 3.166,-30.007 12.322,-51.832 23.127,-51.832 l 0,0 v 74.958 z"
+     style="fill:#4d240e" /><path
+     inkscape:connector-curvature="0"
+     id="path70"
+     d="m 245.876,291.934 c 7.284,0.77 15.055,0.686 23.127,0.686 8.071,0 15.843,-0.416 23.126,-1.185 30.008,-3.165 51.703,-12.322 51.703,-23.127 h -74.829 l -23.127,23.626 z"
+     style="fill:#803c16" /></g>
+</g>
+<g
+   inkscape:groupmode="layer"
+   id="Layer_3">
+	<g
+   id="g3946"><text
+     y="38.846199"
+     x="522.69238"
+     style="font-size:24px;fill:#ffffff;font-family:MyriadPro-Regular"
+     id="text75">Атмосфера</text>
+<text
+     y="57.287102"
+     x="522.70612"
+     style="font-size:14px;fill:#ffffff;font-family:MyriadPro-Regular"
+     id="text77">Толщина 7500 км</text>
+</g>
+	<g
+   id="g3952"><text
+     y="161.3564"
+     x="522.69238"
+     style="font-size:24px;fill:#ffffff;font-family:MyriadPro-Regular"
+     id="text81">Мантия</text>
+<text
+     y="179.79829"
+     x="522.70612"
+     style="font-size:14px;fill:#ffffff;font-family:MyriadPro-Regular"
+     id="text83">Толщина 10 500 км</text>
+</g>
+	<g
+   id="g3958"><text
+     y="373.86719"
+     x="522.69238"
+     style="font-size:24px;fill:#ffffff;font-family:MyriadPro-Regular"
+     id="text87">Ядро</text>
+<text
+     y="393.8457"
+     x="522.69238"
+     style="font-size:14px;fill:#ffffff;font-family:MyriadPro-Regular"
+     id="text89">Радиус 7500 км</text>
+</g>
+	<g
+   id="g3971"><polygon
+     id="polygon95"
+     points="353.59,61.154 353.59,61.154 521.045,37.317 522.706,39.707 "
+     style="fill:#ffffff;stroke:#000000;stroke-miterlimit:10" /><polygon
+     id="polygon99"
+     points="385,184.798 385,184.798 522.524,160.371 522.86,162.342 "
+     style="fill:#ffffff;stroke:#000000;stroke-miterlimit:10" /><polygon
+     id="polygon103"
+     points="522.261,357.434 294.854,243.142 294.854,243.142 523.151,355.643 "
+     style="fill:#ffffff;stroke:#000000;stroke-miterlimit:10" /></g>
+</g>
+</svg>

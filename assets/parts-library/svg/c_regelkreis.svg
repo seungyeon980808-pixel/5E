@@ -1,0 +1,430 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="460"
+   height="390"
+   id="svg2813"
+   sodipodi:version="0.32"
+   inkscape:version="0.46"
+   sodipodi:docname="Regelkreis.svg"
+   inkscape:output_extension="org.inkscape.output.svg.inkscape"
+   version="1.0">
+  <defs
+     id="defs2815">
+    <inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="0 : 526.18109 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_z="744.09448 : 526.18109 : 1"
+       inkscape:persp3d-origin="372.04724 : 350.78739 : 1"
+       id="perspective2821" />
+    <desc
+       id="desc3174">Drawing</desc>
+    <desc
+       id="desc3128">Drawing</desc>
+    <desc
+       id="desc3198">Drawing</desc>
+    <desc
+       id="desc3152">Drawing</desc>
+    <desc
+       id="desc3050">Drawing</desc>
+    <desc
+       id="desc3285">Drawing</desc>
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="2"
+     inkscape:cx="293.97797"
+     inkscape:cy="172.06718"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     showgrid="false"
+     inkscape:window-width="1440"
+     inkscape:window-height="792"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     showguides="true"
+     inkscape:guide-bbox="true"
+     guidetolerance="6" />
+  <metadata
+     id="metadata2818">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:groupmode="layer"
+     id="layer2"
+     inkscape:label="Hilfslinien"
+     style="display:none"
+     sodipodi:insensitive="true">
+    <path
+       sodipodi:type="arc"
+       style="opacity:0.8492063;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#00ef2d;stroke-width:2.652174;stroke-linecap:square;stroke-linejoin:miter;marker:none;marker-start:none;marker-mid:none;marker-end:none;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
+       id="path3943"
+       sodipodi:cx="238.66014"
+       sodipodi:cy="233.49055"
+       sodipodi:rx="147.79968"
+       sodipodi:ry="147.79968"
+       d="M 386.45982,233.49055 A 147.79968,147.79968 0 1 1 90.860458,233.49055 A 147.79968,147.79968 0 1 1 386.45982,233.49055 z"
+       transform="matrix(0.942623,0,0,0.942623,-1.9809557,15.748183)" />
+  </g>
+  <g
+     inkscape:label="Ebene 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     style="display:inline">
+    <g
+       style="visibility:visible"
+       id="g3148"
+       transform="matrix(2.5053686e-2,0,0,2.5053686e-2,96.60664,263.7839)" />
+    <g
+       style="visibility:visible"
+       id="g3170"
+       transform="matrix(2.5053686e-2,0,0,2.5053686e-2,99.17657,114.66)" />
+    <g
+       style="visibility:visible"
+       id="g3194"
+       transform="matrix(2.5053686e-2,0,0,2.5053686e-2,325.37137,262.03329)" />
+    <g
+       style="visibility:visible"
+       id="g3216"
+       transform="matrix(2.5053686e-2,0,0,2.5053686e-2,324.11869,117.14336)" />
+    <path
+       style="fill:#000000;visibility:visible"
+       d="M 80.31147,252.30587 L 73.62214,275.10472 L 88.654347,274.55354 L 80.31147,252.30587 z"
+       id="path3146" />
+    <path
+       style="fill:#000000;visibility:visible"
+       d="M 361.86223,301.74657 L 363.08986,301.96792 L 361.86223,301.74657 L 361.86223,301.74657 L 361.86223,301.74657 L 361.86223,301.74657 z"
+       id="path3182" />
+    <path
+       style="fill:#000000;visibility:visible"
+       d="M 289.67205,344.48498 L 313.38321,343.14387 L 307.96572,329.41089 L 289.67205,344.48498 z"
+       id="path3192"
+       inkscape:transform-center-x="-3.1067523"
+       inkscape:transform-center-y="-4.1380409" />
+    <path
+       style="fill:#000000;visibility:visible"
+       d="M 356.34715,216.63874 L 362.91122,193.78978 L 347.90406,194.41612 L 356.34715,216.63874 z"
+       id="path3214" />
+    <g
+       style="visibility:visible"
+       id="g3218"
+       transform="matrix(2.5053686e-2,0,0,2.5053686e-2,288.6249,111.46268)">
+      <desc
+         id="desc3220">Drawing</desc>
+      <g
+         id="g3222">
+        <g
+           id="g3224"
+           style="fill:#000000;stroke:none">
+          <path
+             id="path3226"
+             d="M 50,250 L 5330,250 L 5330,300 L 5330,350 L 50,350 L 50,300 L 50,250 z" />
+          <path
+             id="path3228"
+             d="M 6050,300 L 5150,0 L 5150,600 L 6050,300 z" />
+        </g>
+        <g
+           id="g3230" />
+      </g>
+    </g>
+    <g
+       style="visibility:visible"
+       id="g3232"
+       transform="matrix(2.5053686e-2,0,0,2.5053686e-2,215.06424,40.058924)">
+      <desc
+         id="desc3234">Drawing</desc>
+      <g
+         id="g3236">
+        <g
+           id="g3238"
+           style="fill:#000000;stroke:none">
+          <path
+             id="path3240"
+             d="M 350,50 L 350,1651 L 300,1651 L 250,1651 L 250,50 L 300,50 L 350,50 z" />
+          <path
+             id="path3242"
+             d="M 300,2371 L 600,1471 L 0,1471 L 300,2371 z" />
+        </g>
+        <g
+           id="g3244" />
+      </g>
+    </g>
+    <g
+       id="g2597">
+      <g
+         transform="matrix(2.3478243e-2,0,0,2.5053686e-2,286.31164,216.59433)"
+         id="g3100"
+         style="visibility:visible">
+        <desc
+           id="desc3102">Drawing</desc>
+        <g
+           id="g3104">
+          <g
+             style="fill:#99ccff;stroke:none"
+             id="g3106">
+            <path
+               d="M 3001,1501 L 1,1501 L 1,1 L 6001,1 L 6001,1501 L 3001,1501 z"
+               id="path3108" />
+          </g>
+          <g
+             style="fill:none;stroke:#000000;stroke-width:1.03300643"
+             id="g3110">
+            <path
+               style="fill:none;stroke-width:1.03300643"
+               d="M 3001,1501 L 1,1501 L 1,1 L 6001,1 L 6001,1501 L 3001,1501"
+               id="path3112" />
+            <path
+               style="fill:none;stroke-width:1.03300643"
+               d="M 3001,1501 L 1,1501 L 1,1 L 6001,1 L 6001,1501 L 3001,1501"
+               id="path3114" />
+          </g>
+        </g>
+      </g>
+      <text
+         sodipodi:linespacing="125%"
+         id="text3097"
+         y="239.82372"
+         x="356.71515"
+         style="font-size:16px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
+         xml:space="preserve"><tspan
+           y="239.82372"
+           x="356.71515"
+           id="tspan3099"
+           sodipodi:role="line">Messeinrichtung</tspan></text>
+    </g>
+    <g
+       id="g2609">
+      <path
+         id="path3062"
+         d="M 222.29638,368.87808 L 154.85887,368.87808 L 154.85887,331.29689 L 289.73388,331.29689 L 289.73388,368.87808 L 222.29638,368.87808"
+         style="fill:#ffd320;stroke:#000000;stroke-width:0.05;visibility:visible" />
+      <text
+         sodipodi:linespacing="125%"
+         id="text3101"
+         y="355.31262"
+         x="221.23302"
+         style="font-size:16px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
+         xml:space="preserve"><tspan
+           y="355.31262"
+           x="221.23302"
+           id="tspan3103"
+           sodipodi:role="line">Regler</tspan></text>
+    </g>
+    <g
+       id="g2585">
+      <g
+         transform="matrix(2.2479168e-2,0,0,2.5053686e-2,19.96138,214.77712)"
+         id="g3074"
+         style="visibility:visible">
+        <desc
+           id="desc3076">Drawing</desc>
+        <g
+           id="g3078">
+          <g
+             style="fill:#aecf00;stroke:none"
+             id="g3080">
+            <path
+               d="M 3001,1501 L 1,1501 L 1,1 L 6001,1 L 6001,1501 L 3001,1501 z"
+               id="path3082" />
+          </g>
+          <g
+             style="fill:none;stroke:#000000;stroke-width:1.05571258"
+             id="g3084">
+            <path
+               style="fill:none;stroke-width:1.05571258"
+               d="M 3001,1501 L 1,1501 L 1,1 L 6001,1 L 6001,1501 L 3001,1501"
+               id="path3086" />
+            <path
+               style="fill:none;stroke-width:1.05571258"
+               d="M 3001,1501 L 1,1501 L 1,1 L 6001,1 L 6001,1501 L 3001,1501"
+               id="path3088" />
+          </g>
+        </g>
+      </g>
+      <text
+         sodipodi:linespacing="125%"
+         id="text3105"
+         y="239.21797"
+         x="85.859253"
+         style="font-size:16px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
+         xml:space="preserve"><tspan
+           y="239.21797"
+           x="85.859253"
+           id="tspan3107"
+           sodipodi:role="line">Stelleinrichtung</tspan></text>
+    </g>
+    <text
+       xml:space="preserve"
+       style="font-size:16px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
+       x="329.85641"
+       y="106.93403"
+       id="text3109"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan3111"
+         x="329.85641"
+         y="106.93403">Regelgröße</tspan><tspan
+         sodipodi:role="line"
+         x="329.85641"
+         y="126.93403"
+         style="font-size:16px"
+         id="tspan3881" /></text>
+    <g
+       id="g2576">
+      <g
+         transform="matrix(2.2479169e-2,0,0,2.5053686e-2,154.83639,99.743504)"
+         style="fill:#ff6600;stroke:none;visibility:visible"
+         id="g3289">
+        <path
+           style="fill:#ff6600"
+           d="M 3001,1501 L 1,1501 L 1,1 L 6001,1 L 6001,1501 L 3001,1501 z"
+           id="path3291" />
+      </g>
+      <g
+         transform="matrix(2.2479169e-2,0,0,2.5053686e-2,154.83639,99.743504)"
+         style="fill:#ff6600;stroke:#000000;stroke-width:1.05571258;visibility:visible"
+         id="g3293">
+        <path
+           style="fill:#ff6600;stroke-width:1.05571258"
+           d="M 3001,1501 L 1,1501 L 1,1 L 6001,1 L 6001,1501 L 3001,1501"
+           id="path3295" />
+        <path
+           style="fill:#ff6600;stroke-width:1.05571258"
+           d="M 3001,1501 L 1,1501 L 1,1 L 6001,1 L 6001,1501 L 3001,1501"
+           id="path3297" />
+      </g>
+      <text
+         sodipodi:linespacing="100%"
+         id="text3113"
+         y="124.18437"
+         x="222.52992"
+         style="font-size:16px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:center;line-height:100%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
+         xml:space="preserve"><tspan
+           y="124.18437"
+           x="222.52992"
+           id="tspan3115"
+           sodipodi:role="line">Regelstrecke</tspan></text>
+    </g>
+    <text
+       xml:space="preserve"
+       style="font-size:16px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
+       x="222.5726"
+       y="29.788483"
+       id="text3117"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan3119"
+         x="222.5726"
+         y="29.788483">Störgröße</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:16px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
+       x="65.386765"
+       y="107.07402"
+       id="text3121"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan3123"
+         x="65.386765"
+         y="107.07402">Stellgröße</tspan></text>
+    <text
+       xml:space="preserve"
+       x="65.840233"
+       y="351.59729"
+       id="text3125"
+       style="font-size:16px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:middle;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan3127"
+         x="65.840233"
+         y="351.59729">Steuergröße</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:16px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
+       x="362.94736"
+       y="351.59729"
+       id="text3129"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan3131"
+         x="362.94736"
+         y="351.59729">Sollwert</tspan></text>
+    <text
+       xml:space="preserve"
+       style="font-size:16px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;font-family:sans-serif"
+       x="363.71832"
+       y="304.57358"
+       id="text3133"
+       sodipodi:linespacing="125%"><tspan
+         sodipodi:role="line"
+         id="tspan3135"
+         x="363.71832"
+         y="304.57358">Istwert</tspan></text>
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="M 357.10484,254.48529 C 357.3699,287.40633 338.30515,326.679 298.54788,341.75922"
+       id="path2683"
+       sodipodi:nodetypes="cc" />
+    <path
+       sodipodi:nodetypes="cc"
+       id="path3508"
+       d="M 80.557747,265.99569 C 82.100557,312.12243 118.34,346.84142 154.9025,351.16739"
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2.49999976;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+    <path
+       id="path3455"
+       d="M 289.64258,360.15983 L 311.63851,367.63663 L 311.70479,352.28958 L 289.64258,360.15983 z"
+       style="fill:#000000;visibility:visible"
+       sodipodi:nodetypes="cccc" />
+    <path
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2.5;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="M 311.14774,360.16239 C 336.35441,360.16239 436.39342,360.1624 436.39342,360.1624"
+       id="path3510"
+       sodipodi:nodetypes="cc" />
+    <path
+       sodipodi:nodetypes="cc"
+       id="path3907"
+       d="M 356.38272,203.08015 C 354.22577,160.98268 330.80572,131.64447 304.96995,118.75521"
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+    <path
+       sodipodi:type="arc"
+       style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:none;stroke-width:2.5;stroke-linecap:round;stroke-linejoin:miter;marker:none;marker-start:none;marker-mid:none;marker-end:none;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;visibility:visible;display:inline;overflow:visible;enable-background:accumulate"
+       id="path3909"
+       sodipodi:cx="329.77002"
+       sodipodi:cy="70.063263"
+       sodipodi:rx="2.3611217"
+       sodipodi:ry="2.3611217"
+       d="M 332.13114,70.063263 A 2.3611217,2.3611217 0 1 1 327.4089,70.063263 A 2.3611217,2.3611217 0 1 1 332.13114,70.063263 z"
+       transform="matrix(1.4621118,0,0,1.4621118,-177.45833,16.68419)" />
+    <path
+       sodipodi:nodetypes="cc"
+       id="path3935"
+       d="M 80.421027,214.99832 C 80.771097,171.10173 102.80237,118.86871 151.47532,118.07397"
+       style="fill:none;fill-rule:evenodd;stroke:#000000;stroke-width:2.5;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1" />
+    <path
+       id="path3947"
+       d="M 155.34963,117.8729 L 132.06743,113.13221 L 133.88571,128.06421 L 155.34963,117.8729 z"
+       style="fill:#000000;visibility:visible"
+       inkscape:transform-center-y="1.4635771"
+       inkscape:transform-center-x="6.54236" />
+  </g>
+</svg>

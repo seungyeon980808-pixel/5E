@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="239.53mm" height="207.04mm" version="1.1" viewBox="0 0 239.53 207.04" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+<defs>
+<marker id="a" overflow="visible" orient="auto">
+<path transform="matrix(-.8 0 0 -.8 -10 0)" d="m0 0 5-5-17.5 5 17.5 5z" fill-rule="evenodd" stroke="#000" stroke-width="1pt"/>
+</marker>
+<marker id="b" overflow="visible" orient="auto">
+<path transform="matrix(-.8 0 0 -.8 -10 0)" d="m0 0 5-5-17.5 5 17.5 5z" fill-rule="evenodd" stroke="#000" stroke-width="1pt"/>
+</marker>
+</defs>
+<metadata>
+<rdf:RDF>
+<cc:Work rdf:about="">
+<dc:format>image/svg+xml</dc:format>
+<dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+<dc:title/>
+</cc:Work>
+</rdf:RDF>
+</metadata>
+<g transform="translate(125.3 54.566)">
+<g transform="matrix(.93372 0 0 .93372 -.36679 3.2445)">
+<rect x="-74.461" y="23.789" width="132.29" height="15.119" fill="#4c1900" stroke="#000" stroke-dashoffset="5.6693" stroke-linecap="square" stroke-width="1.5"/>
+<rect x="-74.461" y="59.319" width="132.29" height="15.119" fill="#4c1900" stroke="#000" stroke-dashoffset="5.6693" stroke-linecap="square" stroke-width="1.5"/>
+<rect x="-97.896" y="38.908" width="179.16" height="20.411" fill="#f63"/>
+<rect x="-46.924" y="-53.816" width="77.216" height="77.216" fill="#fff" stroke="#000" stroke-dashoffset="5.6693" stroke-linecap="square" stroke-width="1.5"/>
+<rect x="-21.144" y="-28.037" width="25.658" height="25.658" fill="#808080" stroke="#000" stroke-dashoffset="5.6693" stroke-linecap="square" stroke-width="1.5"/>
+<rect x="-58.988" y="-21.271" width="12.126" height="12.126" fill="#f63" stroke="#000" stroke-dashoffset="5.6693" stroke-linecap="square" stroke-width="1.1342"/>
+<g transform="translate(0 128.33)" stroke="#000" stroke-dashoffset="5.6693" stroke-linecap="square">
+<rect x="-46.924" y="-53.816" width="77.216" height="77.216" fill="#fff" stroke-width="1.5"/>
+<rect x="-21.144" y="-28.037" width="25.658" height="25.658" fill="#808080" stroke-width="1.5"/>
+<rect x="-58.988" y="-21.271" width="12.126" height="12.126" fill="#f63" stroke-width="1.1342"/>
+</g>
+<text x="-126.24404" y="148.83333" fill="#000000" font-family="sans-serif" font-size="19.756px" letter-spacing="0px" stroke-width=".26458" word-spacing="0px" style="line-height:1.25" xml:space="preserve"><tspan x="-126.24404" y="148.83333" font-size="14.111px" stroke-width=".26458">Isolant</tspan></text>
+<text x="55.940475" y="139.00595" fill="#000000" font-family="sans-serif" font-size="19.756px" letter-spacing="0px" stroke-width=".26458" word-spacing="0px" style="line-height:1.25" xml:space="preserve"><tspan x="55.940475" y="139.00595" font-size="14.111px" stroke-width=".26458">Primaire</tspan></text>
+<path d="m-97.518 130.24 29.353-50.84" fill="none" marker-end="url(#b)" stroke="#000"/>
+<path d="m89.958 123.58-15.666-58.467" fill="none" marker-end="url(#a)" stroke="#000"/>
+</g>
+</g>
+</svg>

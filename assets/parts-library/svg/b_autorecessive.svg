@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<svg version="1.1" width="1350" height="1580" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+    <g id="male" stroke="#000" stroke-width="4">
+      <circle cx="45" r="45"/>
+      <path d="m0,52c-20 0-50 10-50 40v140c0 30 40 30 40 0v-110c0-6 10-6 10 0v340c0 30 40 30 40 0v-190c0-6 10-6 10 0v190c0 30 40 30 40 0v-340c0-6 10-6 10 0v110c0 30 40 30 40 0v-140c0-30-30-40-50-40h-90z"/>
+    </g>
+    <g id="r_min">
+      <circle r="33.85" fill="#ff9b9b" stroke="#000" stroke-width="4"/>
+      <text y="11" font-family="DejaVu Sans" font-size="30" font-style="oblique" font-weight="bold" text-anchor="middle">r</text>
+    </g>
+    <g id="R_maj">
+      <circle r="33.85" fill="#9b9bff" stroke="#000" stroke-width="4"/>
+      <text y="11" font-family="DejaVu Sans" font-size="30" font-style="oblique" font-weight="bold" text-anchor="middle">R</text>
+    </g>
+    <marker id="arr" orient="auto-start-reverse" overflow="visible">
+      <path d="m2.8,0 -3.5-2 v4z"/>
+    </marker>
+  </defs>
+  <g id="female" transform="translate(759.3 80.88)" fill="#a000ff" stroke="#000" stroke-width="4">
+    <circle cx="45" r="45"/>
+    <path d="m0,52c-20 0-40 10-40 40l-35 130c-8 30 27 45 35 15 0 0 30-112 30-115 0-6 10-6 10 0l-40 165h40v175c0 30 40 30 40 0v-175h10v175c0 30 40 30 40 0v-175h40l-40-165c0-6 10-6 10 0l30 120c8 30 43 15 35-15l-35-135c0-30-20-40-40-40h-90z"/>
+  </g>
+  <use xlink:href="#male" x="476.45" y="80.88" fill="#a000ff"/>
+  <use xlink:href="#male" x="99.55" y="918" fill="#00f"/>
+  <use xlink:href="#male" x="453.85" y="918" fill="#a000ff"/>
+  <use xlink:href="#male" x="808.15" y="918" fill="#a000ff"/>
+  <use xlink:href="#male" x="1162.45" y="918" fill="#f00"/>
+  <g stroke="#000" stroke-width="4" marker-end="url(#arr)">
+    <path d="m482.2,608 -342,176"/>
+    <path d="m482.2,608 -15,162"/>
+    <path d="m560.6,608 295,176"/>
+    <path d="m560.6,608 560,190"/>
+    <path d="m765.1,608 -535,190"/>
+    <path d="m765.1,608 44,162"/>
+    <path d="m843.5,608 -264,180"/>
+    <path d="m843.5,608 367,176"/>
+  </g>
+  <use xlink:href="#R_maj" x="482.2" y="608"/>
+  <use xlink:href="#r_min" x="560.6" y="608"/>
+  <use xlink:href="#R_maj" x="765.1" y="608"/>
+  <use xlink:href="#r_min" x="843.5" y="608"/>
+  <use xlink:href="#R_maj" x="105.3" y="818.7"/>
+  <use xlink:href="#R_maj" x="183.7" y="818.7"/>
+  <use xlink:href="#R_maj" x="459.7" y="818.7"/>
+  <use xlink:href="#r_min" x="538.1" y="818.7"/>
+  <use xlink:href="#R_maj" x="813.9" y="818.7"/>
+  <use xlink:href="#r_min" x="892.3" y="818.7"/>
+  <use xlink:href="#r_min" x="1168.2" y="818.7"/>
+  <use xlink:href="#r_min" x="1246.6" y="818.7"/>
+  <g font-family="DejaVu Sans" font-size="40" text-anchor="middle">
+    <text transform="translate(220 266)" font-size="60">
+      <tspan>Unaffected</tspan><tspan x="0" dy="56">Carrier</tspan><tspan x="0" dy="56">Father</tspan>
+    </text>
+    <text transform="translate(1118 266)" font-size="60">
+      <tspan>Unaffected</tspan><tspan x="0" dy="56">Carrier</tspan><tspan x="0" dy="56">Mother</tspan>
+    </text>
+    <text transform="translate(142 1475)">
+      <tspan>Unaffected</tspan><tspan x="0" dy="40">1 in 4 chance</tspan>
+    </text>
+    <text transform="translate(676 1475)">
+      <tspan>Unaffected Carrier</tspan><tspan x="0" dy="40">2 in 4 chance</tspan>
+    </text>
+    <text transform="translate(1206 1475)">
+      <tspan>Affected</tspan><tspan x="0" dy="40">1 in 4 chance</tspan>
+    </text>
+  </g>
+</svg>

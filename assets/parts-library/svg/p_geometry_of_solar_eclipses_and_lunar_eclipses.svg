@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   version="1.1"
+   width="1800"
+   height="1245"
+   id="svg2">
+  <defs
+     id="defs4" />
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title></dc:title>
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     transform="translate(0,192.63782)"
+     id="layer1">
+    <path
+       d="m 491.25726,565.90912 a 192.6499,192.6499 0 1 1 -385.2998,0 192.6499,192.6499 0 1 1 385.2998,0 z"
+       transform="translate(0,-192.63782)"
+       id="path2985"
+       style="fill:#ffff00" />
+    <text
+       x="245.62863"
+       y="570.72534"
+       transform="translate(0,-192.63782)"
+       id="text2987"
+       xml:space="preserve"
+       style="font-size:40px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#ff0000;fill-opacity:1;stroke:none;font-family:Sans"><tspan
+         x="245.62863"
+         y="570.72534"
+         id="tspan2989">Sun</tspan></text>
+    <path
+       d="m 1117.3695,570.72534 a 110.7737,110.7737 0 1 1 -221.54737,0 110.7737,110.7737 0 1 1 221.54737,0 z"
+       transform="translate(0,-192.63782)"
+       id="path2991"
+       style="fill:#000080" />
+    <text
+       x="936.76013"
+       y="585.17407"
+       transform="translate(0,-192.63782)"
+       id="text2993"
+       xml:space="preserve"
+       style="font-size:40px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#0000ff;fill-opacity:1;stroke:none;font-family:Sans"><tspan
+         x="936.76013"
+         y="585.17407"
+         id="tspan2995">Earth</tspan></text>
+    <path
+       d="m 1473.7718,581.56189 a 61.407158,61.407158 0 1 1 -122.8143,0 61.407158,61.407158 0 1 1 122.8143,0 z"
+       transform="translate(0,-192.63782)"
+       id="path2997"
+       style="fill:#808080" />
+    <text
+       x="1362.998"
+       y="602.03094"
+       transform="translate(0,-192.63782)"
+       id="text2999"
+       xml:space="preserve"
+       style="font-size:40px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"><tspan
+         x="1362.998"
+         y="602.03094"
+         id="tspan3001">Moon</tspan></text>
+    <text
+       x="1216.1025"
+       y="712.80463"
+       transform="translate(0,-192.63782)"
+       id="text3003"
+       xml:space="preserve"
+       style="font-size:40px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#008080;fill-opacity:1;stroke:none;font-family:Sans"><tspan
+         x="1216.1025"
+         y="712.80463"
+         id="tspan3005">Lunar eclipse</tspan></text>
+    <path
+       d="m 804.31332,588.78625 a 56.590908,56.590908 0 1 1 -113.18182,0 56.590908,56.590908 0 1 1 113.18182,0 z"
+       transform="translate(0,-192.63782)"
+       id="path3007"
+       style="fill:#808080" />
+    <text
+       x="700.76404"
+       y="602.03094"
+       transform="translate(0,-192.63782)"
+       id="text3009"
+       xml:space="preserve"
+       style="font-size:40px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#000000;fill-opacity:1;stroke:none;font-family:Sans"><tspan
+         x="700.76404"
+         y="602.03094"
+         id="tspan3011">Moon</tspan></text>
+    <text
+       x="616.47968"
+       y="695.94775"
+       transform="translate(0,-192.63782)"
+       id="text3013"
+       xml:space="preserve"
+       style="font-size:40px;font-style:normal;font-weight:normal;line-height:125%;letter-spacing:0px;word-spacing:0px;fill:#ff6600;fill-opacity:1;stroke:none;font-family:Sans"><tspan
+         x="616.47968"
+         y="695.94775"
+         id="tspan3015">Solar eclipse</tspan></text>
+  </g>
+</svg>

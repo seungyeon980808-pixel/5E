@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://web.resource.org/cc/"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   width="850"
+   height="531"
+   id="svg2452"
+   sodipodi:version="0.32"
+   inkscape:version="0.45.1"
+   version="1.0"
+   sodipodi:docbase="C:\Documents and Settings\Jim\Desktop\Wikipedia"
+   sodipodi:docname="Linking Number 1.svg"
+   inkscape:output_extension="org.inkscape.output.svg.inkscape">
+  <defs
+     id="defs2454" />
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     gridtolerance="10000"
+     guidetolerance="10"
+     objecttolerance="10"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="0.35"
+     inkscape:cx="375"
+     inkscape:cy="520"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     inkscape:window-width="744"
+     inkscape:window-height="573"
+     inkscape:window-x="46"
+     inkscape:window-y="92" />
+  <metadata
+     id="metadata2457">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Layer 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(-435,-392.57647)">
+    <path
+       id="path2175"
+       d="M 899,461.57647 L 920,480.57647 L 938,502.57647 L 953,525.57647 L 966,549.57647 L 977,575.57647 L 984,602.57647 L 989,630.57647 L 990,658.57647 L 989,685.57647 L 985,710.57647 L 978,735.57647 L 970,759.57647 L 959,781.57647 L 946,803.57647 L 931,823.57647 L 914,841.57647 L 896,858.57647 L 876,873.57647 L 854,886.57647 L 832,897.57647 L 808,905.57647 L 783,912.57647 L 758,916.57647 L 731,917.57647 L 704,916.57647 L 679,912.57647 L 654,905.57647 L 630,897.57647 L 607,886.57647 L 585,873.57647 L 565,858.57647 L 547,841.57647 L 530,823.57647 L 515,803.57647 L 502,781.57647 L 491,759.57647 L 483,735.57647 L 476,710.57647 L 472,685.57647 L 471,658.57647 L 472,631.57647 L 476,606.57647 L 483,581.57647 L 491,557.57647 L 502,534.57647 L 515,512.57647 L 530,492.57647 L 547,474.57647 L 565,457.57647 L 585,442.57647 L 607,429.57647 L 630,418.57647 L 654,410.57647 L 679,403.57647 L 704,399.57647 L 731,398.57647 L 751,399.57647 L 770,401.57647 L 790,405.57647 L 809,411.57647"
+       style="fill:none;fill-rule:nonzero;stroke:#ff0000;stroke-width:12px;stroke-linecap:butt;stroke-linejoin:round" />
+    <path
+       id="path2177"
+       d="M 506,638.57647 L 471,702.57647 L 436,638.57647 L 435,636.57647 L 435,634.57647 L 438,630.57647 L 443,630.57647 L 445,631.57647 L 446,632.57647 L 476,686.57647 L 466,686.57647 L 496,632.57647 L 500,630.57647 L 504,630.57647 L 507,634.57647 L 507,636.57647 L 506,638.57647 z M 477,644.57647 L 477,689.57647 L 465,689.57647 L 465,644.57647 L 477,644.57647 z "
+       style="fill:#ff0000;fill-rule:nonzero;stroke:none;stroke-linecap:round;stroke-linejoin:round" />
+    <path
+       id="path2179"
+       d="M 1284,638.57647 L 1249,702.57647 L 1214,638.57647 L 1213,636.57647 L 1213,634.57647 L 1216,630.57647 L 1220,630.57647 L 1224,632.57647 L 1254,686.57647 L 1244,686.57647 L 1274,632.57647 L 1275,631.57647 L 1277,630.57647 L 1282,630.57647 L 1285,634.57647 L 1285,636.57647 L 1284,638.57647 z M 1255,644.57647 L 1255,689.57647 L 1243,689.57647 L 1243,644.57647 L 1255,644.57647 z "
+       style="fill:#0000ff;fill-rule:nonzero;stroke:none;stroke-linecap:round;stroke-linejoin:round" />
+    <path
+       id="path2181"
+       d="M 821,855.57647 L 801,835.57647 L 783,814.57647 L 768,791.57647 L 755,766.57647 L 744,740.57647 L 737,713.57647 L 733,686.57647 L 731,658.57647 L 732,631.57647 L 736,606.57647 L 743,581.57647 L 751,557.57647 L 762,534.57647 L 775,512.57647 L 790,492.57647 L 807,474.57647 L 825,457.57647 L 845,442.57647 L 867,429.57647 L 889,418.57647 L 913,410.57647 L 938,403.57647 L 964,399.57647 L 990,398.57647 L 1017,399.57647 L 1042,403.57647 L 1067,410.57647 L 1091,418.57647 L 1113,429.57647 L 1135,442.57647 L 1155,457.57647 L 1173,474.57647 L 1190,492.57647 L 1205,512.57647 L 1218,534.57647 L 1229,557.57647 L 1237,581.57647 L 1244,606.57647 L 1248,631.57647 L 1249,658.57647 L 1248,685.57647 L 1244,710.57647 L 1237,735.57647 L 1229,759.57647 L 1218,781.57647 L 1205,803.57647 L 1190,823.57647 L 1173,841.57647 L 1155,858.57647 L 1135,873.57647 L 1113,886.57647 L 1091,897.57647 L 1067,905.57647 L 1042,912.57647 L 1017,916.57647 L 990,917.57647 L 970,916.57647 L 950,914.57647 L 931,910.57647 L 911,905.57647"
+       style="fill:none;fill-rule:nonzero;stroke:#0000ff;stroke-width:12px;stroke-linecap:butt;stroke-linejoin:round" />
+  </g>
+</svg>

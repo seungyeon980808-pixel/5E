@@ -13,13 +13,13 @@
  * 평면 속성만 갱신(박스 위치·크기 보존)하고 계열은 전량 재생성한다 — 표시점/수선
  * 등 부속 객체는 funcgraph id가 아니라 planeId만 참조하므로 안전. */
 
-import { state, ptToMm, mmToPt } from "../state.js?v=1.4.0";
-import { makeDefaultCoordplane } from "../function-graph/defaults.js?v=1.4.0";
-import { renderCoordplane, renderFuncgraph, smoothSamplePts, catmullRomHandles, bezierSamplePts, markerRadius } from "../render/coordplane.js?v=1.4.0";
-import { sampleFunctionPoints } from "../function-graph/sampler.js?v=1.4.0";
-import { worldFromMath, mathFromWorld, planeAsY2 } from "../function-graph/coords.js?v=1.4.0";
-import { nextObjectId } from "../tools/id.js?v=1.4.0";
-import { simplifyRDP, fdPerpDist } from "../geometry.js?v=1.4.0";
+import { state, ptToMm, mmToPt } from "../state.js?v=1.6.0-remediation-0929";
+import { makeDefaultCoordplane } from "../function-graph/defaults.js?v=1.6.0-preview-labeler-0917-1111";
+import { renderCoordplane, renderFuncgraph, smoothSamplePts, catmullRomHandles, bezierSamplePts, markerRadius } from "../render/coordplane.js?v=1.6.0-remediation-0929";
+import { sampleFunctionPoints } from "../function-graph/sampler.js?v=1.6.0-preview-labeler-0917-1111";
+import { worldFromMath, mathFromWorld, planeAsY2 } from "../function-graph/coords.js?v=1.6.0-preview-labeler-0917-1111";
+import { nextObjectId } from "../tools/id.js?v=1.6.0-preview-labeler-0917-1111";
+import { simplifyRDP, fdPerpDist } from "../geometry.js?v=1.6.0-preview-labeler-0917-1111";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 const PAD_X = 1.6;                // x: 마지막 눈금 → 화살표 여유(요구: 조금 줄임)
@@ -121,6 +121,7 @@ function newBarSeries() { return { kind: "bar", axis: "y", items: [], widthRatio
 // 재사용하되, 회색·흰색은 명도만 다른 solid이므로 여기서만 별칭으로 구분한다.
 const BAR_FILLS = [["회색", "gray"], ["흰색", "white"], ["빗금", "hatch"], ["점", "dots"], ["교차", "cross"]];
 const BAR_GRAY_LEVEL = 170;   // 기출 막대 회색(0=검정, 255=흰색)
+const MAX_TICK_LABELS = 160;
 // 막대 채우기 별칭 → 공용 채우기 필드(fillStyle/fillLevel). 렌더는 js/render/fill.js가 맡는다.
 function barFillFields(alias) {
   const a = alias || "gray";
@@ -147,7 +148,8 @@ function genMultiples(base, count) {
   const b = String(base || "").trim();
   if (!b) return [];
   const out = [];
-  for (let k = 1; k <= Math.max(1, count); k++) out.push(k === 1 ? b : `${k}${b}`);
+  const visibleCount = Math.min(MAX_TICK_LABELS, Math.max(1, Math.floor(count)));
+  for (let k = 1; k <= visibleCount; k++) out.push(k === 1 ? b : `${k}${b}`);
   return out;
 }
 function applyCfg(plane, cfg) {
@@ -583,10 +585,13 @@ function buildFrame(cfg, at, artboard) {
 function areaFields(s, plane) {
   if (!s || !s.area || !s.area.on) return {};
   const a = s.area;
+  const dx = s.offset && Number.isFinite(s.offset.dx) ? s.offset.dx : 0;
   return {
     area: {
       from: Number.isFinite(a.from) ? a.from : undefined,
       to: Number.isFinite(a.to) ? a.to : undefined,
+      worldFrom: Number.isFinite(a.from) ? worldFromMath(plane, a.from + dx, 0).x : undefined,
+      worldTo: Number.isFinite(a.to) ? worldFromMath(plane, a.to + dx, 0).x : undefined,
       baseY: worldFromMath(plane, 0, 0).y,
       level: Number.isFinite(a.level) ? a.level : 220,
       edges: a.edges === false ? false : undefined,
@@ -2405,7 +2410,7 @@ function build() {
                 <span class="gm-row-lbl">y축 기준</span>
                 <div class="gm-row-body"><input type="text" id="gm-tickbase-y" class="gm-num" style="font-family:monospace;flex:1;min-width:0;" placeholder="예: v_0  → v₀, 2v₀, 3v₀…"></div>
               </div>
-              <div class="gm-ax-note" style="grid-column:auto;padding-left:102px;">기준 문자 하나만 넣으면 2·3·4배가 자동 생성됩니다</div>
+              <div class="gm-ax-note" style="grid-column:auto;padding-left:102px;">기준 문자 하나만 넣으면 2·3·4배가 자동 생성됩니다 · 화면 성능을 위해 축마다 최대 160개</div>
             </div>
           </div>
 

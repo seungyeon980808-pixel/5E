@@ -8,7 +8,7 @@ const evidence = process.env.EVIDENCE_DIR || path.join(__dirname, '..', '.omo', 
 
 async function stateSnapshot(page) {
   return page.evaluate(async () => {
-    const { state } = await import('./js/state.js?v=1.6.0-preview-labeler-0917-1111');
+    const { state } = await import('./js/state.js?v=1.6.0-remediation-0929');
     return structuredClone(state.get());
   });
 }
@@ -32,7 +32,7 @@ async function createRightAngle(page) {
   await page.mouse.click(x, y);
   await page.mouse.click(x + 28, y);
   await page.mouse.click(x + 28, y + 24);
-  await page.waitForFunction((ids) => import('./js/state.js?v=1.6.0-preview-labeler-0917-1111')
+  await page.waitForFunction((ids) => import('./js/state.js?v=1.6.0-remediation-0929')
     .then(({ state }) => state.get().objects.some((object) => object.type === 'rightangle' && !ids.includes(object.id))), before.objects.map((object) => object.id));
   return (await stateSnapshot(page)).objects.find((object) => object.type === 'rightangle' && !before.objects.some((old) => old.id === object.id));
 }
@@ -48,7 +48,7 @@ async function createRect(page) {
   await page.mouse.down();
   await page.mouse.move(x + 30, y + 20);
   await page.mouse.up();
-  await page.waitForFunction((ids) => import('./js/state.js?v=1.6.0-preview-labeler-0917-1111')
+  await page.waitForFunction((ids) => import('./js/state.js?v=1.6.0-remediation-0929')
     .then(({ state }) => state.get().objects.some((object) => object.type === 'rect' && !ids.includes(object.id))), before.objects.map((object) => object.id));
   return (await stateSnapshot(page)).objects.find((object) => object.type === 'rect' && !before.objects.some((old) => old.id === object.id));
 }
@@ -66,7 +66,7 @@ async function createAngleArc(page) {
   await page.mouse.click(x, y);
   await page.mouse.click(x + 24, y);
   await page.mouse.click(x + 24, y + 20);
-  await page.waitForFunction((ids) => import('./js/state.js?v=1.6.0-preview-labeler-0917-1111')
+  await page.waitForFunction((ids) => import('./js/state.js?v=1.6.0-remediation-0929')
     .then(({ state }) => state.get().objects.some((object) => object.type === 'anglearc' && !ids.includes(object.id))), before.objects.map((object) => object.id));
   return (await stateSnapshot(page)).objects.find((object) => object.type === 'anglearc' && !before.objects.some((old) => old.id === object.id));
 }
@@ -156,7 +156,7 @@ async function selectMoveResizeRotate(page, id) {
 
   const orientation = page.locator('select.insp-input:has(option[value="-1"])');
   await orientation.selectOption('-1');
-  await page.waitForFunction((selectedId) => import('./js/state.js?v=1.6.0-preview-labeler-0917-1111')
+  await page.waitForFunction((selectedId) => import('./js/state.js?v=1.6.0-remediation-0929')
     .then(({ state }) => state.get().objects.find((object) => object.id === selectedId)?.orientation === -1), id);
   const oppositeOrientation = (await stateSnapshot(page)).objects.find((object) => object.id === id);
   const oppositeFrame = await assertRightAngleFrame(page, oppositeOrientation, 'opposite orientation');
@@ -184,7 +184,7 @@ async function saveAndReopen(page, context, id) {
   await (await chooser).setFiles(savedPath);
   const open = reopened.getByRole('button', { name: '열기', exact: true });
   if (await open.isVisible().catch(() => false)) await open.click();
-  await reopened.waitForFunction((expectedId) => import('./js/state.js?v=1.6.0-preview-labeler-0917-1111')
+  await reopened.waitForFunction((expectedId) => import('./js/state.js?v=1.6.0-remediation-0929')
     .then(({ state }) => state.get().objects.some((object) => object.id === expectedId)), id);
   const rendered = reopened.locator(`[data-id="${id}"]`).first();
   try {

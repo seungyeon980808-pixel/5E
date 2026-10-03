@@ -11,18 +11,25 @@
 //  - 삽입물 전체를 groupId 하나로 묶음 (Shift+G로 해제 가능; undo는 rebuildGroups로 안전)
 // 삽입은 반드시 state.update() 경유 — 스냅샷 1개 = Undo 1스텝. */
 
-import { applyNewObjectStyleDefaults } from "./style-mode.js?v=1.4.0";
-import { DEFAULT_TEXT_FONT } from "./state.js?v=1.4.0";
-import { vectorizeImage } from "./image-vectorize.js?v=1.4.0";
-import { measureFormula } from "./formula.js?v=1.4.0";
+import { applyNewObjectStyleDefaults } from "./style-mode.js?v=1.6.0-remediation-0929";
+import { DEFAULT_TEXT_FONT } from "./state.js?v=1.6.0-remediation-0929";
+import { MAX_PROCESS_DIMENSION } from "./image-analysis.js?v=1.6.0-remediation-0929";
+import { createImageAnalysisController } from "./image-analysis-controller.js?v=1.6.0-remediation-0929";
+import { measureFormula } from "./formula.js?v=1.6.0-remediation-0929";
+import { modKey, shortcutKey, keyLabel } from "./platform.js?v=1.6.0-remediation-0929";
+import { selectedObjectifyImage, objectifyImageFile } from "./image-objectify-source.js";
+import { renderSessionToDataUrl } from "./image-cutout.js?v=1.6.0-preview-lite-hybrid-0922";
 
 const ACCEPTED_TYPES = new Set(["image/png", "image/jpeg", "image/webp"]);
-const MAX_PROCESS_DIMENSION = 2000; // 데모 성능 검증 범위 (1초 이내)
+const MAX_SOURCE_FILE_BYTES = 64 * 1024 * 1024;
 const ARTBOARD_FIT_RATIO = 0.8;     // 인수인계서 §3: 아트보드 폭 80%에 맞춰 중앙 배치
 let idCounter = 0;
 
 function clone(value) {
   return JSON.parse(JSON.stringify(value));
+}
+export function objectifySourceTaggedObject(object, sourceMetadata) {
+  return sourceMetadata ? { ...object, sourceMetadata: clone(sourceMetadata) } : object;
 }
 function round3(value) {
   return Math.round(value * 1000) / 1000;
@@ -92,6 +99,8 @@ function injectObjectifyStyles() {
        지금: 적정 크기(1120×720)를 기본으로 두되 화면이 좁으면 min()으로 줄어들고,
             배율 보정은 .modal의 max-width/max-height가 그대로 담당하게 !important를 뺀다.
             vh/vw를 --ui-zoom으로 나누는 이유는 .modal 규칙 주석 참고. */
+    .objectify-overlay { backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); }
+    .objectify-zoom-value { min-width:4ch; text-align:center; color:var(--text-secondary); font-variant-numeric:tabular-nums; }
     .modal-objectify {
       width: min(1120px, calc((100vw - 48px) / var(--ui-zoom, 1)));
       height: min(720px, calc((100vh - 48px) / var(--ui-zoom, 1)));
@@ -108,6 +117,9 @@ function injectObjectifyStyles() {
     .objectify-right .modal-field { gap:2px; }
     .objectify-right .modal-label { font-size: 11.5px; display:inline-flex; align-items:center; }
     .objectify-right .objectify-controls { gap:8px 10px; }
+    .objectify-advanced-details { border-top:1px solid var(--border-muted); padding-top:4px; }
+    .objectify-advanced-details > summary { cursor:pointer; color:var(--text-secondary); font:600 11px/1 "IBM Plex Sans KR",system-ui,sans-serif; }
+    .objectify-advanced-body { display:flex; flex-direction:column; gap:9px; padding-top:7px; }
     .objectify-right .modal-field-row { margin:0; gap:6px; align-items:center; }
     /* 체크박스 행: 물음표를 label 밖에 둔다 — label 안에 있으면 눌렀을 때 체크가 토글된다. */
     .objectify-check { display:flex; align-items:center; gap:2px; }
@@ -132,7 +144,7 @@ function injectObjectifyStyles() {
 function buildModal() {
   injectObjectifyStyles();
   const overlay = document.createElement("div");
-  overlay.className = "modal-overlay";
+  overlay.className = "modal-overlay objectify-overlay";
   overlay.hidden = true;
   overlay.innerHTML = `
     <div class="modal modal-objectify" role="dialog" aria-modal="true" aria-labelledby="objectify-title">
@@ -145,9 +157,13 @@ function buildModal() {
             <div id="objectify-dropzone" class="objectify-dropzone" role="button" tabindex="0">PNG/JPG/WEBP 파일을 여기에 끌어 놓기 · 클릭해 선택 · Ctrl+V 붙여넣기</div>
           </div>
           <div id="objectify-tools" class="objectify-tools" hidden>
+            <button id="objectify-zoom-out" type="button" class="modal-btn" aria-label="축소">−</button>
+            <output id="objectify-zoom-value" class="objectify-zoom-value" aria-label="확대 비율">100%</output>
+            <button id="objectify-zoom-in" type="button" class="modal-btn" aria-label="확대">＋</button>
             <button id="objectify-zoom-reset" type="button" class="modal-btn">전체 보기</button>
             <button id="objectify-region" type="button" class="modal-btn" title="드래그로 남길 영역을 지정합니다. 영역 안쪽 조각만 남고 나머지는 제외됩니다.">영역만 남기기</button>
-            <span class="modal-label" id="objectify-tool-hint" style="font-weight:normal;color:#6e7781;margin:0;">휠=확대/축소 · 드래그=이동 · 클릭=제외</span>
+            <button id="objectify-remove-image" type="button" class="modal-btn">이미지 삭제</button>
+            <span class="modal-label" id="objectify-tool-hint" style="font-weight:normal;color:#6e7781;margin:0;">Control 키+휠·핀치=확대/축소 · 스크롤·드래그=이동 · 클릭=제외</span>
           </div>
           <p class="objectify-description" id="objectify-legend" hidden style="margin:0;">
             <span id="objectify-legend-body">
@@ -172,45 +188,52 @@ function buildModal() {
 스캔 얼룩이 객체로 딸려 들어올 때 값을 올리세요.">?</button></span>
               <span class="objectify-range-row"><input id="objectify-minarea" type="range" min="5" max="400" step="1" value="25" /><output class="objectify-range-value" id="objectify-minarea-value">25px²</output></span>
             </label>
-            <label class="modal-field">
-              <span class="modal-label">글자 판정 크기<button type="button" class="gm-help" title="가로·세로가 모두 이 크기보다 작은 조각을 '글자'로 봅니다.
-글자가 도형으로 잘못 잡히면 값을 올리고, 작은 도형이 글자로 잡히면 내리세요.">?</button></span>
-              <span class="objectify-range-row"><input id="objectify-textsize" type="range" min="8" max="60" step="1" value="55" /><output class="objectify-range-value" id="objectify-textsize-value">55px</output></span>
-            </label>
-            <label class="modal-field">
-              <span class="modal-label">곡선 단순화<button type="button" class="gm-help" title="곡선을 이루는 점의 개수를 줄입니다.
-값이 크면 매끈해지지만 모양이 뭉개지고, 작으면 원본에 가깝지만 점이 많아집니다.">?</button></span>
-              <span class="objectify-range-row"><input id="objectify-eps" type="range" min="0" max="40" step="1" value="12" /><output class="objectify-range-value" id="objectify-eps-value">1.2</output></span>
-            </label>
           </div>
-          <div class="objectify-sec">글자(라벨) 처리<button type="button" class="gm-help" title="위에서 '글자'로 판정된 조각을 어떻게 할지 정합니다.">?</button></div>
-          <div class="objectify-radios">
+          <details class="objectify-advanced-details">
+            <summary>고급 인식·글자 옵션</summary>
+            <div class="objectify-advanced-body">
+              <div class="objectify-controls" style="grid-template-columns:1fr 1fr;">
+                <label class="modal-field">
+                  <span class="modal-label">글자 판정 크기<button type="button" class="gm-help" title="가로·세로가 모두 이 크기보다 작은 조각을 '글자'로 봅니다.
+글자가 도형으로 잘못 잡히면 값을 올리고, 작은 도형이 글자로 잡히면 내리세요.">?</button></span>
+                  <span class="objectify-range-row"><input id="objectify-textsize" type="range" min="8" max="60" step="1" value="55" /><output class="objectify-range-value" id="objectify-textsize-value">55px</output></span>
+                </label>
+                <label class="modal-field">
+                  <span class="modal-label">곡선 단순화<button type="button" class="gm-help" title="곡선을 이루는 점의 개수를 줄입니다.
+값이 크면 매끈해지지만 모양이 뭉개지고, 작으면 원본에 가깝지만 점이 많아집니다.">?</button></span>
+                  <span class="objectify-range-row"><input id="objectify-eps" type="range" min="0" max="40" step="1" value="12" /><output class="objectify-range-value" id="objectify-eps-value">1.2</output></span>
+                </label>
+              </div>
+              <div class="objectify-sec">글자(라벨) 처리<button type="button" class="gm-help" title="위에서 '글자'로 판정된 조각을 어떻게 할지 정합니다.">?</button></div>
+              <div class="objectify-radios">
             <label class="modal-field-row"><input type="radio" name="objectify-textmode" value="image" checked /><span class="modal-label">원본 이미지로 유지 (권장)</span></label>
             <label class="modal-field-row"><input type="radio" name="objectify-textmode" value="keep" /><span class="modal-label">남기기 (글자 모양 그대로)</span></label>
             <label class="modal-field-row"><input type="radio" name="objectify-textmode" value="remove" /><span class="modal-label">지우기</span></label>
             <label class="modal-field-row"><input type="radio" name="objectify-textmode" value="replace" /><span class="modal-label">텍스트 객체로 대체</span></label>
-          </div>
-          <div class="objectify-sec">기타</div>
-          <div class="objectify-check">
+              </div>
+              <div class="objectify-sec">기타</div>
+              <div class="objectify-check">
             <label class="modal-field modal-field-row"><input id="objectify-graylevels" type="checkbox" checked /><span class="modal-label">회색 단계 보존</span></label>
             <button type="button" class="gm-help" title="흰색·회색·검정을 여러 단계로 나눠 인식합니다.
 음영이 들어간 그림에서 명암을 살리려면 켜 두세요.">?</button>
-          </div>
-          <div class="objectify-check">
+              </div>
+              <div class="objectify-check">
             <label class="modal-field modal-field-row"><input id="objectify-removegrid" type="checkbox" /><span class="modal-label">격자·눈금선 제거</span></label>
             <button type="button" class="gm-help" title="그래프 용지의 모눈이나 표의 눈금선을 지웁니다.
 그래프·도표 이미지에서 선만 남기고 싶을 때 켜세요.">?</button>
-          </div>
-          <div class="objectify-check">
+              </div>
+              <div class="objectify-check">
             <label class="modal-field modal-field-row"><input id="objectify-reference" type="checkbox" /><span class="modal-label">원본을 반투명 배경으로</span></label>
             <button type="button" class="gm-help" title="원본 이미지를 흐리게 깔아 함께 넣습니다.
 변환 결과를 원본과 겹쳐 보며 다듬을 때 유용합니다.">?</button>
-          </div>
-          <div class="objectify-check">
+              </div>
+              <div class="objectify-check">
             <label class="modal-field modal-field-row"><input id="objectify-advanced" type="checkbox" /><span class="modal-label">선·도형 승격 ⚠</span></label>
             <button type="button" class="gm-help" title="[고급·미완성] 실험 기능이라 결과가 부정확할 수 있습니다.
 획을 선 객체로, 사각형을 상자로 바꾸고 테두리와 채움을 합칩니다.">?</button>
-          </div>
+              </div>
+            </div>
+          </details>
         </div>
       </div>
       <p id="objectify-status" class="objectify-status" role="status">이미지를 선택하세요.</p>
@@ -228,9 +251,9 @@ function buildModal() {
 /* 외부 모듈용 진입점(기출 라이브러리 등): 모달을 열고 파일을 바로 로드.
  * initImageObjectify()가 실행된 뒤에만 동작 — 준비 전이면 false 반환. */
 let _openWithFile = null;
-export function openObjectifyWithFile(file) {
+export function openObjectifyWithFile(file, options = {}) {
   if (!_openWithFile) return false;
-  _openWithFile(file);
+  _openWithFile(file, options);
   return true;
 }
 
@@ -261,11 +284,16 @@ export function initImageObjectify(state) {
   const stage = overlay.querySelector("#objectify-stage");
   const tools = overlay.querySelector("#objectify-tools");
   const zoomResetButton = overlay.querySelector("#objectify-zoom-reset");
+  const zoomValue = overlay.querySelector("#objectify-zoom-value");
+  const zoomOut = overlay.querySelector("#objectify-zoom-out");
+  const zoomIn = overlay.querySelector("#objectify-zoom-in");
   const regionButton = overlay.querySelector("#objectify-region");
+  const removeImageButton = overlay.querySelector("#objectify-remove-image");
   const toolHint = overlay.querySelector("#objectify-tool-hint");
 
   let sourceCanvas = null;   // 처리용 캔버스 (흰 배경 합성, 최대 2000px)
   let sourceDataUrl = null;  // 참고 이미지 삽입용 원본 dataURL
+  let sourceMetadata = null;
   let analysis = null;       // vectorizeImage 결과
   let previewPaths = [];     // 컴포넌트별 Path2D 캐시
   let excluded = new Set();  // 미리보기에서 제외한 컴포넌트 index
@@ -275,13 +303,26 @@ export function initImageObjectify(state) {
   let regionMode = false;    // '영역만 남기기' 도구 활성(드래그로 남길 사각형 지정)
   let regionDrag = null;     // 영역 드래그 중 사각형(이미지 px) {x0,y0,x1,y1}
   let needFit = false;       // 새 이미지 로드 시 1회 전체 보기
+  let loadGeneration = 0;
+  let analysisGeneration = 0;
+  let analysisStartTimer = 0;
+  let analysisSuspended = false;
+  let analysisMode = "worker";
+  const analysisController = createImageAnalysisController();
 
   const setStatus = (message, isError = false) => {
     status.textContent = message;
     status.classList.toggle("is-error", isError);
   };
+  let selectionOpenGeneration = 0;
   const close = () => {
+    selectionOpenGeneration += 1;
     overlay.hidden = true;
+    loadGeneration += 1;
+    analysisGeneration += 1;
+    analysisSuspended = false;
+    analysisController.cancel();
+    if (analysisStartTimer) { clearTimeout(analysisStartTimer); analysisStartTimer = 0; }
     // 영역 드래그 도중 모달이 닫히는 경로(예: Esc 오라우팅, 바깥 클릭)가 있으면, 정리
     // 안 된 regionDrag가 살아남아 이후 window mouseup이 닫힌 모달 뒤에서 제외 목록을
     // 그리다 만 사각형 기준으로 조용히 교체한다 — 닫을 때 항상 리셋한다.
@@ -333,6 +374,9 @@ export function initImageObjectify(state) {
   /* ----- 줌/팬 (미리보기 캔버스 CSS transform) ----- */
   function applyView() {
     preview.style.transform = `translate(${view.ox}px, ${view.oy}px) scale(${view.zoom})`;
+    zoomValue.textContent = `${Math.round(view.zoom * 100)}%`;
+    zoomOut.disabled = view.zoom <= .05;
+    zoomIn.disabled = view.zoom >= 20;
   }
   function fitView() {
     if (!sourceCanvas) return;
@@ -419,48 +463,40 @@ export function initImageObjectify(state) {
     const textCount = analysis.components.filter((c) => c.isText).length;
     const parts = [`오브젝트 ${total}개 (글자 추정 ${textCount}개)`];
     if (excluded.size) parts.push(`제외 ${excluded.size}개`);
+    if (analysisMode === "fallback") parts.push("호환 모드");
     setStatus(total ? parts.join(" · ") : "조건에 맞는 오브젝트를 찾지 못했습니다. 설정을 조정해 보세요.", total === 0);
     insertButton.disabled = total - excluded.size === 0;
   }
 
   /* ----- 분석 실행 ----- */
   function analyze() {
-    if (!sourceCanvas) return;
+    if (!sourceCanvas || overlay.hidden) return;
+    analysisSuspended = false;
+    analysisGeneration += 1;
+    const generation = analysisGeneration;
+    const capturedCanvas = sourceCanvas;
+    analysisController.cancel();
+    if (analysisStartTimer) clearTimeout(analysisStartTimer);
     analyzeButton.disabled = true;
     insertButton.disabled = true;
     setStatus("이미지를 분석하는 중입니다...");
     // 상태 메시지가 먼저 그려지도록 파이프라인은 살짝 미뤄 실행.
     // (rAF는 백그라운드 탭에서 멈추므로 setTimeout 사용)
-    setTimeout(() => {
+    analysisStartTimer = setTimeout(async () => {
+      analysisStartTimer = 0;
+      if (generation !== analysisGeneration || capturedCanvas !== sourceCanvas || overlay.hidden) return;
       try {
-        const ctx = sourceCanvas.getContext("2d");
-        const imageData = ctx.getImageData(0, 0, sourceCanvas.width, sourceCanvas.height);
-        // 사전 게이트: 사진·스캔처럼 어두운 잉크 비율이 과도하게 높은 이미지는 대량 잉크로
-        // 오판돼 벡터화가 메인 스레드를 수십 초~분 프리징시킨다. 벡터화 전에 어두운 픽셀
-        // 비율을 재서 상한(55%)을 넘으면 조기 중단하고 안내한다.
-        {
-          const d = imageData.data;
-          let ink = 0, opaque = 0;
-          for (let p = 0; p < d.length; p += 4) {
-            if (d[p + 3] < 16) continue; // 투명 픽셀 제외
-            opaque++;
-            const lum = 0.299 * d[p] + 0.587 * d[p + 1] + 0.114 * d[p + 2];
-            if (lum < 128) ink++;
-          }
-          const ratio = opaque ? ink / opaque : 0;
-          if (ratio > 0.55) {
-            setStatus(`어두운 영역 비율이 너무 높습니다(${Math.round(ratio * 100)}%). 사진·스캔 이미지는 객체화에 적합하지 않아 분석을 건너뜁니다. 선·도형 위주의 이미지를 사용하세요.`, true);
-            analyzeButton.disabled = false;
-            // 조기 return 전에 이전 analysis를 비우고 한 번 다시 그려야 한다 —
-            // 안 그러면 sourceCanvas는 이미 새 이미지로 바뀌었는데 미리보기엔
-            // 이전 이미지의 컴포넌트 오버레이가 그대로 남는다(원본만이라도 표시).
-            analysis = null;
-            previewPaths = [];
-            drawPreview();
-            return;
-          }
-        }
-        analysis = vectorizeImage(imageData, currentOptions());
+        const ctx = capturedCanvas.getContext("2d");
+        const imageData = ctx.getImageData(0, 0, capturedCanvas.width, capturedCanvas.height);
+        const completed = await analysisController.analyze({
+          width: capturedCanvas.width,
+          height: capturedCanvas.height,
+          data: imageData.data,
+          options: currentOptions(),
+        });
+        if (generation !== analysisGeneration || capturedCanvas !== sourceCanvas || overlay.hidden) return;
+        analysis = completed.result;
+        analysisMode = completed.mode;
         excluded = new Set();
         previewPaths = analysis.components.map((comp) => {
           const path = new Path2D();
@@ -512,11 +548,17 @@ export function initImageObjectify(state) {
         drawPreview();
         updateResultStatus();
       } catch (error) {
+        if (generation !== analysisGeneration || error?.code === "CANCELLED" || error?.code === "SUPERSEDED") return;
         analysis = null;
         previewPaths = [];
-        setStatus(`분석 중 오류가 발생했습니다: ${error.message || error}`, true);
+        if (error?.code === "DENSE_INK") {
+          setStatus(`어두운 영역 비율이 너무 높습니다(${Math.round(error.inkRatio * 100)}%). 사진·스캔 이미지는 객체화에 적합하지 않아 분석을 건너뜁니다. 선·도형 위주의 이미지를 사용하세요.`, true);
+          drawPreview();
+        } else {
+          setStatus(`분석 중 오류가 발생했습니다: ${error.message || error}`, true);
+        }
       } finally {
-        analyzeButton.disabled = !sourceCanvas;
+        if (generation === analysisGeneration && !overlay.hidden) analyzeButton.disabled = !sourceCanvas;
       }
     }, 20);
   }
@@ -524,22 +566,84 @@ export function initImageObjectify(state) {
   let analyzeTimer = 0;
   function scheduleAnalyze() {
     if (!sourceCanvas) return;
+    analysisGeneration += 1;
+    analysisController.cancel();
+    if (analysisStartTimer) { clearTimeout(analysisStartTimer); analysisStartTimer = 0; }
     clearTimeout(analyzeTimer);
     analyzeTimer = setTimeout(analyze, 250);
   }
 
+  function suspendAnalysis() {
+    const suspendedActiveAnalysis = !overlay.hidden && sourceCanvas && analyzeButton.disabled;
+    analysisGeneration += 1;
+    analysisController.suspend();
+    if (analysisStartTimer) { clearTimeout(analysisStartTimer); analysisStartTimer = 0; }
+    if (analyzeTimer) { clearTimeout(analyzeTimer); analyzeTimer = 0; }
+    if (suspendedActiveAnalysis) analysisSuspended = true;
+  }
+
+  function resumeAnalysis() {
+    if (!analysisSuspended || overlay.hidden || !sourceCanvas) return;
+    analysisSuspended = false;
+    analyzeButton.disabled = false;
+    setStatus("분석이 중단되었습니다. 다시 분석하세요.");
+  }
+
+  function clearSourceImage() {
+    selectionOpenGeneration += 1;
+    loadGeneration += 1;
+    analysisGeneration += 1;
+    analysisController.cancel();
+    if (analysisStartTimer) { clearTimeout(analysisStartTimer); analysisStartTimer = 0; }
+    if (analyzeTimer) { clearTimeout(analyzeTimer); analyzeTimer = 0; }
+    sourceCanvas = null;
+    sourceDataUrl = null;
+    sourceMetadata = null;
+    analysis = null;
+    previewPaths = [];
+    excluded = new Set();
+    regionDrag = null;
+    panning = null;
+    setRegionMode(false);
+    preview.width = 1;
+    preview.height = 1;
+    stage.classList.remove("has-image");
+    tools.hidden = true;
+    legend.hidden = true;
+    analyzeButton.disabled = true;
+    insertButton.disabled = true;
+    setStatus("이미지를 선택하세요.");
+    dropzone.focus();
+  }
+
   /* ----- 파일 로드 ----- */
-  function loadFile(file) {
+  function loadFile(file, options = {}) {
     if (!file || !ACCEPTED_TYPES.has(file.type)) {
       setStatus("PNG, JPG, JPEG 또는 브라우저가 지원하는 WEBP 파일을 선택해 주세요.", true);
       return;
     }
+    if (file.size > MAX_SOURCE_FILE_BYTES) {
+      setStatus("이미지 파일이 너무 큽니다(64MB 초과). 디코딩 전에 작은 파일로 변환해 주세요.", true);
+      return;
+    }
+    selectionOpenGeneration += 1;
+    const nextSourceMetadata = options.sourceMetadata ? clone(options.sourceMetadata) : null;
+    const generation = ++loadGeneration;
+    analysisGeneration += 1;
+    analysisController.cancel();
+    if (analysisStartTimer) { clearTimeout(analysisStartTimer); analysisStartTimer = 0; }
     const reader = new FileReader();
-    reader.onerror = () => setStatus("이미지 파일을 읽지 못했습니다.", true);
+    reader.onerror = () => {
+      if (generation === loadGeneration) setStatus("이미지 파일을 읽지 못했습니다.", true);
+    };
     reader.onload = () => {
+      if (generation !== loadGeneration || overlay.hidden) return;
       const image = new Image();
-      image.onerror = () => setStatus("브라우저가 이 이미지 파일을 디코딩하지 못했습니다.", true);
+      image.onerror = () => {
+        if (generation === loadGeneration) setStatus("브라우저가 이 이미지 파일을 디코딩하지 못했습니다.", true);
+      };
       image.onload = () => {
+        if (generation !== loadGeneration || overlay.hidden) return;
         const scale = Math.min(1, MAX_PROCESS_DIMENSION / Math.max(image.naturalWidth, image.naturalHeight));
         sourceCanvas = document.createElement("canvas");
         sourceCanvas.width = Math.max(1, Math.round(image.naturalWidth * scale));
@@ -549,6 +653,7 @@ export function initImageObjectify(state) {
         ctx.fillRect(0, 0, sourceCanvas.width, sourceCanvas.height);
         ctx.drawImage(image, 0, 0, sourceCanvas.width, sourceCanvas.height);
         sourceDataUrl = reader.result;
+        sourceMetadata = nextSourceMetadata;
         analysis = null;
         excluded = new Set();
         // 새 이미지 → 팬 상태 초기화 + 전체 보기
@@ -581,7 +686,7 @@ export function initImageObjectify(state) {
     if (toolHint) {
       toolHint.textContent = on
         ? "드래그로 남길 영역을 그리세요 — 그 안쪽만 남습니다 (Esc 취소)"
-        : "휠=확대/축소 · 드래그=이동 · 클릭=제외";
+        : "Control 키+휠·핀치=확대/축소 · 스크롤·드래그=이동 · 클릭=제외";
     }
     stage.style.cursor = on ? "crosshair" : "";
   }
@@ -610,23 +715,31 @@ export function initImageObjectify(state) {
   // 리스너는 캔버스 클릭 후 포커스가 body로 이동하면(캔버스는 포커스 불가 요소) 이벤트
   // 전파 경로에 overlay가 없어 아예 호출되지 않는 문제가 있었다(모달 닫기 핸들러만 반응).
 
-  /* ----- 휠 줌 (커서 기준) ----- */
-  stage.addEventListener("wheel", (event) => {
+  function zoomAt(factor, mx = stage.clientWidth / 2, my = stage.clientHeight / 2) {
     if (!sourceCanvas) return;
-    event.preventDefault();
-    const rect = stage.getBoundingClientRect();
-    const mx = event.clientX - rect.left, my = event.clientY - rect.top;
-    // 부호만 보고 한 번에 1.15배씩 움직이면, 한 제스처에 이벤트를 훨씬 많이 보내는
-    // Mac 트랙패드에서 줌이 걷잡을 수 없이 빨라진다. 실제 이동량에 비례시키고
-    // deltaMode(줄/페이지 단위)도 픽셀로 환산한다.
-    const unit = event.deltaMode === 1 ? 16 : (event.deltaMode === 2 ? rect.height : 1);
-    const dy = Math.max(-120, Math.min(120, event.deltaY * unit));
-    const factor = Math.pow(1.0015, -dy);
-    const nz = Math.max(0.05, Math.min(20, view.zoom * factor));
+    const nz = Math.max(.05, Math.min(20, view.zoom * factor));
     view.ox = mx - (mx - view.ox) * (nz / view.zoom);
     view.oy = my - (my - view.oy) * (nz / view.zoom);
     view.zoom = nz;
     applyView();
+  }
+  zoomOut.addEventListener("click", () => zoomAt(1 / 1.2));
+  zoomIn.addEventListener("click", () => zoomAt(1.2));
+  stage.addEventListener("wheel", event => {
+    if (!sourceCanvas) return;
+    event.preventDefault();
+    event.stopPropagation();
+    const rect = stage.getBoundingClientRect();
+    const scale = rect.width / stage.offsetWidth;
+    const unit = event.deltaMode === 1 ? 16 : event.deltaMode === 2 ? stage.clientHeight : 1;
+    if (event.ctrlKey) {
+      const dy = Math.max(-120, Math.min(120, event.deltaY * unit));
+      zoomAt(Math.exp(-dy * .003), (event.clientX - rect.left) / scale, (event.clientY - rect.top) / scale);
+    } else {
+      view.ox -= event.deltaX * unit / scale;
+      view.oy -= event.deltaY * unit / scale;
+      applyView();
+    }
   }, { passive: false });
 
   /* ----- 포인터: 빈 곳 드래그=이동 · 클릭=제외 ----- */
@@ -727,12 +840,13 @@ export function initImageObjectify(state) {
       const layerId = s.activeLayerId;
       const addedIds = [];
       const pushObj = (obj) => {
-        s.objects.push(obj);
-        addedIds.push(obj.id);
+        const tagged = objectifySourceTaggedObject(obj, sourceMetadata);
+        s.objects.push(tagged);
+        addedIds.push(tagged.id);
       };
 
       if (referenceInput.checked && sourceDataUrl) {
-        s.objects.push(applyNewObjectStyleDefaults({
+        s.objects.push(objectifySourceTaggedObject(applyNewObjectStyleDefaults({
           id: `obj_${stamp}_ref${++idCounter}`,
           type: "image", src: sourceDataUrl,
           x: ox, y: oy, w: round3(analysis.width * scale), h: round3(analysis.height * scale),
@@ -740,7 +854,7 @@ export function initImageObjectify(state) {
           aspectLocked: true, exportable: false, imageSelectionLocked: true,
           mode: "edit", cutouts: [], recognized: true,
           layerId, order: s.objects.length,
-        }));
+        }), sourceMetadata));
       }
 
       for (const comp of comps) {
@@ -946,22 +1060,30 @@ export function initImageObjectify(state) {
   }
 
   /* ===== 이벤트 배선 ===== */
-  openButton.addEventListener("click", () => {
+  const updatePasteHint = () => {
+    dropzone.textContent = keyLabel("PNG/JPG/WEBP 파일을 여기에 끌어 놓기 · 클릭해 선택 · Ctrl+V 붙여넣기");
+  };
+  updatePasteHint();
+  window.addEventListener("5e:shortcut-platform-change", updatePasteHint);
+  const openSelectedImage = async () => {
+    const generation = ++selectionOpenGeneration;
+    const image = selectedObjectifyImage(state.get());
     overlay.hidden = false;
     dropzone.focus();
-  });
-  // Ctrl+T = 이미지 객체화. (일부 브라우저는 Ctrl+T를 새 탭에 예약해 가로챌 수
-  // 없다 — 그 경우 버튼으로 연다. 가로챌 수 있는 환경에서는 즉시 열림.)
-  document.addEventListener("keydown", (e) => {
-    if (!(e.ctrlKey || e.metaKey) || e.shiftKey || e.altKey || e.key.toLowerCase() !== "t") return;
-    const tgt = e.target;
-    if (tgt && (tgt.tagName === "INPUT" || tgt.tagName === "TEXTAREA" || tgt.isContentEditable)) return;
-    e.preventDefault();
-    if (overlay.hidden) { overlay.hidden = false; dropzone.focus(); }
-  }, true);
-  _openWithFile = (file) => {
+    if (!image) return;
+    setStatus("선택한 이미지를 불러오고 있습니다.");
+    try {
+      const file = await objectifyImageFile(image, { renderCutouts: renderSessionToDataUrl });
+      if (generation === selectionOpenGeneration && !overlay.hidden) loadFile(file, { sourceMetadata: image.sourceMetadata });
+    } catch (error) {
+      if (generation === selectionOpenGeneration && !overlay.hidden) setStatus(error.message, true);
+    }
+  };
+  openButton.addEventListener("click", openSelectedImage);
+  _openWithFile = (file, options = {}) => {
+    selectionOpenGeneration += 1;
     overlay.hidden = false;
-    loadFile(file);
+    loadFile(file, options);
   };
   overlay.querySelector("#objectify-cancel").addEventListener("click", close);
   overlay.addEventListener("mousedown", (event) => { if (event.target === overlay) close(); });
@@ -977,13 +1099,18 @@ export function initImageObjectify(state) {
     }
     close();
   });
-  document.addEventListener("keydown", (event) => {
-    if (!overlay.hidden && (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === "v") {
+  window.addEventListener("keydown", (event) => {
+    if (!overlay.hidden && modKey(event) && shortcutKey(event) === "v") {
       event.stopPropagation();
     }
   }, true);
-  document.addEventListener("paste", (event) => {
+  window.addEventListener("paste", (event) => {
     if (overlay.hidden) return;
+    const target = event.target;
+    if (target?.isContentEditable || target?.closest?.("textarea, input:not([type=range]):not([type=checkbox]):not([type=radio]):not([type=file]), [contenteditable=true]")) {
+      event.stopPropagation();
+      return;
+    }
     const imageItem = Array.from(event.clipboardData?.items || []).find((item) => item.type.startsWith("image/"));
     if (!imageItem) return;
     const imageFile = imageItem.getAsFile();
@@ -993,6 +1120,7 @@ export function initImageObjectify(state) {
     loadFile(imageFile);
   }, true);
 
+  removeImageButton.addEventListener("click", clearSourceImage);
   dropzone.addEventListener("click", () => fileInput.click());
   dropzone.addEventListener("keydown", (event) => {
     if (event.key === "Enter" || event.key === " ") { event.preventDefault(); fileInput.click(); }
@@ -1022,6 +1150,8 @@ export function initImageObjectify(state) {
   advancedInput.addEventListener("change", scheduleAnalyze);
   analyzeButton.addEventListener("click", analyze);
   insertButton.addEventListener("click", insertObjects);
+  window.addEventListener("pagehide", suspendAnalysis);
+  window.addEventListener("pageshow", resumeAnalysis);
 
   // 전처리 툴바: 전체보기
   zoomResetButton.addEventListener("click", fitView);

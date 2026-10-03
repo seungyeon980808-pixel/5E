@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="391px" height="108px" viewBox="0 0 391 108" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+    <!-- Generator: Sketch 50.2 (55047) - http://www.bohemiancoding.com/sketch -->
+    <title>Card / Intention / Deletion</title>
+    <desc>Created with Sketch.</desc>
+    <defs></defs>
+    <g id="Card-/-Intention-/-Deletion" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+        <rect id="Rectangle-3" fill="#F5F5F5" x="0" y="0" width="391" height="108" rx="5"></rect>
+        <g id="Action-/-Delete" transform="translate(178.000000, 18.000000)">
+            <g id="Group">
+                <circle id="Oval-15-Copy-7" fill="#CC3333" cx="17.5" cy="17.5" r="17.5"></circle>
+                <g id="close" transform="translate(9.423077, 9.423077)" fill="#FFFFFF" fill-rule="nonzero">
+                    <polygon id="Shape" points="16.1538462 2.15384615 14.2692308 0.269230769 8.07692308 6.46153846 1.88461538 0.269230769 0 2.15384615 6.19230769 8.34615385 0 14.5384615 1.88461538 16.4230769 8.07692308 10.2307692 14.2692308 16.4230769 16.1538462 14.5384615 9.96153846 8.34615385"></polygon>
+                </g>
+            </g>
+        </g>
+        <text id="User-intends-to-dele" font-family="Lato-Bold, Lato" font-size="16" font-weight="bold" letter-spacing="0.3428572" fill="#000000">
+            <tspan x="88.0125706" y="87">User intends to delete article</tspan>
+        </text>
+    </g>
+</svg>

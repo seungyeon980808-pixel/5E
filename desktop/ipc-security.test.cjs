@@ -8,7 +8,7 @@ const os = require('node:os');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 
-const appUrl = pathToFileURL(path.join(__dirname, '..', 'preview', 'index.html')).href;
+const appUrl = pathToFileURL(path.join(__dirname, '..', 'index.html')).href;
 const channels = ['codex:status', 'codex:start', 'codex:stop', 'codex:models', 'codex:account',
   'codex:send', 'codex:interrupt', 'codex:login', 'capture:sources', 'local-images:pick-folder',
   'local-images:list', 'local-images:thumbnail', 'local-images:read'];

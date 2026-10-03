@@ -7,10 +7,10 @@
 // the projection stays anchored in world space through zoom/pan (the viewBox
 // alone changes what slice of that space is shown).
 
-import { getZoom, getRenderScale } from "../viewport.js?v=1.4.0";
-import { SVG_NS, rotPt, catmullRomPath } from "./core.js?v=1.4.0";
-import { renderText } from "./labels.js?v=1.4.0";
-import { makeFillPattern } from "./fill.js?v=1.4.0";
+import { getZoom, getRenderScale } from "../viewport.js?v=1.6.0-preview-lite-hybrid-0922";
+import { SVG_NS, rotPt, catmullRomPath } from "./core.js?v=1.6.0-remediation-0929";
+import { renderText } from "./labels.js?v=1.6.0-remediation-0929";
+import { makeFillPattern } from "./fill.js?v=1.6.0-remediation-0929";
 import {
   renderRect,
   renderEllipse,
@@ -20,48 +20,67 @@ import {
   renderCurve,
   renderImage,
   renderSvgAsset,
-} from "./shapes.js?v=1.4.2";
-import { renderAxes, renderAngleArc, renderRightAngle, renderLabeler } from "./annotations.js?v=1.4.0";
-import { renderCoordplane, renderFuncgraph } from "./coordplane.js?v=1.4.0";
-import { renderCircuit } from "./circuit.js?v=1.4.0";
-import { renderOptics, renderApparatus } from "./optics-apparatus.js?v=1.4.0";
-import { renderPendulum, pendulumBBox } from "./pendulum.js?v=1.4.0";
-import { renderSpring, springBBox } from "./spring.js?v=1.4.0";
-import { renderChargeField, chargeFieldBBox, renderFieldLines, fieldLinesBBox } from "./field.js?v=1.4.0";
-import { renderStandingWave, standingWaveBBox } from "./standing-wave.js?v=1.4.0";
-import { renderGauge } from "./gauge.js?v=1.4.0";
-import { renderSolid3d } from "./solid3d.js?v=1.4.0";
-import { renderParabola, parabolaBBox } from "./parabola.js?v=1.4.0";
-import { renderGroundArc, groundArcBBox } from "./groundarc.js?v=1.4.0";
+} from "./shapes.js?v=1.6.0-remediation-0929";
+import { renderAxes, renderAngleArc, renderRightAngle, renderLabeler } from "./annotations.js?v=1.6.0-remediation-0929";
+import { renderCoordplane, renderFuncgraph } from "./coordplane.js?v=1.6.0-remediation-0929";
+import { renderCircuit } from "./circuit.js?v=1.6.0-remediation-0929";
+import { renderOptics, renderApparatus } from "./optics-apparatus.js?v=1.6.0-remediation-0929";
+import { renderPendulum, pendulumBBox } from "./pendulum.js?v=1.6.0-remediation-0929";
+import { renderSpring, springBBox } from "./spring.js?v=1.6.0-remediation-0929";
+import { renderChargeField, chargeFieldBBox, renderFieldLines, fieldLinesBBox } from "./field.js?v=1.6.0-remediation-0929";
+import { renderStandingWave, standingWaveBBox } from "./standing-wave.js?v=1.6.0-remediation-0929";
+import { renderGauge } from "./gauge.js?v=1.6.0-remediation-0929";
+import { renderSolid3d } from "./solid3d.js?v=1.6.0-remediation-0929";
+import { renderParabola, parabolaBBox } from "./parabola.js?v=1.6.0-remediation-0929";
+import { renderGroundArc, groundArcBBox } from "./groundarc.js?v=1.6.0-remediation-0929";
 // 생명과학 부품 6종 (2026-07-31) — 규격은 docs/BIO_PARTS_SPEC.md
-import { renderBrace, braceBBox } from "./brace.js?v=1.4.0";
-import { renderChromosome, chromosomeBBox } from "./chromosome.js?v=1.4.0";
-import { renderBilayer, bilayerBBox } from "./bilayer.js?v=1.4.0";
-import { renderNeuron, neuronBBox } from "./neuron.js?v=1.4.0";
-import { renderLegend, legendBBox } from "./legend.js?v=1.4.0";
-import { renderPedigree, pedigreeBBox } from "./pedigree.js?v=1.4.0";
+import { renderBrace, braceBBox } from "./brace.js?v=1.6.0-remediation-0929";
+import { renderChromosome, chromosomeBBox } from "./chromosome.js?v=1.6.0-remediation-0929";
+import { renderBilayer, bilayerBBox } from "./bilayer.js?v=1.6.0-remediation-0929";
+import { renderNeuron, neuronBBox } from "./neuron.js?v=1.6.0-remediation-0929";
+import { renderLegend, legendBBox } from "./legend.js?v=1.6.0-remediation-0929";
+import { renderPedigree, pedigreeBBox } from "./pedigree.js?v=1.6.0-remediation-0929";
 // 화학 부품 10종 (2026-07-31) — 규격은 docs/CHEM_PARTS_SPEC.md
 // 전부 크기박스 계열이라 bbox 는 SIZE_TYPES 경로가 자동 처리한다 → 렌더 함수만 가져온다.
-import { renderVessel } from "./vessel.js?v=1.4.0";
-import { renderChemModel } from "./chemmodel.js?v=1.4.0";
-import { renderParticleBox } from "./particlebox.js?v=1.4.0";
-import { renderOrbital } from "./orbital.js?v=1.4.0";
-import { renderBondGroup } from "./bondgroup.js?v=1.4.0";
-import { renderChemChart } from "./chemchart.js?v=1.4.0";
-import { renderAxisBreak } from "./axisbreak.js?v=1.4.0";
-import { renderChemGraph } from "./chemgraph.js?v=1.4.0";
-import { renderElectrode } from "./electrode.js?v=1.4.0";
-import { renderPeriodic } from "./periodic.js?v=1.4.0";
-import { DEFAULT_TEXT_SIZE_MM, scaleBBoxForWidth } from "../state.js?v=1.4.0";
+import { renderVessel } from "./vessel.js?v=1.6.0-remediation-0929";
+import { renderChemModel } from "./chemmodel.js?v=1.6.0-remediation-0929";
+import { renderParticleBox } from "./particlebox.js?v=1.6.0-remediation-0929";
+import { renderOrbital } from "./orbital.js?v=1.6.0-remediation-0929";
+import { renderBondGroup } from "./bondgroup.js?v=1.6.0-remediation-0929";
+import { renderChemChart } from "./chemchart.js?v=1.6.0-remediation-0929";
+import { renderAxisBreak } from "./axisbreak.js?v=1.6.0-remediation-0929";
+import { renderChemGraph } from "./chemgraph.js?v=1.6.0-remediation-0929";
+import { renderElectrode } from "./electrode.js?v=1.6.0-remediation-0929";
+import { renderPeriodic } from "./periodic.js?v=1.6.0-remediation-0929";
+import { DEFAULT_TEXT_SIZE_MM, scaleBBoxForWidth } from "../state.js?v=1.6.0-remediation-0929";
 import { SIZE_TYPES, TEXT_MEASURED_TYPES, POINT_ARRAY_TYPES, ENDPOINT_HANDLE_TYPES,
-         zOrderObjects } from "../object-types.js?v=1.4.0";
-import { resolveObjectStyle } from "../style-mode.js?v=1.4.0";
-import { renderFormula } from "../formula.js?v=1.4.0";
-import { IMAGE_EDIT_SESSION_ID } from "../image-cutout.js?v=1.4.0";
+         zOrderObjects } from "../object-types.js?v=1.6.0-preview-labeler-0917-1111";
+import { resolveObjectStyle } from "../style-mode.js?v=1.6.0-remediation-0929";
+import { renderFormula } from "../formula.js?v=1.6.0-remediation-0929";
+import { IMAGE_EDIT_SESSION_ID } from "../image-cutout.js?v=1.6.0-preview-lite-hybrid-0922";
+import {
+  SELECTION_COLOR,
+  SELECTION_DASH_PX,
+  SELECTION_HANDLE_COUNT,
+  SELECTION_STROKE_PX,
+  selectionScaleForSvg,
+  selectionVisualMetrics,
+} from "../selection-visuals.js?v=1.6.0-preview-labeler-0917-1111";
 
 function renderObjectById(state, id) {
   if (id === IMAGE_EDIT_SESSION_ID) return state.imageEditSession || null;
   return state.objects.find((o) => o.id === id) || null;
+}
+
+function styleSelectionFrame(el, kind, color = SELECTION_COLOR) {
+  el.setAttribute("data-selection-frame", kind);
+  el.setAttribute("fill", "none");
+  el.setAttribute("stroke", color);
+  el.setAttribute("stroke-width", String(SELECTION_STROKE_PX));
+  el.setAttribute("vector-effect", "non-scaling-stroke");
+  if (kind === "multi-member") el.setAttribute("stroke-dasharray", SELECTION_DASH_PX.join(" "));
+  else el.removeAttribute("stroke-dasharray");
+  el.setAttribute("pointer-events", "none");
 }
 
 /* ===== SNAP PREVIEW STATE: transient render data, never persisted ===== */
@@ -149,6 +168,7 @@ function renderSnapPreview(scene, zoom) {
 export function render(state) {
   const scene = document.getElementById("scene");
   if (!scene) return;
+  const selectionScale = selectionScaleForSvg(scene.ownerSVGElement, state.viewBox);
 
   // Simplest correct projection: wipe and rebuild. Fine at this scale; a
   // keyed/diffing pass can replace this once object counts grow.
@@ -172,7 +192,20 @@ export function render(state) {
   artboard.setAttribute("y", -_abH / 2);
   artboard.setAttribute("width", _abW);
   artboard.setAttribute("height", _abH);
-  artboard.setAttribute("fill", "#ffffff");
+  if (state.artboardDisplay === "checkerboard") {
+    const pattern = document.createElementNS(SVG_NS, "pattern");
+    pattern.id = "artboard-display-checker";
+    pattern.setAttribute("patternUnits", "userSpaceOnUse");
+    const size = state.viewBox.w / Math.max(1, scene.ownerSVGElement?.clientWidth || 1000) * 16;
+    pattern.setAttribute("width", size); pattern.setAttribute("height", size);
+    for (const [x, y, w, h, fill] of [[0, 0, size, size, "#e5e7eb"], [0, 0, size / 2, size / 2, "#b9bec6"], [size / 2, size / 2, size / 2, size / 2, "#b9bec6"]]) {
+      const tile = document.createElementNS(SVG_NS, "rect");
+      for (const [key, value] of Object.entries({ x, y, width: w, height: h, fill })) tile.setAttribute(key, value);
+      pattern.append(tile);
+    }
+    defs.append(pattern);
+  }
+  artboard.setAttribute("fill", state.artboardDisplay === "checkerboard" ? "url(#artboard-display-checker)" : "#ffffff");
   artboard.setAttribute("stroke", "#d0d7de");
   artboard.setAttribute("stroke-width", "1");
   artboard.setAttribute("vector-effect", "non-scaling-stroke");
@@ -298,15 +331,10 @@ export function render(state) {
     scene.appendChild(group);
   }
 
-  // ----- selection outline (blue dashed bbox; world space so it tracks zoom/pan) -----
   const _selIds = state.selectedIds || [];
 
-  // For a grouped multi-selection, draw ONE combined green rect instead of per-member outlines.
   const _groupMembers = _selIds.map((id) => renderObjectById(state, id)).filter(Boolean);
-  const _firstMember = _groupMembers[0];
-  const _allSameGroup = _selIds.length > 1 && _firstMember && _firstMember.groupId &&
-    _groupMembers.every((o) => o.groupId === _firstMember.groupId);
-  if (_allSameGroup) {
+  if (_selIds.length > 1) {
     const _gbox = combinedGroupBBox(_groupMembers, scene);
     if (_gbox) {
       const _grect = document.createElementNS(SVG_NS, "rect");
@@ -314,10 +342,7 @@ export function render(state) {
       _grect.setAttribute("y", _gbox.y);
       _grect.setAttribute("width", _gbox.w);
       _grect.setAttribute("height", _gbox.h);
-      _grect.setAttribute("fill", "none");
-      _grect.setAttribute("stroke-width", "0.4");
-      _grect.setAttribute("stroke-dasharray", "0.6 0.6");
-      _grect.style.stroke = "#2f9e44";
+      styleSelectionFrame(_grect, "multi-outer");
       scene.appendChild(_grect);
     }
   }
@@ -328,13 +353,9 @@ export function render(state) {
     const _selLayer = (state.layers || []).find(l => l.id === (sel.layerId ?? 1));
     if (_selLayer && _selLayer.visible === false) continue;
     if (sel.positionLocked) renderPositionLockMarker(sel, scene, getZoom());
-    if (_allSameGroup) continue; // combined rect already drawn above
-    const _selColor = (state.targetedId === _sid) ? "#e67700"
-                    : sel.groupId  ? "#2f9e44"
-                    : sel.locked   ? "#e53e3e"
-                    : sel.positionLocked ? "#8b5cf6"
-                    : "var(--c-main, #0969da)";
-    if (sel.type === "line" || sel.type === "circuit" || sel.type === "pendulum" || sel.type === "spring"
+    const _selColor = state.targetedId === _sid ? "#e67700" : SELECTION_COLOR;
+    const _frameKind = _selIds.length > 1 ? "multi-member" : "single";
+    if (sel.type === "line" || sel.type === "circuit" || sel.type === "labeler" || sel.type === "pendulum" || sel.type === "spring"
         || sel.type === "chargefield" || sel.type === "fieldlines" || sel.type === "standingwave"
         || sel.type === "parabola" || sel.type === "groundarc"
         // 생명과학 p1/p2 계열 — 두 점을 잇는 점선 복제가 선택 표시다(위와 같은 규칙)
@@ -350,6 +371,7 @@ export function render(state) {
       ln.setAttribute("stroke-dasharray", "0.6 0.6");
       ln.style.stroke = _selColor;
       ln.setAttribute("pointer-events", "none"); // decorative; the hit twin owns events
+      styleSelectionFrame(ln, _frameKind, _selColor);
       scene.appendChild(ln);
     } else if (sel.type === "polyline" && sel.closed === true) {
       // Closed polyline takes branch-A (face) treatment: a dashed bbox rect guide,
@@ -365,6 +387,7 @@ export function render(state) {
         box.setAttribute("stroke-width", "0.4"); // world units
         box.setAttribute("stroke-dasharray", "0.6 0.6");
         box.style.stroke = _selColor;
+        styleSelectionFrame(box, _frameKind, _selColor);
         scene.appendChild(box);
       }
     } else if (sel.type === "polyline") {
@@ -376,6 +399,7 @@ export function render(state) {
       pl.setAttribute("stroke-dasharray", "0.6 0.6");
       pl.style.stroke = _selColor;
       pl.setAttribute("pointer-events", "none"); // decorative; the hit twin owns events
+      styleSelectionFrame(pl, _frameKind, _selColor);
       scene.appendChild(pl);
     } else if (sel.type === "curve" && sel.closed === true) {
       // Closed curve: bbox rect guide (same as closed polyline).
@@ -390,6 +414,7 @@ export function render(state) {
         box.setAttribute("stroke-width", "0.4");
         box.setAttribute("stroke-dasharray", "0.6 0.6");
         box.style.stroke = _selColor;
+        styleSelectionFrame(box, _frameKind, _selColor);
         scene.appendChild(box);
       }
     } else if (sel.type === "curve") {
@@ -401,6 +426,7 @@ export function render(state) {
       cv.setAttribute("stroke-dasharray", "0.6 0.6");
       cv.style.stroke = _selColor;
       cv.setAttribute("pointer-events", "none"); // decorative; the hit twin owns events
+      styleSelectionFrame(cv, _frameKind, _selColor);
       scene.appendChild(cv);
     } else if (sel.type === "text" || sel.type === "formula") {
       // getBBox() on the already-rendered element gives the exact visual bounds.
@@ -419,6 +445,7 @@ export function render(state) {
           box.setAttribute("stroke-width", "0.4");
           box.setAttribute("stroke-dasharray", "0.6 0.6");
           box.style.stroke = _selColor;
+          styleSelectionFrame(box, _frameKind, _selColor);
           // getBBox()는 요소 자신의 rotate 변환을 반영하지 않으므로 회전된 텍스트/수식은
           // 선택 외곽선이 회전 전 위치에 남는다 → 렌더와 동일한 rotate를 박스에도 적용.
           // (text는 앵커 obj.x/obj.y, formula는 박스 중심이 피벗)
@@ -449,6 +476,7 @@ export function render(state) {
         ray.setAttribute("stroke-dasharray", "0.6 0.6");
         ray.style.stroke = _selColor;
         ray.setAttribute("pointer-events", "none");
+        styleSelectionFrame(ray, _frameKind, _selColor);
         scene.appendChild(ray);
       }
       // Dashed bbox guide (vertex-centered square of radius r), matching the
@@ -464,6 +492,37 @@ export function render(state) {
         box.setAttribute("stroke-width", "0.4");
         box.setAttribute("stroke-dasharray", "0.6 0.6");
         box.style.stroke = _selColor;
+        styleSelectionFrame(box, _frameKind, _selColor);
+        scene.appendChild(box);
+      }
+    } else if (sel.type === "rightangle") {
+      const bb = singleObjBBox(sel, scene);
+      if (bb) {
+        const box = document.createElementNS(SVG_NS, "rect");
+        box.setAttribute("x", bb.x);
+        box.setAttribute("y", bb.y);
+        box.setAttribute("width", bb.w);
+        box.setAttribute("height", bb.h);
+        box.setAttribute("fill", "none");
+        box.setAttribute("stroke-width", "0.4");
+        box.setAttribute("stroke-dasharray", "0.6 0.6");
+        box.style.stroke = _selColor;
+        styleSelectionFrame(box, _frameKind, _selColor);
+        scene.appendChild(box);
+      }
+    } else if (sel.type === "funcgraph") {
+      const bb = singleObjBBox(sel, scene);
+      if (bb) {
+        const box = document.createElementNS(SVG_NS, "rect");
+        box.setAttribute("x", bb.x);
+        box.setAttribute("y", bb.y);
+        box.setAttribute("width", bb.w);
+        box.setAttribute("height", bb.h);
+        box.setAttribute("fill", "none");
+        box.setAttribute("stroke-width", "0.4");
+        box.setAttribute("stroke-dasharray", "0.6 0.6");
+        box.style.stroke = _selColor;
+        styleSelectionFrame(box, _frameKind, _selColor);
         scene.appendChild(box);
       }
     } else {
@@ -476,6 +535,7 @@ export function render(state) {
       box.setAttribute("stroke-width", "0.4"); // world units
       box.setAttribute("stroke-dasharray", "0.6 0.6");
       box.style.stroke = _selColor;
+      styleSelectionFrame(box, _frameKind, _selColor);
       if (sel.rotation) {
         const cx = sel.x + sel.w / 2, cy = sel.y + sel.h / 2;
         box.setAttribute("transform", `rotate(${sel.rotation} ${cx} ${cy})`);
@@ -484,41 +544,22 @@ export function render(state) {
     }
   }
 
-  // ----- selection handles (DESIGN 5-2: fixed 10 CSS px = 10/zoom world units) -----
   if (_selIds.length === 1) {
     const handleSel = renderObjectById(state, _selIds[0]);
     // 숨긴 레이어의 객체에는 핸들을 그리지 않는다(보이지 않는 객체가 변형되는 것 방지).
     const _hLayer = handleSel && (state.layers || []).find(l => l.id === (handleSel.layerId ?? 1));
     const _hVisible = !(_hLayer && _hLayer.visible === false);
     if (handleSel && _hVisible && !state.targetedId) {
-      renderHandles(handleSel, scene, getZoom(), state.activeTool);
+      renderHandles(handleSel, scene, selectionScale, state.activeTool);
     }
   } else if (_selIds.length > 1 && !state.targetedId) {
-    // Whole-group selection (green): every selected object shares one groupId.
-    // Draw 8 resize handles on the COMBINED bbox so the group scales as a unit
-    // (DESIGN 6-2). Targeted (orange) is excluded above, so it never gets handles.
     const _members = _selIds.map((id) => state.objects.find((o) => o.id === id)).filter(Boolean);
-    const _first = _members[0];
-    const _sharedGid = _first && _first.groupId &&
-      _members.every((o) => o.groupId === _first.groupId) ? _first.groupId : null;
-    if (_sharedGid) {
-      const _box = combinedGroupBBox(_members, scene);
-      if (_box) {
-        // Reuse renderHandles via a synthetic axis-aligned rect (id "__group__"):
-        // it emits the same 8 white squares the resize logic listens for.
-        renderHandles(
-          { type: "rect", id: "__group__", x: _box.x, y: _box.y, w: _box.w, h: _box.h, rotation: 0 },
-          scene, getZoom(), state.activeTool
-        );
-      }
-    } else {
-      // Plain multi-selection (no shared groupId): still draw the 8 handles on the
-      // combined bbox so an ad-hoc selection scales/rotates as a unit.
+    if (_members.length === _selIds.length && !_members.some((o) => o.locked)) {
       const _box = combinedGroupBBox(_members, scene);
       if (_box) {
         renderHandles(
           { type: "rect", id: "__group__", x: _box.x, y: _box.y, w: _box.w, h: _box.h, rotation: 0 },
-          scene, getZoom(), state.activeTool
+          scene, selectionScale, state.activeTool
         );
       }
     }
@@ -532,11 +573,7 @@ export function render(state) {
   if (state.draft) {
     const d = state.draft;
 
-    // For size-based shapes (ellipse/triangle) the bbox differs from the shape
-    // outline, so draw a dashed rectangle guide spanning the drag bounds first.
-    // (rect's own preview already IS that rectangle; the line has no bbox ??it
-    // shows its own solid preview below ??so both skip the duplicate guide.)
-    if (d.type !== "rect" && d.type !== "line" && d.type !== "polyline" && d.type !== "curve" && d.type !== "anglearc" && d.type !== "rightangle" && d.type !== "circuit" && d.type !== "labeler" && d.type !== "pendulum") {
+    if (d.type !== "rect" && SIZE_TYPES.has(d.type)) {
       const box = document.createElementNS(SVG_NS, "rect");
       box.setAttribute("x", d.x);
       box.setAttribute("y", d.y);
@@ -575,6 +612,18 @@ export function render(state) {
     const el = renderObject(d);
     if (el) {
       scene.appendChild(el);
+    }
+    if (d.type === "labeler") {
+      for (const point of [d.p1, d.elbow].filter(Boolean)) {
+        const dot = document.createElementNS(SVG_NS, "circle");
+        dot.setAttribute("cx", point.x);
+        dot.setAttribute("cy", point.y);
+        dot.setAttribute("r", 4 / selectionScale);
+        dot.style.fill = "var(--c-main, #0969da)";
+        dot.setAttribute("pointer-events", "none");
+        dot.dataset.ui = "labeler-draft-point";
+        scene.appendChild(dot);
+      }
     }
   }
 
@@ -776,13 +825,15 @@ function makeHitTwin(obj) {
     twin.setAttribute("width", r * 2);
     twin.setAttribute("height", r * 2);
   } else if (obj.type === "labeler") {
-    // Hover band along the leader (p1→p2); the label glyph grabs via its own fill.
     const a = obj.p1 || { x: 0, y: 0 }, b = obj.p2 || a;
-    twin = document.createElementNS(SVG_NS, "line");
-    twin.setAttribute("x1", a.x);
-    twin.setAttribute("y1", a.y);
-    twin.setAttribute("x2", b.x);
-    twin.setAttribute("y2", b.y);
+    const joint = obj.elbow || b;
+    twin = document.createElementNS(SVG_NS, "path");
+    let d = `M ${a.x} ${a.y} L ${joint.x} ${joint.y}`;
+    if (obj.elbow) d += ` L ${b.x} ${b.y}`;
+    for (const point of [obj.p3, ...(obj.extraAnchors || [])].filter(Boolean)) {
+      d += ` M ${point.x} ${point.y} L ${joint.x} ${joint.y}`;
+    }
+    twin.setAttribute("d", d);
   } else {
     return null; // not an open path → no twin (closed shapes grab via fill)
   }
@@ -898,7 +949,6 @@ export function renderObject(obj) {
   }
 }
 
-/* ----- selection handles: 10-CSS-px white squares, zoom-invariant (DESIGN 5-2) ----- */
 /* ----- bbox of one object in world space (text uses its rendered <text> box) ----- */
 export function singleObjBBox(o, scene) {
   // was: rect|ellipse|triangle|image|svgAsset|axes|coordplane|optics|apparatus
@@ -925,8 +975,15 @@ export function singleObjBBox(o, scene) {
     return { x: o.x - r, y: o.y - r, w: 2 * r, h: 2 * r };
   }
   if (o.type === "rightangle") {
-    const r = (o.size || 0) * 1.6;
-    return { x: o.x - r, y: o.y - r, w: 2 * r, h: 2 * r };
+    const size = Math.max(o.size || 4, 0.1);
+    const angle = (o.angle || 0) * Math.PI / 180;
+    const side = (o.orientation ?? 1) >= 0 ? 1 : -1;
+    const ux = Math.cos(angle), uy = Math.sin(angle);
+    const vx = -uy * side, vy = ux * side;
+    const xs = [o.x, o.x + ux * size, o.x + (ux + vx) * size, o.x + vx * size];
+    const ys = [o.y, o.y + uy * size, o.y + (uy + vy) * size, o.y + vy * size];
+    const x = Math.min(...xs), y = Math.min(...ys);
+    return { x, y, w: Math.max(...xs) - x, h: Math.max(...ys) - y };
   }
   if (TEXT_MEASURED_TYPES.has(o.type)) { // was: text|formula
     const el = scene.querySelector(`[data-id="${o.id}"]`);
@@ -945,8 +1002,9 @@ export function singleObjBBox(o, scene) {
   if (o.type === "labeler") {
     const a = o.p1 || { x: 0, y: 0 }, b = o.p2 || a;
     const sz = (o.labelSize || DEFAULT_TEXT_SIZE_MM) * 0.7; // pad for the label glyph
-    const minX = Math.min(a.x, b.x - sz), minY = Math.min(a.y, b.y - sz);
-    const maxX = Math.max(a.x, b.x + sz), maxY = Math.max(a.y, b.y + sz);
+    const points = [a, o.elbow, o.p3, ...(o.extraAnchors || [])].filter(Boolean);
+    const minX = Math.min(...points.map(p => p.x), b.x - sz), minY = Math.min(...points.map(p => p.y), b.y - sz);
+    const maxX = Math.max(...points.map(p => p.x), b.x + sz), maxY = Math.max(...points.map(p => p.y), b.y + sz);
     return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
   }
   if (o.type === "pendulum") {
@@ -992,33 +1050,33 @@ function combinedGroupBBox(members, scene) {
 }
 
 function renderHandles(sel, scene, zoom, activeTool) {
-  const half = 5 / zoom;   // resize square is half*2 = 10 CSS px (DESIGN 5-2 base size)
-  const sw   = 0.5 / zoom;
+  const metrics = selectionVisualMetrics(zoom);
+  const half = metrics.handleWorld / 2;
 
   const g = document.createElementNS(SVG_NS, "g");
   g.setAttribute("id", "handles");
+  g.dataset.handleCount = String(SELECTION_HANDLE_COUNT);
 
-  const makeHandle = (wx, wy, label, easierPointerTarget = false) => {
-    if (easierPointerTarget) {
-      const hit = document.createElementNS(SVG_NS, "rect");
-      const hitHalf = 12 / zoom;
-      hit.setAttribute("x", wx - hitHalf);
-      hit.setAttribute("y", wy - hitHalf);
-      hit.setAttribute("width", hitHalf * 2);
-      hit.setAttribute("height", hitHalf * 2);
-      hit.setAttribute("fill", "transparent");
-      hit.dataset.handle = label;
-      hit.dataset.id = sel.id;
-      g.appendChild(hit);
-    }
+  const makeHandle = (wx, wy, label) => {
+    const hit = document.createElementNS(SVG_NS, "rect");
+    const hitHalf = metrics.hitWorld / 2;
+    hit.setAttribute("x", wx - hitHalf);
+    hit.setAttribute("y", wy - hitHalf);
+    hit.setAttribute("width", hitHalf * 2);
+    hit.setAttribute("height", hitHalf * 2);
+    hit.setAttribute("fill", "transparent");
+    hit.dataset.handle = label;
+    hit.dataset.id = sel.id;
+    g.appendChild(hit);
     const r = document.createElementNS(SVG_NS, "rect");
     r.setAttribute("x", wx - half);
     r.setAttribute("y", wy - half);
     r.setAttribute("width",  half * 2);
     r.setAttribute("height", half * 2);
     r.setAttribute("fill", "#ffffff");
-    r.setAttribute("stroke", "#0969da");
-    r.setAttribute("stroke-width", sw);
+    r.setAttribute("stroke", SELECTION_COLOR);
+    r.setAttribute("stroke-width", SELECTION_STROKE_PX);
+    r.setAttribute("vector-effect", "non-scaling-stroke");
     r.dataset.handle = label;
     r.dataset.id = sel.id;
     g.appendChild(r);
@@ -1173,6 +1231,10 @@ function renderHandles(sel, scene, zoom, activeTool) {
     makeHandle(sel.p2.x, sel.p2.y, "p1", true);
     // 라벨러의 두 번째 지시선: 세 번째 핸들.
     if (sel.type === "labeler" && sel.p3) makeHandle(sel.p3.x, sel.p3.y, "p2", true);
+    if (sel.type === "labeler" && sel.elbow) makeHandle(sel.elbow.x, sel.elbow.y, "elbow", true);
+    if (sel.type === "labeler") {
+      (sel.extraAnchors || []).forEach((point, index) => makeHandle(point.x, point.y, `anchor-${index}`, true));
+    }
   } else if ((sel.type === "polyline" || sel.type === "curve") && !sel.closed) {
     sel.points.forEach((p, i) => makeHandle(p.x, p.y, `p${i}`, true));
   }

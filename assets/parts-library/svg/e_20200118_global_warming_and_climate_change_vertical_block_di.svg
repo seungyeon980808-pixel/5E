@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1775" height="1950">
+
+<style type="text/css">
+ rect { stroke-width:4; fill:white; }
+ rect.R { stroke:#b11600; }
+ rect.G { stroke:#6c6f04; }
+ rect.B { stroke:#008080; }
+ rect.bg { fill:#f8f8f8; }
+
+ path { stroke-width:1; stroke:black; }
+ path.Rd { fill:#ffdcdd; }
+ path.Gr { fill:#dcf0d3; }
+ path.Bl { fill:#ddeaea; }
+ path.arr { stroke-width:4; fill:black; stroke-linejoin:round; }
+</style>
+
+<rect class="bg" width="1775" height="1950" x="0" y="0"/>
+
+     <g id="TEXT_GLOBAL" font-size="40px" font-family="Liberation Sans,sans-serif" text-anchor="middle">
+
+<path class="Rd" d="M25,200 h1725 v175 h-525 v200 h-1100 v150 h450 v575 H25 z"/>
+<path class="Gr" d="M25,1350 h600 v-625 h1000 v-150 h-375 v-175 h500 v1100 H25 z"/>
+<path class="Bl" d="M25,1525 h1725 v400 H25 z"/>
+
+<switch><text x="850" y="100" font-size="70px" font-weight="bold" id="trsvg54-zh" systemLanguage="zh"><tspan id="trsvg1-zh">全球变暖和气候变化</tspan></text><text x="850" y="100" font-size="70px" font-weight="bold" id="trsvg54-ca" systemLanguage="ca"><tspan id="trsvg1-ca">Escalfament global i canvi climàtic</tspan></text><text x="850" y="100" font-size="70px" font-weight="bold" id="trsvg54-pt" systemLanguage="pt"><tspan id="trsvg1-pt">Aquecimento global e mudanças climáticas</tspan></text><text x="850" y="100" font-size="70px" font-weight="bold" id="trsvg54"><tspan id="trsvg1">Global warming and climate change</tspan></text></switch>
+<switch><text x="850" y="170" font-size="50px" id="trsvg55-zh" systemLanguage="zh"><tspan id="trsvg2-zh">原因与后果</tspan></text><text x="850" y="170" font-size="50px" id="trsvg55-ca" systemLanguage="ca"><tspan id="trsvg2-ca">Causes i efectes</tspan></text><text x="850" y="170" font-size="50px" id="trsvg55-pt" systemLanguage="pt"><tspan id="trsvg2-pt">Causas e efeitos</tspan></text><text x="850" y="170" font-size="50px" id="trsvg55"><tspan id="trsvg2">Causes and effects</tspan></text></switch>
+<switch><text x="200" y="425" font-size="70px" font-style="italic" fill="#b11600" id="trsvg56-zh" systemLanguage="zh"><tspan id="trsvg3-zh">原因</tspan></text><text x="200" y="425" font-size="70px" font-style="italic" fill="#b11600" id="trsvg56-ca" systemLanguage="ca"><tspan id="trsvg3-ca">Causes</tspan></text><text x="200" y="425" font-size="70px" font-style="italic" fill="#b11600" id="trsvg56-pt" systemLanguage="pt"><tspan id="trsvg3-pt">Causas</tspan></text><text x="200" y="425" font-size="70px" font-style="italic" fill="#b11600" id="trsvg56"><tspan id="trsvg3">Causes</tspan></text></switch>
+
+<g font-size="30px">
+<switch><text x="450" y="510" text-anchor="end" id="trsvg57-zh" systemLanguage="zh"><tspan id="trsvg4-zh">H2O</tspan></text><text x="450" y="510" text-anchor="end" id="trsvg57-ca" systemLanguage="ca"><tspan id="trsvg4-ca">Vapor d'aigua</tspan></text><text x="450" y="510" text-anchor="end" id="trsvg57-pt" systemLanguage="pt"><tspan id="trsvg4-pt">Vapor de água,</tspan></text><text x="450" y="510" text-anchor="end" id="trsvg57"><tspan id="trsvg4">Water vapor,</tspan></text></switch>
+<switch><text x="450" y="545" text-anchor="end" id="trsvg58-zh" systemLanguage="zh"><tspan id="trsvg5-zh">CH4</tspan></text><text x="450" y="545" text-anchor="end" id="trsvg58-ca" systemLanguage="ca"><tspan id="trsvg5-ca">Metà</tspan></text><text x="450" y="545" text-anchor="end" id="trsvg58-pt" systemLanguage="pt"><tspan id="trsvg5-pt">metano</tspan></text><text x="450" y="545" text-anchor="end" id="trsvg58"><tspan id="trsvg5">methane</tspan></text></switch>
+<switch><text x="1185" y="510" text-anchor="start" id="trsvg59-zh" systemLanguage="zh"><tspan id="trsvg6-zh">CO2</tspan></text><text x="1185" y="510" text-anchor="start" id="trsvg59-ca" systemLanguage="ca"><tspan id="trsvg6-ca">CO2</tspan></text><text x="1185" y="510" text-anchor="start" id="trsvg59"><tspan id="trsvg6">CO2</tspan></text></switch>
+</g>
+
+ <g id="TOP_ROW" transform="translate(0,300)" fill="#b11600">
+<g transform="translate(325,0)">
+<rect class="R" x="-150" y="-50" width="300" height="75"/>
+<path class="arr" d=" M0,25 v25 M0,50 h1000 M1000,50 v-25"/>
+<switch><text x="0" y="0" id="trsvg60-zh" systemLanguage="zh"><tspan id="trsvg7-zh">农业活动</tspan></text><text x="0" y="0" id="trsvg60-ca" systemLanguage="ca"><tspan id="trsvg7-ca">Agricultura</tspan></text><text x="0" y="0" id="trsvg60-pt" systemLanguage="pt"><tspan id="trsvg7-pt">Agricultura</tspan></text><text x="0" y="0" id="trsvg60"><tspan id="trsvg7">Agriculture</tspan></text></switch>
+</g>
+
+<g transform="translate(825,0)">
+<rect class="R" x="-250" y="-50" width="500" height="75"/>
+<path class="arr" d="M0,25 v70 l10,-20 h-20 l10,20"/>
+<switch><text x="0" y="5" font-size="50px" font-weight="bold" id="trsvg61-zh" systemLanguage="zh"><tspan id="trsvg8-zh">化石燃料</tspan></text><text x="0" y="5" font-size="50px" font-weight="bold" id="trsvg61-ca" systemLanguage="ca"><tspan id="trsvg8-ca">Combustibles fòssils</tspan></text><text x="0" y="5" font-size="50px" font-weight="bold" id="trsvg61-pt" systemLanguage="pt"><tspan id="trsvg8-pt">Combustíveis fósseis</tspan></text><text x="0" y="5" font-size="50px" font-weight="bold" id="trsvg61"><tspan id="trsvg8">Fossil fuels</tspan></text></switch>
+</g>
+
+<g transform="translate(1325,0)">
+<rect class="R" x="-150" y="-50" width="300" height="75"/>
+<switch><text x="0" y="0" id="trsvg62-zh" systemLanguage="zh"><tspan id="trsvg9-zh">森林砍伐</tspan></text><text x="0" y="0" id="trsvg62-ca" systemLanguage="ca"><tspan id="trsvg9-ca">Desforestació</tspan></text><text x="0" y="0" id="trsvg62-pt" systemLanguage="pt"><tspan id="trsvg9-pt">Desmatamento</tspan></text><text x="0" y="0" id="trsvg62"><tspan id="trsvg9">Deforestation</tspan></text></switch>
+</g>
+ </g>
+
+ <g id="SECOND_ROW" transform="translate(0,450)">
+<g transform="translate(825,0)" fill="#b11600">
+<rect class="R" x="-350" y="-50" width="700" height="150"/>
+<path class="arr" d="M350,25 h120 l-20,-10 v20 l20,-10"/>
+<path class="arr" d="M0,100 v45 l10,-20 h-20 l10,20"/>
+<switch><text font-size="55px" font-weight="bold" x="0" y="0" id="trsvg63-zh" systemLanguage="zh"><tspan id="trsvg10-zh">温室气体</tspan></text><text font-size="55px" font-weight="bold" x="0" y="0" id="trsvg63-ca" systemLanguage="ca"><tspan id="trsvg10-ca">Gasos hivernacle</tspan></text><text font-size="55px" font-weight="bold" x="0" y="0" id="trsvg63-pt" systemLanguage="pt"><tspan id="trsvg10-pt">Gases de efeito estufa</tspan></text><text font-size="55px" font-weight="bold" x="0" y="0" id="trsvg63"><tspan id="trsvg10">Greenhouse gases</tspan></text></switch>
+<switch><text x="0" y="45" id="trsvg64-zh" systemLanguage="zh"><tspan id="trsvg11-zh">二氧化碳（CO2）、甲烷（CH4）</tspan></text><text x="0" y="45" id="trsvg64-ca" systemLanguage="ca"><tspan id="trsvg11-ca">Diòxid de carboni, metà,</tspan></text><text x="0" y="45" id="trsvg64-pt" systemLanguage="pt"><tspan id="trsvg11-pt">Dióxido de carbono, metano,</tspan></text><text x="0" y="45" id="trsvg64"><tspan id="trsvg11">Carbon dioxide, methane,</tspan></text></switch>
+<switch><text x="0" y="85" id="trsvg65-zh" systemLanguage="zh"><tspan id="trsvg12-zh">一氧化二氮（N2O）、水蒸气（H2O）</tspan></text><text x="0" y="85" id="trsvg65-ca" systemLanguage="ca"><tspan id="trsvg12-ca">òxid de nitrogen, vapor d'agua...</tspan></text><text x="0" y="85" id="trsvg65-pt" systemLanguage="pt"><tspan id="trsvg12-pt">óxido nitroso, vapor de água, ...</tspan></text><text x="0" y="85" id="trsvg65"><tspan id="trsvg12">nitrous oxide, water vapor, ...</tspan></text></switch>
+</g>
+
+<g transform="translate(1450,25)" fill="#6c6f04">
+<rect class="G" x="-150" y="-50" width="300" height="100"/>
+<switch><text x="0" y="-10" id="trsvg66-zh" systemLanguage="zh"><tspan id="trsvg13-zh">海洋</tspan></text><text x="0" y="-10" id="trsvg66-ca" systemLanguage="ca"><tspan id="trsvg13-ca">Oceà</tspan></text><text x="0" y="-10" id="trsvg66-pt" systemLanguage="pt"><tspan id="trsvg13-pt">Acidificação</tspan></text><text x="0" y="-10" id="trsvg66"><tspan id="trsvg13">Ocean</tspan></text></switch>
+<switch><text x="0" y="35" id="trsvg67-zh" systemLanguage="zh"><tspan id="trsvg14-zh">酸化</tspan></text><text x="0" y="35" id="trsvg67-ca" systemLanguage="ca"><tspan id="trsvg14-ca">acidificació</tspan></text><text x="0" y="35" id="trsvg67-pt" systemLanguage="pt"><tspan id="trsvg14-pt">do oceano</tspan></text><text x="0" y="35" id="trsvg67"><tspan id="trsvg14">acidification</tspan></text></switch>
+</g>
+ </g>
+
+<g id="CENTER_TITLE" transform="translate(850,650)" fill="#b11600">
+<rect class="R" x="-700" y="-50" width="1450" height="100"/>
+<path class="arr" d=" M-250,50 v725 M-250,775 h-45 l20,-10 v20 l-20,-10"/>
+<path class="arr" d=" M-250,275 h-45 l20,-10 v20 l-20,-10 M-250,425 h-45 l20,-10 v20 l-20,-10 M-250,550 h-45 l20,-10 v20 l-20,-10 M-250,235 h45 l-20,-10 v20 l20,-10 M-250,510 h45 l-20,-10 v20 l20,-10 M-250,645 h45 l-20,-10 v20 l20,-10 M-250,775 h45 l-20,-10 v20 l20,-10"/>
+<switch><text font-size="75px" x="0" y="25" id="trsvg68-zh" systemLanguage="zh"><tspan id="trsvg15-zh">全球变暖、气候变化</tspan></text><text font-size="75px" x="0" y="25" id="trsvg68-ca" systemLanguage="ca"><tspan id="trsvg15-ca">Escalfament global, canvi climàtic</tspan></text><text font-size="75px" x="0" y="25" id="trsvg68-pt" systemLanguage="pt"><tspan id="trsvg15-pt">Aquecimento global, mudanças climáticas</tspan></text><text font-size="75px" x="0" y="25" id="trsvg68"><tspan id="trsvg15">Global warming, climate change</tspan></text></switch>
+</g>
+
+ <g id="LEFT_COLUMN" transform="translate(350,0)"> 
+
+<switch><text font-style="italic" font-size="70px" fill="#b11600" x="0" y="810" id="trsvg69-zh" systemLanguage="zh"><tspan id="trsvg16-zh">反馈</tspan></text><text font-style="italic" font-size="70px" fill="#b11600" x="0" y="810" id="trsvg69-ca" systemLanguage="ca"><tspan id="trsvg16-ca">Retroacció</tspan></text><text font-style="italic" font-size="70px" fill="#b11600" x="0" y="810" id="trsvg69-pt" systemLanguage="pt"><tspan id="trsvg16-pt">Opinião</tspan></text><text font-style="italic" font-size="70px" fill="#b11600" x="0" y="810" id="trsvg69"><tspan id="trsvg16">Feedback</tspan></text></switch>
+
+<g transform="translate(0,900)" fill="#b11600">
+<rect class="R" x="-200" y="-50" width="400" height="150"/>
+<path class="arr" stroke-dasharray="12,12" d="  M-200,25 h-50  M-250,25 v-275  M-250,-250 h50"/>
+<path class="arr" d="M-225,-250 h20 l-20,-10 v20 l20-10"/>
+<switch><text x="0" y="-5" id="trsvg70-zh" systemLanguage="zh"><tspan id="trsvg17-zh">冰雪覆盖</tspan></text><text x="0" y="-5" id="trsvg70-ca" systemLanguage="ca"><tspan id="trsvg17-ca">Reducció de</tspan></text><text x="0" y="-5" id="trsvg70-pt" systemLanguage="pt"><tspan id="trsvg17-pt">Redução da cobertura</tspan></text><text x="0" y="-5" id="trsvg70"><tspan id="trsvg17">Snow cover</tspan></text></switch>
+<switch><text x="0" y="35" id="trsvg71-zh" systemLanguage="zh"><tspan id="trsvg18-zh">减少</tspan></text><text x="0" y="35" id="trsvg71-ca" systemLanguage="ca"><tspan id="trsvg18-ca">la coberta de neu</tspan></text><text x="0" y="35" id="trsvg71-pt" systemLanguage="pt"><tspan id="trsvg18-pt">de neve: menor</tspan></text><text x="0" y="35" id="trsvg71"><tspan id="trsvg18">reduction: less</tspan></text></switch>
+<switch><text x="0" y="80" id="trsvg72-zh" systemLanguage="zh"><tspan id="trsvg19-zh">阳光反射</tspan></text><text x="0" y="80" id="trsvg72-ca" systemLanguage="ca"><tspan id="trsvg19-ca">Reflex de la llum solar</tspan></text><text x="0" y="80" id="trsvg72-pt" systemLanguage="pt"><tspan id="trsvg19-pt">reflexão da luz solar</tspan></text><text x="0" y="80" id="trsvg72"><tspan id="trsvg19">sunlight reflection</tspan></text></switch>
+</g>
+
+<g transform="translate(0,1075)" fill="#b11600">
+<rect class="R" x="-200" y="-50" width="400" height="100"/>
+<path class="arr" d="M-200,0 h-75" stroke-dasharray="12,12"/>
+<switch><text x="0" y="-10" id="trsvg73-zh" systemLanguage="zh"><tspan id="trsvg20-zh">水蒸气</tspan></text><text x="0" y="-10" id="trsvg73-ca" systemLanguage="ca"><tspan id="trsvg20-ca">Increment</tspan></text><text x="0" y="-10" id="trsvg73-pt" systemLanguage="pt"><tspan id="trsvg20-pt">Aumento do</tspan></text><text x="0" y="-10" id="trsvg73"><tspan id="trsvg20">Water vapor</tspan></text></switch>
+<switch><text x="0" y="35" id="trsvg74-zh" systemLanguage="zh"><tspan id="trsvg21-zh">增加</tspan></text><text x="0" y="35" id="trsvg74-ca" systemLanguage="ca"><tspan id="trsvg21-ca">del vapor d'aigua</tspan></text><text x="0" y="35" id="trsvg74-pt" systemLanguage="pt"><tspan id="trsvg21-pt">vapor de água</tspan></text><text x="0" y="35" id="trsvg74"><tspan id="trsvg21">increase</tspan></text></switch>
+</g>
+
+<g transform="translate(0,1200)" fill="#b11600">
+<rect class="R" x="-200" y="-50" width="400" height="100"/>
+<path class="arr" stroke-dasharray="12,12" d=" M-200,0 h-75 M-275,0 v-725 M-275,-725 h400"/>
+<path class="arr" d="M100,-725 h20 l-20,-10 v20 l20,-10"/>
+<switch><text x="0" y="-10" id="trsvg75-zh" systemLanguage="zh"><tspan id="trsvg22-zh">永久冻土融化</tspan></text><text x="0" y="-10" id="trsvg75-ca" systemLanguage="ca"><tspan id="trsvg22-ca">Fusió del permagel;</tspan></text><text x="0" y="-10" id="trsvg75-pt" systemLanguage="pt"><tspan id="trsvg22-pt">Degelo do permafrost;</tspan></text><text x="0" y="-10" id="trsvg75"><tspan id="trsvg22">Permafrost thaw;</tspan></text></switch>
+<switch><text x="0" y="35" id="trsvg76-zh" systemLanguage="zh"><tspan id="trsvg23-zh">甲烷释放</tspan></text><text x="0" y="35" id="trsvg76-ca" systemLanguage="ca"><tspan id="trsvg23-ca">alliberament de metà</tspan></text><text x="0" y="35" id="trsvg76-pt" systemLanguage="pt"><tspan id="trsvg23-pt">liberação de metano</tspan></text><text x="0" y="35" id="trsvg76"><tspan id="trsvg23">methane release</tspan></text></switch>
+</g>
+
+<g transform="translate(0,1425)" fill="#6c6f04">
+<rect class="G" x="-200" y="-50" width="400" height="100"/>
+<path class="arr" d="M0,50 v70 l10,-20 h-20 l10,20"/>
+<switch><text x="0" y="-10" id="trsvg77-zh" systemLanguage="zh"><tspan id="trsvg24-zh">传染病载体增加</tspan></text><text x="0" y="-10" id="trsvg77-ca" systemLanguage="ca"><tspan id="trsvg24-ca">Portador de malalties</tspan></text><text x="0" y="-10" id="trsvg77-pt" systemLanguage="pt"><tspan id="trsvg24-pt">Vetor de doenças,</tspan></text><text x="0" y="-10" id="trsvg77"><tspan id="trsvg24">Disease carrier,</tspan></text></switch>
+<switch><text x="0" y="35" id="trsvg78-zh" systemLanguage="zh"><tspan id="trsvg25-zh">有害生物散播</tspan></text><text x="0" y="35" id="trsvg78-ca" systemLanguage="ca"><tspan id="trsvg25-ca">Propagació de pestes</tspan></text><text x="0" y="35" id="trsvg78-pt" systemLanguage="pt"><tspan id="trsvg25-pt">propagação de pragas</tspan></text><text x="0" y="35" id="trsvg78"><tspan id="trsvg25">pest propagation</tspan></text></switch>
+</g>
+
+<g transform="translate(0,1600)" fill="#008080">
+<rect class="B" x="-200" y="-50" width="400" height="100"/>
+<switch><text x="0" y="-10" id="trsvg79-zh" systemLanguage="zh"><tspan id="trsvg26-zh">影响</tspan></text><text x="0" y="-10" id="trsvg79-ca" systemLanguage="ca"><tspan id="trsvg26-ca">Impacte directe sobre</tspan></text><text x="0" y="-10" id="trsvg79-pt" systemLanguage="pt"><tspan id="trsvg26-pt">Impacto direto</tspan></text><text x="0" y="-10" id="trsvg79"><tspan id="trsvg26">Direct impact on</tspan></text></switch>
+<switch><text x="0" y="35" id="trsvg80-zh" systemLanguage="zh"><tspan id="trsvg27-zh">人类健康</tspan></text><text x="0" y="35" id="trsvg80-ca" systemLanguage="ca"><tspan id="trsvg27-ca">la salut humana</tspan></text><text x="0" y="35" id="trsvg80-pt" systemLanguage="pt"><tspan id="trsvg27-pt">na saúde humana</tspan></text><text x="0" y="35" id="trsvg80"><tspan id="trsvg27">human health</tspan></text></switch>
+</g>
+
+ </g>
+
+<g font-style="italic" font-size="70px" fill="#008080">
+<switch><text x="350" y="1775" id="trsvg81-zh" systemLanguage="zh"><tspan id="trsvg28-zh">对人类的</tspan></text><text x="350" y="1775" id="trsvg81-ca" systemLanguage="ca"><tspan id="trsvg28-ca">Efectes</tspan></text><text x="350" y="1775" id="trsvg81-pt" systemLanguage="pt"><tspan id="trsvg28-pt">Efeitos</tspan></text><text x="350" y="1775" id="trsvg81"><tspan id="trsvg28">Effects</tspan></text></switch>
+<switch><text x="350" y="1850" id="trsvg82-zh" systemLanguage="zh"><tspan id="trsvg29-zh">影响</tspan></text><text x="350" y="1850" id="trsvg82-ca" systemLanguage="ca"><tspan id="trsvg29-ca">sobre la humanitat</tspan></text><text x="350" y="1850" id="trsvg82-pt" systemLanguage="pt"><tspan id="trsvg29-pt">em humanos</tspan></text><text x="350" y="1850" id="trsvg82"><tspan id="trsvg29">on humans</tspan></text></switch>
+</g>
+
+ <g id="WIDE_BLOCKS" transform="translate(1100,0)" fill="#6c6f04">
+
+<switch><text font-style="italic" font-size="70px" x="25" y="810" id="trsvg83-zh" systemLanguage="zh"><tspan id="trsvg30-zh">环境效应</tspan></text><text font-style="italic" font-size="70px" x="25" y="810" id="trsvg83-ca" systemLanguage="ca"><tspan id="trsvg30-ca">Efectes sobre l'ambient</tspan></text><text font-style="italic" font-size="70px" x="25" y="810" id="trsvg83-pt" systemLanguage="pt"><tspan id="trsvg30-pt">Efeitos sobre o meio ambiente</tspan></text><text font-style="italic" font-size="70px" x="25" y="810" id="trsvg83"><tspan id="trsvg30">Effects on the environment</tspan></text></switch>
+
+<g transform="translate(0,900)">
+<rect class="G" x="-450" y="-50" width="950" height="75"/>
+<path class="arr" d="M-225,25 v45 l10,-20 h-20 l10,20"/>
+<path class="arr" d="M275,25 v45 l10,-20 h-20 l10,20"/>
+<switch><text x="25" y="0" id="trsvg84-zh" systemLanguage="zh"><tspan id="trsvg31-zh">栖息地缩减</tspan></text><text x="25" y="0" id="trsvg84-ca" systemLanguage="ca"><tspan id="trsvg31-ca">Destrucció d'hàbitats</tspan></text><text x="25" y="0" id="trsvg84-pt" systemLanguage="pt"><tspan id="trsvg31-pt">Destruição de habitats</tspan></text><text x="25" y="0" id="trsvg84"><tspan id="trsvg31">Habitat destruction</tspan></text></switch>
+</g>
+
+<g transform="translate(0,1150)">
+<rect class="G" x="-450" y="-50" width="950" height="125"/>
+<path class="arr" d=" M500,10 h100 M600,10 v690 M600,700 h-645"/>
+<path class="arr" d="M-25,700 h-20 l20,-10 v20 l-20,-10"/>
+<switch><text x="0" y="0" id="trsvg85-zh" systemLanguage="zh"><tspan id="trsvg32-zh">极端天气</tspan></text><text x="0" y="0" id="trsvg85-ca" systemLanguage="ca"><tspan id="trsvg32-ca">Intensificació d'esdeveniments extrems: calor,</tspan></text><text x="0" y="0" id="trsvg85-pt" systemLanguage="pt"><tspan id="trsvg32-pt">Eventos climáticos intensificados: Calor</tspan></text><text x="0" y="0" id="trsvg85"><tspan id="trsvg32">Intensified weather events:</tspan></text></switch>
+<switch><text x="0" y="50" id="trsvg86-zh" systemLanguage="zh"><tspan id="trsvg33-zh">热浪、风暴、洪水、干旱、山火</tspan></text><text x="0" y="50" id="trsvg86-ca" systemLanguage="ca"><tspan id="trsvg33-ca"> tempestes, inundacions, sequeres, incendis...</tspan></text><text x="0" y="50" id="trsvg86-pt" systemLanguage="pt"><tspan id="trsvg33-pt">tempestades, inundações, secas, incêndios florestais...</tspan></text><text x="0" y="50" id="trsvg86"><tspan id="trsvg33">Heat, storms, floods, droughts, wildfires...</tspan></text></switch>
+</g>
+ </g>
+
+ <g id="CENTER_COLUMN" transform="translate(875,0)">
+
+<g transform="translate(0,1025)" fill="#6c6f04">
+<rect class="G" x="-225" y="-50" width="450" height="100"/>
+<switch><text x="0" y="-10" id="trsvg87-zh" systemLanguage="zh"><tspan id="trsvg34-zh">生态系统崩溃</tspan></text><text x="0" y="-10" id="trsvg87-ca" systemLanguage="ca"><tspan id="trsvg34-ca">Col·lapse d'ecosistemes:</tspan></text><text x="0" y="-10" id="trsvg87-pt" systemLanguage="pt"><tspan id="trsvg34-pt">Colapso do ecossistema:</tspan></text><text x="0" y="-10" id="trsvg87"><tspan id="trsvg34">Ecosystem collapse:</tspan></text></switch>
+<switch><text x="0" y="35" font-size="35" id="trsvg88-zh" systemLanguage="zh"><tspan id="trsvg35-zh">北极、大堡礁</tspan></text><text x="0" y="35" font-size="35" id="trsvg88-ca" systemLanguage="ca"><tspan id="trsvg35-ca">Àrtic, barrera de corall...</tspan></text><text x="0" y="35" font-size="35" id="trsvg88-pt" systemLanguage="pt"><tspan id="trsvg35-pt">Ártico, Barreira de Corais, ...</tspan></text><text x="0" y="35" font-size="35" id="trsvg88"><tspan id="trsvg35">Arctic, Barrier Reef, ...</tspan></text></switch>
+</g>
+
+<g transform="translate(-25,1300)" fill="#6c6f04">
+<rect class="G" x="-200" y="-50" width="400" height="100"/>
+<path class="arr" d="M200,0 h95 l-20,-10 v20 l20,-10"/>
+<path class="arr" d="M250,0 v125"/>
+<path class="arr" d=" M250,125 h45 M275,125 h20 l-20,-10 v20 l20,-10"/>
+<switch><text x="0" y="-10" id="trsvg89-zh" systemLanguage="zh"><tspan id="trsvg36-zh">冰川消退</tspan></text><text x="0" y="-10" id="trsvg89-ca" systemLanguage="ca"><tspan id="trsvg36-ca">Retira dels glaciars,</tspan></text><text x="0" y="-10" id="trsvg89-pt" systemLanguage="pt"><tspan id="trsvg36-pt">Recuo glacial, derretimento</tspan></text><text x="0" y="-10" id="trsvg89"><tspan id="trsvg36">Glacial retreat,</tspan></text></switch>
+<switch><text x="0" y="35" id="trsvg90-zh" systemLanguage="zh"><tspan id="trsvg37-zh">冰盖融化</tspan></text><text x="0" y="35" id="trsvg90-ca" systemLanguage="ca"><tspan id="trsvg37-ca">fusió de gel</tspan></text><text x="0" y="35" id="trsvg90-pt" systemLanguage="pt"><tspan id="trsvg37-pt">da camada de gelo</tspan></text><text x="0" y="35" id="trsvg90"><tspan id="trsvg37">ice sheet melt</tspan></text></switch>
+</g>
+
+<g transform="translate(-25,1425)" fill="#6c6f04">
+<rect class="G" x="-200" y="-50" width="400" height="100"/>
+<switch><text x="0" y="-10" id="trsvg91-zh" systemLanguage="zh"><tspan id="trsvg38-zh">珊瑚白化</tspan></text><text x="0" y="-10" id="trsvg91-ca" systemLanguage="ca"><tspan id="trsvg38-ca">Blanqueig del corall,</tspan></text><text x="0" y="-10" id="trsvg91-pt" systemLanguage="pt"><tspan id="trsvg38-pt">Branqueamento de corais,</tspan></text><text x="0" y="-10" id="trsvg91"><tspan id="trsvg38">Coral bleaching,</tspan></text></switch>
+<switch><text x="0" y="35" id="trsvg92-zh" systemLanguage="zh"><tspan id="trsvg39-zh">鱼群减少</tspan></text><text x="0" y="35" id="trsvg92-ca" systemLanguage="ca"><tspan id="trsvg39-ca">declivi del peix</tspan></text><text x="0" y="35" id="trsvg92-pt" systemLanguage="pt"><tspan id="trsvg39-pt">declínio dos estoques de peixes</tspan></text><text x="0" y="35" id="trsvg92"><tspan id="trsvg39">fish stock decline</tspan></text></switch>
+</g>
+
+<g transform="translate(-25,1600)" fill="#008080">
+<rect class="B" x="-200" y="-50" width="400" height="100"/>
+<switch><text x="0" y="-10" id="trsvg93-zh" systemLanguage="zh"><tspan id="trsvg40-zh">人类移民</tspan></text><text x="0" y="-10" id="trsvg93-ca" systemLanguage="ca"><tspan id="trsvg40-ca">Migració humana</tspan></text><text x="0" y="-10" id="trsvg93-pt" systemLanguage="pt"><tspan id="trsvg40-pt">Migração humana</tspan></text><text x="0" y="-10" id="trsvg93"><tspan id="trsvg40">Human migration</tspan></text></switch>
+<switch><text x="0" y="35" id="trsvg94-zh" systemLanguage="zh"><tspan id="trsvg41-zh">冲突</tspan></text><text x="0" y="35" id="trsvg94-ca" systemLanguage="ca"><tspan id="trsvg41-ca">i conflictes</tspan></text><text x="0" y="35" id="trsvg94-pt" systemLanguage="pt"><tspan id="trsvg41-pt">e conflito</tspan></text><text x="0" y="35" id="trsvg94"><tspan id="trsvg41">and conflict</tspan></text></switch>
+</g>
+
+<g transform="translate(-25,1850)" fill="#008080">
+<rect class="B" x="-200" y="-50" width="400" height="100"/>
+<switch><text x="0" y="-10" id="trsvg95-zh" systemLanguage="zh"><tspan id="trsvg42-zh">造成</tspan></text><text x="0" y="-10" id="trsvg95-ca" systemLanguage="ca"><tspan id="trsvg42-ca">Dany físic directe</tspan></text><text x="0" y="-10" id="trsvg95-pt" systemLanguage="pt"><tspan id="trsvg42-pt">Dano físico direto</tspan></text><text x="0" y="-10" id="trsvg95"><tspan id="trsvg42">Direct physical</tspan></text></switch>
+<switch><text x="0" y="35" id="trsvg96-zh" systemLanguage="zh"><tspan id="trsvg43-zh">有害后果</tspan></text><text x="0" y="35" id="trsvg96-ca" systemLanguage="ca"><tspan id="trsvg43-ca">a la humanitat</tspan></text><text x="0" y="35" id="trsvg96-pt" systemLanguage="pt"><tspan id="trsvg43-pt">a humanos</tspan></text><text x="0" y="35" id="trsvg96"><tspan id="trsvg43">harm to humans</tspan></text></switch>
+</g>
+ </g>
+
+ <g id="RIGHT_COLUMN" transform="translate(1375,0)">
+
+<g transform="translate(0,1025)" fill="#6c6f04">
+<rect class="G" x="-225" y="-50" width="450" height="100"/>
+<switch><text x="0" y="-10" id="trsvg97-zh" systemLanguage="zh"><tspan id="trsvg44-zh">生物多样性丧失</tspan></text><text x="0" y="-10" id="trsvg97-ca" systemLanguage="ca"><tspan id="trsvg44-ca">Pèrdua de biodiversitat,</tspan></text><text x="0" y="-10" id="trsvg97-pt" systemLanguage="pt"><tspan id="trsvg44-pt">Perda de biodiversidade,</tspan></text><text x="0" y="-10" id="trsvg97"><tspan id="trsvg44">Biodiversity loss,</tspan></text></switch>
+<switch><text x="0" y="35" id="trsvg98-zh" systemLanguage="zh"><tspan id="trsvg45-zh">物种灭绝</tspan></text><text x="0" y="35" id="trsvg98-ca" systemLanguage="ca"><tspan id="trsvg45-ca">extinció d'espècies</tspan></text><text x="0" y="35" id="trsvg98-pt" systemLanguage="pt"><tspan id="trsvg45-pt">extinção de espécies</tspan></text><text x="0" y="35" id="trsvg98"><tspan id="trsvg45">species extinction</tspan></text></switch>
+</g>
+
+<g transform="translate(0,1300)" fill="#6c6f04">
+<rect class="G" x="-225" y="-50" width="450" height="100"/>
+<path class="arr" d=" M225,0 h50 M275,0 v450 M275,450 h-45"/>
+<path class="arr" d="M250,450 h-20 l20,-10 v20 l-20,-10"/>
+<switch><text x="0" y="-10" id="trsvg99-zh" systemLanguage="zh"><tspan id="trsvg46-zh">淡水资源减少</tspan></text><text x="0" y="-10" id="trsvg99-ca" systemLanguage="ca"><tspan id="trsvg46-ca">Pèrdua d'aigua dolça,</tspan></text><text x="0" y="-10" id="trsvg99-pt" systemLanguage="pt"><tspan id="trsvg46-pt">Perda de água doce,</tspan></text><text x="0" y="-10" id="trsvg99"><tspan id="trsvg46">Freshwater loss,</tspan></text></switch>
+<switch><text x="0" y="35" id="trsvg100-zh" systemLanguage="zh"><tspan id="trsvg47-zh">沙漠化</tspan></text><text x="0" y="35" id="trsvg100-ca" systemLanguage="ca"><tspan id="trsvg47-ca">desertificació</tspan></text><text x="0" y="35" id="trsvg100-pt" systemLanguage="pt"><tspan id="trsvg47-pt">desertificação</tspan></text><text x="0" y="35" id="trsvg100"><tspan id="trsvg47">desertification</tspan></text></switch>
+</g>
+
+<g transform="translate(0,1425)" fill="#6c6f04">
+<rect class="G" x="-225" y="-50" width="450" height="100"/>
+<path class="arr" d="M0,50 v70 l10,-20 h-20 l10,20"/>
+<switch><text x="0" y="-10" id="trsvg101-zh" systemLanguage="zh"><tspan id="trsvg48-zh">海平面上涨</tspan></text><text x="0" y="-10" id="trsvg101-ca" systemLanguage="ca"><tspan id="trsvg48-ca">Pujada del nivell del mar,</tspan></text><text x="0" y="-10" id="trsvg101-pt" systemLanguage="pt"><tspan id="trsvg48-pt">Aumento do nível do mar,</tspan></text><text x="0" y="-10" id="trsvg101"><tspan id="trsvg48">Sea level rise,</tspan></text></switch>
+<switch><text x="0" y="35" id="trsvg102-zh" systemLanguage="zh"><tspan id="trsvg49-zh">沿海地区淹没</tspan></text><text x="0" y="35" id="trsvg102-ca" systemLanguage="ca"><tspan id="trsvg49-ca">submersió de la costa</tspan></text><text x="0" y="35" id="trsvg102-pt" systemLanguage="pt"><tspan id="trsvg49-pt">submersão costeira</tspan></text><text x="0" y="35" id="trsvg102"><tspan id="trsvg49">coastal submersion</tspan></text></switch>
+</g>
+
+<g transform="translate(0,1600)" fill="#008080">
+<rect class="B" x="-225" y="-50" width="450" height="100"/>
+<path class="arr" d="M-225,0 h-95 l20,-10 v20 l-20,-10"/>
+<path class="arr" d="M0,50 v45 l10,-20 h-20 l10,20"/>
+<switch><text x="0" y="-10" id="trsvg103-zh" systemLanguage="zh"><tspan id="trsvg50-zh">城市与农田</tspan></text><text x="0" y="-10" id="trsvg103-ca" systemLanguage="ca"><tspan id="trsvg50-ca">Inundació de ciutats i </tspan></text><text x="0" y="-10" id="trsvg103-pt" systemLanguage="pt"><tspan id="trsvg50-pt">Cidades inundadas,</tspan></text><text x="0" y="-10" id="trsvg103"><tspan id="trsvg50">Flooded cities,</tspan></text></switch>
+<switch><text x="0" y="35" id="trsvg104-zh" systemLanguage="zh"><tspan id="trsvg51-zh">遭受洪灾</tspan></text><text x="0" y="35" id="trsvg104-ca" systemLanguage="ca"><tspan id="trsvg51-ca">de terres fèrtils</tspan></text><text x="0" y="35" id="trsvg104-pt" systemLanguage="pt"><tspan id="trsvg51-pt">terras agrícolas</tspan></text><text x="0" y="35" id="trsvg104"><tspan id="trsvg51">farmland</tspan></text></switch>
+</g>
+
+<g transform="translate(0,1750)" fill="#008080">
+<rect class="B" x="-225" y="-50" width="450" height="100"/>
+<path class="arr" d=" M-225,0 h-275 M-500,0 v-95"/>
+<path class="arr" d="M-500,-80 v-15 l-10,20 h20 l-10,-20"/>
+<path class="arr" d="M0,100 v-45 l10,20 h-20 l10,-20"/>
+<switch><text x="0" y="-10" id="trsvg105-zh" systemLanguage="zh"><tspan id="trsvg52-zh">作物歉收</tspan></text><text x="0" y="-10" id="trsvg105-ca" systemLanguage="ca"><tspan id="trsvg52-ca">pèrdua de collites,</tspan></text><text x="0" y="-10" id="trsvg105-pt" systemLanguage="pt"><tspan id="trsvg52-pt">Quebra de safra,</tspan></text><text x="0" y="-10" id="trsvg105"><tspan id="trsvg52">Crop failure,</tspan></text></switch>
+<switch><text x="0" y="35" id="trsvg106-zh" systemLanguage="zh"><tspan id="trsvg53-zh">耕地减少</tspan></text><text x="0" y="35" id="trsvg106-ca" systemLanguage="ca"><tspan id="trsvg53-ca">pèrdua de terra fèrtil</tspan></text><text x="0" y="35" id="trsvg106-pt" systemLanguage="pt"><tspan id="trsvg53-pt">perda de terras agrícolas</tspan></text><text x="0" y="35" id="trsvg106"><tspan id="trsvg53">farmland loss</tspan></text></switch>
+</g>
+ </g>
+
+     </g>
+</svg>

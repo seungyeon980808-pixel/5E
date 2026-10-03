@@ -1,4 +1,6 @@
-const SOURCES = Object.freeze({ PARTS: "parts", EXAM: "exam", LOCAL: "local" });
+import { openPdfReferencePicker } from "./pdf-library/reference-picker.js?v=1.6.0-preview-labeler-0917-1111";
+
+const SOURCES = Object.freeze({ PARTS: "parts", PDF: "pdf", LOCAL: "local" });
 const MAX_RESULTS = 60;
 const MAX_SELECT = 10;
 
@@ -9,8 +11,7 @@ function textOf(item) {
 }
 
 function remoteUrl(source, item) {
-  const base = source === SOURCES.EXAM ? "assets/exam-library/images/" : "assets/parts-library/svg/";
-  return `${base}${encodeURIComponent(item.file)}`;
+  return `assets/parts-library/svg/${encodeURIComponent(item.file)}`;
 }
 
 async function urlToDataUrl(url) {
@@ -25,12 +26,11 @@ async function urlToDataUrl(url) {
   });
 }
 
-export function createAiReferenceSearch({ desktop, onAdd, onStatus } = {}) {
+export function createAiReferenceSearch({ desktop, onAdd, onAddMany, onStatus } = {}) {
   let overlay = null;
   let source = SOURCES.PARTS;
   let query = "";
   let parts = [];
-  let exams = [];
   let locals = [];
   let localFolder = "";
   let loaded = false;
@@ -41,19 +41,15 @@ export function createAiReferenceSearch({ desktop, onAdd, onStatus } = {}) {
 
   async function ensureRemoteData() {
     if (loaded) return;
-    const [partResponse, examResponse] = await Promise.all([
-      fetch("assets/parts-library/manifest.json", { cache: "no-store" }),
-      fetch("assets/exam-library/manifest.json", { cache: "no-store" }),
-    ]);
-    if (!partResponse.ok || !examResponse.ok) throw new Error("이미지 검색 목록을 불러오지 못했습니다.");
-    const [partManifest, examManifest] = await Promise.all([partResponse.json(), examResponse.json()]);
+    const partResponse = await fetch("assets/parts-library/manifest.json", { cache: "no-store" });
+    if (!partResponse.ok) throw new Error("이미지 검색 목록을 불러오지 못했습니다.");
+    const partManifest = await partResponse.json();
     parts = Array.isArray(partManifest.items) ? partManifest.items : [];
-    exams = Array.isArray(examManifest.items) ? examManifest.items : [];
     loaded = true;
   }
 
   function currentItems() {
-    const list = source === SOURCES.EXAM ? exams : source === SOURCES.LOCAL ? locals : parts;
+    const list = source === SOURCES.LOCAL ? locals : parts;
     const needle = query.trim().toLocaleLowerCase("ko");
     return (needle ? list.filter((item) => textOf(item).includes(needle)) : list).slice(0, MAX_RESULTS);
   }
@@ -83,7 +79,7 @@ export function createAiReferenceSearch({ desktop, onAdd, onStatus } = {}) {
       button.setAttribute("aria-pressed", String(active));
     });
     const items = currentItems();
-    const total = source === SOURCES.EXAM ? exams.length : source === SOURCES.LOCAL ? locals.length : parts.length;
+    const total = source === SOURCES.LOCAL ? locals.length : parts.length;
     summary.textContent = `${query.trim() ? `검색 결과 ${items.length}개` : `전체 ${total}개`} · 최대 ${MAX_SELECT}개 선택`;
     grid.replaceChildren();
     if (!items.length) {
@@ -141,8 +137,9 @@ export function createAiReferenceSearch({ desktop, onAdd, onStatus } = {}) {
           : await urlToDataUrl(remoteUrl(recordSource, item)),
         sourceKind: recordSource === SOURCES.LOCAL ? "local-folder" : recordSource,
       })));
-      references.forEach((reference) => onAdd?.(reference));
-      status(`참고 이미지 ${references.length}개가 추가되었습니다.`, "ok");
+      if (onAddMany) onAddMany(references);
+      else references.forEach((reference) => onAdd?.(reference));
+      status(`이미지 ${references.length}개를 각각 작업으로 추가했습니다.`, "ok");
       close();
     } catch (error) {
       status(error.message || String(error), "error");
@@ -154,6 +151,7 @@ export function createAiReferenceSearch({ desktop, onAdd, onStatus } = {}) {
   async function open() {
     close();
     selected.clear();
+    source = SOURCES.PARTS;
     query = "";
     overlay = document.createElement("div");
     overlay.className = "ai-compare-overlay ai-reference-search-overlay";
@@ -161,7 +159,7 @@ export function createAiReferenceSearch({ desktop, onAdd, onStatus } = {}) {
       <header><strong>이미지 검색</strong><button type="button" data-ai-search-close aria-label="닫기">×</button></header>
       <nav aria-label="검색 위치">
         <button type="button" data-ai-search-source="parts">온라인 이미지</button>
-        <button type="button" data-ai-search-source="exam">기출문제</button>
+        <button type="button" data-ai-search-source="pdf">PDF 기출문제</button>
         <button type="button" data-ai-search-source="local">로컬 폴더</button>
       </nav>
       <div class="ai-reference-search-query"><span aria-hidden="true">⌕</span><input type="search" placeholder="이미지 검색어를 입력하세요" aria-label="이미지 검색어"></div>
@@ -174,7 +172,20 @@ export function createAiReferenceSearch({ desktop, onAdd, onStatus } = {}) {
     overlay.querySelector("[data-ai-search-close]").onclick = close;
     overlay.addEventListener("mousedown", (event) => { if (event.target === overlay) close(); });
     overlay.querySelectorAll("[data-ai-search-source]").forEach((button) => {
-      button.onclick = () => { source = button.dataset.aiSearchSource; render(); };
+      button.onclick = async () => {
+        const nextSource = button.dataset.aiSearchSource;
+        if (nextSource === SOURCES.PDF) {
+          close();
+          try {
+            await openPdfReferencePicker({ onAdd, onAddMany, onStatus: status });
+          } catch (error) {
+            status(error.message || String(error), "error");
+          }
+          return;
+        }
+        source = nextSource;
+        render();
+      };
     });
     const input = overlay.querySelector("input[type=search]");
     input.oninput = () => { query = input.value; render(); };

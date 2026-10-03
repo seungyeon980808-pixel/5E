@@ -21,13 +21,13 @@
 //               geometry on canvas drag/click via makeShape()/makeCircuit()/the ARC
 //               tool. The registry only names which tool + variant to arm.
 
-import { state } from "./state.js?v=1.4.0";
-import { armSymbol } from "./tools.js?v=1.5.4";
-import { renderObject } from "./render.js?v=1.4.0";
-import { applyNewObjectStyleDefaults } from "./style-mode.js?v=1.4.0";
-import { getSvgAsset } from "./svg-assets.js?v=1.4.0";
-import { TOOL_ICONS } from "./tool-icons.js?v=1.4.0";
-import { openGraphModal } from "./graph/graph-modal.js?v=1.4.0";
+import { state } from "./state.js?v=1.6.0-remediation-0929";
+import { armSymbol } from "./tools.js?v=1.6.0-remediation-0929";
+import { renderObject } from "./render.js?v=1.6.0-remediation-0929";
+import { applyNewObjectStyleDefaults } from "./style-mode.js?v=1.6.0-remediation-0929";
+import { getSvgAsset } from "./svg-assets.js?v=1.6.0-preview-labeler-0917-1111";
+import { TOOL_ICONS } from "./tool-icons.js?v=1.6.0-preview-labeler-0917-1111";
+import { openGraphModal } from "./graph/graph-modal.js?v=1.6.0-remediation-0929";
 
 const DEFAULT_STROKE_WIDTH = 0.2; // world units (mm) — matches tools.js shapes
 
@@ -877,6 +877,13 @@ export function renderSymbolsForCategories(container, categories, sizer) {
   return ids.length;
 }
 
+export function renderSymbolsForIds(container, ids, sizer) {
+  for (const id of ids) {
+    const def = TEMPLATES[id];
+    if (def) container.appendChild(makeSymbolButton(id, def, sizer));
+  }
+}
+
 function renderPanel() {
   const host = document.getElementById("symbol-sections");
   if (!host) return;
@@ -936,6 +943,7 @@ export function activateTemplate(symbolId) {
     const c = def.create || {};
     armSymbol(symbolId, c.tool, c.element ?? c.kind, c.props);
   }
+  window.dispatchEvent(new CustomEvent("5e:template-activated", { detail: { symbolId } }));
 }
 
 /* ===== WIRE THE LEFT-PANEL LIBRARY ===== */

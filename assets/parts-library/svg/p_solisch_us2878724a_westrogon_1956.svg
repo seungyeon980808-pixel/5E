@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg width="350" height="200" version="1.1" viewBox="0 0 350 200" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+ <metadata>
+  <rdf:RDF>
+   <cc:Work rdf:about="">
+    <dc:format>image/svg+xml</dc:format>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:title/>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <g transform="translate(0 -922.52)" stroke="#000">
+  <g fill-opacity=".26667" stroke-linecap="round" stroke-linejoin="bevel" stroke-opacity=".53333" stroke-width=".5">
+   <path d="m31.498 927.52a223.49 223.49 0 0 0-21.498 95 223.49 223.49 0 0 0 21.584 95h8.416l13.871-13.871a127.27 127.27 0 0 1-29.74-81.129 127.27 127.27 0 0 1 29.588-81.281l-13.719-13.719z" fill="#04f"/>
+   <path d="m124.95 957.52a290.71 290.71 0 0 1 7.7949 65 290.71 290.71 0 0 1-7.8887 65h30.148l9.5879-9.5879a96.9 96.9 0 0 1-17.719-55.412 96.9 96.9 0 0 1 17.643-55.488l-9.5117-9.5117z" fill="#04f"/>
+   <path d="m96.596 957.52a583.69 583.69 0 0 0-3.8262 65 583.69 583.69 0 0 0 4.3047 65h28.092a290.71 290.71 0 0 0 7.5742-65 290.71 290.71 0 0 0-7.8359-65z" fill="#08f"/>
+   <path d="m269.6 992.52a135.46 135.46 0 0 0-3.6191 30 135.46 135.46 0 0 0 3.5234 30h2.5938a310.9 310.9 0 0 0 1.9629-30 310.9 310.9 0 0 0-1.8106-30z" fill="#0af"/>
+   <path d="m298.38 997.52a42.59 42.59 0 0 0-8.168 25 42.59 42.59 0 0 0 8.2188 25h2.2812v-50z" fill="#04f"/>
+   <path d="m300.71 997.52v50h4.2891l4.5703-4.5703a43.2 43.2 0 0 1-5.2305-20.43 43.2 43.2 0 0 1 5.1973-20.463l-4.5371-4.5371z" fill="#0af"/>
+   <path d="m310.62 1002.5-1.25 1.25v3.916a28.26 28.26 0 0 1 4.2559 14.834 28.26 28.26 0 0 1-4.2559 14.764v3.9863l1.25 1.25h1.4961a34.86 34.86 0 0 0 6.3594-20 34.86 34.86 0 0 0-6.3301-20z" fill="#0af"/>
+   <path d="m315.2 987.52a189.77 189.77 0 0 1 3.6777 35 189.77 189.77 0 0 1-3.5469 35h8.7598a51.68 51.68 0 0 0 13.766-35 51.68 51.68 0 0 0-13.811-35z" fill="#08f"/>
+  </g>
+  <g fill="none">
+   <path d="m280 1092.5v-50" stroke-width="3"/>
+   <path d="m280 1002.5v-50" stroke-width="3"/>
+   <path d="m-50 1022.5h450" stroke-dasharray="16, 4, 2, 4" stroke-width="2"/>
+  </g>
+ </g>
+</svg>

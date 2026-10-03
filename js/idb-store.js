@@ -1,3 +1,4 @@
+import { previewStorage as localStorage } from './preview-storage.js?v=1.6.0-remediation-0929';
 /* ===== idb-store: 아주 작은 IndexedDB 키-값 저장소 =====
  *
  * localStorage(~5MB 상한)로는 퍼스널 라이브러리(이미지 base64 포함)가 금방 넘친다.
@@ -24,7 +25,7 @@ export function idbAvailable() {
 function openDB() {
   if (_dbPromise) return _dbPromise;
   _dbPromise = new Promise((resolve, reject) => {
-    const req = indexedDB.open(DB_NAME, VERSION);
+    const req = indexedDB.open("5e.preview:" + DB_NAME, VERSION);
     req.onupgradeneeded = () => {
       const db = req.result;
       if (!db.objectStoreNames.contains(STORE)) db.createObjectStore(STORE);

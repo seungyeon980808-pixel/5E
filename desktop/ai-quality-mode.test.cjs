@@ -22,7 +22,7 @@ test("quality and output choices are explicit and safe by default", async () => 
     assert.match(rule, /어떤 경우에도 바꾸지 않는다/);
   }
   assert.match(modes.qualityModeRule("simple"), /형태를 단순화하거나 다른 물체로 치환하지 않는다/);
-  assert.match(modes.qualityModeRule("simple"), /고품질 1회 변환/);
+  assert.match(modes.qualityModeRule("simple"), /고품질 1회 처리/);
   assert.match(modes.qualityModeRule("complex", { revision: true }), /맞는 영역은 그대로 보존/);
 });
 
@@ -43,7 +43,7 @@ test("exam palette removes color and keeps only black, gray and white", async ()
   }
 });
 
-test("AI panel exposes three modes, explicit output engines, tabs and batch conversion", () => {
+test("AI panel exposes three modes, explicit output engines, task tabs and a bounded conversion queue", () => {
   const html = fs.readFileSync(path.join(__dirname, "..", "index.html"), "utf8");
   const panel = fs.readFileSync(path.join(__dirname, "..", "js", "ai-panel.js"), "utf8");
   for (const mode of ["simple", "standard", "complex"]) {
@@ -51,11 +51,11 @@ test("AI panel exposes three modes, explicit output engines, tabs and batch conv
   }
   assert.match(html, /data-ai-output-engine="raster"/);
   assert.match(html, /data-ai-output-engine="asset"/);
-  assert.match(html, /data-ai-batch/);
+  assert.match(panel, /distributeSourcesToTaskTabs/);
   assert.match(html, /data-ai-tab-list/);
-  assert.match(panel, /const BATCH_CONCURRENCY = 5/);
+  assert.match(panel, /const BATCH_CONCURRENCY = 1/);
   assert.doesNotMatch(panel, /createStructureLockedLineart/);
-  assert.match(panel, /복잡 변환 완료 · 원본 구조 확인 필요/);
+  assert.match(panel, /복잡 변환 완료 · 직접 확인 필요/);
   assert.match(panel, /normalizeQualityMode\(currentRunInput\?\.qualityMode\) === AI_QUALITY_MODES\.COMPLEX/);
   assert.match(panel, /AI_OUTPUT_ENGINES\.RASTER/);
 });

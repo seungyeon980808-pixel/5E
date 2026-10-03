@@ -1,0 +1,13 @@
+<?xml version="1.0" standalone="no"?>
+<svg width="288" height="600" viewBox="0 0 288 600" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<title>Whitehead link</title>
+<defs><path id="Figur8" d="M-141.4214,141.4214A200,200 0 1,0 141.4214,141.4214
+L-141.4214-141.4214A200,200 0 1,1 141.4214,-141.4214Z"/></defs>
+<g transform="translate(144,300)scale(0.555)" stroke="#000000" stroke-width="60" fill="none">
+<circle r="200" stroke-width="88"/><circle r="200" stroke="#0000FF"/>
+<use xlink:href="#Figur8" stroke-width="88"/><use xlink:href="#Figur8" stroke="#FF0000"/>
+<path stroke-width="88" d="M173.2051,100A200,200 0 0,1 100,173.2051
+M-173.2051-100A200,200 0 0,1-100-173.2051M-30-30L30,30"/>
+<path stroke="#0000FF" d="M178.2013,90.7981A200,200 0 0,1 90.7981,178.2013
+M-178.2013-90.7981A200,200 0 0,1-90.7981-178.2013"/>
+<path stroke="#FF0000" d="M-37-37L37,37"/></g></svg>

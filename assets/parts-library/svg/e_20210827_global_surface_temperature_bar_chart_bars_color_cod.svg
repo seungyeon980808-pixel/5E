@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?><svg width="1000" height="750" xmlns="http://www.w3.org/2000/svg"><path d="M0,0 h1000 v750 h-1000 z" stroke="none" fill="#f8f8f8f8"/><path d="M150,60 h800 v595 h-800 z" stroke="#888888" stroke-width="1" fill="gray"/><path stroke="lightgray" stroke-width="0.50" d="M140,60 h810M140,178 h810M140,296 h810M140,414 h810M140,532 h810M140,650 h810M150,60 v605M250,60 v605M350,60 v605M450,60 v605M550,60 v605M650,60 v605M750,60 v605M850,60 v605M950,60 v605"/><text font-family="Liberation Sans,sans-serif" text-anchor="middle" fill="black" font-size="40px"><tspan x="550" y="40">Cambio de temperatura media global</tspan><tspan x="550" y="740" font-size="10px">Datos de temperatura de HadCRUT: julio anterior a junio del año indicado
+</tspan>
+<tspan x="80" y="72.25">1 °C</tspan><tspan x="80" y="190.25">0,75</tspan><tspan x="80" y="308.25">0,50</tspan><tspan x="80" y="426.25">0,25</tspan><tspan x="80" y="544.25">0 °C</tspan></text><text font-family="Liberation Sans,sans-serif" text-anchor="middle" fill="black" font-size="35px"><tspan x="155" y="698.75">1950</tspan> <tspan x="255" y="698.75">1960</tspan> <tspan x="355" y="698.75">1970</tspan> <tspan x="455" y="698.75">1980</tspan> <tspan x="555" y="698.75">1990</tspan> <tspan x="655" y="698.75">2000</tspan> <tspan x="755" y="698.75">2010</tspan> <tspan x="855" y="698.75">2020</tspan> </text>
+<g id="BARS" stroke="black" stroke-width="1"><path fill="#fcbba1" d="M170,532 v-33.748 h10.01 v33.748 z"/>
+<path fill="#fee0d2" d="M180,532 v-34.259 h10.01 v34.259 z"/>
+<path fill="#fee0d2" d="M190,532 v24.819 h10.01 v-24.819 z"/>
+<path fill="#c6dbef" d="M200,532 v67.181 h10.01 v-67.181 z"/>
+ <circle cx="205" cy="594.181" r="3" fill="white"/><path fill="#6baed6" d="M210,532 v115.915 h10.01 v-115.915 z"/>
+ <circle cx="215" cy="642.915" r="3" fill="white"/><path fill="#ffffff" d="M220,532 v73.239 h10.01 v-73.239 z"/>
+<path fill="#fb6a4a" d="M230,532 v-32.45 h10.01 v32.45 z"/>
+<path fill="#fee0d2" d="M240,532 v-13.531 h10.01 v13.531 z"/> <path fill="#ffffff" d="M250,532 v27.533 h10.01 v-27.533 z"/>
+<path fill="#ffffff" d="M260,532 v-24.701 h10.01 v24.701 z"/>
+<path fill="#ffffff" d="M270,532 v0.157 h10.01 v-0.157 z"/>
+<path fill="#ffffff" d="M280,532 v5.192 h10.01 v-5.192 z"/>
+<path fill="#fcbba1" d="M290,532 v11.603 h10.01 v-11.603 z"/>
+<path fill="#c6dbef" d="M300,532 v107.183 h10.01 v-107.183 z"/>
+ <circle cx="305" cy="634.183" r="3" fill="white"/><path fill="#fb6a4a" d="M310,532 v41.497 h10.01 v-41.497 z"/>
+<path fill="#ffffff" d="M320,532 v35.046 h10.01 v-35.046 z"/>
+<path fill="#ffffff" d="M330,532 v50.032 h10.01 v-50.032 z"/>
+<path fill="#fcbba1" d="M340,532 v20.886 h10.01 v-20.886 z"/> <path fill="#fee0d2" d="M350,532 v-24.269 h10.01 v24.269 z"/>
+<path fill="#6baed6" d="M360,532 v72.098 h10.01 v-72.098 z"/>
+ <circle cx="365" cy="599.098" r="3" fill="white"/><path fill="#c6dbef" d="M370,532 v71.115 h10.01 v-71.115 z"/>
+ <circle cx="375" cy="598.115" r="3" fill="white"/><path fill="#fb6a4a" d="M380,532 v-45.233 h10.01 v45.233 z"/>
+<path fill="#08306b" d="M390,532 v70.721 h10.01 v-70.721 z"/>
+ <circle cx="395" cy="597.721" r="3" fill="white"/><path fill="#c6dbef" d="M400,532 v59.983 h10.01 v-59.983 z"/>
+ <circle cx="405" cy="586.983" r="3" fill="white"/><path fill="#08306b" d="M410,532 v119.849 h10.01 v-119.849 z"/>
+ <circle cx="415" cy="646.849" r="3" fill="white"/><path fill="#fee0d2" d="M420,532 v29.343 h10.01 v-29.343 z"/>
+<path fill="#fee0d2" d="M430,532 v3.501 h10.01 v-3.501 z"/>
+<path fill="#ffffff" d="M440,532 v25.37 h10.01 v-25.37 z"/> <path fill="#fee0d2" d="M450,532 v-64.546 h10.01 v64.546 z"/>
+<path fill="#ffffff" d="M460,532 v-54.634 h10.01 v54.634 z"/>
+<path fill="#ffffff" d="M470,532 v-18.447 h10.01 v18.447 z"/>
+<path fill="#cb181d" d="M480,532 v-64.585 h10.01 v64.585 z"/>
+<path fill="#c6dbef" d="M490,532 v-47.003 h10.01 v47.003 z"/>
+ <circle cx="495" cy="490" r="3" fill="white"/><path fill="#c6dbef" d="M500,532 v24.859 h10.01 v-24.859 z"/>
+ <circle cx="505" cy="551.86" r="3" fill="white"/><path fill="#ffffff" d="M510,532 v-13.963 h10.01 v13.963 z"/>
+<path fill="#fcbba1" d="M520,532 v-34.849 h10.01 v34.849 z"/>
+<path fill="#fb6a4a" d="M530,532 v-119.691 h10.01 v119.691 z"/>
+<path fill="#08306b" d="M540,532 v-54.083 h10.01 v54.083 z"/>  <circle cx="545" cy="482.92" r="3" fill="white"/><path fill="#ffffff" d="M550,532 v-113.831 h10.01 v113.831 z"/>
+<path fill="#ffffff" d="M560,532 v-131.098 h10.01 v131.098 z"/>
+<path fill="#fb6a4a" d="M570,532 v-104.745 h10.01 v104.745 z"/>
+<path fill="#ffffff" d="M580,532 v-45.784 h10.01 v45.784 z"/>
+<path fill="#ffffff" d="M590,532 v-62.776 h10.01 v62.776 z"/>
+<path fill="#fcbba1" d="M600,532 v-140.656 h10.01 v140.656 z"/>
+<path fill="#6baed6" d="M610,532 v-113.673 h10.01 v113.673 z"/>
+ <circle cx="615" cy="423.33" r="3" fill="white"/><path fill="#ffffff" d="M620,532 v-113.005 h10.01 v113.005 z"/>
+<path fill="#cb181d" d="M630,532 v-254.801 h10.01 v254.801 z"/>
+<path fill="#08306b" d="M640,532 v-190.885 h10.01 v190.885 z"/>  <circle cx="645" cy="346.12" r="3" fill="white"/><path fill="#08306b" d="M650,532 v-148.208 h10.01 v148.208 z"/>
+ <circle cx="655" cy="388.79" r="3" fill="white"/><path fill="#c6dbef" d="M660,532 v-155.485 h10.01 v155.485 z"/>
+ <circle cx="665" cy="381.52" r="3" fill="white"/><path fill="#ffffff" d="M670,532 v-245.165 h10.01 v245.165 z"/>
+<path fill="#fcbba1" d="M680,532 v-213.462 h10.01 v213.462 z"/>
+<path fill="#ffffff" d="M690,532 v-235.213 h10.01 v235.213 z"/>
+<path fill="#fee0d2" d="M700,532 v-228.33 h10.01 v228.33 z"/>
+<path fill="#c6dbef" d="M710,532 v-240.209 h10.01 v240.209 z"/>
+ <circle cx="715" cy="296.8" r="3" fill="white"/><path fill="#fee0d2" d="M720,532 v-263.179 h10.01 v263.179 z"/>
+<path fill="#08306b" d="M730,532 v-177.669 h10.01 v177.669 z"/>
+ <circle cx="735" cy="359.33" r="3" fill="white"/><path fill="#c6dbef" d="M740,532 v-219.48 h10.01 v219.48 z"/>  <circle cx="745" cy="317.52" r="3" fill="white"/><path fill="#fcbba1" d="M750,532 v-272.934 h10.01 v272.934 z"/>
+<path fill="#08306b" d="M760,532 v-214.839 h10.01 v214.839 z"/>
+ <circle cx="765" cy="322.16" r="3" fill="white"/><path fill="#6baed6" d="M770,532 v-209.843 h10.01 v209.843 z"/>
+ <circle cx="775" cy="327.16" r="3" fill="white"/><path fill="#ffffff" d="M780,532 v-229.785 h10.01 v229.785 z"/>
+<path fill="#ffffff" d="M790,532 v-261.881 h10.01 v261.881 z"/>
+<path fill="#fee0d2" d="M800,532 v-308.57 h10.01 v308.57 z"/>
+<path fill="#cb181d" d="M810,532 v-412.253 h10.01 v412.253 z"/>
+<path fill="#c6dbef" d="M820,532 v-335.435 h10.01 v335.435 z"/>
+ <circle cx="825" cy="201.57" r="3" fill="white"/><path fill="#c6dbef" d="M830,532 v-280.486 h10.01 v280.486 z"/>
+ <circle cx="835" cy="256.514" r="3" fill="white"/><path fill="#fee0d2" d="M840,532 v-316.869 h10.01 v316.869 z"/> <path fill="#ffffff" d="M850,532 v-379.921 h10.01 v379.921 z"/>
+<path fill="#6baed6" d="M860,532 v-298.776 h10.01 v298.776 z"/>  <circle cx="865" cy="238.224" r="3" fill="white"/></g>  <g id="LEGEND" transform="translate(-5,0)" stroke="black" stroke-width="1">
+<path fill="#cb181d" d="M170,70 h40 v40 h-40 z"/> 
+<path fill="#fb6a4a" d="M170,110 h40 v40 h-40 z"/> 
+<path fill="#fcbba1" d="M170,150 h40 v40 h-40 z"/> 
+<path fill="#fee0d2" d="M170,190 h40 v40 h-40 z"/> 
+
+<path fill="white" d="M170,230 h40 v40 h-40 z"/> 
+
+<path fill="#c6dbef" d="M170,270 h40 v40 h-40 z"/> 
+ <circle cx="190" cy="290" r="10" fill="white"/><path fill="#6baed6" d="M170,310 h40 v40 h-40 z"/> 
+ <circle cx="190" cy="330" r="10" fill="white"/><path fill="#08306b" d="M170,350 h40 v40 h-40 z"/>
+ <circle cx="190" cy="370" r="10" fill="white"/><text font-size="40px" fill="white" font-family="Liberation Sans,sans-serif" text-anchor="start" stroke="none"><tspan x="220" y="105">▲ Años El Niño muy fuertes</tspan>
+<tspan x="220" y="265">► Neutral</tspan>
+<tspan x="220" y="385">▼ La Niña fuerte</tspan>
+</text>
+  </g></svg>

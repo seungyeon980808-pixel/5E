@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   version="1.0"
+   width="93.754608"
+   height="60.315029"
+   id="svg2"
+   inkscape:version="0.48.4 r9939"
+   sodipodi:docname="symbolAnsi67 svg.svg">
+  <metadata
+     id="metadata20">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+        <dc:title />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="640"
+     inkscape:window-height="480"
+     id="namedview18"
+     showgrid="false"
+     inkscape:zoom="0.70757936"
+     inkscape:cx="-123.85899"
+     inkscape:cy="159.33113"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="svg2"
+     fit-margin-top="0"
+     fit-margin-left="0"
+     fit-margin-right="0"
+     fit-margin-bottom="0" />
+  <defs
+     id="defs4" />
+  <g
+     id="g6"
+     transform="translate(-342.99482,-265.78184)">
+    <path
+       style="fill:none;stroke:#000000;stroke-width:1.55663776px;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-opacity:1;stroke-dasharray:none"
+       d="m 343.77314,266.56016 92.19797,0 0,58.75839 -92.19797,0 z"
+       id="path8"
+       inkscape:connector-curvature="0" />
+    <text
+       xml:space="preserve"
+       x="376.00928"
+       y="314.04074"
+       style="font-size:22.5056076px;font-style:normal;font-weight:normal;text-align:start;text-anchor:start;fill:#000000;font-family:Arial"
+       id="text10">I</text>
+    <text
+       xml:space="preserve"
+       x="382.31085"
+       y="319.59213"
+       style="font-size:15.00373745px;font-style:normal;font-weight:normal;text-align:start;text-anchor:start;fill:#000000;font-family:Arial"
+       id="text12">0</text>
+    <text
+       xml:space="preserve"
+       x="390.71295"
+       y="314.04074"
+       style="font-size:22.5056076px;font-style:normal;font-weight:normal;text-align:start;text-anchor:start;fill:#000000;font-family:Arial"
+       id="text14">&gt;</text>
+    <path
+       style="fill:#000000;fill-opacity:1;fill-rule:nonzero;stroke:#000000;stroke-width:0.01875467px;stroke-linecap:butt;stroke-linejoin:round;stroke-opacity:1;stroke-dasharray:none"
+       d="m 365.02219,280.15729 36.25278,0 0,1.25657 -36.25278,0 0,-1.25657 z m 35.01497,-3.13203 7.50187,3.75094 -7.50187,3.75093 0,-7.50187 z"
+       id="path16"
+       inkscape:connector-curvature="0" />
+  </g>
+</svg>

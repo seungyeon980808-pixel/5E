@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns="http://www.w3.org/2000/svg" version="1.1" width="560" height="320" viewBox="0 0 560 320">
+<desc>
+	Weather fronts:
+	1. cold front
+	2. warm front
+	3. stationary front
+	4. occluded front
+	5. surface trough
+	6. squall line
+	7. dry line
+	8. tropical wave
+	9. trowal
+</desc>
+<g transform="translate(40,30)">
+<g id="cold_front" transform="translate(0,0)">
+	<path style="fill:#3333cc; stroke:none; stroke-width:0;" d="M0,0 h1 v12 l17,12 l-17,12 v34 l17,12 l-17,12 v34 l17,12 l-17,12 v34 l17,12 l-17,12 v12 h-2 v-222 z"/>
+</g>
+<g id="warm_front" transform="translate(60,0)">
+	<path style="fill:red; stroke:none; stroke-width:0;" d="M0,0 h1 v12 a12,12 0 0,1 0,24 v34 a12,12 0 0,1 0,24 v34 a12,12 0 0,1 0,24 v34 a12,12 0 0,1 0,24 v12 h-2 v-222 z"/>
+</g>
+<g id="stationary_front" transform="translate(120,0)">
+	<path style="fill:#3333cc; stroke:none; stroke-width:0;" d="M0,0 h1 v12 l17,12 l-17,12 v17 h-2 v-53 h1 z m0,111 h1 v17 l17,12 l-17,12 v17 h-2 v-58 h1 z"/>
+	<path style="fill:red; stroke:none; stroke-width:0;" d="M0,53 h1 v58 h-2 v-17 a12,12 0 0,1 0,-24 v-17 h1 z m0,116 h1 v53 h-2 v-12 a12,12 0 0,1 0,-24 v-17 h-2 z"/>
+</g>
+<g id="occluded_front" transform="translate(180,0)">
+	<path style="fill:darkviolet; stroke:none; stroke-width:0;" d="M0,0 h1 v12 l17,12 l-17,12 v34 a12,12 0 0,1 0,24 v34 l17,12 l-17,12 v34 a12,12 0 0,1 0,24 v12 h-2 v-222 z"/>
+</g>
+<g id="surface_trough" transform="translate(240,0)">
+	<path style="fill:none; stroke:#cc6600; stroke-width:2;" d="M0,0 v35 m0,11.75 v35 m0,11.75 v35 m0,11.75 v35 m0,11.75 v35"/>
+</g>
+<g id="squall_line" style="fill:red; stroke:red; stroke-width:2.06;" transform="translate(300,0) scale(0.97)">
+	<path d="M0,0 v35 m0,30 v35 m0,30 v35 m0,30 v35 m0,30"/>
+	<circle r="2" cy="45"/>
+	<circle r="2" cy="55"/>
+	<circle r="2" cy="110"/>
+	<circle r="2" cy="120"/>
+	<circle r="2" cy="175"/>
+	<circle r="2" cy="185"/>
+</g>
+<g id="dry_line" transform="translate(360,0)">
+	<path style="fill:none; stroke:#cc6600; stroke-width:2;" d="M0,0 v2.25 a12.5,12.5 0 0,1 0,25 v2.5 a12.5,12.5 0 0,1 0,25 v2.5 a12.5,12.5 0 0,1 0,25 v2.5 a12.5,12.5 0 0,1 0,25 v2.5 a12.5,12.5 0 0,1 0,25 v2.5 a12.5,12.5 0 0,1 0,25 v2.5 a12.5,12.5 0 0,1 0,25 v2.5 a12.5,12.5 0 0,1 0,25 v2.25 z"/>
+</g>
+<g id="tropical_wave" transform="translate(420,0)">
+	<path style="fill:none; stroke:#cc6600; stroke-width:2;" d="M0,0 v222"/>
+</g>
+<g id="trowal" transform="translate(480,0)">
+	<path style="fill:none; stroke:#3333cc; stroke-width:2;" d="M0,0 v35 m0,11.75 v35 m0,11.75 v35 m0,11.75 v35 m0,11.75 v35"/>
+	<path style="fill:none; stroke:red; stroke-width:2;" d="M0,0 l5,20 m-5,26.75 l5,20 m-5,26.75 l5,20 m-5,26.75 l5,20 m-5,26.75 l5,20 m-5,26.75 "/>
+</g>
+<g text-anchor="middle" font-family="sans-serif" font-size="20" font-weight="bold" transform="translate(1,260)">
+	<text x="0">1</text>
+	<text x="60">2</text>
+	<text x="120">3</text>
+	<text x="180">4</text>
+	<text x="240">5</text>
+	<text x="300">6</text>
+	<text x="360">7</text>
+	<text x="420">8</text>
+	<text x="480">9</text>
+</g>
+</g>
+</svg>

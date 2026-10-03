@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.0//EN" "http://www.w3.org/TR/2001/PR-SVG-20010719/DTD/svg10.dtd">
+<svg width="21cm" height="8cm" viewBox="38 63 418 148" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <g>
+    <rect style="fill: #ffffff" x="110" y="90" width="80" height="120"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x="110" y="90" width="80" height="120"/>
+  </g>
+  <g>
+    <rect style="fill: #ffffff" x="130" y="100" width="40" height="12.5" rx="2.35099e-37" ry="2.35099e-37"/>
+    <rect style="fill: none; fill-opacity:0; stroke-width: 1; stroke-linejoin: round; stroke-dasharray: 4; stroke: #000000" x="130" y="100" width="40" height="12.5" rx="2.35099e-37" ry="2.35099e-37"/>
+  </g>
+  <text style="fill: #000000;text-anchor:middle;font-size:12.8;font-family:sanserif;font-style:normal;font-weight:normal" x="105.5" y="187.425">
+    <tspan x="105.5" y="187.425">*</tspan>
+  </text>
+  <text style="fill: #000000;text-anchor:middle;font-size:12.8;font-family:sanserif;font-style:normal;font-weight:normal" x="105.5" y="137.425">
+    <tspan x="105.5" y="137.425">*</tspan>
+  </text>
+  <text style="fill: #000000;text-anchor:middle;font-size:12.8;font-family:sanserif;font-style:normal;font-weight:normal" x="115.5" y="187.425">
+    <tspan x="115.5" y="187.425">*</tspan>
+  </text>
+  <text style="fill: #000000;text-anchor:middle;font-size:12.8;font-family:sanserif;font-style:normal;font-weight:normal" x="115.5" y="137.425">
+    <tspan x="115.5" y="137.425">*</tspan>
+  </text>
+  <text style="fill: #000000;text-anchor:start;font-size:12.8;font-family:sanserif;font-style:normal;font-weight:normal" x="38" y="160">
+    <tspan x="38" y="160">Inputs</tspan>
+  </text>
+  <text style="fill: #000000;text-anchor:start;font-size:12.8;font-family:sanserif;font-style:normal;font-weight:normal" x="220" y="160">
+    <tspan x="220" y="160">Outputs</tspan>
+  </text>
+  <text style="fill: #000000;text-anchor:start;font-size:12.8;font-family:sanserif;font-style:normal;font-weight:normal" x="240" y="75">
+    <tspan x="240" y="75">Identification label</tspan>
+  </text>
+  <line style="fill: none; fill-opacity:0; stroke-width: 2; stroke-linejoin: round; stroke: #000000" x1="80" y1="130" x2="100" y2="130"/>
+  <line style="fill: none; fill-opacity:0; stroke-width: 2; stroke-linejoin: round; stroke: #000000" x1="80" y1="180" x2="100" y2="180"/>
+  <text style="fill: #000000;text-anchor:middle;font-size:12.8;font-family:sanserif;font-style:normal;font-weight:normal" x="184.5" y="186.925">
+    <tspan x="184.5" y="186.925">*</tspan>
+  </text>
+  <text style="fill: #000000;text-anchor:middle;font-size:12.8;font-family:sanserif;font-style:normal;font-weight:normal" x="184.5" y="136.925">
+    <tspan x="184.5" y="136.925">*</tspan>
+  </text>
+  <text style="fill: #000000;text-anchor:middle;font-size:12.8;font-family:sanserif;font-style:normal;font-weight:normal" x="194.5" y="186.925">
+    <tspan x="194.5" y="186.925">*</tspan>
+  </text>
+  <text style="fill: #000000;text-anchor:middle;font-size:12.8;font-family:sanserif;font-style:normal;font-weight:normal" x="194.5" y="136.925">
+    <tspan x="194.5" y="136.925">*</tspan>
+  </text>
+  <g>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="197.662,189.162 214.5,206 454.5,206 "/>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="202.445,189.702 196.081,187.581 198.202,193.945 "/>
+  </g>
+  <g>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="173.162,96.8377 190,80 360,80 "/>
+    <polyline style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" points="173.702,92.0549 171.581,98.4189 177.945,96.2975 "/>
+  </g>
+  <text style="fill: #000000;text-anchor:start;font-size:12.8;font-family:sanserif;font-style:normal;font-weight:normal" x="230.5" y="202">
+    <tspan x="230.5" y="202">Symbols associated with terminals</tspan>
+  </text>
+  <line style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x1="200" y1="130" x2="220" y2="130"/>
+  <line style="fill: none; fill-opacity:0; stroke-width: 2; stroke: #000000" x1="200" y1="180" x2="220" y2="180"/>
+  <line style="fill: none; fill-opacity:0; stroke-width: 2; stroke-dasharray: 4; stroke: #000000" x1="90" y1="170" x2="90" y2="140"/>
+  <line style="fill: none; fill-opacity:0; stroke-width: 2; stroke-dasharray: 4; stroke: #000000" x1="210" y1="170" x2="210" y2="140"/>
+</svg>

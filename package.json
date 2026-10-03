@@ -21,29 +21,76 @@
     "test:image": "node desktop/run-smoke.cjs --image",
     "audit:exam-motifs": "node scripts/engine-v2/audit-exam-motifs.mjs --check",
     "package:win": "electron-builder --win nsis --x64 --publish never",
-    "package:mac": "electron-builder --mac dmg zip --x64 --arm64 --publish never"
+    "package:mac": "electron-builder --mac dmg zip --x64 --arm64 --publish never",
+    "test:web-artifact": "node tests/test-web-publication-browser.cjs"
   },
   "devDependencies": {
     "electron": "44.4.5",
     "electron-builder": "26.15.3",
+    "js-yaml": "4.3.2",
     "playwright": "1.62.1"
   },
   "build": {
     "appId": "com.5e.editor",
     "productName": "5E",
     "artifactName": "5E-${version}-${os}-${arch}.${ext}",
-    "directories": { "output": "release", "buildResources": "build" },
-    "files": ["index.html", "manifest.json", "LICENSE", "css/**/*", "js/**/*", "assets/**/*", "!assets/exam-library/**", "fonts/**/*", "preview/**/*", "desktop/**/*", "tests/fixtures/rights-clear-smoke.png", "docs/EXAM_SCIENTIFIC_DIAGRAM_STYLE.md", "docs/GPT_KNOWLEDGE_EVALUATION_SCIENCE_LINEART.md", "docs/IMAGE_COMPLEXITY_MODE_SPEC.md"],
-    "win": { "icon": "assets/icon.ico", "artifactName": "5E-${version}-windows-${arch}.${ext}", "target": [{ "target": "nsis", "arch": ["x64"] }] },
+    "directories": {
+      "output": "release",
+      "buildResources": "build"
+    },
+    "files": [
+      "index.html",
+      "manifest.json",
+      "LICENSE",
+      "css/**/*",
+      "js/**/*",
+      "assets/**/*",
+      "!assets/exam-library/**",
+      "fonts/**/*",
+      "desktop/**/*",
+      "tests/fixtures/rights-clear-smoke.png",
+      "docs/EXAM_SCIENTIFIC_DIAGRAM_STYLE.md",
+      "docs/GPT_KNOWLEDGE_EVALUATION_SCIENCE_LINEART.md",
+      "docs/IMAGE_COMPLEXITY_MODE_SPEC.md",
+      "vendor/**/*"
+    ],
+    "win": {
+      "icon": "assets/icon.ico",
+      "artifactName": "5E-${version}-windows-${arch}.${ext}",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
     "mac": {
       "icon": "assets/icon.icns",
       "category": "public.app-category.education",
       "artifactName": "5E-${version}-macos-${arch}.${ext}",
       "target": [
-        { "target": "dmg", "arch": ["x64", "arm64"] },
-        { "target": "zip", "arch": ["x64", "arm64"] }
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
       ]
     },
-    "nsis": { "oneClick": false, "allowToChangeInstallationDirectory": true, "createDesktopShortcut": true }
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true
+    }
   }
 }

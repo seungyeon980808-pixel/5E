@@ -1,0 +1,83 @@
+name: Validated Web Release
+
+# Publication is a separate, explicit operation. Merely merging this workflow
+# does not change the current branch-based Pages deployment.
+on:
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: Publish the tested artifact (only after Pages/environment approval is configured)
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: validated-web-release
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.21.0
+          cache: npm
+      - run: npm ci --no-audit
+      - run: npx playwright install --with-deps chromium webkit
+      - run: npm run verify:release-identity -- --sha "${{ github.sha }}"
+      - id: preserved
+        name: Resolve the approved immutable preview snapshot
+        run: |
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const sha = require('./release-channels.json').webPublication.preservePreviewSourceSha;
+          if (!/^[a-f0-9]{40}$/.test(sha)) throw new Error('Full preservation SHA required');
+          fs.appendFileSync(process.env.GITHUB_OUTPUT, `sha=${sha}\n`);
+          NODE
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.preserved.outputs.sha }}
+          path: _work/preserved-web
+      - name: Stage the exact candidate while preserving published preview/mobile routes
+        run: node scripts/web-release.cjs --site _work/web-release/site --receipt _work/web-release/receipt.json --preserved-root _work/preserved-web
+      - run: npm run test:unit
+      - name: Run the complete source regression suite
+        env:
+          EVIDENCE_DIR: ${{ github.workspace }}/_work/web-release/evidence/source
+        run: npm run test:browser
+      - name: Test the files that will actually be published
+        env:
+          FIVE_E_SITE_ROOT: ${{ github.workspace }}/_work/web-release/site
+          EVIDENCE_DIR: ${{ github.workspace }}/_work/web-release/evidence/artifact
+        run: npm run test:web-artifact
+      - name: Reject any file changes since staging and testing
+        run: node scripts/web-release.cjs --verify --site _work/web-release/site --receipt _work/web-release/receipt.json
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _work/web-release/site
+      - uses: actions/upload-artifact@v4
+        with:
+          name: web-validation-${{ github.sha }}
+          path: |
+            _work/web-release/receipt.json
+            _work/web-release/evidence
+
+  publish:
+    if: ${{ inputs.publish && github.ref == 'refs/heads/main' }}
+    needs: validate
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      # Deploy the artifact of this successful validation job; never check out,
+      # rebuild, or copy another branch after the tests have passed.
+      - id: deployment
+        uses: actions/deploy-pages@v4

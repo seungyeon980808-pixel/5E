@@ -1,0 +1,297 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   version="1.1"
+   x="0"
+   y="0"
+   width="800"
+   height="634"
+   viewBox="0 0 800 634"
+   id="svg15737"
+   sodipodi:docname="P-trap_ml.svg"
+   inkscape:version="0.92.1 r15371">
+  <metadata
+     id="metadata15743">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <defs
+     id="defs15741" />
+  <sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1362"
+     inkscape:window-height="743"
+     id="namedview15739"
+     showgrid="false"
+     showguides="false"
+     inkscape:zoom="0.74447949"
+     inkscape:cx="298.29469"
+     inkscape:cy="273.03803"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:window-maximized="0"
+     inkscape:current-layer="svg15737" />
+  <style
+     type="text/css"
+     id="style15635">
+	.st0{fill:#00FFFF;fill-opacity:0.4;}
+	.st1{fill:none;stroke:#0071BC;stroke-width:2;}
+	.st2{fill:none;stroke:#000;stroke-width:4;}
+	.st3{fill:none;stroke:#000;stroke-width:2;}
+	.st4{fill:none;stroke:#000;stroke-width:3;}
+	.st5{fill:#FF0000;fill-opacity:0.2;stroke:#000;stroke-width:3;stroke-linejoin:round;}
+	.st6{fill:none;stroke:#000;stroke-width:3;stroke-linejoin:round;}
+	.st7{fill:none;stroke:#000;stroke-width:3;stroke-linejoin:round;}
+	.st8{font-family:Liberation Sans,Arial;}
+	.st9{font-size:33px;}
+</style>
+  <path
+     style="fill:#00ffff;fill-opacity:0.4"
+     inkscape:connector-curvature="0"
+     id="path15637"
+     d="m 207,259 v 185 c 0,7.8 -9.2,14.1 -20.5,14.1 -11.3,0 -20.5,-6.3 -20.5,-14.1 V 244.2 H 31 V 444 c 0,76.4 69.5,138.3 155.5,138.3 86,0 155.5,-61.9 155.5,-138.3 V 259 c 0,-8.2 5.3,-14.8 11.8,-14.8 H 207.7 c -0.5,4.9 -0.7,9.8 -0.7,14.8 z"
+     class="st0" />
+  <line
+     style="fill:none;stroke:#0071bc;stroke-width:2"
+     id="line15639"
+     y2="244.2"
+     x2="166"
+     y1="244.2"
+     x1="31"
+     class="st1" />
+  <line
+     style="fill:none;stroke:#0071bc;stroke-width:2"
+     id="line15641"
+     y2="244.2"
+     x2="352.20001"
+     y1="244.2"
+     x1="207"
+     class="st1" />
+  <path
+     style="fill:none;stroke:#000000;stroke-width:4"
+     inkscape:connector-curvature="0"
+     id="path15643"
+     d="M 800,109.2 H 353.8 C 272.7,109.2 207,176.2 207,259 v 185 c 0,7.8 -9.2,14.1 -20.5,14.1 -11.3,0 -20.5,-6.3 -20.5,-14.1 V 128.8 c 0,-5.2 2,-10.1 5.6,-13.8 l 1.3,-1.3 H 24.1 l 0.8,0.8 c 3.9,3.8 6,8.9 6,14.3 V 444 c 0,76.4 69.5,138.3 155.5,138.3 86,0 155.6,-61.9 155.6,-138.3 V 259 c 0,-8.2 5.3,-14.8 11.8,-14.8 h 399.9"
+     class="st2" />
+  <path
+     style="fill:none;stroke:#000000;stroke-width:2"
+     inkscape:connector-curvature="0"
+     id="path15645"
+     d="m 186.5,582.3 c -9.1,0 -18.1,-0.7 -26.8,-2 V 599 c 0,2.5 2.1,4.6 4.6,4.6 h 44.3 c 2.5,0 4.6,-2.1 4.6,-4.6 v -18.7 c -8.6,1.3 -17.6,2 -26.7,2 z"
+     class="st3" />
+  <path
+     style="fill:none;stroke:#000000;stroke-width:2"
+     inkscape:connector-curvature="0"
+     id="path15647"
+     d="m 201.5,624.1 h -30.1 c -1.9,0 -3.5,-1.6 -3.5,-3.5 v -17 h 37 v 17 c 0.1,1.9 -1.4,3.5 -3.4,3.5 z"
+     class="st3" />
+  <line
+     style="fill:none;stroke:#000000;stroke-width:3"
+     id="line15649"
+     y2="458.10001"
+     x2="405.5"
+     y1="458.10001"
+     x1="186.5"
+     class="st4" />
+  <g
+     id="g15663">
+    <g
+       id="g15661">
+      <line
+         style="fill:none;stroke:#000000;stroke-width:2"
+         id="line15651"
+         y2="448.89999"
+         x2="367"
+         y1="253.39999"
+         x1="367"
+         class="st3" />
+      <g
+         id="g15655">
+        <polygon
+           id="polygon15653"
+           points="367,254.1 372.3,257.2 367,244.2 361.7,257.2 " />
+      </g>
+      <g
+         id="g15659">
+        <polygon
+           id="polygon15657"
+           points="367,448.2 372.3,445.1 367,458.1 361.7,445.1 " />
+      </g>
+    </g>
+  </g>
+  <polygon
+     style="fill:#ff0000;fill-opacity:0.2;stroke:#000000;stroke-width:3;stroke-linejoin:round"
+     id="polygon15665"
+     points="254,211.4 292,211.4 273,244.2 "
+     class="st5" />
+  <polygon
+     style="fill:#ff0000;fill-opacity:0.2;stroke:#000000;stroke-width:3;stroke-linejoin:round"
+     id="polygon15667"
+     points="79.5,211.4 117.5,211.4 98.5,244.2 "
+     class="st5" />
+  <g
+     id="g15677"
+     transform="rotate(-30.408328,310.54476,237.61422)">
+    <g
+       id="g15675">
+      <line
+         style="fill:none;stroke:#000000;stroke-width:3;stroke-linejoin:round"
+         id="line15669"
+         y2="196.2"
+         x2="371"
+         y1="236.2"
+         x1="321.79999"
+         class="st6" />
+      <g
+         id="g15673">
+        <polygon
+           id="polygon15671"
+           points="312,244.2 330.5,238.6 322.6,235.6 321.2,227.3 " />
+      </g>
+    </g>
+  </g>
+  <g
+     id="g15687">
+    <g
+       id="g15685">
+      <line
+         style="fill:none;stroke:#000000;stroke-width:3;stroke-linejoin:round"
+         id="line15679"
+         y2="43.099998"
+         x2="98.5"
+         y1="70.099998"
+         x1="98.5"
+         class="st6" />
+      <g
+         id="g15683">
+        <polygon
+           id="polygon15681"
+           points="98.5,69.1 90.6,64.5 98.5,83.9 106.4,64.5 " />
+      </g>
+    </g>
+  </g>
+  <g
+     id="g15697">
+    <g
+       id="g15695">
+      <line
+         style="fill:none;stroke:#000000;stroke-width:3;stroke-linejoin:round"
+         id="line15689"
+         y2="74"
+         x2="268.5"
+         y1="108.9"
+         x1="286.20001"
+         class="st6" />
+      <g
+         id="g15693">
+        <polygon
+           id="polygon15691"
+           points="285.8,108.1 277.3,107.6 292,120.3 290.4,101 " />
+      </g>
+    </g>
+  </g>
+  <g
+     id="g15707">
+    <g
+       id="g15705">
+      <line
+         style="fill:none;stroke:#000000;stroke-width:3;stroke-linejoin:round"
+         id="line15699"
+         y2="594.20001"
+         x2="371"
+         y1="594.20001"
+         x1="198.10001"
+         class="st6" />
+      <g
+         id="g15703">
+        <polygon
+           id="polygon15701"
+           points="199,594.2 203.3,586.9 185.4,594.2 203.3,601.5 " />
+      </g>
+    </g>
+  </g>
+  <g
+     id="g15717">
+    <g
+       id="g15715">
+      <polyline
+         style="fill:none;stroke:#000000;stroke-width:3;stroke-linejoin:round"
+         id="polyline15709"
+         points="194.1,468.3 218.5,500.8 371,500.8    "
+         class="st6" />
+      <g
+         id="g15713">
+        <polygon
+           id="polygon15711"
+           points="194.7,469 203.1,468 186.5,458.1 191.4,476.8 " />
+      </g>
+    </g>
+  </g>
+  <path
+     style="fill:none;stroke:#000000;stroke-width:3;stroke-linejoin:round"
+     inkscape:connector-curvature="0"
+     id="path15719"
+     d="M 172.9,113.6 H 24.1 c -2.5,0 -4.6,-2.1 -4.6,-4.6 V 89.6 c 0,-2.5 2.1,-4.6 4.6,-4.6 h 148.7 c 2.5,0 4.6,2.1 4.6,4.6 V 109 c 0.1,2.5 -2,4.6 -4.5,4.6 z"
+     class="st7" />
+  <text
+     y="32"
+     x="11"
+     style="font-size:33px;font-family:'Liberation Sans', Arial"
+     id="text15722"
+     class="st8 st9">പ്രവേശനമാര്‍ഗ്ഗം</text>
+  <text
+     style="font-size:33px;font-family:'Liberation Sans', Arial"
+     id="text15724"
+     class="st8 st9"
+     x="215"
+     y="65">ക്രൗൻ</text>
+  <text
+     style="font-size:33px;font-family:'Liberation Sans', Arial"
+     id="text15726"
+     class="st8 st9"
+     x="311.83899"
+     y="164.16525">നിറഞ്ഞൊഴുകല്‍</text>
+  <text
+     style="font-size:33px;font-family:'Liberation Sans', Arial"
+     id="text15728"
+     class="st8 st9"
+     x="503.49997"
+     y="215.20763">പുറത്തേക്കുള്ളമാര്‍ഗം</text>
+  <text
+     style="font-size:33px;font-family:'Liberation Sans', Arial"
+     id="text15730"
+     class="st8 st9"
+     x="382"
+     y="360">സീൽ</text>
+  <text
+     style="font-size:33px;font-family:'Liberation Sans', Arial"
+     id="text15732"
+     class="st8 st9"
+     x="382"
+     y="510">ക്ലിപ്</text>
+  <text
+     style="font-size:33px;font-family:'Liberation Sans', Arial"
+     id="text15734"
+     class="st8 st9"
+     x="377"
+     y="603">ക്ലീൻഔട്ട്</text>
+</svg>

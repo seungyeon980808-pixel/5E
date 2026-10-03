@@ -1,0 +1,9 @@
+<svg width="314mm" height="184mm" version="1.1" viewBox="0 0 314 184" xmlns="http://www.w3.org/2000/svg">
+ <rect width="314" height="184" fill="#fff"/>
+ <g fill="none"><path d="m31 12v150l250 0v-156" stroke="#000"/><path d="m281 135h2m-2-28h2m-2-27h2m-2-28h2m-2-27h2m-252 131h2m-2-6h2m-2-6h2m-2-6h2m-2-6h3m-3-6h2m-2-6h2m-2-6h2m-2-6h2m-2-6h3m-3-6h2m-2-6h2m-2-6h2m-2-6h2m-2-6h3m-3-6h2m-2-6h2m-2-6h2m-2-6h2m-2-6h3m-3-6h2m-2-6h2m-2-6h2m-2-6h2m-2-6h3m237 148v2m-10-2v2m-10-2v2m-10-2v2m-10-4v4m-10-2v2m-10-2v2m-10-2v2m-10-2v2m-10-4v4m-10-2v2m-10-2v2m-10-2v2m-10-2v2m-10-4v4m-10-2v2m-10-2v2m-10-2v2m-10-2v2m-10-4v4m-10-2v2m-10-2v2m-10-2v2m-10-2v2" stroke="#000" stroke-width=".5"/>
+ <g stroke-width="2"><path d="m31 12h19c20 1 23 20 34 54 12 42 24 63 43 75 23 14 60 17 84 18 15 1 47 1 70 2" stroke="#080"/><path d="m31 52c14 0 21-10 31-30 6-13 13-17 19 3 17 56 18 114 112 126 15 3 57 6 88 7" stroke="#f00"/></g></g>
+ <g font-family="Times" font-size="13px">
+ <g text-anchor="middle"><text x="81" y="173">1</text><text x="131" y="173">2</text><text x="181" y="173">3</text><text x="231" y="173">4</text><text x="281" y="173">5</text><text x="31" y="173">0</text></g>
+ <g fill="#080" text-anchor="end"><text x="29" y="136">0,2</text><text x="29" y="106">0,4</text><text x="29" y="76">0,6</text><text x="29" y="45">0,8</text><text x="29" y="16">1,0</text><text x="29" y="165">0,0</text></g>
+ <g fill="#f00"><text x="285" y="166">0,0</text><text x="285" y="138">0,5</text><text x="285" y="110">1,0</text><text x="285" y="83">1,5</text><text x="285" y="55">2,0</text><text x="285" y="28">2,5</text><text transform="rotate(-90)" x="-104" y="312">Delay</text></g>
+ <text transform="rotate(-90)" x="-101" y="10" fill="#080">Gain</text><text x="134" y="182">Frequency</text></g></svg>

@@ -1,0 +1,245 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE svg PUBLIC '-//W3C//DTD SVG 1.1//EN' "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg width='930px' height='830px' xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink">
+<!-- to make it bigger, increase the scale below (e.g., scale(1.2,1.2)) and increase the width and height above to match -->
+<g transform="scale(1,1)">
+<rect width="930" height="830" x="0" y="0" fill="white" stroke="white"/>
+
+<g transform="translate(10,0)">
+
+<!-- giants chart -->
+<g transform="translate(50,720) scale(1.5,-0.01)">
+  <!-- background size grid -->
+  <g stroke="#aaa" stroke-width="100">
+    <!-- y is radius/10 -->
+    <line x1="0" x2="65" y1="2000"  y2="2000"  />
+    <line x1="0" x2="65" y1="4000"  y2="4000"  />
+    <line x1="0" x2="65" y1="6000"  y2="6000"  />
+    <line x1="0" x2="65" y1="8000"  y2="8000"  />
+    <line x1="0" x2="65" y1="68000" y2="68000" />
+    <line x1="0" x2="65" y1="70000" y2="70000" />
+  </g>
+  <g transform="scale(1,-100) translate(-3,3)">
+    <text x="0" y="0" font-family="times-roman" font-size="10" text-anchor="end" stroke-width="1" fill="black" transform="scale(0.667,1)">
+      <tspan x="0" dy="-20">   40,000</tspan>
+      <tspan x="0" dy="-20">   80,000</tspan>
+      <tspan x="0" dy="-20">  120,000</tspan>
+      <tspan x="0" dy="-20">  160,000</tspan>
+      <tspan x="0" y="-680">1,360,000</tspan>
+      <tspan x="0" dy="-20">1,400,000</tspan>
+    </text>
+  </g>
+  <!-- the objects -->
+  <g stroke-width="8">
+    <!-- x1=x2 = 10*rank -->
+    <!-- y2 = radius/10 -->
+    <line x1="10"  x2="10"  y1="0" y2="69570" stroke="#c72"/><!--sun-->
+    <line x1="20"  x2="20"  y1="0" y2="6989"  stroke="#050"/><!--jupiter-->
+    <line x1="30"  x2="30"  y1="0" y2="5823"  stroke="#050"/><!--saturn-->
+    <line x1="40"  x2="40"  y1="0" y2="2536"  stroke="#050"/><!--uranus-->
+    <line x1="50"  x2="50"  y1="0" y2="2462"  stroke="#050"/><!--neptune-->
+    <line x1="60"  x2="60"  y1="0" y2="637"   stroke="#700"/><!--earth-->
+  </g>
+  <!-- names -->
+  <g text-anchor="end" font-family="verdana" font-size="12" transform="scale(0.667,-100) rotate(-90,0,0) translate(-3,2)">
+    <text x="0" y="0">
+      <tspan x="0" dy="15">Sun</tspan>
+      <tspan x="0" dy="15">Jupiter</tspan>
+      <tspan x="0" dy="15">Saturn</tspan>
+      <tspan x="0" dy="15">Uranus</tspan>
+      <tspan x="0" dy="15">Neptune</tspan>
+      <tspan x="0" dy="15">Earth</tspan>
+    </text>
+  </g>
+</g>
+
+<!-- regular chart -->
+<g transform="translate(100,720) scale(1.5,-1)">
+  <!-- background size grid -->
+  <g stroke="#aaa" stroke-width="1">
+    <!-- y is radius/10 -->
+    <line x1="54" x2="510" y1="50"  y2="50"  />
+    <line x1="54" x2="510" y1="100" y2="100" />
+    <line x1="54" x2="510" y1="150" y2="150" />
+    <line x1="54" x2="510" y1="200" y2="200" />
+    <line x1="54" x2="510" y1="250" y2="250" />
+    <line x1="54" x2="510" y1="300" y2="300" />
+    <line x1="54" x2="510" y1="350" y2="350" />
+    <line x1="54" x2="510" y1="400" y2="400" />
+    <line x1="54" x2="510" y1="450" y2="450" />
+    <line x1="54" x2="510" y1="500" y2="500" />
+    <line x1="54" x2="510" y1="550" y2="550" />
+    <line x1="54" x2="510" y1="600" y2="600" />
+    <line x1="54" x2="510" y1="650" y2="650" />
+  </g>
+  <g transform="translate(515,-3)">
+    <text x="0" y="0" text-anchor="start" font-size="10" stroke-width="1" fill="black" font-family="times-roman" transform="scale(0.667,-1)">
+      <tspan x="0" dy="-50" >1,000</tspan>
+      <tspan x="0" dy="-50" >2,000</tspan>
+      <tspan x="0" dy="-50" >3,000</tspan>
+      <tspan x="0" dy="-50" >4,000</tspan>
+      <tspan x="0" dy="-50" >5,000</tspan>
+      <tspan x="0" dy="-50" >6,000</tspan>
+      <tspan x="0" dy="-50" >7,000</tspan>
+      <tspan x="0" dy="-50" >8,000</tspan>
+      <tspan x="0" dy="-50" >9,000</tspan>
+      <tspan x="0" dy="-50">10,000</tspan>
+      <tspan x="0" dy="-50">11,000</tspan>
+      <tspan x="0" dy="-50">12,000</tspan>
+      <tspan x="0" dy="-50">13,000</tspan>
+    </text>
+  </g>
+  <!-- the objects -->
+  <g stroke-width="8">
+    <!-- x1=x2 = 10*rank -->
+    <!-- y2 = radius/10 -->
+    <line x1="60"  x2="60"  y1="0" y2="637" stroke="#700"/><!--earth-->
+    <line x1="70"  x2="70"  y1="0" y2="605" stroke="#700"/><!--venus-->
+    <line x1="80"  x2="80"  y1="0" y2="339" stroke="#700"/><!--mars-->
+    <line x1="90"  x2="90"  y1="0" y2="263" stroke="#0a0"/><!--ganymede-->
+    <line x1="100" x2="100" y1="0" y2="257" stroke="#0a0"/><!--titan-->
+    <line x1="110" x2="110" y1="0" y2="244" stroke="#700"/><!--mercury-->
+    <line x1="120" x2="120" y1="0" y2="241" stroke="#0a0"/><!--callisto-->
+    <line x1="130" x2="130" y1="0" y2="182" stroke="#0a0"/><!--io-->
+    <line x1="140" x2="140" y1="0" y2="174" stroke="#b00"/><!--moon-->
+    <line x1="150" x2="150" y1="0" y2="156" stroke="#0a0"/><!--europa-->
+    <line x1="160" x2="160" y1="0" y2="135" stroke="#0a0"/><!--triton-->
+    <line x1="170" x2="170" y1="0" y2="119" stroke="#88f"/><!--pluto-->
+    <line x1="180" x2="180" y1="0" y2="116" stroke="#88f"/><!--eris-->
+    <line x1="190" x2="190" y1="0" y2="79"  stroke="#0a0"/><!--titania-->
+    <line x1="200" x2="200" y1="0" y2="77"  stroke="#88f"/><!--haumea-->
+    <line x1="210" x2="210" y1="0" y2="76"  stroke="#0a0"/><!--rhea-->
+    <line x1="220" x2="220" y1="0" y2="76"  stroke="#0a0"/><!--oberon-->
+    <line x1="230" x2="230" y1="0" y2="73"  stroke="#0a0"/><!--iapetus-->
+    <line x1="240" x2="240" y1="0" y2="72"  stroke="#88f"/><!--makemake-->
+    <line x1="250" x2="250" y1="0" y2="62"  stroke="#88f"/><!--gonggong-->
+    <line x1="260" x2="260" y1="0" y2="61"  stroke="#bbf"/><!--charon-->
+    <line x1="270" x2="270" y1="0" y2="58"  stroke="#0a0"/><!--umbriel-->
+    <line x1="280" x2="280" y1="0" y2="58"  stroke="#0a0"/><!--ariel-->
+    <line x1="290" x2="290" y1="0" y2="56"  stroke="#0a0"/><!--dione-->
+    <line x1="300" x2="300" y1="0" y2="55"  stroke="#88f"/><!--quaoar-->
+    <line x1="310" x2="310" y1="0" y2="53"  stroke="#0a0"/><!--tethys-->
+    <line x1="320" x2="320" y1="0" y2="47"  stroke="#700"/><!--ceres-->
+    <line x1="330" x2="330" y1="0" y2="46"  stroke="#88f"/><!--orcus-->
+    <line x1="340" x2="340" y1="0" y2="45"  stroke="#88f"/><!--sedna-->
+    <line x1="350" x2="350" y1="0" y2="42"  stroke="#88f"/><!--salacia-->
+    <line x1="360" x2="360" y1="0" y2="40"  stroke="#88f"/><!--mani-->
+    <line x1="370" x2="370" y1="0" y2="39"  stroke="#88f"/><!--achlys-->
+    <line x1="380" x2="380" y1="0" y2="38"  stroke="#88f"/><!--aya-->
+    <line x1="390" x2="390" y1="0" y2="37"  stroke="#88f"/><!--chiminigagua-->
+    <line x1="400" x2="400" y1="0" y2="35"  stroke="#88f"/><!--ixion-->
+    <line x1="410" x2="410" y1="0" y2="34"  stroke="#88f"/><!--goibniu-->
+    <line x1="420" x2="420" y1="0" y2="34"  stroke="#88f"/><!--ritona-->
+    <line x1="430" x2="430" y1="0" y2="33"  stroke="#88f"/><!--uni-->
+    <line x1="440" x2="440" y1="0" y2="33"  stroke="#88f"/><!--varuna-->
+    <line x1="450" x2="450" y1="0" y2="33"  stroke="#88f"/><!--2003 UZ413-->
+    <line x1="460" x2="460" y1="0" y2="32"  stroke="#88f"/><!--varda-->
+    <line x1="470" x2="470" y1="0" y2="32"  stroke="#88f"/><!--rumina-->
+    <line x1="480" x2="480" y1="0" y2="32"  stroke="#88f"/><!--2014 UZ224-->
+    <line x1="490" x2="490" y1="0" y2="32"  stroke="#88f"/><!--gkunhomdima-->
+    <line x1="500" x2="500" y1="0" y2="31"  stroke="#bbf"/><!--dysnomia-->
+  </g>
+  <!-- names -->
+  <g text-anchor="end" font-family="verdana" font-size="12" transform="scale(0.667,-1) rotate(-90,0,0) translate(-3,2)">
+    <text x="0" y="75">
+      <tspan x="0" dy="15">Earth</tspan>
+      <tspan x="0" dy="15">Venus</tspan>
+      <tspan x="0" dy="15">Mars</tspan>
+      <tspan x="0" dy="15">Ganymede</tspan>
+      <tspan x="0" dy="15">Titan</tspan>
+      <tspan x="0" dy="15">Mercury</tspan>
+      <tspan x="0" dy="15">Callisto</tspan>
+      <tspan x="0" dy="15">Io</tspan>
+      <tspan x="0" dy="15">Moon</tspan>
+      <tspan x="0" dy="15">Europa</tspan>
+      <tspan x="0" dy="15">Triton</tspan>
+      <tspan x="0" dy="15">Pluto</tspan>
+      <tspan x="0" dy="15">Eris</tspan>
+      <tspan x="0" dy="15">Titania</tspan>
+      <tspan x="0" dy="15">Haumea</tspan>
+      <tspan x="0" dy="15">Rhea</tspan>
+      <tspan x="0" dy="15">Oberon</tspan>
+      <tspan x="0" dy="15">Iapetus</tspan>
+      <tspan x="0" dy="15">Makemake</tspan>
+      <tspan x="0" dy="15">Gonggong</tspan>
+      <tspan x="0" dy="15">Charon</tspan>
+      <tspan x="0" dy="15">Umbriel</tspan>
+      <tspan x="0" dy="15">Ariel</tspan>
+      <tspan x="0" dy="15">Dione</tspan>
+      <tspan x="0" dy="15">Quaoar</tspan>
+      <tspan x="0" dy="15">Tethys</tspan>
+      <tspan x="0" dy="15">Ceres</tspan>
+      <tspan x="0" dy="15">Orcus</tspan>
+      <tspan x="0" dy="15">Sedna</tspan>
+      <tspan x="0" dy="15">Salacia</tspan>
+      <tspan x="0" dy="15">Máni</tspan>
+      <tspan x="0" dy="15">Achlys</tspan>
+      <tspan x="0" dy="15">Aya</tspan>
+      <tspan x="0" dy="15">Chiminigagua</tspan>
+      <tspan x="0" dy="15">Ixion</tspan>
+      <tspan x="0" dy="15">Goibniu</tspan>
+      <tspan x="0" dy="15">Ritona</tspan>
+      <tspan x="0" dy="15">Uni</tspan>
+      <tspan x="0" dy="15">Varuna</tspan>
+      <tspan x="0" dy="15">2003 UZ413</tspan>
+      <tspan x="0" dy="15">Varda</tspan>
+      <tspan x="0" dy="15">Rumina</tspan>
+      <tspan x="0" dy="15">2014 UZ224</tspan>
+      <tspan x="0" dy="15">Gǃkúnǁʼhòmdímà</tspan>
+      <tspan x="0" dy="15">Dysnomia</tspan>
+    </text>
+  </g>
+</g>
+
+<!-- scale change indicator -->
+<line x1="145" y1="714" x2="183" y2="83" stroke="#700" stroke-width="2"/>
+<!--line x1="145" y1="714" x2="777" y2="714" stroke="#700" stroke-width="2" transform="rotate(-86.5,145,714)"/-->
+<line x1="466" y1="714" x2="461" y2="719" stroke="#700" stroke-width="2" transform="rotate(-86.5,145,714)"/>
+<line x1="466" y1="714" x2="461" y2="709" stroke="#700" stroke-width="2" transform="rotate(-86.5,145,714)"/>
+<!--line x1="145" y1="719" x2="184" y2="719" stroke="#700" stroke-width="2"/-->
+<defs>
+  <path id="scale" d="M150,515 L150,515 176,83"/>
+</defs>
+<text font-size="18" font-family="verdana" fill="#aaa">
+	<!--textPath xlink:href="#scale">scale change &#x00d7; 100</textPath--><!--mul-->
+	<textPath xlink:href="#scale">scale change &#x00f7; 100</textPath><!--div-->
+</text>
+
+<!-- axis indicator -->
+<defs>
+  <path id="diam"  d="M40,500 L40,500 40,100" />
+</defs>
+<text font-size="14" font-family="verdana" fill="black">
+  <textPath xlink:href="#diam">diameter (km)</textPath>
+</text>
+<g transform="translate(37,345)" stroke="black" stroke-width="1">
+  <line x1="0" y1="0" x2="0"  y2="50"/>
+  <line x1="0" y1="0" x2="-5" y2="5" />
+  <line x1="0" y1="0" x2="5"  y2="5" />
+</g>
+
+<!-- legend -->
+<g transform="translate(400,95) scale(1,-1)">
+  <rect width="270" height="85" x="0" y="0" fill="white" stroke="white"/>
+  <line x1="5"  y1="25" x2="85"  y2="25" stroke="#700" stroke-width="12"/>
+  <line x1="85" y1="25" x2="165" y2="25" stroke="#b00" stroke-width="12"/>
+  <line x1="5"  y1="40" x2="85"  y2="40" stroke="#050" stroke-width="12"/>
+  <line x1="85" y1="40" x2="165" y2="40" stroke="#0a0" stroke-width="12"/>
+  <line x1="5"  y1="55" x2="85"  y2="55" stroke="#88f" stroke-width="12"/>
+  <line x1="85" y1="55" x2="165" y2="55" stroke="#bbf" stroke-width="12"/>
+  <g transform="translate(0,51) scale(1,-1)" font-family="verdana" font-size="12">
+    <text x="85"  y="-16" text-anchor="middle" font-size="14" font-weight="bold">Legend</text>
+    <text y="0" transform="translate(167,-15)">
+      <tspan x="0" dy="15">transneptunian</tspan>
+      <tspan x="0" dy="15">giant planets</tspan>
+      <tspan x="0" dy="15">inner system</tspan>
+    </text>
+    <text x="75" y="45" text-anchor="end">solar orbit</text>
+    <text x="93" y="45">satellite</text>
+  </g>
+</g>
+
+</g>
+
+</g>
+</svg>

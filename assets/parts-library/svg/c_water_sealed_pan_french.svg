@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://web.resource.org/cc/"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:xlink="http://www.w3.org/1999/xlink"
+   xmlns:sodipodi="http://inkscape.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   version="1.0"
+   width="841.89001pt"
+   height="430pt"
+   id="svg1354"
+   sodipodi:version="0.32"
+   inkscape:version="0.43"
+   sodipodi:docname="Water sealed pan french.svg"
+   sodipodi:docbase="D:\Bureau">
+  <metadata
+     id="metadata29">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <sodipodi:namedview
+     inkscape:window-height="682"
+     inkscape:window-width="1024"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     borderopacity="1.0"
+     bordercolor="#666666"
+     pagecolor="#ffffff"
+     id="base"
+     inkscape:zoom="1.1912176"
+     inkscape:cx="291.04424"
+     inkscape:cy="246.19316"
+     inkscape:window-x="-4"
+     inkscape:window-y="-4"
+     inkscape:current-layer="svg1354" />
+  <defs
+     id="defs1357">
+    <marker
+       refX="0"
+       refY="0"
+       orient="auto"
+       style="overflow:visible"
+       id="Arrow1Mend">
+      <path
+         d="M 0,0 L 5,-5 L -12.5,0 L 5,5 L 0,0 z "
+         transform="scale(-0.4,-0.4)"
+         style="fill-rule:evenodd;stroke:#000000;stroke-width:1pt;marker-start:none"
+         id="path31478" />
+    </marker>
+  </defs>
+  <path
+     d="M 803.51453,340.76707 C 806.86656,338.8106 809.08215,335.18836 813.90617,334.65387 C 826.53504,333.25461 825.10066,337.70733 811.80591,350.3234 C 808.51931,353.44224 808.9753,358.86129 803.13297,357.12999 C 799.47833,356.04697 799.43603,350.45051 796.42353,347.25491 C 787.41442,337.69826 784.7462,335.0285 791.80012,335.0285 C 798.55513,335.0285 795.4363,335.13578 803.51453,340.76707 z "
+     style="fill:#000000;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:1.71772921px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1"
+     id="path3127" />
+  <use
+     transform="translate(60.67545,3.407844)"
+     id="use4002"
+     x="0"
+     y="0"
+     width="744.09448"
+     height="1052.3622"
+     xlink:href="#path3127" />
+  <use
+     transform="translate(-14.09004,-32.42816)"
+     id="use4004"
+     x="0"
+     y="0"
+     width="744.09448"
+     height="1052.3622"
+     xlink:href="#use4002" />
+  <use
+     transform="translate(63.88299,30.50673)"
+     id="use4006"
+     x="0"
+     y="0"
+     width="744.09448"
+     height="1052.3622"
+     xlink:href="#use4004" />
+  <path
+     d="M 33.692248,70.514674 C 56.016924,70.514674 1012.2568,70.514674 1012.2568,70.514674"
+     style="opacity:1;color:#000000;fill:none;fill-opacity:0.75;fill-rule:evenodd;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;marker:none;marker-start:none;marker-mid:none;marker-end:none;stroke-miterlimit:4;stroke-dasharray:8, 8;stroke-dashoffset:0;stroke-opacity:1;visibility:visible;display:inline;overflow:visible"
+     id="path4008" />
+  <path
+     d="M 406.23789,370.83033 L 328.69278,370.83033"
+     style="color:#000000;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;marker:none;marker-start:none;marker-mid:none;marker-end:none;stroke-miterlimit:4;stroke-dasharray:6, 6;stroke-dashoffset:0;stroke-opacity:1;visibility:visible;display:inline;overflow:visible"
+     id="path14716" />
+  <g
+     transform="matrix(0.466265,0,0,0.466265,361.1207,43.93282)"
+     style="stroke:#000000;stroke-opacity:1"
+     id="g19179">
+    <path
+       d="M -669.85999,62.069619 C -669.85999,62.069619 -572.42239,57.213552 -565.4125,70.171809 C -557.71572,84.399826 -552.61425,125.92089 -543.31894,135.00509 C -533.17969,144.91407 119.31033,458.66908 139.52362,478.17386 C 160.87088,498.77286 155.43269,581.00771 156.54038,690.54669 C 157.14665,750.50135 190.66259,864.25902 254.7817,919.7589 C 333.66914,988.04186 406.25583,995.25209 468.60954,995.93526 C 571.62154,997.02647 676.23975,921.13058 742.93699,834.37297 C 797.60072,763.26815 845.58973,697.23776 927.81171,697.23776 C 982.45358,697.23776 1351.4249,814.68592 1351.4249,814.68592 M 419.08342,58.108162 C 419.08342,58.108162 334.09074,58.108162 331.41801,64.522704 C 329.47844,69.177679 338.90164,179.98446 357.07618,336.07165 C 375.16301,491.40567 370.52553,552.86132 369.90526,637.55513 C 368.65266,810.72616 507.30911,769.56205 536.68335,738.04962 C 589.25982,681.64605 649.2013,625.46458 714.15235,564.85699 C 788.68575,495.30783 883.87545,480.51469 977.14861,504.98793 C 1230.2045,571.38536 1381.2647,605.48242 1381.2647,605.48242"
+       style="opacity:0.9;color:#000000;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:17.15763855;stroke-linecap:butt;stroke-linejoin:miter;marker:none;marker-start:none;marker-mid:none;marker-end:none;stroke-miterlimit:4;stroke-dashoffset:0;stroke-opacity:1;visibility:visible;display:inline;overflow:visible"
+       id="path1363" />
+    <path
+       d="M 156.9375,700.71875 C 160.86936,762.6247 194.1272,867.24939 254.78125,919.75 C 333.6687,988.03295 406.27129,995.25433 468.625,995.9375 C 571.63701,997.02873 676.24026,921.13261 742.9375,834.375 C 790.1964,772.90211 832.47258,715.21756 896.1875,700.71875 M 572.53125,700.71875 C 560.24205,713.18898 548.28524,725.62055 536.6875,738.0625 C 511.62918,764.94485 407.0399,798.8411 377.625,700.71875"
+       style="opacity:0.9;color:#000000;fill:#0000ff;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:17.15763855;stroke-linecap:butt;stroke-linejoin:miter;marker:none;marker-start:none;marker-mid:none;marker-end:none;stroke-miterlimit:4;stroke-dashoffset:0;stroke-opacity:1;visibility:visible;display:inline;overflow:visible"
+       id="path22547" />
+  </g>
+  <path
+     d="M 406.23787,400.75252 C 406.23787,400.75252 349.8029,400.75252 328.69276,400.75252"
+     style="color:#000000;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:#000000;stroke-width:2;stroke-linecap:butt;stroke-linejoin:miter;marker:none;marker-start:none;marker-mid:none;marker-end:none;stroke-miterlimit:4;stroke-dasharray:6, 6;stroke-dashoffset:0;stroke-opacity:1;visibility:visible;display:inline;overflow:visible"
+     id="path14727"
+     sodipodi:nodetypes="cc" />
+  <text
+     x="662.22186"
+     y="59.732628"
+     style="font-size:20px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Arial"
+     id="text30421"
+     xml:space="preserve"><tspan
+       x="662.22186"
+       y="59.732628"
+       id="tspan30423">Haut du siphon à l'horizontale</tspan></text>
+  <text
+     x="721.18683"
+     y="461.9039"
+     style="font-size:20px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Arial"
+     id="text30425"
+     xml:space="preserve"><tspan
+       x="721.18683"
+       y="461.9039"
+       id="tspan30427">Mouches et odeurs bloquées </tspan><tspan
+       x="721.18683"
+       y="486.9039"
+       id="tspan30437">depuis la fosse ou l'égout</tspan></text>
+  <path
+     d="M 802.83062,445.27275 L 839.11675,357.58127"
+     style="fill:none;fill-opacity:0.75;fill-rule:evenodd;stroke:#000000;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;marker-end:url(#Arrow1Mend);stroke-opacity:1;display:inline"
+     id="path30439" />
+  <text
+     xml:space="preserve"
+     style="font-size:20px;font-style:normal;font-variant:normal;font-weight:normal;font-stretch:normal;text-align:start;line-height:125%;writing-mode:lr-tb;text-anchor:start;fill:#000000;fill-opacity:1;stroke:none;stroke-width:1px;stroke-linecap:butt;stroke-linejoin:miter;stroke-opacity:1;font-family:Arial"
+     x="65.479225"
+     y="374.64142"
+     id="text2206"
+     sodipodi:linespacing="125%"><tspan
+       sodipodi:role="line"
+       id="tspan2208"
+       x="65.479225"
+       y="374.64142">Hauteur d'eau de 20 à 30mm</tspan><tspan
+       sodipodi:role="line"
+       x="65.479225"
+       y="399.64142"
+       id="tspan2210"> pour bloquer les gaz</tspan></text>
+</svg>

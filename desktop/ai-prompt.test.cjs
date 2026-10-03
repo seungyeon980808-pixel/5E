@@ -27,10 +27,12 @@ test("all quality modes preserve the mandatory structure invariant", async () =>
   const { buildImagePrompt } = await loadPromptModule();
   for (const qualityMode of ["simple", "standard", "complex"]) {
     const prompt = buildImagePrompt({ request: "참고 이미지를 재구성해 줘", mode: "diagram", qualityMode });
-    assert.match(prompt, /객체 종류·개수·실루엣·연결·접촉·겹침·좌우\/상하 순서와 상대 비율/);
+    assert.match(prompt, /객체 종류·개수·실루엣·연결·접촉·겹침·방향·좌우\/상하 순서와 상대 비율/);
     assert.match(prompt, /어떤 경우에도 바꾸지 않는다/);
-    assert.match(prompt, /문자, 숫자, 단위, 수식, 기호, 라벨, 로고, 워터마크, 지시선과 화살표를 절대 생성하지 않는다/);
-    assert.match(prompt, /실제 RGBA 투명 배경/);
+    assert.match(prompt, /문자 요소와 문자용 지시선은 생성하지/);
+    assert.match(prompt, /operation=generate backgroundPolicy=white arrowPolicy=scientific-only/);
+    assert.match(prompt, /alpha 255의 완전 불투명 단색/);
+    assert.match(prompt, /과학적 화살표는 내용으로 보존/);
     assert.ok(prompt.length < 2400, `image prompt is unexpectedly long: ${prompt.length}`);
   }
 });
@@ -42,7 +44,7 @@ test("complex revision is a correction pass and discussion never renders", async
 
   assert.match(revision, /복잡 모드 교정 단계/);
   assert.match(revision, /맞는 영역은 그대로 보존/);
-  assert.match(revision, /잘못된 부분만 변경/);
+  assert.match(revision, /달라진 부품·분기·연결만 고치고/);
   assert.match(discussion, /대화형 설계 보조자/);
   assert.doesNotMatch(discussion, /imagegen/);
   assert.ok(discussion.length < 700, `discussion prompt is unexpectedly long: ${discussion.length}`);

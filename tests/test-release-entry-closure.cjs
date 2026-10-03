@@ -39,11 +39,12 @@ function localModuleClosure(entry) {
   return visited;
 }
 
-test('desktop packages and loads the audited preview entry', () => {
+test('desktop packages and loads the canonical 1.6.0 root entry', () => {
   const packageJson = JSON.parse(fs.readFileSync(path.join(root, 'package.json'), 'utf8'));
-  assert.ok(packageJson.build.files.includes('preview/**/*'), 'preview/**/* must be packaged');
+  assert.ok(!packageJson.build.files.includes('preview/**/*'), 'desktop must not package the historical preview runtime');
+  assert.ok(packageJson.build.files.includes('vendor/**/*'), 'canonical PDF dependencies must be packaged');
   const main = fs.readFileSync(path.join(root, 'desktop/main.cjs'), 'utf8');
-  assert.match(main, /loadFile\(path\.join\(__dirname, "\.\.", "preview", "index\.html"\)\)/);
+  assert.match(main, /loadFile\(path\.join\(__dirname, "\.\.", "index\.html"\)\)/);
   for (const relativePath of requiredFiles) {
     assert.ok(fs.existsSync(path.join(root, relativePath)), `missing release file: ${relativePath}`);
   }
