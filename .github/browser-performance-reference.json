@@ -1,0 +1,2257 @@
+{
+  "schemaVersion": 1,
+  "measuredOutsideGitHubActions": true,
+  "sourceDirty": false,
+  "sourceCommit": "d3e5f473b112eb5a3cbe569c223be67220defb4e",
+  "identity": {
+    "previewTree": "7bab77a243fd85fc0189522e36990bba204180c5",
+    "methodologyBlobs": {
+      "tests/test-ai-workbench-polish-browser.cjs": "59cc1b844ddb74c56254a4e07b94a6b4096867be",
+      "tests/test-ai-workspace-lifecycle-browser.cjs": "ac9d175f797149f8bc1af3b9afe04aa6c8027dfb",
+      "tests/helpers/crop-loading-fixture.cjs": "fb5f87e8b8f09f0a093b51d152a8823810b8ca85",
+      "tests/helpers/performance-reference.cjs": "517ced6819ee4c7788bcba340a8166c842146c77",
+      "package-lock.json": "8ee166e9fcf67fd8d4bdf06f89b5fdc7fb4c80c3",
+      "scripts/check-browser-performance-reference.cjs": "ce67c7edc8593aa08ce009aa3e63c1b53635248d"
+    }
+  },
+  "scenarios": [
+    {
+      "engine": "chromium",
+      "name": "tasks-1",
+      "environment": {
+        "node": "v24.21.0",
+        "engine": "chromium",
+        "browserVersion": "151.0.7922.34",
+        "headless": false,
+        "platform": "darwin",
+        "release": "25.6.0",
+        "arch": "arm64",
+        "cpu": "Apple M5",
+        "cpuCount": 10,
+        "totalMemory": 17179869184,
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        },
+        "deviceScaleFactor": 2,
+        "head": "d3e5f473b112eb5a3cbe569c223be67220defb4e",
+        "dirtyStatus": "",
+        "measuredOutsideGitHubActions": true,
+        "performanceIdentity": {
+          "previewTree": "7bab77a243fd85fc0189522e36990bba204180c5",
+          "methodologyBlobs": {
+            "tests/test-ai-workbench-polish-browser.cjs": "59cc1b844ddb74c56254a4e07b94a6b4096867be",
+            "tests/test-ai-workspace-lifecycle-browser.cjs": "ac9d175f797149f8bc1af3b9afe04aa6c8027dfb",
+            "tests/helpers/crop-loading-fixture.cjs": "fb5f87e8b8f09f0a093b51d152a8823810b8ca85",
+            "tests/helpers/performance-reference.cjs": "517ced6819ee4c7788bcba340a8166c842146c77",
+            "package-lock.json": "8ee166e9fcf67fd8d4bdf06f89b5fdc7fb4c80c3",
+            "scripts/check-browser-performance-reference.cjs": "ce67c7edc8593aa08ce009aa3e63c1b53635248d"
+          }
+        }
+      },
+      "sourceIntegrity": {
+        "before": {
+          "preview/js/ai-panel.js": "e67e36cf7b6a49c1aa795be276b3328f1e27aa6240ef5c3ee9493cece1791a49",
+          "preview/js/ai-task-workspaces.js": "c17e8862ff848bee19a350cca13f74a420a369bf5ec544c0aefc5f2211b1ba70",
+          "preview/js/ai-workspace-batch.js": "e6d3ee7dc3a9280d8c902d923fb66e8ff65e91a01d178ab1fc859feca2c41d89",
+          "preview/js/ai-comparison.js": "aa39ddf12ce4f2858f022b72d8221d6be008b7004ef3a0d910f4699143fe8082",
+          "preview/js/unified-library-ui.js": "d0a43a16a31b10308a78aac853cd78bf437e0d297579e96a3ebf03c8ce3027a1",
+          "preview/js/tools/pointer-magnifier.js": "2ebd6592aa82a7eeca4aaf05075fcb4fd7e4b04ab9052a18b13e737408fb3d42",
+          "preview/css/ai-panel.css": "d389e28457548347f075aa6aaaf95f6855f30d980bb539a29a62813edfb26260",
+          "preview/css/ai-comparison.css": "858bdbb517eb8b5a5fd0a5b39b409af1a6e5f35196da1219e7db32bc14ea74c9",
+          "preview/css/unified-library.css": "b02a60c8eb0dcc96ee90ad8acd5ea107582832d34e59d23c88a6c526104f371c",
+          "preview/index.html": "55222ad2e42388cf02a568b5a1b1917627aede43346433c5d61437887bf246ca",
+          "preview/js/main.js": "023e9565e96438eb307c151931c9bd0cc1b98014545674464305cbd8a983b731",
+          "tests/test-ai-workspace-lifecycle-browser.cjs": "63becaaccb995e0cf73ada63d1b67f2987e96f11d8ef19b527a9d154399b47b1",
+          "tests/helpers/crop-loading-fixture.cjs": "a457b8751befa0d6a190daae4d662747ccd0372d8309a763e312292b68b4725d",
+          "tests/test-ai-workbench-polish-browser.cjs": "9e211dae335ada7789614b83fed542f008e9c44b6ec2bc1971e31d38e12bd2fd",
+          "tests/helpers/performance-reference.cjs": "53abb131683ce30a50ab99a668ede56c0acadb879fab3508111d28738c0711b8",
+          "package-lock.json": "2d55e02b7ee7c469721e9834dbfb6b99d0f73eda0aab2be85c1a3da0e70112ec"
+        },
+        "after": {
+          "preview/js/ai-panel.js": "e67e36cf7b6a49c1aa795be276b3328f1e27aa6240ef5c3ee9493cece1791a49",
+          "preview/js/ai-task-workspaces.js": "c17e8862ff848bee19a350cca13f74a420a369bf5ec544c0aefc5f2211b1ba70",
+          "preview/js/ai-workspace-batch.js": "e6d3ee7dc3a9280d8c902d923fb66e8ff65e91a01d178ab1fc859feca2c41d89",
+          "preview/js/ai-comparison.js": "aa39ddf12ce4f2858f022b72d8221d6be008b7004ef3a0d910f4699143fe8082",
+          "preview/js/unified-library-ui.js": "d0a43a16a31b10308a78aac853cd78bf437e0d297579e96a3ebf03c8ce3027a1",
+          "preview/js/tools/pointer-magnifier.js": "2ebd6592aa82a7eeca4aaf05075fcb4fd7e4b04ab9052a18b13e737408fb3d42",
+          "preview/css/ai-panel.css": "d389e28457548347f075aa6aaaf95f6855f30d980bb539a29a62813edfb26260",
+          "preview/css/ai-comparison.css": "858bdbb517eb8b5a5fd0a5b39b409af1a6e5f35196da1219e7db32bc14ea74c9",
+          "preview/css/unified-library.css": "b02a60c8eb0dcc96ee90ad8acd5ea107582832d34e59d23c88a6c526104f371c",
+          "preview/index.html": "55222ad2e42388cf02a568b5a1b1917627aede43346433c5d61437887bf246ca",
+          "preview/js/main.js": "023e9565e96438eb307c151931c9bd0cc1b98014545674464305cbd8a983b731",
+          "tests/test-ai-workspace-lifecycle-browser.cjs": "63becaaccb995e0cf73ada63d1b67f2987e96f11d8ef19b527a9d154399b47b1",
+          "tests/helpers/crop-loading-fixture.cjs": "a457b8751befa0d6a190daae4d662747ccd0372d8309a763e312292b68b4725d",
+          "tests/test-ai-workbench-polish-browser.cjs": "9e211dae335ada7789614b83fed542f008e9c44b6ec2bc1971e31d38e12bd2fd",
+          "tests/helpers/performance-reference.cjs": "53abb131683ce30a50ab99a668ede56c0acadb879fab3508111d28738c0711b8",
+          "package-lock.json": "2d55e02b7ee7c469721e9834dbfb6b99d0f73eda0aab2be85c1a3da0e70112ec"
+        },
+        "unchanged": true
+      },
+      "cleanup": {
+        "serverClosed": true,
+        "browserClosed": true,
+        "contextClosed": true
+      },
+      "performance": {
+        "count": 1,
+        "engine": "chromium",
+        "coldSelectionIncludingAutomationMs": [
+          50.478875000000244
+        ],
+        "samples": [
+          {
+            "id": "task-0",
+            "ms": 14.299999952316284,
+            "ready": true
+          },
+          {
+            "id": "task-0",
+            "ms": 14.5,
+            "ready": true
+          },
+          {
+            "id": "task-0",
+            "ms": 14.399999976158142,
+            "ready": true
+          },
+          {
+            "id": "task-0",
+            "ms": 14.899999976158142,
+            "ready": true
+          },
+          {
+            "id": "task-0",
+            "ms": 13.399999976158142,
+            "ready": true
+          },
+          {
+            "id": "task-0",
+            "ms": 14.399999976158142,
+            "ready": true
+          },
+          {
+            "id": "task-0",
+            "ms": 14.399999976158142,
+            "ready": true
+          },
+          {
+            "id": "task-0",
+            "ms": 15.299999952316284,
+            "ready": true
+          },
+          {
+            "id": "task-0",
+            "ms": 15.100000023841858,
+            "ready": true
+          },
+          {
+            "id": "task-0",
+            "ms": 14.399999976158142,
+            "ready": true
+          },
+          {
+            "id": "task-0",
+            "ms": 14.199999928474426,
+            "ready": true
+          },
+          {
+            "id": "task-0",
+            "ms": 14.299999952316284,
+            "ready": true
+          },
+          {
+            "id": "task-0",
+            "ms": 15.400000095367432,
+            "ready": true
+          },
+          {
+            "id": "task-0",
+            "ms": 14.5,
+            "ready": true
+          },
+          {
+            "id": "task-0",
+            "ms": 13.699999928474426,
+            "ready": true
+          },
+          {
+            "id": "task-0",
+            "ms": 15,
+            "ready": true
+          },
+          {
+            "id": "task-0",
+            "ms": 13.200000047683716,
+            "ready": true
+          },
+          {
+            "id": "task-0",
+            "ms": 14.399999976158142,
+            "ready": true
+          },
+          {
+            "id": "task-0",
+            "ms": 11.700000047683716,
+            "ready": true
+          },
+          {
+            "id": "task-0",
+            "ms": 14.399999976158142,
+            "ready": true
+          }
+        ],
+        "gaps": [
+          3.4999999046326593,
+          9,
+          8.299999999999955,
+          8.299999999999955,
+          8.400000000000091,
+          8.299999999999727,
+          8.400000000000091,
+          8.300000000000182,
+          8.299999999999727,
+          8.400000000000091,
+          8.300000000000182,
+          8.199999999999818,
+          8.099999999999909,
+          8.700000000000273,
+          8.299999999999727,
+          8.400000000000091,
+          8.200000000000273,
+          8.399999999999636,
+          8.400000000000091,
+          8.200000000000273,
+          8.399999999999636,
+          8.300000000000182,
+          8.300000000000182,
+          8.099999999999909,
+          8.699999999999818,
+          8.300000000000182,
+          8.299999999999727,
+          7.800000000000182,
+          8.599999999999909,
+          8.700000000000273,
+          7.399999999999636,
+          8.300000000000182,
+          9.199999999999818,
+          8.300000000000182,
+          8.400000000000091,
+          7.400000000000091,
+          9.199999999999818,
+          7.900000000000091,
+          8.799999999999727,
+          8.300000000000182,
+          8.400000000000091,
+          8.299999999999727,
+          8.300000000000182,
+          8.400000000000091,
+          8.299999999999727,
+          8.400000000000091,
+          8.200000000000273,
+          8.399999999999636,
+          7.400000000000091,
+          8.300000000000182,
+          8.400000000000091,
+          9.299999999999727,
+          8.300000000000182,
+          8.299999999999727,
+          8.400000000000091,
+          8,
+          8.599999999999909,
+          8.300000000000182,
+          8.300000000000182,
+          7.5,
+          8.399999999999636,
+          9.300000000000182,
+          7.300000000000182,
+          8.399999999999636,
+          9.200000000000273,
+          7.400000000000091,
+          9.299999999999727,
+          8.200000000000273,
+          7.5,
+          9.299999999999727,
+          7.400000000000091,
+          9.199999999999818,
+          7.700000000000273,
+          8.099999999999909,
+          9.199999999999818,
+          7.600000000000364,
+          8.699999999999818,
+          8,
+          8.300000000000182,
+          9.099999999999909,
+          8.299999999999727
+        ],
+        "stop": true,
+        "last": 2694.2,
+        "started": 2023.4000000953674,
+        "longTaskSupported": true,
+        "longTasks": [],
+        "dpr": 2,
+        "minimumMs": 11.700000047683716,
+        "medianMs": 14.399999976158142,
+        "p95Ms": 15.299999952316284,
+        "maximumMs": 15.400000095367432,
+        "over100ms": 0,
+        "longTasksOver50ms": [],
+        "rafGapsOver50ms": [],
+        "webkitLimitation": null
+      },
+      "visual": {
+        "errors": [],
+        "sends": 0
+      }
+    },
+    {
+      "engine": "chromium",
+      "name": "tasks-10",
+      "environment": {
+        "node": "v24.21.0",
+        "engine": "chromium",
+        "browserVersion": "151.0.7922.34",
+        "headless": false,
+        "platform": "darwin",
+        "release": "25.6.0",
+        "arch": "arm64",
+        "cpu": "Apple M5",
+        "cpuCount": 10,
+        "totalMemory": 17179869184,
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        },
+        "deviceScaleFactor": 2,
+        "head": "d3e5f473b112eb5a3cbe569c223be67220defb4e",
+        "dirtyStatus": "",
+        "measuredOutsideGitHubActions": true,
+        "performanceIdentity": {
+          "previewTree": "7bab77a243fd85fc0189522e36990bba204180c5",
+          "methodologyBlobs": {
+            "tests/test-ai-workbench-polish-browser.cjs": "59cc1b844ddb74c56254a4e07b94a6b4096867be",
+            "tests/test-ai-workspace-lifecycle-browser.cjs": "ac9d175f797149f8bc1af3b9afe04aa6c8027dfb",
+            "tests/helpers/crop-loading-fixture.cjs": "fb5f87e8b8f09f0a093b51d152a8823810b8ca85",
+            "tests/helpers/performance-reference.cjs": "517ced6819ee4c7788bcba340a8166c842146c77",
+            "package-lock.json": "8ee166e9fcf67fd8d4bdf06f89b5fdc7fb4c80c3",
+            "scripts/check-browser-performance-reference.cjs": "ce67c7edc8593aa08ce009aa3e63c1b53635248d"
+          }
+        }
+      },
+      "sourceIntegrity": {
+        "before": {
+          "preview/js/ai-panel.js": "e67e36cf7b6a49c1aa795be276b3328f1e27aa6240ef5c3ee9493cece1791a49",
+          "preview/js/ai-task-workspaces.js": "c17e8862ff848bee19a350cca13f74a420a369bf5ec544c0aefc5f2211b1ba70",
+          "preview/js/ai-workspace-batch.js": "e6d3ee7dc3a9280d8c902d923fb66e8ff65e91a01d178ab1fc859feca2c41d89",
+          "preview/js/ai-comparison.js": "aa39ddf12ce4f2858f022b72d8221d6be008b7004ef3a0d910f4699143fe8082",
+          "preview/js/unified-library-ui.js": "d0a43a16a31b10308a78aac853cd78bf437e0d297579e96a3ebf03c8ce3027a1",
+          "preview/js/tools/pointer-magnifier.js": "2ebd6592aa82a7eeca4aaf05075fcb4fd7e4b04ab9052a18b13e737408fb3d42",
+          "preview/css/ai-panel.css": "d389e28457548347f075aa6aaaf95f6855f30d980bb539a29a62813edfb26260",
+          "preview/css/ai-comparison.css": "858bdbb517eb8b5a5fd0a5b39b409af1a6e5f35196da1219e7db32bc14ea74c9",
+          "preview/css/unified-library.css": "b02a60c8eb0dcc96ee90ad8acd5ea107582832d34e59d23c88a6c526104f371c",
+          "preview/index.html": "55222ad2e42388cf02a568b5a1b1917627aede43346433c5d61437887bf246ca",
+          "preview/js/main.js": "023e9565e96438eb307c151931c9bd0cc1b98014545674464305cbd8a983b731",
+          "tests/test-ai-workspace-lifecycle-browser.cjs": "63becaaccb995e0cf73ada63d1b67f2987e96f11d8ef19b527a9d154399b47b1",
+          "tests/helpers/crop-loading-fixture.cjs": "a457b8751befa0d6a190daae4d662747ccd0372d8309a763e312292b68b4725d",
+          "tests/test-ai-workbench-polish-browser.cjs": "9e211dae335ada7789614b83fed542f008e9c44b6ec2bc1971e31d38e12bd2fd",
+          "tests/helpers/performance-reference.cjs": "53abb131683ce30a50ab99a668ede56c0acadb879fab3508111d28738c0711b8",
+          "package-lock.json": "2d55e02b7ee7c469721e9834dbfb6b99d0f73eda0aab2be85c1a3da0e70112ec"
+        },
+        "after": {
+          "preview/js/ai-panel.js": "e67e36cf7b6a49c1aa795be276b3328f1e27aa6240ef5c3ee9493cece1791a49",
+          "preview/js/ai-task-workspaces.js": "c17e8862ff848bee19a350cca13f74a420a369bf5ec544c0aefc5f2211b1ba70",
+          "preview/js/ai-workspace-batch.js": "e6d3ee7dc3a9280d8c902d923fb66e8ff65e91a01d178ab1fc859feca2c41d89",
+          "preview/js/ai-comparison.js": "aa39ddf12ce4f2858f022b72d8221d6be008b7004ef3a0d910f4699143fe8082",
+          "preview/js/unified-library-ui.js": "d0a43a16a31b10308a78aac853cd78bf437e0d297579e96a3ebf03c8ce3027a1",
+          "preview/js/tools/pointer-magnifier.js": "2ebd6592aa82a7eeca4aaf05075fcb4fd7e4b04ab9052a18b13e737408fb3d42",
+          "preview/css/ai-panel.css": "d389e28457548347f075aa6aaaf95f6855f30d980bb539a29a62813edfb26260",
+          "preview/css/ai-comparison.css": "858bdbb517eb8b5a5fd0a5b39b409af1a6e5f35196da1219e7db32bc14ea74c9",
+          "preview/css/unified-library.css": "b02a60c8eb0dcc96ee90ad8acd5ea107582832d34e59d23c88a6c526104f371c",
+          "preview/index.html": "55222ad2e42388cf02a568b5a1b1917627aede43346433c5d61437887bf246ca",
+          "preview/js/main.js": "023e9565e96438eb307c151931c9bd0cc1b98014545674464305cbd8a983b731",
+          "tests/test-ai-workspace-lifecycle-browser.cjs": "63becaaccb995e0cf73ada63d1b67f2987e96f11d8ef19b527a9d154399b47b1",
+          "tests/helpers/crop-loading-fixture.cjs": "a457b8751befa0d6a190daae4d662747ccd0372d8309a763e312292b68b4725d",
+          "tests/test-ai-workbench-polish-browser.cjs": "9e211dae335ada7789614b83fed542f008e9c44b6ec2bc1971e31d38e12bd2fd",
+          "tests/helpers/performance-reference.cjs": "53abb131683ce30a50ab99a668ede56c0acadb879fab3508111d28738c0711b8",
+          "package-lock.json": "2d55e02b7ee7c469721e9834dbfb6b99d0f73eda0aab2be85c1a3da0e70112ec"
+        },
+        "unchanged": true
+      },
+      "cleanup": {
+        "serverClosed": true,
+        "browserClosed": true,
+        "contextClosed": true
+      },
+      "performance": {
+        "count": 10,
+        "engine": "chromium",
+        "coldSelectionIncludingAutomationMs": [
+          56.279625000000124,
+          75.52599999999984,
+          75.56904200000008,
+          77.12004199999956,
+          74.72912499999984,
+          73.9747499999994,
+          77.14095799999996,
+          93.51333299999988,
+          88.71875,
+          86.492166
+        ],
+        "samples": [
+          {
+            "id": "task-1",
+            "ms": 13,
+            "ready": true
+          },
+          {
+            "id": "task-8",
+            "ms": 13.200000047683716,
+            "ready": true
+          },
+          {
+            "id": "task-5",
+            "ms": 13.099999904632568,
+            "ready": true
+          },
+          {
+            "id": "task-2",
+            "ms": 12.200000047683716,
+            "ready": true
+          },
+          {
+            "id": "task-9",
+            "ms": 14.100000023841858,
+            "ready": true
+          },
+          {
+            "id": "task-6",
+            "ms": 12.600000023841858,
+            "ready": true
+          },
+          {
+            "id": "task-3",
+            "ms": 12.600000023841858,
+            "ready": true
+          },
+          {
+            "id": "task-0",
+            "ms": 12.399999976158142,
+            "ready": true
+          },
+          {
+            "id": "task-7",
+            "ms": 14,
+            "ready": true
+          },
+          {
+            "id": "task-4",
+            "ms": 13.099999904632568,
+            "ready": true
+          },
+          {
+            "id": "task-1",
+            "ms": 12.600000023841858,
+            "ready": true
+          },
+          {
+            "id": "task-8",
+            "ms": 13,
+            "ready": true
+          },
+          {
+            "id": "task-5",
+            "ms": 12.900000095367432,
+            "ready": true
+          },
+          {
+            "id": "task-2",
+            "ms": 12.899999976158142,
+            "ready": true
+          },
+          {
+            "id": "task-9",
+            "ms": 12.799999952316284,
+            "ready": true
+          },
+          {
+            "id": "task-6",
+            "ms": 12.5,
+            "ready": true
+          },
+          {
+            "id": "task-3",
+            "ms": 13.300000071525574,
+            "ready": true
+          },
+          {
+            "id": "task-0",
+            "ms": 13,
+            "ready": true
+          },
+          {
+            "id": "task-7",
+            "ms": 12.699999928474426,
+            "ready": true
+          },
+          {
+            "id": "task-4",
+            "ms": 12.100000023841858,
+            "ready": true
+          }
+        ],
+        "gaps": [
+          3.700000023841767,
+          8.300000000000182,
+          7.799999999999727,
+          9,
+          8.300000000000182,
+          8.300000000000182,
+          8,
+          8.699999999999818,
+          8.300000000000182,
+          8,
+          8.399999999999636,
+          8.700000000000273,
+          8.199999999999818,
+          8.400000000000091,
+          8.199999999999818,
+          8.400000000000091,
+          8.400000000000091,
+          8.300000000000182,
+          8.299999999999727,
+          8.400000000000091,
+          8.300000000000182,
+          8.299999999999727,
+          8.400000000000091,
+          8.300000000000182,
+          8.099999999999909,
+          8.599999999999909,
+          8.300000000000182,
+          8.299999999999727,
+          7.599999999999909,
+          8.900000000000091,
+          8.5,
+          8.400000000000091,
+          7.900000000000091,
+          8.699999999999818,
+          8.400000000000091,
+          7.400000000000091,
+          9.199999999999818,
+          8.300000000000182,
+          8.400000000000091,
+          8.399999999999636,
+          7.800000000000182,
+          8.800000000000182,
+          8.299999999999727,
+          8.300000000000182,
+          8.400000000000091,
+          8.299999999999727,
+          8.300000000000182,
+          8.299999999999727,
+          8,
+          8.900000000000091,
+          8.200000000000273,
+          8.299999999999727,
+          7.900000000000091,
+          8.800000000000182,
+          8.299999999999727,
+          8.300000000000182,
+          7.599999999999909,
+          9.099999999999909,
+          8.300000000000182,
+          8.299999999999727,
+          7.700000000000273,
+          9.099999999999909,
+          8.099999999999909,
+          8.599999999999909,
+          7.800000000000182,
+          8.800000000000182,
+          8.299999999999727,
+          8.099999999999909,
+          8.600000000000364,
+          8.299999999999727,
+          8.400000000000091,
+          8.199999999999818,
+          7.600000000000364,
+          9.099999999999909,
+          7.5,
+          9.299999999999727,
+          7.900000000000091,
+          8.599999999999909,
+          8.400000000000091,
+          8.300000000000182,
+          7.900000000000091,
+          8.899999999999636
+        ],
+        "stop": true,
+        "last": 3343.7,
+        "started": 2664.899999976158,
+        "longTaskSupported": true,
+        "longTasks": [],
+        "dpr": 2,
+        "minimumMs": 12.100000023841858,
+        "medianMs": 12.900000095367432,
+        "p95Ms": 14,
+        "maximumMs": 14.100000023841858,
+        "over100ms": 0,
+        "longTasksOver50ms": [],
+        "rafGapsOver50ms": [],
+        "webkitLimitation": null
+      },
+      "visual": {
+        "errors": [],
+        "sends": 0
+      }
+    },
+    {
+      "engine": "chromium",
+      "name": "tasks-30",
+      "environment": {
+        "node": "v24.21.0",
+        "engine": "chromium",
+        "browserVersion": "151.0.7922.34",
+        "headless": false,
+        "platform": "darwin",
+        "release": "25.6.0",
+        "arch": "arm64",
+        "cpu": "Apple M5",
+        "cpuCount": 10,
+        "totalMemory": 17179869184,
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        },
+        "deviceScaleFactor": 2,
+        "head": "d3e5f473b112eb5a3cbe569c223be67220defb4e",
+        "dirtyStatus": "",
+        "measuredOutsideGitHubActions": true,
+        "performanceIdentity": {
+          "previewTree": "7bab77a243fd85fc0189522e36990bba204180c5",
+          "methodologyBlobs": {
+            "tests/test-ai-workbench-polish-browser.cjs": "59cc1b844ddb74c56254a4e07b94a6b4096867be",
+            "tests/test-ai-workspace-lifecycle-browser.cjs": "ac9d175f797149f8bc1af3b9afe04aa6c8027dfb",
+            "tests/helpers/crop-loading-fixture.cjs": "fb5f87e8b8f09f0a093b51d152a8823810b8ca85",
+            "tests/helpers/performance-reference.cjs": "517ced6819ee4c7788bcba340a8166c842146c77",
+            "package-lock.json": "8ee166e9fcf67fd8d4bdf06f89b5fdc7fb4c80c3",
+            "scripts/check-browser-performance-reference.cjs": "ce67c7edc8593aa08ce009aa3e63c1b53635248d"
+          }
+        }
+      },
+      "sourceIntegrity": {
+        "before": {
+          "preview/js/ai-panel.js": "e67e36cf7b6a49c1aa795be276b3328f1e27aa6240ef5c3ee9493cece1791a49",
+          "preview/js/ai-task-workspaces.js": "c17e8862ff848bee19a350cca13f74a420a369bf5ec544c0aefc5f2211b1ba70",
+          "preview/js/ai-workspace-batch.js": "e6d3ee7dc3a9280d8c902d923fb66e8ff65e91a01d178ab1fc859feca2c41d89",
+          "preview/js/ai-comparison.js": "aa39ddf12ce4f2858f022b72d8221d6be008b7004ef3a0d910f4699143fe8082",
+          "preview/js/unified-library-ui.js": "d0a43a16a31b10308a78aac853cd78bf437e0d297579e96a3ebf03c8ce3027a1",
+          "preview/js/tools/pointer-magnifier.js": "2ebd6592aa82a7eeca4aaf05075fcb4fd7e4b04ab9052a18b13e737408fb3d42",
+          "preview/css/ai-panel.css": "d389e28457548347f075aa6aaaf95f6855f30d980bb539a29a62813edfb26260",
+          "preview/css/ai-comparison.css": "858bdbb517eb8b5a5fd0a5b39b409af1a6e5f35196da1219e7db32bc14ea74c9",
+          "preview/css/unified-library.css": "b02a60c8eb0dcc96ee90ad8acd5ea107582832d34e59d23c88a6c526104f371c",
+          "preview/index.html": "55222ad2e42388cf02a568b5a1b1917627aede43346433c5d61437887bf246ca",
+          "preview/js/main.js": "023e9565e96438eb307c151931c9bd0cc1b98014545674464305cbd8a983b731",
+          "tests/test-ai-workspace-lifecycle-browser.cjs": "63becaaccb995e0cf73ada63d1b67f2987e96f11d8ef19b527a9d154399b47b1",
+          "tests/helpers/crop-loading-fixture.cjs": "a457b8751befa0d6a190daae4d662747ccd0372d8309a763e312292b68b4725d",
+          "tests/test-ai-workbench-polish-browser.cjs": "9e211dae335ada7789614b83fed542f008e9c44b6ec2bc1971e31d38e12bd2fd",
+          "tests/helpers/performance-reference.cjs": "53abb131683ce30a50ab99a668ede56c0acadb879fab3508111d28738c0711b8",
+          "package-lock.json": "2d55e02b7ee7c469721e9834dbfb6b99d0f73eda0aab2be85c1a3da0e70112ec"
+        },
+        "after": {
+          "preview/js/ai-panel.js": "e67e36cf7b6a49c1aa795be276b3328f1e27aa6240ef5c3ee9493cece1791a49",
+          "preview/js/ai-task-workspaces.js": "c17e8862ff848bee19a350cca13f74a420a369bf5ec544c0aefc5f2211b1ba70",
+          "preview/js/ai-workspace-batch.js": "e6d3ee7dc3a9280d8c902d923fb66e8ff65e91a01d178ab1fc859feca2c41d89",
+          "preview/js/ai-comparison.js": "aa39ddf12ce4f2858f022b72d8221d6be008b7004ef3a0d910f4699143fe8082",
+          "preview/js/unified-library-ui.js": "d0a43a16a31b10308a78aac853cd78bf437e0d297579e96a3ebf03c8ce3027a1",
+          "preview/js/tools/pointer-magnifier.js": "2ebd6592aa82a7eeca4aaf05075fcb4fd7e4b04ab9052a18b13e737408fb3d42",
+          "preview/css/ai-panel.css": "d389e28457548347f075aa6aaaf95f6855f30d980bb539a29a62813edfb26260",
+          "preview/css/ai-comparison.css": "858bdbb517eb8b5a5fd0a5b39b409af1a6e5f35196da1219e7db32bc14ea74c9",
+          "preview/css/unified-library.css": "b02a60c8eb0dcc96ee90ad8acd5ea107582832d34e59d23c88a6c526104f371c",
+          "preview/index.html": "55222ad2e42388cf02a568b5a1b1917627aede43346433c5d61437887bf246ca",
+          "preview/js/main.js": "023e9565e96438eb307c151931c9bd0cc1b98014545674464305cbd8a983b731",
+          "tests/test-ai-workspace-lifecycle-browser.cjs": "63becaaccb995e0cf73ada63d1b67f2987e96f11d8ef19b527a9d154399b47b1",
+          "tests/helpers/crop-loading-fixture.cjs": "a457b8751befa0d6a190daae4d662747ccd0372d8309a763e312292b68b4725d",
+          "tests/test-ai-workbench-polish-browser.cjs": "9e211dae335ada7789614b83fed542f008e9c44b6ec2bc1971e31d38e12bd2fd",
+          "tests/helpers/performance-reference.cjs": "53abb131683ce30a50ab99a668ede56c0acadb879fab3508111d28738c0711b8",
+          "package-lock.json": "2d55e02b7ee7c469721e9834dbfb6b99d0f73eda0aab2be85c1a3da0e70112ec"
+        },
+        "unchanged": true
+      },
+      "cleanup": {
+        "serverClosed": true,
+        "browserClosed": true,
+        "contextClosed": true
+      },
+      "performance": {
+        "count": 30,
+        "engine": "chromium",
+        "coldSelectionIncludingAutomationMs": [
+          71.48491599999943,
+          82.8485410000012,
+          83.26779200000055,
+          91.64249999999993,
+          96.23837500000081,
+          93.17116700000042,
+          104.68754200000149,
+          98.31512499999917,
+          101.45208300000013,
+          103.17241699999977,
+          114.87195800000154,
+          117.21195799999987,
+          121.6734579999993,
+          146.7672079999993,
+          120.49266700000044,
+          124.45270800000071,
+          131.51608300000044,
+          135.23533300000054,
+          155.18041599999924,
+          141.65220799999952,
+          139.0567090000004,
+          146.08741700000064,
+          155.839750000001,
+          159.01737499999945,
+          149.54633300000023,
+          155.1358340000006,
+          171.10525000000052,
+          190.58045800000036,
+          174.77270800000042,
+          175.59158299999945
+        ],
+        "samples": [
+          {
+            "id": "task-1",
+            "ms": 10.300000071525574,
+            "ready": true
+          },
+          {
+            "id": "task-8",
+            "ms": 10.700000047683716,
+            "ready": true
+          },
+          {
+            "id": "task-15",
+            "ms": 11.100000023841858,
+            "ready": true
+          },
+          {
+            "id": "task-22",
+            "ms": 11.300000071525574,
+            "ready": true
+          },
+          {
+            "id": "task-29",
+            "ms": 11.5,
+            "ready": true
+          },
+          {
+            "id": "task-6",
+            "ms": 11.700000047683716,
+            "ready": true
+          },
+          {
+            "id": "task-13",
+            "ms": 10.600000023841858,
+            "ready": true
+          },
+          {
+            "id": "task-20",
+            "ms": 10.100000023841858,
+            "ready": true
+          },
+          {
+            "id": "task-27",
+            "ms": 9.899999976158142,
+            "ready": true
+          },
+          {
+            "id": "task-4",
+            "ms": 10.800000071525574,
+            "ready": true
+          },
+          {
+            "id": "task-11",
+            "ms": 9.899999976158142,
+            "ready": true
+          },
+          {
+            "id": "task-18",
+            "ms": 10.400000095367432,
+            "ready": true
+          },
+          {
+            "id": "task-25",
+            "ms": 10.200000047683716,
+            "ready": true
+          },
+          {
+            "id": "task-2",
+            "ms": 9.899999976158142,
+            "ready": true
+          },
+          {
+            "id": "task-9",
+            "ms": 11.5,
+            "ready": true
+          },
+          {
+            "id": "task-16",
+            "ms": 17.700000047683716,
+            "ready": true
+          },
+          {
+            "id": "task-23",
+            "ms": 10.5,
+            "ready": true
+          },
+          {
+            "id": "task-0",
+            "ms": 10.700000047683716,
+            "ready": true
+          },
+          {
+            "id": "task-7",
+            "ms": 11.399999976158142,
+            "ready": true
+          },
+          {
+            "id": "task-14",
+            "ms": 10.5,
+            "ready": true
+          }
+        ],
+        "gaps": [
+          4,
+          8.600000000000364,
+          8.5,
+          8.399999999999636,
+          8.199999999999818,
+          8.400000000000546,
+          7.699999999999818,
+          8.599999999999454,
+          8.600000000000364,
+          8.300000000000182,
+          8.399999999999636,
+          7.800000000000182,
+          9,
+          8.300000000000182,
+          8.199999999999818,
+          8.399999999999636,
+          8.400000000000546,
+          8.300000000000182,
+          8.299999999999272,
+          7.700000000000728,
+          9,
+          8.299999999999272,
+          7.600000000000364,
+          9.100000000000364,
+          8.299999999999272,
+          8.300000000000182,
+          7.5,
+          8.600000000000364,
+          8.899999999999636,
+          8.400000000000546,
+          8.399999999999636,
+          8.199999999999818,
+          8.400000000000546,
+          7.699999999999818,
+          9,
+          8.199999999999818,
+          8.399999999999636,
+          7.400000000000546,
+          9.399999999999636,
+          8.199999999999818,
+          8.300000000000182,
+          8.199999999999818,
+          8.5,
+          8.300000000000182,
+          8.300000000000182,
+          7.800000000000182,
+          9,
+          8.300000000000182,
+          8.299999999999272,
+          7.5,
+          8.700000000000728,
+          8.799999999999272,
+          7.600000000000364,
+          9.199999999999818,
+          8.199999999999818,
+          8.400000000000546,
+          8.300000000000182,
+          8.299999999999272,
+          8,
+          7.900000000000546,
+          8.300000000000182,
+          8.399999999999636,
+          8.399999999999636,
+          8.700000000000728,
+          8.699999999999818,
+          8.199999999999818,
+          8.399999999999636,
+          8.400000000000546,
+          8.300000000000182,
+          8.299999999999272,
+          7.5,
+          9.200000000000728,
+          8.299999999999272,
+          8.400000000000546,
+          7.399999999999636,
+          9,
+          8.5,
+          7.600000000000364,
+          9.199999999999818,
+          8.300000000000182,
+          8.300000000000182,
+          8.299999999999272,
+          8.300000000000182,
+          8.400000000000546,
+          8.299999999999272,
+          16.700000000000728,
+          8.299999999999272,
+          8.400000000000546,
+          8.300000000000182,
+          8.299999999999272,
+          8.300000000000182,
+          8.400000000000546,
+          8.399999999999636,
+          8.199999999999818,
+          8.400000000000546,
+          7.599999999999454,
+          9.100000000000364,
+          8.300000000000182,
+          7.5,
+          9.199999999999818,
+          8.300000000000182,
+          8.399999999999636,
+          8.300000000000182,
+          8.300000000000182,
+          8,
+          8.699999999999818
+        ],
+        "stop": true,
+        "last": 7125.8,
+        "started": 6238,
+        "longTaskSupported": true,
+        "longTasks": [],
+        "dpr": 2,
+        "minimumMs": 9.899999976158142,
+        "medianMs": 10.700000047683716,
+        "p95Ms": 11.700000047683716,
+        "maximumMs": 17.700000047683716,
+        "over100ms": 0,
+        "longTasksOver50ms": [],
+        "rafGapsOver50ms": [],
+        "webkitLimitation": null
+      },
+      "visual": {
+        "errors": [],
+        "sends": 0
+      }
+    },
+    {
+      "engine": "chromium",
+      "name": "loading",
+      "environment": {
+        "node": "v24.21.0",
+        "engine": "chromium",
+        "browserVersion": "151.0.7922.34",
+        "headless": false,
+        "platform": "darwin",
+        "release": "25.6.0",
+        "arch": "arm64",
+        "cpu": "Apple M5",
+        "cpuCount": 10,
+        "totalMemory": 17179869184,
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        },
+        "deviceScaleFactor": 2,
+        "head": "d3e5f473b112eb5a3cbe569c223be67220defb4e",
+        "dirtyStatus": "",
+        "measuredOutsideGitHubActions": true,
+        "performanceIdentity": {
+          "previewTree": "7bab77a243fd85fc0189522e36990bba204180c5",
+          "methodologyBlobs": {
+            "tests/test-ai-workbench-polish-browser.cjs": "59cc1b844ddb74c56254a4e07b94a6b4096867be",
+            "tests/test-ai-workspace-lifecycle-browser.cjs": "ac9d175f797149f8bc1af3b9afe04aa6c8027dfb",
+            "tests/helpers/crop-loading-fixture.cjs": "fb5f87e8b8f09f0a093b51d152a8823810b8ca85",
+            "tests/helpers/performance-reference.cjs": "517ced6819ee4c7788bcba340a8166c842146c77",
+            "package-lock.json": "8ee166e9fcf67fd8d4bdf06f89b5fdc7fb4c80c3",
+            "scripts/check-browser-performance-reference.cjs": "ce67c7edc8593aa08ce009aa3e63c1b53635248d"
+          }
+        }
+      },
+      "sourceIntegrity": {
+        "before": {
+          "preview/js/ai-panel.js": "e67e36cf7b6a49c1aa795be276b3328f1e27aa6240ef5c3ee9493cece1791a49",
+          "preview/js/ai-task-workspaces.js": "c17e8862ff848bee19a350cca13f74a420a369bf5ec544c0aefc5f2211b1ba70",
+          "preview/js/ai-workspace-batch.js": "e6d3ee7dc3a9280d8c902d923fb66e8ff65e91a01d178ab1fc859feca2c41d89",
+          "preview/js/ai-comparison.js": "aa39ddf12ce4f2858f022b72d8221d6be008b7004ef3a0d910f4699143fe8082",
+          "preview/js/unified-library-ui.js": "d0a43a16a31b10308a78aac853cd78bf437e0d297579e96a3ebf03c8ce3027a1",
+          "preview/js/tools/pointer-magnifier.js": "2ebd6592aa82a7eeca4aaf05075fcb4fd7e4b04ab9052a18b13e737408fb3d42",
+          "preview/css/ai-panel.css": "d389e28457548347f075aa6aaaf95f6855f30d980bb539a29a62813edfb26260",
+          "preview/css/ai-comparison.css": "858bdbb517eb8b5a5fd0a5b39b409af1a6e5f35196da1219e7db32bc14ea74c9",
+          "preview/css/unified-library.css": "b02a60c8eb0dcc96ee90ad8acd5ea107582832d34e59d23c88a6c526104f371c",
+          "preview/index.html": "55222ad2e42388cf02a568b5a1b1917627aede43346433c5d61437887bf246ca",
+          "preview/js/main.js": "023e9565e96438eb307c151931c9bd0cc1b98014545674464305cbd8a983b731",
+          "tests/test-ai-workspace-lifecycle-browser.cjs": "63becaaccb995e0cf73ada63d1b67f2987e96f11d8ef19b527a9d154399b47b1",
+          "tests/helpers/crop-loading-fixture.cjs": "a457b8751befa0d6a190daae4d662747ccd0372d8309a763e312292b68b4725d",
+          "tests/test-ai-workbench-polish-browser.cjs": "9e211dae335ada7789614b83fed542f008e9c44b6ec2bc1971e31d38e12bd2fd",
+          "tests/helpers/performance-reference.cjs": "53abb131683ce30a50ab99a668ede56c0acadb879fab3508111d28738c0711b8",
+          "package-lock.json": "2d55e02b7ee7c469721e9834dbfb6b99d0f73eda0aab2be85c1a3da0e70112ec"
+        },
+        "after": {
+          "preview/js/ai-panel.js": "e67e36cf7b6a49c1aa795be276b3328f1e27aa6240ef5c3ee9493cece1791a49",
+          "preview/js/ai-task-workspaces.js": "c17e8862ff848bee19a350cca13f74a420a369bf5ec544c0aefc5f2211b1ba70",
+          "preview/js/ai-workspace-batch.js": "e6d3ee7dc3a9280d8c902d923fb66e8ff65e91a01d178ab1fc859feca2c41d89",
+          "preview/js/ai-comparison.js": "aa39ddf12ce4f2858f022b72d8221d6be008b7004ef3a0d910f4699143fe8082",
+          "preview/js/unified-library-ui.js": "d0a43a16a31b10308a78aac853cd78bf437e0d297579e96a3ebf03c8ce3027a1",
+          "preview/js/tools/pointer-magnifier.js": "2ebd6592aa82a7eeca4aaf05075fcb4fd7e4b04ab9052a18b13e737408fb3d42",
+          "preview/css/ai-panel.css": "d389e28457548347f075aa6aaaf95f6855f30d980bb539a29a62813edfb26260",
+          "preview/css/ai-comparison.css": "858bdbb517eb8b5a5fd0a5b39b409af1a6e5f35196da1219e7db32bc14ea74c9",
+          "preview/css/unified-library.css": "b02a60c8eb0dcc96ee90ad8acd5ea107582832d34e59d23c88a6c526104f371c",
+          "preview/index.html": "55222ad2e42388cf02a568b5a1b1917627aede43346433c5d61437887bf246ca",
+          "preview/js/main.js": "023e9565e96438eb307c151931c9bd0cc1b98014545674464305cbd8a983b731",
+          "tests/test-ai-workspace-lifecycle-browser.cjs": "63becaaccb995e0cf73ada63d1b67f2987e96f11d8ef19b527a9d154399b47b1",
+          "tests/helpers/crop-loading-fixture.cjs": "a457b8751befa0d6a190daae4d662747ccd0372d8309a763e312292b68b4725d",
+          "tests/test-ai-workbench-polish-browser.cjs": "9e211dae335ada7789614b83fed542f008e9c44b6ec2bc1971e31d38e12bd2fd",
+          "tests/helpers/performance-reference.cjs": "53abb131683ce30a50ab99a668ede56c0acadb879fab3508111d28738c0711b8",
+          "package-lock.json": "2d55e02b7ee7c469721e9834dbfb6b99d0f73eda0aab2be85c1a3da0e70112ec"
+        },
+        "unchanged": true
+      },
+      "cleanup": {
+        "serverClosed": true,
+        "browserClosed": true,
+        "contextClosed": true
+      },
+      "transition": {
+        "timings": [
+          {
+            "keyframes": [
+              {
+                "offset": 0,
+                "easing": "linear",
+                "composite": "auto",
+                "height": "1179.2px",
+                "computedOffset": 0
+              },
+              {
+                "offset": 1,
+                "easing": "linear",
+                "composite": "auto",
+                "height": "442.2px",
+                "computedOffset": 1
+              }
+            ],
+            "timing": {
+              "delay": 0,
+              "direction": "normal",
+              "duration": 0.01,
+              "easing": "ease",
+              "endDelay": 0,
+              "fill": "backwards",
+              "iterationStart": 0,
+              "iterations": 1
+            }
+          },
+          {
+            "keyframes": [
+              {
+                "offset": 0,
+                "easing": "linear",
+                "composite": "auto",
+                "scrollbarColor": "rgb(72, 79, 88) rgba(0, 0, 0, 0)",
+                "computedOffset": 0
+              },
+              {
+                "offset": 1,
+                "easing": "linear",
+                "composite": "auto",
+                "scrollbarColor": "rgb(72, 79, 88) rgba(0, 0, 0, 0)",
+                "computedOffset": 1
+              }
+            ],
+            "timing": {
+              "delay": 0,
+              "direction": "normal",
+              "duration": 0.01,
+              "easing": "ease",
+              "endDelay": 0,
+              "fill": "backwards",
+              "iterationStart": 0,
+              "iterations": 1
+            }
+          }
+        ],
+        "settledMs": 9.5
+      },
+      "result": {
+        "skeleton": {
+          "x": 37,
+          "y": 105.1953125,
+          "width": 884.3984375,
+          "height": 442.1953125
+        },
+        "slowTargetRatio": 2,
+        "decodedWidth": 800,
+        "retryWidth": 700,
+        "reopenedWidth": 600,
+        "touchHidesLens": true,
+        "dark": true,
+        "reducedMotion": true,
+        "errors": []
+      }
+    },
+    {
+      "engine": "webkit",
+      "name": "tasks-1",
+      "environment": {
+        "node": "v24.21.0",
+        "engine": "webkit",
+        "browserVersion": "26.5",
+        "headless": false,
+        "platform": "darwin",
+        "release": "25.6.0",
+        "arch": "arm64",
+        "cpu": "Apple M5",
+        "cpuCount": 10,
+        "totalMemory": 17179869184,
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        },
+        "deviceScaleFactor": 2,
+        "head": "d3e5f473b112eb5a3cbe569c223be67220defb4e",
+        "dirtyStatus": "",
+        "measuredOutsideGitHubActions": true,
+        "performanceIdentity": {
+          "previewTree": "7bab77a243fd85fc0189522e36990bba204180c5",
+          "methodologyBlobs": {
+            "tests/test-ai-workbench-polish-browser.cjs": "59cc1b844ddb74c56254a4e07b94a6b4096867be",
+            "tests/test-ai-workspace-lifecycle-browser.cjs": "ac9d175f797149f8bc1af3b9afe04aa6c8027dfb",
+            "tests/helpers/crop-loading-fixture.cjs": "fb5f87e8b8f09f0a093b51d152a8823810b8ca85",
+            "tests/helpers/performance-reference.cjs": "517ced6819ee4c7788bcba340a8166c842146c77",
+            "package-lock.json": "8ee166e9fcf67fd8d4bdf06f89b5fdc7fb4c80c3",
+            "scripts/check-browser-performance-reference.cjs": "ce67c7edc8593aa08ce009aa3e63c1b53635248d"
+          }
+        }
+      },
+      "sourceIntegrity": {
+        "before": {
+          "preview/js/ai-panel.js": "e67e36cf7b6a49c1aa795be276b3328f1e27aa6240ef5c3ee9493cece1791a49",
+          "preview/js/ai-task-workspaces.js": "c17e8862ff848bee19a350cca13f74a420a369bf5ec544c0aefc5f2211b1ba70",
+          "preview/js/ai-workspace-batch.js": "e6d3ee7dc3a9280d8c902d923fb66e8ff65e91a01d178ab1fc859feca2c41d89",
+          "preview/js/ai-comparison.js": "aa39ddf12ce4f2858f022b72d8221d6be008b7004ef3a0d910f4699143fe8082",
+          "preview/js/unified-library-ui.js": "d0a43a16a31b10308a78aac853cd78bf437e0d297579e96a3ebf03c8ce3027a1",
+          "preview/js/tools/pointer-magnifier.js": "2ebd6592aa82a7eeca4aaf05075fcb4fd7e4b04ab9052a18b13e737408fb3d42",
+          "preview/css/ai-panel.css": "d389e28457548347f075aa6aaaf95f6855f30d980bb539a29a62813edfb26260",
+          "preview/css/ai-comparison.css": "858bdbb517eb8b5a5fd0a5b39b409af1a6e5f35196da1219e7db32bc14ea74c9",
+          "preview/css/unified-library.css": "b02a60c8eb0dcc96ee90ad8acd5ea107582832d34e59d23c88a6c526104f371c",
+          "preview/index.html": "55222ad2e42388cf02a568b5a1b1917627aede43346433c5d61437887bf246ca",
+          "preview/js/main.js": "023e9565e96438eb307c151931c9bd0cc1b98014545674464305cbd8a983b731",
+          "tests/test-ai-workspace-lifecycle-browser.cjs": "63becaaccb995e0cf73ada63d1b67f2987e96f11d8ef19b527a9d154399b47b1",
+          "tests/helpers/crop-loading-fixture.cjs": "a457b8751befa0d6a190daae4d662747ccd0372d8309a763e312292b68b4725d",
+          "tests/test-ai-workbench-polish-browser.cjs": "9e211dae335ada7789614b83fed542f008e9c44b6ec2bc1971e31d38e12bd2fd",
+          "tests/helpers/performance-reference.cjs": "53abb131683ce30a50ab99a668ede56c0acadb879fab3508111d28738c0711b8",
+          "package-lock.json": "2d55e02b7ee7c469721e9834dbfb6b99d0f73eda0aab2be85c1a3da0e70112ec"
+        },
+        "after": {
+          "preview/js/ai-panel.js": "e67e36cf7b6a49c1aa795be276b3328f1e27aa6240ef5c3ee9493cece1791a49",
+          "preview/js/ai-task-workspaces.js": "c17e8862ff848bee19a350cca13f74a420a369bf5ec544c0aefc5f2211b1ba70",
+          "preview/js/ai-workspace-batch.js": "e6d3ee7dc3a9280d8c902d923fb66e8ff65e91a01d178ab1fc859feca2c41d89",
+          "preview/js/ai-comparison.js": "aa39ddf12ce4f2858f022b72d8221d6be008b7004ef3a0d910f4699143fe8082",
+          "preview/js/unified-library-ui.js": "d0a43a16a31b10308a78aac853cd78bf437e0d297579e96a3ebf03c8ce3027a1",
+          "preview/js/tools/pointer-magnifier.js": "2ebd6592aa82a7eeca4aaf05075fcb4fd7e4b04ab9052a18b13e737408fb3d42",
+          "preview/css/ai-panel.css": "d389e28457548347f075aa6aaaf95f6855f30d980bb539a29a62813edfb26260",
+          "preview/css/ai-comparison.css": "858bdbb517eb8b5a5fd0a5b39b409af1a6e5f35196da1219e7db32bc14ea74c9",
+          "preview/css/unified-library.css": "b02a60c8eb0dcc96ee90ad8acd5ea107582832d34e59d23c88a6c526104f371c",
+          "preview/index.html": "55222ad2e42388cf02a568b5a1b1917627aede43346433c5d61437887bf246ca",
+          "preview/js/main.js": "023e9565e96438eb307c151931c9bd0cc1b98014545674464305cbd8a983b731",
+          "tests/test-ai-workspace-lifecycle-browser.cjs": "63becaaccb995e0cf73ada63d1b67f2987e96f11d8ef19b527a9d154399b47b1",
+          "tests/helpers/crop-loading-fixture.cjs": "a457b8751befa0d6a190daae4d662747ccd0372d8309a763e312292b68b4725d",
+          "tests/test-ai-workbench-polish-browser.cjs": "9e211dae335ada7789614b83fed542f008e9c44b6ec2bc1971e31d38e12bd2fd",
+          "tests/helpers/performance-reference.cjs": "53abb131683ce30a50ab99a668ede56c0acadb879fab3508111d28738c0711b8",
+          "package-lock.json": "2d55e02b7ee7c469721e9834dbfb6b99d0f73eda0aab2be85c1a3da0e70112ec"
+        },
+        "unchanged": true
+      },
+      "cleanup": {
+        "serverClosed": true,
+        "browserClosed": true,
+        "contextClosed": true
+      },
+      "performance": {
+        "count": 1,
+        "engine": "webkit",
+        "coldSelectionIncludingAutomationMs": [
+          57.31254199999967
+        ],
+        "samples": [
+          {
+            "id": "task-0",
+            "ms": 28,
+            "ready": true
+          },
+          {
+            "id": "task-0",
+            "ms": 28,
+            "ready": true
+          },
+          {
+            "id": "task-0",
+            "ms": 27,
+            "ready": true
+          },
+          {
+            "id": "task-0",
+            "ms": 27,
+            "ready": true
+          },
+          {
+            "id": "task-0",
+            "ms": 28,
+            "ready": true
+          },
+          {
+            "id": "task-0",
+            "ms": 28,
+            "ready": true
+          },
+          {
+            "id": "task-0",
+            "ms": 27,
+            "ready": true
+          },
+          {
+            "id": "task-0",
+            "ms": 28,
+            "ready": true
+          },
+          {
+            "id": "task-0",
+            "ms": 27,
+            "ready": true
+          },
+          {
+            "id": "task-0",
+            "ms": 26,
+            "ready": true
+          },
+          {
+            "id": "task-0",
+            "ms": 27,
+            "ready": true
+          },
+          {
+            "id": "task-0",
+            "ms": 27,
+            "ready": true
+          },
+          {
+            "id": "task-0",
+            "ms": 27,
+            "ready": true
+          },
+          {
+            "id": "task-0",
+            "ms": 32,
+            "ready": true
+          },
+          {
+            "id": "task-0",
+            "ms": 29,
+            "ready": true
+          },
+          {
+            "id": "task-0",
+            "ms": 29,
+            "ready": true
+          },
+          {
+            "id": "task-0",
+            "ms": 28,
+            "ready": true
+          },
+          {
+            "id": "task-0",
+            "ms": 28,
+            "ready": true
+          },
+          {
+            "id": "task-0",
+            "ms": 28,
+            "ready": true
+          },
+          {
+            "id": "task-0",
+            "ms": 28,
+            "ready": true
+          }
+        ],
+        "gaps": [
+          7,
+          16,
+          2,
+          1,
+          13,
+          17,
+          17,
+          16,
+          3,
+          1,
+          13,
+          17,
+          17,
+          16,
+          2,
+          2,
+          13,
+          16,
+          17,
+          17,
+          3,
+          1,
+          12,
+          17,
+          17,
+          16,
+          3,
+          1,
+          13,
+          17,
+          16,
+          17,
+          3,
+          2,
+          12,
+          16,
+          17,
+          17,
+          3,
+          1,
+          12,
+          17,
+          17,
+          16,
+          3,
+          2,
+          12,
+          18,
+          15,
+          17,
+          3,
+          2,
+          12,
+          17,
+          16,
+          17,
+          2,
+          1,
+          13,
+          17,
+          17,
+          16,
+          4,
+          1,
+          12,
+          17,
+          16,
+          17,
+          3,
+          2,
+          12,
+          16,
+          17,
+          17,
+          3,
+          1,
+          12,
+          17,
+          17,
+          16,
+          9,
+          2,
+          6,
+          18,
+          15,
+          18,
+          16,
+          2,
+          1,
+          13,
+          17,
+          18,
+          15,
+          3,
+          1,
+          13,
+          18,
+          15,
+          17,
+          2,
+          1,
+          14,
+          16,
+          17,
+          16,
+          3,
+          1,
+          13,
+          17,
+          17,
+          16,
+          3,
+          1,
+          13,
+          16,
+          18,
+          16,
+          3,
+          1,
+          13,
+          16
+        ],
+        "stop": true,
+        "last": 3327,
+        "started": 1988,
+        "longTaskSupported": false,
+        "longTasks": [],
+        "dpr": 2,
+        "minimumMs": 26,
+        "medianMs": 28,
+        "p95Ms": 29,
+        "maximumMs": 32,
+        "over100ms": 0,
+        "longTasksOver50ms": [],
+        "rafGapsOver50ms": [],
+        "webkitLimitation": "Long Tasks API unavailable: RAF gaps are rendering-stall observations, not proof of main-thread task duration."
+      },
+      "visual": {
+        "errors": [],
+        "sends": 0
+      }
+    },
+    {
+      "engine": "webkit",
+      "name": "tasks-10",
+      "environment": {
+        "node": "v24.21.0",
+        "engine": "webkit",
+        "browserVersion": "26.5",
+        "headless": false,
+        "platform": "darwin",
+        "release": "25.6.0",
+        "arch": "arm64",
+        "cpu": "Apple M5",
+        "cpuCount": 10,
+        "totalMemory": 17179869184,
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        },
+        "deviceScaleFactor": 2,
+        "head": "d3e5f473b112eb5a3cbe569c223be67220defb4e",
+        "dirtyStatus": "",
+        "measuredOutsideGitHubActions": true,
+        "performanceIdentity": {
+          "previewTree": "7bab77a243fd85fc0189522e36990bba204180c5",
+          "methodologyBlobs": {
+            "tests/test-ai-workbench-polish-browser.cjs": "59cc1b844ddb74c56254a4e07b94a6b4096867be",
+            "tests/test-ai-workspace-lifecycle-browser.cjs": "ac9d175f797149f8bc1af3b9afe04aa6c8027dfb",
+            "tests/helpers/crop-loading-fixture.cjs": "fb5f87e8b8f09f0a093b51d152a8823810b8ca85",
+            "tests/helpers/performance-reference.cjs": "517ced6819ee4c7788bcba340a8166c842146c77",
+            "package-lock.json": "8ee166e9fcf67fd8d4bdf06f89b5fdc7fb4c80c3",
+            "scripts/check-browser-performance-reference.cjs": "ce67c7edc8593aa08ce009aa3e63c1b53635248d"
+          }
+        }
+      },
+      "sourceIntegrity": {
+        "before": {
+          "preview/js/ai-panel.js": "e67e36cf7b6a49c1aa795be276b3328f1e27aa6240ef5c3ee9493cece1791a49",
+          "preview/js/ai-task-workspaces.js": "c17e8862ff848bee19a350cca13f74a420a369bf5ec544c0aefc5f2211b1ba70",
+          "preview/js/ai-workspace-batch.js": "e6d3ee7dc3a9280d8c902d923fb66e8ff65e91a01d178ab1fc859feca2c41d89",
+          "preview/js/ai-comparison.js": "aa39ddf12ce4f2858f022b72d8221d6be008b7004ef3a0d910f4699143fe8082",
+          "preview/js/unified-library-ui.js": "d0a43a16a31b10308a78aac853cd78bf437e0d297579e96a3ebf03c8ce3027a1",
+          "preview/js/tools/pointer-magnifier.js": "2ebd6592aa82a7eeca4aaf05075fcb4fd7e4b04ab9052a18b13e737408fb3d42",
+          "preview/css/ai-panel.css": "d389e28457548347f075aa6aaaf95f6855f30d980bb539a29a62813edfb26260",
+          "preview/css/ai-comparison.css": "858bdbb517eb8b5a5fd0a5b39b409af1a6e5f35196da1219e7db32bc14ea74c9",
+          "preview/css/unified-library.css": "b02a60c8eb0dcc96ee90ad8acd5ea107582832d34e59d23c88a6c526104f371c",
+          "preview/index.html": "55222ad2e42388cf02a568b5a1b1917627aede43346433c5d61437887bf246ca",
+          "preview/js/main.js": "023e9565e96438eb307c151931c9bd0cc1b98014545674464305cbd8a983b731",
+          "tests/test-ai-workspace-lifecycle-browser.cjs": "63becaaccb995e0cf73ada63d1b67f2987e96f11d8ef19b527a9d154399b47b1",
+          "tests/helpers/crop-loading-fixture.cjs": "a457b8751befa0d6a190daae4d662747ccd0372d8309a763e312292b68b4725d",
+          "tests/test-ai-workbench-polish-browser.cjs": "9e211dae335ada7789614b83fed542f008e9c44b6ec2bc1971e31d38e12bd2fd",
+          "tests/helpers/performance-reference.cjs": "53abb131683ce30a50ab99a668ede56c0acadb879fab3508111d28738c0711b8",
+          "package-lock.json": "2d55e02b7ee7c469721e9834dbfb6b99d0f73eda0aab2be85c1a3da0e70112ec"
+        },
+        "after": {
+          "preview/js/ai-panel.js": "e67e36cf7b6a49c1aa795be276b3328f1e27aa6240ef5c3ee9493cece1791a49",
+          "preview/js/ai-task-workspaces.js": "c17e8862ff848bee19a350cca13f74a420a369bf5ec544c0aefc5f2211b1ba70",
+          "preview/js/ai-workspace-batch.js": "e6d3ee7dc3a9280d8c902d923fb66e8ff65e91a01d178ab1fc859feca2c41d89",
+          "preview/js/ai-comparison.js": "aa39ddf12ce4f2858f022b72d8221d6be008b7004ef3a0d910f4699143fe8082",
+          "preview/js/unified-library-ui.js": "d0a43a16a31b10308a78aac853cd78bf437e0d297579e96a3ebf03c8ce3027a1",
+          "preview/js/tools/pointer-magnifier.js": "2ebd6592aa82a7eeca4aaf05075fcb4fd7e4b04ab9052a18b13e737408fb3d42",
+          "preview/css/ai-panel.css": "d389e28457548347f075aa6aaaf95f6855f30d980bb539a29a62813edfb26260",
+          "preview/css/ai-comparison.css": "858bdbb517eb8b5a5fd0a5b39b409af1a6e5f35196da1219e7db32bc14ea74c9",
+          "preview/css/unified-library.css": "b02a60c8eb0dcc96ee90ad8acd5ea107582832d34e59d23c88a6c526104f371c",
+          "preview/index.html": "55222ad2e42388cf02a568b5a1b1917627aede43346433c5d61437887bf246ca",
+          "preview/js/main.js": "023e9565e96438eb307c151931c9bd0cc1b98014545674464305cbd8a983b731",
+          "tests/test-ai-workspace-lifecycle-browser.cjs": "63becaaccb995e0cf73ada63d1b67f2987e96f11d8ef19b527a9d154399b47b1",
+          "tests/helpers/crop-loading-fixture.cjs": "a457b8751befa0d6a190daae4d662747ccd0372d8309a763e312292b68b4725d",
+          "tests/test-ai-workbench-polish-browser.cjs": "9e211dae335ada7789614b83fed542f008e9c44b6ec2bc1971e31d38e12bd2fd",
+          "tests/helpers/performance-reference.cjs": "53abb131683ce30a50ab99a668ede56c0acadb879fab3508111d28738c0711b8",
+          "package-lock.json": "2d55e02b7ee7c469721e9834dbfb6b99d0f73eda0aab2be85c1a3da0e70112ec"
+        },
+        "unchanged": true
+      },
+      "cleanup": {
+        "serverClosed": true,
+        "browserClosed": true,
+        "contextClosed": true
+      },
+      "performance": {
+        "count": 10,
+        "engine": "webkit",
+        "coldSelectionIncludingAutomationMs": [
+          35.931541000001744,
+          92.60412499999802,
+          85.3157089999986,
+          99.474124999997,
+          104.06466600000203,
+          84.92454100000032,
+          80.06075000000055,
+          97.14291700000103,
+          117.12558399999762,
+          102.97912500000166
+        ],
+        "samples": [
+          {
+            "id": "task-1",
+            "ms": 28,
+            "ready": true
+          },
+          {
+            "id": "task-8",
+            "ms": 26,
+            "ready": true
+          },
+          {
+            "id": "task-5",
+            "ms": 26,
+            "ready": true
+          },
+          {
+            "id": "task-2",
+            "ms": 26,
+            "ready": true
+          },
+          {
+            "id": "task-9",
+            "ms": 28,
+            "ready": true
+          },
+          {
+            "id": "task-6",
+            "ms": 28,
+            "ready": true
+          },
+          {
+            "id": "task-3",
+            "ms": 28,
+            "ready": true
+          },
+          {
+            "id": "task-0",
+            "ms": 25,
+            "ready": true
+          },
+          {
+            "id": "task-7",
+            "ms": 27,
+            "ready": true
+          },
+          {
+            "id": "task-4",
+            "ms": 25,
+            "ready": true
+          },
+          {
+            "id": "task-1",
+            "ms": 27,
+            "ready": true
+          },
+          {
+            "id": "task-8",
+            "ms": 28,
+            "ready": true
+          },
+          {
+            "id": "task-5",
+            "ms": 24,
+            "ready": true
+          },
+          {
+            "id": "task-2",
+            "ms": 28,
+            "ready": true
+          },
+          {
+            "id": "task-9",
+            "ms": 27,
+            "ready": true
+          },
+          {
+            "id": "task-6",
+            "ms": 29,
+            "ready": true
+          },
+          {
+            "id": "task-3",
+            "ms": 27,
+            "ready": true
+          },
+          {
+            "id": "task-0",
+            "ms": 29,
+            "ready": true
+          },
+          {
+            "id": "task-7",
+            "ms": 27,
+            "ready": true
+          },
+          {
+            "id": "task-4",
+            "ms": 28,
+            "ready": true
+          }
+        ],
+        "gaps": [
+          12,
+          17,
+          3,
+          1,
+          13,
+          17,
+          16,
+          17,
+          2,
+          2,
+          12,
+          17,
+          18,
+          15,
+          3,
+          1,
+          13,
+          16,
+          18,
+          16,
+          3,
+          1,
+          13,
+          15,
+          18,
+          17,
+          2,
+          1,
+          13,
+          17,
+          17,
+          16,
+          2,
+          1,
+          14,
+          17,
+          16,
+          17,
+          3,
+          1,
+          13,
+          16,
+          18,
+          16,
+          3,
+          1,
+          13,
+          16,
+          17,
+          16,
+          3,
+          1,
+          12,
+          18,
+          16,
+          17,
+          3,
+          1,
+          12,
+          18,
+          16,
+          18,
+          2,
+          1,
+          12,
+          18,
+          16,
+          16,
+          2,
+          1,
+          14,
+          17,
+          16,
+          16,
+          2,
+          2,
+          14,
+          16,
+          17,
+          16,
+          3,
+          1,
+          13,
+          17,
+          16,
+          18,
+          2,
+          1,
+          12,
+          18,
+          16,
+          16,
+          3,
+          1,
+          13,
+          17,
+          16,
+          18,
+          2,
+          2,
+          12,
+          18,
+          16,
+          16,
+          3,
+          1,
+          13,
+          18,
+          15,
+          17,
+          2,
+          1,
+          14,
+          16,
+          17,
+          17,
+          2,
+          1,
+          13,
+          18
+        ],
+        "stop": true,
+        "last": 4218,
+        "started": 2888,
+        "longTaskSupported": false,
+        "longTasks": [],
+        "dpr": 2,
+        "minimumMs": 24,
+        "medianMs": 27,
+        "p95Ms": 29,
+        "maximumMs": 29,
+        "over100ms": 0,
+        "longTasksOver50ms": [],
+        "rafGapsOver50ms": [],
+        "webkitLimitation": "Long Tasks API unavailable: RAF gaps are rendering-stall observations, not proof of main-thread task duration."
+      },
+      "visual": {
+        "errors": [],
+        "sends": 0
+      }
+    },
+    {
+      "engine": "webkit",
+      "name": "tasks-30",
+      "environment": {
+        "node": "v24.21.0",
+        "engine": "webkit",
+        "browserVersion": "26.5",
+        "headless": false,
+        "platform": "darwin",
+        "release": "25.6.0",
+        "arch": "arm64",
+        "cpu": "Apple M5",
+        "cpuCount": 10,
+        "totalMemory": 17179869184,
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        },
+        "deviceScaleFactor": 2,
+        "head": "d3e5f473b112eb5a3cbe569c223be67220defb4e",
+        "dirtyStatus": "",
+        "measuredOutsideGitHubActions": true,
+        "performanceIdentity": {
+          "previewTree": "7bab77a243fd85fc0189522e36990bba204180c5",
+          "methodologyBlobs": {
+            "tests/test-ai-workbench-polish-browser.cjs": "59cc1b844ddb74c56254a4e07b94a6b4096867be",
+            "tests/test-ai-workspace-lifecycle-browser.cjs": "ac9d175f797149f8bc1af3b9afe04aa6c8027dfb",
+            "tests/helpers/crop-loading-fixture.cjs": "fb5f87e8b8f09f0a093b51d152a8823810b8ca85",
+            "tests/helpers/performance-reference.cjs": "517ced6819ee4c7788bcba340a8166c842146c77",
+            "package-lock.json": "8ee166e9fcf67fd8d4bdf06f89b5fdc7fb4c80c3",
+            "scripts/check-browser-performance-reference.cjs": "ce67c7edc8593aa08ce009aa3e63c1b53635248d"
+          }
+        }
+      },
+      "sourceIntegrity": {
+        "before": {
+          "preview/js/ai-panel.js": "e67e36cf7b6a49c1aa795be276b3328f1e27aa6240ef5c3ee9493cece1791a49",
+          "preview/js/ai-task-workspaces.js": "c17e8862ff848bee19a350cca13f74a420a369bf5ec544c0aefc5f2211b1ba70",
+          "preview/js/ai-workspace-batch.js": "e6d3ee7dc3a9280d8c902d923fb66e8ff65e91a01d178ab1fc859feca2c41d89",
+          "preview/js/ai-comparison.js": "aa39ddf12ce4f2858f022b72d8221d6be008b7004ef3a0d910f4699143fe8082",
+          "preview/js/unified-library-ui.js": "d0a43a16a31b10308a78aac853cd78bf437e0d297579e96a3ebf03c8ce3027a1",
+          "preview/js/tools/pointer-magnifier.js": "2ebd6592aa82a7eeca4aaf05075fcb4fd7e4b04ab9052a18b13e737408fb3d42",
+          "preview/css/ai-panel.css": "d389e28457548347f075aa6aaaf95f6855f30d980bb539a29a62813edfb26260",
+          "preview/css/ai-comparison.css": "858bdbb517eb8b5a5fd0a5b39b409af1a6e5f35196da1219e7db32bc14ea74c9",
+          "preview/css/unified-library.css": "b02a60c8eb0dcc96ee90ad8acd5ea107582832d34e59d23c88a6c526104f371c",
+          "preview/index.html": "55222ad2e42388cf02a568b5a1b1917627aede43346433c5d61437887bf246ca",
+          "preview/js/main.js": "023e9565e96438eb307c151931c9bd0cc1b98014545674464305cbd8a983b731",
+          "tests/test-ai-workspace-lifecycle-browser.cjs": "63becaaccb995e0cf73ada63d1b67f2987e96f11d8ef19b527a9d154399b47b1",
+          "tests/helpers/crop-loading-fixture.cjs": "a457b8751befa0d6a190daae4d662747ccd0372d8309a763e312292b68b4725d",
+          "tests/test-ai-workbench-polish-browser.cjs": "9e211dae335ada7789614b83fed542f008e9c44b6ec2bc1971e31d38e12bd2fd",
+          "tests/helpers/performance-reference.cjs": "53abb131683ce30a50ab99a668ede56c0acadb879fab3508111d28738c0711b8",
+          "package-lock.json": "2d55e02b7ee7c469721e9834dbfb6b99d0f73eda0aab2be85c1a3da0e70112ec"
+        },
+        "after": {
+          "preview/js/ai-panel.js": "e67e36cf7b6a49c1aa795be276b3328f1e27aa6240ef5c3ee9493cece1791a49",
+          "preview/js/ai-task-workspaces.js": "c17e8862ff848bee19a350cca13f74a420a369bf5ec544c0aefc5f2211b1ba70",
+          "preview/js/ai-workspace-batch.js": "e6d3ee7dc3a9280d8c902d923fb66e8ff65e91a01d178ab1fc859feca2c41d89",
+          "preview/js/ai-comparison.js": "aa39ddf12ce4f2858f022b72d8221d6be008b7004ef3a0d910f4699143fe8082",
+          "preview/js/unified-library-ui.js": "d0a43a16a31b10308a78aac853cd78bf437e0d297579e96a3ebf03c8ce3027a1",
+          "preview/js/tools/pointer-magnifier.js": "2ebd6592aa82a7eeca4aaf05075fcb4fd7e4b04ab9052a18b13e737408fb3d42",
+          "preview/css/ai-panel.css": "d389e28457548347f075aa6aaaf95f6855f30d980bb539a29a62813edfb26260",
+          "preview/css/ai-comparison.css": "858bdbb517eb8b5a5fd0a5b39b409af1a6e5f35196da1219e7db32bc14ea74c9",
+          "preview/css/unified-library.css": "b02a60c8eb0dcc96ee90ad8acd5ea107582832d34e59d23c88a6c526104f371c",
+          "preview/index.html": "55222ad2e42388cf02a568b5a1b1917627aede43346433c5d61437887bf246ca",
+          "preview/js/main.js": "023e9565e96438eb307c151931c9bd0cc1b98014545674464305cbd8a983b731",
+          "tests/test-ai-workspace-lifecycle-browser.cjs": "63becaaccb995e0cf73ada63d1b67f2987e96f11d8ef19b527a9d154399b47b1",
+          "tests/helpers/crop-loading-fixture.cjs": "a457b8751befa0d6a190daae4d662747ccd0372d8309a763e312292b68b4725d",
+          "tests/test-ai-workbench-polish-browser.cjs": "9e211dae335ada7789614b83fed542f008e9c44b6ec2bc1971e31d38e12bd2fd",
+          "tests/helpers/performance-reference.cjs": "53abb131683ce30a50ab99a668ede56c0acadb879fab3508111d28738c0711b8",
+          "package-lock.json": "2d55e02b7ee7c469721e9834dbfb6b99d0f73eda0aab2be85c1a3da0e70112ec"
+        },
+        "unchanged": true
+      },
+      "cleanup": {
+        "serverClosed": true,
+        "browserClosed": true,
+        "contextClosed": true
+      },
+      "performance": {
+        "count": 30,
+        "engine": "webkit",
+        "coldSelectionIncludingAutomationMs": [
+          54.57737500000076,
+          93.68116699999518,
+          109.02987500000017,
+          92.79799999999523,
+          104.42525000000023,
+          101.97666700000264,
+          110.32320900000195,
+          114.44683300000179,
+          126.50208399999974,
+          127.1921250000014,
+          104.6639159999977,
+          116.91729200000555,
+          139.0430419999975,
+          110.94400000000314,
+          147.50475000000006,
+          119.81604200000584,
+          150.0775829999984,
+          114.66016700000182,
+          132.49245900000096,
+          142.0592500000057,
+          142.7780000000057,
+          158.51129200000287,
+          156.98912500000006,
+          153.88299999999435,
+          167.0355419999978,
+          156.42391599999974,
+          195.4164579999997,
+          204.05958400000236,
+          150.03733300000022,
+          152.26304199999868
+        ],
+        "samples": [
+          {
+            "id": "task-1",
+            "ms": 26,
+            "ready": true
+          },
+          {
+            "id": "task-8",
+            "ms": 27,
+            "ready": true
+          },
+          {
+            "id": "task-15",
+            "ms": 27,
+            "ready": true
+          },
+          {
+            "id": "task-22",
+            "ms": 27,
+            "ready": true
+          },
+          {
+            "id": "task-29",
+            "ms": 28,
+            "ready": true
+          },
+          {
+            "id": "task-6",
+            "ms": 28,
+            "ready": true
+          },
+          {
+            "id": "task-13",
+            "ms": 27,
+            "ready": true
+          },
+          {
+            "id": "task-20",
+            "ms": 28,
+            "ready": true
+          },
+          {
+            "id": "task-27",
+            "ms": 27,
+            "ready": true
+          },
+          {
+            "id": "task-4",
+            "ms": 25,
+            "ready": true
+          },
+          {
+            "id": "task-11",
+            "ms": 28,
+            "ready": true
+          },
+          {
+            "id": "task-18",
+            "ms": 27,
+            "ready": true
+          },
+          {
+            "id": "task-25",
+            "ms": 28,
+            "ready": true
+          },
+          {
+            "id": "task-2",
+            "ms": 28,
+            "ready": true
+          },
+          {
+            "id": "task-9",
+            "ms": 27,
+            "ready": true
+          },
+          {
+            "id": "task-16",
+            "ms": 29,
+            "ready": true
+          },
+          {
+            "id": "task-23",
+            "ms": 27,
+            "ready": true
+          },
+          {
+            "id": "task-0",
+            "ms": 27,
+            "ready": true
+          },
+          {
+            "id": "task-7",
+            "ms": 28,
+            "ready": true
+          },
+          {
+            "id": "task-14",
+            "ms": 26,
+            "ready": true
+          }
+        ],
+        "gaps": [
+          12,
+          17,
+          2,
+          1,
+          13,
+          17,
+          18,
+          15,
+          3,
+          1,
+          13,
+          17,
+          16,
+          17,
+          2,
+          1,
+          14,
+          16,
+          17,
+          16,
+          3,
+          1,
+          13,
+          17,
+          17,
+          16,
+          3,
+          1,
+          13,
+          17,
+          16,
+          18,
+          2,
+          1,
+          13,
+          16,
+          17,
+          17,
+          2,
+          1,
+          13,
+          17,
+          17,
+          17,
+          2,
+          1,
+          13,
+          17,
+          16,
+          17,
+          2,
+          1,
+          14,
+          16,
+          17,
+          18,
+          2,
+          2,
+          12,
+          15,
+          18,
+          16,
+          2,
+          2,
+          13,
+          17,
+          16,
+          17,
+          2,
+          2,
+          13,
+          16,
+          16,
+          18,
+          2,
+          1,
+          13,
+          17,
+          18,
+          15,
+          3,
+          1,
+          13,
+          17,
+          17,
+          16,
+          2,
+          2,
+          13,
+          16,
+          16,
+          17,
+          2,
+          1,
+          14,
+          18,
+          15,
+          18,
+          2,
+          2,
+          12,
+          17,
+          16,
+          17,
+          2,
+          2,
+          13,
+          16,
+          17,
+          16,
+          3,
+          1,
+          13,
+          17,
+          17,
+          16,
+          3,
+          1,
+          13,
+          17
+        ],
+        "stop": true,
+        "last": 7468,
+        "started": 6139,
+        "longTaskSupported": false,
+        "longTasks": [],
+        "dpr": 2,
+        "minimumMs": 25,
+        "medianMs": 27,
+        "p95Ms": 28,
+        "maximumMs": 29,
+        "over100ms": 0,
+        "longTasksOver50ms": [],
+        "rafGapsOver50ms": [],
+        "webkitLimitation": "Long Tasks API unavailable: RAF gaps are rendering-stall observations, not proof of main-thread task duration."
+      },
+      "visual": {
+        "errors": [],
+        "sends": 0
+      }
+    },
+    {
+      "engine": "webkit",
+      "name": "loading",
+      "environment": {
+        "node": "v24.21.0",
+        "engine": "webkit",
+        "browserVersion": "26.5",
+        "headless": false,
+        "platform": "darwin",
+        "release": "25.6.0",
+        "arch": "arm64",
+        "cpu": "Apple M5",
+        "cpuCount": 10,
+        "totalMemory": 17179869184,
+        "viewport": {
+          "width": 1440,
+          "height": 1000
+        },
+        "deviceScaleFactor": 2,
+        "head": "d3e5f473b112eb5a3cbe569c223be67220defb4e",
+        "dirtyStatus": "",
+        "measuredOutsideGitHubActions": true,
+        "performanceIdentity": {
+          "previewTree": "7bab77a243fd85fc0189522e36990bba204180c5",
+          "methodologyBlobs": {
+            "tests/test-ai-workbench-polish-browser.cjs": "59cc1b844ddb74c56254a4e07b94a6b4096867be",
+            "tests/test-ai-workspace-lifecycle-browser.cjs": "ac9d175f797149f8bc1af3b9afe04aa6c8027dfb",
+            "tests/helpers/crop-loading-fixture.cjs": "fb5f87e8b8f09f0a093b51d152a8823810b8ca85",
+            "tests/helpers/performance-reference.cjs": "517ced6819ee4c7788bcba340a8166c842146c77",
+            "package-lock.json": "8ee166e9fcf67fd8d4bdf06f89b5fdc7fb4c80c3",
+            "scripts/check-browser-performance-reference.cjs": "ce67c7edc8593aa08ce009aa3e63c1b53635248d"
+          }
+        }
+      },
+      "sourceIntegrity": {
+        "before": {
+          "preview/js/ai-panel.js": "e67e36cf7b6a49c1aa795be276b3328f1e27aa6240ef5c3ee9493cece1791a49",
+          "preview/js/ai-task-workspaces.js": "c17e8862ff848bee19a350cca13f74a420a369bf5ec544c0aefc5f2211b1ba70",
+          "preview/js/ai-workspace-batch.js": "e6d3ee7dc3a9280d8c902d923fb66e8ff65e91a01d178ab1fc859feca2c41d89",
+          "preview/js/ai-comparison.js": "aa39ddf12ce4f2858f022b72d8221d6be008b7004ef3a0d910f4699143fe8082",
+          "preview/js/unified-library-ui.js": "d0a43a16a31b10308a78aac853cd78bf437e0d297579e96a3ebf03c8ce3027a1",
+          "preview/js/tools/pointer-magnifier.js": "2ebd6592aa82a7eeca4aaf05075fcb4fd7e4b04ab9052a18b13e737408fb3d42",
+          "preview/css/ai-panel.css": "d389e28457548347f075aa6aaaf95f6855f30d980bb539a29a62813edfb26260",
+          "preview/css/ai-comparison.css": "858bdbb517eb8b5a5fd0a5b39b409af1a6e5f35196da1219e7db32bc14ea74c9",
+          "preview/css/unified-library.css": "b02a60c8eb0dcc96ee90ad8acd5ea107582832d34e59d23c88a6c526104f371c",
+          "preview/index.html": "55222ad2e42388cf02a568b5a1b1917627aede43346433c5d61437887bf246ca",
+          "preview/js/main.js": "023e9565e96438eb307c151931c9bd0cc1b98014545674464305cbd8a983b731",
+          "tests/test-ai-workspace-lifecycle-browser.cjs": "63becaaccb995e0cf73ada63d1b67f2987e96f11d8ef19b527a9d154399b47b1",
+          "tests/helpers/crop-loading-fixture.cjs": "a457b8751befa0d6a190daae4d662747ccd0372d8309a763e312292b68b4725d",
+          "tests/test-ai-workbench-polish-browser.cjs": "9e211dae335ada7789614b83fed542f008e9c44b6ec2bc1971e31d38e12bd2fd",
+          "tests/helpers/performance-reference.cjs": "53abb131683ce30a50ab99a668ede56c0acadb879fab3508111d28738c0711b8",
+          "package-lock.json": "2d55e02b7ee7c469721e9834dbfb6b99d0f73eda0aab2be85c1a3da0e70112ec"
+        },
+        "after": {
+          "preview/js/ai-panel.js": "e67e36cf7b6a49c1aa795be276b3328f1e27aa6240ef5c3ee9493cece1791a49",
+          "preview/js/ai-task-workspaces.js": "c17e8862ff848bee19a350cca13f74a420a369bf5ec544c0aefc5f2211b1ba70",
+          "preview/js/ai-workspace-batch.js": "e6d3ee7dc3a9280d8c902d923fb66e8ff65e91a01d178ab1fc859feca2c41d89",
+          "preview/js/ai-comparison.js": "aa39ddf12ce4f2858f022b72d8221d6be008b7004ef3a0d910f4699143fe8082",
+          "preview/js/unified-library-ui.js": "d0a43a16a31b10308a78aac853cd78bf437e0d297579e96a3ebf03c8ce3027a1",
+          "preview/js/tools/pointer-magnifier.js": "2ebd6592aa82a7eeca4aaf05075fcb4fd7e4b04ab9052a18b13e737408fb3d42",
+          "preview/css/ai-panel.css": "d389e28457548347f075aa6aaaf95f6855f30d980bb539a29a62813edfb26260",
+          "preview/css/ai-comparison.css": "858bdbb517eb8b5a5fd0a5b39b409af1a6e5f35196da1219e7db32bc14ea74c9",
+          "preview/css/unified-library.css": "b02a60c8eb0dcc96ee90ad8acd5ea107582832d34e59d23c88a6c526104f371c",
+          "preview/index.html": "55222ad2e42388cf02a568b5a1b1917627aede43346433c5d61437887bf246ca",
+          "preview/js/main.js": "023e9565e96438eb307c151931c9bd0cc1b98014545674464305cbd8a983b731",
+          "tests/test-ai-workspace-lifecycle-browser.cjs": "63becaaccb995e0cf73ada63d1b67f2987e96f11d8ef19b527a9d154399b47b1",
+          "tests/helpers/crop-loading-fixture.cjs": "a457b8751befa0d6a190daae4d662747ccd0372d8309a763e312292b68b4725d",
+          "tests/test-ai-workbench-polish-browser.cjs": "9e211dae335ada7789614b83fed542f008e9c44b6ec2bc1971e31d38e12bd2fd",
+          "tests/helpers/performance-reference.cjs": "53abb131683ce30a50ab99a668ede56c0acadb879fab3508111d28738c0711b8",
+          "package-lock.json": "2d55e02b7ee7c469721e9834dbfb6b99d0f73eda0aab2be85c1a3da0e70112ec"
+        },
+        "unchanged": true
+      },
+      "cleanup": {
+        "serverClosed": true,
+        "browserClosed": true,
+        "contextClosed": true
+      },
+      "transition": {
+        "timings": [
+          {
+            "keyframes": [
+              {
+                "composite": "auto",
+                "easing": "linear",
+                "offset": 0,
+                "computedOffset": 0,
+                "height": "1179.199951px"
+              },
+              {
+                "composite": "auto",
+                "easing": "linear",
+                "offset": 1,
+                "computedOffset": 1,
+                "height": "442.200012px"
+              }
+            ],
+            "timing": {
+              "delay": 0,
+              "direction": "normal",
+              "duration": 0.01,
+              "easing": "ease",
+              "endDelay": 0,
+              "fill": "backwards",
+              "iterationStart": 0,
+              "iterations": 1
+            }
+          }
+        ],
+        "settledMs": 26
+      },
+      "result": {
+        "skeleton": {
+          "x": 37,
+          "y": 105.1875,
+          "width": 884.390625,
+          "height": 442.1875
+        },
+        "slowTargetRatio": 2,
+        "decodedWidth": 800,
+        "retryWidth": 700,
+        "reopenedWidth": 600,
+        "touchHidesLens": true,
+        "dark": true,
+        "reducedMotion": true,
+        "errors": []
+      }
+    }
+  ]
+}
