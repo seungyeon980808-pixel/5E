@@ -56,14 +56,15 @@ async function fixture(t, engine, name, count = null) {
   });
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve)); resources.serverPort = server.address().port;
   write(evidence, 'resources.json', resources);
-  browser = await playwright[engine].launch({ headless: true }); resources.browserStarted = true;
+  const headless = process.env.TASK9_HEADED !== '1';
+  browser = await playwright[engine].launch({ headless }); resources.browserStarted = true;
   context = await browser.newContext({ viewport: { width: 1440, height: 1000 }, deviceScaleFactor: 2, hasTouch: true, colorScheme: 'light', reducedMotion: 'no-preference' }); resources.contextStarted = true;
   write(evidence, 'resources.json', resources);
   await context.tracing.start({ screenshots: true, snapshots: true }); tracing = true;
   page = await context.newPage(); page.setDefaultTimeout(15000);
   page.on('pageerror', error => errors.push(error.message));
   const origin = `http://127.0.0.1:${resources.serverPort}`;
-  write(evidence, 'environment.json', { node: process.version, executable: process.execPath, engine, browserVersion: browser.version(), platform: os.platform(), release: os.release(), arch: os.arch(), cpu: os.cpus()[0]?.model, cpuCount: os.cpus().length, totalMemory: os.totalmem(), loadAverage: os.loadavg(), viewport: { width: 1440, height: 1000 }, deviceScaleFactor: 2, head: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(), dirtyStatus: execFileSync('git', ['status', '--short'], { cwd: root, encoding: 'utf8' }), sourceHashes: sourceBefore, service: 'deterministic desktop fixture; no authenticated provider request', measurement: 'trusted pointer click event through decoded selected target plus two animation frames; automation actionability time excluded' });
+  write(evidence, 'environment.json', { node: process.version, executable: process.execPath, engine, browserVersion: browser.version(), headless, platform: os.platform(), release: os.release(), arch: os.arch(), cpu: os.cpus()[0]?.model, cpuCount: os.cpus().length, totalMemory: os.totalmem(), loadAverage: os.loadavg(), viewport: { width: 1440, height: 1000 }, deviceScaleFactor: 2, head: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(), dirtyStatus: execFileSync('git', ['status', '--short'], { cwd: root, encoding: 'utf8' }), sourceHashes: sourceBefore, service: 'deterministic desktop fixture; no authenticated provider request', measurement: 'trusted pointer click event through decoded selected target plus two animation frames; automation actionability time excluded' });
   if (count !== null) {
     await page.addInitScript({ content: `${seed}\nseedRequestWorkspaces(${count}); localStorage.setItem('5e.preview:5e.mode','pro'); localStorage.setItem('5e.preview:theme','light'); localStorage.setItem('5e.preview:5e.tutorial.bannerSeen','true'); window.fiveEDesktop.captureSources=async()=>[{name:'검증 캡처',data:window.__task2.original}];` });
     await page.route('**/preview/js/main.js*', route => {
@@ -123,6 +124,7 @@ for (const engine of ['chromium', 'webkit']) for (const count of [1, 10, 30]) {
     // DOM snapshots and screenshot capture are diagnostic work, not application
     // click-to-paint latency. Preserve traces on either side of the benchmark.
     await pauseTracing();
+    await page.bringToFront();
     await page.waitForTimeout(100);
     await page.evaluate(() => {
       window.__polish = { samples: [], gaps: [], stop: false, last: performance.now(), started: performance.now() };

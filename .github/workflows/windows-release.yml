@@ -12,6 +12,8 @@ jobs:
   test:
     name: Test
     runs-on: macos-latest
+    env:
+      TASK9_HEADED: '1'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

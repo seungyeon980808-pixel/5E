@@ -1,0 +1,38 @@
+name: Browser Performance Diagnostics
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [codex/160-source-and-deploy-gate]
+    paths:
+      - tests/test-ai-workbench-polish-browser.cjs
+      - .github/workflows/browser-performance.yml
+
+permissions:
+  contents: read
+
+jobs:
+  performance:
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: [macos-15, macos-26]
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.21.0
+          cache: npm
+      - run: npm ci --no-audit
+      - run: npx playwright install --with-deps chromium webkit
+      - name: Measure interactive Retina rendering with the unchanged performance limits
+        env:
+          TASK9_HEADED: '1'
+          TASK9_EVIDENCE: ${{ github.workspace }}/_work/performance
+        run: npm run test:browser -- --only test-ai-workbench-polish-browser.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: browser-performance-${{ matrix.runner }}-${{ github.sha }}
+          path: _work/performance

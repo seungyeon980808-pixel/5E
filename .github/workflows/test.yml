@@ -13,6 +13,8 @@ jobs:
     # Native WebKit is the reference for the existing rendering/performance gate.
     # This suite also exercises headed browser interactions.
     runs-on: macos-latest
+    env:
+      TASK9_HEADED: '1'
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4

@@ -34,6 +34,7 @@ jobs:
           EVIDENCE_DIR: ${{ github.workspace }}/_work/web-release/evidence/source
           OUTPUT_EVIDENCE: ${{ github.workspace }}/_work/web-release/evidence/source/output
           TASK2_EVIDENCE: ${{ github.workspace }}/_work/web-release/evidence/source/lifecycle
+          TASK9_HEADED: '1'
           TASK9_EVIDENCE: ${{ github.workspace }}/_work/web-release/evidence/source/polish
         run: npm run test:browser
       - uses: actions/upload-artifact@v4
