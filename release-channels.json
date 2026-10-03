@@ -9,21 +9,20 @@
   },
   "channels": {
     "stableWeb": {
-      "version": "1.6.0",
+      "version": "1.6.1",
       "url": "https://www.5e.ai.kr/",
       "entry": "index.html",
-      "pagesSourceBranch": "codex/preview-1.6.0",
-      "pagesSourceSha": "751b1ed4622058497a6f3ba43f92333eb15268eb",
-      "observedOn": "2026-10-03"
+      "pagesBuildType": "workflow",
+      "pagesSourceBranch": "main",
+      "tag": "v1.6.1",
+      "sourceReceipt": "https://www.5e.ai.kr/js/release-receipt.js"
     },
     "previewWeb": {
       "version": "1.7.0",
       "label": "Preview",
       "url": "https://www.5e.ai.kr/preview/",
       "entry": "preview/index.html",
-      "pagesSourceBranch": "codex/preview-1.6.0",
-      "pagesSourceSha": "751b1ed4622058497a6f3ba43f92333eb15268eb",
-      "observedOn": "2026-10-03"
+      "preservedSourceSha": "751b1ed4622058497a6f3ba43f92333eb15268eb"
     },
     "desktop": {
       "version": "1.6.1",
@@ -58,9 +57,7 @@
     "publishedV158Checksum": "OPEN_PENDING_PUBLICATION"
   },
   "webPublication": {
-    "status": "PENDING_EXTERNAL",
-    "currentBuildType": "legacy",
-    "proposedBuildType": "workflow",
+    "status": "VALIDATED_PUBLICATION_REQUIRED",
     "canonicalSourceBranch": "main",
     "preservePreviewSourceSha": "751b1ed4622058497a6f3ba43f92333eb15268eb",
     "preservePreviewPath": "preview",
@@ -71,6 +68,15 @@
       "preview",
       "mobile",
       "1.6.0"
-    ]
+    ],
+    "buildType": "workflow"
+  },
+  "previousWebDeployment": {
+    "observedOn": "2026-10-03",
+    "buildType": "legacy",
+    "sourceBranch": "codex/preview-1.6.0",
+    "sourceSha": "751b1ed4622058497a6f3ba43f92333eb15268eb",
+    "stableVersion": "1.6.0",
+    "previewVersion": "1.7.0"
   }
 }
