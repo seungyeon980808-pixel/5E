@@ -2,11 +2,6 @@ name: Browser Performance Diagnostics
 
 on:
   workflow_dispatch:
-  push:
-    branches: [codex/160-source-and-deploy-gate]
-    paths:
-      - tests/test-ai-workbench-polish-browser.cjs
-      - .github/workflows/browser-performance.yml
 
 permissions:
   contents: read
