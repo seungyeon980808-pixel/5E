@@ -163,7 +163,7 @@ async function selectMoveResizeRotate(page, id) {
   return { initialFrame, moveFrame, resizeFrame, rotateFrame, oppositeFrame, object: oppositeOrientation };
 }
 
-async function saveAndReopen(page, context, id) {
+async function saveAndReopen(page, browser, id) {
   await page.locator('#file-menu-btn').click();
   await page.locator('#project-save').click();
   const downloadEvent = page.waitForEvent('download');
@@ -173,10 +173,17 @@ async function saveAndReopen(page, context, id) {
   const download = await downloadEvent;
   const savedPath = path.join(evidence, 'rightangle-selection.5e');
   await download.saveAs(savedPath);
-  const reopened = await context.newPage();
+  // Verify the downloaded file independently of the original tab's autosave.
+  const reopenedContext = await browser.newContext({ viewport: { width: 1440, height: 1000 }, serviceWorkers: 'block', locale: 'ko-KR' });
+  await reopenedContext.addInitScript(() => {
+    localStorage.setItem('5e.preview:5e.tutorial.bannerSeen', 'true');
+    localStorage.setItem('5e.tutorial.bannerSeen', 'true');
+  });
+  const reopened = await reopenedContext.newPage();
   const reopenedErrors = [];
   reopened.on('pageerror', (error) => reopenedErrors.push(error.message));
-  await reopened.goto(`${base}?mode=pro&mobile=0`, { waitUntil: 'domcontentloaded' });
+  await reopened.goto(`${base}?mode=pro&mobile=0`, { waitUntil: 'networkidle' });
+  await reopened.locator('html[data-mode="pro"]').waitFor({ state: 'attached' });
   await dismissWelcome(reopened);
   await reopened.locator('#file-menu-btn').click();
   const chooser = reopened.waitForEvent('filechooser');
@@ -190,12 +197,16 @@ async function saveAndReopen(page, context, id) {
   try {
     await rendered.waitFor({ state: 'attached' });
   } catch (error) {
+    const snapshot = await stateSnapshot(reopened);
+    fs.writeFileSync(path.join(evidence, 'reopen-failure-state.json'), JSON.stringify({ snapshot, errors: reopenedErrors }, null, 2));
+    await reopened.screenshot({ path: path.join(evidence, 'reopen-failure.png'), fullPage: true });
     throw new Error(`${error.message}; reopen errors=${JSON.stringify(reopenedErrors)}`);
   }
   await rendered.click({ force: true });
   const object = (await stateSnapshot(reopened)).objects.find((candidate) => candidate.id === id);
   const frame = await assertRightAngleFrame(reopened, object, 'reopen');
-  return { reopened, savedPath, frame, object };
+  assert.deepEqual(reopenedErrors, [], 'file reopening must not emit runtime errors');
+  return { reopened, reopenedContext, savedPath, frame, object };
 }
 
 (async () => {
@@ -227,14 +238,14 @@ async function saveAndReopen(page, context, id) {
     await page.locator(`[data-id="${anglearc.id}"]`).first().click({ force: true });
     const anglearcFrame = await assertFiniteSingleFrame(page, 'anglearc regression');
     await page.screenshot({ path: path.join(evidence, 'selection-regressions.png'), fullPage: true });
-    const persisted = await saveAndReopen(page, context, rightangle.id);
+    const persisted = await saveAndReopen(page, browser, rightangle.id);
     persisted.reopened.on('console', recordConsole);
     await persisted.reopened.screenshot({ path: path.join(evidence, 'rightangle-reopened.png'), fullPage: true });
     assert.deepEqual(invalidRectErrors, [], `rightangle interaction must not emit invalid rect errors: ${invalidRectErrors.join(' | ')}`);
     const report = { scenario: 'search-create-select-move-resize-rotate-save-reopen-rightangle', rightangle, interaction, rectFrame, anglearcFrame, reopenedFrame: persisted.frame, invalidRectErrors, savedPath: persisted.savedPath, passed: true };
     fs.writeFileSync(path.join(evidence, 'rightangle-selection-report.json'), `${JSON.stringify(report, null, 2)}\n`);
     console.log(JSON.stringify(report, null, 2));
-    await persisted.reopened.close();
+    await persisted.reopenedContext.close();
   } catch (error) {
     fs.writeFileSync(path.join(evidence, 'rightangle-selection-report.json'), `${JSON.stringify({ passed: false, invalidRectErrors, error: error.stack || String(error) }, null, 2)}\n`);
     throw error;

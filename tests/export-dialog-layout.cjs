@@ -12,8 +12,13 @@ const cases = [
     for (const testCase of cases) {
       const context = await browser.newContext({ viewport: { width: testCase.width, height: 900 } });
       const page = await context.newPage();
-      await page.goto(previewUrl, { waitUntil: 'load' });
-      await page.evaluate(() => document.querySelector('.tut-welcome-overlay')?.remove());
+      await context.addInitScript(() => {
+        localStorage.setItem('5e.preview:5e.tutorial.bannerSeen', 'true');
+        localStorage.setItem('5e.tutorial.bannerSeen', 'true');
+      });
+      await page.goto(previewUrl, { waitUntil: 'networkidle' });
+      // main.js installs export handlers after awaiting autosave recovery.
+      await page.locator('html[data-mode]').waitFor({ state: 'attached' });
       await page.evaluate(screen => document.documentElement.setAttribute('data-screen', screen), testCase.screen);
       await page.evaluate(() => document.getElementById('image-export').click());
       await page.locator('#export-overlay').waitFor({ state: 'visible' });
