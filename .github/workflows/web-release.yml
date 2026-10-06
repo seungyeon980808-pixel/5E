@@ -35,6 +35,7 @@ jobs:
           EVIDENCE_DIR: ${{ github.workspace }}/_work/web-release/evidence/source
           OUTPUT_EVIDENCE: ${{ github.workspace }}/_work/web-release/evidence/source/output
           TASK2_EVIDENCE: ${{ github.workspace }}/_work/web-release/evidence/source/lifecycle
+          TASK8_EVIDENCE: ${{ github.workspace }}/_work/web-release/evidence/source/multiselect
           TASK9_HEADED: '1'
           TASK9_PERFORMANCE_REFERENCE: .github/browser-performance-reference.json
           TASK9_EVIDENCE: ${{ github.workspace }}/_work/web-release/evidence/source/polish

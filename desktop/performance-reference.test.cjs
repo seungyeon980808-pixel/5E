@@ -34,3 +34,25 @@ test('dirty, hosted, incomplete cleanup and failed visual evidence are rejected'
     const record = fixture(); mutate(record); assert.throws(() => validate(record, expected));
   }
 });
+
+test('a local supplied performance reference cannot relax live timing gates', () => {
+  const { spawnSync } = require('node:child_process');
+  const root = require('node:path').resolve(__dirname, '..');
+  const run = spawnSync(process.execPath, ['-e', "require('./tests/helpers/performance-reference.cjs').loadForHostedCi(process.cwd())"], {
+    cwd: root, encoding: 'utf8',
+    env: { ...process.env, GITHUB_ACTIONS: 'false', TASK9_PERFORMANCE_REFERENCE: 'nonexistent-reference.json' },
+  });
+  assert.notEqual(run.status, 0);
+  assert.match(run.stderr, /Only hosted CI may use physical reference acceptance/);
+});
+
+test('hosted acceptance fails closed when its reference is missing', () => {
+  const { spawnSync } = require('node:child_process');
+  const root = require('node:path').resolve(__dirname, '..');
+  const run = spawnSync(process.execPath, ['-e', "require('./tests/helpers/performance-reference.cjs').loadForHostedCi(process.cwd())"], {
+    cwd: root, encoding: 'utf8',
+    env: { ...process.env, GITHUB_ACTIONS: 'true', TASK9_PERFORMANCE_REFERENCE: 'nonexistent-reference.json' },
+  });
+  assert.notEqual(run.status, 0);
+  assert.match(run.stderr, /ENOENT/);
+});

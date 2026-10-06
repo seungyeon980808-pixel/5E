@@ -14,6 +14,9 @@ jobs:
     # This suite also exercises headed browser interactions.
     runs-on: macos-latest
     env:
+      EVIDENCE_DIR: ${{ github.workspace }}/_work/ci/evidence/browser
+      TASK2_EVIDENCE: ${{ github.workspace }}/_work/ci/evidence/lifecycle
+      TASK8_EVIDENCE: ${{ github.workspace }}/_work/ci/evidence/multiselect
       TASK9_HEADED: '1'
       TASK9_PERFORMANCE_REFERENCE: .github/browser-performance-reference.json
     steps:
@@ -27,3 +30,12 @@ jobs:
       - run: node scripts/check-browser-performance-reference.cjs
       - run: npm run test:unit
       - run: npm run test:browser
+      - name: Preserve regression diagnostics
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ci-browser-${{ github.sha }}-${{ github.run_attempt }}
+          path: |
+            _work/ci/evidence
+            .omo/evidence
+          if-no-files-found: ignore
