@@ -1,3 +1,9 @@
+# Current local candidate
+
+The 1.6.2 candidate remains **HOLD**. Library browsing and progressive crop changes are prepared locally; public stable web metadata remains 1.6.1. No signing, installation, server, or live-AI gate is cleared.
+
+## Previous candidate record
+
 # Release hold
 
 The 1.6.1 candidate remains **HOLD**. This patch prepares canonical source recovery, PDF page-cache cleanup, and validation of the exact web artifact. It does not clear the existing signing, native Windows, server authentication, or live AI release gates.

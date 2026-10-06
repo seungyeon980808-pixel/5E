@@ -9,11 +9,12 @@ import { mapQueryHighlights, queryHighlightTerms } from "../pdf-library/search.j
 const PREBUILT_PREVIEW_REVISION = "cropbox-v2";
 
 async function providedPagePreview(document, source, result, options = {}) {
-  if ((options.original && !options.continuous) || !document?.source?.locator?.startsWith("5e.shared.drive/")) return null;
+  // prebuiltPage: a full-page card may use the prebuilt page image even when it asks for the original page.
+  if ((options.original && !options.continuous && !options.prebuiltPage) || !document?.source?.locator?.startsWith("5e.shared.drive/")) return null;
   const hash = document.source.sha256;
   if (!providedPagePreviews[hash] || source.pageNumber > providedPagePreviews[hash]) return null;
   const fullPage = source.rect.every((value, index) => value === [0, 0, 1, 1][index]);
-  const url = new URL(`../../assets/pdf-library/previews/${hash}/${source.pageNumber}${fullPage && options.thumbnail === true ? "-thumb" : ""}.webp?v=${PREBUILT_PREVIEW_REVISION}`, import.meta.url).href;
+  const url = new URL(`../../assets/pdf-library/previews/${hash}/${source.pageNumber}${fullPage && options.thumbnail === true && !options.prebuiltPage ? "-thumb" : ""}.webp?v=${PREBUILT_PREVIEW_REVISION}`, import.meta.url).href;
   const image = fullPage ? { url } : await cropPrebuiltPreview(url, source.rect, options.thumbnail === true);
   return Object.freeze({
     ...image,

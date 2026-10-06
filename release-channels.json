@@ -1,10 +1,10 @@
 {
   "schemaVersion": 3,
   "candidate": {
-    "version": "1.6.1",
+    "version": "1.6.2",
     "desktopEntry": "index.html",
     "sourceBranch": "main",
-    "tag": "v1.6.1",
+    "tag": "v1.6.2",
     "status": "HOLD"
   },
   "channels": {
@@ -25,14 +25,14 @@
       "preservedSourceSha": "751b1ed4622058497a6f3ba43f92333eb15268eb"
     },
     "desktop": {
-      "version": "1.6.1",
+      "version": "1.6.2",
       "entry": "index.html",
       "artifacts": [
-        "5E-1.6.1-windows-x64.exe",
-        "5E-1.6.1-macos-x64.dmg",
-        "5E-1.6.1-macos-arm64.dmg",
-        "5E-1.6.1-macos-x64.zip",
-        "5E-1.6.1-macos-arm64.zip"
+        "5E-1.6.2-windows-x64.exe",
+        "5E-1.6.2-macos-x64.dmg",
+        "5E-1.6.2-macos-arm64.dmg",
+        "5E-1.6.2-macos-x64.zip",
+        "5E-1.6.2-macos-arm64.zip"
       ]
     },
     "latestPublishedDesktop": {
@@ -63,7 +63,7 @@
     "preservePreviewPath": "preview",
     "workflow": ".github/workflows/web-release.yml",
     "requiresSeparateDeploymentApproval": true,
-    "candidateVersion": "1.6.1",
+    "candidateVersion": "1.6.2",
     "preservePaths": [
       "preview",
       "mobile",

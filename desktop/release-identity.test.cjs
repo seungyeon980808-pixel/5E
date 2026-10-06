@@ -8,10 +8,10 @@ const { spawnSync } = require("node:child_process");
 const root = path.resolve(__dirname, "..");
 const validator = path.join(root, "scripts", "check-release-identity.cjs");
 
-test("release identity binds the 1.6.1 package, lock, canonical UI, and artifact names", () => {
+test("release identity binds the candidate package, lock, canonical UI, and artifact names", () => {
   const result = spawnSync(process.execPath, [validator], { cwd: root, encoding: "utf8" });
   assert.equal(result.status, 0, result.stderr || result.stdout);
-  assert.match(result.stdout, /Release identity OK: 1\.6\.1/);
+  assert.ok(result.stdout.includes(`Release identity OK: ${require("../package.json").version}`));
 });
 
 test("tag mismatch fails before a build can start", (t) => {

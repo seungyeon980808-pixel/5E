@@ -1,6 +1,7 @@
+import { createThumbnailQueue } from "./library/thumbnail-queue.js?v=1.6.2-library-speed";
 import { attachCropMagnifier } from "./tools/pointer-magnifier.js?v=1.6.1-remediation-0929";
 import { targetPageGeometry, fittedPageSize, createPreviewPaper } from "./library/page-loading.js?v=1.6.1-workbench-polish-0928-final";
-import { createContinuousCropPages } from "./library/continuous-crop-pages.js?v=1.6.1-remediation-0929";
+import { createContinuousCropPages } from "./library/continuous-crop-pages.js?v=1.6.2-library-speed";
 import { registerEscapeLayer } from "./escape-layers.js?v=1.6.1-remediation-0929";
 import { DESKTOP_RELEASE_URL } from "./ai-install-guide.js?v=1.6.1-remediation-0929";
 import { safeExternalSourceUrl } from "./library-import-policy.js?v=1.6.1-remediation-0929";
@@ -128,7 +129,8 @@ export async function materializeLibraryThumbnail(result, activeProvider, pdfMod
     const pageNumber = pdfMode === "page"
       ? result.firstMatchingPage ?? result.matches?.[0]?.pageNumber ?? result.provenance?.pageNumber ?? 1
       : 1;
-    return result.loadPreview(pageNumber, { thumbnail: true, ...(pdfMode === "page" ? { original: true } : {}) });
+    // Page cards need a sharp full page. Prefer the prebuilt page image; render the PDF only when none exists.
+    return result.loadPreview(pageNumber, { thumbnail: true, ...(pdfMode === "page" ? { original: true, prebuiltPage: true } : {}) });
   }
   return activeProvider.materialize(result, { thumbnail: true });
 }
@@ -147,7 +149,8 @@ export async function materializeOriginalLibraryPage(result, activeProvider) {
 
 export async function materializeLibraryAction(result, activeProvider, options = {}) {
   const accepted = options.acceptedAssets?.get(result?.id);
-  if (accepted && libraryResultIdentity(accepted.result) === libraryResultIdentity(result)
+  // A crop accepted from the fast page preview is only a placeholder; final output always uses the original PDF.
+  if (accepted && !accepted.materialized?.previewOnly && libraryResultIdentity(accepted.result) === libraryResultIdentity(result)
     && JSON.stringify(accepted.result.provenance?.rect) === JSON.stringify(result.provenance?.rect)) return accepted.materialized;
   if (result?.kind !== "pdf") return activeProvider.materialize(result, options);
   const original = await materializeOriginalLibraryPage(result, activeProvider);
@@ -855,7 +858,7 @@ function buildShell() {
         </aside>
         <button class="unilib-scrim" data-unilib-scrim type="button" aria-label="열린 패널 닫기"></button>
       </div>
-      <div class="unilib-crop library-reader--expanded" data-unilib-crop hidden role="dialog" aria-modal="true" aria-labelledby="unilib-crop-title"><header><strong id="unilib-crop-title">여러 영역 크롭</strong><div class="unilib-crop-view-controls"><span class="unilib-crop-page-controls" data-unilib-crop-page-controls hidden><button type="button" class="unilib-button" data-unilib-crop-page-prev aria-label="이전 쪽">‹</button><output data-unilib-crop-page aria-label="현재 PDF 쪽"></output><button type="button" class="unilib-button" data-unilib-crop-page-next aria-label="다음 쪽">›</button></span><button type="button" class="unilib-button" data-unilib-crop-zoom-out aria-label="축소">−</button><output data-unilib-crop-zoom aria-label="확대 비율">100%</output><button type="button" class="unilib-button" data-unilib-crop-zoom-in aria-label="확대">＋</button><button type="button" class="unilib-button" data-unilib-crop-fit>좌우 맞춤</button></div></header><div class="unilib-crop-workspace library-reader-main"><div class="unilib-crop-stage-shell"><div class="unilib-crop-stage library-reader-preview" data-unilib-crop-stage tabindex="0" aria-label="PDF 페이지에서 자를 영역 선택 · Enter로 첫 영역 만들기, 다음 영역은 Shift+Enter, 화살표로 이동, Shift와 화살표로 크기 조절"><div class="unilib-crop-canvas" data-unilib-crop-canvas><img data-unilib-crop-image draggable="false" alt="자를 원문 PDF 페이지"><div class="unilib-crop-accepted-layer" data-unilib-crop-accepted-layer aria-hidden="true"></div><div class="unilib-crop-draft" data-unilib-crop-box aria-hidden="true"></div></div></div><div class="unilib-crop-load-state" data-unilib-crop-load-state role="status" hidden><span class="unilib-crop-spinner" aria-hidden="true"></span><span data-unilib-crop-load-message>PDF 페이지를 불러오는 중입니다…</span><button type="button" class="unilib-button" data-unilib-crop-retry hidden>다시 시도</button></div></div><aside class="unilib-crop-preview library-reader-sidebar"><div class="unilib-crop-collection-heading"><strong data-unilib-crop-count>크롭 이미지 0개</strong></div><div class="unilib-crop-card-grid"><div class="unilib-crop-collection library-crop-collection" data-unilib-crop-collection aria-label="추가한 자르기 영역"></div><section class="unilib-crop-draft-review" data-unilib-crop-draft-review hidden aria-label="추가할 영역 미리보기"><canvas data-unilib-crop-preview aria-label="현재 선택 영역 미리보기"></canvas><div class="unilib-crop-draft-meta"><strong>추가할 영역</strong><div class="unilib-crop-confirm" data-unilib-crop-confirm hidden><strong>이 영역을 추가할까요?</strong><button type="button" class="unilib-button" data-unilib-crop-draft-cancel>취소</button><button type="button" class="unilib-button" data-unilib-crop-save title="Enter / Space" disabled>추가</button></div></div></section></div><p class="unilib-crop-selection" data-unilib-crop-selection role="status" aria-live="polite">추가한 영역이 없습니다.</p></aside></div><footer class="unilib-crop-footer"><button type="button" class="unilib-button" data-unilib-crop-cancel>닫기</button><button type="button" class="unilib-primary" data-unilib-crop-workbench disabled>작업대에 넣기</button></footer></div>
+      <div class="unilib-crop library-reader--expanded" data-unilib-crop hidden role="dialog" aria-modal="true" aria-labelledby="unilib-crop-title"><header><strong id="unilib-crop-title">여러 영역 크롭</strong><div class="unilib-crop-view-controls"><span class="unilib-crop-page-controls" data-unilib-crop-page-controls hidden><button type="button" class="unilib-button" data-unilib-crop-page-prev aria-label="이전 쪽">‹</button><output data-unilib-crop-page aria-label="현재 PDF 쪽"></output><button type="button" class="unilib-button" data-unilib-crop-page-next aria-label="다음 쪽">›</button></span><button type="button" class="unilib-button" data-unilib-crop-zoom-out aria-label="축소">−</button><output data-unilib-crop-zoom aria-label="확대 비율">100%</output><button type="button" class="unilib-button" data-unilib-crop-zoom-in aria-label="확대">＋</button><button type="button" class="unilib-button" data-unilib-crop-fit>좌우 맞춤</button></div></header><div class="unilib-crop-workspace library-reader-main"><div class="unilib-crop-stage-shell"><div class="unilib-crop-stage library-reader-preview" data-unilib-crop-stage tabindex="0" aria-label="PDF 페이지에서 자를 영역 선택 · Enter로 첫 영역 만들기, 다음 영역은 Shift+Enter, 화살표로 이동, Shift와 화살표로 크기 조절"><div class="unilib-crop-canvas" data-unilib-crop-canvas><img data-unilib-crop-image draggable="false" alt="자를 원문 PDF 페이지"><div class="unilib-crop-accepted-layer" data-unilib-crop-accepted-layer aria-hidden="true"></div><div class="unilib-crop-draft" data-unilib-crop-box aria-hidden="true"></div></div></div><div class="unilib-crop-load-state" data-unilib-crop-load-state role="status" hidden><span class="unilib-crop-spinner" aria-hidden="true"></span><span data-unilib-crop-load-message>PDF 페이지를 불러오는 중입니다…</span><button type="button" class="unilib-button" data-unilib-crop-retry hidden>다시 시도</button></div><div class="unilib-crop-quality" data-unilib-crop-quality role="status" aria-live="polite" hidden><span class="unilib-crop-quality-spinner" aria-hidden="true"></span><span data-unilib-crop-quality-message>고해상도 원본 준비 중…</span><button type="button" class="unilib-button" data-unilib-crop-quality-retry hidden>다시 시도</button></div></div><aside class="unilib-crop-preview library-reader-sidebar"><div class="unilib-crop-collection-heading"><strong data-unilib-crop-count>크롭 이미지 0개</strong></div><div class="unilib-crop-card-grid"><div class="unilib-crop-collection library-crop-collection" data-unilib-crop-collection aria-label="추가한 자르기 영역"></div><section class="unilib-crop-draft-review" data-unilib-crop-draft-review hidden aria-label="추가할 영역 미리보기"><canvas data-unilib-crop-preview aria-label="현재 선택 영역 미리보기"></canvas><div class="unilib-crop-draft-meta"><strong>추가할 영역</strong><div class="unilib-crop-confirm" data-unilib-crop-confirm hidden><strong>이 영역을 추가할까요?</strong><button type="button" class="unilib-button" data-unilib-crop-draft-cancel>취소</button><button type="button" class="unilib-button" data-unilib-crop-save title="Enter / Space" disabled>추가</button></div></div></section></div><p class="unilib-crop-selection" data-unilib-crop-selection role="status" aria-live="polite">추가한 영역이 없습니다.</p></aside></div><footer class="unilib-crop-footer"><button type="button" class="unilib-button" data-unilib-crop-cancel>닫기</button><button type="button" class="unilib-primary" data-unilib-crop-workbench disabled>작업대에 넣기</button></footer></div>
       <div class="unilib-dialog-backdrop" data-unilib-drive-settings hidden><section class="unilib-dialog" role="dialog" aria-modal="true" aria-labelledby="unilib-drive-settings-title"><header><h3 id="unilib-drive-settings-title">Drive 자료 연결</h3><button type="button" class="unilib-icon-button" data-unilib-drive-settings-close aria-label="Drive 자료 연결 닫기">${ICONS.close}</button></header><div data-unilib-folder-manager><p class="unilib-folder-guidance">공개 읽기 전용 폴더를 연결하면 파일 목록과 검색 색인을 먼저 읽고, PDF 원문은 필요할 때만 가져옵니다.</p><div data-unilib-drive-settings-body></div></div></section></div>
       <div class="unilib-dialog-backdrop" data-unilib-local-install hidden><section class="unilib-dialog unilib-local-install-dialog" role="dialog" aria-modal="true" aria-labelledby="unilib-local-install-title"><header><h3 id="unilib-local-install-title" tabindex="-1">설치형 5E에서 폴더 연결하기</h3><button type="button" class="unilib-icon-button" data-unilib-local-install-close aria-label="설치 안내 닫기">${ICONS.close}</button></header><div class="unilib-local-install-body"><p>내 컴퓨터의 폴더를 연결하려면 설치형 5E가 필요합니다.</p><a class="unilib-local-install-download ai-action-motion" data-ai-orbit="true" href="${DESKTOP_RELEASE_URL}" target="_blank" rel="noopener noreferrer"><span class="ai-action-motion-label">설치형 다운로드</span></a></div></section></div>
       <p class="unilib-status" data-unilib-status role="status" aria-live="polite" hidden></p>
@@ -979,7 +982,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   let previewEpoch = 0;
   let continuousView = null;
   let thumbnailEpoch = 0;
-  let thumbnailQueue = Promise.resolve();
+  const thumbnailQueue = createThumbnailQueue();
   let thumbnailObserver = null;
   let renderedResultCount = 0;
   let appendResultBatch = () => {};
@@ -1280,7 +1283,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     searchController = new AbortController();
     const signal = searchController.signal;
     thumbnailEpoch += 1;
-    thumbnailQueue = Promise.resolve();
+    thumbnailQueue.clear();
     thumbnailObserver?.disconnect();
     const requestId = `unilib-${++requestSequence}`;
     setResultState("loading", "검색 결과를 불러오는 중…");
@@ -1343,7 +1346,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
 
   function renderResults() {
     const ownThumbnailEpoch = ++thumbnailEpoch;
-    thumbnailQueue = Promise.resolve();
+    thumbnailQueue.clear();
     thumbnailObserver?.disconnect();
     thumbnailObserver = null;
     const visibleResults = results;
@@ -1388,7 +1391,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     };
     const loadThumbnail = (result, media) => {
       thumbnailStatus(media);
-      thumbnailQueue = thumbnailQueue.then(async () => {
+      void thumbnailQueue.enqueue(async () => {
         if (ownThumbnailEpoch !== thumbnailEpoch || !media.isConnected) return;
         const activeProvider = await provider();
         if (ownThumbnailEpoch !== thumbnailEpoch || !media.isConnected) return;
@@ -1903,6 +1906,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     searchScheduler.cancel();
     previewEpoch += 1;
     thumbnailEpoch += 1;
+    thumbnailQueue.clear();
     thumbnailObserver?.disconnect();
     thumbnailObserver = null;
     pdfUi?.deactivate?.();
@@ -2414,6 +2418,15 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   let cropReady = false;
   let cropOpenOptions = {};
   const cropLoadState = overlay.querySelector("[data-unilib-crop-load-state]");
+  const cropQuality = overlay.querySelector("[data-unilib-crop-quality]");
+  // Shown while the crop stage works on the fast page preview and the original PDF page is still loading.
+  const setCropQuality = (state, message = "고해상도 원본 준비 중…") => {
+    cropQuality.hidden = !state;
+    if (state) cropQuality.dataset.state = state;
+    else delete cropQuality.dataset.state;
+    cropQuality.querySelector("[data-unilib-crop-quality-message]").textContent = message;
+    cropQuality.querySelector("[data-unilib-crop-quality-retry]").hidden = state !== "error";
+  };
   const cropLoadPaper = document.createElement("div");
   cropLoadPaper.className = "unilib-crop-load-paper";
   cropLoadPaper.setAttribute("aria-hidden", "true");
@@ -2468,6 +2481,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   const cropRetry = overlay.querySelector("[data-unilib-crop-retry]");
   const setCropLoadState = (state, message = "PDF 페이지를 불러오는 중입니다…") => {
     cropReady = state === "ready";
+    if (!cropReady) setCropQuality(null);
     cropMagnifier.hide();
     cropLoadPreview.hidden = true;
     cropLoadPreview.removeAttribute("src");
@@ -2650,6 +2664,45 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       paintCropPreview();
     }
   };
+  const previewCropMaterialized = (rect, source, manualResult) => {
+    const [x, y, width, height] = rect;
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.max(1, Math.round(cropImage.naturalWidth * width));
+    canvas.height = Math.max(1, Math.round(cropImage.naturalHeight * height));
+    const context = canvas.getContext("2d", { alpha: false });
+    context.fillStyle = "#ffffff";
+    context.fillRect(0, 0, canvas.width, canvas.height);
+    context.drawImage(cropImage, x * cropImage.naturalWidth, y * cropImage.naturalHeight, width * cropImage.naturalWidth, height * cropImage.naturalHeight, 0, 0, canvas.width, canvas.height);
+    return { dataUrl: canvas.toDataURL("image/png"), previewOnly: true, source, result: manualResult };
+  };
+  const cropCanonicalPage = (session, result, materialized) => {
+    const canonicalPage = materialized?.result ?? (["page", "crop"].includes(result.kind) ? result : null);
+    if (!canonicalPage || !["page", "crop"].includes(canonicalPage.kind)
+      || canonicalPage.provenance?.documentId !== session.documentId
+      || canonicalPage.provenance?.pageNumber !== session.pageNumber) {
+      throw new Error("선택한 PDF 쪽의 원본 응답이 일치하지 않습니다.");
+    }
+    if (result.kind === "pdf" && canonicalPage.kind !== "page") throw new Error("선택한 PDF 쪽의 원본 응답이 페이지가 아닙니다.");
+    return canonicalPage;
+  };
+  // Replace regions accepted from the fast preview with exact crops once the original page is available.
+  // Entries are updated in place so selections, the tray, and pending actions keep the same objects.
+  const upgradePreviewCrops = async (canonicalPage) => {
+    const { documentId, pageNumber } = canonicalPage.provenance;
+    const entries = new Set([...acceptedCrops, ...acceptedAssets.values()].filter(({ result, materialized }) => materialized?.previewOnly
+      && result.provenance?.documentId === documentId && result.provenance?.pageNumber === pageNumber));
+    if (!entries.size) return;
+    for (const entry of entries) {
+      try {
+        const activeProvider = await provider();
+        const source = { documentId, pageNumber, rect: [...entry.result.provenance.rect], fullPageFallback: false };
+        const materialized = await activeProvider.materialize(withManualCropVariant(canonicalPage, source), { representation: "manual" });
+        if (entry.materialized?.previewOnly && resultImage(entry.result, materialized)) entry.materialized = materialized;
+      } catch { /* The entry stays preview-only; final actions materialize it from the original PDF. */ }
+    }
+    renderAcceptedCrops();
+    renderCropTray();
+  };
   const paintExactCropPreview = async () => {
     const result = selectedActiveResult();
     if (!draftCrop || !cropSessionIsCurrent(cropSession, result)) return;
@@ -2672,6 +2725,13 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
         throw new Error("선택한 PDF 쪽의 원본을 확인하지 못했습니다.");
       }
       const manualResult = withManualCropVariant(canonicalPage, source);
+      if (cropSession.quality === "preview") {
+        // The original page is still loading: accept the region from the displayed preview now and replace it later.
+        cropExact = { result: resultForRepresentation(manualResult, "manual"), materialized: previewCropMaterialized(rect, source, manualResult), rectKey: rect.join(",") };
+        cropPreviewExact = true;
+        setCropActionAvailability();
+        return;
+      }
       const materialized = await (await provider()).materialize(manualResult, { representation: "manual" });
       const src = resultImage(result, materialized);
       if (!src) throw new Error("선택한 이미지를 표시할 수 없습니다.");
@@ -2707,6 +2767,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     activeAcceptedCropId = null;
     editingAcceptedId = null;
     cropDialog.hidden = true;
+    setCropQuality(null);
     draftCrop = null;
     cropGesture = null;
     cropSession = null;
@@ -2730,6 +2791,48 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     if (refreshSelection) void renderPreview();
   };
   const openCropEditor = async ({ emptyDraft = false, wholePage = false, title = "여러 영역 크롭", preserveScroll = false } = {}) => {
+    // The stage was opened from the fast preview; swap in the original page without moving the view.
+    const upgradeCropToOriginal = async (session, result, originalPage) => {
+      const outcome = await originalPage;
+      const live = () => cropSessionIsCurrent(session, selectedActiveResult()) && cropSession === session && session.quality === "preview";
+      const fail = (error) => {
+        if (!live()) return;
+        setCropQuality("error", "고해상도 원본을 불러오지 못했습니다.");
+        setStatus(`원문 페이지 실패: ${error instanceof Error ? error.message : error}`, true);
+      };
+      if (outcome.kind === "error") { fail(outcome.error); return; }
+      let canonicalPage;
+      try { canonicalPage = cropCanonicalPage(session, result, outcome.value); }
+      catch (error) { fail(error); return; }
+      if (!live()) { void upgradePreviewCrops(canonicalPage); return; }
+      try {
+        const src = resultImage(result, outcome.value);
+        if (!src) throw new Error("원문 페이지를 표시할 수 없습니다.");
+        const decoded = new Image();
+        decoded.src = src;
+        await decoded.decode();
+        if (!live()) { void upgradePreviewCrops(canonicalPage); return; }
+        const previousWidth = cropImage.naturalWidth;
+        const anchor = cropCanvas.getBoundingClientRect();
+        cropImage.src = src;
+        await cropImage.decode();
+        if (!live()) { void upgradePreviewCrops(canonicalPage); return; }
+        if (previousWidth && cropImage.naturalWidth) cropBaseScale *= previousWidth / cropImage.naturalWidth;
+        sizeCropCanvas();
+        const moved = cropCanvas.getBoundingClientRect();
+        cropStage.scrollLeft += moved.left - anchor.left;
+        cropStage.scrollTop += moved.top - anchor.top;
+        session.canonicalPage = canonicalPage;
+        session.quality = "original";
+        setCropQuality(null);
+        paintCrop();
+        if (draftCrop) void paintExactCropPreview();
+        void upgradePreviewCrops(canonicalPage);
+      } catch (error) {
+        void upgradePreviewCrops(canonicalPage);
+        fail(error);
+      }
+    };
     const result = selectedActiveResult();
     if (!result || result.provenance?.provider !== "pdf") return;
     if (cropDialog.hidden) cropReturnFocus = document.activeElement;
@@ -2756,6 +2859,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     cropPreviewExact = false;
     cropExact = null;
     cropDialog.hidden = false;
+    setCropQuality(null);
     setCropLoadState("loading");
     if (continuousCrop.mounted) continuousCrop.activate(session.pageNumber, !preserveScroll);
     sizePendingCrop(targetPageGeometry(result) || { width: 3, height: 4 });
@@ -2781,26 +2885,46 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       paintCrop();
       cropStage.focus();
       setStatus("");
-      const original = await materializeOriginalLibraryPage(result, activeProvider);
-      if (!cropSessionIsCurrent(session, selectedActiveResult()) || cropSession !== session) return;
-      const canonicalPage = original?.result ?? (["page", "crop"].includes(result.kind) ? result : null);
-      if (!canonicalPage || !["page", "crop"].includes(canonicalPage.kind)
-        || canonicalPage.provenance?.documentId !== session.documentId
-        || canonicalPage.provenance?.pageNumber !== session.pageNumber) {
-        throw new Error("선택한 PDF 쪽의 원본 응답이 일치하지 않습니다.");
-      }
-      if (result.kind === "pdf" && canonicalPage.kind !== "page") throw new Error("선택한 PDF 쪽의 원본 응답이 페이지가 아닙니다.");
-      session.canonicalPage = canonicalPage;
-      const src = resultImage(result, original);
+      const live = () => cropSessionIsCurrent(session, selectedActiveResult()) && cropSession === session;
+      // Start the original page and the fast page preview together; the stage opens on whichever arrives first.
+      const preparePage = async (value, kind) => {
+        cropCanonicalPage(session, result, value);
+        const src = resultImage(result, value);
+        if (!src) throw new Error("원문 페이지를 표시할 수 없습니다.");
+        const image = new Image();
+        image.src = src;
+        await image.decode();
+        return { kind, value };
+      };
+      const originalPage = materializeOriginalLibraryPage(result, activeProvider)
+        .then(value => preparePage(value, "original"))
+        .catch(error => ({ kind: "error", error }));
+      const fastPage = typeof cropDocumentFile?.loadPreview === "function"
+        ? Promise.resolve().then(() => cropDocumentFile.loadPreview(session.pageNumber, { continuous: true }))
+          .then(value => preparePage(value, "preview")).catch(() => null)
+        : Promise.resolve(null);
+      // A failed or undecodable candidate must not prevent the other candidate from opening the page.
+      const first = await Promise.race([
+        originalPage.then(async original => original.kind === "error" ? (await fastPage || original) : original),
+        fastPage.then(preview => preview || originalPage),
+      ]);
+      if (!live()) return;
+      if (first.kind === "error") throw first.error;
+      const quality = first.kind;
+      const shown = first.value;
+      session.canonicalPage = cropCanonicalPage(session, result, shown);
+      session.quality = quality;
+      const src = resultImage(result, shown);
       if (!src) throw new Error("원문 페이지를 표시할 수 없습니다.");
       const decoded = new Image();
       decoded.src = src;
       await decoded.decode();
-      if (!cropSessionIsCurrent(session, selectedActiveResult()) || cropSession !== session) return;
+      if (!live()) return;
       cropImage.src = src;
       await cropImage.decode();
-      if (!cropSessionIsCurrent(session, selectedActiveResult()) || cropSession !== session) return;
+      if (!live()) return;
       setCropLoadState("ready");
+      if (quality === "preview") setCropQuality("loading");
       if (pageCount > 1 && !continuousCrop.mounted) continuousCrop.mount(pageCount, session.pageNumber, cropDocumentFile?.getPageGeometry);
       if (continuousCrop.mounted) continuousCrop.activate(session.pageNumber);
       if (!preserveScroll) fitCropContent();
@@ -2811,6 +2935,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       }
       paintCrop();
       void paintExactCropPreview();
+      if (quality === "preview") void upgradeCropToOriginal(session, result, originalPage);
       return true;
     } catch (error) {
       if (cropSession === session) {
@@ -2873,6 +2998,11 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   cropRetry.addEventListener("click", () => {
     if (cropSession?.viewOnly) void openExpandedPreview();
     else void openCropEditor(cropOpenOptions);
+  });
+  cropQuality.querySelector("[data-unilib-crop-quality-retry]").addEventListener("click", () => {
+    if (!cropSession || cropSession.viewOnly) return;
+    commitAcceptedCropSession({ acceptedAssets, acceptedCrops, documentId: cropSession.documentId, pageNumber: cropSession.pageNumber });
+    void openCropEditor({ ...cropOpenOptions, preserveScroll: true });
   });
   overlay.querySelector("[data-unilib-crop-fit]").addEventListener("click", fitCropContent);
   overlay.querySelector("[data-unilib-crop-zoom-out]").addEventListener("click", () => setCropZoom(cropZoom / 1.2));

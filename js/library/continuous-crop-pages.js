@@ -1,7 +1,7 @@
 /* Keep one editable original page inside a lazily rendered continuous document. */
 export function createContinuousCropPages({ stage, canvas, loadPage, onPage }) {
   let root = null, pageCount = 0, activePage = 1, extent = 0;
-  let generation = 0, pageWidth = 0;
+  let generation = 0, pageWidth = 0, fallbackRatio = 0;
   const ratios = new Map();
   const slots = new Map();
   const renders = new WeakMap();
@@ -9,6 +9,7 @@ export function createContinuousCropPages({ stage, canvas, loadPage, onPage }) {
   const reset = () => {
     generation += 1;
     ratios.clear();
+    fallbackRatio = 0;
     if (root) { stage.append(canvas); root.remove(); }
     root = null;
     slots.clear();
@@ -82,6 +83,7 @@ export function createContinuousCropPages({ stage, canvas, loadPage, onPage }) {
   const updateWindow = page => {
     windowPage = page;
     slots.forEach((slot, number) => {
+      if (number === activePage) return;
       if (Math.abs(number - windowPage) <= 4) {
         void render(slot, number);
       } else if (slot.dataset.loaded && number !== activePage) {
@@ -95,9 +97,11 @@ export function createContinuousCropPages({ stage, canvas, loadPage, onPage }) {
     if (!root) return;
     extent = height;
     pageWidth = width;
+    // Keep unknown page geometry stable when the active image gains resolution.
+    fallbackRatio ||= height / width;
     ratios.set(activePage, height / width);
     root.style.width = `${width}px`;
-    slots.forEach((slot, page) => { slot.style.height = `${ratios.has(page) ? width * ratios.get(page) : height}px`; });
+    slots.forEach((slot, page) => { slot.style.height = `${ratios.has(page) ? width * ratios.get(page) : width * fallbackRatio}px`; });
     updateWindow(activePage);
   };
   const activate = (page, scroll = false) => {
