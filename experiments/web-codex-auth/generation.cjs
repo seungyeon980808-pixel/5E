@@ -3,6 +3,9 @@ const { realpath, stat, readFile } = require('node:fs/promises');
 const path = require('node:path');
 const { pathToFileURL } = require('node:url');
 const MAX_IMAGE = 8_000_000;
+const MAX_SCENE_TEXT = 200_000;
+const SCENE_BASE_INSTRUCTIONS = 'You are a single-purpose JSON scene planner. Return only the requested compact JSON. Do not use tools, search, browse, inspect files, ask questions, or narrate your reasoning.';
+const SCENE_DEVELOPER_INSTRUCTIONS = 'Complete exactly one scene-planning response. Treat attached images only as visual references. Never call image generation, shell, web, skills, or filesystem tools.';
 class RequestError extends Error { constructor(status, message) { super(message); this.status = status; } }
 function validateInput(value) {
   if (!value || typeof value !== 'object' || Array.isArray(value) || Object.keys(value).some(key => !['request', 'image'].includes(key)) || typeof value.request !== 'string' || value.request.length > 12000) throw new RequestError(400, 'Invalid generation request');
@@ -26,7 +29,7 @@ class Generation {
     this.onNotification = event => {
       void this.event(event).catch(async () => {
         const job = this.job;
-        this.finish('failed', '이미지 결과를 읽지 못했습니다.');
+        this.finish('failed', job?.purpose === 'scene' ? '분석 결과를 읽지 못했습니다.' : '이미지 결과를 읽지 못했습니다.');
         await this.interrupt(job);
         this.notifyReleasable();
       });
@@ -42,9 +45,9 @@ class Generation {
   prepare(value, prepared = null) {
     validateInput(value);
     if (this.job && (this.job.state === 'running' || this.job.launchPending || (this.job.turnId && !this.job.stopped))) throw new RequestError(409, 'Generation already running');
-    this.job = { jobId: randomUUID(), state: 'queued', launchPending: false, queuedAt: Date.now() };
+    this.job = { jobId: randomUUID(), state: 'queued', launchPending: false, queuedAt: Date.now(), purpose: prepared?.purpose === 'scene' ? 'scene' : 'image' };
     this.releaseNotified = false;
-    this.preparedInput = { value: { ...value }, prepared: prepared ? { ...prepared, images: prepared.images ? [...prepared.images] : undefined, selection: prepared.selection ? Object.freeze({ ...prepared.selection }) : undefined } : null };
+    this.preparedInput = { value: { ...value }, prepared: prepared ? { ...prepared, images: prepared.images ? [...prepared.images] : undefined, selection: prepared.selection ? Object.freeze({ ...prepared.selection }) : undefined, outputSchema: prepared.outputSchema === undefined ? undefined : JSON.parse(JSON.stringify(prepared.outputSchema)) } : null };
     return this.snapshot(this.job.jobId);
   }
   launch() {
@@ -56,12 +59,13 @@ class Generation {
     job.launchPending = true;
     job.startedAt = Date.now();
     this.timer = setTimeout(() => {
-      this.finish('failed', '이미지 생성 시간이 초과되었습니다.');
+      this.finish('failed', job.purpose === 'scene' ? '분석 시간이 초과되었습니다.' : '이미지 생성 시간이 초과되었습니다.');
       void this.interrupt(job);
       this.notifyReleasable();
     }, this.timeout);
     this.timer.unref?.();
-    void this.execute(value, job, prepared).catch(() => { if (this.job === job) this.finish('failed', '이미지를 생성하지 못했습니다.'); }).finally(() => {
+    const run = job.purpose === 'scene' ? this.executeScene(job, prepared) : this.execute(value, job, prepared);
+    void run.catch(() => { if (this.job === job) this.finish('failed', job.purpose === 'scene' ? '분석 요청을 시작하지 못했습니다.' : '이미지를 생성하지 못했습니다.'); }).finally(() => {
       job.launchPending = false;
       this.notifyReleasable();
     });
@@ -74,8 +78,39 @@ class Generation {
   snapshot(id) {
     if (id === null && this.job) id = this.job.jobId;
     if (typeof id !== 'string' || id !== this.job?.jobId) throw new RequestError(404, 'Generation not found');
-    const { jobId, state, imageDataUrl, error } = this.job;
-    return { jobId, state, ...(imageDataUrl ? { imageDataUrl } : {}), ...(error ? { error } : {}) };
+    const { jobId, state, imageDataUrl, error, purpose, sceneText } = this.job;
+    return { jobId, state, ...(purpose === 'scene' ? { purpose } : {}), ...(imageDataUrl ? { imageDataUrl } : {}), ...(sceneText !== undefined ? { sceneText } : {}), ...(error ? { error } : {}) };
+  }
+  // Text-only analysis turn: image generation disabled, optional JSON output schema, attached images are references only.
+  async executeScene(job, prepared) {
+    if (job.state !== 'running') return;
+    const { model, effort, serviceTier } = prepared.selection;
+    const thread = await this.runtime.rpc('thread/start', { model, serviceTier, ephemeral: true, cwd: this.runtime.directory, approvalPolicy: 'never', sandbox: 'read-only', config: { 'features.shell_tool': false, 'features.image_generation': false, web_search: 'disabled' }, baseInstructions: SCENE_BASE_INSTRUCTIONS, developerInstructions: SCENE_DEVELOPER_INSTRUCTIONS });
+    job.threadId = thread.thread?.id;
+    if (!job.threadId) throw new Error('Missing thread');
+    if (job.state !== 'running') return;
+    const input = [{ type: 'text', text: prepared.text, text_elements: [] }];
+    for (const url of prepared.images ?? []) input.push({ type: 'image', url });
+    const result = await this.runtime.rpc('turn/start', { threadId: job.threadId, model, effort, serviceTier, approvalPolicy: 'never', input, ...(prepared.outputSchema !== undefined ? { outputSchema: prepared.outputSchema } : {}) });
+    job.turnId = result.turn?.id || job.turnId;
+    if (job.state !== 'running') await this.interrupt(job);
+  }
+  async sceneEvent(job, method, params) {
+    if (params.item?.type === 'imageGeneration') {
+      this.finish('failed', '분석 요청에서 이미지 생성이 감지되어 중단했습니다.');
+      await this.interrupt(job);
+      return;
+    }
+    if (method === 'item/completed' && params.item?.type === 'agentMessage' && typeof params.item.text === 'string') {
+      if (params.item.text.length > MAX_SCENE_TEXT) { this.finish('failed', '분석 결과가 너무 깁니다.'); await this.interrupt(job); return; }
+      if (params.item.phase !== 'commentary' || job.sceneText === undefined) job.sceneText = params.item.text;
+    }
+    if (method === 'turn/completed') {
+      const status = params.turn?.status;
+      if (status && status !== 'completed') this.finish('failed', params.turn?.error?.message || '분석이 정상 완료되지 않았습니다.');
+      else if (typeof job.sceneText === 'string' && job.sceneText.trim()) this.finish('completed');
+      else this.finish('failed', '분석 결과가 비어 있습니다.');
+    }
   }
   async execute(value, job, prepared) {
     const { APPROVED_FIRST_PROMPT } = await import(pathToFileURL(path.resolve(__dirname, '../../js/ai-approved-first-png.js')).href);
@@ -103,6 +138,7 @@ class Generation {
     if (turnId) job.turnId = turnId;
     if (method === 'turn/completed') job.stopped = true;
     if (job.state !== 'running') return;
+    if (job.purpose === 'scene') { await this.sceneEvent(job, method, params); this.notifyReleasable(); return; }
     if (method === 'item/completed' && params.item?.type === 'agentMessage'
       && typeof params.item.text === 'string' && params.item.text.length <= 100000
       && params.item.text.includes('<5e-editable-labels>')
