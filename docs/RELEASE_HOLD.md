@@ -1,3 +1,7 @@
+# 1.6.2 web publication authorized — desktop HOLD retained
+
+On 2026-10-06 the owner authorized tagging and publication of the 1.6.2 web artifact. Publication still requires the existing source/artifact workflow checks. Installer and live-AI holds below remain unchanged. Historical local preparation records follow.
+
 # Current local candidate
 
 The 1.6.2 candidate remains **HOLD**. Library browsing and progressive crop changes are prepared locally; public stable web metadata remains 1.6.1. No signing, installation, server, or live-AI gate is cleared.

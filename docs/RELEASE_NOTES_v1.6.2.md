@@ -1,9 +1,11 @@
-# 5E 1.6.2 candidate — HOLD
+<!-- release-title: 5E 1.6.2 — 라이브러리 반응성 개선 -->
+# 5E 1.6.2
 
-Prepared locally on 2026-10-06 from the canonical 1.6.1 source. This is not a publication receipt.
+- 라이브러리 페이지 미리보기를 더 빠르게 표시하도록 개선했습니다.
+- 원본 로딩을 기다리는 동안에도 크롭을 시작할 수 있습니다.
+- 원본으로 전환할 때 편집 위치와 확대 비율을 유지합니다.
+- 불필요한 썸네일 로딩을 줄이고, 이미지 로딩 실패 시 재시도를 개선했습니다.
 
-PDF page thumbnails use existing prebuilt images. Crop editing opens on a fast preview and replaces it with the original while preserving the current view. Final insertion, objectification, and AI transfer retain original-quality materialization. Thumbnail work runs with bounded concurrency and discards obsolete queued results.
+최종 삽입에는 원본 품질을 유지합니다. 첫 원본 PDF 다운로드에는 시간이 걸릴 수 있습니다.
 
-The 1.7.0 Preview, mobile, fixed 1.6.0 route, rights metadata, and release holds remain preserved. The initial catalog load and first original PDF download can still take time.
-
-See STABILITY_FOLLOWUP_OPERATIONS.md for fresh test results, source binding, and integration limitations. No push, tag, web/server deployment, installer publication, or device installation is recorded by this candidate.
+정식 웹 1.6.2 배포를 위한 릴리즈입니다. 설치판은 기존 서명·기기 검수 HOLD를 유지합니다. 1.7.0 Preview·모바일·고정 1.6.0 경로는 보존하며, 1.6.3 안정화 작업은 포함하지 않습니다. 배포 완료 여부는 성공한 워크플로와 공개 소스 영수증으로 확인합니다.
