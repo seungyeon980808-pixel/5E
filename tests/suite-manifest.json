@@ -1,6 +1,7 @@
 {
   "schemaVersion": 1,
   "unit": [
+    { "path": "tests/test-pdf-runtime-loader.mjs", "findingIds": ["PDF-MODULE-RETRY"] },
     { "path": "tests/test-stable-library-startup.mjs", "findingIds": ["LIBRARY-STARTUP-STABLE"] },
     { "path": "tests/test-project-file-policy.mjs", "findingIds": ["A1"] },
     { "path": "tests/test-stable-library-speed.mjs" },
@@ -37,6 +38,7 @@
     { "path": "tools/mcp-5e/test/server-pairing.test.mjs" }
   ],
   "browser": [
+    { "path": "tests/test-pdf-runtime-retry-browser.cjs", "findingIds": ["PDF-MODULE-RETRY"] },
     { "path": "tests/test-stable-library-startup-browser.cjs", "findingIds": ["LIBRARY-STARTUP-STABLE"] },
     { "path": "tests/test-project-file-size-browser.cjs", "findingIds": ["A1"] },
     { "path": "tests/test-stable-library-progressive-crop-browser.cjs", "findingIds": ["LIBRARY-SPEED-STABLE"] },

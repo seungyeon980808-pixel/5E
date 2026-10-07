@@ -3,6 +3,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { spawn } = require('node:child_process');
 const { chromium, webkit } = require('playwright');
+const { runPdfRuntimeRetryCases } = require('./helpers/pdf-runtime-retry-fixture.cjs');
 
 const root = path.resolve(__dirname, '..');
 const site = process.env.FIVE_E_SITE_ROOT;
@@ -228,6 +229,7 @@ async function freshContext(browser, errors, origin) {
         fs.writeFileSync(path.join(evidence, 'results.json'), JSON.stringify(results, null, 2) + '\n');
       }
     }
+    await runPdfRuntimeRetryCases({ origin: `${server.origin}/`, evidence: path.join(evidence, 'pdf-runtime-retry') });
     console.log(JSON.stringify(results, null, 2));
   } finally {
     server.child.kill('SIGTERM');

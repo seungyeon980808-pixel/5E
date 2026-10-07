@@ -2,6 +2,7 @@ import { insertImageFromSrc } from "./image-paste.js?v=1.6.1-remediation-0929";
 import { openObjectifyWithFile } from "./image-objectify.js?v=1.6.1-remediation-0929";
 
 import { createPdfLibraryUi } from "./pdf-library/pdf-library-ui.js?v=1.6.3-library-startup";
+import { createPdfRuntimeLoader } from "./pdf-library/runtime-loader.js?v=1.6.3-pdf-runtime-retry";
 import { defaultRecentThreePack } from "./pdf-library/default-pack-config.js?v=1.6.1-preview-labeler-0917-1111";
 import { loadBundledDesktopPack } from "./pdf-library/desktop-pack.js?v=1.6.1-preview-labeler-0917-1111";
 import { registerPdfReferencePicker } from "./pdf-library/reference-picker.js?v=1.6.1-preview-labeler-0917-1111";
@@ -86,10 +87,7 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
   const pdfUi = createPdfLibraryUi({
     state,
     host: pdfPanel,
-    loadRuntime: async () => {
-      const { createPdfRuntime } = await import("./pdf-library/pdf-runtime.js?v=1.6.1-preview-crop-quality-0920-1806");
-      return createPdfRuntime();
-    },
+    loadRuntime: createPdfRuntimeLoader(),
     searchDocuments: async (documents, query, { filters = {}, prebuiltIndexes = [], limit = MAX_RENDER } = {}) => {
       const prebuiltDocumentIds = new Set(prebuiltIndexes.flatMap((source) => source.documents.map((document) => document.id)));
       const dynamicDocuments = documents.filter((document) => !prebuiltDocumentIds.has(document.id));
