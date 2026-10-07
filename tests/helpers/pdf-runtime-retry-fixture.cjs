@@ -56,7 +56,14 @@ async function runPdfRuntimeRetryCases({ origin, evidence }) {
         const context = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
         const page = await context.newPage();
         const errors = [], moduleRequests = []; let offline = scenario === 'manual-retry';
-        await context.addInitScript(() => localStorage.setItem('5e.tutorial.bannerSeen', 'true'));
+        await context.addInitScript(() => {
+          // Stable tutorial settings currently use previewStorage too. Seed
+          // both namespaces before startup so a delayed welcome cannot block
+          // this experienced-user PDF workflow.
+          for (const prefix of ['', '5e.preview:']) {
+            localStorage.setItem(`${prefix}5e.tutorial.bannerSeen`, 'true');
+          }
+        });
         page.on('pageerror', error => errors.push(error.message));
         await context.route('**/assets/pdf-library/catalog-bootstrap.json', route => route.fulfill({ status: 404, body: 'force verified remote fixture' }));
         await context.route('https://5e-google-drive-gateway.5e-desktop.workers.dev/**', route => {
@@ -76,8 +83,6 @@ async function runPdfRuntimeRetryCases({ origin, evidence }) {
         try {
           await page.goto(`${origin}?mode=pro&mobile=0`, { waitUntil: 'load' });
           await page.locator('#canvas').waitFor({ state: 'visible' });
-          const skip = page.getByRole('button', { name: '건너뛰기', exact: true });
-          if (await skip.isVisible()) await skip.click();
           await page.locator('#exam-library-open').click();
           const ui = page.locator('.unified-library-overlay').last();
           await page.waitForFunction(() => document.querySelector('.unified-library-overlay')?.dataset.searchReadiness === 'ready');
