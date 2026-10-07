@@ -82,6 +82,7 @@
     { "path": "tests/test-ai-task-elapsed-browser.cjs", "findingIds": ["AI-TASK-ELAPSED"] }
   ],
   "deferred": [
+    { "path": "tests/test-examlibrary-browser.cjs", "findingIds": ["EXAMLIBRARY-DOMAIN"], "reason": "Dedicated route-publication gate in examlibrary-route.yml; uses real public exam PDFs and native HWPX downloads." },
     { "path": "tests/test-web-publication-browser.cjs", "findingIds": ["WEB-PUBLICATION-160"], "reason": "Dedicated staged-artifact gate: npm run test:web-artifact requires FIVE_E_SITE_ROOT." },
     { "path": "tests/authenticated-desktop-observer.cjs", "findingIds": ["ARCH-160-01"], "reason": "Helper for manual authenticated acceptance; requires the explicitly authorized real-service harness" },
     { "path": "tests/test-ai-workbench-authenticated.cjs", "findingIds": ["ARCH-160-01"], "reason": "Manual authenticated acceptance gate requires explicit AI_WORKBENCH_REAL and authorization for paid provider requests" },

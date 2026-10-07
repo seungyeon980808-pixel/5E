@@ -6,6 +6,7 @@ const os = require('node:os');
 const { execFileSync } = require('node:child_process');
 const YAML = require('js-yaml');
 const { inventory, verifyArtifact, stage } = require('../scripts/web-release.cjs');
+const { appendRoute, verifyRoute } = require('../scripts/examlibrary-publication.cjs');
 
 function fixture(t) {
   const site = fs.mkdtempSync(path.join(os.tmpdir(), '5e-web-publication-'));
@@ -56,6 +57,7 @@ test('production staging uses committed blobs and excludes ignored files while p
   write('js/app.js', 'const stable = true;');
   write('js/release-receipt.js', 'const release = { sourceCommit: null };');
   write('assets/public.txt', 'public');
+  write('examlibrary/index.html', '<iframe title="기출 탐색기"></iframe>');
   write('.gitignore', 'assets/private.txt\n');
   write('preview/index.html', '<title>5E 1.7.0</title>');
   write('mobile/index.html', '<title>5E mobile</title>');
@@ -80,7 +82,22 @@ test('production staging uses committed blobs and excludes ignored files while p
   assert.equal(fs.readFileSync(path.join(site, 'preview/index.html'), 'utf8'), '<title>5E 1.7.0</title>');
   assert.equal(fs.readFileSync(path.join(site, 'mobile/index.html'), 'utf8'), '<title>5E mobile</title>');
   assert.equal(fs.readFileSync(path.join(site, '1.6.0/index.html'), 'utf8'), '<title>5E 1.6.0</title>');
+  assert.equal(fs.readFileSync(path.join(site, 'examlibrary/index.html'), 'utf8'), '<iframe title="기출 탐색기"></iframe>');
   verifyArtifact(site, receipt, { expectedSha: receipt.sourceCommit, requireClean: true });
+  const routeSite = path.join(temporary, 'route-site');
+  fs.cpSync(site, routeSite, { recursive: true });
+  write('examlibrary/index.html', '<iframe title="기출 탐색기" src="https://example.invalid/"></iframe>');
+  git(['add', 'examlibrary/index.html']);
+  commit();
+  const routeReceipt = appendRoute(routeSite, receipt, sourceRoot, receipt.sourceCommit);
+  assert.equal(fs.readFileSync(path.join(routeSite, 'index.html'), 'utf8'), fs.readFileSync(path.join(site, 'index.html'), 'utf8'));
+  assert.equal(routeReceipt.baseSourceCommit, receipt.sourceCommit);
+  verifyRoute(routeSite, routeReceipt);
+  fs.writeFileSync(path.join(routeSite, 'index.html'), 'unexpected root replacement');
+  assert.throws(() => verifyRoute(routeSite, { ...routeReceipt, files: inventory(routeSite) }), /Existing published 5E file changed/);
+  fs.copyFileSync(path.join(site, 'index.html'), path.join(routeSite, 'index.html'));
+  fs.writeFileSync(path.join(routeSite, 'unapproved.js'), 'unexpected addition');
+  assert.throws(() => verifyRoute(routeSite, { ...routeReceipt, files: inventory(routeSite) }), /Unexpected publication addition/);
   fs.writeFileSync(path.join(site, 'js/release-receipt.js'), `const release = { sourceCommit: '${'a'.repeat(40)}' };`);
   assert.throws(() => verifyArtifact(site, { ...receipt, files: inventory(site) }), /Displayed source commit/);
   write('js/app.js', 'const stable = false;');

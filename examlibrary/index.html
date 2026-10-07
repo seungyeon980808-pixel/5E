@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content="5E 기출 라이브러리 — 기출문항 검색, 원본 PDF 대조와 편집 가능한 한글 문서 변환" />
+    <meta name="referrer" content="strict-origin-when-cross-origin" />
+    <title>기출 탐색기 · 5E</title>
+    <style>
+      html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: #fff; }
+      iframe { display: block; width: 100%; height: 100%; border: 0; }
+      noscript { position: absolute; inset: 0; display: grid; place-items: center; font: 16px system-ui, sans-serif; }
+    </style>
+  </head>
+  <body>
+    <iframe id="examlibrary" title="기출 탐색기" allow="fullscreen" allowfullscreen></iframe>
+    <noscript><a href="https://seungyeon980808-pixel.github.io/exam-search/">기출 탐색기 열기</a></noscript>
+    <script>
+      const frame = document.querySelector('#examlibrary');
+      const app = new URL('https://seungyeon980808-pixel.github.io/exam-search/');
+      app.search = location.search;
+      app.hash = location.hash;
+      window.addEventListener('message', event => {
+        if (event.origin !== app.origin || event.source !== frame.contentWindow
+            || event.data?.type !== '5e:examlibrary-location') return;
+        const { search, hash } = event.data;
+        if (typeof search !== 'string' || typeof hash !== 'string'
+            || search.length > 8192 || hash.length > 8192
+            || (search && !search.startsWith('?')) || (hash && !hash.startsWith('#'))) return;
+        const address = new URL(location.href);
+        address.search = search;
+        address.hash = hash;
+        history.replaceState(null, '', address);
+      });
+      frame.addEventListener('load', () => {
+        frame.contentWindow.postMessage({ type: '5e:examlibrary-ready' }, app.origin);
+      });
+      frame.src = app.href;
+    </script>
+  </body>
+</html>
