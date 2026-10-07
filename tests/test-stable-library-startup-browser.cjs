@@ -113,7 +113,7 @@ const stateOfCrop = ui => ui.evaluate(el => ({ page: el.querySelector('[data-uni
       assert.deepEqual(f.state.errors, []); results.push({ engine: name, case: 'corrupt-cache-missing-bootstrap-remote-fallback', errors: f.state.errors }); await f.context.close();
 
       f = await setup(browser); contexts.push(f.context); await f.open();
-      await f.page.keyboard.press('Escape'); await f.ui.waitFor({ state: 'hidden' });
+      await f.ui.locator('[data-unilib-close]').click(); await f.ui.waitFor({ state: 'hidden' });
       f.state.metadata.release(); f.state.indexGate.release();
       await f.page.waitForFunction(() => document.querySelector('.unified-library-overlay')?.dataset.searchReadiness === 'ready');
       assert.equal(await f.ui.isVisible(), false); await f.open();

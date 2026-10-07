@@ -1345,7 +1345,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       if (searchReadiness !== "ready") setStatus(readinessMessage(), searchReadiness === "error");
       if (results.length && !await waitForFirstResultPaint(ownEpoch, signal)) return;
       if (!searchIsCurrent(ownEpoch, signal)) return;
-      setResultState(results.length ? "ready" : searchReadiness !== "ready" ? "loading" : "empty", results.length ? "" : searchReadiness !== "ready" ? readinessMessage() : "검색 결과가 없습니다.");
+      setResultState(results.length ? "ready" : searchReadiness === "error" ? "error" : searchReadiness !== "ready" ? "loading" : "empty", results.length ? "" : searchReadiness !== "ready" ? readinessMessage() : "검색 결과가 없습니다.");
       if (searchReadiness !== "ready") { setStatus(readinessMessage(), searchReadiness === "error"); return; }
       setStatus(pendingIndexCount ? `내 PDF ${pendingIndexCount}개를 색인하는 중입니다.` : "");
     } catch (error) {
@@ -2264,7 +2264,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   setSearchPaneOpen(searchPaneOpen);
   setPreviewPaneOpen(previewPaneOpen);
   previewToggle.addEventListener("click", () => setPreviewPaneOpen(!previewPaneOpen));
-  overlay.querySelector("[data-unilib-result-retry]").addEventListener("click", () => void runSearch());
+  overlay.querySelector("[data-unilib-result-retry]").addEventListener("click", () => void (searchReadiness === "error" && providedRetry ? providedRetry() : runSearch()));
   overlay.querySelector("[data-unilib-provided-retry]").addEventListener("click", () => { if (typeof providedRetry === "function") void providedRetry(); });
   overlay.querySelector("[data-unilib-scrim]").addEventListener("click", closeDrawers);
   overlay.querySelector("[data-unilib-close]").addEventListener("click", close);
@@ -3391,7 +3391,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       searchReadiness = ["loading", "error", "ready"].includes(value) ? value : "ready";
       overlay.dataset.searchReadiness = searchReadiness;
       if (!overlay.hidden && searchReadiness !== "ready") setStatus(readinessMessage(), searchReadiness === "error");
-      if (searchReadiness === "ready") void refreshCatalog();
+      if (searchReadiness === "ready" || searchReadiness === "error") void refreshCatalog();
     },
     applyCatalogUpdate(callback) {
       if (!cropDialog.hidden) return new Promise((resolve, reject) => catalogUpdates.push(() => Promise.resolve().then(callback).then(resolve, reject)));
