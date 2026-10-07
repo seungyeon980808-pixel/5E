@@ -1,0 +1,109 @@
+name: Exam Library Route
+
+on:
+  workflow_dispatch:
+    inputs:
+      base_run:
+        description: Successful Validated Web Release run already published to 5E
+        required: true
+        default: '37582662277'
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: validated-web-release
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    if: ${{ github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.21.0
+          cache: npm
+      - name: Check that the base artifact passed the complete existing release gate and was published
+        id: base
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BASE_RUN: ${{ inputs.base_run }}
+        run: |
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const { execFileSync } = require('node:child_process');
+          if (!/^[0-9]+$/.test(process.env.BASE_RUN)) throw new Error('Numeric release run required');
+          const api = suffix => JSON.parse(execFileSync('gh', ['api', `repos/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.BASE_RUN}${suffix}`], { encoding: 'utf8' }));
+          const run = api('');
+          if (run.status !== 'completed' || run.conclusion !== 'success' || run.head_branch !== 'main'
+              || run.path !== '.github/workflows/web-release.yml') throw new Error('Base must be a successful main web release');
+          const jobs = api('/jobs?per_page=100').jobs;
+          if (!['Source Browser Regression', 'validate', 'publish'].every(name => jobs.some(job => job.name === name && job.conclusion === 'success'))) {
+            throw new Error('Base did not complete source, artifact, and publication validation');
+          }
+          (async () => {
+            const response = await fetch(`https://www.5e.ai.kr/js/release-receipt.js?route-run=${process.env.GITHUB_RUN_ID}`, { signal: AbortSignal.timeout(30000) });
+            if (!response.ok) throw new Error('Cannot confirm the currently published 5E version');
+            const current = (await response.text()).match(/sourceCommit: '([a-f0-9]{40})'/)?.[1];
+            if (current !== run.head_sha) throw new Error('Base is stale: select the currently published validated release run');
+            fs.appendFileSync(process.env.GITHUB_OUTPUT, `sha=${run.head_sha}\nrun=${process.env.BASE_RUN}\n`);
+          })().catch(error => { console.error(error); process.exitCode = 1; });
+          NODE
+      - uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ steps.base.outputs.run }}
+          name: github-pages
+          path: _work/base-pages
+      - uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ steps.base.outputs.run }}
+          name: web-validation-${{ steps.base.outputs.sha }}
+          path: _work/base-validation
+      - run: |
+          mkdir -p _work/examlibrary-publication/site
+          tar -xf _work/base-pages/artifact.tar -C _work/examlibrary-publication/site
+      - name: Verify the original receipt and append only the new route
+        env:
+          BASE_SOURCE_SHA: ${{ steps.base.outputs.sha }}
+        run: node scripts/examlibrary-publication.cjs --site _work/examlibrary-publication/site --base-receipt _work/base-validation/receipt.json --receipt _work/examlibrary-publication/receipt.json
+      - run: npm ci --no-audit
+        env:
+          ELECTRON_SKIP_BINARY_DOWNLOAD: '1'
+      - run: npx playwright install --with-deps chromium webkit
+      - run: node --test desktop/web-publication.test.cjs
+      - name: Test the committed route with real public exam search, PDF, and HWPX downloads
+        env:
+          FIVE_E_SITE_ROOT: ${{ github.workspace }}/_work/examlibrary-publication/site
+          EVIDENCE_DIR: ${{ github.workspace }}/_work/examlibrary-publication/evidence
+        run: node tests/test-examlibrary-browser.cjs
+      - name: Reject changes to the tested artifact or to any existing 5E file
+        run: node scripts/examlibrary-publication.cjs --verify --site _work/examlibrary-publication/site --receipt _work/examlibrary-publication/receipt.json
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _work/examlibrary-publication/site
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: examlibrary-publication-${{ github.sha }}
+          path: |
+            _work/examlibrary-publication/receipt.json
+            _work/examlibrary-publication/evidence
+
+  publish:
+    needs: validate
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}examlibrary/
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

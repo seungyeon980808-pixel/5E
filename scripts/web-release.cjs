@@ -7,7 +7,7 @@ const digest = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
 const gitBlob = bytes => crypto.createHash('sha1').update(`blob ${bytes.length}\0`).update(bytes).digest('hex');
 const root = path.resolve(__dirname, '..');
 const surfaceDirectories = ['js', 'css', 'assets', 'fonts', 'vendor'];
-const surfaceFiles = ['index.html', 'manifest.json', 'LICENSE', 'docs/credits.html', 'experiments/web-codex-auth/editor-bridge.js'];
+const surfaceFiles = ['index.html', 'manifest.json', 'LICENSE', 'docs/credits.html', 'experiments/web-codex-auth/editor-bridge.js', 'examlibrary/index.html'];
 
 function filesBelow(directory) {
   const files = [];
