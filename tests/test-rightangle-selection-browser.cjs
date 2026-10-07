@@ -190,9 +190,9 @@ async function saveAndReopen(page, browser, id) {
   await reopened.locator('#project-open').click();
   await (await chooser).setFiles(savedPath);
   const open = reopened.getByRole('button', { name: '열기', exact: true });
-  if (await open.isVisible().catch(() => false)) await open.click();
-  await reopened.waitForFunction((expectedId) => import('./js/state.js?v=1.6.0-remediation-0929')
-    .then(({ state }) => state.get().objects.some((object) => object.id === expectedId)), id);
+  // FileReader opens this confirmation asynchronously. Await the real user
+  // action instead of treating a not-yet-visible dialog as already confirmed.
+  await open.click();
   const rendered = reopened.locator(`[data-id="${id}"]`).first();
   try {
     await rendered.waitFor({ state: 'attached' });

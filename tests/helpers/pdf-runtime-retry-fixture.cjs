@@ -114,8 +114,21 @@ async function runPdfRuntimeRetryCases({ origin, evidence }) {
             return img?.naturalWidth >= 600 && quality?.hidden;
           });
           const originalWidth = await image.evaluate(img => img.naturalWidth);
-          await ui.locator('[data-unilib-crop-stage]').focus();
-          await page.keyboard.press('Enter');
+          // Opening a question can already seed a draft. Enter would then save
+          // it, racing the following click against a button that becomes hidden.
+          // Draw a new selection and confirm it once, as a pointer user does.
+          const canvasBounds = await ui.locator('[data-unilib-crop-canvas]').boundingBox();
+          const stageBounds = await ui.locator('[data-unilib-crop-stage]').boundingBox();
+          assert.ok(canvasBounds && stageBounds, 'original PDF crop surface is visible');
+          const left = Math.max(canvasBounds.x, stageBounds.x);
+          const top = Math.max(canvasBounds.y, stageBounds.y);
+          const width = Math.min(canvasBounds.x + canvasBounds.width, stageBounds.x + stageBounds.width) - left;
+          const height = Math.min(canvasBounds.y + canvasBounds.height, stageBounds.y + stageBounds.height) - top;
+          assert.ok(width > 80 && height > 80, 'original PDF has a usable crop area');
+          await page.mouse.move(left + width * .2, top + height * .2);
+          await page.mouse.down();
+          await page.mouse.move(left + width * .6, top + height * .6, { steps: 6 });
+          await page.mouse.up();
           await ui.locator('[data-unilib-crop-save]:not([disabled])').click();
           await ui.locator('.unilib-crop-collection-thumb').first().waitFor();
           assert.match(await ui.locator('[data-unilib-crop-count]').textContent(), /1개/);
