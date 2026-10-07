@@ -9,12 +9,12 @@
   },
   "channels": {
     "stableWeb": {
-      "version": "1.6.2",
+      "version": "1.6.3",
       "url": "https://www.5e.ai.kr/",
       "entry": "index.html",
       "pagesBuildType": "workflow",
       "pagesSourceBranch": "main",
-      "tag": "v1.6.2",
+      "tag": "v1.6.3",
       "sourceReceipt": "https://www.5e.ai.kr/js/release-receipt.js"
     },
     "previewWeb": {
