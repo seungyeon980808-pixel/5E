@@ -78,6 +78,8 @@ const stateOfCrop = ui => ui.evaluate(el => ({ page: el.querySelector('[data-uni
       await f.ui.locator('[data-unilib-query]').fill('힘 운동');
       await f.ui.locator(`[data-result-id$="${book.source.displayName}:page:316"]`).waitFor();
       assert.equal(await f.ui.locator('[data-unilib-query]').inputValue(), '힘 운동');
+      await f.ui.locator('[data-unilib-query]').fill('교과서_중2.pdf');
+      await f.ui.locator(`[data-result-id$="${book.source.displayName}:page:1"]`).waitFor();
       results.push({ engine: name, case: 'catalog-before-index-and-crop-preservation', listMs, before, errors: f.state.errors });
       assert.deepEqual(f.state.errors, []); await f.context.close();
 

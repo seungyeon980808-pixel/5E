@@ -720,7 +720,7 @@ export function createUnifiedLibraryProvider(input = {}) {
         }
         for (const miss of entry.misses ?? []) if (!current.misses.includes(miss)) current.misses.push(miss);
       }
-      return Object.freeze([...matchesByDocument].slice(0, boundedLimit(options.limit)).map(([documentId, pages]) => {
+      const found = [...matchesByDocument].map(([documentId, pages]) => {
         const matches = [...pages.values()].sort((left, right) => left.pageNumber - right.pageNumber).map((match) => Object.freeze({
           ...match,
           terms: Object.freeze(match.terms), highlights: Object.freeze(match.highlights), misses: Object.freeze(match.misses),
@@ -739,7 +739,11 @@ export function createUnifiedLibraryProvider(input = {}) {
           getPageGeometry: (pageNumber = matches[0].pageNumber) => pageGeometry(documents.find((document) => document.id === file.documentId), pageNumber),
           loadPreview: (pageNumber = matches[0].pageNumber, previewOptions = {}) => loadPdfPage(file, pageNumber, previewOptions),
         });
-      }));
+      });
+      // File-name matches remain usable after the full-text index becomes ready.
+      const filenameMatches = [...filesByDocument.values()].filter(file =>
+        !matchesByDocument.has(file.documentId) && matchesText(file.searchText, queryTokens));
+      return Object.freeze([...found, ...filenameMatches].slice(0, boundedLimit(options.limit)));
     },
     listPdfPages(options = {}) {
       const compact = parseCompactExamCode(options.query);

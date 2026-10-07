@@ -6,7 +6,7 @@ import { defaultRecentThreePack } from "./pdf-library/default-pack-config.js?v=1
 import { loadBundledDesktopPack } from "./pdf-library/desktop-pack.js?v=1.6.1-preview-labeler-0917-1111";
 import { registerPdfReferencePicker } from "./pdf-library/reference-picker.js?v=1.6.1-preview-labeler-0917-1111";
 import { mergePreferredCatalogs } from "./pdf-library/catalog-merge.js?v=1.6.1-preview-labeler-0917-1111";
-import { createUnifiedLibraryProvider } from "./library/provider.js?v=1.6.2-library-speed";
+import { createUnifiedLibraryProvider } from "./library/provider.js?v=1.6.3-library-startup";
 import { createUnifiedLibraryUi, unifiedLibrarySourceMetadata, unifiedLibraryTransfer } from "./unified-library-ui.js?v=1.6.3-library-startup";
 import { insertPartsAsset, loadPartsManifest, materializePartsAsset } from "./parts-library.js?v=1.6.1-preview-labeler-0917-1111";
 const MAX_RENDER = 60; // 그리드에 한 번에 그리는 카드 수 (초과분은 안내문으로 표시)
@@ -257,7 +257,7 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
           try { latest = await startup.refresh(); }
           catch { packManagement.setProvidedStatus(`${defaultPack.documentCount}개 PDF · 저장된 목록 사용 중`); }
           if (epoch !== providedEpoch) return;
-          if (latest && (latest.catalogChecksum !== connection.pack.catalogChecksum || JSON.stringify(latest.documents.map(d => [d.id, d.source.sha256])) !== JSON.stringify(connection.pack.documents.map(d => [d.id, d.source.sha256])))) {
+          if (latest && (latest.catalogChecksum !== connection.pack.catalogChecksum || latest.version !== connection.pack.version || latest.title !== connection.pack.title || JSON.stringify(latest.documents.map(d => [d.id, d.source.sha256])) !== JSON.stringify(connection.pack.documents.map(d => [d.id, d.source.sha256])))) {
             await unifiedUi.applyCatalogUpdate(async () => {
               if (epoch !== providedEpoch) return;
               defaultPack = driveFolderPack(latest, PROVIDED_DRIVE_FOLDER_URL);

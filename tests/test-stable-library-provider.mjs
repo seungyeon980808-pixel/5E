@@ -85,3 +85,12 @@ test('shared textbook uses prebuilt pages for browsing and the PDF for original 
   assert.equal(original.previewOnly, undefined);
   assert.equal(calls.length, 1);
 });
+
+
+test('filename lookup stays available when full-text search has no body match', async () => {
+  const provider = makeProvider({ searchPdf: async () => [] });
+  const found = await provider.searchPdfFiles({ query: '교과서.pdf' });
+  assert.deepEqual(found.map(file => file.documentId), ['book']);
+  assert.equal(found[0].firstMatchingPage, 1);
+  assert.equal((await provider.searchPdfFiles({ query: '교과서.pdf', sourceIds: [] })).length, 0);
+});
