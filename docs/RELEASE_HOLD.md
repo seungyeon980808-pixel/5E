@@ -1,6 +1,8 @@
-# Current local candidate: 1.6.3 — HOLD
+# 현재 로컬 후보: 1.6.3 — 공개 전 HOLD
 
-The public stable web is 1.6.2 at df09ba5e860ecf25fcba6e0d9bb07249a8e259cd. This separate local branch integrates A1 and library startup improvements. No 1.6.3 publication, installer signing, native-device or live-AI gate is cleared.
+공개 안정판과 원격 main은 1.6.2(df09ba5e860ecf25fcba6e0d9bb07249a8e259cd)입니다. 별도 브랜치에서 라이브러리 초기 표시 개선과 A1을 통합·검수했습니다. 1.6.3의 main 병합·push·태그·배포는 진행하지 않았습니다. 설치판 서명·기기 설치·실계정 AI의 기존 HOLD도 유지합니다.
+
+검사: 기본 336개 통과, 브라우저 41개 묶음 확인(기존 경과시간 검사 첫 시간초과 1건은 단독 재검 통과), 실제 교과서·기출 원본 크롭 확인. 전체 최초 실행을 무실패 통과로 기록하지 않습니다. 상세 결과는 `docs/STABILITY_FOLLOWUP_OPERATIONS.md`를 보세요.
 
 ## Historical preparation records
 
