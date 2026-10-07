@@ -12,7 +12,7 @@ import { previewStorage as localStorage } from './preview-storage.js?v=1.6.1-rem
  * 스냅샷이 수 MB에 달할 수 있어 localStorage(≈5MB, 문자열 전용) 용량이 부족하다.
  */
 
-import { serialize, migrate, applyLoaded } from "./project-io.js?v=1.6.1-remediation-0929";
+import { serialize, migrate, applyLoaded } from "./project-io.js?v=1.6.3-project-file-size";
 import { showAlert, showConfirm } from "./ui-dialogs.js?v=1.6.1-remediation-0929";
 
 import { captureProjectStatus, markProjectStatus } from "./project-status.js?v=1.6.1-ai-latest-fixes-0928";

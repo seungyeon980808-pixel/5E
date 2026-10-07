@@ -22,7 +22,7 @@ import { previewStorage as localStorage } from './preview-storage.js?v=1.6.1-rem
 import { state } from "./state.js?v=1.6.1-remediation-0929";
 import {
   serialize as serializeProject, migrate as migrateProject, applyLoaded as applyLoadedProject,
-} from "./project-io.js?v=1.6.1-remediation-0929";
+} from "./project-io.js?v=1.6.3-project-file-size";
 import { showAlert, showConfirm, showPrompt } from "./ui-dialogs.js?v=1.6.1-remediation-0929";
 import { switchPage, addPage } from "./pages.js?v=1.6.1-remediation-0929";
 import { rasterizeExportCanvas, ensureEmbeddedFonts, insertPngPhys,

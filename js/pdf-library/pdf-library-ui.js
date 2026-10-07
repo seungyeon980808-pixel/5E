@@ -324,11 +324,13 @@ export function expandFigureResults(found) {
 
 export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, invalidateSearch, insertImage, openIndependentReferences, loadDesktopAdapter, onCatalogChange }) {
   let runtime = null;
+  let runtimeLoading = null;
   let docs = [];
   let packDocumentIds = new Set();
   let packSearchIndex = null;
   let packSyncEpoch = 0;
   let catalogRevision = 0;
+  let searchIndexRevision = 0;
   const updatedPackDocumentIds = new Set();
   const browserPdfSizes = new Map();
   const documentOpeners = new Map();
@@ -523,8 +525,8 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
   };
 
   async function ensureRuntime() {
-    if (!runtime) runtime = await loadRuntime();
-    return runtime;
+    if (!runtimeLoading) runtimeLoading = Promise.resolve().then(loadRuntime).then(value => (runtime = value)).catch(error => { runtimeLoading = null; throw error; });
+    return runtimeLoading;
   }
 
   function withRuntimeLock(operation, options = {}) {
@@ -799,13 +801,14 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
       }
     }
     packSearchIndex = searchIndex;
+    searchIndexRevision += 1;
     catalogChanged();
     onCatalogChange?.();
     refreshPackFilters();
     invalidateSearch?.();
     closePreview();
     refreshOcrControls();
-    await runSearch();
+    if (host.isConnected) await runSearch();
   }
 
   async function recognizeScans() {
@@ -1331,8 +1334,14 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
       publishDocuments(docs.map((document) => document.id === documentId ? opened : document));
       return opened;
     },
+    syncPackSearchIndex(searchIndex, { notify = true } = {}) {
+      packSearchIndex = searchIndex;
+      searchIndexRevision += 1;
+      invalidateSearch?.();
+      if (notify) onCatalogChange?.();
+    },
     getCatalog() {
-      return { documents: [...docs], searchIndex: packSearchIndex, revision: `pdf-catalog:${pdfCatalogRevisionKey(docs)}` };
+      return { documents: [...docs], searchIndex: packSearchIndex, revision: `pdf-catalog:${pdfCatalogRevisionKey(docs)}:search:${searchIndexRevision}` };
     },
     getResolvedResults() {
       return [...new Map(resultResolver.values().map((value) => [value.id, value])).values()];

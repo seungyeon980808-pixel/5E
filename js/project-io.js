@@ -31,6 +31,7 @@ import { chooseProjectSaveTarget, timestampProjectFilename } from './project-sav
 import {
   FS_DIR_SUPPORTED, loadSavedProjectDir, currentProjectDirName, pickProjectDir, writeProjectToDir,
 } from './export-dir.js?v=1.6.1-remediation-0929';
+import { projectFileSizeError } from "./project-file-policy.js?v=1.6.3-project-file-size";
 let savingProject = false;
 
 // Schema version of the saved file. Distinct from the app UI version.
@@ -664,6 +665,13 @@ export function applyLoaded(state, data) {
 function openProject(state, file) {
   const executable = /\.exe$/i.test(file.name);
   if (executable && file.size > 64 * 1024 * 1024) { alert('프로젝트 실행 파일이 너무 큽니다.'); return; }
+  if (!executable) {
+    const sizeError = projectFileSizeError(file);
+    if (sizeError) {
+      void showAlert(sizeError, { title: "프로젝트 파일 용량 초과" });
+      return;
+    }
+  }
   const reader = new FileReader();
   reader.onload = async () => {
     try {

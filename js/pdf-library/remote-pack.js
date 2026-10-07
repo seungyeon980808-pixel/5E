@@ -30,7 +30,7 @@ function safeRemoteUrl(value, label) {
   throw new PackValidationError(label, "expected HTTPS or exact loopback HTTP");
 }
 
-async function boundedBytes(response, maximum, label) {
+export async function boundedBytes(response, maximum, label) {
   if (!response.ok) throw new PackValidationError(label, `HTTP ${response.status}`);
   const declared = Number(response.headers.get("content-length"));
   if (Number.isFinite(declared) && declared > maximum) throw new PackValidationError(label, `exceeds ${maximum} bytes`);
@@ -67,9 +67,14 @@ function json(bytes, label) {
 
 async function fetchBytes(fetcher, url, maximum, label) {
   const requestUrl = safeRemoteUrl(url, label);
-  const response = await fetcher(requestUrl.href, { redirect: "manual" });
-  if (response.url) safeRemoteUrl(response.url, label);
-  return boundedBytes(response, maximum, label);
+  const controller = new AbortController();
+  // Catalog/index requests must eventually offer retry; large originals keep their existing budget.
+  const timeout = maximum === MAX_PDF_BYTES ? null : setTimeout(() => controller.abort(), maximum === MAX_MANIFEST_BYTES ? 15_000 : 120_000);
+  try {
+    const response = await fetcher(requestUrl.href, { redirect: "manual", signal: controller.signal });
+    if (response.url) safeRemoteUrl(response.url, label);
+    return await boundedBytes(response, maximum, label);
+  } finally { clearTimeout(timeout); }
 }
 
 export function createBrowserRemoteAssetCache({ storage = globalThis.caches, cacheName = "5e-pdf-library-v1" } = {}) {
@@ -82,7 +87,7 @@ export function createBrowserRemoteAssetCache({ storage = globalThis.caches, cac
   return Object.freeze({
     async get(url, checksum) {
       const response = await (await storage.open(cacheName)).match(cacheKey(url, checksum));
-      return response?.ok ? new Uint8Array(await response.arrayBuffer()) : null;
+      return response?.ok ? boundedBytes(response, new URL(url).pathname.endsWith(".json") ? MAX_JSON_BYTES : MAX_PDF_BYTES, "cached asset") : null;
     },
     async put(url, checksum, bytes) {
       await (await storage.open(cacheName)).put(cacheKey(url, checksum), new Response(bytes, {
@@ -96,14 +101,46 @@ export function createBrowserRemoteAssetCache({ storage = globalThis.caches, cac
   });
 }
 
-export async function loadRemotePack({ baseUrl, fetcher = globalThis.fetch, assetCache = createBrowserRemoteAssetCache() }) {
+// Snapshots contain only previously verified catalog metadata, never PDF bytes or search text.
+export function compactRemoteCatalog(catalog) {
+  return {
+    schemaVersion: catalog.schemaVersion,
+    documentMetadata: catalog.documentMetadata,
+    documents: catalog.documents.map((document) => ({
+      ...document,
+      pages: (document.pages ?? []).map(({ documentId, pageNumber, widthPoints, heightPoints, rotation }) =>
+        ({ documentId, pageNumber, widthPoints, heightPoints, rotation, text: "", words: [], items: [] })),
+    })),
+  };
+}
+
+export async function remoteCatalogSnapshot(baseUrl, pack, checksums, catalog) {
+  const payload = { schemaVersion: 1, baseUrl, pack, checksums, catalog: compactRemoteCatalog(catalog), catalogChecksum: checksums.files[pack.paths.catalog] };
+  return { payload, digest: await sha256Hex(new TextEncoder().encode(JSON.stringify(payload))) };
+}
+
+export async function validateRemoteCatalogSnapshot(snapshot, baseUrl) {
+  try {
+    const payload = snapshot?.payload;
+    const bytes = new TextEncoder().encode(JSON.stringify(payload));
+    if (bytes.byteLength > MAX_JSON_BYTES || payload?.schemaVersion !== 1 || payload.baseUrl !== baseUrl
+      || !HASH_PATTERN.test(snapshot.digest ?? "") || await sha256Hex(bytes) !== snapshot.digest
+      || payload.catalogChecksum !== payload.checksums?.files?.[payload.pack?.paths?.catalog]) return null;
+    return payload;
+  } catch { return null; }
+}
+
+export async function loadRemotePack({ baseUrl, fetcher = globalThis.fetch, assetCache = createBrowserRemoteAssetCache(), catalogFirst = false, snapshot = null, refreshMetadata = false, onSnapshot = null }) {
   if (typeof baseUrl !== "string" || baseUrl.trim() === "") throw new PackValidationError("baseUrl", "remote pack is unconfigured");
   const root = safeRemoteUrl(new URL(baseUrl, globalThis.location?.href ?? "http://localhost/"), "baseUrl");
   if (!root.pathname.endsWith("/") || root.search || root.hash) throw new PackValidationError("baseUrl", "expected a directory URL without query or fragment");
-  const [packBytes, checksumBytes] = await Promise.all([
-    fetchBytes(fetcher, new URL("pack.json", root).href, MAX_MANIFEST_BYTES, "pack.json"),
-    fetchBytes(fetcher, new URL("checksums.json", root).href, MAX_MANIFEST_BYTES, "checksums.json"),
-  ]);
+  const cached = await validateRemoteCatalogSnapshot(snapshot, root.href);
+  const [packBytes, checksumBytes] = cached && !refreshMetadata
+    ? [new TextEncoder().encode(JSON.stringify(cached.pack)), new TextEncoder().encode(JSON.stringify(cached.checksums))]
+    : await Promise.all([
+      fetchBytes(fetcher, new URL("pack.json", root).href, MAX_MANIFEST_BYTES, "pack.json"),
+      fetchBytes(fetcher, new URL("checksums.json", root).href, MAX_MANIFEST_BYTES, "checksums.json"),
+    ]);
   const pack = json(packBytes, "pack.json");
   const checksums = json(checksumBytes, "checksums.json");
   if (pack.schemaVersion !== 1 || typeof pack.id !== "string" || typeof pack.version !== "string") throw new PackValidationError("pack.json", "unsupported manifest");
@@ -125,13 +162,20 @@ export async function loadRemotePack({ baseUrl, fetcher = globalThis.fetch, asse
     try { await assetCache?.put(url, checksum, bytes); } catch {}
     return bytes;
   };
-  const [catalogBytes, searchBytes] = await Promise.all([readIndex(catalogPath), readIndex(searchPath)]);
-  if (await sha256Hex(catalogBytes) !== checksums.files[catalogPath]) throw new PackValidationError(catalogPath, "SHA-256 mismatch");
-  if (await sha256Hex(searchBytes) !== checksums.files[searchPath]) throw new PackValidationError(searchPath, "SHA-256 mismatch");
-  const catalog = json(catalogBytes, catalogPath);
-  const searchIndex = json(searchBytes, searchPath);
+  const eagerSearch = catalogFirst ? null : readIndex(searchPath);
+  eagerSearch?.catch(() => {});
+  const reuseCatalog = catalogFirst && cached && cached.catalogChecksum === checksums.files[catalogPath];
+  const catalog = reuseCatalog ? cached.catalog : json(await readIndex(catalogPath), catalogPath);
   if (!Array.isArray(catalog.documents) || catalog.documents.length !== pack.documentCount) throw new PackValidationError(catalogPath, "document count mismatch");
-  if (searchIndex.schemaVersion !== "pdf-search-index-v1" || !Array.isArray(searchIndex.entries)) throw new PackValidationError(searchPath, "unsupported search index");
+  let pendingSearch = null;
+  const loadSearchIndex = () => {
+    if (!pendingSearch) pendingSearch = (eagerSearch || readIndex(searchPath)).then((bytes) => {
+      const searchIndex = json(bytes, searchPath);
+      if (searchIndex.schemaVersion !== "pdf-search-index-v1" || !Array.isArray(searchIndex.entries)) throw new PackValidationError(searchPath, "unsupported search index");
+      return Object.freeze({ ...searchIndex, entries: Object.freeze(searchIndex.entries.map((entry) => materializePackSearchEntry(pack.id, entry))) });
+    }).catch((error) => { pendingSearch = null; throw error; });
+    return pendingSearch;
+  };
   const documents = Object.freeze(catalog.documents.map((document) => {
     const prefix = `${pack.id}/`;
     if (!document.source?.locator?.startsWith(prefix)) throw new PackValidationError("document.source", "does not belong to this pack");
@@ -141,6 +185,9 @@ export async function loadRemotePack({ baseUrl, fetcher = globalThis.fetch, asse
     return materializePackDocument(pack.id, catalog, document, sourceSha256);
   }));
   if (documents.reduce((sum, document) => sum + document.pageCount, 0) !== pack.pageCount) throw new PackValidationError(catalogPath, "page count mismatch");
+  if (catalogFirst && onSnapshot) {
+    void remoteCatalogSnapshot(root.href, pack, checksums, catalog).then(onSnapshot).catch(() => {});
+  }
   const pendingDocuments = new Map();
   const readDocument = async (document) => {
     const prefix = `${pack.id}/`;
@@ -181,10 +228,8 @@ export async function loadRemotePack({ baseUrl, fetcher = globalThis.fetch, asse
     pageCount: pack.pageCount,
     bytes: Number(pack.bytes) || null,
     documents,
-    searchIndex: Object.freeze({
-      ...searchIndex,
-      entries: Object.freeze(searchIndex.entries.map((entry) => materializePackSearchEntry(pack.id, entry))),
-    }),
+    searchIndex: catalogFirst ? Object.freeze({ schemaVersion: "pdf-search-index-v1", entries: Object.freeze([]) }) : await loadSearchIndex(),
+    ...(catalogFirst ? { loadSearchIndex, catalogChecksum: checksums.files[catalogPath], searchChecksum: checksums.files[searchPath] } : {}),
     async downloadDocument(document) {
       return Object.freeze({
         bytes: await readDocument(document),

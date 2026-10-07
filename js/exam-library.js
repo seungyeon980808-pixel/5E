@@ -1,13 +1,13 @@
 import { insertImageFromSrc } from "./image-paste.js?v=1.6.1-remediation-0929";
 import { openObjectifyWithFile } from "./image-objectify.js?v=1.6.1-remediation-0929";
 
-import { createPdfLibraryUi } from "./pdf-library/pdf-library-ui.js?v=1.6.1-remediation-0929";
+import { createPdfLibraryUi } from "./pdf-library/pdf-library-ui.js?v=1.6.3-library-startup";
 import { defaultRecentThreePack } from "./pdf-library/default-pack-config.js?v=1.6.1-preview-labeler-0917-1111";
 import { loadBundledDesktopPack } from "./pdf-library/desktop-pack.js?v=1.6.1-preview-labeler-0917-1111";
 import { registerPdfReferencePicker } from "./pdf-library/reference-picker.js?v=1.6.1-preview-labeler-0917-1111";
 import { mergePreferredCatalogs } from "./pdf-library/catalog-merge.js?v=1.6.1-preview-labeler-0917-1111";
 import { createUnifiedLibraryProvider } from "./library/provider.js?v=1.6.2-library-speed";
-import { createUnifiedLibraryUi, unifiedLibrarySourceMetadata, unifiedLibraryTransfer } from "./unified-library-ui.js?v=1.6.2-library-speed";
+import { createUnifiedLibraryUi, unifiedLibrarySourceMetadata, unifiedLibraryTransfer } from "./unified-library-ui.js?v=1.6.3-library-startup";
 import { insertPartsAsset, loadPartsManifest, materializePartsAsset } from "./parts-library.js?v=1.6.1-preview-labeler-0917-1111";
 const MAX_RENDER = 60; // 그리드에 한 번에 그리는 카드 수 (초과분은 안내문으로 표시)
 
@@ -121,31 +121,48 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
   });
   const isDesktopLibrary = Boolean(globalThis.fiveEDesktop?.pdfLibrary);
   let packManagement = null;
+  let packManagementLoading = null;
   let installedPackDocuments = [];
   let installedPackSearchIndex = { schemaVersion: "pdf-search-index-v1", entries: [] };
   let defaultPack = null;
   let drivePack = null;
   let drivePackDocumentIds = new Set();
-  const mountPackManagement = async () => {
-    if (packManagement) return packManagement;
+  const mountPackManagement = () => {
+    if (packManagementLoading) return packManagementLoading;
+    packManagementLoading = buildPackManagement().catch(error => { packManagementLoading = null; throw error; });
+    return packManagementLoading;
+  };
+  const buildPackManagement = async () => {
     const [
       { createIndexedDbPackAdapter, createPackStore },
       { mountPackManagement: mount },
       { loadRemotePack },
+      { loadCatalogFirst },
+      { PROVIDED_CATALOG_BOOTSTRAP },
       { configuredGoogleDriveGatewayUrl, createGoogleDriveConnection, PROVIDED_DRIVE_FOLDER_URL, driveFolderPack, parseGoogleDriveFolderUrl },
     ] = await Promise.all([
       import("./pdf-library/pack-store.js?v=1.6.1-preview-labeler-0917-1111"),
       import("./pdf-library/pack-management.js?v=1.6.1-preview-library-popup-0919-1630"),
-      import("./pdf-library/remote-pack.js?v=1.6.1-preview-labeler-0917-1111"),
-      import("./pdf-library/google-drive.js?v=1.6.1-remediation-0929"),
+      import("./pdf-library/remote-pack.js?v=1.6.3-library-startup"),
+      import("./pdf-library/catalog-startup.js?v=1.6.3-library-startup"),
+      import("./pdf-library/catalog-bootstrap.js?v=1.6.3-library-startup"),
+      import("./pdf-library/google-drive.js?v=1.6.3-library-startup"),
     ]);
     const store = createPackStore({ adapter: createIndexedDbPackAdapter() });
     const configured = defaultRecentThreePack();
     const gatewayBaseUrl = await configuredGoogleDriveGatewayUrl();
     const driveConnection = createGoogleDriveConnection({ gatewayBaseUrl });
-    const providedConnection = createGoogleDriveConnection({ gatewayBaseUrl, storage: null });
+    let startup = null;
+    const providedConnection = createGoogleDriveConnection({ gatewayBaseUrl, storage: null,
+      loadPack: isDesktopLibrary ? loadRemotePack : async options => {
+        startup = await loadCatalogFirst({ ...options, bootstrap: PROVIDED_CATALOG_BOOTSTRAP });
+        return startup.pack;
+      },
+    });
     const isProvidedFolder = (url) => Boolean(url) && parseGoogleDriveFolderUrl(url).folderId === parseGoogleDriveFolderUrl(PROVIDED_DRIVE_FOLDER_URL).folderId;
     const syncPackCatalog = () => {
+      const currentDefault = defaultPack, currentDrive = drivePack;
+      const currentDriveIds = new Set(drivePackDocumentIds);
       const preferredRemote = mergePreferredCatalogs(defaultPack, drivePack);
       const merged = mergePreferredCatalogs(
         preferredRemote,
@@ -156,14 +173,14 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
         searchIndex: merged.searchIndex,
         openDocument: (runtime, document) => merged.installedDocumentIds.has(document.id)
           ? store.openDocument(runtime, document)
-          : drivePackDocumentIds.has(document.id)
-            ? drivePack.openDocument(runtime, document)
-            : defaultPack.openDocument(runtime, document),
-        downloadDocument: (document) => drivePackDocumentIds.has(document.id)
-          ? drivePack.downloadDocument(document)
-          : defaultPack?.downloadDocument?.(document),
+          : currentDriveIds.has(document.id)
+            ? currentDrive.openDocument(runtime, document)
+            : currentDefault.openDocument(runtime, document),
+        downloadDocument: (document) => currentDriveIds.has(document.id)
+          ? currentDrive.downloadDocument(document)
+          : currentDefault?.downloadDocument?.(document),
         canDownloadDocument: (document) => !merged.installedDocumentIds.has(document.id)
-          && (drivePackDocumentIds.has(document.id) || typeof defaultPack?.downloadDocument === "function"),
+          && (currentDriveIds.has(document.id) || typeof currentDefault?.downloadDocument === "function"),
       });
     };
     packManagement = mount({
@@ -210,19 +227,52 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
         });
       },
     });
-    const connectProvided = async () => {
-      packManagement.setProvidedStatus("제공 자료를 연결하는 중…");
-      try {
-        const connection = await providedConnection.connect(PROVIDED_DRIVE_FOLDER_URL);
-        defaultPack = driveFolderPack(connection.pack, PROVIDED_DRIVE_FOLDER_URL);
-        await syncPackCatalog();
-        packManagement.setProvidedStatus(`${defaultPack.title} · ${defaultPack.documentCount}개 PDF 연결됨`);
-        pdfUi.setSourceStatus(`제공 자료 ${defaultPack.documentCount}개 PDF 연결됨`);
-      } catch (error) {
-        const message = `제공 자료 연결 실패: ${error instanceof Error ? error.message : error}`;
-        packManagement.setProvidedStatus(message, true);
-        pdfUi.setSourceStatus(message, true);
-      }
+    let providedLoading = null;
+    let providedEpoch = 0;
+    const connectProvided = () => {
+      if (providedLoading) return providedLoading;
+      const epoch = ++providedEpoch;
+      unifiedUi?.setSearchReadiness("loading");
+      packManagement.setProvidedStatus("제공 자료 목록을 준비하는 중…");
+      providedLoading = (async () => {
+        try {
+          const connection = await providedConnection.connect(PROVIDED_DRIVE_FOLDER_URL);
+          if (epoch !== providedEpoch) return;
+          defaultPack = driveFolderPack(connection.pack, PROVIDED_DRIVE_FOLDER_URL);
+          unifiedUi?.setSearchReadiness("loading");
+          await syncPackCatalog();
+          packManagement.setProvidedStatus(`${defaultPack.documentCount}개 PDF · 본문 검색 준비 중…`);
+          pdfUi.setSourceStatus(`제공 자료 ${defaultPack.documentCount}개 PDF 연결됨`);
+          const installIndex = async pack => {
+            const index = await pack.loadSearchIndex();
+            if (epoch !== providedEpoch) return;
+            defaultPack = Object.freeze({ ...defaultPack, searchIndex: index });
+            pdfUi.syncPackSearchIndex(mergePreferredCatalogs(defaultPack, drivePack).searchIndex, { notify: false });
+            unifiedUi?.setSearchReadiness("ready");
+            packManagement.setProvidedStatus(`${defaultPack.documentCount}개 PDF · 본문 검색 가능`);
+          };
+          if (isDesktopLibrary) { unifiedUi?.setSearchReadiness("ready"); return; }
+          // Refresh metadata before choosing an index; stale cached catalogs remain usable if offline.
+          let latest;
+          try { latest = await startup.refresh(); }
+          catch { packManagement.setProvidedStatus(`${defaultPack.documentCount}개 PDF · 저장된 목록 사용 중`); }
+          if (epoch !== providedEpoch) return;
+          if (latest && (latest.catalogChecksum !== connection.pack.catalogChecksum || JSON.stringify(latest.documents.map(d => [d.id, d.source.sha256])) !== JSON.stringify(connection.pack.documents.map(d => [d.id, d.source.sha256])))) {
+            await unifiedUi.applyCatalogUpdate(async () => {
+              if (epoch !== providedEpoch) return;
+              defaultPack = driveFolderPack(latest, PROVIDED_DRIVE_FOLDER_URL);
+              await syncPackCatalog();
+            });
+          }
+          await installIndex(latest || connection.pack);
+        } catch (error) {
+          const message = `제공 자료 연결 실패: ${error instanceof Error ? error.message : error}`;
+          unifiedUi?.setSearchReadiness("error");
+          packManagement.setProvidedStatus(message, true);
+          pdfUi.setSourceStatus(message, true);
+        }
+      })().finally(() => { providedLoading = null; });
+      return providedLoading;
     };
     packManagement.setProvidedRetry(connectProvided);
     unifiedUi?.setProvidedRetry(connectProvided);
@@ -255,7 +305,7 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
   let unifiedProviderCache = null;
   let unifiedProviderCacheKey = "";
   async function ensureUnifiedManifests() {
-    if (!partsManifest) partsManifest = await loadPartsManifest();
+    if (isDesktopLibrary && !partsManifest) partsManifest = await loadPartsManifest();
   }
 
   async function materializeImportedImage({ result, item }) {
@@ -318,6 +368,7 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
 
   unifiedUi = createUnifiedLibraryUi({
     getProvider: getUnifiedProvider,
+    initialSearchReadiness: isDesktopLibrary ? "ready" : "loading",
     insertMaterialized: insertUnifiedResult,
     openObjectify: async (result, asset, context = {}) => {
       const transfer = unifiedLibraryTransfer(result, asset);

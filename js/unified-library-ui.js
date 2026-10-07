@@ -890,7 +890,7 @@ function createPartOptions(host, onChange) {
   return () => ({ ...state });
 }
 
-export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openObjectify, openAi, openIndependentReferences, pdfUi, pdfDetailsElement, onImportedImages, onDesktopSnapshot, desktopLibrary = globalThis.fiveEDesktop?.pdfLibrary, storage = globalThis.localStorage }) {
+export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openObjectify, openAi, openIndependentReferences, pdfUi, pdfDetailsElement, onImportedImages, onDesktopSnapshot, desktopLibrary = globalThis.fiveEDesktop?.pdfLibrary, storage = globalThis.localStorage, initialSearchReadiness = "ready" }) {
   const overlay = buildShell();
   const root = overlay.querySelector(".unilib");
   const help = overlay.querySelector("[data-unilib-help]");
@@ -976,6 +976,20 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   const knownSourceIds = new Set();
   let openEpoch = 0;
   let searchEpoch = 0;
+  let searchReadiness = initialSearchReadiness;
+  let pendingCatalogRefresh = false;
+  let catalogUpdates = [];
+  const readinessMessage = () => searchReadiness === "error"
+    ? "본문 검색을 준비하지 못했습니다. 목록은 사용할 수 있습니다. 제공 자료를 다시 연결해 주세요."
+    : "본문 검색 준비 중 · 지금은 파일명으로 찾을 수 있습니다.";
+  const refreshCatalog = async () => {
+    if (overlay.hidden) return;
+    if (!cropDialog.hidden) { pendingCatalogRefresh = true; return; }
+    const epoch = openEpoch;
+    const live = () => epoch === openEpoch && !overlay.hidden;
+    await renderSources(live);
+    if (live()) await runSearch({ preservePreview: true });
+  };
   let searchController = null;
   let requestSequence = 0;
   let pdfMatchIndex = 0;
@@ -1276,8 +1290,10 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     return searchIsCurrent(ownEpoch, signal);
   };
 
-  async function runSearch() {
-    invalidateAction();
+  async function runSearch({ preservePreview = false } = {}) {
+    const previousIdentity = preservePreview ? libraryResultIdentity(selectedActiveResult()) : null;
+    const previousScroll = overlay.querySelector(".unilib-result-scroll").scrollTop;
+    if (!preservePreview) invalidateAction();
     const ownEpoch = ++searchEpoch;
     searchController?.abort();
     searchController = new AbortController();
@@ -1287,7 +1303,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     thumbnailObserver?.disconnect();
     const requestId = `unilib-${++requestSequence}`;
     setResultState("loading", "검색 결과를 불러오는 중…");
-    setPreviewLoading();
+    if (!preservePreview) setPreviewLoading();
     overlay.querySelector("[data-unilib-count]").textContent = "불러오는 중";
     setStatus("라이브러리를 검색하는 중…");
     try {
@@ -1304,7 +1320,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
         ? (typeof activeProvider.searchAsync === "function" ? activeProvider.searchAsync({ ...options, kinds }) : activeProvider.search({ ...options, kinds }))
         : [];
       const pdfPromise = activeTypes.includes("pdf")
-        ? (queryText && typeof activeProvider.searchPdfFiles === "function" ? activeProvider.searchPdfFiles(options) : activeProvider.listPdfFiles?.(pageDisplayActive ? pageInventoryOptions : options) ?? [])
+        ? (queryText && searchReadiness === "ready" && typeof activeProvider.searchPdfFiles === "function" ? activeProvider.searchPdfFiles(options) : activeProvider.listPdfFiles?.(pageDisplayActive ? pageInventoryOptions : options) ?? [])
         : [];
       const [regular, pdfFiles] = await Promise.all([regularPromise, pdfPromise]);
       const displayedPdf = pageDisplayActive ? pdfResultsForDisplay(pdfFiles, "page", Boolean(queryText)) : pdfFiles;
@@ -1323,10 +1339,14 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
         selectedId = results.find((item) => item.matches?.length)?.id ?? selectedId;
       }
       renderResults();
-      void renderPreview();
+      const samePreview = preservePreview && previousIdentity && previousIdentity === libraryResultIdentity(selectedActiveResult());
+      if (samePreview) overlay.querySelector(".unilib-result-scroll").scrollTop = previousScroll;
+      else { if (preservePreview) invalidateAction(); void renderPreview(); }
+      if (searchReadiness !== "ready") setStatus(readinessMessage(), searchReadiness === "error");
       if (results.length && !await waitForFirstResultPaint(ownEpoch, signal)) return;
       if (!searchIsCurrent(ownEpoch, signal)) return;
-      setResultState(results.length ? "ready" : "empty", results.length ? "" : "검색 결과가 없습니다.");
+      setResultState(results.length ? "ready" : searchReadiness !== "ready" ? "loading" : "empty", results.length ? "" : searchReadiness !== "ready" ? readinessMessage() : "검색 결과가 없습니다.");
+      if (searchReadiness !== "ready") { setStatus(readinessMessage(), searchReadiness === "error"); return; }
       setStatus(pendingIndexCount ? `내 PDF ${pendingIndexCount}개를 색인하는 중입니다.` : "");
     } catch (error) {
       if (error?.name !== "AbortError" && ownEpoch === searchEpoch) {
@@ -1943,7 +1963,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     await new Promise((resolve) => requestAnimationFrame(resolve));
     if (!isCurrentOpen()) return;
     try {
-      await pdfUi?.activate?.();
+      if (desktopLibrary) await pdfUi?.activate?.();
       if (!isCurrentOpen()) return;
       if (desktopLibrary && pdfUi?.syncDesktopConnections) {
         const snapshot = await pdfUi.syncDesktopConnections();
@@ -2789,6 +2809,10 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     if (restoreFocus && !overlay.hidden) cropReturnFocus?.focus?.({ preventScroll: true });
     cropReturnFocus = null;
     if (refreshSelection) void renderPreview();
+    if (catalogUpdates.length || pendingCatalogRefresh) {
+      const updates = catalogUpdates; catalogUpdates = []; pendingCatalogRefresh = false;
+      void (async () => { for (const update of updates) await update(); await refreshCatalog(); })().catch(error => setStatus(`자료 갱신 실패: ${error.message}`, true));
+    }
   };
   const openCropEditor = async ({ emptyDraft = false, wholePage = false, title = "여러 영역 크롭", preserveScroll = false } = {}) => {
     // The stage was opened from the fast preview; swap in the original page without moving the view.
@@ -3363,7 +3387,17 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       const host = overlay.querySelector("[data-unilib-provided-status]");
       if (host.classList.contains("is-error")) host.querySelector("[data-unilib-provided-retry]").hidden = !providedRetry;
     },
-    open, close, refresh: async () => { await renderSources(); await runSearch(); }, element: overlay,
+    setSearchReadiness(value) {
+      searchReadiness = ["loading", "error", "ready"].includes(value) ? value : "ready";
+      overlay.dataset.searchReadiness = searchReadiness;
+      if (!overlay.hidden && searchReadiness !== "ready") setStatus(readinessMessage(), searchReadiness === "error");
+      if (searchReadiness === "ready") void refreshCatalog();
+    },
+    applyCatalogUpdate(callback) {
+      if (!cropDialog.hidden) return new Promise((resolve, reject) => catalogUpdates.push(() => Promise.resolve().then(callback).then(resolve, reject)));
+      return Promise.resolve().then(callback);
+    },
+    open, close, refresh: refreshCatalog, element: overlay,
     async beginReferenceSelection(consumer, trigger) {
       referenceConsumer = consumer;
       root.classList.add("consumer-mode");

@@ -1,6 +1,8 @@
 {
   "schemaVersion": 1,
   "unit": [
+    { "path": "tests/test-stable-library-startup.mjs", "findingIds": ["LIBRARY-STARTUP-STABLE"] },
+    { "path": "tests/test-project-file-policy.mjs", "findingIds": ["A1"] },
     { "path": "tests/test-stable-library-speed.mjs" },
     { "path": "tests/test-stable-library-provider.mjs" },
     { "path": "tests/test-preview-module-identity.cjs" },
@@ -35,6 +37,8 @@
     { "path": "tools/mcp-5e/test/server-pairing.test.mjs" }
   ],
   "browser": [
+    { "path": "tests/test-stable-library-startup-browser.cjs", "findingIds": ["LIBRARY-STARTUP-STABLE"] },
+    { "path": "tests/test-project-file-size-browser.cjs", "findingIds": ["A1"] },
     { "path": "tests/test-stable-library-progressive-crop-browser.cjs", "findingIds": ["LIBRARY-SPEED-STABLE"] },
     { "path": "tests/test-frontend-remediation-browser.cjs", "findingIds": ["FRONTEND-REMEDIATION-0929"] },
     { "path": "tests/test-ai-failure-log-browser.cjs", "findingIds": ["AI-MODEL-FAILURE-LOG"] },

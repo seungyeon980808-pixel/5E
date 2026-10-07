@@ -1,3 +1,9 @@
+# Current local candidate: 1.6.3 — HOLD
+
+The public stable web is 1.6.2 at df09ba5e860ecf25fcba6e0d9bb07249a8e259cd. This separate local branch integrates A1 and library startup improvements. No 1.6.3 publication, installer signing, native-device or live-AI gate is cleared.
+
+## Historical preparation records
+
 # 1.6.2 web publication authorized — desktop HOLD retained
 
 On 2026-10-06 the owner authorized tagging and publication of the 1.6.2 web artifact. Publication still requires the existing source/artifact workflow checks. Installer and live-AI holds below remain unchanged. Historical local preparation records follow.
