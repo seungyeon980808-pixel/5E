@@ -7,6 +7,7 @@ const { execFileSync } = require('node:child_process');
 const YAML = require('js-yaml');
 const { inventory, verifyArtifact, stage } = require('../scripts/web-release.cjs');
 const { appendRoute, verifyRoute } = require('../scripts/examlibrary-publication.cjs');
+const { appendRoute: appendOurDocs, verifyRoute: verifyOurDocs } = require('../scripts/ourdocs-publication.cjs');
 
 function fixture(t) {
   const site = fs.mkdtempSync(path.join(os.tmpdir(), '5e-web-publication-'));
@@ -58,6 +59,7 @@ test('production staging uses committed blobs and excludes ignored files while p
   write('js/release-receipt.js', 'const release = { sourceCommit: null };');
   write('assets/public.txt', 'public');
   write('examlibrary/index.html', '<iframe title="기출 탐색기"></iframe>');
+  write('ourdocs/index.html', '<iframe title="OurDocs"></iframe>');
   write('.gitignore', 'assets/private.txt\n');
   write('preview/index.html', '<title>5E 1.7.0</title>');
   write('mobile/index.html', '<title>5E mobile</title>');
@@ -83,6 +85,7 @@ test('production staging uses committed blobs and excludes ignored files while p
   assert.equal(fs.readFileSync(path.join(site, 'mobile/index.html'), 'utf8'), '<title>5E mobile</title>');
   assert.equal(fs.readFileSync(path.join(site, '1.6.0/index.html'), 'utf8'), '<title>5E 1.6.0</title>');
   assert.equal(fs.readFileSync(path.join(site, 'examlibrary/index.html'), 'utf8'), '<iframe title="기출 탐색기"></iframe>');
+  assert.equal(fs.readFileSync(path.join(site, 'ourdocs/index.html'), 'utf8'), '<iframe title="OurDocs"></iframe>');
   verifyArtifact(site, receipt, { expectedSha: receipt.sourceCommit, requireClean: true });
   const routeSite = path.join(temporary, 'route-site');
   fs.cpSync(site, routeSite, { recursive: true });
@@ -93,6 +96,17 @@ test('production staging uses committed blobs and excludes ignored files while p
   assert.equal(fs.readFileSync(path.join(routeSite, 'index.html'), 'utf8'), fs.readFileSync(path.join(site, 'index.html'), 'utf8'));
   assert.equal(routeReceipt.baseSourceCommit, receipt.sourceCommit);
   verifyRoute(routeSite, routeReceipt);
+  const ourdocsSite = path.join(temporary, 'ourdocs-site'); fs.cpSync(routeSite, ourdocsSite, { recursive: true });
+  write('ourdocs/index.html', '<iframe title="OurDocs" src="https://ourdocs.example/ourdocs/"></iframe>');
+  git(['add', 'ourdocs/index.html']); commit();
+  const ourdocsReceipt = appendOurDocs(ourdocsSite, routeReceipt, sourceRoot);
+  assert.equal(verifyOurDocs(ourdocsSite, ourdocsReceipt), Object.keys(ourdocsReceipt.files).length);
+  assert.equal(fs.readFileSync(path.join(ourdocsSite, 'examlibrary/index.html'), 'utf8'), fs.readFileSync(path.join(routeSite, 'examlibrary/index.html'), 'utf8'));
+  fs.writeFileSync(path.join(ourdocsSite, 'examlibrary/index.html'), 'unapproved replacement');
+  assert.throws(() => verifyOurDocs(ourdocsSite, { ...ourdocsReceipt, files: inventory(ourdocsSite) }), /Existing published file changed/);
+  fs.copyFileSync(path.join(routeSite, 'examlibrary/index.html'), path.join(ourdocsSite, 'examlibrary/index.html'));
+  fs.writeFileSync(path.join(ourdocsSite, 'private-local.js'), 'unexpected addition');
+  assert.throws(() => verifyOurDocs(ourdocsSite, { ...ourdocsReceipt, files: inventory(ourdocsSite) }), /Unexpected addition/);
   fs.writeFileSync(path.join(routeSite, 'index.html'), 'unexpected root replacement');
   assert.throws(() => verifyRoute(routeSite, { ...routeReceipt, files: inventory(routeSite) }), /Existing published 5E file changed/);
   fs.copyFileSync(path.join(site, 'index.html'), path.join(routeSite, 'index.html'));
