@@ -15,7 +15,7 @@ test('route append preserves all existing bytes and rejects uncommitted source a
   fs.mkdirSync(source);fs.mkdirSync(site);
   try{
     execFileSync('git',['init','-q'],{cwd:source});
-    for(const asset of assets){fs.mkdirSync(path.dirname(path.join(source,asset)),{recursive:true});fs.writeFileSync(path.join(source,asset),'test asset '+asset);}
+    for(const asset of assets){fs.mkdirSync(path.dirname(path.join(source,asset)),{recursive:true});fs.writeFileSync(path.join(source,asset),asset.endsWith('.woff2')?Buffer.alloc(2*1024*1024,65):'test asset '+asset);}
     execFileSync('git',['add','.'],{cwd:source});execFileSync('git',['-c','user.name=Test','-c','user.email=test@example.com','commit','-qm','fixture'],{cwd:source});
     for(const file of ['index.html','404.html','js/release-receipt.js','examlibrary/index.html','ourdocs/index.html','preview/index.html','mobile/index.html']){fs.mkdirSync(path.dirname(path.join(site,file)),{recursive:true});fs.writeFileSync(path.join(site,file),'unchanged '+file);}
     const base={sourceCommit:'a'.repeat(40),files:inventory(site)};const config={url:'https://demo.supabase.co',publishableKey:'sb_publishable_test'};

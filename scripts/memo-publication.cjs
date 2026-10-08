@@ -22,7 +22,7 @@ function appendRoute(site,base,sourceRoot,config) {
   for(const file of ['index.html','404.html','js/release-receipt.js','examlibrary/index.html','ourdocs/index.html'])if(!base.files[file])throw new Error(`Incomplete published base: ${file}`);
   const sourceCommit=execFileSync('git',['rev-parse','HEAD'],{cwd:sourceRoot,encoding:'utf8'}).trim();
   for(const asset of assets) {
-    const committed=execFileSync('git',['show',`${sourceCommit}:${asset}`],{cwd:sourceRoot});
+    const committed=execFileSync('git',['show',`${sourceCommit}:${asset}`],{cwd:sourceRoot,maxBuffer:64*1024*1024});
     if(!fs.readFileSync(path.join(sourceRoot,asset)).equals(committed))throw new Error(`Uncommitted route input: ${asset}`);
     fs.mkdirSync(path.dirname(path.join(site,asset)),{recursive:true});fs.writeFileSync(path.join(site,asset),committed);
   }
