@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101016">
+  <meta name="color-scheme" content="dark">
+  <title>memo — 생각을 놓아두는 곳</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <svg width="0" height="0" aria-hidden="true" style="position:absolute"><defs>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 2.5 14.6 9.4 21.5 12l-6.9 2.6-2.6 6.9-2.6-6.9L2.5 12l6.9-2.6Z"/></symbol>
+    <symbol id="i-archive" viewBox="0 0 24 24"><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M3 4h18v4H3zM9 12h6"/></symbol>
+    <symbol id="i-note" viewBox="0 0 24 24"><path d="M5 3h14a2 2 0 0 1 2 2v11l-5 5H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Zm11 18v-5h5M7 8h10M7 12h7"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M15 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h3"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></symbol>
+    <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14m-5-5 5 5-5 5"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+    <symbol id="i-grip" viewBox="0 0 24 24"><path d="M9 5h.01M15 5h.01M9 12h.01M15 12h.01M9 19h.01M15 19h.01" stroke-width="3"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="m6 6 12 12M6 18 18 6"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="M19 12H5m5-5-5 5 5 5"/></symbol>
+    <symbol id="i-move" viewBox="0 0 24 24"><path d="M12 3v18M3 12h18M9 6l3-3 3 3M9 18l3 3 3-3M6 9l-3 3 3 3M18 9l3 3-3 3"/></symbol>
+  </defs></svg>
+  <noscript>메모를 사용하려면 브라우저에서 JavaScript를 켜 주세요.</noscript>
+  <div class="shell">
+    <header class="appbar">
+      <div class="brand"><svg class="icon brand-symbol" aria-hidden="true"><use href="#i-star"/></svg><span class="wordmark">memo</span><span class="domain">5e.ai.kr/memo</span></div>
+      <nav class="tools" aria-label="메모 도구">
+        <button class="button add-sticky" id="add-sticky" type="button"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg>포스트잇</button>
+        <button class="button" id="archive-toggle" type="button" aria-expanded="false" aria-controls="archive-view"><svg class="icon" aria-hidden="true"><use href="#i-archive"/></svg><span>보관함</span></button>
+      </nav>
+    </header>
+    <main class="board" id="board" aria-label="메모 작업판">
+      <section class="desk" aria-label="빠른 메모장">
+        <header class="desk-head"><h1 id="desk-title"><svg class="icon" aria-hidden="true"><use href="#i-note"/></svg><span>빠른 메모</span></h1><span class="desk-caption">필요한 것만, 잠깐 여기에.</span></header>
+        <div class="recent" id="recent-view">
+          <form id="memo-form">
+            <div class="composer">
+              <div class="title-row" id="title-row" hidden><label class="sr-only" for="memo-title">메모 제목 (선택)</label><input class="title-input" id="memo-title" type="text" placeholder="제목 (선택)" maxlength="160"></div>
+              <label class="sr-only" for="memo-input">새 메모</label><textarea class="body-input" id="memo-input" placeholder="링크나 메모를 붙여넣으세요." rows="2" spellcheck="false" maxlength="100000"></textarea>
+              <div class="compose-actions">
+                <button class="button title-toggle" id="title-toggle" type="button" aria-expanded="false" aria-controls="title-row"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg><span>제목 추가</span></button>
+                <div class="save-group"><span class="shortcut"><kbd id="mod-key">⌘</kbd> <kbd>Enter</kbd></span><button class="save" id="save-button" type="submit" disabled>저장<svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></button></div>
+              </div>
+            </div>
+          </form>
+          <div class="list-head"><h2>최근 메모 <span class="count" id="note-count">0</span></h2><span class="list-hint">최신순</span></div>
+          <ul class="notes" id="notes" aria-label="최근 메모 목록"></ul><button class="button" id="recent-more" type="button" hidden>더 보기</button>
+        </div>
+        <section class="archive" id="archive-view" aria-labelledby="desk-title" hidden>
+          <p id="archive-message">24시간이 지난 메모는 주인장 보관함에서 확인하세요.</p>
+          <button class="google" id="google-button" type="button">Google로 로그인</button>
+          <div class="archive-account" id="archive-account" hidden><span id="account-email"></span><button class="button" id="logout-button" type="button">로그아웃</button></div>
+          <ul class="notes" id="archive-notes" aria-label="보관된 메모 목록" hidden></ul>
+          <button class="button" id="archive-more" type="button" hidden>더 보기</button>
+        </section>
+        <footer class="desk-footer"><svg class="icon" aria-hidden="true"><use href="#i-clock"/></svg><span>24시간 공개 · 이후 주인장 보관함으로</span></footer>
+      </section>
+      <div class="stickies" id="stickies" role="region" aria-label="포스트잇 작업판"></div>
+    </main>
+    <footer class="page-footer"><p class="move-hint"><svg class="icon" aria-hidden="true"><use href="#i-move"/></svg><span id="move-hint">포스트잇 윗부분을 잡아 자유롭게 옮기세요.</span></p><p class="connection" id="connection" data-state="loading"><span id="connection-text" role="status">연결 중…</span><button id="retry-button" type="button" hidden>다시 시도</button></p></footer>
+  </div>
+  <p class="status" id="status" role="status" aria-live="polite" aria-atomic="true"></p>
+  <script src="config.js"></script>
+  <script src="vendor/supabase.js"></script>
+  <script type="module" src="app.js"></script>
+</body>
+</html>
