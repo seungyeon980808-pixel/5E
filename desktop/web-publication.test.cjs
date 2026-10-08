@@ -60,6 +60,7 @@ test('production staging uses committed blobs and excludes ignored files while p
   write('assets/public.txt', 'public');
   write('examlibrary/index.html', '<iframe title="기출 탐색기"></iframe>');
   write('ourdocs/index.html', '<iframe title="OurDocs"></iframe>');
+  write('404.html', '<title>Named route recovery</title>');
   write('.gitignore', 'assets/private.txt\n');
   write('preview/index.html', '<title>5E 1.7.0</title>');
   write('mobile/index.html', '<title>5E mobile</title>');
@@ -86,6 +87,7 @@ test('production staging uses committed blobs and excludes ignored files while p
   assert.equal(fs.readFileSync(path.join(site, '1.6.0/index.html'), 'utf8'), '<title>5E 1.6.0</title>');
   assert.equal(fs.readFileSync(path.join(site, 'examlibrary/index.html'), 'utf8'), '<iframe title="기출 탐색기"></iframe>');
   assert.equal(fs.readFileSync(path.join(site, 'ourdocs/index.html'), 'utf8'), '<iframe title="OurDocs"></iframe>');
+  assert.equal(fs.readFileSync(path.join(site, '404.html'), 'utf8'), '<title>Named route recovery</title>');
   verifyArtifact(site, receipt, { expectedSha: receipt.sourceCommit, requireClean: true });
   const routeSite = path.join(temporary, 'route-site');
   fs.cpSync(site, routeSite, { recursive: true });
@@ -98,9 +100,11 @@ test('production staging uses committed blobs and excludes ignored files while p
   verifyRoute(routeSite, routeReceipt);
   const ourdocsSite = path.join(temporary, 'ourdocs-site'); fs.cpSync(routeSite, ourdocsSite, { recursive: true });
   write('ourdocs/index.html', '<iframe title="OurDocs" src="https://ourdocs.example/ourdocs/"></iframe>');
-  git(['add', 'ourdocs/index.html']); commit();
+  write('404.html', '<script>/* OurDocs named route recovery */</script>');
+  git(['add', 'ourdocs/index.html', '404.html']); commit();
   const ourdocsReceipt = appendOurDocs(ourdocsSite, routeReceipt, sourceRoot);
   assert.equal(verifyOurDocs(ourdocsSite, ourdocsReceipt), Object.keys(ourdocsReceipt.files).length);
+  assert.equal(fs.readFileSync(path.join(ourdocsSite, '404.html'), 'utf8'), '<script>/* OurDocs named route recovery */</script>');
   assert.equal(fs.readFileSync(path.join(ourdocsSite, 'examlibrary/index.html'), 'utf8'), fs.readFileSync(path.join(routeSite, 'examlibrary/index.html'), 'utf8'));
   fs.writeFileSync(path.join(ourdocsSite, 'examlibrary/index.html'), 'unapproved replacement');
   assert.throws(() => verifyOurDocs(ourdocsSite, { ...ourdocsReceipt, files: inventory(ourdocsSite) }), /Existing published file changed/);
