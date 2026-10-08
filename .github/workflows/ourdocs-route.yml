@@ -70,7 +70,7 @@ jobs:
           NODE
       - name: Append only the committed OurDocs entry
         run: node scripts/ourdocs-publication.cjs --site _work/ourdocs-publication/site --base-receipt _work/ourdocs-base-receipt/receipt.json --receipt _work/ourdocs-publication/receipt.json
-      - run: node --test tests/test-ourdocs-entry.cjs
+      - run: node --test desktop/ourdocs-entry.test.cjs
       - name: Verify the deployed OurDocs service
         run: |
           node - <<'NODE'
