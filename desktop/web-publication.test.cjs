@@ -60,6 +60,7 @@ test('production staging uses committed blobs and excludes ignored files while p
   write('assets/public.txt', 'public');
   write('examlibrary/index.html', '<iframe title="기출 탐색기"></iframe>');
   write('ourdocs/index.html', '<iframe title="OurDocs"></iframe>');
+  write('404.html', '<title>Named route recovery</title>');
   write('.gitignore', 'assets/private.txt\n');
   write('preview/index.html', '<title>5E 1.7.0</title>');
   write('mobile/index.html', '<title>5E mobile</title>');
@@ -86,6 +87,7 @@ test('production staging uses committed blobs and excludes ignored files while p
   assert.equal(fs.readFileSync(path.join(site, '1.6.0/index.html'), 'utf8'), '<title>5E 1.6.0</title>');
   assert.equal(fs.readFileSync(path.join(site, 'examlibrary/index.html'), 'utf8'), '<iframe title="기출 탐색기"></iframe>');
   assert.equal(fs.readFileSync(path.join(site, 'ourdocs/index.html'), 'utf8'), '<iframe title="OurDocs"></iframe>');
+  assert.equal(fs.readFileSync(path.join(site, '404.html'), 'utf8'), '<title>Named route recovery</title>');
   verifyArtifact(site, receipt, { expectedSha: receipt.sourceCommit, requireClean: true });
   const routeSite = path.join(temporary, 'route-site');
   fs.cpSync(site, routeSite, { recursive: true });
