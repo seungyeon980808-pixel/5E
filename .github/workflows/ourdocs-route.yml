@@ -68,7 +68,7 @@ jobs:
             }
           })().catch(error => { console.error(error); process.exitCode = 1; });
           NODE
-      - name: Append only the committed OurDocs entry
+      - name: Append the committed OurDocs entry and named route recovery
         run: node scripts/ourdocs-publication.cjs --site _work/ourdocs-publication/site --base-receipt _work/ourdocs-base-receipt/receipt.json --receipt _work/ourdocs-publication/receipt.json
       - run: node --test desktop/ourdocs-entry.test.cjs
       - name: Verify the deployed OurDocs service

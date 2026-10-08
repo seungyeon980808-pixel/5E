@@ -98,9 +98,11 @@ test('production staging uses committed blobs and excludes ignored files while p
   verifyRoute(routeSite, routeReceipt);
   const ourdocsSite = path.join(temporary, 'ourdocs-site'); fs.cpSync(routeSite, ourdocsSite, { recursive: true });
   write('ourdocs/index.html', '<iframe title="OurDocs" src="https://ourdocs.example/ourdocs/"></iframe>');
-  git(['add', 'ourdocs/index.html']); commit();
+  write('404.html', '<script>/* OurDocs named route recovery */</script>');
+  git(['add', 'ourdocs/index.html', '404.html']); commit();
   const ourdocsReceipt = appendOurDocs(ourdocsSite, routeReceipt, sourceRoot);
   assert.equal(verifyOurDocs(ourdocsSite, ourdocsReceipt), Object.keys(ourdocsReceipt.files).length);
+  assert.equal(fs.readFileSync(path.join(ourdocsSite, '404.html'), 'utf8'), '<script>/* OurDocs named route recovery */</script>');
   assert.equal(fs.readFileSync(path.join(ourdocsSite, 'examlibrary/index.html'), 'utf8'), fs.readFileSync(path.join(routeSite, 'examlibrary/index.html'), 'utf8'));
   fs.writeFileSync(path.join(ourdocsSite, 'examlibrary/index.html'), 'unapproved replacement');
   assert.throws(() => verifyOurDocs(ourdocsSite, { ...ourdocsReceipt, files: inventory(ourdocsSite) }), /Existing published file changed/);

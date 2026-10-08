@@ -15,8 +15,14 @@
       const frame = document.getElementById('ourdocs');
       const app = new URL('https://ourdocs-cloud.5e-desktop.workers.dev/ourdocs/');
       const validRoute = path => typeof path === 'string' && path.length <= 2048
-        && /^\/(?:|login|documents|invite|manage|admin|studio\/[a-f0-9-]{36})(?:\?[^#]*)?$/.test(path);
+        && /^\/(?:|login|documents|invite|manage|admin|studio\/[a-f0-9-]{36}|s\/[A-Za-z0-9%_-]+)(?:\?[^#]*)?$/.test(path);
       const route = new URLSearchParams(location.search).get('route') || '/';
+      const namedRoute = /^\/s\/[A-Za-z0-9%_-]+$/.test(route) ? route : null;
+      if (namedRoute) {
+        const address = new URL(location.href);
+        address.pathname = '/ourdocs/' + namedRoute.slice(3); address.search = ''; address.hash = '';
+        history.replaceState(null, '', address);
+      }
       if (validRoute(route)) {
         const selected = new URL(route, app.origin);
         app.pathname = '/ourdocs' + selected.pathname;
@@ -30,8 +36,9 @@
         if (!validRoute(path) || typeof hash !== 'string' || hash.length > 8192
           || (hash && !hash.startsWith('#'))) return;
         const address = new URL(location.href);
-        address.search = '';
-        if (path !== '/') address.searchParams.set('route', path);
+        address.pathname = '/ourdocs/'; address.search = '';
+        if (/^\/s\/[A-Za-z0-9%_-]+$/.test(path)) address.pathname += path.slice(3);
+        else if (path !== '/') address.searchParams.set('route', path);
         address.hash = hash;
         history.replaceState(null, '', address);
       });

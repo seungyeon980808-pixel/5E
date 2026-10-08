@@ -34,3 +34,18 @@ test('scrubs redeemed invitation tokens and mirrors SPA state only from its own 
   send('https://ourdocs-cloud.5e-desktop.workers.dev', qa.frame.contentWindow, '/studio/11111111-1111-4111-8111-111111111111', '');
   assert.equal(new URL(qa.updates[1]).searchParams.get('route'), '/studio/11111111-1111-4111-8111-111111111111');
 });
+
+test('shows a named path while passing only the named application route to the Worker', () => {
+  const name = encodeURIComponent('4월교과협의록');
+  const qa = fixture('?route=' + encodeURIComponent('/s/' + name));
+  assert.equal(qa.frame.src, 'https://ourdocs-cloud.5e-desktop.workers.dev/ourdocs/s/' + name);
+  assert.equal(qa.updates[0], 'https://www.5e.ai.kr/ourdocs/' + name);
+});
+test('recovers direct Korean share paths through Pages without intercepting unrelated or unsafe paths', () => {
+  const recovery = fs.readFileSync(require('node:path').join(__dirname, '../404.html'), 'utf8').match(/<script>([\s\S]*?)<\/script>/)[1];
+  const redirects = [];
+  for (const path of ['/ourdocs/4월교과협의록', '/ourdocs/' + encodeURIComponent('4월교과협의록') + '/', '/examlibrary/missing', '/ourdocs/%2fapi', '/ourdocs/admin', '/ourdocs/%ZZ'])
+    vm.runInNewContext(recovery, { URL, location: { pathname: path, origin: 'https://www.5e.ai.kr', replace: url => redirects.push(url) } });
+  assert.equal(redirects.length, 2);
+  for (const target of redirects) assert.equal(new URL(target).searchParams.get('route'), '/s/' + encodeURIComponent('4월교과협의록'));
+});

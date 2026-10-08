@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="origin"><title>5E · 주소 확인</title></head>
+<body><main><h1>페이지를 찾을 수 없습니다.</h1><p><a href="/">5E 홈으로 이동</a></p></main>
+<script>
+(() => {
+  const match = /^\/ourdocs\/([^/]+)\/?$/.exec(location.pathname);
+  if (!match) return;
+  let name;
+  try { name = decodeURIComponent(match[1]).normalize('NFC').toLowerCase(); } catch { return; }
+  if (!/^[\p{L}\p{N}][\p{L}\p{N}_-]{0,59}$/u.test(name)
+    || ['login','documents','invite','manage','admin','studio','rhwp','api','health','assets','s'].includes(name)) return;
+  const target = new URL('/ourdocs/', location.origin);
+  target.searchParams.set('route', '/s/' + encodeURIComponent(name));
+  location.replace(target.href);
+})();
+</script></body></html>

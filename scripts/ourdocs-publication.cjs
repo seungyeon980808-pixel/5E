@@ -3,25 +3,27 @@ const path = require('node:path');
 const { execFileSync } = require('node:child_process');
 const { inventory } = require('./web-release.cjs');
 const { verifyRoute: verifyExamLibrary } = require('./examlibrary-publication.cjs');
-const route = 'ourdocs/index.html';
+const routes = ['ourdocs/index.html', '404.html'];
 
 function verifyRoute(site, receipt) {
   const actual = inventory(site);
   if (JSON.stringify(Object.keys(actual).sort()) !== JSON.stringify(Object.keys(receipt.files).sort())) throw new Error('Publication inventory changed after validation');
   for (const [file, hash] of Object.entries(actual)) if (hash !== receipt.files[file]) throw new Error(`Publication changed: ${file}`);
-  for (const [file, hash] of Object.entries(receipt.baseFiles)) if (file !== route && actual[file] !== hash) throw new Error(`Existing published file changed: ${file}`);
-  for (const file of Object.keys(actual)) if (file !== route && !Object.hasOwn(receipt.baseFiles, file)) throw new Error(`Unexpected addition: ${file}`);
+  for (const [file, hash] of Object.entries(receipt.baseFiles)) if (!routes.includes(file) && actual[file] !== hash) throw new Error(`Existing published file changed: ${file}`);
+  for (const file of Object.keys(actual)) if (!routes.includes(file) && !Object.hasOwn(receipt.baseFiles, file)) throw new Error(`Unexpected addition: ${file}`);
   return Object.keys(actual).length;
 }
 
 function appendRoute(site, base, sourceRoot) {
   verifyExamLibrary(site, base);
   const sourceCommit = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: sourceRoot, encoding: 'utf8' }).trim();
-  const bytes = fs.readFileSync(path.join(sourceRoot, route));
-  const committed = execFileSync('git', ['show', `${sourceCommit}:${route}`], { cwd: sourceRoot });
-  if (!bytes.equals(committed)) throw new Error('Route differs from its committed source');
   fs.mkdirSync(path.join(site, 'ourdocs'), { recursive: true });
-  fs.writeFileSync(path.join(site, route), bytes);
+  for (const route of routes) {
+    const bytes = fs.readFileSync(path.join(sourceRoot, route));
+    const committed = execFileSync('git', ['show', `${sourceCommit}:${route}`], { cwd: sourceRoot });
+    if (!bytes.equals(committed)) throw new Error('Route differs from its committed source');
+    fs.writeFileSync(path.join(site, route), bytes);
+  }
   const receipt = { schemaVersion: 1, sourceCommit, baseSourceCommit: base.baseSourceCommit, baseRouteCommit: base.sourceCommit, baseFiles: base.files, files: inventory(site) };
   verifyRoute(site, receipt);
   return receipt;
