@@ -6,6 +6,7 @@ const png=Uint8Array.from(Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1H
 const upload=(f,id,bytes=png,type='image/png')=>f.mf.dispatchFetch('https://memo-test.workers.dev/images/'+id,{method:'PUT',headers:{'content-type':type},body:bytes});
 const get=(f,path,token)=>f.mf.dispatchFetch('https://memo-test.workers.dev'+path,{headers:token?{authorization:'Bearer '+token}:{}});
 async function use(t){const f=await fixture(request=>{
+  if(request.url==='https://example.com/long')return new Response('<meta property="og:image" content="/cover.png">'+ 'x'.repeat(400000),{headers:{'content-type':'text/html'}});
   if(request.url==='https://example.com/page')return new Response('<html><head><meta content="화면 &amp; 디자인" property="og:title"><meta content="/cover.png" property="og:image"></head></html>',{headers:{'content-type':'text/html'}});
   if(request.url==='https://example.com/cover.png')return new Response(png,{headers:{'content-type':'image/png'}});
   if(request.url==='https://example.com/unsafe')return new Response(null,{status:302,headers:{location:'http://127.0.0.1/private'}});
@@ -45,6 +46,7 @@ test('unsupported and oversized uploads fail, missing upload IDs cannot produce 
 });
 test('links without thumbnails and redirects to private hosts fall back without accepting fabricated previews',async t=>{
  const f=await use(t);
+ const long=randomUUID();await f.request('/entries',{id:long,entry:{body:'https://example.com/long'}});assert.equal((await (await get(f,'/entries/'+long+'/preview')).json()).url,'https://example.com/long');
  for(const body of ['https://example.com/no-image','https://example.com/unsafe','http://127.0.0.1/private']){
   const id=randomUUID();await f.request('/entries',{id,entry:{body}});const preview=await get(f,'/entries/'+id+'/preview');assert.equal(preview.status,200);assert.equal(await preview.json(),null);
  }

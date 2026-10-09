@@ -21,11 +21,11 @@ function decoded(value){
     return code>0&&code<=0x10ffff&&!(code>=0xd800&&code<=0xdfff)?String.fromCodePoint(code):entity;
   });
 }
-async function limitedBytes(response,limit){
+async function limitedBytes(response,limit,truncate=false){
   const reader=response.body?.getReader();if(!reader)throw Error('Empty image');
   const parts=[];let size=0;
   while(true){const {done,value}=await reader.read();if(done)break;size+=value.length;
-    if(size>limit){await reader.cancel();throw Error('Media too large');}parts.push(value);}
+    if(size>limit){if(truncate){parts.push(value.slice(0,value.length-(size-limit)));size=limit;await reader.cancel();break;}await reader.cancel();throw Error('Media too large');}parts.push(value);}
   const bytes=new Uint8Array(size);let at=0;for(const part of parts){bytes.set(part,at);at+=part.length;}return bytes;
 }
 function imageType(bytes){
@@ -58,7 +58,7 @@ async function preview(db,row){
   try{
     const {response,url}=await remote(source,'text/html',AbortSignal.timeout(5000));
     if(!response.headers.get('content-type')?.includes('text/html'))return null;
-    const bytes=await limitedBytes(response,262144),meta=new Map();
+    const bytes=await limitedBytes(response,262144,true),meta=new Map();
     const parser=new HTMLRewriter().on('meta',{element(e){const key=(e.getAttribute('property')||e.getAttribute('name')||'').toLowerCase(),value=e.getAttribute('content');if(value&&!meta.has(key))meta.set(key,decoded(value));}});
     await parser.transform(new Response(bytes,{headers:{'content-type':'text/html;charset=utf-8'}})).text();
     title=(meta.get('og:title')||meta.get('twitter:title')||'').slice(0,200);
