@@ -67,3 +67,6 @@ __pycache__/
 /results/exam-diagram-engine-v2-2/stability-r6-incline/
 /results/exam-diagram-engine-v2-2/stability-r6-replacement/
 /results/exam-diagram-engine-v2-2/stability-r7-concise-incline/
+
+# Local Cloudflare CLI cache
+.wrangler/

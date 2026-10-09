@@ -1,0 +1,27 @@
+name: Memo Checks
+on:
+  pull_request:
+    paths: ['memo/**', 'scripts/memo-*.cjs', '.github/workflows/memo-*.yml']
+  push:
+    branches: ['main', 'codex/memo-live-connection']
+    paths: ['memo/**', 'scripts/memo-*.cjs', '.github/workflows/memo-*.yml']
+permissions:
+  contents: read
+jobs:
+  memo:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.21.0
+      - run: npm ci --prefix memo --no-audit --no-fund
+      - run: npm test --prefix memo
+      - run: node --test desktop/memo-publication.test.cjs
+      - run: memo/node_modules/.bin/playwright install --with-deps chromium webkit
+      - run: node memo/tests/browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: memo-review-${{ github.run_id }}
+          path: _work/memo-review

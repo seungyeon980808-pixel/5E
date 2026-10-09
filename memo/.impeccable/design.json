@@ -1,0 +1,181 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-10-08T16:38:38.205332+00:00",
+  "title": "Design System: Memo night desktop",
+  "extensions": {
+    "shadows": [
+      {
+        "name": "desk",
+        "value": "0 20px 60px rgb(0 0 0 / 32%)",
+        "purpose": "Ambient lift for the central memo."
+      },
+      {
+        "name": "paper",
+        "value": "0 12px 30px rgb(0 0 0 / 22%)",
+        "purpose": "Ambient lift for editable paper."
+      },
+      {
+        "name": "status",
+        "value": "0 8px 24px rgb(0 0 0 / 24%)",
+        "purpose": "Temporary status feedback."
+      }
+    ],
+    "motion": [
+      {
+        "name": "ease",
+        "value": "cubic-bezier(.22, 1, .36, 1)",
+        "purpose": "Button and status transitions."
+      },
+      {
+        "name": "button",
+        "value": "background 140ms var(--ease), color 140ms var(--ease)",
+        "purpose": "Hover feedback."
+      },
+      {
+        "name": "status",
+        "value": "opacity 140ms var(--ease)",
+        "purpose": "Brief status visibility."
+      }
+    ],
+    "breakpoints": [
+      {
+        "name": "board-max",
+        "value": "1199px"
+      },
+      {
+        "name": "phone-max",
+        "value": "560px"
+      }
+    ],
+    "source": {
+      "design": "memo/DESIGN.md",
+      "artifacts": [
+        "memo/index.html",
+        "memo/style.css",
+        "memo/app.js",
+        "memo/cloud.js"
+      ],
+      "incumbent": "/Users/parkseungyeon/.codex/visualizations/2026/10/08/01a11b20-6c56-7672-84d5-d451f196441a/memo-concept",
+      "seed": "661c54bf",
+      "scope": "Bounded extension; preserve incumbent canon. Paths are relative to worktree root except incumbent."
+    },
+    "typographyMeta": {
+      "mobile-input": {
+        "displayName": "Phone input",
+        "purpose": "Composer and sticky title/body at max-width 560px; prevents Safari input zoom."
+      }
+    }
+  },
+  "components": [
+    {
+      "name": "Save",
+      "kind": "button",
+      "refersTo": "save",
+      "description": "Primary memo action; save requires body text. Visual specimen only; application handlers are not included.",
+      "html": "<button class=\"ds-save\" type=\"button\">저장<svg class=\"ds-icon\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M5 12h14m-5-5 5 5-5 5\"/></svg></button>",
+      "css": ":host { font: 14px/1.5 Pretendard, -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', sans-serif; color: var(--ink, #eeeaf7); }\nbutton, input, textarea { font: inherit; }\nbutton { cursor: pointer; transition: background 140ms var(--ease, cubic-bezier(.22, 1, .36, 1)), color 140ms var(--ease, cubic-bezier(.22, 1, .36, 1)); }\n:focus-visible { outline: 2px solid var(--accent, #c3b7f5); outline-offset: 3px; }\n.ds-icon { display: block; width: 16px; height: 16px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }\n.ds-save { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 31px; padding: 6px 12px; border: 0; border-radius: 5px; color: var(--accent-ink, #231b39); background: var(--accent, #c3b7f5); font-size: 12px; font-weight: 600; }\n.ds-save:hover { background: var(--accent-hover, #d6ccff); }\n.ds-save:disabled { background: var(--disabled, #383044); color: var(--muted, #ada6bf); }\n.ds-save .ds-icon { width: 13px; height: 13px; }\n@media (prefers-reduced-motion: reduce) { button { transition: none !important; } }"
+    },
+    {
+      "name": "Add sticky",
+      "kind": "button",
+      "refersTo": "add-sticky",
+      "description": "Toolbar paper action. Visual specimen only; application handlers are not included.",
+      "html": "<button class=\"ds-button ds-add-sticky\" type=\"button\"><svg class=\"ds-icon\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M12 5v14M5 12h14\"/></svg>포스트잇</button>",
+      "css": ":host { font: 14px/1.5 Pretendard, -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', sans-serif; color: var(--ink, #eeeaf7); }\nbutton, input, textarea { font: inherit; }\nbutton { cursor: pointer; transition: background 140ms var(--ease, cubic-bezier(.22, 1, .36, 1)), color 140ms var(--ease, cubic-bezier(.22, 1, .36, 1)); }\n:focus-visible { outline: 2px solid var(--accent, #c3b7f5); outline-offset: 3px; }\n.ds-icon { display: block; width: 16px; height: 16px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }\n.ds-button { display: inline-flex; justify-content: center; align-items: center; gap: 7px; min-height: 34px; padding: 6px 11px; border: 0; border-radius: 6px; background: transparent; color: var(--muted, #ada6bf); font-size: 12px; font-weight: 550; }\n.ds-button:hover { background: var(--hover, #30283f); color: var(--ink, #eeeaf7); }\n.ds-add-sticky { color: var(--accent, #c3b7f5); background: #262032; }\n.ds-add-sticky:hover { background: var(--hover, #30283f); color: var(--accent-hover, #d6ccff); }\n@media (prefers-reduced-motion: reduce) { button { transition: none !important; } }"
+    },
+    {
+      "name": "Archive toggle",
+      "kind": "nav",
+      "refersTo": "archive-toggle",
+      "description": "Quiet navigation to the archive placeholder. Visual specimen only; application handlers are not included.",
+      "html": "<button class=\"ds-button\" type=\"button\" aria-expanded=\"false\"><svg class=\"ds-icon\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><rect x=\"4\" y=\"8\" width=\"16\" height=\"12\" rx=\"2\"/><path d=\"M3 4h18v4H3zM9 12h6\"/></svg>보관함</button>",
+      "css": ":host { font: 14px/1.5 Pretendard, -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', sans-serif; color: var(--ink, #eeeaf7); }\nbutton, input, textarea { font: inherit; }\nbutton { cursor: pointer; transition: background 140ms var(--ease, cubic-bezier(.22, 1, .36, 1)), color 140ms var(--ease, cubic-bezier(.22, 1, .36, 1)); }\n:focus-visible { outline: 2px solid var(--accent, #c3b7f5); outline-offset: 3px; }\n.ds-icon { display: block; width: 16px; height: 16px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }\n.ds-button { display: inline-flex; justify-content: center; align-items: center; gap: 7px; min-height: 34px; padding: 6px 11px; border: 0; border-radius: 6px; background: transparent; color: var(--muted, #ada6bf); font-size: 12px; font-weight: 550; }\n.ds-button:hover { background: var(--hover, #30283f); color: var(--ink, #eeeaf7); }\n@media (prefers-reduced-motion: reduce) { button { transition: none !important; } }"
+    },
+    {
+      "name": "Copy",
+      "kind": "button",
+      "refersTo": "copy",
+      "description": "Compact copy action; application swaps SVG on success. Visual specimen only; application handlers are not included.",
+      "html": "<button class=\"ds-icon-button\" type=\"button\" aria-label=\"메모 복사\"><svg class=\"ds-icon\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><rect x=\"8\" y=\"8\" width=\"12\" height=\"12\" rx=\"2\"/><path d=\"M15 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h3\"/></svg></button>",
+      "css": ":host { font: 14px/1.5 Pretendard, -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', sans-serif; color: var(--ink, #eeeaf7); }\nbutton, input, textarea { font: inherit; }\nbutton { cursor: pointer; transition: background 140ms var(--ease, cubic-bezier(.22, 1, .36, 1)), color 140ms var(--ease, cubic-bezier(.22, 1, .36, 1)); }\n:focus-visible { outline: 2px solid var(--accent, #c3b7f5); outline-offset: 3px; }\n.ds-icon { display: block; width: 16px; height: 16px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }\n.ds-icon-button { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; border: 0; border-radius: 5px; background: transparent; color: var(--muted, #ada6bf); }\n.ds-icon-button:hover { color: var(--accent, #c3b7f5); background: var(--hover, #30283f); }\n.ds-icon-button .ds-icon { width: 14px; height: 14px; }\n.ds-icon-button[data-copied] { color: var(--success, #b7d9c7); }\n@media (prefers-reduced-motion: reduce) { button { transition: none !important; } }"
+    },
+    {
+      "name": "Google login",
+      "kind": "button",
+      "refersTo": "google",
+      "description": "Text-only OAuth entry when configured; disabled without configuration. Visual specimen only; application handlers are not included.",
+      "html": "<button class=\"ds-google\" type=\"button\">Google로 로그인</button>",
+      "css": ":host { font: 14px/1.5 Pretendard, -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', sans-serif; color: var(--ink, #eeeaf7); }\nbutton, input, textarea { font: inherit; }\nbutton { cursor: pointer; transition: background 140ms var(--ease, cubic-bezier(.22, 1, .36, 1)), color 140ms var(--ease, cubic-bezier(.22, 1, .36, 1)); }\n:focus-visible { outline: 2px solid var(--accent, #c3b7f5); outline-offset: 3px; }\n.ds-icon { display: block; width: 16px; height: 16px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }\n.ds-google { min-height: 36px; border: 1px solid var(--control-line, #746b87); background: var(--inset, #14121b); color: var(--ink, #eeeaf7); padding: 7px 12px; border-radius: 6px; font-size: 12px; }\n.ds-google:hover { background: var(--hover, #30283f); }\n@media (prefers-reduced-motion: reduce) { button { transition: none !important; } }"
+    },
+    {
+      "name": "Composer",
+      "kind": "input",
+      "refersTo": "composer",
+      "description": "Body-field excerpt; optional title and action row are described in DESIGN.md. Visual specimen only; application handlers are not included.",
+      "html": "<div class=\"ds-composer\"><label class=\"ds-sr-only\" for=\"ds-body\">새 메모</label><textarea class=\"ds-body-input\" id=\"ds-body\" rows=\"2\" placeholder=\"링크나 메모를 붙여넣으세요.\"></textarea></div>",
+      "css": ":host { font: 14px/1.5 Pretendard, -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', sans-serif; color: var(--ink, #eeeaf7); }\nbutton, input, textarea { font: inherit; }\nbutton { cursor: pointer; transition: background 140ms var(--ease, cubic-bezier(.22, 1, .36, 1)), color 140ms var(--ease, cubic-bezier(.22, 1, .36, 1)); }\n:focus-visible { outline: 2px solid var(--accent, #c3b7f5); outline-offset: 3px; }\n.ds-icon { display: block; width: 16px; height: 16px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }\n.ds-composer { background: var(--inset, #14121b); border: 1px solid var(--control-line, #746b87); border-radius: 7px; overflow: hidden; }\n.ds-composer:focus-within { border-color: var(--accent, #c3b7f5); }\n.ds-body-input { display: block; border: 0; outline: none; width: 100%; min-height: 68px; max-height: 180px; padding: 13px 14px 7px; background: transparent; color: var(--ink, #eeeaf7); font-size: 14px; line-height: 1.65; resize: vertical; caret-color: var(--accent, #c3b7f5); }\ninput::placeholder, textarea::placeholder { color: var(--muted, #ada6bf); opacity: 1; }\n.ds-title-input:focus-visible, .ds-body-input:focus-visible { outline: 0; }\n.ds-sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }\n@media (prefers-reduced-motion: reduce) { button { transition: none !important; } }\n@media (max-width:560px) { .ds-title-input, .ds-body-input { font-size:16px; } }"
+    },
+    {
+      "name": "Count",
+      "kind": "chip",
+      "refersTo": "count",
+      "description": "Plain informational count; no filled badge and no interaction. Visual specimen only; application handlers are not included.",
+      "html": "<span class=\"ds-count\" aria-label=\"최근 메모 수\">3</span>",
+      "css": ":host { font: 14px/1.5 Pretendard, -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', sans-serif; color: var(--ink, #eeeaf7); }\nbutton, input, textarea { font: inherit; }\nbutton { cursor: pointer; transition: background 140ms var(--ease, cubic-bezier(.22, 1, .36, 1)), color 140ms var(--ease, cubic-bezier(.22, 1, .36, 1)); }\n:focus-visible { outline: 2px solid var(--accent, #c3b7f5); outline-offset: 3px; }\n.ds-icon { display: block; width: 16px; height: 16px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }\n.ds-count { color: var(--accent, #c3b7f5); font-variant-numeric: tabular-nums; }\n@media (prefers-reduced-motion: reduce) { button { transition: none !important; } }"
+    },
+    {
+      "name": "Memo surface",
+      "kind": "card",
+      "refersTo": "desk",
+      "description": "Surface and heading excerpt; page centering omitted for standalone preview. Visual specimen only; application handlers are not included.",
+      "html": "<section class=\"ds-desk\"><header class=\"ds-desk-head\"><h1 class=\"ds-heading\"><svg class=\"ds-icon\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M5 3h14a2 2 0 0 1 2 2v11l-5 5H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Zm11 18v-5h5M7 8h10M7 12h7\"/></svg><span>빠른 메모</span></h1></header></section>",
+      "css": ":host { font: 14px/1.5 Pretendard, -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', sans-serif; color: var(--ink, #eeeaf7); }\nbutton, input, textarea { font: inherit; }\nbutton { cursor: pointer; transition: background 140ms var(--ease, cubic-bezier(.22, 1, .36, 1)), color 140ms var(--ease, cubic-bezier(.22, 1, .36, 1)); }\n:focus-visible { outline: 2px solid var(--accent, #c3b7f5); outline-offset: 3px; }\n.ds-icon { display: block; width: 16px; height: 16px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }\n.ds-desk { width: 600px; background: var(--paper, #1b1923); border-radius: var(--radius, 12px); box-shadow: 0 20px 60px rgb(0 0 0 / 32%); }\n.ds-desk-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 20px 11px; }\n.ds-heading { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 580; letter-spacing: -.015em; margin: 0; }\n.ds-desk-head .ds-icon { width: 15px; height: 15px; color: var(--accent, #c3b7f5); }\n@media (prefers-reduced-motion: reduce) { button { transition: none !important; } }"
+    },
+    {
+      "name": "Editable paper",
+      "kind": "custom",
+      "refersTo": "sticky",
+      "description": "Editable field specimen with source paper palettes; absolute positioning omitted for preview. Visual specimen only; application handlers are not included.",
+      "html": "<article class=\"ds-sticky\" data-color=\"lilac\" style=\"--tilt:-3deg\"><div class=\"ds-sticky-bar\"><button class=\"ds-drag-handle\" type=\"button\" aria-label=\"포스트잇 이동\"><svg class=\"ds-icon\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><path d=\"M9 5h.01M15 5h.01M9 12h.01M15 12h.01M9 19h.01M15 19h.01\" stroke-width=\"3\"/></svg>포스트잇</button></div><input class=\"ds-sticky-title\" aria-label=\"포스트잇 제목 (선택)\" placeholder=\"제목 (선택)\" maxlength=\"160\"><textarea class=\"ds-sticky-body\" aria-label=\"포스트잇 메모\" rows=\"3\" placeholder=\"생각을 놓아두세요.\"></textarea><footer class=\"ds-sticky-footer\"><span>24시간 남음</span><button class=\"ds-sticky-copy\" type=\"button\"><svg class=\"ds-icon\" viewBox=\"0 0 24 24\" aria-hidden=\"true\"><rect x=\"8\" y=\"8\" width=\"12\" height=\"12\" rx=\"2\"/><path d=\"M15 8V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v8a2 2 0 0 0 2 2h3\"/></svg>복사</button></footer></article>",
+      "css": ":host { font: 14px/1.5 Pretendard, -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', sans-serif; color: var(--ink, #eeeaf7); }\nbutton, input, textarea { font: inherit; }\nbutton { cursor: pointer; transition: background 140ms var(--ease, cubic-bezier(.22, 1, .36, 1)), color 140ms var(--ease, cubic-bezier(.22, 1, .36, 1)); }\n:focus-visible { outline: 2px solid var(--accent, #c3b7f5); outline-offset: 3px; }\n.ds-icon { display: block; width: 16px; height: 16px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }\n.ds-sticky { --sticky-paper: #2e283e; --sticky-ink: #e8dff7; --sticky-muted: #bdb1d0;\n      position: relative; width: 212px; background: var(--sticky-paper); color: var(--sticky-ink); border-radius: 3px;\n      box-shadow: 0 12px 30px rgb(0 0 0 / 22%); transform: rotate(var(--tilt, -2deg)); pointer-events: auto; }\n.ds-sticky[data-color=\"amber\"] { --sticky-paper: #3b3225; --sticky-ink: #f1e5cc; --sticky-muted: #d0bea0; }\n.ds-sticky[data-color=\"slate\"] { --sticky-paper: #243340; --sticky-ink: #dcebf7; --sticky-muted: #aac1d3; }\n.ds-sticky[data-color=\"rose\"] { --sticky-paper: #3a2732; --sticky-ink: #f3dfe9; --sticky-muted: #d4afc0; }\n.ds-sticky:focus-within { outline: 1px solid var(--sticky-muted); outline-offset: 3px; }\n.ds-sticky.ds-dragging { transform: rotate(0); cursor: grabbing; }\n.ds-sticky ::selection { background: var(--sticky-ink); color: var(--sticky-paper); }\n.ds-sticky :focus-visible { outline-color: var(--sticky-ink); }\n.ds-sticky-bar { display: flex; align-items: center; justify-content: space-between; gap: 4px; padding: 4px 5px 0 9px; }\n.ds-drag-handle { display: flex; align-items: center; gap: 5px; flex: 1; min-width: 0; height: 28px; border: 0; padding: 0; background: transparent; color: var(--sticky-muted); font-size: 11px; text-align: left; cursor: grab; touch-action: none; }\n.ds-drag-handle .ds-icon { width: 12px; height: 12px; }\n.ds-sticky-title { display: block; width: calc(100% - 28px); margin: 7px 14px 0; padding: 0; border: 0; border-radius: 0; background: transparent; color: var(--sticky-ink); font-size: 14px; line-height: 1.6; font-weight: 580; }\n.ds-sticky-title::placeholder, .ds-sticky-body::placeholder { color: var(--sticky-muted); }\n.ds-sticky-body { display: block; width: 100%; min-height: 100px; max-height: 260px; border: 0; padding: 7px 14px 5px; background: transparent; color: var(--sticky-ink); font-size: 13px; line-height: 1.75; resize: vertical; overflow-wrap: anywhere; caret-color: var(--sticky-ink); }\n.ds-sticky-title:focus, .ds-sticky-body:focus { outline: none; }\n.ds-sticky-footer { display: flex; align-items: center; justify-content: space-between; min-height: 34px; padding: 0 9px 5px 14px; color: var(--sticky-muted); font-size: 11px; }\n.ds-sticky-copy { display: inline-flex; align-items: center; justify-content: center; gap: 4px; border: 0; padding: 5px; min-height: 27px; background: transparent; color: var(--sticky-muted); font-size: 11px; border-radius: 4px; }\n.ds-sticky-copy .ds-icon { width: 11px; height: 11px; }\n.ds-sticky-copy:hover { color: var(--sticky-ink); background: rgb(255 255 255 / 8%); }\n@media (prefers-reduced-motion: reduce) { button { transition: none !important; } }\n@media (max-width:560px) { .ds-sticky-title, .ds-sticky-body { font-size:16px; } }"
+    },
+    {
+      "name": "Connection and retry",
+      "kind": "custom",
+      "description": "Existing footer status with an error and deliberate retry. Visual specimen only; application handlers are not included.",
+      "html": "<p class=\"ds-connection\" data-state=\"error\"><span role=\"status\">연결이 끊겼어요. 작성 중인 내용은 남아 있어요.</span><button type=\"button\">다시 시도</button></p>",
+      "css": ":host { font: 11px/1.5 Pretendard, -apple-system, BlinkMacSystemFont, 'Apple SD Gothic Neo', sans-serif; color:var(--muted, #ada6bf); }\n.ds-connection { display:flex; align-items:center; gap:8px; }\n.ds-connection[data-state=\"error\"] { color:var(--error, #ffb8be); }\n.ds-connection button { color:inherit; text-decoration:underline; text-underline-offset:3px; padding:0; background:none; border:0; font:inherit; font-size:11px; cursor:pointer; transition:background 140ms var(--ease, cubic-bezier(.22, 1, .36, 1)), color 140ms var(--ease, cubic-bezier(.22, 1, .36, 1)); }\n.ds-connection button:focus-visible { outline:2px solid var(--accent, #c3b7f5); outline-offset:3px; }\n@media (prefers-reduced-motion:reduce) { .ds-connection button { transition:none !important; } }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Night desktop",
+    "overview": "Night indigo and violet frame a quiet, mysterious desktop for quick Korean notes. Pale lavender controls sit beside flat paper in muted lilac, amber, slate and rose; faint stationary pools of color provide atmosphere.\n\nThis preserves the user-pinned night desktop and seed 661c54bf from the incumbent direction contract. The former tall mobile-style card is a confirmed anti-reference. This system records the visual vocabulary in `index.html` and `style.css`, with interaction states in `app.js` and `cloud.js`; composition and incumbent provenance remain in `surface-brief.md`.",
+    "keyCharacteristics": [
+      "Compact utility typography and one clear save action.",
+      "Dark paper with small corners, direct editing and restrained tilt.",
+      "Depth supports persistent stacking and visible interaction feedback."
+    ],
+    "rules": [
+      {
+        "name": "Paper Palette",
+        "body": "Keep each sticky’s paper, ink and muted colors together when cycling its palette.",
+        "section": "colors"
+      },
+      {
+        "name": "Persistent Stack",
+        "body": "Use persisted note order for elevation; focus outlines must not override the card’s z-index.",
+        "section": "elevation"
+      }
+    ],
+    "dos": [
+      "Do retain compact text, optional titles and directly editable paper.",
+      "Do preserve line breaks, long-text wrapping and visible focus feedback.",
+      "Do adapt free placement into an editable board at the implemented breakpoints."
+    ],
+    "donts": [
+      "Don't restore the rejected tall mobile-style card as the desktop composition.",
+      "Don't replace the four paper palettes with arbitrary unreadable color combinations.",
+      "Don't describe local fixtures or implemented Workers/D1 flows as connected production services before Google/Cloudflare setup is complete."
+    ]
+  }
+}

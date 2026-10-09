@@ -61,7 +61,10 @@ test('production staging uses committed blobs and excludes ignored files while p
   write('examlibrary/index.html', '<iframe title="기출 탐색기"></iframe>');
   write('ourdocs/index.html', '<iframe title="OurDocs"></iframe>');
   write('404.html', '<title>Named route recovery</title>');
-  write('.gitignore', 'assets/private.txt\n');
+  write('memo/index.html', '<title>memo</title>');
+  write('memo/app.js', 'const memo = true;');
+  write('memo/config.js', 'window.MEMO_CONFIG={apiUrl:"https://demo.workers.dev",googleClientId:"fixture.apps.googleusercontent.com"};');
+  write('.gitignore', 'assets/private.txt\nmemo/node_modules/\n');
   write('preview/index.html', '<title>5E 1.7.0</title>');
   write('mobile/index.html', '<title>5E mobile</title>');
   write('1.6.0/index.html', '<title>5E 1.6.0</title>');
@@ -73,6 +76,7 @@ test('production staging uses committed blobs and excludes ignored files while p
   git(['add', 'release-channels.json']);
   commit();
   write('assets/private.txt', 'ignored local material must never be published');
+  write('memo/node_modules/private.txt', 'dependency files must never be published');
   assert.equal(git(['status', '--porcelain']), '');
   const site = path.join(temporary, 'site');
   const receipt = stage({ output: site, preservedRoot: sourceRoot, sourceRoot });
@@ -82,6 +86,9 @@ test('production staging uses committed blobs and excludes ignored files while p
   assert.equal(receipt.sourceCommit, git(['rev-parse', 'HEAD']));
   assert.equal(fs.readFileSync(path.join(site, 'js/release-receipt.js'), 'utf8'), `const release = { sourceCommit: '${receipt.sourceCommit}' };`);
   assert.equal(fs.existsSync(path.join(site, 'assets/private.txt')), false);
+  assert.equal(fs.existsSync(path.join(site, 'memo/node_modules/private.txt')), false);
+  assert.equal(fs.readFileSync(path.join(site, 'memo/index.html'), 'utf8'), '<title>memo</title>');
+  assert.equal(fs.readFileSync(path.join(site, 'memo/app.js'), 'utf8'), 'const memo = true;');
   assert.equal(fs.readFileSync(path.join(site, 'preview/index.html'), 'utf8'), '<title>5E 1.7.0</title>');
   assert.equal(fs.readFileSync(path.join(site, 'mobile/index.html'), 'utf8'), '<title>5E mobile</title>');
   assert.equal(fs.readFileSync(path.join(site, '1.6.0/index.html'), 'utf8'), '<title>5E 1.6.0</title>');

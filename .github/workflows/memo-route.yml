@@ -1,0 +1,101 @@
+name: Memo Route
+on:
+  workflow_dispatch:
+    inputs:
+      base_run:
+        description: Currently published successful OurDocs Route or Memo Route run
+        required: true
+        default: '37727660932'
+        type: string
+permissions:
+  contents: read
+  actions: read
+  deployments: read
+concurrency:
+  group: validated-web-release
+  cancel-in-progress: false
+jobs:
+  validate:
+    if: ${{ github.ref == 'refs/heads/main' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.21.0
+      - name: Verify the current published base
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BASE_RUN: ${{ inputs.base_run }}
+        run: |
+          node - <<'NODE'
+          const {execFileSync}=require('node:child_process');
+          if(!/^[0-9]+$/.test(process.env.BASE_RUN))throw Error('Numeric run required');
+          const api=suffix=>JSON.parse(execFileSync('gh',['api',`repos/${process.env.GITHUB_REPOSITORY}/${suffix}`],{encoding:'utf8'}));
+          const run=api(`actions/runs/${process.env.BASE_RUN}`);
+          if(run.status!=='completed'||run.conclusion!=='success'||run.head_branch!=='main'||!['.github/workflows/ourdocs-route.yml','.github/workflows/memo-route.yml'].includes(run.path))throw Error('Successful route publication required');
+          const jobs=api(`actions/runs/${process.env.BASE_RUN}/jobs?per_page=100`).jobs;
+          if(!['validate','publish'].every(name=>jobs.some(j=>j.name===name&&j.conclusion==='success')))throw Error('Base publication did not pass');
+          const deployments=api('deployments?environment=github-pages&per_page=100');
+          let latest;
+          for(const d of deployments){const status=api(`deployments/${d.id}/statuses?per_page=1`)[0];if(status?.state==='success'){latest=status;break;}}
+          if(!latest?.log_url?.includes(`/actions/runs/${process.env.BASE_RUN}/`))throw Error('Base is not the latest successful Pages publication');
+          NODE
+      - uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ inputs.base_run }}
+          name: github-pages
+          path: _work/memo-base-pages
+      - uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ inputs.base_run }}
+          pattern: '*-publication-*'
+          merge-multiple: true
+          path: _work/memo-base-receipt
+      - run: |
+          mkdir -p _work/memo-publication/site
+          tar -xf _work/memo-base-pages/artifact.tar -C _work/memo-publication/site
+      - name: Confirm the public routes still match the base
+        run: |
+          node - <<'NODE'
+          const fs=require('node:fs'),crypto=require('node:crypto');
+          const base=JSON.parse(fs.readFileSync('_work/memo-base-receipt/receipt.json','utf8'));
+          (async()=>{
+            const files=['index.html','404.html','js/release-receipt.js','examlibrary/index.html','ourdocs/index.html'];
+            if(base.files['memo/config.js'])files.push('memo/config.js','memo/app.js');
+            for(const file of files){const r=await fetch(`https://www.5e.ai.kr/${file}?memo-check=${process.env.GITHUB_RUN_ID}`,{signal:AbortSignal.timeout(30000)});
+              if(!r.ok||crypto.createHash('sha256').update(Buffer.from(await r.arrayBuffer())).digest('hex')!==base.files[file])throw Error(`Published base changed: ${file}`);}
+          })().catch(e=>{console.error(e);process.exitCode=1;});
+          NODE
+      - run: npm ci --prefix memo --no-audit --no-fund
+      - run: npm test --prefix memo
+      - run: node --test desktop/memo-publication.test.cjs
+      - name: Append the committed memo application
+        env:
+          MEMO_API_URL: ${{ vars.MEMO_API_URL }}
+          MEMO_GOOGLE_CLIENT_ID: ${{ vars.MEMO_GOOGLE_CLIENT_ID }}
+        run: node scripts/memo-publication.cjs --site _work/memo-publication/site --base-receipt _work/memo-base-receipt/receipt.json --receipt _work/memo-publication/receipt.json
+      - name: Verify the live database and Google login configuration
+        run: node scripts/memo-publication.cjs --ready --site _work/memo-publication/site
+      - run: node scripts/memo-publication.cjs --verify --site _work/memo-publication/site --receipt _work/memo-publication/receipt.json
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _work/memo-publication/site
+      - uses: actions/upload-artifact@v4
+        with:
+          name: memo-publication-${{ github.sha }}
+          path: _work/memo-publication/receipt.json
+  publish:
+    needs: validate
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}memo/
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

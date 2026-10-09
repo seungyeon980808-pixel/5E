@@ -7,7 +7,7 @@ const digest = bytes => crypto.createHash('sha256').update(bytes).digest('hex');
 const gitBlob = bytes => crypto.createHash('sha1').update(`blob ${bytes.length}\0`).update(bytes).digest('hex');
 const root = path.resolve(__dirname, '..');
 const surfaceDirectories = ['js', 'css', 'assets', 'fonts', 'vendor'];
-const surfaceFiles = ['index.html', '404.html', 'manifest.json', 'LICENSE', 'docs/credits.html', 'experiments/web-codex-auth/editor-bridge.js', 'examlibrary/index.html', 'ourdocs/index.html'];
+const surfaceFiles = ['index.html', '404.html', 'manifest.json', 'LICENSE', 'docs/credits.html', 'experiments/web-codex-auth/editor-bridge.js', 'examlibrary/index.html', 'ourdocs/index.html', ...require('../memo/assets.json')];
 
 function filesBelow(directory) {
   const files = [];
@@ -113,6 +113,14 @@ function stage({ output, preservedRoot, allowDirty = false, sourceRoot = root })
     }
   }
   for (const { relative, blob } of retained) copy(relative, preservedRoot, blob);
+  const memoConfig = path.join(output, 'memo/config.js');
+  if (fs.existsSync(memoConfig)) {
+    const { publicConfig, readConfig } = require('./memo-config.cjs');
+    if (process.env.MEMO_API_URL || process.env.MEMO_GOOGLE_CLIENT_ID) {
+      const config = publicConfig(process.env.MEMO_API_URL, process.env.MEMO_GOOGLE_CLIENT_ID);
+      fs.writeFileSync(memoConfig, 'window.MEMO_CONFIG = Object.freeze(' + JSON.stringify(config) + ');\n');
+    } else readConfig(memoConfig);
+  }
   const releaseReceipt = path.join(output, 'js/release-receipt.js');
   if (fs.existsSync(releaseReceipt)) {
     const source = fs.readFileSync(releaseReceipt, 'utf8');

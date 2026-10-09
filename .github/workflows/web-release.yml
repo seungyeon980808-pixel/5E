@@ -72,7 +72,12 @@ jobs:
           ref: ${{ steps.preserved.outputs.sha }}
           path: _work/preserved-web
       - name: Stage the exact candidate while preserving preview/mobile and the fixed 1.6.0 route
+        env:
+          MEMO_API_URL: ${{ vars.MEMO_API_URL }}
+          MEMO_GOOGLE_CLIENT_ID: ${{ vars.MEMO_GOOGLE_CLIENT_ID }}
         run: node scripts/web-release.cjs --site _work/web-release/site --receipt _work/web-release/receipt.json --preserved-root _work/preserved-web
+      - name: Verify memo database and Google login configuration before publication
+        run: node scripts/memo-publication.cjs --ready --site _work/web-release/site
       - run: npm run test:unit
       - name: Test the files that will actually be published
         env:

@@ -13,11 +13,6 @@ function liteUrl() {
   return url.href;
 }
 
-async function dismissTutorial(page) {
-  const skip = page.getByRole("button", { name: "건너뛰기", exact: true });
-  if (await skip.waitFor({ state: "visible", timeout: 2_000 }).then(() => true).catch(() => false)) await skip.click();
-}
-
 async function drawLine(page, from, to) {
   await page.locator('#tool-list .tool-btn[data-tool="L"]').click();
   await page.mouse.click(from.x, from.y);
@@ -30,10 +25,15 @@ async function drawLine(page, from, to) {
     const browser = await engine.launch({ headless: true });
     try {
       const page = await browser.newPage({ viewport: { width: 1440, height: 960 } });
+      // Use the returning-user state before the app initializes so a delayed
+      // welcome dialog cannot intercept the inspector's drawing controls.
+      await page.addInitScript(() => {
+        localStorage.setItem("5e.preview:5e.tutorial.bannerSeen", "true");
+        localStorage.setItem("5e.tutorial.bannerSeen", "true");
+      });
       const errors = [];
       page.on("pageerror", error => errors.push(error.message));
       await page.goto(liteUrl());
-      await dismissTutorial(page);
       await page.locator("#panel-left").waitFor({ state: "visible" });
       await page.locator("#canvas").waitFor({ state: "visible" });
 
