@@ -64,6 +64,11 @@ test('production staging uses committed blobs and excludes ignored files while p
   write('memo/index.html', '<title>memo</title>');
   write('memo/app.js', 'const memo = true;');
   write('memo/config.js', 'window.MEMO_CONFIG={apiUrl:"https://demo.workers.dev",googleClientId:"fixture.apps.googleusercontent.com"};');
+  write('hub/index.html', '<title>5E Hub</title>');
+  write('hub/style.css', 'body { color: navy; }');
+  write('hub/assets/editor.svg', '<svg></svg>');
+  write('docfinder/index.html', '<title>DocFinder entry</title>');
+  write('hub/PRODUCT.md', 'source-only product context');
   write('.gitignore', 'assets/private.txt\nmemo/node_modules/\n');
   write('preview/index.html', '<title>5E 1.7.0</title>');
   write('mobile/index.html', '<title>5E mobile</title>');
@@ -89,6 +94,11 @@ test('production staging uses committed blobs and excludes ignored files while p
   assert.equal(fs.existsSync(path.join(site, 'memo/node_modules/private.txt')), false);
   assert.equal(fs.readFileSync(path.join(site, 'memo/index.html'), 'utf8'), '<title>memo</title>');
   assert.equal(fs.readFileSync(path.join(site, 'memo/app.js'), 'utf8'), 'const memo = true;');
+  assert.equal(fs.readFileSync(path.join(site, 'hub/index.html'), 'utf8'), '<title>5E Hub</title>');
+  assert.equal(fs.readFileSync(path.join(site, 'hub/style.css'), 'utf8'), 'body { color: navy; }');
+  assert.equal(fs.readFileSync(path.join(site, 'hub/assets/editor.svg'), 'utf8'), '<svg></svg>');
+  assert.equal(fs.readFileSync(path.join(site, 'docfinder/index.html'), 'utf8'), '<title>DocFinder entry</title>');
+  assert.equal(fs.existsSync(path.join(site, 'hub/PRODUCT.md')), false);
   assert.equal(fs.readFileSync(path.join(site, 'preview/index.html'), 'utf8'), '<title>5E 1.7.0</title>');
   assert.equal(fs.readFileSync(path.join(site, 'mobile/index.html'), 'utf8'), '<title>5E mobile</title>');
   assert.equal(fs.readFileSync(path.join(site, '1.6.0/index.html'), 'utf8'), '<title>5E 1.6.0</title>');

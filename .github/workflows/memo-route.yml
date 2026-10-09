@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
     inputs:
       base_run:
-        description: Currently published successful OurDocs Route or Memo Route run
+        description: Currently published successful OurDocs Route, Memo Route, or Hub Route run
         required: true
         default: '37727660932'
         type: string
@@ -33,7 +33,7 @@ jobs:
           if(!/^[0-9]+$/.test(process.env.BASE_RUN))throw Error('Numeric run required');
           const api=suffix=>JSON.parse(execFileSync('gh',['api',`repos/${process.env.GITHUB_REPOSITORY}/${suffix}`],{encoding:'utf8'}));
           const run=api(`actions/runs/${process.env.BASE_RUN}`);
-          if(run.status!=='completed'||run.conclusion!=='success'||run.head_branch!=='main'||!['.github/workflows/ourdocs-route.yml','.github/workflows/memo-route.yml'].includes(run.path))throw Error('Successful route publication required');
+          if(run.status!=='completed'||run.conclusion!=='success'||run.head_branch!=='main'||!['.github/workflows/ourdocs-route.yml','.github/workflows/memo-route.yml','.github/workflows/hub-route.yml'].includes(run.path))throw Error('Successful route publication required');
           const jobs=api(`actions/runs/${process.env.BASE_RUN}/jobs?per_page=100`).jobs;
           if(!['validate','publish'].every(name=>jobs.some(j=>j.name===name&&j.conclusion==='success')))throw Error('Base publication did not pass');
           const deployments=api('deployments?environment=github-pages&per_page=100');
