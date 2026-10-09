@@ -1,9 +1,10 @@
 import { createRemoteJWKSet, jwtVerify } from 'jose';
+import { mediaRoute } from './media.js';
 
 const DAY=86400000, CLOCK="CAST(unixepoch('subsec')*1000 AS INTEGER)";
 const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const fields=['kind','title','body','color','x','y','tilt','z'];
-const defaults={kind:'memo',title:'',body:'',color:'lilac',x:.1,y:.1,tilt:0,z:0};
+const fields=['kind','title','body','color','x','y','tilt','z','image_ids'];
+const defaults={kind:'memo',title:'',body:'',color:'lilac',x:.1,y:.1,tilt:0,z:0,image_ids:[]};
 const googleKeys=createRemoteJWKSet(new URL('https://www.googleapis.com/oauth2/v3/certs'));
 class ApiError extends Error { constructor(status,code,message){super(message);this.status=status;this.code=code;} }
 function invalid(message='Invalid memo request'){throw new ApiError(400,'22023',message);}
@@ -11,6 +12,7 @@ function record(value,partial=false){
   if(!value||typeof value!=='object'||Array.isArray(value)||Object.keys(value).some(k=>!fields.includes(k)))invalid();
   const result=partial?{...value}:{...defaults,...value};
   for(const [k,v] of Object.entries(result)){
+    if(k==='image_ids'){if(partial||!Array.isArray(v)||v.length>4||new Set(v).size!==v.length||v.some(id=>!uuid.test(id)))invalid();result[k]=JSON.stringify(v);}
     if(k==='kind'&&!['memo','sticky'].includes(v)||k==='color'&&!['lilac','amber','slate','rose'].includes(v))invalid();
     if(['title','body'].includes(k)&&(typeof v!=='string'||v.length>(k==='title'?160:100000)))invalid();
     if(['x','y','tilt','z'].includes(k)&&(!Number.isFinite(v)||v<(k==='tilt'?-4:0)||v>(k==='tilt'?4:k==='z'?2147483647:1)||(k==='z'&&!Number.isInteger(v))))invalid();
@@ -26,7 +28,7 @@ async function body(request){
   const bytes=new Uint8Array(size);let at=0;for(const c of chunks){bytes.set(c,at);at+=c.byteLength;}
   try{const data=JSON.parse(new TextDecoder().decode(bytes));if(!data||typeof data!=='object'||Array.isArray(data))invalid();return data;}catch{invalid('Invalid JSON');}
 }
-function serialize(row){return {...row,created_at:new Date(row.created_at).toISOString(),updated_at:new Date(row.updated_at).toISOString()};}
+function serialize(row){return {...row,image_ids:JSON.parse(row.image_ids||'[]'),created_at:new Date(row.created_at).toISOString(),updated_at:new Date(row.updated_at).toISOString()};}
 function configured(env){return !!env.GOOGLE_CLIENT_ID?.match(/^[A-Za-z0-9_-]+\.apps\.googleusercontent\.com$/)&&!!env.OWNER_EMAIL?.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);}
 async function identity(request,env){
   const header=request.headers.get('authorization');if(!header)return {owner:false,user:null};
@@ -50,6 +52,7 @@ async function route(request,env,url){
     return {service:'5e-memo',schema:1,ready:configured(env),google_client_id:env.GOOGLE_CLIENT_ID||''};
   }
   const auth=await identity(request,env);
+  const media=await mediaRoute(request,env,url,auth,ApiError,uuid);if(media!==undefined)return media;
   if(url.pathname==='/snapshot'&&request.method==='POST'){
     const data=await body(request);if(Object.keys(data).some(k=>!['archive','cursor'].includes(k))||data.archive!==undefined&&typeof data.archive!=='boolean')invalid();
     const archive=data.archive===true;
@@ -64,12 +67,14 @@ async function route(request,env,url){
   }
   if(url.pathname==='/entries'&&request.method==='POST'){
     const data=await body(request);if(!uuid.test(data.id)||Object.keys(data).some(k=>!['id','entry'].includes(k)))invalid();
-    const entry=record(data.entry);
+    const entry=record(data.entry),images=JSON.parse(entry.image_ids);
+    const imageGuard=images.length?` WHERE (SELECT count(*) FROM memo_images WHERE id IN (${images.map(()=>'?').join(',')}) AND (entry_id=? OR (entry_id IS NULL AND created_at>${CLOCK}-${DAY})))=?`:'';
     const results=await env.DB.batch([
-      env.DB.prepare(`INSERT INTO memo_entries(id,${fields.join(',')}) VALUES(?,${fields.map(()=>'?').join(',')}) ON CONFLICT(id) DO NOTHING`).bind(data.id,...fields.map(k=>entry[k])),
+      env.DB.prepare(`INSERT INTO memo_entries(id,${fields.join(',')}) SELECT ?,${fields.map(()=>'?').join(',')}${imageGuard} ON CONFLICT(id) DO NOTHING`).bind(data.id,...fields.map(k=>entry[k]),...(images.length?[...images,data.id,images.length]:[])),
+      ...images.map(id=>env.DB.prepare('UPDATE memo_images SET entry_id=? WHERE id=? AND entry_id IS NULL AND EXISTS(SELECT 1 FROM memo_entries WHERE id=? AND image_ids=?)').bind(data.id,id,data.id,entry.image_ids)),
       env.DB.prepare(`SELECT * FROM memo_entries WHERE id=? AND (created_at>${CLOCK}-${DAY} OR ?=1)`).bind(data.id,Number(auth.owner))
     ]);
-    const row=results[1].results[0];if(!row)throw new ApiError(403,'42501','Memo moved to owner archive');
+    const row=results.at(-1).results[0];if(!row)throw new ApiError(403,'42501','Memo moved to owner archive');
     return serialize(row);
   }
   const id=url.pathname.match(/^\/entries\/([^/]+)$/)?.[1];
@@ -93,9 +98,9 @@ export default {
     const headers={'content-type':'application/json;charset=utf-8','cache-control':'no-store','vary':'Origin','x-content-type-options':'nosniff'};
     if(origin&&!allowed.includes(origin))return Response.json({code:'ORIGIN_DENIED',message:'Origin not allowed'},{status:403,headers});
     if(origin)headers['access-control-allow-origin']=origin;
-    headers['access-control-allow-methods']='GET,POST,PATCH,DELETE,OPTIONS';headers['access-control-allow-headers']='Content-Type,Authorization';
+    headers['access-control-allow-methods']='GET,POST,PUT,PATCH,DELETE,OPTIONS';headers['access-control-allow-headers']='Content-Type,Authorization';
     if(request.method==='OPTIONS')return new Response(null,{status:204,headers});
-    try{return Response.json(await route(request,env,new URL(request.url)),{headers});}
+    try{const result=await route(request,env,new URL(request.url));if(result instanceof Response){const merged=new Headers(headers);for(const [key,value] of result.headers)merged.set(key,value);return new Response(result.body,{status:result.status,headers:merged});}return Response.json(result,{headers});}
     catch(error){return Response.json({code:error instanceof ApiError?error.code:'UNAVAILABLE',message:error instanceof ApiError?error.message:'Memo service is temporarily unavailable'},{status:error instanceof ApiError?error.status:503,headers});}
   }
 };
