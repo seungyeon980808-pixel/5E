@@ -116,8 +116,8 @@ function stage({ output, preservedRoot, allowDirty = false, sourceRoot = root })
   const memoConfig = path.join(output, 'memo/config.js');
   if (fs.existsSync(memoConfig)) {
     const { publicConfig, readConfig } = require('./memo-config.cjs');
-    if (process.env.MEMO_SUPABASE_URL || process.env.MEMO_SUPABASE_PUBLISHABLE_KEY) {
-      const config = publicConfig(process.env.MEMO_SUPABASE_URL, process.env.MEMO_SUPABASE_PUBLISHABLE_KEY);
+    if (process.env.MEMO_API_URL || process.env.MEMO_GOOGLE_CLIENT_ID) {
+      const config = publicConfig(process.env.MEMO_API_URL, process.env.MEMO_GOOGLE_CLIENT_ID);
       fs.writeFileSync(memoConfig, 'window.MEMO_CONFIG = Object.freeze(' + JSON.stringify(config) + ');\n');
     } else readConfig(memoConfig);
   }

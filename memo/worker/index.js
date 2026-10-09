@@ -1,0 +1,101 @@
+import { createRemoteJWKSet, jwtVerify } from 'jose';
+
+const DAY=86400000, CLOCK="CAST(unixepoch('subsec')*1000 AS INTEGER)";
+const uuid=/^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const fields=['kind','title','body','color','x','y','tilt','z'];
+const defaults={kind:'memo',title:'',body:'',color:'lilac',x:.1,y:.1,tilt:0,z:0};
+const googleKeys=createRemoteJWKSet(new URL('https://www.googleapis.com/oauth2/v3/certs'));
+class ApiError extends Error { constructor(status,code,message){super(message);this.status=status;this.code=code;} }
+function invalid(message='Invalid memo request'){throw new ApiError(400,'22023',message);}
+function record(value,partial=false){
+  if(!value||typeof value!=='object'||Array.isArray(value)||Object.keys(value).some(k=>!fields.includes(k)))invalid();
+  const result=partial?{...value}:{...defaults,...value};
+  for(const [k,v] of Object.entries(result)){
+    if(k==='kind'&&!['memo','sticky'].includes(v)||k==='color'&&!['lilac','amber','slate','rose'].includes(v))invalid();
+    if(['title','body'].includes(k)&&(typeof v!=='string'||v.length>(k==='title'?160:100000)))invalid();
+    if(['x','y','tilt','z'].includes(k)&&(!Number.isFinite(v)||v<(k==='tilt'?-4:0)||v>(k==='tilt'?4:k==='z'?2147483647:1)||(k==='z'&&!Number.isInteger(v))))invalid();
+  }
+  if(partial&&!Object.keys(result).length)invalid();
+  return result;
+}
+async function body(request){
+  if(!request.headers.get('content-type')?.startsWith('application/json'))invalid('JSON required');
+  const reader=request.body?.getReader();if(!reader)invalid();
+  const chunks=[];let size=0;
+  while(true){const {done,value}=await reader.read();if(done)break;size+=value.byteLength;if(size>512000){await reader.cancel();throw new ApiError(413,'22023','Memo is too large');}chunks.push(value);}
+  const bytes=new Uint8Array(size);let at=0;for(const c of chunks){bytes.set(c,at);at+=c.byteLength;}
+  try{const data=JSON.parse(new TextDecoder().decode(bytes));if(!data||typeof data!=='object'||Array.isArray(data))invalid();return data;}catch{invalid('Invalid JSON');}
+}
+function serialize(row){return {...row,created_at:new Date(row.created_at).toISOString(),updated_at:new Date(row.updated_at).toISOString()};}
+function configured(env){return !!env.GOOGLE_CLIENT_ID?.match(/^[A-Za-z0-9_-]+\.apps\.googleusercontent\.com$/)&&!!env.OWNER_EMAIL?.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/);}
+async function identity(request,env){
+  const header=request.headers.get('authorization');if(!header)return {owner:false,user:null};
+  if(!configured(env))throw new ApiError(503,'AUTH_CONFIG','Owner login is not configured');
+  if(!header.startsWith('Bearer ')||header.length>8192)throw new ApiError(401,'AUTH_EXPIRED','Google login required');
+  let payload;
+  try{({payload}=await jwtVerify(header.slice(7),googleKeys,{audience:env.GOOGLE_CLIENT_ID,issuer:['https://accounts.google.com','accounts.google.com'],algorithms:['RS256'],requiredClaims:['sub','iat','exp','email','email_verified'],maxTokenAge:'1h',clockTolerance:0}));}
+  catch{throw new ApiError(401,'AUTH_EXPIRED','Google login expired or invalid');}
+  if(payload.email_verified!==true||typeof payload.email!=='string'||typeof payload.sub!=='string')throw new ApiError(401,'AUTH_EXPIRED','Verified Google account required');
+  return {owner:payload.email.toLowerCase()===env.OWNER_EMAIL.toLowerCase(),user:{id:payload.sub,email:payload.email,expires_at:payload.exp}};
+}
+async function inaccessible(db,id,owner){
+  const row=await db.prepare(`SELECT version,created_at,${CLOCK} AS clock FROM memo_entries WHERE id=?`).bind(id).first();
+  if(!row)throw new ApiError(404,'P0002','Memo was deleted');
+  if(!owner&&row.created_at<=row.clock-DAY)throw new ApiError(403,'42501','Memo moved to owner archive');
+  throw new ApiError(409,'40001','Memo changed on another device');
+}
+async function route(request,env,url){
+  if(url.pathname==='/health'&&request.method==='GET'){
+    await env.DB.prepare('SELECT id FROM memo_entries LIMIT 1').all();
+    return {service:'5e-memo',schema:1,ready:configured(env),google_client_id:env.GOOGLE_CLIENT_ID||''};
+  }
+  const auth=await identity(request,env);
+  if(url.pathname==='/snapshot'&&request.method==='POST'){
+    const data=await body(request);if(Object.keys(data).some(k=>!['archive','cursor'].includes(k))||data.archive!==undefined&&typeof data.archive!=='boolean')invalid();
+    const archive=data.archive===true;
+    if(archive&&!auth.owner)throw new ApiError(403,'42501','Owner archive requires the designated Google account');
+    const cursor=data.cursor;let cursorWhere='',params=[];
+    if(cursor){if(!uuid.test(cursor.id)||!Number.isFinite(Date.parse(cursor.created_at)))invalid('Invalid cursor');cursorWhere=' AND (created_at<? OR (created_at=? AND id<?))';const time=Date.parse(cursor.created_at);params=[time,time,cursor.id];}
+    const results=await env.DB.batch([
+      env.DB.prepare(`SELECT ${CLOCK} AS clock`),
+      env.DB.prepare(`SELECT * FROM memo_entries WHERE created_at${archive?'<=':'>'}${CLOCK}-${DAY}${cursorWhere} ORDER BY created_at DESC,id DESC LIMIT 101`).bind(...params)
+    ]);
+    return {server_time:new Date(results[0].results[0].clock).toISOString(),owner:auth.owner,user:auth.user,owner_configured:configured(env),entries:results[1].results.map(serialize)};
+  }
+  if(url.pathname==='/entries'&&request.method==='POST'){
+    const data=await body(request);if(!uuid.test(data.id)||Object.keys(data).some(k=>!['id','entry'].includes(k)))invalid();
+    const entry=record(data.entry);
+    const results=await env.DB.batch([
+      env.DB.prepare(`INSERT INTO memo_entries(id,${fields.join(',')}) VALUES(?,${fields.map(()=>'?').join(',')}) ON CONFLICT(id) DO NOTHING`).bind(data.id,...fields.map(k=>entry[k])),
+      env.DB.prepare(`SELECT * FROM memo_entries WHERE id=? AND (created_at>${CLOCK}-${DAY} OR ?=1)`).bind(data.id,Number(auth.owner))
+    ]);
+    const row=results[1].results[0];if(!row)throw new ApiError(403,'42501','Memo moved to owner archive');
+    return serialize(row);
+  }
+  const id=url.pathname.match(/^\/entries\/([^/]+)$/)?.[1];
+  if(id&&['PATCH','DELETE'].includes(request.method)){
+    if(!uuid.test(id))invalid();const data=await body(request);
+    if(!Number.isInteger(data.version)||data.version<1)throw new ApiError(409,'40001','Valid memo version required');
+    if(Object.keys(data).some(k=>!['version',...(request.method==='PATCH'?['patch']:[])].includes(k)))invalid();
+    if(request.method==='PATCH'){
+      const patch=record(data.patch,true),keys=Object.keys(patch);
+      const row=await env.DB.prepare(`UPDATE memo_entries SET ${keys.map(k=>k+'=?').join(',')},updated_at=${CLOCK},version=version+1 WHERE id=? AND version=? AND (created_at>${CLOCK}-${DAY} OR ?=1) RETURNING *`).bind(...keys.map(k=>patch[k]),id,data.version,Number(auth.owner)).first();
+      if(!row)await inaccessible(env.DB,id,auth.owner);return serialize(row);
+    }
+    const row=await env.DB.prepare(`DELETE FROM memo_entries WHERE id=? AND version=? AND (created_at>${CLOCK}-${DAY} OR ?=1) RETURNING id`).bind(id,data.version,Number(auth.owner)).first();
+    if(!row)await inaccessible(env.DB,id,auth.owner);return {deleted:true};
+  }
+  throw new ApiError(404,'NOT_FOUND','Endpoint not found');
+}
+export default {
+  async fetch(request,env){
+    const origin=request.headers.get('origin'),allowed=(env.ALLOWED_ORIGINS||'https://www.5e.ai.kr,https://5e.ai.kr').split(',').map(s=>s.trim());
+    const headers={'content-type':'application/json;charset=utf-8','cache-control':'no-store','vary':'Origin','x-content-type-options':'nosniff'};
+    if(origin&&!allowed.includes(origin))return Response.json({code:'ORIGIN_DENIED',message:'Origin not allowed'},{status:403,headers});
+    if(origin)headers['access-control-allow-origin']=origin;
+    headers['access-control-allow-methods']='GET,POST,PATCH,DELETE,OPTIONS';headers['access-control-allow-headers']='Content-Type,Authorization';
+    if(request.method==='OPTIONS')return new Response(null,{status:204,headers});
+    try{return Response.json(await route(request,env,new URL(request.url)),{headers});}
+    catch(error){return Response.json({code:error instanceof ApiError?error.code:'UNAVAILABLE',message:error instanceof ApiError?error.message:'Memo service is temporarily unavailable'},{status:error instanceof ApiError?error.status:503,headers});}
+  }
+};

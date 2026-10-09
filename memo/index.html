@@ -51,7 +51,7 @@
         </div>
         <section class="archive" id="archive-view" aria-labelledby="desk-title" hidden>
           <p id="archive-message">24시간이 지난 메모는 주인장 보관함에서 확인하세요.</p>
-          <button class="google" id="google-button" type="button">Google로 로그인</button>
+          <div id="google-button" role="group" aria-label="Google 로그인"><button class="google" type="button" disabled>Google로 로그인</button></div>
           <div class="archive-account" id="archive-account" hidden><span id="account-email"></span><button class="button" id="logout-button" type="button">로그아웃</button></div>
           <ul class="notes" id="archive-notes" aria-label="보관된 메모 목록" hidden></ul>
           <button class="button" id="archive-more" type="button" hidden>더 보기</button>
@@ -64,7 +64,6 @@
   </div>
   <p class="status" id="status" role="status" aria-live="polite" aria-atomic="true"></p>
   <script src="config.js"></script>
-  <script src="vendor/supabase.js"></script>
   <script type="module" src="app.js"></script>
 </body>
 </html>

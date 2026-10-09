@@ -63,7 +63,7 @@ test('production staging uses committed blobs and excludes ignored files while p
   write('404.html', '<title>Named route recovery</title>');
   write('memo/index.html', '<title>memo</title>');
   write('memo/app.js', 'const memo = true;');
-  write('memo/config.js', 'window.MEMO_CONFIG={url:"https://demo.supabase.co",publishableKey:"sb_publishable_fixture"};');
+  write('memo/config.js', 'window.MEMO_CONFIG={apiUrl:"https://demo.workers.dev",googleClientId:"fixture.apps.googleusercontent.com"};');
   write('.gitignore', 'assets/private.txt\nmemo/node_modules/\n');
   write('preview/index.html', '<title>5E 1.7.0</title>');
   write('mobile/index.html', '<title>5E mobile</title>');

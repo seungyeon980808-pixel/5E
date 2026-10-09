@@ -1,15 +1,13 @@
 const fs=require('node:fs');
 const vm=require('node:vm');
-function publicConfig(url,key) {
-  if(!/^https:\/\/[a-z0-9-]+\.supabase\.co$/.test(url||'')) throw new Error('Supabase project URL required');
-  if(!/^sb_publishable_[A-Za-z0-9_-]+$/.test(key||'')) {
-    let role;try { role=JSON.parse(Buffer.from(key.split('.')[1],'base64url').toString()).role; } catch {}
-    if(role!=='anon') throw new Error('Only a publishable key or legacy anon key may be deployed');
-  }
-  return {url,publishableKey:key};
+function publicConfig(apiUrl,googleClientId) {
+  let url;try{url=new URL(apiUrl);}catch{}
+  if(!url||url.protocol!=='https:'||url.username||url.password||url.search||url.hash||url.pathname!=='/')throw new Error('Public HTTPS Worker origin required');
+  if(!/^[A-Za-z0-9_-]+\.apps\.googleusercontent\.com$/.test(googleClientId||''))throw new Error('Google web client ID required');
+  return {apiUrl:url.origin,googleClientId};
 }
 function readConfig(file) {
   const window={};vm.runInNewContext(fs.readFileSync(file,'utf8'),{window,Object});
-  return publicConfig(window.MEMO_CONFIG?.url,window.MEMO_CONFIG?.publishableKey);
+  return publicConfig(window.MEMO_CONFIG?.apiUrl,window.MEMO_CONFIG?.googleClientId);
 }
 module.exports={publicConfig,readConfig};

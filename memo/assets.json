@@ -5,7 +5,5 @@
   "memo/cloud.js",
   "memo/config.js",
   "memo/pretendard.woff2",
-  "memo/FONT-LICENSE.txt",
-  "memo/vendor/supabase.js",
-  "memo/vendor/LICENSE-supabase"
+  "memo/FONT-LICENSE.txt"
 ]

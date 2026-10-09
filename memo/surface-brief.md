@@ -14,11 +14,11 @@ FIRST VIEWPORT: Preserve the 600px desktop memo and 212px paper width, with cont
 
 FORM: Preserve seed 661c54bf, grounded candidate 6, and the user-pinned “night desktop”. The incumbent prototype retains its original direction contract and candidate/challenger rationale locally; this file records their seed and approved design decisions without publishing machine-specific provenance paths. These are historical provenance, not current service-state specifications. No new selection or replacement world.
 
-SIGNATURE: Directly editable paper with 3px corners, restrained tilt, normalized positions and persistent stacking around a compact memo. Focus outlines preserve layer order. Shared persistence now travels through the SDK/SQL connection; local pending edits do not imply a saved server record.
+SIGNATURE: Directly editable paper with 3px corners, restrained tilt, normalized positions and persistent stacking around a compact memo. Focus outlines preserve layer order. Shared persistence now travels through the Workers/D1 connection; local pending edits do not imply a saved server record.
 
 ## Comparison evidence and limits
 
-The six supplied captures in `../_work/memo-review/` are `desktop.png`, `mobile.png`, `owner-archive.png`, `webkit.png`, `draft-preserved.png` and `retry-failed.png`. This documentation pass inspected their pixels and compared source with the incumbent; it did not open a browser or rerun integration tests. The browser test source uses an isolated PostgreSQL engine, test identity and OAuth endpoints. Its captures are not evidence of live Google or Supabase production access.
+The six supplied captures in `../_work/memo-review/` are `desktop.png`, `mobile.png`, `owner-archive.png`, `webkit.png`, `draft-preserved.png` and `retry-failed.png`. This documentation pass inspected their pixels and compared source with the incumbent; it did not open a browser or rerun integration tests. The browser test source uses an isolated workerd/D1 engine with signed Google test identity. Its captures are not evidence of live Google or Cloudflare production access.
 
 Current source retains newer composer text when an earlier save resolves and preserves connection error/retry when refresh fails (the supplied review's F1/F2 scenarios). The supplied reports describe successful local checks; this pass makes no independent runtime-success claim and no final score. Documentation-only checks and captured source hashes are in `../.omo/evidence/memo-documentation/validation.json`.
 

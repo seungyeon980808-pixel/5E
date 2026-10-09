@@ -26,20 +26,21 @@ function appendRoute(site,base,sourceRoot,config) {
     if(!fs.readFileSync(path.join(sourceRoot,asset)).equals(committed))throw new Error(`Uncommitted route input: ${asset}`);
     fs.mkdirSync(path.dirname(path.join(site,asset)),{recursive:true});fs.writeFileSync(path.join(site,asset),committed);
   }
-  const validated=config.url || config.publishableKey ? publicConfig(config.url,config.publishableKey) : readConfig(path.join(site,'memo/config.js'));
+  const validated=config.apiUrl || config.googleClientId ? publicConfig(config.apiUrl,config.googleClientId) : readConfig(path.join(site,'memo/config.js'));
   fs.writeFileSync(path.join(site,'memo/config.js'),'window.MEMO_CONFIG = Object.freeze('+JSON.stringify(validated)+');\n');
   const receipt={schemaVersion:1,sourceCommit,baseSourceCommit:base.baseSourceCommit||base.sourceCommit,baseRouteCommit:base.sourceCommit,baseFiles:base.files,files:inventory(site)};
   verifyRoute(site,receipt);return receipt;
 }
 async function readiness(site) {
   const config=readConfig(path.join(site,'memo/config.js'));
-  const response=await fetch(config.url+'/rest/v1/rpc/memo_snapshot',{method:'POST',headers:{apikey:config.publishableKey,'content-type':'application/json'},body:JSON.stringify({p_archive:false,p_cursor:null}),signal:AbortSignal.timeout(20000)});
+  const response=await fetch(config.apiUrl+'/snapshot',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({archive:false,cursor:null}),signal:AbortSignal.timeout(20000)});
   const snapshot=await response.json();
-  if(!response.ok||!Array.isArray(snapshot.entries)||!snapshot.server_time||snapshot.owner!==false||snapshot.owner_configured!==true)throw new Error('Public memo database is not ready');
-  const denied=await fetch(config.url+'/rest/v1/rpc/memo_snapshot',{method:'POST',headers:{apikey:config.publishableKey,'content-type':'application/json'},body:JSON.stringify({p_archive:true,p_cursor:null}),signal:AbortSignal.timeout(20000)});
-  if(denied.ok)throw new Error('Archive must reject anonymous access');
-  const settings=await fetch(config.url+'/auth/v1/settings',{headers:{apikey:config.publishableKey},signal:AbortSignal.timeout(20000)});
-  if(!settings.ok||!(await settings.json()).external?.google)throw new Error('Google login provider is not enabled');
+  if(!response.ok||!Array.isArray(snapshot.entries)||!snapshot.server_time||snapshot.owner!==false||snapshot.user!==null||snapshot.owner_configured!==true)throw new Error('Cloudflare memo database is not ready');
+  const denied=await fetch(config.apiUrl+'/snapshot',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({archive:true,cursor:null}),signal:AbortSignal.timeout(20000)});
+  if(denied.status!==403)throw new Error('Archive must reject anonymous access');
+  const health=await fetch(config.apiUrl+'/health',{signal:AbortSignal.timeout(20000)});
+  const settings=await health.json();
+  if(!health.ok||!settings.ready||settings.google_client_id!==config.googleClientId)throw new Error('Google login configuration does not match');
 }
 if(require.main===module)(async()=>{
   const args=process.argv.slice(2),option=name=>{const value=args[args.indexOf(name)+1];if(!args.includes(name)||!value||value.startsWith('--'))throw new Error(`${name} required`);return path.resolve(value);};
@@ -47,7 +48,7 @@ if(require.main===module)(async()=>{
   if(args.includes('--ready'))await readiness(site);
   else if(args.includes('--verify'))console.log(`Verified ${verifyRoute(site,JSON.parse(fs.readFileSync(option('--receipt'),'utf8')))} files`);
   else {
-    const receipt=appendRoute(site,JSON.parse(fs.readFileSync(option('--base-receipt'),'utf8')),path.resolve(__dirname,'..'),{url:process.env.MEMO_SUPABASE_URL,publishableKey:process.env.MEMO_SUPABASE_PUBLISHABLE_KEY});
+    const receipt=appendRoute(site,JSON.parse(fs.readFileSync(option('--base-receipt'),'utf8')),path.resolve(__dirname,'..'),{apiUrl:process.env.MEMO_API_URL,googleClientId:process.env.MEMO_GOOGLE_CLIENT_ID});
     const output=option('--receipt');fs.mkdirSync(path.dirname(output),{recursive:true});fs.writeFileSync(output,JSON.stringify(receipt,null,2)+'\n');
     console.log('Added memo; every existing published file is unchanged');
   }

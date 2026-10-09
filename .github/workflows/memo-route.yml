@@ -74,10 +74,10 @@ jobs:
       - run: node --test desktop/memo-publication.test.cjs
       - name: Append the committed memo application
         env:
-          MEMO_SUPABASE_URL: ${{ vars.MEMO_SUPABASE_URL }}
-          MEMO_SUPABASE_PUBLISHABLE_KEY: ${{ vars.MEMO_SUPABASE_PUBLISHABLE_KEY }}
+          MEMO_API_URL: ${{ vars.MEMO_API_URL }}
+          MEMO_GOOGLE_CLIENT_ID: ${{ vars.MEMO_GOOGLE_CLIENT_ID }}
         run: node scripts/memo-publication.cjs --site _work/memo-publication/site --base-receipt _work/memo-base-receipt/receipt.json --receipt _work/memo-publication/receipt.json
-      - name: Verify the live database and Google provider
+      - name: Verify the live database and Google login configuration
         run: node scripts/memo-publication.cjs --ready --site _work/memo-publication/site
       - run: node scripts/memo-publication.cjs --verify --site _work/memo-publication/site --receipt _work/memo-publication/receipt.json
       - uses: actions/upload-pages-artifact@v3

@@ -175,7 +175,7 @@
     "donts": [
       "Don't restore the rejected tall mobile-style card as the desktop composition.",
       "Don't replace the four paper palettes with arbitrary unreadable color combinations.",
-      "Don't describe local fixtures or implemented SDK/SQL flows as connected production services before Google/Supabase setup is complete."
+      "Don't describe local fixtures or implemented Workers/D1 flows as connected production services before Google/Cloudflare setup is complete."
     ]
   }
 }

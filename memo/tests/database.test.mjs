@@ -1,70 +1,49 @@
-import { test, before, after } from 'node:test';
+import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
-import { PGlite } from '@electric-sql/pglite';
-let db;
-const owner='11111111-1111-4111-8111-111111111111', stranger='22222222-2222-4222-8222-222222222222';
-const fresh='33333333-3333-4333-8333-333333333333', old='44444444-4444-4444-8444-444444444444';
-async function asRole(role,uid,sql,params=[]) {
-  return db.transaction(async tx=>{
-    await tx.exec(`set local role ${role}`);
-    await tx.query("select set_config('request.jwt.claim.sub',$1,true)",[uid||'']);
-    return tx.query(sql,params);
-  });
-}
-before(async()=>{
-  db=new PGlite();
-  await db.exec(`create role anon; create role authenticated; create schema auth;
-    create table auth.identities(user_id uuid,provider text,identity_data jsonb);
-    create function auth.uid() returns uuid language sql stable as $$select nullif(current_setting('request.jwt.claim.sub',true),'')::uuid$$;
-    grant usage on schema public,auth to anon,authenticated; grant execute on function auth.uid() to anon,authenticated;`);
-  await db.exec(fs.readFileSync(new URL('../../supabase/migrations/20261009010000_memo.sql',import.meta.url),'utf8'));
-  await db.query("insert into private.memo_owners values ('owner@example.com')");
-  await db.query(`insert into auth.identities values ($1,'google','{"email":"owner@example.com","email_verified":true}'),($2,'google','{"email":"other@example.com","email_verified":true}')`,[owner,stranger]);
+import {randomUUID} from 'node:crypto';
+import {fixture,clientId} from './fixture.mjs';
+const DAY=86400000;
+async function use(t){const f=await fixture();t.after(()=>f.close());return f;}
+test('idempotent create, immutable server age, validated payload and atomic version conflicts',async t=>{
+ const f=await use(t),id=randomUUID();
+ const create=await f.request('/entries',{id,entry:{title:'선택 제목',body:'https://example.com'}});assert.equal(create.status,200);const row=await create.json();
+ const again=await (await f.request('/entries',{id,entry:{body:'duplicate'}})).json();assert.deepEqual(again,row);
+ assert.ok(Math.abs(Date.parse(row.created_at)-Date.now())<2000);
+ for(const patch of [{created_at:'2099-01-01'},{id:randomUUID()},{version:5},{x:2},{z:1.5},{body:100},{title:'a'.repeat(161)}])assert.equal((await f.request('/entries/'+id,{version:1,patch},{method:'PATCH'})).status,400);
+ const responses=await Promise.all(['a','b'].map(body=>f.request('/entries/'+id,{version:1,patch:{body}},{method:'PATCH'})));assert.deepEqual(responses.map(r=>r.status).sort(),[200,409]);
+ const updated=await responses.find(r=>r.status===200).json();assert.equal(updated.created_at,row.created_at);assert.equal(updated.version,2);
+ for(const version of [null,1])assert.equal((await f.request('/entries/'+id,{version,patch:{body:'stale'}},{method:'PATCH'})).status,409);
+ await assert.rejects(f.db.prepare('UPDATE memo_entries SET created_at=0 WHERE id=?').bind(id).run(),/immutable/);
 });
-after(()=>db.close());
-test('anonymous create is idempotent and clock and fields are server controlled',async()=>{
-  const sql='select public.memo_create($1,$2) as entry';
-  const a=await asRole('anon',null,sql,[fresh,{kind:'memo',title:'전송 링크',body:'https://example.com'}]);
-  const b=await asRole('anon',null,sql,[fresh,{kind:'memo',body:'must not duplicate or overwrite'}]);
-  assert.equal(a.rows[0].entry.body,b.rows[0].entry.body);assert.equal(a.rows[0].entry.version,1);
-  await assert.rejects(asRole('anon',null,sql,['55555555-5555-4555-8555-555555555555',{kind:'memo',body:'clock',created_at:'2099-01-01'}]),/Invalid memo fields/);
-  await assert.rejects(asRole('anon',null,'insert into public.memo_entries(id,kind,body) values ($1,\'memo\',\'x\')',[old]),/permission denied/);
+test('24-hour archive is hidden from anonymous snapshots, guessed IDs, updates and deletes',async t=>{
+ const f=await use(t),id=randomUUID();await f.seed(id,{body:'private archived body'},DAY+1);
+ const snapshot=await (await f.request()).json();assert.deepEqual(snapshot.entries,[]);assert.equal(snapshot.owner,false);
+ assert.equal((await f.request('/snapshot',{archive:true})).status,403);
+ assert.equal((await f.request('/entries',{id,entry:{body:'guess'}})).status,403);
+ for(const method of ['PATCH','DELETE'])assert.equal((await f.request('/entries/'+id,{version:1,...(method==='PATCH'?{patch:{body:'tamper'}}:{})},{method})).status,403);
+ const owner=await f.token(),archive=await (await f.request('/snapshot',{archive:true},{token:owner})).json();assert.equal(archive.entries[0].body,'private archived body');
+ assert.equal((await f.request('/entries/'+id,{version:1,patch:{body:'owner update'}},{method:'PATCH',token:owner})).status,200);
+ assert.equal((await f.request('/entries/'+id,{version:2},{method:'DELETE',token:owner})).status,200);
 });
-test('24-hour archive is unavailable by direct select, RPC and guessed UUID to anon and other Google accounts',async()=>{
-  await db.query("insert into public.memo_entries(id,kind,body,created_at) values ($1,'memo','private archive',now()-interval '24 hours')",[old]);
-  for(const [role,uid] of [['anon',null],['authenticated',stranger]]){
-    const direct=await asRole(role,uid,'select body from public.memo_entries where id=$1',[old]);assert.equal(direct.rows.length,0);
-    await assert.rejects(asRole(role,uid,'select public.memo_snapshot(true,null)'),/Owner login required/);
-    await assert.rejects(asRole(role,uid,'select public.memo_update($1,1,$2)',[old,{body:'expose'}]),/moved to archive/);
-    await assert.rejects(asRole(role,uid,'select public.memo_delete($1,1)',[old]),/moved to archive/);
-    await assert.rejects(asRole(role,uid,'select public.memo_create($1,$2)',[old,{kind:'memo',body:'reuse id'}]),/moved to archive/);
-  }
-  const archive=await asRole('authenticated',owner,'select public.memo_snapshot(true,null) as snapshot');
-  assert.equal(archive.rows[0].snapshot.entries[0].body,'private archive');assert.equal(archive.rows[0].snapshot.owner,true);
+test('Google signature, audience, issuer, expiry and verified owner identity are checked',async t=>{
+ const f=await use(t);await f.seed(randomUUID(),{body:'secret'},DAY*2);
+ assert.equal((await f.request('/snapshot',{archive:true},{token:await f.token('someone@example.com')})).status,403);
+ const now=Math.floor(Date.now()/1000);
+ for(const claims of [{aud:'another-client'},{iss:'https://attacker.example'},{exp:now-1},{email_verified:false},{iat:now-4000,exp:now+3600}])assert.equal((await f.request('/snapshot',{archive:true},{token:await f.token('owner@example.com',claims)})).status,401);
+ const valid=await f.token(),parts=valid.split('.');const payload=JSON.parse(Buffer.from(parts[1],'base64url'));payload.email='attacker@example.com';parts[1]=Buffer.from(JSON.stringify(payload)).toString('base64url');assert.equal((await f.request('/snapshot',{archive:true},{token:parts.join('.')})).status,401);
+ assert.equal((await f.request('/snapshot',{archive:true},{token:valid})).status,200);
+ const health=await (await f.request('/health',undefined,{method:'GET'})).json();assert.equal(health.google_client_id,clientId);assert.equal(health.ready,true);
 });
-test('only a verified Google identity belonging to the designated owner grants access',async()=>{
-  await db.query("update auth.identities set identity_data=jsonb_set(identity_data,'{email_verified}','false') where user_id=$1",[owner]);
-  await assert.rejects(asRole('authenticated',owner,'select public.memo_snapshot(true,null)'),/Owner login required/);
-  await db.query("update auth.identities set provider='email',identity_data=jsonb_set(identity_data,'{email_verified}','true') where user_id=$1",[owner]);
-  await assert.rejects(asRole('authenticated',owner,'select public.memo_snapshot(true,null)'),/Owner login required/);
-  await db.query("update auth.identities set provider='google' where user_id=$1",[owner]);
+test('pinning preserves creation age; page cursor uses stable creation time and ID order',async t=>{
+ const f=await use(t),id=randomUUID();const row=await (await f.request('/entries',{id,entry:{body:'pin'}})).json();
+ const pin=await (await f.request('/entries/'+id,{version:1,patch:{kind:'sticky',x:.9,y:.2,color:'amber'}},{method:'PATCH'})).json();assert.equal(pin.created_at,row.created_at);
+ const time=Date.now();await f.db.batch(Array.from({length:102},()=>f.db.prepare('INSERT INTO memo_entries(id,kind,body,created_at,updated_at) VALUES(?,?,?,?,?)').bind(randomUUID(),'memo','page',time,time)));
+ const first=await (await f.request()).json();assert.equal(first.entries.length,101);const cursor=first.entries[99];
+ const next=await (await f.request('/snapshot',{archive:false,cursor:{id:cursor.id,created_at:cursor.created_at}})).json();assert.equal(next.entries.length,3);
+ assert.equal(new Set([...first.entries.slice(0,100),...next.entries].map(e=>e.id)).size,103);
 });
-test('pinning and editing retain original age, concurrent edits reject stale versions',async()=>{
-  const original=(await db.query('select * from public.memo_entries where id=$1',[fresh])).rows[0];
-  const update=await asRole('anon',null,'select public.memo_update($1,$2,$3) as entry',[fresh,1,{kind:'sticky',x:.82,title:'새 제목'}]);
-  assert.equal(Date.parse(update.rows[0].entry.created_at),original.created_at.getTime());assert.equal(update.rows[0].entry.version,2);
-  await assert.rejects(asRole('anon',null,'select public.memo_update($1,1,$2)',[fresh,{body:'stale'}]),/changed on another device/);
-  await assert.rejects(asRole('anon',null,'select public.memo_delete($1,1)',[fresh]),/changed on another device/);
-  await assert.rejects(asRole('anon',null,'select public.memo_update($1,null,$2)',[fresh,{body:'bypass version'}]),/changed on another device/);
-  await assert.rejects(asRole('anon',null,'select public.memo_update($1,2,$2)',[fresh,{created_at:'2099-01-01'}]),/Invalid memo fields/);
-  await asRole('anon',null,'select public.memo_delete($1,2)',[fresh]);
-});
-test('public snapshots paginate without repeating rows with equal creation times',async()=>{
-  await db.exec("insert into public.memo_entries(id,kind,body) select gen_random_uuid(),'memo','메모 '||n from generate_series(1,103) n");
-  const first=(await asRole('anon',null,'select public.memo_snapshot(false,null) as s')).rows[0].s;
-  assert.equal(first.entries.length,101);assert.ok(first.server_time);
-  const last=first.entries[99];
-  const second=(await asRole('anon',null,'select public.memo_snapshot(false,$1) as s',[{id:last.id,created_at:last.created_at}])).rows[0].s;
-  assert.equal(second.entries.length,3);assert.ok(!first.entries.slice(0,100).some(x=>second.entries.some(y=>x.id===y.id)));
+test('browser origin allowlist and no-store prevent cross-origin/cached archive exposure',async t=>{
+ const f=await use(t);
+ const denied=await f.request('/snapshot',{}, {headers:{origin:'https://unknown.example'}});assert.equal(denied.status,403);assert.equal(denied.headers.get('access-control-allow-origin'),null);
+ const allowed=await f.request('/snapshot',{}, {headers:{origin:'https://www.5e.ai.kr'}});assert.equal(allowed.headers.get('access-control-allow-origin'),'https://www.5e.ai.kr');assert.equal(allowed.headers.get('cache-control'),'no-store');
 });

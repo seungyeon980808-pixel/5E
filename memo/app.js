@@ -3,12 +3,12 @@ const $ = id => document.getElementById(id);
 const board = $('board'), input = $('memo-input'), titleInput = $('memo-title'), save = $('save-button');
 const colors = ['lilac','amber','slate','rose'], smallBoard = matchMedia('(max-width:1199px)');
 const clamp = (v,min,max) => Math.min(max,Math.max(min,v));
-let client, cloud, ready=false, busy=false, titleOpen=false, owner=false, session=null, maxZ=0;
-let entries=[], archiveEntries=[], recentMore=false, archiveMore=false, refreshTimer, statusTimer, refreshSerial=0;
+let cloud, ready=false, busy=false, titleOpen=false, owner=false, session=null, maxZ=0;
+let entries=[], archiveEntries=[], recentMore=false, archiveMore=false, statusTimer, refreshSerial=0;
 let createAttempt=null;
 const pending = new Map(), cards = new Map();
 const config = window.MEMO_CONFIG || {};
-const storageKey = '5e-memo-drafts-v1:' + (config.url || 'unconfigured');
+const storageKey = '5e-memo-drafts-v1:' + (config.apiUrl || 'unconfigured');
 function now() { return cloud ? cloud.now() : Date.now(); }
 function recent(e) { return e.created + DAY > now(); }
 function announce(message,error=false) {
@@ -132,7 +132,6 @@ function updateConnection() {
   if(pending.size)connection([...pending.values()].some(p=>p.paused)?'저장하지 못한 포스트잇 수정이 있어요.':'포스트잇 저장 중…', [...pending.values()].some(p=>p.paused)?'error':'loading',[...pending.values()].some(p=>p.paused));
   else connection('모든 기기에서 같은 메모');
 }
-function invalidate() {clearTimeout(refreshTimer);refreshTimer=setTimeout(()=>refresh(),150);}
 async function loadArchive(append) {
   const last=archiveEntries.at(-1);const authUser=session?.user?.id;
   const result=await cloud.snapshot(true,append&&last?{id:last.id,created_at:last.created_at}:null);
@@ -258,13 +257,7 @@ $('archive-toggle').addEventListener('click',async()=>{
   $('desk-title').replaceChildren(icon(opening?'archive':'note'),document.createTextNode(opening?'주인장 보관함':'빠른 메모'));renderArchive();
   if(opening&&owner)try{await loadArchive(false);}catch{announce('보관함을 불러오지 못했어요. 다시 시도해 주세요.',true);}
 });
-$('google-button').addEventListener('click',async()=>{
-  if(!client){announce('로그인 연결을 아직 준비 중이에요.',true);return;}
-  $('google-button').disabled=true;
-  const {error}=await client.auth.signInWithOAuth({provider:'google',options:{redirectTo:new URL('./',location.href).origin+'/memo/',queryParams:{access_type:'online',prompt:'select_account'}}});
-  if(error){announce('Google 로그인을 열지 못했어요. 다시 시도해 주세요.',true);$('google-button').disabled=false;}
-});
-$('logout-button').addEventListener('click',async()=>{const {error}=await client.auth.signOut({scope:'local'});if(error)announce('로그아웃하지 못했어요. 다시 시도해 주세요.',true);});
+$('logout-button').addEventListener('click',()=>{cloud?.logout();window.google?.accounts.id.disableAutoSelect();refresh();});
 $('recent-more').addEventListener('click',()=>refresh(true));
 $('archive-more').addEventListener('click',async()=>{try{await loadArchive(true);}catch{announce('보관된 메모를 더 불러오지 못했어요.',true);}});
 $('retry-button').addEventListener('click',async()=>{
@@ -280,18 +273,33 @@ window.addEventListener('online',()=>refresh());window.addEventListener('focus',
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh();});
 window.addEventListener('beforeunload',event=>{persist();if(pending.size||busy){event.preventDefault();event.returnValue='';}});
 titleState();syncButton();renderAll();
-setInterval(()=>{renderAll();if(!document.hidden)refresh();},15000);
-async function initialize() {
-  if(!/^https:\/\/[a-z0-9-]+\.supabase\.co$/.test(config.url)||!config.publishableKey){
-    connection('메모 연결을 준비 중이에요.','error');$('google-button').disabled=true;return;
+setInterval(()=>{renderAll();if(!document.hidden)refresh();},5000);
+function authState(user){
+  if(session?.user?.id===user?.id&&session?.user?.expires_at===user?.expires_at)return;
+  session=user?{user}:null;owner=false;archiveEntries=[];archiveMore=false;renderArchive();
+}
+async function setupGoogle(){
+  try{
+    await new Promise((resolve,reject)=>{
+      const script=document.createElement('script');script.src='https://accounts.google.com/gsi/client';script.async=true;
+      const timeout=setTimeout(()=>reject(Error('Google login timeout')),15000);
+      script.onload=()=>{clearTimeout(timeout);resolve();};script.onerror=()=>{clearTimeout(timeout);reject(Error('Google login unavailable'));};document.head.append(script);
+    });
+    window.google.accounts.id.initialize({client_id:config.googleClientId,auto_select:false,callback:async response=>{
+      try{await cloud.login(response.credential);await refresh();announce('Google 계정으로 로그인했어요.');}
+      catch{announce('Google 로그인을 확인하지 못했어요. 다시 로그인해 주세요.',true);}
+    }});
+    $('google-button').replaceChildren();
+    window.google.accounts.id.renderButton($('google-button'),{type:'standard',theme:'filled_black',size:'medium',text:'signin_with',shape:'pill',locale:'ko',width:180});
+  }catch{
+    const button=document.createElement('button');button.className='google';button.type='button';button.textContent='Google 로그인 다시 연결';button.addEventListener('click',()=>{button.disabled=true;setupGoogle();});$('google-button').replaceChildren(button);
   }
-  client=window.supabase.createClient(config.url,config.publishableKey,{auth:{flowType:'pkce',detectSessionInUrl:true,persistSession:true,autoRefreshToken:true}});
-  cloud=new MemoCloud(client);
-  client.auth.onAuthStateChange((_event,s)=>{session=s;owner=false;archiveEntries=[];renderArchive();setTimeout(()=>refresh(),0);});
-  const {data,error}=await client.auth.getSession();session=data.session;
-  if(error)announce('로그인을 완료하지 못했어요. 보관함에서 다시 로그인해 주세요.',true);
-  const q=new URL(location.href);if(q.searchParams.has('code')||q.searchParams.has('error')){for(const key of ['code','error','error_description','error_code'])q.searchParams.delete(key);history.replaceState(null,'',q);}
-  client.channel('memo-board').on('postgres_changes',{event:'*',schema:'public',table:'memo_entries'},invalidate).subscribe();
-  await refresh();
+}
+async function initialize() {
+  let url;try{url=new URL(config.apiUrl);}catch{}
+  if(!url||url.protocol!=='https:'||url.username||url.password||url.search||url.hash||url.pathname!=='/'||! /^[A-Za-z0-9_-]+\.apps\.googleusercontent\.com$/.test(config.googleClientId||'')){
+    connection('메모 연결을 준비 중이에요.','error');return;
+  }
+  cloud=new MemoCloud(config,authState);await refresh();setupGoogle();
 }
 initialize().catch(()=>connection('메모 연결을 확인하지 못했어요. 새로고침해 주세요.','error',true));
