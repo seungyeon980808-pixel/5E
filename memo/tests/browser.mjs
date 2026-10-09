@@ -24,7 +24,7 @@ const server=http.createServer((req,res)=>{
 });
 await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 const base='http://127.0.0.1:'+server.address().port+'/memo/';
-let failures=0,heldResolve,holdNext=false,holdCreateNext=false,heldStarted=()=>{},snapshotFailures=0;
+let failures=0,heldResolve,holdNext=false,holdCreateNext=false,heldStarted=()=>{},snapshotFailures=0,holdArchiveNext=false,archiveStarted=()=>{},releaseArchive;
 async function capture(page,file){if(process.env.MEMO_SKIP_CAPTURE!=='1')await page.screenshot({path:path.join(evidence,file),fullPage:true});}
 const errors=[], requests=[];
 async function setup(context,authenticated=false){
@@ -38,7 +38,9 @@ async function setup(context,authenticated=false){
     if(failures&&name==='memo_create'){failures--;await route.fulfill({status:503,json:{message:'temporary outage'}});return;}
     if(holdNext&&name==='memo_update'){holdNext=false;await new Promise(resolve=>heldResolve=resolve);}
     const response=await f.request(url.pathname,args,{method:req.method(),headers:req.headers().authorization?{authorization:req.headers().authorization}:{}});
-    const data=await response.json();await route.fulfill({status:response.status,headers:{'access-control-allow-origin':new URL(base).origin,'content-type':'application/json'},body:JSON.stringify(data)});
+    const data=await response.json();
+    if(holdArchiveNext&&args.archive){holdArchiveNext=false;await new Promise(resolve=>{releaseArchive=resolve;archiveStarted();});}
+    await route.fulfill({status:response.status,headers:{'access-control-allow-origin':new URL(base).origin,'content-type':'application/json'},body:JSON.stringify(data)});
   });
   context.on('page',p=>p.on('pageerror',e=>errors.push(e.message)));
 }
@@ -115,7 +117,9 @@ try{
   await pa.locator('#archive-toggle').click();assert.equal(await pa.locator('#archive-notes').isVisible(),false);
   console.log('phase:archive');const c=await browser.newContext({viewport:{width:1440,height:900}});await setup(c,true);const pc=await c.newPage();await pc.goto(base);await pc.getByText('모든 기기에서 같은 메모').waitFor();await pc.locator('#archive-toggle').click();
   await pc.getByText('24시간 지난 주인장 메모',{exact:true}).waitFor();await pc.getByText('그 다음 쓴 내용',{exact:true}).waitFor();await capture(pc,'owner-archive.png');
-  await pc.locator('#logout-button').click();await pc.getByRole('button',{name:'Google로 로그인'}).waitFor();assert.equal(await pc.locator('#archive-notes').textContent(),'');
+  holdArchiveNext=true;const archivePending=new Promise(resolve=>archiveStarted=resolve);await pc.evaluate(()=>window.dispatchEvent(new Event('focus')));await archivePending;
+  await pc.locator('#logout-button').click();await pc.getByRole('button',{name:'Google로 로그인'}).waitFor();releaseArchive();
+  await pc.getByText('모든 기기에서 같은 메모').waitFor();assert.equal(await pc.locator('#archive-notes').textContent(),'');assert.equal(await pc.locator('#archive-notes').isVisible(),false);
   console.log('phase:google');await pa.locator('#google-button button').click();await pa.getByText('그 다음 쓴 내용',{exact:true}).waitFor();
   assert.equal(await pa.evaluate(()=>window.fixtureGoogle.client_id),clientId);
   assert.equal(await pa.evaluate(()=>window.fixtureGoogle.auto_select),false);
@@ -125,7 +129,7 @@ try{
   const pd=await d.newPage();await pd.goto(base);await pd.getByText('모든 기기에서 같은 메모').waitFor();await pd.locator('#archive-toggle').click();assert.equal(await pd.locator('#archive-notes').isVisible(),false);
   console.log('phase:webkit');const wk=await webkit.launch();const w=await wk.newContext({viewport:{width:1440,height:900}});await setup(w);const pw=await w.newPage();await pw.goto(base);await pw.getByText('모든 기기에서 같은 메모').waitFor();await capture(pw,'webkit.png');assert.equal(await pw.locator('.sticky').count(),0);await wk.close();
   assert.deepEqual(errors,[]);
-  fs.writeFileSync(path.join(evidence,'checks.json'),JSON.stringify({status:'passed',engines:['Chromium','WebKit'],cases:['two-device memo transfer','optional title','clipboard','pin preserves creation time','sticky text/color/position sync','failed save retains draft','queued edits while saving','concurrent edit conflict and deliberate retry','new draft preserved while saving','failed retry retains connection error','server clock visibility','owner archive','logout clears archive','Google signed identity contract','expired login clears archive'],liveCloudflare:false,liveGoogle:false},null,2));
+  fs.writeFileSync(path.join(evidence,'checks.json'),JSON.stringify({status:'passed',engines:['Chromium','WebKit'],cases:['two-device memo transfer','optional title','clipboard','pin preserves creation time','sticky text/color/position sync','failed save retains draft','queued edits while saving','concurrent edit conflict and deliberate retry','new draft preserved while saving','failed retry retains connection error','server clock visibility','owner archive','logout clears archive including late responses','Google signed identity contract','expired login clears archive'],liveCloudflare:false,liveGoogle:false},null,2));
   console.log('Browser + D1 checks passed; evidence: '+evidence);
 }catch(e){
   console.log('FAILED',e.message,requests.slice(-15));

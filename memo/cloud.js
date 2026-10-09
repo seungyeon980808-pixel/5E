@@ -31,6 +31,7 @@ export class MemoCloud {
     return {owner:data.owner,entries:data.entries.slice(0,100).map(normalize),more:data.entries.length>100};
   }
   async login(token){
+    if(typeof token!=='string'||!token)throw Error('Google identity is missing');
     this.token=token;
     try{const snapshot=await this.snapshot();try{sessionStorage.setItem(this.key,token);}catch{}return snapshot;}
     catch(error){this.logout();throw error;}
