@@ -78,6 +78,7 @@ jobs:
             }
           })().catch(error => { console.error(error); process.exitCode = 1; });
           NODE
+      - run: npm ci --ignore-scripts --no-audit --no-fund
       - run: node --test desktop/hub-publication.test.cjs
       - name: Append the committed hub and DocFinder entry
         run: node scripts/hub-publication.cjs --site _work/hub-publication/site --base-receipt _work/hub-base-receipt/receipt.json --receipt _work/hub-publication/receipt.json
