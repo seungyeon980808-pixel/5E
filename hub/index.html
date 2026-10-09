@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="5E Hub — 과학 그림 편집, 한글 문서 공동작성, 기출 탐색과 문서 검색. 수업과 평가에 필요한 5E 도구를 한곳에서 만나보세요.">
+  <meta name="theme-color" content="#fafbfd">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="5E Hub · 선생님의 작업을, 하나로 잇다">
+  <meta property="og:description" content="그림을 만들고, 문서를 함께 쓰고, 필요한 자료를 찾는 네 가지 도구.">
+  <meta property="og:url" content="https://www.5e.ai.kr/hub/">
+  <meta property="og:image" content="https://www.5e.ai.kr/hub/assets/5e-original.png">
+  <link rel="canonical" href="https://www.5e.ai.kr/hub/">
+  <link rel="icon" type="image/png" href="./assets/5e-original.png">
+  <link rel="apple-touch-icon" href="./assets/5e-original.png">
+  <link rel="preload" href="./assets/pretendard.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="./style.css">
+  <script src="./app.js" defer></script>
+  <title>5E Hub · 수업과 평가에 필요한 도구, 한곳에서</title>
+</head>
+<body>
+  <a class="skip-link" href="#tools">도구 목록으로 건너뛰기</a>
+  <div class="page-shell">
+    <header class="site-header">
+      <a class="brand" href="./" aria-label="5E Hub 홈">
+        <img src="./assets/5e-original.png" width="36" height="36" alt="">
+        <span class="wordmark">5E <span>Hub</span></span>
+      </a>
+      <nav aria-label="주요 메뉴">
+        <a class="browse-tools" href="#tools">도구 둘러보기</a>
+        <a class="header-editor" href="https://5e.ai.kr/">5E 열기 <svg class="arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></a>
+      </nav>
+    </header>
+
+    <main>
+      <section class="hero" aria-labelledby="hero-title">
+        <div class="hero-copy">
+          <h1 id="hero-title">선생님의 작업을,<br><span>하나로 잇다.</span></h1>
+          <p>그림을 만들고, 문서를 함께 쓰고, 필요한 자료를 찾는 일.<br class="desktop-break"> 수업과 평가를 준비하는 도구들을 한곳에 모았습니다.</p>
+          <a class="text-link" href="#tools">지금 필요한 도구 찾기 <svg class="arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14m-6-6 6 6 6-6"/></svg></a>
+        </div>
+        <div class="family-signature" aria-hidden="true">
+          <span class="signature-5e">5E<span class="signature-period">.</span></span>
+          <span class="signature-family">a family of tools</span>
+          <div class="family-colors"><i class="color-editor"></i><i class="color-docs"></i><i class="color-exam"></i><i class="color-finder"></i></div>
+        </div>
+      </section>
+
+      <section class="tools-section" id="tools" aria-labelledby="tools-title">
+        <div class="section-heading">
+          <div><h2 id="tools-title">어떤 작업을 시작할까요?</h2><p>이름을 몰라도, 하고 싶은 일로 찾아보세요.</p></div>
+          <div class="filters" role="group" aria-label="작업별 도구 선택" hidden>
+            <button type="button" data-filter="all" aria-pressed="true">전체</button>
+            <button type="button" data-filter="create" aria-pressed="false">그림 만들기</button>
+            <button type="button" data-filter="share" aria-pressed="false">함께 쓰기</button>
+            <button type="button" data-filter="find" aria-pressed="false">자료 찾기</button>
+          </div>
+        </div>
+        <p class="sr-only" id="filter-status" role="status" aria-live="polite"></p>
+
+        <div class="service-grid">
+          <article class="service service-editor" data-category="create" aria-labelledby="editor-title">
+            <a class="service-art" href="https://5e.ai.kr/" tabindex="-1" aria-hidden="true">
+              <span class="service-category">그림 만들기</span>
+              <img class="family-icon" src="./assets/editor.svg" width="128" height="128" alt="" fetchpriority="high">
+              <span class="art-caption">DRAW &amp; EDIT</span>
+            </a>
+            <div class="service-content">
+              <h3 id="editor-title"><span class="editor-wordmark">5E</span></h3>
+              <p class="service-subtitle">과학 그림 편집기</p>
+              <p class="service-description">시험지에 넣을 그림과 그래프를<br> 직접 만들고, 내 방식으로 편집하세요.</p>
+              <ul class="feature-tags" aria-label="5E 주요 기능"><li>과학 도형</li><li>그래프</li><li>이미지 편집</li></ul>
+              <a class="service-action" href="https://5e.ai.kr/">그림 만들기 <svg class="arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></a>
+              <span class="service-address">5e.ai.kr</span>
+            </div>
+          </article>
+
+          <article class="service service-docs" data-category="share" aria-labelledby="docs-title">
+            <a class="service-art" href="https://5e.ai.kr/ourdocs/" tabindex="-1" aria-hidden="true">
+              <span class="service-category">함께 쓰기</span>
+              <img class="family-icon" src="./assets/ourdocs.svg" width="128" height="128" alt="">
+              <span class="art-caption">WRITE TOGETHER</span>
+            </a>
+            <div class="service-content">
+              <h3 id="docs-title">OurDocs</h3>
+              <p class="service-subtitle">함께 쓰는 한글 문서</p>
+              <p class="service-description">같은 문서를 함께 작성하고,<br> 링크 하나로 동료와 연결하세요.</p>
+              <ul class="feature-tags" aria-label="OurDocs 주요 기능"><li>한글 문서</li><li>공동작성</li><li>링크 공유</li></ul>
+              <a class="service-action" href="https://5e.ai.kr/ourdocs/">함께 작성하기 <svg class="arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></a>
+              <span class="service-address">5e.ai.kr/ourdocs</span>
+            </div>
+          </article>
+
+          <article class="service service-exam" data-category="find" aria-labelledby="exam-title">
+            <a class="service-art" href="https://5e.ai.kr/examlibrary/" tabindex="-1" aria-hidden="true">
+              <span class="service-category">기출 찾기</span>
+              <img class="family-icon" src="./assets/examlibrary.svg" width="128" height="128" alt="">
+              <span class="art-caption">EXPLORE EXAMS</span>
+            </a>
+            <div class="service-content">
+              <h3 id="exam-title">ExamLibrary</h3>
+              <p class="service-subtitle">기출 탐색기</p>
+              <p class="service-description">필요한 기출문항을 찾아보고,<br> 시험지 원본과 함께 확인하세요.</p>
+              <ul class="feature-tags" aria-label="기출 탐색기 주요 기능"><li>문항 검색</li><li>과목별 탐색</li><li>원본 확인</li></ul>
+              <a class="service-action" href="https://5e.ai.kr/examlibrary/">기출 찾아보기 <svg class="arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></a>
+              <span class="service-address">5e.ai.kr/examlibrary</span>
+            </div>
+          </article>
+
+          <article class="service service-finder" data-category="find" aria-labelledby="finder-title">
+            <a class="service-art" href="https://5e.ai.kr/docfinder/" tabindex="-1" aria-hidden="true">
+              <span class="service-category">문서 찾기</span>
+              <img class="family-icon" src="./assets/docfinder.svg" width="128" height="128" alt="">
+              <span class="art-caption">FIND DOCUMENTS</span>
+            </a>
+            <div class="service-content">
+              <h3 id="finder-title">DocFinder</h3>
+              <p class="service-subtitle">문서 검색 라이브러리</p>
+              <p class="service-description">파일 이름부터 문서 속 내용까지,<br> 쌓아 둔 자료에서 필요한 것을 찾으세요.</p>
+              <ul class="feature-tags" aria-label="DocFinder 지원 문서"><li>PDF</li><li>HWP</li><li>HWPX</li></ul>
+              <a class="service-action" href="https://5e.ai.kr/docfinder/">문서 찾아보기 <svg class="arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></a>
+              <span class="service-address">5e.ai.kr/docfinder</span>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <aside class="bookmark-note" aria-label="허브 주소 기억하기">
+        <svg class="bookmark-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 4h12v17l-6-4-6 4z"/></svg>
+        <div><strong>다음에는, 이 주소 하나면 됩니다.</strong><p>5E의 모든 도구로 들어가는 가장 가까운 입구.</p></div>
+        <a href="https://www.5e.ai.kr/hub/">www.5e.ai.kr/hub <svg class="arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14m-6-6 6 6-6 6"/></svg></a>
+      </aside>
+    </main>
+
+    <footer class="site-footer"><span class="footer-brand">5E <span>family</span></span><p>수업과 평가를 준비하는 선생님을 위해.</p><span class="footer-domain">5e.ai.kr</span></footer>
+  </div>
+</body>
+</html>
