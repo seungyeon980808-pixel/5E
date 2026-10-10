@@ -1121,7 +1121,10 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
         .catch((error) => { variants.delete(key); throw error; });
       variants.set(key, pending);
     }
-    return variants.get(key);
+    return variants.get(key).then(source => requiresRawImageOutput(item) ? item.data : source, error => {
+      if (requiresRawImageOutput(item)) return item.data;
+      throw error;
+    });
   };
   const renderOutputVariant = async (item, image, revision = outputProcessingRevision) => {
     if (!item || !image || item.kind !== 'generated' || item.sceneResult) return;
@@ -1134,7 +1137,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     try {
       const source = await resolveOutputVariant(item);
       if (!isCurrent()) return;
-      image.src = source;
+      image.src = requiresRawImageOutput(item) ? item.data : source;
       if (item.labelPlan?.frozen) ensureCompositePreviewControl(item);
       image.classList.toggle('ai-output-transparent', !requiresRawImageOutput(item) && selectedImageOutputOptions.backgroundPolicy !== 'preserve');
       comparison?.update({ revisions: comparisonRevisions() });
@@ -2082,21 +2085,29 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       savePng.title = "현재 생성 결과를 PNG 파일로 저장";
       savePng.onclick = async () => {
         if (busy || savePng.disabled) return;
+        const taskId = activeTaskTabId, visibilityEpoch = localVisibilityEpoch;
+        const originalData = item.data, selectedAtStart = selectedOutputItem() === item;
+        const isSaveCurrent = () => !disposed && taskId === activeTaskTabId && visibilityEpoch === localVisibilityEpoch
+          && item.data === originalData && generatedImages.includes(item)
+          && (!selectedAtStart || selectedOutputItem() === item);
         const footerSave = panel.querySelector('[data-ai-save-selected]');
         savePng.disabled = true;
         if (footerSave) footerSave.disabled = true;
         try {
           const link = document.createElement("a");
           const safeName = String(item.name || "평가원식-선화").replace(/[\\/:*?"<>|]+/g, "-");
-          link.href = await resolveOutputVariant(item);
+          const source = await resolveOutputVariant(item);
+          if (busy || !isSaveCurrent()) return;
+          link.href = requiresRawImageOutput(item) ? item.data : source;
           link.download = `${safeName}.png`;
           link.click();
           setStatus('선택한 배경·색상 설정으로 PNG를 저장했습니다.', 'ok');
         } catch (error) {
+          if (busy || !isSaveCurrent()) return;
           setStatus(`PNG 저장 실패: ${error.message}`, 'error');
         } finally {
-          savePng.disabled = false;
-          syncSelectedOutputActions();
+          savePng.disabled = disposed;
+          if (isSaveCurrent()) syncSelectedOutputActions();
         }
       };
       actions.appendChild(savePng);
@@ -2637,6 +2648,13 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       promptMode,comments:structuredClone(comments),maximumAttempts:hasChecks?2:1,attempts:[],status:'preparing'};
     item.scopedEditHistory ||= [];
     item.scopedEditHistory.push(history);
+    if (automaticSeparationRun?.item === item) {
+      const run = automaticSeparationRun;
+      automaticSeparationRun = null;
+      run.controller.abort('raw-contract-bound');
+    }
+    outputVariantCache.delete(item);
+    refreshOutputPreviews();
     let nativeRaw = null, nativeContext = null, lastVerification = null, failureShown = false;
     const persistScopedHistory = async () => {
       if (activeTaskTabId === ownerTaskId) captureActiveTaskTab();
@@ -6186,33 +6204,74 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   const exportResults = async mode => {
     captureActiveTaskTab();
     const selected = taskExportSelection([...taskTabs.values()], mode);
-    return Promise.all(selected.map(async record => ({
-      ...record,
-      dataUrl: await resolveImageOutput(
-        record.item,
-        normalizeImageOutputOptions(record.outputOptions),
-        transparentizeGeneratedImage,
-      ),
-    })));
+    return Promise.all(selected.map(async record => {
+      const owner = batchOwner(record.taskId);
+      const originalData = record.item.data, capturedItem = structuredClone(record.item);
+      const currentItem = () => {
+        const tab = taskTabs.get(record.taskId);
+        if (disposed || !tab || !sameBatchOwner(owner, batchOwner(record.taskId))) {
+          throw new Error('저장할 작업의 소유자가 변경되었습니다. 다시 저장해 주세요.');
+        }
+        if (tab.workState === 'busy' || (record.taskId === activeTaskTabId && (busy || preflightRun))) {
+          throw new Error('저장할 작업이 실행 중입니다. 완료 후 다시 저장해 주세요.');
+        }
+        // Match restoreTaskTab's retained-view authority, including inactive tasks.
+        const view = taskViews.get(record.taskId);
+        const retained = view && view.sourceSnapshot === tab.attachments && view.outputSnapshot === tab.generated
+          && view.attachments.length === (tab.attachments || []).length
+          && view.generatedImages.length === (tab.generated || []).length;
+        const items = record.taskId === activeTaskTabId ? generatedImages
+          : retained ? view.generatedImages : tab.generated;
+        const current = items?.find(item => item.id === record.candidateId);
+        if (!current || current.data !== originalData) {
+          throw new Error('저장할 결과가 변경되었습니다. 다시 저장해 주세요.');
+        }
+        return current;
+      };
+      let processed;
+      try {
+        processed = await resolveImageOutput(
+          currentItem(), normalizeImageOutputOptions(record.outputOptions), transparentizeGeneratedImage,
+        );
+      } catch (error) {
+        const current = currentItem();
+        if (!requiresRawImageOutput(current)) throw error;
+        processed = current.data;
+      }
+      // Ephemeral writer callback: never serialize it or change the captured item.
+      const currentDataUrl = () => {
+        const current = currentItem();
+        return requiresRawImageOutput(current) ? current.data : processed;
+      };
+      return { ...record, item: capturedItem, dataUrl: currentDataUrl(), currentDataUrl };
+    }));
   };
   collectiveExportButton.addEventListener('click', async () => {
     if (busy || exportInProgress || typeof exportCollection !== 'function') return;
+    const taskId = activeTaskTabId, visibilityEpoch = localVisibilityEpoch;
+    const requestEpoch = currentRequestEpoch, owner = batchOwner(taskId);
+    const canReportExport = () => !disposed && !busy && !preflightRun
+      && taskId === activeTaskTabId && visibilityEpoch === localVisibilityEpoch
+      && requestEpoch === currentRequestEpoch && sameBatchOwner(owner, batchOwner(taskId));
     exportInProgress = true;
     collectiveExportButton.disabled = true;
     collectiveExportMode.disabled = true;
     setStatus('여러 작업의 결과를 준비하고 있습니다…', 'busy');
     try {
       const result = await exportCollection(collectiveExportMode.value);
+      if (!canReportExport()) return;
       if (result.status === 'stored') setStatus(`결과 ${result.count}개를 선택한 폴더에 저장했습니다.`, 'ok');
       else if (result.status === 'download-requested') setStatus(`결과 ${result.count}개의 ZIP 다운로드를 요청했습니다. 브라우저의 다운로드 완료를 확인해 주세요.`, 'warn');
       else setStatus('결과 저장을 취소했습니다. 편집 내용은 유지됩니다.', 'warn');
     } catch (error) {
-      setStatus(`여러 작업 저장 실패: ${error.message}`, 'error');
+      if (canReportExport()) setStatus(`여러 작업 저장 실패: ${error.message}`, 'error');
     } finally {
       exportInProgress = false;
-      collectiveExportMode.disabled = busy;
-      collectiveExportButton.disabled = busy
-        || !(generatedImages.length || [...taskTabs.values()].some(tab => Array.isArray(tab.generated) && tab.generated.length));
+      if (!disposed) {
+        collectiveExportMode.disabled = busy;
+        collectiveExportButton.disabled = busy
+          || !(generatedImages.length || [...taskTabs.values()].some(tab => Array.isArray(tab.generated) && tab.generated.length));
+      }
     }
   });
   panel.querySelector('[data-ai-insert-selected]')?.addEventListener('click', () => {

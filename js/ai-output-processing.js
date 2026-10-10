@@ -62,5 +62,13 @@ export async function resolveImageOutput(item, value, transform) {
   const options = normalizeImageOutputOptions(value);
   if (options.backgroundPolicy === "preserve" && !options.examPalette && options.lineThickness === 0) return item.data;
   if (typeof transform !== "function") throw new Error("이미지 처리기를 사용할 수 없습니다.");
-  return transform(item.data, options);
+  try {
+    const output = await transform(item.data, options);
+    return requiresRawImageOutput(item) ? item.data : output;
+  } catch (error) {
+    // A scoped edit can bind this candidate while local decoding is pending.
+    // Its RAW contract makes that obsolete local operation irrelevant.
+    if (requiresRawImageOutput(item)) return item.data;
+    throw error;
+  }
 }
