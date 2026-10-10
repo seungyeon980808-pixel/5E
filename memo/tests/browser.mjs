@@ -31,7 +31,8 @@ async function setup(context,authenticated=false){
   if(authenticated)await context.addInitScript(({ownerToken,apiUrl})=>{if(location.protocol!=='http:')return;sessionStorage.setItem('5e-memo-google:'+apiUrl,ownerToken);},{ownerToken,apiUrl});
   await context.route('https://accounts.google.com/gsi/client',route=>route.fulfill({contentType:'text/javascript',body:`window.google={accounts:{id:{initialize(options){window.fixtureGoogle=options;},renderButton(element){const button=document.createElement('button');button.textContent='Google로 로그인';button.onclick=()=>window.fixtureGoogle.callback({credential:${JSON.stringify(ownerToken)}});element.append(button);},disableAutoSelect(){}}}};`}));
   await context.route(apiUrl+'/**',async route=>{
-    const req=route.request(),url=new URL(req.url()),args=req.postDataJSON();
+    const req=route.request(),url=new URL(req.url()),args=req.method()==='GET'?null:req.postDataJSON();
+    if(req.method()==='GET'){const response=await f.mf.dispatchFetch(req.url(),{headers:req.headers().authorization?{authorization:req.headers().authorization}:{}});await route.fulfill({status:response.status,headers:{'access-control-allow-origin':new URL(base).origin,'content-type':response.headers.get('content-type')},body:Buffer.from(await response.arrayBuffer())});return;}
     const name=url.pathname==='/snapshot'?'memo_snapshot':req.method()==='POST'?'memo_create':req.method()==='PATCH'?'memo_update':'memo_delete';requests.push({name,args});
     if(snapshotFailures&&name==='memo_snapshot'){snapshotFailures--;await route.fulfill({status:503,json:{message:'snapshot outage'}});return;}
     if(holdCreateNext&&name==='memo_create'){holdCreateNext=false;await new Promise(resolve=>{heldResolve=resolve;heldStarted();});}
