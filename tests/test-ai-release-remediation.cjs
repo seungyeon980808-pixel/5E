@@ -1228,3 +1228,290 @@ collectiveCase('collective same-owner historical export failure remains visible'
 });
 
 }
+
+{
+// PREVIEW-LIFETIME-MODEL-TESTS-APPEND-07. Append verbatim; keep every prior byte.
+// Full actual source bodies in a VM; controlled transform/DOM/lifecycle dependencies.
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs');
+const path = require('node:path');
+const vm = require('node:vm');
+const crypto = require('node:crypto');
+const root = path.resolve(__dirname, '..');
+const evidenceParent = path.join(root, '.omo/evidence');
+fs.mkdirSync(evidenceParent, { recursive: true });
+const evidence = fs.mkdtempSync(path.join(evidenceParent, 'preview-lifetime-units-' + Date.now() + '-' + process.pid + '-'));
+process.stdout.write('[preview-lifetime-units evidence] ' + evidence + '\n');
+const sha = value => crypto.createHash('sha256').update(value).digest('hex');
+const sourcePath = path.join(root, 'js/ai-panel.js');
+const source = fs.readFileSync(sourcePath, 'utf8');
+const outputPath = path.join(root, 'js/ai-output-processing.js');
+const outputSource = fs.readFileSync(outputPath, 'utf8');
+const policyPath = path.join(root, 'js/image-background-options.js');
+const policySource = fs.readFileSync(policyPath, 'utf8');
+const write = (name, data) => fs.writeFileSync(path.join(evidence, name), JSON.stringify(data, null, 2) + '\n');
+write('source-receipt.json', { status: 'loaded-extraction-pending', sourcePath, sourceSHA256: sha(source),
+  outputPath, outputSHA256: sha(outputSource), policyPath, policySHA256: sha(policySource) });
+function oneSlice(text, start, end, label) {
+  assert.equal(text.split(start).length - 1, 1, label + ': unique original start');
+  const from = text.indexOf(start), to = text.indexOf(end, from + start.length);
+  assert.ok(to > from, label + ': original end seam exists');
+  return text.slice(from, to);
+}
+const pieces = {
+  status: oneSlice(source, '  const setOutputProcessingStatus = (text, item = null, revision = outputProcessingRevision) => {',
+    '  const syncOutputProcessingUi = () => {', 'full processing status'),
+  preview: oneSlice(source, '  const resolveOutputVariant = (item) => {',
+    '  const emptyReviewReport = () =>', 'full resolver, render, refresh and showWorkbench'),
+  openClose: oneSlice(source, '  const open = async ({ reference, references = [], prompt, startGeneration = false,',
+    '  const panelFocusables = () =>', 'full open and close'),
+  visibilityDispose: oneSlice(source, '    setWorkbenchVisible: visible => {',
+    '    snapshotTask: async id => {', 'full visibility and disposal methods'),
+};
+const importLine = 'import { BACKGROUND_POLICIES } from "./image-background-options.js?v=1.7.0-four-session-integration";\n';
+assert.equal(outputSource.split(importLine).length - 1, 1, 'Only known policy import is removed');
+const outputVmSource = outputSource.replace(importLine, '').replace(/^export /gm, '');
+const policyVmSource = policySource.replace(/^export /gm, '');
+assert.equal(pieces.preview.split('  const showWorkbench = () => {').length - 1, 1,
+  'Parent fixed source includes actual shared showWorkbench helper');
+for (const [name, text] of Object.entries(pieces)) fs.writeFileSync(path.join(evidence, 'extracted-' + name + '.txt'), text);
+fs.writeFileSync(path.join(evidence, 'captured-output-processing.txt'), outputSource);
+fs.writeFileSync(path.join(evidence, 'captured-background-options.txt'), policySource);
+const provenance = {
+  status: 'extracted-not-browser-qualified', sourcePath, sourceSHA256: sha(source),
+  outputPath, outputSHA256: sha(outputSource), policyPath, policySHA256: sha(policySource),
+  extractedSHA256: Object.fromEntries(Object.entries(pieces).map(([name, text]) => [name, sha(text)])),
+  classification: 'Source-qualified ModelTests; not browser coverage',
+  extraction: 'Entire source resolver/render/refresh/showWorkbench, processing-status function, open/close and setWorkbenchVisible/dispose methods; output-processing and policy modules lose only export keywords and the explicit policy import.',
+  seams: ['Deferred transform promises replace native decode/alpha work', 'DOM setters record writes',
+    'Motion, persistence, comparison disposal, desktop/account refresh, task restore and other external dependencies are controlled stand-ins',
+    'Simple open path uses no incoming references, no task restore and no automatic separation', 'VM microtask draining is not browser RAF or timing evidence'],
+  limits: 'No actual DOM, native decode, pixels, file writes/downloads, provider, physical workspace integration, CSS/RAF/Safari or product initialization coverage.',
+};
+write('source-receipt.json', provenance);
+const RAW = 'data:image/png;base64,UkFX';
+const PROCESSED = 'data:image/png;base64,UFJPQ0VTU0VE';
+function deferred() {
+  let resolve, reject;
+  const promise = new Promise((yes, no) => { resolve = yes; reject = no; });
+  return { promise, resolve, reject };
+}
+async function drain() { for (let index = 0; index < 20; index++) await Promise.resolve(); }
+function fixture() {
+  const writes = [], lifecycleEvents = [], transforms = [], gates = [];
+  const ready = deferred(); ready.resolve();
+  const image = { classList: { toggle: (name, value) => writes.push({ type: 'class', name, value }) } };
+  let src = RAW, statusText = 'initial';
+  Object.defineProperty(image, 'src', { get: () => src,
+    set: value => { src = value; writes.push({ type: 'src', value }); } });
+  const item = { id: 'retained-historical', kind: 'generated', data: RAW, outputImage: image };
+  const outputProcessingStatus = {};
+  Object.defineProperty(outputProcessingStatus, 'textContent', { get: () => statusText,
+    set: value => { statusText = value; writes.push({ type: 'status', value }); } });
+  const noop = () => {};
+  const unsupported = name => () => { throw new Error('Unexpected fixture path: ' + name); };
+  // Only the open target is modeled. No spring/CSS/RAF or native visibility is executed.
+  let motionOpen = true;
+  const motion = { isOpen: () => motionOpen,
+    show: () => { motionOpen = true; lifecycleEvents.push('show'); },
+    hide: () => { motionOpen = false; lifecycleEvents.push('hide'); },
+    finish: () => lifecycleEvents.push('finish'),
+    dispose: () => { motionOpen = false; lifecycleEvents.push('motion-dispose'); } };
+  const sandbox = {
+    disposed: false, localVisibilityEpoch: 0, outputProcessingRevision: 0,
+    activeTaskTabId: 'owner-task', selectedImageOutputOptions: { backgroundPolicy: 'connected', examPalette: false, lineThickness: 0 },
+    selectedSeparationMode: 'off', AI_SEPARATION_MODES: { OFF: 'off' },
+    SEPARATION_BACKGROUND_HINT: 'background', SEPARATION_LIMITS_HINT: 'limits',
+    generatedImages: [item], outputVariantCache: new WeakMap(), selectedOutputItem: () => item,
+    outputProcessingStatus, imageOutputSummary: () => 'current output summary',
+    ensureCompositePreviewControl: () => writes.push({ type: 'composite' }),
+    comparison: { update: () => writes.push({ type: 'comparison' }) }, comparisonRevisions: () => [],
+    syncLegacyResultUi: noop, syncOutputProcessingUi: noop,
+    transparentizeGeneratedImage: (data, options) => {
+      const gate = deferred(); gates.push(gate); transforms.push({ data, options: { ...options } }); return gate.promise;
+    },
+    panel: { dataset: {}, hidden: false, querySelector: () => null, dispatchEvent: unsupported('candidate dispatch') },
+    workspaceReady: ready.promise, syncLiteModeUi: noop, busy: false, preflightRun: null,
+    taskTabs: new Map([['owner-task', { id: 'owner-task', workState: 'idle' }]]),
+    restoreTaskTab: unsupported('task restore'), state: { get: () => ({ selectedIds: [], objects: [] }) },
+    syncSelectedOutputActions: noop, motion,
+    candidateUsesAutomaticSeparation: () => false, startAutomaticSeparation: unsupported('automatic separation'),
+    desktop: { setAiTaskShortcutActive: value => lifecycleEvents.push('shortcut:' + value) },
+    refresh: () => Promise.resolve(), sourceToDataUrl: unsupported('incoming references'),
+    addReferencesAsTasks: unsupported('incoming task creation'), addLog: unsupported('incoming failure'),
+    setStatus: unsupported('generic status'), input: { value: '', focus: noop }, submit: unsupported('generation'),
+    closeComparison: () => lifecycleEvents.push('close-comparison'), closeCapture: null,
+    abortAutomaticSeparation: reason => lifecycleEvents.push(reason),
+    captureActiveTaskTab: noop, persistTasks: noop,
+    taskPersistence: { flush: () => Promise.resolve(), dispose: () => lifecycleEvents.push('persistence-dispose') },
+    document: { querySelector: () => null, getElementById: () => ({ focus: noop }) },
+    graphOwnerEpoch: 0, graphWorkflow: { cancel: () => Promise.resolve() },
+    lifecycle: { abort: () => lifecycleEvents.push('lifecycle-abort') }, imageLabelRunAbort: null,
+    structureAnalysis: { cancel: noop }, abortSourceComposites: noop, sourceLabelControllers: [],
+    imageReview: null, generationTimingTimer: null, clearInterval: noop, clearTimeout: noop, requestTimeout: null,
+    taskViews: new Map(), taskRows: new Map(), requestStates: { live: () => false, advance: unsupported('request advance') },
+    requestToken: null, disposalCallbacks: [],
+  };
+  const context = vm.createContext(sandbox);
+  vm.runInContext(policyVmSource + '\n' + outputVmSource + '\n' + pieces.status + '\n' + pieces.preview
+    + '\n' + pieces.openClose + '\nconst controller = {\n' + pieces.visibilityDispose + '\n};'
+    + '\nglobalThis.api = { renderOutputVariant, refreshOutputPreviews, showWorkbench, open, close, controller };',
+    context, { filename: sourcePath + '#actual-preview-lifetimes' });
+  const settle = (index, rejection = false) => {
+    assert.ok(gates[index], 'Expected actual resolver transform call ' + index);
+    if (rejection) gates[index].reject(new Error('held historical decode failure'));
+    else gates[index].resolve(PROCESSED);
+  };
+  const terminal = name => {
+    if (name === 'close') sandbox.api.close();
+    else if (name === 'dispose') sandbox.api.controller.dispose();
+    else sandbox.api.controller.setWorkbenchVisible(false);
+  };
+  const reopen = async name => {
+    if (name === 'open') await sandbox.api.open();
+    else sandbox.api.controller.setWorkbenchVisible(true);
+    await drain();
+  };
+  const receipt = () => ({ writes, lifecycleEvents, transforms, src, statusText,
+    disposed: sandbox.disposed, visibilityEpoch: sandbox.localVisibilityEpoch,
+    revision: sandbox.outputProcessingRevision, motionOpen, itemData: item.data, cachePresent: sandbox.outputVariantCache.has(item) });
+  return { sandbox, api: sandbox.api, motion, image, item, writes, lifecycleEvents, transforms, gates, settle, terminal, reopen, receipt };
+}
+let serial = 0;
+function previewCase(name, body) {
+  const id = String(++serial).padStart(2, '0');
+  test('preview lifetime ModelTest: ' + name, async () => {
+    let f, outcome = 'failed', error = null;
+    try { f = fixture(); await body(f); outcome = 'passed'; }
+    catch (failure) { error = { message: failure.message, stack: failure.stack }; throw failure; }
+    finally { write('case-' + id + '.json', { name, outcome, error, sourceSHA256: sha(source),
+      extractedSHA256: provenance.extractedSHA256, observable: f?.receipt(), limits: provenance.limits }); }
+  });
+}
+function resultWrites(f) { return f.writes.filter(write => write.type !== 'status'); }
+function failures(f) { return f.writes.filter(write => write.type === 'status' && write.value.startsWith('결과 처리 실패:')); }
+function assertCurrentCompletion(f, rejected) {
+  assert.equal(f.item.data, RAW, 'Preview does not rewrite stored raw input');
+  if (rejected) {
+    assert.equal(resultWrites(f).length, 0);
+    assert.equal(failures(f).length, 1, 'Only current render reports one error');
+  } else {
+    assert.deepEqual(resultWrites(f).map(write => write.type), ['src', 'class', 'comparison']);
+    assert.equal(f.image.src, PROCESSED);
+    assert.equal(failures(f).length, 0);
+    assert.equal(f.writes.filter(write => write.type === 'status' && write.value === 'current output summary').length, 1);
+  }
+}
+for (const transition of ['close', 'dispose', 'workbench-hide']) for (const rejected of [false, true]) {
+  previewCase(transition + ' ignores held ' + (rejected ? 'rejection' : 'success'), async f => {
+    const pending = f.api.renderOutputVariant(f.item, f.image);
+    assert.equal(f.transforms.length, 1);
+    f.terminal(transition);
+    assert.equal(f.sandbox.localVisibilityEpoch, 1, 'Actual lifetime method advances epoch');
+    const before = JSON.stringify(f.writes);
+    f.settle(0, rejected); await pending; await drain();
+    assert.equal(JSON.stringify(f.writes), before, 'Old continuation has zero preview/status writes');
+    assert.equal(f.image.src, RAW); assert.equal(f.item.data, RAW);
+  });
+}
+for (const reveal of ['open', 'workbench']) for (const rejected of [false, true]) {
+  previewCase(reveal + ' starts current render over retained pending ' + (rejected ? 'rejection' : 'success'), async f => {
+    const old = f.api.renderOutputVariant(f.item, f.image);
+    f.terminal(reveal === 'open' ? 'close' : 'workbench-hide');
+    await f.reopen(reveal);
+    assert.equal(f.sandbox.outputProcessingRevision, 1, 'Actual reveal refreshes preview revision');
+    assert.equal(f.transforms.length, 1, 'Fresh consumer reuses normal pending resolver cache');
+    f.writes.length = 0; f.settle(0, rejected); await old; await drain();
+    assertCurrentCompletion(f, rejected);
+  });
+}
+for (const rejected of [false, true]) {
+  previewCase('settlement while closed followed by open: ' + (rejected ? 'retry rejected cache' : 'reuse resolved cache'), async f => {
+    const old = f.api.renderOutputVariant(f.item, f.image); f.api.close();
+    f.settle(0, rejected); await old; await drain();
+    assert.deepEqual(f.writes, [], 'Closed completion/rejection remains silent');
+    await f.api.open(); await drain();
+    if (rejected) {
+      assert.equal(f.transforms.length, 2, 'Existing resolver evicts rejected promise and retries');
+      f.writes.length = 0; f.settle(1); await drain();
+    } else assert.equal(f.transforms.length, 1, 'Resolved cache is retained normally');
+    assertCurrentCompletion(f, false);
+  });
+  previewCase('unchanged historical ' + (rejected ? 'rejection remains visible' : 'processing stays visible'), async f => {
+    const pending = f.api.renderOutputVariant(f.item, f.image);
+    f.settle(0, rejected); await pending;
+    assertCurrentCompletion(f, rejected);
+  });
+  previewCase('reopen preserves RAW transition despite old transform ' + (rejected ? 'rejection' : 'success'), async f => {
+    const old = f.api.renderOutputVariant(f.item, f.image); f.api.close();
+    f.item.scopedEditHistory = [{ status: 'preparing' }];
+    await f.reopen('open');
+    assert.equal(f.image.src, RAW); assert.equal(f.transforms.length, 1);
+    assert.equal(f.writes.filter(write => write.type === 'src').length, 1);
+    const before = JSON.stringify(f.writes);
+    f.settle(0, rejected); await old; await drain();
+    assert.equal(JSON.stringify(f.writes), before, 'Old transform cannot overwrite reopened RAW');
+    assert.equal(f.item.scopedEditHistory[0].status, 'preparing');
+    assert.equal(f.writes.find(write => write.type === 'class').value, false);
+  });
+}
+previewCase('already resolved cache survives close/reopen', async f => {
+  const first = f.api.renderOutputVariant(f.item, f.image); f.settle(0); await first;
+  f.api.close(); f.writes.length = 0; await f.reopen('open');
+  assert.equal(f.transforms.length, 1); assertCurrentCompletion(f, false);
+});
+previewCase('manager-style visible then open shares cache and only latest render writes', async f => {
+  const old = f.api.renderOutputVariant(f.item, f.image); f.api.close();
+  f.api.controller.setWorkbenchVisible(true); await f.api.open(); await drain();
+  assert.equal(f.sandbox.outputProcessingRevision, 1, 'Only the closed-to-open transition refreshes');
+  assert.equal(f.transforms.length, 1, 'Actual reveal methods do not duplicate the pending conversion');
+  f.writes.length = 0; f.settle(0); await old; await drain();
+  assertCurrentCompletion(f, false);
+});
+previewCase('modern RAW reveal starts no local transform', async f => {
+  f.item.imageLabelWorkflow = { explicit: true };
+  f.api.close();
+  await f.reopen('open');
+  assert.equal(f.transforms.length, 0); assert.equal(f.image.src, RAW);
+  assert.equal(f.writes.filter(write => write.type === 'src').length, 1);
+  assert.equal(f.writes.find(write => write.type === 'class').value, false);
+});
+previewCase('disposed controller cannot restart preview through render or either reveal method', async f => {
+  f.api.controller.dispose(); const showCount = f.lifecycleEvents.filter(value => value === 'show').length;
+  await f.api.renderOutputVariant(f.item, f.image);
+  await f.api.open(); f.api.controller.setWorkbenchVisible(true); await drain();
+  assert.equal(f.lifecycleEvents.filter(value => value === 'show').length, showCount);
+  assert.equal(f.motion.isOpen(), false);
+  assert.deepEqual(f.writes, []); assert.equal(f.transforms.length, 0);
+});
+previewCase('open waiting for workspace readiness cannot revive disposed view', async f => {
+  const gate = deferred(); f.sandbox.workspaceReady = gate.promise;
+  const pending = f.api.open(); f.api.controller.dispose();
+  const showCount = f.lifecycleEvents.filter(value => value === 'show').length;
+  gate.resolve(); await pending; await drain();
+  assert.equal(f.lifecycleEvents.filter(value => value === 'show').length, showCount);
+  assert.equal(f.motion.isOpen(), false);
+  assert.deepEqual(f.writes, []); assert.equal(f.transforms.length, 0);
+});
+previewCase('non-revealing open does not force a visible preview refresh', async f => {
+  await f.api.open({ reveal: false }); await drain();
+  assert.equal(f.sandbox.outputProcessingRevision, 0); assert.equal(f.transforms.length, 0);
+  assert.deepEqual(f.writes, []); assert.equal(f.lifecycleEvents.includes('show'), false);
+});
+for (const rejected of [false, true]) previewCase('motion target closed without epoch advance blocks ' + (rejected ? 'error' : 'success'), async f => {
+  const pending = f.api.renderOutputVariant(f.item, f.image);
+  f.motion.hide(); assert.equal(f.sandbox.localVisibilityEpoch, 0);
+  f.settle(0, rejected); await pending; await drain();
+  assert.deepEqual(f.writes, []); assert.equal(f.image.src, RAW);
+});
+previewCase('already-open repeated reveals do not bump revision or rerender', async f => {
+  const pending = f.api.renderOutputVariant(f.item, f.image);
+  f.api.controller.setWorkbenchVisible(true); await f.api.open(); await drain();
+  assert.equal(f.sandbox.outputProcessingRevision, 0); assert.equal(f.transforms.length, 1);
+  assert.deepEqual(f.writes, []); f.settle(0); await pending; await drain();
+  assertCurrentCompletion(f, false);
+});
+write('case-count.json', { count: serial, executionComplete: false,
+  note: 'Registration only. Per-case receipts and the parent node:test result determine execution outcomes.' });
+}

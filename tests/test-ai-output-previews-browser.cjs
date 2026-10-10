@@ -1813,3 +1813,297 @@ for (const engine of ['chromium', 'webkit']) {
       } finally { t.after(restore); }
     });
 }
+
+// PRIVATE08: actual native load/decode success/error across preview UI lifetimes.
+// Root only. Manager dispose is explicitly component-lifecycle coverage, not a UI delete claim.
+assert.equal(rawTransitionCrypto.createHash('sha256').update(fs.readFileSync(__filename).subarray(0,151959)).digest('hex'),
+  'b3c6a043cb3a5e653ebb4b845fe2be8b0402293b5fd34fcf72af16b1d60fc592', 'PRIVATE08 retains all reviewed42 bytes');
+
+function lifetimeReplaceOnce(source, from, to, label) {
+  assert.equal(source.split(from).length-1,1,label);return source.replace(from,to);
+}
+function lifetimeObservePanel(source) {
+  const start='  const renderOutputVariant = async (item, image, revision = outputProcessingRevision) => {';
+  const end='  const refreshOutputPreviews = () => {';
+  assert.equal(source.split(start).length-1,1);assert.equal(source.split(end).length-1,1);
+  const at=source.indexOf(start),stop=source.indexOf(end,at),original=source.slice(at,stop);
+  assert.equal(original.endsWith('  };\n'),true);
+  let body=original.slice(start.length,-'  };\n'.length);
+  body=lifetimeReplaceOnce(body,'      const source = await resolveOutputVariant(item);',`      const __pending = resolveOutputVariant(item);
+      const __cached = outputVariantCache.get(item)?.get(key);
+      __call.cacheId = __life.promiseId(__cached);
+      const source = await __pending;`, 'One original preview resolver await retained');
+  assert.equal(body.split('if (!isCurrent()) return;').length-1,2,'Both actual success and error guards observed');
+  body=body.replaceAll('if (!isCurrent()) return;',`const __accepted = isCurrent();
+      __call.checks.push({accepted:__accepted,epoch:localVisibilityEpoch,revision:outputProcessingRevision,disposed});
+      if (!__accepted) return;`);
+  for(const [kind,statement] of [
+    ['src','image.src = requiresRawImageOutput(item) ? item.data : source;'],
+    ['class',"image.classList.toggle('ai-output-transparent', !requiresRawImageOutput(item) && selectedImageOutputOptions.backgroundPolicy !== 'preserve');"],
+    ['status','setOutputProcessingStatus(`${imageOutputSummary()}${backgroundLocked ? ` · ${SEPARATION_BACKGROUND_HINT} ${SEPARATION_LIMITS_HINT}` : \'\'}`, item, revision);'],
+    ['error-status','setOutputProcessingStatus(`결과 처리 실패: ${error.message}`, item, revision);'],
+  ]) body=lifetimeReplaceOnce(body,statement,`__life.perform(__call,${JSON.stringify(kind)},()=>{ ${statement} });`,'Pass-through original '+kind+' statement');
+  const setup=`  const __life = window.__previewLifetime ||= (()=>{
+    let serial=0; const ids=new WeakMap();
+    return {calls:[],shows:[],transforms:[],nodes:new Map(),writes:[],mutations:[],
+      promiseId(p){if(!p || typeof p.then!=='function')return null;if(!ids.has(p))ids.set(p,++serial);return ids.get(p);},
+      perform(call,kind,action){const result=action();this.writes.push({callId:call.id,kind,revision:call.revision,epoch:call.epoch});return result;},
+      view(){return {shows:this.shows.slice(),calls:this.calls.map(({done,resolve,...v})=>v),writes:this.writes.slice(),mutations:this.mutations.slice(),transforms:this.transforms.map(({done,resolve,...v})=>v)};}
+    };
+  })();
+  __life.nodes.set(panel,()=>({epoch:localVisibilityEpoch,revision:outputProcessingRevision,disposed,
+    activeTaskId:activeTaskTabId,selectedCandidateId,hidden:panel.hidden,inert:panel.inert,
+    connected:panel.isConnected,busy,source:selectedOutputItem()?.data,
+    retainedImage:selectedOutputItem()?.outputImage===window.__lifetimeRetained?.image,
+    status:outputProcessingStatus?.textContent,
+    src:selectedOutputItem()?.outputImage?.getAttribute('src'),classes:selectedOutputItem()?.outputImage?.className}));
+`;
+  const replacement=setup+start+`
+    const __call={id:__life.calls.length,epoch:localVisibilityEpoch,revision,taskId:activeTaskTabId,
+      candidateId:item?.id,policy:selectedImageOutputOptions.backgroundPolicy,disposedAtEntry:disposed,
+      checks:[],settled:false,cacheId:null};
+    __call.done=new Promise(resolve=>{__call.resolve=resolve;});__life.calls.push(__call);
+    try {`+body+`
+    } finally {__call.settled=true;__call.exit=__life.nodes.get(panel)();__call.resolve();}
+  };
+`;
+  let observed=source.slice(0,at)+replacement+source.slice(stop);
+  const showStart='  const showWorkbench = () => {',showEnd='  const emptyReviewReport = () =>';
+  assert.equal(source.split(showStart).length-1,1);assert.equal(source.split(showEnd).length-1,1);
+  const a=source.indexOf(showStart),b=source.indexOf(showEnd,a),show=source.slice(a,b);
+  assert.equal(show.endsWith('  };\n'),true);
+  const originalShowBody=show.slice(showStart.length,-'  };\n'.length);
+  const observedShow=showStart+`
+    const __show={epoch:localVisibilityEpoch,revision:outputProcessingRevision,disposed,
+      opening:!motion.isOpen(),callIdsBefore:__life.calls.map(c=>c.id)};
+    __life.shows.push(__show);
+    try {`+originalShowBody+`
+    }finally{__show.exit={epoch:localVisibilityEpoch,revision:outputProcessingRevision,disposed,
+      open:motion.isOpen(),callIdsAfter:__life.calls.map(c=>c.id)};}
+  };\n`;
+  return lifetimeReplaceOnce(observed,show,observedShow,'Entire current show helper body preserved');
+}
+function lifetimeObserveNative(source) {
+  const success='    img.onload = () => resolve(img);';
+  const failure='    img.onerror = () => reject(new Error("생성 이미지를 불러오지 못했습니다."));';
+  const intercept=(kind,original)=>`    const __${kind} = ${original};
+    img.on${kind} = event => {
+      const gate=window.__previewLifetimeGate;
+      if(!gate || !gate.armed || gate.raw!==src){__${kind}(event);return;}
+      gate.armed=false;
+      (async()=>{
+        let decodeError=null;
+        try {await HTMLImageElement.prototype.decode.call(img);}
+        catch(error){decodeError={name:error.name,message:error.message};if(${JSON.stringify(kind)}==='load')throw error;}
+        gate.receipt={event:${JSON.stringify(kind)},trusted:event.isTrusted,nativeImage:img instanceof HTMLImageElement,
+          src,currentSrc:img.currentSrc,width:img.naturalWidth,height:img.naturalHeight,
+          complete:img.complete,decodeCompleted:decodeError===null,decodeError};
+        gate.enteredResolve(gate.receipt);
+        await gate.releasePromise;
+        __${kind}(event);
+      })().catch(error=>{gate.enteredReject(error);reject(error);});
+    };`;
+  let body=lifetimeReplaceOnce(source,success,intercept('load','() => resolve(img)'),'Original native success delivery');
+  body=lifetimeReplaceOnce(body,failure,intercept('error','() => reject(new Error("생성 이미지를 불러오지 못했습니다."))'),'Original native error delivery');
+  body=lifetimeReplaceOnce(body,'export async function transparentizeGeneratedImage(',
+    'async function actualLifetimeTransparentizeGeneratedImage(','Original actual transform function');
+  return body+`\nexport async function transparentizeGeneratedImage(...args){
+    const state=window.__previewLifetime;
+    const call={src:args[0],policy:args[1]?.backgroundPolicy,settled:false};
+    call.done=new Promise(resolve=>{call.resolve=resolve;});state.transforms.push(call);
+    try{const result=await actualLifetimeTransparentizeGeneratedImage(...args);call.result=result;return result;}
+    catch(error){call.error={name:error.name,message:error.message};throw error;}
+    finally{call.settled=true;call.resolve();}
+  }\n`;
+}
+async function installLifetimeRoutes(page,runtime,origin,evidence) {
+  for(const [file,observe] of [['ai-panel.js',lifetimeObservePanel],['image-background.js',lifetimeObserveNative]]){
+    const source=fs.readFileSync(path.join(root,'js',file),'utf8');
+    const pins={"ai-panel.js": "c18120db3f60402e4634397762c1bf98b02cb04e0349f3c915104b199f5ce8a7", "image-background.js": "9024c9f10256d9e45a7d03cf8354ffbb0b45006f5b312b04c50556159232aa49"};
+    assert.equal(rawTransitionCrypto.createHash('sha256').update(source).digest('hex'),pins[file],'PRIVATE08 observed module is the reviewed parent candidate source');
+    const body=observe(source);
+    const url=new URL(runtime.moduleBase+file+runtime.moduleQuery,origin).href;
+    await page.route(url,route=>{
+      assert.equal(route.request().url(),url);
+      write(evidence,file+'.observer-load.json',{url,entry:runtime.entry,
+        sourceSHA256:rawTransitionCrypto.createHash('sha256').update(source).digest('hex'),
+        servedSHA256:rawTransitionCrypto.createHash('sha256').update(body).digest('hex'),
+        qualification:'Original function bodies, guards and native handlers retained; event delivery delayed and assignments observed, no DOM setter overrides'});
+      fs.writeFileSync(path.join(evidence,file+'.served.js'),body);
+      return route.fulfill({contentType:'text/javascript',body});
+    });
+  }
+}
+function lifetimeFixture(outcome) {
+  let source=harness.replace("separationMode: 'off',", "separationMode: 'off', generationMode: 'single',");
+  if(outcome==='reject')source=lifetimeReplaceOnce(source,'  window.__task5Expected = structuredClone(tabs);',
+    `  const truncated='data:image/png;base64,'+btoa(atob(original.split(',')[1]).slice(0,33));
+  // Original native canvas PNG signature + complete IHDR, no IDAT/IEND: real decoder error.
+  // Attachments retain the complete native canvas PNG so the actual fixture still boots normally.
+  for(const tab of tabs)for(const item of tab.generated)item.data=truncated;
+  window.__task5Expected = structuredClone(tabs);`,'Corrupt historical input fixture only');
+  source=lifetimeReplaceOnce(source,rawTransitionEntrySeam,
+    '  await installLifetimeRoutes(page,runtime,origin,evidence);\n'+rawTransitionEntrySeam,'Canonical module install before entry');
+  return new Function('require','root','fs','path','assert','chromium','webkit','installLifetimeRoutes',
+    source+'; return requestBrowserFixture;')(require,root,fs,path,assert,chromium,webkit,installLifetimeRoutes);
+}
+async function lifetimeSnapshot(page){return page.evaluate(()=>{
+  const s=window.__previewLifetime,p=window.__lifetimePanel;
+  return {state:s.nodes.get(p)(),probe:s.view(),sends:window.__task2.sends.length,generations:window.__task2.generationSends.length};
+});}
+async function lifetimeClick(page,selector,evidence,name){
+  const button=page.locator(selector);assert.equal(await button.count(),1);assert.equal(await button.isVisible(),true);assert.equal(await button.isEnabled(),true);
+  write(evidence,name+'.json',await button.evaluate(b=>({text:b.textContent,ariaLabel:b.getAttribute('aria-label'),rect:b.getBoundingClientRect().toJSON(),hidden:!!b.closest('[hidden],[inert]'),disabled:b.disabled})));
+  await button.click();
+}
+async function lifetimeArm(page,raw){await page.evaluate(raw=>{
+  const p=document.querySelector('#ai-image-panel');window.__lifetimePanel=p;
+  const gate={raw,armed:true};gate.enteredPromise=new Promise((resolve,reject)=>{gate.enteredResolve=resolve;gate.enteredReject=reject;});
+  gate.enteredPromise.catch(()=>{});gate.releasePromise=new Promise(resolve=>{gate.release=resolve;});window.__previewLifetimeGate=gate;
+  const state=window.__previewLifetime;
+  const image=p.querySelector('.is-ai-active-candidate .ai-preview-stage > img'),status=p.querySelector('[data-ai-output-processing-status]');
+  if(!image||!status)throw new Error('Actual retained preview/status nodes required');
+  window.__lifetimeRetained={image,status};
+  const observer=new MutationObserver(records=>{for(const r of records)state.mutations.push({target:r.target===image?'image':r.target===status?'status':'status-child',type:r.type,attribute:r.attributeName,oldValue:r.oldValue});});
+  observer.observe(image,{attributes:true,attributeOldValue:true,attributeFilter:['src','class']});
+  observer.observe(status,{subtree:true,childList:true,characterData:true,characterDataOldValue:true});
+  window.__lifetimeMutationObserver=observer;
+},raw);}
+async function lifetimePersistPixels(page,data,evidence,name){
+  const file=path.join(evidence,name+'.png'),encoded=Buffer.from(data.split(',')[1],'base64');fs.writeFileSync(file,encoded);
+  const decoded=await page.evaluate(async data=>{
+    const img=new Image();img.src=data;await img.decode();const c=document.createElement('canvas');c.width=img.naturalWidth;c.height=img.naturalHeight;
+    const ctx=c.getContext('2d');ctx.drawImage(img,0,0);return {width:c.width,height:c.height,rgba:[...ctx.getImageData(0,0,c.width,c.height).data]};
+  },data);
+  const rgba=Buffer.from(decoded.rgba);fs.writeFileSync(file+'.rgba',rgba);
+  const receipt={path:file,bytes:encoded.length,width:decoded.width,height:decoded.height,sha256:rawTransitionCrypto.createHash('sha256').update(encoded).digest('hex'),rgbaPath:file+'.rgba',rgbaSHA256:rawTransitionCrypto.createHash('sha256').update(rgba).digest('hex')};
+  write(evidence,name+'.receipt.json',receipt);return receipt;
+}
+
+for(const engine of ['chromium','webkit'])for(const scenario of ['close','close-reopen','manager-dispose'])for(const outcome of ['success','reject']){
+  test(`${engine} root: preview render lifetime ${scenario} native-${outcome}`,{timeout:120000,concurrency:false},async t=>{
+    const evidence=path.join(evidenceRoot,'preview-render-lifetime',engine,'root',scenario,outcome);fs.mkdirSync(evidence,{recursive:true});
+    const restore=rawTransitionConfigure(engine,'/');let page;
+    t.after(async()=>{if(page&&!page.isClosed())await page.evaluate(()=>{window.__previewLifetimeGate?.release();window.__lifetimeMutationObserver?.disconnect();});});
+    try{
+      const configured=await lifetimeFixture(outcome)(t,1,evidence);page=configured.page;
+      assert.equal(new URL(page.url()).pathname,'/');
+      await page.evaluate(async()=>{await Promise.all(window.__previewLifetime.calls.map(call=>call.done));});
+      const snapshot=await rawTransitionSnapshot(page),before=rawTransitionTab(snapshot,'task-0'),item=before.generated[0],raw=item.data;
+      assert.equal(item.id,'candidate-0');assert.equal(before.selectedCandidateId,'candidate-0');
+      write(evidence,'baseline-owner.json',snapshot);
+      const nativeOriginal=await page.evaluate(()=>window.__task2.original);
+      await lifetimePersistPixels(page,nativeOriginal,evidence,'native-canvas-fixture');
+      fs.writeFileSync(path.join(evidence,'historical-input.png'),Buffer.from(raw.split(',')[1],'base64'));
+      if(outcome==='reject'){
+        const encoded=Buffer.from(raw.split(',')[1],'base64'),valid=Buffer.from(nativeOriginal.split(',')[1],'base64');
+        assert.equal(encoded.length,33);assert.deepEqual(encoded,valid.subarray(0,33));
+      }else assert.equal(raw,nativeOriginal);
+      await lifetimeArm(page,raw);
+      await chooseExposedOutputSetting(page,evidence,'background','connected');
+      const native=await rawTransitionPromise(page,'__previewLifetimeGate.enteredPromise','native lifetime event gate');
+      assert.equal(native.trusted,true);assert.equal(native.nativeImage,true);assert.equal(native.src,raw);
+      assert.equal(native.event,outcome==='success'?'load':'error');assert.equal(native.decodeCompleted,outcome==='success');
+      if(outcome==='success'){assert.equal(native.width,512);assert.equal(native.height,384);assert.equal(native.decodeError,null);}
+      else {assert.equal(native.width,0);assert.equal(native.height,0);assert.equal(native.decodeError.name,'EncodingError');}
+      const held=await lifetimeSnapshot(page),pending=held.probe.calls.filter(c=>c.policy==='connected');
+      assert.equal(pending.length,1);const old=pending[0];assert.equal(old.settled,false);assert.equal(old.checks.length,0);assert.notEqual(old.cacheId,null);
+      assert.equal(held.probe.transforms.length,1);assert.equal(held.probe.transforms[0].settled,false);
+      assert.equal(held.state.disposed,false);assert.equal(held.state.busy,false);
+      write(evidence,'native-held.json',{native,held});await page.screenshot({path:path.join(evidence,'native-held.png')});
+      if(scenario==='manager-dispose'){
+        // Task deletion clears membership/revision before disposal and cannot isolate the review's retained-card lifetime defect.
+        // Call the real top-level workspace manager disposal, including its actual child controller disposal.
+        await page.evaluate(()=>window.__task2Manager.dispose());
+        write(evidence,'manager-dispose-invocation.json',{entry:'window.__task2Manager.dispose()',classification:'Browser-hosted actual manager/controller lifecycle; no public delete UI coverage claimed'});
+      }else{
+        await lifetimeClick(page,'#ai-image-panel [data-ai-close]',evidence,'actual-close-control');
+        await waitModernSignal(page,()=>document.querySelector('#ai-image-panel')?.hidden,null,'actual close animation hidden completion');
+      }
+      const hidden=await lifetimeSnapshot(page);assert.equal(hidden.state.hidden,true);assert.ok(hidden.state.epoch>old.epoch);
+      assert.equal(hidden.state.disposed,scenario==='manager-dispose');
+      assert.equal(hidden.state.src,held.state.src);assert.equal(hidden.state.classes,held.state.classes);
+      assert.equal(hidden.probe.calls.find(c=>c.id===old.id).settled,false);
+      write(evidence,'after-lifecycle.json',hidden);await page.screenshot({path:path.join(evidence,'after-lifecycle.png')});
+      if(scenario==='close-reopen'){
+        await lifetimeClick(page,'#ai-image-install-open',evidence,'actual-reopen-control');
+        await waitModernSignal(page,()=>{const p=document.querySelector('#ai-image-panel');return p&&!p.hidden&&!p.inert;},null,'actual reopen visible completion');
+      }
+      const beforeRelease=await lifetimeSnapshot(page),renders=beforeRelease.probe.calls.filter(c=>c.policy==='connected');
+      const fresh=renders.filter(c=>c.id!==old.id);
+      if(scenario==='close-reopen'){
+        assert.equal(fresh.length,1,'Reopening starts exactly one fresh preview, repeated show does not refresh');
+        const shows=beforeRelease.probe.shows.slice(hidden.probe.shows.length);
+        assert.equal(shows.length,2,'Actual manager activation plus open(reveal) call the common helper');
+        assert.deepEqual(shows.map(s=>s.opening),[true,false]);
+        assert.equal(shows[0].exit.revision,shows[0].revision+1);assert.equal(shows[1].exit.revision,shows[1].revision);
+        assert.equal(shows[0].exit.callIdsAfter.length,shows[0].callIdsBefore.length+1);
+        assert.deepEqual(shows[1].exit.callIdsAfter,shows[1].callIdsBefore);
+        for(const call of fresh){assert.equal(call.epoch,beforeRelease.state.epoch);assert.ok(call.epoch>old.epoch);assert.ok(call.revision>old.revision);assert.equal(call.cacheId,old.cacheId);assert.equal(call.settled,false);}
+        assert.equal(beforeRelease.state.disposed,false);assert.equal(beforeRelease.state.hidden,false);
+      }else assert.equal(fresh.length,0);
+      assert.equal(beforeRelease.probe.transforms.length,1,'All visibility consumers share one actual pending transform');
+      write(evidence,'before-delivery.json',beforeRelease);
+      // No synthetic result or error: deliver the retained original native handler only.
+      await page.evaluate(async()=>{window.__previewLifetimeGate.release();await Promise.all(window.__previewLifetime.calls.map(c=>c.done));await Promise.all(window.__previewLifetime.transforms.map(c=>c.done));});
+      const after=await lifetimeSnapshot(page),oldDone=after.probe.calls.find(c=>c.id===old.id);
+      write(evidence,'after-delivery.json',after);await page.screenshot({path:path.join(evidence,'after-delivery.png')});
+      assert.equal(oldDone.settled,true);assert.equal(oldDone.checks.length,1);assert.equal(oldDone.checks[0].accepted,false);
+      assert.deepEqual(after.probe.writes.filter(w=>w.callId===old.id),[],'Old visibility writes neither image.src, class nor processing status');
+      const all=after.probe.calls.filter(c=>c.policy==='connected');
+      assert.deepEqual(all.map(c=>c.id),renders.map(c=>c.id),'Settlement starts no unobserved extra render');
+      for(const call of all){assert.equal(call.cacheId,old.cacheId);assert.equal(call.settled,true);assert.equal(call.checks.length,1);}
+      const accepted=all.filter(c=>c.checks[0].accepted);
+      if(scenario==='close-reopen'){
+        assert.equal(accepted.length,1,'Exactly the current visibility/current revision consumes settlement');
+        const current=accepted[0];assert.equal(current.epoch,after.state.epoch);assert.equal(current.revision,after.state.revision);assert.notEqual(current.id,old.id);
+        for(const call of all.filter(c=>c.id!==current.id))assert.deepEqual(after.probe.writes.filter(w=>w.callId===call.id),[]);
+        assert.deepEqual(after.probe.writes.filter(w=>w.callId===current.id).map(w=>w.kind),outcome==='success'?['src','class','status']:['error-status']);
+        if(outcome==='reject'){
+          assert.equal(after.state.status,'결과 처리 실패: 생성 이미지를 불러오지 못했습니다.');
+          assert.equal(after.state.src,beforeRelease.state.src);assert.equal(after.state.classes,beforeRelease.state.classes);
+          assert.deepEqual(after.probe.mutations.slice(beforeRelease.probe.mutations.length).filter(m=>m.target==='image'),[]);
+        }else{
+          assert.equal(after.state.src,after.probe.transforms[0].result);assert.match(after.state.classes,/ai-output-transparent/);
+          assert.doesNotMatch(after.state.status,/실패|처리하는 중/);
+          const visible=await rawTransitionPreview(page,raw,'candidate-0');assert.equal(visible.src,after.probe.transforms[0].result);
+          write(evidence,'current-visible-preview.json',visible);
+        }
+      }else{
+        assert.equal(accepted.length,0);assert.equal(after.state.hidden,true);
+        assert.equal(after.state.src,beforeRelease.state.src);assert.equal(after.state.classes,beforeRelease.state.classes);assert.equal(after.state.status,beforeRelease.state.status);
+        assert.deepEqual(after.probe.writes,beforeRelease.probe.writes);
+        assert.deepEqual(after.probe.mutations,beforeRelease.probe.mutations,'Retained closed/disposed DOM receives zero settlement mutations');
+      }
+      assert.equal(after.probe.transforms.length,1);const processed=after.probe.transforms[0];assert.equal(processed.settled,true);
+      if(outcome==='success'){
+        assert.equal(processed.error,undefined);assert.notEqual(processed.result,raw);
+        const pixels=await rawTransitionPixels(page,{raw,data:processed.result});assert.equal(pixels.outside[3],0);assert.equal(pixels.inside[3],255);assert.equal(pixels.ink[3],255);assert.equal(pixels.interiorMismatches,0);assert.ok(pixels.alphaMismatches>0);
+        write(evidence,'actual-transform-pixels.json',pixels);await lifetimePersistPixels(page,processed.result,evidence,'actual-transform');
+      }else{assert.equal(processed.result,undefined);assert.equal(processed.error.message,'생성 이미지를 불러오지 못했습니다.');}
+      assert.equal(after.sends,0);assert.equal(after.generations,0);assert.equal(after.state.activeTaskId,'task-0');assert.equal(after.state.selectedCandidateId,'candidate-0');assert.equal(after.state.source,raw);assert.equal(after.state.retainedImage,true);
+      if(scenario!=='manager-dispose'){
+        const saved=rawTransitionTab(await rawTransitionSnapshot(page),'task-0');
+        assert.deepEqual(saved.generated,before.generated);assert.deepEqual(saved.attachments,before.attachments);
+        write(evidence,'retained-owner-after.json',saved);
+      }
+      if(scenario==='close-reopen' && outcome==='success'){
+        // A second, physical reopen consumes the already settled cache, not a new transform.
+        await lifetimeClick(page,'#ai-image-panel [data-ai-close]',evidence,'cached-close-control');
+        await waitModernSignal(page,()=>document.querySelector('#ai-image-panel')?.hidden,null,'cached close completion');
+        await lifetimeClick(page,'#ai-image-install-open',evidence,'cached-reopen-control');
+        await page.evaluate(async()=>{await Promise.all(window.__previewLifetime.calls.map(c=>c.done));});
+        const cached=await lifetimeSnapshot(page),newCalls=cached.probe.calls.filter(c=>c.policy==='connected'&&!all.some(old=>old.id===c.id));
+        assert.equal(newCalls.length,1);const call=newCalls[0];assert.equal(call.cacheId,old.cacheId);
+        assert.equal(call.epoch,cached.state.epoch);assert.ok(call.epoch>accepted[0].epoch);assert.ok(call.revision>accepted[0].revision);
+        assert.equal(call.settled,true);assert.deepEqual(call.checks.map(v=>v.accepted),[true]);
+        assert.equal(cached.probe.transforms.length,1);assert.equal(cached.state.src,processed.result);assert.equal(cached.state.retainedImage,true);
+        const visible=await rawTransitionPreview(page,raw,'candidate-0');assert.equal(visible.src,processed.result);
+        assert.equal(cached.sends,0);assert.equal(cached.generations,0);
+        write(evidence,'settled-cache-reopen.json',{cached,visible});await page.screenshot({path:path.join(evidence,'settled-cache-reopen.png')});
+      }
+      assert.deepEqual(configured.errors,[]);write(evidence,'completion.json',{engine,scenario,outcome,oldRenderId:old.id,cachePromiseId:old.cacheId,renderIds:all.map(c=>c.id),acceptedRenderIds:accepted.map(c=>c.id),staleWrites:0,transformCalls:1,providerRequests:0,
+        qualification:scenario==='manager-dispose'?'Actual manager/controller disposal, component-qualified; not public delete UI':'Actual visible close/reopen controls',native});
+    }finally{restore();}
+  });
+}

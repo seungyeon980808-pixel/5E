@@ -1127,11 +1127,13 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     });
   };
   const renderOutputVariant = async (item, image, revision = outputProcessingRevision) => {
-    if (!item || !image || item.kind !== 'generated' || item.sceneResult) return;
+    if (disposed || !item || !image || item.kind !== 'generated' || item.sceneResult) return;
     const key = imageOutputOptionsKey(selectedImageOutputOptions);
     const taskId = activeTaskTabId;
     const original = item.data;
-    const isCurrent = () => revision === outputProcessingRevision && taskId === activeTaskTabId
+    const visibilityEpoch = localVisibilityEpoch;
+    const isCurrent = () => !disposed && motion.isOpen() && visibilityEpoch === localVisibilityEpoch
+      && revision === outputProcessingRevision && taskId === activeTaskTabId
       && key === imageOutputOptionsKey(selectedImageOutputOptions) && item.data === original
       && item.outputImage === image && generatedImages.includes(item);
     try {
@@ -1155,6 +1157,12 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     if (isHistoricalPngLocalResult(selectedOutputItem())) setOutputProcessingStatus('선택한 방식으로 결과를 처리하는 중…');
     else setOutputProcessingStatus(imageOutputSummary());
     for (const item of generatedImages) void renderOutputVariant(item, item.outputImage, revision);
+  };
+  const showWorkbench = () => {
+    if (disposed) return;
+    const opening = !motion.isOpen();
+    motion.show();
+    if (opening) refreshOutputPreviews();
   };
   const emptyReviewReport = () => ({ verdict: "uncertain", checks: [], issues: [] });
   const scopedAppliedReviewReport = () => ({
@@ -4359,7 +4367,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       }
     }
     syncSelectedOutputActions();
-    if (reveal) motion.show();
+    if (reveal) showWorkbench();
     const selectedForAutomaticSeparation = selectedOutputItem();
     if (panel.dataset.aiSharingMode !== 'view' && candidateUsesAutomaticSeparation(selectedForAutomaticSeparation)
       && selectedForAutomaticSeparation.automaticSeparationState !== 'ready') {
@@ -6551,7 +6559,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     open, close, attachReference, clearTasks, ready: workspaceReady,
     refreshTaskSelection: () => commentController?.refreshControls(),
     setWorkbenchVisible: visible => {
-      if (visible) motion.show();
+      if (visible) showWorkbench();
       else { localVisibilityEpoch += 1; motion.hide(); motion.finish(); }
     },
     dispose() {
