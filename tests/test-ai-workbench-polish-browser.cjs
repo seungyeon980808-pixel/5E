@@ -34,8 +34,8 @@ async function fixture(t, engine, name, count = null) {
   const errors = [];
   const server = http.createServer((request, response) => {
     let file = path.resolve(root, `.${new URL(request.url, 'http://localhost').pathname}`);
-    if (!file.startsWith(root + path.sep)) return response.writeHead(403).end();
     if (file.endsWith('/preview') || request.url.split('?')[0].endsWith('/')) file = path.join(file, 'index.html');
+    if (!file.startsWith(root + path.sep)) return response.writeHead(403).end();
     const types = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.woff2': 'font/woff2' };
     fs.readFile(file, (error, body) => { response.writeHead(error ? 404 : 200, { 'Content-Type': types[path.extname(file)] || 'application/octet-stream' }); response.end(error ? 'missing' : body); });
   });

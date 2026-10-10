@@ -8,6 +8,9 @@ const { pathToFileURL } = require('node:url');
 const root = path.resolve(__dirname, '..');
 const panelSource = fs.readFileSync(path.join(root, 'js/ai-panel.js'), 'utf8');
 const productModule = name => import(`${pathToFileURL(path.join(root, `js/${name}.js`)).href}?v=1.7.0-four-session-integration`);
+const retainedPng = 'data:image/png;base64,' + fs.readFileSync(path.join(root,'tests/fixtures/rights-clear-smoke.png')).toString('base64');
+const { fixture: separationPngFixture } = require('./helpers/separation-fixtures.cjs');
+async function separationGuards(){ const [panel,output]=await Promise.all([productModule('ai-panel'),productModule('ai-output-processing')]);return {candidateUsesAutomaticSeparation:panel.candidateUsesAutomaticSeparation,candidateUsesSeparatedAssets:panel.candidateUsesSeparatedAssets,isHistoricalPngLocalResult:output.isHistoricalPngLocalResult}; }
 
 function sourcePart(start, end) {
   const first = panelSource.indexOf(start);
@@ -30,7 +33,8 @@ async function resultInsertionScenario(change = () => {}, { duringDecode = false
   const [review, labels, store, materializer, transform] = await Promise.all([
     'ai-image-review', 'ai-image-label-run', 'store', 'ai-candidate-materializer', 'transform',
   ].map(productModule));
-  const data = 'candidate-source-A', candidateSha256 = await labels.imageLabelDigest(data);
+  const guards = await separationGuards();
+  const data = retainedPng, candidateSha256 = await labels.imageLabelDigest(data);
   const workflow = { imageKind: 'general', labelResult: 'remove', explicit: true };
   const ids = ['object-counts','inside-outside','liquid-occupancy','connections','composition-state','black-fill-meaning','presentation','request-scope','raster-label-removal','kice-flat-style','flat-gray-regions'];
   const acceptance = review.enforceImageLabelAcceptance({ verdict: 'pass', checks: ids.map(id => ({ id, label: id, status: 'pass', detail: 'Complete race fixture review' })), issues: [] }, { workflow, candidateSha256 });
@@ -51,11 +55,18 @@ async function resultInsertionScenario(change = () => {}, { duringDecode = false
     undoStack: [],
     redoStack: [],
   };
+  let workbenchOpen = true;
   const context = {
     state: store.createStore(draft),
+    disposed: false,
+    localVisibilityEpoch: 0,
+    motion: {
+      isOpen: () => workbenchOpen,
+      hide: () => { workbenchOpen = false; context.panel.inert = true; },
+    },
     busy: false,
     output: {},
-    item: { id: 'candidate-A', data, imageLabelWorkflow: workflow, candidateSha256,
+    item: { id: 'candidate-A', kind:'generated', data, imageLabelWorkflow: workflow, candidateSha256,
       reviewReport: acceptance.report, reviewState: acceptance.state, verifiedCandidateData: data },
     isImageLabelCandidateAccepted: review.isImageLabelCandidateAccepted,
     imageLabelDigest: labels.imageLabelDigest,
@@ -68,19 +79,19 @@ async function resultInsertionScenario(change = () => {}, { duringDecode = false
     selectedImageOutputOptions: {},
     imageOutputOptionsKey: value => JSON.stringify(value),
     AI_SEPARATION_MODES: { OFF: 'off' },
-    candidateUsesSeparatedAssets: () => false,
-    candidateUsesAutomaticSeparation: () => true,
+    ...guards,
     selectedOutputItem: () => context.selectedItem,
     setBusy: (value) => {
       context.busy = value;
       if (!value) completed.resolve();
     },
     setStatus: () => {},
-    panel: { hidden: false, querySelector: () => null },
+    panel: { hidden: false, inert: false, querySelector: () => null },
     resolveOutputVariant: () => outputGate.promise,
     captureActiveTaskTab: () => {},
     persistTasks: () => {},
-    close: () => { context.panel.hidden = true; },
+    // Closing retires local operations immediately; hidden changes after settling.
+    close: () => { context.localVisibilityEpoch += 1; context.motion.hide(); },
     addLog: () => {},
     Image: class {
       naturalWidth = 20;
@@ -109,7 +120,7 @@ async function resultInsertionScenario(change = () => {}, { duringDecode = false
 
   context.output.onclick();
   if (!duringDecode) change(context, { pageA, pageB });
-  outputGate.resolve('data:image/png;base64,synthetic');
+  outputGate.resolve(data);
   if (duringDecode) {
     await decodeStarted.promise;
     change(context, { pageA, pageB });
@@ -141,11 +152,13 @@ test('AI-160-01: ordinary result use rejects page, close, candidate, and decode 
   });
   assert.equal(backToA.pageA.length, 0, 'A to B to A must remain invalid');
 
-  const closed = await resultInsertionScenario((context) => { context.panel.hidden = true; });
+  const closed = await resultInsertionScenario((context) => { context.close(); });
   assert.equal(closed.pageA.length, 0, 'closing the panel must invalidate use');
+  assert.equal(closed.context.panel.inert, true, 'Closing makes the panel inert immediately');
+  assert.equal(closed.context.panel.hidden, false, 'The close race occurs before the hide animation settles');
 
   const changedCandidate = await resultInsertionScenario((context) => {
-    context.selectedItem = { id: 'candidate-B', data: 'candidate-source-B' };
+    context.selectedItem = { id: 'candidate-B', kind:'generated', data:retainedPng };
   });
   assert.equal(changedCandidate.pageA.length, 0, 'changing candidate must invalidate use');
 
@@ -161,8 +174,11 @@ test('AI-160-01: ordinary result use rejects page, close, candidate, and decode 
 });
 
 test('AI-160-02: candidate preparation is keyed by source, output, and separation options', async () => {
-  const candidateA = { id: 'A', kind: 'generated', data: 'source-A' };
-  const candidateB = { id: 'B', kind: 'generated', data: 'source-B' };
+  const guards=await separationGuards();
+  // Controlled valid PNG variants exercise ownership/options, not provider quality.
+  const variants=Object.fromEntries(await Promise.all([['A:thickness-0',160],['B:thickness-2',161],['A:thickness-2',162]].map(async([key,width])=>[key,(await separationPngFixture({width})).dataUrl])));
+  const candidateA = { id: 'A', kind: 'generated', data: variants['A:thickness-0'] };
+  const candidateB = { id: 'B', kind: 'generated', data: variants['B:thickness-2'] };
   const calls = [];
   const context = {
     generatedImages: [candidateA, candidateB],
@@ -178,7 +194,7 @@ test('AI-160-02: candidate preparation is keyed by source, output, and separatio
     AbortController,
     AI_SEPARATION_MODES: { OFF: 'off', MANUAL: 'manual' },
     syncSelectedOutputActions: () => {},
-    candidateUsesAutomaticSeparation: (item) => item?.kind === 'generated',
+    ...guards,
     separationOptionsForMode: (mode) => ({ layout: mode }),
     normalizeImageOutputOptions: (value) => ({ ...value }),
     transparentizeGeneratedImage: () => {},
@@ -186,7 +202,7 @@ test('AI-160-02: candidate preparation is keyed by source, output, and separatio
       const options = context.selectedImageOutputOptions;
       const value = `${item.id}:thickness-${options.lineThickness}`;
       calls.push(value);
-      return value;
+      return variants[value];
     },
     automaticSeparationCacheKey: async (data, options, separation) => `${data}:${options.lineThickness}:${separation.layout}`,
     prepareSeparatedAssets: async (data) => ({ assets: [{ id: data, source: data }] }),
@@ -203,18 +219,19 @@ test('AI-160-02: candidate preparation is keyed by source, output, and separatio
   context.selectedCandidateId = 'A';
   const prepared = await context.startAutomaticSeparation(candidateA);
 
-  assert.equal(prepared.assets[0].source, 'A:thickness-2');
+  assert.equal(prepared.assets[0].source, variants['A:thickness-2']);
   assert.deepEqual(calls, ['A:thickness-0', 'B:thickness-2', 'A:thickness-2']);
 });
 
 test('AI-160-02: the real cache key changes for every rendered or separation input', async () => {
   const module = await productModule('ai-panel');
-  const source = 'data:image/png;base64,AA==';
+  const source = retainedPng;
+  const alternative=(await separationPngFixture({width:161})).dataUrl;
   const output = { backgroundPolicy: 'preserve', examPalette: false, lineThickness: 0 };
   const separation = { layout: 'auto', maxAssets: 128, maxDurationMs: 8000 };
   const base = await module.automaticSeparationCacheKey(source, output, separation);
   const variants = await Promise.all([
-    module.automaticSeparationCacheKey('data:image/png;base64,AQ==', output, separation),
+    module.automaticSeparationCacheKey(alternative, output, separation),
     module.automaticSeparationCacheKey(source, { ...output, backgroundPolicy: 'connected' }, separation),
     module.automaticSeparationCacheKey(source, { ...output, examPalette: true }, separation),
     module.automaticSeparationCacheKey(source, { ...output, lineThickness: 2 }, separation),
@@ -361,21 +378,22 @@ test('AI-160-03: a failed preflight releases only its own lock so retry can star
 });
 
 test('AI-160-02: an aborted separation never publishes a stale ready result', async () => {
-  const candidate = { id: 'A', kind: 'generated', data: 'source-A' };
-  const pending = deferred();
+  const guards=await separationGuards();
+  const candidate = { id: 'A', kind: 'generated', data: retainedPng };
+  const pending = deferred(),entered=deferred();
   const context = {
     generatedImages: [candidate], selectedCandidateId: 'A', automaticSeparationRun: null,
     automaticSeparationCache: new Map(), panel: { dataset: {} }, activeTaskTabId: 'task-A',
     selectedSeparationMode: 'auto', selectedImageOutputOptions: { lineThickness: 0 }, AbortController,
     AI_SEPARATION_MODES: { OFF: 'off', MANUAL: 'manual' }, syncSelectedOutputActions: () => {},
-    candidateUsesAutomaticSeparation: () => true, separationOptionsForMode: () => ({ layout: 'auto' }),
+    ...guards, separationOptionsForMode: () => ({ layout: 'auto' }),
     normalizeImageOutputOptions: (value) => value, transparentizeGeneratedImage: () => {},
-    resolveImageOutput: async () => 'source-A', automaticSeparationCacheKey: async () => 'key-A',
-    prepareSeparatedAssets: () => pending.promise,
+    resolveOutputVariant: async () => retainedPng, automaticSeparationCacheKey: async () => 'key-A',
+    prepareSeparatedAssets: () => {entered.resolve();return pending.promise;},
   };
   vm.runInNewContext(sourcePart('  function selectedOutputItem() {', '  function candidateAlreadyInserted(item) {'), context);
   const obsolete = context.startAutomaticSeparation(candidate);
-  await flush();
+  await entered.promise;
   context.abortAutomaticSeparation('candidate-changed');
   pending.resolve({ assets: [{ id: 'obsolete' }] });
   await obsolete;
@@ -527,4 +545,66 @@ test('batch capture retains only selected revision inputs and immutable operatio
   invalidModel.snapshot.options.model='missing-model';
   assert.match(context.preflight(invalidModel),/선택 모델 missing-model/);
   assert.equal(tab.generated.length,3);
+});
+
+
+test('bound RAW cannot enter automatic, manual or cached legacy-separated delegates', async()=>{
+  const [guards,review,labels,store]=await Promise.all([separationGuards(),productModule('ai-image-review'),productModule('ai-image-label-run'),productModule('store')]);
+  const candidateSha256=await labels.imageLabelDigest(retainedPng),workflow={imageKind:'general',labelResult:'remove',explicit:true};
+  const ids=['object-counts','inside-outside','liquid-occupancy','connections','composition-state','black-fill-meaning','presentation','request-scope','raster-label-removal','kice-flat-style','flat-gray-regions'];
+  const acceptance=review.enforceImageLabelAcceptance({verdict:'pass',checks:ids.map(id=>({id,label:id,status:'pass',detail:'Controlled complete byte-bound unit review'})),issues:[]},{workflow,candidateSha256});
+  assert.equal(acceptance.accepted,true);
+  for(const metadata of [{},{imageLabelWorkflow:false},{imageLabelWorkflow:{}},{labelPlan:{frozen:true}},{targetPlacement:{}},{scopedEditHistory:[{status:'cancelled'}]},{graphResult:{}},{sceneResult:{objects:[]}},{nativeGraph:{}},{candidateSha256:'invalid'}]){
+    const candidate={id:'protected',kind:'generated',data:retainedPng,imageLabelWorkflow:workflow,candidateSha256,reviewReport:acceptance.report,reviewState:acceptance.state,verifiedCandidateData:retainedPng,
+      generationMode:'separated',automaticSeparationState:'ready',automaticSeparationPrepared:{assets:[{id:'stale',data:retainedPng}]},...metadata};
+    const before=structuredClone(candidate),calls={variant:0,automatic:0,dialog:0,insertion:0},statuses=[];
+    const context={...guards,generatedImages:[candidate],selectedCandidateId:candidate.id,activeTaskTabId:'task-A',selectedSeparationMode:'auto',selectedImageOutputOptions:{},
+      automaticSeparationRun:null,automaticSeparationCache:new Map(),AbortController,panel:{dataset:{}},AI_SEPARATION_MODES:{OFF:'off',MANUAL:'manual'},
+      disposed:false,motion:{isOpen:()=>true},localVisibilityEpoch:0,busy:false,currentRequestEpoch:1,state:store.createStore({activePageId:'A',objects:[],artboard:{w:90,h:60},activeLayerId:1}),
+      isAdoptableImageLabelCandidate:review.isImageLabelCandidateAccepted,verifyImageLabelCandidateBytes:async item=>!item.imageLabelWorkflow?.explicit||(await labels.imageLabelDigest(item.data)===item.candidateSha256&&review.isImageLabelCandidateAccepted(item)),
+      imageOutputOptionsKey:JSON.stringify,normalizeImageOutputOptions:value=>value,separationOptionsForMode:()=>({layout:'auto'}),automaticSeparationCacheKey:async()=> 'cached',
+      resolveOutputVariant:async()=>{calls.variant++;return retainedPng;},prepareSeparatedAssets:async()=>{calls.automatic++;throw Error('Protected RAW reached segmentation');},
+      openEditableAssetsDialog:async()=>{calls.dialog++;throw Error('Protected RAW reached manual processing');},insertEditableAssets:()=>{calls.insertion++;return true;},
+      setStatus:(text,level)=>statuses.push({text,level}),syncSelectedOutputActions(){},captureActiveTaskTab(){},persistTasks(){},prepareEditableLabelFonts:async()=>{}};
+    vm.runInNewContext(sourcePart('  function selectedOutputItem() {','  function syncSelectedOutputActions() {'),context);
+    for(const mode of ['auto','grid','manual']){
+      context.selectedSeparationMode=mode;
+      assert.equal(await context.startAutomaticSeparation(candidate),null);
+      await context.openGroupsForItem(candidate,false,mode==='manual',true);
+      await context.openGroupsForItem(candidate,true,true,true); // Cached legacy flag cannot bypass the RAW guard.
+    }
+    assert.deepEqual(calls,{variant:0,automatic:0,dialog:0,insertion:0});
+    assert.deepEqual(candidate,before,'Neither stale cached assets nor malformed metadata may mutate RAW');
+    assert.equal(context.state.get().objects.length,0);assert.ok(statuses.every(status=>status.level==='warn'));
+  }
+});
+
+test('a historical separation awaiting its source loses authority if RAW metadata appears',async()=>{
+  const guards=await separationGuards(),source=deferred(),entered=deferred();let preparedCalls=0;
+  const item={id:'A',kind:'generated',data:retainedPng};
+  const context={...guards,generatedImages:[item],selectedCandidateId:'A',activeTaskTabId:'task-A',selectedSeparationMode:'auto',selectedImageOutputOptions:{},automaticSeparationRun:null,automaticSeparationCache:new Map(),AbortController,
+    panel:{dataset:{}},AI_SEPARATION_MODES:{OFF:'off',MANUAL:'manual'},syncSelectedOutputActions(){},normalizeImageOutputOptions:value=>value,separationOptionsForMode:()=>({layout:'auto'}),
+    resolveOutputVariant:()=>{entered.resolve();return source.promise;},automaticSeparationCacheKey:async()=> 'key',prepareSeparatedAssets:async()=>{preparedCalls++;return {assets:[{id:'forbidden'}]};}};
+  vm.runInNewContext(sourcePart('  function selectedOutputItem() {','  function candidateAlreadyInserted(item) {'),context);
+  const pending=context.startAutomaticSeparation(item);await entered.promise;
+  item.imageLabelWorkflow={explicit:true};const now=structuredClone(item);source.resolve(retainedPng);
+  assert.equal(await pending,null);assert.equal(preparedCalls,0);assert.deepEqual(item,now);assert.equal(context.automaticSeparationRun,null);
+});
+
+
+test('a held historical manual byte check cannot annotate or process newly bound RAW',async()=>{
+  const [guards,review,store]=await Promise.all([separationGuards(),productModule('ai-image-review'),productModule('store')]);
+  const item={id:'A',kind:'generated',data:retainedPng,separatedAssetsError:'Retained historical error'},byteCheck=deferred(),entered=deferred();
+  const calls={variant:0,dialog:0,capture:0,persist:0};
+  const context={...guards,generatedImages:[item],selectedCandidateId:item.id,activeTaskTabId:'task-A',selectedSeparationMode:'manual',selectedImageOutputOptions:{},
+    automaticSeparationRun:null,automaticSeparationCache:new Map(),AbortController,panel:{dataset:{}},AI_SEPARATION_MODES:{OFF:'off',MANUAL:'manual'},
+    disposed:false,motion:{isOpen:()=>true},localVisibilityEpoch:0,busy:false,currentRequestEpoch:1,state:store.createStore({activePageId:'A',objects:[],artboard:{w:90,h:60},activeLayerId:1}),
+    isAdoptableImageLabelCandidate:review.isImageLabelCandidateAccepted,verifyImageLabelCandidateBytes:()=>{entered.resolve();return byteCheck.promise;},imageOutputOptionsKey:JSON.stringify,
+    resolveOutputVariant:async()=>{calls.variant++;return retainedPng;},openEditableAssetsDialog:async()=>{calls.dialog++;throw Error('Rebound RAW reached manual segmentation');},
+    setStatus(){},syncSelectedOutputActions(){},captureActiveTaskTab(){calls.capture++;},persistTasks(){calls.persist++;}};
+  vm.runInNewContext(sourcePart('  function selectedOutputItem() {','  function syncSelectedOutputActions() {'),context);
+  const pending=context.openGroupsForItem(item,true,true,false);await entered.promise;
+  item.imageLabelWorkflow={explicit:true};const now=structuredClone(item);byteCheck.resolve(true);await pending;
+  assert.deepEqual(item,now,'The obsolete separated-error branch must preserve every newly bound RAW field');
+  assert.deepEqual(calls,{variant:0,dialog:0,capture:0,persist:0});assert.equal(context.state.get().objects.length,0);
 });

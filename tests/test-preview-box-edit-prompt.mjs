@@ -1,5 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import {readFileSync} from 'node:fs';
+const retainedPng='data:image/png;base64,'+readFileSync(new URL('./fixtures/rights-clear-smoke.png',import.meta.url)).toString('base64');
 
 for (const directory of ['js']) {
   const { collectScopedAreaComments, buildScopedEditPrompt } = await import(`../${directory}/ai-scoped-edit-prompt.js`);
@@ -28,7 +30,7 @@ for (const directory of ['js']) {
 
 test('partial edits bypass global processing on display, export and insertion', async () => {
   const {resolveImageOutput} = await import('../js/ai-output-processing.js');
-  const data = 'data:image/png;base64,exact-composite';
+  const data = retainedPng;
   let calls = 0;
   const transform = () => {calls++;return 'processed';};
   const options = {backgroundPolicy:'transparent',examPalette:true,lineThickness:2};
@@ -40,10 +42,12 @@ test('partial edits bypass global processing on display, export and insertion', 
 
 test('modern and unknown generated contracts stay RAW through the actual output resolver', async () => {
   const {resolveImageOutput}=await import('../js/ai-output-processing.js');
+  const {candidateUsesAutomaticSeparation,candidateUsesSeparatedAssets,separatedCandidateNextAction}=await import('../js/ai-panel.js');
   const {isHistoricalPngLocalResult,requiresRawImageOutput,canChooseLocalOutput}=await import('../js/ai-output-processing.js');
-  // Policy-only sentinel; this unit never decodes it or claims PNG quality.
-  const historical={kind:'generated',data:'data:image/png;base64,policy-sentinel',reviewState:'idle'};
+  // Reuse the retained valid PNG bytes; policy units make no quality claim.
+  const historical={kind:'generated',data:retainedPng,reviewState:'idle'};
   assert.equal(isHistoricalPngLocalResult(historical),true);
+  assert.equal(candidateUsesAutomaticSeparation(historical),true);assert.equal(candidateUsesSeparatedAssets({...historical,generationMode:'separated'}),true);
   const cases=[{imageLabelWorkflow:{explicit:true}},{imageLabelWorkflow:{explicit:false}},
     {imageLabelWorkflow:{}},{imageLabelWorkflow:false},{labelPlan:{frozen:true}},
     {labelPlan:{}},{sourceLabelPlan:{}},{editableDraft:{}},{candidateSha256:'invalid'},
@@ -55,6 +59,8 @@ test('modern and unknown generated contracts stay RAW through the actual output 
     const transform=()=>{calls++;throw new Error('Protected RAW reached postprocessing');};
     assert.equal(isHistoricalPngLocalResult(candidate),false,JSON.stringify(metadata));
     assert.equal(requiresRawImageOutput(candidate),true);
+    const cached={...candidate,generationMode:'separated',automaticSeparationState:'ready',automaticSeparationPrepared:{assets:[{id:'old',data:retainedPng}]}};
+    assert.equal(candidateUsesAutomaticSeparation(cached),false);assert.equal(candidateUsesSeparatedAssets(cached),false);assert.equal(separatedCandidateNextAction(cached),'ordinary-insert');
     for(const policy of ['connected','all-near-white']){
       assert.equal(await resolveImageOutput(candidate,{backgroundPolicy:policy,examPalette:true,lineThickness:2},transform),candidate.data);
       assert.equal(canChooseLocalOutput(candidate,'background',policy),false);
@@ -70,7 +76,7 @@ test('modern and unknown generated contracts stay RAW through the actual output 
 test('legacy delegate policy retains Lite binary actions, locks separation, and rejects hidden advanced choices', async()=>{
   const {canChooseLocalOutput}=await import('../js/ai-output-processing.js');
   const {transitionSeparationMode}=await import('../js/ai-separation-mode.js');
-  const item={kind:'generated',data:'data:image/png;base64,policy-sentinel'};
+  const item={kind:'generated',data:retainedPng};
   for(const mode of ['lite','pro']){
     for(const value of ['preserve','connected'])assert.equal(canChooseLocalOutput(item,'background',value,{mode}),true);
     for(const value of ['off','auto'])assert.equal(canChooseLocalOutput(item,'objects',value,{mode}),true);
@@ -114,12 +120,12 @@ test('actual settings delegate refuses a modern or locked choice before dispatch
     const controller=context.mount(panel,{canChoose:(key,value)=>canChooseLocalOutput(item,key,value,{mode,readOnly})});
     return {events,control,button,click:()=>listeners.click({target:button}),dispose:()=>controller.dispose()};
   };
-  for(const item of [{kind:'generated',data:'data:image/png;base64,policy-sentinel',imageLabelWorkflow:{explicit:true}},
-    {kind:'generated',data:'data:image/png;base64,policy-sentinel',labelPlan:{frozen:true}},null]){
+  for(const item of [{kind:'generated',data:retainedPng,imageLabelWorkflow:{explicit:true}},
+    {kind:'generated',data:retainedPng,labelPlan:{frozen:true}},null]){
     const current=build(item);current.button.disabled=false;current.click();
     assert.deepEqual(current.events,[]);assert.equal(current.control.value,'preserve');current.dispose();
   }
-  const legacy={kind:'generated',data:'data:image/png;base64,policy-sentinel'};
+  const legacy={kind:'generated',data:retainedPng};
   for(const [mode,readOnly] of [['lite',false],['pro',true]]){
     const current=build(legacy,mode,readOnly);current.button.disabled=false;current.click();
     assert.deepEqual(current.events,[]);assert.equal(current.control.value,'preserve');current.dispose();

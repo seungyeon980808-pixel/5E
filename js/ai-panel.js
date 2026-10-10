@@ -353,9 +353,9 @@ const separationOptionsForMode = mode => ({
   ...AUTOMATIC_SEPARATION_OPTIONS,
   layout: mode === AI_SEPARATION_MODES.GRID ? 'grid' : 'auto',
 });
-export const candidateUsesSeparatedAssets = item => item?.generationMode === AI_ASSET_GENERATION_MODES.SEPARATED;
-export const candidateUsesAutomaticSeparation = item => item?.kind === 'generated'
-  && !item?.sceneResult;
+export const candidateUsesSeparatedAssets = item => isHistoricalPngLocalResult(item)
+  && item.generationMode === AI_ASSET_GENERATION_MODES.SEPARATED;
+export const candidateUsesAutomaticSeparation = item => isHistoricalPngLocalResult(item);
 export async function automaticSeparationCacheKey(dataUrl, outputOptions = {}, separationOptions = AUTOMATIC_SEPARATION_OPTIONS) {
   const prefix = 'data:image/png;base64,';
   if (typeof dataUrl !== 'string' || !dataUrl.startsWith(prefix)) throw new TypeError('자동 분리 원본은 PNG 데이터여야 합니다.');
@@ -2136,6 +2136,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
 
   function automaticSeparationIsCurrent(run) {
     return automaticSeparationRun === run && !run.controller.signal.aborted
+      && isHistoricalPngLocalResult(run.item)
       && run.taskId === activeTaskTabId && run.separationMode === selectedSeparationMode
       && selectedOutputItem() === run.item;
   }
@@ -2234,6 +2235,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   }
 
   async function openGroupsForItem(item, separated = false, manual = false, useResult = false) {
+    if (!isHistoricalPngLocalResult(item)) { setStatus('이 결과는 원본을 그대로 사용합니다. 저장된 그림 처리로 분리할 수 없습니다.', 'warn'); return; }
     if (!isAdoptableImageLabelCandidate(item)) { setStatus('그림·스타일 검수에 통과하지 않아 분리 결과를 적용할 수 없습니다. RAW 비교 결과를 확인하세요.', 'warn'); return; }
     const epoch = currentRequestEpoch;
     const taskId = activeTaskTabId;
@@ -2248,7 +2250,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     const isCurrent = () => !disposed && motion.isOpen() && visibilityEpoch === localVisibilityEpoch && !busy && epoch === currentRequestEpoch && taskId === activeTaskTabId
       && outputKey === imageOutputOptionsKey(selectedImageOutputOptions) && separationMode === selectedSeparationMode
       && selectedOutputItem()?.id === candidateId && selectedOutputItem()?.data === source
-      && isAdoptableImageLabelCandidate(item)
+      && isHistoricalPngLocalResult(item) && isAdoptableImageLabelCandidate(item)
       && state.get().activePageId === pageId && pageSnapshot() === originalPage;
     try {
       if (!await verifyImageLabelCandidateBytes(item) || !isCurrent()) throw new Error('검수한 RAW 후보와 분리 후보가 다릅니다. 원본은 유지했습니다.');
@@ -2284,7 +2286,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       else if (isCurrent()) setStatus('원본 PNG를 유지했습니다.', 'ok');
     } catch (error) {
       const message = error.message || String(error);
-      if (separated) {
+      if (separated && isHistoricalPngLocalResult(item)) {
         item.separatedAssetsError = message;
         captureActiveTaskTab();
         persistTasks();
@@ -2324,7 +2326,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       const manual = automatic && selectedSeparationMode === AI_SEPARATION_MODES.MANUAL;
       const automaticState = manual ? 'manual' : automatic ? (item.automaticSeparationState || 'idle') : '';
       groups.hidden = false;
-      groups.disabled = busy || !item || !isAdoptableImageLabelCandidate(item) || selectedSeparationMode === AI_SEPARATION_MODES.OFF || Boolean(item.sceneResult) || automaticState === 'preparing';
+      groups.disabled = busy || !isHistoricalPngLocalResult(item) || !isAdoptableImageLabelCandidate(item) || selectedSeparationMode === AI_SEPARATION_MODES.OFF || automaticState === 'preparing';
       groups.dataset.aiSeparationState = automaticState;
       groups.dataset.aiSeparationKey = automatic ? (item.automaticSeparationKey || '') : '';
       groups.dataset.aiSeparationCacheHit = automatic ? String(item.automaticSeparationCacheHit === true) : '';
@@ -2340,7 +2342,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       recovery.disabled = busy || nextAction !== 'manual-regions';
     }
     if (outputNote) {
-      outputNote.hidden = !item || selectedSeparationMode === AI_SEPARATION_MODES.OFF;
+      outputNote.hidden = !isHistoricalPngLocalResult(item) || selectedSeparationMode === AI_SEPARATION_MODES.OFF;
       outputNote.textContent = item?.automaticSeparationState === 'preparing'
         ? '기기에서 물체를 분리하는 중…'
         : item?.automaticSeparationState === 'ready'
@@ -2973,6 +2975,30 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     return item;
   };
 
+  function assertImmediateNativeBatchOwner(run, eventEpoch) {
+    if (batchRun !== run || disposed || run.context.signal.aborted || currentCancelRequested
+      || eventEpoch !== currentRequestEpoch || activeTaskTabId !== run.context.owner.taskId
+      || !sameBatchOwner(batchOwner(run.context.owner.taskId), run.context.owner)) {
+      throw new DOMException('이전 작업 결과입니다.', 'AbortError');
+    }
+  }
+  function finishImmediateNativeBatch(run, candidate, eventEpoch) {
+    if (!run) return false;
+    assertImmediateNativeBatchOwner(run, eventEpoch);
+    if (run.context.snapshot.operation !== 'generate' || currentEngine !== IMAGE_ENGINE_IDS.FAST_SCENE
+      || normalizeOutputEngine(currentRunInput?.outputEngine) !== AI_OUTPUT_ENGINES.ASSET
+      || currentRunInput?.imageLabelWorkflow?.explicit !== true || currentRunInput?.frozenLabelPlan
+      || run.candidate !== candidate || candidate?.id !== `workspace-${run.context.jobId}-${run.context.attempt}`
+      || candidate.graphResult || !candidate.sceneResult?.valid || !candidate.sceneResult?.supported
+      || !Array.isArray(candidate.sceneResult.objects) || !candidate.sceneResult.objects.length) {
+      throw new Error('검증된 네이티브 도식 작업의 완료 후보가 아닙니다.');
+    }
+    imageReceived = true; serverTurnFinished = true; currentTurnDone = true;
+    currentTerminalOutcome = 'completed'; awaitingTurnId = false; previewPending = false;
+    finishCurrentTurnUi(eventEpoch);
+    return true;
+  }
+
   const addScenePreview = (sceneResult, sceneSource, sceneCompileSource = sceneSource) => {
     if (!sceneResult?.valid || !sceneResult?.supported || !sceneResult.objects?.length) return false;
     const data = fastSceneToSvgDataUrl(sceneResult);
@@ -2999,6 +3025,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     latestGeneratedSrc = data;
     previews.querySelector("[data-ai-empty]")?.remove();
     generatedImages.push(item);
+    selectedCandidateId = item.id;
+    panel.dataset.aiSelectedCandidateId = item.id;
     previews.prepend(item.card || makeImageCard(item));
     return item;
   };
@@ -4664,6 +4692,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       }
     }
     const requestEpoch = ++currentRequestEpoch;
+    const immediateBatchRun = batchRun;
     preparationAccepted = true;
     if (!busy) setBusy(true);
     imageReceived = false;
@@ -4823,6 +4852,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
               });
               const compiled = cachedScene.result;
               if (compiled.valid && compiled.supported && compiled.objects.length) {
+                if (immediateBatchRun) assertImmediateNativeBatchOwner(immediateBatchRun, requestEpoch);
                 cachedItem = addScenePreview(
                   compiled,
                   cached.entry.output.sceneSource,
@@ -4858,6 +4888,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
                 } : {}),
               };
               persistPerformance(currentTurnPerformance);
+              if (currentEngine === IMAGE_ENGINE_IDS.FAST_SCENE && finishImmediateNativeBatch(immediateBatchRun, cachedItem, requestEpoch)) return;
               setGenerating(false);
               setTaskState("completed");
               setStatus("동일 요청 결과를 즉시 불러왔습니다.", "ok");
@@ -4879,6 +4910,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
           if (!compiled.valid || !compiled.supported || !compiled.objects.length) {
             throw new Error("검증된 내부 도식을 5E 오브젝트로 변환하지 못했습니다.");
           }
+          if (immediateBatchRun) assertImmediateNativeBatchOwner(immediateBatchRun, requestEpoch);
           const item = addScenePreview(compiled, compiledScene.source, compiledScene.compileSource);
           if (!item) throw new Error("검증된 내부 도식을 미리보기에 추가하지 못했습니다.");
           stageCurrentOutput({
@@ -4887,6 +4919,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
             sceneCompileSource: compiledScene.compileSource,
           });
           await commitCurrentOutput();
+          if (immediateBatchRun) assertImmediateNativeBatchOwner(immediateBatchRun, requestEpoch);
           imageReceived = true;
           serverTurnFinished = true;
           currentTurnDone = true;
@@ -4906,6 +4939,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
             cacheHit: false,
           };
           persistPerformance(currentTurnPerformance);
+          if (finishImmediateNativeBatch(immediateBatchRun, item, requestEpoch)) return;
           setGenerating(false);
           setStatus("내부 검증 도식 생성 완료", "ok");
           addLog(`이미지가 완성되었습니다. 원격 생성 없이 내부 검증 자산을 편집 가능한 벡터 오브젝트 ${compiled.objects.length}개로 구성했습니다.`);

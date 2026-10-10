@@ -328,3 +328,357 @@ test('selected workspaces queue both >1MiB PNGs with byte-identical persisted or
   assert.ok(result.persistedRecordBytes.every(bytes=>bytes>1_048_576)); assert.ok(result.persistedTotalBytes>2_097_152); assert.equal(result.sizeError,false);
   assert.deepEqual(errors,[]);
 });
+
+
+// Immediate native completion: observations call the actual cache methods and
+// return their original values. No cache record, hit, output or owner is seeded.
+async function installImmediateSceneCacheObservation(page) {
+  await page.evaluate(async () => {
+    const moduleUrl = new URL(window.__runtime.base + 'ai-output-cache-store.js' + window.__runtime.query, window.location.href);
+    const entryBase = new URL(window.__runtime.base, window.location.href);
+    if (moduleUrl.origin !== window.location.origin || moduleUrl.pathname !== entryBase.pathname + 'ai-output-cache-store.js' || moduleUrl.search !== window.__runtime.query) throw new Error('Cache observation must import the exact canonical same-origin module');
+    const { ExactOutputCacheStore } = await import(moduleUrl.href);
+    const original = { get: ExactOutputCacheStore.prototype.get, put: ExactOutputCacheStore.prototype.put };
+    const proof = window.__immediateSceneCacheProof = { phase: 'warm', gets: [], puts: [], methodPassThrough: true, moduleUrl: moduleUrl.href, documentUrl: window.location.href };
+    for (const method of ['get','put']) ExactOutputCacheStore.prototype[method] = function (...args) {
+      const phase = proof.phase;
+      const key = method === 'get' ? args[0] : args[0]?.key;
+      const result = Reflect.apply(original[method], this, args);
+      return result.then(async value => {
+        // Observe the already-used actual backend handle; leave it open for its
+        // product owner. The original method above performs every read/write.
+        const database = await this.backend.open();
+        proof[method === 'get' ? 'gets' : 'puts'].push({phase,key,backendName:this.backend.databaseName,backendClass:this.backend.constructor.name,databaseName:database.name,result:structuredClone(value)});
+        return value;
+      });
+    };
+    window.__restoreImmediateSceneCacheObservation = () => {
+      for (const method of ['get','put']) ExactOutputCacheStore.prototype[method] = original[method];
+    };
+    // Exact owner database reads only. Manager registry keys deliberately use
+    // native localStorage, while task databases retain their preview prefix.
+    window.__readImmediateSceneTaskOwners = async taskIds => {
+      const primary = JSON.parse(localStorage.getItem('5e.aiPrimaryWorkspace.v1') || '""');
+      const parallel = JSON.parse(localStorage.getItem('5e.aiParallelWorkspaces.v1') || '[]');
+      const validScope = value => typeof value === 'string' && /^[a-f0-9-]{36}$/.test(value);
+      if (primary !== '' && !validScope(primary) || !Array.isArray(parallel) || parallel.some(value => !validScope(value))) throw new Error('Invalid actual native workspace registry');
+      const registered = new Set([primary,...parallel]);
+      const owners = [];
+      for (const taskId of taskIds) {
+        const rows = [...document.querySelectorAll('#ai-image-panel [data-ai-tab-list] [data-ai-workspace-link]')].filter(row => row.dataset.tabId === taskId);
+        if (rows.length !== 1) throw new Error('Expected one actual navigation owner: ' + taskId);
+        const navigationScope = rows[0].dataset.aiWorkspaceLink;
+        const scope = navigationScope === 'legacy' ? '' : navigationScope;
+        if (!(scope === '' || validScope(scope)) || !registered.has(scope)) throw new Error('Exact navigation scope is not registered: ' + taskId);
+        const dbName = '5e.preview:5e-ai-image-tasks' + (scope ? '-' + scope : '');
+        const db = await new Promise((resolve,reject) => {
+          const request = indexedDB.open(dbName,1);
+          request.onupgradeneeded = () => { request.transaction.abort(); reject(new Error('Actual task owner database absent: ' + dbName)); };
+          request.onerror = () => reject(request.error);
+          request.onsuccess = () => resolve(request.result);
+        });
+        let workspace;
+        try {
+          workspace = await new Promise((resolve,reject) => {
+            const request = db.transaction('tasks').objectStore('tasks').get('workspace');
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+          });
+        } finally { db.close(); }
+        const tabs = workspace?.tabs?.filter(tab => tab.id === taskId);
+        if (tabs?.length !== 1) throw new Error('Expected one exact durable task owner: ' + taskId);
+        const tab = tabs[0];
+        owners.push({taskId,scope,navigationScope,dbName,batchOwnerPresent:Object.hasOwn(tab,'batchOwner'),...(Object.hasOwn(tab,'batchOwner') ? {batchOwner:tab.batchOwner} : {}),tab});
+      }
+      return owners;
+    };
+  });
+}
+
+async function selectImmediateSceneTask(page, taskId) {
+  const button = page.locator('#ai-image-panel [data-tab-id="' + taskId + '"] .ai-task-tab-select');
+  assert.equal(await button.count(),1);
+  await button.click();
+  await page.waitForFunction(taskId => {
+    const button = document.querySelector('#ai-image-panel [data-tab-id="' + taskId + '"] .ai-task-tab-select');
+    return button?.getAttribute('aria-pressed') === 'true';
+  },taskId);
+}
+
+function assertEveryOriginalAttachmentField(canonical, original) {
+  assert.equal(canonical.attachments.length,original.attachments.length);
+  for (let index=0;index<original.attachments.length;index++) for (const field of Object.keys(original.attachments[index])) {
+    assert.equal(Object.hasOwn(canonical.attachments[index],field),true);
+    assert.deepEqual(canonical.attachments[index][field],original.attachments[index][field],'Preparation retains original attachment field and bytes: ' + field);
+  }
+}
+
+async function immediateSceneFixture(context,count,evidence,engine) {
+  const previousEngine=process.env.TASK2_ENGINE; process.env.TASK2_ENGINE=engine;
+  try { return await requestBrowserFixture(context,count,evidence); }
+  finally {
+    // Register restoration after the real fixture's cleanup hooks, including
+    // failed boot: cleanup receipts must retain their actual engine identity.
+    context.after(()=>{if(previousEngine===undefined)delete process.env.TASK2_ENGINE;else process.env.TASK2_ENGINE=previousEngine;});
+  }
+}
+
+for (const engine of ['chromium','webkit']) test('real native scene cache completes selected batch once with one uncached peer in ' + engine,{timeout:180000},async context => {
+  const evidence=path.join(evidenceRoot,engine,'real-scene-cache-batch'); fs.mkdirSync(evidence,{recursive:true});
+  const {page,errors,baseline:initial}=await immediateSceneFixture(context,3,evidence,engine);
+  for (const id of ['task-0','task-1','task-2']) await selectImmediateSceneTask(page,id);
+  const baseline=await page.evaluate(async()=>(await window.__task2Manager.sharingSnapshot()).workspaces.flatMap(workspace=>workspace.tabs));
+  assert.equal(baseline.length,3); assert.equal(new Set(baseline.map(tab=>tab.id)).size,3);
+  for (const tab of initial) {
+    assertEveryOriginalAttachmentField(baseline.find(item=>item.id===tab.id),tab);
+    assert.ok(Buffer.from(tab.attachments[0].data.split(',')[1],'base64').byteLength>1_048_576,'The real warmed/batched source attachment retains the original large PNG');
+  }
+  assert.ok(baseline.every(tab=>tab.generated.length===0&&tab.selectedCandidateId===null&&tab.outputEngine==='asset'&&tab.imageLabelWorkflow.explicit===true));
+  assert.equal(baseline.find(tab=>tab.id==='task-1').model,'gpt-6.1-sol');
+  assert.equal(baseline.find(tab=>tab.id==='task-2').model,'gpt-6.1-sol');
+  assert.equal(baseline.find(tab=>tab.id==='task-0').model,'gpt-6-luna');
+  await installImmediateSceneCacheObservation(page);
+  await (await currentPrimaryAction(page)).click();
+  await page.waitForFunction(()=>window.__task2.generationSends.length===1);
+  assert.equal(await page.evaluate(()=>window.__task2.generationSends[0].stage),'native-generation');
+  await page.evaluate(()=>{window.__task2.emitGeneration(0,'image');window.__task2.emitGeneration(0,'done');});
+  await page.waitForFunction(()=>window.__immediateSceneCacheProof.puts.some(row=>row.phase==='warm'&&row.result.stored===true&&row.result.entry?.output?.sceneSource));
+  await page.waitForFunction(()=>document.querySelector('#ai-image-panel')?.dataset.aiBusy==='false');
+  const originalWarm=await page.evaluate(async()=>(await window.__task2Manager.sharingSnapshot()).workspaces.flatMap(workspace=>workspace.tabs).find(tab=>tab.id==='task-2'));
+  const warmSelection=await page.evaluate(()=>{
+    const panel=document.querySelector('#ai-image-panel');
+    const cards=[...panel.querySelectorAll('.ai-generated-card.is-ai-active-candidate')];
+    const options=[...panel.querySelectorAll('[data-ai-candidate-option][aria-selected="true"]')];
+    return {activeOwner:window.__task2Manager.activeExamTask(),panelCandidateId:panel.dataset.aiSelectedCandidateId,
+      activeCardIds:cards.map(card=>card.dataset.aiCandidateId),selectedOptionIds:options.map(option=>option.dataset.aiCandidateOption),
+      workbench:panel.aiWorkbench.getViewState()};
+  });
+  assert.equal(originalWarm.generated.length,1);
+  const warmCandidateId=originalWarm.generated[0].id;
+  assert.equal(warmSelection.activeOwner.taskId,'task-2');
+  assert.equal(warmSelection.panelCandidateId,warmCandidateId,'The native singleton selects its authoritative candidate before any owner switch/reload');
+  assert.deepEqual(warmSelection.activeCardIds,[warmCandidateId],'Exactly one actual active native card belongs to the authoritative candidate');
+  assert.deepEqual(warmSelection.selectedOptionIds,[warmCandidateId]);
+  assert.equal(warmSelection.workbench.selectedCandidateId,warmCandidateId);
+  assert.equal(originalWarm.selectedCandidateId,warmCandidateId,'Live controller capture agrees with the rendered native singleton');
+  assert.equal(originalWarm.workbenchViewState.selectedCandidateId,warmCandidateId);
+  fs.writeFileSync(path.join(evidence,'real-native-singleton-selection.json'),JSON.stringify({tab:originalWarm,selection:warmSelection},null,2));
+  // Use the actual physical owner restore before the strict full baseline. Its
+  // serializer may add defaults, but it must preserve every already-present field.
+  await selectImmediateSceneTask(page,'task-0'); await selectImmediateSceneTask(page,'task-2');
+  const warm=await page.evaluate(async()=>({proof:structuredClone(window.__immediateSceneCacheProof),tab:(await window.__task2Manager.sharingSnapshot()).workspaces.flatMap(workspace=>workspace.tabs).find(tab=>tab.id==='task-2'),sends:structuredClone(window.__task2.sends)}));
+  assertEveryOriginalAttachmentField(warm.tab,originalWarm);
+  assert.equal(warm.tab.generated.length,originalWarm.generated.length);
+  for(let index=0;index<originalWarm.generated.length;index++) for(const field of Object.keys(originalWarm.generated[index])) {
+    assert.equal(Object.hasOwn(warm.tab.generated[index],field),true);
+    assert.deepEqual(warm.tab.generated[index][field],originalWarm.generated[index][field],'Real owner restore retains each original native candidate field: '+field);
+  }
+  const warmPuts=warm.proof.puts.filter(row=>row.phase==='warm'&&row.result.stored);
+  assert.equal(warmPuts.length,1); const entry=warmPuts[0].result.entry;
+  assert.equal(warm.proof.gets.length,1); assert.equal(warm.proof.gets[0].result.hit,false);
+  assert.equal(warmPuts[0].backendName,'5e-ai-output-cache');
+  assert.equal(warmPuts[0].backendClass,'IndexedDBOutputCacheBackend');
+  assert.equal(warmPuts[0].databaseName,'5e.preview:5e-ai-output-cache');
+  assert.equal(entry.output.complete,true); assert.ok(entry.output.sceneSource); assert.ok(entry.output.sceneCompileSource);
+  assert.equal(warm.tab.generated.length,1); assert.equal(warm.tab.generated[0].sceneResult.valid,true); assert.equal(warm.tab.generated[0].sceneResult.supported,true);
+  assert.equal(warm.sends.length,1); assert.equal(warm.sends[0].payload.model,'gpt-6.1-sol');
+  fs.writeFileSync(path.join(evidence,'real-cache-warm.json'),JSON.stringify(warm,null,2));
+  await selectImmediateSceneTask(page,'task-0');
+  await page.locator('#ai-image-panel [data-tab-id="task-1"] .ai-task-tab-select').click({modifiers:['Meta']});
+  assert.equal(await page.locator('#ai-image-panel [data-ai-selection-count]').textContent(),'2개 선택');
+  await page.evaluate(()=>{window.__immediateSceneCacheProof.phase='selected-batch';});
+  await (await currentPrimaryAction(page)).click();
+  await page.waitForFunction(()=>window.__task2Manager.workspaceBatchState().length===2&&window.__task2Manager.workspaceBatchState().find(job=>job.sourceSnapshot.owner.taskId==='task-1')?.state==='completed'&&window.__task2.generationSends.length===2);
+  const mid=await page.evaluate(()=>({jobs:window.__task2Manager.workspaceBatchState(),proof:structuredClone(window.__immediateSceneCacheProof),sends:structuredClone(window.__task2.sends)}));
+  const capturedSources=mid.jobs.map(job=>job.sourceSnapshot);
+  for(const source of capturedSources) {
+    assert.equal(source.snapshotVersion,1);
+    assert.equal(Object.hasOwn(source.snapshot,'dataUrl'),false,'The nested compact encoding omits only its duplicated byte field');
+    assert.equal(source.dataUrl,initial.find(tab=>tab.id===source.owner.taskId).attachments[0].data,'Captured original source remains byte exact');
+  }
+  assert.equal(new Set(capturedSources.map(source=>JSON.stringify(source.owner))).size,2);
+  assert.deepEqual(capturedSources.map(source=>source.owner.taskId),['task-0','task-1']);
+  const hit=mid.proof.gets.filter(row=>row.phase==='selected-batch'&&row.result.hit);
+  assert.equal(hit.length,1); assert.equal(hit[0].key,entry.key); assert.deepEqual(hit[0].result.entry.descriptor,entry.descriptor); assert.deepEqual(hit[0].result.entry.output,entry.output);
+  assert.equal(hit[0].backendClass,'IndexedDBOutputCacheBackend'); assert.equal(hit[0].databaseName,'5e.preview:5e-ai-output-cache');
+  assert.equal(mid.proof.gets.filter(row=>row.phase==='selected-batch'&&row.result.hit===false).length,1);
+  assert.equal(mid.sends.length,2,'Warm request once plus only one actual uncached batch request');
+  assert.deepEqual(mid.sends.map(send=>send.stage),['native-generation','native-generation']);
+  assert.deepEqual(mid.sends.map(send=>send.payload.model),['gpt-6.1-sol','gpt-6-luna']);
+  assert.equal(mid.jobs.find(job=>job.sourceSnapshot.owner.taskId==='task-0').state,'running');
+  const cachedJob=mid.jobs.find(job=>job.sourceSnapshot.owner.taskId==='task-1');
+  assert.equal(cachedJob.state,'completed'); assert.equal(cachedJob.attempt,1);
+  assert.equal(cachedJob.result.generation.operation,'generate');
+  assert.deepEqual({scope:cachedJob.result.generation.scope,taskId:cachedJob.result.generation.taskId},cachedJob.sourceSnapshot.owner);
+  assert.equal(cachedJob.result.generation.candidateId,`workspace-${cachedJob.id}-${cachedJob.attempt}`);
+  assert.equal(cachedJob.result.output.committed,true); assert.equal(cachedJob.result.output.revisionId,cachedJob.result.generation.candidateId);
+  assert.equal(cachedJob.result.generation.candidate.sceneSource,entry.output.sceneSource); assert.equal(cachedJob.result.generation.candidate.sceneCompileSource,entry.output.sceneCompileSource);
+  fs.writeFileSync(path.join(evidence,'real-cache-batch-mid.json'),JSON.stringify(mid,null,2));
+  await selectImmediateSceneTask(page,'task-1');
+  const cachedVisible=await page.evaluate(async()=>(await window.__task2Manager.sharingSnapshot()).workspaces.flatMap(workspace=>workspace.tabs).find(tab=>tab.id==='task-1'));
+  assert.equal(cachedVisible.generated.length,1); assert.equal(cachedVisible.generated[0].id,cachedJob.result.generation.candidateId);
+  assert.equal(cachedVisible.generated[0].workspaceBatch.jobId,cachedJob.id);
+  await page.evaluate(()=>{window.__task2.emitGeneration(1,'image');window.__task2.emitGeneration(1,'done');});
+  await page.waitForFunction(()=>window.__task2Manager.workspaceBatchState().every(job=>job.state==='completed'));
+  for (const id of ['task-0','task-1','task-2']) await selectImmediateSceneTask(page,id);
+  await page.waitForFunction(async()=>{
+    const actual=(await window.__task2Manager.sharingSnapshot()).workspaces.flatMap(workspace=>workspace.tabs);
+    const stored=await window.__readImmediateSceneTaskOwners(['task-0','task-1','task-2']);
+    const canonical=value=>Array.isArray(value)?value.map(canonical):value&&typeof value==='object'?Object.fromEntries(Object.keys(value).sort().map(key=>[key,canonical(value[key])])):value;
+    return stored.every(owner=>JSON.stringify(canonical(owner.tab))===JSON.stringify(canonical(actual.find(tab=>tab.id===owner.taskId))));
+  });
+  const final=await page.evaluate(async()=>({jobs:window.__task2Manager.workspaceBatchState(),tabs:(await window.__task2Manager.sharingSnapshot()).workspaces.flatMap(workspace=>workspace.tabs),durable:await window.__readImmediateSceneTaskOwners(['task-0','task-1','task-2']),proof:structuredClone(window.__immediateSceneCacheProof),sends:structuredClone(window.__task2.sends)}));
+  assert.deepEqual(final.jobs.map(job=>job.sourceSnapshot),capturedSources,'All captured source bytes, settings and owner identities stay exact');
+  assert.deepEqual(final.jobs.map(job=>job.state),['completed','completed']); assert.equal(final.sends.length,2);
+  assert.equal(new Set(final.tabs.map(tab=>tab.id)).size,3); assert.equal(final.tabs.length,3);
+  for (const original of baseline) {
+    const tab=final.tabs.find(tab=>tab.id===original.id);
+    assert.equal(tab.generated.length,original.generated.length+1); assert.equal(new Set(tab.generated.map(item=>item.id)).size,1);
+    assert.deepEqual(tab.attachments,original.attachments,'Full original normalized attachment fields and raw bytes remain exact');
+    assert.equal(tab.generated[0].sceneResult.valid,true); assert.equal(tab.generated[0].sceneResult.supported,true);
+  }
+  for (const owner of final.durable) {
+    assert.deepEqual(owner.tab,final.tabs.find(tab=>tab.id===owner.taskId),'Whole owner task and every candidate field are durably identical');
+    const captured=capturedSources.find(source=>source.owner.taskId===owner.taskId);
+    if(captured && owner.batchOwnerPresent && owner.batchOwner!=null) assert.deepEqual(owner.batchOwner,captured.owner,'Compare only an actually stored batch identity; absence remains observed absence');
+  }
+  assert.deepEqual(final.tabs.find(tab=>tab.id==='task-2').generated,warm.tab.generated,'The unselected warm owner keeps its complete original native history');
+  fs.writeFileSync(path.join(evidence,'real-cache-batch-final.json'),JSON.stringify(final,null,2));
+  await page.evaluate(()=>window.__restoreImmediateSceneCacheObservation());
+  await page.reload({waitUntil:'networkidle'}); await page.locator('#ai-image-install-open').click();
+  await page.waitForFunction(()=>window.__task2Manager.workspaceBatchState().length===2&&window.__task2Manager.workspaceBatchState().every(job=>job.state==='completed'));
+  for (const id of ['task-0','task-1','task-2']) await selectImmediateSceneTask(page,id);
+  const reopened=await page.evaluate(async()=>({jobs:window.__task2Manager.workspaceBatchState(),tabs:(await window.__task2Manager.sharingSnapshot()).workspaces.flatMap(workspace=>workspace.tabs),sends:structuredClone(window.__task2.sends)}));
+  assert.deepEqual(reopened.jobs,final.jobs,'Reload preserves the entire completed journal and exact owners');
+  assert.deepEqual(reopened.tabs.map(tab=>tab.id).sort(),final.tabs.map(tab=>tab.id).sort());
+  for (const tab of final.tabs) assert.deepEqual(reopened.tabs.find(item=>item.id===tab.id),tab,'Reselect and reload preserve every complete task/candidate field');
+  assert.equal(reopened.sends.length,0,'Restoring completed cached/transport rows never replays a provider request');
+  fs.writeFileSync(path.join(evidence,'real-cache-batch-reload.json'),JSON.stringify(reopened,null,2));
+  assert.deepEqual(errors,[]);
+});
+
+for (const engine of ['chromium','webkit']) test('source-free workspaces expose no physical send; local motif router/compiler component is valid in ' + engine,{timeout:120000},async context=>{
+  const evidence=path.join(evidenceRoot,engine,'source-free-ui-and-local-component'); fs.mkdirSync(evidence,{recursive:true});
+  const {page,errors,baseline:initial}=await immediateSceneFixture(context,2,evidence,engine);
+  page.on('dialog',async dialog=>{assert.equal(dialog.type(),'confirm');await dialog.accept();});
+  const request='한반도 물리 해안선 지도를 그려 줘';
+  // Visit both real owners before the exact baseline, retaining every original
+  // field while allowing the application's normal first-open initialization.
+  for (const id of ['task-0','task-1']) await selectImmediateSceneTask(page,id);
+  const canonical=await page.evaluate(async()=>(await window.__task2Manager.sharingSnapshot()).workspaces.flatMap(workspace=>workspace.tabs));
+  assert.equal(canonical.length,2); assert.equal(new Set(canonical.map(tab=>tab.id)).size,2);
+  for(const tab of initial) assertEveryOriginalAttachmentField(canonical.find(item=>item.id===tab.id),tab);
+  assert.ok(canonical.every(tab=>tab.generated.length===0&&tab.selectedCandidateId===null&&tab.outputEngine==='asset'&&tab.imageLabelWorkflow.explicit===true));
+  const deletionReceipts=[];
+  const inspectPhysicalActions=async()=>{
+    const actions=[];
+    for(const selector of ['[data-ai-send]','[data-ai-comments-apply]']) {
+      const buttons=page.locator('#ai-image-panel '+selector);
+      const count=await buttons.count(); assert.ok(count<=1,'One canonical action per selector in the actual active panel');
+      const observations=[];
+      for(let index=0;index<count;index++) {
+        const button=buttons.nth(index);
+        observations.push({visible:await button.isVisible(),enabled:await button.isEnabled()});
+      }
+      assert.equal(observations.filter(button=>button.visible&&button.enabled).length,0,'Source-free empty stage has no available physical action: '+selector);
+      actions.push({selector,count,observations});
+    }
+    assert.equal(await page.locator('#ai-image-panel [data-ai-input]').isVisible(),false);
+    assert.equal(await page.locator('#ai-image-panel').getAttribute('data-ai-stage'),'empty');
+    assert.equal(await page.evaluate(()=>window.__task2.sends.length),0);
+    assert.equal(await page.evaluate(()=>window.__task2Manager.workspaceBatchState().length),0);
+    return actions;
+  };
+  for(const id of ['task-0','task-1']) {
+    await selectImmediateSceneTask(page,id);
+    // Pin a real user-chosen layout before deletion. Removing the source must
+    // not change zoom/layout, unrelated owner fields, history or settings.
+    const compare=page.locator('#ai-image-panel [data-ai-layout-mode="side-by-side"]');
+    assert.equal(await compare.count(),1); assert.equal(await compare.isVisible(),true); assert.equal(await compare.isEnabled(),true); await compare.click();
+    const settings=page.locator('#ai-image-panel [data-ai-side-tab="comments"]');
+    assert.equal(await settings.isVisible(),true); await settings.click();
+    const owner=await page.evaluate(()=>window.__task2Manager.activeExamTask()); assert.equal(owner.taskId,id);
+    const before=await page.evaluate(async()=>(await window.__task2Manager.sharingSnapshot()).workspaces.flatMap(workspace=>workspace.tabs));
+    const prior=before.find(tab=>tab.id===id);
+    assert.equal(prior.attachments.length,1); assert.equal(prior.generated.length,0);
+    assert.equal(prior.workbenchViewState.layout,'side-by-side');
+    assert.equal(prior.workbenchViewState.selectedSourceId,prior.attachments[0].id);
+    assert.equal(prior.commentViewState.selected,null); assert.equal(prior.commentViewState.tab,'comments');
+    const input=page.locator('#ai-image-panel [data-ai-input]'); assert.equal(await input.isVisible(),true); assert.equal(await input.isEnabled(),true); await input.fill(request);
+    const typed=await page.evaluate(async()=>(await window.__task2Manager.sharingSnapshot()).workspaces.flatMap(workspace=>workspace.tabs));
+    for(const tab of before) {
+      const expected=structuredClone(tab); if(tab.id===id) expected.input=request;
+      assert.deepEqual(typed.find(item=>item.id===tab.id),expected,'Physical typing changes only the exact owned input; every peer/owner field remains exact');
+    }
+    const remove=page.locator('#ai-image-panel .ai-reference-card button[title="이미지 제거"]');
+    assert.equal(await remove.count(),1); assert.equal(await remove.isVisible(),true); assert.equal(await remove.isEnabled(),true); await remove.click();
+    await page.waitForFunction(()=>document.querySelector('#ai-image-panel')?.dataset.aiStage==='empty'&&document.querySelectorAll('#ai-image-panel .ai-reference-card').length===0);
+    assert.equal(await input.inputValue(),request); assert.equal(await remove.count(),0);
+    const sourceDeletion=await page.evaluate(async composition=>{
+      const url=new URL(window.__runtime.base+'ai-source-tasking.js'+window.__runtime.query,window.location.href);
+      if(url.origin!==window.location.origin||url.search!==window.__runtime.query)throw new Error('Source composition must use the actual canonical same-origin module');
+      const {normalizeReferenceComposition}=await import(url.href);
+      return {moduleUrl:url.href,composition:normalizeReferenceComposition(composition,[])};
+    },typed.find(tab=>tab.id===id).referenceComposition);
+    const after=await page.evaluate(async()=>(await window.__task2Manager.sharingSnapshot()).workspaces.flatMap(workspace=>workspace.tabs));
+    for(const tab of typed) {
+      const expected=structuredClone(tab);
+      if(tab.id===id) {
+        expected.attachments=[];
+        // These two dependent source fields are the exact deletion transition,
+        // not omitted/filtered fields or a generic snapshot normalizer.
+        expected.referenceComposition=sourceDeletion.composition;
+        expected.workbenchViewState.selectedSourceId='';
+      }
+      assert.deepEqual(after.find(item=>item.id===tab.id),expected,'Only source deletion and its exact source references change; the complete owner/peer task remains exact');
+    }
+    assert.deepEqual(await page.evaluate(()=>window.__task2Manager.activeExamTask()),owner,'Source removal preserves the actual controller scope and task identity');
+    const actions=await inspectPhysicalActions();
+    deletionReceipts.push({owner,before,typed,after,sourceDeletion,actions});
+  }
+  await selectImmediateSceneTask(page,'task-0');
+  await page.locator('#ai-image-panel [data-tab-id="task-1"] .ai-task-tab-select').click({modifiers:['Meta']});
+  assert.equal(await page.locator('#ai-image-panel [data-ai-selection-count]').textContent(),'2개 선택');
+  const beforeComponent=await page.evaluate(async()=>(await window.__task2Manager.sharingSnapshot()).workspaces.flatMap(workspace=>workspace.tabs));
+  assert.ok(beforeComponent.every(tab=>tab.attachments.length===0&&tab.generated.length===0&&tab.input===request));
+  for(const tab of deletionReceipts.at(-1).after) assert.deepEqual(beforeComponent.find(item=>item.id===tab.id),tab,'Physical multi-selection does not mutate a complete source-free task');
+  const selectedActions=await inspectPhysicalActions();
+  // Positive evidence is limited to actual public component APIs. This never
+  // invokes submit/runBatch, registers a candidate, primes a cache or inserts.
+  const component=await page.evaluate(async({request,references})=>{
+    const names=['ai-local-asset-router','ai-panel','ai-scene-preview'];
+    const urls=names.map(name=>new URL(window.__runtime.base+name+'.js'+window.__runtime.query,window.location.href));
+    if(urls.some(url=>url.origin!==window.location.origin||url.search!==window.__runtime.query))throw new Error('Local component imports must retain the actual canonical same-origin query');
+    const [router,panel,preview]=await Promise.all(urls.map(url=>import(url.href)));
+    const match=router.matchLocalAssetRequest({request,mode:'diagram',references:[]});
+    const compiled=panel.compilePanelScene(match.motifRequest,{mode:'diagram',layerId:window.__integrationState.get().activeLayerId,idPrefix:'local_component'});
+    const data=preview.fastSceneToSvgDataUrl(compiled.result);
+    const svg=new DOMParser().parseFromString(decodeURIComponent(data.slice(data.indexOf(',')+1)),'image/svg+xml');
+    return {request,urls:urls.map(url=>url.href),origin:window.location.origin,moduleBase:window.__runtime.base,moduleQuery:window.__runtime.query,
+      match,compiled,svgData:data,svgRoot:svg.documentElement.localName,svgParseErrors:svg.querySelectorAll('parsererror').length,
+      withOriginalSource:router.matchLocalAssetRequest({request,mode:'diagram',references}),
+      wrongMode:router.matchLocalAssetRequest({request,mode:'physics',references:[]}),
+      qualification:'Actual router/compiler/renderer component APIs only; no singleton UI generation, batch completion, cache hit or provider execution is established.'};
+  },{request,references:deletionReceipts.flatMap(receipt=>receipt.typed.find(tab=>tab.id===receipt.owner.taskId).attachments)});
+  for(const url of component.urls) {
+    const parsed=new URL(url); assert.equal(parsed.origin,component.origin); assert.equal(parsed.search,component.moduleQuery);
+    assert.ok(parsed.pathname.startsWith(component.moduleBase));
+  }
+  assert.equal(component.match.matched,true);
+  assert.equal(component.compiled.expansionError,null);
+  assert.equal(component.compiled.result.valid,true); assert.equal(component.compiled.result.supported,true);
+  assert.ok(component.compiled.result.objects.length>0); assert.equal(component.compiled.result.stats.outputObjects,component.compiled.result.objects.length);
+  assert.match(component.compiled.compileSource,/verified_map_outline/);
+  assert.match(component.svgData,/^data:image\/svg\+xml;charset=utf-8,/); assert.equal(component.svgRoot,'svg'); assert.equal(component.svgParseErrors,0);
+  assert.equal(component.withOriginalSource.matched,false); assert.equal(component.withOriginalSource.reason,'references-present');
+  assert.equal(component.wrongMode.matched,false); assert.equal(component.wrongMode.reason,'diagram-mode-only');
+  const afterComponent=await page.evaluate(async()=>({tabs:(await window.__task2Manager.sharingSnapshot()).workspaces.flatMap(workspace=>workspace.tabs),sends:structuredClone(window.__task2.sends),jobs:window.__task2Manager.workspaceBatchState()}));
+  assert.deepEqual(afterComponent.tabs.map(tab=>tab.id).sort(),beforeComponent.map(tab=>tab.id).sort());
+  for(const tab of beforeComponent) assert.deepEqual(afterComponent.tabs.find(item=>item.id===tab.id),tab,'Component calls leave every complete workspace task/history/source/owner field unchanged');
+  assert.deepEqual(afterComponent.sends,[]); assert.deepEqual(afterComponent.jobs,[]);
+  assert.equal(await page.locator('#ai-image-panel .ai-generated-card').count(),0);
+  await inspectPhysicalActions();
+  fs.writeFileSync(path.join(evidence,'source-free-ui-and-local-component.json'),JSON.stringify({canonical,deletionReceipts,selectedActions,beforeComponent,component,afterComponent,
+    singletonUiGenerationEstablished:false,positiveLocalBatchEstablished:false},null,2));
+  assert.deepEqual(errors,[]);
+});

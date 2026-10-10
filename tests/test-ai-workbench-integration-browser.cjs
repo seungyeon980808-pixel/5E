@@ -290,7 +290,40 @@ async function currentPrimaryAction(page) {
 
 const active = '#ai-image-panel';
 async function chooseModel(page, choice) { await page.locator(`${active} [data-ai-setting-key="model"] [data-ai-model-choice="${choice}"]`).click(); }
-async function setting(page, key, value) { await page.locator(`${active} [data-ai-setting-key="${key}"] [data-ai-setting-value="${value}"]`).click(); }
+async function setting(page, key, value) {
+  const contract = await page.evaluate(async ({ key, value }) => {
+    const panel = document.querySelector('#ai-image-panel');
+    const snapshot = await window.__task2Manager.sharingSnapshot();
+    const workspace = snapshot.workspaces[snapshot.activeWorkspace];
+    const tab = workspace?.tabs.find(tab => tab.id === workspace.activeTaskTabId);
+    if (!tab) throw new Error('Actual active workspace and task are required');
+    const selectedId = panel.dataset.aiSelectedCandidateId;
+    const item = tab.generated.find(item => item.id === selectedId);
+    const { isHistoricalPngLocalResult, canChooseLocalOutput } = await import(window.__runtime.base + 'ai-output-processing.js' + window.__runtime.query);
+    // Empty source and historical candidate are distinct real controller owners.
+    // A modern/bound result cannot be reclassified into either settings branch.
+    const source = !selectedId && tab.generated.length === 0;
+    if (!source && (!item || !isHistoricalPngLocalResult(item))) {
+      throw new Error('Local settings require a genuine empty source or historical PNG candidate');
+    }
+    return { taskId: tab.id, selectedId, source, historical: Boolean(item && isHistoricalPngLocalResult(item)),
+      allowed: canChooseLocalOutput(item || null, key, value, { mode: document.documentElement.dataset.mode,
+        busy: panel.dataset.aiBusy === 'true', readOnly: panel.dataset.aiSharingMode === 'view', separationMode: tab.separationMode }),
+      selector: source ? '[data-ai-compact-settings]' : '[data-ai-legacy-result-settings]' };
+  }, { key, value });
+  assert.equal(contract.allowed, true, 'The actual output eligibility/controller permits this choice');
+  assert.equal(contract.source !== contract.historical, true, 'Exactly one authentic settings contract applies');
+  const owner = page.locator(`${active} ${contract.selector}`);
+  assert.equal(await owner.count(), 1, 'One actual settings owner');
+  assert.equal(await owner.isVisible(), true, 'The current source or historical settings owner is physically visible');
+  const button = owner.locator(`[data-ai-setting-key="${key}"] [data-ai-setting-value="${value}"]`);
+  assert.equal(await button.count(), 1, 'One actual exposed choice');
+  assert.equal(await button.isVisible(), true, 'No hidden native/legacy choice is used');
+  assert.equal(await button.isEnabled(), true, 'The real controller enables the exposed choice');
+  await button.click();
+  const native = key === 'background' ? '[data-ai-background-policy]' : '[data-ai-separation-mode]';
+  assert.equal(await page.locator(`${active} ${native}`).inputValue(), value, 'The visible setting delegates to the original native controller');
+}
 async function refreshModels(page) {
   await page.click(`${active} [data-ai-connection-open]`);
   await page.locator(`${active} [data-ai-connection-dialog][open] [data-ai-model-refresh]`).click();

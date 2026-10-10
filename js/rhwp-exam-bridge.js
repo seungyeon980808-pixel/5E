@@ -364,7 +364,15 @@ export class RhwpExamBridge {
 
   insertAt(target, figure) {
     if (!target || target.generation !== this.generation || target.revision !== this.revision) throw new Error('문서가 변경되었습니다. 삽입할 위치를 다시 선택해주세요.');
-    this.input.cursor.moveTo(target.position);
+    const input = this.input;
+    // Placement installs a confirmed caret target. Retire the previous table
+    // gesture so its screen-space handles cannot consume the next picture click.
+    if (input.cursor.isInTableObjectSelection()) {
+      input.cursor.exitTableObjectSelection();
+      input.tableObjectRenderer?.clear();
+      this.deps.eventBus.emit('table-object-selection-changed', false);
+    }
+    input.cursor.moveTo(target.position);
     return this.insertFigure(figure);
   }
 

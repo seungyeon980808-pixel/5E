@@ -19,11 +19,23 @@ const controlledHarness = harness.replace("separationMode: 'off',", "separationM
 const fixture = new Function('require', 'root', 'fs', 'path', 'assert', 'chromium', 'webkit', controlledHarness + '; return requestBrowserFixture;')(require, root, fs, path, assert, chromium, webkit);
 // Original one-frame source drawing/observation for the real first workflow.
 const modernHarness = controlledHarness.replace('draw.strokeRect(40, 50, 100, 180); draw.strokeRect(200, 50, 100, 180); draw.strokeRect(360, 50, 100, 180);', 'draw.strokeRect(40, 50, 420, 280);');
-const modernFixture = new Function('require', 'root', 'fs', 'path', 'assert', 'chromium', 'webkit', modernHarness + '; return requestBrowserFixture;')(require, root, fs, path, assert, chromium, webkit);
+const protectedModernHarness = modernHarness.replace('  const entryReceipt = await inspectEntry', `  const processingHooks=[];
+  for (const [file, name, entry] of [['ai-separated-assets.js','prepareSeparatedAssets','automatic'],['ai-editable-assets.js','prepareEditableAssets','manual']]) {
+    await page.route('**/js/'+file+'*', route => {
+      const source=fs.readFileSync(path.join(root,'js',file),'utf8'),seam='export async function '+name+'(';
+      assert.equal(source.split(seam).length-1,1,'Real '+name+' observation seam occurs once');
+      const body=source.replace(seam,'async function observedOriginal'+name+'(')+'\\nexport async function '+name+'(...args) { (window.__localSeparationCalls ||= []).push({entry:'+JSON.stringify(entry)+',candidateId:document.querySelector("#ai-image-panel")?.dataset.aiSelectedCandidateId}); return observedOriginal'+name+'(...args); }';
+      processingHooks.push({file,entry,requestUrl:route.request().url(),loadIndex:processingHooks.length+1,sourceSHA256:require('node:crypto').createHash('sha256').update(source).digest('hex'),servedSHA256:require('node:crypto').createHash('sha256').update(body).digest('hex'),originalFunctionRetained:true});
+      write(evidence,'actual-processing-source-loads.json',processingHooks);
+      return route.fulfill({contentType:'text/javascript',body});
+    });
+  }
+  const entryReceipt = await inspectEntry`);
+const modernFixture = new Function('require', 'root', 'fs', 'path', 'assert', 'chromium', 'webkit', 'write', protectedModernHarness + '; return requestBrowserFixture;')(require, root, fs, path, assert, chromium, webkit, write);
 const panel = '#ai-image-panel';
 const background = `${panel} select[data-ai-background-policy]`;
 const separation = `${panel} select[data-ai-separation-mode]`;
-const write = (dir, name, value) => fs.writeFileSync(path.join(dir, name), JSON.stringify(value, null, 2));
+function write(dir,name,value){fs.writeFileSync(path.join(dir,name),JSON.stringify(value,null,2));}
 
 // Current UI choices delegate through initAISettingsPanel to the unchanged
 // native controller. Never select a hidden native control or invent an option.
@@ -316,8 +328,9 @@ for (const engine of ['chromium', 'webkit']) {
 }
 
 for (const engine of ['chromium', 'webkit']) {
-  test(`${engine}: fixed source workflow records three stages and keeps the actual generated RAW alpha`, { timeout: 90000 }, async t => {
-    const evidence = path.join(evidenceRoot, engine, 'modern-first-raw'); fs.mkdirSync(evidence, { recursive: true });
+ for(const sourceSeparation of ['off','auto']) {
+  test(`${engine}: fixed source workflow records three stages and keeps the actual generated RAW alpha (${sourceSeparation})`, { timeout: 90000 }, async t => {
+    const evidence = path.join(evidenceRoot, engine, 'modern-first-raw-'+sourceSeparation); fs.mkdirSync(evidence, { recursive: true });
     process.env.TASK2_ENGINE = engine;
     const { page, errors } = await modernFixture(t, 2, evidence, { initialGeneration: true });
     const before = await page.evaluate(async () => {
@@ -333,6 +346,7 @@ for (const engine of ['chromium', 'webkit']) {
     assert.equal(await page.locator(`${panel} [data-ai-setting-value="all-near-white"]:visible`).count(), 0,
       'The fixed source UI intentionally omits interior-white removal');
     await chooseExposedOutputSetting(page, evidence, 'background', 'connected');
+    if(sourceSeparation==='auto')await chooseExposedOutputSetting(page,evidence,'objects','auto');
     await page.evaluate(() => {
       const panel = document.querySelector('#ai-image-panel');
       window.__modernWorkflowDone = new Promise((resolve, reject) => {
@@ -385,7 +399,7 @@ for (const engine of ['chromium', 'webkit']) {
       const actualImage = document.querySelector('#ai-image-panel .is-ai-active-candidate .ai-preview-stage > img');
       const generation = window.__task2.generationSends[0];
       const attachment = generation.payload.attachments[0];
-      return { stages:window.__task2.sends.map(send => send.stage), generations:window.__task2.generationSends.length,
+      return { id:candidate.id,data:candidate.data,separationMode:tab.separationMode, stages:window.__task2.sends.map(send => send.stage), generations:window.__task2.generationSends.length,
         purposes:window.__task2.sends.map(send => send.payload.purpose), text:generation.payload.text,
         approvedPrefixRetained:generation.payload.text.startsWith(APPROVED_FIRST_PROMPT),
         approvedPromptSha256:await imageLabelDigest(APPROVED_FIRST_PROMPT), generationHarness:candidate.workflowMetrics?.generationHarness,
@@ -396,7 +410,7 @@ for (const engine of ['chromium', 'webkit']) {
         raw:await pixels(window.__task2.modified), stored:await pixels(candidate.data), visible:await pixels(actualImage.src),
         workflow:candidate.imageLabelWorkflow, reviewState:candidate.reviewState, counts:Object.fromEntries(tabs.map(tab=>[tab.id,tab.generated.length])),
         historicalStillOriginal:tabs.find(tab=>tab.id==='task-1').generated[0].data===window.__task2.original,
-        processing:window.__outputProcessCalls || [], legacyVisible:document.querySelector('[data-ai-legacy-result-settings]').hidden===false };
+        processing:window.__outputProcessCalls || [], separationCalls:window.__localSeparationCalls || [], legacyVisible:document.querySelector('[data-ai-legacy-result-settings]').hidden===false };
     });
     write(evidence, 'actual-modern-raw.json', { before, metrics, result, errors,
       provenance:'Real first workflow with parent controlled local transport; no provider quality claim. Encoded RAW comes from its actual generation event.' });
@@ -423,8 +437,11 @@ for (const engine of ['chromium', 'webkit']) {
     assert.deepEqual(result.counts, {'task-0':1,'task-1':1});
     assert.equal(result.historicalStillOriginal, true); assert.equal(result.legacyVisible, false);
     assert.equal(result.processing.length, before.processing, 'No local result transform may touch any modern pending or completed RAW');
+    assert.equal(result.separationMode,sourceSeparation);assert.deepEqual(result.separationCalls,[],'Modern auto cannot enter local automatic/manual segmentation');
+    if(sourceSeparation==='auto')await qualifyModernAutoRaw(page,evidence,result);
     assert.deepEqual(errors, []); await page.screenshot({path:path.join(evidence,'modern-first-raw.png')});
   });
+ }
 
   test(`${engine}: historical Lite keeps local binary controls and real mode switch restores Pro options`, { timeout:90000 }, async t => {
     const evidence=path.join(evidenceRoot,engine,'legacy-lite-pro'); fs.mkdirSync(evidence,{recursive:true});
@@ -476,4 +493,144 @@ for (const engine of ['chromium', 'webkit']) {
     write(evidence,'actual-mode-contract.json',{pro,lite,restored,preservation,errors});
     await page.screenshot({path:path.join(evidence,'restored-pro.png')});
   });
+}
+
+
+async function waitModernSignal(page,source,arg,label) {
+  return page.evaluate(({source,arg,label})=>new Promise((resolve,reject)=>{
+    const predicate=(0,eval)('('+source+')');let timer,ended=false;
+    const finish=error=>{if(ended)return;ended=true;observer.disconnect();document.removeEventListener('load',check,true);clearTimeout(timer);error?reject(error):resolve();};
+    const check=()=>{try{if(predicate(arg))finish();}catch(error){finish(error);}};
+    const observer=new MutationObserver(check);observer.observe(document,{subtree:true,childList:true,attributes:true});document.addEventListener('load',check,true);
+    timer=setTimeout(()=>finish(new Error('Actual modern '+label+' deadline')),15000);check();
+  }),{source:source.toString(),arg,label});
+}
+async function modernRawObservation(page,phase,expected) {
+  return page.evaluate(async({phase,expected})=>{
+    const snapshot=await window.__task2Manager.sharingSnapshot(),tab=snapshot.workspaces.flatMap(w=>w.tabs).find(tab=>tab.id==='task-0'),candidate=tab?.generated.find(item=>item.id===expected.id);
+    if(!candidate)throw new Error('Actual durable modern candidate/owner is required');
+    const image=document.querySelector('#ai-image-panel .is-ai-active-candidate .ai-preview-stage > img');
+    if(!image)throw new Error('Actual selected preview is required');await image.decode();
+    const canvas=document.createElement('canvas');canvas.width=image.naturalWidth;canvas.height=image.naturalHeight;const context=canvas.getContext('2d');context.drawImage(image,0,0);
+    const rgba=context.getImageData(0,0,canvas.width,canvas.height).data;
+    const {imageLabelDigest}=await import(window.__runtime.base+'ai-image-label-run.js'+window.__runtime.query);
+    const keys=['imageLabelWorkflow','sourceSha256','candidateSha256','planSha256','sourceFrame','candidateFrame','sourceLabelPlan','labelPlan','targetPlacement','reviewReport','reviewState','scopedEditHistory'];
+    return {phase,url:location.href,selected:document.querySelector('#ai-image-panel').dataset.aiSelectedCandidateId,taskId:tab.id,data:candidate.data,digest:await imageLabelDigest(candidate.data),
+      bindings:Object.fromEntries(keys.map(key=>[key,candidate[key]])),separationMode:tab.separationMode,visibleData:image.src,
+      pixels:{width:canvas.width,height:canvas.height,rgbaHash:[...new Uint8Array(await crypto.subtle.digest('SHA-256',rgba))].map(v=>v.toString(16).padStart(2,'0')).join(''),alpha:[rgba[3],rgba[(100*canvas.width+80)*4+3]]},
+      outputCalls:window.__outputProcessCalls||[],separationCalls:window.__localSeparationCalls||[],sends:window.__task2.sends.length,generationSends:window.__task2.generationSends.length,
+      groupsDisabled:document.querySelector('[data-ai-editable-groups]').disabled,groupState:document.querySelector('[data-ai-editable-groups]').dataset.aiSeparationState,
+      historicalData:snapshot.workspaces.flatMap(w=>w.tabs).find(tab=>tab.id==='task-1').generated[0].data};
+  },{phase,expected:{id:expected.id}});
+}
+async function qualifyModernAutoRaw(page,evidence,expected) {
+  const receipts=[];
+  const observe=async(phase,afterReload=false)=>{
+    await waitModernSignal(page,id=>{
+      const panel=document.querySelector('#ai-image-panel'),image=panel?.querySelector('.is-ai-active-candidate .ai-preview-stage > img');
+      return panel?.dataset.aiBusy==='false'&&panel.dataset.aiSelectedCandidateId===id&&image?.complete&&image.naturalWidth;
+    },expected.id,phase+' owner/decode');
+    const actual=await modernRawObservation(page,phase,expected);write(evidence,phase+'.json',actual);await page.screenshot({path:path.join(evidence,phase+'.png')});receipts.push(actual);
+    assert.equal(actual.taskId,'task-0');assert.equal(actual.selected,expected.id);assert.equal(actual.separationMode,'auto');
+    assert.equal(actual.data,expected.data);assert.equal(actual.visibleData,expected.data);assert.equal(actual.digest,expected.storedDigest);assert.deepEqual(actual.pixels,expected.raw);
+    assert.deepEqual(actual.outputCalls,[]);assert.deepEqual(actual.separationCalls,[]);assert.equal(actual.groupsDisabled,true);assert.equal(actual.groupState,'');
+    assert.equal(actual.sends,afterReload?0:3);assert.equal(actual.generationSends,afterReload?0:1);
+    if(receipts.length>1){assert.deepEqual(actual.bindings,receipts[0].bindings);assert.equal(actual.historicalData,receipts[0].historicalData);}
+    return actual;
+  };
+  await observe('auto-completed');
+  await page.locator('#ai-image-panel [data-tab-id="task-1"] .ai-task-tab-select:visible').click();
+  await waitModernSignal(page,()=>document.querySelector('#ai-image-panel').dataset.aiSelectedCandidateId==='candidate-1',null,'historical owner selection');
+  await page.locator('#ai-image-panel [data-tab-id="task-0"] .ai-task-tab-select:visible').click();await observe('auto-reselected');
+  const checkpoint=await page.evaluate(()=>window.__task2Manager.checkpointForClose());write(evidence,'actual-auto-checkpoint.json',checkpoint);assert.equal(checkpoint.recovered,true);
+  await observe('auto-checkpointed');
+  const originalUrl=page.url();await page.reload({waitUntil:'domcontentloaded'});assert.equal(page.url(),originalUrl);
+  await waitModernSignal(page,()=>Boolean(window.__task2Manager)&&Boolean(document.querySelector('#ai-image-panel [data-ai-send]')),null,'canonical manager initialization');
+  if(!await page.locator('#ai-image-panel').isVisible())await page.locator('#ai-image-install-open').click();
+  await observe('auto-reloaded',true);
+  assert.match(expected.id, /^[A-Za-z0-9_-]+$/, 'Exact controlled candidate identity');
+  const selectedCard=page.locator('#ai-image-panel .is-ai-active-candidate[data-ai-candidate-id="'+expected.id+'"]');
+  const saveButton=page.locator('#ai-image-panel .ai-output-actions > [data-ai-save-selected]');
+  const saveContract=await page.evaluate(id=>{
+    const panel=document.querySelector('#ai-image-panel');
+    const cards=[...panel.querySelectorAll('.is-ai-active-candidate[data-ai-candidate-id]')];
+    const card=cards.find(card=>card.dataset.aiCandidateId===id),button=panel.querySelector('.ai-output-actions > [data-ai-save-selected]');
+    const candidateHandler=card?.querySelector('[data-ai-save-candidate]');
+    const rect=button?.getBoundingClientRect(),ancestors=[];
+    for(let node=button;node&&node!==panel;node=node.parentElement){const css=getComputedStyle(node);ancestors.push({tag:node.localName,className:node.className,hidden:node.hidden,display:css.display,visibility:css.visibility});}
+    return {url:location.href,selectedId:panel.dataset.aiSelectedCandidateId,busy:panel.dataset.aiBusy,
+      selectedCards:cards.map(card=>card.dataset.aiCandidateId),cardConnected:Boolean(card?.isConnected),buttonConnected:Boolean(button?.isConnected),
+      disabled:button?.disabled,candidateHandlerConnected:Boolean(candidateHandler?.isConnected),
+      candidateHandlerCount:card?.querySelectorAll('[data-ai-save-candidate]').length,candidateHandlerDisabled:candidateHandler?.disabled,
+      rect:rect?{x:rect.x,y:rect.y,width:rect.width,height:rect.height}:null,ancestors,
+      footerSaveCount:panel.querySelectorAll('[data-ai-save-selected]').length};
+  },expected.id);
+  write(evidence,'actual-auto-save-ui-contract.json',saveContract);
+  assert.equal(saveContract.selectedId,expected.id);assert.equal(saveContract.busy,'false');
+  assert.deepEqual(saveContract.selectedCards,[expected.id]);assert.equal(saveContract.cardConnected,true);assert.equal(saveContract.buttonConnected,true);
+  assert.equal(await selectedCard.count(),1,'Exactly one live selected candidate owns PNG saving');
+  assert.equal(saveContract.footerSaveCount,1,'Exactly one selected-result save entry belongs to the active workbench');
+  assert.equal(saveContract.candidateHandlerConnected,true,'The selected live card retains its original save controller');
+  assert.equal(saveContract.candidateHandlerCount,1);assert.equal(saveContract.candidateHandlerDisabled,false);
+  assert.equal(await saveButton.count(),1,'Exactly one actual fixed-footer PNG save button');
+  assert.equal(await saveButton.isVisible(),true,'Actual selected PNG saving must have a physically visible UI entry');
+  assert.equal(await saveButton.isEnabled(),true,'The real PNG save controller must be enabled');
+  // Physically click only the visible fixed-footer action. The unchanged product
+  // handler forwards to its selected card's hidden controller; the test never
+  // invokes a hidden click/API. Require the real browser download and disk file.
+  const [download]=await Promise.all([page.waitForEvent('download'),saveButton.click()]);
+  assert.match(download.suggestedFilename(), /\.png$/i, 'The actual download is a PNG file');
+  const pngPath=path.join(evidence,'modern-auto-actual-save.png');await download.saveAs(pngPath);
+  const savedBytes=fs.readFileSync(pngPath),expectedBytes=Buffer.from(expected.data.split(',')[1],'base64');
+  write(evidence,'actual-auto-save-file.json',{path:pngPath,bytes:savedBytes.length,sha256:require('node:crypto').createHash('sha256').update(savedBytes).digest('hex'),expectedBytes:expectedBytes.length,expectedSHA256:require('node:crypto').createHash('sha256').update(expectedBytes).digest('hex')});
+  assert.deepEqual(savedBytes,expectedBytes,'Actual Save retains every encoded RAW PNG byte');
+  const savedSHA256=require('node:crypto').createHash('sha256').update(savedBytes).digest('hex');
+  assert.equal(savedSHA256,require('node:crypto').createHash('sha256').update(expectedBytes).digest('hex'),'Actual downloaded file SHA matches every captured RAW byte');
+  const savedData='data:image/png;base64,'+savedBytes.toString('base64');
+  const savedPixelProof=await page.evaluate(async data=>{
+    const image=new Image();image.src=data;await image.decode();
+    const canvas=document.createElement('canvas');canvas.width=image.naturalWidth;canvas.height=image.naturalHeight;
+    const context=canvas.getContext('2d');context.drawImage(image,0,0);const rgba=context.getImageData(0,0,canvas.width,canvas.height).data;
+    const {imageLabelDigest}=await import(window.__runtime.base+'ai-image-label-run.js'+window.__runtime.query);
+    return {digest:await imageLabelDigest(data),pixels:{width:canvas.width,height:canvas.height,
+      rgbaHash:[...new Uint8Array(await crypto.subtle.digest('SHA-256',rgba))].map(v=>v.toString(16).padStart(2,'0')).join(''),
+      alpha:[rgba[3],rgba[(100*canvas.width+80)*4+3]]}};
+  },savedData);
+  write(evidence,'actual-auto-downloaded-pixels.json',{path:pngPath,sha256:savedSHA256,...savedPixelProof});
+  assert.equal(savedPixelProof.digest,expected.storedDigest,'Downloaded file retains the accepted candidate byte digest');
+  assert.deepEqual(savedPixelProof.pixels,expected.raw,'Every decoded downloaded RGBA channel matches the real generated RAW');
+  await observe('auto-saved',true);
+  const originalObjects=await page.evaluate(()=>JSON.parse(JSON.stringify(window.__integrationState.get().objects)));
+  assert.equal(originalObjects.filter(object=>object.aiTaskId==='task-0'&&object.aiCandidateId===expected.id).length,0);
+  await page.evaluate(id=>{
+    const state=window.__integrationState,panel=document.querySelector('#ai-image-panel');
+    window.__modernAutoInsertDone=new Promise((resolve,reject)=>{
+      let timer,off;const clean=()=>{off?.();observer.disconnect();clearTimeout(timer);};
+      const check=()=>{const own=state.get().objects.filter(object=>object.aiTaskId==='task-0'&&object.aiCandidateId===id);if(own.some(object=>object.type==='image')&&panel.hidden&&panel.dataset.aiBusy==='false'){clean();resolve(own);}};
+      const observer=new MutationObserver(check);observer.observe(panel,{attributes:true});off=state.subscribe(check);
+      timer=setTimeout(()=>{clean();reject(new Error('Actual modern RAW materializer completion deadline'));},15000);check();
+    });window.__modernAutoInsertDone.catch(()=>{});
+  },expected.id);
+  await page.locator('#ai-image-panel [data-ai-insert-selected]').click();
+  const inserted=await page.evaluate(()=>window.__modernAutoInsertDone),images=inserted.filter(object=>object.type==='image');write(evidence,'actual-auto-native-insertion.json',{originalObjects,inserted});
+  assert.equal(images.length,1);assert.equal(images[0].src,expected.data);assert.equal(images[0].aiTaskId,'task-0');assert.equal(images[0].aiCandidateId,expected.id);
+  await waitModernSignal(page,id=>{
+    const owner=document.querySelector('#scene [data-id="'+CSS.escape(id)+'"]');
+    return Boolean(owner?.localName==='image'?owner:owner?.querySelector('image'));
+  },images[0].id,'actual materialized image render');
+  const insertionPixels=await page.evaluate(async id=>{
+    const owner=document.querySelector('#scene [data-id="'+CSS.escape(id)+'"]'),node=owner.localName==='image'?owner:owner.querySelector('image'),href=node.getAttribute('href');
+    const image=new Image();image.src=href;await image.decode();const canvas=document.createElement('canvas');canvas.width=image.naturalWidth;canvas.height=image.naturalHeight;const context=canvas.getContext('2d');context.drawImage(image,0,0);const rgba=context.getImageData(0,0,canvas.width,canvas.height).data;
+    const {imageLabelDigest}=await import(window.__runtime.base+'ai-image-label-run.js'+window.__runtime.query);
+    return{objectId:id,href,digest:await imageLabelDigest(href),pixels:{width:canvas.width,height:canvas.height,rgbaHash:[...new Uint8Array(await crypto.subtle.digest('SHA-256',rgba))].map(v=>v.toString(16).padStart(2,'0')).join(''),alpha:[rgba[3],rgba[(100*canvas.width+80)*4+3]]}};
+  },images[0].id);
+  write(evidence,'actual-auto-native-render.json',insertionPixels);
+  assert.equal(insertionPixels.href,expected.data);assert.equal(insertionPixels.digest,expected.storedDigest);assert.deepEqual(insertionPixels.pixels,expected.raw);
+  await page.screenshot({path:path.join(evidence,'actual-auto-native-render.png')});
+  const after=await page.evaluate(id=>({others:window.__integrationState.get().objects.filter(object=>!(object.aiTaskId==='task-0'&&object.aiCandidateId===id)),sends:window.__task2.sends.length,outputCalls:window.__outputProcessCalls||[],separationCalls:window.__localSeparationCalls||[]}),expected.id);
+  assert.deepEqual(after.others,originalObjects);assert.equal(after.sends,0);assert.deepEqual(after.outputCalls,[]);assert.deepEqual(after.separationCalls,[]);
+  // Reopen through the actual toolbar after materialization and recheck durable
+  // candidate bindings/visible pixels rather than treating an inserted ID as proof.
+  await page.locator('#ai-image-install-open').click();await observe('auto-inserted-and-reopened',true);
+  write(evidence,'auto-lifecycle.json',{receipts,checkpoint,pngPath,inserted,insertionPixels,after,combinedProviderCalls:3,combinedGenerationCalls:1,localTransforms:0});
 }

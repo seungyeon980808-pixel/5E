@@ -189,12 +189,92 @@ async function pictures(page) {
 async function doubleClick(page,index=0) {
   const position=await point(page,'image',index);await page.mouse.dblclick(position.x,position.y);
 }
+let originalEditDiagnosticSequence=0;
+// Observation only: retain the original point, real click, menu action and timeout.
+async function originalEditState(page,index,position) {
+  return page.evaluate(async ({index,position,moduleUrl})=>{
+    const frame=document.querySelector('#exam-studio iframe'),deps=frame?.contentWindow?.rhwpStudio?.plugins?.deps;
+    const rect=element=>{if(!element)return null;const r=element.getBoundingClientRect();return{x:r.x,y:r.y,w:r.width,h:r.height};};
+    const element=el=>el?{tag:el.tagName,id:el.id,className:el.getAttribute('class'),role:el.getAttribute('role'),hidden:el.hidden,
+      display:el.ownerDocument.defaultView.getComputedStyle(el).display,visibility:el.ownerDocument.defaultView.getComputedStyle(el).visibility,
+      text:el.textContent?.slice(0,160),rect:rect(el)}:null;
+    const input=deps?.getInputHandler(),control=deps?.wasm.getPageControlLayout(0).controls.filter(c=>c.type==='image')[index];
+    const ref=control?{sec:control.secIdx,ppi:control.paraIdx,ci:control.controlIdx,type:'image',pageIndex:0,
+      ...(control.cellPath?.length?{cellPath:control.cellPath}:{}),...(control.headerFooter?{headerFooter:control.headerFooter}:{})}:null;
+    const snapshot={at:performance.now(),url:location.href,bodyClass:document.body.className,
+      workspace:element(document.querySelector('#rhwp-exam-workspace')),busy:document.querySelector('#rhwp-exam-workspace')?.getAttribute('aria-busy'),
+      editBar:element(document.querySelector('#exam-edit-bar')),inline:element(document.querySelector('#exam-inline-editor')),
+      placement:element(document.querySelector('.exam-placement')),status:document.querySelector('#exam-status')?.textContent,
+      region:element(document.querySelector('#exam-picture-controls')),heading:element(document.querySelector('#exam-picture-controls .exam-region-heading')),
+      modify:element(document.querySelector('[data-picture-modify]')),selected:input?.cursor.getSelectedPictureRef(),control,ref,position,
+      frame:rect(frame),canvases:[...(frame?.contentDocument.querySelectorAll('#scroll-content canvas')||[])].map(canvas=>({
+        className:canvas.className,width:canvas.width,height:canvas.height,rect:rect(canvas),top:canvas.style.top,
+        renderedZoom:canvas.dataset.rhwpRenderedZoom})),zoom:input?.viewportManager.getZoom(),animating:input?.viewportManager.isZoomAnimating(),
+      scroll:input?{x:input.viewportManager.getScrollX(),y:input.viewportManager.getScrollY()}:null};
+    try{
+      const {RhwpExamBridge}=await import(moduleUrl);
+      // Own input prevents this observational adapter from installing resize hooks.
+      const bridge=Object.assign(Object.create(RhwpExamBridge.prototype),{editor:{element:frame},deps,revision:0});
+      Object.defineProperty(bridge,'input',{value:input});
+      snapshot.geometry=ref?bridge.figureGeometry(ref):null;snapshot.viewport=ref?bridge.figureViewport(ref):null;
+      snapshot.pictureId=ref?bridge.figureId(ref):null;
+      if(position){
+        snapshot.topmost=element(document.elementFromPoint(position.x,position.y));
+        const root=frame.getBoundingClientRect(),x=(position.x-root.x)*frame.offsetWidth/root.width-frame.clientLeft,
+          y=(position.y-root.y)*frame.offsetHeight/root.height-frame.clientTop;
+        snapshot.frameTopmost=element(frame.contentDocument.elementFromPoint(x,y));
+        const nativePoint=input.pagePointFromClientPoint(x,y);snapshot.nativePoint=nativePoint;
+        snapshot.nativeHit=nativePoint?input.findPictureAtClick(nativePoint.pageIdx,nativePoint.pageX,nativePoint.pageY):null;
+      }
+    }catch(error){snapshot.observationError={name:error.name,message:error.message};}
+    return snapshot;
+  },{index,position,moduleUrl:new URL(runtimes.get(page).moduleBase+'rhwp-exam-bridge.js'+runtimes.get(page).moduleQuery,page.url()).href});
+}
 async function originalEdit(page,index=0) {
   await idle(page);
-  const position=await point(page,'image',index);
-  await page.mouse.click(position.x,position.y);
-  await action(page,'edit');
-  await page.locator('#exam-edit-bar').waitFor({state:'visible'});
+  const position=await point(page,'image',index),observations=[];
+  const capture=async phase=>{try{observations.push({phase,state:await originalEditState(page,index,position)});}catch(error){observations.push({phase,observationError:error.message});}};
+  // Read the expected physical target without importing an adapter or hit-testing
+  // before the click. The original point and actual mouse click are unchanged.
+  const expected=await page.evaluate(index=>{
+    const deps=document.querySelector('#exam-studio iframe').contentWindow.rhwpStudio.plugins.deps;
+    const control=deps.wasm.getPageControlLayout(0).controls.filter(control=>control.type==='image')[index];
+    if(!control)throw new Error('Expected physical picture target is absent');
+    return {sec:control.secIdx,ppi:control.paraIdx,ci:control.controlIdx,type:'image',
+      cellPath:control.cellPath || [],headerFooter:control.headerFooter || null};
+  },index);
+  try{
+    await page.mouse.click(position.x,position.y);
+    await waitForState(page,expected=>{
+      const frame=document.querySelector('#exam-studio iframe'),deps=frame?.contentWindow?.rhwpStudio?.plugins?.deps;
+      const selected=deps?.getInputHandler()?.cursor.getSelectedPictureRef();
+      const key=ref=>ref?JSON.stringify([ref.sec,ref.ppi,ref.ci,(ref.cellPath || []).map(step=>[
+        step.controlIndex ?? step.controlIdx,step.cellIndex ?? step.cellIdx,step.cellParaIndex ?? step.cellParaIdx,
+      ]),ref.headerFooter || null]):null;
+      if(selected?.type!=='image'||key(selected)!==key(expected))return false;
+      const button=document.querySelector('#exam-picture-controls [data-picture-modify]');
+      if(!button||button.disabled||!button.getClientRects().length)return false;
+      for(let node=button;node;node=node.parentElement){const css=getComputedStyle(node);
+        if(node.hidden||css.display==='none'||css.visibility==='hidden'||css.visibility==='collapse')return false;}
+      return true;
+    },expected);
+    await capture('actual-picture-owner-and-controls-settled');
+    await action(page,'edit');
+    await page.locator('#exam-edit-bar').waitFor({state:'visible'});
+    await capture('original-edit-completed');
+    if(process.env.EVIDENCE_DIR){
+      const target=path.resolve(process.env.EVIDENCE_DIR),stem='original-edit-success-'+Date.now()+'-'+(++originalEditDiagnosticSequence);
+      fs.mkdirSync(target,{recursive:true});fs.writeFileSync(path.join(target,stem+'.json'),JSON.stringify({index,expected,position,observations},null,2));
+    }
+  }catch(error){
+    await capture('original-failure');
+    if(process.env.EVIDENCE_DIR){
+      const target=path.resolve(process.env.EVIDENCE_DIR),stem='original-edit-failure-'+Date.now()+'-'+(++originalEditDiagnosticSequence);
+      try{fs.mkdirSync(target,{recursive:true});fs.writeFileSync(path.join(target,stem+'.json'),JSON.stringify({index,originalError:{name:error.name,message:error.message,stack:error.stack},observations},null,2));await page.screenshot({path:path.join(target,stem+'.png')});}
+      catch(evidenceError){console.error('Original-edit diagnostic capture failed: '+evidenceError.message);}
+    }
+    throw error;
+  }
 }
 async function drawing(page,stateUrl) {return page.evaluate(async url=>{const {state}=await import(url);const s=state.get();return{activePageId:s.activePageId,objects:JSON.parse(JSON.stringify(s.objects)),pages:JSON.parse(JSON.stringify(s.pages)),undo:s.undoStack.length,viewBox:s.viewBox};},stateUrl);}
 module.exports={navigate,ready,idle,action,crop,point,place,pictures,doubleClick,originalEdit,drawing,withServer,waitForState,runtime:page=>runtimes.get(page)};

@@ -206,7 +206,40 @@ test('sixty crop pages evict decoded images without changing page geometry and r
       const observer=new MutationObserver(ready);observer.observe(stage,{subtree:true,childList:true,attributes:true,attributeFilter:['data-loaded','src']});
       timer=setTimeout(()=>{observer.disconnect();reject(new Error(`Actual crop preview ${number} decode/registration deadline`));},30000);ready();
     });
+    window.cropSnapshot = () => {
+      const stage=document.querySelector('#stage'),root=stage.querySelector('.unilib-crop-pages');
+      return {scrollTop:stage.scrollTop,canvasPage:document.querySelector('#canvas').parentElement.dataset.page,
+        activePages:[...stage.querySelectorAll('.unilib-crop-page.is-active')].map(slot=>Number(slot.dataset.page)),
+        images:stage.querySelectorAll('.unilib-crop-page img').length,loads:[...window.loads],
+        slots:[...root.children].map(slot=>({number:Number(slot.dataset.page),offset:slot.offsetTop-root.offsetTop,
+          height:slot.getBoundingClientRect().height,loaded:slot.dataset.loaded||null,
+          previews:[...slot.querySelectorAll(':scope > img')].map(image=>({complete:image.complete,width:image.naturalWidth,height:image.naturalHeight}))}))};
+    };
+    window.waitCropState = (label,condition) => new Promise((resolve,reject) => {
+      const stage=document.querySelector('#stage');let timer,ended=false;
+      const finish=(error,value)=>{if(ended)return;ended=true;observer.disconnect();stage.removeEventListener('scroll',ready);clearTimeout(timer);error?reject(error):resolve(value);};
+      const ready=()=>{try{if(condition())finish(null,window.cropSnapshot());}catch(error){finish(error);}};
+      const observer=new MutationObserver(ready);
+      observer.observe(stage,{subtree:true,childList:true,attributes:true,attributeFilter:['class','data-loaded','src']});
+      stage.addEventListener('scroll',ready);
+      timer=setTimeout(()=>finish(new Error(`Actual crop ${label} deadline: ${JSON.stringify(window.cropSnapshot())}`)),30000);ready();
+    });
+    window.waitCropOwner = number => window.waitCropState(`owner ${number}`,()=>{
+      const stage=document.querySelector('#stage'),root=stage.querySelector('.unilib-crop-pages'),slot=root.querySelector(`[data-page="${number}"]`),active=root.querySelectorAll('.is-active');
+      return slot.contains(document.querySelector('#canvas'))&&active.length===1&&active[0]===slot&&Math.abs(stage.scrollTop-(slot.offsetTop-root.offsetTop))<1;
+    });
+    window.waitCropRetired = number => window.waitCropState(`retirement ${number}`,()=>{
+      const slot=document.querySelector(`.unilib-crop-page[data-page="${number}"]`);
+      return !slot.contains(document.querySelector('#canvas'))&&!slot.dataset.loaded&&!slot.querySelector(':scope > img, :scope > .unilib-crop-page-placeholder, :scope > .unilib-crop-page-status');
+    });
+    window.scrollCropTo = number => {
+      const stage=document.querySelector('#stage'),root=stage.querySelector('.unilib-crop-pages'),slot=root.querySelector(`[data-page="${number}"]`);
+      const completed=window.waitCropOwner(number); // Arm observation before the real DOM scroll event.
+      stage.scrollTop=slot.offsetTop-root.offsetTop;
+      return completed;
+    };
   });
+  try {
   await page.evaluate(()=>window.waitCropPreview(2));
   const initialOwner=await page.evaluate(()=>({
     rows:document.querySelectorAll('.unilib-crop-page').length,
@@ -220,22 +253,58 @@ test('sixty crop pages evict decoded images without changing page geometry and r
   assert.equal(initialOwner.previews,0); assert.equal(initialOwner.loads,0,'Continuous previews never materialize the caller-owned initial page');
   const heights=await page.locator('.unilib-crop-page').evaluateAll(nodes=>nodes.map(n=>n.getBoundingClientRect().height));
   for(let n=1;n<=60;n+=4){
-    await page.evaluate(n=>{document.querySelector('#stage').scrollTop=(n-1)*400;},n);
+    const settled=await page.evaluate(async n=>{
+      // Page 5 is the first transition that makes caller page 1 an eligible
+      // neighbour. Page 9 must then retire that actual decoded preview.
+      const first=n===5?window.waitCropPreview(1):Promise.resolve(null);
+      const retired=n===9?window.waitCropRetired(1):Promise.resolve(null);
+      const [owner,firstPreview,retirement]=await Promise.all([window.scrollCropTo(n),first,retired]);
+      const decoded=n===1?null:await window.waitCropPreview(n);
+      const neighbour=n===1?null:await window.waitCropPreview(n+1);
+      return {owner,firstPreview,retirement,decoded,neighbour,after:window.cropSnapshot()};
+    },n);
+    record(`crop-scroll-${n}`,settled);
+    assert.equal(settled.owner.canvasPage,String(n),'The real onPage/activate path moves the caller canvas');
+    assert.deepEqual(settled.owner.activePages,[n]);
+    assert.ok(settled.after.images<=9,`retained ${settled.after.images} images after page ${n}`);
+    assert.deepEqual(settled.after.slots.map(slot=>slot.height),heights,'All sixty page heights survive the real transition');
     if(n===1) {
-      // Page 1's real owner is already mounted. Do not wait for a preview
-      // image that this component explicitly excludes from loadPage.
+      // The initial editable owner has no continuous preview request.
       assert.equal(await page.locator('.unilib-crop-page[data-page="1"] #canvas').count(),1);
     } else {
-      const decoded=await page.evaluate(n=>window.waitCropPreview(n),n);
+      const decoded=settled.decoded;
       assert.equal(decoded.number,n);assert.equal(decoded.width,300);assert.equal(decoded.height,400);
+      assert.equal(settled.neighbour.number,n+1);assert.equal(settled.neighbour.width,300);assert.equal(settled.neighbour.height,400);
+    }
+    if(n===5){
+      assert.equal(settled.firstPreview.number,1);assert.equal(settled.firstPreview.width,300);assert.equal(settled.firstPreview.height,400);
+      assert.equal(settled.after.loads.filter(number=>number===1).length,1,'Page 1 really decodes its first neighbour preview before eviction');
+    }
+    if(n===9){
+      const slot=settled.retirement.slots.find(slot=>slot.number===1);
+      assert.equal(slot.loaded,null);assert.deepEqual(slot.previews,[]);
+      assert.equal(settled.retirement.loads.filter(number=>number===1).length,1,'Retirement does not silently request another preview');
     }
   }
   const result=await page.evaluate(()=>({images:document.querySelectorAll('.unilib-crop-page img').length,heights:[...document.querySelectorAll('.unilib-crop-page')].map(n=>n.getBoundingClientRect().height),loads:window.loads}));record('crop-window',result);
   assert.ok(result.images<=9,`retained ${result.images} images`);assert.deepEqual(result.heights,heights);
-  await page.evaluate(()=>{document.querySelector('#stage').scrollTop=0;});
-  await page.evaluate(()=>window.waitCropPreview(1));
+  const returned=await page.evaluate(async()=>{
+    const decoded=window.waitCropPreview(1); // Arm while page 1 is still evicted.
+    const [owner,preview]=await Promise.all([window.scrollCropTo(1),decoded]);
+    return {owner,preview,after:window.cropSnapshot()};
+  });
+  assert.equal(returned.owner.canvasPage,'1');assert.deepEqual(returned.owner.activePages,[1]);
+  assert.equal(returned.preview.number,1);assert.equal(returned.preview.width,300);assert.equal(returned.preview.height,400);
+  assert.ok(returned.after.images<=9);assert.deepEqual(returned.after.slots.map(slot=>slot.height),heights);
+  record('crop-return-settled',returned);
   assert.equal(await page.evaluate(()=>window.loads.filter(n=>n===1).length),2,'The evicted page 1 preview must really reload exactly once on return');
   record('crop-return',{loads:await page.evaluate(()=>window.loads)});
+  } catch(error) {
+    const actual=await page.evaluate(()=>window.cropSnapshot()).catch(cause=>({captureError:String(cause)}));
+    record('crop-lifecycle-failure',{error:String(error.stack||error),actual});
+    await page.screenshot({path:path.join(evidence,'crop-lifecycle-failure.png')}).catch(cause=>record('crop-lifecycle-screenshot-error',{error:String(cause)}));
+    throw error;
+  }
 });
 test('browser zoom remains available outside canvas and is prevented inside canvas',async t=>{
  const page=await fixture(t,true);await page.locator('#canvas').waitFor();

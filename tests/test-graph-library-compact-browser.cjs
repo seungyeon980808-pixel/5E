@@ -4,7 +4,31 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const {chromium,webkit} = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
-const {installCropFixture,pointerOnImage} = require('./helpers/crop-loading-fixture.cjs');
+const {pointerOnImage} = require('./helpers/crop-loading-fixture.cjs');
+const crypto = require('node:crypto');
+const Module = require('node:module');
+// This component fixture supplies the same public openGraph callback as exam-library.
+// Only the helper's constructor arguments and an accepted-map observation are adapted.
+const cropHelperPath = require.resolve('./helpers/crop-loading-fixture.cjs');
+const cropHelperSource = fs.readFileSync(cropHelperPath,'utf8');
+const graphFactorySeam = '      getProvider: async () => provider, insertMaterialized: async () => {},';
+const graphFactoryReplacement = `${graphFactorySeam}
+      openGraph: async reference => {
+        const libraryUrl = new URL(moduleUrl, window.location.href);
+        const graphUrl = new URL('./graph/graph-modal.js' + libraryUrl.search, libraryUrl);
+        if (graphUrl.origin !== window.location.origin) throw new Error('Graph fixture module must remain on the owned origin');
+        (window.__graphFactoryOpenCalls ||= []).push({ moduleUrl: graphUrl.href, source: structuredClone(reference.source) });
+        return (await import(graphUrl.href)).openGraphModal(null, 'coord', { traceReference: reference });
+      },`;
+const graphObservationSeam = '  const libraryTransferHooks = [];';
+const graphObservationReplacement = "  body = replaceOnce(body, 'const acceptedAssets = new Map();', 'const acceptedAssets = new Map(); window.__graphCrops = acceptedAssets;');\n" + graphObservationSeam;
+assert.equal(cropHelperSource.split(graphFactorySeam).length-1,1,'Exact component constructor callback seam');
+assert.equal(cropHelperSource.split(graphObservationSeam).length-1,1,'Exact accepted-crop observation seam');
+const graphHelperSource = cropHelperSource.replace(graphFactorySeam,graphFactoryReplacement).replace(graphObservationSeam,graphObservationReplacement);
+const graphHelper = new Module(cropHelperPath,module); graphHelper.filename=cropHelperPath; graphHelper.paths=Module._nodeModulePaths(path.dirname(cropHelperPath));
+graphHelper._compile(graphHelperSource,cropHelperPath);
+const installGraphCropFixture=graphHelper.exports.installCropFixture;
+const graphFixtureQualification={scope:'component constructor callback plus accepted-map observation; actual main checked separately',originalHelperSHA256:crypto.createHash('sha256').update(cropHelperSource).digest('hex'),adaptedHelperSHA256:crypto.createHash('sha256').update(graphHelperSource).digest('hex'),constructorCallbackSeams:1,acceptedMapObservationSeams:1,productGraphCallbackParameterUnmodified:true,productBusinessBranchesUnmodified:true};
 const root=path.resolve(__dirname,'..');
 const out=path.resolve(process.env.EVIDENCE_DIR||'.omo/evidence/graph-editor-library-compact-20261009/library');
 assert(process.env.RELEASE_URL || process.env.PREVIEW_URL,'Owned integration server URL is required');
@@ -23,10 +47,11 @@ async function crop(page,ui,fraction=.25) {
   const errors=[];page.on('pageerror',e=>errors.push(e.message));
   const actions=[];const record=text=>actions.push(text);
   try{
-   await page.route('**/js/unified-library-ui.js?*',route=>route.fulfill({contentType:'text/javascript',body:fs.readFileSync(path.join(root,'js/unified-library-ui.js'),'utf8').replace('const acceptedAssets = new Map();','const acceptedAssets = new Map(); window.__graphCrops=acceptedAssets;').replace('const overlay = buildShell();',`openGraph=async reference=>(await import('./graph/graph-modal.js${version}')).openGraphModal(null,'coord',{traceReference:reference}); const overlay = buildShell();`)}));
-   const ui=await installCropFixture(page);
+   fs.writeFileSync(path.join(out,`${name}-graph-component-qualification.json`),JSON.stringify(graphFixtureQualification,null,2));
+   const ui=await installGraphCropFixture(page,{root,evidence:path.join(out,`${name}-crop-fixture`)});
    await crop(page,ui);
    assert(await ui.locator('[data-unilib-crop-graph]').isEnabled());
+   assert(await ui.locator('[data-unilib-crop-graph]').isVisible());
    await ui.locator('[data-unilib-crop-graph]').click();
    await page.locator('#gm-preview [data-trace-layer="source"]').waitFor();
    assert(!await ui.isVisible());assert(await page.locator('#gm-tab-coord').isVisible());
@@ -110,6 +135,9 @@ async function crop(page,ui,fraction=.25) {
    await app.setViewportSize({width:720,height:900});await app.locator('.gm-modal').screenshot({path:path.join(out,`${name}-full-app-narrow.png`)});
    await app.locator('#gm-cancel').click();await app.close();
    record('Actual full-app library registration carries graph purpose and restores the draft on Close');
+   const factoryCalls=await page.evaluate(()=>window.__graphFactoryOpenCalls);
+   assert.equal(factoryCalls.length,2,'Direct crop and retained workbench crop each use the configured public callback');
+   fs.writeFileSync(path.join(out,`${name}-graph-component-callbacks.json`),JSON.stringify(factoryCalls,null,2));
    assert.deepEqual(errors,[]);reports.push({browser:name,pass:true,providerCalls:0,actions,boxes});
   }catch(error){await page.screenshot({path:path.join(out,`${name}-failure.png`)});reports.push({browser:name,pass:false,actions,error:error.stack,errors});}
   finally{await browser.close();}
