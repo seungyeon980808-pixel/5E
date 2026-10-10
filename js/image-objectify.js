@@ -132,7 +132,7 @@ function injectObjectifyStyles() {
     .objectify-stage.is-panning { cursor:grabbing; }
     .objectify-stage canvas { position:absolute; top:0; left:0; transform-origin:0 0; }
     .objectify-tools { display:flex; flex-wrap:wrap; gap:8px; align-items:center; }
-    .objectify-tools .modal-btn.is-active { background:var(--accent); color:#fff; border-color:var(--accent); }
+    .objectify-tools .modal-btn.is-active { background:var(--control-selected-bg); color:var(--control-selected-text); border-color:var(--control-selected-border); }
     .modal-objectify .objectify-dropzone { position:absolute; inset:0; margin:0; z-index:3; display:flex; align-items:center; justify-content:center; text-align:center; padding:24px; background:#22272e; color:#adbac7; border:2px dashed #444c56; border-radius:8px; cursor:pointer; }
     .objectify-stage.has-image .objectify-dropzone { display:none; }
     .objectify-stage.is-dragover .objectify-dropzone { display:flex; background:#2d333b; border-color:var(--accent); }
@@ -680,9 +680,9 @@ export function initImageObjectify(state) {
    * 남기고 나머지는 제외한다(원하는 부분만 출력). 일회성 — 적용 후 자동으로 꺼진다. */
   function setRegionMode(on) {
     regionMode = on;
-    regionButton.style.background = on ? "var(--accent, #0969da)" : "";
-    regionButton.style.color = on ? "#fff" : "";
-    regionButton.style.borderColor = on ? "var(--accent, #0969da)" : "";
+    regionButton.style.background = on ? "var(--control-selected-bg)" : "";
+    regionButton.style.color = on ? "var(--control-selected-text)" : "";
+    regionButton.style.borderColor = on ? "var(--control-selected-border)" : "";
     if (toolHint) {
       toolHint.textContent = on
         ? "드래그로 남길 영역을 그리세요 — 그 안쪽만 남습니다 (Esc 취소)"

@@ -1,0 +1,393 @@
+{
+  "schema": "5e.graph-reconstruction/v1",
+  "variant": "cartesian",
+  "coordinateMode": "observed",
+  "source": {
+    "id": "reference-1",
+    "hash": "sha256:c0db329f3570779948a278dd97c2c4eb7c67516eecd8c897440db0b412063c7a",
+    "width": 1125,
+    "height": 436,
+    "plotBox": {
+      "x": 645,
+      "y": 78,
+      "w": 465,
+      "h": 282
+    }
+  },
+  "axisPlacement": {
+    "x": {
+      "mode": "fraction",
+      "value": 0.3957
+    },
+    "y": {
+      "mode": "fraction",
+      "value": 0
+    }
+  },
+  "axes": {
+    "x": {
+      "scale": "linear",
+      "title": "시간",
+      "unit": "s",
+      "displayTitle": "시간(s)",
+      "min": null,
+      "max": null,
+      "step": null,
+      "ticks": [
+        {
+          "value": 1,
+          "label": "1",
+          "position": 0.1763
+        },
+        {
+          "value": 2,
+          "label": "2",
+          "position": 0.3527
+        },
+        {
+          "value": 3,
+          "label": "3",
+          "position": 0.529
+        },
+        {
+          "value": 4,
+          "label": "4",
+          "position": 0.7054
+        }
+      ],
+      "orientation": "horizontal",
+      "titlePosition": {
+        "x": 0.8882,
+        "y": 0.2801
+      },
+      "titleAnchor": "middle"
+    },
+    "y": {
+      "scale": "linear",
+      "title": "변위",
+      "unit": "cm",
+      "displayTitle": "변위",
+      "min": null,
+      "max": null,
+      "step": null,
+      "ticks": [
+        {
+          "value": -2,
+          "label": "−2",
+          "position": 0.1277
+        },
+        {
+          "value": 0,
+          "label": "0",
+          "position": 0.3957
+        },
+        {
+          "value": 2,
+          "label": "2",
+          "position": 0.6631
+        }
+      ],
+      "orientation": "horizontal",
+      "titlePosition": {
+        "x": -0.0989,
+        "y": 0.9433
+      },
+      "titleAnchor": "middle"
+    }
+  },
+  "series": [
+    {
+      "id": "s1",
+      "kind": "points",
+      "axis": "y",
+      "certainty": "observed",
+      "coordinateSpace": "normalized",
+      "label": "",
+      "endLabel": "",
+      "points": [
+        {
+          "x": 0,
+          "y": 0.1277
+        },
+        {
+          "x": 0.0215,
+          "y": 0.1454
+        },
+        {
+          "x": 0.043,
+          "y": 0.1915
+        },
+        {
+          "x": 0.0667,
+          "y": 0.2872
+        },
+        {
+          "x": 0.0882,
+          "y": 0.3936
+        },
+        {
+          "x": 0.1118,
+          "y": 0.5035
+        },
+        {
+          "x": 0.1333,
+          "y": 0.5922
+        },
+        {
+          "x": 0.1548,
+          "y": 0.6454
+        },
+        {
+          "x": 0.1763,
+          "y": 0.6631
+        },
+        {
+          "x": 0.1978,
+          "y": 0.6454
+        },
+        {
+          "x": 0.2215,
+          "y": 0.5922
+        },
+        {
+          "x": 0.243,
+          "y": 0.5
+        },
+        {
+          "x": 0.2645,
+          "y": 0.3936
+        },
+        {
+          "x": 0.286,
+          "y": 0.2908
+        },
+        {
+          "x": 0.3097,
+          "y": 0.195
+        },
+        {
+          "x": 0.3312,
+          "y": 0.1418
+        },
+        {
+          "x": 0.3527,
+          "y": 0.1277
+        },
+        {
+          "x": 0.3742,
+          "y": 0.1454
+        },
+        {
+          "x": 0.3978,
+          "y": 0.195
+        },
+        {
+          "x": 0.4194,
+          "y": 0.2872
+        },
+        {
+          "x": 0.4409,
+          "y": 0.3936
+        },
+        {
+          "x": 0.4624,
+          "y": 0.5
+        },
+        {
+          "x": 0.486,
+          "y": 0.5957
+        },
+        {
+          "x": 0.5075,
+          "y": 0.6489
+        },
+        {
+          "x": 0.529,
+          "y": 0.6631
+        },
+        {
+          "x": 0.5505,
+          "y": 0.6454
+        },
+        {
+          "x": 0.5742,
+          "y": 0.5922
+        },
+        {
+          "x": 0.5957,
+          "y": 0.5
+        },
+        {
+          "x": 0.6172,
+          "y": 0.3936
+        },
+        {
+          "x": 0.6387,
+          "y": 0.2908
+        },
+        {
+          "x": 0.6624,
+          "y": 0.195
+        },
+        {
+          "x": 0.6839,
+          "y": 0.1454
+        },
+        {
+          "x": 0.7054,
+          "y": 0.1277
+        },
+        {
+          "x": 0.7247,
+          "y": 0.1454
+        }
+      ],
+      "curveStyle": "smooth",
+      "breaks": [],
+      "endpoints": [],
+      "lineStyle": "solid",
+      "strokeWidth": 0.39,
+      "markerShape": "none"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "unit-y",
+      "kind": "text",
+      "text": "(cm)",
+      "x": -0.0989,
+      "y": 0.8049,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "fontSizePx": 35,
+      "fontWeight": 400
+    },
+    {
+      "id": "guide-peak-horizontal",
+      "kind": "guide",
+      "text": "",
+      "x": 0.529,
+      "y": 0.6631,
+      "to": {
+        "x": 0,
+        "y": 0.6631
+      },
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "seriesId": "s1",
+      "pointIndex": 24,
+      "endStyle": "none"
+    },
+    {
+      "id": "guide-peak-1",
+      "kind": "guide",
+      "text": "",
+      "x": 0.1763,
+      "y": 0.6631,
+      "to": {
+        "x": 0.1763,
+        "y": 0.3957
+      },
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "vertical",
+      "seriesId": "s1",
+      "pointIndex": 8,
+      "endStyle": "none"
+    },
+    {
+      "id": "guide-peak-3",
+      "kind": "guide",
+      "text": "",
+      "x": 0.529,
+      "y": 0.6631,
+      "to": {
+        "x": 0.529,
+        "y": 0.3957
+      },
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "vertical",
+      "seriesId": "s1",
+      "pointIndex": 24,
+      "endStyle": "none"
+    },
+    {
+      "id": "guide-trough-horizontal",
+      "kind": "guide",
+      "text": "",
+      "x": 0.7054,
+      "y": 0.1277,
+      "to": {
+        "x": 0,
+        "y": 0.1277
+      },
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "seriesId": "s1",
+      "pointIndex": 32,
+      "endStyle": "none"
+    },
+    {
+      "id": "guide-trough-2",
+      "kind": "guide",
+      "text": "",
+      "x": 0.3527,
+      "y": 0.1277,
+      "to": {
+        "x": 0.3527,
+        "y": 0.3957
+      },
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "vertical",
+      "seriesId": "s1",
+      "pointIndex": 16,
+      "endStyle": "none"
+    },
+    {
+      "id": "guide-trough-4",
+      "kind": "guide",
+      "text": "",
+      "x": 0.7054,
+      "y": 0.1277,
+      "to": {
+        "x": 0.7054,
+        "y": 0.3957
+      },
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "vertical",
+      "seriesId": "s1",
+      "pointIndex": 32,
+      "endStyle": "none"
+    }
+  ],
+  "regions": [],
+  "legends": [],
+  "style": {
+    "fontSizePx": 35,
+    "labelWeight": 400,
+    "strokeWidth": 0.39,
+    "guideStyle": {
+      "strokeWidth": 0.18,
+      "dashLength": 0.9,
+      "dashGap": 0.6
+    }
+  },
+  "frame": {
+    "variant": "quadrant",
+    "arrowX": true,
+    "arrowY": true,
+    "arrowY2": false,
+    "tickTop": false,
+    "tickRight": false,
+    "arrowLength": 2.7,
+    "arrowWidth": 1.8,
+    "strokeWidth": 0.23
+  },
+  "review": []
+}

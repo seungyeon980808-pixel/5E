@@ -132,6 +132,14 @@ function runner({ env = {}, args = ["--only", "test-project-file-size-browser.cj
   return { run: module.exports.run, calls, process: fakeProcess };
 }
 
+test("runner overrides inherited exam origin with its owned combined server", async () => {
+  const instance = runner({ env: { EXAM_URL: "http://127.0.0.1:65177/" } });
+  await instance.run();
+  const suite = instance.calls.find(call => call.kind === "suite");
+  assert.equal(suite.env.EXAM_URL, origin + "/");
+  assert.equal(suite.env.EXAM_URL, suite.env.RELEASE_URL);
+});
+
 test("runner rejects invalid entries and selectors before server or browser launch", async () => {
   for (const options of [{ env: { APP_ENTRY: "/bad" } }, { args: ["--only"] }, { args: ["--only", "nonexistent.cjs"] }]) {
     const instance = runner(options);

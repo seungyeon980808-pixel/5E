@@ -41,7 +41,7 @@ function ensureStylesheet() {
   if (existing) return waitForStylesheet(existing);
   const link = document.createElement("link");
   link.rel = "stylesheet";
-  link.href = new URL("../../css/library-workbench-assignment.css?v=1.6.1-preview-emerald-polish-0921", import.meta.url).href;
+  link.href = new URL("../../css/library-workbench-assignment.css?v=1.7.0-four-session-integration", import.meta.url).href;
   link.dataset.workbenchAssignmentStyle = "";
   document.head.append(link);
   return waitForStylesheet(link);
@@ -62,7 +62,7 @@ function trapTab(event, container) {
   else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
 }
 
-export async function chooseWorkbenchAssignment({ references, host, returnFocus } = {}) {
+export async function chooseWorkbenchAssignment({ references, host, returnFocus, conversionKind: initialKind = "image", allowConversionChoice = true } = {}) {
   const items = Array.isArray(references) ? references : [];
   if (!items.length) return Promise.resolve(null);
   await ensureStylesheet();
@@ -74,6 +74,7 @@ export async function chooseWorkbenchAssignment({ references, host, returnFocus 
     overlay.className = "workbench-assignment-overlay";
     overlay.innerHTML = `<section class="workbench-assignment" role="dialog" aria-modal="true" aria-labelledby="workbench-assignment-title">
       <header><h2 id="workbench-assignment-title">AI 작업대 배정</h2><button type="button" class="workbench-assignment-icon" data-action="cancel" aria-label="닫기">×</button></header>
+      <div class="workbench-assignment-modes" role="group" aria-label="변환 목적" ${allowConversionChoice ? "" : "hidden"}><button type="button" data-conversion-kind="image">이미지 변환</button><button type="button" data-conversion-kind="graph">그래프 복원 · 편집 가능한 그래프</button></div>
       <div class="workbench-assignment-modes" role="group" aria-label="배정 방법">
         <button type="button" class="ai-action-motion" data-placement="separate"><span class="ai-action-motion-label">이미지마다 따로</span></button><button type="button" class="ai-action-motion" data-placement="together"><span class="ai-action-motion-label">한 작업대에 함께</span></button><button type="button" class="ai-action-motion" data-placement="advanced"><span class="ai-action-motion-label">직접 나누기</span></button>
       </div>
@@ -82,6 +83,7 @@ export async function chooseWorkbenchAssignment({ references, host, returnFocus 
       <p class="workbench-assignment-error" data-error role="status" aria-live="polite"></p>
       <footer><button type="button" data-action="cancel">취소</button><button type="button" class="workbench-assignment-primary ai-action-motion" data-ai-orbit="true" data-action="continue"><span class="ai-action-motion-label">AI 작업으로 보내기</span></button></footer>
     </section>`;
+    let conversionKind = initialKind === "graph" ? "graph" : "image";
     const dialog = overlay.querySelector(".workbench-assignment");
     const advanced = overlay.querySelector("[data-advanced]");
     const summary = overlay.querySelector("[data-summary]");
@@ -145,6 +147,7 @@ export async function chooseWorkbenchAssignment({ references, host, returnFocus 
     });
 
     const render = () => {
+      for (const button of overlay.querySelectorAll("[data-conversion-kind]")) button.setAttribute("aria-pressed",String(button.dataset.conversionKind === conversionKind));
       for (const button of overlay.querySelectorAll("[data-placement]")) {
         const active = button.dataset.placement === placement;
         button.setAttribute("aria-pressed", String(active));
@@ -218,6 +221,7 @@ export async function chooseWorkbenchAssignment({ references, host, returnFocus 
       const button = event.target.closest("button");
       if (!button || confirmation) return;
       error.textContent = "";
+      if (button.dataset.conversionKind) { conversionKind=button.dataset.conversionKind; render(); return; }
       if (button.dataset.action === "cancel") { finish(null); return; }
       if (button.dataset.placement && PLACEMENTS.has(button.dataset.placement)) {
         placement = button.dataset.placement;
@@ -252,7 +256,7 @@ export async function chooseWorkbenchAssignment({ references, host, returnFocus 
           const proceed = await confirmAction({ title: "미배정 이미지를 제외할까요?", message: "작업대에 넣지 않은 이미지는 이번 AI 작업에서 제외됩니다.", okText: "제외하고 계속" });
           if (!proceed || settled) return;
         }
-        finish({ placement, groups: resultGroups.map((group) => [...group]) });
+        finish({ conversionKind, placement, groups: resultGroups.map((group) => [...group]) });
       }
     });
     overlay.addEventListener("keydown", (event) => {

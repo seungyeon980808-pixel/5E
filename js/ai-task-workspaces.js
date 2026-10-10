@@ -105,22 +105,24 @@ export function createTaskPersistence({
   let dirty = false;
   let outage = false;
   let queue = Promise.resolve();
-  const captureAndQueue = ({ force = false, required = false } = {}) => {
-    if (!dirty && !force) return queue;
-    dirty = false;
-    let value;
-    let captureError;
-    try {
-      capture();
-      value = structuredClone(snapshot());
-    } catch (error) {
-      captureError = error;
-    }
+  let pendingReplacements = 0;
+  let timerEpoch = 0;
+  const cancelTimer = () => {
+    timerEpoch += 1;
+    if (timer !== null) clearTimer(timer);
+    timer = null;
+  };
+  const readSnapshot = () => {
+    capture();
+    return structuredClone(snapshot());
+  };
+  const queueWrite = (read, { required = false, apply } = {}) => {
     const write = async () => {
       try {
-        if (captureError) throw captureError;
+        const value = read();
         if (!store) throw new Error('IndexedDB unavailable');
         await store.put(value);
+        apply?.();
         outage = false;
         return { ok: true, error: null };
       } catch (error) {
@@ -137,33 +139,61 @@ export function createTaskPersistence({
       return true;
     });
   };
+  const captureAndQueue = ({ force = false, required = false } = {}) => {
+    if (!dirty && !force) return queue;
+    dirty = false;
+    // A replacement owns both the persisted snapshot and its controller install.
+    // Captures requested during that transaction must read the installed owner.
+    if (pendingReplacements) return queueWrite(readSnapshot, { required });
+    let value;
+    let captureError;
+    try {
+      value = readSnapshot();
+    } catch (error) {
+      captureError = error;
+    }
+    return queueWrite(() => {
+      if (captureError) throw captureError;
+      return value;
+    }, { required });
+  };
   const flush = () => {
-    if (timer) clearTimer(timer);
-    timer = null;
+    cancelTimer();
     return captureAndQueue();
   };
   return {
     schedule() {
       dirty = true;
-      if (timer) clearTimer(timer);
-      timer = setTimer(() => { timer = null; void captureAndQueue(); }, delayMs);
+      cancelTimer();
+      const epoch = timerEpoch;
+      timer = setTimer(() => {
+        if (epoch !== timerEpoch) return;
+        timer = null;
+        void captureAndQueue();
+      }, delayMs);
     },
     flush,
     checkpoint() {
-      if (timer) clearTimer(timer);
-      timer = null;
+      cancelTimer();
       return captureAndQueue({ force: true, required: true });
     },
+    replace(value, apply) {
+      const replacement = structuredClone(value);
+      cancelTimer();
+      dirty = false;
+      pendingReplacements += 1;
+      return queueWrite(() => replacement, { required: true, apply })
+        .finally(() => { pendingReplacements -= 1; });
+    },
     dispose() {
-      if (timer) clearTimer(timer);
-      timer = null;
+      cancelTimer();
       dirty = false;
     },
     settled: () => queue,
   };
 }
 
-export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshStart = false, serviceCap = 10 } = {}) {
+export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshStart = false, serviceCap = 10, materializeCandidate } = {}) {
   const original = document.getElementById('ai-image-panel');
   if (!original) return;
   const template = original.cloneNode(true);
@@ -201,6 +231,14 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
     let count=active.panel.querySelector('[data-ai-selection-count]');
     if(!count){count=document.createElement('output');count.dataset.aiSelectionCount='';active.panel.querySelector('[data-ai-tabs]').prepend(count);}
     count.textContent = `${selectedTasks.values().length}개 선택`;
+    const total = entries.reduce((sum, entry) => sum + entry.tabs.length, 0);
+    const selectAll = active.panel.querySelector('[data-ai-tab-select-all]');
+    if (selectAll) {
+      const allSelected = total > 0 && selectedTasks.values().length === total;
+      selectAll.disabled = !restored || clearing || !total || active.panel.dataset.aiSharingMode === 'view';
+      selectAll.setAttribute('aria-pressed', String(allSelected));
+      selectAll.classList.toggle('is-on', allSelected);
+    }
     controls.hidden = !batchIssue;
     const renderKey=JSON.stringify([batchIssue]);
     if(controls.dataset.renderKey===renderKey)return;
@@ -254,6 +292,17 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
       collectiveExportInProgress = false;
     }
   }
+  async function selectCollection() {
+    if (clearing || active?.panel.dataset.aiSharingMode === 'view') return;
+    await Promise.all(entries.map(entry => entry.controller.ready));
+    if (clearing || active?.panel.dataset.aiSharingMode === 'view') return;
+    selectedTasks.clear();
+    for (const entry of entries) for (const row of entry.tabs) {
+      selectedTasks.select(ownerFor(entry, row.dataset.tabId), { toggle: true });
+    }
+    preparedLaunch = null;
+    renderNavigation();
+  }
   async function clearCollection(confirm) {
     if (clearing) return;
     clearing = true;
@@ -286,7 +335,8 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
   function activate(entry) {
     if (!entry || entry.disposed || !entries.includes(entry)) return;
     for (const item of entries) {
-      item.panel.hidden = item !== entry;
+      if (item.controller.setWorkbenchVisible) item.controller.setWorkbenchVisible(item === entry);
+      else item.panel.hidden = item !== entry;
       item.panel.id = item === entry ? 'ai-image-panel' : `ai-workspace-${item.scope || 'legacy'}`;
     }
     active = entry;
@@ -482,8 +532,14 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
     const entry = { scope, panel, controller: null, tabs: [], ready: false, disposed: false };
     entries.push(entry);
     entry.controller = initialize(state, {
+      materializeCandidate,
       panel, clientScope: scope, desktop: createTaskBridge(window.fiveEDesktop || window.fiveEWebAI, scope),
-      exportCollection, clearCollection, launchSelected, cancelWorkspaceJob: context=>workspaceBatch.cancel(context.jobId).then(refreshBatch).catch(batchError),
+      resumeAfterLogin: async ({ signal } = {}) => {
+        if (signal?.aborted || entry.disposed) throw new DOMException('로그인이 취소되었습니다.', 'AbortError');
+        activate(entry);
+        await entry.controller.open({ reveal: true });
+      },
+      exportCollection, clearCollection, selectCollection, launchSelected, cancelWorkspaceJob: context=>workspaceBatch.cancel(context.jobId).then(refreshBatch).catch(batchError),
       newWorkspace: () => { const next = add(crypto.randomUUID()); saveRegistry(); return next.scope; },
       workspaceEmpty: () => {
         if (disposeEntry(entry)) return;
@@ -586,6 +642,7 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
         sourceKind: String(reference.sourceKind || 'auto'),
         source: reference.source === undefined ? null : structuredClone(reference.source),
         referenceRole: reference.referenceRole,
+        ...(reference.sourceTextCandidates ? {sourceTextCandidates:structuredClone(reference.sourceTextCandidates)} : {}),
       };
     });
   };
@@ -681,7 +738,7 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
     },
     close: () => active.controller.close(),
     attachReference: (...args) => active.controller.attachReference(...args),
-    openIndependentReferences: async ({ references, prompt = '', startGeneration = false, placement = 'separate', groups = null } = {}) => {
+    openIndependentReferences: async ({ references, prompt = '', startGeneration = false, placement = 'separate', groups = null, reveal = true, importId = null, conversionKind = 'image' } = {}) => {
       await ready;
       const snapshots = independentReferences(references);
       const groupedSnapshots = Array.isArray(groups)
@@ -697,8 +754,13 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
         : placement === 'together' ? [snapshots] : snapshots.map(snapshot => [snapshot]);
       if (!groupedSnapshots.length) throw new Error('열 AI 작업대가 없습니다.');
       if (placement === 'together' && snapshots.length > 10) throw new Error('한 AI 작업대는 참고 이미지를 최대 10개까지 받을 수 있습니다.');
+      const journalKey = importId ? `ai-reference-import:${importId}` : null;
+      let journal = journalKey ? await idbGet(journalKey) : null;
+      if (journal && (journal.version !== 1 || journal.scopes?.length !== groupedSnapshots.length)) {
+        throw new Error('저장된 이미지 전달 정보가 현재 작업과 다릅니다.');
+      }
       let reusable = null;
-      if (initialReferenceTargetAvailable) {
+      if (!journal && initialReferenceTargetAvailable) {
         initialReferenceTargetAvailable = false;
         if (!initialEntry.disposed && initialEntry.panel.dataset.aiSharingMode !== 'view') {
           const snapshot = await initialEntry.controller.sharingSnapshot();
@@ -706,14 +768,29 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
           if (checkpoint.recovered && !checkpoint.hasWork && snapshot.tabs.length <= 1 && snapshot.taskTabSerial <= 1) reusable = initialEntry;
         }
       }
+      if (journalKey && !journal) {
+        // Reserve stable destinations before the first pixel import. A reload
+        // between a task checkpoint and its receipt can then find that task.
+        journal = { version: 1, scopes: groupedSnapshots.map((_, index) => index === 0 && reusable ? reusable.scope : crypto.randomUUID()) };
+        await idbSet(journalKey, journal);
+      }
       const imported = [];
       const transferredReferenceIndices = [];
       for (const [index, group] of groupedSnapshots.entries()) {
-        const entry = index === 0 && reusable ? reusable : add(crypto.randomUUID(), false);
+        const entry = journal
+          ? entries.find(item => item.scope === journal.scopes[index]) || add(journal.scopes[index], false)
+          : index === 0 && reusable ? reusable : add(crypto.randomUUID(), false);
         const created = entry !== reusable;
+        saveRegistry();
         try {
           await entry.controller.ready;
-          await entry.controller.open({ references: group, placement: group.length > 1 ? 'together' : 'separate', reveal: false, prompt, startGeneration: startGeneration === true });
+          const previous = journal ? await entry.controller.sharingSnapshot() : null;
+          const previousAttachments = previous?.tabs.flatMap(tab => tab.attachments || []) || [];
+          const alreadyImported = journal && group.every(reference => previousAttachments.some(item => item.data === reference.dataUrl));
+          if (!alreadyImported) {
+            if (journal && previousAttachments.length) throw new Error('일부 이미지가 이미 저장되어 있습니다. 기존 작업대를 확인해 주세요.');
+            await entry.controller.open({ references: group, placement: group.length > 1 ? 'together' : 'separate', reveal: false, prompt, conversionKind, startGeneration: startGeneration === true });
+          }
           const snapshot = await entry.controller.sharingSnapshot();
           const attachments = snapshot.tabs.flatMap(tab => tab.attachments || []);
           const accepted = group.filter(reference => attachments.some(item => item.data === reference.dataUrl));
@@ -724,8 +801,9 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
           if (accepted.length !== group.length) throw new Error('일부 참고 이미지를 AI 작업실에 불러오지 못했습니다.');
           imported.push({ scope: entry.scope, name: group[0].name, referenceIndices });
         } catch (cause) {
-          const checkpoint = await entry.controller.checkpointForClose();
-          if (checkpoint.recovered && !checkpoint.hasWork) {
+          let checkpoint;
+          try { checkpoint = await entry.controller.checkpointForClose(); } catch { /* Keep the original storage failure. */ }
+          if (checkpoint?.recovered && !checkpoint.hasWork) {
             if (created) {
               await entry.controller.importSharingSnapshot({ key: 'workspace', tabs: [], activeTaskTabId: null, taskTabSerial: 0, imageSerial: 0 });
               disposeEntry(entry);
@@ -738,9 +816,25 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
           throw error;
         }
         saveRegistry();
-        activate(entry);
+        if (reveal) activate(entry);
       }
       return imported;
+    },
+    revealImportedReferences: async (receipt, { signal } = {}) => {
+      await ready;
+      if (signal?.aborted) throw new DOMException('로그인이 취소되었습니다.', 'AbortError');
+      if (!Array.isArray(receipt) || !receipt.length) throw new Error('이어갈 이미지 작업대를 찾지 못했습니다.');
+      const targets = receipt.map(item => {
+        if (typeof item.scope !== 'string' || item.scope !== '' && !/^[a-f0-9-]{36}$/i.test(item.scope)) throw new Error('저장된 작업대 주소가 올바르지 않습니다.');
+        return entries.find(entry => entry.scope === item.scope) || add(item.scope, false);
+      });
+      await Promise.all(targets.map(entry => entry.controller.ready));
+      if (signal?.aborted) throw new DOMException('로그인이 취소되었습니다.', 'AbortError');
+      if (targets.some(entry => !entry.tabs.length)) throw new Error('저장된 작업대에 이미지가 없습니다.');
+      saveRegistry();
+      activate(targets.at(-1));
+      await active.controller.open({ reveal: true });
+      return receipt;
     },
     prepareNewWork: async () => {
       await ready;

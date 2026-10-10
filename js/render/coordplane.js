@@ -19,10 +19,26 @@ import {
   applyDash,
   makeArrowHead,
 } from "./core.js?v=1.7.0-four-session-integration";
-import { worldXFromMathX, worldYFromMathY, worldYFromMathY2, y2RangeOf } from "../function-graph/coords.js?v=1.7.0-four-session-integration";
-import { renderGraphLabel, measureGraphLabel } from "./graph-label.js?v=1.7.0-four-session-integration";
+import { coordinateTicks, worldXFromMathX, worldYFromMathY, worldYFromMathY2, y2RangeOf, planeAsY2 } from "../function-graph/coords.js?v=1.7.0-four-session-integration";
+import { renderGraphLabel as renderBaseGraphLabel, measureGraphLabel } from "./graph-label.js?v=1.7.0-four-session-integration";
 import { renderPolyline } from "./shapes.js?v=1.7.0-four-session-integration";
 import { resolveFill, makeFillPattern } from "./fill.js?v=1.7.0-four-session-integration";
+import { EXAM_STYLE, isExamStyle, examPlaneStyle, examSeriesStyle } from '../graph/exam-style.js?v=1.7.0-four-session-integration';
+
+// Reconstructed exam labels are upright, including older saved objects which
+// predate labelStyle. Ordinary graph variables retain their existing typography.
+const graphLabelRenderer = obj => (text, options = {}) => {
+  const settings={...options,upright:!!obj.reconstruction || options.upright===true,
+    sourceHeight:options.sourceHeight ?? (obj.reconstruction?.labelSizeMode==='source-height')};
+  if (!isExamStyle(obj)) return renderBaseGraphLabel(text,settings);
+  // Measure each font at ONE canonical size. Scaling that same vector label
+  // avoids size-dependent canvas glyph metrics changing relative proportions.
+  const label=renderBaseGraphLabel(text,{...settings,x:0,y:0,size:EXAM_STYLE.label,sourceHeight:true});
+  if(!label)return label;
+  const wrap=document.createElementNS(SVG_NS,'g');
+  wrap.setAttribute('transform',`translate(${options.x||0} ${options.y||0}) scale(${(options.size||EXAM_STYLE.label)/EXAM_STYLE.label})`);
+  wrap.append(label);return wrap;
+};
 
 // dominant-baseline(구식 addName) → renderGraphLabel vAlign 매핑.
 function baselineToVAlign(b) {
@@ -138,7 +154,17 @@ function markerRadius(strokeWidth) {
   return Math.max(sw * 1.465, 0.564);
 }
 
+function graphMarker(x,y,shape,size,strokeWidth,color) {
+  const node=document.createElementNS(SVG_NS,shape==='circle'||shape==='open-circle'?'circle':shape==='square'?'rect':'path');
+  if(shape==='circle'||shape==='open-circle'){node.setAttribute('cx',x);node.setAttribute('cy',y);node.setAttribute('r',size);}
+  else if(shape==='square'){node.setAttribute('x',x-size);node.setAttribute('y',y-size);node.setAttribute('width',size*2);node.setAttribute('height',size*2);}
+  else node.setAttribute('d',shape==='cross'?`M ${x-size} ${y-size} L ${x+size} ${y+size} M ${x-size} ${y+size} L ${x+size} ${y-size}`:`M ${x-size} ${y} L ${x+size} ${y} M ${x} ${y-size} L ${x} ${y+size}`);
+  node.setAttribute('fill',shape==='open-circle'?'#fff':shape==='circle'||shape==='square'?color:'none');node.setAttribute('stroke',color);node.setAttribute('stroke-width',strokeWidth);node.setAttribute('data-graph-marker',shape);return node;
+}
+
 function renderCoordplane(obj) {
+  obj = examPlaneStyle(obj);
+  const renderGraphLabel = graphLabelRenderer(obj);
   const g = document.createElementNS(SVG_NS, "g");
   if (obj.id) g.dataset.id = obj.id;
 
@@ -171,10 +197,19 @@ function renderCoordplane(obj) {
   };
 
   // Origin in world; each axis is on-screen only if 0 lies within its range.
-  const worldX0 = worldXFromMathX(P, 0);
-  const worldY0 = worldYFromMathY(P, 0);
-  const xAxisVisible = yMin <= 0 && 0 <= yMax;   // horizontal axis at y=0 crosses the box?
-  const yAxisVisible = xMin <= 0 && 0 <= xMax;   // vertical axis at x=0 crosses the box?
+  const fractionX = obj.axisPlacement?.y?.mode === 'fraction' && Number.isFinite(obj.axisPlacement.y.value) ? Math.max(0, Math.min(1, obj.axisPlacement.y.value)) : null;
+  const fractionY = obj.axisPlacement?.x?.mode === 'fraction' && Number.isFinite(obj.axisPlacement.x.value) ? Math.max(0, Math.min(1, obj.axisPlacement.x.value)) : null;
+  const boxFrame = obj.axisVariant === 'box', logX = obj.xScale === 'log', logY = obj.yScale === 'log';
+  const worldX0 = boxFrame && fractionX !== null ? left + obj.w * fractionX : boxFrame || logX || logY ? left : fractionX !== null ? left + obj.w * fractionX : worldXFromMathX(P, obj.reconstruction?.preserveAxes ? Math.max(xMin, Math.min(xMax, 0)) : 0);
+  const worldY0 = boxFrame && fractionY !== null ? top + obj.h * (1 - fractionY) : boxFrame || logX || logY ? bottom : fractionY !== null ? top + obj.h * (1 - fractionY) : worldYFromMathY(P, obj.reconstruction?.preserveAxes ? Math.max(yMin, Math.min(yMax, 0)) : 0);
+  const xAxisVisible = boxFrame || logX || logY || fractionY !== null || obj.reconstruction?.preserveAxes || (yMin <= 0 && 0 <= yMax);   // horizontal axis at y=0 crosses the box?
+  const yAxisVisible = boxFrame || logX || logY || fractionX !== null || obj.reconstruction?.preserveAxes || (xMin <= 0 && 0 <= xMax);   // vertical axis at x=0 crosses the box?
+
+  // A box has its own frame/tick rails, independent of observed interior axes.
+  // Guides still terminate at worldX0/worldY0 (the actual axis intersection).
+  const interiorBoxAxes = boxFrame && (worldX0 !== left || worldY0 !== bottom);
+  const tickAxisX = boxFrame ? left : worldX0;
+  const tickAxisY = boxFrame ? bottom : worldY0;
 
   // ----- axis variant (형태): 십자(cross) / ㄴ자(quadrant) / ㅏ자(halfcross) / 직선(single) -----
   //   cross     : x·y 양방향 (십자, 공간좌표)
@@ -188,11 +223,12 @@ function renderCoordplane(obj) {
   const xBoth = xMin < -1e-9;                              // x축 음의 방향도 그리나?
   const yBoth = hasYArm && yMin < -1e-9;                   // y축 음의 방향도?
   const rich = !!obj.richLabels;       // 혼합 라벨러(한글정자+영문이탤릭+수식) 사용
+  const fullReconstructionGrid = !!obj.reconstruction && !!obj.gridToData && !obj.gridBounds;
   const gridToData = !!obj.gridToData; // 격자를 데이터 사각형 끝까지(꼬리 없이)
   // Positive-only forms start each axis at the origin; fall back to the box edge
   // when 0 is outside the perpendicular range so the line never begins off-canvas.
-  const xAxisLeft   = xBoth ? left   : (yAxisVisible ? worldX0 : left);
-  const yAxisBottom = yBoth ? bottom : (xAxisVisible ? worldY0 : bottom);
+  const xAxisLeft   = (fractionX !== null || xBoth) ? left   : (yAxisVisible ? worldX0 : left);
+  const yAxisBottom = (fractionY !== null || yBoth) ? bottom : (xAxisVisible ? worldY0 : bottom);
 
   // Grid/ticks/numbers at the exact box edge read as a terminal "bar" ⊢ and crowd
   // the arrow; skip them so the GRID stops one cell short of the range (평가원:
@@ -224,11 +260,26 @@ function renderCoordplane(obj) {
   const skipTickX = (v) => legacyTrim && atEdgeX(v);
   const skipTickY = (v) => (gcYpos == null && !gridToData) && atEdgeY(v);
 
+  const applyGridStyle = l => {
+    const style = obj.gridStyle;
+    if (style) {
+      if (Number.isFinite(style.strokeWidth) && style.strokeWidth > 0) l.setAttribute('stroke-width', style.strokeWidth);
+      if (Number.isFinite(style.strokeLevel)) l.setAttribute('stroke', grayHex(style.strokeLevel));
+      if (style.dashLength === 0 || style.dashGap === 0) {
+        l.removeAttribute('stroke-dasharray');
+        l.setAttribute('stroke-linecap', 'butt');
+      } else if (Number.isFinite(style.dashLength) && Number.isFinite(style.dashGap) && style.dashLength > 0 && style.dashGap > 0) {
+        l.setAttribute('stroke-dasharray', `${style.dashLength} ${style.dashGap}`);
+        l.setAttribute('stroke-linecap', 'butt');
+      }
+    }
+  };
+
   // ----- GRID (light, dashed — 평가원 style) -----
   // Every grid line spans the SAME grid rectangle so the ends line up cleanly
   // (no dashes poking into the one-cell axis margin, #3). The rectangle is bounded
   // by the outermost drawn grid lines; the origin sides (L자/직선) are the axes.
-  if (obj.showGrid) {
+  if (obj.showGrid && !logX && !logY) {
     // 격자 스타일: 대시를 더 짧게(점에 가깝게) + 간격을 넓혀 성기게(요구: 스타일 변경).
     const gdash = Math.max(sw * 1.8, 0.4);
     const addGrid = (x1, y1, x2, y2) => {
@@ -239,12 +290,16 @@ function renderCoordplane(obj) {
       l.setAttribute("stroke-width", sw * 0.5);
       l.setAttribute("stroke-linecap", "round");            // 짧은 대시가 점처럼 둥글게
       l.setAttribute("stroke-dasharray", `${gdash} ${gdash * 1.35}`);
+      applyGridStyle(l);
       g.appendChild(l);
     };
     // 격자선이 놓이는 정수 k 범위. gridCount·gridToData면 데이터 끝(마지막 눈금)까지;
     // 구경로면 박스-끝 한 칸 트리밍.
     let xLoK, xHiK, yLoK, yHiK;
-    if (!legacyTrim) {
+    if (obj.gridBounds) {
+      xLoK=Math.ceil(obj.gridBounds.xMin/stepX);xHiK=Math.floor(obj.gridBounds.xMax/stepX);
+      yLoK=Math.ceil(obj.gridBounds.yMin/stepY);yHiK=Math.floor(obj.gridBounds.yMax/stepY);
+    } else if (!legacyTrim) {
       xLoK = xBoth ? kx.kStart : Math.max(0, kx.kStart); xHiK = kx.kEnd;
       yLoK = yBoth ? ky.kStart : Math.max(0, ky.kStart); yHiK = ky.kEnd;
     } else {
@@ -256,23 +311,25 @@ function renderCoordplane(obj) {
       yLoK = Math.round(gYlo / ky.step); yHiK = Math.round(gYhi / ky.step);
     }
     // 격자 사각형 경계 = 마지막 눈금 + gridOver 칸(사진4: 데이터 밖으로 반 칸 더).
-    const rectLeft  = xBoth ? worldXFromMathX(P, (xLoK - goXN) * kx.step) : worldX0;
-    const rectRight = worldXFromMathX(P, (xHiK + goXP) * kx.step);
-    const rectTop   = worldYFromMathY(P, (yHiK + goYP) * ky.step);
-    const rectBot   = yBoth ? worldYFromMathY(P, (yLoK - goYN) * ky.step) : worldY0;
-    if (kx.kEnd - kx.kStart <= GRID_MAX_LINES) {
+    const rectLeft  = interiorBoxAxes || fullReconstructionGrid ? left : xBoth ? worldXFromMathX(P, (obj.gridBounds?.xMin ?? xLoK*kx.step) - goXN*kx.step) : worldX0;
+    const rectRight = fullReconstructionGrid ? right : worldXFromMathX(P, (obj.gridBounds?.xMax ?? xHiK*kx.step) + goXP*kx.step);
+    const rectTop   = fullReconstructionGrid ? top : worldYFromMathY(P, (obj.gridBounds?.yMax ?? yHiK*ky.step) + goYP*ky.step);
+    const rectBot   = interiorBoxAxes || fullReconstructionGrid ? bottom : yBoth ? worldYFromMathY(P, (obj.gridBounds?.yMin ?? yLoK*ky.step) - goYN*ky.step) : worldY0;
+    if (obj.showGridX !== false && kx.kEnd - kx.kStart <= GRID_MAX_LINES) {
       for (let k = xLoK; k <= xHiK; k++) {
         if ((!xBoth && k < 0) || skipTickX(k * kx.step)) continue;
         const vx = worldXFromMathX(P, k * kx.step);
-        if (yAxisVisible && Math.abs(vx - worldX0) < 1e-6) continue; // axis draws this one
+        if (fullReconstructionGrid && obj.showAxisLines && boxFrame && (Math.abs(vx - left) < 1e-6 || Math.abs(vx - right) < 1e-6)) continue;
+        if (yAxisVisible && (obj.showAxisLines || !fullReconstructionGrid) && Math.abs(vx - worldX0) < 1e-6) continue; // axis draws this one
         addGrid(vx, rectTop, vx, rectBot);
       }
     }
-    if (hasYArm && ky.kEnd - ky.kStart <= GRID_MAX_LINES) { // 직선이면 가로 격자 없음
+    if (obj.showGridY !== false && hasYArm && ky.kEnd - ky.kStart <= GRID_MAX_LINES) { // 직선이면 가로 격자 없음
       for (let k = yLoK; k <= yHiK; k++) {
         if ((!yBoth && k < 0) || skipTickY(k * ky.step)) continue;
         const vy = worldYFromMathY(P, k * ky.step);
-        if (xAxisVisible && Math.abs(vy - worldY0) < 1e-6) continue;
+        if (fullReconstructionGrid && obj.showAxisLines && boxFrame && (Math.abs(vy - top) < 1e-6 || Math.abs(vy - bottom) < 1e-6)) continue;
+        if (xAxisVisible && (obj.showAxisLines || !fullReconstructionGrid) && Math.abs(vy - worldY0) < 1e-6) continue;
         addGrid(rectLeft, vy, rectRight, vy);
       }
     }
@@ -281,15 +338,33 @@ function renderCoordplane(obj) {
   // ----- AXIS LINES + arrowheads (scaled 1.5× like renderAxes) -----
   // 축선은 화살표 notch(가운데 파인 지점)까지만 그어 촉과 깔끔히 이어지게 한다.
   const headSw = sw * 1.5;
-  const shaftGap = headSw * 3.6;   // = 화살표 notch 깊이(appendArrow의 len-notch)
+  const examHead = obj.axisArrowShape === 'exam';
+  const customHead = !examHead && (Number.isFinite(obj.axisArrowLength) || Number.isFinite(obj.axisArrowWidth));
+  const headLength = obj.axisArrowLength > 0 ? obj.axisArrowLength : headSw * 6;
+  const headWidth = obj.axisArrowWidth > 0 ? obj.axisArrowWidth : headSw * 3.6;
+  const shaftGap = examHead ? headLength / 1.1551 : customHead ? headLength * 0.7 : headSw * 3.6;
+  const arrowOn = key => typeof obj[key] === 'boolean' ? obj[key] : !boxFrame;
+  const axisHead = (x, y, dx, dy) => {
+    if (examHead) { const head=smoothArrowHead(x,y,dx,dy,headLength/(1.1551*6),color);head.setAttribute('data-axis-arrow','');g.appendChild(head); }
+    else if (customHead) g.appendChild(makeArrowHead(x,y,dx,dy,headLength,color,{lenMul:1,widthMul:headWidth/(2*headLength)}));
+    else appendArrow(g,x,y,dx,dy,headSw,color);
+  };
   if (obj.showAxisLines) {
     if (xAxisVisible) {
-      addLine(xAxisLeft, worldY0, right - shaftGap, worldY0, color, sw); // X axis → +X right
-      appendArrow(g, right, worldY0, 1, 0, headSw, color);
+      addLine(boxFrame ? left : xAxisLeft, worldY0, right - (arrowOn('axisArrowX') ? shaftGap : 0), worldY0, color, sw);
+      if (arrowOn('axisArrowX')) axisHead(right,worldY0,1,0);
     }
     if (hasYArm && yAxisVisible) {
-      addLine(worldX0, yAxisBottom, worldX0, top + shaftGap, color, sw); // Y axis → +Y up
-      appendArrow(g, worldX0, top, 0, -1, headSw, color);
+      addLine(worldX0, boxFrame ? bottom : yAxisBottom, worldX0, top + (arrowOn('axisArrowY') ? shaftGap : 0), color, sw);
+      if (arrowOn('axisArrowY')) axisHead(worldX0,top,0,-1);
+    }
+    if (boxFrame) {
+      // Bottom/left axes normally supply these borders. Interior axes must not
+      // replace them; avoid duplicate strokes in the default edge-axis case.
+      if (worldY0 !== bottom) addLine(left,bottom,right,bottom,color,sw);
+      if (worldX0 !== left) addLine(left,bottom,left,top,color,sw);
+      if (worldY0 !== top) addLine(left,top,right,top,color,sw);
+      if (!obj.y2?.enabled && worldX0 !== right) addLine(right,bottom,right,top,color,sw);
     }
   }
 
@@ -297,23 +372,23 @@ function renderCoordplane(obj) {
   // 눈금은 '데이터 쪽(안쪽)으로만' 뻗는다(요구): ㄴ자면 x축 눈금은 위로만(아래로 안 튀어나옴),
   // y축 눈금은 오른쪽으로만(왼쪽으로 안 튀어나옴). 반대쪽으로는 그 방향에 데이터가 있을 때만
   // (십자=양쪽). x축 아래쪽은 y가 음수 범위(yBoth)일 때만, y축 왼쪽은 x가 음수 범위(xBoth)일 때만.
-  const tIn = sw * 4.8;              // 안쪽(데이터 쪽) 길이 — 눈금을 조금 더 길게(요구)
-  const tickSw = sw * 0.8;           // 요구: 눈금 굵기를 축선보다 20% 얇게(축·격자는 sw 그대로)
+  const tIn = obj.tickLength || sw * 4.8;
+  const tickSw = obj.tickStrokeWidth || sw * 0.8;
   if (obj.showTicks) {
-    if (xAxisVisible) {
-      const up = tIn, down = yBoth ? tIn : 0;       // 위=항상, 아래=y음수범위일 때만
+    if (xAxisVisible && !logX && !Array.isArray(obj.explicitTicksX)) {
+      const up = tIn, down = yBoth && !boxFrame ? tIn : 0;       // 위=항상, 아래=y음수범위일 때만
       if (kx.kEnd - kx.kStart <= GRID_MAX_LINES) for (let k = kx.kStart; k <= kx.kEnd; k++) {
         if (k === 0 || (!xBoth && k < 0) || skipTickX(k * kx.step)) continue;
         const vx = worldXFromMathX(P, k * kx.step);
-        addLine(vx, worldY0 - up, vx, worldY0 + down, tickColor, tickSw);  // -y = 위(안쪽)
+        addLine(vx, tickAxisY - up, vx, tickAxisY + down, tickColor, tickSw);  // -y = 위(안쪽)
       }
     }
-    if (hasYArm && yAxisVisible) {
-      const rightLen = tIn, leftLen = xBoth ? tIn : 0; // 오른쪽=항상, 왼쪽=x음수범위일 때만
+    if (hasYArm && yAxisVisible && !logY && !Array.isArray(obj.explicitTicksY)) {
+      const rightLen = tIn, leftLen = xBoth && !boxFrame ? tIn : 0; // 오른쪽=항상, 왼쪽=x음수범위일 때만
       if (ky.kEnd - ky.kStart <= GRID_MAX_LINES) for (let k = ky.kStart; k <= ky.kEnd; k++) {
         if (k === 0 || (!yBoth && k < 0) || skipTickY(k * ky.step)) continue;
         const vy = worldYFromMathY(P, k * ky.step);
-        addLine(worldX0 - leftLen, vy, worldX0 + rightLen, vy, tickColor, tickSw); // +x = 오른쪽(안쪽)
+        addLine(tickAxisX - leftLen, vy, tickAxisX + rightLen, vy, tickColor, tickSw); // +x = 오른쪽(안쪽)
       }
     }
   }
@@ -329,12 +404,13 @@ function renderCoordplane(obj) {
     if (rich) {
       // 눈금 숫자도 halo를 켠다 — 예전엔 흰 사각형 블록이 대신 가려 줬는데 그 블록을
       // 없앴으므로(glyph 윤곽만 남김), 격자 파선이 숫자를 뚫고 지나가지 않게 하려면 필요하다.
-      node = renderGraphLabel(text, { x: nx, y: ny, size: numSize, color, anchor, vAlign: baselineToVAlign(baseline), halo: true, haloRatio: obj.haloRatio });
+      node = renderGraphLabel(text, { x: nx, y: ny, size: numSize, color, anchor, vAlign: baselineToVAlign(baseline), halo: true, haloRatio: obj.haloRatio, weight: obj.labelWeight });
       if (node) g.appendChild(node);
     } else {
       node = document.createElementNS(SVG_NS, "text");
       node.setAttribute("x", nx); node.setAttribute("y", ny);
       node.setAttribute("font-size", numSize);
+      node.setAttribute("font-weight", obj.labelWeight ?? 400);
       // Upright serif numerals (math-axis convention); NOT the italic 물리량 font.
       node.setAttribute("font-family", "'Times New Roman', 'IBM Plex Serif', serif");
       node.setAttribute("fill", color);
@@ -369,7 +445,7 @@ function renderCoordplane(obj) {
       const ord = tickOrd(k, kStart);
       return (ord >= 0 && arr[ord] != null) ? String(arr[ord]) : "";
     };
-    if (xAxisVisible) {
+    if (xAxisVisible && !logX && !Array.isArray(obj.explicitTicksX)) {
       if (kx.kEnd - kx.kStart <= GRID_MAX_LINES) for (let k = kx.kStart; k <= kx.kEnd; k++) {
         if (k === 0 || (!xBoth && k < 0) || skipTickX(k * kx.step)) continue;
         const txt = labelFor(k, kx.step, obj.tickTextX, kx.kStart);
@@ -379,10 +455,10 @@ function renderCoordplane(obj) {
         const vx = worldXFromMathX(P, k * kx.step);
         // 눈금 라벨을 눈금선보다 살짝 왼쪽으로(요구): 아래첨자(t₀의 ₀) 때문에 우측으로
         // 치우쳐 보이는 걸 보정.
-        addNumber(txt, vx - numSize * 0.14 + offX.dx, worldY0 + tickGap + offX.dy, "middle", "hanging", "x:" + ordX);
+        addNumber(txt, vx - numSize * 0.14 + offX.dx, tickAxisY + tickGap + offX.dy, "middle", "hanging", "x:" + ordX);
       }
     }
-    if (hasYArm && yAxisVisible) {
+    if (hasYArm && yAxisVisible && !logY && !Array.isArray(obj.explicitTicksY)) {
       if (ky.kEnd - ky.kStart <= GRID_MAX_LINES) for (let k = ky.kStart; k <= ky.kEnd; k++) {
         if (k === 0 || (!yBoth && k < 0) || skipTickY(k * ky.step)) continue;
         const txt = labelFor(k, ky.step, obj.tickTextY, ky.kStart);
@@ -390,9 +466,49 @@ function renderCoordplane(obj) {
         const ordY = tickOrd(k, ky.kStart);
         const offY = tickOffOf(obj.tickOffY, ordY);
         const vy = worldYFromMathY(P, k * ky.step);
-        addNumber(txt, worldX0 - tickGap + offY.dx, vy + offY.dy, "end", "middle", "y:" + ordY);
+        addNumber(txt, tickAxisX - tickGap + offY.dx, vy + offY.dy, "end", "middle", "y:" + ordY);
       }
     }
+  }
+
+  if (obj.showGrid && (logX || logY)) {
+    for (const axis of ['x','y']) for (const value of coordinateTicks(P,axis,axis === 'x' ? stepX : stepY).slice(0,GRID_MAX_LINES)) {
+      if (axis === 'x' ? obj.showGridX === false : obj.showGridY === false) continue;
+      const x = worldXFromMathX(P,value), y = worldYFromMathY(P,value);
+      if (axis === 'x') addLine(x,top,x,bottom,gridColor,sw*0.5); else if(hasYArm) addLine(left,y,right,y,gridColor,sw*0.5);
+      g.lastChild.setAttribute('stroke-dasharray', `${Math.max(sw*1.8,0.4)} ${Math.max(sw*1.8,0.4)*1.35}`);
+      applyGridStyle(g.lastChild);
+    }
+  }
+  for (const axis of ['x','y']) {
+    if (!(axis === 'x' ? logX : logY) || (axis === 'y' && !hasYArm) || Array.isArray(axis === 'x' ? obj.explicitTicksX : obj.explicitTicksY)) continue;
+    coordinateTicks(P,axis,1).slice(0,GRID_MAX_LINES).forEach((value,index) => {
+      const x=worldXFromMathX(P,value), y=worldYFromMathY(P,value);
+      if(obj.showTicks) { if(axis==='x')addLine(x,tickAxisY-tIn,x,tickAxisY,tickColor,tickSw);else addLine(tickAxisX,y,tickAxisX+tIn,y,tickColor,tickSw); }
+      if(tickMode!=='none' && (axis==='x'?obj.showTickX!==false:obj.showTickY!==false)) {
+        const label=rich ? `10^{${Math.round(Math.log10(value))}}` : `10^${Math.round(Math.log10(value))}`;
+        if(axis==='x')addNumber(label,x,tickAxisY+tickGap,'middle','hanging',`x:${index}`);else addNumber(label,tickAxisX-tickGap,y,'end','middle',`y:${index}`);
+      }
+    });
+  }
+
+  for (const axis of ['x', 'y']) {
+    const entries = axis === 'x' ? obj.explicitTicksX : obj.explicitTicksY;
+    if (!Array.isArray(entries)) continue;
+    entries.forEach((tick, index) => {
+      const value = tick.value;
+      if (!Number.isFinite(value) || value < (axis === 'x' ? xMin : yMin) || value > (axis === 'x' ? xMax : yMax)) return;
+      const wx = worldXFromMathX(P, value), wy = worldYFromMathY(P, value);
+      const off = tickOffOf(axis === 'x' ? obj.tickOffX : obj.tickOffY, index);
+      if (obj.showTicks) {
+        if (axis === 'x') addLine(wx, tickAxisY - tIn, wx, tickAxisY, tickColor, tickSw);
+        else addLine(tickAxisX, wy, tickAxisX + tIn, wy, tickColor, tickSw);
+      }
+      if (tickMode !== 'none' && tick.label !== '') {
+        if (axis === 'x') addNumber(tick.label, wx + off.dx, tickAxisY + tickGap + off.dy, 'middle', 'hanging', `x:${index}`);
+        else addNumber(tick.label, tickAxisX - tickGap + off.dx, wy + off.dy, 'end', 'middle', `y:${index}`);
+      }
+    });
   }
 
   // ----- AXIS NAME LABELS + ORIGIN -----
@@ -401,14 +517,15 @@ function renderCoordplane(obj) {
     if (!text) return;
     if (rich) {
       // 혼합 라벨러: 한글 정자 + 영문 이탤릭 + 줄바꿈 + 수식 + halo.
-      const gl = renderGraphLabel(text, { x: lx, y: ly, size, color, anchor, vAlign: baselineToVAlign(baseline), halo: true, haloRatio: obj.haloRatio });
+      const gl = renderGraphLabel(text, { x: lx, y: ly, size, color, anchor, vAlign: baselineToVAlign(baseline), halo: true, haloRatio: obj.haloRatio, weight: obj.labelWeight });
       if (gl) g.appendChild(gl);
       return;
     }
     const t = document.createElementNS(SVG_NS, "text");
     t.setAttribute("x", lx); t.setAttribute("y", ly);
     t.setAttribute("font-size", size);
-    applyObjectLabelFont(t, obj.labelType);
+    t.setAttribute("font-weight", obj.labelWeight ?? 400);
+    applyObjectLabelFont(t, obj.labelType); if (obj.reconstruction) t.setAttribute("font-style", "normal");
     t.setAttribute("fill", color);
     t.setAttribute("text-anchor", anchor);
     t.setAttribute("dominant-baseline", baseline);
@@ -431,14 +548,15 @@ function renderCoordplane(obj) {
     const px = pos ? obj.x + pos.fx * obj.w : lx + (off.dx || 0);
     const py = pos ? obj.y + pos.fy * obj.h : ly + (off.dy || 0);
     // 분율 위치는 라벨 '중심'을 그 점에 맞춘다(모달 드래그가 중심 분율을 저장하므로 튐 없음).
-    const anc = pos ? "middle" : anchor;
+    const requestedAnchor = which === "x" ? obj.labelXAnchor : obj.labelYAnchor;
+    const anc = ["start", "middle", "end"].includes(requestedAnchor) ? requestedAnchor : (pos ? "middle" : anchor);
     const bl = pos ? "middle" : baseline;
     let el = null;
-    if (rich) el = renderGraphLabel(text, { x: px, y: py, size: nameSize, color, anchor: anc, vAlign: baselineToVAlign(bl), halo: true, haloRatio: obj.haloRatio });
+    if (rich) el = renderGraphLabel(text, { x: px, y: py, size: nameSize, color, anchor: anc, vAlign: baselineToVAlign(bl), orientation: obj.reconstruction?.axes?.[which]?.orientation, halo: true, haloRatio: obj.haloRatio, weight: obj.labelWeight });
     else {
       el = document.createElementNS(SVG_NS, "text");
       el.setAttribute("x", px); el.setAttribute("y", py); el.setAttribute("font-size", nameSize);
-      applyObjectLabelFont(el, obj.labelType); el.setAttribute("fill", color);
+      applyObjectLabelFont(el, obj.labelType); if (obj.reconstruction) el.setAttribute("font-style", "normal"); el.setAttribute("fill", color); el.setAttribute("font-weight", obj.labelWeight ?? 400);
       el.setAttribute("text-anchor", anc); el.setAttribute("dominant-baseline", bl);
       fillTextWithRomanRuns(el, text);
     }
@@ -448,7 +566,10 @@ function renderCoordplane(obj) {
   const showY = obj.showAxisLabels !== false && obj.showAxisLabelY !== false;
   if (obj.showAxisLines) {
     const Lshape = (variant === "quadrant" || variant === "halfcross");
-    if (Lshape) {
+    if (obj.reconstruction?.preserveAxes) {
+      if (xAxisVisible && showX) addAxisName('x', obj.labelX, right, worldY0 + nameSize, 'end', 'hanging');
+      if (hasYArm && yAxisVisible && showY) addAxisName('y', obj.labelY, worldX0 - nameSize * 0.4, top - nameSize * 0.3, 'end', 'auto');
+    } else if (Lshape) {
       // ㄴ/ㅏ(사진 기준): x이름 = 화살표의 '아래쪽 오른편', 눈금 숫자와 같은 줄에 나란히
       // (t₀·2t₀… 와 같은 높이, 화살표 오른쪽). y이름 = y축 화살표 '왼쪽 위'.
       const numBaseY = worldY0 + tickGap + numSize * 0.78;
@@ -464,7 +585,7 @@ function renderCoordplane(obj) {
   if (obj.showOrigin && xAxisVisible && yAxisVisible) {
     const oText = obj.labelOrigin ?? "O";
     // 원점 라벨: 기본 크기 살짝 작게(nameSize*0.82) + 원점에 더 가까이(오프셋 축소).
-    const oSize = nameSize * 0.82;
+    const oSize = Number.isFinite(obj.originLabelSize) && obj.originLabelSize > 0 ? obj.originLabelSize : nameSize * 0.82;
     if (variant === "halfcross") addName(oText, worldX0 - oSize * 0.35, worldY0, "end", "middle", oSize);
     else addName(oText, worldX0 - oSize * 0.22, worldY0 + oSize * 0.08, "end", "hanging", oSize);
   }
@@ -479,8 +600,8 @@ function renderCoordplane(obj) {
   if (y2c && y2c.enabled && hasYArm && obj.showAxisLines) {
     const r2 = y2RangeOf(obj);
     // 축선 + 화살촉: 왼쪽 세로축과 같은 모양·같은 높이 범위(판의 아래끝~위끝).
-    addLine(right, yAxisBottom, right, top + shaftGap, color, sw);
-    appendArrow(g, right, top, 0, -1, headSw, color);
+    addLine(right, boxFrame || y2c.scale === 'log' ? bottom : yAxisBottom, right, top + (arrowOn('axisArrowY2') ? shaftGap : 0), color, sw);
+    if (arrowOn('axisArrowY2')) axisHead(right, top, 0, -1);
     const step2 = Number.isFinite(y2c.gridStepY2) && y2c.gridStepY2 > 0 ? y2c.gridStepY2 : 1;
     const lblStep2 = Number.isFinite(y2c.tickStepY2) && y2c.tickStepY2 > 0 ? y2c.tickStepY2 : step2;
     const texts2 = Array.isArray(y2c.tickTextY2) && y2c.tickTextY2.length ? y2c.tickTextY2 : null;
@@ -490,14 +611,14 @@ function renderCoordplane(obj) {
     // (tickRange로 y2 범위를 따로 훑으면 여백 안쪽에 눈금이 하나 더 생긴다).
     const lo2 = Math.min(r2.min, r2.max), hi2 = Math.max(r2.min, r2.max);
     let ord2 = 0;
-    if (ky.kEnd - ky.kStart <= GRID_MAX_LINES) {
+    if (y2c.scale !== 'log' && !Array.isArray(y2c.explicitTicks) && ky.kEnd - ky.kStart <= GRID_MAX_LINES) {
       for (let k = ky.kStart; k <= ky.kEnd; k++) {
         const v2 = k * step2;
         if (k === 0 || (!yBoth && k < 0) || skipTickY(k * ky.step)) continue;
         if (v2 < lo2 - 1e-6 || v2 > hi2 + 1e-6) continue;
         const vy = worldYFromMathY2(obj, v2);
         // 눈금 표시선도 showTickY2를 따라간다 — 끄면 '축선 + 축 이름'만 남는다(기출 관례).
-        if (obj.showTicks && showNum2) addLine(right, vy, right + tIn, vy, tickColor, tickSw);  // 바깥(오른쪽)으로
+        if (obj.showTicks && showNum2) addLine(right, vy, right + (boxFrame ? -tIn : tIn), vy, tickColor, tickSw);  // 바깥(오른쪽)으로
         if (showNum2) {
           const txt = texts2 ? String(texts2[ord2] ?? "") : fmtTick(k * lblStep2);
           if (txt) addNumber(txt, right + tIn + tickGap, vy, "start", "middle", null);
@@ -505,19 +626,31 @@ function renderCoordplane(obj) {
         ord2++;
       }
     }
+    if(y2c.scale === 'log' && !Array.isArray(y2c.explicitTicks)) coordinateTicks(planeAsY2(P),'y',1).slice(0,GRID_MAX_LINES).forEach(value=>{
+      const y=worldYFromMathY2(P,value);
+      if(obj.showTicks&&showNum2)addLine(right,y,right+(boxFrame?-tIn:tIn),y,tickColor,tickSw);
+      if(showNum2)addNumber(rich?`10^{${Math.round(Math.log10(value))}}`:`10^${Math.round(Math.log10(value))}`,right+tIn+tickGap,y,'start','middle',null);
+    });
     // 축 이름: 오른쪽 바깥에 세로쓰기(아래→위로 읽는 방향, -90° 회전).
+    (y2c.explicitTicks || []).forEach(tick => {
+      if (tick.value < lo2 || tick.value > hi2) return;
+      const vy = worldYFromMathY2(obj, tick.value);
+      if (obj.showTicks && showNum2) addLine(right, vy, right + (boxFrame ? -tIn : tIn), vy, tickColor, tickSw);
+      if (showNum2 && tick.label) addNumber(tick.label, right + tIn + tickGap, vy, 'start', 'middle', null);
+    });
     if (y2c.labelY2) {
       const lx = right + tIn + (showNum2 ? numSize * 1.9 : numSize * 0.5) + nameSize * 0.65;
       const ly = (top + bottom) / 2;
       const wrap = document.createElementNS(SVG_NS, "g");
-      wrap.setAttribute("transform", `rotate(-90 ${lx} ${ly})`);
+      const orientation = obj.reconstruction?.axes?.y2?.orientation || 'rotate';
+      if (orientation === 'rotate') wrap.setAttribute('transform', `rotate(-90 ${lx} ${ly})`);
       let el2 = null;
       if (rich) {
-        el2 = renderGraphLabel(y2c.labelY2, { x: lx, y: ly, size: nameSize, color, anchor: "middle", vAlign: "middle", halo: true, haloRatio: obj.haloRatio });
+        el2 = renderGraphLabel(y2c.labelY2, { orientation: orientation === 'vertical' ? 'vertical' : 'horizontal', x: lx, y: ly, size: nameSize, color, anchor: "middle", vAlign: "middle", halo: true, haloRatio: obj.haloRatio, weight: obj.labelWeight });
       } else {
         el2 = document.createElementNS(SVG_NS, "text");
         el2.setAttribute("x", lx); el2.setAttribute("y", ly); el2.setAttribute("font-size", nameSize);
-        applyObjectLabelFont(el2, obj.labelType); el2.setAttribute("fill", color);
+        applyObjectLabelFont(el2, obj.labelType); if (obj.reconstruction) el2.setAttribute("font-style", "normal"); el2.setAttribute("fill", color);
         el2.setAttribute("text-anchor", "middle"); el2.setAttribute("dominant-baseline", "middle");
         fillTextWithRomanRuns(el2, y2c.labelY2);
       }
@@ -530,35 +663,54 @@ function renderCoordplane(obj) {
   // 표시점 ●, 수선의 발(축까지 점선), 화살촉, 가이드라인(두 점 점선), 범례(선 견본+글씨) 박스.
   const annColor = grayHex(obj.strokeLevel);
   const annSw = obj.strokeWidth || 0.3;
+  const styleGuide = (line, override) => {
+    const hasOverride = override && ['strokeWidth', 'dashLength', 'dashGap', 'strokeLevel'].some(key => Number.isFinite(override[key]));
+    const style = hasOverride ? { ...obj.guideStyle, ...override } : obj.guideStyle;
+    if (!style) return;
+    if (Number.isFinite(style.strokeWidth) && style.strokeWidth > 0) line.setAttribute('stroke-width', style.strokeWidth);
+    if (Number.isFinite(style.strokeLevel)) line.setAttribute('stroke', grayHex(style.strokeLevel));
+    if (style.dashLength === 0 || style.dashGap === 0) {
+      line.removeAttribute('stroke-dasharray');
+      line.setAttribute('stroke-linecap', 'butt');
+    } else if (Number.isFinite(style.dashLength) && style.dashLength > 0 && Number.isFinite(style.dashGap) && style.dashGap > 0) {
+      line.setAttribute('stroke-dasharray', `${style.dashLength} ${style.dashGap}`);
+      line.setAttribute('stroke-linecap', 'butt');
+    }
+    line.setAttribute('data-graph-guide', '');
+  };
   const wmX = (mx) => worldXFromMathX(P, mx), wmY = (my) => worldYFromMathY(P, my);
   // 수선의 발: 점 (x,y)에서 두 축으로 점선을 내린다(곡선 불필요 — 자유 표시점에서도 동작).
-  (obj.annGuides || []).forEach((p) => {
+  (obj.annGuides || []).forEach((p, index) => {
     if (!p || !Number.isFinite(p.x) || !Number.isFinite(p.y)) return;
     const wx = wmX(p.x), wy = wmY(p.y);
     const seg = (x1, y1, x2, y2) => {
       const l = document.createElementNS(SVG_NS, "line");
+      l.setAttribute('data-display-kind','guide'); l.setAttribute('data-display-index',String(index));
       l.setAttribute("x1", x1); l.setAttribute("y1", y1); l.setAttribute("x2", x2); l.setAttribute("y2", y2);
       l.setAttribute("stroke", annColor); l.setAttribute("stroke-width", annSw * 0.55);
       l.setAttribute("stroke-dasharray", "0.54 0.42"); l.setAttribute("stroke-linecap", "round");
+      styleGuide(l, p);
       g.appendChild(l);
     };
     if (Math.abs(wy - worldY0) > 1e-6) seg(wx, wy, wx, worldY0);   // → x축(수직)
     if (Math.abs(wx - worldX0) > 1e-6) seg(wx, wy, worldX0, wy);   // → y축(수평)
   });
   // 가이드라인: 두 점을 잇는 점선(수선의 발보다 대시가 큼 — 안내선 성격).
-  (obj.guideLines || []).forEach((gl) => {
+  (obj.guideLines || []).forEach((gl, index) => {
     if (!gl || !Number.isFinite(gl.x1)) return;
     const l = document.createElementNS(SVG_NS, "line");
+    l.setAttribute('data-display-kind','guideline'); l.setAttribute('data-display-index',String(index));
     l.setAttribute("x1", wmX(gl.x1)); l.setAttribute("y1", wmY(gl.y1));
     l.setAttribute("x2", wmX(gl.x2)); l.setAttribute("y2", wmY(gl.y2));
     // 가이드라인: 수선의 발보다 더 촘촘하고 얇게(요구 2, 평가원 양식).
     l.setAttribute("stroke", annColor); l.setAttribute("stroke-width", annSw * 0.45);
     l.setAttribute("stroke-dasharray", "0.45 0.35"); l.setAttribute("stroke-linecap", "round");
+    styleGuide(l, gl);
     g.appendChild(l);
   });
   // 화살촉: (x,y)=곡선 위 지점, (dx,dy)=그 지점 접선(요구 5, 클릭 한 번). 옛 데이터(tx,ty)도 호환.
   // 클릭한 지점이 화살촉의 '정중앙'에 오도록 촉을 진행 방향으로 길이 절반만큼 앞당긴다(요구 4).
-  (obj.annArrows || []).forEach((a) => {
+  (obj.annArrows || []).forEach((a, index) => {
     if (!a || !Number.isFinite(a.x) || !Number.isFinite(a.y)) return;
     const cx = wmX(a.x), cy = wmY(a.y);
     let dx, dy;
@@ -569,14 +721,17 @@ function renderCoordplane(obj) {
     // smoothArrowHead(요구 5)로 바뀌었고, 이 화살표·직선 끝 화살표는 원래 것을 유지한다.
     const headSw = annSw * 1.75, headLen = headSw * 4.5;   // makeArrowHead의 length와 동일
     // 클릭 지점이 화살촉 정중앙(요구 4) — 촉을 진행방향으로 절반 앞당긴다.
-    g.appendChild(makeArrowHead(cx + dx * headLen / 2, cy + dy * headLen / 2, dx, dy, headSw, annColor));
+    const head = isExamStyle(obj) ? smoothArrowHead(cx + dx * obj.axisArrowLength / 2,cy + dy * obj.axisArrowLength / 2,dx,dy,obj.axisArrowLength/(1.1551*6),annColor) : makeArrowHead(cx + dx * headLen / 2, cy + dy * headLen / 2, dx, dy, headSw, annColor);
+    head.setAttribute('data-display-kind','arrow'); head.setAttribute('data-display-index',String(index));
+    g.appendChild(head);
   });
   // 표시점: 검은 원(반지름 = 선 굵기 연동, 계열 표시점과 동일 식).
-  (obj.annMarkers || []).forEach((p) => {
+  (obj.annMarkers || []).forEach((p, index) => {
     if (!p || !Number.isFinite(p.x) || !Number.isFinite(p.y)) return;
     const c = document.createElementNS(SVG_NS, "circle");
+    c.setAttribute('data-display-kind','marker'); c.setAttribute('data-display-index',String(index));
     c.setAttribute("cx", wmX(p.x)); c.setAttribute("cy", wmY(p.y));
-    c.setAttribute("r", markerRadius(annSw)); c.setAttribute("fill", annColor); c.setAttribute("stroke", "none");
+    c.setAttribute("r", obj.markerSize || markerRadius(annSw)); c.setAttribute("fill", annColor); c.setAttribute("stroke", "none");
     g.appendChild(c);
   });
   // 라벨러 표시점(요구 ⑥): 점 + A·B·C… 라벨. 라벨은 점에서 dist(mm)만큼 angle(도, 0=오른쪽,
@@ -586,7 +741,7 @@ function renderCoordplane(obj) {
     const wx = wmX(lp.x), wy = wmY(lp.y);
     const c = document.createElementNS(SVG_NS, "circle");
     c.setAttribute("cx", wx); c.setAttribute("cy", wy);
-    c.setAttribute("r", markerRadius(annSw)); c.setAttribute("fill", annColor); c.setAttribute("stroke", "none");
+    c.setAttribute("r", obj.markerSize || markerRadius(annSw)); c.setAttribute("fill", annColor); c.setAttribute("stroke", "none");
     if (Number.isFinite(li)) c.setAttribute("data-labelpt", String(li));   // 미리보기 드래그용(향후)
     g.appendChild(c);
     const dist = Number.isFinite(lp.dist) ? lp.dist : 5;
@@ -597,7 +752,7 @@ function renderCoordplane(obj) {
     // 점 이름(A·B·C…)은 변수가 아니라 이름표 — 기울임 없이 정자로 쓴다(요구).
     const lbl = renderGraphLabel(String(lp.text ?? ""), {
       x: lx, y: ly, size, color: annColor, anchor: "middle", vAlign: "middle", halo: true, upright: true,
-      haloRatio: obj.haloRatio,
+      haloRatio: obj.haloRatio, weight: obj.labelWeight,
     });
     if (lbl) g.appendChild(lbl);
   });
@@ -607,12 +762,57 @@ function renderCoordplane(obj) {
     renderLegendBox(g, lg, wmX(lg.x), wmY(lg.y), obj, li);
   });
 
+  // Opposite-side frame ticks are explicit; ordinary boxed exams use bottom/left.
+  if(boxFrame && obj.showTicks) for(const line of [...g.querySelectorAll('line')]) {
+    if(Number(line.getAttribute('stroke-width'))!==tickSw)continue;
+    const x1=Number(line.getAttribute('x1')),x2=Number(line.getAttribute('x2')),y1=Number(line.getAttribute('y1')),y2=Number(line.getAttribute('y2'));
+    if(obj.boxTickTop===true&&x1===x2&&y2===bottom&&y1<bottom)addLine(x1,top,x1,top+tIn,tickColor,tickSw);
+    else if(obj.boxTickRight===true&&!obj.y2?.enabled&&y1===y2&&x1===left&&x2>left)addLine(right-tIn,y1,right,y1,tickColor,tickSw);
+  }
+
   // ----- rotation: whole plane turns about its bbox center -----
   const rot = obj.rotation ?? 0;
   if (rot) {
     const cx = obj.x + obj.w / 2, cy = obj.y + obj.h / 2;
     g.setAttribute("transform", `rotate(${rot} ${cx} ${cy})`);
   }
+  (obj.graphAnnotations || []).forEach((annotation) => {
+    if (!annotation || !Number.isFinite(annotation.x) || !Number.isFinite(annotation.y)) return;
+    const x = worldXFromMathX(P, annotation.x);
+    const y = annotation.axis === 'y2' ? worldYFromMathY2(P, annotation.y) : worldYFromMathY(P, annotation.y);
+    if (annotation.kind === 'point' && annotation.endStyle !== 'none') {
+      const pointSw = annotation.strokeWidth > 0 ? annotation.strokeWidth : sw;
+      const dot = document.createElementNS(SVG_NS, 'circle'); dot.setAttribute('cx', x); dot.setAttribute('cy', y); dot.setAttribute('r', annotation.markerSize > 0 ? annotation.markerSize : Math.max(pointSw * 1.6, 0.5)); dot.setAttribute('stroke', color); dot.setAttribute('stroke-width', pointSw); dot.setAttribute('fill', annotation.endStyle === 'open' ? '#fff' : Number.isFinite(annotation.fillLevel) ? grayHex(annotation.fillLevel) : color); g.appendChild(dot);
+      dot.setAttribute('data-graph-annotation-shape', annotation.id || '');
+      dot.setAttribute('data-graph-annotation-kind', annotation.kind);
+    }
+    if ((annotation.kind === 'leader' || annotation.kind === 'arrow') && Number.isFinite(annotation.to?.x) && Number.isFinite(annotation.to?.y)) {
+      const tx = worldXFromMathX(P, annotation.to.x);
+      const ty = annotation.axis === 'y2' ? worldYFromMathY2(P, annotation.to.y) : worldYFromMathY(P, annotation.to.y);
+      const width = Number.isFinite(annotation.strokeWidth) && annotation.strokeWidth > 0 ? annotation.strokeWidth : sw * 0.7;
+      const line = document.createElementNS(SVG_NS, 'line');
+      line.setAttribute('x1', x); line.setAttribute('y1', y); line.setAttribute('x2', tx); line.setAttribute('y2', ty);
+      line.setAttribute('stroke', color); line.setAttribute('stroke-width', width);
+      line.setAttribute('data-graph-annotation-shape', annotation.id || '');
+      line.setAttribute('data-graph-annotation-kind', annotation.kind);
+      g.appendChild(line);
+      const length = Math.hypot(tx - x, ty - y);
+      if (annotation.kind === 'arrow' && length > 1e-9) g.appendChild(isExamStyle(obj) ? smoothArrowHead(tx,ty,(tx-x)/length,(ty-y)/length,obj.axisArrowLength/(1.1551*6),color) : makeArrowHead(tx, ty, (tx - x) / length, (ty - y) / length, width * 1.75, color));
+    }
+    if (annotation.kind === 'guide') {
+      const line = document.createElementNS(SVG_NS, 'line');
+      line.setAttribute('x1', x); line.setAttribute('y1', y);
+      const endpoint = Number.isFinite(annotation.to?.x) && Number.isFinite(annotation.to?.y);
+      line.setAttribute('x2', endpoint ? wmX(annotation.to.x) : annotation.orientation === 'horizontal' ? worldX0 : x);
+      line.setAttribute('y2', endpoint ? (annotation.axis === 'y2' ? worldYFromMathY2(P, annotation.to.y) : wmY(annotation.to.y)) : annotation.orientation === 'horizontal' ? y : worldY0);
+      line.setAttribute('stroke', color); line.setAttribute('stroke-width', sw * 0.55);
+      line.setAttribute('data-graph-annotation-shape', annotation.id || '');
+      line.setAttribute('data-graph-annotation-kind', annotation.kind);
+      styleGuide(line, annotation); g.appendChild(line);
+    }
+    const label = renderGraphLabel(annotation.displayText ?? annotation.text, { x, y, size: annotation.fontSize || annotation.size || nameSize, sourceHeight: annotation.labelSizeMode === 'source-height' ? true : undefined, anchor: 'middle', vAlign: 'middle', orientation: annotation.orientation, haloRatio: obj.haloRatio, weight: annotation.fontWeight ?? obj.labelWeight });
+    if (label) { label.setAttribute('data-graph-annotation', annotation.id || ''); g.appendChild(label); }
+  });
   return g;
 }
 
@@ -620,6 +820,7 @@ function renderCoordplane(obj) {
  * lg.size=글씨 크기, lg.swatch=선 견본 길이(둘 다 mm, 없으면 기본). 박스는 실제 글씨 폭에
  * 맞춰 딱 맞게(auto-fit). 텍스트 자간은 현행 대비 +50%(요구). 선 견본은 dash로 스타일 표현. */
 function renderLegendBox(g, lg, x0, y0, obj, li) {
+  const renderGraphLabel = graphLabelRenderer(obj);
   const color = grayHex(obj.strokeLevel);
   const sw = obj.strokeWidth || 0.3;
   // 기본값을 평가원 양식에 맞게 작게(종전보다 축소).
@@ -629,40 +830,46 @@ function renderLegendBox(g, lg, x0, y0, obj, li) {
   const rowH = size * 1.5, gap = size * 0.55;
   const ls = size * 0.18;   // 자간(+50% 느낌): 글자 사이를 벌린다(요구).
   const rows = lg.rows;
+  const sourceSwatch = !!obj.reconstruction?.schema && lg.frame !== true && rows.length === 1 && rows[0].text === "" && pad === 0;
+  const framed = lg.frame === true || lg.frame !== false && !obj.reconstruction?.schema;
   // 박스 폭 = 여백 + 견본 + 간격 + 가장 넓은 글씨 폭(자간 반영) + 여백.
   let maxText = 0;
   rows.forEach((r) => {
     const t = String(r.text || "");
-    const w = measureGraphLabel(t, size).w + ls * Math.max(0, t.replace(/\s/g, "").length - 1);
+    const measured=isExamStyle(obj)
+      ? measureGraphLabel(t,EXAM_STYLE.label,!!obj.reconstruction,obj.labelWeight??400,true).w*size/EXAM_STYLE.label
+      : measureGraphLabel(t,size,!!obj.reconstruction,obj.labelWeight??400,obj.reconstruction?.labelSizeMode==='source-height').w;
+    const w = measured + ls * Math.max(0, t.replace(/\s/g, "").length - 1);
     if (w > maxText) maxText = w;
   });
   const boxW = pad * 2 + swatch + gap + maxText;
   const boxH = pad * 2 + rowH * rows.length;
   const rect = document.createElementNS(SVG_NS, "rect");
-  rect.setAttribute("x", x0); rect.setAttribute("y", y0);
+  rect.setAttribute("x", x0); rect.setAttribute("y", sourceSwatch ? y0 - rowH / 2 : y0);
   rect.setAttribute("width", boxW); rect.setAttribute("height", boxH);
-  rect.setAttribute("fill", "#ffffff"); rect.setAttribute("fill-opacity", "0.9");
-  rect.setAttribute("stroke", color); rect.setAttribute("stroke-width", sw * 0.5);
+  rect.setAttribute("fill", "#ffffff"); rect.setAttribute("fill-opacity", framed ? "0.9" : "0");
+  rect.setAttribute("stroke", framed ? color : "none"); rect.setAttribute("stroke-width", sw * 0.5);
   // 직각 박스(요구): rx 제거.
   if (Number.isFinite(li)) rect.setAttribute("data-legend", String(li));   // 미리보기 드래그 이동용
   g.appendChild(rect);
   rows.forEach((r, i) => {
-    const cy = y0 + pad + rowH * i + rowH / 2;
+    const cy = sourceSwatch ? y0 : y0 + pad + rowH * i + rowH / 2;
     const l = document.createElementNS(SVG_NS, "line");
     l.setAttribute("x1", x0 + pad); l.setAttribute("y1", cy);
     l.setAttribute("x2", x0 + pad + swatch); l.setAttribute("y2", cy);
-    l.setAttribute("stroke", color); l.setAttribute("stroke-width", sw * 1.3);
+    l.setAttribute("stroke", color); l.setAttribute("stroke-width", r.strokeWidth ?? sw * 1.3);
     l.setAttribute("stroke-linecap", "round");
     if (Array.isArray(r.dash) && r.dash.length === 2 && (r.dash[0] || r.dash[1])) {
       l.setAttribute("stroke-dasharray", `${r.dash[0]} ${r.dash[1]}`);
     }
-    g.appendChild(l);
+    if (r.lineVisible !== false) g.appendChild(l);
+    if (r.markerShape && r.markerShape !== 'none') g.appendChild(graphMarker(x0+pad+swatch/2,cy,r.markerShape,r.markerSize>0?r.markerSize:size*.25,r.markerStrokeWidth>0?r.markerStrokeWidth:sw,color));
     const lbl = renderGraphLabel(String(r.text || ""), {
       x: x0 + pad + swatch + gap, y: cy, size, color, anchor: "start", vAlign: "middle", halo: false,
     });
     if (lbl) {
       // 자간 +50%(요구): formula/한글 런의 <text>에 letter-spacing 적용(textContent 기반이라 반영됨).
-      lbl.querySelectorAll("text").forEach((t) => t.setAttribute("letter-spacing", ls));
+      lbl.querySelectorAll("text").forEach((t) => t.setAttribute("letter-spacing", isExamStyle(obj)?EXAM_STYLE.label*.18:ls));
       g.appendChild(lbl);
     }
   });
@@ -756,21 +963,23 @@ function catmullRomHandles(pts, t) {
   return h;
 }
 // 절대 제어점(handles[i] = {inX,inY,outX,outY}, pts와 평행)으로 3차 베지어 path를 만든다.
-function bezierPathD(pts, handles) {
+function bezierPathD(pts, handles, segmentModes = []) {
   if (!pts || pts.length < 2 || !handles || handles.length !== pts.length) return "";
   let d = `M ${pts[0].x} ${pts[0].y}`;
   for (let i = 0; i < pts.length - 1; i++) {
+    if (segmentModes[i] === "line") { d += ` L ${pts[i + 1].x} ${pts[i + 1].y}`; continue; }
     const o = handles[i], nx = handles[i + 1];
     d += ` C ${o.outX} ${o.outY} ${nx.inX} ${nx.inY} ${pts[i + 1].x} ${pts[i + 1].y}`;
   }
   return d;
 }
 // 핸들 베지어를 촘촘한 점으로 편다(표시점/수선/스냅이 곡선 위에 앉게).
-function bezierSamplePts(pts, handles, segs = 16) {
+function bezierSamplePts(pts, handles, segs = 16, segmentModes = []) {
   if (!pts || pts.length < 2 || !handles || handles.length !== pts.length) return pts || [];
   const out = [{ x: pts[0].x, y: pts[0].y }];
   for (let i = 0; i < pts.length - 1; i++) {
     const p1 = pts[i], p2 = pts[i + 1];
+    if (segmentModes[i] === "line") { out.push({ ...p2 }); continue; }
     const c1x = handles[i].outX, c1y = handles[i].outY;
     const c2x = handles[i + 1].inX, c2y = handles[i + 1].inY;
     for (let j = 1; j <= segs; j++) {
@@ -858,11 +1067,23 @@ function clipRunByWorldX(run, xMin, xMax) {
 // 막대 무늬 <pattern> id 일련번호 — 모달 미리보기처럼 obj.id가 없는 렌더에서 충돌을 막는다.
 let _barPatSeq = 0;
 
-function renderFuncgraph(obj) {
+function renderFuncgraph(obj, plane = null) {
+  obj = examSeriesStyle(obj, plane);
+  const renderGraphLabel = graphLabelRenderer(obj);
   const g = document.createElementNS(SVG_NS, "g");
   if (obj.id) g.dataset.id = obj.id;
 
   const pts = obj.points || [];
+  if(obj.sourceKind === 'region') {
+    if(pts.length>=3) {
+      const region=document.createElementNS(SVG_NS,'path');region.setAttribute('d',`M ${pts.map(p=>`${p.x} ${p.y}`).join(' L ')} Z`);
+      region.setAttribute('fill',grayHex(obj.regionFillLevel ?? 180));region.setAttribute('fill-opacity',Math.max(0,Math.min(1,obj.regionOpacity ?? 0.35)));
+      region.setAttribute('stroke',obj.lineVisible===true||obj.regionSpec?.strokeWidth>0?grayHex(obj.strokeLevel):'none');region.setAttribute('stroke-width',obj.regionSpec?.strokeWidth ?? obj.strokeWidth ?? .2);
+      region.setAttribute('data-graph-region','');if(obj.regionSpec?.id)region.setAttribute('data-graph-region-id',obj.regionSpec.id);g.appendChild(region);
+    }
+    return g;
+  }
+
 
   /* ----- 곡선 아래 면적 채움 (함수 하나에 붙는 옵션) -----
    * obj.area = { from, to, baseY, level, edges, label }
@@ -884,8 +1105,17 @@ function renderFuncgraph(obj) {
       clipXMin = Number.isFinite(area.worldFrom) ? area.worldFrom : worldX(lo);
       clipXMax = Number.isFinite(area.worldTo) ? area.worldTo : worldX(hi);
     }
+    if (Number.isFinite(area.worldFrom)) clipXMin = area.worldFrom;
+    if (Number.isFinite(area.worldTo)) clipXMax = area.worldTo;
+    let areaOffset = 0;
+    const hasAreaHandles = Array.isArray(obj.handles) && obj.handles.length === pts.length;
     const areaRuns = splitByBreaks(pts, obj.breaks)
-      .map((run) => clipRunByWorldX(run, Math.min(clipXMin, clipXMax), Math.max(clipXMin, clipXMax)))
+      .map((run) => {
+        const offset = areaOffset; areaOffset += run.length;
+        const geometry = hasAreaHandles ? bezierSamplePts(run, obj.handles.slice(offset, offset + run.length), 32, obj.segmentModes?.slice(offset, offset + run.length - 1))
+          : (obj.curveStyle || (obj.sourceKind === 'points' ? 'straight' : 'smooth')) === 'smooth' ? smoothSamplePts(run, obj.curvature, 24) : run;
+        return clipRunByWorldX(geometry, Math.min(clipXMin, clipXMax), Math.max(clipXMin, clipXMax));
+      })
       .filter((run) => run.length > 1);
     if (areaRuns.length) {
       const d = areaRuns.map((seg) => `M ${seg[0].x.toFixed(3)} ${area.baseY.toFixed(3)} `
@@ -960,7 +1190,7 @@ function renderFuncgraph(obj) {
       if (q.length < 4 || q.some((p) => !p || !Number.isFinite(p.x) || !Number.isFinite(p.y))) return;
       const bar = document.createElementNS(SVG_NS, "path");
       bar.setAttribute("d", `M ${q[0].x} ${q[0].y} L ${q[1].x} ${q[1].y} L ${q[2].x} ${q[2].y} L ${q[3].x} ${q[3].y} Z`);
-      bar.setAttribute("fill", fillAttr);
+      bar.setAttribute("fill", Number.isFinite(r.fillLevel) ? grayHex(r.fillLevel) : fillAttr);
       bar.setAttribute("stroke", edge);
       bar.setAttribute("stroke-width", esw);
       bar.setAttribute("stroke-linejoin", "miter");
@@ -982,19 +1212,48 @@ function renderFuncgraph(obj) {
 
   // curveStyle: "straight"(수동 계열 기본, 요구 ④의 직선/꺾은선) | "smooth"(함수식 기본, 기존 Catmull-Rom).
   // 막대 계열은 points가 '사각형 꼭짓점'이라 선으로 이으면 안 된다 — 선 경로를 건너뛴다.
-  if (!isBars) {
+  if (!isBars && obj.lineVisible !== false) {
     const style = obj.curveStyle || (obj.sourceKind === "points" ? "straight" : "smooth");
     const el = document.createElementNS(SVG_NS, "path");
     // 편집 가능한 베지어 핸들이 있으면(자유곡선 변환) 그 제어점으로 진짜 3차 베지어를 그린다.
     const hasHandles = Array.isArray(obj.handles) && obj.handles.length === pts.length && pts.length >= 2;
-    el.setAttribute("d", hasHandles ? bezierPathD(pts, obj.handles)
-      : (style === "straight" ? straightPathD(pts, obj.breaks) : funcgraphPathD(pts, obj.curvature, obj.breaks)));
+    const bezierD = () => {
+      const starts = [0, ...(obj.breaks || []).filter(i => Number.isInteger(i) && i > 0 && i < pts.length), pts.length];
+      return starts.slice(0, -1).map((start, i) => bezierPathD(pts.slice(start, starts[i + 1]), obj.handles.slice(start, starts[i + 1]), obj.segmentModes?.slice(start, starts[i + 1] - 1))).join(' ');
+    };
+    let pathD = hasHandles ? bezierD()
+      : (style === "straight" ? straightPathD(pts, obj.breaks) : funcgraphPathD(pts, obj.curvature, obj.breaks));
+    // Closure belongs to one continuous series, never to individual discontinuous
+    // runs. Repeated endpoints already contain their closing geometry.
+    if (obj.closed === true && pts.length > 2 && !(obj.breaks || []).some(i => Number.isInteger(i) && i > 0 && i < pts.length) && (pathD.match(/\bM\b/g) || []).length === 1) {
+      const first = pts[0], last = pts[pts.length - 1];
+      const closingMode = obj.segmentModes?.[pts.length - 1];
+      if ((first.x !== last.x || first.y !== last.y) && closingMode !== 'line' && (hasHandles || style === 'smooth')) {
+        if (hasHandles) {
+          const a = obj.handles[pts.length - 1], b = obj.handles[0];
+          pathD += ` C ${a.outX} ${a.outY} ${b.inX} ${b.inY} ${first.x} ${first.y}`;
+        } else {
+          const cp = crBezierCP(pts[pts.length - 2], last, first, pts[1], obj.curvature);
+          pathD += ` C ${cp.c1x} ${cp.c1y} ${cp.c2x} ${cp.c2y} ${first.x} ${first.y}`;
+        }
+      }
+      pathD += ' Z';
+    }
+    el.setAttribute("d", pathD);
     el.setAttribute("fill", "none");
     el.setAttribute("stroke", grayHex(obj.strokeLevel));
     el.setAttribute("stroke-width", obj.strokeWidth ?? 0.2);
     el.setAttribute("stroke-linecap", "round");
     el.setAttribute("stroke-linejoin", "round");
     applyDash(el, obj);
+    if (Array.isArray(obj.dashPattern) && obj.dashPattern.length && obj.dashPattern.every(n => Number.isFinite(n) && n >= 0) && obj.dashPattern.some(n => n > 0)) el.setAttribute("stroke-dasharray", obj.dashPattern.join(" "));
+    // Reconstructed dash lengths describe visible ink and gaps. Round caps can
+    // bridge a measured gap; zero-length dot strokes still need round caps.
+    if (obj.reconstruction && el.hasAttribute('stroke-dasharray')) {
+      const pattern = el.getAttribute('stroke-dasharray').trim().split(/[ ,]+/).map(Number);
+      const effective = pattern.length % 2 ? pattern.concat(pattern) : pattern;
+      if (effective.every((n, i) => Number.isFinite(n) && (i % 2 || n > 0))) el.setAttribute('stroke-linecap', 'butt');
+    }
     g.appendChild(el);
   }
 
@@ -1012,7 +1271,7 @@ function renderFuncgraph(obj) {
     const ly = last.y + ny * size * 0.18;
     const lbl = renderGraphLabel(obj.endLabel, {
       x: lx, y: ly, size, color: grayHex(obj.strokeLevel),
-      anchor: nx >= 0 ? "start" : "end", vAlign: "middle", halo: true, haloRatio: obj.haloRatio,
+      anchor: nx >= 0 ? "start" : "end", vAlign: "middle", halo: true, haloRatio: obj.haloRatio, weight: obj.labelWeight,
     });
     if (lbl) g.appendChild(lbl);
   }
@@ -1028,14 +1287,17 @@ function renderFuncgraph(obj) {
     const l = document.createElementNS(SVG_NS, "line");
     l.setAttribute("x1", seg[0].x); l.setAttribute("y1", seg[0].y);
     l.setAttribute("x2", seg[1].x); l.setAttribute("y2", seg[1].y);
-    l.setAttribute("stroke", gc); l.setAttribute("stroke-width", gsw * 0.55);
-    l.setAttribute("stroke-dasharray", "0.54 0.42"); l.setAttribute("stroke-linecap", "round"); // 대시·간격 40%↓(요구)
+    l.setAttribute("stroke", gc); l.setAttribute("stroke-width", obj.guideStyle?.strokeWidth ?? gsw * 0.55);
+    l.setAttribute("stroke-dasharray", obj.guideStyle ? `${obj.guideStyle.dashLength} ${obj.guideStyle.dashGap}` : "0.54 0.42"); l.setAttribute("stroke-linecap", isExamStyle(obj) ? "butt" : "round");
+    l.setAttribute('data-graph-guide', '');
     g.appendChild(l);
   });
   // 구간 화살표: 곡선 위 지정 지점에 화살촉만 접선 방향으로 얹는다(선을 덧그리지 않는다).
   (obj.arrowMarks || []).forEach((am) => {
     if (!am || !Number.isFinite(am.x) || !Number.isFinite(am.y)) return;
-    g.appendChild(makeArrowHead(am.x, am.y, am.dx, am.dy, am.strokeWidth || 0.525, gc));
+    const head = am.examLength ? smoothArrowHead(am.x,am.y,am.dx,am.dy,am.examLength/(1.1551*6),gc) : makeArrowHead(am.x, am.y, am.dx, am.dy, am.strokeWidth || 0.525, gc);
+    head.setAttribute('data-graph-direction', '');
+    g.appendChild(head);
   });
   // arrowPolys는 옛 저장 파일 호환용(예전엔 화살표를 폴리라인으로 구웠다).
   (obj.arrowPolys || []).forEach((ap) => {
@@ -1046,6 +1308,7 @@ function renderFuncgraph(obj) {
     });
     if (el) g.appendChild(el);
   });
+  if(obj.markerShape && obj.markerShape !== 'none') pts.forEach((p,i)=>{if(obj.endpointMarkers?.some(e=>e.index===i))return;g.appendChild(graphMarker(p.x,p.y,obj.markerShape,obj.markerSize>0?obj.markerSize:markerRadius(gsw),obj.markerStrokeWidth>0?obj.markerStrokeWidth:gsw,gc));});
   (obj.markers || []).forEach((m) => {
     if (!m) return;
     const c = document.createElementNS(SVG_NS, "circle");
@@ -1055,6 +1318,17 @@ function renderFuncgraph(obj) {
     c.setAttribute("r", obj.markerSize || markerRadius(gsw));
     c.setAttribute("fill", gc); c.setAttribute("stroke", "none");
     g.appendChild(c);
+  });
+  (obj.endpointMarkers?.length ? obj.endpointMarkers : (pts.length === 1 && (!obj.markerShape || obj.markerShape === 'none') ? [{ index: 0, kind: 'closed' }] : [])).forEach((endpoint) => {
+    const point = obj.points?.[endpoint.index];
+    if (!point) return;
+    const circle = document.createElementNS(SVG_NS, 'circle');
+    circle.setAttribute('cx', point.x); circle.setAttribute('cy', point.y);
+    circle.setAttribute('r', endpoint.markerSize || obj.markerSize || Math.max(markerRadius(gsw), gsw * 1.6));
+    circle.setAttribute('fill', endpoint.kind === 'open' ? '#fff' : Number.isFinite(endpoint.fillLevel) ? grayHex(endpoint.fillLevel) : gc);
+    circle.setAttribute('stroke', gc); circle.setAttribute('stroke-width', gsw);
+    circle.setAttribute('data-graph-endpoint', endpoint.kind);
+    g.appendChild(circle);
   });
   return g;
 }

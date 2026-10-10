@@ -168,7 +168,8 @@ function renderSnapPreview(scene, zoom) {
 }
 
 /* ----- main draw: clear the scene group, repaint from state ----- */
-export function render(state) {
+export function render(state, change) {
+  if (change === 'native-text-input' && state.draftText?.nativeEditor) return;
   const scene = document.getElementById("scene");
   if (!scene) return;
   const selectionScale = selectionScaleForSvg(scene.ownerSVGElement, state.viewBox);
@@ -237,7 +238,7 @@ export function render(state) {
     const _layerId = obj.layerId ?? 1;
     const _layer = (state.layers || []).find(l => l.id === _layerId);
     if (_layer && _layer.visible === false) continue;
-    const el = renderObject(obj);
+    const el = renderObject(obj, state.objects);
     if (!el) continue;
     // 지연 자르기 가이드는 별도의 빨간 점선 레이어가 그립니다.
     // 기본 렌더를 그대로 노출하면 일반 곡선 스타일(검은 선/면)이 섞여
@@ -886,7 +887,7 @@ function makeHitTwin(obj) {
 /* ----- per-object dispatch (one branch per shape type) ----- */
 // Exported so SVG export reuses the exact same per-object node builders
 // (no duplicated shape-drawing code; DESIGN 1-1 projection stays single-source).
-export function renderObject(obj) {
+export function renderObject(obj, objects = []) {
   obj = resolveObjectStyle(obj);
   switch (obj.type) {
     case "rect":
@@ -914,7 +915,7 @@ export function renderObject(obj) {
     case "coordplane":
       return renderCoordplane(obj);
     case "funcgraph":
-      return renderFuncgraph(obj);
+      return renderFuncgraph(obj, objects.find(o => o.id === obj.planeId && o.type === 'coordplane'));
     case "anglearc":
       return renderAngleArc(obj);
     case "rightangle":

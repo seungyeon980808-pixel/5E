@@ -6,7 +6,7 @@
 import { TEXT_FONTS, MIN_TEXT_PT, ptToMm, normalizeTextRunStyle,
          LETTER_SPACING_MIN, LETTER_SPACING_MAX,
          WIDTH_SCALE_MIN, WIDTH_SCALE_MAX } from "../state.js?v=1.7.0-four-session-integration";
-import { makeSection } from "./widgets.js?v=1.7.0-four-session-integration";
+import { makeSection, makeTextDetailButton } from "./widgets.js?v=1.7.0-four-session-integration";
 import { startEditingTextObject } from "../tools.js?v=1.7.0-four-session-integration";
 
 export function buildTextSection(ctx) {
@@ -55,24 +55,15 @@ export function buildTextSection(ctx) {
   fontSizeRow.appendChild(fontSizeUnit);
   secTextBody.appendChild(fontSizeRow);
 
-  const textEditRow = document.createElement("div");
-  textEditRow.className = "insp-row";
+  const textEditRow = document.createElement("span");
+  textEditRow.className = "insp-summary-action";
   textEditRow.dataset.liteControl = "text-label";
   textEditRow.style.display = "none";
-  const textEditLbl = document.createElement("label");
-  textEditLbl.className = "insp-field-label";
-  textEditLbl.textContent = "텍스트";
-  const textEditBtn = document.createElement("button");
-  textEditBtn.type = "button";
-  textEditBtn.textContent = "편집";
-  textEditBtn.title = "텍스트 편집";
-  textEditBtn.style.cssText = "padding:4px 10px;font-size:11px;cursor:pointer;border:1px solid var(--border);border-radius:6px;background:var(--bg-input);color:var(--text-primary);";
-  textEditBtn.addEventListener("click", () => {
+  const textEditBtn = makeTextDetailButton(() => {
     const id = (state.get().selectedIds || [])[0];
-    if (id) startEditingTextObject(id);
+    if (id) startEditingTextObject(id, null, { detailed: true });
   });
-  textEditRow.append(textEditLbl, textEditBtn);
-  secTextBody.appendChild(textEditRow);
+  textEditRow.appendChild(textEditBtn);
 
   const boldRow = document.createElement("div");
   boldRow.className = "insp-row";
@@ -276,9 +267,9 @@ export function buildTextSection(ctx) {
   wsNum.addEventListener("change", () => commitWidthScale(wsNum.value));
   wsNum.addEventListener("keydown", (e) => { if (e.key === "Enter") wsNum.blur(); });
 
-  // 예전의 "글꼴 설정..." 버튼(별도 모달)은 제거됐다. 글꼴/크기/굵게/기울임과 심볼
-  // 팔레트는 이제 통합 텍스트/라벨 편집기(더블클릭·텍스트 도구) 안에서 모두 처리한다.
+  // 상세 아이콘은 기존 통합 텍스트/라벨 편집기를 연다.
   const secText = makeSection("글꼴", secTextBody);
+  secText.querySelector("summary").appendChild(textEditRow);
   secText.dataset.liteSection = "text";
 
   return { secText, fontFamSel, fontSizeNum, textEditRow, textEditBtn, boldCb, italicCb, haloCb, vertCb, lsRange, lsNum, wsRange, wsNum };

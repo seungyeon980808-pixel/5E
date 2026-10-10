@@ -3,7 +3,7 @@
  * split). Builds the section DOM and wires its events; mounting into the
  * inspector panel happens in js/inspector.js (the orchestrator). */
 
-import { makeColorPicker, makeSection, supportsDash, DASH_PRESETS } from "./widgets.js?v=1.7.0-four-session-integration";
+import { makeColorPicker, makeSection, makeTextDetailButton, supportsDash, DASH_PRESETS } from "./widgets.js?v=1.7.0-four-session-integration";
 // 패턴 유효성 판정은 렌더러(applyDash)와 같은 함수를 써야 인스펙터 표시와 실제 그림이 안 어긋난다.
 import { normalizeDashPattern } from "../render/core.js?v=1.7.0-four-session-integration";
 import { openLabelerTextEditor } from "../tools.js?v=1.7.0-four-session-integration";
@@ -457,24 +457,15 @@ export function buildLineSection(ctx) {
   dashRow.appendChild(dashBtns);
   sec1Body.appendChild(dashRow);
 
-  const leaderLabelRow = document.createElement("div");
-  leaderLabelRow.className = "insp-row";
+  const leaderLabelRow = document.createElement("span");
+  leaderLabelRow.className = "insp-summary-action";
   leaderLabelRow.dataset.liteControl = "leader-label";
   leaderLabelRow.style.display = "none";
-  const leaderLabelLbl = document.createElement("label");
-  leaderLabelLbl.className = "insp-field-label";
-  leaderLabelLbl.textContent = "라벨";
-  const leaderLabelBtn = document.createElement("button");
-  leaderLabelBtn.type = "button";
-  leaderLabelBtn.textContent = "편집";
-  leaderLabelBtn.title = "지시선 라벨 편집";
-  leaderLabelBtn.style.cssText = "padding:4px 10px;font-size:11px;cursor:pointer;border:1px solid var(--border);border-radius:6px;background:var(--bg-input);color:var(--text-primary);";
-  leaderLabelBtn.addEventListener("click", () => {
+  const leaderLabelBtn = makeTextDetailButton(() => {
     const id = (state.get().selectedIds || [])[0];
-    if (id) openLabelerTextEditor(id);
+    if (id) openLabelerTextEditor(id, null, { detailed: true });
   });
-  leaderLabelRow.append(leaderLabelLbl, leaderLabelBtn);
-  sec1Body.appendChild(leaderLabelRow);
+  leaderLabelRow.appendChild(leaderLabelBtn);
 
   // Length/gap sliders — visible only when a dashed preset is active (dashLength > 0).
   function makeDashSliderRow(labelText, prop) {
@@ -877,14 +868,14 @@ export function buildLineSection(ctx) {
       const active = !isPartial && (Array.isArray(p.dashPattern)
         ? (!!pat && p.dashPattern.length === pat.length && p.dashPattern.every((v, k) => v === pat[k]))
         : (!pat && p.dashLength === dl && p.dashGap === dg));
-      btn.style.background = active ? "var(--accent)" : "var(--bg-input)";
-      btn.style.color      = active ? "#ffffff" : "var(--text-primary)";
+      btn.style.background = active ? "var(--control-selected-bg)" : "var(--bg-input)";
+      btn.style.color      = active ? "var(--control-selected-text)" : "var(--text-primary)";
       btn.style.border     = active ? "1px solid var(--accent)" : "1px solid var(--border)";
     });
     // 부분 점선 button: shown for straight lines only; highlighted when active.
     partialDashBtn.style.display = obj.type === "line" ? "" : "none";
-    partialDashBtn.style.background = isPartial ? "var(--accent)" : "var(--bg-input)";
-    partialDashBtn.style.color      = isPartial ? "#ffffff" : "var(--text-primary)";
+    partialDashBtn.style.background = isPartial ? "var(--control-selected-bg)" : "var(--bg-input)";
+    partialDashBtn.style.color      = isPartial ? "var(--control-selected-text)" : "var(--text-primary)";
     partialDashBtn.style.border     = isPartial ? "1px solid var(--accent)" : "1px solid var(--border)";
 
     // 길이/간격 슬라이더는 2값 점선 전용 — 패턴이 켜져 있으면 감춘다.
@@ -991,6 +982,7 @@ export function buildLineSection(ctx) {
   angleInp.addEventListener("blur", commitAngle);
 
   const sec1 = makeSection("선", sec1Body);
+  sec1.querySelector("summary").appendChild(leaderLabelRow);
   sec1.dataset.liteSection = "line";
 
   return {

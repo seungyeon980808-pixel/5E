@@ -3,9 +3,11 @@ const fs = require('node:fs');
 const path = require('node:path');
 const test = require('node:test');
 const vm = require('node:vm');
+const { pathToFileURL } = require('node:url');
 
 const root = path.resolve(__dirname, '..');
 const panelSource = fs.readFileSync(path.join(root, 'js/ai-panel.js'), 'utf8');
+const productModule = name => import(`${pathToFileURL(path.join(root, `js/${name}.js`)).href}?v=1.7.0-four-session-integration`);
 
 function sourcePart(start, end) {
   const first = panelSource.indexOf(start);
@@ -25,9 +27,18 @@ async function flush() {
 }
 
 async function resultInsertionScenario(change = () => {}, { duringDecode = false } = {}) {
+  const [review, labels, store, materializer, transform] = await Promise.all([
+    'ai-image-review', 'ai-image-label-run', 'store', 'ai-candidate-materializer', 'transform',
+  ].map(productModule));
+  const data = 'candidate-source-A', candidateSha256 = await labels.imageLabelDigest(data);
+  const workflow = { imageKind: 'general', labelResult: 'remove', explicit: true };
+  const ids = ['object-counts','inside-outside','liquid-occupancy','connections','composition-state','black-fill-meaning','presentation','request-scope','raster-label-removal','kice-flat-style','flat-gray-regions'];
+  const acceptance = review.enforceImageLabelAcceptance({ verdict: 'pass', checks: ids.map(id => ({ id, label: id, status: 'pass', detail: 'Complete race fixture review' })), issues: [] }, { workflow, candidateSha256 });
+  assert.equal(acceptance.accepted, true, 'The real review gate accepts the complete, byte-bound baseline fixture');
   const outputGate = deferred();
   const completed = deferred();
   const decodeGate = deferred();
+  const decodeStarted = deferred();
   const pageA = [];
   const pageB = [];
   const draft = {
@@ -40,30 +51,15 @@ async function resultInsertionScenario(change = () => {}, { duringDecode = false
     undoStack: [],
     redoStack: [],
   };
-  const listeners = new Set();
-  let pageRevision = 0;
   const context = {
-    state: {
-      get: () => draft,
-      update: (update) => {
-        const pageId = draft.activePageId;
-        const pages = draft.pages;
-        const page = pages.find((item) => item.id === pageId);
-        update(draft);
-        const nextPage = draft.pages.find((item) => item.id === draft.activePageId);
-        if (draft.activePageId !== pageId || draft.pages !== pages || nextPage !== page) pageRevision += 1;
-        for (const listener of listeners) listener(draft);
-      },
-      subscribe: (listener) => {
-        listeners.add(listener);
-        return () => listeners.delete(listener);
-      },
-      capturePageContext: () => ({ pageId: draft.activePageId, revision: pageRevision }),
-      isPageContextCurrent: (token) => token.pageId === draft.activePageId && token.revision === pageRevision,
-    },
+    state: store.createStore(draft),
     busy: false,
     output: {},
-    item: { id: 'candidate-A', data: 'candidate-source-A' },
+    item: { id: 'candidate-A', data, imageLabelWorkflow: workflow, candidateSha256,
+      reviewReport: acceptance.report, reviewState: acceptance.state, verifiedCandidateData: data },
+    isImageLabelCandidateAccepted: review.isImageLabelCandidateAccepted,
+    imageLabelDigest: labels.imageLabelDigest,
+    rebuildGroups: transform.rebuildGroups,
     selectedItem: null,
     activeTaskTabId: 'task-A',
     selectedCandidateId: 'candidate-A',
@@ -90,29 +86,41 @@ async function resultInsertionScenario(change = () => {}, { duringDecode = false
       naturalWidth = 20;
       naturalHeight = 20;
       set src(_value) {
+        decodeStarted.resolve();
         if (duringDecode) decodeGate.promise.then(() => this.onload());
         else queueMicrotask(() => this.onload());
       }
     },
     getLastMouseWorld: () => null,
   };
-  const pasteSource = fs.readFileSync(path.join(root, 'preview/js/image-paste.js'), 'utf8')
+  const pasteSource = fs.readFileSync(path.join(root, 'js/image-paste.js'), 'utf8')
     .replace(/^import .*;\n/gm, '')
     .replace(/^export /gm, '');
   const handler = sourcePart('output.onclick = () => {', '\n      };');
   context.selectedItem = context.item;
-  vm.runInNewContext(`${pasteSource}\n${handler}\n};`, context);
+  const bindingHelpers = sourcePart('  const isAdoptableImageLabelCandidate =', '  const reviewSourceLabelCandidate =');
+  const buttonHelper = sourcePart('  const syncEditableLabelPlanButton =', '  const attachEditableLabelPlan =');
+  vm.runInNewContext(`${bindingHelpers}\n${buttonHelper}\n${pasteSource}\n${handler}\n};`, context);
+  context.materializeCandidate = materializer.createCandidateMaterializer(context.state, {
+    insertImageFromSrc: context.insertImageFromSrc,
+    prepareImageCandidateRevision: context.prepareImageCandidateRevision,
+    rebuildGroups: transform.rebuildGroups,
+  });
 
   context.output.onclick();
   if (!duringDecode) change(context, { pageA, pageB });
   outputGate.resolve('data:image/png;base64,synthetic');
   if (duringDecode) {
-    await flush();
+    await decodeStarted.promise;
     change(context, { pageA, pageB });
     decodeGate.resolve();
   }
   await completed.promise;
-  return { context, draft, pageA, pageB };
+  // Materialization commits a new objects array. Observe the live active page,
+  // not an obsolete pre-transaction array that could hide a successful insert.
+  return { context, draft,
+    pageA: draft.activePageId === 'A' ? draft.objects : pageA,
+    pageB: draft.activePageId === 'B' ? draft.objects : pageB };
 }
 
 const switchPage = (context, { pageB }) => context.state.update((state) => {
@@ -200,7 +208,7 @@ test('AI-160-02: candidate preparation is keyed by source, output, and separatio
 });
 
 test('AI-160-02: the real cache key changes for every rendered or separation input', async () => {
-  const module = await import(pathToFileURL(path.join(root, 'js/ai-panel.js')).href);
+  const module = await productModule('ai-panel');
   const source = 'data:image/png;base64,AA==';
   const output = { backgroundPolicy: 'preserve', examPalette: false, lineThickness: 0 };
   const separation = { layout: 'auto', maxAssets: 128, maxDurationMs: 8000 };
@@ -215,13 +223,18 @@ test('AI-160-02: the real cache key changes for every rendered or separation inp
   assert.equal(new Set([base, ...variants]).size, variants.length + 1);
 });
 
-function submitContext(statusPromise) {
+async function submitContext(statusPromise) {
+  const [quality, workflow, kice, white, models, snapshots, references, composition, marks, requests] = await Promise.all([
+    'ai-quality-mode', 'ai-image-label-workflow', 'kice-image-workflow', 'ai-white-png',
+    'ai-model-capabilities', 'ai-candidate-snapshot', 'ai-reference-roles', 'ai-source-tasking', 'ai-mark-policy', 'ai-request-plan',
+  ].map(productModule));
   const sends = [];
   let statusCalls = 0;
   const context = {
     panel: { dataset: {}, hidden: false },
     disposed: false,
     busy: false,
+    conversionKind: 'image',
     desktop: { web: true, status: () => { statusCalls += 1; return statusPromise; } },
     input: { value: 'request-A' },
     chatInput: { value: 'request-A' },
@@ -229,7 +242,11 @@ function submitContext(statusPromise) {
     attachments: [{ id: 'source-A' }],
     generatedImages: [],
     selectedMode: 'diagram',
-    selectedOutputEngine: 'raster',
+    // This preflight fixture exercises the native scene request path. Raster
+    // requests enter the explicit image-label workflow before the legacy tail.
+    selectedOutputEngine: quality.AI_OUTPUT_ENGINES.ASSET,
+    AI_OUTPUT_ENGINES: quality.AI_OUTPUT_ENGINES,
+    normalizeOutputEngine: quality.normalizeOutputEngine,
     selectedQualityMode: 'default',
     selectedCandidateId: null,
     referenceComposition: {},
@@ -240,11 +257,12 @@ function submitContext(statusPromise) {
     reviewModeCheckbox: { checked: false },
     currentRequestEpoch: 0,
     preflightRun: null,
+    batchRun: null,
     modelsLoaded: true,
-    availableModels: [],
+    availableModels: [{ model: 'synthetic', supportedReasoningEfforts: ['medium'], serviceTiers: ['priority'] }],
     modelSelection: () => ({model:'synthetic',effort:'medium',serviceTier:null}),
     savedModelPreference: () => ({model:'synthetic',effort:'medium',serviceTier:null}),
-    defaultAIModelSelection: (catalog, value) => value,
+    defaultAIModelSelection: models.defaultAIModelSelection,
     requestToken: null,
     beginRequest: () => { context.requestToken = {}; return context.requestToken; },
     requestStates: { live: () => true, advance: () => {} },
@@ -252,17 +270,21 @@ function submitContext(statusPromise) {
     setGenerating: () => {},
     queueMicrotask,
     structuredClone,
-    isWhitePngWorkflow: () => false,
-    kiceImageRequest: (value) => value,
-    compactConversation: () => '',
+    isWhitePngWorkflow: white.isWhitePngWorkflow,
+    kiceImageRequest: kice.kiceImageRequest,
+    compactConversation: requests.compactConversation,
     conversationMessages: [],
     recordConversationMessage: (role, text) => context.conversationMessages.push({ role, text }),
-    snapshotImageItem: (value) => ({ ...value }),
-    enforceKiceImageRunInput: (value) => value,
-    normalizeReferenceComposition: (value) => value,
-    normalizeMarkPolicy: (value) => value,
-    readMarkPolicy: () => ({}),
-    partitionReferenceItems: (inputs) => ({ inputs, styleReferences: [] }),
+    snapshotImageItem: snapshots.snapshotImageItem,
+    enforceKiceImageRunInput: kice.enforceKiceImageRunInput,
+    normalizeReferenceComposition: composition.normalizeReferenceComposition,
+    normalizeMarkPolicy: marks.normalizeMarkPolicy,
+    readMarkPolicy: () => marks.normalizeMarkPolicy({}),
+    readPreserveSourceLabels: () => false,
+    readImageLabelWorkflow: () => workflow.normalizeImageLabelWorkflow(null),
+    normalizeImageLabelWorkflow: workflow.normalizeImageLabelWorkflow,
+    preciseRestoreCheckbox: { checked: false },
+    partitionReferenceItems: references.partitionReferenceItems,
     orderedInputReferences: (value) => value,
     commentPrompt: () => '',
     refresh: () => {},
@@ -276,7 +298,7 @@ function submitContext(statusPromise) {
 
 test('AI-160-03: preflight locks before status await so a double click prepares one request', async () => {
   const status = deferred();
-  const { context, sends, statusCalls } = submitContext(status.promise);
+  const { context, sends, statusCalls } = await submitContext(status.promise);
   const first = context.submit('image');
   const second = context.submit('image');
   status.resolve({ login: { loggedIn: true } });
@@ -293,8 +315,7 @@ test('AI-160-03: preflight locks before status await so a double click prepares 
 
 test('AI-160-03: model loading is covered by the same preflight lock', async () => {
   const models = deferred();
-  const { context, statusCalls } = submitContext(Promise.resolve({ login: { loggedIn: true } }));
-  context.isWhitePngWorkflow = () => false;
+  const { context, statusCalls } = await submitContext(Promise.resolve({ login: { loggedIn: true } }));
   context.modelsLoaded = false;
   context.loadModels = () => models.promise;
   const first = context.submit('image');
@@ -310,7 +331,7 @@ test('AI-160-03: model loading is covered by the same preflight lock', async () 
 
 test('AI-160-03: task input is captured before delayed status and model awaits', async () => {
   const status = deferred();
-  const { context } = submitContext(status.promise);
+  const { context } = await submitContext(status.promise);
   const request = context.submit('image');
   context.activeTaskTabId = 'task-B';
   context.input.value = 'request-B';
@@ -327,7 +348,7 @@ test('AI-160-03: task input is captured before delayed status and model awaits',
 
 test('AI-160-03: a failed preflight releases only its own lock so retry can start', async () => {
   const firstStatus = deferred();
-  const { context } = submitContext(firstStatus.promise);
+  const { context } = await submitContext(firstStatus.promise);
   const first = context.submit('image');
   firstStatus.resolve(Promise.reject(new Error('synthetic status failure')));
   assert.equal(await first, undefined);
@@ -363,7 +384,7 @@ test('AI-160-02: an aborted separation never publishes a stale ready result', as
 });
 
 test('SEC-160-04: default sharing serializes only the active workspace and active task', async () => {
-  const module = await import(pathToFileURL(path.join(root, 'preview/js/ai-sharing-document.mjs')).href);
+  const module = await import(`${pathToFileURL(path.join(root, 'js/ai-sharing-document.mjs')).href}?v=1.7.0-four-session-integration`);
   const image = { id: 'image', name: 'image', kind: 'generated', data: 'data:image/png;base64,AA==' };
   const task = (id, input) => ({ id, title: id, attachments: [], generated: [image], conversationMessages: [], input });
   const workspaces = [
@@ -376,8 +397,6 @@ test('SEC-160-04: default sharing serializes only the active workspace and activ
   assert.deepEqual(document.workspaces[0].tabs.map((tab) => tab.id), ['A-active']);
   assert.equal(JSON.stringify(document).includes('private'), false);
 });
-
-const { pathToFileURL } = require('node:url');
 
 for (const enabled of [false, true]) {
   test(`white revision terminal routes captured review preference ${enabled} without reading live model controls`, () => {
@@ -417,26 +436,71 @@ for (const enabled of [false, true]) {
 
 test('review preference is captured before delayed status even if its control changes', async () => {
   const status = deferred();
-  const { context } = submitContext(status.promise);
+  const { context } = await submitContext(status.promise);
   const pending = context.submit('image');
   context.reviewModeCheckbox.checked = true;
   status.resolve({ login: { loggedIn: true } });
   assert.equal((await pending).reviewEnabled, false);
 });
 
+test('raster preflight retains the actual explicit-workflow guard and captured request ownership', async () => {
+  const { normalizeImageLabelWorkflow } = await productModule('ai-image-label-workflow');
+  const { context: invalid } = await submitContext(Promise.resolve({ login: { loggedIn: true } }));
+  const errors = [], invalidRuns = [];
+  invalid.selectedOutputEngine = invalid.AI_OUTPUT_ENGINES.RASTER;
+  invalid.setStatus = (message, type) => errors.push({ message, type });
+  invalid.runImageLabelConversion = async detail => invalidRuns.push(detail);
+  await invalid.submit('image');
+  assert.equal(invalidRuns.length, 0, 'Missing explicit policy cannot reach the conversion boundary');
+  assert.ok(errors.some(error => error.type === 'error' && /이미지 종류와 라벨 처리 선택/.test(error.message)));
+  assert.equal(invalid.preflightRun, null);
+
+  const status = deferred();
+  const { context: valid, statusCalls } = await submitContext(status.promise);
+  const runs = [];
+  valid.selectedOutputEngine = valid.AI_OUTPUT_ENGINES.RASTER;
+  const workflow = normalizeImageLabelWorkflow({ imageKind: 'general', labelResult: 'restore-editable' }, { requireExplicit: true });
+  valid.readImageLabelWorkflow = () => workflow;
+  valid.runImageLabelConversion = async detail => runs.push(detail);
+  const first = valid.submit('image'), second = valid.submit('image');
+  valid.readImageLabelWorkflow = () => normalizeImageLabelWorkflow({ imageKind: 'exam', labelResult: 'remove' });
+  valid.reviewModeCheckbox.checked = true;
+  status.resolve({ login: { loggedIn: true } });
+  await Promise.all([first, second]);
+  assert.equal(statusCalls(), 1);
+  assert.equal(runs.length, 1, 'Only the owning preflight reaches the real normalized conversion route');
+  assert.equal(runs[0].originatingTaskId, 'task-A');
+  assert.equal(runs[0].request, 'request-A');
+  assert.deepEqual(Array.from(runs[0].runInput.attachments, item => item.id), ['source-A']);
+  assert.deepEqual(runs[0].runInput.imageLabelWorkflow, workflow);
+  assert.equal(runs[0].runInput.reviewEnabled, false);
+});
+
 test('batch capture retains only selected revision inputs and immutable operation settings without changing stored history', async () => {
-  const { snapshotImageItem } = await import(pathToFileURL(path.join(root, 'js/ai-panel.js')).href);
+  const [{ snapshotImageItem }, { collectScopedAreaComments }, models, workflow, quality] = await Promise.all([
+    'ai-candidate-snapshot', 'ai-scoped-edit-prompt', 'ai-model-capabilities', 'ai-image-label-workflow', 'ai-quality-mode',
+  ].map(productModule));
   const source = { id:'original',kind:'reference',data:'original-bytes',comments:[{text:'original comment'}] };
-  const selected = { id:'selected',kind:'generated',data:'selected-bytes',comments:[{type:'area',text:'captured comment'}] };
-  const tab = { id:'A',title:'A',input:'request',attachments:[source],generated:[{id:'older',data:'history-bytes'},selected,{id:'newer',data:'newer-history'}],selectedCandidateId:'selected',model:'catalog-sol',effort:'medium',serviceTier:null,mode:'diagram',outputEngine:'raster',qualityMode:'default',generationMode:'single',referenceComposition:{kind:'all'},markPolicy:{text:'preserve'},conversationMessages:[],uiMessages:[{text:'unrelated history'}] };
+  const selected = { id:'selected',kind:'generated',data:'selected-bytes',comments:[{type:'area',imageId:'selected',x:10,y:10,w:20,h:20,text:'captured comment'}] };
+  const tab = { id:'A',title:'A',input:'request',attachments:[source],generated:[{id:'older',data:'history-bytes'},selected,{id:'newer',data:'newer-history'}],selectedCandidateId:'selected',model:'catalog-sol',effort:'medium',serviceTier:null,mode:'diagram',outputEngine:'raster',qualityMode:'default',generationMode:'single',referenceComposition:{kind:'all'},markPolicy:{text:'preserve'},imageLabelWorkflow:workflow.normalizeImageLabelWorkflow({imageKind:'general',labelResult:'restore-editable'}),conversationMessages:[],uiMessages:[{text:'unrelated history'}] };
   const stored=JSON.stringify(tab);
-  const context={structuredClone,taskTabs:new Map([['A',tab]]),activeTaskTabId:'C',availableModels:[],snapshotImageItem,defaultAIModelSelection:(_,value)=>({model:value.model,effort:value.effort,serviceTier:value.serviceTier}),compactConversation:()=>'',batchOwner:taskId=>({taskId,scope:{sessionId:'session',workspaceId:'workspace'}}),panel:{dataset:{}},busy:false,preflightRun:null,desktop:{send(){}},resolveAIModelSelection:()=>{}};
+  const context={structuredClone,collectScopedAreaComments,scopedPromptMode:{value:'compact'},
+    taskTabs:new Map([['A',tab]]),activeTaskTabId:'C',
+    availableModels:['catalog-sol','catalog-luna'].map(model=>({model,supportedReasoningEfforts:['medium'],serviceTiers:['priority']})),
+    snapshotImageItem,defaultAIModelSelection:models.defaultAIModelSelection,resolveAIModelSelection:models.resolveAIModelSelection,
+    normalizeImageLabelWorkflow:workflow.normalizeImageLabelWorkflow,AI_OUTPUT_ENGINES:quality.AI_OUTPUT_ENGINES,
+    compactConversation:()=>'',batchOwner:taskId=>({taskId,scope:{sessionId:'session',workspaceId:'workspace'}}),
+    panel:{dataset:{}},busy:false,preflightRun:null,desktop:{send(){}}};
   vm.runInNewContext(sourcePart('  function captureBatchTask(id) {','  async function runWorkspaceBatch(context,emit) {')+'\nglobalThis.capture=captureBatchTask;globalThis.preflight=preflightBatch;',context);
   const scoped=context.capture('A');
   assert.equal(scoped.snapshot.operation,'scoped-edit');
   assert.equal(scoped.snapshot.options.attachments.length,0);
   assert.deepEqual(Array.from(scoped.snapshot.options.generated,item=>item.id),['selected']);
   assert.equal(scoped.snapshot.options.uiMessages,undefined);
+  assert.equal(scoped.snapshot.scopeEdit.promptMode,'compact');
+  assert.equal(scoped.snapshot.options.serviceTier,'priority');
+  context.scopedPromptMode.value='legacy';
+  assert.equal(scoped.snapshot.scopeEdit.promptMode,'compact','A later control change must not change the queued request');
   assert.equal(context.preflight(scoped),null);
   assert.equal(JSON.stringify(tab),stored);
   selected.comments[0].text='later comment';tab.model='catalog-luna';
@@ -444,10 +508,23 @@ test('batch capture retains only selected revision inputs and immutable operatio
   assert.equal(scoped.snapshot.options.model,'catalog-sol');
   selected.data='changed source';assert.match(context.preflight(scoped),/원본 버전이 변경/);selected.data='selected-bytes';
   selected.comments=[];
+  const missingBox=context.capture('A');
+  assert.equal(missingBox.snapshot.operation,'scoped-edit');
+  assert.match(context.preflight(missingBox),/박스/);
+  assert.equal(missingBox.snapshot.options.attachments.length,0,'Missing boxes cannot turn a raster revision into a new whole-image request');
+  selected.sceneResult={};
   const normal=context.capture('A');
   assert.equal(normal.snapshot.operation,'generate');
   assert.deepEqual(Array.from(normal.snapshot.options.generated,item=>item.id),['selected']);
   assert.equal(normal.snapshot.options.attachments[0].data,'original-bytes');
   assert.equal(normal.snapshot.options.attachments[0].comments[0].text,'original comment');
+  assert.equal(context.preflight(normal),null,'A native scene request with an explicit workflow and real catalog remains valid');
+  const invalidPolicy=structuredClone(normal);
+  invalidPolicy.snapshot.options.imageLabelWorkflow={explicit:false};
+  assert.match(context.preflight(invalidPolicy),/이미지 종류와 라벨 처리 선택/);
+  const invalidModel=structuredClone(normal);
+  invalidModel.snapshot.model='missing-model';
+  invalidModel.snapshot.options.model='missing-model';
+  assert.match(context.preflight(invalidModel),/선택 모델 missing-model/);
   assert.equal(tab.generated.length,3);
 });

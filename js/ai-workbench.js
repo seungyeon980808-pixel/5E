@@ -1,3 +1,5 @@
+import { buildSourceLabelCorrectionDraft } from './ai-source-label-plan.js?v=1.7.0-four-session-integration';
+import { LABEL_REVIEW_POLICY } from './ai-image-review.js?v=1.7.0-four-session-integration';
 import { composeReferenceImages } from './ai-reference-composite.js?v=1.7.0-four-session-integration';
 import { comparisonGeometry } from './ai-comparison.js?v=1.7.0-four-session-integration';
 const REVIEW_STATES = new Set([
@@ -79,11 +81,14 @@ export function normalizePixelInspection(value) {
 export function normalizeReviewDetail(detail = {}) {
   const state = normalizeReviewState(detail.state);
   const report = detail.report && typeof detail.report === "object" ? detail.report : {};
+  const labelReview = report.labelReview?.policy === LABEL_REVIEW_POLICY
+    && ['pass', 'fail', 'uncertain'].includes(report.labelReview.verdict) ? report.labelReview : null;
   return {
     state,
     candidateId: cleanText(detail.candidateId),
     report: {
       verdict: cleanText(report.verdict),
+      ...(labelReview ? { labelReview: { policy: labelReview.policy, verdict: labelReview.verdict, editability: 'not-verified' } } : {}),
       checks: Array.isArray(report.checks) ? report.checks.map((check, index) => ({
         id: cleanText(check?.id, `check-${index + 1}`),
         label: cleanText(check?.label, `검수 항목 ${index + 1}`),
@@ -92,6 +97,7 @@ export function normalizeReviewDetail(detail = {}) {
       })) : [],
       issues: Array.isArray(report.issues) ? report.issues.map((issue) => ({
         message: cleanText(issue?.message, "확인이 필요한 문제가 있습니다."),
+        ...(issue?.checkId ? { checkId: cleanText(issue.checkId) } : {}),
         bbox: issue?.bbox ?? null,
         severity: cleanText(issue?.severity),
       })) : [],
@@ -134,6 +140,24 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
   const sourceSelect = panel.querySelector("[data-ai-source-select]");
   const resultState = panel.querySelector("[data-ai-result-state]");
   const reviewSummary = panel.querySelector("[data-ai-review-summary]");
+  const reviewContent = panel.querySelector('[data-ai-review-content]');
+  const reviewOpen = panel.querySelector('[data-ai-review-open]');
+  const reviewCount = panel.querySelector('[data-ai-review-count]');
+  reviewContent?.append(panel.querySelector('.ai-review-overview'));
+  const connection = panel.querySelector('.ai-advanced-settings');
+  if (connection) { connection.open = true; panel.querySelector('[data-ai-connection-content]')?.append(connection); }
+  for (const kind of ['review', 'connection']) {
+    const button = panel.querySelector(`[data-ai-${kind}-open]`);
+    const dialog = panel.querySelector(`[data-ai-${kind}-dialog]`);
+    if (dialog) panel.append(dialog); // Native modal siblings avoid nested aria-modal dialogs.
+    button?.addEventListener('click', () => { if (dialog && !dialog.open) dialog.showModal(); });
+    dialog?.querySelector('[data-ai-info-close]')?.addEventListener('click', () => dialog.close());
+    dialog?.addEventListener('keydown', event => {
+      if (event.key === 'Escape') { event.preventDefault(); event.stopImmediatePropagation(); dialog.close(); }
+    });
+    dialog?.addEventListener('close', () => button?.focus());
+  }
+
   const compositePreview = panel.querySelector("[data-ai-composite-preview]");
   const orientationButtons = Array.from(panel.querySelectorAll("[data-ai-composition-orientation]"));
   const layoutButtons = Array.from(panel.querySelectorAll("[data-ai-layout-mode]"));
@@ -447,6 +471,63 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     };
     reviewSummary.dataset.state = state;
     reviewSummary.textContent = labels[state] || labels.idle;
+    let issuesView = panel.querySelector('[data-ai-label-quality-issues]');
+    if (!issuesView) {
+      issuesView = document.createElement('section');
+      issuesView.dataset.aiLabelQualityIssues = '';
+      issuesView.className = 'ai-label-quality-issues';
+      issuesView.setAttribute('aria-label', '라벨 생성 결과 확인 사항');
+      reviewContent?.append(issuesView);
+    }
+    const issues = record?.report?.issues || [];
+    const labelReview = record?.report?.labelReview;
+    if (reviewCount) { reviewCount.hidden = !issues.length; reviewCount.textContent = String(issues.length); }
+    if (reviewOpen) {
+      reviewOpen.dataset.state = state;
+      reviewOpen.setAttribute('aria-label', issues.length ? `결과 확인 사항 ${issues.length}개` : `결과 확인 사항 · ${labels[state] || labels.idle}`);
+      reviewOpen.title = issues.length ? `결과 확인 사항 ${issues.length}개` : labels[state] || labels.idle;
+    }
+    issuesView.replaceChildren();
+    issuesView.hidden = !issues.length && !labelReview;
+    if (!issuesView.hidden) {
+      if (labelReview) {
+        const summary = document.createElement('p'); summary.dataset.aiLabelReviewSummary = '';
+        const verdicts = { pass: '통과', fail: '미통과', uncertain: '확인 필요' };
+        summary.textContent = `라벨 내용·연결·가독성: ${verdicts[labelReview.verdict] || '확인 필요'} · 전체 결과: ${verdicts[record.report.verdict] || '확인 필요'}`;
+        issuesView.append(summary);
+      }
+      if (!issues.length) return;
+      const heading = document.createElement('strong'); heading.textContent = `결과 확인 사항 ${issues.length}개`;
+      const list = document.createElement('ul');
+      const issueDescriptions = {
+        'source-plan-uncertainty': '원본에서 읽은 라벨의 내용이나 연결 대상을 확실하게 확인하지 못했습니다.',
+        'raw-ink-occlusion': '라벨이 그림의 선과 겹칩니다. 라벨 위치를 확인해 주세요.',
+        'unconfirmed-source-fallback': '연결 대상을 확정하지 못해 라벨을 원본 위치에 임시 배치했습니다.',
+        'final-glyph-overlap': '최종 배치에서 라벨끼리 겹칩니다.',
+        'clipped-final-glyph': '라벨의 일부가 그림 가장자리 밖으로 나갑니다.',
+        'clipped-label': '라벨의 일부가 그림 가장자리 밖으로 나갑니다.',
+        'unmeasured-final-glyph': '최종 라벨의 글자 영역을 측정하지 못했습니다.',
+        'raw-ink-not-checked': '라벨과 그림의 선이 겹치는지 확인하지 못했습니다.',
+        'label-overlap': '라벨끼리 겹칩니다.',
+      };
+      for (const issue of issues) {
+        const row = document.createElement('li');
+        const body = document.createElement(normalizeReviewBBox(issue.bbox) ? 'button' : 'span');
+        body.textContent = issueDescriptions[issue.code]
+          || issueDescriptions[issue.message] || issue.message || '결과를 확인해 주세요.';
+        if (body.tagName === 'BUTTON') { body.type = 'button'; body.title = '그림에서 위치 확인'; body.onclick = () => highlightIssue(activeCandidate(), issue.bbox); }
+        row.appendChild(body); list.appendChild(row);
+      }
+      issuesView.append(heading, list);
+      const correction = buildSourceLabelCorrectionDraft({ report: record?.report });
+      if (correction) {
+        const button = document.createElement('button'); button.type = 'button'; button.dataset.aiLabelCorrectionDraft = '';
+        button.textContent = `${correction.label} 교정 요청 준비`;
+        button.onclick = () => panel.dispatchEvent(new CustomEvent('5e:ai-label-correction-draft'));
+        issuesView.append(button);
+      }
+
+    }
   }
 
   function stateForCard(card) {
@@ -783,7 +864,13 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
   });
 
   let knownGeneratedCount = 0;
-  const cardObserver = new MutationObserver(() => {
+  const cardObserver = new MutationObserver(records => {
+    // Box overlays are view annotations, not candidate changes. Rebuilding the
+    // version menu for each marker repaint makes its options impossible to click.
+    const overlay = node => node.nodeType === 1 && node.matches('[data-ai-comment-marker], [data-ai-comment-drag-preview]');
+    if (records.every(record => record.type === 'childList'
+      && [...record.addedNodes, ...record.removedNodes].length > 0
+      && [...record.addedNodes, ...record.removedNodes].every(overlay))) return;
     const nextCount = generatedCards().length;
     syncCandidates({ preferNewest: nextCount > knownGeneratedCount });
     knownGeneratedCount = nextCount;

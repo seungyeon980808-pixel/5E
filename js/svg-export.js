@@ -134,7 +134,8 @@ ensureEmbeddedFonts();
 
 /* ----- a layer's visibility (mirrors render.js: hidden = visible === false) ----- */
 function isReferenceImage(obj) {
-  return !!obj && obj.type === "image" && (obj.imageSelectionLocked === true || (obj.mode === "background" && obj.locked === true));
+  return !!obj && obj.type === "image" && obj.aiLabelEditingBackground !== true
+    && (obj.imageSelectionLocked === true || (obj.mode === "background" && obj.locked === true));
 }
 
 function isHidden(s, obj, options = {}) {
@@ -314,7 +315,7 @@ export function buildExportSvg(s, bounds = null, options = {}) {
   g.setAttribute("clip-path", "url(#artboard-clip)");
   for (const obj of zOrderObjects(s.objects)) {
     if (isHidden(s, obj, options)) continue;
-    const el = renderObject(obj);
+    const el = renderObject(obj, s.objects);
     if (el) g.appendChild(el);
   }
   svg.appendChild(g);
@@ -398,13 +399,19 @@ export function rasterizeExportCanvas(s, { dpi = 300, bounds = null, options = {
  * 한글(HWP)·PPT 등에서 바로 Ctrl+V 가능. localhost/HTTPS + 사용자 제스처 필요.
  * 성공 시 true. (SVG는 클립보드 규격상 지원되지 않아 PNG만) */
 export async function copyPngToClipboard(state, dpi = 300, bounds = null, options = {}) {
-  if (!navigator.clipboard || typeof ClipboardItem === "undefined") return false;
-  await ensureEmbeddedFonts();
-  const result = await rasterizeExportCanvas(state.get(), { dpi, bounds, options });
-  const rawBlob = await new Promise((res) => result.canvas.toBlob(res, "image/png"));
-  if (!rawBlob) return false;
-  const blob = await pngBlobWithDpi(rawBlob, dpi); // 실제 DPI(pHYs) 기록
-  await navigator.clipboard.write([new ClipboardItem({ "image/png": blob })]);
+  if (!navigator.clipboard?.write || typeof ClipboardItem === "undefined") return false;
+  const snapshot = structuredClone(state.get());
+  // Safari requires write() inside the original gesture. Give ClipboardItem
+  // the pending PNG, then embed fonts/rasterize without losing that gesture.
+  const png = (async () => {
+    await ensureEmbeddedFonts();
+    const result = await rasterizeExportCanvas(snapshot, { dpi, bounds, options });
+    const rawBlob = await new Promise((res) => result.canvas.toBlob(res, "image/png"));
+    if (!rawBlob) throw new Error("PNG encoding failed");
+    return pngBlobWithDpi(rawBlob, dpi);
+  })();
+  png.catch(() => {}); // write() may reject before consuming the PNG promise.
+  await navigator.clipboard.write([new ClipboardItem({ "image/png": png })]);
   return true;
 }
 

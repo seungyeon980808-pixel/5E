@@ -25,7 +25,7 @@ export function imageOutputOptionsKey(value) {
 
 export async function resolveImageOutput(item, value, transform) {
   if (!item?.data) throw new Error("처리할 이미지가 없습니다.");
-  if (item.sceneResult) return item.data;
+  if (item.sceneResult || item.reviewState === 'scoped-applied') return item.data;
   const options = normalizeImageOutputOptions(value);
   if (options.backgroundPolicy === "preserve" && !options.examPalette && options.lineThickness === 0) return item.data;
   if (typeof transform !== "function") throw new Error("이미지 처리기를 사용할 수 없습니다.");

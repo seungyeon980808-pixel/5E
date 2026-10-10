@@ -2,6 +2,10 @@ import './ai-label-background.js?v=1.7.0-four-session-integration';
 import { initLiteShell } from "./lite-shell.js?v=1.7.0-four-session-integration";
 import { previewStorage as localStorage } from './preview-storage.js?v=1.7.0-four-session-integration';
 import { initWebLoginUi } from './web-login-ui.js?v=1.7.0-four-session-integration';
+import { createAiLoginHandoff, LOGIN_INTENT_SESSION_KEY } from './ai-login-handoff.js?v=1.7.0-four-session-integration';
+import { idbGet, idbSet, idbDel } from './idb-store.js?v=1.7.0-four-session-integration';
+import { chooseWorkbenchAssignment } from './library/workbench-assignment.js?v=1.7.0-four-session-integration';
+import { initQuickCapture } from './quick-capture.js?v=1.7.0-four-session-integration';
 import { initMobileImage } from './mobile-image.js?v=1.7.0-four-session-integration';
 import { showAlert, showRecoveryCheckpointDialog } from "./ui-dialogs.js?v=1.7.0-four-session-integration";
 import { initAiSharing } from './ai-sharing-ui.js?v=1.7.0-four-session-integration';
@@ -21,15 +25,18 @@ import { initZoomReadoutLifecycle } from "./zoom-readout-lifecycle.js?v=1.7.0-fo
 import { initTools } from "./tools.js?v=1.7.0-four-session-integration";
 import { initCutTool } from "./cut-tool.js?v=1.7.0-four-session-integration";
 import { initEraseTool } from "./erase-tool.js?v=1.7.0-four-session-integration";
-import { initTransform, undo, redo } from "./transform.js?v=1.7.0-four-session-integration";
+import { initTransform, undo, redo, rebuildGroups } from "./transform.js?v=1.7.0-four-session-integration";
 import { initArtboardResize } from "./artboard-resize.js?v=1.7.0-four-session-integration";
 import { initInspector } from "./inspector.js?v=1.7.0-four-session-integration";
-import { initDesktopProjectCloseGuard, initProjectIO, initProjectFileOpening, saveProject } from "./project-io.js?v=1.7.0-four-session-integration";
-import { initExportDialog } from "./export-dialog.js?v=1.7.0-four-session-integration";
+import { initDesktopProjectCloseGuard, initProjectIO, initProjectFileOpening, configurePortableProjectIO, saveProject, serialize, applyLoaded, prepareLoadedProject } from "./project-io.js?v=1.7.0-four-session-integration";
+import { ensureEmbeddedFonts, rasterizeExportCanvas, insertPngPhys } from "./svg-export.js?v=1.7.0-four-session-integration";
+import { initExportDialog, runAreaCapture } from "./export-dialog.js?v=1.7.0-four-session-integration";
 import { initRuler, setRulerVisible } from "./ruler.js?v=1.7.0-four-session-integration";
 import { initSettings } from "./settings.js?v=1.7.0-four-session-integration";
 import { initImageObjectify } from "./image-objectify.js?v=1.7.0-four-session-integration";
-import { initImagePaste } from "./image-paste.js?v=1.7.0-four-session-integration";
+import { initImagePaste, insertImageFromSrc, prepareImageCandidateRevision } from "./image-paste.js?v=1.7.0-four-session-integration";
+import { createCandidateMaterializer } from "./ai-candidate-materializer.js?v=1.7.0-four-session-integration";
+import { validateWorkbenchGraph, insertWorkbenchGraph } from "./graph/workbench-result.js?v=1.7.0-four-session-integration";
 import { initImageCutout } from "./image-cutout.js?v=1.7.0-four-session-integration";
 import { renderSessionToDataUrl } from "./image-cutout.js?v=1.7.0-four-session-integration";
 import { handSelectedCanvasImageToAi } from "./ai-canvas-handoff.js?v=1.7.0-four-session-integration";
@@ -67,7 +74,7 @@ import { initChemGraphSection } from "./inspector/section-chemgraph.js?v=1.7.0-f
 import { initElectrodeSection } from "./inspector/section-electrode.js?v=1.7.0-four-session-integration";
 import { initPeriodicSection } from "./inspector/section-periodic.js?v=1.7.0-four-session-integration";
 import { initAutosave } from "./autosave.js?v=1.7.0-four-session-integration";
-import { initPages } from "./pages.js?v=1.7.0-four-session-integration";
+import { initPages, switchPage, resetPageHistory } from "./pages.js?v=1.7.0-four-session-integration";
 import { localizeShortcutLabels } from "./platform.js?v=1.7.0-four-session-integration";
 import { initModalDrag } from "./modal-drag.js?v=1.7.0-four-session-integration";
 import { initSteppers } from "./stepper.js?v=1.7.0-four-session-integration";
@@ -75,6 +82,8 @@ import { initReferenceWindows } from "./reference-window.js?v=1.7.0-four-session
 import { initTutorial } from "./tutorial.js?v=1.7.0-four-session-integration";
 import { initAiInstallGuide } from "./ai-install-guide.js?v=1.7.0-four-session-integration";
 import { initAiPanel } from "./ai-panel.js?v=1.7.0-four-session-integration";
+import { initRhwpExamWorkspace } from "./rhwp-exam-workspace.js?v=1.7.0-four-session-integration";
+import { commitActiveText } from "./text-editor.js?v=1.7.0-four-session-integration";
 
 const svg = document.getElementById("canvas");
 // Canvas interaction transfers keyboard ownership away from the last toolbar button.
@@ -210,7 +219,8 @@ const zoomReadout = document.getElementById("zoom-readout");
 })();
 
 /* ----- projection of viewBox onto the SVG element ----- */
-function applyViewBox(s) {
+function applyViewBox(s, change) {
+  if (change === 'native-text-input' && s.draftText?.nativeEditor) return;
   const { x, y, w, h } = s.viewBox;
   svg.setAttribute("viewBox", `${x} ${y} ${w} ${h}`);
   if (zoomReadout) zoomReadout.textContent = `zoom ${getZoom().toFixed(2)}×`;
@@ -302,13 +312,21 @@ initProjectIO(state, svg);
 
 /* ----- 다중 페이지: 하단 탭 바(추가/복제/이름변경/순서/삭제) + 스왑 전환 ----- */
 initPages(state);
+const materializeCandidate = createCandidateMaterializer(state,{insertImageFromSrc,prepareImageCandidateRevision,validateWorkbenchGraph,insertWorkbenchGraph,rebuildGroups});
+const examWorkspace = initRhwpExamWorkspace(state, { configurePortableProjectIO,
+  serialize, applyLoaded, prepareLoadedProject, ensureEmbeddedFonts, rasterizeExportCanvas, insertPngPhys, commitActiveText,
+  runAreaCapture, switchPage, resetPageHistory, insertImageFromSrc, materializeCandidate, centerView:() => centerView(state),
+  reportError:message => showAlert(message,{title:'시험지 보내기'}),
+  whenReady:() => autosaveReady,
+});
 
 /* ----- autosave: 2.5초 디바운스로 IndexedDB에 자동 저장 + 부팅 시 크래시 복구 -----
  * pages[] 채운 뒤에 초기화해야 첫 저장부터 유효한 다중 페이지 스냅샷이 된다. */
 const autosaveReady = initAutosave(state, { selectRecoveryCheckpoint: showRecoveryCheckpointDialog });
 initProjectFileOpening(state, autosaveReady);
 const recoveryChoice = await autosaveReady;
-const aiPanel = initAiPanel(state, { freshStart: recoveryChoice === "fresh" });
+const aiPanel = initAiPanel(state, { freshStart: recoveryChoice === "fresh", materializeCandidate });
+examWorkspace.setAiPanel(aiPanel);
 window.addEventListener('5e:lite-ai-open', async () => {
   await aiPanel?.open();
   window.dispatchEvent(new Event('5e:lite-ai-opened'));
@@ -329,12 +347,24 @@ const openSelectedAi = () => {
     });
 };
 const webLogin = initWebLoginUi({ openAi: openSelectedAi });
+const aiLoginHandoff = webLogin ? createAiLoginHandoff({
+  read:idbGet,write:idbSet,remove:idbDel,session:window.sessionStorage,
+  prepare:options=>aiPanel.openIndependentReferences(options),
+  reveal:(receipt,options)=>aiPanel.revealImportedReferences(receipt,options),
+  requireAi:action=>webLogin.requireAi(action),
+}) : null;
+if (aiLoginHandoff) {
+  if (recoveryChoice === 'fresh') window.sessionStorage.removeItem(LOGIN_INTENT_SESSION_KEY);
+  else void aiLoginHandoff.recover().catch(error=>{
+    if(error?.name!=='AbortError')void showAlert(`로그인 전 이미지 작업을 복원하지 못했습니다.\n${error.message}`);
+  });
+}
 if (aiEntryButton) {
   aiEntryButton.title = "AI 이미지 변환";
   aiEntryButton.setAttribute("aria-label", "AI 이미지 변환");
   const label = aiEntryButton.querySelector(".search-trigger-label");
   if (label) label.textContent = "AI 이미지 변환";
-  aiEntryButton.addEventListener("click", () => webLogin ? webLogin.openAi() : openSelectedAi());
+  aiEntryButton.addEventListener("click", openSelectedAi);
 }
 const desktopHandoff = initAiInstallGuide({
   saveProject: () => saveProject(state),
@@ -353,6 +383,7 @@ window.addEventListener("5e:local-folder-intent", () => desktopHandoff.reportLoc
 
 /* ----- export dialog: 파일 dropdown → 내보내기/미리보기 (PNG/SVG) ----- */
 initExportDialog(state, svg);
+initQuickCapture(state, svg);
 
 /* ----- rulers: top + left ruler canvases synced to viewport ----- */
 initRuler(svg, state);
@@ -367,12 +398,20 @@ initImageObjectify(state);
 initImagePaste(state, svg);
 
 /* ----- exam library: 기출 문항 검색 → 이미지 삽입/객체 변환 (지연 로딩) ----- */
-const openAiWithReference = (options) => webLogin
-  ? webLogin.requireAi(() => aiPanel?.open(options))
-  : aiPanel?.open(options);
-const openIndependentAiReferences = (options) => webLogin
-  ? webLogin.requireAi(() => aiPanel?.openIndependentReferences(options))
-  : aiPanel?.openIndependentReferences(options);
+const prepareLibraryAiDestination = async (options = {}) => {
+  const references=[options.reference,...(options.references || [])].filter(Boolean);
+  if(options.conversionKind || !references.length)return options;
+  const assignment=await chooseWorkbenchAssignment({references:references.map(reference=>({...reference,dataUrl:reference.dataUrl || reference.data || reference.src}))});
+  return assignment ? {...options,reference:undefined,references,conversionKind:assignment.conversionKind,placement:assignment.placement,groups:assignment.groups} : null;
+};
+const openAiWithReference = async options => {
+  const prepared=await prepareLibraryAiDestination(options);if(!prepared)return;
+  return aiLoginHandoff ? aiLoginHandoff.open(prepared) : aiPanel?.open(prepared);
+};
+const openIndependentAiReferences = async options => {
+  const prepared=await prepareLibraryAiDestination(options);if(!prepared)return;
+  return aiLoginHandoff ? aiLoginHandoff.open(prepared) : aiPanel?.openIndependentReferences(prepared);
+};
 initExamLibrary(state, { openAi: openAiWithReference, openIndependentReferences: openIndependentAiReferences });
 
 /* ----- image cutout editing: edit-mode image 오려내기 (사각형/자유 영역 지우기) ----- */
@@ -414,7 +453,7 @@ initReferenceWindows(state);
 
 /* ----- 따라하기: 상단바 단추 + 첫 방문 제안 배너 -----
    페이지(연습용 페이지 생성)와 view-mode(Pro 전환) 배선이 끝난 뒤에 켠다. */
-initTutorial();
+if (new URLSearchParams(location.search).get('exam') !== '1') initTutorial();
 
 /* Canvas and crop views own their zoom; surrounding UI keeps browser zoom. */
 const ownsZoom = target => target instanceof Element && target.closest("#ruler-container, [data-unilib-crop-stage]");

@@ -15,7 +15,15 @@ function initSteppers(root = document) {
     const box = btn.closest(".gm-step");
     const inp = box && box.querySelector("input");
     if (!inp || inp.disabled) return;
-    if (Number(btn.dataset.step) > 0) inp.stepUp(); else inp.stepDown();
+    const direction = Number(btn.dataset.step) > 0 ? 1 : -1;
+    if (inp.step === 'any' && Number(inp.dataset.stepSize) > 0) {
+      // Imported coordinates may have more precision than the button increment.
+      // stepUp() throws for step="any"; keep the exact input and add the increment.
+      const value = Number.isFinite(inp.valueAsNumber) ? inp.valueAsNumber : 0;
+      const min = inp.min === '' ? -Infinity : Number(inp.min);
+      const max = inp.max === '' ? Infinity : Number(inp.max);
+      inp.value = String(Math.min(max, Math.max(min, value + direction * Number(inp.dataset.stepSize))));
+    } else if (direction > 0) inp.stepUp(); else inp.stepDown();
     inp.dispatchEvent(new Event("input", { bubbles: true }));
     inp.dispatchEvent(new Event("change", { bubbles: true }));
   });

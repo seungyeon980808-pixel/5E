@@ -22,8 +22,9 @@ const JUMP_FUNCTION_RE = /\b(?:sign|floor|ceil|round)\s*\(/i;
 
 function linearErrorMm(a, b, probe, t, plane) {
   if (![a, b, probe].every(Number.isFinite)) return Infinity;
-  const expected = a + (b - a) * t;
-  return Math.abs(worldYFromMathY(plane, probe) - worldYFromMathY(plane, expected));
+  const mapped = [a, b, probe].map(y => worldYFromMathY(plane, y));
+  if (!mapped.every(Number.isFinite)) return 0;
+  return Math.abs(mapped[2] - (mapped[0] + (mapped[1] - mapped[0]) * t));
 }
 
 function isJumpCell(values, ySpan) {
@@ -63,8 +64,12 @@ function sampleFunctionPoints(expr, domainMin, domainMax, plane, opts = {}) {
   try { fn = compile(expr); }
   catch (err) { return { points: [], error: err.message }; }
 
-  const lo = Math.min(domainMin, domainMax);
+  let lo = Math.min(domainMin, domainMax);
   const hi = Math.max(domainMin, domainMax);
+  if (plane.xScale === 'log') lo = Math.max(lo, plane.xMin);
+  if ((plane.xScale === 'log' && !(plane.xMin > 0 && plane.xMax > plane.xMin)) ||
+      (plane.yScale === 'log' && !(plane.yMin > 0 && plane.yMax > plane.yMin)))
+    return { points: [], breaks: [], error: "로그축 범위는 0보다 커야 합니다" };
   if (!(hi > lo)) return { points: [], error: "정의역이 비어 있습니다" };
 
   // 평면의 표시 y범위 — 이 밖으로 나가는 값은 run을 끊어(평면 밖으로 돌출하거나 점근선을
@@ -85,6 +90,9 @@ function sampleFunctionPoints(expr, domainMin, domainMax, plane, opts = {}) {
     return cache.get(x);
   };
   const step = (hi - lo) / samples;
+  const xAt = i => plane.xScale === 'log'
+    ? 10 ** (Math.log10(lo) + (Math.log10(hi) - Math.log10(lo)) * i / samples)
+    : lo + step * i;
   const ySpan = Math.max(1e-12, yHi - yLo);
   const hasJumpFunction = JUMP_FUNCTION_RE.test(expr);
 
@@ -94,11 +102,11 @@ function sampleFunctionPoints(expr, domainMin, domainMax, plane, opts = {}) {
   let projectedPoints = samples + 1;
   const detailByCell = [];
   for (let i = 0; i < samples; i++) {
-    const x0 = lo + step * i;
-    const x1 = i === samples - 1 ? hi : lo + step * (i + 1);
+    const x0 = i === 0 ? lo : xAt(i);
+    const x1 = i === samples - 1 ? hi : xAt(i + 1);
     const y0 = valueAt(x0);
     const y1 = valueAt(x1);
-    const probes = DETAIL_PROBES.map((t) => ({ t, x: x0 + (x1 - x0) * t }));
+    const probes = DETAIL_PROBES.map((t) => ({ t, x: plane.xScale === 'log' ? x0 * (x1 / x0) ** t : x0 + (x1 - x0) * t }));
     const values = [y0, ...probes.map((probe) => valueAt(probe.x)), y1];
     const jump = hasJumpFunction && isJumpCell(values, ySpan);
     const detail = jump ? [] : probes.filter((probe, index) => linearErrorMm(y0, y1, values[index + 1], probe.t, plane) > eps);
@@ -118,8 +126,9 @@ function sampleFunctionPoints(expr, domainMin, domainMax, plane, opts = {}) {
   const runs = [];
   let run = [];
   const append = (mx, my) => {
-    if (Number.isFinite(my) && my >= yLo && my <= yHi) {
-      run.push({ x: worldXFromMathX(plane, mx), y: worldYFromMathY(plane, my) });
+    const p = { x: worldXFromMathX(plane, mx), y: worldYFromMathY(plane, my) };
+    if (Number.isFinite(p.x) && Number.isFinite(p.y) && Number.isFinite(my) && my >= yLo && my <= yHi) {
+      run.push(p);
     } else if (run.length) {
       runs.push(run);
       run = [];

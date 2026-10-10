@@ -136,6 +136,8 @@ export function openLabelerTextEditor(objId, pendingLabeler = null, options = {}
     labelRuns: o.labelRuns ? structuredClone(o.labelRuns) : undefined,
     labelScriptStyles: o.labelScriptStyles ? structuredClone(o.labelScriptStyles) : undefined,
     labelStyleText: prefill,
+    labelSourceAtOpen: prefill,
+    labelContentModeAtOpen: isFormula ? 'formula' : 'plain',
     formulaUpright: o.formulaUpright === true,
     textOrient: o.textOrient,
     textRotation: o.textRotation,
@@ -469,6 +471,8 @@ export function startEditingTextObject(objId, clickPt = null, options = {}) {
       labelRuns: o.labelRuns ? structuredClone(o.labelRuns) : undefined,
       labelScriptStyles: o.labelScriptStyles ? structuredClone(o.labelScriptStyles) : undefined,
       labelStyleText: labelTypographyText(o),
+      labelSourceAtOpen: labelTypographyText(o),
+      labelContentModeAtOpen: o.type === 'formula' || o.contentMode === 'formula' ? 'formula' : 'plain',
       formulaUpright: o.formulaUpright === true,
       textOrient: o.textOrient,
       labelFontFamilyAtOpen: o.fontFamily || DEFAULT_TEXT_FONT,
@@ -781,7 +785,7 @@ function _syncDraftFromUnifiedEditor() {
     s.draftText.rawSource = raw;
     s.draftText.contentMode = s.draftText.aiInlinePlain ? "plain" : _labelAwareContentMode(raw, s.draftText);
     _syncDraftRunsToText(s.draftText, raw);
-  });
+  }, "native-text-input");
   _refreshUnifiedPreview();
 }
 
@@ -793,6 +797,9 @@ function _syncSemanticLabelDraft(draft, raw) {
 }
 
 function _labelAwareContentMode(raw, draft) {
+  // Imported semantic labels can use formula mode without TeX syntax. Opening
+  // or resizing their editor must preserve that mode until the source changes.
+  if (hasLabelTypography(draft) && raw === draft.labelSourceAtOpen) return draft.labelContentModeAtOpen;
   const formula = hasLabelTypography(draft)
     ? raw.split('\n').some(line => looksLikeFormula(line)) || /[_^](?:\{[^}]*\}|[A-Za-z0-9+−-])|(?:frac|sqrt|vec)\{/.test(raw)
     : looksLikeFormula(raw);
@@ -1465,7 +1472,7 @@ function _openTextEditor(draft, clientX, clientY, prefill, caretClick = null) {
     _textEditor.rows = Math.max(1, _textEditor.value.split("\n").length);
     _syncEditorWidth(); // fit the new text while retaining room for its end caret
     const val = _textEditor.value;
-    _state.update((s) => { if (s.draftText) s.draftText.text = val; });
+    _state.update((s) => { if (s.draftText) s.draftText.text = val; }, "native-text-input");
   });
 
   _textEditor.addEventListener("keydown", (ke) => {
@@ -1656,7 +1663,7 @@ function _commitText() {
   // 라벨러도 텍스트 도구와 동일하게 수식으로 승격될 수 있다(확정 항목 ①):
   // 수식이면 라벨러 객체에 contentMode/source/rawSource로 저장되고
   // renderLabeler가 renderFormula로 그린다.
-  const formulaMode = dt && !dt.aiInlinePlain && (dt.contentMode === "formula" || looksLikeFormula(rawSource));
+  const formulaMode = dt && !dt.aiInlinePlain && (dt.contentMode === "formula" || (!hasLabelTypography(dt) && looksLikeFormula(rawSource)));
   const normalizedSource = normalizeFormulaSource(rawSource);
   const fromTool = _state.get().activeTool === "T"; // new-text path
   _removeTextEditor();
@@ -2068,7 +2075,7 @@ function setupTextClickToEdit() {
   const textPressObject = (s, e, point) => {
     const handle = e.target?.closest?.('[data-handle]');
     if (handle) {
-      if (handle.dataset.handle !== 'p1') return null;
+      if (!['p1', 'p2'].includes(handle.dataset.handle)) return null;
       const obj = s.objects.find(o => o.id === handle.dataset.id);
       return obj?.type === 'labeler' ? obj : null;
     }

@@ -3,6 +3,7 @@
   if (window.fiveEDesktop) return;
   const origin = location.hostname === '127.0.0.1' ? location.origin : 'https://five-e-ai-runtime-probe.onrender.com';
   const key = '5e:web-ai-session';
+  const localReady = location.hostname === '127.0.0.1' ? fetch('/api/local-ai-config',{cache:'no-store'}).then(r=>r.ok?r.json():{}).then(r=>r.local===true).catch(()=>false) : Promise.resolve(false);
   let popup, token = '', loginTicket = '', loginTimer, attempt = 0;
   let authUrl = '', preparing = false, positioning = false, positionTimer, positionDeadline;
   const closeLoginWindows = () => {
@@ -19,22 +20,23 @@
     window.dispatchEvent(new Event('5e:web-ai-status'));
   };
   window.fiveEWebRequest = async (action, payload = {}) => {
-    if (!token) {
+    const local=await localReady;
+    if (!token && !local) {
       if (action === 'bridge-status') return { login: { loggedIn: false }, server: false };
       throw new Error('ChatGPT 로그인을 눌러 계정을 연결해 주세요.');
     }
     if (!['bridge-status', 'bridge-models', 'bridge-account', 'bridge-send', 'bridge-events', 'bridge-interrupt'].includes(action)) throw new Error('허용되지 않은 요청입니다.');
     const response = await fetch(`${origin}/api/${action}`, {
       method: 'POST', credentials: 'omit',
-      headers: { Authorization: `Bearer ${token}`, 'X-5E-Request': '1', 'Content-Type': 'application/json' },
+      headers: { ...(local ? {} : {Authorization: `Bearer ${token}`}), 'X-5E-Request': '1', 'Content-Type': 'application/json' },
       body: JSON.stringify(payload), signal: AbortSignal.timeout(40000),
     });
-    if (response.status === 401) {
+    if (!local && response.status === 401) {
       save('');
       if (action === 'bridge-status') return { login: { loggedIn: false }, server: false };
     }
     const result = await response.json();
-    if (action === 'bridge-status' && result.login?.loggedIn === false && token) save('');
+    if (!local && action === 'bridge-status' && result.login?.loggedIn === false && token) save('');
     if (!response.ok) throw Object.assign(new Error(result.error || '서버 연결에 실패했습니다.'), { status: response.status });
     return result;
   };

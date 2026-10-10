@@ -1,0 +1,419 @@
+{
+  "id": "p2_2021_09_03",
+  "provenance": "recorded-actual-provider-response",
+  "expectedAnalyticSeries": [
+    "potential-energy"
+  ],
+  "plan": {
+    "schema": "5e.graph-reconstruction/v1",
+    "variant": "cartesian",
+    "coordinateMode": "observed",
+    "source": {
+      "id": "reference-1",
+      "hash": "sha256:a77d85dd9817c5795db3f7fbe2cffc77849fc7d6e177951d94cd23fdbc15fae2",
+      "width": 831,
+      "height": 370,
+      "plotBox": {
+        "x": 450,
+        "y": 15,
+        "w": 367,
+        "h": 215
+      }
+    },
+    "frame": {
+      "variant": "quadrant",
+      "arrowX": true,
+      "arrowY": true,
+      "arrowY2": false,
+      "tickTop": false,
+      "tickRight": false,
+      "arrowLength": 3.4,
+      "arrowWidth": 2.3,
+      "strokeWidth": 0.27
+    },
+    "axisPlacement": {
+      "x": {
+        "mode": "fraction",
+        "value": 0
+      },
+      "y": {
+        "mode": "fraction",
+        "value": 0
+      }
+    },
+    "axes": {
+      "x": {
+        "scale": "linear",
+        "title": "t",
+        "displayTitle": "t",
+        "unit": "",
+        "min": null,
+        "max": null,
+        "step": null,
+        "ticks": [
+          {
+            "value": null,
+            "label": "t_0",
+            "displayMath": "t_0",
+            "position": 0.196185
+          },
+          {
+            "value": null,
+            "label": "2t_0",
+            "displayMath": "2t_0",
+            "position": 0.392371
+          },
+          {
+            "value": null,
+            "label": "3t_0",
+            "displayMath": "3t_0",
+            "position": 0.588556
+          },
+          {
+            "value": null,
+            "label": "4t_0",
+            "displayMath": "4t_0",
+            "position": 0.784741
+          }
+        ],
+        "orientation": "horizontal",
+        "titlePosition": {
+          "x": 0.972752,
+          "y": -0.111628
+        },
+        "titleAnchor": "middle"
+      },
+      "y": {
+        "scale": "linear",
+        "title": "E_p",
+        "displayTitle": "E_p",
+        "displayMath": "E_{\\mathrm{p}}",
+        "unit": "",
+        "min": null,
+        "max": null,
+        "step": null,
+        "ticks": [],
+        "orientation": "horizontal",
+        "titlePosition": {
+          "x": -0.106267,
+          "y": 0.930233
+        },
+        "titleAnchor": "middle"
+      }
+    },
+    "series": [
+      {
+        "id": "potential-energy",
+        "kind": "points",
+        "axis": "y",
+        "certainty": "observed",
+        "coordinateSpace": "normalized",
+        "label": "",
+        "endLabel": "",
+        "points": [
+          {
+            "x": 0,
+            "y": 0.716279
+          },
+          {
+            "x": 0.024523,
+            "y": 0.697674
+          },
+          {
+            "x": 0.049046,
+            "y": 0.623256
+          },
+          {
+            "x": 0.073569,
+            "y": 0.516279
+          },
+          {
+            "x": 0.098093,
+            "y": 0.386047
+          },
+          {
+            "x": 0.122616,
+            "y": 0.246512
+          },
+          {
+            "x": 0.147139,
+            "y": 0.125581
+          },
+          {
+            "x": 0.171662,
+            "y": 0.04186
+          },
+          {
+            "x": 0.196185,
+            "y": 0
+          },
+          {
+            "x": 0.220708,
+            "y": 0.037209
+          },
+          {
+            "x": 0.245232,
+            "y": 0.125581
+          },
+          {
+            "x": 0.269755,
+            "y": 0.24186
+          },
+          {
+            "x": 0.294278,
+            "y": 0.381395
+          },
+          {
+            "x": 0.318801,
+            "y": 0.511628
+          },
+          {
+            "x": 0.343324,
+            "y": 0.623256
+          },
+          {
+            "x": 0.367847,
+            "y": 0.693023
+          },
+          {
+            "x": 0.392371,
+            "y": 0.716279
+          },
+          {
+            "x": 0.416894,
+            "y": 0.693023
+          },
+          {
+            "x": 0.441417,
+            "y": 0.623256
+          },
+          {
+            "x": 0.46594,
+            "y": 0.511628
+          },
+          {
+            "x": 0.490463,
+            "y": 0.381395
+          },
+          {
+            "x": 0.514986,
+            "y": 0.246512
+          },
+          {
+            "x": 0.53951,
+            "y": 0.125581
+          },
+          {
+            "x": 0.564033,
+            "y": 0.037209
+          },
+          {
+            "x": 0.588556,
+            "y": 0
+          },
+          {
+            "x": 0.613079,
+            "y": 0.037209
+          },
+          {
+            "x": 0.637602,
+            "y": 0.125581
+          },
+          {
+            "x": 0.662125,
+            "y": 0.246512
+          },
+          {
+            "x": 0.686649,
+            "y": 0.381395
+          },
+          {
+            "x": 0.711172,
+            "y": 0.511628
+          },
+          {
+            "x": 0.735695,
+            "y": 0.623256
+          },
+          {
+            "x": 0.760218,
+            "y": 0.693023
+          },
+          {
+            "x": 0.784741,
+            "y": 0.716279
+          }
+        ],
+        "curveStyle": "smooth",
+        "candidateFamily": "sinusoid",
+        "breaks": [],
+        "endpoints": [],
+        "lineStyle": "solid",
+        "markerShape": "none",
+        "strokeWidth": 0.61
+      }
+    ],
+    "annotations": [
+      {
+        "id": "origin",
+        "kind": "text",
+        "text": "0",
+        "x": -0.043597,
+        "y": -0.097674,
+        "axis": "y",
+        "coordinateSpace": "normalized",
+        "orientation": "horizontal",
+        "fontSizePx": 35,
+        "fontWeight": 400
+      },
+      {
+        "id": "maximum-guide",
+        "kind": "guide",
+        "text": "",
+        "x": 0.784741,
+        "y": 0.716279,
+        "to": {
+          "x": 0,
+          "y": 0.716279
+        },
+        "axis": "y",
+        "coordinateSpace": "normalized",
+        "orientation": "horizontal",
+        "seriesId": "potential-energy",
+        "pointIndex": 32,
+        "endStyle": "none",
+        "strokeWidth": 0.19,
+        "dashLength": 1.34,
+        "dashGap": 0.76
+      },
+      {
+        "id": "two-t0-guide",
+        "kind": "guide",
+        "text": "",
+        "x": 0.392371,
+        "y": 0.716279,
+        "to": {
+          "x": 0.392371,
+          "y": 0
+        },
+        "axis": "y",
+        "coordinateSpace": "normalized",
+        "orientation": "vertical",
+        "seriesId": "potential-energy",
+        "pointIndex": 16,
+        "endStyle": "none",
+        "strokeWidth": 0.19,
+        "dashLength": 1.34,
+        "dashGap": 0.76
+      },
+      {
+        "id": "four-t0-guide",
+        "kind": "guide",
+        "text": "",
+        "x": 0.784741,
+        "y": 0.716279,
+        "to": {
+          "x": 0.784741,
+          "y": 0
+        },
+        "axis": "y",
+        "coordinateSpace": "normalized",
+        "orientation": "vertical",
+        "seriesId": "potential-energy",
+        "pointIndex": 32,
+        "endStyle": "none",
+        "strokeWidth": 0.19,
+        "dashLength": 1.34,
+        "dashGap": 0.76
+      },
+      {
+        "id": "one-t0-tick",
+        "kind": "guide",
+        "text": "",
+        "x": 0.196185,
+        "y": 0,
+        "to": {
+          "x": 0.196185,
+          "y": 0.060465
+        },
+        "axis": "y",
+        "coordinateSpace": "normalized",
+        "orientation": "vertical",
+        "seriesId": "potential-energy",
+        "pointIndex": 8,
+        "endStyle": "none",
+        "strokeWidth": 0.23,
+        "dashLength": 0,
+        "dashGap": 0
+      },
+      {
+        "id": "three-t0-tick",
+        "kind": "guide",
+        "text": "",
+        "x": 0.588556,
+        "y": 0,
+        "to": {
+          "x": 0.588556,
+          "y": 0.060465
+        },
+        "axis": "y",
+        "coordinateSpace": "normalized",
+        "orientation": "vertical",
+        "seriesId": "potential-energy",
+        "pointIndex": 24,
+        "endStyle": "none",
+        "strokeWidth": 0.23,
+        "dashLength": 0,
+        "dashGap": 0
+      }
+    ],
+    "regions": [],
+    "legends": [],
+    "style": {
+      "fontSizePx": 35,
+      "labelWeight": 400,
+      "strokeWidth": 0.61,
+      "guideStyle": {
+        "strokeWidth": 0.19,
+        "dashLength": 1.34,
+        "dashGap": 0.76
+      }
+    },
+    "review": []
+  },
+  "responseFile": "outputs/graph-restoration-20261008/live/p2_2021_09_03/response.txt",
+  "responseSha256": "3d23762e12480742a2f2430df5982032551d02757d40afd30f29b59cbcdd1c77",
+  "sourceFile": "outputs/graph-restoration-20261008/live/p2_2021_09_03/source.png",
+  "expectedValues": [
+    {
+      "seriesId": "potential-energy",
+      "x": 0,
+      "y": 0.716279,
+      "tolerance": 0.017
+    },
+    {
+      "seriesId": "potential-energy",
+      "x": 1,
+      "y": 0,
+      "tolerance": 0.017
+    },
+    {
+      "seriesId": "potential-energy",
+      "x": 2,
+      "y": 0.716279,
+      "tolerance": 0.017
+    },
+    {
+      "seriesId": "potential-energy",
+      "x": 3,
+      "y": 0,
+      "tolerance": 0.017
+    },
+    {
+      "seriesId": "potential-energy",
+      "x": 4,
+      "y": 0.716279,
+      "tolerance": 0.017
+    }
+  ]
+}

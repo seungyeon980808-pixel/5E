@@ -152,7 +152,7 @@ function setup(root, kind) {
     const name = kind === 'editor' ? ['도구', '속성'][index] : ['작업 목록', '수정 설정'][index];
     panel.id = kind === 'editor' ? panel.id : `image-${side}-panel-${++serial}`;
     panel.dataset.layoutPanel = side;
-    const button = group.querySelector(`[data-panel-toggle="${side}"]`)
+    const button = toolbar.querySelector(`[data-panel-toggle="${side}"]`)
       || (kind === 'editor' ? document.getElementById(`drawer-${side}-toggle`) : null)
       || document.createElement('button');
     button.type = 'button';
@@ -163,7 +163,10 @@ function setup(root, kind) {
     label.className = 'panel-toggle-label';
     label.textContent = name;
     button.replaceChildren(panelIcon(side), label);
-    group.append(button);
+    const headerStatus = kind === 'image' && side === 'right'
+      ? toolbar.querySelector('.ai-head-status') : null;
+    if (headerStatus) headerStatus.insertBefore(button, headerStatus.querySelector('.ai-close'));
+    else group.append(button);
     const close = panel.querySelector('.panel-collapse-close') || document.createElement('button');
     close.type = 'button';
     close.className = 'panel-collapse-close';
@@ -238,6 +241,8 @@ window.addEventListener('5e:view-mode-change', refresh);
 window.addEventListener('keydown', event => {
   if (fixedLite()) return;
   if (!narrow.matches || (event.key !== 'Escape' && event.key !== 'Tab')) return;
+  // The detailed text dialog owns cancellation and font-navigation keys.
+  if (event.target instanceof Element && event.target.closest('.unified-text-editor')) return;
   const layout = [...layouts].find(item => !item.root.hidden && preferences[item.kind].drawer
     && (item.kind === 'image' || !document.querySelector('#ai-image-panel:not([hidden])')));
   if (!layout || document.querySelector('dialog[open]')) return;

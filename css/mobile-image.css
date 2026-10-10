@@ -20,7 +20,7 @@
   min-height: var(--mobile-control); padding: 0 var(--mobile-space); border: 1px solid var(--border); border-radius: var(--mobile-radius);
   background: var(--bg-input); color: var(--text-primary); font: inherit; font-size: var(--mobile-body); cursor: pointer;
 }
-.mobile-image-mode :is([data-mobile-photo], [data-mobile-open], [data-crop-apply]) { background: var(--accent); color: var(--text-on-accent, #fff); }
+.mobile-image-mode :is([data-mobile-photo], [data-mobile-open], [data-crop-apply]) { background: var(--control-selected-bg); color: var(--control-selected-text); border:1px solid var(--control-selected-border); }
 .mobile-image-mode button:disabled { opacity: .55; cursor: default; }
 .mobile-image-mode :is(button, input, select, summary):focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 .mobile-image-mode #ai-image-panel {

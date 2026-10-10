@@ -1,4 +1,5 @@
 import { insertImageFromSrc } from "./image-paste.js?v=1.7.0-four-session-integration";
+import { openGraphModal } from './graph/graph-modal.js?v=1.7.0-four-session-integration';
 import { openObjectifyWithFile } from "./image-objectify.js?v=1.7.0-four-session-integration";
 
 import { createPdfLibraryUi } from "./pdf-library/pdf-library-ui.js?v=1.7.0-four-session-integration";
@@ -381,6 +382,7 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
     },
     openAi,
     openIndependentReferences,
+    openGraph:reference=>openGraphModal(null,'coord',{traceReference:reference}),
     pdfUi,
     onImportedImages: async (files) => {
       const records = [];
@@ -412,9 +414,9 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
     await opening;
   };
   openButton.addEventListener("click", () => void openLibrary(openButton));
-  registerPdfReferencePicker(async ({ onAdd, onAddMany, onStatus, trigger } = {}) => {
+  registerPdfReferencePicker(async ({ kind, onAdd, onAddMany, onStatus, trigger } = {}) => {
     void mountPackManagement().catch((error) => onStatus?.(error instanceof Error ? error.message : String(error), "error"));
-    await unifiedUi.beginReferenceSelection({ onAdd, onAddMany, onStatus, onComplete: unifiedUi.close }, trigger || openButton);
+    await unifiedUi.beginReferenceSelection({ kind, onAdd, onAddMany, onStatus, onComplete: unifiedUi.close }, trigger || openButton);
   });
   return Object.freeze({
     openLibrary,

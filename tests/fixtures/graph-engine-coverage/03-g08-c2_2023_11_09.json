@@ -1,0 +1,343 @@
+{
+  "schema": "5e.graph-reconstruction/v1",
+  "variant": "cartesian",
+  "coordinateMode": "observed",
+  "source": {
+    "id": "g08-c2_2023_11_09",
+    "hash": "sha256:0de26d7f6271dbb98bb0d537f5e3312bd847962cfff057a814d26c8670914b24",
+    "width": 471,
+    "height": 380,
+    "plotBox": {
+      "x": 110,
+      "y": 16,
+      "w": 345,
+      "h": 309
+    }
+  },
+  "axisPlacement": {
+    "x": {
+      "mode": "fraction",
+      "value": 0
+    },
+    "y": {
+      "mode": "fraction",
+      "value": 0
+    }
+  },
+  "axes": {
+    "x": {
+      "scale": "unknown",
+      "title": "온도",
+      "unit": "°C",
+      "displayTitle": "온도 (°C)",
+      "min": null,
+      "max": null,
+      "step": null,
+      "ticks": [
+        {
+          "value": 0.0098,
+          "label": "0.0098",
+          "position": 0.37101
+        }
+      ],
+      "orientation": "horizontal",
+      "titlePosition": {
+        "x": 0.83188,
+        "y": -0.08738
+      },
+      "titleAnchor": "middle"
+    },
+    "y": {
+      "scale": "unknown",
+      "title": "압력",
+      "unit": "atm",
+      "displayTitle": "압력",
+      "min": null,
+      "max": null,
+      "step": null,
+      "ticks": [
+        {
+          "value": null,
+          "label": "P_0",
+          "displayMath": "P_0",
+          "position": 0.05502
+        },
+        {
+          "value": 0.006,
+          "label": "0.006",
+          "position": 0.30421
+        },
+        {
+          "value": null,
+          "label": "P_3",
+          "displayMath": "P_3",
+          "position": 0.70874
+        }
+      ],
+      "orientation": "horizontal",
+      "titlePosition": {
+        "x": -0.15942,
+        "y": 0.95307
+      },
+      "titleAnchor": "middle"
+    }
+  },
+  "series": [
+    {
+      "id": "s1",
+      "kind": "points",
+      "axis": "y",
+      "certainty": "observed",
+      "coordinateSpace": "normalized",
+      "label": "",
+      "points": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 0.04348,
+          "y": 0.02589
+        },
+        {
+          "x": 0.08696,
+          "y": 0.05178
+        },
+        {
+          "x": 0.13043,
+          "y": 0.08091
+        },
+        {
+          "x": 0.17391,
+          "y": 0.11327
+        },
+        {
+          "x": 0.21739,
+          "y": 0.14887
+        },
+        {
+          "x": 0.26087,
+          "y": 0.1877
+        },
+        {
+          "x": 0.30435,
+          "y": 0.22977
+        },
+        {
+          "x": 0.34203,
+          "y": 0.26861
+        },
+        {
+          "x": 0.37101,
+          "y": 0.30421
+        }
+      ],
+      "curveStyle": "smooth",
+      "breaks": [],
+      "endpoints": [],
+      "lineStyle": "solid",
+      "markerSize": 0.82
+    },
+    {
+      "id": "s2",
+      "kind": "points",
+      "axis": "y",
+      "certainty": "observed",
+      "coordinateSpace": "normalized",
+      "label": "",
+      "points": [
+        {
+          "x": 0.37101,
+          "y": 0.30421
+        },
+        {
+          "x": 0.4087,
+          "y": 0.3301
+        },
+        {
+          "x": 0.44638,
+          "y": 0.35922
+        },
+        {
+          "x": 0.48406,
+          "y": 0.39159
+        },
+        {
+          "x": 0.52174,
+          "y": 0.42718
+        },
+        {
+          "x": 0.55942,
+          "y": 0.46602
+        },
+        {
+          "x": 0.5971,
+          "y": 0.50809
+        },
+        {
+          "x": 0.63188,
+          "y": 0.55016
+        },
+        {
+          "x": 0.66377,
+          "y": 0.59223
+        },
+        {
+          "x": 0.69565,
+          "y": 0.63754
+        },
+        {
+          "x": 0.72464,
+          "y": 0.68285
+        },
+        {
+          "x": 0.75072,
+          "y": 0.72816
+        },
+        {
+          "x": 0.77681,
+          "y": 0.7767
+        },
+        {
+          "x": 0.8,
+          "y": 0.82524
+        },
+        {
+          "x": 0.82029,
+          "y": 0.87379
+        },
+        {
+          "x": 0.83768,
+          "y": 0.92233
+        },
+        {
+          "x": 0.84928,
+          "y": 0.96764
+        }
+      ],
+      "curveStyle": "smooth",
+      "breaks": [],
+      "endpoints": [],
+      "lineStyle": "solid",
+      "markerSize": 0.82
+    },
+    {
+      "id": "s3",
+      "kind": "points",
+      "axis": "y",
+      "certainty": "observed",
+      "coordinateSpace": "normalized",
+      "label": "",
+      "points": [
+        {
+          "x": 0.26087,
+          "y": 0.96764
+        },
+        {
+          "x": 0.37101,
+          "y": 0.30421
+        }
+      ],
+      "curveStyle": "straight",
+      "breaks": [],
+      "endpoints": [],
+      "lineStyle": "solid",
+      "markerSize": 0.82
+    }
+  ],
+  "annotations": [
+    {
+      "id": "unit-y",
+      "kind": "text",
+      "text": "(atm)",
+      "x": -0.15942,
+      "y": 0.83495,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "endStyle": "none",
+      "fontSizePx": 36
+    },
+    {
+      "id": "solid-label",
+      "kind": "text",
+      "text": "고체",
+      "x": 0.15362,
+      "y": 0.4822,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "endStyle": "none",
+      "fontSizePx": 36
+    },
+    {
+      "id": "liquid-label",
+      "kind": "text",
+      "text": "액체",
+      "x": 0.47826,
+      "y": 0.61974,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "endStyle": "none",
+      "fontSizePx": 36
+    },
+    {
+      "id": "gas-label",
+      "kind": "text",
+      "text": "기체",
+      "x": 0.61449,
+      "y": 0.24919,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "endStyle": "none",
+      "fontSizePx": 36
+    },
+    {
+      "id": "triple-horizontal-guide",
+      "kind": "guide",
+      "text": "",
+      "x": 0.37101,
+      "y": 0.30421,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "seriesId": "s2",
+      "pointIndex": 0,
+      "endStyle": "none"
+    },
+    {
+      "id": "triple-vertical-guide",
+      "kind": "guide",
+      "text": "",
+      "x": 0.37101,
+      "y": 0.30421,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "vertical",
+      "seriesId": "s2",
+      "pointIndex": 0,
+      "endStyle": "none"
+    }
+  ],
+  "style": {
+    "fontSizePx": 38,
+    "labelWeight": 400,
+    "strokeWidth": 0.68,
+    "guideStyle": {
+      "strokeWidth": 0.18,
+      "dashLength": 1,
+      "dashGap": 0.6
+    }
+  },
+  "review": [],
+  "frame": {
+    "variant": "quadrant",
+    "arrowX": true,
+    "arrowY": true,
+    "arrowLength": 3.6,
+    "arrowWidth": 2.25,
+    "strokeWidth": 0.28
+  }
+}

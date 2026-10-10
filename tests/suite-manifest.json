@@ -1,108 +1,1473 @@
 {
   "schemaVersion": 1,
   "unit": [
-    { "path": "tests/test-fivee-project.mjs", "findingIds": ["X13", "R10"] },
-    { "path": "tests/test-editable-png.mjs", "findingIds": ["X13", "R10"] },
-    { "path": "tests/test-rhwp-exam-project.mjs", "findingIds": ["X13", "R10"] },
-    { "path": "tests/test-four-session-entry.cjs", "findingIds": ["X1", "X2", "X3", "X9"] },
-    { "path": "tests/test-pdf-runtime-loader.mjs", "findingIds": ["PDF-MODULE-RETRY"] },
-    { "path": "tests/test-stable-library-startup.mjs", "findingIds": ["LIBRARY-STARTUP-STABLE"] },
-    { "path": "tests/test-project-file-policy.mjs", "findingIds": ["A1"] },
-    { "path": "tests/test-stable-library-speed.mjs" },
-    { "path": "tests/test-stable-library-provider.mjs" },
-    { "path": "tests/test-preview-module-identity.cjs" },
-    { "path": "tests/test-ai-error-log.cjs" },
-    { "path": "tests/test-project-status-image-fingerprint.cjs" },
-    { "path": "tests/test-ai-batch-source.cjs" },
-    { "path": "tests/test-ai-workspace-multiselect.cjs" },
-    { "path": "tests/test-library-provider.mjs" },
-    { "path": "tests/test-ai-events.mjs" },
-    { "path": "tests/test-ai-comparison.cjs" },
-    { "path": "tests/test-ai-model-capabilities.cjs" },
-    { "path": "tests/test-ai-separation-mode.cjs" },
-    { "path": "tests/test-ai-workbench-request-state.cjs" },
-    { "path": "tests/test-ai-panel-local-bypass.mjs" },
-    { "path": "tests/test-ai-primary-action.cjs" },
-    { "path": "tests/test-ai-remote-input-plan.mjs" },
-    { "path": "tests/test-image-background.mjs" },
-    { "path": "tests/test-lite-workflow-state.mjs" },
-    { "path": "tests/test-png-exif-regression.mjs" },
-    { "path": "tests/test-preview-lite-cache-identity.cjs" },
-    { "path": "tests/test-release-entry-closure.cjs" },
-    { "path": "tests/test-rights-clear-smoke-fixture.mjs" },
-    { "path": "tests/test-separation-edge-regression.mjs" },
-    { "path": "tests/task4-data-contracts.cjs" },
-    { "path": "tests/test-graph-correctness.mjs" },
-    { "path": "tests/test-ai-release-remediation.cjs" },
-    { "path": "tests/test-smoke-gate-contract.cjs", "findingIds": ["TPK-005"] },
-    { "path": "tests/test-ui-accessibility-lifecycle.cjs" },
-    { "path": "tests/test-library-crop-session.mjs" },
-    { "path": "tests/test-library-import-policy.mjs" },
-    { "path": "tools/mcp-5e/test/bridge-security.test.mjs" },
-    { "path": "tools/mcp-5e/test/server-pairing.test.mjs" }
+    {
+      "path": "tests/test-rhwp-exam-annotations.mjs",
+      "findingIds": [
+        "RHWP-CUMULATIVE-SOURCE",
+        "RHWP-EXAM-INLINE-ANNOTATIONS"
+      ]
+    },
+    {
+      "path": "tests/test-rhwp-exam-image-scale.mjs",
+      "findingIds": [
+        "RHWP-CUMULATIVE-SOURCE",
+        "RHWP-EXAM-IMAGE-SCALE"
+      ]
+    },
+    {
+      "path": "tests/test-rhwp-exam-picture-resize.mjs",
+      "findingIds": [
+        "RHWP-CUMULATIVE-SOURCE",
+        "RHWP-EXAM-ASPECT-RESIZE"
+      ]
+    },
+    {
+      "path": "tests/test-rhwp-exam-region.mjs",
+      "findingIds": [
+        "RHWP-CUMULATIVE-SOURCE",
+        "RHWP-EXAM-CROP-GEOMETRY"
+      ]
+    },
+    {
+      "path": "tests/test-local-codex-bridge.cjs",
+      "findingIds": [
+        "GRAPH-LOCAL-TRANSPORT"
+      ]
+    },
+    {
+      "path": "tests/test-modal-surface-motion.mjs",
+      "findingIds": [
+        "LABEL-CUMULATIVE-SOURCE",
+        "AI-MODAL-CONTINUITY"
+      ]
+    },
+    {
+      "path": "tests/test-preview-box-edit-border.mjs",
+      "findingIds": [
+        "LABEL-CUMULATIVE-SOURCE"
+      ]
+    },
+    {
+      "path": "tests/test-preview-box-edit-panel-integration.mjs",
+      "findingIds": [
+        "LABEL-CUMULATIVE-SOURCE"
+      ]
+    },
+    {
+      "path": "tests/test-preview-box-edit-prompt.mjs",
+      "findingIds": [
+        "LABEL-CUMULATIVE-SOURCE"
+      ]
+    },
+    {
+      "path": "tests/test-preview-box-edit-timing.mjs",
+      "findingIds": [
+        "LABEL-CUMULATIVE-SOURCE"
+      ]
+    },
+    {
+      "path": "tests/test-physics-graph-evaluation-config.mjs",
+      "findingIds": [
+        "CUMULATIVE-SOURCE-CONTRACT"
+      ]
+    },
+    {
+      "path": "tests/test-physics-graph-result-audit.mjs",
+      "findingIds": [
+        "CUMULATIVE-SOURCE-CONTRACT"
+      ]
+    },
+    {
+      "path": "tools/image-harness/frozen-source-observation.test.cjs",
+      "findingIds": [
+        "CUMULATIVE-SOURCE-CONTRACT"
+      ]
+    },
+    {
+      "path": "tests/test-rhwp-labeler-harness.mjs",
+      "findingIds": [
+        "RHWP-LABEL-RAW-INVARIANCE",
+        "RHWP-IMAGE-HARNESS-PARITY",
+        "AI-LABEL-GOTHIC-RUNS"
+      ]
+    },
+    {
+      "path": "tests/test-graph-analytic-summary.mjs",
+      "findingIds": [
+        "GRAPH-CUMULATIVE-SOURCE"
+      ],
+      "classificationRationale": "Pure synchronous Node summary assertions over in-memory plans; no browser, server, or provider. Source browser classification was a runner-routing label."
+    },
+    {
+      "path": "tests/test-graph-reconstruction-workflow.mjs",
+      "findingIds": [
+        "GRAPH-CUMULATIVE-SOURCE"
+      ]
+    },
+    {
+      "path": "tests/test-graph-reconstruction-contract.mjs",
+      "findingIds": [
+        "GRAPH-CUMULATIVE-SOURCE"
+      ]
+    },
+    {
+      "path": "tests/test-graph-source-grid.mjs",
+      "findingIds": [
+        "GRAPH-CUMULATIVE-SOURCE"
+      ]
+    },
+    {
+      "path": "tests/test-graph-source-arrow-size.mjs",
+      "findingIds": [
+        "GRAPH-CUMULATIVE-SOURCE"
+      ]
+    },
+    {
+      "path": "tests/test-graph-analytic-fit.mjs",
+      "findingIds": [
+        "GRAPH-CUMULATIVE-SOURCE",
+        "GRAPH-ANALYTIC-EDITOR"
+      ]
+    },
+    {
+      "path": "tests/test-graph-source-guide-style.mjs",
+      "findingIds": [
+        "GRAPH-CUMULATIVE-SOURCE"
+      ]
+    },
+    {
+      "path": "tests/test-graph-shape-preserving.mjs",
+      "findingIds": [
+        "GRAPH-CUMULATIVE-SOURCE"
+      ]
+    },
+    {
+      "path": "tests/test-graph-engine-prompts.mjs",
+      "findingIds": [
+        "GRAPH-CUMULATIVE-SOURCE"
+      ]
+    },
+    {
+      "path": "tests/test-graph-editing-reconstruction.mjs",
+      "findingIds": [
+        "GRAPH-CUMULATIVE-SOURCE"
+      ]
+    },
+    {
+      "path": "tests/test-graph-reconstruction-quality.mjs",
+      "findingIds": [
+        "GRAPH-CUMULATIVE-SOURCE"
+      ]
+    },
+    {
+      "path": "tests/test-graph-axis-layout.mjs",
+      "findingIds": [
+        "GRAPH-CUMULATIVE-SOURCE"
+      ]
+    },
+    {
+      "path": "tests/test-graph-workbench-result-stability.mjs",
+      "findingIds": [
+        "GRAPH-CUMULATIVE-SOURCE"
+      ]
+    },
+    {
+      "path": "tests/test-graph-polyline-simplify.mjs",
+      "findingIds": [
+        "GRAPH-CUMULATIVE-SOURCE",
+        "GRAPH-EDITOR-USABILITY"
+      ]
+    },
+    {
+      "path": "tests/test-graph-log-coordinates.mjs",
+      "findingIds": [
+        "GRAPH-CUMULATIVE-SOURCE"
+      ]
+    },
+    {
+      "path": "tests/test-native-graph.mjs",
+      "findingIds": [
+        "GRAPH-CUMULATIVE-SOURCE"
+      ]
+    },
+    {
+      "path": "tests/test-graph-trajectory-relations.mjs",
+      "findingIds": [
+        "GRAPH-CUMULATIVE-SOURCE",
+        "GRAPH-RELATION-ANALYTIC"
+      ]
+    },
+    {
+      "path": "tests/test-graph-engine-model.mjs",
+      "findingIds": [
+        "GRAPH-CUMULATIVE-SOURCE"
+      ]
+    },
+    {
+      "path": "tests/test-graph-source-frame.mjs",
+      "findingIds": [
+        "GRAPH-CUMULATIVE-SOURCE"
+      ]
+    },
+    {
+      "path": "tests/test-graph-textbook-elements.mjs",
+      "findingIds": [
+        "GRAPH-CUMULATIVE-SOURCE"
+      ]
+    },
+    {
+      "path": "tests/test-graph-observed-native.mjs",
+      "findingIds": [
+        "GRAPH-CUMULATIVE-SOURCE"
+      ]
+    },
+    {
+      "path": "tests/test-graph-modal-fixed-selection.mjs",
+      "findingIds": [
+        "GRAPH-CUMULATIVE-SOURCE"
+      ],
+      "classificationRationale": "Node vm executes actual modal handlers with DOM/transport substitutes; no browser, server, or provider. Source browser classification was a runner-routing label."
+    },
+    {
+      "path": "tests/test-graph-trace-coordinates.mjs",
+      "findingIds": [
+        "GRAPH-CUMULATIVE-SOURCE",
+        "GRAPH-EDITOR-TRACING"
+      ]
+    },
+    {
+      "path": "tests/test-graph-relation-analytic-fit.mjs",
+      "findingIds": [
+        "GRAPH-CUMULATIVE-SOURCE",
+        "GRAPH-RELATION-ANALYTIC"
+      ]
+    },
+    {
+      "path": "tests/test-graph-guide-rebinding.mjs",
+      "findingIds": [
+        "GRAPH-CUMULATIVE-SOURCE",
+        "GRAPH-RELATION-ANALYTIC"
+      ]
+    },
+    {
+      "path": "tests/test-graph-reconstruction-error.mjs",
+      "findingIds": [
+        "GRAPH-CUMULATIVE-SOURCE"
+      ]
+    },
+    {
+      "path": "tests/test-graph-physics-families.mjs",
+      "findingIds": [
+        "GRAPH-CUMULATIVE-SOURCE"
+      ],
+      "classificationRationale": "Pure Node assertions over retained JSON observations, fitting and validation; no browser, server, provider, or page API. Source browser classification was a runner-routing label."
+    },
+    {
+      "path": "tests/test-ai-login-handoff.mjs",
+      "findingIds": [
+        "LOGIN-CROP-INTENT",
+        "GRAPH-CONVERSION-INTENT",
+        "AI-LOGIN-SOURCE-RESUME"
+      ]
+    },
+    {
+      "path": "tests/test-ai-candidate-materializer.mjs",
+      "findingIds": [
+        "X14",
+        "AI-NATIVE-REVISION-OWNERSHIP"
+      ]
+    },
+    {
+      "path": "tests/test-rhwp-exam-links.mjs",
+      "findingIds": [
+        "RHWP-EXAM-TAB-IDENTITY"
+      ]
+    },
+    {
+      "path": "tests/test-rhwp-exam-source-tabs.mjs",
+      "findingIds": [
+        "RHWP-EXAM-TAB-OWNERSHIP",
+        "X13"
+      ]
+    },
+    {
+      "path": "tests/test-fivee-project.mjs",
+      "findingIds": [
+        "X13",
+        "R10",
+        "RHWP-PROJECT-DRAFTS"
+      ]
+    },
+    {
+      "path": "tests/test-editable-png.mjs",
+      "findingIds": [
+        "X13",
+        "R10",
+        "RHWP-PNG-SOURCE"
+      ]
+    },
+    {
+      "path": "tests/test-rhwp-exam-project.mjs",
+      "findingIds": [
+        "X13",
+        "R10",
+        "RHWP-EXAM-SOURCE"
+      ]
+    },
+    {
+      "path": "tests/test-four-session-entry.cjs",
+      "findingIds": [
+        "X1",
+        "X2",
+        "X3",
+        "X9"
+      ]
+    },
+    {
+      "path": "tests/test-pdf-runtime-loader.mjs",
+      "findingIds": [
+        "PDF-MODULE-RETRY"
+      ]
+    },
+    {
+      "path": "tests/test-stable-library-startup.mjs",
+      "findingIds": [
+        "LIBRARY-STARTUP-STABLE"
+      ]
+    },
+    {
+      "path": "tests/test-project-file-policy.mjs",
+      "findingIds": [
+        "A1"
+      ]
+    },
+    {
+      "path": "tests/test-stable-library-speed.mjs"
+    },
+    {
+      "path": "tests/test-stable-library-provider.mjs"
+    },
+    {
+      "path": "tests/test-preview-module-identity.cjs"
+    },
+    {
+      "path": "tests/test-ai-error-log.cjs"
+    },
+    {
+      "path": "tests/test-project-status-image-fingerprint.cjs"
+    },
+    {
+      "path": "tests/test-ai-batch-source.cjs"
+    },
+    {
+      "path": "tests/test-ai-workspace-multiselect.cjs"
+    },
+    {
+      "path": "tests/test-library-provider.mjs"
+    },
+    {
+      "path": "tests/test-ai-events.mjs"
+    },
+    {
+      "path": "tests/test-ai-comparison.cjs"
+    },
+    {
+      "path": "tests/test-ai-model-capabilities.cjs"
+    },
+    {
+      "path": "tests/test-ai-separation-mode.cjs"
+    },
+    {
+      "path": "tests/test-ai-workbench-request-state.cjs"
+    },
+    {
+      "path": "tests/test-ai-panel-local-bypass.mjs"
+    },
+    {
+      "path": "tests/test-ai-primary-action.cjs"
+    },
+    {
+      "path": "tests/test-ai-remote-input-plan.mjs"
+    },
+    {
+      "path": "tests/test-image-background.mjs"
+    },
+    {
+      "path": "tests/test-lite-workflow-state.mjs"
+    },
+    {
+      "path": "tests/test-png-exif-regression.mjs"
+    },
+    {
+      "path": "tests/test-preview-lite-cache-identity.cjs"
+    },
+    {
+      "path": "tests/test-release-entry-closure.cjs"
+    },
+    {
+      "path": "tests/test-rights-clear-smoke-fixture.mjs"
+    },
+    {
+      "path": "tests/test-separation-edge-regression.mjs"
+    },
+    {
+      "path": "tests/task4-data-contracts.cjs"
+    },
+    {
+      "path": "tests/test-graph-correctness.mjs"
+    },
+    {
+      "path": "tests/test-ai-release-remediation.cjs"
+    },
+    {
+      "path": "tests/test-smoke-gate-contract.cjs",
+      "findingIds": [
+        "TPK-005"
+      ]
+    },
+    {
+      "path": "tests/test-ui-accessibility-lifecycle.cjs"
+    },
+    {
+      "path": "tests/test-library-crop-session.mjs"
+    },
+    {
+      "path": "tests/test-library-import-policy.mjs"
+    },
+    {
+      "path": "tools/mcp-5e/test/bridge-security.test.mjs"
+    },
+    {
+      "path": "tools/mcp-5e/test/server-pairing.test.mjs"
+    },
+    {
+      "path": "desktop/label-leader-attachment.test.cjs",
+      "findingIds": [
+        "LABELER-NATIVE-ATTACHMENT"
+      ]
+    },
+    {
+      "path": "desktop/ai-exam-border-and-geometry.test.cjs",
+      "findingIds": [
+        "AI-LABEL-ATOMIC-REMOVAL",
+        "AI-LABEL-GEOMETRY-QUARANTINE"
+      ]
+    },
+    {
+      "path": "desktop/ai-exam-atomic-removal.test.cjs",
+      "findingIds": [
+        "AI-LABEL-ATOMIC-REMOVAL"
+      ]
+    },
+    {
+      "path": "desktop/ai-label-standard-style.test.cjs",
+      "findingIds": [
+        "AI-LABEL-STANDARD-STYLE"
+      ]
+    },
+    {
+      "path": "desktop/ai-source-observation-wire.test.cjs",
+      "findingIds": [
+        "AI-LABEL-SOURCE-SCOPE"
+      ]
+    },
+    {
+      "path": "desktop/ai-source-observation-classification.test.cjs",
+      "findingIds": [
+        "AI-LABEL-SOURCE-SCOPE"
+      ]
+    },
+    {
+      "path": "tests/test-rhwp-exam-geometry.mjs",
+      "findingIds": [
+        "RHWP-NATIVE-GEOMETRY",
+        "RHWP-EXAM-INLINE-GEOMETRY"
+      ],
+      "classificationRationale": "Default node:test geometry assertions run without a browser. The existing RHWP_GEOMETRY_BROWSER=1 opt-in invokes both engines; browser classification alone does not enable that case. Preserve the source unit registration and report the separate native geometry gate."
+    },
+    {
+      "path": "desktop/entry-path.test.cjs",
+      "findingIds": [
+        "DESKTOP-CANONICAL-FILE-ENTRY",
+        "DESKTOP-FILE-PROTOCOL-SECURITY"
+      ]
+    },
+    {
+      "path": "desktop/graph-straight-hit.test.cjs",
+      "findingIds": [
+        "GRAPH-STRAIGHT-FUNCGRAPH-HIT-TEST"
+      ]
+    },
+    {
+      "path": "desktop/ai-task-replacement-persistence.test.cjs",
+      "findingIds": [
+        "FOUR-SESSION-ARMED-SNAPSHOT-REPLACEMENT"
+      ]
+    },
+    {
+      "path": "desktop/ai-candidate-locked-cluster-portable-structure.test.cjs",
+      "findingIds": [
+        "FOUR-SESSION-LOCKED-NATIVE-CLUSTER",
+        "FOUR-SESSION-MALFORMED-NATIVE-GRAPH"
+      ]
+    },
+    {
+      "path": "desktop/rhwp-exam-late-owner.test.cjs",
+      "findingIds": [
+        "INTEGRATION-RHWP-LATE-OWNER"
+      ]
+    }
   ],
   "browser": [
-    { "path": "tests/test-pdf-runtime-retry-browser.cjs", "findingIds": ["PDF-MODULE-RETRY"] },
-    { "path": "tests/test-stable-library-startup-browser.cjs", "findingIds": ["LIBRARY-STARTUP-STABLE"] },
-    { "path": "tests/test-project-file-size-browser.cjs", "findingIds": ["A1"] },
-    { "path": "tests/test-stable-library-progressive-crop-browser.cjs", "findingIds": ["LIBRARY-SPEED-STABLE"] },
-    { "path": "tests/test-frontend-remediation-browser.cjs", "findingIds": ["FRONTEND-REMEDIATION-0929"] },
-    { "path": "tests/test-ai-failure-log-browser.cjs", "findingIds": ["AI-MODEL-FAILURE-LOG"] },
-    { "path": "tests/test-ai-batch-source-browser.cjs", "findingIds": ["AI-FOLLOWUP-BATCH"] },
-    { "path": "tests/test-ai-compare-layout-browser.cjs", "findingIds": ["AI-FOLLOWUP-LAYOUT"] },
-    { "path": "tests/test-ai-output-previews-browser.cjs", "findingIds": ["AI-FOLLOWUP-OUTPUT"] },
-    { "path": "tests/test-ai-workspace-deletion-browser.cjs", "findingIds": ["AI-FOLLOWUP-DELETION"] },
-    { "path": "tests/test-ai-library-transfer-browser.cjs", "findingIds": ["AI-FOLLOWUP-LIBRARY-TRANSFER"] },
-    { "path": "tests/test-ai-workbench-polish-browser.cjs", "findingIds": ["B0", "R1", "R2", "R3", "R5"] },
-    { "path": "tests/test-ai-workspace-multiselect-browser.cjs", "findingIds": ["ARCH-160-01"] },
-    { "path": "tests/test-ai-workbench-integration-browser.cjs", "findingIds": ["R2", "R3", "R7", "R8"] },
-    { "path": "tests/test-ai-comparison-browser.cjs", "findingIds": ["R2", "R3"] },
-    { "path": "tests/test-ai-crop-loading-browser.cjs", "findingIds": ["B0", "R1"] },
-    { "path": "tests/test-ai-separation-mode-browser.cjs", "findingIds": ["R7", "R8"] },
-    { "path": "tests/test-library-real-provider-browser.cjs", "findingIds": ["LIB-REAL-PROVIDER"] },
-    { "path": "tests/test-unified-library-page-scroll-browser.cjs", "findingIds": ["LIB-PAGE-SCROLL"] },
-    { "path": "tests/test-release-entry-browser.cjs", "findingIds": ["TPK-001", "TPK-002"] },
-    { "path": "tests/test-preview-startup-browser.cjs", "findingIds": ["TPK-004"] },
-    { "path": "tests/test-shortcut-simplification-browser.cjs", "findingIds": ["TPK-005"] },
-    { "path": "tests/test-mode-switch-browser.cjs", "findingIds": ["CAN-DATA-01"] },
-    { "path": "tests/project-save-folder-dialog.cjs", "findingIds": ["TPK-004"] },
-    { "path": "tests/export-dialog-layout.cjs", "findingIds": ["TPK-004"] },
-    { "path": "tests/test-preview-canvas-center.cjs", "findingIds": ["TPK-005"] },
-    { "path": "tests/test-rightangle-selection-browser.cjs", "findingIds": ["TPK-005"] },
-    { "path": "tests/test-funcgraph-selection-browser.cjs", "findingIds": ["TPK-005"] },
-    { "path": "tests/test-preview-lite-restored-workspace.cjs", "findingIds": ["TPK-005"] },
-    { "path": "tests/test-preview-lite-inspector-controls.cjs", "findingIds": ["TPK-005"] },
-    { "path": "tests/project-save-download.cjs", "findingIds": ["TPK-005"] },
-    { "path": "tests/test-personal-object-category-text-browser.cjs", "findingIds": ["SEC-160-01"] },
-    { "path": "tests/test-ai-release-browser.cjs", "findingIds": ["AI-160-01", "AI-160-02", "AI-160-03", "SEC-160-04"] },
-    { "path": "tests/test-ai-focus-browser.cjs", "findingIds": ["EDGE-DIALOG-01"] },
-    { "path": "tests/test-ai-workspace-lifecycle-browser.cjs", "findingIds": ["ARCH-160-01"] },
-    { "path": "tests/test-circuit-body-scale-browser.cjs", "findingIds": ["TASK12-CIRCUIT-SCALE"] },
-    { "path": "tests/test-endpoint-draft-browser.cjs", "findingIds": ["TASK12-ENDPOINT-DRAFT"] },
-    { "path": "tests/test-smoke-contract-browser.cjs", "findingIds": ["TPK-005"] },
-    { "path": "tests/task10-ui-browser.cjs", "findingIds": ["CAN-DATA-01", "TPK-007", "TPK-008"] },
-    { "path": "tests/test-pdf-navigation-browser.cjs", "findingIds": ["PDF-LATEST-PAGE-NAVIGATION"] },
-    { "path": "tests/test-ai-separation-preservation-browser.cjs", "findingIds": ["AI-SEPARATION-PRESERVATION"] },
-    { "path": "tests/test-ai-task-elapsed-browser.cjs", "findingIds": ["AI-TASK-ELAPSED"] }
+    {
+      "path": "tests/test-graph-physics-relations-browser.cjs",
+      "findingIds": [
+        "GRAPH-PHYSICS-RELATIONS"
+      ]
+    },
+    {
+      "path": "tests/test-graph-trace-browser.cjs",
+      "findingIds": [
+        "GRAPH-EDITOR-TRACING"
+      ]
+    },
+    {
+      "path": "tests/test-graph-editor-selection-workspace-browser.cjs",
+      "findingIds": [
+        "GRAPH-SELECTION-UI"
+      ]
+    },
+    {
+      "path": "tests/test-graph-modal-textbook-style-browser.cjs",
+      "findingIds": [
+        "GRAPH-SUPPLEMENTARY-STYLE"
+      ]
+    },
+    {
+      "path": "tests/test-graph-axis-layout-browser.cjs",
+      "findingIds": [
+        "GRAPH-EDITOR-USABILITY"
+      ]
+    },
+    {
+      "path": "tests/test-graph-source-arrow-browser.cjs",
+      "findingIds": [
+        "GRAPH-SOURCE-ARROW-SIZE"
+      ]
+    },
+    {
+      "path": "tests/test-graph-engine-editor-browser.cjs",
+      "findingIds": [
+        "GRAPH-ENGINE-COVERAGE"
+      ]
+    },
+    {
+      "path": "tests/test-graph-engine-render.cjs",
+      "findingIds": [
+        "GRAPH-ENGINE-COVERAGE"
+      ]
+    },
+    {
+      "path": "tests/test-graph-workbench-result-stability-browser.cjs",
+      "findingIds": [
+        "GRAPH-WORKBENCH"
+      ]
+    },
+    {
+      "path": "tests/test-physics-graph-result-audit-browser.cjs",
+      "findingIds": [
+        "G15"
+      ]
+    },
+    {
+      "path": "tests/test-graph-editor-followup-browser.cjs",
+      "findingIds": [
+        "G15"
+      ]
+    },
+    {
+      "path": "tests/test-graph-reconstruction-browser.cjs",
+      "findingIds": [
+        "GRAPH-NATIVE-RECONSTRUCTION"
+      ]
+    },
+    {
+      "path": "tests/test-graph-extension-ui-browser.cjs",
+      "findingIds": [
+        "GRAPH-EXTENSION-UI"
+      ]
+    },
+    {
+      "path": "tests/test-graph-editor-unified-browser.cjs",
+      "findingIds": [
+        "GRAPH-ANALYTIC-EDITOR"
+      ]
+    },
+    {
+      "path": "tests/test-graph-selection-ui-browser.cjs",
+      "findingIds": [
+        "GRAPH-SELECTION-UI"
+      ]
+    },
+    {
+      "path": "tests/test-graph-plane-engine-browser.cjs",
+      "findingIds": [
+        "GRAPH-ENGINE-COVERAGE"
+      ]
+    },
+    {
+      "path": "tests/test-graph-workbench-browser.cjs",
+      "findingIds": [
+        "GRAPH-WORKBENCH"
+      ]
+    },
+    {
+      "path": "tests/test-graph-source-typography-browser.cjs",
+      "findingIds": [
+        "GRAPH-SOURCE-TYPOGRAPHY"
+      ]
+    },
+    {
+      "path": "tests/test-graph-editing-reconstruction-browser.cjs",
+      "findingIds": [
+        "GRAPH-EDITING-RECONSTRUCTION"
+      ]
+    },
+    {
+      "path": "tests/test-graph-editor-exam-browser.cjs",
+      "findingIds": [
+        "GRAPH-EXAM-EDITOR"
+      ]
+    },
+    {
+      "path": "tests/test-graph-reconstruction-upright.cjs",
+      "findingIds": [
+        "GRAPH-RECONSTRUCTION-UPRIGHT"
+      ]
+    },
+    {
+      "path": "tests/test-graph-exam-style-browser.cjs",
+      "findingIds": [
+        "GRAPH-EXAM-PROPORTIONS"
+      ]
+    },
+    {
+      "path": "tests/test-graph-editor-exam-groups.cjs",
+      "findingIds": [
+        "GRAPH-EXAM-GROUPS"
+      ]
+    },
+    {
+      "path": "tests/test-graph-boxed-axis-render.cjs",
+      "findingIds": [
+        "G15"
+      ]
+    },
+    {
+      "path": "tests/test-graph-workbench-stability-browser.cjs",
+      "findingIds": [
+        "GRAPH-WORKBENCH"
+      ]
+    },
+    {
+      "path": "tests/test-graph-analytic-recovery-browser.cjs",
+      "findingIds": [
+        "GRAPH-RELATION-ANALYTIC"
+      ]
+    },
+    {
+      "path": "tests/test-graph-editor-tracing-browser.cjs",
+      "findingIds": [
+        "GRAPH-EDITOR-TRACING"
+      ]
+    },
+    {
+      "path": "tests/test-rhwp-exam-typing-browser.cjs",
+      "findingIds": [
+        "RHWP-ISOLATED-PERFORMANCE",
+        "RHWP-EXAM-TYPING-LATENCY"
+      ]
+    },
+    {
+      "path": "tests/test-rhwp-exam-camera-browser.cjs",
+      "findingIds": [
+        "RHWP-ISOLATED-PERFORMANCE",
+        "RHWP-EXAM-CONTEXT-ZOOM"
+      ]
+    },
+    {
+      "path": "tests/test-rhwp-exam-workspace-browser.cjs",
+      "findingIds": [
+        "RHWP-CUMULATIVE-SOURCE",
+        "RHWP-EXAM-WORKFLOW"
+      ]
+    },
+    {
+      "path": "tests/test-rhwp-exam-ai-browser.cjs",
+      "findingIds": [
+        "RHWP-CUMULATIVE-SOURCE",
+        "RHWP-EXAM-AI-ROUNDTRIP"
+      ]
+    },
+    {
+      "path": "tests/test-rhwp-exam-drafts-browser.cjs",
+      "findingIds": [
+        "RHWP-CUMULATIVE-SOURCE",
+        "RHWP-UNAPPLIED-DRAFT-RESTORE"
+      ]
+    },
+    {
+      "path": "tests/test-rhwp-exam-inline-browser.cjs",
+      "findingIds": [
+        "RHWP-CUMULATIVE-SOURCE",
+        "RHWP-EXAM-INLINE-ANNOTATIONS",
+        "RHWP-EXAM-INLINE-GEOMETRY",
+        "RHWP-UNAPPLIED-DRAFT-RESTORE"
+      ]
+    },
+    {
+      "path": "tests/test-rhwp-exam-graph-zoom-browser.cjs",
+      "findingIds": [
+        "RHWP-CUMULATIVE-SOURCE",
+        "RHWP-EXAM-GRAPH-SEND",
+        "RHWP-EXAM-CONTEXT-ZOOM"
+      ]
+    },
+    {
+      "path": "tests/test-rhwp-exam-image-scale-browser.cjs",
+      "findingIds": [
+        "RHWP-CUMULATIVE-SOURCE",
+        "RHWP-EXAM-IMAGE-SCALE"
+      ]
+    },
+    {
+      "path": "tests/test-rhwp-exam-edit-navigation-browser.cjs",
+      "findingIds": [
+        "RHWP-CUMULATIVE-SOURCE",
+        "RHWP-EXAM-EDIT-NAVIGATION",
+        "RHWP-EXAM-SOURCE-APPLY"
+      ]
+    },
+    {
+      "path": "tests/test-rhwp-exam-picture-controls-browser.cjs",
+      "findingIds": [
+        "RHWP-CUMULATIVE-SOURCE",
+        "RHWP-EXAM-PICTURE-LAYOUT",
+        "RHWP-EXAM-CROP-GEOMETRY"
+      ]
+    },
+    {
+      "path": "tests/test-local-ocr-resources-browser.cjs",
+      "findingIds": [
+        "CANONICAL-LOCAL-OCR"
+      ]
+    },
+    {
+      "path": "tests/test-source-candidates-browser.cjs",
+      "findingIds": [
+        "LOCAL-OCR-RESOURCE-CLOSURE",
+        "AI-LABEL-SOURCE-CANDIDATES",
+        "AI-LABEL-OWNERSHIP"
+      ]
+    },
+    {
+      "path": "tests/test-graph-library-compact-browser.cjs",
+      "findingIds": [
+        "GRAPH-LIBRARY-UNION",
+        "GRAPH-EDITOR-LIBRARY-COMPACT"
+      ]
+    },
+    {
+      "path": "tests/test-ai-login-resume-browser.cjs",
+      "findingIds": [
+        "LOGIN-CROP-DURABLE-UNION",
+        "AI-LOGIN-SOURCE-RESUME",
+        "AI-MODAL-CONTINUITY"
+      ]
+    },
+    {
+      "path": "tests/test-graph-owner-lifetime-browser.cjs",
+      "findingIds": [
+        "G15",
+        "GRAPH-OWNER-LIFETIME"
+      ]
+    },
+    {
+      "path": "tests/test-ai-header-union-browser.cjs",
+      "findingIds": [
+        "GRAPH-LABEL-HEADER-UNION"
+      ]
+    },
+    {
+      "path": "tests/test-graph-render-refinement.mjs",
+      "findingIds": [
+        "GRAPH-CUMULATIVE-SOURCE",
+        "GRAPH-EXAM-RENDER"
+      ]
+    },
+    {
+      "path": "tests/test-graph-batch-union-browser.cjs",
+      "findingIds": [
+        "GRAPH-BATCH-UNION"
+      ]
+    },
+    {
+      "path": "tests/test-rhwp-inline-routes-browser.cjs",
+      "findingIds": [
+        "R15",
+        "RHWP-NATIVE-LEADER-ROUTES"
+      ]
+    },
+    {
+      "path": "tests/test-four-session-candidate-smoke.cjs",
+      "findingIds": [
+        "CANDIDATE-FIRST-CONNECTED-FEATURES"
+      ]
+    },
+    {
+      "path": "tests/test-rhwp-exam-file-menu-browser.cjs",
+      "findingIds": [
+        "RHWP-EXAM-FILE-OPEN",
+        "RHWP-EXAM-WORKFLOW",
+        "RHWP-UNAPPLIED-DRAFT-RESTORE"
+      ]
+    },
+    {
+      "path": "tests/test-pdf-runtime-retry-browser.cjs",
+      "findingIds": [
+        "PDF-MODULE-RETRY"
+      ]
+    },
+    {
+      "path": "tests/test-stable-library-startup-browser.cjs",
+      "findingIds": [
+        "LIBRARY-STARTUP-STABLE"
+      ]
+    },
+    {
+      "path": "tests/test-project-file-size-browser.cjs",
+      "findingIds": [
+        "A1"
+      ]
+    },
+    {
+      "path": "tests/test-stable-library-progressive-crop-browser.cjs",
+      "findingIds": [
+        "LIBRARY-SPEED-STABLE"
+      ]
+    },
+    {
+      "path": "tests/test-frontend-remediation-browser.cjs",
+      "findingIds": [
+        "FRONTEND-REMEDIATION-0929"
+      ]
+    },
+    {
+      "path": "tests/test-ai-failure-log-browser.cjs",
+      "findingIds": [
+        "AI-MODEL-FAILURE-LOG"
+      ]
+    },
+    {
+      "path": "tests/test-ai-batch-source-browser.cjs",
+      "findingIds": [
+        "AI-FOLLOWUP-BATCH"
+      ]
+    },
+    {
+      "path": "tests/test-ai-compare-layout-browser.cjs",
+      "findingIds": [
+        "AI-FOLLOWUP-LAYOUT"
+      ]
+    },
+    {
+      "path": "tests/test-ai-output-previews-browser.cjs",
+      "findingIds": [
+        "AI-FOLLOWUP-OUTPUT"
+      ]
+    },
+    {
+      "path": "tests/test-ai-workspace-deletion-browser.cjs",
+      "findingIds": [
+        "AI-FOLLOWUP-DELETION"
+      ]
+    },
+    {
+      "path": "tests/test-ai-library-transfer-browser.cjs",
+      "findingIds": [
+        "AI-FOLLOWUP-LIBRARY-TRANSFER"
+      ]
+    },
+    {
+      "path": "tests/test-ai-workbench-polish-browser.cjs",
+      "findingIds": [
+        "B0",
+        "R1",
+        "R2",
+        "R3",
+        "R5"
+      ]
+    },
+    {
+      "path": "tests/test-ai-workspace-multiselect-browser.cjs",
+      "findingIds": [
+        "ARCH-160-01"
+      ]
+    },
+    {
+      "path": "tests/test-ai-workbench-integration-browser.cjs",
+      "findingIds": [
+        "R2",
+        "R3",
+        "R7",
+        "R8"
+      ]
+    },
+    {
+      "path": "tests/test-ai-comparison-browser.cjs",
+      "findingIds": [
+        "R2",
+        "R3"
+      ]
+    },
+    {
+      "path": "tests/test-ai-crop-loading-browser.cjs",
+      "findingIds": [
+        "B0",
+        "R1"
+      ]
+    },
+    {
+      "path": "tests/test-ai-separation-mode-browser.cjs",
+      "findingIds": [
+        "R7",
+        "R8"
+      ]
+    },
+    {
+      "path": "tests/test-library-real-provider-browser.cjs",
+      "findingIds": [
+        "LIB-REAL-PROVIDER"
+      ]
+    },
+    {
+      "path": "tests/test-unified-library-page-scroll-browser.cjs",
+      "findingIds": [
+        "LIB-PAGE-SCROLL"
+      ]
+    },
+    {
+      "path": "tests/test-release-entry-browser.cjs",
+      "findingIds": [
+        "TPK-001",
+        "TPK-002"
+      ]
+    },
+    {
+      "path": "tests/test-preview-startup-browser.cjs",
+      "findingIds": [
+        "TPK-004"
+      ]
+    },
+    {
+      "path": "tests/test-shortcut-simplification-browser.cjs",
+      "findingIds": [
+        "TPK-005"
+      ]
+    },
+    {
+      "path": "tests/test-mode-switch-browser.cjs",
+      "findingIds": [
+        "CAN-DATA-01"
+      ]
+    },
+    {
+      "path": "tests/project-save-folder-dialog.cjs",
+      "findingIds": [
+        "TPK-004"
+      ]
+    },
+    {
+      "path": "tests/export-dialog-layout.cjs",
+      "findingIds": [
+        "TPK-004"
+      ]
+    },
+    {
+      "path": "tests/test-preview-canvas-center.cjs",
+      "findingIds": [
+        "TPK-005"
+      ]
+    },
+    {
+      "path": "tests/test-rightangle-selection-browser.cjs",
+      "findingIds": [
+        "TPK-005"
+      ]
+    },
+    {
+      "path": "tests/test-funcgraph-selection-browser.cjs",
+      "findingIds": [
+        "TPK-005"
+      ]
+    },
+    {
+      "path": "tests/test-preview-lite-restored-workspace.cjs",
+      "findingIds": [
+        "TPK-005"
+      ]
+    },
+    {
+      "path": "tests/test-preview-lite-inspector-controls.cjs",
+      "findingIds": [
+        "TPK-005"
+      ]
+    },
+    {
+      "path": "tests/project-save-download.cjs",
+      "findingIds": [
+        "TPK-005"
+      ]
+    },
+    {
+      "path": "tests/test-personal-object-category-text-browser.cjs",
+      "findingIds": [
+        "SEC-160-01"
+      ]
+    },
+    {
+      "path": "tests/test-ai-release-browser.cjs",
+      "findingIds": [
+        "AI-160-01",
+        "AI-160-02",
+        "AI-160-03",
+        "SEC-160-04"
+      ]
+    },
+    {
+      "path": "tests/test-ai-focus-browser.cjs",
+      "findingIds": [
+        "EDGE-DIALOG-01"
+      ]
+    },
+    {
+      "path": "tests/test-ai-workspace-lifecycle-browser.cjs",
+      "findingIds": [
+        "ARCH-160-01"
+      ]
+    },
+    {
+      "path": "tests/test-circuit-body-scale-browser.cjs",
+      "findingIds": [
+        "TASK12-CIRCUIT-SCALE"
+      ]
+    },
+    {
+      "path": "tests/test-endpoint-draft-browser.cjs",
+      "findingIds": [
+        "TASK12-ENDPOINT-DRAFT"
+      ]
+    },
+    {
+      "path": "tests/test-smoke-contract-browser.cjs",
+      "findingIds": [
+        "TPK-005"
+      ]
+    },
+    {
+      "path": "tests/task10-ui-browser.cjs",
+      "findingIds": [
+        "CAN-DATA-01",
+        "TPK-007",
+        "TPK-008"
+      ]
+    },
+    {
+      "path": "tests/test-pdf-navigation-browser.cjs",
+      "findingIds": [
+        "PDF-LATEST-PAGE-NAVIGATION"
+      ]
+    },
+    {
+      "path": "tests/test-ai-separation-preservation-browser.cjs",
+      "findingIds": [
+        "AI-SEPARATION-PRESERVATION"
+      ]
+    },
+    {
+      "path": "tests/test-ai-task-elapsed-browser.cjs",
+      "findingIds": [
+        "AI-TASK-ELAPSED"
+      ]
+    },
+    {
+      "path": "tests/test-label-background-invariance-browser.cjs",
+      "findingIds": [
+        "AI-LABEL-BACKGROUND-INVARIANCE"
+      ]
+    },
+    {
+      "path": "tests/test-rhwp-labeler-harness-browser.cjs",
+      "findingIds": [
+        "RHWP-IMAGE-HARNESS-PARITY",
+        "AI-LABEL-GOTHIC-RUNS"
+      ]
+    },
+    {
+      "path": "tests/test-labeler-selection-edit-browser.cjs",
+      "findingIds": [
+        "LABELER-SELECT-THEN-EDIT",
+        "LABELER-CENTRAL-HANDLE"
+      ]
+    },
+    {
+      "path": "tests/test-labeler-attached-leaders-browser.cjs",
+      "findingIds": [
+        "LABELER-NATIVE-ATTACHMENT",
+        "LABELER-OPAQUE-LEADER"
+      ]
+    },
+    {
+      "path": "tests/test-label-inline-bounds-browser.cjs",
+      "findingIds": [
+        "LABELER-INLINE-BOUNDS"
+      ]
+    },
+    {
+      "path": "tests/labeler/test-creation-finish-browser.cjs",
+      "findingIds": [
+        "LABELER-TWO-CLICK-FINISH"
+      ]
+    },
+    {
+      "path": "tests/test-preview-box-edit-verification-browser.cjs",
+      "findingIds": [
+        "BOX-EDIT-VERIFICATION"
+      ]
+    },
+    {
+      "path": "tests/test-preview-box-edit-compact-browser.cjs",
+      "findingIds": [
+        "BOX-EDIT-COMPACT"
+      ]
+    },
+    {
+      "path": "tests/test-ai-settings-panel-browser.cjs",
+      "findingIds": [
+        "AI-BINARY-SETTINGS"
+      ]
+    },
+    {
+      "path": "tests/test-ai-image-label-workflow-browser.cjs",
+      "findingIds": [
+        "IMAGE-LABEL-WORKFLOW"
+      ]
+    },
+    {
+      "path": "tests/test-ai-label-timeout-browser.cjs",
+      "findingIds": [
+        "AI-LABEL-TIMEOUT",
+        "AI-MODEL-FAILURE-LOG"
+      ]
+    },
+    {
+      "path": "tests/test-ai-editable-drafts-browser.cjs",
+      "findingIds": [
+        "AI-EDITABLE-DRAFTS",
+        "AI-OPTIONAL-LABEL-REVIEW"
+      ]
+    },
+    {
+      "path": "tests/test-ai-label-leaders-browser.cjs",
+      "findingIds": [
+        "AI-LABEL-LEADERS"
+      ]
+    },
+    {
+      "path": "tests/test-ai-label-composite-browser.cjs",
+      "findingIds": [
+        "AI-LABEL-COMPOSITE"
+      ]
+    },
+    {
+      "path": "tests/test-label-joint-verification-browser.cjs",
+      "findingIds": [
+        "AI-LABEL-JOINT-VERIFICATION",
+        "AI-LABEL-EDITABILITY"
+      ]
+    },
+    {
+      "path": "tests/test-label-painted-glyphs-browser.cjs",
+      "findingIds": [
+        "AI-LABEL-PAINTED-GLYPHS",
+        "AI-LABEL-TYPOGRAPHY"
+      ]
+    },
+    {
+      "path": "tests/test-ai-source-label-pipeline-browser.cjs",
+      "findingIds": [
+        "AI-LABEL-OWNERSHIP",
+        "AI-LABEL-QUALITY"
+      ]
+    },
+    {
+      "path": "tests/test-ai-label-editability-browser.cjs",
+      "findingIds": [
+        "AI-LABEL-EDITABILITY"
+      ]
+    },
+    {
+      "path": "tests/test-labeler-doubleclick-browser.cjs",
+      "findingIds": [
+        "LABELER-DOUBLECLICK"
+      ]
+    },
+    {
+      "path": "tests/test-ai-label-typography-browser.cjs",
+      "findingIds": [
+        "AI-LABEL-TYPOGRAPHY"
+      ]
+    },
+    {
+      "path": "tests/test-labeler-interactions-browser.cjs",
+      "findingIds": [
+        "labeler-direct-edit",
+        "labeler-selection-route"
+      ]
+    },
+    {
+      "path": "tests/test-graph-reconstruction-iterative-guards.mjs",
+      "findingIds": [
+        "GRAPH-AUTO-ITERATIVE"
+      ],
+      "classificationRationale": "Full source guard spawns the iterative driver for source decoding and native rendering, launching Chromium and private servers even with --validate-only; all providers are local mocks/sentinels. Keep this required suite active in browser, never deferred; not safe for a browser-free unit run."
+    },
+    {
+      "path": "tests/test-four-session-integration-browser.cjs",
+      "findingIds": [
+        "FOUR-SESSION-QA1",
+        "FOUR-SESSION-QA2",
+        "FOUR-SESSION-QA3",
+        "FOUR-SESSION-QA4",
+        "FOUR-SESSION-QA5",
+        "FOUR-SESSION-QA6",
+        "FOUR-SESSION-QA7",
+        "FOUR-SESSION-QA8"
+      ]
+    },
+    {
+      "path": "tests/test-four-session-resource-closure-browser.cjs",
+      "findingIds": [
+        "FOUR-SESSION-RUNTIME-IDENTITY",
+        "FOUR-SESSION-LOADED-BYTE-CLOSURE",
+        "RHWP-PINNED-SDK-WASM-PROVENANCE",
+        "ROOT-OCR-RESOURCE-CLOSURE"
+      ]
+    }
   ],
   "deferred": [
-    { "path": "tests/test-examlibrary-browser.cjs", "findingIds": ["EXAMLIBRARY-DOMAIN"], "reason": "Dedicated route-publication gate in examlibrary-route.yml; uses real public exam PDFs and native HWPX downloads." },
-    { "path": "tests/test-web-publication-browser.cjs", "findingIds": ["WEB-PUBLICATION-160"], "reason": "Dedicated staged-artifact gate: npm run test:web-artifact requires FIVE_E_SITE_ROOT." },
-    { "path": "tests/authenticated-desktop-observer.cjs", "findingIds": ["ARCH-160-01"], "reason": "Helper for manual authenticated acceptance; requires the explicitly authorized real-service harness" },
-    { "path": "tests/test-ai-workbench-authenticated.cjs", "findingIds": ["ARCH-160-01"], "reason": "Manual authenticated acceptance gate requires explicit AI_WORKBENCH_REAL and authorization for paid provider requests" },
-    { "path": "tests/library-open-epoch-browser.cjs", "findingIds": ["AI-160-02"], "reason": "AI owner regression" },
-    { "path": "tests/test-lite-main-browser.cjs", "findingIds": ["ARCH-160-02"], "reason": "full UI gate" },
-    { "path": "tests/test-preview-lite-four-pane-qa.cjs", "findingIds": ["TPK-005"], "reason": "retired four-pane contract" },
-    { "path": "tests/test-preview-lite-hybrid.cjs", "findingIds": ["TPK-005"], "reason": "historical Lite prototype" },
-    { "path": "tests/test-preview-lite-integrated.cjs", "findingIds": ["TPK-005"], "reason": "historical Lite prototype" },
-    { "path": "tests/test-preview-lite-runtime.cjs", "findingIds": ["TPK-005"], "reason": "historical Lite prototype" },
-    { "path": "tests/test-preview-lite-unified.cjs", "findingIds": ["TPK-005"], "reason": "historical Lite prototype" },
-    { "path": "tests/test-preview-shell-presentation.cjs", "findingIds": ["ARCH-160-02"], "reason": "full UI gate" },
-    { "path": "tests/task4-data-browser-server.cjs", "findingIds": ["CAN-DATA-01"], "reason": "orchestration-required Task 4 browser fixture; run with task4-data-browser.mjs" },
-    { "path": "tests/task4-data-browser.mjs", "findingIds": ["CAN-DATA-01"], "reason": "in-page module for the orchestration-required Task 4 browser gate" },
-    { "path": "tests/test-graph-browser.cjs", "findingIds": ["GEO160-005", "GEO160-006", "GEO160-007"], "reason": "orchestration-required graph gate needs GRAPH_BASE_URL, evidence, and an isolated browser profile" },
-    { "path": "tests/task8-geometry-browser-server.cjs", "findingIds": ["GEO160-001", "GEO160-002", "GEO160-004", "GEO160-008"], "reason": "orchestration-required Task 8 browser fixture and artifact receiver" },
-    { "path": "tests/task8-geometry-browser.cjs", "findingIds": ["GEO160-001", "GEO160-002", "GEO160-004", "GEO160-008"], "reason": "orchestration-required Task 8 driver needs a positional URL and evidence directory" },
-    { "path": "tests/task8-geometry-browser.mjs", "findingIds": ["GEO160-001", "GEO160-002", "GEO160-004", "GEO160-008"], "reason": "in-page module for the orchestration-required Task 8 browser gate" }
+    {
+      "path": "tests/test-graph-analytic-reference-browser.cjs",
+      "findingIds": [
+        "GRAPH-ANALYTIC-EDITOR"
+      ],
+      "reason": "Source-backed replay of eight explicitly manual engine fixtures, AI calls 0. Requires ignored source images via GRAPH_SOURCE_ROOT and running preview, preserves source provenance and exercises formula/fallback edits and save/reopen."
+    },
+    {
+      "path": "tests/test-graph-engine-reference-browser.cjs",
+      "findingIds": [
+        "GRAPH-ENGINE-COVERAGE"
+      ],
+      "reason": "Manual source-fixture engine validation; AI calls 0. Requires ignored local outputs/graph-unseen20-20261004 source images and running preview; not portable CI."
+    },
+    {
+      "path": "tests/test-graph-exam-refinement-browser.cjs",
+      "findingIds": [
+        "GRAPH-EXAM-REVIEWED"
+      ],
+      "reason": "Source-reviewed regression or unchanged actual-response native editing replay with GRAPH_AUTOMATIC_BATCH_EVIDENCE; no model requests, requires local evidence."
+    },
+    {
+      "path": "tests/test-examlibrary-browser.cjs",
+      "findingIds": [
+        "EXAMLIBRARY-DOMAIN"
+      ],
+      "reason": "Dedicated route-publication gate in examlibrary-route.yml; uses real public exam PDFs and native HWPX downloads."
+    },
+    {
+      "path": "tests/test-web-publication-browser.cjs",
+      "findingIds": [
+        "WEB-PUBLICATION-160"
+      ],
+      "reason": "Dedicated staged-artifact gate: npm run test:web-artifact requires FIVE_E_SITE_ROOT."
+    },
+    {
+      "path": "tests/authenticated-desktop-observer.cjs",
+      "findingIds": [
+        "ARCH-160-01"
+      ],
+      "reason": "Helper for manual authenticated acceptance; requires the explicitly authorized real-service harness"
+    },
+    {
+      "path": "tests/test-ai-workbench-authenticated.cjs",
+      "findingIds": [
+        "ARCH-160-01"
+      ],
+      "reason": "Manual authenticated acceptance gate requires explicit AI_WORKBENCH_REAL and authorization for paid provider requests"
+    },
+    {
+      "path": "tests/library-open-epoch-browser.cjs",
+      "findingIds": [
+        "AI-160-02"
+      ],
+      "reason": "AI owner regression"
+    },
+    {
+      "path": "tests/test-lite-main-browser.cjs",
+      "findingIds": [
+        "ARCH-160-02"
+      ],
+      "reason": "full UI gate"
+    },
+    {
+      "path": "tests/test-preview-lite-four-pane-qa.cjs",
+      "findingIds": [
+        "TPK-005"
+      ],
+      "reason": "retired four-pane contract"
+    },
+    {
+      "path": "tests/test-preview-lite-hybrid.cjs",
+      "findingIds": [
+        "TPK-005"
+      ],
+      "reason": "historical Lite prototype"
+    },
+    {
+      "path": "tests/test-preview-lite-integrated.cjs",
+      "findingIds": [
+        "TPK-005"
+      ],
+      "reason": "historical Lite prototype"
+    },
+    {
+      "path": "tests/test-preview-lite-runtime.cjs",
+      "findingIds": [
+        "TPK-005"
+      ],
+      "reason": "historical Lite prototype"
+    },
+    {
+      "path": "tests/test-preview-lite-unified.cjs",
+      "findingIds": [
+        "TPK-005"
+      ],
+      "reason": "historical Lite prototype"
+    },
+    {
+      "path": "tests/test-preview-shell-presentation.cjs",
+      "findingIds": [
+        "ARCH-160-02"
+      ],
+      "reason": "full UI gate"
+    },
+    {
+      "path": "tests/task4-data-browser-server.cjs",
+      "findingIds": [
+        "CAN-DATA-01"
+      ],
+      "reason": "orchestration-required Task 4 browser fixture; run with task4-data-browser.mjs"
+    },
+    {
+      "path": "tests/task4-data-browser.mjs",
+      "findingIds": [
+        "CAN-DATA-01"
+      ],
+      "reason": "in-page module for the orchestration-required Task 4 browser gate"
+    },
+    {
+      "path": "tests/test-graph-browser.cjs",
+      "findingIds": [
+        "GEO160-005",
+        "GEO160-006",
+        "GEO160-007"
+      ],
+      "reason": "orchestration-required graph gate needs GRAPH_BASE_URL, evidence, and an isolated browser profile"
+    },
+    {
+      "path": "tests/task8-geometry-browser-server.cjs",
+      "findingIds": [
+        "GEO160-001",
+        "GEO160-002",
+        "GEO160-004",
+        "GEO160-008"
+      ],
+      "reason": "orchestration-required Task 8 browser fixture and artifact receiver"
+    },
+    {
+      "path": "tests/task8-geometry-browser.cjs",
+      "findingIds": [
+        "GEO160-001",
+        "GEO160-002",
+        "GEO160-004",
+        "GEO160-008"
+      ],
+      "reason": "orchestration-required Task 8 driver needs a positional URL and evidence directory"
+    },
+    {
+      "path": "tests/task8-geometry-browser.mjs",
+      "findingIds": [
+        "GEO160-001",
+        "GEO160-002",
+        "GEO160-004",
+        "GEO160-008"
+      ],
+      "reason": "in-page module for the orchestration-required Task 8 browser gate"
+    },
+    {
+      "path": "tests/test-rhwp-exam-desktop.cjs",
+      "findingIds": [
+        "RHWP-EXAM-DESKTOP"
+      ],
+      "reason": "Native integration gate requires an Electron runtime (ELECTRON_EXE) and an isolated desktop profile."
+    },
+    {
+      "path": "tests/test-textbook-label-live-browser.cjs",
+      "findingIds": [
+        "AI-TEXTBOOK-LABEL-LIVE"
+      ],
+      "reason": "Manual real-model acceptance uses retained textbook generation artifacts and an isolated local preview server"
+    },
+    {
+      "path": "tests/test-graph-reconstruction-iterative.mjs",
+      "findingIds": [
+        "GRAPH-AUTO-ITERATIVE"
+      ],
+      "reason": "Explicit GRAPH_RECONSTRUCTION_REAL=1, fresh EVIDENCE_DIR and eight local source images required; maximum 3 attempts per source/24 authenticated CLI calls. Never runs in default tests."
+    },
+    {
+      "path": "tests/test-graph-reconstruction-authenticated.mjs",
+      "findingIds": [
+        "GRAPH-REAL-OBSERVATION"
+      ],
+      "reason": "Manual authenticated model observation requires explicit GRAPH_RECONSTRUCTION_REAL=1 and bounded real provider requests; distinct from desktop UI end-to-end"
+    },
+    {
+      "path": "tests/test-graph-reconstruction-csat-batch.mjs",
+      "findingIds": [
+        "GRAPH-EXAM-MODEL"
+      ],
+      "reason": "Opt-in authenticated CSAT model observation with explicit GRAPH_RECONSTRUCTION_REAL=1 and bounded provider calls; separate from reviewed graph capability regression."
+    },
+    {
+      "path": "tests/profile-rhwp-exam-typing.cjs",
+      "findingIds": [
+        "RHWP-TYPING-PROFILE",
+        "RHWP-EXAM-TYPING-LATENCY"
+      ],
+      "reason": "Manual profiling harness requires an explicit HWP_FILE and comparison setup; not an automatic browser regression.",
+      "classificationRationale": "Restore the source profiling-only classification. This harness reports WebKit synthetic input metrics and has no pass/fail latency oracle or baseline comparison; RHWP_DOCUMENT is optional (the source reason names HWP_FILE). The required test-rhwp-exam-typing-browser.cjs remains browser."
+    }
   ]
 }

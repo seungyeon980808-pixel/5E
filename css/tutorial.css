@@ -446,15 +446,15 @@
   padding: 0.63em 1em;
   border: 1px solid var(--accent);
   border-radius: 7px;
-  background: var(--accent);
-  color: #fff;
+  background: var(--control-selected-bg);
+  color: var(--control-selected-text);
   font-family: inherit;
   font-size: 0.94em;
   font-weight: 600;
   cursor: pointer;
   transition: transform 160ms var(--tut-ease-out), background 160ms ease;
 }
-.tut-coach-auto:hover { background: var(--accent-hover); }
+.tut-coach-auto:hover { background: var(--control-selected-bg);  border:1px solid var(--control-selected-border);}
 .tut-coach-auto:active { transform: scale(0.98); }
 .tut-coach-auto[hidden] { display: none; }
 .tut-coach-do[hidden] { display: none; }
@@ -507,10 +507,10 @@
 
 .tut-btn-primary {
   border-color: var(--accent);
-  background: var(--accent);
-  color: #fff;
+  background: var(--control-selected-bg);
+  color: var(--control-selected-text);
 }
-.tut-btn-primary:hover:not(:disabled) { background: var(--accent-hover); border-color: var(--accent-hover); }
+.tut-btn-primary:hover:not(:disabled) { background: var(--control-selected-bg); border-color: var(--control-selected-border); }
 
 .tut-btn-quit { color: var(--text-secondary); }
 

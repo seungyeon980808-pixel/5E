@@ -1,0 +1,502 @@
+{
+  "schema": "5e.graph-reconstruction/v1",
+  "variant": "axis-break",
+  "coordinateMode": "observed",
+  "source": {
+    "id": "reference-1",
+    "hash": "sha256:7173dc6ae2581c2ec3b650a5f3cb3ceaa5f809a1bcfd7db0bbaf804f1a4b6174",
+    "width": 454,
+    "height": 392,
+    "plotBox": {
+      "x": 84,
+      "y": 16,
+      "w": 355,
+      "h": 317
+    }
+  },
+  "axisPlacement": {
+    "x": {
+      "mode": "fraction",
+      "value": 0
+    },
+    "y": {
+      "mode": "fraction",
+      "value": 0
+    }
+  },
+  "frame": {
+    "variant": "quadrant",
+    "arrowX": true,
+    "arrowY": true,
+    "arrowY2": false,
+    "tickTop": false,
+    "tickRight": false,
+    "arrowLength": 3.55,
+    "arrowWidth": 2.17,
+    "strokeWidth": 0.28
+  },
+  "axes": {
+    "x": {
+      "scale": "unknown",
+      "title": "부피",
+      "displayTitle": "부피",
+      "unit": "",
+      "min": null,
+      "max": null,
+      "step": null,
+      "ticks": [],
+      "orientation": "horizontal",
+      "titlePosition": {
+        "x": 0.915,
+        "y": -0.095
+      },
+      "titleAnchor": "middle"
+    },
+    "y": {
+      "scale": "unknown",
+      "title": "압력",
+      "displayTitle": "압력",
+      "unit": "",
+      "min": null,
+      "max": null,
+      "step": null,
+      "ticks": [],
+      "orientation": "horizontal",
+      "titlePosition": {
+        "x": -0.113,
+        "y": 0.959
+      },
+      "titleAnchor": "middle"
+    }
+  },
+  "series": [
+    {
+      "id": "AB",
+      "kind": "points",
+      "axis": "y",
+      "certainty": "observed",
+      "coordinateSpace": "normalized",
+      "label": "",
+      "endLabel": "",
+      "points": [
+        {
+          "x": 0.1324,
+          "y": 0.795
+        },
+        {
+          "x": 0.2563,
+          "y": 0.795
+        }
+      ],
+      "curveStyle": "straight",
+      "candidateFamily": "linear",
+      "breaks": [],
+      "endpoints": [
+        {
+          "index": 0,
+          "kind": "closed",
+          "markerSize": 1.18
+        }
+      ],
+      "lineStyle": "solid",
+      "markerShape": "none",
+      "strokeWidth": 0.43,
+      "arrowSpecs": [
+        {
+          "segmentIndex": 0,
+          "t": 0.52,
+          "dir": 1,
+          "strokeWidth": 0.7
+        }
+      ]
+    },
+    {
+      "id": "BC",
+      "kind": "points",
+      "axis": "y",
+      "certainty": "observed",
+      "coordinateSpace": "normalized",
+      "label": "",
+      "endLabel": "",
+      "points": [
+        {
+          "x": 0.2563,
+          "y": 0.795
+        },
+        {
+          "x": 0.2732,
+          "y": 0.7476
+        },
+        {
+          "x": 0.2901,
+          "y": 0.7066
+        },
+        {
+          "x": 0.3127,
+          "y": 0.6593
+        },
+        {
+          "x": 0.338,
+          "y": 0.612
+        },
+        {
+          "x": 0.3662,
+          "y": 0.5647
+        },
+        {
+          "x": 0.3972,
+          "y": 0.5174
+        },
+        {
+          "x": 0.431,
+          "y": 0.47
+        },
+        {
+          "x": 0.4676,
+          "y": 0.4259
+        },
+        {
+          "x": 0.5042,
+          "y": 0.388
+        },
+        {
+          "x": 0.5437,
+          "y": 0.3502
+        },
+        {
+          "x": 0.5859,
+          "y": 0.3123
+        },
+        {
+          "x": 0.6282,
+          "y": 0.2808
+        },
+        {
+          "x": 0.6732,
+          "y": 0.2461
+        },
+        {
+          "x": 0.7239,
+          "y": 0.2145
+        },
+        {
+          "x": 0.7746,
+          "y": 0.1861
+        }
+      ],
+      "curveStyle": "smooth",
+      "candidateFamily": "none",
+      "breaks": [],
+      "endpoints": [
+        {
+          "index": 0,
+          "kind": "closed",
+          "markerSize": 1.18
+        }
+      ],
+      "lineStyle": "solid",
+      "markerShape": "none",
+      "strokeWidth": 0.43,
+      "arrowSpecs": [
+        {
+          "segmentIndex": 6,
+          "t": 0.6,
+          "dir": 1,
+          "strokeWidth": 0.75
+        }
+      ]
+    },
+    {
+      "id": "CD",
+      "kind": "points",
+      "axis": "y",
+      "certainty": "observed",
+      "coordinateSpace": "normalized",
+      "label": "",
+      "endLabel": "",
+      "points": [
+        {
+          "x": 0.7746,
+          "y": 0.1672
+        },
+        {
+          "x": 0.3211,
+          "y": 0.1672
+        }
+      ],
+      "curveStyle": "straight",
+      "candidateFamily": "linear",
+      "breaks": [],
+      "endpoints": [
+        {
+          "index": 0,
+          "kind": "closed",
+          "markerSize": 1.18
+        }
+      ],
+      "lineStyle": "solid",
+      "markerShape": "none",
+      "strokeWidth": 0.43,
+      "arrowSpecs": [
+        {
+          "segmentIndex": 0,
+          "t": 0.53,
+          "dir": 1,
+          "strokeWidth": 0.7
+        }
+      ]
+    },
+    {
+      "id": "DA",
+      "kind": "points",
+      "axis": "y",
+      "certainty": "observed",
+      "coordinateSpace": "normalized",
+      "label": "",
+      "endLabel": "",
+      "points": [
+        {
+          "x": 0.3211,
+          "y": 0.1672
+        },
+        {
+          "x": 0.3014,
+          "y": 0.1987
+        },
+        {
+          "x": 0.2817,
+          "y": 0.2334
+        },
+        {
+          "x": 0.262,
+          "y": 0.2713
+        },
+        {
+          "x": 0.2451,
+          "y": 0.3123
+        },
+        {
+          "x": 0.2282,
+          "y": 0.3565
+        },
+        {
+          "x": 0.2113,
+          "y": 0.4069
+        },
+        {
+          "x": 0.1972,
+          "y": 0.4574
+        },
+        {
+          "x": 0.1831,
+          "y": 0.511
+        },
+        {
+          "x": 0.1718,
+          "y": 0.5647
+        },
+        {
+          "x": 0.1606,
+          "y": 0.6215
+        },
+        {
+          "x": 0.1493,
+          "y": 0.6782
+        },
+        {
+          "x": 0.1408,
+          "y": 0.735
+        },
+        {
+          "x": 0.1324,
+          "y": 0.795
+        }
+      ],
+      "curveStyle": "smooth",
+      "candidateFamily": "none",
+      "breaks": [],
+      "endpoints": [
+        {
+          "index": 0,
+          "kind": "closed",
+          "markerSize": 1.18
+        }
+      ],
+      "lineStyle": "solid",
+      "markerShape": "none",
+      "strokeWidth": 0.43,
+      "arrowSpecs": [
+        {
+          "segmentIndex": 7,
+          "t": 0.8,
+          "dir": 1,
+          "strokeWidth": 0.7
+        }
+      ]
+    }
+  ],
+  "annotations": [
+    {
+      "id": "A",
+      "kind": "text",
+      "text": "A",
+      "x": 0.0718,
+      "y": 0.795,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "seriesId": "AB",
+      "pointIndex": 0,
+      "fontSizePx": 37,
+      "fontWeight": 400
+    },
+    {
+      "id": "B",
+      "kind": "text",
+      "text": "B",
+      "x": 0.3197,
+      "y": 0.795,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "seriesId": "BC",
+      "pointIndex": 0,
+      "fontSizePx": 37,
+      "fontWeight": 400
+    },
+    {
+      "id": "C",
+      "kind": "text",
+      "text": "C",
+      "x": 0.8394,
+      "y": 0.1672,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "seriesId": "CD",
+      "pointIndex": 0,
+      "fontSizePx": 37,
+      "fontWeight": 400
+    },
+    {
+      "id": "D",
+      "kind": "text",
+      "text": "D",
+      "x": 0.2535,
+      "y": 0.1672,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "seriesId": "DA",
+      "pointIndex": 0,
+      "fontSizePx": 37,
+      "fontWeight": 400
+    },
+    {
+      "id": "origin",
+      "kind": "text",
+      "text": "0",
+      "x": -0.0563,
+      "y": -0.0631,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "fontSizePx": 35,
+      "fontWeight": 400
+    },
+    {
+      "id": "x-break",
+      "kind": "text",
+      "text": "≈",
+      "x": 0.0704,
+      "y": 0,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "rotate",
+      "fontSizePx": 23,
+      "fontWeight": 400
+    },
+    {
+      "id": "y-break",
+      "kind": "text",
+      "text": "≈",
+      "x": 0,
+      "y": 0.0757,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "fontSizePx": 23,
+      "fontWeight": 400
+    }
+  ],
+  "regions": [],
+  "legends": [],
+  "style": {
+    "fontSizePx": 35,
+    "labelWeight": 400,
+    "strokeWidth": 0.43,
+    "guideStyle": {
+      "strokeWidth": 0.25,
+      "dashLength": 0.6,
+      "dashGap": 0.6
+    }
+  },
+  "review": [
+    {
+      "path": "variant",
+      "reason": "축 생략 표시는 원본 위치에 유지합니다. 생략 구간의 수치와 물리적 기울기는 확정하지 않습니다."
+    },
+    {
+      "path": "axes.x",
+      "reason": "축 수치를 읽을 수 없습니다. 표시 좌표는 실제 데이터와 구별하십시오."
+    },
+    {
+      "path": "axes.y",
+      "reason": "축 수치를 읽을 수 없습니다. 표시 좌표는 실제 데이터와 구별하십시오."
+    },
+    {
+      "path": "series.0",
+      "reason": "관찰한 모양입니다. 확정 데이터와 구별하여 검수하십시오."
+    },
+    {
+      "path": "series.1",
+      "reason": "관찰한 모양입니다. 확정 데이터와 구별하여 검수하십시오."
+    },
+    {
+      "path": "series.2",
+      "reason": "관찰한 모양입니다. 확정 데이터와 구별하여 검수하십시오."
+    },
+    {
+      "path": "series.3",
+      "reason": "관찰한 모양입니다. 확정 데이터와 구별하여 검수하십시오."
+    },
+    {
+      "path": "annotations.0",
+      "reason": "표기의 위치는 표시 좌표 관찰입니다. 원본과 대조하십시오."
+    },
+    {
+      "path": "annotations.1",
+      "reason": "표기의 위치는 표시 좌표 관찰입니다. 원본과 대조하십시오."
+    },
+    {
+      "path": "annotations.2",
+      "reason": "표기의 위치는 표시 좌표 관찰입니다. 원본과 대조하십시오."
+    },
+    {
+      "path": "annotations.3",
+      "reason": "표기의 위치는 표시 좌표 관찰입니다. 원본과 대조하십시오."
+    },
+    {
+      "path": "annotations.4",
+      "reason": "표기의 위치는 표시 좌표 관찰입니다. 원본과 대조하십시오."
+    },
+    {
+      "path": "annotations.5",
+      "reason": "표기의 위치는 표시 좌표 관찰입니다. 원본과 대조하십시오."
+    },
+    {
+      "path": "annotations.6",
+      "reason": "표기의 위치는 표시 좌표 관찰입니다. 원본과 대조하십시오."
+    }
+  ]
+}

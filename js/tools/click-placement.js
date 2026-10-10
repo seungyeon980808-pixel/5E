@@ -347,8 +347,10 @@ function updateLabelerPreview() {
 }
 
 function commitLabeler() {
-  const lab = makeLabelerDraft(draftPoints[0], mouseWorld || draftPoints[0]);
-  if (draftPoints.length >= 2) lab.elbow = { ...draftPoints[1] };
+  if (draftPoints.length < 2) { resetClickDraft(); return; }
+  // The floating endpoint previews another click; only placed points are committed.
+  const lab = makeLabelerDraft(draftPoints[0], draftPoints[draftPoints.length - 1]);
+  if (draftPoints.length >= 3) lab.elbow = { ...draftPoints[1] };
   const d = Math.hypot(lab.p2.x - lab.p1.x, lab.p2.y - lab.p1.y);
   if (d < MIN_SIZE) { resetClickDraft(); return; } // zero-length placement: discard
   lab.id = nextObjectId();

@@ -44,6 +44,21 @@ function isClosedPoly(o) { return o && o.type === "polyline" && o.closed === tru
 // branch-A (face) interaction. The gap is closed with a smooth curved span.
 function isClosedCurve(o) { return o && o.type === "curve" && o.closed === true; }
 
+// Manual graph series paint straight spans unless explicit Bézier handles own
+// their geometry. Preserve discontinuities so selection cannot invent a bridge.
+function straightFuncgraphRuns(o) {
+  const pts = o.points || [];
+  if (o.type !== "funcgraph" || (o.curveStyle || (o.sourceKind === "points" ? "straight" : "smooth")) !== "straight"
+      || Array.isArray(o.handles) && o.handles.length === pts.length) return null;
+  const breaks = new Set(o.breaks || []), runs = []; let run = [];
+  for (let i = 0; i < pts.length; i++) {
+    if (breaks.has(i) && run.length) { runs.push(run); run = []; }
+    run.push(pts[i]);
+  }
+  if (run.length) runs.push(run);
+  return runs;
+}
+
 // Labeler label-block half extents (world mm), mirroring renderLabeler EXACTLY:
 // formula labels use the measured formula box, plain labels the multiline estimate.
 // Shared by hitTest and getObjectBBox so click and marquee can never disagree.
@@ -359,6 +374,20 @@ function hitTest(objects, p, tol = 0, lineTol = tol) {
     if (o.type === "curve" || o.type === "funcgraph") {
       const pts = o.points || [];
       if (pts.length < 2) continue;
+      const straightRuns = straightFuncgraphRuns(o);
+      if (straightRuns) {
+        for (const run of straightRuns) {
+          for (let k = 0; k < run.length - 1; k++) {
+            if (segDist(p.x, p.y, run[k].x, run[k].y, run[k + 1].x, run[k + 1].y) <= margin) return o.id;
+          }
+        }
+        if (o.closed === true && pts.length > 2 && straightRuns.length === 1) {
+          const first = pts[0], last = pts[pts.length - 1];
+          if (segDist(p.x, p.y, last.x, last.y, first.x, first.y) <= margin
+              || pointInPolygon(p.x, p.y, pts)) return o.id;
+        }
+        continue;
+      }
       if (pts.length === 2) {
         if (segDist(p.x, p.y, pts[0].x, pts[0].y, pts[1].x, pts[1].y) <= margin) return o.id;
         continue;
@@ -583,6 +612,14 @@ function objectStrokeSegments(o) {
   if (o.type === "curve" || o.type === "funcgraph") {
     const pts = o.points || [];
     if (pts.length < 2) return segs;
+    const straightRuns = straightFuncgraphRuns(o);
+    if (straightRuns) {
+      for (const run of straightRuns) for (let k = 0; k < run.length - 1; k++)
+        segs.push([run[k].x, run[k].y, run[k + 1].x, run[k + 1].y]);
+      if (o.closed === true && pts.length > 2 && straightRuns.length === 1)
+        segs.push([pts[pts.length - 1].x, pts[pts.length - 1].y, pts[0].x, pts[0].y]);
+      return segs;
+    }
     if (pts.length === 2) { segs.push([pts[0].x, pts[0].y, pts[1].x, pts[1].y]); return segs; }
     const SAMPLES = 10;
     for (let k = 0; k < pts.length - 1; k++) {

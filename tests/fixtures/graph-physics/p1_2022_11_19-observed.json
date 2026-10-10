@@ -1,0 +1,359 @@
+{
+  "schema": "5e.graph-reconstruction/v1",
+  "variant": "cartesian",
+  "coordinateMode": "observed",
+  "source": {
+    "id": "reference-1",
+    "hash": "sha256:7d9de34ed76521029a00a8f5dc0e69f833405b994c887e117e6733e9cd84cc32",
+    "width": 1250,
+    "height": 483,
+    "plotBox": {
+      "x": 805,
+      "y": 14,
+      "w": 431,
+      "h": 390
+    }
+  },
+  "axisPlacement": {
+    "x": {
+      "mode": "fraction",
+      "value": 0.5
+    },
+    "y": {
+      "mode": "fraction",
+      "value": 0
+    }
+  },
+  "axes": {
+    "x": {
+      "scale": "linear",
+      "title": "x",
+      "displayTitle": "x",
+      "unit": "",
+      "min": null,
+      "max": null,
+      "step": null,
+      "ticks": [
+        {
+          "value": null,
+          "label": "d",
+          "position": 0.1694
+        },
+        {
+          "value": null,
+          "label": "2d",
+          "position": 0.3387
+        },
+        {
+          "value": null,
+          "label": "3d",
+          "position": 0.5058
+        },
+        {
+          "value": null,
+          "label": "4d",
+          "position": 0.6752
+        },
+        {
+          "value": null,
+          "label": "5d",
+          "position": 0.8445
+        }
+      ],
+      "orientation": "horizontal",
+      "titlePosition": {
+        "x": 0.977,
+        "y": 0.453
+      },
+      "titleAnchor": "middle"
+    },
+    "y": {
+      "scale": "linear",
+      "title": "P에 작용하는 전기력",
+      "displayTitle": "P에\n작용하는\n전기력",
+      "unit": "",
+      "min": null,
+      "max": null,
+      "step": null,
+      "ticks": [],
+      "orientation": "horizontal",
+      "titlePosition": {
+        "x": -0.035,
+        "y": 0.854
+      },
+      "titleAnchor": "end"
+    }
+  },
+  "series": [
+    {
+      "id": "s1",
+      "kind": "points",
+      "axis": "y",
+      "certainty": "observed",
+      "coordinateSpace": "normalized",
+      "label": "",
+      "endLabel": "",
+      "points": [
+        {
+          "x": 0.0394,
+          "y": 0.0026
+        },
+        {
+          "x": 0.0441,
+          "y": 0.0846
+        },
+        {
+          "x": 0.051,
+          "y": 0.1769
+        },
+        {
+          "x": 0.058,
+          "y": 0.2513
+        },
+        {
+          "x": 0.0673,
+          "y": 0.3103
+        },
+        {
+          "x": 0.0789,
+          "y": 0.3615
+        },
+        {
+          "x": 0.0928,
+          "y": 0.4026
+        },
+        {
+          "x": 0.109,
+          "y": 0.4308
+        },
+        {
+          "x": 0.1323,
+          "y": 0.4513
+        },
+        {
+          "x": 0.1601,
+          "y": 0.4667
+        },
+        {
+          "x": 0.1972,
+          "y": 0.4795
+        },
+        {
+          "x": 0.239,
+          "y": 0.4872
+        },
+        {
+          "x": 0.2854,
+          "y": 0.4923
+        },
+        {
+          "x": 0.3155,
+          "y": 0.4974
+        },
+        {
+          "x": 0.3387,
+          "y": 0.5
+        },
+        {
+          "x": 0.3596,
+          "y": 0.5077
+        },
+        {
+          "x": 0.3805,
+          "y": 0.5231
+        },
+        {
+          "x": 0.3991,
+          "y": 0.5462
+        },
+        {
+          "x": 0.4176,
+          "y": 0.5821
+        },
+        {
+          "x": 0.4339,
+          "y": 0.6308
+        },
+        {
+          "x": 0.4478,
+          "y": 0.6949
+        },
+        {
+          "x": 0.4571,
+          "y": 0.7667
+        },
+        {
+          "x": 0.464,
+          "y": 0.8513
+        },
+        {
+          "x": 0.4687,
+          "y": 0.9308
+        },
+        {
+          "x": 0.471,
+          "y": 1
+        }
+      ],
+      "curveStyle": "smooth",
+      "breaks": [],
+      "endpoints": [],
+      "lineStyle": "solid",
+      "strokeWidth": 0.536,
+      "markerShape": "none"
+    },
+    {
+      "id": "s2",
+      "kind": "points",
+      "axis": "y",
+      "certainty": "observed",
+      "coordinateSpace": "normalized",
+      "label": "",
+      "endLabel": "",
+      "points": [
+        {
+          "x": 0.5476,
+          "y": 0.0026
+        },
+        {
+          "x": 0.5522,
+          "y": 0.0821
+        },
+        {
+          "x": 0.5592,
+          "y": 0.159
+        },
+        {
+          "x": 0.5684,
+          "y": 0.2282
+        },
+        {
+          "x": 0.58,
+          "y": 0.2846
+        },
+        {
+          "x": 0.594,
+          "y": 0.3256
+        },
+        {
+          "x": 0.6079,
+          "y": 0.3513
+        },
+        {
+          "x": 0.6218,
+          "y": 0.3615
+        },
+        {
+          "x": 0.6334,
+          "y": 0.359
+        },
+        {
+          "x": 0.6497,
+          "y": 0.3487
+        },
+        {
+          "x": 0.6659,
+          "y": 0.3282
+        },
+        {
+          "x": 0.6821,
+          "y": 0.2974
+        },
+        {
+          "x": 0.6984,
+          "y": 0.2564
+        },
+        {
+          "x": 0.7123,
+          "y": 0.2051
+        },
+        {
+          "x": 0.7239,
+          "y": 0.1487
+        },
+        {
+          "x": 0.7355,
+          "y": 0.0795
+        },
+        {
+          "x": 0.7564,
+          "y": 0.0026
+        }
+      ],
+      "curveStyle": "smooth",
+      "breaks": [],
+      "endpoints": [],
+      "lineStyle": "solid",
+      "strokeWidth": 0.536,
+      "markerShape": "none"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "origin",
+      "kind": "text",
+      "text": "0",
+      "x": -0.0464,
+      "y": 0.5,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "fontSizePx": 34,
+      "fontWeight": 400
+    },
+    {
+      "id": "guide3d",
+      "kind": "guide",
+      "text": "",
+      "x": 0.5058,
+      "y": 0.9974,
+      "to": {
+        "x": 0.5058,
+        "y": 0.0026
+      },
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "vertical",
+      "endStyle": "none"
+    },
+    {
+      "id": "guide5d",
+      "kind": "guide",
+      "text": "",
+      "x": 0.8445,
+      "y": 0.9974,
+      "to": {
+        "x": 0.8445,
+        "y": 0.0026
+      },
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "vertical",
+      "endStyle": "none"
+    }
+  ],
+  "regions": [],
+  "legends": [],
+  "style": {
+    "fontSizePx": 34,
+    "labelWeight": 400,
+    "strokeWidth": 0.244,
+    "guideStyle": {
+      "strokeWidth": 0.162,
+      "dashLength": 1.3,
+      "dashGap": 0.65
+    }
+  },
+  "frame": {
+    "variant": "cross",
+    "arrowX": true,
+    "arrowY": true,
+    "arrowY2": false,
+    "tickTop": false,
+    "tickRight": false,
+    "arrowLength": 3.25,
+    "arrowWidth": 1.95,
+    "strokeWidth": 0.244
+  },
+  "review": []
+}

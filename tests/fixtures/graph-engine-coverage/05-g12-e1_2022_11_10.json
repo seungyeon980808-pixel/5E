@@ -1,0 +1,418 @@
+{
+  "schema": "5e.graph-reconstruction/v1",
+  "variant": "cartesian",
+  "coordinateMode": "observed",
+  "source": {
+    "id": "g12-e1_2022_11_10",
+    "hash": "sha256:d57a1d124c12899ca2081300a7e15ae5ab4b991ec95833fb5105ed95cee8b545",
+    "width": 1085,
+    "height": 367,
+    "plotBox": {
+      "x": 197,
+      "y": 16,
+      "w": 838,
+      "h": 254
+    }
+  },
+  "axisPlacement": {
+    "x": {
+      "mode": "fraction",
+      "value": 0
+    },
+    "y": {
+      "mode": "fraction",
+      "value": 0
+    }
+  },
+  "axes": {
+    "x": {
+      "scale": "linear",
+      "title": "위도",
+      "unit": "°",
+      "displayTitle": "위도",
+      "min": null,
+      "max": null,
+      "step": null,
+      "ticks": [
+        {
+          "value": 90,
+          "label": "90°N",
+          "position": 0
+        },
+        {
+          "value": 90,
+          "label": "90°S",
+          "position": 1
+        }
+      ],
+      "orientation": "horizontal",
+      "titlePosition": {
+        "x": 0.5,
+        "y": -0.274
+      },
+      "titleAnchor": "middle"
+    },
+    "y": {
+      "scale": "linear",
+      "title": "기압",
+      "unit": "hPa",
+      "displayTitle": "기압",
+      "min": null,
+      "max": null,
+      "step": null,
+      "ticks": [
+        {
+          "value": 1000,
+          "label": "1000",
+          "position": 0.3091
+        },
+        {
+          "value": 1020,
+          "label": "1020",
+          "position": 0.7717
+        }
+      ],
+      "orientation": "vertical",
+      "titlePosition": {
+        "x": -0.17,
+        "y": 0.569
+      },
+      "titleAnchor": "middle"
+    }
+  },
+  "series": [
+    {
+      "id": "pressure",
+      "kind": "points",
+      "axis": "y",
+      "certainty": "observed",
+      "coordinateSpace": "normalized",
+      "label": "",
+      "points": [
+        {
+          "x": 0,
+          "y": 0.7047
+        },
+        {
+          "x": 0.0263,
+          "y": 0.6339
+        },
+        {
+          "x": 0.0573,
+          "y": 0.5591
+        },
+        {
+          "x": 0.0895,
+          "y": 0.4961
+        },
+        {
+          "x": 0.1241,
+          "y": 0.4409
+        },
+        {
+          "x": 0.1551,
+          "y": 0.389
+        },
+        {
+          "x": 0.1778,
+          "y": 0.3701
+        },
+        {
+          "x": 0.191,
+          "y": 0.3819
+        },
+        {
+          "x": 0.2076,
+          "y": 0.4213
+        },
+        {
+          "x": 0.2243,
+          "y": 0.4764
+        },
+        {
+          "x": 0.2428,
+          "y": 0.5472
+        },
+        {
+          "x": 0.2625,
+          "y": 0.622
+        },
+        {
+          "x": 0.2816,
+          "y": 0.685
+        },
+        {
+          "x": 0.3007,
+          "y": 0.7283
+        },
+        {
+          "x": 0.3138,
+          "y": 0.7362
+        },
+        {
+          "x": 0.3246,
+          "y": 0.7323
+        },
+        {
+          "x": 0.3437,
+          "y": 0.7126
+        },
+        {
+          "x": 0.3699,
+          "y": 0.6693
+        },
+        {
+          "x": 0.401,
+          "y": 0.6102
+        },
+        {
+          "x": 0.432,
+          "y": 0.5591
+        },
+        {
+          "x": 0.4558,
+          "y": 0.5315
+        },
+        {
+          "x": 0.4737,
+          "y": 0.5197
+        },
+        {
+          "x": 0.5006,
+          "y": 0.5197
+        },
+        {
+          "x": 0.5334,
+          "y": 0.5236
+        },
+        {
+          "x": 0.5704,
+          "y": 0.5394
+        },
+        {
+          "x": 0.5943,
+          "y": 0.563
+        },
+        {
+          "x": 0.6241,
+          "y": 0.6063
+        },
+        {
+          "x": 0.6539,
+          "y": 0.6535
+        },
+        {
+          "x": 0.6838,
+          "y": 0.6929
+        },
+        {
+          "x": 0.7041,
+          "y": 0.7087
+        },
+        {
+          "x": 0.7172,
+          "y": 0.7008
+        },
+        {
+          "x": 0.7315,
+          "y": 0.6772
+        },
+        {
+          "x": 0.7494,
+          "y": 0.622
+        },
+        {
+          "x": 0.7673,
+          "y": 0.5433
+        },
+        {
+          "x": 0.7912,
+          "y": 0.4173
+        },
+        {
+          "x": 0.815,
+          "y": 0.2835
+        },
+        {
+          "x": 0.8317,
+          "y": 0.2008
+        },
+        {
+          "x": 0.8461,
+          "y": 0.1457
+        },
+        {
+          "x": 0.8586,
+          "y": 0.126
+        },
+        {
+          "x": 0.8711,
+          "y": 0.1339
+        },
+        {
+          "x": 0.8866,
+          "y": 0.1614
+        },
+        {
+          "x": 0.9045,
+          "y": 0.2087
+        },
+        {
+          "x": 0.9248,
+          "y": 0.2677
+        },
+        {
+          "x": 0.9356,
+          "y": 0.2835
+        },
+        {
+          "x": 0.9535,
+          "y": 0.2913
+        },
+        {
+          "x": 0.9666,
+          "y": 0.3031
+        },
+        {
+          "x": 0.9809,
+          "y": 0.3425
+        },
+        {
+          "x": 1,
+          "y": 0.4252
+        }
+      ],
+      "curveStyle": "smooth",
+      "breaks": [],
+      "endpoints": [],
+      "lineStyle": "solid",
+      "markerSize": 0.82
+    }
+  ],
+  "annotations": [
+    {
+      "id": "equator-guide",
+      "kind": "guide",
+      "text": "",
+      "x": 0.5006,
+      "y": 1,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "vertical",
+      "endStyle": "none"
+    },
+    {
+      "id": "equator-label",
+      "kind": "text",
+      "text": "0°",
+      "x": 0.5006,
+      "y": -0.104,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "endStyle": "none",
+      "fontSizePx": 38
+    },
+    {
+      "id": "label-a",
+      "kind": "text",
+      "text": "A",
+      "x": 0.2428,
+      "y": -0.104,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "endStyle": "none",
+      "fontSizePx": 38
+    },
+    {
+      "id": "label-b",
+      "kind": "text",
+      "text": "B",
+      "x": 0.815,
+      "y": -0.104,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "endStyle": "none",
+      "fontSizePx": 38
+    },
+    {
+      "id": "label-c",
+      "kind": "text",
+      "text": "C",
+      "x": 0.8586,
+      "y": -0.104,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "endStyle": "none",
+      "fontSizePx": 38
+    },
+    {
+      "id": "pressure-unit",
+      "kind": "text",
+      "text": "(hPa)",
+      "x": -0.169,
+      "y": 0.335,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "endStyle": "none",
+      "fontSizePx": 38
+    }
+  ],
+  "style": {
+    "fontSizePx": 38,
+    "labelWeight": 400,
+    "strokeWidth": 0.26,
+    "guideStyle": {
+      "strokeWidth": 0.14,
+      "dashLength": 0.55,
+      "dashGap": 0.4
+    }
+  },
+  "review": [],
+  "frame": {
+    "variant": "box",
+    "arrowX": false,
+    "arrowY": false,
+    "arrowLength": 2.4,
+    "arrowWidth": 1.65,
+    "strokeWidth": 0.22,
+    "tickTop": false,
+    "tickRight": false
+  },
+  "regions": [
+    {
+      "id": "band-0",
+      "kind": "x-band",
+      "coordinateSpace": "normalized",
+      "axis": "y",
+      "from": 0.2350835322195704,
+      "to": 0.25059665871121717,
+      "level": 180,
+      "opacity": 1
+    },
+    {
+      "id": "band-1",
+      "kind": "x-band",
+      "coordinateSpace": "normalized",
+      "axis": "y",
+      "from": 0.8078758949880668,
+      "to": 0.8233890214797136,
+      "level": 180,
+      "opacity": 1
+    },
+    {
+      "id": "band-2",
+      "kind": "x-band",
+      "coordinateSpace": "normalized",
+      "axis": "y",
+      "from": 0.850835322195704,
+      "to": 0.8663484486873508,
+      "level": 180,
+      "opacity": 1
+    }
+  ]
+}

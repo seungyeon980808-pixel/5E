@@ -2,6 +2,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
 const { chromium, webkit } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
+const { mixedCandidate, assertCandidateUnion } = require('./fixtures/candidate-union.cjs');
 const root = path.resolve(__dirname, '..');
 const evidence = path.resolve(process.env.EVIDENCE_DIR || '.omo/evidence/a1-browser');
 fs.mkdirSync(evidence, { recursive: true });
@@ -21,6 +22,7 @@ const modules = { state: moduleUrl('state'), project: moduleUrl('project-io'), s
 const fixture = path.join(root, 'tests/fixtures/rights-clear-smoke.png');
 const fixtureSrc = `data:image/png;base64,${fs.readFileSync(fixture).toString('base64')}`;
 const limit = 128 * 1024 * 1024;
+const pngLimit = 64 * 1024 * 1024;
 async function context(browser, errors) {
   const ctx = await browser.newContext({ viewport: { width: 1400, height: 900 } });
   await ctx.addInitScript(() => {
@@ -28,6 +30,18 @@ async function context(browser, errors) {
     for (const prefix of ['', '5e.preview:']) localStorage.setItem(`${prefix}5e.tutorial.bannerSeen`, 'true');
     Object.defineProperty(window, 'showSaveFilePicker', { configurable: true, value: undefined });
     Object.defineProperty(window, 'showDirectoryPicker', { configurable: true, value: undefined });
+    // A load event precedes completion of the async project restore handler.
+    const Reader = window.FileReader;
+    window.FileReader = class extends Reader {
+      readAsArrayBuffer(file, ...args) {
+        const onload = this.onload;
+        if (typeof onload === 'function') this.onload = async event => {
+          try { await onload.call(this, event); }
+          finally { window.dispatchEvent(new CustomEvent('a1:reader-complete', { detail: file.name })); }
+        };
+        return super.readAsArrayBuffer(file, ...args);
+      }
+    };
   });
   ctx.on('page', p => p.on('pageerror', e => errors.push(e.message)));
   return ctx;
@@ -36,7 +50,8 @@ async function doc(page) {
   return page.evaluate(async m => (await import(m.project)).serialize((await import(m.state)).state.get()), modules);
 }
 async function ready(page) {
-  await page.goto(`${origin}?mode=pro&mobile=0`, { waitUntil: 'load' });
+  await page.goto(`${entryUrl}?mode=pro&mobile=0`, { waitUntil: 'load' });
+  assert.equal(new URL(page.url()).pathname, config.entry, 'navigation must exercise the configured entry');
   await page.locator('#canvas').waitFor({ state: 'visible' });
   await page.waitForFunction(async m => (await import(m.state)).state.get().pages?.length > 0, modules);
 }
@@ -52,6 +67,54 @@ async function choose(page, file) {
   const wait = page.waitForEvent('filechooser');
   await page.locator('#project-open').click();
   await (await wait).setFiles(file);
+}
+async function openAndWait(page, file) {
+  await page.evaluate(name => {
+    window.a1OpenCompleted = new Promise((resolve, reject) => {
+      const complete = event => {
+        if (event.detail !== name) return;
+        clearTimeout(timer);
+        window.removeEventListener('a1:reader-complete', complete);
+        resolve();
+      };
+      const timer = setTimeout(() => {
+        window.removeEventListener('a1:reader-complete', complete);
+        reject(new Error(`Project restore handler did not complete for ${name}`));
+      }, 30000);
+      window.addEventListener('a1:reader-complete', complete);
+    });
+  }, typeof file === 'string' ? path.basename(file) : file.name);
+  await choose(page, file);
+  await page.getByRole('button', { name: '열기', exact: true }).click();
+  await page.evaluate(() => window.a1OpenCompleted);
+}
+async function downloadDrawing(page, label) {
+  await page.locator('#file-menu-btn').click();
+  await page.locator('#project-save').click();
+  const dialog = page.locator('.modal-overlay:not([hidden])').last();
+  await dialog.locator('.modal-input').fill(label);
+  const downloading = page.waitForEvent('download');
+  await dialog.getByRole('button', { name: '저장', exact: true }).click();
+  const download = await downloading;
+  const savedPath = path.join(evidence, `${label}.5e`);
+  await download.saveAs(savedPath);
+  assert.equal(download.suggestedFilename().normalize('NFC'), `${label}.5e`);
+  const project = await page.evaluate(async ({ bytes, runtime }) =>
+    (await import(runtime.moduleBase + 'fivee-project.js' + runtime.moduleQuery)).parseFiveEProject(new Uint8Array(bytes)),
+  { bytes: [...fs.readFileSync(savedPath)], runtime });
+  return { savedPath, project };
+}
+function assertPngProject(project, drawing, expectedCandidate) {
+  assert.equal(project.kind, 'drawing');
+  assert.deepEqual(project.drawing, drawing, 'PNG drawing survives the actual project download');
+  assert.deepEqual(project.workspace.drawing, drawing, 'portable workspace retains the PNG drawing');
+  const pngTask = project.workspace.ai.workspaces.flatMap(workspace => workspace.tabs).find(tab => tab.id === 'a1-png-task');
+  assert.ok(pngTask, 'ordinary PNG open retains its AI task');
+  assert.equal(pngTask.selectedCandidateId, expectedCandidate.id);
+  assert.equal(pngTask.generated.length, 1);
+  assertCandidateUnion(assert, pngTask.generated[0], expectedCandidate);
+  assert.equal(pngTask.input, 'PNG draft');
+  assert.deepEqual(pngTask.conversationMessages, [{ role: 'user', text: 'PNG history' }]);
 }
 async function snapshot(page) {
   return page.evaluate(async m => {
@@ -88,7 +151,8 @@ async function snapshot(page) {
       await savingDialog.getByRole('button', { name: '저장', exact: true }).click();
       const download = await saving;
       const savedPath = path.join(evidence, `${label}.5e`); await download.saveAs(savedPath);
-      const saved = JSON.parse(fs.readFileSync(savedPath, 'utf8'));
+      const saved = await page.evaluate(async ({bytes,url}) => (await import(url)).parseFiveEProject(new Uint8Array(bytes)).drawing,
+        {bytes:[...fs.readFileSync(savedPath)],url:runtime.moduleBase+'fivee-project.js'+runtime.moduleQuery});
       assert.deepEqual(saved, before);
       assert.equal(download.suggestedFilename().normalize('NFC'), `${label}.5e`);
       // Fresh storage and actual file input, not reuse of in-memory objects.
@@ -114,17 +178,23 @@ async function snapshot(page) {
       const baseline = await snapshot(page);
       assert.ok(baseline.undo.length > 0 && baseline.redo.length > 0);
       page.on('dialog', async d => { dialogs.push(d.message()); await d.dismiss(); });
-      await page.evaluate(({ limit }) => {
-        const sizes = { 'a1-below.5e': limit - 1, 'a1-exact.json': limit, 'a1-over.5e': limit + 1, 'a1-over.json': limit + 1 };
+      await page.evaluate(({ limit, pngLimit }) => {
+        const sizes = { 'a1-below.5e': limit - 1, 'a1-exact.json': limit, 'a1-over.5e': limit + 1, 'a1-over.json': limit + 1,
+          'a1-below.png': pngLimit - 1, 'a1-exact.png': pngLimit, 'a1-over.png': pngLimit + 1 };
         const realSize = Object.getOwnPropertyDescriptor(File.prototype, 'size') || Object.getOwnPropertyDescriptor(Blob.prototype, 'size');
         Object.defineProperty(File.prototype, 'size', { configurable: true, get() { return sizes[this.name] ?? realSize.get.call(this); } });
-        window.a1Spy = { constructors: 0, reads: [], parses: 0 };
+        window.a1Spy = { constructors: 0, reads: [], arrayBuffers: [], parses: 0 };
         const Reader = window.FileReader;
         window.FileReader = class extends Reader { constructor() { super(); window.a1Spy.constructors++; }
-          readAsText(file, ...args) { window.a1Spy.reads.push(file.name); return super.readAsText(file, ...args); } };
+          readAsArrayBuffer(file, ...args) { window.a1Spy.reads.push(file.name); return super.readAsArrayBuffer(file, ...args); } };
+        const arrayBuffer = Blob.prototype.arrayBuffer;
+        Blob.prototype.arrayBuffer = function (...args) {
+          if (this instanceof File) window.a1Spy.arrayBuffers.push(this.name);
+          return arrayBuffer.apply(this, args);
+        };
         const parse = JSON.parse;
         JSON.parse = function (text, ...args) { if (String(text).includes('A1_POLICY_MARKER')) window.a1Spy.parses++; return parse(text, ...args); };
-      }, { limit });
+      }, { limit, pngLimit });
       const payload = JSON.stringify({ ...saved, a1Probe: 'A1_POLICY_MARKER' });
       const file = name => ({ name, mimeType: 'application/json', buffer: Buffer.from(payload) });
       const spy = () => page.evaluate(() => window.a1Spy);
@@ -135,9 +205,9 @@ async function snapshot(page) {
         await alert.getByRole('button', { name: '확인', exact: true }).waitFor();
         assert.match(await alert.textContent(), /134,217,729바이트/);
         assert.match(await alert.textContent(), /페이지를 나누어/);
-        assert.deepEqual(await spy(), { constructors: 0, reads: [], parses: 0 });
+        assert.deepEqual(await spy(), { constructors: 0, reads: [], arrayBuffers: [], parses: 0 });
         assert.deepEqual(await snapshot(page), baseline);
-        assert.equal(await page.locator('input[type="file"][accept*=".5e"]').inputValue(), '');
+        assert.equal(await page.locator('input[type="file"][accept*=".5e"][accept*=".json"]:not(#exam-project-file)').inputValue(), '');
         if (i === 0) await page.screenshot({ path: path.join(evidence, `${engine.name()}-size-rejection.png`) });
         await alert.getByRole('button', { name: '확인', exact: true }).click();
       }
@@ -147,26 +217,82 @@ async function snapshot(page) {
           document.querySelector('#canvas').dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: transfer }));
         }, { name, payload });
         await page.getByRole('button', { name: '확인', exact: true }).click();
-        assert.deepEqual(await spy(), { constructors: 0, reads: [], parses: 0 });
+        assert.deepEqual(await spy(), { constructors: 0, reads: [], arrayBuffers: [], parses: 0 });
         assert.deepEqual(await snapshot(page), baseline);
       }
+      await choose(page, file('a1-over.png'));
+      const pngLimitAlert = page.locator('.modal-overlay:not([hidden])').last();
+      assert.match(await pngLimitAlert.textContent(), /64 MiB/);
+      assert.deepEqual(await spy(), { constructors: 0, reads: [], arrayBuffers: [], parses: 0 });
+      assert.deepEqual(await snapshot(page), baseline);
+      await pngLimitAlert.getByRole('button', { name: '확인', exact: true }).click();
       for (const name of ['a1-below.5e', 'a1-exact.json']) {
         await choose(page, file(name));
         await page.getByRole('button', { name: '취소', exact: true }).click();
         assert.deepEqual(await snapshot(page), baseline);
       }
-      assert.deepEqual(await spy(), { constructors: 2, reads: ['a1-below.5e', 'a1-exact.json'], parses: 2 });
+      assert.deepEqual(await spy(), { constructors: 2, reads: ['a1-below.5e', 'a1-exact.json'], arrayBuffers: [], parses: 2 });
       await choose(page, []); // File picker cancellation produces no read.
+      assert.deepEqual(await spy(), { constructors: 2, reads: ['a1-below.5e', 'a1-exact.json'], arrayBuffers: [], parses: 2 });
       assert.deepEqual(await snapshot(page), baseline);
       await choose(page, { name: 'a1-malformed.5e', mimeType: 'application/json', buffer: Buffer.from('{"A1_POLICY_MARKER":') });
       await page.waitForFunction(() => window.a1Spy.parses === 3);
-      await page.waitForFunction(() => document.querySelector('input[type="file"][accept*=".5e"]').value === '');
+      await page.waitForFunction(() => document.querySelector('input[type="file"][accept*=".5e"][accept*=".json"]:not(#exam-project-file)').value === '');
       assert.deepEqual(await snapshot(page), baseline);
       assert.ok(dialogs.some(d => /프로젝트 파일을 열 수 없습니다/.test(d)));
+      const expectedCandidate = mixedCandidate(fixtureSrc);
+      const pngDrawing = structuredClone(before);
+      pngDrawing.pages[0].meta.examLink = { tabId: 'a1-png-tab', assetId: 'a1-png-asset' };
+      const expectedPngDrawing = await page.evaluate(async ({ m, drawing }) => (await import(m.project)).migrate(drawing),
+        { m: modules, drawing: pngDrawing });
+      const pngSource = await page.evaluate(async ({ bytes, drawing, candidate, runtime }) => {
+        const source = structuredClone(drawing), link = { tabId:'a1-png-tab', assetId:'a1-png-asset' };
+        source.pages[0].meta.examLink = link;
+        const taskId = 'a1-png-task', context = { version:1, pageId:source.activePageId, viewBox:null, selectedIds:[], ai:{
+          scope:'', taskId, snapshot:{key:'workspace',tabs:[{id:taskId,title:'PNG source',examLink:link,generated:[candidate],attachments:[],
+            selectedCandidateId:candidate.id,input:'PNG draft',conversationMessages:[{role:'user',text:'PNG history'}],workState:'idle'}],
+            activeTaskTabId:taskId,taskTabSerial:1,imageSerial:1},
+        }};
+        const {embedEditablePng}=await import(runtime.moduleBase+'editable-png.js'+runtime.moduleQuery);
+        return [...embedEditablePng(new Uint8Array(bytes),{id:'a1-png-figure',version:1,name:'PNG source',source,link,context})];
+      }, {bytes:[...fs.readFileSync(fixture)],drawing:pngDrawing,candidate:expectedCandidate,runtime});
+      // Small, valid PNG bytes exercise the declared size boundary without a
+      // 64 MiB allocation. Reaching confirmation proves read and format acceptance.
+      const pngBoundaryReads = ['a1-below.5e', 'a1-exact.json', 'a1-malformed.5e'];
+      assert.deepEqual(await spy(), { constructors: 3, reads: pngBoundaryReads, arrayBuffers: [], parses: 3 });
+      for (const [name, size] of [['a1-below.png', pngLimit - 1], ['a1-exact.png', pngLimit]]) {
+        await choose(page, { name, mimeType: 'image/png', buffer: Buffer.from(pngSource) });
+        const confirmation = page.locator('.modal-overlay:not([hidden])').last();
+        await confirmation.getByRole('button', { name: '취소', exact: true }).waitFor();
+        assert.match(await confirmation.textContent(), /현재 작업을 이 프로젝트 파일로 대체/);
+        assert.equal(await page.evaluate(name => new File([], name).size, name), size);
+        pngBoundaryReads.push(name);
+        assert.deepEqual(await spy(), { constructors: pngBoundaryReads.length, reads: pngBoundaryReads, arrayBuffers: [], parses: 3 });
+        assert.deepEqual(await snapshot(page), baseline);
+        await confirmation.getByRole('button', { name: '취소', exact: true }).click();
+        assert.deepEqual(await snapshot(page), baseline);
+      }
+      await openAndWait(page, { name: 'a1-source.png', mimeType: 'image/png', buffer: Buffer.from(pngSource) });
+      await page.locator(`[data-ai-selected-candidate-id="${expectedCandidate.id}"]`).waitFor({ state: 'attached' });
+      assert.deepEqual(await doc(page), expectedPngDrawing);
+      const { savedPath: pngProjectPath, project: pngProject } = await downloadDrawing(page, `${engine.name()}-PNG-union`);
+      assertPngProject(pngProject, expectedPngDrawing, expectedCandidate);
+      // A fresh context has no source task or draft to mask a loader omission.
+      const reopenedPage = await (await context(browser, errors)).newPage();
+      await ready(reopenedPage);
+      assert.equal(await reopenedPage.locator(`[data-ai-selected-candidate-id="${expectedCandidate.id}"]`).count(), 0);
+      await openAndWait(reopenedPage, pngProjectPath);
+      await reopenedPage.locator(`[data-ai-selected-candidate-id="${expectedCandidate.id}"]`).waitFor({ state: 'attached' });
+      assert.deepEqual(await doc(reopenedPage), expectedPngDrawing);
+      // Capture the restored live workspace through its real save path; merely
+      // parsing the original download would not test candidate/draft restoration.
+      const { project: reopenedProject } = await downloadDrawing(reopenedPage, `${engine.name()}-PNG-union-reopened`);
+      assertPngProject(reopenedProject, expectedPngDrawing, expectedCandidate);
       assert.deepEqual(errors, []);
-      results.push({ engine: engine.name(), result: 'PASS', testServerOrigin: origin, actualProjectBytes: fs.statSync(savedPath).size,
-        rejectedReaderConstructors: 0, rejectedReads: 0, rejectedParses: 0,
-        scenarios: ['actual PNG import/save/fresh reopen', 'picker oversize and identical-file reselection', '.5e/.json canvas drop oversize', 'below and exact limit read then cancel', 'picker cancellation', 'malformed project preserves document/selection/undo/redo/save status'] });
+      results.push({ engine: engine.name(), result: 'PASS', testServerOrigin: origin, testEntryUrl: entryUrl, actualProjectBytes: fs.statSync(savedPath).size,
+        rejectedReaderConstructors: 0, rejectedReads: 0, rejectedArrayBuffers: 0, rejectedParses: 0,
+        simulatedPngAcceptedSizes: [pngLimit - 1, pngLimit],
+        scenarios: ['actual PNG import/save/fresh reopen', 'picker oversize and identical-file reselection', '.5e/.json canvas drop oversize', 'below and exact limit read then cancel', 'picker cancellation', 'malformed project preserves document/selection/undo/redo/save status', 'editable PNG 64 MiB guard before FileReader and arrayBuffer', 'editable PNG below and exact 64 MiB read then cancel', 'ordinary editable PNG open/save/fresh file-input reopen preserves drawing, native candidate union, drafts and conversation'] });
     } finally { await browser.close(); }
   }
   fs.writeFileSync(path.join(evidence, 'results.json'), JSON.stringify(results, null, 2) + '\n');

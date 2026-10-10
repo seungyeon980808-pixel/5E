@@ -1,4 +1,5 @@
 import { normalizeMarkPolicy } from './ai-mark-policy.js?v=1.7.0-four-session-integration';
+import { validateWorkbenchGraph } from './graph/workbench-result.js?v=1.7.0-four-session-integration';
 
 // Snapshotting retains data, never grants label/source verification authority.
 export function validateCandidateSnapshot(item) {
@@ -16,8 +17,23 @@ export function validateCandidateSnapshot(item) {
   for (const key of ['labelPlan','imageLabelWorkflow','sourceLabelPlan','editableDraft','targetPlacement','workflowMetrics','graphResult','graphEdit']) {
     if (item[key] != null && (typeof item[key] !== 'object' || Array.isArray(item[key]))) throw new TypeError('Invalid candidate ' + key);
   }
+  // Reuse native structure/source checks without recomputing quality or repairing data.
+  if (item.graphResult != null) validateWorkbenchGraph(item.graphResult);
   if (item.targetPlacement?.candidateSha256 && item.candidateSha256 && item.targetPlacement.candidateSha256 !== item.candidateSha256) throw new TypeError('Candidate source binding mismatch');
-  if (item.targetPlacement?.planSha256 && item.planSha256 && item.targetPlacement.planSha256 !== item.planSha256) throw new TypeError('Candidate plan binding mismatch');
+  if (item.targetPlacement?.planSha256 && item.planSha256 && item.targetPlacement.planSha256 !== item.planSha256) {
+    const report=item.removalReport,binding=report?.removalBinding,subset=item.labelPlan?.sourcePlan;
+    const ids=report?.removedLabelIds;
+    const sameIds=value=>Array.isArray(value)&&Array.isArray(ids)&&value.length===ids.length&&value.every((id,index)=>id===ids[index]);
+    if(item.imageLabelWorkflow?.imageKind!=='exam'||report?.status!=='partial'||binding?.version!==1
+      ||binding.sourceSha256!==item.sourceSha256||binding.planSha256!==item.planSha256||binding.candidateSha256!==item.candidateSha256
+      ||!Array.isArray(ids)||!ids.length||new Set(ids).size!==ids.length
+      ||!sameIds(binding.removedLabelIds)||!sameIds(binding.restoredLabelIds)
+      ||!sameIds(subset?.labels?.map(label=>label.id))||!sameIds(item.labelPlan?.labels?.map(label=>label.id))
+      ||ids.some(id=>!item.sourceLabelPlan?.labels?.some(label=>label.id===id)||report.deferredLabels?.some(label=>label.labelId===id))
+      ||JSON.stringify(subset?.removalBinding)!==JSON.stringify(binding)
+      ||!/^[a-f0-9]{64}$/.test(report.restorationPlanSha256)
+      ||item.targetPlacement.planSha256!==report.restorationPlanSha256) throw new TypeError('Candidate plan binding mismatch');
+  }
 }
 
 export function snapshotImageItem(item) {

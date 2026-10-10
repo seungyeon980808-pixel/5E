@@ -16,6 +16,12 @@ const genericFailures = new Set([
 ]);
 
 export function appendAiErrorRecord(records, current, message, cause) {
+  current = { ...current, ...(cause?.aiRequest || {}) };
+  const phases = { sourceAnalysis:'원본 라벨 분석 · 그림 생성 전', generation:'그림 생성', pixelProcessing:'원본 주석 제거',
+    targetMapping:'라벨 연결 대상 확인', labelProposals:'라벨 배치 준비', finalVerification:'그림·라벨 검수', review:'그림·라벨 검수', labelPlacement:'라벨 합성', localRestore:'국소 복원', localReview:'국소 복원 검수' };
+  const times = cause?.workflowMetrics?.timings;
+  const stage = cause?.aiPhase ? `단계: ${phases[cause.aiPhase] || cause.aiPhase}${Number.isFinite(times?.[cause.aiPhase]) ? ` · ${Math.round(times[cause.aiPhase]/1000)}초` : ''}\n` : '';
+  const timing = times ? `소요: 글자 위치 후보 ${Number.isFinite(times.sourceCandidates) ? Math.round(times.sourceCandidates/1000)+'초' : '-'} · 전체 ${Number.isFinite(times.total) ? Math.round(times.total/1000)+'초' : '-'}\n` : '';
   const details = [message, cause?.message, cause?.code ? `오류 코드: ${cause.code}` : '', cause?.status ? `HTTP 상태: ${cause.status}` : ''].filter(Boolean);
   const error = safeAiErrorText([...new Set(details)].join('\n'));
   const generic = genericFailures.has(error.trim());
@@ -28,7 +34,7 @@ export function appendAiErrorRecord(records, current, message, cause) {
       if (sameRequest(records[index]) && records[index].generic) records.splice(index, 1);
     }
   }
-  records.push({ taskId: current.taskId, requestId: current.requestId, turnId: current.turnId, error, generic, text: safeAiErrorText(`시간: ${new Date().toISOString()}\n작업: ${current.taskTitle || current.taskId || '(없음)'} (${current.taskId || '-'})\n요청: ${current.requestId || '-'} · 실행: ${current.turnId || '-'}\n모델: ${current.model || '-'} · 추론: ${current.effort || '-'} · 속도: ${current.serviceTier || '표준'}\n\n${error}`) });
+  records.push({ taskId: current.taskId, requestId: current.requestId, turnId: current.turnId, error, generic, text: safeAiErrorText(`시간: ${new Date().toISOString()}\n작업: ${current.taskTitle || current.taskId || '(없음)'} (${current.taskId || '-'})\n요청: ${current.requestId || '-'} · 실행: ${current.turnId || '-'}\n모델: ${current.model || '-'} · 추론: ${current.effort || '-'} · 속도: ${current.serviceTier || '표준'}\n${stage}${timing}\n${error}`) });
   return true;
 }
 
@@ -36,7 +42,9 @@ export function mountAiErrorLog(panel, context) {
   const records = [];
   const open = document.createElement('button');
   open.type = 'button'; open.className = 'modal-btn ai-error-log-open';
-  open.dataset.aiErrorLogOpen = ''; open.textContent = '로그 보기';
+  open.dataset.aiErrorLogOpen = ''; open.classList.add('ai-header-tool');
+  open.title = '로그 보기'; open.setAttribute('aria-label', '로그 보기');
+  open.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M14 3H6v18h12V7zM14 3v5h4M9 12h6M9 16h6"/></svg>';
   open.setAttribute('aria-haspopup', 'dialog');
   panel.querySelector('[data-ai-status]')?.after(open);
   const dialog = document.createElement('dialog');

@@ -96,13 +96,15 @@ export function isImageCommentTarget(item, selectedId) {
   return Boolean(selectedId) && item.id === selectedId;
 }
 
-export function createImageCommentController({ panel, getImages, getSelectedId, isBusy, changed, viewChanged }) {
+export function createImageCommentController({ panel, getImages, getSelectedId, isBusy, changed, viewChanged, areaOnlyForSelected = false }) {
   const doc = panel.ownerDocument || document;
   const win = doc.defaultView || globalThis;
   const q = selector => panel.querySelector(selector);
   const bindings = new Map();
   const cleanup = [];
   let tool = 'pan';
+  let lastResultId = null;
+  const scopedTarget = () => areaOnlyForSelected && images().find(item => item.kind === 'generated' && item.id === getSelectedId() && !item.graphResult && !item.sceneResult);
   let markersVisible = true;
   let selected = null;
   let geometrySelection = null;
@@ -118,7 +120,7 @@ export function createImageCommentController({ panel, getImages, getSelectedId, 
   }
 
   function images() { return getImages() || []; }
-  function allowed() { return images().filter(item => isImageCommentTarget(item, getSelectedId())); }
+  function allowed() { const result = scopedTarget(); return result ? [result] : images().filter(item => isImageCommentTarget(item, getSelectedId())); }
   function entries() {
     return allowed().flatMap(item => (item.comments || []).map(comment => ({ item, comment })));
   }
@@ -231,6 +233,7 @@ export function createImageCommentController({ panel, getImages, getSelectedId, 
       const historical = getImages().filter(item => item.kind === 'generated' && item.id !== getSelectedId() && item.comments?.length);
       text.textContent = historical.length
         ? '이 버전에는 새 코멘트가 없습니다. 이전 코멘트는 원래 버전에 보관되어 있습니다. 버전 목록에서 확인할 수 있습니다.'
+        : scopedTarget() ? '수정 박스를 그리고 각 박스에 바꿀 내용을 적으세요. 박스 밖은 원본 그대로 유지됩니다.'
         : '점 또는 영역 도구로 그림에 코멘트를 남기세요. 지정하지 않은 부분은 보존합니다.';
       list.append(text);
     }
@@ -266,6 +269,84 @@ export function createImageCommentController({ panel, getImages, getSelectedId, 
       remove.disabled = isBusy();
       remove.onclick = () => { selected = commentKey(item, comment); deleteSelectedComment(); };
       row.append(choose, editor, remove);
+      if (scopedTarget() === item && comment.type === 'area') {
+        const details = doc.createElement('details');
+        details.dataset.aiPrecisionSettings = '';
+        details.open = Boolean(comment.precisionCheck);
+        const summary = doc.createElement('summary');
+        summary.textContent = '수치 검증 · 실험';
+        const typeLabel = doc.createElement('label');
+        typeLabel.textContent = '검증할 수정';
+        const type = doc.createElement('select');
+        type.dataset.aiPrecisionKind = '';
+        type.dataset.aiInputMutator = '';
+        type.setAttribute('aria-label', `박스 ${comment.number} 검증할 수정`);
+        for (const [value,text] of [['','사람 검토만'],['move','이동'],['circles','원 추가'],['disconnect','가로선 끊기']]) {
+          const option = doc.createElement('option'); option.value=value; option.textContent=text; type.append(option);
+        }
+        type.value = comment.precisionCheck?.kind || '';
+        const img = bindings.get(item)?.img;
+        type.disabled = isBusy() || !img?.naturalWidth || !img?.naturalHeight;
+        type.onchange = () => {
+          if (isBusy()) return;
+          if (!type.value) delete comment.precisionCheck;
+          else {
+            const r = {x0:Math.ceil(comment.x/100*img.naturalWidth),y0:Math.ceil(comment.y/100*img.naturalHeight),
+              x1:Math.floor((comment.x+comment.w)/100*img.naturalWidth),y1:Math.floor((comment.y+comment.h)/100*img.naturalHeight)};
+            comment.precisionCheck = {kind:type.value,search:r,
+              ...(type.value==='move'?{dx:0,dy:0}:type.value==='disconnect'?{gap:30}:
+                {diameter:0,centers:[{x:Math.floor((r.x0+r.x1)/2),y:Math.floor((r.y0+r.y1)/2)}]})};
+          }
+          changed(); render();
+        };
+        typeLabel.append(type); details.append(summary,typeLabel);
+        const check = comment.precisionCheck;
+        if (check) {
+          const fields = doc.createElement('div'); fields.dataset.aiPrecisionFields='';
+          const numeric = (name,value,update,{min,step=1,max}={}) => {
+            const label = doc.createElement('label'); label.textContent=name;
+            const input = doc.createElement('input'); input.type='number'; input.value=String(value);
+            input.dataset.aiInputMutator='';
+            input.inputMode=min===undefined?'text':step<1?'decimal':'numeric';
+            input.step=String(step); if(min!==undefined)input.min=String(min);
+            if(max!==undefined)input.max=String(max);
+            input.setAttribute('aria-label',`박스 ${comment.number} ${name}`);
+            input.disabled=isBusy();
+            input.onchange=()=>{
+              if(isBusy())return;
+              const next=input.value.trim()?Number(input.value):NaN;
+              if(!Number.isFinite(next)||!input.validity.valid){input.value=String(value);return;}
+              value=next;update(next);changed();
+            };
+            label.append(input); fields.append(label); return input;
+          };
+          if (check.kind==='move') {
+            numeric('가로 이동 px',check.dx,v=>check.dx=v);
+            numeric('세로 이동 px',check.dy,v=>check.dy=v);
+          } else if (check.kind==='circles') {
+            numeric('추가 개수',check.centers.length,v=>{
+              check.centers=Array.from({length:v},(_,i)=>check.centers[i]||{x:0,y:0}); render();
+            },{min:1,max:8});
+            numeric('지름 px',check.diameter,v=>check.diameter=v,{min:1});
+            check.centers.forEach((center,index)=>{
+              numeric(`중심 ${index+1} 가로 px`,center.x,v=>center.x=v,{min:0,step:0.5});
+              numeric(`중심 ${index+1} 세로 px`,center.y,v=>center.y=v,{min:0,step:0.5});
+            });
+          } else if (check.kind==='disconnect') numeric('끊을 간격 px',check.gap,v=>check.gap=v,{min:1});
+          const searchTitle = doc.createElement('p'); searchTitle.textContent='대상 탐색 범위 · 원본 픽셀';
+          fields.append(searchTitle);
+          for (const [key,name] of [['x0','왼쪽 px'],['y0','위쪽 px'],['x1','오른쪽 px'],['y1','아래쪽 px']]) {
+            numeric(name,check.search[key],v=>check.search[key]=v,{min:0});
+          }
+          const note = doc.createElement('p');
+          const permissionNote=doc.createElement('span');
+          permissionNote.textContent='수정 박스를 넓히지 않습니다.';
+          permissionNote.style.whiteSpace='nowrap';
+          note.append('탐색은 읽기 전용입니다. ',permissionNote,' 숫자 통과 후에도 외관과 다른 대상의 보존을 확인하세요.');
+          details.append(fields,note);
+        }
+        row.append(details);
+      }
       list.append(row);
     }
   }
@@ -288,11 +369,18 @@ export function createImageCommentController({ panel, getImages, getSelectedId, 
     const completeCount = allEntries.filter(({ comment }) => commentText(comment).trim() && normalizeCommentBox(comment)).length;
     const apply = q('[data-ai-comments-apply]');
     if (apply) {
-      apply.textContent = '변환/선택 영역 수정';
-      apply.disabled = busy || !allowed().length;
+      const areas = allEntries.filter(({comment}) => comment.type === 'area');
+      if (scopedTarget()) {
+        apply.textContent = areas.length ? `박스 ${areas.length}개 수정하기` : '박스를 지정해 주세요';
+        apply.disabled = busy || !areas.length || areas.some(({comment}) => !commentText(comment).trim() || !normalizeCommentBox(comment));
+      } else {
+        apply.textContent = panel.dataset.aiWorkflow === 'graph' ? '그래프 복원' : '변환하기';
+        apply.disabled = busy || !allowed().length;
+      }
     }
     panel.querySelectorAll('[data-ai-comment-tool]').forEach(button => {
       button.disabled = busy;
+      if (areaOnlyForSelected) button.hidden = Boolean(scopedTarget()) && button.dataset.aiCommentTool === 'point';
       button.classList.toggle('is-on', button.dataset.aiCommentTool === tool);
       button.setAttribute('aria-pressed', String(button.dataset.aiCommentTool === tool));
     });
@@ -342,7 +430,7 @@ export function createImageCommentController({ panel, getImages, getSelectedId, 
         }
       }
     }
-    geometry.hidden = !active;
+    geometry.hidden = !active || Boolean(scopedTarget());
     geometry.querySelectorAll('input').forEach(input => {
       input.disabled = busy;
       if (active && doc.activeElement !== input) input.value = String(Number(Number(active.comment[input.dataset.aiGeometryKey]).toFixed(2)));
@@ -351,6 +439,10 @@ export function createImageCommentController({ panel, getImages, getSelectedId, 
 
   function render() {
     if (destroyed) return;
+    const resultId = scopedTarget()?.id || null;
+    if (resultId && resultId !== lastResultId && panel.dataset.aiSharingMode !== 'view') tool = 'area';
+    lastResultId = resultId;
+    if (resultId) activateTab('comments');
     for (const [item, entry] of bindings) {
       if (entry.img.isConnected === false) { entry.dispose(); bindings.delete(item); }
     }
@@ -459,6 +551,7 @@ export function createImageCommentController({ panel, getImages, getSelectedId, 
     }
     const button = event.target.closest?.('[data-ai-comment-tool]');
     if (button && !isBusy() && TOOL_NAMES.has(button.dataset.aiCommentTool)) {
+      if (scopedTarget() && button.dataset.aiCommentTool === 'point') return;
       tool = button.dataset.aiCommentTool;
       if (tool !== 'pan') markersVisible = true;
       for (const entry of bindings.values()) clearDrag(entry);
@@ -498,7 +591,7 @@ export function createImageCommentController({ panel, getImages, getSelectedId, 
     render,
     getViewState: () => ({tool,selected,markersVisible,tab:q('[data-ai-chat-panel]')?.hidden===false?'chat':'comments'}),
     restoreViewState(value) {
-      tool=panel.dataset.aiSharingMode==='view'?'pan':TOOL_NAMES.has(value?.tool)?value.tool:'pan';
+      tool=panel.dataset.aiSharingMode==='view'?'pan':TOOL_NAMES.has(value?.tool)?value.tool:scopedTarget()?'area':'pan';
       selected=typeof value?.selected==='string'?value.selected:null;
       markersVisible=value?.markersVisible !== false;
       activateTab(value?.tab);

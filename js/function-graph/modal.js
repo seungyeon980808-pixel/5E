@@ -75,7 +75,7 @@ function renderChips() {
     const on = i === _sel;
     chip.style.cssText = "display:inline-flex;align-items:center;gap:6px;font: 12px monospace;" +
       "border:1px solid " + (on ? "var(--accent)" : "var(--border)") + ";border-radius:4px;padding:3px 8px;" +
-      "background:" + (on ? "color-mix(in srgb, var(--accent) 22%, var(--bg-input))" : "var(--bg-input)") + ";color:var(--text-primary);cursor:pointer;max-width:180px;";
+      "background:" + (on ? "var(--control-selected-bg)" : "var(--bg-input)") + ";color:var(--text-primary);cursor:pointer;max-width:180px;";
     const lbl = document.createElement("span");
     lbl.textContent = "y=" + (f.expr.trim() || "…");
     lbl.style.cssText = "overflow:hidden;text-overflow:ellipsis;white-space:nowrap;";
@@ -126,7 +126,7 @@ function syncControls() {
   _els.widthInput.value = f.strokeWidth;
   [..._els.styleHost.children].forEach((b, i) => {
     const on = i === f.styleIdx;
-    b.style.background = on ? "color-mix(in srgb, var(--accent) 22%, var(--bg-input))" : "var(--bg-input)";
+    b.style.background = on ? "var(--control-selected-bg)" : "var(--bg-input)";
     b.style.borderColor = on ? "var(--accent)" : "var(--border)";
   });
   _els.domainMin.value = fmt(f.domain.min);

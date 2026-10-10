@@ -126,12 +126,81 @@ export async function encodeScopedPng(image,{metadata=[]}={}) {
  const ihdr=new Uint8Array(13);put32(ihdr,0,checked.width);put32(ihdr,4,checked.height);ihdr[8]=8;ihdr[9]=6;
  return concat([SIGNATURE,chunk('IHDR',ihdr),...preservedMetadata.map((m)=>chunk(m.type,m.data)),chunk('IDAT',compressed),chunk('IEND',new Uint8Array())]);
 }
+function borderFailure(code, message, details) {
+ const error = new RangeError(message);
+ error.code = code;
+ error.details = Object.freeze(details);
+ throw error;
+}
+
+/** Only a right/bottom border discrepancy is supported. This deliberately does not
+ * estimate a transform: every unmasked RGBA pixel in the overlap must be identical.
+ * Two visible edge directions provide spatial anchors; flat/transparent overlaps
+ * are inconclusive. AI redraws/background drift may therefore remain blocked.
+ */
+function matchCandidateBorder(original, candidate, mask) {
+ const dimensions = { originalWidth: original.width, originalHeight: original.height,
+  candidateWidth: candidate.width, candidateHeight: candidate.height };
+ if (original.width === candidate.width && original.height === candidate.height) {
+  return { image: candidate, geometry: Object.freeze({ kind: 'same-size', ...dimensions }) };
+ }
+ if (Math.abs(original.width - candidate.width) > 1 || Math.abs(original.height - candidate.height) > 1) {
+  borderFailure('SCOPED_EDIT_DIMENSIONS', 'original and candidate dimensions differ by more than one border pixel; resize is forbidden.', dimensions);
+ }
+ const width = Math.min(original.width, candidate.width), height = Math.min(original.height, candidate.height);
+ let checkedPixels = 0, firstMismatch = null, horizontalAnchor = false, verticalAnchor = false;
+ const visibleEdge = (a, b) => {
+  // Compare premultiplied colour: hidden RGB in transparent pixels is not an anchor.
+  for (let c = 0; c < 3; c += 1) {
+   if (Math.abs(original.data[a + c] * original.data[a + 3] / 255
+    - original.data[b + c] * original.data[b + 3] / 255) >= 64) return true;
+  }
+  return false;
+ };
+ for (let y = 0; y < original.height; y += 1) {
+  for (let x = 0; x < original.width; x += 1) {
+   const pixel = y * original.width + x;
+   if (x >= width || y >= height) {
+    if (mask[pixel]) borderFailure('SCOPED_EDIT_MISSING_ALLOWED_PIXELS',
+     'candidate is missing pixels inside the allowed mask; padding an edit is forbidden.', { ...dimensions, x, y });
+    continue;
+   }
+   if (mask[pixel]) continue;
+   checkedPixels += 1;
+   const sourceOffset = pixel * 4, candidateOffset = (y * candidate.width + x) * 4;
+   for (let c = 0; c < 4; c += 1) {
+    if (original.data[sourceOffset + c] !== candidate.data[candidateOffset + c] && !firstMismatch) {
+     firstMismatch = { x, y };
+    }
+   }
+   if (!horizontalAnchor && x > 0 && !mask[pixel - 1]) horizontalAnchor = visibleEdge(sourceOffset, sourceOffset - 4);
+   if (!verticalAnchor && y > 0 && !mask[pixel - original.width]) verticalAnchor = visibleEdge(sourceOffset, sourceOffset - original.width * 4);
+  }
+ }
+ if (firstMismatch) borderFailure('SCOPED_EDIT_ALIGNMENT_UNCONFIRMED',
+  'candidate size and preserved RGBA pixels both changed; zero-offset alignment is unconfirmed.', { ...dimensions, ...firstMismatch, checkedPixels });
+ if (!horizontalAnchor || !verticalAnchor) borderFailure('SCOPED_EDIT_ALIGNMENT_UNCONFIRMED',
+  'candidate border alignment lacks visible anchors in both directions.', { ...dimensions, checkedPixels });
+ // Copy rows at their original integer coordinates. No canvas, interpolation,
+ // translation or scaling. Missing unmasked border bytes stay from the original.
+ const data = new Uint8Array(original.data);
+ for (let y = 0; y < height; y += 1) {
+  data.set(candidate.data.subarray(y * candidate.width * 4, (y * candidate.width + width) * 4), y * original.width * 4);
+ }
+ return { image: { width: original.width, height: original.height, data },
+  geometry: Object.freeze({ kind: 'verified-border-only', ...dimensions,
+   checkedPixels, horizontalAnchor, verticalAnchor }) };
+}
+
 export async function applyScopedPngEdit(originalPng,candidatePng,mask) {
  const sourceBytes=bytes(originalPng,'originalPng');
  if(usesSharedBuffer(sourceBytes)) throw new TypeError('originalPng must be a non-shared Uint8Array.');
  const candidateBytes=snapshotBytes(candidatePng,'candidatePng'), capturedMask=snapshotMask(mask);
  const original=await decodeScopedPng(sourceBytes), candidate=await decodeScopedPng(candidateBytes);
  const removedMetadata=(original.removedMetadata.includes('caBX') || candidate.removedMetadata.includes('caBX')) ? ['caBX'] : [];
- const metadataDisposition=removedMetadata.length ? 'caBX-removed-after-edit-invalidates-C2PA-provenance; no replacement signature was generated' : 'supported-metadata-preserved'; if(original.width!==candidate.width||original.height!==candidate.height) throw new RangeError('original and candidate dimensions must match exactly; resize is forbidden.'); validateBinaryMask(capturedMask,original.width,original.height); if(!metadataCompatible(original.metadata,candidate.metadata)) fail('candidate color-profile metadata does not exactly match original; implicit color conversion is forbidden.');
- const result={width:original.width,height:original.height,data:compositeRgbaWithinMask(original,candidate,capturedMask)}; if(!isRgbaOutsideMaskUnchanged(original,result,capturedMask)) fail('internal outside-mask invariant failed.'); const png=await encodeScopedPng(result,{metadata:original.metadata}); const decoded=await decodeScopedPng(png); if(!isRgbaOutsideMaskUnchanged(original,decoded,capturedMask)) fail('encoded PNG changed pixels outside mask.'); const changes=deriveRgbaChangeMask(original,decoded); return {png,width:original.width,height:original.height,changedPixelCount:changes.changedPixelCount,changedBounds:changes.bounds,outsideUnchanged:true,metadataDisposition,removedMetadata};
+ const metadataDisposition=removedMetadata.length ? 'caBX-removed-after-edit-invalidates-C2PA-provenance; no replacement signature was generated' : 'supported-metadata-preserved';
+ validateBinaryMask(capturedMask,original.width,original.height);
+ if(!metadataCompatible(original.metadata,candidate.metadata)) fail('candidate color-profile metadata does not exactly match original; implicit color conversion is forbidden.');
+ const aligned = matchCandidateBorder(original,candidate,capturedMask);
+ const result={width:original.width,height:original.height,data:compositeRgbaWithinMask(original,aligned.image,capturedMask)}; if(!isRgbaOutsideMaskUnchanged(original,result,capturedMask)) fail('internal outside-mask invariant failed.'); const png=await encodeScopedPng(result,{metadata:original.metadata}); const decoded=await decodeScopedPng(png); if(!isRgbaOutsideMaskUnchanged(original,decoded,capturedMask)) fail('encoded PNG changed pixels outside mask.'); const changes=deriveRgbaChangeMask(original,decoded); return {png,width:original.width,height:original.height,changedPixelCount:changes.changedPixelCount,changedBounds:changes.bounds,outsideUnchanged:true,metadataDisposition,removedMetadata,geometry:aligned.geometry};
 }

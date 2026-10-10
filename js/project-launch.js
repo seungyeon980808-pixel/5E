@@ -42,12 +42,13 @@ export async function saveNativeProjectPackage(json, target) {
   return { kind: 'download-requested' };
 }
 
-export function initProjectLaunch({ state, ready, prepare, apply, mark, needsConfirm }) {
+export function initProjectLaunch({ state, ready, prepare, apply, mark, needsConfirm, openFile }) {
   let queue = Promise.resolve(ready);
   const receive = payload => {
     queue = queue.then(async () => {
       try {
         if (payload.error) throw new Error(payload.error);
+        if(payload.bytes) {await openFile?.(payload);return;}
         const project = prepare(JSON.parse(payload.json));
         if (needsConfirm() && !await showConfirm('현재 작업을 저장한 프로젝트로 대체할까요?\n저장하지 않은 현재 작업은 사라집니다.', { title: '프로젝트 열기', okText: '열기', cancelText: '취소' })) return;
         apply(state, project); mark();

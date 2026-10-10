@@ -1,0 +1,353 @@
+{
+  "schema": "5e.graph-reconstruction/v1",
+  "variant": "cartesian",
+  "source": {
+    "id": "cycle",
+    "hash": "sha256:e442019a6fb18998b80db6b53e5bb6bbef2afef26063beda2ad1b2649a10cab4",
+    "width": 402,
+    "height": 353,
+    "plotBox": {
+      "x": 82,
+      "y": 17,
+      "w": 304,
+      "h": 283
+    }
+  },
+  "axes": {
+    "x": {
+      "scale": "unknown",
+      "title": "절대 온도",
+      "unit": "",
+      "min": null,
+      "max": null,
+      "step": null,
+      "ticks": [],
+      "orientation": "horizontal",
+      "titlePosition": {
+        "x": 1.015,
+        "y": -0.107
+      },
+      "titleAnchor": "end"
+    },
+    "y": {
+      "scale": "unknown",
+      "title": "압력",
+      "unit": "",
+      "min": null,
+      "max": null,
+      "step": null,
+      "ticks": [],
+      "orientation": "horizontal",
+      "titlePosition": {
+        "x": -0.105,
+        "y": 0.995
+      },
+      "titleAnchor": "end"
+    }
+  },
+  "series": [
+    {
+      "id": "cycle",
+      "label": "",
+      "kind": "points",
+      "axis": "y",
+      "certainty": "observed",
+      "coordinateSpace": "normalized",
+      "points": [
+        {
+          "x": 0.4901,
+          "y": 0.1979
+        },
+        {
+          "x": 0.4901,
+          "y": 0.5088
+        },
+        {
+          "x": 0.6875,
+          "y": 0.7173
+        },
+        {
+          "x": 0.8158,
+          "y": 0.7173
+        },
+        {
+          "x": 0.7895,
+          "y": 0.6537
+        },
+        {
+          "x": 0.7599,
+          "y": 0.5901
+        },
+        {
+          "x": 0.727,
+          "y": 0.5265
+        },
+        {
+          "x": 0.6908,
+          "y": 0.4629
+        },
+        {
+          "x": 0.6513,
+          "y": 0.3993
+        },
+        {
+          "x": 0.6086,
+          "y": 0.3392
+        },
+        {
+          "x": 0.5625,
+          "y": 0.2792
+        },
+        {
+          "x": 0.5132,
+          "y": 0.2226
+        },
+        {
+          "x": 0.4901,
+          "y": 0.1979
+        }
+      ],
+      "breaks": [],
+      "endpoints": [
+        {
+          "index": 0,
+          "kind": "closed"
+        },
+        {
+          "index": 1,
+          "kind": "closed"
+        },
+        {
+          "index": 2,
+          "kind": "closed"
+        },
+        {
+          "index": 3,
+          "kind": "closed"
+        }
+      ],
+      "curveStyle": "smooth",
+      "segmentModes": [
+        "line",
+        "line",
+        "line",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth"
+      ],
+      "closed": true,
+      "arrowSpecs": [
+        {
+          "segmentIndex": 0,
+          "t": 0.5,
+          "dir": 1,
+          "strokeWidth": 1.0
+        },
+        {
+          "segmentIndex": 1,
+          "t": 0.5,
+          "dir": 1,
+          "strokeWidth": 1.0
+        },
+        {
+          "segmentIndex": 2,
+          "t": 0.5,
+          "dir": 1,
+          "strokeWidth": 1.0
+        },
+        {
+          "segmentIndex": 5,
+          "t": 0.5,
+          "dir": 1,
+          "strokeWidth": 1.0
+        }
+      ]
+    }
+  ],
+  "annotations": [
+    {
+      "id": "origin",
+      "kind": "text",
+      "text": "0",
+      "x": -0.0559,
+      "y": -0.0353,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "endStyle": "none",
+      "fontSizePx": 38
+    },
+    {
+      "id": "label-a",
+      "kind": "text",
+      "text": "A",
+      "x": 0.4112,
+      "y": 0.5035,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "seriesId": "cycle",
+      "pointIndex": 1,
+      "endStyle": "none",
+      "fontSizePx": 38
+    },
+    {
+      "id": "label-b",
+      "kind": "text",
+      "text": "B",
+      "x": 0.6875,
+      "y": 0.8021,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "seriesId": "cycle",
+      "pointIndex": 2,
+      "endStyle": "none",
+      "fontSizePx": 38
+    },
+    {
+      "id": "label-c",
+      "kind": "text",
+      "text": "C",
+      "x": 0.8158,
+      "y": 0.8021,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "seriesId": "cycle",
+      "pointIndex": 3,
+      "endStyle": "none",
+      "fontSizePx": 38
+    },
+    {
+      "id": "label-d",
+      "kind": "text",
+      "text": "D",
+      "x": 0.4112,
+      "y": 0.1908,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "seriesId": "cycle",
+      "pointIndex": 0,
+      "endStyle": "none",
+      "fontSizePx": 38
+    },
+    {
+      "id": "adiabatic",
+      "kind": "text",
+      "text": "단열",
+      "x": 0.8158,
+      "y": 0.417,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "seriesId": "cycle",
+      "endStyle": "none",
+      "fontSizePx": 38
+    }
+  ],
+  "review": [
+    {
+      "path": "series[0]",
+      "reason": "경로에 D→A, A→B, B→C, C→D 방향의 화살촉이 각각 보인다. 제공된 스키마에는 선 위 방향 화살촉 필드가 없어 별도 복원이 필요하다.",
+      "sourceBox": {
+        "x": 221,
+        "y": 88,
+        "w": 119,
+        "h": 166
+      }
+    },
+    {
+      "path": "series[0].points",
+      "reason": "D–A는 수직 직선, A–B는 우상향 직선, B–C는 수평 직선이다. C–D는 곡선이며 관찰 좌표로 근사했다. 마지막 점은 첫 점 D와 연결되는 폐경로를 나타낸다.",
+      "sourceBox": {
+        "x": 224,
+        "y": 90,
+        "w": 113,
+        "h": 161
+      }
+    },
+    {
+      "path": "axes",
+      "reason": "두 축의 양의 방향 끝에 화살촉이 있다. 축 화살촉을 지정하는 필드가 없어 별도 복원이 필요하다."
+    },
+    {
+      "path": "axes.x",
+      "reason": "축 수치를 읽을 수 없습니다. 눈금과 범위를 확인하십시오."
+    },
+    {
+      "path": "axes.y",
+      "reason": "축 수치를 읽을 수 없습니다. 눈금과 범위를 확인하십시오."
+    },
+    {
+      "path": "series.0",
+      "reason": "관찰한 모양입니다. 확정 데이터와 구별하여 검수하십시오."
+    },
+    {
+      "path": "annotations.0",
+      "reason": "표기의 위치는 표시 좌표 관찰입니다. 원본과 대조하십시오."
+    },
+    {
+      "path": "annotations.1",
+      "reason": "표기의 위치는 표시 좌표 관찰입니다. 원본과 대조하십시오."
+    },
+    {
+      "path": "annotations.2",
+      "reason": "표기의 위치는 표시 좌표 관찰입니다. 원본과 대조하십시오."
+    },
+    {
+      "path": "annotations.3",
+      "reason": "표기의 위치는 표시 좌표 관찰입니다. 원본과 대조하십시오."
+    },
+    {
+      "path": "annotations.4",
+      "reason": "표기의 위치는 표시 좌표 관찰입니다. 원본과 대조하십시오."
+    },
+    {
+      "path": "annotations.5",
+      "reason": "표기의 위치는 표시 좌표 관찰입니다. 원본과 대조하십시오."
+    }
+  ],
+  "coordinateMode": "observed",
+  "axisPlacement": {
+    "x": {
+      "mode": "fraction",
+      "value": 0
+    },
+    "y": {
+      "mode": "fraction",
+      "value": 0
+    }
+  },
+  "style": {
+    "fontSizePx": 38,
+    "labelWeight": 300,
+    "strokeWidth": 0.32,
+    "guideStyle": {
+      "strokeWidth": 0.15,
+      "dashLength": 1.2,
+      "dashGap": 0.9
+    }
+  },
+  "provenance": {
+    "kind": "source-reviewed-graph-capability-fixture",
+    "rawObservationSchema": "5e.graph-reconstruction/v1",
+    "modelCurvePointsUnchanged": true,
+    "modelCallsThisRevision": 0,
+    "sourceReviewAdditions": [
+      "표시 좌표 모드",
+      "원본 눈금·축 제목 위치",
+      "글자·선 스타일",
+      "닫힌 경로의 직선·곡선 구간",
+      "진행 화살표 4개",
+      "2차: 계열 선폭과 독립적인 화살촉 크기"
+    ]
+  }
+}

@@ -42,6 +42,7 @@
 
   <!-- ?v= 캐시버스트: CSS도 버전 범프 시 함께 올려 새 스타일이 즉시 반영되게 함(하드리프레시 불필요) -->
   <link rel="stylesheet" href="/css/style.css?v=1.7.0-four-session-integration" />
+  <link rel="stylesheet" href="/css/rhwp-exam-workspace.css?v=1.7.0-four-session-integration" />
   <link rel="stylesheet" href="/css/inspector.css?v=1.7.0-four-session-integration" />
   <link rel="stylesheet" href="/css/exam-library.css?v=1.7.0-four-session-integration" />
   <link rel="stylesheet" href="/css/unified-library.css?v=1.7.0-four-session-integration" />
@@ -132,6 +133,14 @@
                 aria-label="튜토리얼" data-shell-tip="튜토리얼">
           <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.45" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M2.75 4.25c2.75-.8 5-.35 7.25 1.35v10.15c-2.25-1.7-4.5-2.15-7.25-1.35zM17.25 4.25c-2.75-.8-5-.35-7.25 1.35v10.15c2.25-1.7 4.5-2.15 7.25-1.35z"/><path d="m11.95 8.2 2.55 1.8-2.55 1.8z" fill="currentColor" stroke="none"/>
+          </svg>
+        </button>
+        <button id="quick-capture-btn" class="topbar-btn shell-icon-button" type="button"
+                aria-label="빠른 캡처" aria-pressed="false" aria-keyshortcuts="Alt+C"
+                data-shell-tip="빠른 캡처 · Alt+C">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M5 3H3v2M9 3h1M14 3h1M19 3h2v2M21 9v1M3 9v1M3 14v1M3 19v2h2M9 21h1M14 21h1M21 14v1"/>
+            <path d="m12 12 4 10 1.7-4.3L22 16z"/>
           </svg>
         </button>
         <button id="mcp-bridge-btn" class="topbar-btn mcp-bridge-btn" type="button"
@@ -431,10 +440,16 @@
       <header class="ai-head">
         <div class="ai-title-line">
           <h2 class="modal-title" id="ai-image-title">AI 이미지 변환</h2>
+          <div class="ai-workflow-switch" role="group" aria-label="변환할 객체">
+            <button type="button" data-ai-workflow="image" aria-pressed="true">이미지 변환</button>
+            <button type="button" data-ai-workflow="graph" aria-pressed="false">그래프 복원</button>
+          </div>
         </div>
         <div class="ai-head-status">
           <button type="button" class="ai-project-transfer" data-ai-project-transfer hidden>웹 프로젝트 열기</button>
           <span class="ai-status" data-ai-status>상태 확인 중…</span>
+          <button type="button" class="ai-header-tool" data-ai-review-open aria-label="결과 확인 사항" title="결과 확인 사항" aria-haspopup="dialog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="m4 6 1.5 1.5L8 4M11 6h9M4 12h3M11 12h9M4 18h3M11 18h9"/></svg><span data-ai-review-count hidden></span></button>
+          <button type="button" class="ai-header-tool" data-ai-connection-open aria-label="연결 정보" title="연결 정보" aria-haspopup="dialog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M8 3v5M16 3v5M6 8h12v4a6 6 0 0 1-12 0zM12 18v3"/></svg></button>
           <button class="ai-close" type="button" data-ai-close aria-label="AI 이미지 변환 닫기" title="닫기 (Esc)">
             <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="m5 5 10 10M15 5 5 15"/></svg>
           </button>
@@ -460,7 +475,10 @@
         <aside class="ai-task-rail" aria-label="작업 목록">
           <div class="ai-rail-heading">
             <strong>작업</strong>
-            <div class="ai-rail-actions"><button type="button" data-ai-tab-clear title="현재 작업 목록을 모두 지웁니다. 원본 파일은 삭제하지 않습니다">모두 지우기</button></div>
+            <div class="ai-rail-actions" role="group" aria-label="작업 목록 관리">
+              <button type="button" data-ai-tab-select-all aria-pressed="false" title="작업 목록의 모든 작업을 선택합니다">전체 선택</button>
+              <button type="button" data-ai-tab-clear title="작업 목록의 모든 작업을 삭제합니다. 원본 파일은 삭제하지 않습니다">전체 삭제</button>
+            </div>
           </div>
           <nav class="ai-task-tabs" data-ai-tabs aria-label="AI 이미지 작업 탭">
             <div class="ai-task-tab-list" data-ai-tab-list></div>
@@ -486,7 +504,7 @@
             <div class="ai-annotation-toolbar" role="group" aria-label="코멘트 도구">
               <button type="button" class="is-on" data-ai-comment-tool="pan" aria-pressed="true" title="그림을 이동합니다. 코멘트는 생성하지 않습니다">이동</button>
               <button type="button" data-ai-comment-tool="point" aria-pressed="false" title="그림의 한 위치를 지정하고 코멘트를 작성합니다">점 코멘트</button>
-              <button type="button" data-ai-comment-tool="area" aria-pressed="false" title="영역을 둘러싸고 코멘트를 작성합니다">영역 코멘트</button>
+              <button type="button" data-ai-comment-tool="area" aria-pressed="false" title="영역을 둘러싸고 코멘트를 작성합니다">수정 박스</button>
             </div>
           </header>
           <div class="ai-comparison-grid">
@@ -522,6 +540,10 @@
                   <button type="button" data-ai-version-button aria-haspopup="listbox" aria-expanded="false" aria-controls="ai-version-list" disabled>생성 결과 없음</button>
                   <div id="ai-version-list" class="ai-version-list" data-ai-version-list role="listbox" aria-label="생성 결과 버전" tabindex="-1" hidden></div>
                 </div>
+                <div class="ai-label-view" data-ai-label-view role="group" aria-label="수정본 라벨 표시" hidden>
+                  <button type="button" data-ai-label-view-mode="included" aria-pressed="true">라벨 포함</button>
+                  <button type="button" data-ai-label-view-mode="diagram" aria-pressed="false">그림만</button>
+                </div>
                 </div>
               </div></header>
               <div class="ai-result-state" data-ai-result-state data-state="idle">생성 전</div>
@@ -553,17 +575,109 @@
 
         <section class="ai-conversation" aria-label="코멘트와 Codex 대화">
           <nav class="ai-side-tabs" aria-label="오른쪽 패널">
-            <button type="button" class="is-on" data-ai-side-tab="comments" aria-pressed="true">코멘트 <span data-ai-comments-count>0</span></button>
+            <button type="button" class="is-on" data-ai-side-tab="comments" aria-pressed="true">변환 설정 <span data-ai-comments-count hidden>0</span></button>
             <button type="button" data-ai-side-tab="chat" aria-pressed="false">Codex 대화</button>
             <button type="button" class="ai-comment-visibility" data-ai-comment-visibility aria-pressed="true" title="이미지 위의 코멘트 표시를 켜거나 끕니다">코멘트 표시</button>
           </nav>
+          <section class="ai-compact-settings" data-ai-compact-settings aria-label="변환 설정">
+
+            <div class="ai-setting-row">
+              <span>변환 모델</span>
+              <div class="ai-setting-pair" data-ai-setting-key="model" role="group" aria-label="변환 모델">
+                <button type="button" data-ai-model-choice="sol" aria-pressed="false">Sol 6.1</button>
+                <button type="button" data-ai-model-choice="luna" aria-pressed="false">Luna 6</button>
+              </div>
+              <button type="button" class="ai-setting-help" aria-label="변환 모델 도움말" aria-expanded="false" data-ai-help-title="변환 모델" data-ai-setting-help="그림 변환에 사용할 모델입니다. 라벨 복원은 선택한 모델과 관계없이 Luna 6 · 보통으로 진행합니다.">?</button>
+            </div>
+            <div class="ai-setting-row ai-fixed-setting">
+              <span>속도</span>
+              <span class="ai-fixed-setting-value" data-ai-fixed-speed>빠르게 · 고정</span>
+              <button type="button" class="ai-setting-help" aria-label="속도 도움말" aria-expanded="false" data-ai-help-title="속도" data-ai-setting-help="그림 변환과 라벨 처리에 빠른 응답 설정을 사용합니다. 속도는 별도로 선택하지 않습니다. 모델이 빠른 응답을 지원하지 않으면 요청을 보내기 전에 안내합니다.">?</button>
+            </div>
+            <div class="ai-setting-row">
+              <span>라벨 복원</span>
+              <div class="ai-setting-pair" data-ai-setting-key="labels" role="group" aria-label="라벨 복원">
+                <button type="button" data-ai-setting-value="remove" aria-pressed="false">끄기</button>
+                <button type="button" data-ai-setting-value="restore-editable" aria-pressed="false">켜기</button>
+              </div>
+              <button type="button" class="ai-setting-help" aria-label="라벨 복원 도움말" aria-expanded="false" data-ai-help-title="라벨 복원" data-ai-setting-help="켜면 원본 라벨을 편집 가능한 글자와 지시선으로 복원합니다. 원본에 없는 라벨은 만들지 않습니다. 결과의 위치와 연결 대상을 확인해 주세요.">?</button>
+            </div>
+            <div class="ai-setting-row">
+              <span>라벨 검수</span>
+              <div class="ai-setting-pair" data-ai-setting-key="verification" role="group" aria-label="라벨 검수 방식">
+                <button type="button" data-ai-setting-value="draft-first" aria-pressed="false">초안 먼저</button>
+                <button type="button" data-ai-setting-value="full" aria-pressed="false">자동 검수</button>
+              </div>
+              <button type="button" class="ai-setting-help" aria-label="라벨 검수 도움말" aria-expanded="false" data-ai-help-title="라벨 검수" data-ai-setting-help="초안 먼저는 일반 그림의 편집 라벨을 로컬 배치로 먼저 제공합니다. 위치·문구·연결을 확인하고 필요하면 결과 카드에서 추가 검수하세요. 기출 제거가 보류되면 원본 옆에 라벨 목록을 제공합니다. 초안을 자동 승인하지 않습니다.">?</button>
+            </div>
+            <div class="ai-settings-divider">
+            </div>
+            <div class="ai-settings-caption">이미지 처리</div>
+            <div class="ai-setting-row">
+              <span>배경 제거</span>
+              <div class="ai-setting-pair" data-ai-setting-key="background" role="group" aria-label="배경 제거">
+                <button type="button" data-ai-setting-value="preserve" aria-pressed="false">끄기</button>
+                <button type="button" data-ai-setting-value="connected" aria-pressed="false">켜기</button>
+              </div>
+              <button type="button" class="ai-setting-help" aria-label="배경 제거 도움말" aria-expanded="false" data-ai-help-title="배경 제거" data-ai-setting-help="켜면 그림 바깥의 흰 배경을 투명하게 처리합니다. 그림 내부의 흰색과 채움은 유지합니다. 객체 분리 중에는 바깥 배경 제거가 함께 적용됩니다.">?</button>
+            </div>
+            <div class="ai-setting-row">
+              <span>객체 분리</span>
+              <div class="ai-setting-pair" data-ai-setting-key="objects" role="group" aria-label="객체 분리">
+                <button type="button" data-ai-setting-value="off" aria-pressed="false">끄기</button>
+                <button type="button" data-ai-setting-value="auto" aria-pressed="false">켜기</button>
+              </div>
+              <button type="button" class="ai-setting-help" aria-label="객체 분리 도움말" aria-expanded="false" data-ai-help-title="객체 분리" data-ai-setting-help="켜면 떨어져 있는 객체를 자동 감지해 각각 사용할 수 있게 분리합니다. 맞닿거나 겹친 구조는 함께 처리될 수 있습니다. 켜는 동안 배경 제거도 함께 적용됩니다.">?</button>
+            </div>
+            <div class="ai-setting-row">
+              <span>화살표 제거</span>
+              <div class="ai-setting-pair" data-ai-setting-key="arrows" role="group" aria-label="화살표 제거">
+                <button type="button" data-ai-setting-value="keep" aria-pressed="false">끄기</button>
+                <button type="button" data-ai-setting-value="remove" aria-pressed="false">켜기</button>
+              </div>
+              <button type="button" class="ai-setting-help" aria-label="화살표 제거 도움말" aria-expanded="false" data-ai-help-title="화살표 제거" data-ai-setting-help="켜면 힘·이동 방향 등 과학적 의미의 화살표도 제거합니다. 의미가 필요하면 끄세요. 라벨 소속 지시선과 끝점은 라벨 처리에 따라 함께 제거하거나 편집 객체로 복원합니다.">?</button>
+            </div>
+            <div class="ai-setting-row">
+              <span>보조선 제거</span>
+              <div class="ai-setting-pair" data-ai-setting-key="guides" role="group" aria-label="보조선 제거">
+                <button type="button" data-ai-setting-value="keep" aria-pressed="false">끄기</button>
+                <button type="button" data-ai-setting-value="remove" aria-pressed="false">켜기</button>
+              </div>
+              <button type="button" class="ai-setting-help" aria-label="보조선 제거 도움말" aria-expanded="false" data-ai-help-title="보조선 제거" data-ai-setting-help="켜면 설명용 보조선·확대 연결선·강조틀을 제거합니다. 실제 관·도선·윤곽선·계기 눈금은 유지합니다. 라벨 소속 지시선은 이 설정과 별도로 처리합니다.">?</button>
+            </div>
+            <p class="ai-settings-summary" data-ai-settings-summary>라벨 없이 그림만 변환</p>
+            <p data-ai-output-processing-status role="status" aria-live="polite">원본 PNG를 그대로 사용합니다.</p>
+            <details class="ai-source-treatment">
+              <summary>원본 처리 방식</summary>
+              <div class="ai-setting-row">
+                <span>원본 종류</span>
+                <div class="ai-setting-pair" data-ai-setting-key="kind" role="group" aria-label="원본 종류">
+                  <button type="button" data-ai-setting-value="general" aria-pressed="true">일반</button>
+                  <button type="button" data-ai-setting-value="exam" aria-pressed="false">기출</button>
+                </div>
+                <button type="button" class="ai-setting-help" aria-label="원본 종류 도움말" aria-expanded="false" data-ai-help-title="원본 종류" data-ai-setting-help="라이브러리에서 출처를 아는 이미지는 자동으로 정합니다. 직접 넣은 교과서 사진·삽화는 일반으로 두면 됩니다. 기출 그림을 직접 넣었을 때만 기출로 바꾸세요. 일반은 선화로 변환하고, 기출은 기존 선과 배치를 유지하며 라벨을 처리합니다.">?</button>
+              </div>
+              <p class="ai-source-treatment-note">교과서 사진·삽화는 일반 · 기출 그림은 원본 선 유지</p>
+              <label class="ai-review-toggle">
+                <input type="checkbox" data-ai-precise-restore data-ai-input-mutator> 결과를 원본과 대조해 추가 보정</label>
+              </details>
+            </section>
+          <div class="ai-settings-native-controls" hidden>
+          <div class="ai-source-label-control">
+            <label class="ai-output-processing-row"><span>원본 종류</span><select data-ai-image-kind data-ai-input-mutator aria-label="원본 이미지 종류"><option value="">선택해 주세요</option><option value="exam">기출 · 원본 스타일 유지</option><option value="general" selected>일반 · 과학 도식으로 변환</option></select></label>
+            <label class="ai-output-processing-row"><span>라벨 처리</span><select data-ai-label-result data-ai-input-mutator aria-label="라벨 처리"><option value="">선택해 주세요</option><option value="remove" selected>라벨 삭제</option><option value="restore-editable">편집 라벨 복원</option></select></label>
+            <label class="ai-output-processing-row"><span>라벨 검수</span><select data-ai-label-verification data-ai-input-mutator aria-label="라벨 검수 방식"><option value="draft-first" selected>편집 초안 먼저 · 검수 선택</option><option value="full">자동 검수 후 제공</option></select></label>
+
+            <label hidden><input type="checkbox" data-ai-preserve-source-labels data-ai-input-mutator aria-describedby="ai-source-label-note"> 편집 라벨 복원</label>
+            <p id="ai-source-label-note" class="ai-mark-policy-note" data-ai-source-label-note>라벨의 글자·지시선·끝점을 함께 제거합니다. 기출은 필요한 영역만 처리하며, 편집 복원은 기존 라벨을 수정 가능한 객체로 만듭니다.</p>
+          </div>
           <section class="ai-output-processing" data-ai-output-processing aria-label="생성 결과 처리">
             <label class="ai-output-processing-row ai-output-option-background">
               <span>배경</span>
               <select data-ai-background-policy aria-label="생성 결과 배경 처리">
                 <option value="preserve">원본 유지</option>
                 <option value="connected">외부 배경 제거</option>
-                <option value="all-near-white">모든 흰색 제거</option>
+
               </select>
             </label>
             <label class="ai-output-processing-row ai-output-option-palette">
@@ -592,15 +706,15 @@
             </label>
             <p class="ai-output-processing-note ai-output-processing-note-pro">생성된 이미지도 이 패널 안에서 객체 분리 방식을 바꿀 수 있습니다.</p>
             <p class="ai-output-processing-note ai-output-processing-note-lite">분리는 떨어진 물체를 중심으로 작동합니다. 맞닿거나 겹친 물체는 함께 처리될 수 있습니다.</p>
-            <p data-ai-output-processing-status role="status" aria-live="polite">원본 PNG를 그대로 사용합니다.</p>
+
           </section>
-          <div class="ai-side-content">
+</div>          <div class="ai-side-content">
             <section class="ai-comments-panel" data-ai-comments-panel aria-label="위치별 코멘트">
               <section class="ai-preparation" aria-label="이미지 요청과 기본 설정">
                 <header><strong data-ai-request-title>첫 변환</strong><span data-ai-request-hint>고정된 평가원식 규칙으로 변환합니다.</span></header>
                 <p class="ai-request-note" data-ai-request-note>먼저 평가원식 흑백 선화로 변환합니다.<br>결과에 수정 위치를 표시하세요.</p>
                 <textarea data-ai-input aria-label="이미지 수정 요청" placeholder="예: 숫자와 단위를 지우고 평가원식 흑백 선화로 정리해 주세요."></textarea>
-                <details class="ai-conversion-options">
+                <details class="ai-conversion-options" hidden>
                   <summary>변환 옵션 <span data-ai-conversion-summary>교과서 선화 · 그림형</span></summary>
                   <div class="ai-conversion-options-body">
                     <div class="ai-mode-row" role="group" aria-label="출력 방식">
@@ -619,8 +733,8 @@
                       <div class="ai-mark-policy-fields">
                         <label for="ai-mark-arrows">화살표
                           <select id="ai-mark-arrows" data-ai-mark-arrows>
-                            <option value="structural" selected>구조 표시만 유지</option>
-                            <option value="keep">모두 유지</option>
+                            <option value="structural">구조 표시만 유지</option>
+                            <option value="keep" selected>모두 유지</option>
                             <option value="remove">모두 제거</option>
                           </select>
                         </label>
@@ -647,7 +761,7 @@
                 <label class="ai-review-toggle"><input type="checkbox" data-ai-review-mode checked> 결과 확인</label>
               </div>
               <section class="ai-comments-list-section" aria-label="수정 코멘트 목록">
-                <header class="ai-comments-heading"><strong>위치별 수정 요청</strong><span>지정하지 않은 부분은 유지</span></header>
+                <header class="ai-comments-heading"><strong>위치별 수정 요청</strong><span>박스 밖은 원본 유지</span></header>
                 <div class="ai-comments-list" data-ai-comments aria-live="polite"><p class="ai-comments-empty">그림에서 점을 찍거나 영역을 둘러싸고 수정할 내용을 남기세요.</p></div>
               </section>
               <p class="ai-comment-list-status" data-ai-comment-status aria-live="polite">코멘트는 선택한 이미지 버전에 연결됩니다.</p>
@@ -665,8 +779,8 @@
             </section>
           </div>
           <details class="ai-advanced-settings">
-            <summary title="계정 및 고급 설정"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 5h14M3 10h14M3 15h14"/><circle cx="7" cy="5" r="2"/><circle cx="13" cy="10" r="2"/><circle cx="8" cy="15" r="2"/></svg>설정</summary>
-            <div class="ai-mode-row ai-quality-row" role="group" aria-label="그림 복잡도">
+            <summary title="계정 연결 및 모델 목록"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><path d="M3 5h14M3 10h14M3 15h14"/><circle cx="7" cy="5" r="2"/><circle cx="13" cy="10" r="2"/><circle cx="8" cy="15" r="2"/></svg>연결 정보</summary>
+            <div class="ai-mode-row ai-quality-row" hidden role="group" aria-label="그림 복잡도">
               <span>복잡도</span>
               <button type="button" data-ai-quality="simple" title="물체 1~2개, 연결이 거의 없는 그림 · 형태 보존 고품질 1회 AI 변환">단순<small>정밀 1회</small></button>
               <button type="button" class="is-on" data-ai-quality="standard" title="여러 부품이 연결된 일반 실험 장치 · 약 1~2분">보통<small>권장</small></button>
@@ -679,28 +793,40 @@
                 <span data-ai-account-tokens>누적 토큰 확인 중…</span>
               </div>
               <button type="button" data-ai-login>Codex 로그인</button>
-              <label class="ai-setting-label">생성 모델
+              <p data-ai-fixed-model hidden>그래프 복원 · Sol 6.1 / medium 고정</p>
+              <label class="ai-setting-label" hidden>생성 모델
                 <select data-ai-model aria-label="AI 모델 선택"><option value="">불러오는 중…</option></select>
               </label>
               <span class="ai-model-warning" data-ai-model-warning role="status" aria-live="polite" hidden>선택한 모델의 지원 설정을 확인해 주세요.</span>
-              <label class="ai-setting-label">추론
+              <label class="ai-setting-label" hidden>추론
                 <select data-ai-effort aria-label="추론 수준 선택"><option value="">불러오는 중…</option></select>
               </label>
-              <label class="ai-setting-label">속도
-                <select data-ai-speed aria-label="응답 속도 선택"><option value="">표준</option></select>
+              <label class="ai-setting-label" hidden>속도
+                <select data-ai-speed aria-label="응답 속도 선택"><option value="priority">빠르게 · 고정</option></select>
               </label>
               <button type="button" data-ai-new>현재 작업 초기화</button>
             </div>
           </details>
           <footer class="ai-workbench-actions">
+            <label class="ai-setting-label" data-ai-scoped-prompt-row hidden>수정 방식
+              <select data-ai-scoped-prompt-mode data-ai-input-mutator aria-label="박스 수정 방식" title="짧은 명세는 비교 검증 중인 후보이며 기본 방식은 바뀌지 않습니다.">
+                <option value="legacy" selected>기존 방식</option>
+                <option value="compact">짧은 명세 · 실험</option>
+                <option value="compact-tight">짧은 명세 · 좁은 문맥</option>
+                <option value="verified">수치 명세 · 실험</option>
+                <option value="verified-tight">수치 명세 · 좁은 문맥</option>
+              </select>
+            </label>
             <button type="button" class="modal-btn modal-btn-primary" data-ai-comments-apply disabled>코멘트 반영하기</button>
             <div class="ai-conversation-actions">
               <button type="button" data-ai-interrupt title="현재 진행 중인 AI 요청을 취소합니다" hidden>작업 취소</button>
             </div>
-            <div class="ai-output-actions"><button type="button" data-ai-insert-selected disabled>캔버스에 삽입</button></div>
+            <div class="ai-output-actions"><button type="button" data-ai-insert-selected disabled>캔버스에서 편집</button></div>
           </footer>
         </section>
       </div>
+      <dialog class="ai-info-dialog" role="dialog" aria-modal="true" data-ai-review-dialog aria-labelledby="ai-review-dialog-title"><header><h3 id="ai-review-dialog-title">결과 확인 사항</h3><button type="button" data-ai-info-close aria-label="결과 확인 사항 닫기">×</button></header><div data-ai-review-content></div></dialog>
+      <dialog class="ai-info-dialog" role="dialog" aria-modal="true" data-ai-connection-dialog aria-labelledby="ai-connection-dialog-title"><header><h3 id="ai-connection-dialog-title">연결 정보</h3><button type="button" data-ai-info-close aria-label="연결 정보 닫기">×</button></header><div data-ai-connection-content></div></dialog>
     </section>
   </div>
 

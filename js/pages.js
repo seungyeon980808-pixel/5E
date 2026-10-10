@@ -115,6 +115,14 @@ export function switchPage(state, targetId) {
 }
 
 /* ----- 추가(빈 페이지) ----- */
+export function resetPageHistory(state, page) {
+  savePageRuntime({undoStack:[],redoStack:[],selectedIds:[],selectedGuideId:null,activeLayerId:page.layers[0]?.id},page);
+  if (state.get().activePageId === page.id) state.update(s => {
+    s.undoStack = []; s.redoStack = []; s.selectedIds = []; s.selectedGuideId = null;
+    rebuildGroups(s);
+  });
+}
+
 export function addPage(state) {
   const id = newPageId();
   state.update((s) => {
@@ -144,6 +152,8 @@ function duplicatePage(state) {
       objects: cur.objects, guides: cur.guides, layers: cur.layers,
       artboard: cur.artboard, meta: cur.meta,
     }));
+    delete clone.meta?.examLink;
+    delete clone.meta?.examRevisionId;
     const idx = s.pages.indexOf(cur);
     s.pages.splice(idx + 1, 0, {
       id,

@@ -92,6 +92,7 @@ export async function prepareScopedEditProposal(session, candidatePng, getCurren
     changedBounds: result.changedBounds ? Object.freeze({ ...result.changedBounds }) : null,
     removedMetadata: Object.freeze([...(result.removedMetadata || [])]),
     metadataDisposition: result.metadataDisposition || null,
+    geometry: result.geometry ? Object.freeze({ ...result.geometry }) : null,
     get previewPng() { return new Uint8Array(png); },
   });
   proposals.set(proposal, { owner: session, png, consumed: false });

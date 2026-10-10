@@ -1,3 +1,4 @@
+import { createPdfSourceTextCandidates } from "../ai-source-label-candidates.js?v=1.7.0-four-session-integration";
 import { createCropOverrideStore } from "./crop-overrides.js?v=1.7.0-four-session-integration";
 import { createRenderScheduler } from "./render-scheduler.js?v=1.7.0-four-session-integration";
 import { importRejectionMessage, partitionLibraryImports } from "../library-import-policy.js?v=1.7.0-four-session-integration";
@@ -1083,12 +1084,16 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
       const references = [];
       for (const result of selected) {
         const source = normalizedSource(result);
-        const render = await withRuntimeLock(async () => {
-          await ensureDocumentOpen(source.documentId);
-          return runtime.renderCrop({ source, dpi: HIGH_RES_DPI });
+        const { render, document } = await withRuntimeLock(async () => {
+          const document = await ensureDocumentOpen(source.documentId);
+          const render = await runtime.renderCrop({ source, dpi: HIGH_RES_DPI });
+          return { render, document };
         });
+        const data = await pngDataUrl(render.bytes);
+        const sourceTextCandidates = await createPdfSourceTextCandidates({ document, page: document?.pages?.find(page => page.pageNumber === source.pageNumber), render, data });
         references.push({
-          dataUrl: await pngDataUrl(render.bytes),
+          dataUrl: data,
+          sourceTextCandidates,
           name: resultTitle(result),
           source: { ...source, title: resultTitle(result), documentTitle: result.documentTitle || result.sourceName || "원본 PDF" },
         });
@@ -1110,13 +1115,17 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
       const additions = [];
       for (const result of selected) {
         const source = normalizedSource(result);
-        const render = await withRuntimeLock(async () => {
-          await ensureDocumentOpen(source.documentId);
-          return runtime.renderCrop({ source, dpi: HIGH_RES_DPI });
+        const { render, document } = await withRuntimeLock(async () => {
+          const document = await ensureDocumentOpen(source.documentId);
+          const render = await runtime.renderCrop({ source, dpi: HIGH_RES_DPI });
+          return { render, document };
         });
+        const data = await pngDataUrl(render.bytes);
+        const sourceTextCandidates = await createPdfSourceTextCandidates({ document, page: document?.pages?.find(page => page.pageNumber === source.pageNumber), render, data });
         additions.push({
           name: resultTitle(result),
-          data: await pngDataUrl(render.bytes),
+          data,
+          sourceTextCandidates,
           sourceKind: "pdf-library",
           source: sourceMetadata(result),
         });

@@ -120,6 +120,33 @@
 
 .insp-summary::-webkit-details-marker { display: none; }
 
+.insp-summary-action {
+  margin-left: auto;
+  display: inline-flex;
+  flex-shrink: 0;
+}
+
+.insp-text-detail-btn {
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 4px;
+  border: 1px solid var(--insp-border);
+  border-radius: var(--control-radius);
+  background: var(--insp-field-bg);
+  color: var(--insp-text);
+  cursor: pointer;
+}
+.insp-text-detail-btn svg { width: 18px; height: 18px; }
+.insp-text-detail-btn:hover:not(:disabled) { background: var(--btn-tool-hover); }
+.insp-text-detail-btn:active:not(:disabled) {
+  background: var(--control-selected-bg);
+  border-color: var(--control-selected-border);
+}
+.insp-text-detail-btn:focus-visible { outline: 2px solid var(--insp-accent); outline-offset: 2px; }
+.insp-text-detail-btn:disabled { opacity: .4; cursor: default; }
+
 .insp-summary::before {
   /* ASCII-only escape (U+203A) so the disclosure chevron can't turn into
      mojibake if the sheet is ever read with the wrong charset. */
@@ -282,8 +309,8 @@ details[open] > .insp-summary::before {
 }
 .insp-ab-drag-btn:hover { border-color: var(--insp-accent); }
 .insp-ab-drag-btn.is-active {
-  color: #fff;
-  background: var(--insp-accent);
+  color: var(--control-selected-text);
+  background: var(--control-selected-bg);
   border-color: var(--insp-accent);
 }
 

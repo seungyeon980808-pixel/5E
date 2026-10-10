@@ -18,7 +18,7 @@ import {
 } from "./export-dir.js?v=1.7.0-four-session-integration";
 import { showAlert } from "./ui-dialogs.js?v=1.7.0-four-session-integration";
 import { registerTopMenu } from "./top-menu.js?v=1.7.0-four-session-integration";
-import { screenToWorld } from "./viewport.js?v=1.7.0-four-session-integration";
+import { screenToWorld, worldToScreen } from "./viewport.js?v=1.7.0-four-session-integration";
 import { openExamPreview } from "./exam-preview.js?v=1.7.0-four-session-integration";
 
 // Default export filename base = local date/time to the minute (YYYYMMDD_HHmm),
@@ -158,7 +158,7 @@ function segValue(group, attr) {
  * 크기(mm)가 실시간 표시된다. Enter로 확정(화면 사각형 → world 좌표 → onDone(bounds)),
  * Esc/우클릭으로 취소(onDone(null)). world 1단위=1mm이므로 라벨은 mm.
  * 미리보기·영역지정(export) 둘 다 이 한 함수를 쓴다. */
-export function runAreaCapture(svg, state, onDone, hintText) {
+export function runAreaCapture(svg, state, onDone, hintText, options = {}) {
   const overlay = document.createElement("div");
   overlay.className = "capture-overlay";
   /* ⚠ z-index 는 튜토리얼 흐림(100010)보다 위여야 한다.
@@ -170,7 +170,7 @@ export function runAreaCapture(svg, state, onDone, hintText) {
     "background:rgba(0,0,0,0.35);user-select:none;";
 
   const HINT_DRAW = hintText || "저장할 영역을 드래그하십시오";
-  const HINT_ADJUST = "핸들로 크기 조절 · 드래그로 이동 · [내보내기] 또는 Enter 로 확정 · Esc 취소";
+  const HINT_ADJUST = `핸들로 크기 조절 · 드래그로 이동 · [${options.confirmText || '지정'}] 또는 Enter로 확정 · Esc 취소`;
   const hint = document.createElement("div");
   hint.textContent = HINT_DRAW;
   hint.style.cssText =
@@ -213,7 +213,7 @@ export function runAreaCapture(svg, state, onDone, hintText) {
   okBtn.style.cssText =
     "margin-left:8px;padding:2px 10px;border:0;border-radius:3px;cursor:pointer;" +
     "background:#fff;color:var(--accent);font:inherit;font-weight:700;pointer-events:auto;";
-  okBtn.textContent = "지정";
+  okBtn.textContent = options.confirmText || "지정";
   okBtn.addEventListener("mousedown", (e) => { e.preventDefault(); e.stopPropagation(); });
   okBtn.addEventListener("click", (e) => { e.preventDefault(); e.stopPropagation(); confirm(); });
   dim.append(wInput, sepX, hInput, sepU, okBtn);
@@ -393,6 +393,13 @@ export function runAreaCapture(svg, state, onDone, hintText) {
   }
   function onCtx(e) { e.preventDefault(); cancel(); }
 
+  if (options.initialBounds) {
+    const b=options.initialBounds;
+    if ([b.x,b.y,b.w,b.h].every(Number.isFinite) && b.w>0 && b.h>0) {
+      const vb=state.get().viewBox, a=worldToScreen(svg,vb,b.x,b.y), z=worldToScreen(svg,vb,b.x+b.w,b.y+b.h);
+      box={l:a.x,t:a.y,r:z.x,b:z.y};phase="adjust";hint.textContent=HINT_ADJUST;render();
+    }
+  }
   overlay.addEventListener("mousedown", onDown);
   window.addEventListener("mousemove", onMove);
   window.addEventListener("mouseup", onUp);

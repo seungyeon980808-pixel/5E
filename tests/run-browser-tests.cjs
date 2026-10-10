@@ -61,9 +61,17 @@ async function run() {
   const failures = [];
   const report = { entry: config.entry, requested: config, serverPid: server.child.pid, runtime: [], suites: [], cleanup: false };
   const evidenceBase = process.env.EVIDENCE_DIR;
+  let transferServer, transferOrigin;
   try {
     const origin = await server.ready;
     report.origin = origin;
+    if (selected.some(entry => entry.path === 'tests/test-four-session-integration-browser.cjs')) {
+      transferServer = startServer();
+      transferOrigin = await transferServer.ready;
+      if (transferOrigin === origin) throw new Error('File-transfer verification requires a distinct real origin');
+      report.transferServerPid = transferServer.child.pid;
+      report.transferOrigin = transferOrigin;
+    }
     const playwrightModule = process.env.PLAYWRIGHT_MODULE || require.resolve("playwright");
     const { chromium, webkit } = require(playwrightModule);
     for (const engine of [chromium, webkit]) {
@@ -90,6 +98,8 @@ async function run() {
         APP_MODULE_QUERY: runtime.moduleQuery,
         PREVIEW_URL: runtime.entryUrl,
         RELEASE_URL: `${origin}/`,
+        EXAM_URL: `${origin}/`,
+        ...(transferOrigin ? { CROSS_TRANSFER_URL: `${transferOrigin}/` } : {}),
       };
       if (evidenceBase) environment.EVIDENCE_DIR = path.join(evidenceBase, path.basename(entry.path, ".cjs"));
       const result = spawnSync(process.execPath, [entry.path], { cwd: root, stdio: "inherit", env: environment });
@@ -101,7 +111,8 @@ async function run() {
     report.error = { message: error.message, resources: error.resourceReceipt };
     throw error;
   } finally {
-    await stopServer(server.child);
+    try { if (transferServer) await stopServer(transferServer.child); }
+    finally { await stopServer(server.child); }
     report.cleanup = true;
     if (evidenceBase) {
       fs.mkdirSync(evidenceBase, { recursive: true });

@@ -1,0 +1,87 @@
+{
+  "schema": "5e.graph-reconstruction/v1",
+  "source": {
+    "id": "synthetic-linear",
+    "hash": "synthetic-v1-linear",
+    "width": 400,
+    "height": 300,
+    "plotBox": {
+      "x": 40,
+      "y": 20,
+      "w": 320,
+      "h": 240
+    }
+  },
+  "axes": {
+    "x": {
+      "scale": "linear",
+      "title": "",
+      "unit": "",
+      "min": 0,
+      "max": 4,
+      "step": 1
+    },
+    "y": {
+      "scale": "linear",
+      "title": "",
+      "unit": "",
+      "min": 0,
+      "max": 4,
+      "step": 1
+    },
+    "y2": {
+      "scale": "linear",
+      "title": "농도",
+      "unit": "%",
+      "min": 0,
+      "max": 100,
+      "step": 20
+    }
+  },
+  "series": [
+    {
+      "id": "s1",
+      "kind": "points",
+      "axis": "y",
+      "certainty": "exact",
+      "coordinateSpace": "data",
+      "points": [
+        {
+          "x": 0,
+          "y": 0
+        },
+        {
+          "x": 1,
+          "y": 2
+        },
+        {
+          "x": 4,
+          "y": 3
+        }
+      ],
+      "breaks": [],
+      "endpoints": []
+    },
+    {
+      "id": "s2",
+      "kind": "points",
+      "axis": "y2",
+      "certainty": "exact",
+      "coordinateSpace": "data",
+      "points": [
+        {
+          "x": 0,
+          "y": 20
+        },
+        {
+          "x": 4,
+          "y": 80
+        }
+      ],
+      "breaks": [],
+      "endpoints": []
+    }
+  ],
+  "annotations": [],
+  "review": []
+}

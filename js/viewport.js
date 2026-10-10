@@ -190,7 +190,8 @@ export function initViewport(svg, state, onChange) {
   });
   const sameBox = (a, b) => a.left === b.left && a.top === b.top
     && a.width === b.width && a.height === b.height;
-  state.subscribe(() => {
+  state.subscribe((s, change) => {
+    if (change === "native-text-input" && s.draftText?.nativeEditor) return;
     const vb = state.get().viewBox;
     if (liteMode() && !retainModeProjection && (Math.abs(vb.x + vb.w / 2) > 1e-8 || Math.abs(vb.y + vb.h / 2) > 1e-8)) {
       centerView(state);

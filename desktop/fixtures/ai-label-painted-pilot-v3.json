@@ -1,0 +1,90 @@
+{
+  "sourcePlanSha256": "9deb7a7907a2114a009a99666cb6d2a1d964d0645bb104158f46a99e13890f7b",
+  "labels": [
+    {
+      "text": "그림 16 | 전류가 흐르는 코일 주위의 자기장",
+      "evidence": "그림 16 | 전류가 흐르는 코일 주위의 자기장",
+      "sourceKind": "reference",
+      "sourceRef": 1,
+      "mode": "text",
+      "labelType": "label",
+      "contentMode": "plain",
+      "anchor": {
+        "x": 0.414,
+        "y": 0.923
+      },
+      "position": {
+        "x": 0.414,
+        "y": 0.923
+      },
+      "typography": {
+        "role": "text",
+        "bounds": {
+          "x": 0.006,
+          "y": 0.887,
+          "w": 0.842,
+          "h": 0.078
+        }
+      },
+      "scope": "general",
+      "id": "label-caption"
+    },
+    {
+      "text": "−",
+      "evidence": "−",
+      "sourceKind": "reference",
+      "sourceRef": 1,
+      "mode": "text",
+      "labelType": "label",
+      "contentMode": "plain",
+      "anchor": {
+        "x": 0.22,
+        "y": 0.782
+      },
+      "position": {
+        "x": 0.22,
+        "y": 0.782
+      },
+      "typography": {
+        "role": "symbol",
+        "bounds": {
+          "x": 0.193,
+          "y": 0.754,
+          "w": 0.054,
+          "h": 0.056
+        }
+      },
+      "scope": "general",
+      "id": "label-minus"
+    },
+    {
+      "text": "+",
+      "evidence": "+",
+      "sourceKind": "reference",
+      "sourceRef": 1,
+      "mode": "text",
+      "labelType": "label",
+      "contentMode": "plain",
+      "anchor": {
+        "x": 0.631,
+        "y": 0.782
+      },
+      "position": {
+        "x": 0.631,
+        "y": 0.782
+      },
+      "typography": {
+        "role": "symbol",
+        "bounds": {
+          "x": 0.606,
+          "y": 0.754,
+          "w": 0.05,
+          "h": 0.056
+        }
+      },
+      "scope": "general",
+      "id": "label-plus"
+    }
+  ],
+  "description": "Unmodified retained pilot v3 label observation; copied for rendered glyph regression only."
+}

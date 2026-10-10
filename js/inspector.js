@@ -141,6 +141,12 @@ export function initInspector(state) {
   contentEl.appendChild(secStandingWave);
   contentEl.appendChild(secCoord);
   contentEl.appendChild(secFunc);
+  const labelReviewNotice = document.createElement('p');
+  labelReviewNotice.dataset.aiLabelReviewDraftNotice = '';
+  labelReviewNotice.textContent = '검토용 결과 · 자동 검수 미통과. 라벨을 클릭해 수정하고 위치와 연결 대상을 확인하세요.';
+  labelReviewNotice.style.cssText = 'font-size:12px;line-height:1.5;color:var(--text-secondary);padding:8px;border:1px solid var(--border);border-radius:6px;';
+  labelReviewNotice.hidden = true;
+  contentEl.prepend(labelReviewNotice);
   if (root) root.appendChild(abSection);
   if (root) root.appendChild(layerDetails);
   if (root) root.insertBefore(bgSection, root.firstChild);
@@ -179,11 +185,14 @@ export function initInspector(state) {
   }
 
   /* ---- Subscribe: populate controls on every state change ---- */
-  function populate(s) {
+  function populate(s, change) {
+    if (change === "native-text-input" && s.draftText?.nativeEditor) return;
     renderBgSection(s);
     renderLayerPanel(s);
     const ids = s.selectedIds || [];
     const selectedObjects = ids.map((id) => s.objects.find((o) => o.id === id)).filter(Boolean);
+    labelReviewNotice.hidden = !selectedObjects.some(object => object.aiReviewDraft === true
+      || s.objects.some(parent => parent.id === object.aiParentImageId && parent.aiReviewDraft === true));
     const liteObject = selectedObjects.length === 1 ? selectedObjects[0] : null;
     document.documentElement.dataset.liteInspector = liteObject
       ? (["line", "polyline", "labeler"].includes(liteObject.type) ? "line"
@@ -454,7 +463,7 @@ export function initInspector(state) {
     // 이 섹션을 쓰므로 그대로 둔다(여긴 일반 선택 분기라 영향 없음).
     imageSection.style.display = "none";
     if (isText) {
-      textEditRow.style.display = document.documentElement.dataset.mode === "lite" && obj.type === "text" ? "" : "none";
+      textEditRow.style.display = "";
       fontFamSel.value = styleObj.fontFamily || DEFAULT_TEXT_FONT;
       boldCb.checked = (styleObj.fontWeight || "normal") === "bold";
       italicCb.checked = styleObj.italic === true;
@@ -600,7 +609,7 @@ export function initInspector(state) {
       arrowBtn.setAttribute("aria-label", `화살표 방향: ${ARROW_LABELS[displayArrow]}`);
       arrowBtn.innerHTML = `<svg width="40" height="24" viewBox="0 0 40 24">${ARROW_ICONS[displayArrow]}</svg>`;
     }
-    leaderLabelRow.style.display = document.documentElement.dataset.mode === "lite" && obj.type === "labeler" ? "" : "none";
+    leaderLabelRow.style.display = obj.type === "labeler" ? "" : "none";
 
     // Dash presets + sliders: lines and size-based shape outlines.
     const canDash = supportsDash(obj) || obj.type === "labeler";

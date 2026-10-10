@@ -1,0 +1,534 @@
+{
+  "schema": "5e.graph-reconstruction/v1",
+  "variant": "cartesian",
+  "source": {
+    "id": "membrane",
+    "hash": "sha256:0384b76339d983d1249751ce10ef45a45de69f6042e3f630cbc5cd6658efec8b",
+    "width": 554,
+    "height": 483,
+    "plotBox": {
+      "x": 151,
+      "y": 25,
+      "w": 387,
+      "h": 344
+    }
+  },
+  "axes": {
+    "x": {
+      "scale": "linear",
+      "title": "시간",
+      "unit": "ms",
+      "min": 0,
+      "max": 4.45,
+      "step": 1,
+      "ticks": [
+        {
+          "value": 0,
+          "label": "0",
+          "position": 0
+        },
+        {
+          "value": 1,
+          "label": "1",
+          "position": 0.2247191011235955
+        },
+        {
+          "value": 2,
+          "label": "2",
+          "position": 0.449438202247191
+        },
+        {
+          "value": 3,
+          "label": "3",
+          "position": 0.6741573033707865
+        },
+        {
+          "value": 4,
+          "label": "4",
+          "position": 0.898876404494382
+        }
+      ],
+      "orientation": "horizontal",
+      "titlePosition": {
+        "x": 0.995,
+        "y": -0.17
+      },
+      "titleAnchor": "end",
+      "displayTitle": "시간(ms)"
+    },
+    "y": {
+      "scale": "linear",
+      "title": "막전위",
+      "unit": "mV",
+      "min": -110.5,
+      "max": 48.2,
+      "step": null,
+      "ticks": [
+        {
+          "value": -80,
+          "label": "−80",
+          "position": 0.19218651543793322
+        },
+        {
+          "value": -70,
+          "label": "−70",
+          "position": 0.2551984877126654
+        },
+        {
+          "value": 0,
+          "label": "0",
+          "position": 0.6962822936357909
+        },
+        {
+          "value": 30,
+          "label": "+30",
+          "position": 0.8853182104599875
+        }
+      ],
+      "orientation": "vertical",
+      "titlePosition": {
+        "x": -0.25,
+        "y": 0.86
+      },
+      "titleAnchor": "middle",
+      "displayTitle": "막전위"
+    }
+  },
+  "series": [
+    {
+      "id": "membrane-potential",
+      "kind": "points",
+      "axis": "y",
+      "certainty": "observed",
+      "coordinateSpace": "normalized",
+      "points": [
+        {
+          "x": 0,
+          "y": 0.256
+        },
+        {
+          "x": 0.052,
+          "y": 0.262
+        },
+        {
+          "x": 0.103,
+          "y": 0.27
+        },
+        {
+          "x": 0.155,
+          "y": 0.282
+        },
+        {
+          "x": 0.196,
+          "y": 0.297
+        },
+        {
+          "x": 0.23,
+          "y": 0.317
+        },
+        {
+          "x": 0.256,
+          "y": 0.349
+        },
+        {
+          "x": 0.282,
+          "y": 0.401
+        },
+        {
+          "x": 0.308,
+          "y": 0.477
+        },
+        {
+          "x": 0.333,
+          "y": 0.581
+        },
+        {
+          "x": 0.359,
+          "y": 0.698
+        },
+        {
+          "x": 0.385,
+          "y": 0.788
+        },
+        {
+          "x": 0.411,
+          "y": 0.849
+        },
+        {
+          "x": 0.432,
+          "y": 0.878
+        },
+        {
+          "x": 0.45,
+          "y": 0.887
+        },
+        {
+          "x": 0.465,
+          "y": 0.875
+        },
+        {
+          "x": 0.483,
+          "y": 0.837
+        },
+        {
+          "x": 0.504,
+          "y": 0.756
+        },
+        {
+          "x": 0.527,
+          "y": 0.651
+        },
+        {
+          "x": 0.553,
+          "y": 0.535
+        },
+        {
+          "x": 0.579,
+          "y": 0.43
+        },
+        {
+          "x": 0.605,
+          "y": 0.331
+        },
+        {
+          "x": 0.628,
+          "y": 0.256
+        },
+        {
+          "x": 0.646,
+          "y": 0.221
+        },
+        {
+          "x": 0.661,
+          "y": 0.201
+        },
+        {
+          "x": 0.674,
+          "y": 0.195
+        },
+        {
+          "x": 0.695,
+          "y": 0.198
+        },
+        {
+          "x": 0.716,
+          "y": 0.206
+        },
+        {
+          "x": 0.741,
+          "y": 0.224
+        },
+        {
+          "x": 0.767,
+          "y": 0.242
+        },
+        {
+          "x": 0.793,
+          "y": 0.253
+        },
+        {
+          "x": 0.811,
+          "y": 0.256
+        },
+        {
+          "x": 0.897,
+          "y": 0.256
+        },
+        {
+          "x": 0.951,
+          "y": 0.256
+        }
+      ],
+      "breaks": [],
+      "endpoints": [],
+      "curveStyle": "smooth",
+      "segmentModes": [
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth",
+        "smooth"
+      ]
+    }
+  ],
+  "annotations": [
+    {
+      "id": "guide-plus30",
+      "kind": "guide",
+      "text": "",
+      "x": 0.45,
+      "y": 0.887,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "endStyle": "none"
+    },
+    {
+      "id": "guide-zero",
+      "kind": "guide",
+      "text": "",
+      "x": 0.359,
+      "y": 0.698,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "endStyle": "none"
+    },
+    {
+      "id": "guide-minus70",
+      "kind": "guide",
+      "text": "",
+      "x": 0.897,
+      "y": 0.256,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "endStyle": "none"
+    },
+    {
+      "id": "guide-minus80",
+      "kind": "guide",
+      "text": "",
+      "x": 0.674,
+      "y": 0.195,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "endStyle": "none"
+    },
+    {
+      "id": "guide-rising-zero",
+      "kind": "guide",
+      "text": "",
+      "x": 0.359,
+      "y": 0.698,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "vertical",
+      "endStyle": "none"
+    },
+    {
+      "id": "guide-peak",
+      "kind": "guide",
+      "text": "",
+      "x": 0.45,
+      "y": 0.887,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "vertical",
+      "endStyle": "none"
+    },
+    {
+      "id": "guide-falling-minus70",
+      "kind": "guide",
+      "text": "",
+      "x": 0.628,
+      "y": 0.256,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "vertical",
+      "endStyle": "none"
+    },
+    {
+      "id": "guide-trough",
+      "kind": "guide",
+      "text": "",
+      "x": 0.674,
+      "y": 0.195,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "vertical",
+      "endStyle": "none"
+    },
+    {
+      "id": "guide-time4",
+      "kind": "guide",
+      "text": "",
+      "x": 0.897,
+      "y": 0.256,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "vertical",
+      "endStyle": "none"
+    },
+    {
+      "id": "stimulus",
+      "kind": "text",
+      "text": "자극",
+      "x": 0,
+      "y": -0.247,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "endStyle": "none",
+      "fontSizePx": 39
+    },
+    {
+      "id": "membrane-unit",
+      "kind": "text",
+      "text": "(mV)",
+      "x": -0.25,
+      "y": 0.655,
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "horizontal",
+      "endStyle": "none",
+      "fontSizePx": 39
+    },
+    {
+      "id": "stimulus-arrow",
+      "kind": "arrow",
+      "text": "",
+      "x": 0,
+      "y": -0.2,
+      "to": {
+        "x": 0,
+        "y": -0.118
+      },
+      "axis": "y",
+      "coordinateSpace": "normalized",
+      "orientation": "vertical",
+      "endStyle": "none",
+      "strokeWidth": 0.2
+    }
+  ],
+  "review": [
+    {
+      "path": "axes",
+      "reason": "축 끝의 범위 수치는 명시되지 않았다. x.max와 y.min/max는 눈금 간격과 plotBox로부터 추정한 표시 범위이다. 가로축은 막전위 0 mV가 아니라 아래쪽 표시 경계에 위치한다.",
+      "sourceBox": {
+        "x": 145,
+        "y": 24,
+        "w": 394,
+        "h": 350
+      }
+    },
+    {
+      "path": "annotations[2]",
+      "reason": "−70 mV 수평 점선의 오른쪽 부분이 회복된 곡선과 겹쳐 정확한 끝 위치를 구분하기 어렵다.",
+      "sourceBox": {
+        "x": 389,
+        "y": 273,
+        "w": 115,
+        "h": 17
+      }
+    },
+    {
+      "path": "annotations[9]",
+      "reason": "‘자극’ 위에서 시간 0을 향하는 짧은 위쪽 실선 화살표가 있다. 제공된 표기 스키마에는 독립 화살표 형식이 없어 별도 복원 확인이 필요하다.",
+      "sourceBox": {
+        "x": 142,
+        "y": 405,
+        "w": 19,
+        "h": 34
+      }
+    },
+    {
+      "path": "series.0",
+      "reason": "관찰한 모양입니다. 확정 데이터와 구별하여 검수하십시오."
+    },
+    {
+      "path": "annotations.0",
+      "reason": "표기의 위치는 표시 좌표 관찰입니다. 원본과 대조하십시오."
+    },
+    {
+      "path": "annotations.1",
+      "reason": "표기의 위치는 표시 좌표 관찰입니다. 원본과 대조하십시오."
+    },
+    {
+      "path": "annotations.2",
+      "reason": "표기의 위치는 표시 좌표 관찰입니다. 원본과 대조하십시오."
+    },
+    {
+      "path": "annotations.3",
+      "reason": "표기의 위치는 표시 좌표 관찰입니다. 원본과 대조하십시오."
+    },
+    {
+      "path": "annotations.4",
+      "reason": "표기의 위치는 표시 좌표 관찰입니다. 원본과 대조하십시오."
+    },
+    {
+      "path": "annotations.5",
+      "reason": "표기의 위치는 표시 좌표 관찰입니다. 원본과 대조하십시오."
+    },
+    {
+      "path": "annotations.6",
+      "reason": "표기의 위치는 표시 좌표 관찰입니다. 원본과 대조하십시오."
+    },
+    {
+      "path": "annotations.7",
+      "reason": "표기의 위치는 표시 좌표 관찰입니다. 원본과 대조하십시오."
+    },
+    {
+      "path": "annotations.8",
+      "reason": "표기의 위치는 표시 좌표 관찰입니다. 원본과 대조하십시오."
+    },
+    {
+      "path": "annotations.9",
+      "reason": "표기의 위치는 표시 좌표 관찰입니다. 원본과 대조하십시오."
+    }
+  ],
+  "coordinateMode": "observed",
+  "axisPlacement": {
+    "x": {
+      "mode": "fraction",
+      "value": 0
+    },
+    "y": {
+      "mode": "fraction",
+      "value": 0
+    }
+  },
+  "style": {
+    "fontSizePx": 39,
+    "labelWeight": 300,
+    "strokeWidth": 0.32,
+    "guideStyle": {
+      "strokeWidth": 0.15,
+      "dashLength": 1.2,
+      "dashGap": 0.9
+    }
+  },
+  "provenance": {
+    "kind": "source-reviewed-graph-capability-fixture",
+    "rawObservationSchema": "5e.graph-reconstruction/v1",
+    "modelCurvePointsUnchanged": true,
+    "modelCallsThisRevision": 0,
+    "sourceReviewAdditions": [
+      "표시 좌표 모드",
+      "원본 눈금·축 제목 위치",
+      "글자·선 스타일",
+      "하단 시간축",
+      "세로 제목·단위 분리",
+      "자극 화살표"
+    ]
+  }
+}

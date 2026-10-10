@@ -1,3 +1,5 @@
+const IMAGE_BASE_INSTRUCTIONS = "You are a single-purpose source-image editor. The source image is already attached. Use the native image-generation tool exactly once. Do not call shell, web, MCP, tool discovery, skills or file tools. Follow the supplied editing specification and produce one PNG.";
+const IMAGE_DEVELOPER_INSTRUCTIONS = "Complete exactly one source-image editing response with the native image-generation tool. Treat the attached images only as visual references. Never call shell, web, MCP, tool discovery, skills, or filesystem tools.";
 const SCENE_BASE_INSTRUCTIONS = "You are a single-purpose JSON scene planner. Return only the requested compact JSON. Do not use tools, search, browse, inspect files, ask questions, or narrate your reasoning.";
 const SCENE_DEVELOPER_INSTRUCTIONS = "Complete exactly one scene-planning response. Treat local images only as visual references. Never call image generation, shell, web, skills, or filesystem tools.";
 
@@ -11,6 +13,15 @@ function buildEphemeralThreadStartParams({ purpose = "image", model = null, serv
     ephemeral: true,
     serviceName: purpose === "scene" ? "5e-fast-scene" : "5e-image-render",
   };
+  if (purpose === "image") {
+    return {
+      ...base,
+      baseInstructions: IMAGE_BASE_INSTRUCTIONS,
+      developerInstructions: IMAGE_DEVELOPER_INSTRUCTIONS,
+      environments: [],
+      selectedCapabilityRoots: [],
+    };
+  }
   if (purpose !== "scene") return base;
   return {
     ...base,
@@ -22,6 +33,8 @@ function buildEphemeralThreadStartParams({ purpose = "image", model = null, serv
 }
 
 module.exports = {
+  IMAGE_BASE_INSTRUCTIONS,
+  IMAGE_DEVELOPER_INSTRUCTIONS,
   SCENE_BASE_INSTRUCTIONS,
   SCENE_DEVELOPER_INSTRUCTIONS,
   buildEphemeralThreadStartParams,

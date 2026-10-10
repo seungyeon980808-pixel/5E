@@ -1,0 +1,226 @@
+{
+  "editorSdkVersion": "0.8.7",
+  "source": "https://edwardkim.github.io/rhwp/",
+  "retrievedOn": "2026-10-08",
+  "modifications": [
+    "Use relative WASM/preload paths",
+    "Remove upstream PWA registration and app icons",
+    "Use relative icon sprite paths in stylesheet"
+  ],
+  "files": [
+    {
+      "path": "assets/canvaskit-renderer-qwNCZ9x6.js",
+      "sha256": "3b7efb4d890bbdc9d59780d43a6041ac37b88d3dbb76682a0c31983c2b2e6788",
+      "bytes": 247494
+    },
+    {
+      "path": "assets/index-CJqHfaJX.css",
+      "sha256": "77febd44c7840da15121989e64d344123d5d353b9d7c4ecc66f44ac8d544110e",
+      "bytes": 113835
+    },
+    {
+      "path": "assets/index-zNX2Cct6.js",
+      "sha256": "b78ebda7b1f3b521485d4109f5fe2d1faefb9f495b4481e73b17c7401d1b19f2",
+      "bytes": 2116313
+    },
+    {
+      "path": "assets/rhwp_bg-BkVWMBaR.wasm",
+      "sha256": "54cf95014312e605c51b98eb9021247ea79ef2bbd0a7080e11c011d0246e3989",
+      "bytes": 11821756
+    },
+    {
+      "path": "assets/studio-plugin-7wns0tfd.js",
+      "sha256": "3523819ac5b02bf6ae7cbe43d818ac0abaacf2dd09e03594c5b3172ed835e828",
+      "bytes": 54381
+    },
+    {
+      "path": "fonts/Cafe24Ssurround-v2.0.woff2",
+      "sha256": "2d726dbf8863d66e6d5cf56e2532c5d14d8a4b514461b565c513c1da6ae2f41a",
+      "bytes": 391868
+    },
+    {
+      "path": "fonts/Cafe24Supermagic-Regular-v1.0.woff2",
+      "sha256": "65434a217b9532867a1fe41417d0ad51210a60027a51dca40748aafed48ef0ba",
+      "bytes": 765684
+    },
+    {
+      "path": "fonts/D2Coding-Regular.woff2",
+      "sha256": "358df12fdf9b65d0fd31554a826f97af4eeefd96a047297a28a856315fe872c1",
+      "bytes": 1485508
+    },
+    {
+      "path": "fonts/GowunBatang-Regular.woff2",
+      "sha256": "0c6a288aa0c12081dccde769c312f71f290b353243747dd24fb8c57f94f01d72",
+      "bytes": 495092
+    },
+    {
+      "path": "fonts/GowunDodum-Regular.woff2",
+      "sha256": "349c098a6181952dab564bf891b8efcacfbf855adc28d40b4aa2e5937c101c56",
+      "bytes": 406476
+    },
+    {
+      "path": "fonts/Happiness-Sans-Bold.woff2",
+      "sha256": "54becdfd4f7f58e872eba8fbc67778e29cff94c1cd03f9a0ebadfbe482b4aba0",
+      "bytes": 336604
+    },
+    {
+      "path": "fonts/Happiness-Sans-Regular.woff2",
+      "sha256": "4fc37e7663c3d440b5a6af6938bde0c6618b666553ed521745f3362050bd4988",
+      "bytes": 291556
+    },
+    {
+      "path": "fonts/Happiness-Sans-Title.woff2",
+      "sha256": "057e6821a062d9192964d99cf058fe6608230e9e4a464c9652b3756e02460e22",
+      "bytes": 348700
+    },
+    {
+      "path": "fonts/HappinessSansVF.woff2",
+      "sha256": "cd29de60acf8c466938400561fcbfb14812dd5981f4f78b0c8da74609682423c",
+      "bytes": 613412
+    },
+    {
+      "path": "fonts/KoPubWorld-Batang-Bold.woff2",
+      "unavailable": "HTTP Error 404: Not Found"
+    },
+    {
+      "path": "fonts/KoPubWorld-Batang-Light.woff2",
+      "unavailable": "HTTP Error 404: Not Found"
+    },
+    {
+      "path": "fonts/KoPubWorld-Batang-Medium.woff2",
+      "unavailable": "HTTP Error 404: Not Found"
+    },
+    {
+      "path": "fonts/KoPubWorld-Dotum-Bold.woff2",
+      "unavailable": "HTTP Error 404: Not Found"
+    },
+    {
+      "path": "fonts/KoPubWorld-Dotum-Light.woff2",
+      "unavailable": "HTTP Error 404: Not Found"
+    },
+    {
+      "path": "fonts/KoPubWorld-Dotum-Medium.woff2",
+      "unavailable": "HTTP Error 404: Not Found"
+    },
+    {
+      "path": "fonts/LatinModernMath-Regular.woff2",
+      "sha256": "1177d9025d1e797c54b3c7676976365abd90f903423091de7f0f4e7a4b372162",
+      "bytes": 391760
+    },
+    {
+      "path": "fonts/NanumGothic-Regular.woff2",
+      "sha256": "4a000e3bca1298c43c70dc97447e537a27e0a8c1585f410be57dfeff06d3f713",
+      "bytes": 340688
+    },
+    {
+      "path": "fonts/NanumGothicCoding-Regular.woff2",
+      "sha256": "87ab32ebaf4e1f803099ad1d096744092c8f985b2e08a24e2304f5ac05d81d6a",
+      "bytes": 521332
+    },
+    {
+      "path": "fonts/NanumMyeongjo-Regular.woff2",
+      "sha256": "561e9193a6e848b3f7ce9f8f5907310a13e175bc9d69e77da2842a7517a97c16",
+      "bytes": 502068
+    },
+    {
+      "path": "fonts/NotoSansKR-Bold.woff2",
+      "sha256": "dab3d492daa687386292cff1499225db580f931f800ee0d124eb0636378c6020",
+      "bytes": 559192
+    },
+    {
+      "path": "fonts/NotoSansKR-ExtraLight.woff2",
+      "sha256": "3b5cac6af73fd94fa91ded10f6cfc54c7ce52189986fe7ca6fd457208f1d3673",
+      "bytes": 592496
+    },
+    {
+      "path": "fonts/NotoSansKR-Regular.woff2",
+      "sha256": "d1bf8649914a4fe9477a8735bf056383e44e466141fb3d61897252e06d900c1a",
+      "bytes": 562220
+    },
+    {
+      "path": "fonts/NotoSerifKR-Bold.woff2",
+      "sha256": "504d6af6abb882acd912d47bafa383c4512a6c8c33635e4e8fb37111d9310941",
+      "bytes": 1033556
+    },
+    {
+      "path": "fonts/NotoSerifKR-Regular.woff2",
+      "sha256": "c9a1e3ac69994d680883b53b1fd83d520733b704792522a932bfaa276117de45",
+      "bytes": 971428
+    },
+    {
+      "path": "fonts/Pretendard-Black.woff2",
+      "sha256": "c5fd0c3568fc1368a3edc0d0fbb36df029935954276e3573451b3bae09e27296",
+      "bytes": 800404
+    },
+    {
+      "path": "fonts/Pretendard-Bold.woff2",
+      "sha256": "4609c3356e536fafe38f4add0daeceb3d8595d3057bce13c428c33ddbd43d362",
+      "bytes": 791156
+    },
+    {
+      "path": "fonts/Pretendard-ExtraBold.woff2",
+      "sha256": "dd7c1e156f508eb962acc7a33a7a1896d1e0b71e11156fad96e731689ceb6dc3",
+      "bytes": 793540
+    },
+    {
+      "path": "fonts/Pretendard-ExtraLight.woff2",
+      "sha256": "df43dc9165dff4542114674bcd8b79b7daae6dec004004586d5d076fec6fe2aa",
+      "bytes": 734392
+    },
+    {
+      "path": "fonts/Pretendard-Light.woff2",
+      "sha256": "b7426635cce2ea2b95c9c802e43fba1c620e0dafaf25f737c069b8b4e09fa841",
+      "bytes": 757000
+    },
+    {
+      "path": "fonts/Pretendard-Medium.woff2",
+      "sha256": "d03481330eeba0659ab5b87f25ceb504a35de377dd90a0d0aba2982eb2d05e2c",
+      "bytes": 778432
+    },
+    {
+      "path": "fonts/Pretendard-Regular.woff2",
+      "sha256": "fad853f7f47c6c8b103171e7193fa095708cdcd70850a71d93aa5379e8a61d63",
+      "bytes": 765892
+    },
+    {
+      "path": "fonts/Pretendard-SemiBold.woff2",
+      "sha256": "c863f76a7de5c1ddc1ed8b2fa794964530774592c4f31407a84e2a2ae93f17f0",
+      "bytes": 785856
+    },
+    {
+      "path": "fonts/Pretendard-Thin.woff2",
+      "sha256": "1539755224a64719d5b18406762c476db74fcc299b9e4641ca1e9812fbc7a09b",
+      "bytes": 694804
+    },
+    {
+      "path": "fonts/SourceHanSerifK-OldHangul-subset.woff2",
+      "sha256": "9e419cd16df2ea3b220aa7751320d956ac2493440ba412484d98325078f09d43",
+      "bytes": 239628
+    },
+    {
+      "path": "fonts/SpoqaHanSans-Regular.woff2",
+      "sha256": "6568bf80b50c14f2e54f56f2c07e668416f39f880baf5ea2825d315767f98f69",
+      "bytes": 275144
+    },
+    {
+      "path": "images/icon_small_ko.svg",
+      "sha256": "a0ac1200a41b6a75e9afb30cda5bb850276087d45c2f25870605888238ba9b39",
+      "bytes": 469618
+    },
+    {
+      "path": "images/icon_small_ko_dark.svg",
+      "sha256": "9d02ea0b8c1d399a89290d97613759826f19f3e3f392b6d79dcf6109e7e15fa6",
+      "bytes": 451775
+    },
+    {
+      "path": "locale-init.js",
+      "sha256": "633d47a6a53b2211cf816769f8c084b097c1b60b6ab263803d8610c0531539fa",
+      "bytes": 1342
+    },
+    {
+      "path": "theme-init.js",
+      "sha256": "5a3afcc0139187bfe509414cd60fde2a0dfea72fd72751c4e6e696cdc0f6c587",
+      "bytes": 2783
+    }
+  ]
+}

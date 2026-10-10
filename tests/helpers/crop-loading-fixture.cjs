@@ -1,8 +1,8 @@
 async function installCropFixture(page) {
-  await page.route('**/crop-fixture', route => route.fulfill({ contentType: 'text/html', body: '<html><head><link rel="stylesheet" href="/preview/css/style.css"><link rel="stylesheet" href="/preview/css/unified-library.css"></head><body></body></html>' }));
+  await page.route('**/crop-fixture', route => route.fulfill({ contentType: 'text/html', body: '<html><head><link rel="stylesheet" href="/css/style.css?v=1.7.0-four-session-integration"><link rel="stylesheet" href="/css/unified-library.css?v=1.7.0-four-session-integration"></head><body></body></html>' }));
   await page.goto(new URL('/crop-fixture', process.env.PREVIEW_URL).href);
   await page.evaluate(async () => {
-    const { createUnifiedLibraryUi } = await import('/preview/js/unified-library-ui.js');
+    const { createUnifiedLibraryUi } = await import('/js/unified-library-ui.js?v=1.7.0-four-session-integration');
     const dimensions = { 1: { width: 600, height: 800 }, 2: { width: 800, height: 400 }, 3: { width: 700, height: 1000 } };
     window.cropGates = {};
     window.holdCrop = key => {

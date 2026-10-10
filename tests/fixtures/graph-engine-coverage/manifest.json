@@ -1,0 +1,122 @@
+{
+  "manualProvenance": "MANUALLY COMPOSED engine-validation inputs. Seven previous AI observation responses are reused only as starting geometry, then explicitly edited. Scatter is manually traced from source pixels. No AI requests. Not automatic reconstruction results.",
+  "aiCalls": 0,
+  "cases": [
+    {
+      "id": "g04-b2_2023_11_04",
+      "planFile": "tests/fixtures/graph-engine-coverage/01-g04-b2_2023_11_04.json",
+      "sourceFile": "outputs/graph-unseen20-20261004/g04-b2_2023_11_04-source.png",
+      "sourceHash": "sha256:860be6763e014a71c11b26d6cf88eba1b00da23af9edb5458b748ca1e3773c57",
+      "baselineResponse": "outputs/graph-unseen20-20261004/g04-b2_2023_11_04-response.txt",
+      "manualProvenance": "Baseline observation geometry with manually composed engine feature/style settings",
+      "requiredFeatures": [
+        "curve weights",
+        "data dashes",
+        "fine guides"
+      ],
+      "nativeBuildOk": true,
+      "error": null
+    },
+    {
+      "id": "g06-c1_2023_11_11",
+      "planFile": "tests/fixtures/graph-engine-coverage/02-g06-c1_2023_11_11.json",
+      "sourceFile": "outputs/graph-unseen20-20261004/g06-c1_2023_11_11-source.png",
+      "sourceHash": "sha256:0ca5c984714b9ff2330580178bb069d22e78aece5abcd0683bc73a2c2a7e10ee",
+      "baselineResponse": "outputs/graph-unseen20-20261004/g06-c1_2023_11_11-response.txt",
+      "manualProvenance": "Baseline observation geometry with manually composed engine feature/style settings",
+      "requiredFeatures": [
+        "box",
+        "large circles",
+        "linked guides"
+      ],
+      "nativeBuildOk": true,
+      "error": null
+    },
+    {
+      "id": "g08-c2_2023_11_09",
+      "planFile": "tests/fixtures/graph-engine-coverage/03-g08-c2_2023_11_09.json",
+      "sourceFile": "outputs/graph-unseen20-20261004/g08-c2_2023_11_09-source.png",
+      "sourceHash": "sha256:0de26d7f6271dbb98bb0d537f5e3312bd847962cfff057a814d26c8670914b24",
+      "baselineResponse": "outputs/graph-unseen20-20261004/g08-c2_2023_11_09-response.txt",
+      "manualProvenance": "Baseline observation geometry with manually composed engine feature/style settings",
+      "requiredFeatures": [
+        "smooth phase boundaries",
+        "arrow size"
+      ],
+      "nativeBuildOk": true,
+      "error": null
+    },
+    {
+      "id": "g10-e1_2023_11_13",
+      "planFile": "tests/fixtures/graph-engine-coverage/04-g10-e1_2023_11_13.json",
+      "sourceFile": "outputs/graph-unseen20-20261004/g10-e1_2023_11_13-source.png",
+      "sourceHash": "sha256:ff54ad225f878e757940c22cc1d69a6d854c62774ac339b2c7ca6d6545833e9c",
+      "baselineResponse": "outputs/graph-unseen20-20261004/g10-e1_2023_11_13-response.txt",
+      "manualProvenance": "Baseline observation geometry with manually composed engine feature/style settings",
+      "requiredFeatures": [
+        "true log y",
+        "labeled markers"
+      ],
+      "nativeBuildOk": true,
+      "error": null
+    },
+    {
+      "id": "g12-e1_2022_11_10",
+      "planFile": "tests/fixtures/graph-engine-coverage/05-g12-e1_2022_11_10.json",
+      "sourceFile": "outputs/graph-unseen20-20261004/g12-e1_2022_11_10-source.png",
+      "sourceHash": "sha256:d57a1d124c12899ca2081300a7e15ae5ab4b991ec95833fb5105ed95cee8b545",
+      "baselineResponse": "outputs/graph-unseen20-20261004/g12-e1_2022_11_10-response.txt",
+      "manualProvenance": "Baseline observation geometry with manually composed engine feature/style settings",
+      "requiredFeatures": [
+        "gray bands",
+        "multiple extrema"
+      ],
+      "nativeBuildOk": true,
+      "error": null
+    },
+    {
+      "id": "g14-e2_2022_11_05",
+      "planFile": "tests/fixtures/graph-engine-coverage/06-g14-e2_2022_11_05.json",
+      "sourceFile": "outputs/graph-unseen20-20261004/g14-e2_2022_11_05-source.png",
+      "sourceHash": "sha256:7255384f24cc90275ac152ad267c1b4f380bd535e732f34fd36753405a4bad3b",
+      "baselineResponse": null,
+      "manualProvenance": "Manual approximate pixel trace; no completed prior AI response",
+      "requiredFeatures": [
+        "two scatter symbols",
+        "right axis",
+        "legend"
+      ],
+      "nativeBuildOk": true,
+      "error": null
+    },
+    {
+      "id": "g17-p2_2023_11_06",
+      "planFile": "tests/fixtures/graph-engine-coverage/07-g17-p2_2023_11_06.json",
+      "sourceFile": "outputs/graph-unseen20-20261004/g17-p2_2023_11_06-source.png",
+      "sourceHash": "sha256:10af9abcef79bc7106253094301b4e194352ddfb32960982205a53a42ad8791c",
+      "baselineResponse": "outputs/graph-unseen20-20261004/g17-p2_2023_11_06-response.txt",
+      "manualProvenance": "Baseline observation geometry with manually composed engine feature/style settings",
+      "requiredFeatures": [
+        "source-traced smooth plateau",
+        "long and short dashes"
+      ],
+      "nativeBuildOk": true,
+      "error": null
+    },
+    {
+      "id": "g18-p2_2023_11_16",
+      "planFile": "tests/fixtures/graph-engine-coverage/08-g18-p2_2023_11_16.json",
+      "sourceFile": "outputs/graph-unseen20-20261004/g18-p2_2023_11_16-source.png",
+      "sourceHash": "sha256:1e47e96c64ef6fae617f2ba75ade6ee8fa9732a4d26b63f8dcc59da1a4ae0144",
+      "baselineResponse": "outputs/graph-unseen20-20261004/g18-p2_2023_11_16-response.txt",
+      "manualProvenance": "Baseline observation geometry with manually composed engine feature/style settings",
+      "requiredFeatures": [
+        "repeated extrema",
+        "fine guides",
+        "long data dashes"
+      ],
+      "nativeBuildOk": true,
+      "error": null
+    }
+  ]
+}

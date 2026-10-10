@@ -19,7 +19,7 @@ const geometry = image => [image.x, image.y, image.w, image.h, image.rotation].j
 
 export function createCanvasStore(initial) {
   const store = createStore(initial);
-  return { ...store, update(updater) {
+  return { ...store, update(updater, change) {
     store.update(s => {
       const enabled = s.constrainImagesToArtboard;
       const previous = enabled ? new Map(s.objects.filter(o => o.type === "image").map(o => [o.id, geometry(o)])) : null;
@@ -32,6 +32,6 @@ export function createCanvasStore(initial) {
       for (const image of s.objects) {
         if (image.type === "image" && previous.get(image.id) !== geometry(image)) constrainImageToArtboard(image, s.artboard);
       }
-    });
+    }, change);
   } };
 }

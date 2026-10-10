@@ -1,0 +1,12 @@
+{
+  "source": "rhwp-typing-performance/js/ai-approved-first-png.js",
+  "baselineHead": "1e429aa5546b99baa6fd20607070673001c1ba19",
+  "promptSha256": "8d6180f311791d497469d93cbc0eff98919b0d376d84a958f2b391c475e14067",
+  "transport": {
+    "maxLongEdge": 1536,
+    "maxPixels": 2500000,
+    "preservePng": true,
+    "preferWebp": false
+  },
+  "attachmentName": "INPUT_SOURCE.png"
+}

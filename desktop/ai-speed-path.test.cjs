@@ -2,6 +2,7 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const fs = require("node:fs");
 const path = require("node:path");
+const { mainModuleUrl, runtimeConfiguration } = require("../tests/helpers/four-session-entry.cjs");
 
 test("AI image rendering uses a short fresh thread and optimized attachments", () => {
   const panel = fs.readFileSync(path.join(__dirname, "..", "js", "ai-panel.js"), "utf8");
@@ -31,7 +32,34 @@ test("the optimized modules are cache-busted by the AI panel entrypoint", () => 
   assert.match(scenePrompt, /ai-scene-fastpath\.js\?v=\d+\.\d+\.\d+[^"\s]*/);
   assert.match(scenePrompt, /ai-motif-catalog\.js\?v=\d+\.\d+\.\d+[^"\s]*/);
   assert.match(main, /ai-panel\.js\?v=\d+\.\d+\.\d+[^"\s]*/);
-  assert.ok(index.includes(`js/main.js?v=${require("../package.json").version}`));
+  // The installed package version is distinct from the shared integrated web
+  // runtime. Pin its full identity, including the query, for both entrypoints.
+  const origin = "https://unit.invalid";
+  const expectedQuery = "?v=1.7.0-four-session-integration";
+  for (const entry of ["/", "/preview/"]) {
+    const html = entry === "/" ? index : fs.readFileSync(path.join(__dirname, "..", "preview", "index.html"), "utf8");
+    const entryUrl = new URL(entry, origin).href;
+    const mainUrl = mainModuleUrl(html, entryUrl);
+    assert.equal(mainUrl, `${origin}/js/main.js${expectedQuery}`, `${entry} loads the canonical integrated entrypoint`);
+    const runtime = runtimeConfiguration({ entry }, entryUrl, mainUrl, main);
+    assert.equal(runtime.moduleBase, "/js/");
+    assert.equal(runtime.moduleQuery, expectedQuery);
+    assert.equal(runtime.stateUrl, `${origin}/js/state.js${expectedQuery}`);
+    for (const [parent, source, names] of [
+      ["main", main, ["ai-panel"]],
+      ["ai-panel", panel, ["ai-image-transport", "ai-request-plan", "ai-prompt", "ai-scene-fastpath", "ai-motif-catalog", "ai-local-asset-router", "ai-remote-input-plan", "ai-output-cache-store"]],
+      ["ai-scene-prompt", scenePrompt, ["ai-scene-fastpath", "ai-motif-catalog"]],
+    ]) {
+      for (const name of names) {
+        const imports = [...source.matchAll(/\bfrom\s*["']([^"']+)["']/g)]
+          .map(match => new URL(match[1], `${origin}/js/${parent}.js${expectedQuery}`))
+          .filter(url => url.pathname.endsWith(`/${name}.js`));
+        // Several named imports may share one URL; a different query or path
+        // would create another module identity and must still fail this check.
+        assert.deepEqual([...new Set(imports.map(url => url.href))], [`${origin}/js/${name}.js${expectedQuery}`], `${parent} uses one exact ${name} identity`);
+      }
+    }
+  }
 });
 
 test("common scientific diagrams use the local editable scene path with exact-cache and raster fallback", () => {

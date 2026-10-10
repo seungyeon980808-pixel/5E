@@ -1,0 +1,46 @@
+{
+  "id": "white-surfaces-science-tracing-v1",
+  "model": "gpt-6.1-sol",
+  "effort": "medium",
+  "fallback": false,
+  "isolatedImageProfile": true,
+  "defaultSurface": "white",
+  "grayTone": "#D9D9D9",
+  "maxGrayLevels": 1,
+  "grayPolicy": "Only source-grounded enumerated material areas; no face orientation or source photo darkness shading. Areas provided before new output.",
+  "scienceStrokes": "retain each visible scientific internal stroke and relative density, not ornamental texture",
+  "nativeHaloRatio": 0.13,
+  "imageToolsPerAttempt": 1,
+  "postgenerationPaletteFilter": false,
+  "styleTemplate": "[5e-kice-flat-style v1.0.0 experiment white-surfaces-science-tracing-v1]\n원본의 모든 위치·형상·끝점·연결·앞뒤 겹침·캔버스·여백은 고정한다. 흰 배경, 가는 검정 윤곽선, 흰 물체 면을 기본으로 한다.\n허용 회색 영역은 아래 원본 관찰 목록뿐이다. 허용 영역을 한 동일한 옅은 중성 회색 #D9D9D9로 평면 채운다. 목록 밖의 모든 물체 면은 흰색이다. 원본 재료가 검거나 면 방향이 다르다는 이유로 회색/검은 면을 만들지 않는다.\n[allowlist]\n동일 물체의 위·앞·옆면을 다른 밝기로 표현하지 않는다. 입체 음영, 그라데이션, 광택, 하이라이트, 반사띠, 그림자, 조명, 새 표면 질감은 금지한다.\n원본에 이미 보이는 실제 내부 과학 구조선과 경계·세포 윤곽·조직 선조·여러 도선·해칭·수면·눈금·과학적 방향 화살표는 각각의 경로와 상대 선 밀도까지 그대로 트레이싱한다. 실제 세밀한 과학 구조선을 장식 질감으로 분류하여 비우거나 몇 가닥으로 축약하지 않는다. 보이지 않는 선·숨은 연결·표준 구조는 발명하지 않는다.\n[END 5e-kice-flat-style]",
+  "perSourceFacts": {
+    "allowlist": {
+      "textbook-nephron-detail": "원본 붉은 혈관과 내부 모세혈관 다발의 보이는 물리 벽 영역. 관 내강·주머니·세포 경계면·주변 배경은 흰색.",
+      "textbook-plate-structure": "원본 맨틀 영역과 원본 바닷물 영역. 대륙 지각·해양 지각·지표는 흰색. 판 하단의 실제 흰 점선 경계는 제거하지 않고 회색 면 위 원래 경로와 대시 간격 그대로 남긴다.",
+      "textbook-light-refraction": "원본 수면 아래 물 영역. 공기와 배경은 흰색. 물의 경계, 광선·법선·각도 표시는 실제 과학 구조선으로 보존한다."
+    },
+    "science": {
+      "textbook-nephron-detail": "원본 혈류 화살표 2개와 절단면의 세포 단면 고리는 실제 과학 구조다. 토리의 원래 여러 혈관 굽힘과 앞뒤 교차를 그대로 유지하며 표준적인 새 혈관 매듭을 설계하지 않는다. 보라색 확대 점선 가이드는 교재 주석으로 제거한다.",
+      "textbook-plate-structure": "원본 흰 점선의 판 하단 경계, 수직 판 두께 양끝 화살표, 수직 맨틀 범위 화살표와 깊이 눈금은 과학 표식이다. 라벨 지시선으로 착각해 지우지 않는다. 지표의 보이는 형상과 지각/맨틀/판의 관계를 원본대로 유지한다.",
+      "textbook-light-refraction": "원본 광선 2개와 방향 화살표 2개, 원본 법선의 실제 길이, 수면, 입사/굴절 각도 호와 직각 표식을 그대로 유지한다. 아래쪽으로 법선을 새로 늘리거나 새로운 호를 만들지 않는다."
+    }
+  },
+  "schemaVersion": 1,
+  "sourceLabelPolicyVersion": 4,
+  "reviewStyleContractVersion": "1.1.0",
+  "status": "User-approved visual checkpoint; experimental recipe, not a guarantee of geometry or automatic acceptance",
+  "validation": {
+    "frozenAdditionalCases": 3,
+    "practicalStylePass": 3,
+    "independentOverallVisualPass": 1,
+    "automaticAccepted": 0,
+    "correctiveRegressionCases": 2,
+    "repeatStabilityVerified": false
+  },
+  "provenance": {
+    "localEvidence": "harness-search-20261004",
+    "frozenSettingsSha256": "b71f0bb0e4f4b304dc7ad5fa6c00dfbd791cfdfac298fae68a26e1e088973043",
+    "imageBackendRevision": "not exposed",
+    "historicalRunsRetainActualPolicyVersions": true
+  }
+}

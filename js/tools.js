@@ -639,6 +639,9 @@ function setupDrawing() {
       if (_ho && _ho.type === "anglearc") {
         openAngleArcLabelEditor(hitId); return;
       }
+      if (_ho && _ho.type === "funcgraph" && _ho.planeId) {
+        openGraphModal(_ho.planeId,'func');return;
+      }
       if (_ho && _ho.type === "coordplane") {
         // 그래프 도구로 만든 평면(richLabels)은 통합 그래프 모달(좌표+계열 한 화면)로,
         // 그 외(함수입력이 만든 구형 평면)는 기존 상세 편집 모달로 재편집한다.

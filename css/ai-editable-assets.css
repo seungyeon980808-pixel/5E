@@ -39,7 +39,7 @@
 .aea-status { min-height: 20px; }
 .aea-footer { border-top: 1px solid var(--border); padding-top: 12px; }
 .aea-dialog .aea-primary { background: var(--btn-tool-bg); color: var(--text-primary); border-color: var(--border); font-weight: 600; }
-.aea-dialog .aea-primary:hover:not(:disabled) { background: var(--accent); color: #fff; border-color: var(--accent); }
+.aea-dialog .aea-primary:hover:not(:disabled) { background: var(--control-selected-bg); color: var(--control-selected-text); border-color: var(--accent); }
 .ai-separated-mode { display: grid; grid-template-columns: var(--ai-option-label-width, 70px) minmax(0, 1fr); gap: 5px var(--ai-option-gap, 8px); align-items: center; margin: 7px 0; color: var(--text-label); font-size: 12px; }
 .ai-separated-mode select { min-width: 0; height: 32px; padding: 0 8px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg-input); color: var(--text-primary); font: inherit; font-size: 13px; }
 .ai-separated-mode small { grid-column: 2; color: var(--text-label); font-size: 9px; line-height: 1.45; }

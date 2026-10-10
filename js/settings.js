@@ -258,7 +258,7 @@ function prefStyles() {
                       background:var(--bg-input); color:var(--text-secondary); cursor:pointer;
                       font:var(--shell-control-font-weight) var(--settings-preset-font-size)/1 "IBM Plex Mono",monospace; }
     .pref-scale-btn:hover { color:var(--text-primary); background:var(--btn-tool-hover); }
-    .pref-scale-btn[aria-pressed="true"] { color:#fff; border-color:var(--accent); background:var(--accent); }
+    .pref-scale-btn[aria-pressed="true"] { color:var(--control-selected-text); border-color:var(--control-selected-border); background:var(--control-selected-bg); }
     .pref-scale-btn:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
     .pref-note { margin:0 0 var(--settings-content-gap); font-size:var(--shell-control-font-size); line-height:1.6; color:var(--text-secondary); word-break:keep-all; }
     .pref-actions { display:flex; flex-wrap:wrap; gap:var(--shell-control-gap); margin-bottom:var(--settings-content-gap); }
@@ -401,7 +401,7 @@ function openShortcutDialog() {
   const mod = mac ? "⌘" : "Ctrl";
   const groups = [
     ["설정", settingsShortcutRows()],
-    ["파일", [["프로젝트 저장", `${mod}+S`], ["이미지로 내보내기", mac ? "⌥P" : "Alt+P"]]],
+    ["파일", [["프로젝트 저장", `${mod}+S`], ["이미지로 내보내기", mac ? "⌥P" : "Alt+P"], ["빠른 캡처", mac ? "⌥C" : "Alt+C"]]],
     ["편집", [["실행 취소", `${mod}+Z`], ["다시 실행", `${mod}+Shift+Z`], ["복사", `${mod}+C`], ["붙여넣기", `${mod}+V`], ["삭제", "Delete"]]],
     ["도구", [["선택", "V"], ["회전", "R"], ["타원", "O"], ["사각형", "S"], ["직선", "L"], ["꺾은선", "P"], ["곡선", "C"], ["텍스트", "T"]]],
     ["검색·명령", [["오브젝트 검색", `${mod}+F`], ["명령 팔레트", `${mod}+K`]]],

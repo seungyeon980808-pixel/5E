@@ -1,0 +1,42 @@
+{
+  "schema": "5e.graph-reconstruction/v1",
+  "source": {
+    "id": "assets/exam-library/images/c2_2024_09_03.png",
+    "hash": "c748425e80e66f4b1b66f45bee6043322286f58ea07d26635003e21b0882708a",
+    "width": 493,
+    "height": 425,
+    "plotBox": {
+      "x": 85,
+      "y": 17,
+      "w": 392,
+      "h": 350
+    }
+  },
+  "axes": {
+    "x": {
+      "scale": "unknown",
+      "title": "온도",
+      "unit": "℃",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    "y": {
+      "scale": "unknown",
+      "title": "밀도",
+      "unit": "",
+      "min": null,
+      "max": null,
+      "step": null
+    }
+  },
+  "series": [],
+  "annotations": [],
+  "review": [
+    {
+      "path": "variant",
+      "reason": "실제 원본의 수동 관찰: y축 생략 물결선, A/B/C 점, −4 표기. 축 수치와 구간 대응은 확정하지 않음. AI 호출 결과 아님."
+    }
+  ],
+  "variant": "axis-break"
+}

@@ -1,9 +1,11 @@
+import { buildFiveEProject, parseFiveEProject } from './fivee-project.js?v=1.7.0-four-session-integration';
+import { validateAnnotationPatch } from "./rhwp-exam-annotations.js?v=1.7.0-four-session-integration";
+import { readEditablePng, validateFigureRender, EDITABLE_PNG_MAX_BYTES } from "./editable-png.js?v=1.7.0-four-session-integration";
 /* ===== PROJECT I/O (save / open editable 5E project source) ===== */
 //
-// This is the *editable source* format — the data needed to reconstruct the
-// drawing — and is separate from image export (built later). We serialize only
-// the persistent drawing data; transient session state (undo/redo, selection,
-// active tool/layer, viewBox) is deliberately NOT saved.
+// The .5e package keeps editable drawing data, workspace view/selection and AI
+// history. Connected exam projects also include the document and committed
+// image sources alongside unapplied drafts. Undo stacks remain session-only.
 //
 // Groups are NOT stored: each object already carries `groupId`, and groups are
 // derived from it when a page is loaded or switched. groupId is the single
@@ -46,9 +48,9 @@ const SCHEMA_VERSION = "0.17";
 // Default artboard size for files saved before the artboard field existed.
 const DEFAULT_ARTBOARD = { w: 90, h: 60 };
 
-// The .5e container is UTF-8 JSON so project files stay inspectable and old
-// .json saves remain readable. Only the user-facing extension changes.
-const PROJECT_FILE_ACCEPT = ".5e,.json,application/json";
+// New .5e files use the common ZIP container; legacy UTF-8 JSON and old
+// Legacy JSON .5e and .json files remain readable alongside the ZIP package.
+const PROJECT_FILE_ACCEPT = ".5e,.5exam,.json,application/json";
 const APPARATUS_TEMPLATE_IDS = {
   wire: "E001",
   compass: "E002",
@@ -267,13 +269,13 @@ function migrateObjectList(objects) {
       }
       if (next.type === "funcgraph") {
         // 함수 그래프(§3-2): points[]는 월드 mm로 구운 캐시(렌더 실체). planeId는
-        // 쓰기 경로(재샘플·평행이동)에서만 참조. 열린 스트로크(closed:false 고정).
+        // 쓰기 경로(재샘플·평행이동)에서만 참조. 영역 그래프의 닫힌 경로도 보존.
         next.expr = next.expr ?? "";
         next.domainMin = next.domainMin ?? -5;
         next.domainMax = next.domainMax ?? 5;
         next.planeId = next.planeId ?? null;
         next.points = Array.isArray(next.points) ? next.points : [];
-        next.closed = false;
+        next.closed = next.closed === true;
         next.strokeLevel = next.strokeLevel ?? 0;
         next.strokeWidth = next.strokeWidth ?? 0.2;
         next.dashLength = next.dashLength ?? 0;
@@ -300,10 +302,24 @@ function sanitizeArtboard(artboard) {
     : { ...DEFAULT_ARTBOARD };
 }
 function sanitizeMeta(meta) {
-  return {
+  const result = {
     number: meta && typeof meta.number === "string" ? meta.number : "",
     points: meta && typeof meta.points === "string" ? meta.points : "",
+    ...(meta?.examLink && /^[a-zA-Z0-9_-]{1,80}$/.test(meta.examLink.tabId) && /^[a-zA-Z0-9_-]{1,80}$/.test(meta.examLink.assetId)
+      ? {examLink:{tabId:meta.examLink.tabId,assetId:meta.examLink.assetId}} : {}),
+    ...(/^[a-zA-Z0-9_-]{1,80}$/.test(meta?.examRevisionId || '') ? {examRevisionId:meta.examRevisionId} : {}),
   };
+  if(result.examLink){
+    // The ordinary drawing migration must retain exam export/layout drafts.
+    // Validate before copying so malformed project metadata fails atomically.
+    for(const key of ['examRender','examDraftRender'])if(meta[key]!==undefined){
+      if(meta[key]!==null)validateFigureRender(meta[key]);
+      result[key]=meta[key]===null?null:JSON.parse(JSON.stringify(meta[key]));
+    }
+    if(meta.examEditScope!==undefined){if(!['source','annotations'].includes(meta.examEditScope))throw new Error('그림 편집 이력이 올바르지 않습니다.');result.examEditScope=meta.examEditScope;}
+    if(meta.examAnnotationBaseline!==undefined){validateAnnotationPatch(meta.examAnnotationBaseline,meta.examAnnotationBaseline);result.examAnnotationBaseline=JSON.parse(JSON.stringify(meta.examAnnotationBaseline));}
+  }
+  return result;
 }
 
 let _loadSeq = 0;
@@ -377,16 +393,25 @@ export function serialize(s) {
 }
 
 /* Native Save As opens directly; unsupported browsers confirm a download name. */
+let portableProjectIO = {};
+export function configurePortableProjectIO(value) { portableProjectIO = value; }
 export async function saveProject(state) {
   if (savingProject) return { kind: "cancelled" };
   savingProject = true;
   try {
     let filename = timestampProjectFilename();
+    // Open the native picker while the click still carries user activation.
+    const handlePromise=!window.fiveEDesktop?.project?.saveBytes && window.showSaveFilePicker ? window.showSaveFilePicker({suggestedName:filename,types:[{description:"5E 프로젝트 파일",accept:{"application/zip":[".5e"]}}]}) : null;
+    if(handlePromise) void handlePromise.catch(()=>{});
     const statusToken = captureProjectStatus(state);
     const json = JSON.stringify(serialize(state.get()), null, 2);
-    const blob = new Blob([json], { type: "application/json" });
-    if (window.fiveEDesktop?.project?.save) {
-      const outcome = await window.fiveEDesktop.project.save({ json, suggestedName: filename });
+    const examBlob = await portableProjectIO.saveExam?.();
+    const workspace = !examBlob && portableProjectIO.snapshot ? await portableProjectIO.snapshot() : undefined;
+    const drawing=workspace?.drawing || JSON.parse(json);
+    const {drawing:workspaceDrawing,...context}=workspace || {};
+    const blob = examBlob || buildFiveEProject({kind:"drawing",drawing,...(workspace?{workspace:context}:{})});
+    if (window.fiveEDesktop?.project?.saveBytes) {
+      const outcome = await window.fiveEDesktop.project.saveBytes({ bytes:Array.from(new Uint8Array(await blob.arrayBuffer())), suggestedName: filename });
       if (outcome?.kind === "failed") throw new Error('파일을 기록하지 못했습니다.');
       if (outcome?.kind === "saved") {
         markProjectStatus(state, statusToken, "file");
@@ -394,10 +419,7 @@ export async function saveProject(state) {
       return outcome;
     }
     if (window.showSaveFilePicker) {
-      const handle = await window.showSaveFilePicker({
-        suggestedName: filename,
-        types: [{ description: "5E 프로젝트 파일", accept: { "application/json": [".5e"] } }],
-      });
+      const handle = await handlePromise;
       const writable = await handle.createWritable();
       await writable.write(blob);
       await writable.close();
@@ -663,6 +685,11 @@ export function applyLoaded(state, data) {
 
 /* ----- openProject: read a .5e (or legacy .json) file and load it into state ----- */
 function openProject(state, file) {
+  const png = /\.png$/i.test(file.name);
+  if (png && file.size > EDITABLE_PNG_MAX_BYTES) {
+    void showAlert('원본 포함 PNG는 최대 64 MiB까지 열 수 있습니다.', { title: "프로젝트 파일 용량 초과" });
+    return;
+  }
   const executable = /\.exe$/i.test(file.name);
   if (executable && file.size > 64 * 1024 * 1024) { alert('프로젝트 실행 파일이 너무 큽니다.'); return; }
   if (!executable) {
@@ -675,8 +702,16 @@ function openProject(state, file) {
   const reader = new FileReader();
   reader.onload = async () => {
     try {
-      const json = executable ? await extractWindowsProjectSource(reader.result) : reader.result;
-      const data = prepareLoadedProject(JSON.parse(json));
+      const json = executable ? await extractWindowsProjectSource(reader.result) : null;
+      const figure = png ? readEditablePng(reader.result, prepareLoadedProject) : null;
+      if (png && !figure) throw new Error("이 PNG에는 5E 원본이 없습니다. 이미지 불러오기로 넣어주세요.");
+      const portable = !png && !executable ? parseFiveEProject(reader.result,prepareLoadedProject) : null;
+      if (!png && !executable && (!portable || portable.kind === 'exam')) {
+        if (!portableProjectIO.openExam) throw new Error('시험지 작업 공간을 준비해주세요.');
+        await portableProjectIO.openExam(new Uint8Array(reader.result));return;
+      }
+      const data = png ? figure.source : executable ? JSON.parse(json) : portable.drawing;
+      prepareLoadedProject(data);
 
       // 파일이 유효하다고 확인된 뒤에만 묻는다(깨진 파일은 확인창 없이 바로 에러).
       // applyLoaded는 undoStack까지 비워 되돌릴 수 없는 '대체'다 — 폴더에 섞여 있던
@@ -688,7 +723,15 @@ function openProject(state, file) {
       );
       if (!ok) return;
 
-      applyLoaded(state, data);
+      if (png && portableProjectIO.restore) {
+        const context = figure.context;
+        await portableProjectIO.restore({ drawing:data,
+          ...(context ? {viewBox:context.viewBox,selectedIds:context.selectedIds} : {}),
+          ...(context?.ai ? {ai:{workspaces:[context.ai.snapshot],activeWorkspace:0}} : {}),
+        });
+      }
+      else if (portable?.workspace && portableProjectIO.restore) await portableProjectIO.restore(portable.workspace);
+      else applyLoaded(state, data);
       markProjectStatus(state, captureProjectStatus(state), "file");
     } catch (err) {
       // On any failure, do NOT corrupt current state — just warn.
@@ -696,8 +739,7 @@ function openProject(state, file) {
     }
   };
   reader.onerror = () => alert("파일을 읽는 중 오류가 발생했습니다.");
-  if (executable) reader.readAsArrayBuffer(file);
-  else reader.readAsText(file);
+  reader.readAsArrayBuffer(file);
 }
 
 /* ----- image import: file-picker + drag-and-drop helper ----- */
@@ -814,7 +856,8 @@ function initProjectShortcuts(state, fileInput) {
 export function initProjectFileOpening(state, ready) {
   initProjectLaunch({ state, ready, prepare: prepareLoadedProject, apply: applyLoaded,
     needsConfirm: () => initProjectStatus(state, serialize).hasUnsavedWork(),
-    mark: () => markProjectStatus(state, captureProjectStatus(state), 'file') });
+    mark: () => markProjectStatus(state, captureProjectStatus(state), 'file'),
+    openFile: async payload => {if(payload.bytes) openProject(state,new File([new Uint8Array(payload.bytes)],payload.name || '프로젝트.5e'));} });
 }
 
 export function initProjectIO(state, svg) {
@@ -849,7 +892,7 @@ export function initProjectIO(state, svg) {
   // Hidden file input for 5E projects. Legacy .json files remain supported.
   const fileInput = document.createElement("input");
   fileInput.type = "file";
-  fileInput.accept = PROJECT_FILE_ACCEPT + ',.exe';
+  fileInput.accept = PROJECT_FILE_ACCEPT + ',.exe,.png';
   fileInput.style.display = "none";
   document.body.appendChild(fileInput);
 
@@ -973,7 +1016,7 @@ export function initProjectIO(state, svg) {
       if (!file) return;
       // 5E 프로젝트 파일과 기존 JSON 프로젝트 파일도 드래그앤드랍 지원.
       // 일부 OS에서 사용자 정의 확장자의 MIME이 비어 있으므로 확장자도 함께 본다.
-      if (file.type === "application/json" || /\.(?:5e|json)$/i.test(file.name) || /\.exe$/i.test(file.name)) {
+      if (file.type === "application/json" || /\.(?:5e|5exam|json)$/i.test(file.name) || /\.exe$/i.test(file.name)) {
         openProject(state, file);
         return;
       }
