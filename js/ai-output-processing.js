@@ -1,5 +1,38 @@
 import { BACKGROUND_POLICIES } from "./image-background-options.js?v=1.7.0-four-session-integration";
 
+// Local processing never changes a bound label/scoped/graph result.
+// Null fields are ordinary historical serialization; partial or false metadata
+// still marks an unknown modern contract and must remain RAW.
+const BOUND_FIELDS = ['imageLabelWorkflow','sourceLabelPlan','labelPlan','editableDraft',
+  'targetPlacement','sourceSha256','candidateSha256','planSha256','sourceFrame',
+  'candidateFrame','finalLabelComposite','labelVerificationPreview','workflowMetrics',
+  'verifiedCandidateData','graphResult','nativeGraph','sceneResult'];
+export function hasBoundImageOutput(item) {
+  return BOUND_FIELDS.some(key => item?.[key] != null)
+    || item?.reviewState === 'scoped-applied'
+    || (item?.scopedEditHistory != null
+      && (!Array.isArray(item.scopedEditHistory) || item.scopedEditHistory.length > 0));
+}
+export function isHistoricalPngLocalResult(item) {
+  return item?.kind === 'generated' && typeof item.data === 'string'
+    && item.data.startsWith('data:image/png;base64,') && !hasBoundImageOutput(item);
+}
+export function requiresRawImageOutput(item) {
+  return hasBoundImageOutput(item)
+    || (item?.kind === 'generated' && !isHistoricalPngLocalResult(item));
+}
+export function canChooseLocalOutput(item, key, value, {
+  mode = 'pro', busy = false, readOnly = false, separationMode = 'off',
+} = {}) {
+  if (busy || readOnly || (item && !isHistoricalPngLocalResult(item))) return false;
+  // A source without a result retains only the fixed labeler's safe choices.
+  const advanced = Boolean(item) && mode === 'pro';
+  if (key === 'background') return separationMode === 'off'
+    && (advanced ? ['preserve','connected','all-near-white'] : ['preserve','connected']).includes(value);
+  if (key === 'objects') return (advanced ? ['off','auto','grid','manual'] : ['off','auto']).includes(value);
+  return false;
+}
+
 export const DEFAULT_IMAGE_OUTPUT_OPTIONS = Object.freeze({
   backgroundPolicy: "preserve",
   examPalette: false,
@@ -25,7 +58,7 @@ export function imageOutputOptionsKey(value) {
 
 export async function resolveImageOutput(item, value, transform) {
   if (!item?.data) throw new Error("처리할 이미지가 없습니다.");
-  if (item.sceneResult || item.reviewState === 'scoped-applied') return item.data;
+  if (requiresRawImageOutput(item)) return item.data;
   const options = normalizeImageOutputOptions(value);
   if (options.backgroundPolicy === "preserve" && !options.examPalette && options.lineThickness === 0) return item.data;
   if (typeof transform !== "function") throw new Error("이미지 처리기를 사용할 수 없습니다.");

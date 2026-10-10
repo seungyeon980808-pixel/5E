@@ -151,3 +151,141 @@ test('complete accepted review remains accepted and stable after repeated normal
   assert.equal(isImageLabelCandidateAccepted({ imageLabelWorkflow: workflow, candidateSha256, reviewReport: once.report, reviewState: once.state }), true);
   assert.deepEqual(report, original);
 });
+
+
+// Exercise the complete actual app adapter at its workflow boundary. The test
+// doubles stand in for async input preparation and workflow execution; no
+// eligibility condition or request-composition algorithm is reimplemented.
+function capturedFirstSourceTurn(runInput, options = {}, { held = false } = {}) {
+  const begin = source.indexOf('  const runImageLabelConversion =');
+  const end = source.indexOf('\n  const submit =', begin);
+  assert.ok(begin >= 0 && end > begin, 'Complete original source-turn adapter must be available');
+  const calls = [], ownershipStates = [];
+  const boundary = new Error('Controlled workflow boundary reached');
+  let enterPreparation, releasePreparation, liveControlReads = 0;
+  const preparationEntered = new Promise(resolve => { enterPreparation = resolve; });
+  const preparation = new Promise(resolve => { releasePreparation = resolve; });
+  const context = {
+    AbortController, DOMException, clearTimeout,
+    AI_ASSET_GENERATION_MODES: { SINGLE: 'single', SEPARATED: 'separated' },
+    SEPARATED_ASSETS_PROMPT: null,
+    currentRequestEpoch: 0, activeTaskTabId: 'captured-owner', disposed: false,
+    imageLabelRunAbort: null, batchRun: null, requestTimeout: null,
+    currentCancelRequested: false, currentTurnType: null, currentEngine: null,
+    currentTurnStartedAt: null, currentTerminalOutcome: null, currentTurnDone: false,
+    currentRunInput: null, currentTurnPerformance: null, currentCacheRequest: null,
+    pendingCacheOutput: null, currentRequestSnapshot: null, providerRequestPersistable: false,
+    IMAGE_ENGINE_IDS: { RASTER: 'raster' }, sourceLabelAnalysis: {}, imageLabelRaster: {},
+    availableModels: [], outputCache: null, labelBackgroundCache: null,
+    taskTabs: new Map([['captured-owner', {}]]), state: { get: () => ({ artboard: { w: 512, h: 384 } }) },
+    setBusy: value => ownershipStates.push(['busy', value]), requestPhase() {},
+    setTaskState: value => ownershipStates.push(['state', value]), setGenerating() {}, setStatus() {},
+    commentPrompt: refs => {
+      assert.equal(refs[0], runInput.attachments[0], 'Comments remain bound to the captured original');
+      return 'Captured original source comments';
+    },
+    prepareApprovedFirstAttachment: async original => {
+      assert.equal(original.data, runInput.attachments[0].data);
+      enterPreparation();
+      if (held) await preparation;
+      return { name: 'INPUT_SOURCE.png', data: original.data };
+    },
+    createExamLocalRestore: () => undefined,
+    executeImageLabelRun: async args => { calls.push(args); throw boundary; },
+  };
+  for (const control of ['selectedAssetGenerationMode', 'selectedMode', 'selectedCandidateId', 'attachments', 'generatedImages']) {
+    Object.defineProperty(context, control, { get() { liveControlReads++; throw new Error(`Read live UI ${control}`); } });
+  }
+  return {
+    context, calls, boundary, ownershipStates, preparationEntered,
+    release: () => releasePreparation(), liveReads: () => liveControlReads,
+    run: supplement => {
+      context.SEPARATED_ASSETS_PROMPT = supplement;
+      vm.runInNewContext(source.slice(begin, end) + '\nthis.invokeSourceTurn = runImageLabelConversion;', context);
+      return context.invokeSourceTurn({ runInput, request: 'Captured original scientific request',
+        generationInstructions: 'Captured original scientific request', options, originatingTaskId: 'captured-owner' });
+    },
+  };
+}
+
+function capturedSourceInput(overrides = {}) {
+  const input = {
+    imageLabelWorkflow: Object.freeze({ explicit: true, imageKind: 'general', labelResult: 'remove', verificationMode: 'full' }),
+    generationMode: 'separated', generated: Object.freeze([]), selectedCandidateId: null,
+    attachments: Object.freeze([Object.freeze({ id: 'captured-source', referenceRole: 'INPUT_SOURCE', data: 'data:image/png;base64,captured-original', comments: [] })]),
+    model: 'gpt-6.1-sol', effort: 'medium', serviceTier: 'priority', modelCatalog: [],
+    ...overrides,
+  };
+  return Object.freeze(input);
+}
+
+test('actual first-source adapter preserves full framing only for the captured first explicit separated request', { timeout: 3000 }, async () => {
+  const { SEPARATED_ASSETS_PROMPT } = await import('../js/ai-separated-assets.js?v=1.7.0-four-session-integration');
+  const { APPROVED_FIRST_PROMPT, approvedFirstRequestText } = await import('../js/ai-approved-first-png.js?v=1.7.0-four-session-integration');
+  const cases = [
+    ['first separated source', {}, {}, true],
+    ['first single source', { generationMode: 'single' }, {}, false],
+    ['saved candidate', { generated: Object.freeze([Object.freeze({ id: 'saved', data: 'saved-RAW', kind: 'generated' })]) }, {}, false],
+    ['optional review', {}, { verifyOnly: true }, false],
+    ['exam source', { imageLabelWorkflow: Object.freeze({ explicit: true, imageKind: 'exam', labelResult: 'remove' }) }, {}, false],
+    ['implicit workflow', { imageLabelWorkflow: Object.freeze({ explicit: false, imageKind: 'general', labelResult: 'remove' }) }, {}, false],
+    ['no captured separation choice', { generationMode: undefined }, {}, false],
+  ];
+  for (const [name, overrides, options, expectsPreservation] of cases) {
+    const input = capturedSourceInput(overrides), original = JSON.stringify(input);
+    const turn = capturedFirstSourceTurn(input, options);
+    await assert.rejects(turn.run(SEPARATED_ASSETS_PROMPT), error => error === turn.boundary);
+    assert.equal(turn.calls.length, 1, name);
+    const args = turn.calls[0];
+    assert.equal(args.source, input.attachments[0], `${name}: original source identity`);
+    assert.equal(args.previousCandidates, input.generated, `${name}: previous RAW candidates remain captured`);
+    assert.equal(args.workflow, input.imageLabelWorkflow);
+    assert.equal(args.verifyOnly, options.verifyOnly === true);
+    assert.match(args.generationInstructions, /Captured original scientific request/);
+    assert.match(args.generationInstructions, /Captured original source comments/);
+    if (expectsPreservation) {
+      assert.match(args.generationInstructions, /원본 전체의 종횡비와 프레이밍/);
+      assert.match(args.generationInstructions, /객체마다 따로 확대·축소하거나 중앙 정렬하지 않는다/);
+      assert.match(args.generationInstructions, /객체를 이동하거나 잘라내지 않는다/);
+      assert.equal(args.generationInstructions.split(SEPARATED_ASSETS_PROMPT).length - 1, 1, 'The existing whole supplement appears exactly once');
+    } else {
+      assert.equal(args.generationInstructions.includes(SEPARATED_ASSETS_PROMPT), false, name);
+    }
+    const assembled = approvedFirstRequestText({ instructions: args.generationInstructions });
+    assert.equal(assembled.startsWith(APPROVED_FIRST_PROMPT), true, 'The entire approved prefix remains immutable');
+    assert.equal(assembled.slice(0, APPROVED_FIRST_PROMPT.length), APPROVED_FIRST_PROMPT);
+    assert.equal(turn.context.currentRunInput.generationMode, 'single', 'Local separation must not alter the single RAW generation route');
+    if (input.imageLabelWorkflow.imageKind === 'general' && !options.verifyOnly) assert.equal(args.generationSource.data, input.attachments[0].data);
+    else assert.equal(args.generationSource, undefined);
+    assert.equal(JSON.stringify(input), original, `${name}: captured snapshot is not mutated`);
+    assert.equal(turn.liveReads(), 0, `${name}: no live controls or selected task inputs`);
+    assert.equal(turn.context.imageLabelRunAbort, null, 'Actual finally retires this request controller');
+  }
+});
+
+test('held source preparation retains captured separation and rejects a retired owner before workflow execution', { timeout: 3000 }, async () => {
+  const { SEPARATED_ASSETS_PROMPT } = await import('../js/ai-separated-assets.js?v=1.7.0-four-session-integration');
+  for (const retired of [false, true]) {
+    const input = capturedSourceInput(), turn = capturedFirstSourceTurn(input, {}, { held: true });
+    const pending = turn.run(SEPARATED_ASSETS_PROMPT);
+    pending.catch(() => {});
+    try {
+      await turn.preparationEntered;
+      // A real held promise spans the owner transition. Live selection getters
+      // throw if request construction reads them instead of the input snapshot.
+      if (retired) turn.context.activeTaskTabId = 'new-owner';
+    } finally { turn.release(); }
+    if (retired) {
+      await assert.rejects(pending, error => error.name === 'AbortError');
+      assert.equal(turn.calls.length, 0, 'A retired source owner cannot execute or rewrite another task');
+      assert.equal(turn.ownershipStates.some(([key]) => key === 'state'), false, 'Stale completion does not alter the new task state');
+    } else {
+      await assert.rejects(pending, error => error === turn.boundary);
+      assert.equal(turn.calls.length, 1);
+      assert.match(turn.calls[0].generationInstructions, /원본 전체의 종횡비와 프레이밍/);
+      assert.equal(turn.calls[0].source, input.attachments[0]);
+    }
+    assert.equal(turn.liveReads(), 0);
+    assert.equal(turn.context.imageLabelRunAbort, null);
+  }
+});

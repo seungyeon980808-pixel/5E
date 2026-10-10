@@ -70,7 +70,7 @@ async function drawLine(page, from, to) {
       await page.locator(".unified-text-input:visible").press("Enter");
       assert.deepEqual(await page.locator("#inspector [data-lite-control]:visible")
         .evaluateAll(controls => controls.map(control => control.dataset.liteControl)),
-      ["font-size", "text-label"],
+      ["text-label", "font-size"],
       `${engine.name()} Lite text must expose size and its existing editor`);
       const text = page.locator("#scene text[data-id]").last();
       const beforeTextSize = await text.getAttribute("font-size");
@@ -93,7 +93,7 @@ async function drawLine(page, from, to) {
       await page.locator(".unified-text-input:visible").press("Enter");
       assert.deepEqual(await page.locator("#inspector [data-lite-control]:visible")
         .evaluateAll(controls => controls.map(control => control.dataset.liteControl)),
-      ["color", "stroke-width", "line-style", "leader-label"],
+      ["leader-label", "color", "stroke-width", "line-style"],
       `${engine.name()} Lite leader must expose line controls and its existing editor`);
       await page.locator('[data-lite-control="leader-label"] button').click();
       await page.locator(".unified-text-input:visible").fill("지시선 후");
@@ -107,8 +107,13 @@ async function drawLine(page, from, to) {
       await page.locator('html[data-mode="pro"]').waitFor();
       assert.equal(await page.locator('[data-lite-control="text-label"]').isVisible(), false,
         `${engine.name()} Pro must not gain the Lite text-label button`);
-      assert.equal(await page.locator('[data-lite-control="leader-label"]').isVisible(), false,
-        `${engine.name()} Pro must not gain the Lite leader-label button`);
+      assert.equal(await page.locator('[data-lite-control="leader-label"]').isVisible(), true,
+        `${engine.name()} Pro retains the current labeler branch's shared leader-label editor`);
+      await page.locator('[data-lite-control="leader-label"] button').click();
+      await page.locator(".unified-text-input:visible").fill("Pro 지시선 후");
+      await page.locator(".unified-text-input:visible").press("Enter");
+      assert.match(await page.locator("#scene").textContent(), /Pro 지시선 후/,
+        `${engine.name()} the shared Pro editor must update the same retained leader`);
       await page.screenshot({ path: path.join(evidence, `${engine.name()}-pro-unaffected.png`) });
       assert.deepEqual(errors, []);
       report.push({ engine: engine.name(), line: true, text: true, leader: true, proUnchanged: true });

@@ -69,7 +69,7 @@ function isComposingKey(e) {
 function hasBlockingModal() {
   const persistentLiteEditor = document.documentElement?.dataset.mode === 'lite'
     && document.documentElement?.dataset.liteResultMode === 'edit';
-  return [...document.querySelectorAll('.modal-overlay:not([hidden])')]
+  return [...document.querySelectorAll('.modal-overlay:not([hidden]):not([inert])')]
     .some((overlay) => !(persistentLiteEditor && overlay.id === 'ai-image-panel'));
 }
 

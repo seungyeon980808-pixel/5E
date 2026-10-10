@@ -1,8 +1,9 @@
 import { registerEscapeLayer } from './escape-layers.js?v=1.7.0-four-session-integration';
 
 /** Compact choices delegate to the existing request and output controllers. */
-export function initAISettingsPanel(panel, { signal } = {}) {
-  const root = panel.querySelector('[data-ai-compact-settings]');
+export function initAISettingsPanel(panel, { signal, canChoose = () => true } = {}) {
+  const roots = [...panel.querySelectorAll('[data-ai-compact-settings], [data-ai-legacy-result-settings]')];
+  const root = roots.find(node => node.hasAttribute('data-ai-compact-settings'));
   if (!root) return { sync() {}, dispose() {} };
   let popup = null, helpButton = null, disposeEscape = null;
   const closeHelp = () => {
@@ -21,15 +22,19 @@ export function initAISettingsPanel(panel, { signal } = {}) {
     return [...control.options].find(option => option.value === target && !option.disabled)?.value ?? null;
   };
   const sync = () => {
-    for (const group of root.querySelectorAll('[data-ai-setting-key]')) {
+    for (const group of roots.flatMap(node => [...node.querySelectorAll('[data-ai-setting-key]')])) {
       const control = controlFor(group.dataset.aiSettingKey);
       if (!control) continue;
       for (const button of group.querySelectorAll('[data-ai-setting-value], [data-ai-model-choice]')) {
         const value = valueFor(button, control);
         const selected = value !== null && value === control.value;
+        if (button.hasAttribute('data-ai-legacy-pro-choice')) {
+          const nextHidden = document.documentElement.dataset.mode === 'lite';
+          if (button.hidden !== nextHidden) button.hidden = nextHidden;
+        }
         button.setAttribute('aria-pressed', String(selected));
         button.classList.toggle('is-on', selected);
-        const disabled = control.disabled || value === null || panel.dataset.aiSharingMode === 'view'
+        const disabled = control.disabled || value === null || !canChoose(group.dataset.aiSettingKey, value) || panel.dataset.aiSharingMode === 'view'
           || (group.dataset.aiSettingKey === 'verification' && controlFor('labels')?.value !== 'restore-editable');
         if (button.disabled !== disabled) button.disabled = disabled;
         if (button.dataset.aiModelChoice) button.title = value === null ? '연결 서버의 모델 목록에 이 모델이 없습니다.' : '';
@@ -40,13 +45,17 @@ export function initAISettingsPanel(panel, { signal } = {}) {
       ? `Luna medium 라벨 복원 · ${controlFor('verification')?.value === 'draft-first' ? '편집 초안 먼저' : '자동 검수'}` : '라벨 없이 그림만 변환';
     if (note && note.textContent !== summary) note.textContent = summary;
   };
-  root.addEventListener('click', event => {
+  for (const settingsRoot of roots) settingsRoot.addEventListener('click', event => {
     const button = event.target.closest('[data-ai-setting-value], [data-ai-model-choice]');
     if (button && !button.disabled) {
       const group = button.closest('[data-ai-setting-key]');
       const control = controlFor(group.dataset.aiSettingKey);
       const value = control && valueFor(button, control);
-      if (!control || control.disabled || value === null || value === control.value) return;
+      if (!control || control.disabled || value === null || !canChoose(group.dataset.aiSettingKey, value)
+        || ![...control.options].some(option => option.value === value && !option.disabled && !option.hidden)) return;
+      // Repeating a legacy choice retries a failed real transform; source choices
+      // keep their original no-op behavior. This never invokes generation.
+      if (value === control.value && !settingsRoot.hasAttribute('data-ai-legacy-result-settings')) return;
       control.value = value;
       control.dispatchEvent(new Event('change', { bubbles: true }));
       sync();

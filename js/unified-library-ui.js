@@ -153,6 +153,22 @@ export async function materializeLibraryAction(result, activeProvider, options =
   // A crop accepted from the fast page preview is only a placeholder; final output always uses the original PDF.
   if (accepted && !accepted.materialized?.previewOnly && libraryResultIdentity(accepted.result) === libraryResultIdentity(result)
     && JSON.stringify(accepted.result.provenance?.rect) === JSON.stringify(result.provenance?.rect)) return accepted.materialized;
+  if (accepted?.materialized?.previewOnly && result?.kind === "crop" && result.cropType === "manual"
+    && result.provenance?.provider === "pdf" && libraryResultIdentity(accepted.result) === libraryResultIdentity(result)
+    && JSON.stringify(accepted.result.provenance?.rect) === JSON.stringify(result.provenance?.rect)) {
+    // The accepted preview has a local ID. Bind its final crop to the provider's owned original page.
+    const source = result.variants?.manual?.source;
+    if (!source || source.documentId !== result.provenance.documentId || source.pageNumber !== result.provenance.pageNumber
+      || JSON.stringify(source.rect) !== JSON.stringify(result.provenance.rect) || source.fullPageFallback !== false) {
+      throw new TypeError("PDF manual crop does not match accepted provenance");
+    }
+    const page = activeProvider.listPdfPages().find(candidate => candidate.provenance?.documentId === source.documentId
+      && candidate.provenance?.pageNumber === source.pageNumber);
+    if (!page) throw new TypeError("PDF original page provenance is unavailable");
+    return activeProvider.materialize(withManualCropVariant(page, source), {
+      ...options, representation: "manual", original: true, preview: false, thumbnail: false,
+    });
+  }
   if (result?.kind !== "pdf") return activeProvider.materialize(result, options);
   const original = await materializeOriginalLibraryPage(result, activeProvider);
   if (options.representation !== "manual" || !result.variants?.manual?.source) return original;

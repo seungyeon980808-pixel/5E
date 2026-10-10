@@ -96,7 +96,7 @@ export function isImageCommentTarget(item, selectedId) {
   return Boolean(selectedId) && item.id === selectedId;
 }
 
-export function createImageCommentController({ panel, getImages, getSelectedId, isBusy, changed, viewChanged, areaOnlyForSelected = false }) {
+export function createImageCommentController({ panel, getImages, getSelectedId, isBusy, selectedTaskCount = () => 0, changed, viewChanged, areaOnlyForSelected = false }) {
   const doc = panel.ownerDocument || document;
   const win = doc.defaultView || globalThis;
   const q = selector => panel.querySelector(selector);
@@ -370,7 +370,11 @@ export function createImageCommentController({ panel, getImages, getSelectedId, 
     const apply = q('[data-ai-comments-apply]');
     if (apply) {
       const areas = allEntries.filter(({comment}) => comment.type === 'area');
-      if (scopedTarget()) {
+      const selectedCount = selectedTaskCount();
+      if (Number.isInteger(selectedCount) && selectedCount >= 2) {
+        apply.textContent = `선택한 작업 ${selectedCount}개 변환하기`;
+        apply.disabled = busy || panel.dataset.aiSharingMode === 'view';
+      } else if (scopedTarget()) {
         apply.textContent = areas.length ? `박스 ${areas.length}개 수정하기` : '박스를 지정해 주세요';
         apply.disabled = busy || !areas.length || areas.some(({comment}) => !commentText(comment).trim() || !normalizeCommentBox(comment));
       } else {
@@ -589,6 +593,7 @@ export function createImageCommentController({ panel, getImages, getSelectedId, 
   return {
     bind,
     render,
+    refreshControls: () => updateControls(entries()),
     getViewState: () => ({tool,selected,markersVisible,tab:q('[data-ai-chat-panel]')?.hidden===false?'chat':'comments'}),
     restoreViewState(value) {
       tool=panel.dataset.aiSharingMode==='view'?'pan':TOOL_NAMES.has(value?.tool)?value.tool:scopedTarget()?'area':'pan';

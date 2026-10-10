@@ -233,15 +233,13 @@ test('ARCH-160-01: 100 real workbench disposals release listeners and observers'
   context.after(() => browser.close());
   const page = await browser.newPage();
   await page.addInitScript(value => { window.__runtime = value; }, runtimeInit);
-  await page.setContent('<!doctype html><body></body>');
+  await page.route('https://workbench-component.invalid/', route => route.fulfill({contentType:'text/html',body:'<!doctype html><body></body>'}));
+  await page.route('**/js/**', route => route.fulfill({contentType:'text/javascript',body:fs.readFileSync(path.join(root,new URL(route.request().url()).pathname),'utf8')}));
+  await page.goto('https://workbench-component.invalid/');
   const indexSource = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  const rawWorkbench = fs.readFileSync(path.join(root, 'js/ai-workbench.js'), 'utf8');
-  const workbenchSource = rawWorkbench
-    .replace(/^import .*;\n/gm, '')
-    .replace(/^export /gm, '')
-    .slice(0, rawWorkbench.replace(/^import .*;\n/gm, '').replace(/^export /gm, '').indexOf('\nif (typeof document !== "undefined")'));
 
-  const result = await page.evaluate(async ({ indexSource, workbenchSource }) => {
+  const result = await page.evaluate(async ({ indexSource }) => {
+    const { setupAiWorkbench: setup } = await import(window.__runtime.base + 'ai-workbench.js' + window.__runtime.query);
     const parsed = new DOMParser().parseFromString(indexSource, 'text/html');
     const markup = parsed.getElementById('ai-image-panel').outerHTML;
     const listeners = [];
@@ -266,7 +264,6 @@ test('ARCH-160-01: 100 real workbench disposals release listeners and observers'
       observe() { this.record.active = true; }
       disconnect() { this.record.active = false; }
     };
-    const setup = new Function('composeReferenceImages', `${workbenchSource}; return setupAiWorkbench;`)(async () => null);
     for (let cycle = 0; cycle < 100; cycle += 1) {
       const host = document.createElement('div');
       host.innerHTML = markup;
@@ -284,7 +281,7 @@ test('ARCH-160-01: 100 real workbench disposals release listeners and observers'
       totalListeners: listeners.length,
       totalObservers: observers.length,
     };
-  }, { indexSource, workbenchSource });
+  }, { indexSource });
 
   assert.ok(result.totalListeners > 0);
   assert.ok(result.totalObservers > 0);
@@ -298,15 +295,13 @@ test('TPK-005: pane header resize writes after observer delivery and coalesces u
   context.after(() => browser.close());
   const page = await browser.newPage();
   await page.addInitScript(value => { window.__runtime = value; }, runtimeInit);
-  await page.setContent('<!doctype html><body></body>');
+  await page.route('https://workbench-component.invalid/', route => route.fulfill({contentType:'text/html',body:'<!doctype html><body></body>'}));
+  await page.route('**/js/**', route => route.fulfill({contentType:'text/javascript',body:fs.readFileSync(path.join(root,new URL(route.request().url()).pathname),'utf8')}));
+  await page.goto('https://workbench-component.invalid/');
   const indexSource = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
-  const rawWorkbench = fs.readFileSync(path.join(root, 'js/ai-workbench.js'), 'utf8');
-  const workbenchSource = rawWorkbench
-    .replace(/^import .*;\n/gm, '')
-    .replace(/^export /gm, '')
-    .slice(0, rawWorkbench.replace(/^import .*;\n/gm, '').replace(/^export /gm, '').indexOf('\nif (typeof document !== "undefined")'));
 
-  const result = await page.evaluate(async ({ indexSource, workbenchSource }) => {
+  const result = await page.evaluate(async ({ indexSource }) => {
+    const { setupAiWorkbench: setup } = await import(window.__runtime.base + 'ai-workbench.js' + window.__runtime.query);
     const parsed = new DOMParser().parseFromString(indexSource, 'text/html');
     const panel = parsed.getElementById('ai-image-panel');
     document.body.append(panel);
@@ -322,7 +317,6 @@ test('TPK-005: pane header resize writes after observer delivery and coalesces u
       if (name === '--ai-pane-head-height') writes.push(value);
       nativeSetProperty(name, value, priority);
     };
-    const setup = new Function('composeReferenceImages', `${workbenchSource}; return setupAiWorkbench;`)(async () => null);
     setup(panel);
     const headObserver = observers[0];
     headObserver.callback([]);
@@ -341,7 +335,7 @@ test('TPK-005: pane header resize writes after observer delivery and coalesces u
       writesAfterUnchangedDelivery,
       disconnected: headObserver.active === false,
     };
-  }, { indexSource, workbenchSource });
+  }, { indexSource });
 
   assert.equal(result.duringDelivery, '');
   assert.equal(result.afterDelivery, '16px');
@@ -364,7 +358,7 @@ function seedRequestWorkspaces(count, initialGeneration = false, mixedCandidate)
   const modified = canvas.toDataURL('image/png');
   const tabs = Array.from({ length: count }, (_, index) => ({
     id: `task-${index}`, title: `검증 작업 ${index + 1}`, workState: 'idle', input: '선택 영역 안에 작은 사각형 추가',
-    model: 'gpt-6-sol', effort: 'medium', serviceTier: '', separationMode: 'off',
+    model: 'gpt-6.1-sol', effort: 'medium', serviceTier: '', separationMode: 'off',
     outputOptions: { backgroundPolicy: 'preserve', examPalette: false, lineThickness: 0 },
     attachments: [{ id: `source-${index}`, kind: 'reference', name: `원본 ${index + 1}`, data: original, comments: [] }],
     generated: [{ id: `candidate-${index}`, kind: 'generated', name: `결과 ${index + 1}`, data: original,
@@ -379,10 +373,36 @@ function seedRequestWorkspaces(count, initialGeneration = false, mixedCandidate)
     }
   }
   window.__task5Expected = structuredClone(tabs);
-  if (initialGeneration) { tabs[0].generated = []; tabs[0].selectedCandidateId = null; }
+  if (initialGeneration) {
+    tabs[0].generated = []; tabs[0].selectedCandidateId = null;
+    tabs[0].imageLabelWorkflow = { version: '1.1.0', imageKind: 'general', labelResult: 'remove', verificationMode: 'full', auxiliaryMarks: 'remove', scientificArrows: 'keep', explicit: true };
+  }
+  const generationSends = [];
+  const sourceObservation = {
+    version: 4, observationVersion: 1, leaderObservationVersion: 1, observationContractRevision: '1.4.0',
+    removalOnlyItems: [], reviewRequired: false,
+    geometryLock: { version: 1, objects: [{ id: 'frame', sourceRef: 1, role: 'scientific-object', description: 'Controlled original frame', bounds: { x: 40/512, y: 50/384, w: 420/512, h: 280/384 }, relations: [] }] },
+    labels: [], removalRegions: [], protectedRegions: [], preservedMarks: [], uncertainties: [],
+  };
+  const reviewIds = ['object-counts','inside-outside','liquid-occupancy','connections','composition-state','black-fill-meaning','presentation','request-scope','kice-flat-style','flat-gray-regions','raster-label-removal','editable-label-coverage','leader-relations','label-overlay-alignment','label-typography','leader-overlay'];
+  const sourceReview = { verdict: 'pass', checks: reviewIds.map(id => ({ id, label: id, status: 'pass', detail: 'Controlled transport for request ownership; not provider quality evidence' })), issues: [] };
+  const deliver = (send, method, params) => {
+    for (const listener of listeners) listener({ clientScope: send.payload.clientScope || '', method, params });
+  };
+  const observerReply = send => {
+    const text = String(send.payload.text || '');
+    let response;
+    if (text.includes('입력 원본 라벨 관찰')) { send.stage = 'source-observation'; response = sourceObservation; }
+    else if (text.includes('검수') || text.includes('FINAL_NATIVE_OVERLAY')) { send.stage = 'full-review'; response = sourceReview; }
+    else throw new Error('Unexpected controlled observer request: ' + text.slice(0, 200));
+    setTimeout(() => {
+      deliver(send, 'item/completed', { turnId: send.turnId, item: { type: 'agentMessage', phase: 'final_answer', text: JSON.stringify(response) } });
+      deliver(send, 'turn/completed', { turn: { id: send.turnId, status: 'completed' } });
+    }, 0);
+  };
   let statusGate = null;
   window.__task2 = {
-    original, modified, sends, longTasks: [],
+    original, modified, sends, generationSends, longTasks: [],
     delayStatus() { statusGate = {}; statusGate.promise = new Promise(resolve => { statusGate.resolve = resolve; }); },
     releaseStatus() { statusGate?.resolve({ login: { loggedIn: true }, server: true }); statusGate = null; },
     emit(index, kind) {
@@ -400,9 +420,15 @@ function seedRequestWorkspaces(count, initialGeneration = false, mixedCandidate)
   window.fiveEDesktop = {
     web: true, status: async () => statusGate ? statusGate.promise : ({ login: { loggedIn: true }, server: true }),
     start: async () => ({ ok: true }), stop: async () => ({ ok: true }),
-    models: async () => ({ data: [{ model: 'gpt-6-sol', displayName: 'Sol', isDefault: true, defaultReasoningEffort: 'medium', supportedReasoningEfforts: ['medium'], serviceTiers: ['priority'] }] }),
+    models: async () => ({ data: [{ model: 'gpt-6.1-sol', displayName: 'Sol', isDefault: true, defaultReasoningEffort: 'medium', supportedReasoningEfforts: ['medium'], serviceTiers: ['priority'] }, { model: 'gpt-6-luna', displayName: 'Luna', defaultReasoningEffort: 'medium', supportedReasoningEfforts: ['medium'], serviceTiers: ['priority'] }] }),
     account: async () => ({ rateLimits: {} }), login: async () => {},
-    send: async payload => { const turnId = `turn-${sends.length}`; const threadId = `thread-${sends.length}`; sends.push({ payload, turnId, threadId }); return { turnId, threadId }; },
+    send: async payload => {
+      const turnId = `turn-${sends.length}`, threadId = `thread-${sends.length}`;
+      const send = { payload, turnId, threadId }; sends.push(send);
+      if (payload.purpose === 'image') { send.stage = 'image-generation'; generationSends.push(send); }
+      else observerReply(send);
+      return { turnId, threadId };
+    },
     interrupt: async () => ({ ok: true }),
     onEvent: callback => { listeners.add(callback); return () => listeners.delete(callback); },
     onState: () => () => {}, onLog: () => () => {}, setAiTaskShortcutActive() {}, onAiCloseTaskShortcut: () => () => {},
@@ -422,6 +448,8 @@ function seedRequestWorkspaces(count, initialGeneration = false, mixedCandidate)
 }
 
 async function requestBrowserFixture(context, count, evidence, { initialGeneration = false, union = false } = {}) {
+  const { fixtureContext, installAiMain } = require(path.join(root, 'tests/helpers/canonical-fixture-adapter.cjs'));
+  const { runtime, runtimeInit, inspectEntry, startServer, stopServer, mixedCandidate } = fixtureContext(root);
   const server = process.env.PREVIEW_URL ? null : startServer();
   const origin = process.env.PREVIEW_URL ? new URL(process.env.PREVIEW_URL).origin : await server.ready;
   const engine = process.env.TASK2_ENGINE === 'webkit' ? webkit : chromium;
@@ -448,10 +476,7 @@ async function requestBrowserFixture(context, count, evidence, { initialGenerati
   const errors = [];
   page.on('pageerror', error => { errors.push(error.message); console.error('TASK2 PAGE ERROR', error.message); });
   await page.addInitScript({ content: `(${seedRequestWorkspaces.toString()})(${count}, ${initialGeneration}, ${union ? mixedCandidate.toString() : 'null'})` });
-  await page.route(`**${runtime.moduleBase}main.js*`, route => route.fulfill({ contentType: 'text/javascript', body:
-    'await window.__seedReady;\n' + fs.readFileSync(path.join(root, 'js/main.js'), 'utf8').replace(
-      'const aiPanel = initAiPanel(state, { freshStart: recoveryChoice === "fresh" });',
-      'const aiPanel = initAiPanel(state, { freshStart: false }); window.__task2Manager = aiPanel;') }));
+  await installAiMain(page, root, {}, evidence);
   const entryReceipt = await inspectEntry(page, origin, runtime);
   fs.writeFileSync(path.join(evidence, 'entry-' + count + '.json'), JSON.stringify(entryReceipt, null, 2));
   const welcome = page.locator('.tut-welcome-overlay .tut-banner-no');
@@ -506,9 +531,8 @@ for (const count of [1, 10, 30]) {
     await page.locator(task(0)).click();
     await page.screenshot({ path: path.join(evidence, `populated-${count}.png`) });
     await page.locator('#ai-image-panel [data-ai-comments-apply]').click();
-    await page.getByRole('dialog', { name: '수정 허용 범위 확인' }).waitFor();
     assert.equal(await page.locator('#ai-image-panel [data-ai-generating]').isVisible(), true);
-    await page.getByRole('button', { name: '이 범위로 생성', exact: true }).click();
+    assert.equal(await page.getByRole('dialog', { name: '수정 허용 범위 확인' }).count(), 0, 'The explicit primary scope action already authorizes the captured bounds');
     await page.waitForFunction(() => window.__task2.sends.length === 1);
     if (count > 1) await page.locator(task(1)).click();
     await page.evaluate(() => { window.__task2.emit(0, 'image'); window.__task2.emit(0, 'done'); });
@@ -518,7 +542,7 @@ for (const count of [1, 10, 30]) {
       assert.equal(await page.locator('#ai-image-panel .ai-generated-card').count(), 1);
       await page.locator(task(0)).click();
     }
-    await page.getByRole('dialog', { name: '선택 영역 수정 후보 · 아직 미적용' }).waitFor();
+    await page.getByRole('dialog', { name: '수정 전후 비교' }).waitFor();
     const restoredPhase = await page.evaluate(() => ({
       phase: document.querySelector('#ai-image-panel').dataset.aiRequestPhase,
       row: document.querySelector('#ai-image-panel [data-tab-id="task-0"] .ai-task-tab-time').textContent,
@@ -566,7 +590,6 @@ test('cancel/retry isolates late A1 events while scoped A2 and B await approval 
   };
   const start = async count => {
     await page.locator('#ai-image-panel [data-ai-comments-apply]').click();
-    await page.getByRole('dialog', { name: '수정 허용 범위 확인' }).getByRole('button', { name: '이 범위로 생성', exact: true }).click();
     await page.waitForFunction(count => window.__task2.sends.length === count, count);
   };
   await start(1);
@@ -599,7 +622,7 @@ test('cancel/retry isolates late A1 events while scoped A2 and B await approval 
   await page.screenshot({ path: path.join(evidence, 'a-b-waiting-c-active.png') });
   for (const index of [0, 1]) {
     await select(index);
-    await page.getByRole('dialog', { name: '선택 영역 수정 후보 · 아직 미적용' }).getByRole('button', { name: '적용', exact: true }).click();
+    await page.getByRole('dialog', { name: '수정 전후 비교' }).getByRole('button', { name: '적용', exact: true }).click();
     await page.waitForFunction(() => document.querySelectorAll('#ai-image-panel .ai-generated-card').length === 2 && document.querySelector('#ai-image-panel').dataset.aiBusy === 'false');
   }
   const result = await page.evaluate(async () => {
@@ -643,7 +666,6 @@ test('a hung scoped response expires without success or automatic resend', { tim
   const { page, errors } = await requestBrowserFixture(context, 2, evidence);
   await page.clock.install();
   await page.locator('#ai-image-panel [data-ai-comments-apply]').click();
-  await page.getByRole('dialog', { name: '수정 허용 범위 확인' }).getByRole('button', { name: '이 범위로 생성', exact: true }).click();
   await page.waitForFunction(() => window.__task2.sends.length === 1);
   await page.clock.fastForward(181_000);
   await page.waitForFunction(() => document.querySelector('#ai-image-panel').dataset.aiBusy === 'false');
@@ -666,17 +688,18 @@ test('initial generation shows preparation before delayed status and completes i
   await page.locator('#ai-image-panel [data-tab-id="task-1"] .ai-task-tab-select').click();
   await page.waitForFunction(() => document.querySelector('#ai-image-panel').dataset.aiSelectedCandidateId === 'candidate-1');
   await page.evaluate(() => window.__task2.releaseStatus());
-  await page.waitForFunction(() => window.__task2.sends.length === 1);
-  await page.evaluate(() => { window.__task2.emit(0, 'image'); window.__task2.emit(0, 'done'); });
+  await page.waitForFunction(() => window.__task2.generationSends.length === 1);
+  await page.evaluate(() => { const index = window.__task2.sends.indexOf(window.__task2.generationSends[0]); window.__task2.emit(index, 'image'); window.__task2.emit(index, 'done'); });
   await page.waitForFunction(() => [...document.querySelectorAll('[data-ai-request-phase]')].some(panel => panel.dataset.aiRequestPhase === 'completed'));
   assert.equal(await page.locator('#ai-image-panel').getAttribute('data-ai-selected-candidate-id'), 'candidate-1');
   const result = await page.evaluate(async () => {
     const tasks = (await window.__task2Manager.sharingSnapshot()).workspaces.flatMap(workspace => workspace.tabs);
-    return { counts: Object.fromEntries(tasks.map(task => [task.id, task.generated.length])), state: tasks.find(task => task.id === 'task-0').workState, sends: window.__task2.sends.length };
+    return { counts: Object.fromEntries(tasks.map(task => [task.id, task.generated.length])), state: tasks.find(task => task.id === 'task-0').workState, sends: window.__task2.generationSends.length, transportStages: window.__task2.sends.map(send => send.stage) };
   });
   assert.deepEqual(result.counts, { 'task-0': 1, 'task-2': 1, 'task-3': 1, 'task-1': 1 });
   assert.equal(result.state, 'completed');
   assert.equal(result.sends, 1);
+  assert.deepEqual(result.transportStages, ['source-observation', 'image-generation', 'full-review'], 'All three real correlated transport stages are accounted for; exactly one generation occurs');
   assert.deepEqual(errors, []);
   fs.writeFileSync(path.join(evidence, 'normal-generation.json'), JSON.stringify(result, null, 2));
 });

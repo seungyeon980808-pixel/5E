@@ -1,11 +1,12 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
-const { chromium, webkit } = require('playwright');
-const { installCropFixture, pointerOnImage } = require('./helpers/crop-loading-fixture.cjs');
+const { chromium, webkit } = require(process.env.PLAYWRIGHT_MODULE || '/Users/parkseungyeon/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
+const root = path.resolve(__dirname, '..');
+const { installCropFixture, pointerOnImage, captureCropEvidence, releaseCropFixture } = require('./helpers/crop-loading-fixture.cjs');
 const verifyToolLenses = require('./helpers/crop-tool-lenses.cjs');
 const verifyPreviewLoading = require('./helpers/crop-preview-loading.cjs');
-const evidence = path.resolve(process.env.EVIDENCE_DIR || '.omo/evidence/ai-workbench-polish-0928/task4/magnifier');
+const evidence = path.resolve(process.env.EVIDENCE_DIR || path.join(root, '.omo/evidence/ai-workbench-polish-0928/task4/magnifier'));
 const closeTo = (actual, expected, message) => assert.ok(Math.abs(actual - expected) < .1, `${message}: ${actual} != ${expected}`);
 
 async function lensCoordinates(page, ui) {
@@ -33,7 +34,7 @@ async function lensCoordinates(page, ui) {
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
     try {
-      const ui = await installCropFixture(page);
+      const ui = await installCropFixture(page, { root, evidence: path.join(evidence, name), held: ['original-2', 'thumbnail-2', 'continuous-2'] });
       const load = ui.locator('[data-unilib-crop-load-state]');
       const stage = ui.locator('[data-unilib-crop-stage]');
       const toggle = ui.locator('[data-crop-magnifier-toggle]');
@@ -65,7 +66,7 @@ async function lensCoordinates(page, ui) {
       await page.keyboard.down('Space');
       await page.locator('#library-crop-magnifier').waitFor({ state: 'hidden' });
       await page.keyboard.up('Space');
-      await page.evaluate(() => { window.holdCrop('original-2'); window.holdCrop('thumbnail-2'); });
+      await page.evaluate(() => { window.cropActionAfter = window.cropFixtureLog.length; for (const key of ['original-2', 'thumbnail-2', 'continuous-2']) if (window.cropGates[key]?.released !== false) throw new Error(`Missing pre-armed gate ${key}`); });
       await ui.locator('[data-unilib-crop-page-next]').click();
       await load.waitFor({ state: 'visible' });
       const paper = ui.locator('.unilib-crop-load-paper');
@@ -84,10 +85,11 @@ async function lensCoordinates(page, ui) {
       assert.equal(await ui.locator('[data-unilib-crop-canvas]').evaluate(el => getComputedStyle(el).filter), 'none');
       await page.screenshot({ path: path.join(evidence, `${name}-target-loading.png`) });
       await page.evaluate(() => { window.holdCrop('decode-2'); window.cropGates['original-2'].release(); });
-      await page.evaluate(async () => { for (let i = 0; i < 4; i++) await new Promise(requestAnimationFrame); });
+      await page.evaluate(async () => { await window.waitCropEvent({ phase: 'editor-decode-start', number: 2, kind: 'original' }, window.cropActionAfter); await window.waitCropEvent({ phase: 'decode-held', number: 2 }, window.cropActionAfter); });
       assert.equal(await load.isVisible(), true, 'status remains during decoded readiness');
       await page.evaluate(() => window.cropGates['decode-2'].release());
       await load.waitFor({ state: 'hidden' });
+      await page.evaluate(() => window.cropGates['continuous-2'].release());
       const ready = await ui.locator('[data-unilib-crop-image]').boundingBox();
       closeTo(ready.width, target.width, 'ready width matches loading');
       closeTo(ready.height, target.height, 'ready height matches loading');
@@ -101,14 +103,17 @@ async function lensCoordinates(page, ui) {
       await ui.locator('[data-unilib-crop-retry]').click();
       await load.waitFor({ state: 'hidden' });
       assert.equal(await ui.locator('[data-unilib-crop-image]').evaluate(img => img.naturalWidth), 700, 'retry renders actual target');
-      await page.evaluate(() => { window.holdCrop('original-2'); window.holdCrop('thumbnail-2'); });
+      await page.evaluate(() => { window.cropActionAfter = window.cropFixtureLog.length; for (const key of ['original-2', 'thumbnail-2', 'continuous-2']) window.holdCrop(key); });
       await ui.locator('[data-unilib-crop-page-prev]').click();
       await load.waitFor({ state: 'visible' });
+      const canceledOperations = await page.evaluate(() => window.cropFixtureLog.filter(row => row.phase === 'editor-start' && row.number === 2 && row.sequence > window.cropActionAfter).map(row => row.sequence));
+      assert.ok(canceledOperations.length > 0, 'The canceled page has an actual started editor operation');
       await ui.locator('[data-unilib-crop-cancel]').click();
       await ui.locator('[data-result-id="geometry-book:page:1"]').click();
       await ui.locator('[data-unilib-adjust]').click();
       await load.waitFor({ state: 'hidden' });
-      await page.evaluate(async () => { window.cropGates['original-2'].release(); window.cropGates['thumbnail-2'].release(); for (let i = 0; i < 4; i++) await new Promise(requestAnimationFrame); });
+      await page.evaluate(async operations => { for (const key of ['original-2', 'thumbnail-2', 'continuous-2']) window.cropGates[key].release(); await Promise.all(operations.flatMap(operation => ['editor-settled', 'editor-original-settled', 'editor-fast-settled'].map(phase => window.waitCropEvent({ phase, operation })))); }, canceledOperations);
+      fs.writeFileSync(path.join(evidence, `${name}-loading-gate-events.json`), JSON.stringify(await captureCropEvidence(page), null, 2));
       assert.equal(await ui.locator('[data-unilib-crop-image]').evaluate(img => img.naturalWidth), 600, 'stale page cannot replace reopened target');
       assert.equal(await ui.locator('.unilib-crop-load-preview').getAttribute('src'), null);
       await lensCoordinates(page, ui);
@@ -140,7 +145,15 @@ async function lensCoordinates(page, ui) {
     } catch (error) {
       await page.screenshot({ path: path.join(evidence, `${name}-failure.png`) });
       throw error;
-    } finally { await context.close(); await browser.close(); }
+    } finally {
+      try {
+        fs.writeFileSync(path.join(evidence, `${name}-crop-events-final.json`), JSON.stringify(await captureCropEvidence(page), null, 2));
+        await releaseCropFixture(page);
+      } finally {
+        try { await context.close(); }
+        finally { await browser.close(); fs.writeFileSync(path.join(evidence, `${name}-cleanup.json`), JSON.stringify({ contextClosed: true, browserClosed: !browser.isConnected() }, null, 2)); }
+      }
+    }
   }
   fs.writeFileSync(path.join(evidence, 'results.json'), JSON.stringify(outcomes, null, 2));
   console.log(JSON.stringify(outcomes));

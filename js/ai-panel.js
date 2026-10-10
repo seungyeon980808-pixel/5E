@@ -7,6 +7,7 @@ import { collectScopedAreaComments, buildScopedEditPrompt } from './ai-scoped-ed
 import { buildCompactScopedEditPrompt, buildVerifiedScopedEditPrompt } from './ai-scoped-edit-compact.js?v=1.7.0-four-session-integration';
 import { prepareScopedEditContext, restoreScopedEditContext } from './ai-scoped-edit-context.js?v=1.7.0-four-session-integration';
 import { validateScopedEditChecks, evaluateScopedEditPrecision, scopedEditCorrectionFeedback } from './ai-scoped-edit-verification.js?v=1.7.0-four-session-integration';
+import { isHistoricalPngLocalResult, requiresRawImageOutput, canChooseLocalOutput } from './ai-output-processing.js?v=1.7.0-four-session-integration';
 import { initAISettingsPanel, sourceImageKind } from "./ai-settings-panel.js?v=1.7.0-four-session-integration";
 import { createModalSurfaceMotion } from './modal-surface-motion.js?v=1.7.0-four-session-integration';
 import { showAlert } from './ui-dialogs.js?v=1.7.0-four-session-integration';
@@ -514,14 +515,15 @@ export async function acknowledgeActiveTaskClearCancellation({ tab, activeTaskTa
   return { acknowledged: outcome?.ok === true };
 }
 
-function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, navigationChanged, workspaceEmpty, exportCollection, clearCollection, selectCollection, launchSelected, cancelWorkspaceJob, resumeAfterLogin, materializeCandidate }) {
+function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, navigationChanged, workspaceEmpty, exportCollection, clearCollection, selectCollection, launchSelected, selectedTaskCount, cancelWorkspaceJob, resumeAfterLogin, materializeCandidate }) {
   if (!panel) return;
   const lifecycle = new AbortController();
   const disposalCallbacks = [];
   let disposed = false;
+  let localVisibilityEpoch = 0;
 
   const modal = panel.querySelector(".modal-ai");
-  const motion = createModalSurfaceMotion({ overlay: panel, surface: modal });
+  const motion = createModalSurfaceMotion({ overlay: panel, surface: modal, cssEntrance: 'modal-pop' });
   const status = panel.querySelector("[data-ai-status]");
   const log = panel.querySelector("[data-ai-log]");
   const input = panel.querySelector("[data-ai-input]");
@@ -645,6 +647,15 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   if (!outputProcessing) throw new Error('이미지 구성 선택을 표시할 위치가 없습니다.');
   outputProcessing.prepend(generationModeRow);
   const outputProcessingStatus = panel.querySelector('[data-ai-output-processing-status]');
+  const outputStatusHome = outputProcessingStatus?.parentNode;
+  const outputStatusNext = outputProcessingStatus?.nextSibling;
+  const legacyResultSettings = panel.querySelector('[data-ai-legacy-result-settings]');
+  const sourceCompactSettings = outputProcessingStatus?.closest('[data-ai-compact-settings]');
+  const sourceProcessingFeedback = document.createElement('div');
+  sourceProcessingFeedback.className = 'ai-source-processing-feedback';
+  sourceProcessingFeedback.dataset.aiSourceProcessingFeedback = '';
+  sourceProcessingFeedback.hidden = true;
+  if (sourceCompactSettings && outputStatusHome) outputStatusHome.insertBefore(sourceProcessingFeedback, outputProcessingStatus);
   const backgroundPolicySelect = panel.querySelector('select[data-ai-background-policy]');
   const backgroundLockHint = document.createElement('small');
   backgroundLockHint.className = 'ai-background-lock-hint';
@@ -654,6 +665,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   backgroundLockHint.hidden = true;
   backgroundPolicySelect?.closest('label')?.after(backgroundLockHint);
   backgroundPolicySelect?.setAttribute('aria-describedby', backgroundLockHint.id);
+  const backgroundLockHome = backgroundLockHint.parentNode;
+  const backgroundLockNext = backgroundLockHint.nextSibling;
   const examPaletteSelect = panel.querySelector('select[data-ai-exam-palette]');
   const lineThicknessSelect = panel.querySelector('select[data-ai-line-thickness]');
   const separationModeSelect = panel.querySelector('select[data-ai-separation-mode]');
@@ -1000,13 +1013,65 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     selectedImageOutputOptions = next.outputOptions;
     singleBackgroundPolicy = next.singleBackgroundPolicy;
   };
+  const outputChoiceAllowed = (key, value) => canChooseLocalOutput(selectedOutputItem(), key, value, {
+    mode: document.documentElement.dataset.mode, busy,
+    readOnly: panel.dataset.aiSharingMode === 'view' || conversionKind === 'graph',
+    separationMode: selectedSeparationMode,
+  });
+  const localAppearanceAllowed = () => !busy && panel.dataset.aiSharingMode !== 'view'
+    && conversionKind !== 'graph' && (!selectedOutputItem() || isHistoricalPngLocalResult(selectedOutputItem()));
+  const syncLegacyResultUi = () => {
+    const item = selectedOutputItem();
+    const eligible = isHistoricalPngLocalResult(item) && conversionKind !== 'graph'
+      && panel.dataset.aiSharingMode !== 'view';
+    if (legacyResultSettings && legacyResultSettings.hidden !== !eligible) legacyResultSettings.hidden = !eligible;
+    panel.dataset.aiLegacyResult = String(eligible);
+    for (const button of legacyResultSettings?.querySelectorAll('[data-ai-legacy-pro-choice]') || []) {
+      const nextHidden = document.documentElement.dataset.mode === 'lite';
+      if (button.hidden !== nextHidden) button.hidden = nextHidden;
+    }
+    const hint = legacyResultSettings?.querySelector('[data-ai-legacy-background-lock]');
+    const hintHidden = selectedSeparationMode === AI_SEPARATION_MODES.OFF;
+    if (hint && hint.hidden !== hintHidden) hint.hidden = hintHidden;
+    // Empty source preferences retain their real summary and separation lock.
+    // A pending/completed or unknown candidate never owns this source-only slot.
+    const sourceEligible = Boolean(sourceCompactSettings) && !busy && !item && generatedImages.length === 0
+      && attachments.some(isInputReference) && conversionKind !== 'graph' && panel.dataset.aiSharingMode !== 'view';
+    if (sourceProcessingFeedback.hidden !== !sourceEligible) sourceProcessingFeedback.hidden = !sourceEligible;
+    const statusParent = eligible ? legacyResultSettings : sourceEligible ? sourceProcessingFeedback : outputStatusHome;
+    if (outputProcessingStatus && statusParent && outputProcessingStatus.parentNode !== statusParent) {
+      if (statusParent === outputStatusHome) outputStatusHome.insertBefore(outputProcessingStatus,
+        outputStatusNext?.parentNode === outputStatusHome ? outputStatusNext : null);
+      else statusParent.append(outputProcessingStatus);
+    }
+    const lockParent = sourceEligible ? sourceProcessingFeedback : backgroundLockHome;
+    if (lockParent && backgroundLockHint.parentNode !== lockParent) {
+      if (lockParent === backgroundLockHome) backgroundLockHome.insertBefore(backgroundLockHint,
+        backgroundLockNext?.parentNode === backgroundLockHome ? backgroundLockNext : null);
+      else lockParent.append(backgroundLockHint);
+    }
+  };
+  const setOutputProcessingStatus = (text, item = null, revision = outputProcessingRevision) => {
+    if (item && (revision !== outputProcessingRevision || item !== selectedOutputItem())) return;
+    if (outputProcessingStatus) outputProcessingStatus.textContent = text;
+  };
   const syncOutputProcessingUi = () => {
-    compactSettings?.sync();
+    syncLegacyResultUi();
     applySeparationMode(selectedSeparationMode);
     const backgroundLocked = selectedSeparationMode !== AI_SEPARATION_MODES.OFF;
     backgroundLockHint.hidden = !backgroundLocked;
     if (outputProcessing) outputProcessing.hidden = selectedOutputEngine === AI_OUTPUT_ENGINES.ASSET;
     if (backgroundPolicySelect) {
+      const allWhite = backgroundPolicySelect.querySelector('[data-ai-legacy-all-white]');
+      const advanced = isHistoricalPngLocalResult(selectedOutputItem()) && document.documentElement.dataset.mode !== 'lite';
+      if (!allWhite && advanced) {
+        const option = document.createElement('option'); option.value = 'all-near-white';
+        option.textContent = '내부 흰색도 제거'; option.dataset.aiLegacyAllWhite = '';
+        backgroundPolicySelect.append(option);
+      } else if (allWhite) {
+        allWhite.hidden = !advanced; allWhite.disabled = !advanced;
+        if (!advanced && selectedImageOutputOptions.backgroundPolicy !== 'all-near-white') allWhite.remove();
+      }
       const legacyOption = backgroundPolicySelect.querySelector('[data-ai-legacy-output-option]');
       if (selectedImageOutputOptions.backgroundPolicy === 'checkerboard' && !legacyOption) {
         const option = document.createElement('option');
@@ -1040,11 +1105,13 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       separationModeSelect.value = selectedSeparationMode;
       separationModeSelect.disabled = busy;
     }
-    if (outputProcessingStatus) outputProcessingStatus.textContent = `${imageOutputSummary()}${backgroundLocked ? ` · ${SEPARATION_BACKGROUND_HINT} ${SEPARATION_LIMITS_HINT}` : ''}`;
+    setOutputProcessingStatus(`${imageOutputSummary()}${backgroundLocked ? ` · ${SEPARATION_BACKGROUND_HINT} ${SEPARATION_LIMITS_HINT}` : ''}`);
+    compactSettings?.sync();
   };
   const resolveOutputVariant = (item) => {
     if (!item) return Promise.reject(new Error('선택한 결과가 없습니다.'));
-    if (item.reviewState === 'scoped-applied' || (panel.dataset.aiBoxEdit === 'true' && item === selectedOutputItem())) return Promise.resolve(item.data);
+    if (requiresRawImageOutput(item) || (panel.dataset.aiBoxEdit === 'true' && item === selectedOutputItem()
+      && !isHistoricalPngLocalResult(item))) return Promise.resolve(item.data);
 
     const key = imageOutputOptionsKey(selectedImageOutputOptions);
     let variants = outputVariantCache.get(item);
@@ -1069,26 +1136,21 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       if (!isCurrent()) return;
       image.src = source;
       if (item.labelPlan?.frozen) ensureCompositePreviewControl(item);
-      image.classList.toggle('ai-output-transparent', item.reviewState !== 'scoped-applied' && panel.dataset.aiBoxEdit !== 'true' && selectedImageOutputOptions.backgroundPolicy !== 'preserve');
+      image.classList.toggle('ai-output-transparent', !requiresRawImageOutput(item) && selectedImageOutputOptions.backgroundPolicy !== 'preserve');
       comparison?.update({ revisions: comparisonRevisions() });
       const backgroundLocked = selectedSeparationMode !== AI_SEPARATION_MODES.OFF;
-      outputProcessingStatus?.style.removeProperty('display');
-      if (outputProcessingStatus) outputProcessingStatus.textContent = `${imageOutputSummary()}${backgroundLocked ? ` · ${SEPARATION_BACKGROUND_HINT} ${SEPARATION_LIMITS_HINT}` : ''}`;
+      setOutputProcessingStatus(`${imageOutputSummary()}${backgroundLocked ? ` · ${SEPARATION_BACKGROUND_HINT} ${SEPARATION_LIMITS_HINT}` : ''}`, item, revision);
     } catch (error) {
       if (!isCurrent()) return;
-      if (outputProcessingStatus) {
-        outputProcessingStatus.style.display = 'block';
-        outputProcessingStatus.textContent = `결과 처리 실패: ${error.message}`;
-      }
+      setOutputProcessingStatus(`결과 처리 실패: ${error.message}`, item, revision);
     }
   };
   const refreshOutputPreviews = () => {
     const revision = ++outputProcessingRevision;
     if (!generatedImages.some((item) => !item.sceneResult)) { syncOutputProcessingUi(); return; }
-    if (outputProcessingStatus) {
-      outputProcessingStatus.style.display = 'block';
-      outputProcessingStatus.textContent = '선택한 방식으로 결과를 처리하는 중…';
-    }
+    syncLegacyResultUi();
+    if (isHistoricalPngLocalResult(selectedOutputItem())) setOutputProcessingStatus('선택한 방식으로 결과를 처리하는 중…');
+    else setOutputProcessingStatus(imageOutputSummary());
     for (const item of generatedImages) void renderOutputVariant(item, item.outputImage, revision);
   };
   const emptyReviewReport = () => ({ verdict: "uncertain", checks: [], issues: [] });
@@ -1323,8 +1385,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     const cancelButton = panel.querySelector("[data-ai-interrupt]");
     cancelButton.disabled = !on || insertingOutput;
     cancelButton.hidden = !on || insertingOutput;
-    syncSelectedOutputActions();
     for (const item of generatedImages) syncEditableLabelPlanButton(item);
+    syncSelectedOutputActions();
     commentController?.render();
   };
   const syncWhitePngUi = () => {
@@ -1490,6 +1552,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     if (compositionEdit) { compositionEdit.hidden = referenceComposition.orientation !== 'free'; compositionEdit.disabled = busy; }
 
     panel.dispatchEvent(new CustomEvent('5e:ai-composition-change', { detail: structuredClone(referenceComposition) }));
+    syncLegacyResultUi();
   };
   const orderedInputReferences = (items, composition = referenceComposition) => {
     const byId = new Map(items.map(item => [item.id, item]));
@@ -1946,7 +2009,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
         const candidateSource = item.data;
         const outputKey = imageOutputOptionsKey(selectedImageOutputOptions);
         const pageContext = state.capturePageContext?.();
-        const isCurrent = () => !panel.hidden && taskId === activeTaskTabId
+        const visibilityEpoch = localVisibilityEpoch;
+        const isCurrent = () => !disposed && motion.isOpen() && visibilityEpoch === localVisibilityEpoch && taskId === activeTaskTabId
           && outputKey === imageOutputOptionsKey(selectedImageOutputOptions)
           && selectedOutputItem() === item && item.id === candidateId && item.data === candidateSource
           && isAdoptableImageLabelCandidate(item)
@@ -2180,7 +2244,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     const pageId = state.get().activePageId;
     const pageSnapshot = () => JSON.stringify({ objects: state.get().objects, artboard: state.get().artboard, layer: state.get().activeLayerId });
     const originalPage = pageSnapshot();
-    const isCurrent = () => !panel.hidden && !busy && epoch === currentRequestEpoch && taskId === activeTaskTabId
+    const visibilityEpoch = localVisibilityEpoch;
+    const isCurrent = () => !disposed && motion.isOpen() && visibilityEpoch === localVisibilityEpoch && !busy && epoch === currentRequestEpoch && taskId === activeTaskTabId
       && outputKey === imageOutputOptionsKey(selectedImageOutputOptions) && separationMode === selectedSeparationMode
       && selectedOutputItem()?.id === candidateId && selectedOutputItem()?.data === source
       && isAdoptableImageLabelCandidate(item)
@@ -2872,6 +2937,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       structureRecord: currentRunInput?.structureRecord ? JSON.parse(JSON.stringify(currentRunInput.structureRecord)) : null,
       rendererPrompt: typeof rendererPrompt === "string" ? rendererPrompt : "",
       labelPlan: labelPlan ? JSON.parse(JSON.stringify(labelPlan)) : null,
+      ...(currentRunInput?.imageLabelWorkflow ? { imageLabelWorkflow: structuredClone(currentRunInput.imageLabelWorkflow) } : {}),
       generationMode: currentRunInput?.generationMode === 'separated' ? 'separated' : 'single',
       sourceReferenceId: currentRunInput?.attachments?.length === 1 ? currentRunInput.attachments[0].id : null,
       sourceReferenceName: currentRunInput?.attachments?.length === 1 ? currentRunInput.attachments[0].name : "",
@@ -2910,8 +2976,6 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   const addScenePreview = (sceneResult, sceneSource, sceneCompileSource = sceneSource) => {
     if (!sceneResult?.valid || !sceneResult?.supported || !sceneResult.objects?.length) return false;
     const data = fastSceneToSvgDataUrl(sceneResult);
-    latestGeneratedSrc = data;
-    previews.querySelector("[data-ai-empty]")?.remove();
     const item = {
       id: `generated-${++imageSerial}`,
       name: `생성 결과 ${generatedImages.length + 1}`,
@@ -2927,6 +2991,13 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       comments: [],
       nextCommentNumber: 1,
     };
+    if (batchRun) {
+      item.id = `workspace-${batchRun.context.jobId}-${batchRun.context.attempt}`;
+      batchRun.candidate = item;
+      return item;
+    }
+    latestGeneratedSrc = data;
+    previews.querySelector("[data-ai-empty]")?.remove();
     generatedImages.push(item);
     previews.prepend(item.card || makeImageCard(item));
     return item;
@@ -4298,6 +4369,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     }
   };
   const close = ({ integratedEdit = false } = {}) => {
+    localVisibilityEpoch += 1;
     closeComparison(); closeCapture?.();
     abortAutomaticSeparation('panel-closed');
     captureActiveTaskTab(); persistTasks(); void taskPersistence.flush();
@@ -4355,6 +4427,11 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     if (runInput.attachments.some(item => item.referenceRole === 'STYLE_REFERENCE')) throw new Error('이 변환은 선택한 원본의 과학 구조를 기준으로 처리합니다. 표현 참고는 별도 작업으로 준비해 주세요.');
     const previousCandidate = runInput.generated.find(item => item.id === runInput.selectedCandidateId) || runInput.generated.at(-1);
     if (runInput.preciseRestore && !previousCandidate) throw new Error('그림 정밀 복원에는 먼저 생성한 결과가 필요합니다.');
+    // Capture the first separated source contract before asynchronous input
+    // preparation; the approved prefix and single RAW generation stay intact.
+    const separationInstructions = workflow.explicit === true && workflow.imageKind === 'general'
+      && runInput.generationMode === AI_ASSET_GENERATION_MODES.SEPARATED && runInput.generated.length === 0
+      && options.verifyOnly !== true ? SEPARATED_ASSETS_PROMPT : '';
     const epoch = ++currentRequestEpoch;
     const abort = new AbortController(); imageLabelRunAbort = abort;
     const batchOwnerRun = batchRun;
@@ -4380,7 +4457,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
         ? await prepareApprovedFirstAttachment({ ...sources[0] }) : undefined;
       if (!isCurrent()) throw new DOMException('이전 작업 결과입니다.', 'AbortError');
       const result = await executeImageLabelRun({ source: sources[0], workflow, request: `${request}${commentPrompt(sources)}`, observer, raster: imageLabelRaster, selection,
-        generationSource, generationInstructions: [generationInstructions, commentPrompt(sources)].filter(Boolean).join('\n\n'),
+        generationSource, generationInstructions: [generationInstructions, separationInstructions, commentPrompt(sources)].filter(Boolean).join('\n\n'),
         artboard: { ...state.get().artboard }, signal: abort.signal, observation: tab?.sourceLabelObservation,
         onObservation: async observation => {
           if (!isCurrent()) throw new DOMException('이전 작업 결과입니다.', 'AbortError');
@@ -5094,7 +5171,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     });
   }
   backgroundPolicySelect?.addEventListener('change', () => {
-    if (busy || selectedSeparationMode !== AI_SEPARATION_MODES.OFF) { syncOutputProcessingUi(); return; }
+    if (!outputChoiceAllowed('background', backgroundPolicySelect.value)) { syncOutputProcessingUi(); return; }
     selectedImageOutputOptions = normalizeImageOutputOptions({
       ...selectedImageOutputOptions,
       backgroundPolicy: backgroundPolicySelect.value,
@@ -5109,7 +5186,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     setStatus('추가 AI 요청 없이 기기에서 배경을 처리합니다. 생성 원본은 유지됩니다.', 'ok');
   });
   examPaletteSelect?.addEventListener('change', () => {
-    if (busy) { syncOutputProcessingUi(); return; }
+    if (!localAppearanceAllowed()) { syncOutputProcessingUi(); return; }
     selectedImageOutputOptions = normalizeImageOutputOptions({
       ...selectedImageOutputOptions,
       examPalette: examPaletteSelect.value === 'true',
@@ -5122,7 +5199,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     setStatus('결과의 색상 처리 설정을 바꿨습니다. 생성 원본은 유지됩니다.', 'ok');
   });
   lineThicknessSelect?.addEventListener('change', () => {
-    if (busy) { syncOutputProcessingUi(); return; }
+    if (!localAppearanceAllowed()) { syncOutputProcessingUi(); return; }
     selectedImageOutputOptions = normalizeImageOutputOptions({
       ...selectedImageOutputOptions,
       lineThickness: Number(lineThicknessSelect.value),
@@ -5135,7 +5212,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     setStatus('추가 AI 요청 없이 기기에서 선 굵기를 처리합니다. 생성 원본은 유지됩니다.', 'ok');
   });
   separationModeSelect?.addEventListener('change', () => {
-    if (busy) { syncOutputProcessingUi(); return; }
+    if (!outputChoiceAllowed('objects', separationModeSelect.value)) { syncOutputProcessingUi(); return; }
     applySeparationMode(normalizeSeparationMode(separationModeSelect.value));
     const lite = document.documentElement.dataset.mode === 'lite';
     if (lite) liteSeparationMode = selectedSeparationMode;
@@ -5153,7 +5230,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
         : '생성 결과의 객체를 자동으로 다시 분석합니다.', 'ok');
   });
   generationModeSelect.addEventListener('change', () => {
-    if (busy) { syncSelectedOutputActions(); return; }
+    if (!outputChoiceAllowed('objects', generationModeSelect.value === AI_ASSET_GENERATION_MODES.SEPARATED ? 'auto' : 'off')) { syncSelectedOutputActions(); return; }
     const hasOutput = Boolean(selectedOutputItem());
     applySeparationMode(generationModeSelect.value === AI_ASSET_GENERATION_MODES.SEPARATED
       ? AI_SEPARATION_MODES.AUTO : AI_SEPARATION_MODES.OFF);
@@ -6019,7 +6096,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     }
   }));
   modal?.addEventListener("mousedown", (event) => event.stopPropagation());
-  commentController=createImageCommentController({panel,getImages:()=>[...attachments.filter(isInputReference),...generatedImages],getSelectedId:()=>selectedCandidateId||generatedImages.at(-1)?.id,isBusy:()=>busy,areaOnlyForSelected:true,changed:()=>{scopedSelectionRevision += 1;captureActiveTaskTab();persistTasks();},viewChanged:()=>{captureActiveTaskTab();persistTasks();}});
+  commentController=createImageCommentController({panel,getImages:()=>[...attachments.filter(isInputReference),...generatedImages],getSelectedId:()=>selectedCandidateId||generatedImages.at(-1)?.id,isBusy:()=>busy,selectedTaskCount,areaOnlyForSelected:true,changed:()=>{scopedSelectionRevision += 1;captureActiveTaskTab();persistTasks();},viewChanged:()=>{captureActiveTaskTab();persistTasks();}});
   panel.querySelector('[data-ai-comments-apply]')?.addEventListener('click', () => sendButton.onclick());
   // Selected-result actions stay in the fixed footer; per-card controls are hidden.
   const editableGroups = document.createElement('button');
@@ -6151,7 +6228,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     if (busy || !canEditLabelReviewDraft(item)) return;
     const taskId = activeTaskTabId, candidateId = item.id, data = item.data;
     const pageContext = state.capturePageContext?.();
-    const isCurrent = () => !disposed && !panel.hidden && activeTaskTabId === taskId
+    const visibilityEpoch = localVisibilityEpoch;
+    const isCurrent = () => !disposed && motion.isOpen() && visibilityEpoch === localVisibilityEpoch && activeTaskTabId === taskId
       && selectedOutputItem() === item && item.id === candidateId && item.data === data
       && (!pageContext || state.isPageContextCurrent?.(pageContext) === true);
     insertingOutput = true;
@@ -6225,7 +6303,9 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   window.addEventListener('pagehide',()=>{void taskPersistence.flush();},{signal:lifecycle.signal});
   window.addEventListener('5e:shortcut-platform-change', syncTaskDeleteShortcutHints,{signal:lifecycle.signal});
   window.addEventListener('5e:shortcut-platform-change', syncSourceShortcutHints,{signal:lifecycle.signal});
-  window.addEventListener('5e:view-mode-change', syncLiteModeUi,{signal:lifecycle.signal});
+  window.addEventListener('5e:view-mode-change', () => {
+    syncLiteModeUi(); refreshOutputPreviews(); restartSelectedAutomaticSeparation('view-mode-changed');
+  },{signal:lifecycle.signal});
   if (!taskTabs.size) createTaskTab();
   workspaceReady=(async()=>{try{const recovered=recoverTaskWorkspaceSnapshot(await taskStore?.get('workspace'));if(disposed)return;if(Array.isArray(recovered?.tabs)){if(recovered.sharingMode)panel.dataset.aiSharingMode=recovered.sharingMode;taskTabs.clear();for(const tab of recovered.tabs)taskTabs.set(tab.id,tab);taskTabSerial=Math.max(taskTabSerial,Number(recovered.taskTabSerial)||0);imageSerial=Math.max(imageSerial,Number(recovered.imageSerial)||0);if(taskTabs.size)restoreTaskTab(recovered.activeTaskTabId);else{activeTaskTabId=null;renderTaskTabs();}persistTasks();}}catch(error){if(!disposed)addLog(`이전 이미지 작업 복원 실패: ${error.message}`,"error");}})();
   if (reviewModelSelect) {
@@ -6245,7 +6325,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   syncLiteModeUi();
   syncReferenceSummary();
   syncSourceShortcutHints();
-  compactSettings = initAISettingsPanel(panel, { signal: lifecycle.signal });
+  compactSettings = initAISettingsPanel(panel, { signal: lifecycle.signal,
+    canChoose: (key, value) => ['background','objects'].includes(key) ? outputChoiceAllowed(key, value) : true });
   disposalCallbacks.push(() => compactSettings.dispose());
   setBusy(false);
   refresh();
@@ -6375,13 +6456,15 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   return {
     batchOwner, ownsBatchOwner: owner => taskTabs.has(owner.taskId)&&sameBatchOwner(batchOwner(owner.taskId),owner), captureBatchTask,preflightBatch,runBatch:runWorkspaceBatch,commitBatch,interruptBatch,
     open, close, attachReference, clearTasks, ready: workspaceReady,
+    refreshTaskSelection: () => commentController?.refreshControls(),
     setWorkbenchVisible: visible => {
       if (visible) motion.show();
-      else { motion.hide(); motion.finish(); }
+      else { localVisibilityEpoch += 1; motion.hide(); motion.finish(); }
     },
     dispose() {
       if (disposed) return;
       disposed = true;
+      localVisibilityEpoch += 1;
       graphOwnerEpoch+=1;
       void graphWorkflow.cancel();
       motion.hide(); motion.finish(); motion.dispose();

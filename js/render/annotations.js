@@ -15,7 +15,7 @@ import { renderLabelTypography } from "../ai-label-typography.js?v=1.7.0-four-se
 // Formula labels (확정 항목 ①): a labeler whose content was committed as a formula
 // (contentMode:"formula") renders through the SAME projection formula objects use,
 // so the label, the editor preview, and SVG/PNG export can never diverge.
-import { renderFormula } from "../formula.js?v=1.7.0-four-session-integration";
+import { renderFormula, measureFormula } from "../formula.js?v=1.7.0-four-session-integration";
 import {
   DEFAULT_TEXT_FONT,
   DEFAULT_TEXT_SIZE_MM,

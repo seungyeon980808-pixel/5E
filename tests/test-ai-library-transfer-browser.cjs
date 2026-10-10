@@ -6,6 +6,8 @@ const test = require('node:test');
 const { chromium } = require(process.env.PLAYWRIGHT_MODULE || '/Users/parkseungyeon/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
 const { installCropFixture, pointerOnImage } = require('./helpers/crop-loading-fixture.cjs');
 const root = path.resolve(__dirname, '..');
+const { fixtureContext, installAiMain } = require('./helpers/canonical-fixture-adapter.cjs');
+const { runtime, inspectEntry } = fixtureContext(root);
 async function fixture(t) {
   const server = http.createServer((req, res) => {
     let file = path.join(root, new URL(req.url, 'http://localhost').pathname);
@@ -35,11 +37,7 @@ async function crop(page, ui, fraction = .25) {
 }
 async function library(t, count = 1) {
   const { page } = await fixture(t);
-  await page.route('**/preview/js/unified-library-ui.js*', route => {
-    const source = fs.readFileSync(path.join(root, 'preview/js/unified-library-ui.js'), 'utf8');
-    return route.fulfill({contentType:'text/javascript',body:source.replace('const acceptedAssets = new Map();', 'const acceptedAssets = new Map(); window.__acceptedAssets = acceptedAssets; openIndependentReferences = (...args) => window.__transfer(...args);')});
-  });
-  const ui = await installCropFixture(page);
+  const ui = await installCropFixture(page, { libraryTransfer: true, evidence: process.env.EVIDENCE_DIR });
   await page.evaluate(() => { window.__transfer = async () => {
     window.__transferStarted = true;
     if (window.__transferGate) await window.__transferGate;
@@ -57,6 +55,7 @@ async function library(t, count = 1) {
 test('successful transfer clears the accepted crop tray on reopen and preserves the PDF source', async t => {
   const { page, ui } = await library(t);
   await ui.locator('[data-unilib-ai]').click();
+  await page.locator('.workbench-assignment [data-action="continue"]').click();
   await ui.waitFor({state:'hidden'});
   await page.evaluate(() => window.cropFixture.open());
   assert.equal(await page.evaluate(() => window.__acceptedAssets.size), 0);
@@ -66,6 +65,7 @@ test('failed transfer keeps crops and the library open', async t => {
   const { page, ui } = await library(t);
   await page.evaluate(() => window.__failTransfer = true);
   await ui.locator('[data-unilib-ai]').click();
+  await page.locator('.workbench-assignment [data-action="continue"]').click();
   await page.waitForFunction(() => document.querySelector('[data-unilib-status]').textContent.includes('failed'));
   assert.equal(await ui.isVisible(), true);
   assert.equal(await page.evaluate(() => window.__acceptedAssets.size), 1);
@@ -81,12 +81,14 @@ async function manager(t) {
   const { page, origin } = await fixture(t);
   await page.addInitScript(() => {
     localStorage.setItem('5e.tutorial.bannerSeen','true'); localStorage.setItem('5e.preview:5e.mode','pro');
-    window.fiveEDesktop = { web: true, status: async () => ({login:{loggedIn:true},server:true}), models:async()=>({data:[]}), account:async()=>({}), onEvent:()=>()=>{}, onState:()=>()=>{}, onLog:()=>()=>{} };
+    window.__fixtureProviderCalls = [];
+    window.fiveEDesktop = { web: true, status: async () => ({login:{loggedIn:true},server:true}), models:async()=>({data:[]}), account:async()=>({}), send:async payload=>{window.__fixtureProviderCalls.push(payload);throw new Error('Unexpected controlled generation during library ownership test');}, interrupt:async()=>({ok:true}), onEvent:()=>()=>{}, onState:()=>()=>{}, onLog:()=>()=>{} };
   });
-  await page.route('**/preview/js/main.js*', route => route.fulfill({contentType:'text/javascript',body:fs.readFileSync(path.join(root,'preview/js/main.js'),'utf8').replace('const aiPanel = initAiPanel(state, { freshStart: recoveryChoice === "fresh" });','const aiPanel = initAiPanel(state, { freshStart: false }); window.__manager = aiPanel;')}));
-  await page.route('**/preview/js/ai-panel.js*', route => route.fulfill({contentType:'text/javascript',body:fs.readFileSync(path.join(root,'preview/js/ai-panel.js'),'utf8').replace('    await workspaceReady;\n    syncLiteModeUi();', '    await workspaceReady;\n    if (window.__failImport && references.some(reference => reference.name === "fail")) throw new Error("fixture import failed");\n    syncLiteModeUi();')}));
-  if (process.env.TRANSFER_BASELINE) await page.route('**/preview/js/ai-task-workspaces.js*', route => route.fulfill({contentType:'text/javascript',body:require('node:child_process').execFileSync('git',['show','HEAD:preview/js/ai-task-workspaces.js'],{cwd:root,encoding:'utf8'})}));
-  await page.goto(origin + '/preview/', {waitUntil:'networkidle'});
+  await installAiMain(page, root, { seedReady: false, manager: '__manager', state: null }, process.env.EVIDENCE_DIR);
+  await page.route('**/js/ai-panel.js*', route => route.fulfill({contentType:'text/javascript',body:fs.readFileSync(path.join(root,'js/ai-panel.js'),'utf8').replace('    await workspaceReady;\n    syncLiteModeUi();', '    await workspaceReady;\n    if (window.__failImport && references.some(reference => reference.name === "fail")) throw new Error("fixture import failed");\n    syncLiteModeUi();')}));
+  if (process.env.TRANSFER_BASELINE) await page.route('**/js/ai-task-workspaces.js*', route => route.fulfill({contentType:'text/javascript',body:require('node:child_process').execFileSync('git',['show','HEAD:preview/js/ai-task-workspaces.js'],{cwd:root,encoding:'utf8'})}));
+  const entryReceipt = await inspectEntry(page, origin, runtime);
+  if(process.env.EVIDENCE_DIR) fs.writeFileSync(path.join(process.env.EVIDENCE_DIR, 'manager-entry.json'), JSON.stringify(entryReceipt,null,2));
   await page.waitForFunction(() => window.__manager);
   return page;
 }
@@ -163,7 +165,7 @@ test('failed imports remove newly created empty workspaces and retain earlier su
 test('a busy reference consumer rejects the handoff instead of acknowledging a discarded image', async t => {
   const page = await manager(t);
   const result = await page.evaluate(async () => {
-    const { createUnifiedAiSourceConsumer } = await import('/preview/js/ai-panel.js');
+    const { createUnifiedAiSourceConsumer } = await import(window.__runtime.base + 'ai-panel.js' + window.__runtime.query);
     const consumer = createUnifiedAiSourceConsumer({addReferencesAsTasks:()=>[],setStatus:()=>{}});
     try { consumer.onAddMany([{data:'sample'}], {placement:'separate'}); return 'accepted'; }
     catch(error) { return error.message; }

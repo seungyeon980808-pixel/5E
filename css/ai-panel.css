@@ -842,7 +842,8 @@
   transform: none;
 }
 
-#ai-image-panel:not([hidden]) > .ai-workbench { animation: none; }
+#ai-image-panel:not([hidden]) > .ai-workbench { animation: modal-pop 260ms cubic-bezier(.2,.9,.25,1.06); transform-origin: center; }
+@media (prefers-reduced-motion: reduce) { #ai-image-panel:not([hidden]) > .ai-workbench { animation: none; } }
 #ai-image-panel .modal-drag-handle { display: none !important; }
 
 #ai-image-panel .ai-head {
@@ -2953,3 +2954,21 @@
 #ai-image-panel .ai-graph-edit-entry[hidden] { display: none; }
 #ai-image-panel .ai-graph-edit-entry:disabled { opacity: .5; cursor: not-allowed; }
 #ai-image-panel .ai-graph-edit-entry:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+
+/* Local controls for historical PNGs do not reveal source conversion settings. */
+.ai-legacy-result-settings { margin:0 0 12px; padding:12px; border:1px solid var(--border); border-radius:8px; }
+.ai-legacy-result-settings[hidden], .ai-legacy-result-settings [hidden] { display:none !important; }
+.ai-legacy-result-settings > p { margin:6px 0 10px; color:var(--text-secondary); font-size:12px; }
+#ai-image-panel .ai-legacy-result-settings .ai-setting-row { display:grid; grid-template-columns:76px minmax(0,1fr); gap:8px; align-items:start; margin:0 0 9px; }
+#ai-image-panel .ai-legacy-result-settings .ai-setting-pair { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:4px; }
+#ai-image-panel .ai-legacy-result-settings .ai-setting-pair button { height:30px; min-height:30px; padding:0 4px; border:1px solid var(--border); border-radius:5px; background:var(--bg-input); color:var(--text-label); font:inherit; font-size:12px; }
+#ai-image-panel .ai-legacy-result-settings .ai-setting-pair button.is-on { color:var(--text-primary); background:var(--control-selected-bg); border-color:var(--accent); font-weight:600; }
+#ai-image-panel .ai-legacy-result-settings .ai-setting-pair button:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+#ai-image-panel .ai-legacy-result-settings [data-ai-output-processing-status] { display:block; margin:6px 0 0; font-size:12px; line-height:1.5; color:var(--text-secondary); }
+.ai-legacy-result-settings > small { display:block; color:var(--text-secondary); }
+
+/* Empty source feedback uses the original status and lock nodes, never a RAW-result control. */
+#ai-image-panel .ai-source-processing-feedback[hidden] { display:none !important; }
+#ai-image-panel .ai-source-processing-feedback:not([hidden]) [data-ai-output-processing-status] { display:block; }
+#ai-image-panel .ai-source-processing-feedback [data-ai-background-lock-hint]:not([hidden]) { display:block; padding:4px 0 0; }

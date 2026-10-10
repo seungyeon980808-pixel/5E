@@ -49,7 +49,7 @@ async function exportDownload(page, format, filename) {
     await page.goto(`${base}?mode=pro&mobile=0`, { waitUntil: "networkidle" });
     await page.locator("#canvas").waitFor({ state: "visible" });
     await page.evaluate(async () => {
-      const { state } = await import("./js/state.js?v=1.6.0-remediation-0929");
+      const { state } = await import("/js/state.js?v=1.7.0-four-session-integration");
       state.update((s) => {
         s.objects = [{
           id: "scale-resistor",
@@ -77,13 +77,13 @@ async function exportDownload(page, format, filename) {
     await input.fill("1.6");
     await input.press("Enter");
     await input.blur();
-    await page.waitForFunction(() => import("./js/state.js?v=1.6.0-remediation-0929").then(({ state }) => state.get().objects[0].bodyScale === 1.6));
+    await page.waitForFunction(() => import("/js/state.js?v=1.7.0-four-session-integration").then(({ state }) => state.get().objects[0].bodyScale === 1.6));
     await twoFrames(page);
     const after = await body.evaluate((node) => node.outerHTML);
     assert.notEqual(after, before, "short resistor bodyScale 1→1.6 must change rendered geometry");
 
     const geometry = await page.evaluate(async () => {
-      const { renderCircuit } = await import("./js/render/circuit.js?v=1.6.0-preview-labeler-0917-1111");
+      const { renderCircuit } = await import("/js/render/circuit.js?v=1.7.0-four-session-integration");
       const read = (element, bodyScale) => {
         const node = renderCircuit({
           id: `${element}-${bodyScale}`,
@@ -121,7 +121,14 @@ async function exportDownload(page, format, filename) {
     await saveDialog.getByRole("button", { name: "저장", exact: true }).click();
     const savedDownload = await savePromise;
     const savedPath = await savedDownload.path();
-    const savedProject = JSON.parse(fs.readFileSync(savedPath, "utf8"));
+    const savedBytes = fs.readFileSync(savedPath);
+    assert.deepEqual([...savedBytes.subarray(0, 2)], [80, 75], "Project save must use the current portable ZIP format");
+    const portable = await page.evaluate(async bytes => {
+      const { parseFiveEProject } = await import("/js/fivee-project.js?v=1.7.0-four-session-integration");
+      return parseFiveEProject(new Uint8Array(bytes));
+    }, [...savedBytes]);
+    assert.equal(portable.kind, "drawing");
+    const savedProject = portable.drawing;
     assert.equal(projectObject(savedProject, "scale-resistor")?.bodyScale, 1.6, "project save must retain bodyScale");
 
     const reopened = await context.newPage();
@@ -134,7 +141,7 @@ async function exportDownload(page, format, filename) {
     const chooser = await chooserPromise;
     await chooser.setFiles(savedPath);
     await reopened.getByRole("button", { name: "열기", exact: true }).click();
-    await reopened.waitForFunction(() => import("./js/state.js?v=1.6.0-remediation-0929").then(({ state }) => {
+    await reopened.waitForFunction(() => import("/js/state.js?v=1.7.0-four-session-integration").then(({ state }) => {
       const object = state.get().objects.find((candidate) => candidate.id === "scale-resistor");
       return object?.bodyScale === 1.6;
     }));

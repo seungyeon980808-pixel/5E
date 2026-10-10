@@ -14,7 +14,7 @@ async function waitForState(page,predicate,arg,{timeout=60000}={}) {
     const timer=setTimeout(()=>finish(new Error('RHWP state transition deadline')),timeout);
     function finish(error){if(ended)return;ended=true;clearTimeout(timer);for(const cleanup of cleanups)cleanup();error?reject(error):resolve();}
     function connect(doc){
-      if(!doc||documents.has(doc))return;
+      if(!doc?.documentElement||documents.has(doc))return;
       documents.add(doc);
       const observer=new MutationObserver(()=>{frames(doc);check();});
       observer.observe(doc.documentElement,{subtree:true,childList:true,attributes:true,characterData:true});
@@ -84,7 +84,7 @@ async function navigate(page,url,options={}) {
 // an ephemeral port so concurrently running workers never share a document.
 async function withServer(run) {
   const configured = process.env.EXAM_URL || process.env.RELEASE_URL;
-  if (configured) return run(configured);
+  if (configured) return run(new URL(configured).origin);
   const root = path.resolve(__dirname, '../..');
   const child = spawn(process.execPath, ['scripts/preview-local-server.cjs'], {
     cwd: root, env: { ...process.env, PORT: '0' }, stdio: ['ignore', 'pipe', 'inherit'],

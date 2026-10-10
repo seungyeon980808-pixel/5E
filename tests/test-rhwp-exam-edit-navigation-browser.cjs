@@ -24,7 +24,11 @@ h.withServer(async origin=>{
    assert.equal(await page.locator('[data-edit-apply],[data-edit-cancel]').count(),0,'duplicate source actions are removed');
    const draftLabel=async text=>{
     await page.evaluate(async url=>{const {openLabelerTextEditor}=await import(url);openLabelerTextEditor('navigation-label');},textUrl);
-    await page.locator('textarea.unified-text-input').fill(text);
+    const editor = page.locator('textarea.ai-inline-label-editor');
+    await editor.waitFor({state:'visible'});
+    assert.equal(await editor.count(),1,'The current plain label uses exactly one native inline editor');
+    assert.equal(await editor.getAttribute('aria-label'),'라벨 직접 편집');
+    await editor.fill(text);
    };
    await draftLabel('돌아갈 때 보관한 라벨');
    // Trigger without blur: navigation itself must commit pending text.

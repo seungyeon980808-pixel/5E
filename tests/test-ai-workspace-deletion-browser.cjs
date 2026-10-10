@@ -4,7 +4,7 @@ const path = require('node:path');
 const test = require('node:test');
 const { chromium, webkit } = require(process.env.PLAYWRIGHT_MODULE || '/Users/parkseungyeon/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
 const root = path.resolve(__dirname, '..');
-const evidenceRoot = process.env.DELETION_EVIDENCE || path.join(root, '.omo/evidence/ai-followup-0928/deletion/after');
+const evidenceRoot = process.env.DELETION_EVIDENCE || process.env.EVIDENCE_DIR || path.join(root, '.omo/evidence/ai-followup-0928/deletion/after');
 function seedRequestWorkspaces(count, initialGeneration = false, missingCapabilities = false, mode = 'pro') {
   localStorage.setItem('5e.tutorial.bannerSeen', 'true');
   localStorage.setItem('5e.preview:5e.mode', mode);
@@ -78,11 +78,13 @@ function seedRequestWorkspaces(count, initialGeneration = false, missingCapabili
 }
 
 async function requestBrowserFixture(context, count, evidence, { transferGate = '', initialGeneration = false, missingCapabilities = false, mode = 'pro' } = {}) {
+  const { fixtureContext, installAiMain } = require(path.join(root, 'tests/helpers/canonical-fixture-adapter.cjs'));
+  const { runtime, runtimeInit, inspectEntry, startServer, stopServer, mixedCandidate } = fixtureContext(root);
   const http = require('node:http');
   const types = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.woff2': 'font/woff2' };
   const server = http.createServer((request, response) => {
     let file = path.resolve(root, `.${new URL(request.url, 'http://localhost').pathname}`);
-    if (!file.startsWith(root + path.sep)) { response.writeHead(403).end(); return; }
+    if (file !== root && !file.startsWith(root + path.sep)) { response.writeHead(403).end(); return; }
     if (file.endsWith('/preview') || request.url.split('?')[0].endsWith('/')) file = path.join(file, 'index.html');
     fs.readFile(file, (error, body) => {
       response.writeHead(error ? 404 : 200, { 'Content-Type': types[path.extname(file)] || 'application/octet-stream' });
@@ -114,19 +116,24 @@ async function requestBrowserFixture(context, count, evidence, { transferGate = 
   page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
   page.on('pageerror', error => { errors.push(error.message); console.error('DELETION PAGE ERROR', error.stack); });
   await page.addInitScript({ content: `(${seedRequestWorkspaces.toString()})(${count}, ${initialGeneration}, ${missingCapabilities}, ${JSON.stringify(mode)})` });
-  await page.route('**/preview/js/main.js*', route => route.fulfill({ contentType: 'text/javascript', body:
-    'await window.__seedReady;\n' + fs.readFileSync(path.join(root, 'preview/js/main.js'), 'utf8').replace(
-      'const aiPanel = initAiPanel(state, { freshStart: recoveryChoice === "fresh" });',
-      'const aiPanel = initAiPanel(state, { freshStart: false }); window.__task2Manager = aiPanel; window.__integrationState = state;') }));
-  await page.route('**/preview/js/ai-panel.js*', route => {
-    let source = fs.readFileSync(path.join(root, 'preview/js/ai-panel.js'), 'utf8');
-    if (transferGate === 'snapshot') source = source.replace("return structuredClone({ key: 'workspace', tabs: [tab], activeTaskTabId: id, taskTabSerial, imageSerial });", "const snapshot = structuredClone({ key: 'workspace', tabs: [tab], activeTaskTabId: id, taskTabSerial, imageSerial }); window.__transferWaiting = true; await new Promise(resolve => { window.__releaseTransfer = resolve; }); return snapshot;");
-    if (transferGate === 'import') source = source.replace("await taskStore.put({ ...snapshot, key: 'workspace', sharingMode: mode || null });", "await taskStore.put({ ...snapshot, key: 'workspace', sharingMode: mode || null }); window.__transferWaiting = true; await new Promise(resolve => { window.__releaseTransfer = resolve; });");
+  await installAiMain(page, root, {}, evidence);
+  await page.route('**/js/ai-panel.js*', route => {
+    let source = fs.readFileSync(path.join(root, 'js/ai-panel.js'), 'utf8');
+    if (transferGate === 'snapshot') {
+      assert.equal(source.split("return structuredClone({ key: 'workspace', tabs: [tab], activeTaskTabId: id, taskTabSerial, imageSerial });").length - 1, 1);
+      source = source.replace("return structuredClone({ key: 'workspace', tabs: [tab], activeTaskTabId: id, taskTabSerial, imageSerial });", "const snapshot = structuredClone({ key: 'workspace', tabs: [tab], activeTaskTabId: id, taskTabSerial, imageSerial }); window.__transferWaiting = true; await new Promise(resolve => { window.__releaseTransfer = resolve; }); return snapshot;");
+    }
+    if (transferGate === 'import') {
+      const seam = "await taskPersistence.replace({ ...recovered, key: 'workspace', sharingMode: mode || null }, () => {";
+      assert.equal(source.split(seam).length - 1, 1);
+      source = source.replace(seam, "window.__transferWaiting = true; await new Promise(resolve => { window.__releaseTransfer = resolve; }); " + seam);
+    }
     return route.fulfill({contentType:'text/javascript',body:source});
   });
-  await page.route('**/preview/js/ai-task-workspaces.js*', route => route.fulfill({contentType:'text/javascript',body:
-    fs.readFileSync(path.join(root,'preview/js/ai-task-workspaces.js'),'utf8').replace('pendingSelections.delete(key);','pendingSelections.delete(key); window.__transferSettled = true;')}));
-  await page.goto(`http://127.0.0.1:${server.address().port}/preview/`, { waitUntil: 'networkidle' });
+  await page.route('**/js/ai-task-workspaces.js*', route => route.fulfill({contentType:'text/javascript',body:
+    fs.readFileSync(path.join(root,'js/ai-task-workspaces.js'),'utf8').replace('pendingSelections.delete(key);','pendingSelections.delete(key); window.__transferSettled = true;')}));
+  const entryReceipt = await inspectEntry(page, `http://127.0.0.1:${server.address().port}`, runtime);
+  fs.writeFileSync(path.join(evidence, 'entry-' + count + '.json'), JSON.stringify(entryReceipt, null, 2));
   const welcome = page.locator('.tut-welcome-overlay .tut-banner-no');
   if (await welcome.isVisible()) await welcome.click();
   await page.locator('#ai-image-install-open').click();

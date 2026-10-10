@@ -37,3 +37,93 @@ test('partial edits bypass global processing on display, export and insertion', 
   assert.equal(await resolveImageOutput({data},options,transform),'processed');
   assert.equal(calls,1);
 });
+
+test('modern and unknown generated contracts stay RAW through the actual output resolver', async () => {
+  const {resolveImageOutput}=await import('../js/ai-output-processing.js');
+  const {isHistoricalPngLocalResult,requiresRawImageOutput,canChooseLocalOutput}=await import('../js/ai-output-processing.js');
+  // Policy-only sentinel; this unit never decodes it or claims PNG quality.
+  const historical={kind:'generated',data:'data:image/png;base64,policy-sentinel',reviewState:'idle'};
+  assert.equal(isHistoricalPngLocalResult(historical),true);
+  const cases=[{imageLabelWorkflow:{explicit:true}},{imageLabelWorkflow:{explicit:false}},
+    {imageLabelWorkflow:{}},{imageLabelWorkflow:false},{labelPlan:{frozen:true}},
+    {labelPlan:{}},{sourceLabelPlan:{}},{editableDraft:{}},{candidateSha256:'invalid'},
+    {sourceFrame:{}},{workflowMetrics:{}},{targetPlacement:{}},{graphResult:{}},{sceneResult:{}},
+    {nativeGraph:{}},{reviewState:'scoped-applied'},{scopedEditHistory:[{status:'cancelled'}]},
+    {scopedEditHistory:{}},{data:'data:image/svg+xml,scene'},{data:'not-a-PNG'}];
+  for(const metadata of cases){
+    const candidate={...historical,...metadata};const before=structuredClone(candidate);let calls=0;
+    const transform=()=>{calls++;throw new Error('Protected RAW reached postprocessing');};
+    assert.equal(isHistoricalPngLocalResult(candidate),false,JSON.stringify(metadata));
+    assert.equal(requiresRawImageOutput(candidate),true);
+    for(const policy of ['connected','all-near-white']){
+      assert.equal(await resolveImageOutput(candidate,{backgroundPolicy:policy,examPalette:true,lineThickness:2},transform),candidate.data);
+      assert.equal(canChooseLocalOutput(candidate,'background',policy),false);
+      assert.equal(canChooseLocalOutput(candidate,'objects','auto'),false);
+    }
+    assert.equal(calls,0);assert.deepEqual(candidate,before,'Guard leaves the complete candidate/report/metadata untouched');
+  }
+  let calls=0;const transform=(data,options)=>{calls++;return {data,options};};
+  const result=await resolveImageOutput(historical,{backgroundPolicy:'all-near-white'},transform);
+  assert.equal(calls,1);assert.equal(result.data,historical.data);assert.equal(result.options.backgroundPolicy,'all-near-white');
+});
+
+test('legacy delegate policy retains Lite binary actions, locks separation, and rejects hidden advanced choices', async()=>{
+  const {canChooseLocalOutput}=await import('../js/ai-output-processing.js');
+  const {transitionSeparationMode}=await import('../js/ai-separation-mode.js');
+  const item={kind:'generated',data:'data:image/png;base64,policy-sentinel'};
+  for(const mode of ['lite','pro']){
+    for(const value of ['preserve','connected'])assert.equal(canChooseLocalOutput(item,'background',value,{mode}),true);
+    for(const value of ['off','auto'])assert.equal(canChooseLocalOutput(item,'objects',value,{mode}),true);
+    for(const restrictions of [{busy:true},{readOnly:true}]){
+      assert.equal(canChooseLocalOutput(item,'background','connected',{mode,...restrictions}),false);
+      assert.equal(canChooseLocalOutput(item,'objects','auto',{mode,...restrictions}),false);
+    }
+    assert.equal(canChooseLocalOutput(item,'background','preserve',{mode,separationMode:'auto'}),false);
+    assert.equal(canChooseLocalOutput(item,'background','all-near-white',{mode}),mode==='pro');
+    for(const value of ['grid','manual'])assert.equal(canChooseLocalOutput(item,'objects',value,{mode}),mode==='pro');
+  }
+  for(const mode of ['lite','pro']){
+    assert.equal(canChooseLocalOutput(null,'background','connected',{mode}),true);
+    assert.equal(canChooseLocalOutput(null,'background','all-near-white',{mode}),false,'Empty source is never relabeled historical');
+    assert.equal(canChooseLocalOutput(null,'objects','grid',{mode}),false);
+  }
+  const original={separationMode:'off',outputOptions:{backgroundPolicy:'all-near-white',examPalette:false,lineThickness:0}};
+  const separated=transitionSeparationMode(original,'auto');
+  assert.equal(separated.outputOptions.backgroundPolicy,'connected');
+  assert.equal(separated.singleBackgroundPolicy,'all-near-white');
+  assert.deepEqual(transitionSeparationMode(separated,'off').outputOptions,original.outputOptions);
+  assert.deepEqual(original,{separationMode:'off',outputOptions:{backgroundPolicy:'all-near-white',examPalette:false,lineThickness:0}});
+});
+
+test('actual settings delegate refuses a modern or locked choice before dispatch and retries only qualified legacy controls',async()=>{
+  const fs=await import('node:fs/promises');const vm=await import('node:vm');
+  const {canChooseLocalOutput}=await import('../js/ai-output-processing.js');
+  const source=await fs.readFile(new URL('../js/ai-settings-panel.js',import.meta.url),'utf8');
+  const complete=source.replace(/^import .*registerEscapeLayer.*\n/m,'').replace('export function initAISettingsPanel','function initAISettingsPanel').replace('export function sourceImageKind','function sourceImageKind');
+  const build=(item,mode='pro',readOnly=false)=>{
+    const events=[],listeners={};
+    const control={value:'preserve',disabled:false,options:[{value:'preserve'},{value:'connected'},{value:'all-near-white'}],dispatchEvent:event=>events.push(event.type)};
+    const group={dataset:{aiSettingKey:'background'},querySelectorAll:()=>[button]};
+    const button={dataset:{aiSettingValue:'all-near-white'},disabled:false,hidden:false,classList:{toggle(){}},setAttribute(){},hasAttribute:()=>false,closest:selector=>selector==='[data-ai-setting-key]'?group:button};
+    const settingsRoot={hasAttribute:key=>key==='data-ai-legacy-result-settings',querySelector:()=>null,querySelectorAll:()=>[group],addEventListener:(name,fn)=>{listeners[name]=fn;}};
+    const compact={hasAttribute:key=>key==='data-ai-compact-settings',querySelector:()=>null,querySelectorAll:()=>[],addEventListener(){}};
+    const panel={hidden:false,dataset:{aiSharingMode:readOnly?'view':'edit'},querySelectorAll:()=>[compact,settingsRoot],querySelector:()=>control,addEventListener(){}};
+    const context={registerEscapeLayer:()=>()=>{},MutationObserver:class{observe(){}disconnect(){}},Event:class{constructor(type){this.type=type;}},
+      document:{documentElement:{dataset:{mode}},addEventListener(){}},window:{addEventListener(){}}};
+    vm.runInNewContext(complete+'\nthis.mount=initAISettingsPanel;',context);
+    const controller=context.mount(panel,{canChoose:(key,value)=>canChooseLocalOutput(item,key,value,{mode,readOnly})});
+    return {events,control,button,click:()=>listeners.click({target:button}),dispose:()=>controller.dispose()};
+  };
+  for(const item of [{kind:'generated',data:'data:image/png;base64,policy-sentinel',imageLabelWorkflow:{explicit:true}},
+    {kind:'generated',data:'data:image/png;base64,policy-sentinel',labelPlan:{frozen:true}},null]){
+    const current=build(item);current.button.disabled=false;current.click();
+    assert.deepEqual(current.events,[]);assert.equal(current.control.value,'preserve');current.dispose();
+  }
+  const legacy={kind:'generated',data:'data:image/png;base64,policy-sentinel'};
+  for(const [mode,readOnly] of [['lite',false],['pro',true]]){
+    const current=build(legacy,mode,readOnly);current.button.disabled=false;current.click();
+    assert.deepEqual(current.events,[]);assert.equal(current.control.value,'preserve');current.dispose();
+  }
+  const current=build(legacy);current.click();assert.deepEqual(current.events,['change']);assert.equal(current.control.value,'all-near-white');
+  current.click();assert.deepEqual(current.events,['change','change'],'The actual legacy delegate retries a failed selected policy instead of silently no-op');current.dispose();
+});

@@ -40,6 +40,7 @@ function stepSpring(value, velocity, target, seconds) {
   const displacement = value - target;
   const coefficient = velocity + SPRING_FREQUENCY * displacement;
   const decay = Math.exp(-SPRING_FREQUENCY * seconds);
+  if (decay === 0) return { value: target, velocity: 0 };
   return {
     value: target + (displacement + coefficient * seconds) * decay,
     velocity: (velocity - SPRING_FREQUENCY * coefficient * seconds) * decay,
@@ -83,17 +84,24 @@ function originOffset(surface, origin) {
  * The whole overlay fades, including its scrim, without also fading the child
  * surface. Original inline values and priorities are restored at rest.
  *
+ * `cssEntrance` opts a separate surface into an actual named CSS entrance. Its
+ * initial scale/opacity are CSS-owned; an interrupted close captures presentation
+ * values, cancels only that named effect, and reuses this lifecycle and scheduler.
+ * Reopening continues those channels without restarting the CSS entrance.
+ *
  * Scheduler arguments are optional and allow deterministic unit verification.
  */
 export function createModalSurfaceMotion({
   overlay,
   surface = overlay?.querySelector?.('.modal') || overlay,
+  cssEntrance = null,
   reducedMotion = prefersReducedMotion,
   requestFrame = callback => globalThis.requestAnimationFrame?.(callback),
   cancelFrame = handle => globalThis.cancelAnimationFrame?.(handle),
   now = () => globalThis.performance?.now?.() ?? Date.now(),
 } = {}) {
   if (!overlay || !surface) throw new TypeError('A modal overlay and surface are required.');
+  if (cssEntrance && surface === overlay) throw new TypeError('A CSS entrance requires a separate modal surface.');
   const nativeDialog = overlay.tagName?.toLowerCase() === 'dialog';
   const visible = () => nativeDialog ? Boolean(overlay.open) : !overlay.hidden;
   let target = visible() ? 1 : 0;
@@ -106,6 +114,15 @@ export function createModalSurfaceMotion({
   let savedStyles = null;
   let baseOpacity = 1;
   let offset = { x: 0, y: 12 };
+  let cssEntrancePending = false;
+  let cssChannels = null;
+  let previousCssSample = null;
+
+  function readNow() {
+    const time = now();
+    if (!Number.isFinite(time)) throw new TypeError('Modal motion requires a finite clock.');
+    return time;
+  }
 
   function setState(state) {
     overlay.dataset.modalMotionState = state;
@@ -126,6 +143,7 @@ export function createModalSurfaceMotion({
     if (savedStyles) return;
     savedStyles = [
       ...SURFACE_PROPERTIES.map(name => ({ element: surface, name })),
+      ...(cssEntrance ? [{ element: surface, name: 'opacity' }] : []),
       { element: overlay, name: 'opacity' },
     ].map(({ element, name }) => ({
       element, name,
@@ -163,6 +181,69 @@ export function createModalSurfaceMotion({
     }
   }
 
+  function namedCssAnimations() {
+    if (!cssEntrance) return [];
+    return [...(surface.getAnimations?.() || [])]
+      .filter(animation => animation.animationName === cssEntrance);
+  }
+
+  function readCssSurface(time = readNow()) {
+    const components = cssComponents(computedProperty(surface, 'scale')).map(Number);
+    const scale = components.length ? [components[0], components[1] ?? components[0], components[2] ?? 1] : [1, 1, 1];
+    const rawOpacity = computedProperty(surface, 'opacity');
+    const opacity = rawOpacity === '' ? 1 : Number(rawOpacity);
+    if (!scale.every(Number.isFinite) || !Number.isFinite(opacity)) {
+      throw new TypeError('The named CSS entrance must expose finite scale and opacity.');
+    }
+    return { scale, opacity, time };
+  }
+
+  function cancelCssEntrance() {
+    for (const animation of namedCssAnimations()) animation.cancel();
+    cssEntrancePending = false;
+  }
+
+  function handoffCssEntrance(time) {
+    if (cssChannels) return;
+    // Copy presentation values before cancellation; computed-style objects are live.
+    const presented = readCssSurface(time);
+    const previous = previousCssSample;
+    cancelCssEntrance();
+    const base = readCssSurface(time);
+    const seconds = previous ? (presented.time - previous.time) / 1000 : 0;
+    // This preserves sampled velocity; exact CSS easing derivatives still require
+    // verification at a first-frame interruption and at the 62% keyframe boundary.
+    const velocity = (value, oldValue) => {
+      const sampled = seconds > 0 ? (value - oldValue) / seconds : 0;
+      return Number.isFinite(sampled) ? sampled : 0;
+    };
+    cssChannels = {
+      scale: presented.scale.map((value, index) => ({
+        value, velocity: velocity(value, previous?.scale[index] ?? value),
+        open: base.scale[index], closed: base.scale[index] * (index < 2 ? INITIAL_SCALE : 1),
+      })),
+      opacity: {
+        value: presented.opacity, velocity: velocity(presented.opacity, previous?.opacity ?? presented.opacity),
+        open: base.opacity, closed: presented.opacity,
+      },
+    };
+    previousCssSample = null;
+  }
+
+  function stepCssChannels(seconds) {
+    if (!cssChannels) return;
+    for (const channel of [...cssChannels.scale, cssChannels.opacity]) {
+      Object.assign(channel, stepSpring(channel.value, channel.velocity,
+        target ? channel.open : channel.closed, seconds));
+    }
+  }
+
+  function cssChannelsSettled() {
+    return !cssChannels || [...cssChannels.scale, cssChannels.opacity].every(channel =>
+      Math.abs(channel.value - (target ? channel.open : channel.closed)) <= POSITION_TOLERANCE
+      && Math.abs(channel.velocity) <= VELOCITY_TOLERANCE);
+  }
+
   function render() {
     const progress = Math.max(0, Math.min(1, value));
     const remaining = 1 - progress;
@@ -172,12 +253,17 @@ export function createModalSurfaceMotion({
       `calc(${base.translate[1] || '0px'} + ${offset.y * remaining}px)`,
     ];
     if (base.translate[2]) translation.push(base.translate[2]);
-    const scale = 1 - (1 - INITIAL_SCALE) * remaining;
-    const scaledBase = [base.scale[0] || '1', base.scale[1] || base.scale[0] || '1'];
-    const scaleValues = scaledBase.map(component => `calc(${component} * ${scale})`);
-    if (base.scale[2]) scaleValues.push(base.scale[2]);
     surface.style.setProperty('translate', translation.join(' '));
-    surface.style.setProperty('scale', scaleValues.join(' '));
+    if (cssChannels) {
+      surface.style.setProperty('scale', cssChannels.scale.map(channel => String(channel.value)).join(' '));
+      surface.style.setProperty('opacity', String(Math.max(0, Math.min(1, cssChannels.opacity.value))));
+    } else {
+      const scale = 1 - (1 - INITIAL_SCALE) * remaining;
+      const scaledBase = [base.scale[0] || '1', base.scale[1] || base.scale[0] || '1'];
+      const scaleValues = scaledBase.map(component => `calc(${component} * ${scale})`);
+      if (base.scale[2]) scaleValues.push(base.scale[2]);
+      surface.style.setProperty('scale', scaleValues.join(' '));
+    }
     overlay.style.setProperty('opacity', String(baseOpacity * progress));
   }
 
@@ -188,6 +274,9 @@ export function createModalSurfaceMotion({
 
   function commit({ notify = true } = {}) {
     cancelScheduledFrame();
+    if (cssEntrance) cancelCssEntrance();
+    cssChannels = null;
+    previousCssSample = null;
     value = target;
     velocity = 0;
     restoreStyles();
@@ -209,12 +298,22 @@ export function createModalSurfaceMotion({
   function frame(timestamp) {
     frameHandle = null;
     if (disposed) return;
+    if (!Number.isFinite(timestamp)) { commit(); return; }
+    if (cssEntrancePending) {
+      lastTime = timestamp;
+      const running = namedCssAnimations().some(animation =>
+        animation.playState !== 'finished' && animation.playState !== 'idle');
+      if (shouldReduceMotion() || !running) commit();
+      else { previousCssSample = readCssSurface(); schedule(); }
+      return;
+    }
     const elapsed = Math.max(0, (timestamp - lastTime) / 1000);
     lastTime = timestamp;
     ({ value, velocity } = stepSpring(value, velocity, target, elapsed));
+    stepCssChannels(elapsed);
     render();
     if (Math.abs(value - target) <= POSITION_TOLERANCE
-      && Math.abs(velocity) <= VELOCITY_TOLERANCE) {
+      && Math.abs(velocity) <= VELOCITY_TOLERANCE && cssChannelsSettled()) {
       commit();
     } else {
       schedule();
@@ -234,8 +333,9 @@ export function createModalSurfaceMotion({
 
   function show({ origin } = {}) {
     if (disposed) return false;
+    if (target === 1 && visible()) { pendingHidden = null; return true; }
+    const time = readNow();
     pendingHidden = null;
-    if (target === 1 && visible()) return true;
     const wasVisible = visible();
     expose();
     if (!savedStyles) {
@@ -245,9 +345,20 @@ export function createModalSurfaceMotion({
       offset = originOffset(surface, origin);
     }
     target = 1;
-    lastTime = now();
+    lastTime = time;
     setAccessible(true);
     setState('start');
+    if (cssEntrance && !wasVisible) {
+      // The source CSS owns the initial 260ms scale and child opacity. Do not
+      // fade the overlay or add a second transform while that entrance plays.
+      cssEntrancePending = true;
+      cssChannels = null;
+      previousCssSample = null;
+      value = 1; velocity = 0;
+      if (shouldReduceMotion()) commit();
+      else schedule();
+      return true;
+    }
     render();
     if (shouldReduceMotion()) commit();
     else schedule();
@@ -256,14 +367,16 @@ export function createModalSurfaceMotion({
 
   function hide({ onHidden } = {}) {
     if (disposed) return false;
+    const time = readNow();
     if (typeof onHidden === 'function') pendingHidden = onHidden;
     if (!savedStyles) {
       captureStyles();
       value = visible() ? 1 : 0;
       velocity = 0;
     }
+    if (cssEntrance) handoffCssEntrance(time);
     target = 0;
-    lastTime = now();
+    lastTime = time;
     setAccessible(false);
     setState('closing');
     render();

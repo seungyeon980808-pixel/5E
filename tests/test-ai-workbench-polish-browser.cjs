@@ -6,10 +6,12 @@ const os = require('node:os');
 const crypto = require('node:crypto');
 const { execFileSync } = require('node:child_process');
 const test = require('node:test');
-const playwright = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
-const root = process.env.TASK9_ROOT || process.cwd();
-const evidenceRoot = path.resolve(process.env.TASK9_EVIDENCE || path.join(root, '.omo/evidence/ai-workbench-polish-0928/task9-polish/browser'));
-const { installCropFixture, pointerOnImage } = require(path.join(root, 'tests/helpers/crop-loading-fixture.cjs'));
+const playwright = require(process.env.PLAYWRIGHT_MODULE || '/Users/parkseungyeon/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
+const root = path.resolve(process.env.TASK9_ROOT || path.join(__dirname, '..'));
+const { fixtureContext, installAiMain } = require(path.join(root, 'tests/helpers/canonical-fixture-adapter.cjs'));
+const { runtime, inspectEntry } = fixtureContext(root);
+const evidenceRoot = path.resolve(process.env.TASK9_EVIDENCE || process.env.EVIDENCE_DIR || path.join(root, '.omo/evidence/ai-workbench-polish-0928/task9-polish/browser'));
+const { installCropFixture, pointerOnImage, captureCropEvidence, releaseCropFixture } = require(path.join(root, 'tests/helpers/crop-loading-fixture.cjs'));
 const { identity, loadForHostedCi } = require('./helpers/performance-reference.cjs');
 const physicalReference = loadForHostedCi(root);
 const active = '#ai-image-panel';
@@ -21,7 +23,9 @@ const seedStart = lifecycleFixture.indexOf('function seedRequestWorkspaces(');
 const seedEnd = lifecycleFixture.indexOf('\nasync function requestBrowserFixture(', seedStart);
 assert.ok(seedStart >= 0 && seedEnd > seedStart, 'populated lifecycle fixture must be available');
 const seed = lifecycleFixture.slice(seedStart, seedEnd);
-const sourceFiles = ['preview/js/ai-panel.js', 'preview/js/ai-task-workspaces.js', 'preview/js/ai-workspace-batch.js', 'preview/js/ai-comparison.js', 'preview/js/unified-library-ui.js', 'preview/js/tools/pointer-magnifier.js', 'preview/css/ai-panel.css', 'preview/css/ai-comparison.css', 'preview/css/unified-library.css', 'preview/index.html', 'preview/js/main.js', 'tests/test-ai-workspace-lifecycle-browser.cjs', 'tests/helpers/crop-loading-fixture.cjs', 'tests/test-ai-workbench-polish-browser.cjs', 'tests/helpers/performance-reference.cjs', 'package-lock.json'];
+const legacySourceFiles = ['preview/js/ai-panel.js', 'preview/js/ai-task-workspaces.js', 'preview/js/ai-workspace-batch.js', 'preview/js/ai-comparison.js', 'preview/js/unified-library-ui.js', 'preview/js/tools/pointer-magnifier.js', 'preview/css/ai-panel.css', 'preview/css/ai-comparison.css', 'preview/css/unified-library.css', 'preview/index.html', 'preview/js/main.js', 'tests/test-ai-workspace-lifecycle-browser.cjs', 'tests/helpers/crop-loading-fixture.cjs', 'tests/test-ai-workbench-polish-browser.cjs', 'tests/helpers/performance-reference.cjs', 'package-lock.json'];
+const canonicalSources = ['js', 'css'].flatMap(dir => fs.readdirSync(path.join(root, dir), { recursive: true }).filter(file => /\.(?:js|mjs|css)$/.test(file)).map(file => `${dir}/${file}`));
+const sourceFiles = [...new Set([...legacySourceFiles, ...canonicalSources, 'index.html', 'tests/helpers/canonical-fixture-adapter.cjs', 'tests/helpers/four-session-entry.cjs', 'tests/fixtures/candidate-union.cjs', 'tests/run-browser-tests.cjs'])].sort();
 const hashes = () => Object.fromEntries(sourceFiles.map(file => [file, crypto.createHash('sha256').update(fs.readFileSync(path.join(root, file))).digest('hex')]));
 
 async function fixture(t, engine, name, count = null) {
@@ -39,7 +43,11 @@ async function fixture(t, engine, name, count = null) {
   const resources = { engine, pid: process.pid, serverPort: null, browserStarted: false, contextStarted: false, serverClosed: false, browserClosed: false, contextClosed: false };
   t.after(async () => {
     try {
-      if (page && !page.isClosed()) await page.screenshot({ path: path.join(evidence, 'final.png') });
+      if (page && !page.isClosed()) {
+        write(evidence, 'crop-events.json', await captureCropEvidence(page));
+        await releaseCropFixture(page);
+        await page.screenshot({ path: path.join(evidence, 'final.png') });
+      }
       if (tracing) {
         let deadline;
         try {
@@ -69,13 +77,22 @@ async function fixture(t, engine, name, count = null) {
   write(evidence, 'environment.json', { node: process.version, executable: process.execPath, engine, browserVersion: browser.version(), headless, measuredOutsideGitHubActions: process.env.GITHUB_ACTIONS !== 'true', performanceIdentity: identity(root), platform: os.platform(), release: os.release(), arch: os.arch(), cpu: os.cpus()[0]?.model, cpuCount: os.cpus().length, totalMemory: os.totalmem(), loadAverage: os.loadavg(), viewport: { width: 1440, height: 1000 }, deviceScaleFactor: 2, head: execFileSync('git', ['rev-parse', 'HEAD'], { cwd: root, encoding: 'utf8' }).trim(), dirtyStatus: execFileSync('git', ['status', '--short'], { cwd: root, encoding: 'utf8' }), sourceHashes: sourceBefore, service: 'deterministic desktop fixture; no authenticated provider request', measurement: 'trusted pointer click event through decoded selected target plus two animation frames; automation actionability time excluded' });
   if (count !== null) {
     await page.addInitScript({ content: `${seed}\nseedRequestWorkspaces(${count}); localStorage.setItem('5e.preview:5e.mode','pro'); localStorage.setItem('5e.preview:theme','light'); localStorage.setItem('5e.preview:5e.tutorial.bannerSeen','true'); window.fiveEDesktop.captureSources=async()=>[{name:'검증 캡처',data:window.__task2.original}];` });
-    await page.route('**/preview/js/main.js*', route => {
-      const source = fs.readFileSync(path.join(root, 'preview/js/main.js'), 'utf8');
-      const original = 'const aiPanel = initAiPanel(state, { freshStart: recoveryChoice === "fresh" });';
-      assert.ok(source.includes(original));
-      return route.fulfill({ contentType: 'text/javascript', body: 'await window.__seedReady;\n' + source.replace(original, 'const aiPanel = initAiPanel(state, { freshStart: false }); window.__task2Manager=aiPanel;') });
+    await page.addInitScript(() => {
+      let actual;
+      window.__task2ManagerReady = new Promise(resolve => {
+        Object.defineProperty(window, '__task2Manager', { configurable: true, get: () => actual, set(value) { actual = value; resolve(value); } });
+      });
     });
-    await page.goto(`${origin}/preview/`, { waitUntil: 'networkidle' });
+    await installAiMain(page, root, { seedReady: true, manager: '__task2Manager', state: '__integrationState' }, evidence);
+    const entry = await inspectEntry(page, origin, runtime);
+    write(evidence, 'entry-runtime.json', entry);
+    await page.evaluate(async () => {
+      let deadline;
+      try {
+        const manager = await Promise.race([window.__task2ManagerReady, new Promise((_resolve, reject) => { deadline = setTimeout(() => reject(new Error('Actual canonical manager initialization deadline exceeded')), 10000); })]);
+        await manager.sharingSnapshot();
+      } finally { clearTimeout(deadline); }
+    });
     const welcome = page.locator('.tut-welcome-overlay .tut-banner-no'); if (await welcome.isVisible()) await welcome.click();
     await page.click('#ai-image-install-open');
     await selected(page, 0);
@@ -127,7 +144,7 @@ for (const engine of ['chromium', 'webkit']) for (const count of [1, 10, 30]) {
     // click-to-paint latency. Preserve traces on either side of the benchmark.
     await pauseTracing();
     await page.bringToFront();
-    await page.waitForTimeout(100);
+    await page.locator(active).evaluate(async node => { await document.fonts.ready; await Promise.all(node.getAnimations().map(animation => animation.finished)); });
     await page.evaluate(() => {
       window.__polish = { samples: [], gaps: [], stop: false, last: performance.now(), started: performance.now() };
       window.__task2.longTasks = [];
@@ -194,7 +211,7 @@ for (const engine of ['chromium', 'webkit']) for (const count of [1, 10, 30]) {
 for (const engine of ['chromium', 'webkit']) test(`${engine}: dark reduced-motion crop preserves target geometry through slow decode, retry and reopen`, { timeout: 90000 }, async t => {
   const { page, evidence, errors, origin, pauseTracing, resumeTracing } = await fixture(t, engine, 'loading');
   process.env.PREVIEW_URL = origin;
-  const ui = await installCropFixture(page);
+  const ui = await installCropFixture(page, { root, evidence, held: ['original-2', 'thumbnail-2', 'continuous-2'] });
   await page.evaluate(() => document.documentElement.setAttribute('data-theme', 'dark'));
   await page.emulateMedia({ reducedMotion: 'reduce', colorScheme: 'dark' });
   const load = ui.locator('[data-unilib-crop-load-state]');
@@ -208,7 +225,7 @@ for (const engine of ['chromium', 'webkit']) test(`${engine}: dark reduced-motio
   await pointerOnImage(page, ui, .9);
   await ui.locator('[data-unilib-crop-canvas]').evaluate(node => Promise.all(node.getAnimations().map(animation => animation.finished)));
   await page.screenshot({ path: path.join(evidence, 'dark-zoom-edge-lens.png') });
-  await page.evaluate(() => { window.holdCrop('original-2'); window.holdCrop('thumbnail-2'); });
+  await page.evaluate(() => { window.cropActionAfter = window.cropFixtureLog.length; for (const key of ['original-2', 'thumbnail-2', 'continuous-2']) if (window.cropGates[key]?.released !== false) throw new Error(`Missing pre-armed gate ${key}`); });
   await pauseTracing();
   await ui.locator('[data-unilib-crop-page-next]').click(); await load.waitFor({ state: 'visible' });
   await ui.locator('.unilib-crop-load-paper').waitFor({ state: 'visible' });
@@ -231,12 +248,13 @@ for (const engine of ['chromium', 'webkit']) test(`${engine}: dark reduced-motio
   await page.evaluate(() => window.cropGates['thumbnail-2'].release());
   await ui.locator('.unilib-crop-load-preview').waitFor({ state: 'visible' });
   await page.evaluate(() => { window.holdCrop('decode-2'); window.cropGates['original-2'].release(); });
-  await page.evaluate(async () => { for (let n = 0; n < 4; n++) await new Promise(requestAnimationFrame); });
+  await page.evaluate(async () => { await window.waitCropEvent({ phase: 'editor-decode-start', number: 2, kind: 'original' }, window.cropActionAfter); await window.waitCropEvent({ phase: 'decode-held', number: 2 }, window.cropActionAfter); });
   assert.equal(await load.isVisible(), true);
   await ui.locator('[data-unilib-crop-canvas]').evaluate(node => Promise.all(node.getAnimations().map(animation => animation.finished)));
   await page.screenshot({ path: path.join(evidence, 'decode-pending-target-only.png') });
   await page.evaluate(() => window.cropGates['decode-2'].release()); await load.waitFor({ state: 'hidden' });
   assert.equal(await image.evaluate(img => img.naturalWidth), 800);
+  await page.evaluate(() => window.cropGates['continuous-2'].release());
   await page.evaluate(() => { window.cropBrokenPage = 3; });
   await ui.locator('[data-unilib-crop-page-next]').click();
   await ui.locator('[data-unilib-crop-load-state][data-state="error"]').waitFor();
@@ -244,10 +262,13 @@ for (const engine of ['chromium', 'webkit']) test(`${engine}: dark reduced-motio
   await page.screenshot({ path: path.join(evidence, 'decode-failed.png') });
   await page.evaluate(() => { window.cropBrokenPage = null; }); await ui.locator('[data-unilib-crop-retry]').click(); await load.waitFor({ state: 'hidden' });
   assert.equal(await image.evaluate(img => img.naturalWidth), 700);
-  await page.evaluate(() => { window.holdCrop('original-2'); window.holdCrop('thumbnail-2'); });
+  await page.evaluate(() => { window.cropActionAfter = window.cropFixtureLog.length; for (const key of ['original-2', 'thumbnail-2', 'continuous-2']) window.holdCrop(key); });
   await ui.locator('[data-unilib-crop-page-prev]').click(); await load.waitFor({ state: 'visible' });
+  const canceledOperations = await page.evaluate(() => window.cropFixtureLog.filter(row => row.phase === 'editor-start' && row.number === 2 && row.sequence > window.cropActionAfter).map(row => row.sequence));
+  assert.ok(canceledOperations.length > 0, 'The canceled page has an actual started editor operation');
   await ui.locator('[data-unilib-crop-cancel]').click(); await ui.locator('[data-result-id="geometry-book:page:1"]').click(); await ui.locator('[data-unilib-adjust]').click(); await load.waitFor({ state: 'hidden' });
-  await page.evaluate(async () => { window.cropGates['original-2'].release(); window.cropGates['thumbnail-2'].release(); for (let n = 0; n < 4; n++) await new Promise(requestAnimationFrame); });
+  await page.evaluate(async operations => { for (const key of ['original-2', 'thumbnail-2', 'continuous-2']) window.cropGates[key].release(); await Promise.all(operations.flatMap(operation => ['editor-settled', 'editor-original-settled', 'editor-fast-settled'].map(phase => window.waitCropEvent({ phase, operation })))); }, canceledOperations);
+  write(evidence, 'loading-gate-events.json', await captureCropEvidence(page));
   assert.equal(await image.evaluate(img => img.naturalWidth), 600);
   const pointer = await pointerOnImage(page, ui);
   await page.touchscreen.tap(pointer.point.x, pointer.point.y); await page.locator('#library-crop-magnifier').waitFor({ state: 'hidden' });

@@ -4,7 +4,7 @@ const path = require('node:path');
 const test = require('node:test');
 const { chromium, webkit } = require(process.env.PLAYWRIGHT_MODULE || '/Users/parkseungyeon/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
 const root = path.resolve(__dirname, '..');
-const evidence = process.env.SEPARATION_EVIDENCE || path.join(root, '.omo/evidence/ai-latest-fixes-0928/separation-green');
+const evidence = process.env.SEPARATION_EVIDENCE || process.env.EVIDENCE_DIR || path.join(root, '.omo/evidence/ai-latest-fixes-0928/separation-green');
 fs.mkdirSync(evidence, { recursive: true });
 const original = fs.readFileSync(path.join(root, 'tests/test-ai-workspace-lifecycle-browser.cjs'), 'utf8');
 const start = original.indexOf('function seedRequestWorkspaces(');
@@ -13,21 +13,24 @@ const harness = original.slice(start, end)
   .replace('draw.strokeRect(40, 50, 420, 280);', 'draw.strokeRect(40, 50, 100, 180); draw.strokeRect(220, 120, 60, 80); draw.strokeRect(360, 50, 100, 180);')
   .replace("separationMode: 'off',", "separationMode: 'auto', generationMode: 'separated',")
   .replace("kind: 'generated', name:", "kind: 'generated', generationMode: 'separated', name:")
-  .replace('  await page.goto(', `  await page.route('**/preview/js/ai-separated-assets.js*', route => {
-    const source = fs.readFileSync(path.join(root, 'preview/js/ai-separated-assets.js'), 'utf8');
+  .replace('  const entryReceipt = await inspectEntry', `  await page.route('**/js/ai-separated-assets.js*', route => {
+    const source = fs.readFileSync(path.join(root, 'js/ai-separated-assets.js'), 'utf8');
+    assert.equal(source.split('export async function prepareSeparatedAssets(').length - 1, 1, 'Original segmentation observation seam occurs once');
     return route.fulfill({ contentType: 'text/javascript', body: source.replace('export async function prepareSeparatedAssets(', 'async function realPrepareSeparatedAssets(') + '\\nexport async function prepareSeparatedAssets(...args) { window.__separationCalls = (window.__separationCalls || 0) + 1; return realPrepareSeparatedAssets(...args); }' });
   });
-  await page.goto(`);
+  const entryReceipt = await inspectEntry`);
 const fixture = new Function('require', 'root', 'fs', 'path', 'assert', 'chromium', 'webkit', harness + '; return requestBrowserFixture;')(require, root, fs, path, assert, chromium, webkit);
 const write = (name, value) => fs.writeFileSync(path.join(evidence, name), JSON.stringify(value, null, 2));
 test('separated request preserves layout and attachment framing at the production request boundary', { timeout: 90000 }, async t => {
   const { page } = await fixture(t, 1, evidence, { initialGeneration: true });
   await page.click('#ai-image-panel [data-ai-send]');
-  await page.waitForFunction(() => window.__task2.sends.length === 1);
+  await page.waitForFunction(() => window.__task2.generationSends.length === 1);
   const result = await page.evaluate(async () => {
-    const payload = window.__task2.sends[0].payload;
+    const generation = window.__task2.generationSends[0];
+    if (!window.__task2.sends.includes(generation) || generation.payload.purpose !== 'image') throw new Error('Actual generation must belong to the complete transport ledger');
+    const payload = generation.payload;
     const image = new Image(); image.src = payload.attachments[0].data; await image.decode();
-    return { text: payload.text, width: image.naturalWidth, height: image.naturalHeight, sends: window.__task2.sends.length, interceptedAt: 'fiveEDesktop.send' };
+    return { text: payload.text, width: image.naturalWidth, height: image.naturalHeight, sends: window.__task2.generationSends.length, transportStages: window.__task2.sends.map(send => ({ stage: send.stage, purpose: send.payload.purpose, turnId: send.turnId, threadId: send.threadId })), interceptedAt: 'fiveEDesktop.send' };
   });
   write('prompt.json', result);
   assert.doesNotMatch(result.text, /4×4 격자로 배치|아틀라스 배치만 적용/);
@@ -37,6 +40,16 @@ test('separated request preserves layout and attachment framing at the productio
 test('legacy separated candidate dialog shares processed pixels, positions, and cached segmentation', { timeout: 90000 }, async t => {
   const { page, errors } = await fixture(t, 1, evidence);
   await page.waitForFunction(() => document.querySelector('#ai-image-panel .ai-generated-card .ai-preview-stage > img')?.src !== window.__task2.original);
+  const previewContract = await page.evaluate(() => {
+    const panel = document.querySelector('#ai-image-panel');
+    return { boxEdit: panel.dataset.aiBoxEdit, selected: panel.dataset.aiSelectedCandidateId,
+      sourceIsRaw: panel.querySelector('.ai-generated-card .ai-preview-stage > img')?.src === window.__task2.original,
+      coverageRequirement: 'original processed main/dialog alpha and cached segmentation remain mandatory',
+      sourceContract: 'Qualified historical PNG uses the real local variant; modern or bound/scoped metadata remains RAW' };
+  });
+  write('required-legacy-preview-contract.json', previewContract);
+  assert.equal(previewContract.sourceIsRaw, false,
+    'CURRENT_UI_CONTRACT_GAP: qualified historical PNG did not resolve its local variant; original processed-main/dialog alpha oracle is not waived');
   await page.click('#ai-image-panel [data-ai-editable-groups]');
   await page.waitForFunction(() => document.querySelectorAll('.aea-thumbnail img').length === 3);
   const inspect = () => page.evaluate(async () => {

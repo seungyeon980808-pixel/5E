@@ -25,7 +25,15 @@ const previewUrl = process.env.PREVIEW_URL || 'http://127.0.0.1:8765/';
     await dialog.getByRole('button', { name: '저장', exact: true }).click();
     const download = await downloadPromise;
     assert.equal(download.suggestedFilename().normalize('NFC'), '왕복 확인.5e');
-    const saved = JSON.parse(fs.readFileSync(await download.path(), 'utf8'));
+    const bytes = fs.readFileSync(await download.path());
+    assert.deepEqual([...bytes.subarray(0, 2)], [80, 75], 'The common portable project uses its actual ZIP format');
+    const portable = await page.evaluate(async values => {
+      const { parseFiveEProject } = await import('/js/fivee-project.js?v=1.7.0-four-session-integration');
+      return parseFiveEProject(new Uint8Array(values));
+    }, [...bytes]);
+    assert.equal(portable.kind, 'drawing');
+    assert.equal(portable.name, '', 'The drawing serializer uses its optional default metadata name; the download filename is asserted separately');
+    const saved = portable.drawing;
     assert.equal(saved.version, '0.17');
     assert.equal(saved.pages.length, 1);
     assert.deepEqual(errors, []);

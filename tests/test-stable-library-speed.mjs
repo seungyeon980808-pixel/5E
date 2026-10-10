@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { createThumbnailQueue } from '../js/library/thumbnail-queue.js';
 
-import { cropSessionIsCurrent, pdfResultsForDisplay, cropContentBoundsForResult, shouldHandleLibrarySpace, materializeLibraryThumbnail, materializeLibraryAction } from "../js/unified-library-ui.js";
+import { cropSessionIsCurrent, pdfResultsForDisplay, cropContentBoundsForResult, shouldHandleLibrarySpace, materializeLibraryThumbnail, materializeLibraryAction, acceptedCropResult } from "../js/unified-library-ui.js";
 
 const page = (pageNumber) => ({
   id: "audit-document",
@@ -97,4 +97,50 @@ test('thumbnail queue bounds concurrency and drops obsolete queued work', async 
   release();
   await Promise.all([first, second, obsolete, current]);
   assert.deepEqual(ran, ['slow', 'visible', 'new-search']);
+});
+
+// The real provider refuses the preview's local crop ID. Final output must retain
+// that provider's ownership checks while resolving the original page and rect.
+test("accepted manual preview rematerializes its exact crop through the owned canonical PDF page", async () => {
+  const { createUnifiedLibraryProvider } = await import('../js/library/provider.js');
+  const calls = [];
+  const exact = { dataUrl: "data:original-pdf-crop" };
+  const provider = createUnifiedLibraryProvider({
+    pdfDocuments: [{ id: "book", title: "Book", pageCount: 2,
+      source: { kind: "file", locator: "book.pdf" }, pages: [{ pageNumber: 1 }, { pageNumber: 2 }] }],
+    materializers: { pdf: async input => { calls.push(input); return exact; } },
+  });
+  const page = provider.listPdfPages().find(item => item.provenance.pageNumber === 2);
+  const result = acceptedCropResult(page, [0.1, 0.2, 0.3, 0.4], 1);
+  const before = structuredClone(result);
+  const preview = { dataUrl: "data:preview-only", previewOnly: true };
+  const acceptedAssets = new Map([[result.id, { result, materialized: preview }]]);
+  await assert.rejects(provider.materialize(result, { representation: "manual" }), /provenance is unavailable/);
+  assert.equal(calls.length, 0, "The provider still refuses unregistered local IDs");
+  assert.equal(await materializeLibraryAction(result, provider, { acceptedAssets, representation: "manual", preview: true, thumbnail: true }), exact);
+  assert.equal(calls.length, 1);
+  assert.equal(calls[0].result.id, page.id);
+  assert.equal(calls[0].result.kind, "page");
+  assert.deepEqual(calls[0].source, { documentId: "book", pageNumber: 2, rect: [0.1, 0.2, 0.3, 0.4], fullPageFallback: false });
+  assert.equal(calls[0].options.original, true);
+  assert.equal(calls[0].options.representation, "manual");
+  assert.equal(calls[0].options.preview, false); assert.equal(calls[0].options.thumbnail, false);
+  assert.deepEqual(result, before); assert.equal(acceptedAssets.get(result.id).materialized, preview);
+  const cached = { dataUrl: "data:exact-cached-crop" };
+  acceptedAssets.set(result.id, { result, materialized: cached });
+  assert.equal(await materializeLibraryAction(result, provider, { acceptedAssets }), cached);
+  assert.equal(calls.length, 1);
+  const invalid = [
+    acceptedCropResult({ ...page, provenance: { ...page.provenance, documentId: "foreign" } }, [0.1, 0.2, 0.3, 0.4], 2),
+    acceptedCropResult({ ...page, provenance: { ...page.provenance, pageNumber: 99 } }, [0.1, 0.2, 0.3, 0.4], 3),
+    acceptedCropResult(page, [0.9, 0.2, 0.3, 0.4], 4),
+    { ...result, variants: { manual: { source: { ...result.variants.manual.source, rect: [0, 0, 1, 1] } } } },
+  ];
+  for (const target of invalid) {
+    const acceptedAssets = new Map([[target.id, { result: target, materialized: preview }]]);
+    await assert.rejects(materializeLibraryAction(target, provider, { acceptedAssets, representation: "manual" }), /provenance|does not match/);
+  }
+  const mismatch = new Map([[result.id, { result: { ...result, provenance: { ...result.provenance, pageNumber: 1 } }, materialized: preview }]]);
+  await assert.rejects(materializeLibraryAction(result, provider, { acceptedAssets: mismatch }), /provenance is unavailable/);
+  assert.equal(calls.length, 1, "Unknown owners/pages, invalid rects and mismatched accepted entries never reach PDF rendering");
 });

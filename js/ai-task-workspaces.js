@@ -231,6 +231,7 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
     let count=active.panel.querySelector('[data-ai-selection-count]');
     if(!count){count=document.createElement('output');count.dataset.aiSelectionCount='';active.panel.querySelector('[data-ai-tabs]').prepend(count);}
     count.textContent = `${selectedTasks.values().length}개 선택`;
+    active.controller?.refreshTaskSelection?.();
     const total = entries.reduce((sum, entry) => sum + entry.tabs.length, 0);
     const selectAll = active.panel.querySelector('[data-ai-tab-select-all]');
     if (selectAll) {
@@ -332,11 +333,11 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
   function saveSelection() {
     if (restored && active?.controller) store(selectionKey, {scope: active.scope, taskId: active.controller.activeTask()});
   }
-  function activate(entry) {
+  function activate(entry, { reveal = true } = {}) {
     if (!entry || entry.disposed || !entries.includes(entry)) return;
     for (const item of entries) {
-      if (item.controller.setWorkbenchVisible) item.controller.setWorkbenchVisible(item === entry);
-      else item.panel.hidden = item !== entry;
+      if (item.controller.setWorkbenchVisible) item.controller.setWorkbenchVisible(reveal && item === entry);
+      else item.panel.hidden = !reveal || item !== entry;
       item.panel.id = item === entry ? 'ai-image-panel' : `ai-workspace-${item.scope || 'legacy'}`;
     }
     active = entry;
@@ -539,7 +540,7 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
         activate(entry);
         await entry.controller.open({ reveal: true });
       },
-      exportCollection, clearCollection, selectCollection, launchSelected, cancelWorkspaceJob: context=>workspaceBatch.cancel(context.jobId).then(refreshBatch).catch(batchError),
+      exportCollection, clearCollection, selectCollection, launchSelected, selectedTaskCount: () => selectedTasks.values().length, cancelWorkspaceJob: context=>workspaceBatch.cancel(context.jobId).then(refreshBatch).catch(batchError),
       newWorkspace: () => { const next = add(crypto.randomUUID()); saveRegistry(); return next.scope; },
       workspaceEmpty: () => {
         if (disposeEntry(entry)) return;
@@ -842,7 +843,7 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
       const next = add(crypto.randomUUID(), false);
       await next.controller.ready;
       saveRegistry();
-      return () => activate(next);
+      return () => activate(next, { reveal: false });
     },
     checkpointForClose: async () => {
       const snapshots = await Promise.all(entries.map((entry) => entry.controller.checkpointForClose()));

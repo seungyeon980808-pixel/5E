@@ -10,7 +10,7 @@ const fixture = new Function('require', 'root', 'fs', 'path', 'assert', 'chromiu
 for (const engine of ['chromium', 'webkit']) {
   test(`${engine}: comparison aligns images and keeps controls beside their context`, { timeout: 90000 }, async t => {
     process.env.TASK2_ENGINE = engine;
-    const evidence = path.join(root, '.omo/evidence/ai-followup-0928/layout', process.env.QA_PHASE || 'green', engine);
+    const evidence = path.join(process.env.EVIDENCE_DIR || path.join(root, '.omo/evidence/ai-followup-0928/layout', process.env.QA_PHASE || 'green'), engine);
     fs.mkdirSync(evidence, { recursive: true });
     const { page, errors } = await fixture(t, 2, evidence);
     const panel = '#ai-image-panel';
@@ -89,14 +89,34 @@ for (const engine of ['chromium', 'webkit']) {
     assert.deepEqual(colors[0].image, ['255,255,255'], 'opaque original stays white');
     assert.ok(colors[1].image.includes('184,190,198') && colors[1].image.includes('159,167,178'), 'transparent output uses both medium gray tones');
     assert.ok(colors[1].image.every(value => [[184,190,198],[159,167,178]].some(expected => value.split(',').every((channel,i) => Math.abs(Number(channel)-expected[i])<=1))), 'only checker tones and one-level rendering rounding are present');
-    await page.click(`${panel} [data-ai-comment-tool="point"]`);
+    assert.equal(await page.locator(`${panel} [data-ai-comment-tool="point"]`).isVisible(), false,
+      'Scoped generated revisions intentionally expose area editing, not point creation');
+    await page.click(`${panel} [data-ai-comment-tool="area"]`);
     const imageBox = await page.locator(`${panel} .is-ai-active-candidate .ai-preview-stage > img`).boundingBox();
-    await page.mouse.click(imageBox.x + imageBox.width * .6, imageBox.y + imageBox.height * .6);
+    // Same image-relative 60%,60% origin oracle; real area input also proves extent.
+    await page.mouse.move(imageBox.x + imageBox.width * .6, imageBox.y + imageBox.height * .6);
+    await page.mouse.down();
+    await page.mouse.move(imageBox.x + imageBox.width * .68, imageBox.y + imageBox.height * .68);
+    await page.mouse.up();
     const addedComment = await page.evaluate(async () => {
       const snapshot = await window.__task2Manager.sharingSnapshot();
       return snapshot.workspaces.flatMap(workspace => workspace.tabs).find(tab => tab.id === 'task-0').generated[0].comments.at(-1);
     });
     assert.ok(Math.abs(addedComment.x - 60) < .5 && Math.abs(addedComment.y - 60) < .5, 'comment clicks use actual image coordinates');
+    assert.equal(addedComment.type, 'area');
+    assert.ok(Math.abs(addedComment.w - 8) < .5 && Math.abs(addedComment.h - 8) < .5,
+      'Scoped area extent uses the same real image coordinates');
+    const pointApi = await page.evaluate(async () => {
+      const url = window.__runtime.base + 'ai-image-comments.js' + window.__runtime.query;
+      const { normalizeCommentBox } = await import(url);
+      return { url, value: normalizeCommentBox({ type: 'point', x: 60, y: 60, w: 0, h: 0 }),
+        coverage: 'actual component point input validation; not selected-output point UI creation' };
+    });
+    assert.deepEqual(pointApi.value, { x: 60, y: 60, w: 0, h: 0 });
+    fs.writeFileSync(path.join(evidence, 'comment-input-contract.json'), JSON.stringify({
+      actualUiAction: 'scoped area drag', origin: { x: 60, y: 60 }, extent: { w: 8, h: 8 },
+      retiredUiAction: 'selected generated point creation', addedComment, pointApi,
+    }, null, 2));
     await page.click(`${panel} [data-ai-comment-tool="pan"]`);
     await page.click(`${panel} [data-ai-zoom-action="in"]`);
     await geometry('linked-zoom');

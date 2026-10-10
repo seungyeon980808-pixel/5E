@@ -710,6 +710,26 @@
           </section>
 </div>          <div class="ai-side-content">
             <section class="ai-comments-panel" data-ai-comments-panel aria-label="위치별 코멘트">
+              <section class="ai-legacy-result-settings" data-ai-legacy-result-settings hidden aria-label="저장된 그림 처리">
+                <strong>저장된 그림 처리</strong>
+                <p>추가 AI 요청 없이 이 기기에서 처리합니다. 생성 원본은 유지됩니다.</p>
+                <div class="ai-setting-row"><span>배경</span>
+                  <div class="ai-setting-pair" data-ai-setting-key="background" role="group" aria-label="저장된 그림 배경 처리">
+                    <button type="button" data-ai-setting-value="preserve" aria-pressed="false">원본 유지</button>
+                    <button type="button" data-ai-setting-value="connected" aria-pressed="false">외부 흰색 제거</button>
+                    <button type="button" data-ai-setting-value="all-near-white" data-ai-legacy-pro-choice aria-pressed="false" title="물체 내부의 흰색도 제거합니다">내부 흰색도 제거</button>
+                  </div>
+                </div>
+                <div class="ai-setting-row"><span>객체 분리</span>
+                  <div class="ai-setting-pair" data-ai-setting-key="objects" role="group" aria-label="저장된 그림 객체 분리">
+                    <button type="button" data-ai-setting-value="off" aria-pressed="false">한 장</button>
+                    <button type="button" data-ai-setting-value="auto" aria-pressed="false">자동 분리</button>
+                    <button type="button" data-ai-setting-value="grid" data-ai-legacy-pro-choice aria-pressed="false">격자 분리</button>
+                    <button type="button" data-ai-setting-value="manual" data-ai-legacy-pro-choice aria-pressed="false">직접 지정</button>
+                  </div>
+                </div>
+                <small data-ai-legacy-background-lock hidden>분리 중에는 외부 배경 제거가 함께 적용됩니다.</small>
+              </section>
               <section class="ai-preparation" aria-label="이미지 요청과 기본 설정">
                 <header><strong data-ai-request-title>첫 변환</strong><span data-ai-request-hint>고정된 평가원식 규칙으로 변환합니다.</span></header>
                 <p class="ai-request-note" data-ai-request-note>먼저 평가원식 흑백 선화로 변환합니다.<br>결과에 수정 위치를 표시하세요.</p>
