@@ -1,4 +1,4 @@
-import { showConfirm } from './ui-dialogs.js?v=1.6.1-remediation-0929';
+import { showConfirm } from './ui-dialogs.js?v=1.7.0-four-session-integration';
 
 export function nativeProjectTarget() {
   const platform = navigator.userAgentData?.platform || navigator.platform || '';

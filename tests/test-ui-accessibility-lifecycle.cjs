@@ -69,7 +69,7 @@ test('characterization: mode switch keeps the approved three choices and quiet i
 test('characterization: pointer focus remains deliberately quiet', () => {
   const css = read('preview/css/style.css');
   assert.match(cssRule(css, '#canvas.pointer-focused'), /outline:\s*none/);
-  const main = read('preview/js/main.js');
+  const main = read('js/main.js');
   assert.match(main, /svg\.classList\.add\("pointer-focused"\)/);
   assert.match(main, /svg\.addEventListener\("blur", \(\) => svg\.classList\.remove\("pointer-focused"\)/);
 });
@@ -104,7 +104,7 @@ if (!characterizeOnly) {
     assert.match(source, /checkpoint\.pageCount/);
     assert.match(source, /source:\s*selected\.source/);
     assert.match(source, /id:\s*Number\(selected\.id\)/);
-    assert.match(read('preview/js/main.js'), /selectRecoveryCheckpoint:\s*showRecoveryCheckpointDialog/);
+    assert.match(read('js/main.js'), /selectRecoveryCheckpoint:\s*showRecoveryCheckpointDialog/);
   });
 
   test('ARCH-160-02: hidden zoom readout is idle and refreshes on reveal and visibility', async () => {

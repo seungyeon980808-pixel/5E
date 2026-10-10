@@ -12,7 +12,12 @@ function moduleUrl(name) {
   assert.ok(match, `${name} must use the actual root entry import`);
   return '/js/' + match[1].slice(2);
 }
-const modules = { state: moduleUrl('state'), project: moduleUrl('project-io'), status: '/js/project-status.js?v=1.6.1-ai-latest-fixes-0928' };
+const { entryConfiguration, runtimeConfiguration, mainModuleUrl } = require('./helpers/four-session-entry.cjs');
+const config = entryConfiguration(process.env);
+const entryUrl = new URL(config.entry, origin).href;
+const html = fs.readFileSync(path.join(root, config.entry === '/' ? 'index.html' : 'preview/index.html'), 'utf8');
+const runtime = runtimeConfiguration(config, entryUrl, mainModuleUrl(html, entryUrl), main);
+const modules = { state: moduleUrl('state'), project: moduleUrl('project-io'), status: runtime.moduleBase + 'project-status.js' + runtime.moduleQuery };
 const fixture = path.join(root, 'tests/fixtures/rights-clear-smoke.png');
 const fixtureSrc = `data:image/png;base64,${fs.readFileSync(fixture).toString('base64')}`;
 const limit = 128 * 1024 * 1024;

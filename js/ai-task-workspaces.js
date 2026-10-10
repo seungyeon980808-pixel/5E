@@ -1,12 +1,13 @@
-import { createWorkspaceBatch, createWorkspaceSelection } from './ai-workspace-batch.js?v=1.6.1-remediation-0929';
-import { createBatchStore } from './ai-batch-store.js?v=1.6.1-remediation-0929';
+import { validateWorkspaceCandidates } from './ai-candidate-snapshot.js?v=1.7.0-four-session-integration';
+import { createWorkspaceBatch, createWorkspaceSelection } from './ai-workspace-batch.js?v=1.7.0-four-session-integration';
+import { createBatchStore } from './ai-batch-store.js?v=1.7.0-four-session-integration';
 import {
   chooseTaskExportDestination,
   normalizeTaskExportMode,
   writeTaskExports,
-} from './ai-task-export.js?v=1.6.1-remediation-0929';
-import { restoreGenerationTiming } from './ai-generation-timing.js';
-import { idbGet, idbSet } from './idb-store.js?v=1.6.1-remediation-0929';
+} from './ai-task-export.js?v=1.7.0-four-session-integration';
+import { restoreGenerationTiming } from './ai-generation-timing.js?v=1.7.0-four-session-integration';
+import { idbGet, idbSet } from './idb-store.js?v=1.7.0-four-session-integration';
 
 const CANCELLABLE_TASK_STATES = new Set(['busy', 'running']);
 
@@ -38,6 +39,7 @@ export async function clearTaskWorkspaces({ tasks, confirm, cancel, remove }) {
 
 export function recoverTaskWorkspaceSnapshot(value) {
   if (!value || !Array.isArray(value.tabs)) return null;
+  validateWorkspaceCandidates(value);
   const recovered = structuredClone(value);
   recovered.tabs = recovered.tabs.filter(tab => tab && typeof tab.id === 'string').map(tab => {
     const generated = Array.isArray(tab.generated) ? tab.generated : [];
@@ -588,12 +590,63 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
     });
   };
   return {
+    examTaskNames: () => entries.flatMap(entry => entry.controller?.examTaskNames?.() || []),
+    renameExamTask: (link,name) => {for (const entry of entries) entry.controller?.renameExamTask?.(link,name);},
+    activeExamTask: () => ({scope:active.scope || '',taskId:active.controller.activeTask()}),
+    captureExamTask: async (taskId = null, scope = null) => {
+      await ready;
+      const entry = taskId ? entries.find(entry => (scope === null || (entry.scope || '') === scope) && entry.controller.ownsTask(taskId)) : active;
+      if (!entry) return null;
+      const id = taskId || entry.controller.activeTask();
+      if (!id) return null;
+      const snapshot = await entry.controller.examTaskSnapshot(id);
+      return {scope:entry.scope || '',taskId:id,snapshot};
+    },
+    restoreExamTask: async (context, {candidateId = null} = {}) => {
+      await ready;
+      validateWorkspaceCandidates(context?.snapshot);
+      if (context.snapshot.tabs.length !== 1 || context.snapshot.tabs[0].id !== context.taskId) throw new TypeError("Invalid exam task context");
+      const link = context.snapshot.tabs[0].examLink;
+      let entry = [...entries].reverse().find(entry => {
+        if (!entry.controller.ownsTask(context.taskId)) return false;
+        const current = entry.controller.examTaskLink(context.taskId);
+        return link ? current?.tabId === link.tabId && current.assetId === link.assetId : (entry.scope || '') === context.scope;
+      });
+      if (!entry) {
+        entry = add(crypto.randomUUID(), false);
+        await entry.controller.importSharingSnapshot(structuredClone(context.snapshot), null);
+        saveRegistry();
+      }
+      activate(entry);
+      await entry.controller.open({taskId:context.taskId,candidateId});
+      return {scope:entry.scope || '',taskId:context.taskId,snapshot:await entry.controller.examTaskSnapshot(context.taskId)};
+    },
     workspaceBatchState: () => structuredClone(batchJobs),
     dispose: () => batchDisposal ||= (async()=>{ batchDisposed=true;clearTimeout(batchTimer);await workspaceBatch?.dispose();for(const entry of entries){entry.panel.removeEventListener('input',entry.batchInputChanged);entry.panel.removeEventListener('change',entry.batchInputChanged);entry.controller.dispose();} })(),
     sharingHasViewOnly: () => entries.some(entry => entry.panel.dataset.aiSharingMode === 'view'),
     sharingSnapshot: async () => {
       await ready;
       return { workspaces: await Promise.all(entries.map(entry => entry.controller.sharingSnapshot())), activeWorkspace: entries.indexOf(active) };
+    },
+    restoreProjectSnapshot: async document => {
+      await ready;
+      if (!Array.isArray(document?.workspaces) || document.workspaces.some(snapshot=>!recoverTaskWorkspaceSnapshot(snapshot))) throw new Error('AI 작업 원본이 올바르지 않습니다.');
+      const restored=[];
+      for (const snapshot of document.workspaces) {
+        if (!snapshot.tabs.length) continue;
+        // Import in independent scopes so another open task never loses work.
+        const linked=snapshot.tabs.find(t=>t.examLink);
+        let entry=linked?[...entries].reverse().find(e=>{const l=e.controller.examTaskLink(linked.id);return l?.tabId===linked.examLink.tabId && l.assetId===linked.examLink.assetId;}):null;
+        let merged=structuredClone(snapshot);
+        if(entry) {
+          const live=await entry.controller.sharingSnapshot(), ids=new Set(merged.tabs.map(t=>t.id));
+          merged.tabs.push(...live.tabs.filter(t=>!ids.has(t.id)));
+        } else entry=add(crypto.randomUUID(),false);
+        await entry.controller.importSharingSnapshot(merged,null);
+        restored.push(entry);
+      }
+      if(restored.length) activate(restored[Math.min(restored.length-1,Math.max(0,document.activeWorkspace||0))]);
+      saveRegistry();
     },
     openSharingDocument: async (id, document) => {
       await ready;

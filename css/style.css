@@ -2944,3 +2944,11 @@ textarea.unified-text-input {
 .delayed-cut-confirm { border: 1px solid var(--accent); background: var(--accent); color: #fff; }
 .delayed-cut-confirm:disabled { opacity: .45; cursor: not-allowed; }
 .delayed-cut-cancel { margin-top: 6px; border: 1px solid var(--border); background: transparent; color: var(--text-secondary); }
+
+.ai-inline-label-editor {
+  background: rgba(255, 255, 255, 0.96);
+  outline: 1px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: 2px;
+  cursor: text;
+}

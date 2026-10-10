@@ -12,8 +12,8 @@
  * 때만** 다시 만든다.
  */
 
-import { makeSection } from "./widgets.js?v=1.6.1-preview-labeler-0917-1111";
-import { CHEMCHART_PIE_COLORS } from "../render/chemchart.js?v=1.6.1-remediation-0929";
+import { makeSection } from "./widgets.js?v=1.7.0-four-session-integration";
+import { CHEMCHART_PIE_COLORS } from "../render/chemchart.js?v=1.7.0-four-session-integration";
 
 const KINDS = [["bar", "막대그래프"], ["pie", "원그래프"]];
 

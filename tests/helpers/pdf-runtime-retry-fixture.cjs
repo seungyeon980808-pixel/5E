@@ -3,6 +3,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { createHash } = require('node:crypto');
 const { chromium, webkit } = require('playwright');
+const { entryConfiguration, mainModuleUrl, runtimeConfiguration } = require('./four-session-entry.cjs');
 
 const hash = value => createHash('sha256').update(value).digest('hex');
 const json = value => JSON.stringify(value);
@@ -49,6 +50,11 @@ function fixturePack() {
 async function runPdfRuntimeRetryCases({ origin, evidence }) {
   fs.mkdirSync(evidence, { recursive: true });
   const results = [], fixture = fixturePack();
+  const root = path.resolve(__dirname, '../..');
+  const entryUrl = new URL('/', origin).href;
+  const mainUrl = mainModuleUrl(fs.readFileSync(path.join(root, 'index.html'), 'utf8'), entryUrl);
+  const runtime = runtimeConfiguration(entryConfiguration(process.env), entryUrl, mainUrl, fs.readFileSync(path.join(root, 'js/main.js'), 'utf8'));
+  const expectedVersion = new URL(runtime.moduleQuery, origin).searchParams.get('v');
   for (const [name, engine] of Object.entries({ chromium, webkit })) {
     const browser = await engine.launch({ headless: true });
     try {
@@ -105,7 +111,7 @@ async function runPdfRuntimeRetryCases({ origin, evidence }) {
           await preview.evaluate(img => img.decode());
           assert.ok(await preview.evaluate(img => img.naturalWidth > 100));
           assert.equal(new Set(moduleRequests).size, moduleRequests.length, 'no failed module URL is reused');
-          assert.equal(new URL(moduleRequests[0]).searchParams.get('v'), '1.6.3-pdf-runtime-retry');
+          assert.equal(new URL(moduleRequests[0]).searchParams.get('v'), expectedVersion);
           if (scenario === 'normal') assert.equal(moduleRequests.length, 1);
           if (scenario === 'automatic-retry') assert.equal(moduleRequests.length, 2);
 

@@ -5,8 +5,8 @@ import {
   gridAssignments,
   mergeAssignments,
   summarizeAssignments,
-} from './ai-separated-assets-assignments.js?v=1.6.1-preview-labeler-0917-1111';
-import { decodeScopedPng, encodeScopedPng } from './ai-scoped-edit-png.js?v=1.6.1-remediation-0929';
+} from './ai-separated-assets-assignments.js?v=1.7.0-four-session-integration';
+import { decodeScopedPng, encodeScopedPng } from './ai-scoped-edit-png.js?v=1.7.0-four-session-integration';
 
 const WHITE_THRESHOLD = 240;
 const MAX_COMPONENTS_BEFORE_GROUPING = 512;

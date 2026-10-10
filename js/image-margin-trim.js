@@ -1,4 +1,4 @@
-import { cropBoxToBounds } from "./cut-geometry.js?v=1.6.1-preview-labeler-0917-1111";
+import { cropBoxToBounds } from "./cut-geometry.js?v=1.7.0-four-session-integration";
 
 export function contentBounds(data, width, height) {
   let left = width, top = height, right = -1, bottom = -1;

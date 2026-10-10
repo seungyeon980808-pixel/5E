@@ -1,4 +1,4 @@
-import { decodeScopedPng, encodeScopedPng } from './ai-scoped-edit-png.js?v=1.6.1-remediation-0929';
+import { decodeScopedPng, encodeScopedPng } from './ai-scoped-edit-png.js?v=1.7.0-four-session-integration';
 
 const MAX_PIXELS = 16_000_000;
 const MAX_ASSETS = 128;

@@ -1,5 +1,5 @@
-import { createPdfRuntime, detectPageItems } from "./pdf-runtime.js?v=1.6.1-preview-crop-quality-0920-1806";
-import { createDocumentRecord, createSourceRecord, PDF_LIBRARY_SCHEMA } from "./contract.js?v=1.6.1-preview-labeler-0917-1111";
+import { createPdfRuntime, detectPageItems } from "./pdf-runtime.js?v=1.7.0-four-session-integration";
+import { createDocumentRecord, createSourceRecord, PDF_LIBRARY_SCHEMA } from "./contract.js?v=1.7.0-four-session-integration";
 
 function pdfOpenDiagnostic(error) {
   const message = error instanceof Error && error.message ? error.message : "PDF 문서를 열 수 없습니다.";

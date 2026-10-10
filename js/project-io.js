@@ -9,29 +9,29 @@
 // derived from it when a page is loaded or switched. groupId is the single
 // source of truth, and the saved file never supplies a separate groups list.
 
-import { screenToWorld } from "./viewport.js?v=1.6.1-preview-lite-hybrid-0922";
-import { applyNewObjectStyleDefaults, migrateObjectStyleMode } from "./style-mode.js?v=1.6.1-remediation-0929";
-import { showProjectCloseDialog } from "./project-close-dialog.js?v=1.6.1-remediation-0929";
-import { showAlert, showConfirm } from "./ui-dialogs.js?v=1.6.1-remediation-0929";
-import { downscaleIfNeeded } from "./image-paste.js?v=1.6.1-remediation-0929";
-import { DEFAULT_TEXT_SIZE_MM, DEFAULT_TEXT_FONT, normalizeTextRuns, textRunsToText } from "./state.js?v=1.6.1-remediation-0929";
+import { screenToWorld } from "./viewport.js?v=1.7.0-four-session-integration";
+import { applyNewObjectStyleDefaults, migrateObjectStyleMode } from "./style-mode.js?v=1.7.0-four-session-integration";
+import { showProjectCloseDialog } from "./project-close-dialog.js?v=1.7.0-four-session-integration";
+import { showAlert, showConfirm } from "./ui-dialogs.js?v=1.7.0-four-session-integration";
+import { downscaleIfNeeded } from "./image-paste.js?v=1.7.0-four-session-integration";
+import { DEFAULT_TEXT_SIZE_MM, DEFAULT_TEXT_FONT, normalizeTextRuns, textRunsToText } from "./state.js?v=1.7.0-four-session-integration";
 import {
   ENDPOINT_HANDLE_TYPES, LABEL_CAPABLE_TYPES, OBJECT_TYPE_IDS,
   POINT_ARRAY_TYPES, SIZE_TYPES, TEXT_MEASURED_TYPES,
-} from "./object-types.js?v=1.6.1-preview-labeler-0917-1111";
-import { insertImageFromSrc } from "./image-paste.js?v=1.6.1-remediation-0929";
-import { addPage } from "./pages.js?v=1.6.1-remediation-0929";
+} from "./object-types.js?v=1.7.0-four-session-integration";
+import { insertImageFromSrc } from "./image-paste.js?v=1.7.0-four-session-integration";
+import { addPage } from "./pages.js?v=1.7.0-four-session-integration";
 
-import { initProjectStatus, captureProjectStatus, markProjectStatus } from "./project-status.js?v=1.6.1-ai-latest-fixes-0928";
-import { modKey, shortcutKey, isEditingTarget, isComposingKey } from "./platform.js?v=1.6.1-remediation-0929";
-import { initProjectLaunch } from './project-launch.js?v=1.6.1-remediation-0929';
-import { extractWindowsProjectSource } from './windows-project-source.mjs?v=1.6.1-preview-project-launcher-0918-1508';
+import { initProjectStatus, captureProjectStatus, markProjectStatus } from "./project-status.js?v=1.7.0-four-session-integration";
+import { modKey, shortcutKey, isEditingTarget, isComposingKey } from "./platform.js?v=1.7.0-four-session-integration";
+import { initProjectLaunch } from './project-launch.js?v=1.7.0-four-session-integration';
+import { extractWindowsProjectSource } from './windows-project-source.mjs?v=1.7.0-four-session-integration';
 
-import { chooseProjectSaveTarget, timestampProjectFilename } from './project-save-dialog.js?v=1.6.1-remediation-0929';
+import { chooseProjectSaveTarget, timestampProjectFilename } from './project-save-dialog.js?v=1.7.0-four-session-integration';
 import {
   FS_DIR_SUPPORTED, loadSavedProjectDir, currentProjectDirName, pickProjectDir, writeProjectToDir,
-} from './export-dir.js?v=1.6.1-remediation-0929';
-import { projectFileSizeError } from "./project-file-policy.js?v=1.6.3-project-file-size";
+} from './export-dir.js?v=1.7.0-four-session-integration';
+import { projectFileSizeError } from "./project-file-policy.js?v=1.7.0-four-session-integration";
 let savingProject = false;
 
 // Schema version of the saved file. Distinct from the app UI version.

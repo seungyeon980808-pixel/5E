@@ -1,5 +1,5 @@
-import { rectangleToBinaryMask } from './ai-scoped-edit.js?v=1.6.1-preview-labeler-0917-1111';
-import { decodeScopedPng, applyScopedPngEdit } from './ai-scoped-edit-png.js?v=1.6.1-remediation-0929';
+import { rectangleToBinaryMask } from './ai-scoped-edit.js?v=1.7.0-four-session-integration';
+import { decodeScopedPng, applyScopedPngEdit } from './ai-scoped-edit-png.js?v=1.7.0-four-session-integration';
 
 // Private byte snapshots must never be exposed as writable views.
 const sessions = new WeakMap();

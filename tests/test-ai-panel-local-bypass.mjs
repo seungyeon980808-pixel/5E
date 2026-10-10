@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 import { matchLocalAssetRequest } from "../preview/js/ai-local-asset-router.js";
-import { compilePanelScene } from "../preview/js/ai-panel.js";
+import { compilePanelScene } from "../js/ai-panel.js";
 
 test("an exact internal asset compiles through the same panel path without an image call", () => {
   const match = matchLocalAssetRequest({
@@ -20,7 +20,7 @@ test("an exact internal asset compiles through the same panel path without an im
 });
 
 test("the local asset completion branch returns before desktop send", async () => {
-  const source = await readFile(new URL("../preview/js/ai-panel.js", import.meta.url), "utf8");
+  const source = await readFile(new URL("../js/ai-panel.js", import.meta.url), "utf8");
   const matcher = source.indexOf("matchLocalAssetRequest({");
   const localStatusBranch = source.indexOf("if (localAssetMatch.matched) {", matcher + 1);
   const localBranch = source.indexOf("if (localAssetMatch.matched) {", localStatusBranch + 1);

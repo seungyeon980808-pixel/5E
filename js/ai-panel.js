@@ -1,109 +1,110 @@
-import { mountAiErrorLog, safeAiErrorText } from './ai-error-log.js?v=1.6.1-server-fixes-0929';
-import { mountRevisionComparison } from './ai-comparison.js?v=1.6.1-ai-latest-fixes-0928';
-import { attachCropMagnifier } from './tools/pointer-magnifier.js?v=1.6.1-remediation-0929';
-import { readAIModelCatalog, resolveAIModelSelection, defaultAIModelSelection } from './ai-model-capabilities.js?v=1.6.1-server-fixes-0929';
-import { transitionSeparationMode, SEPARATION_BACKGROUND_HINT, SEPARATION_LIMITS_HINT } from './ai-separation-mode.js?v=1.6.1-workbench-polish-0928-final';
-import { createWorkbenchRequestState } from './ai-workbench-request-state.js?v=1.6.1-workbench-polish-0928-final';
-import { openAiCompositionEditor } from './ai-composition-editor.js?v=1.6.1-remediation-0929';
-import { restrictSharedWorkspace } from './ai-sharing-access.js';
-import { registerEscapeLayer } from './escape-layers.js?v=1.6.1-remediation-0929';
-import { clearTaskWorkspaces, createTaskPersistence, createTaskWorkspaces, recoverTaskWorkspaceSnapshot } from './ai-task-workspaces.js?v=1.6.1-remediation-0929';
+import { snapshotImageItem, taskItemCopy } from './ai-candidate-snapshot.js?v=1.7.0-four-session-integration';
+import { mountAiErrorLog, safeAiErrorText } from './ai-error-log.js?v=1.7.0-four-session-integration';
+import { mountRevisionComparison } from './ai-comparison.js?v=1.7.0-four-session-integration';
+import { attachCropMagnifier } from './tools/pointer-magnifier.js?v=1.7.0-four-session-integration';
+import { readAIModelCatalog, resolveAIModelSelection, defaultAIModelSelection } from './ai-model-capabilities.js?v=1.7.0-four-session-integration';
+import { transitionSeparationMode, SEPARATION_BACKGROUND_HINT, SEPARATION_LIMITS_HINT } from './ai-separation-mode.js?v=1.7.0-four-session-integration';
+import { createWorkbenchRequestState } from './ai-workbench-request-state.js?v=1.7.0-four-session-integration';
+import { openAiCompositionEditor } from './ai-composition-editor.js?v=1.7.0-four-session-integration';
+import { restrictSharedWorkspace } from './ai-sharing-access.js?v=1.7.0-four-session-integration';
+import { registerEscapeLayer } from './escape-layers.js?v=1.7.0-four-session-integration';
+import { clearTaskWorkspaces, createTaskPersistence, createTaskWorkspaces, recoverTaskWorkspaceSnapshot } from './ai-task-workspaces.js?v=1.7.0-four-session-integration';
 import {
   advanceGenerationTiming,
   restoreGenerationTiming,
   sampleGenerationTiming,
   serializeGenerationTiming,
   startGenerationTiming,
-} from './ai-generation-timing.js';
-import { taskExportSelection } from './ai-task-export.js?v=1.6.1-remediation-0929';
-import { keyLabel, modKey } from './platform.js?v=1.6.1-remediation-0929';
+} from './ai-generation-timing.js?v=1.7.0-four-session-integration';
+import { taskExportSelection } from './ai-task-export.js?v=1.7.0-four-session-integration';
+import { keyLabel, modKey } from './platform.js?v=1.7.0-four-session-integration';
 import {
   distributeSourcesToTaskTabs,
   groupSourcesInTaskTab,
   moveReferenceInComposition,
   normalizeReferenceComposition,
-} from './ai-source-tasking.js?v=1.6.1-remediation-0929';
-import { setupAiWorkbench } from './ai-workbench.js?v=1.6.1-remediation-0929';
-import { mountDurableBatchUi } from './ai-batch-ui.js?v=1.6.1-remediation-0929';
-import { createScopedEditSession, confirmScopedEditSession, prepareScopedEditProposal, acceptScopedEditProposal, invalidateScopedEditSession } from './ai-scoped-edit-session.js?v=1.6.1-remediation-0929';
-import { decodeScopedPng } from './ai-scoped-edit-png.js?v=1.6.1-remediation-0929';
-import { createScopedEditComparison } from './ai-scoped-edit-comparison.js?v=1.6.1-remediation-0929';
-import { createImageCommentController, buildCommentRequest, PRESERVE_UNREQUESTED } from "./ai-image-comments.js?v=1.6.1-comment-visibility-0928";
-import { IndexedDBOutputCacheBackend } from "./ai-output-cache-store.js?v=1.6.1-remediation-0929";
-import { insertImageFromSrc } from "./image-paste.js?v=1.6.1-remediation-0929";
-import { openEditableAssetsDialog } from "./ai-editable-assets-dialog.js?v=1.6.1-remediation-0929";
-import { insertEditableAssets } from "./ai-editable-assets.js?v=1.6.1-remediation-0929";
-import { prepareSeparatedAssets, SEPARATED_ASSETS_PROMPT } from "./ai-separated-assets.js?v=1.6.1-remediation-0929";
-import { buildDiscussionPrompt, buildImagePrompt } from "./ai-prompt.js?v=1.6.1-remediation-0929";
-import { IMAGE_BACKGROUND_VERSION, transparentizeGeneratedImage } from "./image-background.js?v=1.5.4";
-import { parseAiEvent } from "./ai-events.js?v=1.5.3";
+} from './ai-source-tasking.js?v=1.7.0-four-session-integration';
+import { setupAiWorkbench } from './ai-workbench.js?v=1.7.0-four-session-integration';
+import { mountDurableBatchUi } from './ai-batch-ui.js?v=1.7.0-four-session-integration';
+import { createScopedEditSession, confirmScopedEditSession, prepareScopedEditProposal, acceptScopedEditProposal, invalidateScopedEditSession } from './ai-scoped-edit-session.js?v=1.7.0-four-session-integration';
+import { decodeScopedPng } from './ai-scoped-edit-png.js?v=1.7.0-four-session-integration';
+import { createScopedEditComparison } from './ai-scoped-edit-comparison.js?v=1.7.0-four-session-integration';
+import { createImageCommentController, buildCommentRequest, PRESERVE_UNREQUESTED } from "./ai-image-comments.js?v=1.7.0-four-session-integration";
+import { IndexedDBOutputCacheBackend } from "./ai-output-cache-store.js?v=1.7.0-four-session-integration";
+import { insertImageFromSrc } from "./image-paste.js?v=1.7.0-four-session-integration";
+import { openEditableAssetsDialog } from "./ai-editable-assets-dialog.js?v=1.7.0-four-session-integration";
+import { insertEditableAssets } from "./ai-editable-assets.js?v=1.7.0-four-session-integration";
+import { prepareSeparatedAssets, SEPARATED_ASSETS_PROMPT } from "./ai-separated-assets.js?v=1.7.0-four-session-integration";
+import { buildDiscussionPrompt, buildImagePrompt } from "./ai-prompt.js?v=1.7.0-four-session-integration";
+import { IMAGE_BACKGROUND_VERSION, transparentizeGeneratedImage } from "./image-background.js?v=1.7.0-four-session-integration";
+import { parseAiEvent } from "./ai-events.js?v=1.7.0-four-session-integration";
 import {
   AI_IMAGE_TRANSPORT_VERSION,
   createCheapImageSignature,
   prepareAIImageForTransport,
-} from "./ai-image-transport.js?v=1.6.1-remediation-0929";
+} from "./ai-image-transport.js?v=1.7.0-four-session-integration";
 import {
   compactConversation,
   markImagesSent,
   selectOutgoingImageItems,
-} from "./ai-request-plan.js?v=1.5.3";
-import { buildFastScenePrompt, FAST_SCENE_PROMPT_VERSION } from "./ai-scene-prompt.js?v=1.6.1-remediation-0929";
-import { chooseImageEngine, IMAGE_ENGINE_IDS } from "./ai-engine-router.js?v=1.5.3";
-import { compileFastScene } from "./ai-scene-fastpath.js?v=1.6.1-remediation-0929";
+} from "./ai-request-plan.js?v=1.7.0-four-session-integration";
+import { buildFastScenePrompt, FAST_SCENE_PROMPT_VERSION } from "./ai-scene-prompt.js?v=1.7.0-four-session-integration";
+import { chooseImageEngine, IMAGE_ENGINE_IDS } from "./ai-engine-router.js?v=1.7.0-four-session-integration";
+import { compileFastScene } from "./ai-scene-fastpath.js?v=1.7.0-four-session-integration";
 import {
   compileFastSceneWithMotifs,
   expandAiMotifScene,
   MOTIF_CATALOG_VERSION,
-} from "./ai-motif-catalog.js?v=1.6.1-remediation-0929";
+} from "./ai-motif-catalog.js?v=1.7.0-four-session-integration";
 import {
   LOCAL_ASSET_ROUTER_VERSION,
   matchLocalAssetRequest,
-} from "./ai-local-asset-router.js?v=1.5.3";
-import { fastSceneToSvgDataUrl, insertFastSceneIntoState } from "./ai-scene-preview.js?v=1.6.1-remediation-0929";
+} from "./ai-local-asset-router.js?v=1.7.0-four-session-integration";
+import { fastSceneToSvgDataUrl, insertFastSceneIntoState } from "./ai-scene-preview.js?v=1.7.0-four-session-integration";
 import {
   buildExactOutputCacheDescriptor,
   createExactOutputCacheKey,
   createRemoteImageInputPlan,
   REMOTE_INPUT_PLAN_VERSION,
-} from "./ai-remote-input-plan.js?v=1.6.1-remediation-0929";
-import { composeReferenceImages } from './ai-reference-composite.js?v=1.6.1-remediation-0929';
+} from "./ai-remote-input-plan.js?v=1.7.0-four-session-integration";
+import { composeReferenceImages } from './ai-reference-composite.js?v=1.7.0-four-session-integration';
 import {
   composeRemoteImageInputPlan,
   REMOTE_COMPOSITOR_VERSION,
-} from "./ai-remote-compositor.js?v=1.5.3";
-import { createExactOutputCacheStore } from "./ai-output-cache-store.js?v=1.6.1-remediation-0929";
-import { openPdfReferencePicker } from "./pdf-library/reference-picker.js?v=1.6.1-preview-labeler-0917-1111";
-import { getReferenceRole, partitionReferenceItems, planImageReferences } from "./ai-reference-roles.js?v=1.6.1-remediation-0929";
-import { normalizeMarkPolicy, buildMarkPolicyContract } from "./ai-mark-policy.js?v=1";
-import { createStructureAnalysisController, formatStructureContract, STRUCTURE_SPEC_VERSION } from "./ai-structure-spec.js?v=1.6.1-server-fixes-0929";
-import { APPROVED_FIRST_PROMPT, APPROVED_FIRST_REQUEST, approvedFirstRequestText, approvedFirstRun, prepareApprovedFirstAttachment } from './ai-approved-first-png.js?v=1.6.1-remediation-0929';
-import { WHITE_PNG_VERSION, isWhitePngWorkflow, buildWhitePngPrompt } from "./ai-white-png.js?v=1.6.1-remediation-0929";
+} from "./ai-remote-compositor.js?v=1.7.0-four-session-integration";
+import { createExactOutputCacheStore } from "./ai-output-cache-store.js?v=1.7.0-four-session-integration";
+import { openPdfReferencePicker } from "./pdf-library/reference-picker.js?v=1.7.0-four-session-integration";
+import { getReferenceRole, partitionReferenceItems, planImageReferences } from "./ai-reference-roles.js?v=1.7.0-four-session-integration";
+import { normalizeMarkPolicy, buildMarkPolicyContract } from "./ai-mark-policy.js?v=1.7.0-four-session-integration";
+import { createStructureAnalysisController, formatStructureContract, STRUCTURE_SPEC_VERSION } from "./ai-structure-spec.js?v=1.7.0-four-session-integration";
+import { APPROVED_FIRST_PROMPT, APPROVED_FIRST_REQUEST, approvedFirstRequestText, approvedFirstRun, prepareApprovedFirstAttachment } from './ai-approved-first-png.js?v=1.7.0-four-session-integration';
+import { WHITE_PNG_VERSION, isWhitePngWorkflow, buildWhitePngPrompt } from "./ai-white-png.js?v=1.7.0-four-session-integration";
 import {
   parseImageReviewReport,
   buildImageCorrectionRequest,
   buildStructuralInventory,
   createAiImageReviewController,
-} from "./ai-image-review.js?v=1.6.1-remediation-0929";
-import { resolveGeneratedRaster } from "./ai-raster-output.js?v=1";
+} from "./ai-image-review.js?v=1.7.0-four-session-integration";
+import { resolveGeneratedRaster } from "./ai-raster-output.js?v=1.7.0-four-session-integration";
 import {
   imageOutputOptionsKey,
   normalizeImageOutputOptions,
   resolveImageOutput,
-} from "./ai-output-processing.js?v=1";
-import { inspectPngDataUrl, enforcePngAcceptance } from "./ai-png-inspection.js?v=1.6.1-remediation-0929";
+} from "./ai-output-processing.js?v=1.7.0-four-session-integration";
+import { inspectPngDataUrl, enforcePngAcceptance } from "./ai-png-inspection.js?v=1.7.0-four-session-integration";
 import {
   enforceKiceImageRunInput,
   KICE_IMAGE_MODE,
   KICE_IMAGE_OUTPUT_ENGINE,
   kiceImageRequest,
-} from "./kice-image-workflow.js?v=1.6.1-remediation-0929";
+} from "./kice-image-workflow.js?v=1.7.0-four-session-integration";
 import {
   AI_OUTPUT_ENGINES,
   AI_QUALITY_MODES,
   normalizeOutputEngine,
   normalizeQualityMode,
   qualityModeCacheVersion,
-} from "./ai-quality-mode.js?v=1.6.1-remediation-0929";
+} from "./ai-quality-mode.js?v=1.7.0-four-session-integration";
 
 // This path never redraws a PNG through Canvas or registers a pending proposal.
 export function scopedPngBytes(data) {
@@ -385,43 +386,7 @@ export function compilePanelScene(input, options) {
 
 const isInputReference = item => { try { return getReferenceRole(item) === 'INPUT_SOURCE'; } catch { return false; } };
 
-export function snapshotImageItem(item) {
-  return {
-    id: item?.id || null,
-    name: item?.name || "이미지",
-    data: item?.data || null,
-    kind: item?.kind || "reference",
-    sourceKind: item?.sourceKind || "auto",
-    source: item?.source === undefined ? null : structuredClone(item.source),
-    referenceRole: item?.referenceRole,
-    primary: item?.primary === true,
-    active: item?.active !== false,
-    stale: item?.stale === true,
-    superseded: item?.superseded === true,
-    createdAt: item?.createdAt || null,
-    updatedAt: item?.updatedAt || null,
-    sentConversationId: item?.sentConversationId || null,
-    sentSource: item?.sentSource || null,
-    sceneSource: item?.sceneSource || "",
-    sceneCompileSource: item?.sceneCompileSource || "",
-    sceneResult: item?.sceneResult || null,
-    engine: item?.engine || null,
-    postprocessOk: item?.postprocessOk === true,
-    workspaceBatch: item?.workspaceBatch ? structuredClone(item.workspaceBatch) : null,
-    pixelInspection: item?.pixelInspection || null,
-    pixelInspectionError: item?.pixelInspectionError || null,
-    separatedAssetsError: typeof item?.separatedAssetsError === 'string' ? item.separatedAssetsError : '',
-    reviewState: item?.reviewState || "idle",
-    reviewReport: item?.reviewReport ? JSON.parse(JSON.stringify(item.reviewReport)) : null,
-    reviewMeta: item?.reviewMeta ? { ...item.reviewMeta } : null,
-    structureRecord: item?.structureRecord ? JSON.parse(JSON.stringify(item.structureRecord)) : null,
-    rendererPrompt: typeof item?.rendererPrompt === "string" ? item.rendererPrompt : "",
-    generationMode: candidateUsesSeparatedAssets(item) ? AI_ASSET_GENERATION_MODES.SEPARATED : AI_ASSET_GENERATION_MODES.SINGLE,
-    markPolicy: normalizeMarkPolicy(item?.markPolicy),
-    nextCommentNumber: item?.nextCommentNumber || ((item?.comments || []).length + 1),
-    comments: (item?.comments || []).map((comment) => ({ ...comment })),
-  };
-}
+export { snapshotImageItem, taskItemCopy } from './ai-candidate-snapshot.js?v=1.7.0-four-session-integration';
 
 function blobToDataUrl(blob) {
   return new Promise((resolve, reject) => {
@@ -1003,7 +968,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   const selectedReviewStatusText = (state) => state === "scoped-applied"
     ? "선택 결과 · 부분 수정 적용 완료"
     : "선택 결과 · 자동 시각 검수 통과";
-  const dispatchReviewEvent = (detail, candidate = null) => {
+  const dispatchReviewEvent = (detail, candidate = null, { restore = false } = {}) => {
     const normalized = {
       pixelInspection: detail?.pixelInspection || candidate?.pixelInspection || null,
       state: detail?.state || "idle",
@@ -1017,15 +982,19 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     };
     const item = candidate || generatedImages.find((entry) => entry.id === normalized.candidateId);
     if (item) {
+      // Restoring a view broadcasts its status; it is not a new review result.
+      if (!restore) {
       item.reviewState = normalized.state;
       item.reviewReport = normalized.report;
       item.reviewMeta = {
+        ...item.reviewMeta,
         generationCount: normalized.generationCount,
         reviewCount: normalized.reviewCount,
         model: normalized.model,
         effort: normalized.effort,
         elapsedMs: normalized.elapsedMs,
       };
+      }
       if (item.card) {
         item.card.dataset.aiCandidateId = item.id;
         item.card.dataset.aiReviewState = normalized.state;
@@ -2391,7 +2360,6 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   let workspaceReady = Promise.resolve();
   const taskStore = typeof indexedDB !== "undefined" ? new IndexedDBOutputCacheBackend({databaseName:clientScope ? `5e-ai-image-tasks-${clientScope}` : "5e-ai-image-tasks",storeName:"tasks"}) : null;
   restrictSharedWorkspace(panel);
-  const taskItemCopy = (item) => ({ ...snapshotImageItem(item), card: null });
   const captureActiveTaskTab = () => {
     const tab = taskTabs.get(activeTaskTabId);
     if (!tab) return;
@@ -2707,7 +2675,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
         model: selectedCandidate.reviewMeta?.model || modelSelect.value,
         effort: selectedCandidate.reviewMeta?.effort || effortSelect.value,
         elapsedMs: selectedCandidate.reviewMeta?.elapsedMs || 0,
-      }, selectedCandidate);
+      }, selectedCandidate, { restore: true });
     } else {
       dispatchReviewEvent({ state: "idle", candidateId: null, report: emptyReviewReport(), generationCount: 0, reviewCount: 0, elapsedMs: 0 });
     }
@@ -3482,11 +3450,14 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     }
   };
   if (desktop?.web) window.addEventListener('5e:web-ai-status', () => { void refresh(); }, { signal: lifecycle.signal });
-  const open = async ({ reference, references = [], prompt, startGeneration = false, placement = "separate", groups = null, reveal = true } = {}) => {
+  const open = async ({ reference, references = [], prompt, startGeneration = false, placement = "separate", groups = null, reveal = true, taskId = null, candidateId = null } = {}) => {
     await workspaceReady;
     syncLiteModeUi();
+    if (taskId && (busy || preflightRun)) throw new Error('현재 AI 작업을 마친 뒤 원래 작업 탭을 여세요.');
+    if (taskId && taskTabs.has(taskId)) restoreTaskTab(taskId);
+    if (taskId && candidateId && generatedImages.some(item => item.id === candidateId)) panel.dispatchEvent(new CustomEvent('5e:ai-candidate-select', {detail:{candidateId}}));
     const selectedObject=state.get().selectedIds?.length === 1 ? state.get().objects.find(o=>state.get().selectedIds?.includes(o.id)&&o.type==="image"&&o.aiTaskId) : null;
-    if (!busy && selectedObject && !reference && !references.length && taskTabs.has(selectedObject.aiTaskId)) {
+    if (!taskId && !busy && selectedObject && !reference && !references.length && taskTabs.has(selectedObject.aiTaskId)) {
       restoreTaskTab(selectedObject.aiTaskId);
       if (generatedImages.some((item) => item.id === selectedObject.aiCandidateId)) {
         panel.dispatchEvent(new CustomEvent('5e:ai-candidate-select', { detail: { candidateId: selectedObject.aiCandidateId } }));
@@ -5297,6 +5268,22 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       taskViews.delete(id); renderTaskTabs();
     },
     ownsTask: id => taskTabs.has(id), activeTask: () => activeTaskTabId,
+    examTaskLink: id => structuredClone(taskTabs.get(id)?.examLink || null),
+    examTaskNames: () => [...taskTabs.values()].filter(tab => tab.examLink).map(tab => ({link:structuredClone(tab.examLink),name:tab.title})),
+    renameExamTask: (link,name) => {
+      const tab = [...taskTabs.values()].find(tab => tab.examLink?.tabId === link.tabId && tab.examLink.assetId === link.assetId);
+      if (!tab || tab.title === name) return;
+      tab.title = name; renderTaskTabs(); persistTasks();
+    },
+    examTaskSnapshot: async id => {
+      await workspaceReady;
+      if (id === activeTaskTabId) { if (busy || preflightRun) throw new Error('이미지 작업을 마친 뒤 시험지에 보내주세요.'); captureActiveTaskTab(); }
+      const tab = taskTabs.get(id);
+      if (!tab) throw new Error('연결된 AI 작업 탭을 찾지 못했습니다.');
+      tab.examLink ||= {tabId:crypto.randomUUID(),assetId:crypto.randomUUID()};
+      persistTasks();
+      return structuredClone({key:'workspace',tabs:[tab],activeTaskTabId:id,taskTabSerial,imageSerial});
+    },
     exportCount, exportResults,
     sharingSnapshot: async () => {
       await workspaceReady;
@@ -5307,8 +5294,10 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       await workspaceReady;
       const recovered = recoverTaskWorkspaceSnapshot(snapshot);
       if (!recovered || !taskStore) throw new Error('수신 문서 저장소를 열지 못했습니다.');
+      await taskPersistence.settled();
       await taskStore.put({...recovered, key:'workspace', sharingMode:mode});
-      panel.dataset.aiSharingMode = mode;
+      if (mode) panel.dataset.aiSharingMode = mode; else delete panel.dataset.aiSharingMode;
+      taskViews.clear();
       taskTabs.clear();
       for (const tab of recovered.tabs) taskTabs.set(tab.id,tab);
       taskTabSerial = recovered.taskTabSerial || 0;

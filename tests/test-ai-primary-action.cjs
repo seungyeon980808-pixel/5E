@@ -1,7 +1,7 @@
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const vm = require('node:vm');
-const source = fs.readFileSync(new URL('../preview/js/ai-panel.js', `file://${__filename}`), 'utf8');
+const source = fs.readFileSync(new URL('../js/ai-panel.js', `file://${__filename}`), 'utf8');
 const handler = source.match(/sendButton\.onclick = \(\) => \{[\s\S]*?\n  \};/)[0];
 function route(item, launchSelected = () => false) {
   const calls = [];

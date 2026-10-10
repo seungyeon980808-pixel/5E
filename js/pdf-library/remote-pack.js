@@ -1,5 +1,5 @@
-import { PackValidationError, sha256Hex } from "./pack-store.js?v=1.6.1-preview-labeler-0917-1111";
-import { materializePackDocument, materializePackSearchEntry } from "./pack-identities.js?v=1.6.1-preview-labeler-0917-1111";
+import { PackValidationError, sha256Hex } from "./pack-store.js?v=1.7.0-four-session-integration";
+import { materializePackDocument, materializePackSearchEntry } from "./pack-identities.js?v=1.7.0-four-session-integration";
 
 const MAX_MANIFEST_BYTES = 1024 * 1024;
 const MAX_JSON_BYTES = 32 * 1024 * 1024;

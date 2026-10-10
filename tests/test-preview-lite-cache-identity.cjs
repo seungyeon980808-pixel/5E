@@ -6,7 +6,7 @@ const test = require("node:test");
 const ROOT = path.resolve(__dirname, "..");
 const SURFACES = [
   { label: 'historical preview', jsRoot: path.join(ROOT, 'preview', 'js'), cacheId: '1.6.0-remediation-0929' },
-  { label: 'canonical 1.6.1', jsRoot: path.join(ROOT, 'js'), cacheId: '1.6.1-remediation-0929' },
+  { label: 'canonical integrated', jsRoot: path.join(ROOT, 'js'), cacheId: '1.7.0-four-session-integration' },
 ];
 const GUARDED_MODULES = new Set([
   "render.js",

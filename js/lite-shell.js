@@ -1,5 +1,5 @@
-import { initLiteAiControls } from './lite-ai-controls.js?v=lite-main-0925';
-import { previewStorage } from './preview-storage.js?v=1.6.1-remediation-0929';
+import { initLiteAiControls } from './lite-ai-controls.js?v=1.7.0-four-session-integration';
+import { previewStorage } from './preview-storage.js?v=1.7.0-four-session-integration';
 // Lite shares the real editor with Pro; AI remains a separate workbench.
 export function initLiteShell(state) {
   const root = document.documentElement;

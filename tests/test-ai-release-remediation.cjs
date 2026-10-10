@@ -5,7 +5,7 @@ const test = require('node:test');
 const vm = require('node:vm');
 
 const root = path.resolve(__dirname, '..');
-const panelSource = fs.readFileSync(path.join(root, 'preview/js/ai-panel.js'), 'utf8');
+const panelSource = fs.readFileSync(path.join(root, 'js/ai-panel.js'), 'utf8');
 
 function sourcePart(start, end) {
   const first = panelSource.indexOf(start);
@@ -200,7 +200,7 @@ test('AI-160-02: candidate preparation is keyed by source, output, and separatio
 });
 
 test('AI-160-02: the real cache key changes for every rendered or separation input', async () => {
-  const module = await import(pathToFileURL(path.join(root, 'preview/js/ai-panel.js')).href);
+  const module = await import(pathToFileURL(path.join(root, 'js/ai-panel.js')).href);
   const source = 'data:image/png;base64,AA==';
   const output = { backgroundPolicy: 'preserve', examPalette: false, lineThickness: 0 };
   const separation = { layout: 'auto', maxAssets: 128, maxDurationMs: 8000 };
@@ -425,7 +425,7 @@ test('review preference is captured before delayed status even if its control ch
 });
 
 test('batch capture retains only selected revision inputs and immutable operation settings without changing stored history', async () => {
-  const { snapshotImageItem } = await import(pathToFileURL(path.join(root, 'preview/js/ai-panel.js')).href);
+  const { snapshotImageItem } = await import(pathToFileURL(path.join(root, 'js/ai-panel.js')).href);
   const source = { id:'original',kind:'reference',data:'original-bytes',comments:[{text:'original comment'}] };
   const selected = { id:'selected',kind:'generated',data:'selected-bytes',comments:[{type:'area',text:'captured comment'}] };
   const tab = { id:'A',title:'A',input:'request',attachments:[source],generated:[{id:'older',data:'history-bytes'},selected,{id:'newer',data:'newer-history'}],selectedCandidateId:'selected',model:'catalog-sol',effort:'medium',serviceTier:null,mode:'diagram',outputEngine:'raster',qualityMode:'default',generationMode:'single',referenceComposition:{kind:'all'},markPolicy:{text:'preserve'},conversationMessages:[],uiMessages:[{text:'unrelated history'}] };

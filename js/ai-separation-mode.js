@@ -1,4 +1,4 @@
-import { normalizeImageOutputOptions } from './ai-output-processing.js?v=1';
+import { normalizeImageOutputOptions } from './ai-output-processing.js?v=1.7.0-four-session-integration';
 
 const MODES = new Set(['off', 'auto', 'grid', 'manual']);
 export const SEPARATION_BACKGROUND_HINT = '물체별 분리는 바깥 배경을 제거합니다. 배경 설정을 바꾸려면 한 장으로 전환하세요.';

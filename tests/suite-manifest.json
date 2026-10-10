@@ -1,6 +1,9 @@
 {
   "schemaVersion": 1,
   "unit": [
+    { "path": "tests/test-fivee-project.mjs", "findingIds": ["X13", "R10"] },
+    { "path": "tests/test-editable-png.mjs", "findingIds": ["X13", "R10"] },
+    { "path": "tests/test-rhwp-exam-project.mjs", "findingIds": ["X13", "R10"] },
     { "path": "tests/test-four-session-entry.cjs", "findingIds": ["X1", "X2", "X3", "X9"] },
     { "path": "tests/test-pdf-runtime-loader.mjs", "findingIds": ["PDF-MODULE-RETRY"] },
     { "path": "tests/test-stable-library-startup.mjs", "findingIds": ["LIBRARY-STARTUP-STABLE"] },

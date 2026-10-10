@@ -1,5 +1,5 @@
-import { renderObject } from "./render.js?v=1.6.1-remediation-0929";
-import { makeFillPattern } from "./render/fill.js?v=1.6.1-remediation-0929";
+import { renderObject } from "./render.js?v=1.7.0-four-session-integration";
+import { makeFillPattern } from "./render/fill.js?v=1.7.0-four-session-integration";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 let insertSerial = 0;

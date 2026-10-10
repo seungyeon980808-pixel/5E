@@ -1,3 +1,5 @@
+import { sampleLeaderRoute, leaderRoutePoints } from './ai-label-leaders.js?v=1.7.0-four-session-integration';
+import { deriveLabelLeaderGeometry, pointInLabelerBlock } from './label-leader-geometry.js?v=1.7.0-four-session-integration';
 /* ===== PICK (selection / hit-testing) ===== */
 //
 // MOVE-ONLY extraction from tools.js (v0.44.0): which object a world-space
@@ -5,30 +7,31 @@
 // LIVE rendered SVG element (getBBox), so this module keeps its own _svg
 // reference, assigned by initPick(svg) from initTools.
 
-import { screenToWorld, getRenderScale } from "./viewport.js?v=1.6.1-preview-lite-hybrid-0922";
-import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, scaleBBoxForWidth } from "./state.js?v=1.6.1-remediation-0929";
+import { screenToWorld, getRenderScale } from "./viewport.js?v=1.7.0-four-session-integration";
+import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, scaleBBoxForWidth } from "./state.js?v=1.7.0-four-session-integration";
 // Single-source circuit body geometry: hit-testing reuses the SAME polygon the
 // renderer draws, so the clickable box and the visible box can never diverge.
 import { circuitBodyPolygon, pendulumGeometry, pendulumBBox, springGeometry, springBBox,
          chargeFieldBBox, fieldLinesBBox, standingWaveGeometry, standingWaveBBox,
          parabolaPoints, parabolaBBox, groundArcPoints, groundArcBBox,
          bracePathPoints, braceBBox, chromosomeBBox, bilayerBBox, neuronBBox,
-         legendBBox, pedigreeBBox } from "./render.js?v=1.6.1-remediation-0929";
+         legendBBox, pedigreeBBox } from "./render.js?v=1.7.0-four-session-integration";
 // Labeler hit-test reuses the SAME label block the renderer trims the leader to
 // (render/annotations.js:renderLabeler): estimateLabelBlock for plain-text labels,
 // measureFormula for formula labels (확정 항목 ①) — so the clickable label area
 // always matches the visible glyphs instead of a fixed one-glyph box.
-import { estimateLabelBlock } from "./render/labels.js?v=1.6.1-remediation-0929";
-import { measureFormula } from "./formula.js?v=1.6.1-remediation-0929";
+import { estimateLabelBlock } from "./render/labels.js?v=1.7.0-four-session-integration";
+import { measureFormula } from "./formula.js?v=1.7.0-four-session-integration";
+import { hasLabelTypography, measureLabelTypography, nativeLabelBounds, nativeLabelPolygon } from "./ai-label-typography.js?v=1.7.0-four-session-integration";
 import {
   segDist, pointInPolygon, pointInTriangle, triangleVertices,
   localPointForSizeObject, curveBezierSeg, curveBezierSegClosed, evalBezier,
   bboxIntersects,
-} from "./geometry.js?v=1.6.1-preview-labeler-0917-1111";
+} from "./geometry.js?v=1.7.0-four-session-integration";
 import {
   OBJECT_TYPES, SIZE_TYPES, BOX_FACE_TYPES, LINE_TOL_TYPES,
   POINT_ARRAY_TYPES, TEXT_MEASURED_TYPES, zOrderObjects,
-} from "./object-types.js?v=1.6.1-preview-labeler-0917-1111";
+} from "./object-types.js?v=1.7.0-four-session-integration";
 
 const HIT_TOL_PX = 6; // CSS px of slop around an edge so thin strokes are clickable
 const LINE_HIT_TOL_PX = 20; // existing screen-space slop for line-family segments
@@ -47,6 +50,10 @@ function isClosedCurve(o) { return o && o.type === "curve" && o.closed === true;
 function labelerBlockHalf(o) {
   const sz = o.labelSize || DEFAULT_TEXT_SIZE_MM;
   const pad = sz * 0.25;
+  if (hasLabelTypography(o)) {
+    const m = measureLabelTypography(o, sz);
+    return { hw: m.rotatedW / 2 + pad, hh: m.rotatedH / 2 + pad };
+  }
   const src = o.contentMode === "formula" ? (o.source || o.rawSource || "") : "";
   if (src) {
     const m = measureFormula(src, sz, {
@@ -57,6 +64,17 @@ function labelerBlockHalf(o) {
     return { hw: m.w / 2 + pad, hh: m.h / 2 + pad };
   }
   return estimateLabelBlock(o.text, sz, pad);
+}
+
+// The text endpoint handle can cover the glyphs after the first press. Keep
+// double-click editing restricted to this body, never the leader's start point.
+export function isLabelerTextPoint(obj, point) {
+  if (obj?.type !== 'labeler' || !point) return false;
+  if (obj.leaderRoutes?.length) return pointInLabelerBlock(deriveLabelLeaderGeometry(obj).label, point);
+  const center = obj.p2 || obj.p1;
+  if (!center) return false;
+  const { hw, hh } = labelerBlockHalf(obj);
+  return Math.abs(point.x - center.x) <= hw && Math.abs(point.y - center.y) <= hh;
 }
 
 let _svg = null;
@@ -187,6 +205,15 @@ function hitTest(objects, p, tol = 0, lineTol = tol) {
   for (let i = zObjects.length - 1; i >= 0; i--) {
     const o = zObjects[i];
     if (!OBJECT_TYPES[o.type]) continue; // was: explicit whitelist of all 20 hittable types
+
+    if (hasLabelTypography(o) && TEXT_MEASURED_TYPES.has(o.type)) {
+      if (pointInPolygon(p.x, p.y, nativeLabelPolygon(o)) || (() => {
+        const b = nativeLabelBounds(o);
+        return !o.rotation && p.x >= b.x - tol && p.x <= b.x + b.w + tol
+          && p.y >= b.y - tol && p.y <= b.y + b.h + tol;
+      })()) return o.id;
+      continue;
+    }
 
     if (TEXT_MEASURED_TYPES.has(o.type)) { // was: text|formula
       // Use the rendered SVG element's getBBox for an accurate hit area.
@@ -405,16 +432,22 @@ function hitTest(objects, p, tol = 0, lineTol = tol) {
     if (o.type === "labeler") {
       const a = o.p1, b = o.p2;
       if (a && b) {
+        const geometry = o.leaderRoutes?.length ? deriveLabelLeaderGeometry(o) : null;
         const joint = o.elbow || b;
-        const segments = [[a, joint], ...(o.elbow ? [[joint, b]] : []), ...[o.p3, ...(o.extraAnchors || [])].filter(Boolean).map(point => [point, joint])];
+        const segments = geometry ? geometry.routes.flatMap(r => { const points = sampleLeaderRoute(r); return points.slice(1).map((p,i) => [points[i],p]); }) : [[a, joint], ...(o.elbow ? [[joint, b]] : []), ...[o.p3, ...(o.extraAnchors || [])].filter(Boolean).map(point => [point, joint])];
         if (segments.some(([from, to]) => segDist(p.x, p.y, from.x, from.y, to.x, to.y) <= margin)) return o.id;
+        if (geometry) {
+          if (pointInLabelerBlock(geometry.label, p, tol)) return o.id;
+          continue;
+        }
         // Label area = the SAME block the renderer measures (labelerBlockHalf:
         // formula box or multiline text estimate), centered on p2, grown by the
         // click margin. The old fixed sz*0.7 box only covered ~one glyph, so
         // clicking a longer label anywhere but near the leader tip missed it.
         const { hw, hh } = labelerBlockHalf(o);
-        if (p.x >= b.x - hw - margin && p.x <= b.x + hw + margin &&
-            p.y >= b.y - hh - margin && p.y <= b.y + hh + margin) return o.id;
+        // The wide leader grab band must not cover a neighbouring label body.
+        if (p.x >= b.x - hw - tol && p.x <= b.x + hw + tol &&
+            p.y >= b.y - hh - tol && p.y <= b.y + hh + tol) return o.id;
       }
       continue;
     }
@@ -447,6 +480,7 @@ function hitTest(objects, p, tol = 0, lineTol = tol) {
 
 /* ----- axis-aligned bounding box of any object (for marquee intersection) ----- */
 function getObjectBBox(o) {
+  if (hasLabelTypography(o) && TEXT_MEASURED_TYPES.has(o.type)) return nativeLabelBounds(o);
   // was: rect|ellipse|triangle|image|svgAsset|axes|coordplane|optics|apparatus
   if (SIZE_TYPES.has(o.type)) {
     return { x: o.x, y: o.y, w: o.w, h: o.h };
@@ -483,11 +517,12 @@ function getObjectBBox(o) {
     return pendulumBBox(o);
   }
   if (o.type === "labeler") {
+    if (o.leaderRoutes?.length) return deriveLabelLeaderGeometry(o).bounds;
     // Same label block as the hit-test (labelerBlockHalf) so marquee selection
     // covers the full label (text or formula), not just a one-glyph pad around p2.
     const a = o.p1 || { x: 0, y: 0 }, b = o.p2 || a;
     const { hw, hh } = labelerBlockHalf(o);
-    const points = [a, o.elbow, o.p3, ...(o.extraAnchors || [])].filter(Boolean);
+    const points = [...leaderRoutePoints(o.leaderRoutes), a, o.elbow, o.p3, ...(o.extraAnchors || [])].filter(Boolean);
     const minX = Math.min(...points.map(p => p.x), b.x - hw), minY = Math.min(...points.map(p => p.y), b.y - hh);
     const maxX = Math.max(...points.map(p => p.x), b.x + hw), maxY = Math.max(...points.map(p => p.y), b.y + hh);
     return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
@@ -620,6 +655,7 @@ function faceBoundaryPolygon(o) {
   // 다른 기하를 보게 됨), hitTest(172-183행)와 동일한 피벗(텍스트=x/y, 수식=박스 중심)
   // 기준으로 bbox 네 모서리를 회전시킨 사각형을 반환한다. 회전 없으면 기존 bbox 판정 유지.
   if (TEXT_MEASURED_TYPES.has(o.type)) {
+    if (hasLabelTypography(o)) return nativeLabelPolygon(o);
     if (!deg) return null;
     const svgEl = _svg.querySelector(`[data-id="${o.id}"]`);
     if (!svgEl) return null;

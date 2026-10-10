@@ -1,4 +1,4 @@
-import { createCropSource, normalizedRect } from "./contract.js?v=1.6.1-preview-labeler-0917-1111";
+import { createCropSource, normalizedRect } from "./contract.js?v=1.7.0-four-session-integration";
 
 export const PDF_ITEM_CORRECTION_SCHEMA = "pdf-item-correction-v1";
 

@@ -1,4 +1,4 @@
-import { createDocumentRecord } from "./contract.js?v=1.6.1-preview-labeler-0917-1111";
+import { createDocumentRecord } from "./contract.js?v=1.7.0-four-session-integration";
 
 export function createPdfCatalog(initialDocuments = []) {
   const documents = new Map();

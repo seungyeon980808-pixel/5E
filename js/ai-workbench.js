@@ -1,5 +1,5 @@
-import { composeReferenceImages } from './ai-reference-composite.js?v=1.6.1-remediation-0929';
-import { comparisonGeometry } from './ai-comparison.js?v=1.6.1-ai-latest-fixes-0928';
+import { composeReferenceImages } from './ai-reference-composite.js?v=1.7.0-four-session-integration';
+import { comparisonGeometry } from './ai-comparison.js?v=1.7.0-four-session-integration';
 const REVIEW_STATES = new Set([
   "idle", "generating", "reviewing", "correcting", "passed",
   "first-generated", "scoped-applied", "needs-attention", "failed", "cancelled",

@@ -11,15 +11,15 @@
 //      with 취소 / 내보내기. On 내보내기 it delegates to svg-export.js's
 //      exportPng() or exportSvg(); the extension is appended from the format.
 
-import { exportPng, exportSvg, copyPngToClipboard, formatExportTimestamp, getContentBounds } from "./svg-export.js?v=1.6.1-remediation-0929";
-import { openBatchExport } from "./export-batch.js?v=1.6.1-remediation-0929";
+import { exportPng, exportSvg, copyPngToClipboard, formatExportTimestamp, getContentBounds } from "./svg-export.js?v=1.7.0-four-session-integration";
+import { openBatchExport } from "./export-batch.js?v=1.7.0-four-session-integration";
 import {
   FS_DIR_SUPPORTED, loadSavedDir, currentDirName, pickDir, clearDir,
-} from "./export-dir.js?v=1.6.1-remediation-0929";
-import { showAlert } from "./ui-dialogs.js?v=1.6.1-remediation-0929";
-import { registerTopMenu } from "./top-menu.js?v=1.6.1-remediation-0929";
-import { screenToWorld } from "./viewport.js?v=1.6.1-preview-lite-hybrid-0922";
-import { openExamPreview } from "./exam-preview.js?v=1.6.1-remediation-0929";
+} from "./export-dir.js?v=1.7.0-four-session-integration";
+import { showAlert } from "./ui-dialogs.js?v=1.7.0-four-session-integration";
+import { registerTopMenu } from "./top-menu.js?v=1.7.0-four-session-integration";
+import { screenToWorld } from "./viewport.js?v=1.7.0-four-session-integration";
+import { openExamPreview } from "./exam-preview.js?v=1.7.0-four-session-integration";
 
 // Default export filename base = local date/time to the minute (YYYYMMDD_HHmm),
 // recomputed each time the modal opens so it reflects the actual export time.

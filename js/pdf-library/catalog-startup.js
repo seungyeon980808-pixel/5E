@@ -1,5 +1,5 @@
-import { loadRemotePack, validateRemoteCatalogSnapshot, boundedBytes } from './remote-pack.js?v=1.6.3-library-startup';
-import { sha256Hex } from './pack-store.js?v=1.6.1-preview-labeler-0917-1111';
+import { loadRemotePack, validateRemoteCatalogSnapshot, boundedBytes } from './remote-pack.js?v=1.7.0-four-session-integration';
+import { sha256Hex } from './pack-store.js?v=1.7.0-four-session-integration';
 
 const MAX_SNAPSHOT_BYTES = 4 * 1024 * 1024;
 const CACHE_NAME = '5e-library-catalog-v1';

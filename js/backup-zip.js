@@ -135,7 +135,7 @@ function readName(u8, start, size, dec) {
   catch (_) { throw new Error("ZIP 항목 이름 인코딩 오류"); }
 }
 
-function unzipStore(u8) {
+export function unzipStore(u8, {maxEntryBytes=MAX_ZIP_ENTRY_BYTES,maxTotalBytes=MAX_ZIP_TOTAL_BYTES} = {}) {
   if (u8.length < 22) throw new Error("손상되었거나 잘린 ZIP");
   const dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength); const dec = new TextDecoder("utf-8", { fatal: true });
   const end = eocdOffset(u8, dv);
@@ -159,7 +159,7 @@ function unzipStore(u8) {
     const localOffset = dv.getUint32(p + 42, true);
     const centralEnd = p + 46 + nameLength + extraLength + commentLength;
     if (centralEnd > end || (flags !== 0 && flags !== ZIP_UTF8_FLAG) || method !== 0 || compressedSize !== size ||
-        size > MAX_ZIP_ENTRY_BYTES || totalBytes + size > MAX_ZIP_TOTAL_BYTES) {
+        size > maxEntryBytes || totalBytes + size > maxTotalBytes) {
       throw new Error("지원하지 않거나 너무 큰 ZIP 항목");
     }
     const name = readName(u8, p + 46, nameLength, dec);

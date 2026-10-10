@@ -28,13 +28,14 @@ import {
   resolveTextFontStyle,
   resolveTextLetterSpacing,
   isEquationFontFamily,
-} from "./state.js?v=1.6.1-remediation-0929";
+} from "./state.js?v=1.7.0-four-session-integration";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
 // Glyph + rule ink. Mirrors renderText(), which always paints #0d1117 (text has
 // no stroke-color control); formulas follow the same single ink convention.
 const INK = "#0d1117";
 const MAX_DEPTH = 8; // recursion guard for nested frac/sqrt/vec
+const SCRIPT_ROLES = new Set(["text", "name", "quantity", "chemical", "unit", "number", "symbol"]);
 
 /* ----- Greek names → glyphs (whole-word match only; unknown words pass through) ----- */
 const GREEK = {
@@ -78,6 +79,7 @@ const SYMBOLS = {
 function parseFormula(src) {
   const s = String(src == null ? "" : src);
   let i = 0;
+  const groupRanges = new WeakMap();
 
   const isLetter = (c) => c >= "a" && c <= "z" || c >= "A" && c <= "Z";
   const isDigit = (c) => c >= "0" && c <= "9";
@@ -89,8 +91,12 @@ function parseFormula(src) {
   function parseGroup(depth) {
     // Caller guarantees s[i] === "{".
     i++; // consume "{"
+    const start = i;
     const node = parseSeq(depth + 1, true);
-    if (s[i] === "}") i++; // consume matching "}" (tolerate a missing one)
+    const end = i;
+    const closed = s[i] === "}";
+    if (closed) i++; // consume matching "}" (tolerate a missing one)
+    groupRanges.set(node, closed && end > start ? { start, end } : null);
     return node;
   }
 
@@ -109,12 +115,21 @@ function parseFormula(src) {
   }
 
   function parseScriptUnit(depth) {
-    if (s[i] === "{") return parseGroup(depth);
+    if (s[i] === "{") {
+      const node = parseGroup(depth);
+      return { node, range: groupRanges.get(node) };
+    }
+    const start = i;
     const c = s[i];
-    if (c === undefined) return { type: "row", items: [] };
-    if (isLetter(c)) { const w = readWord(); return { type: "text", value: GREEK[w] || w }; }
-    if (isDigit(c)) return { type: "text", value: readNumber() };
-    i++; return { type: "text", value: c };
+    if (c === undefined) return { node: { type: "row", items: [] }, range: null };
+    let node;
+    if (isLetter(c)) { const w = readWord(); node = { type: "text", value: GREEK[w] || w }; }
+    else if (isDigit(c)) node = { type: "text", value: readNumber() };
+    else { i++; node = { type: "text", value: c }; }
+    // A malformed delimiter or half of a surrogate pair may still render via
+    // the tolerant legacy parser; it must never receive an inferred style.
+    const valid = c !== "}" && c !== "_" && c !== "^" && !/[\uD800-\uDFFF]/.test(c);
+    return { node, range: valid ? { start, end: i } : null };
   }
 
   function parseAtom(depth) {
@@ -153,15 +168,81 @@ function parseFormula(src) {
     const base = parseAtom(depth);
     if (!base) return null;
     let sub = null, sup = null;
+    let subRange = null, supRange = null;
     while (s[i] === "_" || s[i] === "^") {
       const kind = s[i]; i++;
       const unit = parseScriptUnit(depth);
-      if (kind === "_") { if (!sub) sub = unit; } else if (!sup) sup = unit;
+      if (kind === "_") {
+        if (!sub) { sub = unit.node; subRange = unit.range; }
+      } else if (!sup) { sup = unit.node; supRange = unit.range; }
     }
-    return (sub || sup) ? { type: "script", base, sub, sup } : base;
+    return (sub || sup) ? { type: "script", base, sub, sup, subRange, supRange } : base;
   }
 
   return parseSeq(0, false);
+}
+
+// Ranges refer to canonical UTF-16 source, excluding the marker and enclosing
+// braces. Matching a parsed node prevents offsets in stale/edited metadata from
+// applying a style to an unrelated glyph or only part of a script.
+function visitScripts(node, visit) {
+  if (!node) return;
+  if (node.type === "script") {
+    visit(node);
+    visitScripts(node.base, visit);
+    visitScripts(node.sub, visit);
+    visitScripts(node.sup, visit);
+  } else if (node.type === "row") node.items.forEach(child => visitScripts(child, visit));
+  else if (node.type === "frac") { visitScripts(node.num, visit); visitScripts(node.den, visit); }
+  else if (node.type === "vec" || node.type === "sqrt") visitScripts(node.body, visit);
+}
+
+function scriptSpans(tree) {
+  const spans = [];
+  visitScripts(tree, node => {
+    for (const kind of ["sub", "sup"]) {
+      if (node[`${kind}Range`]) spans.push({ ...node[`${kind}Range`], kind });
+    }
+  });
+  return spans.sort((a, b) => a.start - b.start || a.end - b.end);
+}
+
+export function getFormulaScriptSpans(source) {
+  const value = String(source == null ? "" : source);
+  return scriptSpans(parseFormula(value)).map(span => ({ ...span, text: value.slice(span.start, span.end) }));
+}
+
+function validScriptStyles(tree, styles) {
+  if (!Array.isArray(styles) || styles.length > 64) return [];
+  const spans = scriptSpans(tree);
+  const selections = new Map();
+  for (const style of styles) {
+    if (!style || !Number.isInteger(style.start) || !Number.isInteger(style.end) ||
+      !SCRIPT_ROLES.has(style.role) || !spans.some(span => span.start === style.start && span.end === style.end && span.kind === style.kind)) continue;
+    const key = `${style.kind}:${style.start}:${style.end}`;
+    const previous = selections.get(key);
+    // Reject conflicting duplicates instead of relying on their order.
+    selections.set(key, previous === null || (previous && previous.role !== style.role)
+      ? null : { start: style.start, end: style.end, kind: style.kind, role: style.role });
+  }
+  return [...selections.values()].filter(Boolean).sort((a, b) => a.start - b.start || a.end - b.end);
+}
+
+export function normalizeFormulaScriptStyles(source, styles) {
+  return validScriptStyles(parseFormula(source), styles);
+}
+
+function styledFormulaTree(source, styles) {
+  const tree = parseFormula(source);
+  const selected = validScriptStyles(tree, styles);
+  if (selected.length) visitScripts(tree, node => {
+    for (const kind of ["sub", "sup"]) {
+      const range = node[`${kind}Range`];
+      const match = range && selected.find(style => style.kind === kind && style.start === range.start && style.end === range.end);
+      if (match) node[`${kind}Role`] = match.role;
+    }
+  });
+  return tree;
 }
 
 /* ===== MEASUREMENT (offline canvas; linear in font-size so px ≡ world-mm units) ===== */
@@ -224,7 +305,7 @@ function layoutText(value, F, font) {
       t.setAttribute("font-size", F);
       t.setAttribute("font-family", font.family);
       if (font.weight && font.weight !== "normal") t.setAttribute("font-weight", font.weight);
-      t.setAttribute("font-style", resolveTextFontStyle({ fontFamily: font.family, fontStyle: font.style }));
+      t.setAttribute("font-style", font.forceUpright ? "normal" : resolveTextFontStyle({ fontFamily: font.family, fontStyle: font.style }));
       const letterSpacing = resolveTextLetterSpacing({ fontFamily: font.family });
       if (letterSpacing) t.setAttribute("letter-spacing", letterSpacing);
       t.setAttribute("fill", INK);
@@ -287,8 +368,12 @@ function layoutRow(node, F, font) {
 function layoutScript(node, F, font) {
   const base = layout(node.base, F, font);
   const sf = F * 0.66;
-  const sub = node.sub ? layout(node.sub, sf, font) : null;
-  const sup = node.sup ? layout(node.sup, sf, font) : null;
+  const scriptFont = kind => node[`${kind}Role`] ? {
+    ...font, style: node[`${kind}Role`] === "quantity" ? "italic" : "normal",
+    forceUpright: node[`${kind}Role`] !== "quantity",
+  } : font;
+  const sub = node.sub ? layout(node.sub, sf, scriptFont("sub")) : null;
+  const sup = node.sup ? layout(node.sup, sf, scriptFont("sup")) : null;
   const scriptW = Math.max(sub ? sub.w : 0, sup ? sup.w : 0);
   const w = base.w + scriptW + F * 0.04;
   const supDrop = F * 0.42; // sup baseline raised this far above the main baseline
@@ -423,7 +508,8 @@ function fontOf(obj) {
   return {
     family: obj.fontFamily || DEFAULT_TEXT_FONT,
     weight: obj.fontWeight || "normal",
-    style: resolveTextFontStyle(obj),
+    style: obj.forceUpright ? "normal" : resolveTextFontStyle(obj),
+    forceUpright: obj.forceUpright === true,
   };
 }
 
@@ -432,7 +518,7 @@ export function measureFormula(source, fontSize, fontHint) {
   const F = fontSize || DEFAULT_TEXT_SIZE_MM;
   const font = fontHint || { family: DEFAULT_TEXT_FONT, weight: "normal", style: "normal" };
   let L;
-  try { L = layout(parseFormula(source), F, font); }
+  try { L = layout(styledFormulaTree(source, fontHint?.scriptStyles), F, font); }
   catch (_) { L = layoutText(String(source || ""), F, font); }
   return { w: L.w, ascent: L.ascent, descent: L.descent, h: L.ascent + L.descent };
 }
@@ -445,7 +531,7 @@ export function renderFormula(obj) {
   if (obj.id) g.dataset.id = obj.id;
 
   let L;
-  try { L = layout(parseFormula(obj.source || ""), F, font); }
+  try { L = layout(styledFormulaTree(obj.source || "", obj.scriptStyles), F, font); }
   catch (_) { L = layoutText(String(obj.source || ""), F, font); }
 
   const left = obj.x;

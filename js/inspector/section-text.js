@@ -5,9 +5,9 @@
 
 import { TEXT_FONTS, MIN_TEXT_PT, ptToMm, normalizeTextRunStyle,
          LETTER_SPACING_MIN, LETTER_SPACING_MAX,
-         WIDTH_SCALE_MIN, WIDTH_SCALE_MAX } from "../state.js?v=1.6.1-remediation-0929";
-import { makeSection } from "./widgets.js?v=1.6.1-preview-labeler-0917-1111";
-import { startEditingTextObject } from "../tools.js?v=1.6.1-remediation-0929";
+         WIDTH_SCALE_MIN, WIDTH_SCALE_MAX } from "../state.js?v=1.7.0-four-session-integration";
+import { makeSection } from "./widgets.js?v=1.7.0-four-session-integration";
+import { startEditingTextObject } from "../tools.js?v=1.7.0-four-session-integration";
 
 export function buildTextSection(ctx) {
   const { state } = ctx;

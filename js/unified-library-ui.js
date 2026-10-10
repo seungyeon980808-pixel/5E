@@ -1,12 +1,12 @@
-import { createThumbnailQueue } from "./library/thumbnail-queue.js?v=1.6.2-library-speed";
-import { attachCropMagnifier } from "./tools/pointer-magnifier.js?v=1.6.1-remediation-0929";
-import { targetPageGeometry, fittedPageSize, createPreviewPaper } from "./library/page-loading.js?v=1.6.1-workbench-polish-0928-final";
-import { createContinuousCropPages } from "./library/continuous-crop-pages.js?v=1.6.2-library-speed";
-import { registerEscapeLayer } from "./escape-layers.js?v=1.6.1-remediation-0929";
-import { DESKTOP_RELEASE_URL } from "./ai-install-guide.js?v=1.6.1-remediation-0929";
-import { safeExternalSourceUrl } from "./library-import-policy.js?v=1.6.1-remediation-0929";
-import { queryHighlightTerms } from "./pdf-library/search.js?v=1.6.1-remediation-0929";
-import { chooseWorkbenchAssignment } from "./library/workbench-assignment.js?v=1.6.1-preview-emerald-polish-0921";
+import { createThumbnailQueue } from "./library/thumbnail-queue.js?v=1.7.0-four-session-integration";
+import { attachCropMagnifier } from "./tools/pointer-magnifier.js?v=1.7.0-four-session-integration";
+import { targetPageGeometry, fittedPageSize, createPreviewPaper } from "./library/page-loading.js?v=1.7.0-four-session-integration";
+import { createContinuousCropPages } from "./library/continuous-crop-pages.js?v=1.7.0-four-session-integration";
+import { registerEscapeLayer } from "./escape-layers.js?v=1.7.0-four-session-integration";
+import { DESKTOP_RELEASE_URL } from "./ai-install-guide.js?v=1.7.0-four-session-integration";
+import { safeExternalSourceUrl } from "./library-import-policy.js?v=1.7.0-four-session-integration";
+import { queryHighlightTerms } from "./pdf-library/search.js?v=1.7.0-four-session-integration";
+import { chooseWorkbenchAssignment } from "./library/workbench-assignment.js?v=1.7.0-four-session-integration";
 
 const SOURCE_STORAGE_KEY = "5e.unified-library.sources.v1";
 const TREE_STORAGE_KEY = "5e.unified-library.tree-expanded.v1";

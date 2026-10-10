@@ -1,3 +1,5 @@
+import { renderLeaderRoutes } from '../ai-label-leaders.js?v=1.7.0-four-session-integration';
+import { deriveLabelLeaderGeometry } from '../label-leader-geometry.js?v=1.7.0-four-session-integration';
 /* ===== RENDER/ANNOTATIONS: axes, angle arc, right-angle mark, labeler ===== */
 
 import {
@@ -7,12 +9,13 @@ import {
   makeArrowHead,
   fillTextWithRomanRuns,
   applyObjectLabelFont,
-} from "./core.js?v=1.6.1-remediation-0929";
-import { makeUprightLabel, estimateLabelBlock } from "./labels.js?v=1.6.1-remediation-0929";
+} from "./core.js?v=1.7.0-four-session-integration";
+import { makeUprightLabel } from "./labels.js?v=1.7.0-four-session-integration";
+import { renderLabelTypography } from "../ai-label-typography.js?v=1.7.0-four-session-integration";
 // Formula labels (확정 항목 ①): a labeler whose content was committed as a formula
 // (contentMode:"formula") renders through the SAME projection formula objects use,
 // so the label, the editor preview, and SVG/PNG export can never diverge.
-import { measureFormula, renderFormula } from "../formula.js?v=1.6.1-remediation-0929";
+import { renderFormula } from "../formula.js?v=1.7.0-four-session-integration";
 import {
   DEFAULT_TEXT_FONT,
   DEFAULT_TEXT_SIZE_MM,
@@ -20,7 +23,7 @@ import {
   EQUATION_FONT_STYLE,
   normalizeTextRuns,
   hasStyledTextRuns,
-} from "../state.js?v=1.6.1-remediation-0929";
+} from "../state.js?v=1.7.0-four-session-integration";
 
 /* ----- axes: one atomic symbol — both axis lines + arrowheads + ticks + labels
  * drawn in a SINGLE pass into one <g>. Ticks/labels are PROJECTIONS computed
@@ -261,14 +264,15 @@ function renderRightAngle(obj) {
  * (non-rotating) label sits at p2 in the tool label font, upright/normal
  * (makeUprightLabel, Group 6 / v0.31.0). Pure projection — both points are the
  * truth and round-trip on save/load. ----- */
-function renderLabeler(obj) {
+function renderLabeler(obj, { leadersOnly = false } = {}) {
   const g = document.createElementNS(SVG_NS, "g");
   if (obj.id) g.dataset.id = obj.id;
   const color = grayHex(obj.strokeLevel);
   const sw = obj.strokeWidth || 0.2;
   const a = obj.p1 || { x: 0, y: 0 };
   const b = obj.p2 || a;
-  const size = obj.labelSize || DEFAULT_TEXT_SIZE_MM;
+  const geometry = deriveLabelLeaderGeometry(obj);
+  const { size, semantic, formula: fm, formulaSource: fmSource, formulaFont: fmFont } = geometry;
 
   // Leader from the anchor toward the label, stopping at the edge of the label's
   // (multiline-aware) text block so the line never crosses the glyphs. The block
@@ -278,16 +282,7 @@ function renderLabeler(obj) {
   const pad = Number.isFinite(obj.labelGap) && obj.labelGap >= 0 ? obj.labelGap : 0;
   // Formula label: EXACT measured box (measureFormula); plain text: the same
   // over-estimating multiline block the plain renderer has always used.
-  const fmSource = obj.contentMode === "formula" ? (obj.source || obj.rawSource || "") : "";
-  const fmFont = fmSource ? {
-    family: obj.fontFamily || DEFAULT_TEXT_FONT,
-    weight: obj.fontWeight || "normal",
-    style: obj.italic === true ? "italic" : "normal",
-  } : null;
-  const fm = fmSource ? measureFormula(fmSource, size, fmFont) : null;
-  const { hw, hh } = fm
-    ? { hw: fm.w / 2 + pad, hh: fm.h / 2 + pad }
-    : estimateLabelBlock(obj.text, size, pad);
+  const hw = geometry.label.bounds.w / 2 + pad, hh = geometry.label.bounds.h / 2 + pad;
   // Distance from b back along the leader to where it crosses the padded block:
   // the nearer of the vertical/horizontal faces (ray-vs-centered-box).
   /* 꺾인 지시선(elbow) — 기출 12장. 라벨에서 나온 선이 한 번 꺾여 그림 속 부위를
@@ -314,22 +309,38 @@ function renderLabeler(obj) {
     const lead = dist - Math.min(tx, ty);   // leader length, trimmed to the block edge
     // Fall back safely when the anchor sits inside (or within the gap of) the text
     // block: skip the leader entirely rather than draw a line over the glyphs.
-    if (!(lead > 0.05)) return;
+    if (!(lead > 0.05)) return false;
     drawSeg(from, { x: from.x + ux * lead, y: from.y + uy * lead });
+    return true;
   };
+  const drawTargetArrow = (anchor, from) => {
+    if (obj.leaderArrowHead !== 'target') return;
+    const dx = anchor.x - from.x, dy = anchor.y - from.y, distance = Math.hypot(dx, dy);
+    if (!(distance > 0.05)) return;
+    g.appendChild(makeArrowHead(anchor.x, anchor.y, dx / distance, dy / distance, sw, color));
+  };
+  if (obj.leaderRoutes?.length) {
+    renderLeaderRoutes(g, geometry.routes, {color,sw,applyDash,obj});
+  } else {
   const anchors = [a, obj.p3, ...(obj.extraAnchors || [])].filter(Boolean);
   const elbow = obj.elbow;
   if (elbow && Number.isFinite(elbow.x) && Number.isFinite(elbow.y)) {
-    anchors.forEach(anchor => drawSeg(anchor, elbow));
+    anchors.forEach(anchor => { drawSeg(anchor, elbow); drawTargetArrow(anchor, elbow); });
     drawLeader(elbow);
   } else {
-    anchors.forEach(drawLeader);
+    anchors.forEach(anchor => { if (drawLeader(anchor)) drawTargetArrow(anchor, b); });
   }
 
+  }
+  if (leadersOnly) return g;
   // Upright (non-rotating) callout at p2.
   // ① 수식 라벨: renderFormula(수식 객체와 동일 투영)를 p2 중심에 배치. renderFormula의
   //    앵커는 top-left이므로 측정 폭/높이의 절반만큼 되끌어 중앙 정렬한다. id는 넘기지
   //    않는다(중첩 data-id가 픽/QA의 hit-twin 혼동을 다시 만들지 않도록).
+  if (semantic) {
+    g.appendChild(renderLabelTypography(obj, b, color));
+    return g;
+  }
   if (fm) {
     const fmEl = renderFormula({
       x: b.x - fm.w / 2,

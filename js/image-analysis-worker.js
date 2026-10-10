@@ -1,4 +1,4 @@
-import { analyzeImageData } from "./image-analysis.js?v=1.6.1-remediation-0929";
+import { analyzeImageData } from "./image-analysis.js?v=1.7.0-four-session-integration";
 
 self.postMessage({ type: "ready" });
 
