@@ -7,6 +7,7 @@ let cloud, ready=false, busy=false, titleOpen=false, owner=false, session=null, 
 let entries=[], archiveEntries=[], recentMore=false, archiveMore=false, statusTimer, refreshSerial=0;
 let createAttempt=null,attachments=[],attachmentsReady=false,mediaEpoch=0,viewerNote=null;
 const mediaCache=new Map();
+const entryImages=new Map();let imageTarget=null;
 const pending = new Map(), cards = new Map();
 const config = window.MEMO_CONFIG || {};
 const storageKey = '5e-memo-drafts-v1:' + (config.apiUrl || 'unconfigured');
@@ -58,10 +59,14 @@ async function copyNote(note,button) {
   } catch { announce('복사를 허용하거나 메모를 직접 선택해 복사해 주세요.',true); }
 }
 function renderList(target,items,isArchive=false) {
+  const active=document.activeElement,focusedId=target.contains(active)?active.closest('.note')?.dataset.id:null,focusedLabel=active?.getAttribute('aria-label');
   unwatchMedia(target);target.replaceChildren();
   if(!items.length) { const empty=document.createElement('li');empty.className='empty';empty.textContent=isArchive?'아직 보관된 메모가 없어요.':ready?'위에 첫 메모를 적어보세요.':'메모를 불러오는 중이에요.';target.append(empty); }
   for(const note of items) {
-    const item=document.createElement('li');item.className='note';item.dataset.id=note.id;
+    const item=document.createElement('li');item.className='note';item.dataset.id=note.id;item.tabIndex=0;
+    item.setAttribute('aria-label','메모: '+(note.title||note.body.slice(0,60)||'이미지 메모'));
+    item.addEventListener('pointerdown',event=>{if(!event.target.closest('button,a,input'))item.focus({preventScroll:true});});
+    bindImageAttachment(item,()=>note);
     const text=document.createElement('div');text.className='note-text';
     if(note.title) { const h=document.createElement('h3');h.className='note-title';h.textContent=note.title;text.append(h); }
     const body=document.createElement('div');body.className='note-body';
@@ -69,12 +74,14 @@ function renderList(target,items,isArchive=false) {
     if(url) { const a=document.createElement('a');a.href=url.href;a.target='_blank';a.rel='noopener noreferrer';a.textContent=note.body;body.append(a); }else body.textContent=note.body;
     const meta=document.createElement('div');meta.className='note-meta';
     meta.textContent=ageText(note.created)+(isArchive?' · '+(note.kind==='sticky'?'포스트잇':'메모'):' · '+remainingText(note.created));
-    text.append(body);addNoteMedia(note,text);text.append(meta);
+    text.append(body);addNoteMedia(note,text);const drafts=document.createElement('div');drafts.className='entry-image-drafts';text.append(drafts);renderEntryDrafts(note,drafts);text.append(meta);
     const actions=document.createElement('div');actions.className='note-actions';
-    if(!isArchive) { const pin=iconButton('note','포스트잇으로 꺼내기',()=>addSticky(note));pin.classList.add('pin-note');actions.append(pin); }
+    const attach=imageAttachmentButton(()=>note,'메모에 이미지 추가');actions.append(attach);
+    if(!isArchive) { const pin=iconButton('note','포스트잇으로 꺼내기',()=>addSticky(note));pin.classList.add('pin-note');pin.disabled=!!entryImages.get(note.id)?.saving;actions.append(pin); }
     const copy=iconButton('copy',(note.title||note.body)+' 복사',()=>copyNote(note,copy));copy.classList.add('copy');if(note.title||note.body)actions.append(copy);
     item.append(text,actions);target.append(item);
   }
+  if(focusedId){const item=[...target.children].find(node=>node.dataset.id===focusedId);const match=item&&[...item.querySelectorAll('[aria-label]')].find(node=>node.getAttribute('aria-label')===focusedLabel);(match||item)?.focus({preventScroll:true});}
 }
 function renderNotes() {
   const list=entries.filter(e=>e.kind==='memo'&&recent(e)).sort((a,b)=>b.created-a.created);
@@ -100,6 +107,7 @@ function renderAll() {
       if(document.activeElement!==body) body.value=note.body;
       card.dataset.color=note.color;card.style.zIndex=note.z+10;card.style.setProperty('--tilt',note.tilt+'deg');card.setAttribute('aria-label','포스트잇: '+(note.title||'제목 없음'));positionSticky(note,card);
       card.querySelector('.sticky-age').textContent=remainingText(note.created);updateStickyMedia(note,view);
+      renderEntryDrafts(note,view.drafts);view.attach.disabled=!attachmentsReady||!!entryImages.get(note.id)?.saving;view.remove.disabled=!!entryImages.get(note.id)?.saving;
     }
   }
   layoutStickies();renderArchive();
@@ -150,11 +158,12 @@ function queue(note,patch) {
   clearTimeout(p.timer);p.timer=setTimeout(()=>flush(note.id),450);
 }
 async function flush(id) {
-  const p=pending.get(id);if(!p||p.inFlight||p.paused||!cloud)return;
+  const p=pending.get(id),images=entryImages.get(id);if(!p||p.inFlight||p.paused||!cloud||images?.committing||images?.uncertain)return;
   const patch=p.patch;p.sent=patch;p.patch={};p.inFlight=true;persist();
   try {
     const updated=await cloud.update(id,p.version,patch);p.version=updated.version;
     const note=entries.find(e=>e.id===id);if(note)Object.assign(note,updated,p.patch);
+    if(Object.hasOwn(patch,'body')){invalidateLinkMedia(id);const view=cards.get(id);if(view)view.mediaSignature=null;}
     if(!Object.keys(p.patch).length)pending.delete(id);
     p.sent=null;p.inFlight=false;persist();renderAll();updateConnection();if(pending.has(id))flush(id);
   } catch(error) {
@@ -180,22 +189,25 @@ function renderSticky(note) {
   const color=iconButton('note','포스트잇 색상 바꾸기',()=>{queue(view.note,{color:colors[(colors.indexOf(view.note.color)+1)%4]});card.dataset.color=view.note.color;});
   color.replaceChildren();const dot=document.createElement('span');dot.className='color-dot';dot.setAttribute('aria-hidden','true');color.append(dot);
   const remove=iconButton('close','포스트잇 삭제',async()=>{
+    if(entryImages.get(note.id)?.saving)return;
     remove.disabled=true;
     try {const p=pending.get(note.id);if(p){p.paused=false;await flush(note.id);if(pending.has(note.id))throw Error('pending');}
       await cloud.delete(note.id,view.note.version);entries=entries.filter(e=>e.id!==note.id);renderAll();announce('포스트잇을 지웠어요.');$('add-sticky').focus({preventScroll:true});}
     catch(error){announce(mutationError(error),true);remove.disabled=false;await refresh();}
   });
-  bar.append(handle,color,remove);
+  const attach=imageAttachmentButton(()=>view.note,'포스트잇에 이미지 추가');view.attach=attach;view.remove=remove;
+  bar.append(handle,attach,color,remove);bindImageAttachment(card,()=>view.note);
   const heading=document.createElement('input');heading.className='sticky-title';heading.type='text';heading.placeholder='제목 (선택)';heading.maxLength=160;heading.value=note.title;heading.setAttribute('aria-label','포스트잇 제목 (선택)');
   const body=document.createElement('textarea');body.className='sticky-body';body.rows=3;body.maxLength=100000;body.placeholder='생각을 놓아두세요.';body.value=note.body;body.spellcheck=false;body.setAttribute('aria-label','포스트잇 메모');
   view.heading=heading;view.body=body;
   heading.addEventListener('input',()=>{queue(view.note,{title:heading.value});card.setAttribute('aria-label','포스트잇: '+(heading.value||'제목 없음'));});
-  body.addEventListener('input',()=>{queue(view.note,{body:body.value});updateStickyMedia(view.note,view);});
+  body.addEventListener('input',()=>queue(view.note,{body:body.value}));
   const footer=document.createElement('footer');footer.className='sticky-footer';
   const age=document.createElement('span');age.className='sticky-age';age.textContent=remainingText(note.created);
   const copy=document.createElement('button');copy.type='button';copy.className='sticky-copy';copy.append(icon('copy'),document.createTextNode('복사'));copy.addEventListener('click',()=>copyNote(view.note,copy));footer.append(age,copy);
   const media=document.createElement('div');media.className='sticky-media';view.media=media;
-  card.append(bar,heading,body,media,footer);updateStickyMedia(note,view);$('stickies').append(card);positionSticky(note,card);
+  const drafts=document.createElement('div');drafts.className='entry-image-drafts';view.drafts=drafts;
+  card.append(bar,heading,body,media,drafts,footer);updateStickyMedia(note,view);renderEntryDrafts(note,drafts);$('stickies').append(card);positionSticky(note,card);
   function bringForward(){queue(view.note,{z:++maxZ});card.style.zIndex=view.note.z+10;}
   card.addEventListener('pointerdown',bringForward);card.addEventListener('focusin',bringForward);
   let drag;
@@ -215,7 +227,7 @@ function renderSticky(note) {
   view.observer=new ResizeObserver(()=>positionSticky(view.note,card));view.observer.observe(card);return view;
 }
 async function addSticky(source) {
-  if(!ready||busy)return;
+  if(!ready||busy||source&&entryImages.get(source.id)?.saving)return;
   if(source&&!recent(source)){await refresh();announce('24시간이 지나 보관함으로 이동했어요.');return;}
   busy=true;syncButton();renderAttachments();
   const n=entries.filter(e=>e.kind==='sticky').length,slots=[[.08,.15],[.87,.10],[.04,.66],[.88,.68],[.2,.03],[.64,.76]],slot=slots[n%slots.length];
@@ -239,19 +251,26 @@ async function draftDB(){
   if(!imageDB)imageDB=new Promise((resolve,reject)=>{const r=indexedDB.open('5e-memo-image-drafts',1);r.onupgradeneeded=()=>r.result.createObjectStore('drafts');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});return imageDB;
 }
 let imageDraftWrites=Promise.resolve();
-function saveImageDraft(){
-  const selected=attachments.map(a=>({id:a.id,file:a.file}));
+function saveImageDraft(selected=attachments,key=storageKey){
+  selected=selected.map(a=>({id:a.id,file:a.file}));
   imageDraftWrites=imageDraftWrites.catch(()=>{}).then(async()=>{
     const images=await Promise.all(selected.map(async a=>({id:a.id,type:a.file.type,bytes:await a.file.arrayBuffer()})));
-    const db=await draftDB();await new Promise((resolve,reject)=>{const tx=db.transaction('drafts','readwrite');if(images.length)tx.objectStore('drafts').put(images,storageKey);else tx.objectStore('drafts').delete(storageKey);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});
+    const db=await draftDB();await new Promise((resolve,reject)=>{const tx=db.transaction('drafts','readwrite');if(images.length)tx.objectStore('drafts').put(images,key);else tx.objectStore('drafts').delete(key);tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});
   }).catch(()=>{if(selected.length)announce('이미지 임시 저장이 안 됐어요. 이 탭에서 메모를 저장해 주세요.',true);});
   return imageDraftWrites;
 }
 
 async function restoreImageDraft(){
-  try{const db=await draftDB(),stored=await new Promise((resolve,reject)=>{const r=db.transaction('drafts').objectStore('drafts').get(storageKey);r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});for(const a of (stored||[]).slice(0,4)){const file=a.bytes instanceof ArrayBuffer?new Blob([a.bytes],{type:a.type}):a.file;if(file instanceof Blob&&file.size<=5000000)attachments.push({id:a.id,file,url:URL.createObjectURL(file)});}}
+  try{
+    const db=await draftDB(),stored=await new Promise((resolve,reject)=>{const tx=db.transaction('drafts'),store=tx.objectStore('drafts'),keys=store.getAllKeys(),rows=store.getAll();tx.oncomplete=()=>resolve(keys.result.map((key,i)=>[key,rows.result[i]]));tx.onerror=()=>reject(tx.error);});
+    for(const [key,rows] of stored){
+      if(key!==storageKey&&!String(key).startsWith(storageKey+':entry:'))continue;
+      const images=[];for(const a of (rows||[]).slice(0,4)){const file=a.bytes instanceof ArrayBuffer?new Blob([a.bytes],{type:a.type}):a.file;if(file instanceof Blob&&file.size<=5000000)images.push({id:a.id,file,url:URL.createObjectURL(file)});}
+      if(key===storageKey)attachments=images;else if(images.length)entryImages.set(key.slice((storageKey+':entry:').length),{images,saving:false,error:'이미지 저장을 마쳐 주세요.'});
+    }
+  }
   catch{/* Pasting still works without persistent browser storage. */}
-  attachmentsReady=true;renderAttachments();syncButton();
+  attachmentsReady=true;renderAttachments();syncButton();renderAll();
 }
 function renderAttachments(){
   const target=$('draft-images');target.replaceChildren();target.hidden=!attachments.length;
@@ -269,7 +288,76 @@ async function attachFiles(files){
     attachments.push({id:crypto.randomUUID(),file,url:URL.createObjectURL(file)});
   }renderAttachments();saveImageDraft();syncButton();input.focus();
 }
-$('memo-form').addEventListener('paste',event=>{const files=[...(event.clipboardData?.items||[])].filter(item=>item.kind==='file'&&item.type.startsWith('image/')).map(item=>item.getAsFile()).filter(Boolean);if(files.length){event.preventDefault();attachFiles(files);}});
+function pastedImages(event){return [...(event.clipboardData?.items||[])].filter(item=>item.kind==='file'&&item.type.startsWith('image/')).map(item=>item.getAsFile()).filter(Boolean);}
+function findNote(id){return entries.find(note=>note.id===id)||archiveEntries.find(note=>note.id===id);}
+function imageAttachmentButton(note,label){
+  const button=iconButton('image',label,()=>{if(!ready||entryImages.get(note().id)?.saving)return;imageTarget=note().id;$('existing-image-input').click();});
+  button.classList.add('attach-note-image');button.disabled=!attachmentsReady||!!entryImages.get(note().id)?.saving;return button;
+}
+function bindImageAttachment(target,note){
+  target.addEventListener('paste',event=>{const files=pastedImages(event);if(files.length){event.preventDefault();stageEntryImages(note().id,files);}});
+  target.addEventListener('dragover',event=>{if([...event.dataTransfer.items].some(item=>item.kind==='file'))event.preventDefault();});
+  target.addEventListener('drop',event=>{if(event.dataTransfer.files.length){event.preventDefault();stageEntryImages(note().id,[...event.dataTransfer.files]);}});
+}
+$('existing-image-input').addEventListener('change',event=>{const id=imageTarget;imageTarget=null;if(id)stageEntryImages(id,[...event.target.files]);event.target.value='';});
+function renderEntryDrafts(note,target){
+  target.replaceChildren();const draft=entryImages.get(note.id);target.hidden=!draft?.images.length;if(!draft?.images.length)return;
+  const strip=document.createElement('div');strip.className='draft-images';strip.setAttribute('aria-label','이 메모에 추가할 이미지');
+  for(const [index,image] of draft.images.entries()){
+    const frame=document.createElement('div');frame.className='draft-image';const img=document.createElement('img');img.src=image.url;img.alt='추가할 이미지 '+(index+1);
+    const remove=iconButton('close','추가할 이미지 '+(index+1)+' 제거',()=>{if(draft.saving)return;URL.revokeObjectURL(image.url);draft.images=draft.images.filter(a=>a.id!==image.id);saveImageDraft(draft.images,storageKey+':entry:'+note.id);if(!draft.images.length)entryImages.delete(note.id);renderAll();});remove.disabled=draft.saving;frame.append(img,remove);strip.append(frame);
+  }
+  const status=document.createElement('div');status.className='entry-image-status';status.setAttribute('role','status');
+  const message=document.createElement('span');message.textContent=draft.saving?'이미지 저장 중…':draft.error;status.append(message);
+  if(!draft.saving){const retry=document.createElement('button');retry.type='button';retry.className='entry-image-retry';retry.textContent='다시 저장';retry.addEventListener('click',()=>saveEntryImages(note.id,true));status.append(retry);}
+  target.append(strip,status);
+}
+async function stageEntryImages(id,files){
+  const note=findNote(id);if(!note||!ready||!attachmentsReady)return;
+  if(!owner&&!recent(note)){announce('24시간이 지나 주인장 보관함으로 이동했어요.',true);return;}
+  let draft=entryImages.get(id);if(draft?.saving){announce('이미지를 저장 중이에요. 잠시 후 추가해 주세요.');return;}
+  if(!draft){draft={images:[],saving:false,error:''};entryImages.set(id,draft);}
+  const retry=!!draft.error||!!draft.uncertain;
+  let added=false;
+  for(const file of files){
+    if(!['image/png','image/jpeg','image/webp','image/gif'].includes(file.type)){announce('PNG, JPEG, WebP, GIF 이미지를 넣어 주세요.',true);continue;}
+    if(!file.size||file.size>5000000){announce('이미지는 한 장당 5MB까지 넣을 수 있어요.',true);continue;}
+    if((note.image_ids||[]).length+draft.images.filter(a=>!note.image_ids?.includes(a.id)).length>=4){announce('한 메모에 이미지는 4장까지 넣을 수 있어요.',true);break;}
+    draft.images.push({id:crypto.randomUUID(),file,url:URL.createObjectURL(file)});added=true;
+  }
+  if(!draft.images.length)entryImages.delete(id);
+  if(added){saveImageDraft(draft.images,storageKey+':entry:'+id);await saveEntryImages(id,retry);}
+}
+async function saveEntryImages(id,retry=false){
+  const draft=entryImages.get(id);if(!draft?.images.length||draft.saving||!cloud)return;
+  draft.saving=true;draft.error='';renderAll();
+  try{
+    if(retry){
+      draft.committing=true;
+      while(pending.get(id)?.inFlight)await new Promise(resolve=>setTimeout(resolve,25));
+      if(!await refresh())throw Error('Disconnected');if(owner&&!findNote(id)&&!$('archive-view').hidden)await loadArchive(false);
+      const note=findNote(id),p=pending.get(id);if(p&&note){p.version=note.version;p.paused=false;}
+      draft.committing=false;draft.uncertain=false;
+    }
+    let note=findNote(id);if(!note){const error=Error('Memo unavailable');error.code='P0002';throw error;}
+    for(const image of draft.images)await cloud.upload(image.id,image.file);
+    // Finish text/position writes before attaching, then hold later edits until its version is known.
+    while(pending.has(id)){
+      const p=pending.get(id);if(p.paused){const error=Error('Pending memo edit');error.code='PENDING_EDIT';throw error;}
+      if(p.inFlight)await new Promise(resolve=>setTimeout(resolve,25));else await flush(id);
+    }
+    draft.committing=true;note=findNote(id);if(!note){const error=Error('Memo unavailable');error.code='P0002';throw error;}
+    const updated=await cloud.attach(id,note.version,draft.images.map(image=>image.id)),p=pending.get(id);
+    if(p)p.version=updated.version;Object.assign(findNote(id)||note,updated,p?.patch||{});
+    for(const image of draft.images)URL.revokeObjectURL(image.url);
+    draft.images=[];entryImages.delete(id);await saveImageDraft([],storageKey+':entry:'+id);announce('메모에 이미지를 추가했어요.');
+  }catch(error){
+    if(draft.committing){draft.uncertain=true;const p=pending.get(id);if(p){p.paused=true;persist();}}
+    draft.error=error.code==='IMAGE_LIMIT'?'이미지는 총 4장까지예요. 추가할 이미지를 줄여 주세요.':error.code==='PENDING_EDIT'?'포스트잇 수정부터 다시 저장해 주세요.':mutationError(error);
+    announce(draft.error,true);
+  }finally{draft.saving=false;draft.committing=false;renderAll();updateConnection();if(!draft.images.length)flush(id);}
+}
+$('memo-form').addEventListener('paste',event=>{const files=pastedImages(event);if(files.length){event.preventDefault();attachFiles(files);}});
 $('attach-image').addEventListener('click',()=>$('image-input').click());
 $('image-input').addEventListener('change',event=>{attachFiles([...event.target.files]);event.target.value='';});
 $('memo-form').addEventListener('dragover',event=>{if([...event.dataTransfer.items].some(item=>item.kind==='file'))event.preventDefault();});
@@ -280,6 +368,7 @@ function clearMedia(){
   mediaEpoch++;for(const cached of mediaCache.values())if(cached.url)URL.revokeObjectURL(cached.url);mediaCache.clear();for(const view of cards.values())view.mediaSignature=null;
   if($('media-viewer').open)$('media-viewer').close();$('viewer-image').removeAttribute('src');viewerNote=null;
 }
+function invalidateLinkMedia(id){for(const [key,cached] of mediaCache)if(key.startsWith('link:'+id+':')){if(cached.url)URL.revokeObjectURL(cached.url);mediaCache.delete(key);}}
 function pruneMedia(){
   for(const [key,cached] of mediaCache)if(!owner&&cached.expires<=now()){if(cached.url)URL.revokeObjectURL(cached.url);mediaCache.delete(key);}
   if(viewerNote&&!owner&&!recent(viewerNote)){$('media-viewer').close();$('viewer-image').removeAttribute('src');viewerNote=null;}
@@ -301,6 +390,7 @@ function addNoteMedia(note,target){
       }catch{if(button.isConnected){button.textContent='이미지 다시 불러오기';button.onclick=()=>button.loadMemoMedia();}}
     };target.append(button);mediaObserver.observe(button);
   }
+  const p=pending.get(note.id);if(Object.hasOwn(p?.sent||{},'body')||Object.hasOwn(p?.patch||{},'body'))return;
   const url=firstLink(note.body);if(!url)return;const frame=document.createElement('div');frame.className='note-media link-media preview-pending';target.append(frame);const epoch=mediaEpoch;
   frame.loadMemoMedia=async()=>{
     try{const data=await cachedMedia('link:'+note.id+':'+url,note,async()=>{const info=await cloud.preview(note.id);if(!info||info.url!==url)return null;return {...info,blob:await cloud.media('/entries/'+note.id+'/thumbnail')};});
@@ -354,7 +444,7 @@ $('retry-button').addEventListener('click',async()=>{
 new ResizeObserver(layoutStickies).observe(board);smallBoard.addEventListener('change',layoutStickies);
 window.addEventListener('online',()=>refresh());window.addEventListener('focus',()=>refresh());
 document.addEventListener('visibilitychange',()=>{if(!document.hidden)refresh();});
-window.addEventListener('beforeunload',event=>{persist();if(pending.size||busy){event.preventDefault();event.returnValue='';}});
+window.addEventListener('beforeunload',event=>{persist();if(pending.size||busy||[...entryImages.values()].some(draft=>draft.saving)){event.preventDefault();event.returnValue='';}});
 restoreImageDraft();titleState();syncButton();renderAll();
 setInterval(()=>{renderAll();if(!document.hidden)refresh();},5000);
 function authState(user){

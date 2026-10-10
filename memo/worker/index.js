@@ -77,6 +77,29 @@ async function route(request,env,url){
     const row=results.at(-1).results[0];if(!row)throw new ApiError(403,'42501','Memo moved to owner archive');
     return serialize(row);
   }
+  const attachmentId=url.pathname.match(/^\/entries\/([^/]+)\/images$/)?.[1];
+  if(attachmentId&&request.method==='POST'){
+    if(!uuid.test(attachmentId))invalid();
+    const data=await body(request),images=data.image_ids;
+    if(Object.keys(data).some(k=>!['version','image_ids'].includes(k))||!Array.isArray(images)||!images.length||images.length>4||new Set(images).size!==images.length||images.some(id=>!uuid.test(id)))invalid();
+    if(!Number.isInteger(data.version)||data.version<1)throw new ApiError(409,'40001','Valid memo version required');
+    const current=await env.DB.prepare(`SELECT *,${CLOCK} AS clock FROM memo_entries WHERE id=?`).bind(attachmentId).first();
+    if(!current||!auth.owner&&current.created_at<=current.clock-DAY)await inaccessible(env.DB,attachmentId,auth.owner);
+    const attached=JSON.parse(current.image_ids),added=images.filter(id=>!attached.includes(id));
+    delete current.clock;
+    // A lost response can be retried with the same image IDs without duplicating them.
+    if(!added.length)return serialize(current);
+    if(current.version!==data.version)await inaccessible(env.DB,attachmentId,auth.owner);
+    if(attached.length+added.length>4)throw new ApiError(400,'IMAGE_LIMIT','A memo supports at most four images');
+    const combined=JSON.stringify([...attached,...added]);
+    const results=await env.DB.batch([
+      env.DB.prepare(`UPDATE memo_entries SET image_ids=?,updated_at=${CLOCK},version=version+1 WHERE id=? AND version=? AND (created_at>${CLOCK}-${DAY} OR ?=1) AND (SELECT count(*) FROM memo_images WHERE id IN (${added.map(()=>'?').join(',')}) AND entry_id IS NULL AND created_at>${CLOCK}-${DAY})=? RETURNING *`).bind(combined,attachmentId,data.version,Number(auth.owner),...added,added.length),
+      ...added.map(id=>env.DB.prepare('UPDATE memo_images SET entry_id=? WHERE id=? AND entry_id IS NULL AND EXISTS(SELECT 1 FROM memo_entries WHERE id=? AND version=? AND image_ids=?)').bind(attachmentId,id,attachmentId,data.version+1,combined))
+    ]);
+    const row=results[0].results[0];
+    if(!row){const latest=await env.DB.prepare(`SELECT version,created_at,${CLOCK} AS clock FROM memo_entries WHERE id=?`).bind(attachmentId).first();if(!latest||latest.version!==data.version||!auth.owner&&latest.created_at<=latest.clock-DAY)await inaccessible(env.DB,attachmentId,auth.owner);invalid('Images are missing or already attached elsewhere');}
+    return serialize(row);
+  }
   const id=url.pathname.match(/^\/entries\/([^/]+)$/)?.[1];
   if(id&&['PATCH','DELETE'].includes(request.method)){
     if(!uuid.test(id))invalid();const data=await body(request);

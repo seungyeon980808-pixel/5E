@@ -67,6 +67,7 @@
     <footer class="page-footer"><p class="move-hint"><svg class="icon" aria-hidden="true"><use href="#i-move"/></svg><span id="move-hint">포스트잇 윗부분을 잡아 자유롭게 옮기세요.</span></p><p class="connection" id="connection" data-state="loading"><span id="connection-text" role="status">연결 중…</span><button id="retry-button" type="button" hidden>다시 시도</button></p></footer>
   </div>
   <p class="status" id="status" role="status" aria-live="polite" aria-atomic="true"></p>
+  <input id="existing-image-input" type="file" accept="image/png,image/jpeg,image/webp,image/gif" multiple hidden>
   <dialog id="media-viewer" class="media-viewer" aria-label="첨부 이미지 크게 보기"><button id="close-media" class="icon-button viewer-close" type="button" aria-label="이미지 닫기"><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button><img id="viewer-image" alt="첨부 이미지 원본"></dialog>
   <script src="config.js"></script>
   <script type="module" src="app.js"></script>

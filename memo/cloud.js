@@ -51,6 +51,7 @@ export class MemoCloud {
   }
   async preview(id){return this.request('/entries/'+id+'/preview','GET');}
   async create(id,entry){return normalize(await this.request('/entries','POST',{id,entry}));}
+  async attach(id,version,image_ids){return normalize(await this.request('/entries/'+id+'/images','POST',{version,image_ids}));}
   async update(id,version,patch){return normalize(await this.request('/entries/'+id,'PATCH',{version,patch}));}
   async delete(id,version){return this.request('/entries/'+id,'DELETE',{version});}
 }
