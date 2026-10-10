@@ -156,8 +156,13 @@ for(const channel of auxChannels) {
       assert.deepEqual(await pending,{baseline:[],draft:[]});return;
     }
     if(channel==='exam:workspace-snapshot'||channel==='exam:workspace-restore') {
-      const pending=h.handlers.get(channel)(event,{drawing:{pages:[]}}),request=h.events.at(-1);
+      const sent=once(h.requests,'exam:workspace-request',{signal:AbortSignal.timeout(5000)});
+      const payload=channel==='exam:workspace-snapshot'?undefined:{drawing:{pages:[]}};
+      const pending=h.handlers.get(channel)(event,payload);
+      const [correlated]=await sent,request=h.events.at(-1);
       assert.equal(request.channel,'exam:workspace-request');
+      assert.deepEqual(request.payload,correlated);
+      assert.deepEqual(request.payload.restore,payload);
       await h.handlers.get('exam:workspace-reply')(h.event,{requestId:request.payload.requestId,value:{drawing:{pages:[]}}});
       assert.deepEqual(await pending,{drawing:{pages:[]}});return;
     }
@@ -168,6 +173,18 @@ for(const channel of auxChannels) {
     else assert.equal(result.ok,true);
   });
 }
+
+test('exam workspace snapshot rejects malformed or expired owner proof requests before asking the primary window',async t=>{
+  const h=harness(t);await h.call('exam:open');const window=h.windows.at(-1),event={sender:window.webContents,senderFrame:window.webContents.mainFrame};
+  const count=h.events.length,effects=h.effects.length;
+  await assert.rejects(()=>h.handlers.get('exam:workspace-snapshot')(event,null),/그림 연결 요청이 올바르지 않거나 너무 큽니다/);
+  for(const payload of [[],{}, {drawing:{pages:[]}}, {editRequestId:'invalid'},
+    {editRequestId:'12345678-1234-1234-1234-123456789abc',extra:true}]) {
+    await assert.rejects(()=>h.handlers.get('exam:workspace-snapshot')(event,payload),/그림 소유 확인 요청이 올바르지 않습니다/);
+  }
+  await assert.rejects(()=>h.handlers.get('exam:workspace-snapshot')(event,{editRequestId:'12345678-1234-1234-1234-123456789abc'}),/시험지 편집 연결이 만료되었습니다/);
+  assert.equal(h.events.length,count);assert.equal(h.effects.length,effects);
+});
 
 test('all registered privileged channels are covered by sender tests', t => {
   const h = harness(t);
