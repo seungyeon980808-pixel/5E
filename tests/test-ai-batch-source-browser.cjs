@@ -521,12 +521,22 @@ for (const engine of ['chromium','webkit']) test('real native scene cache comple
   await page.evaluate(()=>{window.__task2.emitGeneration(1,'image');window.__task2.emitGeneration(1,'done');});
   await page.waitForFunction(()=>window.__task2Manager.workspaceBatchState().every(job=>job.state==='completed'));
   for (const id of ['task-0','task-1','task-2']) await selectImmediateSceneTask(page,id);
-  await page.waitForFunction(async()=>{
-    const actual=(await window.__task2Manager.sharingSnapshot()).workspaces.flatMap(workspace=>workspace.tabs);
-    const stored=await window.__readImmediateSceneTaskOwners(['task-0','task-1','task-2']);
-    const canonical=value=>Array.isArray(value)?value.map(canonical):value&&typeof value==='object'?Object.fromEntries(Object.keys(value).sort().map(key=>[key,canonical(value[key])])):value;
-    return stored.every(owner=>JSON.stringify(canonical(owner.tab))===JSON.stringify(canonical(actual.find(tab=>tab.id===owner.taskId))));
-  });
+  // Playwright polls the predicate's immediate truthiness, so return a boolean
+  // and keep awaited database reads in one in-flight attempt between RAF polls.
+  await page.waitForFunction(state=>{
+    if(state.error) throw state.error;
+    if(state.equal) return true;
+    if(!state.pending){
+      state.pending=true;
+      void (async()=>{
+        const actual=(await window.__task2Manager.sharingSnapshot()).workspaces.flatMap(workspace=>workspace.tabs);
+        const stored=await window.__readImmediateSceneTaskOwners(['task-0','task-1','task-2']);
+        const canonical=value=>Array.isArray(value)?value.map(canonical):value&&typeof value==='object'?Object.fromEntries(Object.keys(value).sort().map(key=>[key,canonical(value[key])])):value;
+        state.equal=stored.every(owner=>JSON.stringify(canonical(owner.tab))===JSON.stringify(canonical(actual.find(tab=>tab.id===owner.taskId))));
+      })().catch(error=>{state.error=error;}).finally(()=>{state.pending=false;});
+    }
+    return false;
+  },{pending:false,equal:false,error:null},{timeout:30_000,polling:'raf'});
   const final=await page.evaluate(async()=>({jobs:window.__task2Manager.workspaceBatchState(),tabs:(await window.__task2Manager.sharingSnapshot()).workspaces.flatMap(workspace=>workspace.tabs),durable:await window.__readImmediateSceneTaskOwners(['task-0','task-1','task-2']),proof:structuredClone(window.__immediateSceneCacheProof),sends:structuredClone(window.__task2.sends)}));
   assert.deepEqual(final.jobs.map(job=>job.sourceSnapshot),capturedSources,'All captured source bytes, settings and owner identities stay exact');
   assert.deepEqual(final.jobs.map(job=>job.state),['completed','completed']); assert.equal(final.sends.length,2);

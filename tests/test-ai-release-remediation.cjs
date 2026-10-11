@@ -1266,7 +1266,7 @@ const pieces = {
     '  const emptyReviewReport = () =>', 'full resolver, render, refresh and showWorkbench'),
   openClose: oneSlice(source, '  const open = async ({ reference, references = [], prompt, startGeneration = false,',
     '  const panelFocusables = () =>', 'full open and close'),
-  visibilityDispose: oneSlice(source, '    setWorkbenchVisible: visible => {',
+  visibilityDispose: oneSlice(source, '    setWorkbenchVisible: (visible, { animate = true } = {}) => {',
     '    snapshotTask: async id => {', 'full visibility and disposal methods'),
 };
 const importLine = 'import { BACKGROUND_POLICIES } from "./image-background-options.js?v=1.7.0-four-session-integration";\n';

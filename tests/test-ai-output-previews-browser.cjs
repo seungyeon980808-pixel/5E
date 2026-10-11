@@ -1919,7 +1919,7 @@ function lifetimeObserveNative(source) {
 async function installLifetimeRoutes(page,runtime,origin,evidence) {
   for(const [file,observe] of [['ai-panel.js',lifetimeObservePanel],['image-background.js',lifetimeObserveNative]]){
     const source=fs.readFileSync(path.join(root,'js',file),'utf8');
-    const pins={"ai-panel.js": "c18120db3f60402e4634397762c1bf98b02cb04e0349f3c915104b199f5ce8a7", "image-background.js": "9024c9f10256d9e45a7d03cf8354ffbb0b45006f5b312b04c50556159232aa49"};
+    const pins={"ai-panel.js": "f948ba2ef304ac4c6f4e2ea4d05c58164eb86d7118541ae356f55dc1d197c13d", "image-background.js": "9024c9f10256d9e45a7d03cf8354ffbb0b45006f5b312b04c50556159232aa49"};
     assert.equal(rawTransitionCrypto.createHash('sha256').update(source).digest('hex'),pins[file],'PRIVATE08 observed module is the reviewed parent candidate source');
     const body=observe(source);
     const url=new URL(runtime.moduleBase+file+runtime.moduleQuery,origin).href;

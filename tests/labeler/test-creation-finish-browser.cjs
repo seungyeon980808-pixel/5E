@@ -30,31 +30,36 @@ test.after(() => server?.kill('SIGTERM'));
 
 async function openPage(engine) {
   const browser = await engine.launch({ headless: true });
-  const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
-  const errors = [];
-  page.on('pageerror', error => errors.push(error.message));
-  await page.addInitScript(() => localStorage.setItem('5e.preview:5e.tutorial.bannerSeen', 'true'));
-  await page.goto(preview + '?mode=pro', { waitUntil: 'networkidle' });
-  const skip = page.getByRole('button', { name: '건너뛰기', exact: true });
-  if (await skip.isVisible()) await skip.click();
-  await page.evaluate(async ({ moduleBase, moduleQuery }) => {
-    const v = moduleQuery;
-    const { state } = await import(moduleBase + 'state.js' + v);
-    const { worldToScreen, screenToWorld } = await import(moduleBase + 'viewport.js' + v);
-    const { setActiveTool } = await import(moduleBase + 'tools.js' + v);
-    const { undo, redo } = await import(moduleBase + 'transform.js' + v);
-    const { beginLabelerBranches } = await import(moduleBase + 'tools/labeler-branches.js' + v);
-    window.creationQA = { state, worldToScreen, screenToWorld, setActiveTool, undo, redo, beginLabelerBranches };
-    setActiveTool('V');
-    state.update(s => {
-      s.objects = []; s.groups = []; s.selectedIds = []; s.targetedId = null;
-      s.layers = [{ id: 1, name: '검수', visible: true }]; s.activeLayerId = 1;
-      s.artboard = { w: 100, h: 80 }; s.viewBox = { x: 0, y: 0, w: 100, h: 80 };
-      s.undoStack = []; s.redoStack = []; s.draft = null; s.draftText = null;
-    });
-    await document.fonts.ready;
-  }, { moduleBase, moduleQuery });
-  return { browser, page, errors };
+  try {
+    const page = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+    const errors = [];
+    page.on('pageerror', error => errors.push(error.message));
+    await page.addInitScript(() => localStorage.setItem('5e.preview:5e.tutorial.bannerSeen', 'true'));
+    await page.goto(preview + '?mode=pro', { waitUntil: 'networkidle' });
+    const skip = page.getByRole('button', { name: '건너뛰기', exact: true });
+    if (await skip.isVisible()) await skip.click();
+    await page.evaluate(async ({ moduleBase, moduleQuery }) => {
+      const v = moduleQuery;
+      const { state } = await import(moduleBase + 'state.js' + v);
+      const { worldToScreen, screenToWorld } = await import(moduleBase + 'viewport.js' + v);
+      const { setActiveTool } = await import(moduleBase + 'tools.js' + v);
+      const { undo, redo } = await import(moduleBase + 'transform.js' + v);
+      const { beginLabelerBranches } = await import(moduleBase + 'tools/labeler-branches.js' + v);
+      window.creationQA = { state, worldToScreen, screenToWorld, setActiveTool, undo, redo, beginLabelerBranches };
+      setActiveTool('V');
+      state.update(s => {
+        s.objects = []; s.groups = []; s.selectedIds = []; s.targetedId = null;
+        s.layers = [{ id: 1, name: '검수', visible: true }]; s.activeLayerId = 1;
+        s.artboard = { w: 100, h: 80 }; s.viewBox = { x: 0, y: 0, w: 100, h: 80 };
+        s.undoStack = []; s.redoStack = []; s.draft = null; s.draftText = null;
+      });
+      await document.fonts.ready;
+    }, { moduleBase, moduleQuery });
+    return { browser, page, errors };
+  } catch (error) {
+    try { await browser.close(); } catch { /* Preserve the original setup failure. */ }
+    throw error;
+  }
 }
 
 async function point(page, x, y) {
