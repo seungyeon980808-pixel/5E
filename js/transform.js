@@ -452,6 +452,16 @@ function clipboardBBox(objs) {
  * 리사이즈 때 좌표에서 떨어져 나온다(요구: 함께 묶여 이동). fn(pt{x,y}) → pt{x,y}. */
 function mapFgElements(obj, orig, fn) {
   if (obj.type !== "funcgraph") return;
+  // Shading stores world coordinates too. Keep its baseline and interval with
+  // the curve during insertion, paste, movement and group resizing.
+  if (orig.area && Number.isFinite(orig.area.baseY)) {
+    const a = orig.area;
+    const from = fn({ x: Number.isFinite(a.worldFrom) ? a.worldFrom : (orig.points?.[0]?.x ?? 0), y: a.baseY });
+    const to = fn({ x: Number.isFinite(a.worldTo) ? a.worldTo : (orig.points?.at(-1)?.x ?? 0), y: a.baseY });
+    obj.area = { ...a, baseY: from.y,
+      ...(Number.isFinite(a.worldFrom) ? { worldFrom: from.x } : {}),
+      ...(Number.isFinite(a.worldTo) ? { worldTo: to.x } : {}) };
+  }
   if (orig.markers) obj.markers = orig.markers.map((p) => fn(p));
   if (orig.guideSegs) obj.guideSegs = orig.guideSegs.map((seg) => seg.map((p) => fn(p)));
   if (orig.arrowPolys) obj.arrowPolys = orig.arrowPolys.map((ap) => ({ ...ap, points: ap.points.map((p) => fn(p)) }));

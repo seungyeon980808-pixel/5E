@@ -221,8 +221,8 @@ function pdfProvenance(document, source) {
   };
 }
 
-function entriesForDocument(index, document) {
-  const indexed = (index?.entries ?? []).filter((entry) => entry.documentId === document.id).map((entry) => ({
+function entriesForDocument(index, document, entriesByDocument = null) {
+  const indexed = (entriesByDocument ? entriesByDocument.get(document.id) || [] : (index?.entries ?? []).filter((entry) => entry.documentId === document.id)).map((entry) => ({
     ...entry,
     words: entry.words?.length ? entry.words : (entry.compactWords ?? []).map((word) => ({ text: word[0], rect: word.slice(1) })),
   }));
@@ -360,13 +360,23 @@ function securedPdfEntry(document, entry) {
   return { ...entry, documentId: document.id, text, normalized: normalizedText(text), words, source, contentSource, figureCandidates };
 }
 
-function pdfResults(documents, index) {
+function groupIndexEntries(index) {
+  const grouped = new Map();
+  for (const entry of index?.entries || []) {
+    let list = grouped.get(entry.documentId);
+    if (!list) grouped.set(entry.documentId, list = []);
+    list.push(entry);
+  }
+  return grouped;
+}
+
+function pdfResults(documents, index, entriesByDocument = groupIndexEntries(index)) {
   const results = [];
   const sources = [];
   const files = [];
   for (const document of documents) {
     const resultStart = results.length;
-    const entries = entriesForDocument(index, document).flatMap((entry) => {
+    const entries = entriesForDocument(index, document, entriesByDocument).flatMap((entry) => {
       const secured = securedPdfEntry(document, entry);
       return secured ? [secured] : [];
     });
@@ -505,10 +515,32 @@ function contextualized(result, query) {
 }
 
 export function createUnifiedLibraryProvider(input = {}) {
+  return createProvider(input);
+}
+
+// Keep the same crop/source validators, yielding between small document batches
+// so an arriving search index cannot freeze opening, closing or pointer input.
+export async function createUnifiedLibraryProviderAsync(input = {}) {
+  const documents = uniquePdfDocuments(input.pdfDocuments), index = input.pdfSearchIndex;
+  const grouped = groupIndexEntries(index), pdf = { results: [], sources: [], files: [] };
+  let sliceStart = performance.now();
+  for (let i = 0; i < documents.length; i++) {
+    const part = pdfResults([documents[i]],index,grouped);
+    for (const key of ['results','sources','files']) pdf[key].push(...part[key]);
+    if (performance.now()-sliceStart >= 6 && i < documents.length-1) {
+      if (globalThis.scheduler?.yield) await scheduler.yield();
+      else await new Promise(resolve=>setTimeout(resolve,0));
+      sliceStart = performance.now();
+    }
+  }
+  return createProvider(input,pdf);
+}
+
+function createProvider(input, preparedPdf) {
   const images = collectImageResults(input);
   let documents = uniquePdfDocuments(input.pdfDocuments);
   let searchIndex = input.pdfSearchIndex ?? { schemaVersion: "pdf-search-index-v1", entries: [] };
-  let pdf = pdfResults(documents, searchIndex);
+  let pdf = preparedPdf || pdfResults(documents, searchIndex);
   let revision = String(input.revision ?? input.catalogRevision ?? "catalog:0");
   const resolvedPdfResults = (Array.isArray(input.resolvedPdfResults) ? input.resolvedPdfResults : []).flatMap((resolved) => {
     const canonical = pdf.results.find((result) => result.id === resolved?.id && result.kind === "crop" && result.cropType === "question");

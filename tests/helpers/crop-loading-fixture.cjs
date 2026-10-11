@@ -18,8 +18,8 @@ async function installCropFixture(page, { held = [], root = path.resolve(__dirna
   };
   let body = replaceOnce(source, '    cropOpenOptions = { emptyDraft, wholePage, title };\n    const session = {',
     '    cropOpenOptions = { emptyDraft, wholePage, title };\n    const fixtureOperation = window.__cropRecord?.({ phase: "editor-start", number: result.provenance.pageNumber })?.sequence;\n    const session = {');
-  body = replaceOnce(body, '        await image.decode();\n        return { kind, value };',
-    '        window.__cropRecord?.({ phase: "editor-decode-start", number: session.pageNumber, kind, operation: fixtureOperation });\n        await image.decode();\n        window.__cropRecord?.({ phase: "editor-decode-complete", number: session.pageNumber, kind, operation: fixtureOperation });\n        return { kind, value };');
+  body = replaceOnce(body, '      try { await cropImage.decode(); }',
+    '      window.__cropRecord?.({ phase: "editor-decode-start", number: session.pageNumber, kind: first.kind, operation: fixtureOperation });\n      try { await cropImage.decode(); window.__cropRecord?.({ phase: "editor-decode-complete", number: session.pageNumber, kind: first.kind, operation: fixtureOperation }); }');
   body = replaceOnce(body, '        .catch(error => ({ kind: "error", error }));',
     '        .catch(error => ({ kind: "error", error }))\n        .finally(() => window.__cropRecord?.({ phase: "editor-original-settled", number: session.pageNumber, operation: fixtureOperation }));');
   body = replaceOnce(body, '      const fastPage = typeof cropDocumentFile?.loadPreview === "function"\n        ? Promise.resolve().then(() => cropDocumentFile.loadPreview(session.pageNumber, { continuous: true }))\n          .then(value => preparePage(value, "preview")).catch(() => null)\n        : Promise.resolve(null);',

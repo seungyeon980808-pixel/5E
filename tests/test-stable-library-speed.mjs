@@ -122,7 +122,7 @@ test("accepted manual preview rematerializes its exact crop through the owned ca
   assert.equal(calls[0].result.id, page.id);
   assert.equal(calls[0].result.kind, "page");
   assert.deepEqual(calls[0].source, { documentId: "book", pageNumber: 2, rect: [0.1, 0.2, 0.3, 0.4], fullPageFallback: false });
-  assert.equal(calls[0].options.original, true);
+  assert.equal(calls[0].options.original, false, "Final crop renders its own rectangle at 300 DPI rather than the whole page preview");
   assert.equal(calls[0].options.representation, "manual");
   assert.equal(calls[0].options.preview, false); assert.equal(calls[0].options.thumbnail, false);
   assert.deepEqual(result, before); assert.equal(acceptedAssets.get(result.id).materialized, preview);

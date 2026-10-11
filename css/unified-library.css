@@ -2,8 +2,8 @@
 @import url('./modal-surface-motion.css?v=1.7.0-four-session-integration');
 
 .unified-library-overlay {
-  -webkit-backdrop-filter: blur(6px);
-  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
   z-index: 10050;
   --unilib-bg: var(--bg-app, #0d1117);
   --unilib-panel: var(--bg-panel, #161b22);
@@ -474,6 +474,8 @@
 .unified-library-overlay .unilib-crop-tray-actions > button { min-height: var(--unilib-control-height); }
 .unified-library-overlay .unilib-result-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: start; gap: var(--unilib-space-2); }
 .unified-library-overlay .unilib-result-card {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 111px;
   display: grid;
   grid-template-columns: var(--unilib-thumb-width) minmax(0, 1fr);
   gap: var(--unilib-space-4);
@@ -742,7 +744,9 @@
   .unified-library-overlay .unilib-selected-item > button { width: var(--unilib-mobile-control-height); height: var(--unilib-mobile-control-height); }
   .unified-library-overlay .unilib-summary > span:last-child { display: none; }
   .unified-library-overlay .unilib-result-list { padding-inline: var(--unilib-space-1); }
-  .unified-library-overlay .unilib-result-card { grid-template-columns: var(--unilib-mobile-card-columns); gap: var(--unilib-space-3); min-height: var(--unilib-mobile-card-height); padding: var(--unilib-space-3); }
+  .unified-library-overlay .unilib-result-card {
+  content-visibility: auto;
+  contain-intrinsic-size: auto 111px; grid-template-columns: var(--unilib-mobile-card-columns); gap: var(--unilib-space-3); min-height: var(--unilib-mobile-card-height); padding: var(--unilib-space-3); }
   .unified-library-overlay .unilib-result-copy strong { display: -webkit-box; white-space: normal; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
   .unified-library-overlay .unilib-thumb { width: var(--unilib-mobile-thumb-width); height: var(--unilib-mobile-thumb-height); }
   .unified-library-overlay .unilib-stage { min-height: var(--unilib-mobile-stage-height); margin: var(--unilib-space-4); }

@@ -1067,6 +1067,29 @@ function clipRunByWorldX(run, xMin, xMax) {
 // 막대 무늬 <pattern> id 일련번호 — 모달 미리보기처럼 obj.id가 없는 렌더에서 충돌을 막는다.
 let _barPatSeq = 0;
 
+function graphAreaForRender(obj, plane) {
+  const area = obj.area;
+  if (!area || !obj.reconstruction || !plane || !obj.mathPoints?.length
+    || obj.mathPoints.length !== obj.points?.length) return area;
+  const mapping = obj.axis === 'y2' ? planeAsY2(plane) : plane;
+  // Older files may contain shading left at the pre-insertion coordinates.
+  // Recover only an attached curve that still matches its mathematical plane;
+  // independently moved/rotated curves and custom world-only fills stay intact.
+  if (!obj.mathPoints.every((point, i) => {
+    const x = worldXFromMathX(mapping, point.x), y = worldYFromMathY(mapping, point.y);
+    return Number.isFinite(x) && Number.isFinite(y)
+      && Math.abs(x - obj.points[i].x) < 1e-6 && Math.abs(y - obj.points[i].y) < 1e-6;
+  })) return area;
+  const baseY = worldYFromMathY(mapping, 0);
+  if (!Number.isFinite(baseY)) return area;
+  const dx = Number.isFinite(obj.offset?.dx) ? obj.offset.dx : 0;
+  const from = Number.isFinite(area.from) ? worldXFromMathX(mapping, area.from + dx) : NaN;
+  const to = Number.isFinite(area.to) ? worldXFromMathX(mapping, area.to + dx) : NaN;
+  return { ...area, baseY,
+    ...(Number.isFinite(from) ? { worldFrom: from } : {}),
+    ...(Number.isFinite(to) ? { worldTo: to } : {}) };
+}
+
 function renderFuncgraph(obj, plane = null) {
   obj = examSeriesStyle(obj, plane);
   const renderGraphLabel = graphLabelRenderer(obj);
@@ -1091,7 +1114,7 @@ function renderFuncgraph(obj, plane = null) {
    *   평면의 y=0 위치를 만든 쪽(그래프 모달·MCP)이 구워 넣는다. 이 파일의 다른 그래프
    *   요소(guideSegs·markers)와 같은 규약이라 저장·미리보기·캔버스가 한 경로로 통일된다.
    * 곡선보다 먼저 그려 채움이 선 아래로 깔린다. */
-  const area = obj.area;
+  const area = graphAreaForRender(obj, plane);
   if (area && Number.isFinite(area.baseY) && pts.length > 1) {
     const dMin = obj.domainMin, dMax = obj.domainMax;
     const hasDomain = Number.isFinite(dMin) && Number.isFinite(dMax) && dMax !== dMin;

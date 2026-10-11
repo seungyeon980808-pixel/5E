@@ -36,14 +36,14 @@ function computedProperty(element, name) {
   return element.style.getPropertyValue(name);
 }
 
-function stepSpring(value, velocity, target, seconds) {
+function stepSpring(value, velocity, target, seconds, frequency = SPRING_FREQUENCY) {
   const displacement = value - target;
-  const coefficient = velocity + SPRING_FREQUENCY * displacement;
-  const decay = Math.exp(-SPRING_FREQUENCY * seconds);
+  const coefficient = velocity + frequency * displacement;
+  const decay = Math.exp(-frequency * seconds);
   if (decay === 0) return { value: target, velocity: 0 };
   return {
     value: target + (displacement + coefficient * seconds) * decay,
-    velocity: (velocity - SPRING_FREQUENCY * coefficient * seconds) * decay,
+    velocity: (velocity - frequency * coefficient * seconds) * decay,
   };
 }
 
@@ -95,6 +95,7 @@ export function createModalSurfaceMotion({
   overlay,
   surface = overlay?.querySelector?.('.modal') || overlay,
   cssEntrance = null,
+  springFrequency = SPRING_FREQUENCY,
   reducedMotion = prefersReducedMotion,
   requestFrame = callback => globalThis.requestAnimationFrame?.(callback),
   cancelFrame = handle => globalThis.cancelAnimationFrame?.(handle),
@@ -332,7 +333,7 @@ export function createModalSurfaceMotion({
     }
     const elapsed = Math.max(0, (timestamp - lastTime) / 1000);
     lastTime = timestamp;
-    ({ value, velocity } = stepSpring(value, velocity, target, elapsed));
+    ({ value, velocity } = stepSpring(value, velocity, target, elapsed, springFrequency));
     stepCssChannels(elapsed);
     if (elapsed > 0) releaseCssPresentation();
     render();

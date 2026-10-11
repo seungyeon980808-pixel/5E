@@ -184,8 +184,8 @@ export class RhwpExamBridge {
     const angle = (geometry.rotation || 0)*Math.PI/180;
     const w = Math.abs(Math.cos(angle))*geometry.w + Math.abs(Math.sin(angle))*geometry.h;
     const h = Math.abs(Math.sin(angle))*geometry.w + Math.abs(Math.cos(angle))*geometry.h;
-    const factor = Math.min(1.6, (viewport.w-40)/w, (viewport.h-toolbarHeight-contextHeight-48)/h);
-    const zoom = Math.max(before.zoom, Math.min(2, before.zoom*factor));
+    const factor = Math.min((viewport.w-80)/w, (viewport.h-toolbarHeight-contextHeight-64)/h);
+    const zoom = Math.max(before.zoom, Math.min(4, before.zoom*factor));
     const completed=await this.animateFigureCamera(ref,zoom,{centre:{x:viewport.x+viewport.w/2,y:viewport.y+44+h*zoom/before.zoom/2}});
     if (this.input !== input || this.generation !== before.generation) return null;
     return {...before,zoomApplied:zoom,interrupted:!completed,ref};

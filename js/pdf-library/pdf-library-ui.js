@@ -350,6 +350,18 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
   let thumbnailJobs = [];
   let previewAbort = null;
   let materializePreviewAbort = null;
+  const materializedImages=new Map();
+  let materializedBytes=0;
+  const rememberMaterialized=(key,value)=>{
+    const size=value.bytes?.byteLength || 0;
+    if(size>8*1024*1024)return;
+    materializedImages.set(key,value);materializedBytes+=size;
+    while(materializedBytes>32*1024*1024 || materializedImages.size>24){
+      const oldest=materializedImages.keys().next().value;
+      materializedBytes-=materializedImages.get(oldest).bytes?.byteLength || 0;
+      materializedImages.delete(oldest);
+    }
+  };
   let returnFocus = null;
   let ocrController = null;
   let referenceConsumer = null;
@@ -1376,6 +1388,9 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
       const owningDocument = docs.find((document) => document.id === source?.documentId);
       source = assertPdfMaterializationSource(result, source, owningDocument?.pageCount);
       const dpi = pdfRenderDpi(options);
+      const cacheKey=JSON.stringify([catalogRevision,packSyncEpoch,source.documentId,owningDocument?.source?.sha256 || owningDocument?.source?.locator || null,source.pageNumber,options.original?[0,0,1,1]:source.rect,dpi,options.previewPixelWidth || null]);
+      const cached=materializedImages.get(cacheKey);
+      if(cached){materializedImages.delete(cacheKey);materializedImages.set(cacheKey,cached);return {...cached,result};}
       const replaceablePreview = options.preview && !options.continuous;
       if (replaceablePreview) materializePreviewAbort?.abort(new DOMException("Preview was superseded", "AbortError"));
       const previewController = replaceablePreview ? new AbortController() : null;
@@ -1403,9 +1418,12 @@ export function createPdfLibraryUi({ state, host, loadRuntime, searchDocuments, 
       if (previewController && materializePreviewAbort !== previewController) {
         throw new DOMException("Preview was superseded", "AbortError");
       }
-      return { bytes: rendered.bytes, dataUrl, source: normalized, result };
+      const value={ bytes: rendered.bytes, dataUrl, source: normalized, result };
+      rememberMaterialized(cacheKey,value);
+      return value;
     },
     async clearPreviewCache() {
+      materializedImages.clear();materializedBytes=0;
       clearGrid();
       await withRuntimeLock(() => runtime?.clearCache());
     },

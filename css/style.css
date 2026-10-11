@@ -2720,6 +2720,23 @@ textarea.unified-text-input {
 .app-footer > .app-footer-main { grid-column: 1; justify-self: start; }
 .app-footer > .app-footer-copyright { grid-column: 2; justify-self: center; margin-inline: 0; }
 .app-footer > #project-save-status { grid-column: 3; justify-self: end; max-width: 100% !important; }
+.footer-change-badge {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 190px;
+  height: 16px;
+  padding: 0 5px;
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--border));
+  border-radius: 4px;
+  color: var(--c-text);
+  background: color-mix(in srgb, var(--accent) 16%, var(--bg-panel));
+  font-size: 9px;
+  line-height: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+}
 
 @media (max-width: 1000px) {
   .app-footer-main .footer-badge { display: none; }

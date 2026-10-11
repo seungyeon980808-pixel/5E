@@ -1664,6 +1664,18 @@
   font: inherit;
   cursor: pointer;
 }
+.ai-task-context-menu {
+  position: fixed; z-index: 10120; min-width: 230px; max-width: calc(100vw - 16px);
+  padding: 5px; border: 1px solid var(--border-strong); border-radius: 8px;
+  background: var(--bg-panel); color: var(--c-text); box-shadow: 0 8px 24px rgb(0 0 0 / .25);
+  font-size: 12px; line-height: 1.4; font-family: inherit;
+}
+.ai-task-context-menu[hidden], .ai-task-context-menu [hidden] { display: none; }
+.ai-task-context-menu button { display: flex; align-items: center; justify-content: space-between; width: 100%; padding: 8px 10px; border: 0; border-radius: 4px; background: transparent; color: inherit; text-align: left; font: inherit; }
+.ai-task-context-menu button:hover:not(:disabled), .ai-task-context-menu button:focus-visible { background: var(--btn-tool-hover); outline: 1px solid var(--accent); }
+.ai-task-context-menu button:disabled { opacity: .45; cursor: default; }
+.ai-task-context-menu [data-task-submenu] { margin: 2px 0 3px 10px; padding-left: 5px; border-left: 1px solid var(--border); }
+.ai-task-context-menu [data-task-action="delete"] { border-top: 1px solid var(--border); border-radius: 0 0 4px 4px; margin-top: 3px; }
 #ai-image-panel .ai-task-tab > .ai-task-delete:hover { background: var(--bg-panel-hover); opacity: 1; }
 #ai-image-panel .ai-task-tab > .ai-task-delete:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; opacity: 1; }
 #ai-image-panel .ai-reference-section > summary,
@@ -2934,6 +2946,7 @@
 [data-ai-workflow="graph"] .ai-setting-label:has([data-ai-effort]),
 [data-ai-workflow="graph"] .ai-setting-label:has([data-ai-speed]),
 [data-ai-workflow="graph"] [data-ai-model-refresh] { display:none !important; }
+[data-ai-workflow="graph"] [data-ai-comments-apply] { display:none !important; }
 
 /* Graph editing is a primary action beside the preview view modes. */
 #ai-image-panel .ai-compare-heading .ai-graph-edit-entry {

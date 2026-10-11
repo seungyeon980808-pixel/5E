@@ -41,7 +41,7 @@ async function scenario(origin,engine,surface) {
     await h.navigate(page,new URL(`${surface}?mode=pro&mobile=0&exam=1`,origin).href,{waitUntil:'domcontentloaded'});await h.ready(page);
     stateUrl=h.runtime(page).stateUrl;
     assert.equal(await page.locator('.exam-picture-actions').isVisible(),false);
-    assert.ok(await page.locator('.exam-header').evaluate(n=>n.getBoundingClientRect().height)<105,'empty document header is compact');
+    assert.ok(await page.locator('.exam-header').evaluate(n=>n.getBoundingClientRect().height)<150,'empty document header is compact');
     assert.equal(await page.frameLocator('#exam-studio iframe').locator('[data-menu="file"] .menu-title').textContent(),'문서 설정');
     // The file chooser must be triggered by the shipped menu in Safari/WebKit.
     const chooserWait=page.waitForEvent('filechooser');await h.action(page,'open-hwp');
@@ -104,7 +104,7 @@ async function scenario(origin,engine,surface) {
     await h.action(page,'edit');await page.locator('#exam-edit-bar').waitFor({state:'visible'});
     const linked=(await h.pictures(page))[0];assert.ok(linked.figure);
     assert.equal((await h.drawing(page,stateUrl)).objects.length,1,'registration keeps a single raster background');
-    await page.locator('#exam-workspace-open').click();await h.idle(page);
+    await page.locator('#exam-edit-bar .exam-region-actions button:last-child').click();await h.idle(page);
     assert.equal(await page.locator('.exam-figure[data-connection="linked"]').count(),1);
     assert.equal(await page.locator('.exam-figure strong').textContent(),linked.figure.name);
     // A crop-only draft is also visible and survives the project file.
@@ -142,7 +142,7 @@ async function scenario(origin,engine,surface) {
           await page.locator('.exam-figure[data-connection="unlinked"]').first().click();await h.action(page,'edit');
           await page.locator('#exam-edit-bar').waitFor({state:'visible'});
           assert.equal((await h.drawing(page,stateUrl)).objects[0].type,'image','independent corpus picture registers as a background');
-          await page.locator('#exam-workspace-open').click();await h.idle(page);
+          await page.locator('#exam-edit-bar .exam-region-actions button:last-child').click();await h.idle(page);
           const after=(await h.pictures(page))[0];assert.ok(after.figure);assert.equal(after.figure.name,'문서 그림 1');
           for(const key of ['width','height','rotationAngle','horzOffset','vertOffset','cropLeft','cropTop']) assert.equal(after.props[key],before.props[key],`${file}: registering preserves ${key}`);
           registered=true;

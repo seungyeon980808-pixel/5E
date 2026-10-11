@@ -852,6 +852,13 @@
       ]
     },
     {
+      "path": "tests/test-library-entrance-refresh-browser.cjs",
+      "findingIds": [
+        "LIBRARY-STARTUP-STABLE",
+        "AI-MODAL-CONTINUITY"
+      ]
+    },
+    {
       "path": "tests/test-project-file-size-browser.cjs",
       "findingIds": [
         "A1"

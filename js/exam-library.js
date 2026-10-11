@@ -8,7 +8,7 @@ import { defaultRecentThreePack } from "./pdf-library/default-pack-config.js?v=1
 import { loadBundledDesktopPack } from "./pdf-library/desktop-pack.js?v=1.7.0-four-session-integration";
 import { registerPdfReferencePicker } from "./pdf-library/reference-picker.js?v=1.7.0-four-session-integration";
 import { mergePreferredCatalogs } from "./pdf-library/catalog-merge.js?v=1.7.0-four-session-integration";
-import { createUnifiedLibraryProvider } from "./library/provider.js?v=1.7.0-four-session-integration";
+import { createUnifiedLibraryProviderAsync } from "./library/provider.js?v=1.7.0-four-session-integration";
 import { createUnifiedLibraryUi, unifiedLibrarySourceMetadata, unifiedLibraryTransfer } from "./unified-library-ui.js?v=1.7.0-four-session-integration";
 import { insertPartsAsset, loadPartsManifest, materializePartsAsset } from "./parts-library.js?v=1.7.0-four-session-integration";
 const MAX_RENDER = 60; // 그리드에 한 번에 그리는 카드 수 (초과분은 안내문으로 표시)
@@ -331,7 +331,7 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
     ]);
     if (unifiedProviderCache && unifiedProviderCacheKey === cacheKey) return unifiedProviderCache;
     unifiedProviderCacheKey = cacheKey;
-    unifiedProviderCache = createUnifiedLibraryProvider({
+    const pending = createUnifiedLibraryProviderAsync({
       partsManifest: isDesktopLibrary ? partsManifest : null,
       pdfDocuments: catalog.documents,
       pdfSearchIndex: catalog.searchIndex,
@@ -346,7 +346,14 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
         importedImage: materializeImportedImage,
       },
     });
-    return unifiedProviderCache;
+    unifiedProviderCache = pending;
+    try {
+      const provider = await pending;
+      return pending === unifiedProviderCache ? provider : getUnifiedProvider();
+    } catch (error) {
+      if (pending === unifiedProviderCache) {unifiedProviderCache=null;unifiedProviderCacheKey='';}
+      throw error;
+    }
   }
 
   async function insertUnifiedResult(result, asset, options, context = {}) {

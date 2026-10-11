@@ -232,7 +232,12 @@ export function initWebLoginUi({ openAi }) {
     const operation = new Promise((resolve, reject) => {
       pendingAiAction = { action, resolve, reject, started: false, controller: new AbortController() };
     });
-    show(true);
+    if (connected) {
+      // Local workspace reveal need not wait for another remote status read.
+      // Generation still checks its connection when a request is submitted.
+      void runPendingAiAction();
+      void refresh();
+    } else show(true);
     // Status may have changed in another tab since the last UI refresh.
     if (!connected) void refresh();
     return operation;

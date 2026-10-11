@@ -3606,7 +3606,6 @@ function build() {
       <div class="modal-actions">
         <button type="button" class="modal-btn" id="gm-cancel">취소</button>
         <button type="button" class="modal-btn modal-btn-primary" id="gm-confirm">만들기</button>
-        <button type="button" class="modal-btn modal-btn-primary" id="gm-send-exam" hidden>한글에 넣기</button>
       </div>
     </div>`;
   document.body.appendChild(overlay);
@@ -3703,7 +3702,6 @@ function build() {
     arrowClick: overlay.querySelector("#gm-arrow-click"), arrowList: overlay.querySelector("#gm-arrow-list"),
     preview: overlay.querySelector("#gm-preview"), error: overlay.querySelector("#gm-error"),
     confirm: overlay.querySelector("#gm-confirm"), cancel: overlay.querySelector("#gm-cancel"),
-    sendExam: overlay.querySelector("#gm-send-exam"),
   };
 
   /* --- 탭 전환 배선 --- */
@@ -4206,11 +4204,7 @@ function build() {
     return _mode === "edit" ? commitEdit() : commitCreate();
   };
   _els.confirm.addEventListener("click", commitValidated);
-  _els.sendExam.addEventListener("click", () => {
-    if (_els.sendExam.hidden || editorState() !== state) return;
-    const graph = commitValidated();
-    if (graph) window.dispatchEvent(new CustomEvent('5e:exam-send-graph',{detail:graph}));
-  });
+
   _els.cancel.addEventListener("click", hide);
   overlay.addEventListener('input',e=>{if(e.target.closest('#gm-series-editor'))rememberInvalidSeries();});
   overlay.addEventListener('change',e=>{if(e.target.closest('#gm-series-editor'))rememberInvalidSeries();});
@@ -4601,8 +4595,7 @@ export function openGraphModal(planeId = null, startTab = "coord", editingContex
   if (_els.advPanel) { _els.advPanel.hidden = true; _els.advOpen.setAttribute('aria-expanded','false'); if (_els.advCaret) _els.advCaret.textContent = "▾"; }   // 고급 패널은 접힌 채로 시작
   _els.title.textContent = _mode === "edit" ? "그래프 편집" : "그래프 만들기";
   _els.confirm.textContent = _mode === "edit" ? "적용" : "만들기";
-  _els.sendExam.hidden = !document.getElementById('exam-send') || !!window.fiveEExam || editorState() !== state;
-  _els.confirm.classList.toggle('modal-btn-primary', _els.sendExam.hidden);
+  _els.confirm.classList.add('modal-btn-primary');
   _els.error.textContent = "";
   _overlay.querySelectorAll("input, textarea, select").forEach(input => input.setCustomValidity(""));
   _overlay.hidden = false;

@@ -53,12 +53,20 @@ plan.axes.y2 = { scale:'linear', title:'밀도', unit:'', min:0, max:200, step:2
    const curvedFill=[...curved.querySelectorAll('path')].find(p=>p.getAttribute('stroke')==='none').getAttribute('d');
    const singleton=renderFuncgraph({points:[{x:1,y:2}],strokeWidth:0.4,strokeLevel:0});
    const {state}=await import('/js/state.js?v=1.7.0-four-session-integration'); const p={...state.get().objects.find(o=>o.type==='coordplane'),xMin:2,xMax:8,yMin:10,yMax:100}; const plane=renderCoordplane(p);
+   const attachedPlane=state.get().objects.find(o=>o.type==='coordplane');
+   const attachedGraph=structuredClone(state.get().objects.find(o=>o.type==='funcgraph'));
+   const filledPath=graph=>[...renderFuncgraph(graph,attachedPlane).querySelectorAll('path')].find(el=>el.getAttribute('stroke')==='none')?.getAttribute('d');
+   const correctFill=filledPath(attachedGraph);
+   attachedGraph.area={...attachedGraph.area,baseY:attachedGraph.area.baseY+12,worldFrom:attachedGraph.area.worldFrom+7,worldTo:attachedGraph.area.worldTo+7};
+   const oldFile=JSON.stringify(attachedGraph);
+   const oldAreaRecovery={correct:correctFill,recovered:filledPath(attachedGraph),unchanged:JSON.stringify(attachedGraph)===oldFile};
    const orientations={}; for (const orientation of ['horizontal','vertical','rotate']) { const copy=structuredClone(p);copy.reconstruction.axes.y2.orientation=orientation; const label=renderCoordplane(copy).querySelector('[data-axisname="y2"]'); orientations[orientation]={parentTransform:label.parentNode.getAttribute('transform'),text:label.textContent,rows:label.children.length}; }
    const pointPlane={...p,graphAnnotations:[{id:'no-dot',kind:'point',text:'A',x:4,y:40,axis:'y',orientation:'horizontal',endStyle:'none'}]};
    const noDot=renderCoordplane(pointPlane); const dots=renderCoordplane({...pointPlane,graphAnnotations:pointPlane.graphAnnotations.map(a=>({...a,endStyle:'closed'}))});
    const pointStyle={none:noDot.querySelectorAll('circle').length,closed:dots.querySelectorAll('circle').length,text:noDot.querySelector('[data-graph-annotation="no-dot"]').textContent};
-   return {orientations,pointStyle,curvedFill,moves:(curve.getAttribute('d').match(/M /g)||[]).length,fill:fill.getAttribute('d'),single:singleton.querySelectorAll('circle').length,positiveAxes:plane.querySelectorAll('line').length,svg:graph.outerHTML};
+   return {oldAreaRecovery,orientations,pointStyle,curvedFill,moves:(curve.getAttribute('d').match(/M /g)||[]).length,fill:fill.getAttribute('d'),single:singleton.querySelectorAll('circle').length,positiveAxes:plane.querySelectorAll('line').length,svg:graph.outerHTML};
  });
+ assert.ok(rendering.oldAreaRecovery.correct);assert.equal(rendering.oldAreaRecovery.recovered,rendering.oldAreaRecovery.correct);assert.equal(rendering.oldAreaRecovery.unchanged,true);
  assert.equal(rendering.orientations.horizontal.parentTransform,null); assert.equal(rendering.orientations.vertical.parentTransform,null); assert.match(rendering.orientations.rotate.parentTransform,/rotate\(-90/); assert.equal(rendering.pointStyle.closed,rendering.pointStyle.none+1); assert.equal(rendering.pointStyle.text,'A');
  assert.match(rendering.curvedFill,/L 5\.000 -7\.500/); assert.match(rendering.curvedFill,/L 25\.000 -7\.500/); assert.equal((rendering.curvedFill.match(/M /g)||[]).length,2); assert.equal(rendering.moves,2); assert.match(rendering.fill,/M 5\.000/); assert.match(rendering.fill,/25\.000/); assert.equal(rendering.single,1); assert.ok(rendering.positiveAxes>=2);
  fs.writeFileSync(path.join(evidence,'discontinuous-render.svg'),`<svg xmlns="http://www.w3.org/2000/svg" viewBox="-2 -2 45 50">${rendering.svg}</svg>`);
@@ -97,6 +105,9 @@ plan.axes.y2 = { scale:'linear', title:'밀도', unit:'', min:0, max:200, step:2
  const movedBefore = await snap();
  await page.evaluate(async () => { const { state } = await import('/js/state.js?v=1.7.0-four-session-integration'); const { translateObject } = await import('/js/transform.js?v=1.7.0-four-session-integration'); state.update(s => { for (const object of s.objects) translateObject(object, 7, 9); }); });
  const moved = await snap(); assert.equal(moved[0].x,movedBefore[0].x+7); assert.equal(moved[1].points[0].x,movedBefore[1].points[0].x+7); assert.deepEqual(moved[0].graphAnnotations,movedBefore[0].graphAnnotations); assert.deepEqual(moved[1].mathPoints,movedBefore[1].mathPoints);
+ assert.equal(moved[1].area.baseY,movedBefore[1].area.baseY+9,'Shading baseline moves with the graph');
+ assert.equal(moved[1].area.worldFrom,movedBefore[1].area.worldFrom+7,'Shading start moves with the graph');
+ assert.equal(moved[1].area.worldTo,movedBefore[1].area.worldTo+7,'Shading end moves with the graph');
  await open(inserted.planeId); await page.locator('#gm-confirm').click(); const movedEdited=await snap(); assert.deepEqual(movedEdited[1].points,moved[1].points); assert.deepEqual(movedEdited[0].graphAnnotations,moved[0].graphAnnotations);
  report.scenarios.push({name:'production group member translation and no-op re-edit preserve math and internal label attachment',pass:true});
  report.scenarios.push({ name:'project serialize/applyLoaded and reopen graph editor preserve data',pass:true });

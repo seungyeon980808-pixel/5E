@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { createUnifiedLibraryProvider } from "../js/library/provider.js";
+import { createUnifiedLibraryProvider, createUnifiedLibraryProviderAsync } from "../js/library/provider.js";
 
 const filters = { subject: "p1", academicYear: 2025, startYear: 2025, endYear: 2025, administration: "06" };
 const documents = [
@@ -11,6 +11,16 @@ const documents = [
 const entries = documents.map(document => ({ documentId: document.id, pageNumber: 2, itemId: "q1", itemNumber: 1,
   text: "힘 운동", source: { documentId: document.id, pageNumber: 2, rect: [0.1, 0.1, 0.8, 0.4], fullPageFallback: false } }));
 const makeProvider = (options = {}) => createUnifiedLibraryProvider({ pdfDocuments: documents, pdfSearchIndex: { entries }, ...options });
+
+test('yielding PDF catalog preserves search, inventory and source ownership validation', async () => {
+  const input={pdfDocuments:[...documents,documents[0]],pdfSearchIndex:{entries:[...entries,{...entries[1],itemId:'foreign',source:{...entries[0].source}}]},revision:'async:1'};
+  const original=structuredClone(input),sync=createUnifiedLibraryProvider(input),asyncProvider=await createUnifiedLibraryProviderAsync(input);
+  assert.deepEqual(asyncProvider.search({query:'힘',kinds:['crop','page']}),sync.search({query:'힘',kinds:['crop','page']}));
+  assert.deepEqual(asyncProvider.getSources(),sync.getSources());
+  assert.deepEqual(asyncProvider.listPdfFiles().map(f=>f.documentId),sync.listPdfFiles().map(f=>f.documentId));
+  assert.equal(asyncProvider.search({kinds:['crop']}).some(r=>r.provenance.itemId==='foreign'),false);
+  assert.deepEqual(input,original);
+});
 
 test("PDF inventory uses pdf kind while page and question search retain their kinds", () => {
   const provider = makeProvider();

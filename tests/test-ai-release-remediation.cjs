@@ -674,7 +674,7 @@ async function managedExportFixture({active='owner',held=false}={}) {
     resolveImageOutput:output.resolveImageOutput,transparentizeGeneratedImage:()=>{entered.resolve();return held?gate.promise:'data:image/png;base64,AQID';}};
   c.taskViews.set(tab.id,{attachments:[],generatedImages:[current],sourceSnapshot:tab.attachments,outputSnapshot:tab.generated});
   const owners=sourcePart('  const batchOwner = id =>','  function captureBatchTask(id) {');
-  const code=sourcePart('  const exportResults = async mode => {','  collectiveExportButton.addEventListener(');
+  const code=sourcePart('  const exportResults = async (mode,kind = null) => {','  collectiveExportButton.addEventListener(');
   vm.runInNewContext(owners+'\n'+code+'\nglobalThis.exportResults=exportResults;',c);
   return{c,tab,current,gate,entered,api};
 }
@@ -887,7 +887,7 @@ const onclickSource = oneSlice(source, '      savePng.onclick = async () => {',
   '\n      actions.appendChild(savePng);', 'PNG onclick');
 assert.ok(onclickSource.trimEnd().endsWith('};'), 'Full onclick assignment includes its closing brace');
 const footerSource = oneSlice(source, "  panel.querySelector('[data-ai-save-selected]')?.addEventListener('click', () => {",
-  '\n  const exportCount = mode => {', 'actual footer delegate');
+  '\n  const exportCount = (mode,kind = null) => {', 'actual footer delegate');
 const statusSource = oneSlice(source, '  const setStatus = (text, kind = "", cause) => {',
   '\n  const closeSourceMenu =', 'actual status side effects');
 const rawSource = oneSlice(outputSource, 'const BOUND_FIELDS =',

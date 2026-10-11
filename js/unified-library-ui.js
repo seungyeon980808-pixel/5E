@@ -166,7 +166,7 @@ export async function materializeLibraryAction(result, activeProvider, options =
       && candidate.provenance?.pageNumber === source.pageNumber);
     if (!page) throw new TypeError("PDF original page provenance is unavailable");
     return activeProvider.materialize(withManualCropVariant(page, source), {
-      ...options, representation: "manual", original: true, preview: false, thumbnail: false,
+      ...options, representation: "manual", original: false, preview: false, thumbnail: false,
     });
   }
   if (result?.kind !== "pdf") return activeProvider.materialize(result, options);
@@ -910,7 +910,7 @@ function createPartOptions(host, onChange) {
 export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openObjectify, openAi, openIndependentReferences, openGraph, pdfUi, pdfDetailsElement, onImportedImages, onDesktopSnapshot, desktopLibrary = globalThis.fiveEDesktop?.pdfLibrary, storage = globalThis.localStorage, initialSearchReadiness = "ready" }) {
   const overlay = buildShell();
   const root = overlay.querySelector(".unilib");
-  const motion = createModalSurfaceMotion({overlay,surface:root});
+  const motion = createModalSurfaceMotion({overlay,surface:root,springFrequency:48});
   for (const [attribute,anchor] of [['data-unilib-graph','[data-unilib-ai]'],['data-unilib-crop-graph','[data-unilib-crop-workbench]']]) {
     const button=document.createElement('button');button.type='button';button.className='unilib-button';
     button.setAttribute(attribute,'');button.disabled=true;button.textContent='좌표/함수 생성';
@@ -1006,7 +1006,9 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     ? "본문 검색을 준비하지 못했습니다. 목록은 사용할 수 있습니다. 제공 자료를 다시 연결해 주세요."
     : "본문 검색 준비 중 · 지금은 파일명으로 찾을 수 있습니다.";
   const refreshCatalog = async () => {
-    if (overlay.hidden) return;
+    // Opening reads the latest catalog after settling. A background readiness
+    // notification must not replace the source tree during that entrance.
+    if (!motion.isOpen() || overlay.dataset.modalMotionState !== "open") return;
     if (!cropDialog.hidden) { pendingCatalogRefresh = true; return; }
     const epoch = openEpoch;
     const live = () => epoch === openEpoch && !overlay.hidden;
@@ -1172,9 +1174,13 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
 
   async function provider() { return getProvider(); }
 
+  let renderedSourceProvider = null, renderedSourceRevision = null, renderedSourceKey = '';
+  const sourceTreeKey = () => JSON.stringify([[...(enabledSources || [])].sort(),[...expandedSources].sort(),[...excludedSourceGroups].sort(),desktopConnections]);
   async function renderSources(isCurrent = () => true) {
     const activeProvider = await provider();
     if (!isCurrent()) return false;
+    if (renderedSourceProvider === activeProvider && renderedSourceRevision === activeProvider.revision
+      && renderedSourceKey === sourceTreeKey()) return true;
     const sources = activeProvider.getSources();
     const yearStart = overlay.querySelector("[data-unilib-year-start]");
     const yearEnd = overlay.querySelector("[data-unilib-year-end]");
@@ -1290,6 +1296,9 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     const selectedCount = enabledSources.size;
     overlay.querySelector("[data-unilib-location-summary]").textContent = selectedCount ? `검색 위치 ${selectedCount}곳` : "검색 위치 없음";
     setSearchPaneOpen(searchPaneOpen);
+    renderedSourceProvider = activeProvider;
+    renderedSourceRevision = activeProvider.revision;
+    renderedSourceKey = sourceTreeKey();
     return true;
   }
 
@@ -1959,10 +1968,10 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     thumbnailQueue.clear();
     thumbnailObserver?.disconnect();
     thumbnailObserver = null;
-    pdfUi?.deactivate?.();
-    setDriveSettingsOpen(false);
-    setLocalInstallOpen(false);
     motion.hide({ onHidden: () => {
+      pdfUi?.deactivate?.();
+      setDriveSettingsOpen(false);
+      setLocalInstallOpen(false);
       root.classList.remove("consumer-mode");
       closeDrawers();
       closeExpandedReader();
@@ -1984,14 +1993,19 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     invalidateAction();
     returnFocus = trigger || document.activeElement;
     motion.show({ origin: trigger });
-    setResultState("loading", "검색 결과를 불러오는 중…");
-    setPreviewLoading();
+    if(!results.length){setResultState("loading", "검색 결과를 불러오는 중…");setPreviewLoading();}
     setSearchPaneOpen(searchPaneOpen);
     setPreviewPaneOpen(previewPaneOpen);
     setFolderLoading("loading");
-    await new Promise((resolve) => requestAnimationFrame(resolve));
-    if (!isCurrentOpen()) return;
-    await new Promise((resolve) => requestAnimationFrame(resolve));
+    // Keep search, DOM replacement and PDF initialization outside the entrance
+    // frames. Reopening retains the last usable preview throughout the motion.
+    await new Promise(resolve=>{
+      if(overlay.dataset.modalMotionState==='open'){resolve();return;}
+      const observer=new MutationObserver(()=>{
+        if(['open','closed'].includes(overlay.dataset.modalMotionState)){observer.disconnect();resolve();}
+      });
+      observer.observe(overlay,{attributes:true,attributeFilter:['data-modal-motion-state']});
+    });
     if (!isCurrentOpen()) return;
     try {
       if (desktopLibrary) await pdfUi?.activate?.();
@@ -2009,7 +2023,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       if (!await renderSources(isCurrentOpen)) return;
       if (!isCurrentOpen()) return;
       setFolderLoading("ready");
-      await runSearch();
+      await runSearch({preservePreview:true});
       if (isCurrentOpen()) query.focus();
     } catch (error) {
       if (!isCurrentOpen()) return;
@@ -2372,24 +2386,36 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       if (!chosen.length) return;
       const activeProvider = await provider();
       if (!isCurrent()) return;
-      setStatus("AI 작업용 이미지를 준비하는 중…");
-      const references = [];
       const transferredEntries = [];
-      for (const result of chosen) {
-        const representation = aiActionRepresentationForResult(result, snapshot.selectedId, snapshot.representation, snapshot.selectedFigure);
-        if (!canInsertLibraryResult(result, representation)) continue;
-        const effectiveResult = resultForRepresentation(result, representation);
-        const materialized = await materializeLibraryAction(effectiveResult, activeProvider, { ...snapshot.options, acceptedAssets, representation: materializationRepresentation(result, representation) });
-        if (!isCurrent()) return;
-        references.push(await rasterizeReference(materializedReference(effectiveResult, materialized)));
-        transferredEntries.push(acceptedAssets.get(result.id));
-        if (!isCurrent()) return;
+      const jobs=[];
+      const previews=[];
+      for(const result of chosen){
+        const representation=aiActionRepresentationForResult(result,snapshot.selectedId,snapshot.representation,snapshot.selectedFigure);
+        if(!canInsertLibraryResult(result,representation))continue;
+        const effectiveResult=resultForRepresentation(result,representation);
+        const accepted=acceptedAssets.get(result.id);
+        jobs.push({result,effectiveResult,representation});transferredEntries.push(accepted);
+        previews.push(materializedReference(effectiveResult,accepted?.materialized || (result.id===snapshot.selectedId?currentMaterialized:null)));
       }
-      if (!isCurrent() || !references.length) return;
-      const assignment = referenceConsumer && references.length === 1
-        ? { placement:"separate",groups:[[0]] }
-        : await chooseWorkbenchAssignment({ references, host: overlay, allowConversionChoice: !referenceConsumer, returnFocus: overlay.querySelector("[data-unilib-ai]") });
-      if (!assignment || !isCurrent()) return;
+      if(!isCurrent() || !jobs.length)return;
+      // Assignment uses the already displayed crops; exact output preparation
+      // starts only after confirmation and never blocks opening this dialog.
+      const assignment = referenceConsumer && jobs.length === 1
+        ? {placement:"separate",groups:[[0]]}
+        : await chooseWorkbenchAssignment({references:previews,host:overlay,allowConversionChoice:!referenceConsumer,returnFocus:overlay.querySelector("[data-unilib-ai]")});
+      if(!assignment || !isCurrent())return;
+      setStatus("선택한 영역의 원본 이미지를 준비하는 중…");
+      await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+      const references=[];
+      for(const {result,effectiveResult,representation} of jobs){
+        const materialized=await materializeLibraryAction(effectiveResult,activeProvider,{...snapshot.options,acceptedAssets,representation:materializationRepresentation(result,representation)});
+        if(!isCurrent())return;
+        const reference=await rasterizeReference(materializedReference(effectiveResult,materialized));
+        if(!isCurrent())return;
+        references.push(reference);
+        const accepted=acceptedAssets.get(result.id);
+        if(accepted && !materialized.previewOnly)accepted.materialized=materialized;
+      }
       workbenchReferenceGroups(references, assignment);
       const assignedIndices = [...new Set(assignment.groups.flat())];
       const removeTransferred = (indices) => {
@@ -2742,7 +2768,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     }
     const [x, y, width, height] = draftCrop;
     Object.assign(cropBox.style, { left: `${x * 100}%`, top: `${y * 100}%`, width: `${width * 100}%`, height: `${height * 100}%` });
-    if (cropGesture?.drawing) {
+    if (cropGesture) {
       if (!cropPreviewFrame) cropPreviewFrame = requestAnimationFrame(paintCropPreview);
     } else {
       if (cropPreviewFrame) cancelAnimationFrame(cropPreviewFrame);
@@ -2898,10 +2924,6 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       try {
         const src = resultImage(result, outcome.value);
         if (!src) throw new Error("원문 페이지를 표시할 수 없습니다.");
-        const decoded = new Image();
-        decoded.src = src;
-        await decoded.decode();
-        if (!live()) { void upgradePreviewCrops(canonicalPage); return; }
         const previousWidth = cropImage.naturalWidth;
         const anchor = cropCanvas.getBoundingClientRect();
         cropImage.src = src;
@@ -2981,9 +3003,6 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
         cropCanonicalPage(session, result, value);
         const src = resultImage(result, value);
         if (!src) throw new Error("원문 페이지를 표시할 수 없습니다.");
-        const image = new Image();
-        image.src = src;
-        await image.decode();
         return { kind, value };
       };
       const originalPage = materializeOriginalLibraryPage(result, activeProvider)
@@ -2994,25 +3013,28 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
           .then(value => preparePage(value, "preview")).catch(() => null)
         : Promise.resolve(null);
       // A failed or undecodable candidate must not prevent the other candidate from opening the page.
-      const first = await Promise.race([
+      let first = await Promise.race([
         originalPage.then(async original => original.kind === "error" ? (await fastPage || original) : original),
         fastPage.then(preview => preview || originalPage),
       ]);
       if (!live()) return;
       if (first.kind === "error") throw first.error;
-      const quality = first.kind;
-      const shown = first.value;
-      session.canonicalPage = cropCanonicalPage(session, result, shown);
-      session.quality = quality;
-      const src = resultImage(result, shown);
+      let src = resultImage(result, first.value);
       if (!src) throw new Error("원문 페이지를 표시할 수 없습니다.");
-      const decoded = new Image();
-      decoded.src = src;
-      await decoded.decode();
-      if (!live()) return;
       cropImage.src = src;
-      await cropImage.decode();
+      try { await cropImage.decode(); }
+      catch(error) {
+        const alternate=await (first.kind==='preview'?originalPage:fastPage);
+        if(!live())return;
+        if(!alternate || alternate.kind==='error')throw error;
+        first=alternate;src=resultImage(result,first.value);
+        if(!src)throw error;
+        cropImage.src=src;await cropImage.decode();
+      }
       if (!live()) return;
+      const quality = first.kind;
+      session.canonicalPage = cropCanonicalPage(session, result, first.value);
+      session.quality = quality;
       setCropLoadState("ready");
       if (quality === "preview") setCropQuality("loading");
       if (pageCount > 1 && !continuousCrop.mounted) continuousCrop.mount(pageCount, session.pageNumber, cropDocumentFile?.getPageGeometry);

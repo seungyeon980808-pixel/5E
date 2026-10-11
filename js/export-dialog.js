@@ -167,7 +167,7 @@ export function runAreaCapture(svg, state, onDone, hintText, options = {}) {
    *   설명 창(100012)보다는 아래에 둬서 안내는 계속 읽히게 한다. */
   overlay.style.cssText =
     "position:fixed;inset:0;z-index:100011;cursor:crosshair;" +
-    "background:rgba(0,0,0,0.35);user-select:none;";
+    "background:rgba(0,0,0,0.35);user-select:none;font-family:var(--shell-control-font-family,system-ui,sans-serif);";
 
   const HINT_DRAW = hintText || "저장할 영역을 드래그하십시오";
   const HINT_ADJUST = `핸들로 크기 조절 · 드래그로 이동 · [${options.confirmText || '지정'}] 또는 Enter로 확정 · Esc 취소`;

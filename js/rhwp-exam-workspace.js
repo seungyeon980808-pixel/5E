@@ -40,6 +40,7 @@ export function initRhwpExamWorkspace(state, services) {
       <div class="exam-heading"><span class="exam-brand app-brand">5E</span>
         <input id="exam-name" value="새 시험지" maxlength="200" aria-label="시험지 이름"></div>
       <nav class="exam-actions" aria-label="시험지 작업">
+        <button type="button" data-exam-action="close" title="그림 편집기로 돌아가기">← 그림 편집기로</button>
         <div class="exam-menu">
           <button type="button" data-exam-menu="file" aria-haspopup="menu" aria-expanded="false" aria-controls="exam-file-menu">파일 <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round"><path d="m6 8 4 4 4-4"/></svg></button>
           <div id="exam-file-menu" class="exam-menu-popup" role="menu" hidden>
@@ -64,8 +65,7 @@ export function initRhwpExamWorkspace(state, services) {
     <h2>문서의 그림</h2>
       <p class="exam-hint" hidden>더블클릭: 라벨 · 원본 편집: 전체 그림</p>
       <div id="exam-figures"></div>
-    <footer class="exam-footer"><span id="exam-status" role="status" aria-live="polite">준비 중</span>
-      <button type="button" data-exam-action="close" title="그림 편집기로 돌아가기"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round"><path d="M15 10H4m4-4-4 4 4 4"/></svg>그림 편집기로</button></footer></aside><div id="exam-studio"><div class="exam-loading">시험지 편집기를 준비합니다…</div></div></div>
+    <footer class="exam-footer"><span id="exam-status" role="status" aria-live="polite">준비 중</span></footer></aside><div id="exam-studio"><div class="exam-loading">시험지 편집기를 준비합니다…</div></div></div>
     <input id="exam-hwp-file" type="file" accept=".hwp,.hwpx" hidden>
     <input id="exam-project-file" type="file" accept=".5e,.5exam,.json" hidden>
     <input id="exam-png-file" type="file" accept=".png" hidden>`;
@@ -81,6 +81,12 @@ export function initRhwpExamWorkspace(state, services) {
   });
   const bar=sourceRegion.heading;bar.id='exam-edit-bar';bar.hidden=true;
   bar.querySelector('.exam-edit-badge').id='exam-edit-name';
+  const applySource=document.createElement('button');applySource.type='button';
+  applySource.dataset.sourceApply='';applySource.className='exam-primary';applySource.textContent='시험지에 반영';
+  applySource.addEventListener('click',()=>void run(applyEdit));
+  const returnSource=document.createElement('button');returnSource.type='button';returnSource.textContent='돌아가기';
+  returnSource.addEventListener('click',()=>void run(returnFromEdit));
+  bar.querySelector('.exam-region-actions').append(applySource,returnSource);
   const pictureSettings = new PictureSettings(document.body, {
     onApply:async(layout,context)=>{if(busy)return false;setBusy(true);try{await applyLayout(layout,context);return true;}finally{setBusy(false);}},
     onError:error=>message(error.message,true),
@@ -113,7 +119,7 @@ export function initRhwpExamWorkspace(state, services) {
     nameInput.disabled = value || !!editing;
     panel.querySelectorAll('select').forEach(select => { select.disabled = value || !!editing; });
     [nativeRegion.root,sourceRegion.root,regionInspector,pictureSettings.root].forEach(root=>root.querySelectorAll('button,input,select').forEach(button=>{button.disabled=value;}));
-    document.querySelectorAll('#exam-send,#exam-workspace-open').forEach(button=>{button.disabled=value;});
+    document.querySelectorAll('#exam-send').forEach(button=>{button.disabled=value;});
     if(!value){if(editing)syncSourceControls();if(!pictureSettings.root.hidden)pictureSettings.refresh();}
     updatePlacement(); renderFigures();
   }
@@ -361,6 +367,7 @@ export function initRhwpExamWorkspace(state, services) {
     if (window.fiveEExam) {await window.fiveEExam.returnToSource();return;}
     if (editing) {await applyEdit();return;}
     services.commitActiveText?.();
+    if(!aiRequest && !graph && !state.get().objects.length){await open();return;}
     if (graph && (graph.pageId !== state.get().activePageId || !state.get().objects.some(object=>object.id===graph.planeId && object.type==='coordplane'))) throw new Error('그래프 작업 탭이 바뀌었습니다. 현재 탭에서 한글에 넣기를 다시 눌러주세요.');
     const captured = aiRequest ? await tabs.prepareAi(aiRequest.taskId,aiRequest.scope) : await tabs.capture();
     const pageId = state.get().activePageId, wasOpen = !panel.hidden;
@@ -469,7 +476,14 @@ export function initRhwpExamWorkspace(state, services) {
     const p=new DOMPoint(b.x,b.y).matrixTransform(m);return{x:p.x,y:p.y,w:b.w*m.a,h:b.h*m.d};
   }
   function syncSourceControls(){
-    if(!editing || editing.remote || !panel.hidden){sourceRegion.hide();regionInspector.hidden=true;return;}
+    const ownerPage=editing&&tabs.pageForLink(editing.figure.link);
+    const aiTask=connectedAi?.activeExamTask?.();
+    const aiVisible=!!document.querySelector('#ai-image-panel:not([hidden])');
+    const wrongAi=aiVisible && (!editing?.aiContext || !aiTask || aiTask.scope!==editing.aiContext.scope || aiTask.taskId!==editing.aiContext.taskId);
+    const blocking=[...document.querySelectorAll('dialog[open],.modal-overlay,[role="dialog"]')].some(element=>
+      element!==panel && !element.closest('[data-ai-workflow],#rhwp-exam-workspace')
+      && !element.closest('[hidden],[inert]') && element.getClientRects().length && getComputedStyle(element).visibility!=='hidden');
+    if(!editing || editing.remote || !panel.hidden || ownerPage?.id!==state.get().activePageId || wrongAi || blocking){sourceRegion.hide();regionInspector.hidden=true;return;}
     const render=currentSourceRender();if(!render?.bounds)return;
     const toolbarBottom=document.querySelector('.canvas-toolbar')?.getBoundingClientRect().bottom || 0;
     document.body.style.setProperty('--exam-source-toolbar-bottom',`${toolbarBottom}px`);
@@ -483,6 +497,12 @@ export function initRhwpExamWorkspace(state, services) {
   }
   function scheduleSourcePosition(){if(editing&&!sourcePositionFrame)sourcePositionFrame=requestAnimationFrame(()=>{sourcePositionFrame=0;syncSourceControls();});}
   window.addEventListener('resize',scheduleSourcePosition);
+  // Modal creation and dismissal must immediately suspend the source handles.
+  new MutationObserver(records=>{
+    if(records.some(record=>record.type==='childList'
+      ? [...record.addedNodes,...record.removedNodes].some(node=>node.nodeType===1 && (node.matches('dialog,.modal-overlay,[role="dialog"]') || node.querySelector('dialog,.modal-overlay,[role="dialog"]')))
+      : record.target.matches('dialog,.modal-overlay,[role="dialog"]')))scheduleSourcePosition();
+  }).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['hidden','open','style','class']});
   new ResizeObserver(scheduleSourcePosition).observe(document.querySelector('#canvas'));
   document.addEventListener('scroll',scheduleSourcePosition,true);
   let aiSourceObserver,aiSourceResizeObserver,aiSourcePanel;
@@ -949,7 +969,7 @@ export function initRhwpExamWorkspace(state, services) {
   }
   nativeRegion.root.addEventListener('click',e=>{const b=e.target.closest('[data-exam-action]');if(b&&!b.disabled){nativeRegion.closeMenu();void run(()=>actions[b.dataset.examAction]?.());}});
   const actions = {
-    close:async () => {await flushInline(true);await closeInline();if (window.fiveEExam) return window.fiveEExam.returnToSource(); panel.hidden = true; syncBackground(); document.querySelector('#exam-workspace-open')?.focus(); },
+    close:async () => {await flushInline(true);await closeInline();if (window.fiveEExam) return window.fiveEExam.returnToSource(); panel.hidden = true; syncBackground(); document.querySelector('#exam-send')?.focus(); },
     new:async () => { cancelPlacement();await stableSave();await closeInline(); initializing=true;await bridge.newDocument();initializing=false;documentGeneration=bridge.generation;projectId=crypto.randomUUID();figures = new Map(); nameInput.value = '새 시험지'; changed(); },
     insert:() => startSend(),
     'cancel-placement':() => {cancelPlacement();message('그림 보내기를 취소했습니다.');},
@@ -1043,7 +1063,7 @@ export function initRhwpExamWorkspace(state, services) {
       closeMenus();
       void run(() => actions[action]?.()).then(()=>{
         // The opener becomes focusable after run releases its busy state.
-        if(action==='close' && panel.hidden && !window.fiveEExam)document.querySelector('#exam-workspace-open')?.focus();
+        if(action==='close' && panel.hidden && !window.fiveEExam)document.querySelector('#exam-send')?.focus();
       });
     }
   });
@@ -1094,12 +1114,25 @@ export function initRhwpExamWorkspace(state, services) {
     endEdit();message('시험지로 돌아왔습니다. 수정 내용은 작업 탭에 남아 있습니다.');scheduleSave();
   }
   async function readFile(input, load, maxBytes = EXAM_PROJECT_MAX_BYTES) {
-    const file = input.files[0]; input.value = ''; if (!file) return;
-    await run(async () => {
-      if (file.size > maxBytes) throw new Error(`최대 ${maxBytes / (1024 * 1024)} MiB 파일을 열 수 있습니다.`);
-      const bytes = new Uint8Array(await file.arrayBuffer());
-      await stableSave(); await load(bytes, file.name);
-    });
+    const file = input.files[0]; if (!file) return;
+    try {
+      await run(async () => {
+        if (file.size > maxBytes) throw new Error(`최대 ${maxBytes / (1024 * 1024)} MiB 파일을 열 수 있습니다.`);
+        // Safari can revoke a selected disk file when the picker is cleared.
+        // Retain the selection until all bytes have been copied into memory.
+        let bytes;
+        try { bytes = new Uint8Array(await file.arrayBuffer()); }
+        catch (cause) {
+          // FileReader uses Safari's picker-granted file access directly. Keep
+          // the selected File alive throughout the provider download/read.
+          try {bytes=new Uint8Array(await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(reader.result);reader.onerror=()=>reject(reader.error);reader.onabort=()=>reject(new Error('파일 읽기가 취소되었습니다.'));reader.readAsArrayBuffer(file);}));}
+          catch(error){throw new Error(`“${file.name}”을 읽지 못했습니다. 저장 위치의 파일 읽기가 완료되지 않았습니다. 파일을 다시 선택해 주세요.`,{cause:error});}
+        }
+        await stableSave(); await load(bytes, file.name);
+      });
+    } finally {
+      if (input.files?.[0] === file) input.value = '';
+    }
   }
   panel.querySelector('#exam-project-file').addEventListener('change', event => readFile(event.target, loadProject));
   panel.querySelector('#exam-hwp-file').addEventListener('change', event => readFile(event.target, loadDocument));
@@ -1111,17 +1144,12 @@ export function initRhwpExamWorkspace(state, services) {
   window.addEventListener('beforeunload', event => {
     if (editing || (bridge?.input && savedToken !== token())) { event.preventDefault(); event.returnValue = ''; }
   });
-  const entry = document.createElement('button'); entry.type = 'button'; entry.id = 'exam-workspace-open';
-  entry.className = 'topbar-btn'; entry.textContent = '시험지'; entry.title = '시험지 작업 공간 열기';
-  document.querySelector('.toolbar-document')?.append(entry); entry.addEventListener('click', () => void run(open));
-  const send = document.createElement('button'); send.type = 'button'; send.id = 'exam-send'; send.className = 'topbar-btn'; send.textContent = '보내기'; send.title = '영역을 선택해 시험지에 보내기';
-  entry.before(send); send.addEventListener('click', () => void run(() => startSend()));
+  const send = document.createElement('button'); send.type = 'button'; send.id = 'exam-send'; send.className = 'topbar-btn shell-icon-button';
+  send.setAttribute('aria-label','선택 영역을 시험지에 넣기');send.dataset.shellTip='선택 영역을 시험지에 넣기';
+  send.innerHTML='<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h4l3 3v11H9M13 3v3h3M2.5 10h9M8.5 7l3 3-3 3"/></svg>';
+  document.querySelector('.toolbar-document')?.append(send); send.addEventListener('click', () => void run(() => startSend()));
   window.addEventListener('5e:exam-send-ai', event => void run(() => startSend(event.detail)));
   window.addEventListener('5e:exam-send-graph', event => void run(() => startSend(null,event.detail)));
-  const menu = document.createElement('button'); menu.type = 'button'; menu.className = 'file-menu-item';
-  menu.setAttribute('role', 'menuitem'); menu.textContent = '시험지 작업 공간';
-  document.querySelector('#file-menu-desc')?.before(menu);
-  menu.addEventListener('click', () => { document.querySelector('#file-menu-list').hidden = true; void run(open); });
   async function receiveSource(path) {
     const request = ++incomingRequest;
     const response = await fetch(path, {cache:'no-store'}); if (!response.ok) throw new Error('그림 열기 요청이 만료되었습니다.');

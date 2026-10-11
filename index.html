@@ -41,7 +41,7 @@
   />
 
   <!-- ?v= 캐시버스트: CSS도 버전 범프 시 함께 올려 새 스타일이 즉시 반영되게 함(하드리프레시 불필요) -->
-  <link rel="stylesheet" href="/css/style.css?v=1.7.0-four-session-integration" />
+  <link rel="stylesheet" href="/css/style.css?v=1.7.0-four-session-integration-footer-20261011" />
   <link rel="stylesheet" href="/css/rhwp-exam-workspace.css?v=1.7.0-four-session-integration" />
   <link rel="stylesheet" href="/css/inspector.css?v=1.7.0-four-session-integration" />
   <link rel="stylesheet" href="/css/exam-library.css?v=1.7.0-four-session-integration" />
@@ -122,9 +122,9 @@
           </div>
         </div>
         <button id="sharing-btn" class="topbar-btn shell-icon-button" type="button"
-                aria-label="공유" data-shell-tip="공유" aria-haspopup="dialog">
+                aria-label="AI 작업 링크 공유" data-shell-tip="AI 작업 링크 공유" aria-haspopup="dialog">
           <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-            <path d="M10 12V2.75m-3 3 3-3 3 3M5 8.5H3.75v8h12.5v-8H15"/>
+            <circle cx="4" cy="10" r="2"/><circle cx="15.5" cy="4" r="2"/><circle cx="15.5" cy="16" r="2"/><path d="m5.8 9.05 7.9-4.1M5.8 10.95l7.9 4.1"/>
           </svg>
         </button>
         <!-- 튜토리얼: 실제 화면 위에서 짚어 주는 안내(js/tutorial.js).
@@ -431,6 +431,9 @@
          target="_blank" rel="noopener" title="GNU AGPL v3 라이선스">AGPL-3.0</a>
       <a class="footer-badge" href="https://github.com/seungyeon980808-pixel/5E"
          target="_blank" rel="noopener" title="소스코드 (GitHub)"><span class="footer-code" aria-hidden="true">&lt;/&gt;</span> Source</a>
+      <span class="footer-change-badge" data-change-summary tabindex="0"
+            aria-label="2026.10.12 00:13 KST 반영: 이미지·그래프 작업대 분리, 우클릭 복제, 라이브러리 동작·원본 크롭 개선, 그래프 UI 정리, 시험지 편집 영역 격리·반영 버튼·확대·글꼴, 한글 파일 읽기 오류 안내"
+            title="2026.10.12 00:13 KST · 이미지·그래프 작업대 분리, 우클릭 복제, 라이브러리 동작·원본 크롭 개선, 그래프 UI 정리, 시험지 편집 영역 격리·반영 버튼·확대·글꼴, 한글 파일 읽기 오류 안내">10.12 00:13 · 작업대·편집 개선</span>
     </span>
     <span class="app-footer-credit app-footer-copyright">Copyright © 2026 <strong>박승연</strong> | SMOE</span>
   </footer>
@@ -505,6 +508,7 @@
               <button type="button" class="is-on" data-ai-comment-tool="pan" aria-pressed="true" title="그림을 이동합니다. 코멘트는 생성하지 않습니다">이동</button>
               <button type="button" data-ai-comment-tool="point" aria-pressed="false" title="그림의 한 위치를 지정하고 코멘트를 작성합니다">점 코멘트</button>
               <button type="button" data-ai-comment-tool="area" aria-pressed="false" title="영역을 둘러싸고 코멘트를 작성합니다">수정 박스</button>
+            <button type="button" class="ai-comment-visibility" data-ai-comment-visibility aria-pressed="true" title="이미지 위의 코멘트 표시를 켜거나 끕니다">코멘트 표시</button>
             </div>
           </header>
           <div class="ai-comparison-grid">
@@ -577,7 +581,6 @@
           <nav class="ai-side-tabs" aria-label="오른쪽 패널">
             <button type="button" class="is-on" data-ai-side-tab="comments" aria-pressed="true">변환 설정 <span data-ai-comments-count hidden>0</span></button>
             <button type="button" data-ai-side-tab="chat" aria-pressed="false">Codex 대화</button>
-            <button type="button" class="ai-comment-visibility" data-ai-comment-visibility aria-pressed="true" title="이미지 위의 코멘트 표시를 켜거나 끕니다">코멘트 표시</button>
           </nav>
           <section class="ai-compact-settings" data-ai-compact-settings aria-label="변환 설정">
 
@@ -841,7 +844,7 @@
             <div class="ai-conversation-actions">
               <button type="button" data-ai-interrupt title="현재 진행 중인 AI 요청을 취소합니다" hidden>작업 취소</button>
             </div>
-            <div class="ai-output-actions"><button type="button" data-ai-save-selected disabled>PNG 저장</button><button type="button" data-ai-insert-selected disabled>캔버스에서 편집</button></div>
+            <div class="ai-output-actions"><button type="button" data-ai-save-selected disabled>PNG 저장</button><button type="button" data-ai-insert-selected disabled>캔버스 삽입</button></div>
           </footer>
         </section>
       </div>

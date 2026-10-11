@@ -21,6 +21,27 @@ h.withServer(async origin=>{
    },stateUrl);
    await h.crop(page);await h.place(page);const initial=(await h.pictures(page))[0];
    await h.originalEdit(page);
+   const ownerPage=await page.evaluate(async url=>(await import(url)).state.get().activePageId,stateUrl);
+   await page.evaluate(async url=>{const {state}=await import(url);const {addPage}=await import('/js/pages.js?v=1.7.0-four-session-integration');addPage(state);},stateUrl);
+   await page.locator('#exam-source-region').waitFor({state:'hidden'});
+   assert.equal(await page.locator('#exam-edit-bar').isVisible(),false,'a different page cannot display the owner figure region');
+   await page.evaluate(async ({url,ownerPage})=>{const {state}=await import(url);const {switchPage}=await import('/js/pages.js?v=1.7.0-four-session-integration');switchPage(state,ownerPage);},{url:stateUrl,ownerPage});
+   await page.locator('#exam-source-region').waitFor({state:'visible'});
+   await page.evaluate(()=>window.dispatchEvent(new Event('5e:lite-ai-open')));
+   await page.locator('#ai-image-panel').waitFor({state:'visible'});
+   await page.locator('#exam-source-region').waitFor({state:'hidden'});
+   assert.equal(await page.locator('#exam-edit-bar').isVisible(),false,'a canvas figure region cannot cover an unrelated AI workspace');
+   await page.locator('#ai-image-panel [data-ai-close]').click();
+   await page.locator('#ai-image-panel').waitFor({state:'hidden'});
+   await page.locator('#exam-source-region').waitFor({state:'visible'});
+   await page.evaluate(async url=>{const {openLabelerTextEditor}=await import(url);openLabelerTextEditor('navigation-label');},textUrl);
+   // A full dialog must cover the source controls instead of sharing their layer.
+   await page.evaluate(()=>{const dialog=document.createElement('dialog');dialog.id='region-occlusion-check';dialog.textContent='편집 창';document.body.append(dialog);dialog.showModal();});
+   await page.locator('#exam-source-region').waitFor({state:'hidden'});
+   assert.equal(await page.locator('#exam-edit-bar').isVisible(),false,'source controls do not protrude through dialogs');
+   await page.evaluate(()=>{document.querySelector('#region-occlusion-check').remove();document.activeElement?.blur();});
+   await page.locator('#exam-source-region').waitFor({state:'visible'});
+   assert.equal(await page.locator('[data-source-apply]').textContent(),'시험지에 반영');
    assert.equal(await page.locator('[data-edit-apply],[data-edit-cancel]').count(),0,'duplicate source actions are removed');
    const draftLabel=async text=>{
     await page.evaluate(async url=>{const {openLabelerTextEditor}=await import(url);openLabelerTextEditor('navigation-label');},textUrl);
@@ -32,7 +53,7 @@ h.withServer(async origin=>{
    };
    await draftLabel('돌아갈 때 보관한 라벨');
    // Trigger without blur: navigation itself must commit pending text.
-   await page.evaluate(()=>document.querySelector('#exam-workspace-open').click());await h.idle(page);
+   await page.evaluate(()=>document.querySelector('#exam-edit-bar .exam-region-actions button:last-child').click());await h.idle(page);
    await page.evaluate(()=>{window.dispatchEvent(new Event('resize'));document.dispatchEvent(new Event('scroll'));});
    await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
    for(const selector of ['#exam-source-region','#exam-edit-bar','#exam-region-inspector'])assert.equal(await page.locator(selector).isVisible(),false,selector+' is cleaned up and stays hidden');
@@ -44,7 +65,7 @@ h.withServer(async origin=>{
    // Hold the real PNG export to exercise the asynchronous transition boundary.
    await page.evaluate(()=>{window.examExportEntered=Promise.withResolvers();window.savedToBlob=HTMLCanvasElement.prototype.toBlob;HTMLCanvasElement.prototype.toBlob=function(callback,...args){const canvas=this;window.resumeExamExport=()=>window.savedToBlob.call(canvas,callback,...args);HTMLCanvasElement.prototype.toBlob=window.savedToBlob;window.examExportEntered.resolve();};document.querySelector('#exam-send').click();});
    await page.evaluate(()=>window.examExportEntered.promise);
-   for(const selector of ['#exam-send','#exam-workspace-open'])assert.equal(await page.locator(selector).isDisabled(),true,'navigation is locked during replacement');
+   for(const selector of ['#exam-send','[data-source-apply]'])assert.equal(await page.locator(selector).isDisabled(),true,'navigation is locked during replacement');
    await page.evaluate(()=>window.resumeExamExport());await h.idle(page);
    const applied=(await h.pictures(page))[0];assert.notEqual(applied.figure.id,initial.figure.id);
    assert.equal(applied.figure.source.pages[0].objects[0].text,'보내기로 확정한 라벨','send commits the live text editor before capture');
@@ -55,6 +76,7 @@ h.withServer(async origin=>{
    const alert=page.getByRole('dialog',{name:'시험지 보내기'});await alert.waitFor({state:'visible'});
    assert.match(await alert.textContent(),/그림을 내보내지 못했습니다/);
    await alert.getByRole('button',{name:'확인',exact:true}).click();await h.idle(page);
+   await page.locator('#exam-source-region').waitFor({state:'visible'});
    assert.equal(await page.locator('#exam-source-region').isVisible(),true,'failed replacement keeps the source recoverable');
    assert.equal((await h.pictures(page))[0].figure.id,applied.figure.id,'failed export preserves the document');
    // Wait for a real passive autosave, rather than an explicit save action.

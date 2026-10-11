@@ -515,7 +515,7 @@ export async function acknowledgeActiveTaskClearCancellation({ tab, activeTaskTa
   return { acknowledged: outcome?.ok === true };
 }
 
-function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, navigationChanged, workspaceEmpty, exportCollection, clearCollection, selectCollection, launchSelected, selectedTaskCount, cancelWorkspaceJob, resumeAfterLogin, materializeCandidate }) {
+function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, switchWorkflow, navigationChanged, workspaceEmpty, exportCollection, clearCollection, selectCollection, launchSelected, selectedTaskCount, cancelWorkspaceJob, resumeAfterLogin, materializeCandidate }) {
   if (!panel) return;
   const lifecycle = new AbortController();
   const disposalCallbacks = [];
@@ -560,6 +560,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   });
   const readMarkPolicy = () => normalizeMarkPolicy({arrows:markArrows?.value,trendLines:markTrends?.value,leaders:markLeaders?.value});
   const restoreMarkPolicy = value => {const p=normalizeMarkPolicy({...value,arrows:value?.arrows === 'remove' ? 'remove' : 'keep'});if(markArrows)markArrows.value=p.arrows;if(markTrends)markTrends.value=p.trendLines;if(markLeaders)markLeaders.value=p.leaders;compactSettings?.sync();};
+  markLeaders?.addEventListener('change',()=>{const tab=taskTabs.get(activeTaskTabId);if(tab)tab.markPolicyChosen=true;});
   const previews = panel.querySelector("[data-ai-previews]");
   const renderEmptyResult = (empty) => {
     if (!empty) return;
@@ -2379,21 +2380,23 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     if (conversionKind === 'graph') {
       if (groups) groups.hidden = true;
       if (scoped) scoped.hidden = true;
-      if (save) { save.disabled = busy || !item?.graphResult; save.textContent = 'SVG 저장'; }
+      if (save) save.hidden = true;
       if (outputNote) {
-        outputNote.hidden = !item?.graphResult;
+        outputNote.hidden = true;
         outputNote.textContent = item?.graphResult ? [...summarizeAnalyticGraph(item.graphResult.plan).lines,'더블클릭 또는 세부 편집으로 축·곡선·표기를 조정할 수 있습니다.'].join('\n') : '';
         outputNote.style.whiteSpace = 'pre-line';
       }
     } else {
       if (scoped) scoped.hidden = false;
-      if (save) save.textContent = 'PNG 저장';
+      if (save) {save.hidden = false;save.textContent = 'PNG 저장';}
     }
+    const details=panel.querySelector('[data-ai-output-details]');
+    if(details) details.hidden=conversionKind !== 'graph' || !item?.graphResult;
     if (insert) {
       insert.disabled = busy || !item || !isAdoptableImageLabelCandidate(item) || Boolean(item.card?.querySelector('.ai-canvas-output')?.disabled);
       const labelCount = item?.labelPlan?.labels?.length || 0;
       const labelReview = item?.labelPlan?.reviewRequired === true;
-      insert.textContent = '캔버스에서 편집';
+      insert.textContent = '캔버스 삽입';
       insert.hidden = canEditLabelReviewDraft(item);
       insert.title = labelCount
         ? `이미지와 편집 가능한 자동 라벨 ${labelCount}개를 캔버스에 넣습니다.${labelReview ? ' 라벨 위치와 제외 항목을 확인해 주세요.' : ''}`
@@ -2465,7 +2468,9 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     const graph = conversionKind === 'graph';
     const fixedModel=panel.querySelector('[data-ai-fixed-model]'); if(fixedModel)fixedModel.hidden=!graph;
     panel.dataset.aiWorkflow = conversionKind;
-    panel.querySelectorAll('[data-ai-workflow]').forEach(button => { button.setAttribute('aria-pressed', String(button.dataset.aiWorkflow === conversionKind)); button.disabled = busy; });
+    const repeat=panel.querySelector('[data-ai-comments-apply]');
+    if(repeat) repeat.hidden=graph;
+    panel.querySelectorAll('[data-ai-workflow]').forEach(button => { button.setAttribute('aria-pressed', String(button.dataset.aiWorkflow === conversionKind)); button.disabled = panel.dataset.aiSharingMode === 'view' || (busy && !switchWorkflow); });
     if (graph) {
       sendButton.textContent = generatedImages.length ? '그래프 다시 복원' : '그래프 복원';
       sendButton.title = '원본과 수정 요청으로 편집 가능한 그래프를 복원합니다.';
@@ -2490,6 +2495,10 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   }
 
   function switchConversionKind(kind) {
+    if (switchWorkflow && ['image', 'graph'].includes(kind) && kind !== conversionKind && panel.dataset.aiSharingMode !== 'view') {
+      void switchWorkflow(kind).catch(error => setStatus(error.message, 'error'));
+      return;
+    }
     if (!['image', 'graph'].includes(kind) || kind === conversionKind || busy || graphSubmitting || panel.dataset.aiSharingMode === 'view') return;
     if (attachments.length || generatedImages.length || conversationMessages.length) {
       const sources = attachments.map(snapshotImageItem);
@@ -3272,32 +3281,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
         warning.textContent = "연결 확인 필요";
         copy.append(warning);
       }
-      const closeTab = document.createElement("button");
-      closeTab.type = 'button';
-      closeTab.className = 'ai-task-delete';
-      closeTab.textContent = "×";
-      closeTab.title = "작업 삭제";
-      closeTab.setAttribute('aria-label', `${tab.title} 작업 삭제`);
-      closeTab.onclick = async (event) => {
-        event.stopPropagation();
-        if (panel.dataset.aiSharingMode === 'view') return;
-        if (busy) { setStatus('변환이 끝나거나 취소된 뒤 삭제해 주세요.', 'warn'); return; }
-        if (!await scopedDialog('작업 삭제', `‘${tab.title}’ 작업을 삭제할까요? 원본 파일은 삭제하지 않습니다.`, {accept: '작업 삭제', defaultAccept: true})) return;
-        if (busy || !taskTabs.has(tab.id)) return;
-        captureActiveTaskTab();
-        taskTabs.delete(tab.id); taskViews.delete(tab.id); taskRows.delete(tab.id); requestStates.forget(tab.id);
-        if (!taskTabs.size) {
-          restoreTaskTab(null);
-          await taskPersistence.checkpoint();
-          workspaceEmpty();
-          return;
-        }
-        if (activeTaskTabId === tab.id) restoreTaskTab(taskTabs.keys().next().value);
-        else renderTaskTabs();
-        persistTasks();
-      };
       selectTab.append(copy);
-      button.append(selectTab, closeTab);
+      button.append(selectTab);
       selectTab.onclick = () => {
         if (busy || tab.id === activeTaskTabId) return;
         captureActiveTaskTab();
@@ -3336,7 +3321,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   function restoreTaskTab(tabId) {
     closeComparison();
     outputProcessingRevision += 1;
-    const tab = tabId === null ? { id: null } : taskTabs.get(tabId);
+    const tab = tabId === null ? { id: null, conversionKind } : taskTabs.get(tabId);
     if (!tab) return;
     conversionKind = tab.conversionKind === 'graph' ? 'graph' : 'image';
     abortAutomaticSeparation('task-changed');
@@ -3536,6 +3521,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       return [];
     }
     if (!attachments.length && !generatedImages.length && !conversationMessages.length && !input.value.trim()) {
+      const blank=taskTabs.get(activeTaskTabId);
+      if(!blank?.markPolicyChosen)restoreMarkPolicy({...readMarkPolicy(),leaders:'remove'});
       conversionKind=kind;const empty=taskTabs.get(activeTaskTabId);if(empty)empty.conversionKind=kind;syncGraphWorkbenchUi();
     }
     const taskActions = {
@@ -5517,12 +5504,12 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     return outcome;
   };
   panel.querySelector("[data-ai-interrupt]").onclick = () => batchRun ? cancelWorkspaceJob(batchRun.context) : interruptCurrentTask();
-  async function clearTasks(confirm) {
+  async function clearTasks(confirm, ids = null) {
     if (panel.dataset.aiSharingMode === 'view') return {confirmed:false,removedIds:[],retainedIds:[...taskTabs.keys()]};
     await workspaceReady;
     captureActiveTaskTab();
     const result = await clearTaskWorkspaces({
-      tasks: [...taskTabs.values()],
+      tasks: [...taskTabs.values()].filter(tab=>!ids || ids.includes(tab.id)),
       confirm,
       cancel: async tab => {
         const result = await acknowledgeActiveTaskClearCancellation({ tab, activeTaskTabId, interrupt: interruptCurrentTask });
@@ -6139,20 +6126,20 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     if (isCloseActiveTaskShortcut(event) && activeTaskTabId) {
       event.preventDefault();
       event.stopImmediatePropagation();
-      tabList?.querySelector(`[data-tab-id="${CSS.escape(activeTaskTabId)}"] > .ai-task-delete`)?.click();
+      void deleteTask(activeTaskTabId);
       return;
     }
     if (event.key === 'Delete' && event.target?.closest?.('.ai-task-tab.is-on')) {
       event.preventDefault();
       event.stopImmediatePropagation();
-      event.target.closest('.ai-task-tab')?.querySelector('.ai-task-delete')?.click();
+      void deleteTask(event.target.closest('.ai-task-tab')?.dataset.tabId);
       return;
     }
     if (event.key === "Escape") close();
   }, { signal: lifecycle.signal });
   disposalCallbacks.push(desktop?.onAiCloseTaskShortcut?.(() => {
     if (!panel.hidden && !panel.querySelector('dialog[open]') && activeTaskTabId) {
-      tabList?.querySelector(`[data-tab-id="${CSS.escape(activeTaskTabId)}"] > .ai-task-delete`)?.click();
+      void deleteTask(activeTaskTabId);
     }
   }));
   modal?.addEventListener("mousedown", (event) => event.stopPropagation());
@@ -6188,6 +6175,11 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
   selectedOutputNote.setAttribute('aria-live', 'polite');
   selectedOutputNote.hidden = true;
   panel.querySelector('.ai-output-actions')?.append(selectedOutputNote);
+  const outputDetails = document.createElement('button');
+  outputDetails.type='button';outputDetails.dataset.aiOutputDetails='';
+  outputDetails.textContent='복원 상세';outputDetails.hidden=true;
+  outputDetails.addEventListener('click',()=>void scopedDialog('그래프 복원 상세',selectedOutputNote.textContent,{accept:'닫기'}));
+  panel.querySelector('.ai-output-actions')?.append(outputDetails);
   const graphEditButton = document.createElement('button');
   graphEditButton.type='button';graphEditButton.dataset.aiGraphEdit='';graphEditButton.textContent='그래프 세부 편집';graphEditButton.className='ai-graph-edit-entry';graphEditButton.hidden=true;
   graphEditButton.addEventListener('click',()=>{
@@ -6205,13 +6197,13 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
       }).catch(error=>setStatus(error.message,'error'));
     } else item?.card?.querySelector('[data-ai-save-candidate]')?.click();
   });
-  const exportCount = mode => {
+  const exportCount = (mode,kind = null) => {
     captureActiveTaskTab();
-    return taskExportSelection([...taskTabs.values()], mode).length;
+    return taskExportSelection([...taskTabs.values()].filter(tab=>!kind || tab.conversionKind===kind), mode).length;
   };
-  const exportResults = async mode => {
+  const exportResults = async (mode,kind = null) => {
     captureActiveTaskTab();
-    const selected = taskExportSelection([...taskTabs.values()], mode);
+    const selected = taskExportSelection([...taskTabs.values()].filter(tab=>!kind || tab.conversionKind===kind), mode);
     return Promise.all(selected.map(async record => {
       const owner = batchOwner(record.taskId);
       const originalData = record.item.data, capturedItem = structuredClone(record.item);
@@ -6554,7 +6546,41 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     finally {run.reject(new DOMException('작업이 취소되었습니다.', 'AbortError'));if(batchRun===run)batchRun=null;}
   }
 
+  async function deleteTask(id) {
+    const tab = taskTabs.get(id);
+    if (!tab || panel.dataset.aiSharingMode === 'view') return;
+    const running = () => tab.workState === 'busy' || (id === activeTaskTabId && (busy || preflightRun));
+    if (running()) { setStatus('변환이 끝나거나 취소된 뒤 삭제해 주세요.', 'warn'); return; }
+    if (!await scopedDialog('작업 삭제', `‘${tab.title}’ 작업을 삭제할까요? 원본 파일은 삭제하지 않습니다.`, {accept: '작업 삭제', defaultAccept: true})) return;
+    if (taskTabs.get(id) !== tab || running()) return;
+    captureActiveTaskTab();
+    taskTabs.delete(id); taskViews.delete(id); taskRows.delete(id); requestStates.forget(id);
+    if (!taskTabs.size) {
+      restoreTaskTab(null); await taskPersistence.checkpoint(); workspaceEmpty(); return;
+    }
+    if (activeTaskTabId === id) restoreTaskTab(taskTabs.keys().next().value);
+    else renderTaskTabs();
+    await taskPersistence.checkpoint();
+  }
+
   return {
+    deleteTask,
+    taskImage: id => {
+      if (id === activeTaskTabId) captureActiveTaskTab();
+      const tab = taskTabs.get(id);
+      const image = tab?.generated?.find(item => item.id === tab.selectedCandidateId) || tab?.generated?.at(-1) || tab?.attachments?.[0];
+      return image ? snapshotImageItem(image) : null;
+    },
+    workflowTask: kind => [...taskTabs.values()].reverse().find(tab => tab.conversionKind === kind)?.id || null,
+    taskWorkflow: id => taskTabs.get(id)?.conversionKind || 'image',
+    setEmptyWorkflow: (kind, { discardEmptyTask = false } = {}) => {
+      if (busy || preflightRun || input.value.trim() || !['image','graph'].includes(kind)
+        || [...taskTabs.values()].some(tab=>tab.attachments?.length || tab.generated?.length || tab.conversationMessages?.length || tab.input?.trim())) return false;
+      if (discardEmptyTask) {
+        taskTabs.clear();taskViews.clear();taskRows.clear();restoreTaskTab(null);
+      } else for (const tab of taskTabs.values()) tab.conversionKind=kind;
+      conversionKind = kind; syncLiteModeUi(); syncGraphWorkbenchUi(); renderTaskTabs(); persistTasks(); return true;
+    },
     batchOwner, ownsBatchOwner: owner => taskTabs.has(owner.taskId)&&sameBatchOwner(batchOwner(owner.taskId),owner), captureBatchTask,preflightBatch,runBatch:runWorkspaceBatch,commitBatch,interruptBatch,
     open, close, attachReference, clearTasks, ready: workspaceReady,
     refreshTaskSelection: () => commentController?.refreshControls(),

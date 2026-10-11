@@ -48,7 +48,8 @@ async function setup(browser) {
   page.on('pageerror', error => errors.push(String(error)));
   await page.goto(base + '?mode=pro', { waitUntil: 'networkidle' });
   await page.locator('#ai-image-install-open').click();
-      await page.locator('#ai-image-panel [data-ai-workflow="graph"]').click();
+  await page.locator('#ai-image-panel [data-ai-workflow="graph"]').click();
+  await page.locator('#ai-image-panel[data-ai-workflow="graph"]').waitFor();
   const png = await page.evaluate(() => window.__stability.source.split(',')[1]);
   await page.locator('#ai-image-panel [data-ai-source-file]').setInputFiles({ name: 'stability.png', mimeType: 'image/png', buffer: Buffer.from(png, 'base64') });
   await page.locator('#ai-image-panel [data-ai-attachment-list] img').first().waitFor({ state: 'attached' });
@@ -68,21 +69,91 @@ const tabs = page => page.evaluate(async () => (await (new (await import('/js/ai
 (async () => {
   const results = [];
   for (const [name, engine] of [['chromium', chromium], ['webkit', webkit]]) {
-    const browser = await engine.launch(); const { context, page, errors } = await setup(browser);
+    if (process.env.GRAPH_STABILITY_ENGINE && process.env.GRAPH_STABILITY_ENGINE !== name) continue;
+    const browser = await engine.launch();
+    let context;
     try {
+      const session = await setup(browser);
+      context = session.context;
+      const { page, errors } = session;
+      assert.equal(await page.locator(ui+'.ai-task-delete').count(),0,'Task delete X is removed');
+      await page.evaluate(()=>{
+        window.__copiedPng=null;
+        Object.defineProperty(navigator,'clipboard',{configurable:true,value:{write:async items=>{const png=await items[0].getType('image/png');window.__copiedPng={type:png.type,size:png.size};}}});
+      });
+      const source = await page.evaluate(()=>window.__stability.source);
+      const menu=page.locator('.ai-task-context-menu');
+      await page.locator(ui+'.ai-task-tab-select').first().click({button:'right'});
+      await menu.getByRole('menuitem',{name:'클립보드 복사',exact:true}).click();
+      await page.waitForGraphSignal(()=>window.__copiedPng?.size>0);
+      assert.equal(await page.evaluate(()=>window.__copiedPng.type),'image/png');
+      for (const kind of ['image','graph']) {
+        await page.locator(ui+'[data-ai-workflow="graph"]').click();
+        await page.locator('#ai-image-panel[data-ai-workflow="graph"]').waitFor();
+        await page.locator(ui+'.ai-task-tab-select').first().click({button:'right'});
+        const sourceTaskId=await page.locator(ui+'.ai-task-tab').first().getAttribute('data-tab-id');
+        await menu.getByRole('menuitem',{name:'이미지/그래프 변환으로 보내기',exact:true}).click();
+        await menu.getByRole('menuitem',{name:kind==='image'?'이미지 변환으로 보내기':'그래프 복원으로 보내기',exact:true}).click();
+        await page.locator(`#ai-image-panel[data-ai-workflow="${kind}"]`).waitFor();
+        await page.waitForGraphSignal(({kind,sourceTaskId})=>document.querySelectorAll('#ai-image-panel .ai-task-tab:not(.ai-task-add)').length===(kind==='image'?1:2)
+          && document.querySelector('#ai-image-panel .ai-task-tab.is-on')?.dataset.tabId!==sourceTaskId,{kind,sourceTaskId});
+        if(kind==='image')assert.equal(await page.locator(ui+'[data-ai-mark-leaders]').inputValue(),'remove','a new image task defaults to removing guidelines');
+        try {
+          await page.locator(ui+'.ai-task-tab.is-on .ai-task-tab-select').click({button:'right'});
+        } catch (error) {
+          await page.screenshot({path:path.join(output,name+'-'+kind+'-menu-failure.png')});
+          fs.writeFileSync(path.join(output,name+'-'+kind+'-menu-failure.json'),JSON.stringify(await page.evaluate(()=>({
+            panels:[...document.querySelectorAll('.modal-overlay[data-ai-workflow]')].map(panel=>({id:panel.id,hidden:panel.hidden,inert:panel.inert,data:panel.dataset,rows:[...panel.querySelectorAll('.ai-task-tab')].map(row=>({id:row.dataset.tabId,rect:row.getBoundingClientRect().toJSON(),button:[...row.querySelectorAll('button')].map(button=>({rect:button.getBoundingClientRect().toJSON(),style:['display','visibility','width','height','position','flex','content-visibility'].map(key=>[key,getComputedStyle(button).getPropertyValue(key)]),ancestors:[...function*(node){while(node){yield {tag:node.tagName,hidden:node.hidden,inert:node.inert,display:getComputedStyle(node).display,visibility:getComputedStyle(node).visibility};node=node.parentElement;}}(button)]}))}))})),
+          })),null,2));
+          throw error;
+        }
+        await menu.getByRole('menuitem',{name:'작업대에서 삭제',exact:true}).click();
+        await page.getByRole('dialog',{name:'작업 삭제',exact:true}).getByRole('button',{name:'작업 삭제',exact:true}).click();
+        await page.waitForGraphSignal(({kind,sourceTaskId})=>document.querySelectorAll('#ai-image-panel .ai-task-tab:not(.ai-task-add)').length===(kind==='image'?0:1)
+          && (kind==='image' || document.querySelector('#ai-image-panel .ai-task-tab.is-on')?.dataset.tabId===sourceTaskId),{kind,sourceTaskId});
+        assert.equal((await tabs(page))[0].attachments[0].data,source,'Deleting the explicit copy retains the source owner');
+      }
+      await page.locator(ui+'.ai-task-tab-select').first().click({button:'right'});
+      const duplicatedSourceId=await page.locator(ui+'.ai-task-tab').first().getAttribute('data-tab-id');
+      await menu.getByRole('menuitem',{name:'현 작업대에 추가',exact:true}).click();
+      await page.waitForGraphSignal(sourceId=>document.querySelectorAll('#ai-image-panel .ai-task-tab:not(.ai-task-add)').length===2
+        && document.querySelector('#ai-image-panel .ai-task-tab.is-on')?.dataset.tabId!==sourceId,duplicatedSourceId);
+      await page.locator(ui+'.ai-task-tab.is-on .ai-task-tab-select').click({button:'right'});
+      await menu.getByRole('menuitem',{name:'작업대에서 삭제',exact:true}).click();
+      await page.getByRole('dialog',{name:'작업 삭제',exact:true}).getByRole('button',{name:'작업 삭제',exact:true}).click();
+      await page.waitForGraphSignal(sourceId=>document.querySelectorAll('#ai-image-panel .ai-task-tab:not(.ai-task-add)').length===1
+        && document.querySelector('#ai-image-panel .ai-task-tab.is-on')?.dataset.tabId===sourceId,duplicatedSourceId);
       await page.evaluate(() => { window.__stability.hold = true; });
       await page.observeGraphSignal(() => window.__stability.requests.length === 1, undefined, undefined, async () => { await page.locator(ui + '[data-ai-send]').dblclick(); });
       await page.locator(ui + '[data-ai-workflow="image"]').click({ force: true });
-      assert.equal(await page.locator(ui + '[data-ai-workflow="graph"]').getAttribute('aria-pressed'), 'true');
-      await page.evaluate(() => window.__stability.release(0)); await complete(page, 1);
+      await page.locator('#ai-image-panel[data-ai-workflow="image"]').waitFor();
+      assert.equal(await page.locator('.modal-overlay[data-ai-workflow="graph"][data-ai-busy="true"]').count(),1,'Original graph continues in its own controller');
+      assert.equal(await page.locator(ui + '.ai-task-tab:not(.ai-task-add)').count(),0,'Image workflow excludes the graph source');
+      await page.evaluate(() => window.__stability.release(0));
+      await page.waitForGraphSignal(() => document.querySelector('.modal-overlay[data-ai-workflow="graph"]')?.dataset.aiBusy==='false');
+      await page.locator(ui + '[data-ai-workflow="graph"]').click();
+      await page.locator('#ai-image-panel[data-ai-workflow="graph"]').waitFor();await complete(page, 1);
+      assert.equal(await page.locator(ui+'[data-ai-comments-apply]').isVisible(),false,'graph restore uses one action');
+      assert.equal(await page.locator(ui+'[data-ai-save-selected]').isVisible(),false,'SVG save is absent from graph actions');
+      assert.equal(await page.locator(ui+'[data-ai-selected-output-note]').count(),1);
+      assert.equal(await page.locator(ui+'[data-ai-selected-output-note]').isVisible(),false,'restoration diagnostics are shown on request');
+      await page.locator(ui+'[data-ai-output-details]').click();
+      await page.getByRole('dialog',{name:'그래프 복원 상세',exact:true}).getByRole('button',{name:'닫기',exact:true}).click();
+      assert.equal(await page.locator(ui+'[data-ai-insert-selected]').textContent(),'캔버스 삽입');
+      assert.equal(await page.locator(ui+'.ai-annotation-toolbar [data-ai-comment-visibility]').count(),1,'comment visibility is adjacent to its creation tools');
+      for (const kind of ['image','graph','image','graph']) {
+        await page.locator(ui+`[data-ai-workflow="${kind}"]`).click();
+        await page.locator(`#ai-image-panel[data-ai-workflow="${kind}"]`).waitFor();
+        assert.equal(await page.locator(ui+'.ai-task-tab:not(.ai-task-add)').count(),kind==='image'?0:1,'Navigation preserves separated task lists');
+      }
       const baseline = (await tabs(page)).flatMap(t => t.generated || []).find(g => g.graphResult);
       await page.evaluate(() => { window.__stability.hold = false; window.__stability.error = '429 Too Many Requests'; });
-      await page.locator(ui + '[data-ai-comments-apply]').click(); await idle(page);
+      await page.locator(ui + '[data-ai-send]').click(); await idle(page);
       assert.match(await page.locator(ui + '[data-ai-status]').textContent(), /한도/);
       assert.equal(await count(page), 1); assert.equal(await page.evaluate(() => window.__stability.requests.length), 2);
       assert.deepEqual((await tabs(page)).flatMap(t => t.generated || []).find(g => g.id === baseline.id)?.graphResult, baseline.graphResult);
       await page.evaluate(() => { window.__stability.error = null; window.__stability.hold = true; });
-      await page.observeGraphSignal(() => window.__stability.requests.length === 3, undefined, undefined, async () => { await page.locator(ui + '[data-ai-comments-apply]').click(); });
+      await page.observeGraphSignal(() => window.__stability.requests.length === 3, undefined, undefined, async () => { await page.locator(ui + '[data-ai-send]').click(); });
       await page.evaluate(() => window.__stability.disconnect()); await idle(page);
       assert.match(await page.locator(ui + '[data-ai-status]').textContent(), /연결/);
       await page.evaluate(() => window.__stability.release(2));
@@ -93,6 +164,7 @@ const tabs = page => page.evaluate(async () => (await (new (await import('/js/ai
       const beforeEditTask = (await tabs(page)).find(t => t.generated?.some(c => c.id === baseline.id));
       assert.equal(beforeEditTask.generated.length, 1);
       await page.locator(ui + '.ai-previews img').first().dblclick();
+      assert.equal(await page.locator('#gm-send-exam').count(),0,'graph editing has no duplicate exam entry');
       await page.locator('#gm-labelx').fill('보존된 편집');
       await page.evaluate(() => document.fonts.ready);
       await page.evaluate(() => {
@@ -147,10 +219,26 @@ const tabs = page => page.evaluate(async () => (await (new (await import('/js/ai
       await page.locator(ui + '[data-ai-insert-selected]').click();
       const objects = await page.evaluate(async () => (await import('/js/state.js?v=1.7.0-four-session-integration')).state.get().objects);
       assert.equal(objects.find(o => o.type === 'coordplane').labelX, '보존된 편집'); assert(!objects.some(o => o.type === 'image'));
+      await page.locator('#ai-image-install-open').click();
+      await page.locator('#ai-image-panel').waitFor({state:'visible'});
+      const graphTaskCount=await page.locator(ui+'.ai-task-tab:not(.ai-task-add)').count();
+      await page.locator(ui+'.ai-task-tab.is-on .ai-task-tab-select').click({button:'right'});
+      await menu.getByRole('menuitem',{name:'이미지/그래프 변환으로 보내기',exact:true}).click();
+      await menu.getByRole('menuitem',{name:'이미지 변환으로 보내기',exact:true}).click();
+      await page.locator('#ai-image-panel[data-ai-workflow="image"]').waitFor();
+      await page.waitForGraphSignal(()=>document.querySelectorAll('#ai-image-panel .ai-task-tab:not(.ai-task-add)').length===1);
+      await page.locator(ui+'[data-ai-tab-select-all]').click();
+      assert.equal(await page.locator(ui+'.ai-task-tab.is-batch-selected').count(),1,'select all is scoped to image tasks');
+      await page.locator(ui+'[data-ai-tab-clear]').click();
+      await page.getByRole('dialog',{name:'전체 작업 삭제',exact:true}).getByRole('button',{name:'1개 삭제',exact:true}).click();
+      await page.waitForGraphSignal(()=>document.querySelectorAll('#ai-image-panel .ai-task-tab:not(.ai-task-add)').length===0);
+      await page.locator(ui+'[data-ai-workflow="graph"]').click();
+      await page.locator('#ai-image-panel[data-ai-workflow="graph"]').waitFor();
+      assert.equal(await page.locator(ui+'.ai-task-tab:not(.ai-task-add)').count(),graphTaskCount,'clearing image tasks preserves graph tasks');
       assert.deepEqual(errors, []);
       await page.screenshot({ path: path.join(output, name + '-stability.png') });
-      results.push({ engine: name, duplicateSubmit: 'pass', runningModeChange: 'blocked', rateLimitPreservesPrior: 'pass', disconnectLateResponse: 'blocked', reloadNoResend: 'pass', pendingEditOwnerAndReload: 'pass', modelCalls: 0 });
-    } finally { await context.close(); await browser.close(); }
+      results.push({ engine: name, duplicateSubmit: 'pass', runningModeChange: 'background retained', repeatedNavigationNoDuplicates:'pass',contextMenuCopySendDelete:'pass', rateLimitPreservesPrior: 'pass', disconnectLateResponse: 'blocked', reloadNoResend: 'pass', pendingEditOwnerAndReload: 'pass', modelCalls: 0 });
+    } catch(error){if(context){const p=context.pages()[0];await p.screenshot({path:path.join(output,name+'-round2-failure.png')});fs.writeFileSync(path.join(output,name+'-round2-failure.json'),JSON.stringify(await p.evaluate(()=>[...document.querySelectorAll('.modal-overlay[data-ai-workflow]')].map(p=>({id:p.id,hidden:p.hidden,workflow:p.dataset.aiWorkflow,inert:p.inert,style:p.getAttribute('style'),rect:p.getBoundingClientRect().toJSON(),inner:p.querySelector('.modal-ai')?.getAttribute('style'),rows:[...p.querySelectorAll('.ai-task-tab')].map(r=>({id:r.dataset.tabId,style:getComputedStyle(r).display,rect:r.getBoundingClientRect().toJSON()}))}))),null,2));}throw error;} finally { await context?.close(); await browser.close(); }
   }
   fs.writeFileSync(path.join(output, 'report.json'), JSON.stringify(results, null, 2)); console.log(JSON.stringify(results));
 })().catch(error => { console.error(error); process.exitCode = 1; });
