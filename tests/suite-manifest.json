@@ -1277,6 +1277,13 @@
         "RHWP-PINNED-SDK-WASM-PROVENANCE",
         "ROOT-OCR-RESOURCE-CLOSURE"
       ]
+    },
+    {
+      "path": "tests/test-rhwp-exam-startup-recovery-browser.cjs",
+      "findingIds": [
+        "RHWP-STARTUP-RECOVERY-ORDER"
+      ],
+      "reason": "Exercises keyboard recovery before exam startup in isolated Chromium/WebKit profiles for root and preview."
     }
   ],
   "deferred": [

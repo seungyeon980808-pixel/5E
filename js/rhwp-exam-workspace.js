@@ -953,6 +953,10 @@ export function initRhwpExamWorkspace(state, services) {
     message('시험지를 작성하거나, 현재 5E 그림을 넣어보세요.'); renderFigures();
   }
   async function open() {
+    // Startup creates this workspace before autosaveReady is assigned. Yield
+    // once, then let recovery own the modal surface until its choice is made.
+    await Promise.resolve();
+    await services.whenReady?.();
     if(editing && !editing.remote){await returnFromEdit();if(location.protocol==='file:')return;}
     if (location.protocol === 'file:') {
       if (window.fiveEDesktop?.exam?.open) {
