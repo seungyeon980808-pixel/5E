@@ -34,6 +34,26 @@ h.withServer(async origin=>{
    await page.locator('#ai-image-panel [data-ai-close]').click();
    await page.locator('#ai-image-panel').waitFor({state:'hidden'});
    await page.locator('#exam-source-region').waitFor({state:'visible'});
+   // Exercise the full text widget through the same tool and canvas click as
+   // a person. It is a floating editor, not a native dialog or inline label.
+   const canvas=await page.locator('#canvas').boundingBox();
+   const openTextWidget=async()=>{
+    await page.keyboard.press('t');
+    await page.mouse.click(canvas.x+canvas.width*.55,canvas.y+canvas.height*.45);
+    await page.locator('.unified-text-editor').waitFor({state:'visible'});
+    await page.locator('#exam-source-region').waitFor({state:'hidden',timeout:3000});
+    for(const selector of ['#exam-edit-bar','#exam-region-inspector'])assert.equal(await page.locator(selector).isVisible(),false,selector+' is suspended behind the real text widget');
+   };
+   await openTextWidget();
+   await page.locator('.unified-text-editor textarea').fill('취소할 텍스트');
+   await page.locator('.unified-text-editor').getByRole('button',{name:'취소',exact:true}).click();
+   await page.locator('#exam-source-region').waitFor({state:'visible'});
+   assert.equal((await h.drawing(page,stateUrl)).objects.length,1,'canceling the full widget leaves the figure unchanged');
+   await openTextWidget();
+   await page.locator('.unified-text-editor textarea').fill('새 텍스트');
+   await page.locator('.unified-text-editor').getByRole('button',{name:'확인',exact:true}).click();
+   await page.locator('#exam-source-region').waitFor({state:'visible'});
+   assert.equal((await h.drawing(page,stateUrl)).objects.length,2,'confirming the widget preserves both the figure and added text');
    await page.evaluate(async url=>{const {openLabelerTextEditor}=await import(url);openLabelerTextEditor('navigation-label');},textUrl);
    // A full dialog must cover the source controls instead of sharing their layer.
    await page.evaluate(()=>{const dialog=document.createElement('dialog');dialog.id='region-occlusion-check';dialog.textContent='편집 창';document.body.append(dialog);dialog.showModal();});

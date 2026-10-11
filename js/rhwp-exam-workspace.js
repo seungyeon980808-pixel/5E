@@ -475,12 +475,15 @@ export function initRhwpExamWorkspace(state, services) {
     const c=document.querySelector('#canvas'),m=c?.getScreenCTM(),b=currentSourceRender()?.bounds;if(!m||!b)return null;
     const p=new DOMPoint(b.x,b.y).matrixTransform(m);return{x:p.x,y:p.y,w:b.w*m.a,h:b.h*m.d};
   }
+  // Full floating text widgets occlude the source handles just like dialogs.
+  // Keep direct inline label inputs available on the source canvas.
+  const sourceBlockers='dialog,.modal-overlay,[role="dialog"],.unified-text-editor';
   function syncSourceControls(){
     const ownerPage=editing&&tabs.pageForLink(editing.figure.link);
     const aiTask=connectedAi?.activeExamTask?.();
     const aiVisible=!!document.querySelector('#ai-image-panel:not([hidden])');
     const wrongAi=aiVisible && (!editing?.aiContext || !aiTask || aiTask.scope!==editing.aiContext.scope || aiTask.taskId!==editing.aiContext.taskId);
-    const blocking=[...document.querySelectorAll('dialog[open],.modal-overlay,[role="dialog"]')].some(element=>
+    const blocking=[...document.querySelectorAll(sourceBlockers)].some(element=>
       element!==panel && !element.closest('[data-ai-workflow],#rhwp-exam-workspace')
       && !element.closest('[hidden],[inert]') && element.getClientRects().length && getComputedStyle(element).visibility!=='hidden');
     if(!editing || editing.remote || !panel.hidden || ownerPage?.id!==state.get().activePageId || wrongAi || blocking){sourceRegion.hide();regionInspector.hidden=true;return;}
@@ -500,8 +503,8 @@ export function initRhwpExamWorkspace(state, services) {
   // Modal creation and dismissal must immediately suspend the source handles.
   new MutationObserver(records=>{
     if(records.some(record=>record.type==='childList'
-      ? [...record.addedNodes,...record.removedNodes].some(node=>node.nodeType===1 && (node.matches('dialog,.modal-overlay,[role="dialog"]') || node.querySelector('dialog,.modal-overlay,[role="dialog"]')))
-      : record.target.matches('dialog,.modal-overlay,[role="dialog"]')))scheduleSourcePosition();
+      ? [...record.addedNodes,...record.removedNodes].some(node=>node.nodeType===1 && (node.matches(sourceBlockers) || node.querySelector(sourceBlockers)))
+      : record.target.matches(sourceBlockers)))scheduleSourcePosition();
   }).observe(document.body,{childList:true,subtree:true,attributes:true,attributeFilter:['hidden','open','style','class']});
   new ResizeObserver(scheduleSourcePosition).observe(document.querySelector('#canvas'));
   document.addEventListener('scroll',scheduleSourcePosition,true);
