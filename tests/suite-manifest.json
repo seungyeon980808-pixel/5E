@@ -724,7 +724,8 @@
       "path": "tests/test-rhwp-exam-drafts-browser.cjs",
       "findingIds": [
         "RHWP-CUMULATIVE-SOURCE",
-        "RHWP-UNAPPLIED-DRAFT-RESTORE"
+        "RHWP-UNAPPLIED-DRAFT-RESTORE",
+        "NQA-023"
       ]
     },
     {

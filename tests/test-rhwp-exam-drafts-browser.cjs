@@ -14,7 +14,23 @@ h.withServer(async origin=>{fs.mkdirSync(path.resolve(process.env.EVIDENCE_DIR||
  const emptyWait=p.waitForEvent('download');await dialog.getByRole('button',{name:/^(저장|다운로드)$/}).click();const emptyDownload=await emptyWait;
  const empty=await p.evaluate(async bytes=>(await import('/js/fivee-project.js?v=1.7.0-four-session-integration')).parseFiveEProject(new Uint8Array(bytes)),[...fs.readFileSync(await emptyDownload.path())]);
  assert.equal(empty.kind,'exam');assert.equal(empty.figures.length,0);assert.ok(empty.documentBytes.length>0);
- await p.locator('#exam-workspace-open').click();await h.idle(p);
+ await p.locator('#exam-send').click();await h.idle(p);
+ // Use the fresh-image constructor, whose false recognition flag is omitted
+ // until project loading. Insertion and acknowledgment must both be clean.
+ await h.action(p,'close');
+ await p.evaluate(async ({url,src})=>{
+  const {state}=await import(url);const {insertImageFromSrc}=await import('/js/image-paste.js?v=1.7.0-four-session-integration');
+  await insertImageFromSrc(state,src);
+ },{url,src:'data:image/png;base64,'+fixture.toString('base64')});
+ await h.crop(p);await h.place(p);
+ assert.equal(await p.locator('.exam-figure span').isVisible(),false,'a newly inserted image has no unapplied change');
+ await h.originalEdit(p);
+ await p.evaluate(async url=>{const {state}=await import(url);state.update(s=>{s.objects[0].x+=1;});},url);
+ await p.locator('#exam-edit-bar .exam-region-actions button:last-child').click();await h.idle(p);
+ assert.equal(await p.locator('.exam-figure span').isVisible(),true,'an actual source move remains a draft');
+ await h.originalEdit(p);await p.locator('[data-source-apply]').click();await h.idle(p);
+ assert.equal(await p.locator('.exam-figure span').isVisible(),false,'applying the source clears the draft marker');
+ await h.action(p,'new');await h.idle(p);
  await p.evaluate(bytes=>{const d=document.querySelector('#exam-studio iframe').contentWindow.rhwpStudio.plugins.deps,w=d.wasm;d.getInputHandler().executeOperation({kind:'snapshot',operationType:'foreign-picture',operation:()=>{const r=w.insertPicture(0,0,0,'',new Uint8Array(bytes),18000,12000,600,400,'png','외부 그림',null,null);w.setPictureProperties(0,r.paraIdx,r.controlIdx,{treatAsChar:true,rotationAngle:10,cropLeft:1800,cropTop:600});return{sectionIndex:0,paragraphIndex:r.paraIdx,charOffset:0};}});d.eventBus.emit('document-changed');},[...fixture]);
  const before=(await h.pictures(p))[0];assert.equal(before.figure,null);
  await h.originalEdit(p);await p.locator('#exam-edit-bar').waitFor({state:'visible'});
@@ -36,13 +52,13 @@ h.withServer(async origin=>{fs.mkdirSync(path.resolve(process.env.EVIDENCE_DIR||
  await p.mouse.move(move.x+5,(move.y+south.y)/2);await p.mouse.down();await p.mouse.move(move.x+25,(move.y+south.y)/2+15);await p.mouse.up();
  await p.locator('#capture-confirm').click();await h.idle(p);await p.locator('#exam-send').click();await h.recrop(p);
  const updated=(await h.pictures(p))[0];assert.equal(updated.props.width,before.props.width);assert.equal(updated.props.rotationAngle,before.props.rotationAngle);assert.equal(updated.props.cropLeft,0);assert.equal(updated.props.cropTop,0);assert.ok(updated.props.height>0);
- await h.originalEdit(p);await p.locator('#exam-edit-bar').waitFor({state:'visible'});assert.equal((await h.drawing(p,url)).objects[0].x,registered.objects[0].x+7);await p.locator('#exam-workspace-open').click();await h.idle(p);
+ await h.originalEdit(p);await p.locator('#exam-edit-bar').waitFor({state:'visible'});assert.equal((await h.drawing(p,url)).objects[0].x,registered.objects[0].x+7);await p.locator('#exam-edit-bar .exam-region-actions button:last-child').click();await h.idle(p);
  // Restore in fresh storage: the document stays committed and the draft tab survives.
  const fresh=await b.newContext({viewport:{width:1440,height:950}}),q=await fresh.newPage();await h.navigate(q,new URL(surface,origin).href+'?mode=pro&mobile=0&exam=1',{waitUntil:'domcontentloaded'});await h.ready(q);await q.locator('#exam-project-file').setInputFiles(file);await h.idle(q);
  assert.equal((await h.pictures(q))[0].figure.source.pages[0].objects[0].x,registered.objects[0].x);
  assert.match(await q.locator('.exam-figure span').textContent(),/미반영/);
  await h.originalEdit(q);await q.locator('#exam-edit-bar').waitFor({state:'visible'});assert.equal((await h.drawing(q,url)).objects[0].x,registered.objects[0].x+7);
- await q.locator('#exam-workspace-open').click();await h.idle(q);await h.action(q,'new');await h.idle(q);await q.locator('#exam-name').fill('두 번째 시험지');
+ await q.locator('#exam-edit-bar .exam-region-actions button:last-child').click();await h.idle(q);await h.action(q,'new');await h.idle(q);await q.locator('#exam-name').fill('두 번째 시험지');
  const second=q.waitForEvent('download');await h.action(q,'save');await second;await h.idle(q);
  const drafts=await q.evaluate(async()=>{const{listExamDrafts}=await import('/js/rhwp-exam-project.js?v=1.7.0-four-session-integration');return listExamDrafts();});assert.ok(drafts.length>=2);assert.ok(drafts.some(d=>d.projectId===saved.projectId));
  await fresh.close();assert.deepEqual(errors,[]);await ctx.close();console.log(name+(surface?'-preview':'')+': foreign registration, crop adjustment/cancel, draft save/reopen, geometry and separate autosaves passed');

@@ -13,6 +13,10 @@ function sameData(a, b) {
 
 export function createExamDraftChecker(prepareLoadedProject) {
   const canonicalPages = new WeakMap();
+  // Newly pasted/cropped images omit this false flag; the project loader adds
+  // it. Both representations mean the same thing, including before a reload.
+  const imageDefaults = objects => objects.map(object => object.type === 'image'
+    ? {...object,recognized:object.recognized === true} : object);
   return (current, meta, figure) => {
     let committed = canonicalPages.get(figure.source);
     if (!committed) {
@@ -22,7 +26,7 @@ export function createExamDraftChecker(prepareLoadedProject) {
       canonicalPages.set(figure.source, committed);
     }
     return !!(meta?.examDraftRender && !sameData(meta.examDraftRender, figure.render))
-      || !sameData(current.objects, committed.objects)
+      || !sameData(imageDefaults(current.objects), committed.objects)
       || !sameData(current.artboard, committed.artboard);
   };
 }

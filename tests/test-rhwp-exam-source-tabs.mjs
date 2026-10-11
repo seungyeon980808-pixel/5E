@@ -24,6 +24,16 @@ test('native image source defaults do not create a draft and canonical loading i
   assert.equal(check(current,{examDraftRender:crop(-4)},figure),true);
 });
 const aiContext = (value = link) => ({scope:'scope-a',taskId:'task-a',snapshot:{tabs:[{id:'task-a',examLink:value,generated:[]}]}});
+test('fresh image recognition defaults do not mark an applied source dirty', () => {
+  const source={version:'0.17',activePageId:'fresh',pages:[{id:'fresh',name:'그림',objects:[{id:'image',type:'image',src:'data:image/png;base64,eA==',x:0,y:0,w:10,h:10,rotation:0,mode:'edit',opacity:1,aspectLocked:true,exportable:true,locked:false,positionLocked:false,imageSelectionLocked:false,cutouts:[],layerId:1,order:0}],guides:[],layers:[{id:1,name:'기본',visible:true,locked:false}],artboard:{w:100,h:100}}]};
+  const current=structuredClone(source.pages[0]), figure={source,render:crop(-10)}, before=structuredClone(current);
+  const check=createExamDraftChecker(prepareLoadedProject);
+  assert.equal(check(current,{},figure),false,'an omitted false recognition flag is not a drawing edit');
+  assert.deepEqual(current,before,'checking never changes the live image');
+  current.objects[0].recognized=true;assert.equal(check(current,{},figure),true,'actual recognition remains a draft');
+  current.objects[0].recognized=false;assert.equal(check(current,{},figure),false);
+  current.objects[0].x=2;assert.equal(check(current,{},figure),true,'geometry changes remain visible');
+});
 function fixture(ai = {}) {
   const page = {id:'page-a',name:'그림',meta:{examLink:link},objects:[],guides:[],layers:[{id:1}],artboard:{w:100,h:100}};
   const value = {activePageId:page.id,pages:[page],objects:page.objects,guides:page.guides,layers:page.layers,artboard:page.artboard,selectedIds:[],undoStack:[],redoStack:[],groups:[],viewBox:{x:0,y:0,w:100,h:100}};
