@@ -384,6 +384,10 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
       else activate(entry);
       workflowTargets.set(kind,entry);
       await entry.controller.open({reveal:true});
+      if (id && !selectionFor(kind).values().length) {
+        selectionFor(kind).select(ownerFor(entry,id));
+        renderNavigation();
+      }
     });
     workflowNavigation = next;
     return next;
@@ -401,8 +405,7 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
       const target = add(crypto.randomUUID(),false);
       await target.controller.ready;
       await target.controller.open({references:[{dataUrl:image.data,name:image.name,sourceKind:'workbench',source:image.source}],conversionKind:kind,reveal:false});
-      await target.controller.checkpointForClose();saveRegistry();activate(target);
-      workflowTargets.set(kind,target);
+      await target.controller.checkpointForClose();saveRegistry();revealCreatedTask(target,kind);
     },
     duplicate: async ({entry,taskId}) => {
       if(entry.disposed || !entry.controller.ownsTask(taskId) || entry.panel.dataset.aiSharingMode==='view') return;
@@ -412,17 +415,32 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
       try {
         await target.controller.ready;
         await target.controller.open({references:[{dataUrl:image.data,name:image.name,sourceKind:'workbench',source:image.source}],conversionKind:kind,reveal:false});
-        await target.controller.checkpointForClose();saveRegistry();activate(target);workflowTargets.set(kind,target);
+        await target.controller.checkpointForClose();saveRegistry();revealCreatedTask(target,kind);
       } catch(error) {target.tabs=[];disposeEntry(target);throw error;}
     },
-    remove: async ({entry,taskId}) => {
-      if (entry.disposed || !entry.controller.ownsTask(taskId)) return;
-      const owner=ownerFor(entry,taskId);
-      if(batchJobs.some(job=>['running','queued'].includes(job.state)&&ownerKey(job.sourceSnapshot.owner)===ownerKey(owner))) return;
-      activate(entry);await entry.controller.deleteTask(taskId);saveSelection();
-    },
+    remove: ({entry,taskId}) => removeTask(entry,taskId),
     onError: batchError,
   });
+  function revealCreatedTask(entry,kind) {
+    const taskId=entry.controller.activeTask();
+    if(taskId)selectionFor(kind).select(ownerFor(entry,taskId));
+    activate(entry);workflowTargets.set(kind,entry);
+    entry.panel.querySelector('[data-ai-tab-list] .ai-task-tab.is-on')?.scrollIntoView({block:'nearest'});
+  }
+  async function removeTask(entry,taskId) {
+    if(entry.disposed || !entry.controller.ownsTask(taskId))return;
+    const kind=taskKind(entry,taskId),selection=selectionFor(kind),owner=ownerFor(entry,taskId);
+    if(batchJobs.some(job=>['running','queued'].includes(job.state)&&ownerKey(job.sourceSnapshot.owner)===ownerKey(owner)))return;
+    const wasSelected=selection.values().some(selected=>ownerKey(selected)===ownerKey(owner));
+    activate(entry);await entry.controller.deleteTask(taskId);
+    if(entry.controller.ownsTask(taskId))return;
+    renderNavigation();
+    const nextId=active?.controller.activeTask();
+    if(wasSelected && !selection.values().length && nextId && taskKind(active,nextId)===kind) {
+      selection.select(ownerFor(active,nextId));renderNavigation();
+    }
+    saveSelection();
+  }
   function disposeEntry(entry) {
     if (!entry || entries.length <= 1 || entry.tabs.length || entry.panel.dataset.aiBusy === 'true') return false;
     // Retain the visible empty workspace so deleting its last task cannot
@@ -575,7 +593,7 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
           if (event.key==='ContextMenu' || (event.shiftKey&&event.key==='F10')) openTaskMenu(event);
           if (event.key==='Delete' && event.target===select) {event.preventDefault();event.stopPropagation();void taskMenuDelete();}
         };
-        const taskMenuDelete=async()=>{if(!job || !['running','queued'].includes(job.state)){activate(entry);await entry.controller.deleteTask(taskId);}};
+        const taskMenuDelete=async()=>{if(!job || !['running','queued'].includes(job.state))await removeTask(entry,taskId);};
         let jobAction = row.querySelector('.ai-task-job-action');
         if (job) {
           if (!jobAction) {

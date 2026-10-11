@@ -3537,7 +3537,9 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
           imageKindSelect.value = sourceImageKind(reference);
           imageKindSelect.dispatchEvent(new Event('change', { bubbles: true }));
         }
-        if (freshLibraryTask) panel.aiWorkbench?.restoreViewState?.({ layout: "side-by-side", tracking: true });
+        if (attachments.length === 1 && generatedImages.length === 0) {
+          panel.aiWorkbench?.restoreViewState?.({ layout: "side-by-side", ...(freshLibraryTask ? {tracking:true} : {}) });
+        }
       },
       applyPrompt: nextPrompt => { if (nextPrompt) input.value = nextPrompt; },
       captureTask: captureActiveTaskTab,

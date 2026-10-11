@@ -1333,6 +1333,11 @@
         "POINT-ONLY-GROUP-ABSOLUTE-ROTATION"
       ],
       "reason": "Exercises lines and closed curves with absolute rotation, repeat input, keyboard rotation, undo/redo and serialized objects in root/preview Chromium/WebKit."
+    },
+    {
+      "path": "tests/test-ai-created-task-selection-browser.cjs",
+      "findingIds": ["AI-CREATED-TASK-SELECTION-AND-SOURCE"],
+      "reason": "Exercises explicit duplicate/send ownership, source visibility, workflow isolation, deletion fallback and reload with real local PNG input in root/preview Chromium/WebKit; no AI requests."
     }
   ],
   "deferred": [
