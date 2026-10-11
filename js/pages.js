@@ -320,6 +320,10 @@ function _onDocKey(e) { if (e.key === "Escape") closeContextMenu(); }
 
 function openContextMenu(state, id, tab, x) {
   closeContextMenu();
+  // Switching to an inactive page rebuilds the tabs before this handler runs.
+  // Measure the live replacement; the former tab reports an empty rectangle.
+  tab = [...(_tabsEl?.children || [])].find(candidate => candidate.dataset.id === id);
+  if (!tab) return;
   const s = state.get();
   const idx = (s.pages || []).findIndex((p) => p.id === id);
   const count = (s.pages || []).length;

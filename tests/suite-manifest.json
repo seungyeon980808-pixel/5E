@@ -1291,6 +1291,13 @@
         "LIBRARY-CROP-PENDING-CONFIRMATION"
       ],
       "reason": "Exercises immediate keyboard confirmation, duplicate keys and cancellation during delayed exact crop preparation in Chromium/WebKit for root and preview."
+    },
+    {
+      "path": "tests/test-page-context-anchor-browser.cjs",
+      "findingIds": [
+        "PAGE-CONTEXT-LIVE-TAB-ANCHOR"
+      ],
+      "reason": "Exercises inactive-tab right-click positioning, keyboard reopening, scaled menus and page duplication/deletion/undo for root and preview in Chromium/WebKit."
     }
   ],
   "deferred": [
