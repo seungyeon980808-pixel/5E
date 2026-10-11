@@ -517,6 +517,12 @@
       "findingIds": [
         "INTEGRATION-RHWP-LATE-OWNER"
       ]
+    },
+    {
+      "path": "tests/test-hwp-palette.mjs",
+      "findingIds": [
+        "HWPPALETTE-RHWP-PORT"
+      ]
     }
   ],
   "browser": [
@@ -1276,6 +1282,18 @@
         "FOUR-SESSION-LOADED-BYTE-CLOSURE",
         "RHWP-PINNED-SDK-WASM-PROVENANCE",
         "ROOT-OCR-RESOURCE-CLOSURE"
+      ]
+    },
+    {
+      "path": "tests/test-hwp-palette-browser.cjs",
+      "findingIds": [
+        "HWPPALETTE-RHWP-PORT"
+      ]
+    },
+    {
+      "path": "tests/test-hwp-palette-features-browser.cjs",
+      "findingIds": [
+        "HWPPALETTE-RHWP-PORT"
       ]
     }
   ],

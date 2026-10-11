@@ -1,2 +1,5 @@
 # Preserve whitespace in the upstream font license.
 memo/FONT-LICENSE.txt whitespace=-blank-at-eol
+
+# Preserve the official vendored OpenCV bytes and recorded source hash.
+vendor/opencv/opencv.js -whitespace

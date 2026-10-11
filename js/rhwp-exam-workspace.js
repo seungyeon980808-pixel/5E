@@ -1,3 +1,4 @@
+import { initPaletteWorkspace } from './hwp-palette/ui.js?v=1.7.0-hwppalette-rhwp';
 import { parseFiveEProject } from './fivee-project.js?v=1.7.0-four-session-integration';
 
 import { PictureSettings, ExamRegionSurface } from './rhwp-exam-picture-controls.js?v=1.7.0-four-session-integration';
@@ -73,6 +74,15 @@ export function initRhwpExamWorkspace(state, services) {
   if (window.fiveEExam) {
     panel.querySelector('[data-exam-action="open-png"]').hidden = true;
   }
+  const palette = initPaletteWorkspace(panel, {
+    getBridge:() => bridge,run,notify:(...args)=>message(...args),download,
+    withBusy:async task => { if (busy) throw new Error('진행 중인 작업이 끝난 뒤 다시 실행해주세요.');setBusy(true);try{return await task();}finally{setBusy(false);} },
+    replaceDocument:async(bytes,name,anchor)=>{if(palette.contentEditing)throw new Error('조각 편집을 저장하거나 돌아간 뒤 새 양식을 열어주세요.');await stableSave();await loadDocument(bytes,`${safeName(name)}.hwpx`);if(anchor&&!anchor.hf)bridge.input.cursor.moveTo(anchor);},
+    beginContentEdit:async(bytes,name)=>{if(palette.contentEditing)throw new Error('지금 편집하는 조각을 먼저 저장하거나 돌아가주세요.');const previous=new Uint8Array(await (await stableSave()).arrayBuffer());await loadDocument(bytes,`${safeName(name)}.hwpx`);return async()=>{await stableSave();await loadProject(previous);};},
+  });
+  // A small public capability surface also makes standalone port regressions
+  // exercise the same instances the user operates.
+  window.fiveEPalette = palette;
   const nativeRegion = new ExamRegionSurface(document.body, {
     onSettings:anchor => openPictureSettings(anchor),onUndo:redo=>run(()=>{if(redo)bridge.input.performRedo();else bridge.input.performUndo();renderFigures();}), onError:error=>message(error.message,true),
   });
@@ -885,6 +895,7 @@ export function initRhwpExamWorkspace(state, services) {
   }
 
   async function importFile(file) {
+    if(palette.contentEditing)throw new Error('지금 편집하는 조각을 먼저 저장하거나 돌아가주세요.');
     if (file.size>EXAM_PROJECT_MAX_BYTES) throw new Error('최대 128 MiB 파일을 열 수 있습니다.');
     const bytes=new Uint8Array(await file.arrayBuffer());
     await stableSave();
@@ -943,6 +954,7 @@ export function initRhwpExamWorkspace(state, services) {
     bridge.watchView(()=>{if(!inlineSession&&!editing)syncPictureControls();});
     bridge.deps.eventBus.on('picture-object-selection-changed',scheduleFigures);
     await bridge.newDocument();documentGeneration=bridge.generation;
+    await palette.attach();
     restoredDraft = await readExamDraft().catch(() => null);
     initializing = false;
     savedToken = token();
@@ -1060,6 +1072,10 @@ export function initRhwpExamWorkspace(state, services) {
     const button = event.target.closest('[data-exam-action]');
     if (button && !button.disabled) {
       const action=button.dataset.examAction;
+      if(palette.contentEditing&&['close','new','open-hwp','open-project','demo','restore'].includes(action)){
+        message('조각 편집을 저장하거나 돌아간 뒤 실행해주세요.',true);
+        return;
+      }
       closeMenus();
       void run(() => actions[action]?.()).then(()=>{
         // The opener becomes focusable after run releases its busy state.
