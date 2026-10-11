@@ -1305,6 +1305,13 @@
         "GRAPH-CONTENT-EXPORT-PAINTED-BOUNDS"
       ],
       "reason": "Compares automatic graph export bounds to independently scanned raster pixels for axis labels, rotation, offsets and filled areas; verifies hidden layers, explicit crop and immutable state in root/preview Chromium/WebKit."
+    },
+    {
+      "path": "tests/test-image-clipboard-order-browser.cjs",
+      "findingIds": [
+        "SAFARI-CLIPBOARD-STRING-BEFORE-IMAGE-FILE"
+      ],
+      "reason": "Replays native Safari same-MIME string/file clipboard order through canvas paste, undo/redo, objectify isolation and the AI reader without system fallback or live AI in root/preview Chromium/WebKit."
     }
   ],
   "deferred": [

@@ -197,9 +197,9 @@ export function isAiPasteTargetCurrent(target, { taskId, task, sources = [], rev
 }
 
 export async function pastedImageBlob(event, clipboard = globalThis.navigator?.clipboard) {
-  const eventItem = Array.from(event?.clipboardData?.items || [])
-    .find(item => String(item.type || '').startsWith('image/'));
-  const eventFile = eventItem?.getAsFile?.();
+  const eventFile = Array.from(event?.clipboardData?.items || [])
+    .filter(item => String(item.type || '').startsWith('image/'))
+    .map(item => item.getAsFile?.()).find(Boolean);
   if (eventFile) return eventFile;
   if (typeof clipboard?.read !== 'function') return null;
   const clipboardItems = await clipboard.read();

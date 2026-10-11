@@ -426,7 +426,9 @@ export function initImagePaste(state, svg) {
   document.addEventListener("paste", (event) => {
     if (isEditingFieldTarget(event.target) || blocksCanvasShortcut(event)) return;
     const items = Array.from(event.clipboardData?.items || []);
-    const file = items.find(item => ACCEPTED_TYPES.has(item.type))?.getAsFile();
+    // Safari may put a string item before the file with the same image MIME.
+    const file = items.filter(item => ACCEPTED_TYPES.has(item.type))
+      .map(item => item.getAsFile()).find(Boolean);
     if (!file) return;
     event.preventDefault();
     const initial = state.get();

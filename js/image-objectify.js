@@ -1111,9 +1111,9 @@ export function initImageObjectify(state) {
       event.stopPropagation();
       return;
     }
-    const imageItem = Array.from(event.clipboardData?.items || []).find((item) => item.type.startsWith("image/"));
-    if (!imageItem) return;
-    const imageFile = imageItem.getAsFile();
+    const imageFile = Array.from(event.clipboardData?.items || [])
+      .filter(item => item.type.startsWith("image/"))
+      .map(item => item.getAsFile()).find(Boolean);
     if (!imageFile) return;
     event.preventDefault();
     event.stopPropagation();
