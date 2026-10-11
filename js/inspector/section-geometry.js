@@ -57,8 +57,20 @@ export function buildGeometrySection(ctx) {
         if (o.locked || (o.positionLocked && (prop === "x" || prop === "y"))) return;
         const next = negate ? -val : val;
         if (o[prop] === next) return;
+        const imageAspect = o.type === "image" && o.aspectLocked !== false;
+        const assetAspect = o.type === "svgAsset" && o.lockAspect !== false;
+        const otherProp = prop === "w" ? "h" : prop === "h" ? "w" : null;
+        let otherNext = null;
+        if (otherProp && (imageAspect || assetAspect) && o.w > 0 && o.h > 0) {
+          otherNext = o[otherProp] * next / o[prop];
+          if (!Number.isFinite(otherNext) || !(otherNext > 0)) return;
+        }
         if (o.positionLocked && prop === "w") o.x -= (next - o.w) / 2;
         if (o.positionLocked && prop === "h") o.y -= (next - o.h) / 2;
+        if (otherNext != null) {
+          if (o.positionLocked) o[otherProp === "w" ? "x" : "y"] -= (otherNext - o[otherProp]) / 2;
+          o[otherProp] = otherNext;
+        }
         s2.undoStack.push(snap);
         s2.redoStack = [];
         o[prop] = next;

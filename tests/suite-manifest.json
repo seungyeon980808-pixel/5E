@@ -1312,6 +1312,13 @@
         "SAFARI-CLIPBOARD-STRING-BEFORE-IMAGE-FILE"
       ],
       "reason": "Replays native Safari same-MIME string/file clipboard order through canvas paste, undo/redo, objectify isolation and the AI reader without system fallback or live AI in root/preview Chromium/WebKit."
+    },
+    {
+      "path": "tests/test-inspector-image-aspect-browser.cjs",
+      "findingIds": [
+        "INSPECTOR-IMAGE-NUMERIC-ASPECT-LOCK"
+      ],
+      "reason": "Exercises width/height input with image/SVG aspect locks, free resizing, locked centers, undo/redo, invalid sizes and page isolation in root/preview Chromium/WebKit."
     }
   ],
   "deferred": [
