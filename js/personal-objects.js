@@ -204,8 +204,11 @@ function askNameCategory(existingCategories, done) {
 /* ---------- 저장 동작 ---------- */
 function saveCurrentSelection() {
   const s = _state.get();
-  const ids = s.selectedIds || [];
-  const objs = ids.map((id) => s.objects.find((o) => o.id === id)).filter(Boolean);
+  const ids = new Set(s.selectedIds || []);
+  // Graph editing selects its plane. Preserve the same attached geometry as
+  // clipboard copy, including regions, rather than saving an empty set of axes.
+  const planes = new Set(s.objects.filter(o => ids.has(o.id) && o.type === 'coordplane').map(o => o.id));
+  const objs = s.objects.filter(o => ids.has(o.id) || planes.has(o.planeId));
   if (!objs.length) {
     showAlert("저장할 오브젝트를 먼저 캔버스에서 선택하세요.", { title: "오브젝트 저장" });
     return;

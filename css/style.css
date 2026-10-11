@@ -1072,6 +1072,7 @@ body { zoom: var(--ui-zoom, 1); }
   flex-direction: column;
   gap: 7px;
 }
+.modal-field[hidden] { display: none; }
 
 .modal-label {
   font-size: 12px;

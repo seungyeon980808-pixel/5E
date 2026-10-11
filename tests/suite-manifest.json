@@ -1358,6 +1358,11 @@
     {
       "path": "tests/test-graph-partial-domain-browser.cjs",
       "findingIds": ["NQA-020", "GRAPH-PARTIAL-REAL-DOMAIN"]
+    },
+    {
+      "path": "tests/test-personal-graph-save-browser.cjs",
+      "findingIds": ["NQA-021", "NQA-022", "PERSONAL-GRAPH-BUNDLE"],
+      "reason": "Real graph editor save with plane-only selection, new-category visibility, durable library reload, linked graph reuse, shade, undo/redo and editing in root/preview Chromium/WebKit."
     }
   ],
   "deferred": [
