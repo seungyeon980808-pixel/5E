@@ -1284,6 +1284,13 @@
         "RHWP-STARTUP-RECOVERY-ORDER"
       ],
       "reason": "Exercises keyboard recovery before exam startup in isolated Chromium/WebKit profiles for root and preview."
+    },
+    {
+      "path": "tests/test-library-crop-confirm-browser.cjs",
+      "findingIds": [
+        "LIBRARY-CROP-PENDING-CONFIRMATION"
+      ],
+      "reason": "Exercises immediate keyboard confirmation, duplicate keys and cancellation during delayed exact crop preparation in Chromium/WebKit for root and preview."
     }
   ],
   "deferred": [
