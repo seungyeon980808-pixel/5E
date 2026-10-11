@@ -51,6 +51,21 @@ async function openInline(page, index = 0) {
   }
 }
 
+async function returnToExistingExam(page) {
+  if (await page.locator('#exam-edit-bar').isVisible()) {
+    await page.locator('#exam-edit-bar').getByRole('button', { name: '돌아가기', exact: true }).click();
+  } else {
+    // The separate exam-open button was removed. Use the current send entry,
+    // then cancel placement so the existing document receives no new picture.
+    const count = (await h.pictures(page)).length;
+    await h.crop(page);
+    await page.locator('.exam-placement:not([hidden])').waitFor();
+    await h.action(page, 'cancel-placement');
+    assert.equal((await h.pictures(page)).length, count);
+  }
+  await h.idle(page);
+}
+
 // Use the actual SVG matrix, including its placement over the iframe picture.
 async function svgPoint(svg, fx, fy) {
   return svg.evaluate((node, { fx, fy }) => {
@@ -216,6 +231,11 @@ async function scenario(browser, origin, surface, name) {
   const stateUrl = '/js/state.js?v=1.7.0-four-session-integration';
   const projectUrl = '/js/project-io.js?v=1.7.0-four-session-integration';
   try {
+    const legacy = await freshPage(browser, origin, surface, errors, contexts);
+    await h.action(legacy, 'demo'); await h.idle(legacy); await openInline(legacy);
+    assert.doesNotMatch(await legacy.locator('.exam-figure').first().textContent(), /미반영/, 'loader defaults do not look like unapplied edits');
+    await button(legacy, 'apply').click(); await root(legacy).waitFor({ state: 'hidden' }); await h.idle(legacy);
+    assert.doesNotMatch(await legacy.locator('.exam-figure').first().textContent(), /미반영/, 'unchanged Apply has no false draft indicator');
     const page = await freshPage(browser, origin, surface, errors, contexts);
     await h.action(page, 'close');
     await page.evaluate(async ({ stateUrl, projectUrl, fixture }) => {
@@ -259,7 +279,7 @@ async function scenario(browser, origin, surface, name) {
     const unrelated = await h.drawing(page, stateUrl);
     const draftBackground = background((await linkedDrawing(page, stateUrl, first.figure.link)).objects);
     assert.notDeepEqual(draftBackground, committedBackground, 'the background draft differs from the committed source');
-    await page.locator('#exam-workspace-open').click(); await h.idle(page);
+    await returnToExistingExam(page);
     await openInline(page);
     assert.equal(await canvas(page).locator('g[data-annotation-id]').count(), 1);
     const originalBoxes = await annotationBoxes(page);
@@ -351,7 +371,7 @@ async function scenario(browser, origin, surface, name) {
     await reopened.locator('#exam-edit-bar').waitFor({ state: 'visible' });
     assert.equal((await h.drawing(reopened, stateUrl)).activePageId, savedTab.id, 'Original activates the actual source tab');
     assert.deepEqual(labels((await h.drawing(reopened, stateUrl)).objects), draftLabels);
-    await reopened.locator('#exam-workspace-open').click(); await h.idle(reopened); await openInline(reopened);
+    await returnToExistingExam(reopened); await openInline(reopened);
 
     await button(reopened, 'apply').click(); await root(reopened).waitFor({ state: 'hidden' }); await h.idle(reopened);
     assert.equal(await reopened.locator('.capture-overlay').isVisible(), false, 'Apply uses the fixed crop without recapture');
@@ -365,6 +385,7 @@ async function scenario(browser, origin, surface, name) {
     assert.deepEqual(labels(sourceObjects(applied.figure)), draftLabels, 'committed PNG carries edited labeler objects');
     assert.deepEqual(background(sourceObjects(applied.figure)), committedBackground, 'annotation Apply does not publish the background draft');
     assert.deepEqual(background((await linkedDrawing(reopened, stateUrl, first.figure.link)).objects), draftBackground, 'annotation Apply preserves the live background draft');
+    assert.match(await reopened.locator('.exam-figure').first().textContent(), /미반영/, 'the genuine background draft remains indicated after annotation Apply');
     assert.deepEqual(pageObjects(await h.drawing(reopened, stateUrl), unrelated.activePageId), unrelated.objects);
     const appliedPixels = await bitmap(reopened, true);
     const { pixels: ignoredAppliedPixels, ...appliedBitmap } = appliedPixels;

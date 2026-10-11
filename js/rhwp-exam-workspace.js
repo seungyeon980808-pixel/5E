@@ -6,7 +6,7 @@ import { RhwpExamBridge } from './rhwp-exam-bridge.js?v=1.7.0-four-session-integ
 import { buildExamProject, parseExamProject, readExamDraft, writeExamDraft, listExamDrafts, EXAM_PROJECT_MAX_BYTES } from './rhwp-exam-project.js?v=1.7.0-four-session-integration';
 import { embedEditablePng, readEditablePng, validateFigureRender, EDITABLE_PNG_MAX_BYTES } from './editable-png.js?v=1.7.0-four-session-integration';
 import { normalizeExamFigure, forkExamFigure, validateExamLink, validateExamContext, renameExamFigure } from './rhwp-exam-links.js?v=1.7.0-four-session-integration';
-import { createExamSourceTabs } from './rhwp-exam-source-tabs.js?v=1.7.0-four-session-integration';
+import { createExamSourceTabs, createExamDraftChecker } from './rhwp-exam-source-tabs.js?v=1.7.0-four-session-integration';
 import { annotationsFor, getAnnotationPage, mergeAnnotationPatch, validateAnnotationPatch } from './rhwp-exam-annotations.js?v=1.7.0-four-session-integration';
 import { ExamInlineEditor, chooseInlineCrop } from './rhwp-exam-inline-editor.js?v=1.7.0-four-session-integration';
 import { getContentBounds } from './svg-export.js?v=1.7.0-four-session-integration';
@@ -23,6 +23,7 @@ export function initRhwpExamWorkspace(state, services) {
   let resolveAi;
   const aiReady = new Promise(resolve => {resolveAi = resolve;});
   const tabs = createExamSourceTabs(state,{...services,getAiPanel:() => connectedAi});
+  const drawingHasDraft = createExamDraftChecker(prepareLoadedProject);
   let latestWorkspace;
   let inlineSession, inlineQueue = Promise.resolve(), inlineFailure;
   const inlineRecoveries=new Map();
@@ -230,11 +231,10 @@ export function initRhwpExamWorkspace(state, services) {
     const page=window.fiveEExam ? latestWorkspace?.drawing.pages.find(p=>p.meta?.examLink?.tabId===figure.link.tabId && p.meta.examLink.assetId===figure.link.assetId) : tabs.pageForLink(figure.link); if (!page) return false;
     const value=state.get();
     const current=window.fiveEExam || page.id!==value.activePageId ? page : {objects:value.objects,artboard:value.artboard};
-    const committed=figure.source.pages[0];
     const ai=figure.context?.ai;
     const draft=ai?latestWorkspace?.ai?.workspaces.flatMap(w=>w.tabs).find(t=>t.id===ai.taskId && t.examLink?.tabId===figure.link.tabId):null;
     const fields=t=>t?{input:t.input,generated:t.generated,attachments:t.attachments,selectedCandidateId:t.selectedCandidateId,conversationMessages:t.conversationMessages}:null;
-    return !!(page.meta?.examDraftRender && JSON.stringify(page.meta.examDraftRender)!==JSON.stringify(figure.render)) || JSON.stringify(current.objects)!==JSON.stringify(committed.objects) || JSON.stringify(current.artboard)!==JSON.stringify(committed.artboard) || !!(draft && JSON.stringify(fields(draft))!==JSON.stringify(fields(ai.snapshot.tabs[0])));
+    return drawingHasDraft(current,page.meta,figure) || !!(draft && JSON.stringify(fields(draft))!==JSON.stringify(fields(ai.snapshot.tabs[0])));
   }
   async function captureWorkspace() {
     if (window.fiveEExam?.snapshot) {const workspace=await window.fiveEExam.snapshot();return {...workspace,...(inlineRecoveries.size?{annotationDrafts:clone([...inlineRecoveries.values()])}:{})};}

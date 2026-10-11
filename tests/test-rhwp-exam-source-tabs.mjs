@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {createExamSourceTabs} from '../js/rhwp-exam-source-tabs.js?v=1.7.0-four-session-integration';
+import {createExamSourceTabs,createExamDraftChecker} from '../js/rhwp-exam-source-tabs.js?v=1.7.0-four-session-integration';
+import {prepareLoadedProject} from '../js/project-io.js?v=1.7.0-four-session-integration';
 import {annotationsFor,mergeAnnotationPatch} from '../js/rhwp-exam-annotations.js?v=1.7.0-four-session-integration';
 import {savePageRuntime,restorePageRuntime} from '../js/page-history.js?v=1.7.0-four-session-integration';
 import {createStore} from '../js/store.js?v=1.7.0-four-session-integration';
@@ -8,6 +9,20 @@ import {createRequire} from 'node:module';
 const {mixedCandidate,assertCandidateUnion}=createRequire(import.meta.url)('./fixtures/candidate-union.cjs');
 
 const link = {tabId:'tab-a',assetId:'asset-a'};
+
+test('native image source defaults do not create a draft and canonical loading is cached', () => {
+  const source={version:'0.17',activePageId:'native',pages:[{id:'native',name:'그림',objects:[{id:'image',type:'image',src:'data:image/png;base64,eA==',x:0,y:0,w:10,h:10,rotation:0,layerId:1,order:0,locked:false}],guides:[],layers:[{id:1,name:'기본',visible:true,locked:false}],artboard:{w:100,h:100}}]};
+  const figure={source,render:crop(-10)}, before=structuredClone(source), current=prepareLoadedProject(source).active;
+  let calls=0;const check=createExamDraftChecker(value=>{calls++;return prepareLoadedProject(value);});
+  assert.notDeepEqual(current.objects,source.pages[0].objects,'the real loader adds omitted defaults');
+  assert.equal(check(current,{},figure),false);
+  assert.equal(check({...current,artboard:{h:100,w:100}},{examDraftRender:structuredClone(figure.render)},figure),false);
+  assert.equal(calls,1);assert.deepEqual(source,before);
+  current.objects[0].opacity=.5;assert.equal(check(current,{},figure),true);
+  current.objects[0].opacity=1;current.objects[0].x=2;assert.equal(check(current,{},figure),true);
+  current.objects[0].x=0;assert.equal(check({...current,artboard:{w:90,h:100}},{},figure),true);
+  assert.equal(check(current,{examDraftRender:crop(-4)},figure),true);
+});
 const aiContext = (value = link) => ({scope:'scope-a',taskId:'task-a',snapshot:{tabs:[{id:'task-a',examLink:value,generated:[]}]}});
 function fixture(ai = {}) {
   const page = {id:'page-a',name:'그림',meta:{examLink:link},objects:[],guides:[],layers:[{id:1}],artboard:{w:100,h:100}};

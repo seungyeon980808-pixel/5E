@@ -11,6 +11,22 @@ function sameData(a, b) {
   return keys.length === other.length && keys.every(key => Object.hasOwn(b,key) && sameData(a[key],b[key]));
 }
 
+export function createExamDraftChecker(prepareLoadedProject) {
+  const canonicalPages = new WeakMap();
+  return (current, meta, figure) => {
+    let committed = canonicalPages.get(figure.source);
+    if (!committed) {
+      // Older embedded sources omit defaults added when opening a drawing tab.
+      // Compare the same loaded representation without changing either source.
+      committed = prepareLoadedProject(copyExamData(figure.source)).active;
+      canonicalPages.set(figure.source, committed);
+    }
+    return !!(meta?.examDraftRender && !sameData(meta.examDraftRender, figure.render))
+      || !sameData(current.objects, committed.objects)
+      || !sameData(current.artboard, committed.artboard);
+  };
+}
+
 export function createExamSourceTabs(state, services) {
   const ai = () => services.getAiPanel?.();
   const pageForLink = link => state.get().pages.find(page => page.meta?.examLink?.tabId === link.tabId && page.meta.examLink.assetId === link.assetId);
