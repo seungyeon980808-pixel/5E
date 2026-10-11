@@ -1884,9 +1884,12 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     await renderSources(isCurrent);
   }
 
+  const hasOpenDrawer = () =>
+    window.matchMedia("(max-width: 1099px)").matches && root.classList.contains("preview-open")
+    || window.matchMedia("(max-width: 767px)").matches && root.classList.contains("folders-open");
   function closeDrawers() {
     root.classList.remove("folders-open", "preview-open");
-    if (window.matchMedia("(max-width: 720px)").matches) setMobileFoldersOpen(false);
+    if (window.matchMedia("(max-width: 767px)").matches) setMobileFoldersOpen(false);
   }
   function closeExpandedReader() {
     root.classList.remove("is-reader-expanded");
@@ -3143,7 +3146,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       else if (cancelPlacementChoice) cancelPlacementChoice();
       else if (!cropDialog.hidden) closeCrop();
       else if (cropTrayExpanded) collapseCropTray();
-      else if (root.classList.contains("folders-open") || root.classList.contains("preview-open")) closeDrawers();
+      else if (hasOpenDrawer()) closeDrawers();
       else close({ keyboard: true });
       return;
     }
@@ -3217,7 +3220,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     lastInteractionWasKeyboard = true;
     cancelSpacePress();
     if (cropTrayExpanded) collapseCropTray();
-    else if (root.classList.contains("folders-open") || root.classList.contains("preview-open")) closeDrawers();
+    else if (hasOpenDrawer()) closeDrawers();
     else close({ keyboard: true });
   };
   registerEscapeLayer(overlay.querySelector("[data-unilib-crop-tray]"), collapseCropTray);

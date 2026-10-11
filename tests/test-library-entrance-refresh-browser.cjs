@@ -45,8 +45,24 @@ h.withServer(async origin => {
       });
       assert.equal(closing.after, closing.before, 'closing does not start a background refresh');
       await page.locator('.unified-library-overlay').waitFor({ state: 'hidden' });
+      await page.evaluate(async () => {
+        const { initEscapeLayers } = await import('/js/escape-layers.js?v=1.7.0-four-session-integration');
+        initEscapeLayers();
+        await window.entranceFixture.ui.open();
+      });
+      await page.keyboard.press('Escape');
+      await page.locator('.unified-library-overlay').waitFor({ state: 'hidden', timeout: 2000 });
+      for (const width of [900, 760]) {
+        await page.setViewportSize({ width, height: 1000 });
+        await page.evaluate(() => window.entranceFixture.ui.open());
+        await page.keyboard.press('Escape');
+        assert.equal(await page.locator('.unified-library-overlay').isVisible(), true, 'Esc closes a narrow-screen drawer before the library');
+        assert.equal(await page.locator('.unilib').evaluate(el => el.classList.contains('preview-open')), false);
+        await page.keyboard.press('Escape');
+        await page.locator('.unified-library-overlay').waitFor({ state: 'hidden', timeout: 2000 });
+      }
       assert.deepEqual(errors, []);
-      console.log(name + ': background readiness preserves entrance, latest catalog loads, closing skips refresh');
+      console.log(name + ': entrance refresh and single desktop Esc pass; tablet/mobile drawer Esc remains layered');
     } finally { await browser.close(); }
   }
 }).catch(error => { console.error(error); process.exitCode = 1; });
