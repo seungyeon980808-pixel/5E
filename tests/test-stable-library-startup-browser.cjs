@@ -8,6 +8,8 @@ const evidence = path.resolve(process.env.EVIDENCE_DIR || '.omo/evidence/library
 const snapshot = JSON.parse(fs.readFileSync('assets/pdf-library/catalog-bootstrap.json'));
 const hash = value => crypto.createHash('sha256').update(value).digest('hex');
 const book = snapshot.payload.catalog.documents.find(d => d.source.displayName === '교과서_중2.pdf');
+const titleExam = snapshot.payload.catalog.documents.find(d => d.source.displayName === 'p2_2027_06.pdf');
+const titlePageCount = `${titleExam.pageCount}개`;
 const encode = value => JSON.stringify(value);
 const gate = () => { let release; const promise = new Promise(r => release = r); return { promise, release }; };
 async function setup(browser, { changed = false, fallback = false, indexFailure = false } = {}) {
@@ -69,12 +71,21 @@ const stateOfCrop = ui => ui.evaluate(el => ({ page: el.querySelector('[data-uni
       assert.equal(await f.ui.getAttribute('data-search-readiness'), 'loading');
       assert.equal(f.state.requests.filter(url => /search-index\.json|catalog\.json/.test(url)).length, 0, 'no remote catalog/index blocks first list');
       assert.equal(f.state.requests.filter(url => /parts-library\/manifest|pdf-runtime\.js/.test(url)).length, 0, 'web listing has no parts/PDF runtime gate');
+      await f.ui.locator('[data-unilib-type="pdf"]').click();
+      await f.ui.locator('[data-unilib-query]').fill('물리2 27년 6평');
+      await f.page.waitForFunction(count => document.querySelector('[data-unilib-count]')?.textContent === count, titlePageCount);
+      await f.ui.locator('[data-result-id]').filter({ hasText: '물리2 27년 6평' }).first().waitFor();
+      assert.equal(await f.ui.locator('[data-unilib-count]').textContent(), titlePageCount, 'visible title is searchable before the body index arrives');
       await cropBook(f); const before = await stateOfCrop(f.ui);
       f.state.metadata.release(); f.state.indexGate.release();
       await f.page.waitForFunction(() => document.querySelector('.unified-library-overlay')?.dataset.searchReadiness === 'ready');
       await f.page.waitForTimeout(200); assert.deepEqual(await stateOfCrop(f.ui), before, 'index arrival preserves page, zoom, scroll, draft and query');
       await f.page.screenshot({ path: path.join(evidence, `${name}-crop-index-ready.png`) });
       await f.ui.locator('[data-unilib-crop-cancel]').click();
+      await f.ui.locator('[data-unilib-query]').fill('물리2 27년 6평');
+      await f.page.waitForFunction(count => document.querySelector('[data-unilib-count]')?.textContent === count, titlePageCount);
+      await f.ui.locator('[data-result-id]').filter({ hasText: '물리2 27년 6평' }).first().waitFor();
+      assert.equal(await f.ui.locator('[data-unilib-count]').textContent(), titlePageCount, 'visible title survives body-worker readiness');
       await f.ui.locator('[data-unilib-query]').fill('힘 운동');
       await f.ui.locator(`[data-result-id$="${book.source.displayName}:page:316"]`).waitFor();
       assert.equal(await f.ui.locator('[data-unilib-query]').inputValue(), '힘 운동');

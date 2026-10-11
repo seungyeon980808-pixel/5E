@@ -12,6 +12,20 @@ const entries = documents.map(document => ({ documentId: document.id, pageNumber
   text: "힘 운동", source: { documentId: document.id, pageNumber: 2, rect: [0.1, 0.1, 0.8, 0.4], fullPageFallback: false } }));
 const makeProvider = (options = {}) => createUnifiedLibraryProvider({ pdfDocuments: documents, pdfSearchIndex: { entries }, ...options });
 
+test("visible exam titles remain searchable before and after the full-text worker is ready", async () => {
+  const provider = makeProvider({ searchPdf: async () => [] });
+  for (const query of ["물리1", "물리1 25년 6평", "물리1 힘"]) {
+    const options = { query, filters, kinds: ["crop"] };
+    assert.deepEqual(provider.search(options).map(result => result.provenance.documentId), ["exam"]);
+    assert.deepEqual((await provider.searchAsync(options)).map(result => result.provenance.documentId), ["exam"]);
+    assert.deepEqual(provider.listPdfFiles({ query, filters }).map(result => result.documentId), ["exam"]);
+    assert.deepEqual((await provider.searchPdfFiles({ query, filters })).map(result => result.documentId), ["exam"]);
+  }
+  const source = provider.listPdfFiles().find(file => file.documentId === "old").sourceId;
+  assert.deepEqual(await provider.searchAsync({ query: "물리1 25년 6평", sourceIds: [source], kinds: ["crop"] }), []);
+  assert.deepEqual(await provider.searchPdfFiles({ query: "물리1 25년 6평", sourceIds: [source] }), []);
+});
+
 test("PDF inventory uses pdf kind while page and question search retain their kinds", () => {
   const provider = makeProvider();
   assert.deepEqual(provider.listPdfFiles().map(file => file.kind), ["pdf", "pdf", "pdf"]);

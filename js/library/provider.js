@@ -467,7 +467,7 @@ function pdfResults(documents, index, entriesByDocument = groupIndexEntries(inde
 }
 
 function resultMatches(result, query, compact) {
-  if (!compact) return matchesText(result.searchText, tokens(query));
+  if (!compact) return matchesText([result.title, result.searchText].join(" "), tokens(query));
   const actual = result.metadata;
   if (!examMetadataMatches(actual, compact)) return false;
   if (compact.itemNumber === null) return true;
@@ -676,7 +676,7 @@ function createProvider(input, preparedPdf) {
         if (allowedSources && !allowedSources.has(file.sourceId)) return false;
         if (!matchesPdfInventoryFilters(file, options.filters)) return false;
         if (!String(queryText).trim()) return true;
-        return pdf.results.some((result) => result.sourceId === file.sourceId
+        return resultMatches(file, queryText, compact) || pdf.results.some((result) => result.sourceId === file.sourceId
           && resultMatches(result, queryText, compact));
       });
       return Object.freeze(found.sort(compareExamResults).map((file) => Object.freeze({
@@ -772,9 +772,10 @@ function createProvider(input, preparedPdf) {
           loadPreview: (pageNumber = matches[0].pageNumber, previewOptions = {}) => loadPdfPage(file, pageNumber, previewOptions),
         });
       });
-      // File-name matches remain usable after the full-text index becomes ready.
-      const filenameMatches = [...filesByDocument.values()].filter(file =>
-        !matchesByDocument.has(file.documentId) && matchesText(file.searchText, queryTokens));
+      // The worker searches body text; preserve visible titles and canonical
+      // local matches without inventing highlights on the PDF page.
+      const filenameMatches = this.listPdfFiles(options).filter(file =>
+        !matchesByDocument.has(file.documentId));
       return Object.freeze([...found, ...filenameMatches].slice(0, boundedLimit(options.limit)));
     },
     listPdfPages(options = {}) {
@@ -809,8 +810,7 @@ function createProvider(input, preparedPdf) {
           && matchesFilters({ metadata: deriveExamMetadata({ metadata: document.metadata, source: document.source }) }, options.filters)).map((document) => document.id),
         filters: {}, limit: boundedLimit(options.limit),
       });
-      const nonPdf = local.filter((result) => result.provenance?.provider !== "pdf");
-      const merged = dedupeResults([...nonPdf, ...normalizeWorkerEntries(workerEntries ?? [])]).filter((result) =>
+      const merged = dedupeResults([...normalizeWorkerEntries(workerEntries ?? []), ...local]).filter((result) =>
         (!allowedSources || allowedSources.has(result.sourceId))
         && (!allowedKinds || allowedKinds.has(result.kind))
         && matchesFilters(result, options.filters)
