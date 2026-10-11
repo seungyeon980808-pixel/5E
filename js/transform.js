@@ -1083,8 +1083,26 @@ function applyGroupResize(objs, origObjs, box0, handle, dx, dy) {
 export function groupGeometry(objects, svg) {
   const box = groupBBox(objects, svg);
   if (!box) return null;
-  const rotations = objects.filter(o => Number.isFinite(o.rotation)).map(o => o.rotation);
-  return { ...box, rotation: rotations.length ? rotations.reduce((a, b) => a + b, 0) / rotations.length : 0 };
+  const rotations = objects.filter(o => Number.isFinite(o.rotation)
+    && !ENDPOINT_HANDLE_TYPES.has(o.type) && !POINT_ARRAY_TYPES.has(o.type)
+    && o.type !== 'rightangle' && o.type !== 'anglearc').map(o => o.rotation);
+  let rotation = rotations.length ? rotations.reduce((a, b) => a + b, 0) / rotations.length : null;
+  // Lines and curves bake rotation into their points. When a group contains
+  // only these objects, derive its reference direction from real geometry so
+  // an absolute angle does not reset to zero and accumulate on every commit.
+  if (rotation === null) {
+    for (const o of objects) {
+      const first = o.p1 || o.points?.[0];
+      const next = o.p2 || o.points?.find(p => first && Math.hypot(p.x - first.x, p.y - first.y) > 1e-9);
+      if (first && next && Math.hypot(next.x - first.x, next.y - first.y) > 1e-9) {
+        rotation = Math.atan2(next.y - first.y, next.x - first.x) * 180 / Math.PI;
+        break;
+      }
+      if (o.type === 'rightangle' && Number.isFinite(o.angle)) { rotation = o.angle; break; }
+      if (o.type === 'anglearc' && Number.isFinite(o.startAngle)) { rotation = -o.startAngle; break; }
+    }
+  }
+  return { ...box, rotation: rotation ?? 0 };
 }
 
 export function commitGroupGeometry(state, prop, value, svg) {

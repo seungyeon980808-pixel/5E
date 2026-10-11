@@ -1326,6 +1326,13 @@
         "GROUP-NUMERIC-GEOMETRY-AND-GRAPH-SHADING"
       ],
       "reason": "Exercises whole-group numeric geometry, rotated shading frames, labels, keyboard guides, undo/redo and locks in root/preview Chromium/WebKit."
+    },
+    {
+      "path": "tests/test-point-group-rotation-browser.cjs",
+      "findingIds": [
+        "POINT-ONLY-GROUP-ABSOLUTE-ROTATION"
+      ],
+      "reason": "Exercises lines and closed curves with absolute rotation, repeat input, keyboard rotation, undo/redo and serialized objects in root/preview Chromium/WebKit."
     }
   ],
   "deferred": [
