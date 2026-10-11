@@ -10,13 +10,18 @@ export function createTaskContextMenu({ copy, send, duplicate, remove, onError }
   const lifetime = new AbortController();
   const submenu = menu.querySelector('[data-task-submenu]');
   const sendButton = menu.querySelector('[data-task-action="send"]');
-  let owner = null, opener = null;
+  let owner = null, opener = null, anchorX = 8, anchorY = 8;
+  function position() {
+    menu.style.left=`${Math.max(8,Math.min(anchorX,innerWidth-menu.offsetWidth-8))}px`;
+    menu.style.top=`${Math.max(8,Math.min(anchorY,innerHeight-menu.offsetHeight-8))}px`;
+  }
   function close({ focus = false } = {}) {
     menu.hidden = true; submenu.hidden = true; sendButton.setAttribute('aria-expanded','false'); owner = null;
     if (focus && opener?.isConnected) opener.focus({preventScroll:true});
   }
   function expand() {
     submenu.hidden = false; sendButton.setAttribute('aria-expanded','true');
+    position();
     submenu.querySelector('button')?.focus();
   }
   menu.addEventListener('click', event => {
@@ -35,7 +40,7 @@ export function createTaskContextMenu({ copy, send, duplicate, remove, onError }
   menu.addEventListener('keydown', event => {
     if (event.key === 'Escape' || event.key === 'Tab') { if(event.key==='Escape')event.preventDefault();event.stopPropagation();close({focus:true});return; }
     if ((event.key === 'ArrowRight' || event.key === 'Enter') && event.target === sendButton) {event.preventDefault();expand();return;}
-    if (event.key === 'ArrowLeft' && event.target.closest('[data-task-submenu]')) {event.preventDefault();submenu.hidden=true;sendButton.setAttribute('aria-expanded','false');sendButton.focus();return;}
+    if (event.key === 'ArrowLeft' && event.target.closest('[data-task-submenu]')) {event.preventDefault();submenu.hidden=true;sendButton.setAttribute('aria-expanded','false');position();sendButton.focus();return;}
     if (!['ArrowDown','ArrowUp','Home','End'].includes(event.key)) return;
     event.preventDefault();
     const container = event.target.closest('[data-task-submenu]') || menu;
@@ -56,9 +61,8 @@ export function createTaskContextMenu({ copy, send, duplicate, remove, onError }
       menu.querySelector('[data-task-action="delete"]').disabled=readOnly || running;
       menu.hidden=false;
       const rect=opener?.getBoundingClientRect();
-      const x=event.clientX || rect?.right || 8,y=event.clientY || rect?.top || 8;
-      menu.style.left=`${Math.max(8,Math.min(x,innerWidth-menu.offsetWidth-8))}px`;
-      menu.style.top=`${Math.max(8,Math.min(y,innerHeight-menu.offsetHeight-8))}px`;
+      anchorX=event.clientX || rect?.right || 8;anchorY=event.clientY || rect?.top || 8;
+      menu.scrollTop=0;position();
       menu.querySelector('button:not(:disabled)')?.focus({preventScroll:true});
     },
     dispose() {lifetime.abort();menu.remove();},

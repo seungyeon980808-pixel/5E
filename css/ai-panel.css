@@ -1666,6 +1666,7 @@
 }
 .ai-task-context-menu {
   position: fixed; z-index: 10120; min-width: 230px; max-width: calc(100vw - 16px);
+  box-sizing: border-box; max-height: calc(100vh - 16px); overflow-y: auto; overscroll-behavior: contain;
   padding: 5px; border: 1px solid var(--border-strong); border-radius: 8px;
   background: var(--bg-panel); color: var(--c-text); box-shadow: 0 8px 24px rgb(0 0 0 / .25);
   font-size: 12px; line-height: 1.4; font-family: inherit;

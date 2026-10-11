@@ -1338,6 +1338,11 @@
       "path": "tests/test-ai-created-task-selection-browser.cjs",
       "findingIds": ["AI-CREATED-TASK-SELECTION-AND-SOURCE"],
       "reason": "Exercises explicit duplicate/send ownership, source visibility, workflow isolation, deletion fallback and reload with real local PNG input in root/preview Chromium/WebKit; no AI requests."
+    },
+    {
+      "path": "tests/test-ai-task-menu-viewport-browser.cjs",
+      "findingIds": ["AI-TASK-MENU-VIEWPORT-EDGES"],
+      "reason": "Checks expanded task menus at all viewport edges, short-height scrolling, keyboard collapse/send, pointer send and focus restoration in root/preview Chromium/WebKit."
     }
   ],
   "deferred": [
