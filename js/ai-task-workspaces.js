@@ -335,10 +335,12 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
   }
   function activate(entry, { reveal = true } = {}) {
     if (!entry || entry.disposed || !entries.includes(entry)) return;
+    const switchingVisible = reveal && active !== entry && active
+      && !active.panel.hidden && !active.panel.inert;
     for (const item of entries) {
-      if (item.controller.setWorkbenchVisible) item.controller.setWorkbenchVisible(reveal && item === entry);
-      else item.panel.hidden = !reveal || item !== entry;
       item.panel.id = item === entry ? 'ai-image-panel' : `ai-workspace-${item.scope || 'legacy'}`;
+      if (item.controller.setWorkbenchVisible) item.controller.setWorkbenchVisible(reveal && item === entry, { animate: !switchingVisible });
+      else item.panel.hidden = !reveal || item !== entry;
     }
     active = entry;
     window.dispatchEvent(new CustomEvent('5e:ai-workspace-activate', { detail: { panel: entry.panel, scope: entry.scope } }));

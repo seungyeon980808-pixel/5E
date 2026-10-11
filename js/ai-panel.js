@@ -6558,8 +6558,12 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, nav
     batchOwner, ownsBatchOwner: owner => taskTabs.has(owner.taskId)&&sameBatchOwner(batchOwner(owner.taskId),owner), captureBatchTask,preflightBatch,runBatch:runWorkspaceBatch,commitBatch,interruptBatch,
     open, close, attachReference, clearTasks, ready: workspaceReady,
     refreshTaskSelection: () => commentController?.refreshControls(),
-    setWorkbenchVisible: visible => {
-      if (visible) showWorkbench();
+    setWorkbenchVisible: (visible, { animate = true } = {}) => {
+      if (visible) {
+        showWorkbench();
+        // Switching tasks keeps the open workbench's hit targets stationary.
+        if (!animate) motion.finish();
+      }
       else { localVisibilityEpoch += 1; motion.hide(); motion.finish(); }
     },
     dispose() {
