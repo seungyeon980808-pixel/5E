@@ -2,7 +2,9 @@ const http = require('node:http');
 const https = require('node:https');
 const fs = require('node:fs');
 const path = require('node:path');
+const { createHash } = require('node:crypto');
 const root = path.resolve(process.env.FIVE_E_SITE_ROOT || path.join(__dirname, '..'));
+const workspace = createHash('sha256').update(fs.realpathSync(root)).digest('hex');
 const localBridge = process.env.LOCAL_CODEX_BINARY ? require('./local-codex-bridge.cjs').createLocalCodexBridge({binary:process.env.LOCAL_CODEX_BINARY}) : null;
 const requestedPort = Number(process.env.PORT || 8795);
 let port = requestedPort;
@@ -14,6 +16,12 @@ const server = http.createServer((req, res) => {
   if (req.headers.host !== `127.0.0.1:${port}`) return fail(403, 'Host rejected');
   res.setHeader('Cache-Control', 'no-store');
   const pathname = new URL(req.url, origin).pathname;
+  if (pathname === '/api/local-preview') {
+    if (!['GET', 'HEAD'].includes(req.method)) return fail(405, 'Method rejected');
+    if (req.headers.origin && req.headers.origin !== origin) return fail(403, 'Origin rejected');
+    res.writeHead(200, { 'Content-Type':'application/json' });
+    return res.end(req.method === 'HEAD' ? undefined : JSON.stringify({ app:'5e-local-preview', workspace }));
+  }
   if (pathname === '/api/local-ai-config' && req.method === 'GET') {
     res.writeHead(200, {'Content-Type':'application/json'});
     res.end(JSON.stringify({local:Boolean(localBridge)}));

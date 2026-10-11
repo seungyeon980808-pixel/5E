@@ -10,6 +10,7 @@
     "node": ">=24.21.0 <25"
   },
   "scripts": {
+    "exam": "node scripts/start-rhwp-exam.cjs",
     "desktop": "electron .",
     "test": "npm run test:unit",
     "test:unit": "node desktop/run-unit-tests.cjs",
