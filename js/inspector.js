@@ -6,6 +6,7 @@
  * original DOM order, and keeps setStyleControlsDisabled() + populate() as
  * verbatim original code. */
 
+import { groupGeometry } from "./transform.js?v=1.7.0-four-session-integration";
 import { DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM, mmToPt } from "./state.js?v=1.7.0-four-session-integration";
 import { resolveObjectStyle } from "./style-mode.js?v=1.7.0-four-session-integration";
 import {
@@ -191,6 +192,8 @@ export function initInspector(state) {
     renderLayerPanel(s);
     const ids = s.selectedIds || [];
     const selectedObjects = ids.map((id) => s.objects.find((o) => o.id === id)).filter(Boolean);
+    sec3.classList.toggle("insp-is-group", selectedObjects.length > 1 && !!selectedObjects[0].groupId
+      && selectedObjects.every(o => o.groupId === selectedObjects[0].groupId));
     labelReviewNotice.hidden = !selectedObjects.some(object => object.aiReviewDraft === true
       || s.objects.some(parent => parent.id === object.aiParentImageId && parent.aiReviewDraft === true));
     const liteObject = selectedObjects.length === 1 ? selectedObjects[0] : null;
@@ -361,43 +364,14 @@ export function initInspector(state) {
       setStyleControlsDisabled(groupStyleDisabled, _fn, groupHasLocked);
 
       // Section 3 — combined bbox center (X/Y), combined size (W/H), shared rotation.
-      let gMinX = Infinity, gMinY = Infinity, gMaxX = -Infinity, gMaxY = -Infinity;
-      const gRots = [];
-      ids.forEach((id) => {
-        const o = s.objects.find((o) => o.id === id);
-        if (!o) return;
-        let bx, by, bw, bh;
-        if (o.type === "line") {
-          bx = Math.min(o.p1.x, o.p2.x); by = Math.min(o.p1.y, o.p2.y);
-          bw = Math.abs(o.p2.x - o.p1.x); bh = Math.abs(o.p2.y - o.p1.y);
-        } else if ((o.type === "polyline" || o.type === "curve") && o.points && o.points.length) {
-          let a = Infinity, b = Infinity, c = -Infinity, d = -Infinity;
-          o.points.forEach((p) => { if (p.x < a) a = p.x; if (p.y < b) b = p.y; if (p.x > c) c = p.x; if (p.y > d) d = p.y; });
-          bx = a; by = b; bw = c - a; bh = d - b;
-        } else {
-          bx = o.x ?? 0; by = o.y ?? 0; bw = o.w ?? 0; bh = o.h ?? 0;
-        }
-        if (bx < gMinX) gMinX = bx;
-        if (by < gMinY) gMinY = by;
-        if (bx + bw > gMaxX) gMaxX = bx + bw;
-        if (by + bh > gMaxY) gMaxY = by + bh;
-        if (typeof o.rotation === "number") gRots.push(o.rotation);
-      });
-      if (isFinite(gMinX)) {
-        const cx = (gMinX + gMaxX) / 2, cy = (gMinY + gMaxY) / 2;
-        xF.inp.value = cx.toFixed(2);
-        yF.inp.value = (-cy).toFixed(2); // SVG Y down → math Y up
-        wF.inp.value = (gMaxX - gMinX).toFixed(2);
-        hF.inp.value = (gMaxY - gMinY).toFixed(2);
+      const geometry = groupGeometry(selectedObjects, document.getElementById('canvas'));
+      if (geometry) {
+        xF.inp.value = (geometry.x + geometry.w / 2).toFixed(2);
+        yF.inp.value = (-(geometry.y + geometry.h / 2)).toFixed(2);
+        wF.inp.value = geometry.w.toFixed(2);
+        hF.inp.value = geometry.h.toFixed(2);
+        rotF.inp.value = geometry.rotation.toFixed(1);
       }
-      // shared rotation: common value if all equal, else average (0 when none)
-      let gSharedRot = 0;
-      if (gRots.length) {
-        gSharedRot = gRots.every((r) => r === gRots[0])
-          ? gRots[0]
-          : gRots.reduce((a, b) => a + b, 0) / gRots.length;
-      }
-      rotF.inp.value = gSharedRot.toFixed(1);
       return;
     }
 

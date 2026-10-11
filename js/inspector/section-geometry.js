@@ -8,6 +8,7 @@ import { boxLabelSlots } from "../render.js?v=1.7.0-four-session-integration";
 import { makeSection } from "./widgets.js?v=1.7.0-four-session-integration";
 import { nodeBoxFromDiameter, nodeDiameterFromBox } from "../tools/node-placement.js?v=1.7.0-four-session-integration";
 import { beginLabelerBranches, labelerAnchorCount, labelerBranchStatus } from "../tools/labeler-branches.js?v=1.7.0-four-session-integration";
+import { commitGroupGeometry } from "../transform.js?v=1.7.0-four-session-integration";
 
 export function buildGeometrySection(ctx) {
   const { state, makeLabelSizeRow, makeLabelTypeRow, commitSelectedObject } = ctx;
@@ -49,6 +50,7 @@ export function buildGeometrySection(ctx) {
       }
       if (!isFinite(val)) return;
       inp.setCustomValidity?.("");
+      if (commitGroupGeometry(state, prop, negate ? -val : val, document.getElementById('canvas'))) return;
       const snap = JSON.parse(JSON.stringify(s.objects));
       state.update((s2) => {
         const id = (s2.selectedIds || [])[0];
@@ -112,6 +114,7 @@ export function buildGeometrySection(ctx) {
   whPair.appendChild(wF.el);
   whPair.appendChild(hF.el);
   sec3Body.appendChild(whPair);
+  for (const el of [rotF.el, xyPair, whPair]) el.classList.add('insp-group-geometry');
 
   const lockAspectRow = document.createElement("div");
   lockAspectRow.className = "insp-row";

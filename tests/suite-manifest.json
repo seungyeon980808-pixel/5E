@@ -1319,6 +1319,13 @@
         "INSPECTOR-IMAGE-NUMERIC-ASPECT-LOCK"
       ],
       "reason": "Exercises width/height input with image/SVG aspect locks, free resizing, locked centers, undo/redo, invalid sizes and page isolation in root/preview Chromium/WebKit."
+    },
+    {
+      "path": "tests/test-group-geometry-browser.cjs",
+      "findingIds": [
+        "GROUP-NUMERIC-GEOMETRY-AND-GRAPH-SHADING"
+      ],
+      "reason": "Exercises whole-group numeric geometry, rotated shading frames, labels, keyboard guides, undo/redo and locks in root/preview Chromium/WebKit."
     }
   ],
   "deferred": [

@@ -665,3 +665,8 @@ details[open] > .insp-summary::before {
   .bulk-column-head { grid-template-columns: minmax(85px, 1fr) repeat(2, minmax(76px, 1fr)); gap: 4px; }
   .bulk-value-cell { gap: 2px; }
 }
+
+/* A group exposes its shared box, never individual-symbol controls. */
+.insp-section-geometry.insp-is-group .insp-body > :not(.insp-group-geometry) {
+  display: none !important;
+}

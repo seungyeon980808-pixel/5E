@@ -456,11 +456,22 @@ function mapFgElements(obj, orig, fn) {
   // the curve during insertion, paste, movement and group resizing.
   if (orig.area && Number.isFinite(orig.area.baseY)) {
     const a = orig.area;
-    const from = fn({ x: Number.isFinite(a.worldFrom) ? a.worldFrom : (orig.points?.[0]?.x ?? 0), y: a.baseY });
-    const to = fn({ x: Number.isFinite(a.worldTo) ? a.worldTo : (orig.points?.at(-1)?.x ?? 0), y: a.baseY });
-    obj.area = { ...a, baseY: from.y,
-      ...(Number.isFinite(a.worldFrom) ? { worldFrom: from.x } : {}),
-      ...(Number.isFinite(a.worldTo) ? { worldTo: to.x } : {}) };
+    const frame = a.frame || [1, 0, 0, 1, 0, 0];
+    const origin = fn({ x: frame[4], y: frame[5] });
+    const ux = fn({ x: frame[4] + frame[0], y: frame[5] + frame[1] });
+    const uy = fn({ x: frame[4] + frame[2], y: frame[5] + frame[3] });
+    const nextFrame = [ux.x - origin.x, ux.y - origin.y, uy.x - origin.x, uy.y - origin.y, origin.x, origin.y];
+    // A rotated baseline is no longer one horizontal y value. Keep its local
+    // frame so clipping, shading, edge lines and labels remain a rigid unit.
+    if (a.frame || Math.abs(nextFrame[1]) > 1e-9 || Math.abs(nextFrame[2]) > 1e-9) {
+      obj.area = { ...a, frame: nextFrame };
+    } else {
+      const from = fn({ x: Number.isFinite(a.worldFrom) ? a.worldFrom : (orig.points?.[0]?.x ?? 0), y: a.baseY });
+      const to = fn({ x: Number.isFinite(a.worldTo) ? a.worldTo : (orig.points?.at(-1)?.x ?? 0), y: a.baseY });
+      obj.area = { ...a, baseY: from.y,
+        ...(Number.isFinite(a.worldFrom) ? { worldFrom: from.x } : {}),
+        ...(Number.isFinite(a.worldTo) ? { worldTo: to.x } : {}) };
+    }
   }
   if (orig.markers) obj.markers = orig.markers.map((p) => fn(p));
   if (orig.guideSegs) obj.guideSegs = orig.guideSegs.map((seg) => seg.map((p) => fn(p)));
@@ -1066,6 +1077,68 @@ function applyGroupResize(objs, origObjs, box0, handle, dx, dy) {
   }
 }
 
+// Share the same box and affine operations with numeric inspector controls.
+// Group fields describe the whole selection; mutating only its first member
+// separates linked graphs and labels even though the displayed box is shared.
+export function groupGeometry(objects, svg) {
+  const box = groupBBox(objects, svg);
+  if (!box) return null;
+  const rotations = objects.filter(o => Number.isFinite(o.rotation)).map(o => o.rotation);
+  return { ...box, rotation: rotations.length ? rotations.reduce((a, b) => a + b, 0) / rotations.length : 0 };
+}
+
+export function commitGroupGeometry(state, prop, value, svg) {
+  const s = state.get(), ids = s.selectedIds || [];
+  const members = ids.map(id => s.objects.find(o => o.id === id)).filter(Boolean);
+  const gid = members[0]?.groupId;
+  if (members.length < 2 || !gid || !members.every(o => o.groupId === gid)) return false;
+  if (!['x', 'y', 'w', 'h', 'rotation'].includes(prop)) return false;
+  if (members.some(o => o.locked) || !Number.isFinite(value)) return true;
+  if ((prop === 'x' || prop === 'y') && members.some(o => o.positionLocked)) return true;
+  const box = groupGeometry(members, svg);
+  if (!box) return true;
+  const current = prop === 'x' ? box.x + box.w / 2 : prop === 'y' ? box.y + box.h / 2 : box[prop];
+  if (Math.abs(current - value) < 1e-8 || ((prop === 'w' || prop === 'h') && value < MIN_SIZE)) return true;
+  const snapshot = JSON.parse(JSON.stringify(s.objects));
+  const originals = Object.fromEntries(snapshot.map(o => [o.id, o]));
+  state.update(next => {
+    const live = members.map(o => next.objects.find(item => item.id === o.id));
+    if (prop === 'x' || prop === 'y') {
+      for (const o of live) translateObject(o, prop === 'x' ? value - current : 0, prop === 'y' ? value - current : 0);
+    } else if (prop === 'w' || prop === 'h') {
+      applyGroupResize(live, originals, box, prop === 'w' ? 'e' : 's', prop === 'w' ? value - current : 0, prop === 'h' ? value - current : 0);
+    } else {
+      const delta = value - current, px = box.x + box.w / 2, py = box.y + box.h / 2;
+      for (const o of live) {
+        const orig = originals[o.id], center = objectCenter(orig);
+        const pivot = orig.positionLocked ? center : { x: px, y: py };
+        const rot = p => rotPt(p.x, p.y, pivot.x, pivot.y, delta);
+        if (ENDPOINT_HANDLE_TYPES.has(o.type)) {
+          o.p1 = rot(orig.p1); o.p2 = rot(orig.p2);
+          if (o.type === 'labeler') {
+            if (orig.elbow) o.elbow = rot(orig.elbow);
+            if (orig.p3) o.p3 = rot(orig.p3);
+            if (orig.extraAnchors) o.extraAnchors = orig.extraAnchors.map(rot);
+            if (orig.leaderRoutes) o.leaderRoutes = mapLeaderRoutes(orig.leaderRoutes, rot);
+          }
+        } else if (POINT_ARRAY_TYPES.has(o.type)) {
+          o.points = orig.points.map(rot); mapFgElements(o, orig, rot);
+        } else if (o.type === 'anglearc' || o.type === 'rightangle') {
+          const p = rot(orig); o.x = p.x; o.y = p.y;
+          if (o.type === 'anglearc') o.startAngle = (orig.startAngle || 0) - delta;
+          else o.angle = (orig.angle || 0) + delta;
+        } else {
+          const p = rot(center);
+          o.x = p.x - (orig.w || 0) / 2; o.y = p.y - (orig.h || 0) / 2;
+          o.rotation = (orig.rotation || 0) + delta;
+        }
+      }
+    }
+    next.undoStack.push(snapshot); next.redoStack = [];
+  });
+  return true;
+}
+
 /* ===== PUBLIC: wire all event listeners ===== */
 export function initTransform(svg, state) {
   initObjectClipboard(state, objects => {
@@ -1307,7 +1380,9 @@ export function initTransform(svg, state) {
                   // else의 박스 회전(obj.x+obj.w/2 등)을 타면 funcgraph에 NaN이 기록되고
                   // 그래프만 회전에서 누락된다(마우스 그룹회전은 이미 POINT_ARRAY_TYPES로
                   // 처리 중 — 1556행 참고, 여기 키보드 경로만 누락돼 있었다).
-                  obj.points = obj.points.map((p) => rot(p.x, p.y));
+                  const original = JSON.parse(JSON.stringify(obj));
+                  obj.points = original.points.map((p) => rot(p.x, p.y));
+                  mapFgElements(obj, original, p => rot(p.x, p.y));
                 } else if (obj.type === "anglearc") {
                   const c = rot(obj.x, obj.y);          // vertex about group pivot
                   obj.x = c.x; obj.y = c.y;
@@ -1413,7 +1488,9 @@ export function initTransform(svg, state) {
                   // else의 박스 회전(obj.x+obj.w/2 등)을 타면 funcgraph에 NaN이 기록되고
                   // 그래프만 회전에서 누락된다(마우스 그룹회전은 이미 POINT_ARRAY_TYPES로
                   // 처리 중 — 1556행 참고, 여기 키보드 경로만 누락돼 있었다).
-                  obj.points = obj.points.map((p) => rot(p.x, p.y));
+                  const original = JSON.parse(JSON.stringify(obj));
+                  obj.points = original.points.map((p) => rot(p.x, p.y));
+                  mapFgElements(obj, original, p => rot(p.x, p.y));
                 } else if (obj.type === "anglearc") {
                   const c = rot(obj.x, obj.y);          // vertex about group pivot
                   obj.x = c.x; obj.y = c.y;

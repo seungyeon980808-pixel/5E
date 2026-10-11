@@ -1069,7 +1069,7 @@ let _barPatSeq = 0;
 
 function graphAreaForRender(obj, plane) {
   const area = obj.area;
-  if (!area || !obj.reconstruction || !plane || !obj.mathPoints?.length
+  if (!area || area.frame || !obj.reconstruction || !plane || !obj.mathPoints?.length
     || obj.mathPoints.length !== obj.points?.length) return area;
   const mapping = obj.axis === 'y2' ? planeAsY2(plane) : plane;
   // Older files may contain shading left at the pre-insertion coordinates.
@@ -1116,9 +1116,22 @@ function renderFuncgraph(obj, plane = null) {
    * 곡선보다 먼저 그려 채움이 선 아래로 깔린다. */
   const area = graphAreaForRender(obj, plane);
   if (area && Number.isFinite(area.baseY) && pts.length > 1) {
+    const frame = area.frame;
+    const determinant = frame ? frame[0] * frame[3] - frame[1] * frame[2] : 1;
+    const local = p => !frame || Math.abs(determinant) < 1e-12 ? p : {
+      x: (frame[3] * (p.x - frame[4]) - frame[2] * (p.y - frame[5])) / determinant,
+      y: (-frame[1] * (p.x - frame[4]) + frame[0] * (p.y - frame[5])) / determinant,
+    };
+    const areaPoints = frame ? pts.map(local) : pts;
+    const areaHandles = frame ? obj.handles?.map(h => {
+      const a = local({ x: h.inX, y: h.inY }), b = local({ x: h.outX, y: h.outY });
+      return { inX: a.x, inY: a.y, outX: b.x, outY: b.y };
+    }) : obj.handles;
+    const areaGroup = frame ? document.createElementNS(SVG_NS, 'g') : g;
+    if (frame) { areaGroup.setAttribute('transform', `matrix(${frame.join(' ')})`); g.appendChild(areaGroup); }
     const dMin = obj.domainMin, dMax = obj.domainMax;
     const hasDomain = Number.isFinite(dMin) && Number.isFinite(dMax) && dMax !== dMin;
-    const allX = pts.map((point) => point.x);
+    const allX = areaPoints.map((point) => point.x);
     const dataXMin = Math.min(...allX), dataXMax = Math.max(...allX);
     let clipXMin = dataXMin, clipXMax = dataXMax;
     if (hasDomain && (Number.isFinite(area.from) || Number.isFinite(area.to))) {
@@ -1131,11 +1144,11 @@ function renderFuncgraph(obj, plane = null) {
     if (Number.isFinite(area.worldFrom)) clipXMin = area.worldFrom;
     if (Number.isFinite(area.worldTo)) clipXMax = area.worldTo;
     let areaOffset = 0;
-    const hasAreaHandles = Array.isArray(obj.handles) && obj.handles.length === pts.length;
-    const areaRuns = splitByBreaks(pts, obj.breaks)
+    const hasAreaHandles = Array.isArray(areaHandles) && areaHandles.length === pts.length;
+    const areaRuns = splitByBreaks(areaPoints, obj.breaks)
       .map((run) => {
         const offset = areaOffset; areaOffset += run.length;
-        const geometry = hasAreaHandles ? bezierSamplePts(run, obj.handles.slice(offset, offset + run.length), 32, obj.segmentModes?.slice(offset, offset + run.length - 1))
+        const geometry = hasAreaHandles ? bezierSamplePts(run, areaHandles.slice(offset, offset + run.length), 32, obj.segmentModes?.slice(offset, offset + run.length - 1))
           : (obj.curveStyle || (obj.sourceKind === 'points' ? 'straight' : 'smooth')) === 'smooth' ? smoothSamplePts(run, obj.curvature, 24) : run;
         return clipRunByWorldX(geometry, Math.min(clipXMin, clipXMax), Math.max(clipXMin, clipXMax));
       })
@@ -1148,7 +1161,7 @@ function renderFuncgraph(obj, plane = null) {
       fillEl.setAttribute("d", d);
       fillEl.setAttribute("fill", grayHex(area.level ?? 220));
       fillEl.setAttribute("stroke", "none");
-      g.appendChild(fillEl);
+      areaGroup.appendChild(fillEl);
       // 경계선: 채운 구간의 양 끝을 곡선에서 기준선까지 가는 실선으로 내린다(기본 켬).
       if (area.edges !== false) {
         [areaRuns[0][0], areaRuns.at(-1).at(-1)].forEach((p) => {
@@ -1157,7 +1170,7 @@ function renderFuncgraph(obj, plane = null) {
           l.setAttribute("x2", p.x); l.setAttribute("y2", area.baseY);
           l.setAttribute("stroke", grayHex(obj.strokeLevel));
           l.setAttribute("stroke-width", (obj.strokeWidth ?? 0.3) * 0.55);
-          g.appendChild(l);
+          areaGroup.appendChild(l);
         });
       }
       // 면적 라벨: 채운 영역 한가운데에 흰 halo 글자(스타일 가이드 5장).
@@ -1171,7 +1184,7 @@ function renderFuncgraph(obj, plane = null) {
           color: grayHex(obj.strokeLevel), anchor: "middle", vAlign: "middle", halo: true,
           haloRatio: Number.isFinite(area.haloRatio) ? area.haloRatio : obj.haloRatio,
         });
-        if (lbl) g.appendChild(lbl);
+        if (lbl) areaGroup.appendChild(lbl);
       }
     }
   }
