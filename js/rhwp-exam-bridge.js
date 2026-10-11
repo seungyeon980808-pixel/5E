@@ -89,10 +89,18 @@ export class RhwpExamBridge {
     schedule();
     return ()=>{cancelAnimationFrame(frame);events.forEach((name,i)=>{if(typeof offs[i]==='function')offs[i]();else this.deps.eventBus.off?.(name,schedule);});doc.removeEventListener('scroll',schedule,true);window.removeEventListener('resize',schedule);};
   }
-  selectPicture(ref) {
+  selectPicture(ref, {reveal = false} = {}) {
     const c=this.input.cursor,p=ref.cellPath?.at(-1);
     c.enterPictureObjectSelectionDirect(ref.sec,ref.ppi,ref.ci,'image',p?.cellIndex,p?.cellParaIndex,ref.headerFooter,ref.cellPath?.[0]?.controlIndex,ref.cellPath,null,false,ref.pageIndex);
     this.input.renderPictureObjectSelection();this.deps.eventBus.emit('picture-object-selection-changed',true);
+    if (reveal) {
+      const geometry=this.cameraFigureGeometry(ref),viewport=this.figureViewport(),manager=this.input.viewportManager;
+      if (geometry && viewport && (geometry.x<viewport.x || geometry.y<viewport.y || geometry.x+geometry.w>viewport.x+viewport.w || geometry.y+geometry.h>viewport.y+viewport.h)) {
+        const point=this.parentPoint(0,0);
+        manager.setScrollLeft(manager.getScrollX()+(geometry.x+geometry.w/2-viewport.x-viewport.w/2)/point.scaleX);
+        manager.setScrollTop(manager.getScrollY()+(geometry.y+geometry.h/2-viewport.y-viewport.h/2)/point.scaleY);
+      }
+    }
   }
   paragraphTarget(ref) {
     if(ref.headerFooter || (ref.cellPath?.length||0)>1)return null;
@@ -138,7 +146,7 @@ export class RhwpExamBridge {
   }
 
   async animateFigureCamera(ref,zoom,{fit='none',centre,scroll}={}) {
-    const input=this.input,manager=input.viewportManager,generation=this.generation,from=this.figureGeometry(ref);
+    const input=this.input,manager=input.viewportManager,generation=this.generation,from=this.cameraFigureGeometry(ref);
     const startZoom=manager.getZoom(),startX=manager.getScrollX(),startY=manager.getScrollY();
     const duration=window.matchMedia('(prefers-reduced-motion: reduce)').matches?0:280;
     manager.cancelPendingZoomRaster();manager.cancelZoomAnimation();manager.updateZoomFitMode(fit);
@@ -156,7 +164,7 @@ export class RhwpExamBridge {
         expected=startZoom+(zoom-startZoom)*ease;manager.zoom=expected;
         this.deps.eventBus.emit('zoom-changed',expected,manager.zoomAnchor);
         if(scroll){manager.setScrollLeft(startX+(scroll.x-startX)*ease);manager.setScrollTop(startY+(scroll.y-startY)*ease);}
-        else if(from && centre){const current=this.figureGeometry(ref),point=this.parentPoint(0,0);if(current){
+        else if(from && centre){const current=this.cameraFigureGeometry(ref),point=this.parentPoint(0,0);if(current){
           const x=from.x+from.w/2+(centre.x-from.x-from.w/2)*ease,y=from.y+from.h/2+(centre.y-from.y-from.h/2)*ease;
           manager.setScrollLeft(manager.getScrollX()+(current.x+current.w/2-x)/point.scaleX);
           manager.setScrollTop(manager.getScrollY()+(current.y+current.h/2-y)/point.scaleY);
@@ -177,7 +185,7 @@ export class RhwpExamBridge {
   }
   async focusFigure(ref, {toolbarHeight = 124, contextHeight = 96} = {}) {
     const input = this.input, manager = input?.viewportManager;
-    const geometry = this.figureGeometry(ref), viewport = this.figureViewport();
+    const geometry = this.cameraFigureGeometry(ref), viewport = this.figureViewport();
     if (!manager || !geometry || !viewport) return null;
     const before = {input, generation:this.generation, zoom:manager.getZoom(),
       fit:manager.getZoomFitMode(), x:manager.getScrollX(), y:manager.getScrollY()};
@@ -586,7 +594,7 @@ export class RhwpExamBridge {
     return {x:root.left+(frame.clientLeft+x)*scaleX,y:root.top+(frame.clientTop+y)*scaleY,scaleX,scaleY};
   }
 
-  picturePlacement(ref) {
+  picturePaintData(ref) {
     if (!ref || (ref.type && ref.type !== 'image')) return null;
     try {
       const key=JSON.stringify([this.generation,this.revision,ref.sec,ref.ppi,ref.ci,ref.cellPath,ref.headerFooter]);
@@ -597,16 +605,34 @@ export class RhwpExamBridge {
       for (const page of pages) {
         const control = cached?.control || this.wasm.getPageControlLayout(page).controls?.find(control => matchesPicture(control,ref));
         if (!control || control.missing) continue;
-        const placement = this.pagePlacement(page); if (!placement) continue;
         const op = cached?.op || this.picturePaint(page,control,this.properties(ref)); if (!op) continue;
         if(!cached)this.paintCache.set(key,{page,control,op});
-        const plane = this.editor.element.contentDocument.querySelector?.(`[data-rhwp-flow-image-page="${page}"]`);
-        const element = op.flow ? plane?.querySelectorAll('img')[op.flowIndex]?.parentElement : null;
-        if (element && element.style.transform !== `rotate(${op.transform?.rotation || 0}deg) scale(${op.transform?.horzFlip ? -1 : 1}, ${op.transform?.vertFlip ? -1 : 1})`) continue;
-        return {op,placement,plane,element};
+        return {page,control,op};
       }
     } catch { /* Layout can disappear during a native document swap. */ }
     return null;
+  }
+
+  // Camera movement must survive virtual page recycling and zoom reflow.
+  // Use current document layout, not a raster that can disappear mid-frame.
+  cameraFigureGeometry(ref) {
+    const found=this.picturePaintData(ref),input=this.input;
+    if (!found || !input?.container.getClientRects().length) return null;
+    const {page,op}=found,geometry=this.pictureFrame(op),manager=input.viewportManager,virtual=input.virtualScroll;
+    const zoom=manager.getZoom(),rect=input.container.getBoundingClientRect();
+    const width=Math.max(manager.getViewportSize().width,virtual.getTotalWidth());
+    const point=this.parentPoint(rect.left+input.container.clientLeft+virtual.getPageLeftResolved(page,width)+geometry.x*zoom-manager.getScrollX(),
+      rect.top+input.container.clientTop+virtual.getPageOffset(page)+geometry.y*zoom-manager.getScrollY());
+    return {...geometry,x:point.x,y:point.y,w:geometry.w*zoom*point.scaleX,h:geometry.h*zoom*point.scaleY};
+  }
+
+  picturePlacement(ref) {
+    const found=this.picturePaintData(ref);if (!found) return null;
+    const {page,op}=found,placement=this.pagePlacement(page);if (!placement) return null;
+    const plane=this.editor.element.contentDocument.querySelector?.(`[data-rhwp-flow-image-page="${page}"]`);
+    const element=op.flow ? plane?.querySelectorAll('img')[op.flowIndex]?.parentElement : null;
+    if (element && element.style.transform!==`rotate(${op.transform?.rotation || 0}deg) scale(${op.transform?.horzFlip ? -1 : 1}, ${op.transform?.vertFlip ? -1 : 1})`) return null;
+    return {op,placement,plane,element};
   }
 
   // Parent viewport CSS pixels, BEFORE rotation/flips, not the rotated AABB.

@@ -90,6 +90,19 @@ test('page placement uses the tagged surface across virtualization, scroll and p
   assert.equal(f.bridge.figureGeometry(f.ref),null,'no fabricated geometry for an unrendered page');
 });
 
+test('camera follows document coordinates when the target page has no rendered surface', () => {
+  const f=fixture({page:7,zoom:2});
+  f.content.querySelector=() => null;f.content.querySelectorAll=() => [];
+  Object.assign(f.input.viewportManager,{getViewportSize:()=>({width:900,height:600}),getScrollX:()=>80,getScrollY:()=>7200});
+  Object.assign(f.input.virtualScroll,{getTotalWidth:()=>1600,getPageLeftResolved:()=>10});
+  assert.equal(f.bridge.figureGeometry(f.ref),null,'overlays still require a real paint surface');
+  const g=f.bridge.cameraFigureGeometry(f.ref);
+  near(g.x,200+2+10+1+10+f.box.x*2-80);
+  near(g.y,150+3+70+2+7700+f.box.y*2-7200);
+  near(g.w,f.box.width*2);near(g.h,f.box.height*2);
+  assert.equal(f.bridge.cameraFigureGeometry({...f.ref,ci:999}),null,'missing identities do not produce a camera target');
+});
+
 test('iframe borders and uniform parent CSS scaling are converted once', () => {
   const f=fixture();f.frame.getBoundingClientRect=() => ({left:200,top:150,width:1500,height:1200});
   const g=f.bridge.figureGeometry(f.ref);near(g.x,200+(2+50+f.box.x)*1.5);near(g.y,150+(3+100+f.box.y)*1.5);near(g.w,f.box.width*1.5);

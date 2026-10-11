@@ -66,6 +66,35 @@ h.withServer(async origin=>{
       await p.evaluate(()=>document.querySelector('#exam-studio iframe').contentWindow.rhwpStudio.plugins.deps.getInputHandler().viewportManager.setZoom(1.25));
       await h.idle(p);await p.locator('[data-inline-action="close"]').click();await h.idle(p);
       assert.equal(await p.evaluate(()=>document.querySelector('#exam-studio iframe').contentWindow.rhwpStudio.plugins.deps.getInputHandler().viewportManager.getZoom()),1.25,'interrupted manual zoom remains a user preference');
+      // The list can open a picture on an unrendered page. The earlier camera
+      // journey started with revealPicture(), so it never covered that case.
+      await p.evaluate(()=>{
+        const b=window.cameraBridge,w=b.wasm;
+        for(let i=0;i<100;i++){
+          w.splitParagraph(0,0,0,null);
+          w.insertText(0,0,0,`${i+1}. 앞쪽 본문을 읽은 뒤 다른 쪽의 그림을 편집합니다. `.repeat(4));
+        }
+        b.deps.eventBus.emit('document-changed');b.picturesCache=null;b.paintCacheRevision=null;
+      });
+      const offscreenDownload=p.waitForEvent('download');await h.action(p,'export-hwp');
+      const offscreenFile=await offscreenDownload,offscreenTarget=path.join(dir,engine+'-offscreen.hwp');await offscreenFile.saveAs(offscreenTarget);await h.idle(p);
+      await h.action(p,'new');await h.idle(p);await h.nativeOpen(p,offscreenTarget);
+      await p.evaluate(()=>{
+        const b=window.cameraBridge,m=b.input.viewportManager;b.picturesCache=null;b.paintCacheRevision=null;
+        window.cameraRef=b.documentPictures()[0].ref;m.setZoom(1);m.setScrollTop(0);
+      });
+      await h.waitForState(p,()=>!window.cameraBridge.figureGeometry(window.cameraRef));
+      await p.locator('.exam-figure').first().click();
+      await h.waitForState(p,()=>{const b=window.cameraBridge,g=b.figureGeometry(window.cameraRef),v=b.figureViewport();return g&&g.y>=v.y&&g.y+g.h<=v.y+v.h;});
+      await p.evaluate(()=>window.cameraBridge.input.viewportManager.setScrollTop(0));
+      await h.waitForState(p,()=>!window.cameraBridge.figureGeometry(window.cameraRef));
+      await p.locator('.exam-figure').first().dblclick();await h.idle(p);
+      await h.waitForState(p,()=>{const b=window.cameraBridge,g=b.figureGeometry(window.cameraRef),v=b.figureViewport();return !document.querySelector('#exam-inline-editor').hidden&&g&&g.x>=v.x&&g.y>=v.y&&g.x+g.w<=v.x+v.w&&g.y+g.h<=v.y+v.h;});
+      const offscreenHeading=await p.locator('.exam-inline-image-heading').boundingBox(),offscreenImage=await p.locator('.exam-inline-picture').boundingBox(),offscreenToolbar=await p.locator('.exam-inline-toolbar').boundingBox();
+      assert.ok(offscreenHeading.y+offscreenHeading.height<=offscreenImage.y-4,'offscreen picture keeps its apply actions above the image');
+      assert.ok(offscreenToolbar.y>offscreenImage.y+offscreenImage.height,'editing tools leave the picture visible');
+      await p.screenshot({path:path.join(dir,engine+'-offscreen-focused.png')});
+      await p.locator('[data-inline-action="close"]').click();await h.idle(p);
       assert.deepEqual(errors,[]);reports.push({...result,engine,maxFrameMs,settleJump,reducedMotion:true,manualInterruption:true});
       console.log(`${engine}: ${result.pages} HWP pages, ${animated.length} camera frames, max ${maxFrameMs.toFixed(1)}ms, reused page rasters, settle jump ${settleJump.toFixed(2)}px`);
     }finally{await context.close();await browser.close();}

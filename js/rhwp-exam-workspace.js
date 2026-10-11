@@ -205,7 +205,7 @@ export function initRhwpExamWorkspace(state, services) {
       const title = document.createElement('strong'); title.textContent = name;
       const detail = document.createElement('span'); detail.textContent = draft ? '미반영 수정' : '';detail.hidden=!draft;
       text.append(title,detail); button.append(image,text); button.disabled = busy || !!editing;
-      button.addEventListener('click',()=>{if(!busy){bridge.selectPicture(ref);renderFigures();}});button.addEventListener('dblclick',()=>void run(()=>beginInline(figure?.id,ref)));list.append(button);
+      button.addEventListener('click',()=>{if(!busy){bridge.selectPicture(ref,{reveal:true});renderFigures();}});button.addEventListener('dblclick',()=>void run(()=>beginInline(figure?.id,ref)));list.append(button);
     }
     if (!rows.length) {
       const empty = document.createElement('p'); empty.className = 'exam-empty';
