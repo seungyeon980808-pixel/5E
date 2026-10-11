@@ -98,7 +98,10 @@ export function createModalSurfaceMotion({
   reducedMotion = prefersReducedMotion,
   requestFrame = callback => globalThis.requestAnimationFrame?.(callback),
   cancelFrame = handle => globalThis.cancelAnimationFrame?.(handle),
-  now = () => globalThis.performance?.now?.() ?? Date.now(),
+  now = () => {
+    const timelineTime = globalThis.document?.timeline?.currentTime;
+    return Number.isFinite(timelineTime) ? timelineTime : globalThis.performance?.now?.() ?? Date.now();
+  },
 } = {}) {
   if (!overlay || !surface) throw new TypeError('A modal overlay and surface are required.');
   if (cssEntrance && surface === overlay) throw new TypeError('A CSS entrance requires a separate modal surface.');
@@ -117,6 +120,7 @@ export function createModalSurfaceMotion({
   let cssEntrancePending = false;
   let cssChannels = null;
   let previousCssSample = null;
+  let cssPresentationHold = null;
 
   function readNow() {
     const time = now();
@@ -203,13 +207,31 @@ export function createModalSurfaceMotion({
     cssEntrancePending = false;
   }
 
+  function releaseCssPresentation() {
+    cssPresentationHold?.cancel();
+    cssPresentationHold = null;
+  }
+
   function handoffCssEntrance(time) {
     if (cssChannels) return;
     // Copy presentation values before cancellation; computed-style objects are live.
     const presented = readCssSurface(time);
     const previous = previousCssSample;
+    const named = namedCssAnimations().find(animation => animation.playState !== 'idle');
+    const nativePresentation = named?.effect?.getKeyframes && named.effect.getTiming
+      && typeof globalThis.Animation === 'function' && typeof globalThis.KeyframeEffect === 'function'
+      && globalThis.document?.timeline && Number.isFinite(named.currentTime)
+      ? { frames: named.effect.getKeyframes(), timing: named.effect.getTiming(), time: named.currentTime } : null;
     cancelCssEntrance();
     const base = readCssSurface(time);
+    if (nativePresentation) {
+      // Keep native interpolation precision until the first advancing spring frame.
+      cssPresentationHold = new globalThis.Animation(
+        new globalThis.KeyframeEffect(surface, nativePresentation.frames, nativePresentation.timing),
+        globalThis.document.timeline);
+      cssPresentationHold.pause();
+      cssPresentationHold.currentTime = nativePresentation.time;
+    }
     const seconds = previous ? (presented.time - previous.time) / 1000 : 0;
     // This preserves sampled velocity; exact CSS easing derivatives still require
     // verification at a first-frame interruption and at the 62% keyframe boundary.
@@ -274,6 +296,7 @@ export function createModalSurfaceMotion({
 
   function commit({ notify = true } = {}) {
     cancelScheduledFrame();
+    releaseCssPresentation();
     if (cssEntrance) cancelCssEntrance();
     cssChannels = null;
     previousCssSample = null;
@@ -311,6 +334,7 @@ export function createModalSurfaceMotion({
     lastTime = timestamp;
     ({ value, velocity } = stepSpring(value, velocity, target, elapsed));
     stepCssChannels(elapsed);
+    if (elapsed > 0) releaseCssPresentation();
     render();
     if (Math.abs(value - target) <= POSITION_TOLERANCE
       && Math.abs(velocity) <= VELOCITY_TOLERANCE && cssChannelsSettled()) {

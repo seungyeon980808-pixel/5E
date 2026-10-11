@@ -600,3 +600,284 @@ test('N31 infinite frame timestamp is explicitly rejected or safely settled with
   const f = namedFixture(t); sampledClose(f);
   safeOrRejected(f, () => f.runFrame(Number.POSITIVE_INFINITY, 32));
 });
+
+// Native clock and presentation ownership regressions use the real factory.
+// These spies exercise clock selection and ownership/lifecycle only. They do not
+// implement native interpolation, CSS cascade, geometry, or native C0/C1 truth.
+{
+  function r3Fixture(t, {
+    timelineTime = 100, performanceTime = 900, documentMode = 'present',
+    nativeEffects = true, injectedNow, noPerformance = false,
+    noScheduler = false, reducedMotion = false, namedTime = 73.25,
+  } = {}) {
+    const savedGlobals = new Map();
+    const holds = [];
+    const effects = [];
+    const frames = new Map();
+    let motion;
+    let timelineReads = 0;
+    let performanceReads = 0;
+    let nextFrame = 0;
+    let cssActive = true;
+    const clock = { timeline: timelineTime, performance: performanceTime };
+    const css = { scale: '0.97', opacity: '0.4', translate: 'none' };
+    const timeline = {};
+    Object.defineProperty(timeline, 'currentTime', {
+      get() { timelineReads += 1; return clock.timeline; }, configurable: true,
+    });
+    function globalValue(name, value) {
+      if (!savedGlobals.has(name)) savedGlobals.set(name,
+        Object.getOwnPropertyDescriptor(globalThis, name));
+      Object.defineProperty(globalThis, name, {
+        value, configurable: true, writable: true,
+        enumerable: savedGlobals.get(name)?.enumerable ?? false,
+      });
+    }
+    // One cleanup guarantees restoration even if factory construction/assertions fail.
+    t.after(() => {
+      try { motion?.dispose(); }
+      finally {
+        for (const [name, descriptor] of [...savedGlobals].reverse()) {
+          if (descriptor) Object.defineProperty(globalThis, name, descriptor);
+          else delete globalThis[name];
+        }
+      }
+    });
+    const namedFrames = Object.freeze([
+      Object.freeze({ offset: 0, computedOffset: 0, opacity: '0', scale: '0.94', easing: 'ease-out', composite: 'auto' }),
+      Object.freeze({ offset: 0.62, computedOffset: 0.62, opacity: '1', scale: '1.012', easing: 'ease-out', composite: 'auto' }),
+      Object.freeze({ offset: 1, computedOffset: 1, opacity: '1', scale: '1', easing: 'ease-out', composite: 'auto' }),
+    ]);
+    const namedTiming = Object.freeze({ delay: 12, endDelay: 7, fill: 'both',
+      iterationStart: 0.2, iterations: 1, duration: 260, direction: 'alternate',
+      easing: 'cubic-bezier(0.2, 0.9, 0.25, 1.06)' });
+    const named = {
+      animationName: 'modal-pop', playState: 'running', currentTime: namedTime,
+      cancels: 0, frameReads: 0, timingReads: 0,
+      cancel() { this.cancels += 1; this.playState = 'idle'; cssActive = false; },
+    };
+    const foreign = [
+      { animationName: 'other-css', playState: 'running', currentTime: 51, cancels: 0,
+        cancel() { this.cancels += 1; this.playState = 'idle'; } },
+      { playState: 'running', currentTime: 63, cancels: 0,
+        cancel() { this.cancels += 1; this.playState = 'idle'; } },
+    ];
+    const foreignSnapshot = () => foreign.map(({ animationName, playState, currentTime, cancels }) =>
+      ({ animationName, playState, currentTime, cancels }));
+    const foreignBefore = foreignSnapshot();
+    const surface = { style: fakeStyle(),
+      getBoundingClientRect: () => ({ left: 100, top: 100, width: 400, height: 300 }),
+      getAnimations: () => [named, ...foreign, ...holds.filter(hold => hold.playState !== 'idle')],
+    };
+    const attributes = new Map();
+    const overlay = { tagName: 'DIV', hidden: true, inert: false, dataset: {},
+      style: fakeStyle(), querySelector: () => surface,
+      setAttribute: (name, value) => attributes.set(name, value),
+      removeAttribute: name => attributes.delete(name),
+      animate() { assert.fail('Named entrances must retain their manual overlay scheduler'); },
+    };
+    named.effect = {
+      target: surface,
+      getKeyframes() { named.frameReads += 1; return namedFrames; },
+      getTiming() { named.timingReads += 1; return namedTiming; },
+    };
+    class NativeEffectSpy {
+      constructor(target, keyframes, timing) {
+        this.target = target; this.keyframes = keyframes; this.timing = timing;
+        effects.push(this);
+      }
+    }
+    class NativeAnimationSpy {
+      constructor(effect, receivedTimeline) {
+        this.effect = effect; this.timeline = receivedTimeline;
+        this.playState = 'idle'; this.currentTime = null;
+        this.pauses = 0; this.cancels = 0;
+        holds.push(this);
+      }
+      pause() { this.pauses += 1; this.playState = 'paused'; }
+      cancel() { this.cancels += 1; this.playState = 'idle'; }
+      play() { assert.fail('Presentation hold must never play independently'); }
+    }
+    globalValue('document', documentMode === 'absent' ? undefined
+      : documentMode === 'no-timeline' ? {} : { timeline });
+    globalValue('performance', noPerformance ? undefined
+      : { now() { performanceReads += 1; return clock.performance; } });
+    globalValue('Animation', nativeEffects ? NativeAnimationSpy : undefined);
+    globalValue('KeyframeEffect', nativeEffects ? NativeEffectSpy : undefined);
+    globalValue('getComputedStyle', element => {
+      const read = name => {
+        if (element === surface && cssActive && (name === 'scale' || name === 'opacity')
+          && element.style.getPropertyPriority(name) !== 'important') return css[name];
+        return element.style.getPropertyValue(name) || (name === 'opacity' ? '1' : 'none');
+      };
+      return { get scale() { return read('scale'); }, get opacity() { return read('opacity'); },
+        get translate() { return read('translate'); }, getPropertyValue: read };
+    });
+    motion = createModalSurfaceMotion({ overlay, surface, cssEntrance: 'modal-pop', reducedMotion,
+      ...(injectedNow ? { now: injectedNow } : {}),
+      requestFrame: noScheduler ? () => null : callback => { frames.set(++nextFrame, callback); return nextFrame; },
+      cancelFrame: handle => frames.delete(handle),
+    });
+    const f = { motion, overlay, surface, attributes, named, foreign, clock, css,
+      frames, holds, effects, namedFrames, namedTiming, timeline,
+      counters: () => ({ timelineReads, performanceReads }),
+      assertForeign: () => assert.deepEqual(foreignSnapshot(), foreignBefore),
+      opacity: () => Number(overlay.style.getPropertyValue('opacity') || '1'),
+      frame(timestamp) {
+        clock.timeline = timestamp;
+        const callbacks = [...frames.values()]; frames.clear();
+        for (const callback of callbacks) callback(timestamp);
+      },
+      close() { motion.show(); motion.hide(); },
+    };
+    return f;
+  }
+
+  for (const time of [0, 100]) {
+    test(`R3-C01 timeline ${time} outranks later performance clock and first positive RAF closes`, { concurrency: false }, t => {
+      const f = r3Fixture(t, { timelineTime: time, performanceTime: time + 80, nativeEffects: false });
+      f.close(); assert.equal(f.opacity(), 1);
+      f.frame(time + 16);
+      assert.ok(f.opacity() > 0 && f.opacity() < 1);
+      assert.equal(f.counters().performanceReads, 0);
+      assert.ok(f.counters().timelineReads >= 2);
+      assert.equal(f.frames.size, 1); f.assertForeign();
+    });
+  }
+  for (const [label, time] of [['null', null], ['undefined', undefined], ['NaN', NaN],
+    ['Infinity', Infinity], ['-Infinity', -Infinity], ['numeric-string', '100']]) {
+    test(`R3-C02 ${label} timeline falls back to finite performance time`, { concurrency: false }, t => {
+      const f = r3Fixture(t, { timelineTime: null, performanceTime: 500, nativeEffects: false });
+      f.clock.timeline = time;
+      f.close(); f.frame(500); assert.equal(f.opacity(), 1);
+      f.frame(516); assert.ok(f.opacity() > 0 && f.opacity() < 1);
+      assert.ok(f.counters().performanceReads >= 2); f.assertForeign();
+    });
+  }
+  test('R3-C03 no timeline/performance uses Date fallback', { concurrency: false }, t => {
+    const dateDescriptor = Object.getOwnPropertyDescriptor(Date, 'now');
+    let dateReads = 0;
+    Object.defineProperty(Date, 'now', { ...dateDescriptor, value: () => { dateReads += 1; return 700; } });
+    t.after(() => Object.defineProperty(Date, 'now', dateDescriptor));
+    const f = r3Fixture(t, { documentMode: 'absent', noPerformance: true, nativeEffects: false });
+    f.close(); f.frame(700); assert.equal(f.opacity(), 1);
+    f.frame(716); assert.ok(f.opacity() > 0 && f.opacity() < 1);
+    assert.ok(dateReads >= 2);
+  });
+  test('R3-C04 explicitly injected clock outranks both default clocks', { concurrency: false }, t => {
+    let nowCalls = 0;
+    const f = r3Fixture(t, { timelineTime: 0, performanceTime: 900, nativeEffects: false,
+      injectedNow: () => { nowCalls += 1; return 300; } });
+    f.close(); f.frame(300); assert.equal(f.opacity(), 1);
+    f.frame(316); assert.ok(f.opacity() > 0 && f.opacity() < 1);
+    assert.deepEqual(f.counters(), { timelineReads: 0, performanceReads: 0 });
+    assert.ok(nowCalls >= 2);
+  });
+
+  test('R3-H01 native hold copies effect arguments and precise local time, paused on original timeline', { concurrency: false }, t => {
+    const f = r3Fixture(t); f.close();
+    assert.equal(f.named.cancels, 1); assert.equal(f.holds.length, 1);
+    assert.equal(f.effects.length, 1); assert.equal(f.named.frameReads, 1); assert.equal(f.named.timingReads, 1);
+    const [hold] = f.holds;
+    assert.equal(hold.timeline, f.timeline); assert.equal(hold.effect.target, f.surface);
+    assert.deepEqual(hold.effect.keyframes, f.namedFrames);
+    assert.deepEqual(hold.effect.timing, f.namedTiming);
+    assert.equal(hold.currentTime, 73.25); assert.equal(hold.pauses, 1);
+    assert.equal(hold.playState, 'paused'); assert.equal(hold.cancels, 0);
+    assert.equal(f.frames.size, 1); f.assertForeign();
+  });
+  test('R3-H02 zero and negative elapsed retain own hold; first positive frame cancels it once', { concurrency: false }, t => {
+    const f = r3Fixture(t); f.close(); const [hold] = f.holds;
+    f.frame(100); assert.equal(hold.cancels, 0); assert.equal(hold.playState, 'paused');
+    f.frame(99); assert.equal(hold.cancels, 0); assert.equal(f.opacity(), 1);
+    f.frame(115); assert.equal(hold.cancels, 1); assert.equal(hold.playState, 'idle');
+    assert.ok(f.opacity() < 1); f.frame(131);
+    assert.equal(hold.cancels, 1); f.motion.finish(); f.motion.dispose();
+    assert.equal(hold.cancels, 1); f.assertForeign();
+  });
+  test('R3-H03 finish releases pending hold once, clears scheduler, restores priorities, notifies once', { concurrency: false }, t => {
+    const f = r3Fixture(t);
+    f.surface.style.setProperty('translate', '-50% -50%', 'important');
+    f.surface.style.setProperty('scale', '0.95', 'important');
+    f.surface.style.setProperty('opacity', '0.8', 'important');
+    f.overlay.style.setProperty('opacity', '0.9', 'important');
+    let hidden = 0; f.motion.show(); f.motion.hide({ onHidden: () => { hidden += 1; } });
+    const [hold] = f.holds; f.motion.finish(); f.motion.finish();
+    assert.equal(hold.cancels, 1); assert.equal(hidden, 1); assert.equal(f.frames.size, 0);
+    assert.equal(f.overlay.hidden, true);
+    for (const [element, name, value] of [[f.surface, 'translate', '-50% -50%'],
+      [f.surface, 'scale', '0.95'], [f.surface, 'opacity', '0.8'], [f.overlay, 'opacity', '0.9']]) {
+      assert.equal(element.style.getPropertyValue(name), value);
+      assert.equal(element.style.getPropertyPriority(name), 'important');
+    }
+    f.assertForeign();
+  });
+  test('R3-H04 dispose releases hold, suppresses callback and makes captured RAF inert', { concurrency: false }, t => {
+    const f = r3Fixture(t); let hidden = 0; f.motion.show();
+    f.motion.hide({ onHidden: () => { hidden += 1; } });
+    const [hold] = f.holds; const callbacks = [...f.frames.values()];
+    f.motion.dispose(); f.motion.dispose();
+    const before = [f.overlay.hidden, f.overlay.dataset.modalMotionState, f.surface.style.getPropertyValue('scale')];
+    for (const callback of callbacks) callback(116);
+    assert.deepEqual([f.overlay.hidden, f.overlay.dataset.modalMotionState, f.surface.style.getPropertyValue('scale')], before);
+    assert.equal(hold.cancels, 1); assert.equal(hidden, 0); assert.equal(f.frames.size, 0);
+    assert.equal(f.motion.show(), false); assert.equal(f.motion.hide(), false); f.assertForeign();
+  });
+  test('R3-H05 zero-elapsed reopen keeps one paused hold and invalidates stale close callback', { concurrency: false }, t => {
+    const f = r3Fixture(t); let hidden = 0; f.motion.show();
+    f.motion.hide({ onHidden: () => { hidden += 1; } }); const [hold] = f.holds;
+    f.frame(100); f.motion.show();
+    assert.equal(f.holds.length, 1); assert.equal(hold.cancels, 0);
+    assert.equal(f.overlay.inert, false); assert.equal(f.motion.isOpen(), true);
+    assert.equal(f.frames.size, 1); f.frame(116);
+    assert.equal(hold.cancels, 1); f.motion.finish();
+    assert.equal(hidden, 0); assert.equal(f.overlay.hidden, false); f.assertForeign();
+  });
+  test('R3-H06 reduced-motion retarget commits and releases the pending hold', { concurrency: false }, t => {
+    let reduced = false;
+    const f = r3Fixture(t, { reducedMotion: () => reduced }); f.close(); const [hold] = f.holds;
+    reduced = true; f.motion.show();
+    assert.equal(hold.cancels, 1); assert.equal(f.frames.size, 0);
+    assert.equal(f.overlay.hidden, false); assert.equal(f.overlay.dataset.modalMotionState, 'open'); f.assertForeign();
+  });
+  test('R3-H07 nonfinite RAF commits safely and releases the pending hold', { concurrency: false }, t => {
+    const f = r3Fixture(t); f.close(); const [hold] = f.holds;
+    f.frame(NaN); assert.equal(hold.cancels, 1); assert.equal(f.frames.size, 0);
+    assert.equal(f.overlay.hidden, true); f.assertForeign();
+  });
+  test('R3-H08 zero local animation time still creates an owned hold', { concurrency: false }, t => {
+    const f = r3Fixture(t, { namedTime: 0 }); f.close();
+    assert.equal(f.holds.length, 1); assert.equal(f.holds[0].currentTime, 0); f.assertForeign();
+  });
+  test('R3-H09 sampled manual CSS velocity remains positive after releasing hold', { concurrency: false }, t => {
+    const f = r3Fixture(t); f.motion.show();
+    f.css.scale = '1.005'; f.css.opacity = '0.6'; f.frame(100);
+    f.css.scale = '1.007'; f.css.opacity = '0.7'; f.clock.timeline = 104;
+    f.motion.hide(); const [hold] = f.holds; f.frame(108);
+    assert.equal(hold.cancels, 1);
+    assert.ok(Number(f.surface.style.getPropertyValue('scale').split(' ')[0]) > 1.007);
+    assert.ok(Number(f.surface.style.getPropertyValue('opacity')) > 0.7);
+    assert.ok(f.opacity() < 1); f.assertForeign();
+  });
+  for (const documentMode of ['absent', 'no-timeline']) {
+    test(`R3-F01 native classes with ${documentMode} document fall back without constructing hold`, { concurrency: false }, t => {
+      const f = r3Fixture(t, { documentMode, performanceTime: 100 });
+      assert.doesNotThrow(() => f.close());
+      assert.equal(f.effects.length, 0); assert.equal(f.holds.length, 0);
+      assert.equal(f.named.cancels, 1); f.frame(116);
+      assert.ok(f.opacity() > 0 && f.opacity() < 1); assert.equal(f.frames.size, 1); f.assertForeign();
+    });
+  }
+  for (const [label, namedTime] of [['null', null], ['NaN', NaN]]) {
+    test(`R3-F02 unresolved ${label} animation time falls back to manual scheduler`, { concurrency: false }, t => {
+      const f = r3Fixture(t, { namedTime }); f.close();
+      assert.equal(f.holds.length, 0); assert.equal(f.effects.length, 0);
+      f.frame(116); assert.ok(f.opacity() > 0 && f.opacity() < 1); f.assertForeign();
+    });
+  }
+  test('R3-F03 missing native classes retains manual close path', { concurrency: false }, t => {
+    const f = r3Fixture(t, { nativeEffects: false }); f.close();
+    assert.equal(f.holds.length, 0); assert.equal(f.named.cancels, 1);
+    f.frame(116); assert.ok(f.opacity() > 0 && f.opacity() < 1); f.assertForeign();
+  });
+}

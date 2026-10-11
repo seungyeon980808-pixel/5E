@@ -998,15 +998,21 @@ export function initRhwpExamWorkspace(state, services) {
     download(new Blob([bytes]), `${safeName(nameInput.value)}.${format}`);
     message('한글 파일 다운로드를 시작했습니다. 연결된 PNG에 그림 원본이 들어 있습니다.');
   }
-  let fileMenuFocus;
+  let fileMenuFocus, menuFocusLifetime=0;
   panel.addEventListener('focusin',e=>{if(e.target.closest('.exam-menu'))fileMenuFocus=e.target;});
   function preserveMenuFocus(){
     const open=panel.querySelector('[data-exam-menu][aria-expanded="true"]');if(!open || document.activeElement?.closest('.exam-menu'))return;
-    const target=fileMenuFocus?.isConnected&&fileMenuFocus.getClientRects().length?fileMenuFocus:open;
-    queueMicrotask(()=>{if(open.getAttribute('aria-expanded')==='true')target.focus({preventScroll:true});});
+    const lifetime=menuFocusLifetime;
+    queueMicrotask(()=>{
+      if(lifetime!==menuFocusLifetime || !panel.isConnected || panel.hidden || !panel.getClientRects().length ||
+        open.getAttribute('aria-expanded')!=='true' || document.activeElement?.closest('.exam-menu'))return;
+      const target=fileMenuFocus?.isConnected&&fileMenuFocus.getClientRects().length?fileMenuFocus:open;
+      if(!target.disabled)target.focus({preventScroll:true});
+    });
   }
   document.addEventListener('focusin',preserveMenuFocus,true);
   function closeMenus() {
+    menuFocusLifetime++;
     nativeRegion.closeMenu();
     panel.querySelectorAll('[data-exam-menu]').forEach(button => {
       button.setAttribute('aria-expanded','false');
@@ -1032,7 +1038,14 @@ export function initRhwpExamWorkspace(state, services) {
     const menu = event.target.closest('[data-exam-menu]');
     if (menu && !menu.disabled) {if (menu.getAttribute('aria-expanded') === 'true') closeMenus(); else openMenu(menu);return;}
     const button = event.target.closest('[data-exam-action]');
-    if (button && !button.disabled) {closeMenus();void run(() => actions[button.dataset.examAction]?.());}
+    if (button && !button.disabled) {
+      const action=button.dataset.examAction;
+      closeMenus();
+      void run(() => actions[action]?.()).then(()=>{
+        // The opener becomes focusable after run releases its busy state.
+        if(action==='close' && panel.hidden && !window.fiveEExam)document.querySelector('#exam-workspace-open')?.focus();
+      });
+    }
   });
   document.addEventListener('pointerdown', event => {if (!event.target.closest('.exam-menu,.exam-region-surface')) closeMenus();});
   function closeOpenMenu(event) {

@@ -704,6 +704,12 @@
       ]
     },
     {
+      "path": "tests/test-rhwp-exam-menu-focus-browser.cjs",
+      "findingIds": [
+        "RHWP-EXAM-WORKFLOW"
+      ]
+    },
+    {
       "path": "tests/test-rhwp-exam-ai-browser.cjs",
       "findingIds": [
         "RHWP-CUMULATIVE-SOURCE",
