@@ -7,6 +7,9 @@ import { isAnswerChoiceBoxCandidate, textBeforeFooter, trimImageCandidateAtExter
 import { mapQueryHighlights, queryHighlightTerms } from "../pdf-library/search.js?v=1.7.0-four-session-integration";
 
 const PREBUILT_PREVIEW_REVISION = "cropbox-v2";
+// Results are immutable. Reuse their searchable text across keystrokes without
+// retaining results from a replaced catalog.
+const searchableResultText = new WeakMap();
 
 async function providedPagePreview(document, source, result, options = {}) {
   // prebuiltPage: a full-page card may use the prebuilt page image even when it asks for the original page.
@@ -466,8 +469,17 @@ function pdfResults(documents, index, entriesByDocument = groupIndexEntries(inde
   return { results, sources, files };
 }
 
-function resultMatches(result, query, compact) {
-  if (!compact) return matchesText([result.title, result.searchText].join(" "), tokens(query));
+function resultMatches(result, queryTokens, compact) {
+  if (!compact) {
+    if (!queryTokens.length) return true;
+    let searchable = searchableResultText.get(result);
+    if (!searchable) {
+      const text = normalizedText([result.title, result.searchText].join(" "));
+      searchable = [text, text.replace(/\s+/gu, "")];
+      searchableResultText.set(result, searchable);
+    }
+    return queryTokens.every((token) => searchable.some((text) => text.includes(token)));
+  }
   const actual = result.metadata;
   if (!examMetadataMatches(actual, compact)) return false;
   if (compact.itemNumber === null) return true;
@@ -578,6 +590,16 @@ function createProvider(input, preparedPdf) {
   });
   const materializers = input.materializers ?? {};
 
+  function groupPdfResultsBySource() {
+    const grouped = new Map();
+    for (const result of pdf.results) {
+      if (!grouped.has(result.sourceId)) grouped.set(result.sourceId, []);
+      grouped.get(result.sourceId).push(result);
+    }
+    return grouped;
+  }
+  let pdfResultsBySource = groupPdfResultsBySource();
+
   async function loadPdfPage(file, pageNumber = 1, options = {}) {
     const document = documents.find((candidate) => candidate.id === file.documentId);
     const page = Number(pageNumber);
@@ -611,6 +633,7 @@ function createProvider(input, preparedPdf) {
 
   function search(options = {}) {
     const compact = parseCompactExamCode(options.query);
+    const queryTokens = compact ? [] : tokens(options.query ?? "");
     const allowedSources = Array.isArray(options.sourceIds) ? new Set(options.sourceIds) : null;
     const allowedKinds = normalizedKinds(options.kinds);
     let found = allResults().filter((result) =>
@@ -618,7 +641,7 @@ function createProvider(input, preparedPdf) {
       && (!allowedKinds || allowedKinds.has(result.kind))
       && matchesFilters(result, options.filters)
       && (allowedKinds || result.kind !== "page" || result.metadata.boundaryUncertain === true)
-      && resultMatches(result, options.query ?? "", compact));
+      && resultMatches(result, queryTokens, compact));
     if (!allowedKinds && compact?.itemNumber !== null && found.some((result) => result.kind === "crop")) {
       found = found.filter((result) => result.kind === "crop");
     }
@@ -672,12 +695,13 @@ function createProvider(input, preparedPdf) {
       const compact = parseCompactExamCode(options.query);
       const allowedSources = Array.isArray(options.sourceIds) ? new Set(options.sourceIds) : null;
       const queryText = options.query ?? "";
+      const queryTokens = compact ? [] : tokens(queryText);
       const found = pdf.files.filter((file) => {
         if (allowedSources && !allowedSources.has(file.sourceId)) return false;
         if (!matchesPdfInventoryFilters(file, options.filters)) return false;
         if (!String(queryText).trim()) return true;
-        return resultMatches(file, queryText, compact) || pdf.results.some((result) => result.sourceId === file.sourceId
-          && resultMatches(result, queryText, compact));
+        return resultMatches(file, queryTokens, compact) || (pdfResultsBySource.get(file.sourceId) ?? [])
+          .some((result) => resultMatches(result, queryTokens, compact));
       });
       return Object.freeze(found.sort(compareExamResults).map((file) => Object.freeze({
         ...file,
@@ -780,12 +804,13 @@ function createProvider(input, preparedPdf) {
     },
     listPdfPages(options = {}) {
       const compact = parseCompactExamCode(options.query);
+      const queryTokens = compact ? [] : tokens(options.query ?? "");
       const allowedSources = Array.isArray(options.sourceIds) ? new Set(options.sourceIds) : null;
       const found = pdf.results.filter((result) => result.kind === "page"
         && (!allowedSources || allowedSources.has(result.sourceId))
         && (!options.sourceId || result.sourceId === options.sourceId)
         && matchesFilters(result, options.filters)
-        && resultMatches(result, options.query ?? "", compact))
+        && resultMatches(result, queryTokens, compact))
         .map((result) => contextualized(result, options.query ?? ""));
       const limit = Number.isInteger(options.limit) && options.limit > 0 ? boundedLimit(options.limit) : found.length;
       return Object.freeze(found.sort(compareExamResults).slice(0, limit));
@@ -822,6 +847,7 @@ function createProvider(input, preparedPdf) {
       searchIndex = next.searchIndex ?? { schemaVersion: "pdf-search-index-v1", entries: [] };
       revision = String(next.revision ?? next.catalogRevision ?? revision);
       pdf = pdfResults(documents, searchIndex);
+      pdfResultsBySource = groupPdfResultsBySource();
     },
     getSources() {
       return createHierarchicalSourceNodes([...images.sources, ...pdf.sources]);

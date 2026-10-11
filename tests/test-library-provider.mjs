@@ -82,3 +82,18 @@ test("PDF files and page results expose target dimensions before materialization
   assert.deepEqual(page.preview.pageGeometry, { width: 600, height: 800 });
   assert.equal(file.getPageGeometry(99), null);
 });
+
+test("repeated searches preserve Unicode, spacing and catalog replacement matches", () => {
+  const oldDocument = { ...documents[0], title: "ＡＢＣ 힘 운동" };
+  const provider = makeProvider({ pdfDocuments: [oldDocument], pdfSearchIndex: { entries: [entries[0]] } });
+  for (const query of ["abc", "힘운동", "ABC 힘", "없는 검색", "abc"]) {
+    assert.equal(provider.listPdfFiles({ query }).length, query === "없는 검색" ? 0 : 1);
+  }
+  const replacement = { ...oldDocument, title: "새 교과서", pages: [{ pageNumber: 1, text: "새로운 본문" }] };
+  provider.replacePdfCatalog({ documents: [replacement], searchIndex: { entries: [] }, revision: "new" });
+  assert.equal(provider.listPdfFiles({ query: "abc" }).length, 0);
+  assert.equal(provider.listPdfFiles({ query: "힘운동" }).length, 0);
+  assert.equal(provider.listPdfFiles({ query: "새로운본문" }).length, 1);
+  assert.equal(provider.search({ query: "새로운본문", kinds: ["page"] }).length, 1);
+  assert.equal(provider.listPdfPages({ query: "새로운본문" }).length, 1);
+});
