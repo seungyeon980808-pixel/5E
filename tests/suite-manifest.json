@@ -1343,6 +1343,13 @@
       "path": "tests/test-ai-task-menu-viewport-browser.cjs",
       "findingIds": ["AI-TASK-MENU-VIEWPORT-EDGES"],
       "reason": "Checks expanded task menus at all viewport edges, short-height scrolling, keyboard collapse/send, pointer send and focus restoration in root/preview Chromium/WebKit."
+    },
+    {
+      "path": "tests/test-formula-spacing-browser.cjs",
+      "findingIds": [
+        "NQA-019",
+        "TEXT-FORMULA-SPACING"
+      ]
     }
   ],
   "deferred": [

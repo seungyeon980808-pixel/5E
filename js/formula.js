@@ -157,6 +157,10 @@ function parseFormula(src) {
     }
     // 함수명·기호는 백슬래시로 입력했을 때만 특수 처리 — bare "sin"은 이탤릭 리터럴
     if (isCommand) {
+      if (w === "quad" || w === "qquad") {
+        skipSpaces(); // 명령 뒤 공백은 구분자이며 별도 글자 간격으로 더하지 않는다.
+        return { type: "space", em: w === "qquad" ? 2 : 1 };
+      }
       if (FUNCTION_NAMES.has(w)) return { type: "func", value: w };        // \sin \cos… → 정자(로만)
       if (SYMBOLS[w] != null) return { type: "text", value: SYMBOLS[w] };   // \pm \times \to …
     }
@@ -495,6 +499,7 @@ function layout(node, F, font) {
   switch (node && node.type) {
     case "row": return layoutRow(node, F, font);
     case "text": return layoutText(node.value, F, font);
+    case "space": return { w: F * node.em, ascent: 0, descent: 0, draw() {} };
     case "func": return layoutFunc(node.value, F, font);
     case "script": return layoutScript(node, F, font);
     case "frac": return layoutFrac(node, F, font);
