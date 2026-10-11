@@ -1298,6 +1298,13 @@
         "PAGE-CONTEXT-LIVE-TAB-ANCHOR"
       ],
       "reason": "Exercises inactive-tab right-click positioning, keyboard reopening, scaled menus and page duplication/deletion/undo for root and preview in Chromium/WebKit."
+    },
+    {
+      "path": "tests/test-graph-content-export-browser.cjs",
+      "findingIds": [
+        "GRAPH-CONTENT-EXPORT-PAINTED-BOUNDS"
+      ],
+      "reason": "Compares automatic graph export bounds to independently scanned raster pixels for axis labels, rotation, offsets and filled areas; verifies hidden layers, explicit crop and immutable state in root/preview Chromium/WebKit."
     }
   ],
   "deferred": [

@@ -249,8 +249,42 @@ function rotatedBBox(bb, deg, cx, cy) {
   }
   return { x: x0, y: y0, w: x1 - x0, h: y1 - y0 };
 }
+function renderedGraphBounds(s, options) {
+  const bounds = new Map();
+  const graphs = s.objects.filter(obj => (obj.type === 'coordplane' || obj.type === 'funcgraph') && !isHidden(s, obj, options));
+  if (!graphs.length || typeof document === 'undefined' || !document.body) return bounds;
+  let svg;
+  try {
+    svg = document.createElementNS(SVG_NS, 'svg');
+    svg.setAttribute('aria-hidden', 'true');
+    svg.setAttribute('data-export-measure', '');
+    svg.style.cssText = 'position:absolute;left:-10000px;top:0;width:1px;height:1px;overflow:visible;visibility:hidden;pointer-events:none;';
+    const wrappers = [];
+    for (const obj of graphs) {
+      const node = renderObject(obj, s.objects);
+      if (!node) continue;
+      // The parent's bbox includes the child's rotation, axis labels, markers
+      // and filled regions. Selection geometry deliberately excludes these.
+      const wrapper = document.createElementNS(SVG_NS, 'g');
+      wrapper.appendChild(node); svg.appendChild(wrapper);
+      wrappers.push([obj, wrapper]);
+    }
+    document.body.appendChild(svg);
+    for (const [obj, wrapper] of wrappers) {
+      try {
+        const b = wrapper.getBBox();
+        if ([b.x, b.y, b.width, b.height].every(Number.isFinite) && b.width >= 0 && b.height >= 0 && b.width + b.height > 0) {
+          bounds.set(obj, { x: b.x, y: b.y, w: b.width, h: b.height });
+        }
+      } catch (_) { /* Use geometry when rendered measurement is unavailable. */ }
+    }
+  } catch (_) { /* Non-browser callers keep the existing geometry fallback. */ }
+  finally { svg?.remove?.(); }
+  return bounds;
+}
 export function getContentBounds(s, options = {}, padding = 0) {
   let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  const graphBounds = renderedGraphBounds(s, options);
   for (const obj of s.objects) {
     if (isHidden(s, obj, options)) continue;
     let bb = null;
@@ -259,6 +293,12 @@ export function getContentBounds(s, options = {}, padding = 0) {
     if (!bb || !isFinite(bb.x) || !isFinite(bb.y) || !(bb.w >= 0) || !(bb.h >= 0)) continue;
     const rot = Number(obj.rotation) || 0;
     if (rot) bb = rotatedBBox(bb, rot, bb.x + bb.w / 2, bb.y + bb.h / 2);
+    const rendered = graphBounds.get(obj);
+    if (rendered) {
+      const left = Math.min(bb.x, rendered.x), top = Math.min(bb.y, rendered.y);
+      bb = { x: left, y: top, w: Math.max(bb.x + bb.w, rendered.x + rendered.w) - left,
+        h: Math.max(bb.y + bb.h, rendered.y + rendered.h) - top };
+    }
     const half = (Number(obj.strokeWidth) || 0) / 2;
     if (bb.x - half < x0) x0 = bb.x - half;
     if (bb.y - half < y0) y0 = bb.y - half;
