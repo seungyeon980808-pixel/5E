@@ -109,7 +109,10 @@ function sampleFunctionPoints(expr, domainMin, domainMax, plane, opts = {}) {
     const probes = DETAIL_PROBES.map((t) => ({ t, x: plane.xScale === 'log' ? x0 * (x1 / x0) ** t : x0 + (x1 - x0) * t }));
     const values = [y0, ...probes.map((probe) => valueAt(probe.x)), y1];
     const jump = hasJumpFunction && isJumpCell(values, ySpan);
-    const detail = jump ? [] : probes.filter((probe, index) => linearErrorMm(y0, y1, values[index + 1], probe.t, plane) > eps);
+    // Entirely non-real cells (sqrt/log outside their domain) have no stroke to
+    // refine. Mixed cells still keep their probes to preserve domain boundaries.
+    const hasFiniteValue = values.some(Number.isFinite);
+    const detail = jump || !hasFiniteValue ? [] : probes.filter((probe, index) => linearErrorMm(y0, y1, values[index + 1], probe.t, plane) > eps);
     projectedPoints += detail.length + (jump ? 1 : 0);
     detailByCell.push({ x0, x1, y0, y1, probes, values, jump, detail });
   }

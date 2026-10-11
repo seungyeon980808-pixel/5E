@@ -186,6 +186,10 @@
       ]
     },
     {
+      "path": "tests/test-graph-partial-domain.mjs",
+      "findingIds": ["NQA-020", "GRAPH-PARTIAL-REAL-DOMAIN"]
+    },
+    {
       "path": "tests/test-native-graph.mjs",
       "findingIds": [
         "GRAPH-CUMULATIVE-SOURCE"
@@ -1350,6 +1354,10 @@
         "NQA-019",
         "TEXT-FORMULA-SPACING"
       ]
+    },
+    {
+      "path": "tests/test-graph-partial-domain-browser.cjs",
+      "findingIds": ["NQA-020", "GRAPH-PARTIAL-REAL-DOMAIN"]
     }
   ],
   "deferred": [
