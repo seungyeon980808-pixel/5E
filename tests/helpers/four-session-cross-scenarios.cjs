@@ -1164,8 +1164,8 @@ async function lifecycle(ctx, kind, { exam = false } = {}) {
   await app(ctx, `owner-${kind}`, async page => {
     const label = await makeLabel(ctx, page, { verification: exam ? 'full' : 'draft-first' }), rich = await richUnion(ctx, page, label);
     if (exam) {
-      await sendAiFigure(ctx, page, 'cross-label-task'); await require('./rhwp-exam.cjs').action(page, 'close'); await page.locator('#ai-image-install-open').click();
-      await sendAiFigure(ctx, page, 'cross-graph-task'); await require('./rhwp-exam.cjs').action(page, 'close'); await page.locator('#ai-image-install-open').click();
+      await sendAiFigure(ctx, page, 'cross-label-task'); await require('./rhwp-exam.cjs').action(page, 'close'); await openAI(page);
+      await sendAiFigure(ctx, page, 'cross-graph-task'); await require('./rhwp-exam.cjs').action(page, 'close'); await openAI(page);
       await ctx.check('same-owner replacement has a graph linked by the actual document Send',async()=>{
         const task=(await tabs(page)).find(tab=>tab.id==='cross-graph-task');assert.ok(task.examLink?.tabId&&task.examLink?.assetId);
       });
@@ -1192,7 +1192,7 @@ async function lifecycle(ctx, kind, { exam = false } = {}) {
     if (exam) {
       await page.evaluate(() => { const gate = __graphRenderGate; window.__heldGraph = gate; window.__graphRenderGate = null; });
       await closeAI(page);
-      await page.locator('#exam-workspace-open').click(); await require('./rhwp-exam.cjs').idle(page);
+      await openExamDocument(page);
       replacementFile = await examFile(ctx, page, 'save', `QA6-owner-${kind}.5e`);
       await page.evaluate(() => { __graphRenderGate = window.__heldGraph; });
     }
@@ -1653,15 +1653,16 @@ scenarios.QA6 = async ctx => {
         HTMLCanvasElement.prototype.toBlob = original; __cross.exportEntered.resolve();
       };
       __cross.disposers.push(() => { HTMLCanvasElement.prototype.toBlob = original; });
-      document.querySelector('#exam-send').click();
+      document.querySelector('[data-source-apply]').click();
     });
     await page.evaluate(() => __cross.deadline(__cross.exportEntered.promise, 'source rasterization entered'));
-    await ctx.check('Send/Exam disabled during the real held rasterization', async () => {
-      for (const selector of ['#exam-send', '#exam-workspace-open']) assert.equal(await page.locator(selector).isDisabled(), true);
+    await ctx.check('actual source Apply, Return and HWP entry disabled during held rasterization', async () => {
+      for (const selector of ['#exam-send', '[data-source-apply]']) assert.equal(await page.locator(selector).isDisabled(), true);
+      assert.equal(await page.locator('#exam-edit-bar').getByRole('button',{name:'돌아가기',exact:true}).isDisabled(),true);
     });
     const pendingBefore = await h.pictures(page);
-    await page.evaluate(() => document.querySelector('#exam-workspace-open').click());
-    await ctx.check('pending Exam click cannot change picture/document or source ownership', async () => assert.deepEqual(await h.pictures(page), pendingBefore)); ctx.cover('pending-buttons-lock');
+    await page.evaluate(() => document.querySelector('#exam-send').click());
+    await ctx.check('disabled HWP entry click cannot change picture/document or source ownership', async () => assert.deepEqual(await h.pictures(page), pendingBefore)); ctx.cover('pending-buttons-lock');
     await ctx.act('release explicitly held source PNG export', () => page.evaluate(() => __cross.resumeExport()), page); await h.idle(page);
     const applied = (await h.pictures(page))[0];
     await ctx.check('Send committed live native text without explicit blur and exported one replacement', async () => {
@@ -1675,7 +1676,7 @@ scenarios.QA6 = async ctx => {
     await page.evaluate(() => {
       const original = HTMLCanvasElement.prototype.toBlob;
       HTMLCanvasElement.prototype.toBlob = function (callback) { HTMLCanvasElement.prototype.toBlob = original; callback(null); };
-      __cross.disposers.push(() => { HTMLCanvasElement.prototype.toBlob = original; }); document.querySelector('#exam-send').click();
+      __cross.disposers.push(() => { HTMLCanvasElement.prototype.toBlob = original; }); document.querySelector('[data-source-apply]').click();
     });
     const dialog = page.getByRole('dialog', { name: '시험지 보내기' }); await dialog.waitFor({ state: 'visible' });
     await ctx.check('real export rejection is visible and keeps current document/source', async () => {
@@ -1690,13 +1691,13 @@ scenarios.QA6 = async ctx => {
     await page.evaluate(() => window.dispatchEvent(new Event('5e:exam-workspace-changed'))); await arrived(page, 'passive-autosave');
     await ctx.check('passive autosave retains visible error/source draft and union', async () => { assert.equal(await page.locator('#exam-status').getAttribute('data-error'), 'true'); assert.equal(await page.locator('#exam-source-region').isVisible(), true); });
     await unionEqual(ctx, await tabs(page), rich, 'failed send/autosave: rich candidate union');
-    await page.locator('#exam-send').click(); await h.idle(page);
+    await page.locator('[data-source-apply]').click(); await h.idle(page);
     await ctx.check('explicit retry succeeds once, sends committed draft and clears error', async () => {
       assert.equal(await page.locator('#exam-status').getAttribute('data-error'), 'false'); assert.equal((await h.pictures(page)).length, 1);
       assert.equal((await h.pictures(page))[0].figure.source.pages[0].objects.find(o => o.id === sourceLabel.id).text, '실패해도 보존하는 초안');
     }); ctx.cover('export-failure-autosave-retry');
     await h.originalEdit(page); await closeAI(page); await sourceText(ctx, page, sourceLabel.id, '돌아갈 때 보존할 초안');
-    await page.evaluate(() => document.querySelector('#exam-workspace-open').click()); await h.idle(page);
+    await openExamDocument(page);
     await page.evaluate(() => {
       window.dispatchEvent(new Event('resize')); document.dispatchEvent(new Event('scroll'));
       return __cross.deadline(new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))), 'transition frames');
@@ -2693,7 +2694,7 @@ async function providerSettlement(ctx,page){
 }
 async function canceledOwners(ctx){
   for(const kind of ['cancel','close','dispose'])await app(ctx,'provider-owner-'+kind,async page=>{
-    const h=require('./rhwp-exam.cjs'),label=await makeLabel(ctx,page,{verification:'full'}),rich=await richUnion(ctx,page,label);await sendAiFigure(ctx,page,'cross-label-task');await h.action(page,'close');await page.locator('#ai-image-install-open').click();
+    const h=require('./rhwp-exam.cjs'),label=await makeLabel(ctx,page,{verification:'full'}),rich=await richUnion(ctx,page,label);await sendAiFigure(ctx,page,'cross-label-task');await h.action(page,'close');await openAI(page);
     const next=await prepareSend(ctx,page,'task-1','delayed provider owner '+kind,'restore-editable'),count=(await tabs(page)).find(t=>t.id==='task-1').generated.length;
     const sent=await h.pictures(page),baselineObjects=await objects(page),settled=await page.evaluate(()=>__cross.providerSettlements||0);let consumed=next+1;
     await arm(page,'owner-provider-settled',n=>(__cross.providerSettlements||0)>n,settled);
@@ -2714,15 +2715,17 @@ async function canceledOwners(ctx){
   await app(ctx,'linked-send-wrong-owner-and-late-metadata',async page=>{
     const h=require('./rhwp-exam.cjs'),label=await makeLabel(ctx,page,{verification:'full'});await richUnion(ctx,page,label);await sendAiFigure(ctx,page,'cross-label-task');await h.originalEdit(page,0);await selectTask(ctx,page,'cross-graph-task');
     const before=await h.pictures(page),source=await objects(page),calls=await page.evaluate(()=>__task2.sends.length);
-    await examCycle(page,()=>page.locator('#exam-send').click());const dialog=page.getByRole('dialog',{name:'시험지 보내기'});await dialog.waitFor({state:'visible'});
-    await ctx.check('actual linked source Send rejects foreign active AI task before mutation/provider submission',async()=>{assert.match(await dialog.textContent(),/원래.*AI.*작업 탭|연결/);assert.deepEqual(await h.pictures(page),before);assert.deepEqual(await objects(page),source);assert.equal(await page.evaluate(()=>__task2.sends.length),calls);});await dialog.getByRole('button',{name:'확인',exact:true}).click();
+    await page.locator('[data-source-apply]').waitFor({state:'hidden'});
+    await ctx.check('foreign AI owner does not expose linked source Apply',async()=>assert.equal(await page.locator('[data-source-apply]').isVisible(),false));
+    await examCycle(page,()=>page.evaluate(()=>document.querySelector('[data-source-apply]').click()));const dialog=page.getByRole('dialog',{name:'시험지 보내기'});await dialog.waitFor({state:'visible'});
+    await ctx.check('stale source Apply rejects foreign active AI task before mutation/provider submission',async()=>{assert.match(await dialog.textContent(),/원래.*AI.*작업 탭|연결/);assert.deepEqual(await h.pictures(page),before);assert.deepEqual(await objects(page),source);assert.equal(await page.evaluate(()=>__task2.sends.length),calls);});await dialog.getByRole('button',{name:'확인',exact:true}).click();
     await selectTask(ctx,page,'cross-label-task');await closeAI(page);const originalMeta=await page.evaluate(()=>structuredClone(__candidateQA.state.get().pages.find(p=>p.id===__candidateQA.state.get().activePageId).meta));
     await page.evaluate(()=>{
       const original=HTMLCanvasElement.prototype.toBlob;__cross.lateExport=Promise.withResolvers();
       HTMLCanvasElement.prototype.toBlob=function(callback,...args){const canvas=this;HTMLCanvasElement.prototype.toBlob=original;__cross.releaseLateExport=()=>original.call(canvas,callback,...args);__cross.lateExport.resolve();};
       __cross.disposers.push(()=>{HTMLCanvasElement.prototype.toBlob=original;});
     });
-    await page.evaluate(()=>document.querySelector('#exam-send').click());await page.evaluate(()=>__cross.deadline(__cross.lateExport.promise,'actual source export held before link change'));
+    await page.evaluate(()=>document.querySelector('[data-source-apply]').click());await page.evaluate(()=>__cross.deadline(__cross.lateExport.promise,'actual source export held before link change'));
     await page.evaluate(()=>__candidateQA.state.update(s=>{const p=s.pages.find(p=>p.id===s.activePageId);p.meta.examLink={...p.meta.examLink,assetId:'foreign-late-asset'};}));
     const edited=await fullState(page);await page.evaluate(()=>__cross.releaseLateExport());await h.idle(page);
     await ctx.check('held source raster completion rechecks current metadata ownership before native replacement',async()=>{assert.equal(await page.locator('#exam-status').getAttribute('data-error'),'true');assert.deepEqual(await h.pictures(page),before);assert.deepEqual(await fullState(page),edited);assert.equal(await page.evaluate(()=>__task2.sends.length),calls);});
