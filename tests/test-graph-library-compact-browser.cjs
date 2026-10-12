@@ -6,12 +6,13 @@ const path = require('node:path');
 const {chromium,webkit} = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const {pointerOnImage} = require('./helpers/crop-loading-fixture.cjs');
 const crypto = require('node:crypto');
+const {fixturePack} = require('./helpers/pdf-runtime-retry-fixture.cjs');
 const Module = require('node:module');
 // This component fixture supplies the same public openGraph callback as exam-library.
 // Only the helper's constructor arguments and an accepted-map observation are adapted.
 const cropHelperPath = require.resolve('./helpers/crop-loading-fixture.cjs');
 const cropHelperSource = fs.readFileSync(cropHelperPath,'utf8');
-const graphFactorySeam = '      getProvider: async () => provider, insertMaterialized: async () => {},';
+const graphFactorySeam = '      getProvider: async () => provider, insertMaterialized: async (...args) => window.__insertMaterialized?.(...args),';
 const graphFactoryReplacement = `${graphFactorySeam}
       openGraph: async reference => {
         const libraryUrl = new URL(moduleUrl, window.location.href);
@@ -39,6 +40,11 @@ async function crop(page,ui,fraction=.25) {
   await page.mouse.down();await page.mouse.move(point.x+80,point.y+90,{steps:5});await page.mouse.up();
   await ui.locator('[data-unilib-crop-save]').click();
 }
+async function showSource(page) {
+ await page.waitForFunction(()=>document.querySelector('[data-trace-view] option[value=overlay]')?.disabled===false);
+ await page.locator('select[data-trace-view]').selectOption('overlay');
+ await page.locator('#gm-preview [data-trace-layer="source"]').waitFor();
+}
 (async()=>{
  fs.mkdirSync(out,{recursive:true});const reports=[];
  for(const [name,engine] of [['chromium',chromium],['webkit',webkit]]) {
@@ -53,9 +59,9 @@ async function crop(page,ui,fraction=.25) {
    assert(await ui.locator('[data-unilib-crop-graph]').isEnabled());
    assert(await ui.locator('[data-unilib-crop-graph]').isVisible());
    await ui.locator('[data-unilib-crop-graph]').click();
-   await page.locator('#gm-preview [data-trace-layer="source"]').waitFor();
+   await showSource(page);
    assert(!await ui.isVisible());assert(await page.locator('#gm-tab-coord').isVisible());
-   record('Accepted PDF crop opens real manual coordinate editor with an overlay source, without an AI conversion');
+   record('Accepted PDF crop opens real manual coordinate editor with a retained source; overlay chosen explicitly, without an AI conversion');
    await page.locator('#gm-tab-func-btn').click();await page.locator('#gm-add-series').click();
    await page.locator('#gm-expr').fill('cos(pi*x)^2');await page.locator('#gm-expr').press('Tab');
    await page.locator('#gm-tab-annot-btn').click();
@@ -80,18 +86,18 @@ async function crop(page,ui,fraction=.25) {
     const {registerPdfReferencePicker}=await import('/js/pdf-library/reference-picker.js'+version);
     registerPdfReferencePicker(({kind,onAdd,trigger})=>window.cropFixture.beginReferenceSelection({kind,onAdd},trigger));
    },version);
-   await page.getByRole('button',{name:'라이브러리에서 선택',exact:true}).click();await ui.waitFor({state:'visible'});
+   await page.locator('[data-trace-import]').selectOption('library');await ui.waitFor({state:'visible'});
    assert(!await page.locator('#graph-modal-overlay').isVisible());
    await ui.locator('[data-unilib-close]').focus();await page.keyboard.press('Enter');await page.locator('#graph-modal-overlay').waitFor({state:'visible'});
    assert.equal(await page.locator('#gm-expr').inputValue(),'cos(pi*x)^2');assert.equal(await bars.count(),3);
-   assert(await page.getByRole('button',{name:'라이브러리에서 선택',exact:true}).evaluate(n=>n===document.activeElement));
+   assert(await page.locator('[data-trace-import]').evaluate(n=>n===document.activeElement));
    record('Library cancellation restores pending expression/annotations and keyboard focus');
-   await page.getByRole('button',{name:'라이브러리에서 선택',exact:true}).click();await ui.waitFor({state:'visible'});
+   await page.locator('[data-trace-import]').selectOption('library');await ui.waitFor({state:'visible'});
    await ui.locator('[data-unilib-adjust]').click();await ui.locator('[data-unilib-crop]').waitFor({state:'visible'});await ui.locator('[data-unilib-crop-load-state]').waitFor({state:'hidden'});
    await crop(page,ui,.8);
    await ui.locator('[data-unilib-crop-collection] [data-unilib-graph-crop]').last().click();
    await ui.locator('[data-unilib-crop-graph]').click();await page.locator('#graph-modal-overlay').waitFor({state:'visible'});
-   await page.locator('#gm-preview [data-trace-layer="source"]').waitFor();
+   await showSource(page);
    assert.equal(await page.locator('#gm-expr').inputValue(),'cos(pi*x)^2');
    await page.locator('#gm-confirm').click();
    const saved=await page.evaluate(async version=>{
@@ -102,7 +108,7 @@ async function crop(page,ui,fraction=.25) {
    assert.equal(saved.find(o=>o.type==='funcgraph'&&o.planeId===plane.id)?.expr,'cos(pi*x)^2');
    assert.equal(plane.graphAnnotations.length,3);
    await page.evaluate(async ({version,id})=>(await import('/js/graph/graph-modal.js'+version)).openGraphModal(id,'func'),{version,id:plane.id});
-   await page.locator('#gm-preview [data-trace-layer="source"]').waitFor();assert.equal(await page.locator('#gm-expr').inputValue(),'cos(pi*x)^2');
+   await showSource(page);assert.equal(await page.locator('#gm-expr').inputValue(),'cos(pi*x)^2');
    await page.locator('#gm-cancel').click();
    const after=await page.evaluate(async version=>structuredClone((await import('/js/state.js'+version)).state.get().objects),version);
    assert.deepEqual(after,saved);record('A different crop replaces the reference, keeps the draft, and retains pixel data/source provenance through Apply/reopen/Cancel');
@@ -111,22 +117,53 @@ async function crop(page,ui,fraction=.25) {
    await crop(page,ui,.5);
    await ui.locator('[data-unilib-crop-workbench]').click();
    const retained=await page.evaluate(()=>[...window.__graphCrops.values()][0].result);
-   await ui.locator('[data-unilib-graph]').click();await page.locator('#gm-preview [data-trace-layer="source"]').waitFor();
+   await ui.locator('[data-unilib-graph]').click();await showSource(page);
    await page.locator('#gm-confirm').click();
    const created=await page.evaluate(async ({version,ids})=>(await import('/js/state.js'+version)).state.get().objects.find(o=>o.type==='coordplane'&&!ids.includes(o.id)),{version,ids:saved.map(o=>o.id)});
    assert(created.graphTrace.reference.data.startsWith('data:image/png'));assert.deepEqual(created.graphTrace.reference.source.rect,retained.provenance.rect);
    record('Workbench coordinate/function action retains the initial crop reference when Apply is clicked without touching comparison settings');
    const app=await browser.newPage({viewport:{width:1440,height:1000},reducedMotion:'reduce'});
+   const pdfFixture=fixturePack();
+   await app.route('**/assets/pdf-library/catalog-bootstrap.json',route=>route.fulfill({status:404,body:'controlled catalog fixture'}));
+   await app.route('https://5e-google-drive-gateway.5e-desktop.workers.dev/**',route=>{
+    const url=decodeURIComponent(new URL(route.request().url()).pathname);
+    const body=url.endsWith('/pack.json')?pdfFixture.pack:url.endsWith('/checksums.json')?pdfFixture.checksums:url.endsWith('/catalog.json')?pdfFixture.catalog:url.endsWith('/search-index.json')?pdfFixture.search:pdfFixture.pdf;
+    return route.fulfill({contentType:Buffer.isBuffer(body)?'application/pdf':'application/json',body:Buffer.isBuffer(body)?body:JSON.stringify(body)});
+   });
+   await app.route('**/js/unified-library-ui.js*',route=>{
+    const source=fs.readFileSync(path.join(root,'js/unified-library-ui.js'),'utf8');
+    assert.equal(source.split('const acceptedAssets = new Map();').length-1,1);
+    return route.fulfill({contentType:'text/javascript',body:source.replace('const acceptedAssets = new Map();','const acceptedAssets = new Map(); window.__actualAcceptedAssets=acceptedAssets;')});
+   });
    await app.addInitScript(()=>{localStorage.setItem('5e.tutorial.bannerSeen','true');localStorage.setItem('5e.preview:5e.tutorial.bannerSeen','true');localStorage.setItem('5e.preview:5e.mode','pro');});
-   await app.goto(process.env.PREVIEW_URL+'?mode=pro',{waitUntil:'networkidle'});
+   await app.goto(process.env.PREVIEW_URL+'?mode=pro&mobile=0&exam=0',{waitUntil:'networkidle'});
    await app.evaluate(async version=>(await import('./js/graph/graph-modal.js'+version)).openGraphModal(null,'func'),version);
    await app.locator('#gm-add-series').click();await app.locator('#gm-expr').fill('2*x');await app.locator('#gm-expr').press('Tab');
-   await app.getByRole('button',{name:'라이브러리에서 선택',exact:true}).click();
+   await app.locator('[data-trace-import]').selectOption('library');
    const live=app.locator('.unified-library-overlay');await live.waitFor({state:'visible'});
    assert.equal(await live.locator('[data-unilib-graph]').textContent(),'그래프 원본으로 선택');
    assert(!await live.locator('[data-unilib-ai]').isVisible());
    await live.locator('[data-unilib-close]').click();await app.locator('#graph-modal-overlay').waitFor({state:'visible'});
-   assert.equal(await app.locator('#gm-expr').inputValue(),'2*x');await app.locator('#gm-cancel').click();
+   assert.equal(await app.locator('#gm-expr').inputValue(),'2*x');
+   await app.locator('[data-trace-import]').selectOption('library');await live.waitFor({state:'visible'});
+   await app.waitForFunction(()=>document.querySelector('.unified-library-overlay').dataset.searchReadiness==='ready');
+   await live.locator('[data-unilib-type="pdf"]').click();
+   await live.locator('[data-result-kind="pdf"]').first().click();
+   await live.locator('[data-unilib-adjust]').click();await live.locator('[data-unilib-crop-load-state]').waitFor({state:'hidden'});
+   await crop(app,live);await live.locator('[data-unilib-crop-workbench]').click();
+   const actualCrop=await app.evaluate(()=>structuredClone([...window.__actualAcceptedAssets.values()][0]));
+   await live.locator('[data-unilib-graph]').click();await app.locator('#graph-modal-overlay').waitFor({state:'visible'});
+   assert.equal(await app.locator('select[data-trace-view]').inputValue(),'graph','library import retains Graph only as the default');
+   await showSource(app);assert.equal(await app.locator('#gm-expr').inputValue(),'2*x');
+   await app.locator('#gm-confirm').click();
+   const actualPlane=await app.evaluate(async version=>(await import('./js/state.js'+version)).state.get().objects.find(o=>o.type==='coordplane'),version);
+   actualCrop.result.provenance.rect.forEach((value,index)=>assert.ok(Math.abs(actualPlane.graphTrace.reference.source.rect[index]-value)<=1e-6,'PDF normalization may round bounds below a source pixel'));
+   assert.deepEqual(actualPlane.graphTrace.reference.source.rect,actualCrop.materialized.source.rect,'the exact renderer source bounds are retained');
+   assert.equal(actualPlane.graphTrace.reference.source.documentId,actualCrop.result.provenance.documentId);
+   assert.equal(actualPlane.graphTrace.reference.data,actualCrop.materialized.dataUrl,'the actual catalog/rasterizer transfers the prepared crop pixels');
+   await app.evaluate(async({version,id})=>(await import('./js/graph/graph-modal.js'+version)).openGraphModal(id,'func'),{version,id:actualPlane.id});
+   await showSource(app);assert.equal(await app.locator('#gm-expr').inputValue(),'2*x');await app.locator('#gm-cancel').click();
+   record('Actual app catalog, PDF renderer, crop tray and graph dropdown preserve exact PNG pixels, source bounds within PDF normalized precision and expression through Apply/reopen');
    await app.evaluate(async({version,objects,id})=>{
     const {state}=await import('./js/state.js'+version);state.update(s=>{s.objects=objects;s.groups=[];s.selectedIds=[];});
     (await import('./js/graph/graph-modal.js'+version)).openGraphModal(id,'func');

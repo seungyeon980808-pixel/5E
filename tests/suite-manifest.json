@@ -816,6 +816,7 @@
     {
       "path": "tests/test-graph-library-compact-browser.cjs",
       "findingIds": [
+        "UX-U29-ACTUAL-LIBRARY-IMPORT",
         "GRAPH-LIBRARY-UNION",
         "GRAPH-EDITOR-LIBRARY-COMPACT"
       ]

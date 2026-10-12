@@ -160,4 +160,4 @@ async function runPdfRuntimeRetryCases({ origin, evidence }) {
   return results;
 }
 
-module.exports = { runPdfRuntimeRetryCases };
+module.exports = { runPdfRuntimeRetryCases, fixturePack };
