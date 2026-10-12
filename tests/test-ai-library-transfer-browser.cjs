@@ -3,19 +3,19 @@ const fs = require('node:fs');
 const path = require('node:path');
 const http = require('node:http');
 const test = require('node:test');
-const { chromium } = require(process.env.PLAYWRIGHT_MODULE || '/Users/parkseungyeon/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
+const playwright = require(process.env.PLAYWRIGHT_MODULE || '/Users/parkseungyeon/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
 const { installCropFixture, pointerOnImage } = require('./helpers/crop-loading-fixture.cjs');
 const root = path.resolve(__dirname, '..');
 const { fixtureContext, installAiMain } = require('./helpers/canonical-fixture-adapter.cjs');
 const { runtime, inspectEntry } = fixtureContext(root);
-async function fixture(t) {
+async function fixture(t, engine = 'chromium') {
   const server = http.createServer((req, res) => {
     let file = path.join(root, new URL(req.url, 'http://localhost').pathname);
     if (file.endsWith('/')) file += 'index.html';
     fs.readFile(file, (err, body) => { res.writeHead(err ? 404 : 200, { 'Content-Type': ({'.js':'text/javascript','.mjs':'text/javascript','.css':'text/css','.html':'text/html','.json':'application/json','.svg':'image/svg+xml'})[path.extname(file)] || 'application/octet-stream' }); res.end(err ? '' : body); });
   });
   await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
-  const browser = await chromium.launch({ headless: true });
+  const browser = await playwright[engine].launch({ headless: true });
   const page = await browser.newPage({ viewport: { width: 1440, height: 1000 }, reducedMotion: 'reduce' });
   page.on('pageerror', error => console.error(error.message));
   page.on('console', message => { if (message.type() === 'error') console.error(message.text()); });
@@ -35,8 +35,8 @@ async function crop(page, ui, fraction = .25) {
   await page.mouse.down(); await page.mouse.move(point.x + 80, point.y + 90, { steps: 5 }); await page.mouse.up();
   await ui.locator('[data-unilib-crop-save]').click();
 }
-async function library(t, count = 1) {
-  const { page } = await fixture(t);
+async function library(t, count = 1, engine = 'chromium') {
+  const { page } = await fixture(t, engine);
   const ui = await installCropFixture(page, { libraryTransfer: true, evidence: process.env.EVIDENCE_DIR });
   await page.evaluate(() => { window.__transfer = async () => {
     window.__transferStarted = true;
@@ -171,4 +171,26 @@ test('a busy reference consumer rejects the handoff instead of acknowledging a d
     catch(error) { return error.message; }
   });
   assert.match(result, /받지 못했습니다/);
+});
+
+for (const engine of ['chromium', 'webkit']) test(`${engine}: prepared library crops open AI with Space while text fields retain input`, async t => {
+  const { page, ui } = await library(t, 2, engine);
+  await page.evaluate(() => { window.__transfer = async ({references, conversionKind, placement, groups}) => { window.__handoff = {count:references.length, conversionKind, placement, groups}; }; });
+  const search=ui.locator('input[type="search"]');
+  await search.focus();await page.keyboard.press('Space');
+  assert.equal(await page.locator('.workbench-assignment').count(),0,'typing Space in search cannot send images');
+  await search.fill('');
+  await ui.locator('[data-result-id="geometry-book:page:1"]').focus();
+  await page.keyboard.down('Space');await page.keyboard.down('Space');await page.keyboard.up('Space');
+  await page.locator('.workbench-assignment').waitFor();
+  assert.equal(await page.locator('.workbench-assignment').count(),1,'a held key opens one assignment');
+  assert.equal(await page.locator('.workbench-assignment [data-conversion-kind="image"]').getAttribute('aria-pressed'),'true');
+  assert.equal(await page.locator('.workbench-assignment [data-placement="separate"]').getAttribute('aria-pressed'),'true');
+  await page.keyboard.press('Escape');
+  assert.equal(await page.evaluate(()=>window.__acceptedAssets.size),2,'cancel preserves both crops');
+  await ui.locator('[data-result-id="geometry-book:page:1"]').focus();await page.keyboard.press('Space');
+  await page.locator('.workbench-assignment [data-action="continue"]').click();
+  await ui.waitFor({state:'hidden'});
+  const handoff=await page.evaluate(()=>window.__handoff);
+  assert.equal(handoff.count,2);assert.equal(handoff.conversionKind,'image');assert.equal(handoff.placement,'separate');assert.deepEqual(handoff.groups,[[0],[1]]);
 });

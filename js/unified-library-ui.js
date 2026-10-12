@@ -1100,7 +1100,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     const help = overlay.querySelector("[data-unilib-ai-help]");
     help.textContent=graphMode ? "PDF에서 그래프 영역을 크롭한 뒤 원본으로 선택하세요." : "PDF에서 필요한 영역을 자르고 작업대에 넣으면 AI 이미지 변환을 사용할 수 있습니다.";
     help.hidden = !needsCrop;
-    overlay.querySelector("[data-unilib-ai]").title = needsCrop ? help.textContent : "";
+    overlay.querySelector("[data-unilib-ai]").title = needsCrop ? help.textContent : "준비한 이미지를 AI 작업으로 보내기 (Space)";
   };
   const runLibraryAction = async (work) => {
     if (actionBusy) return;
@@ -3446,6 +3446,19 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
         }
         else finishCropSelection();
       }
+      return;
+    }
+    // Prepared workbench images take Space straight to the same AI assignment
+    // route as the button. Text fields and nested readers keep their own keys.
+    if (event.key === " " && acceptedAssets.size && shouldHandleLibrarySpace(event)
+      && localInstall.hidden && driveSettings.hidden && !root.classList.contains("is-reader-expanded")) {
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      if (event.repeat || actionBusy) return;
+      cancelSpacePress();
+      suppressSpaceKeyup = true;
+      const aiButton = overlay.querySelector("[data-unilib-ai]");
+      if (!aiButton.disabled) aiButton.click();
       return;
     }
     if (["ArrowLeft", "ArrowRight", "ArrowDown", "ArrowUp"].includes(event.key) && (!editableTarget(event.target) || resultCardTarget(event.target)) && results.length) {
