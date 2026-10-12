@@ -962,19 +962,22 @@ async function insertSelected(ctx, page) {
     return { taskId: task.id, candidate, draft: canEditLabelReviewDraft(candidate),
       input: task.input, conversationMessages: task.conversationMessages, uiMessages: task.uiMessages };
   }, version);
-  const insert = page.locator(panel + ' [data-ai-insert-selected]');
+  const oldFooterInsert = page.locator(panel + ' [data-ai-insert-selected]');
+  const insert = page.locator(panel + ' .is-ai-active-candidate [data-ai-canvas-output]');
   const draft = page.locator(panel + ' [data-ai-edit-review-draft]');
   if (selected.draft) {
     await ctx.check('unreviewed editable draft uses its distinct visible canvas action', async () => {
       assert.equal(selected.candidate.reviewState, 'needs-attention');
       assert.ok(['uncertain', 'fail'].includes(selected.candidate.reviewReport.verdict));
-      assert.equal(await insert.isVisible(), false);
+      assert.equal(await oldFooterInsert.isVisible(), false);
+      assert.equal(await insert.isDisabled(), true, 'Unreviewed drafts cannot use regular candidate insertion');
       assert.equal(await draft.isVisible(), true); assert.equal(await draft.isEnabled(), true);
     });
     await ctx.act('actual Canvas edit of selected review draft', () => draft.click(), page);
   } else {
     await ctx.check('regular selected candidate exposes the regular insertion action', async () => {
-      assert.equal(await draft.isVisible(), false); assert.equal(await insert.isVisible(), true);
+      assert.equal(await draft.isVisible(), false); assert.equal(await oldFooterInsert.isVisible(), false);
+      assert.equal(await insert.isVisible(), true); assert.equal(await insert.isEnabled(), true);
     });
     await ctx.act('actual Insert selected candidate', () => insert.click(), page);
   }
