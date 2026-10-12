@@ -82,7 +82,7 @@ const required = {
   QA2: ['raw-off-on', 'raw-on-off', 'raw-reload-preview', 'content-source-model-keys', 'policy-matrix', 'concurrent-owner-cancel', 'corrupt-cache-quota-legacy', 'approved-request'],
   QA3: ['label-click-edit-cancel', 'label-drag-history', 'actual-drawing-roundtrip', 'owned-native-revision', 'generic-locked-rejection', 'foreign-locked-stale-rejection', 'detail-context-two-point-ime', 'native-input-notifications'],
   QA4: ['recorded-upload-replay', 'compare-revision-cancel', 'exact-noop-svg', 'same-id-late-success', 'same-id-late-rejection', 'queued-checkpoint', 'background-owner', 'malformed-source-model'],
-  QA5: ['label-graph-source-tabs', 'embedded-union', 'inline-routed-leaders', 'eight-handles', 'unapplied-draft-project', 'hwp-hwpx-roundtrip', 'graph-pending-preview-send', 'graph-rejected-preview-send', 'graph-modal-send-once-invalid', 'cancel-copy-foreign-conflict-corrupt'],
+  QA5: ['label-graph-source-tabs', 'embedded-union', 'inline-simple-labels-preserve-routes', 'eight-handles', 'unapplied-draft-project', 'hwp-hwpx-roundtrip', 'graph-pending-preview-send', 'graph-rejected-preview-send', 'graph-modal-send-once-invalid', 'cancel-copy-foreign-conflict-corrupt'],
   QA6: ['pending-text-send', 'pending-buttons-lock', 'export-failure-autosave-retry', 'transition-cleanup', 'same-id-restored-owner', 'background-provider-owner', 'canceled-disposed-wrong-link'],
   QA7: ['boundary-input-drop', 'malformed-file-preservation', 'valid-rich-file-roundtrip', 'candidate-binding-rejection', 'zip-crc-missing-asset', 'pdf-runtime-retry-original', 'pdf-late-two-page-preservation'],
   QA8: ['layout-four-sizes-themes-motion', 'graph-topmost-focus', 'capture-protected-failure', 'root-preview-root-union', 'storage-identities', 'second-tab-recovery', 'corrupt-cache-abort-recovery', 'real-browser-zoom-200', 'explicit-other-origin-transfer'],
@@ -1290,13 +1290,44 @@ async function rhwpReady(ctx, page) {
   await h.navigate(page, ctx.report.url + '?mode=pro&mobile=0'); await h.ready(page);
   await page.locator('#ai-image-install-open').click();
 }
-async function sendAiFigure(ctx, page, taskId) {
+async function openExamDocument(page) {
+  const h = require('./rhwp-exam.cjs');
+  await closeAI(page);
+  if (!await page.locator('#rhwp-exam-workspace').isVisible()) {
+    await page.locator('#exam-send').click();
+    await page.locator('[data-exam-document-open]').click();
+    await page.locator('#rhwp-exam-workspace').waitFor({state:'visible'});
+  }
+  await h.idle(page);
+}
+async function openAI(page) {
+  if (!await page.locator(panel).isVisible()) await page.locator('#ai-image-install-open').click();
+}
+async function sendAiFigure(ctx, page, taskId, {fullCrop = false} = {}) {
   const h = require('./rhwp-exam.cjs');
   if (!h.runtime(page)) await rhwpReady(ctx, page);
   if (await page.locator('#rhwp-exam-workspace').isVisible()) await h.action(page, 'close');
   if (!await page.locator(panel).isVisible()) await page.locator('#ai-image-install-open').click();
   await selectTask(ctx, page, taskId);
-  await ctx.act(`actual AI→RHWP capture ${taskId}`, () => h.crop(page, panel + ' [data-ai-exam-send]'), page);
+  await ctx.act(`actual AI→RHWP capture ${taskId}`, async () => {
+    if (!fullCrop) return h.crop(page, panel + ' [data-ai-exam-send]');
+    await page.locator(panel + ' [data-ai-exam-send]').click();
+    await page.locator('.capture-overlay').waitFor({state:'visible'});
+    // The partial crop used for annotation clipping excludes the axis caption.
+    // This pixel-change oracle needs the full visible graph, chosen by a real
+    // capture gesture rather than changing production bounds in the fixture.
+    const b = await page.locator('#canvas').boundingBox();
+    await page.mouse.move(b.x + 2, b.y + 2); await page.mouse.down();
+    await page.mouse.move(b.x + b.width - 2, b.y + b.height - 2); await page.mouse.up();
+    await page.locator('#capture-confirm').click();
+  }, page);
+  await h.waitForState(page, () => {
+    const placement = document.querySelector('.exam-placement');
+    const choice = document.querySelector('[data-dialog-purpose="hwp"]');
+    return placement && !placement.hidden || choice && choice.getBoundingClientRect().width > 0;
+  });
+  const choice = page.locator('[data-dialog-purpose="hwp"]');
+  if (await choice.isVisible()) await ctx.act('actual first-send document creation choice', () => choice.getByRole('button', {name:'새 문서 만들기',exact:true}).click(), page);
   await ctx.act('actual document insertion point and placement', () => h.place(page), page);
   const pictures = await h.pictures(page);
   const figure = pictures.find(p => p.figure?.context?.ai?.taskId === taskId);
@@ -1360,9 +1391,9 @@ async function nativeResize(ctx, page, figureIndex = 0) {
   }
 }
 
-async function inlineRoutes(ctx, page, picture) {
+async function inlineSimpleRoutes(ctx, page, picture) {
   const h = require('./rhwp-exam.cjs');
-  ctx.input('tests/test-rhwp-inline-routes-browser.cjs', 'retained straight/polyline/quadratic/cubic/multi/legacy geometry fixture, exercised here inside actual linked picture');
+  ctx.input('tests/test-rhwp-inline-routes-browser.cjs', 'retained six route geometries preserved during actual simple label/style editing; endpoint editing is outside the approved scope');
   await h.originalEdit(page, 0); await closeAI(page);
   // These are explicit manual annotations on the real linked candidate source,
   // not substitute PNGs or a detached ExamInlineEditor test host.
@@ -1395,69 +1426,72 @@ async function inlineRoutes(ctx, page, picture) {
       } s.selectedIds = [];
     }); return entries.map(e => 'linked-route-' + e.kind);
   }, picture.figure.render.bounds);
-  await page.locator('#exam-send').click(); await h.idle(page);
+  await page.locator('[data-source-apply]').click(); await h.idle(page);
   await h.doubleClick(page, 0); const host = page.locator('#exam-inline-editor'); await host.waitFor({ state: 'visible' });
   const sourceLink = (await h.pictures(page))[0].figure.link;
+  const background = (await linkedObjects(page, sourceLink)).filter(o => o.type !== 'labeler');
+  const geometry = label => Object.fromEntries(['p1','p2','p3','elbow','extraAnchors','leaderRoutes'].map(key => [key,label[key]]));
+  await ctx.check('actual document editor uses approved simple label scope with no geometry controls', async () => {
+    assert.equal(await host.getAttribute('data-simple'), 'true');
+    assert.equal(await host.locator('[data-inline-handle]').count(), 0);
+    for (const action of ['add-label','add-leader','elbow','delete'])
+      assert.equal(await host.locator('[data-inline-action="'+action+'"]').isVisible(), false);
+  });
   for (const id of routeIds) {
-    const glyph = host.locator(`g[data-annotation-id="${id}"] text`).last();
+    const glyph = host.locator('g[data-annotation-id="'+id+'"] text').last();
     const point = await glyph.evaluate(text => {
       const r = text.getBoundingClientRect();
-      for (const fraction of [.2, .8, .35, .65]) { const x = r.x + r.width * fraction, y = r.y + r.height / 2, hit = document.elementFromPoint(x, y); if (hit?.closest('[data-annotation-id]')?.dataset.annotationId === text.closest('[data-annotation-id]').dataset.annotationId && !hit.closest('[data-inline-handle]')) return { x, y }; }
+      for (const fraction of [.2, .8, .35, .65]) {
+        const x = r.x + r.width * fraction, y = r.y + r.height / 2, hit = document.elementFromPoint(x, y);
+        if (hit?.closest('[data-annotation-id]')?.dataset.annotationId === text.closest('[data-annotation-id]').dataset.annotationId)
+          return { x, y };
+      }
       throw new Error('Routed native caption has no exposed hit point');
-    }); await page.mouse.click(point.x, point.y);
-    const before = (await linkedObjects(page, sourceLink)).find(o => o.id === id);
-    const pathsBefore = await host.locator(`g[data-annotation-id="${id}"] [data-label-leader-route]`).evaluateAll(nodes => nodes.map(n => n.getAttribute('d')));
-    async function drag(handleName, dx, dy, predicate) {
-      const handle = host.locator(`[data-inline-handle="${handleName}"]`), b = await handle.boundingBox(); assert.ok(b, 'Actual inline route handle is visible');
-      await transition(page, 'inline-route-' + handleName, predicate, { id, link: sourceLink }, async () => {
-        await page.mouse.move(b.x + b.width / 2, b.y + b.height / 2); await page.mouse.down(); await page.mouse.move(b.x + b.width / 2 + dx, b.y + b.height / 2 + dy); await page.mouse.up();
-      });
-    }
-    await page.evaluate(({ id, before }) => { __cross.routeBefore = before; }, { id, before });
-    await drag('p1', 18, 12, ({ id, link }) => {
-      const s = __candidateQA.state.get(), p = s.pages.find(p => p.meta?.examLink?.tabId === link.tabId), o = (p.id === s.activePageId ? s.objects : p.objects).find(o => o.id === id);
-      return JSON.stringify(o.p1) !== JSON.stringify(__cross.routeBefore.p1);
     });
-    const endpoint = (await linkedObjects(page, sourceLink)).find(o => o.id === id);
-    const pathsAfter = await host.locator(`g[data-annotation-id="${id}"] [data-label-leader-route]`).evaluateAll(nodes => nodes.map(n => n.getAttribute('d')));
-    await ctx.check(`${id}: p1 drag changes visible route endpoint and persisted target`, () => {
-      assert.notDeepEqual(endpoint.p1, before.p1);
-      if (endpoint.leaderRoutes) { assert.deepEqual(endpoint.leaderRoutes[0].target, endpoint.p1); assert.notDeepEqual(pathsAfter, pathsBefore); assert.deepEqual(pathsAfter[0].match(/-?\d+(?:\.\d+)?(?:e[+-]?\d+)?/gi).map(Number).slice(-2), [endpoint.p1.x, endpoint.p1.y]); }
-      else assert.deepEqual(endpoint.elbow, before.elbow);
+    await page.mouse.click(point.x, point.y);
+    const before = (await linkedObjects(page, sourceLink)).find(o => o.id === id);
+    const field = host.locator('[data-inline-field="text"]');
+    assert.equal(await field.inputValue(), before.text);
+    const caption = before.text + ' revised';
+    await field.fill(caption); await field.press('Tab');
+    await h.waitForState(page, ({id, link, caption}) => {
+      const s = __candidateQA.state.get(), p = s.pages.find(p => p.meta?.examLink?.tabId === link.tabId);
+      return (p.id === s.activePageId ? s.objects : p.objects).find(o => o.id === id)?.text === caption;
+    }, {id, link:sourceLink, caption});
+    const edited = (await linkedObjects(page, sourceLink)).find(o => o.id === id);
+    await ctx.check(id + ': caption edit preserves every stored route and original background', async () => {
+      assert.equal(edited.text, caption); assert.deepEqual(geometry(edited), geometry(before));
+      assert.deepEqual((await linkedObjects(page, sourceLink)).filter(o => o.type !== 'labeler'), background);
     });
     await host.locator('[data-inline-action="undo"]').click();
-    await ctx.check(`${id}: inline Undo source geometry`, async () => assert.deepEqual((await linkedObjects(page, sourceLink)).find(o => o.id === id), before));
+    await ctx.check(id + ': actual inline Undo restores the complete caption', async () =>
+      assert.deepEqual((await linkedObjects(page, sourceLink)).find(o => o.id === id), before));
     await host.locator('[data-inline-action="redo"]').click();
-    await ctx.check(`${id}: inline Redo source geometry`, async () => assert.deepEqual((await linkedObjects(page, sourceLink)).find(o => o.id === id), endpoint));
-    await page.evaluate(before => { __cross.routeBefore = before; }, endpoint);
-    await drag('p2', 22, 10, ({ id, link }) => {
-      const s = __candidateQA.state.get(), p = s.pages.find(p => p.meta?.examLink?.tabId === link.tabId), o = (p.id === s.activePageId ? s.objects : p.objects).find(o => o.id === id);
-      return JSON.stringify(o.p2) !== JSON.stringify(__cross.routeBefore.p2);
-    });
-    const caption = (await linkedObjects(page, sourceLink)).find(o => o.id === id);
-    await ctx.check(`${id}: p2 drag moves attached starts with caption and keeps endpoint`, () => {
-      assert.notDeepEqual(caption.p2, endpoint.p2);
-      if (caption.leaderRoutes) { const dx = caption.p2.x - endpoint.p2.x, dy = caption.p2.y - endpoint.p2.y;
-        assert.deepEqual(caption.leaderRoutes[0].target, endpoint.leaderRoutes[0].target);
-        assert.ok(Math.abs(caption.leaderRoutes[0].start.x - endpoint.leaderRoutes[0].start.x - dx) < 1e-7); assert.ok(Math.abs(caption.leaderRoutes[0].start.y - endpoint.leaderRoutes[0].start.y - dy) < 1e-7);
-        if (caption.leaderRoutes.length > 1) assert.deepEqual(caption.leaderRoutes[1], endpoint.leaderRoutes[1]);
+    await ctx.check(id + ': actual inline Redo retains the edited caption and exact route', async () =>
+      assert.deepEqual((await linkedObjects(page, sourceLink)).find(o => o.id === id), edited));
+    if (id === routeIds[0]) {
+      const font = host.locator('[data-inline-field="font"]');
+      const family = await font.evaluate(select => [...select.options].find(o => o.value !== select.value).value);
+      await font.selectOption(family);
+      for (const [name,value] of [['size','12'],['stroke','0.35']]) {
+        const field = host.locator('[data-inline-field="'+name+'"]');
+        await field.fill(value); await field.press('Tab');
       }
-    });
-    if (caption.leaderRoutes?.[0].controls?.length) {
-      await page.evaluate(before => { __cross.routeBefore = before; }, caption);
-      await drag('route-0-control-0', 15, 10, ({ id, link }) => {
-        const s = __candidateQA.state.get(), p = s.pages.find(p => p.meta?.examLink?.tabId === link.tabId), o = (p.id === s.activePageId ? s.objects : p.objects).find(o => o.id === id);
-        return JSON.stringify(o.leaderRoutes[0].controls) !== JSON.stringify(__cross.routeBefore.leaderRoutes[0].controls);
+      const styled = (await linkedObjects(page, sourceLink)).find(o => o.id === id);
+      await ctx.check('approved font, point size and line width controls preserve geometry', () => {
+        assert.equal(styled.fontFamily, family); assert.ok(Math.abs(styled.labelSize - 12 * 25.4 / 72) < 1e-9);
+        assert.equal(styled.strokeWidth, .35); assert.deepEqual(geometry(styled), geometry(before));
       });
-      const controlled = (await linkedObjects(page, sourceLink)).find(o => o.id === id), rendered = await host.locator(`g[data-annotation-id="${id}"] [data-label-leader-route]`).first().getAttribute('d');
-      await ctx.check(`${id}: actual route control edits rendered and stored curve`, () => { const p = controlled.leaderRoutes[0].controls[0]; assert.notDeepEqual(p, caption.leaderRoutes[0].controls[0]); assert.ok(rendered.includes(`${p.x} ${p.y}`)); });
     }
   }
   await host.locator('[data-inline-field="text"]').fill('전류 센서'); await host.locator('[data-inline-field="text"]').press('Tab');
   await host.locator('[data-inline-action="apply"]').click(); await h.idle(page);
   const applied = (await h.pictures(page))[0].figure;
-  await ctx.check('actual inline Apply commits routes into embedded source and original tab', async () => {
-    const live = await linkedObjects(page, sourceLink); for (const id of routeIds) assert.deepEqual(applied.source.pages[0].objects.find(o => o.id === id), live.find(o => o.id === id)); assert.equal(applied.link.tabId, picture.figure.link.tabId);
+  await ctx.check('actual simple Apply commits labels/styles into embedded source and preserves all routes and background', async () => {
+    const live = await linkedObjects(page, sourceLink);
+    for (const id of routeIds) assert.deepEqual(applied.source.pages[0].objects.find(o => o.id === id), live.find(o => o.id === id));
+    assert.deepEqual(applied.source.pages[0].objects.filter(o => o.type !== 'labeler'), background);
+    assert.equal(applied.link.tabId, picture.figure.link.tabId);
   });
   return routeIds;
 }
@@ -1481,11 +1515,11 @@ scenarios.QA5 = async ctx => {
       await unionEqual(ctx, picture.figure.context.ai.snapshot.tabs, [expected], 'actual embedded PNG context');
     } ctx.cover('embedded-union');
     await nativeResize(ctx, page); ctx.cover('eight-handles');
-    const routeIds = await inlineRoutes(ctx, page, first); ctx.cover('inline-routed-leaders');
+    const routeIds = await inlineSimpleRoutes(ctx, page, first); ctx.cover('inline-simple-labels-preserve-routes');
     await h.originalEdit(page, 0); await closeAI(page);
     const prior = (await h.pictures(page))[0], sourceLabel = (await objects(page)).find(o => o.type === 'labeler');
     await sourceText(ctx, page, sourceLabel.id, '보내지 않은 독립 초안');
-    await ctx.act('return to exam without sending active source draft', () => page.evaluate(() => document.querySelector('#exam-workspace-open').click()), page); await h.idle(page);
+    await ctx.act('return to exam without sending active source draft', () => openExamDocument(page), page); await h.idle(page);
     await ctx.check('return preserves sent document revision and distinct unapplied native source draft', async () => {
       assert.equal((await h.pictures(page))[0].figure.id, prior.figure.id);
       assert.equal((await linkedObjects(page, prior.figure.link)).find(o => o.id === sourceLabel.id).text, '보내지 않은 독립 초안');
@@ -1518,8 +1552,8 @@ scenarios.QA5 = async ctx => {
   });
   for (const reject of [false, true]) await app(ctx, `rhwp-graph-${reject ? 'rejected' : 'pending'}-preview`, async page => {
     const h = require('./rhwp-exam.cjs'), label = await makeLabel(ctx, page); await richUnion(ctx, page, label);
-    const parent = await sendAiFigure(ctx, page, 'cross-graph-task'), rasterBefore = await pictureBytes(ctx, page, `graph-${reject}-parent`);
-    await h.action(page, 'close'); await page.locator('#ai-image-install-open').click();
+    const parent = await sendAiFigure(ctx, page, 'cross-graph-task', {fullCrop:true}), rasterBefore = await pictureBytes(ctx, page, `graph-${reject}-parent`);
+    await h.action(page, 'close'); await openAI(page);
     const revision = await editGraph(ctx, page, '새 그래프', { held: true });
     if (reject) await releaseGraph(ctx, page, true);
     await ctx.check('graph revision is native-new but still holds deliberate parent raster', () => { assert.equal(revision.data, parent.figure.context.ai.snapshot.tabs[0].generated[0].data); assert.equal(revision.graphResult.objects.find(o => o.type === 'coordplane').labelX, '새 그래프'); });
@@ -1544,7 +1578,7 @@ scenarios.QA5 = async ctx => {
     const file = await examFile(ctx, page, 'save', `QA5-native-preview-${reject}.5e`), parsed = await parseFile(page, file);
     await ctx.check('portable graph revision contains new axis text with native editable source', () => assert.ok(parsed.workspace.drawing.pages.some(p => p.objects.some(o => o.type === 'coordplane' && o.labelX === '새 그래프'))));
     await bootSecondary(ctx,page,`QA5-graph-${reject}-actual-file-reopen`,async reopened=>{
-      await reopened.locator('#exam-workspace-open').click();await h.idle(reopened);
+      await openExamDocument(reopened);
       await examCycle(reopened,()=>reopened.locator('#exam-project-file').setInputFiles(file));
       const loaded=(await h.pictures(reopened)).find(p=>p.figure.link.assetId===sent.figure.link.assetId);assert.ok(loaded);
       await ctx.check('actual graph .5e chooser reopen preserves sent new native axis and current PNG pixels independently of parent preview',async()=>{
@@ -1559,9 +1593,12 @@ scenarios.QA5 = async ctx => {
   await app(ctx, 'source-graph-modal-send', async page => {
     const h = require('./rhwp-exam.cjs'), label = await makeLabel(ctx, page, { verification: 'full' }); await richUnion(ctx, page, label); await sendAiFigure(ctx, page, 'cross-label-task');
     await h.originalEdit(page); await closeAI(page);
-    // A new source graph must start after the existing figure edit has ended.
-    // While editing, the real Send action applies that existing figure.
-    await page.locator('#exam-workspace-open').click();await h.idle(page);await h.action(page,'close');
+    // Returning to a linked source deliberately resumes its edit session.
+    // Start the unrelated graph on a real new unlinked source page; its graph
+    // Send event must create a new figure rather than apply the old picture.
+    await openExamDocument(page);await h.action(page,'close');await closeAI(page);
+    await page.locator('#page-add').click();
+    await page.locator('#exam-edit-bar').waitFor({state:'hidden'});
     assert.equal(await page.locator('#exam-edit-bar').isVisible(),false);
     await page.evaluate(async version => {
       window.__cross.graphEvents = [];
@@ -2505,8 +2542,8 @@ async function bootSecondary(ctx, sourcePage, name, run, {fresh=false,url=ctx.re
     const served=await page.request.get(new URL('/js/main.js'+version,url).href);assert.equal(served.status(),200);assert.equal(sha(await served.body()),sha(Buffer.from(main)),'Secondary retained hostname must serve same actual candidate');
     const hook='const aiPanel = initAiPanel(state, { freshStart: recoveryChoice === "fresh", materializeCandidate });';assert.ok(main.includes(hook));
     await page.route('**/js/main.js?*',route=>route.fulfill({contentType:'text/javascript',body:main.replace(hook,hook+' window.__task2Manager=aiPanel;window.__candidateQA={state,examWorkspace,materializeCandidate};state.subscribe(()=>__cross.notify());__cross.notify();')}));
-    const source=ctx.input('js/ai-panel.js').toString(),returnHook='return {\n    batchOwner, ownsBatchOwner:';assert.ok(source.includes(returnHook));
-    await page.route('**/js/ai-panel.js?*',route=>route.fulfill({contentType:'text/javascript',body:source.replace(returnHook,'return panel.__crossController = {\n    crossPersistence: taskPersistence, batchOwner, ownsBatchOwner:')}));
+    const source=ctx.input('js/ai-panel.js').toString(),returnHook='return {\n    deleteTask,';assert.equal(source.split(returnHook).length-1,1);
+    await page.route('**/js/ai-panel.js?*',route=>route.fulfill({contentType:'text/javascript',body:source.replace(returnHook,'return panel.__crossController = {\n    crossPersistence: taskPersistence, deleteTask,')}));
     page.on('response',response=>{const item={case:name,url:response.url(),status:response.status()};resources.push(item);
       if(/\.(js|css|wasm|woff2?)(\?|$)/.test(item.url))bodies.push(response.body().then(bytes=>{item.bytes=bytes.length;item.sha256=sha(bytes);},e=>{item.bodyError=e.message;}));});
     await require('./rhwp-exam.cjs').navigate(page,url);await resumeStartup(page);await require('./rhwp-exam.cjs').ready(page);
@@ -2575,7 +2612,7 @@ async function rhwpNegatives(ctx){
   await app(ctx,'rhwp-cancel-copy-conflict-corrupt',async page=>{
     const h=require('./rhwp-exam.cjs'),label=await makeLabel(ctx,page,{verification:'full'}),rich=await richUnion(ctx,page,label);
     await sendAiFigure(ctx,page,'cross-label-task');await sendAiFigure(ctx,page,'cross-graph-task');
-    const before=await h.pictures(page);await h.action(page,'close');await page.locator('#ai-image-install-open').click();await selectTask(ctx,page,'cross-label-task');
+    const before=await h.pictures(page);await h.action(page,'close');await openAI(page);await selectTask(ctx,page,'cross-label-task');
     await page.locator(panel+' [data-ai-exam-send]').click();await page.locator('.capture-overlay').waitFor({state:'visible'});await page.keyboard.press('Escape');
     await ctx.check('actual capture Escape cancels before document mutation',async()=>assert.deepEqual(await h.pictures(page),before));
     await h.crop(page,panel+' [data-ai-exam-send]');await page.locator('.exam-placement').waitFor({state:'visible'});
@@ -2600,19 +2637,22 @@ async function rhwpNegatives(ctx){
     await ctx.check('one real native Undo removes independently linked copy only',async()=>assert.deepEqual((await h.pictures(page)).map(p=>p.figure),before.map(p=>p.figure)));
     await page.evaluate(()=>document.querySelector('#exam-studio iframe').contentWindow.rhwpStudio.plugins.deps.getInputHandler().performRedo());await h.waitForState(page,()=>document.querySelector('#exam-figures').querySelectorAll('button').length===3);
     await h.originalEdit(page,0);await closeAI(page);const source=(await objects(page)).find(o=>o.type==='labeler'),link=(await h.pictures(page))[0].figure.link;
-    // Wrong original source-tab and AI-owner are rejected at the real Send UI.
+    // A foreign source hides Apply; a stale programmatic click must also be
+    // rejected by the retained editing session before native document mutation.
     await page.locator('#page-add').click();const wrongBaseline=await h.pictures(page);
-    await examCycle(page,()=>page.locator('#exam-send').click());
+    await page.locator('[data-source-apply]').waitFor({state:'hidden'});
+    await ctx.check('foreign active source does not expose the linked Apply control',async()=>assert.equal(await page.locator('[data-source-apply]').isVisible(),false));
+    await examCycle(page,()=>page.evaluate(()=>document.querySelector('[data-source-apply]').click()));
     const errorDialog=page.getByRole('dialog',{name:'시험지 보내기'});await errorDialog.waitFor({state:'visible'});
     await ctx.check('foreign active source tab cannot replace linked native figure',async()=>{assert.match(await errorDialog.textContent(),/원래.*작업 탭|연결/);assert.deepEqual(await h.pictures(page),wrongBaseline);});
-    await errorDialog.getByRole('button',{name:'확인',exact:true}).click();await page.locator('#exam-workspace-open').click();await h.idle(page);
+    await errorDialog.getByRole('button',{name:'확인',exact:true}).click();await openExamDocument(page);
     await h.doubleClick(page,0);const host=page.locator('#exam-inline-editor');await host.waitFor({state:'visible'});
     // The existing figure crop clips this caption. The real inline editor
     // selects its first annotation and exposes its text in the visible field.
     // Physical caption selection is independently covered by all routed cases.
     const field=host.locator('[data-inline-field=text]');
     await ctx.check('actual inline opening selects the intended cropped annotation and exposes its text field',async()=>{
-      const ids=await host.locator('[data-inline-handle][data-annotation-id]').evaluateAll(nodes=>[...new Set(nodes.map(node=>node.dataset.annotationId))]);assert.deepEqual(ids,[source.id]);
+      assert.equal(await host.locator('[data-inline-handle]').count(),0);assert.equal(await host.locator('g[data-annotation-id="'+source.id+'"]').count(),1);
       assert.equal(await field.inputValue(),source.contentMode==='formula'?(source.source||source.rawSource||''):source.text);assert.equal(await field.isVisible(),true);assert.equal(await field.isEnabled(),true);
     });
     await field.click();await field.fill('인라인 충돌 초안');
@@ -2625,14 +2665,14 @@ async function rhwpNegatives(ctx){
     const file=await examFile(ctx,page,'save','QA5-conflict-recovery.5e'),project=await parseFile(page,file),recovery=project.workspace.annotationDrafts.find(d=>d.id===sent.id);
     assert.ok(recovery);assert.equal(recovery.edited.find(o=>o.id===source.id).text,'인라인 충돌 초안');
     await bootSecondary(ctx,page,'QA5-conflict-actual-reopen',async reopened=>{
-      await reopened.locator('#exam-workspace-open').click();await h.idle(reopened);
+      await openExamDocument(reopened);
       await examCycle(reopened,()=>reopened.locator('#exam-project-file').setInputFiles(file));await h.doubleClick(reopened,0);const root=reopened.locator('#exam-inline-editor');await root.waitFor({state:'visible'});
       await ctx.check('actual file reopen displays rejected draft with persistent recovery notice, original doc unchanged',async()=>{assert.equal(await root.locator('.exam-inline-recovery').isVisible(),true);assert.match(await root.locator(`g[data-annotation-id="${source.id}"]`).textContent(),/인라인 충돌 초안/);assert.deepEqual((await h.pictures(reopened))[0].figure,sent);});
       await root.locator('[data-inline-action=close]').click();await h.idle(reopened);const retained=await examFile(ctx,reopened,'save','QA5-recovery-retained.5e');assert.deepEqual((await parseFile(reopened,retained)).workspace.annotationDrafts.find(d=>d.id===sent.id),recovery);
       await h.doubleClick(reopened,0);await root.locator('[data-inline-action=apply]').click();await root.waitFor({state:'hidden'});await h.idle(reopened);
       await ctx.check('explicit recovered Apply alone commits attempted label and keeps RAW unchanged',async()=>{const applied=(await h.pictures(reopened))[0].figure;assert.equal(applied.source.pages[0].objects.find(o=>o.id===source.id).text,'인라인 충돌 초안');assert.deepEqual(applied.source.pages[0].objects.filter(o=>o.type!=='labeler'),sent.source.pages[0].objects.filter(o=>o.type!=='labeler'));});
       const resolved=await examFile(ctx,reopened,'save','QA5-recovery-resolved.5e');assert.equal((await parseFile(reopened,resolved)).workspace.annotationDrafts?.some(d=>d.id===sent.id)||false,false);
-      await h.action(reopened,'close');await reopened.locator('#ai-image-install-open').click();await unionEqual(ctx,await tabs(reopened),(await tabs(page)).filter(t=>rich.some(r=>r.id===t.id)),'actual recovery reopen rich union');
+      await h.action(reopened,'close');await openAI(reopened);await unionEqual(ctx,await tabs(reopened),(await tabs(page)).filter(t=>rich.some(r=>r.id===t.id)),'actual recovery reopen rich union');
     },{fresh:true});
     const baseline={state:await fullState(page),pictures:await h.pictures(page)};
     for(const [mutation,boundary]of [['native-ticks-null','workspace'],['native-ticks-null','embedded'],['native-annotation-null','embedded'],['missing-asset','workspace'],['crc','workspace']]){
