@@ -81,6 +81,10 @@ export function copyTaskImage(dataUrl) {
     const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));
     if(!blob)throw new Error('클립보드 이미지를 만들지 못했습니다.');return blob;
   })();
-  png.catch(()=>{});
-  return navigator.clipboard.write([new ClipboardItem({'image/png':png})]);
+  // WebKit can replace the preparation failure with a generic AbortError.
+  // Retain its retry guidance, without delaying an early clipboard denial.
+  let preparationError;
+  png.catch(error=>{preparationError=error;});
+  return navigator.clipboard.write([new ClipboardItem({'image/png':png})])
+    .catch(error=>{throw preparationError || error;});
 }

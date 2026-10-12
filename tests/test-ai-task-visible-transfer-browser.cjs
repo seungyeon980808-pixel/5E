@@ -21,6 +21,10 @@ const seed = lifecycle.slice(start, end).replace('window.__task5Expected = struc
        position:{x:.5,y:.2},anchor:{x:.5,y:.2},typography:{role:'text',bounds:{x:.35,y:.15,w:.3,h:.1}}}
     ]};
   }
+  // This persisted ordinary PNG predates editable binding; prepare it before
+  // product boot rather than stripping provenance from a live modern result.
+  tabs[2].generated[0].reviewState = 'idle';
+  delete tabs[2].generated[0].labelPlan;
   window.__task5Expected = structuredClone(tabs);`);
 const active = '#ai-image-panel';
 
@@ -47,7 +51,7 @@ async function selectSource(page) {
   await page.waitForFunction(() => document.querySelector('#ai-image-panel')?.dataset.aiSelectedCandidateId === 'candidate-0');
 }
 
-for (const engine of ['chromium', 'webkit']) test(`${engine}: other-workflow transfer uses visible labels and preserves the source task`, {timeout:90000}, async t => {
+for (const engine of ['chromium', 'webkit']) test(`${engine}: transfer and clipboard preserve visible labels, historical output settings and source tasks`, {timeout:90000}, async t => {
   const dir = path.join(evidence, engine); fs.mkdirSync(dir, {recursive:true});
   const server = http.createServer((req,res) => {
     const pathname = new URL(req.url, 'http://localhost').pathname;
@@ -68,14 +72,28 @@ for (const engine of ['chromium', 'webkit']) test(`${engine}: other-workflow tra
     if (!page.isClosed()) await page.screenshot({path:path.join(dir,'final.png')});
     await context.close(); await browser.close(); server.closeAllConnections(); await new Promise(resolve => server.close(resolve));
   });
-  await page.addInitScript({content:seed + '\nseedRequestWorkspaces(1);'});
+  await page.addInitScript({content:seed + '\nseedRequestWorkspaces(3);'});
   await page.route('**/js/main.js*', route => route.fulfill({contentType:'text/javascript',body:instrumentAiMain(root,{manager:'__transferManager'}).body}));
+  await page.route('**/js/ai-task-workspaces.js*', route => {
+    const body = fs.readFileSync(path.join(root,'js/ai-task-workspaces.js'),'utf8');
+    const hook = 'const batchError = error => {';
+    assert.equal(body.split(hook).length,2);
+    return route.fulfill({contentType:'text/javascript',body:body.replace(hook,hook + ' window.__lastTaskMenuError = error?.message || String(error);')});
+  });
   await page.route('**/js/ai-label-composite.js*', route => {
     const body = fs.readFileSync(path.join(root,'js/ai-label-composite.js'),'utf8');
     const hook = 'export async function createEditableLabelComposite({ plan, placement, candidateDataUrl, artboard, signal }) {';
     assert.equal(body.split(hook).length, 2);
     return route.fulfill({contentType:'text/javascript',body:body.replace(hook,
       hook + ' if (window.__transferCompositeGate) { window.__transferCompositeEntered = true; await window.__transferCompositeGate; }')});
+  });
+  await page.route('**/js/image-background.js*', route => {
+    const body = fs.readFileSync(path.join(root,'js/image-background.js'),'utf8');
+    const hook = 'export async function transparentizeGeneratedImage(src, options = {}) {';
+    assert.equal(body.split(hook).length,2);
+    return route.fulfill({contentType:'text/javascript',body:body.replace(hook,hook + `
+      const gate = window.__historicalProcessingGate;
+      if (gate && options.backgroundPolicy === gate.policy) {gate.entered = true;await gate.promise;}`)});
   });
   await page.goto(`http://127.0.0.1:${server.address().port}/?mode=pro&mobile=0&exam=0`, {waitUntil:'domcontentloaded'});
   await page.waitForFunction(() => window.__transferManager);
@@ -204,7 +222,96 @@ for (const engine of ['chromium', 'webkit']) test(`${engine}: other-workflow tra
   assert.equal(await page.evaluate(() => __copiedImage),null);
   assert.deepEqual((await snapshot(page)).find(tab => tab.id === 'task-0').generated,beforeCopyRace.find(tab => tab.id === 'task-0').generated);
   receipts.push({action:'clipboard-change-during-real-composition',rejected:true,clipboardNotWritten:true,writeDuringGesture:true,candidatesPreserved:true});
+  async function historical(policy) {
+    await page.locator(active + ' [data-ai-workflow="image"]').click();
+    await page.locator(active + ' [data-tab-id="task-2"] .ai-task-tab-select').click();
+    await page.waitForFunction(() => document.querySelector('#ai-image-panel')?.dataset.aiSelectedCandidateId === 'candidate-2');
+    const button = page.locator(active + ` [data-ai-legacy-result-settings] [data-ai-setting-key="background"] [data-ai-setting-value="${policy}"]`);
+    assert.equal(await button.isVisible(),true); assert.equal(await button.isEnabled(),true);
+    if (await button.getAttribute('aria-pressed') !== 'true') await button.click();
+    const ready = await page.waitForFunction(policy => {
+      const image = document.querySelector('#ai-image-panel .is-ai-active-candidate .ai-preview-stage > img');
+      if (!image?.complete || !image.naturalWidth) return false;
+      const src = image.src;
+      if ((src === __task5Expected[2].generated[0].data) !== (policy === 'preserve')) return false;
+      if (image.src !== src || image.currentSrc !== src) return false;
+      const canvas = document.createElement('canvas'); canvas.width = 512;canvas.height = 384;
+      const draw = canvas.getContext('2d'); draw.drawImage(image,0,0);
+      const outside = draw.getImageData(0,0,1,1).data[3], inside = draw.getImageData(250,150,1,1).data[3];
+      return outside === (policy === 'preserve' ? 255 : 0) && inside === (policy === 'all-near-white' ? 0 : 255) && src;
+    },policy);
+    // Capture the validated loaded source atomically; later task-list refreshes
+    // may briefly reset the card while its output variant loads again.
+    const displayed = await ready.jsonValue();
+    assert.match(displayed,/^data:image\/png;base64,/);
+    return displayed;
+  }
+  const historicalCandidate = (await snapshot(page)).find(tab => tab.id === 'task-2').generated[0];
+  const contract = await page.evaluate(async () => {
+    const output = await import('/js/ai-output-processing.js?v=1.7.0-four-session-integration');
+    const candidate = (await __transferManager.sharingSnapshot()).workspaces.flatMap(w => w.tabs).find(tab => tab.id === 'task-2').generated[0];
+    return {historical:output.isHistoricalPngLocalResult(candidate),raw:output.requiresRawImageOutput(candidate)};
+  });
+  assert.deepEqual(contract,{historical:true,raw:false});
+  for (const policy of ['preserve','connected','all-near-white']) {
+    const displayed = await historical(policy), before = await snapshot(page);
+    const sourceBefore = before.find(tab => tab.id === 'task-2');
+    await page.evaluate(() => {window.__copiedImage = null;});
+    await page.locator(active + ' [data-tab-id="task-2"] .ai-task-tab-select').click({button:'right'});
+    await page.locator('.ai-task-context-menu [data-task-action="copy"]').click();
+    await page.waitForFunction(() => window.__copiedImage);
+    const copy = await page.evaluate(async displayed => ({visible:await __rasterDigest(displayed),copied:await __rasterDigest(__copiedImage.data),gesture:__copiedImage.gesture}),displayed);
+    assert.deepEqual(copy.copied,copy.visible);assert.equal(copy.gesture,true);
+    assert.deepEqual((await snapshot(page)).find(tab => tab.id === 'task-2'),sourceBefore);
+    receipts.push({action:'historical-clipboard',policy,pixelsMatch:true,writeDuringGesture:true,sourcePreserved:true,pixels:copy.visible});
+    for (const kind of ['image','graph']) {
+      const displayed = await historical(policy), before = await snapshot(page), sourceBefore = before.find(tab => tab.id === 'task-2');
+      await transfer(page,'task-2',kind);
+      const after = await snapshot(page), targets = after.filter(tab => !before.some(old => old.id === tab.id));
+      assert.equal(targets.length,1);assert.equal(targets[0].conversionKind,kind);
+      assert.equal(targets[0].attachments[0].data,displayed);
+      assert.deepEqual(after.find(tab => tab.id === 'task-2'),sourceBefore);
+      receipts.push({action:'historical-transfer',policy,targetKind:kind,targetMatchesVisible:true,sourcePreserved:true});
+    }
+    assert.deepEqual((await snapshot(page)).find(tab => tab.id === 'task-2').generated[0],historicalCandidate);
+    fs.writeFileSync(path.join(dir,'receipt.json'), JSON.stringify(receipts,null,2));
+  }
+  // The inactive owner retains its processed output independently of the active task.
+  const inactiveVisible = await historical('connected');await selectSource(page);
+  const inactiveBefore = await snapshot(page);
+  await page.evaluate(() => {window.__copiedImage = null;});
+  await page.locator(active + ' [data-tab-id="task-2"] .ai-task-tab-select').click({button:'right'});
+  await page.locator('.ai-task-context-menu [data-task-action="copy"]').click();
+  await page.waitForFunction(() => window.__copiedImage);
+  const inactiveCopy = await page.evaluate(async data => ({visible:await __rasterDigest(data),copied:await __rasterDigest(__copiedImage.data),gesture:__copiedImage.gesture}),inactiveVisible);
+  assert.deepEqual(inactiveCopy.copied,inactiveCopy.visible);assert.equal(inactiveCopy.gesture,true);assert.deepEqual(await snapshot(page),inactiveBefore);
+  receipts.push({action:'inactive-historical-clipboard',policy:'connected',pixelsMatch:true,sourcePreserved:true,activeTaskPreserved:true,writeDuringGesture:true});
+  for (const action of ['copy','image']) {
+    await historical('connected'); const before = await snapshot(page), sourceBefore = before.find(tab => tab.id === 'task-2');
+    await page.evaluate(() => {
+      window.__copiedImage = null;window.__clipboardWriteStarted = false;window.__lastTaskMenuError = null;
+      const gate = {policy:'connected',entered:false};gate.promise = new Promise(resolve => gate.release = resolve);window.__historicalProcessingGate = gate;
+    });
+    await page.locator(active + ' [data-tab-id="task-2"] .ai-task-tab-select').click({button:'right'});
+    if (action === 'image') await page.locator('.ai-task-context-menu [data-task-action="send"]').click();
+    await page.locator(`.ai-task-context-menu [data-task-action="${action}"]`).click();
+    await page.waitForFunction(() => window.__historicalProcessingGate?.entered);
+    if (action === 'copy') assert.equal(await page.evaluate(() => __clipboardWriteStarted),true);
+    await page.locator(active + ' [data-ai-legacy-result-settings] [data-ai-setting-key="background"] [data-ai-setting-value="preserve"]').click();
+    await page.evaluate(() => {window.__historicalProcessingGate.release();window.__historicalProcessingGate = null;});
+    await page.waitForFunction(() => window.__lastTaskMenuError);
+    const error = page.locator(active + ' [data-ai-workspace-batch] [role="alert"]');
+    await error.waitFor();
+    const after = await snapshot(page), source = after.find(tab => tab.id === 'task-2');
+    assert.deepEqual(after.map(tab => tab.id),before.map(tab => tab.id));assert.deepEqual(source.generated,sourceBefore.generated);
+    assert.equal(source.outputOptions.backgroundPolicy,'preserve');assert.equal(await page.evaluate(() => __copiedImage),null);
+    const errorText = await error.innerText();
+    receipts.push({action:'historical-setting-change-during-processing',destination:action,rejected:true,errorText,noNewTask:true,clipboardNotWritten:true,candidatesPreserved:true,userChoicePreserved:true});
+    fs.writeFileSync(path.join(dir,'receipt.json'), JSON.stringify(receipts,null,2));
+    assert.equal(errorText,'보내는 동안 작업의 그림이나 표시 설정이 바뀌었습니다. 다시 보내 주세요.');
+  }
   // Existing view-only sharing permits copying; it still forbids send/duplicate.
+  await selectSource(page);
   await page.locator(active + ' [data-ai-label-toggle]').click();
   await page.waitForFunction(() => document.querySelector('#ai-image-panel .is-ai-active-candidate .ai-preview-stage > img')?.src !== __task5Expected[0].generated[0].data);
   await page.evaluate(async () => {
@@ -227,6 +334,29 @@ for (const engine of ['chromium', 'webkit']) test(`${engine}: other-workflow tra
   assert.deepEqual(await snapshot(page),readOnlyBefore);
   receipts.push({action:'view-only-clipboard',included:true,pixelsMatch:true,sourcePreserved:true,sendDisabled:true,duplicateDisabled:true,writeDuringGesture:true});
   fs.writeFileSync(path.join(dir,'receipt.json'), JSON.stringify(receipts,null,2));
+  // A clipboard permission refusal must surface immediately, even when the
+  // real visible-image composition is still pending. Never wait for it merely
+  // to decide which clipboard error to show.
+  await page.evaluate(() => {
+    window.__copiedImage = null;window.__lastTaskMenuError = null;
+    window.__transferCompositeEntered = false;window.__clipboardWriteStarted = false;
+    window.__transferCompositeGate = new Promise(resolve => window.__releaseTransferComposite = resolve);
+    window.__savedClipboardWrite = navigator.clipboard.write;
+    navigator.clipboard.write = () => {
+      window.__clipboardWriteStarted = window.__clipboardGesture === true;
+      return Promise.reject(new DOMException('클립보드 접근이 거부되었습니다.','NotAllowedError'));
+    };
+  });
+  await page.locator(active + ' [data-tab-id="task-0"] .ai-task-tab-select[aria-pressed="true"]').click({button:'right'});
+  await page.locator('.ai-task-context-menu [data-task-action="copy"]').click();
+  await page.waitForFunction(() => window.__lastTaskMenuError && window.__transferCompositeEntered);
+  assert.equal(await page.locator(active + ' [data-ai-workspace-batch] [role="alert"]').innerText(),'클립보드 접근이 거부되었습니다.');
+  assert.equal(await page.evaluate(() => __copiedImage),null);
+  assert.equal(await page.evaluate(() => __clipboardWriteStarted),true);
+  assert.deepEqual(await snapshot(page),readOnlyBefore);
+  receipts.push({action:'clipboard-denied-during-real-composition',originalErrorPreserved:true,reportedBeforePreparationCompletes:true,clipboardNotWritten:true,sourcePreserved:true,writeDuringGesture:true});
+  fs.writeFileSync(path.join(dir,'receipt.json'), JSON.stringify(receipts,null,2));
+  await page.evaluate(() => {window.__releaseTransferComposite();window.__transferCompositeGate = null;navigator.clipboard.write = window.__savedClipboardWrite;});
   assert.deepEqual(errors, []);
   assert.equal(await page.evaluate(() => __task2.sends.length), 0);
 });
