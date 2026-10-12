@@ -20,7 +20,7 @@
 // state.objects), so it is never selectable and never exported. */
 
 import { screenToWorld } from "./viewport.js?v=1.7.0-four-session-integration";
-import { tightenBoxObject } from "./cut-geometry.js?v=1.7.0-four-session-integration";
+import { tightenBoxObject, normalizeSrcRect } from "./cut-geometry.js?v=1.7.0-four-session-integration";
 import { smartCutoutRgba } from "./smart-cutout.js?v=1.7.0-four-session-integration";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
@@ -408,12 +408,25 @@ export function applyImageCutouts(ctx, cutouts, width, height) {
 export async function renderSessionToDataUrl(session) {
   const img = await loadRaster(session.src);
   const canvas = document.createElement("canvas");
-  canvas.width = img.naturalWidth || img.width || 1;
-  canvas.height = img.naturalHeight || img.height || 1;
+  const width=img.naturalWidth || img.width || 1,height=img.naturalHeight || img.height || 1;
+  const sr=normalizeSrcRect(session.srcRect) || {x:0,y:0,w:1,h:1};
+  canvas.width = Math.max(1,Math.round(width*sr.w));
+  canvas.height = Math.max(1,Math.round(height*sr.h));
   const ctx = canvas.getContext("2d");
-  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  ctx.drawImage(img,sr.x*width,sr.y*height,sr.w*width,sr.h*height,0,0,canvas.width,canvas.height);
   applyImageCutouts(ctx, session.cutouts, canvas.width, canvas.height);
   return canvas.toDataURL("image/png");
+}
+
+export async function renderCanvasImageForAi(object) {
+  const source=await renderSessionToDataUrl(object),img=await loadRaster(source);
+  const w=Number(object.w),h=Number(object.h),angle=(Number(object.rotation)||0)*Math.PI/180;
+  if(!(w>0)||!(h>0))throw new Error('이미지 크기를 확인하세요.');
+  const cw=Math.abs(Math.cos(angle))*w+Math.abs(Math.sin(angle))*h,ch=Math.abs(Math.sin(angle))*w+Math.abs(Math.cos(angle))*h;
+  const scale=Math.min(Math.max(img.naturalWidth/w,img.naturalHeight/h),4096/Math.max(cw,ch));
+  const canvas=document.createElement('canvas');canvas.width=Math.max(1,Math.ceil(cw*scale-1e-8));canvas.height=Math.max(1,Math.ceil(ch*scale-1e-8));
+  const ctx=canvas.getContext('2d');ctx.translate(canvas.width/2,canvas.height/2);ctx.rotate(angle);ctx.globalAlpha=Math.max(0,Math.min(1,Number(object.opacity??1)));
+  ctx.drawImage(img,-w*scale/2,-h*scale/2,w*scale,h*scale);return canvas.toDataURL('image/png');
 }
 
 async function commitImageEditSession() {

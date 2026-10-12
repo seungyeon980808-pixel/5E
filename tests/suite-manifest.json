@@ -1523,6 +1523,13 @@
         "UX-U49",
         "CANVAS-BRUSH-ERASE"
       ]
+    },
+    {
+      "path": "tests/test-canvas-visible-image-browser.cjs",
+      "findingIds": [
+        "UX-U37",
+        "CANVAS-VISIBLE-IMAGE-HANDOFF"
+      ]
     }
   ],
   "deferred": [

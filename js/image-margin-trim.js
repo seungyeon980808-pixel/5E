@@ -1,4 +1,5 @@
 import { cropBoxToBounds } from "./cut-geometry.js?v=1.7.0-four-session-integration";
+import { applyImageCutouts } from './image-cutout.js?v=1.7.0-four-session-integration';
 
 export function contentBounds(data, width, height) {
   let left = width, top = height, right = -1, bottom = -1;
@@ -28,6 +29,7 @@ export async function trimImageMargins(object) {
   if (!ctx) throw new Error("이미지를 읽을 수 없습니다.");
   ctx.drawImage(image, sr.x * image.naturalWidth, sr.y * image.naturalHeight,
     sr.w * image.naturalWidth, sr.h * image.naturalHeight, 0, 0, canvas.width, canvas.height);
+  applyImageCutouts(ctx, object.cutouts, canvas.width, canvas.height);
   const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height);
   const bounds = contentBounds(pixels.data, canvas.width, canvas.height);
   return bounds ? cropBoxToBounds(object, bounds) : null;

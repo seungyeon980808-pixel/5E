@@ -1,0 +1,16 @@
+const assert=require('node:assert/strict');const {chromium,webkit}=require(process.env.PLAYWRIGHT_MODULE||'playwright');const h=require('./helpers/rhwp-exam.cjs');
+h.withServer(async origin=>{for(const[name,engine]of Object.entries({chromium,webkit})){
+ const browser=await engine.launch(),page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
+ try{
+  await h.navigate(page,origin+'/?mode=pro&mobile=0&exam=0');await h.ready(page);
+  const original=await page.evaluate(async()=>{const{state}=await import('/js/state.js?v=1.7.0-four-session-integration'),c=document.createElement('canvas');c.width=200;c.height=100;const g=c.getContext('2d');g.fillStyle='red';g.fillRect(0,0,100,100);g.fillStyle='#008000';g.fillRect(100,0,100,100);const object={id:'visible-crop',type:'image',src:c.toDataURL(),srcRect:{x:.5,y:0,w:.5,h:1},x:0,y:0,w:40,h:20,rotation:90,opacity:.5,layerId:1,mode:'edit',exportable:true,cutouts:[{type:'rect',x:0,y:0,w:1,h:.25},{type:'rect',x:0,y:.25,w:1,h:.1,background:'white'}]};state.update(s=>{s.objects=[object];s.selectedIds=[object.id];s.imageEditSession=null;});return structuredClone(object);});
+  await page.locator('#ai-image-install-open').click();
+  const img=page.locator('#ai-image-panel .is-ai-active-source .ai-preview-stage > img');await img.waitFor();await img.evaluate(img=>img.decode());
+  const view=await img.evaluate(async img=>{const c=document.createElement('canvas');c.width=img.naturalWidth;c.height=img.naturalHeight;const g=c.getContext('2d');g.drawImage(img,0,0);return{width:c.width,height:c.height,samples:[10,50,70,90].map(x=>[...g.getImageData(x,100,1,1).data])};});
+  assert.equal(view.width,100);assert.equal(view.height,200,'the visible rotation and stretched aspect ratio are included');assert.deepEqual(view.samples[0],[0,128,0,128]);assert.deepEqual(view.samples[1],[0,128,0,128]);assert.deepEqual(view.samples[2],[255,255,255,128]);assert.equal(view.samples[3][3],0,'erased crop pixels remain transparent');
+  assert.deepEqual(await page.evaluate(async()=>(await import('/js/state.js?v=1.7.0-four-session-integration')).state.get().objects[0]),original,'handoff leaves all source bytes and placement intact');
+  const trimmed=await page.evaluate(async()=>{const v='?v=1.7.0-four-session-integration',{trimImageMargins}=await import('/js/image-margin-trim.js'+v),c=document.createElement('canvas');c.width=100;c.height=100;const g=c.getContext('2d');g.fillStyle='#111';g.fillRect(0,0,100,100);const o={id:'margin',type:'image',src:c.toDataURL(),x:0,y:0,w:40,h:40,cutouts:[{type:'rect',x:0,y:0,w:.4,h:1},{type:'brush',points:[{x:.8,y:.3},{x:.8,y:.7}],diameterX:.1,diameterY:.1}]};const result=await trimImageMargins(o);return{result,original:o};});
+  assert.equal(trimmed.result.x,16);assert.equal(trimmed.result.w,24);assert.equal(trimmed.result.srcRect.x,.4);assert.equal(trimmed.result.src,trimmed.original.src);assert.ok(Math.abs(trimmed.result.cutouts[1].diameterX-1/6)<1e-12);assert.equal(trimmed.result.cutouts[1].diameterY,.1,'cropping remaps brush width independently on both axes');
+  assert.deepEqual(errors,[]);console.log(name+': real canvas-to-AI crop/rotation/aspect/opacity/erasure, unchanged source and erased-margin trimming passed');
+ }finally{await browser.close();}
+}}).catch(e=>{console.error(e);process.exitCode=1;});

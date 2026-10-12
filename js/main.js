@@ -39,7 +39,7 @@ import { initImagePaste, insertImageFromSrc, prepareImageCandidateRevision } fro
 import { createCandidateMaterializer } from "./ai-candidate-materializer.js?v=1.7.0-four-session-integration";
 import { validateWorkbenchGraph, insertWorkbenchGraph } from "./graph/workbench-result.js?v=1.7.0-four-session-integration";
 import { initImageCutout } from "./image-cutout.js?v=1.7.0-four-session-integration";
-import { renderSessionToDataUrl } from "./image-cutout.js?v=1.7.0-four-session-integration";
+import { renderCanvasImageForAi } from "./image-cutout.js?v=1.7.0-four-session-integration";
 import { handSelectedCanvasImageToAi } from "./ai-canvas-handoff.js?v=1.7.0-four-session-integration";
 import { initExamLibrary } from "./exam-library.js?v=1.7.0-four-session-integration";
 import { initTemplates } from "./templates.js?v=1.7.0-four-session-integration";
@@ -343,7 +343,7 @@ const openSelectedAi = () => {
     return;
   }
   void handSelectedCanvasImageToAi(state, {
-    renderImage: renderSessionToDataUrl,
+    renderImage: renderCanvasImageForAi,
     renderComposition: async snapshot => {
       await ensureEmbeddedFonts();
       const bounds = getContentBounds(snapshot, {}, 1);
