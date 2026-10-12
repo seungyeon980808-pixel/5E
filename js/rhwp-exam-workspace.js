@@ -383,7 +383,7 @@ export function initRhwpExamWorkspace(state, services) {
       await document.fonts.ready;
       graphBounds = graphSendBounds(graph.planeId);
     }
-    const bounds = await new Promise(resolve => services.runAreaCapture(document.querySelector('#canvas'),state,resolve,graph ? '한글에 넣을 그래프 영역을 확인하거나 다시 드래그하세요' : '시험지에 보낼 영역을 드래그하세요',{confirmText:'확인',initialBounds:[...figures.values()].reverse().find(f=>f.link?.tabId===captured.link.tabId)?.render?.bounds || tabs.pageForLink(captured.link)?.meta?.examRender?.bounds || graphBounds}));
+    const bounds = await new Promise(resolve => services.runAreaCapture(document.querySelector('#canvas'),state,resolve,graph ? '한글에 넣을 그래프 영역을 확인하거나 다시 드래그하세요' : '시험지에 보낼 영역을 드래그하세요',{confirmText:'확인',purpose:'hwp',initialBounds:[...figures.values()].reverse().find(f=>f.link?.tabId===captured.link.tabId)?.render?.bounds || tabs.pageForLink(captured.link)?.meta?.examRender?.bounds || graphBounds}));
     if (!bounds) {
       if (wasOpen) {panel.hidden = false;syncBackground();}
       else if (captured.context.ai) await connectedAi?.restoreExamTask(captured.context.ai);
@@ -569,7 +569,7 @@ export function initRhwpExamWorkspace(state, services) {
   });
   regionInspector.querySelector('[data-source-recrop]').onclick=()=>void run(async()=>{
     const owner=editing,render=currentSourceRender();if(!owner)return;
-    const bounds=await new Promise(resolve=>services.runAreaCapture(document.querySelector('#canvas'),state,resolve,'기존 영역을 옮기거나 다시 드래그하세요',{confirmText:'확인',initialBounds:render.bounds}));
+    const bounds=await new Promise(resolve=>services.runAreaCapture(document.querySelector('#canvas'),state,resolve,'기존 영역을 옮기거나 다시 드래그하세요',{confirmText:'확인',purpose:'hwp',initialBounds:render.bounds}));
     if(bounds && editing===owner)updateSourceRegion(bounds);
   });
   regionInspector.querySelector('[data-source-settings]').onclick=e=>openPictureSettings(e.currentTarget,true);

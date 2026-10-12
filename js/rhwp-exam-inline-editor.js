@@ -153,7 +153,7 @@ export class ExamInlineEditor {
         if (!point || (name==='p1' && !label.leaderRoutes?.length && point.x===label.p2.x && point.y===label.p2.y)) continue;
         // The caption and its drag handle share the same source-space anchor.
         // pointerDown also supports double-click editing through this handle.
-        const handle=el('circle',{cx:point.x,cy:point.y,r:radius,fill:'#fff',stroke:'#2878f0','stroke-width':1.5,'vector-effect':'non-scaling-stroke'});
+        const handle=el('circle',{cx:point.x,cy:point.y,r:radius,fill:'#fff',stroke:'#dba52b','stroke-width':1.5,'vector-effect':'non-scaling-stroke'});
         handle.dataset.inlineHandle=name;handle.dataset.annotationId=label.id;this.svg.append(handle);
       }
     }
@@ -278,8 +278,8 @@ export function chooseInlineCrop({sourceUrl,fullBounds,initialBounds}) {
     const group=el('g');svg.append(group);let bounds=copy(initialBounds),drag;
     const point=event=>{const p=new DOMPoint(event.clientX,event.clientY).matrixTransform(svg.getScreenCTM().inverse());return{x:Math.max(fullBounds.x,Math.min(fullBounds.x+fullBounds.w,p.x)),y:Math.max(fullBounds.y,Math.min(fullBounds.y+fullBounds.h,p.y))};};
     const draw=()=>{
-      const b=bounds;group.replaceChildren(el('rect',{x:b.x,y:b.y,width:b.w,height:b.h,fill:'#2878f00a',stroke:'#2878f0','stroke-width':2,'vector-effect':'non-scaling-stroke','data-crop-handle':'move'}));
-      for(const [name,x,y]of[['nw',b.x,b.y],['ne',b.x+b.w,b.y],['sw',b.x,b.y+b.h],['se',b.x+b.w,b.y+b.h]])group.append(el('circle',{cx:x,cy:y,r:fullBounds.w/120,fill:'white',stroke:'#2878f0','stroke-width':1.5,'vector-effect':'non-scaling-stroke','data-crop-handle':name}));
+      const b=bounds;group.replaceChildren(el('rect',{x:b.x,y:b.y,width:b.w,height:b.h,fill:'#dba52b0a',stroke:'#dba52b','stroke-width':2,'vector-effect':'non-scaling-stroke','data-crop-handle':'move'}));
+      for(const [name,x,y]of[['nw',b.x,b.y],['ne',b.x+b.w,b.y],['sw',b.x,b.y+b.h],['se',b.x+b.w,b.y+b.h]])group.append(el('circle',{cx:x,cy:y,r:fullBounds.w/120,fill:'white',stroke:'#dba52b','stroke-width':1.5,'vector-effect':'non-scaling-stroke','data-crop-handle':name}));
       dialog.querySelector('[data-crop-confirm]').disabled=b.w<.1||b.h<.1;
     };
     svg.addEventListener('pointerdown',event=>{event.preventDefault();drag={start:point(event),before:copy(bounds),kind:event.target.dataset.cropHandle || 'new'};svg.setPointerCapture(event.pointerId);});

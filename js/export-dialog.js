@@ -163,6 +163,7 @@ export function runAreaCapture(svg, state, onDone, hintText, options = {}) {
   window.dispatchEvent(new Event('5e:canvas-interaction-cancel'));
   const overlay = document.createElement("div");
   overlay.className = "capture-overlay";
+  if (options.purpose === "hwp") overlay.dataset.capturePurpose = "hwp";
   /* ⚠ z-index 는 튜토리얼 흐림(100010)보다 위여야 한다.
    *   9000 이던 시절엔 튜토리얼이 도는 동안 흐림 4장이 마우스를 먼저 먹어
    *   '영역 지정'을 눌러도 **캔버스에서 드래그가 되지 않았다**(사용자 지적).
@@ -186,12 +187,14 @@ export function runAreaCapture(svg, state, onDone, hintText, options = {}) {
   rect.style.cssText =
     "position:absolute;border:1.5px solid #4aa3ff;background:rgba(74,163,255,0.18);" +
     "display:none;box-sizing:border-box;";
+  rect.className = "capture-box";
   overlay.appendChild(rect);
 
   // 실제 크기(mm) 라벨 — 클릭해 숫자를 직접 입력할 수 있다: 가로 입력 → Tab → 세로,
   // Enter로 확정. 입력을 위해 pointer-events를 켠다(overlay onDown은 이 영역 클릭을 통과시킴).
   const dim = document.createElement("div");
   dim.dataset.dim = "1";
+  dim.className = "capture-dim";
   dim.style.cssText =
     "position:absolute;display:none;z-index:3;padding:2px 6px;border-radius:3px;cursor:text;" +
     "background:var(--accent);color:#fff;font-size: 12px;font-weight:600;" +
@@ -200,8 +203,10 @@ export function runAreaCapture(svg, state, onDone, hintText, options = {}) {
     "width:46px;text-align:right;font:inherit;color:#fff;border:0;border-radius:3px;" +
     "background:rgba(255,255,255,0.18);padding:1px 4px;outline:none;";
   const wInput = document.createElement("input");
+  wInput.className = "capture-size-input";
   wInput.type = "text"; wInput.inputMode = "decimal"; wInput.style.cssText = INP;
   const hInput = document.createElement("input");
+  hInput.className = "capture-size-input";
   hInput.type = "text"; hInput.inputMode = "decimal"; hInput.style.cssText = INP;
   const sepX = document.createElement("span"); sepX.textContent = " × "; sepX.style.pointerEvents = "none";
   const sepU = document.createElement("span"); sepU.textContent = " mm"; sepU.style.pointerEvents = "none";
@@ -242,6 +247,7 @@ export function runAreaCapture(svg, state, onDone, hintText, options = {}) {
   for (const [id] of HANDLES) {
     const h = document.createElement("div");
     h.dataset.h = id;
+    h.className = "capture-handle";
     h.style.cssText =
       "position:absolute;width:11px;height:11px;margin:-6px 0 0 -6px;display:none;z-index:4;" +
       "background:#fff;border:1.5px solid var(--accent);border-radius:2px;box-sizing:border-box;cursor:" + CURSORS[id] + ";";

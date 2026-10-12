@@ -20,11 +20,12 @@ function dialogIdentity() {
   return { titleId: `${id}-title`, descriptionId: `${id}-description` };
 }
 
-function buildDialog({ title, message, buttons, wide = false, dismissValue = buttons[0].value }) {
+function buildDialog({ title, message, buttons, wide = false, dismissValue = buttons[0].value, purpose }) {
   return new Promise((resolve) => {
     const { titleId, descriptionId } = dialogIdentity();
     const overlay = document.createElement("div");
     overlay.className = wide ? "modal-overlay mode-switch-dialog" : "modal-overlay";
+    if (purpose === 'hwp') overlay.dataset.dialogPurpose = 'hwp';
     const btnHtml = buttons.map((b, i) =>
       `<button type="button" class="modal-btn${b.primary ? " modal-btn-primary" : ""}" data-i="${i}">${escapeHtml(b.label)}</button>`
     ).join("");
@@ -132,6 +133,7 @@ export function showModeSwitch(target) {
 
 export function showExamDocumentChoice() {
   return buildDialog({
+    purpose:'hwp',
     title:'한글 문서 선택',
     message:'이미지를 넣을 한글 문서를 먼저 열어주세요. 선택한 이미지 영역은 유지됩니다.',
     wide:true,
