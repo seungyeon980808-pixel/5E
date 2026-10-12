@@ -117,9 +117,8 @@ async function scenario(origin,engine,surface) {
     await h.action(page,'new');await h.idle(page);await h.openFile(page,'open-project',bundle);
     assert.equal((await h.pictures(page))[0].figure.id,linked.figure.id);
     assert.match(await page.locator('.exam-figure span').textContent(),/미반영 수정/);
+    await h.seedSourceLabel(page);
     await h.doubleClick(page);await page.locator('#exam-inline-editor:not([hidden])').waitFor();await h.idle(page);
-    await page.locator('[data-inline-action="add-label"]').click();
-    const box=await page.locator('.exam-inline-canvas').boundingBox();await page.mouse.click(box.x+box.width*.5,box.y+box.height*.35);
     await page.locator('[data-inline-field="text"]').fill('외부 그림 라벨');await page.locator('[data-inline-field="text"]').press('Tab');
     await page.locator('[data-inline-action="apply"]').click();await h.idle(page);
     const applied=(await h.pictures(page))[0];assert.equal(applied.figure.source.pages[0].objects.find(o=>o.type==='labeler').text,'외부 그림 라벨');

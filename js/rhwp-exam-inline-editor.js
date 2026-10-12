@@ -64,10 +64,15 @@ export class ExamInlineEditor {
       if (id) {this.selected = id; this.render(); this.field('text').focus();this.field('text').select();}
     });
     this.root.addEventListener('keydown', event => {
+      if (event.isComposing || event.keyCode === 229) return;
+      if (event.key === 'Escape') {
+        event.preventDefault(); event.stopImmediatePropagation();
+        if (!event.repeat) { if (this.mode) {this.mode=null;this.anchor=null;this.render();} else void this.action('close'); }
+        return;
+      }
       if (event.target.matches('input,textarea,select')) return;
       if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'z') {event.preventDefault();void this.action(event.shiftKey ? 'redo' : 'undo');}
-      else if (event.key === 'Delete' || event.key === 'Backspace') {event.preventDefault();void this.action('delete');}
-      else if (event.key === 'Escape') {event.preventDefault();if (this.mode) {this.mode = null;this.anchor = null;this.render();} else void this.action('close');}
+      else if (!this.session?.simple && (event.key === 'Delete' || event.key === 'Backspace')) {event.preventDefault();void this.action('delete');}
     });
   }
   field(name) { return this.root.querySelector(`[data-inline-field="${name}"]`); }
@@ -75,6 +80,9 @@ export class ExamInlineEditor {
   get active() { return !this.root.hidden; }
   open(session) {
     this.close();this.session = session;this.labels = copy(session.labels);this.bounds = copy(session.bounds);
+    this.root.dataset.simple = String(!!session.simple);
+    for (const action of ['add-label','add-leader','elbow','delete']) this.button(action).hidden=!!session.simple;
+    this.root.querySelector('.exam-edit-badge').textContent = session.simple ? '라벨 간단 편집 중' : '라벨·지시선 편집 중';
     this.busy=false;this.root.querySelectorAll('button,input,textarea,select').forEach(control=>control.disabled=false);
     this.selected = this.labels[0]?.id;this.undo = [];this.redo = [];this.mode = null;this.lastPress=null;this.root.hidden = false;
     this.root.querySelector('.exam-inline-recovery').hidden=!session.recovery;
@@ -105,8 +113,9 @@ export class ExamInlineEditor {
     const height = this.toolbar.offsetHeight;
     const headingWidth=Math.min(frame.width-24,Math.max(320,geometry.w));
     Object.assign(this.heading.style,{left:`${Math.max(frame.x+12,Math.min(geometry.x,frame.right-headingWidth-12))}px`,top:`${Math.max(8,geometry.y-40)}px`,width:`${headingWidth}px`});
-    // Leave the paragraph directly below the figure visible for comparing type.
-    Object.assign(this.toolbar.style,{left:`${Math.max(frame.x+12,Math.min(geometry.x,frame.right-width-12))}px`,top:`${Math.max(frame.y+12,frame.bottom-height-12)}px`});
+    const angle=(geometry.rotation || 0)*Math.PI/180;
+    const bottom=geometry.y+geometry.h/2+(Math.abs(geometry.w*Math.sin(angle))+Math.abs(geometry.h*Math.cos(angle)))/2;
+    Object.assign(this.toolbar.style,{left:`${Math.max(frame.x+12,Math.min(geometry.x,frame.right-width-12))}px`,top:`${Math.max(frame.y+12,Math.min(bottom+8,frame.bottom-height-12))}px`});
   }
   point(event) {
     const point = new DOMPoint(event.clientX,event.clientY).matrixTransform(this.svg.getScreenCTM().inverse());
@@ -140,7 +149,7 @@ export class ExamInlineEditor {
       this.svg.append(group);
     }
     const label=this.selectedLabel();
-    if (label) {
+    if (label && !this.session.simple) {
       const radius = Math.max(.25,b.w/Math.max(1,this.picture.clientWidth)*4);
       const handles = label.leaderRoutes?.length
         ? [['p1',label.leaderRoutes[0].target],['p2',label.p2],...label.leaderRoutes.flatMap((route,index)=>[
@@ -167,7 +176,7 @@ export class ExamInlineEditor {
     this.button('delete').disabled=!label;this.button('elbow').disabled=!label || !!label.leaderRoutes?.length;
     this.button('elbow').title=label?.leaderRoutes?.length ? '경로의 제어점을 직접 드래그하세요.' : '꺾임점 추가 또는 제거';
     this.button('undo').disabled=!this.undo.length;this.button('redo').disabled=!this.redo.length;
-    this.root.querySelector('[data-inline-hint]').textContent=this.mode==='label' ? '그림에서 라벨을 놓을 위치를 클릭하세요.' : this.mode==='leader' ? (this.anchor ? '라벨을 놓을 위치를 클릭하세요.' : '지시선이 가리킬 위치를 클릭하세요.') : '라벨이나 지시선의 점을 드래그하세요.';
+    this.root.querySelector('[data-inline-hint]').textContent=this.session.simple ? '라벨을 선택해 내용과 모양을 바꿉니다.' : this.mode==='label' ? '그림에서 라벨을 놓을 위치를 클릭하세요.' : this.mode==='leader' ? (this.anchor ? '라벨을 놓을 위치를 클릭하세요.' : '지시선이 가리킬 위치를 클릭하세요.') : '라벨이나 지시선의 점을 드래그하세요.';
     this.svg.dataset.placing=String(!!this.mode);
   }
   changeField(field) {
@@ -218,6 +227,7 @@ export class ExamInlineEditor {
       this.lastPress=null;this.drag=null;this.render();this.field('text').focus();this.field('text').select();return;
     }
     this.lastPress={id:this.selected,time:now,x:event.clientX,y:event.clientY};
+    if (this.session.simple) {this.render();return;}
     this.drag={pointerId:event.pointerId,start:point,before:this.snapshot(),handle:target.dataset.inlineHandle || 'p2'};
     this.svg.setPointerCapture(event.pointerId);this.render();
   }
@@ -258,6 +268,7 @@ export class ExamInlineEditor {
   }
   async action(name) {
     if (!this.active || this.busy) return;
+    if (this.session.simple && ['add-label','add-leader','elbow','delete'].includes(name)) return;
     if(name==='add-label' || name==='add-leader') {this.mode=name==='add-label' ? 'label' : 'leader';this.anchor=null;this.render();this.svg.focus();return;}
     if(name==='delete') {if(!this.selected)return;this.remember();this.labels=this.labels.filter(l=>l.id!==this.selected);this.selected=null;this.render();this.publish();return;}
     if(name==='elbow') {const l=this.selectedLabel();if(!l)return;this.remember();if(l.elbow)delete l.elbow;else l.elbow={x:l.p1.x,y:l.p2.y};this.render();this.publish();return;}

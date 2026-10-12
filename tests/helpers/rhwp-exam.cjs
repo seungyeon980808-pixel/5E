@@ -288,3 +288,14 @@ module.exports.openFile=async function(page,action,file){
  await picker.setFiles(file);await module.exports.idle(page);
 };
 module.exports.nativeOpen=async function(page,file){await module.exports.openFile(page,'open-hwp',file);};
+
+// Seed a caption in the full source editor, then publish through its real Apply
+// action. The document's simple editor only changes existing captions.
+module.exports.seedSourceLabel=async function(page,text='기존 라벨'){
+ await module.exports.originalEdit(page);await page.locator('#exam-edit-bar').waitFor();
+ await page.evaluate(async({stateUrl,text})=>{
+  const {state,DEFAULT_TEXT_FONT}=await import(stateUrl);
+  state.update(s=>{const page=s.pages.find(p=>p.id===s.activePageId),b=page.meta.examRender.bounds,p={x:b.x+b.w*.5,y:b.y+b.h*.35};s.objects.push({id:'source-caption-fixture',type:'labeler',p1:{...p},p2:{...p},text,labelType:'label',fontFamily:DEFAULT_TEXT_FONT,labelSize:3,strokeWidth:.2,strokeLevel:0,layerId:s.layers[0].id,order:s.objects.length,locked:false,positionLocked:false});});
+ },{stateUrl:runtimes.get(page).stateUrl,text});
+ await page.locator('[data-source-apply]').click();await module.exports.idle(page);
+};

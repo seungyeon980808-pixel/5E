@@ -68,6 +68,8 @@ async function scenario(origin, engine, surface) {
     },{stateUrl,id:plane.id});
     const crop=first.figure.render.bounds;
     assert.ok(crop.x<=captionBounds.x && crop.y<=captionBounds.y && crop.x+crop.w>=captionBounds.right && crop.y+crop.h>=captionBounds.bottom,'graph crop includes axis captions outside the coordinate frame');
+    await h.seedSourceLabel(page);
+    const zoomPicture=(await h.pictures(page))[0];
     // A real paragraph below the inline image is the label-size reference.
     await page.evaluate(async () => {
       const frame=document.querySelector('#exam-studio iframe');
@@ -84,10 +86,8 @@ async function scenario(origin, engine, surface) {
     assert.ok(Math.abs(editing.paperScale/before.paperScale-factor)<.02,'paper and body text use the same magnification');
     assert.ok(Math.abs(editing.geometry.w/before.geometry.w-factor)<.02,'picture projection follows document magnification');
     assert.ok(editing.geometry.y>=editing.viewport.y-2,'the whole picture begins below document controls');
-    assert.ok(editing.toolbar.y>editing.geometry.y+editing.geometry.h+48,'reference paragraph below picture is not covered by the toolbar');
-    assert.deepEqual((await h.pictures(page))[0].props,first.props,'zoom does not change stored picture dimensions');
-    await page.locator('[data-inline-action="add-label"]').click();
-    const box=await page.locator('.exam-inline-canvas').boundingBox();await page.mouse.click(box.x+box.width*.65,box.y+box.height*.35);
+    assert.ok(editing.toolbar.y>=editing.geometry.y+editing.geometry.h && editing.toolbar.y<=editing.geometry.y+editing.geometry.h+10,'simple toolbar is directly below the picture');
+    assert.deepEqual((await h.pictures(page))[0].props,zoomPicture.props,'zoom does not change stored picture properties');
     await page.locator('[data-inline-field="text"]').fill('가속 구간');await page.locator('[data-inline-field="text"]').press('Tab');
     await page.locator('[data-inline-field="size"]').fill('10');await page.locator('[data-inline-field="size"]').press('Tab');
     if(engine==='chromium' && !surface) {

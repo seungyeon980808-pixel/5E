@@ -74,6 +74,8 @@
 .exam-inline-picture {position:absolute;transform-origin:center;pointer-events:auto;outline:2px solid var(--exam-accent, #dba52b);background:white;}
 .exam-inline-canvas {display:block;width:100%;height:100%;overflow:hidden;touch-action:none;user-select:none;}
 .exam-inline-canvas [data-annotation-id] {cursor:move;}
+#exam-inline-editor[data-simple="true"] [data-annotation-id] {cursor:pointer;}
+#exam-inline-editor button[hidden] {display:none;}
 .exam-inline-canvas [data-inline-handle] {cursor:grab;}
 .exam-inline-canvas[data-placing="true"] {cursor:crosshair;}
 .exam-inline-toolbar {position:fixed;pointer-events:auto;padding:10px;box-sizing:border-box;border:1px solid var(--border);border-radius:9px;background:var(--bg-panel);box-shadow:0 6px 24px #0003;}

@@ -45,25 +45,15 @@ async function openInline(page, index = 0) {
   assert.equal(await root(page).evaluate(node => node.ownerDocument === document && node.parentElement === document.body), true, 'inline controls belong to the top-level document');
   assert.equal(await page.locator('#exam-edit-bar').isVisible(), false, 'picture double-click opens inline editing');
   assert.equal(await page.locator('#rhwp-exam-workspace').isVisible(), true, 'the exam remains visible during inline editing');
-  for (const action of ['add-label', 'add-leader', 'delete', 'undo', 'redo', 'crop', 'original', 'apply', 'close']) {
+  for (const action of ['undo', 'redo', 'crop', 'original', 'apply', 'close']) {
     assert.equal(await button(page, action).isVisible(), true, `inline ${action} action is visible`);
-    if (!['delete', 'undo', 'redo'].includes(action)) assert.equal(await button(page, action).isEnabled(), true, `inline ${action} action is enabled after opening`);
+    if (!['undo', 'redo'].includes(action)) assert.equal(await button(page, action).isEnabled(), true, `inline ${action} action is enabled after opening`);
   }
+  for (const action of ['add-label','add-leader','elbow','delete']) assert.equal(await button(page,action).isVisible(),false,'simple editing excludes '+action);
 }
 
 async function returnToExistingExam(page) {
-  if (await page.locator('#exam-edit-bar').isVisible()) {
-    await page.locator('#exam-edit-bar').getByRole('button', { name: '돌아가기', exact: true }).click();
-  } else {
-    // The separate exam-open button was removed. Use the current send entry,
-    // then cancel placement so the existing document receives no new picture.
-    const count = (await h.pictures(page)).length;
-    await h.crop(page);
-    await page.locator('.exam-placement:not([hidden])').waitFor();
-    await h.action(page, 'cancel-placement');
-    assert.equal((await h.pictures(page)).length, count);
-  }
-  await h.idle(page);
+  await page.locator('#exam-send').click();await page.locator('[data-exam-document-open]').click();await h.idle(page);
 }
 
 // Use the actual SVG matrix, including its placement over the iframe picture.
@@ -219,6 +209,7 @@ async function freshPage(browser, origin, surface, errors, contexts) {
   contexts.push(context);
   const page = await context.newPage(); page.on('pageerror', error => errors.push(error.message));
   await page.addInitScript(() => {
+    localStorage.setItem('5e.tutorial.bannerSeen','true');localStorage.setItem('5e.preview:5e.tutorial.bannerSeen','true');
     Object.defineProperty(window, 'showSaveFilePicker', { configurable: true, value: undefined });
     Object.defineProperty(window, 'showDirectoryPicker', { configurable: true, value: undefined });
   });
@@ -286,69 +277,31 @@ async function scenario(browser, origin, surface, name) {
 
     await clickText(page, 'inline-seed', true);
     assert.equal(await field(page, 'text').evaluate(node => node === document.activeElement), true, 'label double-click focuses the toolbar textarea');
-    const captionHandle=canvas(page).locator('[data-inline-handle="p2"]');
-    assert.deepEqual(await captionHandle.evaluate(node=>({x:Number(node.getAttribute('cx')),y:Number(node.getAttribute('cy'))})),{x:1,y:-6},'label handle sits at the actual caption centre');
-    const handleBox=await captionHandle.boundingBox();
-    await page.mouse.dblclick(handleBox.x+handleBox.width/2,handleBox.y+handleBox.height/2);
-    assert.equal(await field(page, 'text').evaluate(node=>node===document.activeElement),true,'the centred handle also supports text double-click');
+    assert.equal(await canvas(page).locator('[data-inline-handle]').count(),0,'simple editing has no geometry handles');
     await changeField(page, 'text', '기존 라벨 수정');
     await waitLabel(page, stateUrl, first.figure.link, 'inline-seed', { text: '기존 라벨 수정' });
 
-    await button(page, 'add-label').click();
-    assert.equal(await canvas(page).locator('g[data-annotation-id]').count(), 1, 'the add button waits for placement');
-    await clickSvg(page, .72, .3);
-    assert.equal(await field(page, 'text').evaluate(node => node === document.activeElement), true, 'placing a label focuses its text field');
-    await changeField(page, 'text', '추가 라벨');
-    let drawing = await linkedDrawing(page, stateUrl, first.figure.link);
-    const added = labels(drawing.objects).find(o => o.id !== 'inline-seed');
-    assert.ok(added, 'a new label is stored as an original 5E object');
-    assert.equal(added.type, 'labeler'); assert.equal(added.text, '추가 라벨'); assert.deepEqual(added.p1, added.p2, 'text-only labels have no leader');
-    await dragFrom(page, await textPoint(page, added.id), 18, 10);
-    const moved = labels((await linkedDrawing(page, stateUrl, first.figure.link)).objects).find(o => o.id === added.id);
-    assert.notDeepEqual(moved.p2, added.p2, 'pointer-up persists label movement'); assert.deepEqual(moved.p1, moved.p2);
-    await changeField(page, 'size', 12);
-    await changeField(page, 'stroke', .35);
-    const otherFont = await field(page, 'font').evaluate(select => [...select.options].find(option => !option.disabled && option.value !== select.value)?.value);
-    assert.ok(otherFont, 'font control offers another font'); await changeField(page, 'font', otherFont);
-    await waitLabel(page, stateUrl, first.figure.link, added.id, { labelSize: 12 * 25.4 / 72, strokeWidth: .35, fontFamily: otherFont });
-
-    await button(page, 'add-leader').click();
-    const anchor = await clickSvg(page, .25, .55);
-    assert.equal(await canvas(page).locator('g[data-annotation-id]').count(), 2, 'the leader anchor waits for a label point');
-    const labelPoint = await clickSvg(page, .62, .72);
-    assert.equal(await field(page, 'text').evaluate(node => node === document.activeElement), true);
-    await changeField(page, 'text', '새 지시선');
-    drawing = await linkedDrawing(page, stateUrl, first.figure.link);
-    const leader = labels(drawing.objects).find(o => !['inline-seed', added.id].includes(o.id));
-    assert.ok(leader); assert.equal(leader.text, '새 지시선');
-    for (const [key, expected] of [['p1', anchor], ['p2', labelPoint]]) {
-      assert.ok(Math.abs(leader[key].x - expected.x) < .1 && Math.abs(leader[key].y - expected.y) < .1, `${key} uses the clicked SVG coordinates: ${JSON.stringify({ actual: leader[key], expected })}`);
-    }
-
-    await clickText(page, 'inline-seed');
-    for (const [key, dx, dy] of [['p1', -9, 8], ['p2', 10, 6], ['elbow', -8, -7]]) {
-      const before = labels((await linkedDrawing(page, stateUrl, first.figure.link)).objects).find(o => o.id === 'inline-seed');
-      await drag(page, canvas(page).locator(`[data-inline-handle="${key}"]`), dx, dy);
-      const after = labels((await linkedDrawing(page, stateUrl, first.figure.link)).objects).find(o => o.id === 'inline-seed');
-      assert.notDeepEqual(after[key], before[key], `${key} handle updates source geometry`);
-      for (const other of ['p1', 'p2', 'elbow'].filter(other => other !== key)) assert.deepEqual(after[other], before[other], `${key} drag preserves ${other}`);
-      if (key === 'elbow') {
-        await button(page, 'undo').click(); await waitLabel(page, stateUrl, first.figure.link, before.id, { elbow: before.elbow });
-        await button(page, 'redo').click(); await waitLabel(page, stateUrl, first.figure.link, after.id, { elbow: after.elbow });
-      }
-    }
-    await clickText(page, added.id); await button(page, 'delete').click();
-    await waitLabel(page, stateUrl, first.figure.link, added.id, null);
-    assert.equal(await wrapper(page, added.id).count(), 0);
-    await button(page, 'undo').click(); await waitLabel(page, stateUrl, first.figure.link, added.id, { text: '추가 라벨' });
-    await button(page, 'redo').click(); await waitLabel(page, stateUrl, first.figure.link, added.id, null);
-    await button(page, 'undo').click(); await waitLabel(page, stateUrl, first.figure.link, added.id, { text: '추가 라벨' });
+    const geometryBefore = labels((await linkedDrawing(page,stateUrl,first.figure.link)).objects)[0];
+    await dragFrom(page,await textPoint(page,'inline-seed'),18,10);
+    const geometryAfter = labels((await linkedDrawing(page,stateUrl,first.figure.link)).objects)[0];
+    for (const key of ['p1','p2','elbow']) assert.deepEqual(geometryAfter[key],geometryBefore[key],'simple editing preserves '+key);
+    await changeField(page,'size',12);await changeField(page,'stroke',.35);
+    const oldFont=await field(page,'font').inputValue();
+    const otherFont=await field(page,'font').evaluate(select=>[...select.options].find(option=>!option.disabled&&option.value!==select.value)?.value);
+    assert.ok(otherFont);await changeField(page,'font',otherFont);
+    await waitLabel(page,stateUrl,first.figure.link,'inline-seed',{labelSize:12*25.4/72,strokeWidth:.35,fontFamily:otherFont});
+    await button(page,'undo').click();await waitLabel(page,stateUrl,first.figure.link,'inline-seed',{fontFamily:oldFont});
+    await button(page,'redo').click();await waitLabel(page,stateUrl,first.figure.link,'inline-seed',{fontFamily:otherFont});
+    await canvas(page).focus();await page.keyboard.press('Delete');assert.equal(await canvas(page).locator('g[data-annotation-id]').count(),1,'simple editing cannot delete labels');
+    const near = await page.locator('.exam-inline-toolbar').evaluate(n=>{const p=document.querySelector('.exam-inline-picture').getBoundingClientRect(),t=n.getBoundingClientRect();return{gap:t.top-p.bottom,bottom:t.bottom};});
+    assert.ok(near.gap>=0&&near.gap<=10,'toolbar follows just below the image');assert.ok(near.bottom<=950);
     const draftLabels = labels((await linkedDrawing(page, stateUrl, first.figure.link)).objects);
     const editedBoxes = await annotationBoxes(page);
-    assert.equal(draftLabels.length, 3);
+    assert.equal(draftLabels.length, 1);
     await page.screenshot({ path: path.join(evidence, name + '-draft.png') });
 
-    await button(page, 'close').click(); await root(page).waitFor({ state: 'hidden' }); await h.idle(page);
+    await field(page,'text').focus();await field(page,'text').dispatchEvent('keydown',{key:'Escape',isComposing:true});assert.equal(await root(page).isVisible(),true);
+    await page.keyboard.press('Escape'); await root(page).waitFor({ state: 'hidden' }); await h.idle(page);
     assert.deepEqual(labels((await linkedDrawing(page, stateUrl, first.figure.link)).objects), draftLabels, 'closing retains unapplied annotations');
     assert.deepEqual((await h.pictures(page))[0].figure, first.figure, 'closing does not change the document source');
     assert.deepEqual(await bitmap(page), originalBitmap, 'closing leaves the committed bitmap intact');
@@ -482,7 +435,7 @@ async function scenario(browser, origin, surface, name) {
     const resolvedSave = await save(recovered, name + '-recovery-applied.5e');
     assert.equal(resolvedSave.project.workspace.annotationDrafts?.some(draft => draft.id === cropped.figure.id) || false, false, 'successful recovery Apply clears the pending recovery');
     assert.deepEqual(errors, [], 'all original and reopened pages are free of runtime errors');
-    console.log(name + ': inline placement, fields, label/handle drags, local and native undo/redo, identical background pixels, fixed crop, background drafts, Original, conflicts/recovery and .5e roundtrips passed');
+    console.log(name + ': simple fields, preserved geometry, nearby toolbar, Escape, local/native undo/redo, identical background pixels, crop, background drafts, Original, conflicts/recovery and .5e roundtrips passed');
   } catch (error) {
     const failed = contexts.at(-1)?.pages().at(-1);
     if (failed && !failed.isClosed()) {

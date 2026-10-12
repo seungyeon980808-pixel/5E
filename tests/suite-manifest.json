@@ -762,7 +762,9 @@
         "RHWP-CUMULATIVE-SOURCE",
         "RHWP-EXAM-INLINE-ANNOTATIONS",
         "RHWP-EXAM-INLINE-GEOMETRY",
-        "RHWP-UNAPPLIED-DRAFT-RESTORE"
+        "RHWP-UNAPPLIED-DRAFT-RESTORE",
+        "UX-U44",
+        "UX-U45"
       ]
     },
     {

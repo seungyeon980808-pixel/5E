@@ -666,9 +666,9 @@ export function initRhwpExamWorkspace(state, services) {
       throw preview.reason || camera.reason || new Error('문서의 그림이 바뀌었습니다. 다시 선택해주세요.');
     }
     const baseUrl=preview.value;
-    inlineEditor.open({bridge,ref:target,labels:recovery?.edited || reading.draft,bounds:shownRender.bounds,baseUrl,recovery:!!recovery,layers:getAnnotationPage(prepared.source).layers,layerId:getAnnotationPage(prepared.source).layers.find(layer=>layer.visible!==false)?.id || 1});
+    inlineEditor.open({simple:true,bridge,ref:target,labels:recovery?.edited || reading.draft,bounds:shownRender.bounds,baseUrl,recovery:!!recovery,layers:getAnnotationPage(prepared.source).layers,layerId:getAnnotationPage(prepared.source).layers.find(layer=>layer.visible!==false)?.id || 1});
     inlineEditor.position();
-    message(recovery ? '보관한 라벨 초안입니다. 적용하면 원본 라벨을 이 초안으로 교체합니다.' : '시험지를 확대했습니다. 주변 본문과 비교하며 라벨과 지시선을 수정하세요.');
+    message(recovery ? '보관한 라벨 초안입니다. 적용하면 원본 라벨을 이 초안으로 교체합니다.' : '라벨 내용·글꼴·글자 크기·선 굵기를 수정하세요. 라벨 추가나 위치 변경은 원본 편집에서 할 수 있습니다.');
   }
   function queueInlineChange(labels,bounds) {
     const session=inlineSession;if(!session)return;

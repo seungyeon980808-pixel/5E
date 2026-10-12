@@ -111,7 +111,7 @@ async function workflow(origin,browser,name,surface){
  const stateUrl='/js/state.js?v=1.7.0-four-session-integration';
  const source=await h.drawing(p,stateUrl);near(source.pages.find(x=>x.id===source.activePageId).meta.examRender.bounds.x,-46,'actual native crop left',.001);
  const link=registered[0].figure.link;
- await p.locator('#exam-workspace-open').click();await h.idle(p);
+ await p.locator('#exam-edit-bar .exam-region-actions button:last-child').click();await h.idle(p);
  const registeredPixels=await framePixels(p,nativeRef);
  near(registeredPixels.clip.width,originalPixels.clip.width,'registration display width');near(registeredPixels.clip.height,originalPixels.clip.height,'registration display height');
  for(let i=0;i<originalPixels.colors.length;i++)near(registeredPixels.colors[i],originalPixels.colors[i],'native crop registration pixels',5);
@@ -121,7 +121,7 @@ async function workflow(origin,browser,name,surface){
  const damaged=await p.evaluate(ref=>scaleBridge.pictureSourceRegion(ref),nativeRef);assert.ok(damaged.r<damaged.w || damaged.b<damaged.h,'legacy enlargement reproduced');
  await h.originalEdit(p);
  const restored=await h.drawing(p,stateUrl);assert.deepEqual(restored.pages.find(x=>x.id===restored.activePageId).meta.examRender.bounds,registered[0].figure.render.bounds,'legacy damage retains the saved crop');
- await p.locator('#exam-send').click();await h.recrop(p);await h.idle(p);
+ await p.locator('[data-source-apply]').click();await h.recrop(p);await h.idle(p);
  // Use the actual app's editor for the same inner-image checks.
  await appBridge(p);
  let ref=(await h.pictures(p))[0].control;ref={sec:ref.secIdx,ppi:ref.paraIdx,ci:ref.controlIdx,type:'image'};
@@ -131,12 +131,12 @@ async function workflow(origin,browser,name,surface){
  await p.locator('[data-source-recrop]').click();await p.locator('#capture-confirm').waitFor();
  // Explicitly change crop dimensions through the shipped capture dialog.
  const width=p.locator('.capture-overlay [data-dim] input').first();await width.fill('60');await width.press('Tab');
- await p.locator('#capture-confirm').click();await h.idle(p);await p.locator('#exam-send').click();await h.recrop(p);
+ await p.locator('#capture-confirm').click();await h.idle(p);await p.locator('[data-source-apply]').click();await h.recrop(p);
  let after=(await h.pictures(p))[0];assert.deepEqual(after.figure.link,link);assert.equal((await h.pictures(p)).length,1);near(after.props.width/after.figure.render.bounds.w,before.props.width/before.figure.render.bounds.w,'recrop preserves source output scale',.02);assert.notEqual(after.figure.render.bounds.w,before.figure.render.bounds.w);
  ref={sec:after.control.secIdx,ppi:after.control.paraIdx,ci:after.control.controlIdx,type:'image'};await shown(p,ref,name+'/'+surface+'recrop',{pixels:false});
  // Inline label commit keeps both physical dimensions and returns zoom.
+ await h.seedSourceLabel(p);
  await h.doubleClick(p);await p.locator('#exam-inline-editor:not([hidden])').waitFor();
- await p.locator('[data-inline-action="add-label"]').click();const box=await p.locator('.exam-inline-canvas').boundingBox();await p.mouse.click(box.x+box.width*.5,box.y+box.height*.35);
  await p.locator('[data-inline-field="text"]').fill('scale check');await p.locator('[data-inline-field="text"]').press('Tab');await p.locator('[data-inline-action="apply"]').click();await h.idle(p);
  const labelled=(await h.pictures(p))[0];assert.equal(labelled.props.width,after.props.width);assert.equal(labelled.props.height,after.props.height);assert.deepEqual(labelled.figure.link,link);await shown(p,ref,name+'/'+surface+'labels',{pixels:false});
  const wait=p.waitForEvent('download');await h.action(p,'save');const file=await wait,target=path.join(evidence,name+'-'+(surface?'preview':'root')+'.5e');await file.saveAs(target);await h.idle(p);
@@ -161,7 +161,7 @@ async function externalCorpus(origin,browser,name) {
   await p.locator('.exam-figure[data-connection="unlinked"]').first().click();await h.action(p,'edit');await p.locator('#exam-edit-bar').waitFor({state:'visible'});
   const registered=await p.evaluate(ref=>scaleBridge.properties(ref),ref);
   for(const key of ['width','height','rotationAngle','horzOffset','vertOffset','textWrap','treatAsChar'])assert.equal(registered[key],before[key],file+' registration '+key);
-  await p.locator('#exam-send').click();await h.recrop(p);await h.idle(p);
+  await p.locator('[data-source-apply]').click();await h.recrop(p);await h.idle(p);
   assert.equal(await p.locator('#exam-status').getAttribute('data-error'),'false',file+' applied');
   const result=await p.evaluate(ref=>{
    const b=scaleBridge,props=b.properties(ref),region=b.pictureSourceRegion(ref),f=b.picturePlacement(ref),img=f?.element?.querySelector('img');
