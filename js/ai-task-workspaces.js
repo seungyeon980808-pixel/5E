@@ -400,8 +400,9 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
     },
     send: async ({entry,taskId},kind) => {
       if (entry.disposed || !entry.controller.ownsTask(taskId) || entry.panel.dataset.aiSharingMode === 'view') return;
-      const image = entry.controller.taskImage(taskId);
+      const image = await entry.controller.taskVisibleImage(taskId);
       if (!image?.data) throw new Error('보낼 이미지가 없습니다.');
+      if (entry.disposed || !entry.controller.ownsTask(taskId) || entry.panel.dataset.aiSharingMode === 'view') return;
       const target = add(crypto.randomUUID(),false);
       await target.controller.ready;
       await target.controller.open({references:[{dataUrl:image.data,name:image.name,sourceKind:'workbench',source:image.source}],conversionKind:kind,reveal:false});
@@ -409,8 +410,9 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
     },
     duplicate: async ({entry,taskId}) => {
       if(entry.disposed || !entry.controller.ownsTask(taskId) || entry.panel.dataset.aiSharingMode==='view') return;
-      const kind=taskKind(entry,taskId),image=entry.controller.taskImage(taskId);
+      const kind=taskKind(entry,taskId),image=await entry.controller.taskVisibleImage(taskId);
       if(!image?.data) throw new Error('추가할 이미지가 없습니다.');
+      if(entry.disposed || !entry.controller.ownsTask(taskId) || entry.panel.dataset.aiSharingMode==='view')return;
       const target=add(crypto.randomUUID(),false);
       try {
         await target.controller.ready;

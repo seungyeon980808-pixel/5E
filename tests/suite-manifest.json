@@ -1429,6 +1429,14 @@
       ]
     },
     {
+      "path": "tests/test-ai-task-visible-transfer-browser.cjs",
+      "findingIds": [
+        "UX-U07",
+        "UX-U14",
+        "UX-U58"
+      ]
+    },
+    {
       "path": "tests/test-ai-hwp-direct-output-browser.cjs",
       "findingIds": [
         "UX-U14",

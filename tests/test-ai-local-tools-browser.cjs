@@ -223,7 +223,8 @@ for (const engine of ['chromium','webkit']) test(`${engine}: label switch, scope
 for (const engine of ['chromium','webkit']) test(`${engine}: R01–R07 follow-up labels, compact views and location-bound comment editing`, {timeout:120000}, async t => {
   const {page,errors}=await fixture(t,engine);
   const panel=page.locator(active), popup=panel.locator('[data-ai-comment-popover]');
-  assert.equal(await panel.locator('[data-ai-zoom-linked], [data-ai-connection-open], [data-ai-exam-send], .ai-comments-list-section').count(),0);
+  assert.equal(await panel.locator('[data-ai-zoom-linked], [data-ai-connection-open], .ai-comments-list-section').count(),0);
+  assert.equal(await panel.locator('[data-ai-exam-send]').count(),1,'task-owned HWP output remains available in the header');
   await page.evaluate(async()=>{await Promise.allSettled(document.getAnimations().map(a=>a.finished)); await new Promise(r=>requestAnimationFrame(r));});
   const coverage=await panel.locator('.ai-workbench').evaluate(n=>({rect:n.getBoundingClientRect().toJSON(),width:innerWidth,height:innerHeight,main:getComputedStyle(document.querySelector('.app-shell-header')).visibility}));
   assert.ok(Math.abs(coverage.rect.top)<1 && Math.abs(coverage.rect.height-coverage.height)<2,'AI workbench fills the application');

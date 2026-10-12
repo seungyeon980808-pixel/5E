@@ -6749,6 +6749,40 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
 
   return {
     deleteTask,
+    taskVisibleImage: async id => {
+      if (id === activeTaskTabId) captureActiveTaskTab();
+      const owner = taskTabs.get(id);
+      const selected = tab => tab?.generated?.find(item => item.id === tab.selectedCandidateId)
+        || tab?.generated?.at(-1) || tab?.attachments?.[0];
+      const item = selected(owner);
+      if (!item) return null;
+      const image = snapshotImageItem(item), planKey = JSON.stringify(image.labelPlan);
+      const options = normalizeImageOutputOptions(owner.outputOptions);
+      const optionsKey = imageOutputOptionsKey(options);
+      const included = owner.labelPreviewIncluded?.[image.id] !== false;
+      const artboard = { ...state.get().artboard };
+      const raw = requiresRawImageOutput(image) || (id === activeTaskTabId
+        && panel.dataset.aiBoxEdit === 'true' && !isHistoricalPngLocalResult(image));
+      const current = () => {
+        if (disposed || taskTabs.get(id) !== owner || panel.dataset.aiSharingMode === 'view') return false;
+        if (id === activeTaskTabId) captureActiveTaskTab();
+        const latest = selected(owner);
+        return latest?.id === image.id && latest.data === image.data
+          && JSON.stringify(latest.labelPlan) === planKey
+          && (owner.labelPreviewIncluded?.[image.id] !== false) === included
+          && imageOutputOptionsKey(normalizeImageOutputOptions(owner.outputOptions)) === optionsKey
+          && state.get().artboard.w === artboard.w && state.get().artboard.h === artboard.h;
+      };
+      let data = image.kind === 'generated' && !raw
+        ? await resolveImageOutput(image, options, transparentizeGeneratedImage) : image.data;
+      if (included && hasPreviewLabels(image)) {
+        const composite = await createEditableLabelComposite({ plan: image.labelPlan,
+          candidateDataUrl: data, artboard, signal: lifecycle.signal });
+        data = composite.attachment.data;
+      }
+      if (!current()) throw new Error('보내는 동안 작업의 그림이나 표시 설정이 바뀌었습니다. 다시 보내 주세요.');
+      return { ...image, data };
+    },
     taskImage: id => {
       if (id === activeTaskTabId) captureActiveTaskTab();
       const tab = taskTabs.get(id);
