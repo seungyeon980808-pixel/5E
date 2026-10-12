@@ -911,9 +911,9 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   const overlay = buildShell();
   const root = overlay.querySelector(".unilib");
   const motion = createModalSurfaceMotion({overlay,surface:root,springFrequency:48,animateSurface:false});
-  for (const [attribute,anchor] of [['data-unilib-graph','[data-unilib-ai]'],['data-unilib-crop-graph','[data-unilib-crop-workbench]']]) {
+  for (const [attribute,anchor] of [['data-unilib-graph','[data-unilib-ai]'],['data-unilib-crop-graph','[data-unilib-crop-workbench]'],['data-unilib-crop-insert','[data-unilib-crop-workbench]']]) {
     const button=document.createElement('button');button.type='button';button.className='unilib-button';
-    button.setAttribute(attribute,'');button.disabled=true;button.textContent='좌표/함수 생성';
+    button.setAttribute(attribute,'');button.disabled=true;button.textContent=attribute==='data-unilib-crop-insert'?'캔버스에 넣기':'좌표/함수 생성';
     overlay.querySelector(anchor).after(button);
   }
   const help = overlay.querySelector("[data-unilib-help]");
@@ -2693,6 +2693,10 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       });
     }
     overlay.querySelector("[data-unilib-crop-workbench]").disabled = !available;
+    const canvasButton = overlay.querySelector('[data-unilib-crop-insert]');
+    canvasButton.hidden = Boolean(referenceConsumer) || typeof insertMaterialized !== 'function';
+    canvasButton.disabled = !available || (cropDocumentEntries().length > 1 && !activeAcceptedCropId);
+    canvasButton.title = '캔버스에 넣을 크롭 이미지 하나를 선택하세요.';
     const graph = overlay.querySelector('[data-unilib-crop-graph]');
     graph.hidden = referenceConsumer?.kind !== 'graph' && (!!referenceConsumer || typeof openGraph !== 'function');
     graph.textContent = referenceConsumer?.kind === 'graph' ? '그래프 원본으로 선택' : '좌표/함수 생성';
@@ -3246,6 +3250,34 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     try{await deliverGraphReference(entry.result,entry.materialized,isCurrent);}
     catch(error){if(isCurrent())overlay.querySelector('[data-unilib-crop-selection]').textContent=`원본 연결 실패: ${error.message}`;}
     finally{cropActionBusy=false;if(!cropDialog.hidden)setCropActionAvailability();}
+  });
+  overlay.querySelector('[data-unilib-crop-insert]').addEventListener('click', async () => {
+    if (cropActionBusy || !cropReady || !cropSession || typeof insertMaterialized !== 'function') return;
+    const entries = cropDocumentEntries();
+    const entry = entries.find(({result}) => result.id === activeAcceptedCropId) || (entries.length === 1 ? entries[0] : null);
+    if (!entry) return;
+    const session = cropSession, revision = actionRevision, selectedCrop = activeAcceptedCropId;
+    const rectKey = entry.result.provenance.rect.join(',');
+    const isCurrent = () => !overlay.hidden && !cropDialog.hidden && cropSession === session
+      && actionRevision === revision && activeAcceptedCropId === selectedCrop
+      && cropSessionIsCurrent(session, selectedActiveResult())
+      && cropDocumentEntries().some(value => value === entry && value.result.provenance.rect.join(',') === rectKey);
+    cropActionBusy = true; setCropActionAvailability();
+    // Keep the selected crop if decoding or insertion fails, and rematerialize
+    // preview-only crops through the same exact-source path as AI handoff.
+    commitAcceptedCropSession({acceptedAssets, acceptedCrops, documentId:session.documentId, pageNumber:session.pageNumber});
+    try {
+      const activeProvider = await provider(); if (!isCurrent()) return;
+      const materialized = await materializeLibraryAction(entry.result, activeProvider, {...getPartOptions(), acceptedAssets, representation:'manual'});
+      if (!isCurrent()) return;
+      await insertMaterialized(entry.result, materialized, getPartOptions(), {isCurrent});
+      if (isCurrent()) close({restoreFocus:false});
+    } catch (error) {
+      if (isCurrent()) overlay.querySelector('[data-unilib-crop-selection]').textContent = `캔버스 삽입 실패: ${error.message}`;
+    } finally {
+      cropActionBusy = false;
+      if (!cropDialog.hidden) setCropActionAvailability();
+    }
   });
   overlay.querySelector("[data-unilib-crop-workbench]").addEventListener("click", () => {
     if (!cropDocumentEntries().length || !cropSession) return;

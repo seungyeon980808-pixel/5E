@@ -212,3 +212,41 @@ for (const engine of ['chromium','webkit']) test(`${engine}: assignment defaults
   await dialog.locator('[data-action="continue"]').click();await ui.waitFor({state:'hidden'});
   assert.deepEqual(await page.evaluate(()=>window.__handoff),{count:2,conversionKind:'graph',placement:'together',groups:[[0,1]]});
 });
+
+for(const engine of ['chromium','webkit']) test(`${engine}: a selected PDF crop inserts exact bytes into the canvas without an AI handoff`,async t=>{
+  const {page}=await fixture(t,engine);
+  const ui=await installCropFixture(page,{libraryTransfer:true});
+  await page.evaluate(async()=>{
+    const {createStore}=await import(window.cropFixtureReceipt.moduleUrl.replace('unified-library-ui.js','store.js'));
+    const {insertImageFromSrc}=await import(window.cropFixtureReceipt.moduleUrl.replace('unified-library-ui.js','image-paste.js'));
+    const {unifiedLibrarySourceMetadata}=await import(window.cropFixtureReceipt.moduleUrl);
+    window.__canvasState=createStore({activePageId:'canvas-page',objects:[],pages:[{id:'canvas-page'}],artboard:{w:600,h:400},layers:[{id:'layer-1'}],activeLayerId:'layer-1',undoStack:[],redoStack:[],selectedIds:[]});
+    window.__insertMaterialized=async(result,asset,options,context)=>{
+      window.__sentCrop={data:asset.dataUrl,result:structuredClone(result)};
+      await insertImageFromSrc(window.__canvasState,asset.dataUrl,{preserveBytes:true,centerArtboard:true,sourceMetadata:unifiedLibrarySourceMetadata(result,asset),isCurrent:context.isCurrent});
+    };
+  });
+  await crop(page,ui,.2);await crop(page,ui,.4);
+  const send=ui.locator('[data-unilib-crop-insert]');assert.ok(await send.isVisible());assert.ok(await send.isDisabled(),'multiple crops require an explicit single selection');
+  await ui.locator('[data-unilib-graph-crop]').first().click();assert.equal(await send.isDisabled(),false);
+  const expected=await ui.locator('[data-unilib-graph-crop]').first().locator('img').getAttribute('src');
+  await send.click();await ui.waitFor({state:'hidden'});
+  const result=await page.evaluate(()=>({objects:window.__canvasState.get().objects,sent:window.__sentCrop,ai:window.__transfers||0,retained:window.__acceptedAssets.size}));
+  assert.equal(result.objects.length,1);assert.equal(result.objects[0].type,'image');assert.equal(result.objects[0].src,expected);assert.equal(result.objects[0].src,result.sent.data);
+  assert.equal(result.objects[0].sourceMetadata.documentId,'geometry-book');assert.equal(result.objects[0].sourceMetadata.pageNumber,1);assert.deepEqual(result.objects[0].sourceMetadata.rect,result.sent.result.provenance.rect);
+  assert.equal(result.ai,0);assert.equal(result.retained,2,'inserting a crop keeps its source and the other crop available');
+});
+
+for(const engine of ['chromium','webkit']) test(`${engine}: crop insertion failure retains the source and closing cancels pending delivery`,async t=>{
+  const {page}=await fixture(t,engine),ui=await installCropFixture(page,{libraryTransfer:true});
+  await crop(page,ui,.2);
+  await page.evaluate(()=>{window.__insertMaterialized=async()=>{throw new Error('fixture insertion failed');};});
+  await ui.locator('[data-unilib-crop-insert]').click();
+  await ui.locator('[data-unilib-crop-selection]').filter({hasText:'fixture insertion failed'}).waitFor();
+  assert.ok(await ui.isVisible());assert.equal(await page.evaluate(()=>window.__acceptedAssets.size),1);
+  await page.evaluate(()=>{window.__insertMaterialized=async(result,asset,options,context)=>{window.__insertStarted=true;await new Promise(r=>window.__releaseInsert=r);window.__mayInsert=context.isCurrent();};});
+  await ui.locator('[data-unilib-crop-insert]').click();await page.waitForFunction(()=>window.__insertStarted);
+  await page.keyboard.press('Escape');await page.evaluate(()=>window.__releaseInsert());
+  await page.waitForFunction(()=>window.__mayInsert===false);
+  assert.equal(await page.evaluate(()=>window.__acceptedAssets.size),1,'cancelled delivery keeps the source crop');
+});
