@@ -79,6 +79,31 @@ for (const engine of ['chromium','webkit']) test(`${engine}: native graph revisi
   await page.goto(`http://127.0.0.1:${server.address().port}/?mode=pro&mobile=0&exam=0`,{waitUntil:'domcontentloaded'});
   await page.waitForFunction(() => window.__graphTransferManager);
   await page.evaluate(() => __graphTransferManager.sharingSnapshot());
+  // Isolate only the system clipboard boundary. Keep the engine's real
+  // ClipboardItem, SVG decoder, canvas rasterizer and PNG encoder.
+  await page.evaluate(() => {
+    document.addEventListener('click',event => {
+      if (!event.target.closest('.ai-task-context-menu [data-task-action="copy"]')) return;
+      window.__graphClipboardGesture = event.isTrusted;
+      setTimeout(() => {window.__graphClipboardGesture = false;},0);
+    },true);
+    Object.defineProperty(navigator,'clipboard',{configurable:true,value:{write:async items => {
+      const gesture = window.__graphClipboardGesture === true;
+      const blob = await items[0].getType('image/png');
+      const data = await new Promise((resolve,reject) => {
+        const reader = new FileReader();reader.onload = () => resolve(reader.result);reader.onerror = () => reject(reader.error);reader.readAsDataURL(blob);
+      });
+      window.__graphClipboard = {data,type:blob.type,gesture};
+    }}});
+    window.__graphRasterDigest = async source => {
+      const image = new Image();image.src = source;await image.decode();
+      const canvas = document.createElement('canvas');canvas.width = image.naturalWidth;canvas.height = image.naturalHeight;
+      const draw = canvas.getContext('2d');draw.drawImage(image,0,0);
+      const rgba = draw.getImageData(0,0,canvas.width,canvas.height).data;
+      const hash = [...new Uint8Array(await crypto.subtle.digest('SHA-256',rgba))].map(n => n.toString(16).padStart(2,'0')).join('');
+      return {width:canvas.width,height:canvas.height,hash};
+    };
+  });
   const welcome = page.locator('.tut-welcome-overlay .tut-banner-no'); if (await welcome.isVisible()) await welcome.click();
   await page.locator('#ai-image-install-open').click();
   await page.waitForFunction(() => document.querySelector('#ai-image-panel')?.dataset.aiSelectedCandidateId === 'candidate-0');
@@ -109,6 +134,17 @@ for (const engine of ['chromium','webkit']) test(`${engine}: native graph revisi
     const before = await snap(page), sourceBefore = before.find(tab => tab.id === 'task-0');
     const dimensions = await img.evaluate(image => [image.naturalWidth,image.naturalHeight]);
     assert.deepEqual(dimensions,[512,384]);
+    if (targetKind === 'image') {
+      await page.evaluate(() => {window.__graphClipboard = null;});
+      await page.locator(panel + ' [data-tab-id="task-0"] .ai-task-tab-select').click({button:'right'});
+      await page.locator('.ai-task-context-menu [data-task-action="copy"]').click();
+      await page.waitForFunction(() => window.__graphClipboard);
+      const copy = await page.evaluate(async displayed => ({visible:await __graphRasterDigest(displayed),copied:await __graphRasterDigest(__graphClipboard.data),type:__graphClipboard.type,gesture:__graphClipboard.gesture}),displayed);
+      assert.equal(copy.type,'image/png');assert.equal(copy.gesture,true);
+      assert.deepEqual(copy.copied,copy.visible,'selected SVG revision copies identical raster pixels');
+      assert.deepEqual(await snap(page),before,'copy retains native objects, original, revisions, review, comments and selection');
+      receipts.push({action:'clipboard',candidateId,dimensions,pixels:copy.visible,pixelsMatch:true,sourcePreserved:true,writeDuringGesture:true});
+    }
     await page.locator(panel + ' [data-tab-id="task-0"] .ai-task-tab-select').click({button:'right'});
     await page.locator('.ai-task-context-menu [data-task-action="send"]').click();
     await page.locator(`.ai-task-context-menu [data-task-action="${targetKind}"]`).click();
@@ -122,7 +158,7 @@ for (const engine of ['chromium','webkit']) test(`${engine}: native graph revisi
     const targetImage = page.locator(panel + ' [data-ai-attachment-list] .ai-preview-stage > img');
     await targetImage.evaluate(image => image.decode());
     assert.deepEqual(await targetImage.evaluate(image => [image.naturalWidth,image.naturalHeight]),dimensions);
-    receipts.push({candidateId,targetKind,targetMatchesVisible:true,dimensions,sourcePreserved:true});
+    receipts.push({action:'transfer',candidateId,targetKind,targetMatchesVisible:true,dimensions,sourcePreserved:true});
     fs.writeFileSync(path.join(dir,'receipt.json'),JSON.stringify({engine,actualNativeRenderer:true,actualGraphEdit:true,providerCalls:await page.evaluate(() => __task2.sends.length),cases:receipts},null,2));
   }
   assert.deepEqual(errors,[]); assert.equal(await page.evaluate(() => __task2.sends.length),0);

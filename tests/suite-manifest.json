@@ -1442,9 +1442,10 @@
       "findingIds": [
         "UX-U07",
         "UX-U58",
+        "UX-U59",
         "AI-GRAPH-REVISION-TRANSFER"
       ],
-      "reason": "Actual native rendering and graph editing, current/previous revision transfer into image/graph tasks, source geometry and comments retained, no provider calls."
+      "reason": "Actual native rendering and graph editing, current/previous revision transfer into image/graph tasks and real SVG-to-PNG clipboard preparation with an isolated write boundary, source geometry and comments retained, no provider calls."
     },
     {
       "path": "tests/test-ai-hwp-direct-output-browser.cjs",
