@@ -3637,3 +3637,10 @@ textarea.unified-text-input {
 #graph-modal-overlay .gm-trace-main label { display:flex; align-items:center; gap:4px; font-size:12px; }
 #graph-modal-overlay .gm-trace-main select { min-height:30px; font-size:12px; padding:3px 7px; }
 #graph-modal-overlay :is(#gm-preview,.gm-trace-source-pane) { overflow:auto; }
+
+/* Keep canvas view controls near the picture, with compact popovers below. */
+.canvas-view-controls { display:inline-flex; position:relative; align-items:center; gap:4px; flex:none; }
+.canvas-view-controls .grid-detail { position:absolute; top:calc(100% + 8px); left:0; z-index:400; padding:10px; border:1px solid var(--border); border-radius:7px; background:var(--bg-panel); white-space:nowrap; }
+.canvas-view-controls .canvas-lock-menu { top:calc(100% + 8px); bottom:auto; left:0; transform:none; }
+.canvas-global-controls .zoom-readout { font-size:11px; white-space:nowrap; margin-inline-end:4px; }
+.app-shell-header .canvas-global-controls .web-account-status { flex:0 0 auto; min-width:max-content; }

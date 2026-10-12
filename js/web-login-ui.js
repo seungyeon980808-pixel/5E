@@ -10,7 +10,8 @@ export function initWebLoginUi({ openAi }) {
   const badgeHost = document.querySelector('.app-shell-header .toolbar-inspector-controls .canvas-global-controls')
     || document.querySelector('.panel-utility-bar-right')
     || document.querySelector('.canvas-global-controls');
-  badgeHost?.prepend(badge);
+  const zoom = badgeHost?.querySelector('#zoom-readout');
+  if (zoom) zoom.after(badge); else badgeHost?.prepend(badge);
   const dialog = document.createElement('dialog');
   dialog.className = 'web-login-dialog'; dialog.setAttribute('aria-labelledby', 'web-login-title');
   dialog.innerHTML = `<button type="button" class="web-login-close" aria-label="연결 안내 닫기">×</button>

@@ -130,6 +130,44 @@
         </button>
         <!-- 튜토리얼: 실제 화면 위에서 짚어 주는 안내(js/tutorial.js).
              처음 온 사람이 찾을 수 있어야 하므로 드롭다운 안이 아니라 상단바에 직접 둔다. -->
+        <div class="canvas-view-controls" role="group" aria-label="격자와 화면 기준">
+  <!-- 격자: 토글 버튼 — 켰을 때만 진하기/간격이 나타남. 눈금자는 항상 켜짐(토글 제거) -->
+          <button id="grid-btn" class="grid-toggle-btn" type="button" aria-pressed="false"
+                  title="격자 켜기/끄기" aria-label="격자 켜기/끄기">
+            <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.25" aria-hidden="true"><rect x="3" y="3" width="14" height="14" rx="1.5"/><path d="M8 3v14M12 3v14M3 8h14M3 12h14"/></svg>
+          </button>
+          <span id="grid-detail" class="grid-detail" hidden>
+            <label>
+              진하기
+              <input type="range" id="grid-opacity" min="1" max="10" value="3" />
+            </label>
+            <label>
+              간격
+              <span class="gm-step"><input type="number" id="grid-interval" min="5" max="50" step="5" value="10" /><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="격자 간격 늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="격자 간격 줄이기">▼</button></span></span>
+              mm
+            </label>
+          </span>
+          <div class="canvas-lock-control">
+            <button id="center-view-btn" type="button" aria-pressed="true" aria-haspopup="menu"
+                    aria-expanded="false" aria-controls="canvas-lock-menu" aria-label="기준 좌표 고정"
+                    data-mode="coordinate" title="기준 좌표 고정 (Ctrl+Space)">⌖</button>
+            <div id="canvas-lock-menu" class="canvas-lock-menu" role="menu" hidden>
+              <button type="button" role="menuitemradio" aria-checked="false" data-canvas-lock-mode="free">
+                <strong>자유 이동</strong><span>캔버스를 자유롭게 이동합니다.</span>
+              </button>
+              <button type="button" role="menuitemradio" aria-checked="false" data-canvas-lock-mode="current">
+                <strong>현재 위치 고정</strong><span>지금 보이는 위치를 그대로 고정합니다.</span>
+              </button>
+              <button type="button" role="menuitemradio" aria-checked="true" data-canvas-lock-mode="coordinate">
+                <strong>기준 좌표 고정</strong><span>지정 좌표를 화면 중심에 고정합니다.</span>
+              </button>
+              <div class="canvas-lock-coordinates">
+                <label>X <input id="canvas-lock-x" type="number" step="1" value="0" /></label>
+                <label>Y <input id="canvas-lock-y" type="number" step="1" value="0" /></label>
+              </div>
+            </div>
+          </div>
+        </div>
         <button id="tutorial-btn" class="topbar-btn shell-icon-button" type="button"
                 aria-label="튜토리얼" data-shell-tip="튜토리얼">
           <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.45" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -153,6 +191,7 @@
       </div></div>
 <div class="toolbar-inspector-controls" role="group" aria-label="계정 및 화면 조작">
           <div class="canvas-global-controls" role="group" aria-label="계정 및 화면 조작">
+            <span id="zoom-readout" class="zoom-readout" aria-label="현재 화면 배율">zoom 1.00×</span>
             <button id="theme-toggle" class="topbar-btn icon-btn theme-toggle" type="button" title="흑백 모드 끄기" aria-label="흑백 모드 끄기" aria-pressed="true">
               <svg viewBox="0 0 20 20" aria-hidden="true">
                 <circle cx="10" cy="10" r="6.5" fill="none" stroke="currentColor" stroke-width="1.5" />
@@ -312,6 +351,7 @@
           <div class="tool-section-header">고급 기능 <span class="toggle-icon">▾</span></div>
           <div class="tool-section-body tool-section-body-wide">
             <button id="personal-object-save" class="advanced-tool-btn" type="button">오브젝트 저장</button>
+            <button id="image-objectify-open" class="advanced-tool-btn" type="button" title="이미지 객체화">이미지 객체화</button>
             <button id="bulk-edit-open" class="advanced-tool-btn" type="button">전체 통일/수정</button>
             <button id="graph-tool-open" class="advanced-tool-btn" type="button">좌표/함수 생성</button>
           </div>
@@ -357,52 +397,11 @@
             <span class="search-trigger-label">라이브러리</span>
           </button>
           <span class="image-workflow-divider" aria-hidden="true"></span>
-          <button class="object-search-trigger" type="button" id="image-objectify-open" title="이미지 객체화" aria-label="이미지 객체화">
-            <svg class="search-trigger-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 3h6v6H3zM11 3h6v6h-6zM3 11h6v6H3z"/><path stroke-dasharray="2 2" d="M11 11h6v6h-6z"/></svg>
-            <span class="search-trigger-label">이미지 객체화</span>
-          </button>
           <button class="object-search-trigger image-workflow-ai" type="button" id="ai-image-install-open" title="AI 이미지 변환" aria-label="AI 이미지 변환">
             <svg class="search-trigger-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="m10 2 1.4 4.2L16 8l-4.6 1.8L10 14l-1.4-4.2L4 8l4.6-1.8z"/><path d="m16 13 .7 2.1L19 16l-2.3.9L16 19l-.7-2.1L13 16l2.3-.9z"/></svg>
             <span class="search-trigger-label">AI 이미지 변환</span>
           </button>
         </div>
-        <!-- 격자: 토글 버튼 — 켰을 때만 진하기/간격이 나타남. 눈금자는 항상 켜짐(토글 제거) -->
-        <button id="grid-btn" class="grid-toggle-btn" type="button" aria-pressed="false"
-                title="격자 켜기/끄기" aria-label="격자 켜기/끄기">
-          <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.25" aria-hidden="true"><rect x="3" y="3" width="14" height="14" rx="1.5"/><path d="M8 3v14M12 3v14M3 8h14M3 12h14"/></svg>
-        </button>
-        <span id="grid-detail" class="grid-detail" hidden>
-          <label>
-            진하기
-            <input type="range" id="grid-opacity" min="1" max="10" value="3" />
-          </label>
-          <label>
-            간격
-            <span class="gm-step"><input type="number" id="grid-interval" min="5" max="50" step="5" value="10" /><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="격자 간격 늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="격자 간격 줄이기">▼</button></span></span>
-            mm
-          </label>
-        </span>
-        <div class="canvas-lock-control">
-          <button id="center-view-btn" type="button" aria-pressed="true" aria-haspopup="menu"
-                  aria-expanded="false" aria-controls="canvas-lock-menu" aria-label="기준 좌표 고정"
-                  data-mode="coordinate" title="기준 좌표 고정 (Ctrl+Space)">⌖</button>
-          <div id="canvas-lock-menu" class="canvas-lock-menu" role="menu" hidden>
-            <button type="button" role="menuitemradio" aria-checked="false" data-canvas-lock-mode="free">
-              <strong>자유 이동</strong><span>캔버스를 자유롭게 이동합니다.</span>
-            </button>
-            <button type="button" role="menuitemradio" aria-checked="false" data-canvas-lock-mode="current">
-              <strong>현재 위치 고정</strong><span>지금 보이는 위치를 그대로 고정합니다.</span>
-            </button>
-            <button type="button" role="menuitemradio" aria-checked="true" data-canvas-lock-mode="coordinate">
-              <strong>기준 좌표 고정</strong><span>지정 좌표를 화면 중심에 고정합니다.</span>
-            </button>
-            <div class="canvas-lock-coordinates">
-              <label>X <input id="canvas-lock-x" type="number" step="1" value="0" /></label>
-              <label>Y <input id="canvas-lock-y" type="number" step="1" value="0" /></label>
-            </div>
-          </div>
-        </div>
-        <span id="zoom-readout" class="zoom-readout" aria-label="현재 화면 배율">zoom 1.00×</span>
       </div>
     </main>
 
@@ -433,8 +432,8 @@
       <a class="footer-badge" href="https://github.com/seungyeon980808-pixel/5E"
          target="_blank" rel="noopener" title="소스코드 (GitHub)"><span class="footer-code" aria-hidden="true">&lt;/&gt;</span> Source</a>
       <span class="footer-change-badge" data-change-summary tabindex="0"
-            aria-label="2026-10-13 02:34 KST 반영: 캔버스 조합→AI"
-            title="2026-10-13 02:34 KST · 여러 그림·도형의 선택 조합을 한 장의 AI 입력으로 전달합니다. 선택이 없으면 보이는 전체 그림을 사용하고, 원본 객체·배치·숨긴 레이어를 보존합니다. Safari 검수 대기.">10.13 02:34 · 캔버스 조합→AI</span>
+            aria-label="2026-10-13 02:43 KST 반영: 도구 위치 정리"
+            title="2026-10-13 02:43 KST · Hwp 연결하기는 하단, 격자·화면 기준은 상단, 배율은 GPT 왼쪽, 이미지 객체화는 오브젝트 저장 아래로 이동했습니다. 기존 조작 유지. Safari 검수 대기.">10.13 02:43 · 도구 위치 정리</span>
       <span class="footer-visitor-stats" data-visitor-stats tabindex="0" title="이용자 집계 서버 연결 준비 중">누적 — · 오늘 —</span>
     </span>
     <span class="app-footer-credit app-footer-copyright">Copyright © 2026 <strong>박승연</strong> | SMOE</span>
