@@ -20,7 +20,7 @@ import { initAiSharing } from './ai-sharing-ui.js?v=1.7.0-four-session-integrati
 
 // ?v= matches index.html so a version bump reloads every module, not just main.
 import { state } from "./state.js?v=1.7.0-four-session-integration";
-import { render } from "./render.js?v=1.7.0-four-session-integration";
+import { render, setSmartGuides } from "./render.js?v=1.7.0-four-session-integration";
 import { initViewport, getZoom, screenToWorld, centerView, setCanvasLockMode } from "./viewport.js?v=1.7.0-four-session-integration";
 import { initZoomReadoutLifecycle } from "./zoom-readout-lifecycle.js?v=1.7.0-four-session-integration";
 import { initTools } from "./tools.js?v=1.7.0-four-session-integration";
@@ -504,7 +504,30 @@ initDataPlot();
   });
 })();
 
-/* ===== GRID CONTROLS (canvas bottom bar) ===== */
+/* ===== CANVAS VIEW CONTROLS ===== */
+(function initAutoSnapControl() {
+  const button = document.getElementById('auto-snap-btn');
+  if (!button) return;
+  try { state.update(s => { s.autoSnap = localStorage.getItem('5e.autoSnap') !== 'false'; }); } catch (_) {}
+  let last;
+  const sync = () => {
+    const on = state.get().autoSnap !== false;
+    if (on === last) return;
+    last = on;
+    button.setAttribute('aria-pressed', String(on));
+    button.textContent = `자동 스냅 ${on ? 'ON' : 'OFF'}`;
+    button.title = `자동 정렬 ${on ? '켜짐' : '꺼짐'} · 클릭하여 전환 · Shift를 누르면 수동 스냅`;
+  };
+  button.addEventListener('click', () => {
+    const on = state.get().autoSnap === false;
+    if (!on) setSmartGuides([]);
+    state.update(s => { s.autoSnap = on; });
+    try { localStorage.setItem('5e.autoSnap', String(on)); } catch (_) {}
+  });
+  state.subscribe(sync);
+  sync();
+})();
+
 (function initGridControls() {
   const gridBtn  = document.getElementById("grid-btn");
   const detail   = document.getElementById("grid-detail");

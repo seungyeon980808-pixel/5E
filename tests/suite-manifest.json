@@ -1475,6 +1475,12 @@
         "USER-SAFARI-U06",
         "LIBRARY-NATIVE-FADE"
       ]
+    },
+    {
+      "path": "tests/test-canvas-auto-snap-browser.cjs",
+      "findingIds": [
+        "UX-U47-AUTO-SNAP-CONTROL"
+      ]
     }
   ],
   "deferred": [

@@ -933,6 +933,7 @@ function groupBBox(objs, svg) {
 
 /* ----- Smart alignment guides: edge/center matching while dragging ----- */
 function resolveSmartAlignment(moveObjIds, origObjs, raw, scale, state, svg) {
+  if (state.get().autoSnap === false) return { dx: raw.dx, dy: raw.dy, guides: [] };
   const moving = moveObjIds.map((id) => origObjs[id]).filter(Boolean);
   const base = groupBBox(moving, svg);
   if (!base) return { dx: raw.dx, dy: raw.dy, guides: [] };

@@ -3644,3 +3644,6 @@ textarea.unified-text-input {
 .canvas-view-controls .canvas-lock-menu { top:calc(100% + 8px); bottom:auto; left:0; transform:none; }
 .canvas-global-controls .zoom-readout { font-size:11px; white-space:nowrap; margin-inline-end:4px; }
 .app-shell-header .canvas-global-controls .web-account-status { flex:0 0 auto; min-width:max-content; }
+.auto-snap-btn { min-height:28px; padding:3px 6px; border:1px solid var(--border); border-radius:6px; color:var(--text-secondary); background:var(--bg-input); font:inherit; font-size:10px; white-space:nowrap; cursor:pointer; }
+.auto-snap-btn[aria-pressed="true"] { border-color:var(--text-secondary); color:var(--text-primary); }
+.auto-snap-btn:focus-visible { outline:2px solid var(--text-primary); outline-offset:2px; }
