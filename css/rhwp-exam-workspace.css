@@ -10,8 +10,9 @@
 .exam-brand { font-weight:800; font-size:20px; color:var(--exam-accent, #dba52b); line-height:1; }
 #exam-name { width:100%; min-width:0; height:32px; font:inherit; font-weight:600; padding:4px 6px; border:1px solid transparent; border-radius:5px; color:var(--text-primary); background:transparent; text-overflow:ellipsis; }
 #exam-name:hover, #exam-name:focus { border-color:var(--border); background:var(--bg-app); }
-.exam-actions { display:grid; grid-template-columns:1fr; width:100%; gap:6px; }
-#rhwp-exam-workspace .exam-actions button { display:flex; align-items:center; justify-content:center; gap:5px; width:100%; min-height:34px; padding:6px; font-size:12px; }
+.exam-actions { display:flex; align-items:center; gap:4px; width:auto; margin-left:auto; }
+#rhwp-exam-workspace .exam-actions button { display:flex; align-items:center; justify-content:center; gap:4px; width:auto; min-height:28px; padding:4px 7px; font-size:11px; }
+#rhwp-exam-workspace .exam-actions > [data-exam-action="close"] { width:28px; padding:4px; }
 .exam-actions svg { width:16px; height:16px; flex-shrink:0; }
 .exam-picture-actions { grid-column:1 / -1; display:grid; grid-template-columns:1fr 1fr; gap:6px; }
 .exam-picture-actions[hidden], .exam-hint[hidden] { display:none; }

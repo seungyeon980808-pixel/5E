@@ -27,6 +27,17 @@ const intersect = (a, b) => {
 // This experiment pins the Studio build. Its local plugin context is the only
 // boundary that touches Studio internals; document mutations use its history.
 export class RhwpExamBridge {
+  canReturnOnEscape(event) {
+    const input = this.input, cursor = input?.cursor;
+    // Studio consumes Escape even at a plain body caret. Intercept only that
+    // case; selections, nested editing and drawing retain Studio's cancellation.
+    if (!cursor || event.target !== input.textarea) return false;
+    if (input.imagePlacementMode || input.textboxPlacementMode || input.connectorDrawingMode || input.polygonDrawingMode || input.formOverlay) return false;
+    return !['isInHeaderFooter','isInFootnote','isInPictureObjectSelection','isInTableObjectSelection',
+      'isInBlockSelectionMode','isInCellSelectionMode','isInCell','isInTextBox','hasSelection']
+      .some(method => cursor[method]?.());
+  }
+
   constructor(editor, onChange, onEdit, onReplace, onBeforeReplace, validateSource) {
     this.editor = editor;
     this.onChange = onChange;

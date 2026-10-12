@@ -1481,6 +1481,13 @@
       "findingIds": [
         "UX-U47-AUTO-SNAP-CONTROL"
       ]
+    },
+    {
+      "path": "tests/test-hwp-escape-browser.cjs",
+      "findingIds": [
+        "UX-U40",
+        "UX-U41"
+      ]
     }
   ],
   "deferred": [

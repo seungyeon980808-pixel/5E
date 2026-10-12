@@ -42,9 +42,8 @@ export function initRhwpExamWorkspace(state, services) {
   panel.innerHTML = `
     <div class="exam-body"><aside class="exam-sidebar"><header class="exam-header">
       <div class="exam-heading"><span class="exam-brand app-brand">5E</span>
-        <input id="exam-name" value="새 시험지" maxlength="200" aria-label="시험지 이름"></div>
       <nav class="exam-actions" aria-label="시험지 작업">
-        <button type="button" data-exam-action="close" title="그림 편집기로 돌아가기">← 그림 편집기로</button>
+        <button type="button" data-exam-action="close" title="그림 편집기로 돌아가기 (Esc)" aria-label="그림 편집기로 돌아가기">←</button>
         <div class="exam-menu">
           <button type="button" data-exam-menu="file" aria-haspopup="menu" aria-expanded="false" aria-controls="exam-file-menu">파일 <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round"><path d="m6 8 4 4 4-4"/></svg></button>
           <div id="exam-file-menu" class="exam-menu-popup" role="menu" hidden>
@@ -63,7 +62,8 @@ export function initRhwpExamWorkspace(state, services) {
           </div>
         </div>
 
-      </nav>
+      </nav></div>
+      <input id="exam-name" value="새 시험지" maxlength="200" aria-label="시험지 이름">
       <div class="exam-placement" hidden><img alt="보낼 영역 미리보기"><div><strong>삽입할 위치를 선택하세요</strong><span data-placement-hint>본문이나 표 셀에서 위치를 클릭한 뒤 확인하세요.</span></div><button type="button" data-exam-action="cancel-placement">취소</button><button type="button" data-exam-action="confirm-placement" class="exam-primary" disabled>확인</button></div>
     </header>
     <h2>문서의 그림</h2>
@@ -935,6 +935,9 @@ export function initRhwpExamWorkspace(state, services) {
     bridge.editor.element.contentDocument.addEventListener('focusin',preserveMenuFocus,true);
     bridge.editor.element.contentDocument.addEventListener('keydown', saveShortcut, true);
     bridge.editor.element.contentDocument.addEventListener('keydown', closeOpenMenu, true);
+    bridge.editor.element.contentDocument.addEventListener('keydown', event => {
+      if (event.key === 'Escape' && bridge.canReturnOnEscape(event)) closeWorkspaceWithEscape(event);
+    }, true);
     // Embed chrome omits file open/save commands; the host's File menu owns
     // both HWP and .5e operations. Keep the remaining native page settings clear.
     const nativeFileTitle=bridge.editor.element.contentDocument.querySelector('[data-menu="file"] .menu-title');
@@ -1123,6 +1126,20 @@ export function initRhwpExamWorkspace(state, services) {
     event.preventDefault();event.stopImmediatePropagation();closeMenus();open.focus({preventScroll:true});
   }
   document.addEventListener('keydown',closeOpenMenu,true);
+  function closeWorkspaceWithEscape(event) {
+    if (event.key !== 'Escape' || event.defaultPrevented || event.isComposing || event.repeat || compositionActive() || panel.hidden || busy) return;
+    // Inner dialogs, label editing and RHWP's own cancellation get first use.
+    if (inlineEditor.active || !pictureSettings.root.hidden) return;
+    const owner = event.target?.ownerDocument || document;
+    if ([...owner.querySelectorAll('dialog[open],.modal-overlay,[role="dialog"],[role="alertdialog"]')]
+      .some(node => node !== panel && !node.hidden && node.getClientRects().length)) return;
+    event.preventDefault(); event.stopImmediatePropagation();
+    if (placement) { cancelPlacement(); message('그림 보내기를 취소했습니다.'); return; }
+    void run(actions.close).then(() => {
+      if (panel.hidden && !window.fiveEExam) document.querySelector('#exam-send')?.focus();
+    });
+  }
+  document.addEventListener('keydown',closeWorkspaceWithEscape);
   panel.addEventListener('keydown', event => {
     const trigger = event.target.closest('[data-exam-menu]');
     const menu = event.target.closest('.exam-menu-popup');
