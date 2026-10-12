@@ -72,7 +72,10 @@ export function createTaskContextMenu({ copy, send, duplicate, remove, onError }
 export function copyTaskImage(dataUrl) {
   if (!navigator.clipboard?.write || typeof ClipboardItem === 'undefined') throw new Error('이 브라우저에서 이미지 클립보드 복사를 사용할 수 없습니다.');
   const png = (async () => {
-    const image = new Image();image.src=dataUrl;await image.decode();
+    // Resolve visible pixels inside the ClipboardItem promise, so write() still
+    // starts synchronously in Safari's trusted click. Unsupported browsers never
+    // start asynchronous preparation or leave its rejection unhandled.
+    const image = new Image();image.src=await (typeof dataUrl === 'function' ? dataUrl() : dataUrl);await image.decode();
     const canvas=document.createElement('canvas');canvas.width=image.naturalWidth;canvas.height=image.naturalHeight;
     canvas.getContext('2d').drawImage(image,0,0);
     const blob=await new Promise(resolve=>canvas.toBlob(resolve,'image/png'));

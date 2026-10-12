@@ -6764,7 +6764,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       const raw = requiresRawImageOutput(image) || (id === activeTaskTabId
         && panel.dataset.aiBoxEdit === 'true' && !isHistoricalPngLocalResult(image));
       const current = () => {
-        if (disposed || taskTabs.get(id) !== owner || panel.dataset.aiSharingMode === 'view') return false;
+        if (disposed || taskTabs.get(id) !== owner) return false;
         if (id === activeTaskTabId) captureActiveTaskTab();
         const latest = selected(owner);
         return latest?.id === image.id && latest.data === image.data

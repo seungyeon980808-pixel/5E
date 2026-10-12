@@ -81,6 +81,32 @@ for (const engine of ['chromium', 'webkit']) test(`${engine}: other-workflow tra
   await page.waitForFunction(() => window.__transferManager);
   await page.evaluate(() => __transferManager.sharingSnapshot());
   const welcome = page.locator('.tut-welcome-overlay .tut-banner-no'); if (await welcome.isVisible()) await welcome.click();
+  // Capture only this isolated browser context's clipboard boundary. The real
+  // ClipboardItem, image decoder and PNG encoder still prepare the actual blob.
+  await page.evaluate(() => {
+    document.addEventListener('click', event => {
+      if (!event.target.closest('.ai-task-context-menu [data-task-action="copy"]')) return;
+      window.__clipboardGesture = event.isTrusted;
+      setTimeout(() => {window.__clipboardGesture = false;},0);
+    },true);
+    Object.defineProperty(navigator,'clipboard',{configurable:true,value:{write:async items => {
+      const gesture = window.__clipboardGesture === true;
+      window.__clipboardWriteStarted = gesture;
+      const blob = await items[0].getType('image/png');
+      const data = await new Promise((resolve,reject) => {
+        const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = () => reject(reader.error); reader.readAsDataURL(blob);
+      });
+      window.__copiedImage = {data,type:blob.type,gesture};
+    }}});
+    window.__rasterDigest = async source => {
+      const image = new Image(); image.src = source; await image.decode();
+      const canvas = document.createElement('canvas'); canvas.width = image.naturalWidth; canvas.height = image.naturalHeight;
+      const draw = canvas.getContext('2d'); draw.drawImage(image,0,0);
+      const rgba = draw.getImageData(0,0,canvas.width,canvas.height).data;
+      const hash = [...new Uint8Array(await crypto.subtle.digest('SHA-256',rgba))].map(n => n.toString(16).padStart(2,'0')).join('');
+      return {width:canvas.width,height:canvas.height,hash};
+    };
+  });
   await page.locator('#ai-image-install-open').click();
   await page.waitForFunction(() => {
     const image = document.querySelector('#ai-image-panel .is-ai-active-candidate .ai-preview-stage > img');
@@ -137,6 +163,69 @@ for (const engine of ['chromium', 'webkit']) test(`${engine}: other-workflow tra
   assert.deepEqual(raceSource.generated, beforeRace.find(tab => tab.id === 'task-0').generated);
   assert.equal(raceSource.labelPreviewIncluded['candidate-0'], false, 'user toggle remains OFF after rejected delivery');
   receipts.push({action:'label-change-during-real-composition',rejected:true,noNewTask:true,candidatesPreserved:true});
+  fs.writeFileSync(path.join(dir,'receipt.json'), JSON.stringify(receipts,null,2));
+  for (const included of [true,false]) {
+    await selectSource(page);
+    const toggle = page.locator(active + ' [data-ai-label-toggle]');
+    if ((await toggle.getAttribute('aria-checked') === 'true') !== included) await toggle.click();
+    await page.waitForFunction(included => {
+      const image = document.querySelector('#ai-image-panel .is-ai-active-candidate .ai-preview-stage > img');
+      return image?.complete && (image.src !== __task5Expected[0].generated[0].data) === included;
+    },included);
+    const before = await snapshot(page), sourceBefore = before.find(tab => tab.id === 'task-0');
+    const displayed = await visibleSource(page);
+    await page.evaluate(() => {window.__copiedImage = null;});
+    await page.locator(active + ' [data-tab-id="task-0"] .ai-task-tab-select').click({button:'right'});
+    await page.locator('.ai-task-context-menu [data-task-action="copy"]').click();
+    await page.waitForFunction(() => window.__copiedImage);
+    const copied = await page.evaluate(() => __copiedImage);
+    const pixels = await page.evaluate(async displayed => ({visible:await __rasterDigest(displayed),copied:await __rasterDigest(__copiedImage.data)}),displayed);
+    const source = (await snapshot(page)).find(tab => tab.id === 'task-0');
+    receipts.push({action:'clipboard-copy',included,type:copied.type,writeDuringGesture:copied.gesture,pixelsMatch:JSON.stringify(pixels.visible) === JSON.stringify(pixels.copied),sourcePreserved:JSON.stringify(source) === JSON.stringify(sourceBefore),pixels});
+    fs.writeFileSync(path.join(dir,'receipt.json'), JSON.stringify(receipts,null,2));
+    assert.equal(copied.type,'image/png'); assert.equal(copied.gesture,true,'clipboard.write begins during the trusted click');
+    assert.deepEqual(source,sourceBefore);
+    assert.deepEqual(pixels.copied,pixels.visible,'clipboard receives current visible labels');
+  }
+  // A stale preparation must reject before the clipboard receives any image.
+  await page.locator(active + ' [data-ai-label-toggle]').click();
+  await page.waitForFunction(() => document.querySelector('#ai-image-panel .is-ai-active-candidate .ai-preview-stage > img')?.src !== __task5Expected[0].generated[0].data);
+  const beforeCopyRace = await snapshot(page);
+  await page.evaluate(() => {
+    window.__copiedImage = null; window.__clipboardWriteStarted = false; window.__transferCompositeEntered = false;
+    window.__transferCompositeGate = new Promise(resolve => window.__releaseTransferComposite = resolve);
+  });
+  await page.locator(active + ' [data-tab-id="task-0"] .ai-task-tab-select').click({button:'right'});
+  await page.locator('.ai-task-context-menu [data-task-action="copy"]').click();
+  await page.waitForFunction(() => window.__transferCompositeEntered && window.__clipboardWriteStarted);
+  await page.locator(active + ' [data-ai-label-toggle]').click();
+  await page.evaluate(() => {window.__releaseTransferComposite();window.__transferCompositeGate = null;});
+  await page.getByText('보내는 동안 작업의 그림이나 표시 설정이 바뀌었습니다. 다시 보내 주세요.',{exact:true}).waitFor();
+  assert.equal(await page.evaluate(() => __copiedImage),null);
+  assert.deepEqual((await snapshot(page)).find(tab => tab.id === 'task-0').generated,beforeCopyRace.find(tab => tab.id === 'task-0').generated);
+  receipts.push({action:'clipboard-change-during-real-composition',rejected:true,clipboardNotWritten:true,writeDuringGesture:true,candidatesPreserved:true});
+  // Existing view-only sharing permits copying; it still forbids send/duplicate.
+  await page.locator(active + ' [data-ai-label-toggle]').click();
+  await page.waitForFunction(() => document.querySelector('#ai-image-panel .is-ai-active-candidate .ai-preview-stage > img')?.src !== __task5Expected[0].generated[0].data);
+  await page.evaluate(async () => {
+    const document = await __transferManager.sharingSnapshot();
+    const source = document.workspaces.find(workspace => workspace.tabs.some(tab => tab.id === 'task-0'));
+    const tab = source.tabs.find(tab => tab.id === 'task-0');
+    await __transferManager.openSharingDocument('clipboard-view-only',{mode:'view',activeWorkspace:0,workspaces:[{...source,tabs:[tab],activeTaskTabId:tab.id}]});
+  });
+  await page.waitForFunction(() => document.querySelector('#ai-image-panel')?.dataset.aiSharingMode === 'view'
+    && document.querySelector('#ai-image-panel .is-ai-active-candidate .ai-preview-stage > img')?.src !== __task5Expected[0].generated[0].data);
+  const readOnlyBefore = await snapshot(page), displayed = await visibleSource(page);
+  await page.evaluate(() => {window.__copiedImage = null;});
+  await page.locator(active + ' [data-tab-id="task-0"] .ai-task-tab-select[aria-pressed="true"]').click({button:'right'});
+  assert.equal(await page.locator('.ai-task-context-menu [data-task-action="send"]').isDisabled(),true);
+  assert.equal(await page.locator('.ai-task-context-menu [data-task-action="duplicate"]').isDisabled(),true);
+  await page.locator('.ai-task-context-menu [data-task-action="copy"]').click();
+  await page.waitForFunction(() => window.__copiedImage);
+  const readOnlyCopy = await page.evaluate(async displayed => ({visible:await __rasterDigest(displayed),copied:await __rasterDigest(__copiedImage.data),gesture:__copiedImage.gesture}),displayed);
+  assert.deepEqual(readOnlyCopy.copied,readOnlyCopy.visible); assert.equal(readOnlyCopy.gesture,true);
+  assert.deepEqual(await snapshot(page),readOnlyBefore);
+  receipts.push({action:'view-only-clipboard',included:true,pixelsMatch:true,sourcePreserved:true,sendDisabled:true,duplicateDisabled:true,writeDuringGesture:true});
   fs.writeFileSync(path.join(dir,'receipt.json'), JSON.stringify(receipts,null,2));
   assert.deepEqual(errors, []);
   assert.equal(await page.evaluate(() => __task2.sends.length), 0);

@@ -394,9 +394,11 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
   }
   const taskMenu = createTaskContextMenu({
     copy: ({entry,taskId}) => {
-      const item = entry.controller.taskImage(taskId);
-      if (!item?.data) throw new Error('복사할 이미지가 없습니다.');
-      return copyTaskImage(item.data);
+      return copyTaskImage(async () => {
+        const item = await entry.controller.taskVisibleImage(taskId);
+        if (!item?.data) throw new Error('복사할 이미지가 없습니다.');
+        return item.data;
+      });
     },
     send: async ({entry,taskId},kind) => {
       if (entry.disposed || !entry.controller.ownsTask(taskId) || entry.panel.dataset.aiSharingMode === 'view') return;
