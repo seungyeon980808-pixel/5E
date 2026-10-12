@@ -1243,6 +1243,7 @@ export function initRhwpExamWorkspace(state, services) {
   documentMenu.querySelector('[data-exam-document-open]').addEventListener('click',()=>void run(open));
   documentMenu.querySelector('[data-exam-document-insert]').addEventListener('click',()=>void run(()=>startSend()));
   panel.querySelector('#exam-hwp-file').addEventListener('cancel',()=>{pendingDocumentInsertion=null;message('문서 열기를 취소했습니다.');});
+  window.addEventListener('5e:exam-send-ai', event => void run(() => startSend(event.detail)));
   window.addEventListener('5e:exam-send-graph', event => void run(() => startSend(null,event.detail)));
   async function receiveSource(path) {
     const request = ++incomingRequest;

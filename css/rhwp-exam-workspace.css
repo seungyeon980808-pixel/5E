@@ -44,6 +44,8 @@
 #exam-status[data-error="true"] { color:#d54438; }
 .ai-exam-send { margin-left:auto; padding:6px 14px; background:var(--bg-input); color:var(--text-primary); border:1px solid var(--exam-accent, #dba52b); font:inherit; cursor:pointer; }
 .ai-exam-send:disabled { opacity:.45; cursor:default; }
+#ai-image-panel .ai-head-status .ai-exam-send { margin:0; padding:5px 9px; min-height:30px; border-color:var(--exam-accent, #dba52b); background:var(--bg-input); color:var(--text-primary); font-size:11px; white-space:nowrap; }
+#ai-image-panel .ai-head-status .ai-exam-send:focus-visible { outline:2px solid var(--exam-accent, #dba52b); outline-offset:2px; }
 @media (max-width:420px) {
   .canvas-toolbar .toolbar-document { flex-wrap:wrap; }
 }

@@ -1429,6 +1429,13 @@
       ]
     },
     {
+      "path": "tests/test-ai-hwp-direct-output-browser.cjs",
+      "findingIds": [
+        "UX-U14",
+        "AI-HWP-INDEPENDENT-OUTPUT"
+      ]
+    },
+    {
       "path": "tests/test-ai-collection-current-browser.cjs",
       "findingIds": [
         "UX-U14",

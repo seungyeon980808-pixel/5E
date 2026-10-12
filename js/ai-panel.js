@@ -2439,6 +2439,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     if (comparison && comparisonCount < 2) closeComparison();
     const save = panel.querySelector('[data-ai-save-selected]');
     const insert = panel.querySelector('[data-ai-insert-selected]');
+    const examSend = panel.querySelector('[data-ai-exam-send]');
+    if (examSend) examSend.disabled = busy || !item || !isAdoptableImageLabelCandidate(item);
     const scoped = panel.querySelector('[data-ai-scoped-edit-selected]');
     const groups = panel.querySelector('[data-ai-editable-groups]');
     const recovery = panel.querySelector('[data-ai-separated-recovery]');
@@ -6455,6 +6457,11 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
   });
   panel.querySelector('[data-ai-insert-selected]')?.addEventListener('click', () => {
     if (!busy) selectedOutputItem()?.card?.querySelector('.ai-canvas-output')?.click();
+  });
+  panel.querySelector('[data-ai-exam-send]')?.addEventListener('click', () => {
+    const item = selectedOutputItem();
+    if (busy || !item || !isAdoptableImageLabelCandidate(item)) return;
+    window.dispatchEvent(new CustomEvent('5e:exam-send-ai', {detail:{scope:clientScope || '',taskId:activeTaskTabId}}));
   });
   const reviewDraftButton = document.createElement('button');
   reviewDraftButton.type = 'button';
