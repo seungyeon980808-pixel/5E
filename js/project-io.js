@@ -48,9 +48,6 @@ const SCHEMA_VERSION = "0.17";
 // Default artboard size for files saved before the artboard field existed.
 const DEFAULT_ARTBOARD = { w: 90, h: 60 };
 
-// New .5e files use the common ZIP container; legacy UTF-8 JSON and old
-// Legacy JSON .5e and .json files remain readable alongside the ZIP package.
-const PROJECT_FILE_ACCEPT = ".5e,.5exam,.json,application/json";
 const APPARATUS_TEMPLATE_IDS = {
   wire: "E001",
   compass: "E002",
@@ -892,7 +889,10 @@ export function initProjectIO(state, svg) {
   // Hidden file input for 5E projects. Legacy .json files remain supported.
   const fileInput = document.createElement("input");
   fileInput.type = "file";
-  fileInput.accept = PROJECT_FILE_ACCEPT + ',.exe,.png';
+  fileInput.id = "project-source-file";
+  // Safari's native picker can disable unregistered .5e/.5exam extensions.
+  // Leave its format filter unset; openProject validates the actual bytes and
+  // size before asking to replace any drawing or document.
   fileInput.style.display = "none";
   document.body.appendChild(fileInput);
 

@@ -207,7 +207,7 @@ async function snapshot(page) {
         assert.match(await alert.textContent(), /페이지를 나누어/);
         assert.deepEqual(await spy(), { constructors: 0, reads: [], arrayBuffers: [], parses: 0 });
         assert.deepEqual(await snapshot(page), baseline);
-        assert.equal(await page.locator('input[type="file"][accept*=".5e"][accept*=".json"]:not(#exam-project-file)').inputValue(), '');
+        assert.equal(await page.locator('#project-source-file').inputValue(), '');
         if (i === 0) await page.screenshot({ path: path.join(evidence, `${engine.name()}-size-rejection.png`) });
         await alert.getByRole('button', { name: '확인', exact: true }).click();
       }
@@ -237,7 +237,7 @@ async function snapshot(page) {
       assert.deepEqual(await snapshot(page), baseline);
       await choose(page, { name: 'a1-malformed.5e', mimeType: 'application/json', buffer: Buffer.from('{"A1_POLICY_MARKER":') });
       await page.waitForFunction(() => window.a1Spy.parses === 3);
-      await page.waitForFunction(() => document.querySelector('input[type="file"][accept*=".5e"][accept*=".json"]:not(#exam-project-file)').value === '');
+      await page.waitForFunction(() => document.querySelector('#project-source-file').value === '');
       assert.deepEqual(await snapshot(page), baseline);
       assert.ok(dialogs.some(d => /프로젝트 파일을 열 수 없습니다/.test(d)));
       const expectedCandidate = mixedCandidate(fixtureSrc);
