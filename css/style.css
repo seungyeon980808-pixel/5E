@@ -3597,6 +3597,9 @@ textarea.unified-text-input {
 #graph-modal-overlay .gm-close { position: absolute; top: -4px; right: 0; width: 32px; height: 32px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg-input); color: var(--text-primary); font-size: 24px; cursor: pointer; }
 #graph-modal-overlay .gm-export-actions { display: flex; justify-content: flex-end; flex: 0 0 auto; padding-top: 6px; }
 #graph-modal-overlay .gm-export-actions .modal-btn { min-height: 30px; padding: 4px 10px; font-size: 12px; }
+#graph-modal-overlay .gm-export-actions { gap:6px; }
+#graph-modal-overlay #gm-send-exam { border-color:var(--exam-accent,#dba52b); background:var(--bg-input); color:var(--text-primary); }
+#graph-modal-overlay #gm-send-exam[hidden] { display:none; }
 #graph-modal-overlay .gm-trace-side-layout > .gm-export-actions { grid-column: 1 / -1; grid-row: 5; }
 #graph-modal-overlay .gm-trace-side-layout > #gm-error { grid-row: 6; }
 @container gm-workspace (max-width: 900px) {

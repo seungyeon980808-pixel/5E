@@ -3100,7 +3100,7 @@ function build() {
       </h2>
       <div class="gm-body">
         <div class="gm-left" style="flex:1;min-width:0;">
-          <div class="gm-export-actions"><button type="button" class="modal-btn modal-btn-primary" id="gm-confirm">캔버스로 내보내기</button></div>
+          <div class="gm-export-actions"><button type="button" class="modal-btn" id="gm-send-exam">한글에 넣기</button><button type="button" class="modal-btn modal-btn-primary" id="gm-confirm">캔버스로 내보내기</button></div>
           <div id="gm-trace-toolbar-host"></div>
           <div id="gm-preview" class="gm-preview" style="height:440px;"></div>
           <div id="gm-error" style="color:#e5534b;font-size: 12px;min-height:16px;margin-top:4px;"></div>
@@ -4215,6 +4215,11 @@ function build() {
     return _mode === "edit" ? commitEdit() : commitCreate();
   };
   _els.confirm.addEventListener("click", commitValidated);
+  overlay.querySelector('#gm-send-exam').addEventListener('click', () => {
+    if (_overlay.hidden || _editingContext || !document.querySelector('#exam-send')) return;
+    const result = commitValidated();
+    if (result) window.dispatchEvent(new CustomEvent('5e:exam-send-graph',{detail:result}));
+  });
 
   _els.cancel.addEventListener("click", hide);
   overlay.addEventListener('input',e=>{if(e.target.closest('#gm-series-editor'))rememberInvalidSeries();});
@@ -4607,6 +4612,7 @@ export function openGraphModal(planeId = null, startTab = "coord", editingContex
   _els.title.textContent = _mode === "edit" ? "그래프 편집" : "그래프 만들기";
   _els.confirm.textContent = _mode === "edit" ? "적용" : "캔버스로 내보내기";
   _els.confirm.classList.add('modal-btn-primary');
+  _overlay.querySelector('#gm-send-exam').hidden=!!editingContext || !document.querySelector('#exam-send');
   _els.error.textContent = "";
   _overlay.querySelectorAll("input, textarea, select").forEach(input => input.setCustomValidity(""));
   _overlay.hidden = false;
