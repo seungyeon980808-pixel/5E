@@ -30,7 +30,7 @@ import { initTransform, undo, redo, rebuildGroups } from "./transform.js?v=1.7.0
 import { initArtboardResize } from "./artboard-resize.js?v=1.7.0-four-session-integration";
 import { initInspector } from "./inspector.js?v=1.7.0-four-session-integration";
 import { initDesktopProjectCloseGuard, initProjectIO, initProjectFileOpening, configurePortableProjectIO, saveProject, serialize, applyLoaded, prepareLoadedProject } from "./project-io.js?v=1.7.0-four-session-integration";
-import { ensureEmbeddedFonts, rasterizeExportCanvas, insertPngPhys } from "./svg-export.js?v=1.7.0-four-session-integration";
+import { ensureEmbeddedFonts, getContentBounds, rasterizeExportCanvas, insertPngPhys } from "./svg-export.js?v=1.7.0-four-session-integration";
 import { initExportDialog, runAreaCapture } from "./export-dialog.js?v=1.7.0-four-session-integration";
 import { initRuler, setRulerVisible } from "./ruler.js?v=1.7.0-four-session-integration";
 import { initSettings } from "./settings.js?v=1.7.0-four-session-integration";
@@ -344,6 +344,14 @@ const openSelectedAi = () => {
   }
   void handSelectedCanvasImageToAi(state, {
     renderImage: renderSessionToDataUrl,
+    renderComposition: async snapshot => {
+      await ensureEmbeddedFonts();
+      const bounds = getContentBounds(snapshot, {}, 1);
+      if (!bounds) throw new Error('AI로 보낼 그림의 영역을 확인할 수 없습니다.');
+      const dpi = Math.min(300, 4096 * 25.4 / Math.max(bounds.w,bounds.h));
+      const { canvas } = await rasterizeExportCanvas(snapshot, {bounds, dpi});
+      return canvas.toDataURL('image/png');
+    },
     openPanel: options => aiPanel?.open(options),
   reportError: error => window.alert(`AI 이미지 변환을 열 수 없습니다.\n${error.message}`),
     });
@@ -362,7 +370,7 @@ if (aiLoginHandoff) {
   });
 }
 if (aiEntryButton) {
-  aiEntryButton.title = "AI 이미지 변환";
+  aiEntryButton.title = "AI 이미지 변환 · 선택한 객체 조합, 선택이 없으면 전체 그림";
   aiEntryButton.setAttribute("aria-label", "AI 이미지 변환");
   const label = aiEntryButton.querySelector(".search-trigger-label");
   if (label) label.textContent = "AI 이미지 변환";

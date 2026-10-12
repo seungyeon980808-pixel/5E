@@ -542,6 +542,13 @@
       "findingIds": [
         "FEEDBACK-FREE-COMMENT-SCOPE"
       ]
+    },
+    {
+      "path": "tests/test-ai-canvas-handoff.mjs",
+      "findingIds": [
+        "USER-SAFARI-U37",
+        "AI-CANVAS-COMPOSITION"
+      ]
     }
   ],
   "browser": [
@@ -935,7 +942,12 @@
     {
       "path": "tests/test-ai-library-transfer-browser.cjs",
       "findingIds": [
-        "AI-FOLLOWUP-LIBRARY-TRANSFER"
+        "AI-FOLLOWUP-LIBRARY-TRANSFER",
+        "USER-SAFARI-U32",
+        "USER-SAFARI-U33",
+        "USER-SAFARI-U34",
+        "USER-SAFARI-U36",
+        "USER-SAFARI-U37"
       ]
     },
     {

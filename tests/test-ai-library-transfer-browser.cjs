@@ -6,6 +6,7 @@ const test = require('node:test');
 const playwright = require(process.env.PLAYWRIGHT_MODULE || '/Users/parkseungyeon/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright');
 const { installCropFixture, pointerOnImage } = require('./helpers/crop-loading-fixture.cjs');
 const root = path.resolve(__dirname, '..');
+process.env.APP_ENTRY ??= '/';
 const { fixtureContext, installAiMain } = require('./helpers/canonical-fixture-adapter.cjs');
 const { runtime, inspectEntry } = fixtureContext(root);
 async function fixture(t, engine = 'chromium') {
@@ -77,10 +78,10 @@ test('cancelled multi-crop assignment retains every crop', async t => {
   assert.equal(await page.evaluate(() => window.__acceptedAssets.size), 2);
   assert.equal(await ui.isVisible(), true);
 });
-async function manager(t) {
-  const { page, origin } = await fixture(t);
+async function manager(t, engine = 'chromium') {
+  const { page, origin } = await fixture(t, engine);
   await page.addInitScript(() => {
-    localStorage.setItem('5e.tutorial.bannerSeen','true'); localStorage.setItem('5e.preview:5e.mode','pro');
+    localStorage.setItem('5e.tutorial.bannerSeen','true'); localStorage.setItem('5e.preview:5e.tutorial.bannerSeen','true'); localStorage.setItem('5e.preview:5e.mode','pro');
     window.__fixtureProviderCalls = [];
     window.fiveEDesktop = { web: true, status: async () => ({login:{loggedIn:true},server:true}), models:async()=>({data:[]}), account:async()=>({}), send:async payload=>{window.__fixtureProviderCalls.push(payload);throw new Error('Unexpected controlled generation during library ownership test');}, interrupt:async()=>({ok:true}), onEvent:()=>()=>{}, onState:()=>()=>{}, onLog:()=>()=>{} };
   });
@@ -249,4 +250,28 @@ for(const engine of ['chromium','webkit']) test(`${engine}: crop insertion failu
   await page.keyboard.press('Escape');await page.evaluate(()=>window.__releaseInsert());
   await page.waitForFunction(()=>window.__mayInsert===false);
   assert.equal(await page.evaluate(()=>window.__acceptedAssets.size),1,'cancelled delivery keeps the source crop');
+});
+
+for(const engine of ['chromium','webkit']) test(`${engine}: the real canvas AI button sends one composed image with its layout intact`,async t=>{
+ const page=await manager(t,engine);
+ const before=await page.evaluate(async()=>{
+   const {state}=await import(window.__runtime.base+'state.js'+window.__runtime.query);
+   const square=color=>{const c=document.createElement('canvas');c.width=c.height=20;const x=c.getContext('2d');x.fillStyle=color;x.fillRect(0,0,20,20);return c.toDataURL();};
+   state.update(s=>{s.layers=[{id:1,visible:true},{id:2,visible:false}];s.objects=[
+     {id:'red',type:'image',src:square('#ff0000'),x:-25,y:-10,w:20,h:20,layerId:1,order:0},
+     {id:'blue',type:'image',src:square('#0000ff'),x:5,y:-10,w:20,h:20,layerId:1,order:1},
+     {id:'bar',type:'rect',x:-2,y:-5,w:4,h:10,fill:'#000000',stroke:'none',strokeWidth:0,layerId:1,order:2},
+     {id:'hidden',type:'rect',x:-25,y:-10,w:50,h:20,fill:'#00ff00',layerId:2,order:3}];s.selectedIds=['red','blue','bar'];});
+   window.__compositionState=state;return JSON.stringify(state.get().objects);
+ });
+ await page.locator('#ai-image-install-open').click();await page.locator('#ai-image-panel').waitFor({state:'visible'});
+ await page.waitForFunction(async()=>{const snap=await window.__manager.sharingSnapshot();return snap.workspaces.some(w=>w.tabs.some(t=>t.attachments.length===1));});
+ const result=await page.evaluate(async()=>{
+   const snap=await window.__manager.sharingSnapshot(),tab=snap.workspaces.flatMap(w=>w.tabs).find(t=>t.attachments.length===1),reference=tab.attachments[0];
+   const img=new Image();img.src=reference.data;await img.decode();const c=document.createElement('canvas');c.width=img.naturalWidth;c.height=img.naturalHeight;const ctx=c.getContext('2d');ctx.drawImage(img,0,0);
+   const pixel=(x,y)=>Array.from(ctx.getImageData(Math.round(c.width*x),Math.round(c.height*y),1,1).data);
+   return {reference,generated:tab.generated.length,pixels:[pixel(.2,.5),pixel(.5,.5),pixel(.8,.5)],ratio:c.width/c.height,objects:JSON.stringify(window.__compositionState.get().objects),providerCalls:window.__fixtureProviderCalls.length};
+ });
+ assert.equal(result.reference.sourceKind,'canvas-composition');assert.deepEqual(result.reference.source.objectIds,['red','blue','bar']);assert.equal(result.generated,0);assert.equal(result.providerCalls,0);
+ assert.deepEqual(result.pixels,[[255,0,0,255],[0,0,0,255],[0,0,255,255]]);assert.ok(result.ratio>2.2&&result.ratio<2.5);assert.equal(result.objects,before);
 });
