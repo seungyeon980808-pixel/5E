@@ -38,6 +38,13 @@ export class RhwpExamBridge {
       .some(method => cursor[method]?.());
   }
 
+  enableEditingBorders() {
+    if(!this.wasm.doc || typeof this.wasm.setShowTransparentBorders!=='function' || this.borderGuideGeneration===this.generation)return;
+    this.wasm.setShowTransparentBorders(true);this.borderGuideGeneration=this.generation;
+    this.editor.element.contentDocument.querySelectorAll('[data-cmd="view:border-transparent"]').forEach(button=>button.classList.add('active'));
+    this.deps.eventBus.emit('document-view-changed');
+  }
+
   constructor(editor, onChange, onEdit, onReplace, onBeforeReplace, validateSource) {
     this.editor = editor;
     this.onChange = onChange;
@@ -53,8 +60,8 @@ export class RhwpExamBridge {
     this.deps.eventBus.on('document-changed', this.onDocumentChanged);
     // Page-local text edits do not always emit document-changed.
     this.deps.eventBus.on('document-mutated', this.onDocumentChanged);
-    this.deps.eventBus.on('document-swapped',()=>setTimeout(()=>{if(!this.loading) onReplace?.();this.onDocumentChanged();},0));
-    this.deps.eventBus.on('create-new-document',()=>{const previous=this.generation;setTimeout(()=>{if(this.generation!==previous){onReplace?.();this.onDocumentChanged();}},500);});
+    this.deps.eventBus.on('document-swapped',()=>setTimeout(()=>{this.enableEditingBorders();if(!this.loading) onReplace?.();this.onDocumentChanged();},0));
+    this.deps.eventBus.on('create-new-document',()=>{const previous=this.generation;setTimeout(()=>{if(this.generation!==previous){this.enableEditingBorders();onReplace?.();this.onDocumentChanged();}},500);});
     const emit=this.deps.eventBus.emit.bind(this.deps.eventBus);
     this.deps.eventBus.emit=(name,...args)=>{
       const payload=args[0];
@@ -74,6 +81,7 @@ export class RhwpExamBridge {
       this.onEdit?.(id, ref);
     };
     this.editor.element.contentDocument.addEventListener('dblclick', this.doubleClick, true);
+    this.enableEditingBorders();
   }
 
   static async create(host, options = {}) {
@@ -243,6 +251,7 @@ export class RhwpExamBridge {
     this.loading=true;
     try {await this.deps.createBlankDocument();} finally {this.loading=false;}
     if (!this.input) throw new Error('새 시험지를 만들지 못했습니다.');
+    this.enableEditingBorders();
     this.input.cursor?.moveTo?.({sectionIndex:0,paragraphIndex:0,charOffset:0});
     this.revision++;
   }
@@ -270,7 +279,7 @@ export class RhwpExamBridge {
       }
     } finally {staged.free();}
     this.loading=true;
-    try {await this.editor.loadFile(bytes,name,{skipUnsavedGuard:true,suppressDialogs:true});this.revision++;}
+    try {await this.editor.loadFile(bytes,name,{skipUnsavedGuard:true,suppressDialogs:true});this.enableEditingBorders();this.revision++;}
     finally {this.loading=false;}
   }
 

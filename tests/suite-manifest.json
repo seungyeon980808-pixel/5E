@@ -1498,6 +1498,13 @@
       "findingIds": [
         "UX-U38"
       ]
+    },
+    {
+      "path": "tests/test-hwp-table-guides-browser.cjs",
+      "findingIds": [
+        "UX-U42",
+        "RHWP-EXAM-NATIVE-READY"
+      ]
     }
   ],
   "deferred": [

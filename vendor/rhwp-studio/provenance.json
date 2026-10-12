@@ -5,7 +5,8 @@
   "modifications": [
     "Use relative WASM/preload paths",
     "Remove upstream PWA registration and app icons",
-    "Use relative icon sprite paths in stylesheet"
+    "Use relative icon sprite paths in stylesheet",
+    "Return the native blank document initialization promise to the embedded host"
   ],
   "files": [
     {
@@ -20,8 +21,8 @@
     },
     {
       "path": "assets/index-zNX2Cct6.js",
-      "sha256": "b78ebda7b1f3b521485d4109f5fe2d1faefb9f495b4481e73b17c7401d1b19f2",
-      "bytes": 2116313
+      "sha256": "edb1faeb65e1a1fab264ad0ea5e1c79301732a1a4d9dff3fdd1e0c870b430fe1",
+      "bytes": 2116311
     },
     {
       "path": "assets/rhwp_bg-BkVWMBaR.wasm",
