@@ -1880,6 +1880,16 @@ scenarios.QA7 = async ctx => {
 
 async function onScreen(ctx, page, selector, name) {
   await ctx.check(name, async () => {
+    await page.evaluate(async selector => {
+      const node = document.querySelector(selector);
+      const animations = document.getAnimations().filter(animation => {
+        const target = animation.effect?.target;
+        return target instanceof Element && target.contains(node)
+          && Number.isFinite(animation.effect.getComputedTiming().endTime)
+          && (animation.playState === 'running' || animation.pending);
+      });
+      await __cross.deadline(Promise.allSettled(animations.map(animation => animation.finished)), 'actual control ancestor motion completion');
+    }, selector);
     const locator = page.locator(selector); assert.equal(await locator.isVisible(), true, 'Essential control is hidden');
     const result = await locator.evaluate(n => {
       const r = n.getBoundingClientRect(), hit = document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2);
@@ -1949,7 +1959,7 @@ scenarios.QA8 = async ctx => {
       await page.setViewportSize(viewport);
       for (const theme of ['light', 'dark']) for (const motion of ['reduce', 'no-preference']) {
         await page.emulateMedia({ reducedMotion: motion }); await page.evaluate(theme => { document.documentElement.dataset.theme = theme; }, theme);
-        for (const selector of ['#exam-send', '#exam-workspace-open', '#ai-image-panel [data-ai-close]']) await onScreen(ctx, page, selector, `${viewport.width}/${theme}/${motion}: ${selector} accessible above source AI`);
+        for (const selector of ['[data-source-apply]', '#ai-image-panel [data-ai-exam-send]', '#ai-image-panel [data-ai-close]']) await onScreen(ctx, page, selector, `${viewport.width}/${theme}/${motion}: ${selector} accessible above source AI`);
         await ctx.shot(page, `layout-${viewport.width}-${theme}-${motion}`);
       }
     } ctx.cover('layout-four-sizes-themes-motion');
@@ -1961,7 +1971,7 @@ scenarios.QA8 = async ctx => {
     await ctx.check('actual graph keyboard focus remains inside child dialog', async () => assert.equal(await page.evaluate(() => Boolean(document.activeElement.closest('#graph-modal-overlay'))), true));
     await page.keyboard.press('Escape'); await page.locator('#graph-modal-overlay').waitFor({ state: 'hidden' });
     await ctx.check('Escape restores graph action focus with source AI preserved', async () => { assert.equal(await page.locator(panel).isVisible(), true); assert.equal(await trigger.evaluate(n => document.activeElement === n), true); }); ctx.cover('graph-topmost-focus');
-    await closeAI(page); await page.evaluate(() => document.querySelector('#exam-workspace-open').click()); await h.idle(page);
+    await openExamDocument(page);
     await h.originalEdit(page, 0); await closeAI(page);
     await captureClipboard(ctx, page); ctx.cover('capture-protected-failure');
   });
@@ -3273,11 +3283,10 @@ async function realBrowserZoom(ctx) {
         assert.ok(revision.graphResult.objects.some(o => o.type === 'coordplane' && o.labelX === '200% 교차 그래프'));
       });
       await unionEqual(ctx, await tabs(page), [rich.find(t => t.id === 'cross-label-task')], '200% graph revision retains unrelated full label union');
-      // Parent controls are tested after the actual child closes. In source-edit
-      // mode they must remain above AI itself (the QA8 contract); ordinary AI's
-      // legitimate modality is handled separately by the API-only probe.
-      for (const selector of ['#exam-send', '#exam-workspace-open'])
-        await onScreen(ctx, page, selector, '200% parent control above source AI after actual graph child closes: ' + selector);
+      // The current UI exposes task-owned HWP delivery in the AI header.
+      // Main document navigation is available after closing its modal surface.
+      for (const selector of [panel + ' [data-ai-exam-send]', panel + ' [data-ai-close]'])
+        await onScreen(ctx, page, selector, '200% current AI control after graph child closes: ' + selector);
       // captureEdit rejects a different active task even when AI is closed.
       // Restore the figure's actual linked owner through the real task drawer;
       // keep the graph revision, candidate fields and 200% zoom unchanged.
@@ -3306,9 +3315,10 @@ async function realBrowserZoom(ctx) {
         zoomReceipt(ctx, `QA8-zoom-source-Send-${phase}-lifecycle.json`, observation);
       };
       await ctx.act('200% actual AI close', () => closeAI(page), page);
-      await onScreen(ctx, page, '#exam-send', '200% source Send remains above source edit');
+      await page.locator('[data-source-apply]').waitFor({state:'visible'});
+      await onScreen(ctx, page, '[data-source-apply]', '200% linked source Apply is visible after AI closes');
       await sendLifecycle('before');
-      await ctx.act('200% actual source Send applies the linked figure', () => page.locator('#exam-send').click(), page);
+      await ctx.act('200% actual source Send applies the linked figure', () => page.locator('[data-source-apply]').click(), page);
       try { await page.locator('#rhwp-exam-workspace').waitFor({ state: 'visible' }); await h.idle(page); }
       finally { await sendLifecycle('after'); }
       await ctx.check('200% source Send retains editable native labels and actual document ownership', async () => {
@@ -3317,16 +3327,18 @@ async function realBrowserZoom(ctx) {
       });
       await ctx.shot(page, 'QA8-zoom-200-send-document');
       await ctx.act('200% actual document close', () => h.action(page, 'close'), page);
-      await onScreen(ctx, page, '#exam-workspace-open', '200% actual Exam control remains accessible');
-      await ctx.act('200% actual Exam opens the retained document', () => page.locator('#exam-workspace-open').click(), page);
+      await closeAI(page);
+      await onScreen(ctx, page, '#exam-send', '200% current document entry remains accessible');
+      await ctx.act('200% actual Exam opens the retained document', () => openExamDocument(page), page);
       await page.locator('#rhwp-exam-workspace').waitFor({ state: 'visible' }); await h.idle(page);
       await ctx.check('200% actual Exam reopened the same native figure', async () => assert.ok((await h.pictures(page)).some(p => p.figure?.link?.assetId === picture.figure.link.assetId)));
       await ctx.act('200% actual document close after reopen', () => h.action(page, 'close'), page);
       // originalEdit selects a picture in the visible document; the preceding
       // close deliberately returned to the source canvas. Reopen through the
       // actual Exam control before selecting its retained native figure.
-      await onScreen(ctx, page, '#exam-workspace-open', '200% actual Exam remains accessible before original editing');
-      await ctx.act('200% actual Exam reopens the retained document before original editing', () => page.locator('#exam-workspace-open').click(), page);
+      await closeAI(page);
+      await onScreen(ctx, page, '#exam-send', '200% current document entry accessible before original editing');
+      await ctx.act('200% actual Exam reopens the retained document before original editing', () => openExamDocument(page), page);
       await page.locator('#rhwp-exam-workspace').waitFor({ state: 'visible' }); await h.idle(page);
       await h.originalEdit(page, 0); await page.locator(panel).waitFor({ state: 'visible' }); await selectTask(ctx, page, 'cross-graph-task');
       await ctx.check('all 200% interactions retain true browser zoom without new provider/auth calls', async () => {
@@ -3339,7 +3351,7 @@ async function realBrowserZoom(ctx) {
         try {
           await changePageZoom(ctx, page, driver, baseline, viewport, 1, 'restored-100');
           ctx.result.cleanup.push({ name: 'true browser page zoom', restoredTo100: true, backend: driver.kind });
-          if (!primaryError) for (const selector of ['#exam-send', '#exam-workspace-open', panel + ' [data-ai-close]'])
+          if (!primaryError) for (const selector of [panel + ' [data-ai-exam-send]', panel + ' [data-ai-graph-edit]', panel + ' [data-ai-close]'])
             await onScreen(ctx, page, selector, 'restored actual 100% control: ' + selector);
         } catch (error) {
           ctx.result.errors.push({ phase: 'true-page-zoom-restoration', error: error.stack });
@@ -3363,9 +3375,8 @@ async function probeActualZoomAPI(ctx) {
     let primaryError;
     try {
       await changePageZoom(ctx, page, driver, baseline, viewport, 2, 'api-probe-200');
-      // Ordinary AI is modal: its backdrop intentionally blocks root controls.
-      // Test those after actual close. Full zoom QA separately requires Send/
-      // Exam above AI in the actual RHWP source-edit mode, with no bypass.
+      // Ordinary AI is modal; test document navigation after actual close.
+      // Full zoom QA uses the current linked Apply and task-owned header action.
       for (const selector of [panel + ' [data-ai-close]', panel + ' [data-ai-graph-edit]'])
         await onScreen(ctx, page, selector, 'API probe actual 200% control hit-test: ' + selector);
       const before = await workspace(page);
@@ -3384,7 +3395,7 @@ async function probeActualZoomAPI(ctx) {
         assert.equal(revision.graphResult.objects.find(o => o.type === 'coordplane').labelX, '확대 API probe');
       });
       await ctx.act('API probe 200% actual AI close', () => closeAI(page), page);
-      for (const selector of ['#exam-send', '#exam-workspace-open'])
+      for (const selector of ['#exam-send', '#ai-image-install-open'])
         await onScreen(ctx, page, selector, 'API probe ordinary root control after actual modal close: ' + selector);
       await ctx.act('API probe 200% actual AI reopen', () => page.locator('#ai-image-install-open').click(), page);
       await page.locator(panel).waitFor({ state: 'visible' });
