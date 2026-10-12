@@ -528,7 +528,8 @@
     {
       "path": "tests/test-ai-local-erase.cjs",
       "findingIds": [
-        "AI-LOCAL-POLYGON-ERASE"
+        "AI-LOCAL-POLYGON-ERASE",
+        "UX-U49"
       ]
     },
     {
@@ -1414,7 +1415,8 @@
     {
       "path": "tests/test-ai-local-tools-browser.cjs",
       "findingIds": [
-        "AI-LOCAL-TOOLS"
+        "AI-LOCAL-TOOLS",
+        "UX-U49"
       ]
     },
     {
@@ -1450,7 +1452,8 @@
     {
       "path": "tests/test-feedback-workspace-browser.cjs",
       "findingIds": [
-        "FEEDBACK-BOTTOM-WORKSPACE"
+        "FEEDBACK-BOTTOM-WORKSPACE",
+        "UX-U49"
       ]
     },
     {

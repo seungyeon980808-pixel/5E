@@ -130,10 +130,10 @@ for (const engine of ['chromium','webkit']) test(`${engine}: restored side panel
  await page.keyboard.press('Escape');assert.equal(await panel.locator('[data-ai-comment-popover]').isVisible(),false);assert.equal(await panel.isVisible(),true);
  assert.equal(await panel.locator('[data-ai-comment-tool="pan"]').getAttribute('aria-pressed'),'true');
  const erase=panel.locator('[data-ai-local-erase]');await erase.click();
- await lasso(page,[{x:75,y:-18},{x:140,y:35},{x:140,y:100},{x:75,y:100}]);
+ await lasso(page,[{x:75,y:-18},{x:140,y:100}]);
  await page.waitForFunction(()=>document.querySelector('#ai-image-panel').dataset.aiSelectedCandidateId.startsWith('generated-'));
  const firstErase=await panel.getAttribute('data-ai-selected-candidate-id');assert.equal(await erase.getAttribute('aria-pressed'),'true');
- await lasso(page,[{x:180,y:145},{x:235,y:145},{x:235,y:195},{x:180,y:195}]);
+ await lasso(page,[{x:180,y:145},{x:235,y:195}]);
  await page.waitForFunction(id=>document.querySelector('#ai-image-panel').dataset.aiSelectedCandidateId!==id,firstErase);
  assert.equal(await erase.getAttribute('aria-pressed'),'true');
  const erased=(await snapshot(page))[0].generated.at(-1);assert.equal(erased.labelPlan,null);
@@ -176,17 +176,17 @@ for (const engine of ['chromium','webkit']) test(`${engine}: local erasing uses 
  const parent=(await snapshot(page))[1].generated[0],toggle=panel.locator('[data-ai-label-toggle]');
  if(await toggle.getAttribute('aria-checked')==='false')await toggle.click();
  await page.waitForFunction(data=>{const img=document.querySelector('#ai-image-panel .is-ai-active-candidate .ai-preview-stage > img');return img.complete && img.src!==data;},parent.data);
- const before=(await geometry(page)).src;await panel.locator('[data-ai-local-erase]').click();
- const points=[{x:150,y:35},{x:345,y:35},{x:345,y:135},{x:150,y:135}];await lasso(page,points);
+ const before=(await geometry(page)).src;await panel.locator('[data-ai-local-erase]').click();await panel.locator('[data-ai-erase-mode=rect]').click();
+ const points=[{x:150,y:35},{x:345,y:135}];await lasso(page,points);
  await page.waitForFunction(()=>document.querySelector('#ai-image-panel').dataset.aiSelectedCandidateId.startsWith('generated-'));
  const child=(await snapshot(page))[1].generated.at(-1);assert.equal(child.labelPlan,null);
  const pixels=await page.evaluate(async({before,after,points})=>{
-  const {decodeScopedPng}=await import('/js/ai-scoped-edit-png.js?v=1.7.0-four-session-integration'),{polygonPixelMask}=await import('/js/polygon-mask.js?v=1.7.0-four-session-integration');
+  const {decodeScopedPng}=await import('/js/ai-scoped-edit-png.js?v=1.7.0-four-session-integration'),{rectanglePixelMask}=await import('/js/image-erase-mask.js?v=1.7.0-four-session-integration');
   const read=async src=>decodeScopedPng(new Uint8Array(await (await fetch(src)).arrayBuffer()));
-  const a=await read(before),b=await read(after),mask=polygonPixelMask(a.width,a.height,points);let outsideChanges=0,erased=0;
+  const a=await read(before),b=await read(after),mask=rectanglePixelMask(a.width,a.height,points);let outsideChanges=0,erased=0;
   for(let i=0;i<mask.length;i++){if(!mask[i])for(let c=0;c<4;c++)outsideChanges+=Number(a.data[i*4+c]!==b.data[i*4+c]);else erased+=Number(a.data[i*4+3]>0 && b.data[i*4+3]===0);}
   return {outsideChanges,erased};
- },{before,after:child.data,points:child.scopedEditHistory.at(-1).polygon});
+ },{before,after:child.data,points:child.scopedEditHistory.at(-1).points});
  assert.equal(pixels.outsideChanges,0,'everything outside the erasure matches the displayed labels and picture');assert.ok(pixels.erased>0);
  assert.deepEqual((await snapshot(page))[1].generated[0].labelPlan,parent.labelPlan,'the parent retains editable labels');assert.deepEqual(errors,[]);
 });

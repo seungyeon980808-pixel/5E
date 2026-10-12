@@ -609,9 +609,16 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
   if (!resultTools.querySelector('[data-ai-local-erase]')) {
     const localEraseButton = document.createElement('button'); localEraseButton.type = 'button';
     localEraseButton.dataset.aiLocalErase = ''; localEraseButton.className = 'ai-local-erase-toggle';
-    localEraseButton.setAttribute('aria-label', '자유영역 지우기'); localEraseButton.setAttribute('aria-pressed', 'false');
-    localEraseButton.innerHTML = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="m3 10 6-7 5 4-6 7H6zM5.5 7l5 4M7 14h7"/></svg><span>자유영역 지우기</span>';
+    localEraseButton.setAttribute('aria-label', '지우개'); localEraseButton.setAttribute('aria-pressed', 'false');
+    localEraseButton.setAttribute('aria-controls', 'ai-local-erase-options');localEraseButton.setAttribute('aria-expanded', 'false');
+    localEraseButton.innerHTML = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="m3 10 6-7 5 4-6 7H6zM5.5 7l5 4M7 14h7"/></svg><span>지우개</span>';
     resultTools.append(localEraseButton);
+  }
+  if (!resultTools.querySelector('[data-ai-local-erase-options]')) {
+    const options=document.createElement('div');options.id='ai-local-erase-options';options.dataset.aiLocalEraseOptions='';options.className='ai-local-erase-options';options.hidden=true;
+    options.setAttribute('aria-label','지우개 설정');
+    options.innerHTML='<div class="ai-erase-modes" role="group" aria-label="지우개 방식"><button type="button" data-ai-erase-mode="brush" aria-pressed="true">문질러 지우기</button><button type="button" data-ai-erase-mode="rect" aria-pressed="false">사각 영역</button></div><label>굵기 <input type="range" min="1" max="80" value="20" data-ai-erase-size aria-label="지우개 굵기"><output data-ai-erase-size-value>20 px</output></label><label>지운 자리 <select data-ai-erase-background aria-label="지운 자리 배경"><option value="transparent">투명</option><option value="white">흰색</option></select></label><small>한 번 드래그하면 새 수정본이 됩니다. Esc: 닫기</small>';
+    resultTools.append(options);
   }
   const scopedPromptRow = panel.querySelector('[data-ai-scoped-prompt-row]');
   let scopedAdvanced = scopedPromptRow?.closest('[data-ai-scoped-advanced]');
@@ -6287,8 +6294,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
         sourceReferenceId: parent.sourceReferenceId, sourceReferenceName: parent.sourceReferenceName,
         markPolicy: structuredClone(parent.markPolicy || {}), generationMode: 'single', labelPlan: plan,
         reviewState: 'scoped-applied', reviewReport: scopedAppliedReviewReport(), comments: [], nextCommentNumber: 1,
-        scopedEditHistory: [{ operation: 'local-polygon-erase', parentCandidateId: parent.id, createdAt: now,
-          sourceFrame: { width: erased.width, height: erased.height }, polygon: erased.polygon,
+        scopedEditHistory: [{ operation: `local-${erased.mode}-erase`, parentCandidateId: parent.id, createdAt: now,
+          sourceFrame: { width: erased.width, height: erased.height }, points: erased.points, diameter: erased.diameter, background: erased.background,
           changedPixels: erased.changedPixels, maskedPixels: erased.maskedPixels, outsideRgbaChanged: erased.outsideRgbaChanged,
           visualReview: 'not-performed', status: 'applied' }] };
       if (!isCurrent()) return;
@@ -6301,7 +6308,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       if (view) panel.aiWorkbench?.restoreViewState?.({ ...view, selectedCandidateId: candidate.id });
       panel.dispatchEvent(new CustomEvent('5e:ai-candidate-select', { detail: { candidateId: candidate.id, localErase: true } }));
       captureActiveTaskTab(); persistTasks();
-      setStatus('자유영역 지우기 완료 · 새 수정본으로 보관했습니다. 이전 버전에서 되돌릴 수 있습니다.', 'ok');
+      setStatus('지우기 완료 · 새 수정본으로 보관했습니다. 이전 버전에서 되돌릴 수 있습니다.', 'ok');
     } });
   panel.querySelector('[data-ai-comments-apply]')?.addEventListener('click', () => sendButton.onclick());
   // Selected-result actions stay in the fixed footer; per-card controls are hidden.

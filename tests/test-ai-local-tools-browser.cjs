@@ -103,6 +103,30 @@ async function lasso(page, points, finish=true) {
   if(finish)await page.mouse.up();
 }
 
+for (const engine of ['chromium','webkit']) test(`${engine}: brush strokes, rectangle, white/transparent, outside start and cancellation`,{timeout:120000},async t=>{
+  const {page,errors}=await fixture(t,engine),panel=page.locator(active),erase=panel.locator('[data-ai-local-erase]');
+  await page.evaluate(()=>Promise.allSettled(document.getAnimations().map(a=>a.finished)));const before=await snapshot(page),header=(await geometry(page)).header;
+  await erase.click();assert.equal(await panel.locator('[data-ai-erase-mode=brush]').getAttribute('aria-pressed'),'true');
+  await panel.locator('[data-ai-erase-size]').fill('12');assert.equal(await panel.locator('[data-ai-erase-size-value]').textContent(),'12 px');
+  const read=async src=>page.evaluate(async src=>{const {decodeScopedPng}=await import('/js/ai-scoped-edit-png.js?v=1.7.0-four-session-integration');const d=await decodeScopedPng(new Uint8Array(await(await fetch(src)).arrayBuffer()));return {width:d.width,height:d.height,data:[...d.data]};},src);
+  const stroke=async points=>{const old=await panel.getAttribute('data-ai-selected-candidate-id');await lasso(page,points);await page.waitForFunction(id=>document.querySelector('#ai-image-panel').dataset.aiSelectedCandidateId!==id,old);return(await snapshot(page))[0].generated.at(-1);};
+  const brush=await stroke([{x:65,y:80},{x:200,y:80},{x:200,y:220},{x:65,y:220},{x:65,y:80}]);
+  assert.equal(brush.scopedEditHistory[0].operation,'local-brush-erase');const pixels=await read(brush.data);assert.equal(pixels.data[(150*512+132)*4+3],255,'closed brush loop keeps its center');
+  const h=brush.scopedEditHistory[0],original=await read(before[0].generated[0].data);let inside=0;
+  for(let y=0;y<384;y++)for(let x=0;x<512;x++){
+    const onStroke=h.points.slice(1).some((b,i)=>{const a=h.points[i],dx=b.x-a.x,dy=b.y-a.y,t=Math.max(0,Math.min(1,((x+.5-a.x)*dx+(y+.5-a.y)*dy)/(dx*dx+dy*dy)||0));return Math.hypot(x+.5-a.x-t*dx,y+.5-a.y-t*dy)<=h.diameter/2+1e-8;});
+    const at=(y*512+x)*4;if(onStroke){assert.deepEqual(pixels.data.slice(at,at+4),[0,0,0,0]);inside++;}else assert.deepEqual(pixels.data.slice(at,at+4),original.data.slice(at,at+4));
+  }
+  assert.equal(inside,h.maskedPixels);assert.deepEqual((await snapshot(page))[1],before[1]);assert.deepEqual((await snapshot(page))[0].generated[0],before[0].generated[0]);
+  await panel.locator('[data-ai-erase-background]').selectOption('white');const white=await stroke([{x:65,y:80},{x:200,y:80}]);const whitePixels=await read(white.data);assert.deepEqual(whitePixels.data.slice((80*512+100)*4,(80*512+100)*4+4),[255,255,255,255]);
+  await panel.locator('[data-ai-erase-mode=rect]').click();assert.equal(await panel.locator('[data-ai-erase-size]').isDisabled(),true);
+  await panel.locator('[data-ai-erase-background]').selectOption('transparent');const rect=await stroke([{x:300,y:260},{x:245,y:230}]);assert.equal(rect.scopedEditHistory[0].operation,'local-rect-erase');const rectPixels=await read(rect.data);assert.equal(rectPixels.data[(245*512+270)*4+3],0);
+  await panel.locator('[data-ai-erase-mode=brush]').click();const outside=await stroke([{x:100,y:-18},{x:100,y:45}]);assert.ok(outside.scopedEditHistory[0].points[0].y<0,'outside coordinates stay outside instead of snapping to an edge');
+  const count=(await snapshot(page))[0].generated.length;await lasso(page,[{x:100,y:160},{x:200,y:160}],false);await page.keyboard.press('Escape');await page.mouse.up();assert.equal((await snapshot(page))[0].generated.length,count);assert.equal(await panel.locator('.ai-local-erase-overlay').count(),0);assert.equal(await panel.isVisible(),true);assert.equal(await panel.locator('[data-ai-local-erase-options]').isVisible(),false);
+  assert.deepEqual((await geometry(page)).header,header,'tool settings never change the image fitting header');assert.equal(await page.evaluate(()=>window.__task2.sends.length),0);assert.deepEqual(errors,[]);
+  await erase.click();await page.screenshot({path:path.join(evidence,engine,'brush-settings.png')});
+});
+
 for (const engine of ['chromium','webkit']) test(`${engine}: label switch, scoped settings and isolated local erasure through real workbench controls`, {timeout:150000}, async t => {
   const {page,errors}=await fixture(t,engine);
   const toggle=page.locator(`${active} [data-ai-label-toggle]`);
@@ -141,8 +165,8 @@ for (const engine of ['chromium','webkit']) test(`${engine}: label switch, scope
   await page.locator(`${active} [data-tab-id="task-0"] .ai-task-tab-select`).click();await selected(page,'candidate-0');
   const before=await snapshot(page); const comments=before[0].generated[0].comments.length;
   const erase=page.locator(`${active} [data-ai-local-erase]`);
-  await erase.click();assert.equal(await erase.getAttribute('aria-pressed'),'true');
-  await lasso(page,[{x:75,y:35},{x:140,y:35},{x:140,y:100},{x:75,y:100}]);
+  await erase.click();assert.equal(await erase.getAttribute('aria-pressed'),'true');await page.locator(`${active} [data-ai-erase-mode=rect]`).click();
+  await lasso(page,[{x:75,y:35},{x:140,y:100}]);
   await page.waitForFunction(()=>document.querySelector('#ai-image-panel').dataset.aiSelectedCandidateId.startsWith('generated-')).catch(async error=>{fs.writeFileSync(path.join(evidence,engine,'erase-trace.json'),JSON.stringify(await page.evaluate(()=>({trace:window.__eraseTrace,geometry:[...document.querySelectorAll('#ai-image-panel .is-ai-active-candidate .ai-preview-stage')].map(n=>({rect:JSON.stringify(n.getBoundingClientRect()),cls:n.className,img:n.querySelector('img')?.src.slice(0,80)})),status:document.querySelector('#ai-image-panel [data-ai-status]')?.textContent})),null,2));throw error;});
   const after=await snapshot(page), result=after[0].generated.at(-1);
   assert.equal(after[0].generated.length,before[0].generated.length+1);
@@ -150,7 +174,7 @@ for (const engine of ['chromium','webkit']) test(`${engine}: label switch, scope
   assert.equal(after[0].attachments[0].data,before[0].attachments[0].data);
   assert.deepEqual(after[0].generated.slice(0,-1),before[0].generated,'all original candidate metadata and pixels remain intact');
   assert.equal(after[0].generated[0].comments.length,comments,'erasure cannot create a comment box');
-  assert.equal(result.scopedEditHistory.at(-1).operation,'local-polygon-erase');assert.equal(result.reviewState,'scoped-applied');
+  assert.equal(result.scopedEditHistory.at(-1).operation,'local-rect-erase');assert.equal(result.reviewState,'scoped-applied');
   assert.notEqual(result.data,before[0].generated[0].data);
   assert.equal(await page.locator(`${active} [data-ai-comments-apply]`).textContent(),'수정하기');
   assert.equal(await page.locator(`${active} [data-ai-comments-apply]`).isDisabled(),true);
@@ -190,7 +214,7 @@ for (const engine of ['chromium','webkit']) test(`${engine}: label switch, scope
   });
   assert.ok(compact.left>=compact.headerLeft && compact.right<=compact.headerRight,'result tools fit the narrow pane without clipping');
   assert.equal(compact.height,base.header.height);
-  assert.equal(await erase.getAttribute('aria-label'),'자유영역 지우기','compact icon retains its accessible name');
+  assert.equal(await erase.getAttribute('aria-label'),'지우개','compact icon retains its accessible name');
   await page.screenshot({path:path.join(evidence,engine,'compact.png')});
   assert.deepEqual(errors,[]);
   fs.writeFileSync(path.join(evidence,engine,'result.json'),JSON.stringify({headerHeight:base.header.height,noLabelRoundTrips:3,compositeCallsBeforeReload:1,changedPixels:result.scopedEditHistory.at(-1).changedPixels,exportAndInsertionMatch:true,previousVersionRestored:true,noAiCalls:true,errors},null,2));

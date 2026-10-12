@@ -35,3 +35,36 @@ test('degenerate geometry, excessive allocation, cancellation and already erased
   const controller = new AbortController(); controller.abort();
   await assert.rejects(() => eraseImagePolygon(source, [], { signal: controller.signal }), { name: 'AbortError' });
 });
+
+test('brush raster matches round segment distance, including sparse, reversed, single-point and outside-start paths', async () => {
+  const {brushPixelMask,rectanglePixelMask}=await import('../js/image-erase-mask.js');
+  const width=40,height=30;
+  const paths=[[{x:3,y:4}],[{x:2,y:3},{x:35,y:27}],[{x:-15,y:4},{x:25,y:25}],[{x:-8,y:-8},{x:-8,y:35}], [{x:4,y:4},{x:32,y:4},{x:32,y:24},{x:4,y:24},{x:4,y:4}]];
+  const distance=(p,a,b)=>{const dx=b.x-a.x,dy=b.y-a.y,t=Math.max(0,Math.min(1,((p.x-a.x)*dx+(p.y-a.y)*dy)/(dx*dx+dy*dy)||0));return Math.hypot(p.x-a.x-t*dx,p.y-a.y-t*dy);};
+  for(const points of paths)for(const diameter of [1,4,9,40]){
+    const mask=brushPixelMask(width,height,points,diameter);
+    for(let y=0;y<height;y++)for(let x=0;x<width;x++){
+      let expected=false;for(let j=0;j<Math.max(1,points.length-1);j++)expected ||= distance({x:x+.5,y:y+.5},points[j],points[Math.min(j+1,points.length-1)])<=diameter/2+1e-9;
+      assert.equal(mask[y*width+x],Number(expected),JSON.stringify({points,diameter,x,y}));
+    }
+    assert.deepEqual(mask,brushPixelMask(width,height,[...points].reverse(),diameter));
+  }
+  assert.equal(brushPixelMask(width,height,paths.at(-1),4)[15*width+18],0,'a closed stroke does not fill its enclosed center');
+  const rect=rectanglePixelMask(width,height,[{x:-20,y:3},{x:10,y:9}]);assert.equal(rect.reduce((a,b)=>a+b,0),60);assert.equal(rect[2*width],0);
+  assert.throws(()=>brushPixelMask(width,height,[{x:0,y:0}],0),RangeError);
+});
+
+test('white and transparent brush/rectangle revisions preserve untouched RGBA and PNG metadata',async()=>{
+  const [{eraseImageRegion},{encodeScopedPng,decodeScopedPng}]=await api;
+  const {brushPixelMask,rectanglePixelMask}=await import('../js/image-erase-mask.js');
+  const width=40,height=30,data=Uint8Array.from({length:width*height*4},(_,i)=>i%251),metadata=[{type:'sRGB',data:Uint8Array.of(0)}];
+  const source=url(await encodeScopedPng({width,height,data},{metadata})),points=[{x:-5,y:5},{x:25,y:15}];
+  for(const mode of ['brush','rect'])for(const background of ['white','transparent']){
+    const result=await eraseImageRegion(source,{mode,points,diameter:6,background}),out=await decodeScopedPng(bytes(result.data));
+    const mask=mode==='brush'?brushPixelMask(width,height,points,6):rectanglePixelMask(width,height,points);
+    assert.deepEqual(out.metadata,metadata);assert.equal(result.outsideRgbaChanged,0);assert.equal(result.background,background);
+    for(let i=0;i<mask.length;i++)assert.deepEqual(out.data.subarray(i*4,i*4+4),mask[i]?new Uint8Array(4).fill(background==='white'?255:0):data.subarray(i*4,i*4+4));
+    assert.equal(await eraseImageRegion(result.data,{mode,points,diameter:6,background}),null,'same stroke cannot create an unchanged revision');
+  }
+  assert.equal(await eraseImageRegion(source,{mode:'brush',points:[{x:-20,y:1},{x:-20,y:20}],diameter:5}),null);
+});
