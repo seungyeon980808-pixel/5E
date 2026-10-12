@@ -93,6 +93,92 @@ async function manager(t, engine = 'chromium') {
   await page.waitForFunction(() => window.__manager);
   return page;
 }
+
+async function liveHandoffLibrary(t, engine) {
+  const page = await manager(t, engine);
+  await page.evaluate(async () => {
+    const { createUnifiedLibraryUi } = await import(window.__runtime.base + 'unified-library-ui.js' + window.__runtime.query);
+    const canvas = document.createElement('canvas'); canvas.width = 600; canvas.height = 800;
+    const ctx = canvas.getContext('2d'); ctx.fillStyle = 'white'; ctx.fillRect(0, 0, 600, 800);
+    ctx.fillStyle = '#1665aa'; ctx.fillRect(100, 100, 150, 150);
+    const dataUrl = canvas.toDataURL();
+    const source = { provider: 'pdf', documentId: 'handoff-book', pageNumber: 1 };
+    const file = { id: 'handoff-book', kind: 'pdf', title: 'Handoff source', pageCount: 1,
+      documentId: 'handoff-book', sourceId: 'source', provenance: source,
+      getPageGeometry: () => ({ width: 600, height: 800 }),
+      loadPreview: async () => ({dataUrl, provenance: source, result: {id: 'page-1', kind: 'page', provenance: source}}) };
+    const provider = { getSources: () => [], getExamFilterOptions: () => ({ academicYears: [] }),
+      search: () => [], listPdfFiles: () => [file], materialize: () => file.loadPreview() };
+    window.__liveLibrary = createUnifiedLibraryUi({ getProvider: async () => provider, insertMaterialized: async () => {},
+      openIndependentReferences: options => window.__manager.openIndependentReferences(options) });
+    await window.__liveLibrary.open();
+    window.__lateral = [];
+    const animate = Element.prototype.animate;
+    Element.prototype.animate = function(frames, options) {
+      const animation = animate.call(this, frames, options);
+      if (frames?.[0]?.translate === '0px' && frames?.[1]?.translate === '-48px'
+        || frames?.[0]?.translate === '48px' && frames?.[1]?.translate === '0px') {
+        window.__lateral.push({frames, animation, source: this.classList.contains('unilib'),
+          libraryVisible: !window.__liveLibrary.element.hidden,
+          targetVisible: !document.getElementById('ai-image-panel').hidden,
+          targetReady: document.getElementById('ai-image-panel').dataset.modalMotionState === 'open'});
+      }
+      return animation;
+    };
+  });
+  const ui = page.locator('.unified-library-overlay').last();
+  await ui.locator('[data-unilib-type="pdf"]').click();
+  await ui.locator('[data-result-id="handoff-book:page:1"]').click();
+  await ui.locator('[data-unilib-adjust]').click();
+  await ui.locator('[data-unilib-crop-load-state]').waitFor({state:'hidden'});
+  await crop(page, ui);
+  await ui.locator('[data-unilib-crop-workbench]').click();
+  return {page, ui};
+}
+
+for (const engine of ['chromium', 'webkit']) test(`${engine}: prepared library handoff slides into the real AI workbench and survives reopening`, async t => {
+  const {page, ui} = await liveHandoffLibrary(t, engine);
+  await page.emulateMedia({reducedMotion:'no-preference'});
+  await ui.locator('[data-unilib-ai]').click();
+  await page.locator('.workbench-assignment [data-action="continue"]').click();
+  await page.waitForFunction(() => window.__lateral.length === 2);
+  const opening = await page.evaluate(() => window.__lateral.map(({frames, source, libraryVisible, targetVisible, targetReady}) => ({frames, source, libraryVisible, targetVisible, targetReady})));
+  assert.deepEqual(opening.map(item => item.source), [true, false]);
+  assert.ok(opening.every(item => item.libraryVisible && item.targetVisible && item.targetReady), 'no blank destination or competing pop entrance');
+  await ui.waitFor({state:'hidden'});
+  assert.equal(await page.locator('#ai-image-panel').isVisible(), true);
+  assert.equal(await page.locator('[data-library-ai-handoff]').count(), 0);
+  assert.deepEqual(await page.evaluate(() => window.__lateral.map(({animation}) => animation.playState)), ['idle','idle']);
+  assert.equal(await page.evaluate(async () => (await window.__manager.sharingSnapshot()).workspaces[0].tabs[0].attachments.length), 1);
+  assert.equal(await page.evaluate(() => window.__fixtureProviderCalls.length), 0);
+  assert.equal(await page.locator('.modal-ai').first().evaluate(el => el.style.translate), '');
+
+  // Reversing the source close must release both translate effects immediately.
+  await page.evaluate(async () => {
+    await window.__liveLibrary.open();
+    window.__liveLibrary.close({restoreFocus:false,aiHandoff:true});
+    window.__liveLibrary.open();
+  });
+  await page.waitForFunction(() => window.__liveLibrary.element.dataset.modalMotionState === 'open');
+  assert.equal(await ui.isVisible(), true);
+  assert.equal(await page.locator('[data-library-ai-handoff]').count(), 0);
+  assert.ok(await page.evaluate(() => window.__lateral.every(({animation}) => animation.playState === 'idle')));
+  assert.equal(await ui.locator('[data-result-id="handoff-book:page:1"]').count(), 1);
+  await page.evaluate(() => {window.__liveLibrary.close({restoreFocus:false,aiHandoff:true}); document.getElementById('ai-image-panel').hidden=true;});
+  await page.waitForFunction(() => !document.querySelector('[data-library-ai-handoff]'));
+  assert.ok(await page.evaluate(() => window.__lateral.every(({animation}) => animation.playState === 'idle')), 'closing the target releases the source motion too');
+});
+
+for (const engine of ['chromium', 'webkit']) test(`${engine}: reduced motion library handoff keeps the real workbench stationary`, async t => {
+  const {page, ui} = await liveHandoffLibrary(t, engine);
+  await ui.locator('[data-unilib-ai]').click();
+  await page.locator('.workbench-assignment [data-action="continue"]').click();
+  await ui.waitFor({state:'hidden'});
+  assert.equal(await page.locator('#ai-image-panel').isVisible(), true);
+  assert.equal(await page.evaluate(() => window.__lateral.length), 0);
+  assert.equal(await page.locator('[data-library-ai-handoff]').count(), 0);
+  assert.equal(await page.evaluate(async () => (await window.__manager.sharingSnapshot()).workspaces[0].tabs[0].attachments.length), 1);
+});
 test('initial empty workspace is reused for a single reference and persists without a blank neighbor', async t => {
   const page = await manager(t);
   const result = await page.evaluate(async () => {

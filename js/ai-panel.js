@@ -525,6 +525,9 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
 
   const modal = panel.querySelector(".modal-ai");
   const motion = createModalSurfaceMotion({ overlay: panel, surface: modal, cssEntrance: 'modal-pop' });
+  panel.addEventListener('5e:library-ai-handoff-ready', () => {
+    if (motion.isOpen()) motion.finish();
+  }, { signal: lifecycle.signal });
   const status = panel.querySelector("[data-ai-status]");
   const log = panel.querySelector("[data-ai-log]");
   const input = panel.querySelector("[data-ai-input]");

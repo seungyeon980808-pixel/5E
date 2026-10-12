@@ -1,5 +1,6 @@
 import { createThumbnailQueue } from "./library/thumbnail-queue.js?v=1.7.0-four-session-integration";
 import { createModalSurfaceMotion } from './modal-surface-motion.js?v=1.7.0-four-session-integration';
+import { animateLibraryAiHandoff } from './library-ai-motion.js?v=1.7.0-four-session-integration';
 import { attachCropMagnifier } from "./tools/pointer-magnifier.js?v=1.7.0-four-session-integration";
 import { targetPageGeometry, fittedPageSize, createPreviewPaper } from "./library/page-loading.js?v=1.7.0-four-session-integration";
 import { createContinuousCropPages } from "./library/continuous-crop-pages.js?v=1.7.0-four-session-integration";
@@ -1958,7 +1959,8 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     root.classList.remove("is-reader-expanded");
     overlay.querySelector("[data-unilib-preview]").classList.remove("library-reader--expanded");
   }
-  function close({ restoreFocus = true, keyboard = lastInteractionWasKeyboard } = {}) {
+  let cancelAiHandoff = null;
+  function close({ restoreFocus = true, keyboard = lastInteractionWasKeyboard, aiHandoff = false } = {}) {
     if (!motion.isOpen()) return;
     openEpoch += 1;
     invalidateAction();
@@ -1973,6 +1975,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     thumbnailObserver?.disconnect();
     thumbnailObserver = null;
     motion.hide({ onHidden: () => {
+      cancelAiHandoff?.(); cancelAiHandoff = null;
       pdfUi?.deactivate?.();
       setDriveSettingsOpen(false);
       setLocalInstallOpen(false);
@@ -1981,6 +1984,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       closeExpandedReader();
       closeCrop(false);
     } });
+    if (aiHandoff) cancelAiHandoff = animateLibraryAiHandoff(overlay, root, document.getElementById('ai-image-panel'));
     referenceConsumer = null;
     const activeElement = document.activeElement;
     if (activeElement && overlay.contains(activeElement)) activeElement.blur?.();
@@ -1992,6 +1996,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     window.dispatchEvent(new CustomEvent("5e:library-closed", { detail: { library: "unified" } }));
   }
   async function open(trigger) {
+    cancelAiHandoff?.(); cancelAiHandoff = null;
     const ownOpenEpoch = ++openEpoch;
     const isCurrentOpen = () => ownOpenEpoch === openEpoch && motion.isOpen();
     invalidateAction();
@@ -2454,7 +2459,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
             }
           }
           consumer.onStatus?.(`라이브러리 참고 이미지 ${completedIndices.length}개가 추가되었습니다.`, "ok");
-          consumer.onComplete?.();
+          consumer.onComplete?.({ restoreFocus: false, aiHandoff: true });
           if (referenceConsumer === consumer) referenceConsumer = null;
         } else {
           const receipt = await openAiDestination(references, { assignment, isCurrent });
@@ -2467,7 +2472,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
         return;
       }
       const shouldClose = isCurrent();
-      if (shouldClose) close({ restoreFocus: false });
+      if (shouldClose) close({ restoreFocus: false, aiHandoff: true });
       removeTransferred(completedIndices);
     });
   });
