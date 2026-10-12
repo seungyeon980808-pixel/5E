@@ -111,6 +111,8 @@ export function createImageCommentController({ panel, getImages, getSelectedId, 
   let geometry = null;
   let frame = null;
   let destroyed = false;
+  const erasing = () => panel.dataset.aiLocalEraseActive === 'true';
+  const precisionOpen = new Set();
 
   function listen(target, event, handler, options) {
     target?.addEventListener(event, handler, options);
@@ -272,9 +274,13 @@ export function createImageCommentController({ panel, getImages, getSelectedId, 
       if (scopedTarget() === item && comment.type === 'area') {
         const details = doc.createElement('details');
         details.dataset.aiPrecisionSettings = '';
-        details.open = Boolean(comment.precisionCheck);
+        const key = commentKey(item, comment);
+        details.open = precisionOpen.has(key);
         const summary = doc.createElement('summary');
-        summary.textContent = '수치 검증 · 실험';
+        summary.textContent = comment.precisionCheck ? '고급 · 수치 검증 설정됨' : '고급 · 수치 검증 실험';
+        details.addEventListener('toggle', () => { if (details.isConnected) {
+          if (details.open) precisionOpen.add(key); else precisionOpen.delete(key);
+        } });
         const typeLabel = doc.createElement('label');
         typeLabel.textContent = '검증할 수정';
         const type = doc.createElement('select');
@@ -375,18 +381,25 @@ export function createImageCommentController({ panel, getImages, getSelectedId, 
         apply.textContent = `선택한 작업 ${selectedCount}개 변환하기`;
         apply.disabled = busy || panel.dataset.aiSharingMode === 'view';
       } else if (scopedTarget()) {
-        apply.textContent = areas.length ? `박스 ${areas.length}개 수정하기` : '박스를 지정해 주세요';
+        apply.textContent = '수정하기';
         apply.disabled = busy || !areas.length || areas.some(({comment}) => !commentText(comment).trim() || !normalizeCommentBox(comment));
       } else {
         apply.textContent = panel.dataset.aiWorkflow === 'graph' ? '그래프 복원' : '변환하기';
         apply.disabled = busy || !allowed().length;
       }
     }
+    const applyHint = q('[data-ai-scoped-apply-hint]');
+    if (applyHint) {
+      const areas = allEntries.filter(({comment}) => comment.type === 'area');
+      applyHint.hidden = !scopedTarget() || selectedTaskCount() >= 2;
+      applyHint.textContent = !areas.length ? '수정 박스로 영역을 지정하세요.'
+        : areas.some(({comment}) => !commentText(comment).trim()) ? '각 박스에 바꿀 내용을 적으세요.' : `박스 ${areas.length}개 · 밖은 그대로 유지`;
+    }
     panel.querySelectorAll('[data-ai-comment-tool]').forEach(button => {
       button.disabled = busy;
       if (areaOnlyForSelected) button.hidden = Boolean(scopedTarget()) && button.dataset.aiCommentTool === 'point';
-      button.classList.toggle('is-on', button.dataset.aiCommentTool === tool);
-      button.setAttribute('aria-pressed', String(button.dataset.aiCommentTool === tool));
+      button.classList.toggle('is-on', !erasing() && button.dataset.aiCommentTool === tool);
+      button.setAttribute('aria-pressed', String(!erasing() && button.dataset.aiCommentTool === tool));
     });
     renderGeometry(active, busy);
   }
@@ -477,7 +490,7 @@ export function createImageCommentController({ panel, getImages, getSelectedId, 
     };
     bindings.set(item, entry);
     on(stage, 'pointerdown', event => {
-      if (isBusy() || !allowed().includes(item) || (event.button != null && event.button !== 0) || event.isPrimary === false) return;
+      if (erasing() || isBusy() || !allowed().includes(item) || (event.button != null && event.button !== 0) || event.isPrimary === false) return;
       if (event.target.closest?.('[data-ai-comment-marker]')) return;
       if (event.target !== img && event.target !== stage) return;
       const point = imagePoint(event, img);
@@ -494,7 +507,7 @@ export function createImageCommentController({ panel, getImages, getSelectedId, 
     on(stage, 'pointermove', event => {
       const drag = entry.drag;
       if (!drag || drag.pointerId !== event.pointerId) return;
-      if (isBusy()) { clearDrag(entry); return; }
+      if (erasing() || isBusy() || !allowed().includes(item)) { clearDrag(entry); return; }
       if (drag.type === 'pan') {
         drag.scrollTarget.scrollLeft = drag.left - (event.clientX - drag.x) / drag.scaleX;
         drag.scrollTarget.scrollTop = drag.top - (event.clientY - drag.y) / drag.scaleY;
@@ -509,7 +522,7 @@ export function createImageCommentController({ panel, getImages, getSelectedId, 
       const drag = entry.drag;
       if (!drag || drag.pointerId !== event.pointerId) return;
       clearDrag(entry);
-      if (drag.type === 'pan' || isBusy()) return;
+      if (drag.type === 'pan' || erasing() || isBusy() || !allowed().includes(item)) return;
       const to = imagePoint(event, img);
       if (!to) return;
       const box = drag.type === 'point' ? { ...to, w: 0, h: 0 } : dragBox(drag.from, to);
@@ -579,7 +592,8 @@ export function createImageCommentController({ panel, getImages, getSelectedId, 
     event.preventDefault(); event.stopPropagation();
     deleteSelectedComment();
   });
-  listen(panel, '5e:ai-candidate-select', () => { selected = null; render(); });
+  listen(panel, '5e:ai-local-erase-tool-change', () => { for (const entry of bindings.values()) clearDrag(entry); updateControls(entries()); });
+  listen(panel, '5e:ai-candidate-select', () => { for (const entry of bindings.values()) clearDrag(entry); selected = null; render(); });
   listen(win, 'resize', scheduleMarkers);
   if (win.MutationObserver) {
     const layout = new win.MutationObserver(scheduleMarkers);
@@ -602,7 +616,7 @@ export function createImageCommentController({ panel, getImages, getSelectedId, 
       activateTab(value?.tab);
       render();
     },
-    reset() { selected = null; activateTab('comments'); render(); },
+    reset() { for (const entry of bindings.values()) clearDrag(entry); selected = null; activateTab('comments'); render(); },
     destroy() {
       destroyed = true;
       if (frame != null) {

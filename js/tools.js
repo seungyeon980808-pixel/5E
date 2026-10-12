@@ -14,6 +14,7 @@ import { previewStorage as localStorage } from './preview-storage.js?v=1.7.0-fou
 
 import { screenToWorld, getRenderScale, worldToScreen } from "./viewport.js?v=1.7.0-four-session-integration";
 import { registerEscapeLayer } from "./escape-layers.js?v=1.7.0-four-session-integration";
+import { loadDefaults, applyToolDefaultsToNewObject } from './tool-defaults.js?v=1.7.0-four-session-integration';
 import {
   TEXT_FONTS, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_PX, DEFAULT_TEXT_SIZE_MM,
   TEXT_SIZE_PRESETS, ptToMm, mmToPt, MIN_TEXT_PT,
@@ -452,6 +453,7 @@ let _drawKind = null; // 현재 드래그로 만드는 gauge의 kind
 let drawing = false;
 let startWorld = null; // world coord of the mouse-down point
 let drawType = null;   // type being drawn for the current drag
+let drawDefaults = null;
 let spaceHeld = false; // mirror viewport's Space-pan so we never draw while panning
 // text-editor.js reads Space-held state in its "don't act while panning" guards.
 // Exposed as a getter (setupDrawing owns the keydown/keyup tracker) so the editor
@@ -679,6 +681,7 @@ function setupDrawing() {
     const vb = _state.get().viewBox;
     startWorld = screenToWorld(_svg, vb, e.clientX, e.clientY);
     drawing = true;
+    drawDefaults = loadDefaults();
     drawType = type;
     _drawKind = GAUGE_KIND[_state.get().activeTool] || null; // gauge일 때만 유효
     _state.update((s) => { s.draft = makeShape(drawType, startWorld, startWorld); });
@@ -825,6 +828,16 @@ export function isCommittable(shape) {
 // DESIGN 2-1 branch A (size-based): x/y is the top-left, w/h are positive.
 // `type` is "rect" | "ellipse" | "triangle"; all share this identical structure.
 function makeShape(type, a, b) {
+  const geometry = makeShapeGeometry(type, a, b);
+  const styled = applyToolDefaultsToNewObject(geometry, drawDefaults || loadDefaults());
+  // A chosen palette variant carries its own explicit appearance.
+  for (const key of ['strokeWidth', 'strokeLevel', 'fillLevel']) {
+    if (_symbolProps && Object.hasOwn(_symbolProps, key)) styled[key] = geometry[key];
+  }
+  return styled;
+}
+
+function makeShapeGeometry(type, a, b) {
   if (type === "line") return makeLine(a, b);
   if (type === "pendulum") return makePendulum(a, b);
   if (type === "spring") return makeSpring(a, b);

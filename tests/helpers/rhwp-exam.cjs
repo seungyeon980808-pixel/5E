@@ -144,7 +144,9 @@ async function action(page,name) {
   }
 }
 async function crop(page,button='#exam-send') {
-  await page.locator(button).click();await page.locator('.capture-overlay').waitFor();
+  await page.locator(button).click();
+  if (button === '#exam-send') await page.locator('[data-exam-document-insert]').click();
+  await page.locator('.capture-overlay').waitFor();
   if(await page.locator('#capture-confirm').isVisible()){await page.locator('#capture-confirm').click();return;}
   const box=await page.locator('#canvas').boundingBox();
   await page.mouse.move(box.x+box.width*.35,box.y+box.height*.35);await page.mouse.down();

@@ -9,6 +9,7 @@
 // commitActiveText) plus imported isSpaceHeld to replace cross-module raw reads.
 
 import { screenToWorld, getRenderScale, worldToScreen } from "./viewport.js?v=1.7.0-four-session-integration";
+import { getToolTextDefaults } from './tool-defaults.js?v=1.7.0-four-session-integration';
 import {
   TEXT_FONTS, DEFAULT_TEXT_FONT, DEFAULT_TEXT_SIZE_MM,
   TEXT_SIZE_PRESETS, ptToMm, mmToPt, MIN_TEXT_PT,
@@ -429,13 +430,12 @@ function setupTextTool() {
     const anchor = screenToWorld(_svg, _state.get().viewBox, e.clientX, e.clientY);
     const _sc = worldToScreen(_svg, _state.get().viewBox, anchor.x, anchor.y);
     // WYSIWYG: desired on-screen px → WORLD units via the TRUE render scale.
-    const worldFontSize = DEFAULT_TEXT_SIZE_MM;
+    const defaults = getToolTextDefaults();
     _openTextEditor({
       x: anchor.x, y: anchor.y, text: "",
       source: "", contentMode: "plain",
-      fontSize: worldFontSize, fontFamily: DEFAULT_TEXT_FONT,
-      fontWeight: "normal", fontStyle: "normal",
-      italic: false, underline: false, strikeout: false, rotation: 0,
+      ...defaults,
+      underline: false, strikeout: false, rotation: 0,
       editingId: null,
       editingType: null,
     }, _sc.x, _sc.y, "");

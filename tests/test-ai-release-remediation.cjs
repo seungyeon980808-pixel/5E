@@ -791,7 +791,11 @@ async function installActualExportCapture(f) {
     modelsLoaded:false,generationTiming:null,serializeGenerationTiming:timing.serializeGenerationTiming,
     providerRequestPersistable:false,currentRequestSnapshot:null});
   const capture=sourcePart('  const captureActiveTaskTab = () => {','  const taskPersistence = createTaskPersistence({');
-  vm.runInNewContext(capture+'\nglobalThis.captureActiveTaskTab=captureActiveTaskTab;',c);
+  // Capture now reads per-candidate label presentation state. Execute the real
+  // closures as well; a constant false predicate would hide snapshot regressions.
+  const labelPreview=sourcePart('  const hasPreviewLabels = item =>','  function ensureCompositePreviewControl(item) {');
+  vm.runInNewContext('const labelPreviewStates = new WeakMap();\n'+labelPreview+'\n'+capture
+    +'\nglobalThis.captureActiveTaskTab=captureActiveTaskTab;globalThis.labelPreviewState=labelPreviewState;',c);
   // Component-only restoration of the actual cached-view/array authority slice.
   // This is not a claim that the full physical tab UI has run in this unit.
   const arrays=sourcePart('    const savedView = taskViews.get(tab.id);','    referenceComposition = normalizeReferenceComposition(tab.referenceComposition, attachments);');
@@ -815,6 +819,23 @@ test('ordinary actual capture and persistence snapshot reads preserve export own
     assert.equal(record.dataUrl,'data:image/png;base64,AQID');assert.equal(record.currentDataUrl(),record.dataUrl);
     assert.equal(record.item.data,retainedPng);assert.deepEqual(f.current,originalItem);
   } finally {persistence.dispose();}
+});
+
+test('actual capture persists only editable label presentation without changing the owner or candidate bytes',async()=>{
+  const f=await managedExportFixture();await installActualExportCapture(f);
+  f.current.labelPlan={frozen:true,labels:[{id:'label-1',scope:'general',text:'라벨'}]};
+  const empty={id:'no-label',kind:'generated',data:retainedPng,labelPlan:{frozen:true,labels:[]}};
+  const graph={id:'graph-label',kind:'generated',data:retainedPng,labelPlan:{frozen:true,labels:[{scope:'graph'}]}};
+  f.c.generatedImages.push(empty,graph);
+  f.c.labelPreviewState(f.current).included=false;
+  const before=structuredClone(f.c.generatedImages),owner=f.tab,batchOwner=structuredClone(f.tab.batchOwner);
+  f.c.captureActiveTaskTab();
+  assert.equal(f.c.taskTabs.get(f.tab.id),owner);assert.deepEqual(f.tab.batchOwner,batchOwner);
+  assert.deepEqual(structuredClone(f.tab.labelPreviewIncluded),{[f.current.id]:false});
+  assert.deepEqual(f.c.generatedImages,before,'Presentation capture never mutates candidate bytes or label plans');
+  f.c.labelPreviewState(f.current).included=true;f.c.captureActiveTaskTab();
+  assert.deepEqual(structuredClone(f.tab.labelPreviewIncluded),{[f.current.id]:true});
+  assert.deepEqual(f.c.generatedImages,before);assert.equal(f.tab.selectedCandidateId,f.current.id);
 });
 
 for(const active of ['owner','unrelated-busy-task']) {
@@ -1286,6 +1307,7 @@ const provenance = {
   extraction: 'Entire source resolver/render/refresh/showWorkbench, processing-status function, open/close and setWorkbenchVisible/dispose methods; output-processing and policy modules lose only export keywords and the explicit policy import.',
   seams: ['Deferred transform promises replace native decode/alpha work', 'DOM setters record writes',
     'Motion, persistence, comparison disposal, desktop/account refresh, task restore and other external dependencies are controlled stand-ins',
+    'Local erase controller is an observation stand-in: cancel/destroy calls are recorded, not a gesture/bitmap implementation',
     'Simple open path uses no incoming references, no task restore and no automatic separation', 'VM microtask draining is not browser RAF or timing evidence'],
   limits: 'No actual DOM, native decode, pixels, file writes/downloads, provider, physical workspace integration, CSS/RAF/Safari or product initialization coverage.',
 };
@@ -1325,7 +1347,7 @@ function fixture() {
     SEPARATION_BACKGROUND_HINT: 'background', SEPARATION_LIMITS_HINT: 'limits',
     generatedImages: [item], outputVariantCache: new WeakMap(), selectedOutputItem: () => item,
     outputProcessingStatus, imageOutputSummary: () => 'current output summary',
-    ensureCompositePreviewControl: () => writes.push({ type: 'composite' }),
+    renderLabelPreview: unsupported('frozen label preview outside historical fixture'),
     comparison: { update: () => writes.push({ type: 'comparison' }) }, comparisonRevisions: () => [],
     syncLegacyResultUi: noop, syncOutputProcessingUi: noop,
     transparentizeGeneratedImage: (data, options) => {
@@ -1348,6 +1370,10 @@ function fixture() {
     document: { querySelector: () => null, getElementById: () => ({ focus: noop }) },
     graphOwnerEpoch: 0, graphWorkflow: { cancel: () => Promise.resolve() },
     lifecycle: { abort: () => lifecycleEvents.push('lifecycle-abort') }, imageLabelRunAbort: null,
+    localEraseController: {
+      cancel: () => lifecycleEvents.push('erase-cancel'),
+      destroy: () => lifecycleEvents.push('erase-destroy'),
+    },
     structureAnalysis: { cancel: noop }, abortSourceComposites: noop, sourceLabelControllers: [],
     imageReview: null, generationTimingTimer: null, clearInterval: noop, clearTimeout: noop, requestTimeout: null,
     taskViews: new Map(), taskRows: new Map(), requestStates: { live: () => false, advance: unsupported('request advance') },
@@ -1364,9 +1390,19 @@ function fixture() {
     else gates[index].resolve(PROCESSED);
   };
   const terminal = name => {
+    const before = lifecycleEvents.length;
     if (name === 'close') sandbox.api.close();
     else if (name === 'dispose') sandbox.api.controller.dispose();
     else sandbox.api.controller.setWorkbenchVisible(false);
+    const events = lifecycleEvents.slice(before);
+    if (name === 'close') {
+      assert.equal(events.filter(event => event === 'erase-cancel').length, 1, 'Actual close cancels the local gesture once');
+      assert.ok(events.indexOf('erase-cancel') < events.indexOf('hide'), 'Gesture cancellation precedes hiding the workbench');
+    } else if (name === 'dispose') {
+      assert.equal(events.filter(event => event === 'erase-destroy').length, 1, 'Actual disposal destroys the local tool once');
+      assert.ok(events.indexOf('lifecycle-abort') < events.indexOf('erase-destroy'));
+      assert.ok(events.indexOf('erase-destroy') < events.indexOf('persistence-dispose'));
+    }
   };
   const reopen = async name => {
     if (name === 'open') await sandbox.api.open();
@@ -1391,13 +1427,13 @@ function previewCase(name, body) {
 }
 function resultWrites(f) { return f.writes.filter(write => write.type !== 'status'); }
 function failures(f) { return f.writes.filter(write => write.type === 'status' && write.value.startsWith('결과 처리 실패:')); }
-function assertCurrentCompletion(f, rejected) {
+function assertCurrentCompletion(f, rejected, { srcWrites = 1 } = {}) {
   assert.equal(f.item.data, RAW, 'Preview does not rewrite stored raw input');
   if (rejected) {
     assert.equal(resultWrites(f).length, 0);
     assert.equal(failures(f).length, 1, 'Only current render reports one error');
   } else {
-    assert.deepEqual(resultWrites(f).map(write => write.type), ['src', 'class', 'comparison']);
+    assert.deepEqual(resultWrites(f).map(write => write.type), [...Array(srcWrites).fill('src'), 'class', 'comparison']);
     assert.equal(f.image.src, PROCESSED);
     assert.equal(failures(f).length, 0);
     assert.equal(f.writes.filter(write => write.type === 'status' && write.value === 'current output summary').length, 1);
@@ -1448,7 +1484,7 @@ for (const rejected of [false, true]) {
     f.item.scopedEditHistory = [{ status: 'preparing' }];
     await f.reopen('open');
     assert.equal(f.image.src, RAW); assert.equal(f.transforms.length, 1);
-    assert.equal(f.writes.filter(write => write.type === 'src').length, 1);
+    assert.equal(f.writes.filter(write => write.type === 'src').length, 0, 'Retained RAW is not needlessly reassigned');
     const before = JSON.stringify(f.writes);
     f.settle(0, rejected); await old; await drain();
     assert.equal(JSON.stringify(f.writes), before, 'Old transform cannot overwrite reopened RAW');
@@ -1459,7 +1495,7 @@ for (const rejected of [false, true]) {
 previewCase('already resolved cache survives close/reopen', async f => {
   const first = f.api.renderOutputVariant(f.item, f.image); f.settle(0); await first;
   f.api.close(); f.writes.length = 0; await f.reopen('open');
-  assert.equal(f.transforms.length, 1); assertCurrentCompletion(f, false);
+  assert.equal(f.transforms.length, 1); assertCurrentCompletion(f, false, { srcWrites: 0 });
 });
 previewCase('manager-style visible then open shares cache and only latest render writes', async f => {
   const old = f.api.renderOutputVariant(f.item, f.image); f.api.close();
@@ -1474,11 +1510,13 @@ previewCase('modern RAW reveal starts no local transform', async f => {
   f.api.close();
   await f.reopen('open');
   assert.equal(f.transforms.length, 0); assert.equal(f.image.src, RAW);
-  assert.equal(f.writes.filter(write => write.type === 'src').length, 1);
+  assert.equal(f.writes.filter(write => write.type === 'src').length, 0, 'Retained RAW reveal does not repeat the image load');
   assert.equal(f.writes.find(write => write.type === 'class').value, false);
 });
 previewCase('disposed controller cannot restart preview through render or either reveal method', async f => {
-  f.api.controller.dispose(); const showCount = f.lifecycleEvents.filter(value => value === 'show').length;
+  f.terminal('dispose'); f.api.controller.dispose();
+  assert.equal(f.lifecycleEvents.filter(event => event === 'erase-destroy').length, 1, 'Repeated disposal must not destroy the tool twice');
+  const showCount = f.lifecycleEvents.filter(value => value === 'show').length;
   await f.api.renderOutputVariant(f.item, f.image);
   await f.api.open(); f.api.controller.setWorkbenchVisible(true); await drain();
   assert.equal(f.lifecycleEvents.filter(value => value === 'show').length, showCount);

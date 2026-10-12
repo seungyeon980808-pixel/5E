@@ -46,6 +46,7 @@ import { IndexedDBOutputCacheBackend } from "./ai-output-cache-store.js?v=1.7.0-
 import { parseEditableImageLabelPlan, withEditableImageLabelPlan, SOURCE_LABEL_POLICY_VERSION, EDITABLE_IMAGE_LABEL_PLAN_VERSION } from "./ai-editable-image-labels.js?v=1.7.0-four-session-integration";
 import { createSourceLabelController, withFrozenSourceLabelPlan, buildSourceLabelCorrectionDraft } from './ai-source-label-plan.js?v=1.7.0-four-session-integration';
 import { createEditableLabelComposite } from './ai-label-composite.js?v=1.7.0-four-session-integration';
+import { createLocalImageEraseController } from './ai-image-local-erase.js?v=1.7.0-four-session-integration';
 import { normalizeImageLabelWorkflow } from './ai-image-label-workflow.js?v=1.7.0-four-session-integration';
 import { createImageLabelRasterController, executeImageLabelRun, createExamLocalRestore, imageLabelDigest } from './ai-image-label-run.js?v=1.7.0-four-session-integration';
 import { canEditLabelReviewDraft, insertLabelReviewDraft } from './ai-label-review-draft.js?v=1.7.0-four-session-integration';
@@ -545,6 +546,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
   const markLeaders = panel.querySelector("[data-ai-mark-leaders]");
   const markControls = [markArrows, markTrends, markLeaders];
   let compactSettings = null;
+  let localEraseController = null;
   const preserveSourceLabels = panel.querySelector("[data-ai-preserve-source-labels]");
   const imageKindSelect = panel.querySelector('[data-ai-image-kind]');
   const labelResultSelect = panel.querySelector('[data-ai-label-result]');
@@ -583,6 +585,47 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
   const eCount = panel.querySelector("[data-ai-e-count]");
   const sendButton = panel.querySelector("[data-ai-send]");
   const scopedPromptMode = panel.querySelector("[data-ai-scoped-prompt-mode]");
+  // Upgrade the incumbent template without requiring an index.html mutation.
+  // Keep the legacy selectors as programmatic adapters, outside the tab order.
+  const labelView = panel.querySelector('[data-ai-label-view]');
+  let labelToggle = labelView?.querySelector('[data-ai-label-toggle]');
+  if (labelView) {
+    labelView.hidden = false;
+    for (const legacy of labelView.querySelectorAll('[data-ai-label-view-mode]')) { legacy.hidden = true; legacy.tabIndex = -1; }
+    if (!labelToggle) {
+      labelToggle = document.createElement('button'); labelToggle.type = 'button';
+      labelToggle.dataset.aiLabelToggle = ''; labelToggle.setAttribute('role', 'switch');
+      labelToggle.setAttribute('aria-label', '수정본 라벨 표시');
+      labelToggle.innerHTML = '<span>라벨</span><span class="ai-label-toggle-state" data-ai-label-toggle-state>OFF</span><span class="ai-label-toggle-track" aria-hidden="true"></span>';
+      labelView.prepend(labelToggle);
+    }
+  }
+  let resultTools = panel.querySelector('[data-ai-result-tools]');
+  if (!resultTools) {
+    resultTools = document.createElement('div'); resultTools.className = 'ai-result-tools';
+    resultTools.dataset.aiResultTools = '';
+    labelView?.before(resultTools); if (labelView) resultTools.append(labelView);
+  }
+  if (!resultTools.querySelector('[data-ai-local-erase]')) {
+    const localEraseButton = document.createElement('button'); localEraseButton.type = 'button';
+    localEraseButton.dataset.aiLocalErase = ''; localEraseButton.className = 'ai-local-erase-toggle';
+    localEraseButton.setAttribute('aria-label', '자유영역 지우기'); localEraseButton.setAttribute('aria-pressed', 'false');
+    localEraseButton.innerHTML = '<svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4" aria-hidden="true"><path d="m3 10 6-7 5 4-6 7H6zM5.5 7l5 4M7 14h7"/></svg><span>자유영역 지우기</span>';
+    resultTools.append(localEraseButton);
+  }
+  const scopedPromptRow = panel.querySelector('[data-ai-scoped-prompt-row]');
+  let scopedAdvanced = scopedPromptRow?.closest('[data-ai-scoped-advanced]');
+  if (scopedPromptRow && !scopedAdvanced) {
+    scopedAdvanced = document.createElement('details'); scopedAdvanced.dataset.aiScopedAdvanced = '';
+    scopedAdvanced.className = 'ai-scoped-advanced'; scopedAdvanced.hidden = true;
+    const summary = document.createElement('summary'); summary.textContent = '고급 · 실험';
+    scopedPromptRow.before(scopedAdvanced); scopedAdvanced.append(summary, scopedPromptRow);
+  }
+  if (!panel.querySelector('[data-ai-scoped-apply-hint]')) {
+    const scopedApplyHint = document.createElement('small'); scopedApplyHint.dataset.aiScopedApplyHint = '';
+    scopedApplyHint.setAttribute('role', 'status'); scopedApplyHint.className = 'ai-scoped-apply-hint';
+    panel.querySelector('[data-ai-comments-apply]')?.after(scopedApplyHint);
+  }
   const chatButton = panel.querySelector("[data-ai-chat-send]");
   const newButton = panel.querySelector("[data-ai-new]");
   const retryInterruptedButton = document.createElement('button');
@@ -1140,8 +1183,9 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     try {
       const source = await resolveOutputVariant(item);
       if (!isCurrent()) return;
-      image.src = requiresRawImageOutput(item) ? item.data : source;
-      if (item.labelPlan?.frozen) ensureCompositePreviewControl(item);
+      if (item.labelPlan?.frozen) await renderLabelPreview(item, source);
+      else if (image.src !== source) image.src = source;
+      if (!isCurrent()) return;
       image.classList.toggle('ai-output-transparent', !requiresRawImageOutput(item) && selectedImageOutputOptions.backgroundPolicy !== 'preserve');
       comparison?.update({ revisions: comparisonRevisions() });
       const backgroundLocked = selectedSeparationMode !== AI_SEPARATION_MODES.OFF;
@@ -1409,8 +1453,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     const requestNote = panel.querySelector("[data-ai-request-note]");
     panel.dataset.aiFixedFirst = String(fixedFirst);
     const boxEdit = Boolean(selectedOutputItem() && !selectedOutputItem().sceneResult);
-    const scopedPromptRow = panel.querySelector('[data-ai-scoped-prompt-row]');
-    if (scopedPromptRow) scopedPromptRow.hidden = !boxEdit;
+    if (scopedAdvanced) scopedAdvanced.hidden = !boxEdit || conversionKind === 'graph';
+    if (scopedPromptRow) scopedPromptRow.hidden = false;
     panel.dataset.aiBoxEdit = String(boxEdit);
     const requestTab = panel.querySelector('[data-ai-side-tab="comments"]');
     if (requestTab) requestTab.textContent = boxEdit ? '수정 요청' : '변환 설정';
@@ -1439,7 +1483,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       batchButton.disabled = busy || attachments.length < 2 || (white && reviewModeCheckbox?.checked !== false);
       batchButton.title = white && reviewModeCheckbox?.checked !== false ? "검수 포함 일괄 변환은 아직 지원하지 않습니다. 새 작업으로 그림별 변환을 실행하세요." : "여러 이미지를 각각 생성합니다. 일괄 결과는 독립 검수되지 않습니다.";
     }
-    sendButton.textContent = boxEdit ? "박스 수정하기" : "변환하기";
+    sendButton.textContent = boxEdit ? "수정하기" : "변환하기";
     commentController?.render();
     syncGraphWorkbenchUi();
   };
@@ -1847,51 +1891,86 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
 
   // Presentation state is independent of the frozen plan and QA composite/hash.
   const labelPreviewStates = new WeakMap();
+  const candidateViewportPositions = new WeakMap();
+  function rememberCandidatePosition(item) {
+    const card = item?.card;
+    if (card?.isConnected && card.getClientRects().length) {
+      candidateViewportPositions.set(item, { left: card.scrollLeft, top: card.scrollTop });
+    }
+  }
+  // Version controls hide the old card before emitting candidate-select. Capture
+  // its position while it is still displayed, including click/keyboard selection.
+  panel.addEventListener('click', event => {
+    if (event.target.closest?.('[data-ai-candidate-option]')) rememberCandidatePosition(selectedOutputItem());
+  }, { capture: true, signal: lifecycle.signal });
+  panel.addEventListener('5e:ai-workbench-geometry-change', () => rememberCandidatePosition(selectedOutputItem()), { signal: lifecycle.signal });
+  const hasPreviewLabels = item => item?.labelPlan?.frozen && item.labelPlan.labels?.some(label => label.scope !== 'graph');
+  function labelPreviewState(item) {
+    if (!labelPreviewStates.has(item)) labelPreviewStates.set(item, { included: true, revision: 0 });
+    return labelPreviewStates.get(item);
+  }
   function ensureCompositePreviewControl(item) {
     if (!item?.card || !item.labelPlan?.frozen) return;
-    if (!labelPreviewStates.has(item)) labelPreviewStates.set(item, { included: true, revision: 0 });
-    void renderLabelPreview(item);
+    labelPreviewState(item);
     syncLabelViewControls();
   }
   function syncLabelViewControls() {
     const item = selectedOutputItem();
     const view = panel.querySelector('[data-ai-label-view]');
     if (!view) return;
-    view.hidden = !item?.labelPlan?.frozen;
-    const included = labelPreviewStates.get(item)?.included !== false;
-    for (const button of view.querySelectorAll('button')) {
+    // The same compact slot is present for no-label images. Showing/hiding the
+    // result toolbar used to change the fitted image's available height.
+    view.hidden = conversionKind === 'graph';
+    const available = Boolean(hasPreviewLabels(item));
+    const included = available && labelPreviewState(item).included !== false;
+    if (labelToggle) {
+      labelToggle.disabled = !available || busy;
+      labelToggle.setAttribute('aria-checked', String(included));
+      labelToggle.querySelector('[data-ai-label-toggle-state]').textContent = included ? 'ON' : 'OFF';
+      labelToggle.title = available ? '현재 수정본의 편집 라벨을 표시하거나 숨깁니다.' : '이 수정본에는 편집 라벨이 없습니다.';
+    }
+    for (const button of view.querySelectorAll('[data-ai-label-view-mode]')) {
       button.setAttribute('aria-pressed', String((button.dataset.aiLabelViewMode === 'included') === included));
     }
+    localEraseController?.refresh();
   }
-  async function renderLabelPreview(item) {
+  async function renderLabelPreview(item, resolvedSource) {
     const image = item?.card?.querySelector('.ai-preview-stage > img');
-    const display = labelPreviewStates.get(item);
+    const display = labelPreviewState(item);
     if (!image || !display) return;
     const revision = ++display.revision, data = item.data, plan = item.labelPlan;
     const current = () => !disposed && item.card?.contains(image) && item.data === data
       && item.labelPlan === plan && display.revision === revision;
     try {
-      const source = await resolveOutputVariant(item);
+      const source = resolvedSource || await resolveOutputVariant(item);
       if (!current()) return;
-      if (!display.included) { image.src = source; return; }
-      if (display.source !== source || display.plan !== plan || !display.composite) {
-        const composite = await createEditableLabelComposite({ plan, candidateDataUrl: source,
-          artboard: { ...state.get().artboard }, signal: lifecycle.signal });
-        if (!current()) return;
-        display.source = source; display.plan = plan; display.composite = composite.attachment.data;
+      if (!display.included || !hasPreviewLabels(item)) { if (image.src !== source) image.src = source; return; }
+      const artboard = { ...state.get().artboard }, artboardKey = `${artboard.w}:${artboard.h}`;
+      if (display.source !== source || display.plan !== plan || display.artboardKey !== artboardKey || !display.pending) {
+        display.source = source; display.plan = plan; display.artboardKey = artboardKey;
+        const pending = createEditableLabelComposite({ plan, candidateDataUrl: source, artboard, signal: lifecycle.signal });
+        display.pending = pending;
+        pending.catch(() => { if (display.pending === pending) display.pending = null; });
       }
-      image.src = display.composite;
+      const composite = await display.pending;
+      if (!current()) return;
+      if (image.src !== composite.attachment.data) image.src = composite.attachment.data;
     } catch (error) {
       if (current()) { setStatus(error.message || '라벨 미리보기를 만들지 못했습니다.', 'warn'); }
     }
   }
   panel.querySelector('[data-ai-label-view]')?.addEventListener('click', event => {
     const button = event.target.closest('[data-ai-label-view-mode]');
+    const toggle = event.target.closest('[data-ai-label-toggle]');
     const item = selectedOutputItem();
-    if (!button || !item?.labelPlan?.frozen) return;
-    if (!labelPreviewStates.has(item)) labelPreviewStates.set(item, { included: true, revision: 0 });
-    labelPreviewStates.get(item).included = button.dataset.aiLabelViewMode === 'included';
+    if ((!button && !toggle) || !hasPreviewLabels(item) || busy) return;
+    localEraseController?.cancel();
+    const display = labelPreviewState(item);
+    const next = toggle ? !display.included : button.dataset.aiLabelViewMode === 'included';
+    if (display.included === next) return;
+    display.included = next;
     syncLabelViewControls(); void renderLabelPreview(item);
+    captureActiveTaskTab(); persistTasks();
   });
 
   const makeImageCard = (item) => {
@@ -1909,6 +1988,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
         ? AI_ASSET_GENERATION_MODES.SEPARATED : AI_ASSET_GENERATION_MODES.SINGLE;
     }
     item.card = card;
+    if (item.kind === 'generated') card.addEventListener('scroll', () => rememberCandidatePosition(item), { passive: true, signal: lifecycle.signal });
     const head = document.createElement("div");
     head.className = "ai-image-card-head";
     const name = document.createElement("strong");
@@ -3135,6 +3215,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       kind: node.classList.contains("user") ? "user" : node.classList.contains("error") ? "error" : "assistant",
     }));
     tab.selectedCandidateId = selectedCandidateId;
+    tab.labelPreviewIncluded = Object.fromEntries(generatedImages.filter(hasPreviewLabels)
+      .map(item => [item.id, labelPreviewState(item).included !== false]));
     tab.referenceComposition = structuredClone(referenceComposition);
     const workbenchState = panel.aiWorkbench?.getViewState?.();
     if (workbenchState) tab.workbenchViewState = { ...structuredClone(workbenchState), selectedCandidateId: tab.selectedCandidateId };
@@ -3319,6 +3401,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
   };
 
   function restoreTaskTab(tabId) {
+    localEraseController?.cancel();
     closeComparison();
     outputProcessingRevision += 1;
     const tab = tabId === null ? { id: null, conversionKind } : taskTabs.get(tabId);
@@ -3425,6 +3508,9 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       log.appendChild(emptyLog);
     }
     resetVisualLists();
+    for (const item of generatedImages) if (hasPreviewLabels(item)) {
+      labelPreviewState(item).included = tab.labelPreviewIncluded?.[item.id] !== false;
+    }
     for (const item of attachments) attachmentList.appendChild(item.card || makeImageCard(item));
     for (const item of generatedImages) previews.prepend(item.card || makeImageCard(item));
     if (!generatedImages.length) {
@@ -4412,6 +4498,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     }
   };
   const close = ({ integratedEdit = false } = {}) => {
+    localEraseController?.cancel();
     localVisibilityEpoch += 1;
     closeComparison(); closeCapture?.();
     abortAutomaticSeparation('panel-closed');
@@ -5423,10 +5510,21 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     if (busy && !currentRunInput?.scopedEdit) return;
     const item = generatedImages.find((entry) => entry.id === event.detail?.candidateId);
     if (item) {
+      const previous = selectedOutputItem();
+      const previousImage = previous?.card?.querySelector('.ai-preview-stage > img');
+      const nextImage = item.card?.querySelector('.ai-preview-stage > img');
+      const sameFrame = previous !== item && previousImage?.naturalWidth > 0
+        && previousImage.naturalWidth === nextImage?.naturalWidth && previousImage.naturalHeight === nextImage?.naturalHeight;
+      const scroll = sameFrame ? candidateViewportPositions.get(previous) : null;
+      const preservePosition = () => {
+        if (!scroll || selectedCandidateId !== item.id || !item.card?.isConnected) return;
+        item.card.scrollLeft = scroll.left; item.card.scrollTop = scroll.top;
+      };
       abortAutomaticSeparation('candidate-changed');
       scopedSelectionRevision += 1;
       selectedCandidateId = item.id;
       panel.dataset.aiSelectedCandidateId = item.id;
+      preservePosition(); requestAnimationFrame(preservePosition);
       dispatchReviewEvent({ ...item.reviewMeta, state: item.reviewState, candidateId: item.id, report: item.reviewReport }, item);
       if (busy && currentRunInput?.scopedEdit) scopedTransport?.fail(new Error('수정 중 선택 버전이 변경되어 이전 결과를 차단했습니다.'));
       else setStatus(isAcceptedReviewState(item.reviewState) ? selectedReviewStatusText(item.reviewState) : "선택 결과 · 확인 필요", isAcceptedReviewState(item.reviewState) ? "ok" : "warn");
@@ -6146,6 +6244,38 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
   }));
   modal?.addEventListener("mousedown", (event) => event.stopPropagation());
   commentController=createImageCommentController({panel,getImages:()=>[...attachments.filter(isInputReference),...generatedImages],getSelectedId:()=>selectedCandidateId||generatedImages.at(-1)?.id,isBusy:()=>busy,selectedTaskCount,areaOnlyForSelected:true,changed:()=>{scopedSelectionRevision += 1;captureActiveTaskTab();persistTasks();},viewChanged:()=>{captureActiveTaskTab();persistTasks();}});
+  localEraseController = createLocalImageEraseController({ panel, getTarget: () => conversionKind === 'graph' ? null : selectedOutputItem(),
+    isBusy: () => busy, resolveSource: resolveOutputVariant, status: setStatus,
+    commit: async (parent, erased, isCurrent) => {
+      if (!isCurrent()) return;
+      const view = panel.aiWorkbench?.getViewState?.();
+      const now = new Date().toISOString();
+      // A user-authored local version has its own contract. Never transfer a
+      // provider pass, candidate digest, placement binding or RAW QA composite
+      // to bytes that were not reviewed. The earlier version stays untouched.
+      const plan = parent.labelPlan?.frozen ? structuredClone(parent.labelPlan) : null;
+      if (plan) { delete plan.qualityReview; plan.reviewRequired = true; plan.status = 'review'; }
+      const candidate = { id: `generated-${++imageSerial}`, kind: 'generated', name: `지우기 수정본 ${generatedImages.length + 1}`,
+        data: erased.data, postprocessOk: true, createdAt: now, updatedAt: now, engine: 'local-erase',
+        sourceReferenceId: parent.sourceReferenceId, sourceReferenceName: parent.sourceReferenceName,
+        markPolicy: structuredClone(parent.markPolicy || {}), generationMode: 'single', labelPlan: plan,
+        reviewState: 'scoped-applied', reviewReport: scopedAppliedReviewReport(), comments: [], nextCommentNumber: 1,
+        scopedEditHistory: [{ operation: 'local-polygon-erase', parentCandidateId: parent.id, createdAt: now,
+          sourceFrame: { width: erased.width, height: erased.height }, polygon: erased.polygon,
+          changedPixels: erased.changedPixels, maskedPixels: erased.maskedPixels, outsideRgbaChanged: erased.outsideRgbaChanged,
+          visualReview: 'not-performed', status: 'applied' }] };
+      if (!isCurrent()) return;
+      abortAutomaticSeparation('local-erase');
+      generatedImages.push(candidate); latestGeneratedSrc = candidate.data;
+      selectedCandidateId = candidate.id; panel.dataset.aiSelectedCandidateId = candidate.id;
+      labelPreviewState(candidate).included = labelPreviewStates.get(parent)?.included !== false;
+      previews.prepend(makeImageCard(candidate));
+      syncWhitePngUi(); syncSelectedOutputActions();
+      if (view) panel.aiWorkbench?.restoreViewState?.({ ...view, selectedCandidateId: candidate.id });
+      panel.dispatchEvent(new CustomEvent('5e:ai-candidate-select', { detail: { candidateId: candidate.id } }));
+      captureActiveTaskTab(); persistTasks();
+      setStatus('자유영역 지우기 완료 · 새 수정본으로 보관했습니다. 이전 버전에서 되돌릴 수 있습니다.', 'ok');
+    } });
   panel.querySelector('[data-ai-comments-apply]')?.addEventListener('click', () => sendButton.onclick());
   // Selected-result actions stay in the fixed footer; per-card controls are hidden.
   const editableGroups = document.createElement('button');
@@ -6602,6 +6732,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       void graphWorkflow.cancel();
       motion.hide(); motion.finish(); motion.dispose();
       lifecycle.abort();
+      localEraseController?.destroy();
       imageLabelRunAbort?.abort();
       closeComparison(); closeCapture?.();
       abortAutomaticSeparation('workspace-disposed');

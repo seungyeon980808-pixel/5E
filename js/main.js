@@ -1,4 +1,5 @@
 import './ai-label-background.js?v=1.7.0-four-session-integration';
+import { initVisitorStats } from './visitor-stats.js?v=1.7.0-four-session-integration';
 import { initLiteShell } from "./lite-shell.js?v=1.7.0-four-session-integration";
 import { previewStorage as localStorage } from './preview-storage.js?v=1.7.0-four-session-integration';
 import { initWebLoginUi } from './web-login-ui.js?v=1.7.0-four-session-integration';
@@ -86,6 +87,7 @@ import { initRhwpExamWorkspace } from "./rhwp-exam-workspace.js?v=1.7.0-four-ses
 import { commitActiveText } from "./text-editor.js?v=1.7.0-four-session-integration";
 
 const svg = document.getElementById("canvas");
+initVisitorStats();
 // Canvas interaction transfers keyboard ownership away from the last toolbar button.
 svg.setAttribute("tabindex", "0");
 svg.addEventListener("pointerdown", (event) => {

@@ -2718,7 +2718,7 @@ textarea.unified-text-input {
 .app-footer-main { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* Release footer: left info | centred copyright | right save status, copyright fixed to the viewport centre. */
 .app-footer { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); column-gap: 16px; }
-.app-footer > .app-footer-main { grid-column: 1; justify-self: start; }
+.app-footer > .app-footer-main { grid-column: 1; justify-self: start; max-width: 100%; }
 .app-footer > .app-footer-copyright { grid-column: 2; justify-self: center; margin-inline: 0; }
 .app-footer > #project-save-status { grid-column: 3; justify-self: end; max-width: 100% !important; }
 .footer-change-badge {
@@ -2737,6 +2737,14 @@ textarea.unified-text-input {
   line-height: 14px;
   white-space: nowrap;
   overflow: hidden;
+}
+.footer-visitor-stats {
+  flex: 0 0 auto;
+  color: var(--text-secondary);
+  font-size: 9px;
+  line-height: 16px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
 }
 
 @media (max-width: 1000px) {

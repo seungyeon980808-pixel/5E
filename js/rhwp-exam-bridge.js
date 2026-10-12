@@ -90,6 +90,9 @@ export class RhwpExamBridge {
     return ()=>{cancelAnimationFrame(frame);events.forEach((name,i)=>{if(typeof offs[i]==='function')offs[i]();else this.deps.eventBus.off?.(name,schedule);});doc.removeEventListener('scroll',schedule,true);window.removeEventListener('resize',schedule);};
   }
   selectPicture(ref, {reveal = false} = {}) {
+    // The control path is stable; its page number is not after pagination.
+    const live = this.picturePaintData(ref);
+    if (live) ref = {...ref, pageIndex:live.page};
     const c=this.input.cursor,p=ref.cellPath?.at(-1);
     c.enterPictureObjectSelectionDirect(ref.sec,ref.ppi,ref.ci,'image',p?.cellIndex,p?.cellParaIndex,ref.headerFooter,ref.cellPath?.[0]?.controlIndex,ref.cellPath,null,false,ref.pageIndex);
     this.input.renderPictureObjectSelection();this.deps.eventBus.emit('picture-object-selection-changed',true);
@@ -205,6 +208,24 @@ export class RhwpExamBridge {
     // A manual zoom during editing becomes the user's new view preference.
     if (Math.abs(manager.getZoom()-saved.zoomApplied) > .001) return;
     await this.animateFigureCamera(saved.ref,saved.zoom,{fit:saved.fit,scroll:{x:saved.x,y:saved.y}});
+  }
+
+  async revealFigure(id, {generation = this.generation} = {}) {
+    if (this.generation !== generation) return false;
+    // Restoring the host panel changes the native viewport before its pages paint.
+    const view = this.editor.element.contentWindow;
+    await new Promise(resolve => view.requestAnimationFrame(() => view.requestAnimationFrame(resolve)));
+    if (this.generation !== generation) return false;
+    const ref = this.findFigure(id), manager = this.input?.viewportManager;
+    if (!ref || !manager) return false;
+    this.selectPicture(ref);
+    const viewport = this.figureViewport();
+    if (!viewport || !this.cameraFigureGeometry(ref)) return false;
+    await this.animateFigureCamera(ref, manager.getZoom(), {
+      fit:manager.getZoomFitMode(),
+      centre:{x:viewport.x + viewport.w / 2, y:viewport.y + viewport.h / 2},
+    });
+    return this.generation === generation;
   }
 
   async newDocument() {
@@ -355,8 +376,9 @@ export class RhwpExamBridge {
     for (let page = 0; page < this.wasm.pageCount; page++) {
       for (const control of this.wasm.getPageControlLayout(page).controls || []) {
         if (control.type !== 'image') continue;
-        const ref = {sec:control.secIdx,ppi:control.paraIdx,ci:control.controlIdx,type:'image',...(control.cellPath ? {cellPath:control.cellPath} : {})};
-        const key = JSON.stringify(ref);
+        const ref = pictureRef(control,page);
+        const {pageIndex:_,...identity} = ref;
+        const key = JSON.stringify(identity);
         if (!seen.has(key)) {seen.add(key);pictures.push({ref,id:this.figureId(ref)});}
       }
     }
@@ -385,27 +407,7 @@ export class RhwpExamBridge {
   }
 
   findFigure(id) {
-    for (let page = 0; page < this.wasm.pageCount; page++) {
-      const layout = this.wasm.getPageControlLayout(page);
-      const visit = value => {
-        if (!value || typeof value !== 'object') return null;
-        const sec = value.sectionIndex ?? value.secIdx ?? value.section_idx ?? value.sec;
-        const ppi = value.paragraphIndex ?? value.paraIdx ?? value.parentParaIdx ?? value.paraIndex ?? value.ppi;
-        const ci = value.controlIndex ?? value.controlIdx ?? value.ci;
-        if ([sec, ppi, ci].every(Number.isSafeInteger)) {
-          const ref = { sec, ppi, ci, type:'image', ...(value.cellPath ? {cellPath:value.cellPath} : {}) };
-          if (this.figureId(ref) === id) return ref;
-        }
-        for (const child of Object.values(value)) {
-          const found = Array.isArray(child) ? child.map(visit).find(Boolean) : visit(child);
-          if (found) return found;
-        }
-        return null;
-      };
-      const found = visit(layout);
-      if (found) return found;
-    }
-    return null;
+    return this.documentPictures().find(picture => picture.id === id)?.ref || null;
   }
 
   replaceFigure(id, image, nextId = id, selectedRef = null, region = null) {

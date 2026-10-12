@@ -105,12 +105,12 @@
 @media(max-width:600px) {.exam-inline-heading span {display:none;}.exam-inline-toolbar {max-height:45vh;overflow:auto;}.exam-inline-properties .exam-inline-text {flex-basis:100%;}}
 
 /* Floating controls use the source crop and never reserve a header row. */
-.exam-region-surface {position:fixed;inset:0;z-index:1100;pointer-events:none;color:var(--text-primary);font:12px/1.4 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo",sans-serif;}
+.exam-region-surface {position:fixed;inset:0;z-index:1100;pointer-events:none;color:var(--text-primary);font:var(--shell-control-font-weight) var(--shell-control-font-size)/var(--shell-control-line-height) var(--shell-control-font-family);}
 .exam-region-surface[hidden],.exam-region-surface [hidden],.exam-picture-settings[hidden],#exam-region-inspector[hidden] {display:none!important;}
 #rhwp-exam-workspace .exam-figure[data-connection="linked"] {box-shadow:inset 2px 0 var(--accent);}
 .exam-region-clip {position:fixed;overflow:hidden;pointer-events:none;}
-.exam-region-frame {position:absolute;box-sizing:border-box;outline:1px solid var(--accent);transform-origin:center;pointer-events:none;}
-.exam-region-handle {position:absolute;width:12px;height:12px;padding:0!important;border:1px solid var(--accent)!important;border-radius:1px!important;background:var(--bg-panel)!important;pointer-events:auto;touch-action:none;transform:translate(-50%,-50%);}
+.exam-region-frame {position:absolute;box-sizing:border-box;outline:1px dashed #dba52b;transform-origin:center;pointer-events:none;}
+.exam-region-handle {position:absolute;width:12px;height:12px;padding:0!important;border:1px solid #8c650d!important;border-radius:1px!important;background:#ffda72!important;pointer-events:auto;touch-action:none;transform:translate(-50%,-50%);}
 .exam-region-handle[data-region-handle="nw"] {left:0;top:0;cursor:nwse-resize;}
 .exam-region-handle[data-region-handle="n"] {left:50%;top:0;cursor:ns-resize;}
 .exam-region-handle[data-region-handle="ne"] {left:100%;top:0;cursor:nesw-resize;}
@@ -127,7 +127,9 @@
 .exam-region-surface button:disabled,.exam-picture-settings button:disabled {opacity:.5;cursor:default;}
 .exam-region-surface .exam-primary,.exam-picture-settings .exam-primary {background:var(--accent);color:white;border-color:var(--accent);}
 .exam-region-surface :focus-visible,.exam-picture-settings :focus-visible,#exam-region-inspector :focus-visible {outline:2px solid var(--accent);outline-offset:2px;}
-.exam-region-actions button {display:flex;align-items:center;gap:5px;min-height:32px;}
+.exam-region-actions button,#exam-edit-bar .exam-region-actions button {display:inline-flex;align-items:center;justify-content:center;gap:5px;min-height:var(--shell-control-size);padding:4px 8px;border-radius:var(--shell-control-radius);background:var(--bg-input);font:var(--shell-control-font-weight) var(--shell-control-font-size)/var(--shell-control-line-height) var(--shell-control-font-family);}
+.exam-region-actions button:hover,#exam-edit-bar .exam-region-actions button:hover {background:var(--bg-panel-hover);}
+#exam-edit-bar .exam-region-actions .exam-primary {background:var(--accent);color:white;border-color:var(--accent);}
 .exam-region-actions svg {width:15px;height:15px;}
 .exam-picture-edit-menu {position:fixed;pointer-events:auto;width:230px;padding:5px;background:var(--bg-panel);border:1px solid var(--border);border-radius:7px;box-shadow:0 6px 24px #0003;}
 .exam-picture-edit-menu button {display:block;border:0;width:100%;text-align:left;padding:9px;}

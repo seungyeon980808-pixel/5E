@@ -99,6 +99,7 @@ function buildModal() {
         <input type="checkbox" id="export-include-reference-images" checked />
         <span class="modal-label">배경/참고 이미지 포함</span>
       </label>
+      <button type="button" class="modal-btn" id="export-comparison-settings">인쇄 비교 이미지 관리…</button>
 
       <label class="modal-field modal-field-row" for="export-fit-content"
              title="아트보드 전체가 아니라 그려진 것에 딱 맞춰 내보냅니다.&#10;[영역 지정]으로 손수 잡지 않아도 여백이 사라집니다.">
@@ -412,6 +413,10 @@ export function initExportDialog(state, svg) {
   initFileMenu();
 
   const overlay = buildModal();
+  overlay.querySelector('#export-comparison-settings').addEventListener('click', () => {
+    hideModal();
+    window.dispatchEvent(new Event('5e:open-print-comparison-settings'));
+  });
   const formatGroup = overlay.querySelector("#export-format");
   const dpiGroup = overlay.querySelector("#export-dpi");
   const dpiField = overlay.querySelector("#export-dpi-field");

@@ -126,6 +126,19 @@ export function showModeSwitch(target) {
   });
 }
 
+export function showExamDocumentChoice() {
+  return buildDialog({
+    title:'한글 문서 선택',
+    message:'이미지를 넣을 한글 문서를 먼저 열어주세요. 선택한 이미지 영역은 유지됩니다.',
+    wide:true,
+    buttons:[
+      {label:'취소',value:'cancel'},
+      {label:'기존 문서 열기',value:'open'},
+      {label:'새 문서 만들기',value:'new',primary:true},
+    ],
+  });
+}
+
 function formatRecoveryTime(ts) {
   try {
     return new Date(ts).toLocaleString("ko-KR", {

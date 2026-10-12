@@ -1,0 +1,126 @@
+/* Settings-only refinements; the editor shell and document layout are untouched. */
+#defaults-overlay .modal-defaults,
+.settings-preferences-overlay .pref-modal,
+.settings-print-overlay .settings-print-dialog {
+  box-sizing: border-box;
+  width: min(var(--settings-dialog-max-width, 560px), calc(100vw - 24px));
+  max-height: calc(100dvh - 24px);
+  overflow: auto;
+  padding: 18px;
+  gap: var(--settings-content-gap, 12px);
+  font: var(--shell-control-font-size, 12px)/1.5 var(--shell-control-font-family, system-ui);
+}
+#defaults-overlay .defaults-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 156px;
+  gap: 18px;
+  align-items: start;
+}
+#defaults-overlay .defaults-fields {
+  width: auto;
+  min-width: 0;
+  max-height: none;
+  padding: 0;
+  overflow: visible;
+}
+#defaults-overlay .defaults-preview {
+  margin: 0;
+  min-width: 0;
+  gap: 6px;
+}
+#defaults-overlay .defaults-preview-svg {
+  aspect-ratio: 2;
+  border-radius: var(--shell-control-radius, 8px);
+}
+.settings-section + .settings-section { margin-top: 20px; }
+.settings-section h3,
+.settings-grid h3 {
+  margin: 0 0 8px;
+  color: var(--text-primary);
+  font-size: 12px;
+  font-weight: var(--shell-control-font-weight, 600);
+}
+.settings-row {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  margin-block: 8px;
+  color: var(--text-label);
+}
+.settings-number-unit { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.settings-number-unit input { width: 80px; min-width: 0; box-sizing: border-box; font-variant-numeric: tabular-nums; }
+.settings-number-unit > span { color: var(--text-secondary); }
+#defaults-overlay .modal-input,
+.settings-preferences-overlay .modal-input,
+.settings-print-overlay .modal-input,
+.settings-preferences-overlay .modal-select {
+  box-sizing: border-box;
+  min-width: 0;
+  width: 100%;
+  height: var(--shell-control-size, 32px);
+  padding: 4px 8px;
+  border-radius: var(--shell-control-radius, 8px);
+  font: inherit;
+}
+#defaults-overlay .settings-number-unit .modal-input,
+.settings-preferences-overlay .settings-number-unit .modal-input { width: 80px; }
+.settings-gray { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.settings-swatch { flex: 0 0 18px; height: 18px; border: 1px solid var(--border); border-radius: 4px; }
+.settings-gray input[type="range"] { min-width: 28px; width: 100%; flex: 1 1 0; accent-color: var(--accent); }
+.settings-gray-presets { display: flex; gap: 3px; }
+.settings-gray-presets button {
+  display: grid;
+  place-items: center;
+  padding: 3px;
+  width: 25px;
+  height: 28px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: transparent;
+  cursor: pointer;
+}
+.settings-gray-presets button span { width: 14px; height: 14px; border: 1px solid var(--text-secondary); border-radius: 3px; }
+.settings-gray-presets button:hover { background: var(--btn-tool-hover); }
+.settings-gray-presets button[aria-pressed="true"] { border-color: var(--control-selected-border, var(--accent)); background: var(--control-selected-bg); }
+.settings-advanced { margin-top: 20px; border-top: 1px solid var(--border); padding-top: 10px; }
+.settings-advanced summary { cursor: pointer; color: var(--text-secondary); padding-block: 4px; }
+.settings-advanced[open] summary { margin-bottom: 8px; color: var(--text-primary); }
+.settings-note { margin: 0; color: var(--text-secondary); line-height: 1.65; word-break: keep-all; }
+.settings-advanced .settings-note { margin-top: 8px; }
+.settings-status { margin: 0; color: var(--text-primary); line-height: 1.6; word-break: keep-all; }
+.settings-status[hidden] { display: none; }
+#defaults-overlay .modal-btn,
+.settings-preferences-overlay .modal-btn,
+.settings-print-overlay .modal-btn {
+  min-height: var(--shell-control-size, 32px);
+  padding: 4px 10px;
+  border-radius: var(--shell-control-radius, 8px);
+  font: var(--shell-control-font-weight, 600) var(--shell-control-font-size, 12px)/1.4 var(--shell-control-font-family, system-ui);
+}
+#defaults-overlay :is(input, select, button, summary):focus-visible,
+.settings-preferences-overlay :is(input, select, button):focus-visible,
+.settings-print-overlay :is(input, button):focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.settings-grid { margin-top: 20px; padding-top: 12px; border-top: 1px solid var(--border); }
+.settings-grid .settings-row { grid-template-columns: 72px minmax(0, 1fr) 40px; }
+.settings-grid input[type="range"] { width: 100%; min-width: 0; accent-color: var(--accent); }
+.settings-grid output { text-align: right; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.settings-grid .pref-actions { margin-top: 12px; }
+.settings-check { display: flex; align-items: center; gap: 8px; }
+.settings-check input { accent-color: var(--accent); }
+.settings-print-form { display: grid; gap: 12px; }
+.settings-print-size { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto; align-items: end; gap: 8px; }
+.settings-print-item { display: flex; align-items: center; gap: 10px; padding-block: 8px; }
+.settings-print-item + .settings-print-item { border-top: 1px solid var(--border); }
+.settings-print-item img { width: 44px; height: 44px; object-fit: contain; background: white; border-radius: 4px; }
+.settings-print-item > span { flex: 1; min-width: 0; overflow-wrap: anywhere; }
+.settings-print-overlay input[type="file"] { max-width: 100%; font: inherit; }
+.settings-print-overlay input[type="file"]::file-selector-button { color: var(--text-primary); background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--shell-control-radius, 8px); padding: 6px 8px; margin-right: 8px; font: inherit; }
+@media (max-width: 560px) {
+  #defaults-overlay .defaults-body { grid-template-columns: minmax(0, 1fr); gap: 12px; }
+  #defaults-overlay .defaults-preview { grid-row: 1; width: 160px; }
+  #defaults-overlay .settings-row { grid-template-columns: 72px minmax(0, 1fr); }
+  .settings-preferences-overlay .pref-tabs { flex-wrap: wrap; }
+  .settings-print-size { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .settings-print-size .modal-btn { grid-column: 1 / -1; justify-self: end; }
+}

@@ -2,23 +2,17 @@ import { initSettingsShortcuts, settingsShortcutRows } from './settings-shortcut
 import { previewStorage as localStorage } from './preview-storage.js?v=1.7.0-four-session-integration';
 /* ===== SETTINGS (설정 dropdown + 기본값 설정 modal) ===== */
 //
-// Step 1 of the defaults feature. Owns the "설정 ▾" top-bar dropdown and the
-// "기본값 설정" modal, mirroring export-dialog.js (initFileMenu + buildModal):
-//
-//   1. "설정 ▾" dropdown — opens on click, closes on outside-click / Escape.
-//      Items: 기본값 설정 (opens the modal) + 단축키 설정 (disabled, 준비 중).
-//
-//   2. 기본값 설정 modal — stroke/fill/text/grid defaults, persisted to
-//      localStorage under DEFAULTS_KEY. 취소 / 저장; only 저장 persists.
-//
-// NOTE: This step only *stores* the values. Wiring them into shape creation is
-// step 2 — nothing here reads back into the drawing pipeline yet.
+// 도구 기본값은 새 객체 생성용, 격자는 환경 설정용이다. 입력 중에는 미리보기만
+// 갱신하며 저장에 성공한 값만 적용한다. mm 기반 저장과 기존 백업 형식은 유지한다.
 
 import {
   TEXT_FONTS,
   TEXT_STYLES,
   DEFAULT_TEXT_FONT,
   DEFAULT_TEXT_SIZE_MM,
+  mmToPt,
+  ptToMm,
+  MIN_TEXT_PT,
 } from "./state.js?v=1.7.0-four-session-integration";
 import { registerTopMenu } from "./top-menu.js?v=1.7.0-four-session-integration";
 import { showAlert, showConfirm } from "./ui-dialogs.js?v=1.7.0-four-session-integration";
@@ -45,28 +39,48 @@ import { getShortcutPlatform, setShortcutPlatform, localizeShortcutLabels, SHORT
 let _state = null;
 
 /* ----- defaults schema + localStorage load/save ----- */
-const DEFAULTS_KEY = "phyDraw.defaults";
-const FACTORY_DEFAULTS = {
-  strokeWidth: 0.2,      // mm
-  strokeLevel: 0,        // 0 = black
-  fillLevel: 255,        // opaque white default for new shapes
-  textSizeMm: DEFAULT_TEXT_SIZE_MM,  // matches DEFAULT_TEXT_SIZE_MM
-  textFont: DEFAULT_TEXT_FONT,       // css font-family string
-  textWeight: "normal",
-  textStyle: "normal",
-  gridVisible: false,
-  gridOpacity: 3,
-  gridInterval: 10,
-  rulerTickMm: 10,        // 자 눈금 간격(mm) — 새 자 생성 시 초깃값
-  protractorTickDeg: 10,  // 각도기 눈금 간격(°)
-};
+import { DEFAULTS_KEY, loadDefaults, finiteDefault } from './tool-defaults.js?v=1.7.0-four-session-integration';
+export { loadDefaults, getToolTextDefaults, applyToolDefaultsToNewObject } from './tool-defaults.js?v=1.7.0-four-session-integration';
 
-export function loadDefaults() {
-  try {
-    return { ...FACTORY_DEFAULTS, ...JSON.parse(localStorage.getItem(DEFAULTS_KEY) || "{}") };
-  } catch {
-    return { ...FACTORY_DEFAULTS };
-  }
+function ensureSettingsStyles() {
+  if (document.getElementById("settings-styles")) return;
+  const link = document.createElement("link");
+  link.id = "settings-styles";
+  link.rel = "stylesheet";
+  const url = new URL("../css/settings.css", import.meta.url);
+  url.search = new URL(import.meta.url).search;
+  link.href = url.href;
+  document.head.append(link);
+}
+
+function containSettingsFocus(overlay) {
+  overlay.addEventListener("keydown", event => {
+    if (event.key !== "Tab") return;
+    const fields = [...overlay.querySelectorAll('button, input, select, summary, [tabindex="0"]')]
+      .filter(element => !element.disabled && element.getClientRects().length);
+    if (!fields.length) return;
+    const first = fields[0], last = fields.at(-1);
+    if (event.shiftKey && (document.activeElement === first || !overlay.contains(document.activeElement))) { event.preventDefault(); last.focus(); }
+    else if (!event.shiftKey && (document.activeElement === last || !overlay.contains(document.activeElement))) { event.preventDefault(); first.focus(); }
+  });
+}
+
+function applyGridDefaults(d) {
+  const grid = {
+    visible: !!d.gridVisible,
+    opacity: finiteDefault(d.gridOpacity, 3, 1, 10),
+    interval: finiteDefault(d.gridInterval, 10, 1),
+  };
+  _state?.update(s => { Object.assign(s.grid, grid); });
+  const button = document.getElementById("grid-btn");
+  button?.classList.toggle("is-active", grid.visible);
+  button?.setAttribute("aria-pressed", String(grid.visible));
+  const detail = document.getElementById("grid-detail");
+  if (detail) detail.hidden = !grid.visible;
+  const opacity = document.getElementById("grid-opacity");
+  if (opacity) opacity.value = grid.opacity;
+  const interval = document.getElementById("grid-interval");
+  if (interval) interval.value = grid.interval;
 }
 // 저장공간 부족(QuotaExceededError) 등으로 setItem이 실패할 수 있다 — 예외가
 // 그대로 전파되면 호출자(저장 버튼 클릭 핸들러)의 나머지 코드(hideModal 등)까지
@@ -214,7 +228,7 @@ async function saveJsonWithPicker(json, filename) {
 
 /* 설정 저장 위젯: 무엇을 저장할지 고르고 → 저장 위치 지정 */
 const EXPORT_CHOICES = [
-  { key: DEFAULTS_KEY,          label: "오브젝트 설정 (선 굵기·글꼴 등)" },
+  { key: DEFAULTS_KEY,          label: "도구 기본값·격자 설정" },
   { key: THEME_KEY,             label: "화면 테마 (다크/화이트)" },
   { key: SUBJECT_KEY,           label: "과목 선택" },
   { key: SCREEN_KEY,            label: "환경 설정 (화면 크기)" },
@@ -268,13 +282,14 @@ function prefStyles() {
 }
 
 function openPreferencesDialog({ focusShortcut = false } = {}) {
+  ensureSettingsStyles();
   const overlay = document.createElement("div");
-  overlay.className = "modal-overlay";
+  overlay.className = "modal-overlay settings-preferences-overlay";
   const currentScreen = loadScreenSize();
   overlay.innerHTML = `
     <div class="modal pref-modal" role="dialog" aria-modal="true" aria-labelledby="pref-title">
       <style>${prefStyles()}</style>
-      <h2 class="modal-title" id="pref-title">환경 설정</h2>
+      <h2 class="modal-title"><span id="pref-title">환경 설정</span></h2>
       <div class="pref-tabs" role="tablist">
         ${PREF_TABS.map((t, i) => `<button type="button" class="pref-tab${i === 0 ? " is-on" : ""}"
            role="tab" data-tab="${t.id}" aria-selected="${i === 0}">${t.label}</button>`).join("")}
@@ -296,13 +311,20 @@ function openPreferencesDialog({ focusShortcut = false } = {}) {
         </div>
         <p class="pref-note">실제 단축키 판정과 화면의 키 안내가 함께 바뀝니다.</p>
         <p class="pref-note">브라우저 자체 확대(Ctrl + 휠)와는 별개이며, 100%가 기본 크기입니다.</p>
+        <section class="settings-grid" aria-labelledby="pref-grid-title">
+          <h3 id="pref-grid-title">캔버스 격자</h3>
+          <label class="settings-check"><input type="checkbox" id="pref-grid-visible"> 시작 시 표시</label>
+          <label class="settings-row" for="pref-grid-opacity"><span>진하기</span><input type="range" id="pref-grid-opacity" min="1" max="10" step="1"><output id="pref-grid-opacity-value"></output></label>
+          <label class="settings-row" for="pref-grid-interval"><span>간격</span><span class="settings-number-unit"><input class="modal-input" type="number" id="pref-grid-interval" min="1" step="any"><span>mm</span></span></label>
+          <div class="pref-actions"><button type="button" class="modal-btn" id="pref-grid-save">격자 저장</button><button type="button" class="modal-btn" id="pref-grid-reset">변경 취소</button></div>
+          <p class="pref-note" id="pref-grid-status" role="status">저장하면 현재 화면과 다음 시작에 적용됩니다. 그림에는 포함되지 않습니다.</p>
+        </section>
       </section>
 
       <section class="pref-panel" data-panel="tools" role="tabpanel">
-        <p class="pref-note">새로 만드는 오브젝트에 적용될 기본값입니다 — 선 굵기, 글꼴과 글씨 크기,
-          격자·자·각도기 눈금 간격 등을 정합니다.</p>
+        <p class="pref-note">새로 그리는 도형과 글자의 선·채움·글꼴을 정합니다. 자·각도기의 눈금은 고급 항목에서 설정합니다.</p>
         <div class="pref-actions">
-          <button type="button" class="modal-btn modal-btn-primary" id="pref-open-defaults">오브젝트 설정 열기</button>
+          <button type="button" class="modal-btn modal-btn-primary" id="pref-open-defaults">도구 기본값 열기</button>
         </div>
         <p class="pref-note">여기서 정한 값은 이미 만들어 둔 오브젝트에는 영향을 주지 않습니다.</p>
       </section>
@@ -313,6 +335,7 @@ function openPreferencesDialog({ focusShortcut = false } = {}) {
         <div class="pref-actions">
           <button type="button" class="modal-btn modal-btn-primary" id="pref-export">전체 저장 (백업)</button>
           <button type="button" class="modal-btn" id="pref-import">불러오기 (복원)</button>
+          <button type="button" class="modal-btn" id="pref-print-comparison">인쇄 비교 이미지 관리</button>
         </div>
       </section>
 
@@ -334,6 +357,31 @@ function openPreferencesDialog({ focusShortcut = false } = {}) {
       </div>
     </div>`;
   document.body.appendChild(overlay);
+  containSettingsFocus(overlay);
+
+  const gridVisible = overlay.querySelector("#pref-grid-visible");
+  const gridOpacity = overlay.querySelector("#pref-grid-opacity");
+  const gridInterval = overlay.querySelector("#pref-grid-interval");
+  const gridStatus = overlay.querySelector("#pref-grid-status");
+  const showGridOpacity = () => { overlay.querySelector("#pref-grid-opacity-value").textContent = `${gridOpacity.value}/10`; };
+  const resetGrid = () => {
+    const d = loadDefaults();
+    gridVisible.checked = !!d.gridVisible;
+    gridOpacity.value = finiteDefault(d.gridOpacity, 3, 1, 10);
+    gridInterval.value = finiteDefault(d.gridInterval, 10, 1);
+    showGridOpacity();
+    gridStatus.textContent = "저장하면 현재 화면과 다음 시작에 적용됩니다. 그림에는 포함되지 않습니다.";
+  };
+  resetGrid();
+  gridOpacity.addEventListener("input", showGridOpacity);
+  overlay.querySelector("#pref-grid-reset").addEventListener("click", resetGrid);
+  overlay.querySelector("#pref-grid-save").addEventListener("click", () => {
+    if (!gridInterval.reportValidity()) return;
+    const d = { ...loadDefaults(), gridVisible: gridVisible.checked, gridOpacity: Number(gridOpacity.value), gridInterval: Number(gridInterval.value) };
+    if (!saveDefaults(d)) { gridStatus.textContent = "저장 공간이 부족해 격자를 저장하지 못했습니다. 변경값은 유지됩니다."; return; }
+    applyGridDefaults(d);
+    gridStatus.textContent = "격자 설정을 저장했습니다.";
+  });
 
   const platformSelect = overlay.querySelector("#pref-shortcut-platform");
   platformSelect.value = getShortcutPlatform();
@@ -376,6 +424,7 @@ function openPreferencesDialog({ focusShortcut = false } = {}) {
   relay("#pref-open-defaults", "open-defaults");
   relay("#pref-export", "settings-export");
   relay("#pref-import", "settings-import");
+  overlay.querySelector("#pref-print-comparison").addEventListener("click", () => { close(); openPrintComparisonSettings(); });
 
   // --- 라이브러리: 문항별 메모 개수 + 전체 삭제 ---
   const countEl = overlay.querySelector("#pref-memo-count");
@@ -521,7 +570,7 @@ async function applyImportedSettings(data) {
       // 값이 유효한 JSON 객체일 때만 반영(깨진 값이 defaults를 오염시키지 않게).
       try {
         const parsed = JSON.parse(value);
-        if (!parsed || typeof parsed !== "object") continue;
+        if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) continue;
       } catch {
         continue;
       }
@@ -569,6 +618,7 @@ async function applyImportedSettings(data) {
 
   // theme는 즉시 적용 가능 — main.js initTheme과 동일하게 <html> 속성 + 토글 버튼 반영.
   if (applied.includes(THEME_KEY)) applyThemeLive(data[THEME_KEY]);
+  if (applied.includes(DEFAULTS_KEY)) applyGridDefaults(loadDefaults());
 
   return { applied, failed, skipped };
 }
@@ -648,7 +698,7 @@ function importSettingsFile(file) {
     const needsReopenNote = applied.includes(DEFAULTS_KEY);
     alert(
       (projectLoaded ? "전체 백업을 불러왔습니다 (설정 + 프로젝트)." : "설정을 불러왔습니다.") +
-      (needsReopenNote ? "\n기본값 설정은 다음에 '기본값 설정'을 열 때 반영된 값으로 표시됩니다." : "") +
+      (needsReopenNote ? "\n도구 기본값은 다음에 '도구 기본값'을 열 때 반영된 값으로 표시됩니다." : "") +
       (failed.length ? `\n일부 항목(${failed.length}개)은 저장 공간 부족으로 반영되지 못했습니다.` : "") +
       (skipped.length ? `\n일부 항목(${skipped.length}개)은 교체를 건너뛰어 기존 값이 유지되었습니다.` : "")
     );
@@ -679,415 +729,222 @@ function initSettingsMenu() {
   registerTopMenu("settings", btn, list, { onOpen: reset });
 }
 
-/* ----- modal markup, built once and appended to <body> ----- */
+
+/* ----- 도구 기본값: 새 도형·글자에 필요한 항목만 표시 ----- */
 function buildModal() {
   const overlay = document.createElement("div");
   overlay.className = "modal-overlay";
   overlay.id = "defaults-overlay";
   overlay.hidden = true;
-  // f.css can contain double quotes (e.g. '"신명중명조", ...'); escaping keeps the
-  // value attribute intact so the option value matches the stored default exactly
-  // (otherwise the default font option breaks and the preview can't resolve it).
-  const escAttr = (s) => String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;");
-  const fontOptions = TEXT_FONTS
-    .map((f) => `<option value="${escAttr(f.css)}">${f.label}</option>`)
-    .join("");
-  const styleOptions = TEXT_STYLES
-    .map((s, i) => `<option value="${i}">${s.label}</option>`)
-    .join("");
-
-  overlay.innerHTML = `
-    <div class="modal modal-defaults" role="dialog" aria-modal="true" aria-labelledby="defaults-title">
-      <h2 class="modal-title" id="defaults-title">오브젝트 설정</h2>
-
-      <div class="defaults-body">
-        <div class="defaults-fields">
-          <!-- 반복되던 "기본 …" 접두어는 묶음 제목으로 올렸다(DESIGN 13-1).
-               라벨을 입력칸 위가 아니라 왼쪽 고정 열에 두어 행 높이를 절반으로 줄인다 —
-               종전엔 11개가 한 열에 세로로 쌓여 모달이 화면보다 460px 길었다. -->
-          <div class="gm-group">
-            <p class="gm-group-h">선 · 채움</p>
-            <div class="gm-row">
-              <span class="gm-row-lbl">선 굵기</span>
-              <div class="gm-row-body"><span class="gm-step"><input type="number" id="defaults-stroke-width" step="0.1" min="0.1" max="0.5" autocomplete="off" aria-label="기본 선 굵기 (mm)"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span><span class="gm-unit">mm</span></div>
-            </div>
-            <div class="gm-row">
-              <span class="gm-row-lbl">선 명도</span>
-              <div class="gm-row-body"><span class="gm-step"><input type="number" id="defaults-stroke-level" min="0" max="255" step="1" autocomplete="off" aria-label="기본 선 명도"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span><span class="gm-unit">0–255</span></div>
-            </div>
-            <div class="gm-row">
-              <span class="gm-row-lbl">채우기 명도</span>
-              <div class="gm-row-body"><span class="gm-step"><input type="number" id="defaults-fill-level" min="0" max="255" step="1" autocomplete="off" aria-label="기본 채우기 명도"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span><span class="gm-unit">0–255</span></div>
-            </div>
-          </div>
-
-          <div class="gm-group">
-            <p class="gm-group-h">글자</p>
-            <div class="gm-row">
-              <span class="gm-row-lbl">글자 크기</span>
-              <div class="gm-row-body"><span class="gm-step"><input type="number" id="defaults-text-size" step="0.1" min="0" autocomplete="off" aria-label="기본 글자 크기 (mm)"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span><span class="gm-unit">mm</span></div>
-            </div>
-            <div class="gm-row">
-              <span class="gm-row-lbl">글씨체</span>
-              <div class="gm-row-body">
-                <select id="defaults-text-font" class="modal-input">${fontOptions}</select>
-              </div>
-            </div>
-            <div class="gm-row">
-              <span class="gm-row-lbl">굵기</span>
-              <div class="gm-row-body">
-                <select id="defaults-text-style" class="modal-input">${styleOptions}</select>
-              </div>
-            </div>
-          </div>
-
-          <div class="gm-group">
-            <p class="gm-group-h">격자</p>
-            <div class="gm-row">
-              <span class="gm-row-lbl">시작 시 표시</span>
-              <div class="gm-row-body">
-                <label class="gm-check" for="defaults-grid-visible">
-                  <input type="checkbox" id="defaults-grid-visible" /> 켜기
-                </label>
-              </div>
-            </div>
-            <div class="gm-row">
-              <span class="gm-row-lbl">진하기</span>
-              <div class="gm-row-body"><span class="gm-step"><input type="number" id="defaults-grid-opacity" min="1" max="10" step="1" autocomplete="off" aria-label="격자 진하기"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span><span class="gm-unit">1–10</span></div>
-            </div>
-            <div class="gm-row">
-              <span class="gm-row-lbl">간격</span>
-              <div class="gm-row-body"><span class="gm-step"><input type="number" id="defaults-grid-interval" min="5" max="50" step="5" autocomplete="off" aria-label="격자 간격 (mm)"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span><span class="gm-unit">mm</span></div>
-            </div>
-          </div>
-
-          <div class="gm-group">
-            <p class="gm-group-h">자 · 각도기</p>
-            <div class="gm-row">
-              <span class="gm-row-lbl">자 눈금</span>
-              <div class="gm-row-body"><span class="gm-step"><input type="number" id="defaults-ruler-tick" min="1" max="50" step="1" autocomplete="off" aria-label="자 눈금 간격 (mm)"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span><span class="gm-unit">mm</span></div>
-            </div>
-            <div class="gm-row">
-              <span class="gm-row-lbl">각도기 눈금</span>
-              <div class="gm-row-body"><span class="gm-step"><input type="number" id="defaults-protractor-tick" min="1" max="45" step="1" autocomplete="off" aria-label="각도기 눈금 간격 (도)"><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="줄이기">▼</button></span></span><span class="gm-unit">°</span></div>
-            </div>
-            <!-- 안내는 해당하는 자리에만 둔다(DESIGN 13-3). 종전엔 모달 맨 위에
-                 모든 항목에 대한 주의문이 늘 떠 있어 읽히지 않았다. -->
-            <p class="gm-ax-note">이 두 값만 지금 놓인 자·각도기에 바로 반영됩니다.
-              나머지는 저장되지만 새 도형·격자에는 아직 적용되지 않습니다.</p>
-          </div>
-
-          <div class="gm-group">
-            <p class="gm-group-h">인쇄 비교 이미지</p>
-            <div class="defaults-pbg">
-              <p class="defaults-pbg-desc">실제 인쇄한 시험지를 등록하면 '이미지로 내보내기 →
-                미리보기'에서 배경으로 골라 크기를 견줘 볼 수 있습니다.</p>
-              <div id="defaults-pbg-list" class="defaults-pbg-list"></div>
-              <div class="defaults-pbg-form">
-                <input type="file" id="defaults-pbg-file" accept="image/png,image/jpeg,image/webp" />
-                <div class="defaults-pbg-row">
-                  <input type="text" id="defaults-pbg-name" class="modal-input"
-                         placeholder="이름(선택)" maxlength="40" autocomplete="off" />
-                  <input type="number" id="defaults-pbg-w" class="modal-input"
-                         placeholder="가로 mm" min="1" step="1" autocomplete="off" />
-                  <input type="number" id="defaults-pbg-h" class="modal-input"
-                         placeholder="세로 mm" min="1" step="1" autocomplete="off" />
-                  <button type="button" id="defaults-pbg-add" class="modal-btn">추가</button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="defaults-preview">
-          <span class="modal-label">미리보기</span>
-          <svg id="defaults-preview-svg" class="defaults-preview-svg"
-               viewBox="0 0 320 240"
-               xmlns="http://www.w3.org/2000/svg"></svg>
-        </div>
-      </div>
-
-      <div class="modal-actions">
-        <button type="button" class="modal-btn" id="defaults-cancel">취소</button>
-        <button type="button" class="modal-btn modal-btn-primary" id="defaults-save">저장</button>
-      </div>
-    </div>
-  `;
-  document.body.appendChild(overlay);
+  const escAttr = s => String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
+  const fontOptions = TEXT_FONTS.map(f => '<option value="' + escAttr(f.css) + '">' + escAttr(f.label) + '</option>').join("");
+  const styleOptions = TEXT_STYLES.map((s, i) => '<option value="' + i + '">' + s.label + '</option>').join("");
+  const grayControl = (name, label) => '<div class="settings-row"><label for="defaults-' + name + '-level">' + label + '</label><div class="settings-gray"><span class="settings-swatch" data-swatch="' + name + '" aria-hidden="true"></span><input type="range" id="defaults-' + name + '-level" min="0" max="255" step="any" aria-label="' + label + ' 밝기"><div class="settings-gray-presets" role="group" aria-label="' + label + ' 견본">' + [[0, "검정"], [128, "회색"], [255, "흰색"]].map(([value, title]) => '<button type="button" data-gray="' + name + '" data-level="' + value + '" title="' + title + '" aria-label="' + label + ' ' + title + '" aria-pressed="false"><span style="background:rgb(' + value + ',' + value + ',' + value + ')"></span></button>').join("") + '</div></div></div>';
+  overlay.innerHTML = '<form class="modal modal-defaults" role="dialog" aria-modal="true" aria-labelledby="defaults-title">' +
+    '<h2 class="modal-title"><span id="defaults-title">도구 기본값</span></h2>' +
+    '<p class="settings-note">저장한 값은 이후 새로 그리는 도형과 글자에 적용됩니다. 기존 그림은 바뀌지 않습니다.</p>' +
+    '<div class="defaults-body"><div class="defaults-fields">' +
+    '<section class="settings-section" aria-labelledby="defaults-shapes-title"><h3 id="defaults-shapes-title">선 · 채움</h3>' +
+    '<label class="settings-row" for="defaults-stroke-width"><span>선 굵기</span><span class="settings-number-unit"><input class="modal-input" type="number" id="defaults-stroke-width" min="0.01" step="any" required aria-label="기본 선 굵기 (mm)"><span>mm</span></span></label>' +
+    grayControl("stroke", "선 색") + grayControl("fill", "채움 색") + '</section>' +
+    '<section class="settings-section" aria-labelledby="defaults-text-title"><h3 id="defaults-text-title">글자</h3>' +
+    '<label class="settings-row" for="defaults-text-font"><span>글꼴</span><select id="defaults-text-font" class="modal-input">' + fontOptions + '</select></label>' +
+    '<label class="settings-row" for="defaults-text-size"><span>글자 크기</span><span class="settings-number-unit"><input class="modal-input" type="number" id="defaults-text-size" min="' + MIN_TEXT_PT + '" step="any" required aria-label="기본 글자 크기 (pt)"><span>pt</span></span></label>' +
+    '<label class="settings-row" for="defaults-text-style"><span>글자 모양</span><select id="defaults-text-style" class="modal-input">' + styleOptions + '</select></label></section>' +
+    '<details class="settings-advanced"><summary>자 · 각도기 눈금</summary>' +
+    '<label class="settings-row" for="defaults-ruler-tick"><span>자 눈금</span><span class="settings-number-unit"><input class="modal-input" type="number" id="defaults-ruler-tick" min="1" step="any" required aria-label="자 눈금 간격 (mm)"><span>mm</span></span></label>' +
+    '<label class="settings-row" for="defaults-protractor-tick"><span>각도기 눈금</span><span class="settings-number-unit"><input class="modal-input" type="number" id="defaults-protractor-tick" min="1" max="45" step="any" required aria-label="각도기 눈금 간격 (도)"><span>°</span></span></label>' +
+    '<p class="settings-note">저장 후 새로 만드는 자·각도기에 적용됩니다.</p></details></div>' +
+    '<figure class="defaults-preview"><figcaption class="modal-label">미리보기</figcaption><svg id="defaults-preview-svg" class="defaults-preview-svg" viewBox="0 0 240 120" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="선, 채움, 글자 기본값 미리보기"></svg></figure></div>' +
+    '<p id="defaults-status" class="settings-status" role="status" hidden></p>' +
+    '<div class="modal-actions"><button type="button" class="modal-btn" id="defaults-cancel">취소</button><button type="submit" class="modal-btn modal-btn-primary" id="defaults-save">저장</button></div></form>';
+  document.body.append(overlay);
+  containSettingsFocus(overlay);
   return overlay;
 }
 
-/* ----- initSettings: wire dropdown + 기본값 설정 modal ----- */
-export function initSettings(state) {
-  initSettingsShortcuts();
-  _state = state;   // 전체 백업(프로젝트 포함 저장/복원)에서 사용
-  initSettingsMenu();
+/* 인쇄 비교 이미지는 별도 창. 내보내기 소유자는 아래 함수 또는 이벤트를 연결한다.
+ * window.dispatchEvent(new Event("5e:open-print-comparison-settings"))
+ * 환경 설정 > 저장에서도 열 수 있어 연계 전에도 기존 기능을 잃지 않는다. */
+export function openPrintComparisonSettings() {
+  ensureSettingsStyles();
+  const existing = document.getElementById("print-comparison-overlay");
+  if (existing) { existing.querySelector("[data-print-close]").focus(); return; }
+  const previousFocus = document.activeElement;
+  const overlay = document.createElement("div");
+  overlay.id = "print-comparison-overlay";
+  overlay.className = "modal-overlay settings-print-overlay";
+  overlay.innerHTML = '<div class="modal settings-print-dialog" role="dialog" aria-modal="true" aria-labelledby="print-comparison-title"><h2 class="modal-title"><span id="print-comparison-title">인쇄 비교 이미지</span></h2><p class="settings-note">인쇄한 시험지 이미지를 등록하면 내보내기 미리보기에서 배경으로 골라 크기를 비교할 수 있습니다.</p><div id="defaults-pbg-list" class="defaults-pbg-list"></div><form class="settings-print-form"><label class="modal-field"><span class="modal-label">이미지 파일</span><input type="file" id="defaults-pbg-file" accept="image/png,image/jpeg,image/webp" required></label><label class="modal-field"><span class="modal-label">이름</span><input type="text" id="defaults-pbg-name" class="modal-input" maxlength="40" autocomplete="off" placeholder="파일 이름 사용"></label><div class="settings-print-size"><label class="modal-field"><span class="modal-label">가로 (mm)</span><input type="number" id="defaults-pbg-w" class="modal-input" min="1" step="any" placeholder="210"></label><label class="modal-field"><span class="modal-label">세로 (mm)</span><input type="number" id="defaults-pbg-h" class="modal-input" min="1" step="any" placeholder="297"></label><button type="submit" id="defaults-pbg-add" class="modal-btn">등록</button></div></form><p class="settings-status" data-print-status role="status" hidden></p><div class="modal-actions"><button type="button" class="modal-btn modal-btn-primary" data-print-close>닫기</button></div></div>';
+  document.body.append(overlay);
+  containSettingsFocus(overlay);
+  const list = overlay.querySelector("#defaults-pbg-list");
+  const status = overlay.querySelector("[data-print-status]");
+  let saving = false;
+  const notify = text => { status.hidden = !text; status.textContent = text; };
+  const close = () => { if (saving) return; overlay.remove(); if (previousFocus?.isConnected) previousFocus.focus({ preventScroll: true }); };
+  const renderList = () => {
+    list.replaceChildren();
+    const images = loadPreviewBackgrounds();
+    if (!images.length) {
+      const empty = document.createElement("p");
+      empty.className = "settings-note";
+      empty.textContent = "등록된 이미지가 없습니다.";
+      list.append(empty);
+    }
+    for (const image of images) {
+      const row = document.createElement("div"); row.className = "settings-print-item";
+      const thumb = document.createElement("img"); thumb.src = image.dataUrl; thumb.alt = "";
+      const meta = document.createElement("span"); meta.textContent = image.name + " · " + image.widthMm + "×" + image.heightMm + " mm";
+      const remove = document.createElement("button"); remove.type = "button"; remove.className = "modal-btn"; remove.textContent = "삭제"; remove.setAttribute("aria-label", image.name + " 삭제");
+      remove.addEventListener("click", async () => {
+        if (!await showConfirm("'" + image.name + "' 이미지를 삭제할까요?", { title: "이미지 삭제", okText: "삭제", cancelText: "취소" })) return;
+        removePreviewBackground(image.id);
+        if (loadPreviewBackgrounds().some(item => item.id === image.id)) { notify("저장 공간에 접근하지 못해 삭제하지 못했습니다."); return; }
+        renderList();
+      });
+      row.append(thumb, meta, remove); list.append(row);
+    }
+  };
+  renderList();
+  const form = overlay.querySelector("form");
+  const add = overlay.querySelector("#defaults-pbg-add");
+  form.addEventListener("submit", async event => {
+    event.preventDefault();
+    if (saving || !form.reportValidity()) return;
+    saving = true; add.disabled = true; add.textContent = "등록 중…"; notify("");
+    try {
+      await addPreviewBackground({
+        file: overlay.querySelector("#defaults-pbg-file").files[0],
+        name: overlay.querySelector("#defaults-pbg-name").value,
+        widthMm: overlay.querySelector("#defaults-pbg-w").value,
+        heightMm: overlay.querySelector("#defaults-pbg-h").value,
+      });
+      form.reset(); renderList(); notify("비교 이미지를 등록했습니다.");
+    } catch (error) { notify(error?.message || "이미지를 등록하지 못했습니다."); }
+    finally { saving = false; add.disabled = false; add.textContent = "등록"; }
+  });
+  overlay.querySelector("[data-print-close]").addEventListener("click", close);
+  overlay.addEventListener("mousedown", event => { if (event.target === overlay) close(); });
+  overlay.addEventListener("keydown", event => { if (event.key === "Escape") { event.stopPropagation(); close(); } });
+  overlay.querySelector("#defaults-pbg-file").focus({ preventScroll: true });
+}
 
-  // 환경 설정(화면 크기): 자유 배율 잔여값을 제거하고 승인된 프리셋만 적용한다.
+export function initSettings(state) {
+  ensureSettingsStyles();
+  initSettingsShortcuts();
+  _state = state;
+  initSettingsMenu();
+  applyGridDefaults(loadDefaults());
+  window.addEventListener("5e:open-print-comparison-settings", openPrintComparisonSettings);
+
   document.documentElement.style.removeProperty("--ui-zoom");
   try { localStorage.removeItem("5e.uiZoom"); } catch (_) { /* ignore */ }
   applyScreenSize(loadScreenSize());
-  const screenBtn = document.getElementById("open-screen");
-  if (screenBtn) screenBtn.addEventListener("click", openPreferencesDialog);
-  const shortcutBtn = document.getElementById("open-shortcuts");
-  if (shortcutBtn) shortcutBtn.addEventListener("click", openShortcutDialog);
+  document.getElementById("open-screen")?.addEventListener("click", () => openPreferencesDialog());
+  document.getElementById("open-shortcuts")?.addEventListener("click", openShortcutDialog);
   const overlay = buildModal();
+  const form = overlay.querySelector("form");
   const fields = {
-    strokeWidth:  overlay.querySelector("#defaults-stroke-width"),
-    strokeLevel:  overlay.querySelector("#defaults-stroke-level"),
-    fillLevel:    overlay.querySelector("#defaults-fill-level"),
-    textSizeMm:   overlay.querySelector("#defaults-text-size"),
-    textFont:     overlay.querySelector("#defaults-text-font"),
-    textStyle:    overlay.querySelector("#defaults-text-style"),
-    gridVisible:  overlay.querySelector("#defaults-grid-visible"),
-    gridOpacity:  overlay.querySelector("#defaults-grid-opacity"),
-    gridInterval: overlay.querySelector("#defaults-grid-interval"),
-    rulerTickMm:      overlay.querySelector("#defaults-ruler-tick"),
+    strokeWidth: overlay.querySelector("#defaults-stroke-width"),
+    strokeLevel: overlay.querySelector("#defaults-stroke-level"),
+    fillLevel: overlay.querySelector("#defaults-fill-level"),
+    textSizePt: overlay.querySelector("#defaults-text-size"),
+    textFont: overlay.querySelector("#defaults-text-font"),
+    textStyle: overlay.querySelector("#defaults-text-style"),
+    rulerTickMm: overlay.querySelector("#defaults-ruler-tick"),
     protractorTickDeg: overlay.querySelector("#defaults-protractor-tick"),
   };
-  const previewSvg = overlay.querySelector("#defaults-preview-svg");
+  const preview = overlay.querySelector("#defaults-preview-svg");
+  const status = overlay.querySelector("#defaults-status");
+  let original = null, originalPtDisplay = "", originalStyleDisplay = "", previousFocus = null;
+  const gray = value => "rgb(" + value + "," + value + "," + value + ")";
+  const notify = text => { status.hidden = !text; status.textContent = text; };
 
-  function populate() {
-    const d = loadDefaults();
-    fields.strokeWidth.value  = d.strokeWidth;
-    fields.strokeLevel.value  = d.strokeLevel;
-    fields.fillLevel.value    = d.fillLevel;
-    fields.textSizeMm.value   = d.textSizeMm;
-    fields.textFont.value     = d.textFont;
-    // Find the style preset matching the stored weight/style (fallback: 0 = Regular).
-    const styleIdx = TEXT_STYLES.findIndex(
-      (s) => s.fontWeight === d.textWeight && s.fontStyle === d.textStyle
-    );
-    fields.textStyle.value    = String(styleIdx < 0 ? 0 : styleIdx);
-    fields.gridVisible.checked = !!d.gridVisible;
-    fields.gridOpacity.value  = d.gridOpacity;
-    fields.gridInterval.value = d.gridInterval;
-    fields.rulerTickMm.value       = d.rulerTickMm;
-    fields.protractorTickDeg.value = d.protractorTickDeg;
-  }
-
-  // Read the chosen TEXT_STYLES preset (weight + font-style) from the select.
-  function currentStyle() {
-    return TEXT_STYLES[Number(fields.textStyle.value)] || TEXT_STYLES[0];
-  }
-
-  // Live integrated preview: a simple MECHANICS exam diagram (grid + incline +
-  // a box resting on the slope + a small force arrow + sample label). mm → px
-  // via a fixed scale, treating the preview as ~48mm wide so the scene fits the
-  // larger 320×240 viewBox without clipping.
   function renderPreview() {
-    const PREVIEW_W = 320, PREVIEW_H = 240;
-    const scale = PREVIEW_W / 48;  // px per mm
-
-    const gray = (g) => `rgb(${g},${g},${g})`;
-    const strokeColor = gray(Number(fields.strokeLevel.value) || 0);
-    const fillColor   = gray(Number(fields.fillLevel.value) || 0);
-    const strokePx    = Math.max(0.4, Number(fields.strokeWidth.value) * scale);
-
-    // grid: interval (mm) → px spacing; opacity 1-10 → 0.05-1.0.
-    const interval = Math.max(1, Number(fields.gridInterval.value) || 10);
-    const stepPx   = interval * scale;
-    const opLevel  = Math.min(10, Math.max(1, Number(fields.gridOpacity.value) || 1));
-    const gridOpacity = 0.05 + ((opLevel - 1) / 9) * 0.95;
-
-    let gridLines = "";
-    for (let x = stepPx; x < PREVIEW_W; x += stepPx) {
-      gridLines += `<line x1="${x.toFixed(1)}" y1="0" x2="${x.toFixed(1)}" y2="${PREVIEW_H}" />`;
+    const stroke = gray(Number(fields.strokeLevel.value));
+    const fill = gray(Number(fields.fillLevel.value));
+    for (const name of ["stroke", "fill"]) {
+      const value = Number(fields[name + "Level"].value);
+      const swatch = overlay.querySelector('[data-swatch="' + name + '"]');
+      swatch.style.backgroundColor = gray(value);
+      swatch.title = "RGB " + value;
+      fields[name + "Level"].setAttribute("aria-valuetext", value === 0 ? "검정" : value === 255 ? "흰색" : "회색, 밝기 " + Math.round(value / 255 * 100) + "%");
+      overlay.querySelectorAll('[data-gray="' + name + '"]').forEach(button => button.setAttribute("aria-pressed", String(Number(button.dataset.level) === value)));
     }
-    for (let y = stepPx; y < PREVIEW_H; y += stepPx) {
-      gridLines += `<line x1="0" y1="${y.toFixed(1)}" x2="${PREVIEW_W}" y2="${y.toFixed(1)}" />`;
-    }
-
-    // --- incline (right-triangle ramp): bottom edge + hypotenuse rising L→R ---
-    const BL = { x: 40,  y: 200 };  // bottom-left
-    const BR = { x: 290, y: 200 };  // bottom-right (ground end)
-    const AP = { x: 290, y: 90  };  // apex (top-right)
-    const ramp =
-      `<polygon points="${BL.x},${BL.y} ${BR.x},${BR.y} ${AP.x},${AP.y}"
-                fill="none" stroke="${strokeColor}" stroke-width="${strokePx.toFixed(2)}"
-                stroke-linejoin="round" />`;
-
-    // --- box seated on the hypotenuse (BL → AP), rotated to match the slope ---
-    const dx = AP.x - BL.x, dy = AP.y - BL.y;        // slope vector (dy < 0: rises)
-    const angDeg = Math.atan2(dy, dx) * 180 / Math.PI;
-    const t = 0.45;                                  // fraction up the slope
-    const seat = { x: BL.x + dx * t, y: BL.y + dy * t };
-    const BW = 26, BH = 20;
-    const box =
-      `<g transform="translate(${seat.x.toFixed(1)},${seat.y.toFixed(1)}) rotate(${angDeg.toFixed(2)})">
-         <rect x="${(-BW / 2).toFixed(1)}" y="${(-BH).toFixed(1)}" width="${BW}" height="${BH}"
-               fill="${fillColor}" stroke="${strokeColor}" stroke-width="${strokePx.toFixed(2)}"
-               stroke-linejoin="round" />
-       </g>`;
-
-    // --- small force arrow from the box, pointing down-slope (살짝) ---
-    const len = Math.hypot(dx, dy);
-    const ds = { x: -dx / len, y: -dy / len };       // down-slope unit (toward BL)
-    // start a touch above the slope at the box, then go a short way down-slope
-    const aStart = { x: seat.x + ds.y * 10, y: seat.y - ds.x * 10 };
-    const aEnd   = { x: aStart.x + ds.x * 30, y: aStart.y + ds.y * 30 };
-    const aAng   = Math.atan2(aEnd.y - aStart.y, aEnd.x - aStart.x);
-    const HEAD = 8;
-    const h1 = { x: aEnd.x - HEAD * Math.cos(aAng - Math.PI / 7),
-                 y: aEnd.y - HEAD * Math.sin(aAng - Math.PI / 7) };
-    const h2 = { x: aEnd.x - HEAD * Math.cos(aAng + Math.PI / 7),
-                 y: aEnd.y - HEAD * Math.sin(aAng + Math.PI / 7) };
-    const arrow =
-      `<g stroke="${strokeColor}" stroke-width="${strokePx.toFixed(2)}"
-          stroke-linecap="round" stroke-linejoin="round" fill="none">
-         <line x1="${aStart.x.toFixed(1)}" y1="${aStart.y.toFixed(1)}"
-               x2="${aEnd.x.toFixed(1)}" y2="${aEnd.y.toFixed(1)}" />
-         <polyline points="${h1.x.toFixed(1)},${h1.y.toFixed(1)} ${aEnd.x.toFixed(1)},${aEnd.y.toFixed(1)} ${h2.x.toFixed(1)},${h2.y.toFixed(1)}" />
-       </g>`;
-
-    // --- sample label (upper-left, clear of the ramp) ---
-    const style = currentStyle();
-    const fontPx = Math.max(6, Number(fields.textSizeMm.value) * scale);
-    const fontFamily = fields.textFont.value;
-    const label =
-      `<text x="12" y="${(fontPx + 8).toFixed(1)}" fill="${strokeColor}"
-             font-size="${fontPx.toFixed(1)}"
-             font-family="${fontFamily.replace(/"/g, "&quot;")}"
-             font-weight="${style.fontWeight}" font-style="${style.fontStyle}"
-             text-anchor="start"
-             dominant-baseline="alphabetic">ABC 가나다</text>`;
-
-    previewSvg.innerHTML = `
-      <rect x="0" y="0" width="${PREVIEW_W}" height="${PREVIEW_H}" fill="#ffffff" />
-      <g stroke="#000000" stroke-width="1" opacity="${gridOpacity.toFixed(3)}"
-         vector-effect="non-scaling-stroke">${gridLines}</g>
-      ${ramp}
-      ${box}
-      ${arrow}
-      ${label}
-    `;
+    const ns = "http://www.w3.org/2000/svg";
+    preview.replaceChildren();
+    const element = (tag, attrs) => {
+      const node = document.createElementNS(ns, tag);
+      for (const [key, value] of Object.entries(attrs)) node.setAttribute(key, String(value));
+      preview.append(node); return node;
+    };
+    const width = Math.max(0.2, Number(fields.strokeWidth.value) * 3);
+    element("rect", { x: 0, y: 0, width: 240, height: 120, fill: "#fff" });
+    element("line", { x1: 16, y1: 28, x2: 96, y2: 28, stroke, "stroke-width": width });
+    element("rect", { x: 20, y: 50, width: 72, height: 48, rx: 2, fill, stroke, "stroke-width": width });
+    const style = original && fields.textStyle.value === originalStyleDisplay
+      ? { fontWeight: original.textWeight, fontStyle: original.textStyle }
+      : TEXT_STYLES[Number(fields.textStyle.value)] || TEXT_STYLES[0];
+    const font = Math.min(38, Math.max(6, ptToMm(Number(fields.textSizePt.value)) * 3));
+    element("text", { x: 112, y: 70, fill: stroke, "font-family": fields.textFont.value, "font-size": font, "font-weight": style.fontWeight, "font-style": style.fontStyle }).textContent = "ABC 가나다";
   }
-
-  // Re-render the preview on any control change (no 저장 needed to see it).
-  fields.gridVisible.parentElement.parentElement
-    .querySelectorAll("input, select").forEach((el) => {
-      el.addEventListener("input", renderPreview);
-      el.addEventListener("change", renderPreview);
-    });
 
   function showModal() {
-    populate();
-    renderPreview();
-    renderPbgList();
+    original = loadDefaults();
+    fields.strokeWidth.value = finiteDefault(original.strokeWidth, 0.2, 0.01);
+    fields.strokeLevel.value = finiteDefault(original.strokeLevel, 0, 0, 255);
+    fields.fillLevel.value = finiteDefault(original.fillLevel, 255, 0, 255);
+    const size = finiteDefault(original.textSizeMm, DEFAULT_TEXT_SIZE_MM, ptToMm(MIN_TEXT_PT));
+    fields.textSizePt.value = String(Math.round(mmToPt(size) * 10) / 10);
+    originalPtDisplay = fields.textSizePt.value;
+    if (![...fields.textFont.options].some(option => option.value === original.textFont) && typeof original.textFont === "string") {
+      const option = document.createElement("option"); option.value = original.textFont; option.textContent = "저장된 사용자 글꼴"; fields.textFont.append(option);
+    }
+    fields.textFont.value = original.textFont;
+    const index = TEXT_STYLES.findIndex(style => style.fontWeight === original.textWeight && style.fontStyle === original.textStyle);
+    fields.textStyle.value = String(index < 0 ? 0 : index);
+    originalStyleDisplay = fields.textStyle.value;
+    fields.rulerTickMm.value = finiteDefault(original.rulerTickMm, 10, 1);
+    fields.protractorTickDeg.value = finiteDefault(original.protractorTickDeg, 10, 1, 45);
+    overlay.querySelector(".settings-advanced").open = false;
+    notify(""); renderPreview();
+    previousFocus = document.activeElement;
     overlay.hidden = false;
-    fields.strokeWidth.focus();
-    fields.strokeWidth.select();
+    fields.strokeWidth.focus({ preventScroll: true }); fields.strokeWidth.select();
   }
   function hideModal() {
     overlay.hidden = true;
+    if (previousFocus?.isConnected) previousFocus.focus({ preventScroll: true });
   }
-
-  // Open from the dropdown item.
-  const openBtn = document.getElementById("open-defaults");
-  if (openBtn) openBtn.addEventListener("click", showModal);
-
-  // Cancel / overlay-click / Escape close without saving.
+  for (const field of Object.values(fields)) field.addEventListener("input", renderPreview);
+  overlay.querySelectorAll("[data-gray]").forEach(button => button.addEventListener("click", () => {
+    fields[button.dataset.gray + "Level"].value = button.dataset.level; renderPreview();
+  }));
+  document.getElementById("open-defaults")?.addEventListener("click", showModal);
   overlay.querySelector("#defaults-cancel").addEventListener("click", hideModal);
-  // click이 아닌 mousedown: 다른 모달(openPreferencesDialog 등)과 동일 패턴 —
-  // 입력칸 안에서 드래그 선택 후 오버레이 위에서 mouseup되면 click이 오버레이
-  // 타겟으로 잡혀 실수로 닫히는 것을 막는다.
-  overlay.addEventListener("mousedown", (e) => {
-    if (e.target === overlay) hideModal();
-  });
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && !overlay.hidden) hideModal();
-  });
-
-  // Save: read fields → persist → close. (Step 2 wires these into drawing.)
-  overlay.querySelector("#defaults-save").addEventListener("click", () => {
-    const style = currentStyle();
-    const ok = saveDefaults({
-      strokeWidth:  Number(fields.strokeWidth.value),
-      strokeLevel:  Number(fields.strokeLevel.value),
-      fillLevel:    Number(fields.fillLevel.value),
-      textSizeMm:   Number(fields.textSizeMm.value),
-      textFont:     fields.textFont.value,
-      textWeight:   style.fontWeight,
-      textStyle:    style.fontStyle,
-      gridVisible:  fields.gridVisible.checked,
-      gridOpacity:  Number(fields.gridOpacity.value),
-      gridInterval: Number(fields.gridInterval.value),
-      rulerTickMm:       Number(fields.rulerTickMm.value),
+  overlay.addEventListener("mousedown", event => { if (event.target === overlay) hideModal(); });
+  overlay.addEventListener("keydown", event => { if (event.key === "Escape") { event.stopPropagation(); hideModal(); } });
+  form.addEventListener("submit", event => {
+    event.preventDefault();
+    if (!original || !form.reportValidity()) return;
+    const style = TEXT_STYLES[Number(fields.textStyle.value)] || TEXT_STYLES[0];
+    const unchangedSize = fields.textSizePt.value === originalPtDisplay;
+    const unchangedStyle = fields.textStyle.value === originalStyleDisplay;
+    const next = {
+      ...loadDefaults(),
+      strokeWidth: Number(fields.strokeWidth.value),
+      strokeLevel: Number(fields.strokeLevel.value),
+      fillLevel: Number(fields.fillLevel.value),
+      textSizeMm: unchangedSize ? finiteDefault(original.textSizeMm, DEFAULT_TEXT_SIZE_MM, ptToMm(MIN_TEXT_PT)) : ptToMm(Number(fields.textSizePt.value)),
+      textFont: fields.textFont.value,
+      textWeight: unchangedStyle ? original.textWeight : style.fontWeight,
+      textStyle: unchangedStyle ? original.textStyle : style.fontStyle,
+      rulerTickMm: Number(fields.rulerTickMm.value),
       protractorTickDeg: Number(fields.protractorTickDeg.value),
-    });
-    // 저장 실패(용량 부족) 시 사용자에게 알리고 모달은 열어둔다 — 값을 다시
-    // 입력하지 않아도 재시도할 수 있게.
-    if (!ok) {
-      alert("저장 공간이 부족해 저장하지 못했습니다.");
-      return;
-    }
+    };
+    if (!saveDefaults(next)) { notify("저장 공간이 부족해 저장하지 못했습니다. 입력값을 유지했으니 다시 시도해 주세요."); return; }
+    window.dispatchEvent(new CustomEvent("5e:tool-defaults-saved", { detail: next }));
     hideModal();
-  });
-
-  /* ----- 인쇄 비교 이미지: 업로드 / 목록 / 삭제 ----- */
-  const pbgFile = overlay.querySelector("#defaults-pbg-file");
-  const pbgName = overlay.querySelector("#defaults-pbg-name");
-  const pbgW = overlay.querySelector("#defaults-pbg-w");
-  const pbgH = overlay.querySelector("#defaults-pbg-h");
-  const pbgAdd = overlay.querySelector("#defaults-pbg-add");
-  const pbgListEl = overlay.querySelector("#defaults-pbg-list");
-
-  function renderPbgList() {
-    const list = loadPreviewBackgrounds();
-    pbgListEl.innerHTML = "";
-    if (!list.length) {
-      const empty = document.createElement("p");
-      empty.className = "defaults-pbg-empty";
-      empty.textContent = "등록된 이미지가 없습니다.";
-      pbgListEl.appendChild(empty);
-      return;
-    }
-    for (const bg of list) {
-      const row = document.createElement("div");
-      row.className = "defaults-pbg-item";
-      const thumb = document.createElement("img");
-      thumb.src = bg.dataUrl;
-      thumb.alt = "";
-      thumb.className = "defaults-pbg-thumb";
-      const meta = document.createElement("span");
-      meta.className = "defaults-pbg-meta";
-      meta.textContent = `${bg.name} · ${bg.widthMm}×${bg.heightMm}mm`;
-      const del = document.createElement("button");
-      del.type = "button";
-      del.className = "defaults-pbg-del";
-      del.textContent = "✕";
-      del.title = "삭제";
-      del.addEventListener("click", async () => {
-        const yes = await showConfirm(`'${bg.name}'\n정말로 삭제하시겠습니까?`,
-          { title: "이미지 삭제", okText: "예", cancelText: "아니오" });
-        if (!yes) return;
-        removePreviewBackground(bg.id);
-        renderPbgList();
-      });
-      row.appendChild(thumb);
-      row.appendChild(meta);
-      row.appendChild(del);
-      pbgListEl.appendChild(row);
-    }
-  }
-
-  pbgAdd.addEventListener("click", async () => {
-    const file = pbgFile.files && pbgFile.files[0];
-    if (!file) { showAlert("추가할 이미지 파일을 먼저 선택하세요.", { title: "인쇄 비교 이미지" }); return; }
-    pbgAdd.disabled = true;
-    try {
-      await addPreviewBackground({
-        name: pbgName.value,
-        widthMm: pbgW.value,
-        heightMm: pbgH.value,
-        file,
-      });
-      pbgFile.value = ""; pbgName.value = ""; pbgW.value = ""; pbgH.value = "";
-      renderPbgList();
-    } catch (err) {
-      showAlert(err && err.message ? err.message : "이미지를 추가하지 못했습니다.", { title: "인쇄 비교 이미지" });
-    }
-    pbgAdd.disabled = false;
   });
 
   /* ----- 설정 파일 저장/불러오기 dropdown 항목 wiring ----- */

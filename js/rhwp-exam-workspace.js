@@ -10,6 +10,8 @@ import { createExamSourceTabs, createExamDraftChecker } from './rhwp-exam-source
 import { annotationsFor, getAnnotationPage, mergeAnnotationPatch, validateAnnotationPatch } from './rhwp-exam-annotations.js?v=1.7.0-four-session-integration';
 import { ExamInlineEditor, chooseInlineCrop } from './rhwp-exam-inline-editor.js?v=1.7.0-four-session-integration';
 import { getContentBounds } from './svg-export.js?v=1.7.0-four-session-integration';
+import { registerTopMenu } from './top-menu.js?v=1.7.0-four-session-integration';
+import { showExamDocumentChoice } from './ui-dialogs.js?v=1.7.0-four-session-integration';
 
 const clone = value => JSON.parse(JSON.stringify(value));
 const safeName = name => (name.trim() || '새 시험지').replace(/[\\/:*?"<>|]/g, '_').slice(0, 120);
@@ -25,6 +27,7 @@ export function initRhwpExamWorkspace(state, services) {
   const tabs = createExamSourceTabs(state,{...services,getAiPanel:() => connectedAi});
   const drawingHasDraft = createExamDraftChecker(prepareLoadedProject);
   let latestWorkspace;
+  let pendingDocumentInsertion = null;
   let inlineSession, inlineQueue = Promise.resolve(), inlineFailure;
   const inlineRecoveries=new Map();
   let projectId = crypto.randomUUID(), documentGeneration, restoringWorkspace=false, workspaceStamp=0;
@@ -83,7 +86,7 @@ export function initRhwpExamWorkspace(state, services) {
   const bar=sourceRegion.heading;bar.id='exam-edit-bar';bar.hidden=true;
   bar.querySelector('.exam-edit-badge').id='exam-edit-name';
   const applySource=document.createElement('button');applySource.type='button';
-  applySource.dataset.sourceApply='';applySource.className='exam-primary';applySource.textContent='시험지에 반영';
+  applySource.dataset.sourceApply='';applySource.className='exam-primary';applySource.textContent='문서에 반영';
   applySource.addEventListener('click',()=>void run(applyEdit));
   const returnSource=document.createElement('button');returnSource.type='button';returnSource.textContent='돌아가기';
   returnSource.addEventListener('click',()=>void run(returnFromEdit));
@@ -364,8 +367,8 @@ export function initRhwpExamWorkspace(state, services) {
     message(current ? '같은 탭에서 보낸 그림은 기존 그림 한 개를 갱신합니다.' : '시험지에서 그림을 넣을 위치를 클릭하세요.'); updatePlacement();
   }
   async function startSend(aiRequest = null, graph = null) {
+    pendingDocumentInsertion = null;
     if (window.fiveEExam) {await window.fiveEExam.returnToSource();return;}
-    if (editing) {await applyEdit();return;}
     services.commitActiveText?.();
     if(!aiRequest && !graph && !state.get().objects.length){await open();return;}
     if (graph && (graph.pageId !== state.get().activePageId || !state.get().objects.some(object=>object.id===graph.planeId && object.type==='coordplane'))) throw new Error('그래프 작업 탭이 바뀌었습니다. 현재 탭에서 한글에 넣기를 다시 눌러주세요.');
@@ -387,6 +390,20 @@ export function initRhwpExamWorkspace(state, services) {
     const latest = await tabs.capture(captured.context.ai);
     latest.render = {bounds,options:{includeReferenceImages:true,excludeAllImages:false}};
     if (location.protocol === 'file:' && window.fiveEDesktop?.exam?.open) {await window.fiveEDesktop.exam.open({source:latest.source,captured:latest});return;}
+    // New insertion never dispatches the linked picture's apply action.
+    // Its owner tab may differ from the source-edit session kept in the background.
+    if (editing) endEdit();
+    if (!bridge?.input) {
+      const choice = await showExamDocumentChoice();
+      if (choice === 'cancel') return;
+      await open();
+      if (choice === 'open') {
+        pendingDocumentInsertion = latest;
+        panel.querySelector('#exam-hwp-file').click();
+        message('문서를 열면 선택한 영역을 넣을 위치를 지정할 수 있습니다.');
+        return;
+      }
+    }
     await preparePlacement(latest);
   }
   function graphSendBounds(planeId) {
@@ -839,6 +856,7 @@ export function initRhwpExamWorkspace(state, services) {
     bridge.replaceFigure(session.id,image,nextId,session.ref,{before:figureBounds(figures.get(session.id),session.ref),after:figure.render.bounds,layout:appliedLayout});
     // Keep earlier sources: native HWP undo restores their marker and bitmap.
     figures.set(nextId, figure); tabs.markRevision(figure); endEdit(); changed();
+    await bridge.revealFigure(nextId,{generation:session.generation});
     try {await stableSave(); message('수정한 그림을 시험지에 반영하고 자동 저장했습니다.');}
     catch (error) {message(`그림을 반영했지만 자동 저장에 실패했습니다. 작업 저장을 다시 눌러주세요. ${error.message}`,true);}
     return figure;
@@ -1117,8 +1135,11 @@ export function initRhwpExamWorkspace(state, services) {
   document.addEventListener('keydown', saveShortcut, true);
   async function returnFromEdit(){
     services.commitActiveText?.();
+    const session=editing;
     if(editing?.external)await window.fiveEDesktop.exam.finish({requestId:editing.requestId,apply:false});
-    endEdit();message('시험지로 돌아왔습니다. 수정 내용은 작업 탭에 남아 있습니다.');scheduleSave();
+    endEdit();
+    if (session && !session.external) await bridge?.revealFigure(session.id,{generation:session.generation});
+    message('한글 문서의 원래 그림으로 돌아왔습니다. 수정 내용은 작업 탭에 남아 있습니다.');scheduleSave();
   }
   async function readFile(input, load, maxBytes = EXAM_PROJECT_MAX_BYTES) {
     const file = input.files[0]; if (!file) return;
@@ -1136,6 +1157,11 @@ export function initRhwpExamWorkspace(state, services) {
           catch(error){throw new Error(`“${file.name}”을 읽지 못했습니다. 저장 위치의 파일 읽기가 완료되지 않았습니다. 파일을 다시 선택해 주세요.`,{cause:error});}
         }
         await stableSave(); await load(bytes, file.name);
+        if (input.id === 'exam-hwp-file' && pendingDocumentInsertion) {
+          const captured = pendingDocumentInsertion;
+          pendingDocumentInsertion = null;
+          await preparePlacement(captured);
+        }
       });
     } finally {
       if (input.files?.[0] === file) input.value = '';
@@ -1152,9 +1178,18 @@ export function initRhwpExamWorkspace(state, services) {
     if (editing || (bridge?.input && savedToken !== token())) { event.preventDefault(); event.returnValue = ''; }
   });
   const send = document.createElement('button'); send.type = 'button'; send.id = 'exam-send'; send.className = 'topbar-btn shell-icon-button';
-  send.setAttribute('aria-label','선택 영역을 시험지에 넣기');send.dataset.shellTip='선택 영역을 시험지에 넣기';
-  send.innerHTML='<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h4l3 3v11H9M13 3v3h3M2.5 10h9M8.5 7l3 3-3 3"/></svg>';
-  document.querySelector('.toolbar-document')?.append(send); send.addEventListener('click', () => void run(() => startSend()));
+  send.setAttribute('aria-label','한글 문서');send.dataset.shellTip='한글 문서';
+  send.setAttribute('aria-haspopup','menu');send.setAttribute('aria-expanded','false');send.setAttribute('aria-controls','exam-document-menu');
+  // An authored ㅎ + arae-a mark shares the shell's icon stroke and size.
+  send.innerHTML='<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 3.5h7M3 6h10"/><ellipse cx="8" cy="10.5" rx="4" ry="2.8"/><circle cx="8" cy="16.5" r="1" fill="currentColor" stroke="none"/></svg>';
+  const documentEntry=document.createElement('div');documentEntry.className='file-menu';
+  const documentMenu=document.createElement('div');documentMenu.id='exam-document-menu';documentMenu.className='file-menu-list';documentMenu.setAttribute('role','menu');documentMenu.hidden=true;
+  documentMenu.innerHTML='<button type="button" class="file-menu-item" role="menuitem" data-exam-document-open>한글 문서로 이동</button><button type="button" class="file-menu-item" role="menuitem" data-exam-document-insert>현재 영역 삽입…</button>';
+  documentEntry.append(send,documentMenu);document.querySelector('.toolbar-document')?.append(documentEntry);
+  registerTopMenu('exam-document',send,documentMenu,{onOpen:()=>{documentMenu.querySelector('[data-exam-document-insert]').disabled=busy || !state.get().objects.length;}});
+  documentMenu.querySelector('[data-exam-document-open]').addEventListener('click',()=>void run(open));
+  documentMenu.querySelector('[data-exam-document-insert]').addEventListener('click',()=>void run(()=>startSend()));
+  panel.querySelector('#exam-hwp-file').addEventListener('cancel',()=>{pendingDocumentInsertion=null;message('문서 열기를 취소했습니다.');});
   window.addEventListener('5e:exam-send-ai', event => void run(() => startSend(event.detail)));
   window.addEventListener('5e:exam-send-graph', event => void run(() => startSend(null,event.detail)));
   async function receiveSource(path) {

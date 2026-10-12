@@ -521,6 +521,18 @@
       "findingIds": [
         "INTEGRATION-RHWP-LATE-OWNER"
       ]
+    },
+    {
+      "path": "tests/test-ai-local-erase.cjs",
+      "findingIds": [
+        "AI-LOCAL-POLYGON-ERASE"
+      ]
+    },
+    {
+      "path": "tests/test-visitor-stats.cjs",
+      "findingIds": [
+        "VISITOR-STATS-SERVER"
+      ]
     }
   ],
   "browser": [
@@ -1364,6 +1376,36 @@
       "path": "tests/test-personal-graph-save-browser.cjs",
       "findingIds": ["NQA-021", "NQA-022", "PERSONAL-GRAPH-BUNDLE"],
       "reason": "Real graph editor save with plane-only selection, new-category visibility, durable library reload, linked graph reuse, shade, undo/redo and editing in root/preview Chromium/WebKit."
+    },
+    {
+      "path": "tests/test-ai-local-tools-browser.cjs",
+      "findingIds": [
+        "AI-LOCAL-TOOLS"
+      ]
+    },
+    {
+      "path": "tests/test-tool-defaults-browser.cjs",
+      "findingIds": [
+        "TOOL-DEFAULTS-CREATION"
+      ]
+    },
+    {
+      "path": "tests/test-feedback-document-flow-browser.cjs",
+      "findingIds": [
+        "RHWP-EDIT-RETURN-INSERTION"
+      ]
+    },
+    {
+      "path": "tests/test-feedback-panel-motion-browser.cjs",
+      "findingIds": [
+        "PANEL-MOTION-PROJECTION"
+      ]
+    },
+    {
+      "path": "tests/test-visitor-stats-browser.cjs",
+      "findingIds": [
+        "VISITOR-STATS-UI"
+      ]
     }
   ],
   "deferred": [

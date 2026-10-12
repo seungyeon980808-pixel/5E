@@ -61,7 +61,7 @@ h.withServer(async origin=>{
    assert.equal(await page.locator('#exam-edit-bar').isVisible(),false,'source controls do not protrude through dialogs');
    await page.evaluate(()=>{document.querySelector('#region-occlusion-check').remove();document.activeElement?.blur();});
    await page.locator('#exam-source-region').waitFor({state:'visible'});
-   assert.equal(await page.locator('[data-source-apply]').textContent(),'시험지에 반영');
+   assert.equal(await page.locator('[data-source-apply]').textContent(),'문서에 반영');
    assert.equal(await page.locator('[data-edit-apply],[data-edit-cancel]').count(),0,'duplicate source actions are removed');
    const draftLabel=async text=>{
     await page.evaluate(async url=>{const {openLabelerTextEditor}=await import(url);openLabelerTextEditor('navigation-label');},textUrl);
@@ -83,7 +83,7 @@ h.withServer(async origin=>{
    assert.equal((await h.drawing(page,stateUrl)).objects[0].text,'돌아갈 때 보관한 라벨','pending source text survives returning');
    await draftLabel('보내기로 확정한 라벨');
    // Hold the real PNG export to exercise the asynchronous transition boundary.
-   await page.evaluate(()=>{window.examExportEntered=Promise.withResolvers();window.savedToBlob=HTMLCanvasElement.prototype.toBlob;HTMLCanvasElement.prototype.toBlob=function(callback,...args){const canvas=this;window.resumeExamExport=()=>window.savedToBlob.call(canvas,callback,...args);HTMLCanvasElement.prototype.toBlob=window.savedToBlob;window.examExportEntered.resolve();};document.querySelector('#exam-send').click();});
+   await page.evaluate(()=>{window.examExportEntered=Promise.withResolvers();window.savedToBlob=HTMLCanvasElement.prototype.toBlob;HTMLCanvasElement.prototype.toBlob=function(callback,...args){const canvas=this;window.resumeExamExport=()=>window.savedToBlob.call(canvas,callback,...args);HTMLCanvasElement.prototype.toBlob=window.savedToBlob;window.examExportEntered.resolve();};document.querySelector('[data-source-apply]').click();});
    await page.evaluate(()=>window.examExportEntered.promise);
    for(const selector of ['#exam-send','[data-source-apply]'])assert.equal(await page.locator(selector).isDisabled(),true,'navigation is locked during replacement');
    await page.evaluate(()=>window.resumeExamExport());await h.idle(page);
@@ -92,7 +92,7 @@ h.withServer(async origin=>{
    for(const key of ['width','height'])assert.ok(Math.abs(applied.props[key]-initial.props[key])<=1,key+' survives source editing within one native rounding unit');
    assert.equal(applied.props.treatAsChar,initial.props.treatAsChar);
    await h.originalEdit(page);
-   await page.evaluate(()=>{const original=HTMLCanvasElement.prototype.toBlob;HTMLCanvasElement.prototype.toBlob=function(callback,...args){HTMLCanvasElement.prototype.toBlob=original;callback(null);};document.querySelector('#exam-send').click();});
+   await page.evaluate(()=>{const original=HTMLCanvasElement.prototype.toBlob;HTMLCanvasElement.prototype.toBlob=function(callback,...args){HTMLCanvasElement.prototype.toBlob=original;callback(null);};document.querySelector('[data-source-apply]').click();});
    const alert=page.getByRole('dialog',{name:'시험지 보내기'});await alert.waitFor({state:'visible'});
    assert.match(await alert.textContent(),/그림을 내보내지 못했습니다/);
    await alert.getByRole('button',{name:'확인',exact:true}).click();await h.idle(page);
@@ -104,7 +104,7 @@ h.withServer(async origin=>{
    await page.evaluate(()=>window.dispatchEvent(new Event('5e:exam-workspace-changed')));
    await h.waitForState(page,async previous=>{const {listExamDrafts}=await import('/js/rhwp-exam-project.js?v=1.7.0-four-session-integration');return (await listExamDrafts())[0]?.updatedAt>previous;},savedAt);
    assert.equal(await page.locator('#exam-status').getAttribute('data-error'),'true');
-   await page.locator('#exam-send').click();await h.idle(page);
+   await page.locator('[data-source-apply]').click();await h.idle(page);
    assert.equal(await page.locator('#exam-source-region').isVisible(),false,'retry returns to the exam');
    assert.equal(await page.locator('#exam-status').getAttribute('data-error'),'false');
    assert.deepEqual(errors,[]);

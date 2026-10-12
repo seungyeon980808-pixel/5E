@@ -49,11 +49,17 @@ async function fixture({ remote = true, ai = true, holdOwner = false } = {}) {
   const native = [{ id: original.id, bytes: 'original PNG bytes', source: clone(original.source),
     geometry: { x: 10, y: 20, w: 20, h: 20 }, unrelated: { all: ['retained'] } }];
   const raster = deferred(), entered = deferred(), ownerRelease = deferred(), ownerEntered = deferred();
-  const calls = { replace: 0, revision: 0, end: 0, changed: 0, save: 0, localLookup: 0, localAi: 0, owner: [] };
+  const calls = { replace: 0, revision: 0, end: 0, changed: 0, save: 0, reveal: 0, localLookup: 0, localAi: 0, owner: [] };
   const bridge = { generation: 42, replaceFigure(id, image, nextId, ref, geometry) {
     calls.replace++;
     assert.equal(id, original.id); assert.equal(image, 'new raster bytes');
     native[0] = { ...native[0], id: nextId, bytes: image, geometry: clone(geometry.after) };
+  }, async revealFigure(id, {generation}) {
+    calls.reveal++;
+    assert.equal(generation, this.generation, 'Camera cannot follow a retired document');
+    assert.equal(id, native[0].id, 'Return follows the newly committed picture');
+    assert.equal(calls.end, 1, 'Restore the document panel before revealing its picture');
+    return true;
   } };
   const figures = new Map([[original.id, clone(original)]]);
   const editing = { id: original.id, figure: clone(original), generation: bridge.generation,
@@ -104,7 +110,7 @@ for (const mutation of ['asset', 'tab', 'removed-page', 'foreign-page-id', 'inac
     await assert.rejects(f.completion, /연결된 원래/);
     assert.deepEqual(f.calls.owner, [{ editRequestId: '11111111-1111-1111-1111-111111111111' }]);
     assert.equal(f.calls.localLookup, 0); assert.equal(f.calls.localAi, 0);
-    for (const key of ['replace', 'revision', 'end', 'changed', 'save']) assert.equal(f.calls[key], 0, key);
+    for (const key of ['replace', 'revision', 'end', 'changed', 'save', 'reveal']) assert.equal(f.calls[key], 0, key);
     assert.deepEqual(f.native, f.beforeNative); assert.deepEqual([...f.figures], f.beforeFigures);
     assert.deepEqual(f.primary, edited, 'Every edited primary field is preserved');
   });
@@ -117,7 +123,7 @@ for (const ai of [false, true]) {
     assert.equal(figure.id, 'figure-next'); assert.equal(figure.version, 2);
     assert.deepEqual(figure.link, f.captured.link); assert.deepEqual(figure.context, f.captured.context);
     assert.equal(f.calls.localLookup, 0); assert.equal(f.calls.localAi, 0); assert.equal(f.calls.owner.length, 1);
-    for (const key of ['replace', 'revision', 'end', 'changed', 'save']) assert.equal(f.calls[key], 1, key);
+    for (const key of ['replace', 'revision', 'end', 'changed', 'save', 'reveal']) assert.equal(f.calls[key], 1, key);
     assert.deepEqual(f.figures.get('figure-original'), f.beforeFigures[0][1]);
     assert.deepEqual(f.native[0].unrelated, f.beforeNative[0].unrelated);
     assert.deepEqual(f.primary, primaryBefore);
