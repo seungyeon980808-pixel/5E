@@ -529,6 +529,7 @@ function remapCutout(cut, x0, y0, fw, fh) {
     out.w = round3((+cut.w) / fw); out.h = round3((+cut.h) / fh);
   } else if (Array.isArray(out.points)) {
     out.points = out.points.map((p) => ({ x: mx(p.x), y: my(p.y) }));
+    if (out.type === 'brush') { out.diameterX /= fw;out.diameterY /= fh; }
     if (out.brushWidth) out.brushWidth = round3(out.brushWidth * (1 / fw + 1 / fh) / 2);
   }
   return out;
@@ -547,6 +548,9 @@ export function normalizeSrcRect(sr) {
  * 좁힐 게 없거나 대상이 아니면 null(호출자는 원본을 그대로 쓴다). id·layerId 등 다른
  * 필드는 전부 보존한다 — 자르기 조각뿐 아니라 [여백 정리] 명령도 이 함수를 쓴다. */
 export function tightenBoxObject(o) {
+  // The legacy polygon grid cannot model open brush strokes or ordered white
+  // paint. Preserve placement; explicit image-margin trimming inspects pixels.
+  if ((o?.cutouts || []).some(c => c?.type === 'brush' || c?.background === 'white')) return null;
   if (!isBoxCuttable(o)) return null;
   if (!(o.w > 0) || !(o.h > 0)) return null;
   const cutouts = Array.isArray(o.cutouts) ? o.cutouts : [];

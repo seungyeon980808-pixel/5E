@@ -1516,6 +1516,13 @@
       "findingIds": [
         "UX-U43"
       ]
+    },
+    {
+      "path": "tests/test-canvas-brush-erase-browser.cjs",
+      "findingIds": [
+        "UX-U49",
+        "CANVAS-BRUSH-ERASE"
+      ]
     }
   ],
   "deferred": [

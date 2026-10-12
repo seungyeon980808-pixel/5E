@@ -375,15 +375,21 @@ async function openSmartCutoutDialog(points, targetId, targetSnapshot) {
 export function applyImageCutouts(ctx, cutouts, width, height) {
   ctx.save();
   for (const cut of cutouts || []) {
+    if (cut.type === 'brush') {
+      const pts=cut.points || [],dx=Number(cut.diameterX)*width,dy=Number(cut.diameterY)*height;
+      if (!pts.length || !(dx>0) || !(dy>0)) continue;
+      ctx.save();ctx.globalCompositeOperation=cut.background==='white'?'source-over':'destination-out';ctx.strokeStyle='#fff';ctx.scale(dx,dy);ctx.lineWidth=1;ctx.lineCap='round';ctx.lineJoin='round';ctx.beginPath();ctx.moveTo(pts[0].x*width/dx,pts[0].y*height/dy);
+      if(pts.length===1)ctx.lineTo(pts[0].x*width/dx+.000001,pts[0].y*height/dy);else for(const p of pts.slice(1))ctx.lineTo(p.x*width/dx,p.y*height/dy);ctx.stroke();ctx.restore();continue;
+    }
     if (cut.type === "rect") {
-      ctx.globalCompositeOperation = "destination-out";
+      ctx.globalCompositeOperation = cut.background === 'white' ? 'source-over' : 'destination-out';ctx.fillStyle='#fff';
       ctx.fillRect(cut.x * width, cut.y * height, cut.w * width, cut.h * height);
       continue;
     }
     if (!["poly", "outside-poly", "lasso", "path"].includes(cut.type)) continue;
     const pts = Array.isArray(cut.points) ? cut.points : [];
     if (pts.length < 3) continue;
-    ctx.globalCompositeOperation = cut.type === "outside-poly" ? "destination-in" : "destination-out";
+    ctx.globalCompositeOperation = cut.type === "outside-poly" ? "destination-in" : cut.background === 'white' ? 'source-over' : 'destination-out';ctx.fillStyle='#fff';ctx.strokeStyle='#fff';
     ctx.beginPath();
     ctx.moveTo(pts[0].x * width, pts[0].y * height);
     for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x * width, pts[i].y * height);

@@ -3663,3 +3663,10 @@ textarea.unified-text-input {
 .auto-snap-btn { min-height:28px; padding:3px 6px; border:1px solid var(--border); border-radius:6px; color:var(--text-secondary); background:var(--bg-input); font:inherit; font-size:10px; white-space:nowrap; cursor:pointer; }
 .auto-snap-btn[aria-pressed="true"] { border-color:var(--text-secondary); color:var(--text-primary); }
 .auto-snap-btn:focus-visible { outline:2px solid var(--text-primary); outline-offset:2px; }
+
+.canvas-erase-options { position:absolute; top:30px; right:12px; z-index:20; display:flex; align-items:center; flex-wrap:wrap; gap:8px; max-width:calc(100% - 44px); padding:7px; border:1px solid var(--border); border-radius:7px; background:var(--bg-panel); color:var(--text-primary); box-shadow:0 3px 12px #0002; font-size:11px; }
+.canvas-erase-options[hidden] { display:none; }
+.canvas-erase-options label { display:flex; align-items:center; gap:5px; }
+.canvas-erase-options input { width:80px; }
+.canvas-erase-options output { min-width:32px; text-align:right; }
+.canvas-erase-options select { max-width:140px; font:inherit; }

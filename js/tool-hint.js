@@ -29,7 +29,7 @@ const HINTS = {
   },
   ERASE: {
     title: "지우개",
-    action: "지울 영역을 마우스로 둘러싼 뒤 놓으면 내부가 투명하게 지워집니다.",
+    action: "이미지나 SVG를 문질러 지웁니다. 위쪽에서 사각 영역·흰색·투명을 고를 수 있습니다.",
     keys: "Shift+E: 지우개 도구 · Esc: 취소", activeKeys: ["Shift+E"],
   },
   O: {
