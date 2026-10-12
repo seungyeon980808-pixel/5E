@@ -188,7 +188,9 @@ body.exam-editing #ai-image-panel .modal-ai.ai-workbench {
 .canvas-bottom-bar .exam-document-trigger { border-color:#dba52b; color:var(--text-primary); background:var(--bg-input); white-space:nowrap; flex:none; }
 .canvas-bottom-bar .exam-document-entry { flex:none; }
 .exam-document-trigger > svg { width:17px; height:17px; flex:none; }
-.canvas-bottom-bar .exam-document-entry > .file-menu-list { top:auto; bottom:calc(100% + 6px); }
+.canvas-bottom-bar .exam-document-entry > .file-menu-list { top:auto; bottom:calc(100% + 6px); left:auto; right:0; max-width:calc(100vw - 16px); box-sizing:border-box; transform-origin:bottom right; }
+/* Narrow layouts scroll the bar; its upward menu must stay outside that clip. */
+.canvas-bottom-bar:has(.exam-document-entry > .file-menu-list:not([hidden])) { position:relative; z-index:500; overflow:visible; }
 
 /* A document capture is yellow outlined; ordinary export keeps its own theme. */
 .capture-overlay[data-capture-purpose="hwp"] .capture-box { border-color:#dba52b!important; background:rgba(219,165,43,.08)!important; }

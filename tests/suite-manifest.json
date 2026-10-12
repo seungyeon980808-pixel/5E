@@ -1559,6 +1559,13 @@
         "UX-U37",
         "CANVAS-VISIBLE-IMAGE-HANDOFF"
       ]
+    },
+    {
+      "path": "tests/test-hwp-footer-menu-browser.cjs",
+      "findingIds": [
+        "UX-U56",
+        "HWP-FOOTER-MENU-HIT-TEST"
+      ]
     }
   ],
   "deferred": [
