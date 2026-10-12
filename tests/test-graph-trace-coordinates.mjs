@@ -28,7 +28,7 @@ test('top-right axes choose opposite reference ends without collapsing basis',()
  assert.equal(landmarks.xEnd,'왼쪽');assert.equal(landmarks.yEnd,'아래쪽');assert.deepEqual(fitThreePoints(landmarks.points,landmarks.points),[...IDENTITY]);
 });
 test('state normalizer rejects singular matrices and source frame rejects empty images',()=>{
- assert.deepEqual(normalizeTraceState({graphMatrix:[0,0,0,0,0,0],opacity:8,mode:'bad'}),{version:1,graphMatrix:[...IDENTITY],opacity:1,mode:'graph',wipePosition:0.5});
+ assert.deepEqual(normalizeTraceState({graphMatrix:[0,0,0,0,0,0],opacity:8,mode:'bad'}),{version:1,previewZoom:100,graphMatrix:[...IDENTITY],opacity:1,mode:'graph',wipePosition:0.5});
  assert.throws(()=>sourceFrameMatrix({width:0,height:500},p));
 });
 test('registration composition changes only display positions and preserves input data',()=>{

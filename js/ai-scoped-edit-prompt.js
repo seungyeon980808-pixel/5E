@@ -7,6 +7,7 @@ export function collectScopedAreaComments(comments, candidateId) {
     const box = ['x', 'y', 'w', 'h'].map(key => comment[key]);
     if (!box.every(Number.isFinite) || box[0] < 0 || box[1] < 0 || box[2] <= 0 || box[3] <= 0
         || box[0] + box[2] > 100 || box[1] + box[3] > 100) throw new Error('이미지 안에 유효한 수정 박스를 지정하세요.');
+    if(comment.polygon && (!Array.isArray(comment.polygon) || comment.polygon.length<3 || comment.polygon.length>4096 || comment.polygon.some(p=>!Number.isFinite(p.x)||!Number.isFinite(p.y)||p.x<box[0]||p.y<box[1]||p.x>box[0]+box[2]+.001||p.y>box[1]+box[3]+.001))) throw new Error('자유 영역의 경계가 유효하지 않습니다. 다시 그려주세요.');
     const text = String(comment.text || '').trim();
     if (!text) throw new Error(`박스 ${comment.number ?? index + 1}의 수정 내용을 입력하세요.`);
     return { ...comment, text };
@@ -22,7 +23,7 @@ export function buildScopedEditPrompt({ session, comments, candidateId }) {
     instruction: comment.text,
   }));
   return `Edit the attached current-version PNG itself. Return one PNG at exactly ${session.width} by ${session.height} pixels.
-The boxes are the MAXIMUM permitted edit boundaries, not areas to redraw entirely.
+The boxes are the MAXIMUM permitted edit boundaries, not areas to redraw entirely. When allowed_pixels includes a polygon, only the closed polygon interior is permitted; its surrounding bounding rectangle is not permission.
 Interpret each comment in the context of the supplied image. Inside each box, change only the named target and requested properties. Preserve all other objects, shapes, counts, connections, positions, proportions, fills and line style, INCLUDING unrequested content inside the boxes.
 Outside the union of the listed boxes, change zero pixels. Never expand a box or move an object or connector outside it. Pixel bounds include the top-left and exclude the bottom-right.
 Each instruction belongs only to its paired box:

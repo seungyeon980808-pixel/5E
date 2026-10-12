@@ -936,6 +936,9 @@ function moveGraphAnnotationContact(annotation, dx, dy) {
 
 function rebindGraphAnnotations(plane,list) {
   for(const a of plane.graphAnnotations || []) {
+    // Text is placed freely. Older saved labels may still carry curve metadata,
+    // but changing that curve must not move their visible position.
+    if(a.kind==='text')continue;
     if(!a.seriesId)continue;
     const f=list.find(f=>f.reconstruction?.seriesId===a.seriesId||f.seriesId===a.seriesId||f.id===a.seriesId);
     const s=_series.find(s=>s.reconstruction?.seriesId===a.seriesId||s.seriesId===a.seriesId||s.objectId===a.seriesId);
@@ -964,7 +967,6 @@ function rebindGraphAnnotations(plane,list) {
     if(a.kind==='guide')moveGraphAnnotationContact(a,q.x-a.x,q.y-a.y);
     else if(a.kind==='point'){a.x=q.x;a.y=q.y;}
     else if(a.kind==='leader'||a.kind==='arrow'){a.to={x:q.x,y:q.y};}
-    else if(a.kind==='text'){a.x+=(q.x-old.x);a.y+=(q.y-old.y);}
   }
   // Restored process vertices belong to their analytic process. Adjacent native
   // straight segments follow those contacts rather than keeping stale pixels.
@@ -1942,9 +1944,23 @@ function refreshPreview() {
     });
   }
 
+  // Label hit boxes need their rendered glyph metrics. Attach the SVG before
+  // measuring them; getBBox on a detached SVG is empty in Safari/WebKit.
+  _els.preview.replaceChildren(svg);
+  _previewSvg = svg;
   if(!_annMode && !_placeMode && _activeDraw === -1) {
     const targets = [...planeLayer.querySelectorAll('[data-graph-annotation], [data-graph-annotation-shape]')].flatMap(el => {
-      if (!el.hasAttribute('data-graph-annotation-shape')) return [el];
+      if (!el.hasAttribute('data-graph-annotation-shape')) {
+        // The spaces between glyphs must be draggable too. SVG groups normally
+        // only receive a mouse event on a painted glyph, not their whole box.
+        const box=el.getBBox(),hit=document.createElementNS(SVG_NS,'rect');
+        hit.setAttribute('data-graph-annotation',el.getAttribute('data-graph-annotation'));
+        hit.setAttribute('data-annotation-hit','');
+        for(const [key,value] of Object.entries({x:box.x,y:box.y,width:box.width,height:box.height}))hit.setAttribute(key,String(value));
+        if(el.hasAttribute('transform'))hit.setAttribute('transform',el.getAttribute('transform'));
+        hit.setAttribute('fill','transparent');hit.setAttribute('pointer-events','all');el.before(hit);
+        return [hit,el];
+      }
       // Thin reference strokes remain thin; a transparent screen-sized stroke
       // makes them selectable without changing their saved or visible geometry.
       const hit = el.cloneNode(false); hit.removeAttribute('id'); hit.setAttribute('data-annotation-hit','');
@@ -1974,7 +1990,7 @@ function refreshPreview() {
         const p=annotation.axis==='y2'?planeAsY2(_previewPlane):_previewPlane;
         const toMath=(x,y)=>{const w=clientToWorld(x,y);return w?mathFromWorld(p,w.x,w.y):null;};
         const start=toMath(e.clientX,e.clientY);if(!start)return;const base=structuredClone(annotation);let moved=false;
-        const onMove=ev=>{const m=toMath(ev.clientX,ev.clientY);if(!m)return;const dx=m.x-start.x,dy=m.y-start.y;moved||=Math.abs(dx)+Math.abs(dy)>1e-7;if(!moved)return;annotation.x=base.x+dx;annotation.y=base.y+dy;if(base.to)annotation.to={x:base.to.x+dx,y:base.to.y+dy};delete annotation.seriesId;delete annotation.pointIndex;delete annotation.anchorX;refreshPreview();};
+        const onMove=ev=>{const m=toMath(ev.clientX,ev.clientY);if(!m)return;const dx=m.x-start.x,dy=m.y-start.y;moved||=Math.abs(dx)+Math.abs(dy)>1e-7;if(!moved)return;annotation.x=base.x+dx;annotation.y=base.y+dy;if(base.to)annotation.to={x:base.to.x+dx,y:base.to.y+dy};delete annotation.seriesId;delete annotation.pointIndex;delete annotation.curveAnchor;delete annotation.anchorX;refreshPreview();};
         const onUp=()=>{window.removeEventListener('mousemove',onMove);window.removeEventListener('mouseup',onUp);if(moved)syncTypedAnnotations();};
         window.addEventListener('mousemove',onMove);window.addEventListener('mouseup',onUp);
       });
@@ -2020,8 +2036,6 @@ function refreshPreview() {
     }
   }
   if (plane.reconstruction?.preserveAxes) svg.appendChild(planeLayer);
-  _els.preview.replaceChildren(svg);
-  _previewSvg = svg;
   drawAnnotationSelection(svg);
   _engineControls?.renderRegions(svg,plane,regionPrep.ok?regionPrep.list:[],_tab==='annot'&&!_annMode);
   // Decoration hit targets must sit above curve hit strokes. Preserve every
@@ -3082,10 +3096,11 @@ function build() {
       <h2 class="modal-title" style="display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;">
         <span id="gm-title">그래프 만들기</span>
         <span style="font-size: 12px;font-weight:400;color:var(--text-secondary);">원하는 좌표를 설정하고 자유롭게 그래프를 그립니다.</span>
+        <button type="button" class="gm-close" id="gm-cancel" aria-label="그래프 닫기" title="닫기 (Esc)">×</button>
       </h2>
       <div class="gm-body">
         <div class="gm-left" style="flex:1;min-width:0;">
-          <div class="gm-preview-label"><span>미리보기</span></div>
+          <div class="gm-export-actions"><button type="button" class="modal-btn modal-btn-primary" id="gm-confirm">캔버스로 내보내기</button></div>
           <div id="gm-trace-toolbar-host"></div>
           <div id="gm-preview" class="gm-preview" style="height:440px;"></div>
           <div id="gm-error" style="color:#e5534b;font-size: 12px;min-height:16px;margin-top:4px;"></div>
@@ -3602,10 +3617,6 @@ function build() {
           </div><!-- /gm-tab-content -->
         </div>
 
-      </div>
-      <div class="modal-actions">
-        <button type="button" class="modal-btn" id="gm-cancel">취소</button>
-        <button type="button" class="modal-btn modal-btn-primary" id="gm-confirm">만들기</button>
       </div>
     </div>`;
   document.body.appendChild(overlay);
@@ -4594,7 +4605,7 @@ export function openGraphModal(planeId = null, startTab = "coord", editingContex
   _lpSel = -1;                           // 라벨러 표시점 선택도 초기화(옛 인덱스가 남지 않게)
   if (_els.advPanel) { _els.advPanel.hidden = true; _els.advOpen.setAttribute('aria-expanded','false'); if (_els.advCaret) _els.advCaret.textContent = "▾"; }   // 고급 패널은 접힌 채로 시작
   _els.title.textContent = _mode === "edit" ? "그래프 편집" : "그래프 만들기";
-  _els.confirm.textContent = _mode === "edit" ? "적용" : "만들기";
+  _els.confirm.textContent = _mode === "edit" ? "적용" : "캔버스로 내보내기";
   _els.confirm.classList.add('modal-btn-primary');
   _els.error.textContent = "";
   _overlay.querySelectorAll("input, textarea, select").forEach(input => input.setCustomValidity(""));

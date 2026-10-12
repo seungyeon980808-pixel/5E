@@ -48,7 +48,7 @@ export function createTraceEditor({ toolbarHost, previewHost, reference=null, in
   let interaction=null, calibration=[], gesture=null, wipeGesture=null, clipGroup=null, clipDefs=null, sourceClip=null, graphClip=null, lastPaint=[], suppressUntil=0;
   const abort=new AbortController(), signal=abort.signal, uid=++nextId;
   const toolbar=document.createElement('div');toolbar.className='gm-trace-toolbar';toolbar.dataset.traceEditor=String(uid);
-  toolbar.innerHTML=`<div class="gm-trace-main"><div class="gm-trace-modes" role="group" aria-label="원본 비교 방식"><button type="button" data-trace-mode="graph">그래프만</button><button type="button" data-trace-mode="side">좌우 비교</button><button type="button" data-trace-mode="wipe">바 비교</button><button type="button" data-trace-mode="overlay">겹쳐 비교</button></div><button type="button" data-trace-library>라이브러리에서 선택</button></div><details class="gm-trace-options"><summary>비교 설정</summary><div class="gm-trace-option-fields"><div class="gm-trace-tools" hidden><span class="gm-trace-legend"><span class="gm-trace-original">원본</span> / <span class="gm-trace-generated">편집본</span></span><button type="button" data-trace-move>위치 맞추기</button><button type="button" data-trace-calibrate>축 맞추기</button><label>배율 <input data-trace-scale type="number" min="10" max="1000" step="0.1" value="100" aria-label="그래프 정렬 배율">%</label><label data-trace-opacity-field>원본 농도 <input data-trace-opacity type="range" min="0" max="1" step="0.1" aria-label="원본 농도"></label><button type="button" data-trace-reset>정렬 초기화</button></div><label class="gm-trace-upload">파일에서 선택<input type="file" accept="image/*" aria-label="트레이싱 원본 이미지 선택"></label></div></details><p class="gm-trace-status" role="status" aria-live="polite" hidden></p>`;
+  toolbar.innerHTML=`<div class="gm-trace-main"><label>보기 <select data-trace-view aria-label="그래프 보기"><option value="graph">그래프만</option><option value="side">좌우 비교</option><option value="overlay">겹쳐 비교</option><option value="wipe">바 비교</option></select></label><select data-trace-import aria-label="원본 이미지 불러오기"><option value="">이미지 불러오기</option><option value="library">라이브러리에서 불러오기</option><option value="file">파일 탐색기에서 불러오기</option></select><label>확대 <select data-trace-zoom aria-label="그래프 확대 비율"><option value="50">50%</option><option value="75">75%</option><option value="100">100%</option><option value="125">125%</option><option value="150">150%</option><option value="200">200%</option></select></label><input type="file" accept="image/*" aria-label="트레이싱 원본 이미지 선택" hidden></div><details class="gm-trace-options"><summary>원본 정렬</summary><div class="gm-trace-option-fields"><div class="gm-trace-tools" hidden><span class="gm-trace-legend"><span class="gm-trace-original">원본</span> / <span class="gm-trace-generated">편집본</span></span><button type="button" data-trace-move>위치 맞추기</button><button type="button" data-trace-calibrate>축 맞추기</button><label>정렬 배율 <input data-trace-scale type="number" min="10" max="1000" step="0.1" value="100" aria-label="그래프 정렬 배율">%</label><label data-trace-opacity-field>원본 농도 <input data-trace-opacity type="range" min="0" max="1" step="0.1" aria-label="원본 농도"></label><button type="button" data-trace-reset>정렬 초기화</button></div></div></details><p class="gm-trace-status" role="status" aria-live="polite" hidden></p>`;
   toolbarHost.append(toolbar);
   const pane=document.createElement('div');pane.className='gm-trace-source-pane';pane.hidden=true;
   pane.innerHTML='<span class="gm-trace-pane-label">원본</span><img alt="비교용 원본 그래프">';
@@ -64,8 +64,13 @@ export function createTraceEditor({ toolbarHost, previewHost, reference=null, in
   const changed=(options={})=>onChange(portable(),options);
   function setInteraction(value){interaction=value;calibration=[];gesture=null;onInteractionChange(value);sync();}
   function sync(){
-    toolbar.querySelector('[data-trace-library]').disabled=loading||!onChooseReference;
-    toolbar.querySelectorAll('[data-trace-mode]').forEach(b=>{b.setAttribute('aria-pressed',String(b.dataset.traceMode===state.mode));b.disabled=loading||(b.dataset.traceMode!=='graph'&&!tint);});
+    toolbar.querySelector('[data-trace-import]').disabled=loading;
+    toolbar.querySelector('[data-trace-import] option[value=library]').disabled=!onChooseReference;
+    const view=toolbar.querySelector('[data-trace-view]');view.value=state.mode;view.disabled=loading;
+    [...view.options].forEach(o=>o.disabled=o.value!=='graph'&&!tint);
+    toolbar.querySelector('[data-trace-zoom]').value=String(state.previewZoom || 100);
+    if (svg) {svg.style.width=`${state.previewZoom || 100}%`;svg.style.height=`${state.previewZoom || 100}%`;svg.style.maxWidth='none';svg.style.flexShrink='0';}
+    sideImg.style.width=`${state.previewZoom || 100}%`;sideImg.style.height=`${state.previewZoom || 100}%`;
     const comparing=state.mode!=='graph'&&!!tint;
     toolbar.querySelector('.gm-trace-tools').hidden=!comparing;
     toolbar.querySelector('[data-trace-opacity]').value=String(state.opacity);
@@ -154,21 +159,22 @@ export function createTraceEditor({ toolbarHost, previewHost, reference=null, in
     try{
       const loaded=await redReference(value);if(disposed||ticket!==generation||!isCurrent())return false;
       ref={data:imageData(value),width:loaded.width,height:loaded.height,...(value.plotBox?{plotBox:clone(value.plotBox)}:{}),name:value.name||'원본 그래프',...(value.source?{source:clone(value.source)}:{})};tint=loaded;
-      sideImg.src=ref.data;state.mode='overlay';state.graphMatrix=[...IDENTITY];setInteraction(null);
+      sideImg.src=ref.data;state.mode='graph';state.graphMatrix=[...IDENTITY];setInteraction(null);
       say('');refresh();changed({initial:initializing});return true;
     }catch(error){if(ticket===generation)say(error.message||'원본을 불러오지 못했습니다.');return false;}
     finally{if(ticket===generation){loading=false;sync();}}
   }
-  toolbar.addEventListener('click',event=>{
-    if(event.target.closest('[data-trace-library]')) { void Promise.resolve(onChooseReference?.(event.target.closest('[data-trace-library]'))).catch(error=>say(error.message)); return; }
-    const mode=event.target.closest('[data-trace-mode]');
-    if(mode){state.mode=mode.dataset.traceMode;setInteraction(null);say('');refresh();changed();return;}
-    if(event.target.closest('[data-trace-move]')){setInteraction(interaction==='move'?null:'move');say(interaction?'편집 그래프를 끌어 원본에 맞추세요. 방향키로 미세 조정, Esc로 종료합니다.':'위치 맞추기를 마쳤습니다.');}
-    if(event.target.closest('[data-trace-calibrate]')){
-      if(state.mode!=='overlay'){state.mode='overlay';refresh();}
-      setInteraction(interaction==='calibrate'?null:'calibrate');say(interaction?'원본의 두 축이 만나는 교점을 클릭하세요.':'축 기준 맞추기를 취소했습니다.');
-    }
-    if(event.target.closest('[data-trace-reset]')){state.graphMatrix=[...IDENTITY];setInteraction(null);refresh();changed();say('원본 프레임의 초기 정렬로 돌아왔습니다.');}
+  toolbar.querySelector('[data-trace-view]').addEventListener('change',event=>{state.mode=event.target.value;setInteraction(null);refresh();changed();},{signal});
+  toolbar.querySelector('[data-trace-import]').addEventListener('change',async event=>{
+    const source=event.target.value;event.target.value='';
+    if(source==='file') toolbar.querySelector('input[type=file]').click();
+    else if(source==='library' && onChooseReference) {try {await onChooseReference(event.target);}catch(error){say(error.message);}}
+  },{signal});
+  toolbar.querySelector('[data-trace-zoom]').addEventListener('change',event=>{state.previewZoom=Number(event.target.value);sync();changed({preview:true});},{signal});
+  toolbar.addEventListener('click',async event=>{
+    if(event.target.closest('[data-trace-move]')){setInteraction(interaction==='move'?null:'move');say(interaction?'그래프를 드래그하거나 방향키로 위치를 맞추세요. Esc: 완료':'');}
+    if(event.target.closest('[data-trace-calibrate]')){if(state.mode!=='overlay'){state.mode='overlay';refresh();}setInteraction(interaction==='calibrate'?null:'calibrate');say(interaction?'원본 축 교점을 클릭하세요.':'');}
+    if(event.target.closest('[data-trace-reset]')){state.graphMatrix=[...IDENTITY];setInteraction(null);refresh();changed();say('정렬을 초기화했습니다.');}
   },{signal});
   toolbar.querySelector('[data-trace-opacity]').addEventListener('input',event=>{state.opacity=Number(event.target.value);if(sourceLayer&&state.mode==='overlay')sourceLayer.setAttribute('opacity',state.opacity);changed();},{signal});
   toolbar.querySelector('[data-trace-scale]').addEventListener('change',event=>{
@@ -223,7 +229,7 @@ export function createTraceEditor({ toolbarHost, previewHost, reference=null, in
     }
   },{capture:true,signal});
   // Initial decode preserves a saved matrix/mode, unlike replacing the reference.
-  if(ref){const saved=clone(state);void setReference(ref,{initializing:true}).then(()=>{if(!disposed&&tint){state=saved;if(!initialState?.mode)state.mode='overlay';refresh();changed({initial:true});}});}else{say('');sync();}
+  if(ref){const saved=clone(state);void setReference(ref,{initializing:true}).then(()=>{if(!disposed&&tint){state=saved;if(!initialState?.mode)state.mode='graph';refresh();changed({initial:true});}});}else{say('');sync();}
   return {
     decorate,attachAfterBBox:decorate,setReference,getState:portable,
     isInteracting:()=>!!interaction||!!wipeGesture,cancelInteraction,

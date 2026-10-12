@@ -3590,3 +3590,50 @@ textarea.unified-text-input {
 #graph-modal-overlay .gm-trace-divider:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
 #graph-modal-overlay .gm-trace-wipe-labels { position: absolute; inset: 6px 8px auto; display: flex; justify-content: space-between; pointer-events: none; }
 #graph-modal-overlay .gm-trace-wipe-labels span { padding: 2px 5px; border-radius: 3px; background: white; color: #333; font-size: 12px; }
+
+/* Graph workspace: transfer 20% of the former left track to settings. */
+#graph-modal-overlay .gm-body { grid-template-columns: minmax(0, calc(80% - 380.8px)) minmax(0, 1fr); }
+#graph-modal-overlay .gm-modal > .modal-title { flex-wrap: nowrap !important; padding-right: 36px; position: relative; }
+#graph-modal-overlay .gm-close { position: absolute; top: -4px; right: 0; width: 32px; height: 32px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg-input); color: var(--text-primary); font-size: 24px; cursor: pointer; }
+#graph-modal-overlay .gm-export-actions { display: flex; justify-content: flex-end; flex: 0 0 auto; padding-top: 6px; }
+#graph-modal-overlay .gm-export-actions .modal-btn { min-height: 30px; padding: 4px 10px; font-size: 12px; }
+#graph-modal-overlay .gm-trace-side-layout > .gm-export-actions { grid-column: 1 / -1; grid-row: 5; }
+#graph-modal-overlay .gm-trace-side-layout > #gm-error { grid-row: 6; }
+@container gm-workspace (max-width: 900px) {
+  #graph-modal-overlay .gm-body { grid-template-columns: minmax(0, calc(80% - 324.8px)) minmax(0, 1fr); }
+}
+@container gm-workspace (max-width: 780px) {
+  #graph-modal-overlay .gm-body { grid-template-columns: minmax(0, 1fr); }
+}
+/* Visible interim controls; final palette and size remain a user decision. */
+:root { color-scheme: dark; }
+:root[data-theme="light"] { color-scheme: light; }
+:root[data-theme="light"] .gm-modal :is(input, select, textarea) { color-scheme: light; }
+.gm-step-btns button { width: 30px; color: var(--text-primary); background: var(--bg-panel-hover); font-size: 11px; }
+.gm-step-btns button:active { background: var(--control-selected-bg); }
+.gm-step:has(input:disabled) button { color: var(--text-secondary); }
+.gm-step:focus-within, #graph-modal-overlay .gm-close:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+#graph-modal-overlay .gm-number-step { min-width: 0; max-width: 100%; width: 88px; }
+#graph-modal-overlay .gm-number-step > input { flex: 1 1 0; min-width: 0; width: 0 !important; padding-inline: 3px; }
+#graph-modal-overlay .gm-number-step > .gm-step-btns { flex: 0 0 30px; }
+.canvas-bottom-bar .gm-step { height: 28px; }
+.canvas-bottom-bar .gm-step input { min-width: 0; width: 38px; padding: 0 3px; }
+.canvas-bottom-bar .gm-step-btns button { width: 26px; font-size: 10px; }
+#inspector-empty:empty { display: none !important; }
+
+.modal-actions .modal-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+/* Controls stay above the graph in a compact, stable toolbar. */
+#graph-modal-overlay .gm-left.gm-trace-side-layout { grid-template-rows:auto auto minmax(0,1fr) auto; }
+#graph-modal-overlay .gm-trace-side-layout > .gm-export-actions { grid-column:1 / -1; grid-row:1; }
+#graph-modal-overlay .gm-trace-side-layout > #gm-trace-toolbar-host { grid-row:2; }
+#graph-modal-overlay .gm-trace-side-layout > :is(#gm-preview,.gm-trace-source-pane) { grid-row:3; }
+#graph-modal-overlay .gm-trace-side-layout > #gm-error { grid-row:4; }
+#graph-modal-overlay .gm-export-actions { padding:0 0 6px; }
+#graph-modal-overlay .gm-trace-main { display:flex; flex-wrap:wrap; align-items:center; gap:6px 10px; }
+#graph-modal-overlay .gm-trace-main label { display:flex; align-items:center; gap:4px; font-size:12px; }
+#graph-modal-overlay .gm-trace-main select { min-height:30px; font-size:12px; padding:3px 7px; }
+#graph-modal-overlay :is(#gm-preview,.gm-trace-source-pane) { overflow:auto; }

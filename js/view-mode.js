@@ -62,7 +62,7 @@ function applyMode(mode, persist = true, detail = {}) {
   if (empty) {
     empty.textContent = m === "lite"
       ? "선·꺾은선·텍스트·지시선 라벨을 선택하면 필요한 속성만 표시됩니다."
-      : "선택된 오브젝트 없음";
+      : "";
   }
   // Lite에서는 레이어 1만 보이므로, 활성 레이어를 1로 고정한다.
   if (m === "lite" && _state) {

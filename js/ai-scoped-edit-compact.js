@@ -20,7 +20,7 @@ export function buildCompactScopedEditPrompt({ session, comments, candidateId, c
     ...(correction.trim() ? { previous_error: correction.trim() } : {}),
   };
   return `Edit the single attached clean source. Return one PNG at the exact canvas size below.
-Apply each instruction only to its paired target. A box is permission, not a request to redraw everything inside it.
+Apply each instruction only to its paired target. A box is permission, not a request to redraw everything inside it. If allowed_pixels contains a polygon, change only inside that polygon, not its surrounding rectangle.
 For a move, use the stated destination or offset once; retain the complete target, its size and shape, and clear its former position. For additions, keep all existing objects. For a disconnection, delete only the requested segment and add no terminal symbols.
 Preserve unnamed objects, connections, line style, fills and background inside the boxes. Change no pixels outside them. Do not restyle, remove unrequested labels, or draw markers.
 <5e-scoped-edit-spec>

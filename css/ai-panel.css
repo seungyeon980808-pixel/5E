@@ -3039,3 +3039,70 @@
 #ai-image-panel .ai-source-processing-feedback[hidden] { display:none !important; }
 #ai-image-panel .ai-source-processing-feedback:not([hidden]) [data-ai-output-processing-status] { display:block; }
 #ai-image-panel .ai-source-processing-feedback [data-ai-background-lock-hint]:not([hidden]) { display:block; padding:4px 0 0; }
+
+/* Compact viewing chrome and a location-bound comment editor (R02–R07). */
+body:has(#ai-image-panel:not([hidden])) .app-shell-header { visibility: hidden; pointer-events: none; }
+#ai-image-panel { inset: 0 !important; padding: 0; background: var(--bg-app); }
+#ai-image-panel .modal-ai.ai-workbench { width: calc(100vw / var(--ui-zoom, 1)); height: calc(100dvh / var(--ui-zoom, 1)) !important; min-width: 0; border: 0; }
+#ai-image-panel .ai-pane-head,
+#ai-image-panel .mode-side-by-side .ai-pane-head { min-height: var(--ai-pane-head-height, 36px); padding: 4px 6px; }
+#ai-image-panel .ai-pane-head-controls { flex-wrap: nowrap; gap: 4px; }
+#ai-image-panel .ai-pane-metadata :is(select, [data-ai-version-button]) { height: 28px; min-height: 28px; padding-block: 2px; font-size: 12px; }
+#ai-image-panel .ai-image-card-head { height: 28px; min-height: 28px; flex-basis: 28px; }
+#ai-image-panel .ai-compare-heading { min-height: 36px; padding-block: 4px; gap: 6px; }
+#ai-image-panel .ai-pane-zoom { gap: 3px; }
+#ai-image-panel .ai-pane-zoom button { min-height: 28px; height: 28px; padding: 2px 7px; }
+#ai-image-panel .ai-compare-menu { position: relative; }
+#ai-image-panel .ai-compare-menu > summary { padding: 4px 8px; min-height: 28px; box-sizing: border-box; list-style: none; border: 1px solid var(--border); border-radius: 5px; background: var(--bg-input); color: var(--text-primary); cursor: pointer; white-space: nowrap; }
+#ai-image-panel .ai-compare-menu > summary::-webkit-details-marker { display: none; }
+#ai-image-panel .ai-compare-menu:has([aria-pressed="true"]) > summary { border-color: var(--accent); background: var(--control-selected-bg); }
+#ai-image-panel .ai-compare-menu-items { position: absolute; top: calc(100% + 4px); left: 0; z-index: 40; display: grid; min-width: 150px; padding: 4px; gap: 4px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg-panel); box-shadow: 0 6px 18px #0004; }
+#ai-image-panel .ai-compare-menu:not([open]) .ai-compare-menu-items { display: none; }
+#ai-image-panel .ai-compare-menu-items button { text-align: left; }
+#ai-image-panel .ai-comment-popover { position: fixed; z-index: 60; padding: 28px 12px 12px; max-height: 65vh; overflow: auto; box-sizing: border-box; border: 1px solid var(--border-strong); border-radius: 8px; background: var(--bg-panel); color: var(--text-primary); box-shadow: 0 8px 24px #0005; }
+#ai-image-panel .ai-comment-popover[hidden] { display: none; }
+#ai-image-panel .ai-comment-popover-close { position: absolute; right: 6px; top: 3px; width: 26px; height: 26px; padding: 0; border: 0; background: transparent; color: var(--text-primary); font-size: 20px; cursor: pointer; }
+#ai-image-panel .ai-comment-popover .ai-workbench-comment { padding: 0; margin: 0; border: 0; background: transparent; }
+#ai-image-panel .ai-comment-popover textarea { width: 100%; min-height: 76px; box-sizing: border-box; font: inherit; font-size: 13px; }
+#ai-image-panel .ai-comment-popover [data-ai-inline-delete] { margin-top: 6px; }
+#ai-image-panel :is(.ai-comment-popover-close, .ai-compare-menu > summary):focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+/* Approved bottom dock: images lead; tasks and requests share the lower row. */
+#ai-image-panel .ai-workspace { grid-template-columns: minmax(0,46fr) minmax(0,54fr); grid-template-rows: minmax(0,1fr) clamp(190px,27vh,250px); grid-template-areas: 'results results' 'tasks conversation'; }
+#ai-image-panel .ai-task-rail { border-top:1px solid var(--border); border-right:1px solid var(--border); }
+#ai-image-panel .ai-task-tabs { display:flex; flex:1; overflow:auto; min-height:0; }
+#ai-image-panel .ai-task-tab-list { display:flex; flex-direction:row; align-items:stretch; gap:6px; padding:8px; width:max-content; min-width:100%; }
+#ai-image-panel .ai-task-tab { flex:0 0 180px; width:180px; min-height:70px; border-left-width:1px; border-radius:6px; }
+#ai-image-panel .ai-task-new { flex:0 0 100px; width:100px; }
+#ai-image-panel .ai-conversation { border-top:1px solid var(--border); border-left:0; min-height:0; overflow:hidden; }
+#ai-image-panel .ai-conversation-body { overflow:auto; min-height:0; }
+#ai-image-panel .ai-compare-heading { justify-content:space-between; flex-wrap:wrap; gap:8px; }
+#ai-image-panel .ai-pane-zoom { margin:0; flex:none; }
+#ai-image-panel .ai-annotation-toolbar { flex-wrap:wrap; }
+#ai-image-panel .ai-comment-tools-label { color:var(--text-secondary); margin-left:5px; font-size:12px; }
+#ai-image-panel .ai-annotation-toolbar > .ai-comment-tools-label { display:inline; }
+#ai-image-panel .mode-stacked .ai-comparison-grid { grid-template-columns:minmax(0,1fr); grid-template-rows:repeat(2,minmax(0,1fr)); }
+#ai-image-panel .mode-stacked .ai-image-pane { display:flex; min-height:0; border-right:0; }
+#ai-image-panel .mode-stacked .ai-original-pane { border-bottom:1px solid var(--border); }
+#ai-image-panel .ai-preview-stage > img { max-height:none; flex:none; }
+#ai-image-panel .ai-comment-popover { max-width:300px; }
+#ai-image-panel .ai-comment-popover textarea { min-height:64px; max-height:160px; }
+#ai-image-panel .ai-comment-popover [data-ai-comment-geometry] { display:none !important; }
+@media(max-width:760px) {
+  #ai-image-panel .ai-workspace { grid-template-columns:1fr; grid-template-rows:minmax(260px,1fr) 130px 220px; grid-template-areas:'results' 'tasks' 'conversation'; overflow:auto; }
+  #ai-image-panel .ai-task-rail { border-right:0; }
+  #ai-image-panel .ai-compare-heading { align-items:center; }
+  #ai-image-panel .ai-pane-zoom { order:3; }
+}
+
+#ai-image-panel .ai-graph-edit-hint { display:inline-flex; margin-left:auto; min-height:28px; padding:3px 8px; font-size:12px; }
+#ai-image-panel .ai-task-add { flex:0 0 140px; align-self:stretch; }
+#ai-image-panel .ai-task-tab.is-exam-linked { border-color:#dba52b; }
+#ai-image-panel .ai-task-tab.is-exam-linked .ai-task-tab-title { color:var(--text-primary); }
+#ai-image-panel .ai-task-tab.is-exam-linked.is-on { border-left-color:#dba52b; }
+
+#ai-image-panel [data-ai-reuse-source] { display:inline-flex; min-height:26px; padding:3px 7px; font-size:11px; }
+
+/* Use the selected image's existing action at its upper right. */
+#ai-image-panel .ai-generated-card .ai-canvas-output { display:inline-flex !important; border-radius:5px; }
+#ai-image-panel [data-ai-insert-selected] { display:none !important; }

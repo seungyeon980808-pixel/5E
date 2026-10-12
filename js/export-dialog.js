@@ -160,6 +160,7 @@ function segValue(group, attr) {
  * Esc/우클릭으로 취소(onDone(null)). world 1단위=1mm이므로 라벨은 mm.
  * 미리보기·영역지정(export) 둘 다 이 한 함수를 쓴다. */
 export function runAreaCapture(svg, state, onDone, hintText, options = {}) {
+  window.dispatchEvent(new Event('5e:canvas-interaction-cancel'));
   const overlay = document.createElement("div");
   overlay.className = "capture-overlay";
   /* ⚠ z-index 는 튜토리얼 흐림(100010)보다 위여야 한다.
@@ -327,7 +328,13 @@ export function runAreaCapture(svg, state, onDone, hintText, options = {}) {
     overlay.removeEventListener("contextmenu", onCtx);
     overlay.remove();
   }
-  function finish(bounds) { cleanup(); onDone(bounds); }
+  let finished = false;
+  function finish(bounds) {
+    if (finished) return;
+    finished = true; cleanup();
+    window.dispatchEvent(new Event('5e:canvas-interaction-cancel'));
+    onDone(bounds);
+  }
   function cancel() { finish(null); }
   function confirm() {
     if (!box) return;

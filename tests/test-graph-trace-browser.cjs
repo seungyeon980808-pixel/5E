@@ -16,6 +16,12 @@ const dir=path.resolve(process.env.EVIDENCE_DIR||'.omo/evidence/graph-trace-2026
    window.trace=createTraceEditor({toolbarHost:document.querySelector('#toolbar'),previewHost:document.querySelector('#preview'),reference:{data:canvas.toDataURL(),width:300,height:180,plotBox:{x:0,y:0,w:300,h:180}},onChange:s=>events.push(s)});
    trace.attachAfterBBox(document.querySelector('svg'),plane);
  },base);
+ await page.waitForFunction(()=>document.querySelector('[data-trace-import]')?.disabled===false);
+ if(await page.locator('select[data-trace-view]').inputValue()!=='graph')throw Error('Default view must be graph only');
+ await page.locator('[data-trace-zoom]').selectOption('150');
+ if(await page.evaluate(()=>trace.getState().previewZoom)!==150)throw Error('Zoom selection missing');
+ await page.locator('[data-trace-zoom]').selectOption('100');
+ await page.locator('select[data-trace-view]').selectOption('overlay');
  await page.waitForSelector('[data-trace-layer="source"]');
  const initial=await page.evaluate(()=>({mode:trace.getState().mode,white:document.querySelector('circle').getAttribute('fill'),hit:document.querySelector('#hit').getAttribute('stroke'),graph:document.querySelector('[data-trace-graph] path').getAttribute('stroke'),inline:getComputedStyle(document.querySelector('#inline')).stroke,inlineHit:document.querySelector('#inline-hit').getAttribute('style')}));
  if(initial.mode!=='overlay'||initial.white!=='white'||initial.hit!=='transparent'||initial.graph!=='#166bff'||initial.inline!=='rgb(22, 107, 255)'||initial.inlineHit!=='stroke:transparent!important;fill:transparent')throw Error(JSON.stringify(initial));
@@ -27,11 +33,11 @@ const dir=path.resolve(process.env.EVIDENCE_DIR||'.omo/evidence/graph-trace-2026
  await page.keyboard.press('Escape');
  const editRoundtrip=await page.evaluate(()=>{const m=trace.getGraphMatrix();const p={x:3.2345,y:-2.456};const displayed={x:m[0]*p.x+m[2]*p.y+m[4],y:m[1]*p.x+m[3]*p.y+m[5]};return {p,q:trace.toGraphPoint(displayed)};});
  if(Math.abs(editRoundtrip.p.x-editRoundtrip.q.x)>1e-9)throw Error('Editing inverse failed');
- await page.locator('[data-trace-mode="side"]').click();if(!(await page.locator('.gm-trace-source-pane img').isVisible()))throw Error('Side source missing');
- await page.locator('[data-trace-mode="graph"]').click();
+ await page.locator('select[data-trace-view]').selectOption('side');if(!(await page.locator('.gm-trace-source-pane img').isVisible()))throw Error('Side source missing');
+ await page.locator('select[data-trace-view]').selectOption('graph');
  const restored=await page.evaluate(()=>({stroke:document.querySelector('svg path').getAttribute('stroke'),source:!!document.querySelector('[data-trace-layer]'),inline:document.querySelector('#inline').getAttribute('style')}));
  if(restored.stroke!=='black'||restored.source||restored.inline!=='stroke:var(--accent, orange);fill:none;stroke-width:.3')throw Error('Graph-only paint not restored');
- await page.locator('[data-trace-mode="overlay"]').click();
+ await page.locator('select[data-trace-view]').selectOption('overlay');
  await page.locator('[data-trace-calibrate]').click();
  for(const point of [{x:-20,y:12},{x:20,y:12},{x:-20,y:-12}]){
   const screen=await page.evaluate(p=>{const svg=document.querySelector('svg'),q=svg.createSVGPoint();q.x=p.x;q.y=p.y;const out=q.matrixTransform(svg.getScreenCTM());return{x:out.x,y:out.y};},point);
@@ -40,7 +46,7 @@ const dir=path.resolve(process.env.EVIDENCE_DIR||'.omo/evidence/graph-trace-2026
  const calibrated=await page.evaluate(()=>trace.getState());
  if(Math.abs(calibrated.graphMatrix[0]-.8)>.015||Math.abs(calibrated.graphMatrix[3]-.8)>.015)throw Error('Three-point registration failed '+JSON.stringify(calibrated));
  await page.evaluate(async()=>{const saved=trace.getState();trace.destroy();const {createTraceEditor}=await import('/js/graph/trace-overlay.js?v=1.7.0-four-session-integration');window.trace=createTraceEditor({toolbarHost:document.querySelector('#toolbar'),previewHost:document.querySelector('#preview'),initialState:saved});trace.attachAfterBBox(document.querySelector('svg'),plane);});
- await page.observeGraphSignal(()=>Math.abs(trace.getState().graphMatrix[0]-.8)<.015, undefined, undefined, async () => { await page.waitForSelector('[data-trace-layer="source"]'); });
+ await page.observeGraphSignal(()=>Math.abs(trace.getState().graphMatrix[0]-.8)<.015, undefined, undefined, async () => {await page.waitForSelector('[data-trace-layer="source"]');});
  await page.screenshot({path:path.join(dir,name+'-overlay.png')});
  await page.locator('.gm-trace-options summary').click();
  await page.locator('[data-trace-reset]').click();

@@ -34,6 +34,8 @@ export function initWebLoginUi({ openAi }) {
   const title = dialog.querySelector('h2'), codeBox = dialog.querySelector('[data-login-code]');
   const start = dialog.querySelector('[data-login-start]'), copy = dialog.querySelector('[data-copy-code]');
   let connected = false, userCode = '', phase = 'idle', wasFullscreen = false, toastTimer, preparationTimer, pairFrame, authenticating = false, pendingAiAction = null;
+  let connectionObserver = null;
+  dialog.addEventListener('close', () => { connectionObserver?.disconnect(); connectionObserver = null; });
   async function runPendingAiAction() {
     const pending = pendingAiAction;
     if (!pending || pending.started || !connected) return;
@@ -96,7 +98,7 @@ export function initWebLoginUi({ openAi }) {
     }
     if (next !== 'waiting') resetPairedLayout();
     label.textContent = next === 'connected' ? 'ChatGPT 연결됨' : ['waiting', 'starting'].includes(next) ? '로그인 중…' : next === 'error' ? '연결 확인' : 'ChatGPT 연결';
-    badge.title = connected ? 'ChatGPT 연결됨 · AI 이미지 변환을 사용할 수 있습니다' : label.textContent;
+    badge.title = connected ? 'ChatGPT 연결됨 · 계정과 이용 한도 보기' : label.textContent;
     badge.setAttribute('aria-label', badge.title);
     if (aiButton) {
       aiButton.dataset.loginState = next;
@@ -108,7 +110,7 @@ export function initWebLoginUi({ openAi }) {
     start.disabled = next === 'starting';
     start.querySelector('[data-login-start-label]').textContent = next === 'starting' ? '인증 창 준비 중…' : next === 'waiting' ? authenticating ? '인증 창으로 돌아가기' : '2. OpenAI 인증하기 →' : next === 'connected' ? '닫기' : next === 'error' ? '다시 로그인' : 'ChatGPT로 로그인';
     start.querySelector('[data-login-logo]').hidden = !['idle', 'error'].includes(next);
-    title.textContent = mobile && ['waiting', 'starting'].includes(next) ? '인증 후 5E로 돌아오세요' : next === 'connected' ? '이제 AI 기능을 이용할 수 있습니다.' : ['waiting', 'starting'].includes(next) ? '코드를 보면서 인증하세요' : 'AI 기능을 시작하세요';
+    title.textContent = mobile && ['waiting', 'starting'].includes(next) ? '인증 후 5E로 돌아오세요' : next === 'connected' ? pendingAiAction ? '이제 AI 기능을 이용할 수 있습니다.' : '연결 정보' : ['waiting', 'starting'].includes(next) ? '코드를 보면서 인증하세요' : 'AI 기능을 시작하세요';
     codeBox.hidden = !userCode || next !== 'waiting';
     codeBox.querySelector('strong').textContent = userCode;
   }
@@ -131,7 +133,22 @@ export function initWebLoginUi({ openAi }) {
     title.focus({ preventScroll: true });
   }
   badge.addEventListener('click', () => {
-    if (!connected) show();
+    show();
+    connectionObserver?.disconnect(); connectionObserver = null;
+    const summary = document.querySelector('[data-ai-account]')?.closest('.ai-account-summary');
+    dialog.querySelector('[data-main-connection-summary]')?.remove();
+    if (connected && summary) {
+      const copy = document.createElement('div'); copy.dataset.mainConnectionSummary = '';
+      const update = () => {
+        copy.replaceChildren(...Array.from(summary.children, node => {
+          const field = node.cloneNode(true); for (const key of Object.keys(field.dataset)) delete field.dataset[key]; return field;
+        }));
+      };
+      update(); message.after(copy);
+      connectionObserver = new MutationObserver(update);
+      connectionObserver.observe(summary, {subtree:true, childList:true, characterData:true});
+      window.dispatchEvent(new Event('5e:web-ai-status'));
+    }
   });
   function dismiss() {
     const pending = pendingAiAction;

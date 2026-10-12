@@ -96,6 +96,7 @@ export function createModalSurfaceMotion({
   surface = overlay?.querySelector?.('.modal') || overlay,
   cssEntrance = null,
   springFrequency = SPRING_FREQUENCY,
+  animateSurface = true,
   reducedMotion = prefersReducedMotion,
   requestFrame = callback => globalThis.requestAnimationFrame?.(callback),
   cancelFrame = handle => globalThis.cancelAnimationFrame?.(handle),
@@ -270,6 +271,12 @@ export function createModalSurfaceMotion({
   function render() {
     const progress = Math.max(0, Math.min(1, value));
     const remaining = 1 - progress;
+    // Full-screen libraries keep their large grid stationary while fading.
+    // Avoid alternating style writes/computed reads on that grid every frame.
+    if (!animateSurface) {
+      overlay.style.setProperty('opacity', String(baseOpacity * progress));
+      return;
+    }
     const base = liveSurfaceBase();
     const translation = [
       `calc(${base.translate[0] || '0px'} + ${offset.x * remaining}px)`,

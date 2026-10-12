@@ -181,9 +181,12 @@ export function createExamSourceTabs(state, services) {
     }
     services.switchPage(state,page.id);
     const image = state.get().objects.find(object => ['image','coordplane'].includes(object.type) && object.aiTaskId === taskId && !object.editableAssetRegionId);
-    if (!image || image.aiCandidateId !== candidate.id) {
+    const desiredLabels=tab.labelPreviewIncluded?.[candidate.id]!==false;
+    const hasEditableLabels=candidate.labelPlan?.labels?.some(label=>label.scope!=='graph');
+    const materializedLabels=state.get().objects.some(object=>object.aiTaskId===taskId && object.aiCandidateId===candidate.id && object.aiAutoLabel);
+    if (!image || image.aiCandidateId !== candidate.id || hasEditableLabels && materializedLabels!==desiredLabels) {
       if (image) state.update(value => {value.selectedIds = [image.id];});
-      await services.materializeCandidate(candidate,{taskId,...(image ? {replaceId:image.id} : {})});
+      await services.materializeCandidate(tab.labelPreviewIncluded?.[candidate.id]===false ? {...candidate,labelPlan:null} : candidate,{taskId,...(image ? {replaceId:image.id} : {})});
     }
     services.centerView?.();
     return capture(context);
@@ -236,9 +239,12 @@ export function createExamSourceTabs(state, services) {
       if (state.get().activePageId !== originalPage.id) throw new Error('연결된 원래 5E 작업 탭에서 시험지에 반영해주세요.');
       const tab = context.snapshot.tabs[0], candidate = tab.generated?.find(item => item.id === tab.selectedCandidateId);
       const image = state.get().objects.find(object => ['image','coordplane'].includes(object.type) && object.aiTaskId === context.taskId && !object.editableAssetRegionId);
-      if (candidate && image && image.aiCandidateId !== candidate.id) {
+      const desiredLabels=tab.labelPreviewIncluded?.[candidate?.id]!==false;
+      const hasEditableLabels=candidate?.labelPlan?.labels?.some(label=>label.scope!=='graph');
+      const materializedLabels=state.get().objects.some(object=>object.aiTaskId===context.taskId && object.aiCandidateId===candidate?.id && object.aiAutoLabel);
+      if (candidate && image && (image.aiCandidateId !== candidate.id || hasEditableLabels && materializedLabels!==desiredLabels)) {
         state.update(value => {value.selectedIds = [image.id];});
-        await services.materializeCandidate(candidate,{taskId:context.taskId,replaceId:image.id});
+        await services.materializeCandidate(desiredLabels ? candidate : {...candidate,labelPlan:null},{taskId:context.taskId,replaceId:image.id});
       }
     }
     const captured = await capture(context);

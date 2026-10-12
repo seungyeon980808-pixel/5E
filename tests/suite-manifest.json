@@ -187,7 +187,10 @@
     },
     {
       "path": "tests/test-graph-partial-domain.mjs",
-      "findingIds": ["NQA-020", "GRAPH-PARTIAL-REAL-DOMAIN"]
+      "findingIds": [
+        "NQA-020",
+        "GRAPH-PARTIAL-REAL-DOMAIN"
+      ]
     },
     {
       "path": "tests/test-native-graph.mjs",
@@ -532,6 +535,12 @@
       "path": "tests/test-visitor-stats.cjs",
       "findingIds": [
         "VISITOR-STATS-SERVER"
+      ]
+    },
+    {
+      "path": "tests/test-feedback-free-scope.mjs",
+      "findingIds": [
+        "FEEDBACK-FREE-COMMENT-SCOPE"
       ]
     }
   ],
@@ -1353,12 +1362,16 @@
     },
     {
       "path": "tests/test-ai-created-task-selection-browser.cjs",
-      "findingIds": ["AI-CREATED-TASK-SELECTION-AND-SOURCE"],
+      "findingIds": [
+        "AI-CREATED-TASK-SELECTION-AND-SOURCE"
+      ],
       "reason": "Exercises explicit duplicate/send ownership, source visibility, workflow isolation, deletion fallback and reload with real local PNG input in root/preview Chromium/WebKit; no AI requests."
     },
     {
       "path": "tests/test-ai-task-menu-viewport-browser.cjs",
-      "findingIds": ["AI-TASK-MENU-VIEWPORT-EDGES"],
+      "findingIds": [
+        "AI-TASK-MENU-VIEWPORT-EDGES"
+      ],
       "reason": "Checks expanded task menus at all viewport edges, short-height scrolling, keyboard collapse/send, pointer send and focus restoration in root/preview Chromium/WebKit."
     },
     {
@@ -1370,11 +1383,18 @@
     },
     {
       "path": "tests/test-graph-partial-domain-browser.cjs",
-      "findingIds": ["NQA-020", "GRAPH-PARTIAL-REAL-DOMAIN"]
+      "findingIds": [
+        "NQA-020",
+        "GRAPH-PARTIAL-REAL-DOMAIN"
+      ]
     },
     {
       "path": "tests/test-personal-graph-save-browser.cjs",
-      "findingIds": ["NQA-021", "NQA-022", "PERSONAL-GRAPH-BUNDLE"],
+      "findingIds": [
+        "NQA-021",
+        "NQA-022",
+        "PERSONAL-GRAPH-BUNDLE"
+      ],
       "reason": "Real graph editor save with plane-only selection, new-category visibility, durable library reload, linked graph reuse, shade, undo/redo and editing in root/preview Chromium/WebKit."
     },
     {
@@ -1405,6 +1425,36 @@
       "path": "tests/test-visitor-stats-browser.cjs",
       "findingIds": [
         "VISITOR-STATS-UI"
+      ]
+    },
+    {
+      "path": "tests/test-feedback-input-browser.cjs",
+      "findingIds": [
+        "FEEDBACK-INPUT-CLEANUP"
+      ]
+    },
+    {
+      "path": "tests/test-feedback-workspace-browser.cjs",
+      "findingIds": [
+        "FEEDBACK-BOTTOM-WORKSPACE"
+      ]
+    },
+    {
+      "path": "tests/test-feedback-linked-document-browser.cjs",
+      "findingIds": [
+        "FEEDBACK-PERSISTENT-LINK"
+      ]
+    },
+    {
+      "path": "tests/test-feedback-graph-controls-browser.cjs",
+      "findingIds": [
+        "FEEDBACK-GRAPH-CONTROLS"
+      ]
+    },
+    {
+      "path": "tests/test-feedback-graph-text-browser.cjs",
+      "findingIds": [
+        "FEEDBACK-FREE-GRAPH-TEXT"
       ]
     }
   ],

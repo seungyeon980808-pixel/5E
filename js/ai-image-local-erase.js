@@ -1,35 +1,12 @@
+import { registerEscapeLayer } from './escape-layers.js?v=1.7.0-four-session-integration';
 import { decodeScopedPng, encodeScopedPng } from './ai-scoped-edit-png.js?v=1.7.0-four-session-integration';
 import { getImageStageGeometry } from './ai-image-comments.js?v=1.7.0-four-session-integration';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const abort = signal => { if (signal?.aborted) throw new DOMException('지우기 취소 · 이전 버전 유지', 'AbortError'); };
 
-// Pixel-center, even/odd scan conversion. Geometry is the selected bitmap's
-// coordinate space, never the main canvas or another image's dimensions.
-export function polygonPixelMask(width, height, polygon) {
-  if (!Number.isInteger(width) || !Number.isInteger(height) || width <= 0 || height <= 0
-    || width * height > 16000000) throw new RangeError('지울 이미지 크기가 지원 범위를 벗어났습니다.');
-  if (!Array.isArray(polygon) || polygon.length < 3 || polygon.length > 4096
-    || polygon.some(p => !Number.isFinite(p?.x) || !Number.isFinite(p?.y))) throw new TypeError('닫힌 지우기 영역을 지정하세요.');
-  const points = polygon.map(p => ({ x: Math.max(0, Math.min(width, p.x)), y: Math.max(0, Math.min(height, p.y)) }));
-  const mask = new Uint8Array(width * height);
-  const first = Math.max(0, Math.ceil(Math.min(...points.map(p => p.y)) - .5));
-  const last = Math.min(height - 1, Math.floor(Math.max(...points.map(p => p.y)) - .5));
-  for (let y = first; y <= last; y++) {
-    const line = y + .5, xs = [];
-    for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
-      const a = points[j], b = points[i];
-      if ((a.y > line) !== (b.y > line)) xs.push(a.x + (line - a.y) * (b.x - a.x) / (b.y - a.y));
-    }
-    xs.sort((a, b) => a - b);
-    for (let i = 0; i + 1 < xs.length; i += 2) {
-      const left = Math.max(0, Math.ceil(xs[i] - .5));
-      const right = Math.min(width, Math.ceil(xs[i + 1] - .5));
-      if (right > left) mask.fill(1, y * width + left, y * width + right);
-    }
-  }
-  return mask;
-}
+import { polygonPixelMask } from './polygon-mask.js?v=1.7.0-four-session-integration';
+export { polygonPixelMask } from './polygon-mask.js?v=1.7.0-four-session-integration';
 
 export async function eraseImagePolygon(dataUrl, polygon, { signal } = {}) {
   abort(signal);
@@ -80,6 +57,7 @@ export function createLocalImageEraseController({ panel, getTarget, isBusy, reso
   function setActive(value) {
     cancel(); active = value && eligible(getTarget()) && !isBusy() && panel.dataset.aiSharingMode !== 'view';
     panel.dataset.aiLocalEraseActive = String(active);
+    button?.toggleAttribute('data-escape-layer', active);
     panel.dispatchEvent(new CustomEvent('5e:ai-local-erase-tool-change'));
     refresh();
   }
@@ -87,6 +65,7 @@ export function createLocalImageEraseController({ panel, getTarget, isBusy, reso
     const item = getTarget(), disabled = isBusy() || !eligible(item) || panel.dataset.aiSharingMode === 'view';
     if (disabled && active) { active = false; cancel(); panel.dataset.aiLocalEraseActive = 'false'; }
     if (button) {
+      button.toggleAttribute('data-escape-layer', active);
       button.disabled = disabled || Boolean(pending);
       button.setAttribute('aria-pressed', String(active));
       button.title = disabled ? '이미지 수정본을 선택하면 사용할 수 있습니다.' : '드래그로 둘러싼 부분을 지웁니다. 이전 버전은 보존합니다. Esc: 취소';
@@ -120,12 +99,13 @@ export function createLocalImageEraseController({ panel, getTarget, isBusy, reso
   function bind(item, stage, img) {
     bindings.get(item)?.dispose();
     const disposers = [];
-    const on = (name, callback) => { stage.addEventListener(name, callback, true); disposers.push(() => stage.removeEventListener(name, callback, true)); };
+    const surface = stage.closest('.ai-image-card') || stage.parentElement || stage;
+    const on = (name, callback) => { surface.addEventListener(name, callback, true); disposers.push(() => surface.removeEventListener(name, callback, true)); };
     on('pointerdown', event => {
       if (!active || isBusy() || getTarget() !== item || event.button !== 0 || event.isPrimary === false
         || panel.dataset.aiSharingMode === 'view' || !eligible(item)) return;
-      if (event.target !== img && event.target !== stage && !event.target.closest?.('[data-ai-comment-marker]')) return;
-      const point = position(event, img, false); if (!point) return;
+      if (event.target.closest?.('button,input,textarea,select') && !event.target.closest?.('[data-ai-comment-marker]')) return;
+      const point = position(event, img); if (!point) return;
       event.preventDefault(); event.stopImmediatePropagation(); clearGesture();
       const overlay = doc.createElementNS(SVG_NS, 'svg'); overlay.classList.add('ai-local-erase-overlay');
       // Existing workbench observer exempts transient interaction previews from
@@ -135,7 +115,7 @@ export function createLocalImageEraseController({ panel, getTarget, isBusy, reso
       const path = doc.createElementNS(SVG_NS, 'polygon'); path.setAttribute('vector-effect', 'non-scaling-stroke'); overlay.append(path); stage.append(overlay);
       gesture = { item, stage, img, pointerId: event.pointerId, data: item.data, displaySource: img.src,
         points: [point], overlay, path, lastX: event.clientX, lastY: event.clientY };
-      draw(gesture); try { stage.setPointerCapture(event.pointerId); } catch {}
+      draw(gesture); try { surface.setPointerCapture(event.pointerId); } catch {}
     });
     on('pointermove', event => {
       const g = gesture; if (!g || g.stage !== stage || event.pointerId !== g.pointerId) return;
@@ -169,13 +149,14 @@ export function createLocalImageEraseController({ panel, getTarget, isBusy, reso
     const entry = { stage, img, dispose: () => { if (gesture?.stage === stage) cancel(); disposers.forEach(fn => fn()); stage.classList.remove('is-ai-local-erasing'); } };
     bindings.set(item, entry); refresh();
   }
+  if (button) cleanup.push(registerEscapeLayer(button, () => setActive(false)));
   listen(button, 'click', () => setActive(!active));
   listen(panel, 'click', event => { if (event.target.closest?.('[data-ai-comment-tool]')) setActive(false); });
   listen(panel, 'keydown', event => {
     if (event.key !== 'Escape' || !active || event.target.closest?.('input,textarea,select,[contenteditable="true"]')) return;
     event.preventDefault(); event.stopImmediatePropagation(); setActive(false);
   }, true);
-  listen(panel, '5e:ai-candidate-select', () => setActive(false));
+  listen(panel, '5e:ai-candidate-select', event => { if (!event.detail?.localErase) setActive(false); else refresh(); });
   listen(win, '5e:ai-task-change', () => setActive(false));
   listen(win, '5e:ai-workspace-activate', () => setActive(false));
   listen(win, 'blur', () => cancel());

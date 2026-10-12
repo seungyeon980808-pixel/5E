@@ -350,6 +350,9 @@ export function initRhwpExamWorkspace(state, services) {
     placement = null; panel.querySelector('.exam-placement').hidden = true; delete panel.dataset.placing;
   }
   function updatePlacement() {
+    if (placement?.target && placement.target.generation === bridge?.generation && placement.target.revision !== bridge?.revision) {
+      placement.target = bridge.insertionTarget();
+    }
     panel.querySelector('[data-exam-action="confirm-placement"]').disabled = busy || !placement || (!placement.existing && (!placement.target || placement.target.generation !== bridge?.generation || placement.target.revision !== bridge?.revision));
   }
   async function preparePlacement(captured) {
@@ -600,10 +603,13 @@ export function initRhwpExamWorkspace(state, services) {
     let group=canvas.querySelector('#exam-source-crop');
     if(!group){group=document.createElementNS('http://www.w3.org/2000/svg','g');group.id='exam-source-crop';group.setAttribute('pointer-events','none');canvas.append(group);}
     const page=state.get().pages.find(page=>page.id===state.get().activePageId),bounds=(page?.meta?.examDraftRender || page?.meta?.examRender)?.bounds;
-    canvas.querySelector('#exam-source-crop-fill')?.remove();group.replaceChildren();if(!page?.meta?.examLink || !bounds)return;
+    canvas.querySelector('#exam-source-crop-fill')?.remove();group.replaceChildren();
+    // Saved output bounds are metadata, not a permanent canvas selection.
+    // Show the frame only in the live linked-picture editing session.
+    if(!editing || !panel.hidden || !state.get().objects.length || !page?.meta?.examLink || !bounds)return;
     const fill=document.createElementNS('http://www.w3.org/2000/svg','rect');fill.id='exam-source-crop-fill';for(const[k,v]of Object.entries({x:bounds.x,y:bounds.y,width:bounds.w,height:bounds.h,fill:'#fff','pointer-events':'none'}))fill.setAttribute(k,v);canvas.insertBefore(fill,canvas.querySelector('#scene'));
     const rect=document.createElementNS('http://www.w3.org/2000/svg','rect');
-    for(const [key,value]of Object.entries({x:bounds.x,y:bounds.y,width:bounds.w,height:bounds.h,fill:'none',stroke:'#2878f0','stroke-width':1.5,'stroke-dasharray':'6 4','vector-effect':'non-scaling-stroke'}))rect.setAttribute(key,value);
+    for(const [key,value]of Object.entries({x:bounds.x,y:bounds.y,width:bounds.w,height:bounds.h,fill:'none',stroke:'#dba52b','stroke-width':1.5,'stroke-dasharray':'6 4','vector-effect':'non-scaling-stroke'}))rect.setAttribute(key,value);
     group.append(rect);
   }
   function figureBounds(figure,ref) {
@@ -802,7 +808,7 @@ export function initRhwpExamWorkspace(state, services) {
     if (!editing) return;
     editing = null;
     tabs.closeAi();
-    document.body.classList.remove('exam-editing'); sourceRegion.hide();bar.hidden=true;regionInspector.hidden=true;pictureSettings.close();
+    document.body.classList.remove('exam-editing'); sourceRegion.hide();bar.hidden=true;regionInspector.hidden=true;pictureSettings.close();syncSourceCrop();
     if (location.protocol !== 'file:') panel.hidden = false;
     syncBackground();
     window.dispatchEvent(new Event('resize')); renderFigures();
@@ -994,7 +1000,7 @@ export function initRhwpExamWorkspace(state, services) {
   }
   nativeRegion.root.addEventListener('click',e=>{const b=e.target.closest('[data-exam-action]');if(b&&!b.disabled){nativeRegion.closeMenu();void run(()=>actions[b.dataset.examAction]?.());}});
   const actions = {
-    close:async () => {await flushInline(true);await closeInline();if (window.fiveEExam) return window.fiveEExam.returnToSource(); panel.hidden = true; syncBackground(); document.querySelector('#exam-send')?.focus(); },
+    close:async () => {await flushInline(true);await closeInline();if (window.fiveEExam) return window.fiveEExam.returnToSource(); panel.hidden = true; syncBackground(); await resumeLinkedPage();document.querySelector('#exam-send')?.focus(); },
     new:async () => { cancelPlacement();await stableSave();await closeInline(); initializing=true;await bridge.newDocument();initializing=false;documentGeneration=bridge.generation;projectId=crypto.randomUUID();figures = new Map(); nameInput.value = '새 시험지'; changed(); },
     insert:() => startSend(),
     'cancel-placement':() => {cancelPlacement();message('그림 보내기를 취소했습니다.');},
@@ -1025,6 +1031,23 @@ export function initRhwpExamWorkspace(state, services) {
       await insertSource(source, '속력 그래프');
     },
   };
+  async function resumeLinkedPage() {
+    if (!bridge || !panel.hidden) return;
+    const page=state.get().pages.find(p=>p.id===state.get().activePageId),link=page?.meta?.examLink;
+    if (!link) return;
+    if (editing?.figure.link.tabId===link.tabId && editing?.figure.link.assetId===link.assetId) return;
+    if(editing) {const wasHidden=panel.hidden;endEdit();panel.hidden=wasHidden;}
+    const figure=[...figures.values()].reverse().find(f=>f.link.tabId===link.tabId && f.link.assetId===link.assetId && bridge.findFigure(f.id));
+    if (figure) await beginEdit(figure.id,bridge.findFigure(figure.id));
+  }
+  window.addEventListener('5e:exam-edit-linked-page',()=>void run(resumeLinkedPage));
+  window.addEventListener('5e:exam-unlink-page',event=>{
+    connectedAi?.unlinkExamTask?.(event.detail?.link);
+    if (editing && !tabs.pageForLink(editing.figure.link)) {
+      const wasHidden=panel.hidden;endEdit();panel.hidden=wasHidden;syncBackground();
+    }
+    syncSourceCrop();
+  });
   async function saveEditingProject() {
     if (editing?.external) {await window.fiveEDesktop.exam.saveWorkspace();return;}
     await actions.save();
@@ -1190,7 +1213,6 @@ export function initRhwpExamWorkspace(state, services) {
   documentMenu.querySelector('[data-exam-document-open]').addEventListener('click',()=>void run(open));
   documentMenu.querySelector('[data-exam-document-insert]').addEventListener('click',()=>void run(()=>startSend()));
   panel.querySelector('#exam-hwp-file').addEventListener('cancel',()=>{pendingDocumentInsertion=null;message('문서 열기를 취소했습니다.');});
-  window.addEventListener('5e:exam-send-ai', event => void run(() => startSend(event.detail)));
   window.addEventListener('5e:exam-send-graph', event => void run(() => startSend(null,event.detail)));
   async function receiveSource(path) {
     const request = ++incomingRequest;

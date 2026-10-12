@@ -2,6 +2,7 @@ import { buildSourceLabelCorrectionDraft } from './ai-source-label-plan.js?v=1.7
 import { LABEL_REVIEW_POLICY } from './ai-image-review.js?v=1.7.0-four-session-integration';
 import { composeReferenceImages } from './ai-reference-composite.js?v=1.7.0-four-session-integration';
 import { comparisonGeometry } from './ai-comparison.js?v=1.7.0-four-session-integration';
+import { registerEscapeLayer } from './escape-layers.js?v=1.7.0-four-session-integration';
 const REVIEW_STATES = new Set([
   "idle", "generating", "reviewing", "correcting", "passed",
   "first-generated", "scoped-applied", "needs-attention", "failed", "cancelled",
@@ -133,6 +134,8 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
   const lifecycle = new AbortController();
 
   const results = panel.querySelector(".ai-results");
+  const workspace = panel.querySelector('.ai-workspace');
+  if (workspace) workspace.append(results, panel.querySelector('.ai-task-rail'), panel.querySelector('.ai-conversation'));
   const previews = panel.querySelector("[data-ai-previews]");
   const references = panel.querySelector("[data-ai-attachment-list]");
   const versionButton = panel.querySelector("[data-ai-version-button]");
@@ -146,7 +149,8 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
   reviewContent?.append(panel.querySelector('.ai-review-overview'));
   const connection = panel.querySelector('.ai-advanced-settings');
   if (connection) { connection.open = true; panel.querySelector('[data-ai-connection-content]')?.append(connection); }
-  for (const kind of ['review', 'connection']) {
+  panel.querySelector('[data-ai-connection-dialog]')?.setAttribute('hidden', '');
+  for (const kind of ['review']) {
     const button = panel.querySelector(`[data-ai-${kind}-open]`);
     const dialog = panel.querySelector(`[data-ai-${kind}-dialog]`);
     if (dialog) panel.append(dialog); // Native modal siblings avoid nested aria-modal dialogs.
@@ -161,17 +165,14 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
   const compositePreview = panel.querySelector("[data-ai-composite-preview]");
   const orientationButtons = Array.from(panel.querySelectorAll("[data-ai-composition-orientation]"));
   const layoutButtons = Array.from(panel.querySelectorAll("[data-ai-layout-mode]"));
-  const linkedZoom = panel.querySelector("[data-ai-zoom-linked]");
   const paneZoomControls = Array.from(panel.querySelectorAll("[data-ai-pane-zoom]"));
-  const zoomTarget = panel.querySelector('[data-ai-zoom-target]');
-  const zoomPane = () => panel.dataset.aiLayout === 'result' ? 'result'
-    : panel.dataset.aiLayout === 'source' || linkedZoom?.checked ? 'source' : zoomTarget?.value || 'source';
+  const zoomPane = () => panel.dataset.aiLayout === 'result' ? 'result' : 'source';
   const paneHeadControls = Array.from(panel.querySelectorAll('.ai-pane-head-controls'));
   let paneHeadSyncFrame = 0;
   let paneHeadHeight = '';
   const syncPaneHeadHeight = () => {
     const height = Math.max(0, ...paneHeadControls.map(control => control.offsetHeight));
-    const nextHeight = `${height + 16}px`;
+    const nextHeight = `${height + 8}px`;
     if (nextHeight === paneHeadHeight) return;
     paneHeadHeight = nextHeight;
     panel.style.setProperty('--ai-pane-head-height', nextHeight);
@@ -243,13 +244,15 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
       const scale = Math.min(baseWidth / image.naturalWidth, baseHeight / image.naturalHeight) * zoom;
       image.style.width = `${image.naturalWidth * scale}px`;
       image.style.setProperty('height', `${image.naturalHeight * scale}px`, 'important');
+      image.style.maxHeight = 'none';
+      image.style.maxWidth = 'none';
     }
   }
 
   function fitCardStage(card) {
     const fit = cardFit(card);
     if (!fit) return;
-    const fits = results?.classList.contains('mode-side-by-side')
+    const fits = (results?.classList.contains('mode-side-by-side') || results?.classList.contains('mode-stacked'))
       ? [cardFit(activeCandidate()), cardFit(activeSource())].filter(Boolean)
       : [fit];
     const geometry = comparisonGeometry(fits[0], fits[1] || fits[0], {
@@ -284,11 +287,11 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
   }
 
   function setLayout(mode, fromUser = false) {
-    if (!results || !["side-by-side", "source", "result"].includes(mode)) return;
+    if (!results || !["side-by-side", "stacked", "source", "result"].includes(mode)) return;
     const previous = results.classList.contains("mode-source") ? "source" : results.classList.contains("mode-result") ? "result" : null;
     const position = previous ? readPosition(previous) : null;
-    if (previous && mode !== "side-by-side") paneZoom[mode] = paneZoom[previous];
-    results.classList.remove("mode-side-by-side", "mode-source", "mode-result");
+    if (previous && ['source','result'].includes(mode)) paneZoom[mode] = paneZoom[previous];
+    results.classList.remove("mode-side-by-side", "mode-stacked", "mode-source", "mode-result");
     results.classList.add(`mode-${mode}`);
     for (const button of layoutButtons) {
       const selected = button.dataset.aiLayoutMode === mode;
@@ -296,21 +299,15 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
       button.setAttribute("aria-pressed", String(selected));
     }
     if (fromUser) userChoseLayout = true;
-    const trackingControl = panel.querySelector('[data-ai-tracking-control]');
-    if (trackingControl) trackingControl.hidden = mode !== 'side-by-side';
-    const viewOptions = panel.querySelector('.ai-view-options');
-    if (viewOptions) viewOptions.hidden = mode !== 'side-by-side';
     panel.dataset.aiLayout = mode;
-    const targetControl = panel.querySelector('[data-ai-zoom-target-control]');
-    if (targetControl) targetControl.hidden = mode !== 'side-by-side' || linkedZoom?.checked;
-    if (mode === 'side-by-side' && linkedZoom?.checked) paneZoom.result = paneZoom.source;
+    if (mode === 'side-by-side' || mode === 'stacked') paneZoom.result = paneZoom.source;
     schedulePaneHeadSync();
     window.requestAnimationFrame(() => {
       fitCardStage(activeCandidate());
       fitCardStage(activeSource());
       applyPaneZoom("source");
       applyPaneZoom("result");
-      if (position && mode !== "side-by-side") writePosition(mode, position);
+      if (position && ['source','result'].includes(mode)) writePosition(mode, position);
     });
   }
 
@@ -321,7 +318,7 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
       setLayout(sourceCards().length ? "side-by-side" : "result");
       return;
     }
-    setLayout(sourceCards().length ? "side-by-side" : "result");
+    setLayout(sourceCards().length ? (panel.dataset.aiWorkflow === 'graph' ? 'stacked' : 'side-by-side') : 'result');
   }
 
   const paneCard = (pane) => pane === "source"
@@ -348,7 +345,7 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
   }
   function copyPosition(from, to) { writePosition(to, readPosition(from)); }
   panel.addEventListener('scroll', event => {
-    if (!linkedZoom?.checked || !results.classList.contains('mode-side-by-side')) return;
+    if (!results.classList.contains('mode-side-by-side') && !results.classList.contains('mode-stacked')) return;
     const card = event.target;
     const expected = syncedScroll.get(card);
     if (expected && Math.abs(card.scrollLeft - expected.left) < 1 && Math.abs(card.scrollTop - expected.top) < 1) return;
@@ -391,7 +388,7 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
   function changePaneZoom(pane, action) {
     const position = readPosition(pane);
     const next = action === "in" ? paneZoom[pane] + .2 : action === "out" ? paneZoom[pane] - .2 : 1;
-    const targets = linkedZoom?.checked && results.classList.contains("mode-side-by-side") ? ["source", "result"] : [pane];
+    const targets = ['side-by-side','stacked'].includes(panel.dataset.aiLayout) ? ["source", "result"] : [pane];
     for (const target of targets) {
       paneZoom[target] = next;
       applyPaneZoom(target);
@@ -418,7 +415,7 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     const scale = after.width / stage.offsetWidth;
     card.scrollLeft += (after.left + anchor.x * after.width - event.clientX) / scale;
     card.scrollTop += (after.top + anchor.y * after.height - event.clientY) / scale;
-    if (linkedZoom?.checked && results.classList.contains("mode-side-by-side")) {
+    if (['side-by-side','stacked'].includes(panel.dataset.aiLayout)) {
       const other = pane === "source" ? "result" : "source";
       paneZoom[other] = paneZoom[pane];
       applyPaneZoom(other);
@@ -595,6 +592,7 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
       versionButton.textContent = cards.length
         ? cardTitle(activeCandidate(), `생성 결과 ${cards.length}`)
         : "생성 결과 없음";
+      versionButton.title = versionButton.textContent;
       cards.forEach((card, index) => {
         const option = document.createElement("button");
         const selected = candidateKey(card) === activeCandidateKey;
@@ -705,6 +703,7 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
           replace.value = '__replace__'; replace.textContent = '원본 교체…'; sourceSelect.append(replace);
         }
         sourceSelect.value = activeSourceKey;
+        sourceSelect.title = sourceSelect.selectedOptions[0]?.textContent || "원본 선택";
       }
     }
     for (const card of cards) {
@@ -737,21 +736,36 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
   }
 
   layoutButtons.forEach((button) => button.addEventListener("click", () => setLayout(button.dataset.aiLayoutMode, true)));
+  const compareMenu = panel.querySelector('.ai-compare-menu');
+  const compareMenuLabel = panel.querySelector('[data-ai-compare-menu-label]');
+  const syncCompareMenu = () => {
+    const slider = panel.querySelector('.ai-results')?.classList.contains('is-wipe-comparing');
+    if (compareMenuLabel) compareMenuLabel.textContent = slider ? '슬라이더 비교 ▾' : panel.dataset.aiLayout === 'side-by-side' ? '좌우 비교 ▾' : panel.dataset.aiLayout === 'stacked' ? '상하 비교 ▾' : '비교 ▾';
+    for (const button of layoutButtons) {
+      const active = !slider && button.dataset.aiLayoutMode === panel.dataset.aiLayout;
+      button.classList.toggle('is-on', active); button.setAttribute('aria-pressed', String(active));
+    }
+  };
+  panel.addEventListener('click', event => {
+    if (event.target.closest('[data-ai-layout-mode], [data-ai-compare]')) {
+      if (compareMenu) compareMenu.open = false;
+      queueMicrotask(syncCompareMenu);
+    } else if (compareMenu?.open && !compareMenu.contains(event.target)) compareMenu.open = false;
+  });
+  const compareObserver = new MutationObserver(syncCompareMenu);
+  compareObserver.observe(results, {attributes:true, attributeFilter:['class']});
+  const compareItems = compareMenu?.querySelector('.ai-compare-menu-items');
+  compareItems?.setAttribute('role', 'menu');
+  compareItems?.querySelectorAll('button').forEach(button => button.setAttribute('role', 'menuitem'));
+  const unregisterCompareEscape = compareItems ? registerEscapeLayer(compareItems, () => {
+    compareMenu.open = false; compareMenu.querySelector('summary')?.focus();
+  }) : () => {};
+
   paneZoomControls.forEach((controls) => controls.addEventListener("click", (event) => {
     const button = event.target.closest("[data-ai-zoom-action]");
     if (!button) return;
     changePaneZoom(controls.dataset.aiPaneZoom === "shared" ? zoomPane() : controls.dataset.aiPaneZoom, button.dataset.aiZoomAction);
   }));
-  linkedZoom?.addEventListener("change", () => {
-    const targetControl = panel.querySelector('[data-ai-zoom-target-control]');
-    if (targetControl) targetControl.hidden = linkedZoom.checked || panel.dataset.aiLayout !== 'side-by-side';
-    applyPaneZoom(zoomPane());
-    if (!linkedZoom.checked) return;
-    paneZoom.result = paneZoom.source;
-    applyPaneZoom("result");
-    copyPosition("source", "result");
-  });
-  zoomTarget?.addEventListener('change', () => applyPaneZoom(zoomPane()));
   function selectCandidate(candidateKeyValue) {
     activeCandidateKey = candidateKeyValue;
     panel.dataset.aiSelectedCandidateId = activeCandidateKey;
@@ -910,6 +924,8 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
   applyPaneZoom("result");
   panel.aiWorkbench = {
     dispose() {
+      compareObserver.disconnect();
+      unregisterCompareEscape();
       lifecycle.abort();
       if (paneHeadSyncFrame) window.cancelAnimationFrame(paneHeadSyncFrame);
       headResizeObserver?.disconnect();
@@ -926,7 +942,7 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
         selectedSourceId: activeSourceKey,
         zoom: { ...paneZoom },
         layout: panel.dataset.aiLayout,
-        tracking: linkedZoom?.checked === true,
+        tracking: true,
         scroll: {
           source: { left: sourceCard?.scrollLeft || 0, top: sourceCard?.scrollTop || 0 },
           result: { left: resultCard?.scrollLeft || 0, top: resultCard?.scrollTop || 0 },
@@ -935,12 +951,12 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     },
     restoreViewState(state = {}) {
       state = state && typeof state === "object" ? state : {};
-      if (linkedZoom && typeof state.tracking === "boolean") linkedZoom.checked = state.tracking;
+      // Tracking is always enabled, including old workspaces saved with it off.
       if (state.layout) setLayout(state.layout, true);
       if (state.selectedCandidateId) panel.dataset.aiSelectedCandidateId = state.selectedCandidateId;
       if (state.selectedSourceId) {activeSourceKey = state.selectedSourceId;syncSources();}
       if (Number.isFinite(state.zoom?.source)) paneZoom.source = state.zoom.source;
-      if (Number.isFinite(state.zoom?.result)) paneZoom.result = state.zoom.result;
+      paneZoom.result = paneZoom.source;
       syncCandidates();
       applyPaneZoom("source");
       applyPaneZoom("result");
@@ -955,6 +971,7 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
           resultCard.scrollLeft = Number(state.scroll?.result?.left) || 0;
           resultCard.scrollTop = Number(state.scroll?.result?.top ?? state.scroll?.result) || 0;
         }
+        if (['side-by-side','stacked'].includes(panel.dataset.aiLayout)) copyPosition("source", "result");
       });
     },
   };

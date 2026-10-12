@@ -378,7 +378,7 @@
           </label>
           <label>
             간격
-            <input type="number" id="grid-interval" min="5" max="50" step="5" value="10" />
+            <span class="gm-step"><input type="number" id="grid-interval" min="5" max="50" step="5" value="10" /><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="격자 간격 늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="격자 간격 줄이기">▼</button></span></span>
             mm
           </label>
         </span>
@@ -411,7 +411,7 @@
       <div id="inspector-resize"></div>
 
       <div id="inspector">
-        <div id="inspector-empty">선택된 오브젝트 없음</div>
+        <div id="inspector-empty"></div>
         <div id="inspector-content" style="display:none">
           <!-- sections injected by inspector.js -->
         </div>
@@ -433,8 +433,8 @@
       <a class="footer-badge" href="https://github.com/seungyeon980808-pixel/5E"
          target="_blank" rel="noopener" title="소스코드 (GitHub)"><span class="footer-code" aria-hidden="true">&lt;/&gt;</span> Source</a>
       <span class="footer-change-badge" data-change-summary tabindex="0"
-            aria-label="2026-10-12 11:13 KST 반영: 문서 복귀·도구 기본값·라벨 토글·자유영역 지우기·패널 전환 개선"
-            title="2026-10-12 11:13 KST · 문서의 실제 그림 위치로 복귀, 한글 문서 메뉴와 삽입 위치 선택, 노란 편집 영역, 패널 전환 성능, 도구 기본값과 pt 표시, 라벨 ON/OFF, 자유영역 지우기, 실험 설정 접기, 방문자 집계 서버·푸터 준비. 방문자 운영 서버 배포는 별도입니다.">10.12 11:13 · 문서·작업대 개선</span>
+            aria-label="2026-10-12 16:49 KST 반영: 작업대·문서 연결·코멘트·지우기 정리"
+            title="2026-10-12 16:49 KST · 하단 작업대, 문서 그림 연결 유지와 노란 탭, 영역 잔상 정리, Enter·Space 삭제, 코멘트 점·박스·자유와 Esc, 연속 자유영역 지우기, 원본 재작업, 그래프 보기·불러오기·배율 드롭다운, 위쪽 내보내기, 라이브러리 닫기 스타일 계산 축소. Safari 실사용 검수와 기존 그래프 글자 드래그 검증은 남아 있습니다.">10.12 16:49 · 작업대·연결·지우기</span>
       <span class="footer-visitor-stats" data-visitor-stats tabindex="0" title="이용자 집계 서버 연결 준비 중">누적 — · 오늘 —</span>
     </span>
     <span class="app-footer-credit app-footer-copyright">Copyright © 2026 <strong>박승연</strong> | SMOE</span>
@@ -454,7 +454,6 @@
           <button type="button" class="ai-project-transfer" data-ai-project-transfer hidden>웹 프로젝트 열기</button>
           <span class="ai-status" data-ai-status>상태 확인 중…</span>
           <button type="button" class="ai-header-tool" data-ai-review-open aria-label="결과 확인 사항" title="결과 확인 사항" aria-haspopup="dialog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="m4 6 1.5 1.5L8 4M11 6h9M4 12h3M11 12h9M4 18h3M11 18h9"/></svg><span data-ai-review-count hidden></span></button>
-          <button type="button" class="ai-header-tool" data-ai-connection-open aria-label="연결 정보" title="연결 정보" aria-haspopup="dialog"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="M8 3v5M16 3v5M6 8h12v4a6 6 0 0 1-12 0zM12 18v3"/></svg></button>
           <button class="ai-close" type="button" data-ai-close aria-label="AI 이미지 변환 닫기" title="닫기 (Esc)">
             <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true"><path d="m5 5 10 10M15 5 5 15"/></svg>
           </button>
@@ -495,21 +494,28 @@
             <div class="ai-compare-controls" role="group" aria-label="보기 모드">
               <button type="button" data-ai-layout-mode="source" aria-pressed="false" title="Space로 수정본과 빠르게 비교">원본</button>
               <button type="button" class="is-on" data-ai-layout-mode="result" aria-pressed="true" title="Space로 원본과 빠르게 비교">수정본</button>
-              <button type="button" data-ai-layout-mode="side-by-side" aria-pressed="false">비교</button>
-              <button type="button" data-ai-compare hidden aria-pressed="false">겹쳐 비교</button>
+              <details class="ai-compare-menu">
+                <summary data-ai-compare-menu-label>비교 ▾</summary>
+                <div class="ai-compare-menu-items">
+                  <button type="button" data-ai-layout-mode="side-by-side" aria-pressed="false">좌우 비교</button>
+                  <button type="button" data-ai-layout-mode="stacked" aria-pressed="false">상하 비교</button>
+                  <button type="button" data-ai-compare hidden aria-pressed="false">슬라이더 비교</button>
+                </div>
+              </details>
             </div>
 <div class="ai-pane-zoom" data-ai-pane-zoom="shared" role="group" aria-label="이미지 배율">
                   <button type="button" data-ai-zoom-action="out" aria-label="이미지 축소">−</button>
                   <output data-ai-zoom-value>100%</output>
                   <button type="button" data-ai-zoom-action="in" aria-label="이미지 확대">＋</button>
-                  <button type="button" data-ai-zoom-action="fit">맞춤</button>
-                  <button type="button" class="ai-zoom-help" aria-label="확대 및 이동 도움말" title="Control 키 + 휠 또는 두 손가락 벌리기·오므리기: 확대·축소&#10;두 손가락 스크롤: 이동&#10;맞춤: 전체 보기">?</button>
+                  <button type="button" data-ai-zoom-action="fit">좌우맞춤</button>
+                  <button type="button" class="ai-zoom-help" aria-label="확대 및 이동 도움말" title="Control 키 + 휠 또는 두 손가락 벌리기·오므리기: 확대·축소&#10;두 손가락 스크롤: 이동&#10;좌우맞춤: 이미지 폭에 맞춰 보기">?</button>
                 </div>
-            <details class="ai-view-options"><summary aria-label="보기 설정" title="보기 설정">···</summary><div class="ai-view-options-menu"><label data-ai-tracking-control><input type="checkbox" data-ai-zoom-linked checked> 확대·이동 동기화</label><label data-ai-zoom-target-control hidden>확대 대상 <select data-ai-zoom-target aria-label="확대 대상"><option value="source">원본</option><option value="result">수정본</option></select></label></div></details>
             <div class="ai-annotation-toolbar" role="group" aria-label="코멘트 도구">
               <button type="button" class="is-on" data-ai-comment-tool="pan" aria-pressed="true" title="그림을 이동합니다. 코멘트는 생성하지 않습니다">이동</button>
-              <button type="button" data-ai-comment-tool="point" aria-pressed="false" title="그림의 한 위치를 지정하고 코멘트를 작성합니다">점 코멘트</button>
-              <button type="button" data-ai-comment-tool="area" aria-pressed="false" title="영역을 둘러싸고 코멘트를 작성합니다">수정 박스</button>
+              <span class="ai-comment-tools-label">코멘트</span>
+              <button type="button" data-ai-comment-tool="point" aria-pressed="false" title="한 위치에 코멘트를 남깁니다">점</button>
+              <button type="button" data-ai-comment-tool="area" aria-pressed="false" title="사각형 영역에 코멘트를 남깁니다">박스</button>
+              <button type="button" data-ai-comment-tool="free" aria-pressed="false" title="자유롭게 둘러싼 영역에 코멘트를 남깁니다">자유</button>
             <button type="button" class="ai-comment-visibility" data-ai-comment-visibility aria-pressed="true" title="이미지 위의 코멘트 표시를 켜거나 끕니다">코멘트 표시</button>
             </div>
           </header>
@@ -517,6 +523,7 @@
             <section class="ai-image-pane ai-original-pane" aria-label="원본 이미지">
               <header class="ai-pane-head"><div class="ai-pane-head-controls"><div class="ai-pane-metadata">
                 <strong>원본</strong>
+                <button type="button" class="ai-replace-source" data-ai-reuse-source title="원본으로 새 작업을 준비합니다. 기존 결과는 작업 목록에 보관됩니다.">원본으로 다시 작업</button>
                 <label data-ai-source-picker hidden><select data-ai-source-select aria-label="살펴볼 원본 선택"></select></label>
                 <div class="ai-composition-toolbar" data-ai-composition-controls hidden>
                   <label>배치 <select data-ai-composition-select aria-label="원본 배치">
@@ -785,11 +792,7 @@
                 <div class="ai-review-summary" data-ai-review-summary data-state="idle" role="status" aria-live="polite">준비됨</div>
                 <label class="ai-review-toggle"><input type="checkbox" data-ai-review-mode checked> 결과 확인</label>
               </div>
-              <section class="ai-comments-list-section" aria-label="수정 코멘트 목록">
-                <header class="ai-comments-heading"><strong>위치별 수정 요청</strong><span>박스 밖은 원본 유지</span></header>
-                <div class="ai-comments-list" data-ai-comments aria-live="polite"><p class="ai-comments-empty">그림에서 점을 찍거나 영역을 둘러싸고 수정할 내용을 남기세요.</p></div>
-              </section>
-              <p class="ai-comment-list-status" data-ai-comment-status aria-live="polite">코멘트는 선택한 이미지 버전에 연결됩니다.</p>
+
             </section>
             <section class="ai-chat-panel" data-ai-chat-panel aria-label="Codex와 대화" hidden>
               <header class="ai-chat-heading"><strong>전체 그림에 관해 물어보기</strong><p>대화 답변은 그림을 만들지 않습니다. 정리한 내용을 수정 요청으로 가져온 뒤 변환을 실행하세요.</p></header>

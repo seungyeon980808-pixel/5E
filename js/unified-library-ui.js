@@ -910,7 +910,7 @@ function createPartOptions(host, onChange) {
 export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openObjectify, openAi, openIndependentReferences, openGraph, pdfUi, pdfDetailsElement, onImportedImages, onDesktopSnapshot, desktopLibrary = globalThis.fiveEDesktop?.pdfLibrary, storage = globalThis.localStorage, initialSearchReadiness = "ready" }) {
   const overlay = buildShell();
   const root = overlay.querySelector(".unilib");
-  const motion = createModalSurfaceMotion({overlay,surface:root,springFrequency:48});
+  const motion = createModalSurfaceMotion({overlay,surface:root,springFrequency:48,animateSurface:false});
   for (const [attribute,anchor] of [['data-unilib-graph','[data-unilib-ai]'],['data-unilib-crop-graph','[data-unilib-crop-workbench]']]) {
     const button=document.createElement('button');button.type='button';button.className='unilib-button';
     button.setAttribute(attribute,'');button.disabled=true;button.textContent='좌표/함수 생성';

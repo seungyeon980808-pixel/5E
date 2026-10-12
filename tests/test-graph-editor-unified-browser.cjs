@@ -24,9 +24,21 @@ state.update(s=>{s.objects=[fg,plane];s.objects.forEach((o,i)=>o.order=i);s.grou
 },fixture);
 const snap=()=>page.evaluate(async()=>structuredClone((await import('/js/state.js?v=1.7.0-four-session-integration')).state.get().objects));
 const plane=objects=>objects.find(o=>o.type==='coordplane');
-const open=()=>page.evaluate(async()=>{(await import('/js/graph/graph-modal.js?v=1.7.0-four-session-integration')).openGraphModal('unified-plane');});
+const open=()=>page.evaluate(async()=>{(await import('/js/graph/graph-modal.js?v=1.7.0-four-session-integration')).openGraphModal('unified-plane');await Promise.allSettled(document.querySelector('#graph-modal-overlay').getAnimations({subtree:true}).map(a=>a.finished));});
 const change=async(id,value,event='change')=>{await page.locator(id).fill(String(value));await page.locator(id).dispatchEvent(event);};
 const before=await snap();await open();
+const layout=await page.evaluate(()=>{const g=document.querySelector('.gm-body'),l=g.querySelector('.gm-left'),r=g.getBoundingClientRect(),c=document.querySelector('#gm-cancel').getBoundingClientRect(),m=document.querySelector('.gm-modal').getBoundingClientRect(),e=document.querySelector('#gm-confirm').getBoundingClientRect();return{grid:r.width,gap:parseFloat(getComputedStyle(g).columnGap),left:l.getBoundingClientRect().width,close:{top:c.top,right:c.right},modal:{top:m.top,right:m.right},export:{top:e.top,height:e.height},previewBottom:document.querySelector('#gm-preview').getBoundingClientRect().bottom,wideFooter:document.querySelector('.gm-modal > .modal-actions')!==null};});
+fs.writeFileSync(path.join(output,`${name}-r10-r12-layout.json`),JSON.stringify(layout,null,2));
+assert.ok(Math.abs(layout.left-(layout.grid-460-layout.gap)*.8)<2,'preview uses 80% of its previous width');
+assert.ok(layout.close.top-layout.modal.top<45 && layout.modal.right-layout.close.right<45,'close is at the top right');
+assert.ok(layout.export.top<layout.previewBottom && layout.export.height<=36,'small export is above the preview');
+assert.equal(layout.wideFooter,false);
+assert.equal(await page.locator('.gm-modal .gm-preview-label').count(),0);
+assert.equal(await page.locator('.gm-modal input[type="number"]').evaluateAll(nodes=>nodes.every(n=>n.closest('.gm-step'))),true,'all graph number fields share the stepper');
+const exact=page.locator('#gm-exact-x-min');
+await exact.locator('..').locator('[data-step="1"]').click();assert.equal(await exact.inputValue(),'0.1');
+await exact.locator('..').locator('[data-step="-1"]').click();assert.equal(await exact.inputValue(),'0');
+await page.locator('.gm-modal').screenshot({path:path.join(output,`${name}-r10-r12.png`)});
 assert.equal(await page.locator('#gm-tab-coord #gm-graph-annotations').count(),0);
 assert.equal(await page.locator('#gm-engine-controls #gm-engine-bounds').count(),0);
 assert.equal(await page.locator('#gm-engine-controls #gm-engine-y2').count(),0);
@@ -46,7 +58,7 @@ await open();await page.locator('#gm-tab-func-btn').click();await page.locator('
 const expressionSaved=await snap();await page.evaluate(async()=>{const {state}=await import('/js/state.js?v=1.7.0-four-session-integration');const io=await import('/js/project-io.js?v=1.7.0-four-session-integration');const saved=io.serialize(state.get());io.applyLoaded(state,structuredClone(saved));});await open();await page.locator('#gm-confirm').click();for(const o of expressionSaved){const actual=(await snap()).find(a=>a.id===o.id);for(const key of Object.keys(o))assert.deepEqual(actual[key],o[key],`save ${key}`);}
 await open();await page.locator('#gm-tab-annot-btn').click();const label=page.locator('#gm-preview [data-graph-annotation="label-A"]');await page.evaluate(()=>document.fonts.ready);await label.scrollIntoViewIfNeeded();const box=await label.boundingBox();const oldAnnotation=plane(await snap()).graphAnnotations[0];await label.dragTo(label,{targetPosition:{x:box.width/2+30,y:box.height/2+10}});await page.locator('#gm-confirm').click();current=await snap();const moved=plane(current).graphAnnotations[0];assert.notEqual(moved.x,oldAnnotation.x);assert.equal(moved.anchorX,undefined);assert.equal(moved.seriesId,undefined);assert.equal(moved.text,'수정 A');
 for(const width of [1200,980,720]){await page.setViewportSize({width,height:1000});await open();await page.locator('#gm-tab-annot-btn').click();const overflow=await page.evaluate(()=>{const modal=document.querySelector('.gm-modal'),right=modal.querySelector('.gm-right');return {modal:modal.scrollWidth>modal.clientWidth+1,right:right.scrollWidth>right.clientWidth+1};});assert.deepEqual(overflow,{modal:false,right:false},`no horizontal overflow ${width}`);await page.screenshot({path:path.join(output,`${name}-${width}.png`)});await page.locator('#gm-cancel').click();}
-assert.deepEqual(errors,[]);reports.push({browser:name,ok:true,providerCalls:0,scenarios:['native no-op','enabled tick modes','irregular labels retain positions','explicit position editor','generated number/multiple signed ticks','new right axis labels','typed annotation edit','expression and linked guides','save/reopen','direct label drag','responsive layout']});
+assert.deepEqual(errors,[]);reports.push({browser:name,ok:true,providerCalls:0,scenarios:['compact preview ratio','top-right close and small export','consistent functional steppers','native no-op','enabled tick modes','irregular labels retain positions','explicit position editor','generated number/multiple signed ticks','new right axis labels','typed annotation edit','expression and linked guides','save/reopen','direct label drag','responsive layout']});
 }catch(e){fs.writeFileSync(path.join(output,`${name}-failure.json`),JSON.stringify(await page.evaluate(()=>({advanced:document.querySelector('#gm-adv-panel').hidden,button:document.querySelector('#gm-adv-open').outerHTML,ancestors:[...function*(e){while(e){yield {tag:e.tagName,id:e.id,hidden:e.hidden,display:getComputedStyle(e).display};e=e.parentElement;}}(document.querySelector('#gm-y2-on'))]})),null,2));await page.screenshot({path:path.join(output,`${name}-failure.png`)});throw e;}finally{await browser.close();}}
 fs.writeFileSync(path.join(output,'result.json'),JSON.stringify(reports,null,2));console.log(JSON.stringify(reports));
 })().catch(e=>{console.error(e);process.exit(1);});

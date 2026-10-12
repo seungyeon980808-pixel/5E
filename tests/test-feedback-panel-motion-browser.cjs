@@ -20,13 +20,14 @@ h.withServer(async origin => {
       await settle(page);
       const projection = () => page.evaluate(() => {
         const svg = document.querySelector('#canvas'), point = new DOMPoint(0, 0).matrixTransform(svg.getScreenCTM());
-        return { x: point.x, y: point.y, updates: window.motionUpdates, footer: document.querySelector('.app-footer').getBoundingClientRect().height };
+        const rect=svg.getBoundingClientRect();
+        return { centerX:rect.left+rect.width/2, centerY:rect.top+rect.height/2, x: point.x, y: point.y, updates: window.motionUpdates, footer: document.querySelector('.app-footer').getBoundingClientRect().height };
       });
       for (const side of ['left', 'right']) {
         const before = await projection(); await page.locator('#drawer-' + side + '-toggle').click(); await settle(page);
         const after = await projection();
         assert.ok(after.updates - before.updates <= 4, `600-object ${side} toggle paints only on layout changes: ${after.updates - before.updates}`);
-        assert.ok(Math.hypot(after.x - before.x, after.y - before.y) < 1, 'object screen position survives panel toggle');
+        assert.ok(Math.hypot(after.x - after.centerX, after.y - after.centerY) < 1, 'artboard centers in available work area after panel toggle');
         assert.equal(after.footer, before.footer, 'footer height remains unchanged');
         // Reverse while the panel is still moving, through actual button input.
         await page.locator('#drawer-' + side + '-toggle').click();

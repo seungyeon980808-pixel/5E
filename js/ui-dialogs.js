@@ -38,22 +38,26 @@ function buildDialog({ title, message, buttons, wide = false, dismissValue = but
       </div>`;
     document.body.appendChild(overlay);
     const previousFocus = document.activeElement;
-    const done = (value) => { overlay.remove(); previousFocus?.focus(); resolve(value); };
+    let settled = false, unregisterEscape;
+    const done = (value) => { if (settled) return; settled = true; unregisterEscape?.(); overlay.remove(); previousFocus?.focus({preventScroll:true}); resolve(value); };
     const dialog = overlay.querySelector('[role="dialog"], [role="alertdialog"]');
-    registerEscapeLayer(dialog, () => done(dismissValue));
+    unregisterEscape = registerEscapeLayer(dialog, () => done(dismissValue));
     overlay.querySelectorAll(".modal-btn").forEach((b) => {
       b.addEventListener("click", () => done(buttons[Number(b.dataset.i)].value));
     });
     overlay.addEventListener("mousedown", (e) => { if (e.target === overlay) done(dismissValue); });
     overlay.addEventListener("keydown", (e) => {
-      if (wide && e.key === 'Tab') {
+      if (e.key === 'Tab') {
         const controls = [...overlay.querySelectorAll('.modal-btn')];
         const index = controls.indexOf(document.activeElement);
         e.preventDefault();
         controls[index < 0 ? (e.shiftKey ? controls.length - 1 : 0) : (index + (e.shiftKey ? -1 : 1) + controls.length) % controls.length].focus();
       }
       if (e.key === "Escape") { e.stopPropagation(); done(dismissValue); }
-      if (!wide && e.key === "Enter" && !e.target.closest("button")) { e.preventDefault(); done(buttons[buttons.length - 1].value); }
+      if (!e.isComposing && !e.repeat && ['Enter', ' '].includes(e.key)) {
+        const button = e.target.closest('button.modal-btn');
+        if (button) { e.preventDefault(); e.stopImmediatePropagation(); button.click(); }
+      }
     });
     if (wide) dialog.focus({ preventScroll: true });
     else overlay.querySelector(".modal-btn:last-child")?.focus();

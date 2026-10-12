@@ -126,6 +126,19 @@ for (const [engineName, engine] of [['chromium', chromium], ['webkit', webkit]])
       assert.equal(await page.evaluate(() => loginResumeSent.length), 2, 'a new explicit retry is required to resume canceled work');
     });
 
+    await scenario('R06 connected account badge opens live connection information', async (page, directory) => {
+      await page.locator('.web-account-status[data-state="connected"]').click();
+      const dialog = page.locator('.web-login-dialog'); await dialog.waitFor({state:'visible'});
+      assert.equal(await dialog.locator('h2').textContent(),'연결 정보');
+      await waitForDom(page,()=>document.querySelector('[data-main-connection-summary]')?.textContent.includes('로그인 계정'));
+      assert.equal(await dialog.locator('[data-ai-account]').count(),0,'copied account fields do not duplicate AI controller selectors');
+      assert.equal(await page.locator('#ai-image-panel').isVisible(),false);
+      assert.equal(await page.locator('.web-account-status').evaluate(n=>getComputedStyle(n).cursor),'pointer');
+      await dialog.screenshot({path:path.join(directory,'main-connection.png')});
+      await dialog.locator('.web-login-close').click(); await dialog.waitFor({state:'hidden'});
+      assert.equal(await page.evaluate(()=>loginResumeFixture.calls.login),0);
+    }, { connected: true });
+
     await scenario('connected transfer retains separate order', async (page, directory) => {
       const library = await openCropLibrary(page); await cropReferences(page, library, 2);
       await beginMotionSamples(page); await sendLibrary(page, library, { count: 2 });

@@ -7,7 +7,8 @@
 .app-shell-header .canvas-global-controls { margin-inline-start:auto; min-width:0; }
 .panel-utility-bar-right .web-account-status [data-account-label] { overflow:hidden; text-overflow:ellipsis; }
 .app-shell-header .web-account-status [data-account-label] { overflow:hidden; text-overflow:ellipsis; }
-.web-account-status[data-state="connected"] { cursor:default; }
+.web-account-status[data-state="connected"] { cursor:pointer; }
+.web-login-dialog [data-main-connection-summary] { display:grid; gap:6px; padding:12px; border:1px solid var(--border); border-radius:6px; background:var(--bg-input); font-size:13px; }
 @container inspector-panel (max-width:239px) {
   .panel-utility-bar-right .web-account-status { min-width:max-content; max-width:none; padding-inline:6px; gap:5px; justify-content:center; }
   .panel-utility-bar-right .web-account-status [data-account-label] { font-size:0; flex:none; overflow:visible; }

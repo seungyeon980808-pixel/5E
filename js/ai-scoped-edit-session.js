@@ -1,3 +1,4 @@
+import { polygonPixelMask } from './polygon-mask.js?v=1.7.0-four-session-integration';
 import { rectangleToBinaryMask } from './ai-scoped-edit.js?v=1.7.0-four-session-integration';
 import { decodeScopedPng, applyScopedPngEdit } from './ai-scoped-edit-png.js?v=1.7.0-four-session-integration';
 
@@ -57,12 +58,14 @@ export async function createScopedEditSession(options) {
       throw new TypeError('Only selected-result-pixels rectangles are accepted.');
     }
     return Object.freeze({ x0: rect.x0, y0: rect.y0, x1: rect.x1, y1: rect.y1,
-      coordinateSpace: 'selected-result-pixels' });
+      coordinateSpace: 'selected-result-pixels', ...(rect.polygon ? {polygon:Object.freeze(rect.polygon.map(p=>Object.freeze({x:p.x,y:p.y})))} : {}) });
   });
   const decoded = await decodeScopedPng(source);
   const mask = new Uint8Array(decoded.width * decoded.height);
   for (const rect of rectangles) {
-    const part = rectangleToBinaryMask(decoded.width, decoded.height, rect);
+    const bounds = rectangleToBinaryMask(decoded.width, decoded.height, rect);
+    const part = rect.polygon ? polygonPixelMask(decoded.width, decoded.height, rect.polygon) : bounds;
+    if(rect.polygon) for(let i=0;i<part.length;i++) part[i] &= bounds[i];
     for (let i = 0; i < mask.length; i++) if (part[i]) mask[i] = 1;
   }
   const session = Object.freeze({ ...capturedIdentity, width: decoded.width, height: decoded.height,

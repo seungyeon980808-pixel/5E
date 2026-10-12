@@ -1,10 +1,11 @@
+import { polygonPixelMask } from './polygon-mask.js?v=1.7.0-four-session-integration';
 import { decodeScopedPng, encodeScopedPng, applyScopedPngEdit } from './ai-scoped-edit-png.js?v=1.7.0-four-session-integration';
 
 // Padding and integer cropping only: never resize a source or relocate a target.
 export async function prepareScopedEditContext(sourcePng, rectangles, { contextMargin = null } = {}) {
   const source = await decodeScopedPng(sourcePng);
   const width = 1536, height = 1024;
-  const originalRectangles = rectangles.map(r => ({ ...r }));
+  const originalRectangles = rectangles.map(r => structuredClone(r));
   const left = Math.min(...rectangles.map(r => r.x0)), right = Math.max(...rectangles.map(r => r.x1));
   const top = Math.min(...rectangles.map(r => r.y0)), bottom = Math.max(...rectangles.map(r => r.y1));
   if (!rectangles.length || left < 0 || top < 0 || right > source.width || bottom > source.height
@@ -30,6 +31,7 @@ export async function prepareScopedEditContext(sourcePng, rectangles, { contextM
   }
   const contextRectangles = originalRectangles.map(r => ({
     x0: r.x0 - origin.x, y0: r.y0 - origin.y, x1: r.x1 - origin.x, y1: r.y1 - origin.y,
+    ...(r.polygon ? {polygon:r.polygon.map(p=>({x:p.x-origin.x,y:p.y-origin.y}))} : {}),
   }));
   return { source, originalRectangles, width, height, origin, rectangles: contextRectangles,
     inputPng: await encodeScopedPng({ width, height, data }, { metadata: source.metadata }) };
@@ -37,8 +39,11 @@ export async function prepareScopedEditContext(sourcePng, rectangles, { contextM
 
 export async function restoreScopedEditContext(context, candidatePng) {
   const mask = new Uint8Array(context.width * context.height);
-  for (const r of context.rectangles) for (let y = r.y0; y < r.y1; y++) {
-    mask.fill(1, y * context.width + r.x0, y * context.width + r.x1);
+  for (const r of context.rectangles) {
+    if (r.polygon) {
+      const part=polygonPixelMask(context.width,context.height,r.polygon);
+      for(let i=0;i<mask.length;i++) if(part[i]) mask[i]=1;
+    } else for (let y = r.y0; y < r.y1; y++) mask.fill(1,y*context.width+r.x0,y*context.width+r.x1);
   }
   const applied = await applyScopedPngEdit(context.inputPng, candidatePng, mask);
   const local = await decodeScopedPng(applied.png);

@@ -48,9 +48,6 @@ export function getRenderScale() {
   const m = _svgRef.getScreenCTM();
   return (m && m.a) ? m.a : getZoom();
 }
-
-const VIEW_CENTER_OFFSET_X_MM = 5;
-
 let canvasLock = { mode: "free", worldX: 0, worldY: 0, screenX: 0, screenY: 0 };
 
 function liteMode() {
@@ -200,6 +197,7 @@ export function initViewport(svg, state, onChange) {
     const next = readProjection();
     if (sameBox(projection, next)) projection = next;
   });
+  let layoutAnimation = null;
   const preserveProjection = () => {
     const next = readProjection();
     if (sameBox(projection, next)) return;
@@ -212,12 +210,23 @@ export function initViewport(svg, state, onChange) {
     state.update((s) => {
       s.viewBox.w = next.width / previous.scale;
       s.viewBox.h = next.height / previous.scale;
-      s.viewBox.x = liteMode() && !retainModeProjection ? -s.viewBox.w / 2 : (next.left - previous.x) / previous.scale;
-      s.viewBox.y = liteMode() && !retainModeProjection ? -s.viewBox.h / 2 : (next.top - previous.y) / previous.scale;
+      s.viewBox.x = -s.viewBox.w / 2;
+      s.viewBox.y = -s.viewBox.h / 2;
     });
+    layoutAnimation?.cancel();
     projection = readProjection();
     commit();
+    // One model update, followed by a compositor-only translation. The large
+    // scene is never rebuilt on each frame of a panel/fullscreen transition.
+    if (!window.matchMedia('(prefers-reduced-motion: reduce)').matches && svg.animate) {
+      const cssScale = projection.width / (svg.clientWidth || projection.width);
+      const dx = (previous.x - projection.x) / cssScale, dy = (previous.y - projection.y) / cssScale;
+      if (Math.hypot(dx, dy) > .5) layoutAnimation = svg.animate([
+        {translate: `${dx}px ${dy}px`}, {translate:'0px 0px'},
+      ], {duration:300, easing:'cubic-bezier(.22,1,.36,1)'});
+    }
   };
+  for (const name of ['pointerdown', 'wheel']) svg.addEventListener(name, () => { layoutAnimation?.cancel(); projection = readProjection(); }, {capture:true, passive:true});
   const layoutObserver = new ResizeObserver(preserveProjection);
   layoutObserver.observe(svg);
   window.addEventListener("5e:panel-layout-did-change", preserveProjection);
@@ -396,7 +405,7 @@ export function initViewport(svg, state, onChange) {
 /* ----- centerView: restore the default visual alignment ----- */
 export function centerView(state) {
   state.update((s) => {
-    s.viewBox.x = -s.viewBox.w / 2 - (liteMode() ? 0 : VIEW_CENTER_OFFSET_X_MM);
+    s.viewBox.x = -s.viewBox.w / 2;
     s.viewBox.y = -s.viewBox.h / 2;
   });
 }

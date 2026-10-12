@@ -761,6 +761,7 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
   };
   return {
     examTaskNames: () => entries.flatMap(entry => entry.controller?.examTaskNames?.() || []),
+    unlinkExamTask: link => {for (const entry of entries) entry.controller?.unlinkExamTask?.(link);},
     renameExamTask: (link,name) => {for (const entry of entries) entry.controller?.renameExamTask?.(link,name);},
     activeExamTask: () => ({scope:active.scope || '',taskId:active.controller.activeTask()}),
     captureExamTask: async (taskId = null, scope = null) => {

@@ -98,7 +98,7 @@
 
 @media (min-width: 761px) {
   #ai-image-panel:has(.ai-batch-section) .ai-workspace {
-    grid-template-columns: var(--product-desktop-workspace-columns);
+    grid-template-columns: minmax(0,46fr) minmax(0,54fr);
   }
   #ai-image-panel:has(.ai-batch-section) .ai-batch-section { word-break: keep-all; }
   #ai-image-panel:has(.ai-batch-section) .ai-batch-section > summary { gap: var(--product-space-default); }

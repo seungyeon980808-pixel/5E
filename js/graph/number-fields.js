@@ -12,6 +12,22 @@ export function installGraphNumberFields(root) {
   const eligible = input => input?.matches?.('input[type="number"]') && input.dataset.graphPrecision !== 'exact';
   function format() {
     for (const input of root.querySelectorAll('input[type="number"]')) {
+      // Use the incumbent stepper for dynamic graph fields as well. Existing
+      // input nodes and listeners stay intact; no second value/write path.
+      if (!input.closest('.gm-step')) {
+        const doc = input.ownerDocument;
+        const wrap = doc.createElement('span'); wrap.className = 'gm-step gm-number-step';
+        const buttons = doc.createElement('span'); buttons.className = 'gm-step-btns';
+        for (const [direction, glyph, label] of [[1,'▲','늘리기'],[-1,'▼','줄이기']]) {
+          const button = doc.createElement('button'); button.type = 'button'; button.tabIndex = -1;
+          button.dataset.step = String(direction); button.textContent = glyph;
+          button.setAttribute('aria-label', `${input.getAttribute('aria-label') || input.title || '값'} ${label}`);
+          buttons.append(button);
+        }
+        input.before(wrap); wrap.append(input, buttons);
+      }
+      if (input.step === 'any' && !input.dataset.stepSize) input.dataset.stepSize = '0.1';
+      input.closest('.gm-step')?.querySelectorAll('[data-step]').forEach(button => { if (button.disabled !== input.disabled) button.disabled = input.disabled; });
       if (!eligible(input) || input.value === '' || !Number.isFinite(input.valueAsNumber)) continue;
       const previous = records.get(input);
       if (previous?.dirty && input === document.activeElement) continue;
@@ -67,7 +83,7 @@ export function installGraphNumberFields(root) {
   root.addEventListener('change', normalize, true);
   root.addEventListener('blur', commitBlur, true);
   const observer = new MutationObserver(format);
-  observer.observe(root, { childList: true, subtree: true });
+  observer.observe(root, { childList: true, subtree: true, attributes: true, attributeFilter: ['disabled'] });
   format();
   return { format, destroy() { observer.disconnect(); root.removeEventListener('input', normalize, true); root.removeEventListener('change', normalize, true); root.removeEventListener('blur', commitBlur, true); } };
 }

@@ -790,14 +790,16 @@ function setupDrawing() {
     });
   });
 
-  window.addEventListener("pointercancel", () => {
+  const cancelCanvasGesture = () => {
     drawing = false;
     startWorld = null;
     drawType = null;
     _marqueeStart = null;
     if (_marqueeEl) { _marqueeEl.remove(); _marqueeEl = null; }
-    _state.update((s) => { s.draft = null; });
-  });
+    if (_state.get().draft) _state.update((s) => { s.draft = null; });
+  };
+  window.addEventListener("pointercancel", cancelCanvasGesture);
+  window.addEventListener('5e:canvas-interaction-cancel', cancelCanvasGesture);
 
   // NOTE: targeting a group member on double-click is handled in the mousedown
   // handler above (e.detail >= 2). A dblclick listener can't be used here: every

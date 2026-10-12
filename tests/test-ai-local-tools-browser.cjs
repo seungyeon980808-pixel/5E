@@ -119,6 +119,8 @@ for (const engine of ['chromium','webkit']) test(`${engine}: label switch, scope
   await page.waitForFunction(()=>window.__compositeCalls===1);
   const labeled=await geometry(page);
   const advanced=page.locator(`${active} [data-ai-scoped-advanced]`), precision=page.locator(`${active} [data-ai-precision-settings]`);
+  await page.locator(`${active} .is-ai-active-candidate button[data-ai-comment-marker]`).first().hover();
+  await precision.waitFor({state:'visible'});
   assert.equal(await advanced.getAttribute('open'),null);assert.equal(await precision.getAttribute('open'),null,'existing precision checks do not force open experiment settings');
   await advanced.locator('summary').click();
   const mode=page.locator(`${active} [data-ai-scoped-prompt-mode]`);
@@ -155,7 +157,8 @@ for (const engine of ['chromium','webkit']) test(`${engine}: label switch, scope
   assert.match(await page.locator(`${active} [data-ai-scoped-apply-hint]`).textContent(),/영역/);
   // Cancel a gesture by changing the selected version. The old captured pointer
   // must not create either an erased version or a request box on release.
-  await erase.click();await lasso(page,[{x:100,y:100},{x:170,y:100},{x:170,y:170}],false);
+  assert.equal(await erase.getAttribute('aria-pressed'),'true','eraser stays active after creating a revision');
+  await lasso(page,[{x:100,y:100},{x:170,y:100},{x:170,y:170}],false);
   await page.evaluate(()=>{const p=document.querySelector('#ai-image-panel');p.dataset.aiSelectedCandidateId='candidate-0';p.aiWorkbench.restoreViewState({...p.aiWorkbench.getViewState(),selectedCandidateId:'candidate-0'});p.dispatchEvent(new CustomEvent('5e:ai-candidate-select',{detail:{candidateId:'candidate-0'}}));});
   await page.mouse.up();await selected(page,'candidate-0');
   assert.equal((await snapshot(page))[0].generated.length,after[0].generated.length);
@@ -164,7 +167,7 @@ for (const engine of ['chromium','webkit']) test(`${engine}: label switch, scope
   const downloadPromise=page.waitForEvent('download');await page.locator(`${active} [data-ai-save-selected]`).click();
   const download=await downloadPromise;const downloadPath=await download.path();
   assert.equal(fs.readFileSync(downloadPath).toString('base64'),result.data.split(',')[1],'PNG export uses the erased bytes');
-  await page.locator(`${active} [data-ai-insert-selected]`).click();
+  await page.locator(`${active} .is-ai-active-candidate [data-ai-canvas-output]`).click();
   await page.waitForFunction(()=>window.__localToolsState.get().objects.some(o=>o.aiCandidateId?.startsWith('generated-')));
   const inserted=await page.evaluate(id=>window.__localToolsState.get().objects.find(o=>o.aiCandidateId===id)?.src,result.id);
   assert.equal(inserted,result.data,'canvas insertion uses the same erased bytes');
@@ -191,4 +194,75 @@ for (const engine of ['chromium','webkit']) test(`${engine}: label switch, scope
   await page.screenshot({path:path.join(evidence,engine,'compact.png')});
   assert.deepEqual(errors,[]);
   fs.writeFileSync(path.join(evidence,engine,'result.json'),JSON.stringify({headerHeight:base.header.height,noLabelRoundTrips:3,compositeCallsBeforeReload:1,changedPixels:result.scopedEditHistory.at(-1).changedPixels,exportAndInsertionMatch:true,previousVersionRestored:true,noAiCalls:true,errors},null,2));
+});
+
+for (const engine of ['chromium','webkit']) test(`${engine}: R01–R07 follow-up labels, compact views and location-bound comment editing`, {timeout:120000}, async t => {
+  const {page,errors}=await fixture(t,engine);
+  const panel=page.locator(active), popup=panel.locator('[data-ai-comment-popover]');
+  assert.equal(await panel.locator('[data-ai-zoom-linked], [data-ai-connection-open], [data-ai-exam-send], .ai-comments-list-section').count(),0);
+  await page.evaluate(async()=>{await Promise.allSettled(document.getAnimations().map(a=>a.finished)); await new Promise(r=>requestAnimationFrame(r));});
+  const coverage=await panel.locator('.ai-workbench').evaluate(n=>({rect:n.getBoundingClientRect().toJSON(),width:innerWidth,height:innerHeight,main:getComputedStyle(document.querySelector('.app-shell-header')).visibility}));
+  assert.ok(Math.abs(coverage.rect.top)<1 && Math.abs(coverage.rect.height-coverage.height)<2,'AI workbench fills the application');
+  assert.equal(coverage.main,'hidden');
+  for(const mode of ['source','result']) { await panel.locator(`[data-ai-layout-mode="${mode}"]`).click(); assert.equal(await panel.getAttribute('data-ai-layout'),mode); }
+  await panel.locator('.ai-compare-menu summary').click(); await panel.locator('[data-ai-layout-mode="side-by-side"]').click();
+  assert.equal(await panel.getAttribute('data-ai-layout'),'side-by-side');
+  await panel.locator('.ai-compare-menu summary').click(); await panel.locator('[data-ai-compare]').click();
+  assert.equal(await panel.locator('.ai-results').getAttribute('class').then(v=>v.includes('is-wipe-comparing')),true);
+  assert.equal(await panel.locator('[data-ai-layout-mode][aria-pressed="true"]').count(),0,'slider comparison is the sole selected view');
+  await panel.locator('[data-ai-layout-mode="result"]').click();
+  await panel.locator('[data-tab-id="task-1"] .ai-task-tab-select').click(); await selected(page,'candidate-1');
+  const pin=panel.locator('.is-ai-active-candidate button[data-ai-comment-marker]').first();
+  await pin.hover(); await popup.waitFor({state:'visible'});
+  const editor=popup.locator('[data-ai-inline-editor]');
+  await editor.hover(); await editor.fill('사각형 추가 · 위치 코멘트에서 편집');
+  await page.setViewportSize({width:1280,height:900});
+  await editor.press('End'); await editor.press('!');
+  assert.equal(await editor.inputValue(),'사각형 추가 · 위치 코멘트에서 편집!','typing survives geometry changes');
+  await page.screenshot({path:path.join(evidence,engine,'r07-comment.png')});
+  await editor.press('Escape'); assert.equal(await popup.isVisible(),false);
+  await pin.focus(); await pin.press('Enter'); assert.equal(await popup.isVisible(),true);
+  // This scenario verifies label ownership, not the seeded zero-distance move check.
+  await popup.locator('[data-ai-precision-settings] summary').click();
+  await popup.locator('[data-ai-precision-kind]').selectOption('');
+  await popup.locator('.ai-comment-popover-close').click();
+  const parent=(await snapshot(page))[1].generated[0];
+  const toggle=panel.locator('[data-ai-label-toggle]'); await toggle.click();
+  assert.equal(await toggle.getAttribute('aria-checked'),'false');
+  await panel.locator('[data-ai-comments-apply]').click();
+  await page.waitForFunction(()=>window.__task2.sends.length===1);
+  await page.evaluate(()=>{window.__task2.emit(0,'image');window.__task2.emit(0,'done');});
+  await page.getByRole('dialog',{name:'수정 전후 비교'}).waitFor();
+  await page.getByRole('button',{name:'적용',exact:true}).click();
+  await page.waitForFunction(()=>document.querySelector('#ai-image-panel').dataset.aiBusy==='false' && document.querySelectorAll('#ai-image-panel .ai-generated-card').length===2);
+  const tab=(await snapshot(page))[1], child=tab.generated.at(-1);
+  assert.deepEqual(child.labelPlan.labels,parent.labelPlan.labels,'follow-up preserves label text and positions');
+  assert.deepEqual(tab.generated[0].labelPlan,parent.labelPlan,'parent label plan remains unchanged');
+  assert.equal(child.labelPlan.reviewRequired,true,'revision does not inherit a provider QA pass');
+  assert.equal(child.reviewState,'scoped-applied');
+  assert.equal(await toggle.isEnabled(),true); assert.equal(await toggle.getAttribute('aria-checked'),'false');
+  await toggle.click(); await selected(page,child.id);
+  assert.equal(await toggle.getAttribute('aria-checked'),'true');
+  await selectVersion(page,parent.id); assert.equal(await toggle.getAttribute('aria-checked'),'false');
+  await selectVersion(page,child.id); assert.equal(await toggle.getAttribute('aria-checked'),'true');
+  await panel.locator('.ai-compare-menu summary').click(); await panel.locator('[data-ai-layout-mode="side-by-side"]').click();
+  await panel.locator('[data-ai-zoom-action="in"]').click();
+  const synchronized=await page.evaluate(()=>document.querySelector('#ai-image-panel').aiWorkbench.getViewState());
+  assert.equal(synchronized.zoom.source,synchronized.zoom.result); assert.equal(synchronized.tracking,true);
+  await panel.locator('.ai-compare-menu summary').click(); await panel.locator('.ai-compare-menu summary').press('Escape');
+  assert.equal(await panel.locator('.ai-compare-menu').getAttribute('open'),null); assert.equal(await panel.isVisible(),true);
+  await page.evaluate(()=>document.querySelector('#ai-image-panel').aiWorkbench.restoreViewState({layout:'side-by-side',tracking:false,zoom:{source:3,result:1}}));
+  await page.waitForFunction(()=>document.querySelector('#ai-image-panel .is-ai-active-source').scrollWidth>document.querySelector('#ai-image-panel .is-ai-active-source').clientWidth);
+  const sourceCard=panel.locator('.is-ai-active-source').first(); await sourceCard.hover(); await page.mouse.wheel(100,120);
+  await page.waitForFunction(()=>{const p=document.querySelector('#ai-image-panel'),a=p.querySelector('.is-ai-active-source'),b=p.querySelector('.is-ai-active-candidate');return a.scrollTop>0 && Math.abs(a.scrollTop-b.scrollTop)<=1 && Math.abs(a.scrollLeft-b.scrollLeft)<=1;});
+  const restoredTracking=await page.evaluate(()=>document.querySelector('#ai-image-panel').aiWorkbench.getViewState());
+  assert.equal(restoredTracking.zoom.source,restoredTracking.zoom.result); assert.equal(restoredTracking.tracking,true);
+  await page.screenshot({path:path.join(evidence,engine,'r01-follow-up-labels.png')});
+  await page.reload({waitUntil:'domcontentloaded'}); await page.waitForFunction(()=>window.__localToolsManager);
+  await page.locator('#ai-image-install-open').click(); await selected(page,child.id);
+  assert.deepEqual((await snapshot(page))[1].generated.at(-1).labelPlan.labels,parent.labelPlan.labels,'labels survive persistent recovery');
+  await panel.locator('[data-ai-close]').click();
+  await page.waitForFunction(()=>document.querySelector('#ai-image-panel').hidden);
+  assert.equal(await page.locator('.app-shell-header').evaluate(n=>getComputedStyle(n).visibility),'visible');
+  assert.deepEqual(errors,[]);
 });

@@ -173,3 +173,9 @@ body.exam-editing #ai-image-panel .modal-ai.ai-workbench {
 #exam-region-inspector .exam-region-fields {grid-template-columns:1fr;}
 #exam-region-inspector .exam-region-fields label {grid-template-columns:52px minmax(0,1fr) auto;gap:5px;}
 #exam-region-inspector .exam-region-fields label span {grid-column:auto;}
+
+.page-tab.is-exam-linked { color: var(--text-primary); border-color: #8c650d; background: color-mix(in srgb, var(--bg-panel) 90%, #dba52b); }
+.page-tab.is-exam-linked.is-active { border-color: #dba52b; background: color-mix(in srgb, var(--bg-panel) 82%, #dba52b); }
+.exam-edit-badge { color: #ffda72; }
+#exam-edit-bar .exam-region-actions .exam-primary { color: #211902; background: #ffda72; border-color: #dba52b; }
+#exam-edit-bar .exam-region-actions .exam-primary:hover:not(:disabled) { background: #ffe496; }

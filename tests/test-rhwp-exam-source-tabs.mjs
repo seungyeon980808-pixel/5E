@@ -373,3 +373,26 @@ test('native validation fails before closing AI or creating a linked source page
   await assert.rejects(tabs.prepareAi('task-a','scope-a'),/invalid native graph/);
   assert.deepEqual(value,before);
 });
+
+test('repeated source transfers follow the visible label toggle without changing the candidate',async()=>{
+  const candidate={id:'visible-candidate',data:'data:image/png;base64,AQID',labelPlan:{labels:[{id:'label',text:'라벨',scope:'general'}]}};
+  const context=aiContext(),tab=context.snapshot.tabs[0];
+  tab.generated=[candidate];tab.selectedCandidateId=candidate.id;tab.labelPreviewIncluded={[candidate.id]:true};
+  const {tabs,value,services}=fixture({captureExamTask:async()=>context,close:()=>{}}),calls=[];
+  services.materializeCandidate=async(item,options)=>{
+    calls.push({item:structuredClone(item),options});
+    value.objects=[{id:'visible-image',type:'image',aiTaskId:'task-a',aiCandidateId:item.id}];
+    if(item.labelPlan)value.objects.push({id:'visible-label',type:'text',aiTaskId:'task-a',aiCandidateId:item.id,aiAutoLabel:true});
+    value.pages[0].objects=value.objects;
+  };
+  services.materializeCandidate.validate=()=>{};
+  await tabs.prepareAi('task-a','scope-a');assert.equal(calls.length,1);
+  await tabs.prepareAi('task-a','scope-a');assert.equal(calls.length,1,'unchanged visible version is reused');
+  tab.labelPreviewIncluded[candidate.id]=false;
+  const off=await tabs.prepareAi('task-a','scope-a');assert.equal(calls.length,2);assert.equal(calls[1].item.labelPlan,null);assert.equal(calls[1].options.replaceId,'visible-image');assert.equal(off.source.pages[0].objects.length,1);
+  tab.labelPreviewIncluded[candidate.id]=true;
+  const on=await tabs.prepareAi('task-a','scope-a');assert.equal(calls.length,3);assert.deepEqual(calls[2].item.labelPlan,candidate.labelPlan);assert.equal(on.source.pages[0].objects.length,2);
+  tab.labelPreviewIncluded[candidate.id]=false;
+  const repeat=await tabs.captureEdit({figure:{link},aiContext:context});assert.equal(calls.length,4);assert.equal(calls[3].item.labelPlan,null);assert.equal(repeat.source.pages[0].objects.length,1,'linked repeat apply also follows the current label view');
+  assert.equal(candidate.labelPlan.labels[0].text,'라벨','the parent candidate retains editable labels');
+});
