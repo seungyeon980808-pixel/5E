@@ -542,6 +542,7 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
         const sourceSelect = source.querySelector('.ai-task-tab-select');
         const selected = entry === active && entry.controller?.activeTask() === taskId;
         row.classList.toggle('is-on', selected);
+        row.classList.toggle('is-exam-linked', source.classList.contains('is-exam-linked'));
         row.classList.toggle('is-batch-selected', batchSelected);
         row.dataset.aiBatchSelected=String(batchSelected);
         row.dataset.workState = source.dataset.workState || 'idle';
@@ -761,6 +762,7 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
   };
   return {
     examTaskNames: () => entries.flatMap(entry => entry.controller?.examTaskNames?.() || []),
+    refreshExamLinks: () => {for (const entry of entries) entry.controller?.refreshExamLinks?.();},
     unlinkExamTask: link => {for (const entry of entries) entry.controller?.unlinkExamTask?.(link);},
     renameExamTask: (link,name) => {for (const entry of entries) entry.controller?.renameExamTask?.(link,name);},
     activeExamTask: () => ({scope:active.scope || '',taskId:active.controller.activeTask()}),

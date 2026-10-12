@@ -30,7 +30,7 @@ h.withServer(async origin => {
     const page = await browser.newPage({ viewport:{width:1440,height:1000} }), errors = [];
     page.on('pageerror', error => errors.push(error.message));
     try {
-      await page.addInitScript({ content:seed + '\nseedRequestWorkspaces(2);' });
+      await page.addInitScript({ content:seed + '\nseedRequestWorkspaces(3);' });
       const observed = instrumentAiMain(root, { manager:'__directManager', state:'__directState' });
       await page.route('**/js/main.js?*', route => route.fulfill({ contentType:'text/javascript', body:observed.body }));
       await h.navigate(page, origin + '/?mode=pro&mobile=0&exam=0'); await h.ready(page);
@@ -53,7 +53,9 @@ h.withServer(async origin => {
       const firstPicture = (await h.pictures(page))[0];
       await h.action(page, 'close');
 
-      await choose('task-1'); await output.click(); await ai.waitFor({ state:'hidden' });
+      await choose('task-1');
+      assert.equal(await ai.locator('[data-tab-id="task-0"]').evaluate(node => node.classList.contains('is-exam-linked')), true, 'Confirmed document link is shown on its AI task');
+      await output.click(); await ai.waitFor({ state:'hidden' });
       const originalDrawing = await page.evaluate(() => structuredClone(__directState.get().objects));
       assert.equal(originalDrawing.filter(o => o.type === 'image').length, 2, 'Ordinary canvas insertion preserves composition');
       // Existing figure ownership must not be silently overwritten by task 1.
@@ -101,10 +103,43 @@ h.withServer(async origin => {
       await h.action(page, 'close'); await choose('task-1');
       await h.crop(page, '#ai-image-panel [data-ai-exam-send]'); await h.place(page);
       assert.equal((await h.pictures(page)).length, 2, 'Sending the same task replaces its own figure');
-      await h.action(page, 'close'); await choose('task-0'); await direct.click();
+      await h.action(page, 'close'); await choose('task-2'); await direct.click();
       await page.locator('.capture-overlay').waitFor(); await page.keyboard.press('Escape');
       await ai.waitFor({ state:'visible' });
-      assert.equal(await ai.locator('.ai-task-tab.is-on').getAttribute('data-tab-id'), 'task-0');
+      assert.equal(await ai.locator('.ai-task-tab.is-on').getAttribute('data-tab-id'), 'task-2');
+      assert.equal(await ai.locator('[data-tab-id="task-2"]').evaluate(node => node.classList.contains('is-exam-linked')), false, 'Cancel before document confirmation never presents a live AI link');
+      for (const id of ['task-0','task-1']) assert.equal(await ai.locator(`[data-tab-id="${id}"]`).evaluate(node => node.classList.contains('is-exam-linked')), true, 'Cancel preserves both confirmed link markers');
+      assert.equal((await h.pictures(page)).length, 2, 'Canceled task adds no document picture');
+      const linkState = await page.evaluate(() => __directState.get().pages.map(p => ({id:p.id,link:p.meta?.examLink,pending:p.meta?.examPendingLink})));
+      assert.equal(linkState.filter(p => p.link).length, 2);
+      assert.equal(linkState.filter(p => p.pending).length, 1, 'Pending independent canvas is kept as an uncommitted draft');
+      await ai.locator('[data-ai-close]').click(); await ai.waitFor({state:'hidden'});
+      await page.locator('#exam-send').click(); await page.locator('[data-exam-document-open]').click(); await h.idle(page);
+      const waiting=page.waitForEvent('download'); await h.action(page,'save');
+      const file=path.join(evidence,engineName+'-pending.5e'); await (await waiting).saveAs(file); await h.idle(page);
+      const portable=await browser.newContext({viewport:{width:1440,height:1000}});
+      try {
+        const reopened=await portable.newPage();
+        reopened.on('pageerror',error=>errors.push(error.message));
+        const observation=instrumentAiMain(root,{seedReady:false,manager:'__directManager',state:'__directState'});
+        await reopened.route('**/js/main.js?*',route=>route.fulfill({contentType:'text/javascript',body:observation.body}));
+        await reopened.addInitScript(()=>localStorage.setItem('5e.tutorial.bannerSeen','true'));
+        await h.navigate(reopened,origin+'/?mode=pro&mobile=0&exam=1'); await h.ready(reopened);
+        await reopened.locator('#exam-project-file').setInputFiles(file); await h.idle(reopened);
+        assert.equal((await h.pictures(reopened)).length,2);
+        await h.action(reopened,'close'); await reopened.locator('#ai-image-install-open').click();
+        const restored=reopened.locator('#ai-image-panel [data-tab-id="task-2"]'); await restored.waitFor({state:'visible'});
+        assert.equal(await restored.evaluate(node=>node.classList.contains('is-exam-linked')),false,'Portable reopen must distinguish pending identity from confirmed document connection');
+        for(const id of ['task-0','task-1']) assert.equal(await reopened.locator(`#ai-image-panel [data-tab-id="${id}"].is-exam-linked`).count(),1,'Confirmed AI connections survive portable reopen without marking an unrelated same-ID task');
+        await reopened.locator('#ai-image-panel [data-ai-close]').click();
+        const pageId=await reopened.evaluate(link=>__directState.get().pages.find(p=>p.meta?.examLink?.tabId===link.tabId&&p.meta.examLink.assetId===link.assetId).id,firstPicture.figure.link);
+        const sourcePage=reopened.locator(`.page-tab[data-id="${pageId}"]`);
+        await sourcePage.click(); await sourcePage.click({button:'right'});
+        await reopened.getByText('문서 그림 연결 해제',{exact:true}).click();
+        await reopened.locator('#ai-image-install-open').click();
+        assert.equal(await reopened.locator('#ai-image-panel [data-tab-id="task-0"].is-exam-linked').count(),0,'Explicit unlink also clears retained AI navigation rows');
+        assert.equal(await reopened.locator('#ai-image-panel [data-tab-id="task-1"].is-exam-linked').count(),1,'Unlinking one task preserves the other link');
+      } finally {await portable.close();}
       assert.deepEqual(errors, []);
       assert.equal(await page.evaluate(() => __task2.sends.length), 0);
       await page.evaluate(() => Promise.all(document.getAnimations().map(animation => animation.finished.catch(() => {}))));

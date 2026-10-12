@@ -3323,18 +3323,24 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
 
   const renderTaskTabs = () => {
     if (!tabList) return;
+    // Task identity also exists during canceled preparation. Only a committed
+    // drawing revision establishes the document connection shown to the user.
+    const confirmedExamLinks = new Set((state.get().pages || [])
+      .filter(page => page.meta?.examLink && page.meta.examRevisionId)
+      .map(page => JSON.stringify([page.meta.examLink.tabId,page.meta.examLink.assetId])));
     const rows = [];
     for (const id of taskRows.keys()) if (!taskTabs.has(id)) taskRows.delete(id);
     for (const tab of taskTabs.values()) {
       const timingSample = sampleGenerationTiming(restoreGenerationTiming(tab.generationTiming, { interruptRunning: false }), Date.now());
       if (timingSample.timing) tab.generationTiming = timingSample.timing;
       const timingText = taskTimingLabel(tab, timingSample.view);
-      const values = [tab, tab.title, tab.workState, tab.id === activeTaskTabId, tab.attachments?.[0]?.data, tab.attachments?.length, Boolean(tab.referenceComposition), Boolean(tab.examLink), timingText, taskDeleteShortcutHint()];
+      const linked = !!tab.examLink && confirmedExamLinks.has(JSON.stringify([tab.examLink.tabId,tab.examLink.assetId]));
+      const values = [tab, tab.title, tab.workState, tab.id === activeTaskTabId, tab.attachments?.[0]?.data, tab.attachments?.length, Boolean(tab.referenceComposition), linked, timingText, taskDeleteShortcutHint()];
       const cached = taskRows.get(tab.id);
       if (cached && values.every((value, index) => value === cached.values[index])) { rows.push(cached.row); continue; }
       const button = document.createElement("div");
       button.className = "ai-task-tab";
-      button.classList.toggle("is-exam-linked", Boolean(tab.examLink));
+      button.classList.toggle("is-exam-linked", linked);
       button.dataset.tabId = tab.id;
       button.dataset.workState = tab.workState || "idle";
       const stateLabel = taskNeedsLabelReview(tab) ? '생성 완료 · 검수 확인 필요'
@@ -6831,6 +6837,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       for (const tab of taskTabs.values()) if(tab.examLink?.tabId===link?.tabId && tab.examLink?.assetId===link?.assetId) delete tab.examLink;
       renderTaskTabs();persistTasks();
     },
+    refreshExamLinks: () => renderTaskTabs(),
     examTaskLink: id => structuredClone(taskTabs.get(id)?.examLink || null),
     examTaskNames: () => [...taskTabs.values()].filter(tab => tab.examLink).map(tab => ({link:structuredClone(tab.examLink),name:tab.title})),
     renameExamTask: (link,name) => {

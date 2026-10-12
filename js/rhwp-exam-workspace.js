@@ -159,6 +159,7 @@ export function initRhwpExamWorkspace(state, services) {
       const signature = JSON.stringify(names);
       if (signature === namesSignature) return;
       namesSignature = signature;
+      connectedAi?.refreshExamLinks?.();
       for (const figure of figures.values()) {
         const name = tabs.pageForLink(figure.link)?.name;
         if (name && renameExamFigure(figure,name)) stamp++;
