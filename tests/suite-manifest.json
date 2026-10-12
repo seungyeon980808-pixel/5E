@@ -1488,6 +1488,12 @@
         "UX-U40",
         "UX-U41"
       ]
+    },
+    {
+      "path": "tests/test-hwp-confirm-shortcuts-browser.cjs",
+      "findingIds": [
+        "UX-U38"
+      ]
     }
   ],
   "deferred": [

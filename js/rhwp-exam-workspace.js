@@ -12,6 +12,7 @@ import { ExamInlineEditor, chooseInlineCrop } from './rhwp-exam-inline-editor.js
 import { getContentBounds } from './svg-export.js?v=1.7.0-four-session-integration';
 import { registerTopMenu } from './top-menu.js?v=1.7.0-four-session-integration';
 import { showExamDocumentChoice } from './ui-dialogs.js?v=1.7.0-four-session-integration';
+import { consumeConfirmationPress } from './ui-confirm-key.js?v=1.7.0-four-session-integration';
 
 const clone = value => JSON.parse(JSON.stringify(value));
 const safeName = name => (name.trim() || '새 시험지').replace(/[\\/:*?"<>|]/g, '_').slice(0, 120);
@@ -935,6 +936,7 @@ export function initRhwpExamWorkspace(state, services) {
     bridge.editor.element.contentDocument.addEventListener('focusin',preserveMenuFocus,true);
     bridge.editor.element.contentDocument.addEventListener('keydown', saveShortcut, true);
     bridge.editor.element.contentDocument.addEventListener('keydown', closeOpenMenu, true);
+    bridge.editor.element.contentDocument.addEventListener('keydown', confirmPlacementWithKey, true);
     bridge.editor.element.contentDocument.addEventListener('keydown', event => {
       if (event.key === 'Escape' && bridge.canReturnOnEscape(event)) closeWorkspaceWithEscape(event);
     }, true);
@@ -1126,6 +1128,17 @@ export function initRhwpExamWorkspace(state, services) {
     event.preventDefault();event.stopImmediatePropagation();closeMenus();open.focus({preventScroll:true});
   }
   document.addEventListener('keydown',closeOpenMenu,true);
+  function confirmPlacementWithKey(event) {
+    if (!placement || panel.hidden || event.isComposing || event.keyCode === 229 || compositionActive() || event.ctrlKey || event.metaKey || event.altKey || event.shiftKey || !['Enter',' '].includes(event.key)) return;
+    const nativeInput = event.target === bridge?.input?.textarea;
+    if (!nativeInput && event.target.closest?.('input,textarea,select,button,[contenteditable="true"]')) return;
+    const owner = event.target?.ownerDocument || document;
+    if ([...owner.querySelectorAll('dialog[open],.modal-overlay,[role="dialog"],[role="alertdialog"]')].some(node=>node!==panel && !node.hidden && node.getClientRects().length)) return;
+    consumeConfirmationPress(event);
+    const button = panel.querySelector('[data-exam-action="confirm-placement"]');
+    if (!event.repeat && !button.disabled) void run(confirmPlacement);
+  }
+  document.addEventListener('keydown',confirmPlacementWithKey,true);
   function closeWorkspaceWithEscape(event) {
     if (event.key !== 'Escape' || event.defaultPrevented || event.isComposing || event.repeat || compositionActive() || panel.hidden || busy) return;
     // Inner dialogs, label editing and RHWP's own cancellation get first use.

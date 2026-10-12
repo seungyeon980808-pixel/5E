@@ -1,4 +1,5 @@
 import { registerEscapeLayer } from "./escape-layers.js?v=1.7.0-four-session-integration";
+import { consumeConfirmationPress } from './ui-confirm-key.js?v=1.7.0-four-session-integration';
 
 /* ===== 공용 다이얼로그: 프로그램 양식의 알림/확인 창 =====
  * 브라우저 기본 alert()/confirm() 대신 앱 모달과 같은 모양을 쓴다.
@@ -55,9 +56,9 @@ function buildDialog({ title, message, buttons, wide = false, dismissValue = but
         controls[index < 0 ? (e.shiftKey ? controls.length - 1 : 0) : (index + (e.shiftKey ? -1 : 1) + controls.length) % controls.length].focus();
       }
       if (e.key === "Escape") { e.stopPropagation(); done(dismissValue); }
-      if (!e.isComposing && !e.repeat && ['Enter', ' '].includes(e.key)) {
-        const button = e.target.closest('button.modal-btn');
-        if (button) { e.preventDefault(); e.stopImmediatePropagation(); button.click(); }
+      if (!e.isComposing && !e.repeat && !e.ctrlKey && !e.metaKey && !e.altKey && !e.shiftKey && ['Enter', ' '].includes(e.key)) {
+        const button = e.target.closest('button.modal-btn') || (purpose === 'hwp' && e.target === dialog ? overlay.querySelector('.modal-btn-primary') : null);
+        if (button) { if (purpose === 'hwp') consumeConfirmationPress(e); else { e.preventDefault(); e.stopImmediatePropagation(); } button.click(); }
       }
     });
     if (wide) dialog.focus({ preventScroll: true });

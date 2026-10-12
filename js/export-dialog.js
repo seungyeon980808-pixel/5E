@@ -17,6 +17,7 @@ import {
   FS_DIR_SUPPORTED, loadSavedDir, currentDirName, pickDir, clearDir,
 } from "./export-dir.js?v=1.7.0-four-session-integration";
 import { showAlert } from "./ui-dialogs.js?v=1.7.0-four-session-integration";
+import { consumeConfirmationPress } from './ui-confirm-key.js?v=1.7.0-four-session-integration';
 import { registerTopMenu } from "./top-menu.js?v=1.7.0-four-session-integration";
 import { screenToWorld, worldToScreen } from "./viewport.js?v=1.7.0-four-session-integration";
 import { openExamPreview } from "./exam-preview.js?v=1.7.0-four-session-integration";
@@ -401,9 +402,13 @@ export function runAreaCapture(svg, state, onDone, hintText, options = {}) {
     render();
   }
   function onKey(e) {
+    if (e.isComposing || e.keyCode === 229 || e.ctrlKey || e.metaKey || e.altKey || e.shiftKey) return;
     // 캡처 단계 + stopPropagation: 뒤의 다이얼로그/앱 단축키가 함께 발동하지 않게.
     if (e.key === "Escape") { e.preventDefault(); e.stopPropagation(); cancel(); }
-    else if (e.key === "Enter") { e.preventDefault(); e.stopPropagation(); confirm(); }
+    else if (e.key === 'Enter' || e.key === ' ' && !e.target.closest?.('input,textarea,select,[contenteditable="true"]')) {
+      consumeConfirmationPress(e);
+      if (!e.repeat) confirm();
+    }
   }
   function onCtx(e) { e.preventDefault(); cancel(); }
 
