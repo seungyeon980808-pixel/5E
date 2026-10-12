@@ -3067,15 +3067,7 @@ body:has(#ai-image-panel:not([hidden])) .app-shell-header { visibility: hidden; 
 #ai-image-panel .ai-comment-popover [data-ai-inline-delete] { margin-top: 6px; }
 #ai-image-panel :is(.ai-comment-popover-close, .ai-compare-menu > summary):focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
 
-/* Approved bottom dock: images lead; tasks and requests share the lower row. */
-#ai-image-panel .ai-workspace { grid-template-columns: minmax(0,46fr) minmax(0,54fr); grid-template-rows: minmax(0,1fr) clamp(190px,27vh,250px); grid-template-areas: 'results results' 'tasks conversation'; }
-#ai-image-panel .ai-task-rail { border-top:1px solid var(--border); border-right:1px solid var(--border); }
-#ai-image-panel .ai-task-tabs { display:flex; flex:1; overflow:auto; min-height:0; }
-#ai-image-panel .ai-task-tab-list { display:flex; flex-direction:row; align-items:stretch; gap:6px; padding:8px; width:max-content; min-width:100%; }
-#ai-image-panel .ai-task-tab { flex:0 0 180px; width:180px; min-height:70px; border-left-width:1px; border-radius:6px; }
-#ai-image-panel .ai-task-new { flex:0 0 100px; width:100px; }
-#ai-image-panel .ai-conversation { border-top:1px solid var(--border); border-left:0; min-height:0; overflow:hidden; }
-#ai-image-panel .ai-conversation-body { overflow:auto; min-height:0; }
+/* Retain compact tools while the workspace uses its previous side panels. */
 #ai-image-panel .ai-compare-heading { justify-content:space-between; flex-wrap:wrap; gap:8px; }
 #ai-image-panel .ai-pane-zoom { margin:0; flex:none; }
 #ai-image-panel .ai-annotation-toolbar { flex-wrap:wrap; }
@@ -3089,14 +3081,11 @@ body:has(#ai-image-panel:not([hidden])) .app-shell-header { visibility: hidden; 
 #ai-image-panel .ai-comment-popover textarea { min-height:64px; max-height:160px; }
 #ai-image-panel .ai-comment-popover [data-ai-comment-geometry] { display:none !important; }
 @media(max-width:760px) {
-  #ai-image-panel .ai-workspace { grid-template-columns:1fr; grid-template-rows:minmax(260px,1fr) 130px 220px; grid-template-areas:'results' 'tasks' 'conversation'; overflow:auto; }
-  #ai-image-panel .ai-task-rail { border-right:0; }
   #ai-image-panel .ai-compare-heading { align-items:center; }
   #ai-image-panel .ai-pane-zoom { order:3; }
 }
 
 #ai-image-panel .ai-graph-edit-hint { display:inline-flex; margin-left:auto; min-height:28px; padding:3px 8px; font-size:12px; }
-#ai-image-panel .ai-task-add { flex:0 0 140px; align-self:stretch; }
 #ai-image-panel .ai-task-tab.is-exam-linked { border-color:#dba52b; }
 #ai-image-panel .ai-task-tab.is-exam-linked .ai-task-tab-title { color:var(--text-primary); }
 #ai-image-panel .ai-task-tab.is-exam-linked.is-on { border-left-color:#dba52b; }

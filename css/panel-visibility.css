@@ -326,19 +326,3 @@
   .image-workflow-hub { flex: 1 1 100%; flex-wrap: wrap; min-width: 0; }
   #tool-hint { flex: 1 1 100%; max-width: 100%; overflow: hidden; }
 }
-
-/* The image workbench docks both auxiliary panels below the preview. */
-@media(min-width:768px) {
-  #ai-image-panel[data-panel-layout] .ai-workspace { grid-template-columns:minmax(0,46fr) minmax(0,54fr); grid-template-rows:minmax(0,1fr) clamp(190px,27vh,250px); grid-template-areas:'results results' 'tasks conversation'; }
-  #ai-image-panel[data-left-collapsed="true"] .ai-workspace { grid-template-columns:minmax(0,1fr); grid-template-areas:'results' 'conversation'; }
-  #ai-image-panel[data-right-collapsed="true"] .ai-workspace { grid-template-columns:minmax(0,1fr); grid-template-areas:'results' 'tasks'; }
-  #ai-image-panel[data-left-collapsed="true"][data-right-collapsed="true"] .ai-workspace { grid-template-columns:minmax(0,1fr); grid-template-rows:minmax(0,1fr); grid-template-areas:'results'; }
-  #ai-image-panel[data-panel-layout] .ai-task-rail { overflow:hidden; }
-  #ai-image-panel[data-panel-layout] .ai-task-tabs { display:flex; overflow:auto; }
-  #ai-image-panel[data-panel-layout] .ai-task-tab-list { flex-direction:row; }
-  #ai-image-panel[data-panel-layout] .ai-conversation { overflow:auto; }
-}
-
-@media(max-width:767px) {
-  #ai-image-panel[data-panel-layout][data-left-collapsed] .ai-workspace { grid-template-rows:minmax(0,1fr); }
-}

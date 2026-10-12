@@ -103,16 +103,17 @@ async function lasso(page, points, finish=true) {
   if(finish)await page.mouse.up();
 }
 
-for (const engine of ['chromium','webkit']) test(`${engine}: bottom dock, comments, original reuse and stable comparison`, {timeout:60000}, async t => {
+for (const engine of ['chromium','webkit']) test(`${engine}: restored side panels, comments, original reuse and stable comparison`, {timeout:60000}, async t => {
  const {page,errors}=await fixture(t,engine),panel=page.locator(active);
  assert.ok(await panel.locator('.ai-comment-tools-label').isVisible(),'point, box and free tools have a visible comment heading');
  const layout=await page.evaluate(()=>{
    const p=document.querySelector('#ai-image-panel'),box=n=>{const r=n.getBoundingClientRect();return{x:r.x,y:r.y,w:r.width,h:r.height};};
    return {workspace:box(p.querySelector('.ai-workspace')),results:box(p.querySelector('.ai-results')),tasks:box(p.querySelector('.ai-task-rail')),request:box(p.querySelector('.ai-conversation'))};
  });
- assert.ok(Math.abs(layout.results.w-layout.workspace.w)<2,JSON.stringify(layout));
- assert.ok(layout.tasks.y>=layout.results.y+layout.results.h-2 && layout.request.y===layout.tasks.y);
- assert.ok(layout.tasks.w>layout.workspace.w*.4 && layout.tasks.w<layout.workspace.w*.5);
+ assert.ok(layout.tasks.x+layout.tasks.w<=layout.results.x+2,JSON.stringify(layout));
+ assert.ok(layout.results.x+layout.results.w<=layout.request.x+2,JSON.stringify(layout));
+ assert.ok(Math.abs(layout.results.h-layout.workspace.h)<2 && layout.tasks.y===layout.request.y,JSON.stringify(layout));
+ assert.ok(layout.tasks.w<layout.workspace.w*.2 && layout.request.w<layout.workspace.w*.3);
  await panel.locator('[data-ai-zoom-action="fit"]').click();
  const g=await geometry(page), count=(await snapshot(page)).length;
  const exportBox=await panel.locator('.is-ai-active-candidate [data-ai-canvas-output]').boundingBox();assert.ok(exportBox);assert.ok(Math.abs(exportBox.x+exportBox.width-(g.image.x+g.image.width))<40 && exportBox.y<g.image.y+45,'export is at the upper right of the picture');
@@ -146,11 +147,26 @@ for (const engine of ['chromium','webkit']) test(`${engine}: bottom dock, commen
  await panel.locator('[data-ai-zoom-action="fit"]').click();
  const dimensions=await panel.locator('.is-ai-active-source .ai-preview-stage > img, .is-ai-active-candidate .ai-preview-stage > img').evaluateAll(ns=>ns.map(n=>({w:n.getBoundingClientRect().width,h:n.getBoundingClientRect().height})));
  assert.equal(dimensions.length,2);assert.ok(Math.abs(dimensions[0].w-dimensions[1].w)<2,JSON.stringify(dimensions));
- await page.screenshot({path:path.join(evidence,engine,'bottom-dock.png')});
+ await page.screenshot({path:path.join(evidence,engine,'restored-side-panels.png')});
+ // The user preferred side panels specifically because the app is often enlarged.
+ await page.evaluate(()=>document.documentElement.style.setProperty('--ui-zoom','1.5'));
+ await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
+ const enlarged=await panel.boundingBox();assert.ok(enlarged);
+ assert.ok(enlarged.x>=-1 && enlarged.y>=-1 && enlarged.x+enlarged.width<=1441 && enlarged.y+enlarged.height<=1001,JSON.stringify(enlarged));
+ const beforeCollapse=await panel.locator('.ai-results').boundingBox();
+ await panel.locator('[data-panel-toggle="right"]').click();
+ await page.waitForFunction(()=>document.querySelector('#ai-image-panel').dataset.rightCollapsed==='true');
+ const afterCollapse=await panel.locator('.ai-results').boundingBox();
+ assert.ok(afterCollapse.width>beforeCollapse.width+250,'hiding the enlarged settings panel gives its width back to the picture');
+ await panel.locator('[data-panel-toggle="right"]').click();
+ await page.waitForFunction(()=>document.querySelector('#ai-image-panel').dataset.rightCollapsed==='false');
+ assert.ok(await panel.locator('.ai-conversation').isVisible());
+ await page.screenshot({path:path.join(evidence,engine,'restored-enlarged.png')});
+ await page.evaluate(()=>document.documentElement.style.removeProperty('--ui-zoom'));
  await panel.locator('[data-ai-reuse-source]').click();assert.equal((await snapshot(page)).length,count+1);
  assert.deepEqual(await panel.locator('select[data-ai-empty-import] option').allTextContents(),['이미지 불러오기','라이브러리에서 불러오기','파일 탐색기에서 불러오기']);
  const tabs=await snapshot(page);assert.ok(tabs.some(t=>t.generated?.some(c=>c.id==='candidate-0')),'existing result remains available');
- await page.setViewportSize({width:740,height:900});await page.screenshot({path:path.join(evidence,engine,'bottom-mobile.png')});
+ await page.setViewportSize({width:740,height:900});await page.screenshot({path:path.join(evidence,engine,'restored-mobile.png')});
  assert.deepEqual(errors,[]);
 });
 
