@@ -44,7 +44,7 @@ let _traceController = null, _traceTouched = false, _resumeFromLibrary = null;
 
 function saveTrace(plane) {
   const settings = _traceController?.getState();
-  if (settings?.reference && (_traceTouched || plane.graphTrace)) plane.graphTrace = settings;
+  if (settings && (_traceTouched || plane.graphTrace)) plane.graphTrace = settings;
 }
 const SVG_NS = "http://www.w3.org/2000/svg";
 const PAD_X = 1.6;                // x: 마지막 눈금 → 화살표 여유(요구: 조금 줄임)

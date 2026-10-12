@@ -1,3 +1,4 @@
+import { registerEscapeLayer } from '../escape-layers.js?v=1.7.0-four-session-integration';
 import { IDENTITY, mapPoint, inverseMatrix, multiplyMatrix, fitThreePoints, sourceFrameMatrix, axisLandmarks, normalizeTraceState, traceMatrixForPlane } from './trace-coordinates.js?v=1.7.0-four-session-integration';
 
 /** Integration contract:
@@ -48,7 +49,16 @@ export function createTraceEditor({ toolbarHost, previewHost, reference=null, in
   let interaction=null, calibration=[], gesture=null, wipeGesture=null, clipGroup=null, clipDefs=null, sourceClip=null, graphClip=null, lastPaint=[], suppressUntil=0;
   const abort=new AbortController(), signal=abort.signal, uid=++nextId;
   const toolbar=document.createElement('div');toolbar.className='gm-trace-toolbar';toolbar.dataset.traceEditor=String(uid);
-  toolbar.innerHTML=`<div class="gm-trace-main"><label>보기 <select data-trace-view aria-label="그래프 보기"><option value="graph">그래프만</option><option value="side">좌우 비교</option><option value="overlay">겹쳐 비교</option><option value="wipe">바 비교</option></select></label><select data-trace-import aria-label="원본 이미지 불러오기"><option value="">이미지 불러오기</option><option value="library">라이브러리에서 불러오기</option><option value="file">파일 탐색기에서 불러오기</option></select><label>확대 <select data-trace-zoom aria-label="그래프 확대 비율"><option value="50">50%</option><option value="75">75%</option><option value="100">100%</option><option value="125">125%</option><option value="150">150%</option><option value="200">200%</option></select></label><input type="file" accept="image/*" aria-label="트레이싱 원본 이미지 선택" hidden></div><details class="gm-trace-options"><summary>원본 정렬</summary><div class="gm-trace-option-fields"><div class="gm-trace-tools" hidden><span class="gm-trace-legend"><span class="gm-trace-original">원본</span> / <span class="gm-trace-generated">편집본</span></span><button type="button" data-trace-move>위치 맞추기</button><button type="button" data-trace-calibrate>축 맞추기</button><label>정렬 배율 <input data-trace-scale type="number" min="10" max="1000" step="0.1" value="100" aria-label="그래프 정렬 배율">%</label><label data-trace-opacity-field>원본 농도 <input data-trace-opacity type="range" min="0" max="1" step="0.1" aria-label="원본 농도"></label><button type="button" data-trace-reset>정렬 초기화</button></div></div></details><p class="gm-trace-status" role="status" aria-live="polite" hidden></p>`;
+  toolbar.innerHTML=`<div class="gm-trace-main">
+    <label>보기 <select data-trace-view aria-label="그래프 보기"><option value="graph">그래프만</option><option value="side">좌우 비교</option><option value="overlay">겹쳐 비교</option><option value="wipe">바 비교</option></select></label>
+    <select data-trace-import aria-label="원본 이미지 불러오기"><option value="">이미지 불러오기</option><option value="library">라이브러리에서 불러오기</option><option value="file">파일 탐색기에서 불러오기</option></select>
+    <div class="gm-trace-zoom-control"><button type="button" data-trace-zoom-toggle aria-label="그래프 확대 비율" aria-expanded="false" aria-controls="trace-zoom-${uid}">100%</button>
+      <div id="trace-zoom-${uid}" class="gm-trace-zoom-panel" data-escape-layer role="group" aria-label="그래프 확대 조절" hidden>
+        <label>보기 배율 <output data-trace-zoom-value>100%</output><input data-trace-zoom type="range" min="50" max="200" step="1" value="100" aria-label="그래프 보기 배율"></label>
+        <div class="gm-trace-zoom-actions"><button type="button" data-trace-zoom-reset>100%</button><button type="button" data-trace-zoom-lock aria-pressed="false">배율 고정</button></div>
+      </div>
+    </div><input type="file" accept="image/*" aria-label="트레이싱 원본 이미지 선택" hidden>
+  </div><details class="gm-trace-options"><summary>비교 위치 조정</summary><div class="gm-trace-option-fields"><p class="gm-trace-align-hint">비교 화면에서 편집본의 위치와 크기를 원본에 맞춥니다.</p><div class="gm-trace-tools" hidden><span class="gm-trace-legend"><span class="gm-trace-original">원본</span> / <span class="gm-trace-generated">편집본</span></span><button type="button" data-trace-move>위치 맞추기</button><button type="button" data-trace-calibrate>축 맞추기</button><label>비교 배율 <input data-trace-scale type="number" min="10" max="1000" step="0.1" value="100" aria-label="그래프 정렬 배율">%</label><label data-trace-opacity-field>원본 농도 <input data-trace-opacity type="range" min="0" max="1" step="0.1" aria-label="원본 농도"></label><button type="button" data-trace-reset>조정 초기화</button></div></div></details><p class="gm-trace-status" role="status" aria-live="polite" hidden></p>`;
   toolbarHost.append(toolbar);
   const pane=document.createElement('div');pane.className='gm-trace-source-pane';pane.hidden=true;
   pane.innerHTML='<span class="gm-trace-pane-label">원본</span><img alt="비교용 원본 그래프">';
@@ -60,6 +70,10 @@ export function createTraceEditor({ toolbarHost, previewHost, reference=null, in
   const wipeLabels=document.createElement('div');wipeLabels.className='gm-trace-wipe-labels';wipeLabels.hidden=true;wipeLabels.innerHTML='<span>원본</span><span>편집본</span>';previewHost.append(wipeLabels);
   const sideImg=pane.querySelector('img'), status=toolbar.querySelector('.gm-trace-status');
   const say=text=>{status.textContent=text;status.hidden=!text;};
+  const zoomToggle=toolbar.querySelector('[data-trace-zoom-toggle]'), zoomPanel=toolbar.querySelector('.gm-trace-zoom-panel');
+  function closeZoom(restoreFocus=false){zoomPanel.hidden=true;zoomToggle.setAttribute('aria-expanded','false');if(restoreFocus)zoomToggle.focus();}
+  const disposeZoomEscape=registerEscapeLayer(zoomPanel,()=>closeZoom(true));
+  document.addEventListener('pointerdown',event=>{if(!event.target.closest('.gm-trace-zoom-control'))closeZoom();},{signal});
   const portable=()=>({...clone(state),...(ref?{reference:clone(ref)}:{})});
   const changed=(options={})=>onChange(portable(),options);
   function setInteraction(value){interaction=value;calibration=[];gesture=null;onInteractionChange(value);sync();}
@@ -68,7 +82,14 @@ export function createTraceEditor({ toolbarHost, previewHost, reference=null, in
     toolbar.querySelector('[data-trace-import] option[value=library]').disabled=!onChooseReference;
     const view=toolbar.querySelector('[data-trace-view]');view.value=state.mode;view.disabled=loading;
     [...view.options].forEach(o=>o.disabled=o.value!=='graph'&&!tint);
-    toolbar.querySelector('[data-trace-zoom]').value=String(state.previewZoom || 100);
+    const zoom=toolbar.querySelector('[data-trace-zoom]'), locked=state.previewZoomLocked;
+    zoom.value=String(state.previewZoom);zoom.disabled=locked;
+    zoomToggle.textContent=`${state.previewZoom}%${locked?' · 고정':''}`;
+    toolbar.querySelector('[data-trace-zoom-value]').textContent=`${state.previewZoom}%`;
+    toolbar.querySelector('[data-trace-zoom-lock]').setAttribute('aria-pressed',String(locked));
+    toolbar.querySelector('[data-trace-zoom-reset]').disabled=locked;
+    toolbar.querySelector('.gm-trace-options').hidden=!tint;
+    toolbar.querySelector('.gm-trace-align-hint').textContent=state.mode==='graph' ? '보기에서 비교 방식을 선택한 뒤 편집본의 위치와 크기를 원본에 맞춥니다.' : '비교 화면에서 편집본의 위치와 크기를 원본에 맞춥니다.';
     if (svg) {svg.style.width=`${state.previewZoom || 100}%`;svg.style.height=`${state.previewZoom || 100}%`;svg.style.maxWidth='none';svg.style.flexShrink='0';}
     sideImg.style.width=`${state.previewZoom || 100}%`;sideImg.style.height=`${state.previewZoom || 100}%`;
     const comparing=state.mode!=='graph'&&!!tint;
@@ -170,8 +191,15 @@ export function createTraceEditor({ toolbarHost, previewHost, reference=null, in
     if(source==='file') toolbar.querySelector('input[type=file]').click();
     else if(source==='library' && onChooseReference) {try {await onChooseReference(event.target);}catch(error){say(error.message);}}
   },{signal});
-  toolbar.querySelector('[data-trace-zoom]').addEventListener('change',event=>{state.previewZoom=Number(event.target.value);sync();changed({preview:true});},{signal});
+  toolbar.querySelector('[data-trace-zoom]').addEventListener('input',event=>{
+    if(state.previewZoomLocked){sync();return;}
+    const value=Number(event.target.value);if(!Number.isFinite(value))return;
+    state.previewZoom=Math.max(50,Math.min(200,value));sync();syncDivider();changed({preview:true});
+  },{signal});
+  zoomToggle.addEventListener('click',()=>{if(zoomPanel.hidden)zoomToggle.focus();zoomPanel.hidden=!zoomPanel.hidden;zoomToggle.setAttribute('aria-expanded',String(!zoomPanel.hidden));if(!zoomPanel.hidden)toolbar.querySelector(state.previewZoomLocked?'[data-trace-zoom-lock]':'[data-trace-zoom]').focus();},{signal});
   toolbar.addEventListener('click',async event=>{
+    if(event.target.closest('[data-trace-zoom-lock]')){state.previewZoomLocked=!state.previewZoomLocked;sync();changed({preview:true});}
+    if(event.target.closest('[data-trace-zoom-reset]')&&!state.previewZoomLocked){state.previewZoom=100;sync();syncDivider();changed({preview:true});}
     if(event.target.closest('[data-trace-move]')){setInteraction(interaction==='move'?null:'move');say(interaction?'그래프를 드래그하거나 방향키로 위치를 맞추세요. Esc: 완료':'');}
     if(event.target.closest('[data-trace-calibrate]')){if(state.mode!=='overlay'){state.mode='overlay';refresh();}setInteraction(interaction==='calibrate'?null:'calibrate');say(interaction?'원본 축 교점을 클릭하세요.':'');}
     if(event.target.closest('[data-trace-reset]')){state.graphMatrix=[...IDENTITY];setInteraction(null);refresh();changed();say('정렬을 초기화했습니다.');}
@@ -235,6 +263,6 @@ export function createTraceEditor({ toolbarHost, previewHost, reference=null, in
     isInteracting:()=>!!interaction||!!wipeGesture,cancelInteraction,
     toGraphPoint:p=>p&&state.mode!=='graph'&&tint?mapPoint(inverseMatrix(state.graphMatrix),p):p,
     getGraphMatrix:()=>state.mode!=='graph'&&tint?[...state.graphMatrix]:[...IDENTITY],
-    destroy(){disposed=true;generation++;abort.abort();resizeObserver.disconnect();clearDecoration();pane.remove();toolbar.remove();divider.remove();wipeLabels.remove();previewHost.classList.remove('gm-trace-comparing','gm-trace-aligning');previewHost.parentElement?.classList.remove('gm-trace-side-layout');delete previewHost.dataset.traceInteraction;}
+    destroy(){disposed=true;generation++;abort.abort();disposeZoomEscape();resizeObserver.disconnect();clearDecoration();pane.remove();toolbar.remove();divider.remove();wipeLabels.remove();previewHost.classList.remove('gm-trace-comparing','gm-trace-aligning');previewHost.parentElement?.classList.remove('gm-trace-side-layout');delete previewHost.dataset.traceInteraction;}
   };
 }

@@ -18,9 +18,11 @@ const dir=path.resolve(process.env.EVIDENCE_DIR||'.omo/evidence/graph-trace-2026
  },base);
  await page.waitForFunction(()=>document.querySelector('[data-trace-import]')?.disabled===false);
  if(await page.locator('select[data-trace-view]').inputValue()!=='graph')throw Error('Default view must be graph only');
- await page.locator('[data-trace-zoom]').selectOption('150');
+ await page.locator('[data-trace-zoom-toggle]').click();
+ await page.locator('[data-trace-zoom]').fill('150');
  if(await page.evaluate(()=>trace.getState().previewZoom)!==150)throw Error('Zoom selection missing');
- await page.locator('[data-trace-zoom]').selectOption('100');
+ await page.locator('[data-trace-zoom]').fill('100');
+ await page.locator('[data-trace-zoom-toggle]').click();
  await page.locator('select[data-trace-view]').selectOption('overlay');
  await page.waitForSelector('[data-trace-layer="source"]');
  const initial=await page.evaluate(()=>({mode:trace.getState().mode,white:document.querySelector('circle').getAttribute('fill'),hit:document.querySelector('#hit').getAttribute('stroke'),graph:document.querySelector('[data-trace-graph] path').getAttribute('stroke'),inline:getComputedStyle(document.querySelector('#inline')).stroke,inlineHit:document.querySelector('#inline-hit').getAttribute('style')}));

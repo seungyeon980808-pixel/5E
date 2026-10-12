@@ -3641,6 +3641,19 @@ textarea.unified-text-input {
 #graph-modal-overlay .gm-trace-main select { min-height:30px; font-size:12px; padding:3px 7px; }
 #graph-modal-overlay :is(#gm-preview,.gm-trace-source-pane) { overflow:auto; }
 
+/* Graph zoom opens in place without pushing the preview down. */
+#graph-modal-overlay .gm-trace-toolbar { gap:6px 10px; }
+#graph-modal-overlay .gm-trace-main { gap:6px; }
+#graph-modal-overlay .gm-trace-options summary { padding:5px 8px; min-height:30px; border:1px solid var(--border); border-radius:5px; }
+#graph-modal-overlay .gm-trace-zoom-control { position:relative; flex:none; }
+#graph-modal-overlay .gm-trace-zoom-control > button { min-height:30px; min-width:66px; }
+#graph-modal-overlay .gm-trace-zoom-panel { position:absolute; top:calc(100% + 6px); right:0; z-index:20; width:224px; max-width:calc(100vw - 32px); padding:12px; box-sizing:border-box; border:1px solid var(--border-strong); border-radius:7px; background:var(--bg-panel); box-shadow:0 6px 20px #0003; }
+#graph-modal-overlay .gm-trace-zoom-panel[hidden], #graph-modal-overlay .gm-trace-options[hidden] { display:none; }
+#graph-modal-overlay .gm-trace-zoom-panel label { display:grid; grid-template-columns:1fr auto; gap:8px; }
+#graph-modal-overlay .gm-trace-zoom-panel input { grid-column:1 / -1; width:100%; margin:0; accent-color:var(--accent); }
+#graph-modal-overlay .gm-trace-zoom-actions { display:flex; align-items:center; justify-content:space-between; gap:6px; margin-top:10px; }
+#graph-modal-overlay .gm-trace-align-hint { flex-basis:100%; margin:0; color:var(--text-secondary); line-height:1.5; }
+
 /* Keep canvas view controls near the picture, with compact popovers below. */
 .canvas-view-controls { display:inline-flex; position:relative; align-items:center; gap:4px; flex:none; }
 .canvas-view-controls .grid-detail { position:absolute; top:calc(100% + 8px); left:0; z-index:400; padding:10px; border:1px solid var(--border); border-radius:7px; background:var(--bg-panel); white-space:nowrap; }

@@ -1462,7 +1462,9 @@
     {
       "path": "tests/test-feedback-graph-controls-browser.cjs",
       "findingIds": [
-        "FEEDBACK-GRAPH-CONTROLS"
+        "FEEDBACK-GRAPH-CONTROLS",
+        "UX-U30",
+        "UX-U50"
       ]
     },
     {

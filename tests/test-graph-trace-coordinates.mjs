@@ -28,7 +28,7 @@ test('top-right axes choose opposite reference ends without collapsing basis',()
  assert.equal(landmarks.xEnd,'왼쪽');assert.equal(landmarks.yEnd,'아래쪽');assert.deepEqual(fitThreePoints(landmarks.points,landmarks.points),[...IDENTITY]);
 });
 test('state normalizer rejects singular matrices and source frame rejects empty images',()=>{
- assert.deepEqual(normalizeTraceState({graphMatrix:[0,0,0,0,0,0],opacity:8,mode:'bad'}),{version:1,previewZoom:100,graphMatrix:[...IDENTITY],opacity:1,mode:'graph',wipePosition:0.5});
+ assert.deepEqual(normalizeTraceState({graphMatrix:[0,0,0,0,0,0],opacity:8,mode:'bad'}),{version:1,previewZoom:100,previewZoomLocked:false,graphMatrix:[...IDENTITY],opacity:1,mode:'graph',wipePosition:0.5});
  assert.throws(()=>sourceFrameMatrix({width:0,height:500},p));
 });
 test('registration composition changes only display positions and preserves input data',()=>{
@@ -53,4 +53,11 @@ test('value mode matches rendered zero axis rather than interpreting its disable
 });
 test('explicit tick labels do not relocate the log frame axis intersection',()=>{
  near(axisLandmarks({...p,xScale:'log',xMin:10,xMax:1000,explicitTicksX:[{value:100,label:'100'}],axisPlacement:{y:{mode:'fraction',value:.8}}}).points[0],{x:-25,y:15});
+});
+
+test('continuous view zoom and its lock survive normalization without altering registration',()=>{
+ const matrix=[1.2,0,0,1.2,3,-4], value={previewZoom:137,previewZoomLocked:true,graphMatrix:matrix};
+ const result=normalizeTraceState(value);assert.equal(result.previewZoom,137);assert.equal(result.previewZoomLocked,true);assert.deepEqual(result.graphMatrix,matrix);
+ assert.equal(normalizeTraceState({previewZoom:NaN,previewZoomLocked:'true'}).previewZoom,100);
+ assert.equal(normalizeTraceState({previewZoom:12}).previewZoom,50);assert.equal(normalizeTraceState({previewZoom:500}).previewZoom,200);
 });

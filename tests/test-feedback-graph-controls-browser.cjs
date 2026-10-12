@@ -9,11 +9,30 @@ h.withServer(async origin=>{for(const [name,engine]of Object.entries({chromium,w
  assert.equal(await modal.locator('select[data-trace-view]').inputValue(),'graph');
  assert.deepEqual(await modal.locator('select[data-trace-import] option').allTextContents(),['이미지 불러오기','라이브러리에서 불러오기','파일 탐색기에서 불러오기']);
  const preview=await modal.locator('#gm-preview').boundingBox(),exportBox=await modal.locator('#gm-confirm').boundingBox();assert.ok(exportBox.y+exportBox.height<=preview.y);
- const initial=await modal.locator('#gm-preview > svg').boundingBox();await modal.locator('[data-trace-zoom]').selectOption('150');const enlarged=await modal.locator('#gm-preview > svg').boundingBox();assert.ok(enlarged.width>initial.width*1.4);
- await modal.locator('[data-trace-zoom]').selectOption('100');
+ const initial=await modal.locator('#gm-preview > svg').boundingBox();await modal.locator('[data-trace-zoom-toggle]').click();await modal.locator('[data-trace-zoom]').fill('150');const enlarged=await modal.locator('#gm-preview > svg').boundingBox();assert.ok(enlarged.width>initial.width*1.4);
+ await modal.locator('[data-trace-zoom]').press('ArrowLeft');assert.equal(await modal.locator('[data-trace-zoom]').inputValue(),'149');
+ await modal.locator('[data-trace-zoom]').fill('137');await modal.locator('[data-trace-zoom-lock]').click();assert.equal(await modal.locator('[data-trace-zoom]').isDisabled(),true);
+ await modal.locator('[data-trace-zoom]').dispatchEvent('input');assert.equal(await modal.locator('[data-trace-zoom-toggle]').textContent(),'137% · 고정');
+ await modal.locator('[data-trace-zoom-lock]').press('Escape');assert.equal(await modal.locator('.gm-trace-zoom-panel').isVisible(),false);assert.equal(await modal.isVisible(),true);assert.equal(await modal.locator('[data-trace-zoom-toggle]').evaluate(n=>n===document.activeElement),true);
+ await modal.locator('#gm-confirm').click();
+ const snapshot=()=>page.evaluate(async()=>structuredClone((await import('/js/state.js?v=1.7.0-four-session-integration')).state.get().objects));
+ const saved=await snapshot(),plane=saved.find(o=>o.type==='coordplane');assert.equal(plane.graphTrace.previewZoom,137);assert.equal(plane.graphTrace.previewZoomLocked,true);
+ const openSaved=()=>page.evaluate(async id=>(await import('/js/graph/graph-modal.js?v=1.7.0-four-session-integration')).openGraphModal(id),plane.id);
+ await openSaved();await modal.locator('[data-trace-zoom-toggle]').click();assert.equal(await modal.locator('[data-trace-zoom]').inputValue(),'137');assert.equal(await modal.locator('[data-trace-zoom]').isDisabled(),true);
+ await modal.locator('[data-trace-zoom-lock]').click();await modal.locator('[data-trace-zoom-reset]').click();assert.equal(await modal.locator('[data-trace-zoom]').inputValue(),'100');await modal.locator('#gm-cancel').click();assert.deepEqual(await snapshot(),saved,'Cancel discards changed viewing preferences');
+ await openSaved();await modal.locator('[data-trace-zoom-toggle]').click();await modal.locator('[data-trace-zoom-lock]').click();await modal.locator('[data-trace-zoom]').fill('100');await modal.locator('#gm-confirm').click();
+ const afterZoom=await snapshot();for(const o of saved){const before=structuredClone(o),after=structuredClone(afterZoom.find(x=>x.id===o.id));delete before.graphTrace;delete after.graphTrace;assert.deepEqual(after,before,'View zoom cannot change exported geometry');}
+ await openSaved();
+ const reference=await page.evaluate(()=>{const c=document.createElement('canvas');c.width=400;c.height=200;const g=c.getContext('2d');g.fillStyle='white';g.fillRect(0,0,400,200);g.strokeStyle='black';g.strokeRect(30,20,340,160);return c.toDataURL().split(',')[1];});
+ await modal.locator('input[type=file][aria-label="트레이싱 원본 이미지 선택"]').setInputFiles({name:'reference.png',mimeType:'image/png',buffer:Buffer.from(reference,'base64')});
+ await page.waitForFunction(()=>!document.querySelector('[data-trace-import]').disabled);
+ assert.equal(await modal.locator('.gm-trace-options summary').textContent(),'비교 위치 조정');await modal.locator('select[data-trace-view]').selectOption('overlay');await modal.locator('.gm-trace-options summary').click();assert.ok((await modal.locator('.gm-trace-align-hint').textContent()).includes('편집본의 위치와 크기'));await modal.locator('.gm-trace-options summary').click();
+ for(const width of [1024,720,1440]){await page.setViewportSize({width,height:1000});const sizes=await modal.locator('.gm-modal,.gm-trace-toolbar').evaluateAll(ns=>ns.map(n=>({width:n.clientWidth,scroll:n.scrollWidth})));assert.ok(sizes.every(n=>n.scroll<=n.width+1),JSON.stringify({width,sizes}));await modal.locator('[data-trace-zoom-toggle]').click();const panel=await modal.locator('.gm-trace-zoom-panel').boundingBox();assert.ok(panel.x>=0&&panel.x+panel.width<=width,{width,panel});await modal.locator('[data-trace-zoom]').press('Escape');}
+
+ await modal.locator('[data-trace-zoom-toggle]').click();
  fs.mkdirSync('_work/feedback/parts/graph-controls',{recursive:true});await page.screenshot({path:path.resolve('_work/feedback/parts/graph-controls/'+name+'.png')});
  await modal.locator('#gm-cancel').click();assert.equal(await modal.isVisible(),false);
- if(process.env.GRAPH_CONTROLS_ONLY==='1'){assert.deepEqual(errors,[]);console.log(name+': graph dropdowns, zoom and upper export passed; legacy bound-text drag is outside this run');continue;}
+ if(process.env.GRAPH_CONTROLS_ONLY==='1'){assert.deepEqual(errors,[]);console.log(name+': graph dropdowns, slider/lock, Escape, saved view preferences, Cancel, unchanged geometry and upper export passed; legacy bound-text drag is outside this run');continue;}
  await page.evaluate(async fixture=>{
   const v='?v=1.7.0-four-session-integration', {state}=await import('/js/state.js'+v),{buildNativeGraph}=await import('/js/graph/native-graph.js'+v);
   fixture.annotations=[{id:'free-label',kind:'text',text:'자유 글자',coordinateSpace:'data',orientation:'horizontal',x:2.3,y:2.7,axis:'y',seriesId:'s1',pointIndex:1}];
