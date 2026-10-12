@@ -755,6 +755,7 @@ scenarios.QA1 = async ctx => {
         const first = await page.evaluate(() => loginResumeSent[0].references);
         await page.evaluate(() => { __cross.partialFault.enabled = false; });
         await login.sendLibrary(page, library, { count: 2 });
+        await page.locator('.web-login-dialog').waitFor({ state: 'visible' });
         await ctx.check('explicit partial-save retry preserves both real crops', async () => assert.deepEqual(await page.evaluate(() => loginResumeSent[1].references), first));
       }
       const dialog = page.locator('.web-login-dialog'); await dialog.waitFor({ state: 'visible' });
