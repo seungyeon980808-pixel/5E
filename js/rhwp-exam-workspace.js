@@ -207,7 +207,7 @@ export function initRhwpExamWorkspace(state, services) {
       button.setAttribute('aria-current',String(figure ? figure.id===selected : selectedKey===pictureKey(ref)));
       button.title = `${name} · 선택 / 더블클릭하여 라벨 편집`;
       if (!thumbnails.has(id)) {
-        const bytes = bridge.wasm.getControlImageData(ref.sec,ref.ppi,ref.ci,JSON.stringify(ref.cellPath || []));
+        const bytes = bridge.pictureBytes(ref);
         thumbnails.set(id,URL.createObjectURL(new Blob([bytes],{type:'image/png'})));
       }
       const image = document.createElement('img'); image.src = thumbnails.get(id); image.alt = ''; image.className = 'exam-figure-thumbnail';
@@ -228,7 +228,7 @@ export function initRhwpExamWorkspace(state, services) {
     refreshFigureNames();
     for (const {id,ref} of bridge.documentPictures()) {
       const figure = figures.get(id); if (!figure) continue;
-      const bytes = bridge.wasm.getControlImageData(ref.sec,ref.ppi,ref.ci,JSON.stringify(ref.cellPath || []));
+      const bytes = bridge.pictureBytes(ref);
       const embedded = readEditablePng(bytes,prepareLoadedProject);
       if (!embedded || (embedded.name === figure.name && embedded.source.pages[0]?.name === figure.name && (!embedded.context?.ai || embedded.context.ai.snapshot.tabs[0].title === figure.name))) continue;
       const data = new Uint8Array(bytes), view = new DataView(data.buffer,data.byteOffset,data.byteLength);
@@ -434,7 +434,7 @@ export function initRhwpExamWorkspace(state, services) {
       for (const picture of bridge.documentPictures()) {
         let figure = figures.get(picture.id);
         if (!figure) {
-          const ref = picture.ref, bytes = bridge.wasm.getControlImageData(ref.sec,ref.ppi,ref.ci,JSON.stringify(ref.cellPath || []));
+          const ref = picture.ref, bytes = bridge.pictureBytes(ref);
           const recovered = readEditablePng(bytes,prepareLoadedProject); if (!recovered) continue;
           figure = normalizeExamFigure(recovered); figures.set(figure.id,figure);
           if (picture.id !== figure.id) {const image = await imageFor(figure.source,figure);bridge.writeFigure(ref,image,figure.id);}
@@ -715,8 +715,8 @@ export function initRhwpExamWorkspace(state, services) {
   async function registerPicture(ref, mode = 'original') {
     if (figures.size>=500) throw new Error('그림과 수정 이력은 500개까지 보관합니다. 새 프로젝트로 나눠주세요.');
     const generation=bridge.generation,props=clone(bridge.properties(ref));
-    const raw=new Uint8Array(bridge.wasm.getControlImageData(ref.sec,ref.ppi,ref.ci,JSON.stringify(ref.cellPath||[])));
-    const mime=bridge.wasm.getControlImageMime(ref.sec,ref.ppi,ref.ci,JSON.stringify(ref.cellPath||[])) || 'image/png';
+    const raw=new Uint8Array(bridge.pictureBytes(ref));
+    const mime=bridge.pictureMime(ref) || 'image/png';
     let blob=new Blob([raw],{type:mime}), image;
     try {image=await decodePicture(blob);}
     catch {
@@ -996,7 +996,7 @@ export function initRhwpExamWorkspace(state, services) {
     'export-png':async () => {
       const figure = figures.get(bridge.selectedFigureId()); if (!figure) throw new Error('시험지에서 저장할 그림을 먼저 선택해주세요.');
       flushFigureNames();
-      const ref = bridge.findFigure(figure.id), bytes = bridge.wasm.getControlImageData(ref.sec,ref.ppi,ref.ci,JSON.stringify(ref.cellPath || []));
+      const ref = bridge.findFigure(figure.id), bytes = bridge.pictureBytes(ref);
       download(new Blob([bytes], {type:'image/png'}), `${safeName(figure.name)}.png`);
       message('편집 원본을 포함한 PNG 다운로드를 시작했습니다.');
     },

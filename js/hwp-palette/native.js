@@ -18,6 +18,15 @@ import {
 } from "./model.js";
 import { zipSync, unzipSync } from "../../vendor/fflate/index.js";
 import { xmlDocument } from "./workbook.js";
+import {
+  inSubdocument,
+  stageSubdocument,
+  stageDocument,
+  detachedDocument,
+  installDocumentHistory,
+  REPLACE_DETACHED,
+} from "./subdocuments.js";
+import { importHwpxParagraphs } from "./hwpx-import.js";
 export const mm = (value) => Math.round((Number(value) * 7200) / 25.4);
 const chars = (value) => [...String(value)].length;
 export function read(value) {
@@ -64,14 +73,48 @@ function paragraphAt(p, index) {
     : { ...clone(p), paragraphIndex: index, charOffset: 0 };
 }
 function moveCursor(input, p) {
-  if (p.hf) {
+  if (p.note) {
+    const c = input.cursor;
+    c.exitHeaderFooterMode?.();
+    if (
+      !c.isInFootnote?.() ||
+      c.fnSectionIdx !== p.sectionIndex ||
+      c.fnParaIdx !== p.note.parentParaIndex ||
+      c.fnControlIdx !== p.note.controlIndex
+    )
+      c.enterFootnoteMode(
+        p.sectionIndex,
+        p.note.parentParaIndex,
+        p.note.controlIndex,
+        0,
+        0,
+      );
+    c.setFnCursorPosition(
+      p.cellPath?.length ? p.parentParaIndex : p.paragraphIndex,
+      p.charOffset,
+    );
+  } else if (p.hf) {
+    const c = input.cursor;
+    c.exitFootnoteMode?.();
+    if (
+      !c.isInHeaderFooter?.() ||
+      c.hfSectionIdx !== p.sectionIndex ||
+      c.hfApplyTo !== p.hf.applyTo ||
+      (c.headerFooterMode === "header") !== p.hf.isHeader
+    )
+      c.enterHeaderFooterMode(p.hf.isHeader, p.sectionIndex, p.hf.applyTo);
     input.cursor.setHfCursorPosition(p.paragraphIndex, p.charOffset);
-  } else input.cursor.moveTo(p);
+  } else {
+    input.cursor.exitHeaderFooterMode?.();
+    input.cursor.exitFootnoteMode?.();
+    input.cursor.moveTo(p);
+  }
 }
 function sameContainer(a, b) {
   return (
     a.sectionIndex === b.sectionIndex &&
     JSON.stringify(a.hf || null) === JSON.stringify(b.hf || null) &&
+    JSON.stringify(a.note || null) === JSON.stringify(b.note || null) &&
     ((!inCell(a) && !inCell(b)) ||
       (inCell(a) &&
         inCell(b) &&
@@ -81,6 +124,14 @@ function sameContainer(a, b) {
   );
 }
 export function lengthAt(d, p) {
+  if (p.note || (p.hf && inCell(p))) {
+    const stage = stageSubdocument(d, p);
+    try {
+      return lengthAt(stage.document, stage.map(p));
+    } finally {
+      stage.document.free();
+    }
+  }
   if (p.hf)
     return Number(
       read(
@@ -97,6 +148,14 @@ export function lengthAt(d, p) {
     : d.getParagraphLength(p.sectionIndex, p.paragraphIndex);
 }
 export function textAt(d, p) {
+  if (p.note || (p.hf && inCell(p))) {
+    const stage = stageSubdocument(d, p);
+    try {
+      return textAt(stage.document, stage.map(p));
+    } finally {
+      stage.document.free();
+    }
+  }
   const len = lengthAt(d, p);
   if (p.hf) {
     const files = unzipSync(d.exportHwpx()),
@@ -218,6 +277,54 @@ function charProps(d, p) {
         )
       : d.getCharPropertiesAt(p.sectionIndex, p.paragraphIndex, p.charOffset),
   );
+}
+function paraProps(d, p) {
+  if (!inCell(p))
+    return read(d.getParaPropertiesAt(p.sectionIndex, p.paragraphIndex));
+  if (pathOf(p).length === 1) {
+    const c = pathOf(p)[0];
+    return read(
+      d.getCellParaPropertiesAt(
+        p.sectionIndex,
+        parentOf(p),
+        c.controlIndex,
+        c.cellIndex,
+        c.cellParaIndex,
+      ),
+    );
+  }
+  const record = paragraphRecords(d).find(
+    (r) => positionKey(r.target) === positionKey(p),
+  );
+  const files = unzipSync(d.exportHwpx()),
+    header = xmlDocument(files["Contents/header.xml"]);
+  const style = [...header.getElementsByTagNameNS("*", "paraPr")].find(
+    (n) => n.getAttribute("id") === record?.node.getAttribute("paraPrIDRef"),
+  );
+  if (!style) throw new Error("중첩 문단의 서식을 찾지 못했습니다.");
+  const defaults = style.getElementsByTagNameNS("*", "default")[0],
+    scope = defaults || style;
+  const element = (name) =>
+    scope.getElementsByTagNameNS("*", name)[0] ||
+    style.getElementsByTagNameNS("*", name)[0];
+  const value = (name) =>
+    Number(element(name)?.getAttribute("value") || 0) * (defaults ? 1 : 2);
+  return {
+    alignment: style
+      .getElementsByTagNameNS("*", "align")[0]
+      ?.getAttribute("horizontal")
+      .toLowerCase(),
+    indent: value("intent"),
+    marginLeft: value("left"),
+    marginRight: value("right"),
+    lineSpacing: Number(element("lineSpacing")?.getAttribute("value") || 100),
+    koreanBreakUnit:
+      style
+        .getElementsByTagNameNS("*", "breakSetting")[0]
+        ?.getAttribute("breakNonLatinWord") === "BREAK_WORD"
+        ? 0
+        : 1,
+  };
 }
 function charFormat(d, p, start, end, props) {
   if (!Object.keys(props).length) return;
@@ -374,10 +481,11 @@ function formulaScript(source) {
 export function insertSegments(d, p, segments, assets = new Map()) {
   if (p.hf && segments.some((s) => s.image || s.formula))
     throw new Error(
-      "머리말 그림·수식은 현재 지원되지 않습니다. 본문 또는 본문 표 셀을 선택해주세요.",
+      "머리말·꼬리말의 개체는 분리된 편집 문서를 통해 삽입해야 합니다.",
     );
   // Native controls occupy stream positions. Place one explicit space per
   // control, then insert right-to-left so text offsets stay stable.
+  const beforeLength = lengthAt(d, p);
   let text = "",
     offset = p.charOffset;
   const spans = [],
@@ -416,29 +524,54 @@ export function insertSegments(d, p, segments, assets = new Map()) {
       }
       const width = Math.max(1, Math.min(mm(a.widthMm), limit || bodyWidth)),
         height = Math.round((width * a.heightMm) / a.widthMm);
-      checked(
-        d.insertPicture(
-          p.sectionIndex,
-          inCell(p) ? parentOf(p) : p.paragraphIndex,
-          offset,
-          pathJSON(p),
-          a.bytes,
-          width,
-          height,
-          a.width,
-          a.height,
-          a.extension || "png",
-          a.name || seg.image,
-        ),
-      );
+      const make = (at) => {
+        const inserted = checked(
+          d.insertPicture(
+            at.sectionIndex,
+            at.paragraphIndex,
+            at.charOffset,
+            "[]",
+            a.bytes,
+            width,
+            height,
+            a.width,
+            a.height,
+            a.extension || "png",
+            a.name || seg.image,
+          ),
+        );
+        // Palette images belong to the text/cell at the insertion point. The
+        // native default is a floating picture at paper (0,0), which is clipped
+        // out of header/footer bands and ignores the selected cell.
+        const pictureIndex = inserted.controlIdx ?? inserted.controlIndex;
+        const layout = JSON.stringify({
+          treatAsChar: true,
+          textWrap: "TopAndBottom",
+          vertRelTo: "Para",
+          horzRelTo: "Para",
+          vertOffset: 0,
+          horzOffset: 0,
+        });
+        checked(
+          d.setPictureProperties(
+            at.sectionIndex,
+            inserted.paraIdx ?? at.paragraphIndex,
+            pictureIndex,
+            layout,
+          ),
+        );
+        return inserted;
+      };
+      // The native cell-path picture API inserts a floating table sibling. Use
+      // its control clipboard so the picture really belongs to this cell.
+      if (inCell(p)) controlsFromBody(d, { ...p, charOffset: offset }, make);
+      else make({ ...p, charOffset: offset });
     } else {
       if (!seg.formula.trim()) continue;
       const size =
         nativeCharFields(seg.style).fontSize ||
         charProps(d, p)?.fontSize ||
         1000;
-      if (p.hf)
-        throw new Error("머리말 수식은 한글 편집기의 수식 메뉴로 넣어주세요.");
       if (inCell(p))
         controlsFromBody(d, { ...p, charOffset: offset }, (at) =>
           checked(
@@ -465,7 +598,9 @@ export function insertSegments(d, p, segments, assets = new Map()) {
         );
     }
   }
-  return end;
+  return objects.length
+    ? { ...end, charOffset: p.charOffset + lengthAt(d, p) - beforeLength }
+    : end;
 }
 function makeTable(
   d,
@@ -523,7 +658,10 @@ function makeTable(
         ),
       );
   };
-  if (p.hf) throw new Error("머리말 표는 현재 지원되지 않습니다. 본문 또는 본문 표 셀을 선택해주세요.");
+  if (p.hf)
+    throw new Error(
+      "머리말·꼬리말의 표는 분리된 편집 문서를 통해 삽입해야 합니다.",
+    );
   if (inCell(p)) {
     const sec = p.sectionIndex,
       start = d.getParagraphCount(sec);
@@ -632,6 +770,8 @@ export function paragraphRecords(d) {
     colPr: "cold",
     header: "head",
     footer: "foot",
+    footNote: "fn",
+    endNote: "en",
     pageNum: "pgnp",
     pageHiding: "pghd",
     tbl: "tbl",
@@ -649,13 +789,13 @@ export function paragraphRecords(d) {
     records.push({
       node,
       target,
-      text: target.hf ? xmlParagraphText(node) : textAt(d, target),
+      text: inSubdocument(target) ? xmlParagraphText(node) : textAt(d, target),
     });
     let globalPara = target.paragraphIndex;
     for (let sec = 0; sec < target.sectionIndex; sec++)
       globalPara += d.getParagraphCount(sec);
     const controls =
-      !inCell(target) && !target.hf
+      !inCell(target) && !inSubdocument(target)
         ? nativeControls.filter((c) => c.list === 0 && c.para === globalPara)
         : null;
     const used = new Set();
@@ -667,12 +807,11 @@ export function paragraphRecords(d) {
         const parts =
           child.localName === "ctrl" ? [...child.children] : [child];
         for (const control of parts) {
-          if (
-            ["t", "lineSeg", "char", "autoNum", "newNum"].includes(
-              control.localName,
-            )
-          )
+          if (["autoNum", "newNum"].includes(control.localName)) {
+            ci++;
             continue;
+          }
+          if (["t", "lineSeg", "char"].includes(control.localName)) continue;
           // Header/footer XML is serialized ahead of body objects, while the
           // native control array retains insertion order. Match native indices.
           if (controls) {
@@ -703,9 +842,8 @@ export function paragraphRecords(d) {
                 ))
                   visit(para, {
                     sectionIndex: target.sectionIndex,
-                    ...(target.hf
-                      ? { hf: target.hf, unsupportedControl: true }
-                      : {}),
+                    ...(target.hf ? { hf: target.hf } : {}),
+                    ...(target.note ? { note: target.note } : {}),
                     parentParaIndex: inCell(target)
                       ? parentOf(target)
                       : target.paragraphIndex,
@@ -735,9 +873,8 @@ export function paragraphRecords(d) {
             ))
               visit(para, {
                 sectionIndex: target.sectionIndex,
-                ...(target.hf
-                  ? { hf: target.hf, unsupportedControl: true }
-                  : {}),
+                ...(target.hf ? { hf: target.hf } : {}),
+                ...(target.note ? { note: target.note } : {}),
                 parentParaIndex: inCell(target)
                   ? parentOf(target)
                   : target.paragraphIndex,
@@ -751,6 +888,28 @@ export function paragraphRecords(d) {
                   ...clone(pathOf(target)),
                   { controlIndex: ci, cellIndex: 0, cellParaIndex: cp++ },
                 ],
+              });
+          } else if (["footNote", "endNote"].includes(control.localName)) {
+            const sub = [...control.children].find(
+              (n) => n.localName === "subList",
+            );
+            const kind = controlTypes[control.localName];
+            const ordinal =
+              controls
+                ?.filter((c) => c.ctrlId === kind)
+                .findIndex((c) => c.controlIndex === ci) ?? 0;
+            let cp = 0;
+            for (const para of [...(sub?.children || [])].filter(
+              (n) => n.localName === "p",
+            ))
+              visit(para, {
+                ...body(target.sectionIndex, cp++),
+                note: {
+                  parentParaIndex: target.paragraphIndex,
+                  controlIndex: ci,
+                  kind: control.localName,
+                  ordinal,
+                },
               });
           } else if (["header", "footer"].includes(control.localName)) {
             const apply =
@@ -787,7 +946,22 @@ export function paragraphRecords(d) {
     ))
       visit(n, body(sec, para++));
   }
-  return records;
+  const stages = new Map();
+  try {
+    for (const record of records)
+      if (inSubdocument(record.target)) {
+        const key = containerKey(record.target);
+        let stage = stages.get(key);
+        if (!stage) {
+          stage = stageSubdocument(d, record.target);
+          stages.set(key, stage);
+        }
+        record.text = textAt(stage.document, stage.map(record.target));
+      }
+    return records;
+  } finally {
+    for (const stage of stages.values()) stage.document.free();
+  }
 }
 export const slotNames = (d) =>
   paragraphRecords(d).flatMap((r) =>
@@ -795,17 +969,21 @@ export const slotNames = (d) =>
       .filter((m) => m[1] !== "본문")
       .map((m) => m[1] || ""),
   );
-function fillDocument(d, fills, assets) {
+function containerKey(p) {
+  return JSON.stringify([
+    p.sectionIndex,
+    p.hf || null,
+    p.note ? [p.note.parentParaIndex, p.note.kind, p.note.ordinal] : null,
+  ]);
+}
+function fillDocument(original, fills, assets) {
+  let d = original;
   let count = 0,
     anchor;
   const positions = [];
   for (const record of paragraphRecords(d))
     for (const match of record.text.matchAll(TOKEN)) {
       if (match[1] === "본문") continue;
-      if (record.target.unsupportedControl)
-        throw new Error(
-          "머리말·꼬리말의 표나 도형 안 빈칸은 현재 한글 엔진에서 채울 수 없습니다. 빈칸을 본문 또는 본문 표 셀로 옮겨주세요.",
-        );
       const offset = chars(record.text.slice(0, match.index));
       positions.push({
         p: { ...record.target, charOffset: offset },
@@ -813,11 +991,66 @@ function fillDocument(d, fills, assets) {
         value: fills[count++] ?? null,
       });
     }
-  d.beginBatch();
+  const groups = new Map(),
+    bodyPositions = [];
+  for (const entry of positions) {
+    if (!inSubdocument(entry.p)) {
+      bodyPositions.push(entry);
+      continue;
+    }
+    const key = containerKey(entry.p);
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(entry);
+  }
+  const replaceSource = (next) => {
+    if (d !== original) d.free();
+    d = next;
+  };
+  const nativeBefore = read(d.getControls());
   try {
-    for (const { p, mark, value } of positions.reverse()) {
-      deleteText(d, p, chars(mark));
-      insertValue(d, p, value, assets);
+    for (const entries of [...groups.values()].reverse()) {
+      const stage = stageSubdocument(d, entries[0].p);
+      try {
+        for (const { p, mark, value } of [...entries].reverse()) {
+          const target = stage.map(p);
+          deleteText(stage.document, target, chars(mark));
+          insertValue(stage.document, target, value, assets);
+        }
+        replaceSource(stage.finish().document);
+      } finally {
+        stage.document.free();
+      }
+    }
+    const nativeAfter = read(d.getControls());
+    d.beginBatch();
+    try {
+      for (const { p, mark, value } of bodyPositions.reverse()) {
+        if (inCell(p)) {
+          let global = parentOf(p);
+          for (let sec = 0; sec < p.sectionIndex; sec++)
+            global += d.getParagraphCount(sec);
+          const before = nativeBefore.filter(
+              (c) => c.list === 0 && c.para === global,
+            ),
+            old = before.find(
+              (c) => c.controlIndex === pathOf(p)[0].controlIndex,
+            );
+          if (old) {
+            const ordinal = before
+              .filter((c) => c.ctrlId === old.ctrlId)
+              .indexOf(old);
+            pathOf(p)[0].controlIndex =
+              nativeAfter.filter(
+                (c) =>
+                  c.list === 0 && c.para === global && c.ctrlId === old.ctrlId,
+              )[ordinal]?.controlIndex ?? pathOf(p)[0].controlIndex;
+          }
+        }
+        deleteText(d, p, chars(mark));
+        insertValue(d, p, value, assets);
+      }
+    } finally {
+      d.endBatch();
     }
     for (const record of paragraphRecords(d)) {
       const match = /\\본문\\/.exec(record.text);
@@ -826,14 +1059,26 @@ function fillDocument(d, fills, assets) {
           ...record.target,
           charOffset: chars(record.text.slice(0, match.index)),
         };
-        deleteText(d, anchor, chars(match[0]));
+        if (inSubdocument(anchor)) {
+          const stage = stageSubdocument(d, anchor);
+          try {
+            const target = stage.map(anchor);
+            deleteText(stage.document, target, chars(match[0]));
+            const next = stage.finish(target);
+            replaceSource(next.document);
+            anchor = next.position;
+          } finally {
+            stage.document.free();
+          }
+        } else deleteText(d, anchor, chars(match[0]));
         break;
       }
     }
-  } finally {
-    d.endBatch();
+  } catch (error) {
+    if (d !== original) d.free();
+    throw error;
   }
-  return { count, anchor };
+  return { count, anchor, source: d };
 }
 function positionKey(p) {
   return JSON.stringify([
@@ -841,6 +1086,7 @@ function positionKey(p) {
     inCell(p) ? parentOf(p) : p.paragraphIndex,
     pathOf(p),
     p.hf || null,
+    p.note || null,
   ]);
 }
 function rewriteParentParagraph(d, p, props) {
@@ -902,6 +1148,38 @@ function rewriteParentParagraph(d, p, props) {
   original.parentNode.append(style);
   original.parentNode.setAttribute("itemCnt", String(styles.length + 1));
   record.node.setAttribute("paraPrIDRef", String(id));
+  if (d[REPLACE_DETACHED]) {
+    const encoder = new TextEncoder(),
+      parent = parentOf(p);
+    let global = parent;
+    for (let sec = 0; sec < p.sectionIndex; sec++)
+      global += d.getParagraphCount(sec);
+    const before = read(d.getControls()).filter(
+      (c) => c.list === 0 && c.para === global,
+    );
+    files[`Contents/section${p.sectionIndex}.xml`] = encoder.encode(
+      new XMLSerializer().serializeToString(record.node.ownerDocument),
+    );
+    files["Contents/header.xml"] = encoder.encode(
+      new XMLSerializer().serializeToString(header),
+    );
+    d[REPLACE_DETACHED](zipSync(files));
+    const after = read(d.getControls()).filter(
+        (c) => c.list === 0 && c.para === global,
+      ),
+      used = new Set(),
+      indices = new Map();
+    for (const old of before) {
+      const next = after.find(
+        (c) => c.ctrlId === old.ctrlId && !used.has(c.controlIndex),
+      );
+      if (next) {
+        used.add(next.controlIndex);
+        indices.set(old.controlIndex, next.controlIndex);
+      }
+    }
+    return { sectionIndex: p.sectionIndex, parentParaIndex: parent, indices };
+  }
   const parent = parentOf(p),
     section = record.node.ownerDocument,
     root = section.documentElement,
@@ -979,9 +1257,31 @@ function remapPosition(p, map) {
       map.indices.get(first.controlIndex) ?? first.controlIndex;
   }
 }
-function standaloneFragment(d) {
+function standaloneFragment(d, sourceSection = 0) {
   const files = unzipSync(d.exportHwpx()),
     enc = new TextEncoder();
+  const header = xmlDocument(files["Contents/header.xml"]);
+  // A detached fragment has no section boundary. Materialize the source's
+  // inherited outline reference before dropping that boundary, including styles
+  // linked from footnote paragraphs. Otherwise the native importer would inherit
+  // the destination's unrelated outline (or reject the fragment).
+  const firstSection = xmlDocument(
+    files[`Contents/section${sourceSection}.xml`],
+  );
+  const outline = firstSection
+    .getElementsByTagNameNS("*", "secPr")[0]
+    ?.getAttribute("outlineShapeIDRef");
+  if (outline && outline !== "0") {
+    for (const heading of header.getElementsByTagNameNS("*", "heading"))
+      if (
+        heading.getAttribute("type") === "OUTLINE" &&
+        heading.getAttribute("idRef") === "0"
+      )
+        heading.setAttribute("idRef", outline);
+    files["Contents/header.xml"] = enc.encode(
+      new XMLSerializer().serializeToString(header),
+    );
+  }
   for (const name of Object.keys(files).filter((k) =>
     /^Contents\/section\d+\.xml$/.test(k),
   )) {
@@ -1013,27 +1313,44 @@ function nativeImport(
     end = source.getParagraphCount(sourceSection),
   } = {},
 ) {
-  const r = checked(
-    d.importParagraphBlock(
-      source,
-      JSON.stringify({
-        request: {
-          sourceSection,
-          sourceStart: start,
-          sourceEnd: end,
-          targetSection: sec,
-          insertBefore: index,
-          count: 1,
-        },
-        dryRun,
-      }),
-    ),
-  );
+  let r;
+  try {
+    r = checked(
+      d.importParagraphBlock(
+        source,
+        JSON.stringify({
+          request: {
+            sourceSection,
+            sourceStart: start,
+            sourceEnd: end,
+            targetSection: sec,
+            insertBefore: index,
+            count: 1,
+          },
+          dryRun,
+        }),
+      ),
+    );
+  } catch (error) {
+    if (!d[REPLACE_DETACHED] || !requiresPackageImport(error)) throw error;
+    const imported = importHwpxParagraphs(d, source, sec, index, {
+      sourceSection,
+      start,
+      end,
+    });
+    if (!dryRun) d[REPLACE_DETACHED](imported.bytes);
+    return { start: imported.start, end: imported.end };
+  }
   return (
     r.operationResult?.result?.inserted || {
       start: index,
       end: index + end - start,
     }
+  );
+}
+function requiresPackageImport(error) {
+  return /paragraph block.*(?:opaque HWPX paraHead|implicit source outline|AutoNumber|Footnote|Endnote)/i.test(
+    String(error),
   );
 }
 function insertFragment(d, p, source) {
@@ -1145,15 +1462,38 @@ export class NativePalette {
       throw new Error("시험지 편집기가 준비된 뒤 다시 실행해주세요.");
     return b;
   }
+  focusPosition(position) {
+    moveCursor(this.bridge().input, position);
+  }
+  canGroup(a, b) {
+    return sameContainer(a, b) && paragraphNumber(b) === paragraphNumber(a) + 1;
+  }
   capture() {
     const b = this.bridge(),
       input = b.input;
-    if (input.cursor.isInFootnote?.())
-      throw new Error("각주 작업은 한글 편집기의 도구를 사용해주세요.");
-    const position = clone(input.getCursorPosition());
+    let position = clone(input.getCursorPosition());
     let selection = clone(input.getSelection());
-    if (input.cursor.isInHeaderFooter?.()) {
+    if (input.cursor.isInFootnote?.()) {
       const c = input.cursor;
+      position = body(c.fnSectionIdx, c.fnInnerParaIdx, c.fnCharOffset);
+      position.note = {
+        parentParaIndex: c.fnParaIdx,
+        controlIndex: c.fnControlIdx,
+      };
+      const range = c.getFootnoteSelectionOrdered?.();
+      const convert = (p) => ({
+        ...paragraphAt(position, p.fnParaIdx),
+        charOffset: p.charOffset,
+      });
+      selection =
+        range &&
+        (range.start.fnParaIdx !== range.end.fnParaIdx ||
+          range.start.charOffset !== range.end.charOffset)
+          ? { start: convert(range.start), end: convert(range.end) }
+          : null;
+    } else if (input.cursor.isInHeaderFooter?.()) {
+      const c = input.cursor;
+      position = body(c.hfSectionIdx, c.hfParaIdx, c.hfCharOffset);
       position.hf = {
         isHeader: c.headerFooterMode === "header",
         applyTo: c.hfApplyTo,
@@ -1177,10 +1517,87 @@ export class NativePalette {
       revision: b.revision,
       position,
       selection,
-      text: selection
-        ? selectionText(b.wasm.borrowDocumentHandle(), selection)
-        : "",
+      text: selection ? this.contextText(position, selection) : "",
     };
+  }
+  contextText(position, selection) {
+    const d = this.bridge().wasm.borrowDocumentHandle();
+    if (!inSubdocument(position)) return selectionText(d, selection);
+    const stage = stageSubdocument(d, position);
+    try {
+      return selectionText(stage.document, {
+        start: stage.map(selection.start),
+        end: stage.map(selection.end),
+      });
+    } finally {
+      stage.document.free();
+    }
+  }
+  async inContainer(context, operation) {
+    const b = this.assertContext(context),
+      stage = inSubdocument(context.position)
+        ? stageSubdocument(b.wasm.borrowDocumentHandle(), context.position)
+        : stageDocument(b.wasm.borrowDocumentHandle());
+    const mapped = {
+      ...context,
+      position: stage.map(context.position),
+      selection: context.selection
+        ? {
+            start: stage.map(context.selection.start),
+            end: stage.map(context.selection.end),
+          }
+        : null,
+    };
+    let cursor = clone(mapped.position);
+    const input = {
+      cursor: {
+        clearSelection() {},
+        moveTo(p) {
+          cursor = clone(p);
+        },
+      },
+      getCursorPosition: () => clone(cursor),
+      getSelection: () => clone(mapped.selection),
+      getSelectedCellBlock: () => null,
+      getParaFormatTargetsAtCursor: () => [],
+    };
+    const bridge = {
+      detached: true,
+      input,
+      generation: b.generation,
+      revision: b.revision,
+      wasm: new Proxy(b.wasm, {
+        get: (_, key) =>
+          key === "borrowDocumentHandle"
+            ? () => stage.document
+            : typeof stage.document[key] === "function"
+              ? stage.document[key].bind(stage.document)
+              : b.wasm[key],
+      }),
+      transaction: (_, mutate) => mutate(input),
+    };
+    const native = new NativePalette(() => bridge, this.store, {
+      notify: this.notify,
+    });
+    let finished,
+      adopted = false;
+    try {
+      const result = await operation(native, mapped);
+      this.assertContext(context);
+      finished = stage.finish(cursor);
+      b.transaction("palette-subdocument", (realInput) => {
+        installDocumentHistory(b.wasm).adopt(finished.document);
+        adopted = true;
+        realInput.cursor.clearSelection();
+        moveCursor(realInput, finished.position);
+        return finished.position;
+      });
+      finished = null; // Native history now owns the adopted handle.
+      return result;
+    } finally {
+      if (finished && !adopted) finished.document.free();
+      stage.document.free();
+    }
   }
   assertContext(context) {
     const b = this.bridge();
@@ -1246,7 +1663,10 @@ export class NativePalette {
       source.convertToEditable();
       const assets = await this.assetsFor(fills);
       const result = fillDocument(source, fills, assets);
-      return { source, result };
+      if (result.source !== source) source.free();
+      const prepared = result.source;
+      delete result.source;
+      return { source: prepared, result };
     } catch (e) {
       source.free();
       throw e;
@@ -1256,6 +1676,10 @@ export class NativePalette {
     item,
     { form = false, fills = [], context = this.capture() } = {},
   ) {
+    if (!form && inSubdocument(context.position))
+      return this.inContainer(context, (n, c) =>
+        n.useItem(item, { form, fills, context: c }),
+      );
     if (item.mix?.length) {
       const ops = item.mix.map((ref) => [
         "template",
@@ -1286,13 +1710,21 @@ export class NativePalette {
       const staged = standaloneFragment(source);
       try {
         const b = this.assertContext(context);
-        nativeImport(
-          b.wasm.borrowDocumentHandle(),
-          staged,
-          context.position.sectionIndex,
-          b.wasm.getParagraphCount(context.position.sectionIndex),
-          { dryRun: true },
-        );
+        try {
+          nativeImport(
+            b.wasm.borrowDocumentHandle(),
+            staged,
+            context.position.sectionIndex,
+            b.wasm.getParagraphCount(context.position.sectionIndex),
+            { dryRun: true },
+          );
+        } catch (error) {
+          if (!b.detached && requiresPackageImport(error))
+            return this.inContainer(context, (n, c) =>
+              n.useItem(item, { form, fills, context: c }),
+            );
+          throw error;
+        }
         b.transaction("palette-template", (input) => {
           const at = context.selection
             ? deleteRange(b.wasm.borrowDocumentHandle(), context.selection)
@@ -1314,6 +1746,8 @@ export class NativePalette {
     }
   }
   async insertChar(text, context = this.capture()) {
+    if (inSubdocument(context.position))
+      return this.inContainer(context, (n, c) => n.insertChar(text, c));
     const b = this.assertContext(context);
     return b.transaction("palette-character", (input) => {
       const d = b.wasm.borrowDocumentHandle(),
@@ -1327,6 +1761,21 @@ export class NativePalette {
     });
   }
   async applyFunctions(actions, context = this.capture()) {
+    if (inSubdocument(context.position))
+      return this.inContainer(context, (n, c) => {
+        if (!c.selection)
+          c.selection = {
+            start: { ...clone(c.position), charOffset: 0 },
+            end: {
+              ...clone(c.position),
+              charOffset: lengthAt(
+                n.bridge().wasm.borrowDocumentHandle(),
+                c.position,
+              ),
+            },
+          };
+        return n.applyFunctions(actions, c);
+      });
     const b = this.assertContext(context),
       input = b.input,
       d = b.wasm.borrowDocumentHandle();
@@ -1525,6 +1974,10 @@ export class NativePalette {
     return tightened;
   }
   async fitSpacing({ max = 8, context = this.capture() } = {}) {
+    if (inSubdocument(context.position))
+      return this.inContainer(context, (n, c) =>
+        n.fitSpacing({ max, context: c }),
+      );
     const b = this.bridge(),
       input = b.input,
       selection = context.selection;
@@ -1551,6 +2004,8 @@ export class NativePalette {
     return tightened;
   }
   async convert(text = null, context = this.capture()) {
+    if (inSubdocument(context.position))
+      return this.inContainer(context, (n, c) => n.convert(text, c));
     const source = text ?? context.text;
     if (!source.trim())
       throw new Error("변환할 마크다운을 선택하거나 입력해주세요.");
@@ -1573,6 +2028,11 @@ export class NativePalette {
     return this.executePlan(buildLibraryPlan(source, lookup), context);
   }
   async executePlan(plan, context = this.capture()) {
+    if (
+      inSubdocument(context.position) &&
+      !plan.ops.some((op) => op[0] === "form")
+    )
+      return this.inContainer(context, (n, c) => n.executePlan(plan, c));
     if (plan.ops.some((op) => op[0] === "form")) {
       if (plan.ops.length !== 1 || plan.ops[0][0] !== "form")
         throw new Error("새 양식 열기는 다른 삽입 명령과 나누어 실행해주세요.");
@@ -1597,14 +2057,21 @@ export class NativePalette {
         }
       const b = this.assertContext(context),
         d = b.wasm.borrowDocumentHandle();
-      for (const { fragment } of prepared)
-        nativeImport(
-          d,
-          fragment,
-          context.position.sectionIndex,
-          d.getParagraphCount(context.position.sectionIndex),
-          { dryRun: true },
-        );
+      for (const { fragment } of prepared) {
+        try {
+          nativeImport(
+            d,
+            fragment,
+            context.position.sectionIndex,
+            d.getParagraphCount(context.position.sectionIndex),
+            { dryRun: true },
+          );
+        } catch (error) {
+          if (!b.detached && requiresPackageImport(error))
+            return this.inContainer(context, (n, c) => n.executePlan(plan, c));
+          throw error;
+        }
+      }
       b.transaction("palette-convert", (input) => {
         let p = context.selection
           ? deleteRange(d, context.selection)
@@ -1643,6 +2110,10 @@ export class NativePalette {
     context,
     lookup = libraryLookup(this.store.state),
   ) {
+    if (inSubdocument(context.position))
+      return this.inContainer(context, (n, c) =>
+        n.composeQuestions(text, c, lookup),
+      );
     const questions = text
         .split(/(?=^(?:번호:|번 호:))/m)
         .filter((s) => s.trim())
@@ -1867,6 +2338,74 @@ export class NativePalette {
     this.notify(`${questions.length}개 문항 조판 완료`);
   }
   async captureTemplate(context = this.capture(), { control = null } = {}) {
+    if (inSubdocument(context.position)) {
+      const b = this.assertContext(context),
+        stage = stageSubdocument(
+          b.wasm.borrowDocumentHandle(),
+          context.position,
+        );
+      const mapped = {
+        ...context,
+        position: stage.map(context.position),
+        selection: context.selection
+          ? {
+              start: stage.map(context.selection.start),
+              end: stage.map(context.selection.end),
+            }
+          : null,
+      };
+      if (!mapped.selection && !inCell(mapped.position))
+        mapped.selection = {
+          start: body(mapped.position.sectionIndex, stage.start),
+          end: body(
+            mapped.position.sectionIndex,
+            stage.document.getParagraphCount(mapped.position.sectionIndex) - 1,
+            stage.document.getParagraphLength(
+              mapped.position.sectionIndex,
+              stage.document.getParagraphCount(mapped.position.sectionIndex) -
+                1,
+            ),
+          ),
+        };
+      if (context.position.note) {
+        let global = stage.start;
+        for (let sec = 0; sec < context.position.sectionIndex; sec++)
+          global += stage.document.getParagraphCount(sec);
+        const marker = read(stage.document.getControls()).find(
+          (c) => c.list === 0 && c.para === global && c.ctrlId === "atno",
+        );
+        if (marker) {
+          checked(
+            stage.document.deleteControlAt(
+              context.position.sectionIndex,
+              stage.start,
+              marker.controlIndex,
+            ),
+          );
+          for (const point of [
+            mapped.position,
+            mapped.selection?.start,
+            mapped.selection?.end,
+          ])
+            if (point && !inCell(point) && point.paragraphIndex === stage.start)
+              point.charOffset = Math.max(0, point.charOffset - 1);
+        }
+      }
+      const native = new NativePalette(
+        () => ({
+          generation: b.generation,
+          revision: b.revision,
+          input: {},
+          wasm: { borrowDocumentHandle: () => stage.document },
+        }),
+        this.store,
+      );
+      try {
+        return await native.captureTemplate(mapped, { control });
+      } finally {
+        stage.document.free();
+      }
+    }
     const b = this.assertContext(context),
       live = b.wasm.borrowDocumentHandle(),
       source = new live.constructor(new Uint8Array(live.exportHwpx()));
@@ -1938,10 +2477,16 @@ export class NativePalette {
         start = range?.start.paragraphIndex ?? context.position.paragraphIndex;
         end = (range?.end.paragraphIndex ?? start) + 1;
       }
-      fragment = standaloneFragment(source);
-      const output = live.constructor.createEmpty();
+      fragment = standaloneFragment(source, context.position.sectionIndex);
+      const blank = live.constructor.createEmpty();
+      blank.createBlankDocument();
+      let output;
       try {
-        output.createBlankDocument();
+        output = detachedDocument(live.constructor, blank.exportHwpx());
+      } finally {
+        blank.free();
+      }
+      try {
         nativeImport(output, fragment, 0, 0, {
           sourceSection: context.position.sectionIndex,
           start,
@@ -1983,13 +2528,23 @@ export class NativePalette {
     const b = this.bridge(),
       d = b.wasm.borrowDocumentHandle();
     return paragraphRecords(d)
-      .filter((r) => !inCell(r.target) && !r.target.hf)
+      .filter((r) => !inCell(r.target))
       .map((r, index) => {
         const tables = [...r.node.getElementsByTagNameNS("*", "tbl")].length;
         return {
           index,
           position: clone(r.target),
-          kind: tables ? "표" : "문단",
+          kind: r.target.note
+            ? r.target.note.kind === "endNote"
+              ? "미주"
+              : "각주"
+            : r.target.hf
+              ? r.target.hf.isHeader
+                ? "머리말"
+                : "꼬리말"
+              : tables
+                ? "표"
+                : "문단",
           preview:
             r.text.trim().slice(0, 140) ||
             (tables ? `표 ${tables}개` : "빈 문단"),
@@ -2013,6 +2568,39 @@ export class NativePalette {
     }
   }
   currentFormat() {
+    const context = this.capture();
+    if (inSubdocument(context.position)) {
+      const stage = stageSubdocument(
+        this.bridge().wasm.borrowDocumentHandle(),
+        context.position,
+      );
+      try {
+        const p = stage.map(context.position),
+          d = stage.document;
+        const char = charProps(d, p),
+          para = paraProps(d, p);
+        const native = new NativePalette(
+          () => ({
+            input: {
+              cursor: {},
+              getCursorPosition: () => p,
+              getSelection: () => null,
+              getCharProperties: () => char,
+              getParaProperties: () => ({
+                ...para,
+                indent: (para.indent * 96) / 14400,
+                marginLeft: (para.marginLeft * 96) / 14400,
+                marginRight: (para.marginRight * 96) / 14400,
+              }),
+            },
+          }),
+          this.store,
+        );
+        return native.currentFormat();
+      } finally {
+        stage.document.free();
+      }
+    }
     const b = this.bridge(),
       char = b.input.getCharProperties(),
       para = b.input.getParaProperties();
@@ -2041,5 +2629,51 @@ export class NativePalette {
       { func: "오른쪽여백", value: (para.marginRight * 25.4) / 96 },
       { func: "어절단위 줄바꿈", value: para.koreanBreakUnit === 0 },
     ];
+  }
+  async insertNote({ endnote = false, context = this.capture() } = {}) {
+    const b = this.assertContext(context),
+      d = b.wasm.borrowDocumentHandle();
+    if (inSubdocument(context.position) || inCell(context.position))
+      throw new Error("각주 번호를 넣을 본문 위치를 선택해주세요.");
+    return b.transaction("palette-note-insert", (input) => {
+      const p = context.position;
+      const result = checked(
+        (endnote ? d.insertEndnote : d.insertFootnote).call(
+          d,
+          p.sectionIndex,
+          p.paragraphIndex,
+          p.charOffset,
+        ),
+      );
+      const controlIndex = result.controlIdx ?? result.controlIndex;
+      input.cursor.clearSelection();
+      input.cursor.enterFootnoteMode(
+        p.sectionIndex,
+        p.paragraphIndex,
+        controlIndex,
+        0,
+        0,
+      );
+      input.cursor.setFnCursorPosition(0, 2);
+      return result;
+    });
+  }
+  async deleteNote(context = this.capture()) {
+    const b = this.assertContext(context),
+      d = b.wasm.borrowDocumentHandle(),
+      p = context.position;
+    if (!p.note) throw new Error("지울 각주 또는 미주 안에 커서를 놓아주세요.");
+    return b.transaction("palette-note-delete", (input) => {
+      const result = checked(
+        d.deleteFootnote(
+          p.sectionIndex,
+          p.note.parentParaIndex,
+          p.note.controlIndex,
+        ),
+      );
+      input.cursor.exitFootnoteMode();
+      input.cursor.clearSelection();
+      return result;
+    });
   }
 }

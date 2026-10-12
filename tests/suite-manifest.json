@@ -523,6 +523,12 @@
       "findingIds": [
         "HWPPALETTE-RHWP-PORT"
       ]
+    },
+    {
+      "path": "tests/test-hwp-palette-history.mjs",
+      "findingIds": [
+        "HWPPALETTE-RHWP-SUBDOCUMENTS"
+      ]
     }
   ],
   "browser": [
@@ -1294,6 +1300,12 @@
       "path": "tests/test-hwp-palette-features-browser.cjs",
       "findingIds": [
         "HWPPALETTE-RHWP-PORT"
+      ]
+    },
+    {
+      "path": "tests/test-hwp-palette-subdocuments-browser.cjs",
+      "findingIds": [
+        "HWPPALETTE-RHWP-SUBDOCUMENTS"
       ]
     }
   ],

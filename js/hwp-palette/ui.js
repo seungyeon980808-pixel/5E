@@ -774,7 +774,7 @@ export function initPaletteWorkspace(panel, services) {
       )
       .join(
         "",
-      )}</div><p>도구를 누르면 현재 팔레트에 추가합니다. 설정 도구는 위의 물감 종류에서 열 수 있습니다.</p>`;
+      )}</div><p>도구를 누르면 현재 팔레트에 추가합니다. 설정 도구는 위의 물감 종류에서 열 수 있습니다.</p><div class="palette-choice-list" aria-label="각주·미주 편집">${htmlButton("각주 넣기", "note-insert")}${htmlButton("미주 넣기", "endnote-insert")}${htmlButton("각주·미주 삭제", "note-delete")}</div><p class="palette-description">본문 커서에 각주·미주를 넣습니다. 지울 때는 해당 각주·미주 안에 커서를 놓으세요.</p>`;
   }
   function profileMarkup() {
     const config = store.state.config,
@@ -811,11 +811,9 @@ export function initPaletteWorkspace(panel, services) {
       (button) =>
         (button.onclick = () => {
           native.assertContext(decomposeContext);
-          native
-            .bridge()
-            .input.cursor.moveTo(
-              decomposition[+button.dataset.pieceFocus].position,
-            );
+          native.focusPosition(
+            decomposition[+button.dataset.pieceFocus].position,
+          );
         }),
     );
     manager.querySelector("[data-palette-search]").oninput = (e) => {
@@ -1221,8 +1219,10 @@ export function initPaletteWorkspace(panel, services) {
         bundle &&
         last &&
         index === last.at(-1) + 1 &&
-        decomposition[index].position.sectionIndex ===
-          decomposition[last[0]].position.sectionIndex
+        native.canGroup(
+          decomposition[last.at(-1)].position,
+          decomposition[index].position,
+        )
       )
         last.push(index);
       else groups.push([index]);
@@ -1569,6 +1569,21 @@ export function initPaletteWorkspace(panel, services) {
     const map = {
       "document-undo": () => native.bridge().input.performUndo(),
       "document-redo": () => native.bridge().input.performRedo(),
+      "note-insert": async () => {
+        await native.insertNote();
+        closeManager();
+        native.bridge().editor.element.focus();
+      },
+      "endnote-insert": async () => {
+        await native.insertNote({ endnote: true });
+        closeManager();
+        native.bridge().editor.element.focus();
+      },
+      "note-delete": async () => {
+        await native.deleteNote();
+        closeManager();
+        native.bridge().editor.element.focus();
+      },
       organize,
       scan: () => {
         decomposeContext = null;

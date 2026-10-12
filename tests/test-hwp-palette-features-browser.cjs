@@ -298,7 +298,9 @@ async function exercise(page, origin) {
     cursor.selectAllInHeaderFooter();
     out.headerSelection = n.capture().text;
     await n.insertChar("머리말수정검증");
-    out.headerAfter = read(d.getHeaderFooter(0, true, 0)).text;
+    out.headerAfter = read(
+      b.wasm.borrowDocumentHandle().getHeaderFooter(0, true, 0),
+    ).text;
     out.headerCursor = cursor.hfCharOffset;
     const headerCapture = await n.captureTemplate();
     out.headerCapture = headerCapture.preview;
