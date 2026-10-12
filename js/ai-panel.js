@@ -1854,12 +1854,15 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
   const syncEditableLabelPlanButton = (item) => {
     const output = item?.card?.querySelector("[data-ai-canvas-output]");
     if (!output) return;
-    const count = item.labelPlan?.labels?.length || 0;
-    const review = item.labelPlan?.reviewRequired === true;
+    const includeLabels = labelPreviewStates.get(item)?.included !== false;
+    const count = includeLabels ? item.labelPlan?.labels?.length || 0 : 0;
+    const review = includeLabels && item.labelPlan?.reviewRequired === true;
     const accepted = isAdoptableImageLabelCandidate(item);
     output.disabled = busy || !accepted;
     output.textContent = `${count ? `캔버스에 삽입 · 라벨 ${count}개` : "캔버스에 삽입"}${review ? " · 확인" : ""}`;
-    output.title = count
+    output.title = !includeLabels && item.labelPlan?.labels?.length
+      ? '라벨을 숨긴 현재 이미지만 넣습니다. 라벨 계획은 보존됩니다.'
+      : count
       ? `이미지와 이동·수정·삭제 가능한 자동 라벨 ${count}개를 함께 넣습니다.${review ? " 라벨 위치와 제외 항목을 확인해 주세요." : ""}`
       : review ? "확인되지 않은 라벨은 제외되어 이미지만 넣습니다. 필요한 라벨을 확인해 주세요."
       : item.labelPlan?.status === "unavailable" ? "자동 라벨 계획을 확인하지 못해 이미지만 넣습니다." : "캔버스에 삽입";
@@ -1979,6 +1982,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     const next = toggle ? !display.included : button.dataset.aiLabelViewMode === 'included';
     if (display.included === next) return;
     display.included = next;
+    syncEditableLabelPlanButton(item);
     syncLabelViewControls(); void renderLabelPreview(item);
     captureActiveTaskTab(); persistTasks();
   });
@@ -2236,6 +2240,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     commentDetails.append(commentSummary, commentList);
     if(!commentController) renderComments(item, stage, commentList);
     card.append(head, stage, commentDetails);
+    // The stage becomes queryable from item.card only after this append.
+    if (item.kind === 'generated') syncEditableLabelPlanButton(item);
     ensureCompositePreviewControl(item);
     return card;
   };

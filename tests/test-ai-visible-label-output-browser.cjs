@@ -49,6 +49,9 @@ h.withServer(async origin => {
           await toggle.waitFor(); await page.waitForFunction(() => !document.querySelector('#ai-image-panel [data-ai-label-toggle]').disabled);
           if (!included) await toggle.click();
           assert.equal(await toggle.getAttribute('aria-checked'), String(included));
+          const output = page.locator('#ai-image-panel .is-ai-active-candidate [data-ai-canvas-output]');
+          assert.equal((await output.textContent()).includes('라벨 1개'), included, 'Output caption must describe the visible label choice');
+          if (!included) assert.ok(!(await output.getAttribute('title')).includes('함께 넣습니다'), 'Hidden labels are not promised by the output tooltip');
           const before = await page.evaluate(async () => {
             const tab = (await __visibleManager.sharingSnapshot()).workspaces.flatMap(w => w.tabs).find(t => t.id === 'task-1');
             return { candidate:tab.generated[0], labels:tab.labelPreviewIncluded };
@@ -58,7 +61,7 @@ h.withServer(async origin => {
             const image = document.querySelector('#ai-image-panel .is-ai-active-candidate .ai-preview-stage > img');
             return image?.complete && image.naturalWidth === 512 && (included ? image.src !== raw : image.src === raw);
           }, { included, raw:before.candidate.data });
-          await page.locator('#ai-image-panel .is-ai-active-candidate [data-ai-canvas-output]').click();
+          await output.click();
           await page.locator('#ai-image-panel').waitFor({ state:'hidden' });
           const drawing = await page.evaluate(() => structuredClone(__visibleState.get().objects));
           assert.equal(drawing.filter(o => o.aiAutoLabel).length, Number(included), 'Canvas must preserve the currently visible label choice');
