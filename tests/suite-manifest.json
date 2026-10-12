@@ -1422,6 +1422,13 @@
       ]
     },
     {
+      "path": "tests/test-ai-visible-label-output-browser.cjs",
+      "findingIds": [
+        "UX-U14",
+        "AI-VISIBLE-LABEL-OUTPUT"
+      ]
+    },
+    {
       "path": "tests/test-tool-defaults-browser.cjs",
       "findingIds": [
         "TOOL-DEFAULTS-CREATION"

@@ -2085,7 +2085,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       output.onclick = () => {
         if (busy || output.disabled) return;
         if (!isAdoptableImageLabelCandidate(item)) { setStatus('그림·스타일 검수에 통과하지 않은 결과입니다. RAW 비교 결과를 확인하세요.', 'warn'); return; }
-        const labelCount = item.labelPlan?.labels?.length || 0;
+        const includeLabels = labelPreviewState(item).included !== false;
+        const labelCount = includeLabels ? item.labelPlan?.labels?.length || 0 : 0;
         if (candidateUsesSeparatedAssets(item) && selectedSeparationMode !== AI_SEPARATION_MODES.OFF) { void openGroupsForItem(item, true, false, true); return; }
         if (candidateUsesAutomaticSeparation(item) && selectedSeparationMode !== AI_SEPARATION_MODES.OFF) {
           void openGroupsForItem(item, false, selectedSeparationMode === AI_SEPARATION_MODES.MANUAL || item.automaticSeparationState === 'fallback', true);
@@ -2119,6 +2120,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
         const visibilityEpoch = localVisibilityEpoch;
         const isCurrent = () => !disposed && motion.isOpen() && visibilityEpoch === localVisibilityEpoch && taskId === activeTaskTabId
           && outputKey === imageOutputOptionsKey(selectedImageOutputOptions)
+          && includeLabels === (labelPreviewState(item).included !== false)
           && selectedOutputItem() === item && item.id === candidateId && item.data === candidateSource
           && isAdoptableImageLabelCandidate(item)
           && (!pageContext || state.isPageContextCurrent?.(pageContext) === true);
@@ -2133,7 +2135,9 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
             if (!isCurrent()) throw new Error('결과를 준비하는 동안 페이지·작업 또는 후보가 변경되었습니다.');
             if (item.imageLabelWorkflow?.explicit && await imageLabelDigest(item.data) !== item.candidateSha256) throw new Error('검수한 RAW 후보와 삽입 후보가 다릅니다. 원본은 유지했습니다.');
             if (!isCurrent()) throw new Error('삽입 후보의 검수 상태가 변경되었습니다.');
-            return materializeCandidate(item.graphResult ? item : {...item,data}, {taskId,replaceId:replace?target.id:null,isCurrent});
+            // Preserve the candidate's full plan; only the emitted native
+            // objects follow the label choice currently shown in the preview.
+            return materializeCandidate(item.graphResult ? item : {...item,data,labelPlan:includeLabels ? item.labelPlan : null}, {taskId,replaceId:replace?target.id:null,isCurrent});
           })
           .then(id => {
             addLog(labelCount ? `이미지와 편집 가능한 자동 라벨 ${labelCount}개를 페이지에 넣었습니다.` : "이미지를 페이지에 넣었습니다.");

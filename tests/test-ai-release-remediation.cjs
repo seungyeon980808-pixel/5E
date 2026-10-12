@@ -123,6 +123,7 @@ async function resultInsertionScenario(change = () => {}, { duringDecode = false
     activeTaskTabId: 'task-A',
     selectedCandidateId: 'candidate-A',
     generatedImages: [],
+    labelPreviewStates: new WeakMap(),
     selectedSeparationMode: 'off',
     selectedImageOutputOptions: {},
     imageOutputOptionsKey: value => JSON.stringify(value),
@@ -159,7 +160,8 @@ async function resultInsertionScenario(change = () => {}, { duringDecode = false
   context.selectedItem = context.item;
   const bindingHelpers = sourcePart('  const isAdoptableImageLabelCandidate =', '  const reviewSourceLabelCandidate =');
   const buttonHelper = sourcePart('  const syncEditableLabelPlanButton =', '  const attachEditableLabelPlan =');
-  vm.runInNewContext(`${bindingHelpers}\n${buttonHelper}\n${pasteSource}\n${handler}\n};`, context);
+  const labelViewHelper = sourcePart('  function labelPreviewState(item) {', '  function ensureCompositePreviewControl(item) {');
+  vm.runInNewContext(`${bindingHelpers}\n${buttonHelper}\n${labelViewHelper}\n${pasteSource}\n${handler}\n};`, context);
   context.materializeCandidate = materializer.createCandidateMaterializer(context.state, {
     insertImageFromSrc: context.insertImageFromSrc,
     prepareImageCandidateRevision: context.prepareImageCandidateRevision,
@@ -188,6 +190,12 @@ const switchPage = (context, { pageB }) => context.state.update((state) => {
 });
 
 test('AI-160-01: ordinary result use rejects page, close, candidate, and decode races', async () => {
+  for (const duringDecode of [false, true]) {
+    const changedLabelView = await resultInsertionScenario(context => {
+      context.labelPreviewStates.get(context.item).included = false;
+    }, { duringDecode });
+    assert.equal(changedLabelView.pageA.length, 0, 'Changed visible label choice cannot commit an older insertion');
+  }
   const toB = await resultInsertionScenario(switchPage);
   assert.equal(toB.pageB.length, 0, 'A to B must not insert on B');
 
