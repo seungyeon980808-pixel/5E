@@ -83,7 +83,7 @@ export function initPages(state) {
 }
 
 function pagesSignature(s) {
-  return JSON.stringify((s.pages || []).map((p) => [p.id, p.name, p.meta?.examLink?.tabId || null, p.meta?.examLink?.assetId || null]))
+  return JSON.stringify((s.pages || []).map((p) => [p.id, p.name, p.meta?.examLink?.tabId || null, p.meta?.examLink?.assetId || null, p.meta?.examRevisionId || null]))
     + "|" + s.activePageId;
 }
 
@@ -153,6 +153,7 @@ function duplicatePage(state) {
       artboard: cur.artboard, meta: cur.meta,
     }));
     delete clone.meta?.examLink;
+    delete clone.meta?.examPendingLink;
     delete clone.meta?.examRevisionId;
     const idx = s.pages.indexOf(cur);
     s.pages.splice(idx + 1, 0, {
@@ -288,13 +289,14 @@ function renderTabs(state) {
   const active = s.activePageId;
   const tabs = (s.pages || []).map((p) => {
     const isActive = p.id === active;
+    const isLinked = !!(p.meta?.examLink && p.meta?.examRevisionId);
     const tab = document.createElement("div");
-    tab.className = `page-tab${isActive ? " is-active" : ""}${p.meta?.examLink ? " is-exam-linked" : ""}`;
+    tab.className = `page-tab${isActive ? " is-active" : ""}${isLinked ? " is-exam-linked" : ""}`;
     tab.dataset.id = p.id;
     tab.setAttribute("role", "tab");
     tab.setAttribute("aria-selected", String(isActive));
     tab.title = `${p.name} · 더블클릭 또는 Enter로 이름 변경·삭제`;
-    if (p.meta?.examLink) tab.title = `${p.name} · 문서 그림 연결됨 · 연결 해제 전까지 유지`;
+    if (isLinked) tab.title = `${p.name} · 문서 그림 연결됨 · 연결 해제 전까지 유지`;
     const name = document.createElement("span");
     name.className = "page-tab-name";
     name.textContent = p.name;
@@ -329,7 +331,7 @@ function openContextMenu(state, id, tab, x) {
   const idx = (s.pages || []).findIndex((p) => p.id === id);
   const count = (s.pages || []).length;
   const items = [
-    ...(s.pages[idx]?.meta?.examLink ? [
+    ...(s.pages[idx]?.meta?.examLink && s.pages[idx]?.meta?.examRevisionId ? [
       { label: '연결된 문서 그림 편집', act: () => {switchPage(state,id);window.dispatchEvent(new Event('5e:exam-edit-linked-page'));} },
       { label: '문서 그림 연결 해제', act: () => {
         const link=structuredClone(s.pages[idx].meta.examLink);

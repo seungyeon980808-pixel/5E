@@ -145,38 +145,43 @@ export function createExamSourceTabs(state, services) {
     return {labels:annotationsFor(livePage(target))};
   }
 
-  async function capture(aiContext = null) {
+  async function capture(aiContext = null, options = {}) {
     const current = state.get(), selected = current.objects.filter(object => current.selectedIds.includes(object.id));
     const pageId = current.activePageId;
     const taskId = selected.find(object => object.aiTaskId)?.aiTaskId;
     if (!aiContext && taskId) aiContext = await ai()?.captureExamTask(taskId);
     if (state.get().activePageId !== pageId) throw new Error('작업 탭이 바뀌었습니다. 보내기를 다시 눌러주세요.');
-    const existingLink = current.pages.find(page => page.id === current.activePageId)?.meta?.examLink;
-    const link = aiContext?.snapshot.tabs[0].examLink || existingLink || {tabId:crypto.randomUUID(),assetId:crypto.randomUUID()};
+    const meta = current.pages.find(page => page.id === current.activePageId)?.meta;
+    const existingLink = meta?.examLink || meta?.examPendingLink;
+    const link = aiContext?.snapshot.tabs[0].examLink || existingLink || options.link || {tabId:crypto.randomUUID(),assetId:crypto.randomUUID()};
+    if (options.link && !sameData(link, options.link)) throw new Error('그림 연결이 바뀌었습니다. 보내기를 다시 눌러주세요.');
     if (existingLink && (existingLink.tabId !== link.tabId || existingLink.assetId !== link.assetId)) throw new Error('이 5E 탭은 다른 그림에 연결되어 있습니다. AI 작업의 보내기를 사용해 독립된 탭에서 보내주세요.');
     const linkedPage = pageForLink(link);
     if (linkedPage && linkedPage.id !== current.activePageId) throw new Error('이 이미지 작업에 연결된 5E 탭에서 보내주세요. 별도 그림은 독립된 작업 탭으로 만들어주세요.');
-    state.update(value => {
+    if (options.commit !== false) state.update(value => {
       const page = value.pages.find(page => page.id === value.activePageId);
       page.meta = {...page.meta,examLink:copyExamData(link)};
+      delete page.meta.examPendingLink;
     });
     const source = copyExamData(services.serialize(state.get()));
     source.pages = source.pages.filter(page => page.id === source.activePageId);
+    source.pages[0].meta = {...source.pages[0].meta,examLink:copyExamData(link)};
+    delete source.pages[0].meta.examPendingLink;
     const value = state.get();
     return {source,link:copyExamData(link),name:source.pages[0].name,
       context:{version:1,pageId:source.activePageId,viewBox:copyExamData(value.viewBox),selectedIds:[...value.selectedIds],ai:aiContext}};
   }
 
-  async function prepareAi(taskId, scope) {
+  async function prepareAi(taskId, scope, options = {}) {
     const context = await ai()?.captureExamTask(taskId, scope);
     if (!context) throw new Error('이미지 작업 탭을 찾지 못했습니다.');
     const tab = context.snapshot.tabs[0], candidate = tab.generated?.find(item => item.id === tab.selectedCandidateId);
     if (!candidate) throw new Error('시험지에 보낼 생성 이미지를 선택해주세요.');
     services.materializeCandidate.validate(candidate);
     ai()?.close();
-    let page = pageForLink(tab.examLink);
+    let page = pageForLink(tab.examLink) || state.get().pages.find(page => sameData(page.meta?.examPendingLink,tab.examLink));
     if (!page) {
-      page = {id:`exam_${crypto.randomUUID()}`,name:(tab.title || '생성 이미지').slice(0,40),objects:[],guides:[],layers:copyExamData(state.get().layers),artboard:{w:100,h:100},meta:{number:'',points:'',examLink:copyExamData(tab.examLink)}};
+      page = {id:`exam_${crypto.randomUUID()}`,name:(tab.title || '생성 이미지').slice(0,40),objects:[],guides:[],layers:copyExamData(state.get().layers),artboard:{w:100,h:100},meta:{number:'',points:'',[options.commit === false ? 'examPendingLink' : 'examLink']:copyExamData(tab.examLink)}};
       state.update(value => value.pages.push(page));
     }
     services.switchPage(state,page.id);
@@ -189,7 +194,7 @@ export function createExamSourceTabs(state, services) {
       await services.materializeCandidate(tab.labelPreviewIncluded?.[candidate.id]===false ? {...candidate,labelPlan:null} : candidate,{taskId,...(image ? {replaceId:image.id} : {})});
     }
     services.centerView?.();
-    return capture(context);
+    return capture(context, options);
   }
 
   async function activate(raw) {
@@ -254,8 +259,11 @@ export function createExamSourceTabs(state, services) {
 
   function markRevision(figure) {
     if (figure.editScope === 'annotations') return markAnnotationRevision(figure);
-    const page = pageForLink(figure.link);
+    const page = pageForLink(figure.link) || state.get().pages.find(page => page.id === figure.context?.pageId &&
+      !page.meta?.examLink && (!page.meta?.examPendingLink || sameData(page.meta.examPendingLink,figure.link)));
     if (page) state.update(() => {
+      page.meta = {...page.meta,examLink:copyExamData(figure.link)};
+      delete page.meta.examPendingLink;
       rememberRevision(page,figure);
       // A full-source acknowledgment explicitly commits the chosen area,
       // superseding even a different crop draft. Reads do not consume it.

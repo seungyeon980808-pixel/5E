@@ -375,7 +375,7 @@ export function initRhwpExamWorkspace(state, services) {
     services.commitActiveText?.();
     if(!aiRequest && !graph && !state.get().objects.length){await open();return;}
     if (graph && (graph.pageId !== state.get().activePageId || !state.get().objects.some(object=>object.id===graph.planeId && object.type==='coordplane'))) throw new Error('그래프 작업 탭이 바뀌었습니다. 현재 탭에서 한글에 넣기를 다시 눌러주세요.');
-    const captured = aiRequest ? await tabs.prepareAi(aiRequest.taskId,aiRequest.scope) : await tabs.capture();
+    const captured = aiRequest ? await tabs.prepareAi(aiRequest.taskId,aiRequest.scope,{commit:false}) : await tabs.capture(null,{commit:false});
     const pageId = state.get().activePageId, wasOpen = !panel.hidden;
     panel.hidden = true; syncBackground(); tabs.closeAi();
     let graphBounds;
@@ -390,7 +390,7 @@ export function initRhwpExamWorkspace(state, services) {
       return;
     }
     if (state.get().activePageId !== pageId) throw new Error('작업 탭이 바뀌었습니다. 보내기를 다시 눌러주세요.');
-    const latest = await tabs.capture(captured.context.ai);
+    const latest = await tabs.capture(captured.context.ai,{commit:false,link:captured.link});
     latest.render = {bounds,options:{includeReferenceImages:true,excludeAllImages:false}};
     if (location.protocol === 'file:' && window.fiveEDesktop?.exam?.open) {await window.fiveEDesktop.exam.open({source:latest.source,captured:latest});return;}
     // New insertion never dispatches the linked picture's apply action.

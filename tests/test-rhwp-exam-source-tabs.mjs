@@ -24,6 +24,25 @@ test('native image source defaults do not create a draft and canonical loading i
   assert.equal(check(current,{examDraftRender:crop(-4)},figure),true);
 });
 const aiContext = (value = link) => ({scope:'scope-a',taskId:'task-a',snapshot:{tabs:[{id:'task-a',examLink:value,generated:[]}]}});
+test('a pending canvas send acquires a link only after the document acknowledges it',async()=>{
+  const {tabs,page}=fixture();delete page.meta.examLink;const original=structuredClone(page.meta);
+  const first=await tabs.capture(null,{commit:false});assert.deepEqual(page.meta,original);
+  const latest=await tabs.capture(null,{commit:false,link:first.link});assert.deepEqual(latest.link,first.link);assert.deepEqual(page.meta,original);
+  assert.deepEqual(latest.source.pages[0].meta.examLink,first.link);
+  tabs.markRevision({...latest,id:'confirmed-revision',version:1});
+  assert.deepEqual(page.meta.examLink,first.link);assert.equal(page.meta.examRevisionId,'confirmed-revision');
+  const preserved=structuredClone(page.meta);await tabs.capture(null,{commit:false});assert.deepEqual(page.meta,preserved);
+  await assert.rejects(tabs.capture(null,{commit:false,link:{tabId:'another',assetId:'another'}}),/연결이 바뀌/);
+});
+test('a cancelled AI send reuses its prepared canvas tab without claiming a document link',async()=>{
+  const context=aiContext();context.snapshot.tabs[0].generated=[{id:'candidate'}];context.snapshot.tabs[0].selectedCandidateId='candidate';
+  const {tabs,page,value,services}=fixture({captureExamTask:async()=>context,close:()=>{}});delete page.meta.examLink;
+  services.materializeCandidate=async candidate=>{value.objects=[{id:'native',type:'image',aiTaskId:'task-a',aiCandidateId:candidate.id}];};services.materializeCandidate.validate=()=>{};
+  const first=await tabs.prepareAi('task-a','scope-a',{commit:false}),prepared=value.pages.find(p=>p.id===value.activePageId),count=value.pages.length;
+  assert.equal(prepared.meta.examLink,undefined);assert.deepEqual(prepared.meta.examPendingLink,link);
+  const next=await tabs.prepareAi('task-a','scope-a',{commit:false});assert.equal(value.pages.length,count);assert.equal(value.activePageId,first.context.pageId);
+  tabs.markRevision({...next,id:'confirmed-ai',version:1});assert.deepEqual(prepared.meta.examLink,link);assert.equal(prepared.meta.examPendingLink,undefined);assert.equal(prepared.meta.examRevisionId,'confirmed-ai');
+});
 test('fresh image recognition defaults do not mark an applied source dirty', () => {
   const source={version:'0.17',activePageId:'fresh',pages:[{id:'fresh',name:'그림',objects:[{id:'image',type:'image',src:'data:image/png;base64,eA==',x:0,y:0,w:10,h:10,rotation:0,mode:'edit',opacity:1,aspectLocked:true,exportable:true,locked:false,positionLocked:false,imageSelectionLocked:false,cutouts:[],layerId:1,order:0}],guides:[],layers:[{id:1,name:'기본',visible:true,locked:false}],artboard:{w:100,h:100}}]};
   const current=structuredClone(source.pages[0]), figure={source,render:crop(-10)}, before=structuredClone(current);
