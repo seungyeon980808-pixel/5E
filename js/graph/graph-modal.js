@@ -2436,6 +2436,8 @@ function syncAnnLists() {
     lg => (lg.rows || []).map(r=>r.text).filter(Boolean).join(' · ') || '선 견본', 'legend', '범례');
   renderLabelPtEditor();
   const arm = (btn, on) => btn && btn.classList.toggle("on", on);
+  const selectTool=_overlay.querySelector('#gm-ann-select'), selecting=!_annMode && !_placeMode && _activeDraw===-1 && !_boxMode && !_areaMode;
+  arm(selectTool,selecting);selectTool.setAttribute('aria-pressed',String(selecting));
   arm(_els.annMarker, _annMode === "marker");
   arm(_els.annGuide, _annMode === "guide");
   arm(_els.annArrow, _annMode === "arrow");
@@ -2456,7 +2458,7 @@ function syncAnnLists() {
   };
   _els.annHint.textContent = _annMode
     ? (_annPending ? "한 번 더 클릭해 끝점을 지정하세요." : H[_annMode])
-    : "도구를 켜고 미리보기를 클릭해 배치합니다. 함수가 없어도 됩니다.";
+    : "글자나 표시 요소를 눌러 선택하고 드래그해 이동합니다. 추가하려면 배치 도구를 고르세요.";
   renderLegendEditor();
   syncTypedAnnotations();
 }
@@ -3562,11 +3564,12 @@ function build() {
           <!-- ③ 표시 탭(요구): 곡선에 종속되지 않는 독립 주석. 표시점·수선·화살표는 함수 없이도
                찍힌다. 가이드라인(두 점 점선)·범례(선 견본+글씨) 신규. 모두 미리보기 클릭으로 배치. -->
           <div id="gm-tab-annot" style="display:none;">
-            <div class="gm-display-tools-heading"><span>표시 추가</span><button type="button" class="gm-element-guide" id="gm-element-guide" aria-pressed="false">요소 안내</button></div>
+            <div class="gm-display-tools-heading"><span>표시 도구</span><button type="button" class="gm-element-guide" id="gm-element-guide" aria-pressed="false">요소 안내</button></div>
             <p class="gm-element-legend" id="gm-element-legend" hidden><span>글자·라벨</span><span>선·보조선</span><span>점</span><span>영역</span></p>
             <div class="gm-row">
               <span class="gm-row-lbl" hidden>배치 도구</span>
               <div class="gm-row-body gm-checks" style="flex-wrap:wrap;gap:6px;">
+                <button type="button" id="gm-ann-select" class="gm-ann-tool" aria-pressed="true" title="글자나 표시 요소를 선택하고 드래그해 이동합니다.">선택 · 이동</button>
                 <button type="button" id="gm-ann-marker" class="gm-ann-tool">표시점</button>
                 <button type="button" id="gm-ann-guide" class="gm-ann-tool">수선의 발</button>
                 <button type="button" id="gm-ann-arrow" class="gm-ann-tool">화살표</button>
@@ -3956,6 +3959,10 @@ function build() {
   });
   overlay.querySelector('#gm-y2-min').onchange=e=>{const cfg=_cfg,y2=cfg.exactY2||cfg.engineY2;const value=Number(e.target.value);if(!y2)return;if(!e.target.value.trim()||!Number.isFinite(value)||value>=y2.y2Max){e.target.setCustomValidity('최대값보다 작은 값을 입력하세요.');return;}e.target.setCustomValidity('');y2.y2Min=value;refreshPreview();};
   overlay.querySelector('#gm-y2-scale').onchange=e=>{const y2=_cfg.exactY2||_cfg.engineY2;if(y2){y2.scale=e.target.value;refreshPreview();}};
+  overlay.querySelector('#gm-ann-select').onclick = () => {
+    _traceController?.cancelInteraction();_annMode=null;_annPending=null;_placeMode=null;_activeDraw=-1;_boxMode=false;_areaMode=false;
+    syncAnnLists();syncSeriesEditor();refreshPreview();
+  };
   overlay.querySelector('#gm-add-annotation').onclick = () => armAnn('text');
   overlay.querySelector('#gm-ann-leader').onclick = () => armAnn('leader');
   overlay.querySelector('#gm-ann-single-guide').onclick = () => armAnn('single-guide');
