@@ -4,8 +4,11 @@ function clone(value) {
     : JSON.parse(JSON.stringify(value));
 }
 
-function imageFingerprint(image) {
-  return JSON.stringify({ src: image.src, cutouts: image.cutouts || [] });
+function imageFingerprint(image, value) {
+  return JSON.stringify({ src: image.src, srcRect: image.srcRect, cutouts: image.cutouts || [],
+    w: image.w, h: image.h, rotation: image.rotation, opacity: image.opacity,
+    layerId: image.layerId, visible: !value.layers?.some(layer => layer.id === (image.layerId ?? 1) && layer.visible === false),
+    aiTaskId: image.aiTaskId });
 }
 
 export function selectedCanvasImageSnapshot(value) {
@@ -24,7 +27,7 @@ export function selectedCanvasImageSnapshot(value) {
     activePage,
     image,
     imageCopy: clone(image),
-    fingerprint: imageFingerprint(image),
+    fingerprint: imageFingerprint(image, value),
   });
 }
 
@@ -33,7 +36,7 @@ function snapshotIsCurrent(snapshot, value) {
   if (snapshot.activePage && value.pages?.find(page => page?.id === value.activePageId) !== snapshot.activePage) return false;
   if (!Array.isArray(value.selectedIds) || value.selectedIds.length !== 1 || value.selectedIds[0] !== snapshot.selectedId) return false;
   const image = value.objects?.find(object => object === snapshot.image && object.id === snapshot.selectedId);
-  return Boolean(image && imageFingerprint(image) === snapshot.fingerprint);
+  return Boolean(image && imageFingerprint(image, value) === snapshot.fingerprint);
 }
 
 function compositionObjects(value) {
@@ -81,6 +84,7 @@ async function handCompositionToAi(state, {renderComposition, openPanel, reportE
       source:{pageId:snapshot.activePageId,objectIds:[...snapshot.objectIds]}}],startGeneration:false});
     return Object.freeze({status:'opened'});
   } catch (error) {
+    if (stale || !compositionIsCurrent(snapshot,state.get())) return Object.freeze({status:'stale'});
     reportError(error instanceof Error ? error : new Error(String(error)));
     return Object.freeze({status:'error'});
   } finally { unsubscribe?.(); }
@@ -117,6 +121,7 @@ export async function handSelectedCanvasImageToAi(state, { renderImage, renderCo
     });
     return Object.freeze({ status: 'opened' });
   } catch (error) {
+    if (stale || !snapshotIsCurrent(snapshot,state.get())) return Object.freeze({status:'stale'});
     reportError(error instanceof Error ? error : new Error(String(error)));
     return Object.freeze({ status: 'error' });
   } finally {

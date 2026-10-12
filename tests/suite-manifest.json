@@ -1527,6 +1527,12 @@
       ]
     },
     {
+      "path": "tests/test-canvas-handoff-race-browser.cjs",
+      "findingIds": [
+        "U54"
+      ]
+    },
+    {
       "path": "tests/test-canvas-visible-image-browser.cjs",
       "findingIds": [
         "UX-U37",

@@ -40,3 +40,39 @@ test('a previously linked single image retains its existing AI route',async()=>{
  const s=store(),calls=[];s.update(v=>{v.selectedIds=['b'];v.objects[1].aiTaskId='old-task';});
  const result=await handSelectedCanvasImageToAi(s,{renderImage:()=>{throw new Error('must not render');},openPanel:options=>calls.push(options)});assert.equal(result.status,'linked');assert.deepEqual(calls,[undefined]);
 });
+
+for(const [label,change] of Object.entries({
+ crop:v=>v.objects[1].srcRect={x:.5,y:0,w:.5,h:1},
+ rotation:v=>v.objects[1].rotation=90,
+ opacity:v=>v.objects[1].opacity=.2,
+ aspect:v=>v.objects[1].w=40,
+ visibility:v=>v.layers[0].visible=false,
+ link:v=>v.objects[1].aiTaskId='new-owner',
+}))test(`pending single-image handoff rejects in-place ${label} changes`,async()=>{
+ const s=store(),calls=[];s.update(v=>v.selectedIds=['b']);
+ const gate=Promise.withResolvers(),image=s.get().objects[1];
+ const pending=handSelectedCanvasImageToAi(s,{renderImage:()=>gate.promise,openPanel:options=>calls.push(options)});
+ s.update(change);assert.equal(s.get().objects[1],image,'the real store mutates this object in place');
+ gate.resolve(data);assert.equal((await pending).status,'stale');assert.deepEqual(calls,[]);
+});
+
+test('changing and restoring a crop cannot revive its pending old render',async()=>{
+ const s=store(),calls=[];s.update(v=>v.selectedIds=['b']);const gate=Promise.withResolvers();
+ const pending=handSelectedCanvasImageToAi(s,{renderImage:()=>gate.promise,openPanel:options=>calls.push(options)});
+ s.update(v=>v.objects[1].srcRect={x:0,y:0,w:.5,h:1});s.update(v=>delete v.objects[1].srcRect);
+ gate.resolve(data);assert.equal((await pending).status,'stale');assert.deepEqual(calls,[]);
+});
+
+for(const kind of ['image','composition'])test(`late ${kind} render failure cannot report against a changed canvas`,async()=>{
+ const s=store(),calls=[],errors=[];if(kind==='image')s.update(v=>v.selectedIds=['b']);const gate=Promise.withResolvers();
+ const pending=handSelectedCanvasImageToAi(s,{renderImage:()=>gate.promise,renderComposition:()=>gate.promise,openPanel:options=>calls.push(options),reportError:e=>errors.push(e.message)});
+ s.update(v=>v.activePageId='other');gate.reject(new Error('old render failed'));
+ assert.equal((await pending).status,'stale');assert.deepEqual(calls,[]);assert.deepEqual(errors,[]);
+});
+
+test('panning while a single image renders preserves the current image handoff',async()=>{
+ const s=store(),calls=[];s.update(v=>v.selectedIds=['b']);const gate=Promise.withResolvers();
+ const pending=handSelectedCanvasImageToAi(s,{renderImage:()=>gate.promise,openPanel:options=>calls.push(options)});
+ s.update(v=>v.viewBox={x:50,y:50,w:90,h:60});gate.resolve(data);
+ assert.equal((await pending).status,'opened');assert.equal(calls.length,1);
+});
