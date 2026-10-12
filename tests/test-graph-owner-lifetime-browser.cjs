@@ -12,11 +12,11 @@ for(const scenario of ['sharing-same-id','sharing-same-id-rejected','sharing-che
     process.env.TASK2_ENGINE='chromium';
     const {page,errors}=await fixture(t,1,output,{beforeNavigate:async page=>{
       const panel=fs.readFileSync(path.join(root,'js/ai-panel.js'),'utf8');
-      const hook='return {\n    batchOwner, ownsBatchOwner:';
+      const hook='return {\n    deleteTask,';
       const finish="setStatus('새 수정본의 편집 내용은 유지했습니다. 미리보기 갱신 실패: ' + error.message,'error');\n      });";
-      assert.ok(panel.includes(hook)&&panel.includes(finish));
+      assert.equal(panel.split(hook).length-1,1);assert.ok(panel.includes(finish));
       await page.route('**/js/ai-panel.js?*',route=>route.fulfill({contentType:'text/javascript',body:panel
-        .replace(hook,'return window.__ownerController = {\n    batchOwner, ownsBatchOwner:')
+        .replace(hook,'return window.__ownerController = {\n    deleteTask,')
         .replace('store: taskStore,',"store: {put:async value=>{if(window.__checkpointGate){const gate=window.__checkpointGate;window.__checkpointGate=null;gate.entered.resolve();await gate.release.promise;}return taskStore.put(value);}},")
         .replace(finish,finish.slice(0,-2)+").finally(()=>window.dispatchEvent(new Event('qa:graph-render-settled')));")}));
       const renderer=fs.readFileSync(path.join(root,'js/graph/workbench-result.js'),'utf8');

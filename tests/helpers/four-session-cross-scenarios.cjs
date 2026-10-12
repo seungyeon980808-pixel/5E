@@ -340,9 +340,9 @@ async function app(ctx, name, run, { count = 4, anonymous = false, ownerHooks = 
         if (ownerHooks) await installOwnerHooks(ctx, page);
         else {
           const source = ctx.input('js/ai-panel.js', 'actual controller import seam for fixture seeding; persistence paths remain public UI').toString();
-          const hook = 'return {\n    batchOwner, ownsBatchOwner:';
-          assert.ok(source.includes(hook), 'Exact controller fixture boundary changed');
-          await page.route('**/js/ai-panel.js?*', route => route.fulfill({ contentType: 'text/javascript', body: source.replace(hook, 'return panel.__crossController = {\n    crossPersistence: taskPersistence, batchOwner, ownsBatchOwner:') }));
+          const hook = 'return {\n    deleteTask,';
+          assert.equal(source.split(hook).length - 1, 1, 'Exact controller fixture boundary changed');
+          await page.route('**/js/ai-panel.js?*', route => route.fulfill({ contentType: 'text/javascript', body: source.replace(hook, 'return panel.__crossController = {\n    crossPersistence: taskPersistence, deleteTask,') }));
         }
         if (browserZoom) await installGraphFocusObservation(ctx, page);
         if (setupRoutes) await setupRoutes(page);
@@ -448,6 +448,15 @@ async function selectTask(ctx, page, id) {
     return;
   }
   const row = page.locator(`${panel} [data-tab-id="${id}"] .ai-task-tab-select`);
+  if (!await row.count()) {
+    const target = (await tabs(page)).find(tab => tab.id === id);
+    assert.ok(target, 'Requested task must exist before changing workflows');
+    const kind = target.conversionKind || 'image';
+    await ctx.act(`navigate to actual ${kind} task list`, () => transition(page, 'task-workflow', kind =>
+      document.querySelector('#ai-image-panel')?.dataset.aiWorkflow === kind, kind,
+      () => page.locator(`${panel} [data-ai-workflow="${kind}"]`).click()), page);
+    if (await selected() === id) return;
+  }
   let opened = false;
   if (!await row.isVisible()) {
     ctx.input('js/panel-visibility.js', 'actual collapsed task-list drawer toggle; original page zoom and ownership retained');
@@ -475,8 +484,8 @@ async function stored(page, owner = null) {
       throw new Error('Visible task owner and persisted active workspace must agree');
     }
     const {taskId:ownerId,scope}=owner || activeOwner;
-    const ownerRows=[...document.querySelectorAll('#ai-image-panel .ai-task-tab[data-ai-workspace-link]')].filter(row=>row.dataset.tabId===ownerId&&row.dataset.aiWorkspaceLink===scope);
-    if(ownerRows.length!==1)throw new Error('Durable read requires exactly one task in the captured owner scope');
+    const ownerPanel=scope===activeOwner.scope ? document.querySelector('#ai-image-panel') : document.getElementById('ai-workspace-'+scope);
+    if(!ownerPanel?.__crossController?.ownsTask(ownerId))throw new Error('Durable read requires the exact captured owner, including an inactive workflow');
     const databaseName = scope === 'legacy' ? '5e-ai-image-tasks' : '5e-ai-image-tasks-' + scope;
     const backend = new IndexedDBOutputCacheBackend({ databaseName, storeName: 'tasks' });
     let saved;
@@ -620,13 +629,14 @@ async function installOwnerHooks(ctx, page) {
   // execution remains real; the only added effects hold/release and settlement.
   ctx.input('tests/test-graph-owner-lifetime-browser.cjs', 'read-only reference for real render/checkpoint fault boundaries; not executed as coverage');
   const panelSource = ctx.input('js/ai-panel.js').toString(), renderer = ctx.input('js/graph/workbench-result.js').toString();
-  const hook = 'return {\n    batchOwner, ownsBatchOwner:';
+  const hook = 'return {\n    deleteTask,';
   const finish = "setStatus('새 수정본의 편집 내용은 유지했습니다. 미리보기 갱신 실패: ' + error.message,'error');\n      });";
-  assert.ok(panelSource.includes(hook) && panelSource.includes(finish), 'Owner lifecycle fixture boundary changed; re-audit required');
+  assert.equal(panelSource.split(hook).length - 1, 1, 'Owner controller fixture boundary changed; re-audit required');
+  assert.ok(panelSource.includes(finish), 'Owner lifecycle fixture boundary changed; re-audit required');
   const storeHook = 'store: taskStore,';
   assert.ok(panelSource.includes(storeHook), 'Exact task store boundary is missing');
   await page.route('**/js/ai-panel.js?*', route => route.fulfill({ contentType: 'text/javascript', body: panelSource
-    .replace(hook, 'return window.__ownerController = panel.__crossController = {\n    crossPersistence: taskPersistence, batchOwner, ownsBatchOwner:')
+    .replace(hook, 'return window.__ownerController = panel.__crossController = {\n    crossPersistence: taskPersistence, deleteTask,')
     .replace(storeHook, 'store: {put:async value=>{if(window.__checkpointGate){const gate=window.__checkpointGate;window.__checkpointGate=null;gate.entered.resolve();await gate.release.promise;}return taskStore.put(value);}},')
     .replace(finish, finish.slice(0, -2) + ").finally(()=>window.dispatchEvent(new Event('qa:graph-render-settled')));") }));
   const renderHook = 'export async function workbenchGraphDataUrl(result) {';
@@ -1232,12 +1242,12 @@ scenarios.QA4 = async ctx => {
     await generatedStage.dblclick(); await page.locator('#graph-modal-overlay').waitFor({ state: 'visible' });
     await ctx.check('actual graph child dialog is topmost above AI', async () => assert.equal(await page.locator('#gm-confirm').evaluate(n => { const r = n.getBoundingClientRect(); return document.elementFromPoint(r.x + r.width / 2, r.y + r.height / 2)?.closest('#graph-modal-overlay') !== null; }), true));
     for (const mode of ['side', 'wipe', 'overlay', 'graph']) {
-      await page.locator(`[data-trace-mode="${mode}"]`).click();
-      await ctx.check(`actual compare mode ${mode}`, async () => assert.equal(await page.locator(`[data-trace-mode="${mode}"]`).getAttribute('aria-pressed'), 'true'));
+      await page.locator('select[data-trace-view]').selectOption(mode);
+      await ctx.check(`actual compare mode ${mode}`, async () => assert.equal(await page.locator('select[data-trace-view]').inputValue(), mode));
     }
-    await page.locator('[data-trace-mode="overlay"]').click();
+    await page.locator('select[data-trace-view]').selectOption('overlay');
     await ctx.check('overlay graph comparison color contract', async () => assert.equal(await page.locator('[data-trace-graph]').getAttribute('color'), '#166bff'));
-    await page.locator('[data-trace-mode="wipe"]').click(); const divider = page.getByRole('slider', { name: '원본과 편집본 비교 경계' }); await divider.focus();
+    await page.locator('select[data-trace-view]').selectOption('wipe'); const divider = page.getByRole('slider', { name: '원본과 편집본 비교 경계' }); await divider.focus();
     for (const key of ['ArrowLeft', 'Shift+ArrowRight', 'Home', 'End']) await divider.press(key);
     await ctx.check('keyboard comparison divider covers exact endpoints', async () => assert.equal(await divider.getAttribute('aria-valuenow'), '100'));
     const box = await divider.boundingBox(); await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2); await page.mouse.down(); await page.mouse.move(box.x - 50, box.y + box.height / 2); await page.mouse.up();
@@ -1247,7 +1257,7 @@ scenarios.QA4 = async ctx => {
       () => page.locator('#gm-confirm').click()); await checkpoint(ctx, page);
     const changed = (await tabs(page)).find(t => t.id === replayTaskId);
     await ctx.check('divider-only Apply creates independent parent-linked revision', () => { assert.deepEqual(changed.generated.slice(0, -1), old.generated); assert.equal(changed.generated.at(-1).graphEdit.parentCandidateId, replayed.id); });
-    await page.locator(panel + ' [data-ai-graph-edit]').click(); await page.locator('[data-trace-mode="wipe"]').click();
+    await page.locator(panel + ' [data-ai-graph-edit]').click(); await page.locator('select[data-trace-view]').selectOption('wipe');
     await ctx.check('comparison divider persists through actual graph reopening', async () => assert.equal(await divider.getAttribute('aria-valuenow'), position));
     await page.locator('#gm-labelx').fill('취소할 축'); await page.locator('#gm-cancel').click();
     await ctx.check('graph Cancel preserves original/new candidates, comments and review', async () => assert.deepEqual((await tabs(page)).find(t => t.id === replayTaskId), changed));
@@ -2634,8 +2644,8 @@ scenarios.QA5=async ctx=>{await portableQA5(ctx);await rhwpNegatives(ctx);};
 
 async function providerSettlement(ctx,page){
   const source=ctx.input('js/ai-panel.js','actual workflow finally emits settlement, without altering owner guards or returned data').toString();
-  const hook='return {\n    batchOwner, ownsBatchOwner:',finish='if (imageLabelRunAbort === abort) imageLabelRunAbort = null;';assert.ok(source.includes(hook)&&source.includes(finish));
-  await page.route('**/js/ai-panel.js?*',route=>route.fulfill({contentType:'text/javascript',body:source.replace(hook,'return panel.__crossController = {\n    crossPersistence: taskPersistence, batchOwner, ownsBatchOwner:').replace(finish,finish+' window.__cross.providerSettlements=(window.__cross.providerSettlements||0)+1;window.__cross.notify();')}));
+  const hook='return {\n    deleteTask,',finish='if (imageLabelRunAbort === abort) imageLabelRunAbort = null;';assert.equal(source.split(hook).length-1,1);assert.ok(source.includes(finish));
+  await page.route('**/js/ai-panel.js?*',route=>route.fulfill({contentType:'text/javascript',body:source.replace(hook,'return panel.__crossController = {\n    crossPersistence: taskPersistence, deleteTask,').replace(finish,finish+' window.__cross.providerSettlements=(window.__cross.providerSettlements||0)+1;window.__cross.notify();')}));
 }
 async function canceledOwners(ctx){
   for(const kind of ['cancel','close','dispose'])await app(ctx,'provider-owner-'+kind,async page=>{
