@@ -194,3 +194,21 @@ for (const engine of ['chromium', 'webkit']) test(`${engine}: prepared library c
   const handoff=await page.evaluate(()=>window.__handoff);
   assert.equal(handoff.count,2);assert.equal(handoff.conversionKind,'image');assert.equal(handoff.placement,'separate');assert.deepEqual(handoff.groups,[[0],[1]]);
 });
+
+for (const engine of ['chromium','webkit']) test(`${engine}: assignment defaults are visible and route changes keep the same restrained selection`, async t => {
+  const {page,ui}=await library(t,2,engine);
+  await page.evaluate(()=>{window.__transfer=async({references,conversionKind,placement,groups})=>{window.__handoff={count:references.length,conversionKind,placement,groups};};});
+  await ui.locator('[data-unilib-ai]').click();
+  const dialog=page.locator('.workbench-assignment');await dialog.waitFor();
+  const selectedStyle=async selector=>dialog.locator(selector).evaluate(n=>{const s=getComputedStyle(n);return{background:s.backgroundColor,image:s.backgroundImage,shadow:s.boxShadow,border:s.borderColor,check:getComputedStyle(n,'::before').content,animations:n.getAnimations().length};});
+  const defaultImage=await selectedStyle('[data-conversion-kind="image"]'),defaultSeparate=await selectedStyle('[data-placement="separate"]');
+  assert.equal(defaultImage.image,'none');assert.equal(defaultImage.shadow,'none');assert.equal(defaultSeparate.shadow,'none');assert.equal(defaultSeparate.animations,0);assert.match(defaultImage.check,/✓/);assert.match(defaultSeparate.check,/✓/);
+  await dialog.locator('[data-placement="together"]').click();
+  assert.deepEqual(await selectedStyle('[data-placement="together"]'),defaultSeparate,'an explicit choice is styled just as clearly as the default');
+  await dialog.locator('[data-conversion-kind="graph"]').click();
+  assert.deepEqual(await selectedStyle('[data-conversion-kind="graph"]'),defaultImage);
+  const send=await selectedStyle('[data-action="continue"]');assert.equal(send.image,'none');assert.equal(send.shadow,'none');
+  if(process.env.EVIDENCE_DIR)await page.screenshot({path:path.join(process.env.EVIDENCE_DIR,engine+'-assignment-selection.png')});
+  await dialog.locator('[data-action="continue"]').click();await ui.waitFor({state:'hidden'});
+  assert.deepEqual(await page.evaluate(()=>window.__handoff),{count:2,conversionKind:'graph',placement:'together',groups:[[0,1]]});
+});
