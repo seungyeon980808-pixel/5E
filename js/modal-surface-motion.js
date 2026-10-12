@@ -113,6 +113,7 @@ export function createModalSurfaceMotion({
   let value = target;
   let velocity = 0;
   let frameHandle = null;
+  let nativeFade = null;
   let lastTime = 0;
   let disposed = false;
   let pendingHidden = null;
@@ -123,6 +124,9 @@ export function createModalSurfaceMotion({
   let cssChannels = null;
   let previousCssSample = null;
   let cssPresentationHold = null;
+  const motionPreference = !animateSurface ? globalThis.matchMedia?.('(prefers-reduced-motion: reduce)') : null;
+  const onMotionPreferenceChange = () => { if (nativeFade && shouldReduceMotion()) commit(); };
+  motionPreference?.addEventListener?.('change', onMotionPreferenceChange);
 
   function readNow() {
     const time = now();
@@ -302,8 +306,39 @@ export function createModalSurfaceMotion({
     frameHandle = null;
   }
 
+  function cancelNativeFade(sample = false) {
+    if (!nativeFade) return;
+    if (sample && Number.isFinite(nativeFade.currentTime)) {
+      ({ value, velocity } = stepSpring(value, velocity, target,
+        Math.max(0, nativeFade.currentTime) / 1000, springFrequency));
+    }
+    nativeFade.cancel();
+    nativeFade = null;
+  }
+
+  function scheduleNativeFade() {
+    if (target !== 0 || animateSurface || cssEntrance || typeof overlay.animate !== 'function') return false;
+    // Sample the same spring once. The browser then interpolates opacity without
+    // invalidating a large library's style tree on every JavaScript frame.
+    const frames = [{ opacity: baseOpacity * Math.max(0, Math.min(1, value)) }];
+    let duration = 0;
+    for (let index = 1; index <= 120; index += 1) {
+      duration = index * (1000 / 60);
+      const step = stepSpring(value, velocity, target, duration / 1000, springFrequency);
+      frames.push({ opacity: baseOpacity * Math.max(0, Math.min(1, step.value)) });
+      if (Math.abs(step.value - target) <= POSITION_TOLERANCE
+        && Math.abs(step.velocity) <= VELOCITY_TOLERANCE) break;
+    }
+    frames[frames.length - 1].opacity = baseOpacity * target;
+    const animation = overlay.animate(frames, { duration, easing: 'linear', fill: 'both' });
+    nativeFade = animation;
+    animation.onfinish = () => { if (nativeFade === animation && !disposed) commit(); };
+    return true;
+  }
+
   function commit({ notify = true } = {}) {
     cancelScheduledFrame();
+    cancelNativeFade();
     releaseCssPresentation();
     if (cssEntrance) cancelCssEntrance();
     cssChannels = null;
@@ -353,6 +388,7 @@ export function createModalSurfaceMotion({
   }
 
   function schedule() {
+    if (nativeFade || scheduleNativeFade()) return;
     if (frameHandle !== null) return;
     frameHandle = requestFrame(frame) ?? null;
     // Non-browser consumers still receive a usable, immediately settled surface.
@@ -367,6 +403,7 @@ export function createModalSurfaceMotion({
     if (disposed) return false;
     if (target === 1 && visible()) { pendingHidden = null; return true; }
     const time = readNow();
+    cancelNativeFade(true);
     pendingHidden = null;
     const wasVisible = visible();
     expose();
@@ -400,6 +437,7 @@ export function createModalSurfaceMotion({
   function hide({ onHidden } = {}) {
     if (disposed) return false;
     const time = readNow();
+    cancelNativeFade(true);
     if (typeof onHidden === 'function') pendingHidden = onHidden;
     if (!savedStyles) {
       captureStyles();
@@ -426,6 +464,7 @@ export function createModalSurfaceMotion({
     pendingHidden = null;
     commit({ notify: false });
     disposed = true;
+    motionPreference?.removeEventListener?.('change', onMotionPreferenceChange);
   }
 
   setState(target ? 'open' : 'closed');

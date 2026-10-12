@@ -1456,6 +1456,13 @@
       "findingIds": [
         "FEEDBACK-FREE-GRAPH-TEXT"
       ]
+    },
+    {
+      "path": "tests/test-feedback-library-close-browser.cjs",
+      "findingIds": [
+        "USER-SAFARI-U06",
+        "LIBRARY-NATIVE-FADE"
+      ]
     }
   ],
   "deferred": [
