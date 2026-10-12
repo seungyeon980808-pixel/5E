@@ -1505,6 +1505,12 @@
         "UX-U42",
         "RHWP-EXAM-NATIVE-READY"
       ]
+    },
+    {
+      "path": "tests/test-hwp-cell-resize-browser.cjs",
+      "findingIds": [
+        "UX-U43"
+      ]
     }
   ],
   "deferred": [
