@@ -185,15 +185,21 @@ export function createLocalImageEraseController({ panel, getTarget, isBusy, reso
       if (g.stage !== stage || event.pointerId !== g.pointerId) return;
       event.preventDefault(); event.stopImmediatePropagation();
       if (!valid(g)) { cancel(); return; }
-      if (Math.hypot(event.clientX - g.lastX, event.clientY - g.lastY) < 2 || g.points.length >= 4095) return;
+      if (Math.hypot(event.clientX - g.lastX, event.clientY - g.lastY) < 2) return;
+      if (g.mode === 'brush' && g.points.length >= 4095) {
+        cancel();
+        status('지우개 경로가 너무 깁니다. 짧게 나누어 지워 주세요. 이전 편집은 유지됩니다.', 'warn');
+        return;
+      }
       const point = position(event, img); if (!point) return;
-      g.points.push(point); g.lastX = event.clientX; g.lastY = event.clientY; scheduleDraw(g);
+      if (g.mode === 'rect') g.points[1] = point; else g.points.push(point);
+      g.lastX = event.clientX; g.lastY = event.clientY; scheduleDraw(g);
     });
     on('pointerleave', () => hideCursor());
     on('pointerup', event => {
       const g = gesture; if (!g || g.stage !== stage || event.pointerId !== g.pointerId) return;
       event.preventDefault(); event.stopImmediatePropagation();
-      const point = position(event, img); if (point) g.points.push(point);
+      const point = position(event, img); if (point) { if (g.mode === 'rect') g.points[1] = point; else g.points.push(point); }
       const validAtEnd = valid(g); if (validAtEnd) draw(g); clearGesture({ keepOverlay: validAtEnd });
       if (!validAtEnd) return;
       const revision = ++sequence, controller = new AbortController(); controller.overlay = g.overlay; pending = controller; refresh();

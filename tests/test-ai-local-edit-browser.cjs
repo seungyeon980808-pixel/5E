@@ -6,6 +6,35 @@ const {fixture, verifiedPlan, snapshot} = require('./fixtures/ai-image-label-wor
 const evidence = path.resolve(process.env.EVIDENCE_DIR || '_work/feedback/parts/local-edit-save');
 fs.mkdirSync(evidence, {recursive:true});
 
+test('an oversized brush gesture never silently truncates and erases a shortcut to its final point',{timeout:90000},async t=>{
+  const dir=path.join(evidence,'long-gesture');fs.mkdirSync(dir,{recursive:true});
+  const {page,errors}=await fixture(t,1,dir,{selectedPartial:true,unlabeled:true});
+  const panel=page.locator('#ai-image-panel'),saved=(await snapshot(page))[0].generated;
+  await panel.locator('[data-ai-local-erase]').click();
+  const source=await panel.locator('.ai-generated-card.is-ai-active-candidate .ai-preview-stage > img').getAttribute('src');
+  await page.evaluate(()=>{
+    const img=document.querySelector('#ai-image-panel .ai-generated-card.is-ai-active-candidate .ai-preview-stage > img'),r=img.getBoundingClientRect();
+    const send=(type,x,y)=>img.dispatchEvent(new PointerEvent(type,{bubbles:true,pointerId:91,pointerType:'mouse',isPrimary:true,button:0,buttons:type==='pointerup'?0:1,clientX:r.left+x/512*r.width,clientY:r.top+y/384*r.height}));
+    send('pointerdown',45,60);
+    for(let i=0;i<4100;i++)send('pointermove',i%2?45:90,60);
+    // The final L-shaped detour must never become a diagonal shortcut from
+    // the last sample retained before the path cap.
+    send('pointermove',90,250);send('pointermove',330,250);send('pointerup',330,250);
+  });
+  await page.waitForFunction(()=>document.querySelector('#ai-image-panel [data-ai-status]').textContent.includes('짧게 나누어')).catch(async error=>{
+    const diagnostic=await page.evaluate(()=>{
+      const p=document.querySelector('#ai-image-panel'),img=p.querySelector('.ai-generated-card.is-ai-active-candidate .ai-preview-stage > img'),c=document.createElement('canvas');c.width=512;c.height=384;
+      const ctx=c.getContext('2d');ctx.drawImage(img,0,0);
+      return {draft:p.dataset.aiEditDraft,status:p.querySelector('[data-ai-status]').textContent,unvisitedPixel:[...ctx.getImageData(200,160,1,1).data]};
+    });
+    fs.writeFileSync(path.join(dir,'failure.json'),JSON.stringify(diagnostic,null,2));throw error;
+  });
+  assert.equal(await panel.getAttribute('data-ai-edit-draft'),'false','no unfaithful brush mask is applied');
+  assert.equal(await panel.locator('.ai-generated-card.is-ai-active-candidate .ai-preview-stage > img').getAttribute('src'),source);
+  assert.deepEqual((await snapshot(page))[0].generated,saved);assert.deepEqual(errors,[]);
+  fs.writeFileSync(path.join(dir,'receipt.json'),JSON.stringify({oversizedGestureCancelled:true,bitmapUnchanged:true,savedVersionsUnchanged:true,errors},null,2));
+});
+
 for (const rejected of [false, true]) {
   test(`late local preview ${rejected ? 'failure' : 'completion'} cannot overwrite another candidate status`, {timeout:90000}, async t => {
     const dir=path.join(evidence, rejected ? 'late-preview-error' : 'late-preview-success');fs.mkdirSync(dir,{recursive:true});
