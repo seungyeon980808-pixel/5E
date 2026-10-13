@@ -607,6 +607,11 @@
       ]
     },
     {
+      "path": "tests/test-ai-file-read-boundary-browser.cjs",
+      "findingIds": ["AI-FILE-READ-FAILURE", "AI-FILE-READ-OWNER", "AI-FILE-READ-DISPOSAL"],
+      "reason": "Actual image input, drop and replacement handlers retain their native read path while testing failures, retry, late completion, closing, disposal and newer selections."
+    },
+    {
       "path": "tests/test-library-figure-appearance-browser.cjs",
       "findingIds": [
         "BUTTON-DESIGN",

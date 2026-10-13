@@ -5849,12 +5849,37 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       ? `${result.removedIds.length}개 정리 · ${result.retainedIds.length}개 취소 확인 필요`
       : `${result.removedIds.length}개 작업을 정리했습니다.`, result.retainedIds.length ? 'warn' : 'ok');
   });
-  file.onchange = async () => {
-    const selectedFiles = Array.from(file.files || []).filter((selected) => selected.type.startsWith("image/"));
-    const dataUrls = await Promise.all(selectedFiles.map(blobToDataUrl));
-    addReferencesAsTasks(selectedFiles.map((selected, index) => ({ name: selected.name, data: dataUrls[index] })));
-    file.value = "";
-    if (selectedFiles.length) setStatus(`이미지 ${selectedFiles.length}개 · 작업 ${selectedFiles.length}개 준비됨`, "ok");
+  let sourceReadEpoch = 0;
+  const sourceReadContext = () => ({
+    taskId: activeTaskTabId, task: taskTabs.get(activeTaskTabId),
+    sources: attachments, revision: currentRequestEpoch,
+  });
+  const captureSourceRead = () => ({
+    epoch: ++sourceReadEpoch, visibility: localVisibilityEpoch,
+    target: captureAiPasteTarget(sourceReadContext()),
+  });
+  const sourceReadCurrent = owner => !disposed && !busy && !preflightRun
+    && panel.dataset.aiSharingMode !== 'view' && owner.epoch === sourceReadEpoch
+    && owner.visibility === localVisibilityEpoch
+    && isAiPasteTargetCurrent(owner.target, sourceReadContext());
+  const importSourceFiles = async (files, sourceKind = 'auto') => {
+    if (!files.length || disposed || busy || preflightRun || panel.dataset.aiSharingMode === 'view') return;
+    const owner = captureSourceRead();
+    try {
+      const dataUrls = await Promise.all(files.map(blobToDataUrl));
+      if (!sourceReadCurrent(owner)) return;
+      const ids = addReferencesAsTasks(files.map((selected, index) => ({ name: selected.name, data: dataUrls[index], sourceKind })));
+      if (ids.length) setStatus(`이미지 ${files.length}개 · 작업 ${ids.length}개 준비됨`, 'ok');
+    } catch (error) {
+      if (sourceReadCurrent(owner)) setStatus(`이미지를 읽지 못했습니다: ${error.message}`, 'error', error);
+    }
+  };
+  file.onchange = () => {
+    const selectedFiles = Array.from(file.files || []).filter(selected => selected.type.startsWith('image/'));
+    // Reset before reading so the same file can be selected after failure, and
+    // an older completion cannot clear a newer selection.
+    file.value = '';
+    return importSourceFiles(selectedFiles);
   };
   replaceSourceButton?.addEventListener('click', () => {
     if (!busy && attachments.length) replaceSourceFile?.click();
@@ -5862,17 +5887,19 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
   if (replaceSourceFile) replaceSourceFile.onchange = async () => {
     const selected = Array.from(replaceSourceFile.files || []).find((entry) => entry.type.startsWith('image/'));
     replaceSourceFile.value = '';
-    if (!selected || busy) return;
+    if (!selected || disposed || busy || preflightRun || panel.dataset.aiSharingMode === 'view') return;
     const sourceSelect = panel.querySelector('[data-ai-source-select]');
     const target = attachments.find((item) => item.id === sourceSelect?.value) || attachments[0];
     if (!target) return;
-    const targetTaskId = activeTaskTabId;
-    const targetData = target.data;
-    const data = await blobToDataUrl(selected);
-    if (busy || activeTaskTabId !== targetTaskId || !attachments.includes(target) || target.data !== targetData) {
-      setStatus('파일을 읽는 동안 작업이나 원본이 변경되어 교체하지 않았습니다.', 'warn');
+    const owner = captureSourceRead();
+    let data;
+    try {
+      data = await blobToDataUrl(selected);
+    } catch (error) {
+      if (sourceReadCurrent(owner)) setStatus(`이미지를 읽지 못했습니다: ${error.message}`, 'error', error);
       return;
     }
+    if (!sourceReadCurrent(owner) || !attachments.includes(target)) return;
     currentRequestEpoch += 1;
     target.name = selected.name || '교체한 원본';
     target.data = data;
@@ -6421,10 +6448,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     const dropped = Array.from(event.dataTransfer?.files || []).filter((item) => item.type.startsWith("image/"));
     if (!dropped.length) return;
     event.preventDefault();
-    void Promise.all(dropped.map(blobToDataUrl)).then((dataUrls) => {
-      addReferencesAsTasks(dropped.map((item, index) => ({ data: dataUrls[index], name: item.name, sourceKind: "drop" })));
-      setStatus(`이미지 ${dropped.length}개 · 작업 ${dropped.length}개 준비됨`, "ok");
-    });
+    void importSourceFiles(dropped, 'drop');
   });
   document.addEventListener("keydown", (event) => {
     if (panel.hidden || panel.querySelector("dialog[open]")) return;
