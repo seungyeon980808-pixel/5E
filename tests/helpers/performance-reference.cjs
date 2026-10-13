@@ -15,8 +15,12 @@ function identity(root) {
   const git = (...args) => execFileSync('git', args, { cwd: root, encoding: 'utf8' }).trim();
   const dirty = git('status', '--porcelain', '--untracked-files=no', '--', 'preview', ...methodologyFiles);
   assert.equal(dirty, '', 'Performance inputs must be committed and clean');
+  const canonicalAlias = /^\s*export \* from ['"]\.\.\/\.\.\/js\/main\.js/m
+    .test(fs.readFileSync(path.join(root, 'preview/js/main.js'), 'utf8'));
+  if (canonicalAlias) assert.equal(git('status', '--porcelain', '--untracked-files=no', '--', 'js', 'css', 'index.html'), '', 'Canonical performance inputs must be committed and clean');
   return {
     previewTree: git('rev-parse', 'HEAD:preview'),
+    ...(canonicalAlias ? { canonicalRuntime: Object.fromEntries(['js', 'css', 'index.html'].map(file => [file, git('rev-parse', `HEAD:${file}`)])) } : {}),
     methodologyBlobs: Object.fromEntries(methodologyFiles.map(file => [file, git('rev-parse', `HEAD:${file}`)])),
   };
 }

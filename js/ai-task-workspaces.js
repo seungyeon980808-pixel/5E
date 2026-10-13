@@ -353,6 +353,18 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
     for (const item of entries) {
       const panelId = item === entry ? 'ai-image-panel' : `ai-workspace-${item.scope || 'legacy'}`;
       if (item.panel.id !== panelId) item.panel.id = panelId;
+      // Navigation rows are view copies, not task data. Keep the copies for
+      // closed workspaces off the document; otherwise N warmed workspaces each
+      // retain the N-row navigation and every global selector walks N² rows.
+      const visible = reveal && item === entry;
+      if (!visible && !item.panel.hidden) {
+        const list = item.panel.querySelector('[data-ai-tab-list]');
+        item.navigationCache ||= document.createDocumentFragment();
+        for (const row of [...(list?.children || [])]) if (row.hasAttribute('data-ai-workspace-link')) item.navigationCache.append(row);
+      } else if (visible && item.navigationCache?.childNodes.length) {
+        const list = item.panel.querySelector('[data-ai-tab-list]');
+        list?.insertBefore(item.navigationCache, list.firstChild);
+      }
       if (item.controller.setWorkbenchVisible) item.controller.setWorkbenchVisible(reveal && item === entry, { animate: !switchingVisible });
       else item.panel.hidden = !reveal || item !== entry;
     }
