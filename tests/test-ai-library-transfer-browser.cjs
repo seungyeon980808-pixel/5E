@@ -268,6 +268,7 @@ for (const engine of ['chromium', 'webkit']) test(`${engine}: prepared library c
   const search=ui.locator('input[type="search"]');
   await search.focus();await page.keyboard.press('Space');
   assert.equal(await page.locator('.workbench-assignment').count(),0,'typing Space in search cannot send images');
+  const beforeSearch=await page.evaluate(()=>window.cropFixtureLog.length);
   await search.fill('');
   await ui.locator('[data-result-id="geometry-book:page:1"]').focus();
   await page.keyboard.down('Space');await page.keyboard.down('Space');await page.keyboard.up('Space');
@@ -278,6 +279,11 @@ for (const engine of ['chromium', 'webkit']) test(`${engine}: prepared library c
   await page.keyboard.press('Escape');
   assert.equal(await page.evaluate(()=>window.__acceptedAssets.size),2,'cancel preserves both crops');
   await ui.locator('[data-result-id="geometry-book:page:1"]').focus();await page.keyboard.press('Space');
+  await page.locator('.workbench-assignment').waitFor();
+  // Let the pending search finish while assignment is open: the same selected
+  // source must keep this transaction valid regardless of machine speed.
+  await page.evaluate(after=>window.waitCropEvent({phase:'search-files'},after),beforeSearch);
+  await ui.locator('[data-unilib-result-state]').waitFor({state:'hidden'});
   await page.locator('.workbench-assignment [data-action="continue"]').click();
   await ui.waitFor({state:'hidden'});
   const handoff=await page.evaluate(()=>window.__handoff);

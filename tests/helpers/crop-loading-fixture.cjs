@@ -126,7 +126,7 @@ async function installCropFixture(page, { held = [], root = path.resolve(__dirna
         return value;
       },
     };
-    const provider = { revision: 'crop-test', getSources: () => [], getExamFilterOptions: () => ({ academicYears: [] }), search: () => [], listPdfFiles: () => [file], materialize: result => file.loadPreview(result.provenance.pageNumber, { original: true }) };
+    const provider = { revision: 'crop-test', getSources: () => [], getExamFilterOptions: () => ({ academicYears: [] }), search: () => [], listPdfFiles: () => { window.__cropRecord({ phase: 'search-files' }); return [file]; }, materialize: result => file.loadPreview(result.provenance.pageNumber, { original: true }) };
     window.cropFixture = createUnifiedLibraryUi({
       getProvider: async () => provider, insertMaterialized: async (...args) => window.__insertMaterialized?.(...args),
       openIndependentReferences: libraryTransfer ? (...args) => window.__transfer(...args) : undefined,

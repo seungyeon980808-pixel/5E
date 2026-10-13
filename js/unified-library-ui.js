@@ -2197,7 +2197,9 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     activeFigureRepresentation = picker.value;
     void renderPreview();
   });
-  const searchScheduler = createSearchScheduler(() => runSearch());
+  // A deferred search must not invalidate an accepted-crop handoff when its
+  // selected source is unchanged. runSearch still invalidates a new selection.
+  const searchScheduler = createSearchScheduler(() => runSearch({ preservePreview: true }));
   query.addEventListener("compositionstart", searchScheduler.compositionStart);
   query.addEventListener("compositionend", searchScheduler.compositionEnd);
   query.addEventListener("input", (event) => { cancelSpacePress(); searchScheduler.input(event); });
