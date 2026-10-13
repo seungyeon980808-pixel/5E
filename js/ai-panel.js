@@ -7067,6 +7067,9 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     acknowledgeViewedResult: () => acknowledgeVisibleResult(),
     refreshTaskSelection: () => commentController?.refreshControls(),
     setWorkbenchVisible: (visible, { animate = true } = {}) => {
+      // A cached, closed workspace is already settled. Hiding it again forces
+      // computed-style/layout reads across every retained task on each switch.
+      if (!visible && panel.hidden && panel.inert && !motion.isOpen()) return;
       if (visible) {
         showWorkbench();
         // Switching tasks keeps the open workbench's hit targets stationary.

@@ -22,10 +22,17 @@ export function initButtonDesign(doc = document) {
     for (const [id, selector] of Object.entries(WORKFLOW_SURFACES)) {
       const button = doc.getElementById(id);
       if (!button) continue;
-      const open = [...doc.querySelectorAll(selector)].some(surface => !surface.hidden);
-      button.dataset.workflowOpen = String(open);
+      // These known surfaces use only IDs and one class. Resolve them directly
+      // instead of rescanning all retained workspaces for every DOM mutation.
+      const surfaces = selector.split(',').flatMap(value => {
+        const token = value.trim();
+        return token.startsWith('#') ? [doc.getElementById(token.slice(1))].filter(Boolean)
+          : [...doc.getElementsByClassName(token.slice(1))];
+      });
+      const open = surfaces.some(surface => !surface.hidden);
+      if (button.dataset.workflowOpen !== String(open)) button.dataset.workflowOpen = String(open);
       // Hwp's menu owns aria-expanded; its document view has a separate lifecycle.
-      if (id !== 'exam-send') button.setAttribute('aria-expanded', String(open));
+      if (id !== 'exam-send' && button.getAttribute('aria-expanded') !== String(open)) button.setAttribute('aria-expanded', String(open));
     }
   };
   decorate(doc.body);

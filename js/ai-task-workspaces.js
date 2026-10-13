@@ -351,7 +351,8 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
     const switchingVisible = reveal && active !== entry && active
       && !active.panel.hidden && !active.panel.inert;
     for (const item of entries) {
-      item.panel.id = item === entry ? 'ai-image-panel' : `ai-workspace-${item.scope || 'legacy'}`;
+      const panelId = item === entry ? 'ai-image-panel' : `ai-workspace-${item.scope || 'legacy'}`;
+      if (item.panel.id !== panelId) item.panel.id = panelId;
       if (item.controller.setWorkbenchVisible) item.controller.setWorkbenchVisible(reveal && item === entry, { animate: !switchingVisible });
       else item.panel.hidden = !reveal || item !== entry;
     }

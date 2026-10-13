@@ -148,6 +148,28 @@ for (const engine of ['chromium', 'webkit']) for (const count of [1, 10, 30]) {
     await page.screenshot({ path: path.join(evidence, 'populated-last.png') });
     write(evidence, 'last-task-content.json', await content(page, count));
     await select(page, 0);
+    if (runtime.entry === '/' && count > 1) {
+      await page.evaluate(() => {
+        window.__closedWorkspaceMutations = [];
+        const panels = [...document.querySelectorAll('[id^="ai-workspace-"], #ai-image-panel')]
+          .filter(node => node.hidden && node.inert && node.dataset.aiSelectedCandidateId !== 'candidate-1');
+        window.__closedWorkspaceCount = panels.length;
+        window.__closedWorkspaceObserver = new MutationObserver(records => {
+          window.__closedWorkspaceMutations.push(...records.map(row => ({ id: row.target.id, attribute: row.attributeName })));
+        });
+        for (const node of panels) window.__closedWorkspaceObserver.observe(node, { attributes: true,
+          attributeFilter: ['id', 'hidden', 'inert', 'style', 'aria-hidden', 'data-modal-motion-state'] });
+      });
+      await select(page, 1);
+      const closed = await page.evaluate(() => {
+        window.__closedWorkspaceObserver.disconnect();
+        return { count: window.__closedWorkspaceCount, mutations: window.__closedWorkspaceMutations };
+      });
+      assert.ok(closed.count >= count - 2, 'The check covers retained closed workspaces');
+      assert.deepEqual(closed.mutations, [], 'Task switching does not restyle already closed workspaces');
+      write(evidence, 'closed-workspace-mutations.json', closed);
+      await select(page, 0);
+    }
     const screenshots = [];
     const capture = async name => { const file = path.join(evidence, `${name}.png`); await page.screenshot({ path: file }); screenshots.push({ file, content: await content(page, count) }); };
     await capture('populated-light');
