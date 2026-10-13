@@ -180,10 +180,12 @@ export function initViewport(svg, state, onChange) {
   };
   let projection = readProjection();
   let retainModeProjection = false;
+  let modeProjection = null;
   window.addEventListener('5e:mode-switch-start', event => {
     retainModeProjection = event.detail?.preserveWork === true;
     const current = readProjection();
     if (current.width > 0 && current.height > 0) projection = current;
+    modeProjection = retainModeProjection ? { ...projection } : null;
   });
   const sameBox = (a, b) => a.left === b.left && a.top === b.top
     && a.width === b.width && a.height === b.height;
@@ -200,8 +202,9 @@ export function initViewport(svg, state, onChange) {
   let layoutAnimation = null;
   const preserveProjection = () => {
     const next = readProjection();
-    if (sameBox(projection, next)) return;
-    const previous = projection;
+    const previous = modeProjection || projection;
+    if (sameBox(previous, next) && (!modeProjection ||
+      (previous.x === next.x && previous.y === next.y && previous.scale === next.scale))) return;
     if (next.width <= 0 || next.height <= 0) return;
     if (!(previous.scale > 0)) {
       projection = next;
@@ -210,8 +213,10 @@ export function initViewport(svg, state, onChange) {
     state.update((s) => {
       s.viewBox.w = next.width / previous.scale;
       s.viewBox.h = next.height / previous.scale;
-      s.viewBox.x = -s.viewBox.w / 2;
-      s.viewBox.y = -s.viewBox.h / 2;
+      // "Keep work" retains the actual screen projection even when the mode
+      // changes the tool panel width. Ordinary layout changes still center.
+      s.viewBox.x = modeProjection ? (next.left - previous.x) / previous.scale : -s.viewBox.w / 2;
+      s.viewBox.y = modeProjection ? (next.top - previous.y) / previous.scale : -s.viewBox.h / 2;
     });
     layoutAnimation?.cancel();
     projection = readProjection();
@@ -232,7 +237,10 @@ export function initViewport(svg, state, onChange) {
   window.addEventListener("5e:panel-layout-did-change", preserveProjection);
   window.addEventListener("5e:view-mode-change", () => {
     if (liteMode() && !retainModeProjection) centerView(state);
-    requestAnimationFrame(preserveProjection);
+    requestAnimationFrame(() => {
+      preserveProjection();
+      modeProjection = null;
+    });
   });
 
   /* --- wheel: plain = vertical pan, Shift = horizontal pan, Ctrl/⌘ = zoom ---

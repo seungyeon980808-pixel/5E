@@ -1106,6 +1106,13 @@
       ]
     },
     {
+      "path": "tests/test-mode-projection-browser.cjs",
+      "findingIds": [
+        "CAN-DATA-01",
+        "MODE-KEEP-PROJECTION"
+      ]
+    },
+    {
       "path": "tests/project-save-folder-dialog.cjs",
       "findingIds": [
         "TPK-004"
