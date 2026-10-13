@@ -1366,6 +1366,8 @@ function fixture() {
     taskTabs: new Map([['owner-task', { id: 'owner-task', workState: 'idle' }]]),
     restoreTaskTab: unsupported('task restore'), state: { get: () => ({ selectedIds: [], objects: [] }) },
     syncSelectedOutputActions: noop, motion,
+    // Notification lifecycle is covered by the canonical browser and attention suites.
+    acknowledgeVisibleResult: noop, syncResultEntry: noop,
     candidateUsesAutomaticSeparation: () => false, startAutomaticSeparation: unsupported('automatic separation'),
     desktop: { setAiTaskShortcutActive: value => lifecycleEvents.push('shortcut:' + value) },
     refresh: () => Promise.resolve(), sourceToDataUrl: unsupported('incoming references'),

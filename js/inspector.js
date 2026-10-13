@@ -519,6 +519,7 @@ export function initInspector(state) {
     if (!lineModeBtnEls[lineMode]) lineMode = "solid";
     Object.entries(lineModeBtnEls).forEach(([value, btn]) => {
       const active = value === lineMode;
+      btn.setAttribute('aria-pressed', String(active));
       btn.style.background = active ? "#4a9eff" : "#1e1f22";
       btn.style.borderColor = active ? "#4a9eff" : "#3a3c41";
     });
@@ -828,6 +829,7 @@ export function initInspector(state) {
     if (isAxes) {
       Object.entries(axisVarBtns).forEach(([id, btn]) => {
         const active = id === axisVariant;
+        btn.setAttribute('aria-pressed', String(active));
         btn.style.background = active ? "#4a9eff" : "#1e1f22";
         btn.style.borderColor = active ? "#4a9eff" : "#3a3c41";
       });

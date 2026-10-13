@@ -570,12 +570,20 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
         }
         if (select) {
           select.disabled = !entry.ready;
+          select.dataset.resultAttention = sourceSelect?.dataset.resultAttention || 'false';
+          const oldNotice = select.querySelector('.ai-result-notice');
+          const newNotice = sourceSelect?.querySelector('.ai-result-notice');
+          if (newNotice && !oldNotice) select.querySelector('.ai-task-tab-copy')?.append(newNotice.cloneNode(true));
+          else if (!newNotice) oldNotice?.remove();
           select.setAttribute('aria-pressed', String(selected));
           select.setAttribute('aria-label', sourceSelect?.getAttribute('aria-label') || row.title);
           select.onclick = event => {
             const toggle=event.metaKey || event.ctrlKey;
             selectedTasks.select(batchOwner,{toggle}); preparedLaunch=null;
-            if (toggle) renderNavigation(); else void selectWorkspaceTask(entry,taskId);
+            if (toggle) renderNavigation();
+            else void selectWorkspaceTask(entry,taskId).then(target => {
+              if (event.isTrusted && target === active) target?.controller.acknowledgeViewedResult?.();
+            });
           };
           select.oncontextmenu = null;
           select.onkeydown = event => {

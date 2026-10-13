@@ -1,6 +1,7 @@
 import './ai-label-background.js?v=1.7.0-four-session-integration';
 import { initVisitorStats } from './visitor-stats.js?v=1.7.0-four-session-integration';
 import { initLiteShell } from "./lite-shell.js?v=1.7.0-four-session-integration";
+import { initButtonDesign } from './button-design.js?v=20261013-buttons';
 import { previewStorage as localStorage } from './preview-storage.js?v=1.7.0-four-session-integration';
 import { initWebLoginUi } from './web-login-ui.js?v=1.7.0-four-session-integration';
 import { createAiLoginHandoff, LOGIN_INTENT_SESSION_KEY } from './ai-login-handoff.js?v=1.7.0-four-session-integration';
@@ -87,6 +88,7 @@ import { initRhwpExamWorkspace } from "./rhwp-exam-workspace.js?v=1.7.0-four-ses
 import { commitActiveText } from "./text-editor.js?v=1.7.0-four-session-integration";
 
 const svg = document.getElementById("canvas");
+initButtonDesign();
 initVisitorStats();
 // Canvas interaction transfers keyboard ownership away from the last toolbar button.
 svg.setAttribute("tabindex", "0");
@@ -330,7 +332,7 @@ const recoveryChoice = await autosaveReady;
 const aiPanel = initAiPanel(state, { freshStart: recoveryChoice === "fresh", materializeCandidate });
 examWorkspace.setAiPanel(aiPanel);
 window.addEventListener('5e:lite-ai-open', async () => {
-  await aiPanel?.open();
+  await aiPanel?.open({ acknowledge:true });
   window.dispatchEvent(new Event('5e:lite-ai-opened'));
 });
 initMobileImage(aiPanel);
@@ -339,7 +341,7 @@ initDesktopProjectCloseGuard(state, () => aiPanel?.checkpointForClose());
 const aiEntryButton = document.getElementById("ai-image-install-open");
 const openSelectedAi = () => {
   if (document.documentElement.classList.contains("mobile-image-mode")) {
-    void aiPanel?.open();
+    void aiPanel?.open({ acknowledge:true });
     return;
   }
   void handSelectedCanvasImageToAi(state, {
@@ -352,7 +354,7 @@ const openSelectedAi = () => {
       const { canvas } = await rasterizeExportCanvas(snapshot, {bounds, dpi});
       return canvas.toDataURL('image/png');
     },
-    openPanel: options => aiPanel?.open(options),
+    openPanel: options => aiPanel?.open({ ...options, acknowledge:true }),
   reportError: error => window.alert(`AI 이미지 변환을 열 수 없습니다.\n${error.message}`),
     });
 };
@@ -515,7 +517,7 @@ initDataPlot();
     if (on === last) return;
     last = on;
     button.setAttribute('aria-pressed', String(on));
-    button.textContent = `자동 스냅 ${on ? 'ON' : 'OFF'}`;
+    button.setAttribute('aria-label', `자동 스냅 · ${on ? '켜짐' : '꺼짐'}`);
     button.title = `자동 정렬 ${on ? '켜짐' : '꺼짐'} · 클릭하여 전환 · Shift를 누르면 수동 스냅`;
   };
   button.addEventListener('click', () => {

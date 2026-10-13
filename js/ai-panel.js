@@ -1,4 +1,5 @@
 import { snapshotImageItem, taskItemCopy } from './ai-candidate-snapshot.js?v=1.7.0-four-session-integration';
+import { markResultReady, pendingResult, acknowledgeResult, syncResultEntry } from './ai-result-attention.js?v=20261013-buttons';
 import { createGraphReconstructionWorkflow, graphSourceHash } from './graph/reconstruction-workflow.js?v=1.7.0-four-session-integration';
 import { GRAPH_WORKBENCH_SELECTION, validateWorkbenchGraph, buildWorkbenchGraph, workbenchGraphDataUrl, workbenchGraphContextAttachment, editWorkbenchGraph } from './graph/workbench-result.js?v=1.7.0-four-session-integration';
 import { describeGraphFailure } from './graph/reconstruction-error.js?v=1.7.0-four-session-integration';
@@ -2722,6 +2723,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       panel.dataset.aiSelectedCandidateId = item.id; previews.querySelector('[data-ai-empty]')?.remove(); previews.prepend(makeImageCard(item));
       panel.dispatchEvent(new CustomEvent('5e:ai-candidate-select', { detail: { candidateId: item.id } }));
       dispatchReviewEvent({ state: item.reviewState, candidateId: item.id, report: item.reviewReport, ...item.reviewMeta }, item);
+      currentTurnCandidate = item;
       setTaskState('completed'); setStatus('그래프 복원 완료 · 원본과 비교하거나 세부 편집으로 조정하세요.', 'ok');
       captureActiveTaskTab(); await taskPersistence.checkpoint();
       return item;
@@ -2991,6 +2993,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
         if (done) {
           const owner = taskTabs.get(ownerTaskId);
           owner.workState = 'completed'; owner.inFlightRequest = null; owner.retryRequest = null;
+          markTaskResult(owner, generatedImages.at(-1));
           await taskPersistence.checkpoint();
           requestPhase('completed'); renderTaskTabs();
         } else requestPhase('cancelled');
@@ -3224,6 +3227,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     }
     setBusy(false);
     captureActiveTaskTab();
+    if (['passed', 'needs-attention'].includes(normalized.state)) markTaskResult(taskTabs.get(activeTaskTabId), candidate);
     void loadAccountOverview();
   };
 
@@ -3290,10 +3294,35 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
   });
   const persistTasks = () => taskPersistence.schedule();
 
+  function markTaskResult(tab, candidate) {
+    if (!tab || !candidate || disposed) return;
+    // Capture the active live candidate before deriving the notification count.
+    if (tab.id === activeTaskTabId) captureActiveTaskTab();
+    if (markResultReady(tab, candidate)) { renderTaskTabs(); persistTasks(); }
+  }
+  function acknowledgeVisibleResult(expectedCandidateId = null) {
+    if (panel.hidden || panel.inert || document.hidden || busy || panel.dataset.aiLayout === 'source') return;
+    const selected = selectedOutputItem();
+    if (!selected?.card || selected.card.hidden || selected.card.closest('[hidden]') || !selected.card.getClientRects().length) return;
+    if (expectedCandidateId && selected.id !== expectedCandidateId) return;
+    if (acknowledgeResult(taskTabs.get(activeTaskTabId), selected.id)) { renderTaskTabs(); persistTasks(); }
+  }
+  panel.addEventListener('click', event => {
+    if (!event.isTrusted) return;
+    if (event.target.closest('.ai-results, [data-ai-version-list], [data-ai-layout-mode]')) queueMicrotask(acknowledgeVisibleResult);
+  }, { signal:lifecycle.signal });
+  panel.addEventListener('keyup', event => {
+    if (event.isTrusted && ['Enter',' '].includes(event.key) && event.target.closest('[data-ai-candidate-option], [data-ai-layout-mode]')) queueMicrotask(acknowledgeVisibleResult);
+  }, { signal:lifecycle.signal });
+
   function setTaskState(workState) {
     const tab = taskTabs.get(activeTaskTabId);
     if (!tab || tab.workState === workState) return;
     tab.workState = workState;
+    if (workState === 'completed' && currentTurnType === 'image') {
+      captureActiveTaskTab();
+      markResultReady(tab, currentTurnCandidate || generatedImages.at(-1));
+    }
     const removalRetry = workState === 'completed' && tab.sourceLabelObservation?.removalIncomplete === true;
     if (workState === 'completed' || workState === 'failed') requestPhase(workState);
     if (workState === 'failed' || removalRetry) {
@@ -3323,6 +3352,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
 
   const renderTaskTabs = () => {
     if (!tabList) return;
+    panel.dataset.aiResultCount = String([...taskTabs.values()].filter(tab => pendingResult(tab)).length);
+    syncResultEntry();
     // Task identity also exists during canceled preparation. Only a committed
     // drawing revision establishes the document connection shown to the user.
     const confirmedExamLinks = new Set((state.get().pages || [])
@@ -3335,7 +3366,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       if (timingSample.timing) tab.generationTiming = timingSample.timing;
       const timingText = taskTimingLabel(tab, timingSample.view);
       const linked = !!tab.examLink && confirmedExamLinks.has(JSON.stringify([tab.examLink.tabId,tab.examLink.assetId]));
-      const values = [tab, tab.title, tab.workState, tab.id === activeTaskTabId, tab.attachments?.[0]?.data, tab.attachments?.length, Boolean(tab.referenceComposition), linked, timingText, taskDeleteShortcutHint()];
+      const pending = pendingResult(tab);
+      const values = [tab, tab.title, tab.workState, tab.id === activeTaskTabId, tab.attachments?.[0]?.data, tab.attachments?.length, Boolean(tab.referenceComposition), linked, timingText, taskDeleteShortcutHint(), pending];
       const cached = taskRows.get(tab.id);
       if (cached && values.every((value, index) => value === cached.values[index])) { rows.push(cached.row); continue; }
       const button = document.createElement("div");
@@ -3343,7 +3375,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       button.classList.toggle("is-exam-linked", linked);
       button.dataset.tabId = tab.id;
       button.dataset.workState = tab.workState || "idle";
-      const stateLabel = taskNeedsLabelReview(tab) ? '생성 완료 · 검수 확인 필요'
+      const stateLabel = pending ? '변환 완료 · 확인 필요' : taskNeedsLabelReview(tab) ? '생성 완료 · 검수 확인 필요'
         : { busy: "작업 중", interrupted: "작업 중단", completed: "작업 완료", failed: "작업 실패", idle: "대기" }[button.dataset.workState] || "대기";
       button.title = `${tab.title} · ${stateLabel} · ${taskDeleteShortcutHint()}`;
       if (["completed", "busy", "interrupted", "failed"].includes(tab.workState)) {
@@ -3373,6 +3405,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       const selectTab = document.createElement('button');
       selectTab.type = 'button';
       selectTab.className = 'ai-task-tab-select';
+      selectTab.dataset.resultAttention = String(Boolean(pending));
       selectTab.setAttribute('aria-pressed', String(tab.id === activeTaskTabId));
       selectTab.setAttribute('aria-label', `${tab.title} · ${stateLabel}`);
       const source = (tab.attachments || [])[0];
@@ -3398,6 +3431,9 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       timingLabel.className = "ai-task-tab-time";
       timingLabel.textContent = timingText;
       copy.append(timingLabel);
+      if (pending) {
+        const notice = document.createElement('small'); notice.className = 'ai-result-notice'; notice.textContent = '확인 필요'; copy.append(notice);
+      }
       if ((tab.attachments || []).length > 1 && !tab.referenceComposition) {
         const warning = document.createElement("small");
         warning.textContent = "연결 확인 필요";
@@ -3760,6 +3796,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       const tab = taskTabs.get(job.taskTabId);
       if (tab) tab.generated.push(taskItemCopy(item));
     }
+    markTaskResult(taskTabs.get(job.taskTabId), item);
   };
 
   const releaseBatchSlot = (job) => {
@@ -4468,7 +4505,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     }
   };
   if (desktop?.web) window.addEventListener('5e:web-ai-status', () => { void refresh(); }, { signal: lifecycle.signal });
-  const open = async ({ reference, references = [], prompt, startGeneration = false, placement = "separate", groups = null, reveal = true, taskId = null, candidateId = null, conversionKind:kind } = {}) => {
+  const open = async ({ reference, references = [], prompt, startGeneration = false, placement = "separate", groups = null, reveal = true, taskId = null, candidateId = null, conversionKind:kind, acknowledge = false } = {}) => {
     await workspaceReady;
     syncLiteModeUi();
     if (taskId && (busy || preflightRun)) throw new Error('현재 AI 작업을 마친 뒤 원래 작업 탭을 여세요.');
@@ -4481,6 +4518,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
         panel.dispatchEvent(new CustomEvent('5e:ai-candidate-select', { detail: { candidateId: selectedObject.aiCandidateId } }));
       }
     }
+    // Internal refresh/open calls are not evidence that the user viewed the result.
+    const openingCandidateId = acknowledge ? selectedOutputItem()?.id : null;
     syncSelectedOutputActions();
     if (reveal) showWorkbench();
     const selectedForAutomaticSeparation = selectedOutputItem();
@@ -4533,6 +4572,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     if (!incoming.length && prompt) input.value = prompt;
     if (startGeneration === true && incoming.length >= 1) await submit("image");
     if (reveal) {
+      if (openingCandidateId) acknowledgeVisibleResult(openingCandidateId);
       if (!panel.querySelector('[data-ai-chat-panel]')?.hidden) input.focus();
       else panel.querySelector('[data-ai-side-tab="comments"]')?.focus();
     }
@@ -6801,6 +6841,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     },
     batchOwner, ownsBatchOwner: owner => taskTabs.has(owner.taskId)&&sameBatchOwner(batchOwner(owner.taskId),owner), captureBatchTask,preflightBatch,runBatch:runWorkspaceBatch,commitBatch,interruptBatch,
     open, close, attachReference, clearTasks, ready: workspaceReady,
+    acknowledgeViewedResult: () => acknowledgeVisibleResult(),
     refreshTaskSelection: () => commentController?.refreshControls(),
     setWorkbenchVisible: (visible, { animate = true } = {}) => {
       if (visible) {
@@ -6835,6 +6876,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       for (const dispose of disposalCallbacks) if (typeof dispose === 'function') dispose();
       disposalCallbacks.length = 0;
       panel.hidden = true;
+      delete panel.dataset.aiResultCount;
+      syncResultEntry();
     },
     snapshotTask: async id => {
       await workspaceReady;

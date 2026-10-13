@@ -2,6 +2,10 @@
   "schemaVersion": 1,
   "unit": [
     {
+      "path": "tests/test-ai-result-attention.mjs",
+      "findingIds": ["AI-RESULT-ATTENTION"]
+    },
+    {
       "path": "tests/test-rhwp-exam-annotations.mjs",
       "findingIds": [
         "RHWP-CUMULATIVE-SOURCE",
@@ -553,6 +557,10 @@
     }
   ],
   "browser": [
+    {
+      "path": "tests/test-button-design-browser.cjs",
+      "findingIds": ["BUTTON-DESIGN", "AI-RESULT-ATTENTION"]
+    },
     {
       "path": "tests/test-graph-physics-relations-browser.cjs",
       "findingIds": [

@@ -868,6 +868,7 @@ export function buildLineSection(ctx) {
       const active = !isPartial && (Array.isArray(p.dashPattern)
         ? (!!pat && p.dashPattern.length === pat.length && p.dashPattern.every((v, k) => v === pat[k]))
         : (!pat && p.dashLength === dl && p.dashGap === dg));
+      btn.setAttribute('aria-pressed', String(active));
       btn.style.background = active ? "var(--control-selected-bg)" : "var(--bg-input)";
       btn.style.color      = active ? "var(--control-selected-text)" : "var(--text-primary)";
       btn.style.border     = active ? "1px solid var(--accent)" : "1px solid var(--border)";
