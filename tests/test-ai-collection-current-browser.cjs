@@ -35,6 +35,8 @@ async function snapshot(page) {
 }
 async function exportZip(page, engineName, kind, mode, expected) {
   const panel = page.locator('#ai-image-panel');
+  const more = panel.locator('.ai-output-more');
+  if (!await more.evaluate(element => element.open)) await more.locator('summary').click();
   await panel.locator('[data-ai-task-export-mode]').selectOption(mode);
   const downloads = page.waitForEvent('download');
   await panel.locator('[data-ai-task-export]').click();

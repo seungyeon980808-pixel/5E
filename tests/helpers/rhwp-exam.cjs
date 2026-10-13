@@ -82,8 +82,8 @@ async function navigate(page,url,options={}) {
 
 // The suite runner supplies RELEASE_URL; standalone runs use the same server on
 // an ephemeral port so concurrently running workers never share a document.
-async function withServer(run) {
-  const configured = process.env.EXAM_URL || process.env.RELEASE_URL;
+async function withServer(run, { isolated = false } = {}) {
+  const configured = !isolated && (process.env.EXAM_URL || process.env.RELEASE_URL);
   if (configured) return run(new URL(configured).origin);
   const root = path.resolve(__dirname, '../..');
   const child = spawn(process.execPath, ['scripts/preview-local-server.cjs'], {

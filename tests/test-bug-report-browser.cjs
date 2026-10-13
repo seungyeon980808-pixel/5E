@@ -98,5 +98,8 @@ const receipts = [];
     } finally {await browser.close();}
   }
   fs.writeFileSync(path.join(evidence,'receipt.json'),JSON.stringify(receipts,null,2));
-  });} finally {await new Promise(resolve=>service.close(resolve));fs.rmSync(directory,{recursive:true,force:true});}
+  // The suite-wide server predates this temporary intake port. Start the same
+  // canonical source server with this suite's port instead of submitting to an
+  // unrelated server's default intake. All existing submission assertions remain.
+  }, { isolated:true });} finally {await new Promise(resolve=>service.close(resolve));fs.rmSync(directory,{recursive:true,force:true});}
 })().catch(error=>{console.error(error);process.exitCode=1;});
