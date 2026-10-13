@@ -1,0 +1,130 @@
+name: Preview Release
+run-name: 1.7.0 Preview · ${{ inputs.source_sha }}
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_sha:
+        description: Verified full SHA on feature/1.7.0/four-session-integration
+        required: true
+        type: string
+      base_run:
+        description: Latest successful Pages publication run
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+  deployments: read
+
+concurrency:
+  group: validated-web-release
+  cancel-in-progress: false
+
+jobs:
+  validate:
+    if: ${{ github.ref == 'refs/heads/main' }}
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24.21.0
+      - name: Verify the source and currently published base
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BASE_RUN: ${{ inputs.base_run }}
+          PREVIEW_SHA: ${{ inputs.source_sha }}
+        run: |
+          node - <<'NODE'
+          const {execFileSync}=require('node:child_process');
+          if(!/^[a-f0-9]{40}$/.test(process.env.PREVIEW_SHA)||!/^[0-9]+$/.test(process.env.BASE_RUN))throw Error('Exact source and numeric base run required');
+          const api=suffix=>JSON.parse(execFileSync('gh',['api',`repos/${process.env.GITHUB_REPOSITORY}/${suffix}`],{encoding:'utf8'}));
+          const run=api(`actions/runs/${process.env.BASE_RUN}`);
+          if(run.status!=='completed'||run.conclusion!=='success'||run.head_branch!=='main'||!['.github/workflows/hub-route.yml','.github/workflows/memo-route.yml','.github/workflows/preview-release.yml'].includes(run.path))throw Error('Successful route publication required');
+          const jobs=api(`actions/runs/${process.env.BASE_RUN}/jobs?per_page=100`).jobs;
+          if(!['validate','publish'].every(name=>jobs.some(j=>j.name===name&&j.conclusion==='success')))throw Error('Base validation or deployment failed');
+          let latest;for(const deployment of api('deployments?environment=github-pages&per_page=100')){const status=api(`deployments/${deployment.id}/statuses?per_page=1`)[0];if(status?.state==='success'){latest=status;break;}}
+          if(!latest?.log_url?.includes(`/actions/runs/${process.env.BASE_RUN}/`))throw Error('Base is not the latest successful Pages publication');
+          execFileSync('git',['merge-base','--is-ancestor',process.env.PREVIEW_SHA,'origin/feature/1.7.0/four-session-integration']);
+          const artifacts=api(`actions/runs/${process.env.BASE_RUN}/artifacts?per_page=100`).artifacts.filter(a=>!a.expired);
+          const receipt=artifacts.find(a=>/-publication-/.test(a.name));if(!receipt)throw Error('Published inventory receipt missing');
+          execFileSync('gh',['run','download',process.env.BASE_RUN,'-n',receipt.name,'-D','_work/preview-base-receipt'],{stdio:'inherit'});
+          const pages=artifacts.find(a=>a.name==='github-pages');
+          if(pages){execFileSync('gh',['run','download',process.env.BASE_RUN,'-n','github-pages','-D','_work/preview-base-pages'],{stdio:'inherit'});}
+          NODE
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.source_sha }}
+          path: _work/preview-source
+      - name: Install source verification dependencies
+        working-directory: _work/preview-source
+        run: |
+          npm ci --no-audit --no-fund
+          npx playwright install chromium webkit
+      - name: Validate the committed source
+        working-directory: _work/preview-source
+        run: npm run test:unit
+      - name: Exercise the complete affected UI suites on both engines
+        working-directory: _work/preview-source
+        env:
+          APP_ENTRY: /
+          EVIDENCE_DIR: ${{ github.workspace }}/_work/preview-evidence/source
+        run: |
+          for engine in chromium webkit; do
+            TASK2_ENGINE="$engine" EVIDENCE_DIR="$EVIDENCE_DIR/$engine" node --test tests/test-ai-inline-label-editor-browser.cjs tests/test-library-space-flow-browser.cjs tests/test-library-crop-confirm-browser.cjs tests/test-ai-local-edit-browser.cjs tests/test-ai-library-transfer-browser.cjs
+          done
+      - name: Recover or unpack the exact published base
+        run: |
+          if test -f _work/preview-base-pages/artifact.tar; then
+            mkdir -p _work/preview-publication/site
+            tar -xf _work/preview-base-pages/artifact.tar -C _work/preview-publication/site
+          else
+            git fetch origin 751b1ed4622058497a6f3ba43f92333eb15268eb
+            node scripts/preview-publication.cjs --recover --site _work/preview-publication/site --receipt _work/preview-base-receipt/receipt.json --cache _work/preview-base-blobs
+          fi
+      - name: Replace only preview with the committed source
+        run: node scripts/preview-publication.cjs --site _work/preview-publication/site --base-receipt _work/preview-base-receipt/receipt.json --source _work/preview-source --receipt _work/preview-publication/receipt.json
+      - name: Test the actual publication artifact, including preserved routes
+        working-directory: _work/preview-source
+        env:
+          FIVE_E_SITE_ROOT: ${{ github.workspace }}/_work/preview-publication/site
+          EVIDENCE_DIR: ${{ github.workspace }}/_work/preview-evidence/artifact
+        run: |
+          ROOT_SHA=$(node -p "require('../preview-publication/receipt.json').baseSourceCommit")
+          GITHUB_SHA="$ROOT_SHA" npm run test:web-artifact
+      - name: Confirm the preview revision and reject artifact changes
+        env:
+          FIVE_E_SITE_ROOT: ${{ github.workspace }}/_work/preview-publication/site
+          EVIDENCE_DIR: ${{ github.workspace }}/_work/preview-evidence/identity
+          NODE_PATH: ${{ github.workspace }}/_work/preview-source/node_modules
+        run: |
+          node scripts/preview-publication-browser.cjs
+          node scripts/preview-publication.cjs --verify --site _work/preview-publication/site --receipt _work/preview-publication/receipt.json
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _work/preview-publication/site
+          retention-days: 7
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: preview-publication-${{ github.sha }}
+          path: |
+            _work/preview-publication/receipt.json
+            _work/preview-evidence
+
+  publish:
+    needs: validate
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}preview/
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
