@@ -32,6 +32,24 @@ h.withServer(async origin=>{for(const [name,engine]of Object.entries({chromium,w
  await modal.locator('[data-trace-zoom-toggle]').click();
  fs.mkdirSync('_work/feedback/parts/graph-controls',{recursive:true});await page.screenshot({path:path.resolve('_work/feedback/parts/graph-controls/'+name+'.png')});
  await modal.locator('#gm-cancel').click();assert.equal(await modal.isVisible(),false);
+ await page.evaluate(async fixture=>{
+  const v='?v=1.7.0-four-session-integration',{state}=await import('/js/state.js'+v),{buildNativeGraph}=await import('/js/graph/native-graph.js'+v);
+  let n=0;const built=buildNativeGraph(fixture,{nextId:()=>n++===0?'zoom-series-plane':`zoom-series-${n}`});if(!built.ok)throw Error(built.error);
+  state.update(s=>{s.objects=built.objects;s.groups=built.groups;s.selectedIds=[];});
+  (await import('/js/graph/graph-modal.js'+v)).openGraphModal('zoom-series-plane');
+ },fixture);
+ await page.evaluate(()=>Promise.allSettled(document.querySelector('#graph-modal-overlay').getAnimations({subtree:true}).map(a=>a.finished)));
+ const selectedSeries=modal.locator('#gm-chips [data-series-index="0"]'),seriesSaved=await snapshot();
+ assert.equal(await selectedSeries.getAttribute('aria-pressed'),'true');
+ await modal.locator('[data-trace-zoom-toggle]').click();await modal.locator('.gm-trace-zoom-panel').waitFor({state:'visible'});
+ assert.equal(await selectedSeries.getAttribute('aria-pressed'),'true','Opening viewing controls keeps the curve selected');
+ await modal.locator('[data-trace-zoom]').fill('150');await modal.locator('[data-trace-zoom]').press('ArrowLeft');assert.equal(await modal.locator('[data-trace-zoom]').inputValue(),'149');
+ await modal.locator('[data-trace-zoom-lock]').click();assert.equal(await modal.locator('[data-trace-zoom]').isDisabled(),true);
+ await modal.locator('[data-trace-zoom-lock]').press('Escape');assert.equal(await modal.locator('.gm-trace-zoom-panel').isVisible(),false);
+ await modal.locator('[data-trace-zoom-toggle]').press('Enter');await modal.locator('.gm-trace-zoom-panel').waitFor({state:'visible'});
+ await modal.locator('[data-trace-zoom-lock]').click();await modal.locator('[data-trace-zoom-reset]').click();assert.equal(await modal.locator('[data-trace-zoom]').inputValue(),'100');
+ assert.equal(await selectedSeries.getAttribute('aria-pressed'),'true','Slider, lock, Escape and reset keep the curve selected');
+ await modal.locator('#gm-cancel').click();assert.deepEqual(await snapshot(),seriesSaved,'Viewing controls and Cancel preserve the original curve and geometry');
  if(process.env.GRAPH_CONTROLS_ONLY==='1'){assert.deepEqual(errors,[]);console.log(name+': graph dropdowns, slider/lock, Escape, saved view preferences, Cancel, unchanged geometry and upper export passed; legacy bound-text drag is outside this run');continue;}
  await page.evaluate(async fixture=>{
   const v='?v=1.7.0-four-session-integration', {state}=await import('/js/state.js'+v),{buildNativeGraph}=await import('/js/graph/native-graph.js'+v);

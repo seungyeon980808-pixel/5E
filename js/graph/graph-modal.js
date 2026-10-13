@@ -4267,7 +4267,9 @@ function build() {
     if (_sel === -1 && !_placeMode && _activeDraw === -1) return;
     // 예외 목록이 옛 id(#gm-add-expr,#gm-add-points)를 가리키고 있었음 — 실제 DOM엔
     // #gm-add-series(추가 버튼)와 #gm-subtabs(하위 탭 컨테이너)가 있으므로 교체.
-    if (e.target.closest("#gm-preview, #gm-series-editor, #gm-engine-series, #gm-engine-controls, #gm-style-controls, #gm-adv-open, #gm-adv-panel, #gm-engine-regions, #gm-chips, .gm-tabs, #gm-subtabs, #gm-add-series, .modal-actions")) return;
+    // Viewing controls keep the selected curve. Redrawing on their mousedown
+    // also interrupts WebKit's subsequent click on the zoom toggle.
+    if (e.target.closest("#gm-preview, #gm-trace-toolbar-host, #gm-series-editor, #gm-engine-series, #gm-engine-controls, #gm-style-controls, #gm-adv-open, #gm-adv-panel, #gm-engine-regions, #gm-chips, .gm-tabs, #gm-subtabs, #gm-add-series, .modal-actions")) return;
     _sel = -1; _placeMode = null; _activeDraw = -1;
     renderChips(); syncSeriesEditor(); refreshPreview();
   });
