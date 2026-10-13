@@ -1,5 +1,6 @@
 import { snapshotImageItem, taskItemCopy } from './ai-candidate-snapshot.js?v=1.7.0-four-session-integration';
 import { registerBugReportContext } from './bug-report.js?v=1.7.0-four-session-integration';
+import { initManualImageSplit } from './manual-image-split.js?v=1.7.0-four-session-integration';
 import { markResultReady, pendingResult, acknowledgeResult, syncResultEntry } from './ai-result-attention.js?v=20261013-buttons';
 import { createGraphReconstructionWorkflow, graphSourceHash } from './graph/reconstruction-workflow.js?v=1.7.0-four-session-integration';
 import { GRAPH_WORKBENCH_SELECTION, validateWorkbenchGraph, buildWorkbenchGraph, workbenchGraphDataUrl, workbenchGraphContextAttachment, editWorkbenchGraph } from './graph/workbench-result.js?v=1.7.0-four-session-integration';
@@ -552,6 +553,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
   const markControls = [markArrows, markTrends, markLeaders];
   let compactSettings = null;
   let localEraseController = null;
+  let manualSplitController = null;
   const preserveSourceLabels = panel.querySelector("[data-ai-preserve-source-labels]");
   const imageKindSelect = panel.querySelector('[data-ai-image-kind]');
   const labelResultSelect = panel.querySelector('[data-ai-label-result]');
@@ -1610,6 +1612,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     syncSelectedOutputActions();
   };
   const syncReferenceSummary = () => {
+    manualSplitController?.refresh();
     referenceCount.textContent = String(attachments.length);
     const empty = attachmentList.querySelector("[data-ai-reference-empty]");
     if (empty) empty.hidden = attachments.length > 0;
@@ -3736,6 +3739,19 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       applyPrompt: sourcePrompt => { if (sourcePrompt || prompt) input.value = sourcePrompt || prompt; },
     });
   };
+
+  const splitContext = () => ({ taskId:activeTaskTabId, editable:!disposed && !busy && !preflightRun && panel.dataset.aiSharingMode !== 'view' && conversionKind === 'image',
+    selectedSourceId:panel.aiWorkbench?.getViewState()?.selectedSourceId,
+    sources:attachments.map(item => ({ id:item.id, name:item.name, data:item.data, imageKind:readImageLabelWorkflow().imageKind })) });
+  const splitButton = panel.querySelector('[data-ai-manual-split]');
+  if (splitButton) {
+    manualSplitController = initManualImageSplit({ panel, button:splitButton, getContext:splitContext,
+      isCurrent:snapshot => { const current = splitContext(); return Boolean(snapshot && current.editable && current.taskId === snapshot.taskId && current.sources.length === snapshot.sources.length
+        && current.sources.every((source, index) => source.id === snapshot.sources[index].id && source.data === snapshot.sources[index].data)); },
+      onApply:references => { const ids = addReferencesAsTasks(references, { kind:'image' }); persistTasks(); if (ids.length !== references.length) throw new Error('분할 이미지를 추가하지 못했습니다. 원본을 확인해 주세요.'); setStatus(`${ids.length}개 분할 작업을 추가했습니다. 원본 작업은 유지됩니다.`, 'ok'); },
+    });
+    disposalCallbacks.push(() => manualSplitController.destroy());
+  }
 
   let batchQueue = [];
   let batchRunningCount = 0;

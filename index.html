@@ -50,6 +50,7 @@
   <link rel="stylesheet" href="/css/parts-library.css?v=1.7.0-four-session-integration" />
   <link rel="stylesheet" href="/css/tutorial.css?v=1.7.0-four-session-integration" />
   <link rel="stylesheet" href="/css/bug-report.css?v=1.7.0-four-session-integration" />
+  <link rel="stylesheet" href="/css/manual-image-split.css?v=1.7.0-four-session-integration" />
   <link rel="stylesheet" href="/css/ai-panel.css?v=1.7.0-four-session-integration" />
   <link rel="stylesheet" href="/css/ai-comparison.css?v=1.7.0-four-session-integration" />
   <link rel="stylesheet" href="/css/ai-composition-editor.css?v=1.7.0-four-session-integration" />
@@ -434,8 +435,8 @@
       <a class="footer-badge" href="https://github.com/seungyeon980808-pixel/5E"
          target="_blank" rel="noopener" title="소스코드 (GitHub)"><span class="footer-code" aria-hidden="true">&lt;/&gt;</span> Source</a>
       <span class="footer-change-badge" data-change-summary tabindex="0"
-            aria-label="2026-10-13 15:14 KST 반영: 신고 첨부 E02"
-            title="2026-10-13 15:14 KST · E02: 앞쪽 라이브러리의 신고 대상을 사용하고 재열기 시 캡처를 보존합니다. 로컬 신고는 같은 origin으로 접수합니다.">10.13 15:14 · 신고 첨부 E02</span>
+            aria-label="2026-10-13 15:21 KST 반영: 이미지 분할 E03"
+            title="2026-10-13 15:21 KST · E03: 원본을 보존하면서 사각형·자유 그리기 영역을 새 작업으로 분할합니다. 문제 신고/관리자 접수함 E01·E02도 반영됐습니다.">10.13 15:21 · 이미지 분할 E03</span>
       <span class="footer-visitor-stats" data-visitor-stats tabindex="0" title="이용자 집계 서버 연결 준비 중">누적 — · 오늘 —</span>
     </span>
     <span class="app-footer-credit app-footer-copyright">Copyright © 2026 <strong>박승연</strong> | SMOE</span>
@@ -527,6 +528,7 @@
               <header class="ai-pane-head"><div class="ai-pane-head-controls"><div class="ai-pane-metadata">
                 <strong>원본</strong>
                 <button type="button" class="ai-replace-source" data-ai-reuse-source title="원본으로 새 작업을 준비합니다. 기존 결과는 작업 목록에 보관됩니다.">원본으로 다시 작업</button>
+                <button type="button" class="ai-manual-split" data-ai-manual-split disabled title="원본을 보존하며 사각형·자유 그리기 영역을 새 이미지 작업으로 분할합니다">이미지 분할</button>
                 <label data-ai-source-picker hidden><select data-ai-source-select aria-label="살펴볼 원본 선택"></select></label>
                 <div class="ai-composition-toolbar" data-ai-composition-controls hidden>
                   <label>배치 <select data-ai-composition-select aria-label="원본 배치">

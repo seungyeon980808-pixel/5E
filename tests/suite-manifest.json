@@ -562,6 +562,13 @@
       "findingIds": [
         "BUG-REPORT-INBOX"
       ]
+    },
+    {
+      "path": "tests/test-image-split.cjs",
+      "findingIds": [
+        "USER-SAFARI-U13",
+        "MANUAL-IMAGE-SPLIT"
+      ]
     }
   ],
   "browser": [
@@ -1622,6 +1629,13 @@
       "path": "tests/test-bug-report-browser.cjs",
       "findingIds": [
         "BUG-REPORT-INBOX"
+      ]
+    },
+    {
+      "path": "tests/test-image-split-browser.cjs",
+      "findingIds": [
+        "USER-SAFARI-U13",
+        "MANUAL-IMAGE-SPLIT"
       ]
     }
   ],
