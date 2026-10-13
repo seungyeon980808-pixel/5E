@@ -1,3 +1,4 @@
+import { channelStorage as localStorage } from './preview-storage.js?v=1.7.0-four-session-integration';
 import { validateWorkspaceCandidates } from './ai-candidate-snapshot.js?v=1.7.0-four-session-integration';
 import { createWorkspaceBatch, createWorkspaceSelection } from './ai-workspace-batch.js?v=1.7.0-four-session-integration';
 import { createBatchStore } from './ai-batch-store.js?v=1.7.0-four-session-integration';

@@ -1,3 +1,4 @@
+import { channelStorage } from './preview-storage.js?v=1.7.0-four-session-integration';
 import { createThumbnailQueue } from "./library/thumbnail-queue.js?v=1.7.0-four-session-integration";
 import { createModalSurfaceMotion } from './modal-surface-motion.js?v=1.7.0-four-session-integration';
 import { animateLibraryAiHandoff } from './library-ai-motion.js?v=1.7.0-four-session-integration';
@@ -909,7 +910,7 @@ function createPartOptions(host, onChange) {
   return () => ({ ...state });
 }
 
-export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openObjectify, openAi, openIndependentReferences, openGraph, pdfUi, pdfDetailsElement, onImportedImages, onDesktopSnapshot, desktopLibrary = globalThis.fiveEDesktop?.pdfLibrary, storage = globalThis.localStorage, initialSearchReadiness = "ready" }) {
+export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openObjectify, openAi, openIndependentReferences, openGraph, pdfUi, pdfDetailsElement, onImportedImages, onDesktopSnapshot, desktopLibrary = globalThis.fiveEDesktop?.pdfLibrary, storage = channelStorage, initialSearchReadiness = "ready" }) {
   const overlay = buildShell();
   const root = overlay.querySelector(".unilib");
   const motion = createModalSurfaceMotion({overlay,surface:root,springFrequency:48,animateSurface:false});

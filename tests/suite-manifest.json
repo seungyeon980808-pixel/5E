@@ -582,6 +582,11 @@
   ],
   "browser": [
     {
+      "path": "tests/test-preview-ai-storage-browser.cjs",
+      "findingIds": ["PREVIEW-STABLE-STORAGE-ISOLATION"],
+      "reason": "Exercises preview AI setting changes and task reload against same-origin stable storage sentinels in both browser engines."
+    },
+    {
       "path": "tests/test-ai-inline-label-editor-browser.cjs",
       "findingIds": ["AI-INLINE-LABEL-EDIT", "AI-GROUPED-OUTPUT", "AI-LABEL-CLICK-EDIT", "AI-LEADER-ENDPOINT-SYNC"]
     },
