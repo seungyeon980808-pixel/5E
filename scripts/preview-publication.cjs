@@ -81,7 +81,8 @@ async function recoverBase({site,receipt,repository,cache,origin='https://www.5e
 }
 
 function stamp(file,bytes,sha,branch) {
-  if(!['index.html','js/release-receipt.js'].includes(file))return bytes;
+  const runtime=/^(js|css|experiments)\/.*\.(js|mjs|css)$/.test(file);
+  if(file!=='index.html'&&!runtime)return bytes;
   let value=bytes.toString('utf8');
   if(file==='index.html') {
     if(!/<title>5E 1\.6\.3/.test(value) || !/data-release-version>v1\.6\.3/.test(value))throw Error('Unexpected preview entry version');
@@ -94,7 +95,22 @@ function stamp(file,bytes,sha,branch) {
   } else if(file==='js/release-receipt.js') {
     if((value.match(/sourceCommit: null/g)||[]).length!==1)throw Error('Preview source placeholder missing');
     value=value.replace("version: '1.6.3'","version: '1.7.0 Preview'").replace('sourceCommit: null',`sourceCommit: '${sha}'`);
-  } else return bytes;
+  }
+  // An entry's revision alone does not reload cached child modules. Stamp local
+  // runtime/style URLs consistently, retaining one identity for shared state.
+  // Match whole quoted strings so embedded code/data URLs and remote URLs stay
+  // untouched. HTML uses only src/href attributes; no prose is rewritten.
+  const versionUrl = url => {
+    const match=url.match(/^((?:\.{1,2}\/|\/|(?:js|css|experiments)\/)[^\s<>?#]*\.(?:js|mjs|css))(\?[^#]*)?(#.*)?$/);
+    if(!match)return url;
+    const query=match[2]||'';
+    const next=/(?:^\?|&)v=/.test(query)
+      ? query.replace(/([?&])v=[^&]*/g,`$1v=${sha}`)
+      : query+(query?(file==='index.html'?'&amp;':'&'):'?')+`v=${sha}`;
+    return match[1]+next+(match[3]||'');
+  };
+  if(file==='index.html')value=value.replace(/\b(src|href)="([^"]*)"/g,(_,name,url)=>`${name}="${versionUrl(url)}"`);
+  else value=value.replace(/\/\*[\s\S]*?\*\/|\/\/[^\r\n]*|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`(?:\\.|[^`\\])*`/g,quoted=>quoted[0]==='/'?quoted:quoted[0]+versionUrl(quoted.slice(1,-1))+quoted.at(-1));
   return Buffer.from(value);
 }
 function appendPreview({site,base,sourceRoot,publicationCommit}) {

@@ -2,7 +2,7 @@ const test=require('node:test'),assert=require('node:assert/strict');
 const fs=require('node:fs'),os=require('node:os'),path=require('node:path');
 const {execFileSync}=require('node:child_process');
 const {inventory}=require('../scripts/web-release.cjs');
-const {appendPreview,verifyPreview,recoverBase,safeFile}=require('../scripts/preview-publication.cjs');
+const {appendPreview,verifyPreview,recoverBase,safeFile,stamp}=require('../scripts/preview-publication.cjs');
 function fixture(t){
   const root=fs.mkdtempSync(path.join(os.tmpdir(),'5e-preview-publication-'));t.after(()=>fs.rmSync(root,{recursive:true,force:true}));
   const source=path.join(root,'source'),site=path.join(root,'site');fs.mkdirSync(source);fs.mkdirSync(site);
@@ -50,4 +50,24 @@ test('expired publication artifacts are recovered from exact blobs with generate
 test('publication paths cannot escape the site',()=>{
   for(const file of ['../secret','/secret','a/../secret','a\\secret','.', 'a\0secret'])assert.throws(()=>safeFile(file),/Unsafe file/);
   assert.equal(safeFile('preview/js/main.js'),'preview/js/main.js');
+});
+test('each published revision reloads its local entry, child modules and styles together',()=>{
+  const first='a'.repeat(40),second='b'.repeat(40);
+  const source=`/* The entry's shared state must not split. './state.js?v=comment' */
+// It's a local runtime dependency.
+import './state.js?v=integration'; import("./state.js?v=integration");
+const style=new URL('../css/editor.css?theme=dark&v=old#panel',import.meta.url);
+const unversioned='./widget.js';
+const external='https://example.invalid/widget.js?v=external';
+const data='data:text/javascript,export default "./widget.js"';`;
+  for(const sha of [first,second]) {
+    const result=stamp('js/main.js',Buffer.from(source),sha,'test').toString();
+    assert.equal((result.match(new RegExp(`state\\.js\\?v=${sha}`,'g'))||[]).length,2,'shared modules keep one identity');
+    assert.ok(result.includes(`../css/editor.css?theme=dark&v=${sha}#panel`));
+    assert.ok(result.includes(`./widget.js?v=${sha}`));
+    assert.ok(result.includes('https://example.invalid/widget.js?v=external'));
+    assert.ok(result.includes(`data:text/javascript,export default "./widget.js"`),'embedded data stays exact');
+  }
+  assert.notEqual(stamp('js/main.js',Buffer.from(source),first,'test').toString(),stamp('js/main.js',Buffer.from(source),second,'test').toString());
+  const png=Buffer.from([0,255,1,128]);assert.deepEqual(stamp('assets/image.png',png,first,'test'),png);
 });
