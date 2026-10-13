@@ -29,7 +29,8 @@
     "electron": "44.4.5",
     "electron-builder": "26.15.3",
     "js-yaml": "4.3.2",
-    "playwright": "1.62.1"
+    "playwright": "1.62.1",
+    "pngjs": "7.0.0"
   },
   "build": {
     "appId": "com.5e.editor",

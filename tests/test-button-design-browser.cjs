@@ -71,7 +71,7 @@ for (const engine of [chromium,webkit]) test(`canonical button design and unread
   }
   await page.addInitScript({content:seed+`\nseedRequestWorkspaces(2,true,false,'pro',false,false,false,${JSON.stringify({runtime:runtimeInit})});`});
   await installAiMain(page,root,{},evidence);
-  await page.goto(origin+'/?mode=pro&mobile=0&exam=0',{waitUntil:'domcontentloaded'});
+  await page.goto(new URL('/?mode=pro&mobile=0&exam=0',origin).href,{waitUntil:'domcontentloaded'});
   await page.waitForFunction(()=>window.__task2Manager && document.getElementById('exam-send')?.classList.contains('ui-core-action'));
   await page.evaluate(()=>window.__task2Manager.sharingSnapshot());
   const welcome=page.locator('.tut-welcome-overlay .tut-banner-no');if(await welcome.isVisible())await welcome.click();
@@ -253,7 +253,7 @@ for (const engine of [chromium,webkit]) test(`canonical button design and unread
   const touchPage=await touch.newPage();
   await touchPage.addInitScript({content:seed+`\nseedRequestWorkspaces(2,false,false,'pro',false,false,false,${JSON.stringify({runtime:runtimeInit})});`});
   await installAiMain(touchPage,root,{},path.join(evidence,'touch'));
-  await touchPage.goto(origin+'/?mode=pro&mobile=0&exam=0',{waitUntil:'domcontentloaded'});
+  await touchPage.goto(new URL('/?mode=pro&mobile=0&exam=0',origin).href,{waitUntil:'domcontentloaded'});
   await touchPage.waitForFunction(()=>document.getElementById('exam-send')?.classList.contains('ui-core-action'));
   const touchWelcome=touchPage.locator('.tut-welcome-overlay .tut-banner-no');if(await touchWelcome.isVisible())await touchWelcome.click();
   const coarse=await touchPage.evaluate(ids=>ids.map(id=>({id,height:document.getElementById(id).getBoundingClientRect().height})),core);

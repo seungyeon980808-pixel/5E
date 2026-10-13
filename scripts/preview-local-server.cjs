@@ -38,7 +38,11 @@ const server = http.createServer(async (req, res) => {
   const fail = (status, message) => { res.writeHead(status, { 'Content-Type':'application/json' }); res.end(JSON.stringify({ error:message })); };
   if (req.headers.host !== `127.0.0.1:${port}`) return fail(403, 'Host rejected');
   res.setHeader('Cache-Control', 'no-store');
-  const pathname = new URL(req.url, origin).pathname;
+  let pathname;
+  try {
+    if (!req.url?.startsWith('/') || req.url.startsWith('//')) return fail(400, 'Invalid request target');
+    pathname = new URL(req.url, origin).pathname;
+  } catch { return fail(400, 'Invalid request target'); }
   if (pathname === '/api/local-preview') {
     if (!['GET', 'HEAD'].includes(req.method)) return fail(405, 'Method rejected');
     if (req.headers.origin && req.headers.origin !== origin) return fail(403, 'Origin rejected');
@@ -92,7 +96,11 @@ const server = http.createServer(async (req, res) => {
   }
   if (!['GET','HEAD'].includes(req.method)) return fail(405, 'Method rejected');
   let file;
-  try { file = path.resolve(root, `.${decodeURIComponent(pathname)}`); } catch { return fail(400, 'Invalid path'); }
+  try {
+    const decoded = decodeURIComponent(pathname);
+    if (decoded.includes('\0')) return fail(400, 'Invalid path');
+    file = path.resolve(root, `.${decoded}`);
+  } catch { return fail(400, 'Invalid path'); }
   if (!file.startsWith(root + path.sep) && file !== root) return fail(403, 'Path rejected');
   fs.stat(file, async (error, stat) => {
     if (error) return fail(404, 'Not found');

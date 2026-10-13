@@ -2,6 +2,10 @@
   "schemaVersion": 1,
   "unit": [
     {
+      "path": "tests/test-preview-local-server.cjs",
+      "findingIds": ["LOCAL-PREVIEW-REQUEST-LIFETIME"]
+    },
+    {
       "path": "tests/test-ai-result-attention.mjs",
       "findingIds": [
         "AI-RESULT-ATTENTION"
