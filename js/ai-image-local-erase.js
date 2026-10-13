@@ -54,12 +54,15 @@ export function createLocalImageEraseController({ panel, getTarget, isBusy, reso
     for (const entry of bindings.values()) entry.hideCursor();
   }
   function setActive(value) {
+    if (destroyed) return;
     cancel(); active = value && eligible(getTarget()) && !isBusy() && panel.dataset.aiSharingMode !== 'view';
     panel.dataset.aiLocalEraseActive = String(active);
     panel.dispatchEvent(new CustomEvent('5e:ai-local-erase-tool-change'));
     refresh();
   }
   function refresh() {
+    // A late worker/preview completion must not remount listeners after dispose.
+    if (destroyed) return;
     const item = getTarget(), draft = getDraft(item), history = historyFor(item);
     const disabled = isBusy() || !eligible(item) || panel.dataset.aiSharingMode === 'view';
     const historyDisabled = !eligible(item) || panel.dataset.aiSharingMode === 'view' || Boolean(pending);
@@ -140,6 +143,7 @@ export function createLocalImageEraseController({ panel, getTarget, isBusy, reso
     return displayed && ownsStatus();
   }
   function bind(item, stage, img) {
+    if (destroyed) return;
     bindings.get(item)?.dispose();
     const disposers = [];
     const surface = stage.closest('.ai-image-card') || stage.parentElement || stage;

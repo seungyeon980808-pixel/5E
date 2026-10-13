@@ -364,3 +364,24 @@ test('mapped labels survive local saving and legacy manual versions can insert w
   assert.deepEqual(errors,[]);assert.equal(await page.evaluate(()=>window.__task2.sends.length),0);
   fs.writeFileSync(path.join(dir,'receipt.json'),JSON.stringify({mappedLabelSaved:true,legacyManualRecovered:true,parentUnchanged:true,editableLabels:labels.length,paidAiCalls:0,errors},null,2));
 });
+
+
+// Observe actual controller registrations without replacing erasure or disposal.
+for(const rejected of [false,true])test('late eraser preview cannot remount a disposed workspace '+rejected,{timeout:90000},async t=>{
+ const root=path.resolve(__dirname,'..'),engine=process.env.TASK2_ENGINE||'chromium';const dir=path.join(evidence,'disposed-preview',rejected?'rejected':'resolved');fs.mkdirSync(dir,{recursive:true});
+ const {page,errors}=await fixture(t,1,dir,{selectedPartial:true,beforeNavigate:async page=>{
+  const source=fs.readFileSync(path.join(root,'js/ai-image-local-erase.js'),'utf8'),seam='try { await previewChanged(item); }';assert.equal(source.split(seam).length-1,1);
+  const body=source.replace('const processor = createImageEraseProcessor(win);','const processor = createImageEraseProcessor(win); panel.__eraseBindingCount=()=>bindings.size;').replace(seam,'try { await previewChanged(item); if(window.__holdLocalPreview) { window.__holdLocalPreview=false; await new Promise((resolve,reject)=>{window.__heldLocalPreview={resolve,reject};}).finally(()=>{window.__heldLocalPreviewSettled=true;}); } }');
+  await page.route('**/js/ai-image-local-erase.js*',route=>route.fulfill({contentType:'text/javascript',body}));
+ }});
+ const panel=page.locator('#ai-image-panel'),saved=(await snapshot(page))[0].generated;await panel.locator('[data-ai-local-erase]').click();await page.evaluate(()=>{window.__holdLocalPreview=true;});
+ const box=await panel.locator('.ai-generated-card.is-ai-active-candidate .ai-preview-stage > img').last().boundingBox();
+ await page.mouse.move(box.x+40/512*box.width,box.y+90/384*box.height);await page.mouse.down();await page.mouse.move(box.x+40/512*box.width,box.y+180/384*box.height,{steps:5});await page.mouse.up();
+ await page.waitForFunction(()=>Boolean(window.__heldLocalPreview));await page.evaluate(async()=>{window.__disposedErasePanel=document.querySelector('#ai-image-panel');await __task2Manager.dispose();});
+ const disposed=await page.evaluate(()=>({bindings:__disposedErasePanel.__eraseBindingCount(),draftAttribute:__disposedErasePanel.dataset.aiEditDraft??null}));
+ await page.evaluate(rejected=>{const gate=__heldLocalPreview;rejected?gate.reject(new Error('Synthetic disposed preview failure')):gate.resolve();},rejected);
+ await page.waitForFunction(()=>window.__heldLocalPreviewSettled===true);await page.evaluate(()=>new Promise(requestAnimationFrame));
+ const settled=await page.evaluate(()=>({bindings:__disposedErasePanel.__eraseBindingCount(),draftAttribute:__disposedErasePanel.dataset.aiEditDraft??null}));
+ const generatedAfter=(await snapshot(page))[0].generated;fs.writeFileSync(path.join(dir,'receipt.json'),JSON.stringify({engine,rejected,disposed,settled,savedUnchanged:JSON.stringify(saved)===JSON.stringify(generatedAfter),paidAiCalls:await page.evaluate(()=>__task2.sends.length),errors},null,2));
+ assert.deepEqual(disposed,{bindings:0,draftAttribute:null});assert.deepEqual(settled,disposed,'late completion cannot rebind the disposed eraser or resurrect its draft UI');assert.deepEqual(generatedAfter,saved);assert.equal(await page.evaluate(()=>__task2.sends.length),0);assert.deepEqual(errors,[]);
+});
