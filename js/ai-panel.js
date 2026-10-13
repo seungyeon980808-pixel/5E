@@ -2271,21 +2271,33 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
         if (busy || savePng.disabled) return;
         const taskId = activeTaskTabId, visibilityEpoch = localVisibilityEpoch;
         const originalData = item.data, selectedAtStart = selectedOutputItem() === item;
+        const outputKey = imageOutputOptionsKey(selectedImageOutputOptions);
+        const labelOutput = item.labelPlan?.frozen ? { planKey:JSON.stringify(item.labelPlan),
+          included:labelPreviewState(item).included !== false,artboard:{...state.get().artboard} } : null;
         const isSaveCurrent = () => !disposed && taskId === activeTaskTabId && visibilityEpoch === localVisibilityEpoch
           && item.data === originalData && generatedImages.includes(item)
-          && (!selectedAtStart || selectedOutputItem() === item);
+          && outputKey === imageOutputOptionsKey(selectedImageOutputOptions)
+          && (!selectedAtStart || selectedOutputItem() === item)
+          && (!labelOutput || JSON.stringify(item.labelPlan) === labelOutput.planKey
+            && (labelPreviewState(item).included !== false) === labelOutput.included
+            && !localEraseController.getDraft(item)
+            && state.get().artboard.w === labelOutput.artboard.w && state.get().artboard.h === labelOutput.artboard.h);
         const footerSave = panel.querySelector('[data-ai-save-selected]');
         savePng.disabled = true;
         if (footerSave) footerSave.disabled = true;
         try {
           const link = document.createElement("a");
           const safeName = String(item.name || "평가원식-선화").replace(/[\\/:*?"<>|]+/g, "-");
-          const source = await resolveOutputVariant(item);
+          const source = item.graphResult ? await workbenchGraphDataUrl(item.graphResult) : await resolveOutputVariant(item);
           if (busy || !isSaveCurrent()) return;
-          link.href = requiresRawImageOutput(item) ? item.data : source;
+          const bitmap = item.graphResult ? source : requiresRawImageOutput(item) ? item.data : source;
+          const result = labelOutput?.included && hasPreviewLabels(item)
+            ? await visibleImagePng({data:bitmap,plan:manualLabelPlan(item),artboard:labelOutput.artboard,isCurrent:() => !busy && isSaveCurrent()}) : bitmap;
+          if (busy || !isSaveCurrent()) return;
+          link.href = result;
           link.download = `${safeName}.png`;
           link.click();
-          setStatus('선택한 배경·색상 설정으로 PNG를 저장했습니다.', 'ok');
+          setStatus('현재 보이는 이미지와 라벨을 PNG로 저장했습니다.', 'ok');
         } catch (error) {
           if (busy || !isSaveCurrent()) return;
           setStatus(`PNG 저장 실패: ${error.message}`, 'error');
@@ -2511,7 +2523,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     if (comparison && comparisonCount < 2) closeComparison();
     const save = panel.querySelector('[data-ai-save-selected]');
     const copy = panel.querySelector('[data-ai-copy-selected]');
-    if (copy) copy.disabled = busy || !item || Boolean(item.sceneResult);
+    if (copy) copy.disabled = busy || !item || Boolean(item.sceneResult) || copy.dataset.copyPending === 'true';
     const insert = panel.querySelector('[data-ai-insert-selected]');
     const examSend = panel.querySelector('[data-ai-exam-send]');
     if (examSend) examSend.disabled = busy || !item;
@@ -6578,36 +6590,44 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       && included === (labelPreviewState(item).included !== false) && !localEraseController.getDraft(item)
       && outputKey === imageOutputOptionsKey(selectedImageOutputOptions)
       && state.get().artboard.w === artboard.w && state.get().artboard.h === artboard.h;
-    return (async () => {
+    return { isCurrent:current, png:(async () => {
       const bitmap = item.graphResult ? await workbenchGraphDataUrl(item.graphResult) : await resolveOutputVariant(item);
       if (!current()) throw new Error('출력 중 작업이나 수정본이 바뀌었습니다. 다시 출력하세요.');
       return visibleImagePng({data:bitmap,plan:included && hasPreviewLabels(item) ? manualLabelPlan(item) : null,artboard,isCurrent:current});
-    })();
+    })() };
   }
   panel.querySelector('[data-ai-save-selected]')?.addEventListener('click', () => {
     const item = selectedOutputItem(); if (busy || !item) return;
-    const button = panel.querySelector('[data-ai-save-selected]'); button.disabled = true;
-    void prepareVisibleOutput(item).then(data => {
-      const anchor = document.createElement('a'); anchor.href = data;
-      anchor.download = `${String(item.name || '5E').replace(/[\\/:*?"<>|]+/g,'-')}.png`;
-      document.body.append(anchor); anchor.click(); anchor.remove();
-      setStatus('현재 보이는 이미지와 라벨을 PNG로 저장했습니다.','ok');
-    }).catch(error => setStatus(`PNG 저장 실패: ${error.message}`,'error')).finally(syncSelectedOutputActions);
+    // Reuse the candidate's operation lock and ownership checks. A late decode
+    // must never write into another task's status or download an obsolete PNG.
+    item.card?.querySelector('[data-ai-save-candidate]')?.click();
   });
   copySelected.addEventListener('click', () => {
-    const item = selectedOutputItem(); if (busy || !item) return;
+    const item = selectedOutputItem(); if (busy || !item || copySelected.dataset.copyPending === 'true') return;
     if (!navigator.clipboard?.write || typeof ClipboardItem !== 'function') {
       setStatus('이 브라우저에서는 이미지 복사를 지원하지 않습니다. PNG 저장을 사용하세요.','warn'); return;
     }
     copySelected.disabled = true;
+    copySelected.dataset.copyPending = 'true';
     // Safari requires clipboard.write during the original click. The promised
     // Blob keeps that user gesture while fonts and the PNG are prepared.
-    const blob = prepareVisibleOutput(item).then(data => fetch(data)).then(response => response.blob());
+    const output = prepareVisibleOutput(item);
+    const blob = output.png.then(data => fetch(data)).then(response => response.blob()).then(value => {
+      if (!output.isCurrent()) throw new Error('복사 중 작업이나 수정본이 바뀌었습니다. 다시 복사하세요.');
+      return value;
+    });
     blob.catch(() => {});
-    void navigator.clipboard.write([new ClipboardItem({'image/png':blob})])
-      .then(() => setStatus('현재 보이는 이미지와 라벨을 복사했습니다.','ok'))
-      .catch(error => setStatus(`이미지 복사 실패: ${error.message} PNG 저장을 사용할 수 있습니다.`,'error'))
-      .finally(syncSelectedOutputActions);
+    void (async () => {
+      try {
+        await navigator.clipboard.write([new ClipboardItem({'image/png':blob})]);
+        if (output.isCurrent()) setStatus('현재 보이는 이미지와 라벨을 복사했습니다.','ok');
+      } catch (error) {
+        if (output.isCurrent()) setStatus(`이미지 복사 실패: ${error.message} PNG 저장을 사용할 수 있습니다.`,'error');
+      } finally {
+        delete copySelected.dataset.copyPending;
+        if (!disposed) syncSelectedOutputActions();
+      }
+    })();
   });
   const exportCount = (mode,kind = null) => {
     captureActiveTaskTab();

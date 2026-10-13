@@ -797,11 +797,11 @@ async function installActualExportCapture(f) {
     readImageLabelWorkflow:()=>({imageKind:'general',labelResult:'remove',explicit:true}),preciseRestoreCheckbox:null,
     selectedImageOutputOptions:{backgroundPolicy:'connected'},selectedSeparationMode:'off',singleBackgroundPolicy:'connected',
     modelsLoaded:false,generationTiming:null,serializeGenerationTiming:timing.serializeGenerationTiming,
-    providerRequestPersistable:false,currentRequestSnapshot:null});
+    providerRequestPersistable:false,currentRequestSnapshot:null,localEraseController:null});
   const capture=sourcePart('  const captureActiveTaskTab = () => {','  const taskPersistence = createTaskPersistence({');
   // Capture now reads per-candidate label presentation state. Execute the real
   // closures as well; a constant false predicate would hide snapshot regressions.
-  const labelPreview=sourcePart('  const hasPreviewLabels = item =>','  function ensureCompositePreviewControl(item) {');
+  const labelPreview=sourcePart('  const effectiveLabelPlan = item =>','  function ensureCompositePreviewControl(item) {');
   vm.runInNewContext('const labelPreviewStates = new WeakMap();\n'+labelPreview+'\n'+capture
     +'\nglobalThis.captureActiveTaskTab=captureActiveTaskTab;globalThis.labelPreviewState=labelPreviewState;',c);
   // Component-only restoration of the actual cached-view/array authority slice.
@@ -916,9 +916,9 @@ const onclickSource = oneSlice(source, '      savePng.onclick = async () => {',
   '\n      actions.appendChild(savePng);', 'PNG onclick');
 assert.ok(onclickSource.trimEnd().endsWith('};'), 'Full onclick assignment includes its closing brace');
 const footerSource = oneSlice(source, "  panel.querySelector('[data-ai-save-selected]')?.addEventListener('click', () => {",
-  '\n  const exportCount = (mode,kind = null) => {', 'actual footer delegate');
+  "\n  copySelected.addEventListener('click'", 'actual footer delegate');
 const statusSource = oneSlice(source, '  const setStatus = (text, kind = "", cause) => {',
-  '\n  const closeSourceMenu =', 'actual status side effects');
+  '\n  const reportStatusError =', 'actual status side effects');
 const rawSource = oneSlice(outputSource, 'const BOUND_FIELDS =',
   'export function canChooseLocalOutput(', 'actual RAW eligibility');
 const footerDisabledStatement = 'if (save) save.disabled = busy || !item || Boolean(item.sceneResult);';
@@ -947,6 +947,7 @@ function fixture() {
   const newJob = { phase: 'generating', failures: [], rejected: [] };
   let statusText = 'new job untouched', statusTitle = 'new job untouched';
   const status = { dataset: { kind: 'busy' },
+    setAttribute() {},
     get textContent() { return statusText; }, set textContent(value) { statusText = value; statuses.push(value); },
     get title() { return statusTitle; }, set title(value) { statusTitle = value; },
   };
@@ -969,6 +970,7 @@ function fixture() {
   const sandbox = {
     item, savePng, busy: false, disposed: false, activeTaskTabId: 'task-A', localVisibilityEpoch: 7,
     generatedImages: [item], selected: item, insertingOutput: false, batchRun: null, status,
+    selectedImageOutputOptions:{}, imageOutputOptionsKey:JSON.stringify,
     selectedOutputItem: () => sandbox.selected,
     panel: { querySelector(selector) { assert.equal(selector, '[data-ai-save-selected]'); return footer; } },
     document: { createElement(tag) {
@@ -1059,6 +1061,7 @@ const invalidate = {
   data: f => { f.item.data = CHANGED; },
   membership: f => { f.sandbox.generatedImages = []; },
   'selected-owner': f => { f.sandbox.selected = { id: 'candidate-b', kind: 'generated', data: RAW }; },
+  'output-settings': f => { f.sandbox.selectedImageOutputOptions = { background:'transparent' }; },
 };
 for (const [reason, change] of Object.entries(invalidate)) {
   for (const settlement of ['resolve', 'reject']) {
@@ -1135,6 +1138,7 @@ function collectiveFixture() {
   const newJob = { phase: 'generating', failures: [], rejected: [] };
   let callback, text = 'initial', title = 'initial';
   const status = { dataset: { kind: 'ok' },
+    setAttribute() {},
     get textContent() { return text; }, set textContent(value) { text = value; statusCalls.push(value); },
     get title() { return title; }, set title(value) { title = value; },
   };
@@ -1381,9 +1385,11 @@ function fixture() {
     graphOwnerEpoch: 0, graphWorkflow: { cancel: () => Promise.resolve() },
     lifecycle: { abort: () => lifecycleEvents.push('lifecycle-abort') }, imageLabelRunAbort: null,
     localEraseController: {
+      getDraft: () => null,
       cancel: () => lifecycleEvents.push('erase-cancel'),
       destroy: () => lifecycleEvents.push('erase-destroy'),
     },
+    inlineLabelEditor:null,
     structureAnalysis: { cancel: noop }, abortSourceComposites: noop, sourceLabelControllers: [],
     imageReview: null, generationTimingTimer: null, clearInterval: noop, clearTimeout: noop, requestTimeout: null,
     taskViews: new Map(), taskRows: new Map(), requestStates: { live: () => false, advance: unsupported('request advance') },

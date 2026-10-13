@@ -434,6 +434,9 @@
       "path": "tests/test-ai-release-remediation.cjs"
     },
     {
+      "path": "tests/test-ai-clipboard-ownership.cjs"
+    },
+    {
       "path": "tests/test-smoke-gate-contract.cjs",
       "findingIds": [
         "TPK-005"

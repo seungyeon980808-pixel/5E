@@ -6,7 +6,7 @@ const source = fs.readFileSync(new URL('../js/ai-panel.js', `file://${__filename
 const handler = source.match(/sendButton\.onclick = \(\) => \{[\s\S]*?\n  \};/)[0];
 function route(item, launchSelected = () => false, workflowExplicit = false, conversionKind = 'image') {
   const calls = [];
-  const context = { sendButton: {}, launchSelected, conversionKind, selectedOutputItem: () => item,
+  const context = { sendButton: {}, launchSelected, conversionKind, selectedOutputItem: () => item,localEraseController:null,
     readImageLabelWorkflow: () => ({ explicit: workflowExplicit }),
     startScopedEdit: value => calls.push(['scoped', value]),
     submit: (kind, options) => calls.push(['transform', kind, options?.bypassCache]) };
@@ -75,6 +75,7 @@ test('result use verifies the bound RAW, inserts prepared objects with labels of
       item: { data: tampered ? 'changed-candidate-source' : data, imageLabelWorkflow: workflow, candidateSha256, reviewReport, reviewState: 'passed' },
       imageLabelDigest, isImageLabelCandidateAccepted, state: {}, isCurrent: () => true, taskId: 'task', candidateId: 'candidate',
       candidateAlreadyInserted: () => false,
+      localEraseController:null,
       insertEditableAssets: (_state, prepared) => { used.push(prepared); return true; },
       captureActiveTaskTab: () => {}, persistTasks: () => {}, close: options => used.push(options) };
     const execution = vm.runInNewContext(`${bindingHelpers}\n(async () => { ${useResultBlock} })()`, useContext);

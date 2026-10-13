@@ -41,13 +41,17 @@ test('label restore, observer geometry and semantic guesses cannot change the im
   const a = await run();
   const b = await run({ labelResult: 'restore-editable', geometry: 'Invented gradient and moved frame' });
   assert.deepEqual(a.payload, b.payload);
-  assert.equal(a.payload.text, APPROVED_FIRST_PROMPT);
+  assert.ok(a.payload.text.includes('\n\n'+APPROVED_FIRST_PROMPT+'\n\n[SOURCE-GRID-TRACING:'),'the approved style body remains byte-identical between the geometry contract and final check');
+  assert.match(a.payload.text,/^\[SOURCE-GRID-TRACING:/);
+  assert.match(a.payload.text,/5e-source-tracing v1\.2\.0/);
+  assert.match(a.payload.text,/원본 첨부 없이 텍스트만으로 새 그림을 생성하지 않는다/);
+  assert.match(a.payload.text,/명암 스타일 계약을 덮어쓰지 않는다/);
   assert.equal(a.count, 1); assert.equal(b.count, 1);
   assert.equal(a.payload.model, 'gpt-6.1-sol'); assert.equal(a.payload.effort, 'high');
   assert.equal(a.payload.serviceTier, 'priority');
   assert.equal(a.result.data, png);
   assert.equal(a.result.metrics.generationHarness.id, IMAGE_LABEL_GENERATION_HARNESS);
-  assert.doesNotMatch(a.payload.text, /SOURCE-GRID-TRACING|5e-source-tracing|geometryLock|5e-image-label-workflow|5e-kice-flat-style/);
+  assert.doesNotMatch(a.payload.text, /geometryLock|5e-image-label-workflow|5e-kice-flat-style/);
 });
 
 test('the prepared generation copy is separate from the original analysis binding', async () => {
@@ -57,7 +61,9 @@ test('the prepared generation copy is separate from the original analysis bindin
   assert.equal(source.data, png);
   assert.equal(result.sourceSha256, await imageLabelDigest(png));
   assert.equal(result.metrics.generationHarness.sourceSha256, await imageLabelDigest(prepared));
-  assert.equal(payload.text, approvedFirstRequestText({ instructions: '도선만 수정' }));
+  assert.ok(payload.text.includes('\n\n'+APPROVED_FIRST_PROMPT+'\n\n[SOURCE-GRID-TRACING:'));
+  assert.ok(payload.text.endsWith('\n\n사용자 수정 요청:\n도선만 수정'));
+  assert.match(payload.text,/사용자가 대상·속성을 명시해 변경을 요청한 부분만 예외/);
 });
 
 test('review permits the same restrained shading as the RHWP generation harness', () => {
@@ -69,8 +75,9 @@ test('review permits the same restrained shading as the RHWP generation harness'
 
 test('explicit marker controls travel as content requests without replacing the approved image style', async () => {
   const { payload } = await run({ marks: { scientificArrows: 'remove', auxiliaryMarks: 'keep' } });
-  assert.ok(payload.text.startsWith(APPROVED_FIRST_PROMPT));
-  const content = payload.text.slice(APPROVED_FIRST_PROMPT.length);
+  const approvedIndex=payload.text.indexOf(APPROVED_FIRST_PROMPT);
+  assert.ok(approvedIndex>0);
+  const content = payload.text.slice(payload.text.lastIndexOf('\n\n사용자 수정 요청:\n'));
   assert.match(content, /사용자가 화살표 제거를 켰습니다/);
   assert.match(content, /사용자가 보조선 제거를 껐습니다/);
   assert.match(content, /라벨 글자와.*지시선·끝점.*함께 제거/);
