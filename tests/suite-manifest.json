@@ -413,6 +413,12 @@
       "path": "tests/test-png-exif-regression.mjs"
     },
     {
+      "path": "tests/test-scoped-png-stream-bounds.mjs",
+      "findingIds": [
+        "PNG-INFLATE-BOUNDS-AND-CLEANUP"
+      ]
+    },
+    {
       "path": "tests/test-preview-lite-cache-identity.cjs"
     },
     {

@@ -33,7 +33,34 @@ function crc32(a, start = 0, end = a.length) { if (!crcTable) { crcTable = new U
 function concat(parts) { const size = parts.reduce((n,p) => n + p.length, 0); const out = new Uint8Array(size); let o=0; for(const p of parts){out.set(p,o);o+=p.length;} return out; }
 function equal(a,b) { return a.length === b.length && a.every((v,i)=>v===b[i]); }
 function chunk(type, data) { const payload=bytes(data,'chunk data'); const out=new Uint8Array(payload.length+12); put32(out,0,payload.length); out.set(ascii(type),4); out.set(payload,8); put32(out,out.length-4,crc32(out,4,out.length-4)); return out; }
-async function transform(input, mode) { if (typeof CompressionStream !== 'function' || typeof DecompressionStream !== 'function') fail('CompressionStream/DecompressionStream is unavailable.'); const stream = new Blob([input]).stream().pipeThrough(mode === 'inflate' ? new DecompressionStream('deflate') : new CompressionStream('deflate')); const reader=stream.getReader(); const parts=[]; let total=0; for (;;) { const {value,done}=await reader.read(); if(done) break; total+=value.length; if(total>MAX_RAW_BYTES) fail(`${mode} output exceeds ${MAX_RAW_BYTES} bytes.`); parts.push(value); } return concat(parts); }
+async function transform(input, mode, maximum = MAX_RAW_BYTES) {
+ if (typeof CompressionStream !== 'function' || typeof DecompressionStream !== 'function') fail('CompressionStream/DecompressionStream is unavailable.');
+ // WebKit can return all output for one compressed input chunk. Feed small
+ // declared images incrementally so rejecting excess output also stops input.
+ let offset = 0;
+ const step = Math.max(64, Math.min(65536, maximum));
+ const source = mode === 'inflate' ? new ReadableStream({ pull(controller) {
+  if (offset === input.length) { controller.close(); return; }
+  const end = Math.min(input.length, offset + step);
+  controller.enqueue(input.subarray(offset, end)); offset = end;
+ } }) : new Blob([input]).stream();
+ const stream = source.pipeThrough(mode === 'inflate' ? new DecompressionStream('deflate') : new CompressionStream('deflate'));
+ const reader = stream.getReader(), parts = []; let total = 0, complete = false;
+ try {
+  for (;;) {
+   const { value, done } = await reader.read();
+   if (done) { complete = true; break; }
+   total += value.length;
+   if (total > maximum) fail(`${mode} output exceeds ${maximum} bytes.`);
+   parts.push(value);
+  }
+  return concat(parts);
+ } finally {
+  // Stop the producer on overflow or malformed input, and release every reader.
+  if (!complete) { try { await reader.cancel(); } catch {} }
+  reader.releaseLock();
+ }
+}
 function metadataCompatible(a,b) { return a.length===b.length && a.every((x,i)=>x.type===b[i].type && equal(x.data,b[i].data)); }
 function isValidPngKeyword(data, length) {
  if (length < 1 || length > 79) return false;
@@ -115,7 +142,7 @@ export async function decodeScopedPng(input) {
  }
  if(phase!=='done') fail('IEND is missing.'); metadata=validateMetadata(metadata,colorType); if(colorType===2) metadata=metadata.map(item=>item.type==='sBIT'?{type:item.type,data:Uint8Array.of(...item.data,8)}:item);
  const compressedPixels=concat(idat); await validateIccProfile(metadata);
- const row=width*channels, expected=height*(row+1); if(expected>MAX_RAW_BYTES) fail('inflated image exceeds limit.'); const raw=await transform(compressedPixels,'inflate'); if(raw.length!==expected) fail(`inflated data length ${raw.length} does not equal expected ${expected}.`);
+ const row=width*channels, expected=height*(row+1); if(expected>MAX_RAW_BYTES) fail('inflated image exceeds limit.'); const raw=await transform(compressedPixels,'inflate',expected); if(raw.length!==expected) fail(`inflated data length ${raw.length} does not equal expected ${expected}.`);
  const scan=new Uint8Array(height*row); for(let y=0;y<height;y+=1){const f=raw[y*(row+1)], src=y*(row+1)+1, dst=y*row; if(f>4)fail(`invalid filter ${f}.`); for(let x=0;x<row;x+=1){const left=x>=channels?scan[dst+x-channels]:0, up=y?scan[dst-row+x]:0, ul=y&&x>=channels?scan[dst-row+x-channels]:0, v=raw[src+x]; scan[dst+x]=(v+(f===0?0:f===1?left:f===2?up:f===3?Math.floor((left+up)/2):paeth(left,up,ul)))&255;}}
  const rgba=new Uint8Array(width*height*4); for(let p=0,s=0,d=0;p<width*height;p+=1,s+=channels,d+=4){rgba[d]=scan[s];rgba[d+1]=scan[s+1];rgba[d+2]=scan[s+2];rgba[d+3]=channels===4?scan[s+3]:255;}
  return {width,height,data:rgba,metadata,metadataDisposition:hasCaBX ? 'caBX-recognized-not-preserved' : hasExif ? 'eXIf-recognized-not-preserved' : hasPhys ? 'pHYs-recognized-not-preserved' : 'supported-metadata-preserved',removedMetadata:[...(hasCaBX ? ['caBX'] : []), ...(hasExif ? ['eXIf'] : []), ...(hasPhys ? ['pHYs'] : [])]};
