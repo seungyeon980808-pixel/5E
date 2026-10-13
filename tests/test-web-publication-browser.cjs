@@ -229,7 +229,7 @@ async function freshContext(browser, errors, origin) {
         fs.writeFileSync(path.join(evidence, 'results.json'), JSON.stringify(results, null, 2) + '\n');
       }
     }
-    await runPdfRuntimeRetryCases({ origin: `${server.origin}/`, evidence: path.join(evidence, 'pdf-runtime-retry') });
+    await runPdfRuntimeRetryCases({ origin: `${server.origin}/`, sourceRoot:site, evidence: path.join(evidence, 'pdf-runtime-retry') });
     console.log(JSON.stringify(results, null, 2));
   } finally {
     server.child.kill('SIGTERM');

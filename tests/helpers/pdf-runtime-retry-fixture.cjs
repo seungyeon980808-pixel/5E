@@ -3,7 +3,6 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { createHash } = require('node:crypto');
 const { chromium, webkit } = require('playwright');
-const { entryConfiguration, mainModuleUrl, runtimeConfiguration } = require('./four-session-entry.cjs');
 
 const hash = value => createHash('sha256').update(value).digest('hex');
 const json = value => JSON.stringify(value);
@@ -47,14 +46,16 @@ function fixturePack() {
   return { pack, checksums, catalog, search, pdf };
 }
 
-async function runPdfRuntimeRetryCases({ origin, evidence }) {
+async function runPdfRuntimeRetryCases({ origin, evidence, sourceRoot = path.resolve(__dirname, '../..') }) {
   fs.mkdirSync(evidence, { recursive: true });
   const results = [], fixture = fixturePack();
-  const root = path.resolve(__dirname, '../..');
-  const entryUrl = new URL('/', origin).href;
-  const mainUrl = mainModuleUrl(fs.readFileSync(path.join(root, 'index.html'), 'utf8'), entryUrl);
-  const runtime = runtimeConfiguration(entryConfiguration(process.env), entryUrl, mainUrl, fs.readFileSync(path.join(root, 'js/main.js'), 'utf8'));
-  const expectedVersion = new URL(runtime.moduleQuery, origin).searchParams.get('v');
+  // A publication can preserve a stable root while replacing only preview.
+  // Read the runtime we actually serve, rather than the test checkout's one.
+  const root = path.resolve(sourceRoot);
+  const loader = fs.readFileSync(path.join(root,'js/pdf-library/runtime-loader.js'),'utf8');
+  const defaults = [...loader.matchAll(/moduleUrl\s*=\s*new URL\("([^"\n]+)", import\.meta\.url\)/g)];
+  assert.equal(defaults.length,1,'the served PDF loader has one explicit default module URL');
+  const expectedModule = new URL(defaults[0][1],new URL('js/pdf-library/runtime-loader.js',origin));
   for (const [name, engine] of Object.entries({ chromium, webkit })) {
     const browser = await engine.launch({ headless: true });
     try {
@@ -111,7 +112,7 @@ async function runPdfRuntimeRetryCases({ origin, evidence }) {
           await preview.evaluate(img => img.decode());
           assert.ok(await preview.evaluate(img => img.naturalWidth > 100));
           assert.equal(new Set(moduleRequests).size, moduleRequests.length, 'no failed module URL is reused');
-          assert.equal(new URL(moduleRequests[0]).searchParams.get('v'), expectedVersion);
+          assert.equal(moduleRequests[0],expectedModule.href,'first request uses the actual served PDF loader default, independent of state module version');
           if (scenario === 'normal') assert.equal(moduleRequests.length, 1);
           if (scenario === 'automatic-retry') assert.equal(moduleRequests.length, 2);
 
