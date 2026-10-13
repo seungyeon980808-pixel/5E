@@ -666,7 +666,7 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
         for (const label of panel.querySelectorAll(`[for="${oldId}"]`)) label.htmlFor = element.id;
         for (const labelled of panel.querySelectorAll(`[aria-labelledby="${oldId}"]`)) labelled.setAttribute('aria-labelledby', element.id);
       }
-      panel.hidden = true; original.parentElement.append(panel);
+      panel.hidden = true;
     }
     const entry = { scope, panel, controller: null, tabs: [], ready: false, disposed: false };
     entries.push(entry);
@@ -709,6 +709,9 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
     panel.addEventListener('input',entry.batchInputChanged);
     panel.addEventListener('change',entry.batchInputChanged);
     setupWorkbench(panel);
+    // Set up the hidden clone before mounting it. WebKit otherwise revisits
+    // the growing document for each initial visibility change in its controls.
+    if (panel !== original) original.parentElement.append(panel);
     entry.controller.ready.then(() => {
       if (entry.disposed || !entries.includes(entry)) return;
       entry.ready = true;
