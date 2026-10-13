@@ -139,11 +139,13 @@ export function createPointerMagnifier({ surface, sample, available, id = "crop-
     if (!available() || panning) { hide(); return; }
     if (pointer && frame === null) frame = requestAnimationFrame(paint);
   };
+  // Editors with pointer capture forward coordinates explicitly because their
+  // capture handlers consume the event before it reaches the surface listener.
+  const move = position => { pointer = { x: position.x, y: position.y }; refresh(); };
   const listen = (target, type, listener, options = {}) => target.addEventListener(type, listener, { ...options, signal: events.signal });
   listen(surface, "pointermove", event => {
     if (event.pointerType === "touch" || (event.buttons && (!dragging || event.buttons !== 1))) { hide(); return; }
-    pointer = { x: event.clientX, y: event.clientY };
-    refresh();
+    move({ x: event.clientX, y: event.clientY });
   });
   listen(surface, "pointerleave", hide);
   listen(surface, "pointercancel", hide);
@@ -157,7 +159,7 @@ export function createPointerMagnifier({ surface, sample, available, id = "crop-
     if (event.key === "Escape") hide();
   }, { capture: true });
   listen(window, "keyup", event => { if (event.code === "Space") panning = false; }, { capture: true });
-  return { hide, refresh, destroy() { hide(); events.abort(); lens?.remove(); } };
+  return { hide, refresh, move, destroy() { hide(); events.abort(); lens?.remove(); } };
 }
 
 export function attachCropMagnifier({ surface, image, inspector, available = () => true, id, context = "capture" }) {

@@ -371,13 +371,13 @@ test('native label and graph source tabs use the shared materializer instead of 
     services.materializeCandidate.validate=item=>assert.equal(item,candidate);
     const captured=await tabs.prepareAi('task-a','scope-a');
     assert.equal(calls.length,1);assert.equal(calls[0].item,candidate);
-    assert.deepEqual(calls[0].options,{taskId:'task-a'});
+    assert.deepEqual(calls[0].options,{taskId:'task-a',userOutput:true});
     assert.equal(captured.source.pages[0].objects[0].id,'native');
     candidate.id='next-native';
     context.snapshot.tabs[0].selectedCandidateId=candidate.id;
     await tabs.captureEdit({figure:{link},aiContext:context});
     assert.equal(calls.length,2);
-    assert.deepEqual(calls[1].options,{taskId:'task-a',replaceId:'native'});
+    assert.deepEqual(calls[1].options,{taskId:'task-a',replaceId:'native',userOutput:true});
   }
 });
 

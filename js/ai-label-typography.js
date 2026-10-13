@@ -108,11 +108,23 @@ export function normalizeLabelTypography(value, label) {
 
 export async function prepareEditableLabelFonts(labels) {
   if (typeof document === 'undefined' || !document.fonts?.load || !labels?.length) return;
-  const fonts = labels.flatMap(l => [nativePresentationForLabelTypography(l.typography || { role: inferLabelRole(l) }), ...(l.typography?.runs || []).map(r => ({ ...fontForLabelRole(r.role), fontWeight: l.typography?.fontWeight }))]);
+  const fonts = labels.flatMap(label => {
+    const { typography } = normalizeLabelTypography(label.typography,label);
+    // Loading must use the same defaults as createEditableImageLabelObjects.
+    // Source font observations become user styles only after a manual edit.
+    const base = nativePresentationForLabelTypography(label.manualStyle ? typography
+      : { role:typography.role === 'name' ? 'text' : typography.role });
+    return [base, ...(typography.runs || []).map(run => ({ ...fontForLabelRole(run.role),
+      ...(base.labelFontOverride || !isEquationFontFamily(base.fontFamily)
+        ? ['text','name','symbol'].includes(run.role) ? base : {} : {}), fontWeight:base.fontWeight })),
+      ...(typography.scriptStyles || []).map(style => fontForLabelRole(style.role)),
+      { fontFamily:ROMAN_NUMERAL_FONT_FAMILY, italic:false }];
+  });
   await Promise.all(fonts.map(async font => {
     try { await document.fonts.load(`${font.italic ? 'italic' : 'normal'} ${font.fontWeight || 'normal'} 64px ${font.fontFamily}`, '가Ag123'); }
     catch { /* System font fallback remains available when a face cannot load. */ }
   }));
+  await document.fonts.ready;
 }
 
 export function hasLabelTypography(obj) {

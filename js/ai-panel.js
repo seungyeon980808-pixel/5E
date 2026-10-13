@@ -1,6 +1,9 @@
 import { snapshotImageItem, taskItemCopy } from './ai-candidate-snapshot.js?v=1.7.0-four-session-integration';
 import { registerBugReportContext } from './bug-report.js?v=1.7.0-four-session-integration';
 import { localEditableLabelPlan } from './ai-local-label-plan.js?v=1.7.0-four-session-integration';
+import { manualLabelPlan } from './ai-label-edit-model.js?v=1.7.0-four-session-integration';
+import { createInlineLabelEditor } from './ai-inline-label-editor.js?v=1.7.0-four-session-integration';
+import { visibleImagePng } from './ai-visible-image-output.js?v=1.7.0-four-session-integration';
 import { initManualImageSplit } from './manual-image-split.js?v=1.7.0-four-session-integration';
 import { markResultReady, pendingResult, acknowledgeResult, syncResultEntry } from './ai-result-attention.js?v=20261013-buttons';
 import { createGraphReconstructionWorkflow, graphSourceHash } from './graph/reconstruction-workflow.js?v=1.7.0-four-session-integration';
@@ -554,6 +557,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
   const markControls = [markArrows, markTrends, markLeaders];
   let compactSettings = null;
   let localEraseController = null;
+  let inlineLabelEditor = null;
   let manualSplitController = null;
   const preserveSourceLabels = panel.querySelector("[data-ai-preserve-source-labels]");
   const imageKindSelect = panel.querySelector('[data-ai-image-kind]');
@@ -1905,7 +1909,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     const includeLabels = labelPreviewStates.get(item)?.included !== false;
     const count = includeLabels ? item.labelPlan?.labels?.length || 0 : 0;
     const review = includeLabels && item.labelPlan?.reviewRequired === true;
-    const accepted = isAdoptableImageLabelCandidate(item);
+    const accepted = Boolean(item.data || item.graphResult || item.sceneResult);
     output.disabled = busy || !accepted;
     output.textContent = `${count ? `캔버스에 삽입 · 라벨 ${count}개` : "캔버스에 삽입"}${review ? " · 확인" : ""}`;
     output.title = !includeLabels && item.labelPlan?.labels?.length
@@ -1914,7 +1918,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       ? `이미지와 이동·수정·삭제 가능한 자동 라벨 ${count}개를 함께 넣습니다.${review ? " 라벨 위치와 제외 항목을 확인해 주세요." : ""}`
       : review ? "확인되지 않은 라벨은 제외되어 이미지만 넣습니다. 필요한 라벨을 확인해 주세요."
       : item.labelPlan?.status === "unavailable" ? "자동 라벨 계획을 확인하지 못해 이미지만 넣습니다." : "캔버스에 삽입";
-    if (!accepted) output.title = '그림·스타일 검수에 통과하지 않아 삽입할 수 없습니다. 원본과 RAW 결과를 확인하세요.';
+    if (!accepted) output.title = '삽입할 결과를 선택하세요.';
   };
 
   const attachEditableLabelPlan = (item, plan) => {
@@ -1965,7 +1969,9 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     if (event.target.closest?.('[data-ai-candidate-option]')) rememberCandidatePosition(selectedOutputItem());
   }, { capture: true, signal: lifecycle.signal });
   panel.addEventListener('5e:ai-workbench-geometry-change', () => rememberCandidatePosition(selectedOutputItem()), { signal: lifecycle.signal });
-  const hasPreviewLabels = item => item?.labelPlan?.frozen && item.labelPlan.labels?.some(label => label.scope !== 'graph');
+  const effectiveLabelPlan = item => localEraseController?.getDraft(item)?.labelPlan
+    || (localEraseController?.getDraft(item) ? localEditableLabelPlan(item) : item?.labelPlan);
+  const hasPreviewLabels = item => effectiveLabelPlan(item)?.frozen && effectiveLabelPlan(item).labels?.some(label => label.scope !== 'graph');
   function labelPreviewState(item) {
     if (!labelPreviewStates.has(item)) labelPreviewStates.set(item, { included: true, revision: 0 });
     return labelPreviewStates.get(item);
@@ -1994,29 +2000,46 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       button.setAttribute('aria-pressed', String((button.dataset.aiLabelViewMode === 'included') === included));
     }
     localEraseController?.refresh();
+    inlineLabelEditor?.refresh();
   }
   async function renderLabelPreview(item, resolvedSource) {
     const image = item?.card?.querySelector('.ai-preview-stage > img');
     const display = labelPreviewState(item);
     if (!image || !display) return;
-    const revision = ++display.revision, data = item.data, plan = item.labelPlan;
+    const revision = ++display.revision, data = item.data, plan = effectiveLabelPlan(item);
     const current = () => !disposed && item.card?.contains(image) && item.data === data
-      && item.labelPlan === plan && display.revision === revision;
+      && JSON.stringify(effectiveLabelPlan(item)) === JSON.stringify(plan) && display.revision === revision;
+    const present = async source => {
+      if (image.src !== source) {
+        const readyImage = new Image(); readyImage.src = source;
+        await readyImage.decode();
+      }
+      if (!current()) return;
+      if (image.src !== source) image.src = source;
+      inlineLabelEditor?.presented(item);
+    };
     try {
       const source = localEraseController?.getDraft(item)?.data || resolvedSource || await resolveOutputVariant(item);
       if (!current()) return;
-      if (!display.included || !hasPreviewLabels(item)) { if (image.src !== source) image.src = source; return; }
+      if (inlineLabelEditor?.activeFor(item) || !display.included || !hasPreviewLabels(item)) {
+        if (inlineLabelEditor?.activeFor(item)) {
+          // Keep the composed preview until its live replacement has both fonts
+          // and bitmap ready. The first painted editor frame uses final metrics.
+          await inlineLabelEditor.prepare(item);
+          if (!current()) return;
+        }
+        await present(source); return;
+      }
       const artboard = { ...state.get().artboard }, artboardKey = `${artboard.w}:${artboard.h}`;
       if (display.source !== source || display.plan !== plan || display.artboardKey !== artboardKey || !display.pending) {
         display.source = source; display.plan = plan; display.artboardKey = artboardKey;
-        const previewPlan = localEraseController?.getDraft(item) ? localEditableLabelPlan(item) : plan;
-        const pending = createEditableLabelComposite({ plan: previewPlan, candidateDataUrl: source, artboard, signal: lifecycle.signal });
+        const pending = createEditableLabelComposite({ plan, candidateDataUrl: source, artboard, signal: lifecycle.signal });
         display.pending = pending;
         pending.catch(() => { if (display.pending === pending) display.pending = null; });
       }
       const composite = await display.pending;
       if (!current()) return;
-      if (image.src !== composite.attachment.data) image.src = composite.attachment.data;
+      await present(composite.attachment.data);
     } catch (error) {
       if (current()) { setStatus(error.message || '라벨 미리보기를 만들지 못했습니다.', 'warn'); }
     }
@@ -2031,6 +2054,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     const next = toggle ? !display.included : button.dataset.aiLabelViewMode === 'included';
     if (display.included === next) return;
     display.included = next;
+    if (!next) inlineLabelEditor?.close();
     syncEditableLabelPlanButton(item);
     syncLabelViewControls(); void renderLabelPreview(item);
     captureActiveTaskTab(); persistTasks();
@@ -2137,7 +2161,6 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       output.title = "캔버스에 삽입";
       output.onclick = () => {
         if (busy || output.disabled) return;
-        if (!isAdoptableImageLabelCandidate(item)) { setStatus('그림·스타일 검수에 통과하지 않은 결과입니다. RAW 비교 결과를 확인하세요.', 'warn'); return; }
         const includeLabels = labelPreviewState(item).included !== false;
         const labelCount = includeLabels ? item.labelPlan?.labels?.length || 0 : 0;
         if (candidateUsesSeparatedAssets(item) && selectedSeparationMode !== AI_SEPARATION_MODES.OFF) { void openGroupsForItem(item, true, false, true); return; }
@@ -2175,7 +2198,6 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
           && outputKey === imageOutputOptionsKey(selectedImageOutputOptions)
           && includeLabels === (labelPreviewState(item).included !== false)
           && selectedOutputItem() === item && item.id === candidateId && item.data === candidateSource
-          && isAdoptableImageLabelCandidate(item)
           && (!pageContext || state.isPageContextCurrent?.(pageContext) === true);
         insertingOutput = true;
         setBusy(true);
@@ -2190,7 +2212,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
             if (!isCurrent()) throw new Error('삽입 후보의 검수 상태가 변경되었습니다.');
             // Preserve the candidate's full plan; only the emitted native
             // objects follow the label choice currently shown in the preview.
-            return materializeCandidate(item.graphResult ? item : {...item,data,labelPlan:includeLabels ? item.labelPlan : null}, {taskId,replaceId:replace?target.id:null,isCurrent});
+            return materializeCandidate(item.graphResult ? item : {...item,labelPlan:includeLabels ? item.labelPlan : null,...(!includeLabels ? {editableDraft:null} : {})}, {taskId,replaceId:replace?target.id:null,isCurrent,userOutput:true,...(!item.graphResult ? {dataOverride:data} : {})});
           })
           .then(id => {
             addLog(labelCount ? `이미지와 편집 가능한 자동 라벨 ${labelCount}개를 페이지에 넣었습니다.` : "이미지를 페이지에 넣었습니다.");
@@ -2203,6 +2225,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
           .catch((error)=>{setStatus(`페이지 삽입 실패: ${error.message}`, 'error');addLog(`페이지 삽입 실패: ${error.message}`,"error");})
           .finally(()=>{setBusy(false);insertingOutput=false;syncEditableLabelPlanButton(item);});
       };
+      output.hidden = true; output.tabIndex = -1;
       stage.appendChild(output);
       syncEditableLabelPlanButton(item);
     }
@@ -2487,9 +2510,11 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       : '이 화면에서 원본과 생성 결과를 겹쳐 비교합니다.';
     if (comparison && comparisonCount < 2) closeComparison();
     const save = panel.querySelector('[data-ai-save-selected]');
+    const copy = panel.querySelector('[data-ai-copy-selected]');
+    if (copy) copy.disabled = busy || !item || Boolean(item.sceneResult);
     const insert = panel.querySelector('[data-ai-insert-selected]');
     const examSend = panel.querySelector('[data-ai-exam-send]');
-    if (examSend) examSend.disabled = busy || !item || !isAdoptableImageLabelCandidate(item);
+    if (examSend) examSend.disabled = busy || !item;
     const scoped = panel.querySelector('[data-ai-scoped-edit-selected]');
     const groups = panel.querySelector('[data-ai-editable-groups]');
     const recovery = panel.querySelector('[data-ai-separated-recovery]');
@@ -2499,7 +2524,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       const automatic = candidateUsesAutomaticSeparation(item) && selectedSeparationMode !== AI_SEPARATION_MODES.OFF;
       const manual = automatic && selectedSeparationMode === AI_SEPARATION_MODES.MANUAL;
       const automaticState = manual ? 'manual' : automatic ? (item.automaticSeparationState || 'idle') : '';
-      groups.hidden = false;
+      groups.hidden = selectedSeparationMode === AI_SEPARATION_MODES.OFF || conversionKind === 'graph';
       groups.disabled = busy || !isHistoricalPngLocalResult(item) || !isAdoptableImageLabelCandidate(item) || selectedSeparationMode === AI_SEPARATION_MODES.OFF || automaticState === 'preparing';
       groups.dataset.aiSeparationState = automaticState;
       groups.dataset.aiSeparationKey = automatic ? (item.automaticSeparationKey || '') : '';
@@ -2534,7 +2559,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     if (conversionKind === 'graph') {
       if (groups) groups.hidden = true;
       if (scoped) scoped.hidden = true;
-      if (save) save.hidden = true;
+      if (save) { save.hidden = false; save.textContent = 'PNG 저장'; }
       if (outputNote) {
         outputNote.hidden = true;
         outputNote.textContent = item?.graphResult ? [...summarizeAnalyticGraph(item.graphResult.plan).lines,'더블클릭 또는 세부 편집으로 축·곡선·표기를 조정할 수 있습니다.'].join('\n') : '';
@@ -2547,11 +2572,11 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     const details=panel.querySelector('[data-ai-output-details]');
     if(details) details.hidden=conversionKind !== 'graph' || !item?.graphResult;
     if (insert) {
-      insert.disabled = busy || !item || !isAdoptableImageLabelCandidate(item) || Boolean(item.card?.querySelector('.ai-canvas-output')?.disabled);
+      insert.disabled = busy || !item || Boolean(item.card?.querySelector('.ai-canvas-output')?.disabled);
       const labelCount = item?.labelPlan?.labels?.length || 0;
       const labelReview = item?.labelPlan?.reviewRequired === true;
-      insert.textContent = '캔버스 삽입';
-      insert.hidden = canEditLabelReviewDraft(item);
+      insert.textContent = '캔버스에 삽입';
+      insert.hidden = false;
       insert.title = labelCount
         ? `이미지와 편집 가능한 자동 라벨 ${labelCount}개를 캔버스에 넣습니다.${labelReview ? ' 라벨 위치와 제외 항목을 확인해 주세요.' : ''}`
         : labelReview ? '확인되지 않은 라벨은 제외되어 이미지만 넣습니다. 필요한 라벨을 확인해 주세요.'
@@ -2560,7 +2585,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     }
     const draft = panel.querySelector('[data-ai-edit-review-draft]');
     if (draft) {
-      draft.hidden = !canEditLabelReviewDraft(item);
+      draft.hidden = true;
       draft.disabled = busy || !canEditLabelReviewDraft(item);
       draft.textContent = item?.editableDraft?.presentation === 'external-list' ? '라벨 목록 편집' : '캔버스에서 편집';
       draft.title = item?.editableDraft?.presentation === 'external-list'
@@ -5671,7 +5696,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       selectedCandidateId = item.id;
       panel.dataset.aiSelectedCandidateId = item.id;
       preservePosition(); requestAnimationFrame(preservePosition);
-      dispatchReviewEvent({ ...item.reviewMeta, state: item.reviewState, candidateId: item.id, report: item.reviewReport }, item);
+      dispatchReviewEvent({ ...item.reviewMeta, state: item.reviewState, candidateId: item.id, report: item.reviewReport }, item, { restore:true });
       if (busy && currentRunInput?.scopedEdit) scopedTransport?.fail(new Error('수정 중 선택 버전이 변경되어 이전 결과를 차단했습니다.'));
       else setStatus(isAcceptedReviewState(item.reviewState) ? selectedReviewStatusText(item.reviewState) : "선택 결과 · 확인 필요", isAcceptedReviewState(item.reviewState) ? "ok" : "warn");
       captureActiveTaskTab();
@@ -6422,7 +6447,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       // to bytes that were not reviewed. The earlier version stays untouched.
       // Edit the unflattened bitmap; label geometry/text belongs to a separate
       // layer and remains reusable. The old QA pass does not verify new bytes.
-      const plan = localEditableLabelPlan(parent);
+      const plan = erased.labelPlan || localEditableLabelPlan(parent);
       const candidate = { id: `generated-${++imageSerial}`, kind: 'generated', name: `직접 수정본 ${generatedImages.length + 1}`,
         data: erased.data, postprocessOk: true, createdAt: now, updatedAt: now, engine: 'local-erase',
         sourceReferenceId: parent.sourceReferenceId, sourceReferenceName: parent.sourceReferenceName,
@@ -6441,10 +6466,29 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       syncWhitePngUi(); syncSelectedOutputActions();
       if (view) panel.aiWorkbench?.restoreViewState?.({ ...view, selectedCandidateId: candidate.id });
       panel.dispatchEvent(new CustomEvent('5e:ai-candidate-select', { detail: { candidateId: candidate.id, localErase: true } }));
-      captureActiveTaskTab(); persistTasks();
+      captureActiveTaskTab();
+      try { await taskPersistence.checkpoint(); }
+      catch (error) {
+        generatedImages = generatedImages.filter(item => item !== candidate);
+        candidate.card?.remove(); labelPreviewStates.delete(candidate);
+        latestGeneratedSrc = generatedImages.at(-1)?.data || null;
+        selectedCandidateId = parent.id; panel.dataset.aiSelectedCandidateId = parent.id;
+        panel.aiWorkbench?.restoreViewState?.({ ...view, selectedCandidateId: parent.id });
+        panel.dispatchEvent(new CustomEvent('5e:ai-candidate-select', { detail: { candidateId: parent.id } }));
+        captureActiveTaskTab(); syncSelectedOutputActions();
+        throw new Error(`수정본을 저장하지 못했습니다. 임시 편집을 유지했습니다. ${error.message}`);
+      }
       setStatus('수정 저장 완료 · 새 수정본 하나로 보관했습니다. 라벨과 이전 버전은 유지됩니다.', 'ok');
       return candidate;
     } });
+  inlineLabelEditor = createInlineLabelEditor({ panel, getTarget:selectedOutputItem,
+    getPlan:item => localEraseController.getDraft(item)?.labelPlan || manualLabelPlan(item),
+    isBusy:() => busy, artboard:() => ({...state.get().artboard}),
+    labelsVisible:item => labelPreviewState(item).included && hasPreviewLabels(item),
+    apply:(item,plan) => localEraseController.editLabels(item,plan),
+    displayChanged:item => item ? renderLabelPreview(item) : Promise.resolve(), status:setStatus,
+    enableLabels:() => { const item = selectedOutputItem(); if (item) { labelPreviewState(item).included = true; syncLabelViewControls(); } },
+    cancelTools:() => { localEraseController.cancel(); commentController.cancelTool(); } });
   panel.addEventListener('pointerdown', event => {
     if (event.button !== 0 || event.isPrimary === false) return;
     const target = event.target;
@@ -6460,7 +6504,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
   }, { capture: true, signal: lifecycle.signal });
   panel.addEventListener('click', event => {
     if (!localEraseController.getDraft(selectedOutputItem())) return;
-    if (!event.target.closest?.('[data-ai-insert-selected], [data-ai-canvas-output], [data-ai-exam-send], [data-ai-save-selected], [data-ai-scoped-edit-selected], [data-ai-editable-groups], [data-ai-send], [data-ai-comments-apply]')) return;
+    if (!event.target.closest?.('[data-ai-insert-selected], [data-ai-canvas-output], [data-ai-exam-send], [data-ai-save-selected], [data-ai-copy-selected], [data-ai-scoped-edit-selected], [data-ai-editable-groups], [data-ai-send], [data-ai-comments-apply]')) return;
     event.preventDefault(); event.stopImmediatePropagation();
     setStatus('편집한 그림을 사용하려면 먼저 수정 저장을 누르세요.', 'warn');
     panel.querySelector('[data-ai-edit-save]')?.focus();
@@ -6509,14 +6553,61 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
   });
   panel.querySelector('.ai-compare-controls')?.after(graphEditButton);
   syncSelectedOutputActions();
+  const outputActions = panel.querySelector('.ai-output-actions');
+  const copySelected = document.createElement('button'); copySelected.type = 'button';
+  copySelected.dataset.aiCopySelected = ''; copySelected.textContent = '이미지 복사'; copySelected.disabled = true;
+  const hwpSelected = panel.querySelector('[data-ai-exam-send]') || document.createElement('button');
+  hwpSelected.type = 'button'; hwpSelected.dataset.aiExamSend = '';
+  hwpSelected.textContent = '한글로 보내기'; hwpSelected.className = '';
+  hwpSelected.title = '현재 이미지와 라벨을 한글 문서의 조판 작업으로 보냅니다.';
+  outputActions?.replaceChildren(panel.querySelector('[data-ai-save-selected]'),copySelected,
+    panel.querySelector('[data-ai-insert-selected]'),hwpSelected);
+  const moreOutputs = document.createElement('details'); moreOutputs.className = 'ai-output-more';
+  moreOutputs.innerHTML = '<summary>여러 작업 저장·분리</summary>';
+  moreOutputs.append(editableGroups,separatedRecovery,outputDetails,selectedOutputNote,collectiveExportControls);
+  outputActions?.after(moreOutputs);
+  syncSelectedOutputActions();
+
+  function prepareVisibleOutput(item) {
+    const taskId = activeTaskTabId, data = item.data, planKey = JSON.stringify(item.labelPlan);
+    const included = labelPreviewState(item).included !== false;
+    const outputKey = imageOutputOptionsKey(selectedImageOutputOptions), epoch = localVisibilityEpoch;
+    const artboard = {...state.get().artboard};
+    const current = () => !disposed && !busy && selectedOutputItem() === item && item.data === data
+      && JSON.stringify(item.labelPlan) === planKey && activeTaskTabId === taskId && localVisibilityEpoch === epoch
+      && included === (labelPreviewState(item).included !== false) && !localEraseController.getDraft(item)
+      && outputKey === imageOutputOptionsKey(selectedImageOutputOptions)
+      && state.get().artboard.w === artboard.w && state.get().artboard.h === artboard.h;
+    return (async () => {
+      const bitmap = item.graphResult ? await workbenchGraphDataUrl(item.graphResult) : await resolveOutputVariant(item);
+      if (!current()) throw new Error('출력 중 작업이나 수정본이 바뀌었습니다. 다시 출력하세요.');
+      return visibleImagePng({data:bitmap,plan:included && hasPreviewLabels(item) ? manualLabelPlan(item) : null,artboard,isCurrent:current});
+    })();
+  }
   panel.querySelector('[data-ai-save-selected]')?.addEventListener('click', () => {
-    if (busy) return;
-    const item=selectedOutputItem();
-    if(item?.graphResult){
-      void workbenchGraphDataUrl(item.graphResult).then(data=>{
-        const anchor=document.createElement('a');anchor.href=data;anchor.download=`${item.name || 'graph'}.svg`;document.body.append(anchor);anchor.click();anchor.remove();
-      }).catch(error=>setStatus(error.message,'error'));
-    } else item?.card?.querySelector('[data-ai-save-candidate]')?.click();
+    const item = selectedOutputItem(); if (busy || !item) return;
+    const button = panel.querySelector('[data-ai-save-selected]'); button.disabled = true;
+    void prepareVisibleOutput(item).then(data => {
+      const anchor = document.createElement('a'); anchor.href = data;
+      anchor.download = `${String(item.name || '5E').replace(/[\\/:*?"<>|]+/g,'-')}.png`;
+      document.body.append(anchor); anchor.click(); anchor.remove();
+      setStatus('현재 보이는 이미지와 라벨을 PNG로 저장했습니다.','ok');
+    }).catch(error => setStatus(`PNG 저장 실패: ${error.message}`,'error')).finally(syncSelectedOutputActions);
+  });
+  copySelected.addEventListener('click', () => {
+    const item = selectedOutputItem(); if (busy || !item) return;
+    if (!navigator.clipboard?.write || typeof ClipboardItem !== 'function') {
+      setStatus('이 브라우저에서는 이미지 복사를 지원하지 않습니다. PNG 저장을 사용하세요.','warn'); return;
+    }
+    copySelected.disabled = true;
+    // Safari requires clipboard.write during the original click. The promised
+    // Blob keeps that user gesture while fonts and the PNG are prepared.
+    const blob = prepareVisibleOutput(item).then(data => fetch(data)).then(response => response.blob());
+    blob.catch(() => {});
+    void navigator.clipboard.write([new ClipboardItem({'image/png':blob})])
+      .then(() => setStatus('현재 보이는 이미지와 라벨을 복사했습니다.','ok'))
+      .catch(error => setStatus(`이미지 복사 실패: ${error.message} PNG 저장을 사용할 수 있습니다.`,'error'))
+      .finally(syncSelectedOutputActions);
   });
   const exportCount = (mode,kind = null) => {
     captureActiveTaskTab();
@@ -6600,7 +6691,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
   });
   panel.querySelector('[data-ai-exam-send]')?.addEventListener('click', () => {
     const item = selectedOutputItem();
-    if (busy || !item || !isAdoptableImageLabelCandidate(item)) return;
+    if (busy || !item) return;
     window.dispatchEvent(new CustomEvent('5e:exam-send-ai', {detail:{scope:clientScope || '',taskId:activeTaskTabId}}));
   });
   const reviewDraftButton = document.createElement('button');
@@ -6609,7 +6700,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
   reviewDraftButton.textContent = '캔버스에서 편집';
   reviewDraftButton.title = '검수 미통과 표시를 유지하고 그림과 라벨을 새 객체로 넣습니다. 라벨을 클릭해 글자를 수정하거나 드래그해 이동할 수 있습니다.';
   reviewDraftButton.hidden = true;
-  panel.querySelector('[data-ai-insert-selected]')?.after(reviewDraftButton);
+  reviewDraftButton.tabIndex = -1;
+  moreOutputs.append(reviewDraftButton);
   const verifyLabelDraftButton = document.createElement('button');
   verifyLabelDraftButton.type = 'button';
   verifyLabelDraftButton.className = reviewDraftButton.className;
@@ -6617,7 +6709,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
   verifyLabelDraftButton.textContent = '추가 라벨 검수';
   verifyLabelDraftButton.title = '저장된 생성 후보와 원본을 Luna medium으로 검수합니다. 그림을 다시 생성하지 않으며 캔버스에서 수정한 사본은 변경하지 않습니다.';
   verifyLabelDraftButton.hidden = true;
-  reviewDraftButton.after(verifyLabelDraftButton);
+  panel.querySelector('[data-ai-review-content]')?.append(verifyLabelDraftButton);
   verifyLabelDraftButton.addEventListener('click', async () => {
     const candidate = generatedImages.find(item => item.id === selectedCandidateId) || generatedImages.at(-1);
     if (busy || candidate?.imageLabelWorkflow?.imageKind !== 'general' || !candidate?.labelPlan?.frozen
@@ -6954,6 +7046,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       motion.hide(); motion.finish(); motion.dispose();
       lifecycle.abort();
       localEraseController?.destroy();
+      inlineLabelEditor?.destroy();
       imageLabelRunAbort?.abort();
       closeComparison(); closeCapture?.();
       abortAutomaticSeparation('workspace-disposed');

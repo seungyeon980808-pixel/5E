@@ -1,3 +1,4 @@
+import { buildSourceRelationReviewContract } from './ai-source-tracing-contract.js?v=1.7.0-four-session-integration';
 import { planImageReferences } from "./ai-reference-roles.js?v=1.7.0-four-session-integration";
 
 import { resolveAIModelSelection } from "./ai-model-capabilities.js?v=1.7.0-four-session-integration";
@@ -72,6 +73,7 @@ export function buildImageReviewPrompt({
   const exampleChecks = [...REQUIRED_CHECKS, ...(!exam ? REQUIRED_STYLE_CHECKS : []), ...(labelPlan ? LABEL_REVIEW_CHECKS.filter(([id]) => labelOutcome !== 'remove' || id === 'raster-label-removal') : []), ...(labelCompositeReport ? LABEL_COMPOSITE_REVIEW_CHECKS : [])].map(([id,label]) => ({id,label,status:'pass|fail|uncertain',detail:'원본과 실제 첨부를 대조한 관찰 근거'}));
   return `5E 과학 도식 독립 시각 검수 규칙 v${AI_IMAGE_REVIEW_VERSION}
 ${exam ? '기출 원본 보존 검수: 전체 스타일 변환은 금지다. 제거 마스크 밖의 디코딩 픽셀 동일성은 별도 픽셀 검사에서 판정하며 시각 검수만으로 동일성을 입증하지 않는다. 원본의 색·검정 채움·배경·질감·선 굵기는 보존 대상이다. 원본의 서체나 지시선 끝점 외형을 네이티브 라벨에서 복제할 필요는 없으며 내용·의미·대상과 가독성을 확인한다.' : '일반 이미지 최초 스타일 변환 검수.'}
+${exam ? '' : buildSourceRelationReviewContract()}
 역할: 새 대화에서 원본 참고 이미지들과 현재 후보 이미지를 직접 대조하는 독립 검수자다. ${text(referenceRoleContract) ? `첨부 순서와 역할은 다음 계약을 따른다. STYLE_REFERENCE를 원본 또는 후보로 계수하지 않는다.\n${text(referenceRoleContract)}` : `첨부 순서는 원본 참고 이미지 전부가 먼저이고 마지막 첨부가 현재 후보 "${text(candidateName) || "현재 후보"}"다.`}
 
 ${labelCompositeReport ? `최종 편집 라벨 검수 첨부 순서: 위 원본 참고 목록 ${referenceNames.length}장 → RAW_CANDIDATE "${text(candidateName)}" 1장 → FINAL_NATIVE_OVERLAY "${text(labelCompositeName)}" 1장이다. 마지막 첨부는 실제 5E 텍스트·수식·라벨 객체를 복원해 내보낸 합성 화면이다. 두 후보를 별도 패널/물체로 계수하지 않는다. raster-label-removal와 그림 구조/스타일은 RAW_CANDIDATE에서 확인하고 라벨의 최종 배치/서식/연결은 FINAL_NATIVE_OVERLAY를 원본과 직접 비교한다. FINAL_NATIVE_OVERLAY의 편집 글자는 정상적인 의도된 출력이다. generic presentation의 무문자 규칙은 RAW_CANDIDATE에만 적용한다. 실제 편집 조작과 정확한 원본 폰트 파일 일치는 첨부 화면만으로 검증했다고 주장하지 않는다.

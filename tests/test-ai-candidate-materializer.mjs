@@ -43,6 +43,35 @@ test('owned selection-locked revision is one atomic undo entry and preserves man
   assert.equal(f.state.get().objects.find(object=>object.id==='background').src,'RAW');
 });
 
+test('user output bundles native labels without copying an earlier automatic QA pass',async () => {
+  const f=fixture(),item=candidate();
+  item.reviewState='needs-attention';item.labelPlan.qualityReview={verdict:'fail'};
+  const original=structuredClone(item);
+  await f.materialize(item,{taskId:'task',replaceId:'background',userOutput:true});
+  const objects=f.state.get().objects.filter(o=>o.aiCandidateId==='new');
+  assert.equal(objects.length,2);assert.equal(objects[0].groupId,objects[1].groupId);
+  assert.equal(objects[0].imageSelectionLocked,false);
+  assert.deepEqual(f.state.get().selectedIds,objects.map(o=>o.id));
+  assert.deepEqual(item,original,'user output never upgrades the provider review');
+});
+
+test('user output retains byte integrity even when quality results are informational',async () => {
+  const f=fixture(),item={...candidate(),data:sourceData,imageLabelWorkflow:{explicit:true},candidateSha256:'0'.repeat(64)};
+  const before=structuredClone(f.state.get());
+  await assert.rejects(f.materialize(item,{taskId:'task',replaceId:'background',userOutput:true}),/바이트/);
+  assert.deepEqual(f.state.get(),before);
+});
+
+test('a selected output variant does not replace the immutable RAW candidate or its digest',async()=>{
+  const f=fixture(),item={...candidate(),data:sourceData,imageLabelWorkflow:{explicit:true},
+    candidateSha256:[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(sourceData)))].map(b=>b.toString(16).padStart(2,'0')).join('')};
+  const original=structuredClone(item);
+  const output=sourceData+'\n';
+  await f.materialize(item,{taskId:'task',replaceId:'background',userOutput:true,dataOverride:output});
+  assert.equal(f.state.get().objects.find(o=>o.type==='image').src,output);
+  assert.deepEqual(item,original);
+});
+
 test('graph materialization uses native objects even with inherited stale preview pixels',async () => {
   const f=fixture(),graph=mixedCandidate(sourceData).graphResult;
   const ids = new Map([['plane-4','plane'],['curve-5','curve']]);

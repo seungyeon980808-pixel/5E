@@ -47,7 +47,9 @@ async function insertAndEdit(page,{restore}) {
   if(!restore)return {nativeCount:0};
   const point=await page.evaluate(async id=>{const {worldToScreen}=await import('/js/viewport.js?v=1.7.0-four-session-integration');const s=window.__workflowQA.state.get(),o=s.objects.find(o=>o.id===id);return worldToScreen(document.querySelector('#canvas'),s.viewBox,o.p2.x,o.p2.y);},before[0].id);
   await armSelection(page,before[0].id);
-  await page.mouse.click(point.x,point.y);await selectionArrived(page);
+  // Native output is an image/label group. Shift selects its individual label
+  // before exercising the existing select-then-click text editing gesture.
+  await page.keyboard.down('Shift');await page.mouse.click(point.x,point.y);await page.keyboard.up('Shift');await selectionArrived(page);
   await page.mouse.click(point.x,point.y);
   const editor=page.locator('.ai-inline-label-editor');await editor.waitFor({state:'visible'});
   assert.equal(await page.locator('.unified-text-editor').count(),0,'Select then click edits inline; detailed formatting has an explicit entry');
@@ -73,6 +75,17 @@ for(const imageKind of ['exam','general'])for(const labelResult of ['remove','re
     assert.ok(c,'A completed request has a candidate');
     assert.equal(observations(requests).length,1);assert.equal(generations(requests).length,imageKind==='exam'?0:1);
     assert.equal(mappings(requests).length,0,'Current joint verification confirms placement and review in one Luna turn');
+    if (imageKind === 'general') {
+      const sent = generations(requests)[0];
+      assert.match(sent.text,/SOURCE-GRID-TRACING/);
+      assert.match(sent.text,/이미지 편집 대상으로 전달/);
+      assert.match(sent.text,/필요한 회색 채움·음영을 허용/);
+      assert.match(sent.text,/원본 프레임:.*512.*384/);
+      const sourceAttachment=await page.evaluate(()=>window.__task2.sends.find(s=>s.payload.purpose==='image').payload.attachments[0]);
+      assert.equal(sourceAttachment.name,'INPUT_SOURCE.png');
+      assert.equal(c.workflowMetrics.generationHarness.sourceTracingVersion,'1.2.0');
+      assert.ok(requests.some(r=>r.text.includes('[5e-source-relations v1.2.0]')));
+    }
     assert.equal(c.imageLabelWorkflow.imageKind,imageKind);assert.equal(c.imageLabelWorkflow.labelResult,labelResult);
     assert.equal(c.sourceLabelPlan.frozen,true);assert.equal(c.sourceLabelPlan.labels[0].text,'전자');
     assert.ok(c.sourceLabelPlan.sourceBindings?.length);assert.ok(c.workflowMetrics?.timings);assert.ok(c.workflowMetrics?.calls);
@@ -95,6 +108,25 @@ for(const imageKind of ['exam','general'])for(const labelResult of ['remove','re
     record(dir,{requests,c,pixels,native,errors});
   });
 }
+
+test('relation failures retain the exact changed connection in review without automatic regeneration',{timeout:90000},async t=>{
+  const dir=evidenceFor('relation-failure');const {page,errors}=await fixture(t,1,dir,{initialGeneration:true});
+  await choose(page,'general','remove');await page.locator('#ai-image-panel [data-ai-send]').click();
+  await page.waitForFunction(()=>window.__task2.sends.length===1);await emit(page,0,'assistant',JSON.stringify(verifiedPlan));
+  await page.waitForFunction(()=>window.__task2.sends.length===2);await emit(page,1,'image');
+  await page.waitForFunction(()=>window.__task2.sends.length===3);
+  const failed=JSON.parse(report());failed.verdict='fail';
+  const detail='원본 전원 오른쪽 단자→전류 센서 연결이 후보에서 전압 센서로 바뀌었습니다.';
+  Object.assign(failed.checks.find(c=>c.id==='connections'),{status:'fail',detail});
+  failed.issues=[{checkId:'connections',message:detail,severity:'critical'}];
+  await emit(page,2,'assistant',JSON.stringify(failed));
+  await page.waitForFunction(()=>document.querySelector('#ai-image-panel').dataset.aiBusy==='false');
+  const c=await candidate(page),requests=await sends(page);
+  assert.equal(c.reviewState,'needs-attention');assert.equal(c.reviewReport.verdict,'fail');
+  assert.ok(c.reviewReport.issues.some(issue=>issue.message===detail));assert.equal(requests.length,3);assert.equal(generations(requests).length,1);
+  assert.equal(await page.locator('#ai-image-panel [data-ai-insert-selected]').isEnabled(),true,'the user still decides whether to adopt a reviewed result');
+  assert.deepEqual(errors,[]);record(dir,{c,requests,errors});
+});
 
 test('workflow cancel/retry: late analysis cannot mutate candidate; explicit retry only',{timeout:90000},async t=>{
   const dir=evidenceFor('cancel-retry');const {page,errors}=await fixture(t,1,dir,{initialGeneration:true});

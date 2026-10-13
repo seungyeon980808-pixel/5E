@@ -315,7 +315,14 @@ export function createEditableImageLabelObjects({ labels, placement, candidateSh
       if (label.leaderDash === 'dotted') { object.dashLength = 0.2; object.dashGap = 0.6; }
     }
     // Source bounds are removal/position evidence, not the native tool's size.
-    object.labelSize = DEFAULT_TEXT_SIZE_MM;
+    const style = label.manualStyle;
+    if (style && (!Number.isFinite(style.size) || style.size <= 0 || style.size > 16
+      || style.strokeLevel !== undefined && ![0,1,2,3,4].includes(style.strokeLevel))) {
+      throw new TypeError('직접 편집한 라벨 서식을 확인할 수 없습니다.');
+    }
+    if (style) Object.assign(object, nativePresentationForLabelTypography(typography));
+    object.labelSize = style ? image.h * style.size : DEFAULT_TEXT_SIZE_MM;
+    if (style?.strokeLevel !== undefined) object.strokeLevel = style.strokeLevel;
     if (label.mode !== 'leader') {
       object.type = formula ? 'formula' : 'text';
       object.fontSize = object.labelSize;

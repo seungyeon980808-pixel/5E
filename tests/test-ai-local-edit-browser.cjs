@@ -60,12 +60,13 @@ test('manual edits stay a draft until one save; hover, labels, cancel and task b
   const a=await naturalPoint([80,320]),b=await naturalPoint([160,340]);
   await page.mouse.move(a.x,a.y);await page.mouse.down();await page.mouse.move(b.x,b.y,{steps:5});
   const area=panel.locator('.ai-local-erase-overlay rect');await area.waitFor();
+  await page.waitForFunction(()=>Number(document.querySelector('.ai-local-erase-overlay rect')?.getAttribute('width'))>70);
   assert.ok(Number(await area.getAttribute('width'))>70,'rectangle shows the area before release');
   await page.mouse.up();await page.waitForFunction(()=>!document.querySelector('[data-ai-edit-save]').disabled);
   assert.deepEqual((await snapshot(page))[0].generated,[original], 'two completed gestures are still one unsaved draft');
   await page.screenshot({path:path.join(evidence,'draft.png')});
   assert.equal(await panel.locator('[data-ai-label-toggle]').getAttribute('aria-checked'),'true');
-  await panel.locator('.ai-generated-card.is-ai-active-candidate [data-ai-canvas-output]').last().click();
+  await panel.locator('[data-ai-insert-selected]').click();
   assert.equal(await panel.isVisible(),true,'unsaved edits cannot silently output the old version');
   assert.match(await panel.locator('[data-ai-status]').innerText(),/수정 저장/);
   await panel.locator('[data-ai-label-toggle]').click();
@@ -127,7 +128,7 @@ test('manual edits stay a draft until one save; hover, labels, cancel and task b
   await page.waitForFunction(()=>document.querySelectorAll('#ai-image-panel .ai-generated-card').length===3);
   assert.equal(await panel.locator('[data-ai-label-toggle]').getAttribute('aria-checked'),'false','label OFF carries to the next saved revision');
   await panel.locator('[data-ai-label-toggle]').click();
-  await panel.locator('.ai-generated-card.is-ai-active-candidate [data-ai-canvas-output]').last().click();
+  await panel.locator('[data-ai-insert-selected]').click();
   await page.waitForFunction(()=>document.querySelector('#ai-image-panel').hidden);
   const objects=await page.evaluate(()=>window.__candidateQA.state.get().objects);
   assert.ok(objects.some(o=>o.aiAutoLabel && o.text==='전자'),'saved local bitmap still outputs an editable native label');
@@ -267,7 +268,7 @@ test('mapped labels survive local saving and legacy manual versions can insert w
   const parent=(await snapshot(page))[0].generated[0];
   await panel.locator('[data-tab-id="task-1"]').click();
   await page.waitForFunction(()=>document.querySelector('#ai-image-panel').dataset.aiSelectedCandidateId==='selected-1');
-  await panel.locator('.ai-generated-card.is-ai-active-candidate [data-ai-canvas-output]').click();
+  await panel.locator('[data-ai-insert-selected]').click();
   await panel.waitFor({state:'hidden'});
   const legacyLabels=await page.evaluate(()=>window.__candidateQA.state.get().objects.filter(o=>o.aiAutoLabel));
   assert.equal(legacyLabels.length,1,'recovered legacy local version emits its editable label');
@@ -286,7 +287,7 @@ test('mapped labels survive local saving and legacy manual versions can insert w
   assert.equal(saved[1].labelPlan.targetPlacement,undefined);
   assert.equal(saved[1].labelPlan.candidateSha256,undefined);
   assert.deepEqual(saved[1].labelPlan.labels,plan.labels,'mapped coordinates and text survive');
-  await panel.locator('.ai-generated-card.is-ai-active-candidate [data-ai-canvas-output]').click();
+  await panel.locator('[data-ai-insert-selected]').click();
   await panel.waitFor({state:'hidden'});
   const labels=await page.evaluate(()=>window.__candidateQA.state.get().objects.filter(o=>o.aiAutoLabel));
   assert.equal(labels.length,2);assert.equal(labels.at(-1).text,plan.labels[0].text);

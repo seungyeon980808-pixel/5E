@@ -204,7 +204,7 @@ export function createLocalImageEraseController({ panel, getTarget, isBusy, reso
           history.past.push(existing || null);
           if (history.past.length > 30) history.past.shift();
           history.future = [];
-          drafts.set(item.id, { baseData: item.data, data, width: result.width, height: result.height,
+          drafts.set(item.id, { ...existing, baseData: item.data, data, width: result.width, height: result.height,
             operations: [...(existing?.operations || []), operation] });
           await showPreview(item);
           status('편집 중 · 모두 끝나면 수정 저장을 누르세요.', 'ok');
@@ -258,8 +258,8 @@ export function createLocalImageEraseController({ panel, getTarget, isBusy, reso
     try {
       await showPreview(item);
       if (!controller.signal.aborted && getTarget() === item) status(direction === 'undo'
-        ? '지우기를 실행 취소했습니다. 저장된 수정본과 라벨은 유지됩니다.'
-        : '지우기를 다시 실행했습니다. 편집을 끝내면 수정 저장을 누르세요.', 'ok');
+        ? '직접 편집을 실행 취소했습니다. 저장된 수정본은 유지됩니다.'
+        : '직접 편집을 다시 실행했습니다. 편집을 끝내면 수정 저장을 누르세요.', 'ok');
     } finally { if (pending === controller) pending = null; refresh(); }
   }
   if (button) cleanup.push(registerEscapeLayer(options || button, () => setActive(false)));
@@ -302,5 +302,21 @@ export function createLocalImageEraseController({ panel, getTarget, isBusy, reso
   const observer = new win.MutationObserver(() => { if (panel.hidden || panel.inert || isBusy()) setActive(false); });
   observer.observe(panel, { attributes: true, attributeFilter: ['hidden', 'inert', 'data-ai-busy'] });
   refresh();
-  return { bind, refresh, getDraft, save, discard, undo: () => moveHistory('undo'), redo: () => moveHistory('redo'), cancel: () => setActive(false), destroy() { destroyed = true; cancel(); processor.destroy(); drafts.clear(); histories.clear(); observer.disconnect(); bindings.forEach(entry => entry.dispose()); bindings.clear(); cleanup.forEach(fn => fn()); delete panel.dataset.aiLocalEraseActive; delete panel.dataset.aiEditDraft; } };
+  async function editLabels(item, labelPlan) {
+    if (item !== getTarget() || !eligible(item) || pending || isBusy() || panel.dataset.aiSharingMode === 'view') return false;
+    cancel();
+    const data = item.data, existing = getDraft(item);
+    const image = item.card?.querySelector('.ai-preview-stage > img');
+    const source = existing?.data || image?.src || data;
+    if (destroyed || item !== getTarget() || item.data !== data || getDraft(item) !== existing || pending || isBusy()) return false;
+    if (!image?.naturalWidth || !image?.naturalHeight) return false;
+    const history = historyFor(item, true);
+    history.past.push(existing || null); if (history.past.length > 30) history.past.shift(); history.future = [];
+    drafts.set(item.id, { ...existing, baseData: data, data: source, width: image.naturalWidth, height: image.naturalHeight,
+      operations: existing?.operations || [], labelPlan: structuredClone(labelPlan) });
+    await showPreview(item);
+    if (getTarget() === item && getDraft(item)) status('라벨 편집 중 · 모두 끝나면 수정 저장을 누르세요.', 'ok');
+    return true;
+  }
+  return { bind, refresh, getDraft, editLabels, save, discard, undo: () => moveHistory('undo'), redo: () => moveHistory('redo'), cancel: () => setActive(false), destroy() { destroyed = true; cancel(); processor.destroy(); drafts.clear(); histories.clear(); observer.disconnect(); bindings.forEach(entry => entry.dispose()); bindings.clear(); cleanup.forEach(fn => fn()); delete panel.dataset.aiLocalEraseActive; delete panel.dataset.aiEditDraft; } };
 }

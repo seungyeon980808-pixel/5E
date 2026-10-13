@@ -1,4 +1,5 @@
 import { snapshotImageItem } from './ai-candidate-snapshot.js?v=1.7.0-four-session-integration';
+import { userOutputLabelPlan } from './ai-label-edit-model.js?v=1.7.0-four-session-integration';
 
 // Both canvas output and RHWP sources use this transaction. Preview pixels are
 // never the source of a graph, and preparation never mutates the live page.
@@ -10,7 +11,7 @@ export function createCandidateMaterializer(state, services) {
     return snapshot;
   }
   async function materializeCandidate(candidate, options) {
-    const {taskId,replaceId,isCurrent} = options;
+    const {taskId,replaceId,isCurrent,userOutput = false,dataOverride} = options;
     const snapshot = validate(candidate);
     if (typeof taskId !== 'string' || !taskId.trim() || typeof snapshot.id !== 'string' || !snapshot.id.trim()) {
       throw new Error('편집 원본의 작업과 후보를 확인할 수 없습니다.');
@@ -54,6 +55,19 @@ export function createCandidateMaterializer(state, services) {
     try {
       const draft = {...initial,objects:[],groups:[],selectedIds:[],undoStack:[],redoStack:[]};
       const staging = {get:() => draft,update:fn => fn(draft)};
+      if (userOutput && !snapshot.graphResult) {
+        if (snapshot.imageLabelWorkflow?.explicit && snapshot.candidateSha256) {
+          const digest = [...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(snapshot.data)))].map(b => b.toString(16).padStart(2,'0')).join('');
+          if (digest !== snapshot.candidateSha256) throw new Error('저장된 후보 이미지의 바이트가 달라졌습니다. 다시 결과를 확인하세요.');
+        }
+        snapshot.labelPlan = userOutputLabelPlan(snapshot);
+        // The RAW digest above belongs to the saved candidate. User-selected
+        // background/stroke processing is an output variant, not a new QA pass.
+        if (dataOverride !== undefined) {
+          if (typeof dataOverride !== 'string' || !/^data:image\/png;/.test(dataOverride)) throw new Error('출력할 PNG 변형을 확인할 수 없습니다.');
+          snapshot.data = dataOverride;
+        }
+      }
       let result;
       if (snapshot.graphResult) {
         result = services.insertWorkbenchGraph(staging,snapshot.graphResult,{taskId,candidateId:snapshot.id});
@@ -72,6 +86,13 @@ export function createCandidateMaterializer(state, services) {
         result = {imageId,ids:draft.objects.map(object => object.id)};
       }
       assertCurrent();
+      if (snapshot.labelPlan?.bundleWithImage && result.imageId && draft.objects.length > 1) {
+        const groupId = `${result.imageId}_image_labels`;
+        for (const object of draft.objects) object.groupId = groupId;
+        const image = draft.objects.find(object => object.id === result.imageId);
+        image.imageSelectionLocked = false;
+        draft.selectedIds = draft.objects.map(object => object.id);
+      }
       if (!draft.objects.length || new Set(draft.objects.map(object => object.id)).size !== draft.objects.length
         || draft.objects.some(object => initial.objects.some(current => current.id === object.id && !ownedIds.has(current.id)))) {
         throw new Error('편집 원본의 객체 식별자가 충돌합니다.');

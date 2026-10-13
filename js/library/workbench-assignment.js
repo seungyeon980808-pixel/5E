@@ -1,3 +1,4 @@
+import { markSpaceAction, loadSpaceActionStyle } from './space-action.js?v=1.7.0-four-session-integration';
 const PLACEMENTS = new Set(["separate", "together", "advanced"]);
 
 export function assignmentForPlacement(referenceCount, placement) {
@@ -66,6 +67,7 @@ export async function chooseWorkbenchAssignment({ references, host, returnFocus,
   const items = Array.isArray(references) ? references : [];
   if (!items.length) return Promise.resolve(null);
   await ensureStylesheet();
+  loadSpaceActionStyle();
 
   return new Promise((resolve) => {
     const mount = host instanceof Element ? host : document.body;
@@ -255,6 +257,12 @@ export async function chooseWorkbenchAssignment({ references, host, returnFocus,
       }
     });
     overlay.addEventListener("keydown", (event) => {
+      if (event.key === ' ' && !event.isComposing && !event.ctrlKey && !event.metaKey && !event.altKey && !event.shiftKey
+        && !event.target.closest('input,textarea,select,[contenteditable="true"]') && !confirmation) {
+        event.preventDefault(); event.stopImmediatePropagation();
+        if (!event.repeat && !settled) overlay.querySelector('[data-action="continue"]').click();
+        return;
+      }
       if (event.key === "Escape") {
         event.preventDefault(); event.stopPropagation();
         if (confirmation) confirmation.finish(false); else finish(null);
@@ -264,6 +272,7 @@ export async function chooseWorkbenchAssignment({ references, host, returnFocus,
     });
     mount.append(overlay);
     render();
-    overlay.querySelector('[data-placement="separate"]').focus();
+    const next = overlay.querySelector('[data-action="continue"]');
+    markSpaceAction(dialog, next); next.focus();
   });
 }

@@ -191,7 +191,7 @@ export function createExamSourceTabs(state, services) {
     const materializedLabels=state.get().objects.some(object=>object.aiTaskId===taskId && object.aiCandidateId===candidate.id && object.aiAutoLabel);
     if (!image || image.aiCandidateId !== candidate.id || hasEditableLabels && materializedLabels!==desiredLabels) {
       if (image) state.update(value => {value.selectedIds = [image.id];});
-      await services.materializeCandidate(tab.labelPreviewIncluded?.[candidate.id]===false ? {...candidate,labelPlan:null} : candidate,{taskId,...(image ? {replaceId:image.id} : {})});
+      await services.materializeCandidate(tab.labelPreviewIncluded?.[candidate.id]===false ? {...candidate,labelPlan:null,editableDraft:null} : candidate,{taskId,userOutput:true,...(image ? {replaceId:image.id} : {})});
     }
     services.centerView?.();
     return capture(context, options);
@@ -249,7 +249,7 @@ export function createExamSourceTabs(state, services) {
       const materializedLabels=state.get().objects.some(object=>object.aiTaskId===context.taskId && object.aiCandidateId===candidate?.id && object.aiAutoLabel);
       if (candidate && image && (image.aiCandidateId !== candidate.id || hasEditableLabels && materializedLabels!==desiredLabels)) {
         state.update(value => {value.selectedIds = [image.id];});
-        await services.materializeCandidate(desiredLabels ? candidate : {...candidate,labelPlan:null},{taskId:context.taskId,replaceId:image.id});
+        await services.materializeCandidate(desiredLabels ? candidate : {...candidate,labelPlan:null,editableDraft:null},{taskId:context.taskId,replaceId:image.id,userOutput:true});
       }
     }
     const captured = await capture(context);

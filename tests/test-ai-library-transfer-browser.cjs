@@ -139,8 +139,10 @@ async function liveHandoffLibrary(t, engine) {
 for (const engine of ['chromium', 'webkit']) test(`${engine}: prepared library handoff slides into the real AI workbench and survives reopening`, async t => {
   const {page, ui} = await liveHandoffLibrary(t, engine);
   await page.emulateMedia({reducedMotion:'no-preference'});
-  await ui.locator('[data-unilib-ai]').click();
-  await page.locator('.workbench-assignment [data-action="continue"]').click();
+  await page.keyboard.press('Space');
+  const next=page.locator('.workbench-assignment [data-action="continue"]');await next.waitFor();
+  assert.equal(await next.getAttribute('aria-keyshortcuts'),'Space');
+  await page.keyboard.press('Space');
   await page.waitForFunction(() => window.__lateral.length === 2);
   const opening = await page.evaluate(() => window.__lateral.map(({frames, source, libraryVisible, targetVisible, targetReady}) => ({frames, source, libraryVisible, targetVisible, targetReady})));
   assert.deepEqual(opening.map(item => item.source), [true, false]);

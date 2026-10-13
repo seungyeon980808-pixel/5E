@@ -573,6 +573,15 @@
   ],
   "browser": [
     {
+      "path": "tests/test-ai-inline-label-editor-browser.cjs",
+      "findingIds": ["AI-INLINE-LABEL-EDIT", "AI-GROUPED-OUTPUT", "AI-LABEL-CLICK-EDIT", "AI-LEADER-ENDPOINT-SYNC"]
+    },
+    {
+      "path": "tests/test-library-space-flow-browser.cjs",
+      "findingIds": ["LIBRARY-SPACE-FLOW", "LIBRARY-CROP-FRESH-DRAFT"],
+      "reason": "Exercises one-step Space actions and new-source crop isolation with retained workbench images in Chromium and WebKit."
+    },
+    {
       "path": "tests/test-ai-local-edit-browser.cjs",
       "findingIds": [
         "AI-LOCAL-EDIT-SAVE",

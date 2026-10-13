@@ -1,3 +1,4 @@
+import { buildSourceTracingPrompt, SOURCE_TRACING_CONTRACT_VERSION } from './ai-source-tracing-contract.js?v=1.7.0-four-session-integration';
 import { normalizeImageLabelWorkflow } from './ai-image-label-workflow.js?v=1.7.0-four-session-integration';
 import { removeExamLabelsFromDataUrl } from './ai-exam-label-removal.js?v=1.7.0-four-session-integration';
 import { resolveGeneratedRaster } from './ai-raster-output.js?v=1.7.0-four-session-integration';
@@ -149,17 +150,19 @@ async function executeBoundImageLabelRun({ source, workflow: rawWorkflow, reques
   // approved prompt, never the observer's geometry, typography or style guesses.
   const imageSource = generationSource || { name: 'INPUT_SOURCE.png', data: source.data };
   if (!imageSource.data?.startsWith('data:image/')) throw new Error('이미지 생성 입력을 확인해야 합니다.');
-  const generationPromptSha256 = await imageLabelDigest(APPROVED_FIRST_PROMPT);
+  const generationFrame = imageSource.data === source.data ? sourceFrame : await imageFrame(imageSource.data,signal);
+  const generationPrompt = buildSourceTracingPrompt({ sourceFrame:generationFrame?.width ? {width:generationFrame.width,height:generationFrame.height} : undefined, preserveStyle:true });
+  const generationPromptSha256 = await imageLabelDigest(generationPrompt);
   metrics.generationHarness = workflow.imageKind !== 'general' ? null
     : verifyOnly ? clone(previousCandidate?.workflowMetrics?.generationHarness || previousCandidate?.metrics?.generationHarness || null)
-      : { id: IMAGE_LABEL_GENERATION_HARNESS, promptSha256: generationPromptSha256,
+      : { id: IMAGE_LABEL_GENERATION_HARNESS, sourceTracingVersion:SOURCE_TRACING_CONTRACT_VERSION, promptSha256: generationPromptSha256,
         sourceSha256: await imageLabelDigest(imageSource.data) };
   let generationPayload, backgroundContract;
   if (workflow.imageKind === 'general' && !verifyOnly) {
     const instructions = [generationInstructions, selectedMarkInstructions(workflow),
       preciseRestore ? '사용자가 그림 정밀 복원을 선택했습니다. 수정 전 선택 버전에서 요청한 구조 오류만 원본과 대조해 수정합니다.' : '',
     ].filter(Boolean).join('\n\n');
-    generationPayload = { ...selection, text: approvedFirstRequestText({ instructions }),
+    generationPayload = { ...selection, text: approvedFirstRequestText({ prompt:generationPrompt, instructions }),
       attachments: [{ ...imageSource }, ...(preciseRestore && previousCandidate ? [{ name: '수정 전 선택 버전', data: previousCandidate.data }] : [])] };
     backgroundContract = await imageLabelBackgroundContract({ payload: generationPayload, sourceSha256, harness: metrics.generationHarness });
     metrics.generationHarness = backgroundContract.harness;

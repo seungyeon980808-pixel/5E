@@ -9,6 +9,7 @@ import { DESKTOP_RELEASE_URL } from "./ai-install-guide.js?v=1.7.0-four-session-
 import { safeExternalSourceUrl } from "./library-import-policy.js?v=1.7.0-four-session-integration";
 import { queryHighlightTerms } from "./pdf-library/search.js?v=1.7.0-four-session-integration";
 import { chooseWorkbenchAssignment } from "./library/workbench-assignment.js?v=1.7.0-four-session-integration";
+import { markSpaceAction, loadSpaceActionStyle } from "./library/space-action.js?v=1.7.0-four-session-integration";
 
 const SOURCE_STORAGE_KEY = "5e.unified-library.sources.v1";
 const TREE_STORAGE_KEY = "5e.unified-library.tree-expanded.v1";
@@ -1036,6 +1037,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   let pendingIndexCount = 0;
   let actionBusy = false;
   let actionRevision = 0;
+  let spaceAssignmentIdentity = null;
   let draftCrop = null;
   let providedRetry = null;
   let cropGesture = null;
@@ -1102,11 +1104,22 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     help.textContent=graphMode ? "PDF에서 그래프 영역을 크롭한 뒤 원본으로 선택하세요." : "PDF에서 필요한 영역을 자르고 작업대에 넣으면 AI 이미지 변환을 사용할 수 있습니다.";
     help.hidden = !needsCrop;
     overlay.querySelector("[data-unilib-ai]").title = needsCrop ? help.textContent : "준비한 이미지를 AI 작업으로 보내기 (Space)";
+    syncSpaceAction();
   };
+  function syncSpaceAction() {
+    loadSpaceActionStyle();
+    const identity = libraryResultIdentity(selectedActiveResult());
+    if (spaceAssignmentIdentity && spaceAssignmentIdentity !== identity) spaceAssignmentIdentity = null;
+    const button = !cropDialog.hidden
+      ? overlay.querySelector(draftCrop ? '[data-unilib-crop-save]' : '[data-unilib-crop-workbench]')
+      : overlay.querySelector(spaceAssignmentIdentity ? '[data-unilib-ai]' : '[data-unilib-adjust]');
+    markSpaceAction(overlay, actionBusy || cropActionBusy || cropSession?.viewOnly && !cropDialog.hidden ? null : button);
+  }
   const runLibraryAction = async (work) => {
     if (actionBusy) return;
     actionBusy = true;
     actionButtons().forEach((button) => { button.disabled = true; });
+    syncSpaceAction();
     const snapshot = snapshotAction();
     try {
       await work(snapshot, () => actionIsCurrent(snapshot));
@@ -2136,6 +2149,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     cancelSpacePress();
     const card = event.target.closest("[data-result-id]");
     if (!card) return;
+    spaceAssignmentIdentity = null;
     invalidateAction();
     selectedId = card.dataset.resultId;
     pdfMatchIndex = 0;
@@ -2144,6 +2158,11 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     updateResultSelection();
     focusResultCard(selectedId);
     void renderPreview();
+  });
+  list.addEventListener('dblclick', event => {
+    if (!event.target.closest('[data-result-id]')) return;
+    event.preventDefault(); cancelSpacePress();
+    void openExpandedPreview(libraryResultIdentity(selectedActiveResult()));
   });
   overlay.querySelector("[data-unilib-crop-tray-toggle]").addEventListener("click", () => {
     cropTrayExpanded = !cropTrayExpanded;
@@ -2730,6 +2749,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       });
     }
     overlay.querySelector("[data-unilib-crop-workbench]").disabled = !available;
+    syncSpaceAction();
     const canvasButton = overlay.querySelector('[data-unilib-crop-insert]');
     canvasButton.hidden = Boolean(referenceConsumer) || typeof insertMaterialized !== 'function';
     canvasButton.disabled = !available || (cropDocumentEntries().length > 1 && !activeAcceptedCropId);
@@ -3026,7 +3046,8 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     cropGesture = null;
     const existingCrop = result.variants?.manual?.source?.rect || pdfUi?.cropForResult?.(result)
       || (result.kind === "crop" ? result.variants?.content?.source?.rect || result.provenance.rect : null);
-    draftCrop = emptyDraft || !existingCrop ? null : clampRect(existingCrop);
+    // Existing question bounds determine the view, never an unconfirmed crop.
+    draftCrop = null;
     cropPreviewExact = false;
     cropExact = null;
     cropDialog.hidden = false;
@@ -3327,6 +3348,8 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     updateResultSelection();
     renderCropTray();
     closeCrop(false);
+    spaceAssignmentIdentity = libraryResultIdentity(selectedActiveResult());
+    syncSpaceAction();
     setStatus(`${count}개 이미지를 작업대에 넣었습니다.`);
   });
   cropConfirm.querySelector("[data-unilib-crop-draft-cancel]").addEventListener("click", () => {
@@ -3340,7 +3363,8 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   });
   const finishCropSelection = () => {
     if (!acceptedCrops.length) return;
-    overlay.querySelector("[data-unilib-crop-workbench]").focus();
+    const button = overlay.querySelector("[data-unilib-crop-workbench]");
+    if (!button.disabled) button.click();
   };
   const cropPoint = (event) => {
     return normalizedCropPoint(event, cropCanvas.getBoundingClientRect());
@@ -3519,7 +3543,8 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     }
     // Prepared workbench images take Space straight to the same AI assignment
     // route as the button. Text fields and nested readers keep their own keys.
-    if (event.key === " " && acceptedAssets.size && shouldHandleLibrarySpace(event)
+    if (event.key === " " && spaceAssignmentIdentity === libraryResultIdentity(selectedActiveResult()) && acceptedAssets.size
+      && (shouldHandleLibrarySpace(event) || event.target?.matches?.('[data-unilib-crop-workbench],[data-unilib-ai]'))
       && localInstall.hidden && driveSettings.hidden && !root.classList.contains("is-reader-expanded")) {
       event.preventDefault();
       event.stopImmediatePropagation();

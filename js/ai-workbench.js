@@ -882,7 +882,7 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     // Box overlays are view annotations, not candidate changes. Rebuilding the
     // version menu for each marker repaint makes its options impossible to click.
     const overlay = node => node.nodeType === 1 && node.matches('[data-ai-comment-marker], [data-ai-comment-drag-preview]');
-    if (records.every(record => record.type === 'childList'
+    if (records.every(record => record.target.closest?.('.ai-label-edit-overlay') || record.type === 'childList'
       && [...record.addedNodes, ...record.removedNodes].length > 0
       && [...record.addedNodes, ...record.removedNodes].every(overlay))) return;
     const nextCount = generatedCards().length;

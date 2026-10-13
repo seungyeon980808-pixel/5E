@@ -1,0 +1,17 @@
+@property --space-action-angle { syntax:'<angle>'; initial-value:0deg; inherits:false; }
+:is(.unified-library-overlay,.workbench-assignment) button[data-space-next]:not(:disabled) {
+  position:relative;
+  border-color:var(--accent, #358cff);
+  background:color-mix(in srgb, var(--accent, #358cff) 10%, var(--bg-input, #0c1117));
+}
+:is(.unified-library-overlay,.workbench-assignment) button[data-space-next]:not(:disabled)::after {
+  content:''; position:absolute; inset:-1px; padding:1px; border-radius:inherit; pointer-events:none;
+  background:conic-gradient(from var(--space-action-angle), transparent 0deg, var(--accent, #358cff) 80deg, #c4e4ff 100deg, transparent 135deg, transparent 360deg);
+  -webkit-mask:linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite:xor; mask-composite:exclude;
+  animation:space-action-border 3s linear infinite;
+}
+@keyframes space-action-border { to { --space-action-angle:360deg; } }
+@media (prefers-reduced-motion:reduce) {
+  :is(.unified-library-overlay,.workbench-assignment) button[data-space-next]::after { animation:none; }
+}

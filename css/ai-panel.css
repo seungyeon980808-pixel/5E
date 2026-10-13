@@ -3117,6 +3117,56 @@ body:has(#ai-image-panel:not([hidden])) .app-shell-header { visibility: hidden; 
 
 #ai-image-panel [data-ai-reuse-source] { display:inline-flex; min-height:26px; padding:3px 7px; font-size:11px; }
 
-/* Use the selected image's existing action at its upper right. */
-#ai-image-panel .ai-generated-card .ai-canvas-output { display:inline-flex !important; border-radius:5px; }
-#ai-image-panel [data-ai-insert-selected] { display:none !important; }
+/* One output area under the request action; card controls remain adapters. */
+#ai-image-panel .ai-generated-card .ai-canvas-output { display:none !important; }
+#ai-image-panel .ai-output-actions { grid-template-columns:repeat(2,minmax(0,1fr)); }
+#ai-image-panel .ai-output-actions > button { min-height:34px; color:var(--text-primary); font-weight:500; }
+#ai-image-panel .ai-output-more { font-size:11px; color:var(--text-secondary); }
+#ai-image-panel .ai-output-more > summary { padding:4px 0; cursor:pointer; }
+#ai-image-panel .ai-output-more > button { margin-top:6px; padding:5px 8px; width:100%; border:1px solid var(--border); border-radius:6px; background:var(--bg-input); color:var(--text-primary); font:inherit; }
+#ai-image-panel .ai-output-more [hidden] { display:none; }
+#ai-image-panel .ai-output-more .ai-task-export-controls { display:grid; grid-template-columns:1fr; gap:6px; padding:8px 0 0; }
+#ai-image-panel .ai-output-more .ai-task-export-controls > * { width:100%; }
+#ai-image-panel .ai-output-more .ai-selected-output-note { font-size:11px; line-height:1.5; white-space:normal; }
+
+#ai-image-panel .ai-label-edit-entry { height:24px; min-height:24px; padding:0 7px; border:1px solid var(--border); border-radius:6px; background:var(--bg-input); color:var(--text-primary); font:inherit; font-size:11px; white-space:nowrap; cursor:pointer; }
+#ai-image-panel .ai-label-edit-entry[aria-pressed="true"] { border-color:var(--accent); background:var(--control-selected-bg); }
+#ai-image-panel .ai-label-edit-entry:disabled { opacity:.5; cursor:default; }
+#ai-image-panel[data-ai-label-editing="true"] .ai-conversation > :is(.ai-compact-settings,.ai-side-content,.ai-advanced-settings) { display:none !important; }
+#ai-image-panel .ai-label-edit-panel { flex:1; min-height:0; padding:12px 13px; overflow:auto; color:var(--text-primary); font-size:12px; }
+#ai-image-panel .ai-label-edit-panel[hidden] { display:none; }
+#ai-image-panel .ai-label-edit-panel > header { display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:10px; }
+#ai-image-panel .ai-label-edit-panel > header strong { font-size:13px; font-weight:600; }
+#ai-image-panel .ai-label-edit-panel button { min-height:28px; padding:4px 7px; border:1px solid var(--border); border-radius:6px; background:var(--bg-input); color:var(--text-primary); font:inherit; cursor:pointer; }
+#ai-image-panel .ai-label-edit-panel button[aria-pressed="true"] { border-color:var(--accent); background:var(--control-selected-bg); }
+#ai-image-panel .ai-label-edit-panel button:hover:not(:disabled) { background:var(--btn-tool-hover); }
+#ai-image-panel .ai-label-edit-panel :is(button,input,textarea,select):disabled { opacity:.5; cursor:default; }
+#ai-image-panel :is(.ai-label-edit-panel,.ai-output-more) :is(button,input,textarea,select,summary):focus-visible,
+#ai-image-panel .ai-label-edit-entry:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+#ai-image-panel .ai-label-edit-tools { display:flex; flex-wrap:wrap; gap:5px; margin:8px 0; }
+#ai-image-panel .ai-label-edit-hint { margin:8px 0 12px; color:var(--text-secondary); font-size:11px; line-height:1.6; }
+#ai-image-panel .ai-label-edit-list { display:flex; flex-wrap:wrap; align-content:flex-start; gap:5px; max-height:112px; overflow:auto; margin-bottom:12px; }
+#ai-image-panel .ai-label-edit-list button { max-width:100%; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+#ai-image-panel .ai-label-edit-text { display:flex; flex-direction:column; gap:5px; }
+#ai-image-panel .ai-label-edit-panel :is(input,select,textarea) { min-width:0; width:100%; min-height:28px; padding:5px 7px; border:1px solid var(--border); border-radius:6px; background:var(--bg-input); color:var(--text-primary); font:inherit; }
+#ai-image-panel .ai-label-edit-text textarea { resize:vertical; min-height:56px; line-height:1.5; }
+#ai-image-panel .ai-label-edit-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; margin:10px 0; }
+#ai-image-panel .ai-label-edit-grid > label { display:flex; flex-direction:column; gap:4px; color:var(--text-secondary); font-size:11px; }
+#ai-image-panel .ai-label-edit-wide { grid-column:1/-1; }
+#ai-image-panel .ai-label-edit-detail { margin-top:12px; padding-top:10px; border-top:1px solid var(--border); }
+#ai-image-panel .ai-label-edit-detail > summary { cursor:pointer; color:var(--text-secondary); }
+#ai-image-panel .ai-label-edit-removal { margin-top:12px; justify-content:flex-end; }
+#ai-image-panel .ai-label-edit-overlay { position:absolute; z-index:7; overflow:hidden; pointer-events:none; }
+#ai-image-panel .ai-label-edit-overlay [data-ai-label-id] { pointer-events:all; cursor:move; touch-action:none; }
+#ai-image-panel .ai-label-edit-overlay.is-preview-only [data-ai-label-id] { pointer-events:none; }
+#ai-image-panel .ai-label-edit-overlay.is-preview-only :is(.ai-label-edit-hit,.ai-label-edit-handle) { display:none; }
+#ai-image-panel .ai-label-edit-hit { fill:transparent; stroke:transparent; stroke-width:1px; }
+#ai-image-panel .is-selected > .ai-label-edit-hit { stroke:var(--accent); }
+#ai-image-panel .ai-label-edit-handle { fill:var(--bg-panel); stroke:var(--accent); stroke-width:1.5px; cursor:crosshair; }
+#ai-image-panel .ai-label-edit-overlay [data-ai-label-id]:focus-visible { outline:none; }
+#ai-image-panel .ai-label-edit-overlay [data-ai-label-id]:focus-visible > .ai-label-edit-hit { stroke:var(--accent); stroke-width:2px; }
+
+#ai-image-panel .ai-label-click-overlay { position:absolute; z-index:7; overflow:hidden; pointer-events:none; }
+#ai-image-panel .ai-label-click-overlay [data-ai-label-id] { pointer-events:all; cursor:pointer; }
+#ai-image-panel .ai-label-click-overlay [data-ai-label-id]:focus-visible { outline:none; }
+#ai-image-panel .ai-label-click-overlay [data-ai-label-id]:focus-visible > rect { stroke:var(--accent); stroke-width:1px; }
