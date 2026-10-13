@@ -2646,7 +2646,6 @@ function syncSeriesEditor() {
     const ax = s.axis === "y2" ? "y2" : "y";
     [..._els.axisSeg.children].forEach((b) => {
       const on = b._axis === ax;
-      b.setAttribute('aria-pressed', String(on));
       b.style.background = on ? "color-mix(in srgb, var(--accent) 22%, var(--bg-input))" : "var(--bg-input)";
       b.style.borderColor = on ? "var(--accent)" : "var(--border)";
     });
@@ -2658,7 +2657,6 @@ function syncSeriesEditor() {
     if (document.activeElement !== _els.barWidth) _els.barWidth.value = Number.isFinite(s.widthRatio) ? s.widthRatio : 0.55;
     [..._els.barFillHost.children].forEach((b) => {
       const on = b._fill === (s.fillStyle || "gray");
-      b.setAttribute('aria-pressed', String(on));
       b.style.background = on ? "color-mix(in srgb, var(--accent) 22%, var(--bg-input))" : "var(--bg-input)";
       b.style.borderColor = on ? "var(--accent)" : "var(--border)";
     });
@@ -2696,7 +2694,6 @@ function syncSeriesEditor() {
   const cs = s.curveStyle || (s.kind === "points" ? "straight" : "smooth");
   [..._els.curveHost.children].forEach((b) => {
     const on = b._curve === cs;
-    b.setAttribute('aria-pressed', String(on));
     b.style.background = on ? "color-mix(in srgb, var(--accent) 22%, var(--bg-input))" : "var(--bg-input)";
     b.style.borderColor = on ? "var(--accent)" : "var(--border)";
   });
@@ -2729,7 +2726,6 @@ function syncSeriesEditor() {
     if (document.activeElement !== _els.areaLevel) _els.areaLevel.value = Number.isFinite(a.level) ? a.level : 220;
     if (document.activeElement !== _els.areaLabel) _els.areaLabel.value = a.label || "";
     _els.areaEdges.checked = a.edges !== false;
-    _els.areaDrag.setAttribute('aria-pressed', String(_areaMode));
     _els.areaDrag.style.background = _areaMode ? "color-mix(in srgb, var(--accent) 22%, var(--bg-input))" : "";
     _els.areaNote.hidden = !_areaMode;
   }

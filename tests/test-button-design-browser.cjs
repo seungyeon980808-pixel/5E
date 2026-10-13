@@ -11,7 +11,24 @@ const fixtureSource=fs.readFileSync(path.join(root,'tests/test-ai-workbench-inte
 const seedStart=fixtureSource.indexOf('function seedRequestWorkspaces('),seedEnd=fixtureSource.indexOf('\nasync function requestBrowserFixture(');
 assert.ok(seedStart>=0 && seedEnd>seedStart,'Use the established transport fixture, retaining its generation/review protocol');
 const seed=fixtureSource.slice(seedStart,seedEnd);
-const evidenceRoot=process.env.EVIDENCE_DIR || path.join(root,'_work/feedback/parts/button-design-review');
+const evidenceRoot=process.env.EVIDENCE_DIR || path.join(root,'_work/feedback/parts/button-design-correction');
+
+async function assertOriginalAppearance(page, selector) {
+  await page.evaluate(async()=>{
+    await document.fonts.ready;
+    await Promise.allSettled(document.getAnimations().filter(a=>a.playState==='running' && a.effect?.getTiming().iterations!==Infinity).map(a=>a.finished));
+  });
+  const read = () => page.locator(selector).evaluateAll(els => els.map(el => {
+    const s=getComputedStyle(el);
+    return Object.fromEntries(['backgroundColor','borderTopWidth','borderTopColor','borderRadius','boxShadow','width','height','padding','color'].map(key=>[key,s[key]]));
+  }));
+  const actual=await read(); assert.ok(actual.length,selector);
+  await page.locator('link[href*="button-design.css"]').evaluate(el=>{el.sheet.disabled=true;});
+  const original=await read();
+  await page.locator('link[href*="button-design.css"]').evaluate(el=>{el.sheet.disabled=false;});
+  assert.deepEqual(actual,original,`Effects must preserve existing appearance: ${selector}`);
+  return actual;
+}
 
 for (const engine of [chromium,webkit]) test(`canonical button design and unread conversion lifecycle in ${engine.name()}`,{timeout:90000},async t=>{
   const evidence=path.join(evidenceRoot,engine.name());fs.mkdirSync(evidence,{recursive:true});
@@ -38,15 +55,28 @@ for (const engine of [chromium,webkit]) test(`canonical button design and unread
   await page.addInitScript({content:seed+`\nseedRequestWorkspaces(2,true,false,'pro',false,false,false,${JSON.stringify({runtime:runtimeInit})});`});
   await installAiMain(page,root,{},evidence);
   await page.goto(origin+'/?mode=pro&mobile=0&exam=0',{waitUntil:'domcontentloaded'});
-  await page.waitForFunction(()=>window.__task2Manager && document.getElementById('exam-send')?.classList.contains('ui-button'));
+  await page.waitForFunction(()=>window.__task2Manager && document.getElementById('exam-send')?.classList.contains('ui-core-action'));
   await page.evaluate(()=>window.__task2Manager.sharingSnapshot());
   const welcome=page.locator('.tut-welcome-overlay .tut-banner-no');if(await welcome.isVisible())await welcome.click();
   const core=['exam-library-open','ai-image-install-open','graph-tool-open','exam-send'];
+  await page.evaluate(()=>document.fonts.ready);
   const layout=await page.evaluate(ids=>ids.map(id=>{
     const el=document.getElementById(id),rect=el.getBoundingClientRect(),style=getComputedStyle(el);
     return {id,inHub:!!el.closest('.image-workflow-hub'),height:rect.height,radius:style.borderRadius,border:style.borderTopWidth,animation:getComputedStyle(el,'::before').animationName};
   }),core);
-  assert.ok(layout.every(x=>x.inHub && x.height===32 && x.radius==='8px' && x.border==='1px' && x.animation==='none'),JSON.stringify(layout));
+  assert.ok(layout.every(x=>x.inHub && x.height===27 && x.radius==='6px' && x.border==='1px' && x.animation==='none'),JSON.stringify(layout));
+  const tools=await assertOriginalAppearance(page,'.tool-btn');
+  const eyes=await assertOriginalAppearance(page,'.insp-layer-eye');
+  assert.ok(eyes.every(x=>x.width==='22px' && x.height==='22px' && x.borderTopWidth==='0px' && x.backgroundColor==='rgba(0, 0, 0, 0)'),JSON.stringify(eyes));
+  assert.equal(await page.locator('#panel-right').evaluate(el=>getComputedStyle(el).width),'198px');
+  await page.evaluate(()=>{
+    window.__clickMotions=[];
+    document.addEventListener('click',event=>{
+      const el=event.target.closest?.('.ui-core-action');if(!el)return;
+      const animation=el.getAnimations().find(a=>a.effect?.getKeyframes().some(frame=>frame.scale==='1.03'));
+      if(animation)window.__clickMotions.push({id:el.id,duration:animation.effect.getTiming().duration,scales:animation.effect.getKeyframes().map(frame=>frame.scale)});
+    },true);
+  });
   assert.equal(await page.locator('#auto-snap-btn svg').count(),1);
   assert.equal((await page.locator('#auto-snap-btn').textContent()).trim(),'');
   assert.equal(await page.locator('#center-view-btn').getAttribute('aria-pressed'),'true');
@@ -59,19 +89,29 @@ for (const engine of [chromium,webkit]) test(`canonical button design and unread
   await page.screenshot({path:path.join(evidence,'main-hwp-hover.png')});
   await page.locator('#exam-send').click();
   assert.equal(await page.locator('#exam-document-menu').isVisible(),true);
-  assert.ok(await page.locator('#exam-document-menu button').evaluateAll(els=>els.every(el=>el.classList.contains('ui-button'))));
+  await assertOriginalAppearance(page,'#exam-document-menu button');
+  await page.locator('#exam-send').evaluate(async el=>{await Promise.all(el.getAnimations().filter(a=>a.effect?.getKeyframes().some(frame=>frame.scale)).map(a=>a.finished));});
+  const menuAlignment=await page.evaluate(()=>{
+    const button=document.getElementById('exam-send').getBoundingClientRect(),menu=document.getElementById('exam-document-menu').getBoundingClientRect();
+    return {leftGap:menu.left-button.left,verticalGap:button.top-menu.bottom};
+  });
+  assert.ok(Math.abs(menuAlignment.leftGap)<1 && Math.abs(menuAlignment.verticalGap-3)<1,JSON.stringify(menuAlignment));
+  await page.screenshot({path:path.join(evidence,'hwp-menu-aligned.png')});
   await page.keyboard.press('Escape');
   await page.locator('#graph-tool-open').click();await page.locator('#graph-modal-overlay').waitFor({state:'visible'});
-  assert.ok(await page.locator('#graph-modal-overlay button').evaluateAll(els=>els.every(el=>el.classList.contains('ui-button'))));
+  await assertOriginalAppearance(page,'#graph-modal-overlay button');
   await page.locator('#gm-variant-sel button[data-variant="cross"]').click();await page.mouse.move(400,400);
   assert.equal(await page.locator('#gm-variant-sel button.on').getAttribute('data-variant'),'cross');
   const graphSelection=await page.locator('#gm-variant-sel button').evaluateAll(els=>els.map(el=>({selected:el.classList.contains('on'),background:getComputedStyle(el).backgroundColor,border:getComputedStyle(el).borderTopColor})));
   assert.notEqual(graphSelection.find(x=>x.selected).border,graphSelection.find(x=>!x.selected).border,'Selected graph tools remain distinguishable under the shared skin');
   await page.screenshot({path:path.join(evidence,'graph.png')});await page.keyboard.press('Escape');
   await page.locator('#exam-library-open').click();await page.locator('[data-unilib-close]').waitFor({state:'visible'});
-  assert.ok(await page.locator('[data-unilib-close]').evaluate(el=>el.classList.contains('ui-button')));
+  await assertOriginalAppearance(page,'[data-unilib-close]');
+  const libraryMotion=await page.evaluate(()=>window.__clickMotions.find(x=>x.id==='exam-library-open'));
+  assert.deepEqual(libraryMotion,{id:'exam-library-open',duration:200,scales:['1','1.03','1']});
   await page.screenshot({path:path.join(evidence,'library.png')});await page.keyboard.press('Escape');
   await page.locator('#ai-image-install-open').click();await page.locator('#ai-image-panel [data-ai-send]').waitFor({state:'visible'});
+  await assertOriginalAppearance(page,'#ai-image-panel button');
   await page.screenshot({path:path.join(evidence,'ai-preparation.png')});
   await page.locator('#ai-image-panel [data-ai-send]').click();
   await page.waitForFunction(()=>window.__task2.generationSends.length===1);
@@ -113,25 +153,32 @@ for (const engine of [chromium,webkit]) test(`canonical button design and unread
   await page.locator('#theme-toggle').click();
   await page.waitForFunction(()=>{
     const style=getComputedStyle(document.getElementById('graph-tool-open'));
-    return document.documentElement.dataset.theme==='light' && style.backgroundColor==='rgb(248, 249, 251)' && style.color==='rgb(32, 38, 48)';
+    return document.documentElement.dataset.theme==='light' && style.backgroundColor==='rgba(0, 0, 0, 0)';
   });
+  await assertOriginalAppearance(page,'.tool-btn');
+  await assertOriginalAppearance(page,'.insp-layer-eye');
   await page.screenshot({path:path.join(evidence,'main-light.png')});
   await page.locator('#theme-toggle').click();
-  await page.waitForFunction(()=>document.documentElement.dataset.theme==='dark' && getComputedStyle(document.getElementById('graph-tool-open')).backgroundColor==='rgb(13, 17, 23)');
+  await page.waitForFunction(()=>document.documentElement.dataset.theme==='dark' && getComputedStyle(document.getElementById('graph-tool-open')).backgroundColor==='rgba(0, 0, 0, 0)');
   await page.setViewportSize({width:320,height:780});
   await page.screenshot({path:path.join(evidence,'main-320.png')});
   const mobile=await page.evaluate(ids=>ids.map(id=>{const r=document.getElementById(id).getBoundingClientRect();return{id,left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,height:r.height};}),core);
   assert.ok(mobile.every(r=>r.width>0 && r.left>=0 && r.right<=320 && r.bottom<=780),JSON.stringify(mobile));
+  await page.locator('#exam-send').click();
+  await page.locator('#exam-document-menu').evaluate(async el=>{await Promise.all(el.getAnimations().filter(a=>a.effect?.getTiming().iterations!==Infinity).map(a=>a.finished));});
+  const narrowMenu=await page.locator('#exam-document-menu').boundingBox();
+  assert.ok(narrowMenu.x>=7 && narrowMenu.x+narrowMenu.width<=313,JSON.stringify(narrowMenu));
+  await page.keyboard.press('Escape');
   const touch=await browser.newContext({viewport:{width:320,height:780},hasTouch:true});
   const touchPage=await touch.newPage();
   await touchPage.addInitScript({content:seed+`\nseedRequestWorkspaces(2,false,false,'pro',false,false,false,${JSON.stringify({runtime:runtimeInit})});`});
   await installAiMain(touchPage,root,{},path.join(evidence,'touch'));
   await touchPage.goto(origin+'/?mode=pro&mobile=0&exam=0',{waitUntil:'domcontentloaded'});
-  await touchPage.waitForFunction(()=>document.getElementById('exam-send')?.classList.contains('ui-button'));
+  await touchPage.waitForFunction(()=>document.getElementById('exam-send')?.classList.contains('ui-core-action'));
   const touchWelcome=touchPage.locator('.tut-welcome-overlay .tut-banner-no');if(await touchWelcome.isVisible())await touchWelcome.click();
   const coarse=await touchPage.evaluate(ids=>ids.map(id=>({id,height:document.getElementById(id).getBoundingClientRect().height})),core);
-  assert.ok(coarse.every(x=>x.height>=44),JSON.stringify(coarse));
+  assert.ok(coarse.every(x=>x.height===27),JSON.stringify(coarse));
   await touchPage.screenshot({path:path.join(evidence,'main-touch-320.png')});await touch.close();
   assert.deepEqual(errors,[]);
-  fs.writeFileSync(path.join(evidence,'receipt.json'),JSON.stringify({engine:engine.name(),layout,mobile,coarse,pulse,unreadPersisted:true,acknowledgmentPreservesResults:true,providerCalls:0,fixtureTransportOnly:true,errors},null,2));
+  fs.writeFileSync(path.join(evidence,'receipt.json'),JSON.stringify({engine:engine.name(),layout,tools,eyes,menuAlignment,libraryMotion,mobile,narrowMenu,coarse,pulse,unreadPersisted:true,acknowledgmentPreservesResults:true,providerCalls:0,fixtureTransportOnly:true,errors},null,2));
 });

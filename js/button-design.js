@@ -1,22 +1,15 @@
-// Shared appearance follows existing button semantics; no click handlers are replaced.
+// Effects belong to workflow entries, never to arbitrary HTML buttons or overlays.
 const CORE_IDS = new Set(['exam-library-open', 'ai-image-install-open', 'graph-tool-open', 'exam-send']);
-const COMPACT = '.gm-step-btns, .stepper-btns, .color-swatches, .settings-gray-presets';
-const TILES = '.ai-task-tab-select, .page-tab, .object-tile, .personal-object-tile, .unilib-result-card, .exam-figure';
 
 export function initButtonDesign(doc = document) {
   if (doc.documentElement.dataset.buttonDesignReady === 'true') return;
   doc.documentElement.dataset.buttonDesignReady = 'true';
   const decorate = root => {
-    const selector = 'button, a.ai-action-motion';
+    const selector = [...CORE_IDS].map(id => `#${id}`).join(',');
     const buttons = root.matches?.(selector) ? [root] : [];
     buttons.push(...root.querySelectorAll?.(selector) || []);
     for (const button of buttons) {
-      if (button.classList.contains('ui-button')) continue;
-      button.classList.add('ui-button');
-      if (button.closest(COMPACT) || button.matches('[data-step], .gm-step-btn, .step-btn, .ai-setting-help, .ai-zoom-help')) button.dataset.uiKind = 'compact';
-      else if (button.matches(TILES) || button.querySelector('img')) button.dataset.uiKind = 'tile';
-      else if (button.matches('[role^="menuitem"], .file-menu-item, .tool-section-header')) button.dataset.uiKind = 'menu';
-      if (CORE_IDS.has(button.id)) button.classList.add('ui-core-action');
+      button.classList.add('ui-core-action');
     }
   };
   decorate(doc.body);
@@ -28,10 +21,21 @@ export function initButtonDesign(doc = document) {
   const hub = doc.querySelector('.image-workflow-hub');
   const ai = doc.getElementById('ai-image-install-open');
   if (graph && hub && ai) {
+    graph.classList.remove('advanced-tool-btn');
     graph.classList.add('object-search-trigger');
-    graph.innerHTML = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v14h14M6 13l3-5 3 3 4-7"/></svg><span>좌표/함수 생성</span>';
+    graph.innerHTML = '<svg class="search-trigger-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v14h14M6 13l3-5 3 3 4-7"/></svg><span>좌표/함수 생성</span>';
     ai.after(graph);
   }
+  const clickAnimations = new WeakMap();
+  doc.addEventListener('click', event => {
+    const button = event.target.closest?.('.ui-core-action');
+    if (!button || button.disabled || button.getAttribute('aria-disabled') === 'true'
+      || doc.defaultView.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    clickAnimations.get(button)?.cancel();
+    clickAnimations.set(button, button.animate([
+      { scale:'1' }, { scale:'1.03', offset:.4 }, { scale:'1' },
+    ], { duration:200, easing:'cubic-bezier(.2,.8,.2,1)' }));
+  }, true);
   // Only the hovered core action revolves; idle and hidden controls do no loop work.
   doc.addEventListener('visibilitychange', () => {
     doc.documentElement.dataset.uiMotionPaused = String(doc.hidden);

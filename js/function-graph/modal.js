@@ -126,7 +126,6 @@ function syncControls() {
   _els.widthInput.value = f.strokeWidth;
   [..._els.styleHost.children].forEach((b, i) => {
     const on = i === f.styleIdx;
-    b.setAttribute('aria-pressed', String(on));
     b.style.background = on ? "var(--control-selected-bg)" : "var(--bg-input)";
     b.style.borderColor = on ? "var(--accent)" : "var(--border)";
   });

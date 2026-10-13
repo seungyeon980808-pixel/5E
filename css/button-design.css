@@ -1,68 +1,22 @@
-/* Approved main-page study: quiet idle, a white edge glint on hover, static state. */
+/* Keep the existing controls. Only the four workflow entries get an edge glint. */
 @property --ui-button-orbit { syntax:"<angle>"; initial-value:0deg; inherits:false; }
-:root {
-  --ui-button-radius:8px;
-  --ui-button-size:32px;
+.ui-core-action {
   --ui-button-accent:var(--accent);
-  --ui-button-ink:var(--text-primary);
   --ui-button-orbit-duration:3.2s;
-  --control-radius:var(--ui-button-radius);
+  position:relative;
+  isolation:isolate;
+  overflow:visible;
 }
-:is(#rhwp-exam-workspace, #exam-inline-editor, #exam-inline-crop-dialog, #exam-edit-bar, .exam-document-entry,
-    [data-capture-purpose="hwp"], [data-dialog-purpose="hwp"], .ai-exam-send) {
-  --ui-button-accent:var(--exam-accent, #edc35b);
-}
-.ui-button {
-  /* !important is confined to appearance while migrating legacy ID/inline styles. */
-  color:var(--ui-button-ink) !important;
-  background:var(--bg-input) !important;
-  border:1px solid var(--border-strong) !important;
-  border-radius:var(--ui-button-radius) !important;
-  box-shadow:none !important;
-  filter:none !important;
-  transition:color 160ms ease, background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
-}
-.ui-button:not([data-ui-kind]) { min-height:var(--ui-button-size); }
-.ui-button:focus-visible { outline:2px solid var(--ui-button-accent); outline-offset:2px; }
-.ui-button[data-ui-kind="menu"] { background:transparent !important; border-color:transparent !important; }
-.ui-button:is(.is-active, .is-on, .on, .is-open, .active, .selected, [aria-pressed="true"], [aria-selected="true"], [aria-checked="true"], [aria-current="true"], [aria-expanded="true"]) {
-  border-color:var(--ui-button-accent) !important;
-  background:color-mix(in srgb,var(--ui-button-accent) 10%,var(--bg-input)) !important;
-}
-.ui-button:not(:disabled):not([aria-disabled="true"]):not([aria-busy="true"]):hover {
-  color:var(--text-primary) !important;
-  border-color:transparent !important;
-  background:linear-gradient(color-mix(in srgb,var(--ui-button-accent) 10%,var(--bg-input)),color-mix(in srgb,var(--ui-button-accent) 10%,var(--bg-input))) padding-box,
-    linear-gradient(120deg,var(--ui-button-accent) 0 62%,color-mix(in srgb,var(--ui-button-accent) 15%,#fff) 82%,var(--ui-button-accent) 100%) border-box !important;
-  box-shadow:0 1px 8px color-mix(in srgb,var(--ui-button-accent) 18%,transparent) !important;
-}
-.ui-button:not(:disabled):active { background:color-mix(in srgb,var(--ui-button-accent) 15%,var(--bg-input)) !important; }
-.ui-button:is(:disabled,[aria-disabled="true"]) { opacity:.4; cursor:default; box-shadow:none !important; animation:none !important; }
-.ui-button[data-ui-kind="compact"] { border-radius:4px !important; }
-.ui-button:is(.danger,.destructive,.modal-btn-danger,.btn-danger) { --ui-button-accent:var(--danger,#ef6464); }
-.ui-button svg { stroke-width:1.55; }
-.ui-button:is(.topbar-btn,.grid-toggle-btn,.panel-visibility-toggle,#auto-snap-btn,#center-view-btn) {
-  width:var(--ui-button-size); height:var(--ui-button-size); min-width:var(--ui-button-size);
-  min-height:var(--ui-button-size); padding:0; display:inline-flex; align-items:center; justify-content:center;
-}
-.ui-button:is(.topbar-btn,.grid-toggle-btn,.panel-visibility-toggle,#auto-snap-btn,#center-view-btn) svg {
-  width:17px; height:17px; flex:none;
-}
-#auto-snap-btn, #center-view-btn { position:relative; }
-#auto-snap-btn[aria-pressed="true"]::before, #center-view-btn[aria-pressed="true"]::before {
-  content:"✓"; position:absolute; right:2px; bottom:0; color:var(--ui-button-accent); font:700 10px/1 sans-serif;
-}
-.image-workflow-hub { display:flex; align-items:center; flex-wrap:wrap; gap:6px; padding:0; border:0; background:transparent; }
-.image-workflow-divider { display:none; }
 .image-workflow-hub .ui-core-action {
-  width:auto; height:var(--ui-button-size); min-height:var(--ui-button-size); padding:0 10px;
-  display:inline-flex; align-items:center; justify-content:center; gap:7px; font-size:12px;
+  border-color:color-mix(in srgb,var(--ui-button-accent) 24%,var(--border));
 }
-.image-workflow-hub .ui-core-action svg { width:17px; height:17px; flex:none; }
-.ui-core-action, .sparkle-button, .ai-action-motion {
-  border-color:color-mix(in srgb,var(--ui-button-accent) 24%,var(--border-strong)) !important;
-  background:var(--bg-input) !important; box-shadow:none !important; animation:none !important;
+.image-workflow-hub #exam-send {
+  --ui-button-accent:#dba52b;
+  border-color:var(--ui-button-accent);
 }
+/* The snap entry alone needs dimensions for its new icon; other tools keep theirs. */
+#auto-snap-btn { width:32px; height:32px; padding:0; display:inline-flex; align-items:center; justify-content:center; }
+#auto-snap-btn svg { width:17px; height:17px; }
 .ui-core-action::before {
   content:""; position:absolute; inset:-1px; padding:1px; border-radius:inherit; pointer-events:none;
   background:conic-gradient(from var(--ui-button-orbit), transparent 0deg 220deg,
@@ -73,34 +27,28 @@
   -webkit-mask-composite:xor; mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0); mask-composite:exclude;
   opacity:0; transition:opacity 160ms ease;
 }
-.ui-core-action { position:relative; isolation:isolate; overflow:visible; }
-.sparkle-button::after, .ai-action-motion::after { content:none; }
-.sparkle-button:is([data-sparkle-state="complete"],[data-sparkle-state="settling"]) {
-  --ui-button-accent:var(--sparkle-button-emerald,#34d399);
-  color:var(--ui-button-accent) !important; border-color:var(--ui-button-accent) !important;
-}
 @media(hover:hover) and (pointer:fine) {
   .ui-core-action:not(:disabled):not([aria-busy="true"]):not([data-result-attention="true"]):hover::before { opacity:1; animation:ui-button-orbit var(--ui-button-orbit-duration) linear infinite; }
-  .ui-core-action:not(:disabled):not([aria-busy="true"]):hover { box-shadow:0 2px 13px color-mix(in srgb,var(--ui-button-accent) 18%,transparent) !important; }
+  .image-workflow-hub .ui-core-action:not(:disabled):not([aria-busy="true"]):hover {
+    border-color:var(--ui-button-accent);
+    box-shadow:0 2px 10px color-mix(in srgb,var(--ui-button-accent) 14%,transparent);
+  }
 }
 @keyframes ui-button-orbit { to { --ui-button-orbit:360deg; } }
 .ai-task-tab-select[data-result-attention="true"] { position:relative; }
 .ai-task-tab-select[data-result-attention="true"]::before {
-  content:""; position:absolute; inset:0; border:1px solid var(--ui-button-accent); border-radius:var(--ui-button-radius); pointer-events:none;
+  content:""; position:absolute; inset:0; border:1px solid var(--accent); border-radius:inherit; pointer-events:none;
 }
 .ui-core-action[data-result-attention="true"]::before,
 .ai-task-tab-select[data-result-attention="true"]::before {
   opacity:1; animation:ui-result-attention 1.8s ease-in-out infinite;
 }
 .ui-core-action[data-result-attention="true"]::before { background:var(--ui-button-accent); }
-.ai-result-notice { color:var(--ui-button-accent) !important; }
+.ai-result-notice { color:var(--accent) !important; }
 @keyframes ui-result-attention { 0%,100% { opacity:.2; } 50% { opacity:1; } }
 :root[data-ui-motion-paused="true"] :is(.ui-core-action,.ai-task-tab-select)::before { animation-play-state:paused !important; }
-@media(pointer:coarse) {
-  :root { --ui-button-size:44px; }
-}
 @media(prefers-reduced-motion:reduce) {
-  .ui-button, .ui-core-action::before { transition:none; }
+  .ui-core-action::before { transition:none; }
   .ui-core-action:hover::before { animation:none !important; }
   :is(.ui-core-action,.ai-task-tab-select)[data-result-attention="true"]::before { animation:none !important; opacity:1; }
 }

@@ -122,7 +122,7 @@ input[type="checkbox"], input[type="radio"], input[type="range"] { accent-color:
   --border-muted: color-mix(in srgb, var(--border-strong, #30363d) 35%, var(--bg-panel));
 
   --shell-left-panel-size: 160px;
-  --shell-right-panel-size: 180px;
+  --shell-right-panel-size: 198px;
   --shell-control-size: 32px;
   --shell-control-radius: 8px;
   --shell-icon-size: 17px;

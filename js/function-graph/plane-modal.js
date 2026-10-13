@@ -112,7 +112,6 @@ function syncControls() {
   const d = _draft;
   _els.variantBtns.forEach((b) => {
     const on = b._val === (d.axisVariant || "cross");
-    b.setAttribute('aria-pressed', String(on));
     b.style.background = on ? "color-mix(in srgb, var(--accent) 22%, var(--bg-input))" : "var(--bg-input)";
     b.style.borderColor = on ? "var(--accent)" : "var(--border)";
   });

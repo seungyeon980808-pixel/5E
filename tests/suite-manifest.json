@@ -558,6 +558,10 @@
   ],
   "browser": [
     {
+      "path": "tests/test-library-figure-appearance-browser.cjs",
+      "findingIds": ["BUTTON-DESIGN", "LIBRARY-FIGURE-VISIBILITY"]
+    },
+    {
       "path": "tests/test-button-design-browser.cjs",
       "findingIds": ["BUTTON-DESIGN", "AI-RESULT-ATTENTION"]
     },

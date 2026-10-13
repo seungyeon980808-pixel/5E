@@ -1240,7 +1240,17 @@ export function initRhwpExamWorkspace(state, services) {
   const documentMenu=document.createElement('div');documentMenu.id='exam-document-menu';documentMenu.className='file-menu-list';documentMenu.setAttribute('role','menu');documentMenu.hidden=true;
   documentMenu.innerHTML='<button type="button" class="file-menu-item" role="menuitem" data-exam-document-open>한글 문서로 이동</button><button type="button" class="file-menu-item" role="menuitem" data-exam-document-insert>현재 영역 삽입…</button>';
   documentEntry.append(send,documentMenu);document.querySelector('.image-workflow-hub')?.append(documentEntry);
-  registerTopMenu('exam-document',send,documentMenu,{onOpen:()=>{documentMenu.querySelector('[data-exam-document-insert]').disabled=busy || !state.get().objects.length;}});
+  registerTopMenu('exam-document',send,documentMenu,{onOpen:()=>{
+    documentMenu.querySelector('[data-exam-document-insert]').disabled=busy || !state.get().objects.length;
+    // Align with the trigger, shifting only when a narrow viewport clips the menu.
+    documentMenu.style.translate='none';
+    const bounds=documentEntry.getBoundingClientRect();
+    const displayScale=bounds.width / documentEntry.offsetWidth;
+    // Use layout width: the existing menu-pop animation starts at scale(.96).
+    const right=bounds.left + documentMenu.offsetWidth * displayScale;
+    const shift=Math.max(8-bounds.left, Math.min(0,innerWidth-8-right));
+    if(shift) documentMenu.style.translate=`${shift / displayScale}px 0`;
+  }});
   documentMenu.querySelector('[data-exam-document-open]').addEventListener('click',()=>void run(open));
   documentMenu.querySelector('[data-exam-document-insert]').addEventListener('click',()=>void run(()=>startSend()));
   panel.querySelector('#exam-hwp-file').addEventListener('cancel',()=>{pendingDocumentInsertion=null;message('문서 열기를 취소했습니다.');});
