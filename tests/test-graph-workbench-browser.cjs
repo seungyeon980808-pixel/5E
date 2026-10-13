@@ -193,6 +193,8 @@ async function storedTabs(page) {
       assert.match(revised.text, /사용자가 편집한 현재 그래프/);
       // Current UI saves the selected result through the collection ZIP flow.
       // Preserve the SVG oracle and verify its exact selected-candidate bytes.
+      const moreOutputs = page.locator('#ai-image-panel .ai-output-more');
+      if (!await moreOutputs.evaluate(el => el.open)) await moreOutputs.locator('summary').click();
       await page.locator('#ai-image-panel [data-ai-task-export-mode]').selectOption('selected');
       page.once('dialog',dialog=>dialog.accept());
       let download;
@@ -219,7 +221,7 @@ async function storedTabs(page) {
       assert.deepEqual(recoveredTask.generated, revisedTask.generated);
       assert.equal(recoveredTask.selectedCandidateId, revisedTask.selectedCandidateId);
       assert.equal(await page.evaluate(() => window.__graphWorkbench.requests.length), 0, 'Recovered results must not resend.');
-      await page.locator('#ai-image-panel .is-ai-active-candidate .ai-canvas-output').click();
+      await page.locator('#ai-image-panel [data-ai-insert-selected]').click();
       await page.locator('#ai-image-panel').waitFor({state:'hidden'});
       const inserted = await objects(page);
       assert(inserted.some(o => o.type === 'coordplane' && o.labelX === '편집한 시간'));

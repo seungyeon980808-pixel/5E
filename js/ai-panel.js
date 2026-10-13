@@ -2266,7 +2266,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     annotate.title = "수정 요청 영역 지정";
     annotate.setAttribute("aria-label", "수정 요청 영역 지정");
     actions.append(zoomOut, zoomValue, zoomIn, annotate);
-    if (item.kind === "generated" && !item.sceneResult) {
+    if (item.kind === "generated" && (!item.sceneResult || item.graphResult)) {
       const savePng = document.createElement("button");
       savePng.type = "button";
       savePng.dataset.aiSaveCandidate = '';
@@ -2296,8 +2296,9 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
           const source = item.graphResult ? await workbenchGraphDataUrl(item.graphResult) : await resolveOutputVariant(item);
           if (busy || !isSaveCurrent()) return;
           const bitmap = item.graphResult ? source : requiresRawImageOutput(item) ? item.data : source;
-          const result = labelOutput?.included && hasPreviewLabels(item)
-            ? await visibleImagePng({data:bitmap,plan:manualLabelPlan(item),artboard:labelOutput.artboard,isCurrent:() => !busy && isSaveCurrent()}) : bitmap;
+          const plan = labelOutput?.included && hasPreviewLabels(item) ? manualLabelPlan(item) : null;
+          const result = item.graphResult || plan
+            ? await visibleImagePng({data:bitmap,plan,artboard:labelOutput?.artboard,isCurrent:() => !busy && isSaveCurrent()}) : bitmap;
           if (busy || !isSaveCurrent()) return;
           link.href = result;
           link.download = `${safeName}.png`;
@@ -2529,7 +2530,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     if (comparison && comparisonCount < 2) closeComparison();
     const save = panel.querySelector('[data-ai-save-selected]');
     const copy = panel.querySelector('[data-ai-copy-selected]');
-    if (copy) copy.disabled = outputBusy || !item || Boolean(item.sceneResult) || copy.dataset.copyPending === 'true';
+    if (copy) copy.disabled = outputBusy || !item || Boolean(item.sceneResult && !item.graphResult) || copy.dataset.copyPending === 'true';
     const insert = panel.querySelector('[data-ai-insert-selected]');
     const examSend = panel.querySelector('[data-ai-exam-send]');
     if (examSend) examSend.disabled = outputBusy || !item;
@@ -2571,7 +2572,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
         : '분리된 물체를 확인한 뒤 결과를 사용할 수 있습니다.';
     }
     if (scoped) scoped.disabled = outputBusy || !item || Boolean(item.sceneResult);
-    if (save) save.disabled = outputBusy || !item || Boolean(item.sceneResult);
+    if (save) save.disabled = outputBusy || !item || Boolean(item.sceneResult && !item.graphResult);
     const graphEdit = panel.querySelector('[data-ai-graph-edit]');
     if (graphEdit) { graphEdit.hidden = conversionKind !== 'graph'; graphEdit.disabled = busy || panel.dataset.aiSharingMode === 'view' || !item?.graphResult; }
     if (conversionKind === 'graph') {

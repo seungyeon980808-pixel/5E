@@ -90,7 +90,8 @@ async function install(page) {
       await page.locator('.gm-annotation-editor:visible summary').click();
       await select(2); assert.equal(await page.locator('.gm-annotation-editor:visible').count(), 1);
       assert.equal(await page.locator('[aria-label="표시 1 x"]').isVisible(), false);
-      await select(3); const label = page.locator('#gm-preview [data-graph-annotation="caption"]');
+      await select(3); const label = page.locator('#gm-preview [data-graph-annotation="caption"][role="button"]');
+      assert.equal(await label.count(), 1, 'Select the single interactive label, distinct from its transparent pointer hit area');
       await label.click(); assert.equal(await page.locator('[aria-label="표시 3 선택"]').getAttribute('aria-expanded'), 'true');
       const arrowMiddle = await page.locator('#gm-preview [data-graph-annotation-shape="up"]:not([data-annotation-hit])').first().evaluate(el => {
         const box=el.getBBox(),q=el.ownerSVGElement.createSVGPoint();q.x=box.x+box.width/2;q.y=box.y+box.height/2;
@@ -118,7 +119,8 @@ async function install(page) {
       scenarios.push('cancel retains draft isolation; rounded endpoint edits/deletion affect only target; undo/redo/save/reopen');
 
       await install(page); await open(); await page.locator('#gm-tab-annot-btn').click();
-      const text = page.locator('#gm-preview [data-graph-annotation="caption"]'), box = await text.boundingBox();
+      const text = page.locator('#gm-preview [data-graph-annotation="caption"][role="button"]'), box = await text.boundingBox();
+      assert.equal(await text.count(), 1, 'Drag the interactive label rather than its separate pointer hit area');
       await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2); await page.mouse.down(); await page.mouse.move(box.x + box.width / 2 + 24, box.y + box.height / 2 + 12, { steps: 3 }); await page.mouse.up();
       assert.equal(await page.locator('[aria-label="표시 3 선택"]').getAttribute('aria-expanded'), 'true'); await page.locator('#gm-confirm').click();
       assert.notDeepEqual(planeOf(await snap()).graphAnnotations[2], planeOf(original).graphAnnotations[2]);

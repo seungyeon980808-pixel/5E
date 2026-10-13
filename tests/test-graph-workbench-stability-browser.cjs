@@ -79,7 +79,7 @@ const tabs = page => page.evaluate(async () => (await (new (await import('/js/ai
       assert.equal(await page.locator(ui+'.ai-task-delete').count(),0,'Task delete X is removed');
       await page.evaluate(()=>{
         window.__copiedPng=null;
-        Object.defineProperty(navigator,'clipboard',{configurable:true,value:{write:async items=>{const png=await items[0].getType('image/png');window.__copiedPng={type:png.type,size:png.size};}}});
+        Object.defineProperty(navigator,'clipboard',{configurable:true,value:{write:async items=>{const png=await items[0].getType('image/png');window.__copiedPng={type:png.type,size:png.size,header:[...new Uint8Array(await png.arrayBuffer()).subarray(0,8)]};}}});
       });
       const source = await page.evaluate(()=>window.__stability.source);
       const menu=page.locator('.ai-task-context-menu');
@@ -134,12 +134,54 @@ const tabs = page => page.evaluate(async () => (await (new (await import('/js/ai
       await page.locator(ui + '[data-ai-workflow="graph"]').click();
       await page.locator('#ai-image-panel[data-ai-workflow="graph"]').waitFor();await complete(page, 1);
       assert.equal(await page.locator(ui+'[data-ai-comments-apply]').isVisible(),false,'graph restore uses one action');
-      assert.equal(await page.locator(ui+'[data-ai-save-selected]').isVisible(),false,'SVG save is absent from graph actions');
+      assert.deepEqual(await page.locator(ui+'.ai-output-actions > button').allTextContents(),
+        ['PNG 저장','이미지 복사','캔버스에 삽입','한글로 보내기'],'The approved four output actions are retained for graph results');
+      assert.equal(await page.locator(ui+'[data-ai-save-selected]').isVisible(),true,'The common graph output action saves a PNG');
+      const beforePng = await tabs(page), requestsBeforePng = await page.evaluate(() => __stability.requests.length);
+      fs.writeFileSync(path.join(output,name+'-png-action.json'), JSON.stringify({
+        saveDisabled:await page.locator(ui+'[data-ai-save-selected]').isDisabled(),
+        copyDisabled:await page.locator(ui+'[data-ai-copy-selected]').isDisabled(),
+        candidateSaveHandlers:await page.locator(ui+'.is-ai-active-candidate [data-ai-save-candidate]').count(),
+        selectedHasNativeGraph:beforePng.some(tab=>tab.generated?.some(item=>item.id===tab.selectedCandidateId&&item.graphResult&&item.sceneResult)),
+      },null,2));
+      assert.equal(await page.locator(ui+'[data-ai-save-selected]').isEnabled(),true,'A valid native graph must allow PNG export');
+      assert.equal(await page.locator(ui+'[data-ai-copy-selected]').isEnabled(),true,'A valid native graph must allow image copy');
+      const [pngDownload] = await Promise.all([page.waitForEvent('download'), page.locator(ui+'[data-ai-save-selected]').click()]);
+      assert.match(pngDownload.suggestedFilename(), /\.png$/);
+      const pngPath = path.join(output, name+'-selected-graph.png'); await pngDownload.saveAs(pngPath);
+      assert.deepEqual([...fs.readFileSync(pngPath).subarray(0,8)],[137,80,78,71,13,10,26,10],'The actual download is a PNG, not renamed SVG bytes');
+      const selectedGraph = beforePng.flatMap(tab => tab.generated || []).find(item => item.id === beforePng.find(tab => tab.generated?.some(item => item.id === tab.selectedCandidateId && item.graphResult))?.selectedCandidateId);
+      const pixels = await page.evaluate(async ({ png, svg }) => {
+        const raster = async src => {
+          const img = new Image(); img.src = src; await img.decode();
+          const canvas = document.createElement('canvas'); canvas.width = img.naturalWidth; canvas.height = img.naturalHeight;
+          const ctx = canvas.getContext('2d'); ctx.drawImage(img,0,0);
+          return { width:canvas.width, height:canvas.height, bytes:ctx.getImageData(0,0,canvas.width,canvas.height).data };
+        };
+        const [output, preview] = await Promise.all([raster(png),raster(svg)]);
+        let differences = 0, ink = 0;
+        for (let i = 0; i < output.bytes.length; i++) if (output.bytes[i] !== preview.bytes[i]) differences++;
+        for (let i = 0; i < output.bytes.length; i += 4) if (output.bytes[i+3] && output.bytes[i]+output.bytes[i+1]+output.bytes[i+2] < 600) ink++;
+        return { width:output.width, height:output.height, previewWidth:preview.width, previewHeight:preview.height, differences, ink };
+      }, { png:'data:image/png;base64,'+fs.readFileSync(pngPath).toString('base64'),svg:selectedGraph.data });
+      fs.writeFileSync(path.join(output,name+'-png-pixels.json'),JSON.stringify(pixels,null,2));
+      assert.equal(pixels.width,pixels.previewWidth); assert.equal(pixels.height,pixels.previewHeight);
+      assert.equal(pixels.differences,0,'Exported PNG pixels preserve the displayed native graph'); assert.ok(pixels.ink>10,'The output contains the graph, not a blank bitmap');
+      assert.deepEqual(await tabs(page),beforePng,'Raster export preserves the editable graph, original and prior candidates');
+      assert.equal(await page.evaluate(() => __stability.requests.length),requestsBeforePng,'PNG export does not request another model conversion');
+      await page.evaluate(() => { __copiedPng = null; });
+      await page.locator(ui+'[data-ai-copy-selected]').click();
+      await page.waitForGraphSignal(() => __copiedPng?.size>0);
+      assert.equal(await page.evaluate(() => __copiedPng.type),'image/png');
+      assert.deepEqual(await page.evaluate(() => __copiedPng.header),[137,80,78,71,13,10,26,10],'The isolated clipboard writer receives actual PNG bytes');
+      assert.deepEqual(await tabs(page),beforePng); assert.equal(await page.evaluate(() => __stability.requests.length),requestsBeforePng);
       assert.equal(await page.locator(ui+'[data-ai-selected-output-note]').count(),1);
       assert.equal(await page.locator(ui+'[data-ai-selected-output-note]').isVisible(),false,'restoration diagnostics are shown on request');
+      const moreOutputs = page.locator(ui+'.ai-output-more');
+      if (!await moreOutputs.evaluate(el => el.open)) await moreOutputs.locator('summary').click();
       await page.locator(ui+'[data-ai-output-details]').click();
       await page.getByRole('dialog',{name:'그래프 복원 상세',exact:true}).getByRole('button',{name:'닫기',exact:true}).click();
-      assert.equal(await page.locator(ui+'[data-ai-insert-selected]').textContent(),'캔버스 삽입');
+      assert.equal(await page.locator(ui+'[data-ai-insert-selected]').textContent(),'캔버스에 삽입');
       assert.equal(await page.locator(ui+'.ai-annotation-toolbar [data-ai-comment-visibility]').count(),1,'comment visibility is adjacent to its creation tools');
       for (const kind of ['image','graph','image','graph']) {
         await page.locator(ui+`[data-ai-workflow="${kind}"]`).click();
@@ -164,7 +206,8 @@ const tabs = page => page.evaluate(async () => (await (new (await import('/js/ai
       const beforeEditTask = (await tabs(page)).find(t => t.generated?.some(c => c.id === baseline.id));
       assert.equal(beforeEditTask.generated.length, 1);
       await page.locator(ui + '.ai-previews img').first().dblclick();
-      assert.equal(await page.locator('#gm-send-exam').count(),0,'graph editing has no duplicate exam entry');
+      assert.equal(await page.locator('#gm-send-exam').isVisible(),false,'The shared graph editor hides its exam action while editing a workbench draft');
+      assert.equal(await page.locator('#gm-send-exam').evaluate(el=>el.hidden),true,'A hidden shared control must not appear as a duplicate output action');
       await page.locator('#gm-labelx').fill('보존된 편집');
       await page.evaluate(() => document.fonts.ready);
       await page.evaluate(() => {

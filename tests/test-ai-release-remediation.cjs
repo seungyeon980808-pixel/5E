@@ -923,7 +923,7 @@ const rawSource = oneSlice(outputSource, 'const BOUND_FIELDS =',
   'export function canChooseLocalOutput(', 'actual RAW eligibility');
 const footerBusyStatement = 'const outputBusy = busy || isLocalSavePending(item);';
 assert.equal(source.split(footerBusyStatement).length - 1, 1, 'One actual footer busy-state rule');
-const footerDisabledStatement = 'if (save) save.disabled = outputBusy || !item || Boolean(item.sceneResult);';
+const footerDisabledStatement = 'if (save) save.disabled = outputBusy || !item || Boolean(item.sceneResult && !item.graphResult);';
 assert.equal(source.split(footerDisabledStatement).length - 1, 1, 'One actual footer disabled-state rule');
 const provenance = {
   sourcePath, sourceSHA256: sha(source), outputPath, outputSHA256: sha(outputSource),
