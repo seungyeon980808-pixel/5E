@@ -109,6 +109,10 @@ async function requestBrowserFixture(context, count, evidence, { transferGate = 
     fs.writeFileSync(path.join(evidence, `cleanup-${count}.json`), JSON.stringify({ engine: process.env.TASK2_ENGINE || 'chromium', browserVersion: browser.version(), browserContextClosed: true, browserClosed: !browser.isConnected(), serverClosed: !server.listening, serverPort: port }));
   });
   const page = await browserContext.newPage();
+  // CI traces show the third-party font CSS body can stall DOMContentLoaded.
+  // This data/ownership suite uses platform fonts; font/pixel/performance suites
+  // retain their own real rendering inputs and strict checks.
+  await page.route('https://fonts.googleapis.com/**', route => route.fulfill({contentType:'text/css',body:''}));
   page.setDefaultTimeout(10_000);
   const errors = [];
   page.on('console', message => { if (message.type() === 'error') errors.push(message.text()); });
