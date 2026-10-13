@@ -236,7 +236,7 @@ export function createLocalImageEraseController({ panel, getTarget, isBusy, reso
       && getTarget() === item && getDraft(item) === draft && panel.dataset.aiSharingMode !== 'view';
     try {
       if (await commit(item, draft, current)) { drafts.delete(item.id); histories.delete(item.id); await showPreview(item); }
-    } catch (error) { if (error.name !== 'AbortError') status(error.message || '저장하지 못했습니다. 편집 내용을 유지했습니다.', 'error'); }
+    } catch (error) { if (error.name !== 'AbortError' && !destroyed && getTarget() === item && getDraft(item) === draft && !panel.hidden && !panel.inert) status(error.message || '저장하지 못했습니다. 편집 내용을 유지했습니다.', 'error'); }
     finally { if (pending === controller) pending = null; refresh(); }
   }
   async function discard() {

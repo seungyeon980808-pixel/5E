@@ -6452,6 +6452,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     },
     commit: async (parent, erased, isCurrent) => {
       if (!isCurrent()) return;
+      const ownerTaskId = activeTaskTabId, ownerTask = taskTabs.get(ownerTaskId), ownerImages = generatedImages;
       const view = panel.aiWorkbench?.getViewState?.();
       const now = new Date().toISOString();
       // A user-authored local version has its own contract. Never transfer a
@@ -6481,16 +6482,32 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       captureActiveTaskTab();
       try { await taskPersistence.checkpoint(); }
       catch (error) {
-        generatedImages = generatedImages.filter(item => item !== candidate);
+        const index = ownerImages.indexOf(candidate);
+        if (index >= 0) ownerImages.splice(index, 1);
         candidate.card?.remove(); labelPreviewStates.delete(candidate);
-        latestGeneratedSrc = generatedImages.at(-1)?.data || null;
-        selectedCandidateId = parent.id; panel.dataset.aiSelectedCandidateId = parent.id;
-        panel.aiWorkbench?.restoreViewState?.({ ...view, selectedCandidateId: parent.id });
-        panel.dispatchEvent(new CustomEvent('5e:ai-candidate-select', { detail: { candidateId: parent.id } }));
-        captureActiveTaskTab(); syncSelectedOutputActions();
+        if (taskTabs.get(ownerTaskId) === ownerTask) {
+          ownerTask.generated = (ownerTask.generated || []).filter(item => item.id !== candidate.id);
+          if (ownerTask.selectedCandidateId === candidate.id) ownerTask.selectedCandidateId = parent.id;
+          if (ownerTask.workbenchViewState?.selectedCandidateId === candidate.id) ownerTask.workbenchViewState.selectedCandidateId = parent.id;
+          if (ownerTask.labelPreviewIncluded) delete ownerTask.labelPreviewIncluded[candidate.id];
+          const cached = taskViews.get(ownerTaskId);
+          if (cached?.generatedImages === ownerImages) cached.outputSnapshot = ownerTask.generated;
+        }
+        if (activeTaskTabId === ownerTaskId && generatedImages === ownerImages) {
+          latestGeneratedSrc = generatedImages.at(-1)?.data || null;
+          if (selectedCandidateId === candidate.id) {
+            selectedCandidateId = parent.id; panel.dataset.aiSelectedCandidateId = parent.id;
+            panel.aiWorkbench?.restoreViewState?.({ ...panel.aiWorkbench?.getViewState?.(), selectedCandidateId: parent.id });
+            panel.dispatchEvent(new CustomEvent('5e:ai-candidate-select', { detail: { candidateId: parent.id } }));
+          }
+          captureActiveTaskTab(); syncSelectedOutputActions();
+        }
+        // A task switch may have queued an autosave of the pending version.
+        // Queue the corrected snapshot last so it cannot reappear on reload.
+        try { await taskPersistence.checkpoint(); } catch {}
         throw new Error(`수정본을 저장하지 못했습니다. 임시 편집을 유지했습니다. ${error.message}`);
       }
-      setStatus('수정 저장 완료 · 새 수정본 하나로 보관했습니다. 라벨과 이전 버전은 유지됩니다.', 'ok');
+      if (activeTaskTabId === ownerTaskId && selectedCandidateId === candidate.id) setStatus('수정 저장 완료 · 새 수정본 하나로 보관했습니다. 라벨과 이전 버전은 유지됩니다.', 'ok');
       return candidate;
     } });
   inlineLabelEditor = createInlineLabelEditor({ panel, getTarget:selectedOutputItem,

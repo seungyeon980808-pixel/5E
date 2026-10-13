@@ -383,3 +383,55 @@ test('failed local storage preserves the label draft and retry saves exactly one
   assert.deepEqual(errors,[]);
   fs.writeFileSync(path.join(dir,'receipt.json'),JSON.stringify({rollback:true,draftRetained:true,retryVersions:1,errors},null,2));
 });
+
+for(const switchTarget of ['task','candidate']) test(`late local save failure preserves another ${switchTarget} and retains its label draft`,{timeout:90000},async t=>{
+  const dir=path.join(evidence,`storage-owner-${switchTarget}`);fs.mkdirSync(dir,{recursive:true});
+  const {page,errors}=await fixture(t,switchTarget==='task'?2:1,dir,{selectedPartial:true,unlabeled:true,beforeNavigate:async page=>{
+    if(switchTarget==='candidate')await page.addInitScript(()=>{
+      window.__seedReady=window.__seedReady.then(()=>new Promise((resolve,reject)=>{
+        const r=indexedDB.open('5e.preview:5e-ai-image-tasks',1);
+        r.onsuccess=()=>{const db=r.result,tx=db.transaction('tasks','readwrite'),store=tx.objectStore('tasks'),read=store.get('workspace');
+          read.onsuccess=()=>{const record=read.result,tab=record.tabs[0];if(!tab.generated.some(item=>item.id==='alternate-0'))tab.generated.push({...structuredClone(tab.generated[0]),id:'alternate-0',name:'다른 수정본',comments:[]});store.put(record);};
+          tx.oncomplete=()=>{db.close();resolve();};tx.onerror=()=>reject(tx.error);
+        };r.onerror=()=>reject(r.error);
+      }));
+    });
+    const store=fs.readFileSync(path.resolve(__dirname,'../js/ai-output-cache-store.js'),'utf8');
+    const seam='  put(entry) { return this.request("readwrite", (store) => store.put(entry)); }';
+    assert.equal(store.split(seam).length-1,1);
+    await page.route('**/js/ai-output-cache-store.js*',route=>route.fulfill({contentType:'text/javascript',body:store.replace(seam,
+      '  put(entry) { if(window.__holdLocalSave && entry.tabs?.some(tab=>tab.generated?.length>1)){window.__holdLocalSave=false;return new Promise((resolve,reject)=>{window.__rejectLocalSave=()=>reject(new DOMException("Delayed test quota","QuotaExceededError"));});} return this.request("readwrite", (store) => store.put(entry)); }')}));
+    const source=fs.readFileSync(path.resolve(__dirname,'../js/ai-panel.js'),'utf8');
+    const failure='throw new Error(`수정본을 저장하지 못했습니다. 임시 편집을 유지했습니다. ${error.message}`);';
+    assert.equal(source.split(failure).length-1,1);
+    await page.route('**/js/ai-panel.js*',route=>route.fulfill({contentType:'text/javascript',body:source.replace(failure,'window.__localSaveRollback=true; '+failure)}));
+  }});
+  const panel=page.locator('#ai-image-panel'),before=await snapshot(page);
+  await panel.locator('[data-ai-label-edit]').click();
+  await page.waitForFunction(()=>!document.querySelector('#ai-image-panel [data-label-add]').disabled);
+  await panel.locator('[data-label-add]').click();
+  await page.waitForFunction(()=>!document.querySelector('#ai-image-panel [data-label-add]').disabled);
+  await page.evaluate(()=>window.__holdLocalSave=true);
+  await panel.locator('[data-ai-edit-save]').click();await page.waitForFunction(()=>Boolean(window.__rejectLocalSave));
+  if(switchTarget==='task')await panel.locator('[data-tab-id="task-1"] .ai-task-tab-select').click();
+  else {await panel.locator('[data-ai-version-button]').click();await panel.locator('[data-ai-candidate-option="alternate-0"]').click();}
+  const otherBefore=(await snapshot(page))[1];
+  const statusBefore=await panel.locator('[data-ai-status]').innerText();
+  await page.evaluate(()=>window.__rejectLocalSave());await page.waitForFunction(()=>window.__localSaveRollback);
+  const after=await snapshot(page);
+  assert.equal(await panel.getAttribute('data-ai-selected-candidate-id'),switchTarget==='task'?'selected-1':'alternate-0','another selection is retained');
+  if(switchTarget==='candidate')assert.equal(await panel.locator('[data-ai-status]').innerText(),statusBefore,'another candidate keeps its status');
+  assert.deepEqual(after[1],otherBefore,'another task keeps all data');
+  assert.deepEqual(after[0].generated,before[0].generated,'failed local candidate is removed only from its owner');
+  if(switchTarget==='task')await panel.locator('[data-tab-id="task-0"] .ai-task-tab-select').click();
+  else {await panel.locator('[data-ai-version-button]').click();await panel.locator('[data-ai-candidate-option="selected-0"]').click();}
+  assert.equal(await panel.locator('[data-ai-edit-save]').isVisible(),true,'the owner keeps its pending label draft');
+  await panel.locator('[data-ai-edit-save]').click();
+  await page.waitForFunction(()=>document.querySelector('#ai-image-panel [data-ai-status]').textContent.startsWith('수정 저장 완료'));
+  const saved=await snapshot(page);assert.equal(saved[0].generated.length,before[0].generated.length+1);assert.deepEqual(saved[1],otherBefore);
+  assert.deepEqual(saved[0].generated.slice(0,-1),before[0].generated,'all existing saved versions stay exact');
+  await page.reload({waitUntil:'domcontentloaded'});await page.locator('#ai-image-install-open').click();
+  assert.deepEqual((await snapshot(page)).map(tab=>tab.generated),saved.map(tab=>tab.generated),'the failed intermediate version cannot return from queued autosave on reload');
+  assert.deepEqual(errors,[]);
+  fs.writeFileSync(path.join(dir,'receipt.json'),JSON.stringify({otherTaskUnchanged:true,ownerRollback:true,draftRetained:true,retryVersions:1,errors},null,2));
+});
