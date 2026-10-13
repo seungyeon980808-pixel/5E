@@ -1540,6 +1540,12 @@
       ]
     },
     {
+      "path": "tests/test-library-reopen-scroll-browser.cjs",
+      "findingIds": [
+        "UX-U60-LIBRARY-REOPEN-VIEWPORT"
+      ]
+    },
+    {
       "path": "tests/test-canvas-auto-snap-browser.cjs",
       "findingIds": [
         "UX-U47-AUTO-SNAP-CONTROL"

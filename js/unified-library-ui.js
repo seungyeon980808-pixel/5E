@@ -1331,9 +1331,30 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     return searchIsCurrent(ownEpoch, signal);
   };
 
-  async function runSearch({ preservePreview = false } = {}) {
-    const previousIdentity = preservePreview ? libraryResultIdentity(selectedActiveResult()) : null;
-    const previousScroll = overlay.querySelector(".unilib-result-scroll").scrollTop;
+  const snapshotResultViewport = () => {
+    const scroller = overlay.querySelector(".unilib-result-scroll");
+    const cardBounds = list.querySelector('[aria-selected="true"]')?.getBoundingClientRect();
+    const scrollBounds = scroller.getBoundingClientRect();
+    return {
+      identity: libraryResultIdentity(selectedActiveResult()), renderedCount: renderedResultCount, scrollTop: scroller.scrollTop,
+      selectedOffset: cardBounds && cardBounds.bottom > scrollBounds.top && cardBounds.top < scrollBounds.bottom
+        ? cardBounds.top - scrollBounds.top : null,
+    };
+  };
+  let closedResultViewport = null;
+
+  async function runSearch({ preservePreview = false, retainedViewport = null } = {}) {
+    const previousViewport = preservePreview ? retainedViewport ?? snapshotResultViewport() : null;
+    const previousIdentity = previousViewport?.identity ?? null;
+    const previousScroll = previousViewport?.scrollTop ?? 0;
+    const previousRenderedCount = previousViewport?.renderedCount ?? 0;
+    const previousCardOffset = previousViewport?.selectedOffset ?? null;
+    const scroller = overlay.querySelector(".unilib-result-scroll");
+    const restoreSelectionOffset = () => {
+      if (previousCardOffset == null) return;
+      const card = list.querySelector(`[data-result-id="${CSS.escape(selectedId)}"]`);
+      if (card) scroller.scrollTop += card.getBoundingClientRect().top - scroller.getBoundingClientRect().top - previousCardOffset;
+    };
     if (!preservePreview) invalidateAction();
     const ownEpoch = ++searchEpoch;
     searchController?.abort();
@@ -1379,14 +1400,20 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       if (pageDisplayActive && queryText && !results.find((item) => item.id === selectedId && item.matches?.length)) {
         selectedId = results.find((item) => item.matches?.length)?.id ?? selectedId;
       }
-      renderResults();
       const samePreview = preservePreview && previousIdentity && previousIdentity === libraryResultIdentity(selectedActiveResult());
-      if (samePreview) overlay.querySelector(".unilib-result-scroll").scrollTop = previousScroll;
+      // Restore the old viewport only after its batches exist; otherwise the
+      // browser clamps scrollTop to the first batch and hides a deep selection.
+      renderResults({
+        initialCount: samePreview ? Math.max(previousRenderedCount, results.findIndex(item => item.id === selectedId) + 1) : 60,
+      });
+      if (samePreview) { scroller.scrollTop = previousScroll; restoreSelectionOffset(); }
       else { if (preservePreview) invalidateAction(); void renderPreview(); }
       if (searchReadiness !== "ready") setStatus(readinessMessage(), searchReadiness === "error");
       if (results.length && !await waitForFirstResultPaint(ownEpoch, signal)) return;
       if (!searchIsCurrent(ownEpoch, signal)) return;
       setResultState(results.length ? "ready" : searchReadiness === "error" ? "error" : searchReadiness !== "ready" ? "loading" : "empty", results.length ? "" : searchReadiness !== "ready" ? readinessMessage() : "검색 결과가 없습니다.");
+      // content-visibility may replace estimated heights on the first paint.
+      if (samePreview) restoreSelectionOffset();
       if (searchReadiness !== "ready") { setStatus(readinessMessage(), searchReadiness === "error"); return; }
       setStatus(pendingIndexCount ? `내 PDF ${pendingIndexCount}개를 색인하는 중입니다.` : "");
     } catch (error) {
@@ -1405,7 +1432,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     renderCropTray();
   }
 
-  function renderResults() {
+  function renderResults({ initialCount = 60 } = {}) {
     const ownThumbnailEpoch = ++thumbnailEpoch;
     thumbnailQueue.clear();
     thumbnailObserver?.disconnect();
@@ -1563,7 +1590,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
         else loadThumbnail(result, media);
       }
     };
-    appendResultBatch();
+    appendResultBatch(initialCount - 1);
     prepareVisibleThumbnails();
   }
   const resultScroller = overlay.querySelector(".unilib-result-scroll");
@@ -1962,6 +1989,8 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   let cancelAiHandoff = null;
   function close({ restoreFocus = true, keyboard = lastInteractionWasKeyboard, aiHandoff = false } = {}) {
     if (!motion.isOpen()) return;
+    // WebKit can reset nested scroll positions while the overlay is hidden.
+    closedResultViewport = snapshotResultViewport();
     openEpoch += 1;
     invalidateAction();
     cancelPlacementChoice?.();
@@ -1997,6 +2026,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   }
   async function open(trigger) {
     cancelAiHandoff?.(); cancelAiHandoff = null;
+    const retainedViewport = motion.isOpen() ? null : closedResultViewport;
     const ownOpenEpoch = ++openEpoch;
     const isCurrentOpen = () => ownOpenEpoch === openEpoch && motion.isOpen();
     invalidateAction();
@@ -2032,8 +2062,8 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       if (!await renderSources(isCurrentOpen)) return;
       if (!isCurrentOpen()) return;
       setFolderLoading("ready");
-      await runSearch({preservePreview:true});
-      if (isCurrentOpen()) query.focus();
+      await runSearch({ preservePreview: true, retainedViewport });
+      if (isCurrentOpen()) query.focus({ preventScroll: true });
     } catch (error) {
       if (!isCurrentOpen()) return;
       const message = error instanceof Error ? error.message : String(error);
