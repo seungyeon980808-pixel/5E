@@ -13,9 +13,21 @@ export function buildBugReport({ id, createdAt = new Date().toISOString(), title
   const report = { schemaVersion: 1, id, createdAt,
     title: cleanReportText(title, 160).trim(), description: cleanReportText(description).trim(),
     expected: cleanReportText(expected), steps: cleanReportText(steps),
-    context: includeDiagnostics ? context : {},
+    context: includeDiagnostics ? JSON.parse(JSON.stringify(context, (_, value) =>
+      typeof value === 'string' ? cleanReportText(value, 12000) : value)) : {},
     images: includeImages ? images.map(reportImage).filter(Boolean).slice(0, 3) : [] };
   if (!report.title || !report.description) throw new Error('문제 제목과 발생한 상황을 적어 주세요.');
   if (new Blob([JSON.stringify(report)]).size > BUG_REPORT_MAX_BYTES) throw new Error('첨부 용량이 큽니다. 이미지 일부를 빼거나 작은 화면 캡처를 첨부해 주세요.');
   return report;
+}
+
+export function buildSimpleBugReport(input) {
+  const text = cleanReportText(input.description).trim();
+  const images = (input.images || []).map(reportImage).filter(Boolean);
+  const errors = input.context?.errors || [];
+  if (!text && !images.length && !errors.length) throw new Error('이미지를 첨부하거나 하고 싶은 말을 적어 주세요.');
+  const summary = text || cleanReportText(errors.at(-1)?.message) || '첨부 이미지 확인 요청';
+  return buildBugReport({ ...input, images, title: summary.slice(0, 160),
+    description: text || (errors.length ? '첨부된 오류 로그와 이미지를 확인해 주세요.' : summary),
+    includeImages: true, includeDiagnostics: true });
 }

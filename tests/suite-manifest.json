@@ -573,6 +573,13 @@
   ],
   "browser": [
     {
+      "path": "tests/test-ai-local-edit-browser.cjs",
+      "findingIds": [
+        "AI-LOCAL-EDIT-SAVE",
+        "AI-LOCAL-EDIT-HISTORY"
+      ]
+    },
+    {
       "path": "tests/test-library-figure-appearance-browser.cjs",
       "findingIds": [
         "BUTTON-DESIGN",

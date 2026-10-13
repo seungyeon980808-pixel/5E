@@ -2,6 +2,13 @@ const assert = require('node:assert/strict');
 const test = require('node:test');
 const { pathToFileURL } = require('node:url');
 const path = require('node:path');
+test('duplicate local status and chat log records coalesce while keeping occurrences and safe full diagnostics', async () => {
+ const {appendAiErrorRecord}=await import('../js/ai-error-log.js');
+ const records=[],context={taskId:'local-task'};
+ appendAiErrorRecord(records,context,'페이지 삽입 실패');appendAiErrorRecord(records,context,'페이지 삽입 실패');
+ assert.equal(records.length,1);assert.equal(records[0].occurrences,2);
+ appendAiErrorRecord(records,context,'다른 오류');assert.equal(records.length,2);
+});
 test('diagnostics preserve complete safe messages and redact secrets and image data', async () => {
  const {safeAiErrorText}=await import(pathToFileURL(path.join(__dirname,'../preview/js/ai-error-log.js')));
  const safe='Provider rejected gpt-6-luna: unsupported reasoning effort ultra. '+ 'safe detail '.repeat(500)+' END';

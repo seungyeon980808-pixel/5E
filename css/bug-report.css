@@ -1,6 +1,11 @@
 .app-footer > .footer-actions { grid-column: 3; justify-self: end; display: flex; gap: 10px; align-items: center; min-width: 0; max-width: 100%; }
 .footer-actions #project-save-status { max-width: none !important; flex: 1 1 auto !important; }
 .bug-report-open { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; width: 24px; height: 24px; padding: 3px; border: 1px solid transparent; border-radius: 5px; background: transparent; color: var(--c-sub); cursor: pointer; }
+.bug-report-open { position: relative; }
+.bug-report-open.has-errors { border-color: var(--accent); }
+.bug-report-open [data-report-error-count] { position: absolute; right: -4px; top: -5px; padding: 0 3px; min-width: 12px; font-size: 10px; line-height: 14px; border-radius: 4px; background: var(--bg-panel); color: var(--c-text); border: 1px solid var(--accent); }
+.bug-report-open [data-report-error-count][hidden] { display: none; }
+#ai-image-panel [data-ai-status][role="button"] { cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
 .bug-report-open svg { width: 18px; height: 18px; }
 .bug-report-open:hover { color: var(--c-text); border-color: var(--c-border); }
 .bug-report-open:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
@@ -16,7 +21,10 @@
 .bug-report-dialog .bug-report-check { flex-direction: row; align-items: center; }
 .bug-report-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .bug-report-images { display: flex; gap: 12px; flex-wrap: wrap; }
-.bug-report-images figure { margin: 0; width: 150px; }
+.bug-report-images figure { position: relative; margin: 0; width: 150px; }
+.bug-report-remove { position: absolute; top: 3px; right: 3px; width: 24px; height: 24px; display: grid; place-items: center; padding: 3px; color: var(--c-text); background: var(--bg-panel); border: 1px solid var(--c-border); border-radius: 5px; cursor: pointer; }
+.bug-report-remove svg { width: 16px; height: 16px; }
+.bug-report-remove:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .bug-report-images img { width: 150px; height: 100px; object-fit: contain; background: var(--bg-input); }
 .bug-report-images figcaption { font-size: 11px; overflow-wrap: anywhere; margin-top: 4px; }
 .bug-report-dialog details { font-size: 12px; }

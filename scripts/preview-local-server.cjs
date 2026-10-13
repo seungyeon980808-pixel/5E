@@ -3,6 +3,9 @@ const https = require('node:https');
 const fs = require('node:fs');
 const path = require('node:path');
 const { createHash } = require('node:crypto');
+const { execFile } = require('node:child_process');
+const { promisify } = require('node:util');
+const runFile = promisify(execFile);
 const root = path.resolve(process.env.FIVE_E_SITE_ROOT || path.join(__dirname, '..'));
 const workspace = createHash('sha256').update(fs.realpathSync(root)).digest('hex');
 const localBridge = process.env.LOCAL_CODEX_BINARY ? require('./local-codex-bridge.cjs').createLocalCodexBridge({binary:process.env.LOCAL_CODEX_BINARY}) : null;
@@ -11,7 +14,27 @@ let port = requestedPort;
 let origin = `http://127.0.0.1:${port}`;
 const types = { '.html':'text/html', '.mjs':'text/javascript', '.js':'text/javascript', '.css':'text/css', '.json':'application/json', '.svg':'image/svg+xml', '.png':'image/png', '.webp':'image/webp', '.woff2':'font/woff2', '.wasm':'application/wasm', '.pdf':'application/pdf' };
 const api = /^\/api\/(web-login-(start|status|cancel)|bridge-(status|models|account|send|events|interrupt))$/;
-const server = http.createServer((req, res) => {
+async function previewRevision() {
+  try {
+    const read = async args => (await runFile('git', ['-C', root, ...args], { timeout:2000, maxBuffer:1024*1024 })).stdout.trim();
+    const [commit, branch, status] = await Promise.all([
+      read(['rev-parse', 'HEAD']), read(['rev-parse', '--abbrev-ref', 'HEAD']), read(['status', '--porcelain', '--untracked-files=normal']),
+    ]);
+    return { commit, branch, dirty:Boolean(status) };
+  } catch { return null; }
+}
+function revisionBadge(html, revision) {
+  if (!revision) return html;
+  const escape = value => value.replaceAll('&', '&amp;').replaceAll('"', '&quot;').replaceAll('<', '&lt;').replaceAll('>', '&gt;');
+  return html.replace(/<span\b([^>]*\bdata-change-summary\b[^>]*)>([^<]*)<\/span>/, (match, attributes, label) => {
+    const detail = `브랜치: ${revision.branch} · 기준 커밋: ${revision.commit} · ${revision.dirty ? '미커밋 수정 포함' : '커밋과 동일한 소스'}`;
+    const short = attributes.match(/\bdata-change-short="([^"]*)"/)?.[1] || label;
+    const version = `${revision.commit.slice(0, 8)}${revision.dirty ? ' · 미커밋' : ''}`;
+    attributes = attributes.replace(/\b(title|aria-label)="([^"]*)"/g, (_, name, value) => `${name}="${value} · ${escape(detail)}"`);
+    return `<span${attributes} data-preview-commit="${revision.commit}" data-preview-dirty="${revision.dirty}">${short} · ${version}</span>`;
+  });
+}
+const server = http.createServer(async (req, res) => {
   const fail = (status, message) => { res.writeHead(status, { 'Content-Type':'application/json' }); res.end(JSON.stringify({ error:message })); };
   if (req.headers.host !== `127.0.0.1:${port}`) return fail(403, 'Host rejected');
   res.setHeader('Cache-Control', 'no-store');
@@ -20,7 +43,7 @@ const server = http.createServer((req, res) => {
     if (!['GET', 'HEAD'].includes(req.method)) return fail(405, 'Method rejected');
     if (req.headers.origin && req.headers.origin !== origin) return fail(403, 'Origin rejected');
     res.writeHead(200, { 'Content-Type':'application/json' });
-    return res.end(req.method === 'HEAD' ? undefined : JSON.stringify({ app:'5e-local-preview', workspace }));
+    return res.end(req.method === 'HEAD' ? undefined : JSON.stringify({ app:'5e-local-preview', workspace, revision:await previewRevision() }));
   }
   if (pathname === '/api/local-ai-config' && req.method === 'GET') {
     res.writeHead(200, {'Content-Type':'application/json'});
@@ -71,9 +94,17 @@ const server = http.createServer((req, res) => {
   let file;
   try { file = path.resolve(root, `.${decodeURIComponent(pathname)}`); } catch { return fail(400, 'Invalid path'); }
   if (!file.startsWith(root + path.sep) && file !== root) return fail(403, 'Path rejected');
-  fs.stat(file, (error, stat) => {
+  fs.stat(file, async (error, stat) => {
     if (error) return fail(404, 'Not found');
     if (stat.isDirectory()) file = path.join(file, 'index.html');
+    if (path.basename(file) === 'index.html') {
+      try {
+        const html = await fs.promises.readFile(file, 'utf8');
+        const content = revisionBadge(html, await previewRevision());
+        res.writeHead(200, { 'Content-Type':'text/html' });
+        return res.end(req.method === 'HEAD' ? undefined : content);
+      } catch { return fail(404, 'Not found'); }
+    }
     const stream = fs.createReadStream(file);
     stream.on('error', () => { if (!res.headersSent) fail(404, 'Not found'); else res.destroy(); });
     stream.on('open', () => {

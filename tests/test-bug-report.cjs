@@ -6,6 +6,16 @@ const path = require('node:path');
 const { randomUUID } = require('node:crypto');
 const { createBugReportServer } = require('../scripts/bug-report-server.cjs');
 const report = () => ({ schemaVersion:1, id:randomUUID(), createdAt:new Date().toISOString(), title:'영역이 검게 표시됨', description:'자료 선택 후 영역 자르기', expected:'선택 영역을 표시', steps:'자료 선택 → 자르기', context:{ screen:'라이브러리' }, images:[] });
+test('simple reports need only a message, an image or an existing error and retain the intake schema', async () => {
+  const {buildSimpleBugReport}=await import('../js/bug-report-data.js');
+  const base={id:randomUUID(),context:{errors:[]},images:[]};
+  assert.throws(()=>buildSimpleBugReport(base),/이미지/);
+  assert.equal(buildSimpleBugReport({...base,description:'지우개가 느립니다.'}).title,'지우개가 느립니다.');
+  assert.equal(buildSimpleBugReport({...base,images:[{data:'data:image/png;base64,aGVsbG8=',name:'shot'}]}).images.length,1);
+  const error=buildSimpleBugReport({...base,context:{errors:[{message:'페이지 삽입 실패',log:'Authorization: Bearer synthetic-secret'}]}});
+  assert.equal(error.title,'페이지 삽입 실패');assert.equal(error.schemaVersion,1);
+  assert.doesNotMatch(error.context.errors[0].log,/synthetic-secret/);
+});
 test('report attachments require explicit inclusion and credentials are removed from text', async () => {
   const { buildBugReport } = await import('../js/bug-report-data.js');
   const input = { ...report(), images:[{ name:'원본', role:'original', data:'data:image/png;base64,aGVsbG8=' }], description:'Authorization: Bearer secret-value\n오류 발생' };

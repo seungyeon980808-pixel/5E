@@ -2951,7 +2951,22 @@
   #ai-image-panel .ai-result-pane [data-ai-version-button] { padding:3px 5px; }
 }
 #ai-image-panel .is-ai-local-erasing { cursor:crosshair; touch-action:none; }
-#ai-image-panel .ai-local-erase-overlay { position:absolute; z-index:8; overflow:hidden; pointer-events:none; }
+#ai-image-panel .is-ai-local-erasing[data-ai-erase-mode="brush"] > img { cursor:none; }
+#ai-image-panel .ai-local-erase-overlay, #ai-image-panel .ai-local-erase-cursor { position:absolute; z-index:8; overflow:hidden; pointer-events:none; }
+#ai-image-panel .ai-local-erase-cursor circle { fill:none; }
+#ai-image-panel .ai-local-erase-cursor .ai-erase-ring-outer { stroke:#111; stroke-width:3px; }
+#ai-image-panel .ai-local-erase-cursor .ai-erase-ring-inner { stroke:#fff; stroke-width:1px; }
+#ai-image-panel .ai-local-edit-action { flex:none; min-height:24px; padding:3px 6px; border:1px solid var(--border); border-radius:5px; background:var(--bg-input); color:var(--text-primary); font:inherit; font-size:11px; cursor:pointer; }
+#ai-image-panel .ai-local-edit-action[hidden] { display:none; }
+#ai-image-panel .ai-local-edit-action:disabled { opacity:.6; cursor:default; }
+#ai-image-panel .ai-local-edit-action:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+#ai-image-panel .ai-compare-heading > .ai-local-edit-history { display:flex; flex-direction:row; align-items:center; gap:4px; flex:none; padding-right:8px; border-right:1px solid var(--border); }
+#ai-image-panel .ai-local-edit-history[hidden] { display:none; }
+#ai-image-panel .ai-local-edit-history button { width:28px; min-width:28px; min-height:27px; padding:4px; border:1px solid var(--border); border-radius:5px; color:var(--text-label); background:var(--bg-input); font:inherit; cursor:pointer; }
+#ai-image-panel .ai-local-edit-history button:disabled { opacity:.5; cursor:default; }
+#ai-image-panel .ai-local-edit-history button:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+#ai-image-panel .ai-local-edit-history svg { display:block; width:18px; height:18px; }
+#ai-image-panel [data-ai-edit-save] { border-color:var(--accent); background:var(--control-selected-bg); }
 #ai-image-panel .ai-local-erase-overlay path { fill:none; stroke:var(--accent); stroke-opacity:.3; stroke-linecap:round; stroke-linejoin:round; }
 #ai-image-panel .ai-local-erase-overlay rect { fill:color-mix(in srgb,var(--accent) 12%,transparent); stroke:var(--accent); stroke-width:1.5px; stroke-dasharray:5 3; }
 #ai-image-panel .ai-local-erase-options { position:absolute; top:calc(100% + 8px); right:0; width:260px; max-width:calc(100vw - 32px); z-index:20; padding:10px; border:1px solid var(--border); border-radius:8px; background:var(--bg-panel); box-shadow:0 8px 24px #0003; font-size:11px; }

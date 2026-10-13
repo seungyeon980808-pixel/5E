@@ -1,5 +1,6 @@
 import { snapshotImageItem, taskItemCopy } from './ai-candidate-snapshot.js?v=1.7.0-four-session-integration';
 import { registerBugReportContext } from './bug-report.js?v=1.7.0-four-session-integration';
+import { localEditableLabelPlan } from './ai-local-label-plan.js?v=1.7.0-four-session-integration';
 import { initManualImageSplit } from './manual-image-split.js?v=1.7.0-four-session-integration';
 import { markResultReady, pendingResult, acknowledgeResult, syncResultEntry } from './ai-result-attention.js?v=20261013-buttons';
 import { createGraphReconstructionWorkflow, graphSourceHash } from './graph/reconstruction-workflow.js?v=1.7.0-four-session-integration';
@@ -49,7 +50,7 @@ import { IndexedDBOutputCacheBackend } from "./ai-output-cache-store.js?v=1.7.0-
 import { parseEditableImageLabelPlan, withEditableImageLabelPlan, SOURCE_LABEL_POLICY_VERSION, EDITABLE_IMAGE_LABEL_PLAN_VERSION } from "./ai-editable-image-labels.js?v=1.7.0-four-session-integration";
 import { createSourceLabelController, withFrozenSourceLabelPlan, buildSourceLabelCorrectionDraft } from './ai-source-label-plan.js?v=1.7.0-four-session-integration';
 import { createEditableLabelComposite } from './ai-label-composite.js?v=1.7.0-four-session-integration';
-import { createLocalImageEraseController } from './ai-image-local-erase.js?v=1.7.0-four-session-integration';
+import { createLocalImageEraseController, DEFAULT_ERASE_DIAMETER } from './ai-image-local-erase.js?v=1.7.0-four-session-integration';
 import { normalizeImageLabelWorkflow } from './ai-image-label-workflow.js?v=1.7.0-four-session-integration';
 import { createImageLabelRasterController, executeImageLabelRun, createExamLocalRestore, imageLabelDigest } from './ai-image-label-run.js?v=1.7.0-four-session-integration';
 import { canEditLabelReviewDraft, insertLabelReviewDraft } from './ai-label-review-draft.js?v=1.7.0-four-session-integration';
@@ -624,8 +625,22 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
   if (!resultTools.querySelector('[data-ai-local-erase-options]')) {
     const options=document.createElement('div');options.id='ai-local-erase-options';options.dataset.aiLocalEraseOptions='';options.className='ai-local-erase-options';options.hidden=true;
     options.setAttribute('aria-label','지우개 설정');
-    options.innerHTML='<div class="ai-erase-modes" role="group" aria-label="지우개 방식"><button type="button" data-ai-erase-mode="brush" aria-pressed="true">문질러 지우기</button><button type="button" data-ai-erase-mode="rect" aria-pressed="false">사각 영역</button></div><label>굵기 <input type="range" min="1" max="80" value="20" data-ai-erase-size aria-label="지우개 굵기"><output data-ai-erase-size-value>20 px</output></label><label>지운 자리 <select data-ai-erase-background aria-label="지운 자리 배경"><option value="transparent">투명</option><option value="white">흰색</option></select></label><small>한 번 드래그하면 새 수정본이 됩니다. Esc: 닫기</small>';
+    options.innerHTML=`<div class="ai-erase-modes" role="group" aria-label="지우개 방식"><button type="button" data-ai-erase-mode="brush" aria-pressed="true">문질러 지우기</button><button type="button" data-ai-erase-mode="rect" aria-pressed="false">사각 영역</button></div><label>굵기 <input type="range" min="1" max="80" value="${DEFAULT_ERASE_DIAMETER}" data-ai-erase-size aria-label="지우개 굵기"><output data-ai-erase-size-value>${DEFAULT_ERASE_DIAMETER} px</output></label><label>지운 자리 <select data-ai-erase-background aria-label="지운 자리 배경"><option value="transparent">투명</option><option value="white">흰색</option></select></label><small>그림만 편집합니다. 모두 끝나면 수정 저장을 누르세요. Esc: 도구 닫기</small>`;
     resultTools.append(options);
+  }
+  if (!resultTools.querySelector('[data-ai-edit-save]')) {
+    for (const [key, text] of [['aiEditSave', '수정 저장'], ['aiEditDiscard', '편집 취소']]) {
+      const control = document.createElement('button'); control.type = 'button'; control.dataset[key] = '';
+      control.className = 'ai-local-edit-action'; control.textContent = text; control.hidden = true;
+      resultTools.insertBefore(control, resultTools.querySelector('[data-ai-local-erase]'));
+    }
+  }
+  if (!panel.querySelector('[data-ai-edit-history]')) {
+    const history = document.createElement('div'); history.className = 'ai-local-edit-history';
+    history.dataset.aiEditHistory = ''; history.hidden = true;
+    history.setAttribute('role', 'group'); history.setAttribute('aria-label', '직접 편집 이력');
+    history.innerHTML = '<button type="button" data-ai-edit-undo aria-label="직접 편집 실행 취소" title="실행 취소 (⌘Z / Ctrl+Z)" disabled><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 4 3 8l4 4M3 8h7a6 6 0 0 1 6 6v2"/></svg></button><button type="button" data-ai-edit-redo aria-label="직접 편집 다시 실행" title="다시 실행 (⌘⇧Z / Ctrl+Shift+Z)" disabled><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m13 4 4 4-4 4M17 8h-7a6 6 0 0 0-6 6v2"/></svg></button>';
+    panel.querySelector('.ai-compare-heading > .ai-pane-zoom')?.before(history);
   }
   const scopedPromptRow = panel.querySelector('[data-ai-scoped-prompt-row]');
   let scopedAdvanced = scopedPromptRow?.closest('[data-ai-scoped-advanced]');
@@ -977,6 +992,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     const selection = !preparing && busy && currentRunInput ? currentRunInput : modelSelection();
     return { taskId: requestToken?.taskId || activeTaskTabId,
       taskTitle: taskTabs.get(requestToken?.taskId || activeTaskTabId)?.title,
+      candidateId: panel.dataset.aiSelectedCandidateId,
+      sourceId: panel.aiWorkbench?.getViewState?.()?.selectedSourceId,
       requestId: requestToken?.requestId, turnId: preparing ? null : currentTurnId,
       model: selection.model, effort: selection.effort, serviceTier: selection.serviceTier };
   });
@@ -993,7 +1010,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       task: { id: activeTaskTabId, title: tab?.title, state: tab?.workState, conversionKind,
         model: modelSelection().model, imageKind: imageKindSelect?.value, labelWorkflow: readImageLabelWorkflow(),
         outputOptions: { ...selectedImageOutputOptions }, candidateId: result?.id, sourceId:original?.id || sourceId, layout:view?.layout },
-      images: [original && { ...original, role: 'original' }, result && { ...result, role: 'result' }].filter(Boolean),
+      images: [original && { ...original, role: 'original' }, result && { ...result, data: localEraseController?.getDraft(result)?.data || result.data, role: 'result' }].filter(Boolean),
       errors: errorLog.snapshot() };
   });
   const addLog = (text, kind = "assistant") => {
@@ -1037,8 +1054,18 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     status.textContent = text;
     status.title = text;
     status.dataset.kind = kind;
+    status.setAttribute('role', kind === 'error' ? 'button' : 'status');
+    status.tabIndex = kind === 'error' ? 0 : -1;
+    if (kind === 'error') status.title = `${text} · 클릭하여 문제 신고`;
     if (busy && !insertingOutput && kind === "error") setTaskState("failed");
   };
+  const reportStatusError = () => {
+    if (status.dataset.kind === 'error') panel.dispatchEvent(new CustomEvent('5e:bug-report-open', { bubbles: true, detail: { trigger: status } }));
+  };
+  status.addEventListener('click', reportStatusError, { signal: lifecycle.signal });
+  status.addEventListener('keydown', event => {
+    if (status.dataset.kind === 'error' && ['Enter', ' '].includes(event.key)) { event.preventDefault(); reportStatusError(); }
+  }, { signal: lifecycle.signal });
   const closeSourceMenu = ({ restoreFocus = false } = {}) => {
     if (!sourceMenu || !sourceMenuTrigger) return;
     sourceMenu.hidden = true;
@@ -1214,7 +1241,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       const source = await resolveOutputVariant(item);
       if (!isCurrent()) return;
       if (item.labelPlan?.frozen) await renderLabelPreview(item, source);
-      else if (image.src !== source) image.src = source;
+      else { const preview = localEraseController?.getDraft(item)?.data || source; if (image.src !== preview) image.src = preview; }
       if (!isCurrent()) return;
       image.classList.toggle('ai-output-transparent', !requiresRawImageOutput(item) && selectedImageOutputOptions.backgroundPolicy !== 'preserve');
       comparison?.update({ revisions: comparisonRevisions() });
@@ -1976,13 +2003,14 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     const current = () => !disposed && item.card?.contains(image) && item.data === data
       && item.labelPlan === plan && display.revision === revision;
     try {
-      const source = resolvedSource || await resolveOutputVariant(item);
+      const source = localEraseController?.getDraft(item)?.data || resolvedSource || await resolveOutputVariant(item);
       if (!current()) return;
       if (!display.included || !hasPreviewLabels(item)) { if (image.src !== source) image.src = source; return; }
       const artboard = { ...state.get().artboard }, artboardKey = `${artboard.w}:${artboard.h}`;
       if (display.source !== source || display.plan !== plan || display.artboardKey !== artboardKey || !display.pending) {
         display.source = source; display.plan = plan; display.artboardKey = artboardKey;
-        const pending = createEditableLabelComposite({ plan, candidateDataUrl: source, artboard, signal: lifecycle.signal });
+        const previewPlan = localEraseController?.getDraft(item) ? localEditableLabelPlan(item) : plan;
+        const pending = createEditableLabelComposite({ plan: previewPlan, candidateDataUrl: source, artboard, signal: lifecycle.signal });
         display.pending = pending;
         pending.catch(() => { if (display.pending === pending) display.pending = null; });
       }
@@ -2989,8 +3017,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
           requestPhase('validating');
           if (!isCurrent()) throw new Error('작업 또는 선택 영역이 변경되어 적용할 수 없습니다.');
           // Preserve editable labels, never the previous image's QA pass or byte bindings.
-          const labelPlan = item.labelPlan?.frozen ? structuredClone(item.labelPlan) : null;
-          if (labelPlan) { delete labelPlan.qualityReview; labelPlan.reviewRequired = true; labelPlan.status = 'review'; }
+          const labelPlan = item.labelPlan?.frozen ? localEditableLabelPlan(item) : null;
           const added = await addPreview(scopedPngData(accepted), { alreadyEditable: true, isCurrent, labelPlan, reviewState: "scoped-applied", reviewReport: scopedAppliedReviewReport() });
           if (!added) throw new Error('선택 상태가 변경되어 적용하지 않았습니다.');
           added.sourceReferenceId = item.sourceReferenceId;
@@ -3547,6 +3574,12 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     generatedImages = cachedView?.generatedImages || (tab.generated || []).map(taskItemCopy);
     referenceComposition = normalizeReferenceComposition(tab.referenceComposition, attachments);
     for (const item of generatedImages) {
+      // Repair earlier saved manual versions that retained a placement digest
+      // for the old bitmap. Raw/provider candidates keep their original checks.
+      if (item.engine === 'local-erase' && item.labelPlan?.targetPlacement) {
+        try { item.labelPlan = localEditableLabelPlan(item); }
+        catch (error) { setStatus(`직접 수정본의 라벨을 확인해 주세요: ${error.message}`, 'error'); }
+      }
       if (item.imageLabelWorkflow?.explicit) {
         const gate = enforceImageLabelAcceptance(item.reviewReport, { workflow: item.imageLabelWorkflow, candidateSha256: item.candidateSha256 });
         if (!isImageLabelCandidateAccepted(item)) item.reviewState = 'needs-attention';
@@ -5666,6 +5699,9 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
   });
   sendButton.title = "대화와 코멘트를 반영해 새 이미지로 변환합니다.";
   sendButton.onclick = () => {
+    if (localEraseController?.getDraft(selectedOutputItem())) {
+      setStatus('먼저 수정 저장을 눌러 편집을 완료하세요.', 'warn'); return;
+    }
     if (launchSelected?.()) return;
     if (conversionKind === 'graph') { void submit('image'); return; }
     const item = selectedOutputItem();
@@ -6371,7 +6407,12 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
   modal?.addEventListener("mousedown", (event) => event.stopPropagation());
   commentController=createImageCommentController({panel,getImages:()=>[...attachments.filter(isInputReference),...generatedImages],getSelectedId:()=>selectedCandidateId||generatedImages.at(-1)?.id,isBusy:()=>busy,selectedTaskCount,areaOnlyForSelected:true,changed:()=>{scopedSelectionRevision += 1;captureActiveTaskTab();persistTasks();},viewChanged:()=>{captureActiveTaskTab();persistTasks();}});
   localEraseController = createLocalImageEraseController({ panel, getTarget: () => conversionKind === 'graph' ? null : selectedOutputItem(),
-    isBusy: () => busy, resolveSource: item => Promise.resolve(item.outputImage?.src || item.data), status: setStatus,
+    isBusy: () => busy, resolveSource: item => resolveOutputVariant(item), status: setStatus,
+    previewChanged: async item => {
+      await renderLabelPreview(item);
+      try { await item.outputImage?.decode(); } catch {}
+      syncSelectedOutputActions();
+    },
     commit: async (parent, erased, isCurrent) => {
       if (!isCurrent()) return;
       const view = panel.aiWorkbench?.getViewState?.();
@@ -6379,19 +6420,18 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       // A user-authored local version has its own contract. Never transfer a
       // provider pass, candidate digest, placement binding or RAW QA composite
       // to bytes that were not reviewed. The earlier version stays untouched.
-      // A local erasure edits exactly the displayed bitmap, including any visible
-      // labels. Keep the editable plan on the untouched parent; replaying it on
-      // these raster bytes would restore erased text or draw it twice.
-      const plan = null;
-      const candidate = { id: `generated-${++imageSerial}`, kind: 'generated', name: `지우기 수정본 ${generatedImages.length + 1}`,
+      // Edit the unflattened bitmap; label geometry/text belongs to a separate
+      // layer and remains reusable. The old QA pass does not verify new bytes.
+      const plan = localEditableLabelPlan(parent);
+      const candidate = { id: `generated-${++imageSerial}`, kind: 'generated', name: `직접 수정본 ${generatedImages.length + 1}`,
         data: erased.data, postprocessOk: true, createdAt: now, updatedAt: now, engine: 'local-erase',
         sourceReferenceId: parent.sourceReferenceId, sourceReferenceName: parent.sourceReferenceName,
         markPolicy: structuredClone(parent.markPolicy || {}), generationMode: 'single', labelPlan: plan,
         reviewState: 'scoped-applied', reviewReport: scopedAppliedReviewReport(), comments: [], nextCommentNumber: 1,
-        scopedEditHistory: [{ operation: `local-${erased.mode}-erase`, parentCandidateId: parent.id, createdAt: now,
-          sourceFrame: { width: erased.width, height: erased.height }, points: erased.points, diameter: erased.diameter, background: erased.background,
-          changedPixels: erased.changedPixels, maskedPixels: erased.maskedPixels, outsideRgbaChanged: erased.outsideRgbaChanged,
-          visualReview: 'not-performed', status: 'applied' }] };
+        scopedEditHistory: erased.operations.map(operation => ({ ...operation,
+          operation: `local-${operation.mode}-erase`, parentCandidateId: parent.id, createdAt: now,
+          sourceFrame: { width: erased.width, height: erased.height },
+          visualReview: 'not-performed', status: 'applied' })) };
       if (!isCurrent()) return;
       abortAutomaticSeparation('local-erase');
       generatedImages.push(candidate); latestGeneratedSrc = candidate.data;
@@ -6402,8 +6442,29 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       if (view) panel.aiWorkbench?.restoreViewState?.({ ...view, selectedCandidateId: candidate.id });
       panel.dispatchEvent(new CustomEvent('5e:ai-candidate-select', { detail: { candidateId: candidate.id, localErase: true } }));
       captureActiveTaskTab(); persistTasks();
-      setStatus('지우기 완료 · 새 수정본으로 보관했습니다. 이전 버전에서 되돌릴 수 있습니다.', 'ok');
+      setStatus('수정 저장 완료 · 새 수정본 하나로 보관했습니다. 라벨과 이전 버전은 유지됩니다.', 'ok');
+      return candidate;
     } });
+  panel.addEventListener('pointerdown', event => {
+    if (event.button !== 0 || event.isPrimary === false) return;
+    const target = event.target;
+    if (target.closest?.('button,a,input,textarea,select,label,summary,[role="button"],[role="switch"],[role="slider"],[role="menu"],dialog,[contenteditable]:not([contenteditable="false"]),[data-ai-local-erase-options],[data-ai-comment-popover],canvas,svg')) return;
+    // Empty margins close the drawing tools. A gesture inside a rendered image
+    // or a control still belongs to that editor, even with overlays above it.
+    for (const image of panel.querySelectorAll('.ai-preview-stage > img, [data-ai-composite-preview] img')) {
+      const rect = image.getBoundingClientRect();
+      if (rect.width > 0 && rect.height > 0 && event.clientX >= rect.left && event.clientX <= rect.right
+        && event.clientY >= rect.top && event.clientY <= rect.bottom) return;
+    }
+    localEraseController.cancel(); commentController.cancelTool();
+  }, { capture: true, signal: lifecycle.signal });
+  panel.addEventListener('click', event => {
+    if (!localEraseController.getDraft(selectedOutputItem())) return;
+    if (!event.target.closest?.('[data-ai-insert-selected], [data-ai-canvas-output], [data-ai-exam-send], [data-ai-save-selected], [data-ai-scoped-edit-selected], [data-ai-editable-groups], [data-ai-send], [data-ai-comments-apply]')) return;
+    event.preventDefault(); event.stopImmediatePropagation();
+    setStatus('편집한 그림을 사용하려면 먼저 수정 저장을 누르세요.', 'warn');
+    panel.querySelector('[data-ai-edit-save]')?.focus();
+  }, { capture: true, signal: lifecycle.signal });
   panel.querySelector('[data-ai-comments-apply]')?.addEventListener('click', () => sendButton.onclick());
   // Selected-result actions stay in the fixed footer; per-card controls are hidden.
   const editableGroups = document.createElement('button');

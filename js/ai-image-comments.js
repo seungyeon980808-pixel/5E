@@ -655,6 +655,7 @@ export function createImageCommentController({ panel, getImages, getSelectedId, 
   return {
     bind,
     render,
+    cancelTool: closeCommentMode,
     refreshControls: () => updateControls(entries()),
     getViewState: () => ({tool,selected,markersVisible,tab:q('[data-ai-chat-panel]')?.hidden===false?'chat':'comments'}),
     restoreViewState(value) {
