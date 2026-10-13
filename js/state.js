@@ -379,7 +379,7 @@ export const state = createCanvasStore({
   // grid: canvas reference grid (never exported). opacity maps 1-10 → 0.05-1.0.
   grid: { visible: false, opacity: 3, interval: 10 },
   // Editor preference: automatic edge/center alignment; Shift remains explicit.
-  autoSnap: true,
+  autoSnap: false,
 
   // ===== 다중 페이지(아트보드) — 스왑 방식 =====
   // 활성 페이지의 데이터는 위 s.objects/s.guides/s.layers/s.artboard(그 자리 그대로)에

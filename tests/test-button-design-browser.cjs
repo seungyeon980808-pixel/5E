@@ -111,19 +111,35 @@ for (const engine of [chromium,webkit]) test(`canonical button design and unread
   });
   assert.equal(await page.locator('#auto-snap-btn svg').count(),1);
   assert.equal((await page.locator('#auto-snap-btn').textContent()).trim(),'');
-  assert.equal(await page.locator('#center-view-btn').getAttribute('aria-pressed'),'true');
+  const neutral=await readStateStyle(page,'#settings-menu-btn');
+  assert.equal(await page.locator('html').getAttribute('data-theme'),'dark');
+  assert.equal(await page.locator('#theme-toggle').getAttribute('aria-pressed'),'false');
+  const darkStyle=await readStateStyle(page,'#theme-toggle');
+  assert.equal(darkStyle.border,neutral.border);assert.equal(darkStyle.background,neutral.background);
+  assert.equal(await page.locator('#center-view-btn').getAttribute('aria-pressed'),'false');
+  assert.equal(await page.locator('#center-view-btn').getAttribute('data-mode'),'free');
+  assert.equal(await page.locator('#auto-snap-btn').getAttribute('aria-pressed'),'false');
+  assert.deepEqual(await readStateStyle(page,'#center-view-btn'),neutral);
+  assert.deepEqual(await readStateStyle(page,'#auto-snap-btn'),neutral);
+  for(const side of ['left','right'])assert.deepEqual(await readStateStyle(page,'#drawer-'+side+'-toggle'),neutral);
+  await page.screenshot({path:path.join(evidence,'main-defaults.png')});
+  await page.locator('#center-view-btn').click();await page.locator('[data-canvas-lock-mode="coordinate"]').click();
+  await page.locator('#auto-snap-btn').click();
   const selected=await readStateStyle(page,'#center-view-btn');
+  assert.notEqual(selected.border,neutral.border);
   assert.deepEqual(await readStateStyle(page,'#auto-snap-btn'),selected);
   for(const side of ['left','right']) {
     const selector='#drawer-'+side+'-toggle';
-    assert.deepEqual(await readStateStyle(page,selector),selected);
-    assert.equal(await page.locator(selector+' svg').evaluate(el=>getComputedStyle(el).color),selected.color,'Panel icon stays neutral in the active button');
+    assert.deepEqual(await readStateStyle(page,selector),neutral);
+    assert.equal(await page.locator(selector+' svg').evaluate(el=>getComputedStyle(el).color),neutral.color,'Open panel uses the neutral default');
     await page.locator(selector).click();
     await page.waitForFunction(side=>document.querySelector('#drawer-'+side+'-toggle')?.getAttribute('aria-expanded')==='false',side);
     await page.mouse.move(1000,400);
-    assert.deepEqual(await readStateStyle(page,selector),await readStateStyle(page,'#settings-menu-btn'));
+    assert.deepEqual(await readStateStyle(page,selector),selected);
     await page.locator(selector).click();
     await page.waitForFunction(side=>document.querySelector('#drawer-'+side+'-toggle')?.getAttribute('aria-expanded')==='true',side);
+    await page.mouse.move(1000,400);
+    assert.deepEqual(await readStateStyle(page,selector),neutral);
   }
   await page.locator('#auto-snap-btn').click();assert.equal(await page.locator('#auto-snap-btn').getAttribute('aria-pressed'),'false');
   await page.mouse.move(1000,400);
@@ -133,8 +149,7 @@ for (const engine of [chromium,webkit]) test(`canonical button design and unread
   await page.locator('#center-view-btn').click();await page.locator('[data-canvas-lock-mode="free"]').click();
   await page.mouse.move(1000,400);
   assert.deepEqual(await readStateStyle(page,'#center-view-btn'),await readStateStyle(page,'#settings-menu-btn'));
-  await page.locator('#center-view-btn').click();await page.locator('[data-canvas-lock-mode="coordinate"]').click();
-  await page.locator('#auto-snap-btn').click();assert.equal(await page.locator('#auto-snap-btn svg').count(),1);
+  assert.equal(await page.locator('#auto-snap-btn svg').count(),1);
   await page.mouse.move(1000,400);await page.screenshot({path:path.join(evidence,'main-idle.png')});
   await page.locator('#exam-send').hover();
   assert.equal(await page.locator('#exam-send').evaluate(el=>getComputedStyle(el,'::before').animationName),'ui-button-orbit');
@@ -212,6 +227,7 @@ for (const engine of [chromium,webkit]) test(`canonical button design and unread
   await page.locator('#ai-image-panel').waitFor({state:'hidden'});
   await assertWorkflowState(page,'ai-image-install-open',false,selected);
   await page.locator('#theme-toggle').click();
+  assert.equal(await page.locator('#theme-toggle').getAttribute('aria-pressed'),'true');
   await page.waitForFunction(()=>{
     const style=getComputedStyle(document.getElementById('graph-tool-open'));
     return document.documentElement.dataset.theme==='light' && style.backgroundColor==='rgba(0, 0, 0, 0)';
@@ -220,6 +236,7 @@ for (const engine of [chromium,webkit]) test(`canonical button design and unread
   await assertOriginalAppearance(page,'.insp-layer-eye');
   await page.screenshot({path:path.join(evidence,'main-light.png')});
   await page.locator('#theme-toggle').click();
+  assert.equal(await page.locator('#theme-toggle').getAttribute('aria-pressed'),'false');
   await page.waitForFunction(()=>document.documentElement.dataset.theme==='dark' && getComputedStyle(document.getElementById('graph-tool-open')).backgroundColor==='rgba(0, 0, 0, 0)');
   await page.setViewportSize({width:320,height:780});
   const narrowGaps=await page.evaluate(()=>({toolbar:getComputedStyle(document.querySelector('.toolbar-document')).gap,view:getComputedStyle(document.querySelector('.canvas-view-controls')).gap}));

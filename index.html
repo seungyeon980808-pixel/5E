@@ -53,7 +53,7 @@
   <link rel="stylesheet" href="/css/ai-comparison.css?v=1.7.0-four-session-integration" />
   <link rel="stylesheet" href="/css/ai-composition-editor.css?v=1.7.0-four-session-integration" />
   <link rel="stylesheet" href="/css/ai-editable-assets.css?v=1.7.0-four-session-integration" />
-  <link rel="stylesheet" href="/css/panel-visibility.css?v=1.7.0-four-session-integration" />
+  <link rel="stylesheet" href="/css/panel-visibility.css?v=20261013-default-states" />
   <link rel="stylesheet" href="/css/mobile-image.css?v=1.7.0-four-session-integration" />
   <link rel="stylesheet" href="/css/productization.css?v=1.7.0-four-session-integration" />
   <link rel="stylesheet" href="/css/web-login.css?v=1.7.0-four-session-integration" />
@@ -132,7 +132,7 @@
         <!-- 튜토리얼: 실제 화면 위에서 짚어 주는 안내(js/tutorial.js).
              처음 온 사람이 찾을 수 있어야 하므로 드롭다운 안이 아니라 상단바에 직접 둔다. -->
         <div class="canvas-view-controls" role="group" aria-label="격자와 화면 기준">
-          <button id="auto-snap-btn" class="auto-snap-btn" type="button" aria-label="자동 스냅 · 켜짐" aria-pressed="true" title="자동 정렬 켜기/끄기"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 3.5v7a6 6 0 0 0 12 0v-7h-4v7a2 2 0 0 1-4 0v-7zM4 7h4m4 0h4"/></svg></button>
+          <button id="auto-snap-btn" class="auto-snap-btn" type="button" aria-label="자동 스냅 · 꺼짐" aria-pressed="false" title="자동 정렬 켜기/끄기"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 3.5v7a6 6 0 0 0 12 0v-7h-4v7a2 2 0 0 1-4 0v-7zM4 7h4m4 0h4"/></svg></button>
   <!-- 격자: 토글 버튼 — 켰을 때만 진하기/간격이 나타남. 눈금자는 항상 켜짐(토글 제거) -->
           <button id="grid-btn" class="grid-toggle-btn" type="button" aria-pressed="false"
                   title="격자 켜기/끄기" aria-label="격자 켜기/끄기">
@@ -150,17 +150,17 @@
             </label>
           </span>
           <div class="canvas-lock-control">
-            <button id="center-view-btn" type="button" aria-pressed="true" aria-haspopup="menu"
-                    aria-expanded="false" aria-controls="canvas-lock-menu" aria-label="기준 좌표 고정"
-                    data-mode="coordinate" title="기준 좌표 고정 (Ctrl+Space)"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" aria-hidden="true"><circle cx="10" cy="10" r="5.5"/><path d="M10 2v4M10 14v4M2 10h4M14 10h4"/></svg></button>
+            <button id="center-view-btn" type="button" aria-pressed="false" aria-haspopup="menu"
+                    aria-expanded="false" aria-controls="canvas-lock-menu" aria-label="자유 이동"
+                    data-mode="free" title="자유 이동 (Ctrl+Space)"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" aria-hidden="true"><circle cx="10" cy="10" r="5.5"/><path d="M10 2v4M10 14v4M2 10h4M14 10h4"/></svg></button>
             <div id="canvas-lock-menu" class="canvas-lock-menu" role="menu" hidden>
-              <button type="button" role="menuitemradio" aria-checked="false" data-canvas-lock-mode="free">
+              <button type="button" role="menuitemradio" aria-checked="true" data-canvas-lock-mode="free">
                 <strong>자유 이동</strong><span>캔버스를 자유롭게 이동합니다.</span>
               </button>
               <button type="button" role="menuitemradio" aria-checked="false" data-canvas-lock-mode="current">
                 <strong>현재 위치 고정</strong><span>지금 보이는 위치를 그대로 고정합니다.</span>
               </button>
-              <button type="button" role="menuitemradio" aria-checked="true" data-canvas-lock-mode="coordinate">
+              <button type="button" role="menuitemradio" aria-checked="false" data-canvas-lock-mode="coordinate">
                 <strong>기준 좌표 고정</strong><span>지정 좌표를 화면 중심에 고정합니다.</span>
               </button>
               <div class="canvas-lock-coordinates">
@@ -194,7 +194,7 @@
 <div class="toolbar-inspector-controls" role="group" aria-label="계정 및 화면 조작">
           <div class="canvas-global-controls" role="group" aria-label="계정 및 화면 조작">
             <span id="zoom-readout" class="zoom-readout" aria-label="현재 화면 배율">zoom 1.00×</span>
-            <button id="theme-toggle" class="topbar-btn icon-btn theme-toggle" type="button" title="흑백 모드 끄기" aria-label="흑백 모드 끄기" aria-pressed="true">
+            <button id="theme-toggle" class="topbar-btn icon-btn theme-toggle" type="button" title="라이트 모드 켜기" aria-label="라이트 모드 켜기" aria-pressed="false">
               <svg viewBox="0 0 20 20" aria-hidden="true">
                 <circle cx="10" cy="10" r="6.5" fill="none" stroke="currentColor" stroke-width="1.5" />
                 <path d="M10 3.5a6.5 6.5 0 0 1 0 13z" fill="currentColor" />
@@ -433,8 +433,8 @@
       <a class="footer-badge" href="https://github.com/seungyeon980808-pixel/5E"
          target="_blank" rel="noopener" title="소스코드 (GitHub)"><span class="footer-code" aria-hidden="true">&lt;/&gt;</span> Source</a>
       <span class="footer-change-badge" data-change-summary tabindex="0"
-            aria-label="2026-10-13 12:35 KST 반영: 버튼 규격·상태"
-            title="2026-10-13 12:35 KST · 상단 버튼을 설정·폴더·공유의 크기·모서리·간격에 맞췄습니다. 좌우 패널과 켜진 버튼은 파란 테두리·옅은 파란 배경으로 표시합니다. 하단 네 기능의 기본 모양을 통일하고 Hwp 노란빛은 hover에만 표시합니다. 변환 완료 점멸은 유지합니다.">10.13 12:35 · 버튼 규격·상태</span>
+            aria-label="2026-10-13 12:52 KST 반영: 기본 상태 D01"
+            title="2026-10-13 12:52 KST · D01: 패널 열림·다크모드는 기본 상태로 파란 강조 없이 표시합니다. 자동 스냅·중앙 고정은 기본 OFF이며 직접 켰을 때만 강조합니다. 저장된 스냅·테마 선택은 유지합니다.">10.13 12:52 · 기본 상태 D01</span>
       <span class="footer-visitor-stats" data-visitor-stats tabindex="0" title="이용자 집계 서버 연결 준비 중">누적 — · 오늘 —</span>
     </span>
     <span class="app-footer-credit app-footer-copyright">Copyright © 2026 <strong>박승연</strong> | SMOE</span>

@@ -41,8 +41,31 @@ async function drag(page, from, to, shift=false) {
   return page.evaluate(() => structuredClone(window.__snapState.get().objects));
 }
 for (const engine of ['chromium','webkit']) {
+  test(`${engine}: free canvas movement is the default and coordinate locking remains optional`, async t => {
+    const page=await fixture(t,engine);
+    await seed(page,[]);
+    const snapshot=()=>page.evaluate(()=>structuredClone(window.__snapState.get().viewBox));
+    const pan=async()=>{await page.locator('#canvas').hover();await page.mouse.wheel(0,120);};
+    assert.equal(await page.locator('#center-view-btn').getAttribute('data-mode'),'free');
+    const free=await snapshot();await pan();
+    await page.waitForFunction(y=>window.__snapState.get().viewBox.y!==y,free.y);
+    await page.locator('#center-view-btn').click();await page.locator('[data-canvas-lock-mode="coordinate"]').click();
+    const locked=await snapshot();await pan();
+    // Wait for the next frame after the native wheel, then inspect the projection.
+    await page.evaluate(()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve))));
+    assert.deepEqual(await snapshot(),locked);
+    await page.locator('#center-view-btn').click();await page.locator('[data-canvas-lock-mode="free"]').click();
+    await pan();await page.waitForFunction(y=>window.__snapState.get().viewBox.y!==y,locked.y);
+    await page.reload({waitUntil:'networkidle'});await page.waitForSelector('#exam-send');
+    assert.equal(await page.locator('#center-view-btn').getAttribute('data-mode'),'free');
+  });
   test(`${engine}: automatic alignment can be disabled without changing artwork, survives reload and supports undo`, async t => {
     const page=await fixture(t,engine);
+    assert.equal(await page.locator('#auto-snap-btn').getAttribute('aria-pressed'),'false');
+    await page.locator('#auto-snap-btn').click();
+    assert.equal(await page.locator('#auto-snap-btn').getAttribute('aria-pressed'),'true');
+    await page.reload({waitUntil:'networkidle'});await page.waitForSelector('#exam-send');
+    assert.equal(await page.locator('#auto-snap-btn').getAttribute('aria-pressed'),'true');
     const objects=[{id:'moving',type:'rect',x:-20,y:-10,w:10,h:10,layerId:1,strokeWidth:.2,fill:'#ff0000'}, {id:'fixed',type:'rect',x:15,y:15,w:10,h:10,layerId:1,strokeWidth:.2,fill:'#0000ff'}];
     await seed(page, objects);
     let moved=await drag(page,{x:-15,y:-5},{x:19,y:-5});
@@ -60,7 +83,8 @@ for (const engine of ['chromium','webkit']) {
     await page.locator('#auto-snap-btn').click();assert.equal(await page.locator('#auto-snap-btn').getAttribute('aria-pressed'),'true');
   });
   test(`${engine}: Shift endpoint snapping remains explicit while automatic alignment is off`, async t => {
-    const page=await fixture(t,engine);await page.locator('#auto-snap-btn').click();
+    const page=await fixture(t,engine);
+    assert.equal(await page.locator('#auto-snap-btn').getAttribute('aria-pressed'),'false');
     const objects=[{id:'moving',type:'line',p1:{x:-20,y:-10},p2:{x:-10,y:-10},layerId:1,strokeWidth:.2}, {id:'fixed',type:'line',p1:{x:15,y:15},p2:{x:25,y:15},layerId:1,strokeWidth:.2}];
     await seed(page,objects);
     const moved=await drag(page,{x:-15,y:-10},{x:19,y:15},true);

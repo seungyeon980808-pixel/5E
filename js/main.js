@@ -205,9 +205,9 @@ const zoomReadout = document.getElementById("zoom-readout");
   function syncIcon() {
     if (!btn) return;
     const dark = root.getAttribute("data-theme") === "dark";
-    btn.setAttribute("aria-pressed", String(dark));
-    btn.setAttribute("aria-label", dark ? "흑백 모드 끄기" : "흑백 모드 켜기");
-    btn.title = dark ? "흑백 모드 끄기" : "흑백 모드 켜기";
+    btn.setAttribute("aria-pressed", String(!dark));
+    btn.setAttribute("aria-label", dark ? "라이트 모드 켜기" : "다크 모드 켜기");
+    btn.title = dark ? "라이트 모드 켜기" : "다크 모드 켜기";
   }
   syncIcon();
 
@@ -510,7 +510,7 @@ initDataPlot();
 (function initAutoSnapControl() {
   const button = document.getElementById('auto-snap-btn');
   if (!button) return;
-  try { state.update(s => { s.autoSnap = localStorage.getItem('5e.autoSnap') !== 'false'; }); } catch (_) {}
+  try { state.update(s => { s.autoSnap = localStorage.getItem('5e.autoSnap') === 'true'; }); } catch (_) {}
   let last;
   const sync = () => {
     const on = state.get().autoSnap !== false;
@@ -570,7 +570,7 @@ initDataPlot();
       current: "현재 위치 고정",
       coordinate: "기준 좌표 고정",
     };
-    let mode = "coordinate";
+    let mode = "free";
     const point = () => ({ x: Number(xInput.value) || 0, y: Number(yInput.value) || 0 });
     const closeMenu = () => {
       menu.hidden = true;
@@ -612,7 +612,7 @@ initDataPlot();
       e.preventDefault();
       centerBtn.click();
     }, true);
-    applyCanvasLock("coordinate");
+    applyCanvasLock("free");
   }
   // 눈금자는 항상 켜짐(토글 UI 제거) — 명시적으로 한 번 켜 둔다.
   setRulerVisible(true);

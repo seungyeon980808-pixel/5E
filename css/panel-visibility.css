@@ -116,8 +116,8 @@
 .panel-left[data-layout-panel] .tool-list::-webkit-scrollbar { width:0; height:0; }
 .panel-right[data-layout-panel] { display:flex; flex-direction:column; overflow:hidden; }
 .panel-right[data-layout-panel] #inspector { min-height:0; height:auto; flex:1; overflow-y:auto; }
-.panel-visibility-toggle[aria-expanded="true"],
-#ai-image-panel .panel-visibility-toggle[aria-expanded="true"] {
+.panel-visibility-toggle[aria-expanded="false"],
+#ai-image-panel .panel-visibility-toggle[aria-expanded="false"] {
   color:var(--control-selected-text);
   background:var(--control-selected-bg);
   border-color:var(--control-selected-border);

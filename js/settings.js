@@ -630,9 +630,9 @@ function applyThemeLive(theme) {
   const btn = document.getElementById("theme-toggle");
   if (btn) {
     const dark = theme === "dark";
-    btn.setAttribute("aria-pressed", String(dark));
-    btn.setAttribute("aria-label", dark ? "흑백 모드 끄기" : "흑백 모드 켜기");
-    btn.title = dark ? "흑백 모드 끄기" : "흑백 모드 켜기";
+    btn.setAttribute("aria-pressed", String(!dark));
+    btn.setAttribute("aria-label", dark ? "라이트 모드 켜기" : "다크 모드 켜기");
+    btn.title = dark ? "라이트 모드 켜기" : "다크 모드 켜기";
   }
 }
 
