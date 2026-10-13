@@ -66,6 +66,7 @@ export function mountAiErrorLog(panel, context) {
     catch { output.focus(); output.select(); feedback.textContent = '선택된 로그를 복사해 주세요.'; }
   });
   return {
+    snapshot: () => records.map(({ taskId, requestId, error }) => ({ taskId, requestId, message: error })),
     record(message, cause) {
       if (!appendAiErrorRecord(records, context(), message, cause)) return;
       if (dialog.open) refresh();

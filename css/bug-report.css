@@ -1,0 +1,26 @@
+.app-footer > .footer-actions { grid-column: 3; justify-self: end; display: flex; gap: 10px; align-items: center; min-width: 0; max-width: 100%; }
+.footer-actions #project-save-status { max-width: none !important; flex: 1 1 auto !important; }
+.bug-report-open { display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; width: 24px; height: 24px; padding: 3px; border: 1px solid transparent; border-radius: 5px; background: transparent; color: var(--c-sub); cursor: pointer; }
+.bug-report-open svg { width: 18px; height: 18px; }
+.bug-report-open:hover { color: var(--c-text); border-color: var(--c-border); }
+.bug-report-open:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.bug-report-dialog { color: var(--c-text); background: var(--bg-panel); border: 1px solid var(--c-border); border-radius: 12px; width: min(680px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); padding: 20px; box-sizing: border-box; overflow: auto; }
+.bug-report-dialog::backdrop { background: rgba(0, 0, 0, .55); }
+.bug-report-dialog header, .bug-report-dialog footer { display: flex; align-items: center; gap: 10px; }
+.bug-report-dialog header h2 { margin: 0 auto 0 0; font-size: 18px; }
+.bug-report-dialog p { line-height: 1.6; font-size: 13px; color: var(--c-sub); }
+.bug-report-dialog form > label, .bug-report-columns label { display: flex; flex-direction: column; gap: 6px; margin: 12px 0; font-size: 13px; }
+.bug-report-dialog input:not([type="checkbox"]), .bug-report-dialog textarea { width: 100%; box-sizing: border-box; padding: 8px; color: var(--c-text); background: var(--bg-input); border: 1px solid var(--c-border); border-radius: 5px; font: inherit; }
+.bug-report-dialog textarea { resize: vertical; }
+.bug-report-dialog input:focus-visible, .bug-report-dialog textarea:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+.bug-report-dialog .bug-report-check { flex-direction: row; align-items: center; }
+.bug-report-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.bug-report-images { display: flex; gap: 12px; flex-wrap: wrap; }
+.bug-report-images figure { margin: 0; width: 150px; }
+.bug-report-images img { width: 150px; height: 100px; object-fit: contain; background: var(--bg-input); }
+.bug-report-images figcaption { font-size: 11px; overflow-wrap: anywhere; margin-top: 4px; }
+.bug-report-dialog details { font-size: 12px; }
+.bug-report-dialog pre { max-height: 160px; overflow: auto; white-space: pre-wrap; overflow-wrap: anywhere; background: var(--bg-input); padding: 10px; }
+.bug-report-dialog footer { flex-wrap: wrap; justify-content: flex-end; }
+.bug-report-dialog [data-report-status] { flex: 1 1 100%; font-size: 12px; overflow-wrap: anywhere; }
+@media (max-width: 600px) { .bug-report-columns { grid-template-columns: 1fr; gap: 0; } .bug-report-dialog { padding: 14px; } }

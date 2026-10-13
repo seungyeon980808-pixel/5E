@@ -1,0 +1,38 @@
+const test = require('node:test');
+const assert = require('node:assert/strict');
+const fs = require('node:fs/promises');
+const os = require('node:os');
+const path = require('node:path');
+const { randomUUID } = require('node:crypto');
+const { createBugReportServer } = require('../scripts/bug-report-server.cjs');
+const report = () => ({ schemaVersion:1, id:randomUUID(), createdAt:new Date().toISOString(), title:'영역이 검게 표시됨', description:'자료 선택 후 영역 자르기', expected:'선택 영역을 표시', steps:'자료 선택 → 자르기', context:{ screen:'라이브러리' }, images:[] });
+test('report attachments require explicit inclusion and credentials are removed from text', async () => {
+  const { buildBugReport } = await import('../js/bug-report-data.js');
+  const input = { ...report(), images:[{ name:'원본', role:'original', data:'data:image/png;base64,aGVsbG8=' }], description:'Authorization: Bearer secret-value\n오류 발생' };
+  const plain = buildBugReport(input); assert.deepEqual(plain.images, []); assert.ok(!plain.description.includes('secret-value'));
+  assert.equal(buildBugReport({ ...input, includeImages:true }).images.length, 1);
+  assert.deepEqual(buildBugReport({ ...input, includeDiagnostics:false }).context, {});
+  assert.equal(buildBugReport({ ...input, includeImages:true, images:[{ data:'data:image/svg+xml;base64,aGVsbG8=' }] }).images.length, 0);
+});
+test('local reports preserve originals, reject unsafe requests and protect admin data', async t => {
+  const directory = await fs.mkdtemp(path.join(os.tmpdir(), '5e-reports-'));
+  const adminToken = 'test-only-admin-key-with-32-characters';
+  const server = createBugReportServer({ directory, allowedOrigins:['http://127.0.0.1:61808'], adminToken });
+  await new Promise(resolve => server.listen(0,'127.0.0.1',resolve));
+  t.after(async () => { await new Promise(resolve => server.close(resolve)); await fs.rm(directory,{recursive:true,force:true}); });
+  const origin = `http://127.0.0.1:${server.address().port}`, input = report();
+  const send = (body, extra = {}) => fetch(origin+'/api/bug-reports', { method:'POST', headers:{ Origin:'http://127.0.0.1:61808','Content-Type':'application/json','X-5E-Report':'1', ...extra }, body:JSON.stringify(body) });
+  assert.equal((await send(input, { Origin:'https://untrusted.example' })).status,403);
+  assert.equal((await send({ ...input, id:'../../outside' })).status,400);
+  assert.equal((await send({ ...input, images:[{ name:'x',role:'original',data:'data:text/html;base64,aGVsbG8=' }] })).status,400);
+  assert.equal((await send(input)).status,201); assert.equal((await send(input)).status,201);
+  assert.equal((await send({ ...input, title:'overwrite' })).status,409);
+  assert.equal((await fetch(origin+'/api/admin/reports')).status,401);
+  const headers = { Authorization:`Bearer ${adminToken}` };
+  const list = await (await fetch(origin+'/api/admin/reports',{headers})).json(); assert.equal(list.reports.length,1); assert.equal(list.reports[0].title,input.title); assert.ok(!('images' in list.reports[0]));
+  const before = await fs.readFile(path.join(directory,input.id+'.json'),'utf8');
+  const update = await fetch(origin+'/api/admin/reports/'+input.id, {method:'PUT', headers:{...headers,Origin:origin,'Content-Type':'application/json'}, body:JSON.stringify({status:'fixed',note:'수정 커밋 확인'})}); assert.equal(update.status,200);
+  assert.equal(await fs.readFile(path.join(directory,input.id+'.json'),'utf8'),before);
+  const detail = await (await fetch(origin+'/api/admin/reports/'+input.id,{headers})).json(); assert.equal(detail.review.status,'fixed'); assert.equal(detail.description,input.description);
+  const rejected = await fetch(origin+'/api/admin/reports/'+input.id, {method:'PUT', headers:{...headers,Origin:origin,'Content-Type':'application/json'},body:JSON.stringify({status:'unknown',note:''})}); assert.equal(rejected.status,400);
+});

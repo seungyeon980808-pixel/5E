@@ -3,7 +3,9 @@
   "unit": [
     {
       "path": "tests/test-ai-result-attention.mjs",
-      "findingIds": ["AI-RESULT-ATTENTION"]
+      "findingIds": [
+        "AI-RESULT-ATTENTION"
+      ]
     },
     {
       "path": "tests/test-rhwp-exam-annotations.mjs",
@@ -554,16 +556,28 @@
         "USER-SAFARI-U37",
         "AI-CANVAS-COMPOSITION"
       ]
+    },
+    {
+      "path": "tests/test-bug-report.cjs",
+      "findingIds": [
+        "BUG-REPORT-INBOX"
+      ]
     }
   ],
   "browser": [
     {
       "path": "tests/test-library-figure-appearance-browser.cjs",
-      "findingIds": ["BUTTON-DESIGN", "LIBRARY-FIGURE-VISIBILITY"]
+      "findingIds": [
+        "BUTTON-DESIGN",
+        "LIBRARY-FIGURE-VISIBILITY"
+      ]
     },
     {
       "path": "tests/test-button-design-browser.cjs",
-      "findingIds": ["BUTTON-DESIGN", "AI-RESULT-ATTENTION"]
+      "findingIds": [
+        "BUTTON-DESIGN",
+        "AI-RESULT-ATTENTION"
+      ]
     },
     {
       "path": "tests/test-graph-physics-relations-browser.cjs",
@@ -1602,6 +1616,12 @@
       "findingIds": [
         "UX-U56",
         "HWP-FOOTER-MENU-HIT-TEST"
+      ]
+    },
+    {
+      "path": "tests/test-bug-report-browser.cjs",
+      "findingIds": [
+        "BUG-REPORT-INBOX"
       ]
     }
   ],

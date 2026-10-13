@@ -1,4 +1,5 @@
 import { snapshotImageItem, taskItemCopy } from './ai-candidate-snapshot.js?v=1.7.0-four-session-integration';
+import { registerBugReportContext } from './bug-report.js?v=1.7.0-four-session-integration';
 import { markResultReady, pendingResult, acknowledgeResult, syncResultEntry } from './ai-result-attention.js?v=20261013-buttons';
 import { createGraphReconstructionWorkflow, graphSourceHash } from './graph/reconstruction-workflow.js?v=1.7.0-four-session-integration';
 import { GRAPH_WORKBENCH_SELECTION, validateWorkbenchGraph, buildWorkbenchGraph, workbenchGraphDataUrl, workbenchGraphContextAttachment, editWorkbenchGraph } from './graph/workbench-result.js?v=1.7.0-four-session-integration';
@@ -976,6 +977,17 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       taskTitle: taskTabs.get(requestToken?.taskId || activeTaskTabId)?.title,
       requestId: requestToken?.requestId, turnId: preparing ? null : currentTurnId,
       model: selection.model, effort: selection.effort, serviceTier: selection.serviceTier };
+  });
+  registerBugReportContext(clientScope || 'image-workbench', () => {
+    if (panel.hidden) return null;
+    const tab = taskTabs.get(activeTaskTabId);
+    const result = generatedImages.find(item => item.id === panel.dataset.aiSelectedCandidateId) || generatedImages.at(-1);
+    return { screen: 'AI 이미지 작업대',
+      task: { id: activeTaskTabId, title: tab?.title, state: tab?.workState, conversionKind,
+        model: modelSelection().model, imageKind: imageKindSelect?.value, labelWorkflow: readImageLabelWorkflow(),
+        outputOptions: { ...selectedImageOutputOptions }, candidateId: result?.id },
+      images: [attachments[0] && { ...attachments[0], role: 'original' }, result && { ...result, role: 'result' }].filter(Boolean),
+      errors: errorLog.snapshot() };
   });
   const addLog = (text, kind = "assistant") => {
     if (!text) return null;

@@ -29,7 +29,7 @@ export function initProjectStatus(state, serialize) {
     label.setAttribute('role', 'status');
     label.setAttribute('aria-live', 'polite');
     Object.assign(label.style, { flex: '0 0 auto', maxWidth: '40%', minWidth: '0', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' });
-    footer.appendChild(label);
+    (footer.querySelector?.('.footer-actions') || footer).appendChild(label);
   }
   const text = () => {
     const current = fingerprint();

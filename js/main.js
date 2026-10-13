@@ -1,5 +1,6 @@
 import './ai-label-background.js?v=1.7.0-four-session-integration';
 import { initVisitorStats } from './visitor-stats.js?v=1.7.0-four-session-integration';
+import { initBugReporter } from './bug-report.js?v=1.7.0-four-session-integration';
 import { initLiteShell } from "./lite-shell.js?v=1.7.0-four-session-integration";
 import { initButtonDesign } from './button-design.js?v=20261013-buttons';
 import { previewStorage as localStorage } from './preview-storage.js?v=1.7.0-four-session-integration';
@@ -90,6 +91,7 @@ import { commitActiveText } from "./text-editor.js?v=1.7.0-four-session-integrat
 const svg = document.getElementById("canvas");
 initButtonDesign();
 initVisitorStats();
+initBugReporter(state);
 // Canvas interaction transfers keyboard ownership away from the last toolbar button.
 svg.setAttribute("tabindex", "0");
 svg.addEventListener("pointerdown", (event) => {
