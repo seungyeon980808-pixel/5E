@@ -6401,32 +6401,21 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
   panel.querySelector("[data-ai-close]").addEventListener("click", close);
   panel.addEventListener("mousedown", (event) => { if (event.target === panel) close(); });
   const pasteClipboardImage = async (event = null) => {
-    const pasteTarget = captureAiPasteTarget({
-      taskId: activeTaskTabId,
-      task: taskTabs.get(activeTaskTabId),
-      sources: attachments,
-      revision: currentRequestEpoch,
-    });
+    if (disposed || busy || preflightRun || panel.dataset.aiSharingMode === 'view') return;
+    const owner = captureSourceRead();
     try {
       const result = await readAiClipboardImage(event, {readNative: desktop?.readClipboardImage});
+      if (!sourceReadCurrent(owner)) return;
       if (!result.blob && !result.dataUrl) {
         setStatus('클립보드에서 이미지 형식을 찾지 못했습니다.', 'warn');
         return;
       }
       const data = result.dataUrl || await blobToDataUrl(result.blob);
-      if (busy || !isAiPasteTargetCurrent(pasteTarget, {
-        taskId: activeTaskTabId,
-        task: taskTabs.get(activeTaskTabId),
-        sources: attachments,
-        revision: currentRequestEpoch,
-      })) {
-        setStatus('클립보드를 읽는 동안 작업이나 원본이 변경되어 이미지를 추가하지 않았습니다.', 'warn');
-        return;
-      }
+      if (!sourceReadCurrent(owner)) return;
       addReferencesAsTasks([{ data, name: result.blob?.name || "클립보드 이미지", sourceKind: "clipboard" }]);
       setStatus("붙여넣은 이미지의 작업이 준비되었습니다.", "ok");
     } catch (error) {
-      setStatus(`클립보드 이미지를 읽지 못했습니다: ${error.message}`, 'error');
+      if (sourceReadCurrent(owner)) setStatus(`클립보드 이미지를 읽지 못했습니다: ${error.message}`, 'error', error);
     }
   };
   document.addEventListener("paste", (event) => {

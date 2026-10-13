@@ -612,6 +612,11 @@
       "reason": "Actual image input, drop and replacement handlers retain their native read path while testing failures, retry, late completion, closing, disposal and newer selections."
     },
     {
+      "path": "tests/test-ai-paste-boundary-browser.cjs",
+      "findingIds": ["AI-PASTE-OWNER", "AI-PASTE-DISPOSAL", "AI-PASTE-LATEST-INPUT"],
+      "reason": "Synthetic PNG ClipboardEvents exercise the actual paste handler and native reader across close, disposal, task switching, late errors, retry and newer file/paste attempts without accessing the system clipboard."
+    },
+    {
       "path": "tests/test-library-figure-appearance-browser.cjs",
       "findingIds": [
         "BUTTON-DESIGN",
