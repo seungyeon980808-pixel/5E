@@ -1,7 +1,10 @@
 import { buildSimpleBugReport, cleanReportText, reportImage } from './bug-report-data.js?v=1.7.0-four-session-integration';
 
 const providers = new Map();
-export function registerBugReportContext(key, provider) { providers.set(key, provider); }
+export function registerBugReportContext(key, provider) {
+  providers.set(key, provider);
+  return () => { if (providers.get(key) === provider) providers.delete(key); };
+}
 const icon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 7V5a3 3 0 0 1 6 0v2M8 7h8v8a4 4 0 0 1-8 0zM12 8v11M5 9h3M16 9h3M4 14h4M16 14h4M6 20l3-3M15 17l3 3M6 4l3 3M15 7l3-3"/></svg>';
 
 export function initBugReporter(state) {
@@ -17,15 +20,21 @@ export function initBugReporter(state) {
     <footer><span data-report-status role="status" aria-live="polite"></span><button class="modal-btn" type="submit" data-report-send>보내기</button></footer></form>`;
   document.body.append(dialog);
   const form = dialog.querySelector('form'), status = dialog.querySelector('[data-report-status]');
-  const errors = [], actions = [], uploads = [], controls = new Set();
+  const errors = [], actions = [], uploads = [], panelErrorCounts = new WeakMap();
+  let lastAiErrorCount = 0;
   let captured = null, returnFocus = null, sending = false, reading = false;
   const push = (list, entry) => { list.push(entry); if (list.length > 20) list.shift(); };
-  window.addEventListener('error', event => push(errors, { time: new Date().toISOString(), message: cleanReportText(event.message, 1000) }));
-  window.addEventListener('unhandledrejection', event => push(errors, { time: new Date().toISOString(), message: cleanReportText(event.reason?.message || event.reason, 1000) }));
+  function recordError(message) {
+    push(errors, { time: new Date().toISOString(), message: cleanReportText(message, 1000) });
+    refreshControls();
+  }
+  window.addEventListener('error', event => recordError(event.message));
+  window.addEventListener('unhandledrejection', event => recordError(event.reason?.message || event.reason));
   document.addEventListener('click', event => {
     const control = event.target.closest?.('button,[role="button"]');
     if (!control || dialog.contains(control)) return;
     push(actions, { time: new Date().toISOString(), action: cleanReportText(control.getAttribute('aria-label') || control.title || control.textContent, 160) });
+    if (control.matches('.bug-report-open')) open({ currentTarget: control });
   }, true);
   const endpoint = () => {
     const configured = document.querySelector('meta[name="5e-bug-report-endpoint"]')?.content;
@@ -90,12 +99,20 @@ export function initBugReporter(state) {
     control.dataset.errorCount = String(count); control.classList.toggle('has-errors', Boolean(count));
     const badge = control.querySelector('[data-report-error-count]'); badge.hidden = !count; badge.textContent = count > 99 ? '99+' : String(count);
   }
+  function controlErrorCount(control) {
+    const panel = control.closest('.modal-overlay') || control.closest('#ai-image-panel');
+    return errors.length + (panel ? panelErrorCounts.get(panel) || 0
+      : control.closest('.footer-actions') ? lastAiErrorCount : 0);
+  }
+  function refreshControls() {
+    for (const control of document.querySelectorAll('.bug-report-open')) updateControl(control, controlErrorCount(control));
+  }
   function button(host, className = '') {
     if (!host) return;
     const control = document.createElement('button'); control.type = 'button';
     control.className = `bug-report-open ${className}`;
     control.setAttribute('aria-haspopup', 'dialog'); control.innerHTML = icon + '<span data-report-error-count hidden aria-hidden="true"></span>';
-    control.addEventListener('click', open); host.append(control); controls.add(control); updateControl(control, 0);
+    host.append(control); updateControl(control, controlErrorCount(control));
   }
   button(document.querySelector('.footer-actions'));
   button(document.querySelector('#ai-image-panel .ai-head-status'), 'ai-header-tool modal-btn');
@@ -105,9 +122,14 @@ export function initBugReporter(state) {
     if (host && !libraryHosts.has(host)) { libraryHosts.add(host); button(host, 'unilib-icon-button'); }
   };
   mountLibrary(document);
-  new MutationObserver(records => { for (const record of records) for (const node of record.addedNodes) mountLibrary(node); }).observe(document.body, { childList: true });
+  new MutationObserver(records => {
+    for (const record of records) for (const node of record.addedNodes) mountLibrary(node);
+    refreshControls();
+  }).observe(document.body, { childList: true });
   document.addEventListener('5e:ai-error-record', event => {
-    for (const control of controls) if (event.target.contains(control) || control.closest('.footer-actions')) updateControl(control, event.detail.count);
+    const count = Math.max(0, Number(event.detail?.count) || 0);
+    panelErrorCounts.set(event.target, count); lastAiErrorCount = count;
+    refreshControls();
   });
   document.addEventListener('5e:bug-report-open', event => open({ currentTarget: event.detail?.trigger || event.target }));
   document.addEventListener('keydown', event => {
@@ -116,7 +138,10 @@ export function initBugReporter(state) {
   dialog.querySelector('[data-report-close]').addEventListener('click', () => { if (!sending && !reading) dialog.close(); });
   dialog.addEventListener('cancel', event => { event.stopImmediatePropagation(); if (sending || reading) event.preventDefault(); });
   dialog.addEventListener('keydown', event => event.stopPropagation());
-  dialog.addEventListener('close', () => returnFocus?.isConnected && returnFocus.focus?.({ preventScroll: true }));
+  dialog.addEventListener('close', () => {
+    const trigger = returnFocus; returnFocus = null;
+    if (trigger?.isConnected) trigger.focus?.({ preventScroll: true });
+  });
   form.elements.screenshot.addEventListener('change', async event => {
     const files = [...event.target.files]; if (!files.length || sending || reading) return;
     if (captured.images.length + files.length > 3) { status.textContent = '이미지는 최대 3장입니다. 기존 첨부를 제외한 뒤 추가해 주세요.'; event.target.value = ''; return; }

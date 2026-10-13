@@ -1002,7 +1002,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       requestId: requestToken?.requestId, turnId: preparing ? null : currentTurnId,
       model: selection.model, effort: selection.effort, serviceTier: selection.serviceTier };
   });
-  registerBugReportContext(clientScope || 'image-workbench', trigger => {
+  disposalCallbacks.push(registerBugReportContext(clientScope || 'image-workbench', trigger => {
     if (disposed || panel.hidden || !panel.isConnected || (trigger?.closest('.modal-ai') && !panel.contains(trigger))) return null;
     const tab = taskTabs.get(activeTaskTabId);
     const view = panel.aiWorkbench?.getViewState();
@@ -1017,7 +1017,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
         outputOptions: { ...selectedImageOutputOptions }, candidateId: result?.id, sourceId:original?.id || sourceId, layout:view?.layout },
       images: [original && { ...original, role: 'original' }, result && { ...result, data: localEraseController?.getDraft(result)?.data || result.data, role: 'result' }].filter(Boolean),
       errors: errorLog.snapshot() };
-  });
+  }));
   const addLog = (text, kind = "assistant") => {
     if (!text) return null;
     if (kind === "error") { errorLog.record(text); text = safeAiErrorText(text); }

@@ -1666,6 +1666,13 @@
       ]
     },
     {
+      "path": "tests/test-bug-report-workspaces-browser.cjs",
+      "findingIds": [
+        "BUG-REPORT-WORKSPACE-LIFECYCLE",
+        "BUG-REPORT-GLOBAL-ERROR-BADGE"
+      ]
+    },
+    {
       "path": "tests/test-image-split-browser.cjs",
       "findingIds": [
         "USER-SAFARI-U13",
