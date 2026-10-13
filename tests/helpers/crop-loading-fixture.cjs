@@ -4,13 +4,13 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 const { fixtureContext } = require('./canonical-fixture-adapter.cjs');
 
-async function installCropFixture(page, { held = [], root = path.resolve(__dirname, '../..'), evidence, origin = process.env.PREVIEW_URL, libraryTransfer = false } = {}) {
+async function installCropFixture(page, { held = [], root = path.resolve(__dirname, '../..'), siteRoot = path.resolve(process.env.FIVE_E_SITE_ROOT || root), evidence, origin = process.env.PREVIEW_URL, libraryTransfer = false } = {}) {
   assert.ok(origin, 'Crop fixture requires the retained or owned test origin');
   assert.equal(typeof libraryTransfer, 'boolean', 'libraryTransfer must be an explicit boolean');
   assert.ok(held.every(key => /^(original|thumbnail|continuous|decode)-[1-3]$/.test(key)), 'Explicit crop gate selectors');
-  const { runtime } = fixtureContext(root);
+  const { runtime } = fixtureContext(root, { siteRoot });
   const moduleUrl = `${runtime.moduleBase}unified-library-ui.js${runtime.moduleQuery}`;
-  const sourcePath = path.join(root, runtime.moduleBase, 'unified-library-ui.js');
+  const sourcePath = path.join(siteRoot, runtime.moduleBase, 'unified-library-ui.js');
   const source = fs.readFileSync(sourcePath, 'utf8');
   const replaceOnce = (body, before, after) => {
     assert.equal(body.split(before).length - 1, 1, 'Original crop observation seam must occur once');
@@ -34,12 +34,13 @@ async function installCropFixture(page, { held = [], root = path.resolve(__dirna
   await page.route(`**${runtime.moduleBase}unified-library-ui.js*`, route => route.fulfill({ contentType: 'text/javascript', body }));
   // Older component helpers must consume the same canonical implementation and query.
   const legacyModules = ['unified-library-ui.js', 'store.js', 'cut-tool.js', 'tools/labeler-magnifier.js', 'tools/pointer-magnifier.js'];
-  for (const file of legacyModules) {
+  for (const file of runtime.moduleBase === '/preview/js/' ? [] : legacyModules) {
     await page.route(`**/preview/js/${file}*`, route => route.fulfill({ contentType: 'text/javascript', body: `export * from ${JSON.stringify(runtime.moduleBase + file + runtime.moduleQuery)};` }));
   }
   const receipt = { sourcePath, moduleUrl, originalSHA256: crypto.createHash('sha256').update(source).digest('hex'), instrumentedSHA256: crypto.createHash('sha256').update(body).digest('hex'), originalFunctionBodyRetained: true, observationOnly: true, cropObservationSeamCount: 5, libraryTransfer, libraryTransferHooks, fixtureCallbacks: { openIndependentReferences: libraryTransfer ? "window.__transfer(...args)" : null }, productCallbackParameterUnmodified: true, held, legacyAliases: legacyModules };
   if (evidence) { fs.mkdirSync(evidence, { recursive: true }); fs.writeFileSync(path.join(evidence, 'crop-fixture-source.json'), JSON.stringify(receipt, null, 2) + '\n'); }
-  await page.route('**/crop-fixture', route => route.fulfill({ contentType: 'text/html', body: `<html><head><link rel="stylesheet" href="/css/style.css${runtime.moduleQuery}"><link rel="stylesheet" href="/css/unified-library.css${runtime.moduleQuery}"></head><body></body></html>` }));
+  const styleBase = runtime.moduleBase.replace(/js\/$/, 'css/');
+  await page.route('**/crop-fixture', route => route.fulfill({ contentType: 'text/html', body: `<html><head><link rel="stylesheet" href="${styleBase}style.css${runtime.moduleQuery}"><link rel="stylesheet" href="${styleBase}unified-library.css${runtime.moduleQuery}"></head><body></body></html>` }));
   await page.goto(new URL('/crop-fixture', origin).href);
   await page.evaluate(async ({ held, moduleUrl, receipt, libraryTransfer }) => {
     const { createUnifiedLibraryUi } = await import(moduleUrl);

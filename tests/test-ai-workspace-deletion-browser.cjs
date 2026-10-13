@@ -151,7 +151,8 @@ async function chooseRevision(page, id) { await page.click(`${active} [data-ai-v
 async function openPanel(page) { await page.click('#ai-image-install-open'); await page.locator(active).waitFor({state:'visible'}); }
 async function objects(page) { return page.evaluate(() => structuredClone(window.__integrationState.get().objects)); }
 async function removeTask(page, id) {
-  await page.click(`${active} [data-tab-id="${id}"] .ai-task-delete`);
+  await page.click(`${active} [data-tab-id="${id}"] .ai-task-tab-select`, { button: 'right' });
+  await page.getByRole('menuitem', { name: '작업대에서 삭제', exact: true }).click();
   await page.getByRole('dialog', {name:'작업 삭제',exact:true}).waitFor();
   await page.click(`${active} .ai-confirm-accept`);
   await page.locator('.ai-confirm-dialog').waitFor({state:'detached'});

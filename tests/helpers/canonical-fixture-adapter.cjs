@@ -6,14 +6,14 @@ const path = require('node:path');
 const crypto = require('node:crypto');
 const INIT = 'const aiPanel = initAiPanel(state, { freshStart: recoveryChoice === "fresh", materializeCandidate });';
 
-function fixtureContext(root) {
+function fixtureContext(root, { siteRoot = root } = {}) {
   const entryHelpers = require(path.join(root, 'tests/helpers/four-session-entry.cjs'));
   const config = entryHelpers.entryConfiguration(process.env);
   const origin = 'http://127.0.0.1';
   const entryUrl = new URL(config.entry, origin).href;
-  const html = fs.readFileSync(path.join(root, config.entry === '/' ? 'index.html' : 'preview/index.html'), 'utf8');
+  const html = fs.readFileSync(path.join(siteRoot, config.entry === '/' ? 'index.html' : 'preview/index.html'), 'utf8');
   const mainUrl = entryHelpers.mainModuleUrl(html, entryUrl);
-  const source = fs.readFileSync(path.join(root, new URL(mainUrl).pathname), 'utf8');
+  const source = fs.readFileSync(path.join(siteRoot, new URL(mainUrl).pathname), 'utf8');
   const bound = entryHelpers.runtimeConfiguration(config, entryUrl, mainUrl, source);
   const runtime = { ...config, moduleBase: bound.moduleBase, moduleQuery: bound.moduleQuery };
   const runtimeInit = { base: runtime.moduleBase, query: runtime.moduleQuery };
