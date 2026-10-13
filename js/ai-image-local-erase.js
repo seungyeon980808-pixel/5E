@@ -8,7 +8,7 @@ export const DEFAULT_ERASE_DIAMETER = 64;
 
 export { polygonPixelMask } from './polygon-mask.js?v=1.7.0-four-session-integration';
 
-export function createLocalImageEraseController({ panel, getTarget, isBusy, resolveSource, previewChanged, commit, status }) {
+export function createLocalImageEraseController({ panel, getTarget, isBusy, isSaving = () => false, resolveSource, previewChanged, commit, status }) {
   const doc = panel.ownerDocument, win = doc.defaultView;
   const bindings = new Map(), drafts = new Map(), histories = new Map(), cleanup = [];
   const processor = createImageEraseProcessor(win);
@@ -65,7 +65,7 @@ export function createLocalImageEraseController({ panel, getTarget, isBusy, reso
     if (destroyed) return;
     const item = getTarget(), draft = getDraft(item), history = historyFor(item);
     const disabled = isBusy() || !eligible(item) || panel.dataset.aiSharingMode === 'view';
-    const historyDisabled = !eligible(item) || panel.dataset.aiSharingMode === 'view' || Boolean(pending);
+    const historyDisabled = !eligible(item) || panel.dataset.aiSharingMode === 'view' || Boolean(pending) || isSaving();
     if (disabled && active) { active = false; cancel(); panel.dataset.aiLocalEraseActive = 'false'; }
     panel.dataset.aiEditDraft = String(Boolean(draft));
     if (saveButton) { saveButton.hidden = !draft; saveButton.disabled = disabled || Boolean(pending); }
@@ -275,7 +275,7 @@ export function createLocalImageEraseController({ panel, getTarget, isBusy, reso
   async function moveHistory(direction) {
     const item = getTarget(), history = historyFor(item);
     const source = direction === 'undo' ? history?.past : history?.future;
-    if (!source?.length || pending || panel.hidden || panel.inert || panel.dataset.aiSharingMode === 'view') return;
+    if (!source?.length || pending || isSaving() || panel.hidden || panel.inert || panel.dataset.aiSharingMode === 'view') return;
     cancel();
     const destination = direction === 'undo' ? history.future : history.past;
     destination.push(getDraft(item) || null);

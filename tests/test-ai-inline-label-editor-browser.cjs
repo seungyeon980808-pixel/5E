@@ -384,6 +384,78 @@ test('failed local storage preserves the label draft and retry saves exactly one
   fs.writeFileSync(path.join(dir,'receipt.json'),JSON.stringify({rollback:true,draftRetained:true,retryVersions:1,errors},null,2));
 });
 
+for(const success of [false,true])for(const view of ['parent','child'])test(`pending local save locks its ${view}, preserves other drafts, and releases after ${success?'success':'failure'}`,{timeout:90000},async t=>{
+  const dir=path.join(evidence,`pending-save-${view}-${success?'success':'failure'}`);fs.mkdirSync(dir,{recursive:true});
+  const {page,errors}=await fixture(t,2,dir,{selectedPartial:true,unlabeled:true,beforeNavigate:async page=>{
+    const source=fs.readFileSync(path.resolve(__dirname,'../js/ai-output-cache-store.js'),'utf8');
+    const seam='  put(entry) { return this.request("readwrite", (store) => store.put(entry)); }';assert.equal(source.split(seam).length-1,1);
+    await page.route('**/js/ai-output-cache-store.js*',route=>route.fulfill({contentType:'text/javascript',body:source.replace(seam,
+      '  put(entry) { if(window.__holdLocalSave && entry.tabs?.some(tab=>tab.generated?.length>1)){window.__holdLocalSave=false;return new Promise((resolve,reject)=>{window.__finishLocalSave=success=>success?this.request("readwrite",store=>store.put(entry)).then(resolve,reject):reject(new DOMException("Delayed test quota","QuotaExceededError"));});} return this.request("readwrite", (store) => store.put(entry)); }')}));
+  }});
+  const panel=page.locator('#ai-image-panel'),editor=panel.locator('[data-ai-inline-label-editor]');
+  const ready=()=>page.waitForFunction(()=>{const p=document.querySelector('#ai-image-panel [data-ai-inline-label-editor]');return p&&!p.hidden&&!p.querySelector('[data-label-add]').disabled;});
+  const edit=async text=>{
+    if(await panel.locator('[data-ai-label-edit]').getAttribute('aria-pressed')!=='true')await panel.locator('[data-ai-label-edit]').click();
+    await ready();await editor.locator('[data-label-add]').click();await ready();
+    await editor.locator('[data-label-text]').fill(text);await editor.locator('[data-label-text]').blur();await ready();
+  };
+  const version=async id=>{await panel.locator('[data-ai-version-button]').click();await panel.locator(`[data-ai-candidate-option="${id}"]`).click();};
+  const task=async (id,candidateId)=>{
+    await panel.locator(`[data-tab-id="${id}"] .ai-task-tab-select`).click();
+    await page.waitForFunction(candidateId=>{
+      const p=document.querySelector('#ai-image-panel'),img=p?.querySelector('.is-ai-active-candidate .ai-preview-stage > img');
+      return p&&!p.hidden&&!p.inert&&p.dataset.aiSelectedCandidateId===candidateId&&img?.complete&&img.naturalWidth>0;
+    },candidateId);
+  };
+  // Establish both independent workspaces before delaying the owner's write.
+  // The first navigation durably transfers a seeded task to its own store.
+  await task('task-1','selected-1');await task('task-0','selected-0');
+  const before=await snapshot(page);
+  await edit('저장할 라벨');await page.evaluate(()=>window.__holdLocalSave=true);
+  await panel.locator('[data-ai-edit-save]').click();await page.waitForFunction(()=>Boolean(window.__finishLocalSave));
+  const provisionalId=await panel.getAttribute('data-ai-selected-candidate-id');assert.notEqual(provisionalId,'selected-0');
+  if(view==='parent')await version('selected-0');
+  const assertLocked=async()=>{
+    for(const action of ['local-erase','label-edit','save-selected','copy-selected','insert-selected','exam-send'])
+      assert.equal(await panel.locator(`[data-ai-${action}]`).isDisabled(),true,'pending '+view+' locks '+action);
+    if(view==='parent'){
+      assert.equal(await panel.locator('[data-ai-edit-undo]').isDisabled(),true,'pending owner cannot undo the draft being committed');
+      const bitmap=await panel.locator('.ai-generated-card.is-ai-active-candidate .ai-preview-stage > img').getAttribute('src');
+      await page.keyboard.press('Meta+z');await page.evaluate(()=>new Promise(requestAnimationFrame));
+      assert.equal(await panel.locator('.ai-generated-card.is-ai-active-candidate .ai-preview-stage > img').getAttribute('src'),bitmap);
+    }
+  };
+  await assertLocked();
+  // The lock belongs to these two versions, not all tasks or their drafts.
+  await task('task-1','selected-1');await edit('다른 작업 임시 라벨');
+  assert.equal(await panel.getAttribute('data-ai-edit-draft'),'true');
+  await task('task-0',view==='parent'?'selected-0':provisionalId);
+  await version(view==='parent'?'selected-0':provisionalId);await assertLocked();
+  await page.evaluate(success=>window.__finishLocalSave(success),success);
+  await page.waitForFunction(()=>!document.querySelector('#ai-image-panel [data-ai-local-erase]').disabled);
+  if(success)await page.waitForFunction(()=>document.querySelector('#ai-image-panel').dataset.aiEditDraft==='false');
+  else {
+    await page.waitForFunction(()=>document.querySelector('#ai-image-panel').dataset.aiSelectedCandidateId==='selected-0');
+    assert.equal(await panel.locator('[data-ai-edit-save]').isVisible(),true,'failed write retains the original draft');
+    assert.deepEqual((await snapshot(page))[0].generated,before[0].generated,'provisional revision is fully rolled back');
+    await panel.locator('[data-ai-edit-save]').click();
+    await page.waitForFunction(()=>document.querySelector('#ai-image-panel [data-ai-status]').textContent.startsWith('수정 저장 완료'));
+  }
+  const saved=await snapshot(page);assert.equal(saved[0].generated.length,2,'one durable version, including after retry');
+  assert.deepEqual(saved[0].generated[0],before[0].generated[0]);assert.deepEqual(saved[1].generated,before[1].generated);assert.deepEqual(saved[1].attachments,before[1].attachments);
+  assert.deepEqual(saved[0].generated[1].labelPlan.labels.map(label=>label.text),['저장할 라벨']);
+  await task('task-1','selected-1');
+  assert.equal(await panel.getAttribute('data-ai-edit-draft'),'true','another task keeps its temporary labels through save completion');
+  await panel.locator('[data-ai-edit-discard]').click();await page.waitForFunction(()=>document.querySelector('#ai-image-panel').dataset.aiEditDraft==='false');
+  await task('task-0',success?(view==='parent'?'selected-0':provisionalId):saved[0].generated[1].id);await version(saved[0].generated[1].id);
+  await edit('다음 편집 라벨');assert.equal(await panel.getAttribute('data-ai-edit-draft'),'true','saved child is editable after durable completion');
+  await panel.locator('[data-ai-edit-discard]').click();await page.waitForFunction(()=>document.querySelector('#ai-image-panel').dataset.aiEditDraft==='false');
+  assert.deepEqual((await snapshot(page)).map(tab=>tab.generated),saved.map(tab=>tab.generated));assert.equal(await page.evaluate(()=>__task2.sends.length),0);
+  await page.reload({waitUntil:'domcontentloaded',timeout:30000});await page.locator('#ai-image-install-open').click();
+  assert.deepEqual((await snapshot(page)).map(tab=>tab.generated),saved.map(tab=>tab.generated),'reload keeps only durable versions and exact label data');assert.deepEqual(errors,[]);
+  fs.writeFileSync(path.join(dir,'receipt.json'),JSON.stringify({engine:process.env.TASK2_ENGINE,success,view,lockedAcrossTaskSwitch:true,parentAndChildPreserved:true,otherDraftRetained:true,durableVersions:2,reloadExact:true,paidAiCalls:0,errors},null,2));
+});
+
 for(const switchTarget of ['task','candidate']) test(`late local save failure preserves another ${switchTarget} and retains its label draft`,{timeout:90000},async t=>{
   const dir=path.join(evidence,`storage-owner-${switchTarget}`);fs.mkdirSync(dir,{recursive:true});
   const {page,errors}=await fixture(t,switchTarget==='task'?2:1,dir,{selectedPartial:true,unlabeled:true,beforeNavigate:async page=>{
@@ -406,14 +478,24 @@ for(const switchTarget of ['task','candidate']) test(`late local save failure pr
     assert.equal(source.split(failure).length-1,1);
     await page.route('**/js/ai-panel.js*',route=>route.fulfill({contentType:'text/javascript',body:source.replace(failure,'window.__localSaveRollback=true; '+failure)}));
   }});
-  const panel=page.locator('#ai-image-panel'),before=await snapshot(page);
+  const panel=page.locator('#ai-image-panel');
+  const task=async (id,candidateId)=>{
+    await panel.locator(`[data-tab-id="${id}"] .ai-task-tab-select`).click();
+    await page.waitForFunction(candidateId=>{
+      const p=document.querySelector('#ai-image-panel'),img=p?.querySelector('.is-ai-active-candidate .ai-preview-stage > img');
+      return p&&!p.hidden&&!p.inert&&p.dataset.aiSelectedCandidateId===candidateId&&img?.complete&&img.naturalWidth>0;
+    },candidateId);
+  };
+  // Complete the fixture's one-time durable task migration before saving.
+  if(switchTarget==='task'){await task('task-1','selected-1');await task('task-0','selected-0');}
+  const before=await snapshot(page);
   await panel.locator('[data-ai-label-edit]').click();
   await page.waitForFunction(()=>!document.querySelector('#ai-image-panel [data-label-add]').disabled);
   await panel.locator('[data-label-add]').click();
   await page.waitForFunction(()=>!document.querySelector('#ai-image-panel [data-label-add]').disabled);
   await page.evaluate(()=>window.__holdLocalSave=true);
   await panel.locator('[data-ai-edit-save]').click();await page.waitForFunction(()=>Boolean(window.__rejectLocalSave));
-  if(switchTarget==='task')await panel.locator('[data-tab-id="task-1"] .ai-task-tab-select').click();
+  if(switchTarget==='task')await task('task-1','selected-1');
   else {await panel.locator('[data-ai-version-button]').click();await panel.locator('[data-ai-candidate-option="alternate-0"]').click();}
   const otherBefore=(await snapshot(page))[1];
   const statusBefore=await panel.locator('[data-ai-status]').innerText();
@@ -423,7 +505,10 @@ for(const switchTarget of ['task','candidate']) test(`late local save failure pr
   if(switchTarget==='candidate')assert.equal(await panel.locator('[data-ai-status]').innerText(),statusBefore,'another candidate keeps its status');
   assert.deepEqual(after[1],otherBefore,'another task keeps all data');
   assert.deepEqual(after[0].generated,before[0].generated,'failed local candidate is removed only from its owner');
-  if(switchTarget==='task')await panel.locator('[data-tab-id="task-0"] .ai-task-tab-select').click();
+  if(switchTarget==='task'){
+    await panel.locator('[data-tab-id="task-0"] .ai-task-tab-select').click();
+    await page.waitForFunction(()=>document.querySelector('#ai-image-panel')?.dataset.aiSelectedCandidateId==='selected-0');
+  }
   else {await panel.locator('[data-ai-version-button]').click();await panel.locator('[data-ai-candidate-option="selected-0"]').click();}
   assert.equal(await panel.locator('[data-ai-edit-save]').isVisible(),true,'the owner keeps its pending label draft');
   await panel.locator('[data-ai-edit-save]').click();

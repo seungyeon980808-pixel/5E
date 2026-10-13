@@ -921,12 +921,14 @@ const statusSource = oneSlice(source, '  const setStatus = (text, kind = "", cau
   '\n  const reportStatusError =', 'actual status side effects');
 const rawSource = oneSlice(outputSource, 'const BOUND_FIELDS =',
   'export function canChooseLocalOutput(', 'actual RAW eligibility');
-const footerDisabledStatement = 'if (save) save.disabled = busy || !item || Boolean(item.sceneResult);';
+const footerBusyStatement = 'const outputBusy = busy || isLocalSavePending(item);';
+assert.equal(source.split(footerBusyStatement).length - 1, 1, 'One actual footer busy-state rule');
+const footerDisabledStatement = 'if (save) save.disabled = outputBusy || !item || Boolean(item.sceneResult);';
 assert.equal(source.split(footerDisabledStatement).length - 1, 1, 'One actual footer disabled-state rule');
 const provenance = {
   sourcePath, sourceSHA256: sha(source), outputPath, outputSHA256: sha(outputSource),
   onclickSHA256: sha(onclickSource), footerSHA256: sha(footerSource), statusSHA256: sha(statusSource),
-  rawEligibilitySHA256: sha(rawSource), footerDisabledStatementSHA256: sha(footerDisabledStatement),
+  rawEligibilitySHA256: sha(rawSource), footerDisabledStatementSHA256: sha(footerBusyStatement + footerDisabledStatement),
   extraction: 'Complete onclick and footer listener, complete setStatus, actual RAW classifier prefix; only ES export keywords removed from classifier for VM.',
   dependencySeams: ['resolveOutputVariant controlled deferred/fulfilled/rejected promise', 'DOM disabled click semantics modeled', 'syncSelectedOutputActions executes original footer disabled statement only', 'setTaskState records new-job mutations; no persistence runtime'],
   limits: 'No actual DOM, browser download, file bytes, image decode, PNG pixel, setBusy integration, or task-restore runtime claim.',
@@ -968,7 +970,8 @@ function fixture() {
   const item = { id: 'candidate-a', kind: 'generated', data: RAW, name: 'owner-A', scopedEditHistory: [] };
   item.card = { querySelector(selector) { assert.equal(selector, '[data-ai-save-candidate]'); return savePng; } };
   const sandbox = {
-    item, savePng, busy: false, disposed: false, activeTaskTabId: 'task-A', localVisibilityEpoch: 7,
+    item, savePng, busy: false, pendingLocalSave: false, disposed: false, activeTaskTabId: 'task-A', localVisibilityEpoch: 7,
+    isLocalSavePending: () => sandbox.pendingLocalSave,
     generatedImages: [item], selected: item, insertingOutput: false, batchRun: null, status,
     selectedImageOutputOptions:{}, imageOutputOptionsKey:JSON.stringify,
     selectedOutputItem: () => sandbox.selected,
@@ -991,7 +994,7 @@ function fixture() {
     context, { filename: sourcePath + '#actual-png-save-and-footer' });
   function syncFooter() {
     vm.runInContext("{ const save = panel.querySelector('[data-ai-save-selected]'); const item = selectedOutputItem(); "
-      + footerDisabledStatement + ' }', context, { filename: sourcePath + '#actual-footer-disabled-rule' });
+      + footerBusyStatement + footerDisabledStatement + ' }', context, { filename: sourcePath + '#actual-footer-disabled-rule' });
   }
   function clickFooter() {
     const before = operations.length; footer.click();
@@ -1026,6 +1029,15 @@ function caseTest(name, body) {
     }
   });
 }
+
+caseTest('pending local revision disables the real footer until its checkpoint settles', async f => {
+  f.sandbox.pendingLocalSave = true; f.syncFooter();
+  assert.equal(f.footer.disabled, true); assert.equal(f.clickFooter(), null);
+  assert.equal(f.resolverCalls.length, 0); assert.deepEqual(f.downloads, []);
+  f.sandbox.pendingLocalSave = false; f.syncFooter(); assert.equal(f.footer.disabled, false);
+  f.outcomes.push(Promise.resolve(RAW)); const saved = f.clickFooter(); assert.ok(saved); await saved;
+  assert.deepEqual(f.downloads, [{ href: RAW, download: 'owner-A.png' }]);
+});
 
 caseTest('held completion while busy releases local lock and idle footer delegate saves RAW once', async f => {
   const gate = deferred(); f.outcomes.push(gate.promise);
