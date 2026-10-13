@@ -94,6 +94,24 @@ h.withServer(async origin => {
           assert.equal(after.title, before.title);
           assert.ok(after.cards >= before.cards, 'already rendered batches remain available');
         }
+        await page.keyboard.press('Escape');
+        await page.locator('.unified-library-overlay').waitFor({ state: 'hidden' });
+        await page.evaluate(async () => {
+          const opening = window.reopenFixture.open();
+          await new Promise(requestAnimationFrame);
+          window.reopenFixture.close();
+          await opening;
+        });
+        await page.locator('.unified-library-overlay').waitFor({ state: 'hidden' });
+        await page.evaluate(() => window.reopenFixture.open());
+        const interrupted = await snapshot(page);
+        receipts.push({ engine: name, layout, case: 'interrupted-reopen', before, after: interrupted });
+        fs.writeFileSync(path.join(evidence, 'receipt.json'), JSON.stringify(receipts, null, 2));
+        await page.screenshot({ path: path.join(evidence, `${name}-${layout}-interrupted-reopen.png`) });
+        assert.equal(interrupted.selectedId, before.selectedId);
+        assert.equal(interrupted.selectedVisible, true, 'interrupted entrance does not discard the retained viewport');
+        assert.ok(Math.abs(interrupted.selectedTop - before.selectedTop) <= 1);
+
         await page.locator('[data-unilib-query]').fill('Image 42');
         await page.keyboard.press('Enter');
         await page.waitForFunction(() => document.querySelector('[data-unilib-result-state]')?.dataset.state === 'ready'

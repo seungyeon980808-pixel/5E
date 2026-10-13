@@ -1342,6 +1342,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     };
   };
   let closedResultViewport = null;
+  let restoringResultViewport = null;
 
   async function runSearch({ preservePreview = false, retainedViewport = null } = {}) {
     const previousViewport = preservePreview ? retainedViewport ?? snapshotResultViewport() : null;
@@ -1990,7 +1991,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   function close({ restoreFocus = true, keyboard = lastInteractionWasKeyboard, aiHandoff = false } = {}) {
     if (!motion.isOpen()) return;
     // WebKit can reset nested scroll positions while the overlay is hidden.
-    closedResultViewport = snapshotResultViewport();
+    closedResultViewport = restoringResultViewport ?? snapshotResultViewport();
     openEpoch += 1;
     invalidateAction();
     cancelPlacementChoice?.();
@@ -2027,6 +2028,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   async function open(trigger) {
     cancelAiHandoff?.(); cancelAiHandoff = null;
     const retainedViewport = motion.isOpen() ? null : closedResultViewport;
+    restoringResultViewport = retainedViewport;
     const ownOpenEpoch = ++openEpoch;
     const isCurrentOpen = () => ownOpenEpoch === openEpoch && motion.isOpen();
     invalidateAction();
@@ -2063,7 +2065,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       if (!isCurrentOpen()) return;
       setFolderLoading("ready");
       await runSearch({ preservePreview: true, retainedViewport });
-      if (isCurrentOpen()) query.focus({ preventScroll: true });
+      if (isCurrentOpen()) { restoringResultViewport = null; query.focus({ preventScroll: true }); }
     } catch (error) {
       if (!isCurrentOpen()) return;
       const message = error instanceof Error ? error.message : String(error);
