@@ -15,6 +15,9 @@ const { installCropFixture, pointerOnImage, captureCropEvidence, releaseCropFixt
 const { identity, loadForHostedCi } = require('./helpers/performance-reference.cjs');
 const physicalReference = loadForHostedCi(root);
 const active = '#ai-image-panel';
+const visibleCommentSelector = runtime.entry === '/'
+  ? '.is-ai-active-candidate [data-ai-comment-marker]'
+  : '.ai-workbench-comment';
 const taskButton = index => `${active} [data-tab-id="task-${index}"] .ai-task-tab-select`;
 const write = (dir, name, value) => fs.writeFileSync(path.join(dir, name), JSON.stringify(value, null, 2));
 // Reuse the existing IDB/desktop fixture without importing its node:test registrations.
@@ -109,18 +112,18 @@ async function fixture(t, engine, name, count = null) {
   };
 }
 async function selected(page, index) {
-  await page.waitForFunction(index => {
+  await page.waitForFunction(({ index, selector }) => {
     const panel = document.querySelector('#ai-image-panel');
-    return panel?.dataset.aiSelectedCandidateId === `candidate-${index}` && [...panel.querySelectorAll('.ai-generated-card img')].some(img => img.complete && img.naturalWidth === 512) && [...panel.querySelectorAll('.ai-workbench-comment')].some(row => row.getBoundingClientRect().height > 0);
-  }, index);
+    return panel?.dataset.aiSelectedCandidateId === `candidate-${index}` && [...panel.querySelectorAll('.ai-generated-card img')].some(img => img.complete && img.naturalWidth === 512) && [...panel.querySelectorAll(selector)].some(row => row.getBoundingClientRect().height > 0);
+  }, { index, selector: visibleCommentSelector });
 }
 async function select(page, index) { await page.click(taskButton(index)); await selected(page, index); }
 async function content(page, count) {
-  const snapshot = await page.evaluate(async () => {
+  const snapshot = await page.evaluate(async selector => {
     const tabs = (await window.__task2Manager.sharingSnapshot()).workspaces.flatMap(w => w.tabs);
     const panel = document.querySelector('#ai-image-panel');
-    return { tabs: tabs.map(tab => ({ id: tab.id, originals: tab.attachments.length, revisions: tab.generated.length, comments: tab.generated.reduce((n, item) => n + item.comments.length, 0), originalUnchanged: tab.attachments[0].data === window.__task2.original })), rows: panel.querySelectorAll('.ai-task-tab-select').length, selected: panel.dataset.aiSelectedCandidateId, decoded: [...panel.querySelectorAll('.ai-image-card img')].filter(img => img.complete && img.naturalWidth === 512).length, visibleComments: [...panel.querySelectorAll('.ai-workbench-comment')].filter(el => el.getBoundingClientRect().height > 0).length };
-  });
+    return { tabs: tabs.map(tab => ({ id: tab.id, originals: tab.attachments.length, revisions: tab.generated.length, comments: tab.generated.reduce((n, item) => n + item.comments.length, 0), originalUnchanged: tab.attachments[0].data === window.__task2.original })), rows: panel.querySelectorAll('.ai-task-tab-select').length, selected: panel.dataset.aiSelectedCandidateId, decoded: [...panel.querySelectorAll('.ai-image-card img')].filter(img => img.complete && img.naturalWidth === 512).length, visibleComments: [...panel.querySelectorAll(selector)].filter(el => el.getBoundingClientRect().height > 0).length };
+  }, visibleCommentSelector);
   assert.equal(snapshot.tabs.length, count); assert.equal(snapshot.rows, count);
   assert.ok(snapshot.tabs.every(tab => tab.originals === 1 && tab.revisions === 1 && tab.comments === 1 && tab.originalUnchanged));
   assert.ok(snapshot.decoded >= 2); assert.ok(snapshot.visibleComments >= 1, 'selected populated task must display its comment');
@@ -132,6 +135,14 @@ for (const engine of ['chromium', 'webkit']) for (const count of [1, 10, 30]) {
     const { page, evidence, errors, pauseTracing, resumeTracing } = await fixture(t, engine, `tasks-${count}`, count);
     // Given: every fixture task has an original, revision and area comment; warm every task through the real controls.
     const before = await content(page, count);
+    if (runtime.entry === '/') {
+      const marker = page.locator(`${active} ${visibleCommentSelector}`).first();
+      await marker.focus(); await marker.press('Enter');
+      const popup = page.locator(`${active} [data-ai-comment-popover]`);
+      await popup.waitFor({ state: 'visible' });
+      assert.ok((await popup.locator('[data-ai-inline-editor]').inputValue()).length > 0, 'The visible marker opens the stored comment editor');
+      await popup.locator('.ai-comment-popover-close').click();
+    }
     const cold = [];
     for (let index = 0; index < count; index++) { const start = performance.now(); await select(page, index); cold.push(performance.now() - start); }
     await page.screenshot({ path: path.join(evidence, 'populated-last.png') });
@@ -145,7 +156,7 @@ for (const engine of ['chromium', 'webkit']) for (const count of [1, 10, 30]) {
     await pauseTracing();
     await page.bringToFront();
     await page.locator(active).evaluate(async node => { await document.fonts.ready; await Promise.all(node.getAnimations().map(animation => animation.finished)); });
-    await page.evaluate(() => {
+    await page.evaluate(selector => {
       window.__polish = { samples: [], gaps: [], stop: false, last: performance.now(), started: performance.now() };
       window.__task2.longTasks = [];
       const tick = time => { if (window.__polish.stop) return; window.__polish.gaps.push(time - window.__polish.last); window.__polish.last = time; requestAnimationFrame(tick); }; requestAnimationFrame(tick);
@@ -155,13 +166,13 @@ for (const engine of ['chromium', 'webkit']) for (const count of [1, 10, 30]) {
         const start = performance.now();
         const inspect = () => {
           const panel = document.querySelector('#ai-image-panel');
-          if (panel?.dataset.aiSelectedCandidateId !== id.replace('task-', 'candidate-') || ![...panel.querySelectorAll('.ai-generated-card img')].some(img => img.complete && img.naturalWidth === 512) || ![...panel.querySelectorAll('.ai-workbench-comment')].some(row => row.getBoundingClientRect().height > 0)) {
+          if (panel?.dataset.aiSelectedCandidateId !== id.replace('task-', 'candidate-') || ![...panel.querySelectorAll('.ai-generated-card img')].some(img => img.complete && img.naturalWidth === 512) || ![...panel.querySelectorAll(selector)].some(row => row.getBoundingClientRect().height > 0)) {
             if (performance.now() - start < 1000) requestAnimationFrame(inspect); else window.__polish.samples.push({ id, ms: performance.now() - start, ready: false }); return;
           }
           requestAnimationFrame(() => window.__polish.samples.push({ id, ms: performance.now() - start, ready: true }));
         }; requestAnimationFrame(inspect);
       }, true);
-    });
+    }, visibleCommentSelector);
     // When: trusted cached selection clicks repeatedly cycle across the populated task set.
     for (let sample = 0; sample < 20; sample++) {
       const index = count === 1 ? 0 : (sample * 7 + 1) % count;
@@ -188,6 +199,7 @@ for (const engine of ['chromium', 'webkit']) for (const count of [1, 10, 30]) {
     await page.emulateMedia({ reducedMotion: 'reduce', colorScheme: 'dark' });
     assert.equal(await page.evaluate(() => matchMedia('(prefers-reduced-motion: reduce)').matches), true);
     await capture('populated-dark-reduced');
+    if (runtime.entry === '/') await page.locator(`${active} .ai-compare-menu summary`).click();
     await page.click(`${active} [data-ai-compare]`);
     await page.waitForFunction(() => [...document.querySelectorAll('.ai-comparison-pane image')].length === 2 && [...document.querySelectorAll('.ai-comparison-pane image')].every(img => img.hasAttribute('href')));
     assert.equal(await page.getByLabel('왼쪽 비교 버전', { exact: true }).inputValue(), 'source-0');
@@ -201,6 +213,7 @@ for (const engine of ['chromium', 'webkit']) for (const count of [1, 10, 30]) {
     await page.getByRole('slider').focus(); await page.keyboard.press('Home'); await page.keyboard.press('Shift+ArrowRight');
     assert.equal(await page.getByRole('slider').getAttribute('aria-valuenow'), '10');
     await page.screenshot({ path: path.join(evidence, 'compare-dark-retina-zoompan.png') });
+    if (runtime.entry === '/') await page.locator(`${active} .ai-compare-menu summary`).click();
     await page.click(`${active} [data-ai-compare]`);
     assert.equal(await page.locator(`${active} [data-ai-capture]`).count(), 0, 'retired capture entry is absent');
     write(evidence, 'visual-content.json', { before, screenshots, comparison: { fitViews, zoomViews, left: 'source-0', right: 'candidate-0' }, errors, sends: await page.evaluate(() => window.__task2.sends.length) });
