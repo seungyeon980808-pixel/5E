@@ -6,6 +6,41 @@ const {fixture,verifiedPlan,snapshot} = require('./fixtures/ai-image-label-workf
 const evidence=path.resolve(process.env.EVIDENCE_DIR || '_work/feedback/parts/inline-labels','inline-editor');
 fs.mkdirSync(evidence,{recursive:true});
 
+test('label controls wait for the bitmap presentation before accepting edits',{timeout:90000},async t=>{
+  const dir=path.join(evidence,'presentation-ready');fs.mkdirSync(dir,{recursive:true});
+  const plan={...structuredClone(verifiedPlan),frozen:true,status:'review'};
+  plan.labels[0].anchor={...plan.labels[0].leaderRoutes[0].target};
+  const {page,errors}=await fixture(t,1,dir,{selectedPartial:true,beforeNavigate:async page=>{
+    await page.addInitScript(plan=>{
+      window.__seedReady=window.__seedReady.then(()=>new Promise((resolve,reject)=>{
+        const r=indexedDB.open('5e.preview:5e-ai-image-tasks',1);
+        r.onsuccess=()=>{const db=r.result,tx=db.transaction('tasks','readwrite'),store=tx.objectStore('tasks'),read=store.get('workspace');
+          read.onsuccess=()=>{const record=read.result,item=record.tabs[0].generated[0];item.data=window.__task2.modified;item.labelPlan=plan;record.tabs[0].labelPreviewIncluded={[item.id]:true};store.put(record);};
+          tx.oncomplete=()=>{db.close();resolve();};tx.onerror=()=>reject(tx.error);
+        };r.onerror=()=>reject(r.error);
+      }));
+    },plan);
+    const source=fs.readFileSync(path.resolve(__dirname,'../js/ai-inline-label-editor.js'),'utf8');
+    const seam='Promise.resolve(displayChanged(getTarget()))';
+    assert.equal(source.split(seam).length-1,1,'one retained display callback');
+    await page.route('**/js/ai-inline-label-editor.js*',route=>route.fulfill({contentType:'text/javascript',body:source.replace(seam,
+      'Promise.resolve().then(async()=>{if(window.__holdLabelDisplay){window.__holdLabelDisplay=false;await new Promise(resolve=>{window.__releaseLabelDisplay=resolve;});}return displayChanged(getTarget());})')}));
+  }});
+  const panel=page.locator('#ai-image-panel'),editor=panel.locator('[data-ai-inline-label-editor]'),saved=(await snapshot(page))[0].generated;
+  await page.evaluate(()=>{window.__holdLabelDisplay=true;});
+  await panel.locator('[data-ai-label-edit]').click();await page.waitForFunction(()=>Boolean(window.__releaseLabelDisplay));
+  assert.equal(await editor.isVisible(),true);
+  for(const control of ['add','add-leader','text'])assert.equal(await editor.locator(`[data-label-${control}]`).isDisabled(),true,'presentation is still pending');
+  assert.equal(await editor.locator('[data-label-close]').isEnabled(),true,'pending presentation can still be closed');
+  assert.deepEqual((await snapshot(page))[0].generated,saved);
+  await page.evaluate(()=>window.__releaseLabelDisplay());
+  await page.waitForFunction(()=>!document.querySelector('#ai-image-panel [data-label-add]').disabled);
+  assert.equal(await panel.locator('.ai-generated-card.is-ai-active-candidate .ai-preview-stage > img').getAttribute('src'),saved[0].data);
+  assert.ok(await panel.locator('.ai-label-edit-overlay text').count()>0,'live label text is ready with the bare bitmap');
+  assert.deepEqual(errors,[]);
+  fs.writeFileSync(path.join(dir,'receipt.json'),JSON.stringify({pendingControlsDisabled:true,closeEnabled:true,readyBitmapExact:true,savedCandidatesUnchanged:true,paidAiCalls:0,errors},null,2));
+});
+
 test('clicking a visible label opens only its settings; one leader endpoint stays synchronized through edits and undo',{timeout:90000},async t=>{
   const dir=path.join(evidence,'click-and-leader');fs.mkdirSync(dir,{recursive:true});
   const plan={...structuredClone(verifiedPlan),frozen:true,status:'review'};

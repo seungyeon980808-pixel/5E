@@ -96,7 +96,14 @@ export function createInlineLabelEditor({ panel, getTarget, getPlan, isBusy, art
     panel.dataset.aiLabelEditing = String(active);
     section.hidden = !active; entry.setAttribute('aria-pressed',String(active));
     const epoch = ++displayEpoch;
-    if (active) applying = true;
+    if (active) {
+      applying = true;
+      // Controls start disabled, even before the first bitmap/font presentation
+      // reaches refresh(). Only the completed display may enable editing.
+      section.querySelectorAll('input,textarea,select,button').forEach(control => {
+        if (!control.matches('[data-label-close]')) control.disabled = true;
+      });
+    }
     if (active) { cancelTools(); enableLabels(); }
     refresh();
     void Promise.resolve(displayChanged(getTarget())).finally(() => { if (!destroyed && displayEpoch === epoch) { applying = false; refresh(); } });
