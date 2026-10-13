@@ -9,13 +9,14 @@ const h = require('./helpers/rhwp-exam.cjs');
 const evidence = path.resolve(process.env.EVIDENCE_DIR || '_work/feedback/parts/bug-report');
 fs.mkdirSync(evidence, { recursive:true });
 const receipts = [];
-h.withServer(async origin => {
+(async () => {
   const directory = fs.mkdtempSync(path.join(os.tmpdir(),'5e-report-admin-'));
   const adminToken = 'isolated-browser-admin-key-'+randomUUID();
   const service = createBugReportServer({directory,adminToken});
   await new Promise(resolve=>service.listen(0,'127.0.0.1',resolve));
   const adminOrigin = `http://127.0.0.1:${service.address().port}`;
-  try {
+  process.env.FIVE_E_REPORT_PORT = String(service.address().port);
+  try {await h.withServer(async origin => {
   for (const [name, engine] of Object.entries({ chromium, webkit })) {
     const browser = await engine.launch();
     try {
@@ -32,20 +33,30 @@ h.withServer(async origin => {
       await page.locator('input[name="title"]').fill('검은 선택 영역');await page.locator('textarea[name="description"]').fill('선택 후 검은 상자가 생겼습니다.');
       assert.equal(await page.locator('.bug-report-images img').count(),2);
       let submitted;
-      await page.route('http://127.0.0.1:61909/api/bug-reports', route => {
+      await page.route(origin+'/api/bug-reports', route => {
         if(route.request().method()==='OPTIONS')return route.fulfill({status:204,headers:{'Access-Control-Allow-Origin':origin,'Access-Control-Allow-Headers':'Content-Type,X-5E-Report','Access-Control-Allow-Methods':'POST'}});
         submitted=route.request().postDataJSON(); return route.fulfill({contentType:'application/json',headers:{'Access-Control-Allow-Origin':origin},body:JSON.stringify({id:submitted.id})});
       });
       await page.locator('[data-report-send]').click();await page.locator('[data-report-status]').filter({hasText:'접수되었습니다'}).waitFor(); assert.deepEqual(submitted.images,[]);assert.equal(submitted.context.task.id,'original-task');
       await page.locator('input[name="images"]').check(); await page.locator('[data-report-send]').click();await page.locator('[data-report-status]').filter({hasText:'접수되었습니다'}).waitFor();assert.equal(submitted.images.length,2);
-      await page.unroute('http://127.0.0.1:61909/api/bug-reports');
-      await page.route('http://127.0.0.1:61909/api/bug-reports',route=>route.abort());
+      await page.unroute(origin+'/api/bug-reports');
+      await page.route(origin+'/api/bug-reports',route=>route.abort());
       await page.locator('[data-report-send]').click();await page.locator('[data-report-status]').filter({hasText:'보내지 못했습니다'}).waitFor(); assert.equal(await page.locator('textarea[name="description"]').inputValue(),'선택 후 검은 상자가 생겼습니다.');
       const download = page.waitForEvent('download'); await page.locator('[data-report-save]').click(); const file = await download; const filePath=await file.path(); const saved=JSON.parse(fs.readFileSync(filePath,'utf8'));assert.equal(saved.id,submitted.id);assert.equal(saved.images.length,2);
+      await page.locator('input[name="screenshot"]').setInputFiles({name:'evidence.png',mimeType:'image/png',buffer:Buffer.from(saved.images[0].data.split(',')[1],'base64')});await page.locator('.bug-report-images img').nth(2).waitFor();
+      await page.keyboard.press('Escape');await button.click();assert.equal(await page.locator('.bug-report-images img').count(),3);
+      await page.locator('input[name="images"]').check();await page.locator('input[name="title"]').fill(name+' 管理 <script>alert(1)</script>');
+      await page.unroute(origin+'/api/bug-reports');
+      const liveNetwork=[];
+      service.on('request',req=>liveNetwork.push({method:req.method,origin:req.headers.origin,path:req.url}));
+      page.on('console',message=>{if(message.type()==='error')liveNetwork.push({console:message.text()});});
+      page.on('requestfailed',req=>{if(req.url().startsWith(adminOrigin))liveNetwork.push({url:req.url(),failure:req.failure()});});
+      page.on('response',async res=>{if(res.url().startsWith(adminOrigin))liveNetwork.push({status:res.status(),body:await res.text().catch(()=>null)});});
+      await page.locator('[data-report-send]').click();try {await page.locator('[data-report-status]').filter({hasText:'접수되었습니다'}).waitFor({timeout:18000});}catch(error){console.error(name,liveNetwork,await page.locator('[data-report-status]').textContent());throw error;}
       await page.setViewportSize({width:390,height:844}); assert.ok(await page.locator('#bug-report-dialog').evaluate(el=>el.getBoundingClientRect().width<=390));await page.screenshot({path:path.join(evidence,name+'-mobile.png')});
       await page.setViewportSize({width:1440,height:1000});await page.screenshot({path:path.join(evidence,name+'-desktop.png')});
       await page.keyboard.press('Escape');assert.equal(await page.locator('#bug-report-dialog').evaluate(el=>el.open),false);assert.equal(await button.evaluate(el=>el===document.activeElement),true);assert.deepEqual(errors,[]);
-      receipts.push({engine:name,pass:true,conditions:['context','original-result-preview','images-opt-in','submit','failure-retains-input','export','narrow-screen','Esc-focus']});
+      receipts.push({engine:name,pass:true,conditions:['context','original-result-preview','images-opt-in','submit','failure-retains-input','export','screenshot-close-reopen','live-CORS-intake','narrow-screen','Esc-focus']});
       const real = await browser.newPage({viewport:{width:1440,height:1000}}); const realErrors=[];real.on('pageerror',error=>realErrors.push(error.message));
       await real.goto(origin+'/?mode=pro&mobile=0&exam=0'); await real.locator('.footer-actions .bug-report-open').waitFor();
       const skip=real.getByRole('button',{name:'건너뛰기',exact:true}); if(await skip.isVisible())await skip.click();
@@ -53,20 +64,21 @@ h.withServer(async origin => {
       await real.locator('#ai-image-panel .bug-report-open').click();await real.locator('#bug-report-dialog').waitFor({state:'visible'});
       assert.match(await real.locator('[data-report-context]').textContent(),/AI 이미지 작업대/);assert.deepEqual(realErrors,[]);
       await real.screenshot({path:path.join(evidence,name+'-real-app.png')});
+      await real.keyboard.press('Escape');await real.locator('[data-ai-empty-import]:visible').selectOption('library');await real.locator('.unified-library-overlay .bug-report-open').click();
+      assert.match(await real.locator('[data-report-context]').textContent(),/라이브러리/);assert.doesNotMatch(await real.locator('[data-report-context]').textContent(),/AI 이미지 작업대/);await real.keyboard.press('Escape');
       receipts.push({engine:name,pass:true,conditions:['real-main-load','real-AI-context-provider','no-runtime-errors']});
       const admin = await browser.newPage();
-      const specimen={...saved,id:randomUUID(),title:name+' 管理 <script>alert(1)</script>',context:{screen:'AI 이미지 작업대',model:'fixture'}};
-      assert.equal((await fetch(adminOrigin+'/api/bug-reports',{method:'POST',headers:{Origin:adminOrigin,'Content-Type':'application/json','X-5E-Report':'1'},body:JSON.stringify(specimen)})).status,201);
+      const intake = await (await fetch(adminOrigin+'/api/admin/reports',{headers:{Authorization:`Bearer ${adminToken}`}})).json();const specimen=intake.reports.find(report=>report.title.startsWith(name+' 管理'));
       const before=fs.readFileSync(path.join(directory,specimen.id+'.json'),'utf8');
       await admin.goto(adminOrigin+'/admin');await admin.locator('#token').fill('wrong-key');await admin.getByRole('button',{name:'접수 목록 열기'}).click();await admin.locator('#status').filter({hasText:'관리자 키를 확인'}).waitFor();
       await admin.locator('#token').fill(adminToken);await admin.getByRole('button',{name:'접수 목록 열기'}).click();await admin.locator('#reports button').filter({hasText:specimen.title}).click();
-      await admin.locator('#detail h2').filter({hasText:specimen.title}).waitFor();assert.equal(await admin.locator('#detail img').count(),2);assert.equal(await admin.locator('#detail script').count(),0);
+      await admin.locator('#detail h2').filter({hasText:specimen.title}).waitFor();assert.equal(await admin.locator('#detail img').count(),3);assert.equal(await admin.locator('#detail script').count(),0);
       await admin.getByLabel('처리 상태',{exact:true}).selectOption('investigating');await admin.getByLabel('관리자 메모').fill('재현 확인');await admin.getByRole('button',{name:'처리 상태 저장'}).click();await admin.locator('#status').filter({hasText:'저장했습니다'}).waitFor();
       await admin.reload();await admin.locator('#token').fill(adminToken);await admin.getByRole('button',{name:'접수 목록 열기'}).click();await admin.locator('#reports button').filter({hasText:specimen.title}).click();await admin.getByLabel('관리자 메모').waitFor();assert.equal(await admin.getByLabel('관리자 메모').inputValue(),'재현 확인');assert.equal(await admin.getByLabel('처리 상태',{exact:true}).inputValue(),'investigating');assert.equal(fs.readFileSync(path.join(directory,specimen.id+'.json'),'utf8'),before);
       await admin.screenshot({path:path.join(evidence,name+'-admin.png')});
       receipts.push({engine:name,pass:true,conditions:['admin-auth','real-report-intake','images-and-context','untrusted-text','review-persistence','immutable-original']});
     } finally {await browser.close();}
   }
-  } finally {await new Promise(resolve=>service.close(resolve));fs.rmSync(directory,{recursive:true,force:true});}
   fs.writeFileSync(path.join(evidence,'receipt.json'),JSON.stringify(receipts,null,2));
-}).catch(error=>{console.error(error);process.exitCode=1;});
+  });} finally {await new Promise(resolve=>service.close(resolve));fs.rmSync(directory,{recursive:true,force:true});}
+})().catch(error=>{console.error(error);process.exitCode=1;});

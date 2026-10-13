@@ -27,6 +27,20 @@ const server = http.createServer((req, res) => {
     res.end(JSON.stringify({local:Boolean(localBridge)}));
     return;
   }
+  if (pathname === '/api/bug-reports') {
+    if (req.method !== 'POST') return fail(405, 'Method rejected');
+    if (req.headers.origin !== origin || req.headers['x-5e-report'] !== '1'
+        || !req.headers['content-type']?.startsWith('application/json')) return fail(403, 'Origin rejected');
+    const reportPort = Number(process.env.FIVE_E_REPORT_PORT || 61909);
+    if (!Number.isInteger(reportPort) || reportPort < 1 || reportPort > 65535) return fail(503, 'Report service unavailable');
+    const upstream = http.request({ hostname:'127.0.0.1', port:reportPort, path:'/api/bug-reports', method:'POST',
+      headers:{ Origin:`http://127.0.0.1:${reportPort}`, 'Content-Type':'application/json', 'X-5E-Report':'1' } }, response => {
+      res.writeHead(response.statusCode, { 'Content-Type':'application/json' }); response.pipe(res);
+    });
+    upstream.setTimeout(15000, () => upstream.destroy(new Error('Report service timeout')));
+    upstream.on('error', () => { if (!res.headersSent) fail(502, '문제 신고 서버에 연결하지 못했습니다. 리포트 파일로 저장해 주세요.'); else res.destroy(); });
+    req.on('aborted', () => upstream.destroy()); req.pipe(upstream); return;
+  }
   if (pathname.startsWith('/api/')) {
     if (!api.test(pathname) || req.method !== 'POST') return fail(404, 'Unknown API');
     if (req.headers.origin !== origin || req.headers['x-5e-request'] !== '1') return fail(403, 'Origin rejected');

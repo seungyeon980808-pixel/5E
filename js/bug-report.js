@@ -22,7 +22,7 @@ export function initBugReporter(state) {
     <footer><span data-report-status role="status" aria-live="polite"></span><button class="modal-btn" type="button" data-report-save>리포트 파일 저장</button><button class="modal-btn" type="submit" data-report-send>리포트 보내기</button></footer></form>`;
   document.body.append(dialog);
   const form = dialog.querySelector('form'), status = dialog.querySelector('[data-report-status]');
-  const errors = [], actions = []; let captured = null, returnFocus = null, sending = false;
+  const errors = [], actions = []; let captured = null, returnFocus = null, sending = false, screenshot = null;
   const push = (list, entry) => { list.push(entry); if (list.length > 20) list.shift(); };
   window.addEventListener('error', event => push(errors, { time: new Date().toISOString(), message: cleanReportText(event.message, 1000) }));
   window.addEventListener('unhandledrejection', event => push(errors, { time: new Date().toISOString(), message: cleanReportText(event.reason?.message || event.reason, 1000) }));
@@ -33,7 +33,7 @@ export function initBugReporter(state) {
   }, true);
   const endpoint = () => {
     const configured = document.querySelector('meta[name="5e-bug-report-endpoint"]')?.content;
-    const value = configured || (location.hostname === '127.0.0.1' ? 'http://127.0.0.1:61909/api/bug-reports' : '/api/bug-reports');
+    const value = configured || '/api/bug-reports';
     const url = new URL(value, location.href);
     if (url.username || url.password || !(url.protocol === 'https:' || (url.protocol === 'http:' && url.hostname === '127.0.0.1'))) throw new Error('리포트 수신 주소를 확인해 주세요.');
     return url;
@@ -49,11 +49,12 @@ export function initBugReporter(state) {
   }
   function capture() {
     const current = state.get();
-    const visible = [...providers.values()].map(provider => provider()).find(Boolean);
+    const library = [...document.querySelectorAll('.unified-library-overlay:not([hidden])')].find(node => node.getClientRects().length);
+    const visible = library ? null : [...providers.values()].map(provider => provider()).find(Boolean);
     const context = { version: document.querySelector('[data-release-version]')?.textContent,
       change: document.querySelector('[data-change-summary]')?.textContent, route: location.pathname,
       browser: navigator.userAgent, viewport: { width: innerWidth, height: innerHeight, devicePixelRatio },
-      screen: visible?.screen || (document.querySelector('.unified-library-overlay:not([hidden])') ? '라이브러리' : '캔버스'),
+      screen: visible?.screen || (library ? '라이브러리' : '캔버스'),
       canvas: { artboard: current.artboard, viewBox: current.viewBox, tool: current.tool,
         objectCount: current.objects?.length || 0 },
       task: visible?.task || null, errors: [...errors, ...(visible?.errors || [])].slice(-20), actions: [...actions] };
@@ -63,7 +64,7 @@ export function initBugReporter(state) {
     if (preview?.naturalWidth) {
       try { const canvas = document.createElement('canvas'); canvas.width = preview.naturalWidth; canvas.height = preview.naturalHeight; canvas.getContext('2d').drawImage(preview, 0, 0); previewData = canvas.toDataURL('image/png'); } catch {}
     }
-    const images = visible?.images || (selected ? [{ name: '선택한 캔버스 이미지', src: selected.src, role: 'original' }]
+    const images = visible?.images || (!library && selected ? [{ name: '선택한 캔버스 이미지', src: selected.src, role: 'original' }]
       : preview ? [{ name: '라이브러리 미리보기', src: previewData, role: 'original' }] : []);
     const safeContext = JSON.parse(JSON.stringify(context, (_, value) => typeof value === 'string' ? cleanReportText(value, 1000) : value));
     return { context: safeContext, images: images.map(reportImage).filter(Boolean).slice(0, 2), id: crypto.randomUUID() };
@@ -71,7 +72,7 @@ export function initBugReporter(state) {
   function open(event) {
     if (dialog.open) return;
     returnFocus = event?.currentTarget || document.activeElement;
-    captured = capture(); status.textContent = ''; renderImages();
+    captured = capture(); if (screenshot) captured.images.push(screenshot); status.textContent = ''; renderImages();
     dialog.querySelector('[data-report-context]').textContent = JSON.stringify(captured.context, null, 2);
     form.elements.images.checked = false; dialog.showModal(); form.elements.title.focus();
   }
@@ -102,13 +103,15 @@ export function initBugReporter(state) {
   dialog.addEventListener('keydown', event => { event.stopPropagation(); });
   dialog.addEventListener('close', () => returnFocus?.focus({ preventScroll: true }));
   form.elements.screenshot.addEventListener('change', async event => {
-    const file = event.target.files[0]; if (!file) return;
-    const owner = captured;
-    if (!['image/png','image/jpeg','image/webp'].includes(file.type) || file.size > 6 * 1024 * 1024) { status.textContent = 'PNG·JPEG·WebP 이미지 6MB 이하를 선택해 주세요.'; return; }
-    const data = await new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = reject; reader.readAsDataURL(file); });
-    if (owner !== captured) return;
-    captured.images = captured.images.filter(image => image.role !== 'screenshot');
-    captured.images.push({ name: file.name, data, role: 'screenshot' }); renderImages();
+    const file = event.target.files[0];
+    screenshot = null; captured.images = captured.images.filter(image => image.role !== 'screenshot'); renderImages();
+    if (!file) return;
+    if (!['image/png','image/jpeg','image/webp'].includes(file.type) || file.size > 6 * 1024 * 1024) { event.target.value = ''; status.textContent = 'PNG·JPEG·WebP 이미지 6MB 이하를 선택해 주세요.'; return; }
+    try {
+      const data = await new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = () => reject(new Error('화면 캡처를 읽지 못했습니다. 다시 선택해 주세요.')); reader.readAsDataURL(file); });
+      if (form.elements.screenshot.files[0] !== file) return;
+      screenshot = { name:file.name, data, role:'screenshot' }; captured.images.push(screenshot); renderImages();
+    } catch (error) { if (form.elements.screenshot.files[0] === file) { event.target.value = ''; status.textContent = error.message; } }
   });
   const report = () => {
     const fields = { title: form.elements.title.value, description: form.elements.description.value,
