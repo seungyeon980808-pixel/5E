@@ -24,7 +24,7 @@ async function phase(page,next) {
 
 test('one root runs automatic labels, native graph editing and the pinned RHWP document editor',{timeout:150000},async t=>{
   fs.mkdirSync(output,{recursive:true});
-  process.env.TASK2_ENGINE='chromium';
+  process.env.TASK2_ENGINE ||= 'chromium';
   const {page,errors}=await fixture(t,1,output);
   await choose(page,'general','restore-editable');
   await page.locator('[data-ai-setting-key="verification"] [data-ai-setting-value="full"]').click();
@@ -39,14 +39,27 @@ test('one root runs automatic labels, native graph editing and the pinned RHWP d
   await page.locator('#ai-image-panel').waitFor({state:'hidden'});
   const nativeLabels=await page.evaluate(()=>{
     const objects=__candidateQA.state.get().objects;
-    return {image:objects.find(o=>o.type==='image'),labels:objects.filter(o=>o.aiAutoLabel)};
+    return {image:objects.find(o=>o.type==='image'),labels:objects.filter(o=>o.aiAutoLabel),selectedIds:__candidateQA.state.get().selectedIds};
   });
   assert.equal(nativeLabels.labels.length,1);
-  assert.equal(nativeLabels.image.imageSelectionLocked,true);
+  // The accepted output contract selects one movable image/label bundle.
+  // A locked bitmap would prevent the complete bundle from moving together.
+  assert.equal(nativeLabels.image.imageSelectionLocked,false);
+  assert.ok(nativeLabels.image.groupId);
+  assert.equal(nativeLabels.labels[0].groupId,nativeLabels.image.groupId);
+  assert.equal(nativeLabels.labels[0].aiCandidateId,nativeLabels.image.aiCandidateId);
+  assert.deepEqual(nativeLabels.selectedIds,[nativeLabels.image.id,...nativeLabels.labels.map(label=>label.id)]);
+  assert.equal(nativeLabels.image.src,labeled.data,'the bundle retains the exact generated bitmap');
   await page.screenshot({path:path.join(output,'native-labels.png')});
 
   await page.locator('#ai-image-install-open').click();
   await page.locator('#ai-image-panel [data-ai-workflow="graph"]').click();
+  // Modes keep separate tasks. Supply the synthetic source through the actual
+  // graph-mode file input instead of borrowing the previous image task.
+  const graphSource=await page.evaluate(()=>__task2.original);
+  await page.locator('#ai-image-panel [data-ai-source-file]').setInputFiles({
+    name:'synthetic-graph.png',mimeType:'image/png',buffer:Buffer.from(graphSource.split(',')[1],'base64'),
+  });
   await page.locator('#ai-image-panel [data-ai-input]').fill('축과 곡선을 편집 가능한 그래프로 복원해 주세요');
   let next=await page.evaluate(()=>__task2.sends.length);
   await page.locator('#ai-image-panel [data-ai-send]').click();
@@ -65,7 +78,7 @@ test('one root runs automatic labels, native graph editing and the pinned RHWP d
   }
   let graphs=(await snapshot(page)).flatMap(tab=>tab.generated).filter(item=>item.graphResult);
   assert.equal(graphs.length,1,'graph reconstruction creates a native candidate');
-  await page.locator('[data-ai-graph-edit]').click();
+  await page.locator('#ai-image-panel [data-ai-graph-edit]').click();
   await page.locator('#gm-labelx').fill('편집한 시간');
   await page.locator('#gm-labelx').dispatchEvent('input');
   await page.evaluate(()=>{
@@ -93,7 +106,8 @@ test('one root runs automatic labels, native graph editing and the pinned RHWP d
   assert.ok(types.includes('image')&&types.includes('labeler')&&types.includes('coordplane')&&types.includes('funcgraph'));
   await page.screenshot({path:path.join(output,'labels-and-native-graph.png')});
 
-  await page.locator('#exam-workspace-open').click();
+  await page.locator('#exam-send').click();
+  await page.locator('[data-exam-document-open]').click();
   await page.locator('#rhwp-exam-workspace[aria-busy="false"]').waitFor({timeout:60000});
   const native=await page.evaluate(()=>{
     const deps=document.querySelector('#exam-studio iframe').contentWindow.rhwpStudio.plugins.deps;
