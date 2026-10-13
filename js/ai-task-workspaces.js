@@ -222,6 +222,9 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
     return workflowSelections.get(kind);
   };
   const selectedTasks = {values:()=>selectionFor().values(),select:(...args)=>selectionFor().select(...args),clear:()=>selectionFor().clear()};
+  const setAttributeIfChanged = (node, name, value) => {
+    if (node.getAttribute(name) !== value) node.setAttribute(name, value);
+  };
   const taskKind = (entry,id) => entry.controller?.taskWorkflow?.(id) || entry.panel.dataset.aiWorkflow || 'image';
   const workflowRows = (kind = workflowKind()) => entries.flatMap(entry=>(entry.tabs || []).filter(row=>taskKind(entry,row.dataset.tabId)===kind).map(row=>({entry,row})));
   let workspaceBatch, batchReady = false, batchTimer = null, batchDisposed = false, batchLaunching = false;
@@ -564,14 +567,14 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
         row.classList.toggle('is-on', selected);
         row.classList.toggle('is-exam-linked', source.classList.contains('is-exam-linked'));
         row.classList.toggle('is-batch-selected', batchSelected);
-        row.dataset.aiBatchSelected=String(batchSelected);
-        row.dataset.workState = source.dataset.workState || 'idle';
-        row.title = source.title || source.textContent.replace('×', '').trim();
+        setAttributeIfChanged(row, 'data-ai-batch-selected', String(batchSelected));
+        setAttributeIfChanged(row, 'data-work-state', source.dataset.workState || 'idle');
+        setAttributeIfChanged(row, 'title', source.title || source.textContent.replace('×', '').trim());
         const job = batchJobs.find(candidate => ownerKey(candidate.sourceSnapshot?.owner) === ownerKey(batchOwner)
           && ['queued', 'running', 'failed'].includes(candidate.state));
-        row.dataset.aiGenerationActive = String(job?.state === 'running' || row.dataset.workState === 'busy');
-        if (job) row.dataset.aiWorkspaceJob = job.id;
-        else delete row.dataset.aiWorkspaceJob;
+        setAttributeIfChanged(row, 'data-ai-generation-active', String(job?.state === 'running' || row.dataset.workState === 'busy'));
+        if (job) setAttributeIfChanged(row, 'data-ai-workspace-job', job.id);
+        else if (row.hasAttribute('data-ai-workspace-job')) row.removeAttribute('data-ai-workspace-job');
         for (const selector of ['.ai-task-tab-title', '.ai-task-tab-time']) {
           const next = selector === '.ai-task-tab-time' && job?.state === 'queued'
             ? '실행 대기' : source.querySelector(selector)?.textContent || '';
@@ -585,14 +588,14 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
           if (newIcon) row.prepend(newIcon.cloneNode(true));
         }
         if (select) {
-          select.disabled = !entry.ready;
-          select.dataset.resultAttention = sourceSelect?.dataset.resultAttention || 'false';
+          if (select.disabled !== !entry.ready) select.disabled = !entry.ready;
+          setAttributeIfChanged(select, 'data-result-attention', sourceSelect?.dataset.resultAttention || 'false');
           const oldNotice = select.querySelector('.ai-result-notice');
           const newNotice = sourceSelect?.querySelector('.ai-result-notice');
           if (newNotice && !oldNotice) select.querySelector('.ai-task-tab-copy')?.append(newNotice.cloneNode(true));
           else if (!newNotice) oldNotice?.remove();
-          select.setAttribute('aria-pressed', String(selected));
-          select.setAttribute('aria-label', sourceSelect?.getAttribute('aria-label') || row.title);
+          setAttributeIfChanged(select, 'aria-pressed', String(selected));
+          setAttributeIfChanged(select, 'aria-label', sourceSelect?.getAttribute('aria-label') || row.title);
           select.onclick = event => {
             const toggle=event.metaKey || event.ctrlKey;
             selectedTasks.select(batchOwner,{toggle}); preparedLaunch=null;
