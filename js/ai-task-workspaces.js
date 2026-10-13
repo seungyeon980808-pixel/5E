@@ -503,14 +503,17 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
           // Register the durable destination before removing the source. A restart can finish this receipt.
           localStorage.setItem(registryKey, JSON.stringify(entries.filter(item => item.panel !== original).map(item => item.scope).filter(Boolean)));
           await entry.controller.removeTransferredTask(taskId);
-          writeTransfers(readTransfers().filter(record => record.to !== target.scope));
-          return target;
         } catch (error) {
           target.tabs = [];
           disposeEntry(target);
           writeTransfers(readTransfers().filter(record => record.to !== target.scope));
           throw error;
         }
+        // The destination and source removal are already durable. Receipt cleanup
+        // cannot roll back ownership; retain the receipt for recovery if it fails.
+        try { writeTransfers(readTransfers().filter(record => record.to !== target.scope)); }
+        catch { /* The registered destination remains accessible after reload. */ }
+        return target;
       })();
       pendingSelections.set(key, pending);
     }

@@ -243,3 +243,38 @@ test('deleting the primary workspace preserves remaining task after reload', {ti
   await task(page,1);assert.equal(await page.locator(`${active} [data-ai-input]`).inputValue(),'선택 영역 안에 작은 사각형 추가');
   assert.deepEqual(errors,[]);
 });
+
+for (const engine of ['chromium', 'webkit']) test(`${engine}: completed task transfer survives a receipt cleanup storage failure`, {timeout:60000}, async context => {
+  process.env.TASK2_ENGINE = engine;
+  const evidence = path.join(evidenceRoot, 'receipt-cleanup', engine);
+  fs.mkdirSync(evidence, {recursive:true});
+  const {page,errors} = await requestBrowserFixture(context,2,evidence);
+  const alerts = [];
+  page.on('dialog', async dialog => { alerts.push(dialog.message()); await dialog.dismiss(); });
+  await page.evaluate(() => {
+    const set = Storage.prototype.setItem;
+    window.__cleanupFailures = 0;
+    Storage.prototype.setItem = function(key,value) {
+      if (this === localStorage && key === '5e.aiTaskTransfers.v1' && value === '[]' && !window.__cleanupFailures) {
+        window.__cleanupFailures++;
+        throw new DOMException('synthetic receipt cleanup storage failure', 'QuotaExceededError');
+      }
+      return set.call(this,key,value);
+    };
+  });
+  await page.click(`${active} [data-tab-id="task-1"] .ai-task-tab-select`);
+  await page.waitForFunction(() => window.__transferSettled === true);
+  assert.equal(await page.evaluate(() => window.__cleanupFailures), 1);
+  const result = await record(page,evidence,'cleanup-failed');
+  assert.deepEqual([...result.cards].sort(),['task-0','task-1'],'a completed durable transfer stays accessible');
+  assert.equal(result.selection.taskId,'task-1');
+  assert.equal(result.sends,0);
+  await page.reload({waitUntil:'networkidle'});
+  await openPanel(page);
+  const reloaded = await record(page,evidence,'reloaded');
+  assert.deepEqual([...reloaded.cards].sort(),['task-0','task-1']);
+  assert.deepEqual(reloaded.transfers,[],'recovery completes only the durable receipt');
+  assert.equal(reloaded.sends,0);
+  assert.deepEqual(errors,[]);
+  assert.deepEqual(alerts,[],'an already saved task is not reported as lost');
+});
