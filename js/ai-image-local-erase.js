@@ -128,9 +128,16 @@ export function createLocalImageEraseController({ panel, getTarget, isBusy, reso
     drawFrame = win.requestAnimationFrame(() => { drawFrame = null; if (gesture === g) draw(g); });
   }
   async function showPreview(item) {
+    const revision = sequence;
+    const ownsStatus = () => !destroyed && sequence === revision && !panel.hidden && !panel.inert && getTarget() === item;
+    let displayed = true;
     try { await previewChanged(item); }
-    catch (error) { status(error.message || '편집 미리보기를 표시하지 못했습니다. 수정 내용은 유지됩니다.', 'error'); }
-    refresh();
+    catch (error) {
+      displayed = false;
+      if (ownsStatus()) status(error.message || '편집 미리보기를 표시하지 못했습니다. 수정 내용은 유지됩니다.', 'error');
+    }
+    if (!destroyed) refresh();
+    return displayed && ownsStatus();
   }
   function bind(item, stage, img) {
     bindings.get(item)?.dispose();
@@ -206,8 +213,7 @@ export function createLocalImageEraseController({ panel, getTarget, isBusy, reso
           history.future = [];
           drafts.set(item.id, { ...existing, baseData: item.data, data, width: result.width, height: result.height,
             operations: [...(existing?.operations || []), operation] });
-          await showPreview(item);
-          status('편집 중 · 모두 끝나면 수정 저장을 누르세요.', 'ok');
+          if (await showPreview(item)) status('편집 중 · 모두 끝나면 수정 저장을 누르세요.', 'ok');
         } else status('변경할 그림 픽셀이 없습니다. 라벨은 별도로 유지됩니다.', 'ok');
       })().catch(error => { if (current() && error.name !== 'AbortError') status(error.message || '지우기를 완료하지 못했습니다. 저장된 버전은 유지됩니다.', 'error'); })
         .finally(() => { g.overlay.remove(); if (pending === controller) pending = null; refresh(); });
@@ -239,8 +245,7 @@ export function createLocalImageEraseController({ panel, getTarget, isBusy, reso
     cancel(); drafts.delete(item.id); histories.delete(item.id);
     const controller = new AbortController(); pending = controller; refresh();
     try {
-      await showPreview(item);
-      status('저장 전 편집을 취소했습니다. 기존 수정본을 유지합니다.', 'ok');
+      if (await showPreview(item)) status('저장 전 편집을 취소했습니다. 기존 수정본을 유지합니다.', 'ok');
     } finally { if (pending === controller) pending = null; refresh(); }
   }
   async function moveHistory(direction) {
@@ -256,8 +261,7 @@ export function createLocalImageEraseController({ panel, getTarget, isBusy, reso
     if (next) drafts.set(item.id, next); else drafts.delete(item.id);
     const controller = new AbortController(); pending = controller; refresh();
     try {
-      await showPreview(item);
-      if (!controller.signal.aborted && getTarget() === item) status(direction === 'undo'
+      if (await showPreview(item) && !controller.signal.aborted && getTarget() === item) status(direction === 'undo'
         ? '직접 편집을 실행 취소했습니다. 저장된 수정본은 유지됩니다.'
         : '직접 편집을 다시 실행했습니다. 편집을 끝내면 수정 저장을 누르세요.', 'ok');
     } finally { if (pending === controller) pending = null; refresh(); }
@@ -314,8 +318,7 @@ export function createLocalImageEraseController({ panel, getTarget, isBusy, reso
     history.past.push(existing || null); if (history.past.length > 30) history.past.shift(); history.future = [];
     drafts.set(item.id, { ...existing, baseData: data, data: source, width: image.naturalWidth, height: image.naturalHeight,
       operations: existing?.operations || [], labelPlan: structuredClone(labelPlan) });
-    await showPreview(item);
-    if (getTarget() === item && getDraft(item)) status('라벨 편집 중 · 모두 끝나면 수정 저장을 누르세요.', 'ok');
+    if (await showPreview(item) && getDraft(item)) status('라벨 편집 중 · 모두 끝나면 수정 저장을 누르세요.', 'ok');
     return true;
   }
   return { bind, refresh, getDraft, editLabels, save, discard, undo: () => moveHistory('undo'), redo: () => moveHistory('redo'), cancel: () => setActive(false), destroy() { destroyed = true; cancel(); processor.destroy(); drafts.clear(); histories.clear(); observer.disconnect(); bindings.forEach(entry => entry.dispose()); bindings.clear(); cleanup.forEach(fn => fn()); delete panel.dataset.aiLocalEraseActive; delete panel.dataset.aiEditDraft; } };

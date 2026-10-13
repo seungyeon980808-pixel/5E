@@ -6,6 +6,47 @@ const {fixture, verifiedPlan, snapshot} = require('./fixtures/ai-image-label-wor
 const evidence = path.resolve(process.env.EVIDENCE_DIR || '_work/feedback/parts/local-edit-save');
 fs.mkdirSync(evidence, {recursive:true});
 
+for (const rejected of [false, true]) {
+  test(`late local preview ${rejected ? 'failure' : 'completion'} cannot overwrite another candidate status`, {timeout:90000}, async t => {
+    const dir=path.join(evidence, rejected ? 'late-preview-error' : 'late-preview-success');fs.mkdirSync(dir,{recursive:true});
+    const {page,errors}=await fixture(t,1,dir,{selectedPartial:true,beforeNavigate:async page=>{
+      await page.addInitScript(()=>{
+        window.__seedReady=window.__seedReady.then(()=>new Promise((resolve,reject)=>{
+          const request=indexedDB.open('5e.preview:5e-ai-image-tasks',1);
+          request.onsuccess=()=>{
+            const db=request.result,tx=db.transaction('tasks','readwrite'),store=tx.objectStore('tasks'),read=store.get('workspace');
+            read.onsuccess=()=>{const record=read.result,tab=record.tabs[0];tab.generated.push({...structuredClone(tab.generated[0]),id:'alternate-0',name:'다른 수정본',comments:[]});store.put(record);};
+            tx.oncomplete=()=>{db.close();resolve();};tx.onerror=()=>reject(tx.error);
+          };request.onerror=()=>reject(request.error);
+        }));
+      });
+      const source=fs.readFileSync(path.resolve(__dirname,'../js/ai-image-local-erase.js'),'utf8');
+      const seam='try { await previewChanged(item); }';
+      assert.equal(source.split(seam).length-1,1,'one retained preview callback');
+      await page.route('**/js/ai-image-local-erase.js*',route=>route.fulfill({contentType:'text/javascript',body:source.replace(seam,
+        'try { await previewChanged(item); if(window.__holdLocalPreview) { window.__holdLocalPreview=false; await new Promise((resolve,reject)=>{window.__heldLocalPreview={resolve,reject};}).finally(()=>{window.__heldLocalPreviewSettled=true;}); } }')}));
+    }});
+    const panel=page.locator('#ai-image-panel'),saved=(await snapshot(page))[0].generated;
+    await panel.locator('[data-ai-local-erase]').click();
+    await page.evaluate(()=>{window.__holdLocalPreview=true;});
+    const box=await panel.locator('.ai-generated-card.is-ai-active-candidate .ai-preview-stage > img').last().boundingBox();
+    await page.mouse.move(box.x+40/512*box.width,box.y+90/384*box.height);await page.mouse.down();
+    await page.mouse.move(box.x+40/512*box.width,box.y+180/384*box.height,{steps:5});await page.mouse.up();
+    await page.waitForFunction(()=>Boolean(window.__heldLocalPreview));
+    await panel.locator('[data-ai-version-button]').click();await panel.locator('[data-ai-candidate-option="alternate-0"]').click();
+    await page.waitForFunction(()=>document.querySelector('#ai-image-panel').dataset.aiSelectedCandidateId==='alternate-0');
+    const before=await panel.locator('[data-ai-status]').innerText();
+    await page.evaluate(rejected=>{const gate=window.__heldLocalPreview;rejected?gate.reject(new Error('오래된 미리보기 오류')):gate.resolve();},rejected);
+    await page.waitForFunction(()=>window.__heldLocalPreviewSettled===true);
+    await page.evaluate(()=>new Promise(requestAnimationFrame));
+    assert.equal(await panel.locator('[data-ai-status]').innerText(),before,'late preview may not report a saved/failed edit against the newly selected candidate');
+    assert.deepEqual((await snapshot(page))[0].generated,saved,'late preview never changes saved candidates');
+    assert.equal(await panel.locator('[data-ai-edit-save]').isVisible(),false,'the alternate candidate has no draft');
+    assert.deepEqual(errors,[]);
+    fs.writeFileSync(path.join(dir,'receipt.json'),JSON.stringify({rejected,statusUnchanged:true,savedCandidatesUnchanged:true,paidAiCalls:0,errors},null,2));
+  });
+}
+
 test('manual edits stay a draft until one save; hover, labels, cancel and task boundaries', {timeout:90000}, async t => {
   const plan = {...structuredClone(verifiedPlan), frozen:true, status:'ready', qualityReview:{verdict:'pass'}};
   plan.labels[0].anchor = {...plan.labels[0].leaderRoutes[0].target};
