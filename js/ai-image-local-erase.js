@@ -147,14 +147,21 @@ export function createLocalImageEraseController({ panel, getTarget, isBusy, reso
     bindings.get(item)?.dispose();
     const disposers = [];
     const surface = stage.closest('.ai-image-card') || stage.parentElement || stage;
-    let cursor = null, lastPointer = null;
-    const hideCursor = () => { cursor?.remove(); cursor = null; lastPointer = null; };
-    const showCursor = event => {
-      const point = position(event, img);
-      if (!active || pending || gesture || getTarget() !== item || mode !== 'brush' || !point
+    let cursor = null, lastPointer = null, cursorFrame = null;
+    const hideCursor = () => {
+      if (cursorFrame !== null) win.cancelAnimationFrame(cursorFrame);
+      cursorFrame = null; cursor?.remove(); cursor = null; lastPointer = null;
+    };
+    const cursorAvailable = () => active && !destroyed && !pending && !gesture && !isBusy()
+      && !panel.hidden && !panel.inert && panel.dataset.aiSharingMode !== 'view'
+      && img.isConnected && getTarget() === item && mode === 'brush';
+    const drawCursor = () => {
+      cursorFrame = null;
+      if (!cursorAvailable() || !lastPointer) { hideCursor(); return; }
+      const point = position(lastPointer, img);
+      if (!point
         || point.x < 0 || point.y < 0 || point.x > img.naturalWidth || point.y > img.naturalHeight
-        || event.target?.closest?.('button,input,textarea,select')) { hideCursor(); return; }
-      lastPointer = { clientX: event.clientX, clientY: event.clientY };
+        || lastPointer.target?.closest?.('button,input,textarea,select')) { hideCursor(); return; }
       if (!cursor) {
         cursor = overlayFor(stage, img, 'ai-local-erase-cursor');
         for (const className of ['ai-erase-ring-outer', 'ai-erase-ring-inner']) {
@@ -166,6 +173,13 @@ export function createLocalImageEraseController({ panel, getTarget, isBusy, reso
       for (const circle of cursor.children) {
         circle.setAttribute('cx', point.x); circle.setAttribute('cy', point.y); circle.setAttribute('r', Number(size?.value || DEFAULT_ERASE_DIAMETER)/2);
       }
+    };
+    const showCursor = event => {
+      if (!cursorAvailable()) { hideCursor(); return; }
+      lastPointer = { clientX: event.clientX, clientY: event.clientY, target: event.target };
+      // Keep the newest input, but read current image geometry only at paint.
+      // Scroll/zoom notifications share this frame; no stale bounds are cached.
+      if (cursorFrame === null) cursorFrame = win.requestAnimationFrame(drawCursor);
     };
     const on = (name, callback) => { surface.addEventListener(name, callback, true); disposers.push(() => surface.removeEventListener(name, callback, true)); };
     on('pointerdown', event => {
@@ -228,7 +242,7 @@ export function createLocalImageEraseController({ panel, getTarget, isBusy, reso
       })().catch(error => { if (current() && error.name !== 'AbortError') status(error.message || '지우기를 완료하지 못했습니다. 저장된 버전은 유지됩니다.', 'error'); })
         .finally(() => { g.overlay.remove(); if (pending === controller) pending = null; refresh(); });
     });
-    on('pointercancel', () => clearGesture());
+    on('pointercancel', () => { clearGesture(); hideCursor(); });
     on('lostpointercapture', () => clearGesture());
     const reposition = () => { if (lastPointer) showCursor(lastPointer); };
     surface.addEventListener('scroll', reposition, { passive: true });

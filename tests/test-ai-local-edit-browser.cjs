@@ -6,6 +6,56 @@ const {fixture, verifiedPlan, snapshot} = require('./fixtures/ai-image-label-wor
 const evidence = path.resolve(process.env.EVIDENCE_DIR || '_work/feedback/parts/local-edit-save');
 fs.mkdirSync(evidence, {recursive:true});
 
+test('eraser hover keeps the latest footprint per paint and cancels queued cursors',{timeout:90000},async t=>{
+  const dir=path.join(evidence,'hover-paint');fs.mkdirSync(dir,{recursive:true});
+  const {page,errors}=await fixture(t,1,dir,{selectedPartial:true,unlabeled:true});
+  const panel=page.locator('#ai-image-panel'),saved=(await snapshot(page))[0].generated;
+  await panel.locator('[data-ai-local-erase]').click();
+  const img=panel.locator('.ai-generated-card.is-ai-active-candidate .ai-preview-stage > img'),r=await img.boundingBox();
+  await page.mouse.move(r.x+r.width*.35,r.y+r.height*.75);
+  await panel.locator('.ai-local-erase-cursor').waitFor();
+  const result=await page.evaluate(async()=>{
+    const img=document.querySelector('#ai-image-panel .ai-generated-card.is-ai-active-candidate .ai-preview-stage > img'),r=img.getBoundingClientRect();
+    let writes=0;
+    const observer=new MutationObserver(records=>{writes+=records.filter(rec=>rec.target.matches?.('.ai-local-erase-cursor circle')).length;});
+    observer.observe(img.parentElement,{subtree:true,attributes:true});
+    for(let i=0;i<240;i++)img.dispatchEvent(new PointerEvent('pointermove',{bubbles:true,pointerId:77,pointerType:'mouse',isPrimary:true,buttons:0,clientX:r.left+r.width*(.25+i/240*.4),clientY:r.top+r.height*.75}));
+    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));observer.disconnect();
+    const circle=document.querySelector('.ai-local-erase-cursor circle');
+    return{writes,cx:Number(circle.getAttribute('cx')),cy:Number(circle.getAttribute('cy')),radius:Number(circle.getAttribute('r'))};
+  });
+  fs.writeFileSync(path.join(dir,'burst.json'),JSON.stringify(result,null,2));
+  assert.ok(result.writes<=12,'hover must not rebuild the footprint for every input before the next paint: '+result.writes);
+  assert.ok(Math.abs(result.cx-(.25+239/240*.4)*512)<.01,'the footprint follows the last input, not the first');
+  assert.equal(result.cy,288);assert.equal(result.radius,32);
+  // The next frame must read the live geometry, rather than cache image bounds.
+  const zoom=await page.evaluate(async()=>{
+    const panel=document.querySelector('#ai-image-panel'),img=panel.querySelector('.ai-generated-card.is-ai-active-candidate .ai-preview-stage > img'),r=img.getBoundingClientRect();
+    const x=r.left+r.width*.5,y=r.top+r.height*.5;
+    img.dispatchEvent(new PointerEvent('pointermove',{bubbles:true,pointerId:77,clientX:x,clientY:y}));
+    panel.querySelector('[data-ai-zoom-action="in"]').click();
+    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+    const after=img.getBoundingClientRect(),circle=panel.querySelector('.ai-local-erase-cursor circle');
+    return{cx:Number(circle?.getAttribute('cx')),cy:Number(circle?.getAttribute('cy')),expectedX:(x-after.left)/after.width*512,expectedY:(y-after.top)/after.height*384,widthBefore:r.width,widthAfter:after.width};
+  });
+  assert.ok(zoom.widthAfter>zoom.widthBefore);assert.ok(Math.abs(zoom.cx-zoom.expectedX)<.01);assert.ok(Math.abs(zoom.cy-zoom.expectedY)<.01);
+  const cancelQueued=async action=>page.evaluate(async action=>{
+    const panel=document.querySelector('#ai-image-panel'),img=panel.querySelector('.ai-generated-card.is-ai-active-candidate .ai-preview-stage > img'),r=img.getBoundingClientRect();
+    img.dispatchEvent(new PointerEvent('pointermove',{bubbles:true,pointerId:77,clientX:r.left+r.width*.5,clientY:r.top+r.height*.5}));
+    if(action==='leave')img.dispatchEvent(new PointerEvent('pointerleave',{bubbles:false,pointerId:77}));
+    else if(action==='cancel')img.dispatchEvent(new PointerEvent('pointercancel',{bubbles:true,pointerId:77}));
+    else if(action==='tool')panel.querySelector('[data-ai-local-erase]').click();
+    else await __task2Manager.dispose();
+    await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+    return panel.querySelectorAll('.ai-local-erase-cursor').length;
+  },action);
+  for(const action of ['leave','cancel','tool'])assert.equal(await cancelQueued(action),0,'queued footprint is removed on '+action);
+  await panel.locator('[data-ai-local-erase]').click();
+  assert.equal(await cancelQueued('dispose'),0,'queued footprint cannot outlive its workspace');
+  assert.deepEqual((await snapshot(page))[0].generated,saved);assert.equal(await page.evaluate(()=>__task2.sends.length),0);assert.deepEqual(errors,[]);
+  fs.writeFileSync(path.join(dir,'receipt.json'),JSON.stringify({engine:process.env.TASK2_ENGINE,result,zoom,cancelled:['leave','cancel','tool','dispose'],savedUnchanged:true,paidAiCalls:0,errors},null,2));
+});
+
 test('an oversized brush gesture never silently truncates and erases a shortcut to its final point',{timeout:90000},async t=>{
   const dir=path.join(evidence,'long-gesture');fs.mkdirSync(dir,{recursive:true});
   const {page,errors}=await fixture(t,1,dir,{selectedPartial:true,unlabeled:true});
