@@ -980,15 +980,20 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       requestId: requestToken?.requestId, turnId: preparing ? null : currentTurnId,
       model: selection.model, effort: selection.effort, serviceTier: selection.serviceTier };
   });
-  registerBugReportContext(clientScope || 'image-workbench', () => {
-    if (panel.hidden) return null;
+  registerBugReportContext(clientScope || 'image-workbench', trigger => {
+    if (disposed || panel.hidden || !panel.isConnected || (trigger?.closest('.modal-ai') && !panel.contains(trigger))) return null;
     const tab = taskTabs.get(activeTaskTabId);
+    const view = panel.aiWorkbench?.getViewState();
+    const sourceId = view?.selectedSourceId;
+    const combined = sourceId === '__combined__' && panel.querySelector('.ai-combined-card img');
+    const original = sourceId === '__combined__' ? (combined?.naturalWidth ? { id:sourceId, name:'연결된 전체 원본', data:combined.src } : null)
+      : attachments.find(item => item.id === sourceId) || attachments[0];
     const result = generatedImages.find(item => item.id === panel.dataset.aiSelectedCandidateId) || generatedImages.at(-1);
     return { screen: 'AI 이미지 작업대',
       task: { id: activeTaskTabId, title: tab?.title, state: tab?.workState, conversionKind,
         model: modelSelection().model, imageKind: imageKindSelect?.value, labelWorkflow: readImageLabelWorkflow(),
-        outputOptions: { ...selectedImageOutputOptions }, candidateId: result?.id },
-      images: [attachments[0] && { ...attachments[0], role: 'original' }, result && { ...result, role: 'result' }].filter(Boolean),
+        outputOptions: { ...selectedImageOutputOptions }, candidateId: result?.id, sourceId:original?.id || sourceId, layout:view?.layout },
+      images: [original && { ...original, role: 'original' }, result && { ...result, role: 'result' }].filter(Boolean),
       errors: errorLog.snapshot() };
   });
   const addLog = (text, kind = "assistant") => {

@@ -47,10 +47,11 @@ export function initBugReporter(state) {
     }
     if (!captured.images.length) list.textContent = '현재 첨부할 이미지가 없습니다. 화면 캡처를 추가할 수 있습니다.';
   }
-  function capture() {
+  function capture(trigger) {
     const current = state.get();
-    const library = [...document.querySelectorAll('.unified-library-overlay:not([hidden])')].find(node => node.getClientRects().length);
-    const visible = library ? null : [...providers.values()].map(provider => provider()).find(Boolean);
+    const library = trigger?.closest('.unified-library-overlay') || (!trigger?.closest('.modal-ai')
+      && [...document.querySelectorAll('.unified-library-overlay:not([hidden])')].find(node => node.getClientRects().length));
+    const visible = library ? null : [...providers.values()].map(provider => provider(trigger)).find(Boolean);
     const context = { version: document.querySelector('[data-release-version]')?.textContent,
       change: document.querySelector('[data-change-summary]')?.textContent, route: location.pathname,
       browser: navigator.userAgent, viewport: { width: innerWidth, height: innerHeight, devicePixelRatio },
@@ -72,7 +73,7 @@ export function initBugReporter(state) {
   function open(event) {
     if (dialog.open) return;
     returnFocus = event?.currentTarget || document.activeElement;
-    captured = capture(); if (screenshot) captured.images.push(screenshot); status.textContent = ''; renderImages();
+    captured = capture(event?.currentTarget); if (screenshot) captured.images.push(screenshot); status.textContent = ''; renderImages();
     dialog.querySelector('[data-report-context]').textContent = JSON.stringify(captured.context, null, 2);
     form.elements.images.checked = false; dialog.showModal(); form.elements.title.focus();
   }
