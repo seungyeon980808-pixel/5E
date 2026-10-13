@@ -215,9 +215,10 @@ for (const [engineName, engine] of [['chromium', chromium], ['webkit', webkit]])
       await library.locator('[data-unilib-ai]:not([disabled])').waitFor();
       await page.evaluate(() => { loginResumeStorageFault.enabled = false; });
       await sendLibrary(page, library, { count: 2 });
+      const dialog = page.locator('.web-login-dialog'); await dialog.waitFor({ state: 'visible' });
       const second = await page.evaluate(() => structuredClone(loginResumeSent[1]));
       assert.deepEqual(second.references, first.references, 'both library crops remain available after a partial hidden staging failure');
-      const dialog = page.locator('.web-login-dialog'); await dialog.waitFor({ state: 'visible' });
+      assert.equal(await page.evaluate(() => loginResumeSent.length), 2, 'one explicit retry prepares the same two crops once');
       await dialog.locator('[data-login-start]').click(); await page.evaluate(() => loginResumeFixture.connect());
       await dialog.waitFor({ state: 'hidden', timeout: 2000 }); await library.waitFor({ state: 'hidden' });
       assertPreserved(await workspaces(page), first, [[0], [1]]);
