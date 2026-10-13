@@ -130,6 +130,11 @@ test('ARCH-160-01: disposed workspaces cannot reactivate when deferred recovery 
     const factory = (await import(window.__runtime.base + 'ai-task-workspaces.js' + window.__runtime.query)).createTaskWorkspaces;
     const controllers = [];
     const activationEvents = [];
+    const workflowWrites = [];
+    const unhandledRejections = [];
+    window.addEventListener('unhandledrejection',event=>{
+      unhandledRejections.push(String(event.reason));event.preventDefault();
+    });
     window.addEventListener('5e:ai-workspace-activate', (event) => activationEvents.push({
       scope: event.detail.scope,
       connected: event.detail.panel.isConnected,
@@ -159,6 +164,7 @@ test('ARCH-160-01: disposed workspaces cannot reactivate when deferred recovery 
         batchOwner: id => ({scope:{sessionId:'5e',workspaceId:options.clientScope||'main'},taskId:id}),
         ownsBatchOwner: owner => tabs.some(tab=>tab.dataset.tabId===owner.taskId)&&owner.scope.workspaceId===(options.clientScope||'main'),
         selectTask() {}, dispose() {}, close() {}, attachReference() {}, open: async () => {},
+        setEmptyWorkflow(kind) { options.panel.dataset.aiWorkflow=kind;workflowWrites.push({scope:options.clientScope,connected:options.panel.isConnected,kind});return true; },
         sharingSnapshot: async () => ({ tabs: tabs.map((tab) => ({ id: tab.dataset.tabId })) }),
         deleteAll() {
           tabs = [];
@@ -187,6 +193,7 @@ test('ARCH-160-01: disposed workspaces cannot reactivate when deferred recovery 
     rejecting.rejectReady(new Error('synthetic recovery rejection'));
     await Promise.resolve();
     await Promise.resolve();
+    await new Promise(resolve=>setTimeout(resolve,0));
 
     const afterStalePanel = document.getElementById('ai-image-panel');
     const afterStale = {
@@ -212,20 +219,28 @@ test('ARCH-160-01: disposed workspaces cannot reactivate when deferred recovery 
       afterStale,
       liveActivation,
       primaryRestored: document.getElementById('ai-image-panel') === controllers[0].options.panel,
+      liveRetained: document.getElementById('ai-image-panel') === livePanel && !livePanel.hidden && livePanel.isConnected,
       resolvingConnected: resolvingPanel.isConnected,
       rejectingConnected: rejectingPanel.isConnected,
       staleActivation: activationEvents.some((event) => !event.connected),
+      staleWorkflowWrite: workflowWrites.some(write=>!write.connected),
+      workflowWrites:workflowWrites.length,
+      unhandledRejections,
       registryEntries: JSON.parse(localStorage.getItem('5e.aiParallelWorkspaces.v1') || '[]').length,
     };
   }, { createTaskWorkspaces, indexSource });
 
   assert.deepEqual(result.afterStale, { activeConnected: true, activeIsPrimary: true, primaryVisible: true });
   assert.deepEqual(result.liveActivation, { connected: true, active: true, visible: true });
-  assert.equal(result.primaryRestored, true);
+  assert.equal(result.primaryRestored, false,'deleting the active empty workspace keeps its own conversion workflow visible');
+  assert.equal(result.liveRetained, true);
   assert.equal(result.resolvingConnected, false);
   assert.equal(result.rejectingConnected, false);
   assert.equal(result.staleActivation, false);
-  assert.equal(result.registryEntries, 0);
+  assert.equal(result.staleWorkflowWrite, false,'disposed workspaces cannot persist workflow changes');
+  assert.equal(result.workflowWrites, 1,'only the live workspace is initialized');
+  assert.deepEqual(result.unhandledRejections,[],'a disposed recovery rejection is consumed without an application error');
+  assert.equal(result.registryEntries, 1,'the visible empty workspace remains recoverable');
 });
 
 test('ARCH-160-01: 100 real workbench disposals release listeners and observers', async (context) => {
@@ -312,6 +327,7 @@ test('TPK-005: pane header resize writes after observer delivery and coalesces u
       disconnect() { this.active = false; }
     };
     const writes = [];
+    const measuredHeadHeight = Math.max(0,...Array.from(panel.querySelectorAll('.ai-pane-head-controls'),control=>control.offsetHeight));
     const nativeSetProperty = panel.style.setProperty.bind(panel.style);
     panel.style.setProperty = (name, value, priority) => {
       if (name === '--ai-pane-head-height') writes.push(value);
@@ -331,6 +347,7 @@ test('TPK-005: pane header resize writes after observer delivery and coalesces u
     return {
       duringDelivery,
       afterDelivery,
+      measuredHeadHeight,
       writesAfterFirstDelivery,
       writesAfterUnchangedDelivery,
       disconnected: headObserver.active === false,
@@ -338,7 +355,7 @@ test('TPK-005: pane header resize writes after observer delivery and coalesces u
   }, { indexSource });
 
   assert.equal(result.duringDelivery, '');
-  assert.equal(result.afterDelivery, '16px');
+  assert.equal(result.afterDelivery, `${result.measuredHeadHeight + 8}px`,'one shared header includes its measured controls and spacing');
   assert.equal(result.writesAfterFirstDelivery, 1);
   assert.equal(result.writesAfterUnchangedDelivery, 1);
   assert.equal(result.disconnected, true);
@@ -879,7 +896,12 @@ test('X13: actual sharing, exam, project and root-preview-root writers retain th
     .evaluate(image => image.naturalWidth === 512 && image.getBoundingClientRect().width > 0), 'restored workbench raster is decoded and visibly laid out');
   const capturePaint = async filename => {
     const screenshot = await page.screenshot({ path: path.join(evidence, filename) });
-    return page.evaluate(async ({ png, visibility }) => {
+    return page.evaluate(async ({ png, visibility, selectors }) => {
+      // Opening/restoring can change horizontal versus vertical comparison.
+      // Sample the pane regions at capture time, not an earlier layout frame.
+      visibility = {viewport:{width:innerWidth,height:innerHeight},panes:visibility.panes.map(pane=>({
+        ...pane,region:document.querySelector(selectors[pane.name]).getBoundingClientRect().toJSON()
+      }))};
       const { decodeScopedPng } = await import(window.__runtime.base + 'ai-scoped-edit-png.js' + window.__runtime.query);
       const pixels = await decodeScopedPng(Uint8Array.from(atob(png), character => character.charCodeAt(0)));
       // Sample the existing fixture's rectangle edges and white interior, not pane chrome.
@@ -923,7 +945,7 @@ test('X13: actual sharing, exam, project and root-preview-root writers retain th
           return { x, y, kind, matches };
         }) }];
       }));
-    }, { png: screenshot.toString('base64'), visibility });
+    }, { png: screenshot.toString('base64'), visibility, selectors:paneSelectors });
   };
   const assertPainted = (paint, pane) => assert.ok(paint[pane].paper
     && Math.abs(paint[pane].paper.width / paint[pane].paper.height - 512 / 384) < .02

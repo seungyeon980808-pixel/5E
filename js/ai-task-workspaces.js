@@ -661,7 +661,12 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
       exportCollection, clearCollection, selectCollection, launchSelected, selectedTaskCount: () => selectedTasks.values().length, cancelWorkspaceJob: context=>workspaceBatch.cancel(context.jobId).then(refreshBatch).catch(batchError),
       newWorkspace: () => {
         const kind=workflowKind(),next=add(crypto.randomUUID(),false);
-        void next.controller.ready.then(()=>{next.controller.setEmptyWorkflow(kind);saveRegistry();activate(next);workflowTargets.set(kind,next);});
+        void next.controller.ready.then(()=>{
+          if (next.disposed || !entries.includes(next)) return;
+          next.controller.setEmptyWorkflow(kind);saveRegistry();activate(next);workflowTargets.set(kind,next);
+        }).catch(error=>{
+          if (!next.disposed && entries.includes(next)) batchError(error);
+        });
         return next.scope;
       },
       switchWorkflow: navigateWorkflow,
