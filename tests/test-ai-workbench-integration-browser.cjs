@@ -116,7 +116,8 @@ async function requestBrowserFixture(context, count, evidence, { initialGenerati
     'await window.__seedReady;\n' + fs.readFileSync(path.join(root, 'preview/js/main.js'), 'utf8').replace(
       'const aiPanel = initAiPanel(state, { freshStart: recoveryChoice === "fresh" });',
       'const aiPanel = initAiPanel(state, { freshStart: false }); window.__task2Manager = aiPanel; window.__integrationState = state;') }));
-  await page.goto(`http://127.0.0.1:${server.address().port}/preview/`, { waitUntil: 'networkidle' });
+  await page.goto(`http://127.0.0.1:${server.address().port}/preview/`, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => Boolean(window.__task2Manager));
   const welcome = page.locator('.tut-welcome-overlay .tut-banner-no');
   if (await welcome.isVisible()) await welcome.click();
   await page.locator('#ai-image-install-open').click();
@@ -131,7 +132,7 @@ const active = '#ai-image-panel';
 async function advanced(page) { const details = page.locator(`${active} .ai-advanced-settings`); if (!await details.evaluate(node => node.open)) await details.locator('summary').click(); }
 async function task(page, index) { await page.locator(`${active} [data-tab-id="task-${index}"] .ai-task-tab-select`).click(); await page.waitForFunction(index => document.querySelector('#ai-image-panel [data-tab-id="task-'+index+'"] .ai-task-tab-select')?.getAttribute('aria-pressed') === 'true', index); }
 async function chooseRevision(page, id) { await page.click(`${active} [data-ai-version-button]`); await page.click(`${active} [data-ai-candidate-option="${id}"]`); }
-async function openPanel(page) { await page.click('#ai-image-install-open'); await page.locator(active).waitFor({state:'visible'}); }
+async function openPanel(page) { await page.waitForFunction(() => Boolean(window.__task2Manager)); await page.click('#ai-image-install-open'); await page.locator(active).waitFor({state:'visible'}); }
 async function objects(page) { return page.evaluate(() => structuredClone(window.__integrationState.get().objects)); }
 
 for (const engine of ['chromium', 'webkit']) {
@@ -340,7 +341,7 @@ for(const engine of ['chromium','webkit']) test(`Lite background lock, per-task 
   await separation().getByRole('button',{name:'자동',exact:true}).click();
   await page.click(`${active} [data-ai-close]`);
   await page.evaluate(()=>window.__task2Manager.checkpointForClose());
-  await page.reload({waitUntil:'networkidle'});await openPanel(page);
+  await page.reload({waitUntil:'domcontentloaded'});await openPanel(page);
   await task(page,0);
   assert.equal(await page.locator(`${active} [data-ai-separation-mode]`).inputValue(),'auto');
   await separation().getByRole('button',{name:'안 함',exact:true}).click();

@@ -126,7 +126,8 @@ async function requestBrowserFixture(context, count, evidence, { transferGate = 
   });
   await page.route('**/preview/js/ai-task-workspaces.js*', route => route.fulfill({contentType:'text/javascript',body:
     fs.readFileSync(path.join(root,'preview/js/ai-task-workspaces.js'),'utf8').replace('pendingSelections.delete(key);','pendingSelections.delete(key); window.__transferSettled = true;')}));
-  await page.goto(`http://127.0.0.1:${server.address().port}/preview/`, { waitUntil: 'networkidle' });
+  await page.goto(`http://127.0.0.1:${server.address().port}/preview/`, { waitUntil: 'domcontentloaded' });
+  await page.waitForFunction(() => Boolean(window.__task2Manager));
   const welcome = page.locator('.tut-welcome-overlay .tut-banner-no');
   if (await welcome.isVisible()) await welcome.click();
   await page.locator('#ai-image-install-open').click();
@@ -141,7 +142,7 @@ const active = '#ai-image-panel';
 async function advanced(page) { const details = page.locator(`${active} .ai-advanced-settings`); if (!await details.evaluate(node => node.open)) await details.locator('summary').click(); }
 async function task(page, index) { await page.locator(`${active} [data-tab-id="task-${index}"] .ai-task-tab-select`).click(); await page.waitForFunction(index => document.querySelector('#ai-image-panel [data-tab-id="task-'+index+'"] .ai-task-tab-select')?.getAttribute('aria-pressed') === 'true', index); }
 async function chooseRevision(page, id) { await page.click(`${active} [data-ai-version-button]`); await page.click(`${active} [data-ai-candidate-option="${id}"]`); }
-async function openPanel(page) { await page.click('#ai-image-install-open'); await page.locator(active).waitFor({state:'visible'}); }
+async function openPanel(page) { await page.waitForFunction(() => Boolean(window.__task2Manager)); await page.click('#ai-image-install-open'); await page.locator(active).waitFor({state:'visible'}); }
 async function objects(page) { return page.evaluate(() => structuredClone(window.__integrationState.get().objects)); }
 async function removeTask(page, id) {
   await page.click(`${active} [data-tab-id="${id}"] .ai-task-delete`);
@@ -187,7 +188,7 @@ for (const count of [1,3]) {
     assert.notEqual(result.selection?.taskId,'task-0');
     if(count===3){await task(page,2);await record(page,evidence,'remaining-open');}
     await page.evaluate(()=>window.__task2Manager.checkpointForClose());
-    await page.reload({waitUntil:'networkidle'});await openPanel(page);
+    await page.reload({waitUntil:'domcontentloaded'});await openPanel(page);
     const reloaded=await record(page,evidence,'reloaded');
     assert.deepEqual(reloaded.cards,count===1?[]:['task-2']);
     assert.equal(reloaded.sends,0);
@@ -208,7 +209,7 @@ for (const transferGate of ['snapshot','import']) {
     const result=await record(page,evidence,'callback-settled');
     assert.deepEqual(result.cards,['task-0'],'late callback must not resurrect a deleted task');
     assert.equal(result.selection.taskId,'task-0');assert.deepEqual(result.transfers,[]);
-    await page.reload({waitUntil:'networkidle'});await openPanel(page);
+    await page.reload({waitUntil:'domcontentloaded'});await openPanel(page);
     const reloaded=await record(page,evidence,'reloaded');assert.deepEqual(reloaded.cards,['task-0']);
     await task(page,0);assert.deepEqual(errors,[]);assert.deepEqual(alerts,[]);
   });
@@ -220,7 +221,7 @@ test('deleting a transferred workspace persists its empty state before disposal'
   const result=await record(page,evidence,'workspace-deleted');assert.deepEqual(result.cards,['task-0']);
   await task(page,0);await removeTask(page,'task-0');
   await page.evaluate(()=>window.__task2Manager.checkpointForClose());
-  await page.reload({waitUntil:'networkidle'});await openPanel(page);
+  await page.reload({waitUntil:'domcontentloaded'});await openPanel(page);
   const reloaded=await record(page,evidence,'all-deleted-reloaded');assert.deepEqual(reloaded.cards,[]);assert.deepEqual(errors,[]);
 });
 test('deleting the primary workspace preserves remaining task after reload', {timeout:60000},async context=>{
@@ -230,7 +231,7 @@ test('deleting the primary workspace preserves remaining task after reload', {ti
   await page.waitForFunction(()=>document.querySelector('#ai-image-panel [data-tab-id="task-1"] .ai-task-tab-select')?.getAttribute('aria-pressed')==='true');
   const result=await record(page,evidence,'primary-deleted');assert.deepEqual(result.cards,['task-1']);
   assert.equal(result.selection.taskId,'task-1');
-  await page.reload({waitUntil:'networkidle'});await openPanel(page);
+  await page.reload({waitUntil:'domcontentloaded'});await openPanel(page);
   const reloaded=await record(page,evidence,'reloaded');assert.deepEqual(reloaded.cards,['task-1']);
   await task(page,1);assert.equal(await page.locator(`${active} [data-ai-input]`).inputValue(),'선택 영역 안에 작은 사각형 추가');
   assert.deepEqual(errors,[]);

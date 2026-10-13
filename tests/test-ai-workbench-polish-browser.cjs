@@ -75,7 +75,8 @@ async function fixture(t, engine, name, count = null) {
       assert.ok(source.includes(original));
       return route.fulfill({ contentType: 'text/javascript', body: 'await window.__seedReady;\n' + source.replace(original, 'const aiPanel = initAiPanel(state, { freshStart: false }); window.__task2Manager=aiPanel;') });
     });
-    await page.goto(`${origin}/preview/`, { waitUntil: 'networkidle' });
+    await page.goto(`${origin}/preview/`, { waitUntil: 'domcontentloaded' });
+    await page.waitForFunction(() => Boolean(window.__task2Manager));
     const welcome = page.locator('.tut-welcome-overlay .tut-banner-no'); if (await welcome.isVisible()) await welcome.click();
     await page.click('#ai-image-install-open');
     await selected(page, 0);
