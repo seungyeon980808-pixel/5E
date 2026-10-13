@@ -275,6 +275,9 @@ for(const engine of ['chromium','webkit']) test(`lower cap cancellation acknowle
   await page.screenshot({path:path.join(evidence,'running-cards.png')});
   await page.evaluate(()=>window.__task2.emit(0,'error'));
   await page.waitForFunction(()=>window.__task2.sends.length===3);
+  // A send starts before the navigation poll publishes its new workspace row.
+  // Wait for that row before clicking another row while the list is reordered.
+  await page.waitForFunction(()=>document.querySelector('#ai-image-panel [data-tab-id="task-2"]')?.dataset.aiGenerationActive==='true');
   await page.evaluate(()=>window.__task2.delayInterrupt());
   await jobAction(page,'task-1','cancel');
   await page.waitForFunction(()=>window.__task2Manager.workspaceBatchState().find(j=>j.sourceSnapshot.owner.taskId==='task-1')?.state==='cancelled');
