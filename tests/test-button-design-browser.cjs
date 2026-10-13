@@ -18,16 +18,33 @@ async function assertOriginalAppearance(page, selector) {
     await document.fonts.ready;
     await Promise.allSettled(document.getAnimations().filter(a=>a.playState==='running' && a.effect?.getTiming().iterations!==Infinity).map(a=>a.finished));
   });
-  const read = () => page.locator(selector).evaluateAll(els => els.map(el => {
-    const s=getComputedStyle(el);
-    return Object.fromEntries(['backgroundColor','borderTopWidth','borderTopColor','borderRadius','boxShadow','width','height','padding','color'].map(key=>[key,s[key]]));
-  }));
-  const actual=await read(); assert.ok(actual.length,selector);
-  await page.locator('link[href*="button-design.css"]').evaluate(el=>{el.sheet.disabled=true;});
-  const original=await read();
-  await page.locator('link[href*="button-design.css"]').evaluate(el=>{el.sheet.disabled=false;});
+  // Capture both styles synchronously: inspector rendering can replace eye nodes
+  // between locator resolution and evaluation, yielding detached-node empty styles.
+  const {actual,original}=await page.evaluate(selector=>{
+    const sheet=document.querySelector('link[href*="button-design.css"]').sheet;
+    const read=()=>[...document.querySelectorAll(selector)].map(el=>{
+      const s=getComputedStyle(el);
+      return Object.fromEntries(['backgroundColor','borderTopWidth','borderTopColor','borderRadius','boxShadow','width','height','padding','color'].map(key=>[key,s[key]]));
+    });
+    const actual=read();sheet.disabled=true;
+    try {return {actual,original:read()};} finally {sheet.disabled=false;}
+  },selector);
+  assert.ok(actual.length,selector);
   assert.deepEqual(actual,original,`Effects must preserve existing appearance: ${selector}`);
   return actual;
+}
+
+async function readStateStyle(page, selector) {
+  return page.locator(selector).evaluate(el=>{
+    const s=getComputedStyle(el);
+    return {background:s.backgroundColor,border:s.borderTopColor,color:s.color};
+  });
+}
+
+async function assertWorkflowState(page,id,open,selected) {
+  await page.waitForFunction(({id,open})=>document.getElementById(id)?.dataset.workflowOpen===String(open),{id,open});
+  if(id!=='exam-send')assert.equal(await page.locator('#'+id).getAttribute('aria-expanded'),String(open));
+  if(open)assert.deepEqual(await readStateStyle(page,'#'+id),selected,`${id} uses the same active state as the toolbar`);
 }
 
 for (const engine of [chromium,webkit]) test(`canonical button design and unread conversion lifecycle in ${engine.name()}`,{timeout:90000},async t=>{
@@ -65,6 +82,21 @@ for (const engine of [chromium,webkit]) test(`canonical button design and unread
     return {id,inHub:!!el.closest('.image-workflow-hub'),height:rect.height,radius:style.borderRadius,border:style.borderTopWidth,animation:getComputedStyle(el,'::before').animationName};
   }),core);
   assert.ok(layout.every(x=>x.inHub && x.height===27 && x.radius==='6px' && x.border==='1px' && x.animation==='none'),JSON.stringify(layout));
+  const idle=await page.locator('.image-workflow-hub .ui-core-action').evaluateAll(els=>els.map(el=>{
+    const s=getComputedStyle(el),icon=getComputedStyle(el.querySelector('svg'));
+    return {background:s.backgroundColor,border:s.borderTopColor,color:s.color,padding:s.padding,weight:s.fontWeight,gap:s.gap,iconWidth:icon.width,iconHeight:icon.height};
+  }));
+  assert.equal(idle.length,4);
+  assert.ok(idle.every(s=>JSON.stringify(s)===JSON.stringify(idle[0])),JSON.stringify(idle));
+  assert.equal(await page.locator('.image-workflow-divider').count(),0);
+  assert.equal(idle[0].background,'rgba(0, 0, 0, 0)');
+  const toolbar=await page.locator('#settings-menu-btn,#file-menu-btn,#sharing-btn,#auto-snap-btn,#grid-btn,#center-view-btn,#tutorial-btn,#quick-capture-btn').evaluateAll(els=>els.map(el=>{
+    const s=getComputedStyle(el),icon=getComputedStyle(el.querySelector('svg'));
+    return {id:el.id,width:s.width,height:s.height,radius:s.borderRadius,padding:s.padding,iconWidth:icon.width,iconHeight:icon.height};
+  }));
+  assert.equal(toolbar.length,8);
+  assert.ok(toolbar.every(s=>s.width==='32px' && s.height==='32px' && s.radius==='8px' && s.padding==='4px' && s.iconWidth==='17px' && s.iconHeight==='17px'),JSON.stringify(toolbar));
+  assert.equal(await page.locator('.canvas-view-controls').evaluate(el=>getComputedStyle(el).gap),'8px');
   const tools=await assertOriginalAppearance(page,'.tool-btn');
   const eyes=await assertOriginalAppearance(page,'.insp-layer-eye');
   assert.ok(eyes.every(x=>x.width==='22px' && x.height==='22px' && x.borderTopWidth==='0px' && x.backgroundColor==='rgba(0, 0, 0, 0)'),JSON.stringify(eyes));
@@ -80,7 +112,28 @@ for (const engine of [chromium,webkit]) test(`canonical button design and unread
   assert.equal(await page.locator('#auto-snap-btn svg').count(),1);
   assert.equal((await page.locator('#auto-snap-btn').textContent()).trim(),'');
   assert.equal(await page.locator('#center-view-btn').getAttribute('aria-pressed'),'true');
+  const selected=await readStateStyle(page,'#center-view-btn');
+  assert.deepEqual(await readStateStyle(page,'#auto-snap-btn'),selected);
+  for(const side of ['left','right']) {
+    const selector='#drawer-'+side+'-toggle';
+    assert.deepEqual(await readStateStyle(page,selector),selected);
+    assert.equal(await page.locator(selector+' svg').evaluate(el=>getComputedStyle(el).color),selected.color,'Panel icon stays neutral in the active button');
+    await page.locator(selector).click();
+    await page.waitForFunction(side=>document.querySelector('#drawer-'+side+'-toggle')?.getAttribute('aria-expanded')==='false',side);
+    await page.mouse.move(1000,400);
+    assert.deepEqual(await readStateStyle(page,selector),await readStateStyle(page,'#settings-menu-btn'));
+    await page.locator(selector).click();
+    await page.waitForFunction(side=>document.querySelector('#drawer-'+side+'-toggle')?.getAttribute('aria-expanded')==='true',side);
+  }
   await page.locator('#auto-snap-btn').click();assert.equal(await page.locator('#auto-snap-btn').getAttribute('aria-pressed'),'false');
+  await page.mouse.move(1000,400);
+  assert.deepEqual(await readStateStyle(page,'#auto-snap-btn'),await readStateStyle(page,'#settings-menu-btn'));
+  await page.locator('#grid-btn').click();assert.equal(await page.locator('#grid-btn').getAttribute('aria-pressed'),'true');
+  assert.deepEqual(await readStateStyle(page,'#grid-btn'),selected);await page.locator('#grid-btn').click();
+  await page.locator('#center-view-btn').click();await page.locator('[data-canvas-lock-mode="free"]').click();
+  await page.mouse.move(1000,400);
+  assert.deepEqual(await readStateStyle(page,'#center-view-btn'),await readStateStyle(page,'#settings-menu-btn'));
+  await page.locator('#center-view-btn').click();await page.locator('[data-canvas-lock-mode="coordinate"]').click();
   await page.locator('#auto-snap-btn').click();assert.equal(await page.locator('#auto-snap-btn svg').count(),1);
   await page.mouse.move(1000,400);await page.screenshot({path:path.join(evidence,'main-idle.png')});
   await page.locator('#exam-send').hover();
@@ -89,6 +142,7 @@ for (const engine of [chromium,webkit]) test(`canonical button design and unread
   await page.screenshot({path:path.join(evidence,'main-hwp-hover.png')});
   await page.locator('#exam-send').click();
   assert.equal(await page.locator('#exam-document-menu').isVisible(),true);
+  await assertWorkflowState(page,'exam-send',true,selected);
   await assertOriginalAppearance(page,'#exam-document-menu button');
   await page.locator('#exam-send').evaluate(async el=>{await Promise.all(el.getAnimations().filter(a=>a.effect?.getKeyframes().some(frame=>frame.scale)).map(a=>a.finished));});
   const menuAlignment=await page.evaluate(()=>{
@@ -98,19 +152,25 @@ for (const engine of [chromium,webkit]) test(`canonical button design and unread
   assert.ok(Math.abs(menuAlignment.leftGap)<1 && Math.abs(menuAlignment.verticalGap-3)<1,JSON.stringify(menuAlignment));
   await page.screenshot({path:path.join(evidence,'hwp-menu-aligned.png')});
   await page.keyboard.press('Escape');
+  await assertWorkflowState(page,'exam-send',false,selected);
   await page.locator('#graph-tool-open').click();await page.locator('#graph-modal-overlay').waitFor({state:'visible'});
+  await assertWorkflowState(page,'graph-tool-open',true,selected);
   await assertOriginalAppearance(page,'#graph-modal-overlay button');
   await page.locator('#gm-variant-sel button[data-variant="cross"]').click();await page.mouse.move(400,400);
   assert.equal(await page.locator('#gm-variant-sel button.on').getAttribute('data-variant'),'cross');
   const graphSelection=await page.locator('#gm-variant-sel button').evaluateAll(els=>els.map(el=>({selected:el.classList.contains('on'),background:getComputedStyle(el).backgroundColor,border:getComputedStyle(el).borderTopColor})));
   assert.notEqual(graphSelection.find(x=>x.selected).border,graphSelection.find(x=>!x.selected).border,'Selected graph tools remain distinguishable under the shared skin');
   await page.screenshot({path:path.join(evidence,'graph.png')});await page.keyboard.press('Escape');
+  await assertWorkflowState(page,'graph-tool-open',false,selected);
   await page.locator('#exam-library-open').click();await page.locator('[data-unilib-close]').waitFor({state:'visible'});
+  await assertWorkflowState(page,'exam-library-open',true,selected);
   await assertOriginalAppearance(page,'[data-unilib-close]');
   const libraryMotion=await page.evaluate(()=>window.__clickMotions.find(x=>x.id==='exam-library-open'));
   assert.deepEqual(libraryMotion,{id:'exam-library-open',duration:200,scales:['1','1.03','1']});
   await page.screenshot({path:path.join(evidence,'library.png')});await page.keyboard.press('Escape');
+  await assertWorkflowState(page,'exam-library-open',false,selected);
   await page.locator('#ai-image-install-open').click();await page.locator('#ai-image-panel [data-ai-send]').waitFor({state:'visible'});
+  await assertWorkflowState(page,'ai-image-install-open',true,selected);
   await assertOriginalAppearance(page,'#ai-image-panel button');
   await page.screenshot({path:path.join(evidence,'ai-preparation.png')});
   await page.locator('#ai-image-panel [data-ai-send]').click();
@@ -150,6 +210,7 @@ for (const engine of [chromium,webkit]) test(`canonical button design and unread
   await page.screenshot({path:path.join(evidence,'ai-reviewed.png')});
   await page.locator('#ai-image-panel [data-ai-close]').click();
   await page.locator('#ai-image-panel').waitFor({state:'hidden'});
+  await assertWorkflowState(page,'ai-image-install-open',false,selected);
   await page.locator('#theme-toggle').click();
   await page.waitForFunction(()=>{
     const style=getComputedStyle(document.getElementById('graph-tool-open'));
@@ -161,6 +222,8 @@ for (const engine of [chromium,webkit]) test(`canonical button design and unread
   await page.locator('#theme-toggle').click();
   await page.waitForFunction(()=>document.documentElement.dataset.theme==='dark' && getComputedStyle(document.getElementById('graph-tool-open')).backgroundColor==='rgba(0, 0, 0, 0)');
   await page.setViewportSize({width:320,height:780});
+  const narrowGaps=await page.evaluate(()=>({toolbar:getComputedStyle(document.querySelector('.toolbar-document')).gap,view:getComputedStyle(document.querySelector('.canvas-view-controls')).gap}));
+  assert.equal(narrowGaps.view,narrowGaps.toolbar,'The narrow toolbar retains the same spacing across both groups');
   await page.screenshot({path:path.join(evidence,'main-320.png')});
   const mobile=await page.evaluate(ids=>ids.map(id=>{const r=document.getElementById(id).getBoundingClientRect();return{id,left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,height:r.height};}),core);
   assert.ok(mobile.every(r=>r.width>0 && r.left>=0 && r.right<=320 && r.bottom<=780),JSON.stringify(mobile));
@@ -180,5 +243,5 @@ for (const engine of [chromium,webkit]) test(`canonical button design and unread
   assert.ok(coarse.every(x=>x.height===27),JSON.stringify(coarse));
   await touchPage.screenshot({path:path.join(evidence,'main-touch-320.png')});await touch.close();
   assert.deepEqual(errors,[]);
-  fs.writeFileSync(path.join(evidence,'receipt.json'),JSON.stringify({engine:engine.name(),layout,tools,eyes,menuAlignment,libraryMotion,mobile,narrowMenu,coarse,pulse,unreadPersisted:true,acknowledgmentPreservesResults:true,providerCalls:0,fixtureTransportOnly:true,errors},null,2));
+  fs.writeFileSync(path.join(evidence,'receipt.json'),JSON.stringify({engine:engine.name(),layout,idle,toolbar,selected,tools,eyes,menuAlignment,libraryMotion,mobile,narrowGaps,narrowMenu,coarse,pulse,workflowStateLifecycle:true,panelStateLifecycle:true,unreadPersisted:true,acknowledgmentPreservesResults:true,providerCalls:0,fixtureTransportOnly:true,errors},null,2));
 });

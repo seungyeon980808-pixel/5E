@@ -44,8 +44,8 @@
   padding: 4px 8px;
   border: 1px solid var(--border);
   border-radius: var(--shell-control-radius);
-  background: var(--bg-input);
-  color: var(--text-label);
+  background: var(--btn-tool-bg);
+  color: var(--text-primary);
   font: var(--shell-control-font-weight) var(--shell-control-font-size)/var(--shell-control-line-height) var(--shell-control-font-family);
   cursor: pointer;
 }
@@ -54,7 +54,7 @@
 .panel-collapse-close:hover { background: var(--bg-panel-hover); color: var(--text-primary); }
 .panel-visibility-toggle:focus-visible,
 .panel-collapse-close:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-.panel-visibility-toggle svg { width:var(--shell-icon-size); height:var(--shell-icon-size); fill:none; stroke:currentColor; stroke-width:1.5; }
+.panel-visibility-toggle svg { width:var(--shell-icon-size); height:var(--shell-icon-size); fill:none; stroke:currentColor; stroke-width:1.55; }
 .app .panel-visibility-toggle { width:var(--shell-control-size); height:var(--shell-control-size); min-height:var(--shell-control-size); padding:4px; }
 .app .panel-visibility-toggle .panel-toggle-label { display:none; }
 .app-shell-header {
@@ -116,7 +116,12 @@
 .panel-left[data-layout-panel] .tool-list::-webkit-scrollbar { width:0; height:0; }
 .panel-right[data-layout-panel] { display:flex; flex-direction:column; overflow:hidden; }
 .panel-right[data-layout-panel] #inspector { min-height:0; height:auto; flex:1; overflow-y:auto; }
-.panel-visibility-toggle[aria-expanded="true"] svg { color: var(--accent); }
+.panel-visibility-toggle[aria-expanded="true"],
+#ai-image-panel .panel-visibility-toggle[aria-expanded="true"] {
+  color:var(--control-selected-text);
+  background:var(--control-selected-bg);
+  border-color:var(--control-selected-border);
+}
 .panel-visibility-toggle:active,
 .panel-collapse-close:active { transform: scale(.97); transition: transform 100ms ease-out; }
 .panel-shell-toggles { display:flex; flex:none; gap:var(--shell-control-gap); }

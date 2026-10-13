@@ -1,5 +1,11 @@
 // Effects belong to workflow entries, never to arbitrary HTML buttons or overlays.
 const CORE_IDS = new Set(['exam-library-open', 'ai-image-install-open', 'graph-tool-open', 'exam-send']);
+const WORKFLOW_SURFACES = {
+  'exam-library-open':'.unified-library-overlay',
+  'ai-image-install-open':'#ai-image-panel',
+  'graph-tool-open':'#graph-modal-overlay',
+  'exam-send':'#exam-document-menu, #rhwp-exam-workspace',
+};
 
 export function initButtonDesign(doc = document) {
   if (doc.documentElement.dataset.buttonDesignReady === 'true') return;
@@ -12,11 +18,23 @@ export function initButtonDesign(doc = document) {
       button.classList.add('ui-core-action');
     }
   };
+  const syncOpenStates = () => {
+    for (const [id, selector] of Object.entries(WORKFLOW_SURFACES)) {
+      const button = doc.getElementById(id);
+      if (!button) continue;
+      const open = [...doc.querySelectorAll(selector)].some(surface => !surface.hidden);
+      button.dataset.workflowOpen = String(open);
+      // Hwp's menu owns aria-expanded; its document view has a separate lifecycle.
+      if (id !== 'exam-send') button.setAttribute('aria-expanded', String(open));
+    }
+  };
   decorate(doc.body);
   const observer = new MutationObserver(records => {
     for (const record of records) for (const node of record.addedNodes) if (node.nodeType === 1) decorate(node);
+    syncOpenStates();
   });
-  observer.observe(doc.body, { childList: true, subtree: true });
+  observer.observe(doc.body, { childList: true, subtree: true, attributes:true, attributeFilter:['hidden'] });
+  syncOpenStates();
   const graph = doc.getElementById('graph-tool-open');
   const hub = doc.querySelector('.image-workflow-hub');
   const ai = doc.getElementById('ai-image-install-open');

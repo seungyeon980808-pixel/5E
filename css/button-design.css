@@ -8,15 +8,61 @@
   overflow:visible;
 }
 .image-workflow-hub .ui-core-action {
-  border-color:color-mix(in srgb,var(--ui-button-accent) 24%,var(--border));
+  height:27px;
+  min-height:27px;
+  padding:3px 7px;
+  gap:5px;
+  border:1px solid color-mix(in srgb,var(--accent) 24%,var(--border));
+  border-radius:6px;
+  color:var(--c-sub);
+  background:transparent;
+  font-size:10.5px;
+  font-weight:500;
+  line-height:1.3;
+}
+.image-workflow-hub .ui-core-action > svg {
+  width:15px;
+  height:15px;
+  stroke-width:1.6;
+  flex:none;
 }
 .image-workflow-hub #exam-send {
   --ui-button-accent:#dba52b;
-  border-color:var(--ui-button-accent);
 }
-/* The snap entry alone needs dimensions for its new icon; other tools keep theirs. */
-#auto-snap-btn { width:32px; height:32px; padding:0; display:inline-flex; align-items:center; justify-content:center; }
-#auto-snap-btn svg { width:17px; height:17px; }
+/* The three view controls share the settings/file/share shell geometry and states. */
+.app-shell-header .canvas-view-controls { gap:inherit; }
+.app-shell-header .canvas-view-controls :is(#auto-snap-btn,#grid-btn,#center-view-btn) {
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  flex:none;
+  width:var(--shell-control-size);
+  height:var(--shell-control-size);
+  min-height:var(--shell-control-size);
+  padding:4px;
+  border:1px solid var(--border);
+  border-radius:var(--shell-control-radius);
+  color:var(--text-primary);
+  background:var(--btn-tool-bg);
+}
+.app-shell-header .canvas-view-controls :is(#auto-snap-btn,#grid-btn,#center-view-btn) svg {
+  display:block;
+  width:var(--shell-icon-size);
+  height:var(--shell-icon-size);
+  stroke-width:1.55;
+}
+.app-shell-header .canvas-view-controls :is(#auto-snap-btn,#grid-btn,#center-view-btn):hover {
+  background:var(--btn-tool-hover);
+}
+.app-shell-header .canvas-view-controls :is(#auto-snap-btn,#grid-btn,#center-view-btn)[aria-pressed="true"] {
+  color:var(--control-selected-text);
+  background:var(--control-selected-bg);
+  border-color:var(--control-selected-border);
+}
+.app-shell-header .canvas-view-controls :is(#auto-snap-btn,#grid-btn,#center-view-btn):focus-visible {
+  outline:2px solid var(--accent);
+  outline-offset:2px;
+}
 .ui-core-action::before {
   content:""; position:absolute; inset:-1px; padding:1px; border-radius:inherit; pointer-events:none;
   background:conic-gradient(from var(--ui-button-orbit), transparent 0deg 220deg,
@@ -28,11 +74,17 @@
   opacity:0; transition:opacity 160ms ease;
 }
 @media(hover:hover) and (pointer:fine) {
-  .ui-core-action:not(:disabled):not([aria-busy="true"]):not([data-result-attention="true"]):hover::before { opacity:1; animation:ui-button-orbit var(--ui-button-orbit-duration) linear infinite; }
-  .image-workflow-hub .ui-core-action:not(:disabled):not([aria-busy="true"]):hover {
+  .ui-core-action:not(:disabled):not([aria-busy="true"]):not([data-workflow-open="true"]):not([data-result-attention="true"]):hover::before { opacity:1; animation:ui-button-orbit var(--ui-button-orbit-duration) linear infinite; }
+  .image-workflow-hub .ui-core-action:not(:disabled):not([aria-busy="true"]):not([data-workflow-open="true"]):hover {
     border-color:var(--ui-button-accent);
     box-shadow:0 2px 10px color-mix(in srgb,var(--ui-button-accent) 14%,transparent);
   }
+}
+.image-workflow-hub .ui-core-action[data-workflow-open="true"] {
+  color:var(--control-selected-text);
+  background:var(--control-selected-bg);
+  border-color:var(--control-selected-border);
+  box-shadow:none;
 }
 @keyframes ui-button-orbit { to { --ui-button-orbit:360deg; } }
 .ai-task-tab-select[data-result-attention="true"] { position:relative; }
