@@ -53,6 +53,7 @@ jobs:
           const artifacts=api(`actions/runs/${process.env.BASE_RUN}/artifacts?per_page=100`).artifacts.filter(a=>!a.expired);
           const receipt=artifacts.find(a=>/-publication-/.test(a.name));if(!receipt)throw Error('Published inventory receipt missing');
           execFileSync('gh',['run','download',process.env.BASE_RUN,'-n',receipt.name,'-D','_work/preview-base-receipt'],{stdio:'inherit'});
+          require('./scripts/publication-receipt.cjs').normalizePublicationReceipt('_work/preview-base-receipt');
           const pages=artifacts.find(a=>a.name==='github-pages');
           if(pages){execFileSync('gh',['run','download',process.env.BASE_RUN,'-n','github-pages','-D','_work/preview-base-pages'],{stdio:'inherit'});}
           NODE
