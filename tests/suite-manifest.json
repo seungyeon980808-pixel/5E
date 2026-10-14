@@ -2,6 +2,10 @@
   "schemaVersion": 1,
   "unit": [
     {
+      "path": "tests/test-library-reference-destinations.mjs",
+      "findingIds": ["LIBRARY-MIXED-DESTINATIONS"]
+    },
+    {
       "path": "tests/test-preview-local-server.cjs",
       "findingIds": ["LOCAL-PREVIEW-REQUEST-LIFETIME"]
     },

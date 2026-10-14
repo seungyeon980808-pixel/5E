@@ -2150,12 +2150,11 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     }
     stage.appendChild(img);
     if (item.graphResult) {
-      img.title = '더블클릭하여 그래프 세부 편집';
       const graphEdit = document.createElement('button');
-      graphEdit.type='button';graphEdit.className='ai-graph-edit-hint';graphEdit.textContent='그래프 세부 편집';
-      graphEdit.title='더블클릭으로도 열 수 있습니다.';graphEdit.onclick=()=>{if(!busy)void editGraphCandidate(item);};
+      graphEdit.type='button';graphEdit.dataset.aiGraphEdit='';graphEdit.className='ai-graph-edit-hint';graphEdit.textContent='그래프 세부 편집';
+      graphEdit.disabled=busy || panel.dataset.aiSharingMode==='view';
+      graphEdit.onclick=()=>{if(!busy && panel.dataset.aiSharingMode!=='view')void editGraphCandidate(item);};
       head.append(graphEdit);
-      stage.addEventListener('dblclick',event=>{event.preventDefault();event.stopPropagation();if(!busy)void editGraphCandidate(item);});
     }
     if (item.kind === "generated") {
       const output = document.createElement("button");
@@ -2573,8 +2572,13 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     }
     if (scoped) scoped.disabled = outputBusy || !item || Boolean(item.sceneResult);
     if (save) save.disabled = outputBusy || !item || Boolean(item.sceneResult && !item.graphResult);
-    const graphEdit = panel.querySelector('[data-ai-graph-edit]');
-    if (graphEdit) { graphEdit.hidden = conversionKind !== 'graph'; graphEdit.disabled = busy || panel.dataset.aiSharingMode === 'view' || !item?.graphResult; }
+    for (const graphEdit of panel.querySelectorAll('.ai-graph-edit-hint')) {
+      const active = graphEdit.closest('[data-ai-candidate-id]')?.dataset.aiCandidateId === item?.id;
+      graphEdit.hidden = !active;
+      if (active) graphEdit.dataset.aiGraphEdit = '';
+      else delete graphEdit.dataset.aiGraphEdit;
+      graphEdit.disabled = busy || panel.dataset.aiSharingMode === 'view';
+    }
     if (conversionKind === 'graph') {
       if (groups) groups.hidden = true;
       if (scoped) scoped.hidden = true;
@@ -2666,6 +2670,11 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     const graph = conversionKind === 'graph';
     const fixedModel=panel.querySelector('[data-ai-fixed-model]'); if(fixedModel)fixedModel.hidden=!graph;
     panel.dataset.aiWorkflow = conversionKind;
+    const rail = panel.querySelector('.ai-task-rail');
+    rail?.setAttribute('aria-label', graph ? '그래프 목록' : '작업대 목록');
+    const railTitle = rail?.querySelector('.ai-rail-heading > strong');
+    if (railTitle) railTitle.textContent = graph ? '그래프 목록' : '작업대';
+    panel.querySelector('[data-ai-tabs]')?.setAttribute('aria-label', graph ? '그래프 목록' : '이미지 작업대 목록');
     const repeat=panel.querySelector('[data-ai-comments-apply]');
     if(repeat) repeat.hidden=graph;
     panel.querySelectorAll('[data-ai-workflow]').forEach(button => { button.setAttribute('aria-pressed', String(button.dataset.aiWorkflow === conversionKind)); button.disabled = panel.dataset.aiSharingMode === 'view' || (busy && !switchWorkflow); });
@@ -3547,8 +3556,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       addTask.type = 'button';
       addTask.className = 'ai-task-tab ai-task-add';
       addTask.dataset.aiTaskAdd = '';
-      addTask.textContent = '＋ 새 작업';
-      addTask.title = '독립된 참고 이미지와 대화를 사용하는 새 작업을 만듭니다';
+      addTask.textContent = conversionKind === 'graph' ? '＋ 그래프 추가' : '＋ 새 작업';
+      addTask.title = conversionKind === 'graph' ? '목록에 새 그래프를 추가합니다' : '독립된 참고 이미지와 대화를 사용하는 새 작업을 만듭니다';
       addTask.disabled = false;
       addTask.onclick = () => { newWorkspace(); };
       tabList.append(addTask);
@@ -6605,13 +6614,6 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
   outputDetails.textContent='복원 상세';outputDetails.hidden=true;
   outputDetails.addEventListener('click',()=>void scopedDialog('그래프 복원 상세',selectedOutputNote.textContent,{accept:'닫기'}));
   panel.querySelector('.ai-output-actions')?.append(outputDetails);
-  const graphEditButton = document.createElement('button');
-  graphEditButton.type='button';graphEditButton.dataset.aiGraphEdit='';graphEditButton.textContent='그래프 세부 편집';graphEditButton.className='ai-graph-edit-entry';graphEditButton.hidden=true;
-  graphEditButton.addEventListener('click',()=>{
-    graphEditButton.focus({preventScroll:true});
-    void editGraphCandidate(selectedOutputItem());
-  });
-  panel.querySelector('.ai-compare-controls')?.after(graphEditButton);
   syncSelectedOutputActions();
   const outputActions = panel.querySelector('.ai-output-actions');
   const copySelected = document.createElement('button'); copySelected.type = 'button';

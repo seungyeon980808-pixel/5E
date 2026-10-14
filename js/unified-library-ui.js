@@ -2381,10 +2381,10 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     const placement = assignment?.placement || "separate";
     setStatus("AI 작업실을 여는 중…");
     if (typeof openIndependentReferences === "function") {
-      return openIndependentReferences({ references, startGeneration: false, conversionKind:assignment?.conversionKind || 'image', placement, groups: assignment?.groups, isCurrent });
+      return openIndependentReferences({ references, startGeneration: false, conversionKind:assignment?.conversionKind || 'image', placement, groups: assignment?.groups, groupKinds: assignment?.groupKinds, isCurrent });
     }
     if (typeof openAi !== "function") throw new Error("AI 작업실을 사용할 수 없습니다.");
-    return openAi({ references, conversionKind:assignment?.conversionKind || 'image', placement, groups: assignment?.groups, isCurrent });
+    return openAi({ references, conversionKind:assignment?.conversionKind || 'image', placement, groups: assignment?.groups, groupKinds: assignment?.groupKinds, isCurrent });
   };
   overlay.querySelector("[data-unilib-insert]").addEventListener("click", async () => {
     await runLibraryAction(async (snapshot, isCurrent) => {

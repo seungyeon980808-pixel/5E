@@ -13,6 +13,7 @@ function snapshotOptions(options) {
     conversionKind: options.conversionKind === 'graph' ? 'graph' : 'image',
     placement: options.placement || 'separate',
     groups: options.groups || null,
+    ...(options.groupKinds ? { groupKinds: options.groupKinds } : {}),
     startGeneration: false,
   });
 }

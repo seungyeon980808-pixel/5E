@@ -416,11 +416,11 @@ const prepareLibraryAiDestination = async (options = {}) => {
   const references=[options.reference,...(options.references || [])].filter(Boolean);
   if(options.conversionKind || !references.length)return options;
   const assignment=await chooseWorkbenchAssignment({references:references.map(reference=>({...reference,dataUrl:reference.dataUrl || reference.data || reference.src}))});
-  return assignment ? {...options,reference:undefined,references,conversionKind:assignment.conversionKind,placement:assignment.placement,groups:assignment.groups} : null;
+  return assignment ? {...options,reference:undefined,references,conversionKind:assignment.conversionKind,placement:assignment.placement,groups:assignment.groups,groupKinds:assignment.groupKinds} : null;
 };
 const openAiWithReference = async options => {
   const prepared=await prepareLibraryAiDestination(options);if(!prepared)return;
-  return aiLoginHandoff ? aiLoginHandoff.open(prepared) : aiPanel?.open(prepared);
+  return aiLoginHandoff ? aiLoginHandoff.open(prepared) : (prepared.groupKinds ? aiPanel?.openIndependentReferences(prepared) : aiPanel?.open(prepared));
 };
 const openIndependentAiReferences = async options => {
   const prepared=await prepareLibraryAiDestination(options);if(!prepared)return;

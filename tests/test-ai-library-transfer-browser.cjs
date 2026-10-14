@@ -5,6 +5,7 @@ const http = require('node:http');
 const test = require('node:test');
 const playwright = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const { installCropFixture, pointerOnImage } = require('./helpers/crop-loading-fixture.cjs');
+const { classifyAll } = require('./helpers/workbench-assignment.cjs');
 const root = path.resolve(__dirname, '..');
 process.env.APP_ENTRY ??= '/';
 const { fixtureContext, installAiMain } = require('./helpers/canonical-fixture-adapter.cjs');
@@ -56,6 +57,7 @@ async function library(t, count = 1, engine = 'chromium') {
 test('successful transfer clears the accepted crop tray on reopen and preserves the PDF source', async t => {
   const { page, ui } = await library(t);
   await ui.locator('[data-unilib-ai]').click();
+  await classifyAll(page.locator('.workbench-assignment'));
   await page.locator('.workbench-assignment [data-action="continue"]').click();
   await ui.waitFor({state:'hidden'});
   await page.evaluate(() => window.cropFixture.open());
@@ -66,6 +68,7 @@ test('failed transfer keeps crops and the library open', async t => {
   const { page, ui } = await library(t);
   await page.evaluate(() => window.__failTransfer = true);
   await ui.locator('[data-unilib-ai]').click();
+  await classifyAll(page.locator('.workbench-assignment'));
   await page.locator('.workbench-assignment [data-action="continue"]').click();
   await page.waitForFunction(() => document.querySelector('[data-unilib-status]').textContent.includes('failed'));
   assert.equal(await ui.isVisible(), true);
@@ -141,6 +144,8 @@ for (const engine of ['chromium', 'webkit']) test(`${engine}: prepared library h
   await page.emulateMedia({reducedMotion:'no-preference'});
   await page.keyboard.press('Space');
   const next=page.locator('.workbench-assignment [data-action="continue"]');await next.waitFor();
+  assert.equal(await next.isDisabled(),true);
+  await classifyAll(page.locator('.workbench-assignment'));
   assert.equal(await next.getAttribute('aria-keyshortcuts'),'Space');
   await page.keyboard.press('Space');
   await page.waitForFunction(() => window.__lateral.length === 2);
@@ -174,6 +179,7 @@ for (const engine of ['chromium', 'webkit']) test(`${engine}: prepared library h
 for (const engine of ['chromium', 'webkit']) test(`${engine}: reduced motion library handoff keeps the real workbench stationary`, async t => {
   const {page, ui} = await liveHandoffLibrary(t, engine);
   await ui.locator('[data-unilib-ai]').click();
+  await classifyAll(page.locator('.workbench-assignment'));
   await page.locator('.workbench-assignment [data-action="continue"]').click();
   await ui.waitFor({state:'hidden'});
   assert.equal(await page.locator('#ai-image-panel').isVisible(), true);
@@ -199,6 +205,7 @@ test('multi-crop success removes only the transferred snapshot and retains a con
   const { page, ui } = await library(t, 2);
   await page.evaluate(() => { window.__transferGate = new Promise(resolve => window.__releaseTransfer = resolve); });
   await ui.locator('[data-unilib-ai]').click();
+  await classifyAll(page.locator('.workbench-assignment'));
   await page.locator('.workbench-assignment [data-action="continue"]').click();
   await page.waitForFunction(() => window.__transferStarted);
   await page.evaluate(() => {
@@ -217,6 +224,7 @@ test('partial multi-crop failure retains only unsent crops and keeps the library
   const ids = await page.evaluate(() => [...window.__acceptedAssets.keys()]);
   await page.evaluate(() => { window.__failTransfer = true; window.__partial = [0]; });
   await ui.locator('[data-unilib-ai]').click();
+  await classifyAll(page.locator('.workbench-assignment'));
   await page.locator('.workbench-assignment [data-action="continue"]').click();
   await page.waitForFunction(() => document.querySelector('[data-unilib-status]').textContent.includes('failed'));
   assert.deepEqual(await page.evaluate(() => [...window.__acceptedAssets.keys()]), [ids[1]]);
@@ -274,8 +282,10 @@ for (const engine of ['chromium', 'webkit']) test(`${engine}: prepared library c
   await page.keyboard.down('Space');await page.keyboard.down('Space');await page.keyboard.up('Space');
   await page.locator('.workbench-assignment').waitFor();
   assert.equal(await page.locator('.workbench-assignment').count(),1,'a held key opens one assignment');
-  assert.equal(await page.locator('.workbench-assignment [data-conversion-kind="image"]').getAttribute('aria-pressed'),'true');
-  assert.equal(await page.locator('.workbench-assignment [data-placement="separate"]').getAttribute('aria-pressed'),'true');
+  assert.equal(await page.locator('.workbench-assignment [data-references] [data-reference]').count(),2);
+  assert.equal(await page.locator('.workbench-assignment [data-action="continue"]').isDisabled(),true);
+  await page.keyboard.press('Space');
+  assert.equal(await page.evaluate(()=>window.__handoff),undefined,'Space cannot classify implicitly');
   await page.keyboard.press('Escape');
   assert.equal(await page.evaluate(()=>window.__acceptedAssets.size),2,'cancel preserves both crops');
   await ui.locator('[data-result-id="geometry-book:page:1"]').focus();await page.keyboard.press('Space');
@@ -284,28 +294,39 @@ for (const engine of ['chromium', 'webkit']) test(`${engine}: prepared library c
   // source must keep this transaction valid regardless of machine speed.
   await page.evaluate(after=>window.waitCropEvent({phase:'search-files'},after),beforeSearch);
   await ui.locator('[data-unilib-result-state]').waitFor({state:'hidden'});
+  await classifyAll(page.locator('.workbench-assignment'));
   await page.locator('.workbench-assignment [data-action="continue"]').click();
   await ui.waitFor({state:'hidden'});
   const handoff=await page.evaluate(()=>window.__handoff);
   assert.equal(handoff.count,2);assert.equal(handoff.conversionKind,'image');assert.equal(handoff.placement,'separate');assert.deepEqual(handoff.groups,[[0],[1]]);
 });
 
-for (const engine of ['chromium','webkit']) test(`${engine}: assignment defaults are visible and route changes keep the same restrained selection`, async t => {
+for (const engine of ['chromium','webkit']) test(`${engine}: pending assignment uses border-only selection and preserves the draft after cancel`, async t => {
   const {page,ui}=await library(t,2,engine);
   await page.evaluate(()=>{window.__transfer=async({references,conversionKind,placement,groups})=>{window.__handoff={count:references.length,conversionKind,placement,groups};};});
   await ui.locator('[data-unilib-ai]').click();
   const dialog=page.locator('.workbench-assignment');await dialog.waitFor();
-  const selectedStyle=async selector=>dialog.locator(selector).evaluate(n=>{const s=getComputedStyle(n);return{background:s.backgroundColor,image:s.backgroundImage,shadow:s.boxShadow,border:s.borderColor,check:getComputedStyle(n,'::before').content,animations:n.getAnimations().length};});
-  const defaultImage=await selectedStyle('[data-conversion-kind="image"]'),defaultSeparate=await selectedStyle('[data-placement="separate"]');
-  assert.equal(defaultImage.image,'none');assert.equal(defaultImage.shadow,'none');assert.equal(defaultSeparate.shadow,'none');assert.equal(defaultSeparate.animations,0);assert.match(defaultImage.check,/✓/);assert.match(defaultSeparate.check,/✓/);
-  await dialog.locator('[data-placement="together"]').click();
-  assert.deepEqual(await selectedStyle('[data-placement="together"]'),defaultSeparate,'an explicit choice is styled just as clearly as the default');
-  await dialog.locator('[data-conversion-kind="graph"]').click();
-  assert.deepEqual(await selectedStyle('[data-conversion-kind="graph"]'),defaultImage);
-  const send=await selectedStyle('[data-action="continue"]');assert.equal(send.image,'none');assert.equal(send.shadow,'none');
-  if(process.env.EVIDENCE_DIR)await page.screenshot({path:path.join(process.env.EVIDENCE_DIR,engine+'-assignment-selection.png')});
-  await dialog.locator('[data-action="continue"]').click();await ui.waitFor({state:'hidden'});
-  assert.deepEqual(await page.evaluate(()=>window.__handoff),{count:2,conversionKind:'graph',placement:'together',groups:[[0,1]]});
+  assert.equal(await dialog.locator('[data-benches] [data-reference], [data-graphs] [data-reference]').count(),0);
+  assert.equal(await dialog.locator('[data-placement], [data-action="select-all"]').count(),0);
+  const style=()=>dialog.locator('[data-select-reference="0"]').evaluate(async n=>{
+    await Promise.all(n.getAnimations().filter(a=>Number.isFinite(a.effect.getTiming().iterations)).map(a=>a.finished));
+    const s=getComputedStyle(n), parent=getComputedStyle(n.parentElement);
+    return {background:s.backgroundColor,font:s.font,color:s.color,shadow:s.boxShadow,before:getComputedStyle(n,'::before').content,after:getComputedStyle(n,'::after').content,border:parent.borderColor};
+  });
+  const before=await style();await dialog.locator('[data-select-reference="0"]').click();
+  const selected=await style();assert.notEqual(selected.border,before.border);
+  delete selected.border;delete before.border;assert.deepEqual(selected,before,'selection changes only the border');
+  assert.ok(!JSON.stringify(selected).includes('✓'));assert.equal(selected.shadow,'none');
+  await dialog.locator('[data-classify-reference="0"][data-conversion-kind="graph"]').click();
+  assert.equal(await dialog.locator('[data-references] [data-reference]').count(),1);
+  assert.equal(await dialog.locator('[data-graphs] [data-reference]').count(),1);
+  await page.keyboard.press('Escape');
+  await ui.locator('[data-unilib-ai]').click();await dialog.waitFor();
+  assert.equal(await dialog.locator('[data-graphs] [data-reference="0"]').count(),1,'same crop batch restores classification');
+  await dialog.locator('[data-classify-reference="1"][data-conversion-kind="graph"]').click();
+  assert.equal(await dialog.locator('[data-graph-destination] .workbench-assignment-bench').count(),0);
+  await page.keyboard.press('Space');await ui.waitFor({state:'hidden'});
+  assert.deepEqual(await page.evaluate(()=>window.__handoff),{count:2,conversionKind:'graph',placement:'separate',groups:[[0],[1]]});
 });
 
 for(const engine of ['chromium','webkit']) test(`${engine}: a selected PDF crop inserts exact bytes into the canvas without an AI handoff`,async t=>{
@@ -368,4 +389,129 @@ for(const engine of ['chromium','webkit']) test(`${engine}: the real canvas AI b
  });
  assert.equal(result.reference.sourceKind,'canvas-composition');assert.deepEqual(result.reference.source.objectIds,['red','blue','bar']);assert.equal(result.generated,0);assert.equal(result.providerCalls,0);
  assert.deepEqual(result.pixels,[[255,0,0,255],[0,0,0,255],[0,0,255,255]]);assert.ok(result.ratio>2.2&&result.ratio<2.5);assert.equal(result.objects,before);
+});
+
+async function classifyMixed(page) {
+  const dialog = page.locator('.workbench-assignment');await dialog.waitFor();
+  assert.equal(await dialog.locator('[data-references] [data-reference]').count(),4);
+  for (const index of [0,1]) await dialog.locator(`[data-classify-reference="${index}"][data-conversion-kind="image"]`).click();
+  // Drop an image into an existing bench through the equivalent keyboard target.
+  await dialog.locator('[data-select-reference="1"]').click();
+  await dialog.locator('[data-bench="0"]').focus();await page.keyboard.press('Enter');
+  for (const index of [2,3]) await dialog.locator(`[data-classify-reference="${index}"][data-conversion-kind="graph"]`).click();
+  assert.equal(await dialog.locator('[data-image-destination] .workbench-assignment-bench').count(),1);
+  assert.equal(await dialog.locator('[data-image-destination] [data-reference]').count(),2);
+  assert.equal(await dialog.locator('[data-graphs] [data-reference]').count(),2);
+  assert.equal(await dialog.locator('[data-references] [data-reference]').count(),0);
+  assert.equal(await dialog.locator('[data-graph-destination] [data-placement], [data-graph-destination] [data-conversion-kind], [data-graph-destination] .workbench-assignment-bench').count(),0);
+  return dialog;
+}
+for (const engine of ['chromium', 'webkit']) test(`${engine}: common workbench classifies mixed crops and Space forwards both destinations once`, async t => {
+  const {page, ui} = await library(t, 4, engine);
+  await page.evaluate(() => {window.__transfer = async options => { window.__mixedTransferCount = (window.__mixedTransferCount || 0) + 1; window.__mixedPlan = {groups:options.groups,groupKinds:options.groupKinds}; };});
+  await ui.locator('[data-unilib-ai]').click();
+  const dialog = await classifyMixed(page);
+  if (process.env.EVIDENCE_DIR) {
+    for (const [width,height] of [[1440,1000],[1080,800],[390,844]]) {
+      await page.setViewportSize({width,height});
+      const overflow = await dialog.evaluate(el => el.scrollWidth > el.clientWidth + 1);
+      assert.equal(overflow,false,`no dialog overflow at ${width}`);
+      await page.screenshot({path:path.join(process.env.EVIDENCE_DIR,`${engine}-classification-${width}.png`)});
+    }
+    await page.setViewportSize({width:1440,height:1000});
+  }
+  await dialog.locator('h2').click();
+  await page.keyboard.down('Space');await page.keyboard.down('Space');await page.keyboard.up('Space');
+  await ui.waitFor({state:'hidden'});
+  assert.deepEqual(await page.evaluate(() => window.__mixedPlan), {groups:[[0,1],[2],[3]],groupKinds:['image','graph','graph']});
+  assert.equal(await page.evaluate(() => window.__mixedTransferCount),1);
+  assert.equal(await page.evaluate(() => window.__acceptedAssets.size),0);
+});
+
+for (const engine of ['chromium','webkit']) test(`${engine}: mixed destinations preserve pixels, image groups and graph list through mode switches and reload`, async t => {
+  const page = await manager(t,engine);
+  const errors=[];page.on('pageerror',error=>errors.push(error.message));
+  await page.evaluate(async () => {
+    await window.__manager.open({prompt:'보존할 기존 작업'});
+    window.__mixedReferences = Array.from({length:4},(_,index)=>{
+      const canvas=document.createElement('canvas');canvas.width=90;canvas.height=60;
+      const ctx=canvas.getContext('2d');ctx.fillStyle=['red','green','blue','black'][index];ctx.fillRect(0,0,90,60);
+      return {dataUrl:canvas.toDataURL(),name:`자료 ${index+1}`,sourceKind:'unified-library',source:{documentId:'mixed-fixture',pageNumber:index+1}};
+    });
+    const {chooseWorkbenchAssignment}=await import(window.__runtime.base+'library/workbench-assignment.js'+window.__runtime.query);
+    void chooseWorkbenchAssignment({references:window.__mixedReferences}).then(async plan=>{
+      window.__mixedReceipt=await window.__manager.openIndependentReferences({references:window.__mixedReferences,...plan});
+      await window.__manager.checkpointForClose();window.__mixedSaved=true;
+    });
+  });
+  const dialog=await classifyMixed(page);
+  await page.keyboard.press('Space');await page.waitForFunction(()=>window.__mixedSaved);
+  const inspect=()=>page.evaluate(async()=>{
+    const snapshot=await window.__manager.sharingSnapshot();
+    return snapshot.workspaces.flatMap(w=>w.tabs).map(t=>({kind:t.conversionKind,input:t.input,names:t.attachments.map(a=>a.name),pixels:t.attachments.map(a=>a.data),pages:t.attachments.map(a=>a.source?.pageNumber)}));
+  });
+  const saved=await inspect();
+  assert.equal(saved.some(t=>t.input==='보존할 기존 작업' && !t.names.length),true);
+  assert.deepEqual(saved.filter(t=>t.names.length).map(t=>[t.kind,t.names,t.pages]),[
+    ['image',['자료 1','자료 2'],[1,2]],['graph',['자료 3'],[3]],['graph',['자료 4'],[4]],
+  ]);
+  const expectedPixels=await page.evaluate(()=>window.__mixedReferences.map(r=>r.dataUrl));
+  assert.deepEqual(saved.flatMap(t=>t.pixels),expectedPixels);
+  assert.deepEqual(await page.evaluate(()=>window.__mixedReceipt.flatMap(r=>r.referenceIndices)),[0,1,2,3]);
+  await page.locator('#ai-image-panel [data-ai-workflow="graph"]').click();
+  await page.locator('#ai-image-panel [data-ai-workflow="graph"][aria-pressed="true"]').waitFor();
+  assert.equal(await page.locator('#ai-image-panel .ai-rail-heading > strong').textContent(),'그래프 목록');
+  assert.equal(await page.locator('#ai-image-panel .ai-task-tab:not(.ai-task-add)').count(),2);
+  for (const row of await page.locator('#ai-image-panel .ai-task-tab:not(.ai-task-add) .ai-task-tab-select').all()) await row.click();
+  await page.locator('#ai-image-panel [data-ai-workflow="image"]').click();
+  await page.locator('#ai-image-panel [data-ai-workflow="image"][aria-pressed="true"]').waitFor();
+  assert.equal(await page.locator('#ai-image-panel .ai-task-tab:not(.ai-task-add)').count(),2,'existing draft plus grouped image task');
+  await page.evaluate(()=>window.__manager.checkpointForClose());
+  await page.reload({waitUntil:'networkidle'});await page.waitForFunction(()=>window.__manager);
+  assert.deepEqual(await inspect(),saved);
+  assert.equal(await page.evaluate(()=>window.__fixtureProviderCalls.length),0);
+  assert.deepEqual(errors,[]);
+});
+
+for (const engine of ['chromium','webkit']) test(`${engine}: a failed mixed import retains its saved group and retries graph destinations without duplication`, async t => {
+  const page=await manager(t,engine);
+  const result=await page.evaluate(async()=>{
+    const canvas=document.createElement('canvas');canvas.width=20;canvas.height=20;
+    const refs=['first','second','fail','last'].map((name,i)=>{
+      const ctx=canvas.getContext('2d');ctx.fillStyle=['red','green','blue','black'][i];ctx.fillRect(0,0,20,20);
+      return {name,dataUrl:canvas.toDataURL()};
+    });
+    const plan={references:refs,groups:[[0,1],[2],[3]],groupKinds:['image','graph','graph'],placement:'advanced',importId:'b3499770-9d48-4619-af24-22a1a6e4ba62'};
+    window.__failImport=true;let transferred;
+    try {await window.__manager.openIndependentReferences(plan);}catch(error){transferred=error.transferredReferenceIndices;}
+    window.__failImport=false;
+    const receipt=await window.__manager.openIndependentReferences(plan);
+    await window.__manager.checkpointForClose();
+    const tabs=(await window.__manager.sharingSnapshot()).workspaces.flatMap(w=>w.tabs).filter(t=>t.attachments.length);
+    return {transferred,receipt:receipt.flatMap(r=>r.referenceIndices),tabs:tabs.map(t=>[t.conversionKind,t.attachments.map(a=>a.name)])};
+  });
+  assert.deepEqual(result,{transferred:[0,1],receipt:[0,1,2,3],tabs:[['image',['first','second']],['graph',['fail']],['graph',['last']]]});
+});
+
+for (const engine of ['chromium','webkit']) test(`${engine}: drag assigns, merges and moves crops without duplicates or implicit graph benches`,async t=>{
+  const {page,ui}=await library(t,4,engine);
+  await ui.locator('[data-unilib-ai]').click();const d=page.locator('.workbench-assignment');await d.waitFor();
+  const drag=async(index,target)=>d.locator(`[data-reference="${index}"]`).dragTo(d.locator(target));
+  await drag(0,'[data-drop-target="image"]:not([data-bench])');
+  await drag(1,'[data-bench="0"]');
+  assert.equal(await d.locator('[data-bench="0"] [data-reference]').count(),2);
+  await drag(2,'[data-graph-destination]');
+  await drag(1,'[data-graph-destination]');
+  assert.equal(await d.locator('[data-bench="0"] [data-reference]').count(),1);
+  assert.equal(await d.locator('[data-graphs] [data-reference]').count(),2);
+  await drag(2,'[data-drop-target="pending"]');
+  assert.equal(await d.locator('[data-references] [data-reference]').count(),2);
+  assert.equal(await d.locator('[data-reference]').count(),4,'each original exists exactly once');
+  await drag(3,'[data-bench="0"]');
+  await d.locator('[data-classify-reference="2"][data-conversion-kind="graph"]').click();
+  assert.equal(await d.locator('[data-action="continue"]').isEnabled(),true);
+  await page.keyboard.press('Escape');await ui.locator('[data-unilib-ai]').click();await d.waitFor();
+  assert.equal(await d.locator('[data-bench="0"] [data-reference]').count(),2);
+  assert.equal(await d.locator('[data-graphs] [data-reference]').count(),2);
+  assert.equal(await d.locator('[data-reference]').count(),4);
 });

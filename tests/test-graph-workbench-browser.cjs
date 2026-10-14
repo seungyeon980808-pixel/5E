@@ -152,11 +152,26 @@ async function storedTabs(page) {
       const originalTask = (await storedTabs(page)).find(t => t.generated?.some(c => c.graphResult));
       assert.equal(originalTask.generated.length, 1);
       const originalCandidate = originalTask.generated[0];
+      assert.equal(await page.locator('#ai-image-panel [data-ai-graph-edit]').count(),1,'one graph detail entry');
+      assert.equal(await page.locator('#ai-image-panel .ai-compare-heading [data-ai-graph-edit]').count(),0,'no duplicate toolbar entry');
+      const badge=await page.locator('#ai-image-panel [data-ai-graph-edit]').boundingBox();
+      const graphStage=await page.locator('#ai-image-panel .ai-previews .ai-preview-stage').first().boundingBox();
+      assert.ok(badge.x+badge.width<=graphStage.x+graphStage.width+2 && badge.y+badge.height<=graphStage.y+2,'persistent badge stays above the right edge of the graph');
+      await page.locator('#ai-image-panel .ai-previews img').first().dblclick();
+      assert.equal(await page.locator('#graph-modal-overlay').isVisible(),false,'doubleclick no longer creates another edit route');
       await page.locator('#ai-image-panel [data-ai-graph-edit]').click();
+      const toolbar=await page.locator('.gm-preview-toolbar').evaluate(node=>{
+        const selectors=['select[data-trace-view]','[data-trace-import]','[data-trace-zoom-toggle]','#gm-send-exam','#gm-confirm'];
+        return selectors.map(selector=>{const element=node.querySelector(selector),b=element.getBoundingClientRect();return {selector,top:b.top,bottom:b.bottom,left:b.left,right:b.right};}).filter(b=>b.right>b.left);
+      });
+      fs.writeFileSync(path.join(output,name+'-toolbar.json'),JSON.stringify(toolbar,null,2));
+      assert.ok(Math.max(...toolbar.map(b=>b.top))-Math.min(...toolbar.map(b=>b.top))<=4,'all visible graph controls share one row');
+      assert.ok(toolbar.every((b,index)=>index===0 || b.left>=toolbar[index-1].right),'toolbar controls do not overlap');
+      await page.screenshot({path:path.join(output,name+'-compact-editor.png')});
       await page.locator('#gm-labelx').fill('취소할 제목');
       await page.locator('#gm-cancel').click();
       assert.equal((await objects(page)).length, 0);
-      await page.locator('#ai-image-panel .ai-previews img').first().dblclick();
+      await page.locator('#ai-image-panel [data-ai-graph-edit]').click();
       await page.locator('#gm-labelx').fill('편집한 시간');
       await page.locator('#gm-tab-func-btn').click();await page.locator('#gm-chips [data-series-index="0"]').click();
       await page.locator('#gm-point-detail summary').click();

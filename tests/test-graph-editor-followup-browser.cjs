@@ -53,15 +53,15 @@ async function run(browser,engine,kind){
   });
   const original=structuredClone(versions(await waitVersions(page,1))[0]);
   const stage=()=>page.locator(`#ai-image-panel [data-ai-candidate-id="${original.id}"] .ai-preview-stage`);
-  await step('Doubleclick result opens a topmost graph editor immediately, without closing image editor',async()=>{
-   await stage().dblclick();await page.locator('#gm-preview [data-trace-graph]').waitFor();
+  await step('Persistent image badge opens a topmost graph editor immediately, without closing image editor',async()=>{
+   await page.locator('#ai-image-panel [data-ai-graph-edit]').click();await page.locator('#gm-preview [data-trace-graph]').waitFor();
    assert(await page.locator('#ai-image-panel').isVisible());
    assert(await page.locator('#graph-modal-overlay .gm-modal').evaluate(n=>{const b=n.getBoundingClientRect();return Boolean(document.elementFromPoint(b.x+b.width/2,b.y+60)?.closest('#graph-modal-overlay'));}));
    await page.locator('#gm-labelx').fill('첫 번째 수정');await page.locator('#gm-labelx').press('Tab');
    await shot('immediate-editor');await page.locator('#gm-cancel').click();assert.deepEqual(versions(await cache(page)),[original]);
   });
   await step('Apply appends a new image/version and preserves original pixels, objects and review log',async()=>{
-   await stage().dblclick();await page.locator('#gm-preview [data-trace-graph]').waitFor();
+   await page.locator('#ai-image-panel [data-ai-graph-edit]').click();await page.locator('#gm-preview [data-trace-graph]').waitFor();
    await page.locator('#gm-labelx').fill('첫 번째 수정');await page.locator('#gm-labelx').press('Tab');
    await page.observeGraphSignal(()=>document.querySelector('#ai-image-panel [data-ai-status]')?.textContent.includes('편집을 적용'), undefined, undefined, async () => { await page.locator('#gm-confirm').click(); });
    const saved=await waitVersions(page,2),vs=versions(saved);assert.deepEqual(vs[0],original);assert.notEqual(vs[1].data,original.data);assert.equal(vs[1].graphEdit.parentCandidateId,original.id);
@@ -71,7 +71,7 @@ async function run(browser,engine,kind){
    assert.equal(await stage().locator('img').getAttribute('src'),original.data);await shot('history-original');save('two-versions',saved);
   });
   await step('Editing a previous version makes another independent result; reload keeps three versions',async()=>{
-   await stage().dblclick();await page.locator('#gm-preview [data-trace-graph]').waitFor();
+   await page.locator('#ai-image-panel [data-ai-graph-edit]').click();await page.locator('#gm-preview [data-trace-graph]').waitFor();
    await page.locator('#gm-labelx').fill('두 번째 수정');await page.locator('#gm-labelx').press('Tab');
    await page.observeGraphSignal(()=>document.querySelector('#ai-image-panel [data-ai-status]')?.textContent.includes('편집을 적용'), undefined, undefined, async () => { await page.locator('#gm-confirm').click(); });
    const saved=await waitVersions(page,3),vs=versions(saved);assert.deepEqual(vs[0],original);assert.equal(plane(vs[1].graphResult).labelX,'첫 번째 수정');assert.equal(plane(vs[2].graphResult).labelX,'두 번째 수정');assert.equal(vs[2].graphEdit.parentCandidateId,original.id);

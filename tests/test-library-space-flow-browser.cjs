@@ -1,3 +1,4 @@
+const { classifyAll } = require('./helpers/workbench-assignment.cjs');
 const test = require('node:test');
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
@@ -51,6 +52,8 @@ test('Space advances one ready action per press, while other pages always open a
       await ui.locator('[data-unilib-crop]').waitFor({state:'hidden'});
       await page.keyboard.press('Space');
       const assignment = page.locator('.workbench-assignment');await assignment.waitFor();
+      assert.equal(await assignment.locator('[data-action="continue"]').isDisabled(),true);
+      await classifyAll(assignment);
       assert.equal(await assignment.locator('[data-action="continue"]').getAttribute('aria-keyshortcuts'),'Space');
       if (process.env.EVIDENCE_DIR && engine === chromium) await page.screenshot({path:path.join(process.env.EVIDENCE_DIR,'assignment-ready-1440.png')});
       await page.keyboard.down('Space');await page.keyboard.down('Space');await page.keyboard.up('Space');

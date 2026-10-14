@@ -205,7 +205,7 @@ const tabs = page => page.evaluate(async () => (await (new (await import('/js/ai
       assert.equal(await page.evaluate(() => window.__stability.requests.length), 0);
       const beforeEditTask = (await tabs(page)).find(t => t.generated?.some(c => c.id === baseline.id));
       assert.equal(beforeEditTask.generated.length, 1);
-      await page.locator(ui + '.ai-previews img').first().dblclick();
+      await page.locator(ui + '[data-ai-graph-edit]').click();
       assert.equal(await page.locator('#gm-send-exam').isVisible(),false,'The shared graph editor hides its exam action while editing a workbench draft');
       assert.equal(await page.locator('#gm-send-exam').evaluate(el=>el.hidden),true,'A hidden shared control must not appear as a duplicate output action');
       await page.locator('#gm-labelx').fill('보존된 편집');

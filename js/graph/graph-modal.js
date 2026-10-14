@@ -3102,8 +3102,9 @@ function build() {
       </h2>
       <div class="gm-body">
         <div class="gm-left" style="flex:1;min-width:0;">
+          <div class="gm-preview-toolbar"><div id="gm-trace-toolbar-host"></div>
           <div class="gm-export-actions"><button type="button" class="modal-btn" id="gm-send-exam">한글에 넣기</button><button type="button" class="modal-btn modal-btn-primary" id="gm-confirm">캔버스로 내보내기</button></div>
-          <div id="gm-trace-toolbar-host"></div>
+          </div>
           <div id="gm-preview" class="gm-preview" style="height:440px;"></div>
           <div id="gm-error" style="color:#e5534b;font-size: 12px;min-height:16px;margin-top:4px;"></div>
         </div>

@@ -1,3 +1,4 @@
+import { referenceDestinations } from './library/reference-destinations.js?v=1.7.0-four-session-integration';
 import { channelStorage as localStorage } from './preview-storage.js?v=1.7.0-four-session-integration';
 import { validateWorkspaceCandidates } from './ai-candidate-snapshot.js?v=1.7.0-four-session-integration';
 import { createWorkspaceBatch, createWorkspaceSelection } from './ai-workspace-batch.js?v=1.7.0-four-session-integration';
@@ -894,25 +895,14 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
     },
     close: () => active.controller.close(),
     attachReference: (...args) => active.controller.attachReference(...args),
-    openIndependentReferences: async ({ references, prompt = '', startGeneration = false, placement = 'separate', groups = null, reveal = true, importId = null, conversionKind = 'image' } = {}) => {
+    openIndependentReferences: async ({ references, prompt = '', startGeneration = false, placement = 'separate', groups = null, groupKinds = null, reveal = true, importId = null, conversionKind = 'image' } = {}) => {
       await ready;
       const snapshots = independentReferences(references);
-      const groupedSnapshots = Array.isArray(groups)
-        ? groups.map((indices, groupIndex) => {
-          if (!Array.isArray(indices) || indices.length < 1) throw new Error(`${groupIndex + 1}번째 AI 작업대가 비어 있습니다.`);
-          if (indices.length > 10) throw new Error(`${groupIndex + 1}번째 AI 작업대는 참고 이미지를 최대 10개까지 받을 수 있습니다.`);
-          if (new Set(indices).size !== indices.length) throw new Error(`${groupIndex + 1}번째 AI 작업대에 같은 참고 이미지가 중복되었습니다.`);
-          return indices.map((index) => {
-            if (!Number.isInteger(index) || index < 0 || index >= snapshots.length) throw new Error(`${groupIndex + 1}번째 AI 작업대의 자료 번호가 올바르지 않습니다.`);
-            return snapshots[index];
-          });
-        })
-        : placement === 'together' ? [snapshots] : snapshots.map(snapshot => [snapshot]);
-      if (!groupedSnapshots.length) throw new Error('열 AI 작업대가 없습니다.');
-      if (placement === 'together' && snapshots.length > 10) throw new Error('한 AI 작업대는 참고 이미지를 최대 10개까지 받을 수 있습니다.');
+      const destinations = referenceDestinations(snapshots.length, { placement, groups, groupKinds, conversionKind });
+      const groupedSnapshots = destinations.map(destination => destination.indices.map(index => snapshots[index]));
       const journalKey = importId ? `ai-reference-import:${importId}` : null;
       let journal = journalKey ? await idbGet(journalKey) : null;
-      if (journal && (journal.version !== 1 || journal.scopes?.length !== groupedSnapshots.length)) {
+      if (journal && (journal.version !== 1 || journal.scopes?.length !== groupedSnapshots.length || journal.destinations && JSON.stringify(journal.destinations) !== JSON.stringify(destinations))) {
         throw new Error('저장된 이미지 전달 정보가 현재 작업과 다릅니다.');
       }
       let reusable = null;
@@ -927,7 +917,7 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
       if (journalKey && !journal) {
         // Reserve stable destinations before the first pixel import. A reload
         // between a task checkpoint and its receipt can then find that task.
-        journal = { version: 1, scopes: groupedSnapshots.map((_, index) => index === 0 && reusable ? reusable.scope : crypto.randomUUID()) };
+        journal = { version: 1, destinations, scopes: groupedSnapshots.map((_, index) => index === 0 && reusable ? reusable.scope : crypto.randomUUID()) };
         await idbSet(journalKey, journal);
       }
       const imported = [];
@@ -945,7 +935,7 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
           const alreadyImported = journal && group.every(reference => previousAttachments.some(item => item.data === reference.dataUrl));
           if (!alreadyImported) {
             if (journal && previousAttachments.length) throw new Error('일부 이미지가 이미 저장되어 있습니다. 기존 작업대를 확인해 주세요.');
-            await entry.controller.open({ references: group, placement: group.length > 1 ? 'together' : 'separate', reveal: false, prompt, conversionKind, startGeneration: startGeneration === true });
+            await entry.controller.open({ references: group, placement: group.length > 1 ? 'together' : 'separate', reveal: false, prompt, conversionKind: destinations[index].kind, startGeneration: startGeneration === true });
           }
           const snapshot = await entry.controller.sharingSnapshot();
           const attachments = snapshot.tabs.flatMap(tab => tab.attachments || []);
@@ -956,6 +946,7 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
           transferredReferenceIndices.push(...referenceIndices);
           if (accepted.length !== group.length) throw new Error('일부 참고 이미지를 AI 작업실에 불러오지 못했습니다.');
           imported.push({ scope: entry.scope, name: group[0].name, referenceIndices });
+          workflowTargets.set(destinations[index].kind, entry);
         } catch (cause) {
           let checkpoint;
           try { checkpoint = await entry.controller.checkpointForClose(); } catch { /* Keep the original storage failure. */ }

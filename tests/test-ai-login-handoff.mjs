@@ -143,3 +143,17 @@ test('graph conversion intent survives a preparation checkpoint and recovery', {
   await recovered;
   assert.equal(f.shown.length, 1);
 });
+
+test('mixed image and graph classification is snapshotted and recovered through login', async () => {
+  const f = fixture(), input = options();
+  input.references.push({...input.references[0], name:'그래프'});
+  input.groups = [[0], [1]]; input.groupKinds = ['image', 'graph']; input.placement = 'advanced';
+  const ready = f.authReady();
+  void f.coordinator().open(input); input.groupKinds[1] = 'image'; await ready;
+  assert.deepEqual(f.prepared[0].groupKinds, ['image', 'graph']);
+  const recoveryReady = f.authReady();
+  const recovered = f.coordinator().recover(); await recoveryReady; await f.login(); await recovered;
+  assert.equal(f.prepared.length, 1);
+  assert.deepEqual(f.prepared[0].groups, [[0], [1]]);
+  assert.deepEqual(f.prepared[0].groupKinds, ['image', 'graph']);
+});

@@ -3027,27 +3027,6 @@
 [data-ai-workflow="graph"] [data-ai-model-refresh] { display:none !important; }
 [data-ai-workflow="graph"] [data-ai-comments-apply] { display:none !important; }
 
-/* Graph editing is a primary action beside the preview view modes. */
-#ai-image-panel .ai-compare-heading .ai-graph-edit-entry {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 36px;
-  padding: 7px 12px;
-  font: inherit;
-  font-weight: 600;
-  color: var(--accent-contrast, #fff);
-  background: var(--accent);
-  border: 1px solid var(--accent);
-  border-radius: 6px;
-  white-space: nowrap;
-  cursor: pointer;
-}
-#ai-image-panel .ai-graph-edit-entry[hidden] { display: none; }
-#ai-image-panel .ai-graph-edit-entry:disabled { opacity: .5; cursor: not-allowed; }
-#ai-image-panel .ai-graph-edit-entry:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
-
-
 /* Local controls for historical PNGs do not reveal source conversion settings. */
 .ai-legacy-result-settings { margin:0 0 12px; padding:12px; border:1px solid var(--border); border-radius:8px; }
 .ai-legacy-result-settings[hidden], .ai-legacy-result-settings [hidden] { display:none !important; }
@@ -3110,7 +3089,12 @@ body:has(#ai-image-panel:not([hidden])) .app-shell-header { visibility: hidden; 
   #ai-image-panel .ai-pane-zoom { order:3; }
 }
 
-#ai-image-panel .ai-graph-edit-hint { display:inline-flex; margin-left:auto; min-height:28px; padding:3px 8px; font-size:12px; }
+/* One persistent entry directly above the graph, aligned to its right edge. */
+#ai-image-panel .ai-graph-edit-hint { display:inline-flex; align-items:center; margin-left:auto; min-height:24px; padding:2px 8px; font:inherit; font-size:12px; color:var(--text-primary); background:var(--bg-input); border:1px solid var(--border); border-radius:5px; cursor:pointer; }
+#ai-image-panel .ai-graph-edit-hint[hidden] { display:none; }
+#ai-image-panel .ai-graph-edit-hint:hover:not(:disabled) { border-color:var(--accent); }
+#ai-image-panel .ai-graph-edit-hint:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
+#ai-image-panel .ai-graph-edit-hint:disabled { opacity:.5; cursor:default; }
 #ai-image-panel .ai-task-tab.is-exam-linked { border-color:#dba52b; }
 #ai-image-panel .ai-task-tab.is-exam-linked .ai-task-tab-title { color:var(--text-primary); }
 #ai-image-panel .ai-task-tab.is-exam-linked.is-on { border-left-color:#dba52b; }

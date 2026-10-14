@@ -1,3 +1,4 @@
+const { classifyAll } = require('./workbench-assignment.cjs');
 const fs = require('node:fs');
 const path = require('node:path');
 const root = path.resolve(__dirname, '../..');
@@ -130,8 +131,7 @@ async function sendLibrary(page, library, { count = 1, placement = 'separate', c
   await library.locator('[data-unilib-ai]').click();
   {
     const assignment = library.locator('.workbench-assignment-overlay');
-    await assignment.locator(`[data-conversion-kind="${conversionKind}"]`).click();
-    await assignment.locator(`[data-placement="${placement}"]`).click();
+    await classifyAll(assignment, conversionKind, placement);
     await assignment.locator('[data-action="continue"]').click();
   }
 }
