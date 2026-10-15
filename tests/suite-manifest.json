@@ -590,6 +590,10 @@
   ],
   "browser": [
     {
+      "path": "tests/test-library-catalog-refresh-browser.cjs",
+      "findingIds": ["LIBRARY-LATE-CATALOG-01"]
+    },
+    {
       "path": "tests/test-blur-reveal-dispose-browser.cjs",
       "findingIds": ["BLUR-REVEAL-DETACHED-DISPOSE"]
     },

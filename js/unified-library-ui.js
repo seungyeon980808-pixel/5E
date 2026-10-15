@@ -1016,7 +1016,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     const epoch = openEpoch;
     const live = () => epoch === openEpoch && !overlay.hidden;
     await renderSources(live);
-    if (live()) await runSearch({ preservePreview: true });
+    if (live()) await runSearch({ preservePreview: true, preserveResultOrder: true });
   };
   let searchController = null;
   let requestSequence = 0;
@@ -1358,7 +1358,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   let closedResultViewport = null;
   let restoringResultViewport = null;
 
-  async function runSearch({ preservePreview = false, retainedViewport = null } = {}) {
+  async function runSearch({ preservePreview = false, retainedViewport = null, preserveResultOrder = false } = {}) {
     const previousViewport = preservePreview ? retainedViewport ?? snapshotResultViewport() : null;
     const previousIdentity = previousViewport?.identity ?? null;
     const previousScroll = previousViewport?.scrollTop ?? 0;
@@ -1410,6 +1410,13 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       })) : [];
       const found = [...(Array.isArray(regular) ? regular : []), ...normalizedPdf];
       if (!searchIsCurrent(ownEpoch, signal)) return;
+      if (preserveResultOrder) {
+        // Late catalog entries must not move the selected PDF behind thousands
+        // of new questions and force its entire prefix into the DOM at once.
+        // Explicit searches and filters still use the provider's fresh order.
+        const positions = new Map(results.map((item, index) => [item.id, index]));
+        found.sort((a, b) => (positions.get(a.id) ?? positions.size) - (positions.get(b.id) ?? positions.size));
+      }
       results = Array.isArray(found) ? found : [];
       selectedId = reconcileUnifiedSelection(selectedId, results);
       if (pageDisplayActive && queryText && !results.find((item) => item.id === selectedId && item.matches?.length)) {
