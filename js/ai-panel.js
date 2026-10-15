@@ -938,7 +938,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
 
   const saveConversationMessages = () => {
     const bounded = conversationMessages.slice(-20);
-    localStorage.setItem(`5e.aiConversationMessages${clientScope ? ":" + clientScope : ""}`, JSON.stringify(bounded));
+    // Conversation persistence is required; do not hide write errors as UI preferences.
+    channelStorage.setItem(`5e.aiConversationMessages${clientScope ? ":" + clientScope : ""}`, JSON.stringify(bounded));
   };
   const recordConversationMessage = (role, text) => {
     const value = String(text || "").trim();

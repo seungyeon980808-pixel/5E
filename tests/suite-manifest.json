@@ -1015,6 +1015,10 @@
       ]
     },
     {
+      "path": "tests/test-ai-conversation-storage-browser.cjs",
+      "findingIds": ["STORAGE-CONVERSATION-02"]
+    },
+    {
       "path": "tests/test-ai-failure-log-browser.cjs",
       "findingIds": [
         "AI-MODEL-FAILURE-LOG"
