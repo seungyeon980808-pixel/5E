@@ -1019,6 +1019,10 @@
       "findingIds": ["STORAGE-CONVERSATION-02"]
     },
     {
+      "path": "tests/test-ai-task-notice-browser.cjs",
+      "findingIds": ["AI-TASK-REVIEW-NOTICE-01"]
+    },
+    {
       "path": "tests/test-ai-failure-log-browser.cjs",
       "findingIds": [
         "AI-MODEL-FAILURE-LOG"

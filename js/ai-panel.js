@@ -3471,7 +3471,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       const timingText = taskTimingLabel(tab, timingSample.view);
       const linked = !!tab.examLink && confirmedExamLinks.has(JSON.stringify([tab.examLink.tabId,tab.examLink.assetId]));
       const pending = pendingResult(tab);
-      const values = [tab, tab.title, tab.workState, tab.id === activeTaskTabId, tab.attachments?.[0]?.data, tab.attachments?.length, Boolean(tab.referenceComposition), linked, timingText, taskDeleteShortcutHint(), pending];
+      const values = [tab, tab.title, tab.workState, tab.id === activeTaskTabId, tab.attachments?.[0]?.data, tab.attachments?.length, Boolean(tab.referenceComposition), linked, timingText, taskDeleteShortcutHint(), pending, taskNeedsLabelReview(tab)];
       const cached = taskRows.get(tab.id);
       if (cached && values.every((value, index) => value === cached.values[index])) { rows.push(cached.row); continue; }
       const button = document.createElement("div");
