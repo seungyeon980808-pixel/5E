@@ -22,6 +22,9 @@ function guardModeHalves() {
     const button = event.target.closest?.('#mode-toggle-btn');
     if (!button || document.documentElement.dataset.mode === 'lite' && button.closest('.lite-brand-slot')) return;
     const rect = button.getBoundingClientRect();
+    // 키보드·스크립트 클릭(detail 0 또는 버튼 밖 좌표)은 원래대로 전환한다.
+    if (!event.detail || event.clientX < rect.left || event.clientX > rect.right
+      || event.clientY < rect.top || event.clientY > rect.bottom) return;
     const offset = event.clientX - rect.left;
     if (!rect.width || Math.abs(offset - rect.width / 2) < rect.width * 0.2) return;
     const clicked = offset < rect.width / 2 ? 'pro' : 'lite';
