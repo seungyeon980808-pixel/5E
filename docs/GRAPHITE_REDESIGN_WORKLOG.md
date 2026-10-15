@@ -32,9 +32,10 @@
 - [x] 메뉴·대화상자·기능 검색(스포트라이트)·강조 면 대비·파란 고정색 보정 — 커밋 f520222f
 - [x] 화이트 모드 눈금자 색(js/ruler.js), Lite 왕복 후 위쪽 막대 위치 유지 확인
 - [x] Pro/Lite 막기는 실제 마우스 클릭만(키보드·.click()은 그대로 전환)
-- [x] 테스트 기대값: undo 위치 `.toolbar-document #undo-btn`(preview-startup, lite-main)
+- [x] 기존 브라우저 테스트는 `/preview/` 사본 대상이라 기대값을 바꾸지 않음(원복). test-preview-startup 통과(chromium·webkit)
 - [x] 단위 테스트 1362 통과 / 0 실패
-- [ ] 브라우저 테스트(playwright 필요 — 이 작업 폴더에 node_modules 없음, PLAYWRIGHT_MODULE 지정 필요)
+- [x] 본 화면 점검 스크립트(scratchpad root-check.cjs): 위쪽 막대 겹침·세로 가운데·패널 경계·Pro↔Lite 왕복·기능 검색 — chromium·webkit 통과
+  playwright: `PLAYWRIGHT_MODULE=/Users/parkseungyeon/.codex/worktrees/four-session-integration/5E/node_modules/playwright`
 - [ ] 패널 레일(52px): 지금은 기존처럼 0px로 접힘
 - [ ] 아이콘 세트 교체(도구 패널·아래 기능 줄·속성 패널 아이콘)
 - [ ] AI 패널·튜토리얼·로그인·문제 신고 세부 점검(색은 규격 변수로 이미 따라옴)
