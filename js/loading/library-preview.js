@@ -58,9 +58,10 @@ export function createLibraryPreviewLoading(host, paper, source = '') {
       // The decoded image and its controls are already usable underneath.
       // Only the visual crossfade settles; completion is never held for a timer.
       const finalReveal = BlurReveal.attach(frame, { variant: 'fade', fit: 'contain' });
-      const stop = trackLoadingMotion(frame);
+      // This bounded completion must settle when the reader closes. Pausing it
+      // offscreen leaves its finished promise and detached frame retained.
       void finalReveal.start(image, elapsed).then(() => finalReveal.complete(image))
-        .catch(() => {}).finally(() => { stop(); finalReveal.destroy(); });
+        .catch(() => {}).finally(() => { finalReveal.destroy(); });
     },
   };
 }

@@ -590,6 +590,10 @@
   ],
   "browser": [
     {
+      "path": "tests/test-library-preview-settle-browser.cjs",
+      "findingIds": ["LIBRARY-PREVIEW-SETTLE-CLEANUP"]
+    },
+    {
       "path": "tests/test-preview-ai-storage-browser.cjs",
       "findingIds": ["PREVIEW-STABLE-STORAGE-ISOLATION"],
       "reason": "Exercises preview AI setting changes and task reload against same-origin stable storage sentinels in both browser engines."
