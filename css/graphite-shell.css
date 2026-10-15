@@ -471,3 +471,10 @@
   background: none !important; -webkit-mask: none !important; mask: none !important; padding: 0;
   inset: 0; border: 1px solid var(--ds-ink-2); border-radius: inherit;
 }
+
+/* 속성 패널·도구 패널: 섹션별 여백 덮어쓰기와 스크롤바 폭 때문에 16px 선이 흔들리지 않게 */
+@media (min-width: 768px) {
+  :root:not([data-mode="lite"]) .panel-right .insp-section > .insp-body { padding-left: 8px !important; padding-right: 8px !important; }
+  :root:not([data-mode="lite"]) :is(.panel-right #inspector, .panel-left #tool-list) { scrollbar-width: none; }
+  :root:not([data-mode="lite"]) :is(.panel-right #inspector, .panel-left #tool-list)::-webkit-scrollbar { width: 0; height: 0; }
+}
