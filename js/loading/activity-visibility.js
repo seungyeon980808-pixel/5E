@@ -2,6 +2,16 @@
 const frames = new Map();
 let observer;
 let listening = false;
+let refreshFrame = 0;
+function scheduleRefresh() {
+  // Hidden documents may suspend animation frames entirely. Newly created
+  // motion must still pause in the same mutation delivery.
+  if (document.hidden) { refresh(); return; }
+  if (refreshFrame) return;
+  // Every card observes its own children. A rendered batch must scan the
+  // shared frames once, rather than once per card's mutation callback.
+  refreshFrame = requestAnimationFrame(() => { refreshFrame = 0; refresh(); });
+}
 function refresh() {
   let lights = 0;
   for (const [node, entry] of frames) {
@@ -25,9 +35,12 @@ export function trackLoadingMotion(node) {
   }) : null;
   const entry = { visible: false, paused: new Set() };
   frames.set(node, entry);
-  const mutations = new MutationObserver(refresh);
+  const mutations = new MutationObserver(scheduleRefresh);
   mutations.observe(node, { childList: true, subtree: true });
   if (observer) observer.observe(node); else entry.visible = true;
   refresh();
-  return () => { mutations.disconnect(); observer?.unobserve(node); frames.delete(node); entry.paused.clear(); };
+  return () => {
+    mutations.disconnect(); observer?.unobserve(node); frames.delete(node); entry.paused.clear();
+    if (!frames.size) { cancelAnimationFrame(refreshFrame); refreshFrame = 0; }
+  };
 }

@@ -590,6 +590,10 @@
   ],
   "browser": [
     {
+      "path": "tests/test-loading-motion-batch-browser.cjs",
+      "findingIds": ["LOADING-MOTION-BATCH-01"]
+    },
+    {
       "path": "tests/test-library-catalog-refresh-browser.cjs",
       "findingIds": ["LIBRARY-LATE-CATALOG-01"]
     },
