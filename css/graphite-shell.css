@@ -1,0 +1,139 @@
+/* =====================================================================
+   5E_image 그라파이트 셸 — 배치·부품 모양. 색·크기는 design-tokens.css의
+   --ds-* 토큰만 쓴다. 기능·id는 바꾸지 않는다. Lite 모드(data-mode="lite")는
+   lite-shell.css가 따로 그리므로 여기서는 Pro 화면만 다룬다.
+   ===================================================================== */
+
+/* ---------- 0. 공통 ---------- */
+:root:not([data-mode="lite"]) body { font-family: var(--ds-font); }
+.ds-ico { width: var(--ds-icon-bar); height: var(--ds-icon-bar); flex: none; display: block; }
+.ds-fillcol { fill: currentColor; stroke: none; opacity: .45; }
+
+/* 움직이는 장식 효과 제거 (버튼 테두리 빛 돌기 등) */
+:root:not([data-mode="lite"]) :is(.ui-core-action, .ai-task-tab-select)::before { animation: none !important; opacity: 0 !important; }
+
+/* ---------- 1. 위쪽 막대 ---------- */
+@media (min-width: 768px) {
+  :root:not([data-mode="lite"]) .app-shell-header {
+    background: var(--ds-bar);
+    border-bottom: 1px solid var(--ds-line);
+  }
+  :root:not([data-mode="lite"]) .app-shell-header .canvas-toolbar {
+    height: var(--ds-h-bar);
+    padding: 0;
+    align-items: center;
+    background: transparent;
+  }
+  /* 왼쪽 칸 = 왼쪽 패널 폭. 로고는 패널 버튼과 경계선 사이 정가운데 */
+  :root:not([data-mode="lite"]) .app-shell-header .toolbar-history {
+    height: var(--ds-h-bar);
+    gap: 0;
+    padding: 0 0 0 calc(var(--ds-edge) + var(--ds-h-control) + 1px);
+    justify-content: center;
+    align-items: center;
+    border-right: 1px solid var(--ds-line);
+  }
+  :root:not([data-mode="lite"]) .app[data-left-collapsed="true"] .app-shell-header .toolbar-history { border-right-color: transparent; }
+  :root:not([data-mode="lite"]) .app-shell-header .app-brand {
+    display: inline-flex; align-items: baseline; gap: 0;
+    height: var(--ds-h-control); padding: 0 4px; border-radius: var(--ds-radius);
+    color: var(--ds-ink); text-decoration: none; line-height: var(--ds-h-control);
+  }
+  :root:not([data-mode="lite"]) .app-shell-header .app-brand:hover { background: var(--ds-hover); }
+  .app-brand .app-brand-mark { font: italic 700 21px/1 var(--ds-font-brand); letter-spacing: -.6px; }
+  .app-brand .app-brand-name { font: 500 15px/1 var(--ds-font); color: var(--ds-ink-2); margin-left: 1px; }
+  :root[data-mode="lite"] .app-brand .app-brand-name { display: none; }
+
+  /* 가운데 칸 */
+  :root:not([data-mode="lite"]) .app-shell-header .toolbar-canvas {
+    height: var(--ds-h-bar); flex-wrap: nowrap; gap: 2px; padding: 0 8px; align-items: center;
+  }
+  :root:not([data-mode="lite"]) .app-shell-header .toolbar-document {
+    gap: 2px; padding: 0; flex-wrap: nowrap; align-items: center;
+  }
+  :root:not([data-mode="lite"]) .app-shell-header :is(.toolbar-document, .canvas-view-controls, .file-menu, .canvas-lock-control) {
+    display: flex; align-items: center; gap: 2px;
+  }
+  :root:not([data-mode="lite"]) .app-shell-header .tb-sep {
+    display: block; width: 1px; height: 18px; margin: 0 8px; flex: none; background: var(--ds-line-strong);
+  }
+
+  /* 위쪽 막대 버튼: 테두리 없음 · 28px · 호버 옅은 면 */
+  :root:not([data-mode="lite"]) .app-shell-header :is(.topbar-btn, .shell-icon-button, .icon-btn, .auto-snap-btn, .grid-toggle-btn, [id="center-view-btn"], .panel-visibility-toggle) {
+    position: relative;
+    display: inline-flex; align-items: center; justify-content: center;
+    width: var(--ds-h-control); min-width: var(--ds-h-control); height: var(--ds-h-control); min-height: var(--ds-h-control);
+    padding: 0;
+    border: 0 !important; border-radius: var(--ds-radius);
+    background: transparent; box-shadow: none !important;
+    color: var(--ds-ink-3);
+    transition: none;
+  }
+  :root:not([data-mode="lite"]) .app-shell-header :is(.topbar-btn, .shell-icon-button, .icon-btn, .auto-snap-btn, .grid-toggle-btn, [id="center-view-btn"], .panel-visibility-toggle):hover:not(:disabled) {
+    background: var(--ds-hover); color: var(--ds-ink-2);
+  }
+  :root:not([data-mode="lite"]) .app-shell-header :is(.topbar-btn, .shell-icon-button, .icon-btn, .auto-snap-btn, .grid-toggle-btn, [id="center-view-btn"]):disabled { opacity: .45; }
+  :root:not([data-mode="lite"]) .app-shell-header :is(.topbar-btn, .shell-icon-button, .icon-btn, .auto-snap-btn, .grid-toggle-btn, [id="center-view-btn"], .panel-visibility-toggle) svg {
+    width: var(--ds-icon-bar); height: var(--ds-icon-bar);
+  }
+  /* 켜진 기능(격자·자동 정렬·고정·캡처): 아이콘 밝게 + 아래 작은 점 */
+  :root:not([data-mode="lite"]) .app-shell-header :is(.auto-snap-btn, .grid-toggle-btn, [id="center-view-btn"], [id="quick-capture-btn"])[aria-pressed="true"] {
+    background: transparent; color: var(--ds-selected-ink);
+  }
+  :root:not([data-mode="lite"]) .app-shell-header :is(.auto-snap-btn, .grid-toggle-btn, [id="center-view-btn"], [id="quick-capture-btn"])[aria-pressed="true"]::after {
+    content: ""; position: absolute; left: 50%; bottom: 2px; width: 4px; height: 4px; margin-left: -2px;
+    border-radius: 50%; background: var(--ds-selected-ink);
+  }
+  :root:not([data-mode="lite"]) .app-shell-header .file-menu > .topbar-btn[aria-expanded="true"] { background: var(--ds-selected); color: var(--ds-selected-ink); }
+
+  /* Pro | Lite 두 칸 (버튼 하나·id 그대로) */
+  :root:not([data-mode="lite"]) .app-shell-header #mode-toggle-btn {
+    position: relative; display: inline-flex; align-items: center;
+    height: var(--ds-h-control); min-height: var(--ds-h-control); width: auto; padding: 2px; gap: 2px;
+    border: 0 !important; border-radius: 7px; background: var(--ds-hover);
+    font-size: 0; color: transparent; box-shadow: none !important;
+  }
+  :root:not([data-mode="lite"]) .app-shell-header #mode-toggle-btn::before,
+  :root:not([data-mode="lite"]) .app-shell-header #mode-toggle-btn::after {
+    display: flex; align-items: center; justify-content: center; height: 22px; padding: 0 7px;
+    border-radius: 5px; font: 600 11.5px/1 var(--ds-font); color: var(--ds-ink-3);
+  }
+  :root:not([data-mode="lite"]) .app-shell-header #mode-toggle-btn::before { content: "Pro"; background: var(--ds-selected); color: var(--ds-ink); }
+  :root:not([data-mode="lite"]) .app-shell-header #mode-toggle-btn::after { content: "Lite"; }
+  :root:not([data-mode="lite"]) .app-shell-header #mode-toggle-btn:hover::after { color: var(--ds-ink-2); }
+  :root:not([data-mode="lite"]) .app-shell-header #mode-toggle-btn:disabled { opacity: .6; }
+
+  /* 배율 — 가운데 칸 오른쪽 끝 */
+  :root:not([data-mode="lite"]) .app-shell-header .toolbar-canvas > #zoom-readout {
+    margin-left: auto; flex: none; height: var(--ds-h-control); display: inline-flex; align-items: center;
+    padding: 0 6px; border-radius: var(--ds-radius);
+    font: 500 12px/1 var(--ds-font); color: var(--ds-ink-2); font-variant-numeric: tabular-nums;
+  }
+
+  /* 오른쪽 칸 = 오른쪽 패널 폭. 경계선은 패널 경계와 일직선, 패널 버튼은 맨 오른쪽 고정 */
+  :root:not([data-mode="lite"]) .app-shell-header .toolbar-inspector-controls {
+    height: var(--ds-h-bar);
+    padding: 0 calc(var(--ds-edge) + var(--ds-h-control) + 6px) 0 8px;
+    justify-content: flex-start;
+    border-left: 1px solid var(--ds-line);
+  }
+  :root:not([data-mode="lite"]) .app-shell-header .canvas-global-controls { justify-content: flex-start; gap: 2px; }
+  :root:not([data-mode="lite"]) .app[data-right-collapsed="true"] .app-shell-header .toolbar-inspector-controls { border-left-color: transparent; }
+  :root:not([data-mode="lite"]) .app[data-right-collapsed="true"] .app-shell-header .canvas-global-controls { visibility: hidden; }
+  :root:not([data-mode="lite"]) .app-shell-header .web-account-status {
+    width: auto; min-width: 0; padding: 0 8px; gap: 6px;
+    font: 500 12.5px/1 var(--ds-font); color: var(--ds-ink-2);
+  }
+  :root:not([data-mode="lite"]) .app-shell-header .web-account-status [data-account-label] { font-size: 12.5px !important; overflow: visible; }
+  :root:not([data-mode="lite"]) .app-shell-header .web-account-status [data-account-label]::after { content: none !important; }
+  :root:not([data-mode="lite"]) .app-shell-header .web-account-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--ds-ink-3); }
+
+  /* 패널 버튼 — 양 끝 12px 고정, 글자 숨김, 채워진 칸 = 열림 */
+  :root:not([data-mode="lite"]) .app-shell-header .panel-shell-toggles { height: var(--ds-h-bar); }
+  :root:not([data-mode="lite"]) .app-shell-header .panel-visibility-toggle { color: var(--ds-ink-2); }
+  :root:not([data-mode="lite"]) .app-shell-header [data-panel-toggle="left"] { margin: 0 0 0 var(--ds-edge); }
+  :root:not([data-mode="lite"]) .app-shell-header [data-panel-toggle="right"] { margin: 0 var(--ds-edge) 0 0; }
+  :root:not([data-mode="lite"]) .app-shell-header .panel-visibility-toggle .panel-toggle-label { display: none; }
+  :root:not([data-mode="lite"]) .app-shell-header .panel-visibility-toggle[aria-expanded="false"] { background: transparent; color: var(--ds-ink-2); }
+  :root:not([data-mode="lite"]) .app-shell-header .panel-visibility-toggle[aria-expanded="false"] .ds-fillcol { opacity: 0; }
+}
