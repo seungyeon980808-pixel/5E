@@ -22,8 +22,12 @@ function refresh() {
     node.dataset.loadingMotion = running ? 'running' : 'paused';
     node.dataset.loadingSheen = running && lights++ < 4 ? 'on' : 'off';
     for (const animation of node.getAnimations({ subtree: true })) {
-      if (!running && animation.playState === 'running') { animation.pause(); entry.paused.add(animation); }
-      else if (running && entry.paused.delete(animation) && animation.playState === 'paused') animation.play();
+      // A completed source only has a bounded crossfade left. Let it finish
+      // even under a paused grid so its promise can release the visual layers.
+      const settling = animation.effect?.target?.closest?.('[data-loading-phase="settling"]');
+      const active = running || settling;
+      if (!active && animation.playState === 'running') { animation.pause(); entry.paused.add(animation); }
+      else if (active && entry.paused.delete(animation) && animation.playState === 'paused') animation.play();
     }
   }
 }

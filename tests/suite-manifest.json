@@ -590,6 +590,10 @@
   ],
   "browser": [
     {
+      "path": "tests/test-loading-offscreen-settle-browser.cjs",
+      "findingIds": ["LOADING-OFFSCREEN-SETTLE-01"]
+    },
+    {
       "path": "tests/test-loading-motion-batch-browser.cjs",
       "findingIds": ["LOADING-MOTION-BATCH-01"]
     },

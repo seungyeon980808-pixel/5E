@@ -150,6 +150,7 @@
       this.state = 'settling';
       return loadSource(finalSrc).then(function (src) {
         if (tok !== self.token) return;
+        self.frame.dataset.loadingPhase = 'settling';
         var layer = self._finalLayer(src);
         var instant = !self.stack || self.elapsed() < self.o.instantMs;
         var dur = self.reduced() ? 200 : self.o.settleMs;
@@ -159,6 +160,7 @@
           Array.prototype.slice.call(self.stage.children).forEach(function (n) { if (n !== layer) n.remove(); });
           self.stack = null;
           self.state = 'done';
+          delete self.frame.dataset.loadingPhase;
           self.frame.classList.remove('is-loading');
           self.frame.removeAttribute('aria-busy');
           self._emit('done');
@@ -183,6 +185,7 @@
     reset: function () {
       this.token = null;
       this.state = 'idle';
+      delete this.frame.dataset.loadingPhase;
       this.stack = null;
       // getAnimations() omits detached descendants. A replaced preview can
       // still own paused animations that retain their canvases indefinitely.
