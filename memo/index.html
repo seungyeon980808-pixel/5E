@@ -11,6 +11,7 @@
 <body>
   <svg width="0" height="0" aria-hidden="true" style="position:absolute"><defs>
     <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="8" cy="8" r="1.5"/><path d="m3 17 6-6 4 4 3-3 5 5"/></symbol>
     <symbol id="i-star" viewBox="0 0 24 24"><path d="M12 2.5 14.6 9.4 21.5 12l-6.9 2.6-2.6 6.9-2.6-6.9L2.5 12l6.9-2.6Z"/></symbol>
     <symbol id="i-archive" viewBox="0 0 24 24"><rect x="4" y="8" width="16" height="12" rx="2"/><path d="M3 4h18v4H3zM9 12h6"/></symbol>
     <symbol id="i-note" viewBox="0 0 24 24"><path d="M5 3h14a2 2 0 0 1 2 2v11l-5 5H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Zm11 18v-5h5M7 8h10M7 12h7"/></symbol>
@@ -39,10 +40,13 @@
           <form id="memo-form">
             <div class="composer">
               <div class="title-row" id="title-row" hidden><label class="sr-only" for="memo-title">메모 제목 (선택)</label><input class="title-input" id="memo-title" type="text" placeholder="제목 (선택)" maxlength="160"></div>
-              <label class="sr-only" for="memo-input">새 메모</label><textarea class="body-input" id="memo-input" placeholder="링크나 메모를 붙여넣으세요." rows="2" spellcheck="false" maxlength="100000"></textarea>
+              <label class="sr-only" for="memo-input">새 메모</label><textarea class="body-input" id="memo-input" placeholder="링크, 메모, 이미지를 붙여넣으세요." rows="2" spellcheck="false" maxlength="100000"></textarea>
+              <div id="draft-images" class="draft-images" aria-label="첨부할 이미지" hidden></div>
+              <input id="image-input" type="file" accept="image/png,image/jpeg,image/webp,image/gif" multiple hidden>
               <div class="compose-actions">
+                <div class="compose-tools"><button class="button title-toggle" id="attach-image" type="button"><svg class="icon" aria-hidden="true"><use href="#i-image"/></svg>이미지</button>
                 <button class="button title-toggle" id="title-toggle" type="button" aria-expanded="false" aria-controls="title-row"><svg class="icon" aria-hidden="true"><use href="#i-plus"/></svg><span>제목 추가</span></button>
-                <div class="save-group"><span class="shortcut"><kbd id="mod-key">⌘</kbd> <kbd>Enter</kbd></span><button class="save" id="save-button" type="submit" disabled>저장<svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></button></div>
+                </div><div class="save-group"><span class="shortcut"><kbd id="mod-key">⌘</kbd> <kbd>Enter</kbd></span><button class="save" id="save-button" type="submit" disabled>저장<svg class="icon" aria-hidden="true"><use href="#i-arrow"/></svg></button></div>
               </div>
             </div>
           </form>
@@ -63,6 +67,8 @@
     <footer class="page-footer"><p class="move-hint"><svg class="icon" aria-hidden="true"><use href="#i-move"/></svg><span id="move-hint">포스트잇 윗부분을 잡아 자유롭게 옮기세요.</span></p><p class="connection" id="connection" data-state="loading"><span id="connection-text" role="status">연결 중…</span><button id="retry-button" type="button" hidden>다시 시도</button></p></footer>
   </div>
   <p class="status" id="status" role="status" aria-live="polite" aria-atomic="true"></p>
+  <input id="existing-image-input" type="file" accept="image/png,image/jpeg,image/webp,image/gif" multiple hidden>
+  <dialog id="media-viewer" class="media-viewer" aria-label="첨부 이미지 크게 보기"><button id="close-media" class="icon-button viewer-close" type="button" aria-label="이미지 닫기"><svg class="icon" aria-hidden="true"><use href="#i-close"/></svg></button><img id="viewer-image" alt="첨부 이미지 원본"></dialog>
   <script src="config.js"></script>
   <script type="module" src="app.js"></script>
 </body>

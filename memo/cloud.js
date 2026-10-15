@@ -36,7 +36,22 @@ export class MemoCloud {
     try{const snapshot=await this.snapshot();try{sessionStorage.setItem(this.key,token);}catch{}return snapshot;}
     catch(error){this.logout();throw error;}
   }
+  async upload(id,file){
+    const headers={'content-type':file.type};if(this.token)headers.authorization='Bearer '+this.token;
+    const response=await fetch(this.url+'/images/'+id,{method:'PUT',headers,body:file,cache:'no-store',signal:AbortSignal.timeout(30000)});
+    const result=await response.json();if(response.status===401)this.logout();
+    if(!response.ok){const error=Error(result.message);error.code=result.code;throw error;}return result;
+  }
+  async media(path){
+    const token=this.token,headers={};if(token)headers.authorization='Bearer '+token;
+    const response=await fetch(this.url+path,{headers,cache:'no-store',signal:AbortSignal.timeout(15000)});
+    if(response.status===401)this.logout();
+    if(!response.ok||token!==this.token)throw Error('Media unavailable');
+    const blob=await response.blob();if(token!==this.token)throw Error('Google account changed');return blob;
+  }
+  async preview(id){return this.request('/entries/'+id+'/preview','GET');}
   async create(id,entry){return normalize(await this.request('/entries','POST',{id,entry}));}
+  async attach(id,version,image_ids){return normalize(await this.request('/entries/'+id+'/images','POST',{version,image_ids}));}
   async update(id,version,patch){return normalize(await this.request('/entries/'+id,'PATCH',{version,patch}));}
   async delete(id,version){return this.request('/entries/'+id,'DELETE',{version});}
 }
