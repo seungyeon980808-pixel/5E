@@ -29,6 +29,16 @@ const DESKTOP_RESOURCE_FILES = new Set([
   'docs/IMAGE_COMPLEXITY_MODE_SPEC.md',
   'experiments/web-codex-auth/editor-bridge.js',
 ]);
+function resolveSmokeStateModuleUrl(root = path.join(__dirname, '..')) {
+  const entry = fs.readFileSync(path.join(root, 'index.html'), 'utf8');
+  const mainSource = fs.readFileSync(path.join(root, 'js', 'main.js'), 'utf8');
+  const mainEntry = entry.match(/<script\b[^>]*\bsrc=["']((?:\.\/|\/)?js\/main\.js(?:\?[^"']*)?)["']/)?.[1];
+  const stateImport = mainSource.match(/import\s*\{\s*state\s*\}\s*from\s*["']([^"']+)["']/)?.[1];
+  if (!mainEntry || !stateImport) throw new Error('Cannot resolve the live renderer state module for desktop smoke');
+  // Include the exact dependency query and the entry's URL base: another URL
+  // creates another singleton even when Electron serves the same source bytes.
+  return new URL(stateImport, new URL(mainEntry, pathToFileURL(path.join(root, 'index.html')))).href;
+}
 function relativeInside(root, target) {
   const relative = path.relative(root, target);
   return relative && !path.isAbsolute(relative) && relative !== '..' && !relative.startsWith('..' + path.sep) ? relative : null;
@@ -1084,6 +1094,7 @@ function createWindow() {
       try {
         const codexSendsBeforeSmoke = codexSendInvocationCount;
         const smokeFixtureImageDataUrl = readSmokeFixtureImageDataUrl();
+        const smokeStateModuleUrl = resolveSmokeStateModuleUrl();
         const result = await win.webContents.executeJavaScript(`new Promise((resolve) => {
           requestAnimationFrame(() => requestAnimationFrame(async () => {
             const shortcutModifiersForPlatform = ${shortcutModifiersForPlatform.toString()};
@@ -1222,7 +1233,7 @@ function createWindow() {
             await waitFor(() => !document.querySelector(".tut-welcome-overlay") &&
               !Array.from(document.querySelectorAll(".modal-overlay .modal-title"))
                 .some((title) => startupDialogTitles.has(title.textContent?.trim())), 2000);
-            const stateModule = await import("./js/state.js?v=1.6.1-remediation-0929");
+            const stateModule = await import(${JSON.stringify(smokeStateModuleUrl)});
             const textChooser = document.getElementById("chooser-text");
             const textChooserButton = document.getElementById("tool-text-merged");
             const angleChooser = document.getElementById("chooser-angle");
@@ -1765,4 +1776,4 @@ app.on("window-all-closed", () => {
 app.on("before-quit", stopServer);
 app.on('before-quit',()=>{ if (examServerPromise) void examServerPromise.then(host=>host.close()).catch(()=>{}); });
 
-module.exports = { createSmokeFixtureTurn, isValidSmokeFixtureRequest, shortcutModifiersForPlatform, resolveDesktopEntryResource, createDesktopEntryProtocolHandler };
+module.exports = { createSmokeFixtureTurn, isValidSmokeFixtureRequest, shortcutModifiersForPlatform, resolveDesktopEntryResource, createDesktopEntryProtocolHandler, resolveSmokeStateModuleUrl };

@@ -191,10 +191,26 @@ test("packaged smoke follows the current source, library, state, and platform sh
   assert.match(mainSource, /document\.querySelector\("\[data-unilib-query\]"\)/);
   assert.doesNotMatch(mainSource, /\.ai-file-button input\[type=file\]/);
   assert.doesNotMatch(mainSource, /document\.querySelector\("\.ai-reference-search-dialog"\)/);
-  assert.match(mainSource, /import\("\.\/js\/state\.js\?v=1\.6\.1-remediation-0929"\)/);
+  assert.match(mainSource, /const smokeStateModuleUrl = resolveSmokeStateModuleUrl\(\)/);
+  assert.doesNotMatch(mainSource, /import\("\.\/js\/state\.js\?v=/);
   assert.doesNotMatch(mainSource, /ctrlKey: true, metaKey: true/);
   assert.match(mainSource, /navigator\.userAgentData\?\.platform \|\| navigator\.platform/);
   assert.match(mainSource, /\.\.\.shortcutModifiersForPlatform\(shortcutPlatform\)/);
+});
+
+test("desktop smoke resolves the live state singleton through the actual entry and dependency URLs", (context) => {
+  const { resolveSmokeStateModuleUrl } = loadMainTestSeam();
+  const root = fs.mkdtempSync(path.join(require('node:os').tmpdir(), '5e-smoke-module-'));
+  context.after(() => fs.rmSync(root, { recursive: true, force: true }));
+  fs.mkdirSync(path.join(root, 'js'));
+  for (const mainEntry of ['/js/main.js?v=entry-new', './js/main.js?v=entry-relative']) {
+    fs.writeFileSync(path.join(root, 'index.html'), `<script type="module" src="${mainEntry}"></script>`);
+    fs.writeFileSync(path.join(root, 'js', 'main.js'), 'import { state } from "./state.js?v=dependency-distinct";');
+    assert.equal(resolveSmokeStateModuleUrl(root), new URL('./state.js?v=dependency-distinct',
+      new URL(mainEntry, pathToFileURL(path.join(root, 'index.html')))).href);
+  }
+  fs.writeFileSync(path.join(root, 'js', 'main.js'), 'export const unrelated = true;');
+  assert.throws(() => resolveSmokeStateModuleUrl(root), /Cannot resolve the live renderer state/);
 });
 
 test("packaged smoke uses only the platform-primary delayed-cut modifier", async (context) => {
