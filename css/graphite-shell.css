@@ -464,3 +464,10 @@
   :root:not([data-mode="lite"]) .ds-rail-btn svg { width: var(--ds-icon-tool); height: var(--ds-icon-tool); }
   :root:not([data-mode="lite"]) .ds-rail-btn:focus-visible { outline: 2px solid var(--ds-focus); outline-offset: -2px; }
 }
+
+/* 결과 알림(기능 신호)은 남긴다 — 깜빡임 없이 고정 테두리 */
+:root:not([data-mode="lite"]) :is(.ui-core-action, .ai-task-tab-select)[data-result-attention="true"]::before {
+  opacity: 1 !important; animation: none !important;
+  background: none !important; -webkit-mask: none !important; mask: none !important; padding: 0;
+  inset: 0; border: 1px solid var(--ds-ink-2); border-radius: inherit;
+}

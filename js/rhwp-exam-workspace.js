@@ -1238,8 +1238,8 @@ export function initRhwpExamWorkspace(state, services) {
   const send = document.createElement('button'); send.type = 'button'; send.id = 'exam-send'; send.className = 'object-search-trigger exam-document-trigger';
   send.setAttribute('aria-label','Hwp 연결하기');send.title='Hwp 연결하기';
   send.setAttribute('aria-haspopup','menu');send.setAttribute('aria-expanded','false');send.setAttribute('aria-controls','exam-document-menu');
-  // An authored ㅎ + arae-a mark shares the shell's icon stroke and size.
-  send.innerHTML='<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 3.5h7M3 6h10"/><ellipse cx="8" cy="10.5" rx="4" ry="2.8"/><circle cx="8" cy="16.5" r="1" fill="currentColor" stroke="none"/></svg><span>Hwp 연결하기</span>';
+  // 그라파이트 아이콘 세트(24칸, 선 1.5)의 문서 아이콘.
+  send.innerHTML='<svg class="ds-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3.5h8l4 4v13H6z"/><path d="M14 3.5v4h4"/><path d="M9 12.5h6M9 16h4"/></svg><span>Hwp 연결하기</span>';
   const documentEntry=document.createElement('div');documentEntry.className='file-menu exam-document-entry';
   const documentMenu=document.createElement('div');documentMenu.id='exam-document-menu';documentMenu.className='file-menu-list';documentMenu.setAttribute('role','menu');documentMenu.hidden=true;
   documentMenu.innerHTML='<button type="button" class="file-menu-item" role="menuitem" data-exam-document-open>한글 문서로 이동</button><button type="button" class="file-menu-item" role="menuitem" data-exam-document-insert>현재 영역 삽입…</button>';

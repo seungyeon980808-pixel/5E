@@ -48,12 +48,14 @@ export function initButtonDesign(doc = document) {
   if (graph && hub && ai) {
     graph.classList.remove('advanced-tool-btn');
     graph.classList.add('object-search-trigger');
-    graph.innerHTML = '<svg class="search-trigger-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v14h14M6 13l3-5 3 3 4-7"/></svg><span>좌표/함수 생성</span>';
+    graph.innerHTML = '<svg class="search-trigger-ico ds-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 3.5v16.5h16.5"/><path d="M6.5 17c3-1 4-9 7-9.5S18 9 20 6"/></svg><span>좌표/함수 생성</span>';
     ai.after(graph);
   }
   const clickAnimations = new WeakMap();
   doc.addEventListener('click', event => {
     const button = event.target.closest?.('.ui-core-action');
+    // 그라파이트(Pro)에서는 누를 때 커지는 장식 효과를 쓰지 않는다.
+    if (doc.documentElement.dataset.mode !== 'lite') return;
     if (!button || button.disabled || button.getAttribute('aria-disabled') === 'true'
       || doc.defaultView.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     clickAnimations.get(button)?.cancel();
