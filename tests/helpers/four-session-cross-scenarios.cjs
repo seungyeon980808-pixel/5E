@@ -671,6 +671,17 @@ async function editGraph(ctx, page, text, { held = false, beforeConfirm } = {}) 
     await selectTask(ctx, page, 'cross-graph-task');
   await ctx.check('actual graph edit targets the currently selected graph task', async () =>
     assert.equal(await page.locator(panel + ' .ai-task-tab.is-on').getAttribute('data-tab-id'), 'cross-graph-task'));
+  await ctx.check('graph edit entry remains clickable beside linked-document source actions', async () => {
+    const layout = await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(() => {
+      const button = document.querySelector('#ai-image-panel [data-ai-graph-edit]'), rect = button.getBoundingClientRect();
+      const heading = document.querySelector('#exam-source-region .exam-region-heading');
+      const actions = heading?.getClientRects().length ? heading.getBoundingClientRect() : null;
+      const hit = document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2);
+      resolve({ clickable: button.contains(hit), overlap: Boolean(actions && rect.left < actions.right && rect.right > actions.left
+        && rect.top < actions.bottom && rect.bottom > actions.top) });
+    }))));
+    assert.equal(layout.overlap, false); assert.equal(layout.clickable, true);
+  });
   await page.locator(panel + ' [data-ai-graph-edit]').click(); await page.locator('#gm-labelx').fill(text); await page.locator('#gm-labelx').dispatchEvent('input');
   if (held) await holdGraph(page);
   // For other label values subscribe to the exact persistent write instead.
@@ -843,12 +854,17 @@ scenarios.QA2 = async ctx => {
     });
     const request = await page.evaluate(() => __task2.sends.find(s => s.payload.purpose === 'image').payload);
     await ctx.check('approved request hash/preprocessed attachment and independent observation', async () => {
-      assert.equal(first.workflowMetrics.generationHarness.promptSha256, approved.promptSha256);
+      const { APPROVED_FIRST_PROMPT } = await import('../../js/ai-approved-first-png.js');
+      assert.equal(sha(APPROVED_FIRST_PROMPT), approved.promptSha256, 'The historical approved body remains byte-identical');
+      assert.ok(request.text.includes(APPROVED_FIRST_PROMPT), 'The actual provider request retains the entire approved body');
+      assert.equal(first.workflowMetrics.generationHarness.sourceTracingVersion, approved.sourceTracing.version);
+      assert.equal(first.workflowMetrics.generationHarness.promptSha256, approved.sourceTracing.promptSha256);
       assert.ok(request.attachments.some(a => a.name === approved.attachmentName));
       const observations = await page.evaluate(() => __task2.sends.filter(s => s.payload.text.includes('입력 원본 라벨 관찰')).map(s => ({ model: s.payload.model, effort: s.payload.effort })));
       assert.ok(observations.length); assert.ok(observations.every(r => r.model === 'gpt-6-luna' && r.effort === 'medium'));
       const attachment = request.attachments.find(a => a.name === approved.attachmentName);
       const image = decodePng(pngBytes(attachment.data || attachment.dataUrl)); assert.ok(Math.max(image.width, image.height) <= approved.transport.maxLongEdge); assert.ok(image.width * image.height <= approved.transport.maxPixels);
+      assert.deepEqual({width:image.width,height:image.height}, approved.sourceTracing.sourceFrame);
     });
     ctx.write(`raw-${initial}-request.json`, request);
     await checkpoint(ctx, page);
@@ -963,24 +979,24 @@ async function insertSelected(ctx, page) {
     return { taskId: task.id, candidate, draft: canEditLabelReviewDraft(candidate),
       input: task.input, conversationMessages: task.conversationMessages, uiMessages: task.uiMessages };
   }, version);
-  const oldFooterInsert = page.locator(panel + ' [data-ai-insert-selected]');
+  const footerInsert = page.locator(panel + ' [data-ai-insert-selected]');
   const insert = page.locator(panel + ' .is-ai-active-candidate [data-ai-canvas-output]');
   const draft = page.locator(panel + ' [data-ai-edit-review-draft]');
   if (selected.draft) {
-    await ctx.check('unreviewed editable draft uses its distinct visible canvas action', async () => {
+    await ctx.check('unreviewed editable draft uses the unified visible canvas action without approving QA', async () => {
       assert.equal(selected.candidate.reviewState, 'needs-attention');
       assert.ok(['uncertain', 'fail'].includes(selected.candidate.reviewReport.verdict));
-      assert.equal(await oldFooterInsert.isVisible(), false);
-      assert.equal(await insert.isDisabled(), true, 'Unreviewed drafts cannot use regular candidate insertion');
-      assert.equal(await draft.isVisible(), true); assert.equal(await draft.isEnabled(), true);
+      assert.equal(await footerInsert.isVisible(), true); assert.equal(await footerInsert.isEnabled(), true);
+      assert.equal(await insert.isDisabled(), false, 'Explicit user output remains available regardless of automatic QA');
+      assert.equal(await draft.isVisible(), false);
     });
-    await ctx.act('actual Canvas edit of selected review draft', () => draft.click(), page);
+    await ctx.act('actual Canvas output of selected review draft', () => footerInsert.click(), page);
   } else {
     await ctx.check('regular selected candidate exposes the regular insertion action', async () => {
-      assert.equal(await draft.isVisible(), false); assert.equal(await oldFooterInsert.isVisible(), false);
-      assert.equal(await insert.isVisible(), true); assert.equal(await insert.isEnabled(), true);
+      assert.equal(await draft.isVisible(), false); assert.equal(await footerInsert.isVisible(), true);
+      assert.equal(await footerInsert.isEnabled(), true); assert.equal(await insert.isEnabled(), true);
     });
-    await ctx.act('actual Insert selected candidate', () => insert.click(), page);
+    await ctx.act('actual Insert selected candidate', () => footerInsert.click(), page);
   }
   await page.locator(panel).waitFor({ state: 'hidden' });
   if (selected.draft) await ctx.check('canvas draft insertion preserves the entire unreviewed candidate', async () => {
@@ -990,9 +1006,7 @@ async function insertSelected(ctx, page) {
   await ctx.check('canvas insertion appends its expected log and preserves all prior history', async () => {
     const task = (await tabs(page)).find(t => t.id === selected.taskId);
     const count = selected.candidate.labelPlan?.labels?.length || 0;
-    const message = selected.draft
-      ? `검토용 그림과 편집 라벨 ${count}개를 캔버스에 넣었습니다. 검수 미통과 표시를 유지합니다.`
-      : count ? `이미지와 편집 가능한 자동 라벨 ${count}개를 페이지에 넣었습니다.` : '이미지를 페이지에 넣었습니다.';
+    const message = count ? `이미지와 편집 가능한 자동 라벨 ${count}개를 페이지에 넣었습니다.` : '이미지를 페이지에 넣었습니다.';
     assert.equal(task.input, selected.input);
     assert.deepEqual(task.conversationMessages, selected.conversationMessages);
     assert.deepEqual(task.uiMessages, [...selected.uiMessages, { kind: 'assistant', text: message }]);
@@ -1334,7 +1348,12 @@ async function sendAiFigure(ctx, page, taskId, {fullCrop = false} = {}) {
   assert.ok(figure, 'Actual linked RHWP picture must exist');
   await ctx.check(`${taskId}: materialized source tab native types`, () => {
     const native = figure.figure.source.pages[0].objects;
-    if (taskId === 'cross-label-task') { assert.ok(native.some(o => o.type === 'labeler')); assert.ok(native.some(o => o.type === 'image' && o.imageSelectionLocked && o.aiLabelEditingBackground)); }
+    if (taskId === 'cross-label-task') {
+      const image=native.find(o=>o.type==='image'),labels=native.filter(o=>o.type==='labeler');
+      assert.ok(image?.aiLabelEditingBackground); assert.equal(image.imageSelectionLocked,false);
+      assert.ok(image.groupId); assert.ok(labels.length);
+      for(const label of labels) { assert.equal(label.groupId,image.groupId); assert.equal(label.aiParentImageId,image.id); assert.equal(label.aiTaskId,taskId); assert.equal(label.aiCandidateId,image.aiCandidateId); }
+    }
     else { const plane = native.find(o => o.type === 'coordplane'); assert.ok(plane); assert.ok(native.some(o => o.type === 'funcgraph' && o.planeId === plane.id)); assert.ok(native.every(o => o.aiTaskId === taskId)); }
   });
   return figure;
@@ -2252,6 +2271,8 @@ async function rawStorageFaults(ctx) {
     const priorTask = (await tabs(page)).find(task => task.id === 'task-0');
     const workflow = require('./label-source-browser.cjs');
     const startIndex = await page.evaluate(() => __task2.sends.length);
+    await page.locator(panel + ' [data-ai-review-open]').click();
+    await page.locator(panel + ' [data-ai-review-dialog]').waitFor({ state: 'visible' });
     const verify = page.locator(panel + ' [data-ai-verify-label-draft]');
     await verify.waitFor({ state: 'visible' });
     await ctx.check(`${fault}: real saved-candidate optional-review action is available without status mutation`, async () => {

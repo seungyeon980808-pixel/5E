@@ -246,6 +246,10 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
       image.style.setProperty('height', `${image.naturalHeight * scale}px`, 'important');
       image.style.maxHeight = 'none';
       image.style.maxWidth = 'none';
+      // Compared images share a frame but can have different aspect ratios.
+      // Keep the edit action attached to the image, including its letterbox.
+      stage.style.setProperty('--ai-graph-edge-right', `${Math.max(0, (baseWidth * zoom - image.naturalWidth * scale) / 2)}px`);
+      stage.style.setProperty('--ai-graph-edge-top', `${Math.max(0, (baseHeight * zoom - image.naturalHeight * scale) / 2)}px`);
     }
   }
 

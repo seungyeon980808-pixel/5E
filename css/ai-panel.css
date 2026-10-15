@@ -2176,7 +2176,6 @@
 #ai-image-panel .ai-preparation .ai-mark-policy { padding:6px 0; }
 
 #ai-image-panel[data-ai-stage="empty"] .ai-compare-heading,
-#ai-image-panel[data-ai-stage="empty"] .ai-result-pane > .ai-pane-head,
 #ai-image-panel[data-ai-stage="empty"] .ai-compare-controls,
 #ai-image-panel[data-ai-stage="empty"] .ai-preparation,
 #ai-image-panel[data-ai-stage="empty"] .ai-review-overview,
@@ -3089,8 +3088,9 @@ body:has(#ai-image-panel:not([hidden])) .app-shell-header { visibility: hidden; 
   #ai-image-panel .ai-pane-zoom { order:3; }
 }
 
-/* One persistent entry directly above the graph, aligned to its right edge. */
-#ai-image-panel .ai-graph-edit-hint { display:inline-flex; align-items:center; margin-left:auto; min-height:24px; padding:2px 8px; font:inherit; font-size:12px; color:var(--text-primary); background:var(--bg-input); border:1px solid var(--border); border-radius:5px; cursor:pointer; }
+/* The action follows the rendered image's edge, including zoom and letterbox. */
+#ai-image-panel .ai-preview-stage:has(> .ai-graph-edit-hint) { overflow:visible; }
+#ai-image-panel .ai-graph-edit-hint { position:absolute; z-index:9; top:var(--ai-graph-edge-top, 0px); right:var(--ai-graph-edge-right, 0px); transform:translateY(calc(-100% - 4px)); display:inline-flex; align-items:center; min-height:28px; max-width:100%; padding:4px 10px; box-sizing:border-box; font:inherit; font-size:12px; font-weight:600; white-space:nowrap; color:var(--accent-contrast, #fff); background:var(--accent); border:1px solid var(--accent); border-radius:5px; cursor:pointer; }
 #ai-image-panel .ai-graph-edit-hint[hidden] { display:none; }
 #ai-image-panel .ai-graph-edit-hint:hover:not(:disabled) { border-color:var(--accent); }
 #ai-image-panel .ai-graph-edit-hint:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }

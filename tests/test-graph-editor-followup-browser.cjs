@@ -7,11 +7,11 @@ const root=path.resolve(__dirname,'..'),out=path.resolve(process.env.EVIDENCE_DI
 const base=process.env.PREVIEW_URL||'http://127.0.0.1:62759/',version='?v=1.7.0-four-session-integration';
 fs.mkdirSync(out,{recursive:true});
 const report={startedAt:new Date().toISOString(),base,provider:'Recorded-response replay only',cases:[]};
-const cache=page=>page.evaluate(async version=>{const{IndexedDBOutputCacheBackend}=await import('/js/ai-output-cache-store.js'+version);return new IndexedDBOutputCacheBackend({databaseName:'5e-ai-image-tasks',storeName:'tasks'}).get('workspace');},version);
-async function waitVersions(page,count){await page.waitForGraphSignal(async count=>{const{IndexedDBOutputCacheBackend}=await import('/js/ai-output-cache-store.js?v=1.7.0-four-session-integration');const saved=await new IndexedDBOutputCacheBackend({databaseName:'5e-ai-image-tasks',storeName:'tasks'}).get('workspace');return saved?.tabs?.flatMap(t=>t.generated||[]).length===count;},count,{timeout:5000});return cache(page);}
+const cache=page=>page.evaluate(()=>window.__readGraphFollowupWorkspace());
+async function waitVersions(page,count){await page.waitForGraphSignal(async count=>(await window.__readGraphFollowupWorkspace())?.tabs?.flatMap(t=>t.generated||[]).length===count,count,{timeout:5000});return cache(page);}
 const versions=d=>d.tabs.flatMap(t=>t.generated||[]);
 async function drag(page,locator,dx,dy){const b=await locator.boundingBox();assert(b);await page.mouse.move(b.x+b.width/2,b.y+b.height/2);await page.mouse.down();await page.mouse.move(b.x+b.width/2+dx,b.y+b.height/2+dy,{steps:8});await page.mouse.up();}
-const ink=page=>page.locator('#gm-preview [data-trace-graph]').evaluate(n=>[...n.querySelectorAll('path,polyline,line,text')].filter(x=>!x.closest('[data-preview-hit],[data-preview-annotation-hit]')).map(x=>({stroke:getComputedStyle(x).stroke,fill:getComputedStyle(x).fill})));
+const ink=page=>page.locator('#gm-preview .gm-preview-svg').evaluate(n=>[...n.querySelectorAll('path,polyline,line,text')].filter(x=>!x.closest('[data-preview-hit],[data-preview-annotation-hit]')).map(x=>({stroke:getComputedStyle(x).stroke,fill:getComputedStyle(x).fill})));
 const axis=(title,min,max)=>({min,max,step:1,title,unit:'',scale:'linear',ticks:[]});
 const plan={schema:'5e.graph-reconstruction/v1',source:{id:'tracing-browser-fixture',hash:'synthetic',width:400,height:300,plotBox:{x:40,y:20,w:320,h:240}},axes:{x:axis('시간',0,4),y:axis('크기',-1,10)},series:[{id:'expression',kind:'expression',axis:'y',certainty:'exact',coordinateSpace:'data',expression:'2*x',domain:{min:.123456789,max:4}},{id:'polyline',kind:'points',axis:'y',certainty:'exact',coordinateSpace:'data',curveStyle:'straight',points:[{x:0,y:-1},{x:.25,y:-.5},{x:.5,y:0},{x:.75,y:.5},{x:1,y:1},{x:1.5,y:1},{x:2,y:.5}]}],annotations:[{id:'guide',kind:'guide',text:'',x:1,y:2,to:{x:0,y:2},seriesId:'expression',anchorX:1,axis:'y',orientation:'horizontal',strokeWidth:.10714285714285714,dashLength:1.7948717948717947,dashGap:.7692307692307692},{id:'label',kind:'text',text:'긴 한글 라벨 A와 연결된 함수',x:1,y:2,seriesId:'expression',anchorX:1,axis:'y',orientation:'horizontal'},{id:'polyguide',kind:'guide',text:'',x:.5,y:0,to:{x:.5,y:-1},seriesId:'polyline',axis:'y',orientation:'vertical'}],regions:[],review:[]};
 const curve=(s,id)=>s.objects.find(o=>o.reconstruction?.seriesId===id),plane=s=>s.objects.find(o=>o.type==='coordplane');
@@ -19,6 +19,14 @@ async function setup(browser,replay){
  const context=await browser.newContext({viewport:{width:1600,height:1080},serviceWorkers:'block',acceptDownloads:true});
  await context.route('**/*',r=>{const u=new URL(r.request().url());if(['http:','https:'].includes(u.protocol)&&!['localhost','127.0.0.1'].includes(u.hostname))return r.fulfill({status:200,body:'',contentType:u.hostname==='fonts.googleapis.com'?'text/css':'text/plain'});return r.continue();});
  await context.addInitScript(({plan})=>{localStorage.setItem('5e.preview:5e.tutorial.bannerSeen','true');localStorage.setItem('5e.tutorial.bannerSeen','true');localStorage.setItem('5e.preview:5e.mode','pro');window.showSaveFilePicker=undefined;window.showDirectoryPicker=undefined;
+ window.__readGraphFollowupWorkspace=async()=>{
+  const active=document.querySelector('#ai-image-panel .ai-task-tab.is-on');if(!active)return null;
+  const {tabId,aiWorkspaceLink:scope}=active.dataset;if(!tabId||!scope)throw Error('Visible workspace identity missing');
+  const {IndexedDBOutputCacheBackend}=await import(location.origin+'/js/ai-output-cache-store.js?v=1.7.0-four-session-integration');
+  const saved=await new IndexedDBOutputCacheBackend({databaseName:scope==='legacy'?'5e-ai-image-tasks':'5e-ai-image-tasks-'+scope,storeName:'tasks'}).get('workspace');
+  if(saved?.activeTaskTabId!==tabId)throw Error('Visible and persisted workspace differ');return saved;
+ };
+
  if(plan){const listeners=new Set();window.__traceReplay={requests:[]};window.fiveEDesktop={web:true,status:async()=>({login:{loggedIn:true},server:true}),start:async()=>({ok:true}),account:async()=>({rateLimits:{}}),models:async()=>({data:[{model:'gpt-6.1-sol',displayName:'Recorded replay',isDefault:true,defaultReasoningEffort:'medium',supportedReasoningEfforts:['medium'],serviceTiers:[]}]}),onEvent:fn=>{listeners.add(fn);return()=>listeners.delete(fn);},onState:()=>()=>{},onLog:()=>()=>{},setAiTaskShortcutActive(){},onAiCloseTaskShortcut:()=>()=>{},interrupt:async()=>({ok:true}),send:async request=>{window.__traceReplay.requests.push(request);const m=request.text.match(/바인딩을 정확히 복사하고[^\n]*: (\{[^\n]+\})/);if(!m)throw Error('Replay source binding missing');const reply=structuredClone(plan);reply.source={...JSON.parse(m[1]),plotBox:plan.source.plotBox};const turnId='tracing-replay';queueMicrotask(()=>{for(const event of [{method:'item/completed',params:{turnId,item:{type:'agentMessage',text:JSON.stringify(reply)}}},{method:'turn/completed',params:{turn:{id:turnId,status:'completed'}}}])for(const fn of listeners)fn({...event,clientScope:request.clientScope});});return{turnId,threadId:'tracing-replay'};}};}
  },{plan:replay?.plan});
  const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(String(e)));page.setDefaultTimeout(8000);await page.goto(base+'?mode=pro',{waitUntil:'networkidle'});
@@ -27,7 +35,6 @@ async function setup(browser,replay){
 }
 async function install(page){await page.evaluate(async({plan,version})=>{const{state}=await import('/js/state.js'+version),{buildNativeGraph}=await import('/js/graph/native-graph.js'+version);let n=0;const built=buildNativeGraph(plan,{box:{x:-40,y:-25,w:80,h:50},layerId:1,nextId:()=>n++===0?'tracing-plane':`tracing-${n}`});if(!built.ok)throw Error(built.error);built.objects.find(o=>o.reconstruction?.seriesId==='expression').strokeWidth=.10714285714285714;window.__qaState=state;state.update(s=>{s.objects=built.objects;s.groups=built.groups;s.selectedIds=[];s.undoStack=[];s.redoStack=[];s.activeTool='V';s.activeLayerId=1;});}, {plan,version});}
 const snapshot=page=>page.evaluate(()=>structuredClone({objects:window.__qaState.get().objects,groups:window.__qaState.get().groups}));
-async function traceControls(page){if(!await page.locator('.gm-trace-options').evaluate(n=>n.open))await page.locator('.gm-trace-options summary').click();}
 const open=page=>page.evaluate(async version=>(await import('/js/graph/graph-modal.js'+version)).openGraphModal('tracing-plane'),version);
 async function exportSvg(page){return page.evaluate(async version=>{const{buildExportSvg}=await import('/js/svg-export.js'+version);const state=window.__qaState.get(),p=state.objects.find(o=>o.type==='coordplane');return buildExportSvg(state,{x:p.x-p.w*.2,y:p.y-p.h*.2,w:p.w*1.4,h:p.h*1.4}).outerHTML;},version);}
 async function syntheticSource(page){return Buffer.from((await page.evaluate(()=>{const c=document.createElement('canvas');c.width=400;c.height=300;const g=c.getContext('2d');g.fillStyle='white';g.fillRect(0,0,400,300);g.strokeStyle='black';g.lineWidth=2;g.beginPath();g.moveTo(40,20);g.lineTo(40,260);g.lineTo(360,260);g.moveTo(40,260);g.lineTo(360,60);g.stroke();g.fillStyle='black';g.font='20px serif';g.fillText('x',370,270);g.fillText('y',25,18);return c.toDataURL();})).split(',')[1],'base64');}
@@ -54,14 +61,20 @@ async function run(browser,engine,kind){
   const original=structuredClone(versions(await waitVersions(page,1))[0]);
   const stage=()=>page.locator(`#ai-image-panel [data-ai-candidate-id="${original.id}"] .ai-preview-stage`);
   await step('Persistent image badge opens a topmost graph editor immediately, without closing image editor',async()=>{
-   await page.locator('#ai-image-panel [data-ai-graph-edit]').click();await page.locator('#gm-preview [data-trace-graph]').waitFor();
+   await page.locator('#ai-image-panel [data-ai-graph-edit]').click();await page.locator('#gm-preview .gm-preview-svg').waitFor();
    assert(await page.locator('#ai-image-panel').isVisible());
    assert(await page.locator('#graph-modal-overlay .gm-modal').evaluate(n=>{const b=n.getBoundingClientRect();return Boolean(document.elementFromPoint(b.x+b.width/2,b.y+60)?.closest('#graph-modal-overlay'));}));
+   const edges=await page.locator('#graph-modal-overlay').evaluate(root=>{
+    const fields=[...root.querySelectorAll('button,input,select,textarea,summary,[tabindex]')].filter(n=>!n.disabled&&n.tabIndex>=0&&!n.closest('[hidden],[inert]')&&n.getClientRects().length&&getComputedStyle(n).visibility!=='hidden');
+    fields.at(-1).focus();return{first:fields[0].id,last:fields.at(-1).id};
+   });
+   await page.keyboard.press('Tab');assert.equal(await page.evaluate(()=>document.activeElement.id),edges.first,'Tab stays inside the graph child dialog');
+   await page.keyboard.press('Shift+Tab');assert.equal(await page.evaluate(()=>document.activeElement.id),edges.last,'Reverse Tab stays inside the graph child dialog');
    await page.locator('#gm-labelx').fill('첫 번째 수정');await page.locator('#gm-labelx').press('Tab');
    await shot('immediate-editor');await page.locator('#gm-cancel').click();assert.deepEqual(versions(await cache(page)),[original]);
   });
   await step('Apply appends a new image/version and preserves original pixels, objects and review log',async()=>{
-   await page.locator('#ai-image-panel [data-ai-graph-edit]').click();await page.locator('#gm-preview [data-trace-graph]').waitFor();
+   await page.locator('#ai-image-panel [data-ai-graph-edit]').click();await page.locator('#gm-preview .gm-preview-svg').waitFor();
    await page.locator('#gm-labelx').fill('첫 번째 수정');await page.locator('#gm-labelx').press('Tab');
    await page.observeGraphSignal(()=>document.querySelector('#ai-image-panel [data-ai-status]')?.textContent.includes('편집을 적용'), undefined, undefined, async () => { await page.locator('#gm-confirm').click(); });
    const saved=await waitVersions(page,2),vs=versions(saved);assert.deepEqual(vs[0],original);assert.notEqual(vs[1].data,original.data);assert.equal(vs[1].graphEdit.parentCandidateId,original.id);
@@ -71,7 +84,7 @@ async function run(browser,engine,kind){
    assert.equal(await stage().locator('img').getAttribute('src'),original.data);await shot('history-original');save('two-versions',saved);
   });
   await step('Editing a previous version makes another independent result; reload keeps three versions',async()=>{
-   await page.locator('#ai-image-panel [data-ai-graph-edit]').click();await page.locator('#gm-preview [data-trace-graph]').waitFor();
+   await page.locator('#ai-image-panel [data-ai-graph-edit]').click();await page.locator('#gm-preview .gm-preview-svg').waitFor();
    await page.locator('#gm-labelx').fill('두 번째 수정');await page.locator('#gm-labelx').press('Tab');
    await page.observeGraphSignal(()=>document.querySelector('#ai-image-panel [data-ai-status]')?.textContent.includes('편집을 적용'), undefined, undefined, async () => { await page.locator('#gm-confirm').click(); });
    const saved=await waitVersions(page,3),vs=versions(saved);assert.deepEqual(vs[0],original);assert.equal(plane(vs[1].graphResult).labelX,'첫 번째 수정');assert.equal(plane(vs[2].graphResult).labelX,'두 번째 수정');assert.equal(vs[2].graphEdit.parentCandidateId,original.id);
@@ -88,15 +101,16 @@ async function run(browser,engine,kind){
   await install(page);const original=await snapshot(page),bytes=await syntheticSource(page);
   await step('Comparison toolbar is compact; side comparison black, overlay red/blue',async()=>{
    await open(page);assert.equal(await page.locator('#gm-labelmove,#gm-tickmove,#gm-lockpos').count(),0);
-   await traceControls(page);await page.getByLabel('트레이싱 원본 이미지 선택',{exact:true}).setInputFiles({name:'source.png',mimeType:'image/png',buffer:bytes});
-   await page.locator('[data-trace-layer="source"]').waitFor();await page.locator('.gm-trace-options summary').click();
-   assert((await page.locator('.gm-trace-toolbar').boundingBox()).height<=40);
-   await page.locator('[data-trace-mode="side"]').click();assert((await ink(page)).every(p=>!p.stroke.includes('22, 107, 255')&&!p.fill.includes('22, 107, 255')));
+   await page.getByLabel('트레이싱 원본 이미지 선택',{exact:true}).setInputFiles({name:'source.png',mimeType:'image/png',buffer:bytes});
+   await page.waitForGraphSignal(()=>!document.querySelector('select[data-trace-view] option[value="side"]').disabled);
+   assert.equal(await page.locator('select[data-trace-view]').inputValue(),'graph','Loading a reference must not enable an overlay by itself');
+   assert((await page.locator('.gm-trace-main').boundingBox()).height<=40);
+   await page.locator('select[data-trace-view]').selectOption('side');assert((await ink(page)).every(p=>!p.stroke.includes('22, 107, 255')&&!p.fill.includes('22, 107, 255')));
    assert.equal(await page.locator('.gm-trace-source-pane img').evaluate(n=>getComputedStyle(n).filter),'grayscale(1)');await shot('side-black');
-   await page.locator('[data-trace-mode="overlay"]').click();assert((await ink(page)).some(p=>p.stroke==='rgb(22, 107, 255)'));await shot('overlay-colors');
+   await page.locator('select[data-trace-view]').selectOption('overlay');assert((await ink(page)).some(p=>p.stroke==='rgb(22, 107, 255)'));await shot('overlay-colors');
   });
   await step('Center divider drags, responds to keyboard and survives preview redraw/apply/reopen',async()=>{
-   await page.locator('[data-trace-mode="wipe"]').click();const bar=page.getByRole('slider',{name:'원본과 편집본 비교 경계'});assert.equal(await bar.getAttribute('aria-valuenow'),'50');
+   await page.locator('select[data-trace-view]').selectOption('wipe');const bar=page.getByRole('slider',{name:'원본과 편집본 비교 경계'});assert.equal(await bar.getAttribute('aria-valuenow'),'50');
    await drag(page,bar,100,0);const dragged=Number(await bar.getAttribute('aria-valuenow'));assert(dragged>50);await bar.press('ArrowLeft');assert.equal(Number(await bar.getAttribute('aria-valuenow')),dragged-1);
    assert((await ink(page)).every(p=>!p.stroke.includes('22, 107, 255')));assert.equal(await page.locator('[data-trace-layer="clips"] clipPath').count(),2);
    await page.locator('#gm-tab-func-btn').click();await page.locator('#gm-expr').fill('3*x');await page.locator('#gm-expr').press('Tab');assert(await bar.isVisible());

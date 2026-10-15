@@ -111,7 +111,14 @@ const tabs = page => page.evaluate(async () => (await (new (await import('/js/ai
         await page.getByRole('dialog',{name:'작업 삭제',exact:true}).getByRole('button',{name:'작업 삭제',exact:true}).click();
         await page.waitForGraphSignal(({kind,sourceTaskId})=>document.querySelectorAll('#ai-image-panel .ai-task-tab:not(.ai-task-add)').length===(kind==='image'?0:1)
           && (kind==='image' || document.querySelector('#ai-image-panel .ai-task-tab.is-on')?.dataset.tabId===sourceTaskId),{kind,sourceTaskId});
-        assert.equal((await tabs(page))[0].attachments[0].data,source,'Deleting the explicit copy retains the source owner');
+        // The DOM switches owners before the asynchronous workspace save.
+        // Inspect the original owner by ID after its persisted state is ready.
+        await page.waitForGraphSignal(async ({sourceTaskId,source})=>{
+          const { IndexedDBOutputCacheBackend } = await import('/js/ai-output-cache-store.js?v=1.7.0-four-session-integration');
+          const saved=await new IndexedDBOutputCacheBackend({databaseName:'5e-ai-image-tasks',storeName:'tasks'}).get('workspace');
+          return saved?.tabs?.find(t=>t.id===sourceTaskId)?.attachments?.[0]?.data===source;
+        },{sourceTaskId,source});
+        assert.equal((await tabs(page)).find(t=>t.id===sourceTaskId).attachments[0].data,source,'Deleting the explicit copy retains the source owner');
       }
       await page.locator(ui+'.ai-task-tab-select').first().click({button:'right'});
       const duplicatedSourceId=await page.locator(ui+'.ai-task-tab').first().getAttribute('data-tab-id');
@@ -222,7 +229,12 @@ const tabs = page => page.evaluate(async () => (await (new (await import('/js/ai
         window.__fontGate.started.then(() => { clearTimeout(timer); resolve(); });
       }));
       const oldTask = await page.locator(ui + '.ai-task-tab.is-on').getAttribute('data-tab-id');
-      await page.observeGraphSignal(old => document.querySelector('#ai-image-panel .ai-task-tab.is-on')?.dataset.tabId !== old, oldTask, undefined, async () => { await page.locator(ui + '[data-ai-task-add]').click(); });
+      await page.observeGraphSignal(old => {
+        const panel=document.querySelector('#ai-image-panel');
+        const active=panel?.querySelector('.ai-task-tab.is-on');
+        // A temporarily detached panel is not a completed owner switch.
+        return active && active.dataset.tabId!==old && panel.dataset.aiWorkflow==='graph';
+      }, oldTask, undefined, async () => { await page.locator(ui + '[data-ai-task-add]').click(); });
       await page.waitForGraphSignal(async old => {
         const { IndexedDBOutputCacheBackend } = await import('/js/ai-output-cache-store.js?v=1.7.0-four-session-integration');
         const saved = (await new IndexedDBOutputCacheBackend({ databaseName: '5e-ai-image-tasks', storeName: 'tasks' }).get('workspace'));

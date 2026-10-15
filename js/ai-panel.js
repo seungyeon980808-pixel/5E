@@ -2154,7 +2154,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       graphEdit.type='button';graphEdit.dataset.aiGraphEdit='';graphEdit.className='ai-graph-edit-hint';graphEdit.textContent='그래프 세부 편집';
       graphEdit.disabled=busy || panel.dataset.aiSharingMode==='view';
       graphEdit.onclick=()=>{if(!busy && panel.dataset.aiSharingMode!=='view')void editGraphCandidate(item);};
-      head.append(graphEdit);
+      stage.append(graphEdit);
     }
     if (item.kind === "generated") {
       const output = document.createElement("button");

@@ -69,7 +69,7 @@ export class ExamRegionSurface {
     const a=(g.rotation||0)*Math.PI/180,w=Math.abs(Math.cos(a))*p.width+Math.abs(Math.sin(a))*p.height,h=Math.abs(Math.sin(a))*p.width+Math.abs(Math.cos(a))*p.height;
     const x=p.horzOffset+(p.width-w)/2,y=p.vertOffset+(p.height-h)/2;
     const width=Math.min(Math.max(w,300),v.w-16);
-    this.heading.hidden=false;const top=Math.max(8,y-this.heading.offsetHeight-8);
+    this.heading.hidden=false;const top=Math.max(8,(g.headingBottom??y)-this.heading.offsetHeight-8);
     Object.assign(this.heading.style,{left:`${Math.max(v.x+8,Math.min(x,v.x+v.w-width-8))}px`,top:`${top}px`,width:`${width}px`});
     this.frame.dataset.passive=String(!this.session.bounds);
     const offscreen=x+w<v.x||x>v.x+v.w||y+h<v.y||y>v.y+v.h;

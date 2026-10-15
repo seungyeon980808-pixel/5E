@@ -493,7 +493,11 @@ export function initRhwpExamWorkspace(state, services) {
   function sourceAiPreview(){const panel=document.querySelector('#ai-image-panel:not([hidden])');return panel&&[...panel.querySelectorAll('[data-ai-previews] .ai-preview-stage > img')].find(img=>img.getClientRects().length);}
   function sourceViewport(){const image=sourceAiPreview(),r=(image?.closest('.ai-image-pane') || document.querySelector('#canvas'))?.getBoundingClientRect();return r&&{x:r.x,y:r.y,w:r.width,h:r.height};}
   function sourceGeometry(){
-    const image=sourceAiPreview();if(image){const r=image.getBoundingClientRect();return{x:r.x,y:r.y,w:r.width,h:r.height};}
+    const image=sourceAiPreview();if(image){
+      const r=image.getBoundingClientRect(),badge=image.closest('.ai-preview-stage')?.querySelector('[data-ai-graph-edit]');
+      const headingBottom=badge?.getClientRects().length?Math.min(r.y,badge.getBoundingClientRect().top):r.y;
+      return{x:r.x,y:r.y,w:r.width,h:r.height,headingBottom};
+    }
     const c=document.querySelector('#canvas'),m=c?.getScreenCTM(),b=currentSourceRender()?.bounds;if(!m||!b)return null;
     const p=new DOMPoint(b.x,b.y).matrixTransform(m);return{x:p.x,y:p.y,w:b.w*m.a,h:b.h*m.d};
   }

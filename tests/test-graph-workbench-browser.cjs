@@ -112,6 +112,20 @@ async function storedTabs(page) {
     try {
       const { context, page, errors } = await setup(browser);
       await upload(page);
+      await page.locator('#ai-image-panel .ai-compare-menu summary').click();
+      await page.locator('#ai-image-panel [data-ai-layout-mode="side-by-side"]').click();
+      page.once('dialog', dialog => dialog.accept());
+      await page.locator('#ai-image-panel .ai-original-pane [title="이미지 제거"]').click();
+      await page.waitForGraphSignal(() => document.querySelector('#ai-image-panel')?.dataset.aiStage === 'empty');
+      const emptyPanes = await page.locator('#ai-image-panel').evaluate(panel => {
+        const bounds = selector => { const b=panel.querySelector(selector).getBoundingClientRect(); return {top:b.top,bottom:b.bottom,height:b.height}; };
+        return {source:bounds('.ai-original-pane .ai-reference-list'),result:bounds('.ai-result-pane .ai-previews'),heads:[...panel.querySelectorAll('.ai-pane-head')].map(n=>n.getBoundingClientRect().height)};
+      });
+      assert.ok(Math.abs(emptyPanes.source.top-emptyPanes.result.top)<=1,'empty viewports begin at the same height');
+      assert.ok(Math.abs(emptyPanes.source.bottom-emptyPanes.result.bottom)<=1,'empty viewports have equal height');
+      assert.ok(Math.abs(emptyPanes.heads[0]-emptyPanes.heads[1])<=1,'empty source/result headers reserve equal space');
+      await page.screenshot({path:path.join(output,name+'-empty-aligned.png'),animations:'disabled'});
+      await upload(page);
       const guards = await page.evaluate(async plan => {
         const {buildWorkbenchGraph, validateWorkbenchGraph} = await import('/js/graph/workbench-result.js?v=1.7.0-four-session-integration');
         const result = buildWorkbenchGraph(plan, plan.source);
@@ -154,9 +168,49 @@ async function storedTabs(page) {
       const originalCandidate = originalTask.generated[0];
       assert.equal(await page.locator('#ai-image-panel [data-ai-graph-edit]').count(),1,'one graph detail entry');
       assert.equal(await page.locator('#ai-image-panel .ai-compare-heading [data-ai-graph-edit]').count(),0,'no duplicate toolbar entry');
-      const badge=await page.locator('#ai-image-panel [data-ai-graph-edit]').boundingBox();
-      const graphStage=await page.locator('#ai-image-panel .ai-previews .ai-preview-stage').first().boundingBox();
-      assert.ok(badge.x+badge.width<=graphStage.x+graphStage.width+2 && badge.y+badge.height<=graphStage.y+2,'persistent badge stays above the right edge of the graph');
+      const checkBadge = async label => {
+        const boxes=await page.locator('#ai-image-panel [data-ai-graph-edit]').evaluate(button=>{
+          const rect=n=>{const b=n.getBoundingClientRect();return {x:b.x,y:b.y,right:b.right,bottom:b.bottom,width:b.width,height:b.height};};
+          const image=button.parentElement.querySelector(':scope > img');
+          const b=button.getBoundingClientRect();
+          const hit=document.elementFromPoint(b.x+b.width/2,b.y+b.height/2);
+          return {badge:rect(button),image:rect(image),color:getComputedStyle(button).color,background:getComputedStyle(button).backgroundColor,clickable:hit?.closest('[data-ai-graph-edit]')===button,hit:hit?.outerHTML.slice(0,300),ancestors:[...function*(n){while(n){yield n;n=n.parentElement;}}(button.parentElement)].slice(0,5).map(n=>({class:n.className,rect:rect(n),overflow:getComputedStyle(n).overflow,scrollTop:n.scrollTop,scrollLeft:n.scrollLeft}))};
+        });
+        fs.writeFileSync(path.join(output,name+'-badge-'+label+'.json'),JSON.stringify(boxes,null,2));
+        if(!boxes.clickable) await page.screenshot({path:path.join(output,name+'-badge-'+label+'-failure.png'),animations:'disabled'});
+        assert.ok(Math.abs(boxes.badge.right-boxes.image.right)<=2,label+': badge aligns to actual image right edge');
+        assert.ok(boxes.image.y-boxes.badge.bottom>=2 && boxes.image.y-boxes.badge.bottom<=6,label+': badge sits immediately above image');
+        assert.notEqual(boxes.color,boxes.background,label+': badge has visible contrasting text');
+        assert.ok(boxes.clickable,label+': badge can be clicked above image');
+        return boxes;
+      };
+      const anchorProof=[await checkBadge('fit')];
+      await page.locator('#ai-image-panel [data-ai-zoom-action="in"]').click();
+      anchorProof.push(await checkBadge('zoom'));
+      await page.locator('#ai-image-panel [data-ai-zoom-action="fit"]').click();
+      await page.setViewportSize({width:1080,height:900});
+      // The resize event can precede ResizeObserver's automatic image fit.
+      // Wait for that fit, then independently measure the action's hit target.
+      await page.waitForGraphSignal(()=>{
+        const card=document.querySelector('#ai-image-panel .ai-previews .ai-image-card');
+        const stage=card?.querySelector('.ai-preview-stage');
+        if(!stage) return false;
+        const style=getComputedStyle(card);
+        const available=card.clientWidth-parseFloat(style.paddingLeft)-parseFloat(style.paddingRight);
+        return stage.getBoundingClientRect().width<=available+1;
+      });
+      anchorProof.push(await checkBadge('resize'));
+      await page.screenshot({path:path.join(output,name+'-image-edge-1080.png'),animations:'disabled'});
+      await page.setViewportSize({width:390,height:844});
+      await page.locator('#ai-image-panel [data-ai-layout-mode="result"]').click();
+      await page.locator('#ai-image-panel [data-ai-zoom-action="fit"]').click();
+      anchorProof.push(await checkBadge('mobile'));
+      await page.screenshot({path:path.join(output,name+'-image-edge-390.png'),animations:'disabled'});
+      await page.setViewportSize({width:1440,height:1000});
+      await page.locator('#ai-image-panel .ai-compare-menu summary').click();
+      await page.locator('#ai-image-panel [data-ai-layout-mode="side-by-side"]').click();
+      await page.locator('#ai-image-panel [data-ai-zoom-action="fit"]').click();
+      fs.writeFileSync(path.join(output,name+'-image-edge.json'),JSON.stringify(anchorProof,null,2));
       await page.locator('#ai-image-panel .ai-previews img').first().dblclick();
       assert.equal(await page.locator('#graph-modal-overlay').isVisible(),false,'doubleclick no longer creates another edit route');
       await page.locator('#ai-image-panel [data-ai-graph-edit]').click();
