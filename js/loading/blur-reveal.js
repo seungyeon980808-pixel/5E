@@ -107,6 +107,7 @@
     this.o = Object.assign({}, DEFAULTS, opts || {});
     this.state = 'idle';
     this.prepMs = 0;
+    this.animations = new Set();
     frame.classList.add('br-frame');
     this.stage = el('div', 'br-stage');
     this.bar = el('div', 'br-bar');
@@ -166,12 +167,12 @@
         if (self.o.variant === 'focus' && self.stack && !self.reduced()) {
           var cur = getComputedStyle(self.stack.root).transform;
           self.stack.root.getAnimations().forEach(function (a) { a.cancel(); });
-          self.stack.root.animate([{ transform: cur === 'none' ? 'none' : cur }, { transform: 'scale(1)' }],
+          self._animate(self.stack.root, [{ transform: cur === 'none' ? 'none' : cur }, { transform: 'scale(1)' }],
             { duration: dur, easing: EASE, fill: 'forwards' });
-          layer.animate([{ transform: cur === 'none' ? 'none' : cur }, { transform: 'scale(1)' }],
+          self._animate(layer, [{ transform: cur === 'none' ? 'none' : cur }, { transform: 'scale(1)' }],
             { duration: dur, easing: EASE, fill: 'forwards' });
         }
-        return layer.animate([{ opacity: 0 }, { opacity: 1 }], { duration: dur, easing: EASE, fill: 'forwards' })
+        return self._animate(layer, [{ opacity: 0 }, { opacity: 1 }], { duration: dur, easing: EASE, fill: 'forwards' })
           .finished.then(done, done);
       }).catch(function (error) {
         if (tok === self.token) { self.reset(); self.state = 'failed'; self._emit('failed'); }
@@ -183,6 +184,10 @@
       this.token = null;
       this.state = 'idle';
       this.stack = null;
+      // getAnimations() omits detached descendants. A replaced preview can
+      // still own paused animations that retain their canvases indefinitely.
+      this.animations.forEach(function (a) { a.cancel(); });
+      this.animations.clear();
       this.stage.getAnimations({subtree:true}).forEach(function (a) { a.cancel(); });
       this.stage.textContent = '';
       this.bar.getAnimations().concat(this.barFill.getAnimations()).forEach(function (a) { a.cancel(); });
@@ -194,6 +199,12 @@
     destroy: function () { this.reset(); this.stage.remove(); this.bar.remove(); this.frame.classList.remove('br-frame'); },
 
     // ---- 내부 ----
+
+    _animate: function (node, frames, options) {
+      var animation = node.animate(frames, options);
+      this.animations.add(animation);
+      return animation;
+    },
 
     _emit: function (state) {
       this.frame.dispatchEvent(new CustomEvent('blurreveal', { detail: { state: state, reveal: this } }));
@@ -210,7 +221,7 @@
         self.stage.appendChild(stack.root);
         self.stack = stack;
         if (old && fadeMs) {
-          stack.root.animate([{ opacity: 0 }, { opacity: 1 }], { duration: fadeMs, easing: EASE })
+          self._animate(stack.root, [{ opacity: 0 }, { opacity: 1 }], { duration: fadeMs, easing: EASE })
             .finished.then(function () { old.root.remove(); }, function () {});
         } else if (old) {
           old.root.remove();
@@ -231,9 +242,9 @@
         return stack;
       }
 
-      var D = o.revealMs, total = D * 3, e = this.elapsed();
+      var D = o.revealMs, total = D * 3, e = this.elapsed(), self = this;
       var run = function (node, frames) {
-        var a = node.animate(frames, { duration: total, easing: 'linear', fill: 'forwards' });
+        var a = self._animate(node, frames, { duration: total, easing: 'linear', fill: 'forwards' });
         a.currentTime = Math.min(e, total);
         return a;
       };
@@ -303,8 +314,8 @@
     _startBar: function () {
       if (this.reduced()) { this.bar.style.opacity = 1; this.barFill.style.transform = 'scaleX(.4)'; return; }
       this.barFill.style.transform = '';
-      this.bar.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 200, delay: this.o.instantMs, fill: 'forwards' });
-      this.barFill.animate([
+      this._animate(this.bar, [{ opacity: 0 }, { opacity: 1 }], { duration: 200, delay: this.o.instantMs, fill: 'forwards' });
+      this._animate(this.barFill, [
         { transform: 'scaleX(0)', easing: EASE },
         { transform: 'scaleX(.72)', offset: 0.33, easing: 'ease-out' },
         { transform: 'scaleX(.94)' }
@@ -317,9 +328,9 @@
       fill.getAnimations().forEach(function (a) { a.cancel(); });
       bar.getAnimations().forEach(function (a) { a.cancel(); });
       if (instant) { bar.style.opacity = 0; return; }
-      fill.animate([{ transform: cur === 'none' ? 'scaleX(0)' : cur }, { transform: 'scaleX(1)' }],
+      this._animate(fill, [{ transform: cur === 'none' ? 'scaleX(0)' : cur }, { transform: 'scaleX(1)' }],
         { duration: 180, easing: EASE, fill: 'forwards' });
-      bar.animate([{ opacity: getComputedStyle(bar).opacity }, { opacity: 0 }],
+      this._animate(bar, [{ opacity: getComputedStyle(bar).opacity }, { opacity: 0 }],
         { duration: 260, delay: 160, fill: 'forwards' });
     }
   };

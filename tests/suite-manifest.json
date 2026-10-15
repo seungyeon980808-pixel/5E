@@ -590,6 +590,10 @@
   ],
   "browser": [
     {
+      "path": "tests/test-blur-reveal-dispose-browser.cjs",
+      "findingIds": ["BLUR-REVEAL-DETACHED-DISPOSE"]
+    },
+    {
       "path": "tests/test-library-preview-settle-browser.cjs",
       "findingIds": ["LIBRARY-PREVIEW-SETTLE-CLEANUP"]
     },
