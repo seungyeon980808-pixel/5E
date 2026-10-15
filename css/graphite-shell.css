@@ -440,3 +440,27 @@
 :root[data-theme="dark"]:not([data-palette="classic"]) :is(.unified-text-input:focus, .unified-style-controls select:focus, .canvas-bottom-bar input[type="number"]:focus) { box-shadow: 0 0 0 2px rgba(255, 255, 255, .14); }
 :root[data-theme="dark"]:not([data-palette="classic"]) .ai-status[data-kind="busy"] { color: var(--ds-ink); }
 :root[data-theme="dark"]:not([data-palette="classic"]) .formula-palette-btn:hover { background: var(--ds-hover); }
+
+/* ---------- 9. 패널 레일 — 패널을 접으면 52px 줄 ---------- */
+.ds-rail { display: none; }
+@media (min-width: 768px) {
+  :root:not([data-mode="lite"]) .app[data-panel-layout][data-left-collapsed="true"] { --editor-left-track: var(--ds-rail); }
+  :root:not([data-mode="lite"]) .app[data-panel-layout][data-right-collapsed="true"] { --editor-right-track: var(--ds-rail); }
+  :root:not([data-mode="lite"]) .app[data-left-collapsed="true"] > .ds-rail-left,
+  :root:not([data-mode="lite"]) .app[data-right-collapsed="true"] > .ds-rail-right {
+    display: flex; flex-direction: column; align-items: center; gap: 2px;
+    grid-row: 2; min-height: 0; overflow-y: auto; scrollbar-width: none;
+    padding: 6px 0; background: var(--ds-panel);
+  }
+  :root:not([data-mode="lite"]) .app > .ds-rail-left { grid-column: 1; border-right: 1px solid var(--ds-line); }
+  :root:not([data-mode="lite"]) .app > .ds-rail-right { grid-column: 3; border-left: 1px solid var(--ds-line); }
+  :root:not([data-mode="lite"]) .ds-rail-btn {
+    flex: none; display: flex; align-items: center; justify-content: center;
+    width: 36px; height: 34px; padding: 0; border: 0; border-radius: var(--ds-radius);
+    background: transparent; color: var(--ds-ink-2); cursor: pointer;
+  }
+  :root:not([data-mode="lite"]) .ds-rail-btn:hover { background: var(--ds-hover); color: var(--ds-ink); }
+  :root:not([data-mode="lite"]) .ds-rail-btn.is-active { background: var(--ds-selected); color: var(--ds-selected-ink); }
+  :root:not([data-mode="lite"]) .ds-rail-btn svg { width: var(--ds-icon-tool); height: var(--ds-icon-tool); }
+  :root:not([data-mode="lite"]) .ds-rail-btn:focus-visible { outline: 2px solid var(--ds-focus); outline-offset: -2px; }
+}
