@@ -200,7 +200,8 @@ const zoomReadout = document.getElementById("zoom-readout");
 /* ===== THEME TOGGLE (dark/light; persisted in localStorage 'theme') ===== */
 (function initTheme() {
   const root = document.documentElement;
-  const saved = localStorage.getItem("theme");
+  let saved;
+  try { saved = localStorage.getItem("theme"); } catch { /* Use the default when storage is blocked. */ }
   root.setAttribute("data-theme", saved === "light" || saved === "dark" ? saved : "dark");
 
   const btn = document.getElementById("theme-toggle");
@@ -218,7 +219,7 @@ const zoomReadout = document.getElementById("zoom-readout");
       if (root.dataset.mode === "lite") return;
       const next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
       root.setAttribute("data-theme", next);
-      localStorage.setItem("theme", next);
+      try { localStorage.setItem("theme", next); } catch { /* The current session can still change theme. */ }
       syncIcon();
     });
   }

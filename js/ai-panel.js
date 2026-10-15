@@ -1,4 +1,4 @@
-import { channelStorage as localStorage, channelSessionStorage as sessionStorage } from './preview-storage.js?v=1.7.0-four-session-integration';
+import { channelStorage, channelSessionStorage, optionalStorage } from './preview-storage.js?v=1.7.0-four-session-integration';
 import { snapshotImageItem, taskItemCopy } from './ai-candidate-snapshot.js?v=1.7.0-four-session-integration';
 import { registerBugReportContext } from './bug-report.js?v=1.7.0-four-session-integration';
 import { localEditableLabelPlan } from './ai-local-label-plan.js?v=1.7.0-four-session-integration';
@@ -485,6 +485,9 @@ function findNumber(value, keys) {
   }
   return null;
 }
+
+const localStorage = optionalStorage(channelStorage);
+const sessionStorage = optionalStorage(channelSessionStorage);
 
 export function initAiPanel(state, options) {
   return createTaskWorkspaces(state, initAiTaskPanel, setupAiWorkbench, options);

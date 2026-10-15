@@ -292,9 +292,15 @@ export class RhwpExamBridge {
     input.executeOperation({ kind:'snapshot', operationType:`5e-exam:${label}`,
       operation:() => {
         const before = input.getCursorPosition(), snapshot = this.wasm.saveSnapshot();
+        this.pictureMutationDepth = (this.pictureMutationDepth || 0) + 1;
+        this.picturesCache = null;
         try { result = mutate(input); return input.getCursorPosition(); }
         catch (error) { this.wasm.restoreSnapshot(snapshot); input.cursor.moveTo(before); throw error; }
-        finally { this.wasm.discardSnapshot(snapshot); }
+        finally {
+          this.pictureMutationDepth--;
+          this.picturesCache = null;
+          this.wasm.discardSnapshot(snapshot);
+        }
       } });
     if (result === undefined) throw new Error('이 위치에서 그림을 수정할 수 없습니다.');
     this.deps.eventBus.emit('document-changed');
@@ -393,7 +399,9 @@ export class RhwpExamBridge {
 
   documentPictures() {
     const key = `${this.generation}:${this.revision}`;
-    if (this.picturesCache?.key === key) return this.picturesCache.pictures;
+    // Native mutations precede document-changed, so their revision is still
+    // the old one. Reads inside an operation must see its current controls.
+    if (!this.pictureMutationDepth && this.picturesCache?.key === key) return this.picturesCache.pictures;
     const seen = new Set(), pictures = [];
     for (let page = 0; page < this.wasm.pageCount; page++) {
       for (const control of this.wasm.getPageControlLayout(page).controls || []) {
@@ -404,7 +412,7 @@ export class RhwpExamBridge {
         if (!seen.has(key)) {seen.add(key);pictures.push({ref,id:this.figureId(ref)});}
       }
     }
-    this.picturesCache = {key,pictures};
+    if (!this.pictureMutationDepth) this.picturesCache = {key,pictures};
     return pictures;
   }
 

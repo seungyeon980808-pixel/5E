@@ -44,6 +44,14 @@ const out = process.env.EVIDENCE_DIR || path.resolve(__dirname,'../.omo/evidence
  await open();await page.locator('#gm-tab-func-btn').click();await page.locator('#gm-sub-poly').click();await page.locator('#gm-chips [data-series-index="0"]').click();if(!await page.locator('#gm-point-detail').evaluate(el=>el.open))await page.locator('#gm-point-detail summary').click();
  const arrowSize=page.getByRole('spinbutton',{name:'화살촉 1 길이(mm)',exact:true});assert.equal(Number(await arrowSize.inputValue()),1.1);
  await arrowSize.fill('0');await arrowSize.dispatchEvent('change');await page.locator('#gm-confirm').click();assert.equal(await page.locator('#graph-modal-overlay').isVisible(),true);assert.equal((await snap()).find(o=>o.type==='funcgraph').arrowSpecs[0].strokeWidth,.25);
+ assert.equal(await arrowSize.inputValue(),'0','invalid arrow draft remains available for correction');
+ assert.equal(await arrowSize.evaluate(n=>n===document.activeElement),true,'confirmation focuses the invalid field');
+ await page.locator('#gm-tab-coord-btn').click();await page.locator('#gm-confirm').click();
+ assert.equal(await page.locator('#graph-modal-overlay').isVisible(),true);
+ assert.equal(await arrowSize.inputValue(),'0','tab changes preserve the invalid dynamic arrow input');
+ await arrowSize.fill('0');await arrowSize.press('Enter');
+ assert.equal(await page.locator('#graph-modal-overlay').isVisible(),true,'keyboard confirmation also rejects zero');
+ assert.equal(await arrowSize.inputValue(),'0');
  await arrowSize.fill('4.5');await arrowSize.dispatchEvent('change');await page.locator('#gm-pts').fill('0.15,0.2 0.6,0.9 0.85,0.2');await page.locator('#gm-pts').dispatchEvent('change');
  await page.locator('#gm-segment-modes').fill('직선, 잘못된값');await page.locator('#gm-segment-modes').dispatchEvent('change');await page.locator('#gm-tab-coord-btn').click();await page.locator('#gm-confirm').click();assert.equal(await page.locator('#graph-modal-overlay').isVisible(),true);await page.locator('#gm-tab-func-btn').click();await page.locator('#gm-sub-poly').click();await page.locator('#gm-segment-modes').fill('직선, 직선');await page.locator('#gm-segment-modes').dispatchEvent('change');await page.locator('#gm-tab-coord-btn').click();await page.locator('#gm-adv-open').click();await page.locator('#gm-label-weight').fill('300');await page.locator('#gm-label-weight').dispatchEvent('input');await page.locator('#gm-axis-x-fraction').fill('.2');await page.locator('#gm-axis-x-fraction').dispatchEvent('input');
  await page.screenshot({path:path.join(out,'editor.png')});await page.locator('#gm-confirm').click();assert.equal(await page.locator('#graph-modal-overlay').isVisible(),false);

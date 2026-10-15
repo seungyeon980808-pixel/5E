@@ -19,3 +19,13 @@ function channelStore(name) {
 }
 export const channelStorage = channelStore('localStorage');
 export const channelSessionStorage = channelStore('sessionStorage');
+
+// Optional UI preferences must not prevent a panel from initializing. Keep
+// this adapter separate from document/task stores, whose writes must fail loud.
+export function optionalStorage(storage) {
+  return {
+    getItem(key) { try { return storage.getItem(key); } catch { return null; } },
+    setItem(key, value) { try { storage.setItem(key, value); } catch {} },
+    removeItem(key) { try { storage.removeItem(key); } catch {} },
+  };
+}

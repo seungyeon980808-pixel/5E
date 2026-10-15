@@ -91,6 +91,8 @@ let _focusReturn = null, _disposeEscape = null, _cancelPreviewDrag = null;
 let _regionPointer = null;
 let _expressionErrors = new Map();
 let _seriesInputDrafts = new WeakMap();
+const _arrowInputIds = new WeakMap();
+let _arrowInputSerial = 0;
 let _mode = "create";             // "create" | "edit"
 let _planeId = null;              // edit 대상 coordplane id
 let _cfg = null;                  // 좌표 틀 설정(진실 원본 — DOM 리스너가 여기에 쓴다)
@@ -2290,8 +2292,12 @@ function syncElementLists() {
       chip.firstChild.addEventListener('click',()=>{a.dir=a.dir<0?1:-1;syncElementLists();refreshPreview();});
       const sizeLabel = document.createElement('label'); sizeLabel.textContent='화살촉 길이(mm) ';
       const input = document.createElement('input'); input.type='number';input.step='any';input.min='0';input.style.width='65px';input.setAttribute('aria-label',`화살촉 ${i+1} 길이(mm)`);
+      if (!_arrowInputIds.has(a)) _arrowInputIds.set(a, `gm-series-arrow-size-${++_arrowInputSerial}`);
+      input.id = _arrowInputIds.get(a);
       input.value=(a.strokeWidth ?? ARROW_SW)*4.5;
-      input.addEventListener('change',()=>{const v=Number(input.value);if(!input.value.trim() || !Number.isFinite(v) || v<=0){input.setCustomValidity('화살촉 길이는 0보다 큰 수여야 합니다.');return;}input.setCustomValidity('');a.strokeWidth=v/4.5;refreshPreview();});
+      const validate = () => {const v=Number(input.value);if(!input.value.trim() || !Number.isFinite(v) || v<=0){input.setCustomValidity('화살촉 길이는 0보다 큰 수여야 합니다.');return false;}input.setCustomValidity('');return true;};
+      input.addEventListener('input', validate);
+      input.addEventListener('change',()=>{if(!validate())return;a.strokeWidth=Number(input.value)/4.5;refreshPreview();});
       sizeLabel.appendChild(input);chip.appendChild(sizeLabel);list.appendChild(chip);
     });
     row.hidden = !list.children.length;
@@ -2733,7 +2739,8 @@ function syncSeriesEditor() {
   for (const [i,key] of ['dash','gap'].entries()) { const input = _overlay.querySelector(`#gm-custom-${key}`); if(document.activeElement !== input) input.value = dash[i]; }
   syncElementLists();
   for (const [id,draft] of _seriesInputDrafts.get(s) || []) {
-    const input=_overlay.querySelector(`#${id}`); input.value=draft.value; input.setCustomValidity(draft.message);
+    const input=_overlay.querySelector(`#${id}`);
+    if (input) { input.value=draft.value; input.setCustomValidity(draft.message); }
   }
 }
 
@@ -4206,6 +4213,7 @@ function build() {
   // 그래프 요소(표시점/수선/화살표) 배선은 '③ 표시' 탭으로 이관했다 — 함수 탭 버튼은 제거됨.
 
   const commitValidated = () => {
+    flushEditorInput();
     rememberInvalidSeries();
     const badExpression = _series.findIndex(s=>_expressionErrors.has(s));
     if (badExpression >= 0) { selectSeries(badExpression); _els.expr.scrollIntoView({block:'nearest'}); _els.expr.focus(); return; }
@@ -4213,12 +4221,14 @@ function build() {
     if (badSeries >= 0) selectSeries(badSeries);
     const invalid = overlay.querySelector(':invalid');
     if (invalid) {
-      if (invalid.closest('#gm-tab-coord')) setTab('coord');
-      else if (invalid.closest('#gm-tab-func')) setTab('func');
-      else setTab('annot');
-      if (invalid.closest('#gm-adv-panel')) { _els.advPanel.hidden=false; _els.advOpen.setAttribute('aria-expanded','true'); _els.advCaret.textContent='▴'; }
-      for (let parent=invalid.parentElement;parent && parent!==overlay;parent=parent.parentElement) if (parent.tagName==='DETAILS') parent.open=true;
-      invalid.scrollIntoView({block:'nearest'}); invalid.focus(); invalid.reportValidity(); return;
+      const tab = invalid.closest('#gm-tab-coord') ? 'coord' : invalid.closest('#gm-tab-func') ? 'func' : 'annot';
+      const id = invalid.id;
+      if (_tab !== tab) setTab(tab);
+      const target = (id && overlay.querySelector(`#${id}`)) || overlay.querySelector(':invalid');
+      if (!target) return;
+      if (target.closest('#gm-adv-panel')) { _els.advPanel.hidden=false; _els.advOpen.setAttribute('aria-expanded','true'); _els.advCaret.textContent='▴'; }
+      for (let parent=target.parentElement;parent && parent!==overlay;parent=parent.parentElement) if (parent.tagName==='DETAILS') parent.open=true;
+      target.scrollIntoView({block:'nearest'}); target.focus(); target.reportValidity(); return;
     }
     return _mode === "edit" ? commitEdit() : commitCreate();
   };
@@ -4270,7 +4280,7 @@ function build() {
     // #gm-add-series(추가 버튼)와 #gm-subtabs(하위 탭 컨테이너)가 있으므로 교체.
     // Viewing controls keep the selected curve. Redrawing on their mousedown
     // also interrupts WebKit's subsequent click on the zoom toggle.
-    if (e.target.closest("#gm-preview, #gm-trace-toolbar-host, #gm-series-editor, #gm-engine-series, #gm-engine-controls, #gm-style-controls, #gm-adv-open, #gm-adv-panel, #gm-engine-regions, #gm-chips, .gm-tabs, #gm-subtabs, #gm-add-series, .modal-actions")) return;
+    if (e.target.closest("#gm-preview, #gm-trace-toolbar-host, #gm-series-editor, #gm-engine-series, #gm-engine-controls, #gm-style-controls, #gm-adv-open, #gm-adv-panel, #gm-engine-regions, #gm-chips, .gm-tabs, #gm-subtabs, #gm-add-series, .modal-actions, .gm-export-actions")) return;
     _sel = -1; _placeMode = null; _activeDraw = -1;
     renderChips(); syncSeriesEditor(); refreshPreview();
   });
