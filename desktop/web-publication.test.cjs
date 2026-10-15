@@ -163,6 +163,9 @@ test('web publication requires successful validation and a separate manual main-
   assert.ok(build >= 0 && browser > build && verify > browser && upload > verify);
   assert.ok(steps.some(step => step.run === 'npm run test:unit'));
   assert.ok(workflow.jobs['source-test'].steps.some(step => step.run === 'npm run test:browser'));
+  const sourceBrowserGate = workflow.jobs['source-test'].steps.find(step => step.run === 'npm run test:browser');
+  assert.equal(require('../tests/helpers/four-session-entry.cjs').entryConfiguration(sourceBrowserGate.env).entry, '/',
+    'the source gate must validate the shipped root entry rather than inherit the preserved preview default');
   assert.match(steps[browser].env.FIVE_E_SITE_ROOT, /web-release\/site$/);
   assert.deepEqual(workflow.jobs.publish.steps.map(step => step.uses), ['actions/deploy-pages@v4']);
 });

@@ -32,6 +32,7 @@ jobs:
       - run: node scripts/check-browser-performance-reference.cjs
       - name: Run the complete source regression suite on native WebKit
         env:
+          APP_ENTRY: '/'
           EVIDENCE_DIR: ${{ github.workspace }}/_work/web-release/evidence/source
           OUTPUT_EVIDENCE: ${{ github.workspace }}/_work/web-release/evidence/source/output
           TASK2_EVIDENCE: ${{ github.workspace }}/_work/web-release/evidence/source/lifecycle
