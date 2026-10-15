@@ -478,3 +478,66 @@
   :root:not([data-mode="lite"]) :is(.panel-right #inspector, .panel-left #tool-list) { scrollbar-width: none; }
   :root:not([data-mode="lite"]) :is(.panel-right #inspector, .panel-left #tool-list)::-webkit-scrollbar { width: 0; height: 0; }
 }
+
+/* ---------- 10. AI 이미지 변환 창 — 버튼은 테두리 없음, 칸 버튼은 고른 칸만 진한 면 ---------- */
+:root:not([data-mode="lite"]) #ai-image-panel :is(
+  .ai-header-tool, .ai-head-status .panel-visibility-toggle, .ai-close, .ai-head-status .bug-report-open,
+  .ai-label-view > button, .ai-result-tools > button, .ai-rail-actions > button, .ai-setting-pair > button, .ai-setting-help
+) { border-color: transparent !important; box-shadow: none !important; }
+:root:not([data-mode="lite"]) #ai-image-panel :is(.ai-header-tool, .ai-head-status .panel-visibility-toggle, .ai-close, .ai-head-status .bug-report-open) { background: transparent; color: var(--ds-ink-2); }
+:root:not([data-mode="lite"]) #ai-image-panel :is(.ai-header-tool, .ai-head-status .panel-visibility-toggle, .ai-close, .ai-head-status .bug-report-open):hover { background: var(--ds-hover); color: var(--ds-ink); }
+:root:not([data-mode="lite"]) #ai-image-panel :is(.ai-label-view > button, .ai-result-tools > button, .ai-rail-actions > button, .ai-setting-pair > button, .ai-setting-help) { background: var(--ds-kbd); color: var(--ds-ink-2); }
+:root:not([data-mode="lite"]) #ai-image-panel :is(.ai-label-view > button, .ai-result-tools > button, .ai-rail-actions > button, .ai-setting-pair > button):hover:not(:disabled) { background: var(--ds-selected); color: var(--ds-ink); }
+:root:not([data-mode="lite"]) #ai-image-panel :is(.ai-rail-actions, .ai-setting-pair, .ai-result-tools, .ai-label-view) > :is(.is-on, [aria-pressed="true"], [aria-checked="true"], [aria-selected="true"]) {
+  background: var(--ds-selected-strong) !important; color: var(--ds-selected-ink) !important; font-weight: 600;
+}
+:root:not([data-mode="lite"]) #ai-image-panel .ai-setting-help { color: var(--ds-ink-3); }
+
+/* ---------- 11. 튜토리얼 — 떠 있는 면 규격, 버튼·칸 테두리 없음 ---------- */
+:root:not([data-mode="lite"]) :is(.tut-picker, .tut-coach, .tut-compare, .tut-welcome) {
+  background: var(--ds-raise); border: 0; border-radius: var(--ds-radius-lg); box-shadow: var(--ds-shadow-float);
+  font-family: var(--ds-font);
+}
+/* 안내 상자 위쪽 강조 줄은 '튜토리얼 진행 중' 표시라 남기되 중립색으로 */
+:root:not([data-mode="lite"]) .tut-coach { border-top: 3px solid var(--ds-accent); }
+:root:not([data-mode="lite"]) .tut-btn {
+  border: 0; background: var(--ds-kbd); color: var(--ds-ink); border-radius: var(--ds-radius);
+  font: 500 var(--ds-text-body)/1.2 var(--ds-font); min-height: var(--ds-h-control);
+}
+:root:not([data-mode="lite"]) .tut-btn:active:not(:disabled) { transform: none; }
+:root:not([data-mode="lite"]) .tut-btn:hover:not(:disabled) { background: var(--ds-selected); }
+:root:not([data-mode="lite"]) .tut-btn-primary { background: var(--ds-selected-strong); color: var(--ds-selected-ink); font-weight: 600; }
+:root:not([data-mode="lite"]) .tut-btn-primary:hover:not(:disabled) { background: var(--ds-selected-strong); border-color: transparent; }
+:root:not([data-mode="lite"]) .tut-btn.is-soft { border: 0; background: transparent; color: var(--ds-ink-3); }
+:root:not([data-mode="lite"]) .tut-btn-quit { background: transparent; color: var(--ds-ink-3); }
+:root:not([data-mode="lite"]) :is(.tut-track-btn, .tut-course) { border: 0 !important; background: var(--ds-kbd); }
+:root:not([data-mode="lite"]) :is(.tut-track-btn, .tut-course):hover { background: var(--ds-selected); }
+:root:not([data-mode="lite"]) .tut-track-btn.is-active { background: var(--ds-selected-strong); color: var(--ds-selected-ink); }
+:root:not([data-mode="lite"]) .tut-picker .beta-tag { border: 0; background: var(--ds-kbd); color: var(--ds-ink-2); }
+
+/* ---------- 12. 로그인 창 — 떠 있는 면, 도는 테두리 대신 고정된 강조 면 ---------- */
+:root:not([data-mode="lite"]) .web-login-dialog {
+  background: var(--ds-raise); border: 0; border-radius: var(--ds-radius-lg); box-shadow: var(--ds-shadow-float);
+  color: var(--ds-ink); font-family: var(--ds-font);
+}
+:root:not([data-mode="lite"]) .web-login-dialog[open] { animation: modal-overlay-fade 120ms ease-out; }
+:root:not([data-mode="lite"]) .web-login-dialog button { border: 0; border-radius: var(--ds-radius); background: var(--ds-kbd); color: var(--ds-ink); }
+:root:not([data-mode="lite"]) .web-login-dialog button:hover:not(:disabled) { background: var(--ds-selected); }
+/* 다음에 누를 버튼 표시는 남긴다 — 회전·빛 없이 진한 면으로 */
+:root:not([data-mode="lite"]) :is(.web-login-actions [data-login-start], .web-login-code-row [data-copy-code]),
+:root:not([data-mode="lite"]) .web-login-actions [data-login-start][data-copy-ready="true"] {
+  animation: none !important; border: 0 !important; border-radius: var(--ds-radius) !important;
+  background: var(--ds-selected-strong) !important; color: var(--ds-selected-ink) !important; box-shadow: none !important; filter: none !important;
+}
+:root:not([data-mode="lite"]) .web-login-dialog:is([data-phase="waiting"], [data-phase="connected"]) [data-login-start]:not([data-copy-ready="true"]):not([data-authenticating="true"]) { background: var(--ds-kbd) !important; color: var(--ds-ink) !important; }
+:root:not([data-mode="lite"]) :is(.web-login-dialog [data-main-connection-summary], [data-login-code]) { border: 0; background: var(--ds-field); border-radius: var(--ds-radius); }
+:root:not([data-mode="lite"]) .web-login-toast { background: var(--ds-raise); border: 0; border-radius: var(--ds-radius-lg); box-shadow: var(--ds-shadow-float); color: var(--ds-ink); }
+:root[data-theme="dark"]:not([data-palette="classic"]) .web-account-status[data-state="connected"] .web-account-dot { background: var(--ds-success); border-color: var(--ds-success); }
+:root:not([data-mode="lite"]) .web-login-download {
+  border: 0 !important; border-radius: var(--ds-radius) !important; background: var(--ds-kbd) !important; color: var(--ds-ink) !important; box-shadow: none !important;
+}
+:root:not([data-mode="lite"]) .web-login-download:hover { background: var(--ds-selected) !important; }
+
+/* AI 버튼의 도는 테두리·빛 지나감·눌림 확대 같은 장식 효과는 Pro에서 끈다 */
+:root:not([data-mode="lite"]) :is(.ai-action-motion, .sparkle-button) { animation: none !important; transform: none !important; }
+:root:not([data-mode="lite"]) :is(.ai-action-motion, .sparkle-button)::after { animation: none !important; opacity: 0 !important; }

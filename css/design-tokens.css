@@ -89,6 +89,7 @@
   --ds-hover: rgba(255, 255, 255, .06);
   --ds-selected: rgba(255, 255, 255, .09);
   --ds-selected-ink: #ffffff;
+  --ds-selected-strong: rgba(255, 255, 255, .16); /* 칸 버튼(끄기/켜기)에서 고른 칸 */
   --ds-accent: #dcdcdc;       /* 중립 강조 — 파란 버튼 없음 */
   --ds-accent-ink: #151515;   /* 강조 면 위 글자 */
   --ds-focus: rgba(255, 255, 255, .55);
@@ -144,6 +145,7 @@
   --ds-hover: rgba(177, 186, 196, .08);
   --ds-selected: rgba(47, 129, 247, .15);
   --ds-selected-ink: #e6edf3;
+  --ds-selected-strong: rgba(47, 129, 247, .28);
   --ds-accent: #2f81f7;
   --ds-accent-ink: #ffffff;
   --ds-focus: rgba(88, 166, 255, .7);
@@ -176,6 +178,7 @@
   --ds-hover: rgba(0, 0, 0, .04);
   --ds-selected: rgba(0, 0, 0, .07);
   --ds-selected-ink: #111316;
+  --ds-selected-strong: rgba(0, 0, 0, .11);
   --ds-accent: #2b2f35;
   --ds-accent-ink: #ffffff;
   --ds-focus: rgba(0, 0, 0, .45);
