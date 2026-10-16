@@ -1,4 +1,5 @@
 import {FORMAT,TYPES,PRESETS,STYLES,KINDS,targetDisplay,uid,clone,block,newQuestion,applyPreset,parentOptions,tableCovered,cellValue,mergeCells,migrate,fromLegacy,validate,duplicateQuestion} from './model.js';
+import {applyTextEdit} from './text-sync.js';
 import {loadImage} from './image-load.js';
 import {exportExcel,importExcel} from './excel.js';
 import {handoffQuestion} from './handoff.js';
@@ -210,6 +211,10 @@ async function requestTypeset(value){
           const {questionFingerprint}=await import('./typeset-model.js?v=1014-compact-panel');
           if(snapshot.fingerprint!==await questionFingerprint(target))throw Error('시트 내용과 저장 전 조판 수정이 함께 바뀌었습니다. 시트 수정을 되돌린 뒤 조판을 저장하세요. 기존 조판 수정은 유지됩니다.');
           if(!mutate(()=>target.typeset=snapshot))throw Error('조판을 저장하지 못했습니다.');await saveQueue;
+        },onTextEdit:(changes,questionId)=>{
+          // 한글 창에서 고친 글: 같은 문항의 해당 칸만 바꾼다. 한글 창은 이미 그 글을 보여 주므로 다시 그리지 않는다.
+          const target=data.questions.find(q=>q.id===questionId);if(!target)return false;
+          return mutate(()=>{for(const c of changes)applyTextEdit(target,c.owner,c.value);});
         },onPlacement:(fn,text,questionId)=>{
           // 한글 창에서 끌어 놓은 결과는 데이터(순서·묶음·폭 비율·크기)로만 저장한다. 화면은 자동으로 다시 그려진다.
           const target=data.questions.find(q=>q.id===questionId);if(!target)return;

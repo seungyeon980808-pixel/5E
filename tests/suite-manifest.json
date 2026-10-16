@@ -39,6 +39,12 @@
       ]
     },
     {
+      "path": "tests/test-exampool-text-sync.mjs",
+      "findingIds": [
+        "EXAMPOOL-HWP-TO-SHEET-TEXT"
+      ]
+    },
+    {
       "path": "tests/test-exampool-card-workspace.mjs",
       "findingIds": [
         "EXAMPOOL-CARD-SHEET-SYNC",

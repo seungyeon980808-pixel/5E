@@ -1,4 +1,5 @@
 import {RhwpExamBridge} from '/js/rhwp-exam-bridge.js?v=1014-compact-panel';
+import {buildTextMap,mapTextEdit,applyTextEdit} from './text-sync.js';
 import {loadImage} from './image-load.js';
 import {attachPlacementLayer} from './placement-layer.js';
 import {PictureSettings} from '/js/rhwp-exam-picture-controls.js?v=1.7.0-four-session-integration';
@@ -15,8 +16,8 @@ import {compactSavedBogi} from './compact-bogi.js';
 
 const parse=value=>typeof value==='string'?JSON.parse(value):value;
 const normalized=text=>String(text).replace(/\s+/g,' ').trim();
-export function createTypesetter({host,status,paper,columns,save,download,onSave,onPlacement}){
-  let placer=null,owners=null,bridge=null,starting=null,q=null,fingerprint='',baselineText='',baselineEquations='',baselineImages='',opening=0,loading=false,ready=false,pictureSettings,fitting=false,fitFrame=0,lastProfile,metricsCache,view,dirty=false,changingProfile=Promise.resolve();
+export function createTypesetter({host,status,paper,columns,save,download,onSave,onPlacement,onTextEdit}){
+  let textMap=null,syncTimer=0,placer=null,owners=null,bridge=null,starting=null,q=null,fingerprint='',baselineText='',baselineEquations='',baselineImages='',opening=0,loading=false,ready=false,pictureSettings,fitting=false,fitFrame=0,lastProfile,metricsCache,view,dirty=false,changingProfile=Promise.resolve();
   const message=(text,error=false)=>{status.textContent=text;status.dataset.error=String(error);};
   const document=()=>bridge.wasm.borrowDocumentHandle();
   const profile=()=>({paper:paper.value,columns:Number(columns.value)});
@@ -49,7 +50,7 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
   function scheduleFit(){if(fitting||fitFrame||!ready)return;fitFrame=requestAnimationFrame(()=>{fitFrame=0;try{fitLive();}catch(e){message(e.message,true);}});}
   const equationScripts=async bytes=>{const zip=await JSZip.loadAsync(new Uint8Array(bytes)),xml=await zip.file('Contents/section0.xml').async('string');return [...xml.matchAll(/<hp:script>([\s\S]*?)<\/hp:script>/g)].map(m=>m[1]).join('\n');};
   async function ensure(){
-    if(!starting)starting=RhwpExamBridge.create(host,{showEditingBorders:false,tableLayoutLocked:true,onChange:error=>{if(ready&&!loading&&!fitting){dirty=true;message(error?error.message:'조판 수정 중 · 완료하면 조판 저장을 누르세요.',!!error);scheduleFit();}},onEdit:(_id,ref)=>{
+    if(!starting)starting=RhwpExamBridge.create(host,{showEditingBorders:false,tableLayoutLocked:true,onChange:error=>{if(ready&&!loading&&!fitting){dirty=true;message(error?error.message:'조판 수정 중 · 완료하면 조판 저장을 누르세요.',!!error);scheduleFit();scheduleTextSync();}},onEdit:(_id,ref)=>{
       bridge.selectPicture(ref);pictureSettings.open(bridge.pictureLayout(ref),save,{ref,generation:bridge.generation,inlineAlignment:!!bridge.paragraphTarget(ref)});
     }}).then(async b=>{bridge=b;await bridge.newDocument();bridge.watchView(drawGuide);view=attachTypesetView(bridge,host);placer=attachPlacementLayer({bridge,host,hint:host.parentElement.querySelector('#placement-hint-text'),onApply:(fn,text)=>onPlacement?.(fn,text,q?.id),canEdit:()=>{if(!ready||loading)return false;if(dirty){message('한글 창에 저장 전 수정이 있어 배치를 바꿀 수 없습니다. 조판 저장 후 다시 끌어 주세요.',true);return false;}return true;}});pictureSettings=new PictureSettings(host.parentElement,{onApply:(value,context)=>{if(context.generation!==bridge.generation)throw Error('다시 그림을 선택하세요.');bridge.applyPictureLayout(context.ref,value);},onError:e=>message(e.message,true)});return b;}).catch(e=>{starting=null;throw e;});
     return starting;
@@ -57,11 +58,11 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
   async function prepareFigure(f){const image=await loadImage(f.data);if(image.naturalWidth*image.naturalHeight>40000000)throw Error('사진 크기를 줄여주세요.');if(!f.data.startsWith('data:image/png;')){const canvas=window.document.createElement('canvas');canvas.width=image.naturalWidth;canvas.height=image.naturalHeight;canvas.getContext('2d').drawImage(image,0,0);f.data=canvas.toDataURL('image/png');}return {...f,width:image.naturalWidth,height:image.naturalHeight};}
   // 저장된 조판을 열 때도 그림·표의 주인을 알아야 한다. 그림을 실제로 읽지 않는 가벼운 계획으로 순서만 얻는다.
   const BLANK='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
-  async function planOwners(value){const plan=await buildQuestionHtml(value,async f=>({...f,data:BLANK,width:f.width||100,height:f.height||100}),questionPageProfile(profile()).width);return {images:plan.imageOwners,tables:plan.tableOwners,shapes:plan.tables};}
+  async function planOwners(value){const plan=await buildQuestionHtml(value,async f=>({...f,data:BLANK,width:f.width||100,height:f.height||100}),questionPageProfile(profile()).width);return {images:plan.imageOwners,tables:plan.tableOwners,shapes:plan.tables,texts:plan.textSegments};}
   async function generate(value){
     const Document=document().constructor,d=Document.createEmpty();let bytes;
     try{d.createBlankDocument();const config=questionPageProfile(profile());d.setPageDef(0,JSON.stringify(config.page));d.setColumnDef(0,1,0,true,0);
-      const plan=await buildQuestionHtml(value,prepareFigure,config.width,{native:true,measureText:createNativeTextMeasurer(Document)});owners={images:plan.imageOwners,tables:plan.tableOwners,shapes:plan.tables};const result=parse(d.pasteHtml(0,0,0,'<p><br></p>'+plan.html));if(!result.ok)throw Error('문항 조판을 만들지 못했습니다.');
+      const plan=await buildQuestionHtml(value,prepareFigure,config.width,{native:true,measureText:createNativeTextMeasurer(Document)});owners={images:plan.imageOwners,tables:plan.tableOwners,shapes:plan.tables,texts:plan.textSegments};const result=parse(d.pasteHtml(0,0,0,'<p><br></p>'+plan.html));if(!result.ok)throw Error('문항 조판을 만들지 못했습니다.');
       bytes=await materializeEquations(Document,JSZip,await normalizeQuestionImport(d.exportHwpx(),JSZip),plan.equations);
       const checked=new Document(bytes);try{const styled=new Document(await applyReferenceBogiIndent(checked,JSZip));try{styled.reflowLinesegs();applyQuestionIndent(styled,value.number);fitQuestionPage(styled,profile());verifyNativeQuestion(styled,plan);bytes=exportLayoutHwpx(styled,XLSX.CFB);}finally{styled.free();}}finally{checked.free();}
       if(plan.warnings.length)message(plan.warnings.join(' '));
@@ -69,7 +70,7 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
     return bytes;
   }
   async function open(value){
-    const seq=++opening;loading=true;ready=false;host.dataset.ready='false';metricsCache=null;guide.hidden=true;metricsOutput.textContent='';cancelAnimationFrame(fitFrame);fitFrame=0;save.disabled=true;download.disabled=true;paper.disabled=true;columns.disabled=true;message('실제 한글 문서로 조판하는 중…');placer?.clear();owners=null;
+    const seq=++opening;loading=true;ready=false;host.dataset.ready='false';metricsCache=null;guide.hidden=true;metricsOutput.textContent='';cancelAnimationFrame(fitFrame);fitFrame=0;save.disabled=true;download.disabled=true;paper.disabled=true;columns.disabled=true;message('실제 한글 문서로 조판하는 중…');placer?.clear();owners=null;textMap=null;clearTimeout(syncTimer);
     try{await ensure();if(seq!==opening)return;const next=structuredClone(value),nextFingerprint=await questionFingerprint(next);
       const saved=next.typeset?.fingerprint===nextFingerprint&&[9,10,LAYOUT_VERSION].includes(next.typeset.layoutVersion)?next.typeset:null;
       paper.value=saved?.profile.paper||'A4';columns.value=String(saved?.profile.columns||2);
@@ -97,7 +98,21 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
       validateQuestionPage(document(),profile());lastProfile=profile();message('문항 길이에 맞춰 용지 높이 자동 조절 · 표 크기 잠금 · Shift+Tab으로 내어쓰기');
       try{assertNativeLayout(document());}catch(e){message(e.message,true);}
       if(owners)placer?.setModel({question:q,owners});
+      textMap=owners?.texts?buildTextMap(parse(document().getTextFileText()),owners.texts.map(s=>({...s}))):null;
     }finally{if(seq===opening){loading=false;save.disabled=!ready;download.disabled=!ready;paper.disabled=!ready;columns.disabled=!ready;if(ready){fitLive();drawGuide();}}}
+  }
+  // 한글 창에서 고친 글을 잠시 뒤 시트 칸에 반영한다. 반영하면 이 문항의 기준 글도 새 글로 바뀐다.
+  function scheduleTextSync(){clearTimeout(syncTimer);syncTimer=setTimeout(()=>void syncText(),700);}
+  async function syncText(){
+    if(!ready||loading||!textMap||!onTextEdit||!q)return;
+    const raw=parse(document().getTextFileText()),result=mapTextEdit(textMap,raw);
+    if(result.unchanged)return;
+    if(!result.ok){message(result.reason,true);return;}
+    const id=q.id,changes=result.changes.map(c=>({owner:c.owner,value:c.value}));
+    for(const c of result.changes){applyTextEdit(q,c.owner,c.value);textMap.segments[c.index].value=c.full;}
+    textMap=buildTextMap(raw,textMap.segments);baselineText=normalized(raw);fingerprint=await questionFingerprint(q);
+    if(!onTextEdit(changes,id))return;
+    message('한글에서 고친 글을 시트에 반영했습니다 · 서식까지 남기려면 조판 저장을 누르세요.');
   }
   async function snapshot(){
     if(!bridge||!q||loading||!ready)throw Error('조판이 준비된 뒤 다시 시도하세요.');

@@ -67,17 +67,18 @@ export function wrapHangingText(value,width,prefix,measure){
 export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540,{native=false,measureText}={}){
   const q=handoffQuestion(value),images=[],texts=[],warnings=[],tables=[],equations=[];
   // 문서 순서대로 그림·표가 어느 구성의 것인지 기록한다(한글 창에서 끌어 배치할 때 짝짓기).
-  const imageOwners=[],tableOwners=[];
+  const imageOwners=[],tableOwners=[],textSegments=[];
   const recordTable=(rows,cols,merges=[],owner={kind:'layout'},at=null)=>{const shape={rows,cols,merges:merges.map(m=>`${m.r}:${m.c}:${m.rs}:${m.cs}`).sort()};if(at===null){tables.push(shape);tableOwners.push(owner);}else{tables[at]=shape;tableOwners[at]=owner;}};
   const reserveTable=()=>{tables.push(null);tableOwners.push(null);return tables.length-1;};
-  const text=(v,width=null,fontSize=11,wrap=null)=>{
-    let value=String(v??'');
+  // 글 조각마다 주인(어느 칸의 글인지)과 앞머리 길이(번호·ㄱ.·① 등)를 남긴다. 한글 창에서 고친 글을 시트로 되돌릴 때 쓴다.
+  const text=(v,width=null,fontSize=11,wrap=null,owner=null)=>{
+    let value=String(v??'');if(value.trim())textSegments.push({value,owner});
     if(native)value=mathParts(value).map(part=>{if(!part.math){if(part.text.trim())texts.push(part.text);return part.text;}const marker=`EXAMPOOL_EQ_${equations.length}_END`;equations.push({marker,script:part.text,fontSize:fontSize*100});return marker;}).join('');
     else if(value.trim())texts.push(value);
     value=wrap?wrap(value):wrapQuestionText(value,width,fontSize);
     const body=E(value).replace(/\r?\n/g,'<br>');return native?`<span style="font-family:함초롬바탕;font-size:${fontSize}pt">${body}</span>`:body;
   };
-  const p=(v,width=null,fontSize=11)=>`<p style="margin:4px 0">${text(v,width,fontSize)}</p>`;
+  const p=(v,width=null,fontSize=11,owner=null)=>`<p style="margin:4px 0">${text(v,width,fontSize,null,owner)}</p>`;
   const opening=q.blocks.find(b=>b.parent===null),firstText=opening?.kind==='text'&&opening.text?opening:null;
   const prefix=q.number?`${q.number}. `:'';
   const picture=async(f,width,align,owner={kind:'other'})=>{
@@ -110,7 +111,7 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
       for(let c=0;c<t.cols;c++){
         if(tableCovered(t,r,c))continue;
         const cell=t.cells[r][c],m=t.merges.find(m=>m.r===r&&m.c===c),tag=r<t.headerRows?'th':'td';
-        const formatted=text(cell.value,cellWidth*(m?.cs||1)-16,fontSize).replace(/^<span[^>]*>|<\/span>$/g,'');
+        const formatted=text(cell.value,cellWidth*(m?.cs||1)-16,fontSize,null,{kind:'cell',table:owner.id||owner.kind,r,c}).replace(/^<span[^>]*>|<\/span>$/g,'');
         // Separate paragraphs let the native cell center the entire header
         // block. A soft line break centers only its first line in this engine.
         let body=await picture(cell.figure,cellWidth*(m?.cs||1)-16,undefined,{kind:'cell',table:owner.id||owner.kind,r,c})+formatted.split('<br>').map(line=>`<p style="margin:0;text-align:center;font-family:함초롬바탕;font-size:${fontSize}pt">${line}</p>`).join('');
@@ -122,7 +123,7 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
       }
       html+='</tr>';
     }
-    return html+'</table>'+(t.note?p(t.note,width-12,10):'');
+    return html+'</table>'+(t.note?p(t.note,width-12,10,{kind:'note',table:owner.id||owner.kind}):'');
   };
   // 간격(mm): 구성 앞에 높이를 가진 빈 문단을 둔다. 값이 없으면 넣지 않는다.
   const spacer=b=>{const px=gapPx(b);return px?`<p style="margin:0;font-size:1pt;line-height:100%;height:${Math.round(px)}px;margin-top:${Math.round(px)}px"> </p>`:'';};
@@ -131,9 +132,9 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
     for(const b of q.blocks.filter(b=>b.parent===parent&&(!onlyId||b.id===onlyId))){
       if(b===firstText)continue;
       html+=spacer(b);
-      if(b.kind==='text')html+=b.text?p(b.text,width):'';
+      if(b.kind==='text')html+=b.text?p(b.text,width,11,{kind:'block',id:b.id}):'';
       else if(b.kind==='figure'){
-        if(b.figure)html+=p('')+await picture(b.figure,sizedWidth(b,width),b.align,{kind:'block',id:b.id})+(/^\(.+\)$/.test(b.label)||b.text?p((/^\(.+\)$/.test(b.label)?b.label:'')+(b.text?' '+b.text:''),width):'');
+        if(b.figure)html+=p('')+await picture(b.figure,sizedWidth(b,width),b.align,{kind:'block',id:b.id})+(/^\(.+\)$/.test(b.label)||b.text?p((/^\(.+\)$/.test(b.label)?b.label:'')+(b.text?' '+b.text:''),width,11,b.text?{kind:'block',id:b.id,prefix:(/^\(.+\)$/.test(b.label)?b.label:'').length+1}:null):'');
       }else if(b.kind==='table')html+=await table(b.table,sizedWidth(b,width),false,b.align,{kind:'block',id:b.id});
       else if(b.kind==='group'){
         const boxed=b.boxed===true||b.boxed===undefined&&b.label==='실험',children=q.blocks.filter(x=>x.parent===b.id);let body;
@@ -161,7 +162,7 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
             body+=tr+'</tr>';
           }
           recordTable(rows.length+1,cols,merges,{kind:'boxside',id:b.id},slot);
-          html+=`<table style="border-collapse:collapse;width:${width}px"><tr><td${cols>1?` colspan="${cols}"`:''} style="border:none;border-top:${rule};border-left:${rule};border-right:${rule};width:${width}px;padding:8px 8px 0">${p(b.label)}</td></tr>${body}</table>`;
+          html+=`<table style="border-collapse:collapse;width:${width}px"><tr><td${cols>1?` colspan="${cols}"`:''} style="border:none;border-top:${rule};border-left:${rule};border-right:${rule};width:${width}px;padding:8px 8px 0">${p(b.label,null,11,{kind:'label',id:b.id})}</td></tr>${body}</table>`;
           continue;
         }
         if(b.layout==='나란히'&&children.length){
@@ -175,7 +176,7 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
           body+='</tr></table>';
         }else body=await walk(b.id,innerWidth);
         if(boxed)recordTable(1,1,[],{kind:'box',id:b.id},boxSlot);
-        html+=boxed?`<table style="border-collapse:collapse;width:${width}px"><tr><td style="border:1px solid #555;width:${width}px;height:32px;padding:8px">${p(b.label)}${body}</td></tr></table>`:body;
+        html+=boxed?`<table style="border-collapse:collapse;width:${width}px"><tr><td style="border:1px solid #555;width:${width}px;height:32px;padding:8px">${p(b.label,null,11,{kind:'label',id:b.id})}${body}</td></tr></table>`:body;
       }else if(b.lines){
         if(b.kind==='bogi'){
           // The supplied exam uses a centered title that interrupts the top
@@ -190,42 +191,42 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
           const body=b.lines.map(l=>{
             const label=/^[ㄱ-ㅎ]$/.test(l.label)?l.label+'.':l.label,prefix=label+' ';
             const wrap=v=>{const result=wrapHangingText(v,width-12,prefix,measure);bodyLines+=result.split('\n').length;return result;};
-            return `<p style="margin:0;text-align:left;line-height:150%">${text(prefix+l.text,null,11,wrap)}</p>`;
+            return `<p style="margin:0;text-align:left;line-height:150%">${text(prefix+l.text,null,11,wrap,{kind:'line',block:b.id,id:l.id,prefix:prefix.length})}</p>`;
           }).join('');
           // The last line needs its glyph height and bottom padding, rather
           // than another full line gap. Explicit height also protects nested
           // tables, whose parent does not expand an implicit HTML row.
           const bodyHeight=Math.ceil(Math.max(0,bodyLines-1)*11*4/3*1.6+11*4/3+7+(b.parent?3:0));
           html+=`<table style="border-collapse:collapse;width:${width}px"><tr>${sideCell('left',true)}<td rowspan="2" style="width:${titleWidth}px;height:24px;padding:0.1px;border:none;vertical-align:middle"><p style="margin:0;text-align:center;line-height:100%">${text('<보 기>')}</p></td>${sideCell('right',true)}</tr><tr>${sideCell('left')}${sideCell('right')}</tr><tr><td colspan="3" style="width:${width}px;height:${bodyHeight}px;padding:3px 6px 4px;border:none;border-left:${rule};border-right:${rule};border-bottom:${rule};vertical-align:top">${body}</td></tr></table>`;
-        }else html+=(b.kind==='steps'?p(b.label):'')+b.lines.map(l=>p(l.label+' '+l.text,width)).join('');
+        }else html+=(b.kind==='steps'?p(b.label,null,11,{kind:'label',id:b.id}):'')+b.lines.map(l=>p(l.label+' '+l.text,width,11,{kind:'line',block:b.id,id:l.id,prefix:l.label.length+1})).join('');
       }
     }
     return html;
   };
   // A question number belongs to the opening paragraph. Native hanging
   // indentation is measured from this prefix after import, never added spaces.
-  let html=`<p style="margin:4px 0;text-align:left">${text(prefix+(firstText?firstText.text:q.ask),width-prefix.length*7)}</p>`+await walk(null,width)+(firstText?p(q.ask,width):'');
+  let html=`<p style="margin:4px 0;text-align:left">${text(prefix+(firstText?firstText.text:q.ask),width-prefix.length*7,11,null,firstText?{kind:'block',id:firstText.id,prefix:prefix.length}:{kind:'ask',prefix:prefix.length})}</p>`+await walk(null,width)+(firstText?p(q.ask,width,11,{kind:'ask'}):'');
   if(q.type!=='서술형'){
     if(q.style==='대응표')html+=await table(q.choiceTable,width,true);
     else if(q.style==='그림·그래프'){
       {const per=choiceColumns(q.choiceLayout,q.choices.length)||2;recordTable(Math.ceil(q.choices.length/per),per,[],{kind:'choicegrid'});}
       html+=`<table style="border-collapse:collapse;width:${width}px">`;
-      const per=choiceColumns(q.choiceLayout,q.choices.length)||2;for(let i=0;i<q.choices.length;i+=per){html+='<tr>';for(let j=i;j<i+per;j++){const c=q.choices[j];html+=`<td style="border:none;width:${width/per}px;padding:5px;vertical-align:top">${c?p(labels[j]+' '+c.text)+await picture(c.figure,width/per-20,undefined,{kind:'choice',id:c.id}):''}</td>`;}html+='</tr>';}
+      const per=choiceColumns(q.choiceLayout,q.choices.length)||2;for(let i=0;i<q.choices.length;i+=per){html+='<tr>';for(let j=i;j<i+per;j++){const c=q.choices[j];html+=`<td style="border:none;width:${width/per}px;padding:5px;vertical-align:top">${c?p(labels[j]+' '+c.text,null,11,{kind:'choice',id:c.id,prefix:labels[j].length+1})+await picture(c.figure,width/per-20,undefined,{kind:'choice',id:c.id}):''}</td>`;}html+='</tr>';}
       html+='</table>';
     }else {
       const fontSize=q.style==='조합'?10:11,grid=choiceGrid(q.choices,width,fontSize,q.choiceLayout),rows=Math.ceil(q.choices.length/grid.cols);
       recordTable(rows,grid.cols,[],{kind:'choicegrid'});
       html+=`<table style="border-collapse:collapse;width:${width}px">`;
       for(let row=0;row<rows;row++){
-        const cells=grid.widths.map((w,col)=>{const i=row*grid.cols+col,c=q.choices[i],available=grid.singleLine?w-4:w-8-choiceWidth(labels[i]+' ',fontSize),value=c?labels[i]+' '+c.text:'';return {w,value,height:Math.max(25,Math.ceil(wrapQuestionText(value,available,fontSize).split('\n').length*fontSize*4/3*1.6+6)),available};});
+        const cells=grid.widths.map((w,col)=>{const i=row*grid.cols+col,c=q.choices[i],available=grid.singleLine?w-4:w-8-choiceWidth(labels[i]+' ',fontSize),value=c?labels[i]+' '+c.text:'';return {w,value,owner:c?{kind:'choice',id:c.id,prefix:labels[i].length+1}:null,height:Math.max(25,Math.ceil(wrapQuestionText(value,available,fontSize).split('\n').length*fontSize*4/3*1.6+6)),available};});
         const height=Math.max(...cells.map(c=>c.height));
-        html+='<tr>'+cells.map(c=>`<td style="border:none;width:${c.w}px;height:${height}px;padding:2px;vertical-align:top"><p style="margin:0;text-align:left;line-height:150%">${text(c.value,c.available,fontSize)}</p></td>`).join('')+'</tr>';
+        html+='<tr>'+cells.map(c=>`<td style="border:none;width:${c.w}px;height:${height}px;padding:2px;vertical-align:top"><p style="margin:0;text-align:left;line-height:150%">${text(c.value,c.available,fontSize,null,c.owner)}</p></td>`).join('')+'</tr>';
       }
       html+='</table>';
     }
   }
   html+='<p><br></p>';
-  return {html:`<div style="font-family:함초롬바탕;font-size:10pt">${html}</div>`,images,texts,tables,equations,warnings:[...new Set(warnings)],imageOwners,tableOwners};
+  return {html:`<div style="font-family:함초롬바탕;font-size:10pt">${html}</div>`,images,texts,tables,equations,warnings:[...new Set(warnings)],imageOwners,tableOwners,textSegments};
 }
 
 export function verifyNativeQuestion(document,plan){
