@@ -54,6 +54,21 @@ const server = http.createServer(async (req, res) => {
     res.end(JSON.stringify({local:Boolean(localBridge)}));
     return;
   }
+  if (pathname === '/api/bug-board' || pathname.startsWith('/api/bug-board/')) {
+    const boardPort = Number(process.env.FIVE_E_BUG_BOARD_PORT || 61910);
+    if (!Number.isInteger(boardPort) || boardPort < 1 || boardPort > 65535) return fail(503, '신고 게시판 서버를 확인해 주세요.');
+    if (req.headers.origin && req.headers.origin !== origin) return fail(403, 'Origin rejected');
+    const headers = { ...req.headers, host:`127.0.0.1:${boardPort}` };
+    // The receiver authenticates this local proxy as its own origin. Author/admin credentials are unchanged.
+    if (req.headers.origin) headers.origin = `http://127.0.0.1:${boardPort}`;
+    const upstream = http.request({ hostname:'127.0.0.1',port:boardPort,path:req.url,method:req.method,headers }, response => {
+      const responseHeaders = { 'Content-Type':response.headers['content-type'] || 'application/json','Cache-Control':'no-store','X-Content-Type-Options':'nosniff' };
+      res.writeHead(response.statusCode,responseHeaders); response.pipe(res);
+    });
+    upstream.setTimeout(20000,() => upstream.destroy(new Error('Report service timeout')));
+    upstream.on('error',() => { if (!res.headersSent) fail(503,'신고 서버에 연결하지 못했습니다. 작성 내용은 유지됩니다. 다시 시도해 주세요.'); else res.destroy(); });
+    req.on('aborted',() => upstream.destroy()); req.pipe(upstream); return;
+  }
   if (pathname === '/api/bug-reports') {
     if (req.method !== 'POST') return fail(405, 'Method rejected');
     if (req.headers.origin !== origin || req.headers['x-5e-report'] !== '1'

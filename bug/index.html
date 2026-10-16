@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="ko" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="referrer" content="same-origin">
+  <title>문제 게시판 · 5E</title>
+  <link rel="stylesheet" href="./board.css">
+  <script type="module" src="./board.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#board-content">본문으로 이동</a>
+  <header class="site-header">
+    <a class="brand" href="../" target="_blank" rel="noopener" aria-label="5E 편집기 열기">5E</a>
+    <h1>문제 게시판</h1>
+    <a class="button quiet" href="../" target="_blank" rel="noopener">편집기 열기</a>
+  </header>
+  <main>
+    <nav class="board-nav" aria-label="게시판 메뉴">
+      <a href="#reports" data-nav="reports">문제 신고</a>
+      <a href="#faq" data-nav="faq">FAQ</a>
+      <a href="#write" class="button primary write-link">신고하기</a>
+    </nav>
+    <p id="board-status" class="notice" role="status" aria-live="polite" hidden></p>
+    <section id="board-content" tabindex="-1" aria-label="문제 게시판 내용"></section>
+  </main>
+  <footer class="site-footer"><span>5E · 문제 신고와 도움말</span><a href="#admin" id="admin-link">관리자</a><span data-change-summary data-change-short="문제 게시판·FAQ">문제 게시판·FAQ</span></footer>
+  <dialog id="message-dialog" aria-labelledby="message-title"><h2 id="message-title"></h2><p id="message-body"></p><div class="actions" id="message-actions"></div></dialog>
+</body>
+</html>

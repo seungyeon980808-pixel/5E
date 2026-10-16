@@ -1,0 +1,9 @@
+{
+  "name": "5e-bug-api",
+  "main": "index.mjs",
+  "compatibility_date": "2026-10-15",
+  "workers_dev": true,
+  "vars": { "ALLOWED_ORIGINS": "https://www.5e.ai.kr,https://5e.ai.kr" },
+  "d1_databases": [{ "binding": "DB", "database_name": "5e-bug-board", "database_id": "REPLACE_WITH_BUG_BOARD_DATABASE_ID" }],
+  "r2_buckets": [{ "binding": "IMAGES", "bucket_name": "5e-bug-images" }]
+}

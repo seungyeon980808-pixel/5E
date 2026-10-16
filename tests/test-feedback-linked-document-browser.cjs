@@ -15,6 +15,11 @@ h.withServer(async origin=>{
    await h.crop(page);await h.idle(page);assert.equal((await metadata()).examLink,undefined);assert.equal(await page.locator('.page-tab.is-exam-linked').count(),0);
    await page.locator('#exam-name').focus();await page.keyboard.press('Escape');assert.equal((await h.pictures(page)).length,0);await h.action(page,'close');
    await h.crop(page);await h.place(page);await h.originalEdit(page);
+   await page.locator('#ai-image-install-open').click();await page.locator('#ai-image-panel').waitFor({state:'visible'});
+   await page.locator('#exam-source-region').waitFor({state:'hidden'});
+   assert.equal(await page.locator('#exam-edit-bar').isVisible(),false,'AI shows no document badge or apply controls');
+   await page.locator('#ai-image-panel [data-ai-close]').click();
+   await page.locator('#exam-edit-bar').waitFor({state:'visible'});
    for(let revision=0;revision<2;revision++) {
     const linked=await page.evaluate(async()=>{const {state}=await import('/js/state.js?v=1.7.0-four-session-integration');return state.get().pages.find(p=>p.id===state.get().activePageId).meta.examLink;});assert.ok(linked);
     assert.ok(await page.locator('.page-tab.is-exam-linked.is-active').isVisible());
