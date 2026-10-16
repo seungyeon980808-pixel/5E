@@ -472,7 +472,7 @@ for(const switchTarget of ['task','candidate']) test(`late local save failure pr
     const seam='  put(entry) { return this.request("readwrite", (store) => store.put(entry)); }';
     assert.equal(store.split(seam).length-1,1);
     await page.route('**/js/ai-output-cache-store.js*',route=>route.fulfill({contentType:'text/javascript',body:store.replace(seam,
-      '  put(entry) { if(window.__holdLocalSave && entry.tabs?.some(tab=>tab.generated?.length>1)){window.__holdLocalSave=false;return new Promise((resolve,reject)=>{window.__rejectLocalSave=()=>reject(new DOMException("Delayed test quota","QuotaExceededError"));});} return this.request("readwrite", (store) => store.put(entry)); }')}));
+      '  put(entry) { if(window.__holdLocalSave && entry.tabs?.some(tab=>tab.generated?.some(item=>!window.__knownCandidates.includes(item.id)))){window.__holdLocalSave=false;return new Promise((resolve,reject)=>{window.__rejectLocalSave=()=>reject(new DOMException("Delayed test quota","QuotaExceededError"));});} return this.request("readwrite", (store) => store.put(entry)); }')}));
     const source=fs.readFileSync(path.resolve(__dirname,'../js/ai-panel.js'),'utf8');
     const failure='throw new Error(`수정본을 저장하지 못했습니다. 임시 편집을 유지했습니다. ${error.message}`);';
     assert.equal(source.split(failure).length-1,1);
@@ -493,7 +493,8 @@ for(const switchTarget of ['task','candidate']) test(`late local save failure pr
   await page.waitForFunction(()=>!document.querySelector('#ai-image-panel [data-label-add]').disabled);
   await panel.locator('[data-label-add]').click();
   await page.waitForFunction(()=>!document.querySelector('#ai-image-panel [data-label-add]').disabled);
-  await page.evaluate(()=>window.__holdLocalSave=true);
+  // Hold only the write that carries the new label revision; unrelated state writes must pass through.
+  await page.evaluate(ids=>{window.__knownCandidates=ids;window.__holdLocalSave=true;},before.flatMap(tab=>tab.generated.map(item=>item.id)));
   await panel.locator('[data-ai-edit-save]').click();await page.waitForFunction(()=>Boolean(window.__rejectLocalSave));
   if(switchTarget==='task')await task('task-1','selected-1');
   else {await panel.locator('[data-ai-version-button]').click();await panel.locator('[data-ai-candidate-option="alternate-0"]').click();}
