@@ -69,8 +69,9 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
   // 문서 순서대로 그림·표가 어느 구성의 것인지 기록한다(한글 창에서 끌어 배치할 때 짝짓기).
   const imageOwners=[],tableOwners=[],textSegments=[];
   const recordTable=(rows,cols,merges=[],owner={kind:'layout'},at=null)=>{const shape={rows,cols,merges:merges.map(m=>`${m.r}:${m.c}:${m.rs}:${m.cs}`).sort()};if(at===null){tables.push(shape);tableOwners.push(owner);}else{tables[at]=shape;tableOwners[at]=owner;}};
-  // 가로 묶음 칸·상자 표의 줄 안에서는 칸이 모두 빈 표를 한글 엔진이 빠뜨린다. 그 자리의 빈 칸에만 폭 0인 글자를 둔다.
-  // 평범한 자리에서는 이 글자가 저장 때마다 줄 배치를 흔들어서 쓰지 않는다.
+  // 가로 묶음 칸·상자 표의 줄 안에서는 칸이 모두 빈 표를 한글 엔진이 빠뜨린다. 그 자리의 빈 칸에만 보이지 않는
+  // 단어 연결 문자(U+2060)를 둔다. 문자 참조(&#…;)는 엔진이 글자 그대로 찍고, U+200B·U+FEFF는 저장할 때마다
+  // 줄 배치가 흔들리며, 공백류는 빈 칸으로 취급된다(2026-10-16 실험).
   let nested=0;
   const reserveTable=()=>{tables.push(null);tableOwners.push(null);return tables.length-1;};
   // 글 조각마다 주인(어느 칸의 글인지)과 앞머리 길이(번호·ㄱ.·① 등)를 남긴다. 한글 창에서 고친 글을 시트로 되돌릴 때 쓴다.
@@ -118,7 +119,7 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
         const formatted=text(cell.value,cellWidth*(m?.cs||1)-16,fontSize,null,{kind:'cell',table:owner.id||owner.kind,r,c}).replace(/^<span[^>]*>|<\/span>$/g,'');
         // Separate paragraphs let the native cell center the entire header
         // block. A soft line break centers only its first line in this engine.
-        let body=await picture(cell.figure,cellWidth*(m?.cs||1)-16,undefined,{kind:'cell',table:owner.id||owner.kind,r,c})+formatted.split('<br>').map(line=>`<p style="margin:0;text-align:center;font-family:함초롬바탕;font-size:${fontSize}pt">${line||(cell.value===''&&!cell.figure&&nested?'&#8203;':'')}</p>`).join('');
+        let body=await picture(cell.figure,cellWidth*(m?.cs||1)-16,undefined,{kind:'cell',table:owner.id||owner.kind,r,c})+formatted.split('<br>').map(line=>`<p style="margin:0;text-align:center;font-family:함초롬바탕;font-size:${fontSize}pt">${line||(cell.value===''&&!cell.figure&&nested?'\u2060':'')}</p>`).join('');
         if(t.diagonal&&r===0&&c===0){
           body=p(t.diagonal.col)+p(t.diagonal.row)+body;
           warnings.push('대각선 머리글의 축 이름은 전달됩니다. 사선은 한글에서 지정하세요.');

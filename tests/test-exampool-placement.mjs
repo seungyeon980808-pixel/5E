@@ -80,3 +80,11 @@ test('a boxed side-by-side group is one native table, so the result table inside
   const inner=q.blocks.find(b=>b.parent===group.id&&b.kind==='table');
   if(inner?.table.merges.length)assert.ok(plan.tables.some(t=>t.merges.length===inner.table.merges.length&&t.rows===inner.table.rows));
 });
+
+test('empty cells get an invisible word joiner only inside side-by-side cells, never a character reference',async()=>{
+  const q=structuredClone(data().questions[0]),group=q.blocks.find(b=>b.kind==='group'),table=q.blocks.find(b=>b.kind==='table'&&b.parent===group.id);
+  for(const row of table.table.cells)for(const c of row){c.value='';delete c.figure;}
+  const plain=await buildQuestionHtml(q);assert.ok(!plain.html.includes('⁠'),'ordinary empty cells stay empty');
+  group.layout='나란히';group.boxed=true;
+  const side=await buildQuestionHtml(q);assert.ok(side.html.includes('⁠'));assert.ok(!/&#\d+;/.test(side.html),'the engine prints character references literally');
+});

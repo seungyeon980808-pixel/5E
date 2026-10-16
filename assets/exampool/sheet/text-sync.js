@@ -62,8 +62,8 @@ export function mapTextEdit(map,docText){
   const a=d.start-sp.start,b=d.endOld-sp.start;
   if(a<prefixNorm)return {ok:false,reason:'문항 번호·①·ㄱ. 같은 앞머리는 한글 창에서 바꿀 수 없습니다. 시트에서 고치세요.'};
   const full=replaceNormalized(seg.value,a,b,inserted);
-  // 빈 칸 자리표(ZWSP)는 데이터에 남기지 않는다.
-  const field=full.slice(prefix).replace(/\u200b/g,'').replace(/^\s+/,'');
+  // 빈 칸 자리표(U+2060 등 폭 0 글자)는 데이터에 남기지 않는다.
+  const field=full.slice(prefix).replace(/[\u200b\u2060]/g,'').replace(/^\s+/,'');
   return {ok:true,changes:[{index:sp.index,owner:seg.owner,full,value:field}]};
 }
 
