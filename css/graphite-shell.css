@@ -42,6 +42,8 @@
   :root:not([data-mode="lite"]) .app-shell-header .app-brand:hover { background: var(--ds-hover); }
   .app-brand .app-brand-mark { font: italic 700 21px/1 var(--ds-font-brand); letter-spacing: -.6px; }
   .app-brand .app-brand-name { font: 500 15px/1 var(--ds-font); color: var(--ds-ink-2); margin-left: 1px; }
+  /* 5E 글자 몸통이 막대 가운데보다 4px 위에 떠 보여서 글자만 2px 내린다(버튼 면은 그대로) */
+  :root:not([data-mode="lite"]) .app-shell-header .app-brand > :is(.app-brand-mark, .app-brand-name) { position: relative; top: 2px; }
   :root[data-mode="lite"] .app-brand .app-brand-name { display: none; }
 
   /* 가운데 칸 */
@@ -66,11 +68,11 @@
     padding: 0;
     border: 0 !important; border-radius: var(--ds-radius);
     background: transparent; box-shadow: none !important;
-    color: var(--ds-ink-3);
+    color: var(--ds-ink-2);
     transition: none;
   }
   :root:not([data-mode="lite"]) .app-shell-header :is(.topbar-btn, .shell-icon-button, .icon-btn, .auto-snap-btn, .grid-toggle-btn, [id="center-view-btn"], .panel-visibility-toggle):hover:not(:disabled) {
-    background: var(--ds-hover); color: var(--ds-ink-2);
+    background: var(--ds-hover); color: var(--ds-ink);
   }
   :root:not([data-mode="lite"]) .app-shell-header :is(.topbar-btn, .shell-icon-button, .icon-btn, .auto-snap-btn, .grid-toggle-btn, [id="center-view-btn"]):disabled { opacity: .45; }
   :root:not([data-mode="lite"]) .app-shell-header :is(.topbar-btn, .shell-icon-button, .icon-btn, .auto-snap-btn, .grid-toggle-btn, [id="center-view-btn"], .panel-visibility-toggle) svg {
@@ -78,7 +80,7 @@
   }
   /* 켜진 기능(격자·자동 정렬·고정·캡처): 아이콘 밝게 + 아래 작은 점 */
   :root:not([data-mode="lite"]) .app-shell-header :is(.auto-snap-btn, .grid-toggle-btn, [id="center-view-btn"], [id="quick-capture-btn"])[aria-pressed="true"] {
-    background: transparent; color: var(--ds-selected-ink);
+    background: var(--ds-hover); color: var(--ds-selected-ink);
   }
   :root:not([data-mode="lite"]) .app-shell-header :is(.auto-snap-btn, .grid-toggle-btn, [id="center-view-btn"], [id="quick-capture-btn"])[aria-pressed="true"]::after {
     content: ""; position: absolute; left: 50%; bottom: 2px; width: 4px; height: 4px; margin-left: -2px;
@@ -156,7 +158,7 @@
     display: flex; align-items: center; justify-content: space-between; gap: 6px;
     height: var(--ds-h-row); min-height: var(--ds-h-row); margin: 0; padding: 0 8px;
     border-radius: var(--ds-radius); border: 0;
-    font: 600 var(--ds-text-body)/1 var(--ds-font); letter-spacing: 0; color: var(--ds-ink-2);
+    font: 600 var(--ds-text-body)/1 var(--ds-font); letter-spacing: 0; color: var(--ds-ink);
     background: transparent; cursor: pointer;
   }
   :root:not([data-mode="lite"]) .panel-left .tool-section-header:hover { background: var(--ds-hover); }
@@ -580,4 +582,15 @@
 :root:not([data-mode="lite"]) #ai-image-panel .ai-source-menu-trigger .ds-glyph-caret {
   width: 11px; height: 11px; opacity: .7;
   -webkit-mask-image: var(--ds-chevron); mask-image: var(--ds-chevron);
+}
+
+/* 위쪽 막대 보기 버튼(자석·격자·자유 이동): 꺼짐은 다른 버튼과 같은 밝기, 켜짐만 흰색 + 옅은 면 + 점 */
+@media (min-width: 768px) {
+  :root:not([data-mode="lite"]) .app-shell-header .canvas-view-controls :is(#auto-snap-btn, #grid-btn, #center-view-btn) {
+    color: var(--ds-ink-2); background: transparent; border-color: transparent;
+  }
+  :root:not([data-mode="lite"]) .app-shell-header .canvas-view-controls :is(#auto-snap-btn, #grid-btn, #center-view-btn):hover { color: var(--ds-ink); background: var(--ds-hover); }
+  :root:not([data-mode="lite"]) .app-shell-header .canvas-view-controls :is(#auto-snap-btn, #grid-btn, #center-view-btn):is([aria-pressed="true"], [aria-expanded="true"]) {
+    color: var(--ds-selected-ink); background: var(--ds-hover);
+  }
 }

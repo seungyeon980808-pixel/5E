@@ -83,9 +83,9 @@
   --ds-field: #1f1f1f;        /* 입력칸 */
   --ds-line: #333333;         /* 구분선 */
   --ds-line-strong: #3d3d3d;  /* 칸 테두리 */
-  --ds-ink: #ececec;          /* 본문 글자 */
-  --ds-ink-2: #c8c8c8;        /* 버튼 글자 */
-  --ds-ink-3: #8c8c8c;        /* 보조 글자 · 아이콘 */
+  --ds-ink: #f0f0f0;          /* 본문 글자 */
+  --ds-ink-2: #d4d4d4;        /* 버튼 글자 */
+  --ds-ink-3: #a0a0a0;        /* 보조 글자 · 아이콘 */
   --ds-hover: rgba(255, 255, 255, .06);
   --ds-selected: rgba(255, 255, 255, .09);
   --ds-selected-ink: #ffffff;
@@ -140,8 +140,8 @@
   --ds-line: #21262d;
   --ds-line-strong: #30363d;
   --ds-ink: #e6edf3;
-  --ds-ink-2: #b1bac4;
-  --ds-ink-3: #7d8590;
+  --ds-ink-2: #c9d1d9;
+  --ds-ink-3: #8b949e;
   --ds-hover: rgba(177, 186, 196, .08);
   --ds-selected: rgba(47, 129, 247, .15);
   --ds-selected-ink: #e6edf3;
@@ -173,8 +173,8 @@
   --ds-line: #e2e3e6;
   --ds-line-strong: #d5d8dd;
   --ds-ink: #1b1e23;
-  --ds-ink-2: #3a3f46;
-  --ds-ink-3: #7a7f87;
+  --ds-ink-2: #2f343a;
+  --ds-ink-3: #666b73;
   --ds-hover: rgba(0, 0, 0, .04);
   --ds-selected: rgba(0, 0, 0, .07);
   --ds-selected-ink: #111316;
