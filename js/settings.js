@@ -1,4 +1,5 @@
 import { initSettingsShortcuts, settingsShortcutRows } from './settings-shortcuts.js?v=1.7.0-four-session-integration';
+import { COLOR_MODES, COLOR_MODE_LABELS, getColorMode, setColorMode, syncThemeButton } from './color-mode.js?v=1.7.0-graphite';
 import { previewStorage as localStorage } from './preview-storage.js?v=1.7.0-four-session-integration';
 /* ===== SETTINGS (설정 dropdown + 기본값 설정 modal) ===== */
 //
@@ -301,10 +302,9 @@ function openPreferencesDialog({ focusShortcut = false } = {}) {
           ${SCREEN_PRESETS.map((preset) => `<button type="button" class="pref-scale-btn"
             data-screen-size="${preset.id}" aria-pressed="${preset.id === currentScreen}">${preset.label}</button>`).join("")}
         </div>
-        <p class="pref-note">화면 색 — 다크 테마에서 쓰는 바탕 색입니다.</p>
+        <p class="pref-note">화면 색 — 위쪽 막대의 테마 버튼을 누를 때마다 이 순서로 바뀝니다.</p>
         <div class="pref-scale-group" role="group" aria-label="화면 색">
-          <button type="button" class="pref-scale-btn" data-palette-choice="graphite" aria-pressed="false">그라파이트</button>
-          <button type="button" class="pref-scale-btn" data-palette-choice="classic" aria-pressed="false">클래식(남색)</button>
+          ${COLOR_MODES.map((mode) => `<button type="button" class="pref-scale-btn" data-color-mode-choice="${mode}" aria-pressed="false">${COLOR_MODE_LABELS[mode]}</button>`).join("")}
         </div>
         <div class="pref-row">
           <label class="modal-label" for="pref-shortcut-platform">단축키 기준</label>
@@ -364,19 +364,17 @@ function openPreferencesDialog({ focusShortcut = false } = {}) {
   document.body.appendChild(overlay);
   containSettingsFocus(overlay);
 
-  // 화면 색(팔레트): <html data-palette> + localStorage "5e.palette". 그림·저장 데이터와 무관.
-  const paletteButtons = [...overlay.querySelectorAll("[data-palette-choice]")];
-  const syncPaletteButtons = () => {
-    const current = document.documentElement.getAttribute("data-palette") === "classic" ? "classic" : "graphite";
-    paletteButtons.forEach((btn) => btn.setAttribute("aria-pressed", String(btn.dataset.paletteChoice === current)));
+  // 화면 색: 그라파이트 · 다크네이비 · 화이트(color-mode.js). 그림·저장 데이터와 무관.
+  const colorButtons = [...overlay.querySelectorAll("[data-color-mode-choice]")];
+  const syncColorButtons = () => {
+    const current = getColorMode();
+    colorButtons.forEach((btn) => btn.setAttribute("aria-pressed", String(btn.dataset.colorModeChoice === current)));
   };
-  paletteButtons.forEach((btn) => btn.addEventListener("click", () => {
-    const palette = btn.dataset.paletteChoice === "classic" ? "classic" : "graphite";
-    document.documentElement.setAttribute("data-palette", palette);
-    try { window.localStorage.setItem("5e.palette", palette); } catch {}
-    syncPaletteButtons();
-  }));
-  syncPaletteButtons();
+  colorButtons.forEach((btn) => btn.addEventListener("click", () => setColorMode(btn.dataset.colorModeChoice)));
+  window.addEventListener("5e:color-mode-change", syncColorButtons);
+  new MutationObserver(() => { if (!overlay.isConnected) window.removeEventListener("5e:color-mode-change", syncColorButtons); })
+    .observe(document.body, { childList: true });
+  syncColorButtons();
 
   const gridVisible = overlay.querySelector("#pref-grid-visible");
   const gridOpacity = overlay.querySelector("#pref-grid-opacity");
@@ -644,15 +642,8 @@ async function applyImportedSettings(data) {
 
 // theme를 리로드 없이 즉시 반영(main.js initTheme의 동작을 그대로 재현).
 function applyThemeLive(theme) {
-  const root = document.documentElement;
-  root.setAttribute("data-theme", theme);
-  const btn = document.getElementById("theme-toggle");
-  if (btn) {
-    const dark = theme === "dark";
-    btn.setAttribute("aria-pressed", String(!dark));
-    btn.setAttribute("aria-label", dark ? "라이트 모드 켜기" : "다크 모드 켜기");
-    btn.title = dark ? "라이트 모드 켜기" : "다크 모드 켜기";
-  }
+  document.documentElement.setAttribute("data-theme", theme);
+  syncThemeButton();
 }
 
 // 설정 불러오기: 파일 파싱 → 검증 → 반영. 실패 시 한국어로 알리고 아무것도 바꾸지 않는다.

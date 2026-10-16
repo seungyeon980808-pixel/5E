@@ -2,6 +2,7 @@ import './ai-label-background.js?v=1.7.0-four-session-integration';
 import { initVisitorStats } from './visitor-stats.js?v=1.7.0-four-session-integration';
 import { initBugReporter } from './bug-report.js?v=1.7.0-four-session-integration';
 import { initLiteShell } from "./lite-shell.js?v=1.7.0-four-session-integration";
+import { getColorMode, nextColorMode, setColorMode, syncThemeButton } from './color-mode.js?v=1.7.0-graphite';
 import { initButtonDesign } from './button-design.js?v=20261013-buttons';
 import { previewStorage as localStorage } from './preview-storage.js?v=1.7.0-four-session-integration';
 import { initWebLoginUi } from './web-login-ui.js?v=1.7.0-four-session-integration';
@@ -204,22 +205,13 @@ const zoomReadout = document.getElementById("zoom-readout");
   root.setAttribute("data-theme", saved === "light" || saved === "dark" ? saved : "dark");
 
   const btn = document.getElementById("theme-toggle");
-  function syncIcon() {
-    if (!btn) return;
-    const dark = root.getAttribute("data-theme") === "dark";
-    btn.setAttribute("aria-pressed", String(!dark));
-    btn.setAttribute("aria-label", dark ? "라이트 모드 켜기" : "다크 모드 켜기");
-    btn.title = dark ? "라이트 모드 켜기" : "다크 모드 켜기";
-  }
-  syncIcon();
+  // 누를 때마다 그라파이트 → 다크네이비 → 화이트 순서로 바뀐다(color-mode.js).
+  syncThemeButton(root);
 
   if (btn) {
     btn.addEventListener("click", () => {
       if (root.dataset.mode === "lite") return;
-      const next = root.getAttribute("data-theme") === "dark" ? "light" : "dark";
-      root.setAttribute("data-theme", next);
-      localStorage.setItem("theme", next);
-      syncIcon();
+      setColorMode(nextColorMode(getColorMode(root)), root);
     });
   }
 })();
