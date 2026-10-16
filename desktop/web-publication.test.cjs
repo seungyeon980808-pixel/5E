@@ -68,6 +68,8 @@ test('production staging uses committed blobs and excludes ignored files while p
   write('hub/style.css', 'body { color: navy; }');
   write('hub/assets/editor.svg', '<svg></svg>');
   write('docfinder/index.html', '<title>DocFinder entry</title>');
+  for (const file of require('../bug/assets.json')) write(file, '/* bug board: ' + file + ' */');
+  write('bug/api.mjs', 'server code must never be published');
   write('hub/PRODUCT.md', 'source-only product context');
   write('.gitignore', 'assets/private.txt\nmemo/node_modules/\n');
   write('preview/index.html', '<title>5E 1.7.0</title>');
@@ -98,6 +100,8 @@ test('production staging uses committed blobs and excludes ignored files while p
   assert.equal(fs.readFileSync(path.join(site, 'hub/style.css'), 'utf8'), 'body { color: navy; }');
   assert.equal(fs.readFileSync(path.join(site, 'hub/assets/editor.svg'), 'utf8'), '<svg></svg>');
   assert.equal(fs.readFileSync(path.join(site, 'docfinder/index.html'), 'utf8'), '<title>DocFinder entry</title>');
+  for (const file of require('../bug/assets.json')) assert.equal(fs.readFileSync(path.join(site, file), 'utf8'), '/* bug board: ' + file + ' */');
+  assert.equal(fs.existsSync(path.join(site, 'bug/api.mjs')), false);
   assert.equal(fs.existsSync(path.join(site, 'hub/PRODUCT.md')), false);
   assert.equal(fs.readFileSync(path.join(site, 'preview/index.html'), 'utf8'), '<title>5E 1.7.0</title>');
   assert.equal(fs.readFileSync(path.join(site, 'mobile/index.html'), 'utf8'), '<title>5E mobile</title>');
