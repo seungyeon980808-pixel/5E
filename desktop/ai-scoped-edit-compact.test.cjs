@@ -17,7 +17,7 @@ test("compact requests bind unchanged user comments and corrections to selected 
   const spec = JSON.parse(prompt.split("<5e-scoped-edit-spec>\n")[1].split("\n</5e-scoped-edit-spec>")[0]);
   assert.deepEqual(spec.canvas_pixels, [1000, 1000]);
   assert.deepEqual(spec.edits, [
-    { box: 7, allowed_pixels: rectangles[0], instruction: comments[0].text },
+    { box: 1, allowed_pixels: rectangles[0], instruction: comments[0].text },
     { box: 2, allowed_pixels: rectangles[1], instruction: comments[1].text },
   ]);
   assert.equal(spec.previous_error, "Previous centers were 27 pixels left.");

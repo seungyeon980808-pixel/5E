@@ -9,7 +9,7 @@ export function collectScopedAreaComments(comments, candidateId) {
         || box[0] + box[2] > 100 || box[1] + box[3] > 100) throw new Error('이미지 안에 유효한 수정 박스를 지정하세요.');
     if(comment.polygon && (!Array.isArray(comment.polygon) || comment.polygon.length<3 || comment.polygon.length>4096 || comment.polygon.some(p=>!Number.isFinite(p.x)||!Number.isFinite(p.y)||p.x<box[0]||p.y<box[1]||p.x>box[0]+box[2]+.001||p.y>box[1]+box[3]+.001))) throw new Error('자유 영역의 경계가 유효하지 않습니다. 다시 그려주세요.');
     const text = String(comment.text || '').trim();
-    if (!text) throw new Error(`박스 ${comment.number ?? index + 1}의 수정 내용을 입력하세요.`);
+    if (!text) throw new Error(`박스 ${index + 1}의 수정 내용을 입력하세요.`);
     return { ...comment, text };
   });
 }
@@ -17,8 +17,9 @@ export function collectScopedAreaComments(comments, candidateId) {
 export function buildScopedEditPrompt({ session, comments, candidateId }) {
   const areas = collectScopedAreaComments(comments, candidateId);
   if (areas.length !== session.rectangles.length) throw new Error('수정 박스와 코멘트의 연결이 일치하지 않습니다.');
+  const areaNumbers = (comments || []).flatMap((comment, index) => comment.type === 'area' ? [index + 1] : []);
   const instructions = areas.map((comment, index) => ({
-    box: comment.number ?? index + 1,
+    box: areaNumbers[index],
     allowed_pixels: session.rectangles[index],
     instruction: comment.text,
   }));

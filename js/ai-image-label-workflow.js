@@ -12,7 +12,7 @@ export function normalizeImageLabelWorkflow(value, { requireExplicit = false } =
   if (requireExplicit && !explicit) throw new TypeError('이미지 종류와 라벨 처리 선택을 확인해야 합니다. 이전 작업의 처리 정책을 자동으로 추측하지 않습니다.');
   return Object.freeze({ version: IMAGE_LABEL_WORKFLOW_VERSION, imageKind, labelResult,
     verificationMode: v.verificationMode === 'draft-first' ? 'draft-first' : 'full',
-    auxiliaryMarks: ['keep', 'remove'].includes(v.auxiliaryMarks) ? v.auxiliaryMarks : imageKind === 'exam' ? 'keep' : 'remove',
+    auxiliaryMarks: ['keep', 'remove'].includes(v.auxiliaryMarks) ? v.auxiliaryMarks : 'keep',
     scientificArrows: ['keep', 'remove'].includes(v.scientificArrows) ? v.scientificArrows : 'keep', explicit });
 }
 export function buildImageLabelWorkflowContract(value) {

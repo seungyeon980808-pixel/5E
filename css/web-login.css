@@ -73,3 +73,9 @@
 .web-login-dialog h2,.web-login-dialog p { word-break:keep-all; overflow-wrap:break-word; }
 
 :root[data-theme="light"] .web-login-actions [data-login-logo] { filter:brightness(.2); }
+
+/* A copy guide must never be squeezed to make room for the external provider. */
+.web-login-dialog { width:min(480px,calc(100vw - 32px)); }
+.web-login-dialog [data-login-code] strong { white-space:nowrap; margin:0; }
+.web-login-dialog .web-login-code-row { flex-wrap:nowrap; }
+@media (max-width:420px) { .web-login-dialog .web-login-code-row { flex-wrap:wrap; } }

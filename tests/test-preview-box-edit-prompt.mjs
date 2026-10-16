@@ -14,7 +14,7 @@ for (const directory of ['js']) {
     const rectangles = [{x0:10,y0:10,x1:40,y1:50},{x0:60,y0:10,x1:90,y1:50}];
     const prompt = buildScopedEditPrompt({session:{width:100,height:100,rectangles},comments,candidateId:'v1'});
     const paired = JSON.parse(prompt.split('Each instruction belongs only to its paired box:\n')[1].split('\nDo not restyle')[0]);
-    assert.deepEqual(paired, comments.map((c,i)=>({box:c.number,allowed_pixels:rectangles[i],instruction:c.text.trim()})));
+    assert.deepEqual(paired, comments.map((c,i)=>({box:i+1,allowed_pixels:rectangles[i],instruction:c.text.trim()})));
     assert.match(prompt,/INCLUDING unrequested content inside the boxes/);
     assert.match(prompt,/Outside the union.*change zero pixels/);
     assert.match(prompt,/EDIT_SCOPE_TOO_SMALL/);

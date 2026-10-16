@@ -4,6 +4,7 @@ import { collectScopedAreaComments } from './ai-scoped-edit-prompt.js?v=1.7.0-fo
 export function buildCompactScopedEditPrompt({ session, comments, candidateId, context = null, correction = '' }) {
   const areas = collectScopedAreaComments(comments, candidateId);
   if (areas.length !== session.rectangles.length) throw new Error('수정 박스와 코멘트의 연결이 일치하지 않습니다.');
+  const areaNumbers = (comments || []).flatMap((comment, index) => comment.type === 'area' ? [index + 1] : []);
   const specification = {
     canvas_pixels: context ? [context.width, context.height] : [session.width, session.height],
     coordinate_system: 'attached-image-pixels; top-left inclusive, bottom-right exclusive',
@@ -13,7 +14,7 @@ export function buildCompactScopedEditPrompt({ session, comments, candidateId, c
       instruction_positions: 'Positions in comments refer to the selected image. Subtract the attached origin for attached coordinates. All lengths and offsets stay 1:1 pixels.',
     } : {}),
     edits: areas.map((comment, index) => ({
-      box: comment.number ?? index + 1,
+      box: areaNumbers[index],
       allowed_pixels: context ? context.rectangles[index] : session.rectangles[index],
       instruction: comment.text,
     })),
@@ -37,13 +38,14 @@ export function buildVerifiedScopedEditPrompt({session,comments,candidateId,cont
       || checks.some((check,index)=>check.box!==index)) {
     throw new Error('모든 수정 박스에 연결된 수치 검증 기준이 필요합니다.');
   }
+  const areaNumbers=(comments || []).flatMap((comment,index)=>comment.type==='area'?[index+1]:[]);
   const origin=context?.origin || {x:0,y:0};
   const attachedRect=r=>({x0:r.x0-origin.x,y0:r.y0-origin.y,x1:r.x1-origin.x,y1:r.y1-origin.y});
   const specification={
     canvas_pixels:context?[context.width,context.height]:[session.width,session.height],
     coordinate_system:'attached-image-pixels; top-left inclusive, bottom-right exclusive',
     edits:checks.map((check,index)=>({
-      box:areas[index].number ?? index+1,
+      box:areaNumbers[index],
       allowed_pixels:attachedRect(session.rectangles[index]),
       original_user_instruction:areas[index].text,
       required_edit:{

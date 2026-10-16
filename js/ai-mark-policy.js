@@ -5,7 +5,7 @@ export function normalizeMarkPolicy(value = {}) {
   return {
     arrows: ['structural','keep','remove'].includes(v.arrows) ? v.arrows : 'keep',
     trendLines: ['keep','remove'].includes(v.trendLines) ? v.trendLines : 'keep',
-    leaders: ['keep','remove'].includes(v.leaders) ? v.leaders : 'remove',
+    leaders: ['keep','remove'].includes(v.leaders) ? v.leaders : 'keep',
   };
 }
 export function buildMarkPolicyContract(value) {

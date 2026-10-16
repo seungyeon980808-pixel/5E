@@ -78,11 +78,13 @@
     const availableWidth = screen.availWidth || screen.width || 1280;
     const availableHeight = screen.availHeight || screen.height || 800;
     const viewport = Math.min(window.innerWidth || availableWidth, availableWidth);
-    const paired = viewport >= 840;
-    const width = paired ? Math.min(480, Math.floor((viewport - 48) * .56)) : Math.min(480, availableWidth);
-    const codeWidth = Math.min(420, viewport - width - 48);
+    // The provider input window and local copy guide have independent sizes.
+    // Pair only when both can retain readable widths without shrinking the guide.
+    const width = Math.max(1, Math.min(720, availableWidth - 32));
+    const codeWidth = Math.max(1, Math.min(480, viewport - 32));
+    const paired = viewport >= width + codeWidth + 48;
     const codeLeft = Math.max(16, Math.round((viewport - codeWidth - width - 16) / 2));
-    const height = Math.max(1, Math.min(640, availableHeight - 32));
+    const height = Math.max(1, Math.min(1080, availableHeight - 32));
     const screenLeft = screen.availLeft || 0, screenTop = screen.availTop || 0;
     const left = paired ? Math.min(screenLeft + availableWidth - width, Math.max(screenLeft, (window.screenX || 0) + codeLeft + codeWidth + 16))
       : screenLeft + Math.round((availableWidth - width) / 2);

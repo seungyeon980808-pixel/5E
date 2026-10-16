@@ -375,10 +375,10 @@ if (aiLoginHandoff) {
   });
 }
 if (aiEntryButton) {
-  aiEntryButton.title = "AI 이미지 변환 · 선택한 객체 조합, 선택이 없으면 전체 그림";
-  aiEntryButton.setAttribute("aria-label", "AI 이미지 변환");
+  aiEntryButton.title = "AI 이미지/그래프 · 선택한 객체 조합, 선택이 없으면 전체 그림";
+  aiEntryButton.setAttribute("aria-label", "AI 이미지/그래프");
   const label = aiEntryButton.querySelector(".search-trigger-label");
-  if (label) label.textContent = "AI 이미지 변환";
+  if (label) label.textContent = "AI 이미지/그래프";
   aiEntryButton.addEventListener("click", openSelectedAi);
 }
 const desktopHandoff = initAiInstallGuide({

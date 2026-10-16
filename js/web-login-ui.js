@@ -103,7 +103,7 @@ export function initWebLoginUi({ openAi }) {
     badge.setAttribute('aria-label', badge.title);
     if (aiButton) {
       aiButton.dataset.loginState = next;
-      aiButton.title = connected ? 'AI 이미지 변환 · 사용 가능' : 'AI 이미지 변환 · ChatGPT 연결 필요';
+      aiButton.title = connected ? 'AI 이미지/그래프 · 사용 가능' : 'AI 이미지/그래프 · ChatGPT 연결 필요';
       aiButton.setAttribute('aria-label', aiButton.title);
     }
     if (text) message.textContent = text;

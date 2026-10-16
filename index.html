@@ -403,9 +403,9 @@
             <svg class="search-trigger-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="14" height="14" rx="2"/><line x1="6.5" y1="7" x2="13.5" y2="7"/><line x1="6.5" y1="10" x2="13.5" y2="10"/><line x1="6.5" y1="13" x2="10.5" y2="13"/></svg>
             <span class="search-trigger-label">라이브러리</span>
           </button>
-          <button class="object-search-trigger image-workflow-ai" type="button" id="ai-image-install-open" title="AI 이미지 변환" aria-label="AI 이미지 변환">
+          <button class="object-search-trigger image-workflow-ai" type="button" id="ai-image-install-open" title="AI 이미지/그래프" aria-label="AI 이미지/그래프">
             <svg class="search-trigger-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" aria-hidden="true"><path d="m10 2 1.4 4.2L16 8l-4.6 1.8L10 14l-1.4-4.2L4 8l4.6-1.8z"/><path d="m16 13 .7 2.1L19 16l-2.3.9L16 19l-.7-2.1L13 16l2.3-.9z"/></svg>
-            <span class="search-trigger-label">AI 이미지 변환</span>
+            <span class="search-trigger-label">AI 이미지/그래프</span>
           </button>
         </div>
       </div>
@@ -484,20 +484,20 @@
       </div>
 
       <div class="ai-workspace">
-        <aside class="ai-task-rail" aria-label="작업 목록">
+        <aside class="ai-task-rail" aria-label="이미지 작업대">
           <div class="ai-rail-heading">
-            <strong>작업</strong>
+            <strong>이미지 작업대</strong>
             <div class="ai-rail-actions" role="group" aria-label="작업 목록 관리">
               <button type="button" data-ai-tab-select-all aria-pressed="false" title="작업 목록의 모든 작업을 선택합니다">전체 선택</button>
-              <button type="button" data-ai-tab-clear title="작업 목록의 모든 작업을 삭제합니다. 원본 파일은 삭제하지 않습니다">전체 삭제</button>
+              <button type="button" data-ai-tab-clear disabled title="선택한 작업만 삭제합니다. 원본 파일은 삭제하지 않습니다">선택 삭제</button>
             </div>
           </div>
-          <nav class="ai-task-tabs" data-ai-tabs aria-label="AI 이미지 작업 탭">
+          <nav class="ai-task-tabs" data-ai-tabs aria-label="이미지 작업대">
             <div class="ai-task-tab-list" data-ai-tab-list></div>
           </nav>
         </aside>
 
-        <section class="ai-results mode-result" aria-label="원본과 생성 결과 비교">
+        <section class="ai-results mode-side-by-side" aria-label="원본과 생성 결과 비교">
           <header class="ai-compare-heading">
             <div class="ai-compare-controls" role="group" aria-label="보기 모드">
               <button type="button" data-ai-layout-mode="source" aria-pressed="false" title="Space로 수정본과 빠르게 비교">원본</button>
@@ -531,8 +531,6 @@
             <section class="ai-image-pane ai-original-pane" aria-label="원본 이미지">
               <header class="ai-pane-head"><div class="ai-pane-head-controls"><div class="ai-pane-metadata">
                 <strong>원본</strong>
-                <button type="button" class="ai-replace-source" data-ai-reuse-source title="원본으로 새 작업을 준비합니다. 기존 결과는 작업 목록에 보관됩니다.">원본으로 다시 작업</button>
-                <button type="button" class="ai-manual-split" data-ai-manual-split disabled title="원본을 보존하며 사각형·자유 그리기 영역을 새 이미지 작업으로 분할합니다">이미지 분할</button>
                 <label data-ai-source-picker hidden><select data-ai-source-select aria-label="살펴볼 원본 선택"></select></label>
                 <div class="ai-composition-toolbar" data-ai-composition-controls hidden>
                   <label>배치 <select data-ai-composition-select aria-label="원본 배치">
@@ -609,11 +607,6 @@
                 <button type="button" data-ai-model-choice="luna" aria-pressed="false">Luna 6</button>
               </div>
               <button type="button" class="ai-setting-help" aria-label="변환 모델 도움말" aria-expanded="false" data-ai-help-title="변환 모델" data-ai-setting-help="그림 변환에 사용할 모델입니다. 라벨 복원은 선택한 모델과 관계없이 Luna 6 · 보통으로 진행합니다.">?</button>
-            </div>
-            <div class="ai-setting-row ai-fixed-setting">
-              <span>속도</span>
-              <span class="ai-fixed-setting-value" data-ai-fixed-speed>빠르게 · 고정</span>
-              <button type="button" class="ai-setting-help" aria-label="속도 도움말" aria-expanded="false" data-ai-help-title="속도" data-ai-setting-help="그림 변환과 라벨 처리에 빠른 응답 설정을 사용합니다. 속도는 별도로 선택하지 않습니다. 모델이 빠른 응답을 지원하지 않으면 요청을 보내기 전에 안내합니다.">?</button>
             </div>
             <div class="ai-setting-row">
               <span>라벨 복원</span>
@@ -787,8 +780,8 @@
                         </label>
                         <label for="ai-mark-leaders">보조선·지시선
                           <select id="ai-mark-leaders" data-ai-mark-leaders>
-                            <option value="remove" selected>제거</option>
-                            <option value="keep">유지</option>
+                            <option value="keep" selected>유지</option>
+                            <option value="remove">제거</option>
                           </select>
                         </label>
                       </div>

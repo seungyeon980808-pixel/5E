@@ -4,7 +4,7 @@ const api=import('../js/ai-image-label-workflow.js');
 for(const imageKind of ['exam','general']) for(const labelResult of ['remove','restore-editable']) test(`explicit ${imageKind}/${labelResult} keeps independent choices`,async()=>{
  const {normalizeImageLabelWorkflow:n,buildImageLabelWorkflowContract:c}=await api;
  const p=n({imageKind,labelResult},{requireExplicit:true});
- assert.equal(p.imageKind,imageKind);assert.equal(p.labelResult,labelResult);assert.equal(p.auxiliaryMarks,imageKind==='exam'?'keep':'remove');assert.equal(p.scientificArrows,'keep');
+ assert.equal(p.imageKind,imageKind);assert.equal(p.labelResult,labelResult);assert.equal(p.auxiliaryMarks,'keep');assert.equal(p.scientificArrows,'keep');
  assert.match(c(p),/라벨 소속 제거를 뒤집지 않는다/);
  assert.match(c(p),imageKind==='exam'?/전체 이미지 생성·스타일 변환 금지/:/최초 스타일 변환 1회/);
 });

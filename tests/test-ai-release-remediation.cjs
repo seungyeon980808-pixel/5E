@@ -521,6 +521,7 @@ test('raster preflight retains the actual explicit-workflow guard and captured r
   const { normalizeImageLabelWorkflow } = await productModule('ai-image-label-workflow');
   const { context: invalid } = await submitContext(Promise.resolve({ login: { loggedIn: true } }));
   const errors = [], invalidRuns = [];
+  invalid.taskTabs = new Map();
   invalid.selectedOutputEngine = invalid.AI_OUTPUT_ENGINES.RASTER;
   invalid.setStatus = (message, type) => errors.push({ message, type });
   invalid.runImageLabelConversion = async detail => invalidRuns.push(detail);
@@ -682,7 +683,7 @@ async function managedExportFixture({active='owner',held=false}={}) {
     resolveImageOutput:output.resolveImageOutput,transparentizeGeneratedImage:()=>{entered.resolve();return held?gate.promise:'data:image/png;base64,AQID';}};
   c.taskViews.set(tab.id,{attachments:[],generatedImages:[current],sourceSnapshot:tab.attachments,outputSnapshot:tab.generated});
   const owners=sourcePart('  const batchOwner = id =>','  function captureBatchTask(id) {');
-  const code=sourcePart('  const exportResults = async (mode,kind = null) => {','  collectiveExportButton.addEventListener(');
+  const code=sourcePart('  const exportResults = async (mode,kind = null) => {',"  panel.querySelector('[data-ai-insert-selected]')");
   vm.runInNewContext(owners+'\n'+code+'\nglobalThis.exportResults=exportResults;',c);
   return{c,tab,current,gate,entered,api};
 }
@@ -1128,148 +1129,9 @@ caseTest('same-owner idle rejection remains a visible save error and unlocks', a
 });
 
 
-// Complete production listener; no copied canReportExport implementation.
-const collectiveSource = oneSlice(source, "  collectiveExportButton.addEventListener('click', async () => {",
-  "  panel.querySelector('[data-ai-insert-selected]')", 'actual complete collective export listener');
-function actualOwnerLine(prefix) {
-  const lines = source.split('\n').filter(line => line.startsWith(prefix));
-  assert.equal(lines.length, 1, 'One actual owner helper: ' + prefix);
-  return lines[0];
-}
-const ownerSource = actualOwnerLine('  const batchOwner =') + '\n' + actualOwnerLine('  const sameBatchOwner =');
-fs.writeFileSync(path.join(evidence, 'collective-source-receipt.json'), JSON.stringify({
-  sourcePath, sourceSHA256: sha(source), collectiveHandlerSHA256: sha(collectiveSource),
-  setStatusSHA256: sha(statusSource), ownerHelpersSHA256: sha(ownerSource),
-  extraction: 'Complete actual listener, setStatus and batchOwner/sameBatchOwner source, unmodified in VM.',
-  seams: ['exportCollection held promise', 'status and DOM mutation observations', 'setTaskState and batchRun rejection record newer-job mutations'],
-  limits: 'No real export writer, browser, filesystem save, PNG bytes or pixels are exercised.',
-}, null, 2) + '\n');
-
-function collectiveFixture() {
-  const gate = deferred(), statusCalls = [], domWrites = [], exportCalls = [];
-  const newJob = { phase: 'generating', failures: [], rejected: [] };
-  let callback, text = 'initial', title = 'initial';
-  const status = { dataset: { kind: 'ok' },
-    setAttribute() {},
-    get textContent() { return text; }, set textContent(value) { text = value; statusCalls.push(value); },
-    get title() { return title; }, set title(value) { title = value; },
-  };
-  function control(name) {
-    let disabled = false;
-    return { value: 'selected',
-      get disabled() { return disabled; },
-      set disabled(value) { disabled = value; domWrites.push({ name, disabled: value }); },
-      addEventListener(type, fn) { assert.equal(type, 'click'); assert.equal(callback, undefined); callback = fn; },
-    };
-  }
-  const collectiveExportButton = control('button'), collectiveExportMode = control('mode');
-  const owner = { taskId: 'task-A', scope: { sessionId: 'session-A', workspaceId: 'workspace-A' } };
-  const item = { id: 'candidate-A', kind: 'generated', data: RAW, scopedEditHistory: [] };
-  const tab = { id: owner.taskId, batchOwner: owner, generated: [item] };
-  const sandbox = {
-    busy: false, preflightRun: null, disposed: false, exportInProgress: false, insertingOutput: false,
-    activeTaskTabId: 'task-A', localVisibilityEpoch: 7, currentRequestEpoch: 20, clientScope: 'workspace-A',
-    taskTabs: new Map([[tab.id, tab]]), generatedImages: [item], structuredClone,
-    collectiveExportButton, collectiveExportMode, status, batchRun: null,
-    exportCollection(mode) { exportCalls.push(mode); return gate.promise; },
-    errorLog: { record() {} }, safeAiErrorText: value => value,
-    setTaskState(value) { newJob.phase = value; newJob.failures.push(value); },
-  };
-  const context = vm.createContext(sandbox);
-  vm.runInContext(ownerSource + '\n' + statusSource + '\n' + collectiveSource,
-    context, { filename: sourcePath + '#complete-collective-export-handler' });
-  assert.equal(typeof callback, 'function');
-  const statusSnapshot = () => ({ text: status.textContent, title: status.title, kind: status.dataset.kind });
-  function begin() {
-    const pending = callback();
-    assert.equal(sandbox.exportInProgress, true);
-    assert.equal(collectiveExportButton.disabled, true); assert.equal(collectiveExportMode.disabled, true);
-    assert.deepEqual(exportCalls, ['selected']);
-    assert.equal(statusCalls.length, 1, 'Original initial preparing status is retained');
-    return pending;
-  }
-  function currentJobMarker() {
-    // External state change models the newer request's visible message.
-    status.textContent = 'new request visible'; status.title = 'new request visible'; status.dataset.kind = 'busy';
-    sandbox.batchRun = { reject: error => newJob.rejected.push(String(error)) };
-    statusCalls.length = 0;
-    return statusSnapshot();
-  }
-  const receipt = () => ({ statusCalls, status: statusSnapshot(), domWrites, exportCalls, newJob,
-    exportInProgress: sandbox.exportInProgress, disposed: sandbox.disposed, busy: sandbox.busy,
-    preflight: Boolean(sandbox.preflightRun), taskId: sandbox.activeTaskTabId,
-    visibilityEpoch: sandbox.localVisibilityEpoch, requestEpoch: sandbox.currentRequestEpoch,
-    owner: tab.batchOwner, buttonDisabled: collectiveExportButton.disabled, modeDisabled: collectiveExportMode.disabled,
-  });
-  return { sandbox, gate, tab, item, begin, currentJobMarker, statusSnapshot, statusCalls, domWrites,
-    newJob, collectiveExportButton, collectiveExportMode, receipt };
-}
-function collectiveCase(name, body) {
-  test(name, { concurrency: false }, async () => {
-    let f, outcome = 'failed', failure = null;
-    try { f = collectiveFixture(); await body(f); outcome = 'passed'; }
-    catch (error) { failure = String(error.stack || error); throw error; }
-    finally {
-      const slug = name.replace(/[^a-z0-9]+/gi, '-').toLowerCase();
-      fs.writeFileSync(path.join(evidence, slug + '.json'), JSON.stringify({ scenario: name, outcome, failure,
-        sourceSHA256: sha(source), collectiveHandlerSHA256: sha(collectiveSource), setStatusSHA256: sha(statusSource),
-        observed: f ? f.receipt() : null, scope: 'Actual source in VM; no writer/browser/pixel claim.' }, null, 2) + '\n');
-    }
-  });
-}
-const staleCollective = {
-  busy: f => { f.sandbox.busy = true; },
-  'request-epoch': f => { f.sandbox.currentRequestEpoch++; },
-  'cancelled-new-scope': f => {
-    // Completion occurs after a newer scope has both started and cancelled;
-    // busy alone has returned false and cannot protect the newer UI.
-    f.sandbox.currentRequestEpoch++; f.sandbox.busy = true;
-    f.item.scopedEditHistory.push({ status: 'cancelled' }); f.sandbox.busy = false; f.newJob.phase = 'cancelled';
-  },
-  task: f => { f.sandbox.activeTaskTabId = 'task-B'; },
-  visibility: f => { f.sandbox.localVisibilityEpoch++; },
-  disposal: f => { f.sandbox.disposed = true; },
-  preflight: f => { f.sandbox.preflightRun = { requestId: 'new-preflight' }; },
-  'batch-owner': f => { f.tab.batchOwner = { ...f.tab.batchOwner, scope: { ...f.tab.batchOwner.scope, sessionId: 'session-B' } }; },
-};
-for (const [reason, invalidate] of Object.entries(staleCollective)) {
-  for (const settlement of ['complete', 'reject']) {
-    collectiveCase(`collective ${settlement} after ${reason} cannot report into newer job`, async f => {
-      const pending = f.begin(); invalidate(f); const currentStatus = f.currentJobMarker();
-      const jobBeforeSettlement = structuredClone(f.newJob);
-      const writesBeforeSettlement = f.domWrites.length;
-      if (settlement === 'complete') f.gate.resolve({ status: 'stored', count: 1 });
-      else f.gate.reject(new Error('old export failure'));
-      await pending;
-      assert.deepEqual(f.statusCalls, [], 'No late generic setStatus invocation');
-      assert.deepEqual(f.statusSnapshot(), currentStatus, 'Newer visible status is unchanged');
-      assert.deepEqual(f.newJob, jobBeforeSettlement, 'No newer-job failure or batch rejection');
-      assert.equal(f.sandbox.exportInProgress, false, 'Operation lock always releases');
-      if (reason === 'disposal') assert.equal(f.domWrites.length, writesBeforeSettlement, 'Disposed DOM gets no finally updates');
-      if (reason === 'busy') assert.equal(f.collectiveExportButton.disabled, true, 'New active job retains export busy guard');
-    });
-  }
-}
-for (const expected of [
-  { status: 'stored', count: 2, kind: 'ok', message: /결과 2개를 선택한 폴더에 저장했습니다/ },
-  { status: 'download-requested', count: 2, kind: 'warn', message: /결과 2개의 ZIP 다운로드를 요청했습니다/ },
-  { status: 'cancelled', count: 0, kind: 'warn', message: /결과 저장을 취소했습니다/ },
-]) {
-  collectiveCase(`collective current same-owner ${expected.status} still reports`, async f => {
-    const pending = f.begin(); f.gate.resolve({ status: expected.status, count: expected.count }); await pending;
-    assert.equal(f.statusCalls.length, 2, 'Initial preparing status plus actual completion');
-    assert.match(f.statusCalls[1], expected.message); assert.equal(f.statusSnapshot().kind, expected.kind);
-    assert.equal(f.sandbox.exportInProgress, false); assert.equal(f.collectiveExportButton.disabled, false);
-    assert.equal(f.collectiveExportMode.disabled, false); assert.deepEqual(f.newJob.failures, []);
-    assert.equal(f.item.data, RAW); assert.deepEqual(f.item.scopedEditHistory, []);
-  });
-}
-collectiveCase('collective same-owner historical export failure remains visible', async f => {
-  const pending = f.begin(); f.gate.reject(new Error('historical transform failure')); await pending;
-  assert.equal(f.statusCalls.length, 2); assert.match(f.statusCalls[1], /여러 작업 저장 실패: historical transform failure/);
-  assert.equal(f.statusSnapshot().kind, 'error'); assert.equal(f.sandbox.exportInProgress, false);
-  assert.equal(f.collectiveExportButton.disabled, false); assert.equal(f.collectiveExportMode.disabled, false);
-  assert.deepEqual(f.newJob.failures, []); assert.equal(f.item.data, RAW); assert.deepEqual(f.item.scopedEditHistory, []);
+// The removed collection-export UI has no listener or controls to race.
+test('removed bulk export controls and their listener stay absent', () => {
+  assert.doesNotMatch(source, /collectiveExportButton|collectiveExportMode/);
 });
 
 }
@@ -1382,6 +1244,7 @@ function fixture() {
     taskTabs: new Map([['owner-task', { id: 'owner-task', workState: 'idle' }]]),
     restoreTaskTab: unsupported('task restore'), state: { get: () => ({ selectedIds: [], objects: [] }) },
     syncSelectedOutputActions: noop, motion,
+    loading: { reset: () => lifecycleEvents.push('loading-reset') },
     // Notification lifecycle is covered by the canonical browser and attention suites.
     acknowledgeVisibleResult: noop, syncResultEntry: noop,
     candidateUsesAutomaticSeparation: () => false, startAutomaticSeparation: unsupported('automatic separation'),

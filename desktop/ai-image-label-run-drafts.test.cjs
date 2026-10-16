@@ -107,7 +107,7 @@ for (const checkpoint of ['present','absent','stale']) test(`verify only changes
 
 test('verify only cannot change image kind, label outcome, auxiliary marks or scientific arrows', async () => {
   const f = await setup(), draft = await f.run(f.options);
-  for (const change of [{imageKind:'exam'},{labelResult:'remove'},{auxiliaryMarks:'keep'},{scientificArrows:'remove'}]) {
+  for (const change of [{imageKind:'exam'},{labelResult:'remove'},{auxiliaryMarks:'remove'},{scientificArrows:'remove'}]) {
     await assert.rejects(f.run({...f.options,workflow:{...f.options.workflow,verificationMode:'full',...change},
       verifyOnly:true,observation:f.observation,previousCandidate:draft}),/바인딩/);
   }

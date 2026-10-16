@@ -29,33 +29,19 @@ async function assertAdvancedHidden(page) {
   assert.equal(await page.locator(`${panel} .ai-advanced-settings > summary:visible`).count(),0,'obsolete advanced summary stays hidden');
   assert.equal(await page.locator(`${panel} :is([data-ai-model], [data-ai-effort], [data-ai-speed]):not([data-ai-connection-dialog] *):visible`).count(),0,'legacy model/effort/speed controls outside the connection dialog stay hidden');
 }
-async function openConnection(page) {
+async function refreshModelCatalog(page) {
   await assertAdvancedHidden(page);
-  const button=page.locator(`${panel} [data-ai-connection-open]`);
-  assert.equal(await button.getAttribute('aria-haspopup'),'dialog');
-  await button.click();
-  const dialog=page.locator(`${panel} [data-ai-connection-dialog]`);
-  await dialog.waitFor({state:'visible'});
-  assert.equal(await dialog.evaluate(el=>el.open),true);
-  await assertAdvancedHidden(page);
-  for(const kind of ['model','effort','speed']) {
-    const selector=`[data-ai-${kind}]`,control=dialog.locator(selector);
-    assert.equal(await page.locator(`${panel} ${selector}`).count(),1,`one actual ${kind} control, no legacy duplicate`);
-    assert.equal(await control.count(),1,`${kind} control belongs to the native connection dialog`);
-    // These are the existing controller's backing selects. The compact UI
-    // exposes model buttons; opening connection information must not revive
-    // duplicate model/effort/speed pickers (IMAGE_LABEL_WORKFLOW.md).
-    assert.equal(await control.evaluate(el=>el.closest('label')?.hidden),true,`${kind} backing label remains hidden`);
-    assert.equal(await control.isVisible(),false,`${kind} backing select remains hidden inside connection information`);
-  }
-  assert.equal(await dialog.locator('[data-ai-model-refresh]').isVisible(),true);
-  return dialog;
-}
-async function closeConnection(page,dialog) {
-  await dialog.locator('[data-ai-info-close]').click();
-  await page.waitForFunction(()=>!document.querySelector('#ai-image-panel [data-ai-connection-dialog]').open);
-  await assertAdvancedHidden(page);
-  assert.equal(await page.locator(panel).isVisible(),true);
+  // Reopening the actual workbench refreshes its connected provider catalog.
+  // The retired connection dialog is not a user entry point.
+  await page.evaluate(async () => {
+    const desktop = window.fiveEDesktop, original = desktop.models;
+    let received;
+    const refreshed = new Promise(resolve => { received = resolve; });
+    desktop.models = async (...args) => { const result = await original(...args); received(); return result; };
+    try { await window.__task2Manager.open(); await refreshed; }
+    finally { desktop.models = original; }
+  });
+  assert.equal(await page.locator(`${panel} [data-ai-connection-dialog]`).isVisible(), false);
 }
 async function assertModelChoices(page) {
   const model=page.locator(`${panel} [data-ai-model]`),value=await model.inputValue();
@@ -77,13 +63,13 @@ async function fresh(page) {
     ]});
     await window.__task2Manager.attachReference({src:window.__task2.original,name:'새 이미지'});
   });
-  const connection=await openConnection(page);
-  await connection.locator('[data-ai-model-refresh]').click();
+  await refreshModelCatalog(page);
+  const connection = page.locator(panel);
   await page.waitForFunction(() => document.querySelector('#ai-image-panel [data-ai-model]').value==='gpt-6.1-sol');
   assert.deepEqual(await connection.locator('[data-ai-model] option').evaluateAll(options=>options.map(option=>option.value)),['gpt-6.1-sol','gpt-6-luna'],'exact refreshed provider model IDs');
   assert.equal(await connection.locator('[data-ai-effort]').inputValue(),'medium');
   assert.equal(await connection.locator('[data-ai-speed]').inputValue(),'priority');
-  await closeConnection(page,connection);
+  await assertAdvancedHidden(page);
   await assertModelChoices(page);
 }
 async function active(page) { const rows=await snapshot(page);return rows.find(row=>row.attachments?.[0]?.name==='새 이미지'); }
@@ -166,8 +152,8 @@ test('binary AI controls: fresh defaults, equal buttons, actual persisted polici
   const evidence=dir('defaults');const {page,errors}=await fixture(t,1,evidence,{beforeNavigate:page=>page.addInitScript(observeSettingsDiskWrites)});await fresh(page);
   assert.equal(await page.locator(`${panel} [data-ai-effort]:visible, ${panel} [data-ai-speed]:visible`).count(),0);
   assert.equal(await page.locator(`${panel} [data-ai-speed]`).inputValue(),'priority');
-  assert.equal(await page.locator(`${panel} [data-ai-fixed-speed]`).innerText(),'빠르게 · 고정');
-  const expected={model:'Sol 6.1',labels:'끄기',background:'끄기',objects:'끄기',arrows:'끄기',guides:'켜기'};
+  assert.equal(await page.locator(`${panel} [data-ai-fixed-speed], ${panel} [data-ai-help-title="속도"]`).count(),0,'fixed speed has no redundant visible UI');
+  const expected={model:'Sol 6.1',labels:'끄기',background:'끄기',objects:'끄기',arrows:'끄기',guides:'끄기'};
   assert.equal(await page.locator(`${panel} [data-ai-label-verification]`).inputValue(),'draft-first');
   assert.equal(await pair(page,'verification').getByRole('button',{name:'초안 먼저',exact:true}).isDisabled(),true);
   for(const [key,name] of Object.entries(expected)) {
@@ -207,7 +193,7 @@ test('actual modern controller: policy payloads and exact RAW review/export/nati
   await pair(page,'guides').getByRole('button',{name:'끄기',exact:true}).click();
   await pair(page,'background').getByRole('button',{name:'켜기',exact:true}).click();
   assert.equal((await active(page)).outputOptions.backgroundPolicy,'connected','live pre-generation background control reaches the actual task');
-  await page.locator(`${panel} [data-ai-send]`).click();
+  await page.locator(`${panel} [data-ai-comments-apply]`).click();
   await page.waitForFunction(()=>window.__task2.sends.length>0);
   assert.equal(await pair(page,'labels').getByRole('button',{name:'켜기',exact:true}).isDisabled(),true);
   await finish(page);
@@ -225,17 +211,13 @@ test('actual modern controller: policy payloads and exact RAW review/export/nati
   await page.waitForFunction(raw=>{const image=document.querySelector('#ai-image-panel .ai-generated-card .ai-preview-stage img');return image?.complete&&image.naturalWidth&&image.src===raw;},c.data);
   const reviewRaw=await page.locator(`${panel} .ai-generated-card .ai-preview-stage img`).getAttribute('src');
   assert.equal(reviewRaw,c.data,'review preview remains the exact verified RAW bytes');
-  // Transport-only filesystem boundary: click the real collection export UI,
+  // Transport-only filesystem boundary: click the current PNG save UI,
   // let its real RAW guard export the captured bound candidate unchanged.
-  await page.evaluate(()=>{
-    window.__settingsExports=[];
-    window.fiveEDesktop.batchOutput={pickFolder:async()=>({folder:'private-label-proof'}),save:async record=>{
-      window.__settingsExports.push(record);window.__labelSourceSignals.notify();return{path:record.sourceName+record.extension};
-    }};
-  });
-  await page.locator(`${panel} [data-ai-task-export]`).click();
-  await page.waitForFunction(()=>window.__settingsExports.length===1);
-  const exported=await page.evaluate(()=>window.__settingsExports[0]);
+  const downloadReady=page.waitForEvent('download');
+  await page.locator(`${panel} [data-ai-save-selected]`).click();
+  const download=await downloadReady;
+  assert.match(download.suggestedFilename(), /\.png$/);
+  const exported={extension:'.png', dataUrl:'data:image/png;base64,'+fs.readFileSync(await download.path()).toString('base64')};
   assert.equal(exported.extension,'.png');assert.equal(exported.dataUrl,c.data,'Modern export preserves the exact bound RAW bytes');
   const pixels=await page.evaluate(async src=>{
     const img=new Image();await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=()=>reject(new Error('Actual exported PNG did not decode'));img.src=src;});
@@ -288,15 +270,11 @@ test('historical PNG controller: background export pixels and complete original 
   assert.equal((await snapshot(page)).find(task=>task.id===row.id)?.outputOptions.backgroundPolicy,'connected');
   const reviewRaw=await page.locator(`${panel} .ai-generated-card .ai-preview-stage img`).getAttribute('src');
   const beforeCalls=(await sends(page)).length;assert.equal(beforeCalls,0);
-  await page.evaluate(()=>{
-    window.__settingsExports=[];
-    window.fiveEDesktop.batchOutput={pickFolder:async()=>({folder:'private-label-proof'}),save:async record=>{
-      window.__settingsExports.push(record);window.__labelSourceSignals.notify();return{path:record.sourceName+record.extension};
-    }};
-  });
-  await page.locator(`${panel} [data-ai-task-export]`).click();
-  await page.waitForFunction(()=>window.__settingsExports.length===1);
-  const exported=await page.evaluate(()=>window.__settingsExports[0]);
+  const downloadReady=page.waitForEvent('download');
+  await page.locator(`${panel} [data-ai-save-selected]`).click();
+  const download=await downloadReady;
+  assert.match(download.suggestedFilename(), /\.png$/);
+  const exported={extension:'.png', dataUrl:'data:image/png;base64,'+fs.readFileSync(await download.path()).toString('base64')};
   assert.equal(exported.extension,'.png');assert.notEqual(exported.dataUrl,c.data,'background export is a separate processed variant');
   const pixels=await page.evaluate(async src=>{
     const img=new Image();await new Promise((resolve,reject)=>{img.onload=resolve;img.onerror=()=>reject(new Error('Actual exported PNG did not decode'));img.src=src;});
@@ -315,7 +293,7 @@ test('label restoration button uses Sol image generation and Luna joint verifica
   const evidence=dir('editable-labels');const {page,errors}=await fixture(t,1,evidence);await fresh(page);
   await pair(page,'labels').getByRole('button',{name:'켜기',exact:true}).click();
   await pair(page,'verification').getByRole('button',{name:'자동 검수',exact:true}).click();
-  await page.locator(`${panel} [data-ai-send]`).click();await finish(page);
+  await page.locator(`${panel} [data-ai-comments-apply]`).click();await finish(page);
   const row=await active(page),c=row.generated.at(-1);
   assert.ok(c);assert.equal(c.imageLabelWorkflow.labelResult,'restore-editable');assert.equal(c.reviewState,'passed');assert.equal(c.labelPlan.labels[0].text,'전자');
   const models=await page.evaluate(()=>window.__task2.sends.map(s=>({purpose:s.payload.purpose,model:s.payload.model,effort:s.payload.effort,serviceTier:s.payload.serviceTier})));
@@ -337,8 +315,8 @@ test('task rail selects every workspace idempotently and confirms full deletion 
   assert.equal(await page.locator(`${panel} [data-ai-batch-selected=true]`).count(),4);assert.equal(await selectAll.getAttribute('aria-pressed'),'true');
   await selectAll.click();assert.equal(await page.locator(`${panel} [data-ai-selection-count]`).innerText(),'4개 선택');assert.equal(await page.locator(`${panel} .ai-task-tab.is-on`).getAttribute('data-tab-id'),active);
   await page.screenshot({path:path.join(evidence,'selected-all.png')});
-  const clear=page.getByRole('button',{name:'전체 삭제',exact:true});await clear.click();
-  const confirm=page.getByRole('dialog',{name:'전체 작업 삭제',exact:true});assert.match(await confirm.innerText(),/4개 작업/);
+  const clear=page.getByRole('button',{name:'선택 삭제',exact:true});await clear.click();
+  const confirm=page.getByRole('dialog',{name:'선택 작업 삭제',exact:true});assert.match(await confirm.innerText(),/4개 작업/);
   await confirm.getByRole('button',{name:'취소',exact:true}).click();assert.deepEqual((await snapshot(page)).map(row=>row.id),ids);
   await clear.click();await confirm.getByRole('button',{name:'4개 삭제',exact:true}).click();
   await page.waitForFunction(()=>!document.querySelector('#ai-image-panel .ai-task-tab[data-tab-id="task-0"]'));
@@ -349,10 +327,10 @@ test('task rail selects every workspace idempotently and confirms full deletion 
 test('Sol 6.1 is disabled only when its exact provider ID is absent, with Luna still selectable', {timeout:90000},async t => {
   const evidence=dir('model-catalog');const {page,errors}=await fixture(t,1,evidence);await fresh(page);
   await page.evaluate(()=>{window.fiveEDesktop.models=async()=>({data:[{model:'gpt-6-sol',displayName:'Sol 6',isDefault:true,defaultReasoningEffort:'medium',supportedReasoningEfforts:['medium'],serviceTiers:['priority']},{model:'gpt-6-luna',displayName:'Luna 6',defaultReasoningEffort:'medium',supportedReasoningEfforts:['medium'],serviceTiers:['priority']}]});});
-  const connection=await openConnection(page);await connection.locator('[data-ai-model-refresh]').click();
+  await refreshModelCatalog(page);
   const sol=pair(page,'model').getByRole('button',{name:'Sol 6.1',exact:true}),luna=pair(page,'model').getByRole('button',{name:'Luna 6',exact:true});
   await page.waitForFunction(()=>document.querySelector('#ai-image-panel [data-ai-model-choice=sol]').disabled);
-  assert.equal(await sol.isEnabled(),false);assert.equal(await luna.isEnabled(),true);await closeConnection(page,connection);await assertModelChoices(page);await luna.click();assert.equal(await luna.getAttribute('aria-pressed'),'true');await assertModelChoices(page);
+  assert.equal(await sol.isEnabled(),false);assert.equal(await luna.isEnabled(),true);await assertAdvancedHidden(page);await assertModelChoices(page);await luna.click();assert.equal(await luna.getAttribute('aria-pressed'),'true');await assertModelChoices(page);
   assert.equal(await page.locator(`${panel} [data-ai-model]`).inputValue(),'gpt-6-luna');assert.equal((await sends(page)).length,0);assert.deepEqual(errors,[]);
   fs.writeFileSync(path.join(evidence,'result.json'),JSON.stringify({paidAiCalls:0,sol61Enabled:false,lunaEnabled:true,errors},null,2));
 });

@@ -180,7 +180,7 @@ function capturedFirstSourceTurn(runInput, options = {}, { held = false } = {}) 
     availableModels: [], outputCache: null, labelBackgroundCache: null,
     taskTabs: new Map([['captured-owner', {}]]), state: { get: () => ({ artboard: { w: 512, h: 384 } }) },
     setBusy: value => ownershipStates.push(['busy', value]), requestPhase() {},
-    setTaskState: value => ownershipStates.push(['state', value]), setGenerating() {}, setStatus() {},
+    setTaskState: value => ownershipStates.push(['state', value]), setGenerating() {}, setStatus() {}, captureActiveTaskTab() {}, taskPersistence: { checkpoint: async () => {} },
     commentPrompt: refs => {
       assert.equal(refs[0], runInput.attachments[0], 'Comments remain bound to the captured original');
       return 'Captured original source comments';
@@ -289,4 +289,22 @@ test('held source preparation retains captured separation and rejects a retired 
     assert.equal(turn.liveReads(), 0);
     assert.equal(turn.context.imageLabelRunAbort, null);
   }
+});
+
+for (const received of [false, true]) test(`current image evidence distinguishes review failure from generation failure (${received})`, async () => {
+  const f = capturedFirstSourceTurn(capturedSourceInput());
+  const raw = {id:'current-image', data:'data:image/png;base64,current', card:{}, reviewState:'needs-attention'};
+  const statuses=[];
+  f.context.addPreview = async () => raw;
+  f.context.setStatus = (message, kind) => statuses.push({message,kind});
+  // Even when an old result exists, only this invocation's onRaster permits completion.
+  f.context.taskTabs.get('captured-owner').generated = [{id:'older-image',data:raw.data}];
+  f.context.executeImageLabelRun = async args => {
+    if(received) await args.onRaster({data:raw.data, workflow:{explicit:true}});
+    throw new Error(received ? 'review transport unavailable' : 'generation unavailable');
+  };
+  await assert.rejects(f.run(''), /unavailable/);
+  assert.equal(f.context.currentTerminalOutcome, received ? 'completed' : 'failed');
+  assert.equal(f.context.taskTabs.get('captured-owner').generationNotice,received?'review':undefined);
+  assert.equal(statuses.at(-1).kind,received?'warn':'error');
 });

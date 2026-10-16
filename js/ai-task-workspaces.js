@@ -40,6 +40,17 @@ export async function clearTaskWorkspaces({ tasks, confirm, cancel, remove }) {
   return { confirmed: true, removedIds, retainedIds };
 }
 
+/** A review notice requires image evidence from the current attempt, never old history alone. */
+export function taskHasReviewNotice(tab) {
+  if (!tab || ['busy', 'interrupted'].includes(tab.workState)) return false;
+  if (tab.generationNotice === 'review') return true;
+  const previous = tab.retryRequest?.snapshot?.runInput?.generated;
+  const latest = tab.generated?.at(-1);
+  return tab.workState === 'failed' && Array.isArray(previous)
+    && Boolean(latest?.data && latest.imageLabelWorkflow && latest.reviewState === 'needs-attention')
+    && !previous.some(item => item.id === latest.id);
+}
+
 export function recoverTaskWorkspaceSnapshot(value) {
   if (!value || !Array.isArray(value.tabs)) return null;
   validateWorkspaceCandidates(value);
@@ -247,6 +258,8 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
     if(!count){count=document.createElement('output');count.dataset.aiSelectionCount='';active.panel.querySelector('[data-ai-tabs]').prepend(count);}
     count.textContent = `${selectedTasks.values().length}개 선택`;
     active.controller?.refreshTaskSelection?.();
+    const deleteSelected = active.panel.querySelector('[data-ai-tab-clear]');
+    if (deleteSelected) deleteSelected.disabled = !restored || clearing || !selectedTasks.values().length || active.panel.dataset.aiSharingMode === 'view';
     const total = workflowRows().length;
     const selectAll = active.panel.querySelector('[data-ai-tab-select-all]');
     if (selectAll) {
@@ -326,21 +339,30 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
     try {
       await Promise.all(entries.map(entry => entry.controller.ready));
       const kind=workflowKind();
-      const rows = workflowRows(kind);
+      const chosenOwners = selectionFor(kind).values();
+      const chosen = new Set(chosenOwners.map(ownerKey));
+      const rows = workflowRows(kind).filter(({entry,row}) => chosen.has(ownerKey(ownerFor(entry,row.dataset.tabId))));
       const targets = [...new Set(rows.map(({entry})=>entry))];
       const count = rows.length;
       if (!count || !await confirm(count)) return { confirmed: false, removedIds: [], retainedIds: [] };
       const result = { confirmed: true, removedIds: [], retainedIds: [] };
+      const removedOwners = new Set();
       for (const entry of targets) {
+        const owners = rows.filter(row=>row.entry===entry).map(({row})=>ownerFor(entry,row.dataset.tabId));
         const cleared = await entry.controller.clearTasks(async () => true,rows.filter(row=>row.entry===entry).map(({row})=>row.dataset.tabId));
         result.removedIds.push(...cleared.removedIds);
         result.retainedIds.push(...cleared.retainedIds);
+        for (const owner of owners) if (cleared.removedIds.includes(owner.taskId)) removedOwners.add(ownerKey(owner));
+      }
+      for (const owner of selectionFor(kind).values()) {
+        if (removedOwners.has(ownerKey(owner))) selectionFor(kind).select(owner, { toggle: true });
       }
       await navigateWorkflow(kind);
       saveRegistry();
       return result;
     } finally {
       clearing = false;
+      renderBatchControls();
     }
   }
   function store(key, value) {
@@ -565,6 +587,15 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
         retained.add(row);
         const select = row.querySelector('.ai-task-tab-select');
         const sourceSelect = source.querySelector('.ai-task-tab-select');
+        // Retained navigation rows must follow attachments added after their
+        // first render, including replacements and restored workspaces.
+        const thumbnail = row.querySelector('.ai-task-tab-thumb-frame');
+        const sourceThumbnail = source.querySelector('.ai-task-tab-thumb-frame');
+        if (thumbnail?.outerHTML !== sourceThumbnail?.outerHTML) {
+          if (thumbnail && sourceThumbnail) thumbnail.replaceWith(sourceThumbnail.cloneNode(true));
+          else if (sourceThumbnail) select?.prepend(sourceThumbnail.cloneNode(true));
+          else thumbnail?.remove();
+        }
         const selected = entry === active && entry.controller?.activeTask() === taskId;
         row.classList.toggle('is-on', selected);
         row.classList.toggle('is-exam-linked', source.classList.contains('is-exam-linked'));
@@ -598,13 +629,22 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
           else if (!newNotice) oldNotice?.remove();
           setAttributeIfChanged(select, 'aria-pressed', String(selected));
           setAttributeIfChanged(select, 'aria-label', sourceSelect?.getAttribute('aria-label') || row.title);
-          select.onclick = event => {
+          const chooseTask = event => {
+            if (select.disabled) return;
             const toggle=event.metaKey || event.ctrlKey;
             selectedTasks.select(batchOwner,{toggle}); preparedLaunch=null;
             if (toggle) renderNavigation();
             else void selectWorkspaceTask(entry,taskId).then(target => {
               if (event.isTrusted && target === active) target?.controller.acknowledgeViewedResult?.();
             });
+          };
+          select.onclick = chooseTask;
+          // The whole card is a target, including padding and the status icon.
+          // Explicit controls retain their own actions and never select twice.
+          row.onclick = event => {
+            if (event.target.closest('button, a, input, select, textarea')) return;
+            select.focus({ preventScroll: true });
+            chooseTask(event);
           };
           select.oncontextmenu = null;
           select.onkeydown = event => {

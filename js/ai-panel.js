@@ -1,3 +1,4 @@
+import { createWorkbenchLoading, estimateLoadingMs } from './loading/workbench-loading.js?v=20261015';
 import { channelStorage, channelSessionStorage, optionalStorage } from './preview-storage.js?v=1.7.0-four-session-integration';
 import { snapshotImageItem, taskItemCopy } from './ai-candidate-snapshot.js?v=1.7.0-four-session-integration';
 import { registerBugReportContext } from './bug-report.js?v=1.7.0-four-session-integration';
@@ -5,7 +6,6 @@ import { localEditableLabelPlan } from './ai-local-label-plan.js?v=1.7.0-four-se
 import { manualLabelPlan } from './ai-label-edit-model.js?v=1.7.0-four-session-integration';
 import { createInlineLabelEditor } from './ai-inline-label-editor.js?v=1.7.0-four-session-integration';
 import { visibleImagePng } from './ai-visible-image-output.js?v=1.7.0-four-session-integration';
-import { initManualImageSplit } from './manual-image-split.js?v=1.7.0-four-session-integration';
 import { markResultReady, pendingResult, acknowledgeResult, syncResultEntry } from './ai-result-attention.js?v=20261013-buttons';
 import { createGraphReconstructionWorkflow, graphSourceHash } from './graph/reconstruction-workflow.js?v=1.7.0-four-session-integration';
 import { GRAPH_WORKBENCH_SELECTION, validateWorkbenchGraph, buildWorkbenchGraph, workbenchGraphDataUrl, workbenchGraphContextAttachment, editWorkbenchGraph } from './graph/workbench-result.js?v=1.7.0-four-session-integration';
@@ -28,7 +28,7 @@ import { createWorkbenchRequestState } from './ai-workbench-request-state.js?v=1
 import { openAiCompositionEditor } from './ai-composition-editor.js?v=1.7.0-four-session-integration';
 import { restrictSharedWorkspace } from './ai-sharing-access.js?v=1.7.0-four-session-integration';
 import { registerEscapeLayer } from './escape-layers.js?v=1.7.0-four-session-integration';
-import { clearTaskWorkspaces, createTaskPersistence, createTaskWorkspaces, recoverTaskWorkspaceSnapshot } from './ai-task-workspaces.js?v=1.7.0-four-session-integration';
+import { clearTaskWorkspaces, taskHasReviewNotice, createTaskPersistence, createTaskWorkspaces, recoverTaskWorkspaceSnapshot } from './ai-task-workspaces.js?v=1.7.0-four-session-integration';
 import {
   advanceGenerationTiming,
   restoreGenerationTiming,
@@ -49,7 +49,7 @@ import { mountDurableBatchUi } from './ai-batch-ui.js?v=1.7.0-four-session-integ
 import { createScopedEditSession, confirmScopedEditSession, prepareScopedEditProposal, acceptScopedEditProposal, discardScopedEditProposal, invalidateScopedEditSession } from './ai-scoped-edit-session.js?v=1.7.0-four-session-integration';
 import { decodeScopedPng } from './ai-scoped-edit-png.js?v=1.7.0-four-session-integration';
 import { createScopedEditComparison } from './ai-scoped-edit-comparison.js?v=1.7.0-four-session-integration';
-import { createImageCommentController, buildCommentRequest, PRESERVE_UNREQUESTED } from "./ai-image-comments.js?v=1.7.0-four-session-integration";
+import { createImageCommentController, commentDisplayNumber, buildCommentRequest, PRESERVE_UNREQUESTED } from "./ai-image-comments.js?v=1.7.0-four-session-integration";
 import { IndexedDBOutputCacheBackend } from "./ai-output-cache-store.js?v=1.7.0-four-session-integration";
 import { parseEditableImageLabelPlan, withEditableImageLabelPlan, SOURCE_LABEL_POLICY_VERSION, EDITABLE_IMAGE_LABEL_PLAN_VERSION } from "./ai-editable-image-labels.js?v=1.7.0-four-session-integration";
 import { createSourceLabelController, withFrozenSourceLabelPlan, buildSourceLabelCorrectionDraft } from './ai-source-label-plan.js?v=1.7.0-four-session-integration';
@@ -527,7 +527,7 @@ export async function acknowledgeActiveTaskClearCancellation({ tab, activeTaskTa
   return { acknowledged: outcome?.ok === true };
 }
 
-function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, switchWorkflow, navigationChanged, workspaceEmpty, exportCollection, clearCollection, selectCollection, launchSelected, selectedTaskCount, cancelWorkspaceJob, resumeAfterLogin, materializeCandidate }) {
+function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, switchWorkflow, navigationChanged, workspaceEmpty, clearCollection, selectCollection, launchSelected, selectedTaskCount, cancelWorkspaceJob, resumeAfterLogin, materializeCandidate }) {
   if (!panel) return;
   const lifecycle = new AbortController();
   const disposalCallbacks = [];
@@ -566,7 +566,6 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
   let compactSettings = null;
   let localEraseController = null;
   let inlineLabelEditor = null;
-  let manualSplitController = null;
   const preserveSourceLabels = panel.querySelector("[data-ai-preserve-source-labels]");
   const imageKindSelect = panel.querySelector('[data-ai-image-kind]');
   const labelResultSelect = panel.querySelector('[data-ai-label-result]');
@@ -588,12 +587,15 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     if (!empty) return;
     empty.className = "ai-empty ai-stage-empty";
     empty.dataset.aiEmpty = "";
-    const lite = document.documentElement.dataset.mode === "lite";
-    empty.innerHTML = lite
-      ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.5"/><path d="m5 17 4.5-4.5 3.2 3.2 2-2L19 18"/></svg><strong>변환 결과 대기</strong><span>변환하면 결과가 여기에 표시됩니다.</span>'
-      : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.5"/><path d="m5 17 4.5-4.5 3.2 3.2 2-2L19 18"/></svg><strong>작업할 이미지를 추가하세요</strong><span>이미지를 끌어놓거나 파일을 선택하세요.</span><select class="ai-stage-add" data-ai-empty-import aria-label="작업 이미지 불러오기"><option value="">이미지 불러오기</option><option value="library">라이브러리에서 불러오기</option><option value="file">파일 탐색기에서 불러오기</option></select>';
+    empty.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.5"/><path d="m5 17 4.5-4.5 3.2 3.2 2-2L19 18"/></svg><strong>생성 결과 없음</strong><span>변환하면 결과가 여기에 표시됩니다.</span>';
+  };
+  const renderEmptySource = (empty) => {
+    empty.classList.add('ai-stage-empty');
+    empty.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="9" cy="10" r="1.5"/><path d="m5 17 4.5-4.5 3.2 3.2 2-2L19 18"/></svg><strong>작업할 이미지를 추가하세요</strong><span>이미지를 끌어놓거나 파일을 선택하세요.</span><select class="ai-stage-add" data-ai-empty-import aria-label="작업 이미지 불러오기"><option value="">이미지 불러오기</option><option value="library">라이브러리에서 불러오기</option><option value="file">파일 탐색기에서 불러오기</option></select>';
   };
   renderEmptyResult(previews?.querySelector("[data-ai-empty]"));
+  const initialEmptySource = panel.querySelector('[data-ai-reference-empty]');
+  if (initialEmptySource) renderEmptySource(initialEmptySource);
   const attachmentList = panel.querySelector("[data-ai-attachment-list]");
   const referenceCount = panel.querySelector("[data-ai-reference-count]");
   const referenceSection = panel.querySelector(".ai-reference-section");
@@ -675,29 +677,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
   retryInterruptedButton.className = 'modal-btn';
   retryInterruptedButton.textContent = '중단 작업 다시 시도';
   retryInterruptedButton.hidden = true;
-  const collectiveExportMode = document.createElement('select');
-  collectiveExportMode.dataset.aiTaskExportMode = '';
-  collectiveExportMode.setAttribute('aria-label', '여러 작업 저장 범위');
-  for (const [value, label] of [['selected', '작업별 선택 결과'], ['all', '모든 결과 버전']]) {
-    const option = document.createElement('option');
-    option.value = value;
-    option.textContent = label;
-    collectiveExportMode.append(option);
-  }
-  collectiveExportMode.value = 'selected';
-  const collectiveExportButton = document.createElement('button');
-  collectiveExportButton.type = 'button';
-  collectiveExportButton.dataset.aiTaskExport = '';
-  collectiveExportButton.textContent = '한 폴더에 저장';
-  collectiveExportButton.title = '여러 작업의 결과를 충돌 없는 이름으로 한 폴더에 저장';
-  const collectiveExportControls = document.createElement('div');
-  collectiveExportControls.className = 'ai-task-export-controls';
-  collectiveExportControls.style.cssText = 'display:grid;gap:5px;padding:7px 6px;border-top:1px solid var(--border);';
-  collectiveExportMode.style.cssText = 'width:100%;min-width:0;';
-  collectiveExportButton.style.cssText = 'width:100%;min-width:0;';
   retryInterruptedButton.style.cssText = 'width:100%;min-width:0;';
-  collectiveExportControls.append(retryInterruptedButton, collectiveExportMode, collectiveExportButton);
-  (panel.querySelector('[data-ai-tabs]') || panel.querySelector('[data-ai-tab-list]'))?.after(collectiveExportControls);
+  (panel.querySelector('[data-ai-tabs]') || panel.querySelector('[data-ai-tab-list]'))?.after(retryInterruptedButton);
   const compareButton = panel.querySelector("[data-ai-compare]");
   const captureButton = panel.querySelector("[data-ai-capture]");
   if (captureButton) {
@@ -913,7 +894,6 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
   const automaticSeparationCache = new Map();
   let automaticSeparationRun = null;
   let outputProcessingRevision = 0;
-  let exportInProgress = false;
   let taskTabSerial = 0;
   let activeTaskTabId = null;
   const taskTabs = new Map();
@@ -1150,7 +1130,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     // Empty source preferences retain their real summary and separation lock.
     // A pending/completed or unknown candidate never owns this source-only slot.
     const sourceEligible = Boolean(sourceCompactSettings) && !busy && !item && generatedImages.length === 0
-      && attachments.some(isInputReference) && conversionKind !== 'graph' && panel.dataset.aiSharingMode !== 'view';
+      && conversionKind !== 'graph' && panel.dataset.aiSharingMode !== 'view';
     if (sourceProcessingFeedback.hidden !== !sourceEligible) sourceProcessingFeedback.hidden = !sourceEligible;
     const statusParent = eligible ? legacyResultSettings : sourceEligible ? sourceProcessingFeedback : outputStatusHome;
     if (outputProcessingStatus && statusParent && outputProcessingStatus.parentNode !== statusParent) {
@@ -1341,9 +1321,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     cancelled: "작업 취소",
     interrupted: "작업 중단",
   });
-  const taskNeedsLabelReview = tab => tab?.workState === 'failed'
-    && tab.generated?.at(-1)?.imageLabelWorkflow
-    && tab.generated.at(-1).reviewState === 'needs-attention';
+  const taskNeedsLabelReview = taskHasReviewNotice;
   const taskTimingLabel = (tab, view) => {
     const request = requestStates.snapshot(tab?.id);
     if (request) {
@@ -1352,8 +1330,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
         : { preparing: '요청 준비', 'confirmation-wait': '확인 대기', generating: '변환 중', validating: '결과 확인', completed: '완료', failed: '실패', cancelled: '취소' }[request.phase];
       return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')} · ${phase}`;
     }
-    if (view?.available) return `${view.formatted}${taskNeedsLabelReview(tab) ? ' · 검수 확인 필요' : ''}`;
-    if (taskNeedsLabelReview(tab)) return '생성 완료 · 검수 확인 필요';
+    if (view?.available) return `${view.formatted}${taskNeedsLabelReview(tab) ? ' · 확인 사항' : ''}`;
+    if (taskNeedsLabelReview(tab)) return '생성 완료 · 확인 사항';
     return (tab?.workState === "idle" && !(tab.generated?.length || tab.conversationMessages?.length)) ? "실행 전" : "시간 알 수 없음";
   };
   const updateTaskTimingLabels = (tab, label) => {
@@ -1440,8 +1418,21 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     if (on && currentTurnType === "image" && awaitingTurnId) renderGenerationTiming({ pendingAcceptance: true });
     else renderGenerationTiming();
   };
-  const beginRequest = () => {
+  const loading = createWorkbenchLoading({ host: previews, legacy: generating, panel });
+  disposalCallbacks.push(() => loading.destroy());
+  let pendingLoading = null;
+  const beginRequest = (type = 'image', loadingSource = null) => {
+    delete taskTabs.get(activeTaskTabId)?.generationNotice;
+    pendingLoading = null;
+    loading.reset();
     requestToken = requestStates.begin(activeTaskTabId, selectedCandidateId);
+    if (type !== 'chat') {
+      const source = loadingSource || attachments.find(isInputReference)?.data || attachments[0]?.data;
+      const selectedModel = conversionKind === 'graph' ? GRAPH_WORKBENCH_SELECTION.model : modelSelect.value;
+      const history = [...taskTabs.values()].filter(tab => (tab.conversionKind || 'image') === conversionKind && tab.model === selectedModel)
+        .flatMap(tab => (tab.generated || []).map(item => item.workflowMetrics?.timings?.total || item.generationTiming?.elapsedMs));
+      pendingLoading = { token: requestToken, source, kind: conversionKind, model: selectedModel, startedAt: Date.now(), expectedMs: estimateLoadingMs(conversionKind, selectedModel, history) };
+    }
     setBusy(true);
     stopGenerationTimingTimer();
     generationTimingTimer = setInterval(() => renderGenerationTiming(), 1_000);
@@ -1467,6 +1458,12 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     if (batchRun) void batchRun.emit({type:'progress',progress:{phase}}).catch(batchRun.reject);
     if (requestStates.advance(requestToken, phase)) {
       panel.dataset.aiRequestPhase = phase;
+      if (phase === 'generating' && pendingLoading?.token === requestToken) loading.begin(pendingLoading);
+      if (phase === 'validating') loading.setPhase('결과 확인 중');
+      if (['completed', 'failed', 'cancelled'].includes(phase)) {
+        const candidate = currentTurnCandidate || generatedImages.at(-1);
+        void loading.finish({ token: requestToken, outcome: phase, result: phase === 'completed' ? candidate?.data : null });
+      }
       if (['completed', 'failed', 'cancelled'].includes(phase)) { clearTimeout(requestTimeout); requestTimeout = null; }
       renderGenerationTiming();
     }
@@ -1504,9 +1501,6 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     if (batchButton) batchButton.disabled = on || attachments.length < 2 || (isWhitePngWorkflow({ mode: selectedMode, outputEngine: selectedOutputEngine }) && reviewModeCheckbox?.checked !== false);
     panel.querySelectorAll("[data-ai-input-mutator]").forEach((control) => { control.disabled = on; });
     retryInterruptedButton.disabled = on || !taskTabs.get(activeTaskTabId)?.retryRequest?.snapshot;
-    collectiveExportMode.disabled = on || exportInProgress;
-    collectiveExportButton.disabled = on || exportInProgress
-      || !(generatedImages.length || [...taskTabs.values()].some(tab => Array.isArray(tab.generated) && tab.generated.length));
     panel.querySelectorAll('select[data-ai-reference-role]').forEach(control => { control.disabled = on || generatedImages.length > 0 || conversationMessages.length > 0; });
     const cancelButton = panel.querySelector("[data-ai-interrupt]");
     cancelButton.disabled = !on || insertingOutput;
@@ -1657,7 +1651,6 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     syncSelectedOutputActions();
   };
   const syncReferenceSummary = () => {
-    manualSplitController?.refresh();
     referenceCount.textContent = String(attachments.length);
     const empty = attachmentList.querySelector("[data-ai-reference-empty]");
     if (empty) empty.hidden = attachments.length > 0;
@@ -1708,10 +1701,6 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     let message = '';
     try { resolveAIModelSelection(modelSelection(), availableModels); } catch (error) { message = error.message; }
     if (modelWarning) { modelWarning.textContent = message; modelWarning.hidden = !message; }
-    const fixedSpeed = panel.querySelector('[data-ai-fixed-speed]');
-    let speedSupported = true;
-    try { speedSupported = catalogEntry()?.tiers.includes('priority') === true; } catch {}
-    if (fixedSpeed) fixedSpeed.textContent = speedSupported ? '빠르게 · 고정' : '빠르게 · 지원 확인 필요';
     for (const [control, value] of [[reviewModelSelect, modelSelect.value], [reviewEffortSelect, effortSelect.value]]) {
       if (control) { control.replaceChildren(new Option(value, value)); control.disabled = true; }
     }
@@ -1728,7 +1717,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     const tab = taskTabs.get(activeTaskTabId) || {};
     const preference = {};
     for (const [field, key] of [['model', '5e.aiModel'], ['effort', '5e.aiEffort'], ['serviceTier', '5e.aiSpeed']]) {
-      const saved = field === 'model' ? sessionStorage.getItem('5e.aiModelExplicit') ?? localStorage.getItem(key) : localStorage.getItem(key);
+      const saved = field === 'model' ? sessionStorage.getItem('5e.aiModelExplicit') : localStorage.getItem(key);
       if (Object.hasOwn(tab, field)) preference[field] = tab[field];
       else if (saved !== null) preference[field] = saved;
     }
@@ -1813,14 +1802,14 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       box.style.width = `${comment.w}%`;
       box.style.height = `${comment.h}%`;
       const badge = document.createElement("span");
-      badge.textContent = String(comment.number);
+      badge.textContent = String(commentDisplayNumber(item, comment));
       box.appendChild(badge);
       stage.appendChild(box);
 
       const row = document.createElement("div");
       row.className = "ai-comment-row";
       const number = document.createElement("span");
-      number.textContent = String(comment.number);
+      number.textContent = String(commentDisplayNumber(item, comment));
       const editor = document.createElement("input");
       editor.type = "text";
       editor.dataset.aiInputMutator = "";
@@ -2158,6 +2147,12 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       graphEdit.type='button';graphEdit.dataset.aiGraphEdit='';graphEdit.className='ai-graph-edit-hint';graphEdit.textContent='그래프 세부 편집';
       graphEdit.disabled=busy || panel.dataset.aiSharingMode==='view';
       graphEdit.onclick=()=>{if(!busy && panel.dataset.aiSharingMode!=='view')void editGraphCandidate(item);};
+      stage.addEventListener('dblclick', event => {
+        if (event.target.closest('button,input,select,textarea')) return;
+        const bounds = img.getBoundingClientRect();
+        if (event.clientX < bounds.left || event.clientX > bounds.right || event.clientY < bounds.top || event.clientY > bounds.bottom) return;
+        event.preventDefault(); event.stopPropagation(); graphEdit.click();
+      });
       stage.append(graphEdit);
     }
     if (item.kind === "generated") {
@@ -2675,10 +2670,10 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     const fixedModel=panel.querySelector('[data-ai-fixed-model]'); if(fixedModel)fixedModel.hidden=!graph;
     panel.dataset.aiWorkflow = conversionKind;
     const rail = panel.querySelector('.ai-task-rail');
-    rail?.setAttribute('aria-label', graph ? '그래프 목록' : '작업대 목록');
+    rail?.setAttribute('aria-label', graph ? '그래프 작업대' : '이미지 작업대');
     const railTitle = rail?.querySelector('.ai-rail-heading > strong');
-    if (railTitle) railTitle.textContent = graph ? '그래프 목록' : '작업대';
-    panel.querySelector('[data-ai-tabs]')?.setAttribute('aria-label', graph ? '그래프 목록' : '이미지 작업대 목록');
+    if (railTitle) railTitle.textContent = graph ? '그래프 작업대' : '이미지 작업대';
+    panel.querySelector('[data-ai-tabs]')?.setAttribute('aria-label', graph ? '그래프 작업대' : '이미지 작업대');
     const repeat=panel.querySelector('[data-ai-comments-apply]');
     if(repeat) repeat.hidden=graph;
     panel.querySelectorAll('[data-ai-workflow]').forEach(button => { button.setAttribute('aria-pressed', String(button.dataset.aiWorkflow === conversionKind)); button.disabled = panel.dataset.aiSharingMode === 'view' || (busy && !switchWorkflow); });
@@ -2782,7 +2777,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     const captured = sourceItems.map(snapshotImageItem), styles = references.filter(item => !isInputReference(item)).map(snapshotImageItem);
     const priorGraph = options.runInputSnapshot?.priorGraph || (selectedOutputItem()?.graphResult ? snapshotImageItem(selectedOutputItem()) : null);
     const instructions = [options.requestOverride ?? input.value, options.discussionContextOverride ?? compactConversation(conversationMessages), options.batchContext ? buildCommentRequest([...captured, ...(priorGraph ? [priorGraph] : [])]) : commentPrompt()].filter(Boolean).join('\n');
-    graphSubmitting = true; currentCancelRequested = false;
+    graphSubmitting = true; currentCancelRequested = false; currentTurnType = 'image';
     const epoch = ++currentRequestEpoch;
     beginRequest(); clearTimeout(requestTimeout); requestTimeout = null;
     currentTurnId = null; generationTiming = null;
@@ -2807,6 +2802,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       if (!isCurrent()) return;
       const contextAttachment = priorGraph?.graphResult?.source?.hash === source.hash ? await workbenchGraphContextAttachment(priorGraph.graphResult, priorGraph.id) : null;
       if (!isCurrent()) return;
+      if (pendingLoading) pendingLoading.source = data;
       requestPhase('generating');
       const clockId = `graph-${epoch}`; currentTurnId = clockId; startGenerationClock(clockId);
       const restored = await graphWorkflow.analyze({ source, attachment: { id, name, data }, selection: GRAPH_WORKBENCH_SELECTION, catalog, force: true, instructions, contextAttachment, styleAttachments: styles.map(item => ({ id: item.id, name: item.name, data: item.data })) });
@@ -2866,7 +2862,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     const epoch = ++currentRequestEpoch;
     const ownerTaskId = activeTaskTabId;
     const ownerRevisionId = item.id;
-    const token = beginRequest();
+    const token = beginRequest('image', item.data);
     currentTurnType = 'image';
     currentRunInput = { scopedEdit: true, promptMode }; currentRequestSnapshot = null;
     currentCacheRequest = null; pendingCacheOutput = null; currentReviewScheduled = false;
@@ -3421,7 +3417,10 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
 
   function setTaskState(workState) {
     const tab = taskTabs.get(activeTaskTabId);
-    if (!tab || tab.workState === workState) return;
+    if (!tab) return;
+    if (workState === 'busy') delete tab.generationNotice;
+    if (workState === 'failed' && tab.generationNotice === 'review') workState = 'completed';
+    if (tab.workState === workState) { renderTaskTabs(); return; }
     tab.workState = workState;
     if (workState === 'completed' && currentTurnType === 'image') {
       captureActiveTaskTab();
@@ -3478,11 +3477,11 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       button.className = "ai-task-tab";
       button.classList.toggle("is-exam-linked", linked);
       button.dataset.tabId = tab.id;
-      button.dataset.workState = tab.workState || "idle";
-      const stateLabel = pending ? '변환 완료 · 확인 필요' : taskNeedsLabelReview(tab) ? '생성 완료 · 검수 확인 필요'
+      button.dataset.workState = taskNeedsLabelReview(tab) ? "review" : tab.workState || "idle";
+      const stateLabel = pending ? '변환 완료 · 확인 필요' : taskNeedsLabelReview(tab) ? '생성 완료 · 확인 사항'
         : { busy: "작업 중", interrupted: "작업 중단", completed: "작업 완료", failed: "작업 실패", idle: "대기" }[button.dataset.workState] || "대기";
       button.title = `${tab.title} · ${stateLabel} · ${taskDeleteShortcutHint()}`;
-      if (["completed", "busy", "interrupted", "failed"].includes(tab.workState)) {
+      if (["completed", "busy", "interrupted", "failed", "review"].includes(button.dataset.workState)) {
         const check = document.createElementNS("http://www.w3.org/2000/svg", "svg");
         check.setAttribute("viewBox", "0 0 24 24");
         check.setAttribute("width", "14");
@@ -3491,12 +3490,13 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
         check.classList.add("ai-task-tab-status");
         const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
         const iconPath = {
+          review: "M12 11v6 M12 7h.01 M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0",
           completed: "m20 6-11 11-5-5",
           busy: "M12 8v4l3 2 M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0",
           interrupted: "M12 7v6 M12 17h.01 M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0",
           failed: "M12 8v4 M12 16h.01 M22 12a10 10 0 1 1-20 0 10 10 0 0 1 20 0",
         };
-        path.setAttribute("d", iconPath[tab.workState]);
+        path.setAttribute("d", iconPath[button.dataset.workState]);
         path.setAttribute("fill", "none");
         path.setAttribute("stroke", "currentColor");
         path.setAttribute("stroke-width", "2");
@@ -3560,14 +3560,12 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       addTask.type = 'button';
       addTask.className = 'ai-task-tab ai-task-add';
       addTask.dataset.aiTaskAdd = '';
-      addTask.textContent = conversionKind === 'graph' ? '＋ 그래프 추가' : '＋ 새 작업';
-      addTask.title = conversionKind === 'graph' ? '목록에 새 그래프를 추가합니다' : '독립된 참고 이미지와 대화를 사용하는 새 작업을 만듭니다';
+      addTask.textContent = conversionKind === 'graph' ? '＋ 그래프 추가' : '＋ 이미지 추가';
+      addTask.title = conversionKind === 'graph' ? '그래프 작업대에 새 그래프를 추가합니다' : '이미지를 추가할 새 이미지 작업대를 엽니다';
       addTask.disabled = false;
       addTask.onclick = () => { newWorkspace(); };
       tabList.append(addTask);
     }
-    collectiveExportButton.disabled = busy || exportInProgress
-      || !(generatedImages.length || [...taskTabs.values()].some(tab => Array.isArray(tab.generated) && tab.generated.length));
   };
 
   const resetVisualLists = () => {
@@ -3575,12 +3573,13 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     const emptyReference = document.createElement("p");
     emptyReference.className = "ai-reference-empty";
     emptyReference.dataset.aiReferenceEmpty = "";
-    emptyReference.textContent = "이미지를 추가하면 이 작업의 원본으로 표시됩니다.";
+    renderEmptySource(emptyReference);
     attachmentList.appendChild(emptyReference);
     previews.querySelectorAll(".ai-image-card, [data-ai-empty]").forEach((node) => node.remove());
   };
 
   function restoreTaskTab(tabId) {
+    loading.reset();
     localEraseController?.cancel();
     closeComparison();
     outputProcessingRevision += 1;
@@ -3648,7 +3647,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
             item.reviewState = 'needs-attention';
             item.reviewReport = { ...item.reviewReport, verdict: 'uncertain', issues: [...item.reviewReport.issues, { message: '저장된 RAW 후보가 검수한 후보 바이트와 다릅니다.', severity: 'major' }] };
             if (item.labelPlan) item.labelPlan.reviewRequired = true;
-            if (tab.selectedCandidateId === item.id && tab.workState === 'completed') tab.workState = 'failed';
+            if (tab.selectedCandidateId === item.id && tab.workState === 'completed') tab.generationNotice = 'review';
           }
           if (generatedImages.includes(item)) {
             if (item.card) item.card.dataset.aiReviewState = item.reviewState;
@@ -3659,7 +3658,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
           item.verifiedCandidateData = null; item.reviewState = 'needs-attention';
           item.reviewReport = { ...item.reviewReport, verdict: 'uncertain', issues: [...item.reviewReport.issues, { message: '저장된 RAW 후보의 바이트 검증을 완료하지 못했습니다.', severity: 'major' }] };
           if (item.labelPlan) item.labelPlan.reviewRequired = true;
-          if (tab.selectedCandidateId === item.id && tab.workState === 'completed') tab.workState = 'failed';
+          if (tab.selectedCandidateId === item.id && tab.workState === 'completed') tab.generationNotice = 'review';
           if (generatedImages.includes(item)) { if (item.card) item.card.dataset.aiReviewState = item.reviewState; syncEditableLabelPlanButton(item); syncSelectedOutputActions(); captureActiveTaskTab(); persistTasks(); renderTaskTabs(); }
         });
         continue;
@@ -3676,7 +3675,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       item.reviewState = gated.state;
       item.reviewReport = gated.report;
     }
-    restoreMarkPolicy(tab.markPolicy);
+    restoreMarkPolicy(tab.markPolicyChosen ? tab.markPolicy : {...tab.markPolicy, leaders:'keep'});
     if (preserveSourceLabels) preserveSourceLabels.checked = tab.preserveSourceLabels === true;
     if (imageKindSelect) imageKindSelect.value = tab.imageLabelWorkflow?.imageKind || '';
     if (labelResultSelect) labelResultSelect.value = tab.imageLabelWorkflow?.labelResult || '';
@@ -3772,11 +3771,11 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       title: `작업 ${taskTabSerial}`,
       conversionKind:kind,
       attachments: [], generated: [], conversationMessages: [], uiMessages: [], input: "",
-      generationTiming: null,
+      generationTiming: null, model: 'gpt-6.1-sol', effort: 'medium',
       conversationId: null, mode: selectedMode, qualityMode: selectedQualityMode, outputEngine: selectedOutputEngine,
       preserveSourceLabels: false,
-      imageLabelWorkflow: normalizeImageLabelWorkflow({ imageKind: 'general', labelResult: 'remove', auxiliaryMarks: 'remove', scientificArrows: 'keep', verificationMode: 'draft-first' }), preciseRestore: false,
-      markPolicy: normalizeMarkPolicy({ arrows: 'keep', leaders: 'remove' }),
+      imageLabelWorkflow: normalizeImageLabelWorkflow({ imageKind: 'general', labelResult: 'remove', auxiliaryMarks: 'keep', scientificArrows: 'keep', verificationMode: 'draft-first' }), preciseRestore: false,
+      markPolicy: normalizeMarkPolicy({ arrows: 'keep', leaders: 'keep' }), markPolicyChosen: false,
       generationMode: AI_ASSET_GENERATION_MODES.SINGLE, outputOptions: normalizeImageOutputOptions(),
       separationMode: AI_SEPARATION_MODES.OFF, singleBackgroundPolicy: 'preserve',
       referenceComposition: normalizeReferenceComposition(null, []), workbenchViewState: null,
@@ -3794,7 +3793,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     }
     if (!attachments.length && !generatedImages.length && !conversationMessages.length && !input.value.trim()) {
       const blank=taskTabs.get(activeTaskTabId);
-      if(!blank?.markPolicyChosen)restoreMarkPolicy({...readMarkPolicy(),leaders:'remove'});
+      if(!blank?.markPolicyChosen)restoreMarkPolicy({...readMarkPolicy(),leaders:'keep'});
       conversionKind=kind;const empty=taskTabs.get(activeTaskTabId);if(empty)empty.conversionKind=kind;syncGraphWorkbenchUi();
     }
     const taskActions = {
@@ -3834,19 +3833,6 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       applyPrompt: sourcePrompt => { if (sourcePrompt || prompt) input.value = sourcePrompt || prompt; },
     });
   };
-
-  const splitContext = () => ({ taskId:activeTaskTabId, editable:!disposed && !busy && !preflightRun && panel.dataset.aiSharingMode !== 'view' && conversionKind === 'image',
-    selectedSourceId:panel.aiWorkbench?.getViewState()?.selectedSourceId,
-    sources:attachments.map(item => ({ id:item.id, name:item.name, data:item.data, imageKind:readImageLabelWorkflow().imageKind })) });
-  const splitButton = panel.querySelector('[data-ai-manual-split]');
-  if (splitButton) {
-    manualSplitController = initManualImageSplit({ panel, button:splitButton, getContext:splitContext,
-      isCurrent:snapshot => { const current = splitContext(); return Boolean(snapshot && current.editable && current.taskId === snapshot.taskId && current.sources.length === snapshot.sources.length
-        && current.sources.every((source, index) => source.id === snapshot.sources[index].id && source.data === snapshot.sources[index].data)); },
-      onApply:references => { const ids = addReferencesAsTasks(references, { kind:'image' }); persistTasks(); if (ids.length !== references.length) throw new Error('분할 이미지를 추가하지 못했습니다. 원본을 확인해 주세요.'); setStatus(`${ids.length}개 분할 작업을 추가했습니다. 원본 작업은 유지됩니다.`, 'ok'); },
-    });
-    disposalCallbacks.push(() => manualSplitController.destroy());
-  }
 
   let batchQueue = [];
   let batchRunningCount = 0;
@@ -4413,7 +4399,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       if (!comments.length) continue;
       lines.push(`[${item.kind === "reference" ? "참고 이미지" : "생성 결과"}: ${item.name}]`);
       for (const comment of comments) {
-        lines.push(`- 영역 ${comment.number} (가로 ${comment.x}%, 세로 ${comment.y}%, 너비 ${comment.w}%, 높이 ${comment.h}%): ${comment.text.trim()}`);
+        lines.push(`- 영역 ${commentDisplayNumber(item, comment)} (가로 ${comment.x}%, 세로 ${comment.y}%, 너비 ${comment.w}%, 높이 ${comment.h}%): ${comment.text.trim()}`);
       }
     }
     return lines.length ? `\n\n이미지 영역 코멘트:\n${lines.join("\n")}` : "";
@@ -4780,7 +4766,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     providerRequestPersistable = true;
     setBusy(true); requestPhase('generating');
     const phaseNames = { sourceAnalysis: '원본 라벨·소속 확인 중', pixelProcessing: '기출 주석 국소 제거 중', generation: runInput.preciseRestore ? '선택한 그림 정밀 복원 중' : '일반 이미지 변환 중', targetMapping: '최종 연결 대상 확인 중', labelProposals: '편집 라벨 배치 준비 중', finalVerification: '그림·라벨 결과 확인 중', labelPlacement: '편집 라벨 배치 중', review: '그림·라벨 결과 확인 중', localRestore: '겹친 주석 영역 복원 중', localReview: '국소 복원 결과 확인 중' };
-    const onPhase = phase => { if (isCurrent()) { setStatus(phaseNames[phase] || '결과 준비 중', 'busy'); setGenerating(true, phaseNames[phase] || '결과 준비 중', '원본의 과학 구조와 라벨 소속을 확인합니다.', phase === 'generation' ? 'generate' : 'analyze'); panel.dataset.aiWorkflowPhase = phase; } };
+    const onPhase = phase => { if (isCurrent()) { setStatus(phaseNames[phase] || '결과 준비 중', 'busy'); setGenerating(true, phaseNames[phase] || '결과 준비 중', '원본의 과학 구조와 라벨 소속을 확인합니다.', phase === 'generation' ? 'generate' : 'analyze'); loading.setPhase(phaseNames[phase] || '결과 준비 중'); panel.dataset.aiWorkflowPhase = phase; } };
     const observer = sourceLabelAnalysis;
     const selection = { model: runInput.model, effort: runInput.effort, serviceTier: runInput.serviceTier, models: runInput.modelCatalog || availableModels };
     let pendingRawCandidate = null;
@@ -4806,6 +4792,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
           if(!pendingRawCandidate || !isCurrent()) throw new DOMException('이전 작업 결과입니다.','AbortError');
           Object.assign(pendingRawCandidate,{imageLabelWorkflow:raw.workflow,sourceLabelPlan:raw.sourceLabelPlan,sourceSha256:raw.sourceSha256,sourceFrame:raw.sourceFrame,
             planSha256:raw.planSha256,candidateSha256:raw.candidateSha256,candidateFrame:raw.candidateFrame,workflowMetrics:raw.metrics,verifiedCandidateData:raw.data});
+          tab.generationNotice = 'review';
           captureActiveTaskTab();await taskPersistence.checkpoint();
         }, onPhase, cache: outputCache, backgroundCache: labelBackgroundCache, previousCandidates: runInput.generated, bypassCache: options.bypassCache === true,
         preciseRestore: runInput.preciseRestore === true, verifyOnly: options.verifyOnly === true, previousCandidate,
@@ -4832,8 +4819,9 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       if(pendingRawCandidate){const previousCard=candidate.card;previousCard?.replaceWith(makeImageCard(candidate));}
       ensureCompositePreviewControl(candidate); syncEditableLabelPlanButton(candidate);
       imageReceived = true; currentTurnCandidate = candidate; currentReviewCandidate = candidate;
+      if (candidate.reviewState === 'needs-attention') taskTabs.get(originatingTaskId).generationNotice = 'review';
       const draftReady = canEditLabelReviewDraft(candidate);
-      currentTurnDone = true; currentTerminalOutcome = outOfScope || candidate.reviewState === 'passed' || draftReady ? 'completed' : 'failed'; serverTurnFinished = true; previewPending = false;
+      currentTurnDone = true; currentTerminalOutcome = 'completed'; serverTurnFinished = true; previewPending = false;
       dispatchReviewEvent({ state: candidate.reviewState, candidateId: candidate.id, report: candidate.reviewReport, generationCount: result.metrics.calls.fullGeneration,
         reviewCount: result.metrics.calls.review, elapsedMs: result.metrics.timings.total }, candidate);
       panel.dispatchEvent(new CustomEvent('5e:ai-image-label-timing', { detail: structuredClone(result.metrics) }));
@@ -4846,7 +4834,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
         }
         batchOwnerRun.resolve({ ...batchOwnerRun.context.owner, operation: 'generate', candidateId: candidate.id, candidate: snapshotImageItem(candidate) });
       } else {
-        setTaskState(outOfScope || candidate.reviewState === 'passed' || draftReady ? 'completed' : 'failed'); setGenerating(false); setBusy(false);
+        setTaskState('completed'); taskTabs.get(originatingTaskId).generationNotice = candidate.reviewState === 'needs-attention' ? 'review' : null; renderTaskTabs(); setGenerating(false); setBusy(false);
         setStatus(outOfScope ? outOfScopeMessage
           : candidate.reviewState === 'passed' ? '처리 완료 · 편집 가능한 결과를 준비했습니다.'
           : draftReady ? candidate.editableDraft?.presentation === 'external-list'
@@ -4861,9 +4849,17 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     } catch (error) {
       if (batchOwnerRun) batchOwnerRun.reject(error);
       if (isCurrent()) {
-        currentTerminalOutcome = error.name === 'AbortError' ? 'cancelled' : 'failed';
+        const generatedThisRun = Boolean(pendingRawCandidate?.data);
+        const cancelled = error.name === 'AbortError';
+        currentTerminalOutcome = cancelled ? 'cancelled' : generatedThisRun ? 'completed' : 'failed';
         currentTurnPerformance = error.workflowMetrics || currentTurnPerformance;
-        setTaskState(error.name === 'AbortError' ? 'idle' : 'failed'); setGenerating(false); setBusy(false); setStatus(error.message, error.name === 'AbortError' ? 'warn' : 'error', error);
+        if (generatedThisRun && !cancelled) {
+          imageReceived = true; currentTurnCandidate = pendingRawCandidate;
+          taskTabs.get(originatingTaskId).generationNotice = 'review';
+        }
+        setTaskState(cancelled ? 'idle' : generatedThisRun ? 'completed' : 'failed'); setGenerating(false); setBusy(false);
+        setStatus(generatedThisRun && !cancelled ? '생성 완료 · 확인 사항이 있습니다. 결과 확인에서 내용을 확인하세요.' : error.message, generatedThisRun || cancelled ? 'warn' : 'error', error);
+        captureActiveTaskTab(); await taskPersistence.checkpoint();
       }
       throw error;
     } finally {
@@ -4901,7 +4897,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     currentRequestSnapshot = null;
     providerRequestPersistable = false;
     preflightRun = preflight;
-    const preparingToken = beginRequest();
+    const preparingToken = beginRequest(type);
     let preparationAccepted = false;
     try {
       if (desktop.web) {
@@ -4955,7 +4951,12 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
         const labelWorkflowRequest = [discussionContext, entered].filter(Boolean).join('\n\n');
         await runImageLabelConversion({ runInput, request: labelWorkflowRequest, generationInstructions: labelWorkflowRequest, options, originatingTaskId });
       } catch (error) {
-        if (!disposed && activeTaskTabId === originatingTaskId) { requestPhase('failed'); setGenerating(false); setBusy(false); setStatus(error.message, 'error'); }
+        if (!disposed && activeTaskTabId === originatingTaskId) {
+          const notice = taskTabs.get(originatingTaskId)?.generationNotice === 'review';
+          const cancelled = error.name === 'AbortError';
+          requestPhase(cancelled ? 'cancelled' : notice ? 'completed' : 'failed'); setGenerating(false); setBusy(false);
+          setStatus(notice ? '생성 완료 · 확인 사항이 있습니다. 결과 확인에서 내용을 확인하세요.' : error.message, notice || cancelled ? 'warn' : 'error');
+        }
         if (batchRun) batchRun.reject(error);
       }
       return;
@@ -5782,10 +5783,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
   });
   panel.addEventListener("click", (event) => {
     if (event.target.closest("[data-ai-add-file]") && !file.disabled) file.click();
-    if (event.target.closest('[data-ai-reuse-source]') && !busy) {
-      const sources=attachments.filter(isInputReference).map(item=>({data:item.data,name:item.name,sourceKind:'original-reuse'}));
-      if(sources.length){addReferencesAsTasks(sources);setStatus('원본으로 새 작업을 준비했습니다. 이전 결과는 작업 목록에 보관되어 있습니다.','ok');}
-    }
+
   });
   const interruptCurrentTask = async () => {
     if (!busy && !preflightRun) return;
@@ -5856,8 +5854,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     if (panel.dataset.aiSharingMode !== 'view') void selectCollection?.();
   }, { signal: lifecycle.signal });
   tabClearButton?.addEventListener('click', async () => {
-    const confirm = count => scopedDialog('전체 작업 삭제', `${count}개 작업을 모두 삭제할까요? 원본 파일은 삭제하지 않습니다.`, { accept: `${count}개 삭제`, defaultAccept: true });
-    const result = await (clearCollection ? clearCollection(confirm) : clearTasks(confirm));
+    const confirm = count => scopedDialog('선택 작업 삭제', `선택한 ${count}개 작업을 삭제할까요? 원본 파일은 삭제하지 않습니다.`, { accept: `${count}개 삭제`, defaultAccept: true });
+    const result = await (clearCollection ? clearCollection(confirm) : clearTasks(confirm, []));
     if (!result?.confirmed) return;
     setStatus(result.retainedIds.length
       ? `${result.removedIds.length}개 정리 · ${result.retainedIds.length}개 취소 확인 필요`
@@ -6454,7 +6452,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     void importSourceFiles(dropped, 'drop');
   });
   document.addEventListener("keydown", (event) => {
-    if (panel.hidden || panel.querySelector("dialog[open]")) return;
+    if (panel.hidden || panel.querySelector("dialog[open]") || event.isComposing) return;
     if (isCloseActiveTaskShortcut(event) && activeTaskTabId) {
       event.preventDefault();
       event.stopImmediatePropagation();
@@ -6629,8 +6627,8 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
   outputActions?.replaceChildren(panel.querySelector('[data-ai-save-selected]'),copySelected,
     panel.querySelector('[data-ai-insert-selected]'),hwpSelected);
   const moreOutputs = document.createElement('details'); moreOutputs.className = 'ai-output-more';
-  moreOutputs.innerHTML = '<summary>여러 작업 저장·분리</summary>';
-  moreOutputs.append(editableGroups,separatedRecovery,outputDetails,selectedOutputNote,collectiveExportControls);
+  moreOutputs.innerHTML = '<summary>고급 출력</summary>';
+  moreOutputs.append(editableGroups,separatedRecovery,outputDetails,selectedOutputNote);
   outputActions?.after(moreOutputs);
   syncSelectedOutputActions();
 
@@ -6732,34 +6730,6 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       return { ...record, item: capturedItem, dataUrl: currentDataUrl(), currentDataUrl };
     }));
   };
-  collectiveExportButton.addEventListener('click', async () => {
-    if (busy || exportInProgress || typeof exportCollection !== 'function') return;
-    const taskId = activeTaskTabId, visibilityEpoch = localVisibilityEpoch;
-    const requestEpoch = currentRequestEpoch, owner = batchOwner(taskId);
-    const canReportExport = () => !disposed && !busy && !preflightRun
-      && taskId === activeTaskTabId && visibilityEpoch === localVisibilityEpoch
-      && requestEpoch === currentRequestEpoch && sameBatchOwner(owner, batchOwner(taskId));
-    exportInProgress = true;
-    collectiveExportButton.disabled = true;
-    collectiveExportMode.disabled = true;
-    setStatus('여러 작업의 결과를 준비하고 있습니다…', 'busy');
-    try {
-      const result = await exportCollection(collectiveExportMode.value);
-      if (!canReportExport()) return;
-      if (result.status === 'stored') setStatus(`결과 ${result.count}개를 선택한 폴더에 저장했습니다.`, 'ok');
-      else if (result.status === 'download-requested') setStatus(`결과 ${result.count}개의 ZIP 다운로드를 요청했습니다. 브라우저의 다운로드 완료를 확인해 주세요.`, 'warn');
-      else setStatus('결과 저장을 취소했습니다. 편집 내용은 유지됩니다.', 'warn');
-    } catch (error) {
-      if (canReportExport()) setStatus(`여러 작업 저장 실패: ${error.message}`, 'error');
-    } finally {
-      exportInProgress = false;
-      if (!disposed) {
-        collectiveExportMode.disabled = busy;
-        collectiveExportButton.disabled = busy
-          || !(generatedImages.length || [...taskTabs.values()].some(tab => Array.isArray(tab.generated) && tab.generated.length));
-      }
-    }
-  });
   panel.querySelector('[data-ai-insert-selected]')?.addEventListener('click', () => {
     if (!busy) selectedOutputItem()?.card?.querySelector('.ai-canvas-output')?.click();
   });

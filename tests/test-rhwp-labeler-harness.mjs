@@ -62,7 +62,8 @@ test('the prepared generation copy is separate from the original analysis bindin
   assert.equal(result.sourceSha256, await imageLabelDigest(png));
   assert.equal(result.metrics.generationHarness.sourceSha256, await imageLabelDigest(prepared));
   assert.ok(payload.text.includes('\n\n'+APPROVED_FIRST_PROMPT+'\n\n[SOURCE-GRID-TRACING:'));
-  assert.ok(payload.text.endsWith('\n\n사용자 수정 요청:\n도선만 수정'));
+  assert.ok(payload.text.includes('\n\n사용자 수정 요청:\n도선만 수정'));
+  assert.match(payload.text, /사용자가 보조선 제거를 껐습니다/, 'the default preserves auxiliary marks alongside the explicit request');
   assert.match(payload.text,/사용자가 대상·속성을 명시해 변경을 요청한 부분만 예외/);
 });
 

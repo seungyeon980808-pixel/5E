@@ -171,8 +171,12 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
   let paneHeadSyncFrame = 0;
   let paneHeadHeight = '';
   const syncPaneHeadHeight = () => {
-    const height = Math.max(0, ...paneHeadControls.map(control => control.offsetHeight));
-    const nextHeight = `${height + 8}px`;
+    const height = Math.max(0, ...paneHeadControls.map(control => {
+      const style = getComputedStyle(control.parentElement);
+      return control.offsetHeight + ['paddingTop','paddingBottom','borderTopWidth','borderBottomWidth']
+        .reduce((total, key) => total + (parseFloat(style[key]) || 0), 0);
+    }));
+    const nextHeight = `${Math.ceil(height)}px`;
     if (nextHeight === paneHeadHeight) return;
     paneHeadHeight = nextHeight;
     panel.style.setProperty('--ai-pane-head-height', nextHeight);
@@ -316,13 +320,8 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
   }
 
   function updateResponsiveLayout() {
-    const processing = Boolean(panel.querySelector("[data-ai-generating]:not([hidden])"));
     if (userChoseLayout) return;
-    if (processing && !generatedCards().length) {
-      setLayout(sourceCards().length ? "side-by-side" : "result");
-      return;
-    }
-    setLayout(sourceCards().length ? (panel.dataset.aiWorkflow === 'graph' ? 'stacked' : 'side-by-side') : 'result');
+    setLayout('side-by-side');
   }
 
   const paneCard = (pane) => pane === "source"
@@ -562,18 +561,14 @@ export function setupAiWorkbench(panel = document.getElementById("ai-image-panel
     const processing = Boolean(panel.querySelector("[data-ai-generating]:not([hidden])"));
     const empty = panel.querySelector('[data-ai-empty]');
     if (empty) {
-      const prepared = sourceCards().length > 0;
-      const lite = document.documentElement.dataset.mode === 'lite';
       const title = empty.querySelector('strong');
       const detail = empty.querySelector('span');
       const add = empty.querySelector('[data-ai-add-file]');
-      const titleText = prepared || lite ? '변환 결과 대기' : '작업할 이미지를 추가하세요';
-      const detailText = lite
-        ? '변환하면 결과가 여기에 표시됩니다.'
-        : prepared ? '변환하기를 누르면 결과가 여기에 표시됩니다.' : '이미지를 끌어놓거나 파일을 선택하세요.';
+      const titleText = '생성 결과 없음';
+      const detailText = '변환하면 결과가 여기에 표시됩니다.';
       if (title && title.textContent !== titleText) title.textContent = titleText;
       if (detail && detail.textContent !== detailText) detail.textContent = detailText;
-      if (add && add.hidden !== (prepared || lite)) add.hidden = prepared || lite;
+      if (add && !add.hidden) add.hidden = true;
     }
     panel.dataset.aiStage = processing
       ? "processing"
