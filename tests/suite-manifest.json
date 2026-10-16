@@ -3,11 +3,15 @@
   "unit": [
     {
       "path": "tests/test-library-reference-destinations.mjs",
-      "findingIds": ["LIBRARY-MIXED-DESTINATIONS"]
+      "findingIds": [
+        "LIBRARY-MIXED-DESTINATIONS"
+      ]
     },
     {
       "path": "tests/test-preview-local-server.cjs",
-      "findingIds": ["LOCAL-PREVIEW-REQUEST-LIFETIME"]
+      "findingIds": [
+        "LOCAL-PREVIEW-REQUEST-LIFETIME"
+      ]
     },
     {
       "path": "tests/test-ai-result-attention.mjs",
@@ -586,6 +590,12 @@
         "USER-SAFARI-U13",
         "MANUAL-IMAGE-SPLIT"
       ]
+    },
+    {
+      "path": "tests/test-graph-draft-history.mjs",
+      "findingIds": [
+        "GRAPH-DRAFT-HISTORY"
+      ]
     }
   ],
   "browser": [
@@ -611,16 +621,26 @@
     },
     {
       "path": "tests/test-preview-ai-storage-browser.cjs",
-      "findingIds": ["PREVIEW-STABLE-STORAGE-ISOLATION"],
+      "findingIds": [
+        "PREVIEW-STABLE-STORAGE-ISOLATION"
+      ],
       "reason": "Exercises preview AI setting changes and task reload against same-origin stable storage sentinels in both browser engines."
     },
     {
       "path": "tests/test-ai-inline-label-editor-browser.cjs",
-      "findingIds": ["AI-INLINE-LABEL-EDIT", "AI-GROUPED-OUTPUT", "AI-LABEL-CLICK-EDIT", "AI-LEADER-ENDPOINT-SYNC"]
+      "findingIds": [
+        "AI-INLINE-LABEL-EDIT",
+        "AI-GROUPED-OUTPUT",
+        "AI-LABEL-CLICK-EDIT",
+        "AI-LEADER-ENDPOINT-SYNC"
+      ]
     },
     {
       "path": "tests/test-library-space-flow-browser.cjs",
-      "findingIds": ["LIBRARY-SPACE-FLOW", "LIBRARY-CROP-FRESH-DRAFT"],
+      "findingIds": [
+        "LIBRARY-SPACE-FLOW",
+        "LIBRARY-CROP-FRESH-DRAFT"
+      ],
       "reason": "Exercises one-step Space actions and new-source crop isolation with retained workbench images in Chromium and WebKit."
     },
     {
@@ -632,12 +652,20 @@
     },
     {
       "path": "tests/test-ai-file-read-boundary-browser.cjs",
-      "findingIds": ["AI-FILE-READ-FAILURE", "AI-FILE-READ-OWNER", "AI-FILE-READ-DISPOSAL"],
+      "findingIds": [
+        "AI-FILE-READ-FAILURE",
+        "AI-FILE-READ-OWNER",
+        "AI-FILE-READ-DISPOSAL"
+      ],
       "reason": "Actual image input, drop and replacement handlers retain their native read path while testing failures, retry, late completion, closing, disposal and newer selections."
     },
     {
       "path": "tests/test-ai-paste-boundary-browser.cjs",
-      "findingIds": ["AI-PASTE-OWNER", "AI-PASTE-DISPOSAL", "AI-PASTE-LATEST-INPUT"],
+      "findingIds": [
+        "AI-PASTE-OWNER",
+        "AI-PASTE-DISPOSAL",
+        "AI-PASTE-LATEST-INPUT"
+      ],
       "reason": "Synthetic PNG ClipboardEvents exercise the actual paste handler and native reader across close, disposal, task switching, late errors, retry and newer file/paste attempts without accessing the system clipboard."
     },
     {
@@ -1711,14 +1739,14 @@
     {
       "path": "tests/test-bug-report-browser.cjs",
       "findingIds": [
-        "BUG-REPORT-INBOX"
+        "CS-CENTER-NAVIGATION"
       ]
     },
     {
       "path": "tests/test-bug-report-workspaces-browser.cjs",
       "findingIds": [
         "BUG-REPORT-WORKSPACE-LIFECYCLE",
-        "BUG-REPORT-GLOBAL-ERROR-BADGE"
+        "CS-CENTER-NO-AUTO-UPLOAD"
       ]
     },
     {
@@ -1726,6 +1754,30 @@
       "findingIds": [
         "USER-SAFARI-U13",
         "MANUAL-IMAGE-SPLIT"
+      ]
+    },
+    {
+      "path": "tests/test-user-screen-feedback-browser.cjs",
+      "findingIds": [
+        "USER-SCREEN-FEEDBACK"
+      ]
+    },
+    {
+      "path": "tests/test-screen-loading-motion-browser.cjs",
+      "findingIds": [
+        "USER-SCREEN-LOADING-MOTION"
+      ]
+    },
+    {
+      "path": "tests/test-blur-reveal-product-browser.cjs",
+      "findingIds": [
+        "BLUR-REVEAL-PRODUCT-LIFECYCLE"
+      ]
+    },
+    {
+      "path": "tests/test-library-preview-loading-browser.cjs",
+      "findingIds": [
+        "USER-LIBRARY-PREVIEW-LOADING"
       ]
     }
   ],
