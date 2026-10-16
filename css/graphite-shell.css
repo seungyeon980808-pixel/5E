@@ -158,7 +158,7 @@
     display: flex; align-items: center; justify-content: space-between; gap: 6px;
     height: var(--ds-h-row); min-height: var(--ds-h-row); margin: 0; padding: 0 8px;
     border-radius: var(--ds-radius); border: 0;
-    font: 600 var(--ds-text-body)/1 var(--ds-font); letter-spacing: 0; color: var(--ds-ink);
+    font: 500 var(--ds-text-body)/1 var(--ds-font); letter-spacing: 0; color: var(--ds-ink);
     background: transparent; cursor: pointer;
   }
   :root:not([data-mode="lite"]) .panel-left .tool-section-header:hover { background: var(--ds-hover); }
@@ -215,7 +215,7 @@
     display: flex; align-items: center; gap: 6px;
     height: var(--ds-h-row); min-height: var(--ds-h-row); padding: 0 8px; margin: 0;
     list-style: none; border-radius: var(--ds-radius); cursor: pointer;
-    font: 600 var(--ds-text-body)/1 var(--ds-font); color: var(--ds-ink);
+    font: 500 var(--ds-text-body)/1 var(--ds-font); color: var(--ds-ink);
   }
   :root:not([data-mode="lite"]) .panel-right .insp-summary::-webkit-details-marker { display: none; }
   :root:not([data-mode="lite"]) .panel-right .insp-summary::marker { content: ""; }
