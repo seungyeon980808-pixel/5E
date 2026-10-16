@@ -20,6 +20,13 @@
       ]
     },
     {
+      "path": "tests/test-exampool-placement.mjs",
+      "findingIds": [
+        "EXAMPOOL-PLACEMENT-GRID",
+        "EXAMPOOL-PLACEMENT-XLSX"
+      ]
+    },
+    {
       "path": "tests/test-exampool-card-workspace.mjs",
       "findingIds": [
         "EXAMPOOL-CARD-SHEET-SYNC",

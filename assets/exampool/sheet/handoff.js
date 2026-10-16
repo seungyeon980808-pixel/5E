@@ -1,5 +1,6 @@
 import {FORMAT,clone,validate,tableCovered} from './model.js';
 import {mathParts} from './typeset-model.js';
+import {splitWidths,sizedWidth,gapPx,choiceColumns} from './placement.js';
 
 const E=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const labels=['①','②','③','④','⑤'];
@@ -9,7 +10,9 @@ function choiceWidth(value,fontSize){
 }
 // Short combinations share one baseline, as in the supplied exam. Longer
 // choices get fewer columns; their numbers and continuation text stay together.
-export function choiceGrid(choices,width,fontSize=11){
+export function choiceGrid(choices,width,fontSize=11,layout){
+  const fixed=choiceColumns(layout,choices.length);
+  if(fixed)return {cols:fixed,widths:Array(fixed).fill(width/fixed),singleLine:fixed===choices.length};
   const sizes=choices.map((c,i)=>choiceWidth(labels[i]+' '+c.text,fontSize)+4);
   if(choices.every(c=>!/[\r\n]/.test(c.text))&&sizes.reduce((a,b)=>a+b,0)<=width){
     const gap=(width-sizes.reduce((a,b)=>a+b,0))/sizes.length;
@@ -74,7 +77,7 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
   const p=(v,width=null,fontSize=11)=>`<p style="margin:4px 0">${text(v,width,fontSize)}</p>`;
   const opening=q.blocks.find(b=>b.parent===null),firstText=opening?.kind==='text'&&opening.text?opening:null;
   const prefix=q.number?`${q.number}. `:'';
-  const picture=async(f,width)=>{
+  const picture=async(f,width,align)=>{
     if(!f)return '';
     const image=await prepareFigure(clone(f));
     if(!/^data:image\/png;base64,[A-Za-z0-9+/]*={0,2}$/.test(image.data))throw Error('한글에 넣을 그림을 PNG로 준비하지 못했습니다.');
@@ -82,9 +85,10 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
     if(!Number.isFinite(ratio)||ratio<=0)throw Error('그림 크기를 확인하세요.');
     const w=Math.min(width,Number(image.width)),h=w*ratio;
     images.push(image.data);
-    return `<img src="${image.data}" width="${Math.round(w)}" height="${Math.round(h)}" alt="${E(image.name)}">`;
+    const img=`<img src="${image.data}" width="${Math.round(w)}" height="${Math.round(h)}" alt="${E(image.name)}">`;
+    return align?`<p style="margin:0;text-align:${{왼쪽:'left',가운데:'center',오른쪽:'right'}[align]}">${img}</p>`:img;
   };
-  const table=async(t,width,choices=false)=>{
+  const table=async(t,width,choices=false,align)=>{
     recordTable(t.rows,t.cols+(choices?1:0),t.merges.map(m=>({...m,c:m.c+(choices?1:0)})));
     const fontSize=t.cols>3?9:10,cellWidth=(width-(choices?25:0))/t.cols;
     const rowHeights=Array(t.rows).fill(30);
@@ -96,7 +100,7 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
       if(span===1)rowHeights[r]=Math.max(rowHeights[r],needed);
       else {const height=rowHeights.slice(r,r+span).reduce((a,b)=>a+b,0);if(needed>height)for(let i=r;i<r+span;i++)rowHeights[i]+=(needed-height)/span;}
     }
-    let html=`<table style="border-collapse:collapse;width:${width}px">`;
+    let html=`<table${align?` align="${{왼쪽:'left',가운데:'center',오른쪽:'right'}[align]}"`:''} style="border-collapse:collapse;width:${width}px">`;
     for(let r=0;r<t.rows;r++){
       html+='<tr>';
       if(choices)html+=`<td style="border:none;width:25px">${text(r?labels[r-1]:'')}</td>`;
@@ -117,14 +121,17 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
     }
     return html+'</table>'+(t.note?p(t.note,width-12,10):'');
   };
+  // 간격(mm): 구성 앞에 높이를 가진 빈 문단을 둔다. 값이 없으면 넣지 않는다.
+  const spacer=b=>{const px=gapPx(b);return px?`<p style="margin:0;font-size:1pt;line-height:100%;height:${Math.round(px)}px;margin-top:${Math.round(px)}px"> </p>`:'';};
   const walk=async(parent,width,onlyId=null)=>{
     let html='';
     for(const b of q.blocks.filter(b=>b.parent===parent&&(!onlyId||b.id===onlyId))){
       if(b===firstText)continue;
+      html+=spacer(b);
       if(b.kind==='text')html+=b.text?p(b.text,width):'';
       else if(b.kind==='figure'){
-        if(b.figure)html+=p('')+await picture(b.figure,width)+(/^\(.+\)$/.test(b.label)||b.text?p((/^\(.+\)$/.test(b.label)?b.label:'')+(b.text?' '+b.text:''),width):'');
-      }else if(b.kind==='table')html+=await table(b.table,width);
+        if(b.figure)html+=p('')+await picture(b.figure,sizedWidth(b,width),b.align)+(/^\(.+\)$/.test(b.label)||b.text?p((/^\(.+\)$/.test(b.label)?b.label:'')+(b.text?' '+b.text:''),width):'');
+      }else if(b.kind==='table')html+=await table(b.table,sizedWidth(b,width),false,b.align);
       else if(b.kind==='group'){
         const boxed=b.boxed===true||b.boxed===undefined&&b.label==='실험',children=q.blocks.filter(x=>x.parent===b.id);let body;
         const innerWidth=Math.max(35,width-(boxed?22:0));
@@ -132,8 +139,9 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
           recordTable(1,children.length);
           body=`<table style="border-collapse:collapse;width:${innerWidth}px"><tr>`;
           // Render the children individually while keeping their own descendants.
-          for(const child of children){
-            body+=`<td style="border:none;padding:5px;vertical-align:top;width:${innerWidth/children.length}px">${await walk(b.id,Math.max(35,innerWidth/children.length-16),child.id)}</td>`;
+          const widths=splitWidths(children,innerWidth);
+          for(const [i,child] of children.entries()){
+            body+=`<td style="border:none;padding:5px;vertical-align:top;width:${widths[i]}px">${await walk(b.id,Math.max(35,widths[i]-16),child.id)}</td>`;
           }
           body+='</tr></table>';
         }else body=await walk(b.id,innerWidth);
@@ -171,12 +179,12 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
   if(q.type!=='서술형'){
     if(q.style==='대응표')html+=await table(q.choiceTable,width,true);
     else if(q.style==='그림·그래프'){
-      recordTable(3,2);
+      {const per=choiceColumns(q.choiceLayout,q.choices.length)||2;recordTable(Math.ceil(q.choices.length/per),per);}
       html+=`<table style="border-collapse:collapse;width:${width}px">`;
-      for(let i=0;i<q.choices.length;i+=2){html+='<tr>';for(let j=i;j<i+2;j++){const c=q.choices[j];html+=`<td style="border:none;width:${width/2}px;padding:5px;vertical-align:top">${c?p(labels[j]+' '+c.text)+await picture(c.figure,width/2-20):''}</td>`;}html+='</tr>';}
+      const per=choiceColumns(q.choiceLayout,q.choices.length)||2;for(let i=0;i<q.choices.length;i+=per){html+='<tr>';for(let j=i;j<i+per;j++){const c=q.choices[j];html+=`<td style="border:none;width:${width/per}px;padding:5px;vertical-align:top">${c?p(labels[j]+' '+c.text)+await picture(c.figure,width/per-20):''}</td>`;}html+='</tr>';}
       html+='</table>';
     }else {
-      const fontSize=q.style==='조합'?10:11,grid=choiceGrid(q.choices,width,fontSize),rows=Math.ceil(q.choices.length/grid.cols);
+      const fontSize=q.style==='조합'?10:11,grid=choiceGrid(q.choices,width,fontSize,q.choiceLayout),rows=Math.ceil(q.choices.length/grid.cols);
       recordTable(rows,grid.cols);
       html+=`<table style="border-collapse:collapse;width:${width}px">`;
       for(let row=0;row<rows;row++){

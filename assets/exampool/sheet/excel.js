@@ -1,9 +1,12 @@
 import {FORMAT,TYPES,PRESETS,STYLES,KINDS,targetDisplay,uid,clone,block,newQuestion,validate,migrate} from './model.js';
 import {checkXlsxSize,parseWorkbook as parseLegacy} from './legacy-io.js';
 import {ROWS,fieldValue,writeField} from './vertical.js';
+import {formatSize,formatGap,formatRatio,parseSize,parseGap,parseRatio,parseAlign,parseChoiceLayout} from './placement.js';
 export {checkXlsxSize};
 const MAIN=['번호','답안형','자료 구성','선지 표현','성취기준','발문','정답','배점','출처','해설','출제 의도','문항 ID'];
-const PARTS=['번호','순서','구성','이름','내용','그림','묶음','배치','문항 ID','구성 ID','상위 ID','선지 ID','항목 ID'];
+// 배치 열(폭 비율·크기·간격·정렬)은 2026-10 추가. 예전 파일에는 없어도 읽는다.
+const PARTS_REQUIRED=['번호','순서','구성','이름','내용','그림','묶음','배치','문항 ID','구성 ID','상위 ID','선지 ID','항목 ID'];
+const PARTS=['번호','순서','구성','이름','내용','그림','묶음','배치','폭 비율','크기','간격','정렬','문항 ID','구성 ID','상위 ID','선지 ID','항목 ID'];
 const TABLES=['번호','표 이름','행','열','셀 범위','단위·각주','머리글 행','행 축','열 축','','','','문항 ID','구성 ID'];
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
 const unesc=s=>s.replace(/&(?:amp|lt|gt|quot|apos);/g,c=>({'&amp;':'&','&lt;':'<','&gt;':'>','&quot;':'"','&apos;':"'"}[c]));
@@ -27,14 +30,14 @@ export function project(XLSX,data) {
   const addImage=(figure,sheet,row,col,owner)=>{if(figure)images.push({figure:clone(figure),sheet,row,col,owner});};
   for(const q of data.questions){
     for(const [i,b] of q.blocks.entries()) {
-      const r=parts.length;parts.push([q.number,i+1,KINDS[b.kind],b.label,b.text,'',q.blocks.find(x=>x.id===b.parent)?.label||'',b.layout,q.id,b.id,b.parent||'','','']);
+      const r=parts.length;parts.push([q.number,i+1,KINDS[b.kind],b.label,b.text,'',q.blocks.find(x=>x.id===b.parent)?.label||'',b.layout,formatRatio(b.ratio),formatSize(b.size),formatGap(b.gap),b.align||'',q.id,b.id,b.parent||'','','']);
       if(b.kind==='figure')addImage(b.figure,'구성',r,5,{qid:q.id,bid:b.id});
-      for(const [j,l] of (b.lines||[]).entries())parts.push([q.number,j+1,KINDS[b.kind]+' 항목',l.label,l.text,'',b.label,'',q.id,b.id,'','',l.id]);
+      for(const [j,l] of (b.lines||[]).entries())parts.push([q.number,j+1,KINDS[b.kind]+' 항목',l.label,l.text,'',b.label,'','','','','',q.id,b.id,'','',l.id]);
     }
-    parts.push([q.number,q.blocks.length+1,'발문','발문',q.ask,'','','',q.id,'','','','']);
-    for(const [i,c] of q.choices.entries()){const r=parts.length;parts.push([q.number,i+1,'선지','①②③④⑤'[i],c.text,'','','',q.id,'','',c.id,'']);addImage(c.figure,'구성',r,5,{qid:q.id,cid:c.id});}
+    parts.push([q.number,q.blocks.length+1,'발문','발문',q.ask,'','','','','','','',q.id,'','','','']);
+    for(const [i,c] of q.choices.entries()){const r=parts.length;parts.push([q.number,i+1,'선지','①②③④⑤'[i],c.text,'','',q.choiceLayout||'','','','','',q.id,'','',c.id,'']);addImage(c.figure,'구성',r,5,{qid:q.id,cid:c.id});}
   }
-  const ps=sheet(XLSX,wb,'구성',parts,[9,8,14,20,62,25,20,12,40,40,40,40,40],8);
+  const ps=sheet(XLSX,wb,'구성',parts,[9,8,14,20,62,25,20,12,9,8,8,8,40,40,40,40,40],12);
   images.filter(i=>i.sheet==='구성').forEach(i=>ps['!rows'][i.row]={hpt:86});
   const tableRows=[TABLES];
   for(const q of data.questions){for(const b of q.blocks.filter(b=>b.kind==='table'))indices.push({qid:q.id,bid:b.id,name:b.label,number:q.number,table:b.table});if(q.style==='대응표'||q.choiceTable.cells.some(row=>row.some(c=>c.value!==''||c.figure)))indices.push({qid:q.id,bid:'choices',name:'선지 대응표',number:q.number,table:q.choiceTable});}
@@ -126,15 +129,16 @@ export async function importExcel(XLSX,JSZip,buffer) {
   }
   const getQ=r=>{if(r['문항 ID']){const q=qmap.get(text(r['문항 ID']));if(!q)throw Error('구성·표·자료의 문항 연결이 끊겼습니다.');return q;}const qs=questions.filter(q=>q.number===text(r['번호']||r['연결 문항']));if(qs.length!==1)throw Error('문항 번호를 통해 구성을 연결할 수 없습니다. 번호와 숨김 ID를 확인하세요.');return qs[0];};
   const positions=[],blockIds=new Set(),lines=[];
-  for(const r of namedRows(XLSX,wb.Sheets['구성'],PARTS,10000)){
+  for(const r of namedRows(XLSX,wb.Sheets['구성'],PARTS_REQUIRED,10000)){
     const q=getQ(r);if(r['구성']==='발문'){if(text(r['내용'])!==q.ask&&old.get(q.id)?.ask===q.ask)q.ask=text(r['내용']);continue;}
-    if(r['구성']==='선지') {let c=q.choices.find(c=>c.id===text(r['선지 ID']));if(!c)c=q.choices['①②③④⑤'.indexOf(r['이름'])];if(!c)throw Error('선지의 번호를 확인하세요.');c.text=text(r['내용']);positions.push({sheet:'구성',row:r.row,col:5,owner:{qid:q.id,cid:c.id}});continue;}
+    if(r['구성']==='선지') {let c=q.choices.find(c=>c.id===text(r['선지 ID']));if(!c)c=q.choices['①②③④⑤'.indexOf(r['이름'])];if(!c)throw Error('선지의 번호를 확인하세요.');c.text=text(r['내용']);if(text(r['배치']).trim()){const layout=parseChoiceLayout(r['배치']);if(q._choiceLayoutSeen&&q.choiceLayout!==layout)throw Error('한 문항의 선지 배열은 하나로 입력하세요.');q.choiceLayout=layout;q._choiceLayoutSeen=true;}positions.push({sheet:'구성',row:r.row,col:5,owner:{qid:q.id,cid:c.id}});continue;}
     if(text(r['구성']).endsWith(' 항목')){lines.push({q,r});continue;}
     const kind=Object.keys(KINDS).find(k=>KINDS[k]===r['구성']);if(!kind)throw Error('구성 종류는 설명·그림·표·묶음·과정·대화·보기 중에서 입력하세요.');const bid=text(r['구성 ID'])||uid(),nodeKey=q.id+':'+bid;if(blockIds.has(nodeKey))throw Error('구성 ID가 중복되었습니다.');blockIds.add(nodeKey);
-    const previous=old.get(q.id)?.blocks.find(b=>b.id===bid),b=previous&&previous.kind===kind?clone(previous):block(kind);b.id=bid;b.label=text(r['이름']);b.text=text(r['내용']);b.parent=text(r['상위 ID'])||null;b.layout=text(r['배치'])||'세로';if(b.lines)b.lines=[];b._order=Number(r['순서']);if(!Number.isFinite(b._order))throw Error('구성 순서는 숫자로 입력하세요.');q.blocks.push(b);
+    const previous=old.get(q.id)?.blocks.find(b=>b.id===bid),b=previous&&previous.kind===kind?clone(previous):block(kind);b.id=bid;b.label=text(r['이름']);b.text=text(r['내용']);b.parent=text(r['상위 ID'])||null;b.layout=text(r['배치'])||'세로';for(const [key,col,parse] of [['ratio','폭 비율',parseRatio],['size','크기',parseSize],['gap','간격',parseGap],['align','정렬',parseAlign]]){const v=parse(r[col]);if(v===undefined)delete b[key];else b[key]=v;}if(b.lines)b.lines=[];b._order=Number(r['순서']);if(!Number.isFinite(b._order))throw Error('구성 순서는 숫자로 입력하세요.');q.blocks.push(b);
     if(kind==='figure')positions.push({sheet:'구성',row:r.row,col:5,owner:{qid:q.id,bid}});
   }
   for(const {q,r} of lines){const b=q.blocks.find(b=>b.id===text(r['구성 ID']));if(!b?.lines)throw Error('과정·대화·보기 항목의 연결을 확인하세요.');b.lines.push({id:text(r['항목 ID'])||uid(),label:text(r['이름']),text:text(r['내용']),_order:Number(r['순서'])});}
+  questions.forEach(q=>{if(!q._choiceLayoutSeen)delete q.choiceLayout;delete q._choiceLayoutSeen;});
   questions.forEach(q=>{q.blocks.sort((a,b)=>a._order-b._order);q.blocks.forEach(b=>{delete b._order;if(b.lines){b.lines.sort((a,b)=>a._order-b._order);b.lines.forEach(l=>delete l._order);}});});
   const tws=wb.Sheets['표'],tableRows=readRows(XLSX,tws,20000),th=tableRows[0];if(!TABLES.filter(Boolean).every(h=>th.includes(h)))throw Error('표 목록의 열 이름을 확인하세요.');
   const indices=pack.excel?.indices||[];const indexCount=indices.length;
