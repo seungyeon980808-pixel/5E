@@ -189,11 +189,16 @@ for (const engine of [chromium,webkit]) test(`canonical button design and unread
   assert.equal(libraryMotion,undefined);
   await page.screenshot({path:path.join(evidence,'library.png')});await page.keyboard.press('Escape');
   await assertWorkflowState(page,'exam-library-open',false,selected);
-  await page.locator('#ai-image-install-open').click();await page.locator('#ai-image-panel [data-ai-send]').waitFor({state:'visible'});
+  // 이미지 변환 화면의 주 실행 버튼은 아래쪽 실행 줄의 버튼이다(준비 영역의 [data-ai-send]는 그래프 복원에서만 보인다).
+  // 이 버튼은 [data-ai-send]의 동작을 그대로 부른다(js/ai-panel.js).
+  const runButton='#ai-image-panel [data-ai-comments-apply]';
+  await page.locator('#ai-image-install-open').click();await page.locator(runButton).waitFor({state:'visible'});
+  assert.equal(await page.locator('#ai-image-panel').getAttribute('data-ai-workflow'),'image');
+  assert.equal(await page.locator('#ai-image-panel .ai-preparation > [data-ai-send]').isVisible(),false,'image workflow shows one primary action');
   await assertWorkflowState(page,'ai-image-install-open',true,selected);
   await assertOriginalAppearance(page,'#ai-image-panel button');
   await page.screenshot({path:path.join(evidence,'ai-preparation.png')});
-  await page.locator('#ai-image-panel [data-ai-send]').click();
+  await page.locator(runButton).click();
   await page.waitForFunction(()=>window.__task2.generationSends.length===1);
   await page.evaluate(()=>{window.__task2.emitGeneration(0,'image');window.__task2.emitGeneration(0,'done');});
   await page.waitForFunction(()=>document.querySelector('#ai-image-panel')?.dataset.aiBusy==='false' && document.querySelector('#ai-image-panel')?.dataset.aiResultCount==='1');
