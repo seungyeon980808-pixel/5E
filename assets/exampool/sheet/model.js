@@ -4,6 +4,7 @@ export const FORMAT='5e-question-sheet-v2';
 export const TYPES=['객관식','합답형','서술형'];
 export const PRESETS=['글·수식','그림','그림 비교','그림·표','실험','대화'];
 export const STYLES=['문장·수식','조합','대응표','그림·그래프'];
+export const WORKFLOWS={draft:'출제',review:'점검',complete:'완성'};
 export const KINDS={text:'설명',figure:'그림',table:'표',group:'묶음',steps:'과정',dialogue:'대화',bogi:'보기'};
 export const uid=()=>crypto.randomUUID();
 export const clone=v=>structuredClone(v);
@@ -88,6 +89,7 @@ export function validate(data) {
     for(const k of ['unitLarge','unitMiddle','unitSmall','managementId','templateKey'])if(q[k]!==undefined&&!str(q[k],240))throw Error('단원·관리번호를 확인하세요.');
     if(q.concepts!==undefined&&(!Array.isArray(q.concepts)||q.concepts.length>100||!q.concepts.every(v=>str(v,240))))throw Error('핵심개념은 100개 이내로 입력하세요.');
     if(q.typeset!==undefined&&(!q.typeset||!str(q.typeset.bytes,12*1024*1024)||!str(q.typeset.fingerprint,100)||!str(q.typeset.baselineText,1000000)||!['A4','A3','B4'].includes(q.typeset.profile?.paper)||![1,2].includes(q.typeset.profile?.columns)))throw Error('저장한 조판 문서를 확인하세요.');
+    if(q.workflow!==undefined&&!Object.hasOwn(WORKFLOWS,q.workflow))throw Error('문항 상태는 출제·점검·완성 중 하나입니다.');
     if(!validChoiceLayout(q.choiceLayout))throw Error('선지 배열은 한 줄·3+2·세로 중에서 고르세요.');
     if(!Number.isFinite(q.points)||q.points<0||q.points>10000||!(q.answer===null||Number.isInteger(q.answer)&&q.answer>=0&&q.answer<5))throw Error('정답은 1~5, 배점은 0~10,000으로 입력하세요.');
     const bids=new Set();for(const b of q.blocks){if(!b||!id(b.id)||bids.has(b.id)||!Object.hasOwn(KINDS,b.kind)||!str(b.label,240)||!str(b.text)||!['세로','나란히'].includes(b.layout))throw Error('구성의 종류·이름·ID를 확인하세요.');if(!validPlacement(b))throw Error('구성의 크기·간격·폭 비율·정렬을 확인하세요.');bids.add(b.id);if(b.kind==='table')table(b.table);if(b.kind==='figure'&&!image(b.figure))throw Error('그림 형식을 확인하세요.');if(['steps','bogi','dialogue'].includes(b.kind)&&(!Array.isArray(b.lines)||b.lines.length>30||!b.lines.every(l=>id(l.id)&&str(l.label,120)&&str(l.text))))throw Error('과정·대화·보기 내용을 확인하세요.');}
@@ -100,6 +102,7 @@ export function validate(data) {
   }
   const dids=new Set();for(const d of data.documents){if(!d||!id(d.id)||dids.has(d.id)||!str(d.name,240)||!['textbooks','references','past'].includes(d.kind)||!['application/pdf','image/png','image/jpeg','image/webp','text/plain'].includes(d.mime)||!str(d.data,8*1024*1024)||!d.data.startsWith(`data:${d.mime};base64,`)||!/^data:[^;]+;base64,[A-Za-z0-9+/]*={0,2}$/.test(d.data)||!Array.isArray(d.pages)||!d.pages.length||d.pages.length>3000||!d.pages.every(p=>str(p,1000000)))throw Error('참고자료 파일이 올바르지 않습니다.');dids.add(d.id);}
   for(const q of data.questions)for(const ref of q.references)if(ref.documentId){const d=data.documents.find(x=>x.id===ref.documentId);if(!d||!Number.isInteger(ref.page)||ref.page>d.pages.length)throw Error('자료 원문 또는 쪽수 연결이 끊겼습니다.');}
+  if(data.examSet!==undefined){const e=data.examSet,qids=new Set(data.questions.map(q=>q.id));if(!e||!Array.isArray(e.items)||e.items.length>200||new Set(e.items).size!==e.items.length||!e.items.every(id=>qids.has(id))||e.title!==undefined&&!str(e.title,200))throw Error('시험지 구성의 문항 목록을 확인하세요.');}
   if(JSON.stringify(data).length>24*1024*1024)throw Error('문항과 자료는 합쳐서 24 MB까지 저장할 수 있습니다.');
   return data;
 }

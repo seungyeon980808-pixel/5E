@@ -45,6 +45,13 @@
       ]
     },
     {
+      "path": "tests/test-exampool-exam-set.mjs",
+      "findingIds": [
+        "EXAMPOOL-WORKFLOW",
+        "EXAMPOOL-EXAM-ASSEMBLY"
+      ]
+    },
+    {
       "path": "tests/test-exampool-card-workspace.mjs",
       "findingIds": [
         "EXAMPOOL-CARD-SHEET-SYNC",

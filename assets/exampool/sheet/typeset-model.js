@@ -8,7 +8,8 @@ export function pageProfile(profile={paper:'A4',columns:2}){
   return {page:{width:Math.round(w*HU),height:Math.round(h*HU),marginLeft:Math.round(margin*HU),marginRight:Math.round(margin*HU),marginTop:Math.round(margin*HU),marginBottom:Math.round(margin*HU),marginHeader:0,marginFooter:0,marginGutter:0,landscape:false},spacing:Math.round(spacing*HU),width:Math.floor(((w-2*margin-(profile.columns-1)*spacing)/profile.columns)*HU/75)-8};
 }
 export async function questionFingerprint(q){
-  const {typeset,references,...rest}=q;
+  // 문항 상태(출제·점검·완성)는 내용이 아니므로 조판 승인에 영향을 주지 않는다.
+  const {typeset,references,workflow,...rest}=q;
   const hash=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify(rest)));
   return [...new Uint8Array(hash)].map(v=>v.toString(16).padStart(2,'0')).join('');
 }

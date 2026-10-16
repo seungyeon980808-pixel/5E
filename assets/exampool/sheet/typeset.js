@@ -1,4 +1,5 @@
 import {RhwpExamBridge} from '/js/rhwp-exam-bridge.js?v=1014-compact-panel';
+import {buildExamDocument} from './exam-build.js';
 import {buildTextMap,mapTextEdit,applyTextEdit} from './text-sync.js';
 import {loadImage} from './image-load.js';
 import {attachPlacementLayer} from './placement-layer.js';
@@ -156,6 +157,10 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
   resize.onclick=()=>{if(!ready||loading)return;bridge.setTableLayoutLocked(!bridge.tableLayoutLocked);resize.setAttribute('aria-pressed',String(!bridge.tableLayoutLocked));message(bridge.tableLayoutLocked?'표 크기 잠금 · 마우스로 경계를 움직여도 크기는 유지됩니다.':'표 크기 조절 켜짐 · 표 경계를 드래그한 뒤 다시 끄세요.');};
   align.onchange=()=>{try{if(!ready||loading)return;applyTableAlignment(bridge,align.value);message('표 위치 변경됨 · 조판 저장을 누르세요.');}catch(e){message(e.message,true);}finally{align.value='';}};
   indent.onclick=()=>{try{if(!ready||loading)return;if(!applyHangingIndent(bridge))throw Error('본문에서 들여쓸 위치를 클릭하세요.');message('다음 줄이 커서 위치에 맞춰집니다 · 조판 저장을 누르세요.');bridge.input.textarea.focus();}catch(e){message(e.message,true);}};
-  const contentKey=value=>{const {typeset,references,...content}=value;return JSON.stringify(content);};
-  return {open,commit,get questionId(){return q?.id;},matches:value=>ready&&!!q&&contentKey(q)===contentKey(value),get dirty(){return dirty;},refreshView:()=>view?.fit()};
+  const contentKey=value=>{const {typeset,references,workflow,...content}=value;return JSON.stringify(content);};
+  async function buildExam(data){
+    await ensure();const Document=document().constructor,{document:exam}=await buildExamDocument(Document,data);
+    try{return exportLayoutHwpx(exam,XLSX.CFB);}finally{exam.free();}
+  }
+  return {open,commit,buildExam,get questionId(){return q?.id;},matches:value=>ready&&!!q&&contentKey(q)===contentKey(value),get dirty(){return dirty;},refreshView:()=>view?.fit()};
 }
