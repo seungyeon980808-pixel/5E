@@ -117,3 +117,18 @@ test('readiness requires a working public Worker that rejects foreign writes', a
   fs.writeFileSync(path.join(site, 'bug/config.js'), "export const BUG_BOARD_API = '/api/bug-board';\n");
   await assert.rejects(readiness(site, healthy), /public Worker/);
 });
+
+test('Bug Route normalizes a 1.7.0 Preview base receipt before reading it', () => {
+  const workflow = YAML.load(fs.readFileSync(path.join(__dirname, '../.github/workflows/bug-route.yml'), 'utf8'));
+  const steps = workflow.jobs.validate.steps;
+  const normalize = steps.findIndex(step => /normalizePublicationReceipt\('_work\/bug-base-receipt'\)/.test(step.run || ''));
+  const firstRead = steps.findIndex(step => /_work\/bug-base-receipt\/receipt\.json/.test(step.run || ''));
+  assert.ok(normalize >= 0 && normalize < firstRead, 'receipt normalization must run before the base receipt is read');
+  const { normalizePublicationReceipt } = require('../scripts/publication-receipt.cjs');
+  const directory = fs.mkdtempSync(path.join(os.tmpdir(), '5e-bug-receipt-'));
+  try {
+    fs.mkdirSync(path.join(directory, 'preview-publication'));
+    fs.writeFileSync(path.join(directory, 'preview-publication/receipt.json'), '{"files":{}}');
+    assert.equal(fs.readFileSync(normalizePublicationReceipt(directory), 'utf8'), '{"files":{}}');
+  } finally { fs.rmSync(directory, { recursive: true, force: true }); }
+});

@@ -60,6 +60,8 @@ jobs:
           pattern: '*-publication-*'
           merge-multiple: true
           path: _work/bug-base-receipt
+      - name: Normalize the base receipt (1.7.0 Preview keeps it in a subfolder)
+        run: node -e "require('./scripts/publication-receipt.cjs').normalizePublicationReceipt('_work/bug-base-receipt')"
       - run: |
           mkdir -p _work/bug-publication/site
           tar -xf _work/bug-base-pages/artifact.tar -C _work/bug-publication/site
