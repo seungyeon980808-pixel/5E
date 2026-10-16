@@ -96,8 +96,8 @@ export function getDefaultExportFilename(ext) {
  * 폰트 파일을 base64로 인라인한 @font-face를 export SVG의 <defs>에 넣어 편집 화면과 같은
  * 글꼴로 내보낸다. 파일이 없으면(선택적 폰트) 조용히 건너뛰어 기존 폴백 동작을 유지한다. */
 const EMBED_FONTS = [
-  { family: "Latin Modern Roman", style: "normal", url: "fonts/lmroman10-regular.woff2" },
-  { family: "Latin Modern Roman", style: "italic", url: "fonts/lmroman10-italic.woff2" },
+  { family: "Latin Modern Roman", style: "normal", url: new URL("../fonts/lmroman10-regular.woff2", import.meta.url).href },
+  { family: "Latin Modern Roman", style: "italic", url: new URL("../fonts/lmroman10-italic.woff2", import.meta.url).href },
 ];
 let _fontCss = "";          // 캐시된 @font-face CSS(base64). 사용 가능한 폰트가 없으면 "".
 let _fontCssPromise = null;

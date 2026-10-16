@@ -46,7 +46,8 @@ export function initExamPoolWorkspace(state, services, examWorkspace) {
   const $ = selector => panel.querySelector(selector);
   const entry = document.createElement('button');entry.type = 'button';entry.id = 'exampool-open';entry.className = 'object-search-trigger';
   entry.innerHTML = '<svg viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="14" height="14" rx="2"/><path d="M3 8h14M8 3v14M8 12h9"/></svg><span>문항 설계</span>';
-  document.querySelector('.image-workflow-hub')?.append(entry);
+  // 진입은 5E_ExamPool(문항 시트) 하나로 모은다. 예전 문항 설계 창은 ?exampool=1 또는 숨은 버튼으로만 연다.
+  entry.hidden=true;document.querySelector('.image-workflow-hub')?.append(entry);
   const references = initPoolReferences(panel,{
     getQuestion:()=>current,
     onStandard:standard=>void run(async()=>{await persist();current.standard_code=standard.code;current.standard=standard;markDirty();await persist();renderPlan();references.updateState();}),

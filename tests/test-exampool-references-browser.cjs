@@ -31,7 +31,7 @@ h.withServer(async origin=>{
         const {newQuestion}=await import('/js/exampool-model.js?v=1013-exampool');const item=newQuestion('7');item.ask='기존 발문 보존';item.passage='기존 지문 보존';delete item.intent;delete item.standard;delete item.standard_code;delete item.references;
         await new Promise((resolve,reject)=>{const request=indexedDB.open('5e-exampool',1);request.onupgradeneeded=()=>request.result.createObjectStore('questions',{keyPath:'id'});request.onerror=()=>reject(request.error);request.onsuccess=()=>{const db=request.result,tx=db.transaction('questions','readwrite');tx.objectStore('questions').put(item);tx.oncomplete=()=>{db.close();resolve();};};});return item;
       });
-      await page.locator('#exampool-open').click();await idle(page);await page.locator('[data-standard-code]').first().waitFor();
+      await page.evaluate(()=>document.getElementById('exampool-open').click());await idle(page);await page.locator('[data-standard-code]').first().waitFor();
       assert.equal(await page.locator('#pool-ask').inputValue(),legacy.ask);assert.equal((await rows(page))[0].id,legacy.id);
       assert.equal(await page.locator('.pool-main').evaluate(el=>getComputedStyle(el).backgroundColor),'rgb(255, 255, 255)');
       await page.locator('#pool-subject').selectOption('통합과학1');await page.locator('#pool-standard-search').fill('[10통과1-01-01]');
@@ -65,7 +65,7 @@ h.withServer(async origin=>{
       await page.setViewportSize({width:1440,height:1000});assert.equal((await page.locator('.app-footer').boundingBox()).height,footer.height);
       const downloadWait=page.waitForEvent('download');await page.locator('[data-pool-action="export"]').click();await idle(page);const download=await downloadWait,target=path.join(evidence,name+'.exampool');await download.saveAs(target);
       const data=JSON.parse(fs.readFileSync(target,'utf8'));assert.equal(data.resources.length,3);assert.equal(data.items[0].standard_code,code);
-      const fresh=await browser.newContext({viewport:{width:1440,height:1000}}),next=await fresh.newPage();await h.navigate(next,origin+'/?mode=pro&mobile=0');await h.ready(next);await next.locator('#exampool-open').click();await idle(next);
+      const fresh=await browser.newContext({viewport:{width:1440,height:1000}}),next=await fresh.newPage();await h.navigate(next,origin+'/?mode=pro&mobile=0');await h.ready(next);await next.evaluate(()=>document.getElementById('exampool-open').click());await idle(next);
       await next.locator('#pool-file').setInputFiles(target);await idle(next);assert.equal(await next.locator('#pool-status').getAttribute('data-error'),'false');
       assert.equal(await next.locator('#pool-ask').inputValue(),legacy.ask);assert.equal(await next.locator('#pool-intent').inputValue(),'인쇄 제외 검증');assert.equal((await rows(next))[0].standard_code,code);
       await next.locator('[data-linked-reference-id]').click();await next.waitForFunction(()=>document.querySelector('#pool-evidence-quote').value==='SECOND PAGE KEYWORD');assert.equal(await next.locator('#pool-source-page').inputValue(),'2');assert.ok(await next.locator('#pool-source-page-view img').evaluate(el=>el.naturalWidth>0));

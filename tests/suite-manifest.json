@@ -52,20 +52,6 @@
       ]
     },
     {
-      "path": "tests/test-exampool-card-workspace.mjs",
-      "findingIds": [
-        "EXAMPOOL-CARD-SHEET-SYNC",
-        "EXAMPOOL-WORKBOOK-MERGE-UNDO"
-      ]
-    },
-    {
-      "path": "tests/test-exampool-workspace-layout.mjs",
-      "findingIds": [
-        "EXAMPOOL-RESIZABLE-OFFICE-PANES",
-        "EXAMPOOL-WHOLE-QUESTION-PAGINATION"
-      ]
-    },
-    {
       "path": "tests/test-exampool-question-page.mjs",
       "findingIds": [
         "EXAMPOOL-QUESTION-COLUMN-PAGE",

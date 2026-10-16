@@ -22,7 +22,7 @@ h.withServer(async origin => {
       const page = await context.newPage(), errors = [];page.on('pageerror',error => errors.push(error.message));
       await h.navigate(page,origin+'/?mode=pro&mobile=0');await h.ready(page);
       const footer = await page.locator('.app-footer').boundingBox();
-      await page.locator('#exampool-open').click();await idle(page);await action(page,'new');assert.equal(await page.locator('#pool-number').inputValue(),'1');await fill(page);
+      await page.evaluate(()=>document.getElementById('exampool-open').click());await idle(page);await action(page,'new');assert.equal(await page.locator('#pool-number').inputValue(),'1');await fill(page);
       await page.locator('#pool-ask').focus();await page.locator('#pool-ask').fill('검증용 발문');
       await page.waitForFunction(() => document.querySelector('#pool-status').textContent.startsWith('저장됨'));
       assert.equal(await page.locator('#pool-ask').evaluate(el => el === document.activeElement),true,'autosave preserves typing focus');
@@ -30,7 +30,7 @@ h.withServer(async origin => {
       const id = saved.id, choiceIds = saved.choices.map(row => row.id);
       await action(page,'new');assert.equal(await page.locator('#pool-number').inputValue(),'2');assert.equal(await page.locator('#pool-ask').inputValue(),'','new item does not copy the previous form');
       await page.locator(`[data-question-id="${id}"]`).click();await idle(page);
-      await page.reload({waitUntil:'domcontentloaded'});await h.ready(page);await page.locator('#exampool-open').click();await idle(page);
+      await page.reload({waitUntil:'domcontentloaded'});await h.ready(page);await page.evaluate(()=>document.getElementById('exampool-open').click());await idle(page);
       assert.equal(await page.locator('#pool-ask').inputValue(),'검증용 발문');assert.deepEqual((await rows(page))[0].choices.map(row => row.id),choiceIds);
       // Selection saves pending input and does not reopen an obsolete revision.
       await page.locator('#pool-passage').fill('선택 전 수정');await page.locator(`[data-question-id="${id}"]`).click();await idle(page);
@@ -74,12 +74,12 @@ h.withServer(async origin => {
       await page.screenshot({path:path.join(evidence,engineName+'-handoff.png')});
       // Imported file opens in a clean browser, with independent local storage.
       const fresh = await browser.newContext({viewport:{width:1440,height:1000}}), next = await fresh.newPage();
-      await h.navigate(next,origin+'/?mode=pro&mobile=0');await h.ready(next);await next.locator('#exampool-open').click();await idle(next);
+      await h.navigate(next,origin+'/?mode=pro&mobile=0');await h.ready(next);await next.evaluate(()=>document.getElementById('exampool-open').click());await idle(next);
       await next.locator('#pool-file').setInputFiles(file);await idle(next);assert.notEqual(await next.locator('#pool-status').getAttribute('data-error'),'true',await next.locator('#pool-status').textContent());
       assert.equal(await next.locator('#pool-ask').inputValue(),'검증용 발문');const reopened = (await rows(next))[0];assert.equal(reopened.id,id);assert.equal(reopened.asset.confirmed.png,confirmedPng);
       const oldPages = await h.drawing(next,h.runtime(next).stateUrl);await action(next,'edit');const newPages = await h.drawing(next,h.runtime(next).stateUrl);
       assert.equal(newPages.pages.length,oldPages.pages.length+1,'source opens a new tab without replacing another drawing');assert.equal(newPages.objects[0].p2.y,18);
-      await next.locator('#exampool-open').click();await idle(next);await action(next,'capture');assert.equal((await rows(next))[0].asset.confirmed.id,confirmedId);
+      await next.evaluate(()=>document.getElementById('exampool-open').click());await idle(next);await action(next,'capture');assert.equal((await rows(next))[0].asset.confirmed.id,confirmedId);
       await next.locator('#pool-photo').setInputFiles('tests/fixtures/rights-clear-smoke.png');await idle(next);
       assert.equal(await next.locator('#pool-status').getAttribute('data-error'),'false');const photo = (await rows(next))[0];
       assert.equal(photo.asset.draft.source,null);assert.equal(photo.asset.confirmed.id,confirmedId,'photo replacement leaves the confirmed drawing intact');
