@@ -70,6 +70,31 @@
 
   /* ---- 움직임 ---- */
   --ds-motion: 0s;
+
+  /* ---- 문서 창(5E_ExamPool의 5E_cell·5e_hwp) ----
+     엑셀·한글 창 안은 화면 색과 상관없이 흰 문서다. 창 밖(작업대·막대)만 팔레트를 따른다.
+     제목 줄 색은 프로그램 표시: 5E_cell 초록, 5e_hwp 남청. 포인트 색도 창마다 하나만 쓴다. */
+  --ds-doc: #ffffff;
+  --ds-doc-sub: #f7f8f9;          /* 도구 줄·머리글 칸 */
+  --ds-doc-head: #f1f2f4;         /* 행·열 번호 */
+  --ds-doc-line: #e1e3e6;
+  --ds-doc-line-strong: #d3d6db;
+  --ds-doc-ink: #1b1e23;
+  --ds-doc-ink-2: #3a3f46;
+  --ds-doc-ink-3: #6a7079;
+  --ds-doc-hover: rgba(0, 0, 0, .045);
+  --ds-doc-selected: rgba(0, 0, 0, .08);
+  --ds-doc-paper-bench: #e9ebee;  /* 한글 창 안 종이 뒤 */
+  --ds-cell: #1e7145;             /* 엑셀 포인트: 선택 칸 테두리·주 버튼 */
+  --ds-cell-bar: #1f6f45;         /* 5E_cell 제목 줄 */
+  --ds-cell-soft: #d9ebdf;        /* 선택 머리글 */
+  --ds-cell-tint: #eef6f1;        /* 선택 범위 */
+  --ds-hwp: #2563c9;              /* 한글 포인트 */
+  --ds-hwp-bar: #2f4a67;          /* 5e_hwp 제목 줄 */
+  --ds-hwp-soft: #e9f0fc;
+  --ds-bar-ink: #ffffff;          /* 제목 줄 위 글자 */
+  --ds-bar-hover: rgba(255, 255, 255, .14);
+  --ds-bar-selected: rgba(255, 255, 255, .22);
 }
 
 /* =====================================================================

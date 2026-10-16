@@ -2,7 +2,9 @@ import { createEditor } from '../vendor/rhwp-editor/index.js?v=1.7.0-four-sessio
 import { readEditablePng } from './editable-png.js?v=1.7.0-four-session-integration';
 import { DEFAULT_PICTURE_LAYOUT, validatePictureLayout, regionGeometry } from './rhwp-exam-region.js?v=1.7.0-four-session-integration';
 import { installPictureResize } from './rhwp-exam-picture-resize.js?v=1.7.0-four-session-integration';
-import { installTableShortcuts } from './rhwp-exam-table-controls.js?v=1.7.0-four-session-integration';
+import { installTableShortcuts } from './rhwp-exam-table-controls.js?v=1014-compact-panel';
+import { setTableLayoutLocked } from './rhwp-exam-layout-lock.js?v=1014-compact-panel';
+import {exportCompatibleHwp,exportVerifiedHwpx} from '../assets/exampool/sheet/native-transfer.js?v=1014-compact-panel';
 
 export const FIGURE_PREFIX = '5e-exam:';
 const HWP_UNITS_PER_MM = 7200 / 25.4;
@@ -41,16 +43,18 @@ export class RhwpExamBridge {
 
   enableEditingBorders() {
     if(!this.wasm.doc || typeof this.wasm.setShowTransparentBorders!=='function' || this.borderGuideGeneration===this.generation)return;
-    this.wasm.setShowTransparentBorders(true);this.borderGuideGeneration=this.generation;
-    this.editor.element.contentDocument.querySelectorAll('[data-cmd="view:border-transparent"]').forEach(button=>button.classList.add('active'));
+    this.wasm.setShowTransparentBorders(this.showEditingBorders);this.borderGuideGeneration=this.generation;
+    this.editor.element.contentDocument.querySelectorAll('[data-cmd="view:border-transparent"]').forEach(button=>button.classList.toggle('active',this.showEditingBorders));
     this.deps.eventBus.emit('document-view-changed');
   }
 
-  constructor(editor, onChange, onEdit, onReplace, onBeforeReplace, validateSource) {
+  constructor(editor, onChange, onEdit, onReplace, onBeforeReplace, validateSource, showEditingBorders=true, tableLayoutLocked=false) {
     this.editor = editor;
     this.onChange = onChange;
     this.onEdit = onEdit;
     this.validateSource = validateSource;
+    this.showEditingBorders = showEditingBorders;
+    this.tableLayoutLocked = tableLayoutLocked;
     this.deps = editor.element.contentWindow.rhwpStudio?.plugins?.deps;
     if (!this.deps?.wasm || typeof this.deps.getInputHandler !== 'function') {
       editor.destroy();
@@ -90,16 +94,30 @@ export class RhwpExamBridge {
     const studioUrl = new URL('../vendor/rhwp-studio/index.html', import.meta.url);
     studioUrl.searchParams.set('chrome', 'embed');
     const editor = await createEditor(host, { studioUrl:studioUrl.href, renderer:'canvas2d' });
-    return new RhwpExamBridge(editor, options.onChange, options.onEdit, options.onReplace, options.onBeforeReplace, options.validateSource);
+    return new RhwpExamBridge(editor, options.onChange, options.onEdit, options.onReplace, options.onBeforeReplace, options.validateSource, options.showEditingBorders!==false, options.tableLayoutLocked===true);
   }
 
   get input() {
     const input=this.deps.getInputHandler();this.resizeInputs ||= new WeakSet();
-    if(input && !this.resizeInputs.has(input)){this.resizeInputs.add(input);installPictureResize(input,this);}
+    if(input && !this.resizeInputs.has(input)){this.resizeInputs.add(input);installPictureResize(input,this);setTableLayoutLocked(input,this.tableLayoutLocked);}
     return input;
+  }
+  setTableLayoutLocked(locked) {
+    this.tableLayoutLocked=!!locked;
+    setTableLayoutLocked(this.input,this.tableLayoutLocked);
   }
   get wasm() { return this.deps.wasm; }
   get generation() { return this.wasm.documentGeneration; }
+  async enableApprovedQuestionExport() {
+    if(!window.XLSX?.CFB)await new Promise((resolve,reject)=>{
+      const script=document.createElement('script');script.src='/assets/exampool/sheet/vendor/xlsx.full.min.js';script.onload=resolve;script.onerror=()=>reject(Error('한글 저장 도구를 불러오지 못했습니다.'));document.head.append(script);
+    });
+    this.approvedQuestionGeneration=this.generation;
+    if(this.approvedExportInstalled)return;
+    this.approvedExportInstalled=true;const original=this.wasm.exportHwp.bind(this.wasm),originalHwpx=this.wasm.exportHwpx.bind(this.wasm);
+    this.wasm.exportHwp=(...args)=>this.approvedQuestionGeneration===this.generation?exportCompatibleHwp(this.wasm.borrowDocumentHandle(),window.XLSX.CFB):original(...args);
+    this.wasm.exportHwpx=(...args)=>this.approvedQuestionGeneration===this.generation?exportVerifiedHwpx(this.wasm.borrowDocumentHandle(),window.XLSX.CFB):originalHwpx(...args);
+  }
 
   watchView(callback) {
     let frame=0;const schedule=()=>{if(!frame)frame=requestAnimationFrame(()=>{frame=0;callback();});};
@@ -288,15 +306,18 @@ export class RhwpExamBridge {
   transaction(label, mutate) {
     const input = this.input;
     if (!input) throw new Error('먼저 시험지를 열어주세요.');
+    // A structured question is one native undo step, including its picture.
+    if (this.batchMutation) return mutate(input);
     let result;
     input.executeOperation({ kind:'snapshot', operationType:`5e-exam:${label}`,
       operation:() => {
         const before = input.getCursorPosition(), snapshot = this.wasm.saveSnapshot();
         this.pictureMutationDepth = (this.pictureMutationDepth || 0) + 1;
         this.picturesCache = null;
-        try { result = mutate(input); return input.getCursorPosition(); }
+        try { this.batchMutation = true; result = mutate(input); return input.getCursorPosition(); }
         catch (error) { this.wasm.restoreSnapshot(snapshot); input.cursor.moveTo(before); throw error; }
         finally {
+          this.batchMutation = false;
           this.pictureMutationDepth--;
           this.picturesCache = null;
           this.wasm.discardSnapshot(snapshot);

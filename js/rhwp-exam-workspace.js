@@ -1,8 +1,10 @@
 import { parseFiveEProject } from './fivee-project.js?v=1.7.0-four-session-integration';
+import {buildQuestionHtml,verifyNativeQuestion} from '../assets/exampool/sheet/handoff.js?v=1014-hwp-sheet';
+import {openApprovedQuestion,nativeInsertOptions,sameColumnGeometry} from '../assets/exampool/sheet/native-transfer.js?v=1014-compact-panel';
 
 import { PictureSettings, ExamRegionSurface } from './rhwp-exam-picture-controls.js?v=1.7.0-four-session-integration';
 import { validRegion, DEFAULT_PICTURE_LAYOUT } from './rhwp-exam-region.js?v=1.7.0-four-session-integration';
-import { RhwpExamBridge } from './rhwp-exam-bridge.js?v=1.7.0-four-session-integration';
+import { RhwpExamBridge } from './rhwp-exam-bridge.js?v=1014-question-page';
 import { buildExamProject, parseExamProject, readExamDraft, writeExamDraft, listExamDrafts, EXAM_PROJECT_MAX_BYTES } from './rhwp-exam-project.js?v=1.7.0-four-session-integration';
 import { embedEditablePng, readEditablePng, validateFigureRender, EDITABLE_PNG_MAX_BYTES } from './editable-png.js?v=1.7.0-four-session-integration';
 import { normalizeExamFigure, forkExamFigure, validateExamLink, validateExamContext, renameExamFigure } from './rhwp-exam-links.js?v=1.7.0-four-session-integration';
@@ -1355,5 +1357,133 @@ export function initRhwpExamWorkspace(state, services) {
     });
   });
   window.fiveEDesktop?.exam?.onCancel(() => {if (editing?.external) {endEdit();message('시험지 창을 닫았습니다. 수정 내용은 5E 작업 탭에 남아 있습니다.');}});
-  return { getAutosaveSnapshot:() => state.get(),setAiPanel:panel => {connectedAi = panel;resolveAi();observeSourceAi();syncTabNames();} };
+  // ExamPool v1 boundary: content fields use the existing ExamPool names and
+  // the image is an immutable confirmed snapshot. No live canvas is sampled.
+  async function receiveQuestion(packet) {
+    if (busy || placement || editing) throw new Error('현재 한글 그림 작업을 마친 뒤 문항을 보내세요.');
+    if (location.protocol === 'file:') throw new Error('문항 전달은 로컬 웹 미리보기에서 한글 편집기를 열어 사용하세요.');
+    const q = packet?.question, snapshot = packet?.figure;
+    if (packet?.format !== '5e-exampool' || packet.version !== 1 || !q || typeof q.id !== 'string' ||
+        !['number','passage','ask'].every(key => typeof q[key] === 'string') || !Array.isArray(q.bogi_items) || !Array.isArray(q.choices) || q.choices.length !== 5) throw new Error('문항 전달 데이터가 올바르지 않습니다.');
+    let image, figure;
+    if (snapshot) {
+      if (!snapshot.confirmedAt || !/^data:image\/png;base64,/.test(snapshot.png)) throw new Error('확정한 그림이 아닙니다.');
+      const raw = Uint8Array.from(atob(snapshot.png.split(',')[1]), char => char.charCodeAt(0));
+      const id = crypto.randomUUID();
+      if (snapshot.source) {
+        prepareLoadedProject(clone(snapshot.source));
+        figure = normalizeExamFigure({id,name:snapshot.name,version:1,source:clone(snapshot.source),render:clone(snapshot.render),
+          link:{tabId:crypto.randomUUID(),assetId:crypto.randomUUID()},
+          exampool:{questionId:q.id,assetId:snapshot.assetId,confirmedRevisionId:snapshot.id,confirmedAt:snapshot.confirmedAt}});
+      }
+      image = {id,bytes:figure ? embedEditablePng(raw,figure,prepareLoadedProject) : raw,
+        widthMm:Math.min(80,snapshot.widthMm),heightMm:snapshot.heightMm*Math.min(1,80/snapshot.widthMm),pixelWidth:snapshot.pixelWidth,pixelHeight:snapshot.pixelHeight};
+    }
+    await open();
+    if (busy || placement || editing) throw new Error('한글 편집기가 준비된 뒤 다시 보내세요.');
+    setBusy(true);
+    try {
+      await flushInline(true);await closeInline();await repairLinks();
+      const input = bridge.input, cursor = input.getCursorPosition();
+      if (cursor.cellPath?.length || input.cursor.isInHeaderFooter?.() || input.cursor.isInFootnote?.()) throw new Error('한글 본문에 커서를 놓고 문항을 다시 보내세요.');
+      const textAlignment = bridge.wasm.getParaPropertiesAt(cursor.sectionIndex,cursor.paragraphIndex)?.alignment || 'justify';
+      const lines = text => String(text).split(/\r?\n/);
+      bridge.transaction('exampool-question', () => {
+        if (bridge.wasm.getParagraphLength(cursor.sectionIndex,cursor.paragraphIndex)>0) bridge.insertParagraph();
+        const append = text => {for (const line of lines(text)) {bridge.insertText(line);bridge.insertParagraph();}};
+        append((q.number ? q.number + '. ' : '') + q.passage);
+        if (image) {
+          const ref = bridge.insertFigure(image);
+          // RHWP's text length excludes picture controls. Splitting at zero
+          // moves the picture to the next paragraph, then every following line.
+          const offsets = bridge.wasm.getControlTextPositions(ref.sec,ref.ppi);
+          const after = Math.max(bridge.wasm.getParagraphLength(ref.sec,ref.ppi),...offsets.map(offset => offset+1));
+          const split = JSON.parse(bridge.wasm.splitParagraph(ref.sec,ref.ppi,after,null));
+          if (!split.ok) throw new Error('그림 뒤의 문단을 만들지 못했습니다.');
+          input.cursor.moveTo({sectionIndex:ref.sec,paragraphIndex:split.paraIdx,charOffset:0});
+          bridge.wasm.applyParaFormat(ref.sec,split.paraIdx,JSON.stringify({alignment:textAlignment}));
+        }
+        append(q.ask);
+        if (q.bogi_items.some(row => row.text.trim())) {append('〈보기〉');q.bogi_items.forEach((row,index) => append((row.label || ['ㄱ','ㄴ','ㄷ'][index] || String(index+1)) + '. ' + row.text));}
+        q.choices.forEach((row,index) => append(['①','②','③','④','⑤'][index] + ' ' + row.text));
+        return true;
+      });
+      if (figure) figures.set(figure.id,figure);
+      changed();message('문항과 확정 그림을 넣었습니다. 한글에서 최종 조판하고 .hwp 또는 .hwpx로 저장하세요.');
+    } finally {setBusy(false);}
+  }
+  async function receiveStructuredQuestion(packet){
+    if(busy||placement||editing)throw Error('현재 한글 그림 작업을 마친 뒤 문항을 보내세요.');
+    if(location.protocol==='file:')throw Error('로컬 웹 미리보기에서 문항 시트를 열어 한글로 보내세요.');
+    if(packet?.format!=='5e-question-sheet-v2'||![1,2].includes(packet.version))throw Error('문항 전달 형식이 올바르지 않습니다.');
+    await open();if(busy||placement||editing)throw Error('한글 편집기가 준비된 뒤 다시 보내세요.');setBusy(true);
+    try{
+      if(packet.version===2){
+        await flushInline(true);await closeInline();await repairLinks();
+        const input=bridge.input,cursor=input.getCursorPosition();
+        if(cursor.cellPath?.length||input.cursor.isInHeaderFooter?.()||input.cursor.isInFootnote?.())throw Error('한글 본문에 커서를 놓고 문항을 다시 보내세요.');
+        const target=bridge.wasm.borrowDocumentHandle(),Document=target.constructor,source=await openApprovedQuestion(Document,packet.question,packet.typeset);
+        try{
+          const empty=target.getSectionCount()===1&&target.getParagraphCount(0)===1&&target.getParagraphLength(0,0)===0;
+          if(!empty&&!sameColumnGeometry(source,target,cursor.sectionIndex))throw Error(packet.typeset.pageMode==='question-column'?'문항 전용 용지와 현재 문서의 규격이 다릅니다. 문항 HWPX를 열어 작업하세요. 전체 시험지 조립은 추후 지원합니다.':`조판과 시험지의 용지·여백·단 너비가 다릅니다. 시험지를 ${packet.typeset.profile.paper}·${packet.typeset.profile.columns}단과 저장한 조판의 여백·단 간격으로 맞추거나 문항 HWPX를 열어 작업하세요.`);
+          await bridge.enableApprovedQuestionExport();
+          let recovered;
+          bridge.transaction('approved-question',()=>{
+            if(empty){target.setPageDef(0,source.getPageDef(0));const col=JSON.parse(source.getColumnDef(0));target.setColumnDef(0,col.columnCount,col.columnType,col.sameWidth,col.spacing);}
+            // Insert at a paragraph boundary; never split a native table or
+            // replace the approved document with another HTML conversion.
+            if(target.getParagraphLength(cursor.sectionIndex,cursor.paragraphIndex)>0)bridge.insertParagraph();
+            const pos=input.getCursorPosition(),before=Math.max(1,pos.paragraphIndex);
+            target.importParagraphBlock(source,nativeInsertOptions(source,pos.sectionIndex,before,true));
+            const result=JSON.parse(target.importParagraphBlock(source,nativeInsertOptions(source,pos.sectionIndex,before))),inserted=result.operationResult?.result?.inserted;
+            if(!inserted)throw Error('저장한 문항 조판을 넣지 못했습니다.');
+            input.cursor.moveTo({sectionIndex:pos.sectionIndex,paragraphIndex:inserted.end-1,charOffset:0});
+            recovered=bridge.recoverFigures(prepareLoadedProject);
+            if(new Set([...figures.keys(),...recovered.keys()]).size>500)throw Error('시험지의 5E 그림은 500개까지 보관할 수 있습니다.');
+            return true;
+          });
+          for(const [id,figure] of recovered)figures.set(id,figure);
+          changed();renderFigures();message('저장한 조판을 넣었습니다. 글·표·수식·그림을 각각 편집할 수 있습니다.');
+          return {warnings:[]};
+        }finally{source.free();}
+      }
+      const position=bridge.input.getCursorPosition(),pageDef=bridge.wasm.getPageDef(position.sectionIndex),columnDef=bridge.wasm.getColumnDef(position.sectionIndex);
+      if(columnDef.columnCount>1&&!columnDef.sameWidth)throw Error('문항을 넣을 단을 같은 너비로 맞춘 뒤 다시 보내세요.');
+      const available=(pageDef.width-pageDef.marginLeft-pageDef.marginRight-(pageDef.marginGutter||0)-(columnDef.spacing||0)*(columnDef.columnCount-1))/Math.max(1,columnDef.columnCount)/75-32;
+      if(available<120)throw Error('문항을 넣을 단이 너무 좁습니다. 단 수를 줄이거나 용지 너비를 넓혀주세요.');
+      const width=Math.min(540,available);
+      const plan=await buildQuestionHtml(packet.question,async f=>{
+        const image=new Image();image.src=f.data;await image.decode();
+        if(image.naturalWidth*image.naturalHeight>40000000)throw Error('한글로 보낼 그림 크기를 줄여주세요.');
+        let bytes=Uint8Array.from(atob(f.data.split(',')[1]),c=>c.charCodeAt(0));
+        if(!f.data.startsWith('data:image/png;')){
+          const canvas=document.createElement('canvas');canvas.width=image.naturalWidth;canvas.height=image.naturalHeight;canvas.getContext('2d').drawImage(image,0,0);
+          bytes=new Uint8Array(await(await new Promise((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(Error('그림을 PNG로 바꾸지 못했습니다.')),'image/png'))).arrayBuffer());
+        }
+        const original=readEditablePng(bytes,prepareLoadedProject)||(f.editable?.source?{id:f.editable.id||crypto.randomUUID(),name:f.name.slice(0,200),version:1,source:clone(f.editable.source),render:clone(f.editable.render)}:null);
+        if(original){const independent=forkExamFigure(normalizeExamFigure(original));bytes=embedEditablePng(bytes,independent,prepareLoadedProject);}
+        let raw='';for(let i=0;i<bytes.length;i+=32768)raw+=String.fromCharCode(...bytes.subarray(i,i+32768));
+        return {...f,data:'data:image/png;base64,'+btoa(raw),width:image.naturalWidth,height:image.naturalHeight};
+      },width);
+      await flushInline(true);await closeInline();await repairLinks();
+      const Document=bridge.wasm.borrowDocumentHandle().constructor,staged=Document.createEmpty();
+      try{staged.createBlankDocument();const result=JSON.parse(staged.pasteHtml(0,0,0,plan.html));if(!result.ok)throw Error('문항 구성을 한글로 읽지 못했습니다.');verifyNativeQuestion(staged,plan);}finally{staged.free();}
+      const input=bridge.input,cursor=input.getCursorPosition();
+      if(cursor.cellPath?.length||input.cursor.isInHeaderFooter?.()||input.cursor.isInFootnote?.())throw Error('한글 본문에 커서를 놓고 문항을 다시 보내세요.');
+      let recovered;
+      bridge.transaction('question-sheet',()=>{
+        if(bridge.wasm.getParagraphLength(cursor.sectionIndex,cursor.paragraphIndex)>0)bridge.insertParagraph();
+        const pos=input.getCursorPosition(),result=JSON.parse(bridge.wasm.pasteHtml(pos.sectionIndex,pos.paragraphIndex,pos.charOffset,plan.html));
+        if(!result.ok)throw Error('문항을 넣지 못했습니다. 기존 시험지는 보존했습니다.');
+        input.cursor.moveTo({sectionIndex:pos.sectionIndex,paragraphIndex:result.paraIdx??pos.paragraphIndex,charOffset:result.charOffset??0});
+        recovered=bridge.recoverFigures(prepareLoadedProject);
+        if(new Set([...figures.keys(),...recovered.keys()]).size>500)throw Error('시험지의 5E 그림은 500개까지 보관할 수 있습니다.');
+        return true;
+      });
+      for(const [id,figure] of recovered)figures.set(id,figure);
+      changed();renderFigures();message('문항을 넣었습니다. 글·표는 한글에서 편집하고 그림은 5E에서 수정할 수 있습니다.'+(plan.warnings.length?' '+plan.warnings.join(' '):''));
+      return {warnings:plan.warnings};
+    }finally{setBusy(false);}
+  }
+  return { receiveQuestion,receiveStructuredQuestion, getAutosaveSnapshot:() => state.get(),setAiPanel:panel => {connectedAi = panel;resolveAi();observeSourceAi();syncTabNames();} };
 }

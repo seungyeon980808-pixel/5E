@@ -1,0 +1,151 @@
+/* 5E_ExamPool 문항 시트 — 1.7.0 최종안 화면
+   창 밖(위쪽 막대·작업대·아래 줄)은 화면 색 세 가지(다크네이비·그라파이트·화이트)를 따른다.
+   5E_cell·5e_hwp 창 안은 흰 문서다. 색·크기는 /css/design-tokens.css 의 --ds-* 토큰만 쓴다. */
+
+:root{
+  color-scheme:light dark;
+  /* sheet.css 의 기존 변수를 문서 창 토큰에 연결한다 */
+  --green:var(--ds-cell);--line:var(--ds-doc-line);--soft:var(--ds-doc-sub);
+  --ink:var(--ds-doc-ink);--muted:var(--ds-doc-ink-3);
+  font-family:var(--ds-font);font-size:var(--ds-text-body);
+  background:var(--ds-app);color:var(--ds-ink);
+}
+body{background:var(--ds-app)}
+::selection{background:var(--ds-cell-soft);color:var(--ds-doc-ink)}
+.ico{width:var(--ds-icon-menu);height:var(--ds-icon-menu);flex:none;fill:none;stroke:currentColor;stroke-width:var(--ds-icon-stroke);stroke-linecap:round;stroke-linejoin:round}
+
+/* ---------- 버튼: 테두리 없음 · 올리면 옅은 면 · 눌림/선택은 회색 면 ---------- */
+button{display:inline-flex;align-items:center;justify-content:center;gap:var(--ds-space-3);height:var(--ds-h-control);padding:0 var(--ds-space-4);border:0;border-radius:var(--ds-radius);background:transparent;color:var(--ds-doc-ink-2);font-size:var(--ds-text-body);font-weight:var(--ds-weight-medium);box-shadow:none}
+button:hover:not(:disabled){background:var(--ds-doc-hover)}
+button:active:not(:disabled),button[aria-pressed=true],button[aria-expanded=true]{background:var(--ds-doc-selected);box-shadow:none}
+button:disabled{opacity:.4}
+.primary{background:var(--ds-cell);color:var(--ds-bar-ink)}
+.primary:hover:not(:disabled){background:var(--ds-cell-bar)}
+.primary:active:not(:disabled){background:var(--ds-cell-bar)}
+button:focus-visible,input:focus-visible,textarea:focus-visible,select:focus-visible{outline:2px solid var(--ds-focus);outline-offset:-2px}
+input,select,textarea{border:1px solid var(--ds-doc-line-strong);border-radius:var(--ds-radius-sm);background:var(--ds-doc);color:var(--ds-doc-ink)}
+
+/* ---------- 위쪽 막대 40 ---------- */
+.top{height:var(--ds-h-bar);padding:0 var(--ds-edge);background:var(--ds-bar);color:var(--ds-ink);border-bottom:1px solid var(--ds-line);gap:var(--ds-space-5)}
+.brand{display:flex;align-items:baseline;gap:0}
+.brand-mark{font:italic var(--ds-weight-strong) 17px/1 var(--ds-font-brand);color:var(--ds-ink)}
+.brand strong{font:var(--ds-weight-strong) var(--ds-text-title)/1 var(--ds-font);letter-spacing:0;color:var(--ds-ink)}
+.brand .brand-page{margin-left:var(--ds-space-5);font-size:var(--ds-text-body);color:var(--ds-ink-3);opacity:1}
+.top-actions{gap:var(--ds-space-2)}
+.top button{height:var(--ds-h-control);padding:0 var(--ds-space-4);border:0;background:transparent;color:var(--ds-ink-2)}
+.top button:hover:not(:disabled){background:var(--ds-hover)}
+.top button:active:not(:disabled){background:var(--ds-selected)}
+
+/* ---------- 작업대: 두 창이 떠 있다 ---------- */
+.workspace{gap:var(--ds-space-6);padding:var(--ds-space-6);background:var(--ds-bench)}
+.office-window{display:flex;flex-direction:column;min-width:0;min-height:0;overflow:hidden;background:var(--ds-doc);color:var(--ds-doc-ink);border-radius:var(--ds-radius-lg);box-shadow:var(--ds-shadow-float)}
+.work.office-window{flex:1 1 0}
+.window-title{flex:none;height:var(--ds-h-row);display:flex;align-items:center;gap:var(--ds-space-4);padding:0 var(--ds-space-2) 0 var(--ds-space-5);color:var(--ds-bar-ink);white-space:nowrap}
+.window-title strong,.window-title .window-name{font-size:var(--ds-text-body);font-weight:var(--ds-weight-strong)}
+.window-title>span{font-size:var(--ds-text-meta);opacity:.78}
+[data-app=cell]>.window-title{background:var(--ds-cell-bar)}
+[data-app=hwp]>.window-title{background:var(--ds-hwp-bar)}
+.window-title button{height:var(--ds-h-control-sm);padding:0 var(--ds-space-4);color:var(--ds-bar-ink);background:transparent}
+.window-title button:hover:not(:disabled){background:var(--ds-bar-hover)}
+.window-title button:active:not(:disabled),.window-title button[aria-pressed=true]{background:var(--ds-bar-selected)}
+.window-title .primary{background:var(--ds-bar-selected)}
+.window-title .primary:hover:not(:disabled){background:var(--ds-bar-hover)}
+
+/* ---------- 5E_cell: 리본 36 · 입력줄 28 · 시트 ---------- */
+.work .toolbar{flex:none;min-height:var(--ds-h-row2);height:var(--ds-h-row2);padding:0 var(--ds-space-4);gap:var(--ds-space-1);background:var(--ds-doc-sub);border-bottom:1px solid var(--ds-doc-line)}
+.work .toolbar button{border:0;background:transparent;color:var(--ds-doc-ink-2)}
+.work .toolbar button:hover:not(:disabled){background:var(--ds-doc-hover);border-color:transparent}
+.work .toolbar button.primary{background:transparent;color:var(--ds-cell);font-weight:var(--ds-weight-strong)}
+.work .toolbar button.primary:hover:not(:disabled){background:var(--ds-doc-hover)}
+.divider{height:16px;background:var(--ds-doc-line-strong);margin:0 var(--ds-space-3)}
+.toolbar-end{gap:var(--ds-space-4);color:var(--ds-doc-ink-3);font-size:var(--ds-text-meta)}
+#filter{width:160px;height:var(--ds-h-control-sm);padding:0 var(--ds-space-4);font-size:var(--ds-text-body)}
+.work .formula{flex:none;height:var(--ds-h-control);border-bottom:1px solid var(--ds-doc-line-strong);background:var(--ds-doc)}
+#cell-address{display:flex;align-items:center;justify-content:center;width:64px;padding:0;font-size:var(--ds-text-meta);background:var(--ds-doc-sub);border-right:1px solid var(--ds-doc-line)}
+.fx{display:flex;align-items:center;justify-content:center;width:36px;align-self:stretch;border-right:1px solid var(--ds-doc-line);font:italic var(--ds-text-body)/1 var(--ds-font-brand);color:var(--ds-doc-ink-3)}
+#formula-value{font-size:var(--ds-text-body);background:var(--ds-doc)}
+#formula-value:disabled{background:var(--ds-doc)}
+.registry{background:var(--ds-doc)}
+
+/* 시트 칸: 행·열 번호는 회색, 선택은 엑셀 초록 */
+#registry th,#registry td{border-right-color:var(--ds-doc-line);border-bottom-color:var(--ds-doc-line)}
+#registry th{background:var(--ds-doc-head);color:var(--ds-doc-ink-3);font-size:var(--ds-text-meta)}
+#registry .letters th{background:var(--ds-doc-head);color:var(--ds-doc-ink-3)}
+#registry .row-num{background:var(--ds-doc-head);color:var(--ds-doc-ink-3)}
+#registry .field-label{background:var(--ds-doc-sub);color:var(--ds-doc-ink-2);font-size:var(--ds-text-meta)}
+#registry thead tr:nth-child(2) th{border-bottom-color:var(--ds-doc-line-strong);background:var(--ds-doc-sub)}
+#registry thead button{color:var(--ds-doc-ink);font-size:var(--ds-text-meta);height:38px}
+#registry thead button span{color:var(--ds-doc-ink-3)}
+#registry thead th[data-current=true],table[data-grid] th.grid-header-selected{background:var(--ds-cell-soft)!important;color:var(--ds-cell)!important}
+#registry tr[data-current=true] td{background:var(--ds-cell-tint)}
+#registry tr[data-current=true] th{background:var(--ds-cell-soft);color:var(--ds-cell);border-left-color:var(--ds-cell)}
+#registry textarea,#registry input,#registry select{color:var(--ds-doc-ink);font-size:var(--ds-text-body)}
+#registry td.grid-selected,.data-table td.grid-selected{background:var(--ds-cell-tint)}
+#registry td.grid-active,.data-table td.grid-active{background:var(--ds-doc)}
+#registry td[data-open] textarea{color:var(--ds-doc-ink-2)}
+/* 구성 편집이 열리는 칸: 문자 기호 대신 선 아이콘 */
+#registry td[data-open]::after{content:"";right:8px;bottom:8px;width:11px;height:11px;background:var(--ds-doc-ink-3);
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 16 16 8M9 8h7v7'/%3E%3C/svg%3E") center/contain no-repeat;
+          mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M8 16 16 8M9 8h7v7'/%3E%3C/svg%3E") center/contain no-repeat}
+.table-options summary::after,.block-options summary::after{content:"";display:inline-block;width:10px;height:10px;margin-left:4px;vertical-align:-1px;background:currentColor;
+  -webkit-mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") center/contain no-repeat;
+          mask:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E") center/contain no-repeat}
+#empty{color:var(--ds-doc-ink-3)}
+
+/* ---------- 5e_hwp: 제목 줄에 조판 동작 · 도구 줄 · 종이 ---------- */
+#preview-dialog{flex:1 1 0;width:auto;min-width:420px;border:0;border-radius:var(--ds-radius-lg);box-shadow:var(--ds-shadow-float);background:var(--ds-doc)}
+#preview-dialog .typeset-head{padding:0 var(--ds-space-2) 0 var(--ds-space-5)}
+#preview-dialog .typeset-head h2{font-size:var(--ds-text-meta);font-weight:var(--ds-weight-regular);opacity:.78;margin:0;color:var(--ds-bar-ink)}
+.typeset-actions{margin-left:auto;gap:var(--ds-space-1)}
+.typeset-actions button{height:var(--ds-h-control-sm);padding:0 var(--ds-space-4);font-size:var(--ds-text-body)}
+.typeset-view-controls{height:var(--ds-h-row2);padding:0 var(--ds-space-4);gap:var(--ds-space-1);background:var(--ds-doc-sub);border-bottom:1px solid var(--ds-doc-line);flex-wrap:nowrap}
+.typeset-view-controls button{height:var(--ds-h-control);padding:0 var(--ds-space-4);border:0;font-size:var(--ds-text-body)}
+.typeset-view-controls button[aria-pressed=true]{background:var(--ds-hwp-soft);color:var(--ds-hwp);border:0}
+#typeset-options,#typeset-context{padding:var(--ds-space-2) var(--ds-space-4);gap:var(--ds-space-2);background:var(--ds-doc);border-top:0;border-bottom:1px solid var(--ds-doc-line)}
+#typeset-context button{height:var(--ds-h-control-sm);padding:0 var(--ds-space-4);font-size:var(--ds-text-body)}
+#typeset-context button[aria-pressed=true]{background:var(--ds-hwp-soft);color:var(--ds-hwp)}
+#preview-dialog label{font-size:var(--ds-text-meta);color:var(--ds-doc-ink-2)}
+.typeset-info{padding:var(--ds-space-3) var(--ds-space-5);gap:var(--ds-space-1);background:var(--ds-hwp-soft);border-bottom:1px solid var(--ds-doc-line)}
+#typeset-status{font-size:var(--ds-text-meta);color:var(--ds-doc-ink-2)}
+#typeset-metrics{font-size:var(--ds-text-meta);color:var(--ds-hwp)}
+#typeset-status[data-error=true]{color:var(--ds-danger)}
+#typeset-metrics[data-exceeded=true]{color:var(--ds-warning)}
+#native-editor{background:var(--ds-doc-paper-bench)}
+#preview-dialog[data-expanded=true]{inset:var(--ds-space-6);border:0;box-shadow:var(--ds-shadow-float)}
+#preview-dialog .exam-picture-settings{background:var(--ds-doc);border:0;border-radius:var(--ds-radius);box-shadow:var(--ds-shadow-float)}
+#preview-dialog .exam-wrap-options button[aria-pressed=true]{background:var(--ds-hwp-soft);color:var(--ds-hwp);border-color:transparent}
+
+/* ---------- 자료 열람: 같은 떠 있는 창 ---------- */
+#sources{width:360px;border-left:0;background:var(--ds-doc)}
+.source-head{height:var(--ds-h-row);padding:0 var(--ds-space-2) 0 var(--ds-space-5);background:var(--ds-doc-sub);border-bottom:1px solid var(--ds-doc-line)}
+.source-head strong{font-size:var(--ds-text-body)}
+#sources .tabs button[aria-selected=true],.tabs button[aria-selected=true]{color:var(--ds-cell);border-bottom-color:var(--ds-cell)}
+.workspace:has(#preview-dialog:not([hidden])) #sources:not([hidden]){top:var(--ds-space-6);right:var(--ds-space-6);bottom:var(--ds-space-6);border-radius:var(--ds-radius-lg);box-shadow:var(--ds-shadow-float)}
+
+/* ---------- 아래 줄 27 ---------- */
+footer{height:var(--ds-h-footer);align-items:center;padding:0 var(--ds-edge);background:var(--ds-bar);border-top:1px solid var(--ds-line);color:var(--ds-ink-2);font-size:var(--ds-text-meta)}
+.footer-right{color:var(--ds-ink-3)}
+#status[data-error=true]{color:var(--ds-danger)}
+[data-change-summary]{border:0;border-radius:var(--ds-radius-sm);padding:1px 6px;background:var(--ds-kbd);color:var(--ds-ink-2);font-size:var(--ds-text-meta)}
+
+/* ---------- 대화상자도 흰 문서 창 ---------- */
+dialog{border:0;border-radius:var(--ds-radius-lg);background:var(--ds-doc);color:var(--ds-doc-ink);box-shadow:var(--ds-shadow-float)}
+dialog::backdrop{background:rgba(0,0,0,.32)}
+.dialog-head h2{font-size:var(--ds-text-title);font-weight:var(--ds-weight-strong)}
+#template-gallery button{height:auto;border:1px solid var(--ds-doc-line);background:var(--ds-doc);color:var(--ds-doc-ink);justify-content:flex-start;align-items:stretch}
+#template-gallery button[aria-pressed=true]{border:2px solid var(--ds-cell);background:var(--ds-cell-tint)}
+.add-options button,.doc-list,.standard-item,#delete-confirm{height:auto;min-height:var(--ds-h-control)}
+
+/* ---------- 좁은 화면: 작업대 여백만 줄인다 ---------- */
+@media(max-width:1100px){.workspace{gap:var(--ds-space-4);padding:var(--ds-space-4)}#preview-dialog{min-width:360px}}
+@media(max-width:760px){.workspace:has(#preview-dialog:not([hidden])){flex-direction:column}#preview-dialog{min-width:0;border-top:0}.work .toolbar{height:auto;flex-wrap:wrap;padding:var(--ds-space-2)}}
+
+/* 공통 버튼 높이를 쓰지 않는 안쪽 버튼(탭·줄 도구·자료 목록)은 원래 높이를 유지한다 */
+.tabs button{height:auto;border-radius:0}
+.tabs button:hover:not(:disabled){background:transparent;color:var(--ds-doc-ink)}
+.ref-row button,.figure-slot button,.block-tools button,.line-row button,.add-line,.table-tools button,.choices-head button,.source-buttons button,.doc-nav button,.detail-actions button{height:auto;min-height:var(--ds-h-control-sm)}
+/* 리본이 창 폭보다 길면 오른쪽 끝(단축키·찾기)부터 줄인다. 버튼 위치는 그대로다. */
+.work .toolbar{overflow:hidden}
+.work .toolbar-end{min-width:0;flex:0 1 auto}
+.work .toolbar-end #filter{flex:0 1 160px;min-width:72px;width:auto}
+.workspace:has(#preview-dialog:not([hidden])) .work .toolbar-end #count{display:none}

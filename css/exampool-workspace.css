@@ -1,0 +1,162 @@
+#exampool-workspace { position:fixed; inset:0 0 24px; z-index:790; display:flex; flex-direction:column; background:var(--bg-panel); color:var(--text-primary); font:14px/1.55 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo",sans-serif; }
+#exampool-workspace[hidden], #exampool-workspace [hidden] { display:none !important; }
+#exampool-workspace * { box-sizing:border-box; }
+#exampool-workspace h1, #exampool-workspace h2, #exampool-workspace h3, #exampool-workspace h4, #exampool-workspace p { margin:0; }
+#exampool-workspace button { min-height:32px; padding:5px 10px; color:inherit; background:var(--pool-surface,var(--bg-panel)); border:1px solid var(--pool-border,var(--border)); border-radius:5px; font:inherit; cursor:pointer; }
+#exampool-workspace button:hover { background:var(--pool-hover,var(--bg-app)); }
+#exampool-workspace button:disabled { opacity:.48; cursor:default; }
+#exampool-workspace :focus-visible { outline:2px solid #397bb5; outline-offset:2px; }
+#exampool-workspace ::selection { background:#cde3f7; color:#152c42; }
+#exampool-workspace .pool-primary { border-color:var(--pool-accent,var(--exam-accent,#dba52b)); font-weight:600; }
+.pool-header { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:12px 20px; border-bottom:1px solid var(--border); }
+.pool-header>div:first-child { display:flex; align-items:baseline; gap:12px; flex-shrink:0; }
+.pool-header strong { font-size:18px; }
+#exampool-workspace h1 { font-size:15px; font-weight:500; }
+.pool-actions { display:flex; flex-wrap:wrap; align-items:center; gap:6px; }
+.pool-header .pool-actions { font-size:12px; }
+.pool-body { display:grid; grid-template-columns:166px minmax(0,1fr) clamp(370px,38vw,660px); flex:1; min-height:0; }
+.pool-sidebar { display:flex; flex-direction:column; padding:16px 10px; border-right:1px solid var(--border); overflow:auto; }
+#pool-list { margin:14px 0; }
+#exampool-workspace .pool-list-item { display:block; width:100%; margin:0 0 6px; text-align:left; padding:9px; }
+.pool-list-item strong, .pool-list-item span { display:block; overflow:hidden; white-space:nowrap; text-overflow:ellipsis; }
+.pool-list-item span { margin-top:3px; font-size:12px; color:var(--text-secondary); }
+#exampool-workspace .pool-list-item[aria-current="true"] { border-color:var(--exam-accent,#dba52b); background:var(--bg-app); }
+#exampool-workspace .pool-storage { margin-top:auto; font-size:11px; line-height:1.8; color:var(--text-secondary); }
+/* The document and sources remain light, regardless of the drawing app's theme. */
+.pool-main, .pool-references { --pool-surface:#fff; --pool-border:#d8dfe6; --pool-hover:#edf3f8; --pool-accent:#245b90; --pool-muted:#526273; color:#1e2c3a; color-scheme:light; background:#fff; scrollbar-color:#bcc8d2 #f4f6f8; scrollbar-width:thin; }
+.pool-main { overflow:auto; padding:24px 28px 40px; }
+#pool-form { max-width:900px; margin:0 auto; }
+#exampool-workspace .pool-main .pool-primary, #exampool-workspace .pool-references .pool-primary { background:#245b90; color:#fff; }
+#exampool-workspace .pool-main .pool-primary:hover, #exampool-workspace .pool-references .pool-primary:hover { background:#194c7c; }
+.pool-editor-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:20px; }
+#exampool-workspace h2 { font-size:20px; font-weight:650; letter-spacing:-.02em; }
+#exampool-workspace h3 { font-size:14px; font-weight:650; }
+.pool-editor-heading .pool-actions { font-size:12px; }
+.pool-plan { padding:14px 16px; background:#f5f7f9; border:1px solid #e0e6ec; border-radius:6px; }
+.pool-plan-heading, .pool-writing-heading { display:flex; align-items:center; justify-content:space-between; gap:8px; }
+.pool-plan-heading>span { font-size:11px; color:#526273; }
+.pool-standard-link { display:flex; align-items:flex-start; flex-wrap:wrap; gap:6px; margin:10px 0 12px; }
+#pool-selected-standard { flex:1 1 220px; color:#526273; font-size:12px; }
+#pool-selected-standard strong { display:block; margin-bottom:3px; color:#245b90; }
+#pool-selected-standard span { color:#26394c; }
+.pool-standard-link button { font-size:11px !important; min-height:28px !important; padding:3px 7px !important; }
+.pool-intent-label { display:block; font-size:12px; font-weight:600; margin-bottom:5px; }
+#exampool-workspace .pool-plan textarea { background:white; border:1px solid #d8dfe6; border-radius:4px; padding:7px 9px; font-size:13px; }
+#pool-linked-references h4 { font-size:12px; margin:14px 0 6px; }
+.pool-linked-reference { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:5px; padding:6px 0; border-top:1px solid #e0e6ec; }
+#exampool-workspace .pool-linked-reference button { font-size:11px; min-height:25px; padding:3px 6px; }
+.pool-linked-reference button:first-child { text-align:left; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+#exampool-workspace .pool-linked-reference p { grid-column:1 / -1; font-size:12px; color:#526273; white-space:pre-wrap; overflow-wrap:anywhere; max-height:65px; overflow:auto; }
+.pool-writing-heading { margin:24px 0 8px; padding-bottom:10px; border-bottom:1px solid #d8dfe6; }
+.pool-writing-heading button { font-size:12px !important; min-height:28px !important; }
+.pool-fields { min-width:0; }
+.pool-row { display:grid; grid-template-columns:1fr; margin:14px 0 18px; }
+.pool-row>span, .pool-row>label { font-size:12px; font-weight:650; color:#344b60; margin-bottom:5px; }
+.pool-row>div { min-width:0; }
+#exampool-workspace input, #exampool-workspace textarea, #exampool-workspace select { min-width:0; color:inherit; font:inherit; caret-color:#245b90; }
+#exampool-workspace .pool-main input, #exampool-workspace .pool-main textarea, #exampool-workspace .pool-references input, #exampool-workspace .pool-references textarea, #exampool-workspace .pool-references select { width:100%; border:1px solid #d8dfe6; border-radius:4px; color:#1e2c3a; background:#fff; padding:8px 10px; line-height:1.7; }
+#exampool-workspace textarea { display:block; resize:vertical; }
+#exampool-workspace input::placeholder, #exampool-workspace textarea::placeholder { color:#657485; opacity:1; }
+#exampool-workspace .pool-number-row { display:flex; align-items:center; gap:12px; }
+.pool-number-row>span { margin:0; }
+#exampool-workspace #pool-number { width:130px; font-variant-numeric:tabular-nums; padding:5px 9px; }
+#exampool-workspace .pool-hint, #pool-figure-state { font-size:11px; line-height:1.7; color:#526273; margin-top:6px; }
+.pool-figure .pool-actions { font-size:11px; }
+.pool-figure .pool-actions button { min-height:28px !important; padding:4px 7px !important; }
+#pool-previews { display:flex; flex-wrap:wrap; gap:12px; margin-top:10px; }
+#pool-previews:empty { margin:0; }
+#pool-previews figure { margin:0; flex:1; min-width:130px; max-width:300px; }
+#pool-previews img { display:block; width:100%; height:118px; object-fit:contain; background:white; border:1px solid #d8dfe6; border-radius:4px; }
+#pool-previews figcaption { font-size:11px; color:#526273; padding-top:4px; overflow-wrap:anywhere; }
+.pool-choices { border:0; padding:0; margin:0; }
+.pool-choices legend { font-size:12px; font-weight:650; padding:0 0 7px; color:#344b60; }
+.pool-choices>label { display:grid; grid-template-columns:25px minmax(0,1fr); align-items:center; gap:4px; margin-bottom:7px; }
+.pool-choices>label>span { color:#526273; }
+#pool-print-preview { padding:24px; margin:14px 0 22px; border:1px solid #d8dfe6; background:white; color:#151c24; line-height:1.85; }
+#exampool-workspace #pool-print-preview p { margin:12px 0; white-space:pre-wrap; overflow-wrap:anywhere; }
+#pool-print-preview img { display:block; max-width:100%; max-height:240px; object-fit:contain; margin:16px auto; }
+#pool-print-preview small { color:#526273; }
+.pool-references { --pool-surface:#fff; overflow:auto; padding:20px 20px 32px; border-left:1px solid #d8dfe6; background:#fafbfc; }
+.pool-reference-heading { display:flex; align-items:center; justify-content:space-between; margin-bottom:12px; }
+#exampool-workspace .pool-reference-heading h2 { font-size:16px; }
+#pool-library-count { color:#526273; font-size:11px; }
+.pool-reference-tabs { display:flex; gap:4px; border-bottom:1px solid #d8dfe6; margin-bottom:14px; }
+#exampool-workspace .pool-reference-tabs button { flex:1; border:0; border-radius:0; background:transparent; border-bottom:2px solid transparent; padding:9px 0; font-size:13px; }
+#exampool-workspace .pool-reference-tabs [aria-selected="true"] { color:#245b90; border-bottom-color:#245b90; font-weight:650; }
+.pool-reference-filters { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+.pool-reference-filters label, .pool-reference-import label, .pool-evidence-actions label { display:block; font-size:11px; color:#526273; }
+#exampool-workspace .pool-references select { padding:6px 7px; font-size:12px; min-height:33px; }
+.pool-search-label { display:block; font-size:11px; font-weight:600; margin:12px 0 4px; color:#526273; }
+#exampool-workspace .pool-references input[type="search"] { font-size:13px; }
+.pool-reference-results { max-height:210px; overflow:auto; margin:10px 0 14px; border-top:1px solid #e0e6ec; border-bottom:1px solid #e0e6ec; scrollbar-width:thin; }
+#exampool-workspace .pool-reference-results button { display:block; width:100%; text-align:left; border:0; border-bottom:1px solid #e8edf1; border-radius:0; padding:10px 9px; font-size:12px; background:transparent; }
+#exampool-workspace .pool-reference-results button:hover, #exampool-workspace .pool-reference-results button[aria-current="true"] { background:#eaf2f9; }
+.pool-reference-results strong { display:block; font-size:12px; color:#245b90; overflow-wrap:anywhere; }
+.pool-reference-results span { display:block; margin-top:3px; color:#526273; }
+#exampool-workspace .pool-reference-empty { padding:18px 4px; font-size:12px; color:#526273; line-height:1.8; }
+.pool-standard-detail { padding:14px 0; }
+#exampool-workspace .pool-standard-detail h3 { font-size:16px; color:#245b90; margin:6px 0 10px; }
+#exampool-workspace .pool-standard-text { font-size:15px; line-height:1.9; }
+#exampool-workspace .pool-standard-detail details { margin:16px 0; font-size:12px; line-height:1.8; }
+.pool-standard-detail summary { font-weight:650; color:#344b60; cursor:pointer; }
+#exampool-workspace .pool-standard-detail details p { margin-top:7px; color:#3d5063; }
+#exampool-workspace .pool-standard-detail>button { margin-top:5px; font-size:12px; }
+#exampool-workspace .pool-source-caption { font-size:11px; line-height:1.7; color:#526273; }
+.pool-reference-import { display:flex; align-items:flex-end; gap:8px; }
+.pool-reference-import label { flex:1; }
+#pool-resource-open { font-size:12px !important; min-height:33px !important; }
+.pool-viewer-heading { padding:6px 0 10px; }
+#exampool-workspace .pool-viewer-heading h3 { font-size:13px; overflow-wrap:anywhere; margin-bottom:8px; }
+.pool-page-tools { display:flex; align-items:center; gap:5px; font-size:11px; }
+.pool-page-tools label { display:flex; align-items:center; gap:3px; flex:1; justify-content:center; font-variant-numeric:tabular-nums; white-space:nowrap; }
+#exampool-workspace #pool-source-page { width:46px; padding:3px; text-align:center; font-size:11px; }
+#exampool-workspace .pool-page-tools button { min-height:28px; font-size:11px; padding:3px 7px; }
+#exampool-workspace #pool-source-zoom { width:72px; min-height:28px; padding:3px; font-size:11px; }
+#pool-source-page-view { max-height:56vh; min-height:80px; overflow:auto; background:#edf1f4; border:1px solid #d8dfe6; scrollbar-width:thin; }
+#pool-source-page-view img { display:block; max-width:none; height:auto; background:white; }
+.pool-document-text { padding:16px; font-size:13px; line-height:1.9; white-space:pre-wrap; overflow-wrap:anywhere; background:white; color:#26394c; }
+.pool-source-text { margin:12px 0; font-size:12px; }
+.pool-source-text summary { color:#344b60; cursor:pointer; }
+.pool-source-text .pool-document-text { max-height:200px; overflow:auto; margin:6px 0; }
+.pool-source-text button { font-size:11px !important; }
+.pool-evidence-compose>label { display:block; font-size:12px; font-weight:600; margin:12px 0 5px; }
+#exampool-workspace #pool-evidence-quote { font-size:12px; }
+.pool-evidence-actions { display:flex; justify-content:space-between; gap:8px; align-items:flex-end; margin-top:7px; }
+.pool-evidence-actions button { font-size:12px !important; }
+#exampool-workspace #pool-reference-status { margin-top:12px; font-size:11px; color:#526273; overflow-wrap:anywhere; }
+#pool-reference-status[data-error="true"] { color:#ae2534 !important; }
+.pool-statusbar { display:flex; align-items:center; justify-content:space-between; gap:16px; padding:6px 20px; border-top:1px solid var(--border); color:var(--text-secondary); font-size:11px; }
+#pool-status[data-error="true"] { color:var(--text-primary); font-weight:600; }
+#pool-empty { max-width:520px; margin:64px auto; }
+#exampool-workspace #pool-empty p { margin:12px 0 22px; color:#526273; line-height:1.9; }
+.pool-mobile-switch { display:none; }
+@media(max-width:1100px) {
+  .pool-body { grid-template-columns:minmax(0,1fr) minmax(330px,42%); grid-template-rows:auto minmax(0,1fr); }
+  .pool-sidebar { grid-column:1 / -1; flex-direction:row; align-items:center; gap:10px; border-right:0; border-bottom:1px solid var(--border); padding:8px 12px; overflow:hidden; }
+  .pool-sidebar>button { flex-shrink:0; }
+  #pool-list { display:flex; gap:6px; overflow:auto; margin:0; }
+  #exampool-workspace .pool-list-item { width:148px; flex-shrink:0; margin:0; padding:4px 8px; min-height:32px; }
+  .pool-list-item span, .pool-storage { display:none; }
+  .pool-main { padding:20px 18px 32px; }
+  .pool-references { padding:18px 14px 28px; }
+  .pool-editor-heading { flex-wrap:wrap; }
+}
+@media(max-width:760px) {
+  .pool-header { padding:10px 12px; flex-wrap:wrap; gap:8px; }
+  .pool-header strong { font-size:16px; }
+  .pool-header .pool-actions { font-size:11px; gap:4px; }
+  .pool-header button { min-height:28px !important; padding:4px 7px !important; }
+  .pool-mobile-switch { display:flex; background:#f4f7fa; border-bottom:1px solid #d8dfe6; padding:5px 12px; gap:5px; }
+  #exampool-workspace .pool-mobile-switch button { color:#526273; border:0; background:transparent; flex:1; }
+  #exampool-workspace .pool-mobile-switch [aria-pressed="true"] { color:#245b90; background:white; font-weight:650; }
+  .pool-body { grid-template-columns:minmax(0,1fr); }
+  #exampool-workspace[data-mobile-view="editor"] .pool-references, #exampool-workspace[data-mobile-view="references"] .pool-main { display:none; }
+  .pool-main, .pool-references { grid-column:1; grid-row:2; }
+  .pool-main { padding:20px 16px 32px; }
+  .pool-references { border-left:0; }
+  .pool-plan { padding:12px; }
+  .pool-statusbar { padding:6px 12px; }
+  .pool-statusbar span:last-child { display:none; }
+  #pool-empty { margin:30px auto; }
+}
+@media(prefers-reduced-motion:no-preference) { .pool-reference-tabs button, .pool-mobile-switch button { transition:background-color 120ms ease-out,color 120ms ease-out; } }

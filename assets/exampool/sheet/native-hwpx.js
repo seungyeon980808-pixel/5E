@@ -1,0 +1,70 @@
+// The pinned native HWPX writer omits equation and explicit-break line segments.
+// Preserve the native engine's actual segments from its HWP serialization;
+// do not estimate text widths, baselines or inline-control offsets in JS.
+export function exportLayoutHwpx(document,CFB){
+  const bytes=document.exportHwpx();
+  if(!CFB)throw Error('한글 저장 도구를 준비한 뒤 다시 시도하세요.');
+  const archive=CFB.read(bytes,{type:'array'}),decode=new TextDecoder(),encode=new TextEncoder();
+  let binary=null,changed=false;
+  for(let section=0;section<document.getSectionCount();section++){
+    const file=archive.FileIndex[archive.FullPaths.findIndex(p=>p.endsWith(`Contents/section${section}.xml`))];
+    if(!file)throw Error('한글 구역을 읽지 못했습니다.');
+    let xml=decode.decode(file.content);
+    // Cached line positions on an empty inline-table anchor can place the
+    // table above the preceding wrapped prompt when HWPX is reopened. Let
+    // the engine calculate that anchor from its real table height. Preserve
+    // every text/equation paragraph and all nested cell line geometry.
+    const flow=clearEmptyTableAnchorLines(xml);if(flow!==xml){xml=flow;file.content=encode.encode(xml);file.size=file.content.length;changed=true;}
+    if(!xml.includes('<hp:equation')&&!xml.includes('<hp:lineBreak'))continue;
+    binary ||= CFB.read(document.exportHwp(),{type:'array'});
+    const header=binary.FileIndex[binary.FullPaths.findIndex(p=>p.endsWith('/FileHeader'))].content;
+    const stream=binary.FileIndex[binary.FullPaths.findIndex(p=>p.endsWith(`/BodyText/Section${section}`))].content;
+    let body=new Uint8Array(stream);if(header[36]&1){body.l=0;body=CFB.utils._inflateRaw(body);}
+    const data=new DataView(body.buffer,body.byteOffset,body.byteLength),segments=[];
+    for(let pos=0;pos<body.length;){
+      if(pos+4>body.length)throw Error('한글 문단 정보가 불완전합니다.');
+      const record=data.getUint32(pos,true);pos+=4;let size=record>>>20;
+      if(size===4095){size=data.getUint32(pos,true);pos+=4;}
+      if(pos+size>body.length)throw Error('한글 문단 범위를 확인하세요.');
+      const tag=record&1023;
+      if(tag===66)segments.push([]);
+      if(tag===69){if(size%36||!segments.length)throw Error('한글 줄 배치를 읽지 못했습니다.');
+        for(let i=0;i<size;i+=36)segments.at(-1).push(Array.from({length:9},(_,j)=>data.getUint32(pos+i+j*4,true)));
+      }
+      pos+=size;
+    }
+    const paragraphs=[],stack=[];
+    for(const match of xml.matchAll(/<hp:p\b[^>]*>|<\/hp:p>/g)){
+      if(match[0].startsWith('</')){const p=stack.pop();if(!p)throw Error('한글 문단 구조를 확인하세요.');p.end=match.index;}
+      else{const p={start:match.index,body:match.index+match[0].length};paragraphs.push(p);stack.push(p);}
+    }
+    if(stack.length||paragraphs.length!==segments.length)throw Error('수식 문단의 저장 배치를 확인하지 못했습니다. 문항 조판을 다시 여세요.');
+    const keys=['textpos','vertpos','vertsize','textheight','baseline','spacing','horzpos','horzsize','flags'];let output=xml;
+    // Work backwards so nested paragraph edits retain their original offsets.
+    for(let i=paragraphs.length-1;i>=0;i--){const p=paragraphs[i],body=xml.slice(p.body,p.end);
+      // Only leaf equation/break paragraphs require the writer repair. Parent table
+      // paragraphs retain their native cell placement and borders.
+      if((!body.includes('<hp:equation')&&!body.includes('<hp:lineBreak'))||body.includes('<hp:p ')||!segments[i].length)continue;
+      const clean=body.replace(/<hp:linesegarray>[\s\S]*?<\/hp:linesegarray>/g,'');
+      const lines='<hp:linesegarray>'+segments[i].map(values=>'<hp:lineseg '+keys.map((key,j)=>`${key}="${values[j]}"`).join(' ')+'/>').join('')+'</hp:linesegarray>';
+      output=output.slice(0,p.body)+clean+lines+output.slice(p.end);changed=true;
+    }
+    file.content=encode.encode(output);file.size=file.content.length;
+  }
+  return changed?new Uint8Array(CFB.write(archive,{type:'array',fileType:'zip'})):bytes;
+}
+
+export function clearEmptyTableAnchorLines(xml){
+  const stack=[],ranges=[];
+  for(const token of xml.matchAll(/<hp:p\b[^>]*>|<\/hp:p>|<hp:tbl\b|<hp:t(?:\s[^>]*)?>[\s\S]*?<\/hp:t>/g)){
+    if(token[0].startsWith('<hp:p '))stack.push({table:false,text:false});
+    else if(token[0]==='</hp:p>'){
+      const p=stack.pop();if(stack.length||!p?.table||p.text)continue;
+      const start=xml.lastIndexOf('</hp:run>',token.index)+9,tail=xml.slice(start,token.index),line=tail.match(/<hp:linesegarray>[\s\S]*?<\/hp:linesegarray>/);
+      if(line)ranges.push([start+line.index,start+line.index+line[0].length]);
+    }else if(token[0].startsWith('<hp:tbl')&&stack.length===1)stack[0].table=true;
+    else if(stack.length===1&&token[0].replace(/<[^>]+>/g,'').trim())stack[0].text=true;
+  }
+  for(const [start,end] of ranges.reverse())xml=xml.slice(0,start)+xml.slice(end);
+  return xml;
+}

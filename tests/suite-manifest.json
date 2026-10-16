@@ -20,6 +20,76 @@
       ]
     },
     {
+      "path": "tests/test-exampool-card-workspace.mjs",
+      "findingIds": [
+        "EXAMPOOL-CARD-SHEET-SYNC",
+        "EXAMPOOL-WORKBOOK-MERGE-UNDO"
+      ]
+    },
+    {
+      "path": "tests/test-exampool-workspace-layout.mjs",
+      "findingIds": [
+        "EXAMPOOL-RESIZABLE-OFFICE-PANES",
+        "EXAMPOOL-WHOLE-QUESTION-PAGINATION"
+      ]
+    },
+    {
+      "path": "tests/test-exampool-question-page.mjs",
+      "findingIds": [
+        "EXAMPOOL-QUESTION-COLUMN-PAGE",
+        "EXAMPOOL-CONTENT-HEIGHT-GUIDE"
+      ]
+    },
+    {
+      "path": "tests/test-exampool-layout-lock.mjs",
+      "findingIds": [
+        "EXAMPOOL-NATIVE-TABLE-LAYOUT-LOCK"
+      ]
+    },
+    {
+      "path": "tests/test-exampool-typography.mjs",
+      "findingIds": [
+        "EXAMPOOL-TABLE-ALIGNMENT",
+        "EXAMPOOL-HANGING-INDENT",
+        "EXAMPOOL-BOGI-REFERENCE"
+      ]
+    },
+    {
+      "path": "tests/test-exampool-vertical.mjs",
+      "findingIds": [
+        "EXAMPOOL-VERTICAL-QUESTION",
+        "EXAMPOOL-NATIVE-TYPESET-APPROVAL"
+      ]
+    },
+    {
+      "path": "tests/test-exampool-grid.mjs",
+      "findingIds": [
+        "EXAMPOOL-EXCEL-INTERACTION",
+        "EXAMPOOL-GRID-PASTE-PRESERVATION"
+      ]
+    },
+    {
+      "path": "tests/test-exampool-handoff.mjs",
+      "findingIds": [
+        "EXAMPOOL-STRUCTURED-HWP",
+        "EXAMPOOL-MERGED-CELL-PRESERVATION"
+      ]
+    },
+    {
+      "path": "tests/test-exampool-sheet.mjs",
+      "findingIds": [
+        "EXAMPOOL-STRUCTURED-QUESTION",
+        "EXAMPOOL-XLSX-ROUNDTRIP"
+      ]
+    },
+    {
+      "path": "tests/test-exampool-model.mjs",
+      "findingIds": [
+        "EXAMPOOL-CONFIRMED-HANDOFF",
+        "EXAMPOOL-FILE-ROUNDTRIP"
+      ]
+    },
+    {
       "path": "tests/test-ai-result-attention.mjs",
       "findingIds": [
         "AI-RESULT-ATTENTION"
@@ -679,6 +749,21 @@
         "AI-PASTE-LATEST-INPUT"
       ],
       "reason": "Synthetic PNG ClipboardEvents exercise the actual paste handler and native reader across close, disposal, task switching, late errors, retry and newer file/paste attempts without accessing the system clipboard."
+    },
+    {
+      "path": "tests/test-exampool-references-browser.cjs",
+      "findingIds": [
+        "EXAMPOOL-REFERENCE-WORKSPACE",
+        "EXAMPOOL-LEGACY-MIGRATION"
+      ]
+    },
+    {
+      "path": "tests/test-exampool-browser.cjs",
+      "findingIds": [
+        "EXAMPOOL-PERSISTENCE",
+        "EXAMPOOL-NATIVE-HANDOFF",
+        "EXAMPOOL-EDITABLE-SOURCE"
+      ]
     },
     {
       "path": "tests/test-library-figure-appearance-browser.cjs",
