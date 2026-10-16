@@ -2,6 +2,12 @@
   "schemaVersion": 1,
   "unit": [
     {
+      "path": "tests/test-bug-board-api.mjs",
+      "findingIds": [
+        "BUG-BOARD-API"
+      ]
+    },
+    {
       "path": "tests/test-library-reference-destinations.mjs",
       "findingIds": [
         "LIBRARY-MIXED-DESTINATIONS"
@@ -599,6 +605,12 @@
     }
   ],
   "browser": [
+    {
+      "path": "tests/test-bug-board-browser.cjs",
+      "findingIds": [
+        "BUG-BOARD-UI"
+      ]
+    },
     {
       "path": "tests/test-loading-offscreen-settle-browser.cjs",
       "findingIds": ["LOADING-OFFSCREEN-SETTLE-01"]
