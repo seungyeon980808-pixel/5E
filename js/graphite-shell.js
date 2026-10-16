@@ -144,7 +144,7 @@ function installRails() {
 }
 
 export function setPalette(name) {
-  const palette = name === 'classic' ? 'classic' : 'graphite';
+  const palette = name === 'graphite' ? 'graphite' : 'classic';
   document.documentElement.setAttribute('data-palette', palette);
   try { localStorage.setItem('5e.palette', palette); } catch {}
   return palette;

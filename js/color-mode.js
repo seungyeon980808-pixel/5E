@@ -1,14 +1,14 @@
-// 화면 색 모드 세 가지: 그라파이트(다크) · 다크네이비(다크, 1.6.x 남색) · 화이트.
+// 화면 색 모드 세 가지: 다크네이비(기본, 1.6.x 남색 = palette classic) · 그라파이트 · 화이트.
 // 저장은 기존 키를 그대로 쓴다 — "theme"(dark|light) + "5e.palette"(graphite|classic).
 // 다크네이비는 palette "classic"이다. 그림·저장 데이터와는 무관하다.
 // "theme"는 main.js와 같은 previewStorage, "5e.palette"는 <head> 스크립트가 읽는 원래 저장소.
 import { previewStorage } from './preview-storage.js?v=1.7.0-four-session-integration';
-export const COLOR_MODES = ['graphite', 'navy', 'white'];
+export const COLOR_MODES = ['navy', 'graphite', 'white'];
 export const COLOR_MODE_LABELS = { graphite: '그라파이트', navy: '다크네이비', white: '화이트' };
 
 export function getColorMode(root = document.documentElement) {
   if (root.getAttribute('data-theme') === 'light') return 'white';
-  return root.getAttribute('data-palette') === 'classic' ? 'navy' : 'graphite';
+  return root.getAttribute('data-palette') === 'graphite' ? 'graphite' : 'navy';
 }
 
 export function nextColorMode(mode = getColorMode()) {
@@ -28,7 +28,7 @@ export function syncThemeButton(root = document.documentElement) {
 }
 
 export function setColorMode(mode, root = document.documentElement) {
-  const safe = COLOR_MODES.includes(mode) ? mode : 'graphite';
+  const safe = COLOR_MODES.includes(mode) ? mode : 'navy';
   const theme = safe === 'white' ? 'light' : 'dark';
   root.setAttribute('data-theme', theme);
   // 화이트로 갈 때는 다크 색(팔레트)을 기억해 둔 채로 둔다.

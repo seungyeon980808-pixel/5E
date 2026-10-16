@@ -206,7 +206,7 @@ const zoomReadout = document.getElementById("zoom-readout");
   root.setAttribute("data-theme", saved === "light" || saved === "dark" ? saved : "dark");
 
   const btn = document.getElementById("theme-toggle");
-  // 누를 때마다 그라파이트 → 다크네이비 → 화이트 순서로 바뀐다(color-mode.js).
+  // 누를 때마다 다크네이비(기본) → 그라파이트 → 화이트 순서로 바뀐다(color-mode.js).
   syncThemeButton(root);
 
   if (btn) {

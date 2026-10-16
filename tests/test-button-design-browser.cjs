@@ -228,9 +228,9 @@ for (const engine of [chromium,webkit]) test(`canonical button design and unread
   await page.locator('#ai-image-panel [data-ai-close]').click();
   await page.locator('#ai-image-panel').waitFor({state:'hidden'});
   await assertWorkflowState(page,'ai-image-install-open',false,selected);
-  // 테마 버튼은 그라파이트 → 다크네이비 → 화이트 순환(js/color-mode.js). 두 번 눌러 화이트로.
+  // 테마 버튼은 다크네이비(기본) → 그라파이트 → 화이트 순환(js/color-mode.js). 두 번 눌러 화이트로.
   await page.locator('#theme-toggle').click();
-  assert.equal(await page.locator('html').getAttribute('data-palette'),'classic');
+  assert.equal(await page.locator('html').getAttribute('data-palette'),'graphite');
   assert.equal(await page.locator('#theme-toggle').getAttribute('aria-pressed'),'false');
   await page.locator('#theme-toggle').click();
   assert.equal(await page.locator('#theme-toggle').getAttribute('aria-pressed'),'true');
@@ -243,7 +243,7 @@ for (const engine of [chromium,webkit]) test(`canonical button design and unread
   await page.screenshot({path:path.join(evidence,'main-light.png')});
   await page.locator('#theme-toggle').click();
   assert.equal(await page.locator('#theme-toggle').getAttribute('aria-pressed'),'false');
-  assert.equal(await page.locator('html').getAttribute('data-palette'),'graphite');
+  assert.equal(await page.locator('html').getAttribute('data-palette'),'classic');
   await page.waitForFunction(()=>document.documentElement.dataset.theme==='dark' && getComputedStyle(document.getElementById('graph-tool-open')).backgroundColor==='rgba(0, 0, 0, 0)');
   await page.setViewportSize({width:320,height:780});
   const narrowGaps=await page.evaluate(()=>({toolbar:getComputedStyle(document.querySelector('.toolbar-document')).gap,view:getComputedStyle(document.querySelector('.canvas-view-controls')).gap}));
