@@ -69,12 +69,15 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
   // 문서 순서대로 그림·표가 어느 구성의 것인지 기록한다(한글 창에서 끌어 배치할 때 짝짓기).
   const imageOwners=[],tableOwners=[],textSegments=[];
   const recordTable=(rows,cols,merges=[],owner={kind:'layout'},at=null)=>{const shape={rows,cols,merges:merges.map(m=>`${m.r}:${m.c}:${m.rs}:${m.cs}`).sort()};if(at===null){tables.push(shape);tableOwners.push(owner);}else{tables[at]=shape;tableOwners[at]=owner;}};
+  // 가로 묶음 칸·상자 표의 줄 안에서는 칸이 모두 빈 표를 한글 엔진이 빠뜨린다. 그 자리의 빈 칸에만 폭 0인 글자를 둔다.
+  // 평범한 자리에서는 이 글자가 저장 때마다 줄 배치를 흔들어서 쓰지 않는다.
+  let nested=0;
   const reserveTable=()=>{tables.push(null);tableOwners.push(null);return tables.length-1;};
   // 글 조각마다 주인(어느 칸의 글인지)과 앞머리 길이(번호·ㄱ.·① 등)를 남긴다. 한글 창에서 고친 글을 시트로 되돌릴 때 쓴다.
   const text=(v,width=null,fontSize=11,wrap=null,owner=null)=>{
     let value=String(v??'');if(value.trim())textSegments.push({value,owner});
-    if(native)value=mathParts(value).map(part=>{if(!part.math){if(part.text.trim())texts.push(part.text);return part.text;}const marker=`EXAMPOOL_EQ_${equations.length}_END`;equations.push({marker,script:part.text,fontSize:fontSize*100});return marker;}).join('');
-    else if(value.trim())texts.push(value);
+    if(native)value=mathParts(value).map(part=>{if(!part.math){if(part.text.replace(/\u200b/g,'').trim())texts.push(part.text);return part.text;}const marker=`EXAMPOOL_EQ_${equations.length}_END`;equations.push({marker,script:part.text,fontSize:fontSize*100});return marker;}).join('');
+    else if(value.replace(/\u200b/g,'').trim())texts.push(value);
     value=wrap?wrap(value):wrapQuestionText(value,width,fontSize);
     const body=E(value).replace(/\r?\n/g,'<br>');return native?`<span style="font-family:함초롬바탕;font-size:${fontSize}pt">${body}</span>`:body;
   };
@@ -111,10 +114,11 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
       for(let c=0;c<t.cols;c++){
         if(tableCovered(t,r,c))continue;
         const cell=t.cells[r][c],m=t.merges.find(m=>m.r===r&&m.c===c),tag=r<t.headerRows?'th':'td';
+        // 빈 칸에는 폭 0인 글자(ZWSP)를 둔다. 한글 엔진이 빈 표를 겹친 자리에서 빠뜨리지 않고, 한글 창에서 빈 칸에 처음 쓴 글도 그 칸으로 되돌릴 수 있다.
         const formatted=text(cell.value,cellWidth*(m?.cs||1)-16,fontSize,null,{kind:'cell',table:owner.id||owner.kind,r,c}).replace(/^<span[^>]*>|<\/span>$/g,'');
         // Separate paragraphs let the native cell center the entire header
         // block. A soft line break centers only its first line in this engine.
-        let body=await picture(cell.figure,cellWidth*(m?.cs||1)-16,undefined,{kind:'cell',table:owner.id||owner.kind,r,c})+formatted.split('<br>').map(line=>`<p style="margin:0;text-align:center;font-family:함초롬바탕;font-size:${fontSize}pt">${line}</p>`).join('');
+        let body=await picture(cell.figure,cellWidth*(m?.cs||1)-16,undefined,{kind:'cell',table:owner.id||owner.kind,r,c})+formatted.split('<br>').map(line=>`<p style="margin:0;text-align:center;font-family:함초롬바탕;font-size:${fontSize}pt">${line||(cell.value===''&&!cell.figure&&nested?'&#8203;':'')}</p>`).join('');
         if(t.diagonal&&r===0&&c===0){
           body=p(t.diagonal.col)+p(t.diagonal.row)+body;
           warnings.push('대각선 머리글의 축 이름은 전달됩니다. 사선은 한글에서 지정하세요.');
@@ -145,19 +149,27 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
         if(flatten){
           // 상자 안의 가로 묶음은 상자 표의 한 줄로 만든다. 표를 세 겹 넣으면(상자→가로→결과표)
           // 한글 엔진이 안쪽 표의 병합을 잃는다. 첫 줄은 묶음 이름, 그다음 줄은 구성마다 하나.
-          const rows=b.layout==='나란히'?[{cells:children,group:b}]:children.map(c=>sideRow(c)?{cells:kidsOf(c),group:c}:{cells:[c],single:true});
-          const cols=Math.max(...rows.map(r=>r.single?1:r.cells.length)),rule='1px solid #555',merges=[];
+          const slot=reserveTable(),rule='1px solid #555';
+          // 줄마다 칸 내용을 먼저 만든다. 내용이 없는 구성(빈 설명 등)은 줄을 만들지 않는다. 빈 칸 줄은 한글 엔진이 다르게 처리한다.
+          let rows=[];
+          for(const row of (b.layout==='나란히'?[{cells:children,group:b}]:children.map(c=>sideRow(c)?{cells:kidsOf(c),group:c}:{cells:[c],single:true}))){
+            const n=row.single?1:row.cells.length,widths=row.single?[innerWidth]:splitWidths(row.cells,innerWidth),inner=[];
+            nested++;try{for(const [i,cell] of row.cells.entries())inner.push(row.single?await walk(b.id,innerWidth,cell.id):await walk(row.group.id,Math.max(35,widths[i]-16),cell.id));}finally{nested--;}
+            if(row.single&&!inner[0].trim())continue;
+            for(let i=0;i<inner.length;i++)if(!inner[i].trim())inner[i]='<p><br></p>';
+            rows.push({...row,n,widths,inner});
+          }
+          if(!rows.length)rows=[{cells:[],single:true,n:1,widths:[innerWidth],inner:['<p><br></p>']}];
+          const cols=Math.max(...rows.map(r=>r.single?1:r.n)),merges=[];
           if(cols>1)merges.push({r:0,c:0,rs:1,cs:cols});
-          const slot=reserveTable();let body='';
+          let body='';
           for(const [ri,row] of rows.entries()){
-            const r=ri+1,last=ri===rows.length-1,n=row.single?1:row.cells.length,widths=row.single?[innerWidth]:splitWidths(row.cells,innerWidth);
-            const spans=row.cells.map((_,i)=>i===n-1?cols-(n-1):1);
+            const r=ri+1,last=ri===rows.length-1,spans=row.inner.map((_,i)=>i===row.n-1?cols-(row.n-1):1);
             spans.forEach((span,i)=>{if(span>1)merges.push({r,c:i,rs:1,cs:span});});
             let tr='<tr>';
-            for(const [i,cell] of row.cells.entries()){
-              const edge=`${i===0?`border-left:${rule};`:''}${i===n-1?`border-right:${rule};`:''}${last?`border-bottom:${rule};`:''}`;
-              const inner=row.single?await walk(b.id,innerWidth,cell.id):await walk(row.group.id,Math.max(35,widths[i]-16),cell.id);
-              tr+=`<td${spans[i]>1?` colspan="${spans[i]}"`:''} style="border:none;${edge}padding:${row.single?'2px 8px':'5px 8px'}${last?' 8px':''};vertical-align:top;width:${row.single?width:widths[i]}px">${inner}</td>`;
+            for(const [i,inner] of row.inner.entries()){
+              const edge=`${i===0?`border-left:${rule};`:''}${i===row.n-1?`border-right:${rule};`:''}${last?`border-bottom:${rule};`:''}`;
+              tr+=`<td${spans[i]>1?` colspan="${spans[i]}"`:''} style="border:none;${edge}padding:${row.single?'2px 8px':'5px 8px'}${last?' 8px':''};vertical-align:top;width:${row.single?width:row.widths[i]}px">${inner}</td>`;
             }
             body+=tr+'</tr>';
           }
@@ -170,9 +182,9 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
           body=`<table style="border-collapse:collapse;width:${innerWidth}px"><tr>`;
           // Render the children individually while keeping their own descendants.
           const widths=splitWidths(children,innerWidth);
-          for(const [i,child] of children.entries()){
+          nested++;try{for(const [i,child] of children.entries()){
             body+=`<td style="border:none;padding:5px;vertical-align:top;width:${widths[i]}px">${await walk(b.id,Math.max(35,widths[i]-16),child.id)}</td>`;
-          }
+          }}finally{nested--;}
           body+='</tr></table>';
         }else body=await walk(b.id,innerWidth);
         if(boxed)recordTable(1,1,[],{kind:'box',id:b.id},boxSlot);

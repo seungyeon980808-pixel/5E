@@ -776,6 +776,17 @@
       ]
     },
     {
+      "path": "tests/test-exampool-office-browser.cjs",
+      "findingIds": [
+        "EXAMPOOL-OFFICE-ENTRY",
+        "EXAMPOOL-PALETTE-FOLLOWS-5E",
+        "EXAMPOOL-PARTS-REDRAW",
+        "EXAMPOOL-DRAG-PLACEMENT",
+        "EXAMPOOL-HWP-TO-SHEET-TEXT",
+        "EXAMPOOL-EXAM-ASSEMBLY"
+      ]
+    },
+    {
       "path": "tests/test-exampool-browser.cjs",
       "findingIds": [
         "EXAMPOOL-PERSISTENCE",

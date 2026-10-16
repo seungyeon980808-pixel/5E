@@ -45,3 +45,4 @@ test('an edit across two cells (paragraph merge) is refused instead of guessed',
   if(joined!==doc){const r=mapTextEdit(map,joined);assert.equal(r.ok,false);}
   assert.equal(mapTextEdit(map,doc).unchanged,true);
 });
+

@@ -225,7 +225,7 @@ function makeTypesetter(){return createTypesetter({host:$('#native-editor'),stat
         },onPlacement:(fn,text,questionId)=>{
           // 한글 창에서 끌어 놓은 결과는 데이터(순서·묶음·폭 비율·크기)로만 저장한다. 화면은 자동으로 다시 그려진다.
           const target=data.questions.find(q=>q.id===questionId);if(!target)return;
-          let changed=false;if(mutate(()=>{changed=fn(target)!==false;}))status(changed?text+' · 구성 시트에 반영':'배치가 그대로입니다.');
+          let changed=false;if(mutate(()=>{changed=fn(target)!==false;})){status(changed?text+' · 구성 시트에 반영':'배치가 그대로입니다.');if(changed){clearTimeout(redrawTimer);void requestTypeset(target);}}
         }});}
 // 시험지 HWPX: 문항 조판 문서를 모은다. 한글 엔진은 조판 창과 같은 것을 쓴다.
 async function buildExamBytes(){typesetter ||= makeTypesetter();return typesetter.buildExam(data);}

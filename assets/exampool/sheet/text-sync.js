@@ -54,7 +54,7 @@ export function mapTextEdit(map,docText){
   const hit=map.spans.filter(sp=>d.start>=sp.start&&d.endOld<=sp.end);
   if(hit.length!==1){
     const touched=map.spans.filter(sp=>d.start<sp.end&&d.endOld>sp.start);
-    return {ok:false,reason:touched.length>1?'두 칸 이상에 걸친 수정(문단 합치기·나누기 등)은 시트에 반영하지 않았습니다. 되돌리거나 시트에서 고치세요.':'시트 칸과 짝을 찾지 못한 글(수식이 든 글, 번호·기호·제목 등)을 고쳤습니다. 되돌리거나 시트에서 고치세요.'};
+    return {ok:false,reason:touched.length>1?'두 칸 이상에 걸친 수정(문단 합치기·나누기 등)은 시트에 반영하지 않았습니다. 되돌리거나 시트에서 고치세요.':'시트 칸과 짝을 찾지 못한 글(빈 칸에 처음 쓴 값, 수식이 든 글, 번호·기호·제목 등)을 고쳤습니다. 되돌리고 시트에서 입력하세요.'};
   }
   const sp=hit[0],seg=map.segments[sp.index];
   if(!seg.owner)return {ok:false,reason:'번호·기호·제목처럼 시트 칸에 없는 글을 고쳤습니다. 되돌리거나 시트에서 고치세요.'};
@@ -62,7 +62,8 @@ export function mapTextEdit(map,docText){
   const a=d.start-sp.start,b=d.endOld-sp.start;
   if(a<prefixNorm)return {ok:false,reason:'문항 번호·①·ㄱ. 같은 앞머리는 한글 창에서 바꿀 수 없습니다. 시트에서 고치세요.'};
   const full=replaceNormalized(seg.value,a,b,inserted);
-  const field=full.slice(prefix).replace(/^\s+/,'');
+  // 빈 칸 자리표(ZWSP)는 데이터에 남기지 않는다.
+  const field=full.slice(prefix).replace(/\u200b/g,'').replace(/^\s+/,'');
   return {ok:true,changes:[{index:sp.index,owner:seg.owner,full,value:field}]};
 }
 

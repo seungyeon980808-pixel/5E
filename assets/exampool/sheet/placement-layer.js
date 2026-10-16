@@ -176,7 +176,8 @@ export function attachPlacementLayer({bridge,host,hint,onApply,canEdit}){
   };
   const onFrameDown=e=>{
     if(!enabled||e.button!==0||drag||!canEdit())return;const p=fromFrame(e),item=items.find(x=>x.kind==='figure'&&inside(x.rect,p));
-    if(item)beginMove(item,p);
+    // 그림 위에서 누른 마우스는 배치 층이 맡는다. 한글 엔진이 같은 동작으로 그림을 옮기면 데이터와 문서가 어긋난다.
+    if(item){e.preventDefault();e.stopPropagation();beginMove(item,p);}
   };
   const onFrameUp=e=>{if(drag?.mode==='move'){if(drag.moved){e.stopPropagation();e.preventDefault();}endDrag(true);}};
   const onFrameKey=e=>{if(e.key==='Escape'&&drag){e.stopPropagation();endDrag(false);}};
