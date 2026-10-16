@@ -519,7 +519,7 @@ function renderCoordplane(obj) {
       // 혼합 라벨러: 한글 정자 + 영문 이탤릭 + 줄바꿈 + 수식 + halo.
       const gl = renderGraphLabel(text, { x: lx, y: ly, size, color, anchor, vAlign: baselineToVAlign(baseline), halo: true, haloRatio: obj.haloRatio, weight: obj.labelWeight });
       if (gl) g.appendChild(gl);
-      return;
+      return gl;
     }
     const t = document.createElementNS(SVG_NS, "text");
     t.setAttribute("x", lx); t.setAttribute("y", ly);
@@ -531,6 +531,7 @@ function renderCoordplane(obj) {
     t.setAttribute("dominant-baseline", baseline);
     fillTextWithRomanRuns(t, text);
     g.appendChild(t);
+    return t;
   };
   // 축 이름 전용: 저장된 오프셋(labelXOffset/labelYOffset)만큼 옮겨 그리고, 모달 드래그가
   // 잡을 수 있게 data-axisname으로 태깅한다(요구: 축 라벨 이동 가능).
@@ -586,8 +587,9 @@ function renderCoordplane(obj) {
     const oText = obj.labelOrigin ?? "O";
     // 원점 라벨: 기본 크기 살짝 작게(nameSize*0.82) + 원점에 더 가까이(오프셋 축소).
     const oSize = Number.isFinite(obj.originLabelSize) && obj.originLabelSize > 0 ? obj.originLabelSize : nameSize * 0.82;
-    if (variant === "halfcross") addName(oText, worldX0 - oSize * 0.35, worldY0, "end", "middle", oSize);
-    else addName(oText, worldX0 - oSize * 0.22, worldY0 + oSize * 0.08, "end", "hanging", oSize);
+    const origin = variant === "halfcross" ? addName(oText, worldX0 - oSize * 0.35, worldY0, "end", "middle", oSize)
+      : addName(oText, worldX0 - oSize * 0.22, worldY0 + oSize * 0.08, "end", "hanging", oSize);
+    origin?.setAttribute("data-axisname", "origin");
   }
 
   // ----- 오른쪽 세로축(y2): 좌우 이중 y축 -----
@@ -621,22 +623,22 @@ function renderCoordplane(obj) {
         if (obj.showTicks && showNum2) addLine(right, vy, right + (boxFrame ? -tIn : tIn), vy, tickColor, tickSw);  // 바깥(오른쪽)으로
         if (showNum2) {
           const txt = texts2 ? String(texts2[ord2] ?? "") : fmtTick(k * lblStep2);
-          if (txt) addNumber(txt, right + tIn + tickGap, vy, "start", "middle", null);
+          if (txt) addNumber(txt, right + tIn + tickGap, vy, "start", "middle", null)?.setAttribute('data-y2-tick', String(ord2));
         }
         ord2++;
       }
     }
-    if(y2c.scale === 'log' && !Array.isArray(y2c.explicitTicks)) coordinateTicks(planeAsY2(P),'y',1).slice(0,GRID_MAX_LINES).forEach(value=>{
+    if(y2c.scale === 'log' && !Array.isArray(y2c.explicitTicks)) coordinateTicks(planeAsY2(P),'y',1).slice(0,GRID_MAX_LINES).forEach((value,index)=>{
       const y=worldYFromMathY2(P,value);
       if(obj.showTicks&&showNum2)addLine(right,y,right+(boxFrame?-tIn:tIn),y,tickColor,tickSw);
-      if(showNum2)addNumber(rich?`10^{${Math.round(Math.log10(value))}}`:`10^${Math.round(Math.log10(value))}`,right+tIn+tickGap,y,'start','middle',null);
+      if(showNum2)addNumber(rich?`10^{${Math.round(Math.log10(value))}}`:`10^${Math.round(Math.log10(value))}`,right+tIn+tickGap,y,'start','middle',null)?.setAttribute('data-y2-tick',String(index));
     });
     // 축 이름: 오른쪽 바깥에 세로쓰기(아래→위로 읽는 방향, -90° 회전).
-    (y2c.explicitTicks || []).forEach(tick => {
+    (y2c.explicitTicks || []).forEach((tick,index) => {
       if (tick.value < lo2 || tick.value > hi2) return;
       const vy = worldYFromMathY2(obj, tick.value);
       if (obj.showTicks && showNum2) addLine(right, vy, right + (boxFrame ? -tIn : tIn), vy, tickColor, tickSw);
-      if (showNum2 && tick.label) addNumber(tick.label, right + tIn + tickGap, vy, 'start', 'middle', null);
+      if (showNum2 && tick.label) addNumber(tick.label, right + tIn + tickGap, vy, 'start', 'middle', null)?.setAttribute('data-y2-tick',String(index));
     });
     if (y2c.labelY2) {
       const lx = right + tIn + (showNum2 ? numSize * 1.9 : numSize * 0.5) + nameSize * 0.65;
@@ -754,7 +756,7 @@ function renderCoordplane(obj) {
       x: lx, y: ly, size, color: annColor, anchor: "middle", vAlign: "middle", halo: true, upright: true,
       haloRatio: obj.haloRatio, weight: obj.labelWeight,
     });
-    if (lbl) g.appendChild(lbl);
+    if (lbl) { lbl.setAttribute("data-labelpoint-text", String(li)); g.appendChild(lbl); }
   });
   // 범례 박스: 선 견본 + 글씨 여러 줄. anchor(x,y)=박스 좌상단(math). 크기는 world mm.
   (obj.legends || []).forEach((lg, li) => {
@@ -868,6 +870,7 @@ function renderLegendBox(g, lg, x0, y0, obj, li) {
       x: x0 + pad + swatch + gap, y: cy, size, color, anchor: "start", vAlign: "middle", halo: false,
     });
     if (lbl) {
+      if (Number.isFinite(li)) lbl.setAttribute("data-legend-text", `${li}:${i}`);
       // 자간 +50%(요구): formula/한글 런의 <text>에 letter-spacing 적용(textContent 기반이라 반영됨).
       lbl.querySelectorAll("text").forEach((t) => t.setAttribute("letter-spacing", isExamStyle(obj)?EXAM_STYLE.label*.18:ls));
       g.appendChild(lbl);
@@ -1309,7 +1312,7 @@ function renderFuncgraph(obj, plane = null) {
       x: lx, y: ly, size, color: grayHex(obj.strokeLevel),
       anchor: nx >= 0 ? "start" : "end", vAlign: "middle", halo: true, haloRatio: obj.haloRatio, weight: obj.labelWeight,
     });
-    if (lbl) g.appendChild(lbl);
+    if (lbl) { lbl.setAttribute("data-end-label", ""); g.appendChild(lbl); }
   }
 
   // ----- 그래프 요소(표시점 ● / 수선의 발 / 구간 화살표) -----

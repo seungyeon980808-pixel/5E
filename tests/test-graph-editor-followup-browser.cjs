@@ -61,7 +61,9 @@ async function run(browser,engine,kind){
   const original=structuredClone(versions(await waitVersions(page,1))[0]);
   const stage=()=>page.locator(`#ai-image-panel [data-ai-candidate-id="${original.id}"] .ai-preview-stage`);
   await step('Persistent image badge opens a topmost graph editor immediately, without closing image editor',async()=>{
-   await page.locator('#ai-image-panel [data-ai-graph-edit]').click();await page.locator('#gm-preview .gm-preview-svg').waitFor();
+   const badge=page.locator('#ai-image-panel [data-ai-graph-edit]');
+   assert(await badge.isVisible());assert.notEqual(await badge.evaluate(n=>getComputedStyle(n).backgroundColor),'rgb(47, 129, 247)');
+   await stage().locator(':scope > img').dblclick();await page.locator('#gm-preview .gm-preview-svg').waitFor();
    assert(await page.locator('#ai-image-panel').isVisible());
    assert(await page.locator('#graph-modal-overlay .gm-modal').evaluate(n=>{const b=n.getBoundingClientRect();return Boolean(document.elementFromPoint(b.x+b.width/2,b.y+60)?.closest('#graph-modal-overlay'));}));
    const edges=await page.locator('#graph-modal-overlay').evaluate(root=>{

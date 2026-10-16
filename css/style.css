@@ -3593,7 +3593,7 @@ textarea.unified-text-input {
 #graph-modal-overlay .gm-export-actions { display: flex; justify-content: flex-end; flex: 0 0 auto; padding-top: 6px; }
 #graph-modal-overlay .gm-export-actions .modal-btn { min-height: 30px; padding: 4px 10px; font-size: 12px; }
 #graph-modal-overlay .gm-export-actions { gap:6px; }
-#graph-modal-overlay #gm-send-exam { border-color:var(--exam-accent,#dba52b); background:var(--bg-input); color:var(--text-primary); }
+#graph-modal-overlay #gm-send-exam { background:var(--bg-input); color:var(--text-primary); }
 #graph-modal-overlay #gm-send-exam[hidden] { display:none; }
 #graph-modal-overlay .gm-trace-side-layout > .gm-export-actions { grid-column: 1 / -1; grid-row: 5; }
 #graph-modal-overlay .gm-trace-side-layout > #gm-error { grid-row: 6; }
@@ -3678,3 +3678,10 @@ textarea.unified-text-input {
 #graph-modal-overlay .gm-trace-side-layout > #gm-error { grid-row:3; }
 #graph-modal-overlay .gm-preview-toolbar .gm-trace-main select { height:30px; }
 #graph-modal-overlay .gm-preview-toolbar select[data-trace-view] { width:auto; max-width:120px; min-width:0; }
+
+/* Inline expressions live above the graph; they do not change SVG geometry. */
+#graph-modal-overlay .gm-preview { position:relative; }
+#graph-modal-overlay .gm-inline-text { position:absolute; z-index:20; box-sizing:border-box; height:34px; padding:6px 8px; border:1px solid var(--accent); border-radius:6px; background:var(--bg-input); color:var(--text-primary); font:inherit; font-size:14px; box-shadow:0 4px 12px #0003; }
+#graph-modal-overlay .gm-inline-text:focus { outline:2px solid var(--accent); outline-offset:1px; }
+
+#personal-object-save, #image-objectify-open, #bulk-edit-open { text-align:center; justify-content:center; }

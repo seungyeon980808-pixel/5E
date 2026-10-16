@@ -1,3 +1,5 @@
+import { createDraftHistory } from './draft-history.js?v=1.7.0-four-session-integration';
+import { mountGraphInlineText } from './inline-text.js?v=1.7.0-four-session-integration';
 /* ===== GRAPH MODAL: "그래프" 통합 제작기 (좌표 → 계열 → 출력) =====
  *
  * 사용자가 지정한 워크플로 그대로: ① 좌표 틀을 세팅하고 ② 같은 화면에서 그 위에
@@ -87,6 +89,7 @@ function insertAtCursor(input, text) {
 }
 
 let _overlay = null, _els = null;
+let _draftHistory = null, _inlineText = null;
 let _focusReturn = null, _disposeEscape = null, _cancelPreviewDrag = null;
 let _regionPointer = null;
 let _expressionErrors = new Map();
@@ -1872,7 +1875,10 @@ function refreshPreview() {
         const pl = _previewPlane;
         let baseW;
         if (_cfg[posKey] && Number.isFinite(_cfg[posKey].fx)) baseW = { x: pl.x + _cfg[posKey].fx * pl.w, y: pl.y + _cfg[posKey].fy * pl.h };
-        else { try { const b = el.getBBox(); baseW = { x: b.x + b.width / 2, y: b.y + b.height / 2 }; } catch (_) { baseW = { x: start.x, y: start.y }; } }
+        else {
+          const b = el.getBoundingClientRect();
+          baseW = clientToWorld(b.x + b.width / 2, b.y + b.height / 2) || start;
+        }
         const onMove = (ev) => {
           const w = clientToWorld(ev.clientX, ev.clientY);
           if (!w) return;
@@ -1882,6 +1888,7 @@ function refreshPreview() {
         };
         const onUp = () => { window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); };
         window.addEventListener("mousemove", onMove); window.addEventListener("mouseup", onUp);
+        if (_tab !== 'coord') setTab('coord');
       });
     });
   }
@@ -1912,6 +1919,7 @@ function refreshPreview() {
         };
         const onUp = () => { window.removeEventListener("mousemove", onMove); window.removeEventListener("mouseup", onUp); };
         window.addEventListener("mousemove", onMove); window.addEventListener("mouseup", onUp);
+        if (_tab !== 'coord') setTab('coord');
       });
     });
   }
@@ -2042,7 +2050,7 @@ function refreshPreview() {
   _engineControls?.renderRegions(svg,plane,regionPrep.ok?regionPrep.list:[],_tab==='annot'&&!_annMode);
   // Decoration hit targets must sit above curve hit strokes. Preserve every
   // inherited transform while moving only preview DOM, never graph coordinates.
-  const decorationSelector='[data-graph-annotation],[data-graph-annotation-shape],[data-display-kind],[data-labelpt],[data-legend]';
+  const decorationSelector='[data-graph-annotation],[data-graph-annotation-shape],[data-display-kind],[data-labelpt],[data-legend],[data-axisname],[data-tick],[data-y2-tick]';
   const decorationLayer=planeLayer.cloneNode(false); decorationLayer.removeAttribute('id');
   for (const el of [...planeLayer.querySelectorAll(decorationSelector)]) {
     if (el.parentElement.closest(decorationSelector)) continue;
@@ -2053,6 +2061,13 @@ function refreshPreview() {
     decorationLayer.append(node);
   }
   svg.append(decorationLayer);
+  // Formula groups contain unpainted spaces (subscripts, fractions). The entire
+  // visible label box must accept a click or drag in both browser engines.
+  for (const label of svg.querySelectorAll('g[data-axisname],g[data-tick],g[data-y2-tick],g[data-end-label],g[data-labelpoint-text],g[data-legend-text]')) {
+    const box = label.getBBox(), hit = document.createElementNS(SVG_NS,'rect');
+    for (const [key,value] of Object.entries({x:box.x,y:box.y,width:box.width,height:box.height})) hit.setAttribute(key,String(value));
+    hit.setAttribute('fill','transparent'); hit.setAttribute('pointer-events','all'); label.prepend(hit);
+  }
   // 배치 모드인데 선택 계열에 곡선이 없으면 안내(함수 위에서만 찍을 수 있음).
   if (!selError && _placeMode && !(Array.isArray(_selPts) && _selPts.length >= 2)) {
     selError = "먼저 함수(또는 직선·꺾은선)를 그린 뒤, 그 계열을 선택하고 함수 위를 클릭하세요.";
@@ -2091,6 +2106,8 @@ function refreshPreview() {
   _traceController?.attachAfterBBox(svg, plane);
   syncDisplayProperties(_overlay);
   _numberFields?.format();
+  const active = document.activeElement;
+  _draftHistory?.record(active?.matches('input,textarea') ? active : null);
 }
 
 // 미리보기 화면좌표 → 월드 좌표(스냅 없음). 축 라벨 드래그용.
@@ -3093,6 +3110,78 @@ function setupHelpPopovers(overlay) {
   });
 }
 
+// Ownership is kept with the setting that created the label. Only coordinate
+// labels switch to Coordinates; curve labels and free text retain their editors.
+function graphTextTarget(target) {
+  if (_annMode || _placeMode || _activeDraw !== -1 || _traceController?.getState().interaction) return null;
+  let el = target.closest('[data-axisname],[data-tick],[data-y2-tick],[data-end-label],[data-graph-annotation],[data-labelpoint-text],[data-legend-text]');
+  if (!el) return null;
+  if (el.hasAttribute('data-annotation-hit')) {
+    const id = el.getAttribute('data-graph-annotation');
+    el = [..._els.preview.querySelectorAll('[data-graph-annotation]:not([data-annotation-hit])')].find(node => node.getAttribute('data-graph-annotation') === id);
+    if (!el) return null;
+  }
+  const identity = ['data-axisname','data-tick','data-y2-tick','data-end-label','data-graph-annotation','data-labelpoint-text','data-legend-text'].find(key => el.hasAttribute(key));
+  const seriesIndex = el.closest('[data-preview-series]')?.dataset.previewSeries;
+  const selector = `${seriesIndex === undefined ? '' : `[data-preview-series="${seriesIndex}"] `}[${identity}="${CSS.escape(el.getAttribute(identity))}"]:not([data-annotation-hit])`;
+  const make = (label, value, tab, write, activate = () => {}) => ({
+    element: el, label, value: String(value ?? ''),
+    getRect: () => _els.preview.querySelector(selector)?.getBoundingClientRect(),
+    activate: () => { activate(); setTab(tab); },
+    save: value => {
+      write(value);
+      syncCfgControls(); syncAnnLists(); renderChips(); syncSeriesEditor(); refreshPreview();
+      _draftHistory?.endGroup();
+    },
+  });
+  if (el.hasAttribute('data-axisname')) {
+    const axis = el.getAttribute('data-axisname');
+    const key = {x:'labelX',y:'labelY',y2:'labelY2',origin:'origin'}[axis];
+    if (key) return make(axis === 'origin' ? '원점 라벨' : `${axis}축 이름`, _cfg[key], 'coord', value => _cfg[key] = value);
+  }
+  if (el.hasAttribute('data-tick')) {
+    const [axis, ord] = el.getAttribute('data-tick').split(':'), index = Number(ord);
+    if (!['x','y'].includes(axis) || !Number.isInteger(index)) return null;
+    const upper = axis.toUpperCase();
+    const ticks = structuredClone(_previewPlane[`explicitTicks${upper}`] || generatedTicks(_previewPlane,axis,_cfg.tickMode,_cfg[`tickBase${upper}`]));
+    if (!ticks[index]) return null;
+    return make(`${axis}축 눈금`, ticks[index].label, 'coord', value => {
+      ticks[index].label = value; delete ticks[index].displayText; delete ticks[index].displayMath;
+      _cfg[`explicitTicks${upper}`] = ticks;
+      _cfg[`tickText${upper}`] = ticks.map(tick => tick.label || '').join(', ');
+      _cfg.tickMode = 'text';
+    });
+  }
+  if (el.hasAttribute('data-y2-tick')) {
+    const index = Number(el.getAttribute('data-y2-tick'));
+    const ticks = structuredClone(_previewPlane.y2?.explicitTicks || generatedTicks(planeAsY2(_previewPlane),'y','number'));
+    if (!ticks[index]) return null;
+    return make('오른쪽 축 눈금', ticks[index].label, 'coord', value => {
+      ticks[index].label = value; delete ticks[index].displayText; delete ticks[index].displayMath;
+      const config = _cfg.exactY2 || _cfg.engineY2;
+      if (config) config.explicitTicks = ticks;
+      _cfg.y2TickText = ticks.map(tick => tick.label || '').join(', ');
+    });
+  }
+  if (el.hasAttribute('data-end-label')) {
+    const index = Number(el.closest('[data-preview-series]')?.dataset.previewSeries), series = _series[index];
+    if (series) return make('함수 끝 라벨', series.endLabel, 'func', value => series.endLabel = value, () => { _sel = index; });
+  }
+  if (el.hasAttribute('data-graph-annotation')) {
+    const annotation = (_cfg.graphAnnotations || []).find(a => a.id === el.getAttribute('data-graph-annotation'));
+    if (annotation && ['text','math'].includes(annotation.kind)) return make('표시 텍스트', annotation.text, 'annot', value => annotation.text = value);
+  }
+  if (el.hasAttribute('data-labelpoint-text')) {
+    const spec = _cfg.annLabelPoints?.[Number(el.getAttribute('data-labelpoint-text'))];
+    if (spec) return make('표시점 라벨', spec.text, 'annot', value => spec.text = value);
+  }
+  if (el.hasAttribute('data-legend-text')) {
+    const [legend,row] = el.getAttribute('data-legend-text').split(':').map(Number), spec = _cfg.legends?.[legend]?.rows?.[row];
+    if (spec) return make('범례 텍스트', spec.text, 'annot', value => spec.text = value);
+  }
+  return null;
+}
+
 /* ---------- 모달 DOM ---------- */
 function build() {
   const overlay = document.createElement("div");
@@ -3110,7 +3199,7 @@ function build() {
       <div class="gm-body">
         <div class="gm-left" style="flex:1;min-width:0;">
           <div class="gm-preview-toolbar"><div id="gm-trace-toolbar-host"></div>
-          <div class="gm-export-actions"><button type="button" class="modal-btn" id="gm-send-exam">한글에 넣기</button><button type="button" class="modal-btn modal-btn-primary" id="gm-confirm">캔버스로 내보내기</button></div>
+          <div class="gm-export-actions"><button type="button" class="modal-btn" id="gm-undo" disabled title="실행 취소 (⌘/Ctrl+Z)">실행 취소</button><button type="button" class="modal-btn" id="gm-redo" disabled title="다시 실행 (⌘/Ctrl+Shift+Z)">다시 실행</button><button type="button" class="modal-btn" id="gm-send-exam">한글에 넣기</button><button type="button" class="modal-btn modal-btn-primary" id="gm-confirm">캔버스로 내보내기</button></div>
           </div>
           <div id="gm-preview" class="gm-preview" style="height:440px;"></div>
           <div id="gm-error" style="color:#e5534b;font-size: 12px;min-height:16px;margin-top:4px;"></div>
@@ -4284,6 +4373,25 @@ function build() {
     _sel = -1; _placeMode = null; _activeDraw = -1;
     renderChips(); syncSeriesEditor(); refreshPreview();
   });
+  _inlineText = mountGraphInlineText(_els.preview, graphTextTarget);
+  const travel = redo => { _inlineText.cancel(); _draftHistory?.travel(redo); };
+  overlay.querySelector('#gm-undo').onclick = () => travel(false);
+  overlay.querySelector('#gm-redo').onclick = () => travel(true);
+  overlay.addEventListener('focusout', () => _draftHistory?.endGroup());
+  overlay.addEventListener('pointerdown', event => {
+    if (event.button === 0 && event.target.closest('#gm-preview svg')) _draftHistory?.begin();
+  }, true);
+  const endGesture = () => queueMicrotask(() => _draftHistory?.end());
+  window.addEventListener('pointerup', endGesture);
+  window.addEventListener('pointercancel', endGesture);
+  window.addEventListener('keydown', event => {
+    if (!_overlay || _overlay.hidden || !(event.metaKey || event.ctrlKey) || event.altKey) return;
+    const key = event.key.toLowerCase();
+    if (key !== 'z' && key !== 'y') return;
+    if (event.target.closest('input,textarea,[contenteditable="true"]')) return;
+    event.preventDefault(); event.stopImmediatePropagation();
+    travel(key === 'y' || event.shiftKey);
+  }, true);
   setupHelpPopovers(overlay);
   overlay.addEventListener('pointerdown',e=>{
     if (e.target.closest('[data-region-handle]')) _regionPointer={host:e.target.closest('#gm-preview'),id:e.pointerId};
@@ -4303,6 +4411,7 @@ function build() {
   });
   overlay.addEventListener('mousedown',e=>{
     if (!e.target.closest('#gm-preview') || e.button !== 0) return;
+    if (e.target.closest('input,textarea,select,[contenteditable="true"]')) return;
     flushEditorInput();
     const cfgBefore=structuredClone(_cfg), seriesBefore=_series.map(s=>structuredClone(s));
     const selectionBefore = _displaySelection ? {kind:_displaySelection.kind,index:_displaySelection.kind==='annotation'
@@ -4420,6 +4529,7 @@ async function chooseTraceLibrary(trigger) {
 
 // Escape 등으로 모달을 닫을 때 열려 있는 도움말(?) 팝오버가 화면에 남는 버그 수정 — 함께 정리.
 function hide(applied = false) {
+  _inlineText?.cancel(); _draftHistory = null;
   if(_resumeFromLibrary) { window.removeEventListener('5e:library-closed', _resumeFromLibrary); _resumeFromLibrary=null; }
   _cancelPreviewDrag?.(); _disposeEscape?.(); _disposeEscape = null;
   _engineControls?.cancelRegionDrag();
@@ -4603,6 +4713,7 @@ function loadFromPlane(plane) {
 /* ----- PUBLIC: 열기. planeId 없으면 새로 만들기, 있으면 그 그래프를 편집.
  *   startTab: "coord"(기본) | "func" — F 단축키/버튼 진입점이 시작 탭을 지정. 확정: 둘 다 좌표 먼저. ----- */
 export function openGraphModal(planeId = null, startTab = "coord", editingContext = null) {
+  _inlineText?.cancel(); _draftHistory = null;
   _focusReturn = document.activeElement;
   _editingContext = editingContext;
   if (!_overlay) _overlay = build();
@@ -4658,5 +4769,19 @@ export function openGraphModal(planeId = null, startTab = "coord", editingContex
   _editBaseline = null;
   refreshPreview();
   _editBaseline = plane ? {cfg:structuredClone(_cfg),series:structuredClone(_series)} : null;
+  _draftHistory = createDraftHistory({
+    capture: () => ({cfg: _cfg, series: _series}),
+    restore: value => {
+      _cfg = value.cfg; _series = value.series;
+      _sel = Math.min(_sel, _series.length - 1); _displaySelection = null; _selectedAnnotationId = null;
+      _placeMode = null; _annMode = null; _activeDraw = -1;
+      _seriesInputDrafts = new WeakMap();
+      syncCfgControls(); syncAnnLists(); renderChips(); syncSeriesEditor(); refreshPreview();
+    },
+    changed: ({canUndo,canRedo}) => {
+      _overlay.querySelector('#gm-undo').disabled = !canUndo;
+      _overlay.querySelector('#gm-redo').disabled = !canRedo;
+    },
+  });
   (startTab === 'func' ? _els.tabFuncBtn : _els.tabCoordBtn).focus({preventScroll:true});
 }
