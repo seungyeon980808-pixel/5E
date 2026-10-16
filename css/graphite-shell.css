@@ -594,3 +594,21 @@
     color: var(--ds-selected-ink); background: var(--ds-hover);
   }
 }
+
+/* 1.7.0 통합 브랜치 병합 후 보정 */
+@media (min-width: 768px) {
+  /* 통합 브랜치의 가운데 정렬 규칙보다 우선 — 고급 기능 줄도 16px 시작선 */
+  :root:not([data-mode="lite"]) #tool-list :is(#personal-object-save, #image-objectify-open, #bulk-edit-open).advanced-tool-btn { justify-content: flex-start; text-align: left; }
+  /* 5E_ExamPool(준비 중): 같은 아이콘 세트, 누를 수 없음을 흐림으로 */
+  :root:not([data-mode="lite"]) .image-workflow-hub #exam-pool-open {
+    display: inline-flex; align-items: center; gap: 6px; height: var(--ds-h-control); padding: 0 9px;
+    border: 0; border-radius: var(--ds-radius); background: transparent; box-shadow: none;
+    font: 500 var(--ds-text-body)/1 var(--ds-font); color: var(--ds-ink-2); white-space: nowrap;
+  }
+  :root:not([data-mode="lite"]) .image-workflow-hub #exam-pool-open::before {
+    content: ""; flex: none; width: var(--ds-icon-menu); height: var(--ds-icon-menu); background: var(--ds-ink-3);
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3.5' y='4.5' width='17' height='15' rx='1.5'/%3E%3Cpath d='M3.5 9.5h17M3.5 14.5h17M9 4.5v15'/%3E%3C/svg%3E") center / contain no-repeat;
+            mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3.5' y='4.5' width='17' height='15' rx='1.5'/%3E%3Cpath d='M3.5 9.5h17M3.5 14.5h17M9 4.5v15'/%3E%3C/svg%3E") center / contain no-repeat;
+  }
+  :root:not([data-mode="lite"]) .image-workflow-hub #exam-pool-open:disabled { opacity: .45; cursor: default; }
+}
