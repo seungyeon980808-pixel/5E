@@ -1,0 +1,213 @@
+/* RevealStatus — 5E 상태 표시. .br-frame 안에 붙는다. */
+.rs {
+  --rs-accent: #6f9bff;
+  --rs-sheen: 1;            /* 빛줄기 세기 배율 (0이면 끔) */
+  --rs-cycle: 2.8s;         /* 빛줄기 주기. 5E 글자 속 빛과 같은 주기로 움직인다 */
+  /* 5E는 프로그램 아이콘(assets/logo.svg)과 같은 글꼴: Georgia 굵은 이탤릭. 시스템 글꼴이라 따로 불러오지 않는다 */
+  --rs-mark-font: Georgia, "Times New Roman", serif;
+  --rs-text-font: "Pretendard", "Apple SD Gothic Neo", system-ui, sans-serif;
+  --rs-scale: 1;            /* 글자 크기 배율. 기본 크기는 프레임 폭에 맞춰 자동으로 커진다 */
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  container-type: size;     /* 아래 cqw 단위 = 프레임 폭의 1% */
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .32s ease;
+}
+.rs.is-on { opacity: 1; }
+
+/* ---- 빛줄기: 비스듬한 옅은 파란 빛이 천천히 지나가고 잠시 쉰다 ---- */
+.rs-sheen {
+  position: absolute;
+  top: -20%;
+  bottom: -20%;
+  left: 0;
+  width: 38%;
+  opacity: var(--rs-sheen);
+  background: linear-gradient(100deg,
+    transparent 0%,
+    rgba(130, 170, 255, .10) 30%,
+    rgba(225, 236, 255, .30) 50%,
+    rgba(130, 170, 255, .10) 70%,
+    transparent 100%);
+  transform: translateX(-120%) skewX(-12deg);
+  will-change: transform;
+}
+.rs.is-on .rs-sheen { animation: rs-sweep var(--rs-cycle) cubic-bezier(.45, 0, .25, 1) infinite; }
+.rs.is-done .rs-sheen {
+  animation: rs-glint .75s cubic-bezier(.3, 0, .2, 1) 1 forwards;
+  background: linear-gradient(100deg, transparent, rgba(160, 195, 255, .22) 35%, rgba(255, 255, 255, .55) 50%, rgba(160, 195, 255, .22) 65%, transparent);
+}
+@keyframes rs-sweep {
+  0%   { transform: translateX(-120%) skewX(-12deg); }
+  62%  { transform: translateX(300%) skewX(-12deg); }
+  100% { transform: translateX(300%) skewX(-12deg); }
+}
+@keyframes rs-glint {
+  from { transform: translateX(-120%) skewX(-12deg); }
+  to   { transform: translateX(300%) skewX(-12deg); }
+}
+
+/* ---- 라벨 공통 ---- */
+.rs-scrim { position: absolute; inset: 0; }
+.rs-label {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #e3e9f4;
+  font-family: var(--rs-text-font);
+  white-space: nowrap;
+}
+.rs-mark {
+  position: relative;
+  display: inline-block;
+  font-family: var(--rs-mark-font);
+  font-style: italic;
+  font-weight: 600;
+  letter-spacing: 0;
+  line-height: 1;
+}
+.rs-mark-base { color: #dfe7fb; text-shadow: 0 0 .35em rgba(90, 135, 255, .45); }
+.rs-mark-win {
+  position: absolute;
+  inset: -.2em -.3em;
+  overflow: hidden;
+  transform: translateX(-110%);
+  will-change: transform;
+}
+.rs-mark-glow {
+  /* 창과 같은 크기여야 창 이동과 반대 이동이 정확히 상쇄된다 */
+  position: absolute;
+  inset: 0;
+  padding: .2em .3em;
+  box-sizing: border-box;
+  white-space: nowrap;
+  color: #fff;
+  text-shadow: 0 0 .5em rgba(130, 170, 255, .95), 0 0 1.2em rgba(110, 155, 255, .5);
+  transform: translateX(110%);
+  will-change: transform;
+}
+.rs.is-on .rs-mark-win  { animation: rs-win var(--rs-cycle) cubic-bezier(.45, 0, .25, 1) infinite; }
+.rs.is-on .rs-mark-glow { animation: rs-win-inner var(--rs-cycle) cubic-bezier(.45, 0, .25, 1) infinite; }
+.rs.is-done .rs-mark-win, .rs.is-done .rs-mark-glow { animation: none; transform: none; }
+.rs.is-done .rs-mark-base { color: transparent; }
+@keyframes rs-win {
+  0%   { transform: translateX(-110%); }
+  62%  { transform: translateX(110%); }
+  100% { transform: translateX(110%); }
+}
+@keyframes rs-win-inner {
+  0%   { transform: translateX(110%); }
+  62%  { transform: translateX(-110%); }
+  100% { transform: translateX(-110%); }
+}
+.rs-sep { width: 1px; height: .95em; background: rgba(255, 255, 255, .16); }
+.rs-text {
+  position: relative;
+  display: inline-block;
+  height: 1.4em;
+  transition: width .32s cubic-bezier(.22, .61, .36, 1);
+}
+.rs-msg { position: absolute; left: 0; top: 0; line-height: 1.4em; white-space: nowrap; }
+.rs-step {
+  font-family: var(--rs-text-font);
+  font-size: .86em;
+  color: #7f8da5;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .04em;
+}
+.rs-step:empty { display: none; }
+.rs.is-done .rs-msg { color: #fff; }
+
+/* 동작 줄이기: 빛과 글자 속 빛을 끄고 문구만 바꾼다 */
+.rs.is-reduced .rs-sheen,
+.rs.is-reduced .rs-mark-win { display: none; }
+
+/* 크기: 프레임 폭(cqw)에 비례하고 최소/최대를 둔다. --rs-scale로 한 번에 조절 */
+
+/* ============ A. 칩 (좌하단) ============ */
+.rs--chip .rs-label {
+  left: clamp(12px, 3cqw, 24px);
+  bottom: clamp(12px, 3cqw, 24px);
+  gap: .6em;
+  padding: .6em 1.05em .6em .85em;
+  border-radius: 999px;
+  background: rgba(11, 15, 22, .84);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, .08), 0 .5em 1.6em rgba(0, 0, 0, .32);
+  font-size: calc(clamp(15px, 3.4cqw, 24px) * var(--rs-scale));
+  font-weight: 500;
+}
+.rs--chip .rs-mark { font-size: 1.12em; }
+
+/* ============ B. 하단 띠 ============ */
+.rs--band .rs-scrim {
+  top: auto;
+  height: clamp(80px, 24cqw, 150px);
+  background: linear-gradient(to top, rgba(8, 11, 17, .9), rgba(8, 11, 17, .6) 55%, transparent);
+}
+.rs--band .rs-label {
+  left: clamp(16px, 4cqw, 32px);
+  right: clamp(16px, 4cqw, 32px);
+  bottom: clamp(14px, 3.6cqw, 28px);
+  gap: .75em;
+  font-size: calc(clamp(15px, 3.4cqw, 24px) * var(--rs-scale));
+  font-weight: 500;
+}
+.rs--band .rs-mark { font-size: 1.4em; }
+
+/* ============ C. 중앙 워드마크 ============ */
+.rs--center .rs-scrim {
+  background: radial-gradient(ellipse 55% 48% at 50% 50%, rgba(8, 11, 17, .62), rgba(8, 11, 17, .24) 55%, rgba(8, 11, 17, .06) 85%);
+  transition: opacity .6s ease;
+}
+.rs--center .rs-label {
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  flex-direction: column;
+  gap: .5em;
+  font-size: calc(clamp(15px, 3.5cqw, 24px) * var(--rs-scale));
+  font-weight: 500;
+  letter-spacing: .01em;
+}
+.rs--center .rs-mark { font-size: 4.2em; }
+.rs--center .rs-sep { display: none; }
+.rs--center .rs-text { text-align: center; }
+.rs--center .rs-step { font-size: .78em; }
+
+/* ============ D. 미니멀 (좌상단 텍스트) ============ */
+.rs--minimal .rs-scrim {
+  bottom: auto;
+  height: clamp(70px, 20cqw, 130px);
+  background: linear-gradient(to bottom, rgba(8, 11, 17, .82), rgba(8, 11, 17, .42) 55%, transparent);
+}
+.rs--minimal .rs-label {
+  left: clamp(14px, 3.6cqw, 28px);
+  top: clamp(12px, 3.2cqw, 24px);
+  gap: .6em;
+  font-size: calc(clamp(14px, 3.1cqw, 22px) * var(--rs-scale));
+  font-weight: 500;
+}
+.rs--minimal .rs-mark { font-size: 1.1em; }
+.rs--minimal .rs-sep { width: 1.1em; height: 1px; background: var(--rs-accent); opacity: .7; }
+.rs--minimal .rs-step { display: none; }
+
+@font-face {
+  font-family: 'Pretendard'; font-style: normal; font-weight: 100 900; font-display: swap;
+  src: url('../../fonts/pretendard/PretendardVariable.woff2') format('woff2');
+}
+.rs.is-failed .rs-sheen, .rs.is-failed .rs-mark-win { display: none; }
+.rs-label { min-width: 0; }
+.rs-mark, .rs-sep { flex-shrink: 0; }
+.rs-text { flex: 1; min-width: 0; height: auto; transition: none; }
+.rs-msg { position: relative; display: block; white-space: normal; overflow-wrap: anywhere; }
+.rs-msg.is-leaving { position: absolute; }
+[data-loading-motion="paused"] *, [data-loading-sheen="off"] .rs-sheen,
+[data-loading-sheen="off"] .rs-mark-win, [data-loading-sheen="off"] .rs-mark-glow { animation-play-state: paused !important; }
+[data-loading-sheen="off"] .rs-sheen { opacity: 0; }
+@media (prefers-reduced-motion: reduce) {
+  .rs-sheen, .rs-mark-win { display: none; }
+  .br-stack { transform: none !important; }
+}

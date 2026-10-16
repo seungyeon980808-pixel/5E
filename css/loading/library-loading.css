@@ -1,0 +1,96 @@
+/* LibraryLoading — 라이브러리 전체 로딩 표시 */
+.ll {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-family: "Pretendard", "Apple SD Gothic Neo", system-ui, sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: #c9d3e4;
+  letter-spacing: 0;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateY(2px);
+  transition: opacity .25s ease, transform .25s ease;
+}
+.ll.is-on { opacity: 1; transform: none; }
+.ll-mark {
+  /* 프로그램 아이콘과 같은 글꼴 */
+  font-family: Georgia, "Times New Roman", serif;
+  font-style: italic;
+  font-weight: 600;
+  font-size: 13px;
+  color: #eef3ff;
+  text-shadow: 0 0 .4em rgba(110, 155, 255, .7);
+}
+.ll-count { color: #7f8da5; font-variant-numeric: tabular-nums; }
+.ll.is-done .ll-text { color: #e6ecf7; }
+
+.ll-bar {
+  height: 2px;
+  margin: -4px 0 10px;
+  border-radius: 2px;
+  background: rgba(111, 155, 255, .12);
+  overflow: hidden;
+  opacity: 0;
+  transition: opacity .25s ease;
+}
+.ll-bar.is-on { opacity: 1; }
+.ll-bar-fill {
+  height: 100%;
+  background: #6f9bff;
+  transform: scaleX(0);
+  transform-origin: left center;
+  transition: transform .35s cubic-bezier(.22, .61, .36, 1);
+}
+
+/* 격자 전체를 지나가는 빛줄기 하나 */
+.ll-grid { position: relative; }
+.ll-sheen {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 4;
+  opacity: 0;
+  transition: opacity .4s ease;
+}
+.ll-grid.is-loading .ll-sheen { opacity: 1; }
+.ll-sheen-band {
+  position: absolute;
+  top: -10%;
+  bottom: -10%;
+  left: 0;
+  width: 45%;
+  background: linear-gradient(100deg,
+    transparent,
+    rgba(120, 160, 255, .07) 30%,
+    rgba(200, 220, 255, .16) 50%,
+    rgba(120, 160, 255, .07) 70%,
+    transparent);
+  transform: translateX(-120%) skewX(-12deg);
+  will-change: transform;
+}
+.ll-grid.is-loading .ll-sheen-band { animation: ll-sweep 2.4s cubic-bezier(.45, 0, .25, 1) infinite; }
+@keyframes ll-sweep {
+  0%   { transform: translateX(-120%) skewX(-12deg); }
+  65%  { transform: translateX(260%) skewX(-12deg); }
+  100% { transform: translateX(260%) skewX(-12deg); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ll-sheen { display: none; }
+}
+
+/* 라이브러리 안에서는 썸네일별 진행선을 숨기고 위의 진행선 하나만 쓴다 */
+.ll-grid .br-bar { display: none; }
+/* Keep the existing library header/grid geometry. */
+.unilib > .ll-bar { position: absolute; top: 58px; left: 0; right: 0; z-index: 10; margin: 0; pointer-events: none; }
+.unilib-header .ll { min-width: 0; flex-wrap: wrap; justify-content: flex-end; white-space: normal; }
+.unilib-header .ll-count { color: #a4b1c7; }
+.unilib-thumb.br-frame .br-stage { z-index: 1; pointer-events: none; }
+.unilib-thumb.br-frame.is-loading::after { pointer-events: none; }
+.ll-grid[data-loading-motion="paused"] .ll-sheen-band { animation-play-state: paused; }
+.ll-grid[data-loading-sheen="off"] > .ll-sheen { opacity: 0; }
+@media (prefers-reduced-motion: reduce) { .ll, .ll-bar, .ll-bar-fill { transition: none; } }
+@media (max-width: 760px) { .unilib-header .ll { max-width: 45%; font-size: 10px; gap: 3px; } }

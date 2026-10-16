@@ -87,7 +87,11 @@
   animation: workbench-assignment-overlay-in var(--workbench-motion);
 }
 
+.workbench-assignment-motion-ghost { position:absolute; z-index:2; margin:0; box-sizing:border-box; pointer-events:none; }
+.workbench-assignment-motion-layer { position:absolute; inset:0; overflow:hidden; pointer-events:none; z-index:2; }
+
 .workbench-assignment {
+  position: relative;
   display: flex;
   flex-direction: column;
   width: min(var(--workbench-dialog-width), 100%);
@@ -115,7 +119,8 @@
 .workbench-assignment :is(button, [data-drop-target]):focus-visible { outline: var(--workbench-focus-width) solid var(--workbench-accent); outline-offset: var(--workbench-focus-offset); }
 .workbench-assignment button:disabled { cursor: default; opacity: .5; }
 .workbench-assignment-icon { width: var(--workbench-icon-size); padding: 0 !important; font-size: var(--workbench-type-icon) !important; }
-.workbench-assignment .workbench-assignment-instructions { padding: var(--workbench-space-3) var(--workbench-space-5); color: var(--workbench-muted); font-size: var(--workbench-type-helper); line-height: 1.5; }
+.workbench-assignment h3 { display:flex; align-items:center; gap:6px; min-height:24px; }
+.workbench-assignment button.workbench-assignment-help { min-height:22px; width:22px; padding:0; color:var(--workbench-muted); font-size:12px; }
 .workbench-assignment-advanced { display: grid; grid-template-columns: minmax(220px, .3fr) minmax(260px, .4fr) minmax(220px, .3fr); flex: 1; min-height: 300px; overflow: auto; }
 .workbench-assignment[data-image-only="true"] .workbench-assignment-advanced { grid-template-columns: minmax(220px, .4fr) minmax(260px, .6fr); }
 .workbench-assignment-reference-panel, .workbench-assignment-bench-panel { min-width: 0; padding: var(--workbench-space-4); border: 1px solid transparent; }
@@ -124,6 +129,7 @@
 .workbench-assignment-references, .workbench-assignment-graph-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: start; gap: var(--workbench-space-3); margin-top: var(--workbench-space-4); }
 .workbench-assignment-reference { position: relative; min-width: 0; border: 1px solid var(--workbench-border); border-radius: var(--workbench-radius-card); background: var(--workbench-input); }
 .workbench-assignment-reference[data-selected="true"] { border-color: var(--workbench-accent); }
+.workbench-assignment-reference[data-default-kind="image"]:not([data-selected="true"]) { border-color:color-mix(in srgb, var(--workbench-accent) 45%, var(--workbench-border)); background:color-mix(in srgb, var(--workbench-accent) 5%, var(--workbench-input)); }
 .workbench-assignment button.workbench-assignment-reference-content { display: grid; gap: var(--workbench-space-2); width: 100%; min-width: 0; padding: var(--workbench-space-1); background: transparent; border: 0; text-align: left; cursor: grab; }
 .workbench-assignment-reference-content img { display: block; width: 100%; height: 118px; object-fit: contain; background: var(--workbench-paper); border-radius: var(--workbench-radius-thumbnail); }
 .workbench-assignment-reference-content > span { padding: var(--workbench-space-1); font-size: var(--workbench-type-helper); }

@@ -1,4 +1,5 @@
 import { markSpaceAction, loadSpaceActionStyle } from './space-action.js?v=1.7.0-four-session-integration';
+import { createAssignmentMotion } from './assignment-motion.js?v=1.7.0-four-session-integration';
 
 export function assignmentForPlacement(referenceCount, placement) {
   const count = Math.max(0, Number.isInteger(referenceCount) ? referenceCount : 0);
@@ -87,23 +88,24 @@ export async function chooseWorkbenchAssignment({ references, host, returnFocus,
     overlay.className = 'workbench-assignment-overlay';
     overlay.innerHTML = `<section class="workbench-assignment" role="dialog" aria-modal="true" aria-labelledby="workbench-assignment-title">
       <header><h2 id="workbench-assignment-title">공용 작업대 · 이미지 분류</h2><button type="button" class="workbench-assignment-icon" data-action="cancel" aria-label="닫기">×</button></header>
-      <p class="workbench-assignment-instructions" id="workbench-assignment-help">이미지 안의 버튼으로 분류하거나 끌어놓으세요. 함께 쓸 이미지는 같은 작업대에 놓으세요.</p>
+
       <div class="workbench-assignment-advanced" data-classification>
         <section class="workbench-assignment-reference-panel" data-drop-target="pending" tabindex="0" role="group" aria-label="예비 작업대로 이동">
-          <h3>예비 작업대 <span data-pending-count></span></h3><div class="workbench-assignment-references" data-references></div>
+          <h3>예비 작업대 <button type="button" class="workbench-assignment-help" aria-label="예비 작업대 도움말" title="이미지 안의 버튼으로 분류하거나 원하는 영역으로 끌어놓으세요. 이곳으로 되돌리면 분류를 바꿀 수 있습니다.">?</button><span data-pending-count></span></h3><div class="workbench-assignment-references" data-references></div>
         </section>
         <section class="workbench-assignment-bench-panel" data-image-destination>
-          <h3>AI 이미지 변환 <span data-image-count></span></h3><div class="workbench-assignment-benches" data-benches></div>
+          <h3>AI 이미지 변환 <button type="button" class="workbench-assignment-help" aria-label="AI 이미지 변환 도움말" title="이미지를 놓으면 새 작업대가 생깁니다. 함께 쓸 이미지는 같은 작업대 안에 놓으세요.">?</button><span data-image-count></span></h3><div class="workbench-assignment-benches" data-benches></div>
           <div class="workbench-assignment-drop" data-drop-target="image" tabindex="0" role="button" aria-label="선택 이미지를 새 작업대에 넣기">여기에 놓으면 새 작업대</div>
         </section>
-        <section class="workbench-assignment-bench-panel" data-graph-destination ${allowConversionChoice ? '' : 'hidden'} data-drop-target="graph" tabindex="0" role="group" aria-label="선택 이미지를 그래프 목록에 넣기">
-          <h3>AI 그래프 복원 <span data-graph-count></span></h3><div class="workbench-assignment-graph-list" data-graphs></div>
+        <section class="workbench-assignment-bench-panel" data-graph-destination ${allowConversionChoice ? '' : 'hidden'} data-drop-target="graph" tabindex="0" role="group" aria-label="선택 이미지를 그래프 작업대에 넣기">
+          <h3>AI 그래프 복원 <button type="button" class="workbench-assignment-help" aria-label="AI 그래프 복원 도움말" title="그래프는 작업대 구분 없이 한 목록으로 보냅니다. 각 이미지를 따로 복원합니다.">?</button><span data-graph-count></span></h3><div class="workbench-assignment-graph-list" data-graphs></div>
         </section>
       </div>
       <p class="workbench-assignment-error" data-error role="status" aria-live="polite"></p>
       <footer><span data-summary aria-live="polite"></span><button type="button" data-action="cancel">취소</button><button type="button" class="workbench-assignment-primary" data-action="continue">분류대로 보내기 <kbd>Space</kbd></button></footer>
     </section>`;
     const dialog = overlay.querySelector('.workbench-assignment');
+    const motion = createAssignmentMotion(overlay);
     dialog.dataset.imageOnly = String(!allowConversionChoice);
     const query = selector => overlay.querySelector(selector);
     const saved = assignmentDrafts.get(mount);
@@ -116,6 +118,7 @@ export async function chooseWorkbenchAssignment({ references, host, returnFocus,
       if (settled) return;
       settled = true;
       remember();
+      motion.clear();
       window.removeEventListener('keydown', onKeydown, true);
       overlay.remove();
       if (focusReturn?.isConnected && !focusReturn.matches(':disabled') && !focusReturn.closest('[hidden], [inert]')) focusReturn.focus({preventScroll:true});
@@ -132,6 +135,7 @@ export async function chooseWorkbenchAssignment({ references, host, returnFocus,
       if (destination === 'image' && benchIndex !== null && target.length + moving.size > 10) {
         showError('한 작업대에는 최대 10개까지 넣을 수 있습니다. 새 작업대에 놓으세요.'); return;
       }
+      const animate = motion.capture(indices, destination);
       groups = groups.map(group => group.filter(index => !moving.has(index)));
       for (const index of moving) kinds[index] = destination === 'pending' ? null : destination;
       if (destination === 'image') {
@@ -139,18 +143,23 @@ export async function chooseWorkbenchAssignment({ references, host, returnFocus,
         else groups.push(...[...moving].map(index => [index]));
       }
       groups = groups.filter(group => group.length);
-      selected.clear(); showError(''); remember(); render();
+      selected.clear(); showError(''); remember(); render(); animate();
     };
     const dropMove = (target, indices) => move(indices, target.dataset.dropTarget,
       target.dataset.bench === undefined ? null : Number(target.dataset.bench));
     const card = index => {
       const node = document.createElement('div');
       node.className = 'workbench-assignment-reference'; node.dataset.reference = index;
+      if (!kinds[index]) node.dataset.defaultKind = 'image';
       node.dataset.selected = String(selected.has(index)); node.draggable = true;
       const pick = document.createElement('button'); pick.type = 'button'; pick.dataset.selectReference = index;
       pick.className = 'workbench-assignment-reference-content'; pick.setAttribute('aria-pressed', String(selected.has(index)));
       pick.setAttribute('aria-label', `이미지 ${index + 1} 선택`);
       pick.title = `${items[index]?.name || `이미지 ${index + 1}`} · 선택 후 이동할 영역에서 Enter`;
+      if (!kinds[index]) {
+        pick.title += ' · Space로 이미지 작업대에 배치';
+        pick.setAttribute('aria-description', 'Space를 누르면 이미지 작업대에 배치합니다. 변환은 실행하지 않습니다.');
+      }
       const image = document.createElement('img'); image.src = String(items[index]?.dataUrl || items[index]?.data || items[index]?.src || ''); image.alt = ''; image.draggable = false;
       const label = document.createElement('span'); label.textContent = `이미지 ${index + 1}`;
       pick.append(image, label); node.append(pick);
@@ -176,7 +185,7 @@ export async function chooseWorkbenchAssignment({ references, host, returnFocus,
       const focusIndex = focused?.closest('[data-reference]')?.dataset.reference;
       const pending = query('[data-references]'); pending.replaceChildren();
       items.forEach((_, index) => { if (!kinds[index]) pending.append(card(index)); });
-      if (!pending.children.length) empty(pending, '모든 이미지를 분류했습니다. 이곳으로 다시 끌어와 분류를 바꿀 수 있습니다.');
+      if (!pending.children.length) empty(pending, '분류 완료');
       const benches = query('[data-benches]'); benches.replaceChildren();
       groups.forEach((indices, index) => {
         const bench = document.createElement('section'); bench.className = 'workbench-assignment-bench';
@@ -191,14 +200,15 @@ export async function chooseWorkbenchAssignment({ references, host, returnFocus,
       const graphs = query('[data-graphs]'); graphs.replaceChildren();
       const graphIndices = kinds.flatMap((kind, index) => kind === 'graph' ? [index] : []);
       for (const index of graphIndices) graphs.append(card(index));
-      if (!graphIndices.length) empty(graphs, '그래프를 여기에 놓으세요. 작업대 구분 없이 한 목록으로 보냅니다.');
+      if (!graphIndices.length) empty(graphs, '그래프를 여기에 놓으세요.');
       const unclassified = kinds.filter(kind => !kind).length;
       query('[data-pending-count]').textContent = `${unclassified}개`;
       query('[data-image-count]').textContent = `${kinds.filter(kind => kind === 'image').length}개`;
       query('[data-graph-count]').textContent = `${graphIndices.length}개`;
-      query('[data-summary]').textContent = unclassified ? `미분류 ${unclassified}개 · 모두 분류하면 보낼 수 있습니다.`
+      query('[data-summary]').textContent = unclassified ? `예비 ${unclassified}개 · Space로 이미지 작업대에 배치합니다.`
         : `이미지 ${groups.length}작업대 · 그래프 ${graphIndices.length}개`;
-      query('[data-action="continue"]').disabled = unclassified > 0;
+      query('[data-action="continue"]').innerHTML = `${unclassified ? '작업대로 배치' : '작업대 열기'} <kbd>Space</kbd>`;
+      query('[data-action="continue"]').disabled = false;
       markSpaceAction(dialog, query('[data-action="continue"]'));
       if (focusIndex !== undefined) query(`[data-select-reference="${focusIndex}"]`)?.focus({preventScroll:true});
     };
@@ -213,12 +223,17 @@ export async function chooseWorkbenchAssignment({ references, host, returnFocus,
         render(); return;
       }
       if (button?.dataset.action === 'continue') {
+        // First classify the pending cards in this dialog. Opening the image
+        // workbench is a separate gesture, never an implicit generation request.
+        const pending = kinds.flatMap((kind, index) => !kind ? [index] : []);
+        if (pending.length) { move(pending, 'image'); return; }
+        const imageGroups = groups;
         const graphGroups = kinds.flatMap((kind, index) => kind === 'graph' ? [[index]] : []);
-        const resultGroups = [...groups, ...graphGroups];
+        const resultGroups = [...imageGroups, ...graphGroups];
         if (assignmentHasUnassignedReferences(resultGroups, items.length)) return;
         finish({ conversionKind: graphGroups.length === items.length ? 'graph' : 'image',
-          placement: groups.some(group => group.length > 1) || groups.length && graphGroups.length ? 'advanced' : 'separate',
-          groups: resultGroups.map(group => [...group]), groupKinds: [...groups.map(() => 'image'), ...graphGroups.map(() => 'graph')] });
+          placement: imageGroups.some(group => group.length > 1) || imageGroups.length && graphGroups.length ? 'advanced' : 'separate',
+          groups: resultGroups.map(group => [...group]), groupKinds: [...imageGroups.map(() => 'image'), ...graphGroups.map(() => 'graph')] });
         return;
       }
       // A click/Enter on a destination also provides a keyboard/touch alternative to dragging.
@@ -261,13 +276,30 @@ export async function chooseWorkbenchAssignment({ references, host, returnFocus,
       if (event.key === ' ' && !event.ctrlKey && !event.metaKey && !event.altKey && !event.shiftKey
         && !event.target.closest?.('input,textarea,select,[contenteditable="true"]')) {
         event.preventDefault(); event.stopImmediatePropagation();
-        if (!event.repeat && !settled) query('[data-action="continue"]').click();
+        if (!event.repeat && !settled) {
+          // The dialog may disappear before keyup. Keep that same physical
+          // press from activating the newly focused workbench button.
+          const swallow = next => {
+            if (next.key !== ' ') return;
+            next.preventDefault(); next.stopImmediatePropagation();
+            if (next.type === 'keyup') release();
+          };
+          const release = () => {
+            window.removeEventListener('keydown', swallow, true);
+            window.removeEventListener('keyup', swallow, true);
+            window.removeEventListener('blur', release);
+          };
+          window.addEventListener('keydown', swallow, true);
+          window.addEventListener('keyup', swallow, true);
+          window.addEventListener('blur', release, { once: true });
+          query('[data-action="continue"]').click();
+        }
         return;
       }
       trapTab(event, dialog);
     }
     mount.append(overlay); render();
     window.addEventListener('keydown', onKeydown, true);
-    (query('[data-classify-reference]') || query('[data-action="continue"]')).focus({preventScroll:true});
+    query('[data-action="continue"]').focus({preventScroll:true});
   });
 }

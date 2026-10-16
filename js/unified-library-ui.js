@@ -1,9 +1,11 @@
+import { createLibraryLoading } from './loading/library-controller.js?v=20261015';
+import { createLibraryPreviewLoading } from './loading/library-preview.js?v=20261015';
 import { channelStorage } from './preview-storage.js?v=1.7.0-four-session-integration';
 import { createThumbnailQueue } from "./library/thumbnail-queue.js?v=1.7.0-four-session-integration";
 import { createModalSurfaceMotion } from './modal-surface-motion.js?v=1.7.0-four-session-integration';
 import { animateLibraryAiHandoff } from './library-ai-motion.js?v=1.7.0-four-session-integration';
 import { attachCropMagnifier } from "./tools/pointer-magnifier.js?v=1.7.0-four-session-integration";
-import { targetPageGeometry, fittedPageSize, createPreviewPaper } from "./library/page-loading.js?v=1.7.0-four-session-integration";
+import { targetPageGeometry, fittedPageSize, createPreviewPaper, createLoadingDots } from "./library/page-loading.js?v=1.7.0-four-session-integration";
 import { createContinuousCropPages } from "./library/continuous-crop-pages.js?v=1.7.0-four-session-integration";
 import { registerEscapeLayer } from "./escape-layers.js?v=1.7.0-four-session-integration";
 import { DESKTOP_RELEASE_URL } from "./ai-install-guide.js?v=1.7.0-four-session-integration";
@@ -913,6 +915,9 @@ function createPartOptions(host, onChange) {
 export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openObjectify, openAi, openIndependentReferences, openGraph, pdfUi, pdfDetailsElement, onImportedImages, onDesktopSnapshot, desktopLibrary = globalThis.fiveEDesktop?.pdfLibrary, storage = channelStorage, initialSearchReadiness = "ready" }) {
   const overlay = buildShell();
   const root = overlay.querySelector(".unilib");
+  overlay.querySelector('.unilib-folder-loading-spinner').replaceWith(createLoadingDots());
+  const resultDots = createLoadingDots();
+  overlay.querySelector('[data-unilib-result-state]').prepend(resultDots);
   const motion = createModalSurfaceMotion({overlay,surface:root,springFrequency:48,animateSurface:false});
   for (const [attribute,anchor] of [['data-unilib-graph','[data-unilib-ai]'],['data-unilib-crop-graph','[data-unilib-crop-workbench]'],['data-unilib-crop-insert','[data-unilib-crop-workbench]']]) {
     const button=document.createElement('button');button.type='button';button.className='unilib-button';
@@ -947,6 +952,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     }
   });
   const list = overlay.querySelector("[data-unilib-results]");
+  const libraryLoading = createLibraryLoading({ header: overlay.querySelector('.unilib-header'), grid: overlay.querySelector('.unilib-result-scroll') });
   const query = overlay.querySelector("[data-unilib-query]");
   const stage = overlay.querySelector("[data-unilib-stage]");
   const partOptionsHost = overlay.querySelector("[data-unilib-part-options]");
@@ -1022,6 +1028,8 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   let requestSequence = 0;
   let pdfMatchIndex = 0;
   let previewEpoch = 0;
+  let previewLoading = null;
+  const clearPreviewLoading = () => { previewLoading?.dispose(); previewLoading = null; };
   let continuousView = null;
   let thumbnailEpoch = 0;
   const thumbnailQueue = createThumbnailQueue();
@@ -1146,14 +1154,21 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     host.querySelector("[data-unilib-result-state-message]").textContent = message;
     host.querySelector("[data-unilib-result-retry]").hidden = state !== "error";
     list.setAttribute("aria-busy", String(state === "loading"));
+    resultDots.hidden = state !== 'loading';
+    if (state === 'loading' && !results.length && !list.querySelector('.unilib-result-placeholder')) {
+      list.replaceChildren(...Array.from({length:6}, () => {
+        const item = document.createElement('li'); item.className = 'unilib-result-placeholder';
+        item.setAttribute('aria-hidden', 'true'); item.innerHTML = '<div></div><i></i><i></i>'; return item;
+      }));
+    } else if (state !== 'loading') list.querySelectorAll('.unilib-result-placeholder').forEach(node => node.remove());
   };
   const setPreviewLoading = () => {
-    const loading = document.createElement("div");
-    loading.className = "unilib-preview-loading";
-    loading.setAttribute("role", "status");
-    loading.textContent = "미리보기를 불러오는 중…";
-    stage.replaceChildren(loading);
-    stage.setAttribute("aria-busy", "true");
+    clearPreviewLoading();
+    continuousView?.loading.forEach(pending => pending.dispose());
+    continuousView = null;
+    const paper = createPreviewPaper();
+    stage.replaceChildren(paper);
+    previewLoading = createLibraryPreviewLoading(stage, paper);
   };
   const setProvidedStatus = (message, error = false) => {
     const host = overlay.querySelector("[data-unilib-provided-status]");
@@ -1371,6 +1386,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       if (card) scroller.scrollTop += card.getBoundingClientRect().top - scroller.getBoundingClientRect().top - previousCardOffset;
     };
     if (!preservePreview) invalidateAction();
+    libraryLoading.begin();
     const ownEpoch = ++searchEpoch;
     searchController?.abort();
     searchController = new AbortController();
@@ -1432,6 +1448,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       else { if (preservePreview) invalidateAction(); void renderPreview(); }
       if (searchReadiness !== "ready") setStatus(readinessMessage(), searchReadiness === "error");
       if (results.length && !await waitForFirstResultPaint(ownEpoch, signal)) return;
+      libraryLoading.empty();
       if (!searchIsCurrent(ownEpoch, signal)) return;
       setResultState(results.length ? "ready" : searchReadiness === "error" ? "error" : searchReadiness !== "ready" ? "loading" : "empty", results.length ? "" : searchReadiness !== "ready" ? readinessMessage() : "검색 결과가 없습니다.");
       // content-visibility may replace estimated heights on the first paint.
@@ -1441,6 +1458,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     } catch (error) {
       if (error?.name !== "AbortError" && ownEpoch === searchEpoch) {
         const message = `검색 실패: ${error instanceof Error ? error.message : error}`;
+        libraryLoading.fail();
         setResultState("error", message);
         stage.removeAttribute("aria-busy");
         stage.textContent = "미리보기를 불러오지 못했습니다. 검색을 다시 시도해 주세요.";
@@ -1476,15 +1494,19 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       media.setAttribute("aria-busy", String(!failed));
       const status = document.createElement("span");
       status.className = "unilib-thumbnail-status";
-      status.textContent = failed ? "미리보기를 불러오지 못했습니다" : "미리보기 불러오는 중…";
+      if (failed) libraryLoading.failed(media);
+      if (failed) status.textContent = '미리보기를 불러오지 못했습니다';
+      else status.append(createLoadingDots(), document.createTextNode('미리보기 불러오는 중…'));
       media.replaceChildren(status);
     };
     const showThumbnail = (media, src, result) => {
+      libraryLoading.request(media);
       const image = new Image();
       image.loading = "lazy";
       image.alt = "";
       image.onload = () => {
         if (ownThumbnailEpoch !== thumbnailEpoch || !media.isConnected) return;
+        void libraryLoading.ready(media, image);
         delete media.dataset.thumbnailState;
         media.setAttribute("aria-busy", "false");
         media.querySelector(".unilib-thumbnail-status")?.remove();
@@ -1499,8 +1521,10 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       image.src = src;
       media.append(image);
     };
-    const loadThumbnail = (result, media) => {
+    const loadThumbnail = (result, media, preview = null) => {
+      libraryLoading.request(media);
       thumbnailStatus(media);
+      if (preview) { showThumbnail(media, preview, result); return; }
       void thumbnailQueue.enqueue(async () => {
         if (ownThumbnailEpoch !== thumbnailEpoch || !media.isConnected) return;
         const activeProvider = await provider();
@@ -1536,7 +1560,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       media.className = "unilib-thumb library-card-thumb";
       if (typeof preview === "string" && preview) {
         thumbnailStatus(media);
-        showThumbnail(media, preview, result);
+        pendingThumbnails.push({ result, media, src: preview });
       } else {
         media.textContent = result.kind === "page" ? "PDF" : "5E";
         if (result.provenance?.provider === "pdf") {
@@ -1581,7 +1605,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
           thumbnailObserver?.unobserve(entry.target);
           const result = thumbnailLookup.get(entry.target);
           thumbnailLookup.delete(entry.target);
-          if (result) loadThumbnail(result, entry.target);
+          if (result) loadThumbnail(result.result, entry.target, result.src);
         }
       }, { root: overlay.querySelector(".unilib-result-scroll"), rootMargin: "240px 0px" });
     }
@@ -1597,7 +1621,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
         if (!result) continue;
         thumbnailObserver?.unobserve(media);
         thumbnailLookup.delete(media);
-        loadThumbnail(result, media);
+        loadThumbnail(result.result, media, result.src);
       }
       return visible;
     };
@@ -1607,9 +1631,9 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       if (end <= renderedResultCount) return;
       list.append(...visibleResults.slice(renderedResultCount, end).map(createResultCard));
       renderedResultCount = end;
-      for (const { result, media } of pendingThumbnails.splice(0)) {
-        if (thumbnailObserver) { thumbnailLookup.set(media, result); thumbnailObserver.observe(media); }
-        else loadThumbnail(result, media);
+      for (const { result, media, src } of pendingThumbnails.splice(0)) {
+        if (thumbnailObserver) { thumbnailLookup.set(media, {result, src}); thumbnailObserver.observe(media); }
+        else loadThumbnail(result, media, src);
       }
     };
     appendResultBatch(initialCount - 1);
@@ -1671,6 +1695,8 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   }
 
   async function loadContinuousPage(session, result, pageNumber, frame) {
+    const pageLoading = createLibraryPreviewLoading(frame, null);
+    session.loading.set(frame, pageLoading);
     const cacheKey = `${result.provenance?.documentId || result.id}:${result.revision || ""}:${pageNumber}`;
     try {
       let pending = continuousPageCache.get(cacheKey);
@@ -1691,6 +1717,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       if (continuousView !== session || !frame.isConnected) return;
       frame.dataset.pageState = "ready";
       frame.replaceChildren(image);
+      pageLoading.complete(frame, image);
     } catch (error) {
       if (continuousView !== session || !frame.isConnected) return;
       continuousPageCache.delete(cacheKey);
@@ -1707,6 +1734,9 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       });
       frame.dataset.pageState = "error";
       frame.replaceChildren(message, retryButton);
+    } finally {
+      pageLoading.dispose();
+      if (session.loading.get(frame) === pageLoading) session.loading.delete(frame);
     }
   }
 
@@ -1725,6 +1755,8 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     const activePages = new Set(next.pages);
     for (const [pageNumber, page] of session.pages) {
       if (!activePages.has(pageNumber)) {
+        const frame = page.querySelector('.unilib-pdf-page-frame');
+        session.loading.get(frame)?.dispose(); session.loading.delete(frame);
         page.remove();
         session.pages.delete(pageNumber);
       }
@@ -1740,7 +1772,6 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
         const frame = document.createElement("div");
         frame.className = "unilib-pdf-page-frame";
         frame.dataset.pageState = "loading";
-        frame.textContent = `${pageNumber}쪽 불러오는 중…`;
         page.append(caption, frame);
         session.pages.set(pageNumber, page);
         void loadContinuousPage(session, result, pageNumber, frame);
@@ -1761,7 +1792,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     const after = document.createElement("div");
     after.className = "unilib-pdf-spacer";
     content.append(before, after);
-    const session = { resultId: result.id, pageCount, visiblePage: initialPage, start: 0, end: 0, pageExtent: 0, content, before, after, pages: new Map() };
+    const session = { resultId: result.id, pageCount, visiblePage: initialPage, start: 0, end: 0, pageExtent: 0, content, before, after, pages: new Map(), loading: new Map() };
     continuousView = session;
     stage.classList.add("is-continuous-pdf");
     stage.setAttribute("aria-label", `${result.title} 전체 PDF ${pageCount}쪽`);
@@ -1771,6 +1802,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   }
 
   function showPreviewError(error) {
+    clearPreviewLoading();
     stage.removeAttribute("aria-busy");
     const message = document.createElement("div");
     message.className = "unilib-preview-error";
@@ -1791,17 +1823,17 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   async function renderPreview(retry = 0) {
     const ownEpoch = ++previewEpoch;
     let result = selectedResult();
+    clearPreviewLoading();
+    continuousView?.loading.forEach(pending => pending.dispose());
     continuousView = null;
     stage.classList.remove("is-continuous-pdf");
     stage.removeAttribute("data-visible-pdf-page");
     stage.querySelector(".unilib-preview-loading")?.remove();
     if (result) {
-      const loading = document.createElement("div");
-      loading.className = "unilib-preview-loading";
-      loading.setAttribute("role", "status");
-      loading.textContent = "미리보기 불러오는 중…";
-      stage.replaceChildren(createPreviewPaper(result), loading);
-      stage.setAttribute("aria-busy", "true");
+      const paper = createPreviewPaper(result);
+      stage.replaceChildren(paper);
+      const thumbnail = list.querySelector(`[data-result-id="${CSS.escape(result.id)}"] .unilib-thumb img`);
+      previewLoading = createLibraryPreviewLoading(stage, paper, thumbnail?.currentSrc || resultImage(result));
     }
     const pdfMatches = result?.kind === "pdf" && Array.isArray(result.matches) ? result.matches : [];
     if (pdfMatchIndex >= pdfMatches.length) pdfMatchIndex = 0;
@@ -1811,6 +1843,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     overlay.querySelector("[data-unilib-match-position]").textContent = pdfMatches.length ? `${pdfMatchIndex + 1} / ${pdfMatches.length} · ${activePdfMatch.pageNumber}쪽` : "";
     const continuousPdf = result?.kind === "pdf" && activeTypes.length === 1 && activeTypes[0] === "pdf" && typeof result.loadPreview === "function";
     if (continuousPdf) {
+      clearPreviewLoading();
       overlay.querySelector("[data-unilib-preview-title]").textContent = result.title || "PDF 전체 보기";
       overlay.querySelector("[data-unilib-preview-kind]").textContent = `전체 문서 · ${result.pageCount || 1}쪽`;
       overlay.querySelector("[data-unilib-preview-example]").hidden = !isExampleLibraryResult(result);
@@ -1857,7 +1890,9 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     if (representations.length && !isValidQuestionRepresentation(result, activeRepresentation)) activeRepresentation = representations[0].id;
     if (!representations.length) activeRepresentation = result?.variants?.manual ? "manual" : "full";
     const materializeResult = resultForRepresentation(result, activeRepresentation);
-    stage.querySelector(".unilib-preview-paper")?.replaceWith(createPreviewPaper(materializeResult));
+    const nextPaper = createPreviewPaper(materializeResult);
+    stage.querySelector(".unilib-preview-paper")?.replaceWith(nextPaper);
+    previewLoading?.setPaper(nextPaper);
     const representationHost = overlay.querySelector("[data-unilib-representations]");
     representationHost.hidden = representations.length === 0;
     representationHost.replaceChildren(...representations.map((option) => {
@@ -1928,7 +1963,11 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     const sourceUrl = safeExternalSourceUrl(result?.provenance?.sourceUrl);
     sourceOpen.textContent = isPdf ? "원문 페이지" : "출처 열기";
     sourceOpen.hidden = !result || (!isPdf && !revealable && !sourceUrl);
-    if (!result) { stage.textContent = "검색 결과를 선택하세요."; stage.removeAttribute("aria-busy"); return; }
+    if (!result) {
+      if (searchReadiness === 'loading' && !query.value.trim()) setPreviewLoading();
+      else { stage.textContent = '검색 결과를 선택하세요.'; stage.removeAttribute('aria-busy'); }
+      return;
+    }
     try {
       const activeProvider = await provider();
       const previewPixelWidth = result.kind === "crop" && result.cropType === "question" && result.provenance?.provider === "pdf"
@@ -1965,8 +2004,9 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
           void renderPreview();
         });
         stage.replaceChildren(frame);
+        previewLoading?.complete(frame, image); previewLoading = null;
         stage.removeAttribute("aria-busy");
-      } else { stage.removeAttribute("aria-busy"); stage.textContent = "미리보기를 표시할 수 없습니다."; }
+      } else { showPreviewError(new Error("미리보기 이미지가 없습니다.")); }
     } catch (error) {
       if (ownEpoch !== previewEpoch) return;
       if (retry < 1 && /superseded/iu.test(String(error?.message || error))) {
@@ -2010,6 +2050,9 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   }
   let cancelAiHandoff = null;
   function close({ restoreFocus = true, keyboard = lastInteractionWasKeyboard, aiHandoff = false } = {}) {
+    libraryLoading.reset();
+    clearPreviewLoading();
+    continuousView?.loading.forEach(pending => pending.dispose());
     if (!motion.isOpen()) return;
     // WebKit can reset nested scroll positions while the overlay is hidden.
     closedResultViewport = restoringResultViewport ?? snapshotResultViewport();
@@ -2055,7 +2098,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     invalidateAction();
     returnFocus = trigger || document.activeElement;
     motion.show({ origin: trigger });
-    if(!results.length){setResultState("loading", "검색 결과를 불러오는 중…");setPreviewLoading();}
+    if(!results.length){setResultState("loading", "라이브러리를 불러오는 중…");setPreviewLoading();overlay.querySelector('[data-unilib-count]').textContent='불러오는 중';}
     setSearchPaneOpen(searchPaneOpen);
     setPreviewPaneOpen(previewPaneOpen);
     setFolderLoading("loading");
@@ -2091,6 +2134,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       if (!isCurrentOpen()) return;
       const message = error instanceof Error ? error.message : String(error);
       setFolderLoading("error", message);
+      setResultState('error', '라이브러리를 불러오지 못했습니다. 다시 시도해 주세요.');
       stage.removeAttribute("aria-busy");
       stage.textContent = "미리보기를 준비하지 못했습니다. 폴더 연결을 확인해 주세요.";
       setStatus(`라이브러리 폴더를 불러오지 못했습니다: ${message}`, true);
@@ -2379,7 +2423,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
   setSearchPaneOpen(searchPaneOpen);
   setPreviewPaneOpen(previewPaneOpen);
   previewToggle.addEventListener("click", () => setPreviewPaneOpen(!previewPaneOpen));
-  overlay.querySelector("[data-unilib-result-retry]").addEventListener("click", () => void (searchReadiness === "error" && providedRetry ? providedRetry() : runSearch()));
+  overlay.querySelector("[data-unilib-result-retry]").addEventListener("click", () => void (searchReadiness === "error" && providedRetry ? providedRetry() : overlay.querySelector('[data-unilib-folder-loading]').dataset.state === 'error' ? open(returnFocus) : runSearch()));
   overlay.querySelector("[data-unilib-provided-retry]").addEventListener("click", () => { if (typeof providedRetry === "function") void providedRetry(); });
   overlay.querySelector("[data-unilib-scrim]").addEventListener("click", closeDrawers);
   overlay.querySelector("[data-unilib-close]").addEventListener("click", close);

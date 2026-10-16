@@ -1,0 +1,72 @@
+/* BlurReveal — 효과 전용 스타일. 프레임 요소에 크기(또는 aspect-ratio)만 주면 된다. */
+.br-frame {
+  --br-base: #10141b;      /* 첫 레벨이 그려지기 전 바탕 */
+  --br-accent: #5b8cff;    /* 진행선 */
+  position: relative;
+  overflow: hidden;        /* 블러·확대가 프레임 밖으로 번지지 않게 */
+  isolation: isolate;
+  contain: paint;
+  background: var(--br-base);
+}
+.br-stage,
+.br-stack { position: absolute; inset: 0; }
+.br-layer,
+.br-final {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+.br-sweep {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 125%;
+  overflow: hidden;
+  -webkit-mask-image: linear-gradient(to bottom, #000 80%, transparent);
+  mask-image: linear-gradient(to bottom, #000 80%, transparent);
+}
+.br-sweep-inner { position: absolute; left: 0; top: 0; width: 100%; height: 80%; }
+
+/* The window and its content travel in opposite directions. The paper stays
+   still while a broad, feathered patch of focus passes across it. */
+.br-focus-window {
+  position: absolute; inset: 0 auto 0 0; width: 50%; overflow: hidden;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 42%, #000 58%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 42%, #000 58%, transparent);
+  animation: br-focus-pass 8.2s ease-in-out infinite;
+}
+.br-focus-content { position: absolute; inset: 0 auto 0 0; width: 200%; animation: br-focus-counter 8.2s ease-in-out infinite; }
+.br-focus-glow { position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(193, 217, 255, .15), transparent); }
+@keyframes br-focus-pass { 0% { transform: translateX(-110%); } 80%, 100% { transform: translateX(210%); } }
+@keyframes br-focus-counter { 0% { transform: translateX(55%); } 80%, 100% { transform: translateX(-105%); } }
+[data-loading-motion="paused"] .br-focus-window,
+[data-loading-motion="paused"] .br-focus-content,
+[data-loading-sheen="off"] .br-focus-window,
+[data-loading-sheen="off"] .br-focus-content { animation-play-state: paused; }
+[data-loading-sheen="off"] .br-focus-window { opacity: 0; }
+@media (prefers-reduced-motion: reduce) { .br-focus-window { display: none; } }
+
+/* 로딩 중 입력 막기 (시각 시안 단계) */
+.br-frame.is-loading { cursor: progress; }
+.br-frame.is-loading::after { content: ""; position: absolute; inset: 0; z-index: 3; }
+
+.br-bar {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  z-index: 2;
+  opacity: 0;
+  background: color-mix(in srgb, var(--br-accent) 14%, transparent);
+  pointer-events: none;
+}
+.br-bar-fill {
+  height: 100%;
+  background: var(--br-accent);
+  transform: scaleX(0);
+  transform-origin: left center;
+}
