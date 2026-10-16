@@ -180,3 +180,25 @@ dialog::backdrop{background:rgba(0,0,0,.32)}
 #parts .part-na{display:block;padding:0 var(--ds-space-4);color:var(--ds-doc-ink-3);font-size:var(--ds-text-meta)}
 #parts tbody tr:hover td{background:var(--ds-doc-hover)}
 .toolbar-end #count{white-space:nowrap}
+
+/* ---------- 5e_hwp 배치 층: 한글 파랑 하나로 선택·표시선·손잡이 ---------- */
+.placement-hint{display:flex;gap:var(--ds-space-4);align-items:baseline;margin:0;font-size:var(--ds-text-meta);color:var(--ds-doc-ink-2)}
+.placement-hint b{flex:none;color:var(--ds-hwp);font-weight:var(--ds-weight-strong)}
+.placement-layer{position:absolute;inset:0;z-index:3;pointer-events:none}
+.place-outline{position:absolute;box-shadow:0 0 0 1.5px var(--ds-hwp);border-radius:2px}
+.place-tag{position:absolute;left:-1.5px;bottom:100%;margin-bottom:3px;padding:1px 6px;border-radius:var(--ds-radius-sm);background:var(--ds-hwp);color:var(--ds-bar-ink);font-size:var(--ds-text-meta);white-space:nowrap}
+.placement-layer button{position:absolute;pointer-events:auto;padding:0;border-radius:var(--ds-radius-sm)}
+.place-grip{width:20px;height:24px;background:var(--ds-hwp);color:var(--ds-bar-ink);cursor:grab}
+.place-grip:hover:not(:disabled){background:var(--ds-hwp)}
+.place-grip svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.5;stroke-linecap:round}
+.place-size{width:10px;height:10px;background:var(--ds-doc);box-shadow:0 0 0 1.5px var(--ds-hwp);cursor:nwse-resize}
+.place-size:hover:not(:disabled){background:var(--ds-hwp-soft)}
+.place-divider{width:12px;cursor:col-resize;background:transparent}
+.place-divider::after{content:"";position:absolute;left:5px;top:0;bottom:0;width:2px;border-radius:1px;background:var(--ds-hwp);opacity:.35}
+.place-divider:hover:not(:disabled){background:transparent}.place-divider:hover::after{opacity:1}
+.place-ghost{position:absolute;border-radius:2px;background:var(--ds-hwp-soft);box-shadow:0 0 0 1.5px var(--ds-hwp);opacity:.75}
+.place-marker{position:absolute;border-radius:2px;background:var(--ds-hwp)}
+.place-marker span{position:absolute;left:0;top:calc(100% + 4px);padding:1px 6px;border-radius:var(--ds-radius-sm);background:var(--ds-hwp);color:var(--ds-bar-ink);font-size:var(--ds-text-meta);white-space:nowrap}
+.place-marker[data-axis=v] span{left:calc(100% + 4px);top:0}
+.place-readout{position:absolute;padding:1px 6px;border-radius:var(--ds-radius-sm);background:var(--ds-hwp);color:var(--ds-bar-ink);font-size:var(--ds-text-meta);font-variant-numeric:tabular-nums;white-space:nowrap}
+.placement-layer[data-dragging=true]{cursor:grabbing}

@@ -33,6 +33,12 @@
       ]
     },
     {
+      "path": "tests/test-exampool-placement-edit.mjs",
+      "findingIds": [
+        "EXAMPOOL-DRAG-PLACEMENT"
+      ]
+    },
+    {
       "path": "tests/test-exampool-card-workspace.mjs",
       "findingIds": [
         "EXAMPOOL-CARD-SHEET-SYNC",
