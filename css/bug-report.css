@@ -7,6 +7,7 @@
 .bug-report-open [data-report-error-count][hidden] { display: none; }
 #ai-image-panel [data-ai-status][role="button"] { cursor: pointer; text-decoration: underline; text-underline-offset: 3px; }
 .bug-report-open svg { width: 18px; height: 18px; }
+.unified-library-overlay .unilib-header-actions .bug-report-open { width: auto; height: auto; color: inherit; text-decoration: none; }
 .bug-report-open:hover { color: var(--c-text); border-color: var(--c-border); }
 .bug-report-open:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
 .bug-report-dialog { color: var(--c-text); background: var(--bg-panel); border: 1px solid var(--c-border); border-radius: 12px; width: min(680px, calc(100vw - 32px)); max-height: calc(100dvh - 32px); padding: 20px; box-sizing: border-box; overflow: auto; }

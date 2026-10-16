@@ -9,7 +9,7 @@ const icon = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-
 // Opening it never uploads images, logs, or the user's current document.
 export function initBugReporter() {
   const destination = 'https://5e.ai.kr/bug/';
-  const mount = (host, className = '') => {
+  const mount = (host, className = '', before = null) => {
     if (!host || host.querySelector('.bug-report-open')) return;
     const link = document.createElement('a');
     link.className = `bug-report-open ${className}`;
@@ -17,12 +17,15 @@ export function initBugReporter() {
     link.title = '5E CS Center · 버그 신고 (새 탭)';
     link.setAttribute('aria-label', link.title);
     link.innerHTML = icon;
-    host.append(link);
+    if (before?.parentNode === host) host.insertBefore(link, before); else host.append(link);
   };
   mount(document.querySelector('.footer-actions'));
   mount(document.querySelector('#ai-image-panel .ai-head-status'), 'ai-header-tool modal-btn');
   const mountLibrary = () => {
-    for (const host of document.querySelectorAll('.unified-library-overlay .unilib-actions')) mount(host);
+    // 라이브러리에서는 위쪽 막대(미리보기 접기 · 닫기 옆)에 둔다.
+    for (const host of document.querySelectorAll('.unified-library-overlay .unilib-header-actions')) {
+      mount(host, 'unilib-icon-button', host.querySelector('[aria-label="라이브러리 닫기"]') || host.lastElementChild);
+    }
   };
   mountLibrary();
   new MutationObserver(mountLibrary).observe(document.body, {childList: true, subtree: true});
