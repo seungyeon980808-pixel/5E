@@ -52,7 +52,8 @@ test('Space advances one ready action per press, while other pages always open a
       await ui.locator('[data-unilib-crop]').waitFor({state:'hidden'});
       await page.keyboard.press('Space');
       const assignment = page.locator('.workbench-assignment');await assignment.waitFor();
-      assert.equal(await assignment.locator('[data-action="continue"]').isDisabled(),true);
+      assert.equal(await assignment.locator('[data-default-kind="image"]').count(),1);
+      assert.equal(await assignment.locator('[data-action="continue"]').isEnabled(),true);
       await classifyAll(assignment);
       assert.equal(await assignment.locator('[data-action="continue"]').getAttribute('aria-keyshortcuts'),'Space');
       if (process.env.EVIDENCE_DIR && engine === chromium) await page.screenshot({path:path.join(process.env.EVIDENCE_DIR,'assignment-ready-1440.png')});

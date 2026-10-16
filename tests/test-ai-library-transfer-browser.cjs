@@ -144,7 +144,9 @@ for (const engine of ['chromium', 'webkit']) test(`${engine}: prepared library h
   await page.emulateMedia({reducedMotion:'no-preference'});
   await page.keyboard.press('Space');
   const next=page.locator('.workbench-assignment [data-action="continue"]');await next.waitFor();
-  assert.equal(await next.isDisabled(),true);
+  // Pending crops default to the image workbench; Space is available but only places them.
+  assert.equal(await page.locator('.workbench-assignment [data-default-kind="image"]').count(),1);
+  assert.equal(await next.isEnabled(),true);
   await classifyAll(page.locator('.workbench-assignment'));
   assert.equal(await next.getAttribute('aria-keyshortcuts'),'Space');
   await page.keyboard.press('Space');
@@ -283,9 +285,13 @@ for (const engine of ['chromium', 'webkit']) test(`${engine}: prepared library c
   await page.locator('.workbench-assignment').waitFor();
   assert.equal(await page.locator('.workbench-assignment').count(),1,'a held key opens one assignment');
   assert.equal(await page.locator('.workbench-assignment [data-references] [data-reference]').count(),2);
-  assert.equal(await page.locator('.workbench-assignment [data-action="continue"]').isDisabled(),true);
+  assert.equal(await page.locator('.workbench-assignment [data-default-kind="image"]').count(),2);
+  assert.equal(await page.locator('.workbench-assignment [data-action="continue"]').isEnabled(),true);
   await page.keyboard.press('Space');
-  assert.equal(await page.evaluate(()=>window.__handoff),undefined,'Space cannot classify implicitly');
+  assert.equal(await page.locator('.workbench-assignment').isVisible(),true,'first Space only places pending crops');
+  assert.equal((await page.locator('.workbench-assignment [data-pending-count]').textContent()).trim(),'0개');
+  assert.equal(await page.locator('.workbench-assignment [data-benches] [data-reference]').count(),2);
+  assert.equal(await page.evaluate(()=>window.__handoff),undefined,'placing crops never sends them');
   await page.keyboard.press('Escape');
   assert.equal(await page.evaluate(()=>window.__acceptedAssets.size),2,'cancel preserves both crops');
   await ui.locator('[data-result-id="geometry-book:page:1"]').focus();await page.keyboard.press('Space');
@@ -460,7 +466,7 @@ for (const engine of ['chromium','webkit']) test(`${engine}: mixed destinations 
   assert.deepEqual(await page.evaluate(()=>window.__mixedReceipt.flatMap(r=>r.referenceIndices)),[0,1,2,3]);
   await page.locator('#ai-image-panel [data-ai-workflow="graph"]').click();
   await page.locator('#ai-image-panel [data-ai-workflow="graph"][aria-pressed="true"]').waitFor();
-  assert.equal(await page.locator('#ai-image-panel .ai-rail-heading > strong').textContent(),'그래프 목록');
+  assert.equal(await page.locator('#ai-image-panel .ai-rail-heading > strong').textContent(),'그래프 작업대');
   assert.equal(await page.locator('#ai-image-panel .ai-task-tab:not(.ai-task-add)').count(),2);
   for (const row of await page.locator('#ai-image-panel .ai-task-tab:not(.ai-task-add) .ai-task-tab-select').all()) await row.click();
   await page.locator('#ai-image-panel [data-ai-workflow="image"]').click();
