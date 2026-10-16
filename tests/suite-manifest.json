@@ -27,6 +27,12 @@
       ]
     },
     {
+      "path": "tests/test-exampool-parts-view.mjs",
+      "findingIds": [
+        "EXAMPOOL-PARTS-SHEET"
+      ]
+    },
+    {
       "path": "tests/test-exampool-card-workspace.mjs",
       "findingIds": [
         "EXAMPOOL-CARD-SHEET-SYNC",

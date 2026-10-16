@@ -149,3 +149,34 @@ dialog::backdrop{background:rgba(0,0,0,.32)}
 .work .toolbar-end{min-width:0;flex:0 1 auto}
 .work .toolbar-end #filter{flex:0 1 160px;min-width:72px;width:auto}
 .workspace:has(#preview-dialog:not([hidden])) .work .toolbar-end #count{display:none}
+
+/* ---------- 5E_cell 아래 시트 탭(문항·구성·표) — 엑셀처럼 창 바닥에 붙는다 ---------- */
+.sheet-pane{flex:1;min-height:0;overflow:auto;background:var(--ds-doc)}
+#sheet-tables{padding:var(--ds-space-5) var(--ds-space-6)}
+.sheet-tabs{flex:none;height:var(--ds-h-row);display:flex;align-items:stretch;gap:0;padding:0 var(--ds-space-4);background:var(--ds-doc-sub);border-top:1px solid var(--ds-doc-line-strong)}
+.sheet-tabs button{height:auto;min-width:64px;padding:0 var(--ds-space-6);border-radius:0;color:var(--ds-doc-ink-3);font-size:var(--ds-text-body);border-right:1px solid var(--ds-doc-line)}
+.sheet-tabs button:hover:not(:disabled){background:var(--ds-doc-hover);color:var(--ds-doc-ink)}
+.sheet-tabs button[aria-selected=true]{background:var(--ds-doc);color:var(--ds-cell);font-weight:var(--ds-weight-strong);box-shadow:inset 0 -2px 0 var(--ds-cell)}
+.parts-empty{margin:0;padding:var(--ds-space-6);color:var(--ds-doc-ink-3);font-size:var(--ds-text-body)}
+
+/* 구성 시트: 행 번호·열 글자는 문항 시트와 같은 모양 */
+#parts{width:100%;min-width:640px;table-layout:fixed;border-collapse:separate;border-spacing:0;font-size:var(--ds-text-body);color:var(--ds-doc-ink)}
+#parts th,#parts td{height:var(--ds-h-row);border-right:1px solid var(--ds-doc-line);border-bottom:1px solid var(--ds-doc-line);padding:0;vertical-align:middle}
+#parts thead th{position:sticky;top:0;z-index:2;background:var(--ds-doc-head);color:var(--ds-doc-ink-3);font-size:var(--ds-text-meta);font-weight:var(--ds-weight-regular)}
+#parts thead .letters th{height:22px}
+#parts thead tr:nth-child(2) th{top:22px;background:var(--ds-doc-sub);color:var(--ds-doc-ink-2);font-weight:var(--ds-weight-medium);border-bottom-color:var(--ds-doc-line-strong)}
+#parts .row-num{background:var(--ds-doc-head);color:var(--ds-doc-ink-3);font-size:var(--ds-text-meta);font-weight:var(--ds-weight-regular);text-align:center}
+#parts .row-col{width:36px}#parts .order-col{width:76px}#parts .kind-col{width:64px}#parts .name-col{width:auto}#parts .parent-col{width:96px}
+#parts .layout-col{width:84px}#parts .ratio-col{width:64px}#parts .size-col{width:64px}#parts .gap-col{width:64px}#parts .align-col{width:76px}
+#parts td>input,#parts td>select{width:100%;height:calc(var(--ds-h-row) - 1px);border:0;border-radius:0;background:transparent;padding:0 var(--ds-space-4);font-size:var(--ds-text-body);color:var(--ds-doc-ink)}
+#parts td>input:focus,#parts td>select:focus{outline:2px solid var(--ds-cell);outline-offset:-2px;background:var(--ds-doc)}
+#parts td>input::placeholder{color:var(--ds-doc-ink-3)}
+#parts .part-kind{padding:0 var(--ds-space-4);color:var(--ds-doc-ink-2);font-size:var(--ds-text-meta)}
+#parts .part-name{padding-left:calc(var(--depth,0) * 14px)}
+#parts .part-name:not(:has(input)){padding:0 var(--ds-space-4)}
+#parts .order-cell{display:flex;align-items:center;gap:0;padding:0 0 0 var(--ds-space-4)}
+#parts .order-cell span{flex:1;color:var(--ds-doc-ink-2);font-variant-numeric:tabular-nums}
+#parts .order-cell button{width:var(--ds-h-control-sm);height:var(--ds-h-control-sm);padding:0;color:var(--ds-doc-ink-3)}
+#parts .part-na{display:block;padding:0 var(--ds-space-4);color:var(--ds-doc-ink-3);font-size:var(--ds-text-meta)}
+#parts tbody tr:hover td{background:var(--ds-doc-hover)}
+.toolbar-end #count{white-space:nowrap}

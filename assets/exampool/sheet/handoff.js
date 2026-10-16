@@ -135,6 +135,16 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
       else if(b.kind==='group'){
         const boxed=b.boxed===true||b.boxed===undefined&&b.label==='실험',children=q.blocks.filter(x=>x.parent===b.id);let body;
         const innerWidth=Math.max(35,width-(boxed?22:0));
+        if(boxed&&b.layout==='나란히'&&children.length>1){
+          // 상자 + 가로 묶음은 한 표로 만든다. 표를 세 겹 넣으면(상자→가로→결과표) 한글 엔진이
+          // 안쪽 표의 병합을 잃는다. 첫 행은 묶음 이름(합친 칸), 둘째 행은 자식 칸.
+          const widths=splitWidths(children,width),n=children.length,rule='1px solid #555';
+          recordTable(2,n,[{r:0,c:0,rs:1,cs:n}]);
+          let cells='';
+          for(const [i,child] of children.entries())cells+=`<td style="border:none;border-bottom:${rule};${i===0?`border-left:${rule};`:''}${i===n-1?`border-right:${rule};`:''}padding:5px 8px 8px;vertical-align:top;width:${widths[i]}px">${await walk(b.id,Math.max(35,widths[i]-22),child.id)}</td>`;
+          html+=`<table style="border-collapse:collapse;width:${width}px"><tr><td colspan="${n}" style="border:none;border-top:${rule};border-left:${rule};border-right:${rule};width:${width}px;padding:8px 8px 0">${p(b.label)}</td></tr><tr>${cells}</tr></table>`;
+          continue;
+        }
         if(b.layout==='나란히'&&children.length){
           recordTable(1,children.length);
           body=`<table style="border-collapse:collapse;width:${innerWidth}px"><tr>`;

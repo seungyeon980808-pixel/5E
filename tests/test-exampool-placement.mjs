@@ -71,3 +71,12 @@ test('generated HWP uses ratios, sizes, alignment and the chosen choice columns'
   // An untouched question renders exactly as before the feature existed.
   const again=await buildQuestionHtml(data().questions[0]);assert.equal(again.html,before.html);
 });
+
+test('a boxed side-by-side group is one native table, so the result table inside keeps its merges',async()=>{
+  const q=data().questions[0],group=q.blocks.find(b=>b.kind==='group');group.layout='나란히';group.boxed=true;
+  const n=q.blocks.filter(b=>b.parent===group.id).length,plan=await buildQuestionHtml(q);
+  assert.ok(plan.tables.some(t=>t.rows===2&&t.cols===n&&t.merges.includes(`0:0:1:${n}`)),JSON.stringify(plan.tables));
+  assert.ok(!plan.tables.some(t=>t.rows===1&&t.cols===n),'no extra nested side table');
+  const inner=q.blocks.find(b=>b.parent===group.id&&b.kind==='table');
+  if(inner?.table.merges.length)assert.ok(plan.tables.some(t=>t.merges.length===inner.table.merges.length&&t.rows===inner.table.rows));
+});
