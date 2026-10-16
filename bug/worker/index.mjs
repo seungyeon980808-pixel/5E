@@ -6,9 +6,10 @@ export default {
     if (!env.DB || !env.IMAGES || !env.ADMIN_TOKEN || env.ADMIN_TOKEN.length < 24) {
       return Response.json({ error:'신고 서버 연결을 준비하고 있습니다. 작성 내용은 보존됩니다.' },{status:503,headers:{'Cache-Control':'no-store'}});
     }
+    // 첨부 이미지는 Workers KV(값 최대 25MB). 형식은 신고 글(D1)에 따로 기록되어 있다.
     const images = {
-      async put(key, bytes, type) { await env.IMAGES.put(key,bytes,{httpMetadata:{contentType:type}}); },
-      async get(key) { const image = await env.IMAGES.get(key); return image ? image.arrayBuffer() : null; },
+      async put(key, bytes, type) { await env.IMAGES.put(key,bytes,{metadata:{type}}); },
+      async get(key) { return env.IMAGES.get(key,'arrayBuffer'); },
       async remove(key) { await env.IMAGES.delete(key); },
     };
     const store = createBoardStore(env.DB,images);
