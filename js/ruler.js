@@ -402,7 +402,11 @@ function _draw() {
   const pxPerMm = Math.abs(m.a);
   // Finest tick step based on zoom: >3px/mm=1mm, 1.5–3=5mm, <1.5=10mm
   const fineStep = pxPerMm > 3 ? 1 : pxPerMm >= 1.5 ? 5 : 10;
-  const TICK_COLOR = "rgba(255,255,255,0.7)";
+  // 화이트 테마에서는 다크용 흰 눈금·검은 띠가 반대로 보인다 — 테마에 맞춰 뒤집는다.
+  const isLight = document.documentElement.getAttribute("data-theme") === "light";
+  const TICK_COLOR = isLight ? "rgba(0,0,0,0.55)" : "rgba(255,255,255,0.7)";
+  const RULER_TINT = isLight ? "rgba(0,0,0,0.03)" : "rgba(255,255,255,0.15)";
+  const ARTBOARD_BAND = isLight ? "rgba(255,255,255,0.85)" : "rgba(0,0,0,0.35)";
 
   // Helpers: world mm → ruler-canvas local pixel
   // ruler-h left edge = svgRect.left, ruler-v top edge = svgRect.top
@@ -428,7 +432,7 @@ function _draw() {
     hx.fillRect(0, 0, hw, hh);
 
     // Artboard range highlight on H ruler
-    hx.fillStyle = "rgba(255,255,255,0.15)";
+    hx.fillStyle = RULER_TINT;
     hx.fillRect(0, 0, hw, hh);
     const { w: _abW } = _state.get().artboard;
     const _abHL = wxToHpx(-_abW / 2);
@@ -436,7 +440,7 @@ function _draw() {
     const _hClipL = Math.max(0, _abHL);
     const _hClipR = Math.min(hw, _abHR);
     if (_hClipR > _hClipL) {
-      hx.fillStyle = "rgba(0,0,0,0.35)";
+      hx.fillStyle = ARTBOARD_BAND;
       hx.fillRect(_hClipL, 0, _hClipR - _hClipL, hh);
     }
 
@@ -538,7 +542,7 @@ function _draw() {
     vx.fillRect(0, 0, vw, vh);
 
     // Artboard range highlight on V ruler
-    vx.fillStyle = "rgba(255,255,255,0.15)";
+    vx.fillStyle = RULER_TINT;
     vx.fillRect(0, 0, vw, vh);
     const { h: _abH } = _state.get().artboard;
     const _abVT = wyToVpx(-_abH / 2);
@@ -546,7 +550,7 @@ function _draw() {
     const _vClipT = Math.max(0, _abVT);
     const _vClipB = Math.min(vh, _abVB);
     if (_vClipB > _vClipT) {
-      vx.fillStyle = "rgba(0,0,0,0.35)";
+      vx.fillStyle = ARTBOARD_BAND;
       vx.fillRect(0, _vClipT, vw, _vClipB - _vClipT);
     }
 

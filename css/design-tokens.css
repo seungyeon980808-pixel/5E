@@ -1,0 +1,227 @@
+/* =====================================================================
+   5E 디자인 규격 (design tokens) — 2026-10-16
+   ---------------------------------------------------------------------
+   이 파일이 색·글자·높이·간격·모서리·그림자·아이콘의 유일한 기준이다.
+   다른 CSS는 숫자 색을 새로 쓰지 말고 아래 --ds-* 토큰이나, 아래에서
+   토큰에 연결해 둔 기존 변수(--bg-panel, --text-primary, --accent …)를 쓴다.
+
+   팔레트
+     graphite (기본)  중립 짙은 회색. 강조색도 중립(밝은 회색).
+     classic          1.6.x까지의 남색(GitHub-dark) 계열. <html data-palette="classic">
+   테마
+     data-theme="dark"  위 팔레트
+     data-theme="light" 화이트 — 다크와 같은 3단 구조(바깥 틀 / 작업대 / 떠 있는 창)
+
+   규칙 (시안에서 확정)
+     · 글자 크기는 세 단계만: 제목 14 · 본문 12.5 · 보조 11 (문서 본문·로고 예외)
+     · 높이: 위쪽 막대 40 · 두 번째 줄 36 · 목록 줄 32 · 버튼 28 · 작은 버튼 24
+     · 패널 안 모든 줄은 안쪽 16px에서 시작하고 16px에서 끝난다 (패널 여백 8 + 줄 여백 8)
+     · 버튼은 테두리 없음 · 마우스 올리면 옅은 면 · 선택되면 회색 면
+     · 아이콘은 한 가족의 선 아이콘(24칸, 선 1.5) · 메뉴 15 · 도구 17 · 위쪽 막대 18
+     · 움직이는 장식 효과 없음
+   ===================================================================== */
+
+:root {
+  /* ---- 글자 ---- */
+  --ds-font: "IBM Plex Sans KR", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --ds-font-mono: "SF Mono", ui-monospace, Menlo, monospace;
+  --ds-font-brand: Georgia, "Times New Roman", serif;
+  --ds-text-title: 14px;
+  --ds-text-body: 12.5px;
+  --ds-text-meta: 11px;
+  --ds-weight-regular: 400;
+  --ds-weight-medium: 500;
+  --ds-weight-strong: 600;
+
+  /* ---- 높이 ---- */
+  --ds-h-bar: 40px;
+  --ds-h-row2: 36px;
+  --ds-h-row: 32px;
+  --ds-h-control: 28px;
+  --ds-h-control-sm: 24px;
+  --ds-h-footer: 27px;
+
+  /* ---- 간격 ---- */
+  --ds-space-1: 2px;
+  --ds-space-2: 4px;
+  --ds-space-3: 6px;
+  --ds-space-4: 8px;
+  --ds-space-5: 12px;
+  --ds-space-6: 16px;
+  --ds-inset: 16px;          /* 패널 안 시작선·끝선 */
+  --ds-panel-pad: 8px;       /* 패널 여백 (줄 여백 8 과 더해 16) */
+  --ds-edge: 12px;           /* 위쪽 막대 양 끝 여백 — 패널 버튼 고정 위치 */
+
+  /* ---- 패널 폭 ---- */
+  --ds-panel-left: 160px;
+  --ds-panel-right: 224px;
+  --ds-rail: 52px;
+
+  /* ---- 모서리 ---- */
+  --ds-radius-sm: 4px;
+  --ds-radius: 6px;
+  --ds-radius-lg: 10px;
+
+  /* ---- 아이콘 ---- */
+  --ds-icon-menu: 15px;
+  --ds-icon-tool: 17px;
+  --ds-icon-bar: 18px;
+  --ds-icon-stroke: 1.5;
+
+  /* ---- 움직임 ---- */
+  --ds-motion: 0s;
+}
+
+/* =====================================================================
+   팔레트 — graphite (기본, 다크)
+   ===================================================================== */
+:root[data-theme="dark"]:not([data-palette="classic"]) {
+  --ds-app: #1e1e1e;          /* 가장 바깥 */
+  --ds-panel: #252525;        /* 왼쪽·오른쪽 패널 */
+  --ds-bar: #2c2c2c;          /* 위쪽 막대 · 아래 기능 줄 · 푸터 */
+  --ds-raise: #333333;        /* 떠 있는 메뉴·대화상자 */
+  --ds-field: #1f1f1f;        /* 입력칸 */
+  --ds-line: #333333;         /* 구분선 */
+  --ds-line-strong: #3d3d3d;  /* 칸 테두리 */
+  --ds-ink: #f0f0f0;          /* 본문 글자 */
+  --ds-ink-2: #d4d4d4;        /* 버튼 글자 */
+  --ds-ink-3: #a0a0a0;        /* 보조 글자 · 아이콘 */
+  --ds-hover: rgba(255, 255, 255, .06);
+  --ds-selected: rgba(255, 255, 255, .09);
+  --ds-selected-ink: #ffffff;
+  --ds-selected-strong: rgba(255, 255, 255, .16); /* 칸 버튼(끄기/켜기)에서 고른 칸 */
+  --ds-accent: #dcdcdc;       /* 중립 강조 — 파란 버튼 없음 */
+  --ds-accent-ink: #151515;   /* 강조 면 위 글자 */
+  --ds-focus: rgba(255, 255, 255, .55);
+  --ds-kbd: rgba(255, 255, 255, .08);
+  --ds-bench: #35373b;        /* 캔버스 작업대 */
+  --ds-watermark: rgba(255, 255, 255, .05);
+  --ds-shadow-float: 0 0 0 1px rgba(0, 0, 0, .55), 0 12px 32px rgba(0, 0, 0, .45);
+  --ds-shadow-board: 0 0 0 1px rgba(0, 0, 0, .28), 0 2px 8px rgba(0, 0, 0, .32);
+  --ds-success: #4f9a6c;
+  --ds-warning: #c69a46;
+  --ds-danger: #d06a5f;
+
+  /* 기존 변수 연결 — 이 블록만 바꾸면 26개 CSS 전체가 따라온다 */
+  --bg-app: var(--ds-app);
+  --bg-panel: var(--ds-panel);
+  --bg-panel-hover: #2f2f2f;
+  --bg-canvas: var(--ds-bench);
+  --bg-input: var(--ds-field);
+  --border-strong: var(--ds-line-strong);
+  --text-primary: var(--ds-ink);
+  --text-secondary: var(--ds-ink-3);
+  --text-label: var(--ds-ink-2);
+  --text-muted: var(--ds-ink-3);
+  --accent: var(--ds-accent);
+  --accent-hover: #ffffff;
+  --accent-2: #bdbdbd;
+  --accent-2-hover: #d6d6d6;
+  --btn-tool-active: var(--ds-accent);
+  --btn-tool-bg: transparent;
+  --btn-tool-hover: var(--ds-hover);
+  --scrollbar-thumb: #4a4a4a;
+  --control-selected-bg: var(--ds-selected);
+  --control-selected-text: var(--ds-selected-ink);
+  --control-selected-border: transparent;
+  color-scheme: dark;
+}
+
+/* =====================================================================
+   팔레트 — classic (1.6.x 남색 계열). 기존 값은 style.css 그대로 쓰고
+   새 규격 토큰만 그 값에 맞춘다.
+   ===================================================================== */
+:root[data-theme="dark"][data-palette="classic"] {
+  --ds-app: #0d1117;
+  --ds-panel: #0d1117;
+  --ds-bar: #0d1117;
+  --ds-raise: #161b22;
+  --ds-field: #010409;
+  --ds-line: #21262d;
+  --ds-line-strong: #30363d;
+  --ds-ink: #e6edf3;
+  --ds-ink-2: #c9d1d9;
+  --ds-ink-3: #8b949e;
+  --ds-hover: rgba(177, 186, 196, .08);
+  --ds-selected: rgba(47, 129, 247, .15);
+  --ds-selected-ink: #e6edf3;
+  --ds-selected-strong: rgba(47, 129, 247, .28);
+  --ds-accent: #2f81f7;
+  --ds-accent-ink: #ffffff;
+  --ds-focus: rgba(88, 166, 255, .7);
+  --ds-kbd: #21262d;
+  --ds-bench: #0a0e14;
+  --ds-watermark: rgba(255, 255, 255, .045);
+  --ds-shadow-float: 0 0 0 1px #30363d, 0 12px 32px rgba(0, 0, 0, .55);
+  --ds-shadow-board: 0 0 0 1px #30363d, 0 2px 8px rgba(0, 0, 0, .5);
+  --ds-success: #3fb950;
+  --ds-warning: #d29922;
+  --ds-danger: #f85149;
+  --bg-canvas: var(--ds-bench);
+  --control-selected-border: transparent;
+}
+
+/* =====================================================================
+   화이트 — 같은 3단 구조. 바깥 틀은 옅은 회색, 작업대는 한 단계 진하게.
+   ===================================================================== */
+:root[data-theme="light"] {
+  --ds-app: #f4f4f5;
+  --ds-panel: #f0f0f2;
+  --ds-bar: #f8f8f9;
+  --ds-raise: #ffffff;
+  --ds-field: #ffffff;
+  --ds-line: #e2e3e6;
+  --ds-line-strong: #d5d8dd;
+  --ds-ink: #1b1e23;
+  --ds-ink-2: #2f343a;
+  --ds-ink-3: #666b73;
+  --ds-hover: rgba(0, 0, 0, .04);
+  --ds-selected: rgba(0, 0, 0, .07);
+  --ds-selected-ink: #111316;
+  --ds-selected-strong: rgba(0, 0, 0, .11);
+  --ds-accent: #2b2f35;
+  --ds-accent-ink: #ffffff;
+  --ds-focus: rgba(0, 0, 0, .45);
+  --ds-kbd: rgba(0, 0, 0, .06);
+  --ds-bench: #dcdee2;
+  --ds-watermark: rgba(0, 0, 0, .05);
+  --ds-shadow-float: 0 0 0 1px rgba(0, 0, 0, .12), 0 12px 32px rgba(0, 0, 0, .14);
+  --ds-shadow-board: 0 0 0 1px rgba(0, 0, 0, .14), 0 2px 8px rgba(0, 0, 0, .12);
+  --ds-success: #2f7d55;
+  --ds-warning: #a87a1f;
+  --ds-danger: #c2463c;
+
+  --bg-app: var(--ds-app);
+  --bg-panel: var(--ds-panel);
+  --bg-panel-hover: #e7e8eb;
+  --bg-canvas: var(--ds-bench);
+  --bg-input: var(--ds-field);
+  --border-strong: var(--ds-line-strong);
+  --text-primary: var(--ds-ink);
+  --text-secondary: var(--ds-ink-3);
+  --text-label: var(--ds-ink-2);
+  --text-muted: var(--ds-ink-3);
+  --accent: var(--ds-accent);
+  --accent-hover: #000000;
+  --accent-2: #3a3f46;
+  --accent-2-hover: #1b1e23;
+  --btn-tool-active: var(--ds-accent);
+  --btn-tool-hover: var(--ds-hover);
+  --scrollbar-thumb: #b9bcc2;
+  --control-selected-bg: var(--ds-selected);
+  --control-selected-text: var(--ds-selected-ink);
+  --control-selected-border: transparent;
+}
+
+/* 패널 폭 — 기존 셸 변수에 규격을 연결 */
+:root {
+  --shell-left-panel-size: var(--ds-panel-left);
+  --shell-right-panel-size: var(--ds-panel-right);
+  --shell-control-size: var(--ds-h-control);
+  --shell-control-radius: var(--ds-radius);
+  --shell-icon-size: var(--ds-icon-bar);
+  --shell-control-font-size: var(--ds-text-body);
+  --shell-control-font-weight: var(--ds-weight-medium);
+  --control-radius: var(--ds-radius);
+  --footer-h: var(--ds-h-footer);
+}
