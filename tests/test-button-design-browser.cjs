@@ -81,7 +81,8 @@ for (const engine of [chromium,webkit]) test(`canonical button design and unread
     const el=document.getElementById(id),rect=el.getBoundingClientRect(),style=getComputedStyle(el);
     return {id,inHub:!!el.closest('.image-workflow-hub'),height:rect.height,radius:style.borderRadius,border:style.borderTopWidth,animation:getComputedStyle(el,'::before').animationName};
   }),core);
-  assert.ok(layout.every(x=>x.inHub && x.height===27 && x.radius==='6px' && x.border==='1px' && x.animation==='none'),JSON.stringify(layout));
+  // 그라파이트 규격(css/design-tokens.css): 기능 줄 버튼 28px·테두리 없음·장식 회전 없음.
+  assert.ok(layout.every(x=>x.inHub && x.height===28 && x.radius==='6px' && x.border==='0px' && x.animation==='none'),JSON.stringify(layout));
   const idle=await page.locator('.image-workflow-hub .ui-core-action').evaluateAll(els=>els.map(el=>{
     const s=getComputedStyle(el),icon=getComputedStyle(el.querySelector('svg'));
     return {background:s.backgroundColor,border:s.borderTopColor,color:s.color,padding:s.padding,weight:s.fontWeight,gap:s.gap,iconWidth:icon.width,iconHeight:icon.height};
@@ -95,12 +96,13 @@ for (const engine of [chromium,webkit]) test(`canonical button design and unread
     return {id:el.id,width:s.width,height:s.height,radius:s.borderRadius,padding:s.padding,iconWidth:icon.width,iconHeight:icon.height};
   }));
   assert.equal(toolbar.length,8);
-  assert.ok(toolbar.every(s=>s.width==='32px' && s.height==='32px' && s.radius==='8px' && s.padding==='4px' && s.iconWidth==='17px' && s.iconHeight==='17px'),JSON.stringify(toolbar));
-  assert.equal(await page.locator('.canvas-view-controls').evaluate(el=>getComputedStyle(el).gap),'8px');
+  // 그라파이트 규격: 위쪽 막대 버튼 28px·모서리 6px·아이콘 18px, 버튼 사이 2px.
+  assert.ok(toolbar.every(s=>s.width==='28px' && s.height==='28px' && s.radius==='6px' && s.padding==='0px' && s.iconWidth==='18px' && s.iconHeight==='18px'),JSON.stringify(toolbar));
+  assert.equal(await page.locator('.canvas-view-controls').evaluate(el=>getComputedStyle(el).gap),'2px');
   const tools=await assertOriginalAppearance(page,'.tool-btn');
   const eyes=await assertOriginalAppearance(page,'.insp-layer-eye');
   assert.ok(eyes.every(x=>x.width==='22px' && x.height==='22px' && x.borderTopWidth==='0px' && x.backgroundColor==='rgba(0, 0, 0, 0)'),JSON.stringify(eyes));
-  assert.equal(await page.locator('#panel-right').evaluate(el=>getComputedStyle(el).width),'198px');
+  assert.equal(await page.locator('#panel-right').evaluate(el=>getComputedStyle(el).width),'224px');
   await page.evaluate(()=>{
     window.__clickMotions=[];
     document.addEventListener('click',event=>{
@@ -135,7 +137,9 @@ for (const engine of [chromium,webkit]) test(`canonical button design and unread
     await page.locator(selector).click();
     await page.waitForFunction(side=>document.querySelector('#drawer-'+side+'-toggle')?.getAttribute('aria-expanded')==='false',side);
     await page.mouse.move(1000,400);
-    assert.deepEqual(await readStateStyle(page,selector),selected);
+    // 그라파이트: 접힌 패널 버튼은 면 대신 아이콘의 채운 칸이 사라지는 것으로 구별한다.
+    assert.deepEqual(await readStateStyle(page,selector),neutral);
+    assert.equal(await page.locator(selector+' .ds-fillcol').evaluate(el=>getComputedStyle(el).opacity),'0');
     await page.locator(selector).click();
     await page.waitForFunction(side=>document.querySelector('#drawer-'+side+'-toggle')?.getAttribute('aria-expanded')==='true',side);
     await page.mouse.move(1000,400);
@@ -152,8 +156,8 @@ for (const engine of [chromium,webkit]) test(`canonical button design and unread
   assert.equal(await page.locator('#auto-snap-btn svg').count(),1);
   await page.mouse.move(1000,400);await page.screenshot({path:path.join(evidence,'main-idle.png')});
   await page.locator('#exam-send').hover();
-  assert.equal(await page.locator('#exam-send').evaluate(el=>getComputedStyle(el,'::before').animationName),'ui-button-orbit');
-  await page.waitForFunction(()=>Number(getComputedStyle(document.getElementById('exam-send'),'::before').opacity)>.95);
+  // 그라파이트: 마우스를 올려도 도는 장식 테두리가 없다.
+  assert.equal(await page.locator('#exam-send').evaluate(el=>getComputedStyle(el,'::before').animationName),'none');
   await page.screenshot({path:path.join(evidence,'main-hwp-hover.png')});
   await page.locator('#exam-send').click();
   assert.equal(await page.locator('#exam-document-menu').isVisible(),true);
@@ -181,7 +185,8 @@ for (const engine of [chromium,webkit]) test(`canonical button design and unread
   await assertWorkflowState(page,'exam-library-open',true,selected);
   await assertOriginalAppearance(page,'[data-unilib-close]');
   const libraryMotion=await page.evaluate(()=>window.__clickMotions.find(x=>x.id==='exam-library-open'));
-  assert.deepEqual(libraryMotion,{id:'exam-library-open',duration:200,scales:['1','1.03','1']});
+  // 그라파이트(Pro): 누를 때 커지는 장식 효과가 없다.
+  assert.equal(libraryMotion,undefined);
   await page.screenshot({path:path.join(evidence,'library.png')});await page.keyboard.press('Escape');
   await assertWorkflowState(page,'exam-library-open',false,selected);
   await page.locator('#ai-image-install-open').click();await page.locator('#ai-image-panel [data-ai-send]').waitFor({state:'visible'});
@@ -197,19 +202,16 @@ for (const engine of [chromium,webkit]) test(`canonical button design and unread
   fs.writeFileSync(path.join(evidence,'notification-observation.json'),JSON.stringify({before,attention},null,2));
   assert.equal(await page.locator('#ai-image-install-open').getAttribute('data-result-attention'),'true');
   assert.equal(await page.locator('[data-tab-id="task-0"] .ai-task-tab-select').getAttribute('data-result-attention'),'true');
-  assert.equal(await page.locator('[data-tab-id="task-0"] .ai-task-tab-select').evaluate(el=>getComputedStyle(el,'::before').animationName),'ui-result-attention');
-  await page.waitForFunction(()=>{
-    const el=document.querySelector('[data-tab-id="task-0"] .ai-task-tab-select');
-    if(!el)return false;
-    const samples=window.__pulseSamples ||= []; samples.push(Number(getComputedStyle(el,'::before').opacity));
-    return Math.min(...samples)<.25 && Math.max(...samples)>.95;
-  },null,{timeout:5000});
-  const pulse=await page.evaluate(()=>[Math.min(...window.__pulseSamples),Math.max(...window.__pulseSamples)]);
-  assert.ok(pulse[0]<.25 && pulse[1]>.95,JSON.stringify(pulse));
+  // 그라파이트: 확인 필요 표시는 깜빡이지 않는 고정 테두리로 남는다.
+  const pulseStyle=await page.locator('[data-tab-id="task-0"] .ai-task-tab-select').evaluate(el=>{const s=getComputedStyle(el,'::before');return {animation:s.animationName,opacity:Number(s.opacity),border:s.borderTopWidth};});
+  assert.equal(pulseStyle.animation,'none');
+  assert.ok(pulseStyle.opacity>.95 && pulseStyle.border!=='0px',JSON.stringify(pulseStyle));
+  const pulse=[pulseStyle.opacity,pulseStyle.opacity];
   await page.screenshot({path:path.join(evidence,'conversion-needs-review.png')});
   await page.locator('#ai-image-panel [data-ai-close]').click();
   await page.locator('#ai-image-install-open').hover();
-  assert.equal(await page.locator('#ai-image-install-open').evaluate(el=>getComputedStyle(el,'::before').animationName),'ui-result-attention','Unread pulse takes precedence over hover rotation');
+  const unread=await page.locator('#ai-image-install-open').evaluate(el=>{const s=getComputedStyle(el,'::before');return {animation:s.animationName,opacity:Number(s.opacity)};});
+  assert.ok(unread.animation==='none' && unread.opacity>.95,'Unread mark stays visible without motion on hover: '+JSON.stringify(unread));
   await page.emulateMedia({reducedMotion:'reduce'});
   assert.equal(await page.locator('#ai-image-install-open').evaluate(el=>getComputedStyle(el,'::before').animationName),'none');
   await page.emulateMedia({reducedMotion:'no-preference'});
@@ -226,6 +228,10 @@ for (const engine of [chromium,webkit]) test(`canonical button design and unread
   await page.locator('#ai-image-panel [data-ai-close]').click();
   await page.locator('#ai-image-panel').waitFor({state:'hidden'});
   await assertWorkflowState(page,'ai-image-install-open',false,selected);
+  // 테마 버튼은 그라파이트 → 다크네이비 → 화이트 순환(js/color-mode.js). 두 번 눌러 화이트로.
+  await page.locator('#theme-toggle').click();
+  assert.equal(await page.locator('html').getAttribute('data-palette'),'classic');
+  assert.equal(await page.locator('#theme-toggle').getAttribute('aria-pressed'),'false');
   await page.locator('#theme-toggle').click();
   assert.equal(await page.locator('#theme-toggle').getAttribute('aria-pressed'),'true');
   await page.waitForFunction(()=>{
@@ -237,6 +243,7 @@ for (const engine of [chromium,webkit]) test(`canonical button design and unread
   await page.screenshot({path:path.join(evidence,'main-light.png')});
   await page.locator('#theme-toggle').click();
   assert.equal(await page.locator('#theme-toggle').getAttribute('aria-pressed'),'false');
+  assert.equal(await page.locator('html').getAttribute('data-palette'),'graphite');
   await page.waitForFunction(()=>document.documentElement.dataset.theme==='dark' && getComputedStyle(document.getElementById('graph-tool-open')).backgroundColor==='rgba(0, 0, 0, 0)');
   await page.setViewportSize({width:320,height:780});
   const narrowGaps=await page.evaluate(()=>({toolbar:getComputedStyle(document.querySelector('.toolbar-document')).gap,view:getComputedStyle(document.querySelector('.canvas-view-controls')).gap}));

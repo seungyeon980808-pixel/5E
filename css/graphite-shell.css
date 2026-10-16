@@ -80,7 +80,7 @@
   }
   /* 켜진 기능(격자·자동 정렬·고정·캡처): 아이콘 밝게 + 아래 작은 점 */
   :root:not([data-mode="lite"]) .app-shell-header :is(.auto-snap-btn, .grid-toggle-btn, [id="center-view-btn"], [id="quick-capture-btn"])[aria-pressed="true"] {
-    background: var(--ds-hover); color: var(--ds-selected-ink);
+    background: var(--ds-selected); color: var(--ds-selected-ink);
   }
   :root:not([data-mode="lite"]) .app-shell-header :is(.auto-snap-btn, .grid-toggle-btn, [id="center-view-btn"], [id="quick-capture-btn"])[aria-pressed="true"]::after {
     content: ""; position: absolute; left: 50%; bottom: 2px; width: 4px; height: 4px; margin-left: -2px;
@@ -587,11 +587,11 @@
 /* 위쪽 막대 보기 버튼(자석·격자·자유 이동): 꺼짐은 다른 버튼과 같은 밝기, 켜짐만 흰색 + 옅은 면 + 점 */
 @media (min-width: 768px) {
   :root:not([data-mode="lite"]) .app-shell-header .canvas-view-controls :is(#auto-snap-btn, #grid-btn, #center-view-btn) {
-    color: var(--ds-ink-2); background: transparent; border-color: transparent;
+    color: var(--ds-ink-2); background: transparent; border-color: transparent; padding: 0;
   }
   :root:not([data-mode="lite"]) .app-shell-header .canvas-view-controls :is(#auto-snap-btn, #grid-btn, #center-view-btn):hover { color: var(--ds-ink); background: var(--ds-hover); }
   :root:not([data-mode="lite"]) .app-shell-header .canvas-view-controls :is(#auto-snap-btn, #grid-btn, #center-view-btn):is([aria-pressed="true"], [aria-expanded="true"]) {
-    color: var(--ds-selected-ink); background: var(--ds-hover);
+    color: var(--ds-selected-ink); background: var(--ds-selected);
   }
 }
 
@@ -612,3 +612,5 @@
   }
   :root:not([data-mode="lite"]) .image-workflow-hub #exam-pool-open:disabled { opacity: .45; cursor: default; }
 }
+/* 패널 버튼(편집기·AI 작업실 공통): 접히면 패널 쪽 채운 칸이 사라진다 */
+.panel-visibility-toggle[aria-expanded="false"] .ds-fillcol { opacity: 0; }

@@ -11,13 +11,23 @@ const layouts = new Set();
 const initialized = new WeakSet();
 let serial = 0;
 
+// 그라파이트 아이콘 세트(24칸·선 1.5): 패널 쪽 칸을 채우고, 접히면 채운 칸만 사라진다
+// (css/graphite-shell.css의 .ds-fillcol). 작업실(이미지 패널)도 같은 아이콘을 쓴다.
 function panelIcon(side) {
-  const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-  svg.setAttribute('viewBox', '0 0 20 20');
+  const ns = 'http://www.w3.org/2000/svg';
+  const svg = document.createElementNS(ns, 'svg');
+  svg.setAttribute('class', 'ds-ico');
+  svg.setAttribute('viewBox', '0 0 24 24');
   svg.setAttribute('aria-hidden', 'true');
-  const path = document.createElementNS(svg.namespaceURI, 'path');
-  path.setAttribute('d', `M3 3.5h14v13H3z M${side === 'left' ? 7 : 13} 3.5v13`);
-  svg.append(path);
+  for (const [name, value] of [['fill', 'none'], ['stroke', 'currentColor'], ['stroke-width', '1.5'], ['stroke-linecap', 'round'], ['stroke-linejoin', 'round']]) svg.setAttribute(name, value);
+  const frame = document.createElementNS(ns, 'rect');
+  for (const [name, value] of [['x', '3'], ['y', '4'], ['width', '18'], ['height', '16'], ['rx', '2']]) frame.setAttribute(name, value);
+  const fill = document.createElementNS(ns, 'path');
+  fill.setAttribute('class', 'ds-fillcol');
+  fill.setAttribute('d', side === 'left' ? 'M3.8 4.8h5.2v14.4H3.8z' : 'M15 4.8h5.2v14.4H15z');
+  const divider = document.createElementNS(ns, 'path');
+  divider.setAttribute('d', side === 'left' ? 'M9 4v16' : 'M15 4v16');
+  svg.append(frame, fill, divider);
   return svg;
 }
 
