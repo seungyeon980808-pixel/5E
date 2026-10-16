@@ -49,7 +49,14 @@ export function initButtonDesign(doc = document) {
     graph.classList.remove('advanced-tool-btn');
     graph.classList.add('object-search-trigger');
     graph.innerHTML = '<svg class="search-trigger-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 3v14h14M6 13l3-5 3 3 4-7"/></svg><span>좌표/함수 생성</span>';
-    ai.after(graph);
+    ai.before(graph);
+  }
+  if (hub && !doc.getElementById('exam-pool-open')) {
+    const examPool = doc.createElement('button');
+    examPool.id = 'exam-pool-open'; examPool.type = 'button';
+    examPool.className = 'object-search-trigger'; examPool.disabled = true;
+    examPool.textContent = '5E_ExamPool'; examPool.title = '5E_ExamPool · 준비 중';
+    hub.append(examPool);
   }
   const clickAnimations = new WeakMap();
   doc.addEventListener('click', event => {

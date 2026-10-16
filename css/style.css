@@ -2932,8 +2932,8 @@ textarea.unified-text-input {
   scrollbar-width: thin;
 }
 .page-tab {
-  display: flex; align-items: center;
-  max-width: 180px; padding: 6px 12px; margin-top: 4px;
+  display: flex; align-items: center; justify-content:center; position:relative;
+  flex: 0 0 90px; width: 90px; min-width: 0; box-sizing: border-box; padding: 6px 12px; margin-top: 4px;
   border: 1px solid transparent; border-bottom: none;
   border-radius: 6px 6px 0 0;
   background: transparent; color: var(--text-secondary);
@@ -2944,8 +2944,8 @@ textarea.unified-text-input {
 .page-tab.is-active {
   background: var(--control-selected-bg); color: var(--control-selected-text); border-color: var(--accent);
 }
-.page-tab-name { overflow: hidden; text-overflow: ellipsis; }
-.page-tab-close { display:inline-flex; align-items:center; justify-content:center; width:18px; height:18px; margin-left:5px; padding:0; border:0; border-radius:4px; color:inherit; background:transparent; font:600 14px/1 system-ui; cursor:pointer; opacity:0; }
+.page-tab-name { text-align:center; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.page-tab-close { position:absolute; right:3px; display:inline-flex; align-items:center; justify-content:center; width:18px; height:18px; margin-left:5px; padding:0; border:0; border-radius:4px; color:inherit; background:transparent; font:600 14px/1 system-ui; cursor:pointer; opacity:0; }
 .page-tab:is(:hover,.is-active) .page-tab-close { opacity:.78; }
 .page-tab-close:hover:not(:disabled) { opacity:1; background:color-mix(in srgb,currentColor 18%,transparent); }
 .page-tab-close:focus-visible { opacity:1; outline:2px solid currentColor; outline-offset:1px; }
