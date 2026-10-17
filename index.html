@@ -146,12 +146,12 @@
           <span id="grid-detail" class="grid-detail" hidden>
             <label>
               진하기
-              <input type="range" id="grid-opacity" min="1" max="10" value="3" />
+              <input type="range" id="grid-opacity" min="1" max="10" value="3" data-range-readout="fraction" /><output class="grid-opacity-value" for="grid-opacity" aria-hidden="true">3/10</output>
             </label>
             <label>
               간격
               <span class="gm-step"><input type="number" id="grid-interval" min="5" max="50" step="5" value="10" /><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="격자 간격 늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="격자 간격 줄이기">▼</button></span></span>
-              mm
+              <span class="grid-unit">mm</span>
             </label>
           </span>
           <div class="canvas-lock-control">
@@ -425,9 +425,9 @@
       <a class="footer-badge" href="https://github.com/seungyeon980808-pixel/5E"
          target="_blank" rel="noopener" title="소스코드 (GitHub)"><span class="footer-code" aria-hidden="true">&lt;/&gt;</span> Source</a>
       <span class="footer-change-badge" data-change-summary tabindex="0"
-            data-change-short="10.17 22:47 켜진 버튼 아래 점 없앰"
-            aria-label="2026-10-17 22:47 KST 반영: 위쪽 막대의 켜진 버튼 아래 점을 없앰"
-            title="2026-10-17 22:47 KST 반영: 격자·자동 정렬·고정·캡처 버튼을 켰을 때 아래에 생기던 작은 점을 없앴습니다. 켜짐은 버튼 면과 아이콘 색으로만 보입니다. 버튼 위치·크기는 그대로입니다. 1.6.3 정식 화면에는 영향이 없습니다.">10.17 22:47 켜진 버튼 아래 점 없앰</span>
+            data-change-short="10.18 07:22 슬라이더·간격 칸 정리"
+            aria-label="2026-10-18 07:22 KST 반영: 슬라이더 손잡이를 세로 막대로, 격자 창 간격 칸을 좁히고 옆에 상하 버튼"
+            title="2026-10-18 07:22 KST 반영: 슬라이더를 가는 선과 세로로 길쭉한 손잡이(6×16)로 바꿨습니다. 격자 창은 높이 44에 진하기 값(3/10)을 보여 주고, 간격 칸을 44로 좁혀 옆에 작은 상하 버튼을 늘 보이게 두었습니다. 다른 숫자칸의 ▲▼ 상자는 칸 안 꺾쇠(마우스를 올릴 때만)로 바꿨고, 위쪽 막대 켜진 버튼 아래 점을 없앴습니다. 1.6.3 정식 화면에는 영향이 없습니다.">10.18 07:22 슬라이더·간격 칸 정리</span>
       <span class="footer-visitor-stats" data-visitor-stats tabindex="0" title="이용자 집계 서버 연결 준비 중">누적 — · 오늘 —</span>
     </span>
     <span class="app-footer-credit app-footer-copyright">Copyright © 2026 <strong>박승연</strong> | SMOE</span>

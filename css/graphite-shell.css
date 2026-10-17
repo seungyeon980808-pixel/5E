@@ -686,3 +686,103 @@
     border-color: transparent; background: var(--ds-soft-bg); outline: 1px solid var(--ds-soft-line); outline-offset: -2px; box-shadow: none;
   }
 }
+
+/* =====================================================================
+   숫자칸 · 슬라이더 · 격자 창 — 시안 controls.html 4번 "바꿀 모습"
+     · 슬라이더: 2px 가는 선(채운 부분 --ds-soft-line) + 6×16 세로 막대 손잡이
+       (시안 slider-vertical.html 안 B).
+       채운 위치(--ds-range-p)는 js/range-fill.js가 맞춘다.
+     · 숫자칸(.gm-step): ▲▼ 글자·칸 구분선 없이 위·아래 꺾쇠를 칸 안에,
+       마우스를 올리거나 입력 중일 때만 보인다. 동작은 js/stepper.js 그대로.
+       칸 바깥 크기는 그대로 둔다(격자 창만 시안 크기 28).
+     · 다른 숫자칸(오른쪽 패널 등)의 기본 화살표도 마우스를 올릴 때만.
+     · 격자 창: 높이 44, 글자 12.5/11, 테두리 대신 그림자 + 1px 선.
+       간격 칸은 44 폭 + 옆에 따로 붙은 작은 상하 버튼(늘 보임, 시안 interval-stepper.html 안 1).
+   ===================================================================== */
+@media (min-width: 768px) {
+  /* 슬라이더 */
+  :root:not([data-mode="lite"]) input[type="range"] {
+    -webkit-appearance: none; appearance: none;
+    height: 16px; background: transparent; cursor: pointer;
+  }
+  :root:not([data-mode="lite"]) input[type="range"]:focus { outline: none; }
+  :root:not([data-mode="lite"]) input[type="range"]::-webkit-slider-runnable-track {
+    height: 2px; border-radius: 2px;
+    background: linear-gradient(to right, var(--ds-soft-line) var(--ds-range-p, 0%), var(--ds-line-strong) var(--ds-range-p, 0%));
+  }
+  :root:not([data-mode="lite"]) input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 6px; height: 16px; margin-top: -7px; border: 0; border-radius: 3px;
+    background: var(--ds-ink); box-shadow: none;
+  }
+  :root:not([data-mode="lite"]) input[type="range"]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 3px var(--ds-soft-bg), 0 0 0 4px var(--ds-soft-line); }
+  :root:not([data-mode="lite"]) input[type="range"]::-moz-range-track { height: 2px; border-radius: 2px; background: var(--ds-line-strong); }
+  :root:not([data-mode="lite"]) input[type="range"]::-moz-range-progress { height: 2px; border-radius: 2px; background: var(--ds-soft-line); }
+  :root:not([data-mode="lite"]) input[type="range"]::-moz-range-thumb { width: 6px; height: 16px; border: 0; border-radius: 3px; background: var(--ds-ink); }
+  :root:not([data-mode="lite"]) input[type="range"]:disabled { opacity: .45; cursor: default; }
+
+  /* 숫자칸(.gm-step) — 면·선은 입력칸과 같게, 꺾쇠는 칸 안에 */
+  :root:not([data-mode="lite"]) .gm-step {
+    border-color: var(--ds-line); background-color: var(--ds-field-raise); outline: none;
+  }
+  :root:not([data-mode="lite"]) .gm-step:focus-within { border-color: var(--ds-soft-line); outline: none; }
+  /* 칸이 늘어나 있으면 숫자가 남는 폭을 채우고 꺾쇠는 오른쪽 끝에 붙는다(칸 바깥 크기는 그대로) */
+  :root:not([data-mode="lite"]) .gm-step input { flex: 1 1 auto; min-width: 0; background-color: transparent !important; color: var(--ds-ink); text-align: right; font-variant-numeric: tabular-nums; }
+  :root:not([data-mode="lite"]) .gm-step-btns { border-left-color: transparent; opacity: 0; }
+  :root:not([data-mode="lite"]) .gm-step:is(:hover, :focus-within) .gm-step-btns { opacity: 1; }
+  :root:not([data-mode="lite"]) .gm-step-btns button {
+    position: relative; border: 0 !important; background: transparent !important; box-shadow: none !important;
+    font-size: 0 !important; color: var(--ds-ink-3) !important;
+  }
+  :root:not([data-mode="lite"]) .gm-step-btns button + button { border-top: 0; }
+  :root:not([data-mode="lite"]) .gm-step-btns button::before {
+    content: ""; position: absolute; inset: 1px 3px; border-radius: 3px; background: transparent;
+  }
+  :root:not([data-mode="lite"]) .gm-step-btns button:not(:disabled):hover { color: var(--ds-ink-2) !important; }
+  :root:not([data-mode="lite"]) .gm-step-btns button:not(:disabled):hover::before { background: var(--ds-hover); }
+  :root:not([data-mode="lite"]) .gm-step-btns button::after {
+    content: ""; position: relative; width: 10px; height: 10px; background: currentColor;
+    -webkit-mask: var(--ds-chevron) center / 10px no-repeat; mask: var(--ds-chevron) center / 10px no-repeat;
+  }
+  :root:not([data-mode="lite"]) .gm-step-btns button[data-step="1"]::after { transform: rotate(180deg); }
+
+  /* 다른 숫자칸의 기본 화살표 — 마우스를 올리거나 입력 중일 때만 */
+  :root:not([data-mode="lite"]) input[type="number"]:not(.gm-spinnum)::-webkit-inner-spin-button { opacity: 0; }
+  :root:not([data-mode="lite"]) input[type="number"]:not(.gm-spinnum):is(:hover, :focus)::-webkit-inner-spin-button { opacity: 1; }
+
+  /* 격자 창(위쪽 막대 격자 버튼 아래) */
+  :root:not([data-mode="lite"]) .canvas-view-controls .grid-detail {
+    height: 44px; padding: 0 16px; gap: 16px; box-sizing: border-box;
+    border: 0; border-radius: 8px; background: var(--ds-raise); box-shadow: var(--ds-shadow-float);
+    font: 400 var(--ds-text-body)/1 var(--ds-font); color: var(--ds-ink-2);
+  }
+  :root:not([data-mode="lite"]) .canvas-view-controls .grid-detail > label { display: inline-flex; align-items: center; gap: 8px; }
+  :root:not([data-mode="lite"]) .canvas-view-controls .grid-detail input[type="range"] { width: 120px; margin: 0; }
+  :root:not([data-mode="lite"]) .canvas-view-controls .grid-detail :is(.grid-opacity-value, .grid-unit) {
+    font-size: var(--ds-text-meta); color: var(--ds-ink-3); font-variant-numeric: tabular-nums;
+  }
+  :root:not([data-mode="lite"]) .canvas-view-controls .grid-detail .grid-opacity-value { min-width: 34px; }
+  /* 간격 칸: 칸(44)과 상하 버튼(16×24)을 따로 — 칸 묶음 자체는 테두리·면 없이 */
+  :root:not([data-mode="lite"]) .canvas-view-controls .grid-detail .gm-step {
+    align-items: center; gap: 4px; height: 28px; border: 0; background: transparent; overflow: visible;
+  }
+  :root:not([data-mode="lite"]) .canvas-view-controls .grid-detail .gm-step input {
+    flex: none; width: 44px; height: 28px; box-sizing: border-box; padding: 0 8px;
+    border: 1px solid var(--ds-line); border-radius: var(--ds-radius); background-color: var(--ds-field-raise) !important;
+    font-size: var(--ds-text-body);
+  }
+  :root:not([data-mode="lite"]) .canvas-view-controls .grid-detail .gm-step input:focus { border-color: var(--ds-soft-line); }
+  :root:not([data-mode="lite"]) .canvas-view-controls .grid-detail .gm-step-btns {
+    opacity: 1; width: 16px; height: 24px; box-sizing: border-box;
+    border: 1px solid var(--ds-line-strong); border-radius: 5px; background: var(--ds-field-raise); overflow: hidden;
+  }
+  :root:not([data-mode="lite"]) .canvas-view-controls .grid-detail .gm-step-btns button { width: 14px; min-width: 0; }
+  :root:not([data-mode="lite"]) .canvas-view-controls .grid-detail .gm-step-btns button + button { border-top: 1px solid var(--ds-line) !important; }
+  :root:not([data-mode="lite"]) .canvas-view-controls .grid-detail .gm-step-btns button::before { inset: 0; border-radius: 0; }
+  :root:not([data-mode="lite"]) .canvas-view-controls .grid-detail .gm-step-btns button:not(:disabled):hover { color: var(--ds-ink) !important; }
+  :root:not([data-mode="lite"]) .canvas-view-controls .grid-detail .gm-step-btns button:not(:disabled):active::before { background: var(--ds-soft-bg); }
+}
+/* 터치 화면(마우스 올림 없음)에서는 꺾쇠·화살표를 늘 보인다 */
+@media (min-width: 768px) and (hover: none) {
+  :root:not([data-mode="lite"]) .gm-step-btns { opacity: 1; }
+  :root:not([data-mode="lite"]) input[type="number"]:not(.gm-spinnum)::-webkit-inner-spin-button { opacity: 1; }
+}
