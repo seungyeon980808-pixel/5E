@@ -624,9 +624,10 @@
 @media (min-width: 768px) {
   :root[data-theme="dark"][data-palette="classic"]:not([data-mode="lite"]) :is(.panel-left .tool-section-header, .panel-right .insp-summary, .insp-layer-name, .insp-ab-preset) { color: var(--ds-ink-2); }
   :root[data-theme="dark"][data-palette="classic"]:not([data-mode="lite"]) .insp-layer-row.is-active .insp-layer-name { color: var(--ds-ink); }
-  :root[data-theme="dark"][data-palette="classic"]:not([data-mode="lite"]) .app-shell-header button svg,
+  /* 위쪽 막대 아이콘은 왼쪽 도구 아이콘과 같은 밝기(ink-2) — 더 어두우면 꺼진 버튼처럼 보인다 */
+  :root[data-theme="dark"][data-palette="classic"]:not([data-mode="lite"]) .app-shell-header button svg { color: var(--ds-ink-2); }
+  :root[data-theme="dark"][data-palette="classic"]:not([data-mode="lite"]) .app-shell-header button:hover svg { color: var(--ds-ink); }
   :root[data-theme="dark"][data-palette="classic"]:not([data-mode="lite"]) .image-workflow-hub .ui-core-action svg { color: var(--ds-ink-3); }
-  :root[data-theme="dark"][data-palette="classic"]:not([data-mode="lite"]) .app-shell-header button:hover svg,
   :root[data-theme="dark"][data-palette="classic"]:not([data-mode="lite"]) .image-workflow-hub .ui-core-action:hover svg { color: var(--ds-ink-2); }
   :root[data-theme="dark"][data-palette="classic"]:not([data-mode="lite"]) .app-shell-header button:is([aria-pressed="true"], [aria-expanded="true"], .active, .is-active):not(.panel-visibility-toggle) svg,
   :root[data-theme="dark"][data-palette="classic"]:not([data-mode="lite"]) #tool-list .tool-btn.is-active svg { color: var(--ds-selected-icon); }
