@@ -7,12 +7,14 @@ export function pageProfile(profile={paper:'A4',columns:2}){
   const [w,h]=PAPER_MM[profile.paper],margin=15,spacing=8;
   return {page:{width:Math.round(w*HU),height:Math.round(h*HU),marginLeft:Math.round(margin*HU),marginRight:Math.round(margin*HU),marginTop:Math.round(margin*HU),marginBottom:Math.round(margin*HU),marginHeader:0,marginFooter:0,marginGutter:0,landscape:false},spacing:Math.round(spacing*HU),width:Math.floor(((w-2*margin-(profile.columns-1)*spacing)/profile.columns)*HU/75)-8};
 }
-export async function questionFingerprint(q){
-  // 문항 상태(출제·점검·완성)는 내용이 아니므로 조판 승인에 영향을 주지 않는다.
-  const {typeset,references,workflow,...rest}=q;
-  const hash=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(JSON.stringify(rest)));
-  return [...new Uint8Array(hash)].map(v=>v.toString(16).padStart(2,'0')).join('');
-}
+// 한글 문서에 실제로 나오는 값: 번호·유형·선지 표현·발문·구성·선지·선지표·선지 배열.
+// 단원·성취기준·정답·배점·출처·해설·문항 상태는 조판에 영향이 없으므로 바꿔도 한글 창을 다시 그리지 않는다.
+export const renderedContent=q=>({number:q.number,type:q.type,style:q.style,ask:q.ask,blocks:q.blocks,choices:q.choices,choiceTable:q.choiceTable,choiceLayout:q.choiceLayout});
+const sha256=async text=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text)))].map(v=>v.toString(16).padStart(2,'0')).join('');
+export const questionFingerprint=q=>sha256(JSON.stringify(renderedContent(q)));
+// 이전 판은 조판과 상관없는 칸까지 지문에 넣었다. 그때 저장한 조판도 내용이 같으면 그대로 인정한다.
+const legacyFingerprint=q=>{const {typeset,references,workflow,...rest}=q;return sha256(JSON.stringify(rest));};
+export async function typesetMatches(typeset,q){return !!typeset&&(typeset.fingerprint===await questionFingerprint(q)||typeset.fingerprint===await legacyFingerprint(q));}
 export const toBase64=bytes=>{let raw='';for(let i=0;i<bytes.length;i+=32768)raw+=String.fromCharCode(...bytes.subarray(i,i+32768));return btoa(raw);};
 export const fromBase64=value=>Uint8Array.from(atob(value),c=>c.charCodeAt(0));
 export const mathParts=value=>String(value).split(/(\$\$[\s\S]+?\$\$|\$[^$\n]+?\$|\\\([\s\S]+?\\\)|\{\{수식:[\s\S]+?\}\})/g).filter(Boolean).map(text=>{

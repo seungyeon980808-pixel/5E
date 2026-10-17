@@ -9,7 +9,7 @@ import {createSheetGrid} from './grid.js';
 import {applyGridValues,columnName} from './grid-model.js';
 import {ROWS,fieldValue,applyVerticalValues} from './vertical.js';
 import {TEMPLATES,questionFromTemplate} from './templates.js';
-import {createTypesetter} from './typeset.js?v=1014-compact-panel';
+import {createTypesetter} from './typeset.js?v=1017-live';
 import {renderParts,applyPartChange,movePart} from './parts-view.js';
 let grid=null,future=[];
 let handoffRequest=null;
@@ -33,7 +33,7 @@ function remember(){
     tx.oncomplete=()=>{revision++;resolve();};tx.onerror=tx.onabort=()=>reject(failure||tx.error||Error('저장 공간이 부족합니다. 엑셀로 내려받아 보관하세요.'));
   }));void saveQueue.then(()=>{if(stamp===saveStamp)status('저장됨 · '+new Date().toLocaleTimeString('ko-KR',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit'}));}).catch(e=>status(e.message,true));
 }
-function mutate(fn,{render=true,key=''}={}){const selectedId=current?.id,historyBefore=history.slice(),added=!key||editKey!==key,before=added?null:clone(data),redoBefore=future;try{checkpoint(key);const completed=completeKeys();fn();demoteEdited(completed);validate(data);if(render)renderAll();remember();return true;}catch(e){const rollback=added?history.pop():before;if(rollback){data=rollback;current=data.questions.find(q=>q.id===selectedId)||data.questions[0]||null;}future=redoBefore;history=historyBefore;$('#undo').disabled=!history.length;$('#redo').disabled=!future.length;editKey='';if(render)renderAll();status(e.message,true);return false;}}
+function mutate(fn,{render=true,key=''}={}){const selectedId=current?.id,historyBefore=history.slice(),added=!key||editKey!==key,before=added?null:clone(data),redoBefore=future;try{checkpoint(key);const completed=completeKeys();fn();demoteEdited(completed);validate(data);if(render)renderAll();else queueSync();remember();return true;}catch(e){const rollback=added?history.pop():before;if(rollback){data=rollback;current=data.questions.find(q=>q.id===selectedId)||data.questions[0]||null;}future=redoBefore;history=historyBefore;$('#undo').disabled=!history.length;$('#redo').disabled=!future.length;editKey='';if(render)renderAll();status(e.message,true);return false;}}
 async function boot(){try{
   database=await new Promise((resolve,reject)=>{const r=indexedDB.open(demo?'5e-exampool-structure-demo':'5e-exampool-structure',2);r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains('state'))r.result.createObjectStore('state');if(!r.result.objectStoreNames.contains('backups'))r.result.createObjectStore('backups');};r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);r.onblocked=()=>reject(Error('다른 문항 창을 닫고 다시 열어주세요.'));});
   let raw=await new Promise((resolve,reject)=>{const r=database.transaction('state').objectStore('state').get('draft');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);}),copied=false;
@@ -53,7 +53,7 @@ function renderRows(){const query=$('#filter').value.toLowerCase(),visible=data.
   table.style.width=(186+visible.length*262)+'px';
   table.tHead.innerHTML='<tr class="letters"><th></th><th>A</th>'+visible.map((q,c)=>`<th>${columnName(c+1)}</th>`).join('')+'</tr><tr><th></th><th>항목</th>'+visible.map(q=>`<th data-id="${q.id}" data-current="${q.id===current?.id}"><button data-preview="${q.id}" title="클릭하여 문항 조판 열기">${E(q.managementId||q.number+'번 문항')} <span>조판 보기</span></button></th>`).join('')+'</tr>';
   table.tHead.rows[1].cells[1].textContent='항목';
-  $('#rows').innerHTML=ROWS.map((row,r)=>`<tr class="${row.tall?'tall-row':''}"><th class="row-num" scope="row">${r+1}</th><th class="field-label" scope="row" title="${E(row.hint||'')}">${row.label}</th>${visible.map(q=>{const value=fieldValue(q,row.key),open=row.key==='choices'&&['대응표','그림·그래프'].includes(q.style)?q.style==='대응표'?'tables':'composition':row.open,attr=`data-field="${row.key}" aria-label="${E(q.number)}번 ${row.label}"`;return `<td data-id="${q.id}" ${open?`data-open="${open}" title="더블클릭 또는 F2로 편집"`:''}>${row.options?`<select ${attr}>${options(row.options,value)}</select>`:`<textarea ${attr} rows="1" maxlength="32767">${E(value)}</textarea>`}</td>`;}).join('')}</tr>`).join('');
+  $('#rows').innerHTML=ROWS.map((row,r)=>`<tr class="${row.tall?'tall-row':''}"><th class="row-num" scope="row">${r+1}</th><th class="field-label" scope="row" title="${E(row.hint||'')}">${row.label}</th>${visible.map(q=>{const value=fieldValue(q,row.key),open=row.key==='choices'&&['대응표','그림·그래프'].includes(q.style)?q.style==='대응표'?'tables':'composition':row.open,attr=`data-field="${row.key}" aria-label="${E(q.number)}번 ${row.label}"`;return `<td data-id="${q.id}" data-hwp="${row.text?'text':'off'}" ${open?`data-open="${open}" title="더블클릭 또는 F2로 편집"`:''}>${row.options?`<select ${attr}>${options(row.options,value)}</select>`:`<textarea ${attr} rows="1" maxlength="32767">${E(value)}</textarea>`}</td>`;}).join('')}</tr>`).join('');
   $('#count').textContent=visible.length===data.questions.length?`${data.questions.length}문항`:`${visible.length} / ${data.questions.length}문항`;$('#empty').hidden=!!data.questions.length;for(const id of ['duplicate','preview','edit-detail'])$('#'+id).disabled=!current;$('#detail').hidden=!current;
 }
 function choose(q){if(!q||q.id===current?.id)return;current=q;selection=null;sourceTarget='question';editKey='';document.querySelectorAll('#registry thead th[data-id]').forEach(n=>n.dataset.current=String(n.dataset.id===q.id));if($('#detail-dialog').open)renderDetail();renderSheetView();if(!$('#sources').hidden)renderSources();if(!$('#preview-dialog').hidden)void openTypeset();renderView();}
@@ -100,9 +100,35 @@ function renderView(){
   document.querySelector('.workflow-pick').hidden=view.name!=='desk';
 }
 function show(name,extra={}){if(name!=='desk'&&grid?.finish()===false)return;view={...view,...extra,name};renderView();if(name==='desk'){grid?.refresh({questionId:current?.id});}}
-function renderAll(){cellNode=null;renderRows();if(current)renderDetail();renderSheetView();renderView();$('#undo').disabled=!history.length;$('#redo').disabled=!future.length;grid?.refresh({questionId:current?.id});if(typesetter&&current&&!$('#preview-dialog').hidden){const stale=!typesetter.matches(current);$('#typeset-refresh').hidden=!stale;if(stale&&(typesetter.questionId===current.id||!typesetter.matches(current))){if(!typesetter.dirty)scheduleRedraw();else{$('#typeset-status').textContent='시트 내용 변경됨 · 한글 창의 저장 전 수정이 있어 자동으로 다시 그리지 않습니다. 조판 저장 후 문항 새로고침을 누르세요.';$('#typeset-status').dataset.error='false';}}}}
-// 데이터는 하나: 시트·구성 값을 고치면 한글 창을 잠시 뒤 다시 그린다. 한글 창에 저장 전 수정이 있으면 덮어쓰지 않는다.
-let redrawTimer=0;function scheduleRedraw(){clearTimeout(redrawTimer);redrawTimer=setTimeout(()=>{if(current&&typesetter&&!typesetter.dirty&&!$('#preview-dialog').hidden&&!typesetter.matches(current))void requestTypeset(current);},450);}
+function renderAll(){cellNode=null;renderRows();if(current)renderDetail();renderSheetView();renderView();$('#undo').disabled=!history.length;$('#redo').disabled=!future.length;grid?.refresh({questionId:current?.id});syncTypeset(current);}
+// 데이터는 하나: 시트·구성 값을 고치면 한글 창에 바로 반영한다. 글만 바뀌었으면 그 문단만 바꾸고(서식 유지),
+// 구성·배치·선지 표현처럼 모양이 바뀌었으면 잠시 뒤 다시 그린다. value는 확정 전(입력 중) 값일 수도 있다.
+let redrawTimer=0,syncSeq=0;
+function syncTypeset(value){
+  if(!typesetter||!value||$('#preview-dialog').hidden)return;
+  const stale=!typesetter.matches(value);$('#typeset-refresh').hidden=!stale;if(!stale){clearTimeout(redrawTimer);return;}
+  const seq=++syncSeq;
+  void typesetter.update(value).catch(()=>false).then(done=>{if(seq!==syncSeq)return;if(done){clearTimeout(redrawTimer);$('#typeset-refresh').hidden=!!current&&typesetter.matches(current);}else if(value===current)scheduleRedraw();});
+}
+function scheduleRedraw(){clearTimeout(redrawTimer);redrawTimer=setTimeout(()=>{if(current&&typesetter&&!$('#preview-dialog').hidden&&!typesetter.matches(current))void requestTypeset(current);},450);}
+// 구성 편집 창처럼 화면을 다시 그리지 않는 입력도 잠시 뒤 한글 창에 넣는다.
+function queueSync(){clearTimeout(draftTimer);draftTimer=setTimeout(()=>syncTypeset(current),120);}
+// 시트 칸에 입력하는 동안: 확정 전 값으로 만든 문항을 한글 창에 바로 넣는다(다시 그려야 하는 변경은 확정 때).
+let draftTimer=0;
+function previewDraft(d,value){
+  clearTimeout(draftTimer);
+  draftTimer=setTimeout(()=>{
+    if(!current||!typesetter||$('#preview-dialog').hidden)return;
+    if(!d?.table){syncTypeset(current);return;}
+    try{
+      const copy=clone(data),writes=[{r:d.r,c:d.c,value}];
+      if(d.id==='registry')applyVerticalValues(copy,[...d.table.tHead.rows[1].cells].filter(n=>n.dataset.id).map(n=>n.dataset.id),writes,{});
+      else applyGridValues(copy,{kind:'table',questionId:current.id,tableId:d.id},writes,{});
+      const q=copy.questions.find(x=>x.id===typesetter.questionId);if(!q||typesetter.matches(q))return;
+      ++syncSeq;void typesetter.update(q).catch(()=>false);
+    }catch{/* 아직 맞지 않는 값(목록 밖 값 등)은 확정할 때 알린다 */}
+  },120);
+}
 // 5E_cell 아래 시트 탭: 문항(가로 문항 시트) · 구성(선택 문항의 배치) · 표(선택 문항의 표).
 let sheetView='registry';
 function renderSheetView(){
@@ -187,7 +213,7 @@ $('#apply-import').onclick=()=>{if(!pending)return;const applied=mutate(()=>{con
 function fileData(file){return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=()=>reject(Error('파일을 읽지 못했습니다.'));r.readAsDataURL(file);});}
 $('#figure-file').onchange=async()=>{const file=$('#figure-file').files[0],owner=imageTarget;if(!file||!owner)return;try{if(file.size>5*1024*1024||!['image/png','image/jpeg','image/webp'].includes(file.type))throw Error('5 MB 이하의 PNG·JPEG·WebP 그림을 선택하세요.');const value=await fileData(file),image=await loadImage(value);if(image.naturalWidth*image.naturalHeight>40000000)throw Error('그림 크기를 줄여주세요.');const figure={name:file.name,data:value,width:image.naturalWidth,height:image.naturalHeight};if(file.type==='image/png'&&embedded){window.parent.postMessage({channel:'5e-question-sheet',action:'read-figure',qid:owner.qid,key:owner.key,figure},location.origin);return;}mutate(()=>{const q=data.questions.find(q=>q.id===owner.qid),holder=imageHolder(q,owner.key);if(!holder)throw Error('그림을 넣을 구성을 찾지 못했습니다.');holder.figure=figure;});}catch(e){status(e.message,true);}finally{$('#figure-file').value='';imageTarget=null;}};
 window.addEventListener('message',e=>{if(e.origin!==location.origin||e.source!==window.parent||e.data?.channel!=='5e-question-sheet')return;const m=e.data;if(m.error){if(m.requestId===handoffRequest){handoffRequest=null;$('#handoff').disabled=false;}status(m.error,true);return;}if(m.action==='handoff-ready'&&m.requestId===handoffRequest){handoffRequest=null;$('#handoff').disabled=false;status('한글로 보내기 완료'+(m.warnings?.length?' · '+m.warnings.join(' '):''));return;}if(m.action==='figure-ready')mutate(()=>{const q=data.questions.find(q=>q.id===m.qid),holder=q&&imageHolder(q,m.key);if(!holder)throw Error('그림을 넣을 구성을 찾지 못했습니다.');holder.figure=m.figure;});});
-if(embedded){$('#handoff').hidden=false;$('#handoff').onclick=async()=>{if(!current||handoffRequest)return;try{const question=handoffQuestion(current);const {questionFingerprint,LAYOUT_VERSION}=await import('./typeset-model.js?v=1014-compact-panel');if(!current.typeset||current.typeset.layoutVersion!==LAYOUT_VERSION||current.typeset.fingerprint!==await questionFingerprint(current))throw Error('문항 조판을 열어 확인하고 조판 저장을 누른 뒤 보내세요.');await saveQueue;const requestId=uid();handoffRequest=requestId;$('#handoff').disabled=true;status('선택 문항을 한글로 보내는 중…');window.parent.postMessage({channel:'5e-question-sheet',action:'handoff',requestId,packet:{format:FORMAT,version:2,question,typeset:current.typeset}},location.origin);}catch(e){status(e.message,true);}};$('#return').hidden=false;$('#return').onclick=async()=>{await saveQueue.catch(()=>{});window.parent.postMessage({channel:'5e-question-sheet',action:'close'},location.origin);};}
+if(embedded){$('#handoff').hidden=false;$('#handoff').onclick=async()=>{if(!current||handoffRequest)return;try{const question=handoffQuestion(current);const {typesetMatches,LAYOUT_VERSION}=await import('./typeset-model.js?v=1014-compact-panel');if(!current.typeset||current.typeset.layoutVersion!==LAYOUT_VERSION||!await typesetMatches(current.typeset,current))throw Error('문항 조판을 열어 확인하고 조판 저장을 누른 뒤 보내세요.');await saveQueue;const requestId=uid();handoffRequest=requestId;$('#handoff').disabled=true;status('선택 문항을 한글로 보내는 중…');window.parent.postMessage({channel:'5e-question-sheet',action:'handoff',requestId,packet:{format:FORMAT,version:2,question,typeset:current.typeset}},location.origin);}catch(e){status(e.message,true);}};$('#return').hidden=false;$('#return').onclick=async()=>{await saveQueue.catch(()=>{});window.parent.postMessage({channel:'5e-question-sheet',action:'close'},location.origin);};}
 $('#example').onclick=async()=>{try{const v=validate(await(await fetch('/assets/exampool/sheet/examples.json')).json());mutate(()=>{const qs=v.questions.map(duplicateQuestion);data.questions.push(...qs);current=qs[0];activeTab='composition';});}catch(e){status(e.message,true);}};
 // Reference pane is deliberately closed until requested.
 const loadRuntime=createPdfRuntimeLoader();let runtimeQueue=Promise.resolve();const runtimeTask=fn=>{const p=runtimeQueue.catch(()=>{}).then(async()=>fn(await loadRuntime()));runtimeQueue=p;return p;};
@@ -235,19 +261,22 @@ async function requestTypeset(value){
   typesetRequest=value;
   if(typesetTransition)return typesetTransition;
   typesetTransition=(async()=>{
-    const panel=$('#preview-dialog');
+    const panel=$('#preview-dialog');let lostFormat=false;
     while(typesetRequest!==undefined){
       let next=typesetRequest;typesetRequest=undefined;
       panel.setAttribute('aria-busy','true');
       try{
-        await typesetter?.commit();
+        // 한글 창이 보여 주는 문항이 시트와 같을 때만 서식을 저장한다. 시트에서 구성이 바뀌었다면 그 서식은 새 내용에 맞지 않으므로 버리고 다시 그린다.
+        const shown=data.questions.find(q=>q.id===typesetter?.questionId);
+        if(shown&&typesetter.matches(shown))await typesetter.commit();
+        else if(typesetter?.dirty){typesetter.discard();lostFormat=true;}
         if(typesetRequest!==undefined)continue;
         if(next===null){panel.hidden=true;panel.dataset.expanded='false';$('#typeset-expand').setAttribute('aria-pressed','false');$('#typeset-expand').textContent='크게 보기';$('#preview').setAttribute('aria-expanded','false');$('#preview').focus();continue;}
         next=data.questions.find(q=>q.id===next.id);if(!next)throw Error('문항이 삭제되었습니다. 다른 문항을 선택하세요.');
         closeSources();panel.hidden=false;$('#preview').setAttribute('aria-expanded','true');
         typesetter ||= makeTypesetter();
         $('#typeset-title').textContent=`${next.number}번 문항 조판`;
-        if(!typesetter.matches(next))await typesetter.open(next);else typesetter.refreshView();
+        if(!typesetter.matches(next)){await typesetter.open(next);if(lostFormat)status('구성이 바뀌어 한글 창을 다시 그렸습니다 · 저장하지 않은 서식 조정은 다시 해 주세요.');}else typesetter.refreshView();lostFormat=false;
         $('#typeset-refresh').hidden=true;
       }catch(e){
         typesetRequest=undefined;$('#typeset-status').textContent=e.message;$('#typeset-status').dataset.error='true';
@@ -270,7 +299,7 @@ $('#typeset-discard').onclick=()=>{
   clearTimeout(discardArmed);discardArmed=0;b.textContent='한글 창 수정 버리기';b.hidden=true;
   typesetter?.discard();status('한글 창 수정을 버리고 시트 내용으로 다시 그립니다.');void requestTypeset(current);
 };
-grid=createSheetGrid({formula:$('#formula-value'),nameBox:$('#cell-address'),onStatus:status,onHistory:replay,
+grid=createSheetGrid({formula:$('#formula-value'),nameBox:$('#cell-address'),onStatus:status,onHistory:replay,onDraft:previewDraft,
   onOpen:(d,tab)=>{choose(data.questions.find(q=>q.id===d.table.tBodies[0].rows[d.r].querySelectorAll('td')[d.c].dataset.id));openDetail(tab);},
   onSelect:d=>{if(!d?.table)return;if(d.id==='registry'){selection=null;const cell=d.table.tBodies[0]?.rows[d.r]?.querySelectorAll('td')[d.c];if(cell&&d.user)choose(data.questions.find(q=>q.id===cell.dataset.id));}else selection={id:d.id,anchor:[d.r,d.c],range:[...d.range]};},
   onWrite:(d,writes,options)=>{const scope=d.id==='registry'?{kind:'registry',ids:[...d.table.tHead.rows[1].cells].filter(n=>n.dataset.id).map(n=>n.dataset.id),allowAppend:!$('#filter').value}:{kind:'table',questionId:current.id,tableId:d.id};return mutate(()=>scope.kind==='registry'?applyVerticalValues(data,scope.ids,writes,options):applyGridValues(data,scope,writes,options));}

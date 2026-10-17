@@ -1,16 +1,17 @@
 import {TYPES,PRESETS,STYLES,block,applyPreset} from './model.js';
 
+// text: 한글 문서에 글로 나오는 칸(흰색). 나머지(분류·모양 설정·정답·해설 등)는 옅은 회색으로 구분한다.
 // A row is a field; a column is one complete question. Compound material stays
 // in the ordered document, rather than being flattened into a giant text cell.
 export const ROWS=[
   {key:'type',label:'문항유형',options:TYPES},
   {key:'unitLarge',label:'대단원'}, {key:'unitMiddle',label:'중단원'}, {key:'unitSmall',label:'소단원'},
   {key:'standardCode',label:'성취기준'}, {key:'concepts',label:'핵심개념',hint:'쉼표 또는 줄바꿈으로 여러 개 입력'},
-  {key:'managementId',label:'문항관리번호'}, {key:'ask',label:'발문',tall:true},
-  {key:'materials',label:'자료',open:'composition'}, {key:'photos',label:'사진',open:'composition'},
-  {key:'passage',label:'지문',tall:true}, {key:'choices',label:'선지',tall:true}, {key:'bogi',label:'보기',tall:true},
+  {key:'managementId',label:'문항관리번호'}, {key:'ask',label:'발문',tall:true,text:true},
+  {key:'materials',label:'자료',open:'composition',text:true}, {key:'photos',label:'사진',open:'composition'},
+  {key:'passage',label:'지문',tall:true,text:true}, {key:'choices',label:'선지',tall:true,text:true}, {key:'bogi',label:'보기',tall:true,text:true},
   {key:'preset',label:'자료 구성',options:PRESETS}, {key:'style',label:'선지 표현',options:STYLES},
-  {key:'number',label:'시험지 번호'}, {key:'answer',label:'정답'}, {key:'points',label:'배점'},
+  {key:'number',label:'시험지 번호',text:true}, {key:'answer',label:'정답'}, {key:'points',label:'배점'},
   {key:'source',label:'출처'}, {key:'explanation',label:'해설',tall:true}, {key:'intent',label:'출제 의도'}
 ];
 const labels=['①','②','③','④','⑤'];

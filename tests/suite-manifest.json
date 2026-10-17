@@ -45,6 +45,13 @@
       ]
     },
     {
+      "path": "tests/test-exampool-live-patch.mjs",
+      "findingIds": [
+        "EXAMPOOL-SHEET-TO-HWP-LIVE",
+        "EXAMPOOL-NON-HWP-CELLS-GRAY"
+      ]
+    },
+    {
       "path": "tests/test-exampool-exam-set.mjs",
       "findingIds": [
         "EXAMPOOL-WORKFLOW",

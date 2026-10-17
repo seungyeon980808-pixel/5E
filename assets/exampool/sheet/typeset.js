@@ -5,7 +5,7 @@ import {loadImage} from './image-load.js';
 import {attachPlacementLayer} from './placement-layer.js';
 import {PictureSettings} from '/js/rhwp-exam-picture-controls.js?v=1.7.0-four-session-integration';
 import {buildQuestionHtml,verifyNativeQuestion} from './handoff.js';
-import {questionFingerprint,toBase64,fromBase64,materializeEquations,normalizeQuestionImport,applyQuestionIndent,applyReferenceBogiIndent,LAYOUT_VERSION} from './typeset-model.js?v=1014-compact-panel';
+import {questionFingerprint,typesetMatches,renderedContent,toBase64,fromBase64,materializeEquations,normalizeQuestionImport,applyQuestionIndent,applyReferenceBogiIndent,LAYOUT_VERSION} from './typeset-model.js?v=1014-compact-panel';
 import {QUESTION_PAGE_MODE,questionPageProfile,fitQuestionPage,questionPageMetrics,validateQuestionPage,resizeQuestionDocument} from './question-page.js?v=1014-compact-panel';
 import {applyTableAlignment,applyHangingIndent} from '/js/rhwp-exam-table-controls.js?v=1014-compact-panel';
 import {nativeLayoutSignature,nativeImageSignature} from './native-transfer.js?v=1014-compact-panel';
@@ -14,11 +14,12 @@ import {assertNativeLayout} from './native-layout-check.js?v=1014-compact-panel'
 import {attachTypesetView} from './typeset-view.js';
 import {createNativeTextMeasurer} from './native-text-measure.js';
 import {compactSavedBogi} from './compact-bogi.js';
+import {nativeRuns,planPatches,applyPatches,layoutKey} from './live-patch.js';
 
 const parse=value=>typeof value==='string'?JSON.parse(value):value;
 const normalized=text=>String(text).replace(/\s+/g,' ').trim();
 export function createTypesetter({host,status,paper,columns,save,download,onSave,onPlacement,onTextEdit,onDiverge}){
-  let textMap=null,syncTimer=0,placer=null,owners=null,bridge=null,starting=null,q=null,fingerprint='',baselineText='',baselineEquations='',baselineImages='',opening=0,loading=false,ready=false,pictureSettings,fitting=false,fitFrame=0,lastProfile,metricsCache,view,dirty=false,changingProfile=Promise.resolve();
+  let textMap=null,syncTimer=0,placer=null,owners=null,bridge=null,starting=null,q=null,fingerprint='',baselineText='',baselineEquations='',baselineImages='',opening=0,loading=false,ready=false,pictureSettings,fitting=false,fitFrame=0,lastProfile,metricsCache,view,dirty=false,patching=false,updating=Promise.resolve(),measurer=null,changingProfile=Promise.resolve();
   const message=(text,error=false)=>{status.textContent=text;status.dataset.error=String(error);};
   const document=()=>bridge.wasm.borrowDocumentHandle();
   const profile=()=>({paper:paper.value,columns:Number(columns.value)});
@@ -51,7 +52,7 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
   function scheduleFit(){if(fitting||fitFrame||!ready)return;fitFrame=requestAnimationFrame(()=>{fitFrame=0;try{fitLive();}catch(e){message(e.message,true);}});}
   const equationScripts=async bytes=>{const zip=await JSZip.loadAsync(new Uint8Array(bytes)),xml=await zip.file('Contents/section0.xml').async('string');return [...xml.matchAll(/<hp:script>([\s\S]*?)<\/hp:script>/g)].map(m=>m[1]).join('\n');};
   async function ensure(){
-    if(!starting)starting=RhwpExamBridge.create(host,{showEditingBorders:false,tableLayoutLocked:true,onChange:error=>{if(ready&&!loading&&!fitting){dirty=true;message(error?error.message:'조판 수정 중 · 완료하면 조판 저장을 누르세요.',!!error);scheduleFit();scheduleTextSync();}},onEdit:(_id,ref)=>{
+    if(!starting)starting=RhwpExamBridge.create(host,{showEditingBorders:false,tableLayoutLocked:true,onChange:error=>{if(patching&&!error){scheduleFit();return;}if(ready&&!loading&&!fitting){dirty=true;message(error?error.message:'조판 수정 중 · 완료하면 조판 저장을 누르세요.',!!error);scheduleFit();scheduleTextSync();}},onEdit:(_id,ref)=>{
       bridge.selectPicture(ref);pictureSettings.open(bridge.pictureLayout(ref),save,{ref,generation:bridge.generation,inlineAlignment:!!bridge.paragraphTarget(ref)});
     }}).then(async b=>{bridge=b;await bridge.newDocument();bridge.watchView(drawGuide);view=attachTypesetView(bridge,host);placer=attachPlacementLayer({bridge,host,hint:host.parentElement.querySelector('#placement-hint-text'),onApply:(fn,text)=>onPlacement?.(fn,text,q?.id),canEdit:()=>{if(!ready||loading)return false;if(dirty){message('한글 창에 저장 전 수정이 있어 배치를 바꿀 수 없습니다. 조판 저장 후 다시 끌어 주세요.',true);return false;}return true;}});pictureSettings=new PictureSettings(host.parentElement,{onApply:(value,context)=>{if(context.generation!==bridge.generation)throw Error('다시 그림을 선택하세요.');bridge.applyPictureLayout(context.ref,value);},onError:e=>message(e.message,true)});return b;}).catch(e=>{starting=null;throw e;});
     return starting;
@@ -73,7 +74,7 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
   async function open(value){
     const seq=++opening;loading=true;ready=false;host.dataset.ready='false';metricsCache=null;guide.hidden=true;metricsOutput.textContent='';cancelAnimationFrame(fitFrame);fitFrame=0;save.disabled=true;download.disabled=true;paper.disabled=true;columns.disabled=true;message('실제 한글 문서로 조판하는 중…');placer?.clear();owners=null;textMap=null;clearTimeout(syncTimer);
     try{await ensure();if(seq!==opening)return;const next=structuredClone(value),nextFingerprint=await questionFingerprint(next);
-      const saved=next.typeset?.fingerprint===nextFingerprint&&[9,10,LAYOUT_VERSION].includes(next.typeset.layoutVersion)?next.typeset:null;
+      const saved=await typesetMatches(next.typeset,next)&&[9,10,LAYOUT_VERSION].includes(next.typeset.layoutVersion)?next.typeset:null;
       paper.value=saved?.profile.paper||'A4';columns.value=String(saved?.profile.columns||2);
       let bytes=saved?fromBase64(saved.bytes):await generate(next);
       if(saved)owners=await planOwners(next);
@@ -103,7 +104,7 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
     }finally{if(seq===opening){loading=false;save.disabled=!ready;download.disabled=!ready;paper.disabled=!ready;columns.disabled=!ready;if(ready){fitLive();drawGuide();}}}
   }
   // 한글 창에서 고친 글을 잠시 뒤 시트 칸에 반영한다. 반영하면 이 문항의 기준 글도 새 글로 바뀐다.
-  function scheduleTextSync(){clearTimeout(syncTimer);syncTimer=setTimeout(()=>void syncText(),700);}
+  function scheduleTextSync(){clearTimeout(syncTimer);syncTimer=setTimeout(()=>void syncText(),200);}
   async function syncText(){
     if(!ready||loading||!textMap||!onTextEdit||!q)return;
     const raw=parse(document().getTextFileText()),result=mapTextEdit(textMap,raw);
@@ -115,6 +116,31 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
     textMap=buildTextMap(raw,textMap.segments);baselineText=normalized(raw);fingerprint=await questionFingerprint(q);
     if(!onTextEdit(changes,id))return;
     message('한글에서 고친 글을 시트에 반영했습니다 · 서식까지 남기려면 조판 저장을 누르세요.');
+  }
+  // 시트에서 고친 글을 한글 창에 바로 넣는다. 같은 문항이고 글 조각의 구성이 같으면 바뀐 문단만 바꾸고(서식·저장 전 조판 유지),
+  // 구성이 바뀌었거나 짝을 찾지 못하면 false — 부르는 쪽이 다시 그린다. 차례로 하나씩 처리한다.
+  function update(value){const run=updating.then(()=>patchFrom(value));updating=run.catch(()=>{});return run;}
+  async function patchFrom(value){
+    if(!ready||loading||!q||!owners?.texts||!textMap||value?.id!==q.id)return false;
+    if(contentKey(q)===contentKey(value))return true;
+    if(layoutKey(q)!==layoutKey(value))return false;
+    const seq=opening,next=structuredClone(value),Document=document().constructor;
+    const plan=await buildQuestionHtml(next,async f=>({...f,data:BLANK,width:f.width||100,height:f.height||100}),questionPageProfile(profile()).width,{native:true,measureText:measurer||=createNativeTextMeasurer(Document)});
+    if(seq!==opening||!ready||loading)return false;
+    if(JSON.stringify([plan.imageOwners,plan.tableOwners,plan.tables])!==JSON.stringify([owners.images,owners.tables,owners.shapes]))return false;
+    const patches=planPatches(textMap.segments,plan.textSegments,nativeRuns(document()));
+    if(!patches)return false;
+    if(patches.length){
+      patching=true;
+      try{bridge.transaction('sheet-text',()=>{applyPatches(bridge.wasm,patches);return true;});}
+      finally{requestAnimationFrame(()=>{patching=false;});}
+      message('시트에서 고친 글을 한글 창에 바로 넣었습니다.');
+    }
+    q=next;owners={images:plan.imageOwners,tables:plan.tableOwners,shapes:plan.tables,texts:plan.textSegments};
+    const raw=parse(document().getTextFileText());
+    textMap=buildTextMap(raw,owners.texts.map(s=>({...s})));baselineText=normalized(raw);fingerprint=await questionFingerprint(q);
+    placer?.setModel({question:q,owners});scheduleFit();
+    return true;
   }
   async function snapshot(){
     if(!bridge||!q||loading||!ready)throw Error('조판이 준비된 뒤 다시 시도하세요.');
@@ -158,12 +184,12 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
   resize.onclick=()=>{if(!ready||loading)return;bridge.setTableLayoutLocked(!bridge.tableLayoutLocked);resize.setAttribute('aria-pressed',String(!bridge.tableLayoutLocked));message(bridge.tableLayoutLocked?'표 크기 잠금 · 마우스로 경계를 움직여도 크기는 유지됩니다.':'표 크기 조절 켜짐 · 표 경계를 드래그한 뒤 다시 끄세요.');};
   align.onchange=()=>{try{if(!ready||loading)return;applyTableAlignment(bridge,align.value);message('표 위치 변경됨 · 조판 저장을 누르세요.');}catch(e){message(e.message,true);}finally{align.value='';}};
   indent.onclick=()=>{try{if(!ready||loading)return;if(!applyHangingIndent(bridge))throw Error('본문에서 들여쓸 위치를 클릭하세요.');message('다음 줄이 커서 위치에 맞춰집니다 · 조판 저장을 누르세요.');bridge.input.textarea.focus();}catch(e){message(e.message,true);}};
-  const contentKey=value=>{const {typeset,references,workflow,...content}=value;return JSON.stringify(content);};
+  const contentKey=value=>JSON.stringify(renderedContent(value));
   async function buildExam(data){
     await ensure();const Document=document().constructor,{document:exam}=await buildExamDocument(Document,data);
     try{return exportLayoutHwpx(exam,XLSX.CFB);}finally{exam.free();}
   }
   // 한글 창에서 바꾼 것을 버린다(시트에 반영되지 않은 수정 포함). 다음 open이 시트 내용으로 다시 그린다.
   function discard(){clearTimeout(syncTimer);dirty=false;ready=false;onDiverge?.(false);}
-  return {open,commit,buildExam,discard,get questionId(){return q?.id;},matches:value=>ready&&!!q&&contentKey(q)===contentKey(value),get dirty(){return dirty;},refreshView:()=>view?.fit()};
+  return {open,update,commit,buildExam,discard,get questionId(){return q?.id;},matches:value=>ready&&!!q&&contentKey(q)===contentKey(value),get dirty(){return dirty;},refreshView:()=>view?.fit()};
 }

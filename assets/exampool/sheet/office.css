@@ -80,6 +80,8 @@ input,select,textarea{border:1px solid var(--ds-doc-line-strong);border-radius:v
 #registry tr[data-current=true] td{background:var(--ds-cell-tint)}
 #registry tr[data-current=true] th{background:var(--ds-cell-soft);color:var(--ds-cell);border-left-color:var(--ds-cell)}
 #registry textarea,#registry input,#registry select{color:var(--ds-doc-ink);font-size:var(--ds-text-body)}
+/* 한글 문서에 글로 나오지 않는 칸(분류·모양 설정·정답·해설 등)은 옅은 회색. 한글에 바로 반영되는 글 칸만 흰색 */
+#registry td[data-hwp=off]{background:var(--ds-doc-head)}
 #registry td.grid-selected,.data-table td.grid-selected{background:var(--ds-cell-tint)}
 #registry td.grid-active,.data-table td.grid-active{background:var(--ds-doc)}
 #registry td[data-open] textarea{color:var(--ds-doc-ink-2)}
@@ -178,6 +180,8 @@ dialog::backdrop{background:rgba(0,0,0,.32)}
 #parts .order-cell span{flex:1;color:var(--ds-doc-ink-2);font-variant-numeric:tabular-nums}
 #parts .order-cell button{width:var(--ds-h-control-sm);height:var(--ds-h-control-sm);padding:0;color:var(--ds-doc-ink-3)}
 #parts .part-na{display:block;padding:0 var(--ds-space-4);color:var(--ds-doc-ink-3);font-size:var(--ds-text-meta)}
+#parts tbody td{background:var(--ds-doc-head)}
+#parts tbody td[data-hwp=text]{background:var(--ds-doc)}
 #parts tbody tr:hover td{background:var(--ds-doc-hover)}
 .toolbar-end #count{white-space:nowrap}
 
@@ -284,3 +288,7 @@ dialog::backdrop{background:rgba(0,0,0,.32)}
 .exam-page[data-oversized=true] .exam-sheet{box-shadow:0 0 0 1.5px var(--ds-warning),var(--ds-shadow-board)}
 .exam-page figcaption{font-size:var(--ds-text-meta);color:var(--ds-ink-3)}
 @media(max-width:1100px){.side{width:52px}.side .side-item>span,.side .side-item>b,.side kbd,.side-label,.side-foot,.side .side-new{font-size:0}.side .side-new{padding:0;justify-content:center}.side button{justify-content:center;padding:0}.crumbs #crumb-question{max-width:200px}}
+
+/* 표 시트: 머리칸 글도 한글에 그대로 나오므로 흰색으로 두고 굵기로만 구분한다 */
+.data-table td[data-header=true]:not(.grid-selected):not(.selected){background:var(--ds-doc)}
+.data-table td[data-header=true] input{font-weight:600}

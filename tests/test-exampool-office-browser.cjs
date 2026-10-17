@@ -115,6 +115,33 @@ h.withServer(async origin => {
       const askValue=await sheet.locator('#rows tr:has(th.field-label:text-is("발문")) textarea').first().inputValue();
       assert.equal(askValue.replace(' OK',''),'실험 결과로 옳은 것만을 <보기>에서 있는 대로 고른 것은?','the prompt cell received exactly the typed text');
 
+      // 한글 창을 고친 뒤에도 시트 칸에 입력하는 동안(확정 전) 한글 창의 같은 문단에 바로 들어간다. 다시 그리지 않는다.
+      const nativeText=()=>sheet.evaluate(()=>document.querySelector('#native-editor iframe').contentWindow.rhwpStudio.plugins.deps.wasm.borrowDocumentHandle().getTextFileText());
+      await sheet.evaluate(()=>{window.__busySeen=false;const p=document.querySelector('#preview-dialog');window.__busyWatch?.disconnect();window.__busyWatch=new MutationObserver(()=>{if(p.getAttribute('aria-busy')==='true')window.__busySeen=true;});window.__busyWatch.observe(p,{attributes:true,attributeFilter:['aria-busy']});});
+      await sheet.locator('#rows tr:has(th.field-label:text-is("발문")) td').first().click();await page.keyboard.press('F2');
+      await sheet.evaluate(()=>{const t=document.querySelector('.grid-editing textarea');t.setSelectionRange(t.value.length,t.value.length);});
+      await page.keyboard.type(' 실시간');
+      await sheet.waitForFunction(()=>/실시간/.test(document.querySelector('#native-editor iframe').contentWindow.rhwpStudio.plugins.deps.wasm.borrowDocumentHandle().getTextFileText()),null,{timeout:10000});
+      assert.match(await nativeText(),/OK[\s\S]*실시간/,'the draft reaches the HWP paragraph while typing, after the HWP edit');
+      await page.keyboard.press('Escape');
+      await sheet.waitForFunction(()=>!/실시간/.test(document.querySelector('#native-editor iframe').contentWindow.rhwpStudio.plugins.deps.wasm.borrowDocumentHandle().getTextFileText()),null,{timeout:10000});
+      await sheet.locator('#rows tr:has(th.field-label:text-is("발문")) td').first().click();await page.keyboard.press('F2');
+      await sheet.evaluate(()=>{const t=document.querySelector('.grid-editing textarea');t.setSelectionRange(t.value.length,t.value.length);});
+      await page.keyboard.type(' 실시간');await page.keyboard.press('Enter');
+      await sheet.waitForFunction(()=>/실시간/.test(document.querySelector('#native-editor iframe').contentWindow.rhwpStudio.plugins.deps.wasm.borrowDocumentHandle().getTextFileText()),null,{timeout:10000});
+      assert.match(await sheet.locator('#rows tr:has(th.field-label:text-is("발문")) textarea').first().inputValue(),/ OK[\s\S]* 실시간$/,'the committed cell keeps the HWP edit and the sheet edit');
+      // 한글에 나오지 않는 칸(해설)을 고쳐도 한글 창은 그대로다.
+      await sheet.locator('#rows tr:has(th.field-label:text-is("해설")) td').first().click();await page.keyboard.type('해설만 바꿈');await page.keyboard.press('Enter');
+      await sheet.waitForTimeout(900);
+      assert.equal(await sheet.evaluate(()=>window.__busySeen),false,'text edits and non-printed fields never redraw the HWP window');
+      assert.equal(await sheet.locator('#typeset-refresh').isHidden(),true,'the HWP window matches the sheet');
+      // 흰 칸은 한글에 글로 나오는 칸뿐, 나머지는 옅은 회색.
+      const shades=await sheet.evaluate(()=>{const row=label=>[...document.querySelectorAll('#rows tr')].find(tr=>tr.querySelector('th.field-label')?.textContent===label)?.querySelector('td');document.activeElement?.blur();
+        return Object.fromEntries(['발문','보기','선지','문항유형','성취기준','자료 구성','선지 표현','해설'].map(l=>{const td=row(l);td.classList.remove('grid-active','grid-selected');return [l,{hwp:td.dataset.hwp,bg:getComputedStyle(td).backgroundColor}];}));});
+      for(const l of ['발문','보기','선지'])assert.equal(shades[l].hwp,'text',l);
+      for(const l of ['문항유형','성취기준','자료 구성','선지 표현','해설']){assert.equal(shades[l].hwp,'off',l);assert.notEqual(shades[l].bg,'rgb(255, 255, 255)',l+' is gray');}
+      await sheet.evaluate(()=>window.__busyWatch?.disconnect());
+
       // 시트 칸이 아닌 곳(문항 번호 앞)을 고치면 반영하지 않고, '한글 창 수정 버리기'로 빠져나온다.
       await page.mouse.click(frameBox.x+fb.x+fb.width*.55,frameBox.y+fb.y+92);await page.keyboard.press('Home');await page.keyboard.type('Z');
       await sheet.waitForFunction(()=>!document.querySelector('#typeset-discard').hidden,null,{timeout:15000});

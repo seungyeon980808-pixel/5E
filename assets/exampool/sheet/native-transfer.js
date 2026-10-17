@@ -1,4 +1,4 @@
-import {questionFingerprint,fromBase64,pageProfile,LAYOUT_VERSION} from './typeset-model.js?v=1014-compact-panel';
+import {typesetMatches,fromBase64,pageProfile,LAYOUT_VERSION} from './typeset-model.js?v=1014-compact-panel';
 import {exportLayoutHwpx} from './native-hwpx.js?v=1014-compact-panel';
 import {assertNativeLayout} from './native-layout-check.js?v=1014-compact-panel';
 import {QUESTION_PAGE_MODE,validateQuestionPage} from './question-page.js?v=1014-compact-panel';
@@ -63,7 +63,7 @@ export function exportVerifiedHwpx(document,CFB){
   }finally{checked.free();}
 }
 export async function openApprovedQuestion(Document,question,typeset){
-  if(!typeset?.verified||typeset.layoutVersion!==LAYOUT_VERSION||typeset.fingerprint!==await questionFingerprint(question))throw Error('현재 문항의 조판을 저장한 뒤 다시 보내세요.');
+  if(!typeset?.verified||typeset.layoutVersion!==LAYOUT_VERSION||!await typesetMatches(typeset,question))throw Error('현재 문항의 조판을 저장한 뒤 다시 보내세요.');
   const source=new Document(fromBase64(typeset.bytes));
   try{
     assertNativeLayout(source);

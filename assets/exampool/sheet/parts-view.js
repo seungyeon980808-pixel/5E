@@ -1,6 +1,7 @@
 // 5E_cell의 '구성' 시트: 선택한 문항의 구성 한 줄마다 순서·묶음·배치·폭 비율·크기·간격·정렬.
 // 엑셀 '구성' 시트와 같은 값을 같은 말로 보여 준다. 고치면 데이터 하나만 바뀌고 한글 창이 다시 그려진다.
 import {KINDS} from './model.js';
+import {labelInDocument} from './handoff.js';
 import {ALIGNS,CHOICE_LAYOUTS,formatSize,formatGap,formatRatio,parseSize,parseGap,parseRatio,parseAlign,parseChoiceLayout} from './placement.js';
 
 const E=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -24,7 +25,7 @@ export function renderParts(host,q){
       <th class="row-num" scope="row">${i+1}</th>
       <td class="part-order"><div class="order-cell"><span>${q.blocks.filter(x=>x.parent===b.parent).indexOf(b)+1}</span><button type="button" data-part-move="up" aria-label="${E(b.label)} 위로">${ICON.up}</button><button type="button" data-part-move="down" aria-label="${E(b.label)} 아래로">${ICON.down}</button></div></td>
       <td class="part-kind">${KINDS[b.kind]}</td>
-      <td class="part-name" style="--depth:${depth}"><input data-part="label" aria-label="구성 이름" value="${E(b.label)}" maxlength="240"></td>
+      <td class="part-name" style="--depth:${depth}"${labelInDocument(b)?' data-hwp="text"':''}><input data-part="label" aria-label="구성 이름" value="${E(b.label)}" maxlength="240"></td>
       <td><select data-part="parent" aria-label="상위 묶음"><option value=""${parent?'':' selected'}>—</option>${groups.filter(g=>g.id!==b.id).map(g=>`<option value="${g.id}"${g.id===parent?.id?' selected':''}>${E(g.label)}</option>`).join('')}</select></td>
       <td>${b.kind==='group'?select('layout',['세로','나란히'],b.layout,'배치'):'<span class="part-na">—</span>'}</td>
       <td>${side?field('ratio',formatRatio(b.ratio),'폭 비율','1'):'<span class="part-na">—</span>'}</td>
