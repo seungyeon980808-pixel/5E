@@ -632,3 +632,60 @@
   :root[data-theme="dark"][data-palette="classic"]:not([data-mode="lite"]) #tool-list .tool-btn.is-active svg { color: var(--ds-selected-icon); }
   :root[data-theme="dark"][data-palette="classic"]:not([data-mode="lite"]) #canvas { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='412' height='233'%3E%3Cg fill='%23e6edf3' fill-opacity='0.05' font-family='Georgia, serif' font-size='17.25' font-style='italic' font-weight='600' text-anchor='middle'%3E%3Ctext transform='rotate(-24 116 66)'%3E%3Ctspan x='116' y='58'%3EsciEnce Educational%3C/tspan%3E%3Ctspan x='116' y='80'%3EExam Easy Editor%3C/tspan%3E%3C/text%3E%3Ctext transform='rotate(-24 300 168)'%3E%3Ctspan x='300' y='160'%3EsciEnce Educational%3C/tspan%3E%3Ctspan x='300' y='182'%3EExam Easy Editor%3C/tspan%3E%3C/text%3E%3C/g%3E%3C/svg%3E"); }
 }
+
+/* =====================================================================
+   창 안쪽 컨트롤 — 시안 controls.html "바꿀 모습"
+   대상: 라이브러리 · 그래프 창 · 설정(환경 설정·도구 기본값·인쇄) · AI 작업대 · 한글 작업실 사이드바
+     · 버튼은 테두리 없음. 마우스를 올리면 옅은 면.
+     · 선택·실행은 은은한 버튼 하나: --ds-soft-bg 면 + --ds-soft-line 1px 선.
+     · 입력칸은 패널보다 한 단계 밝은 면 + 옅은 선. 입력 중에만 강조 선.
+   테두리 두께는 그대로 두고 색만 바꾼다(위치·크기가 움직이지 않게).
+   ===================================================================== */
+@media (min-width: 768px) {
+  /* 일반 버튼 */
+  :root:not([data-mode="lite"]) :is(.unified-library-overlay, #graph-modal-overlay, .settings-preferences-overlay, #defaults-overlay, .settings-print-overlay, #ai-image-panel, #rhwp-exam-workspace .exam-sidebar)
+    :is(button, summary, .unilib-icon-button, .bug-report-open):not(.unilib-result-card, [data-ai-side-tab], .ai-task-tab, .ai-task-tab *):not([style*="background: #"], [style*="background:#"], [style*="background: rgb"], [style*="background-color"]):not([class*="swatch"], [class*="color-chip"], [class*="danger"]):not(.on, .active, .is-active, .is-selected, [aria-pressed="true"], [aria-selected="true"], [aria-checked="true"], [aria-current="true"]) {
+    border-color: transparent !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+  :root:not([data-mode="lite"]) :is(.unified-library-overlay, #graph-modal-overlay, .settings-preferences-overlay, #defaults-overlay, .settings-print-overlay, #ai-image-panel, #rhwp-exam-workspace .exam-sidebar)
+    :is(button, summary, .unilib-icon-button, .bug-report-open):not(.unilib-result-card, [data-ai-side-tab], .ai-task-tab, .ai-task-tab *):not([style*="background: #"], [style*="background:#"], [style*="background: rgb"], [style*="background-color"]):not([class*="swatch"], [class*="color-chip"], [class*="danger"]):not(.on, .active, .is-active, .is-selected, [aria-pressed="true"], [aria-selected="true"], [aria-checked="true"], [aria-current="true"]):not(:disabled):hover {
+    background: var(--ds-hover) !important;
+  }
+  /* 선택된 칸 · 실행(주) 버튼 — 은은한 버튼 */
+  :root:not([data-mode="lite"]) :is(.unified-library-overlay, #graph-modal-overlay, .settings-preferences-overlay, #defaults-overlay, .settings-print-overlay, #ai-image-panel, #rhwp-exam-workspace .exam-sidebar)
+    :is(button, summary, [role="tab"]):not(.unilib-result-card, [data-ai-side-tab], .ai-task-tab, .ai-task-tab *):is(.on, .active, .is-active, .is-selected, [aria-pressed="true"], [aria-selected="true"], [aria-checked="true"], [aria-current="true"]),
+  :root:not([data-mode="lite"]) :is(.unified-library-overlay, #graph-modal-overlay, .settings-preferences-overlay, #defaults-overlay, .settings-print-overlay, #ai-image-panel, #rhwp-exam-workspace .exam-sidebar)
+    :is(.modal-btn-primary, .unilib-primary) {
+    border-color: transparent !important;
+    background: var(--ds-soft-bg) !important;
+    color: var(--ds-ink) !important;
+    outline: 1px solid var(--ds-soft-line) !important;
+    outline-offset: -1px !important;
+    box-shadow: none !important;
+  }
+  :root:not([data-mode="lite"]) :is(.unified-library-overlay, #graph-modal-overlay, .settings-preferences-overlay, #defaults-overlay, .settings-print-overlay, #ai-image-panel, #rhwp-exam-workspace .exam-sidebar)
+    :is(.modal-btn-primary, .unilib-primary) { font-weight: var(--ds-weight-medium); }
+  :root:not([data-mode="lite"]) :is(.unified-library-overlay, #graph-modal-overlay, .settings-preferences-overlay, #defaults-overlay, .settings-print-overlay, #ai-image-panel, #rhwp-exam-workspace .exam-sidebar)
+    :is(.modal-btn-primary, .unilib-primary):disabled { outline-color: var(--ds-line-strong); background: transparent !important; color: var(--ds-ink-3) !important; }
+  /* 입력칸 */
+  :root:not([data-mode="lite"]) :is(.unified-library-overlay, #graph-modal-overlay, .settings-preferences-overlay, #defaults-overlay, .settings-print-overlay, #ai-image-panel, #rhwp-exam-workspace .exam-sidebar)
+    :is(input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="file"]), select, textarea, .gm-step) {
+    border-color: var(--ds-line);
+    background-color: var(--ds-field-raise);
+    color: var(--ds-ink);
+  }
+  :root:not([data-mode="lite"]) :is(.unified-library-overlay, #graph-modal-overlay, .settings-preferences-overlay, #defaults-overlay, .settings-print-overlay, #ai-image-panel, #rhwp-exam-workspace .exam-sidebar)
+    :is(input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="file"]), select, textarea):focus,
+  :root:not([data-mode="lite"]) :is(.unified-library-overlay, #graph-modal-overlay, .settings-preferences-overlay, #defaults-overlay, .settings-print-overlay, #ai-image-panel, #rhwp-exam-workspace .exam-sidebar)
+    .gm-step:focus-within { border-color: var(--ds-soft-line); outline: none; }
+  :root:not([data-mode="lite"]) :is(.unified-library-overlay, #graph-modal-overlay, .settings-preferences-overlay, #defaults-overlay, .settings-print-overlay, #ai-image-panel, #rhwp-exam-workspace .exam-sidebar)
+    :is(input[type="checkbox"], input[type="radio"], input[type="range"]) { accent-color: var(--ds-check); }
+  /* 라이브러리 결과 카드: 굵은 파란 테두리 대신 은은한 면 + 가는 선 */
+  :root:not([data-mode="lite"]) .unified-library-overlay .unilib-result-card { border-color: transparent; }
+  :root:not([data-mode="lite"]) .unified-library-overlay .unilib-result-card:hover { background: var(--ds-hover); }
+  :root:not([data-mode="lite"]) .unified-library-overlay .unilib-result-card[aria-selected="true"] {
+    border-color: transparent; background: var(--ds-soft-bg); outline: 1px solid var(--ds-soft-line); outline-offset: -2px; box-shadow: none;
+  }
+}

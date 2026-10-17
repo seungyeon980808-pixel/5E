@@ -178,8 +178,9 @@ for (const engine of [chromium,webkit]) test(`canonical button design and unread
   await assertOriginalAppearance(page,'#graph-modal-overlay button');
   await page.locator('#gm-variant-sel button[data-variant="cross"]').click();await page.mouse.move(400,400);
   assert.equal(await page.locator('#gm-variant-sel button.on').getAttribute('data-variant'),'cross');
-  const graphSelection=await page.locator('#gm-variant-sel button').evaluateAll(els=>els.map(el=>({selected:el.classList.contains('on'),background:getComputedStyle(el).backgroundColor,border:getComputedStyle(el).borderTopColor})));
-  assert.notEqual(graphSelection.find(x=>x.selected).border,graphSelection.find(x=>!x.selected).border,'Selected graph tools remain distinguishable under the shared skin');
+  // 선택 표시는 테두리 색 또는 은은한 버튼의 면·가는 선(outline)으로 구분된다.
+  const graphSelection=await page.locator('#gm-variant-sel button').evaluateAll(els=>els.map(el=>{const s=getComputedStyle(el);return {selected:el.classList.contains('on'),look:[s.backgroundColor,s.borderTopColor,s.outlineStyle,s.outlineColor].join('|')};}));
+  assert.notEqual(graphSelection.find(x=>x.selected).look,graphSelection.find(x=>!x.selected).look,'Selected graph tools remain distinguishable under the shared skin');
   await page.screenshot({path:path.join(evidence,'graph.png')});await page.keyboard.press('Escape');
   await assertWorkflowState(page,'graph-tool-open',false,selected);
   await page.locator('#exam-library-open').click();await page.locator('[data-unilib-close]').waitFor({state:'visible'});
