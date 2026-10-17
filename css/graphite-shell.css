@@ -78,13 +78,9 @@
   :root:not([data-mode="lite"]) .app-shell-header :is(.topbar-btn, .shell-icon-button, .icon-btn, .auto-snap-btn, .grid-toggle-btn, [id="center-view-btn"], .panel-visibility-toggle) svg {
     width: var(--ds-icon-bar); height: var(--ds-icon-bar);
   }
-  /* 켜진 기능(격자·자동 정렬·고정·캡처): 아이콘 밝게 + 아래 작은 점 */
+  /* 켜진 기능(격자·자동 정렬·고정·캡처): 면과 아이콘 색으로만 표시(아래 점 없음) */
   :root:not([data-mode="lite"]) .app-shell-header :is(.auto-snap-btn, .grid-toggle-btn, [id="center-view-btn"], [id="quick-capture-btn"])[aria-pressed="true"] {
     background: var(--ds-selected); color: var(--ds-selected-ink);
-  }
-  :root:not([data-mode="lite"]) .app-shell-header :is(.auto-snap-btn, .grid-toggle-btn, [id="center-view-btn"], [id="quick-capture-btn"])[aria-pressed="true"]::after {
-    content: ""; position: absolute; left: 50%; bottom: 2px; width: 4px; height: 4px; margin-left: -2px;
-    border-radius: 50%; background: var(--ds-selected-ink);
   }
   :root:not([data-mode="lite"]) .app-shell-header .file-menu > .topbar-btn[aria-expanded="true"] { background: var(--ds-selected); color: var(--ds-selected-ink); }
 
