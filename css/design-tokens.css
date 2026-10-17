@@ -7,7 +7,7 @@
 
    팔레트
      graphite         중립 짙은 회색. 강조색도 중립(밝은 회색).
-     classic (기본)   다크네이비. 1.6.x 남색보다 푸른 기를 분명히 한 단계. <html data-palette="classic">
+     classic (기본)   다크네이비. 1.6.3 정식 화면과 같은 색. <html data-palette="classic">
    테마
      data-theme="dark"  위 팔레트
      data-theme="light" 화이트 — 다크와 같은 3단 구조(바깥 틀 / 작업대 / 떠 있는 창)
@@ -128,55 +128,54 @@
 }
 
 /* =====================================================================
-   팔레트 — classic (다크네이비). 1.6.x 남색(GitHub-dark)보다 푸른 기를
-   분명히 한 남색 단계. 그라파이트와 같은 3단 구조(바깥 / 패널 / 떠 있는 창).
+   팔레트 — classic (다크네이비). 1.6.3 정식 화면의 색을 그대로 쓴다.
+   (style.css 1.6.3 값: 바깥 #0d1117 · 패널/막대/푸터 #161b22 ·
+    캔버스 작업대 #010409 · 칸 테두리 #30363d · 강조 #2f81f7)
    ===================================================================== */
 :root[data-theme="dark"][data-palette="classic"] {
-  --ds-app: #0b1424;          /* 가장 바깥 */
-  --ds-panel: #101b30;        /* 왼쪽·오른쪽 패널 */
-  --ds-bar: #13203a;          /* 위쪽 막대 · 아래 기능 줄 · 푸터 */
-  --ds-raise: #182742;        /* 떠 있는 메뉴·대화상자 */
-  --ds-field: #0a1222;        /* 입력칸 */
-  --ds-line: #1d2c47;         /* 구분선 */
-  --ds-line-strong: #283b5c;  /* 칸 테두리 */
-  --ds-ink: #e8eef8;
-  --ds-ink-2: #c6d2e4;
-  --ds-ink-3: #8a9bb8;
-  --ds-hover: rgba(130, 165, 230, .09);
-  --ds-selected: rgba(64, 140, 255, .20);
-  --ds-selected-ink: #eef4ff;
-  --ds-selected-strong: rgba(64, 140, 255, .34);
-  --ds-accent: #3b8cff;
+  --ds-app: #0d1117;
+  --ds-panel: #161b22;
+  --ds-bar: #161b22;
+  --ds-raise: #161b22;
+  --ds-field: #0d1117;
+  --ds-line: #21262d;
+  --ds-line-strong: #30363d;
+  --ds-ink: #e6edf3;
+  --ds-ink-2: #b1bac4;
+  --ds-ink-3: #7d8590;
+  --ds-hover: #21262d;
+  --ds-selected: rgba(47, 129, 247, .15);
+  --ds-selected-ink: #e6edf3;
+  --ds-selected-strong: rgba(47, 129, 247, .28);
+  --ds-accent: #2f81f7;
   --ds-accent-ink: #ffffff;
-  --ds-focus: rgba(96, 165, 255, .75);
-  --ds-kbd: #1d2c47;
-  --ds-bench: #0d1a30;        /* 캔버스 작업대 */
-  --ds-watermark: rgba(160, 190, 255, .05);
-  --ds-shadow-float: 0 0 0 1px #283b5c, 0 12px 32px rgba(0, 6, 20, .6);
-  --ds-shadow-board: 0 0 0 1px #24365a, 0 2px 8px rgba(0, 6, 20, .5);
+  --ds-focus: rgba(88, 166, 255, .7);
+  --ds-kbd: #21262d;
+  --ds-bench: #010409;
+  --ds-watermark: rgba(255, 255, 255, .045);
+  --ds-shadow-float: 0 0 0 1px #30363d, 0 12px 32px rgba(0, 0, 0, .55);
+  --ds-shadow-board: 0 0 0 1px #30363d, 0 2px 8px rgba(0, 0, 0, .5);
   --ds-success: #3fb950;
   --ds-warning: #d29922;
   --ds-danger: #f85149;
 
-  --bg-app: var(--ds-app);
-  --bg-panel: var(--ds-panel);
-  --bg-panel-hover: #172540;
-  --bg-canvas: var(--ds-bench);
-  --bg-input: var(--ds-field);
-  --border-strong: var(--ds-line-strong);
-  --text-primary: var(--ds-ink);
-  --text-secondary: var(--ds-ink-3);
-  --text-label: var(--ds-ink-2);
-  --text-muted: var(--ds-ink-3);
-  --accent: var(--ds-accent);
-  --accent-hover: #5b9eff;
-  --accent-2: #6aa8ff;
-  --accent-2-hover: #85b8ff;
-  --btn-tool-active: var(--ds-accent);
-  --btn-tool-hover: var(--ds-hover);
-  --scrollbar-thumb: #2e4266;
-  --control-selected-bg: var(--ds-selected);
-  --control-selected-text: var(--ds-selected-ink);
+  --bg-app: #0d1117;
+  --bg-panel: #161b22;
+  --bg-panel-hover: #21262d;
+  --bg-canvas: #010409;
+  --bg-input: #0d1117;
+  --border-strong: #30363d;
+  --text-primary: #e6edf3;
+  --text-secondary: #7d8590;
+  --text-label: #b1bac4;
+  --accent: #2f81f7;
+  --accent-hover: #4493f8;
+  --accent-2: #5ea1f7;
+  --accent-2-hover: #79b3f9;
+  --btn-tool-active: #2f81f7;
+  --btn-tool-bg: transparent;
+  --btn-tool-hover: #21262d;
+  --scrollbar-thumb: #484f58;
   --control-selected-border: transparent;
   color-scheme: dark;
 }
