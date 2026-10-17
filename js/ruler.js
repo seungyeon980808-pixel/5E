@@ -367,6 +367,9 @@ export function initRuler(svg, state) {
   const rulerContainer = document.getElementById("ruler-container")
                       || _hCanvas.parentElement || _hCanvas;
   _ro.observe(rulerContainer);
+  // 화면 색(테마·팔레트)을 바꾸면 눈금 색도 바로 다시 그린다.
+  new MutationObserver(() => { _scheduleDraw(); })
+    .observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme", "data-palette"] });
 
   _draw();
 }
@@ -404,9 +407,13 @@ function _draw() {
   const fineStep = pxPerMm > 3 ? 1 : pxPerMm >= 1.5 ? 5 : 10;
   // 화이트 테마에서는 다크용 흰 눈금·검은 띠가 반대로 보인다 — 테마에 맞춰 뒤집는다.
   const isLight = document.documentElement.getAttribute("data-theme") === "light";
-  const TICK_COLOR = isLight ? "rgba(0,0,0,0.55)" : "rgba(255,255,255,0.7)";
-  const RULER_TINT = isLight ? "rgba(0,0,0,0.03)" : "rgba(255,255,255,0.15)";
-  const ARTBOARD_BAND = isLight ? "rgba(255,255,255,0.85)" : "rgba(0,0,0,0.35)";
+  // 다크네이비(classic)는 시안대로 패널과 같은 바탕에 어두운 눈금·숫자만 둔다(띠 없음).
+  const isNavy = !isLight && document.documentElement.getAttribute("data-palette") === "classic";
+  const TICK_COLOR = isNavy ? "#30363d" : isLight ? "rgba(0,0,0,0.55)" : "rgba(255,255,255,0.7)";
+  const RULER_TEXT = isNavy ? "#6e7681" : TICK_COLOR;
+  const RULER_BG = isNavy ? (_cssVar("--ds-panel") || bgColor) : bgColor;
+  const RULER_TINT = isNavy ? "transparent" : isLight ? "rgba(0,0,0,0.03)" : "rgba(255,255,255,0.15)";
+  const ARTBOARD_BAND = isNavy ? "transparent" : isLight ? "rgba(255,255,255,0.85)" : "rgba(0,0,0,0.35)";
 
   // Helpers: world mm → ruler-canvas local pixel
   // ruler-h left edge = svgRect.left, ruler-v top edge = svgRect.top
@@ -428,7 +435,7 @@ function _draw() {
     const hx = _hCanvas.getContext("2d");
     hx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    hx.fillStyle = bgColor;
+    hx.fillStyle = RULER_BG;
     hx.fillRect(0, 0, hw, hh);
 
     // Artboard range highlight on H ruler
@@ -461,7 +468,7 @@ function _draw() {
       else                    { tickLen = 3;  lineW = 0.5; }
 
       hx.strokeStyle = TICK_COLOR;
-      hx.fillStyle   = TICK_COLOR;
+      hx.fillStyle   = RULER_TEXT;
       hx.lineWidth   = lineW;
       hx.beginPath();
       hx.moveTo(px, hh);
@@ -538,7 +545,7 @@ function _draw() {
     const vx = _vCanvas.getContext("2d");
     vx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-    vx.fillStyle = bgColor;
+    vx.fillStyle = RULER_BG;
     vx.fillRect(0, 0, vw, vh);
 
     // Artboard range highlight on V ruler
@@ -570,7 +577,7 @@ function _draw() {
       else                    { tickLen = 3;  lineW = 0.5; }
 
       vx.strokeStyle = TICK_COLOR;
-      vx.fillStyle   = TICK_COLOR;
+      vx.fillStyle   = RULER_TEXT;
       vx.lineWidth   = lineW;
       vx.beginPath();
       vx.moveTo(vw, py);

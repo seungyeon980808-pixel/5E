@@ -133,7 +133,8 @@ for (const engine of [chromium,webkit]) test(`canonical button design and unread
   for(const side of ['left','right']) {
     const selector='#drawer-'+side+'-toggle';
     assert.deepEqual(await readStateStyle(page,selector),neutral);
-    assert.equal(await page.locator(selector+' svg').evaluate(el=>getComputedStyle(el).color),neutral.color,'Open panel uses the neutral default');
+    assert.equal(await page.locator(selector+' svg').evaluate(el=>getComputedStyle(el).color),
+      await page.locator('#settings-menu-btn svg').first().evaluate(el=>getComputedStyle(el).color),'Open panel uses the neutral default');
     await page.locator(selector).click();
     await page.waitForFunction(side=>document.querySelector('#drawer-'+side+'-toggle')?.getAttribute('aria-expanded')==='false',side);
     await page.mouse.move(1000,400);

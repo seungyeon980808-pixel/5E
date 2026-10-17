@@ -140,11 +140,12 @@
   --ds-line: #21262d;
   --ds-line-strong: #30363d;
   --ds-ink: #e6edf3;
-  --ds-ink-2: #c9d1d9;
-  --ds-ink-3: #8b949e;
+  --ds-ink-2: #b1bac4;          /* 시안: 대부분의 글자·도구 아이콘 */
+  --ds-ink-3: #7d8590;          /* 시안: 막대 아이콘·보조 글자 */
   --ds-hover: rgba(177, 186, 196, .08);
   --ds-selected: rgba(47, 129, 247, .15);
   --ds-selected-ink: #e6edf3;
+  --ds-selected-icon: #58a6ff;  /* 시안: 선택·켜짐 아이콘은 파란색 */
   --ds-selected-strong: rgba(47, 129, 247, .28);
   --ds-accent: #2f81f7;
   --ds-accent-ink: #ffffff;

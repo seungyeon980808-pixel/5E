@@ -614,3 +614,21 @@
 }
 /* 패널 버튼(편집기·AI 작업실 공통): 접히면 패널 쪽 채운 칸이 사라진다 */
 .panel-visibility-toggle[aria-expanded="false"] .ds-fillcol { opacity: 0; }
+
+/* =====================================================================
+   다크네이비(classic) 색감 — 시안(main.html "현재 색")과 같은 색 쓰임.
+   배치·크기·굵기는 그대로 두고 색만 맞춘다.
+     강조 글자 ink · 대부분의 글자/도구 아이콘 ink-2 · 막대 아이콘/보조 글자 ink-3
+     선택·켜짐 아이콘 selected-icon(파란색) · 워터마크 옅게
+   ===================================================================== */
+@media (min-width: 768px) {
+  :root[data-theme="dark"][data-palette="classic"]:not([data-mode="lite"]) :is(.panel-left .tool-section-header, .panel-right .insp-summary, .insp-layer-name, .insp-ab-preset) { color: var(--ds-ink-2); }
+  :root[data-theme="dark"][data-palette="classic"]:not([data-mode="lite"]) .insp-layer-row.is-active .insp-layer-name { color: var(--ds-ink); }
+  :root[data-theme="dark"][data-palette="classic"]:not([data-mode="lite"]) .app-shell-header button svg,
+  :root[data-theme="dark"][data-palette="classic"]:not([data-mode="lite"]) .image-workflow-hub .ui-core-action svg { color: var(--ds-ink-3); }
+  :root[data-theme="dark"][data-palette="classic"]:not([data-mode="lite"]) .app-shell-header button:hover svg,
+  :root[data-theme="dark"][data-palette="classic"]:not([data-mode="lite"]) .image-workflow-hub .ui-core-action:hover svg { color: var(--ds-ink-2); }
+  :root[data-theme="dark"][data-palette="classic"]:not([data-mode="lite"]) .app-shell-header button:is([aria-pressed="true"], [aria-expanded="true"], .active, .is-active):not(.panel-visibility-toggle) svg,
+  :root[data-theme="dark"][data-palette="classic"]:not([data-mode="lite"]) #tool-list .tool-btn.is-active svg { color: var(--ds-selected-icon); }
+  :root[data-theme="dark"][data-palette="classic"]:not([data-mode="lite"]) #canvas { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='412' height='233'%3E%3Cg fill='%23e6edf3' fill-opacity='0.05' font-family='Georgia, serif' font-size='17.25' font-style='italic' font-weight='600' text-anchor='middle'%3E%3Ctext transform='rotate(-24 116 66)'%3E%3Ctspan x='116' y='58'%3EsciEnce Educational%3C/tspan%3E%3Ctspan x='116' y='80'%3EExam Easy Editor%3C/tspan%3E%3C/text%3E%3Ctext transform='rotate(-24 300 168)'%3E%3Ctspan x='300' y='160'%3EsciEnce Educational%3C/tspan%3E%3Ctspan x='300' y='182'%3EExam Easy Editor%3C/tspan%3E%3C/text%3E%3C/g%3E%3C/svg%3E"); }
+}
