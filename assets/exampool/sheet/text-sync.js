@@ -29,7 +29,7 @@ export function buildTextMap(docText,segments){
     if(at>=from)from=at+s.length;
   }
   spans.sort((a,b)=>a.start-b.start);
-  return {doc,spans,segments};
+  return {doc,raw:String(docText??''),spans,segments};
 }
 
 // 두 글의 바뀐 한 구간. 앞뒤 공통 부분을 뺀다.
@@ -49,9 +49,23 @@ function replaceNormalized(value,a,b,insert){
 export function mapTextEdit(map,docText){
   const next=norm(docText);
   if(next===map.doc)return {unchanged:true};
-  const d=diffRegion(map.doc,next),inserted=next.slice(d.start,d.endNew);
-  // 바뀐 구간을 감싸는 조각. 조각 끝에 이어 쓰기(삽입)도 그 조각으로 본다.
-  const hit=map.spans.filter(sp=>d.start>=sp.start&&d.endOld<=sp.end);
+  const d0=diffRegion(map.doc,next),ins0=next.slice(d0.start,d0.endNew);
+  // 공백을 하나로 맞춘 글에서는 '앞 칸 끝에 이어 쓰기'와 '다음 칸 앞에 쓰기'가 같아 보인다.
+  // 원래 문서 글에서 고친 자리 바로 뒤가 문단 나눔이면 앞 칸 쪽, 바로 앞이 문단 나눔이면 다음 칸 쪽을 먼저 본다.
+  const rd=diffRegion(map.raw||'',String(docText??'')),old=map.raw||'';
+  const rightBreak=/[\r\n]/.test(old[rd.endOld]||''),leftBreak=/[\r\n]/.test(old[rd.start-1]||'');
+  // 같은 글자가 이어지면 바뀐 자리를 한 칸씩 옮겨도 같은 결과다(예: '다. ' 뒤 'ABC ' 삽입 = '다.' 뒤 ' ABC').
+  const slides=dir=>{const out=[];let r={...d0},ins=ins0;
+    for(let k=0;k<4;k++){const cut=ins||map.doc.slice(r.start,r.endOld);if(!cut)break;
+      if(dir<0){const c=map.doc[r.start-1];if(c===undefined||c!==cut.at(-1))break;r={start:r.start-1,endOld:r.endOld-1,endNew:r.endNew-1};if(ins)ins=c+ins.slice(0,-1);}
+      else{const c=map.doc[r.endOld];if(c===undefined||c!==cut[0])break;r={start:r.start+1,endOld:r.endOld+1,endNew:r.endNew+1};if(ins)ins=ins.slice(1)+c;}
+      out.push({r,ins});}
+    return out;};
+  const order=rightBreak&&!leftBreak?[...slides(-1),{r:d0,ins:ins0},...slides(1)]:[{r:d0,ins:ins0},...slides(1),...slides(-1)];
+  const within=r=>map.spans.filter(sp=>r.start>=sp.start&&r.endOld<=sp.end);
+  const fits=({r})=>{const h=within(r);if(h.length!==1)return false;const seg=map.segments[h[0].index];if(!seg.owner)return false;const pn=normMap(seg.value).idx.filter(i=>i<(seg.owner.prefix||0)).length;return r.start-h[0].start>=pn;};
+  const pick=order.find(fits)||order.find(c=>within(c.r).length===1)||{r:d0,ins:ins0};
+  const d=pick.r,inserted=pick.ins,hit=within(d);
   if(hit.length!==1){
     const touched=map.spans.filter(sp=>d.start<sp.end&&d.endOld>sp.start);
     return {ok:false,reason:touched.length>1?'두 칸 이상에 걸친 수정(문단 합치기·나누기 등)은 시트에 반영하지 않았습니다. 되돌리거나 시트에서 고치세요.':'시트 칸과 짝을 찾지 못한 글(빈 칸에 처음 쓴 값, 수식이 든 글, 번호·기호·제목 등)을 고쳤습니다. 되돌리고 시트에서 입력하세요.'};
@@ -64,7 +78,9 @@ export function mapTextEdit(map,docText){
   const full=replaceNormalized(seg.value,a,b,inserted);
   // 빈 칸 자리표(U+2060 등 폭 0 글자)는 데이터에 남기지 않는다.
   const field=full.slice(prefix).replace(/[\u200b\u2060]/g,'').replace(/^\s+/,'');
-  return {ok:true,changes:[{index:sp.index,owner:seg.owner,full,value:field}]};
+  // 원래 칸 끝에 없던 공백(앞머리 'ㄱ. '의 띄어쓰기 등)은 붙이지 않는다.
+  const was=seg.value.slice(prefix),value=/\s$/.test(was)?field:field.replace(/\s+$/,'');
+  return {ok:true,changes:[{index:sp.index,owner:seg.owner,full,value}]};
 }
 
 // 시트 데이터에 반영한다. 바뀐 칸이 없으면 false.

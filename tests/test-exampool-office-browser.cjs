@@ -115,6 +115,12 @@ h.withServer(async origin => {
       const askValue=await sheet.locator('#rows tr:has(th.field-label:text-is("발문")) textarea').first().inputValue();
       assert.equal(askValue.replace(' OK',''),'실험 결과로 옳은 것만을 <보기>에서 있는 대로 고른 것은?','the prompt cell received exactly the typed text');
 
+      // 시트 칸이 아닌 곳(문항 번호 앞)을 고치면 반영하지 않고, '한글 창 수정 버리기'로 빠져나온다.
+      await page.mouse.click(frameBox.x+fb.x+fb.width*.55,frameBox.y+fb.y+92);await page.keyboard.press('Home');await page.keyboard.type('Z');
+      await sheet.waitForFunction(()=>!document.querySelector('#typeset-discard').hidden,null,{timeout:15000});
+      await redraw(sheet,async()=>{await sheet.click('#typeset-discard');await sheet.click('#typeset-discard');});
+      assert.equal(await sheet.locator('#typeset-discard').isHidden(),true);
+      assert.match(await sheet.locator('#rows tr:has(th.field-label:text-is("발문")) textarea').first().inputValue(),/ OK/,'the synced text survives discarding');
       // 조판 저장 → 시험지 HWPX.
       // 첫 저장은 최종 저장 모양으로 갱신하고 확인을 요청할 수 있다(기존 설계). 그때는 한 번 더 저장한다.
       for(let attempt=0;attempt<2;attempt++){
@@ -128,7 +134,7 @@ h.withServer(async origin => {
       const downloading=page.waitForEvent('download');await sheet.click('#exam-build');const download=await downloading;
       const file=path.join(evidence,`${engineName}-exam.hwpx`);await download.saveAs(file);
       const zip=await JSZip.loadAsync(fs.readFileSync(file)),xml=await zip.file('Contents/section0.xml').async('string');
-      assert.match(xml,/colCount="2"/);assert.match(xml,/width="59528" height="84189"/);assert.ok(xml.includes(' OK'));
+      assert.match(xml,/colCount="2"/);assert.match(xml,/width="59528" height="84189"/);assert.ok(xml.includes('OK'),'the text typed in the HWP window is in the exam');
       assert.ok(Object.keys(zip.files).some(n=>n.startsWith('BinData/')),'the figure is in the exam');
 
       // 세 가지 화면 색 캡처(증거).

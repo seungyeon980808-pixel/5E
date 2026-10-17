@@ -46,3 +46,14 @@ test('an edit across two cells (paragraph merge) is refused instead of guessed',
   assert.equal(mapTextEdit(map,doc).unchanged,true);
 });
 
+
+test('appending at the end of a field or typing into an empty bogi line maps to that field',async()=>{
+  const q=newQuestion('9','합답형','글·수식');q.blocks.find(b=>b.kind==='text').text='인생이란 참 쉬운 일이 아니다.';q.ask='어쩌구 저쩌구 하는 것이다.';
+  const bogi=q.blocks.find(b=>b.kind==='bogi');
+  const plan=await buildQuestionHtml(q),doc=plan.textSegments.map(s=>s.value).join('\r\n'),map=buildTextMap(doc,plan.textSegments);
+  let r=mapTextEdit(map,doc.replace('아니다.','아니다. 알아서 잘 할 수 있도록 해라'));assert.equal(r.ok,true,r.reason);
+  assert.equal(r.changes[0].owner.kind,'block');assert.equal(r.changes[0].value,'인생이란 참 쉬운 일이 아니다. 알아서 잘 할 수 있도록 해라');
+  r=mapTextEdit(map,doc.replace('ㄱ. ','ㄱ. 우하하'));assert.equal(r.ok,true,r.reason);
+  assert.deepEqual(r.changes[0].owner,{kind:'line',block:bogi.id,id:bogi.lines[0].id,prefix:3});assert.equal(r.changes[0].value,'우하하');
+  r=mapTextEdit(map,doc.replace('ㄷ. ','ㄷ. 끝'));assert.equal(r.ok,true,r.reason);assert.equal(r.changes[0].owner.id,bogi.lines[2].id);assert.equal(r.changes[0].value,'끝');
+});

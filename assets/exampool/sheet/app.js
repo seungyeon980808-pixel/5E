@@ -177,7 +177,7 @@ $('#delete-question').onclick=()=>{$('#delete-message').textContent=`${current.n
 $('#filter').oninput=()=>{renderRows();grid?.refresh();};
 document.addEventListener('keydown',e=>{if((e.metaKey||e.ctrlKey)&&e.key.toLowerCase()==='s'){e.preventDefault();if(grid?.finish()!==false)$('#export').click();return;}if((e.metaKey||e.ctrlKey)&&['z','y'].includes(e.key.toLowerCase())&&!e.target.matches('input,textarea,select')){e.preventDefault();replay(e.shiftKey||e.key.toLowerCase()==='y'?'redo':'undo');return;}if(e.key==='Escape'&&!document.querySelector('dialog[open]'))closeSources();});
 function download(bytes,name,mime='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'){const url=URL.createObjectURL(new Blob([bytes],{type:mime})),a=document.createElement('a');a.href=url;a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(url),30000);}
-$('#export').onclick=async()=>{try{status('엑셀 만드는 중…');const bytes=await exportExcel(window.XLSX,window.JSZip,data);download(bytes,'ExamPool-문항.xlsx');status('엑셀 내려받기 완료 · 구성·표·그림·자료와 5E 원본을 함께 보관합니다.');}catch(e){status(e.message,true);}};
+$('#export').onclick=async()=>{try{status('엑셀 만드는 중…');const bytes=await exportExcel(window.XLSX,window.JSZip,data);download(bytes,'5E_ExamPool-문항.xlsx');status('엑셀 내려받기 완료 · 구성·표·그림·자료와 5E 원본을 함께 보관합니다.');}catch(e){status(e.message,true);}};
 $('#import').onclick=()=>$('#excel-file').click();$('#excel-file').onchange=async()=>{const file=$('#excel-file').files[0];if(!file)return;try{
   status('파일 확인 중…');if(/\.xlsx$/i.test(file.name))pending=await importExcel(window.XLSX,window.JSZip,await file.arrayBuffer());else{if(file.size>32*1024*1024)throw Error('32 MB 이하의 문항 파일을 선택하세요.');const v=JSON.parse(await file.text());if(v.format===FORMAT)pending={...validate(v),backedIds:v.questions.map(q=>q.id),warnings:[]};else{const {decodePoolBundle}=await import('/js/exampool-model.js?v=1013-exampool');const pack=decodePoolBundle(JSON.stringify(v));pending=validate({format:FORMAT,questions:pack.items.map(fromLegacy),documents:pack.resources.map(d=>({id:d.id,name:d.title,kind:d.kind==='교과서'?'textbooks':'references',mime:d.mime,data:`data:${d.mime};base64,${d.base64}`,pages:d.pages}))});pending.backedIds=pack.items.map(q=>q.id);pending.warnings=[];}}
   const matches=pending.questions.filter(q=>data.questions.some(x=>x.id===q.id)).length;$('#import-count').textContent=`${pending.questions.length}문항 · ${pending.documents.length}자료 · 기존 문항과 일치 ${matches}개${pending.warnings?.length?' · '+pending.warnings.join(' '):''}`;$('#import-preview').innerHTML='<table><thead><tr><th>번호</th><th>답안형</th><th>구성</th><th>발문</th></tr></thead><tbody>'+pending.questions.slice(0,20).map(q=>`<tr><td>${E(q.number)}</td><td>${E(q.type)}</td><td>${q.blocks.length}개</td><td>${E(q.ask)}</td></tr>`).join('')+'</tbody></table>';$('#import-dialog').showModal();status('불러올 내용을 확인하세요. 적용 전에는 기존 입력이 바뀌지 않습니다.');
@@ -218,7 +218,7 @@ function makeTypesetter(){return createTypesetter({host:$('#native-editor'),stat
           const {questionFingerprint}=await import('./typeset-model.js?v=1014-compact-panel');
           if(snapshot.fingerprint!==await questionFingerprint(target))throw Error('시트 내용과 저장 전 조판 수정이 함께 바뀌었습니다. 시트 수정을 되돌린 뒤 조판을 저장하세요. 기존 조판 수정은 유지됩니다.');
           if(!mutate(()=>target.typeset=snapshot))throw Error('조판을 저장하지 못했습니다.');await saveQueue;
-        },onTextEdit:(changes,questionId)=>{
+        },onDiverge:diverged=>{$('#typeset-discard').hidden=!diverged;},onTextEdit:(changes,questionId)=>{
           // 한글 창에서 고친 글: 같은 문항의 해당 칸만 바꾼다. 한글 창은 이미 그 글을 보여 주므로 다시 그리지 않는다.
           const target=data.questions.find(q=>q.id===questionId);if(!target)return false;
           return mutate(()=>{for(const c of changes)applyTextEdit(target,c.owner,c.value);});
@@ -251,6 +251,7 @@ async function requestTypeset(value){
         $('#typeset-refresh').hidden=true;
       }catch(e){
         typesetRequest=undefined;$('#typeset-status').textContent=e.message;$('#typeset-status').dataset.error='true';
+        if(/내용이 시트와 달라|조판 설정을 적용/.test(e.message))$('#typeset-discard').hidden=!/내용이 시트와 달라/.test(e.message);
         const previous=data.questions.find(q=>q.id===typesetter?.questionId);if(previous){current=previous;renderRows();grid?.refresh({questionId:current.id});$('#typeset-title').textContent=`${previous.number}번 문항 조판`;}
       }finally{panel.setAttribute('aria-busy','false');}
     }
@@ -261,6 +262,14 @@ async function openTypeset(){if(!current||grid?.finish()===false)return;await re
 $('#preview').onclick=()=>void openTypeset();
 $('#typeset-close').onclick=()=>void requestTypeset(null);
 $('#typeset-refresh').onclick=()=>void openTypeset();
+// 막힌 상태 빠져나가기: 두 번 눌러 확인한 뒤 한글 창 수정을 버리고 시트 내용으로 다시 그린다.
+let discardArmed=0;
+$('#typeset-discard').onclick=()=>{
+  const b=$('#typeset-discard');
+  if(!discardArmed){discardArmed=setTimeout(()=>{discardArmed=0;b.textContent='한글 창 수정 버리기';},4000);b.textContent='한 번 더 누르면 버립니다';return;}
+  clearTimeout(discardArmed);discardArmed=0;b.textContent='한글 창 수정 버리기';b.hidden=true;
+  typesetter?.discard();status('한글 창 수정을 버리고 시트 내용으로 다시 그립니다.');void requestTypeset(current);
+};
 grid=createSheetGrid({formula:$('#formula-value'),nameBox:$('#cell-address'),onStatus:status,onHistory:replay,
   onOpen:(d,tab)=>{choose(data.questions.find(q=>q.id===d.table.tBodies[0].rows[d.r].querySelectorAll('td')[d.c].dataset.id));openDetail(tab);},
   onSelect:d=>{if(!d?.table)return;if(d.id==='registry'){selection=null;const cell=d.table.tBodies[0]?.rows[d.r]?.querySelectorAll('td')[d.c];if(cell&&d.user)choose(data.questions.find(q=>q.id===cell.dataset.id));}else selection={id:d.id,anchor:[d.r,d.c],range:[...d.range]};},

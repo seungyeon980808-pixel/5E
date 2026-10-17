@@ -17,7 +17,7 @@ import {compactSavedBogi} from './compact-bogi.js';
 
 const parse=value=>typeof value==='string'?JSON.parse(value):value;
 const normalized=text=>String(text).replace(/\s+/g,' ').trim();
-export function createTypesetter({host,status,paper,columns,save,download,onSave,onPlacement,onTextEdit}){
+export function createTypesetter({host,status,paper,columns,save,download,onSave,onPlacement,onTextEdit,onDiverge}){
   let textMap=null,syncTimer=0,placer=null,owners=null,bridge=null,starting=null,q=null,fingerprint='',baselineText='',baselineEquations='',baselineImages='',opening=0,loading=false,ready=false,pictureSettings,fitting=false,fitFrame=0,lastProfile,metricsCache,view,dirty=false,changingProfile=Promise.resolve();
   const message=(text,error=false)=>{status.textContent=text;status.dataset.error=String(error);};
   const document=()=>bridge.wasm.borrowDocumentHandle();
@@ -108,7 +108,8 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
     if(!ready||loading||!textMap||!onTextEdit||!q)return;
     const raw=parse(document().getTextFileText()),result=mapTextEdit(textMap,raw);
     if(result.unchanged)return;
-    if(!result.ok){message(result.reason,true);return;}
+    if(!result.ok){message(result.reason,true);onDiverge?.(true);return;}
+    onDiverge?.(false);
     const id=q.id,changes=result.changes.map(c=>({owner:c.owner,value:c.value}));
     for(const c of result.changes){applyTextEdit(q,c.owner,c.value);textMap.segments[c.index].value=c.full;}
     textMap=buildTextMap(raw,textMap.segments);baselineText=normalized(raw);fingerprint=await questionFingerprint(q);
@@ -162,5 +163,7 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
     await ensure();const Document=document().constructor,{document:exam}=await buildExamDocument(Document,data);
     try{return exportLayoutHwpx(exam,XLSX.CFB);}finally{exam.free();}
   }
-  return {open,commit,buildExam,get questionId(){return q?.id;},matches:value=>ready&&!!q&&contentKey(q)===contentKey(value),get dirty(){return dirty;},refreshView:()=>view?.fit()};
+  // 한글 창에서 바꾼 것을 버린다(시트에 반영되지 않은 수정 포함). 다음 open이 시트 내용으로 다시 그린다.
+  function discard(){clearTimeout(syncTimer);dirty=false;ready=false;onDiverge?.(false);}
+  return {open,commit,buildExam,discard,get questionId(){return q?.id;},matches:value=>ready&&!!q&&contentKey(q)===contentKey(value),get dirty(){return dirty;},refreshView:()=>view?.fit()};
 }
