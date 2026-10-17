@@ -6,8 +6,8 @@
    토큰에 연결해 둔 기존 변수(--bg-panel, --text-primary, --accent …)를 쓴다.
 
    팔레트
-     graphite         중립 짙은 회색. 강조색도 중립(밝은 회색).
-     classic (기본)   다크네이비. 1.6.3 정식 화면과 같은 색. <html data-palette="classic">
+     graphite (기본)  중립 짙은 회색. 강조색도 중립(밝은 회색).
+     classic          1.6.x까지의 남색(GitHub-dark) 계열. <html data-palette="classic">
    테마
      data-theme="dark"  위 팔레트
      data-theme="light" 화이트 — 다크와 같은 3단 구조(바깥 틀 / 작업대 / 떠 있는 창)
@@ -73,7 +73,7 @@
 }
 
 /* =====================================================================
-   팔레트 — graphite (다크)
+   팔레트 — graphite (기본, 다크)
    ===================================================================== */
 :root[data-theme="dark"]:not([data-palette="classic"]) {
   --ds-app: #1e1e1e;          /* 가장 바깥 */
@@ -128,22 +128,21 @@
 }
 
 /* =====================================================================
-   팔레트 — classic (다크네이비). 1.6.3 정식 화면의 색을 그대로 쓴다.
-   (style.css 1.6.3 값: 바깥 #0d1117 · 패널/막대/푸터 #161b22 ·
-    캔버스 작업대 #010409 · 칸 테두리 #30363d · 강조 #2f81f7)
+   팔레트 — classic (1.6.x 남색 계열). 기존 값은 style.css 그대로 쓰고
+   새 규격 토큰만 그 값에 맞춘다.
    ===================================================================== */
 :root[data-theme="dark"][data-palette="classic"] {
   --ds-app: #0d1117;
-  --ds-panel: #161b22;
-  --ds-bar: #161b22;
+  --ds-panel: #0d1117;
+  --ds-bar: #0d1117;
   --ds-raise: #161b22;
-  --ds-field: #0d1117;
+  --ds-field: #010409;
   --ds-line: #21262d;
   --ds-line-strong: #30363d;
   --ds-ink: #e6edf3;
-  --ds-ink-2: #b1bac4;
-  --ds-ink-3: #7d8590;
-  --ds-hover: #21262d;
+  --ds-ink-2: #c9d1d9;
+  --ds-ink-3: #8b949e;
+  --ds-hover: rgba(177, 186, 196, .08);
   --ds-selected: rgba(47, 129, 247, .15);
   --ds-selected-ink: #e6edf3;
   --ds-selected-strong: rgba(47, 129, 247, .28);
@@ -151,33 +150,15 @@
   --ds-accent-ink: #ffffff;
   --ds-focus: rgba(88, 166, 255, .7);
   --ds-kbd: #21262d;
-  --ds-bench: #010409;
+  --ds-bench: #0a0e14;
   --ds-watermark: rgba(255, 255, 255, .045);
   --ds-shadow-float: 0 0 0 1px #30363d, 0 12px 32px rgba(0, 0, 0, .55);
   --ds-shadow-board: 0 0 0 1px #30363d, 0 2px 8px rgba(0, 0, 0, .5);
   --ds-success: #3fb950;
   --ds-warning: #d29922;
   --ds-danger: #f85149;
-
-  --bg-app: #0d1117;
-  --bg-panel: #161b22;
-  --bg-panel-hover: #21262d;
-  --bg-canvas: #010409;
-  --bg-input: #0d1117;
-  --border-strong: #30363d;
-  --text-primary: #e6edf3;
-  --text-secondary: #7d8590;
-  --text-label: #b1bac4;
-  --accent: #2f81f7;
-  --accent-hover: #4493f8;
-  --accent-2: #5ea1f7;
-  --accent-2-hover: #79b3f9;
-  --btn-tool-active: #2f81f7;
-  --btn-tool-bg: transparent;
-  --btn-tool-hover: #21262d;
-  --scrollbar-thumb: #484f58;
+  --bg-canvas: var(--ds-bench);
   --control-selected-border: transparent;
-  color-scheme: dark;
 }
 
 /* =====================================================================
