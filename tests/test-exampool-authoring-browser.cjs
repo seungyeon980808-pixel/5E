@@ -26,7 +26,7 @@ h.withServer(async origin=>{
       await sheet.waitForSelector('#side-new');await sheet.waitForFunction(()=>document.querySelector('#status').textContent!=='준비 중',null,{timeout:30000});
       await sheet.click('#side-new');await sheet.click('#new-dialog .nq-opt[data-step="form"][data-k="combo"]');await sheet.click('#new-dialog .nq-opt[data-step="struct"][data-k="big"]');await sheet.click('#new-dialog [data-nq="go"]');
       await sheet.waitForSelector('#card-view:not([hidden]) .cv-writer');
-      const openAi=async()=>{await sheet.click('#card-view [data-cvtab="ai"]');await sheet.waitForSelector('#cv-ai-input');};
+      const openAi=async()=>{await sheet.click('#card-view [data-cvright="ai"]');await sheet.waitForSelector('#cv-ai-input');};
       const send=async text=>{const n=await page.evaluate(()=>window.__calls.length);await sheet.fill('#cv-ai-input',text);await sheet.click('#card-view [data-cv="ai-send"]');await sheet.waitForSelector('#card-view .msg.ai.pending');await page.waitForFunction(n=>window.__calls.length>n,n,{timeout:10000});};
       await openAi();
       // 1) AI 오류: 오류 말풍선, 변경안·검토 상태 변화 없음.

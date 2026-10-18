@@ -3,6 +3,7 @@ import {WORKFLOWS} from './model.js';
 import {buildQuestionHtml} from './handoff.js';
 import {examPlan} from './exam-layout.js';
 import {loadImage} from './image-load.js';
+import {pageProfile} from './typeset-model.js';
 
 const E=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export const workflowOf=q=>q.workflow||'draft';
@@ -28,8 +29,16 @@ async function previewFigure(f){
 }
 const previews=new Map();
 export async function previewHtml(q){return preview(q);}
+// 실제 시험지 단 폭(A4 2단, 여백 15mm, 단 간격 8mm → 86mm)으로 만든 문항 HTML. 화면에서는 확대·축소만 한다.
+const columns=new Map();
+export async function columnPreview(q){
+  const width=pageProfile({paper:'A4',columns:2}).width,{typeset,references,workflow,reviews,authoring,...content}=q,key=JSON.stringify(content);
+  const hit=columns.get(q.id);if(hit?.key===key)return {html:hit.html,width};
+  let html;try{html=(await buildQuestionHtml(q,previewFigure,width)).html;}catch{html=`<p>${E(q.ask||'발문을 입력하면 미리보기가 보입니다.')}</p>`;}
+  columns.set(q.id,{key,html});return {html,width};
+}
 async function preview(q){
-  const {typeset,references,workflow,reviews,...content}=q,key=JSON.stringify(content);
+  const {typeset,references,workflow,reviews,authoring,...content}=q,key=JSON.stringify(content);
   const hit=previews.get(q.id);if(hit?.key===key)return hit.html;
   let html;try{html=(await buildQuestionHtml(q,previewFigure)).html;}catch{html=`<p>${E(q.ask||'발문을 입력하면 미리보기가 보입니다.')}</p>`;}
   previews.set(q.id,{key,html});return html;

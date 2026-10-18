@@ -64,7 +64,18 @@ h.withServer(async origin => {
       // 새 문항은 문항 카드(입력 칸)로 열린다. 합답형 선지는 보기 조합 버튼, 오른쪽에는 라이브러리 탭.
       await sheet.waitForSelector('#card-view:not([hidden]) .cv-writer');
       assert.ok(await sheet.locator('#card-view .combo-row').count()===5,'combo choices are composed from bogi letters');
-      assert.deepEqual(await sheet.locator('#card-view .lp-tabs [data-cvtab]').allTextContents(),['기출','교과서','기준','자료','지면','AI']);
+      // 시안 4: 왼쪽 라이브러리(기출·교과서·기준·자료) · 가운데 문항 카드(번호 탭) · 오른쪽 미리보기|AI.
+      assert.deepEqual(await sheet.locator('#card-view .lp-tabs [data-cvtab]').allTextContents(),['기출','교과서','기준','자료']);
+      assert.deepEqual(await sheet.locator('#card-view .cv-rseg [data-cvright]').evaluateAll(b=>b.map(x=>x.textContent.trim())),['미리보기','AI']);
+      assert.ok(await sheet.locator('#card-view .cv-qtab[aria-current="true"]').count()===1,'the current question is marked in the number tabs');
+      await sheet.waitForSelector('#card-view #cv-paper .cv-col');// 미리보기는 실제 단 폭으로 만든 지면을 칸에 맞춘다
+      const fit=await sheet.evaluate(()=>{const n=document.querySelector('#cv-paper'),b=n.querySelector('.cv-fitbox').getBoundingClientRect(),r=n.getBoundingClientRect();return {inside:b.width<=r.width+1&&b.height<=r.height+1,width:document.querySelector('#cv-paper .cv-col').style.width};});
+      assert.ok(fit.inside,'one question fits the preview without scrolling');assert.equal(fit.width,'317px','the preview uses the real column width (86 mm)');
+      const lw=await sheet.evaluate(()=>document.querySelector('#card-view .cv-left').offsetWidth),split=await sheet.locator('#card-view [data-cvsplit="left"]').boundingBox();
+      await sheet.locator('#card-view [data-cvsplit="left"]').hover();await page.mouse.down();await page.mouse.move(split.x-60,split.y+split.height/2,{steps:4});await page.mouse.up();
+      assert.ok(Math.abs(await sheet.evaluate(()=>document.querySelector('#card-view .cv-left').offsetWidth)-(lw-60))<=6,'dragging the left border resizes the library');
+      await sheet.click('#card-view [data-cv="toggle-right"]');assert.equal(await sheet.locator('#card-view .cv-right').isHidden(),true);await sheet.click('#card-view [data-cv="toggle-right"]');
+      await sheet.click('#card-view [data-cvview="page"]');await sheet.waitForSelector('#card-view .pg-sheet .pg-q.now');await sheet.click('#card-view .pg-head [data-cvview="card"]');await sheet.waitForSelector('#card-view .cv-writer');
       await sheet.click('#card-view [data-cv="sheet"]');
       await sheet.waitForSelector('.workspace:not([hidden]) #registry');
       const ask=sheet.locator('#rows tr:has(th.field-label:text-is("발문")) td').first();
@@ -193,6 +204,7 @@ h.withServer(async origin => {
       }
       assert.match(await sheet.locator('#typeset-status').textContent(),/조판 저장됨/);
       // 새 시험지를 만들고 보관함의 문항을 넣은 뒤, 시험지 한 부를 HWPX로 받는다.
+      if(await sheet.locator('.side').isHidden())await sheet.click('#toggle-nav');
       await sheet.click('.side [data-nav="new-exam"]');await sheet.waitForSelector('#examd-view:not([hidden]) #exam-from-library');
       const qid=await sheet.locator('#exam-from-library option').nth(1).getAttribute('value');await sheet.selectOption('#exam-from-library',qid);
       await sheet.waitForSelector(`#examd-view [data-order="${qid}"]`);
@@ -237,6 +249,7 @@ h.withServer(async origin => {
       await sheet.click('#card-view .proposal.old [data-act="reject"]');await sheet.waitForSelector('#card-view .proposal.old',{state:'detached'});
       await page.evaluate(()=>{window.__authorHold=null;});
       // 세 가지 화면 색 캡처(증거).
+      if(await sheet.locator('.side').isHidden())await sheet.click('#toggle-nav');// 카드 화면에서는 왼쪽 메뉴가 기본으로 접힌다
       await sheet.click('.side [data-nav="library"]');
       for(const [theme,palette] of [['dark','classic'],['dark','graphite'],['light','graphite']]){
         await page.evaluate(([t,p])=>{document.documentElement.setAttribute('data-theme',t);document.documentElement.setAttribute('data-palette',p);},[theme,palette]);

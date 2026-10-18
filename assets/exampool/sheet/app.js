@@ -1,5 +1,5 @@
 import {FORMAT,WORKFLOWS,TYPES,PRESETS,STYLES,KINDS,targetDisplay,uid,clone,block,newQuestion,applyPreset,parentOptions,tableCovered,cellValue,mergeCells,migrate,fromLegacy,validate,duplicateQuestion} from './model.js';
-import {workflowOf,questionTitle,questionSubtitle,TITLES,previewHtml} from './views.js';
+import {workflowOf,questionTitle,questionSubtitle,TITLES,previewHtml,columnPreview} from './views.js';
 import {renderNav,renderLibrary,renderExams,renderExam} from './pool-views.js';
 import {createCardEditor} from './card-editor.js';
 import {newExam,examById,examOf,libraryQuestions,addToExam,removeFromExam,moveInExam,renumberExam} from './exams.js';
@@ -162,8 +162,9 @@ function renderView(){
   if(view.name==='library')renderLibrary($('#library-view'),data,view);
   if(view.name==='exams')renderExams($('#exams-view'),data,view);
   if(view.name==='exam')renderExam($('#examd-view'),data,view.examId);
-  if(view.name==='card')cardEditor.render();
-  $('#toggle-lib').hidden=view.name!=='card';
+  if(view.name==='card'){let pref=null;try{pref=localStorage.getItem('exampool-nav');}catch{}document.querySelector('.shell-body').classList.toggle('nav-off',pref===null||pref==='0');if(pref!=='1')$('#toggle-nav').setAttribute('aria-pressed','false');cardEditor.render();}
+  else{let pref=null;try{pref=localStorage.getItem('exampool-nav');}catch{}document.querySelector('.shell-body').classList.toggle('nav-off',pref==='0');}
+  $('#toggle-lib').hidden=true;
   const exam=view.examId&&examById(data,view.examId),list=sheetScope(),at=current?list.indexOf(current):-1;
   $('#crumb-view').textContent=view.name==='library'||(view.name==='card'&&!exam)?'문항 보관함':view.name==='exams'?'시험지':exam?`${exam.status==='done'?'출제 완료':'출제 중'} · ${exam.title}`:'문항 시트';
   $('#crumb-question').textContent=['desk','card'].includes(view.name)&&current?`${questionTitle(current)} · ${questionSubtitle(current)}`:'';
@@ -488,6 +489,8 @@ const cardEditor=createCardEditor($('#card-view'),{
     if(tab&&container){container.append(node);node.hidden=false;node.classList.add('docked');sourceTarget='question';sourceTab=tab;renderSources();}
     else if(node.classList.contains('docked')){node.classList.remove('docked');node.hidden=true;docked.home.insertBefore(node,docked.next);}},
   ai:(q,req)=>void askAi(q,req),
+  columnPreview:q=>columnPreview(q),find:id=>data.questions.find(x=>x.id===id)||null,
+  pagePlan:async q=>{const exam=examOf(data,q.id);if(!exam)return {title:'문항 보관함 · 이 문항만',pages:[{columns:[[q.id],[]]}]};const {examPlan}=await import('./exam-layout.js');const {pages}=examPlan(data,exam);return {title:exam.title,pages:pages.length?pages:[{columns:[[q.id],[]]}]};},
   cancelAi:q=>cancelAi(q),aiPending:q=>aiPending(q),figure:(q,spec)=>createFigure(q,spec),remakeFigure:(q,id,req)=>remakeFigure(q,id,req),editGraph:(q,id)=>editGraphFigure(q,id),figurePending:q=>figurePending(q),proposal:(q,id,action)=>decideProposal(q,id,action),revert:(q,rev)=>revertAuthoring(q,rev),
   applySuggestion:(q,sg)=>{const map={발문:'ask',지문:'passage',보기:'bogi',선지:'choices',해설:'explanation'};const key=map[sg.field]||sg.key;if(!key){status('이 제안은 직접 칸에 옮겨 주세요.',true);return;}mutate(()=>{if(sg.line!==undefined&&key==='bogi'){const b=q.blocks.find(x=>x.kind==='bogi');if(b?.lines[sg.line])b.lines[sg.line].text=sg.text;else writeField(q,'bogi',[fieldValue(q,'bogi'),sg.text].filter(Boolean).join('\n'));}else writeField(q,key,sg.text);});status(`AI 제안을 ${sg.field}에 넣었습니다.`);},
 });
@@ -520,7 +523,7 @@ function authoringSummary(q){const a=q.authoring;return {revision:a.revision,tar
   stale:a.stale.map(s=>`${labelOf(q,s.target)}: ${s.reason}`),axes:Object.fromEntries(Object.entries(a.review.axes).map(([k,v])=>[AXIS_LABEL[k],v.status])),
   recentHistory:a.history.slice(-5).map(h=>`버전 ${h.revision} (${({ai:'AI 변경안',teacher:'직접 수정',revert:'되돌리기',import:'시작'})[h.by]}): ${h.summary}`)};}
 async function askAi(q,{kind,text}){
-  const qid=q.id;
+  const qid=q.id;if(view.name==='card')cardEditor.showAi?.();
   mutate(()=>{ensureAuthoring(q);(q.reviews ||= []).push({role:'me',text,at:nowIso(),kind});if(q.reviews.length>200)q.reviews.splice(0,q.reviews.length-200);},{render:false});
   if(view.name==='card')cardEditor.refreshAi?.();
   if(!embedded){mutate(()=>{q.reviews.push({role:'ai',text:'5E 안에서 열어야 AI 출제 대화를 쓸 수 있습니다.',at:nowIso(),error:true});},{render:false});cardEditor.refreshAi?.();return;}
@@ -630,7 +633,7 @@ window.addEventListener('message',e=>{if(e.origin!==location.origin||e.source!==
 // 왼쪽 메뉴·오른쪽 라이브러리 접기.
 $('#toggle-nav').onclick=()=>{const off=!document.querySelector('.shell-body').classList.contains('nav-off');document.querySelector('.shell-body').classList.toggle('nav-off',off);$('#toggle-nav').setAttribute('aria-pressed',String(!off));try{localStorage.setItem('exampool-nav',off?'0':'1');}catch{}};
 try{if(localStorage.getItem('exampool-nav')==='0'){document.querySelector('.shell-body').classList.add('nav-off');$('#toggle-nav').setAttribute('aria-pressed','false');}}catch{}
-$('#toggle-lib').onclick=()=>$('#card-view [data-cv="fold-lib"]')?.click();
+$('#toggle-lib').onclick=()=>$('#card-view [data-cv="toggle-lib"]')?.click();
 
 await boot();
 // 대화 창이 열리고 닫힐 때 바깥 5E에 알린다(상태 줄·튜토리얼 말풍선을 같이 흐리게).

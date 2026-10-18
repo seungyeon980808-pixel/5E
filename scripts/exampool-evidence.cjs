@@ -8,13 +8,15 @@ const path=require('node:path');
 const crypto=require('node:crypto');
 const {execFile}=require('node:child_process');
 const KINDS={curriculum:'curriculum',past:'items',claim:'claims',textbook:'pages'};
+// 파이썬은 서버의 PATH가 짧아도 찾도록 후보를 차례로 본다(표준 라이브러리만 쓰는 검색 도구).
+const PYTHONS=[path.join(os.homedir(),'.local/share/mise/installs/python/latest/bin/python3'),'/opt/homebrew/bin/python3','/usr/local/bin/python3','/usr/bin/python3'];
 function locate(env=process.env){
-  let db=env.FIVE_E_EVIDENCE_DB||'',tool=env.FIVE_E_EVIDENCE_TOOL||'',python=env.FIVE_E_EVIDENCE_PYTHON||'python3';
-  if(!db||!tool){
-    try{const cfg=JSON.parse(fs.readFileSync(path.join(os.homedir(),'.codex/skills/exam-item-authoring/references/local-database.json'),'utf8'));db||=cfg.database||'';tool||=cfg.query_tool||'';}catch{}
-  }
-  // 공유 폴더에 둔 DB는 검색 도구를 같은 폴더의 scripts/에 함께 둘 수 있다.
+  let db=env.FIVE_E_EVIDENCE_DB||'',tool=env.FIVE_E_EVIDENCE_TOOL||'',cfg={};
+  try{cfg=JSON.parse(fs.readFileSync(path.join(os.homedir(),'.codex/skills/exam-item-authoring/references/local-database.json'),'utf8'));}catch{}
+  // 공유 폴더에 둔 DB는 같은 폴더의 scripts/ 검색 도구를 먼저 쓴다(다른 기기에서도 같은 도구).
   if(db&&!tool){const near=path.join(path.dirname(db),'scripts/search_evidence.py');if(fs.existsSync(near))tool=near;}
+  db||=cfg.database||'';tool||=cfg.query_tool||'';
+  const python=env.FIVE_E_EVIDENCE_PYTHON||[...PYTHONS,cfg.query_python].find(p=>p&&fs.existsSync(p))||'python3';
   return {db,tool,python,available:Boolean(db&&tool&&fs.existsSync(db)&&fs.existsSync(tool))};
 }
 const clip=(v,n)=>{const s=String(v??'').replace(/\s+/g,' ').trim();return s.length>n?s.slice(0,n)+'…':s;};
@@ -48,9 +50,9 @@ function search(request,{env=process.env,run=execFile}={}){
   if(!where.available)return Promise.resolve({available:false,kind:request.kind,results:[],warning:'근거 DB를 찾지 못했습니다. 검색 결과 없음은 거짓의 증거가 아니며, 근거는 미확보로 남습니다.'});
   const args=['-E','-s',where.tool,'--db',where.db,'--sentence',clip(request.sentence||terms.join(' '),300),...terms.flatMap(t=>['--term',t]),'--kind',kind,'--limit',String(limit),...(edition&&kind==='curriculum'?['--curriculum-edition',edition]:[])];
   return new Promise(resolve=>{
-    run(where.python,args,{cwd:os.tmpdir(),timeout:45000,maxBuffer:16*1024*1024,env:{PATH:process.env.PATH,HOME:os.homedir(),LANG:'ko_KR.UTF-8'}},(error,stdout)=>{
+    run(where.python,args,{cwd:os.tmpdir(),timeout:45000,maxBuffer:16*1024*1024,env:{PATH:process.env.PATH,HOME:os.homedir(),LANG:'ko_KR.UTF-8'}},(error,stdout,stderr)=>{
       let raw=null;try{raw=JSON.parse(String(stdout||''));}catch{}
-      if(!raw)return resolve({available:false,kind:request.kind,results:[],warning:`근거 검색을 실행하지 못했습니다(${clip(error?.message||'응답 없음',160)}). 근거는 미확보로 남습니다.`});
+      if(!raw)return resolve({available:false,kind:request.kind,results:[],warning:`근거 검색을 실행하지 못했습니다(${clip(String(stderr||'').split('\n').filter(Boolean).pop()||[error?.code,error?.signal,error?.killed?'시간 초과':''].filter(Boolean).join(' ')||error?.message||'응답 없음',200)}). 근거는 미확보로 남습니다.`});
       resolve({available:raw.availability!=='unavailable'&&raw.availability!=='temporarily_busy',kind:request.kind,terms,results:compact(kind,raw),warning:raw.warning||'',coverageWarning:raw.coverage_warning||undefined});
     });
   });
