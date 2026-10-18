@@ -151,19 +151,24 @@ function findCaptions(m,comps,s,body,texts){
     const near=comps.filter(c=>c!==L&&c.x0>=L.x1-1&&c.x0<=L.x0+h*2.6&&c.y0>=L.y0-tol&&c.y1<=L.y1+tol).sort((p,q)=>p.x0-q.x0);
     const chain=[];let right=L.x1;
     for(const c of near){if(c.x0-right>h*.5)break;chain.push(c);right=Math.max(right,c.x1);if(right-L.x0>h*2.6)break;}
-    let end=-1;
-    chain.forEach((c,k)=>{if(k>=1&&(c.y1-c.y0)>=h*.8&&Math.abs(c.y0-L.y0)<=tol&&Math.abs(c.y1-L.y1)<=tol)end=k;});
-    if(end<1)continue;
-    const group=[L,...chain.slice(0,end+1)];
-    const g={x0:L.x0,y0:Math.min(...group.map(c=>c.y0)),x1:Math.max(...group.map(c=>c.x1)),y1:Math.max(...group.map(c=>c.y1))};
-    const wd=g.x1-g.x0;if(wd<h*1.0||wd>h*2.6)continue;
-    const inner=chain.slice(0,end);if(inner.length>4)continue;
-    // 가~하는 모두 모음 'ㅏ'로 끝난다: 오른쪽에 길쭉한 세로획(또는 ')'와 붙은 'ㅏ)'), 그 왼쪽에 자음.
-    // (A)·(℃)·(atm) 같은 단위 괄호를 거른다.
-    const closing=chain[end],wide=(closing.x1-closing.x0)>=h*.4;
-    const vowel=wide?closing:inner.at(-1),cons=wide?inner:inner.slice(0,-1);
-    const syllable=!wide&&inner.length===1&&(inner[0].x1-inner[0].x0)>=h*.65&&(inner[0].y1-inner[0].y0)>=h*.7;// 자모가 붙은 '나'
-    if(!syllable&&(!vowel||(vowel.y1-vowel.y0)<h*.55||(!wide&&(vowel.x1-vowel.x0)>h*.5)||!cons.length||cons.every(c=>(c.x1-c.x0)<h*.3||(c.y1-c.y0)<h*.3)))continue;
+    // 닫는 괄호 후보를 뒤에서부터 본다(옆 캡션은 바로 뒤에 그림이 붙어 더 긴 덩어리가 이어지기도 한다).
+    let group=null,g=null;
+    for(let end=chain.length-1;end>=1&&!group;end--){
+      const closing=chain[end];
+      if((closing.y1-closing.y0)<h*.8||Math.abs(closing.y0-L.y0)>tol||Math.abs(closing.y1-L.y1)>tol)continue;
+      const parts=[L,...chain.slice(0,end+1)];
+      const box={x0:L.x0,y0:Math.min(...parts.map(c=>c.y0)),x1:Math.max(...parts.map(c=>c.x1)),y1:Math.max(...parts.map(c=>c.y1))};
+      const wd=box.x1-box.x0;if(wd<h*1.0||wd>h*2.6)continue;
+      const inner=chain.slice(0,end);if(inner.length>4)continue;
+      // 가~하는 모두 모음 'ㅏ'로 끝난다: 오른쪽에 길쭉한 세로획(또는 ')'와 붙은 'ㅏ)'), 그 왼쪽에 자음.
+      // (A)·(℃)·(atm) 같은 단위 괄호를 거른다.
+      const wide=(closing.x1-closing.x0)>=h*.4;
+      const vowel=wide?closing:inner.at(-1),cons=wide?inner:inner.slice(0,-1);
+      const syllable=!wide&&inner.length===1&&(inner[0].x1-inner[0].x0)>=h*.65&&(inner[0].y1-inner[0].y0)>=h*.7;// 자모가 붙은 '나'
+      if(!syllable&&(!vowel||(vowel.y1-vowel.y0)<h*.55||(!wide&&(vowel.x1-vowel.x0)>h*.5)||!cons.length||cons.every(c=>(c.x1-c.x0)<h*.3||(c.y1-c.y0)<h*.3)))continue;
+      group=parts;g=box;
+    }
+    if(!group)continue;
     const margin=Math.max(.8*s,h*.15);
     const clear=(right,top)=>!comps.some(c=>!group.includes(c)&&c.x0<g.x1+right&&c.x1>g.x0-margin&&c.y0<g.y1+margin&&c.y1>g.y0-top);
     // 옆 캡션은 오른쪽 그림에, 아래 캡션은 위 그림에 바짝 붙기도 한다.
