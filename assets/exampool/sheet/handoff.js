@@ -195,9 +195,9 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
     const img=`<img src="${image.data}" width="${Math.round(w)}" height="${Math.round(h)}" alt="${E(image.name)}">`;
     return align?`<p style="margin:0;text-align:${{왼쪽:'left',가운데:'center',오른쪽:'right'}[align]}">${img}</p>`:img;
   };
-  const table=async(t,width,choices=false,align,owner=choices?{kind:'choices'}:{kind:'table'},auto=false)=>{
+  const table=async(t,width,choices=false,align,owner=choices?{kind:'choices'}:{kind:'table'},auto=false,room=width)=>{
     recordTable(t.rows,t.cols+(choices?1:0),t.merges.map(m=>({...m,c:m.c+(choices?1:0)})),owner);
-    const fontSize=t.cols>3?9:10,inner=width-(choices?25:0);
+    const fontSize=t.cols>3?9:10;let inner=width-(choices?25:0);
     // 열 폭: 칸 글 폭에 맞춘다. 크기를 정하지 않은 자료표는 글 길이만큼 좁게(평가원 표), 정한 표는 그 폭 안에서 글 길이 비율로 나눈다.
     // 열마다 가장 긴 어절은 한 줄에 들어가게 한다(어절 중간에서 끊기면 칸 높이를 넘는다). 빈 표·그림이 든 표·선지표는 똑같이 나눈다.
     let colW=Array(t.cols).fill(inner/t.cols);
@@ -211,6 +211,8 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
       }
       for(const {c,cs,w} of spans){const have=nat.slice(c,c+cs).reduce((a,b)=>a+b,0);if(w>have)for(let i=c;i<c+cs;i++)nat[i]+=(w-have)/cs;}
       const total=nat.reduce((a,b)=>a+b,0);
+      // 크기를 정한 표라도 글이 그 폭에 다 들어가지 않고 단에 자리가 있으면 글 폭만큼(단 폭까지) 넓힌다(좁게 줄여 칸마다 여러 줄이 되던 문제).
+      if(total>inner&&room>width)inner=Math.min(total,room-(choices?25:0));
       if(auto&&total<=inner)colW=nat;
       else{
         const minimum=word.reduce((a,b)=>a+b,0)<=inner?word:word.map(()=>0);
@@ -286,7 +288,7 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
         // 평가원 지면: 글 아래(맨 바깥) 그림은 가운데. 정렬을 고른 그림만 그쪽으로. 상자·묶음 칸 안 그림은 예전처럼 칸 흐름대로
         // (칸 안에서 가운데 문단으로 감싸면 한글 엔진이 그 줄 배치를 빠뜨려 아래 글이 그림과 겹친다).
         if(b.figure)html+=await picture(b.figure,sizedWidth(b,width),b.align||(b.parent?undefined:'가운데'),{kind:'block',id:b.id})+(/^\(.+\)$/.test(b.label)||b.text?(b.text?p:pc)((/^\(.+\)$/.test(b.label)?b.label:'')+(b.text?' '+b.text:''),width,11,b.text?{kind:'block',id:b.id,prefix:(/^\(.+\)$/.test(b.label)?b.label:'').length+1}:null):'');
-      }else if(b.kind==='table')html+=heading(b)+await table(b.table,sizedWidth(b,width),false,b.align,{kind:'block',id:b.id},b.size===undefined);
+      }else if(b.kind==='table')html+=heading(b)+await table(b.table,sizedWidth(b,width),false,b.align,{kind:'block',id:b.id},b.size===undefined,width);
       else if(b.kind==='group'){
         const boxed=b.boxed===true||b.boxed===undefined&&b.label==='실험',children=q.blocks.filter(x=>x.parent===b.id);let body;
         const isBoxed=g=>g.boxed===true||g.boxed===undefined&&g.label==='실험',kidsOf=g=>q.blocks.filter(x=>x.parent===g.id);
@@ -404,7 +406,8 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
   width-=bodyIndent;
   const askParagraph=async()=>`<p style="margin:4px 0;text-align:justify">${sideText?await floatImages('first',width):''}${text(ask,null,11,asIs,askOwner())}</p>`;
   // 떠 있는 표는 첫 지문 바로 앞 문단에 둔다(한글 엔진은 표를 글 문단 안에 넣지 못한다).
-  const floatHtml=floatTable&&firstText?await table(floatTable.table,sizedWidth(floatTable,width),false,undefined,{kind:'block',id:floatTable.id}):'';
+  // 글 옆 표도 글이 다 들어가지 않으면 단 폭의 60%까지 넓힌다(남은 폭은 지문).
+  const floatHtml=floatTable&&firstText?await table(floatTable.table,sizedWidth(floatTable,width),false,undefined,{kind:'block',id:floatTable.id},false,Math.max(sizedWidth(floatTable,width),width*.6)):'';
   let html=floatHtml+first+await walk(null,width)+(firstText||sideText?await askParagraph():'');
   for(const id of afterAsk)html+=await walk(null,width,id);
   if(q.type!=='서술형'){
