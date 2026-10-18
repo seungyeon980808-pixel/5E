@@ -95,7 +95,7 @@ function inkMap(canvas){
   for(let i=0,p=0;i<W*H;i++,p+=4)ink[i]=(d[p]*299+d[p+1]*587+d[p+2]*114)/1000<215?1:0;
   return {ink,W,H};
 }
-const rect=(x0,y0,x1,y1)=>({x0,y0,x1,y1});
+const rect=(x0,y0,x1,y1)=>({x0:Math.round(x0),y0:Math.round(y0),x1:Math.round(x1),y1:Math.round(y1)});
 function projection(m,r,axis){// axis 'x': 열마다 잉크 수
   const n=axis==='x'?r.x1-r.x0:r.y1-r.y0,a=new Uint32Array(n);
   for(let y=r.y0;y<r.y1;y++){const row=y*m.W;for(let x=r.x0;x<r.x1;x++)if(m.ink[row+x])a[axis==='x'?x-r.x0:y-r.y0]++;}
@@ -111,87 +111,120 @@ function trim(m,r){
   if(!xs.length)return null;
   return rect(r.x0+xs[0][0],r.y0+ys[0][0],r.x0+xs[0][1],r.y0+ys[0][1]);
 }
-// 괄호 캡션 (가) 꼴인가: 양끝 덩어리가 띠 높이만큼 길고 적어도 한쪽은 아주 가늘다.
-// ('ㅏ)'처럼 괄호가 옆 글자에 붙기도 한다. 'ㅇ'·'ㅣ'로 시작·끝나는 이름표 "어머니"는 양끝이 가늘지 않다.)
-function parenAt(m,s,body,y0,y1,x0,x1,texts){
-  if(texts.some(t=>t.x0<x1&&t.x1>x0&&t.y0<y1&&t.y1>y0))return true;
-  const bh=y1-y0,hpt=bh/s,wpt=(x1-x0)/s;
-  const fine=runs(projection(m,rect(x0,y0,x1,y1),'x'),0);
-  const ext=c=>trim(m,rect(x0+c[0],y0,x0+c[1],y1));
-  const tall=c=>{const t=ext(c);return t&&(t.y1-t.y0)>=bh*.85;};
-  const thin=c=>{const t=ext(c);return t&&(t.x1-t.x0)<=Math.max(2,bh*.36);};
-  return fine.length>=2&&fine.length<=6&&tall(fine[0])&&tall(fine.at(-1))&&(thin(fine[0])||thin(fine.at(-1)))&&wpt>=body*.9&&wpt<=body*2.6&&wpt<=hpt*2.6;
+// 8방향 연결 잉크 덩어리.
+function components(m){
+  const {W,H,ink}=m,seen=new Uint8Array(W*H),stack=new Int32Array(W*H),out=[];
+  for(let start=0;start<W*H;start++){
+    if(!ink[start]||seen[start])continue;
+    let top=0,x0=W,y0=H,x1=-1,y1=-1,n=0;stack[top++]=start;seen[start]=1;
+    while(top){const i=stack[--top],x=i%W,y=(i-x)/W;n++;
+      if(x<x0)x0=x;if(x>x1)x1=x;if(y<y0)y0=y;if(y>y1)y1=y;
+      for(let dy=-1;dy<=1;dy++){const yy=y+dy;if(yy<0||yy>=H)continue;
+        for(let dx=-1;dx<=1;dx++){const xx=x+dx;if(xx<0||xx>=W)continue;const j=yy*W+xx;if(ink[j]&&!seen[j]){seen[j]=1;stack[top++]=j;}}}}
+    out.push({x0,y0,x1:x1+1,y1:y1+1,n});
+  }
+  return out;
 }
-// 패널 아래쪽(또는 중간)의 캡션 띠. 한 띠에 캡션이 여럿(나란한 패널의 (가)·(나))이면 clusters에 모두 담긴다.
-function captionBands(m,r,s,body,texts=[]){
-  const bands=runs(projection(m,r,'y'),Math.round(1.2*s)).map(([a,b])=>({y0:r.y0+a,y1:r.y0+b}));
-  const res=[];
-  bands.forEach((band,k)=>{
-    const hpt=(band.y1-band.y0)/s;
-    if(hpt<body*.45||hpt>body*1.5)return;
-    const above=bands.slice(0,k);if(!above.length)return;
-    if((band.y0-above.at(-1).y1)/s<1.2)return;
-    if((above.at(-1).y1-above[0].y0)/s<body*.6)return;
-    const br=rect(r.x0,band.y0,r.x1,band.y1);
-    const clusters=runs(projection(m,br,'x'),Math.round(.8*body*s)).map(([a,b])=>({x0:r.x0+a,x1:r.x0+b}));
-    for(const c of clusters)c.paren=(c.x1-c.x0)/s<=body*3.4&&parenAt(m,s,body,band.y0,band.y1,c.x0,c.x1,texts);
-    const x0=clusters[0].x0,x1=clusters.at(-1).x1;
-    const one=clusters.length===1||(x1-x0)/s<=body*3.4;
-    res.push({y0:band.y0,y1:band.y1,x0,x1,clusters,narrow:(x1-x0)/s<=body*3.4,
-      paren:one&&parenAt(m,s,body,band.y0,band.y1,x0,x1,texts),last:k===bands.length-1,below:bands.slice(k+1)});
-  });
-  return res;
+const hasInk=(m,r)=>{for(let y=Math.max(0,r.y0);y<Math.min(m.H,r.y1);y++){const row=y*m.W;for(let x=Math.max(0,r.x0);x<Math.min(m.W,r.x1);x++)if(m.ink[row+x])return true;}return false;};
+
+// 괄호 캡션 (가)(나)…: 가늘고 긴 '(' 뒤에 글자 덩어리, 같은 높이의 ')'(또는 'ㅏ)'처럼 붙은 덩어리)로 끝나고 둘레가 비어 있다.
+// "어머니"·"A: X선" 같은 이름표, f(x) 같은 수식 괄호는 모양·둘레 조건에서 빠진다.
+function findCaptions(m,comps,s,body,texts){
+  const B=body*s,caps=[];
+  // 자리 확인: 아래 캡션은 바로 아래가 비고 위에 그림이 있다. 옆 캡션은 왼쪽이 비고 오른쪽에 그림이 붙는다.
+  const place=(g,free)=>{
+    // 그래프 속 곡선 이름표 (가)는 같은 줄 양옆에 그림이 붙어 있다.
+    const lateral=hasInk(m,rect(g.x0-B,g.y0,g.x0-2,g.y1))&&hasInk(m,rect(g.x1+2,g.y0,g.x1+B,g.y1));
+    const solo=!hasInk(m,rect(g.x0-B*.6,g.y0,g.x0-2,g.y1))&&!hasInk(m,rect(g.x1+2,g.y0,g.x1+B*.6,g.y1));// "전압(V)"처럼 글자에 붙은 괄호가 아니다
+    const bottom=free&&solo&&!lateral&&!hasInk(m,rect(g.x0-B*.5,g.y1+2,g.x1+B*.5,g.y1+B*.8))&&hasInk(m,rect(g.x0-B*1.5,g.y0-B*3.5,g.x1+B*1.5,g.y0-2));
+    const h=g.y1-g.y0,side=!hasInk(m,rect(g.x0-B*1.5,g.y0,g.x0-2,g.y1))&&hasInk(m,rect(g.x1+2,g.y0-h*.5,g.x1+B*4,g.y1+h*.5));
+    return bottom||side?{...g,bottom,side}:null;};
+  for(const t of texts){const c=place(t,true);if(c)caps.push({...c,text:true});}
+  const lefts=comps.filter(c=>{const h=c.y1-c.y0,w=c.x1-c.x0;return h/s>=body*.5&&h/s<=body*1.4&&w<=h*.36&&w>=h*.06;});
+  for(const L of lefts){
+    const h=L.y1-L.y0,tol=h*.15;
+    if(caps.some(c=>c.x0<=L.x1&&c.x1>=L.x0&&c.y0<=L.y1&&c.y1>=L.y0))continue;
+    const near=comps.filter(c=>c!==L&&c.x0>=L.x1-1&&c.x0<=L.x0+h*2.6&&c.y0>=L.y0-tol&&c.y1<=L.y1+tol).sort((p,q)=>p.x0-q.x0);
+    const chain=[];let right=L.x1;
+    for(const c of near){if(c.x0-right>h*.5)break;chain.push(c);right=Math.max(right,c.x1);if(right-L.x0>h*2.6)break;}
+    let end=-1;
+    chain.forEach((c,k)=>{if(k>=1&&(c.y1-c.y0)>=h*.8&&Math.abs(c.y0-L.y0)<=tol&&Math.abs(c.y1-L.y1)<=tol)end=k;});
+    if(end<1)continue;
+    const group=[L,...chain.slice(0,end+1)];
+    const g={x0:L.x0,y0:Math.min(...group.map(c=>c.y0)),x1:Math.max(...group.map(c=>c.x1)),y1:Math.max(...group.map(c=>c.y1))};
+    const wd=g.x1-g.x0;if(wd<h*1.0||wd>h*2.6)continue;
+    const inner=chain.slice(0,end);if(inner.length>4)continue;
+    // 가~하는 모두 모음 'ㅏ'로 끝난다: 오른쪽에 길쭉한 세로획(또는 ')'와 붙은 'ㅏ)'), 그 왼쪽에 자음.
+    // (A)·(℃)·(atm) 같은 단위 괄호를 거른다.
+    const closing=chain[end],wide=(closing.x1-closing.x0)>=h*.4;
+    const vowel=wide?closing:inner.at(-1),cons=wide?inner:inner.slice(0,-1);
+    const syllable=!wide&&inner.length===1&&(inner[0].x1-inner[0].x0)>=h*.65&&(inner[0].y1-inner[0].y0)>=h*.7;// 자모가 붙은 '나'
+    if(!syllable&&(!vowel||(vowel.y1-vowel.y0)<h*.55||(!wide&&(vowel.x1-vowel.x0)>h*.5)||!cons.length||cons.every(c=>(c.x1-c.x0)<h*.25)))continue;
+    const margin=Math.max(.8*s,h*.15);
+    const clear=(right,top)=>!comps.some(c=>!group.includes(c)&&c.x0<g.x1+right&&c.x1>g.x0-margin&&c.y0<g.y1+margin&&c.y1>g.y0-top);
+    // 옆 캡션은 오른쪽 그림에, 아래 캡션은 위 그림에 바짝 붙기도 한다.
+    const thin=Math.round(.3*s),sideFree=clear(thin,margin),bottomFree=clear(margin,thin);
+    if(!sideFree&&!bottomFree)continue;
+    const c=place(g,bottomFree);if(c&&(c.bottom||sideFree))caps.push({...c,side:c.side&&sideFree});
+  }
+  return caps;
 }
 
-// 한 후보 캔버스를 패널로 나눈다. 결과: [{r(픽셀), caption:{y0,..}|null}]
-function panels(m,s,body,texts=[]){
-  const full=rect(0,0,m.W,m.H);
-  const bottomCaption=r=>{const t=trim(m,r);if(!t)return null;const c=captionBands(m,t,s,body,texts).find(b=>b.last);return c?{t,c}:null;};
-  // 세로 고랑으로 나누기: 고랑 폭 5pt 이상.
-  const cols=runs(projection(m,full,'x'),Math.round(5*s)).filter(([a,b])=>(b-a)/s>=3);
-  let segs=cols.map(([a,b])=>rect(a,0,b,m.H));
-  // 고랑이 없어도(그림이 서로 닿음) 맨 아래 한 줄에 괄호 캡션이 여럿이면 그 사이 잉크가 가장 적은 세로줄에서 자른다.
-  const whole=trim(m,full),row=whole&&captionBands(m,whole,s,body,texts).find(b=>b.last);
-  if(row&&row.clusters.length>=2&&row.clusters.every(c=>c.paren)){
-    const proj=projection(m,rect(0,whole.y0,m.W,row.y0),'x'),cuts=[];
-    for(let i=1;i<row.clusters.length;i++){
-      const a=Math.round((row.clusters[i-1].x0+row.clusters[i-1].x1)/2),b=Math.round((row.clusters[i].x0+row.clusters[i].x1)/2);
-      let best=a,bv=Infinity,run=0,bestRun=0;
-      for(let x=a;x<b;x++){if(proj[x]<bv){bv=proj[x];best=x;run=1;bestRun=1;}else if(proj[x]===bv){run++;if(run>bestRun){bestRun=run;best=x-Math.floor(run/2);}}else run=0;}
-      cuts.push(best);
-    }
-    segs=[0,...cuts].map((x,i)=>rect(x,0,i<cuts.length?cuts[i]:m.W,m.H));
-  }else if(segs.length>1){
-    const capped=segs.map(r=>!!bottomCaption(r)?.c.paren);
-    if(capped.filter(Boolean).length>=2){
-      // 캡션 없는 조각은 가장 가까운 캡션 조각에 붙인다.
-      const groups=segs.map((r,i)=>capped[i]?[r]:null);
-      segs.forEach((r,i)=>{if(capped[i])return;let best=-1,d=1e9;
-        groups.forEach((g,j)=>{if(!g)return;const dd=Math.max(0,segs[j].x0-r.x1,r.x0-segs[j].x1);if(dd<d){d=dd;best=j;}});
-        groups[best].push(r);});
-      segs=groups.filter(Boolean).map(g=>g.reduce((a,b)=>rect(Math.min(a.x0,b.x0),0,Math.max(a.x1,b.x1),m.H)));
-    }else segs=[full];
-  }else segs=[full];
-  // 각 조각 안에서 위아래로 쌓인 패널: 중간의 괄호 캡션 띠 아래에 다시 그림이 있으면 나눈다.
-  const out=[];
-  for(const seg of segs){
-    let r=trim(m,seg);if(!r)continue;
-    for(let guard=0;guard<6;guard++){
-      const bands=captionBands(m,r,s,body,texts);
-      const cut=bands.find(b=>b.paren&&!b.last&&(b.below.at(-1).y1-b.below[0].y0)/s>=body*1.6);
-      if(!cut)break;
-      const top=trim(m,rect(r.x0,r.y0,r.x1,cut.y1));
-      if(top)out.push(top);
-      r=trim(m,rect(r.x0,cut.y1,r.x1,r.y1));if(!r)break;
-    }
-    if(r)out.push(r);
+// 한 후보 캔버스를 캡션 기준으로 패널로 나눈다. 결과: [{r(픽셀), cap|null}] (캡션 순서)
+function panels(m,s,body,texts,split=true,given=null){
+  const whole=trim(m,rect(0,0,m.W,m.H));if(!whole)return [];
+  let caps=given||(split?findCaptions(m,components(m),s,body,texts):[]);
+  if(globalThis.__capsDebug)globalThis.__capsDebug.push({caps:caps.map(c=>[c.x0/s,c.y0/s,c.x1/s,c.y1/s,!!c.text,c.bottom,c.side]),whole:[whole.x0/s,whole.y0/s,whole.x1/s,whole.y1/s]});
+  // 옆 캡션: 왼쪽 가장자리에 세로로 늘어서고 바로 오른쪽에 그림이 붙어 있다. 아니면 아래 캡션만 쓴다.
+  const side=caps.length>1&&caps.every(c=>c.side&&(c.x0-whole.x0)/s<body*2)&&caps.some(c=>!c.bottom);
+  if(!side&&!given)caps=caps.filter(c=>c.bottom);
+  const original=m.ink.slice();
+  // 캡션 글자는 그림에서 뺀다.
+  for(const c of caps)for(let y=Math.max(0,c.y0-2);y<Math.min(m.H,c.y1+2);y++)m.ink.fill(0,y*m.W+Math.max(0,c.x0-2),y*m.W+Math.min(m.W,c.x1+2));
+  if(caps.length<=1){
+    // 캡션이 하나뿐이면 그림 맨 아래에 있을 때만 캡션으로 뗀다(그래프 속 곡선 이름표 (가)는 그대로 둔다).
+    const c=caps[0];
+    if(c&&(whole.y1-c.y1)>body*s*.5){m.ink.set(original);return [{r:whole,cap:null,cell:rect(0,0,m.W,m.H)}];}
+    const r=trim(m,whole);return r?[{r,cap:c||null,cell:rect(0,0,m.W,m.H)}]:[];}
+  const cx=c=>(c.x0+c.x1)/2,cy=c=>(c.y0+c.y1)/2;
+  const cutAt=(axis,a,b,r)=>{// a..b 사이에서 잉크가 가장 적은 줄(빈 줄이 길게 이어지면 그 가운데)
+    a=Math.round(a);b=Math.round(b);if(b<=a)return a;
+    const proj=projection(m,axis==='x'?rect(a,r.y0,b,r.y1):rect(r.x0,a,r.x1,b),axis);
+    let best=0,bv=Infinity,run=0,bestRun=0;
+    for(let i=0;i<proj.length;i++){if(proj[i]<bv){bv=proj[i];best=i;run=1;bestRun=1;}else if(proj[i]===bv){run++;if(run>bestRun){bestRun=run;best=i-Math.floor(run/2);}}else run=0;}
+    return a+best;};
+  const cells=[];
+  if(side){
+    caps.sort((p,q)=>p.y0-q.y0);
+    const cuts=caps.slice(1).map((c,i)=>cutAt('y',cy(caps[i]),cy(c),whole));
+    caps.forEach((c,i)=>cells.push({r:rect(whole.x0,i?cuts[i-1]:whole.y0,whole.x1,i<cuts.length?cuts[i]:whole.y1),cap:c}));
+  }else{
+    // 아래 캡션: 가로로 겹치는 캡션끼리 한 열(위아래로 쌓인 패널).
+    const sorted=[...caps].sort((p,q)=>cx(p)-cx(q)),cols=[];
+    for(const c of sorted){const col=cols.at(-1);if(col&&col.some(o=>o.x0<c.x1+body*s&&c.x0<o.x1+body*s))col.push(c);else cols.push([c]);}
+    const xcuts=cols.slice(1).map((col,i)=>cutAt('x',Math.max(...cols[i].map(cx)),Math.min(...col.map(cx)),whole));
+    const grid=cols.length>1&&cols.every(col=>col.length===cols[0].length)&&cols[0].length>1;
+    cols.forEach((col,i)=>{
+      const x0=i?xcuts[i-1]:whole.x0,x1=i<xcuts.length?xcuts[i]:whole.x1;
+      col.sort((p,q)=>p.y0-q.y0);
+      col.forEach((c,j)=>cells.push({r:rect(x0,j?col[j-1].y1+1:whole.y0,x1,j<col.length-1?c.y1+1:whole.y1),cap:c,row:j,col:i}));
+    });
+    // 2×2처럼 칸이 고르면 줄 순서((가)(나)/(다)(라)), 아니면 열 순서.
+    if(grid)cells.sort((p,q)=>p.row-q.row||p.col-q.col);
   }
-  return out.map(r=>{
-    const c=captionBands(m,r,s,body,texts).find(b=>b.last);
-    // 캡션으로 떼는 것은 (가) 꼴(괄호)일 때만. "A: X선" 같은 이름표는 그림 내용으로 남긴다.
-    if(c&&c.paren){const fig=trim(m,rect(r.x0,r.y0,r.x1,c.y0));if(fig)return {r:fig,cap:c,whole:r};}
-    return {r,cap:null,whole:r};
-  });
+  if(globalThis.__capsDebug)globalThis.__capsDebug.push({side,cells:cells.map(c=>[c.r.x0/s,c.r.y0/s,c.r.x1/s,c.r.y1/s])});
+  const out=cells.flatMap(c=>{const r=trim(m,c.r);return r?[{r,cap:c.cap,cell:c.r}]:[];});
+  // 나눈 조각이 너무 작으면(그래프 속 이름표를 캡션으로 본 경우) 그 캡션을 빼고 다시 나눈다.
+  const wa=(whole.x1-whole.x0)*(whole.y1-whole.y0),size=p=>(p.r.x1-p.r.x0)*(p.r.y1-p.r.y0);
+  const bad=out.filter(p=>(p.r.x1-p.r.x0)<body*s*2.5||size(p)<wa*.03);
+  if(out.length<caps.length||bad.length){
+    m.ink.set(original);
+    const drop=bad.length?bad.reduce((a,b)=>size(a)<size(b)?a:b).cap:null;
+    const keep=caps.filter(c=>c!==drop&&out.some(p=>p.cap===c));
+    if(keep.length===caps.length)return [{r:whole,cap:null,cell:rect(0,0,m.W,m.H)}];
+    return panels(m,s,body,texts,true,keep);
+  }
+  return out;
 }
 
 function crop(canvas,r){
@@ -200,18 +233,9 @@ function crop(canvas,r){
   return c.toDataURL('image/png');
 }
 
-/**
- * 문항(item: corpus.json 항목)의 그림·도표를 원본 위→아래, 왼→오른 순서로 돌려준다.
- * [{data:'data:image/png;base64,…', box:[x0,y0,x1,y1](PDF pt, 위가 0), page, caption:'(가)'|null, kind:'vector'|'raster'|'mixed', widthPt}]
- */
-export async function detectFigures(item,{signal,scale=4}={}){
-  aborted(signal);
-  const pdf=await readQuestionPdf(item,{signal});
-  const {out:cands,chains,prose,frames,body}=candidates(item,pdf);
-  const figs=[];
-  for(const cand of cands){
-    aborted(signal);
-    const pad=1.5,box=[cand.box[0]-pad,cand.box[1]-pad,cand.box[2]+pad,cand.box[3]+pad].map((v,i)=>i<2?Math.max(item.box[i],v):Math.min(item.box[i],v));
+// 후보 하나를 그려 픽셀 잉크 지도를 만든다. 본문 글과 상자 테두리는 그림이 아니므로 흰색으로 지운다.
+async function prepare(item,cand,{chains,prose,frames},scale,signal){
+  const pad=1.5,box=[cand.box[0]-pad,cand.box[1]-pad,cand.box[2]+pad,cand.box[3]+pad].map((v,i)=>i<2?Math.max(item.box[i],v):Math.min(item.box[i],v));
     const canvas=await renderFigureCanvas({...item,box,displayBox:box},scale,{signal});
     const g=canvas.getContext('2d');g.fillStyle='#fff';
     const toPx=b=>[(b[0]-box[0])*scale,(b[1]-box[1])*scale,(b[2]-b[0])*scale,(b[3]-b[1])*scale];
@@ -222,20 +246,42 @@ export async function detectFigures(item,{signal,scale=4}={}){
         for(const edge of [[b[0]-e,b[1]-e,b[2]+e,b[1]+e],[b[0]-e,b[3]-e,b[2]+e,b[3]+e],[b[0]-e,b[1]-e,b[0]+e,b[3]+e],[b[2]-e,b[1]-e,b[2]+e,b[3]+e]])g.fillRect(...toPx(edge));}
     const m=inkMap(canvas);
     // 글자로 찍힌 캡션 (가)(나)의 픽셀 위치.
-    const texts=chains.filter(c=>CAPTION.test(c.str)&&inBox(box,mid(c.box))).map(c=>rect((c.box[0]-box[0])*scale,(c.box[1]-box[1])*scale,(c.box[2]-box[0])*scale,(c.box[3]-box[1])*scale));
-    for(const p of panels(m,scale,body,texts)){
-      const padPx=Math.round(2*scale),r=rect(Math.max(0,p.r.x0-padPx),Math.max(0,p.r.y0-padPx),Math.min(m.W,p.r.x1+padPx),Math.min(m.H,p.r.y1+padPx));
-      if(p.cap)r.y1=Math.min(r.y1,p.cap.y0-1);
+    const texts=chains.filter(c=>CAPTION.test(c.str)&&inBox(box,mid(c.box))).map(c=>rect(Math.floor((c.box[0]-box[0])*scale),Math.floor((c.box[1]-box[1])*scale),Math.ceil((c.box[2]-box[0])*scale),Math.ceil((c.box[3]-box[1])*scale)));
+  return {canvas,g,m,box,texts};
+}
+
+/**
+ * 문항(item: corpus.json 항목)의 그림·도표를 원본 위→아래, 왼→오른 순서로 돌려준다.
+ * [{data:'data:image/png;base64,…', box:[x0,y0,x1,y1](PDF pt, 위가 0), page, caption:'(가)'|null, kind:'vector'|'raster'|'mixed', widthPt}]
+ */
+export async function detectFigures(item,{signal,scale=4}={}){
+  aborted(signal);
+  const pdf=await readQuestionPdf(item,{signal});
+  const ctx=candidates(item,pdf),{out:cands,chains,body}=ctx;
+  const figs=[];
+  for(const cand of cands){
+    aborted(signal);
+    const {canvas,g,m,box,texts}=await prepare(item,cand,ctx,scale,signal);
+    const order=[];
+    for(const p of panels(m,scale,body,texts,!cand.table)){
+      const padPx=Math.round(2*scale),r=rect(Math.max(p.cell.x0,p.r.x0-padPx),Math.max(p.cell.y0,p.r.y0-padPx),Math.min(p.cell.x1,p.r.x1+padPx),Math.min(p.cell.y1,p.r.y1+padPx));
       const pt=[box[0]+r.x0/scale,box[1]+r.y0/scale,box[0]+r.x1/scale,box[1]+r.y1/scale];
       if(pt[2]-pt[0]<6||pt[3]-pt[1]<6)continue;
       let caption=null;
       if(p.cap){const cb=[box[0]+p.cap.x0/scale,box[1]+p.cap.y0/scale,box[0]+p.cap.x1/scale,box[1]+p.cap.y1/scale];
         const t=chains.find(c=>CAPTION.test(c.str)&&inBox(cb,mid(c.box),2));caption=t?t.str.replace(/\s+/gu,'').replace('（','(').replace('）',')'):'?';}
-      figs.push({data:crop(canvas,r),box:pt,page:item.page,caption,kind:cand.kind,widthPt:pt[2]-pt[0]});
+      // 캡션 자리를 지운 잉크로 다시 자른다(캔버스에도 흰색으로).
+      if(p.cap)g.fillRect(p.cap.x0-2,p.cap.y0-2,p.cap.x1-p.cap.x0+4,p.cap.y1-p.cap.y0+4);
+      order.push({r,box:pt,caption});
     }
+    for(const o of order)figs.push({data:crop(canvas,o.r),box:o.box,page:item.page,caption:o.caption,kind:cand.kind,widthPt:o.box[2]-o.box[0],group:cands.indexOf(cand)});
   }
   // 읽는 순서: 위→아래(같은 줄은 왼→오른).
-  figs.sort((a,b)=>overlapY(a.box,b.box)>Math.min(a.box[3]-a.box[1],b.box[3]-b.box[1])*.4?a.box[0]-b.box[0]:a.box[1]-b.box[1]);
+  // 후보끼리는 위→아래(같은 줄은 왼→오른), 한 후보 안에서는 캡션 순서.
+  const groupBox=new Map();for(const f of figs)groupBox.set(f.group,groupBox.has(f.group)?union(groupBox.get(f.group),f.box):f.box);
+  const before=(a,b)=>overlapY(a,b)>Math.min(a[3]-a[1],b[3]-b[1])*.4?a[0]-b[0]:a[1]-b[1];
+  figs.sort((a,b)=>a.group===b.group?0:before(groupBox.get(a.group),groupBox.get(b.group)));
+  for(const f of figs)delete f.group;
   // 글자로 읽지 못한 비트맵 캡션은 순서대로 (가)(나)…를 붙인다.
   let k=0;for(const f of figs){if(!f.caption)continue;if(f.caption==='?')f.caption=`(${LETTERS[k]||'?'})`;const i=LETTERS.indexOf(f.caption[1]);k=(i>=0?i:k)+1;}
   return figs;
@@ -253,12 +299,23 @@ export async function debugOverlay(item){
   g.fillStyle='#f00';g.font='bold 14px sans-serif';figs.forEach((f,i)=>g.fillText(`${i+1}${f.caption||''}`,(f.box[0]-q[0])*s+3,(f.box[1]-q[1])*s+14));
   return [{data:c.toDataURL('image/png')}];
 }
-export async function debugBands(item){
-  const pdf=await readQuestionPdf(item),{out,body}=candidates(item,pdf),s=4,res=[];
+export async function debugCaps(item){
+  const pdf=await readQuestionPdf(item),{out,body,chains}=candidates(item,pdf),s=4,res=[];
   for(const cand of out){const box=cand.box;const canvas=await renderFigureCanvas({...item,box,displayBox:box},s);const m=inkMap(canvas);
-    const cols=runs(projection(m,rect(0,0,m.W,m.H),'x'),Math.round(5*s)).filter(([a,b])=>(b-a)/s>=3);
-    for(const [a,b] of cols){const r=trim(m,rect(a,0,b,m.H));const bands=runs(projection(m,r,'y'),Math.round(1.2*s));const [y0,y1]=bands.at(-1);
-      const br=rect(r.x0,r.y0+y0,r.x1,r.y0+y1);const fine=runs(projection(m,br,'x'),0).map(c=>{const t=trim(m,rect(r.x0+c[0],br.y0,r.x0+c[1],br.y1));return [(t.x1-t.x0)/s,(t.y1-t.y0)/s];});
-      res.push({col:[a/s,b/s],band:(y1-y0)/s,fine,body});}}
-  return res;
+    const comps=components(m);const h=c=>(c.y1-c.y0)/s;
+    const lefts=comps.filter(c=>{const hh=c.y1-c.y0,w=c.x1-c.x0;return hh/s>=body*.5&&hh/s<=body*1.4&&w<=hh*.36&&w>=hh*.06;});
+    res.push({cand:cand.box,kind:cand.kind,comps:comps.length,lefts:lefts.map(c=>[c.x0/s,c.y0/s,(c.x1-c.x0)/s,h(c)]),caps:findCaptions(m,comps,s,body,[]).map(c=>[c.x0/s,c.y0/s,c.x1/s,c.y1/s,c.bottom,c.side])});}
+  return {res,caps:globalThis.__capsDebug};
+}
+export async function debugPanels(item){
+  globalThis.__capsDebug=[];
+  const pdf=await readQuestionPdf(item),ctx=candidates(item,pdf),s=4,res=[];
+  for(const cand of ctx.out){const {m,texts,box}=await prepare(item,cand,ctx,s);
+    res.push({box,panels:panels(m,s,ctx.body,texts).map(p=>({r:[p.r.x0/s,p.r.y0/s,p.r.x1/s,p.r.y1/s],cell:[p.cell.x0/s,p.cell.y0/s,p.cell.x1/s,p.cell.y1/s],cap:p.cap&&[p.cap.x0/s,p.cap.y0/s,p.cap.x1/s,p.cap.y1/s]}))});}
+  return {res,caps:globalThis.__capsDebug};
+}
+export async function debugCanvas(item){
+  const pdf=await readQuestionPdf(item),ctx=candidates(item,pdf),out=[];
+  for(const cand of ctx.out){const {canvas}=await prepare(item,cand,ctx,2);out.push({data:canvas.toDataURL('image/png'),cand,prose:ctx.prose.filter(c=>!inBox(cand.ink,mid(c.box),0.5)&&inter(c.box,cand.box)).map(c=>[c.str,c.box])});}
+  return out;
 }

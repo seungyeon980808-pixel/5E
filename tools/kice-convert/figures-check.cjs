@@ -80,7 +80,8 @@ h.withServer(async origin=>{
   fs.writeFileSync(path.join(OUT,'results.jsonl'),rows.map(r=>JSON.stringify(r)).join('\n')+'\n');
   const strict=rows.filter(r=>r.match!==null),hit=strict.filter(r=>r.match).length;
   const lines=[`# 그림 수 일치 (${BASE?'기존':'새'})`,'',`- 문항 ${rows.length} · 오류 ${rows.filter(r=>!r.ok).length}`,
-    `- 엄격 비교(none/one/table/two/three/complex) ${hit}/${strict.length} = ${(100*hit/Math.max(1,strict.length)).toFixed(1)}%`,'','| struct | 일치 | 분포(찾은 수:문항) |','|---|---|---|'];
+    `- 엄격 비교(none/one/table/two/three/complex) ${hit}/${strict.length} = ${(100*hit/Math.max(1,strict.length)).toFixed(1)}%`,
+    (()=>{const ok=strict.filter(r=>r.match||(r.struct==='complex'&&r.n>=2)).length;return `- 완화 비교(complex는 그림+표처럼 2개도 인정) ${ok}/${strict.length} = ${(100*ok/Math.max(1,strict.length)).toFixed(1)}%`;})(),'','| struct | 일치 | 분포(찾은 수:문항) |','|---|---|---|'];
   for(const s of [...new Set(rows.map(r=>r.struct))].sort()){
     const g=rows.filter(r=>r.struct===s),dist={};for(const r of g)dist[r.n]=(dist[r.n]||0)+1;
     const m=g.filter(r=>r.match).length;
