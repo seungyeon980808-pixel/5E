@@ -64,7 +64,8 @@ test('narrow table headers wrap units without changing Korean words or values',a
  assert.equal(wrapQuestionText('질량 (kg)',43,9),'질량\n(kg)');
  assert.equal(wrapQuestionText('충돌 시간 (s)',43,9),'충돌\n시간\n(s)');
  const plan=await buildQuestionHtml(examples.questions[0],prep,317,{native:true});
- assert(plan.html.includes('font-size:9pt">(kg)</p>'));
+ // 평가원 표: 머리칸은 한 단계 작은 돋움체.
+ assert(plan.html.includes('font-family:함초롬돋움;font-size:8pt">(kg)</p>'));
  assert(plan.texts.includes('질량 (kg)'));assert(plan.texts.some(v=>v.includes('0, 빈칸, ㉠')));
 });
 test('native layout preflight detects nested header and note overflow, while tall fractions do not enlarge text glyphs',()=>{

@@ -7,9 +7,10 @@ export function pageProfile(profile={paper:'A4',columns:2}){
   const [w,h]=PAPER_MM[profile.paper],margin=15,spacing=8;
   return {page:{width:Math.round(w*HU),height:Math.round(h*HU),marginLeft:Math.round(margin*HU),marginRight:Math.round(margin*HU),marginTop:Math.round(margin*HU),marginBottom:Math.round(margin*HU),marginHeader:0,marginFooter:0,marginGutter:0,landscape:false},spacing:Math.round(spacing*HU),width:Math.floor(((w-2*margin-(profile.columns-1)*spacing)/profile.columns)*HU/75)-8};
 }
-// 한글 문서에 실제로 나오는 값: 번호·유형·선지 표현·발문·구성·선지·선지표·선지 배열.
+// 한글 문서에 실제로 나오는 값: 번호·유형·선지 표현·발문·구성·선지·선지표·선지 배열·[3점].
 // 단원·성취기준·정답·배점·출처·해설·문항 상태는 조판에 영향이 없으므로 바꿔도 한글 창을 다시 그리지 않는다.
-export const renderedContent=q=>({number:q.number,type:q.type,style:q.style,ask:q.ask,blocks:q.blocks,choices:q.choices,choiceTable:q.choiceTable,choiceLayout:q.choiceLayout});
+// 배점은 3점일 때만 [3점]으로 찍힌다. 그때만 지문에 넣어 다른 문항의 저장한 조판 지문은 그대로 둔다.
+export const renderedContent=q=>({number:q.number,type:q.type,style:q.style,ask:q.ask,blocks:q.blocks,choices:q.choices,choiceTable:q.choiceTable,choiceLayout:q.choiceLayout,...(q.points===3?{pointsMark:3}:{})});
 const sha256=async text=>[...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text)))].map(v=>v.toString(16).padStart(2,'0')).join('');
 export const questionFingerprint=q=>sha256(JSON.stringify(renderedContent(q)));
 // 이전 판은 조판과 상관없는 칸까지 지문에 넣었다. 그때 저장한 조판도 내용이 같으면 그대로 인정한다.
@@ -83,7 +84,7 @@ export async function applyReferenceBogiIndent(document,JSZip,CFB=globalThis.XLS
   for(const run of runs){
     if(!run.cellPath?.length||run.charStart!==0)continue;
     const bogi=run.cellPath.at(-1).cellIndex===5&&boxes.has(tableKey(run));
-    const prefix=run.text.match(bogi?/^[ㄱ-ㅎ]\. /:/^[①-⑤] /)?.[0];if(!prefix)continue;
+    const prefix=run.text.match(bogi?/^[ㄱ-ㅎ]\. /:/^(?:[①-⑤]|\([가-힣]\)) /)?.[0];if(!prefix)continue;
     const path=JSON.stringify(run.cellPath),start=JSON.parse(document.getCursorRectByPath(run.secIdx,run.parentParaIdx,path,0)),end=JSON.parse(document.getCursorRectByPath(run.secIdx,run.parentParaIdx,path,prefix.length));
     indents.set(paraKey(run.secIdx,run.parentParaIdx,run.cellPath),-Math.round((end.x-start.x)*75));
   }

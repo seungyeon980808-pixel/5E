@@ -73,13 +73,16 @@ export function mapTextEdit(map,docText){
   const sp=hit[0],seg=map.segments[sp.index];
   if(!seg.owner)return {ok:false,reason:'번호·기호·제목처럼 시트 칸에 없는 글을 고쳤습니다. 되돌리거나 시트에서 고치세요.'};
   const prefix=seg.owner.prefix||0,prefixNorm=normMap(seg.value).idx.filter(i=>i<prefix).length;
+  // 꼬리(suffix): [3점]·〔 〕의 닫는 괄호처럼 프로그램이 붙인 끝 글자. 고칠 수 없다.
+  const suffix=seg.owner.suffix||0,tailNorm=normMap(seg.value).idx.filter(i=>i>=seg.value.length-suffix).length,segLen=sp.end-sp.start;
   const a=d.start-sp.start,b=d.endOld-sp.start;
   if(a<prefixNorm)return {ok:false,reason:'문항 번호·①·ㄱ. 같은 앞머리는 한글 창에서 바꿀 수 없습니다. 시트에서 고치세요.'};
+  if(suffix&&b>segLen-tailNorm)return {ok:false,reason:'[3점]·〔 〕처럼 프로그램이 붙인 글은 한글 창에서 바꿀 수 없습니다. 배점·이름은 시트에서 고치세요.'};
   const full=replaceNormalized(seg.value,a,b,inserted);
   // 빈 칸 자리표(U+2060 등 폭 0 글자)는 데이터에 남기지 않는다.
-  const field=full.slice(prefix).replace(/[\u200b\u2060]/g,'').replace(/^\s+/,'');
+  const field=full.slice(prefix,full.length-suffix).replace(/[\u200b\u2060]/g,'').replace(/^\s+/,'');
   // 원래 칸 끝에 없던 공백(앞머리 'ㄱ. '의 띄어쓰기 등)은 붙이지 않는다.
-  const was=seg.value.slice(prefix),value=/\s$/.test(was)?field:field.replace(/\s+$/,'');
+  const was=seg.value.slice(prefix,seg.value.length-suffix),value=/\s$/.test(was)?field:field.replace(/\s+$/,'');
   return {ok:true,changes:[{index:sp.index,owner:seg.owner,full,value}]};
 }
 

@@ -5,7 +5,7 @@ export const SIZE_STEP=5,SIZE_MIN=10,SIZE_MAX=100;     // 단 폭 대비 %
 export const GAP_STEP=.5,GAP_MAX=20;                   // mm
 export const RATIO_MAX=12;                             // 가로 묶음 안 폭 비율(정수)
 export const ALIGNS=['왼쪽','가운데','오른쪽'];
-export const CHOICE_LAYOUTS=['한 줄','3+2','세로'];      // 비우면 자동
+export const CHOICE_LAYOUTS=['한 줄','3+2','2열','세로'];      // 비우면 자동
 export const PX_PER_MM=96/25.4;
 const clamp=(v,lo,hi)=>Math.min(hi,Math.max(lo,v));
 const num=v=>{if(typeof v==='number')return v;const m=String(v).trim().match(/^(-?\d+(?:\.\d+)?)\s*(%|mm)?$/);return m?Number(m[1]):NaN;};
@@ -24,7 +24,7 @@ export function parseSize(v){return String(v??'').trim()===''?undefined:snapSize
 export function parseGap(v){return String(v??'').trim()===''?undefined:snapGap(v);}
 export function parseRatio(v){return String(v??'').trim()===''?undefined:snapRatio(v);}
 export function parseAlign(v){const s=String(v??'').trim();if(!s)return undefined;if(!ALIGNS.includes(s))throw Error('정렬은 왼쪽·가운데·오른쪽 중에서 고르세요.');return s;}
-export function parseChoiceLayout(v){const s=String(v??'').trim().replace(/\s+/g,' ');if(!s||s==='자동')return undefined;const k={'한 줄 5개':'한 줄','한줄':'한 줄','3 + 2':'3+2','세로 5줄':'세로'}[s]||s;if(!CHOICE_LAYOUTS.includes(k))throw Error('선지 배열은 한 줄·3+2·세로 중에서 고르세요.');return k;}
+export function parseChoiceLayout(v){const s=String(v??'').trim().replace(/\s+/g,' ');if(!s||s==='자동')return undefined;const k={'한 줄 5개':'한 줄','한줄':'한 줄','3 + 2':'3+2','2 열':'2열','두 줄':'2열','세로 5줄':'세로'}[s]||s;if(!CHOICE_LAYOUTS.includes(k))throw Error('선지 배열은 한 줄·3+2·2열·세로 중에서 고르세요.');return k;}
 
 // 저장 형식 검사: 값이 있으면 눈금 위에 있어야 한다.
 export function validPlacement(b){
@@ -49,6 +49,7 @@ export const gapPx=b=>b.gap===undefined?0:b.gap*PX_PER_MM;
 export function choiceColumns(layout,count=5){
   if(layout==='한 줄')return count;
   if(layout==='3+2')return Math.min(3,count);
+  if(layout==='2열')return Math.min(2,count);
   if(layout==='세로')return 1;
   return undefined;
 }

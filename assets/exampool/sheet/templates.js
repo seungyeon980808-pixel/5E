@@ -66,9 +66,10 @@ export function questionFromShape({form,struct,subject='all'},number){
   }
   if(struct==='condition'){const g=add('group',null,'');g.boxed=true;add('text',g,'조건');}
   if(struct==='experiment'){
-    const g=add('group',null,'실험');g.boxed=true;
+    // 평가원 실험 상자: 제목 없이 〔실험 과정〕·〔실험 결과〕 머리로 나눈다.
+    const g=add('group',null,'');g.boxed=true;
     const s=add('steps',g,'실험 과정');s.lines=['(가)','(나)','(다)'].map(label=>({id:crypto.randomUUID(),label,text:''}));
-    add('figure',g,'실험 장치');const r=add('table',g,'실험 결과');r.table=makeTable(3,4);
+    add('figure',g,'실험 장치');const r=add('table',g,'실험 결과');r.heading=true;r.table=makeTable(3,4);
   }
   if(form==='talk'){const d=add('dialogue',null,'대화');d.lines.forEach(l=>l.label='학생 '+l.label);}
   if(form==='combo')add('bogi',null,'보기');

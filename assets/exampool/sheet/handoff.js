@@ -4,6 +4,11 @@ import {splitWidths,sizedWidth,gapPx,choiceColumns} from './placement.js';
 
 const E=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const labels=['①','②','③','④','⑤'];
+// 평가원 표·상자: 가는 검은 선.
+const RULE='0.4pt solid #000';
+// 물리량(소문자 한 글자 변수)은 기울이고, 숫자 뒤 단위(2 m, 3 m/s)는 바로 세운다. 대문자(물체 A, B)는 바로 세운다.
+// 수식($…$)은 한글 수식으로 따로 만들어지므로 여기 오지 않는다. HTML 이스케이프 뒤의 글을 받는다.
+export const italicVariables=html=>html.replace(/(?<![A-Za-z&#/])(?<!\d\s{1,2})([a-z])(?![A-Za-z;/])/g,'<i>$1</i>');
 function choiceWidth(value,fontSize){
   const em=fontSize*4/3;
   return mathParts(value).reduce((sum,part)=>sum+(part.math?Math.max(4,[...part.text].length*.65)*em:[...part.text].reduce((n,c)=>n+em*(/\s/.test(c)?.5:c.codePointAt(0)<256?.62:1),0)),0);
@@ -25,7 +30,7 @@ export function choiceGrid(choices,width,fontSize=11,layout){
 // squeeze a long header into one line and paint its Latin units into the next
 // cell. Explicit lines keep the actual text editable and its font unchanged.
 // 구성 이름이 한글 문서에 글로 찍히는지: 상자 묶음의 제목, 과정 제목, (가)·(나) 같은 그림 이름. 아래 조판과 같은 조건.
-export const labelInDocument=b=>b.kind==='steps'||b.kind==='group'&&(b.boxed===true||b.boxed===undefined&&b.label==='실험')||b.kind==='figure'&&!!b.figure&&/^\(.+\)$/.test(b.label);
+export const labelInDocument=b=>!!b.label&&(b.kind==='steps'||b.heading===true||b.kind==='group'&&(b.boxed===true||b.boxed===undefined&&b.label==='실험')||b.kind==='figure'&&!!b.figure&&/^\(.+\)$/.test(b.label));
 export function wrapQuestionText(value,width,fontSize=11){
   if(!width)return String(value??'');
   const em=fontSize*4/3,limit=Math.max(em,width),lines=[];
@@ -77,20 +82,26 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
   let nested=0;
   const reserveTable=()=>{tables.push(null);tableOwners.push(null);return tables.length-1;};
   // 글 조각마다 주인(어느 칸의 글인지)과 앞머리 길이(번호·ㄱ.·① 등)를 남긴다. 한글 창에서 고친 글을 시트로 되돌릴 때 쓴다.
-  const text=(v,width=null,fontSize=11,wrap=null,owner=null)=>{
+  const text=(v,width=null,fontSize=11,wrap=null,owner=null,font='함초롬바탕')=>{
     let value=String(v??''),math=false;const segment=value.trim()?{value,owner}:null;if(segment)textSegments.push(segment);
     if(native)value=mathParts(value).map(part=>{if(!part.math){if(part.text.replace(/\u200b/g,'').trim())texts.push(part.text);return part.text;}math=true;const marker=`EXAMPOOL_EQ_${equations.length}_END`;equations.push({marker,script:part.text,fontSize:fontSize*100});return marker;}).join('');
     else if(value.replace(/\u200b/g,'').trim())texts.push(value);
-    value=wrap?wrap(value):wrapQuestionText(value,width,fontSize);
+    // [3점]은 앞 낱말과 한 덩어리로 줄을 맞춘다(혼자 다음 줄로 떨어지지 않게).
+    value=value.replace(/ (\[\d+점\])$/,'\u2060$1');
+    value=(wrap?wrap(value):wrapQuestionText(value,width,fontSize)).replace(/\u2060(\[\d+점\])$/,' $1');
     // 한글 문서에 들어간 그대로의 글(어절 줄바꿈 포함). 시트에서 고친 글을 한글 창의 같은 문단에 바로 넣을 때 쓴다.
     if(segment){segment.wrapped=value;segment.math=math;}
-    const body=E(value).replace(/\r?\n/g,'<br>');return native?`<span style="font-family:함초롬바탕;font-size:${fontSize}pt">${body}</span>`:body;
+    const body=E(value).replace(/\r?\n/g,'<br>');return native?`<span style="font-family:${font};font-size:${fontSize}pt">${italicVariables(body)}</span>`:body;
   };
   const p=(v,width=null,fontSize=11,owner=null)=>`<p style="margin:4px 0">${text(v,width,fontSize,null,owner)}</p>`;
   const opening=q.blocks.find(b=>b.parent===null),firstText=opening?.kind==='text'&&opening.text?opening:null;
   const prefix=q.number?`${q.number}. `:'';
   // 글 옆 자료: 번호는 묶음 칸 안의 첫 지문 앞에 붙고, 발문은 자료 뒤에 온다.
   const sideText=!firstText?openingSideText(q):null;
+  // 배점이 3점이면 발문 끝에 [3점]. 한글 창에서 고칠 수 없는 꼬리(suffix)로 둔다.
+  const mark=q.points===3?' [3점]':'',ask=q.ask+mark,askOwner=(prefix=0)=>({kind:'ask',...(prefix?{prefix}:{}),...(mark?{suffix:mark.length}:{})});
+  // 평가원 순서: 발문 다음에 <보기>. 맨 바깥 보기는 발문 뒤에 찍는다.
+  const afterAsk=q.blocks.filter(b=>!b.parent&&b.kind==='bogi').map(b=>b.id);
   const picture=async(f,width,align,owner={kind:'other'})=>{
     if(!f)return '';
     const image=await prepareFigure(clone(f));
@@ -122,15 +133,17 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
         if(tableCovered(t,r,c))continue;
         const cell=t.cells[r][c],m=t.merges.find(m=>m.r===r&&m.c===c),tag=r<t.headerRows?'th':'td';
         // 빈 칸에는 폭 0인 글자(ZWSP)를 둔다. 한글 엔진이 빈 표를 겹친 자리에서 빠뜨리지 않고, 한글 창에서 빈 칸에 처음 쓴 글도 그 칸으로 되돌릴 수 있다.
-        const formatted=text(cell.value,cellWidth*(m?.cs||1)-16,fontSize,null,{kind:'cell',table:owner.id||owner.kind,r,c}).replace(/^<span[^>]*>|<\/span>$/g,'');
+        // 평가원 표: 머리칸은 작은 돋움체, 값은 바탕체.
+        const head=r<t.headerRows,cellFont=head?'함초롬돋움':'함초롬바탕',cellSize=head?fontSize-1:fontSize;
+        const formatted=text(cell.value,cellWidth*(m?.cs||1)-16,cellSize,null,{kind:'cell',table:owner.id||owner.kind,r,c},cellFont).replace(/^<span[^>]*>|<\/span>$/g,'');
         // Separate paragraphs let the native cell center the entire header
         // block. A soft line break centers only its first line in this engine.
-        let body=await picture(cell.figure,cellWidth*(m?.cs||1)-16,undefined,{kind:'cell',table:owner.id||owner.kind,r,c})+formatted.split('<br>').map(line=>`<p style="margin:0;text-align:center;font-family:함초롬바탕;font-size:${fontSize}pt">${line||(cell.value===''&&!cell.figure&&nested?'\u2060':'')}</p>`).join('');
+        let body=await picture(cell.figure,cellWidth*(m?.cs||1)-16,undefined,{kind:'cell',table:owner.id||owner.kind,r,c})+formatted.split('<br>').map(line=>`<p style="margin:0;text-align:center;font-family:${cellFont};font-size:${cellSize}pt">${line||(cell.value===''&&!cell.figure&&nested?'\u2060':'')}</p>`).join('');
         if(t.diagonal&&r===0&&c===0){
           body=p(t.diagonal.col)+p(t.diagonal.row)+body;
           warnings.push('대각선 머리글의 축 이름은 전달됩니다. 사선은 한글에서 지정하세요.');
         }
-        html+=`<${tag}${m?` rowspan="${m.rs}" colspan="${m.cs}"`:''} style="border:1px solid #555;width:${cellWidth}px;height:${rowHeights.slice(r,r+(m?.rs||1)).reduce((a,b)=>a+b,0)}px;padding:4px;text-align:center;vertical-align:middle">${body}</${tag}>`;
+        html+=`<${tag}${m?` rowspan="${m.rs}" colspan="${m.cs}"`:''} style="border:${RULE};width:${cellWidth}px;height:${rowHeights.slice(r,r+(m?.rs||1)).reduce((a,b)=>a+b,0)}px;padding:4px;text-align:center;vertical-align:middle">${body}</${tag}>`;
       }
       html+='</tr>';
     }
@@ -138,16 +151,19 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
   };
   // 간격(mm): 구성 앞에 높이를 가진 빈 문단을 둔다. 값이 없으면 넣지 않는다.
   const spacer=b=>{const px=gapPx(b);return px?`<p style="margin:0;font-size:1pt;line-height:100%;height:${Math.round(px)}px;margin-top:${Math.round(px)}px"> </p>`:'';};
+  // 실험 과정·결과 같은 머리: 〔실험 과정〕. 괄호는 고칠 수 없는 앞뒤로 둔다.
+  const heading=b=>(b.kind==='steps'||b.heading===true)&&b.label?p(`〔${b.label}〕`,null,11,{kind:'label',id:b.id,prefix:1,suffix:1}):'';
   const walk=async(parent,width,onlyId=null)=>{
     let html='';
     for(const b of q.blocks.filter(b=>b.parent===parent&&(!onlyId||b.id===onlyId))){
-      if(b===firstText)continue;
+      if(b===firstText||!onlyId&&afterAsk.includes(b.id))continue;
       html+=spacer(b);
       if(b===sideText)html+=p(prefix+b.text,width,11,{kind:'block',id:b.id,prefix:prefix.length});
       else if(b.kind==='text')html+=b.text?p(b.text,width,11,{kind:'block',id:b.id}):'';
       else if(b.kind==='figure'){
+        html+=heading(b);
         if(b.figure)html+=p('')+await picture(b.figure,sizedWidth(b,width),b.align,{kind:'block',id:b.id})+(/^\(.+\)$/.test(b.label)||b.text?p((/^\(.+\)$/.test(b.label)?b.label:'')+(b.text?' '+b.text:''),width,11,b.text?{kind:'block',id:b.id,prefix:(/^\(.+\)$/.test(b.label)?b.label:'').length+1}:null):'');
-      }else if(b.kind==='table')html+=await table(b.table,sizedWidth(b,width),false,b.align,{kind:'block',id:b.id});
+      }else if(b.kind==='table')html+=heading(b)+await table(b.table,sizedWidth(b,width),false,b.align,{kind:'block',id:b.id});
       else if(b.kind==='group'){
         const boxed=b.boxed===true||b.boxed===undefined&&b.label==='실험',children=q.blocks.filter(x=>x.parent===b.id);let body;
         const isBoxed=g=>g.boxed===true||g.boxed===undefined&&g.label==='실험',kidsOf=g=>q.blocks.filter(x=>x.parent===g.id);
@@ -157,7 +173,7 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
         if(flatten){
           // 상자 안의 가로 묶음은 상자 표의 한 줄로 만든다. 표를 세 겹 넣으면(상자→가로→결과표)
           // 한글 엔진이 안쪽 표의 병합을 잃는다. 첫 줄은 묶음 이름, 그다음 줄은 구성마다 하나.
-          const slot=reserveTable(),rule='1px solid #555';
+          const slot=reserveTable(),rule=RULE,titled=!!b.label;
           // 줄마다 칸 내용을 먼저 만든다. 내용이 없는 구성(빈 설명 등)은 줄을 만들지 않는다. 빈 칸 줄은 한글 엔진이 다르게 처리한다.
           let rows=[];
           for(const row of (b.layout==='나란히'?[{cells:children,group:b}]:children.map(c=>sideRow(c)?{cells:kidsOf(c),group:c}:{cells:[c],single:true}))){
@@ -169,20 +185,21 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
           }
           if(!rows.length)rows=[{cells:[],single:true,n:1,widths:[innerWidth],inner:['<p><br></p>']}];
           const cols=Math.max(...rows.map(r=>r.single?1:r.n)),merges=[];
-          if(cols>1)merges.push({r:0,c:0,rs:1,cs:cols});
+          if(titled&&cols>1)merges.push({r:0,c:0,rs:1,cs:cols});
           let body='';
           for(const [ri,row] of rows.entries()){
-            const r=ri+1,last=ri===rows.length-1,spans=row.inner.map((_,i)=>i===row.n-1?cols-(row.n-1):1);
+            const r=ri+(titled?1:0),last=ri===rows.length-1,spans=row.inner.map((_,i)=>i===row.n-1?cols-(row.n-1):1);
             spans.forEach((span,i)=>{if(span>1)merges.push({r,c:i,rs:1,cs:span});});
             let tr='<tr>';
             for(const [i,inner] of row.inner.entries()){
-              const edge=`${i===0?`border-left:${rule};`:''}${i===row.n-1?`border-right:${rule};`:''}${last?`border-bottom:${rule};`:''}`;
+              const edge=`${!titled&&ri===0?`border-top:${rule};`:''}${i===0?`border-left:${rule};`:''}${i===row.n-1?`border-right:${rule};`:''}${last?`border-bottom:${rule};`:''}`;
               tr+=`<td${spans[i]>1?` colspan="${spans[i]}"`:''} style="border:none;${edge}padding:${row.single?'2px 8px':'5px 8px'}${last?' 8px':''};vertical-align:top;width:${row.single?width:row.widths[i]}px">${inner}</td>`;
             }
             body+=tr+'</tr>';
           }
-          recordTable(rows.length+1,cols,merges,{kind:'boxside',id:b.id},slot);
-          html+=`<table style="border-collapse:collapse;width:${width}px"><tr><td${cols>1?` colspan="${cols}"`:''} style="border:none;border-top:${rule};border-left:${rule};border-right:${rule};width:${width}px;padding:8px 8px 0">${p(b.label,null,11,{kind:'label',id:b.id})}</td></tr>${body}</table>`;
+          // 제목 없는 상자(설명·조건, 실험)는 제목 줄 없이 첫 줄에 위 테두리를 둔다.
+          recordTable(rows.length+(titled?1:0),cols,merges,{kind:'boxside',id:b.id},slot);
+          html+=`<table style="border-collapse:collapse;width:${width}px">${titled?`<tr><td${cols>1?` colspan="${cols}"`:''} style="border:none;border-top:${rule};border-left:${rule};border-right:${rule};width:${width}px;padding:8px 8px 0">${p(b.label,null,11,{kind:'label',id:b.id})}</td></tr>`:''}${body}</table>`;
           continue;
         }
         if(b.layout==='나란히'&&children.length){
@@ -196,7 +213,7 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
           body+='</tr></table>';
         }else body=await walk(b.id,innerWidth);
         if(boxed)recordTable(1,1,[],{kind:'box',id:b.id},boxSlot);
-        html+=boxed?`<table style="border-collapse:collapse;width:${width}px"><tr><td style="border:1px solid #555;width:${width}px;height:32px;padding:8px">${p(b.label,null,11,{kind:'label',id:b.id})}${body}</td></tr></table>`:body;
+        html+=boxed?`<table style="border-collapse:collapse;width:${width}px"><tr><td style="border:${RULE};width:${width}px;height:32px;padding:8px">${b.label?p(b.label,null,11,{kind:'label',id:b.id}):''}${body}</td></tr></table>`:body;
       }else if(b.lines){
         if(b.kind==='bogi'){
           // The supplied exam uses a centered title that interrupts the top
@@ -218,16 +235,38 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
           // tables, whose parent does not expand an implicit HTML row.
           const bodyHeight=Math.ceil(Math.max(0,bodyLines-1)*11*4/3*1.6+11*4/3+7+(b.parent?3:0));
           html+=`<table style="border-collapse:collapse;width:${width}px"><tr>${sideCell('left',true)}<td rowspan="2" style="width:${titleWidth}px;height:24px;padding:0.1px;border:none;vertical-align:middle"><p style="margin:0;text-align:center;line-height:100%">${text('<보 기>')}</p></td>${sideCell('right',true)}</tr><tr>${sideCell('left')}${sideCell('right')}</tr><tr><td colspan="3" style="width:${width}px;height:${bodyHeight}px;padding:3px 6px 4px;border:none;border-left:${rule};border-right:${rule};border-bottom:${rule};vertical-align:top">${body}</td></tr></table>`;
-        }else html+=(b.kind==='steps'?p(b.label,null,11,{kind:'label',id:b.id}):'')+b.lines.map(l=>p(l.label+' '+l.text,width,11,{kind:'line',block:b.id,id:l.id,prefix:l.label.length+1})).join('');
+        }else if(b.kind==='dialogue'){
+          // 학생 대화·발표: 이름 칸 + 말 칸(가는 선 상자). 말이 길면 칸 안에서 줄바꿈한다.
+          const nameWidth=Math.min(64,Math.max(40,...b.lines.map(l=>choiceWidth(l.label,11)+12))),speech=width-nameWidth;
+          recordTable(b.lines.length,2,[],{kind:'dialogue',id:b.id});
+          html+=`<table style="border-collapse:collapse;width:${width}px">`+b.lines.map(l=>`<tr><td style="border:none;width:${nameWidth}px;padding:4px 4px 4px 0;vertical-align:top"><p style="margin:0">${text(l.label)}</p></td><td style="border:${RULE};width:${speech}px;padding:3px 8px;vertical-align:middle"><p style="margin:0;text-align:left">${text(l.text,speech-18,11,null,{kind:'line',block:b.id,id:l.id})||(nested?'\u2060':'')}</p></td></tr>`).join('')+'</table>';
+        }else{
+          // 실험 과정: 〔실험 과정〕 머리, (가)·(나) 뒤 글은 내어쓰기(한글에서 번호 뒤에 맞춤).
+          const measure=measureText||((v)=>choiceWidth(v,11));
+          html+=heading(b)+b.lines.map(l=>{const prefix=l.label+' ';return `<p style="margin:0;text-align:left">${text(prefix+l.text,null,11,v=>wrapHangingText(v,width-4,prefix,measure),{kind:'line',block:b.id,id:l.id,prefix:prefix.length})}</p>`;}).join('');
+        }
       }
     }
     return html;
   };
+  // 대응 선지(평가원 원본): 선지 묶음 2열(①② / ③④ / ⑤), 맨 윗줄 묶음 위에만 열 제목, 제목마다 짧은 밑줄, 테두리 없음.
+  // 열이 3개 이하이고 병합·그림이 없을 때만. 그 밖의 선지표는 예전처럼 선 있는 표로 찍는다.
+  const kicePair=t=>t.cols<=3&&t.headerRows===1&&t.rows===6&&!t.merges.length&&!t.cells.flat().some(c=>c.figure);
+  const pairChoices=t=>{
+    const k=t.cols,numW=25,valW=(width/2-numW)/k;
+    recordTable(4,2*(k+1),[],{kind:'choices'});
+    const td=(w,body)=>`<td style="border:none;width:${w}px;padding:1px 2px;vertical-align:top"><p style="margin:0;text-align:center">${body}</p></td>`;
+    const value=(r,c,head)=>{const v=t.cells[r][c].value,body=text(v,valW-8,11,null,{kind:'cell',table:'choices',r,c});return head&&String(v).trim()?`<u>${body}</u>`:body;};
+    let rows='<tr>'+[0,1].map(()=>td(numW,'')+Array.from({length:k},(_,c)=>td(valW,value(0,c,true))).join('')).join('')+'</tr>';
+    for(let line=0;line<3;line++)rows+='<tr>'+[0,1].map(side=>{const i=line*2+side;return i<5?td(numW,text(labels[i]))+Array.from({length:k},(_,c)=>td(valW,value(i+1,c,false))).join(''):td(numW,'')+Array.from({length:k},()=>td(valW,'')).join('');}).join('')+'</tr>';
+    return `<table style="border-collapse:collapse;width:${width}px">${rows}</table>`;
+  };
   // A question number belongs to the opening paragraph. Native hanging
   // indentation is measured from this prefix after import, never added spaces.
-  let html=(sideText?'':`<p style="margin:4px 0;text-align:left">${text(prefix+(firstText?firstText.text:q.ask),width-prefix.length*7,11,null,firstText?{kind:'block',id:firstText.id,prefix:prefix.length}:{kind:'ask',prefix:prefix.length})}</p>`)+await walk(null,width)+(firstText||sideText?p(q.ask,width,11,{kind:'ask'}):'');
+  let html=(sideText?'':`<p style="margin:4px 0;text-align:left">${text(prefix+(firstText?firstText.text:ask),width-prefix.length*7,11,null,firstText?{kind:'block',id:firstText.id,prefix:prefix.length}:askOwner(prefix.length))}</p>`)+await walk(null,width)+(firstText||sideText?p(ask,width,11,askOwner()):'');
+  for(const id of afterAsk)html+=await walk(null,width,id);
   if(q.type!=='서술형'){
-    if(q.style==='대응표')html+=await table(q.choiceTable,width,true);
+    if(q.style==='대응표')html+=kicePair(q.choiceTable)?pairChoices(q.choiceTable):await table(q.choiceTable,width,true);
     else if(q.style==='그림·그래프'){
       {const per=choiceColumns(q.choiceLayout,q.choices.length)||2;recordTable(Math.ceil(q.choices.length/per),per,[],{kind:'choicegrid'});}
       html+=`<table style="border-collapse:collapse;width:${width}px">`;

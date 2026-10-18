@@ -95,7 +95,7 @@ export function validate(data) {
     if(q.concepts!==undefined&&(!Array.isArray(q.concepts)||q.concepts.length>100||!q.concepts.every(v=>str(v,240))))throw Error('핵심개념은 100개 이내로 입력하세요.');
     if(q.typeset!==undefined&&(!q.typeset||!str(q.typeset.bytes,12*1024*1024)||!str(q.typeset.fingerprint,100)||!str(q.typeset.baselineText,1000000)||!['A4','A3','B4'].includes(q.typeset.profile?.paper)||![1,2].includes(q.typeset.profile?.columns)))throw Error('저장한 조판 문서를 확인하세요.');
     if(q.workflow!==undefined&&!Object.hasOwn(WORKFLOWS,q.workflow))throw Error('문항 상태는 출제·점검·완성 중 하나입니다.');
-    if(!validChoiceLayout(q.choiceLayout))throw Error('선지 배열은 한 줄·3+2·세로 중에서 고르세요.');
+    if(!validChoiceLayout(q.choiceLayout))throw Error('선지 배열은 한 줄·3+2·2열·세로 중에서 고르세요.');
     if(!Number.isFinite(q.points)||q.points<0||q.points>10000||!(q.answer===null||Number.isInteger(q.answer)&&q.answer>=0&&q.answer<5))throw Error('정답은 1~5, 배점은 0~10,000으로 입력하세요.');
     const bids=new Set();for(const b of q.blocks){if(!b||!id(b.id)||bids.has(b.id)||!Object.hasOwn(KINDS,b.kind)||!str(b.label,240)||!str(b.text)||!['세로','나란히'].includes(b.layout))throw Error('구성의 종류·이름·ID를 확인하세요.');if(!validPlacement(b))throw Error('구성의 크기·간격·폭 비율·정렬을 확인하세요.');bids.add(b.id);if(b.kind==='table')table(b.table);if(b.kind==='figure'&&!image(b.figure))throw Error('그림 형식을 확인하세요.');if(['steps','bogi','dialogue'].includes(b.kind)&&(!Array.isArray(b.lines)||b.lines.length>30||!b.lines.every(l=>id(l.id)&&str(l.label,120)&&str(l.text))))throw Error('과정·대화·보기 내용을 확인하세요.');}
     const nodeIds=new Set(bids);

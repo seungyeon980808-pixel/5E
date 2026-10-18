@@ -1,4 +1,4 @@
-import {TYPES,PRESETS,STYLES,block,applyPreset,passageBlocks} from './model.js';
+import {TYPES,PRESETS,STYLES,KINDS,block,applyPreset,passageBlocks} from './model.js';
 
 // text: 한글 문서에 글로 나오는 칸(흰색). 나머지(분류·모양 설정·정답·해설 등)는 옅은 회색으로 구분한다.
 // A row is a field; a column is one complete question. Compound material stays
@@ -18,7 +18,7 @@ import {stripChoiceLabel,stripBogiLabel,normalizeCombo,orderCombos} from './choi
 const labels=['①','②','③','④','⑤'];
 export function fieldValue(q,key){
   if(key==='concepts')return (q.concepts||[]).join(', ');
-  if(key==='materials')return q.blocks.filter(b=>!['text','bogi'].includes(b.kind)).map(b=>b.kind==='table'?`${b.label} (${b.table.rows}×${b.table.cols})`:b.label).join(' · ');
+  if(key==='materials')return q.blocks.filter(b=>!['text','bogi'].includes(b.kind)).map(b=>{const name=b.label||(b.boxed?'상자':KINDS[b.kind]);return b.kind==='table'?`${name} (${b.table.rows}×${b.table.cols})`:name;}).join(' · ');
   if(key==='photos'){const figures=[...q.blocks.filter(b=>b.figure).map(b=>b.figure),...q.choices.filter(c=>c.figure).map(c=>c.figure),...q.blocks.filter(b=>b.table).flatMap(b=>b.table.cells.flat().filter(c=>c.figure).map(c=>c.figure))];return figures.length?`${figures.length}개 · ${figures.map(f=>f.name).join(', ')}`:'사진 추가…';}
   if(key==='passage')return passageBlocks(q).map(b=>b.text).filter(Boolean).join('\n\n');
   if(key==='choices')return q.style==='대응표'?'선지 대응표 · '+q.choiceTable.cols+'열 (더블클릭하여 편집)':q.choices.map(c=>c.text+(c.figure?' [그림]':'')).join('\n');

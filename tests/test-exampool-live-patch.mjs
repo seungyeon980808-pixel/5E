@@ -69,7 +69,9 @@ test('patches delete and insert only the changed span, in body paragraphs and ce
 });
 
 test('only printed fields change the fingerprint; typesets saved with the old fingerprint still match',async()=>{
-  const q=question(),hash=await questionFingerprint(q);
+  const q=question();q.points=2;const hash=await questionFingerprint(q);
+  // 배점은 3점일 때만 [3점]으로 찍힌다.
+  const three=structuredClone(q);three.points=3;assert.notEqual(await questionFingerprint(three),hash);
   for(const [k,v] of [['unitLarge','역학'],['standardCode','[12물리01-01]'],['explanation','해설'],['points',4],['answer',2],['source','기출'],['managementId','PHY-1'],['intent','의도']]){
     const c=structuredClone(q);c[k]=v;assert.equal(await questionFingerprint(c),hash,k+' is not printed');
   }
