@@ -732,6 +732,13 @@ function locate(question, pdf) {
 }
 
 export async function convertQuestionNow(question, options = {}) {
+  // ExamPool: 기출 색인(corpus) 항목에는 문항 번호 no가 없다. 번호가 없으면 자기 번호 줄·다음 문항 번호로
+  // 문항 끝을 찾지 못해 잘린 색인 영역을 되살리지 못하므로, 지문 첫 줄 "N." · 제목 "N번" · id 끝 "_NN"에서 채운다.
+  if (!Number.isInteger(question.no)) {
+    const no = Number(String(question.questionText || question.text || '').match(/^\s*(\d{1,2})\.(?!\d)/u)?.[1]
+      || String(question.title || '').match(/(\d{1,2})\s*번\s*$/u)?.[1] || String(question.id || '').match(/_(\d{1,2})$/u)?.[1]);
+    if (Number.isInteger(no) && no > 0) question = { ...question, no };
+  }
   const check = () => options.signal?.throwIfAborted();
   const build = (item, page, glyphs) => {
     check();
