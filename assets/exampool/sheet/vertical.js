@@ -14,14 +14,15 @@ export const ROWS=[
   {key:'number',label:'시험지 번호',text:true}, {key:'answer',label:'정답'}, {key:'points',label:'배점'},
   {key:'source',label:'출처'}, {key:'explanation',label:'해설',tall:true}, {key:'intent',label:'출제 의도'}
 ];
+import {stripChoiceLabel,stripBogiLabel,normalizeCombo,orderCombos} from './choice-text.js';
 const labels=['①','②','③','④','⑤'];
 export function fieldValue(q,key){
   if(key==='concepts')return (q.concepts||[]).join(', ');
   if(key==='materials')return q.blocks.filter(b=>!['text','bogi'].includes(b.kind)).map(b=>b.kind==='table'?`${b.label} (${b.table.rows}×${b.table.cols})`:b.label).join(' · ');
   if(key==='photos'){const figures=[...q.blocks.filter(b=>b.figure).map(b=>b.figure),...q.choices.filter(c=>c.figure).map(c=>c.figure),...q.blocks.filter(b=>b.table).flatMap(b=>b.table.cells.flat().filter(c=>c.figure).map(c=>c.figure))];return figures.length?`${figures.length}개 · ${figures.map(f=>f.name).join(', ')}`:'사진 추가…';}
   if(key==='passage')return passageBlocks(q).map(b=>b.text).filter(Boolean).join('\n\n');
-  if(key==='choices')return q.style==='대응표'?'선지 대응표 · '+q.choiceTable.cols+'열 (더블클릭하여 편집)':q.choices.map((c,i)=>labels[i]+' '+c.text+(c.figure?' [그림]':'')).join('\n');
-  if(key==='bogi')return q.blocks.filter(b=>b.kind==='bogi').flatMap(b=>b.lines.map(l=>l.label+'. '+l.text)).join('\n');
+  if(key==='choices')return q.style==='대응표'?'선지 대응표 · '+q.choiceTable.cols+'열 (더블클릭하여 편집)':q.choices.map(c=>c.text+(c.figure?' [그림]':'')).join('\n');
+  if(key==='bogi')return q.blocks.filter(b=>b.kind==='bogi').flatMap(b=>b.lines.map(l=>l.text)).join('\n');
   if(key==='answer')return q.type==='서술형'?q.modelAnswer:q.answer===null?'':labels[q.answer];
   return String(q[key]??'');
 }
@@ -42,11 +43,12 @@ export function writeField(q,key,value,{clear=false}={}){
   }else if(key==='choices'){
     if(q.style==='대응표'||q.style==='그림·그래프')throw Error('표·그림 선지는 구성 편집에서 수정하세요.');
     const lines=value.split(/\r?\n/);if(lines.length>5)throw Error('선지는 다섯 줄로 입력하세요. 여러 문단·그림 선지는 구성 편집에서 수정하세요.');
-    q.choices.forEach((c,i)=>c.text=(lines[i]||'').replace(/^[①②③④⑤]\s*/,''));
+    q.choices.forEach((c,i)=>c.text=stripChoiceLabel(lines[i]||''));
+    if(q.style==='조합'){q.choices.forEach(c=>c.text=normalizeCombo(c.text));const o=orderCombos(q.choices,q.answer);q.choices=o.choices;q.answer=o.answer;}
   }else if(key==='bogi'){
     let b=q.blocks.find(b=>b.kind==='bogi');if(!b){b=block('bogi');q.blocks.push(b);}
     const lines=value?value.split(/\r?\n/):[];if(lines.length>30)throw Error('보기는 30개까지 입력하세요.');
-    b.lines=lines.map((text,i)=>({...b.lines[i]||{id:crypto.randomUUID(),label:['ㄱ','ㄴ','ㄷ','ㄹ','ㅁ'][i]||String(i+1)},text:text.replace(/^[ㄱㄴㄷㄹㅁ][.．)]?\s*/, '')}));
+    b.lines=lines.map((text,i)=>({...b.lines[i]||{id:crypto.randomUUID(),label:['ㄱ','ㄴ','ㄷ','ㄹ','ㅁ'][i]||String(i+1)},text:stripBogiLabel(text)}));
     const live=new Set(q.blocks.flatMap(b=>b.lines?.map(l=>l.id)||[]));q.references=q.references.filter(r=>!/^[-\w]+$/.test(r.target)||!r.target||q.blocks.some(b=>b.id===r.target)||q.choices.some(c=>c.id===r.target)||live.has(r.target)||['question','ask','passage','bogi'].includes(r.target));
   }else q[key]=value;
 }

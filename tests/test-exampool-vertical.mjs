@@ -65,3 +65,13 @@ test('A4 two columns and mixed LaTeX/Hancom math keep native placement tokens',(
  const p=pageProfile();assert.equal(p.page.width,59528);assert.ok(p.width>300&&p.width<330);assert.throws(()=>pageProfile({paper:'A5',columns:3}),/용지/);
  const parts=mathParts('에너지 $\\frac{1}{2}mv^2$, 속력 \\(v_0\\), {{수식:1 over 2}}');assert.deepEqual(parts.filter(p=>p.math).map(p=>p.text),['\\frac{1}{2}mv^2','v_0','1 over 2']);
 });
+test('choice and bogi cells carry no ①·ㄱ. numbers; combinations are normalized and put in the usual order',()=>{
+ const q=newQuestion('1','합답형');writeField(q,'bogi','ㄱ. 질량 보존\nㄱ과 ㄴ의 비는 같다');
+ assert.deepEqual(q.blocks.find(b=>b.kind==='bogi').lines.map(l=>l.text),['질량 보존','ㄱ과 ㄴ의 비는 같다']);assert.equal(fieldValue(q,'bogi'),'질량 보존\nㄱ과 ㄴ의 비는 같다');
+ q.answer=0;const ids=q.choices.map(c=>c.id);
+ writeField(q,'choices','ㄴㄷ\n① ㄱ\nㄷ ㄱ\nㄴ\nㄱ,ㄴ,ㄷ');
+ assert.deepEqual(q.choices.map(c=>c.text),['ㄱ','ㄴ','ㄱ, ㄷ','ㄴ, ㄷ','ㄱ, ㄴ, ㄷ']);assert.equal(q.answer,3,'정답은 고른 선지(ㄴ, ㄷ)를 따라간다');assert.equal(q.choices[3].id,ids[0]);
+ assert.equal(fieldValue(q,'choices'),'ㄱ\nㄴ\nㄱ, ㄷ\nㄴ, ㄷ\nㄱ, ㄴ, ㄷ');
+ const t=newQuestion('2','객관식');t.style='조합';writeField(t,'choices','A\nC\nAB\nBC\nABC');assert.deepEqual(t.choices.map(c=>c.text),['A','C','A, B','B, C','A, B, C']);
+ const s=newQuestion('3','객관식');writeField(s,'choices','AB\n2v\nㄱㄴ\n4\n5');assert.deepEqual(s.choices.map(c=>c.text),['AB','2v','ㄱㄴ','4','5'],'일반 정답형은 그대로');
+});
