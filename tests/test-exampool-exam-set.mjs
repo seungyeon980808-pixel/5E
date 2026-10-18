@@ -47,3 +47,17 @@ test('exam plan uses saved typesetting heights and lists questions that still ne
   assert.equal(plan.items[0].height,180);assert.equal(plan.items[0].ready,true);
   assert.deepEqual(plan.missing.map(x=>x.id),[b.id]);
 });
+
+test('exam paper follows the questions: all B4 typesets make a B4 two-column exam, mixed papers stay A4',async()=>{
+  const {examPage,EXAM_PAGE}=await import('../assets/exampool/sheet/exam-layout.js');
+  const item=paper=>({q:{typeset:{profile:{paper,columns:2}}}});
+  assert.deepEqual(examPage([item('B4'),item('B4')]),{...EXAM_PAGE,paper:'B4',heightMm:334});
+  assert.equal(examPage([item('B4'),item('A4')]),EXAM_PAGE);assert.equal(examPage([]),EXAM_PAGE);
+  assert.equal(examPage([{q:{paper:'B4'}}]).paper,'B4');
+});
+
+test('question paper is optional and limited to A4, B4 and A3',async()=>{
+  const {validate,newQuestion,FORMAT}=await import('../assets/exampool/sheet/model.js');
+  const q=newQuestion('1');q.paper='B4';validate({format:FORMAT,questions:[q],documents:[]});
+  q.paper='Letter';assert.throws(()=>validate({format:FORMAT,questions:[q],documents:[]}),/기준 용지/);
+});

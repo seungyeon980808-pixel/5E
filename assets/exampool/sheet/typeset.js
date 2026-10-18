@@ -91,10 +91,11 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
     const seq=++opening;loading=true;ready=false;host.dataset.ready='false';metricsCache=null;guide.hidden=true;metricsOutput.textContent='';cancelAnimationFrame(fitFrame);fitFrame=0;save.disabled=true;download.disabled=true;paper.disabled=true;columns.disabled=true;message('실제 한글 문서로 조판하는 중…');placer?.clear();owners=null;textMap=null;clearTimeout(syncTimer);
     try{await ensure();if(seq!==opening)return;const next=structuredClone(value),nextFingerprint=await questionFingerprint(next);
       const saved=await typesetMatches(next.typeset,next)&&[9,10,LAYOUT_VERSION].includes(next.typeset.layoutVersion)?next.typeset:null;
-      paper.value=saved?.profile.paper||'A4';columns.value=String(saved?.profile.columns||2);
+      // 기준 용지: 문항에 정한 용지(q.paper) → 저장한 조판의 용지 → A4. 저장한 조판과 다르면 같은 단 폭 문서를 새 용지로 옮긴다.
+      paper.value=next.paper||saved?.profile.paper||'A4';columns.value=String(saved?.profile.columns||2);
       let bytes=saved?fromBase64(saved.bytes):await generate(next);
       if(saved)owners=await planOwners(next);
-      if(saved&&saved.pageMode!==QUESTION_PAGE_MODE){
+      if(saved&&(saved.pageMode!==QUESTION_PAGE_MODE||saved.profile.paper!==paper.value)){
         // Retain the user's approved native formatting while moving the same
         // column width onto the new question paper; never rebuild it as HTML.
         const Document=document().constructor,old=new Document(bytes);

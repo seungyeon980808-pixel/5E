@@ -1,13 +1,13 @@
-// 저장한 문항 조판(한 단 폭 문항 용지)을 A4 2단 시험지 한 문서로 모은다.
+// 저장한 문항 조판(한 단 폭 문항 용지)을 2단 시험지 한 문서로 모은다(문항들이 모두 B4로 조판됐으면 B4, 아니면 A4).
 // 문항 용지의 본문 폭은 시험지 한 단과 같아서, 문단을 그대로 옮기면 줄바꿈이 유지된다. HTML로 다시 만들지 않는다.
 import {pageProfile} from './typeset-model.js';
 import {openApprovedQuestion,nativeInsertOptions} from './native-transfer.js?v=1014-compact-panel';
-import {examPlan,EXAM_PAGE} from './exam-layout.js';
+import {examPlan} from './exam-layout.js';
 
 const parse=v=>typeof v==='string'?JSON.parse(v):v;
 
 export async function buildExamDocument(Document,data,exam=data.exams?.[0]){
-  const {items,pages,missing}=examPlan(data,exam);
+  const {items,pages,page:sheet,missing}=examPlan(data,exam);
   if(!items.length)throw Error('시험지에 넣을 문항을 고르세요.');
   if(missing.length)throw Error(`조판을 저장하지 않은 문항이 있습니다: ${missing.map(x=>x.q.number+'번').join(', ')}. 각 문항의 조판을 저장한 뒤 다시 만드세요.`);
   // 단이 시작되는 문항: 그 앞에 단 나누기를 넣는다(첫 문항 제외).
@@ -15,8 +15,8 @@ export async function buildExamDocument(Document,data,exam=data.exams?.[0]){
   const target=Document.createEmpty();
   try{
     target.createBlankDocument();
-    const config=pageProfile({paper:EXAM_PAGE.paper,columns:EXAM_PAGE.columns});
-    target.setPageDef(0,JSON.stringify(config.page));target.setColumnDef(0,EXAM_PAGE.columns,0,true,config.spacing);
+    const config=pageProfile({paper:sheet.paper,columns:sheet.columns});
+    target.setPageDef(0,JSON.stringify(config.page));target.setColumnDef(0,sheet.columns,0,true,config.spacing);
     for(const [i,item] of items.entries()){
       const source=await openApprovedQuestion(Document,item.q,item.q.typeset);
       try{

@@ -99,6 +99,8 @@ export function validate(data) {
     for(const k of ['unitLarge','unitMiddle','unitSmall','managementId','templateKey'])if(q[k]!==undefined&&!str(q[k],240))throw Error('단원·관리번호를 확인하세요.');
     if(q.form!==undefined&&!['combo','single','pair','talk'].includes(q.form)||q.structure!==undefined&&!['two','big','small','condition','many','experiment','none'].includes(q.structure))throw Error('새 문항 틀의 유형·자료 구조를 확인하세요.');
     if(q.concepts!==undefined&&(!Array.isArray(q.concepts)||q.concepts.length>100||!q.concepts.every(v=>str(v,240))))throw Error('핵심개념은 100개 이내로 입력하세요.');
+    // 문항별 기준 용지(선택): 조판을 처음 열 때의 용지. 기출(평가원 단 폭 약 110mm)은 B4.
+    if(q.paper!==undefined&&!['A4','B4','A3'].includes(q.paper))throw Error('문항 기준 용지는 A4·B4·A3 중 하나입니다.');
     if(q.typeset!==undefined&&(!q.typeset||!str(q.typeset.bytes,12*1024*1024)||!str(q.typeset.fingerprint,100)||!str(q.typeset.baselineText,1000000)||!['A4','A3','B4'].includes(q.typeset.profile?.paper)||![1,2].includes(q.typeset.profile?.columns)))throw Error('저장한 조판 문서를 확인하세요.');
     if(q.reviews!==undefined&&(!Array.isArray(q.reviews)||q.reviews.length>200||!q.reviews.every(m=>m&&['me','ai'].includes(m.role)&&str(m.text,20000))))throw Error('AI 대화 기록을 확인하세요.');
     if(q.authoring!==undefined)validateAuthoring(q.authoring);
