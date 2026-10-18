@@ -1803,6 +1803,12 @@
       "findingIds": [
         "TEACHER-FLOW-PDF-LIBRARY-WORKBENCH"
       ]
+    },
+    {
+      "path": "tests/test-teacher-flow-ai-image-browser.cjs",
+      "findingIds": [
+        "TEACHER-FLOW-AI-IMAGE-CANVAS"
+      ]
     }
   ],
   "deferred": [
