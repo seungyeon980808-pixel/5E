@@ -7,7 +7,7 @@ import {restoreFigures} from './es/figure-fallback.mjs?v=library-release-2026101
 import {renderFigureImage,setPdfSource} from './es/pdf-viewer.mjs?v=library-release-20261011-3';
 import {questionFromShape} from '../sheet/templates.js';
 import {makeTable,block} from '../sheet/model.js';
-import {analyze,runsText,clean,HEAD,tokens,pairTable} from './rules.js';
+import {analyze,runsText,clean,HEAD,tokens,pairTable,splitEquationParens,mapQuestionText} from './rules.js';
 export {setPdfSource};
 
 export const FIGURE_SCALE=4;// 그림을 원본 PDF의 4배(약 288dpi)로 자른다.
@@ -186,6 +186,8 @@ export async function toQuestion(structure,item,{number='1'}={}){
     if(!header?.some(Boolean))diag.notes.push('선지표 머리줄을 찾지 못했습니다.');
     diag.pair=P?'위치':'낱말';
   }else choices.slice(0,5).forEach((t,i)=>{if(q.choices[i])q.choices[i].text=t;});
+  // 수식 안 괄호·상태 기호는 본문 글로(원본 글꼴과 같게).
+  mapQuestionText(q,splitEquationParens);
   if(figs.size>count.images)diag.notes.push(`그림 ${figs.size}개 중 ${count.images}개만 넣었습니다.`);
   // figures: 넣은 자료 수(그림 + 표 + 조건·실험 상자). images: 그림 수.
   diag.counts={stem:out.filter(b=>b.kind==='text').length,ask:!!q.ask,bogi:bogi?.lines.length||0,

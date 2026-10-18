@@ -197,3 +197,30 @@ export function pairTable(structure){
     return cells;});
   return {header:header.map(h=>h.t),rows:out};
 }
+
+// 수식 안 괄호: 평가원 PDF에서 ( )는 본문 글꼴로 찍힌다(원본 글 채점 기준과 같게). 수식 밖 글로 뺀다.
+// '$(mol)$' → '($mol$)', '$A(g)$' → '$A$($g$)'. 상태 기호 글자(g·l·s)는 시험마다 글꼴이 달라 수식에 둔다. 중괄호 안(분수·\text)은 그대로.
+export function splitEquationParens(str){
+  return String(str||'').replace(/\$([^$\n]+)\$/g,(all,s)=>{
+    if(/\\left|\\right|\\begin/.test(s)||!/[()]/.test(s))return all;
+    const parts=[];let math='',depth=0;
+    const push=(kind,v)=>{if(!v)return;const last=parts.at(-1);if(last?.kind===kind)last.v+=v;else parts.push({kind,v});};
+    for(let i=0;i<s.length;i++){const ch=s[i];
+      if(ch==='\\'){const m=s.slice(i).match(/^\\[A-Za-z]+|^\\./);math+=m[0];i+=m[0].length-1;continue;}
+      if(ch==='{')depth++;if(ch==='}')depth--;
+      if(depth===0&&(ch==='('||ch===')')){
+        push('math',math);math='';
+        push('text',ch);continue;}
+      math+=ch;}
+    push('math',math);
+    if(depth!==0)return all;
+    return parts.map(p=>p.kind==='text'?p.v:p.v.trim()?`$${p.v.trim()}$`:p.v).join('');
+  });
+}
+// 문항 안 모든 글에 적용.
+export function mapQuestionText(q,f){// 자료표 칸은 변환기 그대로(작은 글꼴 표).
+  q.ask=f(q.ask);
+  for(const b of q.blocks){if(typeof b.text==='string')b.text=f(b.text);for(const l of b.lines||[])l.text=f(l.text);}
+  for(const c of q.choices)c.text=f(c.text);
+  for(const r of q.choiceTable?.cells||[])for(const c of r)if(typeof c.value==='string')c.value=f(c.value);
+}
