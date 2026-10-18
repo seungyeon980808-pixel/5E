@@ -8,6 +8,12 @@
       ]
     },
     {
+      "path": "tests/test-bug-board-abuse-limits.mjs",
+      "findingIds": [
+        "SECURITY-BUG-BOARD-ABUSE-LIMITS"
+      ]
+    },
+    {
       "path": "tests/test-visitor-stats-worker.mjs",
       "findingIds": [
         "VISITOR-STATS-WORKER"
@@ -615,6 +621,12 @@
       "path": "tests/test-bug-board-browser.cjs",
       "findingIds": [
         "BUG-BOARD-UI"
+      ]
+    },
+    {
+      "path": "tests/test-exam-preview-background-name-browser.cjs",
+      "findingIds": [
+        "SECURITY-M4-EXAM-PREVIEW-XSS"
       ]
     },
     {

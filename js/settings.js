@@ -1,3 +1,4 @@
+import { escapeHtml } from "./html-escape.js?v=1.7.0-four-session-integration";
 import { initSettingsShortcuts, settingsShortcutRows } from './settings-shortcuts.js?v=1.7.0-four-session-integration';
 import { COLOR_MODES, COLOR_MODE_LABELS, getColorMode, setColorMode, syncThemeButton } from './color-mode.js?v=1.7.0-graphite';
 import { previewStorage as localStorage } from './preview-storage.js?v=1.7.0-four-session-integration';
@@ -746,9 +747,8 @@ function buildModal() {
   overlay.className = "modal-overlay";
   overlay.id = "defaults-overlay";
   overlay.hidden = true;
-  const escAttr = s => String(s).replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/</g, "&lt;");
-  const fontOptions = TEXT_FONTS.map(f => '<option value="' + escAttr(f.css) + '">' + escAttr(f.label) + '</option>').join("");
-  const styleOptions = TEXT_STYLES.map((s, i) => '<option value="' + i + '">' + s.label + '</option>').join("");
+  const fontOptions = TEXT_FONTS.map(f => '<option value="' + escapeHtml(f.css) + '">' + escapeHtml(f.label) + '</option>').join("");
+  const styleOptions = TEXT_STYLES.map((s, i) => '<option value="' + i + '">' + escapeHtml(s.label) + '</option>').join("");
   const grayControl = (name, label) => '<div class="settings-row"><label for="defaults-' + name + '-level">' + label + '</label><div class="settings-gray"><span class="settings-swatch" data-swatch="' + name + '" aria-hidden="true"></span><input type="range" id="defaults-' + name + '-level" min="0" max="255" step="any" aria-label="' + label + ' 밝기"><div class="settings-gray-presets" role="group" aria-label="' + label + ' 견본">' + [[0, "검정"], [128, "회색"], [255, "흰색"]].map(([value, title]) => '<button type="button" data-gray="' + name + '" data-level="' + value + '" title="' + title + '" aria-label="' + label + ' ' + title + '" aria-pressed="false"><span style="background:rgb(' + value + ',' + value + ',' + value + ')"></span></button>').join("") + '</div></div></div>';
   overlay.innerHTML = '<form class="modal modal-defaults" role="dialog" aria-modal="true" aria-labelledby="defaults-title">' +
     '<h2 class="modal-title"><span id="defaults-title">도구 기본값</span></h2>' +

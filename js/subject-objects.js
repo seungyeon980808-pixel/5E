@@ -1,3 +1,4 @@
+import { escapeHtml } from "./html-escape.js?v=1.7.0-four-session-integration";
 import { previewStorage as localStorage } from './preview-storage.js?v=1.7.0-four-session-integration';
 import {
   TEMPLATES,
@@ -160,7 +161,7 @@ export function initSubjectObjects() {
       header.type = "button";
       header.className = "subject-part-header";
       header.setAttribute("aria-expanded", String(expanded));
-      header.innerHTML = "<span>" + part.name + "</span><span class=\"toggle-icon\">▾</span>";
+      header.innerHTML = "<span>" + escapeHtml(part.name) + "</span><span class=\"toggle-icon\">▾</span>";
       const body = document.createElement("div");
       body.className = "subject-part-body";
       if (part.cats?.length) body.appendChild(symbolGrid(null, part.cats));

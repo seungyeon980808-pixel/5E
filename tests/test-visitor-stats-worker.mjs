@@ -30,9 +30,9 @@ function d1() {
   } };
 }
 
-function api({ clock = () => Date.parse('2026-10-18T03:00:00Z'), rateLimit } = {}) {
+function api({ clock = () => Date.parse('2026-10-18T03:00:00Z'), rateLimit, postLimiter } = {}) {
   const db = d1();
-  const handle = createVisitorApi({ store: createVisitorStore(db), allowedOrigins: [ORIGIN, 'https://5e.ai.kr'], clock, ...(rateLimit && { rateLimit }) });
+  const handle = createVisitorApi({ store: createVisitorStore(db), allowedOrigins: [ORIGIN, 'https://5e.ai.kr'], clock, ...(rateLimit && { rateLimit }), ...(postLimiter && { postLimiter }) });
   const call = async ({ method = 'GET', origin = ORIGIN, body, agent = BROWSER, ip = '1.1.1.1', path = '/api/visitor-stats', headers = {} } = {}) => {
     const init = { method, headers: { ...(origin && { Origin: origin }), ...(agent && { 'User-Agent': agent }), ...headers } };
     if (body !== undefined) { init.body = typeof body === 'string' ? body : JSON.stringify(body); init.headers['Content-Type'] ||= 'application/json'; }
@@ -40,7 +40,7 @@ function api({ clock = () => Date.parse('2026-10-18T03:00:00Z'), rateLimit } = {
     const text = await response.text();
     return { status: response.status, headers: response.headers, data: text ? JSON.parse(text) : null };
   };
-  return { db, call };
+  return { db, call, handle };
 }
 
 test('POST counts a browser once per day and once in total; GET never counts', async () => {
@@ -100,4 +100,59 @@ test('rate limit answers 429 after the per-address budget', async () => {
   assert.equal(limited.status, 429);
   assert.equal(limited.headers.get('Retry-After'), '60');
   assert.equal((await call({ ip: '2.2.2.2' })).status, 200);
+});
+
+// 보안 점검 L4: 큰 본문은 끝까지 받기 전에 거른다.
+test('oversized bodies are rejected before the whole body is read', async () => {
+  const { handle } = api();
+  const post = (body, headers = {}) => handle(new Request('https://5e-visitor-stats.example.workers.dev/api/visitor-stats', {
+    method: 'POST', body, duplex: 'half',
+    headers: { Origin: ORIGIN, 'User-Agent': BROWSER, 'Content-Type': 'application/json', ...headers },
+  }), { clientIp: '3.3.3.3' });
+  // 끝없이 이어지는 본문: 몇 조각을 꺼냈는지 센다.
+  const endless = () => {
+    const seen = { pulls: 0, cancelled: false };
+    const stream = new ReadableStream({
+      pull(controller) { seen.pulls++; controller.enqueue(new Uint8Array(400).fill(0x20)); },
+      cancel() { seen.cancelled = true; },
+    });
+    return { stream, seen };
+  };
+
+  const declared = endless();
+  const big = await post(declared.stream, { 'Content-Length': '1048576' });
+  assert.equal(big.status, 413);
+  assert.equal(declared.seen.pulls <= 1, true, 'Content-Length over the limit is refused without reading the body');
+
+  const hidden = endless();
+  const streamed = await post(hidden.stream);
+  assert.equal(streamed.status, 413);
+  assert.equal(hidden.seen.pulls <= 5, true, `reading stops just past 1KB (pulled ${hidden.seen.pulls})`);
+  assert.equal(hidden.seen.cancelled, true, 'the rest of the stream is cancelled');
+
+  assert.equal((await post(JSON.stringify({ visitorId: A }), { 'Content-Length': 'abc' })).status, 413);
+  const exact = JSON.stringify({ visitorId: A });
+  const ok = await post(exact, { 'Content-Length': String(Buffer.byteLength(exact)) });
+  assert.equal(ok.status, 200);
+  assert.equal((await ok.json()).total, 1);
+});
+
+// 보안 점검 L3: 제한 기록이 가득 차도 새 주소를 막지 않고, Rate Limiting 바인딩이 있으면 POST에 더 엄격하게 적용한다.
+test('a full in-memory limiter evicts the oldest address instead of refusing everyone', async () => {
+  const { call } = api({ rateLimit: 1 });
+  for (let i = 0; i < 10000; i++) assert.equal((await call({ ip: `10.${i >> 8}.${i & 255}.1` })).status, 200);
+  assert.equal((await call({ ip: '10.0.0.1' })).status, 429, 'a remembered address is still limited');
+  assert.equal((await call({ ip: '172.16.0.1' })).status, 200, 'a new address is counted even when the table is full');
+});
+
+test('the Workers rate limit binding throttles POST per address without blocking GET', async () => {
+  const used = new Map();
+  const postLimiter = { async limit({ key }) { used.set(key, (used.get(key) || 0) + 1); return { success: used.get(key) <= 2 }; } };
+  const { call } = api({ postLimiter });
+  assert.equal((await call({ method: 'POST', body: { visitorId: A }, ip: '4.4.4.4' })).status, 200);
+  assert.equal((await call({ method: 'POST', body: { visitorId: B }, ip: '4.4.4.4' })).status, 200);
+  const limited = await call({ method: 'POST', body: { visitorId: crypto.randomUUID() }, ip: '4.4.4.4' });
+  assert.equal(limited.status, 429);
+  assert.equal((await call({ ip: '4.4.4.4' })).data.total, 2, 'GET still answers and the refused POST was not counted');
+  assert.equal(used.get('4.4.4.4'), 3);
 });
