@@ -240,6 +240,11 @@ export async function renderQuestion(item, scale = 3, { signal } = {}) {
   return URL.createObjectURL(blob);
 }
 
+// ExamPool: 그림 찾기(figures.js)가 픽셀을 직접 보도록 자르지 않은 캔버스를 준다(item.box 영역, 흰 바탕).
+export async function renderFigureCanvas(item, scale = 4, { signal } = {}) {
+  return questionCanvas(item, scale, false, signal);
+}
+
 export async function renderFigureImage(item, scale = 2, { signal } = {}) {
   signal?.throwIfAborted();
   const canvas = await questionCanvas(item, scale, false, signal);
