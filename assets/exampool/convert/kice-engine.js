@@ -244,12 +244,17 @@ export async function toQuestion(structure,item,{number='1'}={}){
       const paras=s.items.filter(n=>n.k==='para');
       const stepish=/과정|방법/.test(s.name)||noHead&&paras.filter(p=>/^\((가|나|다)\)/.test(p.text)).length>=2;
       if(stepish){
-        const st=add('steps',g,s.name||'실험 과정');st.lines=[];
+        // 과정 글 옆 그림 하나: 상자 안 '글 옆 자료' 가로 묶음(과정 칸 + 그림).
+        const mats0=s.items.filter(n=>n.k!=='para'),pb=paras.map(paraBox).filter(Boolean);
+        const sideFig=mats0.length===1&&mats0[0].k==='figure'&&mats0[0].box&&pb.length&&pb.some(b=>yOverlap(b,mats0[0].box)>4)&&pb.filter(b=>yOverlap(b,mats0[0].box)>4).every(b=>mats0[0].box[0]>=b[2]-3)?mats0[0]:null;
+        let host=g;if(sideFig){host=add('group',g,'글 옆 자료');host.layout='나란히';host.boxed=false;}
+        const st=add('steps',host,s.name||'실험 과정');st.lines=[];
+        if(sideFig){const tb=[Math.min(...pb.map(b=>b[0])),0,Math.max(...pb.filter(b=>yOverlap(b,sideFig.box)>4).map(b=>b[2])),0],nb=sideFig.box;
+          const [a,b]=ratioPair(Math.max(10,nb[0]-tb[0]),nb[2]-nb[0]);st.ratio=a;const f=figure(sideFig,host,'자료',false);f.ratio=b;f.size=100;}
         if(!s.name)st.label='';
         for(const p of paras){const m=p.text.match(/^\(([가-힣])\)\s*(.*)$/);if(m)st.lines.push({id:crypto.randomUUID(),label:`(${m[1]})`,text:m[2]});
           else if(st.lines.length&&!/^[◦○•]/.test(p.text)&&!p.head&&!p.display)st.lines.at(-1).text+=' '+p.text;else st.lines.push({id:crypto.randomUUID(),label:'',text:p.text});}
-        if(noHead){const pre=paras.filter(p=>!st.lines.some(l=>l.text.includes(p.text)));void pre;}
-        emit(s.items.filter(n=>n.k!=='para'),g);
+        emit(s.items.filter(n=>n.k!=='para'&&n!==sideFig),g);
         continue;
       }
       const mats=s.items.filter(n=>n.k!=='para');

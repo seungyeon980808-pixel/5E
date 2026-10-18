@@ -119,25 +119,26 @@ export function analyze(structure,item={}){
   const B=opening?opening.left+OPEN_STEP:outside.length?Math.min(...outside):null;
   // 흐름을 마디(문단 묶음·그림·표·상자)로
   const nodes=[];let run=[];
-  const flush=()=>{if(run.length){for(const p of paragraphs(run,{B:run[0].rect?undefined:B}))nodes.push({k:'para',...p,rect:run[0].rect||null});run=[];}};
   // 글 옆 그림·표(가로로 겹치지 않음)는 흐름 순서가 문단 중간에 끼므로 그 글 묶음 뒤로 미룬다.
   const flow=items.filter(it=>!(it.k==='line'&&it.role==='bogi'));
   const besideAt=k=>{const it=flow[k];if(!it.box)return false;const p=flow.slice(0,k).reverse().find(x=>x.k==='line'),n=flow.slice(k+1).find(x=>x.k==='line');
     const apart=l=>l&&l.geo&&l.rect===it.rect&&(l.right<=it.box[0]+2||l.left>=it.box[2]-2)&&Number.isFinite(l.base)&&l.base>=it.box[1]-2&&l.base<=it.box[3]+l.h+14;
     // 앞 줄이 그림 옆이고 다음 줄이 같은 칸에서 이어지면(그림 아래로 흐르는 문단) 문단 뒤로 미룬다.
     return apart(p)&&(apart(n)||!!n&&n.geo&&n.rect===it.rect&&!MARK.test(n.text)&&!HEAD.test(n.text));};
+  // 미룬 그림은 그 그림 바로 앞 줄이 든 문단 뒤에 놓는다(실험 상자: 과정 문단 옆 그림이 결과 머리 뒤로 밀리지 않게).
   let deferred=[];
+  const flushAll=()=>{
+    if(run.length){for(const p of paragraphs(run,{B:run[0].rect?undefined:B})){nodes.push({k:'para',...p,rect:run[0].rect||null});
+      for(const d of deferred.filter(d=>p.lines.includes(d.after)))nodes.push(d.node);deferred=deferred.filter(d=>!p.lines.includes(d.after));}run=[];}
+    nodes.push(...deferred.map(d=>d.node));deferred=[];};
   for(const [k,it] of flow.entries()){
     if(it.k==='line'&&(!run.length||run[0].rect===it.rect)){run.push(it);continue;}
-    if(it.k!=='line'&&run.length&&besideAt(k)){deferred.push({...it,rect:it.rect||null});continue;}
-    flush();nodes.push(...deferred);
-  // 이어진 그림·표는 위→아래, 같은 높이면 왼→오른 순서로.
-  for(let i=0;i<nodes.length;){if(nodes[i].k==='para'){i++;continue;}let j=i;while(j<nodes.length&&nodes[j].k!=='para'&&nodes[j].rect===nodes[i].rect)j++;
-    const seg=nodes.slice(i,j);if(seg.every(n=>n.box))seg.sort((a,b)=>yOv(a.box,b.box)>4?a.box[0]-b.box[0]:a.box[1]-b.box[1]);nodes.splice(i,j-i,...seg);i=j;}deferred=[];
+    if(it.k!=='line'&&run.length&&besideAt(k)){deferred.push({node:{...it,rect:it.rect||null},after:run.at(-1)});continue;}
+    flushAll();
     if(it.k==='line'){run.push(it);continue;}
     nodes.push({...it,rect:it.rect||null});
   }
-  flush();nodes.push(...deferred);
+  flushAll();
   // 이어진 그림·표는 위→아래, 같은 높이면 왼→오른 순서로.
   for(let i=0;i<nodes.length;){if(nodes[i].k==='para'){i++;continue;}let j=i;while(j<nodes.length&&nodes[j].k!=='para'&&nodes[j].rect===nodes[i].rect)j++;
     const seg=nodes.slice(i,j);if(seg.every(n=>n.box))seg.sort((a,b)=>yOv(a.box,b.box)>4?a.box[0]-b.box[0]:a.box[1]-b.box[1]);nodes.splice(i,j-i,...seg);i=j;}
