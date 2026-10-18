@@ -1,0 +1,2003 @@
+{
+  "schema": "exam-glyph-proofs-v1",
+  "fonts": [
+    {
+      "fontName": "HyhwpEQ",
+      "unitsPerEm": 1024,
+      "glyphs": [
+        {
+          "codepoint": 57345,
+          "glyphId": 250,
+          "formula": "B",
+          "glyfSha256": "aaae12904157037440f7238ae065ddbcc3d04e987ff46925c13797f907294be6",
+          "metrics": [
+            725,
+            37
+          ]
+        },
+        {
+          "codepoint": 57348,
+          "glyphId": 253,
+          "formula": "E",
+          "glyfSha256": "01f662f100fba6eb25f749f9cd3d91f142ad1c53cafd288f1db48cbc6d47fb0a",
+          "metrics": [
+            696,
+            34
+          ]
+        },
+        {
+          "codepoint": 57349,
+          "glyphId": 254,
+          "formula": "F",
+          "glyfSha256": "fef4abf8067c7cd33b167688c580fdbd65c36568e7e7efa60a373a83cecffe5d",
+          "metrics": [
+            667,
+            34
+          ]
+        },
+        {
+          "codepoint": 57351,
+          "glyphId": 256,
+          "formula": "H",
+          "glyfSha256": "a0ca9ffd30d77994c19d69a860888b23e259e21e2992526d1305bfd5f1091543",
+          "metrics": [
+            768,
+            34
+          ]
+        },
+        {
+          "codepoint": 57352,
+          "glyphId": 257,
+          "formula": "I",
+          "glyfSha256": "c148ea68578b8cea53aacd15c2beca777da7b2708ac85bb2901eeedad2dcaa18",
+          "metrics": [
+            369,
+            29
+          ]
+        },
+        {
+          "codepoint": 57355,
+          "glyphId": 260,
+          "formula": "L",
+          "glyfSha256": "d4d2dd8ef336e4b082866c18a3f201b200350bf96212c326c66f531650646f48",
+          "metrics": [
+            640,
+            34
+          ]
+        },
+        {
+          "codepoint": 57363,
+          "glyphId": 268,
+          "formula": "T",
+          "glyfSha256": "76c19796a83e9fdd726a9d06aa04bf87369f4af5a67a0aeb62d1d749ca03d0a1",
+          "metrics": [
+            739,
+            37
+          ]
+        },
+        {
+          "codepoint": 57396,
+          "glyphId": 301,
+          "formula": "1",
+          "glyfSha256": "608a46709c8e6e8981f21096324f696b80004b0a3f80aacf00e453e28b70c763",
+          "metrics": [
+            512,
+            91
+          ]
+        },
+        {
+          "codepoint": 57397,
+          "glyphId": 302,
+          "formula": "2",
+          "glyfSha256": "ea05a22c4bab8ddbc919127b247065d57930ceb614e7e30435709df4f7814938",
+          "metrics": [
+            512,
+            51
+          ]
+        },
+        {
+          "codepoint": 57398,
+          "glyphId": 303,
+          "formula": "3",
+          "glyfSha256": "6e2b541b864fc33713b4881183bd89dd6085010dd22171b5e4f177b03d20b652",
+          "metrics": [
+            512,
+            43
+          ]
+        },
+        {
+          "codepoint": 57399,
+          "glyphId": 304,
+          "formula": "4",
+          "glyfSha256": "f1b4640e88881063cfad5a5f8c7662d46c44b10ec4ed0c4498d4b50c689ef191",
+          "metrics": [
+            512,
+            29
+          ]
+        },
+        {
+          "codepoint": 57400,
+          "glyphId": 305,
+          "formula": "5",
+          "glyfSha256": "aebdf8aa78e54534c3d70b64021b304365e909fab118eb0fb6760909882d2d7d",
+          "metrics": [
+            512,
+            51
+          ]
+        },
+        {
+          "codepoint": 57401,
+          "glyphId": 306,
+          "formula": "6",
+          "glyfSha256": "5767c0c528ec245e4bd9ae263565dbbfd1b1a8483650a44660f5d67308f0ef13",
+          "metrics": [
+            512,
+            43
+          ]
+        },
+        {
+          "codepoint": 57402,
+          "glyphId": 307,
+          "formula": "7",
+          "glyfSha256": "979d8db4e9bb657ed46cdd27535c1e48979b7d16e43c01795451a290878d718c",
+          "metrics": [
+            512,
+            57
+          ]
+        },
+        {
+          "codepoint": 57403,
+          "glyphId": 308,
+          "formula": "8",
+          "glyfSha256": "bb14bf59fdc1dd9a612878e1e3d5b156c78651c528d46e74fabb72e5517d5915",
+          "metrics": [
+            512,
+            43
+          ]
+        },
+        {
+          "codepoint": 57404,
+          "glyphId": 309,
+          "formula": "9",
+          "glyfSha256": "b7cd788814213f8f92bd368574228b6dc8163fd233d5ce395c916585e1e87477",
+          "metrics": [
+            512,
+            43
+          ]
+        },
+        {
+          "codepoint": 57405,
+          "glyphId": 310,
+          "formula": "0",
+          "glyfSha256": "19e9512e78fbd4a791246ef35cd68d965c74e08b7b2ab0f50b7f45097b9a6736",
+          "metrics": [
+            512,
+            40
+          ]
+        },
+        {
+          "codepoint": 57414,
+          "glyphId": 319,
+          "formula": "-",
+          "glyfSha256": "28269ab61eafc845cd98eaaf79c22f089ad775e78bb2f09af48606f9a2d8689d",
+          "metrics": [
+            774,
+            57
+          ]
+        },
+        {
+          "codepoint": 57415,
+          "glyphId": 320,
+          "formula": "=",
+          "glyfSha256": "10c2fc31ff25c63a1e7a4a91b4ed07cd5481fb7ee48d145c84c1809d802d6e53",
+          "metrics": [
+            795,
+            57
+          ]
+        },
+        {
+          "codepoint": 57416,
+          "glyphId": 321,
+          "formula": "+",
+          "glyfSha256": "c11f5eb7f13543d14236617b8ce87251b6146baaf574ea0e8b34bd048d5ae036",
+          "metrics": [
+            795,
+            57
+          ]
+        },
+        {
+          "codepoint": 57427,
+          "glyphId": 332,
+          "formula": ".",
+          "glyfSha256": "36aa82d388e39bf565d2edb6fcfe5b4ca3364ea094d6e13a372ec491ac03f4c7",
+          "metrics": [
+            283,
+            88
+          ]
+        },
+        {
+          "codepoint": 57429,
+          "glyphId": 334,
+          "formula": "<",
+          "glyfSha256": "038281de849da1ce3e3302b0c121439c47dbe2118eb124624d6a448f04ee5fcc",
+          "metrics": [
+            864,
+            103
+          ]
+        },
+        {
+          "codepoint": 57430,
+          "glyphId": 335,
+          "formula": ">",
+          "glyfSha256": "4b6e8801bd5257c371fd3ed8e16816f60c66a1303ae0e7a6e4acf7e968f80cd0",
+          "metrics": [
+            864,
+            97
+          ]
+        },
+        {
+          "codepoint": 57453,
+          "glyphId": 358,
+          "formula": "\\frac",
+          "glyfSha256": "31fabf9ef1208388713bb54b1bc2e88c2d9d5ca56254e913c46e9af221fff66f",
+          "metrics": [
+            512,
+            0
+          ]
+        },
+        {
+          "codepoint": 57508,
+          "glyphId": 413,
+          "formula": "\\theta",
+          "glyfSha256": "52a0034bd0901f622381e1f56eaba6b3ff542516a22296612013f950dde93dba",
+          "metrics": [
+            480,
+            43
+          ]
+        },
+        {
+          "codepoint": 57511,
+          "glyphId": 416,
+          "formula": "\\lambda",
+          "glyfSha256": "96cabfdc8e0e26a83bcfb83a8d5e2ea6b0f58a612a8bed08e8a82d86a72ce8fd",
+          "metrics": [
+            597,
+            50
+          ]
+        },
+        {
+          "codepoint": 57575,
+          "glyphId": 480,
+          "formula": "c",
+          "glyfSha256": "48b1eb92ff3b5a14a1d2e3a5ff3f8940225b5191c5a39f9bc9bb76160d4f1091",
+          "metrics": [
+            442,
+            42
+          ]
+        },
+        {
+          "codepoint": 57576,
+          "glyphId": 481,
+          "formula": "d",
+          "glyfSha256": "e974363fc64f33c4506c8b269d9f3476083fc307b6f74603c2a91374fcc06174",
+          "metrics": [
+            532,
+            41
+          ]
+        },
+        {
+          "codepoint": 57579,
+          "glyphId": 484,
+          "formula": "g",
+          "glyfSha256": "b1fafd3612c6cce6f105dfc69b71fc8a8fd8803815ee7eaa895f4dfa8bfaefce",
+          "metrics": [
+            487,
+            15
+          ]
+        },
+        {
+          "codepoint": 57580,
+          "glyphId": 485,
+          "formula": "h",
+          "glyfSha256": "a088000682c986bb11b276d544586cbd8a69280610e27656d4bea0fdd7658053",
+          "metrics": [
+            590,
+            55
+          ]
+        },
+        {
+          "codepoint": 57585,
+          "glyphId": 490,
+          "formula": "m",
+          "glyfSha256": "dd93908b185c88d53b015048df95edf0fd91670929bd9050cd175050c9d584e1",
+          "metrics": [
+            899,
+            29
+          ]
+        },
+        {
+          "codepoint": 57586,
+          "glyphId": 491,
+          "formula": "n",
+          "glyfSha256": "36f2540fd162c014c05637bf39f382929786ea854bbd559a2d45d46b5340094a",
+          "metrics": [
+            614,
+            29
+          ]
+        },
+        {
+          "codepoint": 57592,
+          "glyphId": 497,
+          "formula": "t",
+          "glyfSha256": "67e555dd4c9883b50e8f652ac6763c93cffad334bd8cf5998159c6233bdf4ba7",
+          "metrics": [
+            369,
+            24
+          ]
+        },
+        {
+          "codepoint": 57594,
+          "glyphId": 499,
+          "formula": "v",
+          "glyfSha256": "1891041183969c1bf1adc367a1d0899847fbae48bb6127a8ce729abc0d85ff3c",
+          "metrics": [
+            496,
+            29
+          ]
+        },
+        {
+          "codepoint": 57596,
+          "glyphId": 501,
+          "formula": "x",
+          "glyfSha256": "fd5f41bb9d2e1a127967cc9c454f3f315246d61439acb9d347ec7a1e956227a9",
+          "metrics": [
+            585,
+            30
+          ]
+        },
+        {
+          "codepoint": 57597,
+          "glyphId": 502,
+          "formula": "y",
+          "glyfSha256": "51f89b98b72ed3290e6a251e9126587993caa22eeb7c41b9ded4a16bad6ae5de",
+          "metrics": [
+            502,
+            29
+          ]
+        }
+      ]
+    },
+    {
+      "fontName": "HyhwpEQ",
+      "unitsPerEm": 1024,
+      "glyphs": [
+        {
+          "codepoint": 57502,
+          "glyphId": 312,
+          "formula": "\\beta",
+          "glyfSha256": "808d27d5687a0f41a9a7d2a8cbad8ee870538dc3d39ea1b67847965f04dcc7cf",
+          "metrics": [
+            579,
+            25
+          ]
+        }
+      ]
+    },
+    {
+      "fontName": "HyhwpEQ",
+      "unitsPerEm": 1024,
+      "glyphs": [
+        {
+          "codepoint": 57501,
+          "glyphId": 311,
+          "formula": "\\alpha",
+          "glyfSha256": "a66a24515caeea3ae065aae9e3c393648e3e91181c9a7238f52a91a6114678a2",
+          "metrics": [
+            655,
+            42
+          ]
+        }
+      ]
+    },
+    {
+      "fontName": "HyhwpEQ",
+      "unitsPerEm": 1024,
+      "glyphs": [
+        {
+          "codepoint": 57573,
+          "glyphId": 478,
+          "formula": "a",
+          "glyfSha256": "da4b8e6d8b0b0491e6767ce8ae08c840c7273f801e4a5c7cda205aceb919bb14",
+          "metrics": [
+            541,
+            41
+          ]
+        },
+        {
+          "codepoint": 57574,
+          "glyphId": 479,
+          "formula": "b",
+          "glyfSha256": "3633e4862c0f1261afe49caafb6e337c1b5e28807370d8a28e1181650d383b46",
+          "metrics": [
+            439,
+            48
+          ]
+        }
+      ]
+    },
+    {
+      "fontName": "HyhwpEQ",
+      "unitsPerEm": 1024,
+      "glyphs": [
+        {
+          "codepoint": 57359,
+          "glyphId": 3,
+          "formula": "P",
+          "glyfSha256": "d24832a2a5c81affd4338f136c87452715038dcd510305a32b7c8e1620e62fa1",
+          "metrics": [
+            696,
+            36
+          ]
+        },
+        {
+          "codepoint": 57365,
+          "glyphId": 4,
+          "formula": "V",
+          "glyfSha256": "4d5b56026dc784b054837cae9c2bbea7160fed0b50db462de6968c3430a79bb3",
+          "metrics": [
+            768,
+            20
+          ]
+        }
+      ]
+    },
+    {
+      "fontName": "HyhwpEQ",
+      "unitsPerEm": 1024,
+      "glyphs": [
+        {
+          "codepoint": 57357,
+          "glyphId": 167,
+          "formula": "N",
+          "glyfSha256": "3e4bc724f468800aaaede2e8d439dd5bbd1c214c995e5b6e707d50b4eb0e655e",
+          "metrics": [
+            768,
+            34
+          ]
+        },
+        {
+          "codepoint": 57412,
+          "glyphId": 222,
+          "formula": "(",
+          "glyfSha256": "f9397177126af029ac94f7c30378bbf5324e95d70a02d222c6b21d6566250a45",
+          "metrics": [
+            398,
+            102
+          ]
+        },
+        {
+          "codepoint": 57413,
+          "glyphId": 223,
+          "formula": ")",
+          "glyfSha256": "28128c2f086cdcb64da316228840d04cae16a7e67222581b30fe0ee3e7af3145",
+          "metrics": [
+            398,
+            52
+          ]
+        },
+        {
+          "codepoint": 57421,
+          "glyphId": 231,
+          "formula": "|",
+          "glyfSha256": "2eb4bcc29ac1ff31a73d2f2a9d1041cfc169fa1ecf3c0d0e21fee59bb806e264",
+          "metrics": [
+            205,
+            81
+          ]
+        },
+        {
+          "codepoint": 57583,
+          "glyphId": 393,
+          "formula": "k",
+          "glyfSha256": "27e170466ad93599697a799f60cfea90d4d8dfda52a278eb908858ddb2c2ebd8",
+          "metrics": [
+            532,
+            55
+          ]
+        },
+        {
+          "codepoint": 57584,
+          "glyphId": 394,
+          "formula": "l",
+          "glyfSha256": "b63b27b261c2000bccc41e3683d547da83a072bd55ba844be47686b5419967c1",
+          "metrics": [
+            305,
+            37
+          ]
+        },
+        {
+          "codepoint": 57588,
+          "glyphId": 398,
+          "formula": "p",
+          "glyfSha256": "5b03b3e8102c84128a2a8a654115a56c2e086f4f3e915b2e4237401abcfdb02c",
+          "metrics": [
+            515,
+            -31
+          ]
+        },
+        {
+          "codepoint": 57589,
+          "glyphId": 399,
+          "formula": "q",
+          "glyfSha256": "b489e303b123474b074b7f0ae9b6522ac4bcde1c247b1a9ff4308a89678f9b3d",
+          "metrics": [
+            457,
+            41
+          ]
+        },
+        {
+          "codepoint": 57591,
+          "glyphId": 401,
+          "formula": "s",
+          "glyfSha256": "fa9801fb30c37fab505a88193a26f78611e3475cdd98bdd62c6c8941f02be9a8",
+          "metrics": [
+            480,
+            53
+          ]
+        },
+        {
+          "codepoint": 57595,
+          "glyphId": 405,
+          "formula": "w",
+          "glyfSha256": "5b4afc25153778082eaed69c2933eac2c580bd1321b0fd4d0ebff7e1e9be9c5a",
+          "metrics": [
+            732,
+            29
+          ]
+        }
+      ]
+    },
+    {
+      "fontName": "HyhwpEQ",
+      "unitsPerEm": 1024,
+      "glyphs": [
+        {
+          "codepoint": 57423,
+          "glyphId": 233,
+          "formula": ":",
+          "glyfSha256": "0a7dc667f48fd13be105a541fa356b78047fe96733d05d893863e5addd735582",
+          "metrics": [
+            283,
+            88
+          ]
+        },
+        {
+          "codepoint": 57577,
+          "glyphId": 387,
+          "formula": "e",
+          "glyfSha256": "4628ef351084da3d7de49e3d2427d8e541f8ec4453aa3902aaa594476a3af3f4",
+          "metrics": [
+            476,
+            47
+          ]
+        },
+        {
+          "codepoint": 57598,
+          "glyphId": 408,
+          "formula": "z",
+          "glyfSha256": "2dc4c84af24120bc3db12965ce6ac89d601a767e18a3e682e12b638e28d97d43",
+          "metrics": [
+            476,
+            44
+          ]
+        },
+        {
+          "codepoint": 57601,
+          "glyphId": 410,
+          "formula": "|",
+          "glyfSha256": "847732d77193bcb6fd8640e9495ef8aad2d7101d20e3f0a0f7661b9faf3c8a99",
+          "metrics": [
+            506,
+            225
+          ]
+        }
+      ]
+    },
+    {
+      "fontName": "HyhwpEQ",
+      "unitsPerEm": 1024,
+      "glyphs": [
+        {
+          "codepoint": 57356,
+          "glyphId": 166,
+          "formula": "M",
+          "glyfSha256": "9bd599ebcebe79d6f59921b889111c3f2dc8beddd90549645d58748535226e4b",
+          "metrics": [
+            938,
+            38
+          ]
+        },
+        {
+          "codepoint": 57428,
+          "glyphId": 238,
+          "formula": "/",
+          "glyfSha256": "464a9f1069f031d2dd98ca7485aff95d4506fb84e3f98803558b13549c952d72",
+          "metrics": [
+            512,
+            57
+          ]
+        }
+      ]
+    },
+    {
+      "fontName": "HyhwpEQ",
+      "unitsPerEm": 1024,
+      "glyphs": [
+        {
+          "codepoint": 57354,
+          "glyphId": 259,
+          "formula": "K",
+          "glyfSha256": "ae3bf4752877030e1d8590a60e8431f86a0c4c923f7032deab9b8ceb9e9cefe7",
+          "metrics": [
+            795,
+            34
+          ]
+        },
+        {
+          "codepoint": 57417,
+          "glyphId": 322,
+          "formula": "[",
+          "glyfSha256": "4fe1c93faba0a33a08e9cea9b52dd15bc95879fd8ea72ee275547143ec8d01eb",
+          "metrics": [
+            283,
+            121
+          ]
+        },
+        {
+          "codepoint": 57418,
+          "glyphId": 323,
+          "formula": "]",
+          "glyfSha256": "d3d633d3e23c50c413a9587f91b0b3701263fa9bcd2a7b3f29a4fcc16bbbf129",
+          "metrics": [
+            283,
+            22
+          ]
+        },
+        {
+          "codepoint": 57504,
+          "glyphId": 409,
+          "formula": "\\delta",
+          "glyfSha256": "769231ffb00495c8cde2fb12be6b57ef856c3dc23fabe423bc8025f398404f41",
+          "metrics": [
+            455,
+            43
+          ]
+        }
+      ]
+    },
+    {
+      "fontName": "HyhwpEQ",
+      "unitsPerEm": 1024,
+      "glyphs": [
+        {
+          "codepoint": 57369,
+          "glyphId": 274,
+          "formula": "Z",
+          "glyfSha256": "f8105a8be5064df0c2ca18a91cf18ccefdd4ceb5038c0aed8d90dff39062e2a1",
+          "metrics": [
+            625,
+            53
+          ]
+        },
+        {
+          "codepoint": 57411,
+          "glyphId": 316,
+          "formula": "*",
+          "glyfSha256": "a6326f01496bf682157125e073f85cefd1f291ab656578b5ff390e67a258f86f",
+          "metrics": [
+            512,
+            62
+          ]
+        },
+        {
+          "codepoint": 57578,
+          "glyphId": 483,
+          "formula": "f",
+          "glyfSha256": "514da64743a0a94c94d9bfcae5ed0198d7c1bbf381b53d9cadceb6c516e25a8c",
+          "metrics": [
+            553,
+            -7
+          ]
+        }
+      ]
+    },
+    {
+      "fontName": "HyhwpEQ",
+      "unitsPerEm": 1024,
+      "glyphs": [
+        {
+          "codepoint": 57522,
+          "glyphId": 427,
+          "formula": "\\chi",
+          "glyfSha256": "6d0d2c81fbb979a04143ae24484812c8a50ed0c3cf88eaf8bbba464511e09521",
+          "metrics": [
+            640,
+            30
+          ]
+        },
+        {
+          "codepoint": 57590,
+          "glyphId": 495,
+          "formula": "r",
+          "glyfSha256": "e755f0a73cda9764e25b7cb7ee72845f2f8b1dd3672ddd352b1d05e0f697bf1f",
+          "metrics": [
+            462,
+            29
+          ]
+        }
+      ]
+    },
+    {
+      "fontName": "HyhwpEQ",
+      "unitsPerEm": 1024,
+      "glyphs": [
+        {
+          "codepoint": 57360,
+          "glyphId": 170,
+          "formula": "Q",
+          "glyfSha256": "493cc505d6628c14b1530649cbb9dbbfc34577186850234ad899224e7800067f",
+          "metrics": [
+            795,
+            57
+          ]
+        },
+        {
+          "codepoint": 57362,
+          "glyphId": 172,
+          "formula": "S",
+          "glyfSha256": "dbc3fbd6635a43cec0c289056d6257208d2aab9209b313321e1fdb16a2065f6e",
+          "metrics": [
+            568,
+            56
+          ]
+        },
+        {
+          "codepoint": 57480,
+          "glyphId": 290,
+          "formula": "\\Delta",
+          "glyfSha256": "e9760a2b62607a056ff66ace5e8c59e7cbafd9462a18990080ec72a798b43db5",
+          "metrics": [
+            853,
+            49
+          ]
+        }
+      ]
+    },
+    {
+      "fontName": "HyhwpEQ",
+      "unitsPerEm": 1024,
+      "glyphs": [
+        {
+          "codepoint": 57361,
+          "glyphId": 171,
+          "formula": "R",
+          "glyfSha256": "fb21549e7b8977d0f5bf0e8788ecb743a688271e4d3d9fa846a10e650d0ea179",
+          "metrics": [
+            753,
+            36
+          ]
+        },
+        {
+          "codepoint": 57426,
+          "glyphId": 236,
+          "formula": ",",
+          "glyfSha256": "8b822d2680e59ff4373a5cf3d2f0ee93bfa2adf75ed99901fae65f97cb578fab",
+          "metrics": [
+            283,
+            84
+          ]
+        }
+      ]
+    },
+    {
+      "fontName": "HyhwpEQ",
+      "unitsPerEm": 1024,
+      "glyphs": [
+        {
+          "codepoint": 57601,
+          "glyphId": 505,
+          "formula": "|",
+          "glyfSha256": "a8851d3957faf3250315b456a5b91a8d30de4551dcedbbe1bfa550a913bc96da",
+          "metrics": [
+            506,
+            225
+          ]
+        }
+      ]
+    },
+    {
+      "fontName": "HyhwpEQ",
+      "unitsPerEm": 1024,
+      "glyphs": [
+        {
+          "codepoint": 57436,
+          "glyphId": 246,
+          "formula": "\\sqrt",
+          "glyfSha256": "dcfa1083efe9c6bb38d58c58a2dede398c318efa19c0e7442cb1779b553df282",
+          "metrics": [
+            1024,
+            230
+          ]
+        }
+      ]
+    },
+    {
+      "fontName": "HyhwpEQ",
+      "unitsPerEm": 1024,
+      "glyphs": [
+        {
+          "codepoint": 57517,
+          "glyphId": 327,
+          "formula": "\\rho",
+          "glyfSha256": "cd9f3a29e98f0cb1c21875e491e5792a6404b6225d79136232cff809da4604da",
+          "metrics": [
+            529,
+            31
+          ]
+        }
+      ]
+    },
+    {
+      "fontName": "HyhwpEQ",
+      "unitsPerEm": 1024,
+      "glyphs": [
+        {
+          "codepoint": 57344,
+          "glyphId": 154,
+          "formula": "A",
+          "glyfSha256": "5bc0ae683a4a77ac3e3cfa963354a88f98c5e388a4049c3d350aa1eda31e0972",
+          "metrics": [
+            768,
+            32
+          ]
+        }
+      ]
+    },
+    {
+      "fontName": "HyhwpEQ",
+      "unitsPerEm": 1024,
+      "glyphs": [
+        {
+          "codepoint": 57347,
+          "glyphId": 252,
+          "formula": "D",
+          "glyfSha256": "ac4f6794e7bb3a1b2bc3d48fb7f924d10fc08b9a34521a76d374859e1bac1ab4",
+          "metrics": [
+            782,
+            36
+          ]
+        }
+      ]
+    },
+    {
+      "fontName": "HyhwpEQ",
+      "unitsPerEm": 1024,
+      "glyphs": [
+        {
+          "codepoint": 57521,
+          "glyphId": 426,
+          "formula": "\\phi",
+          "glyfSha256": "e3b5befd3c2f44047de724f7b7f9fba2947295ca55e836c52d8ea26ec185f5e7",
+          "metrics": [
+            609,
+            50
+          ]
+        }
+      ]
+    },
+    {
+      "fontName": "HyhwpEQ",
+      "unitsPerEm": 1024,
+      "glyphs": [
+        {
+          "codepoint": 57531,
+          "glyphId": 436,
+          "formula": "\\ell",
+          "glyfSha256": "f8f61a73d72f822edfe102f57d3767ae0154be6cd8e44dffb30bfa7119521a4f",
+          "metrics": [
+            426,
+            11
+          ]
+        }
+      ]
+    },
+    {
+      "fontName": "HyhwpEQ",
+      "unitsPerEm": 1024,
+      "glyphs": [
+        {
+          "codepoint": 57578,
+          "glyphId": 388,
+          "formula": "f",
+          "glyfSha256": "c35531d808d6ddf6b5aac9d1ae6910bad1bac7c81ebb28f53263cf9968d6713d",
+          "metrics": [
+            501,
+            -5
+          ]
+        }
+      ]
+    },
+    {
+      "fontName": "HyhwpEQ",
+      "unitsPerEm": 1024,
+      "glyphs": [
+        {
+          "codepoint": 57366,
+          "glyphId": 176,
+          "formula": "W",
+          "glyfSha256": "27d803ff594b61e1b96edfc0bae577fc162caab49e205af634da575ab1cc9f59",
+          "metrics": [
+            1051,
+            19
+          ]
+        }
+      ]
+    },
+    {
+      "fontName": "HyhwpEQ",
+      "unitsPerEm": 1024,
+      "glyphs": [
+        {
+          "codepoint": 57581,
+          "glyphId": 391,
+          "formula": "i",
+          "glyfSha256": "cbdecce93baac1517c702270567063c6766f788e7077e7030ccb33e1d7217a42",
+          "metrics": [
+            352,
+            29
+          ]
+        }
+      ]
+    },
+    {
+      "fontName": "HyhwpEQ",
+      "unitsPerEm": 1024,
+      "glyphs": [
+        {
+          "codepoint": 57497,
+          "glyphId": 402,
+          "formula": "\\Phi",
+          "glyfSha256": "46c682f6db2ef0581f8ca9ad6cb63725e20982ec4a065f68a9e883de12967f45",
+          "metrics": [
+            682,
+            24
+          ]
+        }
+      ]
+    },
+    {
+      "fontName": "HyhwpEQ",
+      "unitsPerEm": 1024,
+      "glyphs": [
+        {
+          "codepoint": 57516,
+          "glyphId": 326,
+          "formula": "{\\pi}",
+          "glyfSha256": "1a6ff69ffbe6b43160008edbad1d47835b1f04c35eea69181148629bf375a757",
+          "metrics": [
+            584,
+            28
+          ]
+        }
+      ]
+    },
+    {
+      "fontName": "HyhwpEQ",
+      "unitsPerEm": 1024,
+      "glyphs": [
+        {
+          "codepoint": 57614,
+          "glyphId": 518,
+          "formula": "\\varepsilon",
+          "glyfSha256": "f74a06c77f930c37195018492db9284482aed1447e72094f64ae23270f78cc17",
+          "metrics": [
+            461,
+            22
+          ]
+        }
+      ]
+    },
+    {
+      "fontName": "HyhwpEQ",
+      "unitsPerEm": 1024,
+      "glyphs": [
+        {
+          "codepoint": 57454,
+          "glyphId": 359,
+          "formula": "\\vec",
+          "glyfSha256": "3664f4c7f59bc913f16d2f857fbef7532ad14a849d2eecc1cb499047110ba68d",
+          "metrics": [
+            512,
+            0
+          ]
+        }
+      ]
+    },
+    {
+      "fontName": "HyhwpEQ",
+      "unitsPerEm": 1024,
+      "glyphs": [
+        {
+          "codepoint": 57344,
+          "glyphId": 249,
+          "formula": "A",
+          "glyfSha256": "5bc0ae683a4a77ac3e3cfa963354a88f98c5e388a4049c3d350aa1eda31e0972",
+          "metrics": [
+            768,
+            32
+          ]
+        },
+        {
+          "codepoint": 57345,
+          "glyphId": 250,
+          "formula": "B",
+          "glyfSha256": "aaae12904157037440f7238ae065ddbcc3d04e987ff46925c13797f907294be6",
+          "metrics": [
+            725,
+            37
+          ]
+        },
+        {
+          "codepoint": 57346,
+          "glyphId": 251,
+          "formula": "C",
+          "glyfSha256": "91505afe0b42519091e7a934465155e9bb5c2f9bd08ffb58e22cfe25b30f32fa",
+          "metrics": [
+            739,
+            57
+          ]
+        },
+        {
+          "codepoint": 57349,
+          "glyphId": 254,
+          "formula": "F",
+          "glyfSha256": "fef4abf8067c7cd33b167688c580fdbd65c36568e7e7efa60a373a83cecffe5d",
+          "metrics": [
+            667,
+            34
+          ]
+        },
+        {
+          "codepoint": 57362,
+          "glyphId": 267,
+          "formula": "S",
+          "glyfSha256": "dbc3fbd6635a43cec0c289056d6257208d2aab9209b313321e1fdb16a2065f6e",
+          "metrics": [
+            568,
+            56
+          ]
+        },
+        {
+          "codepoint": 57363,
+          "glyphId": 268,
+          "formula": "T",
+          "glyfSha256": "76c19796a83e9fdd726a9d06aa04bf87369f4af5a67a0aeb62d1d749ca03d0a1",
+          "metrics": [
+            739,
+            37
+          ]
+        },
+        {
+          "codepoint": 57367,
+          "glyphId": 272,
+          "formula": "X",
+          "glyfSha256": "9920b527b285b6f1e7ea5f66f82fc8fae6f7fa33ef184655f2329792b12f0699",
+          "metrics": [
+            768,
+            25
+          ]
+        },
+        {
+          "codepoint": 57369,
+          "glyphId": 274,
+          "formula": "Z",
+          "glyfSha256": "f8105a8be5064df0c2ca18a91cf18ccefdd4ceb5038c0aed8d90dff39062e2a1",
+          "metrics": [
+            625,
+            53
+          ]
+        },
+        {
+          "codepoint": 57396,
+          "glyphId": 301,
+          "formula": "1",
+          "glyfSha256": "608a46709c8e6e8981f21096324f696b80004b0a3f80aacf00e453e28b70c763",
+          "metrics": [
+            512,
+            91
+          ]
+        },
+        {
+          "codepoint": 57397,
+          "glyphId": 302,
+          "formula": "2",
+          "glyfSha256": "ea05a22c4bab8ddbc919127b247065d57930ceb614e7e30435709df4f7814938",
+          "metrics": [
+            512,
+            51
+          ]
+        },
+        {
+          "codepoint": 57398,
+          "glyphId": 303,
+          "formula": "3",
+          "glyfSha256": "6e2b541b864fc33713b4881183bd89dd6085010dd22171b5e4f177b03d20b652",
+          "metrics": [
+            512,
+            43
+          ]
+        },
+        {
+          "codepoint": 57399,
+          "glyphId": 304,
+          "formula": "4",
+          "glyfSha256": "f1b4640e88881063cfad5a5f8c7662d46c44b10ec4ed0c4498d4b50c689ef191",
+          "metrics": [
+            512,
+            29
+          ]
+        },
+        {
+          "codepoint": 57400,
+          "glyphId": 305,
+          "formula": "5",
+          "glyfSha256": "aebdf8aa78e54534c3d70b64021b304365e909fab118eb0fb6760909882d2d7d",
+          "metrics": [
+            512,
+            51
+          ]
+        },
+        {
+          "codepoint": 57401,
+          "glyphId": 306,
+          "formula": "6",
+          "glyfSha256": "5767c0c528ec245e4bd9ae263565dbbfd1b1a8483650a44660f5d67308f0ef13",
+          "metrics": [
+            512,
+            43
+          ]
+        },
+        {
+          "codepoint": 57402,
+          "glyphId": 307,
+          "formula": "7",
+          "glyfSha256": "979d8db4e9bb657ed46cdd27535c1e48979b7d16e43c01795451a290878d718c",
+          "metrics": [
+            512,
+            57
+          ]
+        },
+        {
+          "codepoint": 57403,
+          "glyphId": 308,
+          "formula": "8",
+          "glyfSha256": "bb14bf59fdc1dd9a612878e1e3d5b156c78651c528d46e74fabb72e5517d5915",
+          "metrics": [
+            512,
+            43
+          ]
+        },
+        {
+          "codepoint": 57404,
+          "glyphId": 309,
+          "formula": "9",
+          "glyfSha256": "b7cd788814213f8f92bd368574228b6dc8163fd233d5ce395c916585e1e87477",
+          "metrics": [
+            512,
+            43
+          ]
+        },
+        {
+          "codepoint": 57405,
+          "glyphId": 310,
+          "formula": "0",
+          "glyfSha256": "19e9512e78fbd4a791246ef35cd68d965c74e08b7b2ab0f50b7f45097b9a6736",
+          "metrics": [
+            512,
+            40
+          ]
+        },
+        {
+          "codepoint": 57412,
+          "glyphId": 317,
+          "formula": "(",
+          "glyfSha256": "f9397177126af029ac94f7c30378bbf5324e95d70a02d222c6b21d6566250a45",
+          "metrics": [
+            398,
+            102
+          ]
+        },
+        {
+          "codepoint": 57413,
+          "glyphId": 318,
+          "formula": ")",
+          "glyfSha256": "28128c2f086cdcb64da316228840d04cae16a7e67222581b30fe0ee3e7af3145",
+          "metrics": [
+            398,
+            52
+          ]
+        },
+        {
+          "codepoint": 57414,
+          "glyphId": 319,
+          "formula": "-",
+          "glyfSha256": "28269ab61eafc845cd98eaaf79c22f089ad775e78bb2f09af48606f9a2d8689d",
+          "metrics": [
+            774,
+            57
+          ]
+        },
+        {
+          "codepoint": 57415,
+          "glyphId": 320,
+          "formula": "=",
+          "glyfSha256": "10c2fc31ff25c63a1e7a4a91b4ed07cd5481fb7ee48d145c84c1809d802d6e53",
+          "metrics": [
+            795,
+            57
+          ]
+        },
+        {
+          "codepoint": 57416,
+          "glyphId": 321,
+          "formula": "+",
+          "glyfSha256": "c11f5eb7f13543d14236617b8ce87251b6146baaf574ea0e8b34bd048d5ae036",
+          "metrics": [
+            795,
+            57
+          ]
+        },
+        {
+          "codepoint": 57419,
+          "glyphId": 324,
+          "formula": "\\{",
+          "glyfSha256": "f9256319c054a9d5a882b416202b8c829d77ab00916896aea8dfa39fa66eb8f0",
+          "metrics": [
+            594,
+            113
+          ]
+        },
+        {
+          "codepoint": 57420,
+          "glyphId": 325,
+          "formula": "\\}",
+          "glyfSha256": "74fcfdeea905aefc171e4ea054b2f3bddd0c7b391f310ae30cda5688982800ab",
+          "metrics": [
+            594,
+            113
+          ]
+        },
+        {
+          "codepoint": 57423,
+          "glyphId": 328,
+          "formula": ":",
+          "glyfSha256": "0a7dc667f48fd13be105a541fa356b78047fe96733d05d893863e5addd735582",
+          "metrics": [
+            283,
+            88
+          ]
+        },
+        {
+          "codepoint": 57426,
+          "glyphId": 331,
+          "formula": ",",
+          "glyfSha256": "8b822d2680e59ff4373a5cf3d2f0ee93bfa2adf75ed99901fae65f97cb578fab",
+          "metrics": [
+            283,
+            84
+          ]
+        },
+        {
+          "codepoint": 57427,
+          "glyphId": 332,
+          "formula": ".",
+          "glyfSha256": "36aa82d388e39bf565d2edb6fcfe5b4ca3364ea094d6e13a372ec491ac03f4c7",
+          "metrics": [
+            283,
+            88
+          ]
+        },
+        {
+          "codepoint": 57429,
+          "glyphId": 334,
+          "formula": "<",
+          "glyfSha256": "038281de849da1ce3e3302b0c121439c47dbe2118eb124624d6a448f04ee5fcc",
+          "metrics": [
+            864,
+            103
+          ]
+        },
+        {
+          "codepoint": 57430,
+          "glyphId": 335,
+          "formula": ">",
+          "glyfSha256": "4b6e8801bd5257c371fd3ed8e16816f60c66a1303ae0e7a6e4acf7e968f80cd0",
+          "metrics": [
+            864,
+            97
+          ]
+        },
+        {
+          "codepoint": 57435,
+          "glyphId": 340,
+          "formula": "\\int",
+          "glyfSha256": "401f804d6aef6e9caa91137be729b762aaa578c401ab08cb4df073c2dadb56b6",
+          "metrics": [
+            630,
+            50
+          ]
+        },
+        {
+          "codepoint": 57436,
+          "glyphId": 341,
+          "formula": "\\sqrt",
+          "glyfSha256": "dcfa1083efe9c6bb38d58c58a2dede398c318efa19c0e7442cb1779b553df282",
+          "metrics": [
+            1024,
+            230
+          ]
+        },
+        {
+          "codepoint": 57447,
+          "glyphId": 352,
+          "formula": "\\sum",
+          "glyfSha256": "1663fadd8f987a583dc9af6e2313c54494f6cf4ba13b10b7c797e643030ca7f8",
+          "metrics": [
+            739,
+            50
+          ]
+        },
+        {
+          "codepoint": 57453,
+          "glyphId": 358,
+          "formula": "\\frac",
+          "glyfSha256": "31fabf9ef1208388713bb54b1bc2e88c2d9d5ca56254e913c46e9af221fff66f",
+          "metrics": [
+            512,
+            0
+          ]
+        },
+        {
+          "codepoint": 57454,
+          "glyphId": 359,
+          "formula": "\\vec",
+          "glyfSha256": "3664f4c7f59bc913f16d2f857fbef7532ad14a849d2eecc1cb499047110ba68d",
+          "metrics": [
+            512,
+            0
+          ]
+        },
+        {
+          "codepoint": 57464,
+          "glyphId": 369,
+          "formula": "\\braceTop",
+          "glyfSha256": "24df8915e3e9e51f60ca7e68ddb36f969928891829f646164da764c87430f6f5",
+          "metrics": [
+            506,
+            210
+          ]
+        },
+        {
+          "codepoint": 57465,
+          "glyphId": 370,
+          "formula": "\\braceMiddle",
+          "glyfSha256": "c82127d8d8c99ba73cfa02cc27cd77432aa2af50614381484a10fa22aaf73f47",
+          "metrics": [
+            506,
+            15
+          ]
+        },
+        {
+          "codepoint": 57466,
+          "glyphId": 371,
+          "formula": "\\braceBottom",
+          "glyfSha256": "46a1b30fdd03c484fed3a9d438e26c64802c8d8dec54783c5bebfe8806352dad",
+          "metrics": [
+            506,
+            210
+          ]
+        },
+        {
+          "codepoint": 57467,
+          "glyphId": 372,
+          "formula": "\\braceExtender",
+          "glyfSha256": "062d0d565def8306a8ffcbb4de3796a1f47eb159fdebc7f257fd8844eee77679",
+          "metrics": [
+            506,
+            210
+          ]
+        },
+        {
+          "codepoint": 57508,
+          "glyphId": 413,
+          "formula": "\\theta",
+          "glyfSha256": "52a0034bd0901f622381e1f56eaba6b3ff542516a22296612013f950dde93dba",
+          "metrics": [
+            480,
+            43
+          ]
+        },
+        {
+          "codepoint": 57516,
+          "glyphId": 421,
+          "formula": "{\\pi}",
+          "glyfSha256": "1a6ff69ffbe6b43160008edbad1d47835b1f04c35eea69181148629bf375a757",
+          "metrics": [
+            584,
+            28
+          ]
+        },
+        {
+          "codepoint": 57573,
+          "glyphId": 478,
+          "formula": "a",
+          "glyfSha256": "da4b8e6d8b0b0491e6767ce8ae08c840c7273f801e4a5c7cda205aceb919bb14",
+          "metrics": [
+            541,
+            41
+          ]
+        },
+        {
+          "codepoint": 57574,
+          "glyphId": 479,
+          "formula": "b",
+          "glyfSha256": "3633e4862c0f1261afe49caafb6e337c1b5e28807370d8a28e1181650d383b46",
+          "metrics": [
+            439,
+            48
+          ]
+        },
+        {
+          "codepoint": 57575,
+          "glyphId": 480,
+          "formula": "c",
+          "glyfSha256": "48b1eb92ff3b5a14a1d2e3a5ff3f8940225b5191c5a39f9bc9bb76160d4f1091",
+          "metrics": [
+            442,
+            42
+          ]
+        },
+        {
+          "codepoint": 57576,
+          "glyphId": 481,
+          "formula": "d",
+          "glyfSha256": "e974363fc64f33c4506c8b269d9f3476083fc307b6f74603c2a91374fcc06174",
+          "metrics": [
+            532,
+            41
+          ]
+        },
+        {
+          "codepoint": 57577,
+          "glyphId": 482,
+          "formula": "e",
+          "glyfSha256": "4628ef351084da3d7de49e3d2427d8e541f8ec4453aa3902aaa594476a3af3f4",
+          "metrics": [
+            476,
+            47
+          ]
+        },
+        {
+          "codepoint": 57578,
+          "glyphId": 483,
+          "formula": "f",
+          "glyfSha256": "514da64743a0a94c94d9bfcae5ed0198d7c1bbf381b53d9cadceb6c516e25a8c",
+          "metrics": [
+            553,
+            -7
+          ]
+        },
+        {
+          "codepoint": 57579,
+          "glyphId": 484,
+          "formula": "g",
+          "glyfSha256": "b1fafd3612c6cce6f105dfc69b71fc8a8fd8803815ee7eaa895f4dfa8bfaefce",
+          "metrics": [
+            487,
+            15
+          ]
+        },
+        {
+          "codepoint": 57580,
+          "glyphId": 485,
+          "formula": "h",
+          "glyfSha256": "a088000682c986bb11b276d544586cbd8a69280610e27656d4bea0fdd7658053",
+          "metrics": [
+            590,
+            55
+          ]
+        },
+        {
+          "codepoint": 57581,
+          "glyphId": 486,
+          "formula": "i",
+          "glyfSha256": "cbdecce93baac1517c702270567063c6766f788e7077e7030ccb33e1d7217a42",
+          "metrics": [
+            352,
+            29
+          ]
+        },
+        {
+          "codepoint": 57583,
+          "glyphId": 488,
+          "formula": "k",
+          "glyfSha256": "27e170466ad93599697a799f60cfea90d4d8dfda52a278eb908858ddb2c2ebd8",
+          "metrics": [
+            532,
+            55
+          ]
+        },
+        {
+          "codepoint": 57584,
+          "glyphId": 489,
+          "formula": "l",
+          "glyfSha256": "b63b27b261c2000bccc41e3683d547da83a072bd55ba844be47686b5419967c1",
+          "metrics": [
+            305,
+            37
+          ]
+        },
+        {
+          "codepoint": 57585,
+          "glyphId": 490,
+          "formula": "m",
+          "glyfSha256": "dd93908b185c88d53b015048df95edf0fd91670929bd9050cd175050c9d584e1",
+          "metrics": [
+            899,
+            29
+          ]
+        },
+        {
+          "codepoint": 57586,
+          "glyphId": 491,
+          "formula": "n",
+          "glyfSha256": "36f2540fd162c014c05637bf39f382929786ea854bbd559a2d45d46b5340094a",
+          "metrics": [
+            614,
+            29
+          ]
+        },
+        {
+          "codepoint": 57588,
+          "glyphId": 493,
+          "formula": "p",
+          "glyfSha256": "5b03b3e8102c84128a2a8a654115a56c2e086f4f3e915b2e4237401abcfdb02c",
+          "metrics": [
+            515,
+            -31
+          ]
+        },
+        {
+          "codepoint": 57589,
+          "glyphId": 494,
+          "formula": "q",
+          "glyfSha256": "b489e303b123474b074b7f0ae9b6522ac4bcde1c247b1a9ff4308a89678f9b3d",
+          "metrics": [
+            457,
+            41
+          ]
+        },
+        {
+          "codepoint": 57591,
+          "glyphId": 496,
+          "formula": "s",
+          "glyfSha256": "fa9801fb30c37fab505a88193a26f78611e3475cdd98bdd62c6c8941f02be9a8",
+          "metrics": [
+            480,
+            53
+          ]
+        },
+        {
+          "codepoint": 57592,
+          "glyphId": 497,
+          "formula": "t",
+          "glyfSha256": "67e555dd4c9883b50e8f652ac6763c93cffad334bd8cf5998159c6233bdf4ba7",
+          "metrics": [
+            369,
+            24
+          ]
+        },
+        {
+          "codepoint": 57594,
+          "glyphId": 499,
+          "formula": "v",
+          "glyfSha256": "1891041183969c1bf1adc367a1d0899847fbae48bb6127a8ce729abc0d85ff3c",
+          "metrics": [
+            496,
+            29
+          ]
+        },
+        {
+          "codepoint": 57596,
+          "glyphId": 501,
+          "formula": "x",
+          "glyfSha256": "fd5f41bb9d2e1a127967cc9c454f3f315246d61439acb9d347ec7a1e956227a9",
+          "metrics": [
+            585,
+            30
+          ]
+        },
+        {
+          "codepoint": 57597,
+          "glyphId": 502,
+          "formula": "y",
+          "glyfSha256": "51f89b98b72ed3290e6a251e9126587993caa22eeb7c41b9ded4a16bad6ae5de",
+          "metrics": [
+            502,
+            29
+          ]
+        },
+        {
+          "codepoint": 57598,
+          "glyphId": 503,
+          "formula": "z",
+          "glyfSha256": "2dc4c84af24120bc3db12965ce6ac89d601a767e18a3e682e12b638e28d97d43",
+          "metrics": [
+            476,
+            44
+          ]
+        }
+      ]
+    },
+    {
+      "fontName": "HyhwpEQ",
+      "unitsPerEm": 1024,
+      "glyphs": [
+        {
+          "codepoint": 57350,
+          "glyphId": 255,
+          "formula": "G",
+          "glyfSha256": "ea20a6f15cd1fec0709d52e62c775701b1bbb05404788cdde66aa8ba16091042",
+          "metrics": [
+            803,
+            57
+          ]
+        },
+        {
+          "codepoint": 57364,
+          "glyphId": 174,
+          "formula": "U",
+          "glyfSha256": "d9a86543673f41bd00b50f39936da9abfdc1e0ed0439303afa9313a0de9e76b4",
+          "metrics": [
+            768,
+            34
+          ]
+        },
+        {
+          "codepoint": 57510,
+          "glyphId": 320,
+          "formula": "\\kappa",
+          "glyfSha256": "f32b529f1ba83c36d906de15732118779b9734f0d75c69737bcc509c1764ff9b",
+          "metrics": [
+            590,
+            56
+          ]
+        },
+        {
+          "codepoint": 57523,
+          "glyphId": 333,
+          "formula": "\\psi",
+          "glyfSha256": "87ee9a2846ebcae84e387b3e796e896f0c5025665a63e18ef8d1104e6d83a422",
+          "metrics": [
+            666,
+            29
+          ]
+        },
+        {
+          "codepoint": 57524,
+          "glyphId": 334,
+          "formula": "\\omega",
+          "glyfSha256": "40a1bfca526e3ccf7cf00d0d03ed0bf55e1e24118f52fc0024505ecfd27839a2",
+          "metrics": [
+            628,
+            29
+          ]
+        },
+        {
+          "codepoint": 57524,
+          "glyphId": 429,
+          "formula": "\\omega",
+          "glyfSha256": "40a1bfca526e3ccf7cf00d0d03ed0bf55e1e24118f52fc0024505ecfd27839a2",
+          "metrics": [
+            628,
+            29
+          ]
+        }
+      ],
+      "evidence": "PDF render crops: p2_2024_11_15 G, p2_2019_09_10 U_0, p2_2019_06_09 kappa, p2_2019_09_14 psi_A, p2_2019_06_14 and p2_2025_11_17 omega"
+    },
+    {
+      "fontName": "HyhwpEQ",
+      "unitsPerEm": 1024,
+      "glyphs": [
+        {
+          "codepoint": 57368,
+          "glyphId": 178,
+          "formula": "Y",
+          "glyfSha256": "09fcc06811b80252fe708d72ab77f7896da8cd7484959796ead4071be4655ede",
+          "metrics": [
+            768,
+            11
+          ],
+          "evidence": "2017_09_math_na_single_05 f:X→Y; 2017_11_math_ga_even_13 overline Y"
+        },
+        {
+          "codepoint": 57518,
+          "glyphId": 328,
+          "formula": "\\sigma",
+          "glyfSha256": "f6f6d96a67a5bde6430912b1bfb2ab5b9ee1084378a26094954a82c9808c4521",
+          "metrics": [
+            585,
+            39
+          ],
+          "evidence": "2018_09_math_ga_single_12/26 표준편차가 σ"
+        },
+        {
+          "codepoint": 57358,
+          "glyphId": 168,
+          "formula": "O",
+          "glyfSha256": "786bc4d40fa5550b4d66d9405cbe54fdfcd6c4f0e43ad21c0cd4ef84916702c5",
+          "metrics": [
+            795,
+            57
+          ],
+          "evidence": "2017_11_math_na_even_17 원 O, even_21 O_n"
+        },
+        {
+          "codepoint": 57512,
+          "glyphId": 322,
+          "formula": "\\mu",
+          "glyfSha256": "21d790360e54124c0574b6f88635c07fb2aa493b22003bd3d1c21beaaf16c56a",
+          "metrics": [
+            616,
+            30
+          ],
+          "evidence": "b2_2019_06_02 10 μm, b2_2019_06_19 μmol/mL"
+        },
+        {
+          "codepoint": 57406,
+          "glyphId": 216,
+          "formula": "!",
+          "glyfSha256": "c84b2d71fdef9c08a68fc36456a21159970bf2f8ec7d23712e275a54b9627e1d",
+          "metrics": [
+            283,
+            86
+          ],
+          "evidence": "2017_11_math_ga_even_17 4!/3!"
+        },
+        {
+          "codepoint": 57503,
+          "glyphId": 408,
+          "formula": "\\gamma",
+          "glyfSha256": "23f8a865ac6084b817eef3bb63a5560c3fb7b8445d72ed545edc9eefbd16f546",
+          "metrics": [
+            529,
+            15
+          ],
+          "evidence": "c1_2022_06_04 α~γ, e2_2021_11_17 감률 γ"
+        },
+        {
+          "codepoint": 57500,
+          "glyphId": 405,
+          "formula": "\\Omega",
+          "glyfSha256": "d216e36d41b29db339a81c3642b95730c44481e7f156f5cdd2e64f4bca994e6e",
+          "metrics": [
+            790,
+            81
+          ],
+          "evidence": "e2_2024_06_20 2Ω sinφ"
+        },
+        {
+          "codepoint": 57593,
+          "glyphId": 403,
+          "formula": "u",
+          "glyfSha256": "4cc3ddc156d8233e47d110decfb19a93eafb3db0672ecba07f630cf572d743d4",
+          "metrics": [
+            585,
+            29
+          ],
+          "evidence": "2018_06_math_ga_single_25 벡터 u, 2023_09 geometry_30 u=(1,0)"
+        },
+        {
+          "codepoint": 57544,
+          "glyphId": 354,
+          "formula": "\\angle",
+          "glyfSha256": "a7e68dc141ec7953cc86d180e3d0b1d1a4f01b743b95018abf810ff09ab2b2d1",
+          "metrics": [
+            768,
+            285
+          ],
+          "evidence": "2018_09_math_ga_single_25 ∠ACB"
+        },
+        {
+          "codepoint": 57487,
+          "glyphId": 297,
+          "formula": "\\Lambda",
+          "glyfSha256": "b798a2470173507c21e646a4e9fc7f6360fecf36490e41127dec72cc5320b04f",
+          "metrics": [
+            711,
+            36
+          ],
+          "evidence": "e2_2019_09_05 ρ_Λ subscript"
+        },
+        {
+          "codepoint": 57498,
+          "glyphId": 403,
+          "formula": "\\chi",
+          "glyfSha256": "a6371660505cda7c1e00522ca92eedfa8815f5aa40ec29d4f0ae307e9d7d22f5",
+          "metrics": [
+            848,
+            27
+          ],
+          "evidence": "c2_2022_09_18 몰 분율 (X_C) printed as chi"
+        }
+      ],
+      "evidence": "Rendered original-PDF crops in tools evidence missing-eq.png (2026-09-29)"
+    },
+    {
+      "fontName": "HyhwpEQ",
+      "unitsPerEm": 1024,
+      "glyphs": [
+        {
+          "codepoint": 57600,
+          "glyphId": 504,
+          "formula": "\\bracketTopLeft",
+          "glyfSha256": "9396fdc46f739aae50903b02b9fa7f55c482017ea730c80b71a3e2df721ad71f",
+          "metrics": [
+            506,
+            225
+          ],
+          "evidence": "stretchy square bracket piece; rendered crops of 2023_11_math_common_odd_09, 2023_11_math_common_even_09"
+        },
+        {
+          "codepoint": 57600,
+          "glyphId": 409,
+          "formula": "\\bracketTopLeft",
+          "glyfSha256": "a8ac16e155c43e9d1fc357e0e91a25c647937e8386ec43d5ec4f41226ccd766a",
+          "metrics": [
+            506,
+            225
+          ],
+          "evidence": "stretchy square bracket piece; rendered crops of 2017_06_math_ga_single_30"
+        },
+        {
+          "codepoint": 57602,
+          "glyphId": 506,
+          "formula": "\\bracketTopRight",
+          "glyfSha256": "a75915adc9109bcc6b8cc26b46c79e515774fc9de6979ed4e49bda2809f3bd50",
+          "metrics": [
+            506,
+            61
+          ],
+          "evidence": "stretchy square bracket piece; rendered crops of 2023_11_math_common_odd_09, 2023_11_math_common_even_09"
+        },
+        {
+          "codepoint": 57602,
+          "glyphId": 411,
+          "formula": "\\bracketTopRight",
+          "glyfSha256": "b3ec2ffb0e9fe7d52aad5485ef088878b805091ef8eb4b3d5c95afebb0422f06",
+          "metrics": [
+            506,
+            61
+          ],
+          "evidence": "stretchy square bracket piece; rendered crops of 2017_06_math_ga_single_30"
+        },
+        {
+          "codepoint": 57603,
+          "glyphId": 507,
+          "formula": "\\bracketBottomLeft",
+          "glyfSha256": "b601680403956479ae4c63add2c7ca5c6575cd06d42a88ea1721a71c10366ba1",
+          "metrics": [
+            506,
+            225
+          ],
+          "evidence": "stretchy square bracket piece; rendered crops of 2023_11_math_common_odd_09, 2023_11_math_common_even_09"
+        },
+        {
+          "codepoint": 57603,
+          "glyphId": 412,
+          "formula": "\\bracketBottomLeft",
+          "glyfSha256": "4c07a12603320ce966e5eddda46691b46e7f29f3f9f958c97b1afa1ea6de15cf",
+          "metrics": [
+            506,
+            225
+          ],
+          "evidence": "stretchy square bracket piece; rendered crops of 2017_06_math_ga_single_30"
+        },
+        {
+          "codepoint": 57604,
+          "glyphId": 508,
+          "formula": "\\bracketBottomRight",
+          "glyfSha256": "b4b20a7da095d4247571e05ba3cdc20b5a4c1a286e4613c5e0267b5865c28bf4",
+          "metrics": [
+            506,
+            61
+          ],
+          "evidence": "stretchy square bracket piece; rendered crops of 2023_11_math_common_odd_09, 2023_11_math_common_even_09"
+        },
+        {
+          "codepoint": 57604,
+          "glyphId": 413,
+          "formula": "\\bracketBottomRight",
+          "glyfSha256": "8852f5d389523e74372af5cf6690e44f7791f3b2ea1c783c072c7e3f9e08e901",
+          "metrics": [
+            506,
+            61
+          ],
+          "evidence": "stretchy square bracket piece; rendered crops of 2017_06_math_ga_single_30"
+        },
+        {
+          "codepoint": 57605,
+          "glyphId": 509,
+          "formula": "\\bracketRightExtender",
+          "glyfSha256": "a8851d3957faf3250315b456a5b91a8d30de4551dcedbbe1bfa550a913bc96da",
+          "metrics": [
+            506,
+            225
+          ],
+          "evidence": "stretchy square bracket piece; rendered crops of 2023_11_math_common_odd_09, 2023_11_math_common_even_09"
+        },
+        {
+          "codepoint": 57605,
+          "glyphId": 414,
+          "formula": "\\bracketRightExtender",
+          "glyfSha256": "847732d77193bcb6fd8640e9495ef8aad2d7101d20e3f0a0f7661b9faf3c8a99",
+          "metrics": [
+            506,
+            225
+          ],
+          "evidence": "stretchy square bracket piece; rendered crops of 2017_06_math_ga_single_30"
+        }
+      ],
+      "evidence": "Closed-interval brackets [−π/6, b] and [0, a/2] rendered in missing-eq.png"
+    },
+    {
+      "fontName": "*¸íÁ¶",
+      "unitsPerEm": 1000,
+      "glyphs": [
+        {
+          "codepoint": 57396,
+          "glyphId": 34245,
+          "renderedCodepoint": 57349,
+          "formula": "",
+          "cffSha256": "80c01963155a9e3a8719ebe08014bd488b9f1dfbf6163b5be84c04be8578f352",
+          "cmapSha256": "22aa77566cf45bf6d6cd9e6a76742f4839c54c21f60577b6e95d228f008088af"
+        },
+        {
+          "codepoint": 57396,
+          "glyphId": 34245,
+          "renderedCodepoint": 57349,
+          "formula": "",
+          "cffSha256": "3a15d63c0c6872dc5963982c6d12e420d201daddb6efc4a9b9d21287938517c5",
+          "cmapSha256": "055d6c845b795f389919c9db407be4d78bd698ff4c327d63c725d1c125260854"
+        },
+        {
+          "codepoint": 57397,
+          "glyphId": 34246,
+          "renderedCodepoint": 57347,
+          "formula": "",
+          "cffSha256": "5fd45886244675f642a76ce1969ba6cd6c34d58de15bcf893d25840faaeb37ac",
+          "cmapSha256": "0c451e18ae9a8b3171baf456654a5ccdb2be8d43721628146c50e163c03f2702"
+        },
+        {
+          "codepoint": 57399,
+          "glyphId": 34248,
+          "renderedCodepoint": 57352,
+          "formula": "",
+          "cffSha256": "6f80397dfc6b8382bb4c3f9547290d7e4290b11680b5dc1bb88bc05c8bbf735e",
+          "cmapSha256": "53d5e20e01ca8c6c28469cb8753b2cabb415f7dc5bdd49a8d3941c518f4965d5"
+        }
+      ]
+    }
+  ]
+}
