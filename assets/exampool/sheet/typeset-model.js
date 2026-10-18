@@ -1,6 +1,8 @@
 import {exportLayoutHwpx,restackPictureLines} from './native-hwpx.js?v=1014-compact-panel';
 export const PAPER_MM={A4:[210,297],B4:[257,364],A3:[297,420]};
 export const LAYOUT_VERSION=11;
+// 평가원 본문 글자: 장평 95%·자간 -5%(같은 글자 크기에서 한 줄에 약 10% 더 들어간다). 새로 조판하는 문항에만 건다.
+export const TEXT_RATIO=95,TEXT_SPACING=-5,TEXT_WIDTH=(TEXT_RATIO+TEXT_SPACING)/100;
 const HU=7200/25.4;
 export function pageProfile(profile={paper:'A4',columns:2}){
   if(!PAPER_MM[profile.paper]||![1,2].includes(profile.columns))throw Error('용지와 단 수를 확인하세요.');
@@ -32,6 +34,7 @@ export async function normalizeQuestionImport(bytes,JSZip){
   header=header.replace(/<hc:(left|right|intent) value="\d+"/g,'<hc:$1 value="0"');
   // 한글 줄 나눔은 평가원처럼 어절 단위(KEEP_WORD). 들여온 문단 모양 일부가 글자 단위(BREAK_WORD)로 들어온다.
   header=header.replace(/breakNonLatinWord="BREAK_WORD"/g,'breakNonLatinWord="KEEP_WORD"');
+  header=header.replace(/<hh:ratio\b[^>]*\/>/g,tag=>tag.replace(/="\d+"/g,`="${TEXT_RATIO}"`)).replace(/<hh:spacing\b[^>]*\/>/g,tag=>tag.replace(/="-?\d+"/g,`="${TEXT_SPACING}"`));
   let xml=await zip.file('Contents/section0.xml').async('string');
   // Center the table's anchor paragraph, including nested tables. Cell text
   // alignment alone does not position an inline table. Clone the styles so
@@ -245,34 +248,58 @@ export function applyFloatingPictures(document,floats){
   if(want.some(f=>!f.done))throw Error('어울림 그림을 문단에서 찾지 못했습니다.');
 }
 // 어울림 그림을 놓은 뒤의 줄 배치 점검. 한글 엔진은 그림 높이 안에 든 두 줄짜리 문단을 그림 반대쪽으로 밀어 잘못 흐르게 한다.
-// ① 그림이 붙은 문단의 줄이 그림과 겹치면, 그 그림은 글 앞에 두고(단 기준 정렬) 문단 오른쪽(왼쪽) 여백을 그림 폭만큼 둔다.
-// ② 그림이 문단보다 아래로 내려오면 문단 아래 간격을 둬서 다음 문단이 그림 밑에서 시작하게 한다.
-// 문단 모양 단위: 여백·간격은 HWPUNIT의 2배(px×150).
+// 그림이 붙은 문단이 그림과 겹치거나 그림보다 짧으면(다음 문단도 그림 옆에 와야 함) 엔진의 어울림 대신
+// 그림은 글 앞(단 기준 정렬)에 두고, 그림 옆에서 시작하는 문단마다 오른쪽(왼쪽) 여백을 그림 폭만큼 둔다(평가원처럼 발문도 그림 옆).
+// 표·그림 문단이 그림 옆에서 시작하면 앞 문단 아래 간격을 둬서 그림 밑으로 보낸다. 문단 모양 단위: 여백·간격은 px×150.
 export function settleFloatingPictures(document){
   const GAP=4,pics=[];
   for(let page=0;page<document.pageCount();page++)for(const c of JSON.parse(document.getPageControlLayout(page)).controls||[]){
-    if(c.type!=='image'||c.cellPath?.length)continue;
-    const props=JSON.parse(document.getPictureProperties(c.secIdx,c.paraIdx,c.controlIdx));if(props.treatAsChar)continue;
-    pics.push({page,sec:c.secIdx,para:c.paraIdx,ci:c.controlIdx,props});
+    if(!['image','table'].includes(c.type)||c.cellPath?.length)continue;
+    const props=JSON.parse(c.type==='image'?document.getPictureProperties(c.secIdx,c.paraIdx,c.controlIdx):document.getTableProperties(c.secIdx,c.paraIdx,c.controlIdx));if(props.treatAsChar)continue;
+    if(pics.some(p=>p.type===c.type&&p.para===c.paraIdx&&p.ci===c.controlIdx))continue;
+    pics.push({page,type:c.type,sec:c.secIdx,para:c.paraIdx,ci:c.controlIdx,props});
   }
   if(!pics.length)return false;
-  const box=p=>(JSON.parse(document.getPageControlLayout(p.page)).controls||[]).find(c=>c.type==='image'&&c.secIdx===p.sec&&c.paraIdx===p.para&&c.controlIdx===p.ci);
-  const lines=p=>{const m=new Map();for(const r of JSON.parse(document.getPageTextLayout(p.page)).runs){if(r.cellPath?.length||r.secIdx!==p.sec||r.paraIdx!==p.para||!r.text.trim())continue;const k=Math.round(r.y*10),v=m.get(k)||{y:r.y,h:0,x0:Infinity,x1:-Infinity};v.h=Math.max(v.h,r.h);v.x0=Math.min(v.x0,r.x);v.x1=Math.max(v.x1,r.x+r.w);m.set(k,v);}return [...m.values()];};
+  const box=p=>(JSON.parse(document.getPageControlLayout(p.page)).controls||[]).find(c=>c.type===p.type&&c.secIdx===p.sec&&c.paraIdx===p.para&&c.controlIdx===p.ci);
+  const setProps=(p,v)=>p.type==='image'?document.setPictureProperties(p.sec,p.para,p.ci,JSON.stringify(v)):document.setTableProperties(p.sec,p.para,p.ci,JSON.stringify(v));
+  const lines=(p,para)=>{const m=new Map();for(const r of JSON.parse(document.getPageTextLayout(p.page)).runs){if(r.cellPath?.length||r.secIdx!==p.sec||r.paraIdx!==para||!r.text.trim())continue;const k=Math.round(r.y*10),v=m.get(k)||{y:r.y,h:0,x0:Infinity,x1:-Infinity};v.h=Math.max(v.h,r.h);v.x0=Math.min(v.x0,r.x);v.x1=Math.max(v.x1,r.x+r.w);m.set(k,v);}return [...m.values()];};
+  const controlParas=p=>new Set((JSON.parse(document.getPageControlLayout(p.page)).controls||[]).filter(c=>!c.cellPath?.length&&c.secIdx===p.sec&&(c.type==='table'||c.type==='image')).map(c=>c.paraIdx));
+  const bottomOf=ls=>ls.length?Math.max(...ls.map(l=>l.y+l.h)):-Infinity;
+  const space=(p,para,needed)=>{const props=JSON.parse(document.getParaPropertiesAt(p.sec,para));document.applyParaFormat(p.sec,para,JSON.stringify({spacingAfter:Math.round(((props.spacingAfter||0)/2+needed)*150)}));document.reflowLinesegs();};
+  const count=document.getParagraphCount?.(pics[0].sec);
   for(const p of pics){
     const right=p.props.horzAlign!=='Left';let b=box(p);if(!b)continue;
-    const overlaps=lines(p).some(l=>l.y<b.y+b.h&&l.y+l.h>b.y&&(right?l.x1>b.x+1:l.x0<b.x+b.w-1));
-    if(overlaps){
-      const para=JSON.parse(document.getParaPropertiesAt(p.sec,p.para)),room=b.w+(right?p.props.outerMarginLeft:p.props.outerMarginRight)/75+GAP;
-      document.setPictureProperties(p.sec,p.para,p.ci,JSON.stringify({textWrap:'InFrontOfText',horzRelTo:'Column'}));
-      document.applyParaFormat(p.sec,p.para,JSON.stringify(right?{marginRight:Math.round(((para.marginRight||0)+room)*150)}:{marginLeft:Math.round(((para.marginLeft||0)+room)*150)}));
-      document.reflowLinesegs();b=box(p);
+    const own=lines(p,p.para),overlaps=own.some(l=>l.y<b.y+b.h&&l.y+l.h>b.y&&(right?l.x1>b.x+1:l.x0<b.x+b.w-1));
+    if(!overlaps&&bottomOf(own)+GAP>=b.y+b.h)continue;
+    const room=b.w+((right?p.props.outerMarginLeft:p.props.outerMarginRight)||0)/75+GAP+2;
+    const narrow=para=>{const props=JSON.parse(document.getParaPropertiesAt(p.sec,para));document.applyParaFormat(p.sec,para,JSON.stringify(right?{marginRight:Math.round(((props.marginRight||0)+room)*150)}:{marginLeft:Math.round(((props.marginLeft||0)+room)*150)}));};
+    setProps(p,{textWrap:'InFrontOfText',horzRelTo:'Column'});
+    if(own.length)narrow(p.para);document.reflowLinesegs();b=box(p);
+    let last=p.para;
+    for(let para=p.para+1;Number.isInteger(count)?para<count:para<p.para+20;para++){
+      const ls=lines(p,para);
+      if(!ls.length||controlParas(p).has(para))break;
+      if(Math.min(...ls.map(l=>l.y))>=b.y+b.h)break;
+      narrow(para);document.reflowLinesegs();b=box(p);last=para;
     }
-    const own=lines(p),bottom=own.length?Math.max(...own.map(l=>l.y+l.h)):b.y;
-    if(b.y+b.h+GAP>bottom){
-      const para=JSON.parse(document.getParaPropertiesAt(p.sec,p.para));
-      document.applyParaFormat(p.sec,p.para,JSON.stringify({spacingAfter:Math.round(((para.spacingAfter||0)/2+b.y+b.h+GAP-bottom)*150)}));
-      document.reflowLinesegs();
-    }
+    // 글 없는 문단에 붙은 표: 그 문단 높이만큼 내려 다음 문단 첫 줄과 위를 맞춘다.
+    if(!own.length&&last!==p.para){const top=Math.min(...lines(p,p.para+1).map(l=>l.y));if(Number.isFinite(top)&&top>b.y+.5){setProps(p,{vertOffset:Math.round((top-b.y)*75)});document.reflowLinesegs();b=box(p);}}
+    const bottom=bottomOf(lines(p,last));
+    if(b.y+b.h+GAP>bottom)space(p,last,b.y+b.h+GAP-bottom);
   }
   return true;
+}
+
+// 글 옆 표: 첫 지문(번호 문단) 바로 앞 문단에 든 표를 떠 있는 표로 바꾼다. 줄 배치는 settleFloatingPictures가 맞춘다.
+export function applyFloatingTable(document,spec,number){
+  if(!spec)return;
+  const prefix=`${number}. `;
+  for(let page=0;page<document.pageCount();page++){
+    const run=JSON.parse(document.getPageTextLayout(page)).runs.find(r=>!r.cellPath?.length&&r.text.startsWith(prefix));if(!run)continue;
+    const t=(JSON.parse(document.getPageControlLayout(page)).controls||[]).find(c=>c.type==='table'&&!c.cellPath?.length&&c.paraIdx===run.paraIdx-1);
+    if(!t)throw Error('글 옆 표를 찾지 못했습니다.');
+    const r=JSON.parse(document.setTableProperties(t.secIdx,t.paraIdx,t.controlIdx,JSON.stringify({treatAsChar:false,textWrap:'InFrontOfText',horzRelTo:'Column',horzAlign:spec.align,vertRelTo:'Para',vertAlign:'Top',vertOffset:0,horzOffset:0})));
+    if(r?.ok===false)throw Error('글 옆 표를 배치하지 못했습니다.');return;
+  }
+  throw Error('글 옆 표의 지문을 찾지 못했습니다.');
 }

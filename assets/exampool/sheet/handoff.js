@@ -41,6 +41,8 @@ export function choiceGrid(choices,width,fontSize=11,layout,measure=choiceWidth)
 // cell. Explicit lines keep the actual text editable and its font unchanged.
 // 구성 이름이 한글 문서에 글로 찍히는지: 상자 묶음의 제목, 과정 제목, (가)·(나) 같은 그림 이름. 아래 조판과 같은 조건.
 export const labelInDocument=b=>!!b.label&&(b.kind==='steps'||b.heading===true||b.kind==='group'&&(b.boxed===true||b.boxed===undefined&&b.label==='실험')||b.kind==='figure'&&!!b.figure&&!isWrapped(b)&&/^\(.+\)$/.test(b.label));
+// 어절 나누기: 띄어쓰기로 나누되 $…$ 수식 안의 띄어쓰기는 나누지 않는다(수식이 여러 줄로 세어져 칸이 커지던 문제).
+const words=line=>String(line).match(/(?:\$[^$\n]*\$|\S)+/g)||[''];
 export function wrapQuestionText(value,width,fontSize=11){
   if(!width)return String(value??'');
   const em=fontSize*4/3,limit=Math.max(em,width),lines=[];
@@ -50,7 +52,7 @@ export function wrapQuestionText(value,width,fontSize=11){
   };
   for(const original of String(value??'').split(/\r?\n/)){
     let line='',used=0;
-    for(const word of original.split(/\s+/)){
+    for(const word of words(original)){
       const size=measure(word),space=line?em*.5:0;
       if(line&&used+space+size>limit){lines.push(line);line=word;used=size;}
       else{line+=(line?' ':'')+word;used+=space+size;}
@@ -64,7 +66,7 @@ export function wrapMeasured(value,first,rest,measure){
   const lines=[];
   for(const original of String(value??'').split(/\r?\n/)){
     let line='',firstLine=!lines.length;
-    for(const word of original.split(/\s+/)){
+    for(const word of words(original)){
       const candidate=line?line+' '+word:word,limit=firstLine&&!lines.length?first:rest;
       if(line&&measure(candidate)>limit){lines.push(line);line=word;firstLine=false;}else line=candidate;
     }
@@ -105,7 +107,7 @@ export function wrapHangingText(value,width,prefix,measure){
   const indent=measure(prefix),lines=[];
   for(const original of String(value).split(/\r?\n/)){
     let line='';
-    for(const word of original.split(/\s+/)){
+    for(const word of words(original)){
       const candidate=line?line+' '+word:word,limit=width-(lines.length?indent:0);
       if(line&&measure(candidate)>limit){lines.push(line);line=word;}
       else line=candidate;
@@ -148,6 +150,20 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
   const p=(v,width=null,fontSize=11,owner=null)=>`<p style="margin:4px 0;text-align:justify">${text(v,width,fontSize,v=>v,owner)}</p>`;
   // 그림 아래 (가)·(나): 평가원처럼 그림 가운데 아래.
   const pc=(v,width=null,fontSize=11,owner=null)=>`<p style="margin:4px 0;text-align:center">${text(v,width,fontSize,null,owner)}</p>`;
+  // 글 옆 자료(맨 바깥 가로 묶음: 글 하나 + 그림·표 하나, 상자 아님)는 평가원처럼 글 문단 옆에 떠 있는 자료로 찍는다.
+  // 그림은 어울림 그림으로, 표는 첫 지문 앞에 넣고 떠 있는 표로 바꾼다(applyFloatingTable). 자료 폭은 묶음 안 폭 비율 몫.
+  let floatTable=null;
+  for(const g of q.blocks.filter(b=>!b.parent&&b.kind==='group'&&b.layout==='나란히'&&b.boxed!==true&&!(b.boxed===undefined&&b.label==='실험'))){
+    const kids=q.blocks.filter(b=>b.parent===g.id),txt=kids.find(b=>b.kind==='text'),mat=kids.find(b=>b.kind==='figure'||b.kind==='table');
+    if(kids.length!==2||!txt?.text||!mat||q.blocks.some(b=>b.parent===txt.id||b.parent===mat.id))continue;
+    const isOpening=q.blocks.find(b=>!b.parent)===g;if(mat.kind==='table'&&(!isOpening||kids[0]!==txt))continue;
+    const share=(mat.ratio||1)/((mat.ratio||1)+(txt.ratio||1)),size=Math.max(10,Math.min(70,Math.round(share*(mat.size??100))));
+    const at=q.blocks.indexOf(g);q.blocks.splice(at,1);
+    for(const b of [txt,mat]){q.blocks.splice(q.blocks.indexOf(b),1);b.parent=null;delete b.ratio;}
+    mat.size=size;mat.align=kids[0]===mat?'왼쪽':'오른쪽';
+    if(mat.kind==='figure'){mat.layout='어울림';q.blocks.splice(at,0,txt,mat);}
+    else{floatTable=mat;q.blocks.splice(at,0,txt,mat);}
+  }
   const opening=q.blocks.find(b=>b.parent===null),firstText=opening?.kind==='text'&&opening.text?opening:null;
   const prefix=q.number?`${q.number}. `:'';
   // 글 옆 자료: 번호는 묶음 칸 안의 첫 지문 앞에 붙고, 발문은 자료 뒤에 온다.
@@ -170,12 +186,14 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
   const table=async(t,width,choices=false,align,owner=choices?{kind:'choices'}:{kind:'table'})=>{
     recordTable(t.rows,t.cols+(choices?1:0),t.merges.map(m=>({...m,c:m.c+(choices?1:0)})),owner);
     const fontSize=t.cols>3?9:10,cellWidth=(width-(choices?25:0))/t.cols;
-    const rowHeights=Array(t.rows).fill(30);
+    // 평가원 자료표: 위아래 여백 작게. 한 줄 칸 높이 약 22px(10pt, 이전 30px).
+    const PITCH=1.15,rowHeights=Array(t.rows).fill(Math.ceil(fontSize*4/3*PITCH+6));
     for(let r=0;r<t.rows;r++)for(let c=0;c<t.cols;c++){
       if(tableCovered(t,r,c))continue;
       const m=t.merges.find(m=>m.r===r&&m.c===c),span=m?.rs||1;
       const cellText=t.cells[r][c].value,cellLimit=cellWidth*(m?.cs||1)-16,wrapped=measureText?wrapMeasured(cellText,cellLimit,cellLimit,v=>measureRich(v,fontSize)):wrapQuestionText(cellText,cellLimit,fontSize);
-      const needed=Math.ceil(wrapped.split('\n').length*fontSize*4/3*1.6+12+extraHeight(wrapped,fontSize));
+      // 여러 줄 칸은 한글 엔진의 칸 문단 줄 간격(160%)으로 잰다. 한 줄 칸만 낮게 둔다.
+      const lines=wrapped.split('\n').length,needed=Math.ceil(lines>1?lines*fontSize*4/3*1.6+8:fontSize*4/3*PITCH+6)+Math.ceil(extraHeight(wrapped,fontSize));
       if(span===1)rowHeights[r]=Math.max(rowHeights[r],needed);
       else {const height=rowHeights.slice(r,r+span).reduce((a,b)=>a+b,0);if(needed>height)for(let i=r;i<r+span;i++)rowHeights[i]+=(needed-height)/span;}
     }
@@ -192,12 +210,12 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
         const formatted=text(cell.value,cellWidth*(m?.cs||1)-16,cellSize,null,{kind:'cell',table:owner.id||owner.kind,r,c},cellFont).replace(/^<span[^>]*>|<\/span>$/g,'');
         // Separate paragraphs let the native cell center the entire header
         // block. A soft line break centers only its first line in this engine.
-        let body=await picture(cell.figure,cellWidth*(m?.cs||1)-16,undefined,{kind:'cell',table:owner.id||owner.kind,r,c})+formatted.split('<br>').map(line=>`<p style="margin:0;text-align:center;font-family:${cellFont};font-size:${cellSize}pt">${line||(cell.value===''&&!cell.figure&&nested?'\u2060':'')}</p>`).join('');
+        let body=await picture(cell.figure,cellWidth*(m?.cs||1)-16,undefined,{kind:'cell',table:owner.id||owner.kind,r,c})+formatted.split('<br>').map(line=>`<p style="margin:0;text-align:center;line-height:${PITCH*100}%;font-family:${cellFont};font-size:${cellSize}pt">${line||(cell.value===''&&!cell.figure&&nested?'\u2060':'')}</p>`).join('');
         if(t.diagonal&&r===0&&c===0){
           body=p(t.diagonal.col)+p(t.diagonal.row)+body;
           warnings.push('대각선 머리글의 축 이름은 전달됩니다. 사선은 한글에서 지정하세요.');
         }
-        html+=`<${tag}${m?` rowspan="${m.rs}" colspan="${m.cs}"`:''} style="border:${RULE};width:${cellWidth}px;height:${rowHeights.slice(r,r+(m?.rs||1)).reduce((a,b)=>a+b,0)}px;padding:4px;text-align:center;vertical-align:middle">${body}</${tag}>`;
+        html+=`<${tag}${m?` rowspan="${m.rs}" colspan="${m.cs}"`:''} style="border:${RULE};width:${cellWidth}px;height:${rowHeights.slice(r,r+(m?.rs||1)).reduce((a,b)=>a+b,0)}px;padding:2px 4px;text-align:center;vertical-align:middle">${body}</${tag}>`;
       }
       html+='</tr>';
     }
@@ -221,7 +239,7 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
   const walk=async(parent,width,onlyId=null)=>{
     let html='';
     for(const b of q.blocks.filter(b=>b.parent===parent&&(!onlyId||b.id===onlyId))){
-      if(b===firstText||!onlyId&&afterAsk.includes(b.id)||floated.has(b.id))continue;
+      if(b===firstText||!onlyId&&afterAsk.includes(b.id)||floated.has(b.id)||b===floatTable)continue;
       html+=spacer(b);
       if(b===sideText)html+=p(prefix+b.text,width,11,{kind:'block',id:b.id,prefix:prefix.length});
       // 상자·가로 묶음 칸 안 글은 실제 글꼴 폭으로 어절 단위 줄바꿈을 넣는다. 칸 문단은 한글 엔진이 줄 수를 다시 세지 않아 칸이 한 줄 높이로 남는다.
@@ -345,7 +363,9 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
   const first=sideText?'':`<p style="margin:4px 0;text-align:justify">${firstFloats}${text(prefix+(firstText?firstText.text:ask),null,11,asIs,firstText?{kind:'block',id:firstText.id,prefix:prefix.length}:askOwner(prefix.length))}</p>`;
   width-=bodyIndent;
   const askParagraph=async()=>`<p style="margin:4px 0;text-align:justify">${sideText?await floatImages('first',width):''}${text(ask,null,11,asIs,askOwner())}</p>`;
-  let html=first+await walk(null,width)+(firstText||sideText?await askParagraph():'');
+  // 떠 있는 표는 첫 지문 바로 앞 문단에 둔다(한글 엔진은 표를 글 문단 안에 넣지 못한다).
+  const floatHtml=floatTable&&firstText?await table(floatTable.table,sizedWidth(floatTable,width),false,undefined,{kind:'block',id:floatTable.id}):'';
+  let html=floatHtml+first+await walk(null,width)+(firstText||sideText?await askParagraph():'');
   for(const id of afterAsk)html+=await walk(null,width,id);
   if(q.type!=='서술형'){
     if(q.style==='대응표')html+=kicePair(q.choiceTable)?pairChoices(q.choiceTable):await table(q.choiceTable,width,true);
@@ -359,16 +379,17 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
       recordTable(rows,grid.cols,[],{kind:'choicegrid'});
       html+=`<table style="border-collapse:collapse;width:${width}px">`;
       for(let row=0;row<rows;row++){
-        const cells=grid.widths.map((w,col)=>{const i=row*grid.cols+col,c=q.choices[i],available=grid.singleLine?w-4:w-8-choiceWidth(labels[i]+' ',fontSize),value=c?labels[i]+' '+c.text:'';return {w,value,owner:c?{kind:'choice',id:c.id,prefix:labels[i].length+1}:null,height:(wrapped=>Math.max(25,Math.ceil(wrapped.split('\n').length*fontSize*4/3*1.6+6+extraHeight(wrapped,fontSize))))(measureText?wrapMeasured(value,available,available,v=>measureRich(v,fontSize)):wrapQuestionText(value,available,fontSize)),available};});
+        // 번호(①) 폭은 둘째 줄부터만 줄인다. 첫 줄은 번호를 포함한 글 전체를 칸 폭에 잰다.
+        const cells=grid.widths.map((w,col)=>{const i=row*grid.cols+col,c=q.choices[i],first=grid.singleLine?w-4:w-8,available=grid.singleLine?w-4:w-8-choiceWidth(labels[i]+' ',fontSize),value=c?labels[i]+' '+c.text:'',wrap=v=>measureText?wrapMeasured(v,first,available,x=>measureRich(x,fontSize)):wrapQuestionText(v,available,fontSize),wrapped=wrap(value);return {w,value,wrap,owner:c?{kind:'choice',id:c.id,prefix:labels[i].length+1}:null,height:Math.max(25,Math.ceil(wrapped.split('\n').length*fontSize*4/3*1.6+6+extraHeight(wrapped,fontSize))),available};});
         // 한 줄에 분수 같은 높은 수식이 있으면 칸 가운데에 맞춰 ①~⑤의 글자 줄이 나란하게 한다.
         const height=Math.max(...cells.map(c=>c.height)),valign=cells.some(c=>extraHeight(c.value,fontSize)>0)?'middle':'top';
-        html+='<tr>'+cells.map(c=>`<td style="border:none;width:${c.w}px;height:${height}px;padding:2px;vertical-align:${valign}"><p style="margin:0;text-align:left;line-height:150%">${text(c.value,c.available,fontSize,null,c.owner)}</p></td>`).join('')+'</tr>';
+        html+='<tr>'+cells.map(c=>`<td style="border:none;width:${c.w}px;height:${height}px;padding:2px;vertical-align:${valign}"><p style="margin:0;text-align:left;line-height:150%">${text(c.value,c.available,fontSize,c.wrap,c.owner)}</p></td>`).join('')+'</tr>';
       }
       html+='</table>';
     }
   }
   const askLead=firstText||sideText?String(ask).replace(/\s+/g,' ').trim().slice(0,12):'';
-  return {html:`<div style="font-family:함초롬바탕;font-size:10pt">${html}</div>`,images,texts,tables,equations,warnings:[...new Set(warnings)],imageOwners,tableOwners,textSegments,bodyIndent,askIndent,askLead,floats};
+  return {html:`<div style="font-family:함초롬바탕;font-size:10pt">${html}</div>`,images,texts,tables,equations,warnings:[...new Set(warnings)],imageOwners,tableOwners,textSegments,bodyIndent,askIndent,askLead,floats,floatTable:floatTable&&firstText?{align:floatTable.align==='왼쪽'?'Left':'Right'}:null};
 }
 
 // 한글 엔진의 getTextFileText는 완성형(KS X 1001) 밖 글자를 문서에는 그대로 두고, 글로 꺼낼 때만 &#9702; 같은

@@ -65,7 +65,11 @@ export function clearEmptyTableAnchorLines(xml){
       const p=stack.pop();if(stack.length||!p?.table||p.text)continue;
       const start=xml.lastIndexOf('</hp:run>',token.index)+9,tail=xml.slice(start,token.index),line=tail.match(/<hp:linesegarray>[\s\S]*?<\/hp:linesegarray>/);
       if(line)ranges.push([start+line.index,start+line.index+line[0].length]);
-    }else if(token[0].startsWith('<hp:tbl')&&stack.length===1)stack[0].table=true;
+    }else if(token[0].startsWith('<hp:tbl')&&stack.length===1){
+      // 떠 있는 표(글 옆 표)의 문단은 엔진이 계산한 높이(거의 0)를 그대로 둔다. 지우면 다시 열 때 한 줄 높이가 생긴다.
+      const pos=xml.slice(token.index,xml.indexOf('<hp:tr',token.index)).match(/<hp:pos\b[^>]*>/)?.[0]||'';
+      if(/treatAsChar="0"/.test(pos))stack[0].text=true;else stack[0].table=true;
+    }
     else if(stack.length===1&&token[0].replace(/<[^>]+>/g,'').trim())stack[0].text=true;
   }
   for(const [start,end] of ranges.reverse())xml=xml.slice(0,start)+xml.slice(end);
