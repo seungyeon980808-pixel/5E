@@ -45,7 +45,8 @@ h.withServer(async origin => {
           return active?.dataset.tabId === id && card?.dataset.aiCandidateId === id.replace('task-', 'candidate-');
         }, id);
       };
-      const output = ai.locator('.is-ai-active-candidate [data-ai-canvas-output]');
+      // 카드의 '캔버스에 삽입'은 숨겨지고(2026-10-12~13) 아래 단추 줄의 한 단추가 선택한 결과를 넣는다.
+      const output = ai.locator('[data-ai-insert-selected]');
       await choose('task-0'); await output.click(); await ai.waitFor({ state:'hidden' });
       await h.crop(page);
       await page.locator('[data-dialog-purpose="hwp"]').getByRole('button', { name:'새 문서 만들기', exact:true }).click();
@@ -71,12 +72,14 @@ h.withServer(async origin => {
       }, null, 2));
       assert.equal(await direct.count(), 1, 'A separate AI task needs its advertised independent document-send action');
       assert.equal(await direct.isVisible(), true); assert.equal(await direct.isEnabled(), true);
-      assert.equal(await direct.evaluate(node => getComputedStyle(node).borderTopColor), 'rgb(219, 165, 43)', 'HWP uses a yellow outline');
+      // 2026-10-13(4dbdd0b8)부터 '한글로 보내기'는 노란 테두리 단추가 아니라 출력 단추 줄의 다른 단추와 같은 모양이다.
+      assert.equal(await direct.evaluate(node => getComputedStyle(node).borderTopColor),
+        await ai.locator('[data-ai-insert-selected]').evaluate(node => getComputedStyle(node).borderTopColor), 'HWP send matches its output row');
       for (const width of [1440, 1024, 720]) {
         await page.setViewportSize({width,height:1000});
         await page.evaluate(() => Promise.all(document.getAnimations().map(animation => animation.finished.catch(() => {}))));
         const placement = await direct.evaluate(node => {
-          const rect=node.getBoundingClientRect(), close=node.closest('.ai-head').querySelector('[data-ai-close]').getBoundingClientRect();
+          const rect=node.getBoundingClientRect(), close=node.closest('#ai-image-panel').querySelector('[data-ai-close]').getBoundingClientRect(); // 보내기 단추는 아래 출력 줄로 옮겨졌다(4dbdd0b8).
           return {width:rect.width,left:rect.left,right:rect.right,bottom:rect.bottom,top:rect.top,closeLeft:close.left,closeTop:close.top,closeBottom:close.bottom};
         });
         assert.ok(placement.width > 0 && placement.left >= 0 && placement.right <= width, `Visible send button at width ${width}`);

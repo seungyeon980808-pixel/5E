@@ -32,7 +32,7 @@ plan.axes.y2 = { scale:'linear', title:'밀도', unit:'', min:0, max:200, step:2
  }
  report.scenarios.push({name:'invalid exact axis, tick interval and y2 input blocks confirm without mutation; corrected input accepted',pass:true});
  assert.equal(await page.locator('#gm-preview [data-graph-endpoint="open"]').count(), 1);
- assert.equal(await page.locator('#gm-preview [data-graph-annotation="a"]').count(), 1);
+ assert.equal(await page.locator('#gm-preview [data-graph-annotation="a"]:not([data-annotation-hit])').count(), 1);
  assert.ok(await page.locator('#gm-preview [data-tick="x:1"]').count());
  await page.screenshot({ path: path.join(evidence, 'exact-preview.png') });
  await page.locator('#gm-confirm').click();

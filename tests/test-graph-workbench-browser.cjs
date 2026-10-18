@@ -212,7 +212,10 @@ async function storedTabs(page) {
       await page.locator('#ai-image-panel [data-ai-zoom-action="fit"]').click();
       fs.writeFileSync(path.join(output,name+'-image-edge.json'),JSON.stringify(anchorProof,null,2));
       await page.locator('#ai-image-panel .ai-previews img').first().dblclick();
-      assert.equal(await page.locator('#graph-modal-overlay').isVisible(),false,'doubleclick no longer creates another edit route');
+      // 2026-10-16(83201a54)부터 결과 그림을 두 번 누르면 '그래프 세부 편집'과 같은 창이 열린다.
+      await page.locator('#graph-modal-overlay').waitFor({state:'visible'});
+      await page.locator('#gm-cancel').click();
+      await page.locator('#graph-modal-overlay').waitFor({state:'hidden'});
       await page.locator('#ai-image-panel [data-ai-graph-edit]').click();
       const toolbar=await page.locator('.gm-preview-toolbar').evaluate(node=>{
         const selectors=['select[data-trace-view]','[data-trace-import]','[data-trace-zoom-toggle]','#gm-send-exam','#gm-confirm'];
@@ -260,28 +263,19 @@ async function storedTabs(page) {
       assert.match(revised.attachments[1].data, /^data:image\/png;base64,/);
       assert.notEqual(revised.attachments[0].data, revised.attachments[1].data);
       assert.match(revised.text, /사용자가 편집한 현재 그래프/);
-      // Current UI saves the selected result through the collection ZIP flow.
-      // Preserve the SVG oracle and verify its exact selected-candidate bytes.
-      const moreOutputs = page.locator('#ai-image-panel .ai-output-more');
-      if (!await moreOutputs.evaluate(el => el.open)) await moreOutputs.locator('summary').click();
-      await page.locator('#ai-image-panel [data-ai-task-export-mode]').selectOption('selected');
-      page.once('dialog',dialog=>dialog.accept());
+      // 묶음 ZIP 내보내기는 2026-10-16(83201a54)에 없어졌다. 지금은 아래 버튼 줄의 저장 버튼이 선택한 결과를 PNG로 내려받는다.
       let download;
       try {
-        [download] = await Promise.all([page.waitForEvent('download'), page.locator('#ai-image-panel [data-ai-task-export]').click()]);
+        [download] = await Promise.all([page.waitForEvent('download'), page.locator('#ai-image-panel [data-ai-save-selected]').click()]);
       } catch (error) {
-        const diagnostic = await page.evaluate(() => ({status:document.querySelector('#ai-image-panel [data-ai-status]')?.textContent,ownerId:document.querySelector('#ai-image-panel .ai-task-tab.is-on')?.dataset.tabId,busy:document.querySelector('#ai-image-panel')?.dataset.aiBusy,saveDisabled:document.querySelector('#ai-image-panel [data-ai-task-export]')?.disabled}));
+        const diagnostic = await page.evaluate(() => ({status:document.querySelector('#ai-image-panel [data-ai-status]')?.textContent,busy:document.querySelector('#ai-image-panel')?.dataset.aiBusy,saveDisabled:document.querySelector('#ai-image-panel [data-ai-save-selected]')?.disabled}));
         fs.writeFileSync(path.join(output, name + '-save-failure.json'), JSON.stringify({error:error.stack,diagnostic,tasks:await storedTabs(page),errors},null,2));
         await page.screenshot({path:path.join(output,name+'-save-failure.png')});
         throw error;
       }
-      assert.match(download.suggestedFilename(), /\.zip$/);
-      const selectedZip=path.join(output,name+'-selected-graph.zip');await download.saveAs(selectedZip);
-      const exported=await page.evaluate(async encoded=>{const {unzipStore}=await import('/js/backup-zip.js?v=1.7.0-four-session-integration');return [...unzipStore(Uint8Array.from(atob(encoded),c=>c.charCodeAt(0)))].map(([name,bytes])=>({name,svg:new TextDecoder().decode(bytes)}));},fs.readFileSync(selectedZip).toString('base64'));
-      assert.equal(exported.length,1,'Selected export contains exactly the selected graph version');assert.match(exported[0].name,/\.svg$/);
-      const exportedCandidate=revisedTask.generated.find(c=>c.id===revisedTask.selectedCandidateId);
-      assert.equal(exported[0].svg,Buffer.from(exportedCandidate.data.split(',')[1],'base64').toString('utf8'),'Downloaded SVG bytes match the selected independent revision');
-      fs.writeFileSync(path.join(output,name+'-selected-graph.svg'),exported[0].svg);
+      assert.match(download.suggestedFilename(), /\.png$/);
+      const selectedPng=path.join(output,name+'-selected-graph.png');await download.saveAs(selectedPng);
+      assert.equal(fs.readFileSync(selectedPng).subarray(1,4).toString('latin1'),'PNG','Selected graph saves as a real PNG');
       await page.reload({ waitUntil: 'networkidle' });
       await page.locator('#ai-image-install-open').click();
       await page.locator('#ai-image-panel [data-ai-workflow="graph"]').click();

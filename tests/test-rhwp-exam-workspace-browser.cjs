@@ -1,3 +1,4 @@
+// 2026-10-12(b2f85a00)부터 한글 문서는 위쪽 '5E_hwp'(#exam-send) 메뉴의 '한글 문서로 이동'으로 열고, 편집은 '문서에 반영'으로 되돌린다.
 const assert=require('node:assert/strict');
 const fs=require('node:fs');const path=require('node:path');
 const {chromium,webkit}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
@@ -37,13 +38,13 @@ h.withServer(async origin=>{
    assert.ok(first.figure.render.bounds);assert.equal(first.figure.source.pages[0].objects.length,1,'whole source survives the crop');
    await h.action(page,'close');
    await page.evaluate(async({url,surface})=>{const{state}=await import(url);const{addPage}=await import('/js/pages.js?v=1.7.0-four-session-integration');addPage(state);state.update(s=>{s.objects=[{id:'unrelated',type:'line',p1:{x:0,y:0},p2:{x:2,y:2},layerId:1,order:0,rotation:0,strokeWidth:.3}];});},{url:stateUrl,surface});
-   await page.locator('#exam-workspace-open').click();await h.idle(page);await h.originalEdit(page);await page.locator('#exam-edit-bar').waitFor({state:'visible'});
+   await page.locator('#exam-send').click();await page.locator('[data-exam-document-open]').click();await h.idle(page);await h.originalEdit(page);await page.locator('#exam-edit-bar').waitFor({state:'visible'});
    const reopened=await h.drawing(page,stateUrl);
    assert.equal(reopened.activePageId,original.activePageId,'original editing returns to the linked source tab');assert.equal(reopened.undo,1,'original tab undo history survives');
    assert.equal(await page.locator('#rhwp-exam-workspace').isVisible(),false,'full 5E working screen returns');
    await page.evaluate(async url=>{const{state}=await import(url);state.update(s=>{s.objects[0].p2.y=4;});},stateUrl);
    await page.screenshot({path:path.join(evidence,name+'-edit.png')});
-   await page.locator('#exam-send').click();await h.recrop(page);await h.idle(page);
+   await page.locator('[data-source-apply]').click();await h.recrop(page);await h.idle(page);
    const edited=(await h.pictures(page))[0];assert.equal(edited.figure.source.pages[0].objects[0].p2.y,4);
    assert.equal(edited.figure.link.assetId,first.figure.link.assetId);assert.notEqual(edited.figure.id,first.figure.id);
    for(const key of['width','horzOffset','vertOffset','treatAsChar'])assert.equal(edited.props[key],first.props[key],key);
@@ -51,10 +52,10 @@ h.withServer(async origin=>{
    await page.evaluate(async({url,surface})=>{const{state}=await import(url);const{switchPage}=await import('/js/pages.js?v=1.7.0-four-session-integration');switchPage(state,state.get().pages.find(p=>p.id!==state.get().activePageId).id);},{url:stateUrl,surface});
    await page.evaluate(()=>document.querySelector('#exam-studio iframe').contentWindow.rhwpStudio.plugins.deps.getInputHandler().performUndo());
    await h.originalEdit(page);await page.locator('#exam-edit-bar').waitFor({state:'visible'});assert.equal((await h.drawing(page,stateUrl)).objects[0].p2.y,10,'native document undo opens the matching source revision');assert.equal((await h.drawing(page,stateUrl)).undo,0,'replacing a dormant source revision clears its earlier undo history');
-   await page.locator('#exam-workspace-open').click();await h.idle(page);
+   await page.locator('#exam-send').click();await page.locator('[data-exam-document-open]').click();await h.idle(page);
    await page.evaluate(()=>document.querySelector('#exam-studio iframe').contentWindow.rhwpStudio.plugins.deps.getInputHandler().performRedo());
    await h.originalEdit(page);await page.locator('#exam-edit-bar').waitFor({state:'visible'});assert.equal((await h.drawing(page,stateUrl)).objects[0].p2.y,4);
-   await page.locator('#exam-workspace-open').click();await h.idle(page);
+   await page.locator('#exam-send').click();await page.locator('[data-exam-document-open]').click();await h.idle(page);
    await h.action(page,'close');await h.crop(page);await h.idle(page);
    assert.match(await page.locator('.exam-placement strong').textContent(),/갱신/);assert.equal(await page.locator('[data-exam-action="confirm-placement"]').isDisabled(),false);
    await page.locator('[data-exam-action="confirm-placement"]').click();await h.idle(page);assert.equal((await h.pictures(page)).length,1,'sending the same tab updates one picture');
@@ -62,7 +63,7 @@ h.withServer(async origin=>{
    await h.originalEdit(page);await page.locator('#exam-edit-bar').waitFor({state:'visible'});
    await page.locator('.page-tab.is-active').focus();await page.keyboard.press('F2');await page.locator('.page-ctx-menu').getByRole('menuitem',{name:'이름 변경',exact:true}).click();
    const renameDialog=page.getByRole('dialog',{name:'페이지 이름 변경'});await renameDialog.locator('input').fill('수정한 탭 이름');await renameDialog.getByRole('button',{name:'확인',exact:true}).click();
-   await page.locator('#exam-workspace-open').click();await h.idle(page);
+   await page.locator('#exam-send').click();await page.locator('[data-exam-document-open]').click();await h.idle(page);
    assert.equal(await page.locator('.exam-figure strong').textContent(),'수정한 탭 이름');
    assert.equal(await page.locator('.exam-figure img').evaluate(image=>image.complete&&image.naturalWidth>0),true,'actual cropped bitmap thumbnail');
    const selectedPoint=await h.point(page,'image');await page.mouse.click(selectedPoint.x,selectedPoint.y);
@@ -79,7 +80,7 @@ h.withServer(async origin=>{
     const document=await save(page,'export-'+format,name+'.'+format);
     await h.action(page,'new');await h.idle(page);await h.nativeOpen(page,document);await h.idle(page);
     assert.equal((await h.pictures(page))[0].figure.name,'수정한 탭 이름');assert.equal((await h.pictures(page)).length,1);await h.originalEdit(page);await page.locator('#exam-edit-bar').waitFor({state:'visible'});assert.equal((await h.drawing(page,stateUrl)).objects[0].p2.y,4);
-    await page.locator('#exam-workspace-open').click();await h.idle(page);
+    await page.locator('#exam-send').click();await page.locator('[data-exam-document-open]').click();await h.idle(page);
    }
    await page.locator('#exam-project-file').setInputFiles(bundle);await h.idle(page);
    const marker=(await h.pictures(page))[0].props.description;
@@ -92,7 +93,7 @@ h.withServer(async origin=>{
    await page.evaluate(()=>{const d=document.querySelector('#exam-studio iframe').contentWindow.rhwpStudio.plugins.deps;d.getInputHandler().executeOperation({kind:'snapshot',operationType:'test-table',operation:()=>{const t=d.wasm.createTable(0,0,0,1,1);return{sectionIndex:0,paragraphIndex:0,charOffset:0,parentParaIndex:t.paraIdx,cellPath:[{controlIndex:t.controlIdx,cellIndex:0,cellParaIndex:0}]};}});d.eventBus.emit('document-changed');});
    await h.action(page,'close');await h.crop(page);await h.place(page,'table');
    assert.equal((await h.pictures(page))[0].control.cellPath.length,1,'confirmed table location receives inline picture');
-   await h.originalEdit(page);await page.locator('#exam-edit-bar').waitFor({state:'visible'});await page.locator('#exam-send').click();await h.recrop(page);await h.idle(page);assert.equal((await h.pictures(page))[0].control.cellPath.length,1);
+   await h.originalEdit(page);await page.locator('#exam-edit-bar').waitFor({state:'visible'});await page.locator('[data-source-apply]').click();await h.recrop(page);await h.idle(page);assert.equal((await h.pictures(page))[0].control.cellPath.length,1);
    // A fresh browser has no live source pages or prior AI names to mask a stale bundle.
    const fresh=await browser.newContext({viewport:{width:1440,height:950}}),freshPage=await fresh.newPage();
    await h.navigate(freshPage,new URL(surface,origin).href+'?mode=pro&mobile=0&exam=1',{waitUntil:'domcontentloaded'});await h.ready(freshPage);

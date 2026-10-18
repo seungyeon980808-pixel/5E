@@ -11,16 +11,17 @@ test('graph batch captures the input reference and commits a native revision wit
   process.env.TASK2_ENGINE='chromium';
   const {page,errors}=await fixture(t,1,output,{beforeNavigate:async page=>{
     const source=fs.readFileSync(path.join(root,'js/ai-panel.js'),'utf8');
-    const hook='return {\n    batchOwner, ownsBatchOwner:';
+    const hook='return {\n    deleteTask,';
     assert.ok(source.includes(hook));
     await page.route('**/js/ai-panel.js?*',route=>route.fulfill({contentType:'text/javascript',
-      body:source.replace(hook,'return window.__graphBatchController = {\n    batchOwner, ownsBatchOwner:')}));
+      body:source.replace(hook,'return window.__graphBatchController = {\n    deleteTask,')}));
   }});
-  await page.locator('#ai-image-panel [data-ai-workflow="graph"]').click();
+  // 2026-10-12(b2f85a00)부터 그래프 단추는 빈 그래프 작업대를 따로 연다. 원본이 붙은 작업을 그래프 작업으로 바꿔 넣는다.
   const captured=await page.evaluate(async()=>{
     const controller=__graphBatchController;
     const document=await controller.sharingSnapshot();
     const tab=document.tabs.find(tab=>tab.id===document.activeTaskTabId);
+    tab.conversionKind='graph';
     // A style reference can precede the actual source; capture must not use it.
     tab.attachments.unshift({...tab.attachments[0],id:'style-only',kind:'style',referenceRole:'style'});
     await controller.importSharingSnapshot(document,null);

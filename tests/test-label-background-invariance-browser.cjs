@@ -20,7 +20,7 @@ for (const engine of ['chromium', 'webkit']) for (const initial of ['remove', 'r
       await choose(page, 'general', labels);
       await page.locator(`${panel} [data-ai-input]`).fill(request);
       const startIndex = await page.evaluate(() => __task2.sends.length);
-      await page.locator(`${panel} [data-ai-send]`).click();
+      await page.locator(`${panel} [data-ai-comments-apply]`).click();
       await finish(page, { sourcePlan: verifiedPlan, startIndex });
       const tabs = await snapshot(page);
       return tabs.find(tab => tab.id === `task-${task}`).generated.at(-1);

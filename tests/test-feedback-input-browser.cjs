@@ -25,7 +25,8 @@ h.withServer(async origin => {
       });
       await page.keyboard.press('Enter');
       assert.equal(await page.locator('.capture-overlay').count(),0);
-      assert.equal(await page.evaluate(()=>window.captured.w),20);
+      // 화면 좌표를 거쳐 돌아오므로 float32 반올림(약 0.000002mm)은 허용한다.
+      assert.ok(Math.abs(await page.evaluate(()=>window.captured.w)-20)<1e-4);
       console.log(name+': page deletion Enter/Space and region capture cleanup passed');
     } finally {await browser.close();}
   }
