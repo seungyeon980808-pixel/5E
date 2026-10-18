@@ -60,6 +60,16 @@ function candidates(item,pdf){
     // 칸 속 글만 있는 괘선 표도(표 분석이 놓친 열린 표 등) 표 하나로 넣는다.
     if(out.some(o=>o.table&&area(inter(o.box,f.box)||[0,0,0,0])>0))continue;
     for(const o of inside)out.splice(out.indexOf(o),1);
+    // 표를 품은 더 큰 그림 후보(그림 옆·위에 표가 붙어 한 덩어리로 잡힌 경우)는 표 바깥쪽만 남긴다.
+    for(const o of [...out]){
+      if(o.table||!inBox(o.box,[f.box[0],f.box[1]],1)||!inBox(o.box,[f.box[2],f.box[3]],1))continue;
+      const sides=[[o.box[0],o.box[1],f.box[0]-1,o.box[3]],[f.box[2]+1,o.box[1],o.box[2],o.box[3]],[o.box[0],o.box[1],o.box[2],f.box[1]-1],[o.box[0],f.box[3]+1,o.box[2],o.box[3]]]
+        .filter(b=>b[2]-b[0]>body*2&&b[3]-b[1]>body*2);
+      if(!sides.length){out.splice(out.indexOf(o),1);continue;}
+      const best=sides.reduce((a,b)=>area(a)>=area(b)?a:b);
+      if(area(best)<area(o.box)*.15){out.splice(out.indexOf(o),1);continue;}
+      o.box=best;o.ink=inter(o.ink,best)||best;o.carved=true;
+    }
     out.push({box:f.box,ink:f.box,kind:inside.some(o=>o.kind!=='vector')?'mixed':'vector',table:true});
   }
   // 괘선 표(조사 기록의 table). 선택지 표·<보기>는 빼고, 그림 후보와 겹치는 표도 뺀다.
