@@ -1797,6 +1797,36 @@
       "findingIds": [
         "USER-LIBRARY-PREVIEW-LOADING"
       ]
+    },
+    {
+      "path": "tests/test-teacher-flow-pdf-library-browser.cjs",
+      "findingIds": [
+        "TEACHER-FLOW-PDF-LIBRARY-WORKBENCH"
+      ]
+    },
+    {
+      "path": "tests/test-teacher-flow-ai-image-browser.cjs",
+      "findingIds": [
+        "TEACHER-FLOW-AI-IMAGE-CANVAS"
+      ]
+    },
+    {
+      "path": "tests/test-teacher-flow-label-export-browser.cjs",
+      "findingIds": [
+        "TEACHER-FLOW-LABEL-EXPORT"
+      ]
+    },
+    {
+      "path": "tests/test-teacher-flow-graph-browser.cjs",
+      "findingIds": [
+        "TEACHER-FLOW-GRAPH-SAVE-REEDIT"
+      ]
+    },
+    {
+      "path": "tests/test-teacher-flow-hwp-exam-browser.cjs",
+      "findingIds": [
+        "TEACHER-FLOW-HWP-EXAM-INSERT"
+      ]
     }
   ],
   "deferred": [
