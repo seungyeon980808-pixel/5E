@@ -186,13 +186,14 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
   const table=async(t,width,choices=false,align,owner=choices?{kind:'choices'}:{kind:'table'})=>{
     recordTable(t.rows,t.cols+(choices?1:0),t.merges.map(m=>({...m,c:m.c+(choices?1:0)})),owner);
     const fontSize=t.cols>3?9:10,cellWidth=(width-(choices?25:0))/t.cols;
-    // 평가원 자료표: 칸 글 줄 간격 115%, 위아래 여백 작게. 한 줄 칸 높이 약 22px(10pt).
+    // 평가원 자료표: 위아래 여백 작게. 한 줄 칸 높이 약 22px(10pt, 이전 30px).
     const PITCH=1.15,rowHeights=Array(t.rows).fill(Math.ceil(fontSize*4/3*PITCH+6));
     for(let r=0;r<t.rows;r++)for(let c=0;c<t.cols;c++){
       if(tableCovered(t,r,c))continue;
       const m=t.merges.find(m=>m.r===r&&m.c===c),span=m?.rs||1;
       const cellText=t.cells[r][c].value,cellLimit=cellWidth*(m?.cs||1)-16,wrapped=measureText?wrapMeasured(cellText,cellLimit,cellLimit,v=>measureRich(v,fontSize)):wrapQuestionText(cellText,cellLimit,fontSize);
-      const needed=Math.ceil(wrapped.split('\n').length*fontSize*4/3*PITCH+6+extraHeight(wrapped,fontSize));
+      // 여러 줄 칸은 한글 엔진의 칸 문단 줄 간격(160%)으로 잰다. 한 줄 칸만 낮게 둔다.
+      const lines=wrapped.split('\n').length,needed=Math.ceil(lines>1?lines*fontSize*4/3*1.6+8:fontSize*4/3*PITCH+6)+Math.ceil(extraHeight(wrapped,fontSize));
       if(span===1)rowHeights[r]=Math.max(rowHeights[r],needed);
       else {const height=rowHeights.slice(r,r+span).reduce((a,b)=>a+b,0);if(needed>height)for(let i=r;i<r+span;i++)rowHeights[i]+=(needed-height)/span;}
     }
