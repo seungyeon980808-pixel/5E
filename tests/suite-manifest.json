@@ -1797,6 +1797,12 @@
       "findingIds": [
         "USER-LIBRARY-PREVIEW-LOADING"
       ]
+    },
+    {
+      "path": "tests/test-teacher-flow-pdf-library-browser.cjs",
+      "findingIds": [
+        "TEACHER-FLOW-PDF-LIBRARY-WORKBENCH"
+      ]
     }
   ],
   "deferred": [
