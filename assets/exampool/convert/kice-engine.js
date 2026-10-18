@@ -104,7 +104,7 @@ const EXP=/과정|결과|가설|자료|준비|방법|탐구|실험/;
 export async function toQuestion(structure,item,{number='1'}={}){
   const diag={notes:[...(structure.notes||[])],decisions:{}};
   const blocks=structure.blocks||[],by=role=>blocks.filter(b=>b.role===role);
-  const A=analyze(structure,item);
+  const A=analyze(structure,item),ph=structure.pageHeight;
   const figs=new Map();for(const n of A.items)if(n.k==='figure'&&!figs.has(n.run)&&(n.run.data||n.run.image?.bytes))figs.set(n.run,{data:n.run.data||await toDataUrl(n.run.image),box:n.box,caption:n.run.caption||null,role:n.run.figRole||'figure'});
   let form=item.form||null,struct=STRUCT_OF(item);
   // 조사 기록이 없으면 규칙: 보기가 있으면 합답형, 지문에 학생이 나오면 대화형, 그림 수로 자료 구조.
@@ -140,13 +140,15 @@ export async function toQuestion(structure,item,{number='1'}={}){
     const startAt=struct==='experiment'?nodes.findIndex(n=>n.k==='para'&&(HEAD.test(n.text)||/^\((가)\)/.test(n.text))):paras.length>1?nodes.indexOf(paras[1]):-1;
     if(startAt>0){const rect={box:null,virtual:true};for(const n of nodes.slice(startAt))if(n.k==='para'||struct==='experiment')n.rect=rect;A.rects.push(rect);diag.notes.push('상자 테두리를 찾지 못해 도입 문단 뒤 글을 상자로 넣었습니다.');}
   }
+  // 크기 기준 폭: 상자 안 자료는 상자 안쪽 폭(테두리·여백 약 16pt 뺌), 아니면 단 폭.
+  const within=n=>n.rect?.box?Math.max(40,n.rect.box[2]-n.rect.box[0]-16):col;
   const figure=(f,parent,label='자료',size=true)=>{const d=figs.get(f.run);const b=add('figure',parent,label);b.figure={name:`${item.id}-${++count.images}.png`,data:d.data};
-    if(size){const w=d.box?d.box[2]-d.box[0]:col*.6;b.size=Math.min(100,Math.max(10,Math.round(w/col*100/5)*5));}return b;};
+    if(size){const w=d.box?d.box[2]-d.box[0]:col*.6,base=within(f);b.size=Math.min(100,Math.max(10,Math.round(w/base*100/5)*5));}return b;};
   const table=(t,parent,label='자료')=>{const d=t.block.detected,b=add('table',parent,d?.caption||label);b.table=d?tableFromDetected(d):tableFromStructure(t.block);count.tables++;
     // 원본 열 폭(pt)·칸 글자 크기(pt): 조판기가 열 폭 비율과 글 크기를 원본대로 쓴다.
     const w=t.block.widths;if(Array.isArray(w)&&w.length===b.table.cols)b.table.colWidths=w.map(x=>Math.round(x*10)/10);
     if(t.block.fontSize)b.table.fontPt=t.block.fontSize;
-    if(t.box){const w=t.box[2]-t.box[0];b.size=Math.min(100,Math.max(10,Math.round(w/col*100/5)*5));}return b;};
+    if(t.box){const w=t.box[2]-t.box[0];b.size=Math.min(100,Math.max(10,Math.round(w/within(t)*100/5)*5));}return b;};
   const textBlock=(paras,parent,label)=>{const b=add('text',parent,label);b.text=paras.map(p=>p.text).join('\n');return b;};
   // 자료 바로 아래 이름 줄 '(가)'·'(가) 아세트산 (나) 뷰테인'과 범례 '(＋: …)'를 그 자료 칸에 붙인다(x 위치로 짝).
   // 그림: 이름은 label, 뒤 글은 text(조판기가 그림 아래에 찍음). 표: 이름은 label, 범례는 table.note.
@@ -154,6 +156,19 @@ export async function toQuestion(structure,item,{number='1'}={}){
   const attachCaptions=(seq,i,run,made)=>{
     const xs=run.map(m=>m.box);if(!xs.every(Boolean))return i;
     const bottom=Math.max(...xs.map(b=>b[3]));
+    // 나란한 그림 아래 단마다 따로 쓴 설명 글(작은 글씨 여러 줄): 줄 낱말 위치로 그림 단에 나눠 각 그림 아래 글로.
+    if(made.length>=2&&made.every(b=>b.kind==='figure')&&ph){
+      while(i<seq.length&&seq[i].k==='para'){
+        const p=seq[i],pb=paraBox(p);if(!pb||pb[1]>bottom+30)break;
+        const cells=p.lines.map(l=>(structure.lineCells||[]).find(c=>Math.abs(ph-c.y-l.base)<1.6));if(cells.some(c=>!c?.words?.length))break;
+        const mid=b=>(b[0]+b[2])/2,colOf=x=>{let k=0,d=Infinity;xs.forEach((b,j)=>{const e=Math.abs(mid(b)-x);if(e<d){d=e;k=j;}});return k;};
+        const per=made.map(()=>[]);let spread=false;
+        for(const c of cells){const ks=new Set();for(const w of c.words){const t=clean(runsText(w.runs));if(!t)continue;const k=colOf((w.x0+w.x1)/2);ks.add(k);per[k].push(t);}if(ks.size>1)spread=true;}
+        if(!spread)break;
+        per.forEach((ws,k)=>{const t=clean(splitEquationParens(ws.join(' ')));if(t)made[k].text=clean((made[k].text?made[k].text+' ':'')+t);});
+        i++;
+      }
+    }
     while(i<seq.length&&seq[i].k==='para'){
       const p=seq[i],pb=paraBox(p),t=p.text.trim();
       if(!pb||pb[1]>bottom+40||!(CAPLINE.test(t)||LEGEND.test(t)))break;
