@@ -49,7 +49,7 @@ function candidates(item,pdf){
     const kind=r.kind!=='image'?'vector':imgArea>=area(ink)*.85?'raster':'mixed';
     out.push({box:r.box,ink,kind});
   }
-  const choiceish=b=>chains.some(c=>inBox(b,mid(c.box),-0.5)&&(CHOICE.test(c.str)||/보\s*기/u.test(c.str)));
+  const choiceish=b=>chains.some(c=>inBox(b,mid(c.box),-0.5)&&(CHOICE.test(c.str)||/[<〈]\s*보\s*기/u.test(c.str)));// '겉보기 등급'은 <보기>가 아니다
   // 칸 속에 그림이 든 괘선 표는 표 전체가 그림 하나다(칸마다 원그래프 등).
   const cells=page.containers.filter(c=>c.kind==='cell');
   for(const f of page.containers){
@@ -57,7 +57,8 @@ function candidates(item,pdf){
     // 표 자신의 칸이어야 한다(바깥 자료 상자 속의 작은 표 칸은 세지 않음): 왼쪽 위 칸이 상자 모서리에 붙는다.
     if(f.kind!=='frame'||!inQ(f.box)||own.length<4||!own.some(c=>Math.abs(c.box[0]-f.box[0])<2&&Math.abs(c.box[1]-f.box[1])<2)||choiceish(f.box))continue;
     const inside=out.filter(o=>inBox(f.box,mid(o.ink),-0.5));
-    if(!inside.length)continue;
+    // 칸 속 글만 있는 괘선 표도(표 분석이 놓친 열린 표 등) 표 하나로 넣는다.
+    if(out.some(o=>o.table&&area(inter(o.box,f.box)||[0,0,0,0])>0))continue;
     for(const o of inside)out.splice(out.indexOf(o),1);
     out.push({box:f.box,ink:f.box,kind:inside.some(o=>o.kind!=='vector')?'mixed':'vector',table:true});
   }
@@ -348,3 +349,10 @@ export async function debugCands(item){const pdf=await readQuestionPdf(item);con
   return {cands:candidates(item,pdf).out.map(o=>o.box),regions:figureRegions(prims,pdf.content.items,H).filter(r=>inBox(item.box,mid(r.ink))).map(r=>r.box)};}
 export async function debugPrims(item,area){const pdf=await readQuestionPdf(item);const H=pdf.pageHeight;const prims=drawingPrimitives(pdf.operations,pdf.OPS,H);const page=analyse(prims,pdf.content.items,H);
   const A=globalThis.__area;return prims.filter(p=>inBox(A,mid(p.box))).map(p=>[p.type,p.orient||'',p.box.map(v=>Math.round(v)),Math.round(p.width*100)/100,page.structural.has(p)?'S':'']);}
+export async function debugConts(item){const pdf=await readQuestionPdf(item);const H=pdf.pageHeight;const prims=drawingPrimitives(pdf.operations,pdf.OPS,H);const page=analyse(prims,pdf.content.items,H);
+  return page.containers.filter(c=>inBox(item.box,mid(c.box))).map(c=>[c.kind,c.box.map(v=>Math.round(v))]);}
+export async function debugChains(item){const pdf=await readQuestionPdf(item);const H=pdf.pageHeight;const prims=drawingPrimitives(pdf.operations,pdf.OPS,H);const page=analyse(prims,pdf.content.items,H);
+  const A=globalThis.__area;return page.chains.filter(c=>inBox(A,mid(c.box))).map(c=>[c.str,c.protected?1:0,c.box.map(v=>Math.round(v))]);}
+export async function debugFrames(item){const pdf=await readQuestionPdf(item);const H=pdf.pageHeight;const prims=drawingPrimitives(pdf.operations,pdf.OPS,H);const page=analyse(prims,pdf.content.items,H);
+  const q=item.box,inQ=b=>inBox(q,mid(b));const chains=page.chains.filter(c=>inQ(c.box));const cells=page.containers.filter(c=>c.kind==='cell');
+  return page.containers.filter(f=>f.kind==='frame'&&inQ(f.box)).map(f=>{const own=cells.filter(c=>inBox(f.box,mid(c.box),-0.5));return [f.box,own.length,own.some(c=>Math.abs(c.box[0]-f.box[0])<2&&Math.abs(c.box[1]-f.box[1])<2),chains.filter(c=>inBox(f.box,mid(c.box),-0.5)&&(CHOICE.test(c.str)||/보\s*기/u.test(c.str))).map(c=>c.str)];});}
