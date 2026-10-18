@@ -48,7 +48,8 @@ for it in corpus:
                 in_table = any(t.contains(pymupdf.Point((bb.x0 + bb.x1) / 2, (bb.y0 + bb.y1) / 2)) for t in tables)
                 ok_size = (abs(s['size'] - bs) <= 0.6 or (body_line and s['size'] >= bs * 0.5)) and not EQFONT.search(s['font'])
                 if in_table:
-                    if ok_size: tchars.append(t)
+                    # 표 칸 글은 본문보다 작게 찍히는 경우가 많다: 크기와 상관없이(수식 글꼴만 빼고) 표 글로 본다.
+                    if not EQFONT.search(s['font']): tchars.append(t)
                     continue
                 if not rect.contains(pymupdf.Point((bb.x0 + bb.x1) / 2, (bb.y0 + bb.y1) / 2)): continue
                 allt.append(t)
