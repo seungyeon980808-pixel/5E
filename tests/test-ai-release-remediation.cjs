@@ -297,9 +297,10 @@ test('AI-160-02: the real cache key changes for every rendered or separation inp
 });
 
 async function submitContext(statusPromise) {
-  const [quality, workflow, kice, white, models, snapshots, references, composition, marks, requests] = await Promise.all([
+  const [quality, workflow, kice, white, models, snapshots, references, composition, marks, requests, brief] = await Promise.all([
     'ai-quality-mode', 'ai-image-label-workflow', 'kice-image-workflow', 'ai-white-png',
     'ai-model-capabilities', 'ai-candidate-snapshot', 'ai-reference-roles', 'ai-source-tasking', 'ai-mark-policy', 'ai-request-plan',
+    'ai-exam-brief',
   ].map(productModule));
   const sends = [];
   let statusCalls = 0;
@@ -312,6 +313,7 @@ async function submitContext(statusPromise) {
     input: { value: 'request-A' },
     chatInput: { value: 'request-A' },
     activeTaskTabId: 'task-A',
+    taskTabs: new Map([['task-A', { id: 'task-A' }]]),
     attachments: [{ id: 'source-A' }],
     generatedImages: [],
     selectedMode: 'diagram',
@@ -350,6 +352,10 @@ async function submitContext(statusPromise) {
     recordConversationMessage: (role, text) => context.conversationMessages.push({ role, text }),
     snapshotImageItem: snapshots.snapshotImageItem,
     enforceKiceImageRunInput: kice.enforceKiceImageRunInput,
+    prepareExamBriefRunInput: brief.prepareExamBriefRunInput,
+    isExamBrief: brief.isExamBrief,
+    isGraphWorkflow: kind => kind === "graph" || kind === "graph-create",
+    isCreationWorkflow: kind => kind === "image-create" || kind === "graph-create",
     normalizeReferenceComposition: composition.normalizeReferenceComposition,
     normalizeMarkPolicy: marks.normalizeMarkPolicy,
     readMarkPolicy: () => marks.normalizeMarkPolicy({}),
@@ -566,6 +572,7 @@ test('batch capture retains only selected revision inputs and immutable operatio
     normalizeImageLabelWorkflow:workflow.normalizeImageLabelWorkflow,AI_OUTPUT_ENGINES:quality.AI_OUTPUT_ENGINES,
     compactConversation:()=>'',batchOwner:taskId=>({taskId,scope:{sessionId:'session',workspaceId:'workspace'}}),
     panel:{dataset:{}},busy:false,preflightRun:null,desktop:{send(){}}};
+  Object.assign(context, await productModule('ai-workflow-kinds'), { isExamBrief: (await productModule('ai-exam-brief')).isExamBrief });
   vm.runInNewContext(sourcePart('  function captureBatchTask(id) {','  async function runWorkspaceBatch(context,emit) {')+'\nglobalThis.capture=captureBatchTask;globalThis.preflight=preflightBatch;',context);
   const scoped=context.capture('A');
   assert.equal(scoped.snapshot.operation,'scoped-edit');
@@ -1171,7 +1178,7 @@ const pieces = {
     '  const syncOutputProcessingUi = () => {', 'full processing status'),
   preview: oneSlice(source, '  const resolveOutputVariant = (item) => {',
     '  const emptyReviewReport = () =>', 'full resolver, render, refresh and showWorkbench'),
-  openClose: oneSlice(source, '  const open = async ({ reference, references = [], prompt, startGeneration = false,',
+  openClose: oneSlice(source, '  const open = async ({ reference, references = [], prompt, examBriefProfile, startGeneration = false,',
     '  const panelFocusables = () =>', 'full open and close'),
   visibilityDispose: oneSlice(source, '    setWorkbenchVisible: (visible, { animate = true } = {}) => {',
     '    snapshotTask: async id => {', 'full visibility and disposal methods'),
@@ -1227,6 +1234,7 @@ function fixture() {
     finish: () => lifecycleEvents.push('finish'),
     dispose: () => { motionOpen = false; lifecycleEvents.push('motion-dispose'); } };
   const sandbox = {
+    EXAM_BRIEF_PROFILE: 'exam-brief-v1',
     disposed: false, localVisibilityEpoch: 0, outputProcessingRevision: 0,
     activeTaskTabId: 'owner-task', selectedImageOutputOptions: { backgroundPolicy: 'connected', examPalette: false, lineThickness: 0 },
     selectedSeparationMode: 'off', AI_SEPARATION_MODES: { OFF: 'off' },

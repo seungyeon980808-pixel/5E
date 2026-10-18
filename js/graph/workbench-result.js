@@ -1,7 +1,11 @@
 import { buildNativeGraph } from './native-graph.js?v=1.7.0-four-session-integration';
-import { EXAM_STYLE } from './exam-style.js?v=1.7.0-four-session-integration';
+import { EXAM_STYLE, DESCRIPTION_EXAM_STYLE, examMetrics } from './exam-style.js?v=1.7.0-four-session-integration';
+import { preserveDescriptionPresentation } from './description-presentation.js?v=1.7.0-four-session-integration';
+import { descriptionAxisTitle, descriptionSeriesLabelPositions } from './description-layout.js?v=1.7.0-four-session-integration';
+import { mathFromWorld, planeAsY2 } from '../function-graph/coords.js?v=1.7.0-four-session-integration';
 import { validateGraphPlan } from './reconstruction-contract.js?v=1.7.0-four-session-integration';
 import { auditGraphReconstructionQuality } from './reconstruction-quality.js?v=1.7.0-four-session-integration';
+import { auditGraphDescriptionQuality } from './description-quality.js?v=1.7.0-four-session-integration';
 import { renderCoordplane, renderFuncgraph } from '../render/coordplane.js?v=1.7.0-four-session-integration';
 import { makeFillPattern } from '../render/fill.js?v=1.7.0-four-session-integration';
 import { ensureEmbeddedFonts } from '../svg-export.js?v=1.7.0-four-session-integration';
@@ -51,12 +55,37 @@ export function validateWorkbenchGraph(result) {
   return plane;
 }
 
-export function buildWorkbenchGraph(plan, source) {
+export function buildWorkbenchGraph(plan, source, { descriptionLayout = false, priorResult = null } = {}) {
   const plot = plan.source.plotBox;
-  const width = EXAM_STYLE.defaultWidth, scale = width / plot.w;
+  const priorWidth=priorResult?.objects?.find(o=>o.type==='coordplane')?.w;
+  const width = descriptionLayout && Number.isFinite(priorWidth) && priorWidth>0 ? priorWidth : EXAM_STYLE.defaultWidth, scale = width / plot.w;
   const built = buildNativeGraph(plan, { source, stylePreset:EXAM_STYLE.preset, box: { x: -width/2, y: -plot.h * scale / 2, w: width, h: plot.h * scale } });
   if (!built.ok) throw new Error(built.error);
-  const result = { schema: GRAPH_WORKBENCH_SCHEMA, source: copy(source), plan: copy(plan), quality: auditGraphReconstructionQuality(plan), objects: copy(built.objects), groups: copy(built.groups) };
+  if (descriptionLayout) {
+    const plane = built.objects.find(o => o.type === 'coordplane');
+    // Preserve the common exam preset, with restrained type and longer,
+    // slender axis heads for newly designed graphs. Restoration is unchanged.
+    Object.assign(plane.graphStyle, { descriptionLayout: true, ...DESCRIPTION_EXAM_STYLE });
+    plane.axisLabelScale = plane.tickLabelScale = DESCRIPTION_EXAM_STYLE.labelScale;
+    plane.labelX = descriptionAxisTitle(plan.axes.x, 'x');
+    plane.labelY = descriptionAxisTitle(plan.axes.y);
+    if (plane.y2 && plan.axes.y2) plane.y2.labelY2 = descriptionAxisTitle(plan.axes.y2);
+    const seriesNames = new Set(plan.series.flatMap(s => [s.label, s.endLabel]).filter(Boolean));
+    for (const annotation of plane.graphAnnotations) {
+      if (seriesNames.has(annotation.text)) annotation.labelRole = 'name';
+    }
+    preserveDescriptionPresentation(built.objects,plan,priorResult);
+    for(const series of built.objects.filter(o=>o.type==='funcgraph')) series.graphStyle=copy(plane.graphStyle);
+    for(const label of descriptionSeriesLabelPositions(built.objects.filter(o=>o.type==='funcgraph'),examMetrics(plane).label)) {
+      const series=label.series,p=series.axis==='y2'?planeAsY2(plane):plane;
+      const at=mathFromWorld(p,label.x,label.y),to=mathFromWorld(p,label.to.x,label.to.y);
+      plane.graphAnnotations.push({id:`description-label-${series.id}`,kind:'text',text:series.endLabel,labelRole:'name',...at,axis:series.axis,coordinateSpace:'data',seriesId:series.reconstruction?.seriesId});
+      plane.graphAnnotations.push({id:`description-label-guide-${series.id}`,kind:'leader',text:'',...at,to,axis:series.axis,coordinateSpace:'data'});
+      series.endLabel='';
+    }
+  }
+  const quality = descriptionLayout ? auditGraphDescriptionQuality(plan) : auditGraphReconstructionQuality(plan);
+  const result = { schema: GRAPH_WORKBENCH_SCHEMA, source: copy(source), plan: copy(plan), quality, objects: copy(built.objects), groups: copy(built.groups) };
   validateWorkbenchGraph(result);
   return result;
 }
@@ -67,7 +96,7 @@ export async function workbenchGraphDataUrl(result) {
   const fontCss = await ensureEmbeddedFonts();
   // SVG-as-image cannot see the document's webfonts. Load before measuring and
   // embed the same face in the candidate, rather than falling back on export.
-  await document.fonts?.load('normal 400 16px "Latin Modern Roman"');
+  await Promise.all(['normal', 'italic'].map(style => document.fonts?.load(`${style} 400 16px "Latin Modern Roman"`)));
   const plot = result.plan.source.plotBox, scale = plot.w / plane.w;
   const svg = document.createElementNS(SVG_NS, 'svg');
   svg.setAttribute('xmlns', SVG_NS);

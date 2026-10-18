@@ -1,3 +1,4 @@
+import { initFigureStudio } from './figure-studio.js?v=20261018';
 import './ai-label-background.js?v=1.7.0-four-session-integration';
 import { initVisitorStats } from './visitor-stats.js?v=1.7.0-four-session-integration';
 import { initBugReporter } from './bug-report.js?v=1.7.0-four-session-integration';
@@ -329,6 +330,7 @@ const aiPanel = initAiPanel(state, { freshStart: recoveryChoice === "fresh", mat
 examWorkspace.setAiPanel(aiPanel);
 initExamPoolWorkspace(state, {serialize, prepareLoadedProject, ensureEmbeddedFonts, rasterizeExportCanvas, insertPngPhys,
   commitActiveText, switchPage, centerView:() => centerView(state)}, examWorkspace);
+initFigureStudio(state, { aiPanel, onInserted: () => centerView(state) });
 window.addEventListener('5e:lite-ai-open', async () => {
   await aiPanel?.open({ acknowledge:true });
   window.dispatchEvent(new Event('5e:lite-ai-opened'));

@@ -1,5 +1,6 @@
 import { normalizeMarkPolicy } from './ai-mark-policy.js?v=1.7.0-four-session-integration';
 import { validateWorkbenchGraph } from './graph/workbench-result.js?v=1.7.0-four-session-integration';
+import { isExamBrief } from './ai-exam-brief.js?v=1.7.0-exam-brief';
 
 // Snapshotting retains data, never grants label/source verification authority.
 export function validateCandidateSnapshot(item) {
@@ -74,8 +75,11 @@ export function snapshotImageItem(item) {
     reviewMeta: item?.reviewMeta ? structuredClone(item.reviewMeta) : null,
     structureRecord: item?.structureRecord ? JSON.parse(JSON.stringify(item.structureRecord)) : null,
     rendererPrompt: typeof item?.rendererPrompt === "string" ? item.rendererPrompt : "",
+    ...(item?.examBriefProfile ? { examBriefProfile: item.examBriefProfile } : {}),
     labelPlan: item?.labelPlan ? JSON.parse(JSON.stringify(item.labelPlan)) : null,
-    imageLabelWorkflow: item?.imageLabelWorkflow ? structuredClone(item.imageLabelWorkflow) : null,
+    // Early brief results inherited source-conversion settings without running
+    // that protocol. Recovery must not claim label verification for a new drawing.
+    imageLabelWorkflow: !isExamBrief(item) && item?.imageLabelWorkflow ? structuredClone(item.imageLabelWorkflow) : null,
     sourceLabelPlan: item?.sourceLabelPlan ? structuredClone(item.sourceLabelPlan) : null,
     editableDraft: item?.editableDraft ? structuredClone(item.editableDraft) : null,
     targetPlacement: item?.targetPlacement ? structuredClone(item.targetPlacement) : null,

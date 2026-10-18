@@ -6,6 +6,8 @@ const { buildEphemeralThreadStartParams } = createRequire(import.meta.url)('../d
 const { resolveTurnPlan } = createRequire(import.meta.url)('../desktop/codex-turn-runtime.cjs');
 import { createGraphReconstructionWorkflow, graphSourceHash, graphCacheKey, GRAPH_JOB_SCHEMA, GRAPH_PIPELINE_VERSION } from '../js/graph/reconstruction-workflow.js';
 
+import { graphDescriptionSource, buildGraphDescriptionPrompt } from '../js/graph/description-contract.js';
+
 const evidence = process.env.EVIDENCE_DIR ? path.resolve(process.env.EVIDENCE_DIR) : path.resolve(import.meta.dirname, '../.omo/evidence/graph-reconstruction-20261004/workflow');
 fs.mkdirSync(evidence, { recursive: true });
 const png = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aS9sAAAAASUVORK5CYII=';
@@ -54,6 +56,52 @@ async function test(name, run) {
   catch (error) { results.push({ name, pass: false, error: error.stack }); }
   finally { for (const ctx of contexts.slice(first)) if (ctx.workflow.isActive()) await ctx.workflow.cancel(); }
 }
+
+await test('text graph dispatch is image-free, bound to draft, cacheable and recoverable', async () => {
+  const description = '가로축 시간, 세로축 속도. 증가하다 일정, 숫자 없이.';
+  const bound = await graphDescriptionSource(description);
+  const textPlan = JSON.parse(buildGraphDescriptionPrompt(bound, description).split('QUALITATIVE_EXAMPLE: ')[1].split('\n')[0]);
+  const ctx = setup();
+  const options = { source: bound, description, selection, catalog };
+  const { pending } = await sent(ctx, options); complete(ctx, textPlan);
+  const result = await pending; assert.equal(result.ok, true);
+  assert.deepEqual(ctx.calls[0].attachments, []);
+  assert.match(ctx.calls[0].text || ctx.calls[0].prompt, /원본 이미지가 없다/);
+  assert.equal(result.value.plan.coordinateMode, 'observed');
+  assert.deepEqual(result.value.plan.axes.x.ticks, []);
+  const cached = await ctx.workflow.analyze(options);
+  assert.equal(cached.metrics.cacheHits, 1); assert.equal(cached.description, description);
+  assert.equal((await ctx.workflow.recover()).description, description);
+  assert.equal(ctx.calls.length, 1);
+});
+await test('text graph rejects stale description, image attachments and unsupported empty result', async () => {
+  const description = '원형 그래프';
+  const bound = await graphDescriptionSource(description);
+  const ctx = setup(), options = { source: bound, description, selection, catalog };
+  for (const extra of [{ source: { ...bound, hash: 'wrong' } }, { attachment: { data: png } }, { maxAttempts: 2, renderCandidate() {} }]) {
+    assert.equal((await outcome(ctx.workflow.analyze({ ...options, ...extra }))).ok, false);
+  }
+  assert.equal(ctx.calls.length, 0);
+  const { pending } = await sent(ctx, options);
+  const rejected = JSON.parse(buildGraphDescriptionPrompt(bound, description).split('QUALITATIVE_EXAMPLE: ')[1].split('\n')[0]);
+  rejected.series = []; rejected.review = [{ path: 'request', reason: '원형 그래프는 지원하지 않습니다.' }];
+  complete(ctx, rejected); const result = await pending;
+  assert.equal(result.ok, false); assert.match(result.error.message, /원형/);
+  assert.equal(result.error.code, 'GRAPH_DESCRIPTION_REJECTED'); assert.equal(ctx.calls.length, 1);
+});
+
+await test('source-bound refusal keeps repair reason when unused axes are omitted, never inserts or retries', async () => {
+  const description = '시간 축 최소 10, 최대 0, 최소가 최대보다 작아야 한다';
+  const bound = await graphDescriptionSource(description), ctx = setup();
+  const { pending } = await sent(ctx, { source: bound, description, selection, catalog });
+  const rejected = JSON.parse(buildGraphDescriptionPrompt(bound, description).split('QUALITATIVE_EXAMPLE: ')[1].split('\n')[0]);
+  rejected.series = []; delete rejected.axes;
+  rejected.review = [{path:'request', reason:'최소 10과 최대 0 조건은 모순입니다. 최소값이 최대값보다 작도록 고쳐 주세요.'}, {path:'axes.x', reason:'unused observation note'}];
+  complete(ctx, rejected); const result = await pending;
+  assert.equal(result.ok, false); assert.equal(result.error.code, 'GRAPH_DESCRIPTION_REJECTED');
+  assert.match(result.error.message, /최소 10과 최대 0/); assert.equal(ctx.calls.length, 1);
+  assert.doesNotMatch(result.error.message, /unused observation note/);
+});
 
 await test('real source digest, selected catalog parameters and raw event success', async () => {
   assert.match(source.hash, /^sha256:[a-f0-9]{64}$/);
@@ -303,6 +351,20 @@ await test('current edited preview and style references remain separate from the
   assert.match(ctx.calls[0].text, /데이터나 좌표를 섞지/);
   complete(ctx); assert.equal((await pending).ok, true);
   assert.equal(ctx.records.has(graphCacheKey(source, selection)), false);
+});
+await test('image followup binds structured manual edits and refuses another source before dispatch', async () => {
+  const priorPlan=plan(), priorObjects=[{type:'funcgraph',expr:'x',points:[{x:9,y:9}],mathPoints:[{x:9,y:9}],domainMin:0,domainMax:2,styleOverrides:{strokeWidth:{value:.61,width:50}}}];
+  const ctx=setup(), options={...args(),instructions:'곡선만 점선으로',contextAttachment:{data:png},priorPlan,priorObjects};
+  const {pending}=await sent(ctx,options);
+  assert.match(ctx.calls[0].text,/다시 추적하거나 점을 재표본화하지/);
+  assert.match(ctx.calls[0].text, new RegExp('이전 생성 plan JSON:'));
+  const compact=JSON.parse(ctx.calls[0].text.split('현재 네이티브 객체 JSON:\n')[1].split('\n\n사용자의')[0]);
+  assert.equal(compact[0].expr,'x');assert.equal(compact[0].points,undefined);
+  assert.equal(compact[0].styleOverrides.strokeWidth.value,.61);
+  assert.deepEqual(ctx.workflow.snapshot().priorObjects,priorObjects);
+  complete(ctx);assert.equal((await pending).ok,true);
+  const other=setup(), bad=structuredClone(options);bad.priorPlan.source.hash='wrong';
+  assert.equal((await outcome(other.workflow.analyze(bad))).ok,false);assert.equal(other.calls.length,0);
 });
 await test('formula-first result preserves raw observations, first result, cache and recovery', async () => {
   const observed = plan();

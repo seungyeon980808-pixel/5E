@@ -6,4 +6,9 @@ for (const [message, code] of [['429 Too Many Requests', 'GRAPH_RATE_LIMIT'], ['
 }
 assert.equal(describeGraphFailure(Object.assign(new Error('invalid'), { code: 'GRAPH_INVALID_RESULT' })).code, 'GRAPH_INVALID_RESULT');
 assert.equal(describeGraphFailure(new Error('Expected series')).code, 'GRAPH_FAILED');
+const refusal = describeGraphFailure(Object.assign(new Error('시간 축 최소값은 최대값보다 작게 지정하세요.'), { code: 'GRAPH_DESCRIPTION_REJECTED' }));
+assert.match(refusal.message, /최소값은 최대값보다 작게/);
+assert.equal(refusal.automaticRetry, false);
+assert.match(refusal.message, /이전 결과는 유지/);
+assert.doesNotMatch(describeGraphFailure(Object.assign(new Error('private validation detail'), { code: 'GRAPH_INVALID_RESULT' })).message, /private validation detail/);
 console.log('Graph failures keep provider reason, fixed selection and no automatic retry PASS');

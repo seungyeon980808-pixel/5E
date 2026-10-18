@@ -2,6 +2,30 @@
   "schemaVersion": 1,
   "unit": [
     {
+      "path": "tests/test-graph-description.mjs",
+      "findingIds": [
+        "GRAPH-DESCRIPTION-CREATION"
+      ]
+    },
+    {
+      "path": "tests/test-graph-point-precision.mjs",
+      "findingIds": [
+        "GRAPH-POINT-PRECISION"
+      ]
+    },
+    {
+      "path": "tests/test-exam-brief.mjs",
+      "findingIds": [
+        "EXAM-BRIEF-AUTO-STYLE"
+      ]
+    },
+    {
+      "path": "tests/test-figure-studio.mjs",
+      "findingIds": [
+        "FIGURE-STUDIO-INPUT-PLANNING"
+      ]
+    },
+    {
       "path": "tests/test-bug-board-api.mjs",
       "findingIds": [
         "BUG-BOARD-API"
@@ -708,6 +732,12 @@
   ],
   "browser": [
     {
+      "path": "tests/test-figure-studio-browser.cjs",
+      "findingIds": [
+        "FIGURE-STUDIO-NATIVE-OBJECTS"
+      ]
+    },
+    {
       "path": "tests/test-bug-board-browser.cjs",
       "findingIds": [
         "BUG-BOARD-UI"
@@ -715,23 +745,33 @@
     },
     {
       "path": "tests/test-loading-offscreen-settle-browser.cjs",
-      "findingIds": ["LOADING-OFFSCREEN-SETTLE-01"]
+      "findingIds": [
+        "LOADING-OFFSCREEN-SETTLE-01"
+      ]
     },
     {
       "path": "tests/test-loading-motion-batch-browser.cjs",
-      "findingIds": ["LOADING-MOTION-BATCH-01"]
+      "findingIds": [
+        "LOADING-MOTION-BATCH-01"
+      ]
     },
     {
       "path": "tests/test-library-catalog-refresh-browser.cjs",
-      "findingIds": ["LIBRARY-LATE-CATALOG-01"]
+      "findingIds": [
+        "LIBRARY-LATE-CATALOG-01"
+      ]
     },
     {
       "path": "tests/test-blur-reveal-dispose-browser.cjs",
-      "findingIds": ["BLUR-REVEAL-DETACHED-DISPOSE"]
+      "findingIds": [
+        "BLUR-REVEAL-DETACHED-DISPOSE"
+      ]
     },
     {
       "path": "tests/test-library-preview-settle-browser.cjs",
-      "findingIds": ["LIBRARY-PREVIEW-SETTLE-CLEANUP"]
+      "findingIds": [
+        "LIBRARY-PREVIEW-SETTLE-CLEANUP"
+      ]
     },
     {
       "path": "tests/test-preview-ai-storage-browser.cjs",
@@ -1184,11 +1224,15 @@
     },
     {
       "path": "tests/test-ai-conversation-storage-browser.cjs",
-      "findingIds": ["STORAGE-CONVERSATION-02"]
+      "findingIds": [
+        "STORAGE-CONVERSATION-02"
+      ]
     },
     {
       "path": "tests/test-ai-task-notice-browser.cjs",
-      "findingIds": ["AI-TASK-REVIEW-NOTICE-01"]
+      "findingIds": [
+        "AI-TASK-REVIEW-NOTICE-01"
+      ]
     },
     {
       "path": "tests/test-ai-failure-log-browser.cjs",

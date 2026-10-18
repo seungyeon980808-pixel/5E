@@ -1,3 +1,4 @@
+import { normalizeAIWorkflowKind } from './ai-workflow-kinds.js?v=1.7.0-four-session-integration';
 import { referenceDestinations } from './library/reference-destinations.js?v=1.7.0-four-session-integration';
 import { channelStorage as localStorage } from './preview-storage.js?v=1.7.0-four-session-integration';
 import { validateWorkspaceCandidates } from './ai-candidate-snapshot.js?v=1.7.0-four-session-integration';
@@ -62,7 +63,7 @@ export function recoverTaskWorkspaceSnapshot(value) {
     const wasRunning = tab.workState === 'busy';
     return {
       ...tab,
-      conversionKind: ['image','graph'].includes(tab.conversionKind) ? tab.conversionKind : generated.some(item=>item.graphResult) ? 'graph' : 'image',
+      conversionKind: normalizeAIWorkflowKind(tab.conversionKind || (generated.some(item=>item.graphResult) ? 'graph' : 'image'), tab.examBriefProfile === 'exam-brief-v1'),
       attachments: Array.isArray(tab.attachments) ? tab.attachments : [],
       generated,
       selectedCandidateId: selected,
@@ -229,7 +230,7 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
   const pendingSelections = new Map();
   const selectionKey = '5e.aiActiveTask.v1';
   const workflowSelections = new Map();
-  const workflowKind = () => active?.panel.dataset.aiWorkflow === 'graph' ? 'graph' : 'image';
+  const workflowKind = () => normalizeAIWorkflowKind(active?.panel.dataset.aiWorkflow);
   const selectionFor = (kind = workflowKind()) => {
     if (!workflowSelections.has(kind)) workflowSelections.set(kind,createWorkspaceSelection());
     return workflowSelections.get(kind);
@@ -925,6 +926,16 @@ export function createTaskWorkspaces(state, initialize, setupWorkbench, { freshS
     },
     open: async options => {
       await ready;
+      // Creation drafts must never inherit the selected image's task, references,
+      // conversation, or prompt. Keep existing workspaces intact in their scope.
+      if (options?.newWorkspace === true) {
+        const target = add(crypto.randomUUID(), false);
+        await target.controller.ready;
+        target.controller.setEmptyWorkflow(normalizeAIWorkflowKind(options.conversionKind, options.examBriefProfile === 'exam-brief-v1'));
+        saveRegistry();
+        activate(target);
+        return target.controller.open(options);
+      }
       const selected = state.get().objects.find(o => state.get().selectedIds?.includes(o.id) && o.aiTaskId);
       const hasReference = options?.reference || options?.references?.length;
       const owner = !hasReference && entries.find(e => e.controller.ownsTask(selected?.aiTaskId));

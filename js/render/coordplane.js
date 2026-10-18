@@ -24,11 +24,14 @@ import { renderGraphLabel as renderBaseGraphLabel, measureGraphLabel } from "./g
 import { renderPolyline } from "./shapes.js?v=1.7.0-four-session-integration";
 import { resolveFill, makeFillPattern } from "./fill.js?v=1.7.0-four-session-integration";
 import { EXAM_STYLE, isExamStyle, examPlaneStyle, examSeriesStyle } from '../graph/exam-style.js?v=1.7.0-four-session-integration';
+import { descriptionTitleLayout, descriptionTickLabelLanes } from '../graph/description-layout.js?v=1.7.0-four-session-integration';
 
-// Reconstructed exam labels are upright, including older saved objects which
-// predate labelStyle. Ordinary graph variables retain their existing typography.
+// Source restoration retains its legacy lettering. Newly described graphs use
+// italic quantities; the label renderer keeps units and numerals upright.
+// Point/series names explicitly request upright lettering at their call sites.
+const graphLabelUpright = (obj, requested) => requested ?? (!!obj.reconstruction && !obj.graphStyle?.descriptionLayout);
 const graphLabelRenderer = obj => (text, options = {}) => {
-  const settings={...options,upright:!!obj.reconstruction || options.upright===true,
+  const settings={parenthesesAreUnits:!obj.graphStyle?.descriptionLayout,...options,upright:graphLabelUpright(obj, options.upright),
     sourceHeight:options.sourceHeight ?? (obj.reconstruction?.labelSizeMode==='source-height')};
   if (!isExamStyle(obj)) return renderBaseGraphLabel(text,settings);
   // Measure each font at ONE canonical size. Scaling that same vector label
@@ -112,13 +115,13 @@ const ARROW_D_CANON = (() => {
   d += "Z";
   return d;
 })();
-function smoothArrowHead(tipX, tipY, dirX, dirY, sw, color) {
+function smoothArrowHead(tipX, tipY, dirX, dirY, sw, color, widthScale = 1) {
   const L = sw * 6.0;             // 전체 크기 배율(비율은 ARROW_TRACE가 고정)
   // 정준 방향(0,-1) → (dirX,dirY)로 돌리는 회전각(도, SVG는 시계방향+). atan2 기준 유도.
   const rotDeg = (Math.atan2(dirY, dirX) * 180) / Math.PI + 90;
   const path = document.createElementNS(SVG_NS, "path");
   path.setAttribute("d", ARROW_D_CANON);
-  path.setAttribute("transform", `translate(${tipX} ${tipY}) rotate(${rotDeg}) scale(${L})`);
+  path.setAttribute("transform", `translate(${tipX} ${tipY}) rotate(${rotDeg}) scale(${widthScale === 1 ? L : `${L * widthScale} ${L}`})`);
   path.setAttribute("fill", color);
   path.setAttribute("stroke", color);
   path.setAttribute("stroke-width", 0.15 / 6);   // scale(L)로 함께 커져 최종 sw*0.15가 된다
@@ -342,21 +345,25 @@ function renderCoordplane(obj) {
   const customHead = !examHead && (Number.isFinite(obj.axisArrowLength) || Number.isFinite(obj.axisArrowWidth));
   const headLength = obj.axisArrowLength > 0 ? obj.axisArrowLength : headSw * 6;
   const headWidth = obj.axisArrowWidth > 0 ? obj.axisArrowWidth : headSw * 3.6;
+  // Text-created graphs have reserved outer padding. Extend only the axis
+  // artwork beyond the data rectangle so an endpoint tick cannot touch a head.
+  const overhang = obj.graphStyle?.descriptionLayout && !boxFrame ? headLength * 1.4 : 0;
+  const tipRight = right + overhang, tipTop = top - overhang;
   const shaftGap = examHead ? headLength / 1.1551 : customHead ? headLength * 0.7 : headSw * 3.6;
   const arrowOn = key => typeof obj[key] === 'boolean' ? obj[key] : !boxFrame;
   const axisHead = (x, y, dx, dy) => {
-    if (examHead) { const head=smoothArrowHead(x,y,dx,dy,headLength/(1.1551*6),color);head.setAttribute('data-axis-arrow','');g.appendChild(head); }
+    if (examHead) { const head=smoothArrowHead(x,y,dx,dy,headLength/(1.1551*6),color,obj.axisArrowWidthScale || 1);head.setAttribute('data-axis-arrow','');g.appendChild(head); }
     else if (customHead) g.appendChild(makeArrowHead(x,y,dx,dy,headLength,color,{lenMul:1,widthMul:headWidth/(2*headLength)}));
     else appendArrow(g,x,y,dx,dy,headSw,color);
   };
   if (obj.showAxisLines) {
     if (xAxisVisible) {
-      addLine(boxFrame ? left : xAxisLeft, worldY0, right - (arrowOn('axisArrowX') ? shaftGap : 0), worldY0, color, sw);
-      if (arrowOn('axisArrowX')) axisHead(right,worldY0,1,0);
+      addLine(boxFrame ? left : xAxisLeft, worldY0, tipRight - (arrowOn('axisArrowX') ? shaftGap : 0), worldY0, color, sw);
+      if (arrowOn('axisArrowX')) axisHead(tipRight,worldY0,1,0);
     }
     if (hasYArm && yAxisVisible) {
-      addLine(worldX0, boxFrame ? bottom : yAxisBottom, worldX0, top + (arrowOn('axisArrowY') ? shaftGap : 0), color, sw);
-      if (arrowOn('axisArrowY')) axisHead(worldX0,top,0,-1);
+      addLine(worldX0, boxFrame ? bottom : yAxisBottom, worldX0, tipTop + (arrowOn('axisArrowY') ? shaftGap : 0), color, sw);
+      if (arrowOn('axisArrowY')) axisHead(worldX0,tipTop,0,-1);
     }
     if (boxFrame) {
       // Bottom/left axes normally supply these borders. Interior axes must not
@@ -397,6 +404,7 @@ function renderCoordplane(obj) {
   const numSize = Math.max(obj.tickLabelSize || 2.6, 1);
   // 축↔라벨 간격: 눈금이 안쪽으로만 뻗으니 라벨을 축 바로 밑에 더 바짝(요구: 여전히 낮다).
   const tickGap = numSize * 0.04 + sw * 1.5;
+  const descriptionXTicks = [];
   // 눈금 숫자 이동(요구 ②): 숫자마다 {dx,dy} 오프셋을 적용하고, data-tick으로 태깅한다
   // (모달 미리보기가 그 태그를 잡아 드래그로 오프셋을 조정). tag=`${axis}:${ord}`.
   const addNumber = (text, nx, ny, anchor, baseline, tag) => {
@@ -420,6 +428,11 @@ function renderCoordplane(obj) {
       g.appendChild(node);
     }
     if (node && tag) node.setAttribute("data-tick", tag);
+    if (node && tag?.startsWith('x:') && obj.graphStyle?.descriptionLayout) {
+      const metric = measureGraphLabel(text,EXAM_STYLE.label,false,obj.labelWeight ?? 400,true,{parenthesesAreUnits:false});
+      const off = obj.tickOffX?.[Number(tag.slice(2))];
+      descriptionXTicks.push({node,x:nx,y:ny,width:metric.w*numSize/EXAM_STYLE.label,height:metric.h*numSize/EXAM_STYLE.label,pinned:!!(off?.dx || off?.dy)});
+    }
     return node;
   };
   // 눈금별 이동 오프셋 조회(월드 mm). obj.tickOffX/Y = [{dx,dy}, …] (순번 기준).
@@ -512,12 +525,29 @@ function renderCoordplane(obj) {
   }
 
   // ----- AXIS NAME LABELS + ORIGIN -----
+  // A requested symbolic tick can arrive as a text annotation (e.g. π next
+  // to the numeric tick 3). Keep that annotation at its actual coordinate and
+  // reserve its space before laying out automatic numeric labels.
+  if (obj.graphStyle?.descriptionLayout) for (const annotation of obj.graphAnnotations || []) {
+    if (annotation.kind !== 'text' || annotation.orientation === 'vertical' || !Number.isFinite(annotation.x) || !Number.isFinite(annotation.y)) continue;
+    const x=worldXFromMathX(P,annotation.x), y=worldYFromMathY(P,annotation.y);
+    if (x<left || x>right || y<tickAxisY || y>tickAxisY+numSize*1.8) continue;
+    const size=annotation.fontSize || annotation.size || numSize;
+    const metric=measureGraphLabel(annotation.displayText ?? annotation.text,EXAM_STYLE.label,false,annotation.fontWeight ?? obj.labelWeight ?? 400,true,{parenthesesAreUnits:false});
+    const height=metric.h*size/EXAM_STYLE.label;
+    descriptionXTicks.push({x,y:y-height/2,width:metric.w*size/EXAM_STYLE.label,height,pinned:true});
+  }
+  let descriptionXTickDepth = 0;
+  for (const label of descriptionTickLabelLanes(descriptionXTicks,numSize*.18)) {
+    if (label.dy && label.node) label.node.setAttribute('transform',`translate(0 ${label.dy}) ${label.node.getAttribute('transform') || ''}`);
+    descriptionXTickDepth = Math.max(descriptionXTickDepth,label.y+label.dy+label.height-tickAxisY);
+  }
   const nameSize = obj.axisLabelSize ? Math.max(obj.axisLabelSize, 1) : Math.max(sw * 14, 3);
   const addName = (text, lx, ly, anchor, baseline, size = nameSize) => {
     if (!text) return;
     if (rich) {
       // 혼합 라벨러: 한글 정자 + 영문 이탤릭 + 줄바꿈 + 수식 + halo.
-      const gl = renderGraphLabel(text, { x: lx, y: ly, size, color, anchor, vAlign: baselineToVAlign(baseline), halo: true, haloRatio: obj.haloRatio, weight: obj.labelWeight });
+      const gl = renderGraphLabel(text, { x: lx, y: ly, size, color, anchor, vAlign: baselineToVAlign(baseline), halo: true, haloRatio: obj.haloRatio, weight: obj.labelWeight, upright: true });
       if (gl) g.appendChild(gl);
       return gl;
     }
@@ -546,17 +576,31 @@ function renderCoordplane(obj) {
     if (!text) return;
     const off = which === "x" ? offX : offY;
     const pos = which === "x" ? posX : posY;
-    const px = pos ? obj.x + pos.fx * obj.w : lx + (off.dx || 0);
-    const py = pos ? obj.y + pos.fy * obj.h : ly + (off.dy || 0);
+    let auto = null;
+    const source = obj.reconstruction?.source;
+    if (!pos && obj.graphStyle?.descriptionLayout && source?.plotBox) {
+      const b = source.plotBox, scale = obj.w / b.w;
+      // Same canonical measurement as graphLabelRenderer above. This keeps
+      // long Korean/unit labels inside the export, at every insertion size.
+      const metric = measureGraphLabel(text, EXAM_STYLE.label, graphLabelUpright(obj), obj.labelWeight ?? 400, true,
+        {parenthesesAreUnits:false,unit:obj.reconstruction?.axes?.[which]?.unit});
+      auto = descriptionTitleLayout({ which, left, right:tipRight, top:tipTop, axisX:worldX0, axisY:worldY0,
+        viewport:{left:obj.x-b.x*scale,right:obj.x+(source.width-b.x)*scale,top:obj.y-b.y*scale,bottom:obj.y+(source.height-b.y)*scale},
+        width:metric.w*nameSize/EXAM_STYLE.label,height:metric.h*nameSize/EXAM_STYLE.label,gap:nameSize*.55,
+        tickClearance:obj.showTickLabels || obj.tickLabelMode === 'text' ? Math.max(numSize + tickGap,descriptionXTickDepth) + nameSize*.55 : 0 });
+    }
+    const px = pos ? obj.x + pos.fx * obj.w : (auto?.x ?? lx) + (off.dx || 0);
+    const py = pos ? obj.y + pos.fy * obj.h : (auto?.y ?? ly) + (off.dy || 0);
     // 분율 위치는 라벨 '중심'을 그 점에 맞춘다(모달 드래그가 중심 분율을 저장하므로 튐 없음).
     const requestedAnchor = which === "x" ? obj.labelXAnchor : obj.labelYAnchor;
-    const anc = ["start", "middle", "end"].includes(requestedAnchor) ? requestedAnchor : (pos ? "middle" : anchor);
-    const bl = pos ? "middle" : baseline;
+    const anc = ["start", "middle", "end"].includes(requestedAnchor) ? requestedAnchor : (pos ? "middle" : auto?.anchor ?? anchor);
+    const bl = pos || auto ? "middle" : baseline;
+    const titleSize = nameSize * (auto?.sizeScale ?? 1);
     let el = null;
-    if (rich) el = renderGraphLabel(text, { x: px, y: py, size: nameSize, color, anchor: anc, vAlign: baselineToVAlign(bl), orientation: obj.reconstruction?.axes?.[which]?.orientation, halo: true, haloRatio: obj.haloRatio, weight: obj.labelWeight });
+    if (rich) el = renderGraphLabel(text, { x: px, y: py, size: titleSize, color, anchor: anc, vAlign: baselineToVAlign(bl), unit:obj.graphStyle?.descriptionLayout ? obj.reconstruction?.axes?.[which]?.unit : undefined, orientation: obj.reconstruction?.axes?.[which]?.orientation, halo: true, haloRatio: obj.haloRatio, weight: obj.labelWeight });
     else {
       el = document.createElementNS(SVG_NS, "text");
-      el.setAttribute("x", px); el.setAttribute("y", py); el.setAttribute("font-size", nameSize);
+      el.setAttribute("x", px); el.setAttribute("y", py); el.setAttribute("font-size", titleSize);
       applyObjectLabelFont(el, obj.labelType); if (obj.reconstruction) el.setAttribute("font-style", "normal"); el.setAttribute("fill", color); el.setAttribute("font-weight", obj.labelWeight ?? 400);
       el.setAttribute("text-anchor", anc); el.setAttribute("dominant-baseline", bl);
       fillTextWithRomanRuns(el, text);
@@ -648,7 +692,7 @@ function renderCoordplane(obj) {
       if (orientation === 'rotate') wrap.setAttribute('transform', `rotate(-90 ${lx} ${ly})`);
       let el2 = null;
       if (rich) {
-        el2 = renderGraphLabel(y2c.labelY2, { orientation: orientation === 'vertical' ? 'vertical' : 'horizontal', x: lx, y: ly, size: nameSize, color, anchor: "middle", vAlign: "middle", halo: true, haloRatio: obj.haloRatio, weight: obj.labelWeight });
+        el2 = renderGraphLabel(y2c.labelY2, { orientation: orientation === 'vertical' ? 'vertical' : 'horizontal', unit:obj.graphStyle?.descriptionLayout ? obj.reconstruction?.axes?.y2?.unit : undefined, x: lx, y: ly, size: nameSize, color, anchor: "middle", vAlign: "middle", halo: true, haloRatio: obj.haloRatio, weight: obj.labelWeight });
       } else {
         el2 = document.createElementNS(SVG_NS, "text");
         el2.setAttribute("x", lx); el2.setAttribute("y", ly); el2.setAttribute("font-size", nameSize);
@@ -812,7 +856,8 @@ function renderCoordplane(obj) {
       line.setAttribute('data-graph-annotation-kind', annotation.kind);
       styleGuide(line, annotation); g.appendChild(line);
     }
-    const label = renderGraphLabel(annotation.displayText ?? annotation.text, { x, y, size: annotation.fontSize || annotation.size || nameSize, sourceHeight: annotation.labelSizeMode === 'source-height' ? true : undefined, anchor: 'middle', vAlign: 'middle', orientation: annotation.orientation, haloRatio: obj.haloRatio, weight: annotation.fontWeight ?? obj.labelWeight });
+    const label = renderGraphLabel(annotation.displayText ?? annotation.text, { x, y, size: annotation.fontSize || annotation.size || nameSize, sourceHeight: annotation.labelSizeMode === 'source-height' ? true : undefined, anchor: 'middle', vAlign: 'middle', orientation: annotation.orientation, haloRatio: obj.haloRatio, weight: annotation.fontWeight ?? obj.labelWeight,
+      upright:obj.graphStyle?.descriptionLayout && annotation.labelRole === 'name' ? true : undefined });
     if (label) { label.setAttribute('data-graph-annotation', annotation.id || ''); g.appendChild(label); }
   });
   return g;
@@ -839,7 +884,7 @@ function renderLegendBox(g, lg, x0, y0, obj, li) {
   rows.forEach((r) => {
     const t = String(r.text || "");
     const measured=isExamStyle(obj)
-      ? measureGraphLabel(t,EXAM_STYLE.label,!!obj.reconstruction,obj.labelWeight??400,true).w*size/EXAM_STYLE.label
+      ? measureGraphLabel(t,EXAM_STYLE.label,graphLabelUpright(obj,obj.graphStyle?.descriptionLayout ? true : undefined),obj.labelWeight??400,true).w*size/EXAM_STYLE.label
       : measureGraphLabel(t,size,!!obj.reconstruction,obj.labelWeight??400,obj.reconstruction?.labelSizeMode==='source-height').w;
     const w = measured + ls * Math.max(0, t.replace(/\s/g, "").length - 1);
     if (w > maxText) maxText = w;
@@ -867,7 +912,7 @@ function renderLegendBox(g, lg, x0, y0, obj, li) {
     if (r.lineVisible !== false) g.appendChild(l);
     if (r.markerShape && r.markerShape !== 'none') g.appendChild(graphMarker(x0+pad+swatch/2,cy,r.markerShape,r.markerSize>0?r.markerSize:size*.25,r.markerStrokeWidth>0?r.markerStrokeWidth:sw,color));
     const lbl = renderGraphLabel(String(r.text || ""), {
-      x: x0 + pad + swatch + gap, y: cy, size, color, anchor: "start", vAlign: "middle", halo: false,
+      x: x0 + pad + swatch + gap, y: cy, size, color, anchor: "start", vAlign: "middle", halo: false, upright:obj.graphStyle?.descriptionLayout ? true : undefined,
     });
     if (lbl) {
       if (Number.isFinite(li)) lbl.setAttribute("data-legend-text", `${li}:${i}`);
@@ -1311,6 +1356,7 @@ function renderFuncgraph(obj, plane = null) {
     const lbl = renderGraphLabel(obj.endLabel, {
       x: lx, y: ly, size, color: grayHex(obj.strokeLevel),
       anchor: nx >= 0 ? "start" : "end", vAlign: "middle", halo: true, haloRatio: obj.haloRatio, weight: obj.labelWeight,
+      upright:obj.graphStyle?.descriptionLayout ? true : undefined,
     });
     if (lbl) { lbl.setAttribute("data-end-label", ""); g.appendChild(lbl); }
   }

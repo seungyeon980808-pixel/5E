@@ -18,6 +18,7 @@ export function describeGraphFailure(error) {
     GRAPH_TIMEOUT: '그래프 분석 시간이 초과되었습니다. 다시 시도할 수 있습니다.',
     GRAPH_CONNECTION: 'AI 연결이 끊겼습니다. 연결을 확인한 뒤 다시 시도하세요.',
     GRAPH_INVALID_RESULT: '복원 결과가 그래프 검증을 통과하지 못했습니다.',
+    GRAPH_DESCRIPTION_REJECTED: detail,
   };
   return { code, detail, message: `${messages[code] || detail} 원본과 이전 결과는 유지하며 자동 재전송하지 않습니다.`, automaticRetry: false };
 }

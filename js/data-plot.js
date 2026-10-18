@@ -71,21 +71,21 @@ function niceRange(dMin, dMax) {
   lo = Math.floor(lo / step) * step;
   hi = Math.ceil(hi / step) * step;
   // 부동소수 잔여 정리(예: 0.30000000004 → 0.3)
-  const dp = Math.max(0, -Math.floor(Math.log10(step)) + 1);
-  const round = (v) => Number(v.toFixed(dp));
+  const round = (v) => Number(v.toPrecision(12));
   return { min: round(lo), max: round(hi), step: round(step) };
 }
 
 /* ---------- 삽입: 선택 평면(없으면 새 평면) + 점들 + 연결선 ---------- */
 // insertDataPlot(pts, { connect }) → { ok, error }
-function insertDataPlot(pts, opts) {
+export function planDataPlot(pts, opts = {}, snapshot = state.get(), makeId = nextObjectId) {
   const connect = !!(opts && opts.connect);
   if (!pts || !pts.length) return { ok: false, error: "숫자 데이터를 찾지 못했습니다." };
+  if (pts.some(p => !Number.isFinite(p.x) || !Number.isFinite(p.y))) return { ok: false, error: "유한한 숫자만 입력해 주세요." };
 
-  const s = state.get();
+  const s = snapshot;
   const selId = (s.selectedIds || [])[0];
   const selected = selId ? s.objects.find((o) => o.id === selId) : null;
-  const reusePlane = selected && selected.type === "coordplane" ? selected : null;
+  const reusePlane = opts.reuseSelected !== false && selected && selected.type === "coordplane" ? selected : null;
 
   // 새 평면: 데이터 범위에 맞춰 축 범위·눈금 자동 설정.
   let newPlane = null;
@@ -94,6 +94,9 @@ function insertDataPlot(pts, opts) {
     const xs = pts.map((p) => p.x), ys = pts.map((p) => p.y);
     const rx = niceRange(Math.min(...xs), Math.max(...xs));
     const ry = niceRange(Math.min(...ys), Math.max(...ys));
+    if (![rx, ry].every(r => Number.isFinite(r.min) && Number.isFinite(r.max) && r.max > r.min && r.step > 0 && Number.isFinite(r.step))) {
+      return { ok: false, error: '데이터의 크기나 값 차이를 축으로 표시할 수 없습니다. 단위를 바꾸어 입력해 주세요.' };
+    }
     const vb = s.viewBox;
     newPlane = makeDefaultCoordplane({ x: vb.x + vb.w / 2, y: vb.y + vb.h / 2 });
     newPlane.xMin = rx.min; newPlane.xMax = rx.max;
@@ -102,33 +105,35 @@ function insertDataPlot(pts, opts) {
     newPlane.showTickLabels = true;      // 데이터 축은 눈금 값이 보여야 읽힌다
     newPlane.lockAspect = false;         // x·y 스케일이 다를 수 있으므로 정사각 강제 해제
     // 박스 크기: 가로 80mm 기준, 세로는 데이터 종횡비로(40~100mm 클램프).
-    const w = 80;
+    const w = opts.size?.w || 80;
     const spanX = rx.max - rx.min, spanY = ry.max - ry.min;
-    const h = Math.max(40, Math.min(100, spanX > 0 ? (w * spanY) / spanX : 60));
+    const h = opts.size?.h || Math.max(40, Math.min(100, spanX > 0 ? (w * spanY) / spanX : 60));
     newPlane.w = w; newPlane.h = h;
     newPlane.x = (vb.x + vb.w / 2) - w / 2;
     newPlane.y = (vb.y + vb.h / 2) - h / 2;
+    if (opts.labels) { newPlane.labelX = opts.labels[0]; newPlane.labelY = opts.labels[1]; }
+    if (opts.center) { newPlane.x = opts.center.x - w / 2; newPlane.y = opts.center.y - h / 2; }
     plane = newPlane;
   }
 
   // 수학 좌표 → 월드 mm (coords.js 매핑 재사용).
   const world = pts.map((p) => worldFromMath(plane, p.x, p.y));
 
-  state.update((st) => {
-    const snap = JSON.parse(JSON.stringify(st.objects));
+  const st = { objects: [], activeLayerId: s.activeLayerId };
+  const ids = [];
+  {
     if (newPlane) {
-      newPlane.id = nextObjectId();
-      newPlane.order = st.objects.length;
+      newPlane.id = makeId();
+      newPlane.order = s.objects.length;
       newPlane.layerId = st.activeLayerId;
       st.objects.push(newPlane);
     }
 
-    const ids = [];
 
     // 연결선(꺾은선): 점들 위/아래 상관없이 렌더 순서상 먼저 넣어 점이 위에 오게.
     if (connect && world.length >= 2) {
       const poly = {
-        id: nextObjectId(),
+        id: makeId(),
         type: "polyline",
         points: world.map((w) => ({ x: w.x, y: w.y })),
         rotation: 0,
@@ -147,7 +152,7 @@ function insertDataPlot(pts, opts) {
     // 측정점: 표준 점 객체(type optics/kind node) — node-placement.js 스키마 그대로.
     for (const w of world) {
       const node = {
-        id: nextObjectId(),
+        id: makeId(),
         type: "optics", kind: "node",
         x: w.x - NODE_SIZE / 2, y: w.y - NODE_SIZE / 2, w: NODE_SIZE, h: NODE_SIZE,
         rotation: 0, strokeLevel: 0, strokeWidth: 0.3,
@@ -160,13 +165,21 @@ function insertDataPlot(pts, opts) {
       ids.push(node.id);
     }
 
-    st.undoStack.push(snap);
-    st.redoStack = [];
-    st.selectedIds = ids;
-    st.targetedId = null;
-    st.activeTool = "V";
-  });
+  }
+  return { ok: true, objects: st.objects, selectedIds: ids, plane };
+}
 
+export function insertDataPlot(pts, opts) {
+  const plan = planDataPlot(pts, opts);
+  if (!plan.ok) return plan;
+  state.update(st => {
+    st.undoStack.push(JSON.parse(JSON.stringify(st.objects)));
+    st.redoStack = [];
+    for (const obj of plan.objects) { obj.order = st.objects.length; st.objects.push(obj); }
+    st.selectedIds = plan.selectedIds;
+    st.targetedId = null;
+    st.activeTool = 'V';
+  });
   return { ok: true };
 }
 

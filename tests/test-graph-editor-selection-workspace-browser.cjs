@@ -171,11 +171,11 @@ async function observe(page, predicate, action) {
       await open(); await page.locator('#gm-tab-func-btn').click(); await select(1);
       await change('#gm-pts', '0,1 2,3.125 4,5'); await page.locator('#gm-confirm').click();
       const edited = await snap();
-      assert.equal(curve(edited, 'polyline').mathPoints[1].y, 3.1, 'Direct coordinate edits commit one decimal');
+      assert.equal(curve(edited, 'polyline').mathPoints[1].y, 3.125, 'Direct coordinate edits keep the typed precision (exact data is not rounded since the description-graph merge)');
       for (const o of before.objects.filter(o => o.id !== curve(before, 'polyline').id)) assert.deepEqual(edited.objects.find(q => q.id === o.id), o);
       await open(); await page.locator('#gm-preview [data-preview-series="1"]').focus();
       await page.locator('#gm-preview [data-preview-series="1"]').press('Enter');
-      assert.equal(await page.locator('#gm-pts').inputValue(), '0,1 2,3.1 4,5', 'Graph selection exposes the same edited series');
+      assert.equal(await page.locator('#gm-pts').inputValue(), '0,1 2,3.125 4,5', 'Graph selection exposes the same edited series at its typed precision');
       await change('#gm-pts', '0,1 4,5'); await page.locator('#gm-confirm').click();
       assert.deepEqual(await snap(), before, 'Editing through graph selection restores the same native data');
       await open(); await page.locator('#gm-tab-func-btn').click(); await select(1);

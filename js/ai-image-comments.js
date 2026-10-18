@@ -98,14 +98,14 @@ export function isImageCommentTarget(item, selectedId) {
   return Boolean(selectedId) && item.id === selectedId;
 }
 
-export function createImageCommentController({ panel, getImages, getSelectedId, isBusy, selectedTaskCount = () => 0, changed, viewChanged, areaOnlyForSelected = false }) {
+export function createImageCommentController({ panel, getImages, getSelectedId, isBusy, selectedTaskCount = () => 0, isTextCreation = () => false, changed, viewChanged, areaOnlyForSelected = false }) {
   const doc = panel.ownerDocument || document;
   const win = doc.defaultView || globalThis;
   const q = selector => panel.querySelector(selector);
   const bindings = new Map();
   const cleanup = [];
   let tool = 'select';
-  const scopedTarget = () => areaOnlyForSelected && images().find(item => item.kind === 'generated' && item.id === getSelectedId() && !item.graphResult && !item.sceneResult);
+  const scopedTarget = () => areaOnlyForSelected && !isTextCreation() && images().find(item => item.kind === 'generated' && item.id === getSelectedId() && !item.graphResult && !item.sceneResult);
   let markersVisible = false;
   let selected = null;
   let frame = null;
@@ -447,6 +447,9 @@ export function createImageCommentController({ panel, getImages, getSelectedId, 
       } else if (scopedTarget()) {
         apply.textContent = '수정하기';
         apply.disabled = busy || !areas.length || areas.some(({comment}) => !commentText(comment).trim() || !normalizeCommentBox(comment));
+      } else if (isTextCreation()) {
+        apply.textContent = '그림 만들기';
+        apply.disabled = busy || !q('[data-ai-input]')?.value.trim() || panel.dataset.aiSharingMode === 'view';
       } else {
         apply.textContent = panel.dataset.aiWorkflow === 'graph' ? '그래프 복원' : '변환하기';
         apply.disabled = busy || !allowed().length;

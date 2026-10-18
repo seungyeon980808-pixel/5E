@@ -14,7 +14,8 @@
 import { SVG_NS, HALO_RATIO, applyGlyphHalo } from "./core.js?v=1.7.0-four-session-integration";
 import { TEXT_FONT_FAMILY, EQUATION_FONT_FAMILY } from "../state.js?v=1.7.0-four-session-integration";
 import { renderFormula, measureFormula } from "../formula.js?v=1.7.0-four-session-integration";
-export const GRAPH_LABEL_RENDER_VERSION = 'graph-label-v2-delimiters';
+import { graphLabelUnitSource, graphLabelRuns } from '../graph/label-roles.js?v=1.7.0-four-session-integration';
+export const GRAPH_LABEL_RENDER_VERSION = 'graph-label-v3-semantic-units';
 
 function labelWeight(value) { return Number.isFinite(Number(value)) ? Math.max(100, Math.min(900, Number(value))) : 400; }
 
@@ -28,9 +29,8 @@ const KO_SCALE = 0.72;
 // 1pt = 0.3528mm → 2pt ≈ 0.71mm. 최소 1mm 보장.
 const MATH_TRIM_MM = 0.71;
 
-// 괄호 안은 "단위"로 본다(평가원 관례: 물리량 기호만 이탤릭, 단위는 정자).
-// 예: "속도(m/s)" → 속도=한글 정자, (m/s)=라틴 정자(이탤릭 금지). 괄호 문자 자체도 정자.
-// 괄호 안 한글은 그대로 한글체. ^·_ 첨자는 formula를 정자 모드로 태워 계속 동작(m/s^2).
+// Legacy labels infer units from parentheses. Description graphs instead use
+// declared units, leaving function arguments such as f(t) in variable type.
 
 // 오프스크린 캔버스로 한글 런 폭 측정(getBBox 회피, 앱 관례). mm를 px로 취급해도
 // 폭이 폰트크기에 선형 비례하므로 mm 폭이 그대로 나온다(돋움은 시스템 폰트라 측정 신뢰 가능).
@@ -43,25 +43,6 @@ function measureKo(text, sizeMm, weight = 400) {
 
 // 한 줄을 한글 / 수식(이탤릭) / 단위(괄호 안, 정자) 런으로 분해. 인접 동종 문자는 합친다.
 // kind: "ko"(한글 정자) | "math"(formula 이탤릭) | "unit"(formula 정자 — 괄호+괄호 안 라틴)
-function splitRuns(line) {
-  const runs = [];
-  let cur = "", curKind = null, depth = 0;
-  const push = () => { if (cur !== "") runs.push({ kind: curKind, text: cur }); cur = ""; };
-  for (const ch of line) {
-    let kind;
-    if (ch === "(") { depth++; kind = "unit"; }
-    else if (ch === ")") kind = "unit";
-    else if (HANGUL_RE.test(ch)) kind = "ko";               // 괄호 안이라도 한글은 한글체
-    else kind = depth > 0 ? "unit" : "math";
-    if (curKind === null) { curKind = kind; cur = ch; }
-    else if (kind === curKind) cur += ch;
-    else { push(); curKind = kind; cur = ch; }
-    if (ch === ")") depth = Math.max(0, depth - 1);
-  }
-  push();
-  return runs;
-}
-
 // formula.js 결과 <g>의 글리프 색을 라벨 색으로 통일(투명 히트 rect는 제거).
 function recolorFormula(g, color) {
   g.querySelectorAll("rect").forEach((r) => { if (r.getAttribute("fill") === "transparent") r.remove(); });
@@ -87,10 +68,10 @@ function sourceEmSize(height, family, sample, weight) {
 function mathSize(size, weight, sourceHeight) {
   return sourceHeight ? sourceEmSize(size, EQUATION_FONT_FAMILY, "H0", weight) : Math.max(1, size - MATH_TRIM_MM);
 }
-function buildPlainLine(line, size, color, upright = false, weight = 400, sourceHeight = false) {
+function buildPlainLine(line, size, color, upright = false, weight = 400, sourceHeight = false, parenthesesAreUnits = true) {
   const g = el("g");
   let cx = 0, asc = 0, desc = 0;
-  for (const run of splitRuns(line)) {
+  for (const run of graphLabelRuns(line, parenthesesAreUnits)) {
     if (run.text === "") continue;
     if (run.kind === "ko") {
       const koSize = sourceHeight ? sourceEmSize(size, TEXT_FONT_FAMILY, "가", weight) : size * KO_SCALE;                // legacy graphs retain their visual balance
@@ -193,40 +174,40 @@ function graphMathNodes(source, depth = 0) {
   }
   return nodes;
 }
-function buildGraphMath(nodes,size,color,upright,weight,sourceHeight=false) {
+function buildGraphMath(nodes,size,color,upright,weight,sourceHeight=false,parenthesesAreUnits=true) {
   const g=el('g');let width=0,ascent=0,descent=0,unitDepth=0;
   const put=(child,x,y)=>{child.g.setAttribute('transform',`translate(${x},${y})`);g.appendChild(child.g);};
   const F=mathSize(size,weight,sourceHeight), scaled=ratio=>sourceHeight?size*ratio:F*ratio+MATH_TRIM_MM;
   for(const node of nodes) {
     let b;
-    const inUnit = upright || unitDepth > 0;
+    const inUnit = upright || (parenthesesAreUnits && unitDepth > 0);
     if(node.kind==='delimiter') {
       if(node.opening) unitDepth++;
       b=node.text ? buildPlainLine(node.text,size,color,true,weight,sourceHeight) : {g:el('g'),width:0,ascent:0,descent:0};
       if(!node.opening) unitDepth=Math.max(0,unitDepth-1);
     }
-    else if(node.kind==='literal') b=buildPlainLine(node.text,size,color,inUnit,weight,sourceHeight);
+    else if(node.kind==='literal') b=buildPlainLine(node.text,size,color,inUnit,weight,sourceHeight,parenthesesAreUnits);
     else if(node.kind==='space') b={g:el('g'),width:F*node.em,ascent:0,descent:0};
-    else if(node.kind==='upright'||node.kind==='group') b=buildGraphMath(node.nodes,size,color,node.kind==='upright'||inUnit,weight,sourceHeight);
+    else if(node.kind==='upright'||node.kind==='group') b=buildGraphMath(node.nodes,size,color,node.kind==='upright'||inUnit,weight,sourceHeight,parenthesesAreUnits);
     else if(node.kind==='frac') {
-      const n=buildGraphMath(node.num,scaled(.88),color,inUnit,weight,sourceHeight),d=buildGraphMath(node.den,scaled(.88),color,inUnit,weight,sourceHeight);
+      const n=buildGraphMath(node.num,scaled(.88),color,inUnit,weight,sourceHeight,parenthesesAreUnits),d=buildGraphMath(node.den,scaled(.88),color,inUnit,weight,sourceHeight,parenthesesAreUnits);
       const pad=F*.05,inner=Math.max(n.width,d.width),bar=-F*.22,nb=bar-F*.08-n.descent,db=bar+F*.08+d.ascent,fg=el('g');
       n.g.setAttribute('transform',`translate(${pad+(inner-n.width)/2},${nb})`);d.g.setAttribute('transform',`translate(${pad+(inner-d.width)/2},${db})`);
       const rule=el('line');rule.setAttribute('x1',pad*.45);rule.setAttribute('x2',inner+2*pad-pad*.45);rule.setAttribute('y1',bar);rule.setAttribute('y2',bar);rule.setAttribute('stroke',color);rule.setAttribute('stroke-width',Math.max(F*.035,.08));rule.setAttribute('stroke-linecap','round');fg.append(rule,n.g,d.g);
       b={g:fg,width:inner+2*pad,ascent:n.ascent-nb,descent:db+d.descent};
     } else if(node.kind==='scripts') {
-      b=buildGraphMath(node.base,size,color,upright,weight,sourceHeight);let sw=0;
-      for(const [kind,dy] of [['sup',-F*.42],['sub',F*.2]]) if(node[kind]) {const script=buildGraphMath(node[kind],scaled(.66),color,upright,weight,sourceHeight);script.g.setAttribute('transform',`translate(${b.width+F*.02},${dy})`);b.g.append(script.g);sw=Math.max(sw,script.width);b.ascent=Math.max(b.ascent,script.ascent-dy);b.descent=Math.max(b.descent,script.descent+dy);}
+      b=buildGraphMath(node.base,size,color,inUnit,weight,sourceHeight,parenthesesAreUnits);let sw=0;
+      for(const [kind,dy] of [['sup',-F*.42],['sub',F*.2]]) if(node[kind]) {const script=buildGraphMath(node[kind],scaled(.66),color,inUnit,weight,sourceHeight,parenthesesAreUnits);script.g.setAttribute('transform',`translate(${b.width+F*.02},${dy})`);b.g.append(script.g);sw=Math.max(sw,script.width);b.ascent=Math.max(b.ascent,script.ascent-dy);b.descent=Math.max(b.descent,script.descent+dy);}
       b.width+=sw+F*.04;
     }
     if(b){put(b,width,0);width+=b.width;ascent=Math.max(ascent,b.ascent);descent=Math.max(descent,b.descent);}
   }
   return {g,width,ascent,descent};
 }
-function buildLine(line,size,color,upright=false,weight=400,sourceHeight=false) {
+function buildLine(line,size,color,upright=false,weight=400,sourceHeight=false,parenthesesAreUnits=true) {
   return (/\\(?:mathrm|text|left|right)\b|\\;/.test(line) || (/\\frac\b/.test(line) && HANGUL_RE.test(line)))
-    ? buildGraphMath(graphMathNodes(line),size,color,upright,weight,sourceHeight)
-    : buildPlainLine(line,size,color,upright,weight,sourceHeight);
+    ? buildGraphMath(graphMathNodes(line),size,color,upright,weight,sourceHeight,parenthesesAreUnits)
+    : buildPlainLine(line,size,color,upright,weight,sourceHeight,parenthesesAreUnits);
 }
 
 // 라벨 <text> 들에 흰 테두리 halo 부여(그래프 선 위에서 깔끔히 끊김; makeUprightLabel 방식).
@@ -252,7 +233,7 @@ export { HALO_RATIO };
 const INTERLINE_GAP = 0.12;
 
 export function renderGraphLabel(source, opts = {}) {
-  const text = source == null ? "" : String(source);
+  const text = graphLabelUnitSource(source, opts.unit);
   if (text.trim() === "") return null;
   if (opts.orientation === 'vertical') {
     // Korean syllables stack upright; a formula run stays intact (fractions/scripts
@@ -262,7 +243,7 @@ export function renderGraphLabel(source, opts = {}) {
   }
   const { x = 0, y = 0, size = 3.5, color = "#000", anchor = "start", vAlign = "baseline", halo = true, upright = false, haloRatio } = opts;
 
-  const lines = text.split("\n").map((l) => buildLine(l, size, color, upright, labelWeight(opts.weight ?? opts.fontWeight), opts.sourceHeight === true));
+  const lines = text.split("\n").map((l) => buildLine(l, size, color, upright, labelWeight(opts.weight ?? opts.fontWeight), opts.sourceHeight === true, opts.parenthesesAreUnits !== false));
   const n = lines.length;
   const gap = size * INTERLINE_GAP;
   // 상대 baseline: 이전 줄 descent + 여백 + 현재 줄 ascent 만큼 내려간다(각 줄 실제 높이 기준).
@@ -294,10 +275,10 @@ export function renderGraphLabel(source, opts = {}) {
 }
 
 // 라벨 블록의 대략 크기(배치 계산용). { w, ascent, descent, h }.
-export function measureGraphLabel(source, size = 3.5, upright = false, weight = 400, sourceHeight = false) {
-  const text = source == null ? "" : String(source);
+export function measureGraphLabel(source, size = 3.5, upright = false, weight = 400, sourceHeight = false, roles = {}) {
+  const text = graphLabelUnitSource(source, roles.unit);
   if (text.trim() === "") return { w: 0, ascent: 0, descent: 0, h: 0 };
-  const lines = text.split("\n").map((l) => buildLine(l, size, "#000", upright, labelWeight(weight), sourceHeight));
+  const lines = text.split("\n").map((l) => buildLine(l, size, "#000", upright, labelWeight(weight), sourceHeight, roles.parenthesesAreUnits !== false));
   const w = Math.max(...lines.map((l) => l.width), 0);
   const gap = size * INTERLINE_GAP;
   let h = lines[0].ascent + lines[0].descent;

@@ -4,9 +4,10 @@ const vm = require('node:vm');
 const test = require('node:test');
 const source = fs.readFileSync(new URL('../js/ai-panel.js', `file://${__filename}`), 'utf8');
 const handler = source.match(/sendButton\.onclick = \(\) => \{[\s\S]*?\n  \};/)[0];
-function route(item, launchSelected = () => false, workflowExplicit = false, conversionKind = 'image') {
+function route(item, launchSelected = () => false, workflowExplicit = false, conversionKind = 'image', examBrief = false) {
   const calls = [];
   const context = { sendButton: {}, launchSelected, conversionKind, selectedOutputItem: () => item,localEraseController:null,
+    isGraphWorkflow: kind => kind === 'graph' || kind === 'graph-create', isExamBrief: () => examBrief, taskTabs: new Map(), activeTaskTabId: null,
     readImageLabelWorkflow: () => ({ explicit: workflowExplicit }),
     startScopedEdit: value => calls.push(['scoped', value]),
     submit: (kind, options) => calls.push(['transform', kind, options?.bypassCache]) };
@@ -32,6 +33,8 @@ assert.equal(graphSelectionOffers, 1, 'A single graph action checks the owned se
 assert.deepEqual(route(image, () => { graphSelectionOffers += 1; return true; }, false, 'graph'), [],
   'An accepted graph multiselect must not directly submit or scope-edit the active task');
 assert.equal(graphSelectionOffers, 2, 'A graph batch delegates the selected task set exactly once');
+assert.deepEqual(route(image, () => false, false, 'graph-create'), [['transform', 'image', undefined]], 'Description graph creation uses the graph submit route');
+assert.deepEqual(route(image, () => false, false, 'image', true), [['transform', 'image', true]], 'A one-line picture result is revised by a new request, not a box-scoped edit');
 let batchCalls = 0;
 for (const selected of [null, image, unfinished]) {
   assert.deepEqual(route(selected, () => { batchCalls += 1; return true; }), [],

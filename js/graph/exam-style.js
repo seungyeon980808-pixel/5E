@@ -8,6 +8,7 @@ export const EXAM_STYLE = Object.freeze({
   axis: .3, curve: .5, guide: .15, tick: .24, tickLength: 1.2,
   arrowLength: 3.6, marker: .7, label: 4.8, dash: .8, gap: .6,
 });
+export const DESCRIPTION_EXAM_STYLE = Object.freeze({labelScale:.7,arrowScale:1.45,arrowWidthScale:.72});
 export const isExamStyle = value => value?.graphStyle?.preset === EXAM_STYLE.preset;
 const positive = (value, fallback) => Number.isFinite(value) && value > 0 ? value : fallback;
 export function examMetrics(plane) {
@@ -34,7 +35,7 @@ export function examPlaneStyle(plane) {
   const customGuide=a=>a.customStyle?{...a,...Object.fromEntries(['strokeWidth','dashLength','dashGap'].filter(k=>Number.isFinite(a[k])).map(k=>[k,a[k]*plane.w/positive(a.customStyleWidth,plane.graphStyle.referenceWidth||EXAM_STYLE.referenceWidth)]))}:a;
   const result = { ...plane, richLabels: true, strokeWidth: m.axis, tickStrokeWidth: m.tick,
     tickLength: m.tickLength, axisLabelSize: m.label, tickLabelSize: m.label, originLabelSize: m.label,
-    axisArrowShape: 'exam', axisArrowLength: m.arrowLength,
+    axisArrowShape: 'exam', axisArrowLength: m.arrowLength, axisArrowWidthScale: positive(plane.graphStyle.arrowWidthScale, 1),
     guideStyle: guide, markerSize: m.marker,
     graphAnnotations: (plane.graphAnnotations || []).map(annotation),
     annGuides: (plane.annGuides || []).map(customGuide),

@@ -12,10 +12,11 @@ import { RELATION_FIT_VERSION } from '../function-graph/physics-relations.js?v=1
 import { describeGraphFailure } from './reconstruction-error.js?v=1.7.0-four-session-integration';
 import { auditGraphReconstructionQuality, GRAPH_RECONSTRUCTION_QUALITY_VERSION } from './reconstruction-quality.js?v=1.7.0-four-session-integration';
 import { GRAPH_LABEL_RENDER_VERSION } from '../render/graph-label.js?v=1.7.0-four-session-integration';
+import { buildGraphDescriptionPrompt, buildGraphImageRevisionContext, graphDescriptionSource } from './description-contract.js?v=1.7.0-four-session-integration';
 
 export const GRAPH_JOB_SCHEMA = '5e.graph-reconstruction-job/v1';
 export const GRAPH_EXTRACTION_VERSION = GRAPH_ENGINE_PROMPT_VERSION;
-export const GRAPH_PIPELINE_VERSION = ['graph-pipeline-v4', SOURCE_FRAME_VERSION, SOURCE_GRID_VERSION, SOURCE_GUIDE_STYLE_VERSION, SOURCE_ARROW_SIZE_VERSION, ANALYTIC_FIT_VERSION, PHYSICS_FIT_VERSION, RELATION_FIT_VERSION, RELATION_ANALYTIC_FIT_VERSION, GRAPH_RECONSTRUCTION_QUALITY_VERSION, GRAPH_LABEL_RENDER_VERSION].join('/');
+export const GRAPH_PIPELINE_VERSION = ['graph-pipeline-v5-structured-revisions', SOURCE_FRAME_VERSION, SOURCE_GRID_VERSION, SOURCE_GUIDE_STYLE_VERSION, SOURCE_ARROW_SIZE_VERSION, ANALYTIC_FIT_VERSION, PHYSICS_FIT_VERSION, RELATION_FIT_VERSION, RELATION_ANALYTIC_FIT_VERSION, GRAPH_RECONSTRUCTION_QUALITY_VERSION, GRAPH_LABEL_RENDER_VERSION].join('/');
 // Actual dense-source observations took 165–183s; keep each bounded request
 // within the same four-minute ceiling as the authenticated acceptance runner.
 export const GRAPH_ANALYSIS_TIMEOUT_MS = 240000;
@@ -131,9 +132,16 @@ export function createGraphReconstructionWorkflow({ transport, store, onChange =
       run.processing = true;
       const safePlan = result.plan && !result.errors.some(e => e.code === 'SOURCE_MISMATCH' || e.path.startsWith('source.')) ? result.plan : null;
       run.snapshot.attempts.push({ attempt: run.snapshot.metrics.analysisCalls, plan: safePlan ? copy(safePlan) : null, valid: result.ok, blocked: result.blocked, errors: copy(result.errors), rawResponse: run.text.slice(0,1000000) });
+      // Refusal is never an insertable plan. Keep a source-bound explanation
+      // even when the model omits unused axes from its empty-series refusal.
+      if (run.snapshot.description && safePlan && Array.isArray(safePlan.series) && !safePlan.series.length) {
+        const notes = safePlan.review || [], requestNotes = notes.filter(r => r.path === 'request');
+        const reasons = (requestNotes.length ? requestNotes : notes).map(r => r.reason).filter(r => typeof r === 'string' && r.trim()).join('\n');
+        if (reasons) return finish(run, Object.assign(new Error(reasons.slice(0, 2000)), { code: 'GRAPH_DESCRIPTION_REJECTED' }));
+      }
       // Keep the provider's observation intact. Only a separately validated,
       // bounded approximation becomes the editable result and cached plan.
-      if (result.ok && !result.blocked) {
+      if (result.ok && !result.blocked && !run.snapshot.description) {
         const attempt = run.snapshot.attempts.at(-1);
         try {
           const sourceFrame = run.sourceRaster ? matchSourceFrame(result.plan, run.sourceRaster) : null;
@@ -157,6 +165,7 @@ export function createGraphReconstructionWorkflow({ transport, store, onChange =
         }
       }
       if (result.ok) {
+        if (run.snapshot.description && !result.plan.series.length) return finish(run, Object.assign(new Error(result.plan.review?.map(r => r.reason).join('\n') || '축과 그릴 관계를 조금 더 구체적으로 설명해 주세요.'), { code: 'GRAPH_DESCRIPTION_REJECTED' }));
         auditResult(result);
         run.snapshot.attempts.at(-1).quality = copy(result.quality);
       }
@@ -236,7 +245,7 @@ export function createGraphReconstructionWorkflow({ transport, store, onChange =
       const saved = await store?.get('draft');
       if (workflow.isActive() || revision !== before) return null;
       const value = saved?.snapshot;
-      if (value?.schema !== GRAPH_JOB_SCHEMA || !value.source || !value.attachment || !value.selection) return null;
+      if (value?.schema !== GRAPH_JOB_SCHEMA || !value.source || (!value.attachment && !value.description) || !value.selection) return null;
       if (value.plan) {
         const checked = validateGraphPlan(value.plan, { source: binding(value.source) });
         if (!checked.ok) return null;
@@ -257,7 +266,7 @@ export function createGraphReconstructionWorkflow({ transport, store, onChange =
       serial = Math.max(serial, Number.isSafeInteger(value.id) ? value.id : 0);
       publish(value); return copy(value);
     },
-    async analyze({ source, attachment, selection, catalog, force = false, maxAttempts = 1, renderCandidate, instructions = '', contextAttachment = null, styleAttachments = [] } = {}) {
+    async analyze({ source, attachment, selection, catalog, force = false, maxAttempts = 1, renderCandidate, instructions = '', contextAttachment = null, styleAttachments = [], description = '', priorPlan = null, priorObjects = null } = {}) {
       if (active || preparing) throw new Error('그래프 분석이 이미 진행 중입니다.');
       const preparation = { cancelled: false };
       preparing = preparation;
@@ -266,14 +275,23 @@ export function createGraphReconstructionWorkflow({ transport, store, onChange =
       try {
       if (!Number.isInteger(maxAttempts) || maxAttempts < 1 || maxAttempts > 3 || (maxAttempts > 1 && typeof renderCandidate !== 'function')) throw new Error('분석 횟수는 1~3회이며 비교 보정에는 그래프 렌더러가 필요합니다.');
       const selected = resolveAIModelSelection(selection, catalog);
+      const creating = Boolean(description);
+      if (creating) {
+        if (maxAttempts !== 1 || attachment || contextAttachment || styleAttachments.length) throw new Error('설명 그래프는 한 번의 텍스트 요청으로 실행합니다.');
+        const bound = await graphDescriptionSource(description, priorPlan, priorObjects);
+        if (['id', 'hash', 'width', 'height'].some(key => source?.[key] !== bound[key])) throw new Error('그래프 설명과 요청 정보가 일치하지 않습니다.');
+      } else {
       if (!source?.id || !source.hash || !Number.isInteger(source.width) || !Number.isInteger(source.height)
         || source.width <= 0 || source.height <= 0 || typeof attachment?.data !== 'string') throw new Error('원본 이미지와 크기를 확인해 주세요.');
       if (await graphSourceHash(attachment.data) !== source.hash) throw new Error('원본 이미지와 분석 정보가 일치하지 않습니다.');
+      if (priorPlan && ['id','hash','width','height'].some(key=>priorPlan.source?.[key] !== source[key])) throw new Error('현재 편집 그래프와 원본 이미지가 일치하지 않습니다.');
+      }
       checkPreparation();
       instructions = String(instructions).trim().slice(0, 20000);
       if (contextAttachment && (!/^data:image\/png;base64,[A-Za-z0-9+/=]+$/.test(contextAttachment.data || '') || contextAttachment.data.length > 16_000_000)) throw new Error('현재 편집 그래프의 비교 이미지를 확인해 주세요.');
       if (!Array.isArray(styleAttachments) || styleAttachments.length > (contextAttachment ? 8 : 9) || styleAttachments.some(item => typeof item?.data !== 'string' || !item.data.startsWith('data:image/') || item.data.length > 16_000_000)) throw new Error('표현 참고 이미지를 확인해 주세요.');
       const hashes = await Promise.all([...(contextAttachment ? [contextAttachment] : []), ...styleAttachments].map(item => graphSourceHash(item.data)));
+      if (!creating && priorPlan) hashes.push((await graphDescriptionSource('복원 그래프의 연속 수정',priorPlan,priorObjects)).hash);
       const contextHash = hashes.length ? JSON.stringify(hashes) : '';
       checkPreparation();
       const cacheKey = graphCacheKey(source, selected, maxAttempts, instructions, contextHash);
@@ -284,7 +302,7 @@ export function createGraphReconstructionWorkflow({ transport, store, onChange =
           const checked = validateGraphPlan(cached.plan, { source: binding(source) });
           if (checked.ok) auditResult(checked);
           if (checked.ok && !checked.blocked) {
-            const value = { schema: GRAPH_JOB_SCHEMA, id: ++serial, status: 'complete', source: copy(source), attachment: copy(attachment), selection: selected,
+            const value = { schema: GRAPH_JOB_SCHEMA, id: ++serial, status: 'complete', source: copy(source), attachment: copy(attachment), selection: selected, description,
               plan: checked.plan, quality: checked.quality, attempts: copy(cached.attempts || []), firstPlan: cached.attempts?.find(a => a.plan)?.acceptedPlan || cached.attempts?.find(a => a.plan)?.plan || checked.plan, finalAttemptSucceeded: true, visualStatus: 'user-review-required', maxAttempts, review: checked.review, blocked: false, error: null,
               metrics: { analysisCalls: 0, cacheHits: 1, requestedImageCalls: 0, forbiddenImageEvents: 0, forbiddenToolEvents: 0, analysisMs: 0, validationMs: 0 } };
             await persist(value); checkPreparation(); publish(value); return copy(value);
@@ -292,10 +310,10 @@ export function createGraphReconstructionWorkflow({ transport, store, onChange =
         }
       }
       // Preserve explicit edits/style references; measure only an original-source restoration.
-      const sourceRaster = !instructions && !contextAttachment && !styleAttachments.length ? await decodeGraphSourceRaster(attachment.data, source) : null;
+      const sourceRaster = !creating && !instructions && !contextAttachment && !styleAttachments.length ? await decodeGraphSourceRaster(attachment.data, source) : null;
       checkPreparation();
       const value = { schema: GRAPH_JOB_SCHEMA, id: ++serial, status: 'running', source: copy(source), attachment: copy(attachment), selection: selected,
-        plan: null, attempts: [], maxAttempts, instructions, contextAttachment: copy(contextAttachment), styleAttachments: copy(styleAttachments), review: [], blocked: false, error: null,
+        plan: null, attempts: [], maxAttempts, instructions, description, priorPlan:copy(priorPlan), priorObjects:copy(priorObjects), contextAttachment: copy(contextAttachment), styleAttachments: copy(styleAttachments), review: [], blocked: false, error: null,
         metrics: { analysisCalls: 0, cacheHits: 0, requestedImageCalls: 0, forbiddenImageEvents: 0, forbiddenToolEvents: 0 } };
       // Checkpoint before sending: recovery failure cannot create an untracked paid request.
       await persist(value);
@@ -306,7 +324,8 @@ export function createGraphReconstructionWorkflow({ transport, store, onChange =
         run.sourceRaster = sourceRaster;
         active = run;
         run.timer = setTimeout(() => { void interrupt(run); finish(run, Object.assign(new Error('그래프 분석 시간이 초과되었습니다. 자동 재시도하지 않았습니다.'), { code: 'GRAPH_TIMEOUT' })); }, timeoutMs);
-        dispatch(run, buildGraphExtractionPrompt(source) + (instructions ? `\n\n사용자의 그래프 복원·수정 요청:\n${instructions}\n출력은 동일한 그래프 JSON 계약을 따르고, 요청하지 않은 축·계열·표기는 보존하십시오.` : '') + (contextAttachment ? '\n두 번째 이미지는 사용자가 편집한 현재 그래프다. 현재 그래프의 표기와 스타일을 유지하며 요청한 부분만 수정한다. 첫 번째 원본 이미지의 픽셀 프레임과 위 source 바인딩으로 결과를 반환한다.' : '') + (styleAttachments.length ? `\n${contextAttachment ? '세 번째' : '두 번째'}부터는 표현 참고 이미지다. 그 이미지의 데이터나 좌표를 섞지 말고, 선·점선·점·축의 표현만 참고한다. 원본 그래프의 관계와 source 바인딩은 유지한다.` : ''), [attachment, ...(contextAttachment ? [contextAttachment] : []), ...styleAttachments]);
+        if (creating) dispatch(run, buildGraphDescriptionPrompt(source, description, priorPlan, priorObjects), []);
+        else dispatch(run, buildGraphExtractionPrompt(source) + buildGraphImageRevisionContext(priorPlan,priorObjects) + (instructions ? `\n\n사용자의 그래프 복원·수정 요청:\n${instructions}\n출력은 동일한 그래프 JSON 계약을 따르고, 요청하지 않은 축·계열·표기는 보존하십시오.` : '') + (contextAttachment ? '\n두 번째 이미지는 사용자가 편집한 현재 그래프다. 현재 그래프의 표기와 스타일을 유지하며 요청한 부분만 수정한다. 첫 번째 원본 이미지의 픽셀 프레임과 위 source 바인딩으로 결과를 반환한다.' : '') + (styleAttachments.length ? `\n${contextAttachment ? '세 번째' : '두 번째'}부터는 표현 참고 이미지다. 그 이미지의 데이터나 좌표를 섞지 말고, 선·점선·점·축의 표현만 참고한다. 원본 그래프의 관계와 source 바인딩은 유지한다.` : ''), [attachment, ...(contextAttachment ? [contextAttachment] : []), ...styleAttachments]);
       });
       } finally { if (preparing === preparation) preparing = null; }
     },

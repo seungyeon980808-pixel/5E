@@ -3,7 +3,7 @@ import { BACKGROUND_POLICIES } from "./image-background-options.js?v=1.7.0-four-
 // Local processing never changes a bound label/scoped/graph result.
 // Null fields are ordinary historical serialization; partial or false metadata
 // still marks an unknown modern contract and must remain RAW.
-const BOUND_FIELDS = ['imageLabelWorkflow','sourceLabelPlan','labelPlan','editableDraft',
+const BOUND_FIELDS = ['examBriefProfile','imageLabelWorkflow','sourceLabelPlan','labelPlan','editableDraft',
   'targetPlacement','sourceSha256','candidateSha256','planSha256','sourceFrame',
   'candidateFrame','finalLabelComposite','labelVerificationPreview','workflowMetrics',
   'verifiedCandidateData','graphResult','nativeGraph','sceneResult'];

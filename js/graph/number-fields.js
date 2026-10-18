@@ -6,6 +6,13 @@ export function roundedGraphNumber(value) {
   return String(Object.is(n, -0) ? 0 : n);
 }
 
+// Exact measured coordinates must remain readable and editable at their supplied
+// precision. Layout controls and observed tracing keep the rounded legacy view.
+export function graphPointNumber(value, exact = false) {
+  return exact && Number.isFinite(Number(value)) && String(value).trim() !== ''
+    ? String(Object.is(Number(value), -0) ? 0 : Number(value)) : roundedGraphNumber(value);
+}
+
 export function installGraphNumberFields(root) {
   const records = new WeakMap();
   const committing = new WeakSet();

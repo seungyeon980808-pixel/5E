@@ -29,6 +29,13 @@ test("default image profile is isolated and uses the native image tool only", ()
   });
 });
 
+test("image renderer supports text-only creation without claiming an attachment exists", () => {
+  const actual = buildEphemeralThreadStartParams({ purpose: 'image' });
+  assert.match(actual.baseInstructions, /when no image is attached/);
+  assert.doesNotMatch(actual.baseInstructions, /source image is already attached/);
+  assert.match(actual.developerInstructions, /creation or editing/);
+});
+
 test("image profile preserves selected model, service tier, cwd and caller inputs", () => {
   const input = {
     purpose: "image",

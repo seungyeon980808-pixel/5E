@@ -32,7 +32,7 @@ import { fitObservedCurve } from "../function-graph/curve-fit.js?v=1.7.0-four-se
 import { inferAxisStep, axisTickBounds, axisMargins, extendGuideGrid } from './axis-layout.js?v=1.7.0-four-session-integration';
 import { EXAM_STYLE, isExamStyle, examMetrics, graphSizeAdvice } from './exam-style.js?v=1.7.0-four-session-integration';
 import { registerEscapeLayer } from '../escape-layers.js?v=1.7.0-four-session-integration';
-import { installGraphNumberFields, roundedGraphNumber } from './number-fields.js?v=1.7.0-four-session-integration';
+import { installGraphNumberFields, graphPointNumber } from './number-fields.js?v=1.7.0-four-session-integration';
 import { simplifyPolyline } from '../function-graph/polyline-simplify.js?v=1.7.0-four-session-integration';
 import { appendDisplayHeading, syncDisplayProperties } from './display-workspace.js?v=1.7.0-four-session-integration';
 import { openPdfReferencePicker } from '../pdf-library/reference-picker.js?v=1.7.0-four-session-integration';
@@ -2630,7 +2630,8 @@ function renderLegendEditor() {
 }
 
 // 좌표 텍스트("0,0 1,2 3,2") ↔ pts[] 변환.
-function ptsToText(pts) { return pts.map((p) => `${roundedGraphNumber(p.x)},${roundedGraphNumber(p.y)}`).join(" "); }
+function pointNumber(value, series = _series[_sel]) { return graphPointNumber(value, series?.reconstruction?.certainty === 'exact'); }
+function ptsToText(pts) { return pts.map((p) => `${pointNumber(p.x)},${pointNumber(p.y)}`).join(" "); }
 function textToPts(text) {
   const out = [];
   for (const tok of String(text || "").trim().split(/\s+/)) {
@@ -4098,7 +4099,7 @@ function build() {
     _els.pts.setCustomValidity('');
     const nextPoints = textToPts(_els.pts.value).map((point, index) => Object.fromEntries(['x','y'].map(key => {
       const previous = s.pts[index]?.[key];
-      return [key, Number.isFinite(previous) && point[key] === Number(roundedGraphNumber(previous)) ? previous : Number(roundedGraphNumber(point[key]))];
+      return [key, Number.isFinite(previous) && point[key] === Number(pointNumber(previous, s)) ? previous : Number(pointNumber(point[key], s))];
     })));
     if (nextPoints.length !== s.pts.length) {
       s.segmentModes = []; s.arrows = (s.arrows || []).filter(a => !Number.isInteger(a.segmentIndex));
