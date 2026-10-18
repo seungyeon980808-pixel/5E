@@ -3,7 +3,8 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import {validate} from '../assets/exampool/sheet/model.js';
 import {questionFingerprint} from '../assets/exampool/sheet/typeset-model.js';
-import {paginateQuestions,examPlan,toggleExam,moveExam} from '../assets/exampool/sheet/exam-layout.js';
+import {paginateQuestions,examPlan} from '../assets/exampool/sheet/exam-layout.js';
+import {newExam,addToExam,removeFromExam,moveInExam,libraryQuestions,examOf,normalizeExams} from '../assets/exampool/sheet/exams.js';
 import {filteredQuestions,workflowOf} from '../assets/exampool/sheet/views.js';
 const examples=JSON.parse(await fs.readFile(new URL('../assets/exampool/sheet/examples.json',import.meta.url),'utf8'));
 const data=()=>structuredClone(examples);
@@ -12,7 +13,7 @@ test('workflow is draft by default, validated, and not part of the typesetting f
   const d=data(),q=d.questions[0];assert.equal(workflowOf(q),'draft');
   const before=await questionFingerprint(q);q.workflow='complete';validate(d);
   assert.equal(await questionFingerprint(q),before);
-  q.workflow='published';assert.throws(()=>validate(d),/출제·점검·완성/);
+  q.workflow='published';assert.throws(()=>validate(d),/초안·검토 중·완성/);
 });
 
 test('cards filter by status, type and text',()=>{
@@ -22,20 +23,27 @@ test('cards filter by status, type and text',()=>{
   assert.equal(filteredQuestions(d,{status:'draft',query:'없는 말'}).length,0);
 });
 
-test('exam set keeps order, rejects unknown ids, and packs whole questions into two columns',()=>{
-  const d=data(),[a,b,c]=d.questions.map(q=>q.id);
-  toggleExam(d,a,true);toggleExam(d,b,true);toggleExam(d,c,true);toggleExam(d,b,true);validate(d);
-  assert.deepEqual(d.examSet.items,[a,b,c]);
-  assert.ok(moveExam(d,c,'up'));assert.deepEqual(d.examSet.items,[a,c,b]);assert.equal(moveExam(d,a,'up'),false);
-  toggleExam(d,c,false);assert.deepEqual(d.examSet.items,[a,b]);
-  d.examSet.items.push('missing');assert.throws(()=>validate(d),/시험지 구성/);
+test('exams keep order, a question belongs to one exam, the rest stay in the library, and pages pack whole questions',()=>{
+  const d=data(),[a,b,c]=d.questions.map(q=>q.id),e1=newExam('중간고사'),e2=newExam('수행평가');d.exams=[e1,e2];
+  addToExam(d,e1.id,a);addToExam(d,e1.id,b);addToExam(d,e1.id,c);validate(d);
+  assert.deepEqual(e1.items,[a,b,c]);
+  assert.ok(moveInExam(d,e1.id,c,1));assert.deepEqual(e1.items,[a,c,b]);assert.equal(moveInExam(d,e1.id,a,0),false);
+  addToExam(d,e2.id,c);assert.deepEqual(e1.items,[a,b],'moving to another exam removes it from the first');assert.equal(examOf(d,c).id,e2.id);
+  removeFromExam(d,c);assert.ok(libraryQuestions(d).some(q=>q.id===c),'removed questions return to the library');
+  e1.items.push('missing');assert.throws(()=>validate(d),/시험지 구성/);e1.items.pop();
+  e2.items.push(a);assert.throws(()=>validate(d),/시험지 구성/,'one question cannot sit in two exams');e2.items.pop();
   assert.deepEqual(paginateQuestions([{id:'x',height:200},{id:'y',height:100},{id:'z',height:300}],{height:267,columns:2,gap:6}).map(p=>p.columns),[[['x'],['y']],[['z'],[]]]);
 });
 
+test('the old single exam set becomes the first drafting exam',()=>{
+  const d=data(),[a,b]=d.questions.map(q=>q.id);delete d.exams;d.examSet={items:[a,b]};normalizeExams(d);
+  assert.equal(d.exams.length,1);assert.equal(d.exams[0].status,'drafting');assert.deepEqual(d.exams[0].items,[a,b]);assert.equal(d.examSet,undefined);
+});
+
 test('exam plan uses saved typesetting heights and lists questions that still need typesetting',()=>{
-  const d=data(),[a,b]=d.questions;toggleExam(d,a.id,true);toggleExam(d,b.id,true);
+  const d=data(),[a,b]=d.questions,e=newExam('시험');d.exams=[e];addToExam(d,e.id,a.id);addToExam(d,e.id,b.id);
   a.typeset={verified:true,metrics:{usedHeightMm:180}};
-  const plan=examPlan(d);
+  const plan=examPlan(d,e);
   assert.equal(plan.items[0].height,180);assert.equal(plan.items[0].ready,true);
   assert.deepEqual(plan.missing.map(x=>x.id),[b.id]);
 });

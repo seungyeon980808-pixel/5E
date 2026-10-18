@@ -6,7 +6,7 @@ export {checkXlsxSize};
 const MAIN=['번호','답안형','자료 구성','선지 표현','성취기준','발문','정답','배점','출처','해설','출제 의도','문항 ID'];
 // 배치 열(폭 비율·크기·간격·정렬)은 2026-10 추가. 예전 파일에는 없어도 읽는다.
 const PARTS_REQUIRED=['번호','순서','구성','이름','내용','그림','묶음','배치','문항 ID','구성 ID','상위 ID','선지 ID','항목 ID'];
-const PARTS=['번호','순서','구성','이름','내용','그림','묶음','배치','폭 비율','크기','간격','정렬','문항 ID','구성 ID','상위 ID','선지 ID','항목 ID'];
+const PARTS=['번호','순서','구성','이름','내용','그림','묶음','배치','폭 비율','크기','간격','정렬','아래 여백','문항 ID','구성 ID','상위 ID','선지 ID','항목 ID'];
 const TABLES=['번호','표 이름','행','열','셀 범위','단위·각주','머리글 행','행 축','열 축','','','','문항 ID','구성 ID'];
 const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[c]));
 const unesc=s=>s.replace(/&(?:amp|lt|gt|quot|apos);/g,c=>({'&amp;':'&','&lt;':'<','&gt;':'>','&quot;':'"','&apos;':"'"}[c]));
@@ -30,14 +30,14 @@ export function project(XLSX,data) {
   const addImage=(figure,sheet,row,col,owner)=>{if(figure)images.push({figure:clone(figure),sheet,row,col,owner});};
   for(const q of data.questions){
     for(const [i,b] of q.blocks.entries()) {
-      const r=parts.length;parts.push([q.number,i+1,KINDS[b.kind],b.label,b.text,'',q.blocks.find(x=>x.id===b.parent)?.label||'',b.layout,formatRatio(b.ratio),formatSize(b.size),formatGap(b.gap),b.align||'',q.id,b.id,b.parent||'','','']);
+      const r=parts.length;parts.push([q.number,i+1,KINDS[b.kind],b.label,b.text,'',q.blocks.find(x=>x.id===b.parent)?.label||'',b.layout,formatRatio(b.ratio),formatSize(b.size),formatGap(b.gap),b.align||'',formatGap(b.pad),q.id,b.id,b.parent||'','','']);
       if(b.kind==='figure')addImage(b.figure,'구성',r,5,{qid:q.id,bid:b.id});
-      for(const [j,l] of (b.lines||[]).entries())parts.push([q.number,j+1,KINDS[b.kind]+' 항목',l.label,l.text,'',b.label,'','','','','',q.id,b.id,'','',l.id]);
+      for(const [j,l] of (b.lines||[]).entries())parts.push([q.number,j+1,KINDS[b.kind]+' 항목',l.label,l.text,'',b.label,'','','','','','',q.id,b.id,'','',l.id]);
     }
-    parts.push([q.number,q.blocks.length+1,'발문','발문',q.ask,'','','','','','','',q.id,'','','','']);
-    for(const [i,c] of q.choices.entries()){const r=parts.length;parts.push([q.number,i+1,'선지','①②③④⑤'[i],c.text,'','',q.choiceLayout||'','','','','',q.id,'','',c.id,'']);addImage(c.figure,'구성',r,5,{qid:q.id,cid:c.id});}
+    parts.push([q.number,q.blocks.length+1,'발문','발문',q.ask,'','','','','','','','',q.id,'','','','']);
+    for(const [i,c] of q.choices.entries()){const r=parts.length;parts.push([q.number,i+1,'선지','①②③④⑤'[i],c.text,'','',q.choiceLayout||'','','','','','',q.id,'','',c.id,'']);addImage(c.figure,'구성',r,5,{qid:q.id,cid:c.id});}
   }
-  const ps=sheet(XLSX,wb,'구성',parts,[9,8,14,20,62,25,20,12,9,8,8,8,40,40,40,40,40],12);
+  const ps=sheet(XLSX,wb,'구성',parts,[9,8,14,20,62,25,20,12,9,8,8,8,9,40,40,40,40,40],12);
   images.filter(i=>i.sheet==='구성').forEach(i=>ps['!rows'][i.row]={hpt:86});
   const tableRows=[TABLES];
   for(const q of data.questions){for(const b of q.blocks.filter(b=>b.kind==='table'))indices.push({qid:q.id,bid:b.id,name:b.label,number:q.number,table:b.table});if(q.style==='대응표'||q.choiceTable.cells.some(row=>row.some(c=>c.value!==''||c.figure)))indices.push({qid:q.id,bid:'choices',name:'선지 대응표',number:q.number,table:q.choiceTable});}
@@ -114,12 +114,12 @@ export async function importExcel(XLSX,JSZip,buffer) {
   const questions=[],qmap=new Map(),overrides=[];
   if(wb.Sheets['문항']?.A1?.v==='항목'){
     const rows=readRows(XLSX,wb.Sheets['문항'],100,500),labels=rows.map(r=>r[0]);
-    if(new Set(labels).size!==labels.length||!ROWS.every(r=>labels.includes(r.label))||!labels.includes('문항 ID'))throw Error('세로 시트의 항목 이름·문항 ID를 확인하세요.');
+    if(new Set(labels).size!==labels.length||!ROWS.filter(r=>!r.optional).every(r=>labels.includes(r.label))||!labels.includes('문항 ID'))throw Error('세로 시트의 항목 이름·문항 ID를 확인하세요.');
     for(let c=1;c<rows[0].length;c++){
       const id=text(rows[labels.indexOf('문항 ID')][c])||uid();if(qmap.has(id))throw Error('문항 ID가 중복되었습니다.');
       const q=old.has(id)?clone(old.get(id)):newQuestion(String(c));q.id=id;
-      for(const row of ROWS){if(row.open)continue;const value=text(rows[labels.indexOf(row.label)][c]??'');if(value!==fieldValue(q,row.key)){
-        if(['passage','choices','bogi'].includes(row.key))overrides.push({q,key:row.key,value});else writeField(q,row.key,value);
+      for(const row of ROWS){if(row.open||!labels.includes(row.label))continue;const value=text(rows[labels.indexOf(row.label)][c]??'');if(value!==fieldValue(q,row.key)){
+        if(['passage','choices','bogi','steps','dialogue'].includes(row.key))overrides.push({q,key:row.key,value});else writeField(q,row.key,value);
       }}q.blocks=[];questions.push(q);qmap.set(id,q);
     }
   }else for(const r of namedRows(XLSX,wb.Sheets['문항'],MAIN,501)){
@@ -134,7 +134,7 @@ export async function importExcel(XLSX,JSZip,buffer) {
     if(r['구성']==='선지') {let c=q.choices.find(c=>c.id===text(r['선지 ID']));if(!c)c=q.choices['①②③④⑤'.indexOf(r['이름'])];if(!c)throw Error('선지의 번호를 확인하세요.');c.text=text(r['내용']);if(text(r['배치']).trim()){const layout=parseChoiceLayout(r['배치']);if(q._choiceLayoutSeen&&q.choiceLayout!==layout)throw Error('한 문항의 선지 배열은 하나로 입력하세요.');q.choiceLayout=layout;q._choiceLayoutSeen=true;}positions.push({sheet:'구성',row:r.row,col:5,owner:{qid:q.id,cid:c.id}});continue;}
     if(text(r['구성']).endsWith(' 항목')){lines.push({q,r});continue;}
     const kind=Object.keys(KINDS).find(k=>KINDS[k]===r['구성']);if(!kind)throw Error('구성 종류는 설명·그림·표·묶음·과정·대화·보기 중에서 입력하세요.');const bid=text(r['구성 ID'])||uid(),nodeKey=q.id+':'+bid;if(blockIds.has(nodeKey))throw Error('구성 ID가 중복되었습니다.');blockIds.add(nodeKey);
-    const previous=old.get(q.id)?.blocks.find(b=>b.id===bid),b=previous&&previous.kind===kind?clone(previous):block(kind);b.id=bid;b.label=text(r['이름']);b.text=text(r['내용']);b.parent=text(r['상위 ID'])||null;b.layout=text(r['배치'])||'세로';for(const [key,col,parse] of [['ratio','폭 비율',parseRatio],['size','크기',parseSize],['gap','간격',parseGap],['align','정렬',parseAlign]]){const v=parse(r[col]);if(v===undefined)delete b[key];else b[key]=v;}if(b.lines)b.lines=[];b._order=Number(r['순서']);if(!Number.isFinite(b._order))throw Error('구성 순서는 숫자로 입력하세요.');q.blocks.push(b);
+    const previous=old.get(q.id)?.blocks.find(b=>b.id===bid),b=previous&&previous.kind===kind?clone(previous):block(kind);b.id=bid;b.label=text(r['이름']);b.text=text(r['내용']);b.parent=text(r['상위 ID'])||null;b.layout=text(r['배치'])||'세로';for(const [key,col,parse] of [['ratio','폭 비율',parseRatio],['size','크기',parseSize],['gap','간격',parseGap],['align','정렬',parseAlign],['pad','아래 여백',parseGap]]){const v=parse(r[col]);if(v===undefined)delete b[key];else b[key]=v;}if(b.lines)b.lines=[];b._order=Number(r['순서']);if(!Number.isFinite(b._order))throw Error('구성 순서는 숫자로 입력하세요.');q.blocks.push(b);
     if(kind==='figure')positions.push({sheet:'구성',row:r.row,col:5,owner:{qid:q.id,bid}});
   }
   for(const {q,r} of lines){const b=q.blocks.find(b=>b.id===text(r['구성 ID']));if(!b?.lines)throw Error('과정·대화·보기 항목의 연결을 확인하세요.');b.lines.push({id:text(r['항목 ID'])||uid(),label:text(r['이름']),text:text(r['내용']),_order:Number(r['순서'])});}

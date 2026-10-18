@@ -20,7 +20,8 @@ test('experiment hierarchy, multiple result tables and exact header merges survi
  assert(plan.texts.includes('0'));assert(plan.texts.includes('㉠'));assert(plan.html.includes('&lt;보 기&gt;'));assert(!plan.html.includes('셀에 바로 입력'));
 });
 test('short answer combinations share one native row; long sentences retain their number and editable cell',async()=>{
- const compact=await buildQuestionHtml(examples.questions[0],prep,317,{native:true});
+ // 선지는 번호 너비만큼 들어간 본문 폭에 놓인다(평가원 지면). 317px 본문 = 단 폭 343px - 번호 "1. " 26px.
+ const compact=await buildQuestionHtml(examples.questions[0],prep,343,{native:true});
  assert(compact.tables.some(t=>t.rows===1&&t.cols===5));
  const q=structuredClone(examples.questions[0]);q.style='문장·수식';q.choices.forEach((c,i)=>c.text=`물체 ${i+1}의 운동량 변화량은 충돌 과정에서 작용한 힘과 시간의 곱으로 구할 수 있다.`);
  const long=await buildQuestionHtml(q,prep,317,{native:true});assert(long.tables.some(t=>t.rows===5&&t.cols===1));

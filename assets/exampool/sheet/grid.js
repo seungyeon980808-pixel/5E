@@ -40,7 +40,7 @@ export function createSheetGrid({root=document,formula,nameBox,onSelect,onWrite,
     paint(true);if(focus){const input=inputFor(active);(input?.tagName==='SELECT'?active:input||active).focus({preventScroll:true});cell.scrollIntoView({block:'nearest',inline:'nearest'});}
   }
   function refresh({questionId}={}){
-    if(refreshing)return;refreshing=true;const previous=active?{key:scopeKey,point:pos(active),range,anchor,lead,focused:!active.isConnected||root.activeElement===active}:null;
+    if(refreshing)return;refreshing=true;const focusHere=n=>!n||n===root.body||!!tableFor(n),previous=active?{key:scopeKey,point:pos(active),range,anchor,lead,focused:root.activeElement===active||cellFor(root.activeElement)===active||!active.isConnected&&focusHere(root.activeElement)}:null;
     root.querySelectorAll('#registry,.data-table').forEach(t=>{
       t.dataset.grid=t.id==='registry'?'registry':t.closest('[data-table]').dataset.table;t.setAttribute('role','grid');
       const rows=[...t.tBodies[0]?.rows||[]],vertical=t.dataset.orientation==='vertical',cols=t.id==='registry'?(vertical?t.tHead.rows[0].cells.length-2:8):Number(t.closest('[data-table]').querySelectorAll('col').length)-1;
@@ -101,7 +101,8 @@ export function createSheetGrid({root=document,formula,nameBox,onSelect,onWrite,
     let cell=cellFor(e.target),t=tableFor(e.target);const header=e.target.closest?.('th'),target=t?{key:identity(t),point:cell&&pos(cell)}:null;
     if(editing&&(editing.cell.contains(e.target)||e.target===formula))return;
     if(!finish()) {e.preventDefault();e.stopPropagation();return;}
-    if(t&&!t.isConnected){t=[...root.querySelectorAll('table[data-grid]')].find(n=>identity(n)===target.key);if(cell)cell=t&&find(t,...target.point);}
+    // Finishing an edit redraws the rows (and sometimes the table), so look the clicked cell up again.
+    if(t&&(!t.isConnected||cell&&!cell.isConnected)){if(!t.isConnected)t=[...root.querySelectorAll('table[data-grid]')].find(n=>identity(n)===target.key);if(cell)cell=t&&find(t,...target.point);}
     if(!t||e.button!==0)return;
     if(e.target.matches?.('[data-axis]')||e.target.closest?.('button'))return;
     if(cell){
@@ -151,7 +152,14 @@ export function createSheetGrid({root=document,formula,nameBox,onSelect,onWrite,
   formula.addEventListener('focus',()=>{if(active&&!editing&&!active.dataset.open){begin();if(editing){editing.fromFormula=true;formula.focus();}}});
   formula.addEventListener('input',()=>{if(editing){const n=editing.input;if(n.tagName==='SELECT'){const option=[...n.options].find(o=>o.textContent===formula.value||o.value===formula.value);if(option)n.value=option.value;}else n.value=formula.value;onDraft?.(describe(),formula.value);}});
   // Clicking a toolbar while typing commits first, before its action is dispatched.
-  root.addEventListener('focusout',e=>{if(editing&&e.target===editing.input&&e.relatedTarget!==formula&&!editing.cell.contains(e.relatedTarget))finish();});
+  // 한글 창을 다시 그리는 동안 편집기가 입력 위치를 가져가도 시트 칸 입력은 끝내지 않는다(keepEditing).
+  let keeping=0;
+  root.addEventListener('focusout',e=>{if(keeping)return;if(editing&&e.target===editing.input&&e.relatedTarget!==formula&&!editing.cell.contains(e.relatedTarget))finish();});
+  async function keepEditing(run){
+    keeping++;const input=editing?.input;
+    try{return await run();}
+    finally{keeping--;if(!keeping&&editing&&editing.input===input&&input.isConnected&&root.activeElement!==input){const at=[input.selectionStart,input.selectionEnd];input.focus({preventScroll:true});input.setSelectionRange?.(at[0],at[1]);}}
+  }
   root.defaultView.addEventListener('resize',()=>paint());
-  return {refresh,finish,selectCell:({row,col=0,focus=false})=>{if(editing)return;const t=root.querySelector('#registry[data-grid]');if(t)select(find(t,row,col),{focus});},manages:n=>!!cellFor(n)&&!n.matches?.('[data-axis]'),selected:describe};
+  return {refresh,finish,keepEditing,selectCell:({row,col=0,focus=false})=>{if(editing)return;const t=root.querySelector('#registry[data-grid]');if(t)select(find(t,row,col),{focus});},manages:n=>!!cellFor(n)&&!n.matches?.('[data-axis]'),selected:describe};
 }

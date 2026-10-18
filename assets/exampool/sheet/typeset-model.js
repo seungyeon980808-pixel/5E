@@ -30,6 +30,8 @@ export async function normalizeQuestionImport(bytes,JSZip){
   // generated question document, before the user starts editing its layout.
   let header=await zip.file('Contents/header.xml').async('string');
   header=header.replace(/<hc:(left|right|intent) value="\d+"/g,'<hc:$1 value="0"');
+  // 한글 줄 나눔은 평가원처럼 어절 단위(KEEP_WORD). 들여온 문단 모양 일부가 글자 단위(BREAK_WORD)로 들어온다.
+  header=header.replace(/breakNonLatinWord="BREAK_WORD"/g,'breakNonLatinWord="KEEP_WORD"');
   let xml=await zip.file('Contents/section0.xml').async('string');
   // Center the table's anchor paragraph, including nested tables. Cell text
   // alignment alone does not position an inline table. Clone the styles so
@@ -56,7 +58,9 @@ export async function normalizeQuestionImport(bytes,JSZip){
   return zip.generateAsync({type:'uint8array',compression:'DEFLATE'});
 }
 
-export function applyQuestionIndent(document,number){
+// 자료 표·그림이 있는 문단(글이 없는 문단)도 찾는다.
+const controlParas=(document,sec)=>{const set=new Set();for(let p=0;p<document.pageCount();p++)for(const c of JSON.parse(document.getPageControlLayout(p)).controls||[])if(c.secIdx===sec&&!(c.cellPath||[]).length)set.add(c.paraIdx);return [...set];};
+export function applyQuestionIndent(document,number,{body=false,askLead='',askIndent=0}={}){
   if(!number)return;
   const prefix=`${number}. `;
   for(let page=0;page<document.pageCount();page++){
@@ -64,8 +68,18 @@ export function applyQuestionIndent(document,number){
     if(!run)continue;
     // 글 옆 자료처럼 번호가 표 칸 안에 있으면 칸 문단은 내어쓰기를 건드리지 않는다.
     if(run.cellPath?.length)return;
-    const start=JSON.parse(document.getCursorRect(run.secIdx,run.paraIdx,0)),end=JSON.parse(document.getCursorRect(run.secIdx,run.paraIdx,prefix.length));
-    document.applyParaFormat(run.secIdx,run.paraIdx,JSON.stringify({indent:-Math.round((end.x-start.x)*150)}));
+    const start=JSON.parse(document.getCursorRect(run.secIdx,run.paraIdx,0)),end=JSON.parse(document.getCursorRect(run.secIdx,run.paraIdx,prefix.length)),hang=Math.round((end.x-start.x)*150);
+    document.applyParaFormat(run.secIdx,run.paraIdx,JSON.stringify({indent:-hang}));
+    // 평가원 지면: 번호 다음 문단(자료 표·발문·<보기>·선지)은 모두 번호 너비만큼 들어가 시작한다. 발문 첫 줄은 한 글자 더.
+    if(body){
+      const lead=String(askLead||'').replace(/\s+/g,''),count=document.getParagraphCount?.(run.secIdx);
+      const texts=new Map();for(let p=0;p<document.pageCount();p++)for(const r of JSON.parse(document.getPageTextLayout(p)).runs)if(!r.cellPath?.length&&r.secIdx===run.secIdx)texts.set(r.paraIdx,(texts.get(r.paraIdx)||'')+r.text);
+      const last=Number.isInteger(count)?count-1:Math.max(run.paraIdx,...texts.keys(),...controlParas(document,run.secIdx));
+      for(let para=run.paraIdx+1;para<=last;para++){
+        const isAsk=!!lead&&String(texts.get(para)||'').replace(/\s+/g,'').startsWith(lead);
+        document.applyParaFormat(run.secIdx,para,JSON.stringify(isAsk?{marginLeft:hang,indent:Math.round(askIndent*150)}:{marginLeft:hang}));
+      }
+    }
     document.reflowLinesegs();return;
   }
   throw Error('문항 번호 뒤의 들여쓰기 위치를 찾지 못했습니다.');

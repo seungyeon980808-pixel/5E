@@ -8,17 +8,19 @@ import {columnName,address,parseClipboard} from '../assets/exampool/sheet/grid-m
 import {questionFingerprint,pageProfile,mathParts} from '../assets/exampool/sheet/typeset-model.js';
 import {project,exportExcel,importExcel,enhanceZip} from '../assets/exampool/sheet/excel.js';
 const require=createRequire(import.meta.url),XLSX=require('../assets/exampool/sheet/vendor/xlsx.full.min.js'),JSZip=require('../assets/exampool/sheet/vendor/jszip.min.js');
+const row=key=>ROWS.findIndex(r=>r.key===key);
 test('vertical fields preserve the requested order and Excel addresses past Z',()=>{
- assert.deepEqual(ROWS.slice(0,13).map(r=>r.label),['문항유형','대단원','중단원','소단원','성취기준','핵심개념','문항관리번호','발문','자료','사진','지문','선지','보기']);
+ assert.deepEqual(ROWS.slice(0,10).map(r=>r.label),['문항유형','발문','자료','지문','실험 과정','대화','보기','선지','정답','배점'],'required fields come first, in exam order');
+ assert.deepEqual(ROWS.filter(r=>r.optional).map(r=>r.key),['steps','dialogue'],'older Excel files without these rows still open');
  assert.equal(columnName(26),'AA');assert.equal(address(7,1),'B8');assert.equal(parseClipboard('a\tb\tc',{maxRows:21,maxCols:500})[0].length,3);
 });
 test('a filtered vertical paste edits question columns by ID, retains pictures and preserves multiple concepts',()=>{
  const a=newQuestion('001'),b=newQuestion('002'),c=newQuestion('003'),data={format:FORMAT,questions:[a,b,c],documents:[]};
- applyVerticalValues(data,[c.id,a.id],[{r:1,c:0,value:'운동과 에너지'},{r:5,c:1,value:'힘, 운동량, 힘\n충격량'}]);
+ applyVerticalValues(data,[c.id,a.id],[{r:row('unitLarge'),c:0,value:'운동과 에너지'},{r:row('concepts'),c:1,value:'힘, 운동량, 힘\n충격량'}]);
  assert.equal(c.unitLarge,'운동과 에너지');assert.equal(b.unitLarge,undefined);assert.deepEqual(a.concepts,['힘','운동량','충격량']);
  const figure=block('figure');figure.figure={name:'사진',data:'data:image/png;base64,AAAA'};a.blocks.push(figure);
- applyVerticalValues(data,[a.id],[{r:9,c:0,value:''}],{clear:true});assert.equal(a.blocks.at(-1).figure.name,'사진');
- assert.throws(()=>applyVerticalValues(data,[a.id],[{r:9,c:0,value:'그림 없음'}]),/편집/);
+ applyVerticalValues(data,[a.id],[{r:row('materials'),c:0,value:''}],{clear:true});assert.equal(a.blocks.at(-1).figure.name,'사진');assert.match(fieldValue(a,'materials'),/그림 ✓/,'the 자료 cell shows which slots hold a picture');
+ assert.throws(()=>applyVerticalValues(data,[a.id],[{r:row('materials'),c:0,value:'그림 없음'}]),/더블클릭/);
 });
 test('text choices and statements keep identities and evidence, while table/graph choices require their own editor',()=>{
  const q=newQuestion('1','합답형'),b=q.blocks.find(b=>b.kind==='bogi'),id=b.lines[0].id;
@@ -74,4 +76,13 @@ test('choice and bogi cells carry no ①·ㄱ. numbers; combinations are normali
  assert.equal(fieldValue(q,'choices'),'ㄱ\nㄴ\nㄱ, ㄷ\nㄴ, ㄷ\nㄱ, ㄴ, ㄷ');
  const t=newQuestion('2','객관식');t.style='조합';writeField(t,'choices','A\nC\nAB\nBC\nABC');assert.deepEqual(t.choices.map(c=>c.text),['A','C','A, B','B, C','A, B, C']);
  const s=newQuestion('3','객관식');writeField(s,'choices','AB\n2v\nㄱㄴ\n4\n5');assert.deepEqual(s.choices.map(c=>c.text),['AB','2v','ㄱㄴ','4','5'],'일반 정답형은 그대로');
+});
+test('experiment steps and student dialogue are edited as sheet lines',()=>{
+ const q=newQuestion('1','합답형','실험');q.blocks.push(block('dialogue'));
+ writeField(q,'steps','(가) 공을 굴린다.\n속력을 잰다.');
+ assert.deepEqual(q.blocks.find(b=>b.kind==='steps').lines.map(l=>[l.label,l.text]),[['(가)','공을 굴린다.'],['(나)','속력을 잰다.']]);
+ writeField(q,'dialogue','민수: 속력은 일정해.\n지아: 아니야, 증가해.');
+ assert.deepEqual(q.blocks.find(b=>b.kind==='dialogue').lines.map(l=>[l.label,l.text]),[['민수','속력은 일정해.'],['지아','아니야, 증가해.']]);
+ assert.equal(fieldValue(q,'dialogue'),'민수: 속력은 일정해.\n지아: 아니야, 증가해.');
+ const plain=newQuestion('2','객관식','글·수식');assert.throws(()=>writeField(plain,'steps','과정'),/실험 과정 자리가 없습니다/);writeField(plain,'steps','');
 });

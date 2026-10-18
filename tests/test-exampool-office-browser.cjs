@@ -61,16 +61,34 @@ h.withServer(async origin => {
       // 새 문항: 유형(합답형) → 자료 구조(실험 상자), 클릭 2번.
       await sheet.click('#side-new');await sheet.click('#new-dialog .nq-opt[data-step="form"][data-k="combo"]');await sheet.click('#new-dialog .nq-opt[data-step="struct"][data-k="experiment"]');
       assert.equal(await sheet.locator('#new-dialog [data-nq="go"]').isEnabled(),true);await sheet.click('#new-dialog [data-nq="go"]');
+      // 새 문항은 문항 카드(입력 칸)로 열린다. 합답형 선지는 보기 조합 버튼, 오른쪽에는 라이브러리 탭.
+      await sheet.waitForSelector('#card-view:not([hidden]) .cv-writer');
+      assert.ok(await sheet.locator('#card-view .combo-row').count()===5,'combo choices are composed from bogi letters');
+      assert.deepEqual(await sheet.locator('#card-view .lp-tabs [data-cvtab]').allTextContents(),['기출','교과서','기준','자료','지면','AI']);
+      await sheet.click('#card-view [data-cv="sheet"]');
       await sheet.waitForSelector('.workspace:not([hidden]) #registry');
       const ask=sheet.locator('#rows tr:has(th.field-label:text-is("발문")) td').first();
-      await ask.click();await page.keyboard.type('실험 결과로 옳은 것만을 <보기>에서 있는 대로 고른 것은?');await page.keyboard.press('Enter');
-      // 그림 구성을 더하고 파일을 넣는다(구성 편집).
-      await sheet.click('#edit-detail');await sheet.click('#add');await sheet.click('#add-dialog [data-kind="figure"]');
+      await ask.click();await page.keyboard.type('실험 결과로 옳은 것만을 <보기>에서 있는 대로 고른 것은?');
+      // 지문도 채운다. 비워 두면 한글 창 첫 줄이 회색 틀 안내(지문 자리)라 시트로 되돌릴 글이 아니다.
+      // 입력 중에 다른 칸을 누르면 입력을 확정하고 그 칸으로 넘어간다(행을 다시 그려도).
+      const passage=sheet.locator('#rows tr:has(th.field-label:text-is("지문")) td').first();
+      await passage.click();
+      assert.equal(await sheet.evaluate(()=>document.querySelector('#registry td.grid-active textarea')?.dataset.field),'passage','clicking another cell while typing moves there');
+      assert.equal(await sheet.locator('#rows tr:has(th.field-label:text-is("발문")) textarea').first().inputValue(),'실험 결과로 옳은 것만을 <보기>에서 있는 대로 고른 것은?');
+      await page.keyboard.type('다음은 실험이다.');await page.keyboard.press('Enter');
+      const passageValue=()=>sheet.locator('#rows tr:has(th.field-label:text-is("지문")) textarea').first().inputValue();
+      // 구성 시트의 「+ 구성 추가」로 그림 자리를 더하고, 자료 칸을 더블클릭해 '자료 넣기' 창에서 그림을 넣는다(구성 편집 창 없이).
+      assert.equal(await sheet.locator('#edit-detail').isVisible(),false,'the composition dialog is no longer a toolbar step');
+      await sheet.click('[data-sheet="parts"]');await sheet.click('#parts-add');await sheet.click('#add-dialog [data-kind="figure"]');
+      await sheet.click('[data-sheet="registry"]');
+      await sheet.locator('#rows tr:has(th.field-label:text-is("자료")) td').first().dblclick();
+      await sheet.waitForSelector('#slot-dialog[open]');
+      assert.ok(await sheet.locator('#slot-dialog [data-slot-pick]').count()>=2,'every figure slot offers a 5E crop');
       const chooser=sheet.waitForEvent?sheet.waitForEvent('filechooser'):page.waitForEvent('filechooser');
       // 실험 상자 틀에는 '실험 장치' 그림 칸이 이미 있다. 방금 더한 그림 칸(마지막)에 넣는다.
-      await sheet.locator('#detail-dialog [data-action="image"]').last().click();await (await chooser).setFiles(figure);
-      await sheet.waitForFunction(()=>/그림|저장/.test(document.querySelector('#status').textContent));
-      await sheet.click('[data-close="detail-dialog"]');
+      await sheet.locator('#slot-dialog [data-slot-file]').last().click();await (await chooser).setFiles(figure);
+      await sheet.waitForFunction(()=>document.querySelectorAll('#slot-dialog .slot-thumb img').length===1,null,{timeout:10000});
+      await sheet.click('[data-close="slot-dialog"]');
 
       // 한글 창 열기.
       await sheet.click('#preview');await typesetReady(sheet);
@@ -109,13 +127,15 @@ h.withServer(async origin => {
       // 한글 창에서 발문 끝에 글을 더하면 시트 발문 칸이 바뀐다.
       await sheet.click('[data-sheet="registry"]');
       const frame=sheet.locator('#native-editor iframe'),fb=await frame.boundingBox();
-      // 문항 첫 줄(번호와 발문)을 누르고 줄 끝에 쓴다. 맨 위 빈 줄은 시트 칸이 아니다.
+      // 문항 첫 줄(번호와 지문)을 누르고 줄 끝에 쓴다. 맨 위 빈 줄은 시트 칸이 아니다.
       await sheet.evaluate(()=>document.querySelector('#native-editor iframe').contentDocument.querySelector('#scroll-container,#scroll-content')?.scrollTo?.(0,0));
-      await page.mouse.click(frameBox.x+fb.x+fb.width*.55,frameBox.y+fb.y+92);await page.keyboard.press('End');await page.keyboard.type(' OK');
-      await sheet.waitForFunction(()=>/한글에서 고친 글을 시트에 반영|시트에 반영하지|시트 칸/.test(document.querySelector('#typeset-status').textContent),null,{timeout:15000});
-      assert.match(await sheet.locator('#typeset-status').textContent(),/한글에서 고친 글을 시트에 반영/);
-      const askValue=await sheet.locator('#rows tr:has(th.field-label:text-is("발문")) textarea').first().inputValue();
-      assert.equal(askValue.replace(' OK',''),'실험 결과로 옳은 것만을 <보기>에서 있는 대로 고른 것은?','the prompt cell received exactly the typed text');
+      // 문서 맨 앞에는 1pt 빈 문단(구역 자리)이 있고 그 다음 줄이 번호와 지문이다. 문서를 누른 뒤 Ctrl+Home → ↓ → End.
+      await page.mouse.click(frameBox.x+fb.x+fb.width*.55,frameBox.y+fb.y+92);await page.keyboard.press('Control+Home');await page.keyboard.press('ArrowDown');await page.keyboard.press('End');
+      // 글자 사이를 띄워 친다: 한 글자씩 시트에 반영되는 동안에도 입력 위치가 한글 창에 남아야 한다.
+      await page.keyboard.type(' OK',{delay:200});
+      await sheet.waitForFunction(()=>[...document.querySelectorAll('#rows textarea[data-field="passage"]')].some(t=>t.value.endsWith(' OK')),null,{timeout:15000});
+      assert.equal(await sheet.evaluate(()=>document.activeElement?.closest?.('#native-editor')?'hwp':document.activeElement?.tagName),'hwp','typing focus stays in the HWP window');
+      assert.equal(await passageValue(),'다음은 실험이다. OK','the passage cell received exactly the typed text');
 
       // 한글 창을 고친 뒤에도 시트 칸에 입력하는 동안(확정 전) 한글 창의 같은 문단에 바로 들어간다. 다시 그리지 않는다.
       const nativeText=()=>sheet.evaluate(()=>document.querySelector('#native-editor iframe').contentWindow.rhwpStudio.plugins.deps.wasm.borrowDocumentHandle().getTextFileText());
@@ -131,7 +151,8 @@ h.withServer(async origin => {
       await sheet.evaluate(()=>{const t=document.querySelector('.grid-editing textarea');t.setSelectionRange(t.value.length,t.value.length);});
       await page.keyboard.type(' 실시간');await page.keyboard.press('Enter');
       await sheet.waitForFunction(()=>/실시간/.test(document.querySelector('#native-editor iframe').contentWindow.rhwpStudio.plugins.deps.wasm.borrowDocumentHandle().getTextFileText()),null,{timeout:10000});
-      assert.match(await sheet.locator('#rows tr:has(th.field-label:text-is("발문")) textarea').first().inputValue(),/ OK[\s\S]* 실시간$/,'the committed cell keeps the HWP edit and the sheet edit');
+      assert.match(await sheet.locator('#rows tr:has(th.field-label:text-is("발문")) textarea').first().inputValue(),/ 실시간$/,'the committed cell reaches the HWP window');
+      assert.equal(await passageValue(),'다음은 실험이다. OK','the HWP edit survives the sheet edit');
       // 한글에 나오지 않는 칸(해설)을 고쳐도 한글 창은 그대로다.
       await sheet.locator('#rows tr:has(th.field-label:text-is("해설")) td').first().click();await page.keyboard.type('해설만 바꿈');await page.keyboard.press('Enter');
       await sheet.waitForTimeout(900);
@@ -149,7 +170,19 @@ h.withServer(async origin => {
       await sheet.waitForFunction(()=>!document.querySelector('#typeset-discard').hidden,null,{timeout:15000});
       await redraw(sheet,async()=>{await sheet.click('#typeset-discard');await sheet.click('#typeset-discard');});
       assert.equal(await sheet.locator('#typeset-discard').isHidden(),true);
-      assert.match(await sheet.locator('#rows tr:has(th.field-label:text-is("발문")) textarea').first().inputValue(),/ OK/,'the synced text survives discarding');
+      assert.match(await passageValue(),/ OK/,'the synced text survives discarding');
+      // 틀의 '실험 장치' 그림 칸은 아직 비어 있다. 빈 칸은 한글 창에 틀(회색 자리)로만 보이고 조판 저장을 막는다.
+      await sheet.click('#typeset-save');
+      await sheet.waitForFunction(()=>document.querySelector('#typeset-status').dataset.error==='true',null,{timeout:15000});
+      assert.match(await sheet.locator('#typeset-status').textContent(),/비어 있는 칸\(그림 1곳\)/);
+      await redraw(sheet,async()=>{
+        await sheet.click('[data-sheet="registry"]');
+        await sheet.locator('#rows tr:has(th.field-label:text-is("자료")) td').first().dblclick();await sheet.waitForSelector('#slot-dialog[open]');
+        const chooser2=sheet.waitForEvent?sheet.waitForEvent('filechooser'):page.waitForEvent('filechooser');
+        await sheet.locator('#slot-dialog [data-slot-file]').first().click();await (await chooser2).setFiles(figure);
+        await sheet.waitForFunction(()=>document.querySelectorAll('#slot-dialog .slot-thumb img').length>=2,null,{timeout:10000});
+        await sheet.click('[data-close="slot-dialog"]');
+      });
       // 조판 저장 → 시험지 HWPX.
       // 첫 저장은 최종 저장 모양으로 갱신하고 확인을 요청할 수 있다(기존 설계). 그때는 한 번 더 저장한다.
       for(let attempt=0;attempt<2;attempt++){
@@ -159,15 +192,33 @@ h.withServer(async origin => {
         await typesetReady(sheet);
       }
       assert.match(await sheet.locator('#typeset-status').textContent(),/조판 저장됨/);
-      await sheet.click('.side-item[data-view="exam"]');await sheet.click('[data-exam-add]');
-      const downloading=page.waitForEvent('download');await sheet.click('#exam-build');const download=await downloading;
+      // 새 시험지를 만들고 보관함의 문항을 넣은 뒤, 시험지 한 부를 HWPX로 받는다.
+      await sheet.click('.side [data-nav="new-exam"]');await sheet.waitForSelector('#examd-view:not([hidden]) #exam-from-library');
+      const qid=await sheet.locator('#exam-from-library option').nth(1).getAttribute('value');await sheet.selectOption('#exam-from-library',qid);
+      await sheet.waitForSelector(`#examd-view [data-order="${qid}"]`);
+      const downloading=page.waitForEvent('download');await sheet.click('[data-exam-act="download"]');const download=await downloading;
       const file=path.join(evidence,`${engineName}-exam.hwpx`);await download.saveAs(file);
       const zip=await JSZip.loadAsync(fs.readFileSync(file)),xml=await zip.file('Contents/section0.xml').async('string');
       assert.match(xml,/colCount="2"/);assert.match(xml,/width="59528" height="84189"/);assert.ok(xml.includes('OK'),'the text typed in the HWP window is in the exam');
       assert.ok(Object.keys(zip.files).some(n=>n.startsWith('BinData/')),'the figure is in the exam');
+      // 5e_hwp로 보내기: 시험지 한 부가 5E 시험지 편집기에서 열리고 문항 창은 닫힌다.
+      await sheet.click('[data-exam-act="send"]');
+      await page.waitForFunction(()=>document.querySelector('#exampool-sheet-workspace')?.hidden===true&&!document.querySelector('#rhwp-exam-workspace')?.hidden,null,{timeout:60000});
+      assert.match(await page.locator('#exam-name').inputValue(),/새 시험지/,'the exam opens under its own name');
+      await page.click('[data-exam-action="close"]');await page.locator('#exam-pool-open').click();await sheet.waitForSelector('#examd-view:not([hidden])');
 
+      // AI 검토: 5E 쪽에 검토 하네스가 붙어 있으면 묶음을 받아 결과를 돌려주고, 제안은 「적용」으로 칸에 들어간다.
+      await page.evaluate(()=>{window.__reviewPackets=[];window.fiveEReviewHarness={request:async packet=>{window.__reviewPackets.push(packet);return {text:'검토를 마쳤습니다.',items:[{field:'발문',text:'물음이 분명합니다.'}],suggestion:{field:'발문',text:'이에 대한 설명으로 옳은 것만을 <보기>에서 있는 대로 고른 것은? (수정)'}};}};});
+      await sheet.locator('#examd-view [data-open-card]').first().click();await sheet.waitForSelector('#card-view:not([hidden]) .cv-writer');
+      await sheet.click('#card-view [data-cv="review"]');
+      await sheet.waitForSelector('#card-view .msg.ai .rv li',{timeout:20000});
+      const packet=await page.evaluate(()=>window.__reviewPackets[0]);
+      assert.equal(packet.format,'5e-exampool-review-v1');assert.equal(packet.kind,'review');assert.ok(packet.question.ask&&packet.previewHtml,'the packet carries the question and its preview');
+      await sheet.click('#card-view [data-ai-apply]');
+      await sheet.waitForFunction(()=>/\(수정\)$/.test(document.querySelector('#cv-ask')?.value||''));
+      assert.equal(await sheet.locator('#card-view .cv-writer .stage [aria-pressed="true"]').textContent(),'검토 중','a draft moves to review after an AI review');
       // 세 가지 화면 색 캡처(증거).
-      await sheet.click('.side-item[data-status="draft"]');
+      await sheet.click('.side [data-nav="library"]');
       for(const [theme,palette] of [['dark','classic'],['dark','graphite'],['light','graphite']]){
         await page.evaluate(([t,p])=>{document.documentElement.setAttribute('data-theme',t);document.documentElement.setAttribute('data-palette',p);},[theme,palette]);
         await sheet.waitForFunction(([t,p])=>document.documentElement.dataset.theme===t&&document.documentElement.dataset.palette===p,[theme,palette]);

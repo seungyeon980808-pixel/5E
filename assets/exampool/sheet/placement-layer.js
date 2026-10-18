@@ -11,7 +11,7 @@ const keyOf=c=>JSON.stringify(c.stableIndex||[c.secIdx,c.paraIdx,c.controlIdx]);
 const order=(a,b)=>a.page-b.page||Math.round((a.y-b.y)*2)/2||(b.w*b.h-a.w*a.h)||a.x-b.x;
 const inside=(r,p,pad=0)=>p.x>=r.x-pad&&p.x<=r.x+r.w+pad&&p.y>=r.y-pad&&p.y<=r.y+r.h+pad;
 
-export function attachPlacementLayer({bridge,host,hint,onApply,canEdit}){
+export function attachPlacementLayer({bridge,host,hint,onApply,canEdit,onActivate}){
   const doc=host.ownerDocument,layer=doc.createElement('div');layer.className='placement-layer';layer.setAttribute('aria-hidden','true');
   const outline=doc.createElement('div');outline.className='place-outline';outline.hidden=true;
   const tag=doc.createElement('span');tag.className='place-tag';outline.append(tag);
@@ -21,7 +21,11 @@ export function attachPlacementLayer({bridge,host,hint,onApply,canEdit}){
   const marker=doc.createElement('div');marker.className='place-marker';marker.hidden=true;
   const markerLabel=doc.createElement('span');marker.append(markerLabel);
   const readout=doc.createElement('div');readout.className='place-readout';readout.hidden=true;
-  layer.append(outline,ghost,marker,readout,grip,sizer);
+  // 그림 위 수정·설정(5E 시험지 편집기와 같은 자리). 더블클릭은 그림 가져오기(빈 자리면 바로 5E에서 잘라 넣기).
+  const tools=doc.createElement('div');tools.className='place-tools';tools.hidden=true;
+  tools.innerHTML='<button type="button" data-place-tool="modify" aria-haspopup="menu" aria-expanded="false">수정</button><button type="button" data-place-tool="settings">설정</button>';
+  const menu=doc.createElement('div');menu.className='place-menu';menu.setAttribute('role','menu');menu.hidden=true;
+  layer.append(outline,ghost,marker,readout,grip,sizer,tools,menu);
   let model=null,items=[],dividers=[],dividerNodes=[],hover=null,drag=null,enabled=false,base=hint?.textContent||'';
   const say=(text)=>{if(hint)hint.textContent=text||base;};
 
@@ -46,7 +50,7 @@ export function attachPlacementLayer({bridge,host,hint,onApply,canEdit}){
     const {question:q,owners}=model,{images,tables}=nativeControls();
     if(images.length!==owners.images.length||tables.length!==owners.tables.length){say('배치 · 저장된 조판이 문항 데이터와 달라 끌어서 배치할 수 없습니다. 문항 새로고침 후 다시 시도하세요.');return;}
     for(const [i,t] of tables.entries())if(t.rowCount!==owners.shapes[i].rows||t.colCount!==owners.shapes[i].cols){say('배치 · 표 구조가 문항 데이터와 달라 끌어서 배치할 수 없습니다.');return;}
-    const add=(c,owner,kind)=>{if(owner?.kind!=='block')return;const b=q.blocks.find(x=>x.id===owner.id);if(!b)return;const rect=toLayer(c.page,c);if(rect)items.push({id:b.id,kind,block:b,rect});};
+    const add=(c,owner,kind)=>{if(owner?.kind!=='block')return;const b=q.blocks.find(x=>x.id===owner.id);if(!b)return;const rect=toLayer(c.page,c);if(rect)items.push({id:b.id,kind,block:b,rect,ref:{sec:c.secIdx,ppi:c.paraIdx,ci:c.controlIdx,type:c.type,pageIndex:c.page,...(c.cellPath?.length?{cellPath:c.cellPath}:{})}});};
     images.forEach((c,i)=>add(c,owners.images[i],'figure'));
     tables.forEach((c,i)=>add(c,owners.tables[i],'table'));
     // 가로 묶음 안 이웃한 두 그림·표 사이의 폭 나누기 손잡이.
@@ -67,8 +71,10 @@ export function attachPlacementLayer({bridge,host,hint,onApply,canEdit}){
   }
   const place=(n,r)=>Object.assign(n.style,{left:`${r.x}px`,top:`${r.y}px`,width:`${r.w}px`,height:`${r.h}px`});
   function showHover(item){
-    hover=item;outline.hidden=!item;grip.hidden=!item||item.kind!=='table';sizer.hidden=!item;
+    if(item!==hover)closeMenu();
+    hover=item;outline.hidden=!item;grip.hidden=!item||item.kind!=='table';sizer.hidden=!item;tools.hidden=!item||item.kind!=='figure'||!onActivate;
     if(!item)return;
+    if(!tools.hidden)Object.assign(tools.style,{left:`${item.rect.x+item.rect.w}px`,top:`${item.rect.y}px`});
     place(outline,item.rect);tag.textContent=`${KIND[item.kind]} · ${item.block.label}${item.block.size?` · ${item.block.size}%`:''}`;
     Object.assign(grip.style,{left:`${item.rect.x-22}px`,top:`${item.rect.y}px`});
     Object.assign(sizer.style,{left:`${item.rect.x+item.rect.w-5}px`,top:`${item.rect.y+item.rect.h-5}px`});
@@ -167,12 +173,27 @@ export function attachPlacementLayer({bridge,host,hint,onApply,canEdit}){
   }
 
   // 한글 창 안의 포인터: 그림 위에서는 바로 끌 수 있다. 표는 글을 고쳐야 하므로 손잡이로만 끈다.
-  let frameDoc=null;
+  function closeMenu(){menu.hidden=true;tools.querySelector('[data-place-tool="modify"]').setAttribute('aria-expanded','false');}
+  function openMenu(){
+    const item=hover;if(!item)return;const linked=!!item.block.figure?.editable?.source,empty=!item.block.figure;
+    menu.innerHTML=`<button type="button" role="menuitem" data-place-action="pick">${empty?'5E 그림에서 잘라 넣기':'5E 그림에서 다시 잘라 넣기'}<small>5E 화면에서 영역을 정해 이 자리에 넣기</small></button>`+
+      (linked?'<button type="button" role="menuitem" data-place-action="edit">편집기에서 수정<small>5E 그림 편집기에서 원본을 고친 뒤 반영</small></button>':'')+
+      (empty?'':'<button type="button" role="menuitem" data-place-action="file">파일에서 넣기<small>PNG·JPEG 그림 파일로 바꾸기</small></button>');
+    const r=tools.getBoundingClientRect(),h=host.getBoundingClientRect();Object.assign(menu.style,{left:`${r.right-h.left}px`,top:`${r.bottom-h.top+4}px`});
+    menu.hidden=false;tools.querySelector('[data-place-tool="modify"]').setAttribute('aria-expanded','true');
+  }
+  tools.addEventListener('pointerdown',e=>e.stopPropagation());menu.addEventListener('pointerdown',e=>e.stopPropagation());
+  tools.addEventListener('click',e=>{const b=e.target.closest('[data-place-tool]');if(!b||!hover)return;if(b.dataset.placeTool==='modify'){menu.hidden?openMenu():closeMenu();return;}closeMenu();onActivate?.('settings',hover.block,hover.ref);});
+  menu.addEventListener('click',e=>{const b=e.target.closest('[data-place-action]');if(!b||!hover)return;const item=hover;closeMenu();onActivate?.(b.dataset.placeAction,item.block,item.ref);});
+  let frameDoc=null,leaveTimer=0;
   const onFrameMove=e=>{
     if(!enabled)return;const p=fromFrame(e);
     if(drag?.mode==='move'){e.stopPropagation();e.preventDefault();moveTo(p);return;}
     if(drag)return;
-    showHover(items.find(x=>inside(x.rect,p,x.kind==='table'?0:0))||null);
+    const found=items.find(x=>inside(x.rect,p,x.kind==='table'?0:0))||null;
+    // 그림 위 버튼으로 옮겨 가는 동안 잠깐 그림 밖을 지나도 버튼이 사라지지 않게 한다.
+    clearTimeout(leaveTimer);if(!found&&hover&&!tools.hidden){leaveTimer=setTimeout(()=>{if(!drag&&!tools.matches(':hover')&&menu.hidden)showHover(null);},400);return;}
+    showHover(found);
   };
   const onFrameDown=e=>{
     if(!enabled||e.button!==0||drag||!canEdit())return;const p=fromFrame(e),item=items.find(x=>x.kind==='figure'&&inside(x.rect,p));
@@ -181,13 +202,15 @@ export function attachPlacementLayer({bridge,host,hint,onApply,canEdit}){
   };
   const onFrameUp=e=>{if(drag?.mode==='move'){if(drag.moved){e.stopPropagation();e.preventDefault();}endDrag(true);}};
   const onFrameKey=e=>{if(e.key==='Escape'&&drag){e.stopPropagation();endDrag(false);}};
+  // 더블클릭: 그림 자리는 5E에서 잘라 넣기, 표 자리는 표 만들기·크기 창.
+  const onFrameDouble=e=>{if(!enabled||!onActivate)return;const p=fromFrame(e),item=items.find(x=>inside(x.rect,p));if(!item)return;e.preventDefault();e.stopPropagation();onActivate(item.kind==='figure'?'pick':'table',item.block,item.ref);};
   function bindFrame(){
     const next=bridge.editor.element.contentDocument;if(next===frameDoc)return;
-    if(frameDoc){frameDoc.removeEventListener('pointermove',onFrameMove,true);frameDoc.removeEventListener('pointerdown',onFrameDown,true);frameDoc.removeEventListener('pointerup',onFrameUp,true);frameDoc.removeEventListener('keydown',onFrameKey,true);}
-    frameDoc=next;frameDoc.addEventListener('pointermove',onFrameMove,true);frameDoc.addEventListener('pointerdown',onFrameDown,true);frameDoc.addEventListener('pointerup',onFrameUp,true);frameDoc.addEventListener('keydown',onFrameKey,true);
+    if(frameDoc){frameDoc.removeEventListener('dblclick',onFrameDouble,true);frameDoc.removeEventListener('pointermove',onFrameMove,true);frameDoc.removeEventListener('pointerdown',onFrameDown,true);frameDoc.removeEventListener('pointerup',onFrameUp,true);frameDoc.removeEventListener('keydown',onFrameKey,true);}
+    frameDoc=next;frameDoc.addEventListener('dblclick',onFrameDouble,true);frameDoc.addEventListener('pointermove',onFrameMove,true);frameDoc.addEventListener('pointerdown',onFrameDown,true);frameDoc.addEventListener('pointerup',onFrameUp,true);frameDoc.addEventListener('keydown',onFrameKey,true);
   }
   doc.addEventListener('keydown',onFrameKey,true);
-  host.addEventListener('pointerleave',()=>{if(!drag)showHover(null);});
+  host.addEventListener('pointerleave',e=>{if(!drag&&!menu.contains(e.relatedTarget)&&!tools.contains(e.relatedTarget))showHover(null);});
 
   return {
     // 문서를 새로 불러온 뒤: 이 문항과, 문서 순서대로의 그림·표 주인 목록을 알려 준다.

@@ -1,0 +1,93 @@
+// ExamPool 화면: 왼쪽 메뉴(문항 보관함·시험지), 문항 보관함, 시험지 목록, 시험지 안(문항 순서·쪽 배치·보내기).
+import {WORKFLOWS} from './model.js';
+import {EXAM_STATUS,libraryQuestions,examById} from './exams.js';
+import {examPlan} from './exam-layout.js';
+import {questionTitle,questionSubtitle,workflowOf,previewHtml} from './views.js';
+
+const E=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const ICON={
+  plus:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
+  box:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="14" rx="1.5"/><path d="M4 9h16M10 13h4"/></svg>',
+  doc:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3.5h7l4 4V20a.5.5 0 0 1-.5.5h-10.5a.5.5 0 0 1-.5-.5V4a.5.5 0 0 1 .5-.5z"/><path d="M9.5 11h5M9.5 14.5h5"/></svg>',
+  done:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg>',
+  grip:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="7" r="1"/><circle cx="15" cy="7" r="1"/><circle cx="9" cy="12" r="1"/><circle cx="15" cy="12" r="1"/><circle cx="9" cy="17" r="1"/><circle cx="15" cy="17" r="1"/></svg>',
+  up:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 15 6-6 6 6"/></svg>',
+  down:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>',
+  out:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h12M13 7l5 5-5 5"/></svg>',
+  table:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="1.5"/><path d="M4 10h16M4 15h16M10 4v16"/></svg>',
+  card:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>',
+};
+const dot=q=>`<i class="dot st-${workflowOf(q)}"></i>`;
+const stage=q=>`${dot(q)}${WORKFLOWS[workflowOf(q)]}`;
+const when=iso=>{const d=new Date(iso);return Number.isFinite(d.getTime())?`${d.getMonth()+1}월 ${d.getDate()}일`:'';};
+
+// 왼쪽 메뉴: 새 문항 · 문항 보관함 · 시험지(출제 중 / 출제 완료).
+export function renderNav(root,data,view){
+  const drafting=data.exams.filter(e=>e.status==='drafting'),done=data.exams.filter(e=>e.status==='done');
+  const cur=(name,id)=>view.name===name||(id&&view.examId===id&&['exam','card','desk'].includes(view.name))?'true':'false';
+  const examItem=e=>`<button type="button" class="nav sub" data-nav="exam" data-exam="${e.id}" aria-current="${view.examId===e.id&&view.name!=='library'?'true':'false'}" title="${E(e.title)}"><span>${E(e.title)}</span><b>${e.items.length}</b></button>`;
+  root.innerHTML=`<button type="button" id="side-new" class="side-new">${ICON.plus}새 문항</button>
+    <button type="button" class="nav" data-nav="library" aria-current="${view.name==='library'||view.name==='card'&&!view.examId?'true':'false'}">${ICON.box}<span>문항 보관함</span><b>${libraryQuestions(data).length}</b></button>
+    <p class="side-label">시험지<button type="button" class="side-add" data-nav="new-exam" title="새 시험지" aria-label="새 시험지">${ICON.plus}</button></p>
+    <button type="button" class="nav" data-nav="exams" data-status="drafting" aria-current="${cur('exams')==='true'&&view.status!=='done'?'true':'false'}">${ICON.doc}<span>출제 중</span><b>${drafting.length}</b></button>
+    ${drafting.map(examItem).join('')}
+    <button type="button" class="nav" data-nav="exams" data-status="done" aria-current="${view.name==='exams'&&view.status==='done'?'true':'false'}">${ICON.done}<span>출제 완료</span><b>${done.length}</b></button>
+    ${done.slice(0,5).map(examItem).join('')}
+    <p class="side-foot">문항 하나는 카드로 쓰고,<br>시험지에서 모아 5e_hwp로 보냅니다</p>`;
+}
+
+// 문항 보관함: 시험지에 넣지 않은 문항 카드.
+export function renderLibrary(root,data,view){
+  const filter=view.stage||'all',query=String(view.query||'').toLowerCase();
+  const all=libraryQuestions(data),list=all.filter(q=>(filter==='all'||workflowOf(q)===filter)&&(!query||[q.number,q.ask,q.unitLarge,q.unitMiddle,q.managementId,...(q.concepts||[])].join(' ').toLowerCase().includes(query)));
+  const seg=[['all','전체'],...Object.entries(WORKFLOWS)].map(([k,v])=>`<button type="button" data-lib-stage="${k}" aria-pressed="${filter===k}">${v}</button>`).join('');
+  const exams=data.exams.filter(e=>e.status==='drafting');
+  root.innerHTML=`<div class="pv-head"><div><h1>문항 보관함</h1><p>시험지에 넣지 않은 문항 ${all.length}개 · 카드를 열어 쓰거나 시험지로 보냅니다</p></div><div class="pv-tools"><div class="seg">${seg}</div><input id="lib-query" value="${E(view.query||'')}" placeholder="내용·단원 찾기" aria-label="보관함 검색"></div></div>
+    <div class="pv-grid">${list.length?list.map(q=>`<article class="pv-card" data-card="${q.id}">
+      <button type="button" class="pv-thumb" data-open-card="${q.id}" aria-label="${E(questionTitle(q))} 열기"><div class="pv-doc" data-preview="${q.id}"></div></button>
+      <div class="pv-meta"><b>${E(questionSubtitle(q))}</b><div class="pv-row"><span>${stage(q)}</span><span>· ${E(q.type)}${q.unitLarge?` · ${E(q.unitLarge)}`:''}</span></div>
+        <div class="pv-row pv-actions">${exams.length?`<select data-to-exam="${q.id}" aria-label="시험지에 넣기"><option value="">시험지에 넣기…</option>${exams.map(e=>`<option value="${e.id}">${E(e.title)}</option>`).join('')}<option value="__new">+ 새 시험지</option></select>`:`<button type="button" class="mini" data-to-exam-new="${q.id}">새 시험지에 넣기</button>`}<button type="button" class="mini danger" data-delete="${q.id}" title="문항 삭제">삭제</button></div></div>
+    </article>`).join(''):`<p class="pv-empty">${all.length?'조건에 맞는 문항이 없습니다.':'보관함이 비어 있습니다. 「새 문항」으로 시험지에 넣지 않은 문항을 만들어 둘 수 있습니다.'}</p>`}</div>`;
+  fillPreviews(root,data);
+}
+
+// 시험지 목록: 출제 중 / 출제 완료.
+export function renderExams(root,data,view){
+  const row=e=>{const qs=e.items.map(id=>data.questions.find(q=>q.id===id)).filter(Boolean),n=k=>qs.filter(q=>workflowOf(q)===k).length,total=qs.length||1;
+    return `<article class="pv-exam" data-exam-row="${e.id}"><div><b>${E(e.title)}</b><span>${qs.length}문항 · 배점 ${qs.reduce((a,q)=>a+(Number(q.points)||0),0)} · ${e.status==='done'&&e.sentAt?`5e_hwp로 보낸 날 ${when(e.sentAt)}`:`고친 날 ${when(e.updatedAt)}`}</span></div>
+      <div class="bar3" title="완성 ${n('complete')} · 검토 중 ${n('review')} · 초안 ${n('draft')}"><i style="width:${n('complete')/total*100}%;background:var(--st-complete)"></i><i style="width:${n('review')/total*100}%;background:var(--st-review)"></i><i style="width:${n('draft')/total*100}%;background:var(--st-draft)"></i></div>
+      ${e.status==='done'?'<span class="badge done">출제 완료</span>':'<span class="badge">출제 중</span>'}<button type="button" class="btn" data-nav="exam" data-exam="${e.id}">열기</button></article>`;};
+  const drafting=data.exams.filter(e=>e.status==='drafting'),done=data.exams.filter(e=>e.status==='done');
+  root.innerHTML=`<div class="pv-head"><div><h1>시험지</h1><p>시험지 한 부를 문항 하나하나로 나눠 만듭니다. 출제 완료한 시험지도 열어서 고칠 수 있습니다.</p></div><div class="pv-tools"><button type="button" class="btn go" data-nav="new-exam">${ICON.plus}새 시험지</button></div></div>
+    <h2 class="pv-sub">출제 중</h2>${drafting.map(row).join('')||'<p class="pv-empty">출제 중인 시험지가 없습니다.</p>'}
+    <h2 class="pv-sub">출제 완료</h2>${done.map(row).join('')||'<p class="pv-empty">아직 출제 완료한 시험지가 없습니다.</p>'}`;
+}
+
+// 시험지 안: 문항 순서(= 시험지 구성), 한눈에 보기, 쪽 배치, 5e_hwp로 보내기.
+export function renderExam(root,data,examId){
+  const exam=examById(data,examId);if(!exam){root.innerHTML='<p class="pv-empty">시험지를 찾지 못했습니다.</p>';return;}
+  const {items,pages,missing}=examPlan(data,exam),qs=items.map(x=>x.q),count=k=>qs.filter(q=>workflowOf(q)===k).length;
+  const lib=libraryQuestions(data);
+  root.innerHTML=`<div class="pv-head"><div class="pv-title"><input id="exam-title" value="${E(exam.title)}" maxlength="200" aria-label="시험지 이름">${exam.status==='done'?'<span class="badge done">출제 완료</span>':'<span class="badge">출제 중</span>'}</div>
+      <div class="pv-tools"><button type="button" class="btn" data-exam-act="cards">${ICON.card}문항 카드</button><button type="button" class="btn" data-exam-act="sheet">${ICON.table}전체 표</button>
+      <button type="button" class="btn" data-exam-act="status">${exam.status==='done'?'출제 중으로 되돌리기':'출제 완료로 옮기기'}</button><button type="button" class="btn" data-exam-act="download" title="시험지 한 부를 HWPX 파일로 내려받기">HWPX</button><button type="button" class="btn go" data-exam-act="send">${ICON.out}5e_hwp로 보내기</button></div></div>
+    <div class="pv-exam-body"><div class="pv-order" id="exam-order">
+      ${items.map((x,i)=>`<div class="pv-orow" draggable="true" data-order="${x.id}"><span class="grip" title="끌어서 순서 바꾸기">${ICON.grip}</span><span class="n">${i+1}</span>
+        <button type="button" class="pv-mini-thumb" data-open-card="${x.id}" aria-label="${i+1}번 카드 열기"><div class="pv-doc" data-preview="${x.id}"></div></button>
+        <div class="t"><b>${E(questionSubtitle(x.q))}</b><span>${E(x.q.type)}${x.q.unitLarge?` · ${E(x.q.unitLarge)}`:''}${x.ready?'':' · 조판 저장 전'}</span></div>
+        <span class="p">${stage(x.q)}</span><span class="p">${Number(x.q.points)||0}점</span>
+        <span class="pv-row-tools"><button type="button" class="mini" data-move="up" title="위로">${ICON.up}</button><button type="button" class="mini" data-move="down" title="아래로">${ICON.down}</button><button type="button" class="mini" data-out="${x.id}" title="보관함으로 빼기">빼기</button></span></div>`).join('')||'<p class="pv-empty">아직 문항이 없습니다.</p>'}
+      <div class="pv-add"><button type="button" class="btn" data-exam-act="new">${ICON.plus}이 시험지에 새 문항</button>${lib.length?`<select id="exam-from-library" aria-label="보관함에서 넣기"><option value="">보관함에서 넣기 (${lib.length})…</option>${lib.map(q=>`<option value="${q.id}">${E(questionSubtitle(q))}</option>`).join('')}</select>`:''}</div>
+    </div>
+    <aside class="pv-summary"><h3>시험지 한눈에</h3>
+      <div class="stat"><span>문항</span><b>${qs.length}</b><span>배점 합</span><b>${qs.reduce((a,q)=>a+(Number(q.points)||0),0)}</b><span>완성</span><b>${count('complete')}</b><span>검토 중</span><b>${count('review')}</b><span>초안</span><b>${count('draft')}</b></div>
+      <h3>쪽 배치 (A4 2단)</h3>
+      <div class="pv-pages">${pages.map(p=>`<div class="pv-page">${p.columns.map(col=>`<div>${col.map(id=>{const x=items.find(v=>v.id===id);return `<i style="height:${Math.min(100,x.height/267*100)}%" title="${items.indexOf(x)+1}번"><b>${items.indexOf(x)+1}</b></i>`;}).join('')}</div>`).join('')}</div>`).join('')||'<p class="pv-empty">문항을 넣으면 보입니다.</p>'}</div>
+      <p class="note">${count('draft')+count('review')?`완성이 아닌 문항(초안 ${count('draft')}, 검토 중 ${count('review')})도 함께 보낼 수 있습니다. `:''}${missing.length?`조판을 저장하지 않은 문항 ${missing.length}개(${missing.map(x=>items.indexOf(x)+1+'번').join(', ')})는 보내기 전에 한글 조판을 저장해야 합니다.`:'보내면 5e_hwp에서 시험지 한 부로 열려 최종 검수를 합니다.'}</p>
+    </aside></div>`;
+  fillPreviews(root,data);
+}
+
+async function fillPreviews(root,data){
+  for(const n of root.querySelectorAll('[data-preview]')){const q=data.questions.find(x=>x.id===n.dataset.preview);if(!q)continue;n.innerHTML=await previewHtml(q);}
+}

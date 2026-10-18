@@ -6,7 +6,8 @@ import {loadImage} from './image-load.js';
 
 const E=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export const workflowOf=q=>q.workflow||'draft';
-export const TITLES={draft:'출제한 문항',review:'점검할 문항',complete:'완성한 문항'};
+export const TITLES={draft:'초안',review:'검토 중',complete:'완성'};
+const NEXT={draft:'review',review:'complete',complete:'draft'};
 const ICON={up:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 15 6-6 6 6"/></svg>',down:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>',remove:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>',add:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>'};
 
 export function questionTitle(q){return q.managementId||`${q.number||'번호 미입력'}번 문항`;}
@@ -26,8 +27,9 @@ async function previewFigure(f){
   return {...f,data,width:image.naturalWidth,height:image.naturalHeight};
 }
 const previews=new Map();
+export async function previewHtml(q){return preview(q);}
 async function preview(q){
-  const {typeset,references,workflow,...content}=q,key=JSON.stringify(content);
+  const {typeset,references,workflow,reviews,...content}=q,key=JSON.stringify(content);
   const hit=previews.get(q.id);if(hit?.key===key)return hit.html;
   let html;try{html=(await buildQuestionHtml(q,previewFigure)).html;}catch{html=`<p>${E(q.ask||'발문을 입력하면 미리보기가 보입니다.')}</p>`;}
   previews.set(q.id,{key,html});return html;
@@ -42,12 +44,12 @@ export function renderCards(root,data,view,currentId){
   const list=filteredQuestions(data,view),grid=root.querySelector('#cards-grid'),inExam=new Set(data.examSet?.items||[]);
   root.querySelector('#cards-title').textContent=TITLES[view.status];
   root.querySelector('#cards-count').textContent=`${list.length}개 문항`;
-  if(!list.length){grid.innerHTML=`<p class="cards-empty">${view.status==='draft'?'새 문항을 만들거나 엑셀을 가져오세요.':view.status==='review'?'점검할 문항이 없습니다. 문항 상태를 점검으로 바꾸면 여기에 모입니다.':'완성한 문항이 없습니다.'}</p>`;return;}
+  if(!list.length){grid.innerHTML=`<p class="cards-empty">${view.status==='draft'?'새 문항을 만들거나 엑셀을 올리세요.':view.status==='review'?'검토할 문항이 없습니다. 카드의 단계 표시를 누르거나 위쪽 상태를 「검토 필요」로 바꾸면 여기에 모입니다.':'완성한 문항이 없습니다.'}</p>`;return;}
   grid.innerHTML=list.map(q=>`<article class="q-card" data-card="${q.id}" aria-current="${q.id===currentId}">
     <button type="button" class="q-card-open" data-open="${q.id}" aria-label="${E(questionTitle(q))} 열기"><div class="q-card-paper"><div class="q-card-doc" data-preview="${q.id}"></div></div></button>
     <div class="q-card-meta"><div><strong>${E(questionSubtitle(q))}</strong><span>${E(questionTitle(q))} · ${E(q.type)}</span></div>
     <label class="q-card-exam" title="시험지에 넣기"><input type="checkbox" data-exam="${q.id}" ${inExam.has(q.id)?'checked':''}><span>시험지</span></label></div>
-    <div class="q-card-foot"><span class="q-status" data-status="${workflowOf(q)}">${WORKFLOWS[workflowOf(q)]}</span>${q.typeset?.verified?'<span class="q-ready">조판 저장됨</span>':'<span class="q-pending">조판 전</span>'}</div>
+    <div class="q-card-foot"><button type="button" class="q-status" data-status="${workflowOf(q)}" data-advance="${q.id}" title="눌러서 다음 단계로: ${WORKFLOWS[NEXT[workflowOf(q)]]}">${WORKFLOWS[workflowOf(q)]}</button>${q.typeset?.verified?'<span class="q-ready">조판 저장됨</span>':'<span class="q-pending">조판 전</span>'}<button type="button" class="q-card-delete" data-delete="${q.id}" title="문항 삭제" aria-label="${E(questionTitle(q))} 삭제"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 7h14M10 7V5h4v2M7 7l1 12h8l1-12M10.5 11v5M13.5 11v5"/></svg></button></div>
   </article>`).join('');
   // 미리보기는 실제 단 폭(540px) 그대로 그리고 카드 폭에 맞춰 줄인다.
   const fit=()=>grid.querySelectorAll('.q-card-paper').forEach(p=>{const d=p.firstElementChild;if(d)d.style.transform=`scale(${Math.min(1,(p.clientWidth-32)/540)})`;});

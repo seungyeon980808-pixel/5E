@@ -8,6 +8,9 @@ const require=createRequire(import.meta.url),XLSX=require('../assets/exampool/sh
 const examples=JSON.parse(await fs.readFile(new URL('../assets/exampool/sheet/examples.json',import.meta.url),'utf8'));
 const data=()=>structuredClone(examples);
 const roundtrip=d=>exportExcel(XLSX,JSZip,d).then(bytes=>importExcel(XLSX,JSZip,bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength)));
+import {ROWS as SHEET_ROWS} from '../assets/exampool/sheet/vertical.js';
+// 세로 시트의 첫 문항 열(B)에서 항목 칸 주소. 1행은 머리글이다.
+const cellOf=key=>'B'+(SHEET_ROWS.findIndex(r=>r.key===key)+2);
 test('ordered experimental hierarchy, merges, numeric zero, unknown, trailing zero and 5 graph choices roundtrip',async()=>{
  const d=data();const t=d.questions[2].blocks.find(b=>b.kind==='table').table;t.cells[1][0].figure=structuredClone(d.questions[2].choices[0].figure);t.cells[1][0].figure.editable={source:{pages:[{id:'source-1',objects:[]}]},render:{bounds:{w:10,h:12}}};
  t.cells[2][1].raw='\\alpha_{0}';t.diagonal={row:'물체',col:'구간'};
@@ -16,9 +19,9 @@ test('ordered experimental hierarchy, merges, numeric zero, unknown, trailing ze
  const count=(await zip.file('xl/drawings/drawing2.xml').async('string')).match(/<xdr:pic>/g).length;assert.equal(count,5);
 });
 test('Excel edits override visible cells, native table merges and graph picture bytes while literals stay strings',async()=>{
- const d=data(),{wb,pack}=project(XLSX,d);wb.Sheets['문항'].B9={t:'s',v:'=literal 😀\n발문'};wb.Sheets['문항'].B19={t:'n',v:0};const x=pack.excel.indices[0],rg=XLSX.utils.decode_range(x.range);wb.Sheets['표'][XLSX.utils.encode_cell({r:rg.s.r+3,c:1})]={t:'s',v:'001'};
+ const d=data(),{wb,pack}=project(XLSX,d);wb.Sheets['문항'][cellOf('ask')]={t:'s',v:'=literal 😀\n발문'};wb.Sheets['문항'][cellOf('points')]={t:'n',v:0};const x=pack.excel.indices[0],rg=XLSX.utils.decode_range(x.range);wb.Sheets['표'][XLSX.utils.encode_cell({r:rg.s.r+3,c:1})]={t:'s',v:'001'};
  const {enhanceZip}=await import('../assets/exampool/sheet/excel.js'),p=project(XLSX,d),zip=await JSZip.loadAsync(XLSX.write(wb,{bookType:'xlsx',type:'array'}));await enhanceZip(zip,wb.SheetNames,p.images,pack.excel.indices);const bytes=await zip.generateAsync({type:'arraybuffer'}),got=await importExcel(XLSX,JSZip,bytes);assert.equal(got.questions[0].ask,'=literal 😀\n발문');assert.equal(got.questions[0].points,0);assert.equal(got.questions[0].blocks.find(b=>b.kind==='table').table.cells[3][1].value,'001');
- wb.Sheets['문항'].B18={t:'n',v:2,f:'1+1'};await assert.rejects(importExcel(XLSX,JSZip,XLSX.write(wb,{bookType:'xlsx',type:'array'})),/수식/);
+ wb.Sheets['문항'][cellOf('answer')]={t:'n',v:2,f:'1+1'};await assert.rejects(importExcel(XLSX,JSZip,XLSX.write(wb,{bookType:'xlsx',type:'array'})),/수식/);
 });
 test('disconnected block hierarchy and overlapping table merges reject before mutation',()=>{
  const d=data(),g=d.questions[0].blocks.find(b=>b.kind==='group');g.parent=g.id;assert.throws(()=>validate(d),/순환/);

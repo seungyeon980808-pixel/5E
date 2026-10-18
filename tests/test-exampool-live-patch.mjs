@@ -84,7 +84,7 @@ test('only printed fields change the fingerprint; typesets saved with the old fi
 });
 
 test('white cells are exactly the fields printed as text in the HWP document',()=>{
-  assert.deepEqual(ROWS.filter(r=>r.text).map(r=>r.key),['ask','materials','passage','choices','bogi','number']);
+  assert.deepEqual(ROWS.filter(r=>r.text).map(r=>r.key),['ask','materials','passage','steps','dialogue','bogi','choices','number']);
   const q=newQuestion('1','객관식','실험'),kind=k=>q.blocks.find(b=>b.kind===k);
   assert.equal(labelInDocument(kind('group')),true,'the boxed 실험 title is printed');
   assert.equal(labelInDocument(kind('steps')),true,'the steps title is printed');

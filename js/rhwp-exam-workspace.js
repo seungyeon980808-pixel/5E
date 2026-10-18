@@ -1412,6 +1412,12 @@ export function initRhwpExamWorkspace(state, services) {
       changed();message('문항과 확정 그림을 넣었습니다. 한글에서 최종 조판하고 .hwp 또는 .hwpx로 저장하세요.');
     } finally {setBusy(false);}
   }
+  // ExamPool 시험지 구성에서 만든 시험지 한 부(HWPX)를 5E 시험지 편집기에서 연다(최종 검수).
+  async function receiveExamDocument(bytes,name){
+    if(busy||placement||editing)throw Error('현재 한글 그림 작업을 마친 뒤 시험지를 보내세요.');
+    await open();await loadDocument(new Uint8Array(bytes),`${String(name||'ExamPool 시험지').replace(/[\\/:*?"<>|]/g,' ').slice(0,180)}.hwpx`);
+    message('ExamPool 시험지를 열었습니다. 최종 검수 후 한글로 저장하세요.');
+  }
   async function receiveStructuredQuestion(packet){
     if(busy||placement||editing)throw Error('현재 한글 그림 작업을 마친 뒤 문항을 보내세요.');
     if(location.protocol==='file:')throw Error('로컬 웹 미리보기에서 문항 시트를 열어 한글로 보내세요.');
@@ -1485,5 +1491,5 @@ export function initRhwpExamWorkspace(state, services) {
       return {warnings:plan.warnings};
     }finally{setBusy(false);}
   }
-  return { receiveQuestion,receiveStructuredQuestion, getAutosaveSnapshot:() => state.get(),setAiPanel:panel => {connectedAi = panel;resolveAi();observeSourceAi();syncTabNames();} };
+  return { receiveQuestion,receiveStructuredQuestion,receiveExamDocument, getAutosaveSnapshot:() => state.get(),setAiPanel:panel => {connectedAi = panel;resolveAi();observeSourceAi();syncTabNames();} };
 }

@@ -18,8 +18,8 @@ export function paginateQuestions(items,{height,columns=2,gap=0}){
 }
 
 // 문항마다 높이(mm)와 준비 상태. 조판을 저장하지 않은 문항은 높이를 추정하고 '조판 저장 필요'로 표시한다.
-export function examItems(data){
-  const ids=data.examSet?.items||[];
+export function examItems(data,exam=data.exams?.[0]){
+  const ids=exam?.items||[];
   return ids.map(id=>{
     const q=data.questions.find(x=>x.id===id);if(!q)return null;
     const measured=q.typeset?.metrics?.usedHeightMm;
@@ -28,18 +28,9 @@ export function examItems(data){
   }).filter(Boolean);
 }
 
-export function examPlan(data){
-  const items=examItems(data);
+export function examPlan(data,exam=data.exams?.[0]){
+  const items=examItems(data,exam);
   const pages=paginateQuestions(items,{height:EXAM_PAGE.heightMm,columns:EXAM_PAGE.columns,gap:EXAM_PAGE.gapMm});
   return {items,pages,missing:items.filter(x=>!x.ready)};
 }
 
-// 시험지 목록 편집(순수 함수).
-export function toggleExam(data,id,on){
-  const set=data.examSet||(data.examSet={items:[]});const at=set.items.indexOf(id);
-  if(on&&at<0)set.items.push(id);if(!on&&at>=0)set.items.splice(at,1);
-}
-export function moveExam(data,id,direction){
-  const items=data.examSet?.items||[],at=items.indexOf(id),to=at+(direction==='up'?-1:1);
-  if(at<0||to<0||to>=items.length)return false;[items[at],items[to]]=[items[to],items[at]];return true;
-}
