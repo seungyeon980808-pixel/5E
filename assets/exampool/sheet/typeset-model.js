@@ -53,7 +53,24 @@ export async function normalizeQuestionImport(bytes,JSZip){
     if(!clones.has(old)){const id=String(nextId++);clones.set(old,id);const style=styles.get(old).replace(/\bid="\d+"/,`id="${id}"`).replace(/horizontal="[^"]*"/,'horizontal="CENTER"');header=header.replace('</hh:paraProperties>',style+'</hh:paraProperties>');}
     return tag.replace(/paraPrIDRef="\d+"/,`paraPrIDRef="${clones.get(old)}"`);
   });
-  header=header.replace(/(<hh:paraProperties\b[^>]*itemCnt=")\d+"/,`$1${styles.size+clones.size}"`);
+  // 표 칸의 가운데 문단(자료표 칸 글)은 줄 간격 130%로. HTML의 line-height는 한글 엔진이 받지 않아 모두 160%로 들어온다.
+  // 표를 품은 문단(겹친 표 자리)은 그대로 둔다.
+  const spacing=new Map();{const open=[];let depth=0;const marks=[];
+    for(const token of xml.matchAll(/<hp:subList\b[^>]*>|<\/hp:subList>|<hp:p\b[^>]*>|<\/hp:p>|<hp:tbl\b/g)){
+      const t=token[0];
+      if(t.startsWith('<hp:subList'))depth++;else if(t==='</hp:subList>')depth--;
+      else if(t.startsWith('<hp:p ')){open.push({index:token.index,tag:t,depth,table:false});}
+      else if(t==='</hp:p>'){const p=open.pop();if(p&&p.depth>0&&!p.table)marks.push(p);}
+      else if(open.length)open.at(-1).table=true;
+    }
+    const center=new Set([...styles.entries()].filter(([,v])=>/horizontal="CENTER"/.test(v)).map(([k])=>k));
+    for(const p of marks.sort((a,b)=>b.index-a.index)){
+      const old=p.tag.match(/paraPrIDRef="(\d+)"/)?.[1];if(!center.has(old))continue;
+      if(!spacing.has(old)){const id=String(nextId++);spacing.set(old,id);header=header.replace('</hh:paraProperties>',styles.get(old).replace(/\bid="\d+"/,`id="${id}"`).replace(/(<hh:lineSpacing type="PERCENT" value=")\d+/g,'$1130')+'</hh:paraProperties>');}
+      xml=xml.slice(0,p.index)+p.tag.replace(/paraPrIDRef="\d+"/,`paraPrIDRef="${spacing.get(old)}"`)+xml.slice(p.index+p.tag.length);
+    }
+  }
+  header=header.replace(/(<hh:paraProperties\b[^>]*itemCnt=")\d+"/,`$1${styles.size+clones.size+spacing.size}"`);
   zip.file('Contents/header.xml',header);
   xml=xml.replace(/<hp:tc\b[^>]*>/g,tag=>tag.replace(/hasMargin="0"/,'hasMargin="1"'));
   xml=xml.replace(/<hp:tbl\b[\s\S]*?(?=<hp:tr>)/g,tag=>tag.replace(/<hp:outMargin\b[^>]*>/,margin=>margin.replace(/\b(left|right)="\d+"/g,'$1="0"')));

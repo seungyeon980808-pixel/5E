@@ -207,8 +207,8 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
       if(tableCovered(t,r,c))continue;
       const m=t.merges.find(m=>m.r===r&&m.c===c),span=m?.rs||1;
       const cellText=t.cells[r][c].value,cellLimit=cw(c,m?.cs)-16,wrapped=measureText?wrapMeasured(cellText,cellLimit,cellLimit,v=>measureRich(v,fontSize)):wrapQuestionText(cellText,cellLimit,fontSize);
-      // 여러 줄 칸은 한글 엔진의 칸 문단 줄 간격(160%)으로 잰다. 한 줄 칸만 낮게 둔다.
-      const lines=wrapped.split('\n').length,needed=Math.ceil(lines>1?lines*fontSize*4/3*1.6+8:fontSize*4/3*PITCH+6)+Math.ceil(extraHeight(wrapped,fontSize));
+      // 여러 줄 칸은 칸 문단 줄 간격(가운데 칸 글 130%, normalizeQuestionImport)으로 잰다.
+      const lines=wrapped.split('\n').length,needed=Math.ceil(lines>1?lines*fontSize*4/3*1.45+10:fontSize*4/3*PITCH+6)+Math.ceil(extraHeight(wrapped,fontSize));
       if(span===1)rowHeights[r]=Math.max(rowHeights[r],needed);
       else {const height=rowHeights.slice(r,r+span).reduce((a,b)=>a+b,0);if(needed>height)for(let i=r;i<r+span;i++)rowHeights[i]+=(needed-height)/span;}
     }
