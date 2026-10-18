@@ -149,11 +149,24 @@ export async function toQuestion(structure,item,{number='1'}={}){
     while(i<seq.length){
       const n=seq[i];
       if(n.k==='para'){
-        const run=[];while(i<seq.length&&seq[i].k==='para'&&!(seq[i].caption&&run.length&&false))run.push(seq[i++]);
-        // 다음 자료가 이 글 옆에 있으면 가로 묶음
-        const next=seq[i],tb=run.length?paraBox(run.at(-1)):null,nb=next&&(next.k==='figure'||next.k==='table')?next.box:null;
-        const beside=tb&&nb&&nb[0]>=tb[2]-3&&yOverlap(tb,nb)>4;
-        if(beside&&model.WRAP&&!parent&&next.k==='figure'){
+        const all=[];while(i<seq.length&&seq[i].k==='para')all.push(seq[i++]);
+        // 바로 뒤 자료 묶음(그림·표 여러 개)이 이 글 옆에 있으면 가로 묶음. 자료와 높이가 겹치는 문단만 옆 글로,
+        // 그 위 문단은 앞 글, 아래 문단은 자료 뒤 글로 나눈다.
+        const mats=[];for(let k=i;k<seq.length&&(seq[k].k==='figure'||seq[k].k==='table');k++)mats.push(seq[k]);
+        const mb=mats.length&&mats.every(m=>m.box)?mats.map(m=>m.box).reduce((a,b)=>[Math.min(a[0],b[0]),Math.min(a[1],b[1]),Math.max(a[2],b[2]),Math.max(a[3],b[3])]):null;
+        // 그림 여러 개(또는 어울림을 못 쓰는 자리) 옆으로 흐르다 그림 아래에서 넓어지는 문단은 그림 아래 줄에서 둘로 나눈다.
+        if(mb&&(mats.length>1||parent||!model.WRAP))for(let k=0;k<all.length;k++){const p=all[k],L=p.lines.filter(l=>l.geo&&Number.isFinite(l.base));
+          const cut=L.findIndex(l=>l.base>mb[3]+2);
+          if(cut>0&&L.slice(0,cut).some(l=>l.base>mb[1])&&L.slice(0,cut).every(l=>l.base<=mb[1]||l.right<=mb[0]+3)&&L.length===p.lines.length){
+            const part=ls=>({...p,lines:ls,text:clean(ls.map(l=>l.text).join(' '))});all.splice(k,1,part(L.slice(0,cut)),{...part(L.slice(cut)),mark:false,caption:false});break;}}
+        const near=all.map(p=>{const b=paraBox(p);return b&&mb&&yOverlap(b,mb)>4&&p.lines.some(l=>l.base>mb[1]+2&&l.base<=mb[3]+2)?b:null;});
+        const k0=near.findIndex(Boolean),k1=near.findLastIndex(Boolean);
+        const sideOk=k0>=0&&near.slice(k0,k1+1).every(b=>b&&mb[0]>=b[2]-3);
+        const run=sideOk?all.slice(k0,k1+1):all,pre=sideOk?all.slice(0,k0):[],post=sideOk?all.slice(k1+1):[];
+        if(pre.length){textBlock(pre,parent,firstText?firstLabel:'설명');firstText=false;}
+        const next=seq[i],tb=run.length?paraBox(run.at(-1)):null,nb=sideOk?mb:null;
+        const beside=sideOk&&mats.length>=1;
+        if(beside&&mats.length===1&&model.WRAP&&!parent&&next.k==='figure'){
           // 조판기의 어울림 그림(맨 바깥 글 + 떠 있는 그림). 그림이 글 왼쪽이면 왼쪽 정렬.
           textBlock(run,parent,firstText?firstLabel:'설명');const f=figure(next,parent,'자료');f.layout=model.WRAP;
           if(nb[2]<=tb[0]+3)f.align='왼쪽';i++;
@@ -162,9 +175,15 @@ export async function toQuestion(structure,item,{number='1'}={}){
           const t=textBlock(run,g,firstText?firstLabel:'설명');// 상자 안 글은 원본에서 본문보다 작은 글자라, 본문 크기로 찍을 때 필요한 폭만큼 글 몫을 키운다.
           const hs=run.flatMap(p=>p.lines.map(l=>l.h)).filter(Boolean).sort((x,y)=>x-y),lineH=hs[hs.length>>1],fs=A.bodyH&&lineH?Math.min(1.4,Math.max(1,A.bodyH/lineH)):1;
           const [a,b]=ratioPair(Math.max(10,(tb[2]-tb[0])*fs+(nb[0]-tb[2])),nb[2]-nb[0]);t.ratio=a;
-          const m=next.k==='figure'?figure(next,g,'자료',false):table(next,g);m.ratio=b;if(next.k==='figure')m.size=100;i++;
+          if(mats.length===1){const m=next.k==='figure'?figure(next,g,'자료',false):table(next,g);m.ratio=b;if(next.k==='figure')m.size=100;i++;}
+          else{// 여러 자료: 옆 칸 안에 자료 묶음(한 줄이면 나란히, 아니면 세로)
+            const row=mats.every((m,k)=>!k||yOverlap(m.box,mats[k-1].box)>4),sub=add('group',g,'자료');sub.layout=row?'나란히':'세로';sub.boxed=false;sub.ratio=b;
+            for(const m of mats){const x=m.k==='figure'?figure(m,sub,figs.get(m.run)?.caption||'자료',!row):table(m,sub);if(row&&m.box)x.ratio=Math.max(1,Math.min(12,Math.round((m.box[2]-m.box[0])/((nb[2]-nb[0])/12))));if(!row&&m.k==='figure')x.size=100;}
+            i+=mats.length;}
         }else textBlock(run,parent,firstText?firstLabel:'설명');
-        firstText=false;continue;
+        firstText=false;
+        if(post.length)textBlock(post,parent,'설명');
+        continue;
       }
       if(n.k==='figure'){
         const run=[];while(i<seq.length&&seq[i].k==='figure')run.push(seq[i++]);
@@ -176,7 +195,11 @@ export async function toQuestion(structure,item,{number='1'}={}){
         if(run.length===1)figure(run[0],parent,lab(0));
         else{const side=run.every((f,k)=>!k||!f.box||!run[k-1].box||yOverlap(f.box,run[k-1].box)>4);
           const g=add('group',parent,'자료');g.layout=side?'나란히':'세로';g.boxed=false;
-          run.forEach((f,k)=>{const b=figure(f,g,lab(k),!side);if(side&&f.box)b.ratio=Math.max(1,Math.min(12,Math.round((f.box[2]-f.box[0])/(width/12))));});}
+          // 나란한 그림: 칸 폭은 그림 사이 가운데를 경계로 나눈 원본 구간, 그림 크기는 그 구간 대비 원본 폭(%).
+          const x0=parent?null:item.box[0]+7,x1=parent?null:item.box[2]-7;
+          run.forEach((f,k)=>{const b=figure(f,g,lab(k),!side);if(!side||!f.box)return;
+            const lo=k?(run[k-1].box[2]+f.box[0])/2:Math.min(f.box[0],x0??f.box[0]),hi=k<run.length-1?(f.box[2]+run[k+1].box[0])/2:Math.max(f.box[2],x1??f.box[2]);
+            b.ratio=Math.max(1,Math.min(12,Math.round((hi-lo)/(width/12))));b.size=Math.min(100,Math.max(10,Math.round((f.box[2]-f.box[0])/(hi-lo)*115/5)*5));});}
         continue;
       }
       if(n.k==='table'){table(n,parent);i++;continue;}
