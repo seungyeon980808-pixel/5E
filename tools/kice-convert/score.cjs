@@ -7,6 +7,7 @@ const EQ=/\$\$[\s\S]+?\$\$|\$[^$\n]+?\$/g;
 const decodeRefs=s=>String(s||'').replace(/&(?:amp;)?#(\d+);/g,(m,n)=>Number(n)>=128?String.fromCodePoint(Number(n)):m);
 const norm=s=>decodeRefs(s).replace(/[〔［]/g,'[').replace(/[〕］]/g,']').replace(/[‘’]/g,"'").replace(/[“”]/g,'"').replace(/[～∼]/g,'~').replace(/\s+/g,'')
   .replace(/^\d{1,2}\./,'').replace(/\[3점\]/g,'').replace(/\((카드|엑셀)에서입력\)/g,'').replace(/[​⁠]/g,'');
+const kor=s=>s.replace(/\((가|나|다|라|마|바)\)/g,'').replace(/[^가-힣ㄱ-ㅎ①-⑤㉠-㉭]/g,'');
 // 2·LCS/(a+b): 순서까지 맞아야 높다.
 function similarity(a,b){if(!a.length&&!b.length)return 1;if(!a.length||!b.length)return 0;
   const n=a.length,m=b.length;let prev=new Uint16Array(m+1),cur=new Uint16Array(m+1);
@@ -36,8 +37,11 @@ function score(item,ref,conv,ts,{convertOnly=false}={}){
   if(!ts||ts.error&&!ts.status){fail('typeset',ts?.error||'조판 결과 없음');row.pass=false;return row;}
   // ② 글: 한글 조판 결과의 글 vs 원본 PDF 본문 글
   // 수식 안 한글(세로 분수 속 '화학식량' 등)은 한글 본문 글로 나오지 않으므로 원본 쪽에서도 한 번씩 뺀다.
-  let refText=ref?norm(ref.body):'';for(const sc of ts.eqScripts||[])for(const w of String(sc).match(/[가-힣]{2,}/g)||[]){const k=refText.indexOf(w);if(k>=0)refText=refText.slice(0,k)+refText.slice(k+w.length);}
-  const sim=ref?similarity(norm(ts.text),refText):0;row.textSim=Math.round(sim*1000)/1000;row.textHead=String(ts.text).slice(0,120);
+  // 글 비교는 한글·ㄱㄴㄷ·①~⑤·㉠~㉭만: 문장 내용과 순서를 본다. 라틴 글자·숫자·기호는 원본에서 수식 글꼴이라 변환 결과가 수식/글로 갈릴 수 있어 수식 검사에 맡긴다.
+  // 원본 글은 표 안 글 뺀 것/넣은 것 중 더 맞는 쪽(표를 그림으로 넣었는지 편집 표로 넣었는지에 따라). 수식 안 한글(세로 분수 속 낱말)은 원본에서 한 번씩 뺀다.
+  const prep=b=>{let t=kor(norm(b));for(const sc of ts.eqScripts||[])for(const w of String(sc).match(/[가-힣]{2,}/g)||[]){const k=t.indexOf(w);if(k>=0)t=t.slice(0,k)+t.slice(k+w.length);}return t;};
+  const got=kor(norm(ts.text));
+  const sim=ref?Math.max(similarity(got,prep(ref.body)),ref.bodyAll?similarity(got,prep(ref.bodyAll)):0):0;row.textSim=Math.round(sim*1000)/1000;row.textHead=String(ts.text).slice(0,120);
   if(sim<TEXT_MIN)fail('text',`글 일치 ${(sim*100).toFixed(1)}%`);pass('text');
   // ③ 수식: 문항의 $…$ 수 = 한글 문서의 수식 개체 수
   const want=equationsIn(q);row.eq={want,got:ts.eq};
@@ -61,4 +65,4 @@ function summarize(rows){
   lines.push('','## 실패 원인(많은 순)','','| 원인 | 문항 수 |','|---|---|',...[...reasons].sort((a,b)=>b[1]-a[1]).slice(0,30).map(([k,v])=>`| ${k} | ${v} |`));
   return lines.join('\n')+'\n';
 }
-module.exports={score,summarize,similarity,norm};
+module.exports={score,summarize,similarity,norm,kor};
