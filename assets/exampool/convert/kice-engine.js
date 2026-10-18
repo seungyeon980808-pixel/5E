@@ -48,7 +48,9 @@ export function injectFigures(structure,figs,item){
     if(f.role==='table'&&tables.some(t=>overlap(t.box,f.box)>.5*Math.min(area(t.box),area(f.box))))continue;
     const fig={role:'figure',kind:'figure',label:'',runs:[{kind:'figure',data:f.data,sourceBox:f.box,caption:f.caption||null,figRole:f.role,widthPt:f.widthPt}]};
     const lines=blocks.map((b,i)=>({b,i,base:b.sourceLine&&ph&&b.role!=='choice'?ph-b.sourceLine.y:null})).filter(x=>Number.isFinite(x.base)&&(f.page==null||f.page===item.page));
-    const beside=lines.filter(x=>x.base>f.box[1]+2&&x.base<f.box[3]+x.b.sourceLine.height&&(x.b.sourceLine.right<=f.box[0]+2||x.b.sourceLine.left>=f.box[2]-2));
+    // 줄 끝이 단 밖(여백 과목명 글자가 붙은 줄)이면 끝 위치를 믿지 않는다.
+    const colEnd=Math.min(...lines.map(x=>x.b.sourceLine.left))+330,rightOf=L=>L.right>colEnd?-Infinity:L.right;
+    const beside=lines.filter(x=>x.base>f.box[1]+2&&x.base<f.box[3]+x.b.sourceLine.height&&(rightOf(x.b.sourceLine)<=f.box[0]+2||x.b.sourceLine.left>=f.box[2]-2));
     let at;
     if(beside.length)at=beside.at(-1).i+1;
     else{const below=lines.find(x=>x.base>f.box[1]+6);at=below?below.i:blocks.findIndex(b=>b.role==='bogi'||b.role==='choice');}
@@ -185,19 +187,20 @@ export async function toQuestion(structure,item,{number='1'}={}){
         if(post.length)textBlock(post,parent,'설명');
         continue;
       }
-      if(n.k==='figure'){
-        const run=[];while(i<seq.length&&seq[i].k==='figure')run.push(seq[i++]);
+      if(n.k==='figure'||n.k==='table'&&seq[i+1]?.k==='table'&&n.box&&seq[i+1].box&&yOverlap(n.box,seq[i+1].box)>4){
+        // 그림(또는 나란한 표) 묶음. 표가 섞이면 같은 줄에 나란한 것만 함께 묶는다.
+        const run=[];while(i<seq.length&&(seq[i].k==='figure'||seq[i].k==='table')&&(!run.length||run[0].k==='figure'&&seq[i].k==='figure'||seq[i].box&&run.at(-1).box&&yOverlap(seq[i].box,run.at(-1).box)>4))run.push(seq[i++]);
         // 그림 바로 아래 (가)·(나) 이름 줄
         // 그림 이름: 자른 그림에서 뺀 캡션 (가)(나), 없으면 그림 바로 아래 (가)·(나) 줄.
-        const own=run.map(f=>figs.get(f.run)?.caption).filter(Boolean);
+        const own=run.map(f=>f.run&&figs.get(f.run)?.caption).filter(Boolean);
         let caps=null;if(seq[i]?.k==='para'&&seq[i].caption){const t=tokens(seq[i].text);if(!own.length||t.every(c=>own.includes(c))){caps=t;i++;}}
-        const lab=k=>figs.get(run[k].run)?.caption||(caps?(caps.length===run.length?caps[k]:k===0?caps.join('    '):''):'자료');
+        const lab=k=>(run[k].run&&figs.get(run[k].run)?.caption)||(caps?(caps.length===run.length?caps[k]:k===0?caps.join('    '):''):'자료');
         if(run.length===1)figure(run[0],parent,lab(0));
         else{const side=run.every((f,k)=>!k||!f.box||!run[k-1].box||yOverlap(f.box,run[k-1].box)>4);
           const g=add('group',parent,'자료');g.layout=side?'나란히':'세로';g.boxed=false;
           // 나란한 그림: 칸 폭은 그림 사이 가운데를 경계로 나눈 원본 구간, 그림 크기는 그 구간 대비 원본 폭(%).
           const x0=parent?null:item.box[0]+7,x1=parent?null:item.box[2]-7;
-          run.forEach((f,k)=>{const b=figure(f,g,lab(k),!side);if(!side||!f.box)return;
+          run.forEach((f,k)=>{const b=f.k==='table'?table(f,g):figure(f,g,lab(k),!side);if(!side||!f.box)return;
             const lo=k?(run[k-1].box[2]+f.box[0])/2:Math.min(f.box[0],x0??f.box[0]),hi=k<run.length-1?(f.box[2]+run[k+1].box[0])/2:Math.max(f.box[2],x1??f.box[2]);
             b.ratio=Math.max(1,Math.min(12,Math.round((hi-lo)/(width/12))));b.size=Math.min(100,Math.max(10,Math.round((f.box[2]-f.box[0])/(hi-lo)*115/5)*5));});}
         continue;

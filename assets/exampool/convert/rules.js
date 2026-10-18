@@ -46,7 +46,9 @@ export function flowItems(structure){
   const body=out.filter(i=>i.k==='line'&&i.geo&&i.right-i.left>40);
   // 본문 오른쪽 끝: 번호 줄(첫 줄)의 끝, 없으면 가장 흔한 줄 끝(여백 글자가 붙어 읽힌 줄에 끌려가지 않게).
   const rights=body.map(i=>Math.round(i.right/3)*3),mode=rights.length?Number([...rights.reduce((m,r)=>m.set(r,(m.get(r)||0)+1),new Map())].sort((a,b)=>b[1]-a[1]||a[0]-b[0])[0][0])+3:Infinity;
-  const first=body[0],shared=rights.filter(r=>r===mode-3).length>=2,edge=first&&first.right-first.left>150&&!(shared&&first.right>mode+8)?first.right+2:mode;
+  const first=body[0],shared=rights.filter(r=>r===mode-3).length>=2;
+  // 평가원 단 폭은 약 317pt(번호 글자 왼쪽 ~ 본문 오른쪽 끝). 모든 줄에 여백 글자가 붙어도 이 폭을 넘지 않게.
+  const edge=Math.min(first&&first.right-first.left>150&&!(shared&&first.right>mode+8)?first.right+2:mode,first?first.left+320:Infinity);
   const WM=/^(물|리|화|생|명|과|학|지|구|II|Ⅱ|I|Ⅰ)$/;
   const margin=i=>i.k==='line'&&i.geo&&i.right-i.left<26&&i.left>edge-2&&i.text.replace(/\s/g,'').length<=2;
   // 여백 글자가 본문 줄 끝에 붙어 읽힌 경우: 줄 끝 낱말 하나를 뗀다.
