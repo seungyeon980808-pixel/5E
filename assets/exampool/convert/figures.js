@@ -40,7 +40,8 @@ function candidates(item,pdf){
     const ink=r.ink,h=ink[3]-ink[1],w=ink[2]-ink[0];
     // 수식 줄: 본문 줄 높이의 띠가 본문 바로 위·아래에 붙어 있다(그림 글꼴로 찍은 반응식·수식 비트맵 포함).
     const flow=prose.some(c=>overlapX(c.box,ink)>Math.min(w,c.box[2]-c.box[0])*.3&&gapY(c.box,ink)<body*1.2);
-    if(h<=body*2.4&&w>=h*3.5&&flow)continue;
+    // 다만 흐름도 띠(납작한 상자를 화살표로 이은 비트맵)일 수 있어 픽셀로 다시 본다(strip).
+    if(h<=body*2.4&&w>=h*3.5&&flow){if(r.kind==='image')out.push({box:r.box,ink,kind:'raster',strip:true});continue;}
     // 본문 크기 글자가 후보 대부분을 덮으면 그림이 아니라 글(상자 속 글·수식)이다.
     const big=chains.filter(c=>c.size>=body*.85&&inBox(ink,mid(c.box),1));
     const textArea=big.reduce((s,c)=>s+area(inter(c.box,ink)||[0,0,0,0]),0);
@@ -48,6 +49,29 @@ function candidates(item,pdf){
     const imgArea=images.filter(p=>inBox(ink,mid(p.box),1)).reduce((s,p)=>s+area(p.box),0);
     const kind=r.kind!=='image'?'vector':imgArea>=area(ink)*.85?'raster':'mixed';
     out.push({box:r.box,ink,kind});
+  }
+  // 본문 줄 사이에 낀 납작한 비트맵(그림 영역에서 빠진 것)도 strip으로 본다.
+  for(const p of images)if(!p.mask&&(p.box[2]-p.box[0])>=body*8&&(p.box[3]-p.box[1])<=body*2.4&&!out.some(o=>inBox(o.box,mid(p.box),1)))out.push({box:p.box,ink:p.box,kind:'raster',strip:true});
+  // 흐름도: 짧은 글이 든 납작한 상자 3개 이상이 화살표로 이어진다(상자가 낮아 벡터 그림 조건에 안 걸림).
+  {
+    const B=body,box=p=>p.box;
+    const flat=prims.filter(p=>p.type==='rect'&&p.stroke&&inQ(p.box)&&(p.box[3]-p.box[1])>=B*.8&&(p.box[3]-p.box[1])<=B*3&&(p.box[2]-p.box[0])>=B*1.5
+      &&!out.some(o=>inBox(o.box,mid(p.box)))
+      // 글줄 속 빈칸 상자(㉠ 자리)는 본문 글에 바로 붙어 있다.
+      &&!prose.some(c=>overlapY(c.box,p.box)>0&&gapX(c.box,p.box)<B*.6&&!inBox(p.box,mid(c.box))));
+    const arrows=prims.filter(p=>inQ(p.box)&&(p.type==='fill'||(p.type==='line'))&&Math.max(p.box[2]-p.box[0],p.box[3]-p.box[1])<B*4);
+    const parent=flat.map((_,i)=>i),find=i=>parent[i]===i?i:(parent[i]=find(parent[i]));
+    flat.forEach((a,i)=>flat.forEach((b,j)=>{if(j<=i)return;const gx=gapX(a.box,b.box),gy=gapY(a.box,b.box);
+      if((overlapY(a.box,b.box)>0&&gx<=B*3)||(overlapX(a.box,b.box)>0&&gy<=B*2.5))parent[find(i)]=find(j);}));
+    const groups=new Map();flat.forEach((p,i)=>{const r=find(i);if(!groups.has(r))groups.set(r,[]);groups.get(r).push(p);});
+    for(const g of groups.values()){
+      if(g.length<3)continue;
+      const u=g.map(box).reduce(union);
+      // 상자 사이 화살표(촉·선)가 둘 이상
+      const between=arrows.filter(p=>inBox(u,mid(p.box),1)&&!g.some(r=>inBox(r.box,mid(p.box),-0.5)));
+      if(between.length<2)continue;
+      out.push({box:[u[0]-B,u[1]-B,u[2]+B,u[3]+B],ink:u,kind:'vector',flow:true});
+    }
   }
   const choiceish=b=>chains.some(c=>inBox(b,mid(c.box),-0.5)&&(CHOICE.test(c.str)||/[<〈]\s*보\s*기/u.test(c.str)));// '겉보기 등급'은 <보기>가 아니다
   // 칸 속에 그림이 든 괘선 표는 표 전체가 그림 하나다(칸마다 원그래프 등).
@@ -304,6 +328,8 @@ export async function detectFigures(item,{signal,scale=4,choices=false}={}){
   for(const cand of cands){
     aborted(signal);
     const {canvas,g,m,box,texts}=await prepare(item,cand,ctx,scale,signal);
+    // strip: 상자 윗변과 아랫변처럼 띠 폭의 40% 넘게 이어진 가로 잉크 줄이 위아래로 있어야 흐름도다(수식 줄은 글자·밑줄뿐).
+    if(cand.strip){const t=trim(m,rect(0,0,m.W,m.H));if(!t)continue;const pr=projection(m,t,'y'),long=[...pr.keys()].filter(i=>pr[i]>=(t.x1-t.x0)*.4);if(!long.length||long.at(-1)-long[0]<body*scale*.5)continue;}
     const order=[];
     for(const p of panels(m,scale,body,texts,!cand.table)){
       const padPx=Math.round(2*scale),r=rect(Math.max(p.cell.x0,p.r.x0-padPx),Math.max(p.cell.y0,p.r.y0-padPx),Math.min(p.cell.x1,p.r.x1+padPx),Math.min(p.cell.y1,p.r.y1+padPx));
@@ -368,4 +394,3 @@ export async function debugOverlay(item){
   g.fillStyle='#f00';g.font='bold 14px sans-serif';figs.forEach((f,i)=>g.fillText(`${i+1}${f.caption||''}`,(f.box[0]-q[0])*s+3,(f.box[1]-q[1])*s+14));
   return [{data:c.toDataURL('image/png')}];
 }
-
