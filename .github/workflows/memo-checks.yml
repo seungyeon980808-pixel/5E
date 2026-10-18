@@ -3,7 +3,7 @@ on:
   pull_request:
     paths: ['memo/**', 'scripts/memo-*.cjs', '.github/workflows/memo-*.yml']
   push:
-    branches: ['main', 'codex/memo-live-connection']
+    branches: ['main', 'codex/memo-*']
     paths: ['memo/**', 'scripts/memo-*.cjs', '.github/workflows/memo-*.yml']
 permissions:
   contents: read
@@ -20,6 +20,7 @@ jobs:
       - run: node --test desktop/memo-publication.test.cjs
       - run: memo/node_modules/.bin/playwright install --with-deps chromium webkit
       - run: node memo/tests/browser.mjs
+      - run: node memo/tests/media-browser.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
