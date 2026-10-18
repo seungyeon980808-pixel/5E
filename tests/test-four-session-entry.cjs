@@ -82,7 +82,7 @@ test("inventory keeps every real classified path and rejects duplicate missing o
   helper.assertCompleteInventory(reordered, root);
 });
 
-function runner({ env = {}, args = ["--only", "test-project-file-size-browser.cjs"], validationError, status = 0, startupError, suiteError } = {}) {
+function runner({ env = {}, args = ["--only", "test-project-file-size-browser.cjs"], validationError, status = 0, startupError, suiteError, statuses } = {}) {
   const calls = [];
   const child = new EventEmitter();
   child.stdout = new EventEmitter();
@@ -115,7 +115,7 @@ function runner({ env = {}, args = ["--only", "test-project-file-size-browser.cj
         });
         return child;
       },
-      spawnSync: (command, args, options) => { calls.push({ kind: "suite", command, args, env: options.env }); return suiteError ? { status: null, signal: "SIGKILL", error: suiteError } : { status }; },
+      spawnSync: (command, args, options) => { calls.push({ kind: "suite", command, args, env: options.env }); return suiteError ? { status: null, signal: "SIGKILL", error: suiteError } : { status: statuses ? statuses.shift() : status }; },
     };
     if (name === "owned-test-playwright") return { chromium: engine("chromium"), webkit: engine("webkit") };
     if (name === "./helpers/four-session-entry.cjs") return { ...helper, inspectEntry: async (page, origin, config) => {
@@ -216,4 +216,18 @@ test("invalid known-failure lists are rejected before server or browser launch",
     await assert.rejects(instance.run());
     assert.equal(instance.calls.length, 0);
   }
+});
+
+test("a failing suite that passes on retry is not a new failure, but repeated failure still is", async () => {
+  const flaky = runner({ statuses: [1, 0], env: { BROWSER_SUITE_RETRIES: "1" } });
+  await flaky.run();
+  assert.notEqual(flaky.process.exitCode, 1);
+  assert.equal(flaky.calls.filter(call => call.kind === "suite").length, 2);
+  const broken = runner({ statuses: [1, 1], env: { BROWSER_SUITE_RETRIES: "1" } });
+  await broken.run();
+  assert.equal(broken.process.exitCode, 1);
+  const noRetry = runner({ statuses: [1, 0] });
+  await noRetry.run();
+  assert.equal(noRetry.process.exitCode, 1);
+  assert.equal(noRetry.calls.filter(call => call.kind === "suite").length, 1);
 });

@@ -75,6 +75,13 @@ function suiteTimeout(value) {
   return ms;
 }
 
+function suiteRetries(value) {
+  if (value === undefined || value === "") return 0;
+  const count = Number(value);
+  if (!Number.isInteger(count) || count < 0 || count > 3) throw new Error("BROWSER_SUITE_RETRIES must be an integer from 0 to 3");
+  return count;
+}
+
 function annotate(level, message) {
   if (process.env.GITHUB_ACTIONS === "true") console.log(`::${level}::${message}`);
   else console.log(`${level === "error" ? "NEW FAILURE" : "NOTICE"}: ${message}`);
@@ -96,8 +103,9 @@ async function run() {
   const known = loadKnownFailures(optionValue("--known-failures"), manifest);
   const reportPath = optionValue("--report");
   const timeoutMs = suiteTimeout(process.env.BROWSER_SUITE_TIMEOUT_MS);
+  const retries = suiteRetries(process.env.BROWSER_SUITE_RETRIES);
   const server = startServer();
-  const failures = [], knownFailures = [], knownPassing = [];
+  const failures = [], knownFailures = [], knownPassing = [], flaky = [];
   const report = { entry: config.entry, requested: config, serverPid: server.child.pid, runtime: [], suites: [], cleanup: false };
   const evidenceBase = process.env.EVIDENCE_DIR;
   let transferServer, transferOrigin;
@@ -142,14 +150,24 @@ async function run() {
       };
       if (evidenceBase) environment.EVIDENCE_DIR = path.join(evidenceBase, path.basename(entry.path, ".cjs"));
       const startedAt = Date.now();
-      const result = spawnSync(process.execPath, [entry.path], { cwd: root, stdio: "inherit", env: environment,
-        ...(timeoutMs ? { timeout: timeoutMs, killSignal: "SIGKILL" } : {}) });
-      const timedOut = result.error?.code === "ETIMEDOUT";
-      if (result.error && !timedOut) throw result.error;
-      const passed = result.status === 0 && !timedOut;
       const knownReason = known.get(entry.path);
+      const attempt = () => {
+        const result = spawnSync(process.execPath, [entry.path], { cwd: root, stdio: "inherit", env: environment,
+          ...(timeoutMs ? { timeout: timeoutMs, killSignal: "SIGKILL" } : {}) });
+        const timedOut = result.error?.code === "ETIMEDOUT";
+        if (result.error && !timedOut) throw result.error;
+        return { result, timedOut, passed: result.status === 0 && !timedOut };
+      };
+      let { result, timedOut, passed } = attempt(), attempts = 1;
+      // 느린 CI 컴퓨터의 타이밍 흔들림: 목록에 없는 검사가 실패하면 정해진 횟수만큼 다시 돌려 본다.
+      while (!passed && !knownReason && attempts <= retries) {
+        console.log(`Retrying browser suite: ${entry.path} (${attempts}/${retries})`);
+        ({ result, timedOut, passed } = attempt());
+        attempts++;
+      }
+      if (passed && attempts > 1) flaky.push({ path: entry.path, attempts });
       report.suites.push({ path: entry.path, findingIds: entry.findingIds, entry: config.entry, status: result.status, signal: result.signal,
-        timedOut, elapsedMs: Date.now() - startedAt, ...(knownReason ? { knownFailure: knownReason } : {}) });
+        timedOut, attempts, elapsedMs: Date.now() - startedAt, ...(knownReason ? { knownFailure: knownReason } : {}) });
       const outcome = { path: entry.path, findingIds: entry.findingIds, status: result.status, ...(timedOut ? { timedOut } : {}) };
       if (passed) { if (knownReason) knownPassing.push(outcome); }
       else if (knownReason) knownFailures.push(outcome);
@@ -172,9 +190,10 @@ async function run() {
     }
   }
   if (known.size) {
-    console.log(`Browser suites: ${selected.length} run, ${failures.length} new failures, ${knownFailures.length} known failures, ${knownPassing.length} known now passing`);
+    console.log(`Browser suites: ${selected.length} run, ${failures.length} new failures, ${knownFailures.length} known failures, ${knownPassing.length} known now passing, ${flaky.length} passed on retry`);
     for (const outcome of knownPassing) annotate("warning", `${outcome.path} 통과 — 알려진 실패 목록에서 빼세요`);
   }
+  for (const outcome of flaky) annotate("warning", `${outcome.path} 다시 돌려서 통과(${outcome.attempts}번째) — 흔들리는 검사`);
   for (const outcome of failures) annotate("error", `${outcome.path} 새 실패${outcome.timedOut ? " (시간 초과)" : ""}`);
   if (failures.length) {
     console.error(`Mapped browser failures: ${JSON.stringify(failures)}`);
