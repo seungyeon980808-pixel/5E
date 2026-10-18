@@ -48,6 +48,8 @@ async function convertBatch(browser,origin,batch){
 }
 
 const READY=n=>{const p=document.querySelector('#preview-dialog'),t=document.querySelector('#typeset-title')?.textContent||'',s=document.querySelector('#typeset-status')?.textContent||'';
+  // 조판이 실패하면 제목이 이전 문항에 머문다: 오류가 뜨면 바로 끝낸다.
+  if(p&&p.getAttribute('aria-busy')!=='true'&&(document.querySelector('#typeset-status')?.dataset.error==='true'||/읽지 못했습니다|실패했습니다/.test(s))&&window.__kiceOpenedAt&&Date.now()-window.__kiceOpenedAt>800)return true;
   return t.startsWith(n+'번')&&p&&!p.hidden&&p.getAttribute('aria-busy')!=='true'&&!/조판하는 중|준비 중/.test(s)&&(document.querySelector('#native-editor')?.dataset.ready==='true'||/읽지 못|실패|오류|확인하세요/.test(s));};
 
 async function typesetBatch(browser,origin,converted,wid){
@@ -72,7 +74,7 @@ async function typesetBatch(browser,origin,converted,wid){
   for(const [i,c] of ok.entries()){
     const qid=questions[i].id,n=String(i+1),t0=Date.now();
     try{
-      await sheet.evaluate(id=>document.querySelector(`[data-open-card="${id}"]`)?.click(),qid);
+      await sheet.evaluate(id=>{window.__kiceOpenedAt=Date.now();document.querySelector(`[data-open-card="${id}"]`)?.click();},qid);
       await sheet.waitForFunction(READY,n,{timeout:90000});
       await sheet.waitForTimeout(350);
       const m=await sheet.evaluate(async()=>{
