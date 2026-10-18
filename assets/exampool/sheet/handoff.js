@@ -136,7 +136,7 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
   const rowWidths=(children,total)=>{
     const w=splitWidths(children,total),need=children.map(c=>c.kind==='table'?tableMin(c.table)/((c.size??100)/100):0);
     let deficit=0;w.forEach((v,i)=>{if(need[i]>v){deficit+=need[i]-v;w[i]=need[i];}});
-    const donors=children.map((c,i)=>c.kind==='text'?Math.max(0,w[i]-120):0),room=donors.reduce((a,b)=>a+b,0);
+    const donors=children.map((c,i)=>c.kind==='text'?Math.max(0,w[i]-120):c.kind==='figure'?Math.max(0,w[i]-80):0),room=donors.reduce((a,b)=>a+b,0);
     if(deficit>0&&room>0){const take=Math.min(deficit,room);w.forEach((v,i)=>{if(donors[i])w[i]-=take*donors[i]/room;});}
     const sum=w.reduce((a,b)=>a+b,0);return sum>total?w.map(v=>v*total/sum):w;
   };
@@ -214,10 +214,19 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
       // 크기를 정한 표라도 글이 그 폭에 다 들어가지 않고 단에 자리가 있으면 글 폭만큼(단 폭까지) 넓힌다(좁게 줄여 칸마다 여러 줄이 되던 문제).
       if(total>inner&&room>width)inner=Math.min(total,room-(choices?25:0));
       if(auto&&total<=inner)colW=nat;
+      // 어절 최소 폭도 다 들어가지 않으면 예전처럼 똑같이 나눈다.
+      else if(word.reduce((a,b)=>a+b,0)>inner)colW=Array(t.cols).fill(inner/t.cols);
       else{
-        const minimum=word.reduce((a,b)=>a+b,0)<=inner?word:word.map(()=>0);
+        const minimum=word;
         colW=nat.map(v=>v*inner/total);
-        for(let pass=0;pass<3;pass++){const short=colW.map((v,i)=>v<minimum[i]);if(!short.some(Boolean))break;const fixed=colW.reduce((a,v,i)=>a+(short[i]?minimum[i]:0),0),rest=nat.reduce((a,v,i)=>a+(short[i]?0:v),0);colW=colW.map((v,i)=>short[i]?minimum[i]:nat[i]*(inner-fixed)/rest);}
+        // 짧은 열을 최소 폭으로 올리고 남은 폭을 나머지 열에 나눈다. 한 번 올린 열은 계속 고정.
+        const fixed=new Set();
+        for(let pass=0;pass<t.cols;pass++){
+          const used=[...fixed].reduce((a,i)=>a+minimum[i],0),rest=nat.reduce((a,v,i)=>a+(fixed.has(i)?0:v),0);
+          colW=nat.map((v,i)=>fixed.has(i)?minimum[i]:rest?v*(inner-used)/rest:0);
+          const short=colW.map((v,i)=>!fixed.has(i)&&v<minimum[i]);if(!short.some(Boolean))break;short.forEach((x,i)=>{if(x)fixed.add(i);});
+        }
+        const sum=colW.reduce((a,b)=>a+b,0);if(sum>inner)colW=colW.map(v=>v*inner/sum);
       }
       width=colW.reduce((a,b)=>a+b,0)+(choices?25:0);
     }
