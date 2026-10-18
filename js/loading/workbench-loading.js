@@ -28,7 +28,6 @@ const readStageTimes = () => { try { return JSON.parse(localStorage.getItem(STAG
 const writeStageTimes = value => { try { localStorage.setItem(STAGE_STORE, JSON.stringify(value)); } catch {} };
 const median = values => { const v = values.filter(n => Number.isFinite(n) && n > 0).sort((a, b) => a - b); return v.length ? v[Math.floor(v.length / 2)] : null; };
 const clock = ms => { const s = Math.max(0, Math.floor(ms / 1000)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, '0')}`; };
-const roughLeft = ms => { const s = Math.max(5, Math.ceil(ms / 5000) * 5); return s < 60 ? `약 ${s}초` : `약 ${Math.floor(s / 60)}분${s % 60 >= 10 ? ` ${Math.round(s % 60 / 10) * 10}초` : ''}`; };
 const samples = new Map();
 export function estimateLoadingMs(kind, model, saved = []) {
   const values = [...(samples.get(`${kind}:${model}`) || []), ...saved].filter(n => Number.isFinite(n) && n >= 1000).sort((a,b) => a-b);
@@ -111,8 +110,8 @@ export function createWorkbenchLoading({ host, legacy, panel }) {
     });
     reveal.progress(overall);
     if (run.settled) return;
-    const left = run.expected.slice(run.stage + 1).reduce((a, b) => a + b, 0) + Math.max(0, run.expected[run.stage] - inStage);
-    meta.textContent = `${run.stage + 1}/${run.plan.length} · ${run.measured && !late ? roughLeft(left) : clock(elapsed(run))}`;
+    // 남은 시간 예측은 들쭉날쭉해(같은 그림도 81~146초) 보여 주지 않는다. 시작부터 흐른 시간만 1초마다 올린다.
+    meta.textContent = `${run.stage + 1}/${run.plan.length} · ${clock(elapsed(run))}`;
     if (late && run.message !== '조금 더 걸리고 있어요') setPhase('조금 더 걸리고 있어요');
   };
   const advanceStage = (run, index) => {
@@ -159,7 +158,6 @@ export function createWorkbenchLoading({ host, legacy, panel }) {
     if (plan) {
       const saved = readStageTimes()[stageKey(run)] || [];
       const history = plan.map((_, i) => median(saved.map(entry => entry[i])));
-      run.measured = saved.length > 0;
       run.expected = plan.map((step, i) => history[i] || step.sec * 1000);
       run.durations = [];
       // 단계 신호가 없는 일반 생성은 원본 읽기를 생성 요청 안에서 함께 한다.
