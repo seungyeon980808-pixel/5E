@@ -172,13 +172,16 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
   const mark=q.points===3?' [3점]':'',ask=q.ask+mark,askOwner=(prefix=0)=>({kind:'ask',...(prefix?{prefix}:{}),...(mark?{suffix:mark.length}:{})});
   // 평가원 순서: 발문 다음에 <보기>. 맨 바깥 보기는 발문 뒤에 찍는다.
   const afterAsk=q.blocks.filter(b=>!b.parent&&b.kind==='bogi').map(b=>b.id);
+  // 기출 그림의 원본 폭(widthPt, 원본 PDF pt)이 있으면 그 크기를 넘지 않는다. 평가원 PDF 한 단(387pt)이 조판 단 폭(columnPx)에 대응.
+  const KICE_COLUMN_PT=387,columnPx=width;
   const picture=async(f,width,align,owner={kind:'other'})=>{
     if(!f)return '';
     const image=await prepareFigure(clone(f));
     if(!/^data:image\/png;base64,[A-Za-z0-9+/]*={0,2}$/.test(image.data))throw Error('한글에 넣을 그림을 PNG로 준비하지 못했습니다.');
     const ratio=Number(image.height)/Number(image.width);
     if(!Number.isFinite(ratio)||ratio<=0)throw Error('그림 크기를 확인하세요.');
-    const w=Math.min(width,Number(image.width)),h=w*ratio;
+    const original=owner.kind==='choice'&&Number(f.widthPt)>0?f.widthPt*columnPx/KICE_COLUMN_PT:Infinity;
+    const w=Math.min(width,Number(image.width),original),h=w*ratio;
     images.push(image.data);imageOwners.push(owner);
     const img=`<img src="${image.data}" width="${Math.round(w)}" height="${Math.round(h)}" alt="${E(image.name)}">`;
     return align?`<p style="margin:0;text-align:${{왼쪽:'left',가운데:'center',오른쪽:'right'}[align]}">${img}</p>`:img;
