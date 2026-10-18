@@ -48,12 +48,16 @@ async function convertBatch(browser,origin,batch){
 }
 
 const READY=n=>{const p=document.querySelector('#preview-dialog'),t=document.querySelector('#typeset-title')?.textContent||'',s=document.querySelector('#typeset-status')?.textContent||'';
+  // 조판이 실패하면 제목이 이전 문항에 머문다: 오류가 뜨면 바로 끝낸다.
+  if(p&&p.getAttribute('aria-busy')!=='true'&&(document.querySelector('#typeset-status')?.dataset.error==='true'||/읽지 못했습니다|실패했습니다/.test(s))&&window.__kiceOpenedAt&&Date.now()-window.__kiceOpenedAt>800)return true;
   return t.startsWith(n+'번')&&p&&!p.hidden&&p.getAttribute('aria-busy')!=='true'&&!/조판하는 중|준비 중/.test(s)&&(document.querySelector('#native-editor')?.dataset.ready==='true'||/읽지 못|실패|오류|확인하세요/.test(s));};
 
 async function typesetBatch(browser,origin,converted,wid){
   const ok=converted.filter(c=>c.ok);if(!ok.length)return [];
   const ctx=await browser.newContext({viewport:{width:1700,height:1150}});
   if(PAPER&&PAPER!=='A4')await ctx.route(/\/assets\/exampool\/sheet\/typeset\.js/,async r=>{const res=await r.fetch();let body=await res.text();body=body.replace("saved?.profile.paper||'A4'",`saved?.profile.paper||'${PAPER}'`);await r.fulfill({response:res,body});});
+  // --debug-verify: '일부 글을 읽지 못했습니다' 오류에 빠진 글을 붙인다(브라우저 안에서만 바꿈).
+  if(args['debug-verify'])await ctx.route(/\/assets\/exampool\/sheet\/handoff\.js/,async r=>{const res=await r.fetch();let body=await res.text();body=body.replace("if(plan.texts.some(v=>!body.includes(normalized(v))))throw Error('한글에서 일부 글을 읽지 못했습니다. 기존 시험지는 보존했습니다.');","{const miss=plan.texts.find(v=>!body.includes(normalized(v)));if(miss!==undefined)throw Error('한글에서 일부 글을 읽지 못했습니다. 기존 시험지는 보존했습니다. [빠짐: '+JSON.stringify(normalized(miss)).slice(0,160)+' | 본문: '+JSON.stringify(body).slice(0,200)+']');}");await r.fulfill({response:res,body});});
   const page=await ctx.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message.slice(0,200)));
   await h.navigate(page,origin+'/?mode=pro&mobile=0');await h.ready(page);
   await page.click('#exam-pool-open');const frameHandle=await page.waitForSelector('#exampool-sheet-workspace iframe');const sheet=await frameHandle.contentFrame();
@@ -72,7 +76,7 @@ async function typesetBatch(browser,origin,converted,wid){
   for(const [i,c] of ok.entries()){
     const qid=questions[i].id,n=String(i+1),t0=Date.now();
     try{
-      await sheet.evaluate(id=>document.querySelector(`[data-open-card="${id}"]`)?.click(),qid);
+      await sheet.evaluate(id=>{window.__kiceOpenedAt=Date.now();document.querySelector(`[data-open-card="${id}"]`)?.click();},qid);
       await sheet.waitForFunction(READY,n,{timeout:90000});
       await sheet.waitForTimeout(350);
       const m=await sheet.evaluate(async()=>{
