@@ -1,4 +1,4 @@
-import {normalizeEquationScript} from './typeset-model.js?v=1014-compact-panel';
+import {normalizeEquationScript,TEXT_WIDTH} from './typeset-model.js?v=1014-compact-panel';
 // Measure with the same native font engine that paints and exports the paper.
 export function createNativeTextMeasurer(Document){
   const cache=new Map(),escape=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -10,7 +10,8 @@ export function createNativeTextMeasurer(Document){
       Object.assign(page,{width:2000000,marginLeft:0,marginRight:0});d.setPageDef(0,JSON.stringify(page));
       d.pasteHtml(0,0,0,`<p><span style="font-family:함초롬바탕;font-size:${fontSize}pt">${escape(text||' ')}</span></p>`);
       const runs=JSON.parse(d.getPageTextLayout(0)).runs;
-      const width=text?runs.reduce((sum,run)=>sum+run.w,0):0;cache.set(key,width);return width;
+      // 들여온 문서의 글자 모양(장평·자간)만큼 줄인다. 수식은 따로 잰다.
+      const width=text?runs.reduce((sum,run)=>sum+run.w,0)*TEXT_WIDTH:0;cache.set(key,width);return width;
     }finally{d.free();}
   };
   // 한글 수식 개체의 실제 폭·높이(px). 표 칸 안 줄 나눔과 칸 높이를 수식 크기로 잰다(수식 자리표시 글자로 재면 수식마다 줄이 바뀐다).

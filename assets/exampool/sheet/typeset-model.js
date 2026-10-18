@@ -1,6 +1,8 @@
 import {exportLayoutHwpx,restackPictureLines} from './native-hwpx.js?v=1014-compact-panel';
 export const PAPER_MM={A4:[210,297],B4:[257,364],A3:[297,420]};
 export const LAYOUT_VERSION=11;
+// 평가원 본문 글자: 장평 95%·자간 -5%(같은 글자 크기에서 한 줄에 약 10% 더 들어간다). 새로 조판하는 문항에만 건다.
+export const TEXT_RATIO=95,TEXT_SPACING=-5,TEXT_WIDTH=(TEXT_RATIO+TEXT_SPACING)/100;
 const HU=7200/25.4;
 export function pageProfile(profile={paper:'A4',columns:2}){
   if(!PAPER_MM[profile.paper]||![1,2].includes(profile.columns))throw Error('용지와 단 수를 확인하세요.');
@@ -32,6 +34,7 @@ export async function normalizeQuestionImport(bytes,JSZip){
   header=header.replace(/<hc:(left|right|intent) value="\d+"/g,'<hc:$1 value="0"');
   // 한글 줄 나눔은 평가원처럼 어절 단위(KEEP_WORD). 들여온 문단 모양 일부가 글자 단위(BREAK_WORD)로 들어온다.
   header=header.replace(/breakNonLatinWord="BREAK_WORD"/g,'breakNonLatinWord="KEEP_WORD"');
+  header=header.replace(/<hh:ratio\b[^>]*\/>/g,tag=>tag.replace(/="\d+"/g,`="${TEXT_RATIO}"`)).replace(/<hh:spacing\b[^>]*\/>/g,tag=>tag.replace(/="-?\d+"/g,`="${TEXT_SPACING}"`));
   let xml=await zip.file('Contents/section0.xml').async('string');
   // Center the table's anchor paragraph, including nested tables. Cell text
   // alignment alone does not position an inline table. Clone the styles so
