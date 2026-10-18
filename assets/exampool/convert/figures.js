@@ -5,7 +5,7 @@
 //    캡션 글자는 자른 그림에서 뺀다(ExamPool이 캡션을 따로 찍음).
 // 좌표는 모두 PDF pt, 위가 0(문항 색인 box와 같은 좌표계).
 import {readQuestionPdf,renderFigureCanvas} from './es/pdf-viewer.mjs?v=library-release-20261011-3';
-import {drawingPrimitives,figureRegions,analyse} from './es/pdf-drawings.mjs?v=readability-20261004-4';
+import {drawingPrimitives,figureRegions,analyse,tableGrids,textItemBox} from './es/pdf-drawings.mjs?v=readability-20261004-4';
 
 const CAPTION=/^\s*[(（]\s*([가-하])\s*[)）]\s*$/u;
 const CHOICE=/[①②③④⑤]/u;
@@ -435,6 +435,11 @@ export async function detectTables(item,{signal}={}){
     const pdf=await readQuestionPdf(item,{signal});
     const ctx=candidates(item,pdf);
     const iou=(a,b)=>{const i=inter(a,b);return i?area(i)/(area(a)+area(b)-area(i)):0;};
+    addGeometry(out,pdf,item,iou);
+    // 칸 글 넘침이 잦은 모양은 그림으로 보낸다(tables-check × run4 조판 결과로 정함: 폭 150pt 미만이면서 칸을 90% 넘게
+    // 채우는 글이 있는 표 28개 중 23개, 한 칸 3줄 이상 3개 중 3개가 넘침).
+    for(const t of out){if(t.source!=='grid'||!t.colWidths)continue;t.fit=tableFit(t);
+      if((t.widthPt<150&&t.fit.fill>=.9)||t.fit.lines>=3){t.confidence=Math.min(t.confidence,.4);t.reason=t.fit.lines>=3?'한 칸에 글 3줄 이상(조판 넘침 위험)':'좁은 표에 칸을 꽉 채운 글(조판 넘침 위험)';}}
     for(const c of ctx.out.filter(o=>o.table)){
       if(out.some(t=>t.box&&iou(t.box,c.box)>.4))continue;
       out.push({box:c.box,page:item.page,rows:0,cols:0,cells:[],merges:[],headerRows:0,caption:null,confidence:.1,source:'figure',
@@ -442,4 +447,58 @@ export async function detectTables(item,{signal}={}){
     }
   }catch(e){if(e?.name==='AbortError')throw e;}
   return out.sort((a,b)=>(a.box?.[1]||0)-(b.box?.[1]||0));
+}
+
+// 원본 표의 모양: 열 경계 colX·행 경계 rowY(pt, 위가 0), 열 폭·행 높이, 칸마다 글 크기(pt)·가로 정렬·세로 정렬·줄 수.
+// 조판기가 원본 비율과 글 크기로 칸을 잡도록(칸 글 넘침 방지). 괘선 격자를 다시 읽어 상자가 맞는 표에만 붙인다.
+function addGeometry(tables,pdf,item,iou){
+  const H=pdf.pageHeight,eqFont=t=>/^(?:HyhwpEQ|HYhwpEQ)/u.test(pdf.fonts?.[t.fontName]?.name?.split('+').at(-1)||'');
+  const grids=tableGrids(drawingPrimitives(pdf.operations,pdf.OPS,H),pdf.content.items,H,item.box);
+  const texts=[...pdf.content.items.filter(t=>t.str?.trim()&&t.transform&&!eqFont(t)),...(pdf.equationItems||[]).filter(t=>t.str?.trim())]
+    .map(t=>({...textItemBox(t,H),str:t.str})).filter(t=>Number.isFinite(t.size))
+    // 이웃 칸 글이 한 조각으로 찍힌 경우가 있어 글자마다(폭 비율: 한글 1, 그 밖 0.55, 빈칸 0.3) 나눠 칸에 넣는다.
+    .flatMap(t=>{const ch=[...t.str];if(ch.length<2||t.rotated)return [t];const adv=c=>/\s/u.test(c)?.3:/[\uAC00-\uD7A3\u3130-\u318F]/u.test(c)?1:.55;
+      const total=ch.reduce((a,c)=>a+adv(c),0)||1,W=t.box[2]-t.box[0];let at=0;
+      return ch.flatMap(c=>{const x0=t.box[0]+at/total*W;at+=adv(c);return /\s/u.test(c)?[]:[{...t,str:c,box:[x0,t.box[1],t.box[0]+at/total*W,t.box[3]]}];});});
+  const r1=v=>Math.round(v*10)/10;
+  for(const t of tables){
+    if(t.source!=='grid'||!t.box)continue;
+    const g=grids.map(g=>[g,iou(g.box,t.box)]).filter(([,v])=>v>.8).sort((a,b)=>b[1]-a[1])[0]?.[0];
+    if(!g||g.rows!==t.rows||g.cols!==t.cols)continue;
+    const colX=Array(g.cols+1),rowY=Array(g.rows+1);
+    for(const c of g.cells){colX[c.col]??=c.box[0];colX[c.col+c.colSpan]??=c.box[2];rowY[c.row]??=c.box[1];rowY[c.row+c.rowSpan]??=c.box[3];}
+    if(colX.some(v=>v==null)||rowY.some(v=>v==null))continue;
+    t.colX=colX.map(r1);t.rowY=rowY.map(r1);
+    t.colWidths=colX.slice(1).map((x,i)=>r1(x-colX[i]));t.rowHeights=rowY.slice(1).map((y,i)=>r1(y-rowY[i]));
+    t.widthPt=r1(colX.at(-1)-colX[0]);t.heightPt=r1(rowY.at(-1)-rowY[0]);
+    const sizes=[];
+    for(const c of g.cells){
+      const cell=t.cells[c.row]?.[c.col];if(!cell)continue;
+      const b=c.box,inside=texts.filter(x=>{const m=mid(x.box);return m[0]>b[0]&&m[0]<b[2]&&m[1]>b[1]&&m[1]<b[3];});
+      if(!inside.length){cell.align='center';cell.valign='middle';continue;}
+      const ink=inside.map(x=>x.box).reduce(union),size=inside.map(x=>x.size).sort((p,q)=>p-q)[Math.floor(inside.length/2)];
+      // 줄: 기준선이 글 크기의 절반 넘게 떨어지면 다른 줄
+      const big=Math.max(...inside.map(x=>x.size)),bases=[...new Set(inside.filter(x=>!x.rotated&&x.size>=big*.9).map(x=>Math.round(x.base)))].sort((p,q)=>p-q);// 첨자는 줄로 세지 않는다
+      const lines=bases.reduce((n,y,i)=>n+(i&&y-bases[i-1]>big*.6?1:0),bases.length?1:0);
+      const left=ink[0]-b[0],right=b[2]-ink[2],top=ink[1]-b[1],bottom=b[3]-ink[3],w=b[2]-b[0];
+      cell.size=r1(size);cell.lines=lines;
+      // 평가원 표는 대부분 가운데 정렬: 한쪽 여백이 거의 없고(4pt 미만) 반대쪽의 1/3도 안 될 때만 왼쪽·오른쪽.
+      cell.align=left<4&&left<right*.35?'left':right<4&&right<left*.35?'right':'center';void w;
+      cell.valign=Math.abs(top-bottom)<=Math.max(2,(b[3]-b[1])*.12)?'middle':top<bottom?'top':'bottom';
+      sizes.push(size);
+    }
+    if(sizes.length)t.fontSize=r1(sizes.sort((p,q)=>p-q)[Math.floor(sizes.length/2)]);
+  }
+}
+
+// 칸 글이 원본 칸 폭을 얼마나 채우는지: fill(가장 꽉 찬 칸의 글 폭/칸 폭), lines(한 칸 최대 줄 수), frac(분수 든 칸 수).
+// 글자 폭 어림: 한글·기호 1em, 그 밖 0.55em, 빈칸 0.3em, 분수는 분자·분모 중 긴 쪽.
+function tableFit(t){
+  const lineWidth=(line,size)=>{let x=String(line);for(let i=0;i<4;i++)x=x.replace(/\\frac\{([^{}]*)\}\{([^{}]*)\}/g,(_,a,b)=>a.length>=b.length?a:b);
+    x=x.replace(/\\text\{([^{}]*)\}/g,'$1').replace(/\\[a-zA-Z]+|[$_^{}`~]/g,'');return [...x].reduce((w,c)=>w+(/[가-힣ㄱ-ㅎ㉠-㉿ⓐ-ⓩ○×△●]/u.test(c)?1:/\s/u.test(c)?.3:.55),0)*size;};
+  const span=(r,c)=>t.merges.find(m=>m.r===r&&m.c===c)?.cs||1;let fill=0,lines=0,frac=0;
+  t.cells.forEach((row,r)=>row.forEach((cell,c)=>{if(!cell.text)return;const w=t.colWidths.slice(c,c+span(r,c)).reduce((a,b)=>a+b,0),size=cell.size||t.fontSize||10;
+    for(const l of cell.text.split('\n'))fill=Math.max(fill,lineWidth(l,size)/Math.max(1,w-2));
+    lines=Math.max(lines,cell.lines||cell.text.split('\n').length);if(/\\frac/.test(cell.text))frac++;}));
+  return {fill:Math.round(fill*100)/100,lines,frac};
 }
