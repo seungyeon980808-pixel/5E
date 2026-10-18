@@ -1827,6 +1827,12 @@
       "findingIds": [
         "TEACHER-FLOW-HWP-EXAM-INSERT"
       ]
+    },
+    {
+      "path": "tests/test-data-compat-1.6.3-browser.cjs",
+      "findingIds": [
+        "DATA-COMPAT-1.6.3-TO-1.7.0"
+      ]
     }
   ],
   "deferred": [
