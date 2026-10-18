@@ -350,7 +350,27 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
           html+=`<table style="border-collapse:collapse;width:${width}px">${titled?`<tr><td${cols>1?` colspan="${cols}"`:''} style="border:none;border-top:${rule};border-left:${rule};border-right:${rule};width:${width}px;padding:8px 8px 0">${p(b.label,null,11,{kind:'label',id:b.id})}</td></tr>`:''}${body}</table>`;
           continue;
         }
-        if(b.layout==='나란히'&&children.length>1){
+        const materials=b.layout==='나란히'&&children.length>1&&children.every(c=>(c.kind==='figure'||c.kind==='table')&&!q.blocks.some(x=>x.parent===c.id));
+        if(materials){
+          // 나란한 자료(그림·표 2~3개): 테두리 없는 2행 표. 윗줄 칸마다 자료를 가운데·아래쪽 맞춤(그림 밑선이 나란히),
+          // 아랫줄 칸마다 (가)·(나) 같은 이름을 가운데. 열 폭은 묶음 안 폭 비율. 표는 칸 폭 가득, 그림은 칸 폭을 넘지 않는 크기로 가운데.
+          const widths=rowWidths(children,innerWidth),caption=c=>(/^\(.+\)$/.test(c.label)?c.label:'')+(c.text?(/^\(.+\)$/.test(c.label)?' ':'')+c.text:''),captioned=children.some(c=>caption(c));
+          recordTable(captioned?2:1,children.length,[],{kind:'side',id:b.id});
+          const tops=[],heights=[];
+          nested++;try{for(const [i,c] of children.entries()){
+            const cellW=Math.max(35,widths[i]-12);let inner='';
+            if(c.kind==='figure'){
+              if(!c.figure&&ghost.figures.has(c.id)&&ghostFigure){const w=sizedWidth(c,cellW);c.figure=ghostFigure(Math.round(w),Math.round(Math.min(150,w*.55)),c.label);}
+              if(c.figure){inner=await picture(c.figure,Math.min(cellW,sizedWidth(c,cellW)),undefined,{kind:'block',id:c.id});heights.push(Number(inner.match(/height="(\d+)"/)?.[1])||0);}
+            }else inner=await table(c.table,cellW,false,undefined,{kind:'block',id:c.id},false,cellW);
+            tops.push(inner||'<p><br></p>');
+          }}finally{nested--;}
+          const topH='';
+          body=`<table style="border-collapse:collapse;width:${innerWidth}px"><tr>${tops.map((inner,i)=>`<td style="border:none;padding:4px 4px 2px;vertical-align:bottom;text-align:center;${topH}width:${widths[i]}px">${inner}</td>`).join('')}</tr>`;
+          if(captioned)body+=`<tr>${children.map((c,i)=>{const label=caption(c),hasText=!!c.text,prefix=/^\(.+\)$/.test(c.label)?c.label.length+1:0;
+            return `<td style="border:none;padding:2px 4px 4px;vertical-align:top;text-align:center;height:24px;width:${widths[i]}px"><p style="margin:0;text-align:center">${label?text(label,Math.max(35,widths[i]-12),11,null,hasText?{kind:'block',id:c.id,prefix}:null):'\u2060'}</p></td>`;}).join('')}</tr>`;
+          body+='</table>';
+        }else if(b.layout==='나란히'&&children.length>1){
           recordTable(1,children.length,[],{kind:'side',id:b.id});
           body=`<table style="border-collapse:collapse;width:${innerWidth}px"><tr>`;
           // Render the children individually while keeping their own descendants.
@@ -366,7 +386,7 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
           body=body.replaceAll('height:__ROWH__',figureOnly?`height:${Math.ceil(Math.max(...cells.map(estimate)))}px`:'');
         }else{if(boxed)inBox++;try{body=await walk(b.id,innerWidth);}finally{if(boxed)inBox--;}}
         if(boxed)recordTable(1,1,[],{kind:'box',id:b.id},boxSlot);
-        html+=boxed?`<table style="border-collapse:collapse;width:${width}px"><tr><td style="border:${RULE};width:${width}px;height:32px;padding:8px 8px ${8+Math.round((b.pad||0)*96/25.4)}px">${b.label?p(b.label,null,11,{kind:'label',id:b.id}):''}${body}</td></tr></table>`:body;
+        html+=boxed?`<table style="border-collapse:collapse;width:${width}px"><tr><td style="border:${RULE};width:${width}px;height:32px;padding:8px 8px ${8+Math.round((b.pad||0)*96/25.4)}px">${b.label?p(b.label,null,11,{kind:'label',id:b.id}):''}${body}<p style="margin:0;font-size:6pt;line-height:100%"> </p></td></tr></table>`:body;
       }else if(b.lines){
         if(b.kind==='bogi'){
           // <보기> 너비: 구성 시트 '크기'(단 폭 대비 %)로 줄이면 가운데에 둔다. ㄷ 아래 여백은 '아래 여백'(mm).
