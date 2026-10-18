@@ -2,6 +2,18 @@
   "schemaVersion": 1,
   "unit": [
     {
+      "path": "tests/test-graph-description-style-keep.mjs",
+      "findingIds": [
+        "GRAPH-DESCRIPTION-STYLE-KEEP"
+      ]
+    },
+    {
+      "path": "tests/test-graph-label-exponent.mjs",
+      "findingIds": [
+        "GRAPH-LABEL-EXPONENT-RUN"
+      ]
+    },
+    {
       "path": "tests/test-exampool-authoring.mjs",
       "findingIds": [
         "EXAMPOOL-AUTHORING-CORE"

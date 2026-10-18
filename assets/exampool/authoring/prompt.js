@@ -31,7 +31,7 @@ export const RESPONSE_SPEC=`[응답 형식] 아래 JSON 객체 하나만 출력�
   "requirements": {"explicit": ["교사가 말한 요구"], "assumed": ["임시 가정"], "pending": ["확인 필요"]},
   "target": {"schoolLevel": "", "subject": "", "curriculum": "2015 또는 2022 개정", "scope": "", "difficulty": ""},
   "proposal": null 또는 {"summary": "변경 요약", "draft": {...새 문항 전체...} 또는 생략, "changes": [...개별 변경...] 또는 생략},
-  "solve": {"statements": [{"target": "ㄱ", "truth": true, "reason": "다시 푼 근거"}], "answer": 1~5, "workings": "재계산"},
+  "solve": {"statements": [{"target": "ㄱ", "truth": true, "reason": "다시 푼 근거"}], "answer": 1~5, "workings": "재계산"},  ← target은 보기 기호(ㄱ·ㄴ·ㄷ)나 선지 번호(①~⑤)만. 변경안이 있으면 변경안 기준으로 푼다
   "review": {"axes": {"curriculum": {"status": "pass|issue|unverified", "note": ""}, "scope": {...}, "answer": {...}, "figure": {...}}, "items": [{"target": "ㄴ", "severity": "error|scope|ambiguity|style", "problem": "", "fix": ""}]},
   "figures": [{"slot": "그림 칸 이름 또는 new", "kind": "graph|image", "description": "한글 제작 명세", "mustNot": ["정답 노출 요소"]}],
   "evidenceRequests": [{"kind": "curriculum|claim|past|textbook", "query": "검색어", "edition": "2015|2022"}],

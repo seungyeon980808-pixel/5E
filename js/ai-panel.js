@@ -2824,7 +2824,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       if (!isCurrent()) return;
       if (restored.blocked) throw Object.assign(new Error(restored.quality?.issues?.filter(i => i.severity === 'critical').map(i => i.message).join('\n') || '확인하지 못한 축 또는 계열이 있습니다.'), { code: 'GRAPH_INVALID_RESULT' });
       requestPhase('validating');
-      const graphResult = buildWorkbenchGraph(creating ? prepareGraphDescriptionPlan(restored.plan) : restored.plan, source, { descriptionLayout: creating, priorResult:priorGraph?.graphResult || null });
+      const graphResult = buildWorkbenchGraph(creating ? prepareGraphDescriptionPlan(restored.plan) : restored.plan, source, { descriptionLayout: creating, priorResult:priorGraph?.graphResult || null, ...(creating&&priorGraph?{request:options.requestOverride ?? input.value}:{}) });
       // Freeze the actual analyzed pixels, including composed inputs. Replacing
       // an attachment later must not silently change the tracing reference.
       if (!creating) graphResult.traceReference = { data, name, width:source.width, height:source.height, plotBox:structuredClone(restored.plan.source.plotBox) };

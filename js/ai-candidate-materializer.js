@@ -93,6 +93,13 @@ export function createCandidateMaterializer(state, services) {
         image.imageSelectionLocked = false;
         draft.selectedIds = draft.objects.map(object => object.id);
       }
+      // 새로 넣는 결과가 이미 있는 그림과 겹치면 기존 내용 아래로 옮긴다(넘겨받은 알려진 문제 4). 교체는 제자리 그대로.
+      if (!replaceId && services.objectsBBox && services.translateObject) {
+        const others = initial.objects.filter(object => !ownedIds.has(object.id));
+        const next = services.objectsBBox(draft.objects), used = services.objectsBBox(others);
+        const overlaps = next && used && next.x < used.x + used.w && next.x + next.w > used.x && next.y < used.y + used.h && next.y + next.h > used.y;
+        if (overlaps) { const dx = used.x - next.x, dy = used.y + used.h + 6 - next.y; for (const object of draft.objects) services.translateObject(object, dx, dy); }
+      }
       if (!draft.objects.length || new Set(draft.objects.map(object => object.id)).size !== draft.objects.length
         || draft.objects.some(object => initial.objects.some(current => current.id === object.id && !ownedIds.has(current.id)))) {
         throw new Error('편집 원본의 객체 식별자가 충돌합니다.');

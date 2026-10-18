@@ -50,9 +50,10 @@ export function resolveTarget(q,label){
   if(/^(question|문항)$/.test(s))return 'question';
   if(/^(ask|발문)$/.test(s))return 'ask';if(/^(answer|정답)$/.test(s))return 'answer';if(/^(explanation|해설)$/.test(s))return 'explanation';
   if(/^(passage|지문)$/.test(s)){const b=q.blocks.find(b=>b.kind==='text'&&!b.parent);return b?'block:'+b.id:null;}
-  const bogi=q.blocks.find(b=>b.kind==='bogi'),j=s.replace(/^보기\s*/,'').replace(/[.．)]$/,'');
-  if(bogi&&j.length===1&&JAMO.includes(j)){const l=bogi.lines.find(l=>l.label===j);return l?'line:'+l.id:null;}
-  const ch=s.replace(/^선지\s*/,'');const ci=CIRCLED.indexOf(ch)>=0?CIRCLED.indexOf(ch):/^[1-5]$/.test(ch)?Number(ch)-1:-1;
+  // '보기 ㄱ'·'초안 ㄱ'·'(ㄱ)'·'ㄱ.'처럼 앞뒤 말이 붙어도 보기 기호 하나를 찾는다.
+  const bogi=q.blocks.find(b=>b.kind==='bogi'),jm=s.replace(/^(보기|초안|변경안|수정안)\s*/,'').match(/^[(（]?([ㄱ-ㅎ])[)）.．]?$/);const j=jm?.[1]||'';
+  if(bogi&&j&&JAMO.includes(j)){const l=bogi.lines.find(l=>l.label===j);return l?'line:'+l.id:null;}
+  const cm=s.replace(/^(선지|초안|변경안)\s*/,'').replace(/\s*(번|번째)?\s*(선지)?$/,'');const ch=cm;const ci=CIRCLED.indexOf(ch)>=0&&ch.length===1?CIRCLED.indexOf(ch):/^[1-5]$/.test(ch)?Number(ch)-1:-1;
   if(ci>=0)return 'choice:'+q.choices[ci].id;
   const b=q.blocks.find(b=>b.label===s||b.id===s);if(b)return 'block:'+b.id;
   for(const x of q.blocks)for(const l of x.lines||[])if(l.id===s)return 'line:'+l.id;

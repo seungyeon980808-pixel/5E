@@ -77,6 +77,8 @@ test('응답 계약: JSON 꺼내기·형식 검사·초안을 실제 칸으로',
   assert.equal(question.choices[2].text,'ㄱ, ㄴ');assert.equal(question.answer,2);assert.equal(q.ask,'','원본은 그대로');
   assert.equal(resolveTarget(question,'ㄴ'),'line:'+question.blocks.find(b=>b.kind==='bogi').lines[1].id);
   assert.equal(resolveTarget(question,'③'),'choice:'+question.choices[2].id);
+  const l2='line:'+question.blocks.find(b=>b.kind==='bogi').lines[1].id;for(const t of ['초안 ㄴ','보기 ㄴ','(ㄴ)','ㄴ.'])assert.equal(resolveTarget(question,t),l2,t);
+  assert.equal(resolveTarget(question,'3번'),'choice:'+question.choices[2].id);assert.equal(resolveTarget(question,'선지 ③'),'choice:'+question.choices[2].id);
   assert.match(applyChanges(q,[{path:'answer',value:7}]).errors[0].message,/1~5/);
 });
 test('정답 구조: 누락·중복 조합, 정답 불일치, 부정 발문',()=>{

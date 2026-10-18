@@ -30,7 +30,7 @@ import { initZoomReadoutLifecycle } from "./zoom-readout-lifecycle.js?v=1.7.0-fo
 import { initTools } from "./tools.js?v=1.7.0-four-session-integration";
 import { initCutTool } from "./cut-tool.js?v=1.7.0-four-session-integration";
 import { initEraseTool } from "./erase-tool.js?v=1.7.0-four-session-integration";
-import { initTransform, undo, redo, rebuildGroups } from "./transform.js?v=1.7.0-four-session-integration";
+import { initTransform, undo, redo, rebuildGroups, objectsBBox, translateObject } from "./transform.js?v=1.7.0-four-session-integration";
 import { initArtboardResize } from "./artboard-resize.js?v=1.7.0-four-session-integration";
 import { initInspector } from "./inspector.js?v=1.7.0-four-session-integration";
 import { initDesktopProjectCloseGuard, initProjectIO, initProjectFileOpening, configurePortableProjectIO, saveProject, serialize, applyLoaded, prepareLoadedProject } from "./project-io.js?v=1.7.0-four-session-integration";
@@ -313,7 +313,7 @@ initProjectIO(state, svg);
 
 /* ----- 다중 페이지: 하단 탭 바(추가/복제/이름변경/순서/삭제) + 스왑 전환 ----- */
 initPages(state);
-const materializeCandidate = createCandidateMaterializer(state,{insertImageFromSrc,prepareImageCandidateRevision,validateWorkbenchGraph,insertWorkbenchGraph,rebuildGroups});
+const materializeCandidate = createCandidateMaterializer(state,{insertImageFromSrc,prepareImageCandidateRevision,validateWorkbenchGraph,insertWorkbenchGraph,rebuildGroups,objectsBBox,translateObject});
 const examWorkspace = initRhwpExamWorkspace(state, { configurePortableProjectIO,
   serialize, applyLoaded, prepareLoadedProject, ensureEmbeddedFonts, rasterizeExportCanvas, insertPngPhys, commitActiveText,
   runAreaCapture, switchPage, resetPageHistory, insertImageFromSrc, materializeCandidate, centerView:() => centerView(state),

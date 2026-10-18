@@ -130,3 +130,17 @@ test('locked or foreign objects cannot acquire the AI revision replacement privi
     assert.deepEqual(f.state.get(),before);
   }
 });
+
+test('a new raster result that would cover existing content is placed below it; replacement stays in place',async () => {
+  const placed=[];
+  const f=fixture({
+    insertImageFromSrc:async (draft,data,options) => {draft.update(value=>{value.objects=[{id:'fresh',type:'image',x:10,y:10,w:40,h:20,src:data,aiTaskId:options.aiTaskId,aiCandidateId:options.aiCandidateId}];});return 'fresh';},
+    objectsBBox:objects => {const boxes=objects.filter(o=>Number.isFinite(o.x)&&Number.isFinite(o.w));if(!boxes.length)return null;const x=Math.min(...boxes.map(o=>o.x)),y=Math.min(...boxes.map(o=>o.y));return {x,y,w:Math.max(...boxes.map(o=>o.x+o.w))-x,h:Math.max(...boxes.map(o=>o.y+o.h))-y};},
+    translateObject:(object,dx,dy) => {placed.push([object.id,dx,dy]);object.x+=dx;object.y+=dy;},
+  });
+  f.state.update(value=>{value.objects=[...value.objects,{id:'existing',type:'rect',x:0,y:0,w:60,h:30}];});
+  await f.materialize({id:'raster',data:'RAW'},{taskId:'task'});
+  const fresh=f.state.get().objects.find(object=>object.id==='fresh');
+  assert.deepEqual(placed,[['fresh',-10,26]],'moved under the existing content with a 6 mm gap');
+  assert.equal(fresh.y,36);assert.equal(fresh.x,0);
+});

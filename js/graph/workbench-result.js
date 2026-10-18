@@ -55,7 +55,7 @@ export function validateWorkbenchGraph(result) {
   return plane;
 }
 
-export function buildWorkbenchGraph(plan, source, { descriptionLayout = false, priorResult = null } = {}) {
+export function buildWorkbenchGraph(plan, source, { descriptionLayout = false, priorResult = null, request } = {}) {
   const plot = plan.source.plotBox;
   const priorWidth=priorResult?.objects?.find(o=>o.type==='coordplane')?.w;
   const width = descriptionLayout && Number.isFinite(priorWidth) && priorWidth>0 ? priorWidth : EXAM_STYLE.defaultWidth, scale = width / plot.w;
@@ -74,7 +74,7 @@ export function buildWorkbenchGraph(plan, source, { descriptionLayout = false, p
     for (const annotation of plane.graphAnnotations) {
       if (seriesNames.has(annotation.text)) annotation.labelRole = 'name';
     }
-    preserveDescriptionPresentation(built.objects,plan,priorResult);
+    preserveDescriptionPresentation(built.objects,plan,priorResult,request);
     for(const series of built.objects.filter(o=>o.type==='funcgraph')) series.graphStyle=copy(plane.graphStyle);
     for(const label of descriptionSeriesLabelPositions(built.objects.filter(o=>o.type==='funcgraph'),examMetrics(plane).label)) {
       const series=label.series,p=series.axis==='y2'?planeAsY2(plane):plane;

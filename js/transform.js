@@ -612,6 +612,9 @@ function objectCenter(obj) {
  * 아는 곳이 applyDelta 하나뿐이도록 이걸 공유한다 — 드래그 밖에서 이동이 필요한 곳
  * (bulk-edit의 간격 통일 등)도 이걸 쓴다. 분기를 복사하면 새 타입이 생겼을 때 한쪽만
  * 고쳐져 "그 타입만 조용히 안 움직이는" 버그가 난다. */
+// 객체 묶음의 경계 상자(mm). 없으면 null.
+export function objectsBBox(objs) { return Array.isArray(objs) && objs.length ? clipboardBBox(objs) : null; }
+
 export function translateObject(obj, dx, dy) {
   const orig = JSON.parse(JSON.stringify(obj));
   applyDelta(obj, orig, dx, dy);

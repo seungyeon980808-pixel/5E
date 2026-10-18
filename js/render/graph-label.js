@@ -166,7 +166,9 @@ function graphMathNodes(source, depth = 0) {
     }
     if ((source[i]==='^'||source[i]==='_') && nodes.length) {
       const kind=source[i++]==='^'?'sup':'sub';let body;
-      if(source[i]==='{') body=group(); else body=source[i++] || '';
+      // 교사는 10^14, 10^-3, s^-1처럼 중괄호 없이 쓴다. 위첨자 뒤 숫자 묶음(앞의 −까지)은 한꺼번에 올린다. 중괄호는 그대로.
+      const run=kind==='sup'&&source[i]!=='{'?/^[-−]?\d+/.exec(source.slice(i)):null;
+      if(source[i]==='{') body=group(); else if(run){body=run[0].replace('-','−');i+=run[0].length;} else body=source[i++] || '';
       if(body!==null) {const last=nodes.pop(); const node=last.kind==='scripts'?last:{kind:'scripts',base:[last]};node[kind]=graphMathNodes(body,depth+1);nodes.push(node);continue;}
     }
     if(source[i]==='{') {const start=i,body=group();if(body!==null){nodes.push({kind:'group',nodes:graphMathNodes(body,depth+1)});continue;}i=start;}
@@ -213,7 +215,7 @@ function buildLine(line,size,color,upright=false,weight=400,sourceHeight=false,p
 // 라벨 <text> 들에 흰 테두리 halo 부여(그래프 선 위에서 깔끔히 끊김; makeUprightLabel 방식).
 /* 가림(할로)은 core.applyGlyphHalo가 단일 출처다 — 캔버스 라벨과 그래프 라벨이
  * 같은 굵기·같은 모양으로 나온다. 그림마다 다르게 주려면 opts.haloRatio를 넘긴다. */
-export { HALO_RATIO };
+export { HALO_RATIO, graphMathNodes };
 
 /* ----- PUBLIC: 혼합 라벨을 SVG <g>로 렌더 -----
  * renderGraphLabel(source, {

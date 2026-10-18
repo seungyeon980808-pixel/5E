@@ -25,7 +25,7 @@ export function createFigureEngines({base=()=>window.fiveEDesktop||window.fiveEW
       const source=await graphDescriptionSource(description,priorPlan,priorObjects);
       const restored=await workflow.analyze({source,selection:GRAPH_WORKBENCH_SELECTION,catalog,description,priorPlan,priorObjects});
       if(restored.blocked)throw Error('그래프 검증에 막혔습니다: '+(restored.quality?.issues?.filter(i=>i.severity==='critical').map(i=>i.message).join(' / ')||'확인하지 못한 축 또는 계열이 있습니다.'));
-      const result=buildWorkbenchGraph(prepareGraphDescriptionPlan(restored.plan),source,{descriptionLayout:true,priorResult:prior||null});
+      const result=buildWorkbenchGraph(prepareGraphDescriptionPlan(restored.plan),source,{descriptionLayout:true,priorResult:prior||null,...(prior?{request:description}:{})});
       result.description={request:description,qualitative:restored.plan.coordinateMode==='observed'};
       const png=await svgToPng(await workbenchGraphDataUrl(result),result.source.width,result.source.height);
       return {...png,graph:result,engine:'native-graph',model:GRAPH_WORKBENCH_SELECTION.model,ms:Date.now()-t0,issues:(result.quality?.issues||[]).map(i=>i.message).slice(0,8)};
