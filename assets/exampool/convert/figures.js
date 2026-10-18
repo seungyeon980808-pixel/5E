@@ -136,7 +136,7 @@ function findCaptions(m,comps,s,body,texts){
     // 그래프 속 곡선 이름표 (가)는 같은 줄 양옆에 그림이 붙어 있다.
     const lateral=hasInk(m,rect(g.x0-B,g.y0,g.x0-2,g.y1))&&hasInk(m,rect(g.x1+2,g.y0,g.x1+B,g.y1));
     const solo=!hasInk(m,rect(g.x0-B*.6,g.y0,g.x0-2,g.y1))&&!hasInk(m,rect(g.x1+2,g.y0,g.x1+B*.6,g.y1));// "전압(V)"처럼 글자에 붙은 괄호가 아니다
-    const bottom=free&&solo&&!lateral&&!hasInk(m,rect(g.x0-B*.5,g.y1+2,g.x1+B*.5,g.y1+B*.8))&&hasInk(m,rect(g.x0-B*1.5,g.y0-B*3.5,g.x1+B*1.5,g.y0-2));
+    const bottom=free&&solo&&!lateral&&!hasInk(m,rect(g.x0-B*.5,g.y1+2,g.x1+B*.5,g.y1+B*.8))&&hasInk(m,rect(g.x0-B*8,g.y0-B*8,g.x1+B*8,g.y0-2));
     const h=g.y1-g.y0,side=!hasInk(m,rect(g.x0-B*1.5,g.y0,g.x0-2,g.y1))&&hasInk(m,rect(g.x1+2,g.y0-h*.5,g.x1+B*4,g.y1+h*.5));
     return bottom||side?{...g,bottom,side}:null;};
   for(const t of texts){const c=place(t,true);if(c)caps.push({...c,text:true});}
