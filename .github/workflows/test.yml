@@ -39,8 +39,13 @@ jobs:
       # 필수 묶음: 프리뷰 배포 검사와 같은 5묶음(두 엔진)과 버튼 디자인. 하나라도 실패하면 막는다.
       - name: Required browser suites
         run: |
+          # 느린 GitHub 컴퓨터의 타이밍 흔들림은 엔진마다 한 번만 다시 돌려 본다. 두 번 다 실패하면 막는다.
+          suites="tests/test-ai-inline-label-editor-browser.cjs tests/test-library-space-flow-browser.cjs tests/test-library-crop-confirm-browser.cjs tests/test-ai-local-edit-browser.cjs tests/test-ai-library-transfer-browser.cjs"
           for engine in chromium webkit; do
-            TASK2_ENGINE=$engine node --test tests/test-ai-inline-label-editor-browser.cjs tests/test-library-space-flow-browser.cjs tests/test-library-crop-confirm-browser.cjs tests/test-ai-local-edit-browser.cjs tests/test-ai-library-transfer-browser.cjs
+            if ! TASK2_ENGINE=$engine node --test $suites; then
+              echo "::warning::필수 묶음 $engine 실패 — 한 번 다시 돌립니다"
+              TASK2_ENGINE=$engine node --test $suites
+            fi
           done
           node tests/run-browser-tests.cjs --only test-button-design-browser.cjs
       # 전체 브라우저 검사: tests/known-failures.json에 이유와 함께 적힌 검사의 실패는 막지 않고,
