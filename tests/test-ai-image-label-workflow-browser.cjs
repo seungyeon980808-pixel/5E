@@ -68,7 +68,7 @@ for(const imageKind of ['exam','general'])for(const labelResult of ['remove','re
     await choose(page,imageKind,labelResult);
     assert.equal(await page.locator('[data-ai-precise-restore]').isChecked(),false);
     if(imageKind==='exam')assert.equal(await page.locator('[data-ai-precise-restore]').isDisabled(),true);
-    await page.locator('#ai-image-panel [data-ai-send]').click();
+    await page.locator('#ai-image-panel [data-ai-comments-apply]').click();
     await finish(page);
     const requests=await sends(page),c=await candidate(page);
     record(dir,{requests,c,errors}); // Preserve the actual result even if a contract assertion fails.
@@ -111,7 +111,7 @@ for(const imageKind of ['exam','general'])for(const labelResult of ['remove','re
 
 test('relation failures retain the exact changed connection in review without automatic regeneration',{timeout:90000},async t=>{
   const dir=evidenceFor('relation-failure');const {page,errors}=await fixture(t,1,dir,{initialGeneration:true});
-  await choose(page,'general','remove');await page.locator('#ai-image-panel [data-ai-send]').click();
+  await choose(page,'general','remove');await page.locator('#ai-image-panel [data-ai-comments-apply]').click();
   await page.waitForFunction(()=>window.__task2.sends.length===1);await emit(page,0,'assistant',JSON.stringify(verifiedPlan));
   await page.waitForFunction(()=>window.__task2.sends.length===2);await emit(page,1,'image');
   await page.waitForFunction(()=>window.__task2.sends.length===3);
@@ -130,11 +130,11 @@ test('relation failures retain the exact changed connection in review without au
 
 test('workflow cancel/retry: late analysis cannot mutate candidate; explicit retry only',{timeout:90000},async t=>{
   const dir=evidenceFor('cancel-retry');const {page,errors}=await fixture(t,1,dir,{initialGeneration:true});
-  await choose(page,'exam','remove');await page.locator('#ai-image-panel [data-ai-send]').click();
+  await choose(page,'exam','remove');await page.locator('#ai-image-panel [data-ai-comments-apply]').click();
   await page.waitForFunction(()=>window.__task2.sends.length===1);await page.locator('#ai-image-panel [data-ai-interrupt]').click();
   await emit(page,0,'assistant',JSON.stringify(plan));await page.waitForFunction(()=>document.querySelector('#ai-image-panel').dataset.aiBusy==='false');
   assert.equal((await snapshot(page))[0].generated.length,0);assert.equal((await sends(page)).length,1);
-  await page.locator('#ai-image-panel [data-ai-send]').click();await finish(page,{startIndex:1});
+  await page.locator('#ai-image-panel [data-ai-comments-apply]').click();await finish(page,{startIndex:1});
   const c=await candidate(page),requests=await sends(page);assert.ok(c);assert.equal(generations(requests).length,0);assert.deepEqual(errors,[]);
   const requestTiers=await page.evaluate(()=>window.__task2.sends.map(request=>request.payload.serviceTier));
   assert.ok(requestTiers.every(tier=>tier==='priority'),'Initial and retry requests keep the fixed fast tier');
@@ -144,7 +144,7 @@ test('workflow cancel/retry: late analysis cannot mutate candidate; explicit ret
 test('workflow unlabeled exam: zero invented native objects and identical source pixels',{timeout:90000},async t=>{
   const dir=evidenceFor('unlabeled');const {page,errors}=await fixture(t,1,dir,{initialGeneration:true,unlabeled:true});
   const empty={...plan,labels:[],removalRegions:[],uncertainties:[]};
-  await choose(page,'exam','restore-editable');await page.locator('#ai-image-panel [data-ai-send]').click();await finish(page,{sourcePlan:empty});
+  await choose(page,'exam','restore-editable');await page.locator('#ai-image-panel [data-ai-comments-apply]').click();await finish(page,{sourcePlan:empty});
   const c=await candidate(page),requests=await sends(page);assert.ok(c);assert.equal(c.sourceLabelPlan.labels.length,0);assert.equal(generations(requests).length,0);
   const pixels=await pixelEvidence(page,c);assert.equal(pixels.outsideChanged,0);assert.equal(pixels.insideChanged,0);
   assert.equal(c.data,await page.evaluate(()=>window.__task2.original),'Unlabeled exam retains exact source PNG bytes, not just matching pixels');
@@ -171,7 +171,7 @@ test('workflow unlabeled exam: zero invented native objects and identical source
 
 test('workflow recovery: choices, source plan and candidate bindings survive reload without calls',{timeout:90000},async t=>{
   const dir=evidenceFor('recovery');const {page,errors}=await fixture(t,1,dir,{initialGeneration:true});
-  await choose(page,'general','restore-editable');await page.locator('#ai-image-panel [data-ai-send]').click();await finish(page);
+  await choose(page,'general','restore-editable');await page.locator('#ai-image-panel [data-ai-comments-apply]').click();await finish(page);
   const before=await candidate(page);
   assert.equal(before.sourceFrame.width,512);assert.equal(before.sourceFrame.height,384);
   const beforeObservation=(await snapshot(page))[0].sourceLabelObservation;
@@ -189,7 +189,7 @@ test('workflow explicit choices: legacy workspace cannot silently dispatch an im
   const dir=evidenceFor('explicit-choices');const {page,errors}=await fixture(t,1,dir,{initialGeneration:true});
   assert.equal(await page.locator('#ai-image-panel [data-ai-image-kind]').inputValue(),'');
   assert.equal(await page.locator('#ai-image-panel [data-ai-label-result]').inputValue(),'');
-  const send=page.locator('#ai-image-panel [data-ai-send]');
+  const send=page.locator('#ai-image-panel [data-ai-comments-apply]');
   const disabled=await send.isDisabled();if(!disabled)await send.click();
   assert.equal((await sends(page)).length,0,'A legacy workspace cannot infer exam/general or label result');
   await page.screenshot({path:path.join(dir,'explicit-choices-required.png')});record(dir,{disabled,requests:await sends(page),errors});assert.deepEqual(errors,[]);
@@ -198,7 +198,7 @@ test('workflow explicit choices: legacy workspace cannot silently dispatch an im
 test('workflow uncertainty: even a proposed confirmed mask cannot erase an uncertain source region',{timeout:90000},async t=>{
   const dir=evidenceFor('uncertainty');const {page,errors}=await fixture(t,1,dir,{initialGeneration:true});
   const uncertain={...plan,removalRegions:[...plan.removalRegions,{id:'unsafe-mark',labelId:'source-label',sourceRef:1,ownership:'confirmed',kind:'polygon',component:'endpoint',method:'flat-background',points:[{x:408/512,y:278/384},{x:430/512,y:278/384},{x:430/512,y:298/384},{x:408/512,y:298/384}]}]};
-  await choose(page,'exam','remove');await page.locator('#ai-image-panel [data-ai-send]').click();await finish(page,{sourcePlan:uncertain});
+  await choose(page,'exam','remove');await page.locator('#ai-image-panel [data-ai-comments-apply]').click();await finish(page,{sourcePlan:uncertain});
   const c=await candidate(page),pixels=await pixelEvidence(page,c);
   assert.equal(pixels.outsideChanged,0);assert.deepEqual(pixels.uncertainMark,[17,17,17,255]);assert.notEqual(c.reviewState,'passed');
   assert.ok(c.removalReport.issues.some(issue=>issue.code==='uncertain-overlap'));
@@ -208,7 +208,7 @@ test('workflow uncertainty: even a proposed confirmed mask cannot erase an uncer
 
 test('workflow selected scoped edit: explicit apply preserves source observation and RAW without full reanalysis',{timeout:120000},async t=>{
   const dir=evidenceFor('selected-scoped-edit');const {page,errors}=await fixture(t,1,dir,{initialGeneration:true});
-  await choose(page,'general','remove');await page.locator('#ai-image-panel [data-ai-send]').click();await finish(page);
+  await choose(page,'general','remove');await page.locator('#ai-image-panel [data-ai-comments-apply]').click();await finish(page);
   const first=await candidate(page),firstRequests=await sends(page),observation=(await snapshot(page))[0].sourceLabelObservation;
   assert.equal(generations(firstRequests).length,1);assert.equal(observations(firstRequests).length,1);
   assert.equal(await page.locator('#ai-image-panel [data-ai-send]').isVisible(),false,'Selected PNG uses the approved box-edit UI');
@@ -281,7 +281,7 @@ test('workflow mixed batch: exam remove and general editable retain independent 
   await choose(page,'general','restore-editable');
   await page.locator('#ai-image-panel [data-tab-id="task-0"] .ai-task-tab-select').click({modifiers:['Meta']});
   assert.match(await page.locator('#ai-image-panel [data-ai-selection-count]').textContent(),/2개 선택/);
-  await page.locator('#ai-image-panel [data-ai-send]').click();
+  await page.locator('#ai-image-panel [data-ai-comments-apply]').click();
   let next=0;
   for(let step=0;step<20;step++) {
     await page.waitForFunction(next=>window.__task2.sends.length>next || window.__task2Manager.workspaceBatchState().filter(j=>j.state==='completed').length===2,next);

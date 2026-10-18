@@ -327,7 +327,11 @@ test('TPK-005: pane header resize writes after observer delivery and coalesces u
       disconnect() { this.active = false; }
     };
     const writes = [];
-    const measuredHeadHeight = Math.max(0,...Array.from(panel.querySelectorAll('.ai-pane-head-controls'),control=>control.offsetHeight));
+    // 2026-10-16(83201a54)부터 머리 줄 높이 = 조절 줄 높이 + 머리 줄의 실제 위아래 여백·테두리(예전 고정 +8px 대신).
+    const measuredHeadHeight = Math.max(0,...Array.from(panel.querySelectorAll('.ai-pane-head-controls'),control=>{
+      const style=getComputedStyle(control.parentElement);
+      return control.offsetHeight+['paddingTop','paddingBottom','borderTopWidth','borderBottomWidth'].reduce((total,key)=>total+(parseFloat(style[key])||0),0);
+    }));
     const nativeSetProperty = panel.style.setProperty.bind(panel.style);
     panel.style.setProperty = (name, value, priority) => {
       if (name === '--ai-pane-head-height') writes.push(value);
@@ -355,7 +359,7 @@ test('TPK-005: pane header resize writes after observer delivery and coalesces u
   }, { indexSource });
 
   assert.equal(result.duringDelivery, '');
-  assert.equal(result.afterDelivery, `${result.measuredHeadHeight + 8}px`,'one shared header includes its measured controls and spacing');
+  assert.equal(result.afterDelivery, `${Math.ceil(result.measuredHeadHeight)}px`,'one shared header includes its measured controls and spacing');
   assert.equal(result.writesAfterFirstDelivery, 1);
   assert.equal(result.writesAfterUnchangedDelivery, 1);
   assert.equal(result.disconnected, true);
@@ -698,7 +702,7 @@ test('initial generation shows preparation before delayed status and completes i
   fs.mkdirSync(evidence, { recursive: true });
   const { page, errors } = await requestBrowserFixture(context, 4, evidence, { initialGeneration: true });
   await page.evaluate(() => window.__task2.delayStatus());
-  await page.locator('#ai-image-panel [data-ai-send]').click();
+  await page.locator('#ai-image-panel [data-ai-comments-apply]').click();
   assert.equal(await page.locator('#ai-image-panel [data-ai-generating]').isVisible(), true);
   assert.equal(await page.locator('#ai-image-panel').getAttribute('data-ai-request-phase'), 'preparing');
   await page.screenshot({ path: path.join(evidence, 'normal-preparation.png') });

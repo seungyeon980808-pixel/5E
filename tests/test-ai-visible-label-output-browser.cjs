@@ -49,7 +49,8 @@ h.withServer(async origin => {
           await toggle.waitFor(); await page.waitForFunction(() => !document.querySelector('#ai-image-panel [data-ai-label-toggle]').disabled);
           if (!included) await toggle.click();
           assert.equal(await toggle.getAttribute('aria-checked'), String(included));
-          const output = page.locator('#ai-image-panel .is-ai-active-candidate [data-ai-canvas-output]');
+          // 카드의 '캔버스에 삽입'은 숨겨지고(2026-10-12~13) 아래 단추 줄의 한 단추가 선택한 결과를 넣는다.
+          const output = page.locator('#ai-image-panel [data-ai-insert-selected]');
           assert.equal((await output.textContent()).includes('라벨 1개'), included, 'Output caption must describe the visible label choice');
           if (!included) assert.ok(!(await output.getAttribute('title')).includes('함께 넣습니다'), 'Hidden labels are not promised by the output tooltip');
           const before = await page.evaluate(async () => {

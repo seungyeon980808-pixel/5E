@@ -194,7 +194,9 @@ async function currentPrimaryAction(page) {
   await page.waitForFunction(() => ['preparation', 'result'].includes(document.querySelector('#ai-image-panel')?.dataset.aiStage));
   const stage = await panel.getAttribute('data-ai-stage');
   assert.ok(['preparation', 'result'].includes(stage), 'Submission begins only in a real idle workbench stage: ' + stage);
-  const selector = stage === 'preparation' ? '[data-ai-send]' : '[data-ai-comments-apply]';
+  // 2026-10-16(83201a54)부터 이미지 작업은 준비 단계에서도 아래 '변환하기' 하나만 보인다. 그래프 작업만 준비 칸의 버튼을 쓴다.
+  const graph = await panel.getAttribute('data-ai-workflow') === 'graph';
+  const selector = stage === 'preparation' && graph ? '[data-ai-send]' : '[data-ai-comments-apply]';
   const button = page.locator('#ai-image-panel[data-ai-stage="' + stage + '"] ' + selector);
   assert.equal(await button.count(), 1, 'Exactly one canonical primary action bound to ' + stage);
   assert.equal(await button.isVisible(), true, 'The actual current primary action must be physically visible');

@@ -5,26 +5,25 @@ const {fixture,choose,verifiedPlan,emit,snapshot}=require('./helpers/label-sourc
 const evidence=path.resolve(process.env.EVIDENCE_DIR||'.omo/evidence/labeler-timeout-browser');
 const panel='#ai-image-panel';
 
-test('failed source observation records actual label model and phase, while preserving the original for retry',{timeout:90000},async t=>{
+test('failed source observation uses the actual label model and preserves the original for retry',{timeout:90000},async t=>{
  const dir=path.join(evidence,'source-failure');fs.mkdirSync(dir,{recursive:true});
  const {page,errors}=await fixture(t,1,dir);await choose(page,'general','restore-editable');
- await page.locator(panel+' [data-ai-send]').click();await page.waitForFunction(()=>window.__task2.sends.length===1);
+ await page.locator(panel+' [data-ai-comments-apply]').click();await page.waitForFunction(()=>window.__task2.sends.length===1);
  assert.equal(await page.evaluate(()=>window.__task2.sends[0].payload.model),'gpt-6-luna');
  await page.evaluate(()=>window.__task2.emit(0,'error'));
  await page.waitForFunction(()=>document.querySelector('#ai-image-panel').dataset.aiBusy==='false');
- await page.locator(panel+' [data-ai-error-log-open]').click();
- const log=await page.locator(panel+' [data-ai-error-log-text]').inputValue();
- assert.match(log,/모델: gpt-6-luna · 추론: medium/);assert.match(log,/실행: turn-0/);assert.match(log,/원본 라벨 분석 · 그림 생성 전/);
+ // 오류 기록 창은 2026-10-13(61bcd508)에 없어졌고 문제 신고는 바깥 게시판 링크가 됐다(4fa3c199). 화면에서 읽을 기록이 없어 기록 문구 확인은 뺐다.
+ const log=await page.locator(panel+' [data-ai-status]').textContent();
  assert.equal(await page.evaluate(()=>window.__task2.sends.length),1);
  const tabs=await snapshot(page);assert.equal(tabs[0].attachments.length,1);assert.equal(tabs[0].generated.length,0);
- assert.deepEqual(errors,[]);await page.screenshot({path:path.join(dir,'actual-stage-error-log.png')});
+ assert.deepEqual(errors,[]);await page.screenshot({path:path.join(dir,'actual-stage-error.png')});
  fs.writeFileSync(path.join(dir,'result.json'),JSON.stringify({scope:'synthetic transport; real product modules',log,imageCalls:0,originalPreserved:true,errors},null,2));
 });
 
 test('final verification connection failure keeps the one generated RAW and flags review without replacement',{timeout:90000},async t=>{
  const dir=path.join(evidence,'review-failure');fs.mkdirSync(dir,{recursive:true});
  const {page,errors}=await fixture(t,1,dir);await choose(page,'general','restore-editable');
- await page.locator(panel+' [data-ai-send]').click();await page.waitForFunction(()=>window.__task2.sends.length===1);
+ await page.locator(panel+' [data-ai-comments-apply]').click();await page.waitForFunction(()=>window.__task2.sends.length===1);
  await emit(page,0,'assistant',JSON.stringify(verifiedPlan));
  await page.waitForFunction(()=>window.__task2.sends.length===2);await emit(page,1,'image');
  await page.waitForFunction(()=>window.__task2.sends.length===3);
@@ -47,7 +46,7 @@ test('final verification connection failure keeps the one generated RAW and flag
 test('unverified exam ink retains original pixels and provides a separate editable list, never in-place overlays',{timeout:90000},async t=>{
  const dir=path.join(evidence,'exam-deferred');fs.mkdirSync(dir,{recursive:true});
  const {page,errors}=await fixture(t,1,dir);await choose(page,'exam','restore-editable');
- await page.locator(panel+' [data-ai-send]').click();await page.waitForFunction(()=>window.__task2.sends.length===1);
+ await page.locator(panel+' [data-ai-comments-apply]').click();await page.waitForFunction(()=>window.__task2.sends.length===1);
  const plan=structuredClone(verifiedPlan);plan.removalRegions=[];plan.inkSearchRegions=[];
  await emit(page,0,'assistant',JSON.stringify(plan));await page.waitForFunction(()=>document.querySelector('#ai-image-panel').dataset.aiBusy==='false');
  const tab=(await snapshot(page))[0],candidate=tab.generated[0];assert.ok(candidate);assert.equal(candidate.labelPlan,null);assert.equal(candidate.reviewState,'needs-attention');
@@ -68,7 +67,7 @@ test('unverified exam ink retains original pixels and provides a separate editab
 test('label uncertainty prevents its entire text leader endpoint unit from being erased',{timeout:90000},async t=>{
  const dir=path.join(evidence,'exam-atomic');fs.mkdirSync(dir,{recursive:true});
  const {page,errors}=await fixture(t,1,dir);await choose(page,'exam','restore-editable');
- await page.locator(panel+' [data-ai-send]').click();await page.waitForFunction(()=>window.__task2.sends.length===1);
+ await page.locator(panel+' [data-ai-comments-apply]').click();await page.waitForFunction(()=>window.__task2.sends.length===1);
  const plan=structuredClone(verifiedPlan);plan.uncertainties=[{sourceRef:1,labelId:'source-label',reason:'검증 fixture: 이 라벨 원문 판독 미확정'}];
  await emit(page,0,'assistant',JSON.stringify(plan));await page.waitForFunction(()=>document.querySelector('#ai-image-panel').dataset.aiBusy==='false');
  const candidate=(await snapshot(page))[0].generated[0];assert.deepEqual(candidate.removalReport.removedLabelIds,[]);

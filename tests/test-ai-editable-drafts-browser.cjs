@@ -157,7 +157,7 @@ test('general draft-first UI offers native editing and optional verification wit
     }
   }
   await page.setViewportSize({width:1440,height:1000});
-  await page.locator(panel+' [data-ai-send]').click();await finish(page);
+  await page.locator(panel+' [data-ai-comments-apply]').click();await finish(page);
   let candidate=(await snapshot(page))[0].generated.at(-1);
   assert.equal(candidate.imageLabelWorkflow.verificationMode,'draft-first');
   assert.equal(candidate.reviewState,'needs-attention');
@@ -205,7 +205,7 @@ for(const [id,count] of [['holdout-exam-2004-physics-q11',5],['holdout-exam-2004
       labels:retainedResponse.labels.map(label=>({...label,disposition:'restore',semanticRole:'scientific-label',reason:'Synthetic classification annotation for UI regression'}))};
     await page.evaluate(async({source,id})=>{await window.__task2Manager.attachReference({src:source,name:id});},{source,id});
     await choose(page,'exam','restore-editable');
-    await page.locator(panel+' [data-ai-send]').click();await finish(page,{sourcePlan});
+    await page.locator(panel+' [data-ai-comments-apply]').click();await finish(page,{sourcePlan});
     let row=(await snapshot(page)).find(row=>row.attachments.some(a=>a.name===id));
     const candidate=row.generated.at(-1);
     const removed=candidate.removalReport.removedLabelIds;

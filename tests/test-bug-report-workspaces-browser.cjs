@@ -23,7 +23,8 @@ for (const engine of ['chromium','webkit']) test(engine+' CS links and selected 
  }});
  assert.equal(await page.evaluate(()=>__reportProviderCount()),1);
  const panel=page.locator('#ai-image-panel');
- assert.equal(await panel.locator('[data-ai-comment-tool="pan"]').getAttribute('aria-pressed'),'true');
+ // 2026-10-16(83201a54)부터 코멘트 도구 기본값은 '선택'(아무 도구도 눌리지 않음)이다.
+ assert.equal(await panel.locator('[data-ai-comment-tool][aria-pressed="true"]').count(),0);
  assert.equal(await panel.getAttribute('data-ai-comments-visible'),'false');
  const scopes=[''];
  for(let i=0;i<2;i++){

@@ -55,9 +55,18 @@ async function generatedPng(page, index) {
   }, index);
 }
 
+
+// 2026-10-12(4a523ad8)부터 박스 수정 방식은 접힌 '고급 · 실험' 칸 안에 있다. 고르기 전에 펼친다.
+async function showScopedMode(page) {
+  const advanced = page.locator('#ai-image-panel [data-ai-scoped-advanced]');
+  await advanced.waitFor({ state: 'visible' });
+  if (!await advanced.evaluate(node => node.open)) await advanced.locator('summary').click();
+  await page.locator('[data-ai-scoped-prompt-mode]').waitFor({ state: 'visible' });
+}
 test('visible compact UI sends one clean source, preserves cancellation and binds corrected comments to original pixels', async context => {
   fs.mkdirSync(evidence, { recursive: true });
   const { page } = await fixture(context, 1, evidence, { selectedPartial: true });
+  await showScopedMode(page);
   const mode = page.locator('[data-ai-scoped-prompt-mode]');
   assert.equal(await mode.isVisible(), true);
   assert.equal(await mode.inputValue(), 'legacy');
@@ -85,6 +94,9 @@ test('visible compact UI sends one clean source, preserves cancellation and bind
   assert.equal(tabs[0].generated[0].data, await page.evaluate(() => window.__task2.original));
 
   const feedback = 'Add one black dot inside the box. The previous dot was misplaced; keep all existing marks unchanged.';
+  // 코멘트 표시는 처음에 꺼져 있다(2026-10-16, 83201a54). 표시를 켜고 박스 표식을 눌러 코멘트 창을 연다.
+  if (await page.locator('#ai-image-panel').getAttribute('data-ai-comments-visible') !== 'true') await page.locator('#ai-image-panel [data-ai-comment-visibility]').click();
+  await page.locator('#ai-image-panel .is-ai-active-candidate button[data-ai-comment-marker]').first().click();
   const fields = page.locator('#ai-image-panel textarea');
   let comment;
   for (let i = 0; i < await fields.count(); i++) {

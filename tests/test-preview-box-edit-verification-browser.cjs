@@ -67,15 +67,36 @@ async function mockMovedPng(page,index,dx){
   },{index,dx});
 }
 
+
+// 2026-10-12(4a523ad8)부터 박스 수정 방식은 접힌 '고급 · 실험' 칸 안에 있다. 고르기 전에 펼친다.
+async function showScopedMode(page) {
+  const advanced = page.locator('#ai-image-panel [data-ai-scoped-advanced]');
+  await advanced.waitFor({ state: 'visible' });
+  if (!await advanced.evaluate(node => node.open)) await advanced.locator('summary').click();
+  await page.locator('[data-ai-scoped-prompt-mode]').waitFor({ state: 'visible' });
+  // 박스별 수치 칸은 코멘트 표식에 올린 창의 접힌 '고급 · 수치 검증' 칸(data-ai-precision-settings) 안에 있다.
+  // 코멘트 표시는 처음에 꺼져 있다(2026-10-16, 83201a54).
+  if (await page.locator('#ai-image-panel').getAttribute('data-ai-comments-visible') !== 'true') await page.locator('#ai-image-panel [data-ai-comment-visibility]').click();
+  const precision = page.locator('#ai-image-panel [data-ai-precision-settings]').first();
+  if (!await precision.isVisible()) {
+    const marker = page.locator('#ai-image-panel .is-ai-active-candidate button[data-ai-comment-marker]').first();
+    if (!await marker.count()) return;
+    // 선택된 표식은 계속 움직이는 효과가 있어 '멈춤' 확인 없이 올린다.
+    await marker.hover({ force: true });
+  }
+  await precision.waitFor({ state: 'visible' });
+  if (!await precision.evaluate(node => node.open)) await precision.locator('summary').first().click();
+}
 test('real product blocks a bad candidate, authorizes one original-based correction and persists both attempts',async context=>{
   fs.mkdirSync(evidence,{recursive:true});
   const mobile=process.env.UI_CAPTURE_WIDTH==='390';
   const {page}=await fixture(context,1,evidence,{selectedPartial:true,precisionMove:true,
     browserContextOptions:mobile?{viewport:{width:390,height:844},deviceScaleFactor:3,isMobile:true,hasTouch:true}:{}});
   await page.evaluate(theme=>document.documentElement.dataset.theme=theme,process.env.UI_CAPTURE_THEME||'dark');
-  if(!await page.locator('[data-ai-scoped-prompt-mode]').isVisible()) {
+  if(!await page.locator('#ai-image-panel [data-ai-scoped-advanced]').isVisible()) {
     await page.locator('#ai-image-panel [data-panel-toggle="right"]').click();
   }
+  await showScopedMode(page);
   await page.locator('[data-ai-scoped-prompt-mode]').selectOption('verified');
   assert.equal(await page.getByLabel('박스 1 가로 이동 px',{exact:true}).getAttribute('inputmode'),'text');
   await capture(page,'criteria');
@@ -165,6 +186,7 @@ test('real product blocks a bad candidate, authorizes one original-based correct
 test('a second real PNG verification failure has no apply or third-request path',async context=>{
   const dir=path.join(evidence,'second-failure');fs.mkdirSync(dir,{recursive:true});
   const {page}=await fixture(context,1,dir,{selectedPartial:true,precisionMove:true});
+  await showScopedMode(page);
   await page.locator('[data-ai-scoped-prompt-mode]').selectOption('verified');
   await subscribe(page,'send-one','send');
   await page.locator('[data-ai-comments-apply]').click();await arrived(page,'send-one');
@@ -188,6 +210,7 @@ test('a second real PNG verification failure has no apply or third-request path'
 test('source preflight rejects an impossible destination before sending, and correction cancellation keeps the original',async context=>{
   const dir=path.join(evidence,'preflight-cancel');fs.mkdirSync(dir,{recursive:true});
   const {page}=await fixture(context,1,dir,{selectedPartial:true,precisionMove:true});
+  await showScopedMode(page);
   await page.locator('[data-ai-scoped-prompt-mode]').selectOption('verified');
   await page.getByLabel('박스 1 가로 이동 px',{exact:true}).fill('150');
   await page.getByLabel('박스 1 가로 이동 px',{exact:true}).press('Tab');
@@ -196,6 +219,7 @@ test('source preflight rejects an impossible destination before sending, and cor
   assert.equal(await page.evaluate(()=>window.__task2.sends.length),0);
   let tabs=await snapshot(page);
   assert.equal(tabs[0].generated[0].scopedEditHistory[0].error.code,'SCOPED_EDIT_SOURCE_UNCERTAIN');
+  await showScopedMode(page);
   await page.getByLabel('박스 1 가로 이동 px',{exact:true}).fill('20');
   await page.getByLabel('박스 1 가로 이동 px',{exact:true}).press('Tab');
   await subscribe(page,'allowed-send','send');

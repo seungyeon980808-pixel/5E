@@ -185,7 +185,7 @@ test('Task 6 browser flow binds preflight, insertion, and default share to the a
   await chooseCurrentInput();
   const countsBefore = await page.evaluate(() => window.__task6Mock.counts());
   await page.evaluate(() => window.__task6Mock.delayStatus());
-  await page.locator('#ai-image-panel [data-ai-send]').dblclick();
+  await page.locator('#ai-image-panel [data-ai-comments-apply]').dblclick();
   await page.waitForFunction((before) => window.__task6Mock.counts().statusCount === before + 1,
     countsBefore.statusCount);
   assert.equal((await page.evaluate(() => window.__task6Mock.counts())).statusCount - countsBefore.statusCount, 1);
@@ -222,7 +222,7 @@ test('Task 6 browser flow binds preflight, insertion, and default share to the a
   }, png);
   await page.waitForFunction(() => window.__task6OldPanel.querySelectorAll('.ai-generated-card').length===1 && window.__task6OldPanel.dataset.aiBusy==='false');
   assert.equal(await page.locator('#ai-image-panel .ai-generated-card').count(),0,'A result never enters active B');
-  await page.locator('#ai-image-panel [data-ai-send]').click();
+  await page.locator('#ai-image-panel [data-ai-comments-apply]').click();
   await page.waitForFunction(() => window.__task6Mock.counts().sendCount===2);
   await page.evaluate((imageDataUrl) => {
     window.__task6Mock.emitEvent({ method: 'item/completed', params: { turnId:'turn-2', item:{type:'imageGeneration',imageDataUrl} } },1);

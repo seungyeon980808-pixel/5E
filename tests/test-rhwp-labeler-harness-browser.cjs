@@ -20,7 +20,7 @@ for (const engine of ['chromium', 'webkit']) {
       const plan = structuredClone(verifiedPlan);
       plan.labels[0].typography.role = 'name';
       plan.labels[0].typography.runs = [{ text: '전자', role: 'name', contentMode: 'plain' }];
-      await page.locator('#ai-image-panel [data-ai-send]').click();
+      await page.locator('#ai-image-panel [data-ai-comments-apply]').click();
       await finish(page, { sourcePlan: plan });
       const result = await page.evaluate(async baseline => {
         const v = '?v=1.7.0-four-session-integration';
