@@ -131,6 +131,15 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
   const measureRich=(v,fontSize=11)=>pieces(v).reduce((sum,part)=>sum+(part.math?eqSize(part.text,fontSize).w:part.text?(measureText?measureText(part.text,fontSize):plainWidth(part.text,fontSize*4/3)):0),0);
   // 줄에 든 수식이 글자보다 높으면 그만큼 줄이 높아진다(분수). 칸 높이를 미리 정할 때 더한다.
   const extraHeight=(wrapped,fontSize=11)=>String(wrapped).split('\n').reduce((sum,line)=>sum+Math.max(0,...pieces(line).filter(p=>p.math).map(p=>eqSize(p.text,fontSize).h-fontSize*4/3)),0);
+  // 가로 묶음 안 폭: 자료표 칸은 적어도 열마다 가장 긴 어절이 들어가는 폭을 받는다(옆 글 칸에서 덜어 온다).
+  const tableMin=t=>{if(!measureText||!t)return 0;const fs=t.cols>3?9:10,word=Array(t.cols).fill(36);for(let r=0;r<t.rows;r++)for(let c=0;c<t.cols;c++){if(tableCovered(t,r,c)||t.merges.some(m=>m.r===r&&m.c===c&&m.cs>1))continue;word[c]=Math.max(word[c],Math.max(0,...words(String(t.cells[r][c].value)).map(x=>measureRich(x,r<t.headerRows?fs-1:fs)))+22);}return word.reduce((a,b)=>a+b,0)+20;};
+  const rowWidths=(children,total)=>{
+    const w=splitWidths(children,total),need=children.map(c=>c.kind==='table'?tableMin(c.table)/((c.size??100)/100):0);
+    let deficit=0;w.forEach((v,i)=>{if(need[i]>v){deficit+=need[i]-v;w[i]=need[i];}});
+    const donors=children.map((c,i)=>c.kind==='text'?Math.max(0,w[i]-120):0),room=donors.reduce((a,b)=>a+b,0);
+    if(deficit>0&&room>0){const take=Math.min(deficit,room);w.forEach((v,i)=>{if(donors[i])w[i]-=take*donors[i]/room;});}
+    const sum=w.reduce((a,b)=>a+b,0);return sum>total?w.map(v=>v*total/sum):w;
+  };
   const reserveTable=()=>{tables.push(null);tableOwners.push(null);return tables.length-1;};
   // 글 조각마다 주인(어느 칸의 글인지)과 앞머리 길이(번호·ㄱ.·① 등)를 남긴다. 한글 창에서 고친 글을 시트로 되돌릴 때 쓴다.
   const text=(v,width=null,fontSize=11,wrap=null,owner=null,font='함초롬바탕')=>{
@@ -189,19 +198,25 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
   const table=async(t,width,choices=false,align,owner=choices?{kind:'choices'}:{kind:'table'},auto=false)=>{
     recordTable(t.rows,t.cols+(choices?1:0),t.merges.map(m=>({...m,c:m.c+(choices?1:0)})),owner);
     const fontSize=t.cols>3?9:10,inner=width-(choices?25:0);
-    // 열 폭: 크기를 정하지 않은 자료표는 칸 글 폭에 맞춘다(평가원 표는 글 길이만큼 좁고 가운데). 단 폭을 넘으면 비율대로 줄인다.
+    // 열 폭: 칸 글 폭에 맞춘다. 크기를 정하지 않은 자료표는 글 길이만큼 좁게(평가원 표), 정한 표는 그 폭 안에서 글 길이 비율로 나눈다.
+    // 열마다 가장 긴 어절은 한 줄에 들어가게 한다(어절 중간에서 끊기면 칸 높이를 넘는다). 빈 표·그림이 든 표·선지표는 똑같이 나눈다.
     let colW=Array(t.cols).fill(inner/t.cols);
-    // 빈 표(틀만 만든 결과표 등)는 줄이지 않는다.
-    if(auto&&measureText&&!t.cells.flat().some(c=>c.figure)&&t.cells.flat().filter(c=>String(c.value).trim()).length>=Math.max(2,t.cols)){
-      const nat=Array(t.cols).fill(36),spans=[];
+    if(!choices&&measureText&&!t.cells.flat().some(c=>c.figure)&&t.cells.flat().filter(c=>String(c.value).trim()).length>=Math.max(2,t.cols)){
+      const nat=Array(t.cols).fill(36),word=Array(t.cols).fill(36),spans=[];
       for(let r=0;r<t.rows;r++)for(let c=0;c<t.cols;c++){
         if(tableCovered(t,r,c))continue;
-        const m=t.merges.find(m=>m.r===r&&m.c===c),size=r<t.headerRows?fontSize-1:fontSize;
-        const w=Math.max(0,...String(t.cells[r][c].value).split(/\r?\n/).map(line=>measureRich(line,size)))+22;
-        if((m?.cs||1)===1)nat[c]=Math.max(nat[c],w);else spans.push({c,cs:m.cs,w});
+        const m=t.merges.find(m=>m.r===r&&m.c===c),size=r<t.headerRows?fontSize-1:fontSize,value=String(t.cells[r][c].value);
+        const w=Math.max(0,...value.split(/\r?\n/).map(line=>measureRich(line,size)))+22,longest=Math.max(0,...words(value).map(x=>measureRich(x,size)))+22;
+        if((m?.cs||1)===1){nat[c]=Math.max(nat[c],w);word[c]=Math.max(word[c],longest);}else spans.push({c,cs:m.cs,w});
       }
       for(const {c,cs,w} of spans){const have=nat.slice(c,c+cs).reduce((a,b)=>a+b,0);if(w>have)for(let i=c;i<c+cs;i++)nat[i]+=(w-have)/cs;}
-      const total=nat.reduce((a,b)=>a+b,0);colW=total<=inner?nat:nat.map(v=>v*inner/total);
+      const total=nat.reduce((a,b)=>a+b,0);
+      if(auto&&total<=inner)colW=nat;
+      else{
+        const minimum=word.reduce((a,b)=>a+b,0)<=inner?word:word.map(()=>0);
+        colW=nat.map(v=>v*inner/total);
+        for(let pass=0;pass<3;pass++){const short=colW.map((v,i)=>v<minimum[i]);if(!short.some(Boolean))break;const fixed=colW.reduce((a,v,i)=>a+(short[i]?minimum[i]:0),0),rest=nat.reduce((a,v,i)=>a+(short[i]?0:v),0);colW=colW.map((v,i)=>short[i]?minimum[i]:nat[i]*(inner-fixed)/rest);}
+      }
       width=colW.reduce((a,b)=>a+b,0)+(choices?25:0);
     }
     const cw=(c,cs=1)=>colW.slice(c,c+cs).reduce((a,b)=>a+b,0);
@@ -260,9 +275,10 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
     for(const b of q.blocks.filter(b=>b.parent===parent&&(!onlyId||b.id===onlyId))){
       if(b===firstText||!onlyId&&afterAsk.includes(b.id)||floated.has(b.id)||b===floatTable)continue;
       html+=spacer(b);
-      if(b===sideText)html+=p(prefix+b.text,width,11,{kind:'block',id:b.id,prefix:prefix.length});
+      // 글 옆 묶음 칸 안의 첫 지문(번호 포함)도 칸 폭으로 어절 줄바꿈을 넣는다(엔진은 칸 안 글을 한 줄에 눌러 담는다).
+      if(b===sideText)html+=measureText?`<p style="margin:4px 0;text-align:left">${text(prefix+b.text,Math.max(35,width-10),11,null,{kind:'block',id:b.id,prefix:prefix.length})}</p>`:p(prefix+b.text,width,11,{kind:'block',id:b.id,prefix:prefix.length});
       // 상자·가로 묶음 칸 안 글은 실제 글꼴 폭으로 어절 단위 줄바꿈을 넣는다. 칸 문단은 한글 엔진이 줄 수를 다시 세지 않아 칸이 한 줄 높이로 남는다.
-      else if(b.kind==='text'&&b.text&&(nested||inBox)&&measureText)html+=`<p style="margin:4px 0;text-align:left">${text(b.text,Math.max(35,width-4),11,null,{kind:'block',id:b.id})}</p>`;
+      else if(b.kind==='text'&&b.text&&(nested||inBox)&&measureText)html+=`<p style="margin:4px 0;text-align:left">${text(b.text,Math.max(35,width-10),11,null,{kind:'block',id:b.id})}</p>`;
       else if(b.kind==='text')html+=b.text?floatsAt.has(b.id)?`<p style="margin:4px 0;text-align:justify">${await floatImages(b.id,width)}${text(b.text,width,11,v=>v,{kind:'block',id:b.id})}</p>`:p(b.text,width,11,{kind:'block',id:b.id}):'';
       else if(b.kind==='figure'){
         html+=heading(b);
@@ -284,7 +300,7 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
           // 줄마다 칸 내용을 먼저 만든다. 내용이 없는 구성(빈 설명 등)은 줄을 만들지 않는다. 빈 칸 줄은 한글 엔진이 다르게 처리한다.
           let rows=[];
           for(const row of (b.layout==='나란히'?[{cells:children,group:b}]:children.map(c=>sideRow(c)?{cells:kidsOf(c),group:c}:{cells:[c],single:true}))){
-            const n=row.single?1:row.cells.length,widths=row.single?[innerWidth]:splitWidths(row.cells,innerWidth),inner=[];
+            const n=row.single?1:row.cells.length,widths=row.single?[innerWidth]:rowWidths(row.cells,innerWidth),inner=[];
             nested++;try{for(const [i,cell] of row.cells.entries())inner.push(row.single?await walk(b.id,innerWidth,cell.id):await walk(row.group.id,Math.max(35,widths[i]-16),cell.id));}finally{nested--;}
             if(row.single&&!inner[0].trim())continue;
             for(let i=0;i<inner.length;i++)if(!inner[i].trim())inner[i]='<p><br></p>';
@@ -313,11 +329,16 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
           recordTable(1,children.length,[],{kind:'side',id:b.id});
           body=`<table style="border-collapse:collapse;width:${innerWidth}px"><tr>`;
           // Render the children individually while keeping their own descendants.
-          const widths=splitWidths(children,innerWidth);
+          const widths=rowWidths(children,innerWidth);
+          const cells=[];
           nested++;try{for(const [i,child] of children.entries()){
-            body+=`<td style="border:none;padding:5px;vertical-align:top;width:${widths[i]}px">${await walk(b.id,Math.max(35,widths[i]-16),child.id)}</td>`;
+            const inner=await walk(b.id,Math.max(35,widths[i]-16),child.id);cells.push(inner);
+            body+=`<td style="border:none;padding:5px;vertical-align:top;width:${widths[i]}px;height:__ROWH__">${inner}</td>`;
           }}finally{nested--;}
           body+='</tr></table>';
+          // 그림만 나란한 칸: 칸 높이를 그림 + (가)·(나) 줄로 정해 둔다. 한글 엔진은 겹친 표의 칸 높이를 내용보다 2~3px 낮게 잡아 (가)가 칸 밖으로 나간다.
+          const figureOnly=children.every(c=>c.kind==='figure'),estimate=html=>Math.max(0,...[...html.matchAll(/<img [^>]*height="(\d+)"/g)].map(m=>Number(m[1])))+((html.match(/<p\b/g)||[]).length)*24+16;
+          body=body.replaceAll('height:__ROWH__',figureOnly?`height:${Math.ceil(Math.max(...cells.map(estimate)))}px`:'');
         }else{if(boxed)inBox++;try{body=await walk(b.id,innerWidth);}finally{if(boxed)inBox--;}}
         if(boxed)recordTable(1,1,[],{kind:'box',id:b.id},boxSlot);
         html+=boxed?`<table style="border-collapse:collapse;width:${width}px"><tr><td style="border:${RULE};width:${width}px;height:32px;padding:8px 8px ${8+Math.round((b.pad||0)*96/25.4)}px">${b.label?p(b.label,null,11,{kind:'label',id:b.id}):''}${body}</td></tr></table>`:body;
