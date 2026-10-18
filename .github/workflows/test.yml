@@ -26,8 +26,8 @@ jobs:
       # 느린 GitHub 컴퓨터의 타이밍 흔들림은 한 번 다시 돌려 보고, 그래도 실패할 때만 새 실패로 본다.
       BROWSER_SUITE_RETRIES: '1'
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 24.21.0
           cache: npm
@@ -49,7 +49,7 @@ jobs:
         if: always()
         run: npm run test:browser -- --known-failures tests/known-failures.json --report _work/ci/evidence/browser-report.json
       - name: Preserve regression diagnostics
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         if: always()
         with:
           name: ci-browser-${{ github.sha }}-${{ github.run_attempt }}
