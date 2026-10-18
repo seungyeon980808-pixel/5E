@@ -307,7 +307,9 @@ export async function toQuestion(structure,item,{number='1'}={}){
     rows.forEach((r,i)=>{if(!q.choiceTable.cells[i+1])return;const cells=r.length>cols?[...r.slice(0,cols-1),r.slice(cols-1).join(' ')]:r;cells.forEach((v,c)=>q.choiceTable.cells[i+1][c].value=v);});
     if(!header?.some(Boolean))diag.notes.push('선지표 머리줄을 찾지 못했습니다.');
     diag.pair=P?'위치':'낱말';
-  }else if(choiceFigs)choiceFigs.forEach((f,i)=>{const d=f.direct||figs.get(f.run);if(!f.direct||/원본 참고/.test(choices[i]||''))q.choices[i].text='';else q.choices[i].text=choices[i]||'';q.choices[i].figure={name:`${item.id}-선지${i+1}.png`,data:d.data};});
+  }else if(choiceFigs)choiceFigs.forEach((f,i)=>{const d=f.direct||figs.get(f.run);if(!f.direct||/원본 참고/.test(choices[i]||''))q.choices[i].text='';else q.choices[i].text=choices[i]||'';q.choices[i].figure={name:`${item.id}-선지${i+1}.png`,data:d.data,...(d.box?{widthPt:Math.round((d.box[2]-d.box[0])*10)/10}:{})};});
+  // 조판기는 선지 스타일이 '그림·그래프'일 때만 선지 그림을 찍는다.
+  if(choiceFigs&&form!=='pair')q.style='그림·그래프';
   else choices.slice(0,5).forEach((t,i)=>{if(q.choices[i])q.choices[i].text=t;});
   // 수식 안 괄호·상태 기호는 본문 글로(원본 글꼴과 같게).
   mapQuestionText(q,splitEquationParens);
