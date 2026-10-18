@@ -50,5 +50,21 @@ export function createBoardStore(db, images) {
         hits=CASE WHEN starts<=? THEN 1 ELSE hits+1 END RETURNING hits`, key, now, now-duration, now-duration);
       return row.hits <= maximum;
     },
+    // 양(첨부 바이트 등)을 더하되 기간 안 합계가 maximum을 넘으면 더하지 않고 false.
+    async usage(key, amount, maximum, duration, now) {
+      if (amount > maximum) return false;
+      const row = await first(`INSERT INTO rate_limits (key,starts,hits) VALUES (?,?,?)
+        ON CONFLICT(key) DO UPDATE SET starts=CASE WHEN starts<=? THEN excluded.starts ELSE starts END,
+        hits=CASE WHEN starts<=? THEN excluded.hits ELSE hits+excluded.hits END
+        WHERE (CASE WHEN starts<=? THEN excluded.hits ELSE hits+excluded.hits END)<=? RETURNING hits`,
+      key, now, amount, now-duration, now-duration, now-duration, maximum);
+      return Boolean(row);
+    },
+    // 기간 안에 쌓인 횟수(늘리지 않고 읽기만).
+    async hits(key, duration, now) {
+      return (await first('SELECT hits FROM rate_limits WHERE key=? AND starts>?', key, now-duration))?.hits || 0;
+    },
+    // 오래된 제한 기록 정리(Cron). 지운 행 수.
+    prune: before => changes('DELETE FROM rate_limits WHERE starts<?', before),
   };
 }

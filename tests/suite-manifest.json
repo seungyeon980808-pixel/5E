@@ -8,6 +8,12 @@
       ]
     },
     {
+      "path": "tests/test-bug-board-abuse-limits.mjs",
+      "findingIds": [
+        "SECURITY-BUG-BOARD-ABUSE-LIMITS"
+      ]
+    },
+    {
       "path": "tests/test-visitor-stats-worker.mjs",
       "findingIds": [
         "VISITOR-STATS-WORKER"

@@ -17,4 +17,9 @@ export default {
       allowedOrigins:(env.ALLOWED_ORIGINS || 'https://www.5e.ai.kr,https://5e.ai.kr').split(',')});
     return handler(request,{clientIp:request.headers.get('CF-Connecting-IP') || 'unknown'});
   },
+  // 하루 한 번 이틀 지난 요청 제한 기록을 지운다(보안 점검 L5). 제한 기간은 길어야 하루다.
+  async scheduled(controller, env, ctx) {
+    if (!env.DB) return;
+    ctx.waitUntil(createBoardStore(env.DB, null).prune((controller.scheduledTime || Date.now()) - 2 * 86400000));
+  },
 };
