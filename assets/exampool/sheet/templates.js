@@ -1,4 +1,4 @@
-import {newQuestion,block,makeTable} from './model.js';
+import {newQuestion,block,makeTable,WRAP} from './model.js';
 import {RECORDS as RAW} from './shape-stats.js';
 
 // 새 문항 틀: ① 유형 → ② 자료 구조, 클릭 2번. 배치는 고르지 않고 기출에서 가장 많이 쓰인 배치로 정한다.
@@ -54,10 +54,9 @@ export function questionFromShape({form,struct,subject='all'},number){
   q.points=2;q.blocks=[];
   const add=(kind,parent,label)=>{const b=block(kind,parent?.id||null,label);q.blocks.push(b);return b;};
   const group=(parent,label,side)=>{const g=add('group',parent,label);g.layout=side?'나란히':'세로';g.boxed=false;return g;};
-  if(struct==='small'){
-    // 글 옆 작은 자료: 첫 글과 자료를 가로로 묶는다. 자료 폭은 단의 약 38%(3:2).
-    const g=group(null,'글 옆 자료',true),t=add('text',g,'지문');t.ratio=3;add('figure',g,'자료').ratio=2;
-  }else add('text',null,'지문');
+  add('text',null,'지문');
+  // 글 옆 작은 자료: 평가원처럼 첫 지문 문단에 붙은 어울림 그림(오른쪽, 글이 왼쪽·아래로 흐름). 폭은 단의 40%.
+  if(struct==='small'){const f=add('figure',null,'자료');f.layout=WRAP;f.size=40;}
   if(struct==='big')add('figure',null,'자료');
   if(struct==='two'||struct==='many'){
     const n=struct==='two'?2:3;

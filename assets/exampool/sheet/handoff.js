@@ -1,4 +1,4 @@
-import {FORMAT,clone,validate,tableCovered,openingSideText} from './model.js';
+import {FORMAT,clone,validate,tableCovered,openingSideText,isWrapped} from './model.js';
 import {mathParts} from './typeset-model.js';
 import {splitWidths,sizedWidth,gapPx,choiceColumns} from './placement.js';
 
@@ -40,7 +40,7 @@ export function choiceGrid(choices,width,fontSize=11,layout,measure=choiceWidth)
 // squeeze a long header into one line and paint its Latin units into the next
 // cell. Explicit lines keep the actual text editable and its font unchanged.
 // 구성 이름이 한글 문서에 글로 찍히는지: 상자 묶음의 제목, 과정 제목, (가)·(나) 같은 그림 이름. 아래 조판과 같은 조건.
-export const labelInDocument=b=>!!b.label&&(b.kind==='steps'||b.heading===true||b.kind==='group'&&(b.boxed===true||b.boxed===undefined&&b.label==='실험')||b.kind==='figure'&&!!b.figure&&/^\(.+\)$/.test(b.label));
+export const labelInDocument=b=>!!b.label&&(b.kind==='steps'||b.heading===true||b.kind==='group'&&(b.boxed===true||b.boxed===undefined&&b.label==='실험')||b.kind==='figure'&&!!b.figure&&!isWrapped(b)&&/^\(.+\)$/.test(b.label));
 export function wrapQuestionText(value,width,fontSize=11){
   if(!width)return String(value??'');
   const em=fontSize*4/3,limit=Math.max(em,width),lines=[];
@@ -117,7 +117,7 @@ export function wrapHangingText(value,width,prefix,measure){
 export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540,{native=false,measureText,skeleton=false,ghostFigure=null}={}){
   const q=handoffQuestion(value,{skeleton}),ghost=skeleton?fillSkeleton(q):{ghosts:new Set(),figures:new Set()},images=[],texts=[],warnings=[],tables=[],equations=[];
   // 문서 순서대로 그림·표가 어느 구성의 것인지 기록한다(한글 창에서 끌어 배치할 때 짝짓기).
-  const imageOwners=[],tableOwners=[],textSegments=[];
+  const imageOwners=[],tableOwners=[],textSegments=[],floats=[];
   const recordTable=(rows,cols,merges=[],owner={kind:'layout'},at=null)=>{const shape={rows,cols,merges:merges.map(m=>`${m.r}:${m.c}:${m.rs}:${m.cs}`).sort()};if(at===null){tables.push(shape);tableOwners.push(owner);}else{tables[at]=shape;tableOwners[at]=owner;}};
   // 가로 묶음 칸·상자 표의 줄 안에서는 칸이 모두 빈 표를 한글 엔진이 빠뜨린다. 그 자리의 빈 칸에만 보이지 않는
   // 단어 연결 문자(U+2060)를 둔다. 문자 참조(&#…;)는 엔진이 글자 그대로 찍고, U+200B·U+FEFF는 저장할 때마다
@@ -203,6 +203,17 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
     }
     return html+'</table>'+(t.note?p(t.note,width-12,10,{kind:'note',table:owner.id||owner.kind}):'');
   };
+  // 어울림 그림: 바로 앞 맨 바깥 글 문단(없으면 번호가 붙는 첫 문단)의 맨 앞에 넣고, 한글로 들여온 뒤 떠 있는 그림으로 바꾼다
+  // (applyFloatingPictures). 글자처럼 취급하지 않으므로 문단 글은 그대로 그림 옆·아래로 흐른다. 그림 폭은 크기(단 폭 대비 %).
+  const floatsAt=new Map(),floated=new Set();
+  {let at='first';for(const b of q.blocks.filter(b=>!b.parent)){
+    if(b.kind==='text'&&b!==firstText&&b.text)at=b.id;
+    if(isWrapped(b)&&(b.figure||ghost.figures.has(b.id)&&ghostFigure)){if(!floatsAt.has(at))floatsAt.set(at,[]);floatsAt.get(at).push(b);floated.add(b.id);}
+  }}
+  const floatImages=async(at,width)=>{let html='';for(const b of floatsAt.get(at)||[]){
+    const w=sizedWidth(b,width);if(!b.figure)b.figure=ghostFigure(Math.round(w),Math.round(Math.min(150,w*.55)),b.label);
+    html+=await picture(b.figure,w,undefined,{kind:'block',id:b.id});floats.push({data:images.at(-1),align:b.align==='왼쪽'?'Left':'Right'});
+  }return html;};
   // 간격(mm): 구성 앞에 높이를 가진 빈 문단을 둔다. 값이 없으면 넣지 않는다.
   const spacer=b=>{const px=gapPx(b);return px?`<p style="margin:0;font-size:1pt;line-height:100%;height:${Math.round(px)}px;margin-top:${Math.round(px)}px"> </p>`:'';};
   // 실험 과정·결과 같은 머리: 〔실험 과정〕. 괄호는 고칠 수 없는 앞뒤로 둔다.
@@ -210,10 +221,10 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
   const walk=async(parent,width,onlyId=null)=>{
     let html='';
     for(const b of q.blocks.filter(b=>b.parent===parent&&(!onlyId||b.id===onlyId))){
-      if(b===firstText||!onlyId&&afterAsk.includes(b.id))continue;
+      if(b===firstText||!onlyId&&afterAsk.includes(b.id)||floated.has(b.id))continue;
       html+=spacer(b);
       if(b===sideText)html+=p(prefix+b.text,width,11,{kind:'block',id:b.id,prefix:prefix.length});
-      else if(b.kind==='text')html+=b.text?p(b.text,width,11,{kind:'block',id:b.id}):'';
+      else if(b.kind==='text')html+=b.text?floatsAt.has(b.id)?`<p style="margin:4px 0;text-align:justify">${await floatImages(b.id,width)}${text(b.text,width,11,v=>v,{kind:'block',id:b.id})}</p>`:p(b.text,width,11,{kind:'block',id:b.id}):'';
       else if(b.kind==='figure'){
         html+=heading(b);
         if(!b.figure&&ghost.figures.has(b.id)&&ghostFigure){const w=sizedWidth(b,width);b.figure=ghostFigure(Math.round(w),Math.round(Math.min(150,w*.55)),b.label);}
@@ -327,10 +338,11 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
   const measure11=measureText||(v=>choiceWidth(v,11)),bodyIndent=prefix&&!sideText?Math.ceil(measure11(prefix)):0,askIndent=Math.round(11*4/3);
   // 본문 글은 줄바꿈을 넣지 않는다. 한글 엔진이 어절 단위로 나누고 양쪽 정렬로 오른쪽 끝을 맞춘다(평가원 지면).
   const asIs=v=>v;
-  const first=sideText?'':`<p style="margin:4px 0;text-align:justify">${text(prefix+(firstText?firstText.text:ask),null,11,asIs,firstText?{kind:'block',id:firstText.id,prefix:prefix.length}:askOwner(prefix.length))}</p>`;
+  const firstFloats=sideText?'':await floatImages('first',width-bodyIndent);
+  const first=sideText?'':`<p style="margin:4px 0;text-align:justify">${firstFloats}${text(prefix+(firstText?firstText.text:ask),null,11,asIs,firstText?{kind:'block',id:firstText.id,prefix:prefix.length}:askOwner(prefix.length))}</p>`;
   width-=bodyIndent;
-  const askParagraph=()=>`<p style="margin:4px 0;text-align:justify">${text(ask,null,11,asIs,askOwner())}</p>`;
-  let html=first+await walk(null,width)+(firstText||sideText?askParagraph():'');
+  const askParagraph=async()=>`<p style="margin:4px 0;text-align:justify">${sideText?await floatImages('first',width):''}${text(ask,null,11,asIs,askOwner())}</p>`;
+  let html=first+await walk(null,width)+(firstText||sideText?await askParagraph():'');
   for(const id of afterAsk)html+=await walk(null,width,id);
   if(q.type!=='서술형'){
     if(q.style==='대응표')html+=kicePair(q.choiceTable)?pairChoices(q.choiceTable):await table(q.choiceTable,width,true);
@@ -353,7 +365,7 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
     }
   }
   const askLead=firstText||sideText?String(ask).replace(/\s+/g,' ').trim().slice(0,12):'';
-  return {html:`<div style="font-family:함초롬바탕;font-size:10pt">${html}</div>`,images,texts,tables,equations,warnings:[...new Set(warnings)],imageOwners,tableOwners,textSegments,bodyIndent,askIndent,askLead};
+  return {html:`<div style="font-family:함초롬바탕;font-size:10pt">${html}</div>`,images,texts,tables,equations,warnings:[...new Set(warnings)],imageOwners,tableOwners,textSegments,bodyIndent,askIndent,askLead,floats};
 }
 
 export function verifyNativeQuestion(document,plan){

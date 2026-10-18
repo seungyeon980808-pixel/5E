@@ -58,11 +58,35 @@ test('2-column choices, italic variables and upright units',()=>{
   assert.equal(italicVariables('&lt;보 기&gt; &amp;'),'&lt;보 기&gt; &amp;');
 });
 
-test('a side material frame puts the question number in the text beside it, and the prompt after',async()=>{
-  const q=shape('combo','small',q=>{q.blocks[1].text='그림과 같이 용수철에 물체를 매달았다.';});
-  const plan=await buildQuestionHtml(q),values=plan.textSegments.map(s=>s.value);
-  assert.equal(values[0],'7. 그림과 같이 용수철에 물체를 매달았다.');assert.deepEqual(plan.textSegments[0].owner,{kind:'block',id:q.blocks[1].id,prefix:3});
-  assert.ok(values.indexOf(q.ask)>0);assert.deepEqual(plan.tables[0],{rows:1,cols:2,merges:[]});
+test('a side material frame floats its picture at the start of the numbered passage (어울림), and the prompt after',async()=>{
+  const png='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
+  const q=shape('combo','small',q=>{q.blocks[0].text='그림과 같이 용수철에 물체를 매달았다.';q.blocks[1].figure={name:'a.png',data:png};});
+  const plan=await buildQuestionHtml(q,async f=>({...f,width:200,height:100}),400),values=plan.textSegments.map(s=>s.value);
+  assert.equal(values[0],'7. 그림과 같이 용수철에 물체를 매달았다.');assert.deepEqual(plan.textSegments[0].owner,{kind:'block',id:q.blocks[0].id,prefix:3});
+  assert.ok(values.indexOf(q.ask)>0);assert.ok(!plan.tables.some(t=>t&&t.rows===1&&t.cols===2),'no side-by-side table');
+  // 그림은 첫 문단 맨 앞(번호 글 앞)에 들어가고, 한글로 들여온 뒤 오른쪽 어울림으로 바뀐다.
+  // 폭은 크기 40%: 단 폭에서 번호 너비를 뺀 본문 폭의 40%.
+  assert.match(plan.html,/<p style="margin:4px 0;text-align:justify"><img [^>]*width="(\d+)"[^>]*>7\. 그림과/);assert.equal(Number(plan.html.match(/<img [^>]*width="(\d+)"/)[1]),Math.round((400-plan.bodyIndent)*.4));
+  assert.deepEqual(plan.floats.map(f=>f.align),['Right']);assert.equal(plan.floats[0].data,png);assert.deepEqual(plan.imageOwners,[{kind:'block',id:q.blocks[1].id}]);
+  q.blocks[1].align='왼쪽';assert.deepEqual((await buildQuestionHtml(q,async f=>({...f,width:200,height:100}),400)).floats.map(f=>f.align),['Left']);
+});
+
+test('cell paragraphs get one line segment per explicit break, tall enough for their equations',async()=>{
+  const {cellEquationLines}=await import('../assets/exampool/sheet/typeset-model.js');
+  const eq=h=>`<hp:equation id="1"><hp:sz width="10" height="${h}"/><hp:script>a</hp:script></hp:equation>`;
+  const cell=body=>`<hp:p id="0"><hp:run><hp:tbl><hp:tc><hp:subList><hp:p id="1">${body}<hp:linesegarray><hp:lineseg textpos="0" vertpos="0" vertsize="1100" textheight="1100" baseline="935" spacing="660" horzpos="0" horzsize="21300" flags="393216"/></hp:linesegarray></hp:p></hp:subList></hp:tc></hp:tbl></hp:run></hp:p>`;
+  const out=cellEquationLines(cell(`<hp:run><hp:t>ㄴ. </hp:t>${eq(1100)}<hp:t>의 관성&lt;<hp:lineBreak/></hp:t></hp:run><hp:run>${eq(2684)}<hp:t>이다.</hp:t></hp:run>`));
+  const segs=[...out.matchAll(/<hp:lineseg [^>]*>/g)].map(m=>Object.fromEntries([...m[0].matchAll(/(\w+)="(\d+)"/g)].map(([,k,v])=>[k,Number(v)])));
+  assert.equal(segs.length,2);assert.deepEqual([segs[1].textpos,segs[1].vertpos,segs[1].vertsize],[17,1760,2684]);
+  const flat=cell(`<hp:run><hp:t>ㄱ. </hp:t>${eq(1100)}<hp:t>뿐</hp:t></hp:run>`);assert.equal(cellEquationLines(flat),flat);
+});
+
+test('a picture-only paragraph starts where the previous paragraph ends and keeps a line segment',async()=>{
+  const {restackPictureLines}=await import('../assets/exampool/sheet/native-hwpx.js');
+  const text='<hp:p id="1"><hp:run><hp:t>글</hp:t></hp:run><hp:linesegarray><hp:lineseg textpos="0" vertpos="100" vertsize="1100" spacing="660"/></hp:linesegarray></hp:p>';
+  const pic='<hp:run><hp:pic id="0"><hp:sz width="13350" height="7200"/><hp:outMargin left="0" right="0" top="0" bottom="0"/></hp:pic></hp:run>';
+  assert.match(restackPictureLines(text+`<hp:p id="2">${pic}<hp:linesegarray><hp:lineseg textpos="0" vertpos="23120" vertsize="7200" spacing="600"/></hp:linesegarray></hp:p>`),/vertpos="1860" vertsize="7200"/);
+  assert.match(restackPictureLines(text+`<hp:p id="2">${pic}</hp:p>`),/<hp:linesegarray><hp:lineseg textpos="0" vertpos="1860" vertsize="7200" textheight="7200"[^>]*horzsize="13350"/);
 });
 
 test('every frame (4 forms x 7 structures) survives an Excel round trip and still builds the same HWP plan',async()=>{

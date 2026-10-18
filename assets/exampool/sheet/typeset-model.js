@@ -70,7 +70,8 @@ export function applyQuestionIndent(document,number,{body=false,askLead='',askIn
     if(!run)continue;
     // 글 옆 자료처럼 번호가 표 칸 안에 있으면 칸 문단은 내어쓰기를 건드리지 않는다.
     if(run.cellPath?.length)return;
-    const start=JSON.parse(document.getCursorRect(run.secIdx,run.paraIdx,0)),end=JSON.parse(document.getCursorRect(run.secIdx,run.paraIdx,prefix.length)),hang=Math.round((end.x-start.x)*150);
+    // 어울림 그림이 문단 맨 앞에 있으면 번호 글은 그 뒤에서 시작한다.
+    const at=run.charStart||0,start=JSON.parse(document.getCursorRect(run.secIdx,run.paraIdx,at)),end=JSON.parse(document.getCursorRect(run.secIdx,run.paraIdx,at+prefix.length)),hang=Math.round((end.x-start.x)*150);
     document.applyParaFormat(run.secIdx,run.paraIdx,JSON.stringify({indent:-hang}));
     // 평가원 지면: 번호 다음 문단(자료 표·발문·<보기>·선지)은 모두 번호 너비만큼 들어가 시작한다. 발문 첫 줄은 한 글자 더.
     if(body){
@@ -207,4 +208,53 @@ export async function applyCellEquationLines(bytes,JSZip){
   const zip=await JSZip.loadAsync(new Uint8Array(bytes)),file=zip.file('Contents/section0.xml'),xml=await file.async('string'),next=cellEquationLines(xml);
   if(next===xml)return bytes;
   zip.file('Contents/section0.xml',next);return zip.generateAsync({type:'uint8array',compression:'DEFLATE'});
+}
+
+// 어울림: 글 문단 맨 앞에 넣은 그림을 떠 있는 그림(문단 기준 오른쪽·왼쪽, 본문이 옆·아래로 흐름)으로 바꾼다.
+// 어느 그림인지는 그림 내용(바이트)으로 찾는다. 표 칸 안 그림은 대상이 아니다. 줄 배치는 부르는 쪽에서 다시 계산한다.
+export function applyFloatingPictures(document,floats){
+  if(!floats?.length)return;
+  const want=floats.map(f=>({align:f.align==='Left'?'Left':'Right',bytes:Uint8Array.from(atob(String(f.data).split(',')[1]||''),c=>c.charCodeAt(0)),done:false}));
+  const seen=new Set();
+  for(let page=0;page<document.pageCount();page++)for(const c of JSON.parse(document.getPageControlLayout(page)).controls||[]){
+    if(c.type!=='image'||c.cellPath?.length)continue;
+    const key=`${c.secIdx}:${c.paraIdx}:${c.controlIdx}`;if(seen.has(key))continue;seen.add(key);
+    const data=document.getControlImageData(c.secIdx,c.paraIdx,'[]',c.controlIdx),f=want.find(f=>!f.done&&f.bytes.length===data.length&&f.bytes.every((b,i)=>b===data[i]));
+    if(!f)continue;f.done=true;
+    const result=JSON.parse(document.setPictureProperties(c.secIdx,c.paraIdx,c.controlIdx,JSON.stringify({treatAsChar:false,textWrap:'Square',horzRelTo:'Para',horzAlign:f.align,vertRelTo:'Para',vertAlign:'Top',vertOffset:0,horzOffset:0,outerMarginLeft:f.align==='Right'?250:0,outerMarginRight:f.align==='Left'?250:0})));
+    if(result?.ok===false)throw Error('어울림 그림을 배치하지 못했습니다.');
+  }
+  if(want.some(f=>!f.done))throw Error('어울림 그림을 문단에서 찾지 못했습니다.');
+}
+// 어울림 그림을 놓은 뒤의 줄 배치 점검. 한글 엔진은 그림 높이 안에 든 두 줄짜리 문단을 그림 반대쪽으로 밀어 잘못 흐르게 한다.
+// ① 그림이 붙은 문단의 줄이 그림과 겹치면, 그 그림은 글 앞에 두고(단 기준 정렬) 문단 오른쪽(왼쪽) 여백을 그림 폭만큼 둔다.
+// ② 그림이 문단보다 아래로 내려오면 문단 아래 간격을 둬서 다음 문단이 그림 밑에서 시작하게 한다.
+// 문단 모양 단위: 여백·간격은 HWPUNIT의 2배(px×150).
+export function settleFloatingPictures(document){
+  const GAP=4,pics=[];
+  for(let page=0;page<document.pageCount();page++)for(const c of JSON.parse(document.getPageControlLayout(page)).controls||[]){
+    if(c.type!=='image'||c.cellPath?.length)continue;
+    const props=JSON.parse(document.getPictureProperties(c.secIdx,c.paraIdx,c.controlIdx));if(props.treatAsChar)continue;
+    pics.push({page,sec:c.secIdx,para:c.paraIdx,ci:c.controlIdx,props});
+  }
+  if(!pics.length)return false;
+  const box=p=>(JSON.parse(document.getPageControlLayout(p.page)).controls||[]).find(c=>c.type==='image'&&c.secIdx===p.sec&&c.paraIdx===p.para&&c.controlIdx===p.ci);
+  const lines=p=>{const m=new Map();for(const r of JSON.parse(document.getPageTextLayout(p.page)).runs){if(r.cellPath?.length||r.secIdx!==p.sec||r.paraIdx!==p.para||!r.text.trim())continue;const k=Math.round(r.y*10),v=m.get(k)||{y:r.y,h:0,x0:Infinity,x1:-Infinity};v.h=Math.max(v.h,r.h);v.x0=Math.min(v.x0,r.x);v.x1=Math.max(v.x1,r.x+r.w);m.set(k,v);}return [...m.values()];};
+  for(const p of pics){
+    const right=p.props.horzAlign!=='Left';let b=box(p);if(!b)continue;
+    const overlaps=lines(p).some(l=>l.y<b.y+b.h&&l.y+l.h>b.y&&(right?l.x1>b.x+1:l.x0<b.x+b.w-1));
+    if(overlaps){
+      const para=JSON.parse(document.getParaPropertiesAt(p.sec,p.para)),room=b.w+(right?p.props.outerMarginLeft:p.props.outerMarginRight)/75+GAP;
+      document.setPictureProperties(p.sec,p.para,p.ci,JSON.stringify({textWrap:'InFrontOfText',horzRelTo:'Column'}));
+      document.applyParaFormat(p.sec,p.para,JSON.stringify(right?{marginRight:Math.round(((para.marginRight||0)+room)*150)}:{marginLeft:Math.round(((para.marginLeft||0)+room)*150)}));
+      document.reflowLinesegs();b=box(p);
+    }
+    const own=lines(p),bottom=own.length?Math.max(...own.map(l=>l.y+l.h)):b.y;
+    if(b.y+b.h+GAP>bottom){
+      const para=JSON.parse(document.getParaPropertiesAt(p.sec,p.para));
+      document.applyParaFormat(p.sec,p.para,JSON.stringify({spacingAfter:Math.round(((para.spacingAfter||0)/2+b.y+b.h+GAP-bottom)*150)}));
+      document.reflowLinesegs();
+    }
+  }
+  return true;
 }

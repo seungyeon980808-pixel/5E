@@ -38,9 +38,9 @@ test('new question frames: 4 forms x 7 material structures, ranked by past exams
  const pair=questionFromShape({form:'pair',struct:'none'},'3');assert.equal(pair.style,'대응표');assert.deepEqual(pair.choiceTable.cells[0].map(c=>c.value),['A','B','C']);assert.ok(!pair.blocks.some(b=>b.kind==='bogi'));
  const talk=questionFromShape({form:'talk',struct:'big'},'4');assert.deepEqual(talk.blocks.find(b=>b.kind==='dialogue').lines.map(l=>l.label),['학생 A','학생 B','학생 C']);assert.ok(talk.blocks.some(b=>b.kind==='figure'&&!b.parent));
  const cond=questionFromShape({form:'single',struct:'condition'},'5'),cbox=cond.blocks.find(b=>b.kind==='group');assert.equal(cbox.label,'');assert.ok(cbox.boxed);
- // 글 옆 작은 자료: 첫 지문과 자료가 가로로 묶이고, 시트의 지문 칸은 그 글이다.
- const small=questionFromShape({form:'combo',struct:'small'},'6'),side=small.blocks[0];assert.equal(side.layout,'나란히');
- writeField(small,'passage','그림과 같이 물체가 운동한다.');assert.equal(small.blocks[1].text,'그림과 같이 물체가 운동한다.');assert.equal(fieldValue(small,'passage'),'그림과 같이 물체가 운동한다.');
+ // 글 옆 작은 자료: 첫 지문 문단에 붙은 어울림 그림(오른쪽), 시트의 지문 칸은 그 글이다.
+ const small=questionFromShape({form:'combo',struct:'small'},'6'),side=small.blocks[1];assert.equal(side.kind,'figure');assert.equal(side.layout,'어울림');assert.equal(side.size,40);assert.equal(side.parent,null);
+ writeField(small,'passage','그림과 같이 물체가 운동한다.');assert.equal(small.blocks[0].text,'그림과 같이 물체가 운동한다.');assert.equal(fieldValue(small,'passage'),'그림과 같이 물체가 운동한다.');
  const two=questionFromShape({form:'combo',struct:'two'},'7');assert.deepEqual(two.blocks.filter(b=>b.kind==='figure').map(b=>b.label),['(가)','(나)']);
  assert.throws(()=>questionFromShape({form:'combo'},'8'),/자료 구조/);
 });

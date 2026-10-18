@@ -1,6 +1,6 @@
 // 5E_cell의 '구성' 시트: 선택한 문항의 구성 한 줄마다 순서·묶음·배치·폭 비율·크기·간격·정렬.
 // 엑셀 '구성' 시트와 같은 값을 같은 말로 보여 준다. 고치면 데이터 하나만 바뀌고 한글 창이 다시 그려진다.
-import {KINDS,makeTable} from './model.js';
+import {KINDS,makeTable,WRAP} from './model.js';
 import {labelInDocument} from './handoff.js';
 import {ALIGNS,CHOICE_LAYOUTS,formatSize,formatGap,formatRatio,parseSize,parseGap,parseRatio,parseAlign,parseChoiceLayout} from './placement.js';
 
@@ -27,7 +27,7 @@ export function renderParts(host,q){
       <td class="part-kind">${b.kind==='figure'||b.kind==='table'?select('kind',[KINDS.figure,KINDS.table],KINDS[b.kind],'자료 종류'):KINDS[b.kind]}</td>
       <td class="part-name" style="--depth:${depth}"${labelInDocument(b)?' data-hwp="text"':''}><input data-part="label" aria-label="구성 이름" value="${E(b.label)}" maxlength="240"${b.kind==='group'&&b.boxed===true?' placeholder="제목 없음"':''}></td>
       <td><select data-part="parent" aria-label="상위 묶음"><option value=""${parent?'':' selected'}>—</option>${groups.filter(g=>g.id!==b.id).map(g=>`<option value="${g.id}"${g.id===parent?.id?' selected':''}>${E(g.label||'상자')}</option>`).join('')}</select></td>
-      <td>${b.kind==='group'?select('layout',['세로','나란히'],b.layout,'배치'):'<span class="part-na">—</span>'}</td>
+      <td>${b.kind==='group'?select('layout',['세로','나란히'],b.layout,'배치'):b.kind==='figure'&&!b.parent?select('layout',['세로',WRAP],b.layout,'배치'):'<span class="part-na">—</span>'}</td>
       <td>${side?field('ratio',formatRatio(b.ratio),'폭 비율','1'):'<span class="part-na">—</span>'}</td>
       <td>${sized||bogi?field('size',formatSize(b.size),'크기',bogi?'100%':'자동'):'<span class="part-na">—</span>'}</td>
       <td>${field('gap',formatGap(b.gap),'간격','0mm')}</td>
@@ -57,11 +57,13 @@ export function applyPartChange(q,id,name,value){
     if(kind==='table'){delete b.figure;b.table=makeTable();}else{delete b.table;b.figure=null;}
     b.kind=kind;return;
   }
+  // 맨 바깥 그림: 세로(글 아래) 또는 어울림(앞 글 문단 옆에 떠 있음).
+  if(name==='layout'&&b.kind==='figure'){if(b.parent||!['세로',WRAP].includes(value))throw Error('그림 배치는 세로·어울림 중에서 고르세요.');b.layout=value;return;}
   if(name==='layout'){if(b.kind!=='group'||!['세로','나란히'].includes(value))throw Error('배치는 세로·나란히 중에서 고르세요.');b.layout=value;if(value==='세로')for(const c of q.blocks)if(c.parent===b.id)delete c.ratio;return;}
   if(name==='parent'){
     const g=value?q.blocks.find(x=>x.kind==='group'&&x.id===value&&x.id!==b.id):null;if(value&&!g)throw Error('상위 묶음을 찾지 못했습니다.');
     for(let p=g;p;p=q.blocks.find(x=>x.id===p.parent))if(p.id===b.id)throw Error('묶음을 자기 안으로 옮길 수 없습니다.');
-    b.parent=g?g.id:null;delete b.ratio;
+    b.parent=g?g.id:null;delete b.ratio;if(g&&b.layout===WRAP)b.layout='세로';
     // 옮긴 구성은 새 묶음의 마지막 순서로 간다.
     q.blocks.splice(q.blocks.indexOf(b),1);q.blocks.push(b);return;
   }

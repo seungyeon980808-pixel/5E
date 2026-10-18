@@ -15,7 +15,9 @@ export function exportLayoutHwpx(document,CFB){
     // the engine calculate that anchor from its real table height. Preserve
     // every text/equation paragraph and all nested cell line geometry.
     const flow=restackPictureLines(clearEmptyTableAnchorLines(xml));if(flow!==xml){xml=flow;file.content=encode.encode(xml);file.size=file.content.length;changed=true;}
-    if(!xml.includes('<hp:equation')&&!xml.includes('<hp:lineBreak'))continue;
+    // 어울림 그림(글자처럼 취급 안 함)이 든 문단도 줄 배치를 빠뜨리면 다시 열 때 글이 그림 쪽으로 흐른다.
+    const floating=/<hp:pos\b[^>]*treatAsChar="0"/;
+    if(!xml.includes('<hp:equation')&&!xml.includes('<hp:lineBreak')&&!floating.test(xml))continue;
     binary ||= CFB.read(document.exportHwp(),{type:'array'});
     const header=binary.FileIndex[binary.FullPaths.findIndex(p=>p.endsWith('/FileHeader'))].content;
     const stream=binary.FileIndex[binary.FullPaths.findIndex(p=>p.endsWith(`/BodyText/Section${section}`))].content;
@@ -44,7 +46,7 @@ export function exportLayoutHwpx(document,CFB){
     for(let i=paragraphs.length-1;i>=0;i--){const p=paragraphs[i],body=xml.slice(p.body,p.end);
       // Only leaf equation/break paragraphs require the writer repair. Parent table
       // paragraphs retain their native cell placement and borders.
-      if((!body.includes('<hp:equation')&&!body.includes('<hp:lineBreak'))||body.includes('<hp:p ')||!segments[i].length)continue;
+      if((!body.includes('<hp:equation')&&!body.includes('<hp:lineBreak')&&!floating.test(body))||body.includes('<hp:p ')||!segments[i].length)continue;
       const clean=body.replace(/<hp:linesegarray>[\s\S]*?<\/hp:linesegarray>/g,'');
       const lines='<hp:linesegarray>'+segments[i].map(values=>'<hp:lineseg '+keys.map((key,j)=>`${key}="${values[j]}"`).join(' ')+'/>').join('')+'</hp:linesegarray>';
       output=output.slice(0,p.body)+clean+lines+output.slice(p.end);changed=true;
