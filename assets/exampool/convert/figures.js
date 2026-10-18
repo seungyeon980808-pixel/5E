@@ -159,7 +159,7 @@ function findCaptions(m,comps,s,body,texts){
     const closing=chain[end],wide=(closing.x1-closing.x0)>=h*.4;
     const vowel=wide?closing:inner.at(-1),cons=wide?inner:inner.slice(0,-1);
     const syllable=!wide&&inner.length===1&&(inner[0].x1-inner[0].x0)>=h*.65&&(inner[0].y1-inner[0].y0)>=h*.7;// 자모가 붙은 '나'
-    if(!syllable&&(!vowel||(vowel.y1-vowel.y0)<h*.55||(!wide&&(vowel.x1-vowel.x0)>h*.5)||!cons.length||cons.every(c=>(c.x1-c.x0)<h*.25)))continue;
+    if(!syllable&&(!vowel||(vowel.y1-vowel.y0)<h*.55||(!wide&&(vowel.x1-vowel.x0)>h*.5)||!cons.length||cons.every(c=>(c.x1-c.x0)<h*.3||(c.y1-c.y0)<h*.3)))continue;
     const margin=Math.max(.8*s,h*.15);
     const clear=(right,top)=>!comps.some(c=>!group.includes(c)&&c.x0<g.x1+right&&c.x1>g.x0-margin&&c.y0<g.y1+margin&&c.y1>g.y0-top);
     // 옆 캡션은 오른쪽 그림에, 아래 캡션은 위 그림에 바짝 붙기도 한다.
@@ -176,8 +176,10 @@ function panels(m,s,body,texts,split=true,given=null){
   let caps=given||(split?findCaptions(m,components(m),s,body,texts):[]);
   if(globalThis.__capsDebug)globalThis.__capsDebug.push({caps:caps.map(c=>[c.x0/s,c.y0/s,c.x1/s,c.y1/s,!!c.text,c.bottom,c.side]),whole:[whole.x0/s,whole.y0/s,whole.x1/s,whole.y1/s]});
   // 옆 캡션: 왼쪽 가장자리에 세로로 늘어서고 바로 오른쪽에 그림이 붙어 있다. 아니면 아래 캡션만 쓴다.
-  const side=caps.length>1&&caps.every(c=>c.side&&(c.x0-whole.x0)/s<body*2)&&caps.some(c=>!c.bottom);
-  if(!side&&!given)caps=caps.filter(c=>c.bottom);
+  const lefts=caps.filter(c=>c.side&&(c.x0-whole.x0)/s<body*2);
+  const side=given?given.side:lefts.length>1&&lefts.some(c=>!c.bottom);
+  if(!given)caps=side?lefts:caps.filter(c=>c.bottom);
+  caps.side=side;
   const original=m.ink.slice();
   // 캡션 글자는 그림에서 뺀다.
   for(const c of caps)for(let y=Math.max(0,c.y0-2);y<Math.min(m.H,c.y1+2);y++)m.ink.fill(0,y*m.W+Math.max(0,c.x0-2),y*m.W+Math.min(m.W,c.x1+2));
@@ -222,7 +224,7 @@ function panels(m,s,body,texts,split=true,given=null){
     const drop=bad.length?bad.reduce((a,b)=>size(a)<size(b)?a:b).cap:null;
     const keep=caps.filter(c=>c!==drop&&out.some(p=>p.cap===c));
     if(keep.length===caps.length)return [{r:whole,cap:null,cell:rect(0,0,m.W,m.H)}];
-    return panels(m,s,body,texts,true,keep);
+    keep.side=caps.side;return panels(m,s,body,texts,true,keep);
   }
   return out;
 }
