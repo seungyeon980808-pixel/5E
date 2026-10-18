@@ -12,26 +12,6 @@ const screen = (page, x, y) => page.evaluate(async ({ x, y }) => {
   return worldToScreen(document.querySelector('#canvas'), state.get().viewBox, x, y);
 }, { x, y });
 
-// Chromium은 "저장 위치 선택" 창(showSaveFilePicker)으로 저장한다. 사용자가 위치를 고른 것처럼
-// 응답하고 앱이 실제로 쓴 바이트를 받아 둔다. WebKit은 그 창이 없어 평소 다운로드로 받는다.
-function recordSavePicker() {
-  if (!window.showSaveFilePicker) return;
-  window.__savedFiles = [];
-  window.showSaveFilePicker = async ({ suggestedName }) => ({
-    createWritable: async () => {
-      const parts = [];
-      return {
-        write: async part => { parts.push(part); },
-        close: async () => {
-          const bytes = new Uint8Array(await new Blob(parts).arrayBuffer());
-          let binary = ''; for (const byte of bytes) binary += String.fromCharCode(byte);
-          window.__savedFiles.push({ name: suggestedName, base64: btoa(binary) });
-        },
-      };
-    },
-  });
-}
-
 async function exportFile(page, format, evidence, engine) {
   await page.keyboard.press('Escape');
   await page.locator('#file-menu-btn').click();
@@ -40,29 +20,15 @@ async function exportFile(page, format, evidence, engine) {
   await dialog.waitFor({ state: 'visible' });
   await dialog.locator('#export-filename').fill(`teacher-label-${format}`);
   await dialog.locator(`#export-format [data-format="${format}"]`).click();
-  const file = `${engine}-teacher-label.${format}`, target = path.join(evidence, file);
-  if (await page.evaluate(() => Array.isArray(window.__savedFiles))) {
-    const before = await page.evaluate(() => window.__savedFiles.length);
-    await dialog.locator('#export-confirm').click();
-    await page.waitForFunction(count => window.__savedFiles.length > count, before, { timeout: 20_000 });
-    const saved = await page.evaluate(() => window.__savedFiles.at(-1));
-    assert.equal(saved.name, `teacher-label-${format}.${format}`);
-    fs.writeFileSync(target, Buffer.from(saved.base64, 'base64'));
-  } else {
-    const result = await flow.download(page, () => dialog.locator('#export-confirm').click(), evidence, file);
-    assert.equal(result.suggested, `teacher-label-${format}.${format}`);
-  }
+  const saved = await flow.captureSave(page, () => dialog.locator('#export-confirm').click(), evidence, `${engine}-teacher-label.${format}`);
+  assert.equal(saved.suggested, `teacher-label-${format}.${format}`);
   await dialog.waitFor({ state: 'hidden' });
-  return fs.readFileSync(target);
+  return saved.bytes;
 }
 
 flow.runEngines('label-export', {
-  async run({ page, context, evidence, engine, shot }) {
-    await context.addInitScript(recordSavePicker);
-    await page.reload({ waitUntil: 'load' });
-    await page.locator('#canvas').waitFor({ state: 'visible' });
-    await flow.assertNavy(page);
-
+  options: { savePicker: true },
+  async run({ page, evidence, engine, shot }) {
     // 그림 넣기(파일 → 이미지 불러오기): 직접 그린 회로 선화.
     const figure = path.join(evidence, 'circuit-figure.png');
     const recorded = flow.recordedAiConversion().responses.find(response => response.match.purpose === 'image').reply.imageDataUrl;

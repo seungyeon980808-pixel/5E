@@ -126,11 +126,12 @@ function entryUrl(origin) {
 }
 
 // 앱을 열고 다크네이비 기본 화면인지 확인한다. 바깥 요청은 고정 자료가 아니면 막고 기록한다.
-async function openApp(engine, origin, { ai = false } = {}) {
+async function openApp(engine, origin, { ai = false, savePicker = false } = {}) {
   const browser = await engine.launch({ headless: true });
   const context = await browser.newContext({ viewport: { width: 1440, height: 950 }, acceptDownloads: true });
   const fixture = textbookPack(), blocked = [], errors = [];
   await context.addInitScript(installRecordedBridge, ai ? recordedAiConversion().responses : null);
+  if (savePicker) await context.addInitScript(recordSavePicker);
   await context.route('**/*', route => {
     const url = new URL(route.request().url());
     if (!['http:', 'https:'].includes(url.protocol) || ['127.0.0.1', 'localhost'].includes(url.hostname)) return route.fallback();
@@ -198,6 +199,40 @@ async function download(page, trigger, evidence, file) {
   return { path: target, suggested: item.suggestedFilename(), bytes: fs.readFileSync(target) };
 }
 
+// Chromium은 "저장 위치 선택" 창(showSaveFilePicker)으로 저장한다. 사용자가 위치를 고른 것처럼
+// 응답하고 앱이 실제로 쓴 바이트를 받아 둔다. WebKit은 그 창이 없어 평소 다운로드로 받는다.
+function recordSavePicker() {
+  if (!window.showSaveFilePicker) return;
+  window.__savedFiles = [];
+  window.showSaveFilePicker = async ({ suggestedName }) => ({
+    createWritable: async () => {
+      const parts = [];
+      return {
+        write: async part => { parts.push(part); },
+        close: async () => {
+          const bytes = new Uint8Array(await new Blob(parts).arrayBuffer());
+          let binary = ''; for (const byte of bytes) binary += String.fromCharCode(byte);
+          window.__savedFiles.push({ name: suggestedName, base64: btoa(binary) });
+        },
+      };
+    },
+  });
+}
+
+// 저장 동작 하나(trigger)가 만든 파일을 엔진에 맞는 길로 받아 증거 폴더에 둔다.
+async function captureSave(page, trigger, evidence, file) {
+  const target = path.join(evidence, file);
+  if (await page.evaluate(() => Array.isArray(window.__savedFiles))) {
+    const before = await page.evaluate(() => window.__savedFiles.length);
+    await trigger();
+    await page.waitForFunction(count => window.__savedFiles.length > count, before, { timeout: 20_000 });
+    const saved = await page.evaluate(() => window.__savedFiles.at(-1));
+    fs.writeFileSync(target, Buffer.from(saved.base64, 'base64'));
+    return { path: target, suggested: saved.name, bytes: fs.readFileSync(target), via: 'save-picker' };
+  }
+  return { ...await download(page, trigger, evidence, file), via: 'download' };
+}
+
 // 라이브러리 → 교과서 PDF → 그림 영역 자르기 → 크롭 모음(라이브러리 저장)까지. 열린 라이브러리를 돌려준다.
 async function cropTextbookFigure(page) {
   await page.locator('#exam-library-open').click();
@@ -261,4 +296,4 @@ async function runEngines(name, scenario) {
   });
 }
 
-module.exports = { textbookPack, textbookPdf, recordedAiConversion, openApp, assertNavy, drawing, runEngines, evidenceDir, inkStats, download, cropTextbookFigure, sendTrayToWorkbench, TEXTBOOK_PATH };
+module.exports = { textbookPack, textbookPdf, recordedAiConversion, openApp, assertNavy, drawing, runEngines, evidenceDir, inkStats, download, captureSave, cropTextbookFigure, sendTrayToWorkbench, TEXTBOOK_PATH };

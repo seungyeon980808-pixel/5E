@@ -1815,6 +1815,12 @@
       "findingIds": [
         "TEACHER-FLOW-LABEL-EXPORT"
       ]
+    },
+    {
+      "path": "tests/test-teacher-flow-graph-browser.cjs",
+      "findingIds": [
+        "TEACHER-FLOW-GRAPH-SAVE-REEDIT"
+      ]
     }
   ],
   "deferred": [
