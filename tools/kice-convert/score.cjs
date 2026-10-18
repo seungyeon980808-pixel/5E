@@ -1,7 +1,7 @@
 // 기출 복원 채점(AI 없음). 문항 하나가 다섯 검사를 모두 통과해야 합격.
 // ① 칸 나누기  ② 글 일치  ③ 수식  ④ 틀  ⑤ 조판(경고 없음 + 높이 비율)
 'use strict';
-const TEXT_MIN=0.97,HEIGHT_RANGE=[0.85,1.2];
+const TEXT_MIN=0.97,RESTORE_TEXT=0.95,HEIGHT_RANGE=[0.85,1.2];
 const EQ=/\$\$[\s\S]+?\$\$|\$[^$\n]+?\$/g;
 // 한글 엔진은 완성형 밖 글자를 &#9702; 같은 문자 참조로 꺼낸다(handoff.js decodeNativeText와 같은 규칙으로 되돌림).
 const decodeRefs=s=>String(s||'').replace(/&(?:amp;)?#(\d+);/g,(m,n)=>Number(n)>=128?String.fromCodePoint(Number(n)):m);
@@ -18,7 +18,7 @@ function equationsIn(q){let n=0;const add=s=>{n+=(String(s||'').match(EQ)||[]).l
 function score(item,ref,conv,ts,{convertOnly=false}={}){
   const row={id:item.id,subject:item.subject,form:item.form,struct:item.struct,layout:item.layout,title:item.title,checks:{},reasons:[]};
   const fail=(k,why)=>{row.checks[k]=false;row.reasons.push(`${k}: ${why}`);};const pass=k=>{if(row.checks[k]!==false)row.checks[k]=true;};
-  if(!conv?.ok){fail('convert',conv?.error||'변환 실패');row.pass=false;row.ms=conv?.ms;return row;}
+  if(!conv?.ok){fail('convert',conv?.error||'변환 실패');row.pass=false;row.shape=false;row.restoreReasons=[...row.reasons];row.ms=conv?.ms;return row;}
   const q=conv.question,d=conv.diag||{},c=d.counts||{};row.ms=conv.ms;row.decisions=d.decisions;row.notes=(d.notes||[]).slice(0,6);
   // ① 칸 나누기
   if(!q.ask.trim())fail('structure','발문 없음');
@@ -33,8 +33,8 @@ function score(item,ref,conv,ts,{convertOnly=false}={}){
   if(need===0&&c.figures>0)fail('template',`그림 ${c.figures}개(기록: 자료 없음)`);
   else if(need>0&&!(c.figures>=need))fail('template',`그림 ${c.figures}개(기록 자료 구조 ${item.struct})`);
   pass('template');
-  if(convertOnly){row.pass=Object.values(row.checks).every(Boolean);return row;}
-  if(!ts||ts.error&&!ts.status){fail('typeset',ts?.error||'조판 결과 없음');row.pass=false;return row;}
+  if(convertOnly){row.pass=row.shape=Object.values(row.checks).every(Boolean);row.restoreReasons=[...row.reasons];return row;}
+  if(!ts||ts.error&&!ts.status){fail('typeset',ts?.error||'조판 결과 없음');row.pass=false;row.shape=false;row.restoreReasons=[...row.reasons];return row;}
   // ② 글: 한글 조판 결과의 글 vs 원본 PDF 본문 글
   // 수식 안 한글(세로 분수 속 '화학식량' 등)은 한글 본문 글로 나오지 않으므로 원본 쪽에서도 한 번씩 뺀다.
   // 글 비교는 한글·ㄱㄴㄷ·①~⑤·㉠~㉭만: 문장 내용과 순서를 본다. 라틴 글자·숫자·기호는 원본에서 수식 글꼴이라 변환 결과가 수식/글로 갈릴 수 있어 수식 검사에 맡긴다.
@@ -52,17 +52,21 @@ function score(item,ref,conv,ts,{convertOnly=false}={}){
   if(ref?.heightMm&&ts.usedMm){const r=ts.usedMm/ref.heightMm;row.heightRatio=Math.round(r*100)/100;if(r<HEIGHT_RANGE[0]||r>HEIGHT_RANGE[1])fail('typeset',`높이 ${ts.usedMm}mm / 원본 ${ref.heightMm}mm`);}
   else fail('typeset','높이 측정 안 됨');
   pass('typeset');
-  row.pass=Object.values(row.checks).every(Boolean);return row;
+  row.shape=Object.values(row.checks).every(Boolean);// 모양 일치(엄격): 높이 0.85~1.2·경고 없음·글 97%
+  // 복원 합격(사용자 기준 2026-10-19): 제자리에 다 들어가면 합격. 조판이 아예 안 되는 경우·내용이 빠진 경우만 불합격.
+  row.restoreReasons=row.reasons.filter(x=>x.startsWith('structure')||x.startsWith('template')||x.startsWith('equation')||x.startsWith('convert')||(x.startsWith('text')&&(row.textSim??0)<RESTORE_TEXT)||(x.startsWith('typeset')&&/읽지 못|실패|조판 결과 없음|대기 실패|불러오기/.test(x)));
+  if((row.textSim??1)<RESTORE_TEXT&&!row.restoreReasons.some(x=>x.startsWith('text')))row.restoreReasons.push(`text: 글 일치 ${((row.textSim??0)*100).toFixed(1)}%`);
+  row.pass=row.restoreReasons.length===0;return row;
 }
 function summarize(rows){
   const pct=(a,b)=>b?`${(a/b*100).toFixed(1)}%`:'-';const n=rows.length,ok=rows.filter(r=>r.pass).length;
-  const lines=[`# 기출 복원 채점 결과`,'',`**합격 ${ok}/${n} (${pct(ok,n)})**`,'','| 검사 | 통과 |','|---|---|'];
+  const sh=rows.filter(r=>r.shape).length;const lines=[`# 기출 복원 채점 결과`,'',`**복원 합격 ${ok}/${n} (${pct(ok,n)})** — 제자리에 다 들어가면 합격(조판 실패·내용 누락만 불합격)`,'',`모양 일치(엄격: 높이 0.85~1.2·경고 없음·글 97%) ${sh}/${n} (${pct(sh,n)})`,'','| 검사 | 통과 |','|---|---|'];
   for(const k of ['convert','structure','text','equation','template','typeset']){const has=rows.filter(r=>k in r.checks);if(!has.length)continue;const p=has.filter(r=>r.checks[k]).length;lines.push(`| ${k} | ${p}/${has.length} (${pct(p,has.length)}) |`);}
   const group=(key,label)=>{const m=new Map();for(const r of rows){const g=r[key];if(!m.has(g))m.set(g,[0,0]);const v=m.get(g);v[1]++;if(r.pass)v[0]++;}
     lines.push('',`| ${label} | 합격 |`,'|---|---|',...[...m].sort((a,b)=>b[1][1]-a[1][1]).map(([g,[a,b]])=>`| ${g} | ${a}/${b} (${pct(a,b)}) |`));};
   group('subject','과목');group('form','유형');group('struct','자료 구조');
-  const reasons=new Map();for(const r of rows)for(const x of r.reasons){const k=x.replace(/\d+(\.\d+)?/g,'#').replace(/\(.*?\)/g,'').slice(0,60);reasons.set(k,(reasons.get(k)||0)+1);}
-  lines.push('','## 실패 원인(많은 순)','','| 원인 | 문항 수 |','|---|---|',...[...reasons].sort((a,b)=>b[1]-a[1]).slice(0,30).map(([k,v])=>`| ${k} | ${v} |`));
+  const reasons=new Map();for(const r of rows)for(const x of (r.restoreReasons||r.reasons)){const k=x.replace(/\d+(\.\d+)?/g,'#').replace(/\(.*?\)/g,'').slice(0,60);reasons.set(k,(reasons.get(k)||0)+1);}
+  lines.push('','## 복원 불합격 원인(많은 순)','','| 원인 | 문항 수 |','|---|---|',...[...reasons].sort((a,b)=>b[1]-a[1]).slice(0,30).map(([k,v])=>`| ${k} | ${v} |`));
   return lines.join('\n')+'\n';
 }
 module.exports={score,summarize,similarity,norm,kor};
