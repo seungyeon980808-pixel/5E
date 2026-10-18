@@ -219,18 +219,24 @@ function recordSavePicker() {
   });
 }
 
-// 저장 동작 하나(trigger)가 만든 파일을 엔진에 맞는 길로 받아 증거 폴더에 둔다.
+// 저장 동작 하나(trigger)가 만든 파일을 받아 증거 폴더에 둔다. 앱이 저장 위치 선택 창으로 쓰든
+// 평소 다운로드로 내려 주든, 먼저 끝난 쪽을 받는다.
 async function captureSave(page, trigger, evidence, file) {
   const target = path.join(evidence, file);
-  if (await page.evaluate(() => Array.isArray(window.__savedFiles))) {
-    const before = await page.evaluate(() => window.__savedFiles.length);
-    await trigger();
-    await page.waitForFunction(count => window.__savedFiles.length > count, before, { timeout: 20_000 });
-    const saved = await page.evaluate(() => window.__savedFiles.at(-1));
-    fs.writeFileSync(target, Buffer.from(saved.base64, 'base64'));
-    return { path: target, suggested: saved.name, bytes: fs.readFileSync(target), via: 'save-picker' };
+  const before = await page.evaluate(() => window.__savedFiles?.length ?? -1);
+  const downloaded = page.waitForEvent('download', { timeout: 20_000 }).then(item => ({ item }));
+  downloaded.catch(() => {});
+  const picked = before < 0 ? new Promise(() => {}) : page.waitForFunction(count => window.__savedFiles.length > count, before, { timeout: 20_000 })
+    .then(() => page.evaluate(() => window.__savedFiles.at(-1))).then(saved => ({ saved }));
+  picked.catch(() => {});
+  await trigger();
+  const result = await Promise.race([downloaded, picked]);
+  if (result.saved) {
+    fs.writeFileSync(target, Buffer.from(result.saved.base64, 'base64'));
+    return { path: target, suggested: result.saved.name, bytes: fs.readFileSync(target), via: 'save-picker' };
   }
-  return { ...await download(page, trigger, evidence, file), via: 'download' };
+  await result.item.saveAs(target);
+  return { path: target, suggested: result.item.suggestedFilename(), bytes: fs.readFileSync(target), via: 'download' };
 }
 
 // 라이브러리 → 교과서 PDF → 그림 영역 자르기 → 크롭 모음(라이브러리 저장)까지. 열린 라이브러리를 돌려준다.
