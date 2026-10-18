@@ -56,6 +56,8 @@ async function typesetBatch(browser,origin,converted,wid){
   const ok=converted.filter(c=>c.ok);if(!ok.length)return [];
   const ctx=await browser.newContext({viewport:{width:1700,height:1150}});
   if(PAPER&&PAPER!=='A4')await ctx.route(/\/assets\/exampool\/sheet\/typeset\.js/,async r=>{const res=await r.fetch();let body=await res.text();body=body.replace("saved?.profile.paper||'A4'",`saved?.profile.paper||'${PAPER}'`);await r.fulfill({response:res,body});});
+  // --debug-verify: '일부 글을 읽지 못했습니다' 오류에 빠진 글을 붙인다(브라우저 안에서만 바꿈).
+  if(args['debug-verify'])await ctx.route(/\/assets\/exampool\/sheet\/handoff\.js/,async r=>{const res=await r.fetch();let body=await res.text();body=body.replace("if(plan.texts.some(v=>!body.includes(normalized(v))))throw Error('한글에서 일부 글을 읽지 못했습니다. 기존 시험지는 보존했습니다.');","{const miss=plan.texts.find(v=>!body.includes(normalized(v)));if(miss!==undefined)throw Error('한글에서 일부 글을 읽지 못했습니다. 기존 시험지는 보존했습니다. [빠짐: '+JSON.stringify(normalized(miss)).slice(0,160)+' | 본문: '+JSON.stringify(body).slice(0,200)+']');}");await r.fulfill({response:res,body});});
   const page=await ctx.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message.slice(0,200)));
   await h.navigate(page,origin+'/?mode=pro&mobile=0');await h.ready(page);
   await page.click('#exam-pool-open');const frameHandle=await page.waitForSelector('#exampool-sheet-workspace iframe');const sheet=await frameHandle.contentFrame();
