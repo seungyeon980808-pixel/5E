@@ -3,6 +3,7 @@ import { readEditablePng } from './editable-png.js?v=1.7.0-four-session-integrat
 import { DEFAULT_PICTURE_LAYOUT, validatePictureLayout, regionGeometry } from './rhwp-exam-region.js?v=1.7.0-four-session-integration';
 import { installPictureResize } from './rhwp-exam-picture-resize.js?v=1.7.0-four-session-integration';
 import { installTableShortcuts } from './rhwp-exam-table-controls.js?v=1.7.0-four-session-integration';
+import { installDocumentShortcuts } from './rhwp-exam-shortcuts.js?v=1.7.0-four-session-integration';
 
 export const FIGURE_PREFIX = '5e-exam:';
 const HWP_UNITS_PER_MM = 7200 / 25.4;
@@ -56,6 +57,7 @@ export class RhwpExamBridge {
       editor.destroy();
       throw new Error('이 RHWP 버전은 그림 연결을 지원하지 않습니다.');
     }
+    installDocumentShortcuts(this);
     installTableShortcuts(this);
     this.revision = 0;
     this.onDocumentChanged = () => { this.revision++; this.onChange?.(); };
