@@ -371,7 +371,9 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
 
 export function verifyNativeQuestion(document,plan){
   const normalized=v=>String(v).replace(/\s+/g,' ').trim();
-  const raw=document.getTextFileText(),body=normalized(raw.startsWith('"')?JSON.parse(raw):raw);
+  // 글 내보내기는 옛 문자 집합 밖의 글자(◦ • ∘ 등)를 &#9702; 처럼 내준다. 문서에는 원래 글자가 들어 있다.
+  const decode=v=>v.replace(/&#(\d{2,7});/g,(m,n)=>Number(n)<=0x10ffff?String.fromCodePoint(Number(n)):m);
+  const raw=document.getTextFileText(),body=normalized(decode(raw.startsWith('"')?JSON.parse(raw):raw));
   if(plan.texts.some(v=>!body.includes(normalized(v))))throw Error('한글에서 일부 글을 읽지 못했습니다. 기존 시험지는 보존했습니다.');
   const seen=new Set(),images=[],tables=new Map();
   for(let page=0;page<document.pageCount();page++)for(const c of JSON.parse(document.getPageControlLayout(page)).controls||[]){
