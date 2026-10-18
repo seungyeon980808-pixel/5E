@@ -1,5 +1,6 @@
 import {validPlacement,validChoiceLayout} from './placement.js';
 import {normalizeExams,validateExams} from './exams.js';
+import {validateAuthoring,remapAuthoring} from '../authoring/schema.js';
 // The visible sheets are projections of this ordered, nested question document.
 export const FORMAT='5e-question-sheet-v2';
 export const TYPES=['객관식','합답형','서술형'];
@@ -97,6 +98,7 @@ export function validate(data) {
     if(q.concepts!==undefined&&(!Array.isArray(q.concepts)||q.concepts.length>100||!q.concepts.every(v=>str(v,240))))throw Error('핵심개념은 100개 이내로 입력하세요.');
     if(q.typeset!==undefined&&(!q.typeset||!str(q.typeset.bytes,12*1024*1024)||!str(q.typeset.fingerprint,100)||!str(q.typeset.baselineText,1000000)||!['A4','A3','B4'].includes(q.typeset.profile?.paper)||![1,2].includes(q.typeset.profile?.columns)))throw Error('저장한 조판 문서를 확인하세요.');
     if(q.reviews!==undefined&&(!Array.isArray(q.reviews)||q.reviews.length>200||!q.reviews.every(m=>m&&['me','ai'].includes(m.role)&&str(m.text,20000))))throw Error('AI 대화 기록을 확인하세요.');
+    if(q.authoring!==undefined)validateAuthoring(q.authoring);
     if(q.workflow!==undefined&&!Object.hasOwn(WORKFLOWS,q.workflow))throw Error('문항 단계는 초안·검토 중·완성 중 하나입니다.');
     if(!validChoiceLayout(q.choiceLayout))throw Error('선지 배열은 한 줄·3+2·2열·세로 중에서 고르세요.');
     if(!Number.isFinite(q.points)||q.points<0||q.points>10000||!(q.answer===null||Number.isInteger(q.answer)&&q.answer>=0&&q.answer<5))throw Error('정답은 1~5, 배점은 0~10,000으로 입력하세요.');
@@ -115,5 +117,5 @@ export function validate(data) {
   return data;
 }
 export function duplicateQuestion(q) {
-  const n=clone(q),ids=new Map();n.id=uid();for(const b of n.blocks){const old=b.id;b.id=uid();ids.set(old,b.id);b.lines?.forEach(l=>{const old=l.id;l.id=uid();ids.set(old,l.id);});}for(const c of n.choices){const old=c.id;c.id=uid();ids.set(old,c.id);}n.blocks.forEach(b=>b.parent=b.parent?ids.get(b.parent):null);n.references.forEach(r=>r.target=ids.get(r.target)||r.target);return n;
+  const n=clone(q),ids=new Map();n.id=uid();for(const b of n.blocks){const old=b.id;b.id=uid();ids.set(old,b.id);b.lines?.forEach(l=>{const old=l.id;l.id=uid();ids.set(old,l.id);});}for(const c of n.choices){const old=c.id;c.id=uid();ids.set(old,c.id);}n.blocks.forEach(b=>b.parent=b.parent?ids.get(b.parent):null);n.references.forEach(r=>r.target=ids.get(r.target)||r.target);if(n.authoring)n.authoring=remapAuthoring(n.authoring,ids);return n;
 }

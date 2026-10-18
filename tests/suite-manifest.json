@@ -2,6 +2,12 @@
   "schemaVersion": 1,
   "unit": [
     {
+      "path": "tests/test-exampool-authoring.mjs",
+      "findingIds": [
+        "EXAMPOOL-AUTHORING-CORE"
+      ]
+    },
+    {
       "path": "tests/test-graph-description.mjs",
       "findingIds": [
         "GRAPH-DESCRIPTION-CREATION"
