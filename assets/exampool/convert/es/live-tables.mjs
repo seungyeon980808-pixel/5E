@@ -5,8 +5,39 @@ const contains = (box, x, y) => x >= box[0] && x <= box[2] && y >= box[1] && y <
 const pdfItem = (item) => ({ str: item.value, width: item.width, height: item.height,
   transform: [1, 0, 0, 1, item.x, item.y] });
 
+// ExamPool: pdf.js can join text of neighbouring cells into one item (") 용질의 질량(").
+// Split such a text item at the vertical rules it crosses, by estimated glyph advances
+// (Hangul 1, other letters 0.55, space 0.3), so each part lands in its own cell.
+const advance = (ch) => /\s/u.test(ch) ? 0.3 : /[ᄀ-ᇿ㄰-㆏가-힣]/u.test(ch) ? 1 : 0.55;
+export function splitAtRules(items, grids, pageHeight) {
+  return items.flatMap((item) => {
+    if (item.math || typeof item.value !== 'string' || [...item.value].length < 2 || item.value !== item.raw) return [item];
+    const b = textItemBox(pdfItem(item), pageHeight).box, cy = (b[1] + b[3]) / 2;
+    const cuts = [...new Set(grids.flatMap((grid) => grid.box[1] <= cy && grid.box[3] >= cy
+      ? grid.cells.filter((cell) => cell.box[1] <= cy && cell.box[3] >= cy).map((cell) => cell.box[2]) : []))]
+      .filter((x) => x > item.x + 1.5 && x < item.x + item.width - 1.5).sort((p, q) => p - q);
+    if (!cuts.length) return [item];
+    const chars = [...item.value], total = chars.reduce((s, ch) => s + advance(ch), 0) || 1;
+    const parts = [];
+    let start = 0, at = 0, used = 0;
+    for (const x of [...cuts, Infinity]) {
+      let end = chars.length;
+      if (Number.isFinite(x)) {
+        const target = (x - item.x) / item.width * total;
+        for (end = start; end < chars.length && used + advance(chars[end]) / 2 < target; end += 1) used += advance(chars[end]);
+      } else for (let k = start; k < end; k += 1) used += advance(chars[k]);
+      const value = chars.slice(start, end).join('');
+      const x0 = item.x + at / total * item.width, x1 = item.x + used / total * item.width;
+      if (value.trim()) parts.push({ ...item, value, raw: value, x: x0, width: Math.max(0.1, x1 - x0) });
+      start = end; at = used;
+    }
+    return parts.length ? parts : [item];
+  });
+}
+
 /** Partition by identity first: an ambiguous cell assignment leaves the whole table in flow. */
 export function partitionTableItems(items, grids, pageHeight) {
+  items = splitAtRules(items, grids, pageHeight);
   const tables = [];
   const used = new Set();
   const choiceTop = Math.min(Infinity, ...items.filter((item) => /[①②③④⑤]/u.test(item.value))

@@ -399,9 +399,10 @@ export async function debugOverlay(item){
 // 표: 괘선 표를 편집 가능한 ExamPool 표(행·열·병합·칸 글)로 읽기
 
 import {convertQuestionNow} from './es/live-convert.mjs';
-import {runsText,clean} from './rules.js';
+import {runsText,clean,splitEquationParens} from './rules.js';
 
-const cellText=runs=>runsText(runs).split('\n').map(clean).filter(Boolean).join('\n');
+// 짝이 안 맞는 괄호는 수식 밖으로("($L)$" → "($L$)"), 엔진 본문과 같은 규칙.
+const cellText=runs=>runsText(runs).split('\n').map(l=>clean(splitEquationParens(l))).filter(Boolean).join('\n');
 
 /**
  * 문항의 괘선 표를 위→아래 순서로 돌려준다.

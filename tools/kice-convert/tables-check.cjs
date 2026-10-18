@@ -54,9 +54,11 @@ async function batchRun(browser,origin,batch){
   await ctx.close();return out;
 }
 
-const chars=s=>{const m=new Map();for(const ch of String(s).replace(/\$[^$]*\$/g,' ').match(/[가-힣0-9A-Za-z]/gu)||[])m.set(ch,(m.get(ch)||0)+1);return m;};
+// 수식 속 \text{…}는 본문 글꼴로 찍힌 글이므로 글 쪽으로 센다.
+const texts=s=>(String(s).match(/\$[^$]*\$/g)||[]).flatMap(x=>[...x.matchAll(/\\text\{([^{}]*)\}/g)].map(m=>m[1])).join(' ');
+const chars=s=>{const m=new Map();for(const ch of (String(s).replace(/\$[^$]*\$/g,' ')+' '+texts(s)).match(/[가-힣0-9A-Za-z]/gu)||[])m.set(ch,(m.get(ch)||0)+1);return m;};
 // 수식 글자 수: 스크립트에서 명령어·괄호·첨자 기호를 빼고 남은 글자
-const eqLen=s=>(String(s).match(/\$[^$]*\$/g)||[]).join('').replace(/\$|\\[a-zA-Z]+|\b(?:rm|it|bold|over|sqrt|LEFT|RIGHT|left|right|times|cdot)\b|[{}_^`~\s]/g,'').length;
+const eqLen=s=>(String(s).match(/\$[^$]*\$/g)||[]).join('').replace(/\\text\{[^{}]*\}/g,'').replace(/\$|\\[a-zA-Z]+|\b(?:rm|it|bold|over|sqrt|LEFT|RIGHT|left|right|times|cdot)\b|[{}_^`~\s]/g,'').length;
 const eqScore=(p,t)=>!p&&!t?1:Math.min(p,t)/Math.max(p,t);
 function f1(pred,truth){const p=chars(pred),t=chars(truth);let hit=0,np=0,nt=0;for(const v of p.values())np+=v;for(const v of t.values())nt+=v;for(const [k,v] of p)hit+=Math.min(v,t.get(k)||0);
   if(!np&&!nt)return 1;if(!np||!nt)return 0;const P=hit/np,R=hit/nt;return P+R?2*P*R/(P+R):0;}
