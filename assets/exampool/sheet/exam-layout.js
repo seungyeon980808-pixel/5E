@@ -28,9 +28,15 @@ export function examItems(data,exam=data.exams?.[0]){
   }).filter(Boolean);
 }
 
+// 시험지 용지: 넣을 문항이 모두 같은 용지(B4·A3)로 조판됐으면 그 용지 2단, 아니면 A4 2단. 문항 용지의 본문 폭이 시험지 한 단과 같아야 줄바꿈이 유지된다.
+export function examPage(items){
+  const papers=new Set(items.map(x=>x.q.typeset?.profile?.paper||x.q.paper||'A4'));
+  const paper=papers.size===1?[...papers][0]:'A4',[,h]={A4:[210,297],B4:[257,364],A3:[297,420]}[paper]||[210,297];
+  return paper===EXAM_PAGE.paper?EXAM_PAGE:{...EXAM_PAGE,paper,heightMm:h-30};
+}
 export function examPlan(data,exam=data.exams?.[0]){
-  const items=examItems(data,exam);
-  const pages=paginateQuestions(items,{height:EXAM_PAGE.heightMm,columns:EXAM_PAGE.columns,gap:EXAM_PAGE.gapMm});
-  return {items,pages,missing:items.filter(x=>!x.ready)};
+  const items=examItems(data,exam),page=examPage(items);
+  const pages=paginateQuestions(items,{height:page.heightMm,columns:page.columns,gap:page.gapMm});
+  return {items,pages,page,missing:items.filter(x=>!x.ready)};
 }
 

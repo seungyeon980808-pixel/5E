@@ -1,4 +1,4 @@
-import {exportLayoutHwpx} from './native-hwpx.js?v=1014-compact-panel';
+import {exportLayoutHwpx,restackPictureLines} from './native-hwpx.js?v=1014-compact-panel';
 export const PAPER_MM={A4:[210,297],B4:[257,364],A3:[297,420]};
 export const LAYOUT_VERSION=11;
 const HU=7200/25.4;
@@ -54,6 +54,8 @@ export async function normalizeQuestionImport(bytes,JSZip){
   zip.file('Contents/header.xml',header);
   xml=xml.replace(/<hp:tc\b[^>]*>/g,tag=>tag.replace(/hasMargin="0"/,'hasMargin="1"'));
   xml=xml.replace(/<hp:tbl\b[\s\S]*?(?=<hp:tr>)/g,tag=>tag.replace(/<hp:outMargin\b[^>]*>/,margin=>margin.replace(/\b(left|right)="\d+"/g,'$1="0"')));
+  // 가운데 그림 문단의 빠진 줄 배치를 채운다(없으면 다시 열 때 그림이 사라진다).
+  xml=restackPictureLines(xml);
   zip.file('Contents/section0.xml',xml);
   return zip.generateAsync({type:'uint8array',compression:'DEFLATE'});
 }
@@ -68,7 +70,8 @@ export function applyQuestionIndent(document,number,{body=false,askLead='',askIn
     if(!run)continue;
     // 글 옆 자료처럼 번호가 표 칸 안에 있으면 칸 문단은 내어쓰기를 건드리지 않는다.
     if(run.cellPath?.length)return;
-    const start=JSON.parse(document.getCursorRect(run.secIdx,run.paraIdx,0)),end=JSON.parse(document.getCursorRect(run.secIdx,run.paraIdx,prefix.length)),hang=Math.round((end.x-start.x)*150);
+    // 어울림 그림이 문단 맨 앞에 있으면 번호 글은 그 뒤에서 시작한다.
+    const at=run.charStart||0,start=JSON.parse(document.getCursorRect(run.secIdx,run.paraIdx,at)),end=JSON.parse(document.getCursorRect(run.secIdx,run.paraIdx,at+prefix.length)),hang=Math.round((end.x-start.x)*150);
     document.applyParaFormat(run.secIdx,run.paraIdx,JSON.stringify({indent:-hang}));
     // 평가원 지면: 번호 다음 문단(자료 표·발문·<보기>·선지)은 모두 번호 너비만큼 들어가 시작한다. 발문 첫 줄은 한 글자 더.
     if(body){
@@ -141,6 +144,21 @@ export async function applyReferenceBogiIndent(document,JSZip,CFB=globalThis.XLS
   return zip.generateAsync({type:'uint8array',compression:'DEFLATE'});
 }
 
+// 한글 엔진은 아래·위 첨자 묶음 바로 뒤의 글자까지 첨자로 읽는다(T_{1}=\frac… 가 T 아래에 모두 붙음).
+// 닫는 괄호 뒤에 띄어쓰기를 하나 둔다. LaTeX·한글 수식 모두 띄어쓰기는 구분 기호일 뿐 모양을 바꾸지 않는다.
+export function normalizeEquationScript(script){
+  const s=String(script);let out='';
+  for(let i=0;i<s.length;i++){
+    out+=s[i];
+    if((s[i]==='_'||s[i]==='^')&&s[i+1]==='{'){
+      let depth=0,j=i+1;for(;j<s.length;j++){if(s[j]==='\\'){j++;continue;}if(s[j]==='{')depth++;else if(s[j]==='}'&&--depth===0)break;}
+      if(j>=s.length)continue;
+      out+=s.slice(i+1,j+1);i=j;
+      const next=s[j+1];if(next!==undefined&&!/[\s}_^]/.test(next))out+=' ';
+    }
+  }
+  return out;
+}
 // The native engine accepts both LaTeX and Hancom equation scripts. Generate
 // each equation with that engine, then place its native HWPX control in the
 // original paragraph/cell. Equations never become bitmap pictures.
@@ -150,7 +168,7 @@ export async function materializeEquations(Document,JSZip,bytes,equations,CFB=gl
   for(const [i,eq] of equations.entries()){
     if(eq.script.length>8000)throw Error('수식은 8,000자 이내로 입력하세요.');
     const temp=Document.createEmpty();let control;
-    try{temp.createBlankDocument();const result=JSON.parse(temp.insertEquation(0,0,0,eq.script,eq.fontSize||1100,0));if(!result.ok)throw Error('수식을 읽지 못했습니다.');const ez=await JSZip.loadAsync(new Uint8Array(temp.exportHwpx())),exml=await ez.file('Contents/section0.xml').async('string');control=exml.match(/<hp:equation\b[\s\S]*?<\/hp:equation>/)?.[0];}finally{temp.free();}
+    try{temp.createBlankDocument();const result=JSON.parse(temp.insertEquation(0,0,0,normalizeEquationScript(eq.script),eq.fontSize||1100,0));if(!result.ok)throw Error('수식을 읽지 못했습니다.');const ez=await JSZip.loadAsync(new Uint8Array(temp.exportHwpx())),exml=await ez.file('Contents/section0.xml').async('string');control=exml.match(/<hp:equation\b[\s\S]*?<\/hp:equation>/)?.[0];}finally{temp.free();}
     if(!control)throw Error('한글 수식 개체를 만들지 못했습니다.');
     control=control.replace(/\bid="\d+"/,`id="${1300000000+i}"`);
     if(!xml.includes(eq.marker))throw Error('수식의 원래 입력 위치를 찾지 못했습니다.');
@@ -165,4 +183,96 @@ export async function materializeEquations(Document,JSZip,bytes,equations,CFB=gl
     // real geometry before showing or saving the first preview.
     native.reflowLinesegs();return exportLayoutHwpx(native,CFB);
   }finally{native.free();}
+}
+
+// 표 칸(보기 상자·선지·표·상자) 문단: 한글 엔진은 칸 안 줄 높이에 수식 높이를 넣지 않아 분수가 아랫줄과 겹치고,
+// 줄바꿈이 있어도 들여온 줄 배치가 한 줄뿐이면 칸 높이를 한 줄로 잡아 글이 칸 밖으로 넘친다.
+// 칸 안 글은 조판할 때 어절 단위로 직접 나눠 두었으므로(줄바꿈), 줄마다 가장 큰 수식 높이로 줄 배치를 써 준다.
+// 글자 위치: 글자 1, 줄바꿈 1, 수식·탭 같은 조판 부호 8(한글 문서 규칙).
+export function cellEquationLines(xml){
+  const paragraphs=[],stack=[];
+  for(const m of xml.matchAll(/<hp:p\b[^>]*>|<\/hp:p>/g)){
+    if(m[0].startsWith('</')){const p=stack.pop();if(p)p.end=m.index;}
+    else{const p={body:m.index+m[0].length,depth:stack.length};paragraphs.push(p);stack.push(p);}
+  }
+  const num=(tag,key)=>Number(tag.match(new RegExp(`\\b${key}="(-?\\d+)"`))?.[1]);
+  let output=xml;
+  for(let i=paragraphs.length-1;i>=0;i--){
+    const p=paragraphs[i];if(!p.depth||p.end===undefined)continue;
+    const body=xml.slice(p.body,p.end);
+    if(!body.includes('<hp:equation')&&!body.includes('<hp:lineBreak')||body.includes('<hp:p ')||body.includes('<hp:tbl'))continue;
+    const first=body.match(/<hp:lineseg\b[^>]*>/)?.[0];if(!first)continue;
+    const base={vertpos:num(first,'vertpos'),vertsize:num(first,'vertsize'),baseline:num(first,'baseline'),spacing:num(first,'spacing'),horzpos:num(first,'horzpos'),horzsize:num(first,'horzsize'),flags:num(first,'flags')};
+    if(Object.values(base).some(v=>!Number.isFinite(v))||base.vertsize<=0)continue;
+    const content=body.replace(/<hp:linesegarray>[\s\S]*?<\/hp:linesegarray>/g,'');
+    const lines=[{start:0,tall:0}];let pos=0;
+    for(const t of content.matchAll(/<hp:equation\b[\s\S]*?<\/hp:equation>|<hp:lineBreak\/>|<hp:(?:tab|pic|ctrl)\b[^>]*?(?:\/>|>[\s\S]*?<\/hp:(?:tab|pic|ctrl)>)|(?<=>)([^<]+)(?=<)/g)){
+      if(t[0].startsWith('<hp:equation')){pos+=8;lines.at(-1).tall=Math.max(lines.at(-1).tall,num(t[0].match(/<hp:sz\b[^>]*>/)?.[0]||'','height')||0);}
+      else if(t[0]==='<hp:lineBreak/>'){pos+=1;lines.push({start:pos,tall:0});}
+      else if(/^<hp:(tab|pic|ctrl)\b/.test(t[0]))pos+=8;
+      else if(t[1]!==undefined)pos+=t[1].replace(/&(?:#\d+|#x[\da-f]+|[a-z]+);/gi,'x').length;
+    }
+    // 줄 배치가 이미 줄마다 있으면(엔진이 계산) 두고, 높은 수식도 줄바꿈도 없으면 그대로 둔다.
+    const segCount=(body.match(/<hp:lineseg\b/g)||[]).length;
+    if(!lines.some(l=>l.tall>base.vertsize)&&(lines.length<2||segCount>=lines.length))continue;
+    let vert=base.vertpos;
+    const segs=lines.map(l=>{const h=Math.max(base.vertsize,l.tall),baseline=Math.round(h*base.baseline/base.vertsize);
+      const seg=`<hp:lineseg textpos="${l.start}" vertpos="${vert}" vertsize="${h}" textheight="${h}" baseline="${baseline}" spacing="${base.spacing}" horzpos="${base.horzpos}" horzsize="${base.horzsize}" flags="${base.flags}"/>`;vert+=h+base.spacing;return seg;}).join('');
+    output=output.slice(0,p.body)+content+`<hp:linesegarray>${segs}</hp:linesegarray>`+output.slice(p.end);
+  }
+  return output;
+}
+export async function applyCellEquationLines(bytes,JSZip){
+  const zip=await JSZip.loadAsync(new Uint8Array(bytes)),file=zip.file('Contents/section0.xml'),xml=await file.async('string'),next=cellEquationLines(xml);
+  if(next===xml)return bytes;
+  zip.file('Contents/section0.xml',next);return zip.generateAsync({type:'uint8array',compression:'DEFLATE'});
+}
+
+// 어울림: 글 문단 맨 앞에 넣은 그림을 떠 있는 그림(문단 기준 오른쪽·왼쪽, 본문이 옆·아래로 흐름)으로 바꾼다.
+// 어느 그림인지는 그림 내용(바이트)으로 찾는다. 표 칸 안 그림은 대상이 아니다. 줄 배치는 부르는 쪽에서 다시 계산한다.
+export function applyFloatingPictures(document,floats){
+  if(!floats?.length)return;
+  const want=floats.map(f=>({align:f.align==='Left'?'Left':'Right',bytes:Uint8Array.from(atob(String(f.data).split(',')[1]||''),c=>c.charCodeAt(0)),done:false}));
+  const seen=new Set();
+  for(let page=0;page<document.pageCount();page++)for(const c of JSON.parse(document.getPageControlLayout(page)).controls||[]){
+    if(c.type!=='image'||c.cellPath?.length)continue;
+    const key=`${c.secIdx}:${c.paraIdx}:${c.controlIdx}`;if(seen.has(key))continue;seen.add(key);
+    const data=document.getControlImageData(c.secIdx,c.paraIdx,'[]',c.controlIdx),f=want.find(f=>!f.done&&f.bytes.length===data.length&&f.bytes.every((b,i)=>b===data[i]));
+    if(!f)continue;f.done=true;
+    const result=JSON.parse(document.setPictureProperties(c.secIdx,c.paraIdx,c.controlIdx,JSON.stringify({treatAsChar:false,textWrap:'Square',horzRelTo:'Para',horzAlign:f.align,vertRelTo:'Para',vertAlign:'Top',vertOffset:0,horzOffset:0,outerMarginLeft:f.align==='Right'?250:0,outerMarginRight:f.align==='Left'?250:0})));
+    if(result?.ok===false)throw Error('어울림 그림을 배치하지 못했습니다.');
+  }
+  if(want.some(f=>!f.done))throw Error('어울림 그림을 문단에서 찾지 못했습니다.');
+}
+// 어울림 그림을 놓은 뒤의 줄 배치 점검. 한글 엔진은 그림 높이 안에 든 두 줄짜리 문단을 그림 반대쪽으로 밀어 잘못 흐르게 한다.
+// ① 그림이 붙은 문단의 줄이 그림과 겹치면, 그 그림은 글 앞에 두고(단 기준 정렬) 문단 오른쪽(왼쪽) 여백을 그림 폭만큼 둔다.
+// ② 그림이 문단보다 아래로 내려오면 문단 아래 간격을 둬서 다음 문단이 그림 밑에서 시작하게 한다.
+// 문단 모양 단위: 여백·간격은 HWPUNIT의 2배(px×150).
+export function settleFloatingPictures(document){
+  const GAP=4,pics=[];
+  for(let page=0;page<document.pageCount();page++)for(const c of JSON.parse(document.getPageControlLayout(page)).controls||[]){
+    if(c.type!=='image'||c.cellPath?.length)continue;
+    const props=JSON.parse(document.getPictureProperties(c.secIdx,c.paraIdx,c.controlIdx));if(props.treatAsChar)continue;
+    pics.push({page,sec:c.secIdx,para:c.paraIdx,ci:c.controlIdx,props});
+  }
+  if(!pics.length)return false;
+  const box=p=>(JSON.parse(document.getPageControlLayout(p.page)).controls||[]).find(c=>c.type==='image'&&c.secIdx===p.sec&&c.paraIdx===p.para&&c.controlIdx===p.ci);
+  const lines=p=>{const m=new Map();for(const r of JSON.parse(document.getPageTextLayout(p.page)).runs){if(r.cellPath?.length||r.secIdx!==p.sec||r.paraIdx!==p.para||!r.text.trim())continue;const k=Math.round(r.y*10),v=m.get(k)||{y:r.y,h:0,x0:Infinity,x1:-Infinity};v.h=Math.max(v.h,r.h);v.x0=Math.min(v.x0,r.x);v.x1=Math.max(v.x1,r.x+r.w);m.set(k,v);}return [...m.values()];};
+  for(const p of pics){
+    const right=p.props.horzAlign!=='Left';let b=box(p);if(!b)continue;
+    const overlaps=lines(p).some(l=>l.y<b.y+b.h&&l.y+l.h>b.y&&(right?l.x1>b.x+1:l.x0<b.x+b.w-1));
+    if(overlaps){
+      const para=JSON.parse(document.getParaPropertiesAt(p.sec,p.para)),room=b.w+(right?p.props.outerMarginLeft:p.props.outerMarginRight)/75+GAP;
+      document.setPictureProperties(p.sec,p.para,p.ci,JSON.stringify({textWrap:'InFrontOfText',horzRelTo:'Column'}));
+      document.applyParaFormat(p.sec,p.para,JSON.stringify(right?{marginRight:Math.round(((para.marginRight||0)+room)*150)}:{marginLeft:Math.round(((para.marginLeft||0)+room)*150)}));
+      document.reflowLinesegs();b=box(p);
+    }
+    const own=lines(p),bottom=own.length?Math.max(...own.map(l=>l.y+l.h)):b.y;
+    if(b.y+b.h+GAP>bottom){
+      const para=JSON.parse(document.getParaPropertiesAt(p.sec,p.para));
+      document.applyParaFormat(p.sec,p.para,JSON.stringify({spacingAfter:Math.round(((para.spacingAfter||0)/2+b.y+b.h+GAP-bottom)*150)}));
+      document.reflowLinesegs();
+    }
+  }
+  return true;
 }

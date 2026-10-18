@@ -8,6 +8,9 @@ export const PRESETS=['글·수식','그림','그림 비교','그림·표','실�
 export const STYLES=['문장·수식','조합','대응표','그림·그래프'];
 // 문항 단계: 초안 → 검토 중 → 완성. 완성한 문항의 내용을 고치면 검토 중으로 돌아간다.
 export const WORKFLOWS={draft:'초안',review:'검토 중',complete:'완성'};
+// 어울림: 그림이 첫 지문(바로 앞 글) 문단에 붙어 오른쪽(정렬이 왼쪽이면 왼쪽)에 떠 있고, 글이 그 옆·아래로 흐른다. 맨 바깥 그림만.
+export const WRAP='어울림';
+export const isWrapped=b=>b?.kind==='figure'&&b.layout===WRAP&&!b.parent;
 export const KINDS={text:'설명',figure:'그림',table:'표',group:'묶음',steps:'과정',dialogue:'대화',bogi:'보기'};
 export const uid=()=>crypto.randomUUID();
 export const clone=v=>structuredClone(v);
@@ -96,13 +99,15 @@ export function validate(data) {
     for(const k of ['unitLarge','unitMiddle','unitSmall','managementId','templateKey'])if(q[k]!==undefined&&!str(q[k],240))throw Error('단원·관리번호를 확인하세요.');
     if(q.form!==undefined&&!['combo','single','pair','talk'].includes(q.form)||q.structure!==undefined&&!['two','big','small','condition','many','experiment','none'].includes(q.structure))throw Error('새 문항 틀의 유형·자료 구조를 확인하세요.');
     if(q.concepts!==undefined&&(!Array.isArray(q.concepts)||q.concepts.length>100||!q.concepts.every(v=>str(v,240))))throw Error('핵심개념은 100개 이내로 입력하세요.');
+    // 문항별 기준 용지(선택): 조판을 처음 열 때의 용지. 기출(평가원 단 폭 약 110mm)은 B4.
+    if(q.paper!==undefined&&!['A4','B4','A3'].includes(q.paper))throw Error('문항 기준 용지는 A4·B4·A3 중 하나입니다.');
     if(q.typeset!==undefined&&(!q.typeset||!str(q.typeset.bytes,12*1024*1024)||!str(q.typeset.fingerprint,100)||!str(q.typeset.baselineText,1000000)||!['A4','A3','B4'].includes(q.typeset.profile?.paper)||![1,2].includes(q.typeset.profile?.columns)))throw Error('저장한 조판 문서를 확인하세요.');
     if(q.reviews!==undefined&&(!Array.isArray(q.reviews)||q.reviews.length>200||!q.reviews.every(m=>m&&['me','ai'].includes(m.role)&&str(m.text,20000))))throw Error('AI 대화 기록을 확인하세요.');
     if(q.authoring!==undefined)validateAuthoring(q.authoring);
     if(q.workflow!==undefined&&!Object.hasOwn(WORKFLOWS,q.workflow))throw Error('문항 단계는 초안·검토 중·완성 중 하나입니다.');
     if(!validChoiceLayout(q.choiceLayout))throw Error('선지 배열은 한 줄·3+2·2열·세로 중에서 고르세요.');
     if(!Number.isFinite(q.points)||q.points<0||q.points>10000||!(q.answer===null||Number.isInteger(q.answer)&&q.answer>=0&&q.answer<5))throw Error('정답은 1~5, 배점은 0~10,000으로 입력하세요.');
-    const bids=new Set();for(const b of q.blocks){if(!b||!id(b.id)||bids.has(b.id)||!Object.hasOwn(KINDS,b.kind)||!str(b.label,240)||!str(b.text)||!['세로','나란히'].includes(b.layout))throw Error('구성의 종류·이름·ID를 확인하세요.');if(!validPlacement(b))throw Error('구성의 크기·간격·폭 비율·정렬을 확인하세요.');bids.add(b.id);if(b.kind==='table')table(b.table);if(b.kind==='figure'&&!image(b.figure))throw Error('그림 형식을 확인하세요.');if(['steps','bogi','dialogue'].includes(b.kind)&&(!Array.isArray(b.lines)||b.lines.length>30||!b.lines.every(l=>id(l.id)&&str(l.label,120)&&str(l.text))))throw Error('과정·대화·보기 내용을 확인하세요.');}
+    const bids=new Set();for(const b of q.blocks){if(!b||!id(b.id)||bids.has(b.id)||!Object.hasOwn(KINDS,b.kind)||!str(b.label,240)||!str(b.text)||!['세로','나란히',...(b.kind==='figure'?[WRAP]:[])].includes(b.layout))throw Error('구성의 종류·이름·ID를 확인하세요.');if(!validPlacement(b))throw Error('구성의 크기·간격·폭 비율·정렬을 확인하세요.');bids.add(b.id);if(b.kind==='table')table(b.table);if(b.kind==='figure'&&!image(b.figure))throw Error('그림 형식을 확인하세요.');if(['steps','bogi','dialogue'].includes(b.kind)&&(!Array.isArray(b.lines)||b.lines.length>30||!b.lines.every(l=>id(l.id)&&str(l.label,120)&&str(l.text))))throw Error('과정·대화·보기 내용을 확인하세요.');}
     const nodeIds=new Set(bids);
     for(const b of q.blocks){if(b.lines)for(const l of b.lines){if(nodeIds.has(l.id))throw Error('구성 항목 ID가 중복되었습니다.');nodeIds.add(l.id);}let node=b,seen=new Set([b.id]);while(node.parent){const p=q.blocks.find(x=>x.id===node.parent);if(!p||p.kind!=='group'||seen.has(p.id))throw Error('구성의 묶음 연결이 끊겼거나 순환합니다.');seen.add(p.id);node=p;}}
     q.choices.forEach(c=>{if(!id(c.id)||nodeIds.has(c.id)||!str(c.text)||!image(c.figure))throw Error('선지 ID 또는 내용을 확인하세요.');nodeIds.add(c.id);});table(q.choiceTable);

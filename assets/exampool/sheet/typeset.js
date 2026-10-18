@@ -5,7 +5,7 @@ import {loadImage} from './image-load.js';
 import {attachPlacementLayer} from './placement-layer.js';
 import {PictureSettings} from '/js/rhwp-exam-picture-controls.js?v=1.7.0-four-session-integration';
 import {buildQuestionHtml,verifyNativeQuestion,skeletonKey,decodeNativeText} from './handoff.js';
-import {questionFingerprint,typesetMatches,renderedContent,toBase64,fromBase64,materializeEquations,normalizeQuestionImport,applyQuestionIndent,applyReferenceBogiIndent,LAYOUT_VERSION} from './typeset-model.js?v=1014-compact-panel';
+import {questionFingerprint,typesetMatches,renderedContent,toBase64,fromBase64,materializeEquations,normalizeQuestionImport,applyQuestionIndent,applyReferenceBogiIndent,applyCellEquationLines,applyFloatingPictures,settleFloatingPictures,LAYOUT_VERSION} from './typeset-model.js?v=1014-compact-panel';
 import {QUESTION_PAGE_MODE,questionPageProfile,fitQuestionPage,questionPageMetrics,validateQuestionPage,resizeQuestionDocument} from './question-page.js?v=1014-compact-panel';
 import {applyTableAlignment,applyHangingIndent} from '/js/rhwp-exam-table-controls.js?v=1014-compact-panel';
 import {nativeLayoutSignature,nativeImageSignature} from './native-transfer.js?v=1014-compact-panel';
@@ -80,7 +80,9 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
     try{d.createBlankDocument();const config=questionPageProfile(profile());d.setPageDef(0,JSON.stringify(config.page));d.setColumnDef(0,1,0,true,0);
       const plan=await buildQuestionHtml(value,prepareFigure,config.width,{native:true,measureText:createNativeTextMeasurer(Document),...SKELETON});owners={images:plan.imageOwners,tables:plan.tableOwners,shapes:plan.tables,texts:plan.textSegments};const result=parse(d.pasteHtml(0,0,0,LEAD+plan.html));if(!result.ok)throw Error('문항 조판을 만들지 못했습니다.');
       bytes=await materializeEquations(Document,JSZip,await normalizeQuestionImport(d.exportHwpx(),JSZip),plan.equations);
-      const checked=new Document(bytes);try{const styled=new Document(await applyReferenceBogiIndent(checked,JSZip));try{styled.reflowLinesegs();applyQuestionIndent(styled,value.number,{body:true,askLead:plan.askLead,askIndent:plan.askIndent});fitQuestionPage(styled,profile());verifyNativeQuestion(styled,plan);bytes=exportLayoutHwpx(styled,XLSX.CFB);}finally{styled.free();}}finally{checked.free();}
+      const checked=new Document(bytes);try{const styled=new Document(await applyReferenceBogiIndent(checked,JSZip));try{styled.reflowLinesegs();applyQuestionIndent(styled,value.number,{body:true,askLead:plan.askLead,askIndent:plan.askIndent});
+        // 어울림은 내어쓰기 뒤에 건다. 문단 모양을 나중에 바꾸면 한글 엔진이 그림 옆 줄 폭을 잘못 잡는다.
+        if(plan.floats.length){applyFloatingPictures(styled,plan.floats);styled.reflowLinesegs();settleFloatingPictures(styled);}fitQuestionPage(styled,profile());verifyNativeQuestion(styled,plan);bytes=await applyCellEquationLines(exportLayoutHwpx(styled,XLSX.CFB),JSZip);}finally{styled.free();}}finally{checked.free();}
       if(plan.warnings.length)message(plan.warnings.join(' '));
     }finally{d.free();}
     return bytes;
@@ -89,10 +91,11 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
     const seq=++opening;loading=true;ready=false;host.dataset.ready='false';metricsCache=null;guide.hidden=true;metricsOutput.textContent='';cancelAnimationFrame(fitFrame);fitFrame=0;save.disabled=true;download.disabled=true;paper.disabled=true;columns.disabled=true;message('실제 한글 문서로 조판하는 중…');placer?.clear();owners=null;textMap=null;clearTimeout(syncTimer);
     try{await ensure();if(seq!==opening)return;const next=structuredClone(value),nextFingerprint=await questionFingerprint(next);
       const saved=await typesetMatches(next.typeset,next)&&[9,10,LAYOUT_VERSION].includes(next.typeset.layoutVersion)?next.typeset:null;
-      paper.value=saved?.profile.paper||'A4';columns.value=String(saved?.profile.columns||2);
+      // 기준 용지: 문항에 정한 용지(q.paper) → 저장한 조판의 용지 → A4. 저장한 조판과 다르면 같은 단 폭 문서를 새 용지로 옮긴다.
+      paper.value=next.paper||saved?.profile.paper||'A4';columns.value=String(saved?.profile.columns||2);
       let bytes=saved?fromBase64(saved.bytes):await generate(next);
       if(saved)owners=await planOwners(next);
-      if(saved&&saved.pageMode!==QUESTION_PAGE_MODE){
+      if(saved&&(saved.pageMode!==QUESTION_PAGE_MODE||saved.profile.paper!==paper.value)){
         // Retain the user's approved native formatting while moving the same
         // column width onto the new question paper; never rebuild it as HTML.
         const Document=document().constructor,old=new Document(bytes);
