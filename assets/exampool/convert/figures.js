@@ -81,10 +81,13 @@ function candidates(item,pdf){
     }}
   // 선택지 ①~⑤ 자리의 그림(그래프 고르기 등)은 문항 그림이 아니다.
   const firstChoice=Math.min(...chains.filter(c=>/^\s*①/u.test(c.str)).map(c=>c.box[1]));
-  for(let i=out.length-1;i>=0;i--)if(mid(out[i].box)[1]>firstChoice-body*.3||(out[i].box[3]>firstChoice+body*.5&&out[i].box[1]>firstChoice-body*3))out.splice(i,1);// 선택지 옆에 길게 걸친 그림은 남긴다
+  const choiceFigs=[];
+  for(let i=out.length-1;i>=0;i--)if(mid(out[i].box)[1]>firstChoice-body*.3||(out[i].box[3]>firstChoice+body*.5&&out[i].box[1]>firstChoice-body*3))choiceFigs.push(...out.splice(i,1));// 선택지 옆에 길게 걸친 그림은 남긴다
+  // 선택지 번호 ①~⑤ 자리(그림 선지를 번호마다 자를 때 씀).
+  const markers=chains.flatMap(c=>c.members).filter(m=>/^\s*[①②③④⑤]/u.test(m.str)).map(m=>{const k='①②③④⑤'.indexOf(m.str.trim()[0]);return {n:k+1,box:[m.box[0],m.box[1],m.box[0]+m.size*1.05,m.box[3]]};});
   // 그림 상자 밖으로 삐져나간 영역은 문항 영역으로 자른다.
   for(const o of out)o.box=[Math.max(q[0],o.box[0]),Math.max(q[1],o.box[1]),Math.min(q[2],o.box[2]),Math.min(q[3],o.box[3])];
-  return {out:out.filter(o=>o.box[2]-o.box[0]>4&&o.box[3]-o.box[1]>4),page,chains,prose,frames,body};
+  return {out:out.filter(o=>o.box[2]-o.box[0]>4&&o.box[3]-o.box[1]>4),choiceFigs,markers,page,chains,prose,frames,body};
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -280,7 +283,7 @@ async function prepare(item,cand,{chains,prose,frames},scale,signal){
  * 문항(item: corpus.json 항목)의 그림·도표를 원본 위→아래, 왼→오른 순서로 돌려준다.
  * [{data:'data:image/png;base64,…', box:[x0,y0,x1,y1](PDF pt, 위가 0), page, caption:'(가)'|null, kind:'vector'|'raster'|'mixed', widthPt}]
  */
-export async function detectFigures(item,{signal,scale=4}={}){
+export async function detectFigures(item,{signal,scale=4,choices=false}={}){
   aborted(signal);
   const pdf=await readQuestionPdf(item,{signal});
   const ctx=candidates(item,pdf),{out:cands,chains,body}=ctx;
@@ -300,7 +303,7 @@ export async function detectFigures(item,{signal,scale=4}={}){
       if(p.cap)g.fillRect(p.cap.x0-2,p.cap.y0-2,p.cap.x1-p.cap.x0+4,p.cap.y1-p.cap.y0+4);
       order.push({r,box:pt,caption});
     }
-    for(const o of order)figs.push({data:crop(canvas,o.r),box:o.box,page:item.page,caption:o.caption,kind:cand.kind,widthPt:o.box[2]-o.box[0],group:cands.indexOf(cand)});
+    for(const o of order)figs.push({data:crop(canvas,o.r),box:o.box,page:item.page,caption:o.caption,kind:cand.kind,widthPt:o.box[2]-o.box[0],role:cand.table?'table':'figure',group:cands.indexOf(cand)});
   }
   // 읽는 순서: 위→아래(같은 줄은 왼→오른).
   // 후보끼리는 위→아래(같은 줄은 왼→오른), 한 후보 안에서는 캡션 순서.
@@ -310,7 +313,34 @@ export async function detectFigures(item,{signal,scale=4}={}){
   for(const f of figs)delete f.group;
   // 글자로 읽지 못한 비트맵 캡션은 순서대로 (가)(나)…를 붙인다.
   let k=0;for(const f of figs){if(!f.caption)continue;if(f.caption==='?')f.caption=`(${LETTERS[k]||'?'})`;const i=LETTERS.indexOf(f.caption[1]);k=(i>=0?i:k)+1;}
+  if(choices)figs.push(...await choiceFigures(item,ctx,scale,signal));
   return figs;
+}
+
+// 그림 선지: 선택지 번호마다 그 번호 오른쪽(다음 번호 전까지)·그 줄(다음 줄 전까지)을 잘라 한 장씩.
+async function choiceFigures(item,ctx,scale,signal){
+  const {choiceFigs,markers,prose,body}=ctx,q=item.box;
+  if(!choiceFigs.length||!markers.length)return [];
+  const rows=[];for(const mk of [...markers].sort((a,b)=>a.box[1]-b.box[1])){const row=rows.find(r=>Math.abs(r[0].box[1]-mk.box[1])<body*.6);if(row)row.push(mk);else rows.push([mk]);}
+  rows.forEach(r=>r.sort((a,b)=>a.box[0]-b.box[0]));
+  const out=[];
+  for(const [ri,row] of rows.entries())for(const [ci,mk] of row.entries()){
+    aborted(signal);
+    const x1=ci+1<row.length?row[ci+1].box[0]-1:q[2],y0=Math.max(q[1],mk.box[1]-body*.4),y1=ri+1<rows.length?Math.min(...rows[ri+1].map(x=>x.box[1]))-body*.4:q[3];
+    const cell=[mk.box[0],y0,x1,y1],hit=choiceFigs.filter(f=>inter(f.box,cell));
+    if(!hit.length)continue;
+    // 칸을 그림 후보 쪽으로 좁힌다(단 구분선·쪽 번호가 끼지 않게).
+    const box=inter(cell,hit.map(f=>[f.box[0]-2,f.box[1]-2,f.box[2]+2,f.box[3]+2]).reduce(union));if(!box)continue;
+    const canvas=await renderFigureCanvas({...item,box,displayBox:box},scale,{signal}),g=canvas.getContext('2d');g.fillStyle='#fff';
+    const toPx=b=>[(b[0]-box[0])*scale,(b[1]-box[1])*scale,(b[2]-b[0])*scale,(b[3]-b[1])*scale];
+    g.fillRect(...toPx([mk.box[0]-1,mk.box[1]-1,mk.box[2]+.5,mk.box[3]+1]));
+    for(const c of prose)if(!choiceFigs.some(f=>inBox(f.ink,mid(c.box),0.5)))g.fillRect(...toPx([c.box[0]-.5,c.box[1]-.5,c.box[2]+.5,c.box[3]+.5]));
+    const m=inkMap(canvas),t=trim(m,rect(0,0,m.W,m.H));if(!t)continue;
+    const pad=Math.round(2*scale),r=rect(Math.max(0,t.x0-pad),Math.max(0,t.y0-pad),Math.min(m.W,t.x1+pad),Math.min(m.H,t.y1+pad));
+    const pt=[box[0]+r.x0/scale,box[1]+r.y0/scale,box[0]+r.x1/scale,box[1]+r.y1/scale];
+    out.push({data:crop(canvas,r),box:pt,page:item.page,caption:null,kind:'mixed',widthPt:pt[2]-pt[0],role:'choice',choice:mk.n});
+  }
+  return out.sort((a,b)=>a.choice-b.choice);
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -356,3 +386,4 @@ export async function debugChains(item){const pdf=await readQuestionPdf(item);co
 export async function debugFrames(item){const pdf=await readQuestionPdf(item);const H=pdf.pageHeight;const prims=drawingPrimitives(pdf.operations,pdf.OPS,H);const page=analyse(prims,pdf.content.items,H);
   const q=item.box,inQ=b=>inBox(q,mid(b));const chains=page.chains.filter(c=>inQ(c.box));const cells=page.containers.filter(c=>c.kind==='cell');
   return page.containers.filter(f=>f.kind==='frame'&&inQ(f.box)).map(f=>{const own=cells.filter(c=>inBox(f.box,mid(c.box),-0.5));return [f.box,own.length,own.some(c=>Math.abs(c.box[0]-f.box[0])<2&&Math.abs(c.box[1]-f.box[1])<2),chains.filter(c=>inBox(f.box,mid(c.box),-0.5)&&(CHOICE.test(c.str)||/보\s*기/u.test(c.str))).map(c=>c.str)];});}
+export const detectWithChoices=item=>detectFigures(item,{choices:true});
