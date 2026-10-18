@@ -1996,6 +1996,30 @@
           "formula": "",
           "cffSha256": "6f80397dfc6b8382bb4c3f9547290d7e4290b11680b5dc1bb88bc05c8bbf735e",
           "cmapSha256": "53d5e20e01ca8c6c28469cb8753b2cabb415f7dc5bdd49a8d3941c518f4965d5"
+        },
+        {
+          "codepoint": 57396,
+          "glyphId": 34245,
+          "renderedCodepoint": 57349,
+          "formula": "",
+          "cffSha256": "f1b956e87c9e9873b5685429e20ccb154e8a6c8b22cefdc2a176dd0feb8445ec",
+          "cmapSha256": "1234880afa5138943f9a2b8ae201d6f484b2432b0cd17ed1fc0f28cc63ad2d83"
+        },
+        {
+          "codepoint": 57398,
+          "glyphId": 34247,
+          "renderedCodepoint": 57350,
+          "formula": "",
+          "cffSha256": "f1b956e87c9e9873b5685429e20ccb154e8a6c8b22cefdc2a176dd0feb8445ec",
+          "cmapSha256": "1234880afa5138943f9a2b8ae201d6f484b2432b0cd17ed1fc0f28cc63ad2d83"
+        },
+        {
+          "codepoint": 57398,
+          "glyphId": 34247,
+          "renderedCodepoint": 57348,
+          "formula": "",
+          "cffSha256": "1733e7a3fc2234e72bdb6f60ddf421b70ebab561570f47fc30d788a8015c8533",
+          "cmapSha256": "5d3d3611dcd67eabee55a9a45d816c845050541ffd03397e710edee91864fdd9"
         }
       ]
     }
