@@ -43,3 +43,14 @@ test('order moves stay within the same group',()=>{
   assert.deepEqual(q.blocks.filter(b=>b.parent===group.id).map(b=>b.id),[kids[1].id,kids[0].id,...kids.slice(2).map(b=>b.id)]);
   ok(q);
 });
+test('after a frame is made, each material cell picks picture or table; untitled boxes may keep an empty name',async()=>{
+  const {questionFromShape}=await import('../assets/exampool/sheet/templates.js');
+  const q=questionFromShape({form:'combo',struct:'two'},'1'),[a,b]=q.blocks.filter(x=>x.kind==='figure');
+  applyPartChange(q,b.id,'kind','표');assert.equal(b.kind,'table');assert.equal(b.table.rows,3);assert.equal('figure' in b,false);ok(q);
+  b.table.cells[1][1].value='2';assert.throws(()=>applyPartChange(q,b.id,'kind','그림'),/비운 뒤/);
+  a.figure={name:'그림',data:'data:image/png;base64,AAAA'};assert.throws(()=>applyPartChange(q,a.id,'kind','표'),/지운 뒤/);
+  const c=questionFromShape({form:'single',struct:'condition'},'2'),box=c.blocks.find(x=>x.kind==='group');
+  applyPartChange(c,box.id,'label','조건');assert.equal(box.label,'조건');applyPartChange(c,box.id,'label','');assert.equal(box.label,'');
+  assert.throws(()=>applyPartChange(c,c.blocks[0].id,'label',''),/이름/);
+  applyPartChange(c,'choices','choiceLayout','2열');assert.equal(c.choiceLayout,'2열');ok(c);
+});

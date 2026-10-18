@@ -1,6 +1,6 @@
 // 5E_cell의 '구성' 시트: 선택한 문항의 구성 한 줄마다 순서·묶음·배치·폭 비율·크기·간격·정렬.
 // 엑셀 '구성' 시트와 같은 값을 같은 말로 보여 준다. 고치면 데이터 하나만 바뀌고 한글 창이 다시 그려진다.
-import {KINDS} from './model.js';
+import {KINDS,makeTable} from './model.js';
 import {labelInDocument} from './handoff.js';
 import {ALIGNS,CHOICE_LAYOUTS,formatSize,formatGap,formatRatio,parseSize,parseGap,parseRatio,parseAlign,parseChoiceLayout} from './placement.js';
 
@@ -24,16 +24,16 @@ export function renderParts(host,q){
     return `<tr data-part-id="${b.id}">
       <th class="row-num" scope="row">${i+1}</th>
       <td class="part-order"><div class="order-cell"><span>${q.blocks.filter(x=>x.parent===b.parent).indexOf(b)+1}</span><button type="button" data-part-move="up" aria-label="${E(b.label)} 위로">${ICON.up}</button><button type="button" data-part-move="down" aria-label="${E(b.label)} 아래로">${ICON.down}</button></div></td>
-      <td class="part-kind">${KINDS[b.kind]}</td>
-      <td class="part-name" style="--depth:${depth}"${labelInDocument(b)?' data-hwp="text"':''}><input data-part="label" aria-label="구성 이름" value="${E(b.label)}" maxlength="240"></td>
-      <td><select data-part="parent" aria-label="상위 묶음"><option value=""${parent?'':' selected'}>—</option>${groups.filter(g=>g.id!==b.id).map(g=>`<option value="${g.id}"${g.id===parent?.id?' selected':''}>${E(g.label)}</option>`).join('')}</select></td>
+      <td class="part-kind">${b.kind==='figure'||b.kind==='table'?select('kind',[KINDS.figure,KINDS.table],KINDS[b.kind],'자료 종류'):KINDS[b.kind]}</td>
+      <td class="part-name" style="--depth:${depth}"${labelInDocument(b)?' data-hwp="text"':''}><input data-part="label" aria-label="구성 이름" value="${E(b.label)}" maxlength="240"${b.kind==='group'&&b.boxed===true?' placeholder="제목 없음"':''}></td>
+      <td><select data-part="parent" aria-label="상위 묶음"><option value=""${parent?'':' selected'}>—</option>${groups.filter(g=>g.id!==b.id).map(g=>`<option value="${g.id}"${g.id===parent?.id?' selected':''}>${E(g.label||'상자')}</option>`).join('')}</select></td>
       <td>${b.kind==='group'?select('layout',['세로','나란히'],b.layout,'배치'):'<span class="part-na">—</span>'}</td>
       <td>${side?field('ratio',formatRatio(b.ratio),'폭 비율','1'):'<span class="part-na">—</span>'}</td>
       <td>${sized?field('size',formatSize(b.size),'크기','자동'):'<span class="part-na">—</span>'}</td>
       <td>${field('gap',formatGap(b.gap),'간격','0mm')}</td>
       <td>${sized?select('align',ALIGNS,b.align||'','정렬','자동'):'<span class="part-na">—</span>'}</td>
     </tr>`;}).join('');
-  const choices=q.type==='서술형'?'':`<tr data-part-id="choices"><th class="row-num" scope="row">${partRows(q).length+2}</th><td class="part-order"></td><td class="part-kind">선지</td><td class="part-name">①~⑤</td><td><span class="part-na">—</span></td><td>${select('choiceLayout',CHOICE_LAYOUTS,q.choiceLayout||'','선지 배열','자동')}</td><td colspan="4"><span class="part-na">한 줄 · 3+2 · 세로</span></td></tr>`;
+  const choices=q.type==='서술형'?'':`<tr data-part-id="choices"><th class="row-num" scope="row">${partRows(q).length+2}</th><td class="part-order"></td><td class="part-kind">선지</td><td class="part-name">①~⑤</td><td><span class="part-na">—</span></td><td>${select('choiceLayout',CHOICE_LAYOUTS,q.choiceLayout||'','선지 배열','자동')}</td><td colspan="4"><span class="part-na">한 줄 · 3+2 · 2열 · 세로</span></td></tr>`;
   host.innerHTML=`<table id="parts" aria-label="선택 문항의 구성과 배치">
     <colgroup><col class="row-col"><col class="order-col"><col class="kind-col"><col class="name-col"><col class="parent-col"><col class="layout-col"><col class="ratio-col"><col class="size-col"><col class="gap-col"><col class="align-col"></colgroup>
     <thead><tr class="letters"><th></th>${'ABCDEFGHI'.split('').map(c=>`<th>${c}</th>`).join('')}</tr>
@@ -45,7 +45,17 @@ export function renderParts(host,q){
 export function applyPartChange(q,id,name,value){
   if(id==='choices'){if(name!=='choiceLayout')return;const v=parseChoiceLayout(value);if(v===undefined)delete q.choiceLayout;else q.choiceLayout=v;return;}
   const b=q.blocks.find(x=>x.id===id);if(!b)throw Error('구성을 찾지 못했습니다.');
-  if(name==='label'){const v=String(value).trim();if(!v)throw Error('구성 이름을 입력하세요.');b.label=v;return;}
+  // 상자는 이름을 비우면 제목 없이 찍힌다(설명·조건·실험 상자).
+  if(name==='label'){const v=String(value).trim();if(!v&&!(b.kind==='group'&&b.boxed===true))throw Error('구성 이름을 입력하세요.');b.label=v;return;}
+  // 자료 칸의 종류: 틀을 만든 뒤 칸마다 그림(그래프 포함)·표 중에서 고른다. 넣은 내용은 지우지 않는다.
+  if(name==='kind'){
+    const kind=value===KINDS.table?'table':value===KINDS.figure?'figure':null;if(!kind||!['figure','table'].includes(b.kind))throw Error('자료 종류는 그림·표 중에서 고르세요.');
+    if(kind===b.kind)return;
+    if(b.kind==='figure'&&b.figure)throw Error('그림이 들어 있는 칸입니다. 그림을 지운 뒤 표로 바꾸세요.');
+    if(b.kind==='table'&&b.table.cells.flat().some(c=>c.value!==''||c.figure))throw Error('내용이 있는 표입니다. 표를 비운 뒤 그림으로 바꾸세요.');
+    if(kind==='table'){delete b.figure;b.table=makeTable();}else{delete b.table;b.figure=null;}
+    b.kind=kind;return;
+  }
   if(name==='layout'){if(b.kind!=='group'||!['세로','나란히'].includes(value))throw Error('배치는 세로·나란히 중에서 고르세요.');b.layout=value;if(value==='세로')for(const c of q.blocks)if(c.parent===b.id)delete c.ratio;return;}
   if(name==='parent'){
     const g=value?q.blocks.find(x=>x.kind==='group'&&x.id===value&&x.id!==b.id):null;if(value&&!g)throw Error('상위 묶음을 찾지 못했습니다.');

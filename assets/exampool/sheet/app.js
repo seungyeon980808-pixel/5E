@@ -160,9 +160,12 @@ document.addEventListener('input',e=>{const n=e.target;if(grid?.manages(n)||n.ta
 });
 document.addEventListener('change',e=>{const n=e.target;if(grid?.manages(n))return;if(n.tagName==='SELECT'&&n.dataset.field)mutate(()=>changeField(current,n.dataset.field,n.value));if(n.tagName==='SELECT'&&n.dataset.bfield){const b=current.blocks.find(b=>b.id===n.closest('[data-block]').dataset.block);mutate(()=>b[n.dataset.bfield]=n.dataset.bfield==='parent'?n.value||null:n.value);}if(n.tagName==='SELECT'&&n.dataset.tfield)mutate(()=>tableBy(n.closest('[data-table]').dataset.table)[n.dataset.tfield]=Number(n.value));if(n.hasAttribute('data-bboxed')){const b=current.blocks.find(b=>b.id===n.closest('[data-block]').dataset.block);mutate(()=>b.boxed=n.checked);}if(n.dataset.answer!==undefined)mutate(()=>current.answer=Number(n.dataset.answer));});
 let addParent=null;
+// (가)·(나)·(다) 자료 묶음에 칸을 더하면 다음 이름((라)…)을 붙인다. 그 밖에는 기본 이름.
+const CAPTIONS=['(가)','(나)','(다)','(라)','(마)','(바)','(사)','(아)'];
+function nextMaterialLabel(q,parent,kind){const used=q.blocks.filter(b=>b.parent===parent).map(b=>b.label);return ['figure','table','group'].includes(kind)&&used.some(l=>CAPTIONS.includes(l))?CAPTIONS.find(c=>!used.includes(c))||KINDS[kind]:KINDS[kind];}
 document.addEventListener('click',e=>{const n=e.target.closest('button'),row=e.target.closest('#rows tr[data-id]');if(row&&!grid?.manages(e.target))choose(data.questions.find(q=>q.id===row.dataset.id));
   if(!n)return;if(n.dataset.preview){choose(data.questions.find(q=>q.id===n.dataset.preview));void openTypeset();return;}if(n.dataset.close){$('#'+n.dataset.close).close();return;}if(n.dataset.tab){if(current)renderDetail();switchTab(n.dataset.tab);return;}if(n.dataset.source){sourceTab=n.dataset.source;selectedStandard=null;$('#source-search').value='';renderSources();return;}
-  if(n.dataset.kind){mutate(()=>current.blocks.push(block(n.dataset.kind,addParent)));$('#add-dialog').close();return;}
+  if(n.dataset.kind){mutate(()=>current.blocks.push(block(n.dataset.kind,addParent,nextMaterialLabel(current,addParent,n.dataset.kind))));$('#add-dialog').close();return;}
   if(n.dataset.ref!==undefined){openRef(current.references[Number(n.dataset.ref)]);return;}if(n.dataset.removeRef!==undefined){mutate(()=>current.references.splice(Number(n.dataset.removeRef),1));return;}
   const action=n.dataset.action;if(!action)return;const b=current?.blocks.find(b=>b.id===n.closest('[data-block]')?.dataset.block),card=n.closest('[data-table]'),id=card?.dataset.table,t=id?tableBy(id):null;
   try{
