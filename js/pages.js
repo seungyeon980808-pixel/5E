@@ -1,3 +1,4 @@
+import { escapeHtml } from "./html-escape.js?v=1.7.0-four-session-integration";
 /* ===== PAGES (다중 아트보드 — 하단 탭 + 스왑 방식 전환) =====
  *
  * 설계 핵심(FEATURE_PROPOSALS "다중 아트보드"): 기존 수십 모듈이 참조하는
@@ -353,7 +354,7 @@ function openContextMenu(state, id, tab, x) {
   menu.className = "text-ctx-menu page-ctx-menu";
   menu.innerHTML = items.map((it, i) =>
     it.sep ? `<div class="page-ctx-sep"></div>`
-      : `<button type="button" class="text-ctx-item${it.danger ? " is-danger" : ""}" data-i="${i}"${it.disabled ? " disabled" : ""}>${it.label}</button>`
+      : `<button type="button" class="text-ctx-item${it.danger ? " is-danger" : ""}" data-i="${i}"${it.disabled ? " disabled" : ""}>${escapeHtml(it.label)}</button>`
   ).join("");
   document.body.appendChild(menu);
 

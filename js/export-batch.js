@@ -1,3 +1,4 @@
+import { escapeHtml } from "./html-escape.js?v=1.7.0-four-session-integration";
 /* ===== BATCH EXPORT (페이지 일괄 내보내기 — 폴더 연결 + 페이지 선택) =====
  *
  * "전체 페이지" 버튼이 바로 파일을 쏟아내던 동작을 중간 단계로 바꾼다.
@@ -255,8 +256,3 @@ function downloadBlob(blob, name) {
   URL.revokeObjectURL(url);
 }
 
-function escapeHtml(str) {
-  return String(str).replace(/[&<>"']/g, (c) => (
-    { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]
-  ));
-}
