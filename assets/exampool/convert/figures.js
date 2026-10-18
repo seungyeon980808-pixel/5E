@@ -49,13 +49,28 @@ function candidates(item,pdf){
     const kind=r.kind!=='image'?'vector':imgArea>=area(ink)*.85?'raster':'mixed';
     out.push({box:r.box,ink,kind});
   }
+  const choiceish=b=>chains.some(c=>inBox(b,mid(c.box),-0.5)&&(CHOICE.test(c.str)||/보\s*기/u.test(c.str)));
+  // 칸 속에 그림이 든 괘선 표는 표 전체가 그림 하나다(칸마다 원그래프 등).
+  const cells=page.containers.filter(c=>c.kind==='cell');
+  for(const f of page.containers){
+    const own=cells.filter(c=>inBox(f.box,mid(c.box),-0.5));
+    // 표 자신의 칸이어야 한다(바깥 자료 상자 속의 작은 표 칸은 세지 않음): 왼쪽 위 칸이 상자 모서리에 붙는다.
+    if(f.kind!=='frame'||!inQ(f.box)||own.length<4||!own.some(c=>Math.abs(c.box[0]-f.box[0])<2&&Math.abs(c.box[1]-f.box[1])<2)||choiceish(f.box))continue;
+    const inside=out.filter(o=>inBox(f.box,mid(o.ink),-0.5));
+    if(!inside.length)continue;
+    for(const o of inside)out.splice(out.indexOf(o),1);
+    out.push({box:f.box,ink:f.box,kind:inside.some(o=>o.kind!=='vector')?'mixed':'vector',table:true});
+  }
   // 괘선 표(조사 기록의 table). 선택지 표·<보기>는 빼고, 그림 후보와 겹치는 표도 뺀다.
   for(const t of page.tables){
     if(!inQ(t.box))continue;
-    if(t.chains.some(c=>CHOICE.test(c.str)||/보\s*기/u.test(c.str)))continue;
+    if(choiceish(t.box))continue;
     if(out.some(o=>area(inter(o.box,t.box)||[0,0,0,0])>area(t.box)*.3))continue;
     out.push({box:t.box,ink:t.box,kind:'vector',table:true});
   }
+  // 선택지 ①~⑤ 자리의 그림(그래프 고르기 등)은 문항 그림이 아니다.
+  const firstChoice=Math.min(...chains.filter(c=>/^\s*①/u.test(c.str)).map(c=>c.box[1]));
+  for(let i=out.length-1;i>=0;i--)if(mid(out[i].box)[1]>firstChoice-body*.3)out.splice(i,1);
   // 한 그림의 조각(겹치거나 아주 가까운 후보)을 합친다. 사이에 본문이 끼면 합치지 않는다.
   const between=b=>prose.some(c=>inBox(b,mid(c.box),-0.5)&&!out.some(o=>inBox(o.box,mid(c.box),-0.5)));
   for(let changed=true;changed;){changed=false;
@@ -88,7 +103,7 @@ function projection(m,r,axis){// axis 'x': 열마다 잉크 수
 }
 function runs(a,minGap){// 잉크가 있는 구간들(빈 칸 minGap 미만은 이어 붙임)
   const out=[];let s=-1,last=-1;
-  for(let i=0;i<a.length;i++)if(a[i]){if(s<0)s=i;else if(i-last>minGap){out.push([s,last+1]);s=i;}last=i;}
+  for(let i=0;i<a.length;i++)if(a[i]){if(s<0)s=i;else if(i-last-1>minGap){out.push([s,last+1]);s=i;}last=i;}
   if(s>=0)out.push([s,last+1]);return out;
 }
 function trim(m,r){
@@ -96,37 +111,57 @@ function trim(m,r){
   if(!xs.length)return null;
   return rect(r.x0+xs[0][0],r.y0+ys[0][0],r.x0+xs[0][1],r.y0+ys[0][1]);
 }
-// 패널 아래쪽(또는 중간)의 (가) 꼴 캡션 띠. paren: 좁은 괄호 두 개가 글자 하나를 감싼 모양.
-function captionBands(m,r,s,body){
+// 괄호 캡션 (가) 꼴인가: 양끝 덩어리가 띠 높이만큼 길고 적어도 한쪽은 아주 가늘다.
+// ('ㅏ)'처럼 괄호가 옆 글자에 붙기도 한다. 'ㅇ'·'ㅣ'로 시작·끝나는 이름표 "어머니"는 양끝이 가늘지 않다.)
+function parenAt(m,s,body,y0,y1,x0,x1,texts){
+  if(texts.some(t=>t.x0<x1&&t.x1>x0&&t.y0<y1&&t.y1>y0))return true;
+  const bh=y1-y0,hpt=bh/s,wpt=(x1-x0)/s;
+  const fine=runs(projection(m,rect(x0,y0,x1,y1),'x'),0);
+  const ext=c=>trim(m,rect(x0+c[0],y0,x0+c[1],y1));
+  const tall=c=>{const t=ext(c);return t&&(t.y1-t.y0)>=bh*.85;};
+  const thin=c=>{const t=ext(c);return t&&(t.x1-t.x0)<=Math.max(2,bh*.36);};
+  return fine.length>=2&&fine.length<=6&&tall(fine[0])&&tall(fine.at(-1))&&(thin(fine[0])||thin(fine.at(-1)))&&wpt>=body*.9&&wpt<=body*2.6&&wpt<=hpt*2.6;
+}
+// 패널 아래쪽(또는 중간)의 캡션 띠. 한 띠에 캡션이 여럿(나란한 패널의 (가)·(나))이면 clusters에 모두 담긴다.
+function captionBands(m,r,s,body,texts=[]){
   const bands=runs(projection(m,r,'y'),Math.round(1.2*s)).map(([a,b])=>({y0:r.y0+a,y1:r.y0+b}));
   const res=[];
   bands.forEach((band,k)=>{
     const hpt=(band.y1-band.y0)/s;
     if(hpt<body*.45||hpt>body*1.5)return;
-    const br=rect(r.x0,band.y0,r.x1,band.y1),cols=runs(projection(m,br,'x'),Math.round(.9*s));
-    if(!cols.length)return;
-    const x0=r.x0+cols[0][0],x1=r.x0+cols.at(-1)[1],wpt=(x1-x0)/s;
-    if(wpt>body*3.4)return;
     const above=bands.slice(0,k);if(!above.length)return;
-    const gapAbove=(band.y0-above.at(-1).y1)/s;if(gapAbove<1.2)return;
-    const tall=above.some(b=>(b.y1-b.y0)/s>=body*1.6)||(above.at(-1).y1-above[0].y0)/s>=body*2.5;if(!tall)return;
-    // 괄호: 가장 왼쪽·오른쪽 잉크 덩어리가 좁고 띠 높이만큼 길다.
-    const fine=runs(projection(m,br,'x'),0);
-    const narrow=c=>(c[1]-c[0])/s<=body*.42;
-    const paren=fine.length>=3&&narrow(fine[0])&&narrow(fine.at(-1))&&wpt>=body*.9&&wpt<=body*2.6;
-    res.push({y0:band.y0,y1:band.y1,x0,x1,paren,last:k===bands.length-1,below:bands.slice(k+1)});
+    if((band.y0-above.at(-1).y1)/s<1.2)return;
+    if((above.at(-1).y1-above[0].y0)/s<body*.6)return;
+    const br=rect(r.x0,band.y0,r.x1,band.y1);
+    const clusters=runs(projection(m,br,'x'),Math.round(.8*body*s)).map(([a,b])=>({x0:r.x0+a,x1:r.x0+b}));
+    for(const c of clusters)c.paren=(c.x1-c.x0)/s<=body*3.4&&parenAt(m,s,body,band.y0,band.y1,c.x0,c.x1,texts);
+    const x0=clusters[0].x0,x1=clusters.at(-1).x1;
+    const one=clusters.length===1||(x1-x0)/s<=body*3.4;
+    res.push({y0:band.y0,y1:band.y1,x0,x1,clusters,narrow:(x1-x0)/s<=body*3.4,
+      paren:one&&parenAt(m,s,body,band.y0,band.y1,x0,x1,texts),last:k===bands.length-1,below:bands.slice(k+1)});
   });
   return res;
 }
 
 // 한 후보 캔버스를 패널로 나눈다. 결과: [{r(픽셀), caption:{y0,..}|null}]
-function panels(m,s,body){
+function panels(m,s,body,texts=[]){
   const full=rect(0,0,m.W,m.H);
-  const bottomCaption=r=>{const t=trim(m,r);if(!t)return null;const c=captionBands(m,t,s,body).find(b=>b.last);return c?{t,c}:null;};
+  const bottomCaption=r=>{const t=trim(m,r);if(!t)return null;const c=captionBands(m,t,s,body,texts).find(b=>b.last);return c?{t,c}:null;};
   // 세로 고랑으로 나누기: 고랑 폭 5pt 이상.
   const cols=runs(projection(m,full,'x'),Math.round(5*s)).filter(([a,b])=>(b-a)/s>=3);
   let segs=cols.map(([a,b])=>rect(a,0,b,m.H));
-  if(segs.length>1){
+  // 고랑이 없어도(그림이 서로 닿음) 맨 아래 한 줄에 괄호 캡션이 여럿이면 그 사이 잉크가 가장 적은 세로줄에서 자른다.
+  const whole=trim(m,full),row=whole&&captionBands(m,whole,s,body,texts).find(b=>b.last);
+  if(row&&row.clusters.length>=2&&row.clusters.every(c=>c.paren)){
+    const proj=projection(m,rect(0,whole.y0,m.W,row.y0),'x'),cuts=[];
+    for(let i=1;i<row.clusters.length;i++){
+      const a=Math.round((row.clusters[i-1].x0+row.clusters[i-1].x1)/2),b=Math.round((row.clusters[i].x0+row.clusters[i].x1)/2);
+      let best=a,bv=Infinity,run=0,bestRun=0;
+      for(let x=a;x<b;x++){if(proj[x]<bv){bv=proj[x];best=x;run=1;bestRun=1;}else if(proj[x]===bv){run++;if(run>bestRun){bestRun=run;best=x-Math.floor(run/2);}}else run=0;}
+      cuts.push(best);
+    }
+    segs=[0,...cuts].map((x,i)=>rect(x,0,i<cuts.length?cuts[i]:m.W,m.H));
+  }else if(segs.length>1){
     const capped=segs.map(r=>!!bottomCaption(r)?.c.paren);
     if(capped.filter(Boolean).length>=2){
       // 캡션 없는 조각은 가장 가까운 캡션 조각에 붙인다.
@@ -142,8 +177,8 @@ function panels(m,s,body){
   for(const seg of segs){
     let r=trim(m,seg);if(!r)continue;
     for(let guard=0;guard<6;guard++){
-      const bands=captionBands(m,r,s,body);
-      const cut=bands.find(b=>b.paren&&!b.last&&b.below.some(x=>(x.y1-x.y0)/s>=body*1.6));
+      const bands=captionBands(m,r,s,body,texts);
+      const cut=bands.find(b=>b.paren&&!b.last&&(b.below.at(-1).y1-b.below[0].y0)/s>=body*1.6);
       if(!cut)break;
       const top=trim(m,rect(r.x0,r.y0,r.x1,cut.y1));
       if(top)out.push(top);
@@ -152,7 +187,7 @@ function panels(m,s,body){
     if(r)out.push(r);
   }
   return out.map(r=>{
-    const c=captionBands(m,r,s,body).find(b=>b.last);
+    const c=captionBands(m,r,s,body,texts).find(b=>b.last);
     // 캡션으로 떼는 것은 (가) 꼴(괄호)일 때만. "A: X선" 같은 이름표는 그림 내용으로 남긴다.
     if(c&&c.paren){const fig=trim(m,rect(r.x0,r.y0,r.x1,c.y0));if(fig)return {r:fig,cap:c,whole:r};}
     return {r,cap:null,whole:r};
@@ -186,7 +221,9 @@ export async function detectFigures(item,{signal,scale=4}={}){
       if(inBox(b,[cand.box[0],cand.box[1]])&&inBox(b,[cand.box[2],cand.box[3]])&&!(area(b)<=area(cand.box)*1.05))
         for(const edge of [[b[0]-e,b[1]-e,b[2]+e,b[1]+e],[b[0]-e,b[3]-e,b[2]+e,b[3]+e],[b[0]-e,b[1]-e,b[0]+e,b[3]+e],[b[2]-e,b[1]-e,b[2]+e,b[3]+e]])g.fillRect(...toPx(edge));}
     const m=inkMap(canvas);
-    for(const p of panels(m,scale,body)){
+    // 글자로 찍힌 캡션 (가)(나)의 픽셀 위치.
+    const texts=chains.filter(c=>CAPTION.test(c.str)&&inBox(box,mid(c.box))).map(c=>rect((c.box[0]-box[0])*scale,(c.box[1]-box[1])*scale,(c.box[2]-box[0])*scale,(c.box[3]-box[1])*scale));
+    for(const p of panels(m,scale,body,texts)){
       const padPx=Math.round(2*scale),r=rect(Math.max(0,p.r.x0-padPx),Math.max(0,p.r.y0-padPx),Math.min(m.W,p.r.x1+padPx),Math.min(m.H,p.r.y1+padPx));
       if(p.cap)r.y1=Math.min(r.y1,p.cap.y0-1);
       const pt=[box[0]+r.x0/scale,box[1]+r.y0/scale,box[0]+r.x1/scale,box[1]+r.y1/scale];
@@ -215,4 +252,13 @@ export async function debugOverlay(item){
   frames.forEach(x=>draw(x.box,'#0a0',1));out.forEach(x=>draw(x.box,'#f80',1));figs.forEach(f=>draw(f.box,'#f00',2));
   g.fillStyle='#f00';g.font='bold 14px sans-serif';figs.forEach((f,i)=>g.fillText(`${i+1}${f.caption||''}`,(f.box[0]-q[0])*s+3,(f.box[1]-q[1])*s+14));
   return [{data:c.toDataURL('image/png')}];
+}
+export async function debugBands(item){
+  const pdf=await readQuestionPdf(item),{out,body}=candidates(item,pdf),s=4,res=[];
+  for(const cand of out){const box=cand.box;const canvas=await renderFigureCanvas({...item,box,displayBox:box},s);const m=inkMap(canvas);
+    const cols=runs(projection(m,rect(0,0,m.W,m.H),'x'),Math.round(5*s)).filter(([a,b])=>(b-a)/s>=3);
+    for(const [a,b] of cols){const r=trim(m,rect(a,0,b,m.H));const bands=runs(projection(m,r,'y'),Math.round(1.2*s));const [y0,y1]=bands.at(-1);
+      const br=rect(r.x0,r.y0+y0,r.x1,r.y0+y1);const fine=runs(projection(m,br,'x'),0).map(c=>{const t=trim(m,rect(r.x0+c[0],br.y0,r.x0+c[1],br.y1));return [(t.x1-t.x0)/s,(t.y1-t.y0)/s];});
+      res.push({col:[a/s,b/s],band:(y1-y0)/s,fine,body});}}
+  return res;
 }
