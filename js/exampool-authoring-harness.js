@@ -11,6 +11,8 @@ import {GUIDELINES_VERSION} from '/assets/exampool/authoring/guidelines.js';
 export const HARNESS_VERSION='exampool-authoring-harness-1';
 const MAX_EVIDENCE_ROUNDS=2,TURN_TIMEOUT=300000;
 export async function fetchEvidence(request){
+  // 데스크톱 앱은 IPC로, 로컬 서버는 같은 원점 API로 검색한다.
+  if(typeof window.fiveEDesktop?.examEvidence==='function'){try{return await window.fiveEDesktop.examEvidence(request);}catch(error){return {available:false,results:[],warning:'근거 검색 실패: '+error.message};}}
   const r=await fetch('/api/exampool-evidence',{method:'POST',headers:{'content-type':'application/json','x-5e-request':'1'},body:JSON.stringify(request)});
   if(r.status===404)return {available:false,results:[],warning:'이 실행 환경에는 근거 검색이 연결되어 있지 않습니다. 근거는 미확보로 남습니다.'};
   const body=await r.json().catch(()=>({}));if(!r.ok)return {available:false,results:[],warning:body.error||'근거 검색 실패'};return body;

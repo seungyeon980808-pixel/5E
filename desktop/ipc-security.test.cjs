@@ -11,7 +11,7 @@ const { pathToFileURL } = require('node:url');
 const appUrl = pathToFileURL(path.join(__dirname, '..', 'index.html')).href;
 const channels = ['codex:status', 'codex:start', 'codex:stop', 'codex:models', 'codex:account',
   'codex:send', 'codex:interrupt', 'codex:login', 'capture:sources', 'local-images:pick-folder',
-  'local-images:list', 'local-images:thumbnail', 'local-images:read', 'exam:open','exam:publish-names','exam:finish','exam:workspace-reply','exam:workspace-changed','exam:save-workspace','exam:project-snapshot','exam:open-project','exam:annotations-reply'];
+  'local-images:list', 'local-images:thumbnail', 'local-images:read', 'exam:open','exam:publish-names','exam:finish','exam:workspace-reply','exam:workspace-changed','exam:save-workspace','exam:project-snapshot','exam:open-project','exam:annotations-reply','exampool:evidence'];
 const auxChannels=['exam:request-edit','exam:get-names','exam:return-source','exam:ack','exam:workspace-snapshot','exam:workspace-restore','exam:project-snapshot-reply','exam:annotations'];
 
 function harness(t) {
@@ -107,6 +107,7 @@ for (const channel of channels) {
     if (channel.startsWith('local-images:')) await h.call('local-images:pick-folder');
     // When the production handler runs, then it returns its successful result.
     if(channel==='exam:open-project'){await assert.rejects(async()=>h.call(channel),/프로젝트 파일/);return;}
+    if(channel==='exampool:evidence'){await assert.rejects(async()=>h.call(channel),/근거 검색 종류/);return;}// 종류·검색어 없는 요청은 실행하지 않는다
     if(channel==='exam:finish'){await assert.rejects(async()=>h.call(channel),/편집 연결/);return;}
     if(channel==='exam:save-workspace') await h.call('exam:open');
     const result = await h.call(channel);

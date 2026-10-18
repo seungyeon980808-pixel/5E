@@ -1648,6 +1648,8 @@ function createWindow() {
     });
   }
 }
+// ExamPool 출제 대화의 근거 검색(읽기 전용). 입력은 종류·검색어·한도로 제한하고 경로·SQL·명령은 받지 않는다.
+handleTrustedIpc("exampool:evidence", async (_event, request) => require("./exampool-evidence.cjs").search(request && typeof request === "object" ? request : {}));
 handleTrustedIpc("codex:status", async () => ({ server: !!server, login: await loginStatus() }));
 handleTrustedIpc("codex:start", () => startServer());
 handleTrustedIpc('exam:open-project',(_event,bytes)=>{

@@ -18,6 +18,7 @@ contextBridge.exposeInMainWorld("fiveEDesktop", {
     onEdit: callback => {const listener = (_event,payload) => callback(payload);ipcRenderer.on('exam:edit',listener);return () => ipcRenderer.removeListener('exam:edit',listener);},
     onCancel: callback => {const listener = () => callback();ipcRenderer.on('exam:cancel',listener);return () => ipcRenderer.removeListener('exam:cancel',listener);},
   },
+  examEvidence: (request) => ipcRenderer.invoke("exampool:evidence", request),
   status: () => ipcRenderer.invoke("codex:status"),
   start: () => ipcRenderer.invoke("codex:start"),
   stop: (payload) => ipcRenderer.invoke("codex:stop", payload),
