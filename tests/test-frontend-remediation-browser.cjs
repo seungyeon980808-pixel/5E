@@ -373,11 +373,16 @@ test('keyboard creates first crop then moves and resizes it with an announcement
  await ui.locator('[data-unilib-crop-save]:not([disabled])').waitFor();
  await page.keyboard.press('Enter');
  await ui.locator('[data-unilib-crop-count]').filter({hasText:'1개'}).waitFor();
- await stage.focus();await page.keyboard.press('Enter');
- const finished=await page.evaluate(()=>document.activeElement?.hasAttribute('data-unilib-crop-workbench'));
- assert.equal(finished,true,'Enter after an accepted crop finishes the selection');assert.equal(await box.boundingBox(),null);
+ assert.equal(await box.boundingBox(),null);
  await stage.focus();await page.keyboard.press('Shift+Enter');
- const second=await box.boundingBox();record('keyboard-crop-next',{finished,second});assert.ok(second&&second.width>0&&second.height>0);
+ const second=await box.boundingBox();assert.ok(second&&second.width>0&&second.height>0);
+ await ui.locator('[data-unilib-crop-draft-cancel]').click();assert.equal(await box.boundingBox(),null);
+ // 2026-10-13(4dbdd0b8)부터 추가한 영역이 있을 때 Enter는 '작업대에 넣기'를 바로 실행하고 크롭 창을 닫는다.
+ await stage.focus();await page.keyboard.press('Enter');
+ await ui.locator('[data-unilib-crop]').waitFor({state:'hidden'});
+ const status=await ui.locator('[data-unilib-status]').textContent();
+ assert.match(status,/1개 이미지를 작업대에 넣었습니다/,'Enter after an accepted crop finishes the selection');
+ record('keyboard-crop-next',{second,status});
 });
 
 for (const action of ['escape','outside','fresh']) test(`autosave boot ${action} preserves snapshots and reports the exact recovery choice`,async t=>{
