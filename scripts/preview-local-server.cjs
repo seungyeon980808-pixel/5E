@@ -9,7 +9,11 @@ const runFile = promisify(execFile);
 const root = path.resolve(process.env.FIVE_E_SITE_ROOT || path.join(__dirname, '..'));
 const workspace = createHash('sha256').update(fs.realpathSync(root)).digest('hex');
 const examEvidence = require('./exampool-evidence.cjs');
-const localBridge = process.env.LOCAL_CODEX_BINARY ? require('./local-codex-bridge.cjs').createLocalCodexBridge({binary:process.env.LOCAL_CODEX_BINARY}) : null;
+const codexBridge = process.env.LOCAL_CODEX_BINARY ? require('./local-codex-bridge.cjs').createLocalCodexBridge({binary:process.env.LOCAL_CODEX_BINARY}) : null;
+// LOCAL_AI_PROVIDER=deepseek + DEEPSEEK_API_KEY: 글 작업은 DeepSeek, 그림은 LOCAL_CODEX_BINARY가 있으면 Codex로.
+const localBridge = process.env.LOCAL_AI_PROVIDER === 'deepseek'
+  ? require('./local-deepseek-bridge.cjs').createDeepSeekBridge({apiKey:process.env.DEEPSEEK_API_KEY||'',model:process.env.DEEPSEEK_MODEL||'deepseek-chat',imageBridge:codexBridge})
+  : codexBridge;
 const requestedPort = Number(process.env.PORT || 8795);
 let port = requestedPort;
 let origin = `http://127.0.0.1:${port}`;

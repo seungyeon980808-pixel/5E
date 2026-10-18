@@ -16,7 +16,7 @@ export async function fetchEvidence(request){
   const body=await r.json().catch(()=>({}));if(!r.ok)return {available:false,results:[],warning:body.error||'근거 검색 실패'};return body;
 }
 // 한 차례 AI 요청: 최종 답 글이 오고 차례가 끝날 때까지 기다린다. 취소·시간 초과는 중단 요청을 보낸다.
-function runTurn(bridge,payload,{signal,timeout=TURN_TIMEOUT}={}){
+function runTurn(bridge,payload,{signal,timeout=TURN_TIMEOUT,onSent}={}){
   return new Promise((resolve,reject)=>{
     let text='',turnId=null,done=false;const buffered=[];
     const finish=(error,value)=>{if(done)return;done=true;clearTimeout(timer);off?.();signal?.removeEventListener('abort',abort);error?reject(error):resolve(value);};
@@ -28,7 +28,7 @@ function runTurn(bridge,payload,{signal,timeout=TURN_TIMEOUT}={}){
     const abort=()=>{void bridge.interrupt?.().catch(()=>{});finish(Object.assign(Error('출제 요청을 취소했습니다.'),{cancelled:true}));};
     const timer=setTimeout(()=>{void bridge.interrupt?.().catch(()=>{});finish(Error('AI 응답이 너무 오래 걸려 중단했습니다.'));},timeout);
     if(signal?.aborted){abort();return;}signal?.addEventListener('abort',abort,{once:true});
-    bridge.send(payload).then(r=>{turnId=r?.turnId||null;for(const e of buffered.splice(0))handle(e);}).catch(error=>finish(error));
+    bridge.send(payload).then(r=>{onSent?.(r);turnId=r?.turnId||null;for(const e of buffered.splice(0))handle(e);}).catch(error=>finish(error));
   });
 }
 export function createAuthoringHarness({base=()=>window.fiveEDesktop||window.fiveEWebAI,evidence=fetchEvidence,turn=runTurn,log=()=>{}}={}){
@@ -45,7 +45,7 @@ export function createAuthoringHarness({base=()=>window.fiveEDesktop||window.fiv
       var figuresSeen=Boolean(packet.figureCount)&&figures.length===packet.figureCount;
       for(let round=1,retried=false;round<=MAX_EVIDENCE_ROUNDS+1;){
         const text=buildAuthoringPrompt(packet,{evidence:found,round,errors});
-        onProgress?.({stage:'turn',round});const t0=Date.now(),raw=await turn(bridge,{purpose:'chat',text,attachments,...selection,conversationId:null},{signal:controller.signal});
+        onProgress?.({stage:'turn',round});const t0=Date.now(),raw=await turn(bridge,{purpose:'chat',text,attachments,...selection,conversationId:null},{signal:controller.signal,onSent:r=>{if(r?.droppedAttachments)figuresSeen=false;}});
         const parsed=parseAuthoringResponse(raw);attempts.push({round,ms:Date.now()-t0,ok:parsed.ok,errors:parsed.errors||[]});log({round,ok:parsed.ok});
         if(!parsed.ok){if(retried)throw Object.assign(Error('AI 응답 형식이 계약과 맞지 않습니다: '+parsed.errors.join(' / ')),{raw:parsed.raw});retried=true;errors=parsed.errors;continue;}
         errors=[];response=parsed.value;
