@@ -8,6 +8,7 @@ const { promisify } = require('node:util');
 const runFile = promisify(execFile);
 const root = path.resolve(process.env.FIVE_E_SITE_ROOT || path.join(__dirname, '..'));
 const workspace = createHash('sha256').update(fs.realpathSync(root)).digest('hex');
+const examEvidence = require('./exampool-evidence.cjs');
 const localBridge = process.env.LOCAL_CODEX_BINARY ? require('./local-codex-bridge.cjs').createLocalCodexBridge({binary:process.env.LOCAL_CODEX_BINARY}) : null;
 const requestedPort = Number(process.env.PORT || 8795);
 let port = requestedPort;
@@ -48,6 +49,18 @@ const server = http.createServer(async (req, res) => {
     if (req.headers.origin && req.headers.origin !== origin) return fail(403, 'Origin rejected');
     res.writeHead(200, { 'Content-Type':'application/json' });
     return res.end(req.method === 'HEAD' ? undefined : JSON.stringify({ app:'5e-local-preview', workspace, revision:await previewRevision() }));
+  }
+  // ExamPool 출제 대화의 근거 검색(읽기 전용, 같은 원점만). 입력은 종류·검색어·한도로 제한한다.
+  if (pathname === '/api/exampool-evidence') {
+    if (req.method !== 'POST') return fail(405, 'Method rejected');
+    if (req.headers.origin !== origin || req.headers['x-5e-request'] !== '1') return fail(403, 'Origin rejected');
+    let body = '', size = 0;
+    req.on('data', chunk => { size += chunk.length; if (size > 20000) { req.destroy(); return; } body += chunk; });
+    req.on('end', async () => {
+      try { const result = await examEvidence.search(JSON.parse(body || '{}')); res.writeHead(200, { 'Content-Type':'application/json' }); res.end(JSON.stringify(result)); }
+      catch (error) { fail(400, error.message); }
+    });
+    return;
   }
   if (pathname === '/api/local-ai-config' && req.method === 'GET') {
     res.writeHead(200, {'Content-Type':'application/json'});

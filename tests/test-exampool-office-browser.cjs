@@ -207,16 +207,35 @@ h.withServer(async origin => {
       assert.match(await page.locator('#exam-name').inputValue(),/새 시험지/,'the exam opens under its own name');
       await page.click('[data-exam-action="close"]');await page.locator('#exam-pool-open').click();await sheet.waitForSelector('#examd-view:not([hidden])');
 
-      // AI 검토: 5E 쪽에 검토 하네스가 붙어 있으면 묶음을 받아 결과를 돌려주고, 제안은 「적용」으로 칸에 들어간다.
-      await page.evaluate(()=>{window.__reviewPackets=[];window.fiveEReviewHarness={request:async packet=>{window.__reviewPackets.push(packet);return {text:'검토를 마쳤습니다.',items:[{field:'발문',text:'물음이 분명합니다.'}],suggestion:{field:'발문',text:'이에 대한 설명으로 옳은 것만을 <보기>에서 있는 대로 고른 것은? (수정)'}};}};});
+      // 출제 대화(대역 하네스 · 실제 AI 아님): 요청 묶음 → 변경안 보관 → 「적용」→ 버전 기록, 대기 중 직접 수정한 응답은 지난 변경안.
+      await page.evaluate(()=>{window.__authorPackets=[];window.__authorHold=null;window.fiveEAuthoringHarness={cancel(){return true;},request:async packet=>{window.__authorPackets.push(packet);if(window.__authorHold)await window.__authorHold;
+        return {response:{format:'exampool-authoring-v1',reply:'검토를 마쳤습니다. 발문을 다듬었습니다.',questions:[],requirements:{explicit:['수능형'],assumed:[],pending:['실제 시험 범위']},
+          proposal:{summary:'발문 다듬기',changes:[{path:'ask',value:'이에 대한 설명으로 옳은 것만을 <보기>에서 있는 대로 고른 것은? (수정)'}]},
+          review:{axes:{answer:{status:'unverified',note:'다시 풀 보기가 비어 있음'},figure:{status:'pass'}},items:[{target:'발문',problem:'물음이 분명합니다.',fix:''}]},figures:[{kind:'graph',slot:'(가)',description:'가로축 시간(s), 세로축 속도(m/s)'}],
+          evidenceUsed:[{ref:'ev-test',target:'발문',claim:'발문 틀',judgement:'direct'}]},evidence:[{ref:'ev-test',kind:'past',title:'기출 테스트',quote:'…',page:2}],searches:[],meta:{model:'stub',ms:5,live:false}};}};});
       await sheet.locator('#examd-view [data-open-card]').first().click();await sheet.waitForSelector('#card-view:not([hidden]) .cv-writer');
       await sheet.click('#card-view [data-cv="review"]');
-      await sheet.waitForSelector('#card-view .msg.ai .rv li',{timeout:20000});
-      const packet=await page.evaluate(()=>window.__reviewPackets[0]);
-      assert.equal(packet.format,'5e-exampool-review-v1');assert.equal(packet.kind,'review');assert.ok(packet.question.ask&&packet.previewHtml,'the packet carries the question and its preview');
-      await sheet.click('#card-view [data-ai-apply]');
+      await sheet.waitForSelector('#card-view .proposal [data-act="apply"]',{timeout:20000});
+      const packet=await page.evaluate(()=>window.__authorPackets[0]);
+      assert.equal(packet.format,'exampool-authoring-request-v1');assert.equal(packet.kind,'review');assert.ok(packet.question.ask!==undefined&&packet.authoring&&Number.isInteger(packet.authoring.revision),'the packet carries the question and its version');
+      assert.equal(packet.question.authoring,undefined,'the AI copy does not carry the stored authoring record');
+      assert.match(await sheet.locator('#card-view .au-strip').textContent(),/자료·그림 · 미검토/,'a review of a proposal waits until the proposal is applied');
+      assert.match(await sheet.locator('#card-view .au-ev').textContent(),/직접 지지/);
+      await sheet.click('#card-view .proposal [data-act="apply"]');
       await sheet.waitForFunction(()=>/\(수정\)$/.test(document.querySelector('#cv-ask')?.value||''));
+      await sheet.waitForFunction(()=>/버전 1/.test(document.querySelector('#card-view .au-strip')?.textContent||''),null,{timeout:10000});
+      await sheet.waitForFunction(()=>/자료·그림 · 확인 필요/.test(document.querySelector('#card-view .au-strip')?.textContent||''),null,{timeout:10000});// 그림을 읽지 않은 검토는 그림 축을 통과시키지 않는다
       assert.equal(await sheet.locator('#card-view .cv-writer .stage [aria-pressed="true"]').textContent(),'검토 중','a draft moves to review after an AI review');
+      // 대기 중 직접 수정 → 늦게 온 응답은 지난 변경안(자동 적용 금지).
+      await page.evaluate(()=>{window.__release=null;window.__authorHold=new Promise(r=>window.__release=r);});
+      await sheet.fill('#cv-ai-input','ㄴ을 참으로 바꿔줘');await sheet.click('#card-view [data-cv="ai-send"]');
+      await sheet.waitForSelector('#card-view .msg.ai.pending');
+      await sheet.fill('#cv-ask','교사가 직접 고친 발문');await sheet.waitForTimeout(900);
+      await page.evaluate(()=>window.__release());
+      await sheet.waitForSelector('#card-view .proposal.old',{timeout:20000});
+      assert.equal(await sheet.locator('#cv-ask').inputValue(),'교사가 직접 고친 발문','a late answer never overwrites the teacher edit');
+      await sheet.click('#card-view .proposal.old [data-act="reject"]');await sheet.waitForSelector('#card-view .proposal.old',{state:'detached'});
+      await page.evaluate(()=>{window.__authorHold=null;});
       // 세 가지 화면 색 캡처(증거).
       await sheet.click('.side [data-nav="library"]');
       for(const [theme,palette] of [['dark','classic'],['dark','graphite'],['light','graphite']]){

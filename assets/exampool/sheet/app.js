@@ -10,6 +10,9 @@ import {handoffQuestion} from './handoff.js';
 import {createSheetGrid} from './grid.js';
 import {applyGridValues,columnName} from './grid-model.js';
 import {ROWS,fieldValue,writeField,applyVerticalValues} from './vertical.js';
+import {ensureAuthoring,syncRevision,restoreRevision,makeRequest,classifyResponse,storeProposal,applyProposal,rejectProposal,proposalChanges,recordReview,recordConversation,previewStructure,labelOf} from '../authoring/session.js';
+import {AXIS_LABEL} from '../authoring/schema.js';
+import {reviewVersion} from '../authoring/review-version.js';
 import {questionFromShape} from './templates.js';
 import {createNewQuestionDialog} from './new-question.js';
 import {createTypesetter} from './typeset.js?v=1017-live';
@@ -36,7 +39,7 @@ function remember(){
     tx.oncomplete=()=>{revision++;resolve();};tx.onerror=tx.onabort=()=>reject(failure||tx.error||Error('저장 공간이 부족합니다. 엑셀로 내려받아 보관하세요.'));
   }));void saveQueue.then(()=>{if(stamp===saveStamp)status('저장됨 · '+new Date().toLocaleTimeString('ko-KR',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit'}));}).catch(e=>status(e.message,true));
 }
-function mutate(fn,{render=true,key=''}={}){const selectedId=current?.id,historyBefore=history.slice(),added=!key||editKey!==key,before=added?null:clone(data),redoBefore=future;try{checkpoint(key);const completed=completeKeys();fn();demoteEdited(completed);validate(data);if(render)renderAll();else queueSync();remember();return true;}catch(e){const rollback=added?history.pop():before;if(rollback){data=rollback;current=data.questions.find(q=>q.id===selectedId)||data.questions[0]||null;}future=redoBefore;history=historyBefore;$('#undo').disabled=!history.length;$('#redo').disabled=!future.length;editKey='';if(render)renderAll();status(e.message,true);return false;}}
+function mutate(fn,{render=true,key=''}={}){const selectedId=current?.id,historyBefore=history.slice(),added=!key||editKey!==key,before=added?null:clone(data),redoBefore=future;try{checkpoint(key);const completed=completeKeys();fn();demoteEdited(completed);validate(data);if(render)renderAll();else queueSync();remember();queueAuthoringSync();return true;}catch(e){const rollback=added?history.pop():before;if(rollback){data=rollback;current=data.questions.find(q=>q.id===selectedId)||data.questions[0]||null;}future=redoBefore;history=historyBefore;$('#undo').disabled=!history.length;$('#redo').disabled=!future.length;editKey='';if(render)renderAll();status(e.message,true);return false;}}
 async function boot(){try{
   database=await new Promise((resolve,reject)=>{const r=indexedDB.open(demo?'5e-exampool-structure-demo':'5e-exampool-structure',2);r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains('state'))r.result.createObjectStore('state');if(!r.result.objectStoreNames.contains('backups'))r.result.createObjectStore('backups');};r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);r.onblocked=()=>reject(Error('다른 문항 창을 닫고 다시 열어주세요.'));});
   let raw=await new Promise((resolve,reject)=>{const r=database.transaction('state').objectStore('state').get('draft');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);}),copied=false;
@@ -146,7 +149,7 @@ function renderTable(t,id,full){let html=`<div class="table-card" data-table="${
 }
 function renderDetail(){if(!current)return;$('#question-title').textContent=`${current.number||'번호 미입력'}번 문항`;$('#structure-count').textContent=current.blocks.length+'개 구성';$('#ask').value=current.ask;renderBlocks();renderChoices();$('#tables').innerHTML=current.blocks.filter(b=>b.kind==='table').map(b=>renderTable(b.table,b.id,true)).join('')+(current.style==='대응표'?renderTable(current.choiceTable,'choices',true):'')||'<p class="muted">구성 추가에서 표를 추가하세요. 그림을 표 안의 셀에도 넣을 수 있습니다.</p>';renderEvidence();switchTab(activeTab);grid?.refresh();}
 // 완성한 문항의 내용이 바뀌면 점검으로 돌린다(상태는 내용이 아니다).
-const contentOf=q=>{const {typeset,references,workflow,reviews,...c}=q;return JSON.stringify(c);};
+const contentOf=q=>{const {typeset,references,workflow,reviews,authoring,...c}=q;return JSON.stringify(c);};
 function completeKeys(){const m=new Map();for(const q of data.questions)if(q.workflow==='complete')m.set(q.id,contentOf(q));return m;}
 function demoteEdited(keys){let n=0;for(const [id,k] of keys){const q=data.questions.find(x=>x.id===id);if(q?.workflow==='complete'&&contentOf(q)!==k){q.workflow='review';n++;}}if(n)setTimeout(()=>status(`완성한 문항 ${n}개의 내용이 바뀌어 점검할 문항으로 옮겼습니다.`),0);}
 // 화면: cards(분류별 카드) · desk(5E_cell·5e_hwp 작업대) · exam(시험지 구성). 처음에는 문항이 있으면 카드로 연다.
@@ -485,19 +488,143 @@ const cardEditor=createCardEditor($('#card-view'),{
     if(tab&&container){container.append(node);node.hidden=false;node.classList.add('docked');sourceTarget='question';sourceTab=tab;renderSources();}
     else if(node.classList.contains('docked')){node.classList.remove('docked');node.hidden=true;docked.home.insertBefore(node,docked.next);}},
   ai:(q,req)=>void askAi(q,req),
+  cancelAi:q=>cancelAi(q),aiPending:q=>aiPending(q),figure:(q,spec)=>createFigure(q,spec),remakeFigure:(q,id,req)=>remakeFigure(q,id,req),editGraph:(q,id)=>editGraphFigure(q,id),figurePending:q=>figurePending(q),proposal:(q,id,action)=>decideProposal(q,id,action),revert:(q,rev)=>revertAuthoring(q,rev),
   applySuggestion:(q,sg)=>{const map={발문:'ask',지문:'passage',보기:'bogi',선지:'choices',해설:'explanation'};const key=map[sg.field]||sg.key;if(!key){status('이 제안은 직접 칸에 옮겨 주세요.',true);return;}mutate(()=>{if(sg.line!==undefined&&key==='bogi'){const b=q.blocks.find(x=>x.kind==='bogi');if(b?.lines[sg.line])b.lines[sg.line].text=sg.text;else writeField(q,'bogi',[fieldValue(q,'bogi'),sg.text].filter(Boolean).join('\n'));}else writeField(q,key,sg.text);});status(`AI 제안을 ${sg.field}에 넣었습니다.`);},
 });
-// AI 대화·검토: 묶음(문항 내용·미리보기·근거·성취기준)을 5E의 검토 하네스로 보낸다. 결과는 이 문항의 대화에 남는다.
-const aiRequests=new Map();
-async function askAi(q,{kind,text}){
-  mutate(()=>{(q.reviews ||= []).push({role:'me',text,at:new Date().toISOString(),kind});if(q.reviews.length>200)q.reviews.splice(0,q.reviews.length-200);});
-  if(!embedded){mutate(()=>{q.reviews.push({role:'ai',text:'5E 안에서 열어야 AI 검토를 쓸 수 있습니다.',at:new Date().toISOString()});});return;}
-  const {typeset,reviews,...question}=clone(q),requestId=uid();aiRequests.set(requestId,{qid:q.id,kind});
-  window.parent.postMessage({channel:'5e-question-sheet',action:'review',requestId,qid:q.id,packet:{format:'5e-exampool-review-v1',kind,request:text,question,previewHtml:await previewHtml(q),standard:q.standardCode,references:q.references,history:(q.reviews||[]).slice(-20).map(({role,text})=>({role,text}))}},location.origin);
+// ── 출제 대화(대화형 출제·검토) ──
+// 문항이 곧 화면의 문항이다. 요청에는 문항 ID·기준 버전·내용 해시·요청 ID를 묶고, 응답은 바로 쓰지 않는다:
+// 변경안은 교사가 「적용」할 때까지 보관하고, 기다리는 동안 문항이 바뀌었으면 '지난 변경안'으로 남긴다.
+const authorRequests=new Map(),seenAuthor=new Set(),cancelledAuthor=new Set();
+let authoringTimer=0,authoringChain=Promise.resolve();
+const nowIso=()=>new Date().toISOString();
+function queueAuthoringSync(){clearTimeout(authoringTimer);authoringTimer=setTimeout(()=>{for(const q of data.questions)if(q.authoring)void syncAuthoring(q.id,{by:'teacher'});},600);}
+// 버전 기록은 비동기(해시)라 사본에서 계산한 뒤 출제 기록 칸만 옮긴다. 되돌리기 단계는 만들지 않는다.
+function syncAuthoring(qid,opts={}){
+  authoringChain=authoringChain.then(async()=>{
+    const live=data.questions.find(x=>x.id===qid);if(!live)return null;
+    const copy=clone(live);ensureAuthoring(copy);const r=await syncRevision(copy,opts);
+    const now=data.questions.find(x=>x.id===qid);if(!now)return r;
+    const a=ensureAuthoring(now),c=copy.authoring;
+    if(a.contentHash===c.contentHash&&a.revision===c.revision)return r;
+    Object.assign(a,{revision:c.revision,contentHash:c.contentHash,hashes:c.hashes,stale:c.stale,history:c.history,bank:c.bank,sessionId:c.sessionId});a.review.axes=c.review.axes;
+    for(const p of a.proposals)if(p.state==='current'&&p.baseRevision!==a.revision)p.state='stale';
+    try{validate(data);remember();}catch(e){status(e.message,true);}
+    if(view.name==='card'&&current?.id===qid)cardEditor.refreshAi?.();
+    return r;
+  }).catch(e=>{status('출제 기록: '+e.message,true);});
+  return authoringChain;
 }
+// 지난 AI 답 이후 교사가 직접 고친 칸(다음 대화의 기준).
+function teacherEditsSince(q){const h=q.authoring?.history||[],lastAi=[...h].reverse().find(x=>x.by==='ai');return h.filter(x=>x.by==='teacher'&&(!lastAi||x.revision>lastAi.revision)).map(x=>`버전 ${x.revision}: ${x.summary}`).slice(-8);}
+function authoringSummary(q){const a=q.authoring;return {revision:a.revision,target:a.target,requirements:a.requirements,issues:a.issues.filter(i=>i.status==='open').map(i=>i.text).slice(-12),
+  stale:a.stale.map(s=>`${labelOf(q,s.target)}: ${s.reason}`),axes:Object.fromEntries(Object.entries(a.review.axes).map(([k,v])=>[AXIS_LABEL[k],v.status])),
+  recentHistory:a.history.slice(-5).map(h=>`버전 ${h.revision} (${({ai:'AI 변경안',teacher:'직접 수정',revert:'되돌리기',import:'시작'})[h.by]}): ${h.summary}`)};}
+async function askAi(q,{kind,text}){
+  const qid=q.id;
+  mutate(()=>{ensureAuthoring(q);(q.reviews ||= []).push({role:'me',text,at:nowIso(),kind});if(q.reviews.length>200)q.reviews.splice(0,q.reviews.length-200);},{render:false});
+  if(view.name==='card')cardEditor.refreshAi?.();
+  if(!embedded){mutate(()=>{q.reviews.push({role:'ai',text:'5E 안에서 열어야 AI 출제 대화를 쓸 수 있습니다.',at:nowIso(),error:true});},{render:false});cardEditor.refreshAi?.();return;}
+  await syncAuthoring(qid,{by:'teacher'});
+  const live=data.questions.find(x=>x.id===qid);if(!live)return;
+  const req=makeRequest(live,kind),{typeset,reviews,authoring,...question}=clone(live);req.contentHash=(await reviewVersion(live)).version;authorRequests.set(req.requestId,req);
+  const packet={format:'exampool-authoring-request-v1',kind,text,question,previewHtml:await previewHtml(live).catch(()=>''),authoring:authoringSummary(live),teacherEdits:teacherEditsSince(live),
+    conversation:(live.reviews||[]).slice(-13,-1).map(({role,text})=>({role,text})),contentHash:req.contentHash,
+    figureCount:live.blocks.filter(b=>b.kind==='figure'&&b.figure?.data).length,figures:live.blocks.filter(b=>b.kind==='figure'&&b.figure?.data&&b.figure.data.length<6e6).map(b=>({blockId:b.id,label:b.label||'그림',data:b.figure.data}))};
+  if(view.name==='card')cardEditor.refreshAi?.();
+  window.parent.postMessage({channel:'5e-question-sheet',action:'author',requestId:req.requestId,qid,packet},location.origin);
+}
+function cancelAi(q){for(const [id,req] of authorRequests)if(req.qid===q.id){cancelledAuthor.add(id);window.parent.postMessage({channel:'5e-question-sheet',action:'author-cancel',cancelId:id},location.origin);}cardEditor.refreshAi?.();}
+const aiPending=q=>{const r=[...authorRequests.values()].find(r=>r.qid===q.id&&!cancelledAuthor.has(r.requestId));if(!r)return null;const p=r.progress||{};return {since:r.at,text:p.stage==='evidence'?`근거 DB에서 ${p.count}건 찾는 중…`:p.stage==='rewrite'?'찾은 근거로 답을 다시 쓰는 중…':p.round>1?'형식을 고쳐 다시 받는 중…':'AI가 답을 쓰는 중…'};};
+async function receiveAuthor(m){
+  const req=authorRequests.get(m.requestId);if(!req)return;authorRequests.delete(m.requestId);
+  const found=data.questions.find(x=>x.id===req.qid),currentHash=found&&req.contentHash?(await reviewVersion(found)).version:null;
+  const q=data.questions.find(x=>x.id===req.qid),verdict=classifyResponse(q,req,{seen:seenAuthor,cancelled:cancelledAuthor,currentHash});seenAuthor.add(req.requestId);
+  if(verdict==='duplicate')return;
+  if(verdict==='gone'){status('AI 답이 왔지만 그 문항이 없어 반영하지 않았습니다.',true);return;}
+  if(verdict==='cancelled'){mutate(()=>{q.reviews.push({role:'ai',text:'요청을 취소했습니다. 늦게 온 답은 반영하지 않았습니다.',at:nowIso(),requestId:req.requestId,error:true});},{render:false});cardEditor.refreshAi?.();return;}
+  if(m.error){mutate(()=>{q.reviews.push({role:'ai',text:m.error,at:nowIso(),requestId:req.requestId,error:true});},{render:false});cardEditor.refreshAi?.();return;}
+  const {response,evidence=[],searches=[],meta={}}=m.result||{};
+  if(!response){mutate(()=>{q.reviews.push({role:'ai',text:'AI 답을 읽지 못했습니다.',at:nowIso(),error:true});},{render:false});cardEditor.refreshAi?.();return;}
+  const evidenceMap=new Map(evidence.map(e=>[e.ref,{kind:{curriculum:'curriculum',past:'past',claim:'paper',textbook:'textbook'}[e.kind]||'other',title:String(e.title||'').slice(0,600),ref:e.ref,quote:String(e.quote||'').slice(0,6000),page:Number.isInteger(e.page)&&e.page>0?e.page:null,sha256:/^[a-f0-9]{64}$/.test(e.sha256||'')?e.sha256:null,bbox:Array.isArray(e.bbox)&&e.bbox.length===4&&e.bbox.every(Number.isFinite)?e.bbox:null}]));
+  mutate(()=>{
+    const stale=verdict==='stale',msg={role:'ai',text:String(response.reply||'').slice(0,20000),at:nowIso(),requestId:req.requestId,kind:req.kind,
+      questions:(response.questions||[]).map(String).slice(0,3),figures:(response.figures||[]).slice(0,6).map(f=>({kind:f.kind,slot:String(f.slot||'new').slice(0,80),description:String(f.description).slice(0,3000),mustNot:(f.mustNot||[]).map(String).slice(0,6)})),
+      items:(response.review?.items||[]).slice(0,30).map(it=>({field:String(it.target||''),text:[it.problem,it.fix&&`→ ${it.fix}`].filter(Boolean).join(' ').slice(0,2000),severity:it.severity})),
+      searches:searches.slice(0,6),meta:{model:meta.model,ms:meta.ms,attempts:meta.attempts?.length||0,live:!!meta.live,guidelines:meta.guidelines},stale};
+    // 요구사항·출제 대상·쟁점은 대화 기록이라 바로 남긴다. 검토 축·다시 푼 결과·근거는 '그 내용'에 묶는다:
+    // 변경안이 있으면 변경안에 붙여 두었다가 적용할 때 새 버전에 기록하고, 없으면 지금 버전에 기록한다.
+    const changes=proposalChanges(q,response.proposal),reviewPack={review:response.review||null,solve:response.solve||null,evidenceUsed:response.evidenceUsed||[],evidence:[...evidenceMap.entries()]};
+    recordConversation(q,response);
+    const structure=previewStructure(q,response);msg.notes=[...structure.problems,...structure.notes].map(p=>(changes.length?'변경안 기준: ':'')+p.text).slice(0,8);
+    if(stale)msg.notes.unshift('기다리는 동안 문항 내용이 바뀌어(직접 수정 등), 이 답은 요청할 때의 내용 기준입니다. 검토 상태에는 반영하지 않았고 변경안은 확인 후 적용할 수 있습니다.');
+    else if(!changes.length){const before=ensureAuthoring(q).evidence.length;recordReview(q,response,{evidence:evidenceMap,figuresSeen:meta.figuresSeen===true&&verdict==='current'});msg.evidence=q.authoring.evidence.slice(before).slice(-12).map(b=>({target:labelOf(q,b.target),judgement:b.judgement,title:b.source?.title||'',claim:b.claim}));}
+    else msg.evidence=(response.evidenceUsed||[]).slice(0,12).map(e=>({target:String(e.target||''),judgement:evidenceMap.has(String(e.ref))?e.judgement:'missing',title:evidenceMap.get(String(e.ref))?.title||'',claim:String(e.claim||'')}));
+    if(changes.length){const p=storeProposal(q,req,{summary:response.proposal.summary||'AI 변경안',changes,review:reviewPack},stale?'stale':'current');msg.proposalId=p.id;}
+    (q.reviews ||= []).push(msg);if(q.reviews.length>200)q.reviews.splice(0,q.reviews.length-200);
+    if(req.kind==='review'&&(q.workflow||'draft')==='draft')q.workflow='review';
+  },{render:false});
+  cardEditor.refreshAi?.();
+}
+// ── 그림·그래프: AI가 쓴 제작 명세로 기존 엔진을 불러 문항의 그림 칸에 넣는다 ──
+// 그래프는 편집 가능한 그래프 객체(수식·데이터·축)를 출제 기록에 함께 둔다. 그림은 비트맵이다(벡터라고 하지 않는다).
+const figureRequests=new Map();
+function figureSlot(q,spec){
+  const figs=q.blocks.filter(b=>b.kind==='figure');
+  return figs.find(b=>b.id===spec.slot||b.label===spec.slot)||figs.find(b=>!b.figure?.data)||null;
+}
+function createFigure(q,spec,{prior=null,blockId=null}={}){
+  if(!embedded){status('5E 안에서 열어야 그림·그래프를 만들 수 있습니다.',true);return;}
+  if([...figureRequests.values()].some(r=>r.qid===q.id)){status('이 문항의 그림·그래프를 만드는 중입니다.',true);return;}
+  let slot=blockId?q.blocks.find(b=>b.id===blockId):figureSlot(q,spec);
+  if(!slot){mutate(()=>{slot=block('figure',null,spec.kind==='graph'?'그래프':'그림');q.blocks.push(slot);});if(!slot)return;}
+  const requestId=uid();figureRequests.set(requestId,{qid:q.id,blockId:slot.id,kind:spec.kind,description:spec.description,mustNot:spec.mustNot||[],at:nowIso()});
+  status(`${spec.kind==='graph'?'그래프를':'그림을'} 만드는 중입니다(${slot.label||'그림 칸'})…`);cardEditor.refreshAi?.();
+  window.parent.postMessage({channel:'5e-question-sheet',action:'figure-create',requestId,qid:q.id,kind:spec.kind,description:spec.description,mustNot:spec.mustNot||[],prior},location.origin);
+}
+function figureLink(q,blockId){return q.authoring?.figures.find(f=>f.blockId===blockId)||null;}
+function remakeFigure(q,blockId,request){const link=figureLink(q,blockId);if(!link)return;const b=q.blocks.find(x=>x.id===blockId);
+  createFigure(q,{kind:link.kind,description:request?`${link.description}\n수정 요청: ${request}`:link.description,mustNot:link.mustNot||[]},{blockId,prior:link.kind==='graph'?{graph:link.graph}:{data:b?.figure?.data||null}});}
+function editGraphFigure(q,blockId){const link=figureLink(q,blockId);if(!link?.graph){status('이 그림에는 편집 가능한 그래프 원본이 없습니다.',true);return;}
+  const requestId=uid();figureRequests.set(requestId,{qid:q.id,blockId,kind:'graph',description:link.description,mustNot:link.mustNot||[],edit:true,at:nowIso()});
+  window.parent.postMessage({channel:'5e-question-sheet',action:'figure-edit-graph',requestId,qid:q.id,graph:link.graph},location.origin);}
+async function receiveFigure(m){
+  const req=figureRequests.get(m.requestId);if(!req)return;figureRequests.delete(m.requestId);
+  const q=data.questions.find(x=>x.id===req.qid);if(!q){status('그림이 왔지만 그 문항이 없어 넣지 않았습니다.',true);return;}
+  if(m.cancelled){cardEditor.refreshAi?.();return;}
+  if(m.error||!m.result?.data){status((req.kind==='graph'?'그래프':'그림')+' 만들기 실패: '+(m.error||'결과 없음'),true);mutate(()=>{(q.reviews ||= []).push({role:'ai',text:`${req.kind==='graph'?'그래프':'그림'} 만들기에 실패했습니다: ${m.error||'결과 없음'} · 문항의 그림 칸은 그대로입니다.`,at:nowIso(),error:true});},{render:false});cardEditor.refreshAi?.();return;}
+  const r=m.result,hash=await sha256Text(r.data),b=q.blocks.find(x=>x.id===req.blockId);
+  if(!b){status('그림 칸이 사라져 넣지 않았습니다.',true);return;}
+  const ok=mutate(()=>{
+    b.figure={name:`${req.kind==='graph'?'그래프':'그림'} · ${(b.label||'').slice(0,40)}.png`,data:r.data,...(r.width?{width:r.width,height:r.height}:{})};
+    const a=ensureAuthoring(q),link={blockId:b.id,kind:req.kind,description:req.description.slice(0,4000),mustNot:req.mustNot,resultHash:hash,editable:req.kind==='graph',engine:r.engine||null,model:r.model||null,ms:r.ms||null,revision:a.revision,at:nowIso(),...(r.graph?{graph:r.graph}:{}),...(r.issues?.length?{issues:r.issues}:{})};
+    a.figures=a.figures.filter(f=>f.blockId!==b.id);a.figures.push(link);
+    (q.reviews ||= []).push({role:'ai',text:`${r.edited?'그래프를 직접 편집한 결과를':req.kind==='graph'?'그래프를 만들어':'그림을 만들어'} ${b.label||'그림 칸'}에 넣었습니다${r.ms?` (${Math.round(r.ms/1000)}초)`:''}.${req.kind==='image'?' 비트맵 그림이라 선·글자를 고치려면 5E에서 편집하세요.':' 수식·데이터·축은 「그래프 편집」에서 고칠 수 있습니다.'} 실제 그림이 들어갔으니 「검토해 줘」로 그림과 문항을 함께 확인하세요.`,at:nowIso(),...(r.issues?.length?{notes:r.issues.map(x=>'그래프 확인: '+x)}:{})});
+  });
+  if(ok){status(`${b.label||'그림 칸'}에 ${req.kind==='graph'?'그래프를':'그림을'} 넣었습니다.`);void syncAuthoring(q.id,{by:r.edited?'teacher':'ai',summary:`${b.label||'그림'} ${r.edited?'그래프 직접 편집':req.kind==='graph'?'그래프 생성':'그림 생성'}`});}
+}
+async function sha256Text(text){return [...new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text)))].map(v=>v.toString(16).padStart(2,'0')).join('');}
+const figurePending=q=>[...figureRequests.values()].find(r=>r.qid===q.id)||null;
+function decideProposal(q,id,action,{force=false}={}){
+  if(action==='reject'){mutate(()=>{rejectProposal(q,id);},{render:false});cardEditor.refreshAi?.();return;}
+  const p=q.authoring?.proposals.find(x=>x.id===id);if(!p)return;
+  if(p.state!=='current'&&!force&&!confirm('이 변경안은 지난 버전을 기준으로 만들어졌습니다. 지금 내용 위에 적용할까요?'))return;
+  let applied=null;const ok=mutate(()=>{applied=applyProposal(q,id,{force:true});});
+  if(ok){status(`AI 변경안을 적용했습니다${applied.errors.length?` · 적용 못 한 변경 ${applied.errors.length}개: ${applied.errors[0].message}`:''} · 되돌리기(⌘Z)로 취소할 수 있습니다.`);
+    void syncAuthoring(q.id,{by:'ai',summary:'AI 변경안: '+p.summary.slice(0,200)}).then(()=>{
+      // 변경안을 만든 검토는 '변경안 그대로' 적용했을 때만 새 버전의 검토로 남긴다(일부만 적용됐거나 지난 변경안이면 남기지 않음).
+      const live=data.questions.find(x=>x.id===q.id);if(!live||!p.review||applied.errors.length||p.state!=='current')return;
+      mutate(()=>{recordReview(live,{review:p.review.review,solve:p.review.solve,evidenceUsed:p.review.evidenceUsed},{evidence:new Map(p.review.evidence||[])});},{render:false});cardEditor.refreshAi?.();});}
+}
+function revertAuthoring(q,revision){
+  if(!confirm(`버전 ${revision}의 내용으로 되돌릴까요? 지금 내용은 이력에 남습니다.`))return;
+  if(mutate(()=>{restoreRevision(q,revision);}))void syncAuthoring(q.id,{by:'revert',summary:`버전 ${revision}으로 되돌림`});
+}
+// 출제 답은 같은 원점 + 이 창이 만든 요청 ID일 때만 받는다(WebKit은 비동기 응답의 e.source가 부모 창이 아닐 수 있다).
+window.addEventListener('message',e=>{if(e.origin!==location.origin||e.data?.channel!=='5e-question-sheet'||!authorRequests.has(e.data.requestId))return;
+  if(e.data.action==='author-progress'){authorRequests.get(e.data.requestId).progress=e.data.progress;cardEditor.refreshAi?.();return;}
+  if(e.data.action==='author-ready')receiveAuthor(e.data);});
+window.addEventListener('message',e=>{if(e.origin!==location.origin||e.data?.channel!=='5e-question-sheet'||e.data.action!=='figure-made'||!figureRequests.has(e.data.requestId))return;void receiveFigure(e.data);});
 window.addEventListener('message',e=>{if(e.origin!==location.origin||e.source!==window.parent||e.data?.channel!=='5e-question-sheet')return;const m=e.data;
-  if(aiRequests.has(m.requestId)){const req=aiRequests.get(m.requestId),q=data.questions.find(x=>x.id===req.qid);aiRequests.delete(m.requestId);if(!q)return;
-    const r=m.result||{};mutate(()=>{q.reviews.push(m.error?{role:'ai',text:m.error,at:new Date().toISOString(),error:true}:{role:'ai',text:String(r.text||r.summary||'검토를 마쳤습니다.'),items:Array.isArray(r.items)?r.items.slice(0,30).map(it=>({field:String(it.field||''),text:String(it.text||it.message||'')})):undefined,suggestion:r.suggestion&&r.suggestion.text?{field:String(r.suggestion.field||''),text:String(r.suggestion.text),...(Number.isInteger(r.suggestion.line)?{line:r.suggestion.line}:{})}:undefined,at:new Date().toISOString()});if(req.kind==='review'&&!m.error&&(q.workflow||'draft')==='draft')q.workflow='review';});return;}
   if(m.requestId&&m.requestId===examRequest){examRequest=null;if(m.error){status(m.error,true);return;}const exam=examById(data,m.qid);if(exam)mutate(()=>{exam.sentAt=new Date().toISOString();});status('시험지를 5e_hwp에서 열었습니다 · 최종 검수 후 「출제 완료로 옮기기」를 누르세요.');}
 });
 // 왼쪽 메뉴·오른쪽 라이브러리 접기.

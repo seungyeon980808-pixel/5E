@@ -4,6 +4,8 @@ import {WORKFLOWS,KINDS} from './model.js';
 import {fieldValue,writeField} from './vertical.js';
 import {normalizeCombo} from './choice-text.js';
 import {workflowOf,previewHtml,questionSubtitle} from './views.js';
+import {AXES,AXIS_LABEL,JUDGEMENT_LABEL} from '../authoring/schema.js';
+import {labelOf} from '../authoring/session.js';
 
 const E=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const NUM=['①','②','③','④','⑤'];
@@ -142,15 +144,48 @@ export function createCardEditor(root,api){
     if(typing){const n=body.querySelector('[data-cvpast="query"]');n.focus();n.setSelectionRange(n.value.length,n.value.length);}
   }
 
-  // AI: 이 문항과 대화하며 고치고 검토한다. 검토 하네스가 붙으면 결과가 여기에 쌓인다.
+  // AI: 이 문항과 대화하며 설계·수정·검토한다. 변경안은 「적용」을 눌러야 문항에 들어간다.
+  const AXIS_STATE={none:'미검토',pass:'통과',issue:'문제 있음',unverified:'확인 필요',stale:'다시 검토'};
+  const PATH_LABEL={ask:'발문',passage:'지문',explanation:'해설',modelAnswer:'모범 답안',intent:'출제 의도',standardCode:'성취기준',answer:'정답',choices:'선지 전체',bogi:'보기',choice:'선지',block:'구성',table:'표',type:'유형',points:'배점'};
+  const changeLine=c=>{const where=c.path==='bogi'&&c.line!==undefined?`보기 ${typeof c.line==='number'?['ㄱ','ㄴ','ㄷ','ㄹ','ㅁ'][c.line]:c.line}`:c.path==='choice'?`선지 ${NUM[Number(c.index)]||''}`:c.path==='answer'?'정답':c.id?`${PATH_LABEL[c.path]} ${c.id}`:PATH_LABEL[c.path]||c.path;
+    const value=c.path==='answer'?NUM[Number(c.value)-1]||c.value:c.path==='table'?`${c.cells?.length||0}행 표`:String(c.value??'');return `<li><b>${E(where)}</b> ${E(value.length>240?value.slice(0,240)+'…':value)}</li>`;};
+  function authoringStrip(x){
+    const a=x.authoring;if(!a)return '';
+    const axes=AXES.map(k=>`<span class="ax ax-${a.review.axes[k].status}" title="${E(a.review.axes[k].note||'')}">${AXIS_LABEL[k]} · ${AXIS_STATE[a.review.axes[k].status]}</span>`).join('');
+    const stale=a.stale.length?`<p class="au-stale">다시 확인: ${a.stale.map(s=>`<span title="${E(s.reason)}">${E(labelOf(x,s.target))}</span>`).join(' · ')}</p>`:'';
+    const pending=a.requirements.pending.length?`<p class="au-pending">확인 필요: ${a.requirements.pending.map(E).join(' · ')}</p>`:'';
+    const open=a.issues.filter(i=>i.status==='open');
+    const history=a.history.length>1?`<details class="au-history"><summary>수정 이력 ${a.history.length}개</summary><ol>${[...a.history].reverse().map(h=>`<li><span>버전 ${h.revision} · ${({ai:'AI 변경안',teacher:'직접 수정',revert:'되돌리기',import:'시작'})[h.by]}</span> ${E(h.summary)}${h.revision!==a.revision?` <button type="button" class="mini" data-cvrevert="${h.revision}">이 버전으로</button>`:' <em>지금</em>'}</li>`).join('')}</ol></details>`:'';
+    const issues=open.length?`<details class="au-issues"><summary>남은 쟁점 ${open.length}개</summary><ul>${open.map(i=>`<li>${E(i.text)}</li>`).join('')}</ul></details>`:'';
+    const fp=api.figurePending?.(x),staleFig=new Set(a.stale.filter(t=>t.target.startsWith('figure:')).map(t=>t.target.slice(7)));
+    const figs=a.figures.length||fp?`<div class="au-figlist">${a.figures.map(f=>{const b=x.blocks.find(v=>v.id===f.blockId);return `<div class="au-figrow${staleFig.has(f.blockId)?' stale':''}"><b>${E(b?.label||'그림')}</b> <span>${f.kind==='graph'?'그래프 · 편집 가능':'그림 · 비트맵'}${staleFig.has(f.blockId)?' · 조건이 바뀜, 다시 확인':''}</span> <button type="button" class="mini" data-cvremake="${E(f.blockId)}">다시 만들기</button>${f.kind==='graph'&&f.graph?` <button type="button" class="mini" data-cvgraphedit="${E(f.blockId)}">그래프 편집</button>`:''}</div>`;}).join('')}${fp?`<div class="au-figrow pending">${fp.kind==='graph'?'그래프를':'그림을'} 만드는 중… <span class="au-elapsed" data-since="${E(fp.at)}"></span></div>`:''}</div>`:'';
+    return `<div class="au-strip"><div class="au-axes"><b>버전 ${a.revision}</b>${axes}</div>${stale}${pending}${figs}${issues}${history}</div>`;
+  }
+  function aiMessage(x,m,i){
+    if(m.role==='me')return `<div class="msg me">${E(m.text)}</div>`;
+    const p=m.proposalId?x.authoring?.proposals.find(p=>p.id===m.proposalId):null;
+    const proposal=p?`<div class="suggest proposal${p.state!=='current'?' old':''}"><div class="sg-head">변경안${p.state!=='current'?' · 지난 버전 기준':''}</div><p>${E(p.summary)}</p><ul class="chg">${p.changes.slice(0,20).map(changeLine).join('')}</ul><div class="sg-act"><button type="button" class="mini go-mini" data-cvprop="${E(p.id)}" data-act="apply">적용</button><button type="button" class="mini" data-cvprop="${E(p.id)}" data-act="reject">거절</button></div></div>`:m.proposalId?'<p class="sg-done">변경안을 처리했습니다.</p>':'';
+    const questions=m.questions?.length?`<ul class="ask-back">${m.questions.map(q=>`<li>${E(q)}</li>`).join('')}</ul>`:'';
+    const items=m.items?.length?`<ol class="rv">${m.items.map(it=>`<li>${it.field?`<b>${E(it.field)}</b> `:''}${E(it.text)}</li>`).join('')}</ol>`:'';
+    const notes=m.notes?.length?`<ul class="au-notes">${m.notes.map(n=>`<li>${E(n)}</li>`).join('')}</ul>`:'';
+    const ev=m.evidence?.length?`<details class="au-ev"><summary>근거 ${m.evidence.length}개</summary><ul>${m.evidence.map(e=>`<li><b>${E(JUDGEMENT_LABEL[e.judgement]||e.judgement)}</b> ${E(e.target)} · ${E(e.claim)}${e.title?` <span>(${E(e.title)})</span>`:''}</li>`).join('')}</ul></details>`:'';
+    const figs=m.figures?.length?`<div class="au-figs">${m.figures.map((f,j)=>`<div class="au-fig"><b>${f.kind==='graph'?'그래프':'그림'} · ${E(f.slot)}</b><p>${E(f.description)}</p><button type="button" class="mini go-mini" data-cvfig="${i}:${j}">${f.kind==='graph'?'그래프 만들기':'그림 만들기'}</button></div>`).join('')}</div>`:'';
+    const meta=m.meta?.model?`<span class="au-meta">${E(m.meta.model)} · ${Math.round((m.meta.ms||0)/1000)}초${m.meta.live?'':' · 대역 응답'}</span>`:'';
+    const legacy=m.suggestion?`<div class="suggest"><div class="sg-head">${E(m.suggestion.field)} · 제안</div><p>${E(m.suggestion.text)}</p><div class="sg-act"><button type="button" class="mini go-mini" data-ai-apply="${i}">적용</button></div></div>`:'';
+    return `<div class="msg ai${m.error?' err':''}${m.stale?' old':''}">${E(m.text)}${questions}${items}${notes}${proposal}${legacy}${figs}${ev}${meta}</div>`;
+  }
   function renderAi(){
     const body=root.querySelector('[data-cvbody="ai"]'),x=q();if(!body||!x)return;
-    const log=x.reviews||[];
-    body.innerHTML=`<div class="ai-scope"><b>${E(x.number||'')}번 문항</b>과 대화합니다 · 지문·자료·발문·보기·선지·근거를 함께 봅니다</div>
-      <div class="chat">${log.length?log.map(m=>`<div class="msg ${m.role==='me'?'me':'ai'}">${E(m.text)}${m.items?.length?`<ol class="rv">${m.items.map(it=>`<li>${it.field?`<b>${E(it.field)}</b> `:''}${E(it.text)}</li>`).join('')}</ol>`:''}${m.suggestion?`<div class="suggest"><div class="sg-head">${E(m.suggestion.field)} · 제안</div><p>${E(m.suggestion.text)}</p><div class="sg-act"><button type="button" class="mini go-mini" data-ai-apply="${log.indexOf(m)}">적용</button></div></div>`:''}</div>`).join(''):'<p class="ai-empty">「검토해 줘」나 고치고 싶은 점을 적어 보내세요. 결과는 이 문항에 남습니다.</p>'}</div>
-      <div class="quick">${['검토해 줘','발문 다듬기','오답 선지 만들기','기출과 비교'].map(t=>`<button type="button" class="mini" data-ai-quick="${t}">${t}</button>`).join('')}</div>
-      <div class="composer"><textarea id="cv-ai-input" rows="2" placeholder="이 문항에 대해 AI에게 요청하세요 (예: 보기 ㄷ을 더 어렵게)"></textarea><button type="button" class="btn go" data-cv="ai-send">보내기</button></div>`;
+    const log=x.reviews||[],typing=document.activeElement?.id==='cv-ai-input',draft=root.querySelector('#cv-ai-input')?.value||'',pending=api.aiPending?.(x);
+    body.innerHTML=`<div class="ai-scope"><b>${E(x.number||'')}번 문항</b>과 함께 설계·수정·검토합니다 · 변경안은 「적용」을 눌러야 문항에 들어갑니다</div>
+      ${authoringStrip(x)}
+      <div class="chat">${log.length?log.map((m,i)=>aiMessage(x,m,i)).join(''):'<p class="ai-empty">만들 문항을 말하거나(예: 두 물체의 운동을 비교하는 수능형 문항, 속도–시간 그래프, 계산보다 조건 해석) 「검토해 줘」를 보내세요.</p>'}${pending?`<div class="msg ai pending">${E(pending.text||'AI가 답을 쓰는 중…')} <span class="au-elapsed" data-since="${E(pending.since||'')}"></span> <button type="button" class="mini" data-cv="ai-cancel">취소</button></div>`:''}</div>
+      <div class="quick">${['새 문항 초안','검토해 줘','발문 다듬기','오답 선지 만들기'].map(t=>`<button type="button" class="mini" data-ai-quick="${t}"${pending?' disabled':''}>${t}</button>`).join('')}</div>
+      <div class="composer"><textarea id="cv-ai-input" rows="2" placeholder="이 문항에 대해 AI에게 요청하세요 (예: ㄴ을 참으로 바꾸고 그래프 구간을 하나 줄여줘)">${E(draft)}</textarea><button type="button" class="btn go" data-cv="ai-send"${pending?' disabled':''}>보내기</button></div>`;
     const chat=body.querySelector('.chat');chat.scrollTop=chat.scrollHeight;
+    // 기다린 시간 표시(1초마다). 답이 오면 다시 그리면서 사라진다.
+    clearInterval(renderAi.timer);const els=[...body.querySelectorAll('.au-elapsed')];if(els.length){const tick=()=>els.forEach(el=>{const s=Math.round((Date.now()-Date.parse(el.dataset.since))/1000);el.textContent=Number.isFinite(s)?`${s}초`:'';});tick();renderAi.timer=setInterval(()=>{if(!els[0].isConnected){clearInterval(renderAi.timer);return;}tick();},1000);}
+    if(typing){const n=body.querySelector('#cv-ai-input');n.focus();n.setSelectionRange(n.value.length,n.value.length);}
   }
 
   function setPanel(k,v){panels[k]=v;store.set(k,v);render();}
@@ -195,10 +230,16 @@ export function createCardEditor(root,api){
     if(d.cv==='choice-table'){api.choiceTable();return;}
     if(d.cv==='typeset'){api.typeset();return;}
     if(d.cv==='review'){panels.lib=true;store.set('lib',true);panels.tab='ai';store.set('tab','ai');render();api.ai(x,{kind:'review',text:'검토해 줘'});return;}
-    if(d.aiQuick){api.ai(x,{kind:d.aiQuick==='검토해 줘'?'review':'chat',text:d.aiQuick});return;}
-    if(d.cv==='ai-send'){const input=root.querySelector('#cv-ai-input'),text=input?.value.trim();if(!text)return;api.ai(x,{kind:/검토/.test(text)?'review':'chat',text});return;}
+    if(d.aiQuick){const kind=d.aiQuick==='검토해 줘'?'review':d.aiQuick==='새 문항 초안'?'draft':'chat';api.ai(x,{kind,text:d.aiQuick==='새 문항 초안'?'지금까지 정한 요구사항으로 새 문항 초안을 만들어 줘. 정하지 않은 것은 가정으로 남겨 줘.':d.aiQuick});return;}
+    if(d.cv==='ai-send'){const input=root.querySelector('#cv-ai-input'),text=input?.value.trim();if(!text)return;input.value='';api.ai(x,{kind:/^검토/.test(text)?'review':'chat',text});return;}
+    if(d.cv==='ai-cancel'){api.cancelAi?.(x);return;}
+    if(d.cvprop){api.proposal?.(x,d.cvprop,d.act);return;}
+    if(d.cvrevert!==undefined){api.revert?.(x,Number(d.cvrevert));return;}
+    if(d.cvfig){const [i,j]=d.cvfig.split(':').map(Number),f=x.reviews?.[i]?.figures?.[j];if(f)api.figure?.(x,f);return;}
+    if(d.cvremake){const request=prompt('어떻게 고칠까요? (비우면 같은 설명으로 다시 만듭니다)','');if(request===null)return;api.remakeFigure?.(x,d.cvremake,request.trim());return;}
+    if(d.cvgraphedit){api.editGraph?.(x,d.cvgraphedit);return;}
     if(d.aiApply!==undefined){const m=x.reviews?.[Number(d.aiApply)];if(m?.suggestion)api.applySuggestion(x,m.suggestion);return;}
   });
   root.addEventListener('keydown',e=>{if(e.target.id==='cv-ai-input'&&e.key==='Enter'&&(e.metaKey||e.ctrlKey)){e.preventDefault();root.querySelector('[data-cv="ai-send"]')?.click();}});
-  return {render,refreshLight,toggleNav(){setPanel('nav',!panels.nav);},get navOpen(){return panels.nav;},get tab(){return panels.tab;}};
+  return {render,refreshLight,refreshAi(){if(panels.tab==='ai'&&panels.lib!==false)renderAi();},toggleNav(){setPanel('nav',!panels.nav);},get navOpen(){return panels.nav;},get tab(){return panels.tab;}};
 }

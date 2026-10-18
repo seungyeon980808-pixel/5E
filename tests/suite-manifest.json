@@ -8,6 +8,12 @@
       ]
     },
     {
+      "path": "tests/test-exampool-evidence.cjs",
+      "findingIds": [
+        "EXAMPOOL-EVIDENCE-ADAPTER"
+      ]
+    },
+    {
       "path": "tests/test-graph-description.mjs",
       "findingIds": [
         "GRAPH-DESCRIPTION-CREATION"
@@ -844,6 +850,12 @@
         "EXAMPOOL-DRAG-PLACEMENT",
         "EXAMPOOL-HWP-TO-SHEET-TEXT",
         "EXAMPOOL-EXAM-ASSEMBLY"
+      ]
+    },
+    {
+      "path": "tests/test-exampool-authoring-browser.cjs",
+      "findingIds": [
+        "EXAMPOOL-AUTHORING-FAILURE-PATHS"
       ]
     },
     {

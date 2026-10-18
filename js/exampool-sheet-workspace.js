@@ -2,6 +2,10 @@ import {embedEditablePng,readEditablePng} from './editable-png.js?v=1.7.0-four-s
 import {getContentBounds} from './svg-export.js?v=1.7.0-four-session-integration';
 const copy=v=>structuredClone(v);
 const asData=bytes=>{let s='';for(let i=0;i<bytes.length;i+=32768)s+=String.fromCharCode(...bytes.subarray(i,i+32768));return 'data:image/png;base64,'+btoa(s);};
+let harnessPromise,enginesPromise;
+const engines=()=>enginesPromise||=(window.fiveEFigureEngines?Promise.resolve(window.fiveEFigureEngines):import('./exampool-figure-engines.js?v=1018-authoring').then(x=>x.createFigureEngines()));
+// 시험에서 대역 하네스를 넣을 수 있게 window.fiveEAuthoringHarness를 먼저 본다.
+const authoring=()=>harnessPromise||=(window.fiveEAuthoringHarness?Promise.resolve(window.fiveEAuthoringHarness):import('./exampool-authoring-harness.js?v=1018-authoring').then(x=>x.createAuthoringHarness()));
 export function initQuestionSheet(state,services,examWorkspace){
   // 5E_ExamPool 버튼(button-design.js가 만든 자리)이 문항 시트를 연다. 없으면 같은 자리에 만든다.
   let entry=document.getElementById('exam-pool-open');
@@ -55,7 +59,14 @@ export function initQuestionSheet(state,services,examWorkspace){
     if(e.origin!==location.origin||e.source!==frame?.contentWindow||e.data?.channel!=='5e-question-sheet')return;
     const m=e.data,send=result=>frame.contentWindow.postMessage({channel:'5e-question-sheet',qid:m.qid,key:m.key,requestId:m.requestId,...result},location.origin);
     if(m.action==='modal'){document.documentElement.classList.toggle('exampool-modal',!!m.open&&!host.hidden);return;}
-    if(m.action==='close'){close();return;}if(busy){send({error:'전송 작업을 마친 뒤 다시 시도하세요.'});return;}busy=true;
+    if(m.action==='close'){close();return;}
+    // 출제 대화: 시간이 오래 걸리므로 다른 전송 작업을 막지 않는다. 문항별 작업 범위로 따로 실행한다.
+    if(m.action==='author'){authoring().then(h=>h.request(m.packet,{requestId:m.requestId,onProgress:progress=>send({action:'author-progress',progress})})).then(result=>send({action:'author-ready',result}),error=>send({action:'author-ready',error:error.message||String(error),cancelled:!!error.cancelled}));return;}
+    if(m.action==='author-cancel'){void authoring().then(h=>h.cancel(m.cancelId));return;}
+    // 문항의 그림·그래프 만들기·그래프 세부 편집도 오래 걸리므로 전송 잠금 밖에서 실행한다.
+    if(m.action==='figure-create'){engines().then(e=>m.kind==='graph'?e.graph({qid:m.qid,description:m.description,prior:m.prior?.graph||null}):e.image({qid:m.qid,description:m.description,mustNot:m.mustNot||[],prior:m.prior?.data||null})).then(result=>send({action:'figure-made',result:{kind:m.kind,...result}}),error=>send({action:'figure-made',error:error.message||String(error)}));return;}
+    if(m.action==='figure-edit-graph'){engines().then(e=>e.editGraph(m.graph)).then(result=>send({action:'figure-made',result:result?{kind:'graph',edited:true,...result}:null,cancelled:!result}),error=>send({action:'figure-made',error:error.message||String(error)}));return;}
+    if(busy){send({error:'전송 작업을 마친 뒤 다시 시도하세요.'});return;}busy=true;
     try {
       if(m.action==='exam-handoff'){
         await examWorkspace.receiveExamDocument(m.bytes,m.title);send({action:'exam-handoff-ready',requestId:m.requestId});close();return;
