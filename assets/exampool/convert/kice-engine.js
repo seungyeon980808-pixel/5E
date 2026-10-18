@@ -69,6 +69,13 @@ export async function toQuestion(structure,item,{number='1'}={}){
   const col=(item.box[2]-item.box[0])-14;
   const count={images:0,tables:0,boxes:0};
   let nodes=A.nodes.filter(n=>n.k!=='figure'||figs.has(n.run));
+  // 그림 선지: 발문 뒤 그림이 정확히 5개이고 선지 글이 비었거나 '원본 참고'면 선지 칸 그림으로.
+  const choiceTexts=by('choice').map(b=>clean(runsText(b.runs)));
+  const afterFigs=A.after.filter(n=>n.k==='figure'&&figs.has(n.run)&&!n.rect);
+  let choiceFigs=null;
+  if(form!=='pair'&&afterFigs.length===5&&choiceTexts.every(t=>!t||/원본 참고/.test(t))){
+    choiceFigs=[...afterFigs].sort((a,b)=>a.box&&b.box&&Math.abs(a.box[1]-b.box[1])>8?a.box[1]-b.box[1]:(a.box?.[0]||0)-(b.box?.[0]||0));
+    nodes=nodes.filter(n=>!choiceFigs.includes(n));diag.notes.push('발문 뒤 그림 5개를 선지 그림으로 넣었습니다.');}
   // 상자 테두리가 없는 조건·실험: 첫 문단(도입) 뒤 ~ 발문 앞 글을 상자로 본다.
   if(!A.rects.length&&(struct==='condition'||struct==='experiment')){
     const paras=nodes.filter(n=>n.k==='para');
@@ -185,13 +192,14 @@ export async function toQuestion(structure,item,{number='1'}={}){
     rows.forEach((r,i)=>{if(!q.choiceTable.cells[i+1])return;const cells=r.length>cols?[...r.slice(0,cols-1),r.slice(cols-1).join(' ')]:r;cells.forEach((v,c)=>q.choiceTable.cells[i+1][c].value=v);});
     if(!header?.some(Boolean))diag.notes.push('선지표 머리줄을 찾지 못했습니다.');
     diag.pair=P?'위치':'낱말';
-  }else choices.slice(0,5).forEach((t,i)=>{if(q.choices[i])q.choices[i].text=t;});
+  }else if(choiceFigs)choiceFigs.forEach((f,i)=>{const d=figs.get(f.run);q.choices[i].text='';q.choices[i].figure={name:`${item.id}-선지${i+1}.png`,data:d.data};});
+  else choices.slice(0,5).forEach((t,i)=>{if(q.choices[i])q.choices[i].text=t;});
   // 수식 안 괄호·상태 기호는 본문 글로(원본 글꼴과 같게).
   mapQuestionText(q,splitEquationParens);
   if(figs.size>count.images)diag.notes.push(`그림 ${figs.size}개 중 ${count.images}개만 넣었습니다.`);
   // figures: 넣은 자료 수(그림 + 표 + 조건·실험 상자). images: 그림 수.
   diag.counts={stem:out.filter(b=>b.kind==='text').length,ask:!!q.ask,bogi:bogi?.lines.length||0,
-    choices:form==='pair'?q.choiceTable.cells.slice(1).filter(r=>r.some(c=>String(c.value).trim())).length:q.choices.filter(c=>c.text.trim()).length,
+    choices:form==='pair'?q.choiceTable.cells.slice(1).filter(r=>r.some(c=>String(c.value).trim())).length:q.choices.filter(c=>c.text.trim()||c.figure).length,choiceFigures:choiceFigs?5:0,
     figures:count.images+count.tables+Math.max(0,count.boxes),images:count.images,tables:count.tables,boxes:count.boxes,three:A.three};
   return {question:q,diag};
 }

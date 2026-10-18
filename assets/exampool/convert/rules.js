@@ -42,7 +42,13 @@ export function flowItems(structure){
     const L=b.sourceLine;
     out.push({k:'line',role:b.role,label:b.label||'',text,left:L?.left,right:L?.right,base:L&&ph?ph-L.y:null,h:L?.height||10,opening:!!L?.opening,geo:!!L});
   }
-  return out;
+  // 쪽 여백의 세로 과목명(물/리/학/II): 다른 줄보다 오른쪽에 있는 1~2글자 줄.
+  const body=out.filter(i=>i.k==='line'&&i.geo&&i.right-i.left>40);
+  const edge=body.length?Math.max(...body.map(i=>i.right)):Infinity;
+  const margin=i=>i.k==='line'&&i.geo&&i.right-i.left<16&&i.left>edge-2&&i.text.replace(/\s/g,'').length<=2;
+  // 그림 부스러기 줄: 홀로 찍힌 '.'과 짧은 수식·글자만 있는 줄.
+  const debris=i=>i.k==='line'&&i.role!=='bogi'&&/(^|\s)\.(\s|$)/.test(i.text)&&tokens(i.text).every(t=>t==='.'||/^\$[^$]{1,3}\$$/.test(t)||[...t].length===1);
+  return out.filter(i=>!margin(i)&&!debris(i));
 }
 
 // 흐름 항목에 상자를 붙인다. 표·그림 테두리, 보기 상자, 글이 없는 상자는 뺀다.
@@ -67,11 +73,11 @@ export function paragraphs(lines,{B}={}){
   const base=Number.isFinite(B)?B:lefts.length?Math.min(...lefts):null;
   for(const l of lines){
     const t=l.text,d=Number.isFinite(base)&&l.geo?l.left-base:0;
-    // 매달린 들여쓰기: ◦·(가)로 시작한 문단의 다음 줄은 더 들여 써도 잇는다.
-    const hanging=cur&&cur.mark&&!cur.display&&l.geo&&l.left>cur.firstLeft+3&&(cur.lines.length===1||Math.abs(l.left-prev.left)<2.5)&&!MARK.test(t)&&!HEAD.test(t);
-    const display=d>INDENT[1]&&!hanging&&!(prev&&prev.geo&&Math.abs(l.left-prev.left)<2&&cur?.display);
     // (가)·(나)로 시작하는 줄은 앞 줄이 문장 끝이거나 들여쓰기가 바뀔 때만 새 문단(줄바꿈으로 줄 머리에 온 (나)는 잇는다).
-    const markStart=MARK.test(t)&&(/^[◦○•ㆍ※*\[〔]/.test(t)||!prev||!prev.geo||!l.geo||(!prev.opening&&Math.abs(l.left-prev.left)>2)||/([.:?!)\]〕]|다)$/.test(prev.text));
+    const markStart=MARK.test(t)&&(/^[◦○•ㆍ※*\[〔]/.test(t)||!prev||!prev.geo||!l.geo||/([.:?!)\]〕]|다)$/.test(prev.text)||(cur?.mark&&Math.abs(l.left-cur.firstLeft)<=2));
+    // 매달린 들여쓰기: ◦·(가)로 시작한 문단의 다음 줄은 더 들여 써도 잇는다.
+    const hanging=cur&&cur.mark&&!cur.display&&l.geo&&l.left>cur.firstLeft+3&&(cur.lines.length===1||Math.abs(l.left-prev.left)<2.5)&&!markStart&&!HEAD.test(t);
+    const display=d>INDENT[1]&&!hanging&&!(prev&&prev.geo&&Math.abs(l.left-prev.left)<2&&cur?.display);
     let start=!cur||l.opening||(prev&&l.role!==prev.role)||markStart||HEAD.test(t)||CAPTION.test(t)||display||cur.display||cur.head||cur.caption;
     // 들여 쓴 줄(본문 왼쪽 + 한 글자): 새 문단. 매달린 들여쓰기는 잇는다.
     if(!start&&!hanging&&d>=INDENT[0]&&d<=INDENT[1]&&!(prev?.geo&&Math.abs(l.left-prev.left)<2))start=true;
@@ -79,7 +85,8 @@ export function paragraphs(lines,{B}={}){
     else{cur.lines.push(l);cur.text+=(/[\-‐]$/.test(cur.text)?'':' ')+t;}
     prev=l;
   }
-  return out.map(p=>({...p,text:clean(p.text)}));
+  // 문단 중간에 홀로 찍힌 '.'(그림 점 부스러기)은 뺀다. 문단 끝 '㉠ .'은 둔다.
+  return out.map(p=>({...p,text:clean(clean(p.text).replace(/\s\.(?=\s+\S)/g,''))}));
 }
 
 // 발문 문장 시작: '?' 앞 마지막 문장 끝 뒤.
@@ -145,8 +152,10 @@ export function analyze(structure,item={}){
     // 머리줄이 발문 앞에 온 경우(드묾)
     const i=pre.findIndex(m=>m.k==='para'&&!m.rect&&isHeader(m.text));if(i>=0){header=headerCells(pre[i].text);pre.splice(i,1);}
   }
-  const three=THREE.test(ask)||/\[\s*3\s*점\s*\]/.test(ask);ask=ask.replace(/\s*\[\s*3\s*점\s*\]\s*/g,' ').trim();
-  return {items,rects,nodes:[...pre,...post],ask,three,header,B};
+  // 오른쪽 끝에 홀로 찍힌 [3점] 줄(그림 뒤로 밀린 경우 포함)
+  let lone=false;for(const list of [pre,post])for(let k=list.length-1;k>=0;k--)if(list[k].k==='para'&&/^\[\s*3\s*점\s*\]$/.test(list[k].text)){list.splice(k,1);lone=true;}
+  const three=lone||THREE.test(ask)||/\[\s*3\s*점\s*\]/.test(ask);ask=ask.replace(/\s*\[\s*3\s*점\s*\]\s*/g,' ').trim();
+  return {items,rects,nodes:[...pre,...post],after:post,ask,three,header,B};
 }
 
 // 선지표 머리줄: 짧은 낱말 2~6개(㉠ ㉡, A B C, (가) (나), 수식 한 덩이 등).
