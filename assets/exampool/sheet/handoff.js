@@ -41,6 +41,8 @@ export function choiceGrid(choices,width,fontSize=11,layout,measure=choiceWidth)
 // cell. Explicit lines keep the actual text editable and its font unchanged.
 // 구성 이름이 한글 문서에 글로 찍히는지: 상자 묶음의 제목, 과정 제목, (가)·(나) 같은 그림 이름. 아래 조판과 같은 조건.
 export const labelInDocument=b=>!!b.label&&(b.kind==='steps'||b.heading===true||b.kind==='group'&&(b.boxed===true||b.boxed===undefined&&b.label==='실험')||b.kind==='figure'&&!!b.figure&&!isWrapped(b)&&/^\(.+\)$/.test(b.label));
+// 어절 나누기: 띄어쓰기로 나누되 $…$ 수식 안의 띄어쓰기는 나누지 않는다(수식이 여러 줄로 세어져 칸이 커지던 문제).
+const words=line=>String(line).match(/(?:\$[^$\n]*\$|\S)+/g)||[''];
 export function wrapQuestionText(value,width,fontSize=11){
   if(!width)return String(value??'');
   const em=fontSize*4/3,limit=Math.max(em,width),lines=[];
@@ -50,7 +52,7 @@ export function wrapQuestionText(value,width,fontSize=11){
   };
   for(const original of String(value??'').split(/\r?\n/)){
     let line='',used=0;
-    for(const word of original.split(/\s+/)){
+    for(const word of words(original)){
       const size=measure(word),space=line?em*.5:0;
       if(line&&used+space+size>limit){lines.push(line);line=word;used=size;}
       else{line+=(line?' ':'')+word;used+=space+size;}
@@ -64,7 +66,7 @@ export function wrapMeasured(value,first,rest,measure){
   const lines=[];
   for(const original of String(value??'').split(/\r?\n/)){
     let line='',firstLine=!lines.length;
-    for(const word of original.split(/\s+/)){
+    for(const word of words(original)){
       const candidate=line?line+' '+word:word,limit=firstLine&&!lines.length?first:rest;
       if(line&&measure(candidate)>limit){lines.push(line);line=word;firstLine=false;}else line=candidate;
     }
@@ -105,7 +107,7 @@ export function wrapHangingText(value,width,prefix,measure){
   const indent=measure(prefix),lines=[];
   for(const original of String(value).split(/\r?\n/)){
     let line='';
-    for(const word of original.split(/\s+/)){
+    for(const word of words(original)){
       const candidate=line?line+' '+word:word,limit=width-(lines.length?indent:0);
       if(line&&measure(candidate)>limit){lines.push(line);line=word;}
       else line=candidate;
@@ -359,10 +361,11 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
       recordTable(rows,grid.cols,[],{kind:'choicegrid'});
       html+=`<table style="border-collapse:collapse;width:${width}px">`;
       for(let row=0;row<rows;row++){
-        const cells=grid.widths.map((w,col)=>{const i=row*grid.cols+col,c=q.choices[i],available=grid.singleLine?w-4:w-8-choiceWidth(labels[i]+' ',fontSize),value=c?labels[i]+' '+c.text:'';return {w,value,owner:c?{kind:'choice',id:c.id,prefix:labels[i].length+1}:null,height:(wrapped=>Math.max(25,Math.ceil(wrapped.split('\n').length*fontSize*4/3*1.6+6+extraHeight(wrapped,fontSize))))(measureText?wrapMeasured(value,available,available,v=>measureRich(v,fontSize)):wrapQuestionText(value,available,fontSize)),available};});
+        // 번호(①) 폭은 둘째 줄부터만 줄인다. 첫 줄은 번호를 포함한 글 전체를 칸 폭에 잰다.
+        const cells=grid.widths.map((w,col)=>{const i=row*grid.cols+col,c=q.choices[i],first=grid.singleLine?w-4:w-8,available=grid.singleLine?w-4:w-8-choiceWidth(labels[i]+' ',fontSize),value=c?labels[i]+' '+c.text:'',wrap=v=>measureText?wrapMeasured(v,first,available,x=>measureRich(x,fontSize)):wrapQuestionText(v,available,fontSize),wrapped=wrap(value);return {w,value,wrap,owner:c?{kind:'choice',id:c.id,prefix:labels[i].length+1}:null,height:Math.max(25,Math.ceil(wrapped.split('\n').length*fontSize*4/3*1.6+6+extraHeight(wrapped,fontSize))),available};});
         // 한 줄에 분수 같은 높은 수식이 있으면 칸 가운데에 맞춰 ①~⑤의 글자 줄이 나란하게 한다.
         const height=Math.max(...cells.map(c=>c.height)),valign=cells.some(c=>extraHeight(c.value,fontSize)>0)?'middle':'top';
-        html+='<tr>'+cells.map(c=>`<td style="border:none;width:${c.w}px;height:${height}px;padding:2px;vertical-align:${valign}"><p style="margin:0;text-align:left;line-height:150%">${text(c.value,c.available,fontSize,null,c.owner)}</p></td>`).join('')+'</tr>';
+        html+='<tr>'+cells.map(c=>`<td style="border:none;width:${c.w}px;height:${height}px;padding:2px;vertical-align:${valign}"><p style="margin:0;text-align:left;line-height:150%">${text(c.value,c.available,fontSize,c.wrap,c.owner)}</p></td>`).join('')+'</tr>';
       }
       html+='</table>';
     }
