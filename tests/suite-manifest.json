@@ -618,6 +618,12 @@
       ]
     },
     {
+      "path": "tests/test-exam-preview-background-name-browser.cjs",
+      "findingIds": [
+        "SECURITY-M4-EXAM-PREVIEW-XSS"
+      ]
+    },
+    {
       "path": "tests/test-loading-offscreen-settle-browser.cjs",
       "findingIds": ["LOADING-OFFSCREEN-SETTLE-01"]
     },
