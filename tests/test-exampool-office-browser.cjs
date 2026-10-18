@@ -20,7 +20,7 @@ async function redraw(sheet,action){
   await sheet.waitForFunction(()=>window.__busySeen,null,{timeout:30000});await typesetReady(sheet);
 }
 async function partsRows(sheet){
-  return sheet.evaluate(()=>[...document.querySelectorAll('#parts tbody tr[data-part-id]')].map(tr=>({id:tr.dataset.partId,kind:tr.querySelector('.part-kind')?.textContent,name:tr.querySelector('[data-part="label"]')?.value||tr.querySelector('.part-name')?.textContent,layout:tr.querySelector('[data-part="layout"],[data-part="choiceLayout"]')?.value,ratio:tr.querySelector('[data-part="ratio"]')?.value})));
+  return sheet.evaluate(()=>[...document.querySelectorAll('#parts tbody tr[data-part-id]')].map(tr=>({id:tr.dataset.partId,kind:tr.querySelector('.part-kind select')?.value||tr.querySelector('.part-kind')?.textContent,name:tr.querySelector('[data-part="label"]')?.value||tr.querySelector('.part-name')?.textContent,layout:tr.querySelector('[data-part="layout"],[data-part="choiceLayout"]')?.value,ratio:tr.querySelector('[data-part="ratio"]')?.value})));
 }
 // 배치 층이 그 위치를 무엇으로 보는지: 마우스를 옮겨 이름표를 읽는다.
 async function findItem(page,sheet,box,kind){
@@ -67,7 +67,8 @@ h.withServer(async origin => {
       // 그림 구성을 더하고 파일을 넣는다(구성 편집).
       await sheet.click('#edit-detail');await sheet.click('#add');await sheet.click('#add-dialog [data-kind="figure"]');
       const chooser=sheet.waitForEvent?sheet.waitForEvent('filechooser'):page.waitForEvent('filechooser');
-      await sheet.locator('#detail-dialog [data-action="image"]').first().click();await (await chooser).setFiles(figure);
+      // 실험 상자 틀에는 '실험 장치' 그림 칸이 이미 있다. 방금 더한 그림 칸(마지막)에 넣는다.
+      await sheet.locator('#detail-dialog [data-action="image"]').last().click();await (await chooser).setFiles(figure);
       await sheet.waitForFunction(()=>/그림|저장/.test(document.querySelector('#status').textContent));
       await sheet.click('[data-close="detail-dialog"]');
 
@@ -80,17 +81,17 @@ h.withServer(async origin => {
       assert.equal(await sheet.locator('[data-part-id="choices"] select').inputValue(),'세로');
 
       // 그림 크기 30%(구성 시트 크기 칸) → 그림과 결과표가 한 화면에 보인다.
-      const sizeInput=sheet.locator('#parts tr:has(.part-kind:text-is("그림")) [data-part="size"]');
+      const sizeInput=sheet.locator('#parts tr:has([data-part="label"][value="그림"]) [data-part="size"]');
       await redraw(sheet,async()=>{await sizeInput.fill('31');await sizeInput.press('Enter');});
       assert.equal(await sizeInput.inputValue(),'30%','typed size snaps to 5%');
       // 순서 올리기: 그림을 보기 위로(같은 묶음 안 순서).
-      await redraw(sheet,()=>sheet.click('#parts tr:has(.part-kind:text-is("그림")) [data-part-move="up"]'));
+      await redraw(sheet,()=>sheet.click('#parts tr:has([data-part="label"][value="그림"]) [data-part-move="up"]'));
       const order=(await partsRows(sheet)).map(r=>r.kind);assert.ok(order.indexOf('그림')<order.indexOf('보기'),'figure moved above bogi');
       // 한글 창에서 그림을 결과표 오른쪽으로 끈다.
       const editor=await sheet.locator('#native-editor').boundingBox(),frameBox=await frameHandle.boundingBox();
       const box={x:frameBox.x+editor.x,y:frameBox.y+editor.y,width:editor.width,height:editor.height};
       const pic=await findItem(page,sheet,box,'그림');assert.ok(pic,'the figure is a draggable placement item');
-      const table=await findItem(page,sheet,box,'표');assert.ok(table,'the result table is a drop target');
+      const table=await findItem(page,sheet,box,'표');if(!table)await page.screenshot({path:path.join(evidence,`${engineName}-no-table.png`)});assert.ok(table,'the result table is a drop target');
       const from={x:frameBox.x+pic.x+pic.w/2,y:frameBox.y+pic.y+pic.h/2},to={x:frameBox.x+table.x+table.w*.9,y:frameBox.y+table.y+table.h/2};
       await page.mouse.move(from.x,from.y);await page.mouse.down();
       for(let i=1;i<=12;i++)await page.mouse.move(from.x+(to.x-from.x)*i/12,from.y+(to.y-from.y)*i/12);

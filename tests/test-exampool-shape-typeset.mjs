@@ -64,3 +64,25 @@ test('a side material frame puts the question number in the text beside it, and 
   assert.equal(values[0],'7. 그림과 같이 용수철에 물체를 매달았다.');assert.deepEqual(plan.textSegments[0].owner,{kind:'block',id:q.blocks[1].id,prefix:3});
   assert.ok(values.indexOf(q.ask)>0);assert.deepEqual(plan.tables[0],{rows:1,cols:2,merges:[]});
 });
+
+test('every frame (4 forms x 7 structures) survives an Excel round trip and still builds the same HWP plan',async()=>{
+  const {createRequire}=await import('node:module'),require=createRequire(import.meta.url);
+  const XLSX=require('../assets/exampool/sheet/vendor/xlsx.full.min.js'),JSZip=require('../assets/exampool/sheet/vendor/jszip.min.js');
+  const {exportExcel,importExcel}=await import('../assets/exampool/sheet/excel.js');
+  const {FORMS,STRUCTS}=await import('../assets/exampool/sheet/templates.js');
+  const {writeField}=await import('../assets/exampool/sheet/vertical.js');
+  const questions=[];let n=0;
+  for(const form of Object.keys(FORMS))for(const struct of Object.keys(STRUCTS)){
+    const q=questionFromShape({form,struct},String(++n));q.ask='옳은 것은?';q.points=n%2?3:2;
+    writeField(q,'passage','질량이 m인 물체가 속력 v로 운동한다.');
+    if(form==='combo'){writeField(q,'bogi','ㄱ. 운동량은 보존된다.\n에너지는 보존된다.\nㄷ. 충격량은 같다.');writeField(q,'choices','ㄱ\nㄴ\nㄱㄷ\nㄴㄷ\nㄱㄴㄷ');}
+    if(form==='talk')writeField(q,'choices','A\nC\nAB\nBC\nABC');
+    q.blocks.filter(b=>b.kind==='steps'||b.kind==='dialogue').forEach(b=>b.lines.forEach((l,i)=>l.text='말 '+i));
+    questions.push(q);
+  }
+  const data={format:'5e-question-sheet-v2',questions,documents:[]};
+  const bytes=await exportExcel(XLSX,JSZip,data),got=await importExcel(XLSX,JSZip,bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength));
+  assert.deepEqual(got.questions,questions);
+  for(const [i,q] of got.questions.entries()){const a=await buildQuestionHtml(q),b=await buildQuestionHtml(questions[i]);assert.deepEqual(a.tables,b.tables);assert.deepEqual(a.texts,b.texts);}
+  assert.equal(got.questions[0].form,'combo');assert.equal(got.questions[0].structure,'two');
+});

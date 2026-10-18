@@ -166,12 +166,15 @@ dialog::backdrop{background:rgba(0,0,0,.32)}
 #parts thead .letters th{height:22px}
 #parts thead tr:nth-child(2) th{top:22px;background:var(--ds-doc-sub);color:var(--ds-doc-ink-2);font-weight:var(--ds-weight-medium);border-bottom-color:var(--ds-doc-line-strong)}
 #parts .row-num{background:var(--ds-doc-head);color:var(--ds-doc-ink-3);font-size:var(--ds-text-meta);font-weight:var(--ds-weight-regular);text-align:center}
-#parts .row-col{width:36px}#parts .order-col{width:76px}#parts .kind-col{width:64px}#parts .name-col{width:auto}#parts .parent-col{width:96px}
+#parts .row-col{width:36px}#parts .order-col{width:76px}#parts .kind-col{width:76px}#parts .name-col{width:auto}#parts .parent-col{width:96px}
 #parts .layout-col{width:84px}#parts .ratio-col{width:64px}#parts .size-col{width:64px}#parts .gap-col{width:64px}#parts .align-col{width:76px}
 #parts td>input,#parts td>select{width:100%;height:calc(var(--ds-h-row) - 1px);border:0;border-radius:0;background:transparent;padding:0 var(--ds-space-4);font-size:var(--ds-text-body);color:var(--ds-doc-ink)}
 #parts td>input:focus,#parts td>select:focus{outline:2px solid var(--ds-cell);outline-offset:-2px;background:var(--ds-doc)}
 #parts td>input::placeholder{color:var(--ds-doc-ink-3)}
 #parts .part-kind{padding:0 var(--ds-space-4);color:var(--ds-doc-ink-2);font-size:var(--ds-text-meta)}
+/* 자료 칸 종류(그림·표)는 칸 안에서 고른다 */
+#parts .part-kind:has(select){padding:0}
+#parts .part-kind select{font-size:var(--ds-text-meta)}
 #parts .part-name{padding-left:calc(var(--depth,0) * 14px)}
 #parts .part-name:not(:has(input)){padding:0 var(--ds-space-4)}
 #parts .order-cell{display:flex;align-items:center;gap:0;padding:0 0 0 var(--ds-space-4)}

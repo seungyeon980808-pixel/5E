@@ -52,6 +52,13 @@
       ]
     },
     {
+      "path": "tests/test-exampool-shape-typeset.mjs",
+      "findingIds": [
+        "EXAMPOOL-NEW-QUESTION-SHAPE",
+        "EXAMPOOL-KICE-TYPESET"
+      ]
+    },
+    {
       "path": "tests/test-exampool-exam-set.mjs",
       "findingIds": [
         "EXAMPOOL-WORKFLOW",
