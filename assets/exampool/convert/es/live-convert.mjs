@@ -129,7 +129,9 @@ export function attachTextScripts(items, recoverBases = true) {
       && Math.abs(other.y - item.y) < 1.5 && other.x - item.x - item.width >= -1
       && other.x - item.x - item.width <= 1.5);
     if (left && right) {
-      promoted.set(item, { ...item, value: item.value.trim(), math: true });
+      // 5E 기출 복원: 본문 글꼴(바탕 바로 선 글자)이면 {rm …}으로 표시해 둔다(한글 수식에서도 바로 선 글자, 엔진이 본문 글로 되돌릴 수 있게).
+      const upright = /Batang/u.test(item.font || '') && !/It|Italic/iu.test(item.font || '');
+      promoted.set(item, { ...item, value: upright ? `{rm ${item.value.trim()}}` : item.value.trim(), math: true });
       promoted.set(right, { ...right, value: right.value.trim().replace(/\s+/gu, '~'), math: true });
     }
   }
@@ -647,7 +649,31 @@ export function buildLiveStructure(question, pdf, glyphs, options = {}) {
     contentRegions: observedContentRegions(question, pdf, clipItems.lastPrimitives, clipItems.lastRegions, figures, blocks, options.includeImages !== false),
     figureFallbacks: figures.map((figure) => ({ ...figure, afterBlock: blocks.findLastIndex((block) =>
       tops.has(block) && tops.get(block) <= (figure.flowBox || figure.box)[3] + 2) })),
-    notes, ...(inlineChoices ? { inlineChoices: true } : {}) };
+    notes, ...(inlineChoices ? { inlineChoices: true } : {}),
+    // --- frame hook (5E 기출 복원): 문항 영역 안의 큰 사각형·선. 조건·실험 상자 판별에 쓴다. 좌표: 위가 0.
+    pageHeight: pdf.pageHeight,
+    // 줄마다 큰 간격(글자 높이쯤)으로 나눈 칸: 선지표 머리줄·선지 줄의 열 위치. y는 아래가 0.
+    lineCells: lines.filter((line) => line.items.length).map((line) => {
+      try {
+        const items = [...line.items].filter((item) => item.math || String(item.value || '').trim()).sort((a, b) => a.x - b.x);
+        const h = Math.max(6, ...items.filter((item) => !item.math).map((item) => item.height));
+        const group = (gap) => {
+          const cells = [];
+          for (const item of items) {
+            const last = cells.at(-1);
+            if (last && item.x - last.x1 <= gap) { last.items.push(item); last.x1 = Math.max(last.x1, item.x + item.width); }
+            else cells.push({ x0: item.x, x1: item.x + item.width, items: [item] });
+          }
+          return cells.map((cell) => ({ x0: cell.x0, x1: cell.x1, runs: lineRuns({ ...line, items: cell.items }) }));
+        };
+        return { y: line.y, height: h, cells: group(h * 1.1), words: group(Math.max(1.2, h * 0.22)) };
+      } catch { return { y: line.y, cells: [] }; }
+    }),
+    frames: (clipItems.lastPrimitives || []).filter((p) => (p.type === 'rect' || p.type === 'line')
+      && p.box[0] >= (question.box?.[0] ?? 0) - 4 && p.box[2] <= (question.box?.[2] ?? Infinity) + 4
+      && p.box[1] >= (question.box?.[1] ?? 0) - 4 && p.box[3] <= (question.box?.[3] ?? Infinity) + 4
+      && Math.max(p.box[2] - p.box[0], p.box[3] - p.box[1]) >= 40)
+      .map((p) => ({ type: p.type, box: p.box.map((v) => Math.round(v * 10) / 10), rounded: !!p.rounded, paint: p.paint, fill: p.fill || null, dash: !!p.dash })) };
 }
 
 /** Finds the question on its page from the printed number when the indexed box is wrong. */
