@@ -68,9 +68,6 @@ function candidates(item,pdf){
     if(out.some(o=>area(inter(o.box,t.box)||[0,0,0,0])>area(t.box)*.3))continue;
     out.push({box:t.box,ink:t.box,kind:'vector',table:true});
   }
-  // 선택지 ①~⑤ 자리의 그림(그래프 고르기 등)은 문항 그림이 아니다.
-  const firstChoice=Math.min(...chains.filter(c=>/^\s*①/u.test(c.str)).map(c=>c.box[1]));
-  for(let i=out.length-1;i>=0;i--)if(mid(out[i].box)[1]>firstChoice-body*.3)out.splice(i,1);
   // 한 그림의 조각(겹치거나 아주 가까운 후보)을 합친다. 사이에 본문이 끼면 합치지 않는다.
   const between=b=>prose.some(c=>inBox(b,mid(c.box),-0.5)&&!out.some(o=>inBox(o.box,mid(c.box),-0.5)));
   for(let changed=true;changed;){changed=false;
@@ -81,6 +78,9 @@ function candidates(item,pdf){
       if(!near||between(u))continue;
       out[i]={box:u,ink:union(a.ink,b.ink),kind:a.kind===b.kind?a.kind:'mixed'};out.splice(j,1);changed=true;break outer;
     }}
+  // 선택지 ①~⑤ 자리의 그림(그래프 고르기 등)은 문항 그림이 아니다.
+  const firstChoice=Math.min(...chains.filter(c=>/^\s*①/u.test(c.str)).map(c=>c.box[1]));
+  for(let i=out.length-1;i>=0;i--)if(mid(out[i].box)[1]>firstChoice-body*.3||(out[i].box[3]>firstChoice+body*.5&&out[i].box[1]>firstChoice-body*3))out.splice(i,1);// 선택지 옆에 길게 걸친 그림은 남긴다
   // 그림 상자 밖으로 삐져나간 영역은 문항 영역으로 자른다.
   for(const o of out)o.box=[Math.max(q[0],o.box[0]),Math.max(q[1],o.box[1]),Math.min(q[2],o.box[2]),Math.min(q[3],o.box[3])];
   return {out:out.filter(o=>o.box[2]-o.box[0]>4&&o.box[3]-o.box[1]>4),page,chains,prose,frames,body};
@@ -170,6 +170,28 @@ function findCaptions(m,comps,s,body,texts){
   return caps;
 }
 
+// 캡션 없이 나란한 두 그림(물질 모형 둘, 그림과 표 등): 위아래 끝까지 빈 넓은 세로 고랑으로 나뉘고
+// 양쪽이 모두 큼직하다. 작은 조각(화살표·범례)은 가까운 큰 조각에 붙인다.
+function gutterSplit(m,s,body,whole){
+  const segs=runs(projection(m,whole,'x'),Math.round(body*s)).map(([a,b])=>{const t=trim(m,rect(whole.x0+a,whole.y0,whole.x0+b,whole.y1));return {x0:whole.x0+a,x1:whole.x0+b,t};});
+  if(segs.length<2)return null;
+  const W=whole.x1-whole.x0,maxH=Math.max(...segs.map(g=>g.t.y1-g.t.y0));
+  // 범례(기호+짧은 글 줄이 왼쪽 정렬로 3줄 이상)는 그림의 일부다.
+  const legend=g=>{const rows=runs(projection(m,g.t,'y'),Math.round(.8*s)).filter(([a,b])=>(b-a)/s>=body*.3);
+    if(rows.length<3||rows.some(([a,b])=>(b-a)/s>body*1.3))return false;
+    const lefts=rows.map(([a,b])=>trim(m,rect(g.t.x0,g.t.y0+a,g.t.x1,g.t.y0+b)).x0);
+    return Math.max(...lefts)-Math.min(...lefts)<=2*s;};
+  const big=segs.filter(g=>(g.x1-g.x0)>=W*.22&&(g.t.y1-g.t.y0)>=maxH*.45&&!legend(g));
+  if(big.length<2)return null;
+  const groups=big.map(g=>({x0:g.x0,x1:g.x1}));
+  for(const g of segs){if(big.includes(g))continue;
+    let best=groups[0],d=Infinity;for(const o of groups){const dd=Math.max(0,o.x0-g.x1,g.x0-o.x1);if(dd<d){d=dd;best=o;}}
+    best.x0=Math.min(best.x0,g.x0);best.x1=Math.max(best.x1,g.x1);}
+  groups.sort((a,b)=>a.x0-b.x0);
+  const cuts=groups.slice(1).map((g,i)=>Math.round((groups[i].x1+g.x0)/2));
+  return groups.map((g,i)=>{const cell=rect(i?cuts[i-1]:0,0,i<cuts.length?cuts[i]:m.W,m.H);return {r:trim(m,rect(g.x0,whole.y0,g.x1,whole.y1)),cap:null,cell};});
+}
+
 // 한 후보 캔버스를 캡션 기준으로 패널로 나눈다. 결과: [{r(픽셀), cap|null}] (캡션 순서)
 function panels(m,s,body,texts,split=true,given=null){
   const whole=trim(m,rect(0,0,m.W,m.H));if(!whole)return [];
@@ -183,6 +205,7 @@ function panels(m,s,body,texts,split=true,given=null){
   const original=m.ink.slice();
   // 캡션 글자는 그림에서 뺀다.
   for(const c of caps)for(let y=Math.max(0,c.y0-2);y<Math.min(m.H,c.y1+2);y++)m.ink.fill(0,y*m.W+Math.max(0,c.x0-2),y*m.W+Math.min(m.W,c.x1+2));
+  if(!caps.length&&split&&!given){const g=gutterSplit(m,s,body,whole);if(g)return g;}
   if(caps.length<=1){
     // 캡션이 하나뿐이면 그림 맨 아래에 있을 때만 캡션으로 뗀다(그래프 속 곡선 이름표 (가)는 그대로 둔다).
     const c=caps[0];
@@ -321,3 +344,7 @@ export async function debugCanvas(item){
   for(const cand of ctx.out){const {canvas}=await prepare(item,cand,ctx,2);out.push({data:canvas.toDataURL('image/png'),cand,prose:ctx.prose.filter(c=>!inBox(cand.ink,mid(c.box),0.5)&&inter(c.box,cand.box)).map(c=>[c.str,c.box])});}
   return out;
 }
+export async function debugCands(item){const pdf=await readQuestionPdf(item);const H=pdf.pageHeight;const prims=drawingPrimitives(pdf.operations,pdf.OPS,H);
+  return {cands:candidates(item,pdf).out.map(o=>o.box),regions:figureRegions(prims,pdf.content.items,H).filter(r=>inBox(item.box,mid(r.ink))).map(r=>r.box)};}
+export async function debugPrims(item,area){const pdf=await readQuestionPdf(item);const H=pdf.pageHeight;const prims=drawingPrimitives(pdf.operations,pdf.OPS,H);const page=analyse(prims,pdf.content.items,H);
+  const A=globalThis.__area;return prims.filter(p=>inBox(A,mid(p.box))).map(p=>[p.type,p.orient||'',p.box.map(v=>Math.round(v)),Math.round(p.width*100)/100,page.structural.has(p)?'S':'']);}
