@@ -215,7 +215,6 @@ function gutterSplit(m,s,body,whole){
 function panels(m,s,body,texts,split=true,given=null){
   const whole=trim(m,rect(0,0,m.W,m.H));if(!whole)return [];
   let caps=given||(split?findCaptions(m,components(m),s,body,texts):[]);
-  if(globalThis.__capsDebug)globalThis.__capsDebug.push({caps:caps.map(c=>[c.x0/s,c.y0/s,c.x1/s,c.y1/s,!!c.text,c.bottom,c.side]),whole:[whole.x0/s,whole.y0/s,whole.x1/s,whole.y1/s]});
   // 옆 캡션: 왼쪽 가장자리에 세로로 늘어서고 바로 오른쪽에 그림이 붙어 있다. 아니면 아래 캡션만 쓴다.
   const lefts=caps.filter(c=>c.side&&(c.x0-whole.x0)/s<body*2);
   const side=given?given.side:lefts.length>1&&lefts.some(c=>!c.bottom);
@@ -256,7 +255,6 @@ function panels(m,s,body,texts,split=true,given=null){
     // 2×2처럼 칸이 고르면 줄 순서((가)(나)/(다)(라)), 아니면 열 순서.
     if(grid)cells.sort((p,q)=>p.row-q.row||p.col-q.col);
   }
-  if(globalThis.__capsDebug)globalThis.__capsDebug.push({side,cells:cells.map(c=>[c.r.x0/s,c.r.y0/s,c.r.x1/s,c.r.y1/s])});
   const out=cells.flatMap(c=>{const r=trim(m,c.r);return r?[{r,cap:c.cap,cell:c.r}]:[];});
   // 나눈 조각이 너무 작으면(그래프 속 이름표를 캡션으로 본 경우) 그 캡션을 빼고 다시 나눈다.
   const wa=(whole.x1-whole.x0)*(whole.y1-whole.y0),size=p=>(p.r.x1-p.r.x0)*(p.r.y1-p.r.y0);
@@ -370,35 +368,4 @@ export async function debugOverlay(item){
   g.fillStyle='#f00';g.font='bold 14px sans-serif';figs.forEach((f,i)=>g.fillText(`${i+1}${f.caption||''}`,(f.box[0]-q[0])*s+3,(f.box[1]-q[1])*s+14));
   return [{data:c.toDataURL('image/png')}];
 }
-export async function debugCaps(item){
-  const pdf=await readQuestionPdf(item),{out,body,chains}=candidates(item,pdf),s=4,res=[];
-  for(const cand of out){const box=cand.box;const canvas=await renderFigureCanvas({...item,box,displayBox:box},s);const m=inkMap(canvas);
-    const comps=components(m);const h=c=>(c.y1-c.y0)/s;
-    const lefts=comps.filter(c=>{const hh=c.y1-c.y0,w=c.x1-c.x0;return hh/s>=body*.5&&hh/s<=body*1.4&&w<=hh*.36&&w>=hh*.06;});
-    res.push({cand:cand.box,kind:cand.kind,comps:comps.length,lefts:lefts.map(c=>[c.x0/s,c.y0/s,(c.x1-c.x0)/s,h(c)]),caps:findCaptions(m,comps,s,body,[]).map(c=>[c.x0/s,c.y0/s,c.x1/s,c.y1/s,c.bottom,c.side])});}
-  return {res,caps:globalThis.__capsDebug};
-}
-export async function debugPanels(item){
-  globalThis.__capsDebug=[];
-  const pdf=await readQuestionPdf(item),ctx=candidates(item,pdf),s=4,res=[];
-  for(const cand of ctx.out){const {m,texts,box}=await prepare(item,cand,ctx,s);
-    res.push({box,panels:panels(m,s,ctx.body,texts).map(p=>({r:[p.r.x0/s,p.r.y0/s,p.r.x1/s,p.r.y1/s],cell:[p.cell.x0/s,p.cell.y0/s,p.cell.x1/s,p.cell.y1/s],cap:p.cap&&[p.cap.x0/s,p.cap.y0/s,p.cap.x1/s,p.cap.y1/s]}))});}
-  return {res,caps:globalThis.__capsDebug};
-}
-export async function debugCanvas(item){
-  const pdf=await readQuestionPdf(item),ctx=candidates(item,pdf),out=[];
-  for(const cand of ctx.out){const {canvas}=await prepare(item,cand,ctx,2);out.push({data:canvas.toDataURL('image/png'),cand,prose:ctx.prose.filter(c=>!inBox(cand.ink,mid(c.box),0.5)&&inter(c.box,cand.box)).map(c=>[c.str,c.box])});}
-  return out;
-}
-export async function debugCands(item){const pdf=await readQuestionPdf(item);const H=pdf.pageHeight;const prims=drawingPrimitives(pdf.operations,pdf.OPS,H);
-  return {cands:candidates(item,pdf).out.map(o=>o.box),regions:figureRegions(prims,pdf.content.items,H).filter(r=>inBox(item.box,mid(r.ink))).map(r=>r.box)};}
-export async function debugPrims(item,area){const pdf=await readQuestionPdf(item);const H=pdf.pageHeight;const prims=drawingPrimitives(pdf.operations,pdf.OPS,H);const page=analyse(prims,pdf.content.items,H);
-  const A=globalThis.__area;return prims.filter(p=>inBox(A,mid(p.box))).map(p=>[p.type,p.orient||'',p.box.map(v=>Math.round(v)),Math.round(p.width*100)/100,page.structural.has(p)?'S':'']);}
-export async function debugConts(item){const pdf=await readQuestionPdf(item);const H=pdf.pageHeight;const prims=drawingPrimitives(pdf.operations,pdf.OPS,H);const page=analyse(prims,pdf.content.items,H);
-  return page.containers.filter(c=>inBox(item.box,mid(c.box))).map(c=>[c.kind,c.box.map(v=>Math.round(v))]);}
-export async function debugChains(item){const pdf=await readQuestionPdf(item);const H=pdf.pageHeight;const prims=drawingPrimitives(pdf.operations,pdf.OPS,H);const page=analyse(prims,pdf.content.items,H);
-  const A=globalThis.__area;return page.chains.filter(c=>inBox(A,mid(c.box))).map(c=>[c.str,c.protected?1:0,c.box.map(v=>Math.round(v))]);}
-export async function debugFrames(item){const pdf=await readQuestionPdf(item);const H=pdf.pageHeight;const prims=drawingPrimitives(pdf.operations,pdf.OPS,H);const page=analyse(prims,pdf.content.items,H);
-  const q=item.box,inQ=b=>inBox(q,mid(b));const chains=page.chains.filter(c=>inQ(c.box));const cells=page.containers.filter(c=>c.kind==='cell');
-  return page.containers.filter(f=>f.kind==='frame'&&inQ(f.box)).map(f=>{const own=cells.filter(c=>inBox(f.box,mid(c.box),-0.5));return [f.box,own.length,own.some(c=>Math.abs(c.box[0]-f.box[0])<2&&Math.abs(c.box[1]-f.box[1])<2),chains.filter(c=>inBox(f.box,mid(c.box),-0.5)&&(CHOICE.test(c.str)||/보\s*기/u.test(c.str))).map(c=>c.str)];});}
-export const detectWithChoices=item=>detectFigures(item,{choices:true});
+
