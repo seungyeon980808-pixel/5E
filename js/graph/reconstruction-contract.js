@@ -336,6 +336,11 @@ export function validateGraphPlan(input, { source } = {}) {
   if(plan.legends!==undefined)list(plan.legends,'legends',32).forEach((l,i)=>{const p=`legends.${i}`;if(!plain(l)){fail(p,'OBJECT','Expected legend');return;}num(l.x,`${p}.x`);num(l.y,`${p}.y`);choice(l.coordinateSpace,['data','normalized'],`${p}.coordinateSpace`);if(l.frame!==undefined&&typeof l.frame!=='boolean')fail(`${p}.frame`,'BOOLEAN','Expected legend frame visibility');for(const k of ['size','swatch','pad'])if(l[k]!==undefined)positive(l[k],`${p}.${k}`,k==='pad');list(l.rows,`${p}.rows`,32).forEach((r,j)=>{if(!plain(r)){fail(p,'OBJECT','Expected legend row');return;}string(r.text,`${p}.rows.${j}.text`);if(r.markerShape!==undefined)marker(r.markerShape,p);if(r.markerSize!==undefined)positive(r.markerSize,p);if(r.lineVisible!==undefined&&typeof r.lineVisible!=='boolean')fail(p,'BOOLEAN','Expected line visibility');});});
   const annotationIds = new Set();
   list(plan.annotations, 'annotations', LIMITS.annotations).forEach((a, i) => {
+    // endStyle은 점 표기(빈 점/찬 점)에만 뜻이 있다. 모델이 화살·선에 'arrow' 같은 값을 적으면 순환 과정 그래프가
+    // 통째로 막혔다(넘겨받은 알려진 문제 3). 점이 아닌 표기의 모르는 값은 none으로 정리하고 검토 표시만 남긴다.
+    if (a && typeof a === 'object' && a.kind !== 'point' && typeof a.endStyle === 'string' && !['open', 'closed', 'none'].includes(a.endStyle)) {
+      a.endStyle = 'none'; flag(`annotations.${i}.endStyle`, '선·화살 표기의 끝 모양 값을 none으로 정리했습니다.');
+    }
     const p = `annotations.${i}`;
     if (!plain(a)) { fail(p, 'ANNOTATION', 'Expected annotation'); return; }
     string(a.id, `${p}.id`, true); if (annotationIds.has(a.id)) fail(`${p}.id`, 'DUPLICATE', 'Duplicate annotation'); annotationIds.add(a.id);

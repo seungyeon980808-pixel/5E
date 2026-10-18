@@ -2,6 +2,12 @@
   "schemaVersion": 1,
   "unit": [
     {
+      "path": "tests/test-graph-annotation-endstyle.mjs",
+      "findingIds": [
+        "GRAPH-CYCLE-ENDSTYLE"
+      ]
+    },
+    {
       "path": "tests/test-local-deepseek-bridge.cjs",
       "findingIds": [
         "LOCAL-DEEPSEEK-BRIDGE"
