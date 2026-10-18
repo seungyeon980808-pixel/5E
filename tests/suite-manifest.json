@@ -1809,6 +1809,12 @@
       "findingIds": [
         "TEACHER-FLOW-AI-IMAGE-CANVAS"
       ]
+    },
+    {
+      "path": "tests/test-teacher-flow-label-export-browser.cjs",
+      "findingIds": [
+        "TEACHER-FLOW-LABEL-EXPORT"
+      ]
     }
   ],
   "deferred": [
