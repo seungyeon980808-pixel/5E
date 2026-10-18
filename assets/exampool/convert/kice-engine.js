@@ -143,6 +143,9 @@ export async function toQuestion(structure,item,{number='1'}={}){
   const figure=(f,parent,label='자료',size=true)=>{const d=figs.get(f.run);const b=add('figure',parent,label);b.figure={name:`${item.id}-${++count.images}.png`,data:d.data};
     if(size){const w=d.box?d.box[2]-d.box[0]:col*.6;b.size=Math.min(100,Math.max(10,Math.round(w/col*100/5)*5));}return b;};
   const table=(t,parent,label='자료')=>{const d=t.block.detected,b=add('table',parent,d?.caption||label);b.table=d?tableFromDetected(d):tableFromStructure(t.block);count.tables++;
+    // 원본 열 폭(pt)·칸 글자 크기(pt): 조판기가 열 폭 비율과 글 크기를 원본대로 쓴다.
+    const w=t.block.widths;if(Array.isArray(w)&&w.length===b.table.cols)b.table.colWidths=w.map(x=>Math.round(x*10)/10);
+    if(t.block.fontSize)b.table.fontPt=t.block.fontSize;
     if(t.box){const w=t.box[2]-t.box[0];b.size=Math.min(100,Math.max(10,Math.round(w/col*100/5)*5));}return b;};
   const textBlock=(paras,parent,label)=>{const b=add('text',parent,label);b.text=paras.map(p=>p.text).join('\n');return b;};
   // 자료 바로 아래 이름 줄 '(가)'·'(가) 아세트산 (나) 뷰테인'과 범례 '(＋: …)'를 그 자료 칸에 붙인다(x 위치로 짝).
