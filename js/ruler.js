@@ -103,6 +103,9 @@ export function initRuler(svg, state) {
 
   // Redraw whenever the store changes (viewport zoom/pan mutates viewBox via state.update)
   state.subscribe(_scheduleDraw);
+  // 화면 색(테마·팔레트)이 바뀌면 바로 다시 그린다. 예전에는 다음 문서 변경·마우스 움직임까지 이전 색이 남았다.
+  new MutationObserver(_scheduleDraw).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme', 'data-palette', 'class', 'style'] });
+  window.matchMedia?.('(prefers-color-scheme: dark)')?.addEventListener?.('change', _scheduleDraw);
 
   const worldPoint = (clientX, clientY) => {
     const matrix = svg.getScreenCTM();
