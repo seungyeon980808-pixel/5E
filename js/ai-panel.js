@@ -4841,7 +4841,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       } else {
         setTaskState('completed'); taskTabs.get(originatingTaskId).generationNotice = candidate.reviewState === 'needs-attention' ? 'review' : null; renderTaskTabs(); setGenerating(false); setBusy(false);
         setStatus(outOfScope ? outOfScopeMessage
-          : candidate.reviewState === 'passed' ? '처리 완료 · 편집 가능한 결과를 준비했습니다.'
+          : candidate.reviewState === 'passed' ? (candidate.reviewReport?.advisory?.length ? `처리 완료 · 참고 사항 ${candidate.reviewReport.advisory.length}개는 결과 확인에서 볼 수 있습니다.` : '처리 완료 · 편집 가능한 결과를 준비했습니다.')
           : draftReady ? candidate.editableDraft?.presentation === 'external-list'
             ? `원본 유지 · 편집 라벨 목록 ${candidate.editableDraft.labelIds.length}개를 준비했습니다. 원본 글자는 남아 있습니다.`
             : result.removalReport?.status === 'partial'

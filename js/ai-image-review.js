@@ -218,8 +218,15 @@ export function parseImageReviewReport(raw, { requireLabelChecks = false, requir
   return { ok: true, report };
 }
 
+// 화면 안내용 판정에서 미통과로 막는 핵심 과학 구조 항목(2026-10-18).
+// 핵심 항목도 검수자가 그 항목에 중대(major) 이상의 문제를 구체적으로 적었을 때만 막는다.
+// "확인할 수 없다" 수준의 실패, 방향·배치·표현·스타일·요청 범위의 실패, '확실하지 않음', 사소한 문제는 참고로만 남긴다.
+export const BLOCKING_REVIEW_CHECKS = Object.freeze(['object-counts', 'inside-outside', 'liquid-occupancy', 'connections', 'raster-label-removal']);
+
 // A model's top-level verdict cannot bypass an omitted style/structure check.
 // This gate retains raw diagnostics; it grants no permission to retry generation.
+// accepted: 화면 안내·결과 사용 판정(핵심 구조만 막음). strictAccepted: 모든 항목 통과(결과 저장 캐시 기준).
+// 두 판정 모두 그림을 다시 그리게 하지 않는다.
 export function enforceImageLabelAcceptance(report, { workflow = {}, candidateSha256 = null } = {}) {
   const general = workflow.imageKind !== 'exam';
   const parsed = parseImageReviewReport(JSON.stringify(report), {
@@ -243,7 +250,23 @@ export function enforceImageLabelAcceptance(report, { workflow = {}, candidateSh
   if (general) gated.styleReview = { version: STYLE_CONTRACT_VERSION, candidateSha256,
     verdict: REQUIRED_STYLE_CHECKS.some(([id]) => gated.checks.find(check => check.id === id)?.status === 'fail') ? 'fail'
       : REQUIRED_STYLE_CHECKS.every(([id]) => gated.checks.find(check => check.id === id)?.status === 'pass') ? 'pass' : 'uncertain' };
-  return { accepted: parsed.ok && gated.verdict === 'pass', state: parsed.ok && gated.verdict === 'pass' ? 'passed' : 'needs-attention', report: gated };
+  const strictAccepted = parsed.ok && gated.verdict === 'pass';
+  // 라벨을 편집 객체로 복원하는 경우의 라벨 검사는 지금처럼 실패하면 막는다.
+  const blocking = new Set([...BLOCKING_REVIEW_CHECKS, ...(workflow.labelResult === 'restore-editable'
+    ? [...LABEL_REVIEW_CHECKS, ...LABEL_COMPOSITE_REVIEW_CHECKS].map(([id]) => id) : [])]);
+  const checks = Array.isArray(gated.checks) ? gated.checks : [], issues = Array.isArray(gated.issues) ? gated.issues : [];
+  const seriousIssue = id => issues.some(issue => issue?.checkId === id && (issue.severity === 'critical' || issue.severity === 'major'));
+  const blockingFail = checks.some(check => blocking.has(check?.id) && check.status === 'fail' && seriousIssue(check.id));
+  // 검수 모델이 아닌 처리 단계가 기록한 중대 문제(배치·제거 실패 등)와 핵심 항목의 치명적 문제는 막는다.
+  const blockingIssue = issues.some(issue => issue?.checkId ? blocking.has(issue.checkId) && issue.severity === 'critical'
+    : issue?.severity === 'critical' || issue?.severity === 'major');
+  const accepted = parsed.ok && !blockingFail && !blockingIssue;
+  gated.advisory = accepted && !strictAccepted ? [
+    ...checks.filter(check => check?.status !== 'pass').map(check => ({ checkId: check.id, label: check.label, status: check.status, detail: check.detail })),
+    ...issues.filter(issue => issue?.checkId && !checks.some(check => check?.id === issue.checkId && check.status !== 'pass'))
+      .map(issue => ({ checkId: issue.checkId, status: 'note', detail: issue.message })),
+  ] : [];
+  return { accepted, strictAccepted, state: accepted ? 'passed' : 'needs-attention', report: gated };
 }
 
 export function isImageLabelCandidateAccepted(candidate) {
