@@ -8,7 +8,8 @@ import {handoffQuestion} from './handoff.js';
 import {createSheetGrid} from './grid.js';
 import {applyGridValues,columnName} from './grid-model.js';
 import {ROWS,fieldValue,applyVerticalValues} from './vertical.js';
-import {TEMPLATES,questionFromTemplate} from './templates.js';
+import {questionFromShape} from './templates.js';
+import {createNewQuestionDialog} from './new-question.js';
 import {createTypesetter} from './typeset.js?v=1017-live';
 import {renderParts,applyPartChange,movePart} from './parts-view.js';
 let grid=null,future=[];
@@ -190,10 +191,9 @@ document.addEventListener('click',e=>{const n=e.target.closest('button'),row=e.t
   }catch(err){status(err.message,true);}
 });
 function imageHolder(q,key){const [kind,id,r,c]=key.split(':');return kind==='block'?q.blocks.find(b=>b.id===id):kind==='choice'?q.choices.find(c=>c.id===id):kind==='cell'?(id==='choices'?q.choiceTable:q.blocks.find(b=>b.id===id)?.table)?.cells[Number(r)]?.[Number(c)]:null;}
-let templateKey='plain';
-$('#template-gallery').innerHTML=TEMPLATES.map(t=>`<button data-template="${t.id}" aria-pressed="${t.id===templateKey}"><div class="template-shape ${t.shape}" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div><strong>${E(t.name)}</strong><span>${E(t.description)}</span><small>${E(t.source)}</small></button>`).join('');
-$('#template-gallery').onclick=e=>{const b=e.target.closest('[data-template]');if(!b)return;templateKey=b.dataset.template;if(templateKey==='graph-choices'){$('#new-type').value='객관식';$('#new-style').value='그림·그래프';}$('#template-gallery').querySelectorAll('button').forEach(n=>n.setAttribute('aria-pressed',String(n===b)));};
-$('#new').onclick=()=>$('#new-dialog').showModal();$('#create').onclick=()=>{const ok=mutate(()=>{if(data.questions.length>=500)throw Error('문항은 500개까지 만들 수 있습니다.');current=questionFromTemplate(templateKey,String(data.questions.length+1),$('#new-type').value,$('#new-style').value);data.questions.push(current);activeTab='composition';});if(ok){$('#new-dialog').close();show('desk');}};
+// 새 문항: 유형 → 자료 구조 2번 클릭. 배치는 자동이고, 자료 종류는 만든 뒤 엑셀에서 칸마다 고른다.
+const newDialog=createNewQuestionDialog($('#new-dialog'),{onCreate:shape=>mutate(()=>{if(data.questions.length>=500)throw Error('문항은 500개까지 만들 수 있습니다.');current=questionFromShape(shape,String(data.questions.length+1));data.questions.push(current);activeTab='composition';})&&(show('desk'),true)});
+$('#new').onclick=()=>newDialog.open();
 $('#edit-detail').onclick=()=>openDetail();
 $('#detail-dialog').addEventListener('close',()=>{grid?.finish();renderRows();renderSheetView();grid?.refresh({questionId:current?.id});});
 $('#add').onclick=()=>{addParent=null;$('#add-dialog').showModal();};$('#duplicate').onclick=()=>mutate(()=>{if(data.questions.length>=500)throw Error('문항은 500개까지 만들 수 있습니다.');current=duplicateQuestion(current);current.number=String(data.questions.length+1);data.questions.push(current);});

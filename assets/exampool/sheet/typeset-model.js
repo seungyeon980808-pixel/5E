@@ -59,8 +59,10 @@ export function applyQuestionIndent(document,number){
   if(!number)return;
   const prefix=`${number}. `;
   for(let page=0;page<document.pageCount();page++){
-    const run=JSON.parse(document.getPageTextLayout(page)).runs.find(r=>!r.cellPath?.length&&r.text.startsWith(prefix));
+    const run=JSON.parse(document.getPageTextLayout(page)).runs.find(r=>r.charStart===0&&r.text.startsWith(prefix)||!r.cellPath?.length&&r.text.startsWith(prefix));
     if(!run)continue;
+    // 글 옆 자료처럼 번호가 표 칸 안에 있으면 칸 문단은 내어쓰기를 건드리지 않는다.
+    if(run.cellPath?.length)return;
     const start=JSON.parse(document.getCursorRect(run.secIdx,run.paraIdx,0)),end=JSON.parse(document.getCursorRect(run.secIdx,run.paraIdx,prefix.length));
     document.applyParaFormat(run.secIdx,run.paraIdx,JSON.stringify({indent:-Math.round((end.x-start.x)*150)}));
     document.reflowLinesegs();return;

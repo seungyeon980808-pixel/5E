@@ -1,4 +1,4 @@
-import {TYPES,PRESETS,STYLES,block,applyPreset} from './model.js';
+import {TYPES,PRESETS,STYLES,block,applyPreset,passageBlocks} from './model.js';
 
 // text: 한글 문서에 글로 나오는 칸(흰색). 나머지(분류·모양 설정·정답·해설 등)는 옅은 회색으로 구분한다.
 // A row is a field; a column is one complete question. Compound material stays
@@ -19,7 +19,7 @@ export function fieldValue(q,key){
   if(key==='concepts')return (q.concepts||[]).join(', ');
   if(key==='materials')return q.blocks.filter(b=>!['text','bogi'].includes(b.kind)).map(b=>b.kind==='table'?`${b.label} (${b.table.rows}×${b.table.cols})`:b.label).join(' · ');
   if(key==='photos'){const figures=[...q.blocks.filter(b=>b.figure).map(b=>b.figure),...q.choices.filter(c=>c.figure).map(c=>c.figure),...q.blocks.filter(b=>b.table).flatMap(b=>b.table.cells.flat().filter(c=>c.figure).map(c=>c.figure))];return figures.length?`${figures.length}개 · ${figures.map(f=>f.name).join(', ')}`:'사진 추가…';}
-  if(key==='passage')return q.blocks.filter(b=>b.kind==='text'&&!b.parent).map(b=>b.text).filter(Boolean).join('\n\n');
+  if(key==='passage')return passageBlocks(q).map(b=>b.text).filter(Boolean).join('\n\n');
   if(key==='choices')return q.style==='대응표'?'선지 대응표 · '+q.choiceTable.cols+'열 (더블클릭하여 편집)':q.choices.map((c,i)=>labels[i]+' '+c.text+(c.figure?' [그림]':'')).join('\n');
   if(key==='bogi')return q.blocks.filter(b=>b.kind==='bogi').flatMap(b=>b.lines.map(l=>l.label+'. '+l.text)).join('\n');
   if(key==='answer')return q.type==='서술형'?q.modelAnswer:q.answer===null?'':labels[q.answer];
@@ -37,7 +37,7 @@ export function writeField(q,key,value,{clear=false}={}){
   else if(key==='answer'){if(q.type==='서술형')q.modelAnswer=value;else if(value===''||value==='—')q.answer=null;else{const n=labels.includes(value)?labels.indexOf(value):Number(value)-1;if(!Number.isInteger(n)||n<0||n>4)throw Error('정답은 ①~⑤ 또는 1~5로 입력하세요.');q.answer=n;}}
   else if(key==='concepts')q.concepts=[...new Set(value.split(/[,\n]/).map(s=>s.trim()).filter(Boolean))];
   else if(key==='passage'){
-    const existing=q.blocks.filter(b=>b.kind==='text'&&!b.parent);if(existing.length>1&&value!==fieldValue(q,key))throw Error('여러 지문이 있는 문항은 구성 편집에서 각각 수정하세요.');
+    const existing=passageBlocks(q);if(existing.length>1&&value!==fieldValue(q,key))throw Error('여러 지문이 있는 문항은 구성 편집에서 각각 수정하세요.');
     let b=existing[0];if(!b){b=block('text',null,'지문');q.blocks.unshift(b);}b.text=value;
   }else if(key==='choices'){
     if(q.style==='대응표'||q.style==='그림·그래프')throw Error('표·그림 선지는 구성 편집에서 수정하세요.');

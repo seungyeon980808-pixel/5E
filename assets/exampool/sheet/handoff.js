@@ -1,4 +1,4 @@
-import {FORMAT,clone,validate,tableCovered} from './model.js';
+import {FORMAT,clone,validate,tableCovered,openingSideText} from './model.js';
 import {mathParts} from './typeset-model.js';
 import {splitWidths,sizedWidth,gapPx,choiceColumns} from './placement.js';
 
@@ -89,6 +89,8 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
   const p=(v,width=null,fontSize=11,owner=null)=>`<p style="margin:4px 0">${text(v,width,fontSize,null,owner)}</p>`;
   const opening=q.blocks.find(b=>b.parent===null),firstText=opening?.kind==='text'&&opening.text?opening:null;
   const prefix=q.number?`${q.number}. `:'';
+  // 글 옆 자료: 번호는 묶음 칸 안의 첫 지문 앞에 붙고, 발문은 자료 뒤에 온다.
+  const sideText=!firstText?openingSideText(q):null;
   const picture=async(f,width,align,owner={kind:'other'})=>{
     if(!f)return '';
     const image=await prepareFigure(clone(f));
@@ -141,7 +143,8 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
     for(const b of q.blocks.filter(b=>b.parent===parent&&(!onlyId||b.id===onlyId))){
       if(b===firstText)continue;
       html+=spacer(b);
-      if(b.kind==='text')html+=b.text?p(b.text,width,11,{kind:'block',id:b.id}):'';
+      if(b===sideText)html+=p(prefix+b.text,width,11,{kind:'block',id:b.id,prefix:prefix.length});
+      else if(b.kind==='text')html+=b.text?p(b.text,width,11,{kind:'block',id:b.id}):'';
       else if(b.kind==='figure'){
         if(b.figure)html+=p('')+await picture(b.figure,sizedWidth(b,width),b.align,{kind:'block',id:b.id})+(/^\(.+\)$/.test(b.label)||b.text?p((/^\(.+\)$/.test(b.label)?b.label:'')+(b.text?' '+b.text:''),width,11,b.text?{kind:'block',id:b.id,prefix:(/^\(.+\)$/.test(b.label)?b.label:'').length+1}:null):'');
       }else if(b.kind==='table')html+=await table(b.table,sizedWidth(b,width),false,b.align,{kind:'block',id:b.id});
@@ -222,7 +225,7 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
   };
   // A question number belongs to the opening paragraph. Native hanging
   // indentation is measured from this prefix after import, never added spaces.
-  let html=`<p style="margin:4px 0;text-align:left">${text(prefix+(firstText?firstText.text:q.ask),width-prefix.length*7,11,null,firstText?{kind:'block',id:firstText.id,prefix:prefix.length}:{kind:'ask',prefix:prefix.length})}</p>`+await walk(null,width)+(firstText?p(q.ask,width,11,{kind:'ask'}):'');
+  let html=(sideText?'':`<p style="margin:4px 0;text-align:left">${text(prefix+(firstText?firstText.text:q.ask),width-prefix.length*7,11,null,firstText?{kind:'block',id:firstText.id,prefix:prefix.length}:{kind:'ask',prefix:prefix.length})}</p>`)+await walk(null,width)+(firstText||sideText?p(q.ask,width,11,{kind:'ask'}):'');
   if(q.type!=='서술형'){
     if(q.style==='대응표')html+=await table(q.choiceTable,width,true);
     else if(q.style==='그림·그래프'){

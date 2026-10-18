@@ -58,8 +58,9 @@ h.withServer(async origin => {
       }
       await page.evaluate(()=>{document.documentElement.setAttribute('data-theme','dark');document.documentElement.setAttribute('data-palette','classic');});
 
-      // 새 문항: 실험 + 장치 그림, 합답형.
-      await sheet.click('#side-new');await sheet.click('[data-template="experiment-table"]');await sheet.selectOption('#new-type','합답형');await sheet.click('#create');
+      // 새 문항: 유형(합답형) → 자료 구조(실험 상자), 클릭 2번.
+      await sheet.click('#side-new');await sheet.click('#new-dialog .nq-opt[data-step="form"][data-k="combo"]');await sheet.click('#new-dialog .nq-opt[data-step="struct"][data-k="experiment"]');
+      assert.equal(await sheet.locator('#new-dialog [data-nq="go"]').isEnabled(),true);await sheet.click('#new-dialog [data-nq="go"]');
       await sheet.waitForSelector('.workspace:not([hidden]) #registry');
       const ask=sheet.locator('#rows tr:has(th.field-label:text-is("발문")) td').first();
       await ask.click();await page.keyboard.type('실험 결과로 옳은 것만을 <보기>에서 있는 대로 고른 것은?');await page.keyboard.press('Enter');

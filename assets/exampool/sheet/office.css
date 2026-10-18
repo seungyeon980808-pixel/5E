@@ -134,8 +134,6 @@ footer{height:var(--ds-h-footer);align-items:center;padding:0 var(--ds-edge);bac
 dialog{border:0;border-radius:var(--ds-radius-lg);background:var(--ds-doc);color:var(--ds-doc-ink);box-shadow:var(--ds-shadow-float)}
 dialog::backdrop{background:rgba(0,0,0,.32)}
 .dialog-head h2{font-size:var(--ds-text-title);font-weight:var(--ds-weight-strong)}
-#template-gallery button{height:auto;border:1px solid var(--ds-doc-line);background:var(--ds-doc);color:var(--ds-doc-ink);justify-content:flex-start;align-items:stretch}
-#template-gallery button[aria-pressed=true]{border:2px solid var(--ds-cell);background:var(--ds-cell-tint)}
 .add-options button,.doc-list,.standard-item,#delete-confirm{height:auto;min-height:var(--ds-h-control)}
 
 /* ---------- 좁은 화면: 작업대 여백만 줄인다 ---------- */

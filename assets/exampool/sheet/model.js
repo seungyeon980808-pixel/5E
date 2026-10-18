@@ -36,6 +36,10 @@ export function applyPreset(q,preset) {
   // Switching a preset adds material; existing content is never deleted.
   q.blocks.push(...additions);return q;
 }
+// 글 옆 자료(가로 묶음이 문항 맨 앞): 묶음의 첫 글이 문항 번호가 붙는 첫 지문이다.
+export function openingSideText(q){const o=q.blocks.find(b=>!b.parent);if(o?.kind!=='group'||o.layout!=='나란히'||o.boxed===true)return null;const c=q.blocks.find(b=>b.parent===o.id);return c?.kind==='text'?c:null;}
+// 시트의 '지문' 칸: 맨 앞 글 옆 지문과 묶음 밖 설명들.
+export const passageBlocks=q=>{const side=openingSideText(q);return [...(side?[side]:[]),...q.blocks.filter(b=>b.kind==='text'&&!b.parent)];};
 export function parentOptions(q,b) {
   const descendants=new Set([b.id]);let changed=true;
   while(changed){changed=false;for(const x of q.blocks)if(descendants.has(x.parent)&&!descendants.has(x.id)){descendants.add(x.id);changed=true;}}
@@ -87,6 +91,7 @@ export function validate(data) {
   const ids=new Set();for(const q of data.questions){if(!q||!id(q.id)||ids.has(q.id)||!TYPES.includes(q.type)||!PRESETS.includes(q.preset)||!STYLES.includes(q.style)||!Array.isArray(q.blocks)||q.blocks.length>80||!Array.isArray(q.choices)||q.choices.length!==5)throw Error('문항 유형·ID·구성을 확인하세요.');ids.add(q.id);
     for(const k of ['number','standardCode','ask','modelAnswer','explanation','intent','source'])if(!str(q[k],k==='number'?40:k==='standardCode'?80:32767))throw Error('문항 입력 내용이 너무 길거나 형식이 다릅니다.');
     for(const k of ['unitLarge','unitMiddle','unitSmall','managementId','templateKey'])if(q[k]!==undefined&&!str(q[k],240))throw Error('단원·관리번호를 확인하세요.');
+    if(q.form!==undefined&&!['combo','single','pair','talk'].includes(q.form)||q.structure!==undefined&&!['two','big','small','condition','many','experiment','none'].includes(q.structure))throw Error('새 문항 틀의 유형·자료 구조를 확인하세요.');
     if(q.concepts!==undefined&&(!Array.isArray(q.concepts)||q.concepts.length>100||!q.concepts.every(v=>str(v,240))))throw Error('핵심개념은 100개 이내로 입력하세요.');
     if(q.typeset!==undefined&&(!q.typeset||!str(q.typeset.bytes,12*1024*1024)||!str(q.typeset.fingerprint,100)||!str(q.typeset.baselineText,1000000)||!['A4','A3','B4'].includes(q.typeset.profile?.paper)||![1,2].includes(q.typeset.profile?.columns)))throw Error('저장한 조판 문서를 확인하세요.');
     if(q.workflow!==undefined&&!Object.hasOwn(WORKFLOWS,q.workflow))throw Error('문항 상태는 출제·점검·완성 중 하나입니다.');

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import {createRequire} from 'node:module';
 import {FORMAT,newQuestion,block,validate} from '../assets/exampool/sheet/model.js';
 import {ROWS,fieldValue,writeField,applyVerticalValues} from '../assets/exampool/sheet/vertical.js';
-import {TEMPLATES,questionFromTemplate} from '../assets/exampool/sheet/templates.js';
+import {FORMS,STRUCTS,questionFromShape,rankForms,rankStructs,autoLayout} from '../assets/exampool/sheet/templates.js';
 import {columnName,address,parseClipboard} from '../assets/exampool/sheet/grid-model.js';
 import {questionFingerprint,pageProfile,mathParts} from '../assets/exampool/sheet/typeset-model.js';
 import {project,exportExcel,importExcel,enhanceZip} from '../assets/exampool/sheet/excel.js';
@@ -26,10 +26,21 @@ test('text choices and statements keep identities and evidence, while table/grap
  const cid=q.choices[0].id;writeField(q,'choices','① 0\n② 1.0\n③ ㉠\n④ 001\n⑤ $v_0$');assert.equal(q.choices[0].id,cid);assert.equal(q.choices[1].text,'1.0');
  q.style='대응표';assert.match(fieldValue(q,'choices'),/대응표/);assert.throws(()=>writeField(q,'choices','new'),/구성 편집/);
 });
-test('past-question templates separate answer mode, material hierarchy and choice presentation',()=>{
- for(const t of TEMPLATES)validate({format:FORMAT,questions:[questionFromTemplate(t.id,'1')],documents:[]});
- const q=questionFromTemplate('experiment-table','2','객관식','대응표'),group=q.blocks.find(b=>b.kind==='group');assert.ok(group.boxed);assert.ok(q.blocks.find(b=>b.kind==='table'&&b.parent===group.id));assert.equal(q.style,'대응표');assert.equal(q.blocks.filter(b=>b.kind==='bogi').length,0);
- assert.equal(questionFromTemplate('graph-choices','3','객관식','문장·수식').style,'문장·수식');
+test('new question frames: 4 forms x 7 material structures, ranked by past exams, layout chosen automatically',()=>{
+ for(const form of Object.keys(FORMS))for(const struct of Object.keys(STRUCTS))validate({format:FORMAT,questions:[questionFromShape({form,struct},'1')],documents:[]});
+ const forms=rankForms('all');assert.equal(forms.total,1440);assert.deepEqual(forms.list.map(o=>o.k),['combo','single','pair','talk']);assert.deepEqual(forms.list.map(o=>o.rec),[true,true,false,false]);
+ const combo=rankStructs('all','combo');assert.equal(combo.total,1089);assert.equal(combo.list.filter(o=>o.rec).length,2);assert.equal(combo.list.reduce((n,o)=>n+o.n,0),1089);
+ assert.equal(autoLayout('all','combo','small'),'side');assert.equal(autoLayout('all','combo','big'),'below');assert.equal(autoLayout('all','combo','none'),null);assert.equal(autoLayout('all','combo','two'),'row');
+ const exp=questionFromShape({form:'combo',struct:'experiment'},'2'),box=exp.blocks.find(b=>b.kind==='group');
+ assert.equal(exp.type,'합답형');assert.equal(exp.style,'조합');assert.ok(box.boxed);assert.ok(exp.blocks.find(b=>b.kind==='table'&&b.parent===box.id));assert.equal(exp.blocks.at(-1).kind,'bogi');assert.equal(exp.points,2);
+ const pair=questionFromShape({form:'pair',struct:'none'},'3');assert.equal(pair.style,'대응표');assert.deepEqual(pair.choiceTable.cells[0].map(c=>c.value),['A','B','C']);assert.ok(!pair.blocks.some(b=>b.kind==='bogi'));
+ const talk=questionFromShape({form:'talk',struct:'big'},'4');assert.deepEqual(talk.blocks.find(b=>b.kind==='dialogue').lines.map(l=>l.label),['학생 A','학생 B','학생 C']);assert.ok(talk.blocks.some(b=>b.kind==='figure'&&!b.parent));
+ const cond=questionFromShape({form:'single',struct:'condition'},'5'),cbox=cond.blocks.find(b=>b.kind==='group');assert.equal(cbox.label,'');assert.ok(cbox.boxed);
+ // 글 옆 작은 자료: 첫 지문과 자료가 가로로 묶이고, 시트의 지문 칸은 그 글이다.
+ const small=questionFromShape({form:'combo',struct:'small'},'6'),side=small.blocks[0];assert.equal(side.layout,'나란히');
+ writeField(small,'passage','그림과 같이 물체가 운동한다.');assert.equal(small.blocks[1].text,'그림과 같이 물체가 운동한다.');assert.equal(fieldValue(small,'passage'),'그림과 같이 물체가 운동한다.');
+ const two=questionFromShape({form:'combo',struct:'two'},'7');assert.deepEqual(two.blocks.filter(b=>b.kind==='figure').map(b=>b.label),['(가)','(나)']);
+ assert.throws(()=>questionFromShape({form:'combo'},'8'),/자료 구조/);
 });
 test('vertical Excel edits metadata, passage, choices and bogi without being overwritten by the composition projection',async()=>{
  const q=newQuestion('001','합답형'),data={format:FORMAT,questions:[q],documents:[]},{wb,pack,images}=project(XLSX,data),ws=wb.Sheets['문항'];
