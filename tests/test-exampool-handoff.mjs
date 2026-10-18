@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
-import {buildQuestionHtml,handoffQuestion,verifyNativeQuestion,wrapQuestionText,wrapHangingText} from '../assets/exampool/sheet/handoff.js';
+import {buildQuestionHtml,handoffQuestion,verifyNativeQuestion,wrapQuestionText,wrapHangingText,decodeNativeText} from '../assets/exampool/sheet/handoff.js';
 import {nativeLayoutIssues,assertNativeLayout} from '../assets/exampool/sheet/native-layout-check.js';
 import {FORMAT,newQuestion,block,validate} from '../assets/exampool/sheet/model.js';
 const examples=JSON.parse(await fs.readFile(new URL('../assets/exampool/sheet/examples.json',import.meta.url),'utf8'));
@@ -60,6 +60,18 @@ test('native preflight rejects changed cell spans and missing pictures instead o
  const doc={getTextFileText:()=>JSON.stringify('물체 A'),pageCount:()=>1,getPageControlLayout:()=>JSON.stringify({controls}),getControlImageData:()=>new Uint8Array([1,2,3])};
  verifyNativeQuestion(doc,plan);controls[0].cells[0].colSpan=1;assert.throws(()=>verifyNativeQuestion(doc,plan),/병합/);controls[0].cells[0].colSpan=2;
  doc.getControlImageData=()=>new Uint8Array([9]);assert.throws(()=>verifyNativeQuestion(doc,plan),/그림/);
+});
+// 한글 엔진은 완성형 밖 글자를 문서에는 그대로 두고 getTextFileText로 꺼낼 때만 &#십진수; 로 바꾼다(2026-10-19 왕복 검사).
+// 평가원 글머리표 ◦, ≳, ⇄ 등이 든 문항이 「일부 글을 읽지 못했습니다」로 통째로 실패하던 회귀.
+test('native preflight reads characters the HWP text export writes as numeric references',()=>{
+ const outsideKs='◦≳≲⇄⇌․—∙≈･・◯\ue034\ue036\ue037𝑥';
+ const engineText=v=>[...v].map(c=>outsideKs.includes(c)?`&#${c.codePointAt(0)};`:c).join('');
+ const texts=['〔실험 결과〕 ◦ 가설에 어긋나는 분자','Δx Δp ≳ h','A ⇄ B','2․3','\ue034 표시','𝑥'];
+ const plan={texts,images:[],tables:[]},doc=body=>({getTextFileText:()=>JSON.stringify(engineText(body)),pageCount:()=>0});
+ verifyNativeQuestion(doc(texts.join('\n')),plan);
+ assert.throws(()=>verifyNativeQuestion(doc(texts.join('\n').replace('◦ ','')),plan),/읽지 못했습니다/,'a really missing character still fails');
+ assert.equal(decodeNativeText('가&#9702;나 &#8819; &#119909;'),'가◦나 ≳ 𝑥');
+ assert.equal(decodeNativeText('&#38; &#39; &#55296; &#9702'),'&#38; &#39; &#55296; &#9702','ASCII, surrogate and unterminated references stay as typed');
 });
 test('narrow table headers wrap units without changing Korean words or values',async()=>{
  assert.equal(wrapQuestionText('질량 (kg)',43,9),'질량\n(kg)');

@@ -883,6 +883,12 @@
       ]
     },
     {
+      "path": "tests/test-exampool-glyphs-browser.cjs",
+      "findingIds": [
+        "EXAMPOOL-NATIVE-GLYPHS"
+      ]
+    },
+    {
       "path": "tests/test-exampool-browser.cjs",
       "findingIds": [
         "EXAMPOOL-PERSISTENCE",
