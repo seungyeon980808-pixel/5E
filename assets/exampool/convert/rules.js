@@ -208,7 +208,7 @@ export function pairTable(structure){
 }
 
 // 수식 안 괄호: 평가원 PDF에서 ( )는 본문 글꼴로 찍힌다(원본 글 채점 기준과 같게). 수식 밖 글로 뺀다.
-// '$(mol)$' → '($mol$)', '$A(g)$' → '$A$($g$)'. 상태 기호 글자(g·l·s)는 시험마다 글꼴이 달라 수식에 둔다. 중괄호 안(분수·\text)은 그대로.
+// '$(mol)$' → '($mol$)', '$A(g)$' → '$A$($g$)'. 상태 기호 글자(g·l·s)는 본문 글꼴로 찍힌 것({rm g}, 변환기 표시)만 글로 뺀다. 중괄호 안(분수·\text)은 그대로.
 export function splitEquationParens(str){
   return String(str||'').replace(/\$([^$\n]+)\$/g,(all,s)=>{
     if(/\\left|\\right|\\begin/.test(s)||!/[()]/.test(s))return all;
@@ -219,6 +219,9 @@ export function splitEquationParens(str){
       if(ch==='{')depth++;if(ch==='}')depth--;
       if(depth===0&&(ch==='('||ch===')')){
         push('math',math);math='';
+        // 본문 글꼴 상태 기호 '({rm g})' → 글 '(g)'
+        const st=ch==='('&&s.slice(i).match(/^\(\{rm\s+([A-Za-z]{1,3})\}\)/);
+        if(st){push('text',`(${st[1]})`);i+=st[0].length-1;continue;}
         push('text',ch);continue;}
       math+=ch;}
     push('math',math);

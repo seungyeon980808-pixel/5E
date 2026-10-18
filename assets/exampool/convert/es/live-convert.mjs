@@ -129,7 +129,9 @@ export function attachTextScripts(items, recoverBases = true) {
       && Math.abs(other.y - item.y) < 1.5 && other.x - item.x - item.width >= -1
       && other.x - item.x - item.width <= 1.5);
     if (left && right) {
-      promoted.set(item, { ...item, value: item.value.trim(), math: true });
+      // 5E 기출 복원: 본문 글꼴(바탕 바로 선 글자)이면 {rm …}으로 표시해 둔다(한글 수식에서도 바로 선 글자, 엔진이 본문 글로 되돌릴 수 있게).
+      const upright = /Batang/u.test(item.font || '') && !/It|Italic/iu.test(item.font || '');
+      promoted.set(item, { ...item, value: upright ? `{rm ${item.value.trim()}}` : item.value.trim(), math: true });
       promoted.set(right, { ...right, value: right.value.trim().replace(/\s+/gu, '~'), math: true });
     }
   }
