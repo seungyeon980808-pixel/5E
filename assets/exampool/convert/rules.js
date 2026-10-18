@@ -165,7 +165,7 @@ export function analyze(structure,item={}){
   // 오른쪽 끝에 홀로 찍힌 [3점] 줄(그림 뒤로 밀린 경우 포함)
   let lone=false;for(const list of [pre,post])for(let k=list.length-1;k>=0;k--)if(list[k].k==='para'&&/^\[\s*3\s*점\s*\]$/.test(list[k].text)){list.splice(k,1);lone=true;}
   const three=lone||THREE.test(ask)||/\[\s*3\s*점\s*\]/.test(ask);ask=ask.replace(/\s*\[\s*3\s*점\s*\]\s*/g,' ').trim();
-  return {items,rects,nodes:[...pre,...post],after:post,ask,three,header,B};
+  return {items,rects,nodes:[...pre,...post],after:post,ask,three,header,B,bodyH:opening?.h||null};
 }
 
 // 선지표 머리줄: 짧은 낱말 2~6개(㉠ ㉡, A B C, (가) (나), 수식 한 덩이 등).

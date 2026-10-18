@@ -45,6 +45,10 @@ export function injectFigures(structure,figs,item){
     if(at<0)at=blocks.length;
     blocks.splice(at,0,fig);
   }
+  // 잘라 넣은 그림·표 안에 통째로 들어가는 지문 줄(편집 표로 못 읽은 표 칸 글, 그림 속 이름표)은 그림과 겹치므로 뺀다.
+  const inside=(L,b)=>L.left>=b[0]-1&&L.right<=b[2]+1&&ph-L.y>=b[1]+2&&ph-L.y<=b[3]+2;
+  const kept=figs.filter(f=>blocks.some(b=>b.runs?.[0]?.sourceBox===f.box));
+  for(let i=blocks.length-1;i>=0;i--){const b=blocks[i];if(b.role==='stem'&&b.sourceLine&&ph&&kept.some(f=>inside(b.sourceLine,f.box))){blocks.splice(i,1);structure.droppedInFigure=(structure.droppedInFigure||0)+1;}}
 }
 
 const toDataUrl=async image=>{const blob=new Blob([image.bytes],{type:image.type||'image/png'});return await new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>ok(r.result);r.onerror=()=>no(r.error);r.readAsDataURL(blob);});};
@@ -132,7 +136,9 @@ export async function toQuestion(structure,item,{number='1'}={}){
           if(nb[2]<=tb[0]+3)f.align='왼쪽';i++;
         }else if(beside){
           const g=add('group',parent,'글 옆 자료');g.layout='나란히';g.boxed=false;
-          const t=textBlock(run,g,firstText?firstLabel:'설명');const [a,b]=ratioPair(Math.max(10,nb[0]-tb[0]),nb[2]-nb[0]);t.ratio=a;
+          const t=textBlock(run,g,firstText?firstLabel:'설명');// 상자 안 글은 원본에서 본문보다 작은 글자라, 본문 크기로 찍을 때 필요한 폭만큼 글 몫을 키운다.
+          const hs=run.flatMap(p=>p.lines.map(l=>l.h)).filter(Boolean).sort((x,y)=>x-y),lineH=hs[hs.length>>1],fs=A.bodyH&&lineH?Math.min(1.4,Math.max(1,A.bodyH/lineH)):1;
+          const [a,b]=ratioPair(Math.max(10,(tb[2]-tb[0])*fs+(nb[0]-tb[2])),nb[2]-nb[0]);t.ratio=a;
           const m=next.k==='figure'?figure(next,g,'자료',false):table(next,g);m.ratio=b;if(next.k==='figure')m.size=100;i++;
         }else textBlock(run,parent,firstText?firstLabel:'설명');
         firstText=false;continue;
