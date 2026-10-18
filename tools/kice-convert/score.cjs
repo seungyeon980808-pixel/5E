@@ -27,7 +27,10 @@ function score(item,ref,conv,ts,{convertOnly=false}={}){
   pass('structure');
   // ④ 틀
   if(d.decisions?.form&&d.decisions.form!==item.form)fail('template',`유형 ${d.decisions.form}(기록 ${item.form})`);
-  const wantFig=item.struct!=='none';if(wantFig!==(c.figures>0))fail('template',`그림 ${c.figures}개(기록 자료 구조 ${item.struct})`);
+  // 조건·실험 상자는 상자 자체가 자료라 그림이 없어도 된다. 표도 자료로 센다(엔진 counts.figures에 표 포함).
+  const need=item.struct==='none'?0:['condition','experiment'].includes(item.struct)?-1:item.struct==='two'?2:['three','complex'].includes(item.struct)?2:1;
+  if(need===0&&c.figures>0)fail('template',`그림 ${c.figures}개(기록: 자료 없음)`);
+  else if(need>0&&!(c.figures>=need))fail('template',`그림 ${c.figures}개(기록 자료 구조 ${item.struct})`);
   pass('template');
   if(convertOnly){row.pass=Object.values(row.checks).every(Boolean);return row;}
   if(!ts||ts.error&&!ts.status){fail('typeset',ts?.error||'조판 결과 없음');row.pass=false;return row;}
