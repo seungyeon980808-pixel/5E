@@ -44,8 +44,14 @@ export function flowItems(structure){
   }
   // 쪽 여백의 세로 과목명(물/리/학/II): 다른 줄보다 오른쪽에 있는 1~2글자 줄.
   const body=out.filter(i=>i.k==='line'&&i.geo&&i.right-i.left>40);
-  const edge=body.length?Math.max(...body.map(i=>i.right)):Infinity;
+  // 본문 오른쪽 끝: 번호 줄(첫 줄)의 끝, 없으면 가장 흔한 줄 끝(여백 글자가 붙어 읽힌 줄에 끌려가지 않게).
+  const rights=body.map(i=>Math.round(i.right/3)*3),mode=rights.length?Number([...rights.reduce((m,r)=>m.set(r,(m.get(r)||0)+1),new Map())].sort((a,b)=>b[1]-a[1]||a[0]-b[0])[0][0])+3:Infinity;
+  const first=body[0],edge=first&&first.right-first.left>150?first.right+2:mode;
+  const WM=/^(물|리|화|생|명|과|학|지|구|II|Ⅱ|I|Ⅰ)$/;
   const margin=i=>i.k==='line'&&i.geo&&i.right-i.left<16&&i.left>edge-2&&i.text.replace(/\s/g,'').length<=2;
+  // 여백 글자가 본문 줄 끝에 붙어 읽힌 경우: 줄 끝 낱말 하나를 뗀다.
+  for(const i of out)if(i.k==='line'&&i.geo&&i.right>edge+10){const t=tokens(i.text);if(t.length>1&&WM.test(t.at(-1))){i.text=t.slice(0,-1).join(' ');i.right=edge;structure.watermark=true;}}
+  if(out.some(margin))structure.watermark=true;
   // 그림 부스러기 줄: 홀로 찍힌 '.'과 짧은 수식·글자만 있는 줄.
   const debris=i=>i.k==='line'&&i.role!=='bogi'&&/(^|\s)\.(\s|$)/.test(i.text)&&tokens(i.text).every(t=>t==='.'||/^\$[^$]{1,3}\$$/.test(t)||[...t].length===1);
   return out.filter(i=>!margin(i)&&!debris(i));

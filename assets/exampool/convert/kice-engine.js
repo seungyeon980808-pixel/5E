@@ -183,6 +183,8 @@ export async function toQuestion(structure,item,{number='1'}={}){
   q.blocks=[...out,...keep.filter(b=>b.kind==='dialogue'),...keep.filter(b=>b.kind==='bogi')];
   // 선지
   const choices=by('choice').map(b=>clean(runsText(b.runs)));
+  // 여백 과목명 끝 글자(II)가 마지막 선지에 붙어 읽힌 경우
+  if(structure.watermark&&choices.length)choices[choices.length-1]=choices.at(-1).replace(/\s+(II|I)$/,'');
   if(form==='pair'){
     // 줄 위치로 열을 맞춘 선지표. 위치 정보가 없으면 낱말로 나눈다.
     let P=pairTable(structure);if(P&&!P.rows.some(r=>r.some(Boolean)))P=null;
