@@ -1,5 +1,5 @@
 import {FORMAT,clone,validate,tableCovered,openingSideText,isWrapped} from './model.js';
-import {mathParts} from './typeset-model.js';
+import {mathParts,TEXT_WIDTH} from './typeset-model.js';
 import {splitWidths,sizedWidth,gapPx,choiceColumns} from './placement.js';
 
 const E=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -197,25 +197,36 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
   };
   const table=async(t,width,choices=false,align,owner=choices?{kind:'choices'}:{kind:'table'},auto=false,room=width)=>{
     recordTable(t.rows,t.cols+(choices?1:0),t.merges.map(m=>({...m,c:m.c+(choices?1:0)})),owner);
-    const fontSize=t.cols>3?9:10;let inner=width-(choices?25:0);
-    // 열 폭: 칸 글 폭에 맞춘다. 크기를 정하지 않은 자료표는 글 길이만큼 좁게(평가원 표), 정한 표는 그 폭 안에서 글 길이 비율로 나눈다.
+    // 기출 표: 원본 열 폭(colWidths, PDF pt)·칸 글자 크기(fontPt)가 있으면 원본 비율 그대로(평가원 한 단 387pt = 조판 단 폭).
+    // 글자도 열 폭과 같은 배율로 줄인다(pt→px 배율 × 0.75, 장평·자간으로 좁아진 만큼 되돌림).
+    const original=!choices&&Array.isArray(t.colWidths)&&t.colWidths.length===t.cols&&t.colWidths.every(v=>Number(v)>0)?t.colWidths.map(Number):null;
+    const fontSize=Number(t.fontPt)>0?Math.min(11,Math.max(7,Math.round(t.fontPt*columnPx/KICE_COLUMN_PT*.75/TEXT_WIDTH*2)/2)):t.cols>3?9:10,headSize=Number(t.fontPt)>0?fontSize:fontSize-1;
+    let inner=width-(choices?25:0);
+    if(original){const w=original.reduce((a,b)=>a+b,0)*columnPx/KICE_COLUMN_PT;inner=Math.min(room-(choices?25:0),w);width=inner+(choices?25:0);}
+    // 열 폭: 원본 열 폭이 없으면 표 폭 안에서 칸 글 길이 비율로 나눈다.
     // 열마다 가장 긴 어절은 한 줄에 들어가게 한다(어절 중간에서 끊기면 칸 높이를 넘는다). 빈 표·그림이 든 표·선지표는 똑같이 나눈다.
     let colW=Array(t.cols).fill(inner/t.cols);
-    if(!choices&&measureText&&!t.cells.flat().some(c=>c.figure)&&t.cells.flat().filter(c=>String(c.value).trim()).length>=Math.max(2,t.cols)){
+    if(original&&!measureText){const sum=original.reduce((a,b)=>a+b,0);colW=original.map(v=>v*inner/sum);}
+    else if(!choices&&measureText&&!t.cells.flat().some(c=>c.figure)&&t.cells.flat().filter(c=>String(c.value).trim()).length>=Math.max(2,t.cols)){
       const nat=Array(t.cols).fill(36),word=Array(t.cols).fill(36),spans=[];
       for(let r=0;r<t.rows;r++)for(let c=0;c<t.cols;c++){
         if(tableCovered(t,r,c))continue;
-        const m=t.merges.find(m=>m.r===r&&m.c===c),size=r<t.headerRows?fontSize-1:fontSize,value=String(t.cells[r][c].value);
+        const m=t.merges.find(m=>m.r===r&&m.c===c),size=r<t.headerRows?headSize:fontSize,value=String(t.cells[r][c].value);
         const w=Math.max(0,...value.split(/\r?\n/).map(line=>measureRich(line,size)))+22,longest=Math.max(0,...words(value).map(x=>measureRich(x,size)))+22;
         if((m?.cs||1)===1){nat[c]=Math.max(nat[c],w);word[c]=Math.max(word[c],longest);}else spans.push({c,cs:m.cs,w});
       }
       for(const {c,cs,w} of spans){const have=nat.slice(c,c+cs).reduce((a,b)=>a+b,0);if(w>have)for(let i=c;i<c+cs;i++)nat[i]+=(w-have)/cs;}
+      // 원본 열 폭이 있으면 그 비율을 쓰고, 가장 긴 어절이 들어가는 최소 폭만 지킨다. 어절이 다 들어가지 않으면 자리가 있는 만큼 넓힌다.
+      if(original){
+        const wordSum=word.reduce((a,b)=>a+b,0);if(wordSum>inner&&room>width)inner=Math.min(room-(choices?25:0),wordSum*1.05);
+        const sum=original.reduce((a,b)=>a+b,0);original.forEach((v,i)=>{nat[i]=v*inner/sum;});
+      }
       const total=nat.reduce((a,b)=>a+b,0);
       // 크기를 정한 표라도 글이 그 폭에 다 들어가지 않고 단에 자리가 있으면 글 폭만큼(단 폭까지) 넓힌다(좁게 줄여 칸마다 여러 줄이 되던 문제).
       if(total>inner&&room>width)inner=Math.min(total,room-(choices?25:0));
-      if(auto&&total<=inner)colW=nat;
+      // 원본 폭을 모르는 표는 단(또는 정한 크기) 폭 가득. 열 폭만 칸 글 길이 비율로.
       // 어절 최소 폭도 다 들어가지 않으면 예전처럼 똑같이 나눈다.
-      else if(word.reduce((a,b)=>a+b,0)>inner)colW=Array(t.cols).fill(inner/t.cols);
+      if(word.reduce((a,b)=>a+b,0)>inner)colW=Array(t.cols).fill(inner/t.cols);
       else{
         const minimum=word;
         colW=nat.map(v=>v*inner/total);
@@ -251,7 +262,7 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
         const cell=t.cells[r][c],m=t.merges.find(m=>m.r===r&&m.c===c),tag=r<t.headerRows?'th':'td';
         // 빈 칸에는 폭 0인 글자(ZWSP)를 둔다. 한글 엔진이 빈 표를 겹친 자리에서 빠뜨리지 않고, 한글 창에서 빈 칸에 처음 쓴 글도 그 칸으로 되돌릴 수 있다.
         // 평가원 표: 머리칸은 작은 돋움체, 값은 바탕체.
-        const head=r<t.headerRows,cellFont=head?'함초롬돋움':'함초롬바탕',cellSize=head?fontSize-1:fontSize;
+        const head=r<t.headerRows,cellFont=head?'함초롬돋움':'함초롬바탕',cellSize=head?headSize:fontSize;
         const formatted=text(cell.value,cw(c,m?.cs)-16,cellSize,null,{kind:'cell',table:owner.id||owner.kind,r,c},cellFont).replace(/^<span[^>]*>|<\/span>$/g,'');
         // Separate paragraphs let the native cell center the entire header
         // block. A soft line break centers only its first line in this engine.
