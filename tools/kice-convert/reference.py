@@ -50,10 +50,10 @@ for it in corpus:
                 if abs(s['size'] - bs) <= 0.6 and not EQFONT.search(s['font']): chars.append(t)
     for dr in pg.get_drawings():
         r = dr['rect']
-        if rect.contains(r) and r.height < 600: bottom = max(bottom, r.y1)
+        if rect.contains(r) and r.height < 600 and (foot_y is None or r.y1 < foot_y - 4): bottom = max(bottom, r.y1)
     for im in pg.get_image_info():
         r = pymupdf.Rect(im['bbox'])
-        if rect.intersects(r) and rect.contains(pymupdf.Point((r.x0 + r.x1) / 2, (r.y0 + r.y1) / 2)): bottom = max(bottom, r.y1)
+        if rect.intersects(r) and rect.contains(pymupdf.Point((r.x0 + r.x1) / 2, (r.y0 + r.y1) / 2)) and (foot_y is None or r.y1 < foot_y - 4): bottom = max(bottom, r.y1)
     body = re.sub(r'\s+', '', ''.join(chars))
     body = re.sub(r'^\d{1,2}\.', '', body)
     res[it['id']] = {'body': body, 'three': '[3점]' in ''.join(allt).replace(' ', ''), 'heightMm': round((bottom - y0) / 72 * 25.4, 1), 'bodySize': bs,
