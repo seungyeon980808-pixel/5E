@@ -25,7 +25,7 @@ function ghostFigure(width,height,label){
   g.fillStyle='#f4f5f6';g.fillRect(0,0,width,height);g.strokeStyle='#b8bdc3';g.lineWidth=1;g.setLineDash([4,3]);g.strokeRect(.5,.5,width-1,height-1);
   g.fillStyle='#9aa0a6';g.textAlign='center';g.textBaseline='middle';
   const line=(text,size,y)=>{let px=size;do g.font=`${px}px "Apple SD Gothic Neo",sans-serif`;while(g.measureText(text).width>width-12&&--px>7);g.fillText(text,width/2,y);};
-  line('자료',13,height/2-9);line('그림·표는 엑셀에서 고르기',10,height/2+9);
+  line('자료',13,height/2-9);line('그림·표는 카드에서 넣기',10,height/2+9);
   const figure={name:'자료 자리.png',data:canvas.toDataURL('image/png'),width,height};ghostFigures.set(key,figure);return figure;
 }
 const SKELETON={skeleton:true,ghostFigure};

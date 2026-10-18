@@ -69,7 +69,7 @@ export function renderExam(root,data,examId){
   const {items,pages,missing}=examPlan(data,exam),qs=items.map(x=>x.q),count=k=>qs.filter(q=>workflowOf(q)===k).length;
   const lib=libraryQuestions(data);
   root.innerHTML=`<div class="pv-head"><div class="pv-title"><input id="exam-title" value="${E(exam.title)}" maxlength="200" aria-label="시험지 이름">${exam.status==='done'?'<span class="badge done">출제 완료</span>':'<span class="badge">출제 중</span>'}</div>
-      <div class="pv-tools"><button type="button" class="btn" data-exam-act="cards">${ICON.card}문항 카드</button><button type="button" class="btn" data-exam-act="sheet">${ICON.table}전체 표</button>
+      <div class="pv-tools"><button type="button" class="btn" data-exam-act="cards">${ICON.card}문항 카드</button><button type="button" class="btn" data-exam-act="sheet" title="여러 문항을 표 한 장에서 한꺼번에 고칩니다">${ICON.table}표로 한꺼번에 고치기</button>
       <button type="button" class="btn" data-exam-act="status">${exam.status==='done'?'출제 중으로 되돌리기':'출제 완료로 옮기기'}</button><button type="button" class="btn" data-exam-act="download" title="시험지 한 부를 HWPX 파일로 내려받기">HWPX</button><button type="button" class="btn go" data-exam-act="send">${ICON.out}5e_hwp로 보내기</button></div></div>
     <div class="pv-exam-body"><div class="pv-order" id="exam-order">
       ${items.map((x,i)=>`<div class="pv-orow" draggable="true" data-order="${x.id}"><span class="grip" title="끌어서 순서 바꾸기">${ICON.grip}</span><span class="n">${i+1}</span>

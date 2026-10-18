@@ -421,9 +421,10 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
     await opening;
   };
   openButton.addEventListener("click", () => void openLibrary(openButton));
-  registerPdfReferencePicker(async ({ kind, onAdd, onAddMany, onStatus, trigger } = {}) => {
+  registerPdfReferencePicker(async ({ kind, onAdd, onAddMany, onStatus, onClose, bindClose, trigger } = {}) => {
     void mountPackManagement().catch((error) => onStatus?.(error instanceof Error ? error.message : String(error), "error"));
-    await unifiedUi.beginReferenceSelection({ kind, onAdd, onAddMany, onStatus, onComplete: unifiedUi.close }, trigger || openButton);
+    bindClose?.(() => unifiedUi.close());
+    await unifiedUi.beginReferenceSelection({ kind, onAdd, onAddMany, onStatus, onClose, onComplete: unifiedUi.close }, trigger || openButton);
   });
   return Object.freeze({
     openLibrary,

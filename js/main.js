@@ -88,7 +88,7 @@ import { initTutorial } from "./tutorial.js?v=1.7.0-four-session-integration";
 import { initAiInstallGuide } from "./ai-install-guide.js?v=1.7.0-four-session-integration";
 import { initAiPanel } from "./ai-panel.js?v=1.7.0-four-session-integration";
 import { initRhwpExamWorkspace } from "./rhwp-exam-workspace.js?v=1.7.0-four-session-integration";
-import { initExamPoolWorkspace } from "./exampool-workspace.js?v=1014-hwp-sheet";
+import { initExamPoolWorkspace } from "./exampool-workspace.js?v=1018-lib";
 import { commitActiveText } from "./text-editor.js?v=1.7.0-four-session-integration";
 
 const svg = document.getElementById("canvas");

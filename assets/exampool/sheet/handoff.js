@@ -82,9 +82,9 @@ export function skeletonKey(value){
 }
 function fillSkeleton(q){
   const ghosts=new Set(),figures=new Set();
-  if(!q.ask.trim()){q.ask='발문 (엑셀에서 입력)';ghosts.add('ask');}
+  if(!q.ask.trim()){q.ask='발문 (카드에서 입력)';ghosts.add('ask');}
   for(const b of q.blocks){
-    if(b.kind==='text'&&!b.text.trim()){b.text=`${ghostName(b)} (엑셀에서 입력)`;ghosts.add('block:'+b.id);}
+    if(b.kind==='text'&&!b.text.trim()){b.text=`${ghostName(b)} (카드에서 입력)`;ghosts.add('block:'+b.id);}
     if(b.kind==='figure'&&!b.figure)figures.add(b.id);
   }
   return {ghosts,figures};

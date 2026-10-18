@@ -663,3 +663,32 @@ body.cv-dragging,body.cv-dragging *{user-select:none!important;-webkit-user-sele
 .top-menu button:hover{background:var(--ds-hover);color:var(--ds-ink)}.top-menu small{color:var(--ds-ink-3)}
 .top-go{display:inline-flex;align-items:center;gap:6px;height:30px;padding:0 12px;border:0;border-radius:var(--ds-radius);background:var(--go-bg,#152137);color:var(--go-ink,#cfe1ff);box-shadow:inset 0 0 0 1px var(--go-line,#6ba4f8);font-size:12.5px}
 .top-go[hidden]{display:none}.top-go .ico{width:15px;height:15px}
+
+/* 한글 조판(5e_hwp)을 가운데 칸에 붙인다(엑셀식 화면을 거치지 않음) */
+.cv-hwp{flex:1;min-height:0;display:flex;padding:8px;background:var(--ds-bench,#0d1320)}
+.cv-hwp .pv-empty{margin:auto;color:var(--ds-ink-3);font-size:12.5px}
+/* 오른쪽 미리보기에 붙은 한글 조판: 창 닫기·크게 보기·긴 배치 안내는 숨긴다(닫기는 AI 탭으로 바꾸면 됨). */
+.cv-hwp-layer #preview-dialog.docked #typeset-close,.cv-hwp-layer #preview-dialog.docked .placement-hint{display:none}
+.cv-hwp-layer{position:fixed;z-index:5;display:flex;padding:8px;background:var(--ds-bench,#0d1320)}.cv-hwp-layer[hidden]{display:none}
+.cv-hwp-layer #preview-dialog.docked,.cv-hwp #preview-dialog.docked{flex:1;min-width:0;width:auto;position:static;inset:auto;margin:0;display:flex;flex-direction:column;min-height:0}
+.cv-hwp-layer #preview-dialog.docked[hidden],.cv-hwp #preview-dialog.docked[hidden]{display:none}
+.cv-hwp-layer #preview-dialog.docked #typeset-expand{display:none}
+
+/* 대응표 선지를 카드에서 바로 */
+.cv-ctable{border-collapse:collapse;width:100%;font-size:13.5px}
+.cv-ctable th,.cv-ctable td{border:1px solid #d5d8dd;padding:0}
+.cv-ctable thead th{background:#f1f3f6}.cv-ctable tbody th{width:56px;background:#f6f7f9;font-weight:500}
+.cv-ctable tbody th label{display:flex;align-items:center;justify-content:center;gap:4px;height:34px}
+.cv-ctable input:not([type=radio]){border:0!important;border-radius:0!important;background:transparent!important;padding:6px 8px!important;width:100%;text-align:center}
+.cv-ctable tr.on td,.cv-ctable tr.on th{background:#eaf2fd}
+
+/* 5E 라이브러리 연결 */
+.lib5e{display:flex;flex-direction:column;gap:8px;padding:10px 12px;border-radius:var(--ds-radius);background:var(--ds-raise);font-size:12.5px;color:var(--ds-ink-2);line-height:1.6}
+.lib5e p{margin:0}.lib5e .btn.go{align-self:flex-start;display:inline-flex;align-items:center;gap:6px;height:32px;padding:0 14px;border:0;border-radius:var(--ds-radius);background:var(--go-bg,#152137);color:var(--go-ink,#cfe1ff);box-shadow:inset 0 0 0 1px var(--go-line,#6ba4f8)}
+.lib5e-h{margin:6px 0 0;font-size:12px;color:var(--ds-ink-2)}
+.lib5e-picks{display:flex;flex-direction:column;gap:8px}
+.lib5e-pick{margin:0;border-radius:var(--ds-radius);overflow:hidden;background:var(--ds-raise);box-shadow:inset 0 0 0 1px var(--ds-line)}
+.lib5e-pick img{display:block;width:100%;max-height:180px;object-fit:contain;background:#fff}
+.lib5e-pick figcaption{display:flex;flex-direction:column;gap:2px;padding:8px 10px;font-size:12px;color:var(--ds-ink-3)}.lib5e-pick b{color:var(--ds-ink)}
+.lib5e-pick .acts{display:flex;gap:6px;margin-top:4px}.lib5e-pick .mini{box-shadow:inset 0 0 0 1px var(--ds-line-strong)}
+.lib-builtin{margin-top:4px}.lib-builtin>summary{cursor:pointer;font-size:12px;color:var(--ds-ink-3);padding:6px 2px}

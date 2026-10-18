@@ -119,6 +119,6 @@ function paperHtml(s,hl,kinds=[]){
 export function previewHtml(s,hl){
   if(!s.type)return `<div class="empty">유형을 고르면<br>예시 문항이 여기에 보입니다.</div>`;
   const list=s.struct?VARIANTS[s.struct]:[['',[]]];
-  const guide=s.struct&&s.struct!=='none'?`<p class="guide">자료는 그림·그래프·표 무엇이든 됩니다. 틀을 만든 뒤 엑셀에서 각 칸에 무엇을 넣을지 고르면 됩니다. 아래는 자료 종류별로 어떻게 보이는지입니다.</p>`:'';
+  const guide=s.struct&&s.struct!=='none'?`<p class="guide">자료는 그림·그래프·표 무엇이든 됩니다. 틀을 만든 뒤 문항 카드에서 각 칸에 무엇을 넣을지 고르면 됩니다. 아래는 자료 종류별로 어떻게 보이는지입니다.</p>`:'';
   return guide+list.map(([label,kinds])=>`<figure class="variant">${label?`<figcaption>${label}</figcaption>`:''}${paperHtml(s,hl,kinds)}</figure>`).join('');
 }

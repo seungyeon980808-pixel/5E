@@ -25,6 +25,17 @@ export function initQuestionSheet(state,services,examWorkspace){
   }
   // 그림 자리 더블클릭 → 5E 그림 화면에서 보낼 영역을 손잡이로 정하고 '이 자리에 넣기'. 문항 창은 잠시 숨긴다.
   let picking=null;
+  async function pickFromLibrary(m,send){
+    const {openPdfReferencePicker}=await import('./pdf-library/reference-picker.js?v=1.7.0-four-session-integration');
+    const app=document.querySelector('body>.app');host.hidden=true;if(app)app.inert=false;
+    const back=document.createElement('button');back.type='button';back.className='exampool-library-back';back.textContent='ExamPool로 돌아가기';
+    back.style.cssText='position:fixed;z-index:2147483000;left:50%;bottom:64px;transform:translateX(-50%);height:38px;padding:0 18px;border:0;border-radius:19px;background:var(--go-bg,#152137);color:var(--go-ink,#cfe1ff);box-shadow:inset 0 0 0 1px var(--go-line,#6ba4f8),0 6px 20px rgba(0,0,0,.4);font:inherit;font-size:13px;cursor:pointer';
+    let done=false,closeLibrary=null;const finish=items=>{if(done)return;done=true;back.remove();closeLibrary?.();open();send({action:'library-picked',items});};
+    back.onclick=()=>finish([]);document.body.append(back);
+    const pack=r=>({data:r.dataUrl||r.src,name:String(r.name||'라이브러리 자료').slice(0,200),source:r.source?{documentTitle:r.source.documentTitle||'',title:r.source.title||'',pageNumber:Number.isInteger(r.source.pageNumber)?r.source.pageNumber:null,rect:r.source.rect||null,sha256:r.source.documentHash||r.source.sha256||null,locator:r.source.locator||null,provider:r.source.provider||null}:null});
+    try{await openPdfReferencePicker({onAdd:r=>{finish([pack(r)]);return ['exampool'];},onAddMany:list=>{finish(list.map(pack));return list.map(()=>'exampool');},onStatus:()=>{},onClose:()=>finish([]),bindClose:fn=>{closeLibrary=fn;},trigger:back});}
+    catch(error){back.remove();open();done=true;send({action:'library-picked',items:[],error:error.message});}
+  }
   async function pickFigure(m,send,options={}){
     services.commitActiveText?.();
     const page=()=>services.prepareLoadedProject(copy(services.serialize(state.get()))).active;
@@ -64,6 +75,8 @@ export function initQuestionSheet(state,services,examWorkspace){
     if(m.action==='author'){authoring().then(h=>h.request(m.packet,{requestId:m.requestId,onProgress:progress=>send({action:'author-progress',progress})})).then(result=>send({action:'author-ready',result}),error=>send({action:'author-ready',error:error.message||String(error),cancelled:!!error.cancelled}));return;}
     if(m.action==='author-cancel'){void authoring().then(h=>h.cancel(m.cancelId));return;}
     // 문항의 그림·그래프 만들기·그래프 세부 편집도 오래 걸리므로 전송 잠금 밖에서 실행한다.
+    // 5E 라이브러리(공유 폴더·자료팩·기출 PDF)에서 고르기: 문항 창을 잠시 내리고 5E 라이브러리 선택기를 연다.
+    if(m.action==='library-pick'){void pickFromLibrary(m,send);return;}
     if(m.action==='figure-create'){engines().then(e=>m.kind==='graph'?e.graph({qid:m.qid,description:m.description,prior:m.prior?.graph||null}):e.image({qid:m.qid,description:m.description,mustNot:m.mustNot||[],prior:m.prior?.data||null})).then(result=>send({action:'figure-made',result:{kind:m.kind,...result}}),error=>send({action:'figure-made',error:error.message||String(error)}));return;}
     if(m.action==='figure-edit-graph'){engines().then(e=>e.editGraph(m.graph)).then(result=>send({action:'figure-made',result:result?{kind:'graph',edited:true,...result}:null,cancelled:!result}),error=>send({action:'figure-made',error:error.message||String(error)}));return;}
     if(busy){send({error:'전송 작업을 마친 뒤 다시 시도하세요.'});return;}busy=true;

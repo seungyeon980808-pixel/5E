@@ -2079,7 +2079,9 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       closeCrop(false);
     } });
     if (aiHandoff) cancelAiHandoff = animateLibraryAiHandoff(overlay, root, document.getElementById('ai-image-panel'));
+    const closingConsumer = referenceConsumer;
     referenceConsumer = null;
+    closingConsumer?.onClose?.();
     const activeElement = document.activeElement;
     if (activeElement && overlay.contains(activeElement)) activeElement.blur?.();
     if (restoreFocus && keyboard) {

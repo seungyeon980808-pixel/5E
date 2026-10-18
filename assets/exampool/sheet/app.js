@@ -15,7 +15,7 @@ import {AXIS_LABEL} from '../authoring/schema.js';
 import {reviewVersion} from '../authoring/review-version.js';
 import {questionFromShape} from './templates.js';
 import {createNewQuestionDialog} from './new-question.js';
-import {createTypesetter} from './typeset.js?v=1017-live';
+import {createTypesetter} from './typeset.js?v=1018-card';
 import {renderParts,applyPartChange,movePart} from './parts-view.js';
 let grid=null,future=[];
 let handoffRequest=null;
@@ -157,6 +157,8 @@ let view={name:'library',status:'drafting',query:'',type:'',stage:'all',examId:n
 function renderView(){
   const panes={library:'#library-view',exams:'#exams-view',exam:'#examd-view',card:'#card-view'};
   for(const [name,sel] of Object.entries(panes))$(sel).hidden=view.name!==name;
+  // 한글 조판 창은 한 번 미리보기에 붙으면 그 자리에 둔다(옮기면 편집기 프레임을 처음부터 다시 읽고 간결 화면이 풀린다). 카드를 떠나면 닫기만 한다.
+  if(view.name!=='card'&&$('#preview-dialog').classList.contains('docked')&&!$('#preview-dialog').hidden)void requestTypeset(null);
   $('#cards-view').hidden=true;$('#exam-view').hidden=true;$('.workspace').hidden=view.name!=='desk';
   renderNav($('.side'),data,view);
   if(view.name==='library')renderLibrary($('#library-view'),data,view);
@@ -352,7 +354,7 @@ function makeTypesetter(){return createTypesetter({onSlot:(action,b,qid)=>{const
           // 시트 전체를 다시 그리면 입력 위치가 시트 칸으로 넘어가 한글 창 입력이 끊긴다. 그 문항 열의 칸 값만 바꾼다.
           // 연달아 치는 글은 되돌리기 한 번으로 묶는다.
           const ok=mutate(()=>{for(const c of changes)applyTextEdit(target,c.owner,c.value);},{render:false,key:'hwp-text:'+questionId});
-          if(ok)refreshColumn(target);return ok;
+          if(ok){refreshColumn(target);if(view.name==='card')cardEditor.syncFields?.(target);}return ok;
         },onPlacement:(fn,text,questionId)=>{
           // 한글 창에서 끌어 놓은 결과는 데이터(순서·묶음·폭 비율·크기)로만 저장한다. 화면은 자동으로 다시 그려진다.
           const target=data.questions.find(q=>q.id===questionId);if(!target)return;
@@ -392,9 +394,10 @@ async function requestTypeset(value){
   })();
   try{await typesetTransition;}finally{typesetTransition=null;}
 }
-async function openTypeset(){if(!current||grid?.finish()===false)return;await requestTypeset(current);}
+async function openTypeset(){if(!current||grid?.finish()===false)return;if(view.name!=='card'){openCard(current.id);cardEditor.showHwp?.();return;}await requestTypeset(current);}
+// 한글 조판은 문항 카드 오른쪽 미리보기에서만 연다(엑셀식 시트 옆 조판은 폐기).
 $('#preview').onclick=()=>void openTypeset();
-$('#typeset-close').onclick=()=>void requestTypeset(null);
+$('#typeset-close').onclick=()=>{if($('#preview-dialog').classList.contains('docked')){cardEditor.setView?.('card');return;}void requestTypeset(null);};
 $('#typeset-refresh').onclick=()=>void openTypeset();
 // 막힌 상태 빠져나가기: 두 번 눌러 확인한 뒤 한글 창 수정을 버리고 시트 내용으로 다시 그린다.
 let discardArmed=0;
@@ -465,7 +468,7 @@ let examRequest=null;
 async function sendExam(exam,{download:asFile=false}={}){
   if(!exam.items.length){status('시험지에 문항을 넣은 뒤 보내세요.',true);return;}
   const {examPlan}=await import('./exam-layout.js');const {missing}=examPlan(data,exam);
-  if(missing.length){const first=missing[0].q;status(`조판을 저장하지 않은 문항이 있습니다: ${missing.map(x=>x.q.number+'번').join(', ')}. ${first.number}번 한글 조판을 엽니다 · 확인하고 「조판 저장」을 누르세요.`,true);current=first;show('desk');void openTypeset();return;}
+  if(missing.length){const first=missing[0].q;status(`조판을 저장하지 않은 문항이 있습니다: ${missing.map(x=>x.q.number+'번').join(', ')}. ${first.number}번 한글 조판을 엽니다 · 확인하고 「조판 저장」을 누르세요.`,true);current=first;openCard(first.id);cardEditor.showHwp?.();return;}
   status('시험지를 만드는 중…');
   try{const bytes=await buildExamBytes(exam);
     if(asFile||!embedded){download(bytes,`${exam.title}.hwpx`,'application/vnd.hancom.hwpx');status(asFile?'시험지 HWPX를 내려받았습니다.':'5E 밖에서는 HWPX로 내려받았습니다.');return;}
@@ -474,6 +477,7 @@ async function sendExam(exam,{download:asFile=false}={}){
 }
 // 문항 카드 편집기.
 const docked={home:null,next:null};
+const hwpDock={home:null,next:null};
 const cardEditor=createCardEditor($('#card-view'),{
   question:()=>current,
   context:()=>{const exam=view.examId&&examById(data,view.examId);return exam?{label:exam.title,numbered:true,questions:exam.items.map(id=>data.questions.find(q=>q.id===id)).filter(Boolean)}:{label:'문항 보관함',numbered:false,questions:libraryQuestions(data)};},
@@ -491,7 +495,13 @@ const cardEditor=createCardEditor($('#card-view'),{
   },
   sheet:()=>show('desk'),
   choiceTable:()=>{sheetView='tables';show('desk');renderSheetView();},
-  typeset:()=>{show('desk');void openTypeset();},
+  typeset:()=>{cardEditor.showHwp?.();},
+  libraryPicks:()=>libraryPicks,
+  pickLibrary:kind=>{if(!embedded){status('5E 안에서 열어야 5E 라이브러리를 쓸 수 있습니다.',true);return;}window.parent.postMessage({channel:'5e-question-sheet',action:'library-pick',requestId:uid(),qid:current?.id,kind},location.origin);status('5E 라이브러리에서 고르세요 · 다 고르면 자동으로 돌아옵니다.');},
+  libraryAction:(act,i)=>{const p=libraryPicks[i],q=current;if(!p||!q)return;const where=[p.source?.documentTitle||p.name,p.source?.pageNumber?p.source.pageNumber+'쪽':''].filter(Boolean).join(' ');
+    if(act==='link'){mutate(()=>{q.references.push({target:'question',label:('5E 라이브러리 · '+where).slice(0,300),quote:(p.source?.title&&p.source.title!==p.source.documentTitle?p.source.title:'').slice(0,2000)});},{render:false});cardEditor.render();status(`${where}을(를) 이 문항의 근거로 연결했습니다.`);return;}
+    let slot=q.blocks.find(b=>b.kind==='figure'&&!b.figure);mutate(()=>{if(!slot){slot=block('figure',null,'그림');q.blocks.push(slot);}slot.figure={name:(where||'라이브러리 그림').slice(0,200)+'.png',data:p.data};});status(`${slot?.label||'그림 칸'}에 넣었습니다 · 출처: ${where}`);},
+  hwpDock:container=>dockHwp(container),hwpOpen:()=>void openTypeset(),hwpClose:()=>{if(!$('#preview-dialog').hidden)void requestTypeset(null);},
   dock:(tab,container)=>{const node=$('#sources');if(!docked.home){docked.home=node.parentElement;docked.next=node.nextSibling;}
     if(tab&&container){container.append(node);node.hidden=false;node.classList.add('docked');sourceTarget='question';sourceTab=tab;renderSources();}
     else if(node.classList.contains('docked')){node.classList.remove('docked');node.hidden=true;docked.home.insertBefore(node,docked.next);}},
@@ -504,6 +514,11 @@ const cardEditor=createCardEditor($('#card-view'),{
 // ── 출제 대화(대화형 출제·검토) ──
 // 문항이 곧 화면의 문항이다. 요청에는 문항 ID·기준 버전·내용 해시·요청 ID를 묶고, 응답은 바로 쓰지 않는다:
 // 변경안은 교사가 「적용」할 때까지 보관하고, 기다리는 동안 문항이 바뀌었으면 '지난 변경안'으로 남긴다.
+// 한글 조판 창(5e_hwp)을 문항 카드 가운데 칸에 붙인다. 엑셀식 화면(5E_cell)을 거치지 않는다.
+function dockHwp(container){const node=$('#preview-dialog');if(!hwpDock.home){hwpDock.home=node.parentElement;hwpDock.next=node.nextSibling;}
+  if(container){if(node.parentElement!==container)container.append(node);node.classList.add('docked');}
+  else if(node.classList.contains('docked')){node.classList.remove('docked');hwpDock.home.insertBefore(node,hwpDock.next);}}
+let libraryPicks=[];// 5E 라이브러리에서 가져온 자료(이번 창에서만)
 const authorRequests=new Map(),seenAuthor=new Set(),cancelledAuthor=new Set();
 let authoringTimer=0,authoringChain=Promise.resolve();
 const nowIso=()=>new Date().toISOString();
@@ -633,6 +648,7 @@ function revertAuthoring(q,revision){
 window.addEventListener('message',e=>{if(e.origin!==location.origin||e.data?.channel!=='5e-question-sheet'||!authorRequests.has(e.data.requestId))return;
   if(e.data.action==='author-progress'){authorRequests.get(e.data.requestId).progress=e.data.progress;cardEditor.refreshAi?.();return;}
   if(e.data.action==='author-ready')receiveAuthor(e.data);});
+window.addEventListener('message',e=>{if(e.origin!==location.origin||e.source!==window.parent||e.data?.channel!=='5e-question-sheet'||e.data.action!=='library-picked')return;const items=(e.data.items||[]).filter(x=>/^data:image\/(png|jpeg|webp);base64,/.test(x?.data||'')&&x.data.length<8*1024*1024);if(items.length){libraryPicks=[...items,...libraryPicks].slice(0,24);status(`5E 라이브러리에서 ${items.length}개를 가져왔습니다 · 근거로 연결하거나 그림 칸에 넣으세요.`);}cardEditor.refreshLibrary?.();});
 window.addEventListener('message',e=>{if(e.origin!==location.origin||e.data?.channel!=='5e-question-sheet'||e.data.action!=='figure-made'||!figureRequests.has(e.data.requestId))return;void receiveFigure(e.data);});
 window.addEventListener('message',e=>{if(e.origin!==location.origin||e.source!==window.parent||e.data?.channel!=='5e-question-sheet')return;const m=e.data;
   if(m.requestId&&m.requestId===examRequest){examRequest=null;if(m.error){status(m.error,true);return;}const exam=examById(data,m.qid);if(exam)mutate(()=>{exam.sentAt=new Date().toISOString();});status('시험지를 5e_hwp에서 열었습니다 · 최종 검수 후 「출제 완료로 옮기기」를 누르세요.');}

@@ -66,7 +66,13 @@ export function createCardEditor(root,api){
   }
   function choicesHtml(x){
     if(x.type==='서술형')return `<div class="f-field"><label for="cv-model">모범 답안</label><textarea id="cv-model" data-cvf="answer" rows="3">${E(x.modelAnswer)}</textarea></div>`;
-    if(x.style==='대응표')return `<div class="f-field"><label>선지 <em>대응표 선지는 표 시트에서 채웁니다</em></label><button type="button" class="btn" data-cv="choice-table">${ICON.table}선지 대응표 열기</button></div>`;
+    if(x.style==='대응표'){
+      // 대응표 선지: 카드에서 바로 채운다(맨 윗줄은 열 제목, 아래 다섯 줄이 ①~⑤). 열은 1~6개.
+      const t=x.choiceTable;
+      return `<div class="f-field"><label>선지 <em>대응표 · 맨 윗줄은 열 제목, 동그라미로 정답</em><span class="lay"><button type="button" class="link" data-cvct-col="-1" ${t.cols<=1?'disabled':''}>− 열</button><button type="button" class="link" data-cvct-col="1" ${t.cols>=6?'disabled':''}>+ 열</button></span></label>
+        <table class="cv-ctable"><thead><tr><th></th>${t.cells[0].map((c,j)=>`<th><input data-cvct="0:${j}" value="${E(c.value)}" placeholder="열 ${j+1}" aria-label="열 제목 ${j+1}"></th>`).join('')}</tr></thead>
+        <tbody>${t.cells.slice(1).map((row,i)=>`<tr class="${x.answer===i?'on':''}"><th><label><input type="radio" name="cv-ans" data-cvans="${i}" ${x.answer===i?'checked':''} aria-label="${NUM[i]} 정답">${NUM[i]}</label></th>${row.map((c,j)=>`<td><input data-cvct="${i+1}:${j}" value="${E(c.value)}" aria-label="${NUM[i]} ${j+1}열"></td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
+    }
     if(isCombo(x)){
       const letters=(bogiOf(x)?.lines||[]).map(l=>l.label).filter(Boolean),pool=letters.length?letters:['ㄱ','ㄴ','ㄷ'];
       return `<div class="f-field"><label>선지 <em>보기 ${pool.join('·')}을 눌러 조합을 만들고, 동그라미로 정답을 고릅니다</em><button type="button" class="link" data-cv="common-combos" style="margin-left:auto">자주 쓰는 조합으로 채우기</button></label>
@@ -101,7 +107,7 @@ export function createCardEditor(root,api){
             <div class="f-row2"><div class="f-field"><label>출처</label><input data-cvf="source" value="${E(x.source)}" placeholder="자체 제작 · 교과서 · 기출 변형"></div><div class="f-field"><label>문항관리번호</label><input data-cvf="managementId" value="${E(x.managementId||'')}"></div></div>
             <div class="f-field"><label>해설</label><textarea data-cvf="explanation" rows="3" placeholder="정답 근거">${E(x.explanation)}</textarea></div></details>
         </section>
-        <footer class="f-foot"><div class="checks" id="cv-checks">${checksHtml(items)}</div><span class="sp"></span><button type="button" class="btn" data-cv="sheet">전체 표에서 보기</button><button type="button" class="btn go" data-cv="review" ${done?'':'title="발문·자료·보기·선지·정답을 채우면 검토가 정확해집니다"'}>${ICON.star}AI 검토 요청</button></footer>
+        <footer class="f-foot"><div class="checks" id="cv-checks">${checksHtml(items)}</div><span class="sp"></span><button type="button" class="btn go" data-cv="review" ${done?'':'title="발문·자료·보기·선지·정답을 채우면 검토가 정확해집니다"'}>${ICON.star}AI 검토 요청</button></footer>
       </form></div>`;
   }
   const checksHtml=items=>items.map(([k,ok,n])=>`<span class="${ok?'ok':''}">${ok?'✓ ':''}${k}${n&&!ok?` ${n}`:''}</span>`).join('');
@@ -109,22 +115,22 @@ export function createCardEditor(root,api){
     const tabs=TABS.map(([k,t])=>`<button type="button" data-cvtab="${k}" aria-pressed="${panels.tab===k}">${t}</button>`).join('');
     const x=q(),refs=x?.references||[];
     return `<aside class="cv-lib cv-left"${panels.lib?'':' hidden'} aria-label="라이브러리"><div class="cv-ph"><b>라이브러리</b><span>읽고 근거로 연결</span></div><div class="lp-tabs">${tabs}</div>
-      <div class="lp-body" data-cvbody="past" ${panels.tab==='past'?'':'hidden'}></div>
-      <div class="lp-body lp-docked" data-cvbody="docked" ${['textbooks','standards','references'].includes(panels.tab)?'':'hidden'}></div>
+      <div class="lp-body" data-cvbody="past" ${['past','textbooks'].includes(panels.tab)?'':'hidden'}></div>
+      <div class="lp-body lp-docked" data-cvbody="docked" ${['standards','references'].includes(panels.tab)?'':'hidden'}></div>
       <div class="lp-linked"><b>이 문항의 근거 ${refs.length}</b><span>${refs.slice(0,4).map(r=>E(r.label)).join(' · ')||'기출·교과서·기준에서 「근거로 연결」을 누르면 여기에 모입니다'}</span></div></aside>`;
   }
   const unseenAi=x=>{const seen=store.get('aiSeen:'+x.id,0);return (x.reviews||[]).slice(seen).filter(m=>m.role==='ai').length;};
   function rightHtml(){
     const x=q(),badge=x&&panels.right!=='ai'?unseenAi(x):0;
     return `<aside class="cv-right"${panels.rightOpen?'':' hidden'} aria-label="미리보기와 AI"><div class="cv-ph"><div class="seg cv-rseg" role="group" aria-label="오른쪽 칸"><button type="button" data-cvright="paper" aria-pressed="${panels.right==='paper'}">${ICON.page}미리보기</button><button type="button" data-cvright="ai" aria-pressed="${panels.right==='ai'}">${ICON.star}AI${badge?`<i class="badge">${badge}</i>`:''}</button></div><span class="sp"></span><small>${x?E(x.number||'')+'번 문항':''}</small></div>
-      <div class="cv-rbody" data-cvbody="paper" ${panels.right==='paper'?'':'hidden'}><div class="cv-rbar"><span>실제 조판 비율(단 폭 86mm·11pt) · 한글 엔진 결과와 줄바꿈이 조금 다를 수 있음</span><span class="sp"></span><button type="button" class="mini" data-cv="to-page">${ICON.out}쪽 전체</button></div><div class="cv-fit" id="cv-paper"></div><div class="lp-actions"><button type="button" class="btn" data-cv="typeset">한글 조판 열기</button></div></div>
+      <div class="cv-rbody" data-cvbody="paper" ${panels.right==='paper'?'':'hidden'}><div class="cv-hwp" id="cv-hwp">${x?'':'<p class="pv-empty">문항을 고르면 한글 조판이 보입니다.</p>'}</div></div>
       <div class="cv-rbody ai-body" data-cvbody="ai" ${panels.right==='ai'?'':'hidden'}></div></aside>`;
   }
   // 가운데 머리줄: 왼쪽 끝 라이브러리 버튼, 번호 탭, 문항 카드|쪽 전체, 한글에서 손보기, 오른쪽 끝 미리보기·AI 버튼.
   function barHtml(){
     return `<div class="cv-bar"><button type="button" class="btn icon pt" data-cv="toggle-lib" aria-pressed="${panels.lib}" title="라이브러리 열기/닫기">${ICON.panelL}</button>${tabsHtml()}
       <div class="seg cv-vseg" role="group" aria-label="가운데 보기"><button type="button" data-cvview="card" aria-pressed="${panels.view==='card'}" title="문항 카드">${ICON.card}<span>문항 카드</span></button><button type="button" data-cvview="page" aria-pressed="${panels.view==='page'}" title="쪽 전체">${ICON.page}<span>쪽 전체</span></button></div>
-      <span class="vsep"></span><button type="button" class="btn icon" data-cv="typeset" title="한글 조판 열기 · 한글에서 손보기">${ICON.out}</button><button type="button" class="btn icon pt" data-cv="toggle-right" aria-pressed="${panels.rightOpen}" title="미리보기·AI 열기/닫기">${ICON.panelR}</button></div>`;
+      <span class="vsep"></span><button type="button" class="btn icon pt" data-cv="toggle-right" aria-pressed="${panels.rightOpen}" title="미리보기·AI 열기/닫기">${ICON.panelR}</button></div>`;
   }
   const splitHtml=k=>`<div class="cv-split" data-cvsplit="${k}" role="separator" aria-orientation="vertical" title="끌어서 폭 바꾸기 · 두 번 누르면 기본 폭"></div>`;
   // 기본 폭(시안 4): 화면 너비의 38%·28.5%(1440px 화면 → 545·410, 1920px → 730·547). 끈 폭은 기억한다.
@@ -132,19 +138,32 @@ export function createCardEditor(root,api){
   function render(){
     const x=q();
     const keep=root.querySelector('.cv-writer')?.scrollTop||0,same=renderedFor===x?.id;
-    api.dock?.(null);// 다시 그리기 전에 붙여 둔 자료 열람 패널을 원래 자리로 돌려놓는다(같이 지워지지 않게).
+    api.dock?.(null);// 다시 그리기 전에 붙여 둔 자료 열람을 원래 자리로 돌려놓는다(같이 지워지지 않게).
     const {lw,rw}=widths();root.style.setProperty('--cv-lw',lw+'px');root.style.setProperty('--cv-rw',rw+'px');
     const center=x?(panels.view==='page'?'<div class="cv-page" id="cv-page"><p class="pv-empty">쪽을 그리는 중…</p></div>':formHtml(x)):'<div class="cv-writer"><p class="pv-empty">위의 ＋로 새 문항을 만들거나 번호를 고르세요.</p></div>';
     root.innerHTML=libHtml()+(panels.lib?splitHtml('left'):'')+`<section class="cv-center">${barHtml()}${center}</section>`+(panels.rightOpen?splitHtml('right'):'')+rightHtml();
     if(same&&panels.view==='card')root.querySelector('.cv-writer').scrollTop=keep;
     renderedFor=x?.id;
-    if(panels.lib)api.dock?.(['textbooks','standards','references'].includes(panels.tab)?panels.tab:null,root.querySelector('[data-cvbody="docked"]'));
-    if(panels.lib&&panels.tab==='past')renderPast();
-    if(panels.rightOpen&&panels.right==='paper')renderPaper();if(panels.rightOpen&&panels.right==='ai'){renderAi();markAiSeen();}
+    if(panels.lib)api.dock?.(['standards','references'].includes(panels.tab)?panels.tab:null,root.querySelector('[data-cvbody="docked"]'));
+    if(panels.lib&&['past','textbooks'].includes(panels.tab))renderPast();
+    placeHwp(panels.rightOpen&&panels.right==='paper'&&!!x);
+    if(panels.rightOpen&&panels.right==='ai'){renderAi();markAiSeen();}
     if(panels.view==='page')void renderPage();
     root.querySelector('.cv-qtab[aria-current="true"]')?.scrollIntoView?.({block:'nearest',inline:'nearest'});
     root.querySelectorAll('.cv-writer textarea').forEach(fit);
   }
+  // 가운데 보기 전환: 한글 조판에서 나가면 한글 창을 닫는다(조판 저장은 창의 「조판 저장」으로).
+  function setView(v){panels.view=v==='hwp'?'card':v;render();}
+  // 한글 조판 창(5e_hwp)은 안에 편집기 프레임이 있어 DOM에서 옮기면 처음부터 다시 읽는다(문항 전환 15초).
+  // 그래서 카드를 다시 그려도 지워지지 않는 층 하나에 한 번만 붙이고, 그 층을 미리보기 칸(#cv-hwp) 위에 겹쳐 둔다.
+  const hwpLayer=document.createElement('div');hwpLayer.className='cv-hwp-layer';hwpLayer.hidden=true;document.body.append(hwpLayer);api.hwpDock?.(hwpLayer);// 편집기 프레임이 생기기 전에 붙여 둔다.
+  let hwpSlotWatch=null,hwpWanted=false;
+  function alignHwp(){const slot=root.querySelector('#cv-hwp');const show=hwpWanted&&slot&&!root.hidden&&!root.closest('[hidden]');hwpLayer.hidden=!show;if(!show)return;
+    const r=slot.getBoundingClientRect();Object.assign(hwpLayer.style,{left:r.left+'px',top:r.top+'px',width:r.width+'px',height:r.height+'px'});}
+  function placeHwp(show){hwpWanted=show;hwpSlotWatch?.disconnect();
+    const slot=root.querySelector('#cv-hwp');if(show&&slot){hwpSlotWatch=new ResizeObserver(alignHwp);hwpSlotWatch.observe(slot);api.hwpDock?.(hwpLayer);api.hwpOpen?.();}else api.hwpClose?.();
+    alignHwp();}
+  new MutationObserver(alignHwp).observe(root,{attributes:true,attributeFilter:['hidden']});window.addEventListener('resize',alignHwp);
   function markAiSeen(){const x=q();if(x)store.set('aiSeen:'+x.id,(x.reviews||[]).length);}
   const fit=t=>{t.style.height='auto';t.style.height=Math.max(t.scrollHeight+2,44)+'px';};
   function refreshLight(){const x=q();if(!x)return;const c=root.querySelector('#cv-checks');if(c)c.innerHTML=checksHtml(completeness(x).items);if(panels.rightOpen&&panels.right==='paper')schedulePaper();
@@ -157,7 +176,7 @@ export function createCardEditor(root,api){
   function fitPaper(){const n=root.querySelector('#cv-paper'),box=n?.querySelector('.cv-fitbox'),col=box?.firstElementChild;if(!col)return;
     col.style.transform='none';const W=col.offsetWidth,H=col.offsetHeight,aw=n.clientWidth-24,ah=n.clientHeight-24;if(!W||!H||aw<=0)return;
     const s=Math.max(.2,Math.min(aw/W,ah>40?ah/H:aw/W));col.style.transform=`scale(${s})`;box.style.width=W*s+'px';box.style.height=H*s+'px';}
-  new ResizeObserver(()=>{fitPaper();fitPage();}).observe(root);
+  new ResizeObserver(()=>{fitPaper();fitPage();alignHwp?.();}).observe(root);
   // 쪽 전체: 시험지에 든 문항이면 그 시험지의 쪽 배치(2단)로, 보관함 문항이면 이 문항만 놓은 쪽으로 가운데에 크게 보여 준다.
   async function renderPage(){const x=q(),n=root.querySelector('#cv-page');if(!x||!n)return;
     const plan=await api.pagePlan(x);if(q()!==x||!n.isConnected)return;
@@ -169,17 +188,25 @@ export function createCardEditor(root,api){
   function fitPage(){const n=root.querySelector('#cv-page');if(!n)return;for(const col of n.querySelectorAll('.pg-col')){const w=col.clientWidth;for(const q of col.querySelectorAll('.pg-q')){const inner=q.firstElementChild;inner.style.transform='none';const s=w/inner.offsetWidth;inner.style.transform=`scale(${s})`;q.style.height=inner.offsetHeight*s+'px';}}}
 
   // 기출: 5E 라이브러리(기출 그림 3,961문항)를 과목·단원·연도·핵심어로 걸러 본다.
+  // 5E 라이브러리 연결: 공유 폴더·자료팩·기출 PDF에서 쪽이나 영역을 골라 가져온다(5E 라이브러리 선택기).
+  function libraryHtml(){
+    const picks=api.libraryPicks?.()||[],textbook=panels.tab==='textbooks';
+    return `<div class="lib5e"><p>${textbook?'교과서는':'기출은'} 5E 라이브러리(공유 폴더·자료팩·PDF)에서 고릅니다. 쪽이나 영역을 고르면 여기로 돌아옵니다.</p>
+      <button type="button" class="btn go" data-cvlib="${textbook?'textbook':'past'}">${ICON.search}5E 라이브러리에서 고르기</button></div>
+      ${picks.length?`<h4 class="lib5e-h">가져온 자료 ${picks.length}</h4><div class="lib5e-picks">${picks.map((p,i)=>`<figure class="lib5e-pick"><img src="${E(p.data)}" alt="${E(p.name)}"><figcaption><b>${E(p.source?.documentTitle||p.name)}</b><span>${p.source?.pageNumber?p.source.pageNumber+'쪽':''}${p.source?.title&&p.source.title!==p.source?.documentTitle?' · '+E(p.source.title):''}</span><span class="acts"><button type="button" class="mini" data-cvpick-link="${i}">근거로 연결</button><button type="button" class="mini" data-cvpick-slot="${i}">그림 칸에 넣기</button></span></figcaption></figure>`).join('')}</div>`:''}`;
+  }
   async function renderPast(){
     const body=root.querySelector('[data-cvbody="past"]');if(!body)return;
+    if(panels.tab==='textbooks'){body.innerHTML=libraryHtml();return;}
     const typing=document.activeElement?.dataset?.cvpast==='query';
     if(!manifest){body.innerHTML='<p class="lp-count">기출 목록을 불러오는 중…</p>';try{manifest=await(manifestLoading||=fetch('/assets/exam-library/manifest.json').then(r=>{if(!r.ok)throw Error();return r.json();}));}catch{body.innerHTML='<p class="lp-count">기출 라이브러리를 불러오지 못했습니다.</p>';manifestLoading=null;return;}}
     const items=manifest.items,subjects=[...new Set(items.map(i=>i.subjectLabel))],f=pastFilter;
     const list=items.filter(i=>(!f.subject||i.subjectLabel===f.subject)&&(!f.part||i.parts.includes(f.part))&&(!f.year||String(i.year)===f.year)&&(!f.query||[i.title,...i.tags,...i.parts].join(' ').includes(f.query)));
     const sel=(k,vals,label)=>`<select data-cvpast="${k}" aria-label="${label}"><option value="">${label}</option>${vals.map(v=>`<option${String(f[k])===String(v)?' selected':''}>${E(v)}</option>`).join('')}</select>`;
-    body.innerHTML=`<div class="lp-filter">${sel('subject',subjects,'과목')}${sel('part',manifest.parts,'단원')}${sel('year',manifest.years,'연도')}</div>
+    body.innerHTML=libraryHtml()+`<details class="lib-builtin"${store.get('builtinOpen',false)?' open':''}><summary>내장 기출 그림 목록(빠른 보기)</summary><div class="lp-filter">${sel('subject',subjects,'과목')}${sel('part',manifest.parts,'단원')}${sel('year',manifest.years,'연도')}</div>
       <label class="lp-search">${ICON.search}<input data-cvpast="query" value="${E(f.query)}" placeholder="핵심어 (예: 자기장, 운동량)"></label>
       <p class="lp-count">5E 라이브러리 기출 ${items.length.toLocaleString()}문항 중 <b>${list.length.toLocaleString()}</b>문항${list.length>40?' · 앞 40개':''}</p>
-      <div class="past-list">${list.slice(0,40).map(i=>`<figure class="past"><img loading="lazy" src="/assets/exam-library/images/${encodeURIComponent(i.file)}" alt="${E(i.title)}"><figcaption><b>${E(i.title)}</b><span>${E([...i.parts,...i.tags].slice(0,3).join(' · '))}</span><button type="button" class="mini" data-cvlink="${E(i.id)}">근거로 연결</button></figcaption></figure>`).join('')}</div>`;
+      <div class="past-list">${list.slice(0,40).map(i=>`<figure class="past"><img loading="lazy" src="/assets/exam-library/images/${encodeURIComponent(i.file)}" alt="${E(i.title)}"><figcaption><b>${E(i.title)}</b><span>${E([...i.parts,...i.tags].slice(0,3).join(' · '))}</span><button type="button" class="mini" data-cvlink="${E(i.id)}">근거로 연결</button></figcaption></figure>`).join('')}</div></details>`;
     if(typing){const n=body.querySelector('[data-cvpast="query"]');n.focus();n.setSelectionRange(n.value.length,n.value.length);}
   }
 
@@ -235,6 +262,7 @@ export function createCardEditor(root,api){
     if(t.matches('textarea'))fit(t);
     if(t.dataset.cvf){const f=t.dataset.cvf;edit(f,()=>{if(f==='passage'){const b=x.blocks.find(v=>v.kind==='text');if(b)b.text=t.value;else writeField(x,'passage',t.value);}else if(f==='points'){if(t.value.trim()!==''&&Number.isFinite(Number(t.value)))x.points=Number(t.value);}else writeField(x,f,t.value);});return;}
     if(t.dataset.cvline){const key=t.dataset.cvline,b=x.blocks.find(v=>v.kind===key),i=Number(t.dataset.i);edit(key,()=>{b.lines[i].text=t.value;});return;}
+    if(t.dataset.cvct){const [r,c]=t.dataset.cvct.split(':').map(Number);edit('choiceTable',()=>{x.choiceTable.cells[r][c].value=t.value;delete x.choiceTable.cells[r][c].raw;});return;}
     if(t.dataset.cvchoice){const i=Number(t.dataset.cvchoice);edit('choices',()=>{x.choices[i].text=t.value;});return;}
     if(t.dataset.cvpast==='query'){pastFilter.query=t.value.trim();store.set('past',pastFilter);clearTimeout(t._timer);t._timer=setTimeout(renderPast,250);}
   });
@@ -245,17 +273,20 @@ export function createCardEditor(root,api){
     if(t.dataset.cvans!==undefined){api.edit(()=>{x.answer=Number(t.dataset.cvans);});return;}
     if(t.matches('[data-points3]')){api.edit(()=>{x.points=t.checked?3:2;});return;}
   });
-  root.addEventListener('toggle',e=>{if(e.target.matches?.('details.f-more'))store.set('more',e.target.open);},true);
+  root.addEventListener('toggle',e=>{if(e.target.matches?.('details.f-more'))store.set('more',e.target.open);if(e.target.matches?.('details.lib-builtin'))store.set('builtinOpen',e.target.open);},true);
   root.addEventListener('click',e=>{
     const b=e.target.closest('button');if(!b)return;const x=q(),d=b.dataset;
     if(d.cvOpen){api.open(d.cvOpen);return;}
     if(d.cvtab){setPanel('tab',d.cvtab);return;}
     if(d.cvright){panels.rightOpen=true;store.set('rightOpen',true);setPanel('right',d.cvright);return;}
-    if(d.cvview){panels.view=d.cvview;render();return;}
-    if(d.cv==='to-page'){panels.view='page';render();return;}
+    if(d.cvview){setView(d.cvview);return;}
+    if(d.cv==='to-page'){setView('page');return;}
     if(d.cv==='toggle-lib'){setPanel('lib',!panels.lib);return;}
     if(d.cv==='toggle-right'){setPanel('rightOpen',!panels.rightOpen);return;}
     if(d.cv==='new'){api.newQuestion();return;}
+    if(d.cvlib){api.pickLibrary?.(d.cvlib);return;}
+    if(d.cvpickLink!==undefined){api.libraryAction?.('link',Number(d.cvpickLink));return;}
+    if(d.cvpickSlot!==undefined){api.libraryAction?.('slot',Number(d.cvpickSlot));return;}
     if(d.cvlink){const i=manifest?.items.find(v=>v.id===d.cvlink);if(i&&x)api.edit(()=>{x.references.push({target:'question',label:i.title,quote:[...i.parts,...i.tags].join(', ')});});api.status?.(`${i?.title} 을(를) 근거로 연결했습니다.`);return;}
     if(!x)return;
     if(d.cvtype){if(d.cvtype===x.type)return;api.edit(()=>{writeField(x,'type',d.cvtype);if(d.cvtype==='합답형')x.style='조합';else if(x.style==='조합')x.style='문장·수식';});return;}
@@ -268,7 +299,7 @@ export function createCardEditor(root,api){
     if(d.cvlayout!==undefined){api.edit(()=>{if(d.cvlayout)x.choiceLayout=d.cvlayout;else delete x.choiceLayout;});return;}
     if(d.cv==='open-standards'){panels.lib=true;store.set('lib',true);setPanel('tab','standards');return;}
     if(d.cv==='sheet'){api.sheet();return;}
-    if(d.cv==='choice-table'){api.choiceTable();return;}
+    if(d.cvctCol){const add=Number(d.cvctCol)>0;api.edit(()=>{const t=x.choiceTable;if(add&&t.cols<6){t.cells.forEach(r=>r.push({value:''}));t.cols++;}else if(!add&&t.cols>1){t.cells.forEach(r=>r.pop());t.cols--;t.merges=t.merges.filter(m=>m.c+m.cs<=t.cols);}});return;}
     if(d.cv==='typeset'){api.typeset();return;}
     if(d.cv==='review'){panels.rightOpen=true;store.set('rightOpen',true);panels.right='ai';store.set('right','ai');render();api.ai(x,{kind:'review',text:'검토해 줘'});return;}
     if(d.aiQuick){const kind=d.aiQuick==='검토해 줘'?'review':d.aiQuick==='새 문항 초안'?'draft':'chat';api.ai(x,{kind,text:d.aiQuick==='새 문항 초안'?'지금까지 정한 요구사항으로 새 문항 초안을 만들어 줘. 정하지 않은 것은 가정으로 남겨 줘.':d.aiQuick});return;}
@@ -289,5 +320,11 @@ export function createCardEditor(root,api){
     const up=ev=>{sp.classList.remove('drag');document.body.classList.remove('cv-dragging');sp.removeEventListener('pointermove',move);sp.removeEventListener('pointerup',up);store.set(k==='left'?'lw':'rw',parseInt(getComputedStyle(root).getPropertyValue(k==='left'?'--cv-lw':'--cv-rw')));fitPaper();fitPage();};
     sp.addEventListener('pointermove',move);sp.addEventListener('pointerup',up);});
   root.addEventListener('dblclick',e=>{const sp=e.target.closest('.cv-split');if(!sp)return;store.set(sp.dataset.cvsplit==='left'?'lw':'rw',null);render();});
-  return {render,refreshLight,refreshAi(){if(panels.rightOpen&&panels.right==='ai'){renderAi();markAiSeen();}else{const r=root.querySelector('.cv-rseg [data-cvright="ai"]');if(r&&q()){const n=unseenAi(q());r.querySelector('.badge')?.remove();if(n)r.insertAdjacentHTML('beforeend',`<i class="badge">${n}</i>`);}}},showAi(){panels.rightOpen=true;store.set('rightOpen',true);panels.right='ai';store.set('right','ai');render();},toggleNav(){setPanel('nav',!panels.nav);},get navOpen(){return panels.nav;},get tab(){return panels.tab;}};
+  // 한글 창에서 고친 글을 카드 칸에 옮긴다(입력 중인 칸은 건드리지 않는다). 카드 전체를 다시 그리지 않아 한글 창 입력이 끊기지 않는다.
+  function syncFields(target){const x=q();if(!x||x!==target)return;
+    for(const t of root.querySelectorAll('[data-cvf]')){if(t===document.activeElement)continue;const f=t.dataset.cvf;
+      const v=f==='passage'?(x.blocks.find(b=>b.kind==='text')?.text||''):f==='answer'?(x.modelAnswer||''):f==='points'?String(x.points??''):String(x[f]??'');
+      if(t.value!==v){t.value=v;if(t.tagName==='TEXTAREA')fit(t);}}
+    refreshLight();}
+  return {render,refreshLight,setView,syncFields,refreshLibrary(){if(panels.lib&&['past','textbooks'].includes(panels.tab))renderPast();},showHwp(){panels.rightOpen=true;panels.right='paper';store.set('rightOpen',true);store.set('right','paper');render();},refreshAi(){if(panels.rightOpen&&panels.right==='ai'){renderAi();markAiSeen();}else{const r=root.querySelector('.cv-rseg [data-cvright="ai"]');if(r&&q()){const n=unseenAi(q());r.querySelector('.badge')?.remove();if(n)r.insertAdjacentHTML('beforeend',`<i class="badge">${n}</i>`);}}},showAi(){panels.rightOpen=true;store.set('rightOpen',true);panels.right='ai';store.set('right','ai');render();},toggleNav(){setPanel('nav',!panels.nav);},get navOpen(){return panels.nav;},get tab(){return panels.tab;}};
 }
