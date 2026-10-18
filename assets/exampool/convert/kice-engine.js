@@ -1,10 +1,10 @@
 // 기출 PDF → ExamPool 문항(AI 없음). 기출 탐색기 변환기(es/)가 읽은 줄·수식·그림 영역을 ExamPool 문항 틀에 채운다.
 // - 글: PDF 글자 위치로 지문·발문·보기·선지를 나눈 결과를 그대로 쓴다. 수식은 한컴 수식 스크립트를 $…$로.
 // - 틀: 조사 기록(유형·자료 구조·배치·선지 배열)이 있으면 그대로, 없으면 규칙으로 고른다.
-// - 그림: PDF 선·그림 영역을 잘라 원본 폭(단 폭 대비 %) 그대로 넣는다.
+// - 그림: figures.js(detectFigures)가 자른 그림·괘선 표·그림 선지를 원본 위치대로 흐름에 끼워 원본 폭(단 폭 대비 %)으로 넣는다.
 import {convertQuestionNow} from './es/live-convert.mjs';
-import {restoreFigures} from './es/figure-fallback.mjs?v=library-release-20261011-3';
-import {renderFigureImage,setPdfSource} from './es/pdf-viewer.mjs?v=library-release-20261011-3';
+import {setPdfSource} from './es/pdf-viewer.mjs?v=library-release-20261011-3';
+import {detectFigures} from './figures.js';
 import {questionFromShape} from '../sheet/templates.js';
 import * as model from '../sheet/model.js';
 const {makeTable,block}=model;
@@ -19,7 +19,32 @@ export {runsText,analyze};
 // 원본에서 읽은 구조 + 그림(이미지). signal로 취소.
 export async function readKice(item,{signal,figureScale=FIGURE_SCALE}={}){
   const structure=await convertQuestionNow(item,{signal});
-  return restoreFigures(item,structure,{bestEffort:true,signal,renderFigure:(q,_scale,opts)=>renderFigureImage(q,figureScale,opts)});
+  let found=[];
+  try{found=await detectFigures(item,{signal,scale:figureScale,choices:true});}
+  catch(e){if(e?.name==='AbortError')throw e;(structure.notes||=[]).push('그림을 찾지 못했습니다: '+String(e?.message||e));}
+  structure.detected=found;
+  injectFigures(structure,found.filter(f=>f.role!=='choice'),item);
+  return structure;
+}
+
+// 찾은 그림을 줄 흐름에 끼운다. 그림 위쪽보다 아래에서 시작하는 첫 줄 앞, 글 옆 그림이면 옆 줄들 뒤.
+// 변환기가 편집 표로 읽은 표와 겹치는 괘선 표 그림은 뺀다(편집 표가 원본에 더 가깝다).
+export function injectFigures(structure,figs,item){
+  const blocks=structure.blocks||[],ph=structure.pageHeight;
+  const tables=blocks.filter(b=>b.kind==='table'&&b.box);
+  const overlap=(a,b)=>{const w=Math.min(a[2],b[2])-Math.max(a[0],b[0]),h=Math.min(a[3],b[3])-Math.max(a[1],b[1]);return w>0&&h>0?w*h:0;};
+  const area=b=>(b[2]-b[0])*(b[3]-b[1]);
+  for(const f of figs){
+    if(f.role==='table'&&tables.some(t=>overlap(t.box,f.box)>.5*Math.min(area(t.box),area(f.box))))continue;
+    const fig={role:'figure',kind:'figure',label:'',runs:[{kind:'figure',data:f.data,sourceBox:f.box,caption:f.caption||null,figRole:f.role,widthPt:f.widthPt}]};
+    const lines=blocks.map((b,i)=>({b,i,base:b.sourceLine&&ph&&b.role!=='choice'?ph-b.sourceLine.y:null})).filter(x=>Number.isFinite(x.base)&&(f.page==null||f.page===item.page));
+    const beside=lines.filter(x=>x.base>f.box[1]+2&&x.base<f.box[3]+x.b.sourceLine.height&&(x.b.sourceLine.right<=f.box[0]+2||x.b.sourceLine.left>=f.box[2]-2));
+    let at;
+    if(beside.length)at=beside.at(-1).i+1;
+    else{const below=lines.find(x=>x.base>f.box[1]+6);at=below?below.i:blocks.findIndex(b=>b.role==='bogi'||b.role==='choice');}
+    if(at<0)at=blocks.length;
+    blocks.splice(at,0,fig);
+  }
 }
 
 const toDataUrl=async image=>{const blob=new Blob([image.bytes],{type:image.type||'image/png'});return await new Promise((ok,no)=>{const r=new FileReader();r.onload=()=>ok(r.result);r.onerror=()=>no(r.error);r.readAsDataURL(blob);});};
@@ -52,7 +77,7 @@ export async function toQuestion(structure,item,{number='1'}={}){
   const diag={notes:[...(structure.notes||[])],decisions:{}};
   const blocks=structure.blocks||[],by=role=>blocks.filter(b=>b.role===role);
   const A=analyze(structure,item);
-  const figs=new Map();for(const n of A.items)if(n.k==='figure'&&n.run.image?.bytes&&!figs.has(n.run))figs.set(n.run,{data:await toDataUrl(n.run.image),box:n.box});
+  const figs=new Map();for(const n of A.items)if(n.k==='figure'&&!figs.has(n.run)&&(n.run.data||n.run.image?.bytes))figs.set(n.run,{data:n.run.data||await toDataUrl(n.run.image),box:n.box,caption:n.run.caption||null,role:n.run.figRole||'figure'});
   let form=item.form||null,struct=STRUCT_OF(item);
   // 조사 기록이 없으면 규칙: 보기가 있으면 합답형, 지문에 학생이 나오면 대화형, 그림 수로 자료 구조.
   if(!form)form=by('bogi').length?'combo':/학생/.test(A.nodes.filter(n=>n.k==='para').map(n=>n.text).join(''))?'talk':'single';
@@ -74,7 +99,11 @@ export async function toQuestion(structure,item,{number='1'}={}){
   const choiceTexts=by('choice').map(b=>clean(runsText(b.runs)));
   const afterFigs=A.after.filter(n=>n.k==='figure'&&figs.has(n.run)&&!n.rect);
   let choiceFigs=null;
-  if(form!=='pair'&&afterFigs.length===5&&choiceTexts.every(t=>!t||/원본 참고/.test(t))){
+  // 그림 선지: 찾은 선지 그림이 ①~⑤ 다섯 개면 선지 칸 그림으로.
+  const found=(structure.detected||[]).filter(f=>f.role==='choice');
+  if(form!=='pair'&&new Set(found.map(f=>f.choice)).size===5&&found.length===5){
+    choiceFigs=[...found].sort((a,b)=>a.choice-b.choice).map(f=>({direct:f}));diag.notes.push('그림 선지 5개를 선지 칸 그림으로 넣었습니다.');}
+  else if(form!=='pair'&&afterFigs.length===5&&choiceTexts.every(t=>!t||/원본 참고/.test(t))){
     choiceFigs=[...afterFigs].sort((a,b)=>a.box&&b.box&&Math.abs(a.box[1]-b.box[1])>8?a.box[1]-b.box[1]:(a.box?.[0]||0)-(b.box?.[0]||0));
     nodes=nodes.filter(n=>!choiceFigs.includes(n));diag.notes.push('발문 뒤 그림 5개를 선지 그림으로 넣었습니다.');}
   // 상자 테두리가 없는 조건·실험: 첫 문단(도입) 뒤 ~ 발문 앞 글을 상자로 본다.
@@ -111,8 +140,10 @@ export async function toQuestion(structure,item,{number='1'}={}){
       if(n.k==='figure'){
         const run=[];while(i<seq.length&&seq[i].k==='figure')run.push(seq[i++]);
         // 그림 바로 아래 (가)·(나) 이름 줄
-        let caps=null;if(seq[i]?.k==='para'&&seq[i].caption){caps=tokens(seq[i].text);i++;}
-        const lab=k=>caps?(caps.length===run.length?caps[k]:k===0?caps.join('    '):''):'자료';
+        // 그림 이름: 자른 그림에서 뺀 캡션 (가)(나), 없으면 그림 바로 아래 (가)·(나) 줄.
+        const own=run.map(f=>figs.get(f.run)?.caption).filter(Boolean);
+        let caps=null;if(seq[i]?.k==='para'&&seq[i].caption){const t=tokens(seq[i].text);if(!own.length||t.every(c=>own.includes(c))){caps=t;i++;}}
+        const lab=k=>figs.get(run[k].run)?.caption||(caps?(caps.length===run.length?caps[k]:k===0?caps.join('    '):''):'자료');
         if(run.length===1)figure(run[0],parent,lab(0));
         else{const side=run.every((f,k)=>!k||!f.box||!run[k-1].box||yOverlap(f.box,run[k-1].box)>4);
           const g=add('group',parent,'자료');g.layout=side?'나란히':'세로';g.boxed=false;
@@ -199,7 +230,7 @@ export async function toQuestion(structure,item,{number='1'}={}){
     rows.forEach((r,i)=>{if(!q.choiceTable.cells[i+1])return;const cells=r.length>cols?[...r.slice(0,cols-1),r.slice(cols-1).join(' ')]:r;cells.forEach((v,c)=>q.choiceTable.cells[i+1][c].value=v);});
     if(!header?.some(Boolean))diag.notes.push('선지표 머리줄을 찾지 못했습니다.');
     diag.pair=P?'위치':'낱말';
-  }else if(choiceFigs)choiceFigs.forEach((f,i)=>{const d=figs.get(f.run);q.choices[i].text='';q.choices[i].figure={name:`${item.id}-선지${i+1}.png`,data:d.data};});
+  }else if(choiceFigs)choiceFigs.forEach((f,i)=>{const d=f.direct||figs.get(f.run);if(!f.direct||/원본 참고/.test(choices[i]||''))q.choices[i].text='';else q.choices[i].text=choices[i]||'';q.choices[i].figure={name:`${item.id}-선지${i+1}.png`,data:d.data};});
   else choices.slice(0,5).forEach((t,i)=>{if(q.choices[i])q.choices[i].text=t;});
   // 수식 안 괄호·상태 기호는 본문 글로(원본 글꼴과 같게).
   mapQuestionText(q,splitEquationParens);
