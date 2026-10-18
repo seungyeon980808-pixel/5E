@@ -3,7 +3,9 @@
 'use strict';
 const TEXT_MIN=0.97,HEIGHT_RANGE=[0.85,1.2];
 const EQ=/\$\$[\s\S]+?\$\$|\$[^$\n]+?\$/g;
-const norm=s=>String(s||'').replace(/[〔［]/g,'[').replace(/[〕］]/g,']').replace(/[‘’]/g,"'").replace(/[“”]/g,'"').replace(/[～∼]/g,'~').replace(/\s+/g,'')
+// 한글 엔진은 완성형 밖 글자를 &#9702; 같은 문자 참조로 꺼낸다(handoff.js decodeNativeText와 같은 규칙으로 되돌림).
+const decodeRefs=s=>String(s||'').replace(/&(?:amp;)?#(\d+);/g,(m,n)=>Number(n)>=128?String.fromCodePoint(Number(n)):m);
+const norm=s=>decodeRefs(s).replace(/[〔［]/g,'[').replace(/[〕］]/g,']').replace(/[‘’]/g,"'").replace(/[“”]/g,'"').replace(/[～∼]/g,'~').replace(/\s+/g,'')
   .replace(/^\d{1,2}\./,'').replace(/\[3점\]/g,'').replace(/\((카드|엑셀)에서입력\)/g,'').replace(/[​⁠]/g,'');
 // 2·LCS/(a+b): 순서까지 맞아야 높다.
 function similarity(a,b){if(!a.length&&!b.length)return 1;if(!a.length||!b.length)return 0;
