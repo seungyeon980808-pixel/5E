@@ -5,7 +5,7 @@ import {loadImage} from './image-load.js';
 import {attachPlacementLayer} from './placement-layer.js';
 import {PictureSettings} from '/js/rhwp-exam-picture-controls.js?v=1.7.0-four-session-integration';
 import {buildQuestionHtml,verifyNativeQuestion,skeletonKey} from './handoff.js';
-import {questionFingerprint,typesetMatches,renderedContent,toBase64,fromBase64,materializeEquations,normalizeQuestionImport,applyQuestionIndent,applyReferenceBogiIndent,LAYOUT_VERSION} from './typeset-model.js?v=1014-compact-panel';
+import {questionFingerprint,typesetMatches,renderedContent,toBase64,fromBase64,materializeEquations,normalizeQuestionImport,applyQuestionIndent,applyReferenceBogiIndent,applyCellEquationLines,LAYOUT_VERSION} from './typeset-model.js?v=1014-compact-panel';
 import {QUESTION_PAGE_MODE,questionPageProfile,fitQuestionPage,questionPageMetrics,validateQuestionPage,resizeQuestionDocument} from './question-page.js?v=1014-compact-panel';
 import {applyTableAlignment,applyHangingIndent} from '/js/rhwp-exam-table-controls.js?v=1014-compact-panel';
 import {nativeLayoutSignature,nativeImageSignature} from './native-transfer.js?v=1014-compact-panel';
@@ -80,7 +80,7 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
     try{d.createBlankDocument();const config=questionPageProfile(profile());d.setPageDef(0,JSON.stringify(config.page));d.setColumnDef(0,1,0,true,0);
       const plan=await buildQuestionHtml(value,prepareFigure,config.width,{native:true,measureText:createNativeTextMeasurer(Document),...SKELETON});owners={images:plan.imageOwners,tables:plan.tableOwners,shapes:plan.tables,texts:plan.textSegments};const result=parse(d.pasteHtml(0,0,0,LEAD+plan.html));if(!result.ok)throw Error('문항 조판을 만들지 못했습니다.');
       bytes=await materializeEquations(Document,JSZip,await normalizeQuestionImport(d.exportHwpx(),JSZip),plan.equations);
-      const checked=new Document(bytes);try{const styled=new Document(await applyReferenceBogiIndent(checked,JSZip));try{styled.reflowLinesegs();applyQuestionIndent(styled,value.number,{body:true,askLead:plan.askLead,askIndent:plan.askIndent});fitQuestionPage(styled,profile());verifyNativeQuestion(styled,plan);bytes=exportLayoutHwpx(styled,XLSX.CFB);}finally{styled.free();}}finally{checked.free();}
+      const checked=new Document(bytes);try{const styled=new Document(await applyReferenceBogiIndent(checked,JSZip));try{styled.reflowLinesegs();applyQuestionIndent(styled,value.number,{body:true,askLead:plan.askLead,askIndent:plan.askIndent});fitQuestionPage(styled,profile());verifyNativeQuestion(styled,plan);bytes=await applyCellEquationLines(exportLayoutHwpx(styled,XLSX.CFB),JSZip);}finally{styled.free();}}finally{checked.free();}
       if(plan.warnings.length)message(plan.warnings.join(' '));
     }finally{d.free();}
     return bytes;

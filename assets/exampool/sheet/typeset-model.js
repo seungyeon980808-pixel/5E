@@ -1,4 +1,4 @@
-import {exportLayoutHwpx} from './native-hwpx.js?v=1014-compact-panel';
+import {exportLayoutHwpx,restackPictureLines} from './native-hwpx.js?v=1014-compact-panel';
 export const PAPER_MM={A4:[210,297],B4:[257,364],A3:[297,420]};
 export const LAYOUT_VERSION=11;
 const HU=7200/25.4;
@@ -54,6 +54,8 @@ export async function normalizeQuestionImport(bytes,JSZip){
   zip.file('Contents/header.xml',header);
   xml=xml.replace(/<hp:tc\b[^>]*>/g,tag=>tag.replace(/hasMargin="0"/,'hasMargin="1"'));
   xml=xml.replace(/<hp:tbl\b[\s\S]*?(?=<hp:tr>)/g,tag=>tag.replace(/<hp:outMargin\b[^>]*>/,margin=>margin.replace(/\b(left|right)="\d+"/g,'$1="0"')));
+  // 가운데 그림 문단의 빠진 줄 배치를 채운다(없으면 다시 열 때 그림이 사라진다).
+  xml=restackPictureLines(xml);
   zip.file('Contents/section0.xml',xml);
   return zip.generateAsync({type:'uint8array',compression:'DEFLATE'});
 }
@@ -165,4 +167,44 @@ export async function materializeEquations(Document,JSZip,bytes,equations,CFB=gl
     // real geometry before showing or saving the first preview.
     native.reflowLinesegs();return exportLayoutHwpx(native,CFB);
   }finally{native.free();}
+}
+
+// 표 칸(보기 상자·선지·표) 문단: 한글 엔진은 칸 안 줄 높이에 수식 높이를 넣지 않아 분수가 아랫줄과 겹친다.
+// 칸 안 글은 조판할 때 어절 단위로 직접 나눠 두었으므로(줄바꿈), 줄마다 가장 큰 수식 높이로 줄 배치를 써 준다.
+// 글자 위치: 글자 1, 줄바꿈 1, 수식·탭 같은 조판 부호 8(한글 문서 규칙).
+export function cellEquationLines(xml){
+  const paragraphs=[],stack=[];
+  for(const m of xml.matchAll(/<hp:p\b[^>]*>|<\/hp:p>/g)){
+    if(m[0].startsWith('</')){const p=stack.pop();if(p)p.end=m.index;}
+    else{const p={body:m.index+m[0].length,depth:stack.length};paragraphs.push(p);stack.push(p);}
+  }
+  const num=(tag,key)=>Number(tag.match(new RegExp(`\\b${key}="(-?\\d+)"`))?.[1]);
+  let output=xml;
+  for(let i=paragraphs.length-1;i>=0;i--){
+    const p=paragraphs[i];if(!p.depth||p.end===undefined)continue;
+    const body=xml.slice(p.body,p.end);
+    if(!body.includes('<hp:equation')||body.includes('<hp:p ')||body.includes('<hp:tbl'))continue;
+    const first=body.match(/<hp:lineseg\b[^>]*>/)?.[0];if(!first)continue;
+    const base={vertpos:num(first,'vertpos'),vertsize:num(first,'vertsize'),baseline:num(first,'baseline'),spacing:num(first,'spacing'),horzpos:num(first,'horzpos'),horzsize:num(first,'horzsize'),flags:num(first,'flags')};
+    if(Object.values(base).some(v=>!Number.isFinite(v))||base.vertsize<=0)continue;
+    const content=body.replace(/<hp:linesegarray>[\s\S]*?<\/hp:linesegarray>/g,'');
+    const lines=[{start:0,tall:0}];let pos=0;
+    for(const t of content.matchAll(/<hp:equation\b[\s\S]*?<\/hp:equation>|<hp:lineBreak\/>|<hp:(?:tab|pic|ctrl)\b[^>]*?(?:\/>|>[\s\S]*?<\/hp:(?:tab|pic|ctrl)>)|(?<=>)([^<]+)(?=<)/g)){
+      if(t[0].startsWith('<hp:equation')){pos+=8;lines.at(-1).tall=Math.max(lines.at(-1).tall,num(t[0].match(/<hp:sz\b[^>]*>/)?.[0]||'','height')||0);}
+      else if(t[0]==='<hp:lineBreak/>'){pos+=1;lines.push({start:pos,tall:0});}
+      else if(/^<hp:(tab|pic|ctrl)\b/.test(t[0]))pos+=8;
+      else if(t[1]!==undefined)pos+=t[1].replace(/&(?:#\d+|#x[\da-f]+|[a-z]+);/gi,'x').length;
+    }
+    if(!lines.some(l=>l.tall>base.vertsize))continue;
+    let vert=base.vertpos;
+    const segs=lines.map(l=>{const h=Math.max(base.vertsize,l.tall),baseline=Math.round(h*base.baseline/base.vertsize);
+      const seg=`<hp:lineseg textpos="${l.start}" vertpos="${vert}" vertsize="${h}" textheight="${h}" baseline="${baseline}" spacing="${base.spacing}" horzpos="${base.horzpos}" horzsize="${base.horzsize}" flags="${base.flags}"/>`;vert+=h+base.spacing;return seg;}).join('');
+    output=output.slice(0,p.body)+content+`<hp:linesegarray>${segs}</hp:linesegarray>`+output.slice(p.end);
+  }
+  return output;
+}
+export async function applyCellEquationLines(bytes,JSZip){
+  const zip=await JSZip.loadAsync(new Uint8Array(bytes)),file=zip.file('Contents/section0.xml'),xml=await file.async('string'),next=cellEquationLines(xml);
+  if(next===xml)return bytes;
+  zip.file('Contents/section0.xml',next);return zip.generateAsync({type:'uint8array',compression:'DEFLATE'});
 }
