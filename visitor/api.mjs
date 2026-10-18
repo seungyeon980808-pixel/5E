@@ -73,7 +73,8 @@ function createRateLimiter({ limit, windowMs, clock }) {
     for (const [name, bucket] of buckets) if (now >= bucket.until) buckets.delete(name);
     let bucket = buckets.get(address);
     if (!bucket) {
-      if (buckets.size >= 10000) return false;
+      // 기록이 가득 차면 가장 오래된 주소를 지운다. 가득 찼다고 새 주소를 모두 거절하면 진짜 방문도 안 세진다(보안 점검 L3).
+      if (buckets.size >= 10000) buckets.delete(buckets.keys().next().value);
       bucket = { until: now + windowMs, used: 0 };
       buckets.set(address, bucket);
     }
@@ -81,7 +82,8 @@ function createRateLimiter({ limit, windowMs, clock }) {
   };
 }
 
-export function createVisitorApi({ store, allowedOrigins, clock = Date.now, rateLimit = 120, rateWindowMs = 60000 }) {
+// postLimiter: Cloudflare Workers Rate Limiting 바인딩(있으면 POST만 주소별로 더 엄격하게, 모든 인스턴스 공통).
+export function createVisitorApi({ store, allowedOrigins, clock = Date.now, rateLimit = 120, rateWindowMs = 60000, postLimiter = null }) {
   const allowed = new Set(allowedOrigins.map(value => new URL(value).origin));
   const accept = createRateLimiter({ limit: rateLimit, windowMs: rateWindowMs, clock });
   return async function handle(request, { clientIp = 'unknown' } = {}) {
@@ -106,7 +108,7 @@ export function createVisitorApi({ store, allowedOrigins, clock = Date.now, rate
         return reply(405, { error: 'method_rejected' });
       }
       if (request.method === 'POST' && !origin) return reply(403, { error: 'origin_required' });
-      if (!accept(clientIp)) {
+      if (!accept(clientIp) || request.method === 'POST' && postLimiter && !(await postLimiter.limit({ key: clientIp })).success) {
         headers.set('Retry-After', String(Math.ceil(rateWindowMs / 1000)));
         return reply(429, { error: 'rate_limited' });
       }

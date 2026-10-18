@@ -30,9 +30,9 @@ function d1() {
   } };
 }
 
-function api({ clock = () => Date.parse('2026-10-18T03:00:00Z'), rateLimit } = {}) {
+function api({ clock = () => Date.parse('2026-10-18T03:00:00Z'), rateLimit, postLimiter } = {}) {
   const db = d1();
-  const handle = createVisitorApi({ store: createVisitorStore(db), allowedOrigins: [ORIGIN, 'https://5e.ai.kr'], clock, ...(rateLimit && { rateLimit }) });
+  const handle = createVisitorApi({ store: createVisitorStore(db), allowedOrigins: [ORIGIN, 'https://5e.ai.kr'], clock, ...(rateLimit && { rateLimit }), ...(postLimiter && { postLimiter }) });
   const call = async ({ method = 'GET', origin = ORIGIN, body, agent = BROWSER, ip = '1.1.1.1', path = '/api/visitor-stats', headers = {} } = {}) => {
     const init = { method, headers: { ...(origin && { Origin: origin }), ...(agent && { 'User-Agent': agent }), ...headers } };
     if (body !== undefined) { init.body = typeof body === 'string' ? body : JSON.stringify(body); init.headers['Content-Type'] ||= 'application/json'; }
@@ -135,4 +135,24 @@ test('oversized bodies are rejected before the whole body is read', async () => 
   const ok = await post(exact, { 'Content-Length': String(Buffer.byteLength(exact)) });
   assert.equal(ok.status, 200);
   assert.equal((await ok.json()).total, 1);
+});
+
+// 보안 점검 L3: 제한 기록이 가득 차도 새 주소를 막지 않고, Rate Limiting 바인딩이 있으면 POST에 더 엄격하게 적용한다.
+test('a full in-memory limiter evicts the oldest address instead of refusing everyone', async () => {
+  const { call } = api({ rateLimit: 1 });
+  for (let i = 0; i < 10000; i++) assert.equal((await call({ ip: `10.${i >> 8}.${i & 255}.1` })).status, 200);
+  assert.equal((await call({ ip: '10.0.0.1' })).status, 429, 'a remembered address is still limited');
+  assert.equal((await call({ ip: '172.16.0.1' })).status, 200, 'a new address is counted even when the table is full');
+});
+
+test('the Workers rate limit binding throttles POST per address without blocking GET', async () => {
+  const used = new Map();
+  const postLimiter = { async limit({ key }) { used.set(key, (used.get(key) || 0) + 1); return { success: used.get(key) <= 2 }; } };
+  const { call } = api({ postLimiter });
+  assert.equal((await call({ method: 'POST', body: { visitorId: A }, ip: '4.4.4.4' })).status, 200);
+  assert.equal((await call({ method: 'POST', body: { visitorId: B }, ip: '4.4.4.4' })).status, 200);
+  const limited = await call({ method: 'POST', body: { visitorId: crypto.randomUUID() }, ip: '4.4.4.4' });
+  assert.equal(limited.status, 429);
+  assert.equal((await call({ ip: '4.4.4.4' })).data.total, 2, 'GET still answers and the refused POST was not counted');
+  assert.equal(used.get('4.4.4.4'), 3);
 });
