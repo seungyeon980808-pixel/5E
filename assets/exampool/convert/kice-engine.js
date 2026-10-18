@@ -145,6 +145,26 @@ export async function toQuestion(structure,item,{number='1'}={}){
   const table=(t,parent,label='자료')=>{const d=t.block.detected,b=add('table',parent,d?.caption||label);b.table=d?tableFromDetected(d):tableFromStructure(t.block);count.tables++;
     if(t.box){const w=t.box[2]-t.box[0];b.size=Math.min(100,Math.max(10,Math.round(w/col*100/5)*5));}return b;};
   const textBlock=(paras,parent,label)=>{const b=add('text',parent,label);b.text=paras.map(p=>p.text).join('\n');return b;};
+  // 자료 바로 아래 이름 줄 '(가)'·'(가) 아세트산 (나) 뷰테인'과 범례 '(＋: …)'를 그 자료 칸에 붙인다(x 위치로 짝).
+  // 그림: 이름은 label, 뒤 글은 text(조판기가 그림 아래에 찍음). 표: 이름은 label, 범례는 table.note.
+  const CAPLINE=/^\([가-하]\)(?!.*다\.$)/u,LEGEND=/^\(.*[:：].*\)$/u;
+  const attachCaptions=(seq,i,run,made)=>{
+    const xs=run.map(m=>m.box);if(!xs.every(Boolean))return i;
+    const bottom=Math.max(...xs.map(b=>b[3]));
+    while(i<seq.length&&seq[i].k==='para'){
+      const p=seq[i],pb=paraBox(p),t=p.text.trim();
+      if(!pb||pb[1]>bottom+40||!(CAPLINE.test(t)||LEGEND.test(t)))break;
+      // 한 문단에 여러 자료의 이름이 함께 있으면 순서대로 나눈다.
+      const parts=[...t.matchAll(/\(([가-하])\)\s*(.*?)(?=\s*\([가-하]\)|$)/gu)];
+      if(!LEGEND.test(t)&&parts.length===made.length&&made.length>1){parts.forEach((m,k)=>{made[k].label=`(${m[1]})`;if(m[2].trim()&&made[k].kind==='figure')made[k].text=m[2].trim();});i++;continue;}
+      const cx=(pb[0]+pb[2])/2;let k=xs.findIndex(b=>cx>=b[0]-6&&cx<=b[2]+6);if(k<0)k=made.length===1?0:-1;if(k<0)break;
+      const b=made[k];
+      if(LEGEND.test(t)){if(b.kind!=='table')break;b.table.note=(b.table.note?b.table.note+'\n':'')+t;}
+      else{const m=t.match(/^\(([가-하])\)\s*(.*)$/u);if(!m)break;b.label=`(${m[1]})`;if(m[2]&&b.kind==='figure')b.text=m[2];}
+      i++;
+    }
+    return i;
+  };
   // 글·그림·표가 섞인 흐름을 칸으로. 글 옆 그림은 가로 묶음.
   const emit=(seq,parent,{firstLabel='지문',width=col}={})=>{
     let i=0,firstText=true;
@@ -195,17 +215,19 @@ export async function toQuestion(structure,item,{number='1'}={}){
         const own=run.map(f=>f.run&&figs.get(f.run)?.caption).filter(Boolean);
         let caps=null;if(seq[i]?.k==='para'&&seq[i].caption){const t=tokens(seq[i].text);if(!own.length||t.every(c=>own.includes(c))){caps=t;i++;}}
         const lab=k=>(run[k].run&&figs.get(run[k].run)?.caption)||(caps?(caps.length===run.length?caps[k]:k===0?caps.join('    '):''):'자료');
-        if(run.length===1)figure(run[0],parent,lab(0));
+        const made=[];
+        if(run.length===1)made.push(figure(run[0],parent,lab(0)));
         else{const side=run.every((f,k)=>!k||!f.box||!run[k-1].box||yOverlap(f.box,run[k-1].box)>4);
           const g=add('group',parent,'자료');g.layout=side?'나란히':'세로';g.boxed=false;
           // 나란한 그림: 칸 폭은 그림 사이 가운데를 경계로 나눈 원본 구간, 그림 크기는 그 구간 대비 원본 폭(%).
           const x0=parent?null:item.box[0]+7,x1=parent?null:item.box[2]-7;
-          run.forEach((f,k)=>{const b=f.k==='table'?table(f,g):figure(f,g,lab(k),!side);if(!side||!f.box)return;
+          run.forEach((f,k)=>{const b=f.k==='table'?table(f,g):figure(f,g,lab(k),!side);made.push(b);if(!side||!f.box)return;
             const lo=k?(run[k-1].box[2]+f.box[0])/2:Math.min(f.box[0],x0??f.box[0]),hi=k<run.length-1?(f.box[2]+run[k+1].box[0])/2:Math.max(f.box[2],x1??f.box[2]);
             b.ratio=Math.max(1,Math.min(12,Math.round((hi-lo)/(width/12))));b.size=Math.min(100,Math.max(10,Math.round((f.box[2]-f.box[0])/(hi-lo)*115/5)*5));});}
+        i=attachCaptions(seq,i,run,made);
         continue;
       }
-      if(n.k==='table'){table(n,parent);i++;continue;}
+      if(n.k==='table'){const b=table(n,parent);i=attachCaptions(seq,i+1,[n],[b]);continue;}
       i++;
     }
   };
