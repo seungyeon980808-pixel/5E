@@ -1617,13 +1617,6 @@
       ]
     },
     {
-      "path": "tests/test-ai-collection-current-browser.cjs",
-      "findingIds": [
-        "UX-U14",
-        "AI-COLLECTIVE-WORKFLOW-OUTPUT"
-      ]
-    },
-    {
       "path": "tests/test-tool-defaults-browser.cjs",
       "findingIds": [
         "TOOL-DEFAULTS-CREATION"
@@ -1765,13 +1758,6 @@
       "findingIds": [
         "BUG-REPORT-WORKSPACE-LIFECYCLE",
         "CS-CENTER-NO-AUTO-UPLOAD"
-      ]
-    },
-    {
-      "path": "tests/test-image-split-browser.cjs",
-      "findingIds": [
-        "USER-SAFARI-U13",
-        "MANUAL-IMAGE-SPLIT"
       ]
     },
     {
