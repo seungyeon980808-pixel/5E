@@ -144,6 +144,21 @@ export async function applyReferenceBogiIndent(document,JSZip,CFB=globalThis.XLS
   return zip.generateAsync({type:'uint8array',compression:'DEFLATE'});
 }
 
+// 한글 엔진은 아래·위 첨자 묶음 바로 뒤의 글자까지 첨자로 읽는다(T_{1}=\frac… 가 T 아래에 모두 붙음).
+// 닫는 괄호 뒤에 띄어쓰기를 하나 둔다. LaTeX·한글 수식 모두 띄어쓰기는 구분 기호일 뿐 모양을 바꾸지 않는다.
+export function normalizeEquationScript(script){
+  const s=String(script);let out='';
+  for(let i=0;i<s.length;i++){
+    out+=s[i];
+    if((s[i]==='_'||s[i]==='^')&&s[i+1]==='{'){
+      let depth=0,j=i+1;for(;j<s.length;j++){if(s[j]==='\\'){j++;continue;}if(s[j]==='{')depth++;else if(s[j]==='}'&&--depth===0)break;}
+      if(j>=s.length)continue;
+      out+=s.slice(i+1,j+1);i=j;
+      const next=s[j+1];if(next!==undefined&&!/[\s}_^]/.test(next))out+=' ';
+    }
+  }
+  return out;
+}
 // The native engine accepts both LaTeX and Hancom equation scripts. Generate
 // each equation with that engine, then place its native HWPX control in the
 // original paragraph/cell. Equations never become bitmap pictures.
@@ -153,7 +168,7 @@ export async function materializeEquations(Document,JSZip,bytes,equations,CFB=gl
   for(const [i,eq] of equations.entries()){
     if(eq.script.length>8000)throw Error('수식은 8,000자 이내로 입력하세요.');
     const temp=Document.createEmpty();let control;
-    try{temp.createBlankDocument();const result=JSON.parse(temp.insertEquation(0,0,0,eq.script,eq.fontSize||1100,0));if(!result.ok)throw Error('수식을 읽지 못했습니다.');const ez=await JSZip.loadAsync(new Uint8Array(temp.exportHwpx())),exml=await ez.file('Contents/section0.xml').async('string');control=exml.match(/<hp:equation\b[\s\S]*?<\/hp:equation>/)?.[0];}finally{temp.free();}
+    try{temp.createBlankDocument();const result=JSON.parse(temp.insertEquation(0,0,0,normalizeEquationScript(eq.script),eq.fontSize||1100,0));if(!result.ok)throw Error('수식을 읽지 못했습니다.');const ez=await JSZip.loadAsync(new Uint8Array(temp.exportHwpx())),exml=await ez.file('Contents/section0.xml').async('string');control=exml.match(/<hp:equation\b[\s\S]*?<\/hp:equation>/)?.[0];}finally{temp.free();}
     if(!control)throw Error('한글 수식 개체를 만들지 못했습니다.');
     control=control.replace(/\bid="\d+"/,`id="${1300000000+i}"`);
     if(!xml.includes(eq.marker))throw Error('수식의 원래 입력 위치를 찾지 못했습니다.');
@@ -170,7 +185,8 @@ export async function materializeEquations(Document,JSZip,bytes,equations,CFB=gl
   }finally{native.free();}
 }
 
-// 표 칸(보기 상자·선지·표) 문단: 한글 엔진은 칸 안 줄 높이에 수식 높이를 넣지 않아 분수가 아랫줄과 겹친다.
+// 표 칸(보기 상자·선지·표·상자) 문단: 한글 엔진은 칸 안 줄 높이에 수식 높이를 넣지 않아 분수가 아랫줄과 겹치고,
+// 줄바꿈이 있어도 들여온 줄 배치가 한 줄뿐이면 칸 높이를 한 줄로 잡아 글이 칸 밖으로 넘친다.
 // 칸 안 글은 조판할 때 어절 단위로 직접 나눠 두었으므로(줄바꿈), 줄마다 가장 큰 수식 높이로 줄 배치를 써 준다.
 // 글자 위치: 글자 1, 줄바꿈 1, 수식·탭 같은 조판 부호 8(한글 문서 규칙).
 export function cellEquationLines(xml){
@@ -184,7 +200,7 @@ export function cellEquationLines(xml){
   for(let i=paragraphs.length-1;i>=0;i--){
     const p=paragraphs[i];if(!p.depth||p.end===undefined)continue;
     const body=xml.slice(p.body,p.end);
-    if(!body.includes('<hp:equation')||body.includes('<hp:p ')||body.includes('<hp:tbl'))continue;
+    if(!body.includes('<hp:equation')&&!body.includes('<hp:lineBreak')||body.includes('<hp:p ')||body.includes('<hp:tbl'))continue;
     const first=body.match(/<hp:lineseg\b[^>]*>/)?.[0];if(!first)continue;
     const base={vertpos:num(first,'vertpos'),vertsize:num(first,'vertsize'),baseline:num(first,'baseline'),spacing:num(first,'spacing'),horzpos:num(first,'horzpos'),horzsize:num(first,'horzsize'),flags:num(first,'flags')};
     if(Object.values(base).some(v=>!Number.isFinite(v))||base.vertsize<=0)continue;
@@ -196,7 +212,9 @@ export function cellEquationLines(xml){
       else if(/^<hp:(tab|pic|ctrl)\b/.test(t[0]))pos+=8;
       else if(t[1]!==undefined)pos+=t[1].replace(/&(?:#\d+|#x[\da-f]+|[a-z]+);/gi,'x').length;
     }
-    if(!lines.some(l=>l.tall>base.vertsize))continue;
+    // 줄 배치가 이미 줄마다 있으면(엔진이 계산) 두고, 높은 수식도 줄바꿈도 없으면 그대로 둔다.
+    const segCount=(body.match(/<hp:lineseg\b/g)||[]).length;
+    if(!lines.some(l=>l.tall>base.vertsize)&&(lines.length<2||segCount>=lines.length))continue;
     let vert=base.vertpos;
     const segs=lines.map(l=>{const h=Math.max(base.vertsize,l.tall),baseline=Math.round(h*base.baseline/base.vertsize);
       const seg=`<hp:lineseg textpos="${l.start}" vertpos="${vert}" vertsize="${h}" textheight="${h}" baseline="${baseline}" spacing="${base.spacing}" horzpos="${base.horzpos}" horzsize="${base.horzsize}" flags="${base.flags}"/>`;vert+=h+base.spacing;return seg;}).join('');

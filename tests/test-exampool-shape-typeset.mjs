@@ -110,3 +110,9 @@ test('every frame (4 forms x 7 structures) survives an Excel round trip and stil
   for(const [i,q] of got.questions.entries()){const a=await buildQuestionHtml(q),b=await buildQuestionHtml(questions[i]);assert.deepEqual(a.tables,b.tables);assert.deepEqual(a.texts,b.texts);}
   assert.equal(got.questions[0].form,'combo');assert.equal(got.questions[0].structure,'two');
 });
+
+test('a space after a sub/superscript group keeps the native engine from extending the subscript',async()=>{
+  const {normalizeEquationScript:n}=await import('../assets/exampool/sheet/typeset-model.js');
+  assert.equal(n('T_{1}=\\frac{t_{1}}{10}'),'T_{1} =\\frac{t_{1}}{10}');assert.equal(n('T_{1}>T_{2}'),'T_{1} >T_{2}');
+  assert.equal(n('x^{2}'),'x^{2}');assert.equal(n('a_{b_{c}}d'),'a_{b_{c}} d');assert.equal(n('A_{0} '),'A_{0} ');
+});

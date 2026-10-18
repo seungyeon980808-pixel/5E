@@ -1,3 +1,4 @@
+import {normalizeEquationScript} from './typeset-model.js?v=1014-compact-panel';
 // Measure with the same native font engine that paints and exports the paper.
 export function createNativeTextMeasurer(Document){
   const cache=new Map(),escape=value=>String(value).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -17,7 +18,7 @@ export function createNativeTextMeasurer(Document){
     const key=JSON.stringify(['eq',script,fontSize]);if(cache.has(key))return cache.get(key);
     const d=Document.createEmpty();
     try{
-      d.createBlankDocument();const result=JSON.parse(d.insertEquation(0,0,0,script,Math.round(fontSize*100),0));
+      d.createBlankDocument();const result=JSON.parse(d.insertEquation(0,0,0,normalizeEquationScript(script),Math.round(fontSize*100),0));
       const control=result.ok?(JSON.parse(d.getPageControlLayout(0)).controls||[]).find(c=>c.type==='equation'):null;
       const size=control?{w:control.w,h:control.h}:null;cache.set(key,size);return size;
     }finally{d.free();}

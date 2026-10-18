@@ -122,7 +122,7 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
   // 가로 묶음 칸·상자 표의 줄 안에서는 칸이 모두 빈 표를 한글 엔진이 빠뜨린다. 그 자리의 빈 칸에만 보이지 않는
   // 단어 연결 문자(U+2060)를 둔다. 문자 참조(&#…;)는 엔진이 글자 그대로 찍고, U+200B·U+FEFF는 저장할 때마다
   // 줄 배치가 흔들리며, 공백류는 빈 칸으로 취급된다(2026-10-16 실험).
-  let nested=0;
+  let nested=0,inBox=0;
   // 칸 안 글 폭·높이를 잴 때 수식은 수식 개체 크기로 잰다. 글에는 $…$ 그대로이거나 이미 수식 자리표시(EXAMPOOL_EQ_n_END)로 바뀐 것이 온다.
   const MARK=/(EXAMPOOL_EQ_\d+_END)/,eqSize=(script,fontSize)=>measureText?.equation?.(script,fontSize)||equationEstimate(script,fontSize);
   const pieces=v=>String(v??'').split(MARK).flatMap(part=>{const m=part.match(/^EXAMPOOL_EQ_(\d+)_END$/);return m?[{math:true,text:equations[Number(m[1])]?.script||''}]:mathParts(part);});
@@ -224,6 +224,8 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
       if(b===firstText||!onlyId&&afterAsk.includes(b.id)||floated.has(b.id))continue;
       html+=spacer(b);
       if(b===sideText)html+=p(prefix+b.text,width,11,{kind:'block',id:b.id,prefix:prefix.length});
+      // 상자·가로 묶음 칸 안 글은 실제 글꼴 폭으로 어절 단위 줄바꿈을 넣는다. 칸 문단은 한글 엔진이 줄 수를 다시 세지 않아 칸이 한 줄 높이로 남는다.
+      else if(b.kind==='text'&&b.text&&(nested||inBox)&&measureText)html+=`<p style="margin:4px 0;text-align:left">${text(b.text,Math.max(35,width-4),11,null,{kind:'block',id:b.id})}</p>`;
       else if(b.kind==='text')html+=b.text?floatsAt.has(b.id)?`<p style="margin:4px 0;text-align:justify">${await floatImages(b.id,width)}${text(b.text,width,11,v=>v,{kind:'block',id:b.id})}</p>`:p(b.text,width,11,{kind:'block',id:b.id}):'';
       else if(b.kind==='figure'){
         html+=heading(b);
@@ -279,7 +281,7 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
             body+=`<td style="border:none;padding:5px;vertical-align:top;width:${widths[i]}px">${await walk(b.id,Math.max(35,widths[i]-16),child.id)}</td>`;
           }}finally{nested--;}
           body+='</tr></table>';
-        }else body=await walk(b.id,innerWidth);
+        }else{if(boxed)inBox++;try{body=await walk(b.id,innerWidth);}finally{if(boxed)inBox--;}}
         if(boxed)recordTable(1,1,[],{kind:'box',id:b.id},boxSlot);
         html+=boxed?`<table style="border-collapse:collapse;width:${width}px"><tr><td style="border:${RULE};width:${width}px;height:32px;padding:8px 8px ${8+Math.round((b.pad||0)*96/25.4)}px">${b.label?p(b.label,null,11,{kind:'label',id:b.id}):''}${body}</td></tr></table>`:body;
       }else if(b.lines){
