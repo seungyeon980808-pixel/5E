@@ -110,6 +110,9 @@ export function analyze(structure,item={}){
   const geoLines=items.filter(i=>i.k==='line'&&i.geo&&i.role!=='bogi');
   // 문항 번호 줄: 변환기 표시가 없으면 흐름의 첫 줄(번호 글자 위치가 줄의 왼쪽).
   const opening=geoLines.find(l=>l.opening)||geoLines[0];if(opening)opening.opening=true;
+  // 번호 줄에 문항 번호 'N.'이 남아 있으면 뗀다(조판기가 번호를 다시 붙인다).
+  const no=Number(String(item.id||'').split('_').pop());
+  if(opening&&no)opening.text=opening.text.replace(new RegExp(`^${no}\\.\\s*`),'');
   const outside=geoLines.filter(l=>!l.rect&&!l.opening).map(l=>l.left);
   const B=opening?opening.left+OPEN_STEP:outside.length?Math.min(...outside):null;
   // 흐름을 마디(문단 묶음·그림·표·상자)로
