@@ -40,7 +40,9 @@ function score(item,ref,conv,ts,{convertOnly=false}={}){
   // 수식 안 한글(세로 분수 속 '화학식량' 등)은 한글 본문 글로 나오지 않으므로 원본 쪽에서도 한 번씩 뺀다.
   // 글 비교는 한글·ㄱㄴㄷ·①~⑤·㉠~㉭만: 문장 내용과 순서를 본다. 라틴 글자·숫자·기호는 원본에서 수식 글꼴이라 변환 결과가 수식/글로 갈릴 수 있어 수식 검사에 맡긴다.
   // 원본 글은 표 안 글 뺀 것/넣은 것 중 더 맞는 쪽(표를 그림으로 넣었는지 편집 표로 넣었는지에 따라). 수식 안 한글(세로 분수 속 낱말)은 원본에서 한 번씩 뺀다.
-  const prep=b=>{let t=kor(norm(b));for(const sc of ts.eqScripts||[])for(const w of String(sc).match(/[가-힣]{2,}/g)||[]){const k=t.indexOf(w);if(k>=0)t=t.slice(0,k)+t.slice(k+w.length);}return t;};
+  // 수식 하나 안의 한글은 원본에서 이어진 글(예: '일때의순간반응속도')이므로 통째로 먼저 빼고, 못 찾으면 낱말 단위로 뺀다.
+  const prep=b=>{let t=kor(norm(b));const cut=w=>{const k=t.indexOf(w);if(k<0)return false;t=t.slice(0,k)+t.slice(k+w.length);return true;};
+    for(const sc of ts.eqScripts||[]){const whole=(String(sc).match(/[가-힣]+/g)||[]).join('');if(whole.length>=2&&cut(whole))continue;for(const w of String(sc).match(/[가-힣]{2,}/g)||[])cut(w);}return t;};
   const got=kor(norm(ts.text));
   const sim=ref?Math.max(similarity(got,prep(ref.body)),ref.bodyAll?similarity(got,prep(ref.bodyAll)):0):0;row.textSim=Math.round(sim*1000)/1000;row.textHead=String(ts.text).slice(0,120);
   if(sim<TEXT_MIN)fail('text',`글 일치 ${(sim*100).toFixed(1)}%`);pass('text');
