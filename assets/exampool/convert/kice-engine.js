@@ -104,7 +104,7 @@ const EXP=/과정|결과|가설|자료|준비|방법|탐구|실험/;
 export async function toQuestion(structure,item,{number='1'}={}){
   const diag={notes:[...(structure.notes||[])],decisions:{}};
   const blocks=structure.blocks||[],by=role=>blocks.filter(b=>b.role===role);
-  const A=analyze(structure,item);
+  const A=analyze(structure,item),ph=structure.pageHeight;
   const figs=new Map();for(const n of A.items)if(n.k==='figure'&&!figs.has(n.run)&&(n.run.data||n.run.image?.bytes))figs.set(n.run,{data:n.run.data||await toDataUrl(n.run.image),box:n.box,caption:n.run.caption||null,role:n.run.figRole||'figure'});
   let form=item.form||null,struct=STRUCT_OF(item);
   // 조사 기록이 없으면 규칙: 보기가 있으면 합답형, 지문에 학생이 나오면 대화형, 그림 수로 자료 구조.
@@ -156,6 +156,19 @@ export async function toQuestion(structure,item,{number='1'}={}){
   const attachCaptions=(seq,i,run,made)=>{
     const xs=run.map(m=>m.box);if(!xs.every(Boolean))return i;
     const bottom=Math.max(...xs.map(b=>b[3]));
+    // 나란한 그림 아래 단마다 따로 쓴 설명 글(작은 글씨 여러 줄): 줄 낱말 위치로 그림 단에 나눠 각 그림 아래 글로.
+    if(made.length>=2&&made.every(b=>b.kind==='figure')&&ph){
+      while(i<seq.length&&seq[i].k==='para'){
+        const p=seq[i],pb=paraBox(p);if(!pb||pb[1]>bottom+30)break;
+        const cells=p.lines.map(l=>(structure.lineCells||[]).find(c=>Math.abs(ph-c.y-l.base)<1.6));if(cells.some(c=>!c?.words?.length))break;
+        const mid=b=>(b[0]+b[2])/2,colOf=x=>{let k=0,d=Infinity;xs.forEach((b,j)=>{const e=Math.abs(mid(b)-x);if(e<d){d=e;k=j;}});return k;};
+        const per=made.map(()=>[]);let spread=false;
+        for(const c of cells){const ks=new Set();for(const w of c.words){const t=clean(runsText(w.runs));if(!t)continue;const k=colOf((w.x0+w.x1)/2);ks.add(k);per[k].push(t);}if(ks.size>1)spread=true;}
+        if(!spread)break;
+        per.forEach((ws,k)=>{const t=clean(splitEquationParens(ws.join(' ')));if(t)made[k].text=clean((made[k].text?made[k].text+' ':'')+t);});
+        i++;
+      }
+    }
     while(i<seq.length&&seq[i].k==='para'){
       const p=seq[i],pb=paraBox(p),t=p.text.trim();
       if(!pb||pb[1]>bottom+40||!(CAPLINE.test(t)||LEGEND.test(t)))break;
