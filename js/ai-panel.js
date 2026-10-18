@@ -1,4 +1,4 @@
-import { createWorkbenchLoading, estimateLoadingMs, showDoneNotice } from './loading/workbench-loading.js?v=20261018c';
+import { createWorkbenchLoading, estimateLoadingMs, showDoneNotice } from './loading/workbench-loading.js?v=20261018e';
 import { channelStorage, channelSessionStorage, optionalStorage } from './preview-storage.js?v=1.7.0-four-session-integration';
 import { snapshotImageItem, taskItemCopy } from './ai-candidate-snapshot.js?v=1.7.0-four-session-integration';
 import { registerBugReportContext } from './bug-report.js?v=1.7.0-four-session-integration';

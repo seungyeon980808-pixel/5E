@@ -637,22 +637,24 @@
      · 선택·실행은 은은한 버튼 하나: --ds-soft-bg 면 + --ds-soft-line 1px 선.
      · 입력칸은 패널보다 한 단계 밝은 면 + 옅은 선. 입력 중에만 강조 선.
    테두리 두께는 그대로 두고 색만 바꾼다(위치·크기가 움직이지 않게).
+   라이브러리 미리보기의 그림 선택 틀(.unilib-figure-choice)은 그림 위에 겹치는 투명한 틀이라 제외한다
+   (은은한 버튼 면이 칠해지면 그림을 가린다).
    ===================================================================== */
 @media (min-width: 768px) {
   /* 일반 버튼 */
   :root:not([data-mode="lite"]) :is(.unified-library-overlay, #graph-modal-overlay, .settings-preferences-overlay, #defaults-overlay, .settings-print-overlay, #ai-image-panel, #rhwp-exam-workspace .exam-sidebar)
-    :is(button, summary, .unilib-icon-button, .bug-report-open):not(.unilib-result-card, [data-ai-side-tab], .ai-task-tab, .ai-task-tab *):not([style*="background: #"], [style*="background:#"], [style*="background: rgb"], [style*="background-color"]):not([class*="swatch"], [class*="color-chip"], [class*="danger"]):not(.on, .active, .is-active, .is-selected, [aria-pressed="true"], [aria-selected="true"], [aria-checked="true"], [aria-current="true"]) {
+    :is(button, summary, .unilib-icon-button, .bug-report-open):not(.unilib-result-card, .unilib-figure-choice, .unilib-header-panel-toggle, .unilib-actions > button, .workbench-assignment-card-actions button, [data-ai-side-tab], .ai-task-tab, .ai-task-tab *):not([style*="background: #"], [style*="background:#"], [style*="background: rgb"], [style*="background-color"]):not([class*="swatch"], [class*="color-chip"], [class*="danger"]):not(.on, .active, .is-active, .is-selected, [aria-pressed="true"], [aria-selected="true"], [aria-checked="true"], [aria-current="true"]) {
     border-color: transparent !important;
     background: transparent !important;
     box-shadow: none !important;
   }
   :root:not([data-mode="lite"]) :is(.unified-library-overlay, #graph-modal-overlay, .settings-preferences-overlay, #defaults-overlay, .settings-print-overlay, #ai-image-panel, #rhwp-exam-workspace .exam-sidebar)
-    :is(button, summary, .unilib-icon-button, .bug-report-open):not(.unilib-result-card, [data-ai-side-tab], .ai-task-tab, .ai-task-tab *):not([style*="background: #"], [style*="background:#"], [style*="background: rgb"], [style*="background-color"]):not([class*="swatch"], [class*="color-chip"], [class*="danger"]):not(.on, .active, .is-active, .is-selected, [aria-pressed="true"], [aria-selected="true"], [aria-checked="true"], [aria-current="true"]):not(:disabled):hover {
+    :is(button, summary, .unilib-icon-button, .bug-report-open):not(.unilib-result-card, .unilib-figure-choice, .unilib-header-panel-toggle, .unilib-actions > button, .workbench-assignment-card-actions button, [data-ai-side-tab], .ai-task-tab, .ai-task-tab *):not([style*="background: #"], [style*="background:#"], [style*="background: rgb"], [style*="background-color"]):not([class*="swatch"], [class*="color-chip"], [class*="danger"]):not(.on, .active, .is-active, .is-selected, [aria-pressed="true"], [aria-selected="true"], [aria-checked="true"], [aria-current="true"]):not(:disabled):hover {
     background: var(--ds-hover) !important;
   }
   /* 선택된 칸 · 실행(주) 버튼 — 은은한 버튼 */
   :root:not([data-mode="lite"]) :is(.unified-library-overlay, #graph-modal-overlay, .settings-preferences-overlay, #defaults-overlay, .settings-print-overlay, #ai-image-panel, #rhwp-exam-workspace .exam-sidebar)
-    :is(button, summary, [role="tab"]):not(.unilib-result-card, [data-ai-side-tab], .ai-task-tab, .ai-task-tab *):is(.on, .active, .is-active, .is-selected, [aria-pressed="true"], [aria-selected="true"], [aria-checked="true"], [aria-current="true"]),
+    :is(button, summary, [role="tab"]):not(.unilib-result-card, .unilib-figure-choice, .unilib-header-panel-toggle, .unilib-actions > button, .workbench-assignment-card-actions button, [data-ai-side-tab], .ai-task-tab, .ai-task-tab *):is(.on, .active, .is-active, .is-selected, [aria-pressed="true"], [aria-selected="true"], [aria-checked="true"], [aria-current="true"]),
   :root:not([data-mode="lite"]) :is(.unified-library-overlay, #graph-modal-overlay, .settings-preferences-overlay, #defaults-overlay, .settings-print-overlay, #ai-image-panel, #rhwp-exam-workspace .exam-sidebar)
     :is(.modal-btn-primary, .unilib-primary) {
     border-color: transparent !important;
@@ -785,4 +787,76 @@
 @media (min-width: 768px) and (hover: none) {
   :root:not([data-mode="lite"]) .gm-step-btns { opacity: 1; }
   :root:not([data-mode="lite"]) input[type="number"]:not(.gm-spinnum)::-webkit-inner-spin-button { opacity: 1; }
+}
+
+/* =====================================================================
+   라이브러리 버튼 — 시안 5e-design-mockups/library-controls.html 안 1 (2026-10-18)
+   1. 위쪽 막대: 메인 위쪽 막대와 같게. 높이 41, 버튼 28×28, 패널 버튼은 눌림 면 없이 양 끝.
+      왼쪽: [왼쪽 패널] 라이브러리 · 오른쪽: [버그][닫기] | [오른쪽 패널]
+   2. 미리보기 아래 버튼: 1px 선 버튼 + 아이콘, AI 이미지 변환만 은은한 버튼.
+   3. 작업대 카드 이미지/그래프: 그림 위 어두운 묶음 + 아이콘(흰 그림 위에서도 또렷하게).
+   글자는 스크립트가 바꿔 쓰므로 아이콘은 ::before 마스크로 붙인다.
+   ===================================================================== */
+@media (min-width: 768px) {
+  :root:not([data-mode="lite"]) .unified-library-overlay { --unilib-header-height: 41px; }
+  :root:not([data-mode="lite"]) .unified-library-overlay .unilib-header { gap: 2px; padding: 0 12px; }
+  :root:not([data-mode="lite"]) .unified-library-overlay .unilib-brand { gap: 8px; }
+  :root:not([data-mode="lite"]) .unified-library-overlay .unilib-brand h2 { font-size: var(--ds-text-title); font-weight: var(--ds-weight-medium, 600); }
+  :root:not([data-mode="lite"]) .unified-library-overlay .unilib-header > .ll { order: 1; }
+  :root:not([data-mode="lite"]) .unified-library-overlay .unilib-header-actions { order: 2; margin-left: auto; gap: 2px; }
+  :root:not([data-mode="lite"]) .unified-library-overlay .unilib-header :is(.unilib-icon-button, .bug-report-open) {
+    display: grid; width: 28px; height: 28px; min-width: 28px; min-height: 28px; padding: 0; place-items: center;
+    border: 0 !important; border-radius: var(--ds-radius); background: transparent !important; box-shadow: none !important; color: var(--ds-ink-2) !important;
+  }
+  :root:not([data-mode="lite"]) .unified-library-overlay .unilib-header :is(.unilib-icon-button, .bug-report-open):hover { background: var(--ds-hover) !important; color: var(--ds-ink) !important; }
+  :root:not([data-mode="lite"]) .unified-library-overlay .unilib-header :is(.unilib-icon-button, .bug-report-open) svg { width: 18px; height: 18px; }
+  :root:not([data-mode="lite"]) .unified-library-overlay .unilib-header-actions .bug-report-open { order: 1; }
+  :root:not([data-mode="lite"]) .unified-library-overlay .unilib-header-actions [data-unilib-close] { order: 2; }
+  :root:not([data-mode="lite"]) .unified-library-overlay .unilib-header-actions [data-unilib-preview-toggle] { position: relative; order: 3; margin-left: 13px; }
+  :root:not([data-mode="lite"]) .unified-library-overlay .unilib-header-actions [data-unilib-preview-toggle]::before {
+    content: ""; position: absolute; left: -7px; top: 6px; width: 1px; height: 16px; background: var(--ds-line-strong);
+  }
+
+  :root:not([data-mode="lite"]) .unified-library-overlay .unilib-actions { gap: 8px; }
+  :root:not([data-mode="lite"]) .unified-library-overlay .unilib-actions > button {
+    display: flex; align-items: center; justify-content: center; gap: 6px; height: 36px; min-height: 36px; padding: 0 10px;
+    border: 1px solid var(--ds-line-strong) !important; border-radius: var(--ds-radius); background: transparent !important; box-shadow: none !important;
+    color: var(--ds-ink-2) !important; font: var(--ds-weight-medium, 500) var(--ds-text-body)/1 var(--ds-font);
+  }
+  :root:not([data-mode="lite"]) .unified-library-overlay .unilib-actions > button:not(:disabled):hover { background: var(--ds-hover) !important; color: var(--ds-ink) !important; }
+  :root:not([data-mode="lite"]) .unified-library-overlay .unilib-actions > [data-unilib-ai] {
+    border-color: var(--ds-soft-line) !important; background: var(--ds-soft-bg) !important; color: var(--ds-ink) !important;
+  }
+  :root:not([data-mode="lite"]) .unified-library-overlay .unilib-actions > [data-unilib-ai]:disabled { border-color: var(--ds-line-strong) !important; background: transparent !important; }
+  :root:not([data-mode="lite"]) .unified-library-overlay .unilib-actions > button::before {
+    content: ""; flex: none; width: 16px; height: 16px; background: currentColor; -webkit-mask: var(--lib-act-icon) center / contain no-repeat; mask: var(--lib-act-icon) center / contain no-repeat;
+  }
+  :root:not([data-mode="lite"]) .unified-library-overlay .unilib-actions > [data-unilib-adjust] { --lib-act-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 3v13h13M3 6h13v13'/%3E%3C/svg%3E"); }
+  :root:not([data-mode="lite"]) .unified-library-overlay .unilib-actions > [data-unilib-objectify] { --lib-act-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 4h7v7H4zM13 13h7v7h-7zM14 4l6 6M20 4l-6 6'/%3E%3C/svg%3E"); }
+  :root:not([data-mode="lite"]) .unified-library-overlay .unilib-actions > [data-unilib-ai] { --lib-act-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3l1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6zM18 15l.8 2.2L21 18l-2.2.8L18 21l-.8-2.2L15 18l2.2-.8z'/%3E%3C/svg%3E"); }
+  :root:not([data-mode="lite"]) .unified-library-overlay .unilib-actions > [data-unilib-graph] { --lib-act-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 3.5v16.5h16.5M6.5 17c3-1 4-9 7-9.5S18 9 20 6'/%3E%3C/svg%3E"); }
+  :root:not([data-mode="lite"]) .unified-library-overlay .unilib-actions > button:not([data-unilib-adjust], [data-unilib-objectify], [data-unilib-ai], [data-unilib-graph])::before { content: none; }
+
+  :root:not([data-mode="lite"]) .workbench-assignment-card-actions {
+    gap: 2px; padding: 2px; border-radius: 7px; background: rgba(13, 17, 23, .92); box-shadow: 0 0 0 1px #30363d, 0 4px 12px rgba(0, 0, 0, .35);
+  }
+  :root:not([data-mode="lite"]) .workbench-assignment .workbench-assignment-card-actions button {
+    display: flex; align-items: center; gap: 5px; height: 26px; min-height: 26px; padding: 0 9px;
+    border: 0 !important; border-radius: 5px; background: transparent !important; box-shadow: none !important; color: #e6edf3 !important; font-size: 12px;
+  }
+  :root:not([data-mode="lite"]) .workbench-assignment .workbench-assignment-card-actions button:hover { background: rgba(177, 186, 196, .14) !important; }
+  :root:not([data-mode="lite"]) .workbench-assignment .workbench-assignment-card-actions button::before {
+    content: ""; flex: none; width: 14px; height: 14px; background: currentColor; -webkit-mask: var(--lib-act-icon) center / contain no-repeat; mask: var(--lib-act-icon) center / contain no-repeat;
+  }
+  :root:not([data-mode="lite"]) .workbench-assignment-card-actions [data-conversion-kind="image"] { --lib-act-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 5h16v14H4zM4 15l5-5 4 4 3-3 4 4'/%3E%3C/svg%3E"); }
+  :root:not([data-mode="lite"]) .workbench-assignment-card-actions [data-conversion-kind="graph"] { --lib-act-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 3.5v16.5h16.5M6.5 17c3-1 4-9 7-9.5S18 9 20 6'/%3E%3C/svg%3E"); }
+  /* Space를 누르면 이미지 작업대로 가므로 "이미지"가 기본 선택처럼 보이게 한다 — 시안 assign-default.html 안 1 */
+  :root:not([data-mode="lite"]) .workbench-assignment .workbench-assignment-card-actions [data-conversion-kind="image"] {
+    background: #152137 !important; box-shadow: inset 0 0 0 1px #6ba4f8 !important;
+  }
+  /* 묶음 바탕은 화면 색과 상관없이 어두우므로 그라파이트·화이트는 파란색 없는 밝은 중립 표시 */
+  :root[data-theme="dark"]:not([data-palette="classic"], [data-mode="lite"]) .workbench-assignment .workbench-assignment-card-actions [data-conversion-kind="image"],
+  :root[data-theme="light"]:not([data-mode="lite"]) .workbench-assignment .workbench-assignment-card-actions [data-conversion-kind="image"] {
+    background: rgba(255, 255, 255, .1) !important; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .55) !important;
+  }
 }

@@ -284,17 +284,25 @@
         // counter-moving inner layer keeps the actual image geometry still.
         // All three blur canvases are prepared once; only transforms move.
         if (o.driven) {
-          // 진행할수록 덜 흐린 레벨이 그림 전체에 깔린다. 지나가는 초점 창은 그대로 둔다.
+          // 진행할수록 단계마다 눈에 띄게 선명해진다. 지나가는 초점 창은 그대로 둔다.
+          //  0~25%: 가장 흐린 → 중간 / 20~55%: 덜 흐린 사본 / 50~100%: 거의 선명한 사본(원래 해상도, 1px 안팎)
           var whole = canvas(c[2].width, c[2].height);
           whole.getContext('2d').drawImage(c[2], 0, 0);
           whole.className = 'br-whole';
           whole.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block';
           root.appendChild(whole);
-          run(whole, [{ opacity: 0 }, { opacity: 0, offset: 0.45 }, { opacity: 1 }]);
+          run(whole, [{ opacity: 0 }, { opacity: 0, offset: 0.2 }, { opacity: 1, offset: 0.55 }, { opacity: 1 }]);
+          var sharp = renderLevel(src, W, H, { scale: 1, blur: 0, tone: { b: 0.99, c: 1.01 } }, Math.max(W * 0.0022, 0.8), o.fit);
+          sharp.className = 'br-sharp';
+          sharp.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block';
+          root.appendChild(sharp);
+          run(sharp, [{ opacity: 0 }, { opacity: 0, offset: 0.5 }, { opacity: 1, offset: 0.97 }, { opacity: 1 }]);
         }
         var scan = el('div', 'br-focus-window'), content = el('div', 'br-focus-content');
         content.appendChild(c[2]); scan.appendChild(content);
         scan.appendChild(el('div', 'br-focus-glow')); root.appendChild(scan);
+        // 선명한 사본이 깔리면 흐린 사본을 든 초점 창은 오히려 흐린 띠가 되므로 사라지게 한다.
+        if (o.driven) run(scan, [{ opacity: 1 }, { opacity: 1, offset: 0.45 }, { opacity: 0, offset: 0.7 }, { opacity: 0 }]);
       } else if (o.variant === 'sweep') {
         // 위→아래로 덜 흐린 레벨이 내려오며 드러난다 (부드러운 경계, transform만 사용)
         var win = el('div', 'br-sweep'), inner = el('div', 'br-sweep-inner');

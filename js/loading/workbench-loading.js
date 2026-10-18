@@ -95,13 +95,10 @@ export function createWorkbenchLoading({ host, legacy, panel }) {
   };
   const stageProgress = run => {
     const now = run.endedAt ?? Date.now(), inStage = now - run.stageStartedAt;
-    let weighted = 0, total = 0;
-    const fills = run.expected.map((ms, i) => {
-      const fill = run.settled ? 1 : i < run.stage ? 1 : i > run.stage ? 0 : Math.min(.92, inStage / ms);
-      weighted += fill * ms; total += ms;
-      return fill;
-    });
-    return { fills, overall: total ? weighted / total : 0, inStage, late: !run.settled && inStage > run.expected[run.stage] };
+    const fills = run.expected.map((ms, i) => run.settled ? 1 : i < run.stage ? 1 : i > run.stage ? 0 : Math.min(.92, inStage / ms));
+    // 선명해지는 정도는 칸마다 같은 몫: 단계가 넘어갈 때마다 눈에 띄게 바뀐다.
+    const overall = fills.reduce((sum, fill) => sum + fill, 0) / fills.length;
+    return { fills, overall, inStage, late: !run.settled && inStage > run.expected[run.stage] };
   };
   const tick = () => {
     const run = active;
@@ -244,9 +241,27 @@ export function createWorkbenchLoading({ host, legacy, panel }) {
   return { begin, finish, reset, setPhase, stage, frame, destroy() { reset(); resize?.disconnect(); sourceChanges.disconnect(); referenceList?.removeEventListener('scroll', layout, true); releaseMotion(); reveal.destroy(); status.destroy(); frame.remove(); } };
 }
 
-// 작업 창을 닫아 둔 채 끝나면 AI 버튼 바로 위에 뜨는 말풍선. 사용자가 닫거나 열 때까지 그대로 둔다.
-// 버튼이 안 보이면 오른쪽 아래에 뜬다.
-export function showDoneNotice({ title, detail = '', onOpen, anchor = document.getElementById('ai-image-install-open') } = {}) {
+// 떠 있는 창(AI 작업 창·라이브러리·대화상자)이 하나라도 보이면 메인 편집 화면이 아니다.
+const OVERLAYS = '.modal-overlay, .unified-library-overlay, .workbench-assignment-overlay';
+const AI_WORKBENCHES = '#ai-image-panel, [id^="ai-workspace-"]';
+const shown = el => !el.hidden && !el.inert && el.getClientRects().length > 0 && getComputedStyle(el).visibility !== 'hidden';
+const onMainScreen = () => ![...document.querySelectorAll(OVERLAYS)].some(shown);
+let pendingNotice = null;
+
+// 작업 창을 닫아 둔 채 끝나면 메인 편집 화면의 AI 버튼 바로 위에 뜨는 말풍선.
+// 다른 창(라이브러리 등)이 열려 있으면 메인으로 돌아올 때까지 기다린다.
+// AI 작업 창을 보고 있으면 띄우지 않는다(작업 탭에 완료 표시가 있다).
+export function showDoneNotice(options = {}) {
+  clearInterval(pendingNotice); pendingNotice = null;
+  if (onMainScreen()) return renderDoneNotice(options);
+  pendingNotice = setInterval(() => {
+    if ([...document.querySelectorAll(AI_WORKBENCHES)].some(shown)) { clearInterval(pendingNotice); pendingNotice = null; return; }
+    if (onMainScreen()) { clearInterval(pendingNotice); pendingNotice = null; renderDoneNotice(options); }
+  }, 500);
+  return null;
+}
+
+function renderDoneNotice({ title, detail = '', onOpen, anchor = document.getElementById('ai-image-install-open') } = {}) {
   document.querySelector('.ai-done-notice')?.dispatchEvent(new Event('ai-done-notice-close'));
   const box = document.createElement('div'), head = document.createElement('div'), sub = document.createElement('div'), row = document.createElement('div');
   const dismiss = document.createElement('button'), open = document.createElement('button');
@@ -269,7 +284,9 @@ export function showDoneNotice({ title, detail = '', onOpen, anchor = document.g
     box.style.bottom = `${Math.round(innerHeight - rect.top + 12)}px`;
     box.style.setProperty('--ai-done-tail', `${Math.round(rect.left + rect.width / 2 - left)}px`);
   };
-  const close = () => { removeEventListener('resize', place); anchor?.classList.remove('has-done-notice'); box.remove(); };
+  // 메인 화면이 아니게 되면(다른 창을 열면) 말풍선을 닫는다.
+  const watch = setInterval(() => { if (!box.isConnected || !onMainScreen()) close(); }, 500);
+  const close = () => { clearInterval(watch); removeEventListener('resize', place); anchor?.classList.remove('has-done-notice'); box.remove(); };
   box.addEventListener('ai-done-notice-close', close);
   dismiss.addEventListener('click', close);
   open.addEventListener('click', () => { close(); onOpen?.(); });
