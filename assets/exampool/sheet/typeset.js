@@ -4,7 +4,7 @@ import {buildTextMap,mapTextEdit,applyTextEdit} from './text-sync.js';
 import {loadImage} from './image-load.js';
 import {attachPlacementLayer} from './placement-layer.js';
 import {PictureSettings} from '/js/rhwp-exam-picture-controls.js?v=1.7.0-four-session-integration';
-import {buildQuestionHtml,verifyNativeQuestion,skeletonKey} from './handoff.js';
+import {buildQuestionHtml,verifyNativeQuestion,skeletonKey,decodeNativeText} from './handoff.js';
 import {questionFingerprint,typesetMatches,renderedContent,toBase64,fromBase64,materializeEquations,normalizeQuestionImport,applyQuestionIndent,applyReferenceBogiIndent,LAYOUT_VERSION} from './typeset-model.js?v=1014-compact-panel';
 import {QUESTION_PAGE_MODE,questionPageProfile,fitQuestionPage,questionPageMetrics,validateQuestionPage,resizeQuestionDocument} from './question-page.js?v=1014-compact-panel';
 import {applyTableAlignment,applyHangingIndent} from '/js/rhwp-exam-table-controls.js?v=1014-compact-panel';
@@ -114,20 +114,21 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
       validateQuestionPage(document(),profile());lastProfile=profile();message('문항 길이에 맞춰 용지 높이 자동 조절 · 표 크기 잠금 · Shift+Tab으로 내어쓰기');
       try{assertNativeLayout(document());}catch(e){message(e.message,true);}
       if(owners)placer?.setModel({question:q,owners});
-      textMap=owners?.texts?buildTextMap(parse(document().getTextFileText()),owners.texts.map(s=>({...s}))):null;
+      textMap=owners?.texts?buildTextMap(decodeNativeText(parse(document().getTextFileText())),owners.texts.map(s=>({...s}))):null;
     }finally{if(seq===opening){loading=false;save.disabled=!ready;download.disabled=!ready;paper.disabled=!ready;columns.disabled=!ready;if(ready){fitLive();drawGuide();}}}
   }
   // 한글 창에서 고친 글을 잠시 뒤 시트 칸에 반영한다. 반영하면 이 문항의 기준 글도 새 글로 바뀐다.
   function scheduleTextSync(){clearTimeout(syncTimer);syncTimer=setTimeout(()=>void syncText(),80);}
   async function syncText(){
     if(!ready||loading||!textMap||!onTextEdit||!q)return;
-    const raw=parse(document().getTextFileText()),result=mapTextEdit(textMap,raw);
+    // 시트와 잇는 글은 문자 참조(&#9702;)를 글자로 되돌린 것, 저장 비교용 기준 글(baselineText)은 엔진이 꺼낸 그대로.
+    const encoded=parse(document().getTextFileText()),raw=decodeNativeText(encoded),result=mapTextEdit(textMap,raw);
     if(result.unchanged)return;
     if(!result.ok){message(result.reason,true);onDiverge?.(true);return;}
     onDiverge?.(false);
     const id=q.id,changes=result.changes.map(c=>({owner:c.owner,value:c.value}));
     for(const c of result.changes){applyTextEdit(q,c.owner,c.value);textMap.segments[c.index].value=c.full;}
-    textMap=buildTextMap(raw,textMap.segments);baselineText=normalized(raw);fingerprint=await questionFingerprint(q);
+    textMap=buildTextMap(raw,textMap.segments);baselineText=normalized(encoded);fingerprint=await questionFingerprint(q);
     if(!onTextEdit(changes,id))return;
     message('한글에서 고친 글을 시트에 반영했습니다 · 서식까지 남기려면 조판 저장을 누르세요.');
   }
@@ -151,8 +152,8 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
       message('시트에서 고친 글을 한글 창에 바로 넣었습니다.');
     }
     q=next;owners={images:plan.imageOwners,tables:plan.tableOwners,shapes:plan.tables,texts:plan.textSegments};
-    const raw=parse(document().getTextFileText());
-    textMap=buildTextMap(raw,owners.texts.map(s=>({...s})));baselineText=normalized(raw);fingerprint=await questionFingerprint(q);
+    const encoded=parse(document().getTextFileText()),raw=decodeNativeText(encoded);
+    textMap=buildTextMap(raw,owners.texts.map(s=>({...s})));baselineText=normalized(encoded);fingerprint=await questionFingerprint(q);
     placer?.setModel({question:q,owners});scheduleFit();
     return true;
   }
