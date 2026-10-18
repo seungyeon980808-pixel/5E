@@ -188,7 +188,7 @@
 
 1.6 계열(1.6.0~1.6.3)은 **웹으로만** 출시했습니다. Windows·macOS 설치판은 서명·실기기 검증 등 [출시 보류 항목](docs/RELEASE_HOLD.md)을 모두 푼 뒤에 게시하며, 아직 정해진 출시 일정은 없습니다.
 
-지금 받을 수 있는 설치판 최신 릴리즈는 <strong>v1.5.8</strong>(Windows)이며 [릴리즈 페이지](https://github.com/seungyeon980808-pixel/5E/releases/tag/v1.5.8)에 있습니다. 설치판에는 1.6 계열의 라이브러리와 AI 이미지 변환 작업대가 들어 있지 않습니다.
+지금 받을 수 있는 설치판 최신 릴리즈 <strong>v1.5.8</strong>(Windows)은 [릴리즈 페이지](https://github.com/seungyeon980808-pixel/5E/releases/tag/v1.5.8)에 있습니다. 설치판에는 1.6 계열의 라이브러리와 AI 이미지 변환 작업대가 들어 있지 않습니다.
 
 ### AI 연결
 
