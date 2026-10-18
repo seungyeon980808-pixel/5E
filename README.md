@@ -8,14 +8,14 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/version-1.6.0-3f3f46?style=flat-square&labelColor=18181b" alt="version 1.6.0">
+  <img src="https://img.shields.io/badge/version-1.6.3-3f3f46?style=flat-square&labelColor=18181b" alt="version 1.6.3">
   <img src="https://img.shields.io/badge/web-설치_없이-3f3f46?style=flat-square&labelColor=18181b" alt="web">
   <img src="https://img.shields.io/github/license/seungyeon980808-pixel/5E?style=flat-square&labelColor=18181b&color=3f3f46" alt="AGPL-3.0">
 </p>
 
 <p align="center">
   <a href="https://www.5e.ai.kr/"><img src="https://img.shields.io/badge/웹에서_바로_쓰기-5e.ai.kr-18181b?style=for-the-badge" alt="웹에서 바로 쓰기"></a>
-  <a href="https://github.com/seungyeon980808-pixel/5E/releases/tag/v1.6.0"><img src="https://img.shields.io/badge/1.6.0-릴리즈_노트-18181b?style=for-the-badge" alt="1.6.0 릴리즈 노트"></a>
+  <a href="https://github.com/seungyeon980808-pixel/5E/releases/tag/v1.6.3"><img src="https://img.shields.io/badge/1.6.3-릴리즈_노트-18181b?style=for-the-badge" alt="1.6.3 릴리즈 노트"></a>
 </p>
 
 <p align="center">
@@ -31,8 +31,8 @@
   <a href="#자주-묻는-질문">자주 묻는 질문</a> ·
   <a href="#구조-한눈에">구조</a> ·
   <a href="#내-데이터는-어디로-가나요">데이터</a> ·
-  <a href="docs/RELEASE_NOTES_v1.6.0.md">1.6.0 변경 내용</a> ·
-  <a href="docs/RELEASE_NOTES_v1.6.1.md">1.6.1 패치 변경 내용</a>
+  <a href="docs/RELEASE_NOTES_v1.6.3.md">1.6.3 변경 내용</a> ·
+  <a href="https://5e.ai.kr/bug/">문제 신고</a>
 </p>
 
 ## 왜 5E인가요
@@ -186,16 +186,16 @@
 
 ### 설치판
 
-1.6.0은 **웹으로 먼저 출시**했습니다. 1.6.1 설치판(Windows·Mac)은 웹 버전 검증을 마친 뒤 PDF 폴더 연결 기능과 함께 따로 내놓을 예정입니다.
+1.6 계열(1.6.0~1.6.3)은 **웹으로만** 출시했습니다. Windows·macOS 설치판은 서명·실기기 검증 등 [출시 보류 항목](docs/RELEASE_HOLD.md)을 모두 푼 뒤에 게시하며, 아직 정해진 출시 일정은 없습니다.
 
-지금 받을 수 있는 설치판 최신 릴리즈 <strong>v1.5.8</strong>은 [릴리즈 페이지](https://github.com/seungyeon980808-pixel/5E/releases/tag/v1.5.8)에 있습니다. 설치판에는 1.6.0의 라이브러리와 AI 이미지 변환 작업대가 아직 들어 있지 않습니다.
+지금 받을 수 있는 설치판 최신 릴리즈 <strong>v1.5.8</strong>(Windows)은 [릴리즈 페이지](https://github.com/seungyeon980808-pixel/5E/releases/tag/v1.5.8)에 있습니다. 설치판에는 1.6 계열의 라이브러리와 AI 이미지 변환 작업대가 들어 있지 않습니다.
 
 ### AI 연결
 
 | 환경 | 연결 방식 |
 |---|---|
 | 웹 | AI 이미지 변환 창에서 ChatGPT 계정으로 기기 로그인 |
-| 설치판 (1.6.1 준비 중) | 내 컴퓨터에 로그인된 Codex 사용 |
+| 설치판 (1.6 계열 설치판 보류 중) | 내 컴퓨터에 로그인된 Codex 사용 |
 
 5E는 ChatGPT 비밀번호를 받지 않고, 웹에서는 로그인한 브라우저 탭에만 5E 세션 토큰을 둡니다([자세히](#내-데이터는-어디로-가나요)). AI 기능은 로그인한 계정의 기능과 이용 한도를 따르며, AI 연결 없이도 그리기와 편집은 모두 쓸 수 있습니다.
 
@@ -331,13 +331,14 @@ sequenceDiagram
 
 ```text
 5E/
-├── index.html · css/ · js/   루트 편집기 (1.5 계열 소스)
-├── preview/                  기존 1.6 회귀 검사 소스 · 공개 1.7 프리뷰는 고정 배포 SHA에서 보존합니다
-│   ├── js/                   편집기 · 라이브러리 · AI 작업대 모듈
+├── index.html · css/ · js/   루트 편집기 (정식 웹 1.6.3 정본)
+├── preview/                  기존 1.6 회귀 검사 소스 (공개 /preview/는 Preview Release로 따로 배포)
+│   ├── js/                   편집기 · 라이브러리 · AI 작업대 모듈 (루트 js/와 같은 구성)
 │   │   ├── render/  inspector/  tools/  function-graph/  graph/
 │   │   ├── library/  pdf-library/          라이브러리 · PDF 검색 · 크롭
 │   │   └── ai-*.js  web-ai-*.js  image-background*.js   AI 작업대 · 후처리
 │   └── vendor/               pdf.js · OCR
+├── bug/                      문제 신고 게시판 화면 · Worker (5e.ai.kr/bug/)
 ├── desktop/                  Electron 설치판 (main · preload · 로컬 Codex 연결 · 보안 정책)
 ├── tools/mcp-5e/             AI 에이전트 연동 MCP 서버
 ├── tests/                    단위 · 브라우저 테스트 · 테스트 자료
@@ -403,6 +404,9 @@ GitHub Actions:
 |---|---|---|
 | Test | 모든 push · PR | 단위 테스트 + 브라우저 테스트 |
 | Release Identity | 모든 push · PR | 버전 정보 일치 검사 |
+| Validated Web Release | 수동 실행 | main을 검사한 동일 산출물만 www.5e.ai.kr에 배포 |
+| Preview Release | 수동 실행 | 1.7.0 Preview를 www.5e.ai.kr/preview/에 배포 |
+| Bug Route | 수동 실행 | 문제 신고 게시판 화면을 5e.ai.kr/bug/에 배포 |
 | Desktop Release | `v*` 태그 | 테스트 → Windows·macOS 빌드 → 출시 보류 검사 → 체크섬 → **초안** 릴리즈 |
 
 설치판 개발 문서: [Windows](docs/DESKTOP_WINDOWS.md) · [macOS](docs/DESKTOP_MACOS.md) · [코드 서명 정책](docs/CODE_SIGNING_POLICY.md)
@@ -414,14 +418,16 @@ GitHub Actions:
 
 | 주소 | 버전 | 용도 |
 |---|---|---|
-| [www.5e.ai.kr](https://www.5e.ai.kr/) | 1.6.0 | 정식 웹 버전 |
+| [www.5e.ai.kr](https://www.5e.ai.kr/) | 1.6.3 | 정식 웹 버전 |
 | [www.5e.ai.kr/1.6.0/](https://www.5e.ai.kr/1.6.0/) | 1.6.0 | 버전을 고정한 주소 |
 | [www.5e.ai.kr/mobile/](https://www.5e.ai.kr/mobile/) | 1.6.0 Mobile Preview | 모바일 미리보기 |
-| [www.5e.ai.kr/preview/](https://www.5e.ai.kr/preview/) | 1.7.0 Preview | 다음 버전 미리보기 |
-| [GitHub Releases](https://github.com/seungyeon980808-pixel/5E/releases) | 설치판 1.5.8 | Windows 설치판 (1.6.1 설치판은 준비 중) |
+| [www.5e.ai.kr/preview/](https://www.5e.ai.kr/preview/) | 1.7.0 Preview | 다음 버전 미리보기 (정식 화면에는 영향 없음) |
+| [5e.ai.kr/bug/](https://5e.ai.kr/bug/) | — | 문제 신고 게시판 |
+| [GitHub Releases](https://github.com/seungyeon980808-pixel/5E/releases) | 설치판 1.5.8 | Windows 설치판 (v1.6.1~v1.6.3은 웹 전용 릴리즈) |
 
-- 현재 공개 웹은 기존 브랜치 기반 GitHub Pages 배포입니다. 1.6.1 후보는 루트 `index.html`을 정본으로 사용하고, 검증한 동일 산출물만 배포하는 Actions 경로를 준비했습니다. 전환·배포 전까지 공개 버전은 1.6.0입니다.
-- 1.6.0은 웹을 먼저 출시했습니다. 설치판은 서명·실기기 검증 등 [출시 보류 항목](docs/RELEASE_HOLD.md)을 모두 풀어야 게시합니다.
+- 1.6.1부터 정식 웹은 main의 루트 `index.html`을 정본으로 삼고, **Validated Web Release** 워크플로가 검사를 통과한 동일 산출물만 GitHub Pages에 배포합니다. 공개 편집기의 `js/release-receipt.js`에 배포한 소스 커밋이 찍힙니다.
+- `/1.6.0/`과 `/mobile/`은 1.6.0 공개 당시 파일을 그대로 보존한 주소입니다.
+- 1.6 계열은 웹으로만 출시했습니다. 설치판은 서명·실기기 검증 등 [출시 보류 항목](docs/RELEASE_HOLD.md)을 모두 풀어야 게시합니다.
 - 문제가 생기면 기록해 둔 정상 버전으로 되돌립니다. 이미 올린 설치 파일은 바꿔치기하지 않고 새 패치 버전을 냅니다. 자세한 절차는 [되돌리기 절차](docs/RELEASE_ROLLBACK.md)에 있습니다.
 - 채널 기록: [RELEASE_CHANNELS.md](docs/RELEASE_CHANNELS.md) · [release-channels.json](release-channels.json) · [GitHub 릴리즈 절차](docs/GITHUB_RELEASES.md)
 
@@ -522,15 +528,17 @@ claude mcp list
 
 ## 문서
 
-- [1.6.0 변경 내용](docs/RELEASE_NOTES_v1.6.0.md)
-- [1.6.1 패치 변경 내용](docs/RELEASE_NOTES_v1.6.1.md)
+- [1.6.3 변경 내용](docs/RELEASE_NOTES_v1.6.3.md) — 라이브러리 즉시 표시 · 서버 운영 환경 보강
+- [1.6.2 변경 내용](docs/RELEASE_NOTES_v1.6.2.md) — 라이브러리 반응성 개선
+- [1.6.1 변경 내용](docs/RELEASE_NOTES_v1.6.1.md) — 소스·배포 경로 정비
+- [1.6.0 변경 내용](docs/RELEASE_NOTES_v1.6.0.md) — 라이브러리 · AI 이미지 변환 작업대
 - [사용 가이드](docs/USER_GUIDE.md)
 - [릴리즈 이력](https://github.com/seungyeon980808-pixel/5E/releases)
 - [이미지 출처](docs/credits.html)
 
 ## 버그 제보와 기여
 
-- 문제를 발견하면 [GitHub Issues](https://github.com/seungyeon980808-pixel/5E/issues)에 남겨 주세요. **사용한 주소(웹/설치판), 브라우저, 어떤 순서로 무엇을 했는지**, 가능하면 **로그 보기** 에서 복사한 내용을 함께 적어 주시면 빨리 고칠 수 있습니다.
+- 문제를 발견하면 [문제 신고 게시판](https://5e.ai.kr/bug/)이나 [GitHub Issues](https://github.com/seungyeon980808-pixel/5E/issues)에 남겨 주세요. **사용한 주소(웹/설치판), 브라우저, 어떤 순서로 무엇을 했는지**, 가능하면 **로그 보기** 에서 복사한 내용을 함께 적어 주시면 빨리 고칠 수 있습니다.
 - 교과서·기출 이미지를 올릴 때는 저작권에 주의해 주세요.
 - 코드를 고쳐 보내실 때는 `npm test`와 `npm run test:browser`가 통과하는지 확인해 주세요.
 
