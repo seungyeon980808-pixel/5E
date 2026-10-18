@@ -68,7 +68,7 @@ h.withServer(async origin=>{
           const exp=expected(item.struct),n=figs.length;
           const row={id:item.id,subject:item.subject,struct:item.struct,ok:r.ok,error:r.error,n,ms:r.ms,
             match:exp?(n>=exp[0]&&n<=exp[1]):null,
-            figures:figs.map(f=>({box:f.box?.map(v=>Math.round(v*10)/10),page:f.page,caption:f.caption,kind:f.kind,widthPt:f.widthPt}))};
+            figures:figs.map(f=>({box:f.box?.map(v=>Math.round(v*10)/10),page:f.page,caption:f.caption,kind:f.kind,role:f.role,widthPt:f.widthPt}))};
           rows.push(row);
         }
         process.stdout.write(`\r  ${rows.length}/${items.length}`);

@@ -394,3 +394,34 @@ export async function debugOverlay(item){
   g.fillStyle='#f00';g.font='bold 14px sans-serif';figs.forEach((f,i)=>g.fillText(`${i+1}${f.caption||''}`,(f.box[0]-q[0])*s+3,(f.box[1]-q[1])*s+14));
   return [{data:c.toDataURL('image/png')}];
 }
+
+// ---------------------------------------------------------------------------------------------
+// 표: 괘선 표를 편집 가능한 ExamPool 표(행·열·병합·칸 글)로 읽기
+
+import {convertQuestionNow} from './es/live-convert.mjs';
+import {runsText,clean} from './rules.js';
+
+const cellText=runs=>runsText(runs).split('\n').map(clean).filter(Boolean).join('\n');
+
+/**
+ * 문항의 괘선 표를 위→아래 순서로 돌려준다.
+ * [{box:[x0,y0,x1,y1](PDF pt, 위 0), page, rows, cols, cells:[[{text}]], merges:[{r,c,rs,cs}], headerRows, caption:'(가)'|null, confidence:0~1, source}]
+ * - 칸 글의 수식은 $한컴 수식 스크립트$(위·아래첨자 포함). 병합에 가려진 칸은 text ''.
+ * - confidence가 낮으면(괘선 불완전·칸 안 그림 등) 엔진은 detectFigures의 role:'table' 그림으로 넣는다.
+ */
+export async function detectTables(item,{signal}={}){
+  aborted(signal);
+  const structure=await convertQuestionNow(item,{signal});
+  const blocks=structure.blocks||[];
+  const out=[];
+  blocks.forEach((b,i)=>{
+    if(b.kind!=='table'||!Array.isArray(b.rows))return;
+    const rows=b.rows.length,cols=Math.max(1,...b.rows.map(r=>r.length));
+    const merges=(b.spans||[]).filter(s=>(s.rowSpan||1)>1||(s.colSpan||1)>1).map(s=>({r:s.row,c:s.col,rs:s.rowSpan||1,cs:s.colSpan||1}));
+    const hidden=(r,c)=>merges.some(m=>r>=m.r&&r<m.r+m.rs&&c>=m.c&&c<m.c+m.cs&&(r!==m.r||c!==m.c));
+    const cells=Array.from({length:rows},(_,r)=>Array.from({length:cols},(_,c)=>({text:hidden(r,c)?'':cellText(b.rows[r]?.[c]||[])})));
+    const next=blocks[i+1],caption=next&&next.kind!=='table'&&next.runs?.length===1&&/^\([가-힣]\)$/u.test(next.runs[0].value||'')?next.runs[0].value:null;
+    out.push({box:b.box,page:item.page,rows,cols,cells,merges,headerRows:Math.min(rows,Math.max(1,...merges.filter(m=>m.r===0&&m.c===0).map(m=>m.rs))),caption,confidence:.9,source:'grid'});
+  });
+  return out.sort((a,b)=>(a.box?.[1]||0)-(b.box?.[1]||0));
+}
