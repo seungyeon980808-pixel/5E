@@ -1,17 +1,19 @@
 // 기출 PDF → ExamPool 문항(AI 없음). 기출 탐색기 변환기(es/)가 읽은 줄·수식·그림 영역을 ExamPool 문항 틀에 채운다.
 // - 글: PDF 글자 위치로 지문·발문·보기·선지를 나눈 결과를 그대로 쓴다. 수식은 한컴 수식 스크립트를 $…$로.
 // - 틀: 조사 기록(유형·자료 구조·배치·선지 배열)이 있으면 그대로, 없으면 규칙으로 고른다.
+// - 표: figures.js(detectTables)가 확신 0.5 이상으로 읽은 괘선 표는 편집 표로, 아니면 그림으로.
 // - 그림: figures.js(detectFigures)가 자른 그림·괘선 표·그림 선지를 원본 위치대로 흐름에 끼워 원본 폭(단 폭 대비 %)으로 넣는다.
 import {convertQuestionNow} from './es/live-convert.mjs';
 import {setPdfSource} from './es/pdf-viewer.mjs?v=library-release-20261011-3';
-import {detectFigures} from './figures.js';
+import {detectFigures,detectTables} from './figures.js';
 import {questionFromShape} from '../sheet/templates.js';
 import * as model from '../sheet/model.js';
 const {makeTable,block}=model;
 import {analyze,runsText,clean,HEAD,tokens,pairTable,splitEquationParens,mapQuestionText} from './rules.js';
 export {setPdfSource};
 
-export const FIGURE_SCALE=4;// 그림을 원본 PDF의 4배(약 288dpi)로 자른다.
+export const FIGURE_SCALE=4;
+export const TABLE_MIN=.5;// detectTables 확신 경계(tables-check: 확신 0.9 표 147개 칸 글 F1 100%).// 그림을 원본 PDF의 4배(약 288dpi)로 자른다.
 const STRUCT_OF=(r)=>!r?null:(r.struct==='one'||r.struct==='table')?(r.layout==='side'?'small':'big'):(r.struct==='three'||r.struct==='complex')?'many':r.struct;
 const ARRANGE={r5:'한 줄',r32:'3+2',c2:'2열',col:'세로'};
 export {runsText,analyze};
@@ -23,6 +25,14 @@ export async function readKice(item,{signal,figureScale=FIGURE_SCALE}={}){
   try{found=await detectFigures(item,{signal,scale:figureScale,choices:true});}
   catch(e){if(e?.name==='AbortError')throw e;(structure.notes||=[]).push('그림을 찾지 못했습니다: '+String(e?.message||e));}
   structure.detected=found;
+  // 괘선 표: 확신이 낮은 표는 편집 표 블록을 빼서 표 그림(detectFigures role:'table')이 대신 들어가게.
+  let tables=[];
+  try{tables=await detectTables(item,{signal});}
+  catch(e){if(e?.name==='AbortError')throw e;(structure.notes||=[]).push('표를 읽지 못했습니다: '+String(e?.message||e));}
+  structure.detectedTables=tables;
+  const iou=(a,b)=>{const w=Math.min(a[2],b[2])-Math.max(a[0],b[0]),h=Math.min(a[3],b[3])-Math.max(a[1],b[1]);if(w<=0||h<=0)return 0;const i=w*h,ar=x=>(x[2]-x[0])*(x[3]-x[1]);return i/(ar(a)+ar(b)-i);};
+  for(const b of structure.blocks||[])if(b.kind==='table'&&b.box){const t=tables.find(t=>t.box&&iou(t.box,b.box)>.6);b.detected=t||null;if(t&&t.confidence<TABLE_MIN)b.dropped=true;}
+  structure.blocks=(structure.blocks||[]).filter(b=>!b.dropped);
   injectFigures(structure,found.filter(f=>f.role!=='choice'),item);
   return structure;
 }
@@ -67,6 +77,18 @@ export function tableFromStructure(t,role='자료표'){
     const runs=t.rows[r]?.[c]||[];tb.cells[r][c].value=runsText(runs).split('\n').map(clean).filter(Boolean).join('\n');}
   // 머리줄: 첫 줄만(평가원 자료표 대부분). 첫 칸이 병합으로 여러 줄이면 그 줄 수만큼.
   tb.headerRows=Math.min(tb.rows,Math.max(1,...tb.merges.filter(m=>m.r===0&&m.c===0).map(m=>m.rs)));
+  return tb;
+}
+
+// detectTables 표 → ExamPool 표(칸 글은 이미 엔진 규칙으로 정리된 $…$ 글).
+export function tableFromDetected(d,role='자료표'){
+  const tb=makeTable(Math.min(30,d.rows),Math.min(12,d.cols),role);
+  const covered=new Set();
+  for(const m of d.merges||[]){if(m.r+m.rs>tb.rows||m.c+m.cs>tb.cols)continue;let clash=false;for(let r=m.r;r<m.r+m.rs;r++)for(let c=m.c;c<m.c+m.cs;c++)if(covered.has(r+':'+c))clash=true;if(clash)continue;
+    for(let r=m.r;r<m.r+m.rs;r++)for(let c=m.c;c<m.c+m.cs;c++)covered.add(r+':'+c);tb.merges.push({r:m.r,c:m.c,rs:m.rs,cs:m.cs});}
+  const hidden=(r,c)=>tb.merges.some(m=>r>=m.r&&r<m.r+m.rs&&c>=m.c&&c<m.c+m.cs&&(r!==m.r||c!==m.c));
+  for(let r=0;r<tb.rows;r++)for(let c=0;c<tb.cols;c++)if(!hidden(r,c))tb.cells[r][c].value=String(d.cells[r]?.[c]?.text||'');
+  tb.headerRows=Math.min(tb.rows,Math.max(1,d.headerRows||1));
   return tb;
 }
 
@@ -118,7 +140,8 @@ export async function toQuestion(structure,item,{number='1'}={}){
   }
   const figure=(f,parent,label='자료',size=true)=>{const d=figs.get(f.run);const b=add('figure',parent,label);b.figure={name:`${item.id}-${++count.images}.png`,data:d.data};
     if(size){const w=d.box?d.box[2]-d.box[0]:col*.6;b.size=Math.min(100,Math.max(10,Math.round(w/col*100/5)*5));}return b;};
-  const table=(t,parent,label='자료')=>{const b=add('table',parent,label);b.table=tableFromStructure(t.block);count.tables++;return b;};
+  const table=(t,parent,label='자료')=>{const d=t.block.detected,b=add('table',parent,d?.caption||label);b.table=d?tableFromDetected(d):tableFromStructure(t.block);count.tables++;
+    if(t.box){const w=t.box[2]-t.box[0];b.size=Math.min(100,Math.max(10,Math.round(w/col*100/5)*5));}return b;};
   const textBlock=(paras,parent,label)=>{const b=add('text',parent,label);b.text=paras.map(p=>p.text).join('\n');return b;};
   // 글·그림·표가 섞인 흐름을 칸으로. 글 옆 그림은 가로 묶음.
   const emit=(seq,parent,{firstLabel='지문',width=col}={})=>{
