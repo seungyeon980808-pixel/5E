@@ -692,3 +692,9 @@ body.cv-dragging,body.cv-dragging *{user-select:none!important;-webkit-user-sele
 .lib5e-pick figcaption{display:flex;flex-direction:column;gap:2px;padding:8px 10px;font-size:12px;color:var(--ds-ink-3)}.lib5e-pick b{color:var(--ds-ink)}
 .lib5e-pick .acts{display:flex;gap:6px;margin-top:4px}.lib5e-pick .mini{box-shadow:inset 0 0 0 1px var(--ds-line-strong)}
 .lib-builtin{margin-top:4px}.lib-builtin>summary{cursor:pointer;font-size:12px;color:var(--ds-ink-3);padding:6px 2px}
+/* 기출 목록: 「근거로 연결」·「변형」 두 버튼(오른쪽), 미리보기가 없으면 본문 일부 */
+.past figcaption .acts{grid-row:1/3;grid-column:2;align-self:center;display:flex;gap:6px}
+.past figcaption .acts button{grid-row:auto;grid-column:auto}
+.past .go-mini{background:var(--go-bg,#152137);color:var(--ds-ink,#e6edf3);box-shadow:inset 0 0 0 1px var(--go-line,#6ba4f8)}
+.past img{background:#fff}
+.past-text{margin:0;padding:10px 12px;font-size:12px;line-height:1.6;color:var(--ds-ink-2);background:var(--ds-raise);max-height:120px;overflow:hidden}

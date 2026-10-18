@@ -279,6 +279,31 @@ document.addEventListener('click',e=>{const n=e.target.closest('button'),row=e.t
 });
 function imageHolder(q,key){const [kind,id,r,c]=key.split(':');return kind==='block'?q.blocks.find(b=>b.id===id):kind==='choice'?q.choices.find(c=>c.id===id):kind==='cell'?(id==='choices'?q.choiceTable:q.blocks.find(b=>b.id===id)?.table)?.cells[Number(r)]?.[Number(c)]:null;}
 // 새 문항: 유형 → 자료 구조 2번 클릭. 배치는 자동이고, 자료 종류는 만든 뒤 엑셀에서 칸마다 고른다.
+// 기출 「변형」: 기출 PDF를 편집 가능한 한글 문항으로 바꿔(AI 없음, 변환 엔진 assets/exampool/convert) 새 문항 카드로 연다.
+// 원본 PDF는 5E 공개 게이트웨이(공유 폴더 「기출문제」)에서 받는다. 원본 출처는 근거로 붙고, 기준 용지는 원본 비율(B4).
+let convertingPast=null;
+async function convertPast(item){
+  if(convertingPast){status(`${convertingPast} 을(를) 바꾸는 중입니다. 끝나면 다시 눌러 주세요.`);return;}
+  if(data.questions.length>=500){status('문항은 500개까지 만들 수 있습니다.',true);return;}
+  convertingPast=item.title;status(`${item.title} 을(를) 편집 가능한 한글 문항으로 바꾸는 중… (AI 없음)`);
+  try{
+    const engine=await import('../convert/kice-engine.js?v=1019-convert'),drive=await import('../convert/es/drive-source.mjs');
+    engine.setPdfSource(name=>{const path=name===item.pdfFile?item.publicPath:null;if(!path)throw Error('원본 PDF 경로를 찾지 못했습니다.');return drive.downloadDriveFile(path);});
+    const r=item.record||[];
+    const source={id:item.id,subject:item.subject,title:item.title,page:item.page,box:item.box,pdfFile:item.pdfFile,publicPath:item.publicPath,no:String(item.no),
+      ...(r.length?{form:r[0],struct:r[1],layout:r[2],choiceShape:r[3],choiceArrange:r[4]}:{})};
+    const {question:q,diag}=await engine.convertKice(source,{number:String(data.questions.length+1)});
+    q.references=[{target:'question',label:`원본 기출 · ${item.title}`.slice(0,300),quote:'',page:item.page}];
+    q.workflow='draft';
+    const ok=mutate(()=>{current=q;data.questions.push(q);const exam=['exam','card','desk'].includes(view.name)&&view.examId&&examById(data,view.examId);if(exam){addToExam(data,exam.id,q.id);renumberExam(data,exam.id);}});
+    if(!ok)return;
+    openCard(q.id);cardEditor.showHwp?.();
+    const warn=(diag?.notes||[]).filter(n=>/못|확인|제외|원본 참고/.test(n));
+    const done=`${item.title} → ${q.number}번 문항으로 가져왔습니다 · 원본은 근거로 연결${warn.length?' · 확인: '+warn[0]:''}`;
+    status(done);setTimeout(()=>status(done),1500);// 자동 저장 표시가 덮지 않게 한 번 더
+  }catch(e){status(`${item.title} 변환 실패: ${e.message}`,true);}
+  finally{convertingPast=null;}
+}
 const newDialog=createNewQuestionDialog($('#new-dialog'),{onCreate:shape=>mutate(()=>{if(data.questions.length>=500)throw Error('문항은 500개까지 만들 수 있습니다.');current=questionFromShape(shape,String(data.questions.length+1));data.questions.push(current);activeTab='composition';const exam=['exam','card','desk'].includes(view.name)&&view.examId&&examById(data,view.examId);if(exam){addToExam(data,exam.id,current.id);renumberExam(data,exam.id);}})&&(show('card'),true)});
 $('#new').onclick=()=>newDialog.open();
 $('#edit-detail').onclick=()=>openDetail();
@@ -497,6 +522,7 @@ const cardEditor=createCardEditor($('#card-view'),{
   choiceTable:()=>{sheetView='tables';show('desk');renderSheetView();},
   typeset:()=>{cardEditor.showHwp?.();},
   libraryPicks:()=>libraryPicks,
+  convertPast:item=>void convertPast(item),
   pickLibrary:kind=>{if(!embedded){status('5E 안에서 열어야 5E 라이브러리를 쓸 수 있습니다.',true);return;}window.parent.postMessage({channel:'5e-question-sheet',action:'library-pick',requestId:uid(),qid:current?.id,kind},location.origin);status('5E 라이브러리에서 고르세요 · 다 고르면 자동으로 돌아옵니다.');},
   libraryAction:(act,i)=>{const p=libraryPicks[i],q=current;if(!p||!q)return;const where=[p.source?.documentTitle||p.name,p.source?.pageNumber?p.source.pageNumber+'쪽':''].filter(Boolean).join(' ');
     if(act==='link'){mutate(()=>{q.references.push({target:'question',label:('5E 라이브러리 · '+where).slice(0,300),quote:(p.source?.title&&p.source.title!==p.source.documentTitle?p.source.title:'').slice(0,2000)});},{render:false});cardEditor.render();status(`${where}을(를) 이 문항의 근거로 연결했습니다.`);return;}

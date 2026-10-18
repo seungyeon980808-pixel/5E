@@ -82,6 +82,22 @@ export async function normalizeQuestionImport(bytes,JSZip){
 
 // 자료 표·그림이 있는 문단(글이 없는 문단)도 찾는다.
 const controlParas=(document,sec)=>{const set=new Set();for(let p=0;p<document.pageCount();p++)for(const c of JSON.parse(document.getPageControlLayout(p)).controls||[])if(c.secIdx===sec&&!(c.cellPath||[]).length)set.add(c.paraIdx);return [...set];};
+// 상자·묶음 칸 안 그림 가운데(사용자 결정: 그림은 무조건 가운데). HTML에서 칸 안 그림을 가운데 문단으로 감싸면 한글 엔진이 줄 배치를 빠뜨리므로,
+// 한글 문서를 만든 뒤 칸 안에서 '그림만 있는 문단'의 정렬만 가운데로 바꾼다. 글과 함께 있는 그림·떠 있는 그림은 건드리지 않는다.
+export function centerCellPictures(document){
+  const key=(s,p,path)=>`${s}:${p}:${JSON.stringify((path||[]).map(c=>[c.controlIndex??c.controlIdx,c.cellIndex??c.cellIdx,c.cellParaIndex??c.cellParaIdx]))}`;
+  const texted=new Set(),targets=new Map();
+  for(let page=0;page<document.pageCount();page++){
+    for(const r of JSON.parse(document.getPageTextLayout(page)).runs||[])if(r.cellPath?.length&&String(r.text||'').trim())texted.add(key(r.secIdx,r.paraIdx,r.cellPath));
+    const layout=document.getPageControlLayout(page),controls=(typeof layout==='string'?JSON.parse(layout):layout).controls||[];
+    for(const c of controls)if(c.type==='image'&&c.cellPath?.length===1)targets.set(key(c.secIdx,c.paraIdx,c.cellPath),c);
+  }
+  let n=0;
+  for(const [k,c] of targets){if(texted.has(k))continue;const cell=c.cellPath[0];
+    try{document.applyParaFormatInCell(c.secIdx,c.paraIdx,cell.controlIndex??cell.controlIdx,cell.cellIndex??cell.cellIdx,cell.cellParaIndex??cell.cellParaIdx,JSON.stringify({alignment:'center'}));n++;}catch{}}
+  if(n)document.reflowLinesegs?.();
+  return n;
+}
 export function applyQuestionIndent(document,number,{body=false,askLead='',askIndent=0}={}){
   if(!number)return;
   const prefix=`${number}. `;

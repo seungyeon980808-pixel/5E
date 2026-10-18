@@ -310,8 +310,11 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
         if(!b.figure&&ghost.figures.has(b.id)&&ghostFigure){const w=sizedWidth(b,width);b.figure=ghostFigure(Math.round(w),Math.round(Math.min(150,w*.55)),b.label);}
         // 평가원 지면: 글 아래(맨 바깥) 그림은 가운데. 정렬을 고른 그림만 그쪽으로. 상자·묶음 칸 안 그림은 예전처럼 칸 흐름대로
         // (칸 안에서 가운데 문단으로 감싸면 한글 엔진이 그 줄 배치를 빠뜨려 아래 글이 그림과 겹친다).
-        if(b.figure)html+=await picture(b.figure,sizedWidth(b,width),b.align||(b.parent?undefined:'가운데'),{kind:'block',id:b.id})+(/^\(.+\)$/.test(b.label)||b.text?(b.text?p:pc)((/^\(.+\)$/.test(b.label)?b.label:'')+(b.text?' '+b.text:''),width,11,b.text?{kind:'block',id:b.id,prefix:(/^\(.+\)$/.test(b.label)?b.label:'').length+1}:null):'');
-      }else if(b.kind==='table')html+=heading(b)+await table(b.table,sizedWidth(b,width),false,b.align,{kind:'block',id:b.id},b.size===undefined,width);
+        // 그림은 무조건 가운데(사용자 결정 2026-10-19). 글 옆 어울림 그림만 예외(위 floats).
+        // 칸 안(상자·묶음)에서는 가운데 문단 대신 테두리 없는 한 칸 표로 감싸 가운데에 둔다(2×N 표 칸과 같은 방식).
+        // 칸 안(상자·묶음)은 HTML에서 가운데 문단으로 감싸면 한글 엔진이 줄 배치를 빠뜨리므로, 한글 문서를 만든 뒤 그 문단만 가운데로 바꾼다(typeset.js centerCellPictures).
+        if(b.figure)html+=((nested||inBox)?await picture(b.figure,sizedWidth(b,width),undefined,{kind:'block',id:b.id}):await picture(b.figure,sizedWidth(b,width),'가운데',{kind:'block',id:b.id}))+(/^\(.+\)$/.test(b.label)||b.text?(b.text?p:pc)((/^\(.+\)$/.test(b.label)?b.label:'')+(b.text?' '+b.text:''),width,11,b.text?{kind:'block',id:b.id,prefix:(/^\(.+\)$/.test(b.label)?b.label:'').length+1}:null):'');
+      }else if(b.kind==='table')html+=heading(b)+await table(b.table,sizedWidth(b,width),false,'가운데',{kind:'block',id:b.id},b.size===undefined,width);
       else if(b.kind==='group'){
         const boxed=b.boxed===true||b.boxed===undefined&&b.label==='실험',children=q.blocks.filter(x=>x.parent===b.id);let body;
         const isBoxed=g=>g.boxed===true||g.boxed===undefined&&g.label==='실험',kidsOf=g=>q.blocks.filter(x=>x.parent===g.id);
