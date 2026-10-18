@@ -14,7 +14,8 @@ function similarity(a,b){if(!a.length&&!b.length)return 1;if(!a.length||!b.lengt
   for(let i=1;i<=n;i++){const ai=a.charCodeAt(i-1);for(let j=1;j<=m;j++)cur[j]=ai===b.charCodeAt(j-1)?prev[j-1]+1:(prev[j]>cur[j-1]?prev[j]:cur[j-1]);[prev,cur]=[cur,prev];cur.fill(0);}
   return 2*prev[m]/(n+m);}
 function equationsIn(q){let n=0;const add=s=>{n+=(String(s||'').match(EQ)||[]).length;};add(q.ask);for(const b of q.blocks||[]){add(b.text);for(const l of b.lines||[])add(l.text);if(b.table)for(const r of b.table.cells)for(const c of r)add(c.value);}
-  for(const c of q.choices||[])add(c.text);if(q.form==='pair'||q.style==='대응표')for(const r of q.choiceTable?.cells||[])for(const c of r)add(c.value);return n;}
+  // 대응표 선지는 선지표만 찍힌다. 평가원 두 갈래 선지표(①②/③④/⑤)는 머리 행이 두 번 찍힌다(원본과 같음).
+  const t=q.choiceTable,pair=q.form==='pair'||q.style==='대응표';if(!pair)for(const c of q.choices||[])add(c.text);else if(t){for(const r of t.cells)for(const c of r)add(c.value);if(t.cols<=3&&t.headerRows===1&&t.rows===6&&!t.merges.length&&!t.cells.flat().some(c=>c.figure))for(const c of t.cells[0])add(c.value);}return n;}
 function score(item,ref,conv,ts,{convertOnly=false}={}){
   const row={id:item.id,subject:item.subject,form:item.form,struct:item.struct,layout:item.layout,title:item.title,checks:{},reasons:[]};
   const fail=(k,why)=>{row.checks[k]=false;row.reasons.push(`${k}: ${why}`);};const pass=k=>{if(row.checks[k]!==false)row.checks[k]=true;};
