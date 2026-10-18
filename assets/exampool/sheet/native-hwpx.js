@@ -75,35 +75,44 @@ export function clearEmptyTableAnchorLines(xml){
 // 글 없이 그림만 든 문단(글 아래 그림)의 줄 위치도 들여올 때의 값(수식 자리표시 글자로 길어진 앞 문단 기준)이 남아
 // 그림 위에 큰 빈칸이 생긴다. 줄 배치를 지우면 한글 엔진이 그림을 빠뜨리므로, 바로 앞 문단이 끝나는 자리로 고쳐 둔다.
 // 앞 문단 끝을 모르면(줄 배치를 비운 표 문단) 0으로 두어 엔진이 흐름대로 놓게 한다.
+// 가운데 맞춘 그림 문단은 한글 엔진의 HWPX 쓰기가 줄 배치를 빠뜨린다(표 칸 안도). 그림 크기로 한 줄을 써 둔다.
 export function restackPictureLines(xml){
-  const stack=[],roots=[];
-  for(const token of xml.matchAll(/<hp:p\b[^>]*>|<\/hp:p>|<hp:pic\b|<hp:tbl\b|<hp:t(?:\s[^>]*)?>[\s\S]*?<\/hp:t>/g)){
-    if(token[0].startsWith('<hp:p ')){const p={start:token.index,pic:false,other:false};if(!stack.length)roots.push(p);stack.push(p);}
-    else if(token[0]==='</hp:p>'){const p=stack.pop();if(!stack.length&&p)p.end=token.index;}
-    else if(stack.length===1&&token[0].startsWith('<hp:pic'))stack[0].pic=true;
-    else if(stack.length===1&&(token[0].startsWith('<hp:tbl')||token[0].replace(/<[^>]+>/g,'').trim()))stack[0].other=true;
+  // 문단 목록(본문, 표 칸마다)별로 이웃 문단을 따라간다.
+  const stack=[],root={paras:[]},open=[root],lists=[root];
+  for(const token of xml.matchAll(/<hp:subList\b[^>]*>|<\/hp:subList>|<hp:p\b[^>]*>|<\/hp:p>|<hp:pic\b|<hp:tbl\b|<hp:t(?:\s[^>]*)?>[\s\S]*?<\/hp:t>/g)){
+    const t=token[0];
+    if(t.startsWith('<hp:subList')){const list={paras:[]};lists.push(list);open.push(list);}
+    else if(t==='</hp:subList>')open.pop();
+    else if(t.startsWith('<hp:p ')){const p={start:token.index,pic:false,other:false,root:!stack.length};open.at(-1).paras.push(p);stack.push(p);}
+    else if(t==='</hp:p>'){const p=stack.pop();if(p)p.end=token.index;}
+    else if(!stack.length)continue;
+    else if(t.startsWith('<hp:pic'))stack.at(-1).pic=true;
+    else if(t.startsWith('<hp:tbl')||t.replace(/<[^>]+>/g,'').trim())stack.at(-1).other=true;
   }
   const value=(tag,key)=>Number(tag.match(new RegExp(`\\b${key}="(-?\\d+)"`))?.[1]);
-  const edits=[];let prevEnd=null;
-  for(const p of roots){
-    if(p.end===undefined){prevEnd=null;continue;}
-    const tail=xml.slice(p.start,p.end),own=tail.slice(tail.lastIndexOf('</hp:run>')+1),array=own.match(/<hp:linesegarray>[\s\S]*?<\/hp:linesegarray>/),segs=array?[...array[0].matchAll(/<hp:lineseg\b[^>]*>/g)].map(m=>m[0]):[];
-    if(p.pic&&!p.other&&segs.length===1){
-      const want=prevEnd??0,at=p.start+(tail.length-own.length)+array.index+array[0].indexOf(segs[0]);
-      if(value(segs[0],'vertpos')!==want)edits.push([at,segs[0],segs[0].replace(/\bvertpos="-?\d+"/,`vertpos="${want}"`)]);
-    }else if(p.pic&&!p.other&&!array){
-      // 가운데 맞춘 그림 문단은 한글 엔진의 HWPX 쓰기가 줄 배치를 빠뜨린다. 그림 크기로 한 줄을 써 둔다.
-      const pics=[...tail.matchAll(/<hp:pic\b[\s\S]*?<\/hp:pic>/g)].map(m=>m[0]),size=pic=>{const sz=pic.match(/<hp:sz\b[^>]*>/)?.[0]||'',margin=pic.match(/<hp:outMargin\b[^>]*>/)?.[0]||'';return {w:value(sz,'width')+(value(margin,'left')||0)+(value(margin,'right')||0),h:value(sz,'height')+(value(margin,'top')||0)+(value(margin,'bottom')||0)};};
-      const sizes=pics.map(size).filter(s=>Number.isFinite(s.w)&&Number.isFinite(s.h));
-      if(sizes.length===pics.length&&sizes.length){
-        const h=Math.max(...sizes.map(s=>s.h)),w=sizes.reduce((a,s)=>a+s.w,0);
-        const seg=`<hp:lineseg textpos="0" vertpos="${prevEnd??0}" vertsize="${h}" textheight="${h}" baseline="${Math.round(h*.85)}" spacing="600" horzpos="0" horzsize="${w}" flags="393216"/>`;
-        edits.push([p.end,'',`<hp:linesegarray>${seg}</hp:linesegarray>`]);segs.push(seg);
+  const edits=[];
+  for(const list of lists){
+    let prevEnd=null;
+    for(const p of list.paras){
+      if(p.end===undefined){prevEnd=null;continue;}
+      const tail=xml.slice(p.start,p.end),body=tail.slice(tail.lastIndexOf('</hp:run>')+1),array=body.match(/<hp:linesegarray>[\s\S]*?<\/hp:linesegarray>/);
+      const segs=array?[...array[0].matchAll(/<hp:lineseg\b[^>]*>/g)].map(m=>m[0]):[];
+      if(p.pic&&!p.other&&segs.length===1&&p.root){
+        const want=prevEnd??0,at=p.start+(tail.length-body.length)+array.index+array[0].indexOf(segs[0]);
+        if(value(segs[0],'vertpos')!==want)edits.push([at,segs[0],segs[0].replace(/\bvertpos="-?\d+"/,`vertpos="${want}"`)]);
+      }else if(p.pic&&!p.other&&!array){
+        const pics=[...tail.matchAll(/<hp:pic\b[\s\S]*?<\/hp:pic>/g)].map(m=>m[0]),size=pic=>{const sz=pic.match(/<hp:sz\b[^>]*>/)?.[0]||'',margin=pic.match(/<hp:outMargin\b[^>]*>/)?.[0]||'';return {w:value(sz,'width')+(value(margin,'left')||0)+(value(margin,'right')||0),h:value(sz,'height')+(value(margin,'top')||0)+(value(margin,'bottom')||0)};};
+        const sizes=pics.map(size).filter(v=>Number.isFinite(v.w)&&Number.isFinite(v.h));
+        if(sizes.length===pics.length&&sizes.length){
+          const h=Math.max(...sizes.map(v=>v.h)),w=sizes.reduce((a,v)=>a+v.w,0);
+          const seg=`<hp:lineseg textpos="0" vertpos="${prevEnd??0}" vertsize="${h}" textheight="${h}" baseline="${Math.round(h*.85)}" spacing="600" horzpos="0" horzsize="${w}" flags="393216"/>`;
+          edits.push([p.end,'',`<hp:linesegarray>${seg}</hp:linesegarray>`]);segs.push(seg);
+        }
       }
+      const last=segs.at(-1);prevEnd=last?value(last,'vertpos')+value(last,'vertsize')+value(last,'spacing'):null;
+      if(!Number.isFinite(prevEnd))prevEnd=null;
     }
-    const last=segs.at(-1);prevEnd=last?value(last,'vertpos')+value(last,'vertsize')+value(last,'spacing'):null;
-    if(!Number.isFinite(prevEnd))prevEnd=null;
   }
-  for(const [at,old,next] of edits.reverse())xml=xml.slice(0,at)+next+xml.slice(at+old.length);
+  for(const [at,old,next] of edits.sort((a,b)=>b[0]-a[0]))xml=xml.slice(0,at)+next+xml.slice(at+old.length);
   return xml;
 }
