@@ -48,7 +48,7 @@ export function flowItems(structure){
   const rights=body.map(i=>Math.round(i.right/3)*3),mode=rights.length?Number([...rights.reduce((m,r)=>m.set(r,(m.get(r)||0)+1),new Map())].sort((a,b)=>b[1]-a[1]||a[0]-b[0])[0][0])+3:Infinity;
   const first=body[0],edge=first&&first.right-first.left>150?first.right+2:mode;
   const WM=/^(물|리|화|생|명|과|학|지|구|II|Ⅱ|I|Ⅰ)$/;
-  const margin=i=>i.k==='line'&&i.geo&&i.right-i.left<16&&i.left>edge-2&&i.text.replace(/\s/g,'').length<=2;
+  const margin=i=>i.k==='line'&&i.geo&&i.right-i.left<26&&i.left>edge-2&&i.text.replace(/\s/g,'').length<=2;
   // 여백 글자가 본문 줄 끝에 붙어 읽힌 경우: 줄 끝 낱말 하나를 뗀다.
   for(const i of out)if(i.k==='line'&&i.geo&&i.right>edge+10){const t=tokens(i.text);if(t.length>1&&WM.test(t.at(-1))){i.text=t.slice(0,-1).join(' ');i.right=edge;structure.watermark=true;}}
   if(out.some(margin))structure.watermark=true;
@@ -122,7 +122,8 @@ export function analyze(structure,item={}){
   const flow=items.filter(it=>!(it.k==='line'&&it.role==='bogi'));
   const besideAt=k=>{const it=flow[k];if(!it.box)return false;const p=flow.slice(0,k).reverse().find(x=>x.k==='line'),n=flow.slice(k+1).find(x=>x.k==='line');
     const apart=l=>l&&l.geo&&l.rect===it.rect&&(l.right<=it.box[0]+2||l.left>=it.box[2]-2)&&Number.isFinite(l.base)&&l.base>=it.box[1]-2&&l.base<=it.box[3]+l.h+14;
-    return apart(p)&&apart(n);};
+    // 앞 줄이 그림 옆이고 다음 줄이 같은 칸에서 이어지면(그림 아래로 흐르는 문단) 문단 뒤로 미룬다.
+    return apart(p)&&(apart(n)||!!n&&n.geo&&n.rect===it.rect&&!MARK.test(n.text)&&!HEAD.test(n.text));};
   let deferred=[];
   for(const [k,it] of flow.entries()){
     if(it.k==='line'&&(!run.length||run[0].rect===it.rect)){run.push(it);continue;}
@@ -164,7 +165,7 @@ export function analyze(structure,item={}){
   // 오른쪽 끝에 홀로 찍힌 [3점] 줄(그림 뒤로 밀린 경우 포함)
   let lone=false;for(const list of [pre,post])for(let k=list.length-1;k>=0;k--)if(list[k].k==='para'&&/^\[\s*3\s*점\s*\]$/.test(list[k].text)){list.splice(k,1);lone=true;}
   const three=lone||THREE.test(ask)||/\[\s*3\s*점\s*\]/.test(ask);ask=ask.replace(/\s*\[\s*3\s*점\s*\]\s*/g,' ').trim();
-  return {items,rects,nodes:[...pre,...post],after:post,ask,three,header,B};
+  return {items,rects,nodes:[...pre,...post],after:post,ask,three,header,B,bodyH:opening?.h||null};
 }
 
 // 선지표 머리줄: 짧은 낱말 2~6개(㉠ ㉡, A B C, (가) (나), 수식 한 덩이 등).

@@ -342,8 +342,27 @@ export function lineRuns(line) {
       || stackRank(left) - stackRank(right) || right.y - left.y);
   const runs = [];
   let previous = null;
+  // 5E 기출 복원: 수식 글꼴의 작은 글자가 바로 앞 수식 글자보다 내려가/올라가 있으면 아래/위첨자(λ_A, v_B).
+  let base = null, script = null;
   for (const item of items) {
     if (!item.value) continue;
+    if (item.math && base && previous?.math && !item.recovered && /^[A-Za-z0-9+−-]{1,3}$/u.test(item.value.trim())
+      && item.height > 0 && item.height <= base.height * 0.8
+      && item.x - (previous.x + previous.width) >= -1 && item.x - (previous.x + previous.width) <= 1.6
+      && Math.abs(item.y - base.y) >= 1.2 && Math.abs(item.y - base.y) <= base.height * 0.7) {
+      const mark = item.y < base.y ? '_' : '^';
+      const last = runs.at(-1);
+      if (last?.kind === 'equation') {
+        if (script && script.mark === mark && Math.abs(script.y - item.y) < 1) last.script = last.script.replace(/\}$/u, `${item.value.trim()}}`);
+        else last.script += `${mark}{${item.value.trim()}}`;
+        script = { mark, y: item.y };
+        previous = item;
+        continue;
+      }
+    }
+    script = null;
+    if (item.math && !(base && item.height <= base.height * 0.8 && Math.abs(item.y - base.y) >= 1.2)) base = item;
+    if (!item.math) base = null;
     const kind = item.math ? 'equation' : 'text';
     const value = item.value;
     const gap = previous ? item.x - previous.x - previous.width : 0;
