@@ -254,12 +254,14 @@ export function applyFloatingPictures(document,floats){
 export function settleFloatingPictures(document){
   const GAP=4,pics=[];
   for(let page=0;page<document.pageCount();page++)for(const c of JSON.parse(document.getPageControlLayout(page)).controls||[]){
-    if(c.type!=='image'||c.cellPath?.length)continue;
-    const props=JSON.parse(document.getPictureProperties(c.secIdx,c.paraIdx,c.controlIdx));if(props.treatAsChar)continue;
-    pics.push({page,sec:c.secIdx,para:c.paraIdx,ci:c.controlIdx,props});
+    if(!['image','table'].includes(c.type)||c.cellPath?.length)continue;
+    const props=JSON.parse(c.type==='image'?document.getPictureProperties(c.secIdx,c.paraIdx,c.controlIdx):document.getTableProperties(c.secIdx,c.paraIdx,c.controlIdx));if(props.treatAsChar)continue;
+    if(pics.some(p=>p.type===c.type&&p.para===c.paraIdx&&p.ci===c.controlIdx))continue;
+    pics.push({page,type:c.type,sec:c.secIdx,para:c.paraIdx,ci:c.controlIdx,props});
   }
   if(!pics.length)return false;
-  const box=p=>(JSON.parse(document.getPageControlLayout(p.page)).controls||[]).find(c=>c.type==='image'&&c.secIdx===p.sec&&c.paraIdx===p.para&&c.controlIdx===p.ci);
+  const box=p=>(JSON.parse(document.getPageControlLayout(p.page)).controls||[]).find(c=>c.type===p.type&&c.secIdx===p.sec&&c.paraIdx===p.para&&c.controlIdx===p.ci);
+  const setProps=(p,v)=>p.type==='image'?document.setPictureProperties(p.sec,p.para,p.ci,JSON.stringify(v)):document.setTableProperties(p.sec,p.para,p.ci,JSON.stringify(v));
   const lines=(p,para)=>{const m=new Map();for(const r of JSON.parse(document.getPageTextLayout(p.page)).runs){if(r.cellPath?.length||r.secIdx!==p.sec||r.paraIdx!==para||!r.text.trim())continue;const k=Math.round(r.y*10),v=m.get(k)||{y:r.y,h:0,x0:Infinity,x1:-Infinity};v.h=Math.max(v.h,r.h);v.x0=Math.min(v.x0,r.x);v.x1=Math.max(v.x1,r.x+r.w);m.set(k,v);}return [...m.values()];};
   const controlParas=p=>new Set((JSON.parse(document.getPageControlLayout(p.page)).controls||[]).filter(c=>!c.cellPath?.length&&c.secIdx===p.sec&&(c.type==='table'||c.type==='image')).map(c=>c.paraIdx));
   const bottomOf=ls=>ls.length?Math.max(...ls.map(l=>l.y+l.h)):-Infinity;
@@ -269,10 +271,10 @@ export function settleFloatingPictures(document){
     const right=p.props.horzAlign!=='Left';let b=box(p);if(!b)continue;
     const own=lines(p,p.para),overlaps=own.some(l=>l.y<b.y+b.h&&l.y+l.h>b.y&&(right?l.x1>b.x+1:l.x0<b.x+b.w-1));
     if(!overlaps&&bottomOf(own)+GAP>=b.y+b.h)continue;
-    const room=b.w+(right?p.props.outerMarginLeft:p.props.outerMarginRight)/75+GAP;
+    const room=b.w+((right?p.props.outerMarginLeft:p.props.outerMarginRight)||0)/75+GAP+2;
     const narrow=para=>{const props=JSON.parse(document.getParaPropertiesAt(p.sec,para));document.applyParaFormat(p.sec,para,JSON.stringify(right?{marginRight:Math.round(((props.marginRight||0)+room)*150)}:{marginLeft:Math.round(((props.marginLeft||0)+room)*150)}));};
-    document.setPictureProperties(p.sec,p.para,p.ci,JSON.stringify({textWrap:'InFrontOfText',horzRelTo:'Column'}));
-    narrow(p.para);document.reflowLinesegs();b=box(p);
+    setProps(p,{textWrap:'InFrontOfText',horzRelTo:'Column'});
+    if(own.length)narrow(p.para);document.reflowLinesegs();b=box(p);
     let last=p.para;
     for(let para=p.para+1;Number.isInteger(count)?para<count:para<p.para+20;para++){
       const ls=lines(p,para);
@@ -280,8 +282,24 @@ export function settleFloatingPictures(document){
       if(Math.min(...ls.map(l=>l.y))>=b.y+b.h)break;
       narrow(para);document.reflowLinesegs();b=box(p);last=para;
     }
+    // 글 없는 문단에 붙은 표: 그 문단 높이만큼 내려 다음 문단 첫 줄과 위를 맞춘다.
+    if(!own.length&&last!==p.para){const top=Math.min(...lines(p,p.para+1).map(l=>l.y));if(Number.isFinite(top)&&top>b.y+.5){setProps(p,{vertOffset:Math.round((top-b.y)*75)});document.reflowLinesegs();b=box(p);}}
     const bottom=bottomOf(lines(p,last));
     if(b.y+b.h+GAP>bottom)space(p,last,b.y+b.h+GAP-bottom);
   }
   return true;
+}
+
+// 글 옆 표: 첫 지문(번호 문단) 바로 앞 문단에 든 표를 떠 있는 표로 바꾼다. 줄 배치는 settleFloatingPictures가 맞춘다.
+export function applyFloatingTable(document,spec,number){
+  if(!spec)return;
+  const prefix=`${number}. `;
+  for(let page=0;page<document.pageCount();page++){
+    const run=JSON.parse(document.getPageTextLayout(page)).runs.find(r=>!r.cellPath?.length&&r.text.startsWith(prefix));if(!run)continue;
+    const t=(JSON.parse(document.getPageControlLayout(page)).controls||[]).find(c=>c.type==='table'&&!c.cellPath?.length&&c.paraIdx===run.paraIdx-1);
+    if(!t)throw Error('글 옆 표를 찾지 못했습니다.');
+    const r=JSON.parse(document.setTableProperties(t.secIdx,t.paraIdx,t.controlIdx,JSON.stringify({treatAsChar:false,textWrap:'InFrontOfText',horzRelTo:'Column',horzAlign:spec.align,vertRelTo:'Para',vertAlign:'Top',vertOffset:0,horzOffset:0})));
+    if(r?.ok===false)throw Error('글 옆 표를 배치하지 못했습니다.');return;
+  }
+  throw Error('글 옆 표의 지문을 찾지 못했습니다.');
 }
