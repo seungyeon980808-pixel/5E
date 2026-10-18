@@ -178,32 +178,37 @@ export function tokens(t){const out=[];let cur='',eq=false;for(const ch of Strin
 export function pairTable(structure){
   const L=(structure.lineCells||[]).filter(l=>l.words?.length).map(l=>({y:l.y,h:l.height||10,words:l.words.map(w=>({x0:w.x0,x1:w.x1,t:clean(runsText(w.runs))})).filter(w=>w.t&&!/^￼/.test(w.t))})).filter(l=>l.words.length).sort((a,b)=>b.y-a.y);
   const first=L.findIndex(l=>l.words.some(w=>/^①/.test(w.t)));if(first<0)return null;
-  const rows=[];
-  for(const l of L.slice(first)){
-    if(!l.words.some(w=>/^[①②③④⑤]/.test(w.t)))break;
-    let cur=null;
+  const isMark=l=>l.words.some(w=>/^[①②③④⑤]/.test(w.t));
+  let last=first;while(last+1<L.length&&!L[last].words.some(w=>/^⑤/.test(w.t)))last++;
+  // 두 줄로 쓴 선지 칸(번호 줄 위아래에 반 줄씩): 번호 줄과 가까운 번호 없는 줄도 선지 영역에 넣는다.
+  let top=first;while(top-1>=0&&!isMark(L[top-1])&&L[top-1].y-L[first].y<L[first].h*1.05)top--;
+  let bot=last;while(bot+1<L.length&&!isMark(L[bot+1])&&L[last].y-L[bot+1].y<L[last].h*1.05)bot++;
+  const rows=[],markLines=L.slice(first,last+1).filter(isMark);
+  for(const l of markLines){let cur=null;
     for(const w of l.words){const m=w.t.match(/^([①②③④⑤])\s*(.*)$/);
-      if(m){cur={mark:m[1],x:w.x0,words:[]};rows.push(cur);if(m[2]){const k=(w.x1-w.x0)*(1-[...m[2]].length/[...w.t].length);cur.words.push({x0:w.x0+k,x1:w.x1,t:m[2]});}}
-      else if(cur)cur.words.push(w);}
-    if(rows.some(r=>r.mark==='⑤'))break;
-  }
+      if(m){cur={mark:m[1],x:w.x0,y:l.y,words:[]};rows.push(cur);if(m[2]){const k=(w.x1-w.x0)*(1-[...m[2]].length/[...w.t].length);cur.words.push({x0:w.x0+k,x1:w.x1,t:m[2],y:l.y});}}
+      else if(cur)cur.words.push({...w,y:l.y});}}
   if(rows.length!==5)return null;
   const starts=[];for(const x of rows.map(r=>r.x).sort((a,b)=>a-b))if(!starts.length||x-starts.at(-1)>6)starts.push(x);
   const blockOf=x=>{let k=0;starts.forEach((s,i)=>{if(x>=s-4)k=i;});return k;};
   const center=w=>(w.x0+w.x1)/2;
+  for(const l of L.slice(top,bot+1).filter(l=>!isMark(l))){
+    const ml=markLines.reduce((a,b)=>Math.abs(b.y-l.y)<Math.abs(a.y-l.y)?b:a);
+    for(const w of l.words){const r=rows.find(r=>r.y===ml.y&&blockOf(r.x)===blockOf(center(w)));if(r)r.words.push({...w,y:l.y});}}
+  for(const r of rows)r.words.sort((a,b)=>b.y-a.y||a.x0-b.x0);
   // 머리줄: 첫 선지 줄 바로 위, 짧은 낱말들, 물음표 없음.
-  let header=null;const up=L[first-1];
-  if(up&&up.y-L[first].y<L[first].h*3&&up.words.length>=2&&up.words.every(w=>w.t.replace(/\$[^$]*\$/g,'X').length<=14)&&!/[?.]$/.test(up.words.at(-1).t)){
+  let header=null;const up=L[top-1];
+  if(up&&up.y-L[top].y<L[top].h*3.2&&up.words.length>=2&&up.words.every(w=>w.t.replace(/\$[^$]*\$/g,'X').length<=14)&&!/[?.]$/.test(up.words.at(-1).t)){
     const own=up.words.filter(w=>blockOf(center(w))===0);
     if(own.length>=1)header=own.map(w=>({t:w.t,c:center(w)-starts[0]}));
   }
-  // 머리줄이 첫 선지 줄에 붙어 읽힌 경우(낱말 끝마다 $A$·$B$…)
   // 머리줄 글자(A·B·C…)가 첫 선지 줄 낱말 끝 수식에 붙어 읽힌 경우: '강자성체$A$', '$XA$선'.
   if(!header){const r1=rows[0].words,HM=/^(.*?)\$([^$]*?)([A-Z])\$(\S{0,3})$/;
     const ms=r1.map(w=>w.t.match(HM));
     if(r1.length>=2&&ms.every(Boolean)&&ms.every((m,i)=>m[3].charCodeAt(0)===ms[0][3].charCodeAt(0)+i)){
       header=ms.map((m,i)=>({t:`$${m[3]}$`,c:center(r1[i])-starts[0]}));
-      r1.forEach((w,i)=>{const m=ms[i];w.t=clean(m[1]+(m[2]?`$${m[2]}$`:'')+m[4]);});}}
+      // 같은 줄의 다른 단(②)에도 같은 머리 글자가 붙어 있다.
+      for(const r of rows.filter(r=>r.y===rows[0].y))for(const w of r.words){const m=w.t.match(HM);if(m&&/^[A-Z]$/.test(m[3]))w.t=clean(m[1]+(m[2]?`$${m[2]}$`:'')+m[4]);}}}
   if(!header){// 머리줄 없음: 첫 단 낱말 중심을 묶어 열을 만든다.
     const cs=rows.flatMap(r=>r.words.map(w=>center(w)-starts[blockOf(r.x)])).sort((a,b)=>a-b),cl=[];
     for(const c of cs){if(cl.length&&c-cl.at(-1).at(-1)<14)cl.at(-1).push(c);else cl.push([c]);}
