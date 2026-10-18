@@ -64,6 +64,15 @@ const eqLen2=s=>eqLen(s)+(String(s).replace(/\$[^$]*\$/g,'').match(/[×○●◯
 const eqScore=(p,t)=>!p&&!t?1:Math.min(p,t)/Math.max(p,t);
 function f1(pred,truth){const p=chars(pred),t=chars(truth);let hit=0,np=0,nt=0;for(const v of p.values())np+=v;for(const v of t.values())nt+=v;for(const [k,v] of p)hit+=Math.min(v,t.get(k)||0);
   if(!np&&!nt)return 1;if(!np||!nt)return 0;const P=hit/np,R=hit/nt;return P+R?2*P*R/(P+R):0;}
+// 칸 글이 원본 칸 폭을 얼마나 채우는지(글자 폭 어림: 한글 1em, 그 밖 0.55em, 분수는 분자·분모 중 긴 쪽).
+const lineWidth=(line,size)=>{let t=String(line);for(let i=0;i<4;i++)t=t.replace(/\\frac\{([^{}]*)\}\{([^{}]*)\}/g,(_,a,b)=>a.length>=b.length?a:b);
+  t=t.replace(/\\text\{([^{}]*)\}/g,'$1').replace(/\\[a-zA-Z]+|[$_^{}`~]/g,'');return [...t].reduce((w,c)=>w+(/[가-힣ㄱ-ㅎ㉠-㉿ⓐ-ⓩ○×△●]/u.test(c)?1:/\s/u.test(c)?.3:.55),0)*size;};
+function fitOf(tb){if(!tb.colWidths)return null;let fill=0,lines=0,frac=0,longest=0;
+  tb.merges=tb.merges||[];const span=(r,c)=>{const m=tb.merges.find(m=>m.r===r&&m.c===c);return m?m.cs:1;};
+  tb.cells.forEach((row,r)=>row.forEach((cell,c)=>{if(!cell.text)return;const w=tb.colWidths.slice(c,c+span(r,c)).reduce((a,b)=>a+b,0);const size=cell.size||tb.fontSize||10;
+    for(const l of cell.text.split('\n')){const lw=lineWidth(l,size);fill=Math.max(fill,lw/Math.max(1,w-2));longest=Math.max(longest,lw);}
+    lines=Math.max(lines,cell.lines||cell.text.split('\n').length);if(/\\frac/.test(cell.text))frac++;}));
+  return {fill:Math.round(fill*100)/100,lines,frac,widthPt:tb.widthPt,fontSize:tb.fontSize};}
 const iou=(a,b)=>{const x0=Math.max(a[0],b[0]),y0=Math.max(a[1],b[1]),x1=Math.min(a[2],b[2]),y1=Math.min(a[3],b[3]);if(x1<=x0||y1<=y0)return 0;const i=(x1-x0)*(y1-y0),A=(a[2]-a[0])*(a[3]-a[1]),B=(b[2]-b[0])*(b[3]-b[1]);return i/(A+B-i);};
 
 h.withServer(async origin=>{
@@ -80,7 +89,7 @@ h.withServer(async origin=>{
           if(r.ok){
             const used=new Set();
             r.figs.forEach((fb,k)=>{const t=r.tables.map((t,i)=>[i,iou(t.box,fb)]).filter(([i,v])=>v>.4&&!used.has(i)).sort((a,b)=>b[1]-a[1])[0];
-              if(t){used.add(t[0]);const tb=r.tables[t[0]];row.tables.push({box:fb,found:true,confidence:tb.confidence,source:tb.source,rows:tb.rows,cols:tb.cols,merges:tb.merges.length,f1:f1(tb.cells.flat().map(c=>c.text).join(' '),r.truthOf[k].text),eq:eqScore(eqLen2(tb.cells.flat().map(c=>c.text).join(' ')),r.truthOf[k].eq),cells:tb.cells.map(rw=>rw.map(c=>c.text))});}
+              if(t){used.add(t[0]);const tb=r.tables[t[0]];row.tables.push({box:fb,found:true,confidence:tb.confidence,source:tb.source,rows:tb.rows,cols:tb.cols,merges:tb.merges.length,fit:fitOf(tb),f1:f1(tb.cells.flat().map(c=>c.text).join(' '),r.truthOf[k].text),eq:eqScore(eqLen2(tb.cells.flat().map(c=>c.text).join(' ')),r.truthOf[k].eq),cells:tb.cells.map(rw=>rw.map(c=>c.text))});}
               else row.tables.push({box:fb,found:false,truth:r.truthOf[k].text.slice(0,200)});});
             r.tables.forEach((tb,i)=>{if(!used.has(i))row.tables.push({box:tb.box,found:true,extra:true,confidence:tb.confidence,source:tb.source,rows:tb.rows,cols:tb.cols,f1:f1(tb.cells.flat().map(c=>c.text).join(' '),tb.truth.text),eq:eqScore(eqLen2(tb.cells.flat().map(c=>c.text).join(' ')),tb.truth.eq)});});
           }

@@ -297,7 +297,11 @@ export function settleFloatingPictures(document){
       const ls=lines(p,para);
       if(!ls.length||controlParas(p).has(para))break;
       if(Math.min(...ls.map(l=>l.y))>=b.y+b.h)break;
-      narrow(para);document.reflowLinesegs();b=box(p);last=para;
+      // 그림 아래로 네 줄 가까이 넘게 길어지는 문단은 좁히지 않고 그림 밑에서 단 폭으로 시작하게 한다(긴 설명이 좁은 폭으로 길게 늘어지지 않게).
+      const before=JSON.parse(document.getParaPropertiesAt(p.sec,para));
+      narrow(para);document.reflowLinesegs();b=box(p);
+      if(bottomOf(lines(p,para))>b.y+b.h+90){document.applyParaFormat(p.sec,para,JSON.stringify(right?{marginRight:Math.round((before.marginRight||0)*150)}:{marginLeft:Math.round((before.marginLeft||0)*150)}));document.reflowLinesegs();b=box(p);break;}
+      last=para;
     }
     // 글 없는 문단에 붙은 표: 그 문단 높이만큼 내려 다음 문단 첫 줄과 위를 맞춘다.
     if(!own.length&&last!==p.para){const top=Math.min(...lines(p,p.para+1).map(l=>l.y));if(Number.isFinite(top)&&top>b.y+.5){setProps(p,{vertOffset:Math.round((top-b.y)*75)});document.reflowLinesegs();b=box(p);}}
