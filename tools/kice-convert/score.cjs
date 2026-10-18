@@ -35,7 +35,9 @@ function score(item,ref,conv,ts,{convertOnly=false}={}){
   if(convertOnly){row.pass=Object.values(row.checks).every(Boolean);return row;}
   if(!ts||ts.error&&!ts.status){fail('typeset',ts?.error||'조판 결과 없음');row.pass=false;return row;}
   // ② 글: 한글 조판 결과의 글 vs 원본 PDF 본문 글
-  const sim=ref?similarity(norm(ts.text),norm(ref.body)):0;row.textSim=Math.round(sim*1000)/1000;row.textHead=String(ts.text).slice(0,120);
+  // 수식 안 한글(세로 분수 속 '화학식량' 등)은 한글 본문 글로 나오지 않으므로 원본 쪽에서도 한 번씩 뺀다.
+  let refText=ref?norm(ref.body):'';for(const sc of ts.eqScripts||[])for(const w of String(sc).match(/[가-힣]{2,}/g)||[]){const k=refText.indexOf(w);if(k>=0)refText=refText.slice(0,k)+refText.slice(k+w.length);}
+  const sim=ref?similarity(norm(ts.text),refText):0;row.textSim=Math.round(sim*1000)/1000;row.textHead=String(ts.text).slice(0,120);
   if(sim<TEXT_MIN)fail('text',`글 일치 ${(sim*100).toFixed(1)}%`);pass('text');
   // ③ 수식: 문항의 $…$ 수 = 한글 문서의 수식 개체 수
   const want=equationsIn(q);row.eq={want,got:ts.eq};

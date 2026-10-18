@@ -88,6 +88,7 @@ async function typesetBatch(browser,origin,converted,wid){
         return {status,metrics,text,eq,eqScripts,usedMm:used?Number(used[1]):null,widthMm:width?Number(width[1]):null,error:document.querySelector('#typeset-status').dataset.error==='true'};
       });
       if(!args['no-shots']){const box=await sheet.locator('.cv-hwp-layer').boundingBox(),fr=await frameHandle.boundingBox();if(box)await page.screenshot({path:path.join(OUT,'shots',`${c.id}.png`),clip:{x:fr.x+box.x,y:fr.y+box.y,width:box.width,height:box.height}});}
+      fs.writeFileSync(path.join(OUT,'shots',`${c.id}.txt`),String(m.text||''));
       res.push({id:c.id,typeset:{...m,ms:Date.now()-t0}});
     }catch(e){const st=await sheet.evaluate(()=>({title:document.querySelector('#typeset-title')?.textContent,status:document.querySelector('#typeset-status')?.textContent,hidden:document.querySelector('#preview-dialog')?.hidden,busy:document.querySelector('#preview-dialog')?.getAttribute('aria-busy'),ready:document.querySelector('#native-editor')?.dataset.ready,layer:!!document.querySelector('.cv-hwp-layer:not([hidden])'),view:!document.querySelector('#card-view')?.hidden})).catch(()=>({}));res.push({id:c.id,typeset:{error:'조판 대기 실패: '+String(e.message).split('\n')[0]+' '+JSON.stringify(st)}});}
   }
