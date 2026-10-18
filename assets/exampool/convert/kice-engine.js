@@ -140,13 +140,15 @@ export async function toQuestion(structure,item,{number='1'}={}){
     const startAt=struct==='experiment'?nodes.findIndex(n=>n.k==='para'&&(HEAD.test(n.text)||/^\((가)\)/.test(n.text))):paras.length>1?nodes.indexOf(paras[1]):-1;
     if(startAt>0){const rect={box:null,virtual:true};for(const n of nodes.slice(startAt))if(n.k==='para'||struct==='experiment')n.rect=rect;A.rects.push(rect);diag.notes.push('상자 테두리를 찾지 못해 도입 문단 뒤 글을 상자로 넣었습니다.');}
   }
+  // 크기 기준 폭: 상자 안 자료는 상자 안쪽 폭(테두리·여백 약 16pt 뺌), 아니면 단 폭.
+  const within=n=>n.rect?.box?Math.max(40,n.rect.box[2]-n.rect.box[0]-16):col;
   const figure=(f,parent,label='자료',size=true)=>{const d=figs.get(f.run);const b=add('figure',parent,label);b.figure={name:`${item.id}-${++count.images}.png`,data:d.data};
-    if(size){const w=d.box?d.box[2]-d.box[0]:col*.6;b.size=Math.min(100,Math.max(10,Math.round(w/col*100/5)*5));}return b;};
+    if(size){const w=d.box?d.box[2]-d.box[0]:col*.6,base=within(f);b.size=Math.min(100,Math.max(10,Math.round(w/base*100/5)*5));}return b;};
   const table=(t,parent,label='자료')=>{const d=t.block.detected,b=add('table',parent,d?.caption||label);b.table=d?tableFromDetected(d):tableFromStructure(t.block);count.tables++;
     // 원본 열 폭(pt)·칸 글자 크기(pt): 조판기가 열 폭 비율과 글 크기를 원본대로 쓴다.
     const w=t.block.widths;if(Array.isArray(w)&&w.length===b.table.cols)b.table.colWidths=w.map(x=>Math.round(x*10)/10);
     if(t.block.fontSize)b.table.fontPt=t.block.fontSize;
-    if(t.box){const w=t.box[2]-t.box[0];b.size=Math.min(100,Math.max(10,Math.round(w/col*100/5)*5));}return b;};
+    if(t.box){const w=t.box[2]-t.box[0];b.size=Math.min(100,Math.max(10,Math.round(w/within(t)*100/5)*5));}return b;};
   const textBlock=(paras,parent,label)=>{const b=add('text',parent,label);b.text=paras.map(p=>p.text).join('\n');return b;};
   // 자료 바로 아래 이름 줄 '(가)'·'(가) 아세트산 (나) 뷰테인'과 범례 '(＋: …)'를 그 자료 칸에 붙인다(x 위치로 짝).
   // 그림: 이름은 label, 뒤 글은 text(조판기가 그림 아래에 찍음). 표: 이름은 label, 범례는 table.note.
