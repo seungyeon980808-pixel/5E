@@ -8,6 +8,12 @@
       ]
     },
     {
+      "path": "tests/test-visitor-stats-worker.mjs",
+      "findingIds": [
+        "VISITOR-STATS-WORKER"
+      ]
+    },
+    {
       "path": "tests/test-library-reference-destinations.mjs",
       "findingIds": [
         "LIBRARY-MIXED-DESTINATIONS"

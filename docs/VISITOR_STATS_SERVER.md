@@ -1,6 +1,18 @@
 # 방문자 집계 서버
 
-`scripts/visitor-stats-server.cjs`는 Node.js **24.21.0 이상, 25 미만**의 내장 `node:sqlite`만 사용한다. 별도 패키지 설치가 필요하지 않다. 서버와 푸터 표시 구현은 준비했으며 **운영 서버 배포는 아직 하지 않았다**.
+## 운영 서버 (2026-10-18 배포)
+
+- **Cloudflare Worker `5e-visitor-stats`** — `https://5e-visitor-stats.5e-desktop.workers.dev/api/visitor-stats`
+- 저장소: D1 `5e-visitor-stats` (`4a1580fd-b8bd-43ec-ad24-5a563a48ccf3`, 표는 `visitor/worker/migrations/0001_visitor_stats.sql`)
+- 코드: `visitor/api.mjs`(API·저장소, 아래 계약과 같음), `visitor/worker/index.mjs`, `visitor/worker/wrangler.jsonc`. 검사 `tests/test-visitor-stats-worker.mjs`
+- `index.html`의 `5e-visitor-stats-endpoint` 메타가 이 주소를 가리킨다(1.7.0 프리뷰만. 1.6.3 정식 화면에는 이 표시가 없다)
+- HMAC 비밀값은 D1 `metadata` 표에 처음 요청 때 만들어 보존한다. **D1을 지우거나 비밀값만 바꾸면 같은 방문자가 다시 집계되므로 함부로 초기화하지 않는다**
+- 요청 제한(주소당 분당 120회)은 Worker 인스턴스마다 따로 센다. 정확한 차단이 필요하면 Cloudflare 규칙을 쓴다
+- 다시 배포: `npx wrangler@4 deploy --config visitor/worker/wrangler.jsonc` (표 변경은 `d1 migrations apply 5e-visitor-stats --remote --config …`)
+
+## 로컬 Node 서버
+
+`scripts/visitor-stats-server.cjs`는 Node.js **24.21.0 이상, 25 미만**의 내장 `node:sqlite`만 사용한다. 별도 패키지 설치가 필요하지 않다. 운영은 위 Worker를 쓰고, 이 서버는 로컬 확인·자체 호스팅용으로 남겨 둔다.
 
 ## 집계 기준
 
