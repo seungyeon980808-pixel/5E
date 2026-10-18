@@ -188,8 +188,9 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
     const fontSize=t.cols>3?9:10,inner=width-(choices?25:0);
     // 열 폭: 크기를 정하지 않은 자료표는 칸 글 폭에 맞춘다(평가원 표는 글 길이만큼 좁고 가운데). 단 폭을 넘으면 비율대로 줄인다.
     let colW=Array(t.cols).fill(inner/t.cols);
-    if(auto&&measureText&&!t.cells.flat().some(c=>c.figure)){
-      const nat=Array(t.cols).fill(28),spans=[];
+    // 빈 표(틀만 만든 결과표 등)는 줄이지 않는다.
+    if(auto&&measureText&&!t.cells.flat().some(c=>c.figure)&&t.cells.flat().filter(c=>String(c.value).trim()).length>=Math.max(2,t.cols)){
+      const nat=Array(t.cols).fill(36),spans=[];
       for(let r=0;r<t.rows;r++)for(let c=0;c<t.cols;c++){
         if(tableCovered(t,r,c))continue;
         const m=t.merges.find(m=>m.r===r&&m.c===c),size=r<t.headerRows?fontSize-1:fontSize;
