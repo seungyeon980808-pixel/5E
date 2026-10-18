@@ -638,7 +638,7 @@ function cellFill(component, chains) {
   return { inside, filled: filled.size, share: filled.size / cells, cells };
 }
 
-function analyse(primitives, textItems, pageHeight) {
+export function analyse(primitives, textItems, pageHeight) {
   const texts = prepareTexts(textItems, pageHeight);
   const bodySize = bodySizeOf(texts);
   const chains = buildChains(texts);
@@ -886,7 +886,7 @@ export function figureRegions(primitives, textItems, pageHeight) {
     }
     for (const chain of labels) taken.add(chain);
     box = labels.map((c) => c.box).reduce(union, region.ink);
-    out.push({ box, ink: region.ink, kind: region.kind,
+    out.push({ box, ink: region.ink, kind: region.kind, inkBoxes: region.members.map((m) => m.box),
       labels: labels.flatMap((c) => c.members.map((m) => keyOf(m.item))),
       labelBoxes: labels.flatMap((c) => c.members.map((m) => m.box)),
       labelText: labels.map((c) => c.str) });
