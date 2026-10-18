@@ -218,6 +218,7 @@ function findCaptions(m,comps,s,body,texts){
 function gutterSplit(m,s,body,whole){
   let segs=runs(projection(m,whole,'x'),Math.round(body*s)).map(([a,b])=>{const t=trim(m,rect(whole.x0+a,whole.y0,whole.x0+b,whole.y1));return {x0:whole.x0+a,x1:whole.x0+b,t};});
   if(segs.length<2){
+    if((whole.y1-whole.y0)<body*s*3)return null;// 흐름도 띠처럼 납작한 그림은 화살표로 나누지 않는다
     // 흰 고랑이 없어도 화살표·연결선 같은 가는 줄 하나만 지나는 넓은 골(열마다 잉크 1.2pt 이하, 폭 1em 이상)이
     // 가운데쯤 있으면 그 골의 오른쪽 끝에서 나눈다(화살표는 앞 그림에 붙는다: 반응 전 → 반응 후).
     const proj=projection(m,whole,'x'),thr=Math.round(1.2*s),W0=whole.x1-whole.x0;let best=null;
@@ -229,10 +230,10 @@ function gutterSplit(m,s,body,whole){
     for(let i=0;i<proj.length;){if(!thinBand(i)){i++;continue;}let j=i;const ys=[];while(j<proj.length&&thinBand(j)){if(proj[j])ys.push(lo[j]);j++;}
       // 골 전체가 한 높이(화살표 줄)여야 한다.
       if(ys.length&&Math.max(...ys)-Math.min(...ys)>2.5*s){i=j;continue;}void bandY;
-      // 축·수평면·수직선처럼 그 줄이 양옆 그림 밑으로 길게 이어지면 화살표가 아니다.
+      // 축·수평면·수직선처럼 그 줄이 어느 한쪽 그림 밑으로라도 길게 이어지면 화살표가 아니다.
       if(ys.length){const yb=Math.round(ys.reduce((a,b)=>a+b,0)/ys.length),on=x=>{for(let y=yb-2;y<=yb+Math.round(2.5*s);y++)if(y>=0&&y<m.H&&m.ink[y*m.W+x])return true;return false;};
         let L=whole.x0+i,R=whole.x0+j-1;while(L>whole.x0&&on(L-1))L--;while(R<whole.x1-1&&on(R+1))R++;
-        if((whole.x0+i)-L>2*body*s&&R-(whole.x0+j-1)>2*body*s){i=j;continue;}}
+        if((whole.x0+i)-L>2*body*s||R-(whole.x0+j-1)>2*body*s){i=j;continue;}}
       if(j-i>=body*s&&i>W0*.15&&j<W0*.85&&(!best||j-i>best[1]-best[0]))best=[i,j];i=j;}
     if(!best)return null;
     const cut=whole.x0+best[1]-Math.round(.5*s);
