@@ -161,17 +161,20 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
   const pc=(v,width=null,fontSize=11,owner=null)=>`<p style="margin:4px 0;text-align:center">${text(v,width,fontSize,null,owner)}</p>`;
   // 글 옆 자료(맨 바깥 가로 묶음: 글 하나 + 그림·표 하나, 상자 아님)는 평가원처럼 글 문단 옆에 떠 있는 자료로 찍는다.
   // 그림은 어울림 그림으로, 표는 첫 지문 앞에 넣고 떠 있는 표로 바꾼다(applyFloatingTable). 자료 폭은 묶음 안 폭 비율 몫.
-  let floatTable=null;
+  let floatTable=null,floatShare=1;
   for(const g of q.blocks.filter(b=>!b.parent&&b.kind==='group'&&b.layout==='나란히'&&b.boxed!==true&&!(b.boxed===undefined&&b.label==='실험'))){
-    const kids=q.blocks.filter(b=>b.parent===g.id),txt=kids.find(b=>b.kind==='text'),mat=kids.find(b=>b.kind==='figure'||b.kind==='table');
-    if(kids.length!==2||!txt?.text||!mat||q.blocks.some(b=>b.parent===txt.id||b.parent===mat.id))continue;
-    const isOpening=q.blocks.find(b=>!b.parent)===g;if(mat.kind==='table'&&(!isOpening||kids[0]!==txt))continue;
+    const kids=q.blocks.filter(b=>b.parent===g.id),txt=kids.find(b=>b.kind==='text');
+    // 그림만 나란히 든 묶음((가)·(나) 그림)도 하나의 자료로 띄운다.
+    const figureRow=b=>b.kind==='group'&&b.layout==='나란히'&&b.boxed!==true&&!(b.boxed===undefined&&b.label==='실험')&&q.blocks.filter(x=>x.parent===b.id).length>1&&q.blocks.filter(x=>x.parent===b.id).every(x=>x.kind==='figure'&&!q.blocks.some(y=>y.parent===x.id));
+    const mat=kids.find(b=>b.kind==='figure'||b.kind==='table'||figureRow(b));
+    if(kids.length!==2||!txt?.text||!mat||q.blocks.some(b=>b.parent===txt.id)||mat.kind!=='group'&&q.blocks.some(b=>b.parent===mat.id))continue;
+    const isOpening=q.blocks.find(b=>!b.parent)===g;if(mat.kind!=='figure'&&(!isOpening||kids[0]!==txt))continue;
     const share=(mat.ratio||1)/((mat.ratio||1)+(txt.ratio||1)),size=Math.max(10,Math.min(70,Math.round(share*(mat.size??100))));
     const at=q.blocks.indexOf(g);q.blocks.splice(at,1);
     for(const b of [txt,mat]){q.blocks.splice(q.blocks.indexOf(b),1);b.parent=null;delete b.ratio;}
     mat.size=size;mat.align=kids[0]===mat?'왼쪽':'오른쪽';
     if(mat.kind==='figure'){mat.layout='어울림';q.blocks.splice(at,0,txt,mat);}
-    else{floatTable=mat;q.blocks.splice(at,0,txt,mat);}
+    else{if(mat.kind==='group')delete mat.size;floatTable=mat;floatShare=share;q.blocks.splice(at,0,txt,mat);}
   }
   const opening=q.blocks.find(b=>b.parent===null),firstText=opening?.kind==='text'&&opening.text?opening:null;
   const prefix=q.number?`${q.number}. `:'';
@@ -295,7 +298,7 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
   const walk=async(parent,width,onlyId=null)=>{
     let html='';
     for(const b of q.blocks.filter(b=>b.parent===parent&&(!onlyId||b.id===onlyId))){
-      if(b===firstText||!onlyId&&afterAsk.includes(b.id)||floated.has(b.id)||b===floatTable)continue;
+      if(b===firstText||!onlyId&&afterAsk.includes(b.id)||floated.has(b.id)||b===floatTable&&!onlyId)continue;
       html+=spacer(b);
       // 글 옆 묶음 칸 안의 첫 지문(번호 포함)도 칸 폭으로 어절 줄바꿈을 넣는다(엔진은 칸 안 글을 한 줄에 눌러 담는다).
       if(b===sideText)html+=measureText?`<p style="margin:4px 0;text-align:left">${text(prefix+b.text,Math.max(35,width-10),11,null,{kind:'block',id:b.id,prefix:prefix.length})}</p>`:p(prefix+b.text,width,11,{kind:'block',id:b.id,prefix:prefix.length});
@@ -427,7 +430,8 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
   const askParagraph=async()=>`<p style="margin:4px 0;text-align:justify">${sideText?await floatImages('first',width):''}${text(ask,null,11,asIs,askOwner())}</p>`;
   // 떠 있는 표는 첫 지문 바로 앞 문단에 둔다(한글 엔진은 표를 글 문단 안에 넣지 못한다).
   // 글 옆 표도 글이 다 들어가지 않으면 단 폭의 60%까지 넓힌다(남은 폭은 지문).
-  const floatHtml=floatTable&&firstText?await table(floatTable.table,sizedWidth(floatTable,width),false,undefined,{kind:'block',id:floatTable.id},false,Math.max(sizedWidth(floatTable,width),width*.6)):'';
+  const floatHtml=!floatTable||!firstText?'':floatTable.kind==='table'?await table(floatTable.table,sizedWidth(floatTable,width),false,undefined,{kind:'block',id:floatTable.id},false,Math.max(sizedWidth(floatTable,width),width*.6))
+    :await walk(null,Math.round(width*Math.min(.6,Math.max(.3,floatShare))),floatTable.id);
   let html=floatHtml+first+await walk(null,width)+(firstText||sideText?await askParagraph():'');
   for(const id of afterAsk)html+=await walk(null,width,id);
   if(q.type!=='서술형'){
