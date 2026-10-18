@@ -47,7 +47,7 @@ test('approved loading lifecycle: fast, slow, failure, retry, decode error, canc
  assert.equal(await page.evaluate(()=>delayed.stage.querySelectorAll('.br-stack').length),0);
  await page.evaluate(()=>{const node=delayed.frame;delayed.destroy();node.remove();});
 
- await page.evaluate(()=>{window.token={id:2};loading.begin({token,source:original,kind:'image',expectedMs:450});});
+ await page.evaluate(()=>{window.token={id:2};loading.begin({token,source:original,kind:'image',plan:null,expectedMs:450});});
  const frame=page.locator('[data-ai-loading-frame]');await frame.locator('.br-layer').first().waitFor();
  assert.equal(await frame.locator('.rs-step').textContent(),'');
  await page.waitForFunction(()=>document.querySelector('.rs-text').textContent.includes('평소보다'));
@@ -147,7 +147,9 @@ test('product entries and actual request signal mount the approved effect', {tim
  assert.equal(await page.evaluate(()=>window.__task2.sends.length),0,'the confirming Space press cannot also run image generation');
  await page.locator('#ai-image-panel [data-ai-comments-apply]').click();
  await page.locator('#ai-image-panel [data-ai-loading-frame] .br-layer').first().waitFor();
- assert.ok((await page.locator('#ai-image-panel .rs-text').textContent()).includes('원본 라벨·소속 확인 중'));
+ assert.match(await page.locator('#ai-image-panel .rs-text').textContent(),/원본(과 라벨)?을 읽고 있어요/);
+ assert.equal(await page.locator('#ai-image-panel .ai-loading-stage').count(),4,'four real stages are shown');
+ assert.equal(await page.locator('#ai-image-panel .ai-loading-stage[data-state="current"]').count(),1);
  assert.equal(await page.locator('#ai-image-panel .rs-step').textContent(),'');
  assert.equal(await page.locator('#ai-image-panel .br-stage').first().evaluate(n=>getComputedStyle(n).position),'absolute','the product entry loads the effect stylesheet');
  assert.equal(await page.locator('#ai-image-panel .rs').evaluate(n=>getComputedStyle(n).position),'absolute','the status band stylesheet is present in the real entry');
@@ -161,12 +163,13 @@ test('product entries and actual request signal mount the approved effect', {tim
  await page.waitForFunction(()=>window.__task2.sends.length>0);
  // Textbook/general conversion remains active through close/reopen. The
  // elapsed request clock and prepared blur canvases must survive navigation.
- await page.waitForFunction(()=>document.querySelector('#ai-image-panel .rs-elapsed').textContent>='00:01');
- const before=await page.locator('#ai-image-panel .rs-elapsed').textContent();
+ const secs=t=>{const m=String(t).match(/(\d+):(\d+)$/);return m?Number(m[1])*60+Number(m[2]):-1;};
+ await page.waitForFunction(()=>/0:0[1-9]|0:[1-5]\d/.test(document.querySelector('#ai-image-panel .ai-loading-meta').textContent));
+ const before=secs(await page.locator('#ai-image-panel .ai-loading-meta').textContent());
  await page.evaluate(async()=>{window.__task2Manager.close();await window.__task2Manager.open();});
  assert.equal(await page.locator('#ai-image-panel').getAttribute('data-blur-loading'),'true');
  assert.equal(await page.locator('#ai-image-panel .br-layer').count(),3);
- assert.ok((await page.locator('#ai-image-panel .rs-elapsed').textContent())>=before);
+ assert.ok(secs(await page.locator('#ai-image-panel .ai-loading-meta').textContent())>=before);
  assert.equal(await page.locator('#ai-image-panel [data-ai-generating]').evaluate(n=>getComputedStyle(n).opacity),'0');
  await page.evaluate(async()=>{
   await window.__task2Manager.openIndependentReferences({references:[{dataUrl:window.__task2.original,name:'다른 작업대'}],startGeneration:false});
@@ -175,7 +178,7 @@ test('product entries and actual request signal mount the approved effect', {tim
  await page.evaluate(()=>window.__task2Manager.revealImportedReferences(window.__imageReceipt));
  assert.equal(await page.locator('#ai-image-panel').getAttribute('data-blur-loading'),'true','loading survives an independent workspace round trip');
  assert.equal(await page.locator('#ai-image-panel .br-layer').count(),3);
- assert.ok((await page.locator('#ai-image-panel .rs-elapsed').textContent())>=before);
+ assert.ok(secs(await page.locator('#ai-image-panel .ai-loading-meta').textContent())>=before);
  assert.equal(await page.evaluate(()=>window.__task2.sends.length),1,'navigation never starts another request');
  await page.evaluate(()=>window.__task2.emit(0,'error'));
  await page.waitForFunction(()=>document.querySelector('#ai-image-panel [data-ai-loading-frame]').dataset.loadingState==='failed');

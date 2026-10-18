@@ -24,6 +24,7 @@
     revealMs: 8000,       // 3배 시간에 걸쳐 큰 윤곽을 드러낸다. 진행률을 뜻하지 않는다
     settleMs: 320,        // 실제 완료 신호에 맞춰 선명한 결과로 전환
     instantMs: 150,       // 결과가 이 시간 안에 오면 효과 없이 바로 표시
+    driven: false,        // true면 시간 대신 progress(0~1) 값만큼 선명해진다 (실제 단계 진행)
     fit: 'contain',         // 'cover' | 'contain'
     reducedMotion: null   // null이면 OS의 '동작 줄이기' 설정을 따른다
   };
@@ -127,9 +128,21 @@
 
     elapsed: function () { return performance.now() - this.t0; },
 
+    // 실제 진행률(0~1)에 맞춰 흐림을 걷는다. 앞으로만 간다.
+    progress: function (p) {
+      p = Math.max(this.progressValue || 0, Math.min(1, Math.max(0, p || 0)));
+      this.progressValue = p;
+      if (this.stack && this.stack.timeline) {
+        var total = this.stack.total;
+        this.stack.timeline.forEach(function (a) { a.pause(); a.currentTime = p * total; });
+      }
+      return this;
+    },
+
     start: function (placeholder, elapsedMs) {
       this.reset();
       this.state = 'loading';
+      this.progressValue = 0;
       this.t0 = performance.now() - Math.max(0, elapsedMs || 0);
       this.token = {};
       this.frame.classList.add('is-loading');
@@ -246,9 +259,12 @@
       }
 
       var D = o.revealMs, total = D * 3, e = this.elapsed(), self = this;
+      stack.timeline = []; stack.total = total;
       var run = function (node, frames) {
         var a = self._animate(node, frames, { duration: total, easing: 'linear', fill: 'forwards' });
-        a.currentTime = Math.min(e, total);
+        if (o.driven) { a.pause(); a.currentTime = (self.progressValue || 0) * total; }
+        else a.currentTime = Math.min(e, total);
+        stack.timeline.push(a);
         return a;
       };
       var mid = [{ opacity: 0 }, { opacity: 0, offset: 0.06 }, { opacity: 0.5, offset: 0.4 }, { opacity: 1 }];
@@ -267,6 +283,15 @@
         // A soft moving window shows the third, still-blurred level. The
         // counter-moving inner layer keeps the actual image geometry still.
         // All three blur canvases are prepared once; only transforms move.
+        if (o.driven) {
+          // 진행할수록 덜 흐린 레벨이 그림 전체에 깔린다. 지나가는 초점 창은 그대로 둔다.
+          var whole = canvas(c[2].width, c[2].height);
+          whole.getContext('2d').drawImage(c[2], 0, 0);
+          whole.className = 'br-whole';
+          whole.style.cssText = 'position:absolute;inset:0;width:100%;height:100%;display:block';
+          root.appendChild(whole);
+          run(whole, [{ opacity: 0 }, { opacity: 0, offset: 0.45 }, { opacity: 1 }]);
+        }
         var scan = el('div', 'br-focus-window'), content = el('div', 'br-focus-content');
         content.appendChild(c[2]); scan.appendChild(content);
         scan.appendChild(el('div', 'br-focus-glow')); root.appendChild(scan);
