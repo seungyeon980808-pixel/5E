@@ -92,8 +92,11 @@ export function tableFlow(extracted, pageHeight, toRuns) {
       return [];
     }
     const xs = [...new Set(table.grid.cells.flatMap((cell) => [cell.box[0], cell.box[2]]))].sort((a, b) => a - b);
+    // 5E 기출 복원: 칸 글자 크기(본문 글꼴 글자 높이의 가운데 값, pt). 조판기가 원본처럼 작은 표 글로 찍는다.
+    const heights = table.cells.flatMap((cell) => cell.items.filter((item) => !item.math && item.height > 0 && String(item.value || '').trim()).map((item) => item.height)).sort((a, b) => a - b);
+    const fontSize = heights.length ? Math.round(heights[heights.length >> 1] * 10) / 10 : null;
     return [{ kind: 'table', rows, spans: table.cells.map(({ row, col, rowSpan, colSpan }) => ({ row, col, rowSpan, colSpan })),
-      widths: xs.slice(1).map((x, col) => x - xs[col]), box: table.box, marker: `\uFFFCtable${index}\uFFFC` }];
+      widths: xs.slice(1).map((x, col) => x - xs[col]), fontSize, box: table.box, marker: `\uFFFCtable${index}\uFFFC` }];
   });
   // Captions centred just below their own ruled panel move with that panel. Keeping
   // them in the page-wide baseline flow would combine '(가) (나)' after both tables.

@@ -143,6 +143,9 @@ export async function toQuestion(structure,item,{number='1'}={}){
   const figure=(f,parent,label='자료',size=true)=>{const d=figs.get(f.run);const b=add('figure',parent,label);b.figure={name:`${item.id}-${++count.images}.png`,data:d.data};
     if(size){const w=d.box?d.box[2]-d.box[0]:col*.6;b.size=Math.min(100,Math.max(10,Math.round(w/col*100/5)*5));}return b;};
   const table=(t,parent,label='자료')=>{const d=t.block.detected,b=add('table',parent,d?.caption||label);b.table=d?tableFromDetected(d):tableFromStructure(t.block);count.tables++;
+    // 원본 열 폭(pt)·칸 글자 크기(pt): 조판기가 열 폭 비율과 글 크기를 원본대로 쓴다.
+    const w=t.block.widths;if(Array.isArray(w)&&w.length===b.table.cols)b.table.colWidths=w.map(x=>Math.round(x*10)/10);
+    if(t.block.fontSize)b.table.fontPt=t.block.fontSize;
     if(t.box){const w=t.box[2]-t.box[0];b.size=Math.min(100,Math.max(10,Math.round(w/col*100/5)*5));}return b;};
   const textBlock=(paras,parent,label)=>{const b=add('text',parent,label);b.text=paras.map(p=>p.text).join('\n');return b;};
   // 자료 바로 아래 이름 줄 '(가)'·'(가) 아세트산 (나) 뷰테인'과 범례 '(＋: …)'를 그 자료 칸에 붙인다(x 위치로 짝).
@@ -241,12 +244,17 @@ export async function toQuestion(structure,item,{number='1'}={}){
       const paras=s.items.filter(n=>n.k==='para');
       const stepish=/과정|방법/.test(s.name)||noHead&&paras.filter(p=>/^\((가|나|다)\)/.test(p.text)).length>=2;
       if(stepish){
-        const st=add('steps',g,s.name||'실험 과정');st.lines=[];
+        // 과정 글 옆 그림 하나: 상자 안 '글 옆 자료' 가로 묶음(과정 칸 + 그림).
+        const mats0=s.items.filter(n=>n.k!=='para'),pb=paras.map(paraBox).filter(Boolean);
+        const sideFig=mats0.length===1&&mats0[0].k==='figure'&&mats0[0].box&&pb.length&&pb.some(b=>yOverlap(b,mats0[0].box)>4)&&pb.filter(b=>yOverlap(b,mats0[0].box)>4).every(b=>mats0[0].box[0]>=b[2]-3)?mats0[0]:null;
+        let host=g;if(sideFig){host=add('group',g,'글 옆 자료');host.layout='나란히';host.boxed=false;}
+        const st=add('steps',host,s.name||'실험 과정');st.lines=[];
+        if(sideFig){const tb=[Math.min(...pb.map(b=>b[0])),0,Math.max(...pb.filter(b=>yOverlap(b,sideFig.box)>4).map(b=>b[2])),0],nb=sideFig.box;
+          const [a,b]=ratioPair(Math.max(10,nb[0]-tb[0]),nb[2]-nb[0]);st.ratio=a;const f=figure(sideFig,host,'자료',false);f.ratio=b;f.size=100;}
         if(!s.name)st.label='';
         for(const p of paras){const m=p.text.match(/^\(([가-힣])\)\s*(.*)$/);if(m)st.lines.push({id:crypto.randomUUID(),label:`(${m[1]})`,text:m[2]});
           else if(st.lines.length&&!/^[◦○•]/.test(p.text)&&!p.head&&!p.display)st.lines.at(-1).text+=' '+p.text;else st.lines.push({id:crypto.randomUUID(),label:'',text:p.text});}
-        if(noHead){const pre=paras.filter(p=>!st.lines.some(l=>l.text.includes(p.text)));void pre;}
-        emit(s.items.filter(n=>n.k!=='para'),g);
+        emit(s.items.filter(n=>n.k!=='para'&&n!==sideFig),g);
         continue;
       }
       const mats=s.items.filter(n=>n.k!=='para');
@@ -308,9 +316,9 @@ export async function toQuestion(structure,item,{number='1'}={}){
     if(!header?.some(Boolean))diag.notes.push('선지표 머리줄을 찾지 못했습니다.');
     diag.pair=P?'위치':'낱말';
   }else if(choiceFigs)choiceFigs.forEach((f,i)=>{const d=f.direct||figs.get(f.run);if(!f.direct||/원본 참고/.test(choices[i]||''))q.choices[i].text='';else q.choices[i].text=choices[i]||'';q.choices[i].figure={name:`${item.id}-선지${i+1}.png`,data:d.data,...(d.box?{widthPt:Math.round((d.box[2]-d.box[0])*10)/10}:{})};});
+  else choices.slice(0,5).forEach((t,i)=>{if(q.choices[i])q.choices[i].text=t;});
   // 조판기는 선지 스타일이 '그림·그래프'일 때만 선지 그림을 찍는다.
   if(choiceFigs&&form!=='pair')q.style='그림·그래프';
-  else choices.slice(0,5).forEach((t,i)=>{if(q.choices[i])q.choices[i].text=t;});
   // 수식 안 괄호·상태 기호는 본문 글로(원본 글꼴과 같게).
   mapQuestionText(q,splitEquationParens);
   if(figs.size>count.images)diag.notes.push(`그림 ${figs.size}개 중 ${count.images}개만 넣었습니다.`);
