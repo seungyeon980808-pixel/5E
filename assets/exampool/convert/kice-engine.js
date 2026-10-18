@@ -6,7 +6,8 @@ import {convertQuestionNow} from './es/live-convert.mjs';
 import {restoreFigures} from './es/figure-fallback.mjs?v=library-release-20261011-3';
 import {renderFigureImage,setPdfSource} from './es/pdf-viewer.mjs?v=library-release-20261011-3';
 import {questionFromShape} from '../sheet/templates.js';
-import {makeTable,block} from '../sheet/model.js';
+import * as model from '../sheet/model.js';
+const {makeTable,block}=model;
 import {analyze,runsText,clean,HEAD,tokens,pairTable,splitEquationParens,mapQuestionText} from './rules.js';
 export {setPdfSource};
 
@@ -96,7 +97,11 @@ export async function toQuestion(structure,item,{number='1'}={}){
         // 다음 자료가 이 글 옆에 있으면 가로 묶음
         const next=seq[i],tb=run.length?paraBox(run.at(-1)):null,nb=next&&(next.k==='figure'||next.k==='table')?next.box:null;
         const beside=tb&&nb&&nb[0]>=tb[2]-3&&yOverlap(tb,nb)>4;
-        if(beside){
+        if(beside&&model.WRAP&&!parent&&next.k==='figure'){
+          // 조판기의 어울림 그림(맨 바깥 글 + 떠 있는 그림). 그림이 글 왼쪽이면 왼쪽 정렬.
+          textBlock(run,parent,firstText?firstLabel:'설명');const f=figure(next,parent,'자료');f.layout=model.WRAP;
+          if(nb[2]<=tb[0]+3)f.align='왼쪽';i++;
+        }else if(beside){
           const g=add('group',parent,'글 옆 자료');g.layout='나란히';g.boxed=false;
           const t=textBlock(run,g,firstText?firstLabel:'설명');const [a,b]=ratioPair(Math.max(10,nb[0]-tb[0]),nb[2]-nb[0]);t.ratio=a;
           const m=next.k==='figure'?figure(next,g,'자료',false):table(next,g);m.ratio=b;if(next.k==='figure')m.size=100;i++;
