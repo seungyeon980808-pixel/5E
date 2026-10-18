@@ -968,8 +968,17 @@ function gridOf(table) {
     if (col < 0 || row < 0) return null;
     const cell = owner.get(row * cols + col);
     const b = cell.box;
-    if (chain.box[0] < b[0] - 1.5 || chain.box[2] > b[2] + 1.5 || chain.box[1] < b[1] - 2.5 || chain.box[3] > b[3] + 2.5) return null;
-    used.add(cell);
+    if (chain.box[1] < b[1] - 2.5 || chain.box[3] > b[3] + 2.5) return null;
+    if (chain.box[0] >= b[0] - 1.5 && chain.box[2] <= b[2] + 1.5) { used.add(cell); continue; }
+    // ExamPool: pdf.js can merge text of neighbouring cells into one item (") 용질의 질량(").
+    // Accept it when the overflow crosses only full vertical rules of the same row; the item is
+    // split at those rules when the cells are filled (live-tables splitAtRules).
+    const crossed = cells.filter((c) => c.box[1] <= cy && c.box[3] >= cy
+      && Math.min(c.box[2], chain.box[2]) - Math.max(c.box[0], chain.box[0]) > 1.5);
+    const left = Math.min(...crossed.map((c) => c.box[0])), right = Math.max(...crossed.map((c) => c.box[2]));
+    if (crossed.some((c) => c.rowSpan > 1 && (c.box[1] > b[1] + 0.5 || c.box[3] < b[3] - 0.5))
+      || chain.box[0] < left - 1.5 || chain.box[2] > right + 1.5) return null;
+    for (const c of crossed) used.add(c);
   }
   if (used.size < Math.max(2, cells.length * 0.4)) return null;
   cells.sort((a, b) => a.row - b.row || a.col - b.col);
