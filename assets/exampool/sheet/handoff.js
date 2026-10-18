@@ -371,11 +371,13 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
   return {html:`<div style="font-family:함초롬바탕;font-size:10pt">${html}</div>`,images,texts,tables,equations,warnings:[...new Set(warnings)],imageOwners,tableOwners,textSegments,bodyIndent,askIndent,askLead,floats};
 }
 
+// 한글 엔진의 getTextFileText는 완성형(KS X 1001) 밖 글자를 문서에는 그대로 두고, 글로 꺼낼 때만 &#9702; 같은
+// 10진 문자 참조로 바꿔 준다(◦ ≳ ⇄ ․ — ≈ ･ 사용자 영역 글자 등, 2026-10-19 왕복 검사). 글자가 사라진 것이 아니므로
+// 꺼낸 글을 원래 글자로 되돌려 비교·시트 반영에 쓴다. 엔진은 ASCII를 참조로 바꾸지 않으므로 128 이상만 되돌린다.
+export const decodeNativeText=v=>String(v??'').replace(/&#(\d{3,7});/g,(m,n)=>{const c=Number(n);return c>=128&&c<=0x10FFFF&&!(c>=0xD800&&c<=0xDFFF)?String.fromCodePoint(c):m;});
 export function verifyNativeQuestion(document,plan){
-  const normalized=v=>String(v).replace(/\s+/g,' ').trim();
-  // 글 내보내기는 옛 문자 집합 밖의 글자(◦ • ∘ 등)를 &#9702; 처럼 내준다. 문서에는 원래 글자가 들어 있다.
-  const decode=v=>v.replace(/&#(\d{2,7});/g,(m,n)=>Number(n)<=0x10ffff?String.fromCodePoint(Number(n)):m);
-  const raw=document.getTextFileText(),body=normalized(decode(raw.startsWith('"')?JSON.parse(raw):raw));
+  const normalized=v=>decodeNativeText(v).replace(/\s+/g,' ').trim();
+  const raw=document.getTextFileText(),body=normalized(raw.startsWith('"')?JSON.parse(raw):raw);
   if(plan.texts.some(v=>!body.includes(normalized(v))))throw Error('한글에서 일부 글을 읽지 못했습니다. 기존 시험지는 보존했습니다.');
   const seen=new Set(),images=[],tables=new Map();
   for(let page=0;page<document.pageCount();page++)for(const c of JSON.parse(document.getPageControlLayout(page)).controls||[]){
