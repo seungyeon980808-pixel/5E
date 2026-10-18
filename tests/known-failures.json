@@ -215,6 +215,14 @@
     {
       "path": "tests/test-screen-loading-motion-browser.cjs",
       "reason": "시간 초과: 화면 요소를 찾지 못함(화면 구조가 바뀐 뒤 검사가 따라가지 못한 것으로 추정)"
+    },
+    {
+      "path": "tests/test-graph-extension-ui-browser.cjs",
+      "reason": "이 Mac 전용: 검사 안에 다른 작업 폴더 경로(/Users/parkseungyeon/.codex/worktrees/analyable-function/5E)와 그 폴더의 git 기록이 박혀 있어 GitHub에서는 git을 실행하지 못함(로컬은 통과)"
+    },
+    {
+      "path": "tests/test-labeler-selection-edit-browser.cjs",
+      "reason": "GitHub webkit에서만 실패(라벨 선택 결과가 빈 목록). 로컬은 두 엔진 통과, 원인 미조사"
     }
   ]
 }

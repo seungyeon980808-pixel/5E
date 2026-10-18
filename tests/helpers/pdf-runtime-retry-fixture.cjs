@@ -104,10 +104,10 @@ async function runPdfRuntimeRetryCases({ origin, evidence, sourceRoot = path.res
             await page.screenshot({ path: path.join(evidence, `${name}-retry-visible.png`) });
             offline = false;
             await retry.click();
-            await stage.locator('.unilib-preview-image img').waitFor();
+            await stage.locator('.unilib-preview-image img:not(.br-final)').waitFor();
             assert.ok(moduleRequests.length > before, 'manual retry actually fetches a fresh module');
           }
-          const preview = stage.locator('.unilib-preview-image img');
+          const preview = stage.locator('.unilib-preview-image img:not(.br-final)');
           await preview.waitFor();
           await preview.evaluate(img => img.decode());
           assert.ok(await preview.evaluate(img => img.naturalWidth > 100));

@@ -1797,7 +1797,7 @@ async function pdfRetry(ctx, page, controls) {
   await ctx.check('exact PDF runtime import failure exposes real Retry', () => assert.ok(before >= 2, 'Automatic retries precede the visible manual retry'));
   controls.offline = false;
   await ctx.act('real PDF runtime Retry', () => retry.click(), page);
-  const preview = stage.locator('.unilib-preview-image img'); await preview.waitFor(); await preview.evaluate(img => img.decode());
+  const preview = stage.locator('.unilib-preview-image img:not(.br-final)'); await preview.waitFor(); await preview.evaluate(img => img.decode());
   await ctx.check('Retry fetches distinct runtime URL and renders actual current PDF', async () => {
     assert.ok(controls.requests.length > before); assert.equal(new Set(controls.requests).size, controls.requests.length); assert.ok(await preview.evaluate(img => img.naturalWidth > 100));
     assert.equal(await library.locator('[data-unilib-query]').inputValue(), 'MODULE RETRY');
