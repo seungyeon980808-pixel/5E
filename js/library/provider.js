@@ -11,6 +11,31 @@ const PREBUILT_PREVIEW_REVISION = "cropbox-v2";
 // retaining results from a replaced catalog.
 const searchableResultText = new WeakMap();
 
+// 문항 카드 썸네일: 문항 상자는 단 전체 폭·고정 아래 끝으로 잡혀 있어 여백과 옆 단 세로선이
+// 같이 들어가고 마지막 줄(보기)이 잘리기도 한다. 썸네일만 실제 글자·그림이 있는 곳에 맞춰
+// 자른다. 작업대에 넣는 영역(source)은 그대로다.
+const THUMB_CONTENT_PAD = 0.008;
+const THUMB_MAX_EXTEND = 0.02;
+
+function questionThumbnailRect(source, result) {
+  if (result?.kind !== "crop" || result.cropType !== "question") return source.rect;
+  const [x, y, width, height] = source.rect;
+  const right = x + width, bottom = y + height;
+  const boxes = [
+    ...(result.searchWords ?? []).map((word) => word.rect),
+    ...(result.variants?.figures ?? []).map((figure) => figure.source?.rect),
+  ].filter((rect) => Array.isArray(rect) && rect.length === 4 && rect.every(Number.isFinite)
+    && rect[0] < right && rect[0] + rect[2] > x && rect[1] < bottom + THUMB_MAX_EXTEND && rect[1] + rect[3] > y);
+  if (!boxes.length) return source.rect;
+  const left = Math.max(x, Math.min(...boxes.map((rect) => rect[0])) - THUMB_CONTENT_PAD);
+  const top = Math.max(y, Math.min(...boxes.map((rect) => rect[1])) - THUMB_CONTENT_PAD);
+  const contentRight = Math.min(right, Math.max(...boxes.map((rect) => rect[0] + rect[2])) + THUMB_CONTENT_PAD);
+  // 마지막 줄이 상자 아래로 조금 삐져나간 경우만 그 줄까지 늘린다(다음 문항을 넘보지 않게 상한)
+  const contentBottom = Math.min(1, bottom + THUMB_MAX_EXTEND, Math.max(...boxes.map((rect) => rect[1] + rect[3])) + THUMB_CONTENT_PAD);
+  if (contentRight - left < 0.05 || contentBottom - top < 0.02) return source.rect;
+  return [left, top, contentRight - left, contentBottom - top];
+}
+
 async function providedPagePreview(document, source, result, options = {}) {
   // prebuiltPage: a full-page card may use the prebuilt page image even when it asks for the original page.
   if ((options.original && !options.continuous && !options.prebuiltPage) || !document?.source?.locator?.startsWith("5e.shared.drive/")) return null;
@@ -18,7 +43,8 @@ async function providedPagePreview(document, source, result, options = {}) {
   if (!providedPagePreviews[hash] || source.pageNumber > providedPagePreviews[hash]) return null;
   const fullPage = source.rect.every((value, index) => value === [0, 0, 1, 1][index]);
   const url = new URL(`../../assets/pdf-library/previews/${hash}/${source.pageNumber}${fullPage && options.thumbnail === true && !options.prebuiltPage ? "-thumb" : ""}.webp?v=${PREBUILT_PREVIEW_REVISION}`, import.meta.url).href;
-  const image = fullPage ? { url } : await cropPrebuiltPreview(url, source.rect, options.thumbnail === true);
+  const cropRect = options.thumbnail === true ? questionThumbnailRect(source, result) : source.rect;
+  const image = fullPage ? { url } : await cropPrebuiltPreview(url, cropRect, options.thumbnail === true);
   return Object.freeze({
     ...image,
     source, provenance: result.provenance, result, previewOnly: true,
