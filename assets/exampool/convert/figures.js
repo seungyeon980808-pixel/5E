@@ -402,7 +402,8 @@ import {convertQuestionNow} from './es/live-convert.mjs';
 import {runsText,clean,splitEquationParens} from './rules.js';
 
 // 짝이 안 맞는 괄호는 수식 밖으로("($L)$" → "($L$)"), 엔진 본문과 같은 규칙.
-const cellText=runs=>runsText(runs).split('\n').map(l=>clean(splitEquationParens(l))).filter(Boolean).join('\n');
+// 표 기호 하나(○ × △ ● ?)만 든 수식은 글자로 둔다("$○$" → "○").
+const cellText=runs=>runsText(runs).split('\n').map(l=>clean(splitEquationParens(l)).replace(/\$\s*(?:\\times|\\circ|[×○●◯△▲□■?])\s*\$/gu,m=>({'\\times':'×','\\circ':'○'})[m.replace(/[$\s]/g,'')]||m.replace(/[$\s]/g,''))).filter(Boolean).join('\n');
 
 /**
  * 문항의 괘선 표를 위→아래 순서로 돌려준다.
@@ -412,8 +413,9 @@ const cellText=runs=>runsText(runs).split('\n').map(l=>clean(splitEquationParens
  */
 export async function detectTables(item,{signal}={}){
   aborted(signal);
-  const structure=await convertQuestionNow(item,{signal});
-  const blocks=structure.blocks||[];
+  let blocks=[],failed=null;
+  try{blocks=(await convertQuestionNow(item,{signal})).blocks||[];}
+  catch(e){if(e?.name==='AbortError')throw e;failed=String(e?.message||e);}// 문항 변환이 실패해도 표 자리는 알려 준다
   const out=[];
   blocks.forEach((b,i)=>{
     if(b.kind!=='table'||!Array.isArray(b.rows))return;
@@ -422,7 +424,22 @@ export async function detectTables(item,{signal}={}){
     const hidden=(r,c)=>merges.some(m=>r>=m.r&&r<m.r+m.rs&&c>=m.c&&c<m.c+m.cs&&(r!==m.r||c!==m.c));
     const cells=Array.from({length:rows},(_,r)=>Array.from({length:cols},(_,c)=>({text:hidden(r,c)?'':cellText(b.rows[r]?.[c]||[])})));
     const next=blocks[i+1],caption=next&&next.kind!=='table'&&next.runs?.length===1&&/^\([가-힣]\)$/u.test(next.runs[0].value||'')?next.runs[0].value:null;
-    out.push({box:b.box,page:item.page,rows,cols,cells,merges,headerRows:Math.min(rows,Math.max(1,...merges.filter(m=>m.r===0&&m.c===0).map(m=>m.rs))),caption,confidence:.9,source:'grid'});
+    // 확신: 빈 칸이 절반을 넘거나 못 읽은 글자(PUA)가 있으면 낮춘다.
+    const shown=cells.flat().filter((_,k)=>!hidden(Math.floor(k/cols),k%cols)),empty=shown.filter(c=>!c.text.trim()).length;
+    const bad=shown.some(c=>/[\uE000-\uF8FF]/u.test(c.text));
+    const confidence=bad?.3:empty>shown.length*.5?.6:.9;
+    out.push({box:b.box,page:item.page,rows,cols,cells,merges,headerRows:Math.min(rows,Math.max(1,...merges.filter(m=>m.r===0&&m.c===0).map(m=>m.rs))),caption,confidence,source:'grid'});
   });
+  // 그림 찾기가 표로 본 자리 중 편집 표로 못 읽은 것: 칸 속 그림·불완전한 괘선 등. 엔진은 그림(detectFigures role:'table')으로 넣는다.
+  try{
+    const pdf=await readQuestionPdf(item,{signal});
+    const ctx=candidates(item,pdf);
+    const iou=(a,b)=>{const i=inter(a,b);return i?area(i)/(area(a)+area(b)-area(i)):0;};
+    for(const c of ctx.out.filter(o=>o.table)){
+      if(out.some(t=>t.box&&iou(t.box,c.box)>.4))continue;
+      out.push({box:c.box,page:item.page,rows:0,cols:0,cells:[],merges:[],headerRows:0,caption:null,confidence:.1,source:'figure',
+        reason:failed?'문항 변환 실패: '+failed:c.kind!=='vector'?'칸 속 그림':'괘선·칸 글을 확정하지 못함'});
+    }
+  }catch(e){if(e?.name==='AbortError')throw e;}
   return out.sort((a,b)=>(a.box?.[1]||0)-(b.box?.[1]||0));
 }

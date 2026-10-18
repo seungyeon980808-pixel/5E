@@ -34,7 +34,7 @@ async function batchRun(browser,origin,batch){
     const m=await import('/assets/exampool/convert/figures.js?v='+Date.now());
     window.__run=async item=>{
       const figs=(await m.detectFigures(item)).filter(f=>f.role==='table').map(f=>f.box);
-      const tables=await m.detectTables(item);
+      const tables=(await m.detectTables(item)).filter(t=>t.confidence>=.5);
       const pdf=await viewer.readQuestionPdf(item);
       // 원본 글: 표 영역 안 글자(가운데가 안에 든 글 조각).
       const eq=t=>/^(?:HyhwpEQ|HYhwpEQ)/u.test(pdf.fonts[t.fontName]?.name?.split('+').at(-1)||'');
@@ -59,6 +59,8 @@ const texts=s=>(String(s).match(/\$[^$]*\$/g)||[]).flatMap(x=>[...x.matchAll(/\\
 const chars=s=>{const m=new Map();for(const ch of (String(s).replace(/\$[^$]*\$/g,' ')+' '+texts(s)).match(/[가-힣0-9A-Za-z]/gu)||[])m.set(ch,(m.get(ch)||0)+1);return m;};
 // 수식 글자 수: 스크립트에서 명령어·괄호·첨자 기호를 빼고 남은 글자
 const eqLen=s=>(String(s).match(/\$[^$]*\$/g)||[]).join('').replace(/\\text\{[^{}]*\}/g,'').replace(/\$|\\[a-zA-Z]+|\b(?:rm|it|bold|over|sqrt|LEFT|RIGHT|left|right|times|cdot)\b|[{}_^`~\s]/g,'').length;
+// 표 기호(○ × 등)는 detectTables가 글자로 풀지만 원본에선 수식 글꼴이라 수식 쪽으로 센다.
+const eqLen2=s=>eqLen(s)+(String(s).replace(/\$[^$]*\$/g,'').match(/[×○●◯△▲□■]/gu)||[]).length;
 const eqScore=(p,t)=>!p&&!t?1:Math.min(p,t)/Math.max(p,t);
 function f1(pred,truth){const p=chars(pred),t=chars(truth);let hit=0,np=0,nt=0;for(const v of p.values())np+=v;for(const v of t.values())nt+=v;for(const [k,v] of p)hit+=Math.min(v,t.get(k)||0);
   if(!np&&!nt)return 1;if(!np||!nt)return 0;const P=hit/np,R=hit/nt;return P+R?2*P*R/(P+R):0;}
@@ -78,9 +80,9 @@ h.withServer(async origin=>{
           if(r.ok){
             const used=new Set();
             r.figs.forEach((fb,k)=>{const t=r.tables.map((t,i)=>[i,iou(t.box,fb)]).filter(([i,v])=>v>.4&&!used.has(i)).sort((a,b)=>b[1]-a[1])[0];
-              if(t){used.add(t[0]);const tb=r.tables[t[0]];row.tables.push({box:fb,found:true,confidence:tb.confidence,source:tb.source,rows:tb.rows,cols:tb.cols,merges:tb.merges.length,f1:f1(tb.cells.flat().map(c=>c.text).join(' '),r.truthOf[k].text),eq:eqScore(eqLen(tb.cells.flat().map(c=>c.text).join(' ')),r.truthOf[k].eq),cells:tb.cells.map(rw=>rw.map(c=>c.text))});}
+              if(t){used.add(t[0]);const tb=r.tables[t[0]];row.tables.push({box:fb,found:true,confidence:tb.confidence,source:tb.source,rows:tb.rows,cols:tb.cols,merges:tb.merges.length,f1:f1(tb.cells.flat().map(c=>c.text).join(' '),r.truthOf[k].text),eq:eqScore(eqLen2(tb.cells.flat().map(c=>c.text).join(' ')),r.truthOf[k].eq),cells:tb.cells.map(rw=>rw.map(c=>c.text))});}
               else row.tables.push({box:fb,found:false,truth:r.truthOf[k].text.slice(0,200)});});
-            r.tables.forEach((tb,i)=>{if(!used.has(i))row.tables.push({box:tb.box,found:true,extra:true,confidence:tb.confidence,source:tb.source,rows:tb.rows,cols:tb.cols,f1:f1(tb.cells.flat().map(c=>c.text).join(' '),tb.truth.text),eq:eqScore(eqLen(tb.cells.flat().map(c=>c.text).join(' ')),tb.truth.eq)});});
+            r.tables.forEach((tb,i)=>{if(!used.has(i))row.tables.push({box:tb.box,found:true,extra:true,confidence:tb.confidence,source:tb.source,rows:tb.rows,cols:tb.cols,f1:f1(tb.cells.flat().map(c=>c.text).join(' '),tb.truth.text),eq:eqScore(eqLen2(tb.cells.flat().map(c=>c.text).join(' ')),tb.truth.eq)});});
           }
           rows.push(row);
         }
