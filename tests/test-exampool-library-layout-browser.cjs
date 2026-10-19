@@ -140,6 +140,13 @@ h.withServer(async origin => {
         return {inLib:r.left>=l.left-0.5&&r.right<=l.right+0.5&&r.bottom<=l.bottom+0.5,top:Math.round(r.top-l.top),pos:z.querySelector('.pos').textContent,acts:z.querySelectorAll('.lp-zoom-foot [data-cvlink],.lp-zoom-foot [data-cvconvert]').length};});
       assert.ok(zoom.inLib,'the zoom stays inside the library pane');assert.equal(zoom.top,44,'below the head row');assert.match(zoom.pos,/^2 \/ \d+$/);assert.equal(zoom.acts,2,'link and convert are available in the zoom');
       await page.keyboard.press('ArrowRight');assert.match(await sheet.locator('#card-view .lp-zoom .pos').textContent(),/^3 \//);
+      // 확대 창에서 근거로 연결하거나 화면 색을 바꿔도(카드 화면이 다시 그려져도) 같은 문항 확대가 남는다.
+      const zt=await sheet.locator('#card-view .lp-zoom-head b').textContent();
+      await sheet.click('#card-view .lp-zoom [data-cvlink]');await sheet.waitForTimeout(600);
+      assert.equal(await sheet.locator('#card-view .lp-zoom-head b').textContent(),zt,'zoom survives linking evidence');
+      await page.evaluate(()=>{document.documentElement.setAttribute('data-theme','light');document.documentElement.setAttribute('data-palette','graphite');});await sheet.waitForTimeout(600);
+      assert.equal(await sheet.locator('#card-view .lp-zoom').isVisible(),true,'zoom survives a theme change');
+      await page.evaluate(()=>{document.documentElement.setAttribute('data-theme','dark');document.documentElement.setAttribute('data-palette','classic');});await sheet.waitForTimeout(300);
       await page.keyboard.press('Escape');assert.equal(await sheet.locator('#card-view .lp-zoom').count(),0);
 
       // 4. 「근거 N」은 겹쳐 펼쳐진다(목록 높이는 그대로).
@@ -160,7 +167,11 @@ h.withServer(async origin => {
       await page.screenshot({path:path.join(evidence,`${engineName}-past.png`)});
 
       // 6. 자료 PDF: 한 쪽이 통째로 보이고, 상태 문장은 아래 상태 막대로.
+      // 기준 검색어는 기준에만: 자료로 가서 새 PDF를 열면 지난 검색어에 걸러지지 않고 보인다.
+      await sheet.selectOption('#card-view [data-cvscope]','standards');await sheet.waitForTimeout(600);
+      await sheet.fill('#card-view [data-cvsrc]','에너지');await sheet.waitForTimeout(400);
       await sheet.selectOption('#card-view [data-cvscope]','references');
+      assert.equal(await sheet.locator('#card-view [data-cvsrc]').inputValue(),'','each scope keeps its own search');
       await sheet.waitForSelector('#card-view #sources #add-doc');
       assert.equal(await sheet.locator('#card-view #sources .source-controls').isVisible(),false,'the document search moves to the head row');
       await sheet.evaluate(()=>{window.__statusSeen=[];new MutationObserver(()=>window.__statusSeen.push(document.querySelector('#status').textContent)).observe(document.querySelector('#status'),{childList:true,characterData:true,subtree:true});});
@@ -185,6 +196,13 @@ h.withServer(async origin => {
       await sheet.waitForTimeout(5000);assert.equal(await sheet.evaluate(()=>document.querySelector('#status').textContent),red,'still shown before 6 seconds');
       await sheet.waitForFunction(()=>document.querySelector('#status').textContent===''&&document.querySelector('#status').dataset.error==='false',null,{timeout:3000});
 
+      // 라이브러리 칸을 끌기 최소(240)까지 줄여도 머리 줄이 칸 밖으로 넘치지 않고 검색창이 남는다.
+      await sheet.selectOption('#card-view [data-cvscope]','past');await sheet.waitForSelector('#card-view .past-list figure.past',{timeout:30000});
+      for(const w of [240,300,380,545]){
+        await sheet.evaluate(w=>document.querySelector('#card-view').style.setProperty('--cv-lw',w+'px'),w);await sheet.waitForTimeout(150);
+        const r=await sheet.evaluate(()=>{const l=document.querySelector('#card-view .cv-left').getBoundingClientRect(),s=document.querySelector('#card-view .lp-one .lp-search').getBoundingClientRect();return {over:[...document.querySelectorAll('#card-view .lp-one>*')].some(n=>n.getBoundingClientRect().right>l.right+0.5),sw:s.width,cut:[...document.querySelectorAll('#card-view figure.past b')].slice(0,4).some(b=>b.scrollWidth>b.clientWidth)};});
+        assert.ok(!r.over&&r.sw>=60&&!r.cut,`library pane ${w}px: ${JSON.stringify(r)}`);
+      }
       assert.deepEqual(errors,[],'no page errors');
       console.log(`${engineName}: ok`);
     } finally {await browser.close();}

@@ -55,7 +55,7 @@ export function completeness(q){
 
 export function createCardEditor(root,api){
   const panels={nav:store.get('nav',true),lib:store.get('lib',true),tab:TABS.some(([k])=>k===store.get('tab','past'))?store.get('tab','past'):'past',right:store.get('right','paper'),rightOpen:store.get('rightOpen',true),view:'card'};
-  let pastIndex=null,pastIndexLoading=null,pastItems=null,pastItemsKey='',pastFilter=store.get('past',{subject:'',part:'',year:'',query:'',tokens:[]}),pastSyn=null,pastRefocus=false,pastAdvOpen=false,pastZoom=-1,books=null,pastComposing=false,pastEnterPending=false,renderedFor=null;
+  let pastIndex=null,pastIndexLoading=null,pastItems=null,pastItemsKey='',pastFilter=store.get('past',{subject:'',part:'',year:'',query:'',tokens:[]}),pastSyn=null,pastRefocus=false,pastAdvOpen=false,pastZoom=-1,pastZoomKey='',books=null,srcQuery=store.get('srcq',{standards:'',references:''}),pastComposing=false,pastEnterPending=false,renderedFor=null;
   if(!Array.isArray(pastFilter.tokens))pastFilter.tokens=[];
   const q=()=>api.question();
 
@@ -168,6 +168,8 @@ export function createCardEditor(root,api){
     const x=q();
     const keep=root.querySelector('.cv-writer')?.scrollTop||0,same=renderedFor===x?.id;
     api.dock?.(null);// 다시 그리기 전에 붙여 둔 자료 열람을 원래 자리로 돌려놓는다(같이 지워지지 않게).
+    // 기준·자료는 검색어를 범위마다 따로 기억한다(한쪽 검색어가 다른 쪽 목록을 거르지 않게).
+    if(['standards','references'].includes(panels.tab)){const src=document.querySelector('#source-search');if(src)src.value=srcQuery[panels.tab]||'';}
     const {lw,rw}=widths();root.style.setProperty('--cv-lw',lw+'px');root.style.setProperty('--cv-rw',rw+'px');
     const center=x?(panels.view==='page'?'<div class="cv-page" id="cv-page"><p class="pv-empty">쪽을 그리는 중…</p></div>':formHtml(x)):'<div class="cv-writer"><p class="pv-empty">위의 ＋로 새 문항을 만들거나 번호를 고르세요.</p></div>';
     root.innerHTML=libHtml()+(panels.lib?splitHtml('left'):'')+`<section class="cv-center">${barHtml()}${center}</section>`+(panels.rightOpen?splitHtml('right'):'')+rightHtml();
@@ -271,7 +273,8 @@ export function createCardEditor(root,api){
   const searchHtml=(placeholder,n)=>`<label class="lp-search">${ICON.search}<span class="lp-tokens">${pastFilter.tokens.map(w=>`<button type="button" class="lp-token" data-cvtoken="${E(w)}" aria-label="${E(w)} 단어 삭제" title="${E(w)} 단어 삭제">${E(w)}<span aria-hidden="true">×</span></button>`).join('')}</span><input data-cvpast="query" value="${E(pastFilter.query)}" placeholder="${placeholder}" aria-label="검색할 단어 입력(Enter로 색인 추가, 최대 3개)">${n}</label>`;
   function fillHead(search,adv,count){
     const s=root.querySelector('[data-cvslot="search"]');if(s)s.innerHTML=search;
-    const pop=root.querySelector('[data-cvslot="adv"]');if(pop)pop.innerHTML=adv;
+    const pop=root.querySelector('[data-cvslot="adv"]'),was=pop?.contains(document.activeElement)?document.activeElement.dataset.cvpast:'';if(pop)pop.innerHTML=adv;
+    if(was)pop.querySelector(`[data-cvpast="${was}"]`)?.focus({preventScroll:true});// 상세검색에서 고른 칸으로 커서를 돌려놓는다
     const n=root.querySelector('[data-cvslot="advn"]');if(n){n.textContent=count;n.hidden=!count;}
   }
   async function renderPast(){
@@ -285,7 +288,7 @@ export function createCardEditor(root,api){
         `<label>교과서<select data-cvpast="book" aria-label="교과서">${list.map(v=>`<option value="${E(v.id)}"${v===b?' selected':''}>${E(v.title)} · ${v.pages}쪽</option>`).join('')}</select></label><p class="lp-adv-note">5E 공유 자료의 교과서입니다. 쪽 번호를 치면 그 쪽부터 보입니다.</p>`,0);
       const pages=b?Array.from({length:Math.min(60,b.pages-from+1)},(_,k)=>from+k):[];
       body.innerHTML=`<div class="past-list">${p}${pages.map(n=>`<figure class="past book" data-book="${E(b.id)}" data-page="${n}"><div class="past-pic"><img loading="lazy" src="${E(bookPage(b,n,true))}" data-full="${E(bookPage(b,n))}" alt="${E(b.title)} ${n}쪽"></div><figcaption><b>${E(b.title)} ${n}쪽</b><span class="acts"><button type="button" class="mini" data-cvbooklink="${n}">근거로 연결</button></span></figcaption></figure>`).join('')}${!p&&!pages.length?'<p class="lp-count">교과서를 찾지 못했습니다. 「5E 라이브러리」에서 쪽이나 영역을 골라 가져올 수 있습니다.</p>':''}</div>`;
-      refocus();return;
+      refocus();reopenZoom();return;
     }
     let items;try{if(!pastItems)body.innerHTML='<p class="lp-count">기출 목록을 불러오는 중…</p>';
       await loadPast([]);const code=pastIndex.subjects.find(v=>v[1]===f.subject)?.[0];items=await loadPast(code?[code]:[]);}
@@ -303,7 +306,7 @@ export function createCardEditor(root,api){
       sel('subject',subjects,'과목')+sel('part',parts,'단원')+sel('year',years,'연도')+`<div class="lp-adv-foot"><span>6월·9월 모평, 수능</span><button type="button" class="mini" data-cvadvclear>모두 지우기</button></div>`,
       ['subject','part','year'].filter(k=>f[k]).length);
     body.innerHTML=`<div class="past-list">${picksHtml()}${list.slice(0,40).map(i=>`<figure class="past">${thumb(i)}<figcaption><b title="${E([i.title,...i.parts,...i.tags.slice(0,3)].join(' · '))}">${E(i.short)}</b><span class="acts"><button type="button" class="mini" data-cvlink="${E(i.id)}">근거로 연결</button><button type="button" class="mini go-mini" data-cvconvert="${E(i.id)}" title="편집 가능한 한글 문항으로 바꿔 새 문항 카드로 엽니다(AI 없음)">변형</button></span></figcaption></figure>`).join('')}</div>`;
-    loadThumbs(body);refocus();
+    loadThumbs(body);refocus();reopenZoom();
   }
 
 
@@ -364,7 +367,7 @@ export function createCardEditor(root,api){
     if(t.dataset.cvline){const key=t.dataset.cvline,b=x.blocks.find(v=>v.kind===key),i=Number(t.dataset.i);edit(key,()=>{b.lines[i].text=t.value;});return;}
     if(t.dataset.cvct){const [r,c]=t.dataset.cvct.split(':').map(Number);edit('choiceTable',()=>{x.choiceTable.cells[r][c].value=t.value;delete x.choiceTable.cells[r][c].raw;});return;}
     if(t.dataset.cvchoice){const i=Number(t.dataset.cvchoice);edit('choices',()=>{x.choices[i].text=t.value;});return;}
-    if(t.dataset.cvsrc!==undefined){const src=document.querySelector('#source-search');if(src){src.value=t.value;src.dispatchEvent(new Event('input',{bubbles:true}));}return;}
+    if(t.dataset.cvsrc!==undefined){srcQuery[panels.tab]=t.value;store.set('srcq',srcQuery);const src=document.querySelector('#source-search');if(src){src.value=t.value;src.dispatchEvent(new Event('input',{bubbles:true}));}return;}
     if(t.dataset.cvpast==='query'){pastFilter.query=t.value.trim();store.set('past',pastFilter);clearTimeout(t._timer);if(!pastComposing&&!e.isComposing)t._timer=setTimeout(renderPast,250);}
   });
   root.addEventListener('change',e=>{
@@ -454,17 +457,21 @@ export function createCardEditor(root,api){
   // 상세검색 창: 바깥을 누르면 닫힌다.
   root.addEventListener('pointerdown',e=>{if(!pastAdvOpen||e.target.closest?.('.lp-adv-pop,[data-cvadv]'))return;pastAdvOpen=false;const pop=root.querySelector('[data-cvslot="adv"]');if(pop)pop.hidden=true;root.querySelector('[data-cvadv]')?.setAttribute('aria-expanded','false');},true);
   // 문항(교과서 쪽) 더블클릭 → 라이브러리 칸 안에서 크게 보기. ← → 이전·다음, Esc 닫기.
+  // 크게 보기 중에 카드 화면이 다시 그려지면(근거로 연결·화면 색 바꾸기 등) 같은 문항을 찾아 다시 띄운다. 목록에서 빠졌으면 닫는다.
+  const zoomKey=f=>{const b=f.querySelector('[data-cvlink],[data-cvbooklink],[data-cvpick-link]');return b?JSON.stringify(b.dataset):'';};
+  function reopenZoom(){if(!pastZoomKey)return;const figs=[...root.querySelectorAll('.cv-left .past-list figure.past')],i=figs.findIndex(f=>zoomKey(f)===pastZoomKey);if(i<0){pastZoom=-1;pastZoomKey='';root.querySelector('.lp-zoom')?.remove();return;}zoomTo(i);}
   function zoomTo(i){
     root.querySelector('.lp-zoom')?.remove();
     const figs=[...root.querySelectorAll('.cv-left .past-list figure.past')],lib=root.querySelector('.cv-left');
-    if(i<0||!figs.length||!lib){pastZoom=-1;return;}
-    pastZoom=Math.max(0,Math.min(figs.length-1,i));const f=figs[pastZoom],img=f.querySelector('img'),b=f.querySelector('figcaption b');
+    if(i<0||!figs.length||!lib){pastZoom=-1;pastZoomKey='';return;}
+    pastZoom=Math.max(0,Math.min(figs.length-1,i));const f=figs[pastZoom];pastZoomKey=zoomKey(f);const img=f.querySelector('img'),b=f.querySelector('figcaption b');
     const src=img?.dataset.full||img?.getAttribute('src')||img?.dataset.card||'',meta=(b?.title||'').split(' · ').slice(1).join(' · ');
     lib.insertAdjacentHTML('beforeend',`<div class="lp-zoom" role="dialog" aria-label="크게 보기"><div class="lp-zoom-head"><b>${E(b?.textContent||'')}</b><span class="meta">${E(meta)}</span><span class="sp"></span><button type="button" class="mini" data-cvzoomnav="-1" aria-label="이전"${pastZoom?'':' disabled'}>${ICON.left}</button><span class="pos">${pastZoom+1} / ${figs.length}</span><button type="button" class="mini" data-cvzoomnav="1" aria-label="다음"${pastZoom<figs.length-1?'':' disabled'}>${ICON.right}</button><button type="button" class="mini" data-cvzoomclose aria-label="닫기 (Esc)" title="닫기 (Esc)">${ICON.close}</button></div><div class="lp-zoom-pic">${src?`<img src="${E(src)}" alt="${E(b?.textContent||'')}">`:''}</div><div class="lp-zoom-foot">${f.querySelector('.acts')?.innerHTML||''}</div></div>`);
     root.querySelector('.lp-zoom [data-cvzoomclose]')?.focus({preventScroll:true});
   }
   root.addEventListener('dblclick',e=>{const f=e.target.closest('.cv-left .past-list figure.past');if(!f||e.target.closest('button'))return;zoomTo([...root.querySelectorAll('.cv-left .past-list figure.past')].indexOf(f));});
-  root.addEventListener('keydown',e=>{
+  // Esc·←→는 문서 전체에서 받는다(상세검색에서 고른 뒤 다시 그리면 커서가 칸 밖 body로 빠지기 때문, WebKit).
+  root.ownerDocument.addEventListener('keydown',e=>{
     if(pastZoom>=0&&root.querySelector('.lp-zoom')){if(e.key==='Escape'){e.preventDefault();zoomTo(-1);return;}if(e.key==='ArrowLeft'||e.key==='ArrowRight'){if(e.target.matches?.('input,textarea,select'))return;e.preventDefault();zoomTo(pastZoom+(e.key==='ArrowRight'?1:-1));return;}}
     if(pastAdvOpen&&e.key==='Escape'){pastAdvOpen=false;const pop=root.querySelector('[data-cvslot="adv"]');if(pop)pop.hidden=true;root.querySelector('[data-cvadv]')?.setAttribute('aria-expanded','false');}
   });
@@ -475,7 +482,8 @@ export function createCardEditor(root,api){
       const v=f==='passage'?(x.blocks.find(b=>b.kind==='text')?.text||''):f==='answer'?(x.modelAnswer||''):f==='points'?String(x.points??''):String(x[f]??'');
       if(t.value!==v){t.value=v;if(t.tagName==='TEXTAREA')fit(t);}}
     refreshLight();}
-  return {render,refreshLight,setView,syncFields,refreshLibrary(){if(panels.lib&&['past','textbooks'].includes(panels.tab))renderPast();},
+  return {render,refreshLight,setView,syncFields,
+    clearSourceSearch(){srcQuery[panels.tab]='';store.set('srcq',srcQuery);const n=root.querySelector('[data-cvsrc]');if(n)n.value='';},refreshLibrary(){if(panels.lib&&['past','textbooks'].includes(panels.tab))renderPast();},
     // 「보내기 → ExamPool」로 받은 자료가 보이게: 라이브러리 칸을 열고 기출·교과서 탭이 아니면 기출 탭으로(가져온 자료는 목록 맨 위).
     showPicks(){panels.lib=true;store.set('lib',true);if(!['past','textbooks'].includes(panels.tab)){panels.tab='past';store.set('tab','past');}render();},showHwp(){panels.rightOpen=true;panels.right='paper';store.set('rightOpen',true);store.set('right','paper');render();},refreshAi(){if(panels.rightOpen&&panels.right==='ai'){renderAi();markAiSeen();}else{const r=root.querySelector('.cv-rseg [data-cvright="ai"]');if(r&&q()){const n=unseenAi(q());r.querySelector('.badge')?.remove();if(n)r.insertAdjacentHTML('beforeend',`<i class="badge">${n}</i>`);}}},showAi(){panels.rightOpen=true;store.set('rightOpen',true);panels.right='ai';store.set('right','ai');render();},toggleNav(){setPanel('nav',!panels.nav);},get navOpen(){return panels.nav;},get tab(){return panels.tab;}};
 }
