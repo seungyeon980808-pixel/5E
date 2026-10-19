@@ -12,6 +12,7 @@
  * initTools. Space-held (pan) state stays owned by tools.js and is read via its
  * isSpaceHeld() getter so there is never a divergent copy. */
 
+import { jsonClone } from "../json-clone.js?v=1.7.0-four-session-integration";
 import { screenToWorld } from "../viewport.js?v=1.7.0-four-session-integration";
 import { simplifyRDP } from "../geometry.js?v=1.7.0-four-session-integration";
 import { nextObjectId } from "./id.js?v=1.7.0-four-session-integration";
@@ -76,7 +77,7 @@ export function setupFreeDraw(svg, state) {
     _state.update((s) => {
       s.draft = null;
       if (simplified.length < 3) return; // need 3+ anchors for a closed fillable curve
-      const snap = JSON.parse(JSON.stringify(s.objects));
+      const snap = jsonClone(s.objects);
       const obj = {
         id: nextObjectId(),
         type: "curve",

@@ -7,6 +7,7 @@
  * 바닥에서의 실제 길이라야 그림 안의 다른 거리(예: 2d)와 비교가 된다.
  */
 
+import { jsonClone } from "../json-clone.js?v=1.7.0-four-session-integration";
 import { makeSection } from "./widgets.js?v=1.7.0-four-session-integration";
 import { groundArcRadius } from "../render.js?v=1.7.0-four-session-integration";
 
@@ -80,7 +81,7 @@ export function initGroundArcSection(state) {
     const s = state.get();
     const o = selected();
     if (!o || o.locked) return;
-    const snap = JSON.parse(JSON.stringify(s.objects));
+    const snap = jsonClone(s.objects);
     state.update((s2) => {
       const t = s2.objects.find((x) => x.id === o.id);
       if (!t || t.locked) return;

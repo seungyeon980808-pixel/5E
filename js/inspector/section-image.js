@@ -3,6 +3,7 @@
  * split). Builds the section DOM and wires its events; mounting into the
  * inspector panel happens in js/inspector.js (the orchestrator). */
 
+import { jsonClone } from "../json-clone.js?v=1.7.0-four-session-integration";
 import { startRectErase, startPathErase, startSmartCutout, clearCutouts, cancelImageEditSession } from "../image-cutout.js?v=1.7.0-four-session-integration";
 import { makeSection } from "./widgets.js?v=1.7.0-four-session-integration";
 import { trimImageMargins } from "../image-margin-trim.js?v=1.7.0-four-session-integration";
@@ -100,7 +101,7 @@ export function buildImageSection(ctx) {
       if (trimmed) state.update(s => {
         const index = s.objects.findIndex(o => o.id === current.id);
         if (index < 0 || JSON.stringify(s.objects[index]) !== snapshot) return;
-        s.undoStack.push(JSON.parse(JSON.stringify(s.objects))); s.redoStack = [];
+        s.undoStack.push(jsonClone(s.objects)); s.redoStack = [];
         s.objects[index] = trimmed;
       });
       trimMargins.textContent = trimmed ? "여백 제거 완료" : "제거할 여백 없음";
@@ -221,7 +222,7 @@ export function buildImageSection(ctx) {
     const s = state.get();
     const cur = selectedImage(s);
     if (!cur) return;
-    const snap = JSON.parse(JSON.stringify(s.objects));
+    const snap = jsonClone(s.objects);
     state.update((s2) => {
       const o = selectedImage(s2);
       if (!o || !apply(s2, o)) return;

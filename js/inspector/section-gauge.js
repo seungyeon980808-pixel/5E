@@ -10,6 +10,7 @@
  * 컨트롤: 눈금 간격(자=mm, 각도기=°) · 투명도(0~100%).
  */
 
+import { jsonClone } from "../json-clone.js?v=1.7.0-four-session-integration";
 import { makeSection } from "./widgets.js?v=1.7.0-four-session-integration";
 
 export function initGaugeSection(state) {
@@ -75,7 +76,7 @@ export function initGaugeSection(state) {
     const s = state.get();
     const o = selectedGauge();
     if (!o || o.locked) return;
-    const snap = JSON.parse(JSON.stringify(s.objects));
+    const snap = jsonClone(s.objects);
     state.update((s2) => {
       const t = s2.objects.find((x) => x.id === o.id);
       if (!t || t.locked) return;
@@ -101,7 +102,7 @@ export function initGaugeSection(state) {
   opRange.addEventListener("input", () => {
     const o = selectedGauge();
     if (!o || o.locked) return;
-    if (!_opSnap) _opSnap = JSON.parse(JSON.stringify(state.get().objects));
+    if (!_opSnap) _opSnap = jsonClone(state.get().objects);
     const v = Number(opRange.value);
     opOut.textContent = `${Math.round(v * 100)}%`;
     state.update((s2) => {

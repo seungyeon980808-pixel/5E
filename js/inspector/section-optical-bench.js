@@ -1,3 +1,4 @@
+import { jsonClone } from "../json-clone.js?v=1.7.0-four-session-integration";
 import { makeSection } from "./widgets.js?v=1.7.0-four-session-integration";
 import { isOpticalBench, opticalBenchSettings, changeOpticalBench } from "../optical-bench.js?v=1.7.0-four-session-integration";
 
@@ -10,7 +11,7 @@ export function buildOpticalBenchSection({state}) {
     const o=selected();if(!isOpticalBench(o)||o.locked)return;
     const next=changeOpticalBench(o,key,value), current=opticalBenchSettings(o);
     if(JSON.stringify(next)===JSON.stringify(current))return;
-    const snapshot=JSON.parse(JSON.stringify(state.get().objects));
+    const snapshot=jsonClone(state.get().objects);
     state.update(s=>{const target=s.objects.find(x=>x.id===o.id);if(!target||target.locked)return;
       s.undoStack.push(snapshot);s.redoStack=[];Object.assign(target,next);});
   }

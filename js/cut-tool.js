@@ -1,3 +1,4 @@
+import { jsonClone } from "./json-clone.js?v=1.7.0-four-session-integration";
 import { createPointerMagnifier, svgMagnifierSample, cropMagnifierEnabled, mountCropMagnifierToggle } from "./tools/pointer-magnifier.js?v=1.7.0-four-session-integration";
 /* ===== CUT TOOL — 삽입(생성) 후 캔버스에서 객체 자르기 (가위 하나) =====
 //
@@ -303,7 +304,7 @@ function applyDelayedCuts() {
   const remainingIds = new Set(remaining.map((c) => c.objectId));
   working.push(...JSON.parse(JSON.stringify(original)).filter((o) => remainingIds.has(o.id)));
   _state.update((s) => {
-    s.undoStack.push(JSON.parse(JSON.stringify(s.objects)));
+    s.undoStack.push(jsonClone(s.objects));
     s.redoStack = [];
     s.objects = working;
     s.selectedIds = addedIds;
@@ -402,7 +403,7 @@ function commitDelayedDraft() {
       // 자유곡선은 일반 자르기와 같은 매끄러운 curve 객체로 저장합니다.
       : { type: "curve", points: path.map((p) => ({ ...p })), closed: false };
   Object.assign(obj, { id: `obj_${Date.now().toString(36)}_delayed${++_idc}`, rotation: 0, strokeLevel: 0, strokeWidth: 0.35, fillNone: true, dashLength: 0, dashGap: 0, arrowHead: "none", locked: false, positionLocked: false, delayedCut: true, layerId: _state.get().activeLayerId, order: _state.get().objects.length });
-  _state.update((s) => { s.undoStack.push(JSON.parse(JSON.stringify(s.objects))); s.redoStack = []; s.objects.push(obj); s.selectedIds = [obj.id]; s.targetedId = null; });
+  _state.update((s) => { s.undoStack.push(jsonClone(s.objects)); s.redoStack = []; s.objects.push(obj); s.selectedIds = [obj.id]; s.targetedId = null; });
   _pendingCuts.push({ id: `delayed-cut-${++_pendingSeq}`, objectId: obj.id });
   _delayedDraft = null; renderDelayedCuts(); updateDelayedAction();
 }
@@ -622,7 +623,7 @@ function applyCut(path) {
 
   const stamp = Date.now().toString(36);
   _state.update((s) => {
-    const snapshot = JSON.parse(JSON.stringify(s.objects));
+    const snapshot = jsonClone(s.objects);
     const map = new Map(results.map((r) => [r.id, r.pieces]));
     const out = [];
     const addedPieces = [];

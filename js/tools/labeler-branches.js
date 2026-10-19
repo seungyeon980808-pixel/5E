@@ -1,3 +1,4 @@
+import { jsonClone } from "../json-clone.js?v=1.7.0-four-session-integration";
 import { screenToWorld } from "../viewport.js?v=1.7.0-four-session-integration";
 
 const NS = "http://www.w3.org/2000/svg";
@@ -76,7 +77,7 @@ export function initLabelerBranches(svg, state) {
     state.update((s) => {
       const target = s.objects.find((item) => item.id === pending?.objectId);
       if (commit && target && !target.locked && pending.anchors.length && pending.elbow) {
-        s.undoStack.push(JSON.parse(JSON.stringify(s.objects)));
+        s.undoStack.push(jsonClone(s.objects));
         s.redoStack = [];
         const anchors = [...(target.p3 ? [target.p3] : []), ...(target.extraAnchors || []), ...pending.anchors].slice(0, 4);
         target.p3 = anchors[0];

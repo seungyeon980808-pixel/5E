@@ -4,6 +4,7 @@
  * helper closures shared by the section builders (snapshots, label-row
  * builders, single-object commit helper). */
 
+import { jsonClone } from "../json-clone.js?v=1.7.0-four-session-integration";
 import { ptToMm, MIN_TEXT_PT, OBJECT_LABEL_TYPES } from "../state.js?v=1.7.0-four-session-integration";
 
 export function createInspectorContext(state) {
@@ -55,7 +56,7 @@ export function createInspectorContext(state) {
         o[prop] = mm;
       });
     };
-    num.addEventListener("focus", () => { editSnap = JSON.parse(JSON.stringify(state.get().objects)); });
+    num.addEventListener("focus", () => { editSnap = jsonClone(state.get().objects); });
     num.addEventListener("input", () => applySize(true));
     num.addEventListener("change", () => { applySize(true); editSnap = null; });
     return { row, num };
@@ -89,7 +90,7 @@ export function createInspectorContext(state) {
       const id = (s.selectedIds || [])[0];
       if (!id) return;
       const nextType = normalizeLabelType(sel.value, fallback);
-      const snap = JSON.parse(JSON.stringify(s.objects));
+      const snap = jsonClone(s.objects);
       state.update((s2) => {
         const o = s2.objects.find((it) => it.id === id);
         if (!o || !applies(o) || o.locked) return;
@@ -112,7 +113,7 @@ export function createInspectorContext(state) {
   function snapBefore() {
     const s = state.get();
     const ids = s.selectedIds || [];
-    return ids.length ? JSON.parse(JSON.stringify(s.objects)) : null;
+    return ids.length ? jsonClone(s.objects) : null;
   }
 
   function pushSnap(snap) {
@@ -131,7 +132,7 @@ export function createInspectorContext(state) {
   function commitSelectedObject(apply) {
     const s = state.get();
     if (!(s.selectedIds || []).length) return;
-    const snap = JSON.parse(JSON.stringify(s.objects));
+    const snap = jsonClone(s.objects);
     state.update((s2) => {
       const o = s2.objects.find((item) => item.id === (s2.selectedIds || [])[0]);
       if (!o || o.locked) return;
@@ -143,7 +144,7 @@ export function createInspectorContext(state) {
 
   // Snapshot that does NOT depend on selection: snapBefore() returns null when
   // nothing is selected, but bg controls act with no canvas selection at all.
-  function snapObjectsAlways() { return JSON.parse(JSON.stringify(state.get().objects)); }
+  function snapObjectsAlways() { return jsonClone(state.get().objects); }
 
   return {
     state,

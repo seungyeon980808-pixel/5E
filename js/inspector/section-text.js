@@ -3,6 +3,7 @@
  * split). Builds the section DOM and wires its events; mounting into the
  * inspector panel happens in js/inspector.js (the orchestrator). */
 
+import { jsonClone } from "../json-clone.js?v=1.7.0-four-session-integration";
 import { TEXT_FONTS, MIN_TEXT_PT, ptToMm, normalizeTextRunStyle,
          LETTER_SPACING_MIN, LETTER_SPACING_MAX,
          WIDTH_SCALE_MIN, WIDTH_SCALE_MAX } from "../state.js?v=1.7.0-four-session-integration";
@@ -174,7 +175,7 @@ export function buildTextSection(ctx) {
     const s = state.get();
     const ids = s.selectedIds || [];
     if (ids.length !== 1) return;
-    const snap = JSON.parse(JSON.stringify(s.objects));
+    const snap = jsonClone(s.objects);
     state.update((s2) => {
       const o = s2.objects.find((o) => o.id === ids[0]);
       if (!o || (o.type !== "text" && o.type !== "formula")) return;
@@ -191,7 +192,7 @@ export function buildTextSection(ctx) {
     const s = state.get();
     const ids = s.selectedIds || [];
     if (ids.length !== 1) return;
-    const snap = JSON.parse(JSON.stringify(s.objects));
+    const snap = jsonClone(s.objects);
     state.update((s2) => {
       const o = s2.objects.find((o) => o.id === ids[0]);
       if (!o || (o.type !== "text" && o.type !== "formula")) return;
@@ -207,7 +208,7 @@ export function buildTextSection(ctx) {
     const s = state.get();
     const ids = s.selectedIds || [];
     if (ids.length !== 1) return;
-    const snap = JSON.parse(JSON.stringify(s.objects));
+    const snap = jsonClone(s.objects);
     state.update((s2) => {
       const o = s2.objects.find((o) => o.id === ids[0]);
       if (!o || (o.type !== "text" && o.type !== "formula")) return;
@@ -222,7 +223,7 @@ export function buildTextSection(ctx) {
     const s = state.get();
     const ids = s.selectedIds || [];
     if (ids.length !== 1) return;
-    const snap = JSON.parse(JSON.stringify(s.objects));
+    const snap = jsonClone(s.objects);
     state.update((s2) => {
       const o = s2.objects.find((o) => o.id === ids[0]);
       if (!o || o.type !== "text") return;

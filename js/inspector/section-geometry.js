@@ -3,6 +3,7 @@
  * split). Builds the section DOM and wires its events; mounting into the
  * inspector panel happens in js/inspector.js (the orchestrator). */
 
+import { jsonClone } from "../json-clone.js?v=1.7.0-four-session-integration";
 import { openAngleArcLabelEditor } from "../tools.js?v=1.7.0-four-session-integration";
 import { boxLabelSlots } from "../render.js?v=1.7.0-four-session-integration";
 import { makeSection } from "./widgets.js?v=1.7.0-four-session-integration";
@@ -51,7 +52,7 @@ export function buildGeometrySection(ctx) {
       if (!isFinite(val)) return;
       inp.setCustomValidity?.("");
       if (commitGroupGeometry(state, prop, negate ? -val : val, document.getElementById('canvas'))) return;
-      const snap = JSON.parse(JSON.stringify(s.objects));
+      const snap = jsonClone(s.objects);
       state.update((s2) => {
         const id = (s2.selectedIds || [])[0];
         const o = s2.objects.find((o) => o.id === id);
@@ -131,7 +132,7 @@ export function buildGeometrySection(ctx) {
     const s = state.get();
     const id = (s.selectedIds || [])[0];
     if (!id) return;
-    const snap = JSON.parse(JSON.stringify(s.objects));
+    const snap = jsonClone(s.objects);
     const val = lockAspectCb.checked;
     state.update((s2) => {
       const o = s2.objects.find((item) => item.id === id);
@@ -190,7 +191,7 @@ export function buildGeometrySection(ctx) {
     const s = state.get();
     const ids = s.selectedIds || [];
     if (!ids.length) return;
-    const snap = JSON.parse(JSON.stringify(s.objects));
+    const snap = jsonClone(s.objects);
     state.update((s2) => {
       const id = (s2.selectedIds || [])[0];
       const o = s2.objects.find((o) => o.id === id);
@@ -247,7 +248,7 @@ export function buildGeometrySection(ctx) {
   showLabelCb.addEventListener("change", () => {
     const s = state.get();
     if (!(s.selectedIds || []).length) return;
-    const snap = JSON.parse(JSON.stringify(s.objects));
+    const snap = jsonClone(s.objects);
     const val = showLabelCb.checked;
     state.update((s2) => {
       const o = s2.objects.find((o) => o.id === (s2.selectedIds || [])[0]);
@@ -321,7 +322,7 @@ export function buildGeometrySection(ctx) {
     });
   };
   nodeSizeInp.addEventListener("focus", () => {
-    nodeSizeSnap = JSON.parse(JSON.stringify(state.get().objects));
+    nodeSizeSnap = jsonClone(state.get().objects);
   });
   nodeSizeInp.addEventListener("input", applyNodeSize);
   nodeSizeInp.addEventListener("change", () => { applyNodeSize(); nodeSizeSnap = null; });
@@ -331,7 +332,7 @@ export function buildGeometrySection(ctx) {
   labelPosSel.addEventListener("change", () => {
     const s = state.get();
     if (!(s.selectedIds || []).length) return;
-    const snap = JSON.parse(JSON.stringify(s.objects));
+    const snap = jsonClone(s.objects);
     const val = labelPosSel.value === "below" ? "below" : "above";
     state.update((s2) => {
       const o = s2.objects.find((o) => o.id === (s2.selectedIds || [])[0]);
@@ -373,7 +374,7 @@ export function buildGeometrySection(ctx) {
     const s = state.get();
     const ids = s.selectedIds || [];
     if (ids.length !== 1) return;
-    const snap = JSON.parse(JSON.stringify(s.objects));
+    const snap = jsonClone(s.objects);
     state.update((s2) => {
       const o = s2.objects.find((it) => it.id === ids[0]);
       if (!o || o.locked) return;
@@ -484,7 +485,7 @@ export function buildGeometrySection(ctx) {
       const o = s.objects.find((item) => item.id === gapEditedId);
       if (!o || o.id !== (s.selectedIds || [])[0] || o.type !== "labeler" || o.locked || o.labelGap === value) return;
       if (!gapUndoRecorded) {
-        s.undoStack.push(JSON.parse(JSON.stringify(s.objects)));
+        s.undoStack.push(jsonClone(s.objects));
         s.redoStack = [];
         gapUndoRecorded = true;
       }
@@ -520,7 +521,7 @@ export function buildGeometrySection(ctx) {
     const s = state.get();
     const ids = s.selectedIds || [];
     if (ids.length !== 1) return;
-    const snap = JSON.parse(JSON.stringify(s.objects));
+    const snap = jsonClone(s.objects);
     state.update((s2) => {
       const o = s2.objects.find((it) => it.id === ids[0]);
       if (!o || o.type !== "labeler" || o.locked) return;
@@ -559,7 +560,7 @@ export function buildGeometrySection(ctx) {
     const s = state.get();
     const ids = s.selectedIds || [];
     if (ids.length !== 1) return;
-    const snap = JSON.parse(JSON.stringify(s.objects));
+    const snap = jsonClone(s.objects);
     state.update((s2) => {
       const o = s2.objects.find((it) => it.id === ids[0]);
       if (!o || o.type !== "labeler" || o.locked) return;
@@ -787,7 +788,7 @@ export function buildGeometrySection(ctx) {
     if (!isFinite(val) || val <= 0) return;
     const s = state.get();
     if (!(s.selectedIds || []).length) return;
-    const snap = JSON.parse(JSON.stringify(s.objects));
+    const snap = jsonClone(s.objects);
     state.update((s2) => {
       const o = s2.objects.find((o) => o.id === (s2.selectedIds || [])[0]);
       if (!o || o.locked) return;
@@ -849,7 +850,7 @@ export function buildGeometrySection(ctx) {
   function commitAxes(apply) {
     const s = state.get();
     if (!(s.selectedIds || []).length) return;
-    const snap = JSON.parse(JSON.stringify(s.objects));
+    const snap = jsonClone(s.objects);
     state.update((s2) => {
       const o = s2.objects.find((o) => o.id === (s2.selectedIds || [])[0]);
       if (!o || o.locked || o.type !== "axes") return;
@@ -950,7 +951,7 @@ export function buildGeometrySection(ctx) {
   function commitLens(apply) {
     const s = state.get();
     if (!(s.selectedIds || []).length) return;
-    const snap = JSON.parse(JSON.stringify(s.objects));
+    const snap = jsonClone(s.objects);
     state.update((s2) => {
       const o = s2.objects.find((o) => o.id === (s2.selectedIds || [])[0]);
       if (!o || o.locked || o.type !== "optics") return;
@@ -996,7 +997,7 @@ export function buildGeometrySection(ctx) {
     function commit() {
       const s = state.get();
       if (!(s.selectedIds || []).length) return;
-      const snap = JSON.parse(JSON.stringify(s.objects));
+      const snap = jsonClone(s.objects);
       state.update((s2) => {
         const o = s2.objects.find((o) => o.id === (s2.selectedIds || [])[0]);
         if (!o || o.locked) return;

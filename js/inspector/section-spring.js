@@ -2,6 +2,7 @@
  * 단진자 섹션과 같은 구조. 감은 수·반지름·끝단 길이·모양을 그 자리에서 고친다.
  * (요구: "도르래의 반지름, 감은수 등을 입력 가능한 객체로 — 단진자와 비슷한 느낌") */
 
+import { jsonClone } from "../json-clone.js?v=1.7.0-four-session-integration";
 import { addEndpointControls } from "./science-controls.js?v=1.7.0-four-session-integration";
 import { makeSection } from "./widgets.js?v=1.7.0-four-session-integration";
 import { SPRING_DEFAULTS } from "../render/spring.js?v=1.7.0-four-session-integration";
@@ -16,7 +17,7 @@ export function buildSpringSection(ctx) {
     const s = state.get();
     const ids = s.selectedIds || [];
     if (ids.length !== 1) return;
-    const snap = JSON.parse(JSON.stringify(s.objects));
+    const snap = jsonClone(s.objects);
     state.update((s2) => {
       const o = s2.objects.find((it) => it.id === ids[0]);
       if (!o || o.type !== "spring" || o.locked) return;
@@ -31,7 +32,7 @@ export function buildSpringSection(ctx) {
     const s = state.get();
     const ids = s.selectedIds || [];
     if (ids.length !== 1) return;
-    const snap = JSON.parse(JSON.stringify(s.objects));
+    const snap = jsonClone(s.objects);
     state.update((s2) => {
       const o = s2.objects.find((it) => it.id === ids[0]);
       if (!o || o.type !== "spring" || o.locked) return;

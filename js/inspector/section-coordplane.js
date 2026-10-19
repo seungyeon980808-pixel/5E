@@ -8,6 +8,7 @@
  *   - 내보내기 포함 : exportable 토글(요구 6 잔존 기능).
  * 더블클릭 재편집도 같은 분기를 탄다(tools.js). */
 
+import { jsonClone } from "../json-clone.js?v=1.7.0-four-session-integration";
 import { makeSection } from "./widgets.js?v=1.7.0-four-session-integration";
 import { openPlaneModal } from "../function-graph/plane-modal.js?v=1.7.0-four-session-integration";
 import { openGraphModal } from "../graph/graph-modal.js?v=1.7.0-four-session-integration";
@@ -36,7 +37,7 @@ function makeHaloRow(body, state, typeOf) {
     const s = state.get();
     const ids = s.selectedIds || [];
     if (ids.length !== 1) return;
-    const snap = JSON.parse(JSON.stringify(s.objects));
+    const snap = jsonClone(s.objects);
     state.update((s2) => {
       const o = s2.objects.find((it) => it.id === ids[0]);
       if (!o || o.type !== typeOf || o.locked) return;

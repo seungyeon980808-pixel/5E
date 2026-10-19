@@ -8,6 +8,7 @@
 // replicates the exact obj-id scheme, and three small accessors (isTextEditorOpen /
 // commitActiveText) plus imported isSpaceHeld to replace cross-module raw reads.
 
+import { jsonClone } from "./json-clone.js?v=1.7.0-four-session-integration";
 import { screenToWorld, getRenderScale, worldToScreen } from "./viewport.js?v=1.7.0-four-session-integration";
 import { getToolTextDefaults } from './tool-defaults.js?v=1.7.0-four-session-integration';
 import {
@@ -177,7 +178,7 @@ export function insertLabelerChar(ch) {
   if (!id) return;
   const o = st.objects.find((x) => x.id === id);
   if (!o || o.type !== "labeler" || o.locked) return;
-  const snap = JSON.parse(JSON.stringify(st.objects));
+  const snap = jsonClone(st.objects);
   _state.update((s2) => {
     const obj = s2.objects.find((x) => x.id === id);
     if (!obj || obj.type !== "labeler" || obj.locked) return;
@@ -332,7 +333,7 @@ function _openSmallTextEditor(objId, { type = "labeler", field = "text", title =
       const fontChanged = fontVal != null && (obj.fontFamily ?? DEFAULT_TEXT_FONT) !== fontVal;
       const sizeChanged = sizeMm != null && (obj.labelSize ?? DEFAULT_TEXT_SIZE_MM) !== sizeMm;
       if (!textChanged && !fontChanged && !sizeChanged) return;
-      const snap = JSON.parse(JSON.stringify(st.objects));
+      const snap = jsonClone(st.objects);
       obj[fld] = val;
       if (fontVal != null) obj.fontFamily = fontVal;
       if (sizeMm != null) obj.labelSize = sizeMm;
@@ -1700,7 +1701,7 @@ function _commitText() {
         if (!textChanged && !fontChanged && !sizeChanged && !weightChanged && !italicChanged) {
           return;
         }
-        const snap = JSON.parse(JSON.stringify(s.objects));
+        const snap = jsonClone(s.objects);
         s.undoStack.push(snap);
         s.redoStack = [];
         if (dt.pendingLabeler) {
@@ -1752,7 +1753,7 @@ function _commitText() {
         if (!textChanged && !styleChanged) {
           return;
         }
-        const snap = JSON.parse(JSON.stringify(s.objects));
+        const snap = jsonClone(s.objects);
         s.undoStack.push(snap);
         s.redoStack = [];
         // formulaMode는 '지금 편집 중인 내용'을 실시간 반영하는 신호(dt.contentMode가
@@ -1792,7 +1793,7 @@ function _commitText() {
       }
     } else if (rawSource) {
       // New text built from the SAME draft data shown while typing.
-      const snap = JSON.parse(JSON.stringify(s.objects));
+      const snap = jsonClone(s.objects);
       s.undoStack.push(snap);
       s.redoStack = [];
       const id = `obj_${Date.now().toString(36)}_${++_idCounter}`;
@@ -2011,7 +2012,7 @@ function commitFormulaEditor() {
       // restore over delete), mirroring the text editor's re-edit semantics.
       const o = s.objects.find((x) => x.id === objId);
       if (o && src) {
-        const snap = JSON.parse(JSON.stringify(s.objects));
+        const snap = jsonClone(s.objects);
         s.undoStack.push(snap);
         s.redoStack = [];
         o.source = src;
@@ -2019,7 +2020,7 @@ function commitFormulaEditor() {
         o.w = m.w; o.h = m.h;
       }
     } else if (src) {
-      const snap = JSON.parse(JSON.stringify(s.objects));
+      const snap = jsonClone(s.objects);
       s.undoStack.push(snap);
       s.redoStack = [];
       const fontSize = DEFAULT_TEXT_SIZE_MM;

@@ -8,6 +8,7 @@
  * selected() / commit() / sync() 3함수 패턴은 section-legend.js 와 같다.
  */
 
+import { jsonClone } from "../json-clone.js?v=1.7.0-four-session-integration";
 import { EXAM_VESSEL_KINDS } from "../render/exam-illustration.js?v=1.7.0-four-session-integration";
 import { makeSection } from "./widgets.js?v=1.7.0-four-session-integration";
 import { vesselFill, volumeFractionAtHeight, VOLUME_KINDS } from "../science-geometry.js?v=1.7.0-four-session-integration";
@@ -189,7 +190,7 @@ export function initVesselSection(state) {
     const s = state.get();
     const o = selected();
     if (!o || o.locked) return;
-    const snap = JSON.parse(JSON.stringify(s.objects));
+    const snap = jsonClone(s.objects);
     state.update((s2) => {
       const t = s2.objects.find((x) => x.id === o.id);
       if (!t || t.locked) return;

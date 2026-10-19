@@ -1,3 +1,4 @@
+import { jsonClone } from "../json-clone.js?v=1.7.0-four-session-integration";
 import { previewStorage as localStorage } from '../preview-storage.js?v=1.7.0-four-session-integration';
 /* ===== INSPECTOR SECTION — 입체(solid3d) =====
  *
@@ -176,7 +177,7 @@ export function initSolid3dSection(state) {
     const s = state.get();
     const o = selected();
     if (!o || o.locked) return;
-    const snap = JSON.parse(JSON.stringify(s.objects));
+    const snap = jsonClone(s.objects);
     state.update((s2) => {
       const t = s2.objects.find((x) => x.id === o.id);
       if (!t || t.locked) return;
@@ -262,7 +263,7 @@ export function initSolid3dSection(state) {
       localStorage.setItem(DEFAULTS_KEY, JSON.stringify(d));
     } catch (_) { /* 저장 실패해도 현재 페이지 적용은 계속한다 */ }
     const s = state.get();
-    const snap = JSON.parse(JSON.stringify(s.objects));
+    const snap = jsonClone(s.objects);
     let changed = 0;
     state.update((s2) => {
       s2.objects.forEach((t) => {

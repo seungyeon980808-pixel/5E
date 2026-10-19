@@ -4,6 +4,7 @@
  * 모서리 둥글기만 다룬다. 구조는 section-axisbreak.js 의 selected() / commit() / sync().
  */
 
+import { jsonClone } from "../json-clone.js?v=1.7.0-four-session-integration";
 import { makeSection } from "./widgets.js?v=1.7.0-four-session-integration";
 
 const SIDES = [["bottom", "아래"], ["top", "위"], ["left", "왼쪽"], ["right", "오른쪽"]];
@@ -78,7 +79,7 @@ export function initBubbleSection(state) {
     const s = state.get();
     const o = selected();
     if (!o || o.locked) return;
-    const snap = JSON.parse(JSON.stringify(s.objects));
+    const snap = jsonClone(s.objects);
     state.update((s2) => {
       const t = s2.objects.find((x) => x.id === o.id);
       if (!t || t.locked) return;
