@@ -3,6 +3,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import vm from 'node:vm';
 import { buildNativeGraph, insertNativeGraph } from '../js/graph/native-graph.js';
+import { jsonClone } from '../js/json-clone.js';
 
 const dir = process.env.EVIDENCE_DIR ? path.resolve(process.env.EVIDENCE_DIR) : path.resolve(import.meta.dirname, '../.omo/evidence/graph-reconstruction-20261004/native');
 fs.mkdirSync(dir, { recursive: true });
@@ -73,7 +74,7 @@ scenario('one atomic insertion, undo snapshot and serialized group membership', 
 scenario('real history engine undo and redo rebuild imported groups', () => {
   const text = fs.readFileSync(path.resolve(import.meta.dirname, '../js/transform.js'), 'utf8');
   const history = text.slice(text.indexOf('function cloneObjects('), text.indexOf('/* ===== MOVE GESTURE'));
-  const context = vm.createContext({ isPageHistoryEntry: () => false });
+  const context = vm.createContext({ isPageHistoryEntry: () => false, jsonClone });
   vm.runInContext(history.replace(/export /g, '') + ';globalThis.history = {undo,redo};', context);
   const data = { objects: [], groups: [], activeLayerId: 'main', undoStack: [], redoStack: [], selectedIds: [] };
   const store = { get: () => data, update: (fn) => fn(data) };
