@@ -2101,6 +2101,12 @@
       ]
     },
     {
+      "path": "tests/test-exampool-paper-mix-browser.cjs",
+      "findingIds": [
+        "EXAMPOOL-EXAM-PAPER-MIX"
+      ]
+    },
+    {
       "path": "tests/test-asset-library-browser.cjs",
       "findingIds": [
         "ASSET-LIBRARY-PORT"

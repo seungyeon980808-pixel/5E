@@ -2,7 +2,7 @@
 // 문항 용지의 본문 폭은 시험지 한 단과 같아서, 문단을 그대로 옮기면 줄바꿈이 유지된다. HTML로 다시 만들지 않는다.
 import {pageProfile} from './typeset-model.js';
 import {openApprovedQuestion,nativeInsertOptions} from './native-transfer.js?v=1014-compact-panel';
-import {examPlan} from './exam-layout.js';
+import {examPlan,paperMixMessage} from './exam-layout.js';
 
 const parse=v=>typeof v==='string'?JSON.parse(v):v;
 
@@ -34,9 +34,10 @@ export async function assembleExamDocument(Document,{items,pages,sheet,open}){
 }
 
 export async function buildExamDocument(Document,data,exam=data.exams?.[0]){
-  const {items,pages,page:sheet,missing}=examPlan(data,exam);
+  const {items,pages,page:sheet,missing,mixed}=examPlan(data,exam);
   if(!items.length)throw Error('시험지에 넣을 문항을 고르세요.');
   if(missing.length)throw Error(`조판을 저장하지 않은 문항이 있습니다: ${missing.map(x=>x.q.number+'번').join(', ')}. 각 문항의 조판을 저장한 뒤 다시 만드세요.`);
+  if(mixed)throw Error(paperMixMessage(mixed));
   const {document}=await assembleExamDocument(Document,{items,pages,sheet,open:item=>openApprovedQuestion(Document,item.q,item.q.typeset)});
   return {document,pages,count:items.length};
 }
