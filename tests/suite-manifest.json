@@ -1831,6 +1831,12 @@
       "findingIds": [
         "DATA-COMPAT-1.6.3-TO-1.7.0"
       ]
+    },
+    {
+      "path": "tests/test-asset-library-browser.cjs",
+      "findingIds": [
+        "ASSET-LIBRARY-PORT"
+      ]
     }
   ],
   "deferred": [

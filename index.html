@@ -60,6 +60,7 @@
   <link rel="stylesheet" href="/css/ai-comparison.css?v=1.7.0-four-session-integration" />
   <link rel="stylesheet" href="/css/ai-composition-editor.css?v=1.7.0-four-session-integration" />
   <link rel="stylesheet" href="/css/ai-editable-assets.css?v=1.7.0-four-session-integration" />
+  <link rel="stylesheet" href="/css/asset-library.css?v=1.7.0-four-session-integration" />
   <link rel="stylesheet" href="/css/panel-visibility.css?v=20261013-default-states" />
   <link rel="stylesheet" href="/css/mobile-image.css?v=1.7.0-four-session-integration" />
   <link rel="stylesheet" href="/css/productization.css?v=1.7.0-four-session-integration" />
@@ -339,6 +340,16 @@
           <div class="tool-section-header">내 오브젝트 <span class="toggle-icon">▾</span></div>
           <div class="tool-section-body tool-section-body-wide">
             <div id="personal-parts"><p class="subject-part-empty">저장된 오브젝트가 없습니다.</p></div>
+          </div>
+        </div>
+        <div class="tool-section is-collapsed" id="asset-library-section">
+          <div class="tool-section-header">에셋 라이브러리 <span class="toggle-icon">▾</span></div>
+          <div class="tool-section-body tool-section-body-wide">
+            <div class="subject-switch asset-library-tabs" id="asset-library-tabs" role="tablist" aria-label="에셋 과목"></div>
+            <input id="asset-library-query" class="asset-library-query" type="search" autocomplete="off"
+                   placeholder="이름·검색어: 학생 / 추 / 도플러" aria-label="에셋 검색" />
+            <p id="asset-library-status" class="asset-library-status" role="status"></p>
+            <div id="asset-library-grid" class="asset-library-grid"></div>
           </div>
         </div>
         <div class="tool-section" id="advanced-section">
