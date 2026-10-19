@@ -913,6 +913,12 @@
       ]
     },
     {
+      "path": "tests/test-exampool-card-typing-perf-browser.cjs",
+      "findingIds": [
+        "EXAMPOOL-CARD-TYPING-PERF"
+      ]
+    },
+    {
       "path": "tests/test-exampool-authoring-browser.cjs",
       "findingIds": [
         "EXAMPOOL-AUTHORING-FAILURE-PATHS"

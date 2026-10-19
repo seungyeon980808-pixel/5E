@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import {createRequire} from 'node:module';
-import {FORMAT,newQuestion,block,applyPreset,validate,duplicateQuestion,mergeCells,migrate,cellValue} from '../assets/exampool/sheet/model.js';
+import {FORMAT,newQuestion,block,applyPreset,validate,duplicateQuestion,mergeCells,migrate,cellValue,jsonSize} from '../assets/exampool/sheet/model.js';
 import {project,exportExcel,importExcel} from '../assets/exampool/sheet/excel.js';
 const require=createRequire(import.meta.url),XLSX=require('../assets/exampool/sheet/vendor/xlsx.full.min.js'),JSZip=require('../assets/exampool/sheet/vendor/jszip.min.js');
 const examples=JSON.parse(await fs.readFile(new URL('../assets/exampool/sheet/examples.json',import.meta.url),'utf8'));
@@ -43,4 +43,19 @@ test('two tables in one experiment, per-statement evidence, and reordered Excel 
  const d=data(),q=d.questions[0],group=q.blocks.find(b=>b.kind==='group'),extra=block('table',group.id,'두 번째 결과');extra.table.cells[1][1].value='㉡';q.blocks.push(extra);const line=q.blocks.find(b=>b.kind==='bogi').lines[1];q.references.push({target:line.id,label:'보기 ㄴ 근거',quote:'연결 유지',standardCode:'[9과01-01]'});
  const duplicate=duplicateQuestion(q);assert.equal(duplicate.references.at(-1).target,duplicate.blocks.find(b=>b.kind==='bogi').lines[1].id);
  const raw=await exportExcel(XLSX,JSZip,d),zip=await JSZip.loadAsync(raw),xml=await zip.file('xl/workbook.xml').async('string'),tags=xml.match(/<sheet\b[^>]*\/>/g);zip.file('xl/workbook.xml',xml.replace(/<sheets>[\s\S]*?<\/sheets>/,`<sheets>${[tags[0],tags[3],tags[2],tags[1],tags[4]].join('')}</sheets>`));const got=await importExcel(XLSX,JSZip,await zip.generateAsync({type:'arraybuffer'}));assert.deepEqual(got.questions,d.questions);
+});
+
+// 카드 입력 성능(밤샘 점검): 키마다 도는 validate가 그림 data URL 정규식과 JSON.stringify(전체)를 매번 하지 않는다.
+test('jsonSize equals JSON.stringify length without building the string', () => {
+  const q=newQuestion('1');applyPreset(q,'그림');q.ask='따옴표" 줄\n바꿈 \\ 한글';q.blocks.find(b=>b.kind==='figure').figure={name:'그림.png',data:'data:image/png;base64,'+'A'.repeat(9000)};
+  const cases=[{format:FORMAT,questions:[q],documents:[],exams:[]},{a:[1,undefined,null,()=>1],b:undefined,c:NaN,d:-0.25,e:1e21,f:new Date(0),g:'가'.repeat(5000),h:true}];
+  for(const c of cases)assert.equal(jsonSize(c),JSON.stringify(c).length);
+});
+test('validate checks a figure data URL once, but still rejects a changed bad one', () => {
+  const q=newQuestion('1');applyPreset(q,'그림');const f={name:'그림.png',data:'data:image/png;base64,'+'A'.repeat(2_000_000)};q.blocks.find(b=>b.kind==='figure').figure=f;
+  const data={format:FORMAT,questions:[q],documents:[],exams:[]};
+  let t=performance.now();validate(data);const first=performance.now()-t;
+  t=performance.now();for(let i=0;i<20;i++)validate(data);const again=(performance.now()-t)/20;
+  assert.ok(again<first,'a figure already checked is not re-scanned');
+  f.data='data:image/png;base64,@@not-base64';assert.throws(()=>validate(data));
 });
