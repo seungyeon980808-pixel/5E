@@ -427,7 +427,9 @@ async function requestTypeset(value){
         if(shown&&typesetter.matches(shown))await typesetter.commit();
         else if(typesetter?.dirty){typesetter.discard();lostFormat=true;}
         if(typesetRequest!==undefined)continue;
-        if(next===null){panel.hidden=true;panel.dataset.expanded='false';$('#typeset-expand').setAttribute('aria-pressed','false');$('#typeset-expand').textContent='크게 보기';$('#preview').setAttribute('aria-expanded','false');$('#preview').focus();continue;}
+        if(next===null){// 닫을 때 초점은 창 안에 있었을 때만 「미리보기」 단추로 돌린다. 저장을 기다린 뒤 늦게 닫히므로, 그새 다른 칸에 치기 시작했으면 그대로 둔다(앞부분이 지워지던 원인).
+          const focusWasInside=panel.contains(document.activeElement)||document.activeElement===document.body||!document.activeElement;
+          panel.hidden=true;panel.dataset.expanded='false';$('#typeset-expand').setAttribute('aria-pressed','false');$('#typeset-expand').textContent='크게 보기';$('#preview').setAttribute('aria-expanded','false');if(focusWasInside)$('#preview').focus();continue;}
         next=data.questions.find(q=>q.id===next.id);if(!next)throw Error('문항이 삭제되었습니다. 다른 문항을 선택하세요.');
         closeSources();panel.hidden=false;$('#preview').setAttribute('aria-expanded','true');
         typesetter ||= makeTypesetter();
