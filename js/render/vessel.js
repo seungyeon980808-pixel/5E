@@ -319,16 +319,28 @@ export function renderVessel(obj) {
   // ----- 액체 · 액면선 -----
   const fill = vesselFill(obj);
   const liquidColor = obj.liquidColor || DEF_LIQUID_COLOR;
-  const split = obj.kind === "u_tube" || (obj.kind === "tank" && obj.hasPartition);
+  // 양쪽 높이·색이 같으면(예전 U자관 파일 포함) 나누지 않고 한 덩어리로 그린다 — 가운데 이음선이 생기지 않게.
+  const sideHeight = side => clamp01(obj[`${side}Liquid`], fill.height);
+  const split = (obj.kind === "u_tube" || (obj.kind === "tank" && obj.hasPartition))
+    && (sideHeight("left") !== sideHeight("right") || (obj.rightLiquidColor && obj.rightLiquidColor !== liquidColor)
+      || (obj.kind === "tank" && obj.hasPartition));
   if (!exam && split) {
     const at = obj.kind === "u_tube" ? 0.5 : num(obj.partitionAt, 0.5, 0.05, 0.95);
     const splitX = inner.x + inner.w * at;
     for (const [side, rx, rw] of [["left", inner.x, splitX - inner.x], ["right", splitX, inner.x + inner.w - splitX]]) {
       const h = clamp01(obj[`${side}Liquid`], fill.height);
-      if (h > 0) g.appendChild(node("rect", {
-        x: rx, y: inner.y + inner.h * (1 - h), width: rw, height: inner.h * h,
+      if (!(h > 0)) continue;
+      const levelY = inner.y + inner.h * (1 - h);
+      g.appendChild(node("rect", {
+        // 왼쪽을 0.05mm 겹쳐 그려 두 액체가 맞닿는 곳에 안티에일리어싱 이음선이 생기지 않게 한다.
+        x: rx, y: levelY, width: side === "left" ? rw + 0.05 : rw, height: inner.h * h,
         fill: side === "right" ? (obj.rightLiquidColor || liquidColor) : liquidColor, "clip-path": clip,
         "data-liquid-side": side,
+      }));
+      // 액면선 — 나뉘지 않은 용기와 같은 굵기로 양쪽 액면에 각각 그린다.
+      g.appendChild(node("rect", {
+        x: rx, y: levelY - sw * 0.4, width: rw, height: sw * 0.8,
+        fill: color, "clip-path": clip, "data-liquid-surface": side,
       }));
     }
   } else if (!exam && fill.height > 0) {

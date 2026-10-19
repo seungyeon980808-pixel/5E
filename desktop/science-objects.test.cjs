@@ -14,6 +14,14 @@ test('empty/full and impossible stored values remain bounded, without ghost liqu
  for(const volumeMl of [0,200,-10,900]){const o={...base,fillMode:'volume',capacityMl:200,volumeMl};const f=G.vesselFill(o);assert(f.height>=0&&f.height<=1);const svg=H.vessel.renderVessel(o).outerHTML;assert(!/NaN|Infinity/.test(svg));if(volumeMl<=0)assert(!svg.includes('fill="#d9dcdf"'));}
  const marks=G.scaleMarks(-20,100,0.00001,12);assert(marks.length<=13);assert.equal(marks[0],-20);assert.equal(marks.at(-1),100);
 });
+test('saved U tubes without side levels keep one liquid body and its surface line; split levels get a surface line each',()=>{
+ const old={...base,kind:'u_tube',liquid:0.4},a=H.vessel.renderVessel(old);
+ assert.equal(a.children.filter(x=>x.attrs['data-liquid-side']).length,0,'equal levels draw one undivided body (no centre seam)');
+ assert.equal(a.children.filter(x=>x.tagName==='rect'&&x.attrs.fill==='#d9dcdf').length,1);
+ assert.equal(a.children.filter(x=>x.tagName==='rect'&&x.attrs.fill==='#000000').length,1,'the legacy surface line remains');
+ const b=H.vessel.renderVessel({...old,leftLiquid:0.6,rightLiquid:0.25});
+ assert.deepEqual(b.children.filter(x=>x.attrs['data-liquid-surface']).map(x=>x.attrs['data-liquid-surface']),['left','right']);
+});
 test('U tube and tank have genuinely independent liquid geometry and colors',()=>{
  for(const kind of ['u_tube','tank']){const o={...base,kind,hasPartition:true,leftLiquid:0.2,rightLiquid:0.8,rightLiquidColor:'#abc123'};const a=H.vessel.renderVessel(o),rects=a.children.filter(x=>x.attrs['data-liquid-side']);assert.equal(rects.length,2);assert(Number(rects[0].attrs.y)>Number(rects[1].attrs.y));assert.equal(rects[1].attrs.fill,'#abc123');const old=rects[1].outerHTML;o.leftLiquid=0.5;const b=H.vessel.renderVessel(o);assert.equal(b.children.find(x=>x.attrs['data-liquid-side']==='right').outerHTML,old);}
 });
