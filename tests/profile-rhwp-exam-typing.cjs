@@ -36,8 +36,9 @@ async function instrument(page) {
   });
   await page.route('**/js/rhwp-exam-workspace.js*', async route => {
     const response = await route.fetch(), source = await response.text();
-    const marker = '  return { getAutosaveSnapshot:';
-    assert.ok(source.includes(marker),'instrument the exact workspace entry');
+    // 작업 공간의 마지막 return { … getAutosaveSnapshot: … } 줄 앞에 잰다(ExamPool이 앞에 receiveQuestion 등을 더함).
+    const marker = source.match(/^  return \{[^\n]*getAutosaveSnapshot:/m)?.[0];
+    assert.ok(marker,'instrument the exact workspace entry');
     const probes = `
   renderFigures = window.__rhwpPerf.wrap('5E.list',renderFigures);
   repairLinks = window.__rhwpPerf.wrap('5E.links',repairLinks);
