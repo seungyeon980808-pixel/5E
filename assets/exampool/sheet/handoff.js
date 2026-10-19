@@ -355,7 +355,7 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
         }
         const materials=b.layout==='나란히'&&children.length>1&&children.every(c=>(c.kind==='figure'||c.kind==='table')&&!q.blocks.some(x=>x.parent===c.id));
         if(materials){
-          // 나란한 자료(그림·표 2~3개): 테두리 없는 2행 표. 윗줄 칸마다 자료를 가운데·아래쪽 맞춤(그림 밑선이 나란히),
+          // 나란한 자료(그림·표 2~3개): 테두리 없는 2행 표. 윗줄 칸마다 자료를 가로·세로 모두 가운데(옆 자료가 더 높아도 칸 가운데),
           // 아랫줄 칸마다 (가)·(나) 같은 이름을 가운데. 열 폭은 묶음 안 폭 비율. 표는 칸 폭 가득, 그림은 칸 폭을 넘지 않는 크기로 가운데.
           const widths=rowWidths(children,innerWidth),caption=c=>(/^\(.+\)$/.test(c.label)?c.label:'')+(c.text?(/^\(.+\)$/.test(c.label)?' ':'')+c.text:''),captioned=children.some(c=>caption(c));
           recordTable(captioned?2:1,children.length,[],{kind:'side',id:b.id});
@@ -369,7 +369,7 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
             tops.push(inner||'<p><br></p>');
           }}finally{nested--;}
           const topH='';
-          body=`<table style="border-collapse:collapse;width:${innerWidth}px"><tr>${tops.map((inner,i)=>`<td style="border:none;padding:4px 4px 2px;vertical-align:bottom;text-align:center;${topH}width:${widths[i]}px">${inner}</td>`).join('')}</tr>`;
+          body=`<table style="border-collapse:collapse;width:${innerWidth}px"><tr>${tops.map((inner,i)=>`<td style="border:none;padding:4px 4px 2px;vertical-align:middle;text-align:center;${topH}width:${widths[i]}px">${inner}</td>`).join('')}</tr>`;
           if(captioned)body+=`<tr>${children.map((c,i)=>{const label=caption(c),hasText=!!c.text,prefix=/^\(.+\)$/.test(c.label)?c.label.length+1:0;
             return `<td style="border:none;padding:2px 4px 4px;vertical-align:top;text-align:center;height:24px;width:${widths[i]}px"><p style="margin:0;text-align:center">${label?text(label,Math.max(35,widths[i]-12),11,null,hasText?{kind:'block',id:c.id,prefix}:null):'\u2060'}</p></td>`;}).join('')}</tr>`;
           body+='</table>';
