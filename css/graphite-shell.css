@@ -303,6 +303,9 @@
   }
   :root:not([data-mode="lite"]) #tool-hint .tool-hint-action { color: var(--ds-ink-2); overflow: hidden; text-overflow: ellipsis; }
   :root:not([data-mode="lite"]) #tool-hint .tool-hint-key { padding: 1px 6px; border: 0; border-radius: 4px; background: var(--ds-kbd); color: var(--ds-ink-2); }
+  /* 아래 막대가 좁으면 키 안내(드래그 중 Shift…)가 글자 중간에서 잘렸다 — 다 들어갈 폭이 아니면 키 안내는 숨기고 동작 글만 …로 줄인다. */
+  :root:not([data-mode="lite"]) .canvas-bottom-bar { container: canvas-bar / inline-size; }
+  @container canvas-bar (max-width: 1500px) { :root:not([data-mode="lite"]) #tool-hint .tool-hint-keys { display: none; } }
 
   /* ---------- 6. 푸터 — 한 줄 27px ---------- */
   :root:not([data-mode="lite"]) .app-footer {
