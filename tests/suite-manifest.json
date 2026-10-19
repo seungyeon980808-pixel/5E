@@ -776,6 +776,12 @@
       "findingIds": [
         "GRAPH-DRAFT-HISTORY"
       ]
+    },
+    {
+      "path": "tests/test-rhwp-exam-shortcuts.mjs",
+      "findingIds": [
+        "RHWP-EXAM-HANCOM-SHORTCUTS"
+      ]
     }
   ],
   "browser": [
@@ -2050,6 +2056,12 @@
       "path": "tests/test-data-compat-1.6.3-browser.cjs",
       "findingIds": [
         "DATA-COMPAT-1.6.3-TO-1.7.0"
+      ]
+    },
+    {
+      "path": "tests/test-rhwp-exam-shortcuts-browser.cjs",
+      "findingIds": [
+        "RHWP-EXAM-HANCOM-SHORTCUTS"
       ]
     }
   ],
