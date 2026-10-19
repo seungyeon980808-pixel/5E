@@ -109,6 +109,20 @@ h.withServer(async origin => {
       assert.equal(await sheet.evaluate(()=>document.querySelector('#card-view [data-cvpast="query"]').value),'자기 장');
       await sheet.fill('#card-view [data-cvpast="query"]','');await sheet.waitForTimeout(400);
 
+      // 3d. 한글 입력: 조합 중에는 입력 칸을 다시 그리지 않고, 조합 중 Enter는 마지막 글자까지 확정된 단어로 조각을 만든다(두 순서 모두).
+      for(const [word,order] of [['질량','keydown-first'],['자석','compositionend-first']]){
+        const r=await sheet.evaluate(async([word,order])=>{const sleep=ms=>new Promise(r=>setTimeout(r,ms));const n=document.querySelector('#card-view [data-cvpast="query"]');n.focus();
+          n.dispatchEvent(new CompositionEvent('compositionstart',{bubbles:true}));
+          for(let k=1;k<=word.length;k++){n.value=word.slice(0,k);n.dispatchEvent(new InputEvent('input',{bubbles:true,isComposing:true,data:word[k-1]}));await sleep(300);}
+          const same=n===document.querySelector('#card-view [data-cvpast="query"]');
+          const enter=init=>n.dispatchEvent(new KeyboardEvent('keydown',{key:'Enter',bubbles:true,cancelable:true,keyCode:229,...init}));
+          if(order==='keydown-first'){enter({isComposing:true});n.dispatchEvent(new CompositionEvent('compositionend',{bubbles:true,data:word}));}
+          else{n.dispatchEvent(new CompositionEvent('compositionend',{bubbles:true,data:word}));enter({});}
+          await sleep(800);return {same,tokens:[...document.querySelectorAll('#card-view .lp-token')].map(t=>t.textContent.replace('×',''))};},[word,order]);
+        assert.equal(r.same,true,'the search box is not rebuilt while composing Hangul');assert.ok(r.tokens.includes(word),`${order}: the whole word becomes an index word: ${r.tokens}`);
+      }
+      while(await sheet.locator('#card-view .lp-token').count())await sheet.click('#card-view .lp-token');
+
       // 4. 「근거 N」은 겹쳐 펼쳐진다(목록 높이는 그대로).
       const listH=await sheet.evaluate(()=>document.querySelector('#card-view .past-list').clientHeight);
       await sheet.click('#card-view [data-cvlinked]');
