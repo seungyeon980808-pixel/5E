@@ -7,6 +7,7 @@ import { makeColorPicker, makeSection, makeTextDetailButton, supportsDash, DASH_
 // 패턴 유효성 판정은 렌더러(applyDash)와 같은 함수를 써야 인스펙터 표시와 실제 그림이 안 어긋난다.
 import { normalizeDashPattern } from "../render/core.js?v=1.7.0-four-session-integration";
 import { openLabelerTextEditor } from "../tools.js?v=1.7.0-four-session-integration";
+import { labelerDotDiameter } from "../labeler-target.js?v=1.7.0-four-session-integration";
 
 const supportsLineStyle = (obj) => supportsDash(obj) || obj?.type === "labeler";
 
@@ -466,6 +467,90 @@ export function buildLineSection(ctx) {
     if (id) openLabelerTextEditor(id, null, { detailed: true });
   });
   leaderLabelRow.appendChild(leaderLabelBtn);
+
+  const targetMarkerRow = document.createElement("div");
+  targetMarkerRow.className = "insp-row";
+  targetMarkerRow.dataset.liteControl = "leader-target-marker";
+  const targetMarkerLbl = document.createElement("label");
+  targetMarkerLbl.className = "insp-field-label";
+  targetMarkerLbl.textContent = "대상 끝점";
+  const targetMarkerSel = document.createElement("select");
+  targetMarkerSel.className = "insp-input";
+  targetMarkerSel.setAttribute("aria-label", "라벨러 대상 끝점");
+  for (const [value, text] of [["none", "없음"], ["dot", "● 점"]]) {
+    const opt = document.createElement("option");
+    opt.value = value;
+    opt.textContent = text;
+    targetMarkerSel.appendChild(opt);
+  }
+  targetMarkerRow.append(targetMarkerLbl, targetMarkerSel);
+  sec1Body.appendChild(targetMarkerRow);
+
+  const targetDotSizeRow = document.createElement("div");
+  targetDotSizeRow.className = "insp-row";
+  targetDotSizeRow.dataset.liteControl = "leader-dot-size";
+  const targetDotSizeLbl = document.createElement("label");
+  targetDotSizeLbl.className = "insp-field-label";
+  targetDotSizeLbl.textContent = "점 지름";
+  const targetDotSizeInp = document.createElement("input");
+  targetDotSizeInp.type = "number";
+  targetDotSizeInp.min = "0.1";
+  targetDotSizeInp.step = "0.1";
+  targetDotSizeInp.className = "insp-input";
+  targetDotSizeInp.setAttribute("aria-label", "라벨러 점 지름");
+  const targetDotSizeUnit = document.createElement("span");
+  targetDotSizeUnit.className = "insp-unit";
+  targetDotSizeUnit.textContent = "mm";
+  targetDotSizeRow.append(targetDotSizeLbl, targetDotSizeInp, targetDotSizeUnit);
+  sec1Body.appendChild(targetDotSizeRow);
+
+  targetMarkerSel.addEventListener("change", () => {
+    if ((state.get().selectedIds || []).length !== 1) return;
+    const marker = targetMarkerSel.value === "dot" ? "dot" : "none";
+    ctx.commitSelectedObject(o => {
+      if (o.type !== "labeler" || (o.targetMarker === "dot" ? "dot" : "none") === marker) return false;
+      o.targetMarker = marker;
+      if (marker === "dot") o.targetDotDiameter = labelerDotDiameter(o);
+      return true;
+    });
+  });
+  let dotEditedId = null, dotUndoRecorded = false;
+  targetDotSizeInp.addEventListener("focus", () => {
+    dotEditedId = (state.get().selectedIds || [])[0];
+    dotUndoRecorded = false;
+  });
+  targetDotSizeInp.addEventListener("input", () => {
+    const diameter = Number(targetDotSizeInp.value);
+    if (!Number.isFinite(diameter) || diameter < 0.1) return;
+    state.update(s => {
+      if ((s.selectedIds || []).length !== 1 || s.selectedIds[0] !== dotEditedId) return;
+      const o = s.objects.find(it => it.id === dotEditedId);
+      if (!o || o.type !== "labeler" || o.locked || o.targetMarker !== "dot" || o.targetDotDiameter === diameter) return;
+      if (!dotUndoRecorded) {
+        s.undoStack.push(JSON.parse(JSON.stringify(s.objects)));
+        s.redoStack = [];
+        dotUndoRecorded = true;
+      }
+      o.targetDotDiameter = diameter;
+    });
+  });
+  targetDotSizeInp.addEventListener("blur", () => {
+    dotEditedId = null;
+    dotUndoRecorded = false;
+    syncLabelerTargetControls(state.get().objects.find(o => o.id === state.get().selectedIds?.[0]));
+  });
+  targetDotSizeInp.addEventListener("keydown", e => { if (e.key === "Enter") targetDotSizeInp.blur(); });
+  function syncLabelerTargetControls(o) {
+    const visible = o?.type === "labeler";
+    const hasDot = visible && o.targetMarker === "dot";
+    targetMarkerRow.style.display = visible ? "" : "none";
+    targetDotSizeRow.style.display = hasDot ? "" : "none";
+    targetMarkerSel.disabled = !visible || !!o?.locked;
+    targetDotSizeInp.disabled = !hasDot || !!o?.locked;
+    targetMarkerSel.value = hasDot ? "dot" : "none";
+    if (document.activeElement !== targetDotSizeInp) targetDotSizeInp.value = String(labelerDotDiameter(o));
+  }
+  syncLabelerTargetControls(null);
 
   // Length/gap sliders — visible only when a dashed preset is active (dashLength > 0).
   function makeDashSliderRow(labelText, prop) {
@@ -992,6 +1077,7 @@ export function buildLineSection(ctx) {
     dimensionLabelRow, dimensionLabelInp, dimensionLabelTypeRow, dimensionLabelSizeRow,
     waveLengthRow, waveAmpRow, waveTailRow,
     lineLabelRow, lineLabelInp, leaderLabelRow, leaderLabelBtn, lineLabelTypeRow, lineLabelShowRow, lineLabelShowCb,
+    syncLabelerTargetControls,
     lineLabelFlipRow, lineLabelSizeRow,
     dashRow, _dashBtnEls, partialDashBtn, dashSliders, dashLenSlider, dashGapSlider,
     partialControls, ratioRange, ratioNum, flipBtn,

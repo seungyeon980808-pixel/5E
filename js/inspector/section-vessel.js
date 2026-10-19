@@ -8,13 +8,17 @@
  * selected() / commit() / sync() 3함수 패턴은 section-legend.js 와 같다.
  */
 
+import { EXAM_VESSEL_KINDS } from "../render/exam-illustration.js?v=1.7.0-four-session-integration";
 import { makeSection } from "./widgets.js?v=1.7.0-four-session-integration";
+import { vesselFill, volumeFractionAtHeight, VOLUME_KINDS } from "../science-geometry.js?v=1.7.0-four-session-integration";
 import { VESSEL_KINDS } from "../render/vessel.js?v=1.7.0-four-session-integration";
 
 /* 한글 이름표 — 렌더러는 kind 문자열만 내보내므로 표시용 이름은 여기서 붙인다(명세 §1). */
 const KIND_KO = {
   beaker: "비커",
   flask: "삼각플라스크",
+  round_flask: "둥근바닥 플라스크",
+  tank: "칸막이 수조",
   test_tube: "시험관",
   cylinder_graduated: "눈금실린더",
   funnel: "깔때기",
@@ -94,6 +98,32 @@ export function initVesselSection(state) {
     "종류를 바꾸면 액체가 그 도형 안쪽 모양을 그대로 따라갑니다.",
   );
 
+  const appearanceSel = selectRow(body, "그림 표현", [["diagram", "단면 도식(2D)"], ["exam", "입체 삽화(3D)"]]);
+  const depthInp = numRow(body, "입체 깊이(비율)", { step: 0.01, min: 0.02, max: 0.3 });
+  const fillModeSel = selectRow(body, "액체 설정", [["height", "액면 비율"], ["volume", "용량(mL)"]],
+    "용량은 모식도의 단면으로 환산합니다. 그림 크기(mm)와 용량(mL)은 별도 설정입니다.");
+  const capacityInp = numRow(body, "전체 용량", { step: 10, min: 0.1, max: 100000, unit: "mL" });
+  const volumeInp = numRow(body, "액체량", { step: 1, min: 0, max: 100000, unit: "mL" });
+  const stepInp = numRow(body, "눈금 간격", { step: 1, min: 0.01, max: 100000, unit: "mL",
+    title: "최대 25개로 표시하며 촘촘한 눈금은 간격의 정수배로 줄입니다. 뷰렛은 위에서 0입니다." });
+  const numberRowEl = row("눈금 숫자");
+  const numbersCb = document.createElement("input"); numbersCb.type = "checkbox";
+  numberRowEl.appendChild(numbersCb); body.appendChild(numberRowEl);
+  const leftInp = numRow(body, "왼쪽 액면", { step: 0.02, min: 0, max: 1 });
+  const rightInp = numRow(body, "오른쪽 액면", { step: 0.02, min: 0, max: 1 });
+  const rightColorRow = row("오른쪽 용액 색");
+  const rightColorInp = document.createElement("input"); rightColorInp.type = "color"; rightColorInp.className = "insp-input";
+  rightColorRow.appendChild(rightColorInp); body.appendChild(rightColorRow);
+  const partitionRow = row("칸막이");
+  const partitionCb = document.createElement("input"); partitionCb.type = "checkbox";
+  partitionRow.appendChild(partitionCb); body.appendChild(partitionRow);
+  const partitionInp = numRow(body, "칸막이 위치", { step: 0.05, min: 0.05, max: 0.95 });
+  const membraneRow = row("반투막");
+  const membraneCb = document.createElement("input"); membraneCb.type = "checkbox";
+  membraneRow.appendChild(membraneCb); body.appendChild(membraneRow);
+  const valveInp = numRow(body, "꼭지 각도", { step: 90, min: 0, max: 90, unit: "°",
+    title: "꼭지의 방향을 바꿉니다. 유체 흐름을 자동 계산하지 않습니다." });
+
   // ----- 액면 · 색 -----
   const liquidInp = numRow(body, "액면 높이", {
     step: 0.02, min: 0, max: 1,
@@ -164,6 +194,7 @@ export function initVesselSection(state) {
       const t = s2.objects.find((x) => x.id === o.id);
       if (!t || t.locked) return;
       mut(t);
+      if (JSON.stringify(s2.objects) === JSON.stringify(snap)) return;
       s2.undoStack.push(snap);
       s2.redoStack = [];
     });
@@ -171,12 +202,39 @@ export function initVesselSection(state) {
 
   kindSel.addEventListener("change", () => {
     const v = VESSEL_KINDS.includes(kindSel.value) ? kindSel.value : "box";
-    commit((t) => { t.kind = v; });
+    commit(t => { t.kind = v; if (!VOLUME_KINDS.includes(v)) t.fillMode = "height"; });
   });
+  fillModeSel.addEventListener("change", () => commit(t => {
+    const current = vesselFill(t);
+    t.fillMode = VOLUME_KINDS.includes(t.kind) && fillModeSel.value === "volume" ? "volume" : "height";
+    t.capacityMl = current.capacity;
+    t.volumeMl = current.capacity * volumeFractionAtHeight(t.kind, current.height);
+    t.liquid = current.height;
+  }));
+  function numeric(inp, apply) {
+    inp.addEventListener("change", () => {
+      if (!inp.value.trim()) return;
+      const v = Number(inp.value); if (Number.isFinite(v)) commit(t => apply(t, v));
+    });
+  }
+  appearanceSel.addEventListener("change", () => commit(t => { t.illustrationStyle = appearanceSel.value === "exam" ? "exam" : "diagram"; }));
+  numeric(depthInp, (t, v) => { t.depthRatio = Math.max(0.02, Math.min(0.3, v)); });
+  numeric(capacityInp, (t, v) => { t.capacityMl = Math.max(0.1, Math.min(100000, v));
+    if (Number.isFinite(t.volumeMl)) t.volumeMl = Math.min(t.volumeMl, t.capacityMl); });
+  numeric(volumeInp, (t, v) => { t.fillMode = "volume"; t.volumeMl = Math.max(0, Math.min(vesselFill(t).capacity, v)); });
+  numeric(stepInp, (t, v) => { t.tickStepMl = Math.max(0.01, Math.min(100000, v)); });
+  numbersCb.addEventListener("change", () => commit(t => { t.showTickNumbers = numbersCb.checked; }));
+  numeric(leftInp, (t, v) => { t.leftLiquid = Math.max(0, Math.min(1, v)); });
+  numeric(rightInp, (t, v) => { t.rightLiquid = Math.max(0, Math.min(1, v)); });
+  numeric(partitionInp, (t, v) => { t.partitionAt = Math.max(0.05, Math.min(0.95, v)); });
+  numeric(valveInp, (t, v) => { t.valveAngle = Math.max(0, Math.min(90, v)); });
+  rightColorInp.addEventListener("change", () => commit(t => { t.rightLiquidColor = rightColorInp.value; }));
+  partitionCb.addEventListener("change", () => commit(t => { t.hasPartition = partitionCb.checked; if(t.hasPartition) t.fillMode = "height"; }));
+  membraneCb.addEventListener("change", () => commit(t => { t.hasMembrane = membraneCb.checked; }));
   liquidInp.addEventListener("change", () => {
     const v = Number(liquidInp.value);
     if (!isFinite(v)) return;
-    commit((t) => { t.liquid = Math.min(1, Math.max(0, v)); });
+    commit(t => { t.liquid = Math.min(1, Math.max(0, v)); });
   });
   colorInp.addEventListener("change", () => {
     const v = colorInp.value;
@@ -206,6 +264,28 @@ export function initVesselSection(state) {
     const o = selected();
     if (!o) { section.style.display = "none"; return; }
     section.style.display = "";
+    const f = vesselFill(o), tank = o.kind === "tank", uTube = o.kind === "u_tube";
+    const split = uTube || (tank && o.hasPartition);
+    const calibrated = VOLUME_KINDS.includes(o.kind) && !split;
+    const set = (inp, val) => { if (document.activeElement !== inp) inp.value = val; };
+    const show = (inp, on) => { inp.closest(".insp-row").style.display = on ? "" : "none"; };
+    set(appearanceSel, o.illustrationStyle === "exam" ? "exam" : "diagram"); show(appearanceSel, EXAM_VESSEL_KINDS.includes(o.kind));
+    set(depthInp, o.depthRatio ?? 0.1); show(depthInp, tank && o.illustrationStyle === "exam");
+    set(fillModeSel, o.fillMode === "volume" ? "volume" : "height"); show(fillModeSel, calibrated);
+    set(capacityInp, f.capacity); show(capacityInp, calibrated);
+    set(volumeInp, Number(f.volume.toFixed(3))); volumeInp.max = f.capacity;
+    show(volumeInp, calibrated && o.fillMode === "volume");
+    set(stepInp, o.tickStepMl ?? f.capacity / 5); show(stepInp, calibrated && o.hasTicks);
+    numbersCb.checked = !!o.showTickNumbers; numberRowEl.style.display = calibrated && o.hasTicks ? "" : "none";
+    show(liquidInp, !split && o.fillMode !== "volume");
+    set(leftInp, o.leftLiquid ?? f.height); show(leftInp, split);
+    set(rightInp, o.rightLiquid ?? f.height); show(rightInp, split);
+    set(rightColorInp, o.rightLiquidColor || o.liquidColor || "#d9dcdf"); rightColorRow.style.display = split ? "" : "none";
+    partitionCb.checked = !!o.hasPartition; partitionRow.style.display = tank ? "" : "none";
+    set(partitionInp, o.partitionAt ?? 0.5); show(partitionInp, tank && o.hasPartition);
+    membraneCb.checked = !!o.hasMembrane; membraneRow.style.display = uTube ? "" : "none";
+    set(valveInp, o.valveAngle ?? 0); show(valveInp, !!o.hasStopcock || o.kind === "burette" && o.illustrationStyle === "exam");
+    body.querySelectorAll("input, select, textarea").forEach(inp => { inp.disabled = !!o.locked; });
     // 편집 중인 칸은 건드리지 않는다(입력 중 커서가 튀는 것 방지 — section-legend.js 와 같다).
     if (document.activeElement !== kindSel) kindSel.value = VESSEL_KINDS.includes(o.kind) ? o.kind : "box";
     if (document.activeElement !== liquidInp) liquidInp.value = Number.isFinite(o.liquid) ? o.liquid : 0.34;

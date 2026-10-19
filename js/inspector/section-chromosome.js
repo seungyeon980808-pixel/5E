@@ -64,6 +64,18 @@ export function initChromosomeSection(state) {
   const body = document.createElement("div");
   body.className = "insp-body";
 
+  const styleRow = row("염색체 형태"), styleSel = document.createElement("select");
+  styleSel.className = "insp-input";
+  [["capsule", "나란한 캡슐 도식"], ["segmented", "동원체가 분절된 막대"], ["spread", "분열기 벌림 형태"]].forEach(([v, label]) => { const op = document.createElement("option"); op.value = v; op.textContent = label; styleSel.appendChild(op); });
+  styleRow.appendChild(styleSel); body.appendChild(styleRow);
+  styleSel.addEventListener("change", () => commit(t => { t.chromosomeForm = styleSel.value; }));
+  const spreadF = numberRow("염색분체 벌림(°)", { step: 1, min: 0, max: 50 });
+  body.appendChild(spreadF.row);
+  spreadF.inp.addEventListener("change", () => {
+    if (!spreadF.inp.value.trim()) return;
+    const v = Number(spreadF.inp.value); if (Number.isFinite(v)) commit(t => { t.spreadAngle = Math.max(0, Math.min(50, v)); });
+  });
+
   // ----- 캡슐 -----
   const widthF = numberRow("캡슐 굵기", { step: 0.2, min: 0.4, max: 20, unit: "mm",
     title: "염색분체 한 가닥(둥근 막대)의 굵기입니다." });
@@ -97,7 +109,7 @@ export function initChromosomeSection(state) {
   const fillRow = row("채우기");
   const fillSel = document.createElement("select");
   fillSel.className = "insp-input";
-  [["solid", "흰색"], ["gray", "회색"], ["hatch", "빗금"], ["cross", "교차"]].forEach(([v, t]) => {
+  [["solid", "흰색"], ["gray", "회색"], ["black", "검정"], ["hatch", "빗금"], ["cross", "교차"]].forEach(([v, t]) => {
     const o = document.createElement("option");
     o.value = v;
     o.textContent = t;
@@ -105,6 +117,9 @@ export function initChromosomeSection(state) {
   });
   fillRow.appendChild(fillSel);
   body.appendChild(fillRow);
+
+  const replicatedF = checkRow("복제된 염색체", "켜면 염색분체 두 개, 끄면 염색분체 하나를 그립니다.");
+  body.appendChild(replicatedF.row);
 
   // ----- 상동쌍 -----
   const pairF = checkRow("상동쌍", "같은 모양 한 벌을 옆에 더 그립니다(2n 표현).");
@@ -179,6 +194,8 @@ export function initChromosomeSection(state) {
     commit((t) => { t.fillStyle = fillSel.value; });
   });
 
+  replicatedF.cb.addEventListener("change", () => { commit(t => { t.replicated = replicatedF.cb.checked; }); });
+
   pairF.cb.addEventListener("change", () => {
     commit((t) => { t.homologPair = pairF.cb.checked; });
   });
@@ -206,6 +223,10 @@ export function initChromosomeSection(state) {
     const o = selected();
     if (!o) { section.style.display = "none"; return; }
     section.style.display = "";
+    if (document.activeElement !== styleSel) styleSel.value = o.chromosomeForm || "capsule";
+    body.querySelectorAll("input, select").forEach(inp => { inp.disabled = !!o.locked; });
+    if (document.activeElement !== spreadF.inp) spreadF.inp.value = o.spreadAngle ?? 22;
+    spreadF.row.style.display = o.chromosomeForm === "spread" && o.replicated !== false ? "" : "none";
 
     const set = (inp, v) => { if (document.activeElement !== inp) inp.value = v; };
     set(widthF.inp, Number.isFinite(o.chromatidWidth) ? o.chromatidWidth : 3);
@@ -217,6 +238,8 @@ export function initChromosomeSection(state) {
 
     if (document.activeElement !== fillSel) fillSel.value = o.fillStyle ?? "solid";
 
+    replicatedF.cb.checked = o.replicated !== false;
+    gapF.row.style.display = o.replicated === false || o.chromosomeForm === "spread" ? "none" : "";
     const pair = o.homologPair === true;
     pairF.cb.checked = pair;
     set(pairGapF.inp, Number.isFinite(o.pairGap) ? o.pairGap : 20);

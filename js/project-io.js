@@ -12,6 +12,8 @@ import { readEditablePng, validateFigureRender, EDITABLE_PNG_MAX_BYTES } from ".
 // source of truth, and the saved file never supplies a separate groups list.
 
 import { screenToWorld } from "./viewport.js?v=1.7.0-four-session-integration";
+import { isLabApparatus, labSettings } from "./lab-apparatus.js?v=1.7.0-four-session-integration";
+import { opticalBenchSettings } from "./optical-bench.js?v=1.7.0-four-session-integration";
 import { applyNewObjectStyleDefaults, migrateObjectStyleMode } from "./style-mode.js?v=1.7.0-four-session-integration";
 import { showProjectCloseDialog } from "./project-close-dialog.js?v=1.7.0-four-session-integration";
 import { showAlert, showConfirm } from "./ui-dialogs.js?v=1.7.0-four-session-integration";
@@ -194,6 +196,14 @@ function migrateObjectList(objects) {
         next.w = next.w ?? 20;
         next.h = next.h ?? 12;
         next.rotation = next.rotation ?? 0;
+        if (next.kind === "optical_bench") {
+          Object.assign(next, opticalBenchSettings(next));
+          next.lockAspect = next.lockAspect ?? true;
+        }
+        if (isLabApparatus(next)) {
+          Object.assign(next, labSettings(next));
+          next.lockAspect = next.lockAspect ?? true;
+        }
         if (next.kind === "wire") {
           next.length = next.length ?? next.w ?? 24;
           next.angle = next.angle ?? 0;

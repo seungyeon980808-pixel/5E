@@ -8,6 +8,9 @@
  *   x, y, w, h    크기박스(이동·리사이즈·저장은 앱이 처리)
  *   kind          VESSEL_KINDS 중 하나. 모양·내부경로·안쪽상자가 kind 로 정해진다
  *   liquid 0~1    액면 높이(0이면 액체 없음) · liquidColor 용액 색
+ *   fillMode "height"|"volume" · capacityMl · volumeMl · tickStepMl · showTickNumbers
+ *   leftLiquid/rightLiquid · rightLiquidColor (U자관/칸막이 수조)
+ *   hasPartition/partitionAt (수조), hasMembrane (U자관), valveAngle (꼭지 0~90°)
  *   hasPiston · pistonAt 0~1(아래=0)
  *   hasFix        고정장치 ▼ (벽이 수직인 kind 에서만)
  *   hasWeight     피스톤 위 추 · hasStopcock 위로 뻗는 관+꼭지 · hasTicks 눈금
@@ -21,13 +24,15 @@
  * 환산 규칙 — kind 마다 `box`(시안 좌표계에서 그 용기 몸통이 차지하는 사각형)를 두고
  * 그것을 obj 의 {x,y,w,h} 에 꽉 채워 맞춘다. 즉 sx = w / box.w, sy = h / box.h.
  * 그래서 폭·높이를 바꾸면 그 용기의 폭·높이가 그대로 바뀐다.
- * 꼭지(위로 뻗는 관)와 추는 상자 위로 조금 삐져나온다 — bbox 는 명세대로 상자 그대로다.
+ * 꼭지·추·눈금 숫자의 돌출부는 bbox 에 포함한다(선택/내보내기 경계).
  *
  * 액체가 용기 안쪽 모양을 따라가는 방법: kind 의 `interior`(내부 경로)를 <clipPath> 에
  * 넣고, 가로로 아주 긴 <rect> 를 잘라 그린다. 액면선·피스톤도 같은 클립을 쓴다.
  */
 
 import { SVG_NS, grayHex } from "./core.js?v=1.7.0-four-session-integration";
+import { vesselFill, vesselWidthAtHeight, heightAtVolumeFraction, scaleMarks, scaleNumber, VOLUME_KINDS } from "../science-geometry.js?v=1.7.0-four-session-integration";
+import { examVesselInterior, drawExamVessel } from "./exam-illustration.js?v=1.7.0-four-session-integration";
 import { renderGraphLabel } from "./graph-label.js?v=1.7.0-four-session-integration";
 
 /* ----- kind 표 — 시안 VK 를 그대로 옮긴 것 -----
@@ -54,6 +59,18 @@ const VK = {
     inner: { x: 8.5, y: 7, w: 23, h: 26 },
     box: { x: 8.5, y: 7, w: 23, h: 26 },
     wall: 0, ticks: 0,
+  },
+  round_flask: {
+    outline: "M 16 5 L 16 13.834849 A 10 10 0 1 0 24 13.834849 L 24 5",
+    interior: "M 16 5 L 24 5 L 24 13.834849 A 10 10 0 1 1 16 13.834849 Z",
+    inner: { x: 10, y: 5, w: 20, h: 28 },
+    box: { x: 10, y: 5, w: 20, h: 28 }, wall: 0, ticks: 0,
+  },
+  tank: {
+    outline: "M 10 8 L 10 32 L 30 32 L 30 8",
+    interior: "M 10 8 L 10 32 L 30 32 L 30 8 Z",
+    inner: { x: 10, y: 8, w: 20, h: 24 },
+    box: { x: 10, y: 8, w: 20, h: 24 }, wall: 1, ticks: 0,
   },
   test_tube: {
     outline: "M 15 7 L 15 27 A 5 5 0 0 0 25 27 L 25 7",
@@ -146,7 +163,7 @@ export function vesselLayout(obj) {
   const us = Math.min(sx, sy);
   const fx = (gx) => x + (gx - K.box.x) * sx;
   const fy = (gy) => y + (gy - K.box.y) * sy;
-  const inner = {
+  const inner = examVesselInterior({ ...obj, x, y, w, h }) || {
     x: fx(K.inner.x), y: fy(K.inner.y),
     w: K.inner.w * sx, h: K.inner.h * sy,
   };
@@ -159,7 +176,33 @@ export function vesselLayout(obj) {
 
 export function vesselBBox(obj) {
   const L = vesselLayout(obj);
-  return { x: L.x, y: L.y, w: L.w, h: L.h };
+  let left = L.x, top = L.y, right = L.x + L.w, bottom = L.y + L.h;
+  if (obj.kind === "beaker") right = Math.max(right, L.fx(33.2));
+  if (obj.kind === "burette" && obj.illustrationStyle !== "exam") bottom = Math.max(bottom, L.fy(30));
+  if (obj.hasStopcock) {
+    const neckTop = L.K.circle ? L.fy(L.K.circle.cy) - L.K.circle.r * L.us : L.inner.y;
+    const cy = neckTop - 6.2 * L.us * 0.55;
+    top = Math.min(top, neckTop - 6.2 * L.us, cy - 5.7 * L.us);
+    left = Math.min(left, L.inner.x + L.inner.w / 2 - 5.7 * L.us);
+    right = Math.max(right, L.inner.x + L.inner.w / 2 + 5.7 * L.us);
+  }
+  if (obj.hasPiston && (obj.hasWeight || obj.hasFix) && L.K.wall) {
+    const py = L.inner.y + L.inner.h * (1 - clamp01(obj.pistonAt, DEF_PISTON_AT));
+    top = Math.min(top, py - Math.max(0.25, L.inner.w * PISTON_BAND_RATIO) / 2 - (obj.hasWeight ? 5 * L.us : Math.max(0.35, 1.15 * L.us) * 2.2));
+  }
+  if (obj.hasTicks && obj.showTickNumbers && VOLUME_KINDS.includes(obj.kind)) {
+    const fill = vesselFill(obj), size = Math.max(0.8, Math.min(1.5, L.h / 25));
+    left = Math.min(left, L.inner.x - 1 - size * scaleNumber(fill.capacity).length * 0.75);
+    top -= size * 0.6; bottom += size * 0.6;
+  }
+  if (obj.illustrationStyle === "exam" && obj.kind === "tank" && obj.hasPartition) top = Math.min(top, L.y - L.h * 0.17);
+  if (obj.illustrationStyle === "exam" && obj.kind === "burette") {
+    const cx = L.x + L.w / 2, cy = L.y + L.h * 0.847;
+    const r = Math.hypot(L.w * 0.43, L.h * 0.07);
+    left = Math.min(left, cx - r); right = Math.max(right, cx + r);
+    top = Math.min(top, cy - r); bottom = Math.max(bottom, cy + r);
+  }
+  return { x: left - L.sw / 2, y: top - L.sw / 2, w: right - left + L.sw, h: bottom - top + L.sw };
 }
 
 /* ----- 시안 경로 문자열을 실제 좌표로 옮긴다 -----
@@ -227,7 +270,9 @@ function downTriangle(cx, cy, s, color) {
 /* ----- 꼭지 — 관에 끼운 스풀 + 중앙 작은 원 + 옆 손잡이 -----
  * 시안 stopcockAt() 그대로. u = 시안 1단위의 실제 길이(mm).
  */
-function stopcockAt(g, cx, cy, u, color, sw) {
+function stopcockAt(parent, cx, cy, u, color, sw, angle = 0) {
+  const g = node("g", { transform: `rotate(${num(angle, 0, 0, 90)} ${cx} ${cy})` });
+  parent.appendChild(g);
   const white = "#ffffff";
   const mk = (rx, ry, rw, rh, s) => g.appendChild(node("rect", {
     x: cx + rx * u, y: cy + ry * u, width: rw * u, height: rh * u,
@@ -268,15 +313,31 @@ export function renderVessel(obj) {
   }
   defs.appendChild(clipPath);
   g.appendChild(defs);
-  const clip = `url(#${clipId})`;
+  let clip = `url(#${clipId})`;
+  const exam = !!examVesselInterior({ ...obj, x: L.x, y: L.y, w: L.w, h: L.h });
 
   // ----- 액체 · 액면선 -----
-  const liquid = clamp01(obj.liquid, DEF_LIQUID);
-  const levelY = inner.y + inner.h * (1 - liquid);
-  if (liquid > 0.004) {
-    bandRect(g, L, levelY, L.h * 2, obj.liquidColor || DEF_LIQUID_COLOR, clip);
+  const fill = vesselFill(obj);
+  const liquidColor = obj.liquidColor || DEF_LIQUID_COLOR;
+  const split = obj.kind === "u_tube" || (obj.kind === "tank" && obj.hasPartition);
+  if (!exam && split) {
+    const at = obj.kind === "u_tube" ? 0.5 : num(obj.partitionAt, 0.5, 0.05, 0.95);
+    const splitX = inner.x + inner.w * at;
+    for (const [side, rx, rw] of [["left", inner.x, splitX - inner.x], ["right", splitX, inner.x + inner.w - splitX]]) {
+      const h = clamp01(obj[`${side}Liquid`], fill.height);
+      if (h > 0) g.appendChild(node("rect", {
+        x: rx, y: inner.y + inner.h * (1 - h), width: rw, height: inner.h * h,
+        fill: side === "right" ? (obj.rightLiquidColor || liquidColor) : liquidColor, "clip-path": clip,
+        "data-liquid-side": side,
+      }));
+    }
+  } else if (!exam && fill.height > 0) {
+    const levelY = inner.y + inner.h * (1 - fill.height);
+    bandRect(g, L, levelY, inner.h * fill.height, liquidColor, clip);
     bandRect(g, L, levelY - sw * 0.4, sw * 0.8, color, clip);
   }
+
+  if (exam) clip = drawExamVessel(g, obj, L) || clip;
 
   // ----- 피스톤(가는 회색 띠 + 위아래 검은 선) · 고정장치 · 추 -----
   if (obj.hasPiston) {
@@ -311,24 +372,61 @@ export function renderVessel(obj) {
   }
 
   // ----- 윤곽선 -----
-  if (K.circle) {
+  if (!exam && K.circle) {
     g.appendChild(node("circle", {
       cx: fx(K.circle.cx), cy: fy(K.circle.cy), r: K.circle.r * us,
       fill: "none", stroke: color, "stroke-width": sw,
     }));
   }
-  if (K.outline) g.appendChild(strokePath(mapPathD(K.outline, L), color, sw));
-  if (K.tap) g.appendChild(strokePath(mapPathD(K.tap, L), color, sw * 0.7));
+  if (!exam && K.outline) g.appendChild(strokePath(mapPathD(K.outline, L), color, sw));
+  if (!exam && K.tap) g.appendChild(strokePath(mapPathD(K.tap, L), color, sw * 0.7));
 
-  // ----- 눈금 -----
-  if (obj.hasTicks && K.ticks) {
-    const len = Math.min(2.6, K.inner.w * 0.3) * L.sx;
-    for (let i = 1; i <= K.ticks; i += 1) {
-      const ty = inner.y + (inner.h * i) / (K.ticks + 1);
-      g.appendChild(node("line", {
-        x1: inner.x, y1: ty, x2: inner.x + len, y2: ty,
-        stroke: color, "stroke-width": sw * 0.6, "stroke-linecap": "round",
-      }));
+  // ----- Optional partitions / osmotic membrane -----
+  if (!exam && obj.kind === "tank" && obj.hasPartition) {
+    const px = inner.x + inner.w * num(obj.partitionAt, 0.5, 0.05, 0.95);
+    g.appendChild(node("line", { x1: px, x2: px, y1: inner.y, y2: inner.y + inner.h,
+      stroke: color, "stroke-width": sw, "data-partition": "tank" }));
+  }
+  if (obj.kind === "u_tube" && obj.hasMembrane) {
+    const px = inner.x + inner.w / 2;
+    const attrs = { x1: px, x2: px, y1: exam ? L.y + L.h * 0.83 : fy(27), y2: exam ? L.y + L.h * 0.975 : fy(33),
+      stroke: color, "stroke-width": exam ? sw * 1.6 : sw, "data-membrane": "u_tube" };
+    if (!exam) attrs["stroke-dasharray"] = `${sw * 2} ${sw * 2}`;
+    g.appendChild(node("line", attrs));
+  }
+  // Numeric volume ticks follow the vessel profile. Legacy files retain their
+  // original fixed tick count until the user enables a capacity/step/number.
+  if (obj.hasTicks) {
+    const calibrated = VOLUME_KINDS.includes(obj.kind) &&
+      (obj.capacityMl != null || obj.tickStepMl != null || obj.showTickNumbers);
+    const len = exam ? Math.min(2.6, inner.w * 0.28) : Math.min(2.6, K.inner.w * 0.3) * L.sx;
+    const marks = calibrated ? scaleMarks(0, fill.capacity, num(obj.tickStepMl, fill.capacity / 5, 0.01), 25)
+      : Array.from({ length: K.ticks }, (_, i) => (i + 1) / (K.ticks + 1));
+    for (const value of marks) {
+      const fraction = calibrated ? (obj.kind === "burette" ? 1 - value / fill.capacity : value / fill.capacity) : 1 - value;
+      const h = calibrated ? heightAtVolumeFraction(obj.kind, fraction) : fraction;
+      const ty = inner.y + inner.h * (1 - h);
+      const wallX = calibrated ? inner.x + inner.w * (1 - vesselWidthAtHeight(obj.kind, h)) / 2 : inner.x;
+      g.appendChild(node("line", { x1: wallX, y1: ty, x2: wallX + len, y2: ty,
+        stroke: color, "stroke-width": sw * 0.6, "stroke-linecap": "round" }));
+      if (calibrated && obj.showTickNumbers) {
+        const label = node("text", { x: wallX - 1, y: ty,
+          "font-size": Math.max(0.8, Math.min(1.5, L.h / 25)),
+          "text-anchor": "end", "dominant-baseline": "middle", fill: color });
+        label.textContent = scaleNumber(value); g.appendChild(label);
+      }
+    }
+  }
+
+  if (exam && obj.hasTicks && VOLUME_KINDS.includes(obj.kind)) {
+    const step = num(obj.tickStepMl, fill.capacity / 5, 0.01);
+    for (const v of scaleMarks(0, fill.capacity, step / 5, 125)) {
+      if (Math.abs(v / step - Math.round(v / step)) < 1e-7) continue;
+      const h = heightAtVolumeFraction(obj.kind, obj.kind === "burette" ? 1 - v / fill.capacity : v / fill.capacity);
+      const ty = inner.y + inner.h * (1 - h);
+      const wallX = inner.x + inner.w * (1 - vesselWidthAtHeight(obj.kind, h)) / 2;
+      g.appendChild(node("line", { x1: wallX, y1: ty, x2: wallX + Math.min(1.5, inner.w * 0.17), y2: ty,
+        stroke: color, "stroke-width": sw * 0.4 }));
     }
   }
 
@@ -344,7 +442,7 @@ export function renderVessel(obj) {
         stroke: color, "stroke-width": sw * 0.85, "stroke-linecap": "round",
       }));
     });
-    stopcockAt(g, cx, top - tubeH * 0.55, us, color, sw);
+    stopcockAt(g, cx, top - tubeH * 0.55, us, color, sw, obj.valveAngle);
   }
 
   // ----- 내부 텍스트 -----

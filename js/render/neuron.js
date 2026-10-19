@@ -22,6 +22,7 @@
  */
 
 import { SVG_NS, grayHex, makeArrowHead } from "./core.js?v=1.7.0-four-session-integration";
+import { examNeuronGeometry, drawExamNeuron } from "./exam-illustration.js?v=1.7.0-four-session-integration";
 import { makeUprightLabel } from "./labels.js?v=1.7.0-four-session-integration";
 import { DEFAULT_TEXT_SIZE_MM } from "../state.js?v=1.7.0-four-session-integration";
 
@@ -111,6 +112,7 @@ function extentPoints(obj, g) {
   const pts = [g.p1, g.p2, g.axonStart];
   pts.push(add(g.p1, { x: 1, y: 0 }, g.R), add(g.p1, { x: -1, y: 0 }, g.R));
   pts.push(add(g.p1, { x: 0, y: 1 }, g.R), add(g.p1, { x: 0, y: -1 }, g.R));
+  if (obj.illustrationStyle === "exam") pts.push(...examNeuronGeometry(obj, g).points);
   for (const d of g.dendrites) { pts.push(d.a, d.b, ...d.branches); }
   for (const tm of g.terminals) { pts.push(tm.a, tm.b); }
   if (obj.showStim) {
@@ -156,6 +158,9 @@ export function renderNeuron(obj) {
   const geo = neuronGeometry(obj);
   const g = document.createElementNS(SVG_NS, "g");
 
+  if (obj.illustrationStyle === "exam") {
+    drawExamNeuron(g, obj, geo, stroke, sw);
+  } else {
   // ── 축삭: 세포체 가장자리 → p2 ──
   if (geo.axonLen > 0) line(g, geo.axonStart, geo.p2, stroke, sw);
 
@@ -191,6 +196,8 @@ export function renderNeuron(obj) {
   nuc.setAttribute("stroke", stroke);
   nuc.setAttribute("stroke-width", sw * 0.8);
   g.appendChild(nuc);
+
+  }
 
   // ── 자극 지점: 축 아래에서 위로 찌르는 화살표 + 라벨 ──
   if (obj.showStim) {

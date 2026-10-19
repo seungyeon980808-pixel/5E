@@ -27,6 +27,8 @@ import { render, setSmartGuides } from "./render.js?v=1.7.0-four-session-integra
 import { initViewport, getZoom, screenToWorld, centerView, setCanvasLockMode } from "./viewport.js?v=1.7.0-four-session-integration";
 import { initZoomReadoutLifecycle } from "./zoom-readout-lifecycle.js?v=1.7.0-four-session-integration";
 import { initTools } from "./tools.js?v=1.7.0-four-session-integration";
+import { initLabApparatusEditing } from "./tools/lab-apparatus.js?v=1.7.0-four-session-integration";
+import { initOpticalBenchEditing } from "./tools/optical-bench.js?v=1.7.0-four-session-integration";
 import { initCutTool } from "./cut-tool.js?v=1.7.0-four-session-integration";
 import { initEraseTool } from "./erase-tool.js?v=1.7.0-four-session-integration";
 import { initTransform, undo, redo, rebuildGroups } from "./transform.js?v=1.7.0-four-session-integration";
@@ -74,6 +76,7 @@ import { initOrbitalSection } from "./inspector/section-orbital.js?v=1.7.0-four-
 import { initBondGroupSection } from "./inspector/section-bondgroup.js?v=1.7.0-four-session-integration";
 import { initChemChartSection } from "./inspector/section-chemchart.js?v=1.7.0-four-session-integration";
 import { initAxisBreakSection } from "./inspector/section-axisbreak.js?v=1.7.0-four-session-integration";
+import { initBubbleSection } from "./inspector/section-bubble.js?v=1.7.0-four-session-integration";
 import { initChemGraphSection } from "./inspector/section-chemgraph.js?v=1.7.0-four-session-integration";
 import { initElectrodeSection } from "./inspector/section-electrode.js?v=1.7.0-four-session-integration";
 import { initPeriodicSection } from "./inspector/section-periodic.js?v=1.7.0-four-session-integration";
@@ -240,6 +243,8 @@ initZoomReadoutLifecycle({ target: svg, refresh: () => applyViewBox(state.get())
 
 /* ----- tools: V/R selection + rectangle drawing (mouse ??store.update) ----- */
 initTools(svg, state);
+initOpticalBenchEditing(svg, state);
+initLabApparatusEditing(svg, state);
 
 /* ----- cut tool: 생성 후 캔버스에서 객체 자르기(가위/칼/올가미) ----- */
 initCutTool(svg, state);
@@ -282,6 +287,7 @@ initOrbitalSection(state);
 initBondGroupSection(state);
 initChemChartSection(state);
 initAxisBreakSection(state);
+initBubbleSection(state);
 initChemGraphSection(state);
 initElectrodeSection(state);
 initPeriodicSection(state);

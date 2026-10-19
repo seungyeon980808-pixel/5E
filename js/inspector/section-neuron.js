@@ -43,6 +43,12 @@ export function initNeuronSection(state) {
   const body = document.createElement("div");
   body.className = "insp-body";
 
+  const styleRow = row("그림 표현"), styleSel = document.createElement("select");
+  styleSel.className = "insp-input";
+  [["diagram", "단순 도식"], ["exam", "기출형 가지 구조"]].forEach(([v, label]) => { const op = document.createElement("option"); op.value = v; op.textContent = label; styleSel.appendChild(op); });
+  styleRow.appendChild(styleSel); body.appendChild(styleRow);
+  styleSel.addEventListener("change", () => commit(t => { t.illustrationStyle = styleSel.value; }));
+
   /* ----- 세포체 크기 ----- */
   const somaRow = row("세포체 크기");
   const somaInp = numInput("0.2", "0.4", "40");
@@ -168,6 +174,8 @@ export function initNeuronSection(state) {
     const o = selected();
     if (!o) { section.style.display = "none"; return; }
     section.style.display = "";
+    if (document.activeElement !== styleSel) styleSel.value = o.illustrationStyle || "diagram";
+    body.querySelectorAll("input, select").forEach(inp => { inp.disabled = !!o.locked; });
 
     if (document.activeElement !== somaInp) somaInp.value = Number.isFinite(o.somaRadius) ? o.somaRadius : 3.4;
     if (document.activeElement !== dendInp) dendInp.value = Number.isFinite(o.dendrites) ? o.dendrites : 5;
