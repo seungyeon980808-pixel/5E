@@ -41,10 +41,6 @@
       "reason": "고정 파일 확인 실패: 한글 작업실 SDK 자원의 실제 바이트 확인이 맞지 않음"
     },
     {
-      "path": "tests/test-rhwp-exam-ai-browser.cjs",
-      "reason": "AI로 만든 그림의 '원본 편집' 뒤 #exam-edit-bar가 뜨지 않음(조사 필요). 한글 문서 입구·반영 단추·문서 선택 창은 검사를 지금 화면에 맞춤"
-    },
-    {
       "path": "tests/test-ai-batch-source-browser.cjs",
       "reason": "버그 후보: 원본 없는 작업 2개를 함께 고르면 '선택한 작업 2개 변환하기'가 눌리는 상태(1개일 때는 막힘). 실행 버튼·빈 작업대 배치는 검사를 지금 화면에 맞춤"
     },
