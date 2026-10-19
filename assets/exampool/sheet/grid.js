@@ -146,7 +146,9 @@ export function createSheetGrid({root=document,formula,nameBox,onSelect,onWrite,
     e.preventDefault();e.clipboardData.setData('text/plain',encodeClipboard(rows));copied={key:scopeKey,range:[...range]};paint();onStatus('복사됨 · 붙여넣을 셀을 선택하세요. Esc로 복사 표시 해제');
   });
   root.addEventListener('paste',e=>{if(active&&!editing&&cellFor(e.target)&&!e.target.matches?.('[data-axis]')){e.preventDefault();e.stopImmediatePropagation();paste(e.clipboardData.getData('text/plain'));}},true);
-  root.addEventListener('beforeinput',e=>{if(!editing&&cellFor(e.target)&&e.target===inputFor(active))begin('');},true);
+  // keydown 없이 글자가 바로 들어오면(받아쓰기·이모지·일부 입력기) 편집을 시작한다. 글자 넣기는 그 글자로 시작한다 —
+  // 빈 값으로 시작하면 WebKit이 들어오던 첫 글자를 버렸다.
+  root.addEventListener('beforeinput',e=>{if(editing||!cellFor(e.target)||e.target!==inputFor(active))return;if(e.inputType==='insertText'&&e.data){e.preventDefault();begin(e.data);}else begin('');},true);
   root.addEventListener('input',e=>{if(editing&&e.target===editing.input){formula.value=editing.input.tagName==='SELECT'?value(active):editing.input.value;onDraft?.(describe(),formula.value);}});
   root.addEventListener('change',e=>{if(editing&&e.target===editing.input&&e.target.tagName==='SELECT'){e.stopImmediatePropagation();finish();active?.focus();}},true);
   formula.addEventListener('focus',()=>{if(active&&!editing&&!active.dataset.open){begin();if(editing){editing.fromFormula=true;formula.focus();}}});

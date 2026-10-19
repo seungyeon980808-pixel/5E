@@ -358,6 +358,10 @@ h.withServer(async origin => {
         assert.equal(await smallSheet.locator('#card-view [data-cvline="bogi"]').count(),3,'a printed bogi stays visible on a non-combo card');
         for(let i=0;i<3;i++){await smallSheet.locator('#card-view [data-cvline-remove="bogi"]').first().click();await smallSheet.waitForTimeout(150);}
         await smallSheet.waitForFunction(()=>!document.querySelector('#card-view [data-cvline="bogi"]'));}
+      // 자료 칸을 여럿 더해도 이름은 (가)·(나)… 순서로 겹치지 않는다((아) 다음은 (자)·(차)).
+      await smallSheet.click('#card-view [data-cv="new"]');await smallSheet.click('#new-dialog .nq-opt[data-step="form"][data-k="combo"]');await smallSheet.click('#new-dialog .nq-opt[data-step="struct"][data-k="two"]');await smallSheet.click('#new-dialog [data-nq="go"]');
+      for(let i=0;i<8;i++){const n=await smallSheet.locator('#card-view .cv-tile').count();await smallSheet.click('#card-view .cv-add-row');await smallSheet.waitForFunction(n=>document.querySelectorAll('#card-view .cv-tile').length===n+1,n);}
+      assert.deepEqual(await smallSheet.locator('#card-view .cv-tile .cap b').allTextContents(),['(가)','(나)','(다)','(라)','(마)','(바)','(사)','(아)','(자)','(차)']);
       // 좁은 카드 칸에서도 유형 메뉴가 칸 밖으로 나가 잘리지 않는다.
       await smallSheet.click('#card-view .cv-shape');
       const menuFit=await smallSheet.evaluate(()=>{const m=document.querySelector('.cv-shape-menu').getBoundingClientRect(),c=document.querySelector('#card-view .cv-writer').getBoundingClientRect();return m.left>=c.left&&m.right<=c.right;});

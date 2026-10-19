@@ -261,7 +261,8 @@ document.addEventListener('input',e=>{const n=e.target;if(grid?.manages(n)||n.ta
 document.addEventListener('change',e=>{const n=e.target;if(grid?.manages(n))return;if(n.tagName==='SELECT'&&n.dataset.field)mutate(()=>changeField(current,n.dataset.field,n.value));if(n.tagName==='SELECT'&&n.dataset.bfield){const b=current.blocks.find(b=>b.id===n.closest('[data-block]').dataset.block);mutate(()=>b[n.dataset.bfield]=n.dataset.bfield==='parent'?n.value||null:n.value);}if(n.tagName==='SELECT'&&n.dataset.tfield)mutate(()=>tableBy(n.closest('[data-table]').dataset.table)[n.dataset.tfield]=Number(n.value));if(n.hasAttribute('data-bboxed')){const b=current.blocks.find(b=>b.id===n.closest('[data-block]').dataset.block);mutate(()=>b.boxed=n.checked);}if(n.dataset.answer!==undefined)mutate(()=>current.answer=Number(n.dataset.answer));});
 let addParent=null;
 // (가)·(나)·(다) 자료 묶음에 칸을 더하면 다음 이름((라)…)을 붙인다. 그 밖에는 기본 이름.
-const CAPTIONS=['(가)','(나)','(다)','(라)','(마)','(바)','(사)','(아)'];
+// 자료 칸 이름: (아) 다음도 (자)…(하)로 이어 간다(8개뿐이라 아홉째부터 모두 「그림」으로 겹쳤다).
+const CAPTIONS=['(가)','(나)','(다)','(라)','(마)','(바)','(사)','(아)','(자)','(차)','(카)','(타)','(파)','(하)'];
 function nextMaterialLabel(q,parent,kind){const used=q.blocks.filter(b=>b.parent===parent).map(b=>b.label);return ['figure','table','group'].includes(kind)&&used.some(l=>CAPTIONS.includes(l))?CAPTIONS.find(c=>!used.includes(c))||KINDS[kind]:KINDS[kind];}
 document.addEventListener('click',e=>{const n=e.target.closest('button'),row=e.target.closest('#rows tr[data-id]');if(row&&!grid?.manages(e.target))choose(data.questions.find(q=>q.id===row.dataset.id));
   if(!n)return;if(n.dataset.delete){askDelete(n.dataset.delete);return;}if(n.dataset.preview){choose(data.questions.find(q=>q.id===n.dataset.preview));void openTypeset();return;}if(n.dataset.close){$('#'+n.dataset.close).close();return;}if(n.dataset.tab){if(current)renderDetail();switchTab(n.dataset.tab);return;}if(n.dataset.source){sourceTab=n.dataset.source;selectedStandard=null;$('#source-search').value='';renderSources();return;}
@@ -424,7 +425,7 @@ async function requestTypeset(value){
         if(shown&&typesetter.matches(shown))await typesetter.commit();
         else if(typesetter?.dirty){typesetter.discard();lostFormat=true;}
         if(typesetRequest!==undefined)continue;
-        if(next===null){panel.hidden=true;panel.dataset.expanded='false';$('#typeset-expand').setAttribute('aria-pressed','false');$('#typeset-expand').textContent='크게 보기';$('#preview').setAttribute('aria-expanded','false');$('#preview').focus();continue;}
+        if(next===null){panel.hidden=true;panel.dataset.expanded='false';$('#typeset-expand').setAttribute('aria-pressed','false');$('#typeset-expand').textContent='크게 보기';$('#preview').setAttribute('aria-expanded','false');/* 초점이 닫히는 창 안에 있을 때만 단추로 돌려준다. 닫기는 늦게 끝나므로 그새 시트·카드에서 치던 칸의 초점을 빼앗아 앞 글자가 사라졌다. */if(panel.contains(document.activeElement))$('#preview').focus();continue;}
         next=data.questions.find(q=>q.id===next.id);if(!next)throw Error('문항이 삭제되었습니다. 다른 문항을 선택하세요.');
         closeSources();panel.hidden=false;$('#preview').setAttribute('aria-expanded','true');
         typesetter ||= makeTypesetter();
