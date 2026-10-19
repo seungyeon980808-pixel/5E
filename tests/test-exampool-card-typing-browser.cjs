@@ -29,6 +29,12 @@ for(const [name,engine] of Object.entries({chromium,webkit})) test(`${name}: car
   const lat=await sheet.evaluate(()=>window.__lat);assert.ok(lat.length>=typed.length,'every keystroke was measured');
   timingCheck(pct(lat,.95)<=100,`${name}: card typing p95 ${pct(lat,.95)}ms (p50 ${pct(lat,.5)}ms) with 150 questions`);
   console.log(`${name}: card typing with 150 questions p50 ${pct(lat,.5)}ms p95 ${pct(lat,.95)}ms max ${pct(lat,1)}ms`);
+  // 카드 화면에서 전체 다시 그리기(단계 단추)를 해도 숨은 엑셀식 시트(150문항 줄)는 다시 그리지 않는다 — 시트를 열 때 그린다.
+  await sheet.evaluate(()=>{window.__rowsWrites=0;const rows=document.querySelector('#rows'),d=Object.getOwnPropertyDescriptor(Element.prototype,'innerHTML');Object.defineProperty(rows,'innerHTML',{set(v){window.__rowsWrites++;d.set.call(this,v);},get(){return d.get.call(this);}});});
+  const stageMs=[];for(const k of ['draft','review','complete','review']){stageMs.push(await sheet.evaluate(k=>new Promise(r=>{const t0=performance.now();document.querySelector(`#card-view [data-cvstage="${k}"]`).click();requestAnimationFrame(()=>requestAnimationFrame(()=>r(performance.now()-t0)));}),k));}
+  assert.equal(await sheet.evaluate(()=>window.__rowsWrites),0,'full card renders leave the hidden sheet rows alone');
+  timingCheck(pct(stageMs,1)<=100,`${name}: stage button full render ${pct(stageMs,1)}ms with 150 questions`);
+  console.log(`${name}: stage button full render max ${pct(stageMs,1)}ms`);
   assert.deepEqual(errors,[]);
  });
 });

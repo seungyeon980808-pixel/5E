@@ -191,8 +191,12 @@ function renderView(){
   $('#workflow').disabled=!current||view.name!=='desk';$('#workflow').value=current?workflowOf(current):'draft';
   document.querySelector('.workflow-pick').hidden=view.name!=='desk';
 }
-function show(name,extra={}){if(name!=='desk'&&grid?.finish()===false)return;view={...view,...extra,name};renderView();if(name==='desk'){grid?.refresh({questionId:current?.id});}}
-function renderAll(){cellNode=null;renderRows();if($('#slot-dialog')?.open&&current)openSlots(current);if(current)renderDetail();renderSheetView();renderView();$('#undo').disabled=!history.length;$('#redo').disabled=!future.length;grid?.refresh({questionId:current?.id});syncTypeset(current);}
+function show(name,extra={}){if(name!=='desk'&&grid?.finish()===false)return;view={...view,...extra,name};if(name==='desk'&&deskStale)renderDesk();renderView();if(name==='desk'){grid?.refresh({questionId:current?.id});}}
+// 엑셀식 시트(줄·세부·표 시트·격자)는 그 화면이 보일 때만 그린다. 다른 화면에서는 미뤄 두었다가 show('desk')에서 그린다
+// (문항 150개면 카드에서 단추 하나 누를 때마다 숨은 시트를 다시 그리느라 50ms·느린 컴퓨터 300ms가 들었다).
+let deskStale=false;
+function renderDesk(){cellNode=null;renderRows();if(current)renderDetail();renderSheetView();deskStale=false;}
+function renderAll(){if(view.name==='desk'){cellNode=null;renderRows();}else deskStale=true;if($('#slot-dialog')?.open&&current)openSlots(current);if(view.name==='desk'){if(current)renderDetail();renderSheetView();}renderView();$('#undo').disabled=!history.length;$('#redo').disabled=!future.length;if(view.name==='desk')grid?.refresh({questionId:current?.id});syncTypeset(current);}
 // 데이터는 하나: 시트·구성 값을 고치면 한글 창에 바로 반영한다. 글만 바뀌었으면 그 문단만 바꾸고(서식 유지),
 // 구성·배치·선지 표현처럼 모양이 바뀌었으면 잠시 뒤 다시 그린다. value는 확정 전(입력 중) 값일 수도 있다.
 let redrawTimer=0,syncSeq=0;
