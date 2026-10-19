@@ -14,6 +14,11 @@ export const isWrapped=b=>b?.kind==='figure'&&b.layout===WRAP&&!b.parent;
 export const KINDS={text:'설명',figure:'그림',table:'표',group:'묶음',steps:'과정',dialogue:'대화',bogi:'보기'};
 export const uid=()=>crypto.randomUUID();
 export const clone=v=>structuredClone(v);
+// 되돌리기 기록용 복사: 객체·배열은 새로 만들고 문자열 같은 값은 그대로 함께 쓴다(문자열은 바뀌지 않으므로 안전).
+// structuredClone은 그림 data URL까지 매번 새로 복사해, 문항이 많으면 기록 10벌에 수백 MB가 쌓였다.
+export function copyTree(v){if(v===null||typeof v!=='object')return v;if(Array.isArray(v))return v.map(copyTree);
+  const proto=Object.getPrototypeOf(v);if(proto!==Object.prototype&&proto!==null)return structuredClone(v);
+  const out={};for(const k of Object.keys(v))out[k]=copyTree(v[k]);return out;}
 export const makeTable=(rows=3,cols=3,role='자료표')=>({rows,cols,headerRows:1,role,cells:Array.from({length:rows},()=>Array.from({length:cols},()=>({value:''}))),merges:[],note:'',diagonal:null});
 export function block(kind,parent=null,label=KINDS[kind]) {
   const b={id:uid(),parent,kind,label,text:'',layout:'세로'};

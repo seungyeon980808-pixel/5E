@@ -35,6 +35,10 @@ for(const [name,engine] of Object.entries({chromium,webkit})) test(`${name}: car
   assert.equal(await sheet.evaluate(()=>window.__rowsWrites),0,'full card renders leave the hidden sheet rows alone');
   timingCheck(pct(stageMs,1)<=100,`${name}: stage button full render ${pct(stageMs,1)}ms with 150 questions`);
   console.log(`${name}: stage button full render max ${pct(stageMs,1)}ms`);
+  // 되돌리기 기록(최대 10벌)은 구조만 복사하고 그림 문자열은 함께 쓴다: 칸을 바꿔 가며 고쳐도 힙이 크게 늘지 않는다(예전 +185MB).
+  if(name==='chromium'){const cdp=await page.context().newCDPSession(page);const heap=async()=>{await cdp.send('HeapProfiler.collectGarbage');await cdp.send('HeapProfiler.collectGarbage');return (await cdp.send('Runtime.getHeapUsage')).usedSize/1048576;};
+    const before=await heap();for(let i=0;i<12;i++){await sheet.click(['#cv-ask','#cv-intent','#cv-passage'][i%3]);await page.keyboard.type('가',{delay:10});}await sheet.waitForTimeout(800);
+    const grown=(await heap())-before;console.log(`${name}: heap after 12 field edits +${grown.toFixed(1)}MB`);assert.ok(grown<60,`undo history keeps heap growth small (${grown.toFixed(1)}MB)`);}
   assert.deepEqual(errors,[]);
  });
 });

@@ -1,4 +1,4 @@
-import {FORMAT,WORKFLOWS,TYPES,PRESETS,STYLES,KINDS,targetDisplay,uid,clone,block,newQuestion,applyPreset,parentOptions,tableCovered,cellValue,mergeCells,migrate,fromLegacy,validate,duplicateQuestion} from './model.js';
+import {FORMAT,WORKFLOWS,TYPES,PRESETS,STYLES,KINDS,targetDisplay,uid,clone,copyTree,block,newQuestion,applyPreset,parentOptions,tableCovered,cellValue,mergeCells,migrate,fromLegacy,validate,duplicateQuestion} from './model.js';
 import {workflowOf,questionTitle,questionSubtitle,TITLES,previewHtml,columnPreview} from './views.js';
 import {renderNav,renderLibrary,renderExams,renderExam} from './pool-views.js';
 import {createCardEditor} from './card-editor.js';
@@ -36,7 +36,7 @@ function status(message,error=false){clearTimeout(statusTimer);$('#status').text
   if(error)statusTimer=setTimeout(()=>{if($('#status').textContent!==message)return;$('#status').textContent='';$('#status').dataset.error='false';},6000);}
 // 자료 열람 상태 문장: 라이브러리 칸에 붙어 있을 때는 칸 안 줄 대신 아래 상태 막대로 보낸다(오류는 빨간 글).
 function sourceSay(message,error=false){$('#source-status').textContent=message;if($('#sources').classList.contains('docked'))status(message,error);}
-function checkpoint(key=''){future=[];if(key&&editKey===key)return;history.push(clone(data));if(history.length>10)history.shift();editKey=key;$('#undo').disabled=false;$('#redo').disabled=true;}
+function checkpoint(key=''){future=[];if(key&&editKey===key)return;history.push(copyTree(data));if(history.length>10)history.shift();editKey=key;$('#undo').disabled=false;$('#redo').disabled=true;}
 // validated: 방금 validate(data)를 통과한 경우(mutate·불러오기) 다시 검사하지 않는다(문항이 많으면 입력마다 수십 ms).
 function remember({validated=false}={}){
   if(!validated)try{validate(data);}catch(e){status(e.message,true);return;}
@@ -49,7 +49,7 @@ function remember({validated=false}={}){
   }));void saveQueue.then(()=>{if(stamp===saveStamp)status('저장됨 · '+new Date().toLocaleTimeString('ko-KR',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit'}));}).catch(e=>status(e.message,true));
 }
 function mutate(fn,{render=true,key=''}={}){const only=key.startsWith('card:')?current:null;// 카드 입력은 그 문항만 바뀐다 → 그 문항만 검사
-  const selectedId=current?.id,historyBefore=history.slice(),added=!key||editKey!==key,before=added?null:only&&data.questions.includes(only)?{i:data.questions.indexOf(only),q:clone(only)}:clone(data),redoBefore=future;try{checkpoint(key);const completed=completeKeys(only&&data.questions.includes(only)?only:null);fn();demoteEdited(completed);validate(data,{only:only&&data.questions.includes(only)?only:null});if(render)renderAll();else queueSync();remember({validated:true});queueAuthoringSync();return true;}catch(e){const rollback=added?history.pop():before;if(rollback?.q){data.questions[rollback.i]=rollback.q;current=data.questions.find(q=>q.id===selectedId)||data.questions[0]||null;}else if(rollback){data=rollback;current=data.questions.find(q=>q.id===selectedId)||data.questions[0]||null;}future=redoBefore;history=historyBefore;$('#undo').disabled=!history.length;$('#redo').disabled=!future.length;editKey='';if(render)renderAll();status(e.message,true);return false;}}
+  const selectedId=current?.id,historyBefore=history.slice(),added=!key||editKey!==key,before=added?null:only&&data.questions.includes(only)?{i:data.questions.indexOf(only),q:clone(only)}:copyTree(data),redoBefore=future;try{checkpoint(key);const completed=completeKeys(only&&data.questions.includes(only)?only:null);fn();demoteEdited(completed);validate(data,{only:only&&data.questions.includes(only)?only:null});if(render)renderAll();else queueSync();remember({validated:true});queueAuthoringSync();return true;}catch(e){const rollback=added?history.pop():before;if(rollback?.q){data.questions[rollback.i]=rollback.q;current=data.questions.find(q=>q.id===selectedId)||data.questions[0]||null;}else if(rollback){data=rollback;current=data.questions.find(q=>q.id===selectedId)||data.questions[0]||null;}future=redoBefore;history=historyBefore;$('#undo').disabled=!history.length;$('#redo').disabled=!future.length;editKey='';if(render)renderAll();status(e.message,true);return false;}}
 async function boot(){try{
   database=await new Promise((resolve,reject)=>{const r=indexedDB.open(CHANNEL+(demo?'5e-exampool-structure-demo':'5e-exampool-structure'),2);r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains('state'))r.result.createObjectStore('state');if(!r.result.objectStoreNames.contains('backups'))r.result.createObjectStore('backups');};r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);r.onblocked=()=>reject(Error('다른 문항 창을 닫고 다시 열어주세요.'));});
   let raw=await new Promise((resolve,reject)=>{const r=database.transaction('state').objectStore('state').get('draft');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);}),copied=false;
@@ -325,7 +325,7 @@ $('#new').onclick=()=>newDialog.open();
 $('#edit-detail').onclick=()=>openDetail();
 $('#detail-dialog').addEventListener('close',()=>{grid?.finish();renderRows();renderSheetView();grid?.refresh({questionId:current?.id});});
 $('#add').onclick=()=>{addParent=null;$('#add-dialog').showModal();};$('#duplicate').onclick=()=>mutate(()=>{if(data.questions.length>=500)throw Error('문항은 500개까지 만들 수 있습니다.');current=duplicateQuestion(current);current.number=String(data.questions.length+1);data.questions.push(current);});
-function replay(which){grid?.finish(true);const source=which==='redo'?future:history,destination=which==='redo'?history:future,old=source.pop();if(!old)return;destination.push(clone(data));const id=current?.id;data=old;current=data.questions.find(q=>q.id===id)||data.questions[0]||null;editKey='';renderAll();remember();}
+function replay(which){grid?.finish(true);const source=which==='redo'?future:history,destination=which==='redo'?history:future,old=source.pop();if(!old)return;destination.push(copyTree(data));const id=current?.id;data=old;current=data.questions.find(q=>q.id===id)||data.questions[0]||null;editKey='';renderAll();remember();}
 $('#undo').onclick=()=>replay('undo');$('#redo').onclick=()=>replay('redo');
 // 열 머리 우클릭: 조판 보기 · 복제 · 삭제. (휴지통을 열 머리에 두면 '조판 보기'를 누르다 삭제가 눌린다.)
 const ctx=document.createElement('div');ctx.id='ctx-menu';ctx.setAttribute('role','menu');ctx.hidden=true;document.body.append(ctx);
