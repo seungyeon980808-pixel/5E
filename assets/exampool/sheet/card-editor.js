@@ -201,6 +201,8 @@ export function createCardEditor(root,api){
   document.addEventListener('focusin',e=>{if(!hwpLayer.contains(e.target))lastFocus=e.target;},true);
   // 빈 곳을 누르면 쓰던 칸에서 나온 것이므로 돌려줄 칸을 잊는다.
   document.addEventListener('pointerdown',e=>{if(!hwpLayer.contains(e.target)&&!e.target.closest?.('input,textarea,select,button,[contenteditable],[tabindex]'))lastFocus=null;},true);
+  // 번호 줄이 넘치면 마우스 휠(세로)로도 가로로 넘긴다(스크롤 막대는 숨겨져 있음).
+  root.addEventListener('wheel',e=>{const t=e.target.closest?.('.cv-qtabs');if(!t||t.scrollWidth<=t.clientWidth||Math.abs(e.deltaX)>Math.abs(e.deltaY))return;e.preventDefault();t.scrollLeft+=e.deltaY;},{passive:false});
   root.tabIndex=-1;// 돌려줄 칸이 없을 때 초점을 받을 곳(Safari는 iframe.blur()로 초점이 빠지지 않는다)
   const reclaim=()=>setTimeout(()=>{const a=document.activeElement;if(!a||!hwpLayer.contains(a)||overHwp||hwpLayer.hidden)return;
     const back=lastFocus?.isConnected&&!lastFocus.closest('[hidden]')&&lastFocus!==document.body?lastFocus:root;back.focus({preventScroll:true});},0);
