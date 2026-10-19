@@ -5,11 +5,12 @@ import {previewHtml} from './new-question-preview.js';
 
 const E=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 // 문항 틀을 줄여 그린 선 그림(24칸·선 1.3). 문자 기호는 쓰지 않는다.
-const I={
+export const SHAPE_ICONS={
   combo:'<path d="M4 4h12"/><rect x="4" y="8" width="16" height="9" rx=".8"/><path d="M7 11h7M7 14h5M4 20.5h3M10 20.5h3M16 20.5h4"/>',
   single:'<path d="M4 4h14M4 7.5h10"/><path d="M4 13h2M8.5 13h2M13 13h2M17.5 13h2.5"/><path d="M4 18h16" opacity=".4"/>',
   pair:'<path d="M4 4h12"/><path d="M8 9h2.5M12.5 9h2.5M17 9h2.5"/><path d="M4 13h1.5M8 13h2.5M12.5 13h2.5M17 13h2.5M4 17h1.5M8 17h2.5M12.5 17h2.5M17 17h2.5"/>',
   talk:'<path d="M4 4h12"/><path d="M4 9h10v5H8l-2.5 2v-2H4z"/><path d="M10 15.5h10v4.5h-1.5V22l-2.5-2H10z"/>',
+  essay:'<path d="M4 4h14M4 7.5h10"/><rect x="4" y="11" width="16" height="9" rx=".8"/><path d="M7 14.5h10M7 17h6"/>',
   small:'<path d="M4 5h9M4 8.5h9M4 12h9M4 15.5h9M4 19h16"/><rect x="15" y="4" width="5" height="12" rx=".6"/>',
   big:'<path d="M4 4h16M4 7.5h12"/><rect x="4" y="11" width="16" height="9" rx=".8"/>',
   two:'<path d="M4 4h16M4 7.5h11"/><rect x="4" y="11" width="7" height="9" rx=".8"/><rect x="13" y="11" width="7" height="9" rx=".8"/>',
@@ -20,7 +21,7 @@ const I={
 };
 const HELP='<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M9.6 9.6a2.5 2.5 0 0 1 4.8 1c0 1.7-2.4 2.1-2.4 3.4"/><path d="M12 17h.01" stroke-width="2.2"/></svg>';
 const CHECK='<svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width:12px;height:12px;stroke-width:2.4"><path d="m5 12 5 5 9-10"/></svg>';
-const thumb=k=>`<span class="nq-thumb"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true">${I[k]}</svg></span>`;
+const thumb=k=>`<span class="nq-thumb"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true">${SHAPE_ICONS[k]}</svg></span>`;
 const pct=(n,d)=>d?n/d*100:0,fmt=v=>v.toFixed(1);
 
 export function createNewQuestionDialog(dialog,{onCreate}){

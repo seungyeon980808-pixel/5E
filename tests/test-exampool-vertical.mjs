@@ -28,9 +28,10 @@ test('text choices and statements keep identities and evidence, while table/grap
  const cid=q.choices[0].id;writeField(q,'choices','① 0\n② 1.0\n③ ㉠\n④ 001\n⑤ $v_0$');assert.equal(q.choices[0].id,cid);assert.equal(q.choices[1].text,'1.0');
  q.style='대응표';assert.match(fieldValue(q,'choices'),/대응표/);assert.throws(()=>writeField(q,'choices','new'),/구성 편집/);
 });
-test('new question frames: 4 forms x 7 material structures, ranked by past exams, layout chosen automatically',()=>{
+test('new question frames: 5 forms (서술형 last, no past exams) x 7 material structures, ranked by past exams, layout chosen automatically',()=>{
  for(const form of Object.keys(FORMS))for(const struct of Object.keys(STRUCTS))validate({format:FORMAT,questions:[questionFromShape({form,struct},'1')],documents:[]});
- const forms=rankForms('all');assert.equal(forms.total,1440);assert.deepEqual(forms.list.map(o=>o.k),['combo','single','pair','talk']);assert.deepEqual(forms.list.map(o=>o.rec),[true,true,false,false]);
+ const forms=rankForms('all');assert.equal(forms.total,1440);assert.deepEqual(forms.list.map(o=>o.k),['combo','single','pair','talk','essay']);assert.deepEqual(forms.list.map(o=>o.rec),[true,true,false,false,false]);assert.equal(forms.list.at(-1).n,0);
+ const essay=questionFromShape({form:'essay',struct:'big'},'6');assert.deepEqual([essay.form,essay.type],['essay','서술형']);assert.ok(!essay.blocks.some(b=>b.kind==='bogi'));
  const combo=rankStructs('all','combo');assert.equal(combo.total,1089);assert.equal(combo.list.filter(o=>o.rec).length,2);assert.equal(combo.list.reduce((n,o)=>n+o.n,0),1089);
  assert.equal(autoLayout('all','combo','small'),'side');assert.equal(autoLayout('all','combo','big'),'below');assert.equal(autoLayout('all','combo','none'),null);assert.equal(autoLayout('all','combo','two'),'row');
  const exp=questionFromShape({form:'combo',struct:'experiment'},'2'),box=exp.blocks.find(b=>b.kind==='group');

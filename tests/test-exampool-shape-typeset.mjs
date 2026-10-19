@@ -89,7 +89,7 @@ test('a picture-only paragraph starts where the previous paragraph ends and keep
   assert.match(restackPictureLines(text+`<hp:p id="2">${pic}</hp:p>`),/<hp:linesegarray><hp:lineseg textpos="0" vertpos="1860" vertsize="7200" textheight="7200"[^>]*horzsize="13350"/);
 });
 
-test('every frame (4 forms x 7 structures) survives an Excel round trip and still builds the same HWP plan',async()=>{
+test('every frame (5 forms x 7 structures) survives an Excel round trip and still builds the same HWP plan',async()=>{
   const {createRequire}=await import('node:module'),require=createRequire(import.meta.url);
   const XLSX=require('../assets/exampool/sheet/vendor/xlsx.full.min.js'),JSZip=require('../assets/exampool/sheet/vendor/jszip.min.js');
   const {exportExcel,importExcel}=await import('../assets/exampool/sheet/excel.js');
@@ -109,6 +109,38 @@ test('every frame (4 forms x 7 structures) survives an Excel round trip and stil
   assert.deepEqual(got.questions,questions);
   for(const [i,q] of got.questions.entries()){const a=await buildQuestionHtml(q),b=await buildQuestionHtml(questions[i]);assert.deepEqual(a.tables,b.tables);assert.deepEqual(a.texts,b.texts);}
   assert.equal(got.questions[0].form,'combo');assert.equal(got.questions[0].structure,'two');
+});
+
+test('changing the form on the card keeps form, type, style and the bogi/dialogue blocks in step',async()=>{
+  const {formOf,formLosses,applyForm,syncForm}=await import('../assets/exampool/sheet/model.js');
+  const q=shape('combo','two');assert.equal(formOf(q),'combo');assert.match(docOf(await buildQuestionHtml(q)),/<보 기>/);
+  assert.deepEqual(formLosses(q,'single'),[],'an empty bogi is dropped without asking');
+  applyForm(q,'single');assert.deepEqual([q.form,q.type,q.style],['single','객관식','문장·수식']);
+  assert.equal(q.blocks.some(b=>b.kind==='bogi'),false,'a dropped bogi no longer prints in the HWP plan');
+  assert.doesNotMatch(docOf(await buildQuestionHtml(q)),/<보 기>/);
+  applyForm(q,'combo');q.blocks.find(b=>b.kind==='bogi').lines[0].text='운동량은 보존된다.';
+  assert.equal(formLosses(q,'pair').length,1,'a bogi with text needs confirmation');
+  applyForm(q,'pair');assert.deepEqual([q.form,q.type,q.style],['pair','객관식','대응표']);assert.deepEqual(q.choiceTable.cells[0].map(c=>c.value),['A','B','C']);
+  applyForm(q,'talk');assert.equal(q.style,'조합');assert.ok(q.blocks.some(b=>b.kind==='dialogue'));assert.equal(formOf(q),'talk');
+  applyForm(q,'essay');assert.deepEqual([q.form,q.type],['essay','서술형']);assert.equal(q.blocks.some(b=>b.kind==='dialogue'),false);
+  assert.equal(q.blocks.filter(b=>b.kind==='figure').length,2,'material slots stay');
+  // 저장된 form이 없는 예전·엑셀 문항은 type·style로 짐작하고 데이터는 건드리지 않는다.
+  const old=shape('pair','none');delete old.form;assert.equal(formOf(old),'pair');syncForm(old);assert.equal(old.form,undefined);
+  // 엑셀(세로 시트)에서 유형을 바꿔 들여오면 form도 같은 규칙으로 맞춘다.
+  const {writeField}=await import('../assets/exampool/sheet/vertical.js');
+  const e=shape('single','big');writeField(e,'type','서술형');assert.equal(e.form,'essay');writeField(e,'type','합답형');assert.equal(e.form,'combo');
+});
+
+test('an Excel file whose 문항유형 was changed comes back with a matching form',async()=>{
+  const {createRequire}=await import('node:module'),require=createRequire(import.meta.url);
+  const XLSX=require('../assets/exampool/sheet/vendor/xlsx.full.min.js'),JSZip=require('../assets/exampool/sheet/vendor/jszip.min.js');
+  const {exportExcel,importExcel}=await import('../assets/exampool/sheet/excel.js');
+  const q=shape('single','none');const data={format:'5e-question-sheet-v2',questions:[q],documents:[]};
+  const bytes=await exportExcel(XLSX,JSZip,data),wb=XLSX.read(bytes,{type:'array',cellStyles:true}),ws=wb.Sheets['문항'];
+  const rows=XLSX.utils.sheet_to_json(ws,{header:1});const r=rows.findIndex(x=>x[0]==='문항유형');assert.ok(r>=0);
+  ws[XLSX.utils.encode_cell({r,c:1})]={t:'s',v:'서술형'};
+  const out=XLSX.write(wb,{type:'array',bookType:'xlsx'}),got=await importExcel(XLSX,JSZip,out);
+  assert.equal(got.questions[0].type,'서술형');assert.equal(got.questions[0].form,'essay');
 });
 
 test('a space after a sub/superscript group keeps the native engine from extending the subscript',async()=>{

@@ -80,6 +80,30 @@ h.withServer(async origin => {
       await sheet.click('#card-view [data-cvview="page"]');await sheet.waitForSelector('#card-view .pg-sheet .pg-q.now');await sheet.click('#card-view .pg-head [data-cvview="card"]');await sheet.waitForSelector('#card-view .cv-writer');
       // 문항 카드에는 표(엑셀식) 진입이 없다. 표는 시험지의 「표로 한꺼번에 고치기」로만 연다.
       assert.equal(await sheet.locator('#card-view [data-cv="sheet"]').count(),0,'the card has no sheet entry');
+      // 머리 줄 틀 이름표: 새 문항 창에서 정한 유형·자료 구조를 보여 주고, 눌렀을 때만 유형 바꾸기 메뉴(서술형 포함 5개)가 열린다.
+      assert.equal(await sheet.locator('#card-view .typeseg').count(),0,'no type segment on the card');
+      assert.equal((await sheet.locator('#card-view .cv-shape').textContent()).trim(),'합답형실험 상자');
+      await sheet.click('#card-view .cv-shape');
+      assert.deepEqual(await sheet.locator('#card-view .cv-shape-menu [data-cvform] .n').allTextContents(),['합답형','일반 정답형','대응·짝 고르기형','학생 대화·발표형','서술형']);
+      await page.keyboard.press('Escape');assert.equal(await sheet.locator('#card-view .cv-shape-menu').count(),0,'Esc closes the menu');
+      // 보기에 글이 있으면 지울지 묻고, 취소하면 그대로.
+      await sheet.fill('#card-view [data-cvline="bogi"][data-i="0"]','운동량은 보존된다.');
+      let asked='';page.once('dialog',d=>{asked=d.message();void d.dismiss();});
+      await sheet.click('#card-view .cv-shape');await sheet.click('#card-view [data-cvform="single"]');
+      assert.match(asked,/보기 1줄을 지웁니다/);assert.match(await sheet.locator('#card-view .cv-shape').textContent(),/^합답형/);
+      await sheet.fill('#card-view [data-cvline="bogi"][data-i="0"]','');
+      await sheet.click('#card-view .cv-shape');await sheet.click('#card-view [data-cvform="single"]');
+      await sheet.waitForFunction(()=>/^일반 정답형/.test(document.querySelector('#card-view .cv-shape').textContent));
+      assert.equal(await sheet.locator('#card-view [data-cvline="bogi"]').count(),0,'the empty bogi is gone with the form');
+      await sheet.click('#card-view .cv-shape');await sheet.click('#card-view [data-cvform="combo"]');
+      await sheet.waitForFunction(()=>/^합답형/.test(document.querySelector('#card-view .cv-shape').textContent)&&document.querySelectorAll('#card-view .combo-row').length===5);
+      // 「그림 자리·표 자리」 대신 자료 칸 맨 아래 「자료 칸 추가」 하나: 빈 칸이 생기고 그 칸에서 그림/표를 고른다.
+      assert.equal(await sheet.locator('#card-view .cv-add-slot, #card-view [data-cvslot-act="add-table"]').count(),0);
+      const tiles=await sheet.locator('#card-view .cv-tile').count();
+      await sheet.click('#card-view .cv-add-row');await sheet.waitForFunction(n=>document.querySelectorAll('#card-view .cv-tile').length===n+1,tiles);
+      const added=sheet.locator('#card-view .cv-tile.empty').last();
+      assert.equal(await added.locator('[data-cvslot-act="pick"]').count(),1);assert.equal(await added.locator('[data-cvslot-act="to-table"]').count(),1);
+      await added.locator('[data-cvslot-act="remove"]').click();await sheet.waitForFunction(n=>document.querySelectorAll('#card-view .cv-tile').length===n,tiles);
       if(await sheet.locator('.side').isHidden())await sheet.click('#toggle-nav');
       await sheet.click('.side [data-nav="new-exam"]');await sheet.waitForSelector('#examd-view:not([hidden]) #exam-from-library');
       await sheet.selectOption('#exam-from-library',await sheet.locator('#exam-from-library option').nth(1).getAttribute('value'));

@@ -28,6 +28,33 @@ export function newQuestion(number='1',type='객관식',preset='글·수식',sty
   applyPreset(q,preset); if(type==='합답형')q.blocks.push(block('bogi'));
   return q;
 }
+// 문항 유형(새 문항 창의 ① 유형): 합답형·일반 정답형·대응·짝·학생 대화·서술형. q.form은 type·style과 함께 움직인다.
+export const FORM_KEYS=['combo','single','pair','talk','essay'];
+const FORM_TYPE={combo:'합답형',single:'객관식',pair:'객관식',talk:'객관식',essay:'서술형'};
+// 저장된 q.form이 없거나(엑셀·예전 파일) type·style과 어긋나면 type·style·대화 칸으로 정한다.
+export function formOf(q){
+  if(q.type==='서술형')return 'essay';
+  if(q.type==='합답형')return 'combo';
+  if(q.style==='대응표')return 'pair';
+  if(q.form==='single'||q.form==='talk')return q.form;
+  return q.blocks.some(b=>b.kind==='dialogue')?'talk':'single';
+}
+// 엑셀에서 유형을 바꿔 들여온 문항: 이미 q.form이 있으면 같은 규칙으로 다시 맞춘다(없으면 그대로 둔다).
+export function syncForm(q){if(q.form!==undefined&&q.form!==formOf(q))q.form=formOf(q);}
+// 유형을 바꿀 때 지워질, 글이 든 칸(보기·대화). 비어 있으면 묻지 않고 지운다.
+const FORM_BLOCK={combo:'bogi',talk:'dialogue'};
+export function formLosses(q,form){const kind=FORM_BLOCK[formOf(q)];if(!kind||FORM_BLOCK[form]===kind)return [];return q.blocks.filter(b=>b.kind===kind&&b.lines.some(l=>l.text.trim()));}
+export function applyForm(q,form){
+  if(!FORM_KEYS.includes(form))throw Error('문항 유형을 확인하세요.');
+  const from=formOf(q),gone=FORM_BLOCK[from];
+  if(gone&&FORM_BLOCK[form]!==gone)q.blocks=q.blocks.filter(b=>b.kind!==gone);
+  q.type=FORM_TYPE[form];q.form=form;
+  if(form==='combo'||form==='talk')q.style='조합';else if(form==='pair')q.style='대응표';else if(q.style==='조합'||q.style==='대응표')q.style='문장·수식';
+  const at=()=>{const i=q.blocks.findIndex(b=>b.kind==='bogi'&&!b.parent);return i<0?q.blocks.length:i;};
+  if(form==='combo'&&!q.blocks.some(b=>b.kind==='bogi'))q.blocks.push(block('bogi'));
+  if(form==='talk'&&!q.blocks.some(b=>b.kind==='dialogue')){const d=block('dialogue');d.lines.forEach(l=>l.label='학생 '+l.label);q.blocks.splice(at(),0,d);}
+  if(form==='pair'&&q.choiceTable.cells[0].every(c=>!String(c.value).trim()))['A','B','C'].forEach((v,c)=>{if(q.choiceTable.cells[0][c])q.choiceTable.cells[0][c].value=v;});
+}
 export function applyPreset(q,preset) {
   if(!PRESETS.includes(preset))throw Error('자료 구성을 선택하세요.');
   q.preset=preset;
@@ -97,7 +124,7 @@ export function validate(data) {
   const ids=new Set();for(const q of data.questions){if(!q||!id(q.id)||ids.has(q.id)||!TYPES.includes(q.type)||!PRESETS.includes(q.preset)||!STYLES.includes(q.style)||!Array.isArray(q.blocks)||q.blocks.length>80||!Array.isArray(q.choices)||q.choices.length!==5)throw Error('문항 유형·ID·구성을 확인하세요.');ids.add(q.id);
     for(const k of ['number','standardCode','ask','modelAnswer','explanation','intent','source'])if(!str(q[k],k==='number'?40:k==='standardCode'?80:32767))throw Error('문항 입력 내용이 너무 길거나 형식이 다릅니다.');
     for(const k of ['unitLarge','unitMiddle','unitSmall','managementId','templateKey'])if(q[k]!==undefined&&!str(q[k],240))throw Error('단원·관리번호를 확인하세요.');
-    if(q.form!==undefined&&!['combo','single','pair','talk'].includes(q.form)||q.structure!==undefined&&!['two','big','small','condition','many','experiment','none'].includes(q.structure))throw Error('새 문항 틀의 유형·자료 구조를 확인하세요.');
+    if(q.form!==undefined&&!FORM_KEYS.includes(q.form)||q.structure!==undefined&&!['two','big','small','condition','many','experiment','none'].includes(q.structure))throw Error('새 문항 틀의 유형·자료 구조를 확인하세요.');
     if(q.concepts!==undefined&&(!Array.isArray(q.concepts)||q.concepts.length>100||!q.concepts.every(v=>str(v,240))))throw Error('핵심개념은 100개 이내로 입력하세요.');
     // 문항별 기준 용지(선택): 조판을 처음 열 때의 용지. 기출(평가원 단 폭 약 110mm)은 B4.
     if(q.paper!==undefined&&!['A4','B4','A3'].includes(q.paper))throw Error('문항 기준 용지는 A4·B4·A3 중 하나입니다.');

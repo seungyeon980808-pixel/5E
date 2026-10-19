@@ -1,4 +1,4 @@
-import {FORMAT,TYPES,PRESETS,STYLES,KINDS,targetDisplay,uid,clone,block,newQuestion,validate,migrate} from './model.js';
+import {FORMAT,TYPES,PRESETS,STYLES,KINDS,targetDisplay,uid,clone,block,newQuestion,validate,migrate,syncForm} from './model.js';
 import {checkXlsxSize,parseWorkbook as parseLegacy} from './legacy-io.js';
 import {ROWS,fieldValue,writeField} from './vertical.js';
 import {formatSize,formatGap,formatRatio,parseSize,parseGap,parseRatio,parseAlign,parseChoiceLayout} from './placement.js';
@@ -163,6 +163,7 @@ export async function importExcel(XLSX,JSZip,buffer) {
   const unassigned=pics.filter(pic=>!positions.some(p=>p.sheet===pic.sheet&&p.row===pic.row&&p.col===pic.col));
   if(unassigned.length)throw Error(`구성·표의 지정 셀 밖에 그림 ${unassigned.length}개가 있습니다. 그림을 원래 구성의 그림 칸 또는 표 셀에 배치한 뒤 다시 올려주세요. 기존 입력은 보존했습니다.`);
   for(const {q,key,value} of overrides)writeField(q,key,value);
+  for(const q of questions)syncForm(q);
   return {...validate({format:FORMAT,questions,documents}),backedIds:[...old.keys()],warnings:[]};
 }
 export async function readPictures(zip,names) {

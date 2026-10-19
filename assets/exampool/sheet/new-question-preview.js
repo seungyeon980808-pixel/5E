@@ -91,10 +91,12 @@ function bodyHtml(s,kinds){
 const ASK={combo:'이에 대한 설명으로 옳은 것만을 &lt;보기&gt;에서 있는 대로 고른 <span class="pts">것은? [3점]</span>',
   single:'충돌 직후 B의 <span class="pts">속력은? [3점]</span>',
   pair:'A, B, C에 해당하는 물리량으로 옳은 것은?',
-  talk:'제시한 내용이 옳은 학생만을 있는 대로 고른 것은?'};
+  talk:'제시한 내용이 옳은 학생만을 있는 대로 고른 것은?',
+  essay:'충돌 직후 B의 속력을 구하고, 그 과정을 서술하시오.'};
 function choicesHtml(t){
   const L=['①','②','③','④','⑤'];
   const row=list=>`<div class="ch r5">${list.map((x,i)=>`<div>${L[i]} ${x}</div>`).join('')}</div>`;
+  if(t==='essay')return '<div class="essay-box"></div>';
   if(t==='combo')return row(['ㄱ','ㄴ','ㄱ, ㄷ','ㄴ, ㄷ','ㄱ, ㄴ, ㄷ']);
   if(t==='talk')return row(['A','C','A, B','B, C','A, B, C']);
   if(t==='single')return row(['<i>v</i>/3','<i>v</i>/2','2<i>v</i>/3','<i>v</i>','3<i>v</i>/2']);
