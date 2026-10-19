@@ -840,6 +840,7 @@ body.cv-dragging,body.cv-dragging *{user-select:none!important;-webkit-user-sele
 #card-view .f-sec-head h3[title],#card-view .f-field>label[title]{cursor:help}
 /* 가운데 카드는 밝은 면이라 그 안의 체크·동그라미도 밝은 모양(그라파이트에서 빈 「3점」 칸이 검게 칠해져 켜진 것처럼 보였다) */
 #card-view .cv-writer{color-scheme:light}
+#card-view:focus{outline:none}
 /* 글자 5단계 */
 #card-view .cv-ph b,#card-view .f-field>label,#card-view .pick,#card-view .toggle{font-size:var(--cv-text-body)}
 #card-view .typeseg button,#card-view .stage button,#card-view .seg button,#card-view .hint,#card-view .cv-tile .cap,
