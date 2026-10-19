@@ -788,19 +788,24 @@ function makeSrcRectViewport(obj, sr, href, preserveAspectRatio) {
   return nested;
 }
 
+// 편집 화면을 그리는 동안에만 scene.js가 넣어 주는 그림 주소 바꾸기(data URL → 재사용 blob URL). 내보내기는 null이라 obj.src 그대로.
+let imageHrefResolver = null;
+export function setImageHrefResolver(resolve) { imageHrefResolver = resolve; }
+const imageHref = (src) => imageHrefResolver ? imageHrefResolver(src) : src;
+
 /* ----- image: embedded raster via SVG <image> (href = base64 data URL) ----- */
 function renderImage(obj) {
   const sr = srcRectOf(obj);
   let el;
   if (sr) {
-    el = makeSrcRectViewport(obj, sr, obj.src, "none");
+    el = makeSrcRectViewport(obj, sr, imageHref(obj.src), "none");
   } else {
     el = document.createElementNS(SVG_NS, "image");
     el.setAttribute("x", obj.x);
     el.setAttribute("y", obj.y);
     el.setAttribute("width", obj.w);
     el.setAttribute("height", obj.h);
-    el.setAttribute("href", obj.src);
+    el.setAttribute("href", imageHref(obj.src));
     el.setAttribute("preserveAspectRatio", "none");
   }
   if (obj.opacity != null) el.setAttribute("opacity", obj.opacity);

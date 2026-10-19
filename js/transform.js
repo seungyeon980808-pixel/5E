@@ -1,3 +1,4 @@
+import { jsonClone } from "./json-clone.js?v=1.7.0-four-session-integration";
 import { mapLeaderRoutes, leaderRoutePoints } from './ai-label-leaders.js?v=1.7.0-four-session-integration';
 /* ===== TRANSFORM (DESIGN 吏? select-tool MOVE + snapshot-based Undo/Redo) ===== */
 //
@@ -114,7 +115,7 @@ function getRotPivot(obj, corner) {
 /* ===== UNDO / REDO ENGINE ===== */
 
 function cloneObjects(objects) {
-  return JSON.parse(JSON.stringify(objects));
+  return jsonClone(objects);
 }
 
 function isDocumentHistoryEntry(entry) {
@@ -406,7 +407,7 @@ export function instantiateObjectsAt(state, srcObjs, target) {
     obj.layerId = state.get().activeLayerId;
   });
   state.update((s2) => {
-    s2.undoStack.push(JSON.parse(JSON.stringify(s2.objects)));
+    s2.undoStack.push(jsonClone(s2.objects));
     s2.redoStack = [];
     newObjs.forEach((o) => s2.objects.push(o));
     s2.selectedIds = newObjs.map((o) => o.id);
@@ -1121,7 +1122,7 @@ export function commitGroupGeometry(state, prop, value, svg) {
   if (!box) return true;
   const current = prop === 'x' ? box.x + box.w / 2 : prop === 'y' ? box.y + box.h / 2 : box[prop];
   if (Math.abs(current - value) < 1e-8 || ((prop === 'w' || prop === 'h') && value < MIN_SIZE)) return true;
-  const snapshot = JSON.parse(JSON.stringify(s.objects));
+  const snapshot = jsonClone(s.objects);
   const originals = Object.fromEntries(snapshot.map(o => [o.id, o]));
   state.update(next => {
     const live = members.map(o => next.objects.find(item => item.id === o.id));
@@ -1231,7 +1232,7 @@ export function initTransform(svg, state) {
       const hasApplicableAngle = angle != null && isFinite(angle);
       if (!hasApplicableAngle && (!props || Object.keys(props).length === 0)) return;
       e.preventDefault();
-      const snap = JSON.parse(JSON.stringify(s.objects));
+      const snap = jsonClone(s.objects);
       state.update((s2) => {
         let changed = false;
         (s2.selectedIds || []).forEach((id) => {
@@ -1266,7 +1267,7 @@ export function initTransform(svg, state) {
     if (e.key === "Delete" || e.key === "Backspace") {
       if (!selectedIds.length) return;
       e.preventDefault();
-      const snap = JSON.parse(JSON.stringify(s.objects));
+      const snap = jsonClone(s.objects);
       state.update((s2) => {
         // locked objects are never deleted; remove only selected + mutable ones
         const before = s2.objects.length;
@@ -1297,7 +1298,7 @@ export function initTransform(svg, state) {
       const shiftArrowKey = "Shift+" + e.key;
       const isFirst = !_arrowKeysHeld.has(shiftArrowKey);
       if (isFirst) _arrowKeysHeld.add(shiftArrowKey);
-      const snap = isFirst ? JSON.parse(JSON.stringify(s.objects)) : null;
+      const snap = isFirst ? jsonClone(s.objects) : null;
       state.update((s2) => {
         if (snap) { s2.undoStack.push(snap); s2.redoStack = []; }
         (s2.selectedIds || []).forEach((id) => {
@@ -1317,7 +1318,7 @@ export function initTransform(svg, state) {
       if (s.activeTool === "rotate") {
         const selected = selectedIds.map(id => s.objects.find((o) => o.id === id)).filter(Boolean);
         if (selected.some((o) => !isMutable(o))) return;
-        const snap = JSON.parse(JSON.stringify(s.objects));
+        const snap = jsonClone(s.objects);
         const flipAxis = (e.key === "ArrowLeft" || e.key === "ArrowRight") ? "flipX" : "flipY";
         state.update((s2) => {
           const ids = s2.selectedIds || [];
@@ -1341,7 +1342,7 @@ export function initTransform(svg, state) {
       const dy = e.key === "ArrowUp"   ? -nudge : e.key === "ArrowDown"  ? nudge : 0;
       const isFirst = !_arrowKeysHeld.has(e.key);
       if (isFirst) _arrowKeysHeld.add(e.key);
-      const snap = isFirst ? JSON.parse(JSON.stringify(s.objects)) : null;
+      const snap = isFirst ? jsonClone(s.objects) : null;
       state.update((s2) => {
         const ids = s2.selectedIds || [];
         if (snap) { s2.undoStack.push(snap); s2.redoStack = []; }
@@ -1365,7 +1366,7 @@ export function initTransform(svg, state) {
         const rotationStep = e.shiftKey ? 30 : 5;
         const selected = selectedIds.map(id => s.objects.find((o) => o.id === id)).filter(Boolean);
         if (selected.some((o) => !isMutable(o))) return;
-        const snap = JSON.parse(JSON.stringify(s.objects));
+        const snap = jsonClone(s.objects);
         // Whole-group rotation: when every selected object shares one groupId,
         // rotate all members about the COMBINED bbox center (group pivot) instead
         // of each object spinning about its own center.
@@ -1445,7 +1446,7 @@ export function initTransform(svg, state) {
         });
         return;
       }
-      const snap = JSON.parse(JSON.stringify(s.objects));
+      const snap = jsonClone(s.objects);
       state.update((s2) => {
         const ids = s2.selectedIds || [];
         // Process from highest index downward to avoid index collision
@@ -1473,7 +1474,7 @@ export function initTransform(svg, state) {
         const rotationStep = e.shiftKey ? 30 : 5;
         const selected = selectedIds.map(id => s.objects.find((o) => o.id === id)).filter(Boolean);
         if (selected.some((o) => !isMutable(o))) return;
-        const snap = JSON.parse(JSON.stringify(s.objects));
+        const snap = jsonClone(s.objects);
         // Whole-group rotation: when every selected object shares one groupId,
         // rotate all members about the COMBINED bbox center (group pivot) instead
         // of each object spinning about its own center.
@@ -1553,7 +1554,7 @@ export function initTransform(svg, state) {
         });
         return;
       }
-      const snap = JSON.parse(JSON.stringify(s.objects));
+      const snap = jsonClone(s.objects);
       state.update((s2) => {
         const ids = s2.selectedIds || [];
         // Process from lowest index upward to avoid index collision
@@ -1581,7 +1582,7 @@ export function initTransform(svg, state) {
       });
       if (!triangleIds.length) return;
       e.preventDefault();
-      const snap = JSON.parse(JSON.stringify(s.objects));
+      const snap = jsonClone(s.objects);
       state.update((s2) => {
         triangleIds.forEach(id => {
           const o = s2.objects.find((o) => o.id === id);
@@ -1597,7 +1598,7 @@ export function initTransform(svg, state) {
     if (!e.ctrlKey && !e.metaKey && shortcutKey(e) === "k") {
       if (!selectedIds.length || s.activeTool !== "V") return;
       e.preventDefault();
-      const snap = JSON.parse(JSON.stringify(s.objects));
+      const snap = jsonClone(s.objects);
       state.update((s2) => {
         const ids = s2.selectedIds || [];
         ids.forEach(id => {
@@ -1614,7 +1615,7 @@ export function initTransform(svg, state) {
     if (!e.ctrlKey && !e.metaKey && !e.shiftKey && shortcutKey(e) === "g") {
       if (s.activeTool !== "V" || selectedIds.length < 2) return;
       e.preventDefault();
-      const snap = JSON.parse(JSON.stringify(s.objects));
+      const snap = jsonClone(s.objects);
       state.update((s2) => {
         const groupId = Date.now().toString();
         // locked objects are excluded from the group; need ?? mutable members left
@@ -1644,7 +1645,7 @@ export function initTransform(svg, state) {
         return o && o.groupId === _gid;
       })) return;
       e.preventDefault();
-      const snap = JSON.parse(JSON.stringify(s.objects));
+      const snap = jsonClone(s.objects);
       state.update((s2) => {
         const grp = s2.groups.find((g) => g.id === _gid);
         if (grp) grp.memberIds.forEach(id => {
@@ -1753,14 +1754,14 @@ export function initTransform(svg, state) {
             ? objectCenter(obj) : getRotPivot(obj, hLabel);
           const mouse     = screenToWorld(svg, s.viewBox, e.clientX, e.clientY);
           _rotStartAngle  = Math.atan2(mouse.y - _rotPivot.y, mouse.x - _rotPivot.x);
-          _rotPendingSnap = isTempImageId(obj.id) ? null : JSON.parse(JSON.stringify(s.objects));
+          _rotPendingSnap = isTempImageId(obj.id) ? null : jsonClone(s.objects);
           _rotDidMove     = false;
         } else {
           _handleDragging   = true;
           _handleId         = hLabel;
           _handleOrigObj    = JSON.parse(JSON.stringify(obj));
           _handleStartWorld = screenToWorld(svg, s.viewBox, e.clientX, e.clientY);
-          _pendingSnapshot  = isTempImageId(obj.id) ? null : JSON.parse(JSON.stringify(s.objects));
+          _pendingSnapshot  = isTempImageId(obj.id) ? null : jsonClone(s.objects);
           _didMove = false;
         }
         e.preventDefault();
@@ -1815,7 +1816,7 @@ export function initTransform(svg, state) {
       const o = objectById(s, id);
       if (o) _moveOrigObjs[id] = JSON.parse(JSON.stringify(o));
     });
-    _pendingSnapshot = _moveIds.some(isTempImageId) ? null : JSON.parse(JSON.stringify(s.objects)); // pre-move state for undo
+    _pendingSnapshot = _moveIds.some(isTempImageId) ? null : jsonClone(s.objects); // pre-move state for undo
     _didMove = false;
 
     svg.style.cursor = "grabbing";
