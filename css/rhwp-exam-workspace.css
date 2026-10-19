@@ -101,7 +101,7 @@
 .exam-inline-properties select {width:110px;}
 #exam-inline-editor :focus-visible,#exam-inline-crop-dialog :focus-visible {outline:2px solid var(--exam-accent, #dba52b);outline-offset:2px;}
 #exam-inline-crop-dialog {width:min(800px,90vw);max-height:90vh;overflow:auto;padding:18px;border:1px solid var(--border);border-radius:9px;background:var(--bg-panel);color:var(--text-primary);font:13px/1.5 -apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo",sans-serif;}
-#exam-inline-crop-dialog::backdrop {background:#0005;}
+#exam-inline-crop-dialog::backdrop {background:var(--popup-scrim,#10141a66);-webkit-backdrop-filter:blur(var(--popup-blur,8px));backdrop-filter:blur(var(--popup-blur,8px));}
 #exam-inline-crop-dialog p {color:var(--text-secondary);font-size:12px;}
 #exam-inline-crop-dialog>svg {display:block;width:100%;height:min(58vh,500px);background:#e9edf2;touch-action:none;}
 #exam-inline-crop-dialog>div {display:flex;justify-content:flex-end;gap:8px;margin-top:12px;}

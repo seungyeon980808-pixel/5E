@@ -1,0 +1,23 @@
+/* ===== 팝업 창 공통: 뜰 때 모션과 뒤 흐림 =====
+ * 모든 팝업 창은 5E 창 모션(style.css modal-pop: 260ms, .94 → 1.012 → 1)으로 커지고,
+ * 뒤 화면은 같은 어둡기(--popup-scrim)와 8px 흐림(--popup-blur)으로 180ms에 걸쳐 가라앉는다.
+ * 창마다 45~55% 검정·0~8px 흐림으로 제각각이던 것을 한 값으로 모았다(ExamPool·구성 편집기와 같은 값).
+ * 로그인 창은 자기 모션(web-login.css)을 쓰고, 모바일 자르기 창은 캔버스 색 바탕을 일부러 쓴다.
+ */
+:root { --popup-scrim: #10141a66; --popup-blur: 8px; }
+
+dialog:modal:not(.web-login-dialog) { animation: modal-pop 260ms cubic-bezier(.2, .9, .25, 1.06); }
+dialog:modal:not(.mobile-crop-dialog)::backdrop {
+  background: var(--popup-scrim);
+  -webkit-backdrop-filter: blur(var(--popup-blur));
+  backdrop-filter: blur(var(--popup-blur));
+  animation: modal-overlay-fade 180ms ease-out;
+}
+.modal-overlay:not(#ai-image-panel) {
+  background: var(--popup-scrim);
+  -webkit-backdrop-filter: blur(var(--popup-blur));
+  backdrop-filter: blur(var(--popup-blur));
+}
+@media (prefers-reduced-motion: reduce) {
+  dialog:modal, dialog:modal::backdrop { animation: none; }
+}
