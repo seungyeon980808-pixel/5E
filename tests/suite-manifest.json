@@ -2065,6 +2065,12 @@
       ]
     },
     {
+      "path": "tests/test-rhwp-exam-structure-lock-browser.cjs",
+      "findingIds": [
+        "RHWP-EXAM-STRUCTURE-LOCK"
+      ]
+    },
+    {
       "path": "tests/test-asset-library-browser.cjs",
       "findingIds": [
         "ASSET-LIBRARY-PORT"
