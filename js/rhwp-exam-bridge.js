@@ -101,7 +101,7 @@ export class RhwpExamBridge {
 
   get input() {
     const input=this.deps.getInputHandler();this.resizeInputs ||= new WeakSet();
-    if(input && !this.resizeInputs.has(input)){this.resizeInputs.add(input);installPictureResize(input,this);setTableLayoutLocked(input,this.tableLayoutLocked);}
+    if(input && !this.resizeInputs.has(input)){this.resizeInputs.add(input);installPictureResize(input,this);input.examStructureNotice=message=>this.onChange?.(new Error(message));setTableLayoutLocked(input,this.tableLayoutLocked);}
     return input;
   }
   setTableLayoutLocked(locked) {

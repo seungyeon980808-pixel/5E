@@ -48,7 +48,8 @@ export function installTableShortcuts(bridge) {
     if(bridge.tableLayoutLocked&&(event.ctrlKey||event.metaKey&&bridge.input?.cursor.isInCellSelectionMode())&&!event.altKey&&['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key)&&event.target===bridge.input?.textarea&&(bridge.input.cursor.isInCell()||bridge.input.cursor.isInCellSelectionMode()||bridge.input.cursor.isInTableObjectSelection())){
       event.preventDefault();event.stopImmediatePropagation();return;
     }
-    if(event.key==='Tab'&&event.shiftKey&&!event.ctrlKey&&!event.metaKey&&!event.altKey&&!event.isComposing&&event.target===bridge.input?.textarea){
+    // 한컴 방식: 표 칸 안 Shift+Tab은 이전 칸으로 간다(칸 안 내어쓰기는 Ctrl+Shift+Tab·「내어쓰기」 단추). 본문에서만 빠른 내어쓰기.
+    if(event.key==='Tab'&&event.shiftKey&&!event.ctrlKey&&!event.metaKey&&!event.altKey&&!event.isComposing&&event.target===bridge.input?.textarea&&!(bridge.input.cursor?.isInCell?.()&&!bridge.input.cursor?.isInTextBox?.())){
       try{if(applyHangingIndent(bridge)){event.preventDefault();event.stopImmediatePropagation();}}catch(error){event.preventDefault();event.stopImmediatePropagation();bridge.onChange?.(error);}return;
     }
     if(!event.ctrlKey || event.metaKey || event.altKey || event.shiftKey || event.isComposing || event.keyCode===229 || !['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key))return;

@@ -282,9 +282,16 @@ export function installDocumentShortcuts(bridge) {
       if (!event.repeat) pending = { input, generation:bridge.generation, expires:Date.now() + 2000 };
       return;
     }
+    // 구조 잠금(rhwp-exam-layout-lock.js)이 켜져 있으면 칸 크기·맞춤은 바꾸지 않는다. 줄·칸·합치기는 명령 전달기에서 막힌다.
+    const structureLocked = () => {
+      if (!input.examTableLayoutLocked) return false;
+      if (input.examStructureNotice) input.examStructureNotice('구조 잠금 중 · 표·그림의 크기나 틀은 구조 잠금을 풀고 바꾸세요. 글은 그대로 고칠 수 있습니다.');
+      return true;
+    };
     if (context.cellSelection && ['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(event.key) &&
         (event.shiftKey || event.ctrlKey || event.metaKey || event.altKey)) {
       consume(event);
+      if (structureLocked()) return;
       const axis = ['ArrowLeft','ArrowRight'].includes(event.key) ? 'width' : 'height';
       const mode = event.altKey ? 'fixed' : event.ctrlKey || event.metaKey ? 'track' : 'cell';
       try { if (!resizeSelected(bridge, axis, mode, ['ArrowRight','ArrowDown'].includes(event.key) ? 300 : -300))
@@ -311,6 +318,7 @@ export function installDocumentShortcuts(bridge) {
         }
       }
       if (action.startsWith('equal-')) {
+        if (structureLocked()) return;
         if (!resizeSelected(bridge, action === 'equal-width' ? 'width' : 'height', 'equal'))
           notify('크기를 맞출 여러 셀을 선택하세요. 보호된 셀은 변경할 수 없습니다.');
       } else if (action === 'extend-cells') {

@@ -114,7 +114,7 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
       baselineText=normalized(parse(document().getTextFileText()));baselineEquations=await equationScripts(bytes);
       baselineImages=await nativeImageSignature(document());ready=true;host.dataset.ready='true';dirty=false;view.refresh();
       bridge.input.cursor.moveTo({sectionIndex:0,paragraphIndex:1,charOffset:0});
-      validateQuestionPage(document(),profile());lastProfile=profile();message('문항 길이에 맞춰 용지 높이 자동 조절 · 표 크기 잠금 · Shift+Tab으로 내어쓰기');
+      validateQuestionPage(document(),profile());lastProfile=profile();message('문항 길이에 맞춰 용지 높이 자동 조절 · 구조 잠금(글만 고침) · 내어쓰기 Shift+Tab(표 칸 안 Ctrl+Shift+Tab)');
       try{assertNativeLayout(document());}catch(e){message(e.message,true);}
       if(owners)placer?.setModel({question:q,owners});
       textMap=owners?.texts?buildTextMap(decodeNativeText(parse(document().getTextFileText())),owners.texts.map(s=>({...s}))):null;
