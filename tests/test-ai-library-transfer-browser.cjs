@@ -89,7 +89,12 @@ async function manager(t, engine = 'chromium') {
     window.fiveEDesktop = { web: true, status: async () => ({login:{loggedIn:true},server:true}), models:async()=>({data:[]}), account:async()=>({}), send:async payload=>{window.__fixtureProviderCalls.push(payload);throw new Error('Unexpected controlled generation during library ownership test');}, interrupt:async()=>({ok:true}), onEvent:()=>()=>{}, onState:()=>()=>{}, onLog:()=>()=>{} };
   });
   await installAiMain(page, root, { seedReady: false, manager: '__manager', state: null }, process.env.EVIDENCE_DIR);
-  await page.route('**/js/ai-panel.js*', route => route.fulfill({contentType:'text/javascript',body:fs.readFileSync(path.join(root,'js/ai-panel.js'),'utf8').replace('    await workspaceReady;\n    syncLiteModeUi();', '    await workspaceReady;\n    if (window.__failImport && references.some(reference => reference.name === "fail")) throw new Error("fixture import failed");\n    syncLiteModeUi();')}));
+  // 참고 이미지 열기(open) 첫 단계 바로 뒤에 가짜 가져오기 실패를 넣는다. 사이에 줄이 더 생겨도(예: 설명으로 만들기의 새 탭) 맞도록
+  // 'await workspaceReady;' 다음 줄들 중 syncLiteModeUi() 전까지를 찾고, 바꾸지 못하면 검사가 바로 실패하게 한다(조용히 넘어가지 않게).
+  const panelSource=fs.readFileSync(path.join(root,'js/ai-panel.js'),'utf8');
+  const patchedPanel=panelSource.replace(/(    await workspaceReady;\n)((?:    (?!syncLiteModeUi\(\);).*\n){0,3}    syncLiteModeUi\(\);)/, '$1    if (window.__failImport && references.some(reference => reference.name === "fail")) throw new Error("fixture import failed");\n$2');
+  assert.notEqual(patchedPanel, panelSource, 'fixture failure hook must be injected into ai-panel.js open()');
+  await page.route('**/js/ai-panel.js*', route => route.fulfill({contentType:'text/javascript',body:patchedPanel}));
   if (process.env.TRANSFER_BASELINE) await page.route('**/js/ai-task-workspaces.js*', route => route.fulfill({contentType:'text/javascript',body:require('node:child_process').execFileSync('git',['show','HEAD:preview/js/ai-task-workspaces.js'],{cwd:root,encoding:'utf8'})}));
   const entryReceipt = await inspectEntry(page, origin, runtime);
   if(process.env.EVIDENCE_DIR) fs.writeFileSync(path.join(process.env.EVIDENCE_DIR, 'manager-entry.json'), JSON.stringify(entryReceipt,null,2));

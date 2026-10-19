@@ -110,7 +110,7 @@ export class RhwpExamBridge {
   get generation() { return this.wasm.documentGeneration; }
   async enableApprovedQuestionExport() {
     if(!window.XLSX?.CFB)await new Promise((resolve,reject)=>{
-      const script=document.createElement('script');script.src='/assets/exampool/sheet/vendor/xlsx.full.min.js';script.onload=resolve;script.onerror=()=>reject(Error('한글 저장 도구를 불러오지 못했습니다.'));document.head.append(script);
+      const script=document.createElement('script');script.src=new URL('../assets/exampool/sheet/vendor/xlsx.full.min.js',import.meta.url).href;script.onload=resolve;script.onerror=()=>reject(Error('한글 저장 도구를 불러오지 못했습니다.'));document.head.append(script);
     });
     this.approvedQuestionGeneration=this.generation;
     if(this.approvedExportInstalled)return;

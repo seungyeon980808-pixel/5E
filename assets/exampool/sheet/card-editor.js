@@ -200,9 +200,9 @@ export function createCardEditor(root,api){
   const F={id:0,year:1,month:2,no:3,page:4,box:5,pdfFile:6,parts:7,tags:8,hasFigure:9,record:10,text:11};
   const MONTH={'06':'6월 모평','09':'9월 모평','11':'수능'};
   async function loadPast(subjects){
-    pastIndex||=await(pastIndexLoading||=fetch('/assets/exampool/convert/data/index.json').then(r=>{if(!r.ok)throw Error();return r.json();}));
+    pastIndex||=await(pastIndexLoading||=fetch(new URL('../convert/data/index.json',import.meta.url)).then(r=>{if(!r.ok)throw Error();return r.json();}));
     const want=subjects.length?subjects:pastIndex.subjects.map(v=>v[0]),key=want.join(',');if(pastItems&&pastItemsKey===key)return pastItems;
-    const lists=await Promise.all(want.map(code=>(loadPast.cache[code]||=fetch(`/assets/exampool/convert/data/${code}.json`).then(r=>{if(!r.ok)throw Error();return r.json();})).then(rows=>rows.map(r=>({code,label:pastIndex.subjects.find(v=>v[0]===code)?.[1]||code,row:r})))));
+    const lists=await Promise.all(want.map(code=>(loadPast.cache[code]||=fetch(new URL(`../convert/data/${code}.json`,import.meta.url)).then(r=>{if(!r.ok)throw Error();return r.json();})).then(rows=>rows.map(r=>({code,label:pastIndex.subjects.find(v=>v[0]===code)?.[1]||code,row:r})))));
     pastItems=lists.flat().map(({code,label,row})=>({id:row[F.id],subject:code,subjectLabel:label,year:row[F.year],month:row[F.month],no:row[F.no],page:row[F.page],box:row[F.box],pdfFile:row[F.pdfFile],publicPath:pastIndex.files[row[F.pdfFile]],parts:row[F.parts]||[],tags:row[F.tags]||[],hasFigure:!!row[F.hasFigure],record:row[F.record],text:row[F.text]||'',
       title:`${row[F.year]}학년도 ${MONTH[row[F.month]]||row[F.month]+'월'} ${label} ${row[F.no]}번`})).sort((a,b)=>b.year-a.year||String(a.month).localeCompare(String(b.month))||a.subject.localeCompare(b.subject)||(+a.no)-(+b.no));
     pastItemsKey=key;return pastItems;
@@ -222,7 +222,7 @@ export function createCardEditor(root,api){
     const list=items.filter(i=>(!f.part||i.parts.includes(f.part))&&(!f.year||String(i.year)===String(f.year))&&(!words.length||words.every(w=>(i.title+' '+i.parts.join(' ')+' '+i.tags.join(' ')+' '+i.text).includes(w))));
     const total=pastIndex.subjects.reduce((n,v)=>n+v[2],0);
     const sel=(k,vals,label)=>`<select data-cvpast="${k}" aria-label="${label}"><option value="">${label}</option>${vals.map(v=>`<option${String(f[k])===String(v)?' selected':''}>${E(v)}</option>`).join('')}</select>`;
-    const thumb=i=>{const card=pastIndex.cards.replace('{id}',encodeURIComponent(i.id)),local=i.hasFigure?`/assets/exam-library/images/${encodeURIComponent(i.id)}.png`:'';
+    const thumb=i=>{const card=pastIndex.cards.replace('{id}',encodeURIComponent(i.id)),local=i.hasFigure?new URL(`../../exam-library/images/${encodeURIComponent(i.id)}.png`,import.meta.url).href:'';
       return `<img loading="lazy" src="${E(card)}" alt="${E(i.title)}" data-past-thumb="${E(i.id)}" data-fallback="${E(local)}">`;};
     body.innerHTML=libraryHtml()+`<details class="lib-builtin"${store.get('builtinOpen',true)?' open':''}><summary>기출 문항 목록 · 과학탐구 ${total.toLocaleString()}문항</summary><div class="lp-filter">${sel('subject',subjects,'과목')}${sel('part',parts,'단원')}${sel('year',years,'연도')}</div>
       <label class="lp-search">${ICON.search}<input data-cvpast="query" value="${E(f.query)}" placeholder="핵심어·본문 단어 (예: 자기장, 오비탈)"></label>

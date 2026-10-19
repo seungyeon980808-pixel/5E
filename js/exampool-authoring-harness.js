@@ -5,16 +5,18 @@
 import {createTaskBridge} from './ai-task-workspaces.js?v=1.7.0-four-session-integration';
 import {defaultAIModelSelection} from './ai-model-capabilities.js?v=1.7.0-four-session-integration';
 import {parseAiEvent} from './ai-events.js?v=1.7.0-four-session-integration';
-import {parseAuthoringResponse} from '/assets/exampool/authoring/contract.js';
-import {buildAuthoringPrompt} from '/assets/exampool/authoring/prompt.js';
-import {GUIDELINES_VERSION} from '/assets/exampool/authoring/guidelines.js';
+import {parseAuthoringResponse} from '../assets/exampool/authoring/contract.js';
+import {buildAuthoringPrompt} from '../assets/exampool/authoring/prompt.js';
+import {GUIDELINES_VERSION} from '../assets/exampool/authoring/guidelines.js';
 export const HARNESS_VERSION='exampool-authoring-harness-1';
 const MAX_EVIDENCE_ROUNDS=2,TURN_TIMEOUT=300000;
 export async function fetchEvidence(request){
   // 데스크톱 앱은 IPC로, 로컬 서버는 같은 원점 API로 검색한다.
   if(typeof window.fiveEDesktop?.examEvidence==='function'){try{return await window.fiveEDesktop.examEvidence(request);}catch(error){return {available:false,results:[],warning:'근거 검색 실패: '+error.message};}}
-  const r=await fetch('/api/exampool-evidence',{method:'POST',headers:{'content-type':'application/json','x-5e-request':'1'},body:JSON.stringify(request)});
-  if(r.status===404)return {available:false,results:[],warning:'이 실행 환경에는 근거 검색이 연결되어 있지 않습니다. 근거는 미확보로 남습니다.'};
+  // 공개 웹(정적 사이트·/preview/)에는 근거 검색 서버가 없다: 404·405·네트워크 오류는 '연결 안 됨'으로 조용히 넘긴다.
+  const offline={available:false,results:[],warning:'이 실행 환경에는 근거 검색이 연결되어 있지 않습니다. 근거는 미확보로 남습니다.'};
+  let r;try{r=await fetch('/api/exampool-evidence',{method:'POST',headers:{'content-type':'application/json','x-5e-request':'1'},body:JSON.stringify(request)});}catch{return offline;}
+  if(r.status===404||r.status===405||r.status===501)return offline;
   const body=await r.json().catch(()=>({}));if(!r.ok)return {available:false,results:[],warning:body.error||'근거 검색 실패'};return body;
 }
 // 한 차례 AI 요청: 최종 답 글이 오고 차례가 끝날 때까지 기다린다. 취소·시간 초과는 중단 요청을 보낸다.
