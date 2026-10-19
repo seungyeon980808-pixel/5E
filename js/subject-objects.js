@@ -4,7 +4,7 @@ import {
   TEMPLATES,
   renderSymbolsForCategories,
   renderSymbolsForIds,
-  sizeIconViewBox,
+  sizeIconViewBoxes,
 } from "./templates.js?v=1.7.0-four-session-integration";
 
 const SUBJECTS = {
@@ -128,7 +128,7 @@ export function initSubjectObjects() {
     if (ids) renderSymbolsForIds(grid, ids, pending);
     else renderSymbolsForCategories(grid, categories, pending);
     decorateGrid(grid);
-    requestAnimationFrame(() => pending.forEach(sizeIconViewBox));
+    requestAnimationFrame(() => sizeIconViewBoxes(pending));
     return grid;
   }
 
@@ -234,7 +234,7 @@ export function initSubjectObjects() {
   saveSubject();
   renderAll();
   document.querySelector("#subject-section > .tool-section-header")?.addEventListener("click", () => {
-    requestAnimationFrame(() => document.querySelectorAll("#subject-section svg.tool-ico").forEach(sizeIconViewBox));
+    requestAnimationFrame(() => sizeIconViewBoxes([...document.querySelectorAll("#subject-section svg.tool-ico")]));
   });
   window.dispatchEvent(new CustomEvent("5e:subject-changed", { detail: { subject } }));
 }

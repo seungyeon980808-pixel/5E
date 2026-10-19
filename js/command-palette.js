@@ -16,7 +16,7 @@ import { modKey, shortcutKey, isEditingTarget, isComposingKey, keyLabel, IS_MAC 
  *   - 오브젝트는 search.js와 동일한 데이터(TEMPLATES/퍼스널)를 재사용해 생성한다.
  */
 
-import { TEMPLATES, activateTemplate, buildSymbolIcon, sizeIconViewBox } from "./templates.js?v=1.7.0-four-session-integration";
+import { TEMPLATES, activateTemplate, buildSymbolIcon, sizeIconViewBoxes } from "./templates.js?v=1.7.0-four-session-integration";
 import { listPersonalItems, insertPersonalItem } from "./personal-objects.js?v=1.7.0-four-session-integration";
 import { state } from "./state.js?v=1.7.0-four-session-integration";
 import { trimSelectedBoxMargins } from "./erase-tool.js?v=1.7.0-four-session-integration";
@@ -233,6 +233,7 @@ export function initCommandPalette() {
 
     // ----- 오브젝트 그룹 (search.js와 동일한 카테고리 정렬) -----
     const objRows = matches.filter((m) => m.kind !== "command");
+    const icons = [];
     const categories = [...new Set([...exactCategories, ...CATEGORY_ORDER, ...objRows.map((m) => m.def.category)])];
     for (const category of categories) {
       const group = objRows.filter((m) => m.def.category === category);
@@ -273,9 +274,10 @@ export function initCommandPalette() {
         badge.textContent = match.kind === "personal" ? "퍼스널" : (match.def.kind === "atomic" ? "즉시" : "드래그");
         row.append(iconBox, label, badge);
         results.appendChild(row);
-        if (icon) sizeIconViewBox(icon);
+        if (icon) icons.push(icon);
       }
     }
+    sizeIconViewBoxes(icons);
     syncHighlight();
   }
 

@@ -787,12 +787,26 @@ export function sizeIconViewBox(svg) {
    * 아이콘을 버튼에 맞게 재단하려고 만든 것이라, 20×20으로 크기·여백·선 굵기를 이미
    * 맞춰 둔 아이콘에 적용하면 ① viewBox를 내용에 딱 붙게 잘라 서로 다른 배율로 커지고
    * ② setStrokeWidth가 1.5/1.05/0.8 위계를 한 값으로 덮어쓴다. */
-  if (svg.dataset.fixedIcon) return;
+  applyIconViewBox(svg, readIconBBox(svg));
+}
+
+// 아이콘 여러 개를 맞출 때는 크기를 모두 먼저 읽고 나서 고친다. 하나씩 읽고 고치면 아이콘마다 레이아웃을
+// 다시 계산해 오브젝트 검색 창(아이콘 140개)이 열 때·지울 때마다 0.1초씩 멈췄다. getBBox는 viewBox·선 굵기와 무관하다.
+export function sizeIconViewBoxes(svgs) {
+  const boxes = svgs.map(readIconBBox);
+  svgs.forEach((svg, i) => applyIconViewBox(svg, boxes[i]));
+}
+
+function readIconBBox(svg) {
+  if (svg.dataset.fixedIcon) return null;
   const g = svg.firstElementChild;
-  if (!g) return;
-  let bb;
-  try { bb = g.getBBox(); } catch { return; }
-  if (!bb || (bb.width <= 0 && bb.height <= 0)) return;
+  if (!g) return null;
+  try { return g.getBBox(); } catch { return null; }
+}
+
+function applyIconViewBox(svg, bb) {
+  const g = svg.firstElementChild;
+  if (!g || !bb || (bb.width <= 0 && bb.height <= 0)) return;
   const pad = Math.max(bb.width, bb.height) * 0.14 + 0.6;
   const vbW = bb.width + pad * 2, vbH = bb.height + pad * 2;
   svg.setAttribute("viewBox", `${bb.x - pad} ${bb.y - pad} ${vbW} ${vbH}`);
@@ -860,7 +874,7 @@ function makeGroupButton(id, def, pending) {
     pop.hidden = false;
     // 팝오버는 hidden인 동안 getBBox가 0이라 아이콘 viewBox를 못 잡는다(pending 사이징이
     // 이 시점엔 실패한다) → 처음 보이게 된 뒤 한 번 맞춘다.
-    if (!sized) { pop.querySelectorAll("svg.tool-ico").forEach((s) => sizeIconViewBox(s)); sized = true; }
+    if (!sized) { sizeIconViewBoxes([...pop.querySelectorAll("svg.tool-ico")]); sized = true; }
     const r = btn.getBoundingClientRect();
     // 버튼 오른쪽이 아니라 **패널 오른쪽 끝** 기준으로 붙인다 — 안쪽 열 버튼에서 열면
     // 팝오버가 팔레트 위로 올라타 아이콘을 덮었다.
@@ -957,7 +971,7 @@ function renderPanel() {
   }
 
   // Now that the sections are live, fit each icon's viewBox to its content.
-  for (const svg of pending) sizeIconViewBox(svg);
+  sizeIconViewBoxes(pending);
 }
 
 /* ----- click → creation (functionally identical to the old per-button wiring) ----- */
