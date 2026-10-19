@@ -333,3 +333,10 @@
 .cv-tile.empty{box-shadow:none;border:1px solid #c9ced6}
 .lp-docked .standard-item{color:var(--ds-ink-2)}.lp-docked .standard-item span{color:var(--ds-ink-2)}
 .lp-docked #source-content{padding:0 12px 12px}.lp-docked .source-controls{padding:10px 12px}
+/* 시험지 머리: 주 단추(5e_hwp로 보내기) + ⋯ 메뉴(나머지). 메뉴 모양은 위쪽 막대 「더 보기」와 같다. */
+.pv-more{position:relative}.pv-more-btn{min-width:32px;padding:0 6px;justify-content:center}
+/* 빈 문항 카드: 낮은 점선 자리(내용이 생기면 원래 미리보기). */
+.pv-thumb.is-empty{height:auto;min-height:0;margin:10px 10px 0;padding:18px 14px;align-items:center;justify-content:center;background:transparent;border:1px dashed var(--ds-line-strong,var(--ds-line));border-radius:var(--ds-radius)}
+.pv-thumb.is-empty::after{display:none}.pv-thumb.is-empty span{width:100%;text-align:center;color:var(--ds-ink-3);font-size:var(--ds-text-meta,12px)}
+.pv-thumb.is-empty:hover{border-color:var(--ds-ink-3)}
+.pv-grid{align-items:start}

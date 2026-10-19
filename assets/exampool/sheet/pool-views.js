@@ -6,6 +6,7 @@ import {questionTitle,questionSubtitle,workflowOf,previewHtml} from './views.js'
 
 const E=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const ICON={
+  more:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="6" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="18" cy="12" r="1"/></svg>',
   plus:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
   box:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="14" rx="1.5"/><path d="M4 9h16M10 13h4"/></svg>',
   doc:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3.5h7l4 4V20a.5.5 0 0 1-.5.5h-10.5a.5.5 0 0 1-.5-.5V4a.5.5 0 0 1 .5-.5z"/><path d="M9.5 11h5M9.5 14.5h5"/></svg>',
@@ -36,6 +37,14 @@ export function renderNav(root,data,view){
     <p class="side-foot">문항 하나는 카드로 쓰고,<br>시험지에서 모아 5e_hwp로 보냅니다</p>`;
 }
 
+// 빈 문항(발문·지문·자료·보기·선지에 글도 그림도 없음)은 큰 흰 미리보기 대신 낮은 점선 자리로 보인다.
+const filled=v=>typeof v==='string'?!!v.trim():!!v;
+const tableFilled=t=>!!t&&/"(?:text|value)":"\s*[^"\s]/.test(JSON.stringify(t));
+function isBlank(q){
+  if(filled(q.ask)||filled(q.passage))return false;
+  for(const b of q.blocks||[])if(filled(b.text)||b.figure||(b.lines||[]).some(l=>filled(l.text))||(b.kind==='table'&&tableFilled(b.table)))return false;
+  return !(q.choices||[]).some(c=>filled(c.text)||c.figure);
+}
 // 문항 보관함: 시험지에 넣지 않은 문항 카드.
 export function renderLibrary(root,data,view){
   const filter=view.stage||'all',query=String(view.query||'').toLowerCase();
@@ -44,7 +53,7 @@ export function renderLibrary(root,data,view){
   const exams=data.exams.filter(e=>e.status==='drafting');
   root.innerHTML=`<div class="pv-head"><div><h1>문항 보관함</h1><p>시험지에 넣지 않은 문항 ${all.length}개 · 카드를 열어 쓰거나 시험지로 보냅니다</p></div><div class="pv-tools"><div class="seg">${seg}</div><input id="lib-query" value="${E(view.query||'')}" placeholder="내용·단원 찾기" aria-label="보관함 검색"></div></div>
     <div class="pv-grid">${list.length?list.map(q=>`<article class="pv-card" data-card="${q.id}">
-      <button type="button" class="pv-thumb" data-open-card="${q.id}" aria-label="${E(questionTitle(q))} 열기"><div class="pv-doc" data-preview="${q.id}"></div></button>
+      ${isBlank(q)?`<button type="button" class="pv-thumb is-empty" data-open-card="${q.id}" aria-label="${E(questionTitle(q))} 열기"><span>아직 내용이 없습니다 · 카드를 열어 쓰기</span></button>`:`<button type="button" class="pv-thumb" data-open-card="${q.id}" aria-label="${E(questionTitle(q))} 열기"><div class="pv-doc" data-preview="${q.id}"></div></button>`}
       <div class="pv-meta"><b>${E(questionSubtitle(q))}</b><div class="pv-row"><span>${stage(q)}</span><span>· ${E(q.type)}${q.unitLarge?` · ${E(q.unitLarge)}`:''}</span></div>
         <div class="pv-row pv-actions">${exams.length?`<select data-to-exam="${q.id}" aria-label="시험지에 넣기"><option value="">시험지에 넣기…</option>${exams.map(e=>`<option value="${e.id}">${E(e.title)}</option>`).join('')}<option value="__new">+ 새 시험지</option></select>`:`<button type="button" class="mini" data-to-exam-new="${q.id}">새 시험지에 넣기</button>`}<button type="button" class="mini danger" data-delete="${q.id}" title="문항 삭제">삭제</button></div></div>
     </article>`).join(''):`<p class="pv-empty">${view.loadError?E(view.loadError):all.length?'조건에 맞는 문항이 없습니다.':'보관함이 비어 있습니다. 「새 문항」으로 시험지에 넣지 않은 문항을 만들어 둘 수 있습니다.'}</p>`}</div>`;
@@ -69,8 +78,9 @@ export function renderExam(root,data,examId){
   const {items,pages,missing}=examPlan(data,exam),qs=items.map(x=>x.q),count=k=>qs.filter(q=>workflowOf(q)===k).length;
   const lib=libraryQuestions(data);
   root.innerHTML=`<div class="pv-head"><div class="pv-title"><input id="exam-title" value="${E(exam.title)}" maxlength="200" aria-label="시험지 이름">${exam.status==='done'?'<span class="badge done">출제 완료</span>':'<span class="badge">출제 중</span>'}</div>
-      <div class="pv-tools"><button type="button" class="btn" data-exam-act="cards">${ICON.card}문항 카드</button><button type="button" class="btn" data-exam-act="sheet" title="여러 문항을 표 한 장에서 한꺼번에 고칩니다">${ICON.table}표로 한꺼번에 고치기</button>
-      <button type="button" class="btn" data-exam-act="status">${exam.status==='done'?'출제 중으로 되돌리기':'출제 완료로 옮기기'}</button><button type="button" class="btn" data-exam-act="download" title="시험지 한 부를 HWPX 파일로 내려받기">HWPX</button><button type="button" class="btn go" data-exam-act="send">${ICON.out}5e_hwp로 보내기</button></div></div>
+      <div class="pv-tools"><div class="pv-more"><button type="button" class="btn pv-more-btn" data-exam-more aria-haspopup="menu" aria-expanded="false" aria-label="시험지 메뉴" title="시험지 메뉴">${ICON.more}</button>
+        <div class="top-menu" role="menu" hidden><button type="button" role="menuitem" data-exam-act="cards">문항 카드로 보기</button><button type="button" role="menuitem" data-exam-act="sheet" title="여러 문항을 표 한 장에서 한꺼번에 고칩니다">표로 한꺼번에 고치기</button><button type="button" role="menuitem" data-exam-act="download">HWPX로 내려받기</button><button type="button" role="menuitem" data-exam-act="status">${exam.status==='done'?'출제 중으로 되돌리기':'출제 완료로 옮기기'}</button></div></div>
+      <button type="button" class="btn go" data-exam-act="send">${ICON.out}5e_hwp로 보내기</button></div></div>
     <div class="pv-exam-body"><div class="pv-order" id="exam-order">
       ${items.map((x,i)=>`<div class="pv-orow" draggable="true" data-order="${x.id}"><span class="grip" title="끌어서 순서 바꾸기">${ICON.grip}</span><span class="n">${i+1}</span>
         <button type="button" class="pv-mini-thumb" data-open-card="${x.id}" aria-label="${i+1}번 카드 열기"><div class="pv-doc" data-preview="${x.id}"></div></button>
