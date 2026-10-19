@@ -2111,6 +2111,12 @@
       "findingIds": [
         "SCIENCE-OBJECTS-PALETTE-INSPECTOR-FIT"
       ]
+    },
+    {
+      "path": "tests/test-ai-done-notice-browser.cjs",
+      "findingIds": [
+        "AI-DONE-NOTICE-SURVIVES-DIALOG"
+      ]
     }
   ],
   "deferred": [
