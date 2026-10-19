@@ -81,8 +81,10 @@
 #new-dialog .nq-go:disabled{border-color:var(--ds-line-strong);background:transparent;color:var(--ds-ink-3);cursor:default}
 #new-dialog .nq-kbd{font-size:10px;border:1px solid currentColor;border-radius:3px;padding:0 4px;line-height:14px;opacity:.7}
 @media(max-width:1180px){
-  #new-dialog[open]{width:100vw;height:100dvh;border-radius:0;grid-template-columns:1fr 1fr;grid-template-rows:var(--ds-h-bar) auto auto auto var(--ds-h-bar);overflow:auto}
+  /* 위아래로 쌓일 때 줄 높이는 내용만큼(max-content). auto면 스크롤 칸이 줄어 자료 구조 선택지가 예시 문항 밑에 가려진다. 창 전체를 스크롤한다. */
+  #new-dialog[open]{width:100vw;height:100dvh;border-radius:0;grid-template-columns:1fr 1fr;grid-template-rows:var(--ds-h-bar) max-content max-content max-content var(--ds-h-bar);overflow:auto}
   #new-dialog .nq-preview,#new-dialog .nq-cells{grid-column:1/-1}
+  #new-dialog .nq-head,#new-dialog .nq-foot{position:sticky;z-index:2;background:var(--ds-raise)}#new-dialog .nq-head{top:0}#new-dialog .nq-foot{bottom:0}
   #new-dialog .nq-cells{border-left:0;border-top:1px solid var(--ds-line)}
 }
 @media(max-width:700px){

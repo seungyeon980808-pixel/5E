@@ -37,6 +37,17 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
   let textMap=null,syncTimer=0,placer=null,owners=null,bridge=null,starting=null,q=null,fingerprint='',baselineText='',baselineEquations='',baselineImages='',opening=0,loading=false,ready=false,pictureSettings,fitting=false,fitFrame=0,lastProfile,metricsCache,view,dirty=false,patching=false,updating=Promise.resolve(),measurer=null,changingProfile=Promise.resolve();
   const message=(text,error=false)=>{status.textContent=text;status.title=text;status.dataset.error=String(error);};// 카드 미리보기 칸에서는 한 줄로 줄이므로 전체 글은 풍선으로
   const document=()=>bridge.wasm.borrowDocumentHandle();
+  // 문서를 다시 읽으면 한글 편집기가 자기 입력칸으로 초점을 가져간다(빈 문서 만들기·읽기마다, 겹치면 여러 번). 그러면 카드 칸 입력과
+  // ⌘Z·⇧⌘Z가 한글 창으로 넘어간다. 한글 창 밖에 초점이 있을 때 읽는 동안만 편집기의 focus()를 막고, 그 사이 한글 창을 누르거나 치면 바로 푼다.
+  let quietLoads=0,quietProto=null,quietFocus=null;
+  const unquiet=()=>{if(quietProto){quietProto.focus=quietFocus;quietProto=null;}};
+  const keepingFocus=async task=>{
+    const frame=host.querySelector('iframe'),view=frame?.contentWindow,inner=frame?.contentDocument,page=globalThis.document;
+    if(!view||!inner||host.contains(page.activeElement)||inner.hasFocus())return task();
+    if(!inner.__fiveEQuiet){inner.__fiveEQuiet=true;for(const type of ['pointerdown','keydown'])inner.addEventListener(type,unquiet,true);}
+    if(quietLoads++===0){quietProto=view.HTMLElement.prototype;quietFocus=quietProto.focus;quietProto.focus=function(){};}
+    try{return await task();}finally{if(--quietLoads===0)unquiet();}};
+  const loadKeepingFocus=(bytes,name)=>keepingFocus(()=>bridge.load(bytes,name));
   const profile=()=>({paper:paper.value,columns:Number(columns.value)});
   const metricsOutput=host.parentElement.querySelector('#typeset-metrics');
   const guideLayer=window.document.createElement('div');guideLayer.className='question-guide-layer';guideLayer.setAttribute('aria-hidden','true');
@@ -69,7 +80,7 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
   async function ensure(){
     if(!starting)starting=RhwpExamBridge.create(host,{showEditingBorders:true,tableLayoutLocked:true,onChange:error=>{if(patching&&!error){scheduleFit();return;}if(ready&&!loading&&!fitting){dirty=true;message(error?error.message:'조판 수정 중 · 완료하면 조판 저장을 누르세요.',!!error);scheduleFit();scheduleTextSync();}},onEdit:(_id,ref)=>{
       bridge.selectPicture(ref);pictureSettings.open(bridge.pictureLayout(ref),save,{ref,generation:bridge.generation,inlineAlignment:!!bridge.paragraphTarget(ref)});
-    }}).then(async b=>{bridge=b;await bridge.newDocument();bridge.watchView(drawGuide);view=attachTypesetView(bridge,host);placer=attachPlacementLayer({bridge,host,hint:host.parentElement.querySelector('#placement-hint-text'),onActivate:(action,block,ref)=>{if(action==='settings'){bridge.selectPicture(ref);pictureSettings.open(bridge.pictureLayout(ref),save,{ref,generation:bridge.generation,inlineAlignment:!!bridge.paragraphTarget(ref)});return;}onSlot?.(action,block,q?.id);},onApply:(fn,text)=>onPlacement?.(fn,text,q?.id),canEdit:()=>{if(!ready||loading)return false;if(dirty){message('한글 창에 저장 전 수정이 있어 배치를 바꿀 수 없습니다. 조판 저장 후 다시 끌어 주세요.',true);return false;}return true;}});pictureSettings=new PictureSettings(host.parentElement,{onApply:(value,context)=>{if(context.generation!==bridge.generation)throw Error('다시 그림을 선택하세요.');bridge.applyPictureLayout(context.ref,value);},onError:e=>message(e.message,true)});return b;}).catch(e=>{starting=null;throw e;});
+    }}).then(async b=>{bridge=b;await keepingFocus(()=>bridge.newDocument());bridge.watchView(drawGuide);view=attachTypesetView(bridge,host);placer=attachPlacementLayer({bridge,host,hint:host.parentElement.querySelector('#placement-hint-text'),onActivate:(action,block,ref)=>{if(action==='settings'){bridge.selectPicture(ref);pictureSettings.open(bridge.pictureLayout(ref),save,{ref,generation:bridge.generation,inlineAlignment:!!bridge.paragraphTarget(ref)});return;}onSlot?.(action,block,q?.id);},onApply:(fn,text)=>onPlacement?.(fn,text,q?.id),canEdit:()=>{if(!ready||loading)return false;if(dirty){message('한글 창에 저장 전 수정이 있어 배치를 바꿀 수 없습니다. 조판 저장 후 다시 끌어 주세요.',true);return false;}return true;}});pictureSettings=new PictureSettings(host.parentElement,{onApply:(value,context)=>{if(context.generation!==bridge.generation)throw Error('다시 그림을 선택하세요.');bridge.applyPictureLayout(context.ref,value);},onError:e=>message(e.message,true)});return b;}).catch(e=>{starting=null;throw e;});
     return starting;
   }
   async function prepareFigure(f){const image=await loadImage(f.data);if(image.naturalWidth*image.naturalHeight>40000000)throw Error('사진 크기를 줄여주세요.');if(!f.data.startsWith('data:image/png;')){const canvas=window.document.createElement('canvas');canvas.width=image.naturalWidth;canvas.height=image.naturalHeight;canvas.getContext('2d').drawImage(image,0,0);f.data=canvas.toDataURL('image/png');}return {...f,width:image.naturalWidth,height:image.naturalHeight};}
@@ -110,7 +121,7 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
         }finally{compact?.free();old.free();}
       }
       q=next;fingerprint=nextFingerprint;
-      await bridge.load(bytes,`${q.number}번 문항.hwpx`);host.append(guideLayer);
+      await loadKeepingFocus(bytes,`${q.number}번 문항.hwpx`);host.append(guideLayer);
       bridge.setTableLayoutLocked(true);resize.setAttribute('aria-pressed','true');
       baselineText=normalized(parse(document().getTextFileText()));baselineEquations=await equationScripts(bytes);
       baselineImages=await nativeImageSignature(document());ready=true;host.dataset.ready='true';dirty=false;view.refresh();
@@ -177,7 +188,7 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
         // An empty paragraph can reflow after changing its insertion font.
         // Show the reopened output itself and require a review of that result;
         // never mark an earlier, different rendering as approved.
-        loading=true;try{await bridge.load(new Uint8Array(bytes),`${q.number}번 문항.hwpx`);}finally{loading=false;}
+        loading=true;try{await loadKeepingFocus(new Uint8Array(bytes),`${q.number}번 문항.hwpx`);}finally{loading=false;}
         message('최종 저장 모양으로 갱신했습니다. 글·표·그림 배치를 확인한 뒤 조판 저장을 다시 누르세요.');return null;
       }
       return {bytes:toBase64(bytes),fingerprint,baselineText,profile:profile(),pageMode:QUESTION_PAGE_MODE,metrics:questionPageMetrics(reopened,profile()),pageDef:parse(document().getPageDef(0)),columnDef:parse(document().getColumnDef(0)),savedAt:new Date().toISOString(),layoutVersion:LAYOUT_VERSION,verified:true};
@@ -196,7 +207,7 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
   const changeProfile=async()=>{
     if(!bridge||loading||!ready)return;loading=true;save.disabled=true;download.disabled=true;paper.disabled=true;columns.disabled=true;guide.hidden=true;
     try{const next=profile(),bytes=resizeQuestionDocument(document(),next,XLSX.CFB),cursor=bridge.input.getCursorPosition();
-      await bridge.load(bytes,`${q.number}번 문항.hwpx`);host.append(guideLayer);bridge.input.cursor.moveTo(cursor);lastProfile=next;metricsCache=null;dirty=true;view.fit();
+      await loadKeepingFocus(bytes,`${q.number}번 문항.hwpx`);host.append(guideLayer);bridge.input.cursor.moveTo(cursor);lastProfile=next;metricsCache=null;dirty=true;view.fit();
       message('기준 단 폭 변경됨 · 글·표·그림 배치를 확인하고 조판 저장을 누르세요.');
     }catch(e){paper.value=lastProfile.paper;columns.value=String(lastProfile.columns);message(e.message,true);}
     finally{loading=false;save.disabled=false;download.disabled=false;paper.disabled=false;columns.disabled=false;drawGuide();}

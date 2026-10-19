@@ -2105,6 +2105,12 @@
       "findingIds": [
         "ASSET-LIBRARY-PORT"
       ]
+    },
+    {
+      "path": "tests/test-science-objects-palette-inspector-browser.cjs",
+      "findingIds": [
+        "SCIENCE-OBJECTS-PALETTE-INSPECTOR-FIT"
+      ]
     }
   ],
   "deferred": [

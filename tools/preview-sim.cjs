@@ -41,8 +41,8 @@ async function check(origin,out){
     step('ExamPool 열림: '+await sheet.evaluate(()=>document.querySelector('#status').textContent));
     await sheet.click('#side-new');await sheet.click('#new-dialog .nq-opt[data-step="form"][data-k="combo"]');await sheet.click('#new-dialog .nq-opt[data-step="struct"][data-k="big"]');await sheet.click('#new-dialog [data-nq="go"]');
     await sheet.waitForSelector('#card-view:not([hidden]) .cv-writer');step('새 문항 카드');
-    await sheet.click('#card-view [data-cvtab="past"]');await sheet.waitForSelector('[data-cvconvert]',{timeout:30000});
-    step('기출 목록: '+await sheet.evaluate(()=>document.querySelector('.lp-count')?.textContent));
+    if(await sheet.$('#card-view [data-cvscope]'))await sheet.selectOption('#card-view [data-cvscope]','past');else await sheet.click('#card-view [data-cvtab="past"]');await sheet.waitForSelector('[data-cvconvert]',{timeout:30000});
+    step('기출 목록: '+await sheet.evaluate(()=>(document.querySelector('.lp-count')?.textContent||(()=>{const n=document.querySelector('#card-view .lp-n');return n?`${n.title} ${n.textContent}`:undefined;})())));
     await sheet.fill('[data-cvpast="query"]','화학 결합 모형');await sheet.waitForTimeout(1200);
     const id=await sheet.evaluate(()=>document.querySelector('[data-cvconvert="c1_2024_06_02"]')?.dataset.cvconvert||document.querySelector('[data-cvconvert]')?.dataset.cvconvert);
     await sheet.click(`[data-cvconvert="${id}"]`);
