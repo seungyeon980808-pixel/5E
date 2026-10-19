@@ -120,6 +120,18 @@ h.withServer(async origin => {
       assert.equal(await sheet.evaluate(()=>document.querySelector('#card-view [data-cvpast="query"]').value),'자기 장');
       await sheet.fill('#card-view [data-cvpast="query"]','');await sheet.waitForTimeout(400);
 
+      // 3c-2. 원활함: 치는 동안 검색 입력칸을 새로 만들지 않는다(같은 요소·초점 유지), 기출 카드 그림은 작업자 스레드에서 자른다.
+      const inputId=await sheet.evaluate(()=>{const n=document.querySelector('#card-view [data-cvpast="query"]');n.dataset.probe='1';return true;});
+      await query.click();const keyLag=[];
+      for(const ch of 'abc'){const t0=Date.now();await page.keyboard.type(ch);await sheet.waitForFunction(c=>document.querySelector('#card-view [data-cvpast="query"]').value.endsWith(c),ch,{polling:'raf'});keyLag.push(Date.now()-t0);}
+      await sheet.waitForTimeout(500);
+      assert.equal(await sheet.evaluate(()=>document.querySelector('#card-view [data-cvpast="query"]').dataset.probe),'1','typing does not rebuild the search input');
+      assert.equal(await sheet.evaluate(()=>document.activeElement?.dataset?.cvpast),'query','focus stays while the list refreshes');
+      if(!process.env.GITHUB_ACTIONS)assert.ok(Math.max(...keyLag)<150,'key echo under 150ms on a local machine: '+keyLag);
+      await sheet.fill('#card-view [data-cvpast="query"]','');await sheet.waitForTimeout(400);
+      // 그림 자르기 작업자 모듈이 이 브라우저에서 읽힌다(바깥 그림은 검사에서 막혀 실제 자르기는 점검 스크립트로 확인).
+      assert.equal(await sheet.evaluate(async()=>{const w=new Worker(new URL('../sheet/past-crop-worker.js',location.href),{type:'module'});const r=await new Promise(res=>{w.onmessage=e=>res(e.data);w.onerror=()=>res('load-error');w.postMessage({id:1,url:location.origin+'/missing.webp'});});w.terminate();return typeof r==='object'&&r.id===1;}),true,'the crop worker loads and answers');
+
       // 3d. 한글 입력: 조합 중에는 입력 칸을 다시 그리지 않고, 조합 중 Enter는 마지막 글자까지 확정된 단어로 조각을 만든다(두 순서 모두).
       for(const [word,order] of [['질량','keydown-first'],['자석','compositionend-first']]){
         const r=await sheet.evaluate(async([word,order])=>{const sleep=ms=>new Promise(r=>setTimeout(r,ms));const n=document.querySelector('#card-view [data-cvpast="query"]');n.focus();
