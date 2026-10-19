@@ -4,13 +4,15 @@ const { installLabelSourcePage, armSelection, selectionArrived } = require('./he
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
+// 예전엔 다른 작업 폴더(5e-170-auto-labeler)의 파일을 직접 읽었다. 그 폴더가 정리돼 같은 내용을 git 커밋(6e2c5501)에서 읽고, 없으면 이 저장소 파일을 쓴다.
+const labelerSource = file => { try { return require('node:child_process').execFileSync('git', ['show', `6e2c5501:tests/${file}`], { cwd: path.resolve(__dirname, '..'), encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'] }); } catch { return fs.readFileSync(path.join(__dirname, file), 'utf8'); } };
 const test = require('node:test');
 const { chromium, webkit } = require(process.env.PLAYWRIGHT_MODULE || 'playwright');
 const root = path.resolve(__dirname, '..');
 const evidenceRoot = process.env.EVIDENCE_DIR || path.join(root, '.omo/evidence/textbook-label-stage2/pipeline-browser');
 const { adaptHarness, syntheticPipelineObservation, syntheticBatchPipelineObservation, verifySyntheticObservationContracts } = require('./helpers/label-source-pipeline-browser.cjs');
 const { jointResponse } = require('./helpers/label-source-browser.cjs');
-const source = fs.readFileSync("/Users/parkseungyeon/.codex/worktrees/5e-170-auto-labeler/5E/tests/test-ai-workspace-lifecycle-browser.cjs", 'utf8');
+const source = labelerSource('test-ai-workspace-lifecycle-browser.cjs');
 const start = source.indexOf('function seedRequestWorkspaces('), end = source.indexOf('\nfor (const count of [1, 10, 30])', start);
 const harness = source.slice(start, end)
   .replace('  let statusGate = null;', "  tabs[0].imageKind = 'general'; tabs[0].labelResult = 'restore-editable'; tabs[0].imageLabelWorkflow = { version:'1.0.0', imageKind:'general', labelResult:'restore-editable' }; tabs[0].preserveSourceLabels = true; tabs[0].input = '원본 도식을 변환해 주세요';\n  let statusGate = null;")
@@ -164,7 +166,7 @@ test('source label UI: cancellation during analysis sends no image request and i
 });
 
 for (const clearance of ['clear', 'overlap']) test(`two selected workspaces: ${clearance === 'clear' ? 'independent passed/failed reviews survive durable commit' : 'RAW overlap blocks both candidates despite a pass response'}`, { timeout: 60000 }, async t => {
-  const original = fs.readFileSync("/Users/parkseungyeon/.codex/worktrees/5e-170-auto-labeler/5E/tests/test-ai-workspace-multiselect-browser.cjs", 'utf8');
+  const original = labelerSource('test-ai-workspace-multiselect-browser.cjs');
   const a = original.indexOf('function seedRequestWorkspaces('), b = original.indexOf('\n\nconst active =', a);
   const code = original.slice(a, b)
     .replace("{ waitUntil: 'domcontentloaded' }", "{ waitUntil: 'domcontentloaded' }")

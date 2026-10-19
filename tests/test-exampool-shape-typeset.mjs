@@ -143,6 +143,25 @@ test('an Excel file whose 문항유형 was changed comes back with a matching fo
   assert.equal(got.questions[0].type,'서술형');assert.equal(got.questions[0].form,'essay');
 });
 
+test('validate(data,{only}) checks the edited question fully and the rest only for duplicate IDs',async()=>{
+  const {validate}=await import('../assets/exampool/sheet/model.js');
+  const a=shape('combo','two'),b=shape('single','none'),data={format:'5e-question-sheet-v2',questions:[a,b],documents:[]};
+  assert.doesNotThrow(()=>validate(data,{only:a}));
+  b.blocks[0].text=42;// 다른 문항의 잘못은 이 범위에서는 보지 않는다(전체 검사에서는 잡힌다)
+  assert.doesNotThrow(()=>validate(data,{only:a}));assert.throws(()=>validate(data),/구성/);b.blocks[0].text='';
+  a.ask='x'.repeat(40000);assert.throws(()=>validate(data,{only:a}),/너무 길거나/);a.ask='';
+  b.id=a.id;assert.throws(()=>validate(data,{only:a}),/ID/);
+});
+
+test('copyTree snapshots for undo copy every object but share immutable strings',async()=>{
+  const {copyTree}=await import('../assets/exampool/sheet/model.js');
+  const q=shape('combo','two');q.blocks.find(b=>b.kind==='figure').figure={name:'f.png',data:'data:image/png;base64,'+'A'.repeat(1000),width:1,height:1};
+  const data={format:'5e-question-sheet-v2',questions:[q],documents:[],exams:[]},copy=copyTree(data);
+  assert.deepEqual(copy,data);assert.notEqual(copy.questions[0],q);assert.notEqual(copy.questions[0].blocks,q.blocks);
+  copy.questions[0].ask='바뀜';copy.questions[0].blocks[0].text='바뀜';assert.notEqual(q.ask,'바뀜');assert.notEqual(q.blocks[0].text,'바뀜');
+  const u8=new Uint8Array([1,2]),c2=copyTree({u8});assert.notEqual(c2.u8,u8);assert.deepEqual([...c2.u8],[1,2]);
+});
+
 test('a space after a sub/superscript group keeps the native engine from extending the subscript',async()=>{
   const {normalizeEquationScript:n}=await import('../assets/exampool/sheet/typeset-model.js');
   assert.equal(n('T_{1}=\\frac{t_{1}}{10}'),'T_{1} =\\frac{t_{1}}{10}');assert.equal(n('T_{1}>T_{2}'),'T_{1} >T_{2}');
