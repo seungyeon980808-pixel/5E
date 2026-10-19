@@ -3038,7 +3038,8 @@
 #ai-image-panel .ai-source-processing-feedback [data-ai-background-lock-hint]:not([hidden]) { display:block; padding:4px 0 0; }
 
 /* Compact viewing chrome and a location-bound comment editor (R02–R07). */
-body:has(#ai-image-panel:not([hidden])) .app-shell-header { visibility: hidden; pointer-events: none; }
+/* 자식 결합(>)으로 좁혀, 페이지 깊은 곳의 hidden 변경이 body 전체 스타일을 다시 계산하지 않게 */
+body:has(> #ai-image-panel:not([hidden])) .app-shell-header { visibility: hidden; pointer-events: none; }
 #ai-image-panel { inset: 0 !important; padding: 0; background: var(--bg-app); }
 #ai-image-panel .modal-ai.ai-workbench { width: calc(100vw / var(--ui-zoom, 1)); height: calc(100dvh / var(--ui-zoom, 1)) !important; min-width: 0; border: 0; }
 #ai-image-panel .ai-pane-head,

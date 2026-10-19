@@ -26,6 +26,12 @@
       ]
     },
     {
+      "path": "tests/test-library-style-invalidation.mjs",
+      "findingIds": [
+        "LIBRARY-SCROLL-STYLE-INVALIDATION"
+      ]
+    },
+    {
       "path": "tests/test-exampool-past-crop.mjs",
       "findingIds": [
         "EXAMPOOL-PAST-CARD-CROP"

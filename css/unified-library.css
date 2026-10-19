@@ -441,7 +441,7 @@
 .unified-library-overlay .unilib-selected-item > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .unified-library-overlay .unilib-selected-item > button { flex: none; width: var(--unilib-control-height); height: var(--unilib-control-height); padding: 0; border: 0; border-radius: var(--unilib-badge-radius); background: transparent; color: var(--unilib-muted); cursor: pointer; }
 .unified-library-overlay .unilib-selected-item > button:hover { background: var(--unilib-raised); color: var(--unilib-text); }
-.unified-library-overlay .unilib-results:has(.unilib-crop-tray:not([hidden])) .unilib-result-scroll { padding-bottom: var(--unilib-selection-tray-height); }
+.unified-library-overlay[data-crop-tray-open="true"] .unilib-results .unilib-result-scroll { padding-bottom: var(--unilib-selection-tray-height); }
 .unified-library-overlay .unilib-crop-tray {
   position: absolute;
   z-index: 8;
@@ -1042,7 +1042,7 @@
 }
 
 /* Approved wide crop workspace: source and accepted regions share the width. */
-.unified-library-overlay:has(.unilib-crop:not([hidden]))::after { content: ""; position: fixed; inset: 0; z-index: 64; background: color-mix(in srgb, var(--unilib-canvas) 30%, transparent); }
+.unified-library-overlay[data-crop-open="true"]::after { content: ""; position: fixed; inset: 0; z-index: 64; background: color-mix(in srgb, var(--unilib-canvas) 30%, transparent); }
 .unified-library-overlay .unilib-crop-workspace { grid-template-columns: minmax(0, .55fr) minmax(0, .45fr); }
 .unified-library-overlay .unilib-crop-preview { overflow: hidden; }
 .unified-library-overlay .unilib-crop-card-grid { display: grid; min-height: 0; flex: 1 1 auto; grid-template-columns: repeat(2, minmax(0, 1fr)); grid-auto-rows: 14rem; gap: var(--unilib-space-3); overflow-y: auto; }
@@ -1162,7 +1162,7 @@
 .unified-library-overlay .unilib-crop-tray-item { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr); aspect-ratio: 16 / 7; }
 
 /* Crop editor: solid focus surface and a stable append-only review order. */
-.unified-library-overlay:has(.unilib-crop:not([hidden]))::after { background: var(--unilib-canvas); backdrop-filter: none; }
+.unified-library-overlay[data-crop-open="true"]::after { background: var(--unilib-canvas); backdrop-filter: none; }
 .unified-library-overlay .unilib-crop-card-grid { grid-auto-rows: minmax(12rem, 1fr); }
 .unified-library-overlay .unilib-crop-collection { display: contents; }
 .unified-library-overlay .unilib-crop-footer > button { min-width: 8rem; min-height: var(--unilib-control-height); }
@@ -1232,7 +1232,7 @@
 @media (prefers-reduced-motion: reduce) {
 }
 
-.unified-library-overlay .unilib:has(.unilib-crop-tray.is-expanded)::after {
+.unified-library-overlay[data-crop-tray-expanded="true"] .unilib::after {
   content: "";
   position: absolute;
   z-index: 7;

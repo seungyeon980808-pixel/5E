@@ -918,6 +918,18 @@ const SEND_ICONS = {
 };
 export function createUnifiedLibraryUi({ getProvider, insertMaterialized, sendTo, openAi, openIndependentReferences, openGraph, pdfUi, pdfDetailsElement, onImportedImages, onDesktopSnapshot, desktopLibrary = globalThis.fiveEDesktop?.pdfLibrary, storage = channelStorage, initialSearchReadiness = "ready" }) {
   const overlay = buildShell();
+  // 자르기 창·크롭 모음이 열렸는지를 overlay 속성으로 옮겨 둔다. CSS가 :has(...:not([hidden]))로 보면, 목록 안의 그림 칸이
+  // hidden을 바꿀 때마다 overlay 전체 스타일을 다시 계산해 스크롤이 끊긴다(바쁜 컴퓨터에서 스크롤 프레임 대부분 50ms 초과).
+  {
+    const tray = overlay.querySelector("[data-unilib-crop-tray]"), crop = overlay.querySelector("[data-unilib-crop]");
+    const mirror = () => {
+      const set = (k, on) => { if ((overlay.dataset[k] === "true") !== on) overlay.dataset[k] = String(on); };
+      set("cropTrayOpen", !!tray && !tray.hidden); set("cropTrayExpanded", !!tray && tray.classList.contains("is-expanded")); set("cropOpen", !!crop && !crop.hidden);
+    };
+    const watch = new MutationObserver(mirror);
+    for (const node of [tray, crop]) if (node) watch.observe(node, { attributes: true, attributeFilter: ["hidden", "class"] });
+    mirror();
+  }
   const root = overlay.querySelector(".unilib");
   overlay.querySelector('.unilib-folder-loading-spinner').replaceWith(createLoadingDots());
   const resultDots = createLoadingDots();
