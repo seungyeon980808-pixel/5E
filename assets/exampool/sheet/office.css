@@ -534,7 +534,7 @@ button.q-status:hover{background:var(--ds-hover)}
 .lp-actions{display:flex;flex-direction:column;gap:6px;align-items:flex-start}.lp-actions .note{font-size:var(--ds-text-meta);color:var(--ds-ink-3);line-height:1.6}
 .lp-linked{border-top:1px solid var(--ds-line);padding:10px 12px;font-size:var(--ds-text-meta);color:var(--ds-ink-3);display:flex;flex-direction:column;gap:2px}.lp-linked b{color:var(--ds-ink);font-size:12px}
 /* 라이브러리 칸 정리(2026-10-19, 시안 library-layout.html 안 B · 공통 값 design-tokens-proposal.md 6절):
-   탭 줄이 머리 줄(44) · 도구는 한 줄(30)로 위에 고정 · 목록만 스크롤 · 문항 카드는 목록 높이의 절반(늘 2개, 카드 단위로 멈춤). */
+   탭 줄이 머리 줄(44) · 도구는 한 줄(30)로 위에 고정 · 목록만 스크롤 · 기출 카드는 한 줄에 2개(시안 library-two-col.html 안 C). */
 .cv-left .lp-tabs{height:var(--cv-head-h,44px);gap:2px}
 .cv-left .lp-tabs button{height:30px;border-radius:var(--cv-ctl-radius,6px);font-size:var(--cv-text-small,12.5px)}
 .lp-refs{flex:none!important;margin-left:6px;padding:0 10px;border:0;background:transparent;color:var(--ds-ink-2);white-space:nowrap;cursor:pointer}
@@ -553,15 +553,18 @@ button.q-status:hover{background:var(--ds-hover)}
 .lp-pick{flex:none;display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;padding:0;border:0;border-radius:var(--cv-ctl-radius,6px);background:transparent;color:var(--ds-ink-2);cursor:pointer}
 .lp-pick:hover{background:var(--ds-hover);color:var(--ds-ink)}
 .lp-pick .ico{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
-.cv-left .past-list{flex:1;min-height:0;overflow:auto;padding:0 12px 12px;display:grid;grid-auto-rows:calc(50% - 6px);gap:12px;scroll-snap-type:y mandatory}
-.cv-left .past{display:grid;grid-template-rows:minmax(0,1fr) auto;min-height:0;border-radius:var(--cv-sec-radius,10px);scroll-snap-align:start}
-.cv-left .past img{width:100%;height:100%;max-height:none;object-fit:contain}
-.cv-left .past .past-text{max-height:none}
-.cv-left .past figcaption{display:flex;align-items:center;gap:8px;min-height:44px;padding:8px 8px 8px 12px;min-width:0}
-.cv-left .past figcaption b{flex:none;white-space:nowrap;font-size:var(--cv-text-body,14px)}
-.cv-left .past figcaption>span:not(.acts){flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:var(--cv-text-meta,11px)}
-.cv-left .past figcaption .acts{flex:none;margin-left:auto}
-.cv-left .past .mini{height:28px;padding:0 10px;font-size:var(--cv-text-small,12.5px);border-radius:var(--cv-ctl-radius,6px)}
+/* 기출 문항 카드 = 5E 라이브러리 「문항」 탭 카드 그대로(흰 그림 칸 + 짧은 제목), 한 줄에 2개, 줄 높이는 그림 비율대로, 줄 단위로 멈춤. */
+.cv-left .past-list{flex:1;min-height:0;overflow:auto;padding:0 12px 12px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:max-content;gap:12px;align-content:start;scroll-snap-type:y mandatory}
+.cv-left .past{display:block;min-width:0;padding:8px;background:transparent;box-shadow:none;border-radius:var(--cv-sec-radius,10px);scroll-snap-align:start}
+.cv-left .past:hover{background:var(--ds-hover)}
+.cv-left .past img{display:block;width:100%;height:auto;max-height:none;aspect-ratio:1.05/1;object-fit:contain;object-position:top;border-radius:var(--cv-ctl-radius,6px)}
+.cv-left .past .past-text{max-height:none;aspect-ratio:1.05/1;border-radius:var(--cv-ctl-radius,6px)}
+.cv-left .past figcaption{display:flex;align-items:center;gap:6px;padding:10px 0 0;min-width:0}
+.cv-left .past figcaption b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:var(--cv-text-body,14px)}
+.cv-left .past figcaption .acts{flex:none;margin-left:auto;gap:2px}
+.cv-left .past .mini{height:26px;padding:0 6px;font-size:var(--cv-text-small,12.5px);border-radius:var(--cv-ctl-radius,6px)}
+/* 가져온 자료: 제목 한 줄 · 단추(근거로 연결·그림 칸에 넣기)는 다음 줄 */
+.cv-left .past.pick figcaption{flex-wrap:wrap}.cv-left .past.pick figcaption b{flex-basis:100%}.cv-left .past.pick figcaption .acts{margin-left:0}
 /* 자료(PDF): 위 한 줄(자료 고르기·파일 열기·원본) · 쪽은 남은 높이에 통째로 · 아래 한 줄(쪽 넘김·근거 문장·근거로 연결). 상태 문장은 아래 상태 막대로. */
 .lp-docked #sources[data-tab=references] .source-controls{display:none}
 .lp-docked #sources[data-tab=references] #source-content{flex:1;min-height:0;display:flex;flex-direction:column;gap:10px;padding:12px}

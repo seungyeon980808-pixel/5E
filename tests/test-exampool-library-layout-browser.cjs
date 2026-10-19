@@ -1,6 +1,6 @@
 // ExamPool 문항 카드 왼쪽 라이브러리 칸 정리(2026-10-19, 시안 5e-design-mockups/library-layout.html 안 B)와
 // 5E 라이브러리 창 「보내기」(이미지 객체화 자리)를 두 엔진으로 확인한다.
-//  - 탭 줄이 머리 줄(44) · 도구 한 줄(모두 30, 윗선 같음) · 기출 문항은 한 화면에 2개(목록 높이의 절반) · 카드 단위로 멈춤
+//  - 탭 줄이 머리 줄(44) · 도구 한 줄(모두 30, 윗선 같음) · 기출 카드는 5E 라이브러리 모양으로 한 줄에 2개 · 줄 단위로 멈춤
 //  - 「근거 N」을 누르면 이 문항의 근거가 겹쳐 펼쳐짐
 //  - 자료 PDF는 한 쪽이 통째로 보이고, 상태 문장은 아래 상태 막대로 · 빨간 오류 글은 6초 뒤 사라짐
 //  (5E 라이브러리 창 「보내기」는 test-teacher-flow-library-send-browser.cjs)
@@ -56,19 +56,25 @@ h.withServer(async origin => {
       assert.ok(tools.every(t=>t.h===30)&&new Set(tools.map(t=>t.top)).size===1,'all tools are 30px on one line: '+JSON.stringify(tools));
       assert.equal(await sheet.locator('#card-view .lp-pick').getAttribute('aria-label'),'5E 라이브러리에서 고르기','the library icon keeps its name');
 
-      // 3. 기출 문항은 한 화면에 2개: 카드 높이 = (목록 높이 - 사이 12) / 2, 두 장이 온전히 보이고 카드 단위로 멈춘다.
-      const two=await sheet.evaluate(()=>{const list=document.querySelector('#card-view .past-list'),cs=getComputedStyle(list),lr=list.getBoundingClientRect();
-        const inner=list.clientHeight-parseFloat(cs.paddingTop)-parseFloat(cs.paddingBottom);
-        const cards=[...list.querySelectorAll('figure.past')].map(c=>c.getBoundingClientRect());
-        const full=cards.filter(r=>r.top>=lr.top-0.5&&r.bottom<=lr.bottom-parseFloat(cs.paddingBottom)+0.5).length;
-        return {h:cards[0].height,want:(inner-12)/2,full,snap:cs.scrollSnapType,align:getComputedStyle(list.querySelector('figure.past')).scrollSnapAlign,count:cards.length};});
-      assert.ok(Math.abs(two.h-two.want)<=1,`card height is half the list: ${two.h} vs ${two.want}`);
-      assert.equal(two.full,2,'exactly two question cards are fully visible');
-      assert.match(two.snap,/y mandatory/);assert.equal(two.align,'start');
-      if(two.count>=3){
+      // 3. 기출 문항 카드는 5E 라이브러리 「문항」 탭 카드 모양으로 한 줄에 2개(시안 library-two-col.html 안 C):
+      //    두 칸 폭이 같고 윗선이 같으며, 그림 칸은 1.05:1, 한 화면에 4개 이상 온전히 보이고 줄 단위로 멈춘다.
+      const grid=await sheet.evaluate(()=>{const list=document.querySelector('#card-view .past-list'),cs=getComputedStyle(list),lr=list.getBoundingClientRect();
+        const cards=[...list.querySelectorAll('figure.past')],rects=cards.map(c=>c.getBoundingClientRect()),img=cards[0].querySelector('img').getBoundingClientRect();
+        const inner=list.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight);
+        const full=rects.filter(r=>r.top>=lr.top-0.5&&r.bottom<=lr.bottom-parseFloat(cs.paddingBottom)+0.5).length;
+        return {w:[rects[0].width,rects[1].width],want:(inner-12)/2,tops:[rects[0].top,rects[1].top,rects[2]?.top],ratio:img.width/img.height,full,count:cards.length,
+          title:cards[0].querySelector('figcaption b').textContent,full_title:cards[0].querySelector('figcaption b').title,snap:cs.scrollSnapType,align:getComputedStyle(cards[0]).scrollSnapAlign};});
+      assert.ok(grid.w.every(v=>Math.abs(v-grid.want)<=1),`two equal columns: ${grid.w} vs ${grid.want}`);
+      assert.equal(Math.round(grid.tops[0]),Math.round(grid.tops[1]),'two cards share one row');assert.ok(grid.tops[2]>grid.tops[0],'the third card starts the next row');
+      assert.ok(Math.abs(grid.ratio-1.05)<0.02,'the picture box keeps the 5E library ratio: '+grid.ratio);
+      assert.ok(grid.full>=4,'at least four question cards are fully visible: '+grid.full);
+      assert.match(grid.title,/^[가-힣]+[12] \d{2}년 (\d+평|수능) \d+번$/,'short title like the 5E library: '+grid.title);
+      assert.match(grid.full_title,/학년도/,'the full title stays in the tooltip');
+      assert.match(grid.snap,/y mandatory/);assert.equal(grid.align,'start');
+      if(grid.count>=5){
         await sheet.locator('#card-view .past-list').hover();await page.mouse.wheel(0,250);await sheet.waitForTimeout(1200);
         const snapped=await sheet.evaluate(()=>{const list=document.querySelector('#card-view .past-list'),lr=list.getBoundingClientRect();return [...list.querySelectorAll('figure.past')].some(c=>Math.abs(c.getBoundingClientRect().top-lr.top)<=1)&&list.scrollTop>0;});
-        assert.ok(snapped,'a wheel scroll past half a card stops on the next card edge');
+        assert.ok(snapped,'a wheel scroll stops on a row edge');
       }
       // 「근거로 연결」·「변형」은 카드 아래 한 줄에 그대로.
       assert.equal(await sheet.locator('#card-view figure.past').first().locator('[data-cvlink]').count(),1);

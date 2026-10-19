@@ -194,17 +194,19 @@ export function createCardEditor(root,api){
   // 5E 라이브러리 연결: 공유 폴더·자료팩·기출 PDF에서 쪽이나 영역을 골라 가져온다(5E 라이브러리 선택기). 단추는 도구 줄 끝 아이콘 하나,
   // 가져온 자료(5E 라이브러리 창 「보내기 → ExamPool」로 온 것 포함)는 목록 맨 위에 같은 카드로 놓는다.
   const pickBtn=kind=>`<button type="button" class="lp-pick" data-cvlib="${kind}" aria-label="5E 라이브러리에서 고르기" title="5E 라이브러리에서 고르기 — 공유 폴더·자료팩·PDF에서 쪽이나 영역을 골라 가져옵니다">${ICON.lib}</button>`;
-  const picksHtml=()=>(api.libraryPicks?.()||[]).map((p,i)=>`<figure class="past pick"><img src="${E(p.data)}" alt="${E(p.name)}"><figcaption><b>${E(p.source?.documentTitle||p.name)}</b><span>${p.source?.pageNumber?p.source.pageNumber+'쪽':''}${p.source?.title&&p.source.title!==p.source?.documentTitle?' · '+E(p.source.title):''}</span><span class="acts"><button type="button" class="mini" data-cvpick-link="${i}">근거로 연결</button><button type="button" class="mini" data-cvpick-slot="${i}">그림 칸에 넣기</button></span></figcaption></figure>`).join('');
+  const picksHtml=()=>(api.libraryPicks?.()||[]).map((p,i)=>`<figure class="past pick"><img src="${E(p.data)}" alt="${E(p.name)}"><figcaption><b title="${E([p.source?.documentTitle||p.name,p.source?.pageNumber?p.source.pageNumber+'쪽':'',p.source?.title&&p.source.title!==p.source?.documentTitle?p.source.title:''].filter(Boolean).join(' · '))}">${E(p.source?.documentTitle||p.name)}${p.source?.pageNumber?' · '+p.source.pageNumber+'쪽':''}</b><span class="acts"><button type="button" class="mini" data-cvpick-link="${i}">근거로 연결</button><button type="button" class="mini" data-cvpick-slot="${i}">그림 칸에 넣기</button></span></figcaption></figure>`).join('');
   // 기출 목록: 과학탐구 전체 기출(조사 색인 assets/exampool/convert/data). 과목 파일은 고를 때 읽는다(과목을 안 고르면 전부).
   // 카드 모양·필터·핵심어는 예전 그대로이고, 핵심어는 문항 본문 글까지 찾는다. 「변형」은 이 기출을 편집 가능한 한글 문항(AI 없음)으로 바꿔 새 카드로 연다.
   const F={id:0,year:1,month:2,no:3,page:4,box:5,pdfFile:6,parts:7,tags:8,hasFigure:9,record:10,text:11};
   const MONTH={'06':'6월 모평','09':'9월 모평','11':'수능'};
+  // 카드에 보이는 짧은 제목은 5E 라이브러리 「문항」 탭과 같은 꼴: 「물리2 27년 6평 2번」(수능은 「27년 수능」). 근거 이름에는 긴 제목을 쓴다.
+  const shortTitle=(year,month,label,no)=>`${label.replace('물리학','물리').replace('생명과학','생명').replace('지구과학','지구').replace('Ⅰ','1').replace('Ⅱ','2')} ${String(year).slice(2)}년 ${month==='11'?'수능':Number(month)+'평'} ${no}번`;
   async function loadPast(subjects){
     pastIndex||=await(pastIndexLoading||=fetch(new URL('../convert/data/index.json',import.meta.url)).then(r=>{if(!r.ok)throw Error();return r.json();}));
     const want=subjects.length?subjects:pastIndex.subjects.map(v=>v[0]),key=want.join(',');if(pastItems&&pastItemsKey===key)return pastItems;
     const lists=await Promise.all(want.map(code=>(loadPast.cache[code]||=fetch(new URL(`../convert/data/${code}.json`,import.meta.url)).then(r=>{if(!r.ok)throw Error();return r.json();})).then(rows=>rows.map(r=>({code,label:pastIndex.subjects.find(v=>v[0]===code)?.[1]||code,row:r})))));
     pastItems=lists.flat().map(({code,label,row})=>({id:row[F.id],subject:code,subjectLabel:label,year:row[F.year],month:row[F.month],no:row[F.no],page:row[F.page],box:row[F.box],pdfFile:row[F.pdfFile],publicPath:pastIndex.files[row[F.pdfFile]],parts:row[F.parts]||[],tags:row[F.tags]||[],hasFigure:!!row[F.hasFigure],record:row[F.record],text:row[F.text]||'',
-      title:`${row[F.year]}학년도 ${MONTH[row[F.month]]||row[F.month]+'월'} ${label} ${row[F.no]}번`})).sort((a,b)=>b.year-a.year||String(a.month).localeCompare(String(b.month))||a.subject.localeCompare(b.subject)||(+a.no)-(+b.no));
+      title:`${row[F.year]}학년도 ${MONTH[row[F.month]]||row[F.month]+'월'} ${label} ${row[F.no]}번`,short:shortTitle(row[F.year],row[F.month],label,row[F.no])})).sort((a,b)=>b.year-a.year||String(a.month).localeCompare(String(b.month))||a.subject.localeCompare(b.subject)||(+a.no)-(+b.no));
     pastItemsKey=key;return pastItems;
   }
   loadPast.cache={};
@@ -225,7 +227,7 @@ export function createCardEditor(root,api){
     const thumb=i=>{const card=pastIndex.cards.replace('{id}',encodeURIComponent(i.id)),local=i.hasFigure?new URL(`../../exam-library/images/${encodeURIComponent(i.id)}.png`,import.meta.url).href:'';
       return `<img loading="lazy" src="${E(card)}" alt="${E(i.title)}" data-past-thumb="${E(i.id)}" data-fallback="${E(local)}">`;};
     const search=`<label class="lp-search">${ICON.search}<input data-cvpast="query" value="${E(f.query)}" placeholder="핵심어·본문 단어"><span class="lp-n" title="기출 ${total.toLocaleString()}문항 중">${list.length.toLocaleString()}문항</span></label>`,filters=sel('subject',subjects,'과목')+sel('part',parts,'단원')+sel('year',years,'연도');
-    body.innerHTML=`<div class="lp-tools"><div class="lp-row">${search}${filters}${pickBtn('past')}</div></div>`+`<div class="past-list">${picksHtml()}${list.slice(0,40).map(i=>`<figure class="past">${thumb(i)}<figcaption><b>${E(i.title)}</b><span>${E([...i.parts,...i.tags].slice(0,3).join(' · '))}</span><span class="acts"><button type="button" class="mini" data-cvlink="${E(i.id)}">근거로 연결</button><button type="button" class="mini go-mini" data-cvconvert="${E(i.id)}" title="편집 가능한 한글 문항으로 바꿔 새 문항 카드로 엽니다(AI 없음)">변형</button></span></figcaption></figure>`).join('')}</div>`;
+    body.innerHTML=`<div class="lp-tools"><div class="lp-row">${search}${filters}${pickBtn('past')}</div></div>`+`<div class="past-list">${picksHtml()}${list.slice(0,40).map(i=>`<figure class="past">${thumb(i)}<figcaption><b title="${E([i.title,...i.parts,...i.tags.slice(0,3)].join(' · '))}">${E(i.short)}</b><span class="acts"><button type="button" class="mini" data-cvlink="${E(i.id)}">근거로 연결</button><button type="button" class="mini go-mini" data-cvconvert="${E(i.id)}" title="편집 가능한 한글 문항으로 바꿔 새 문항 카드로 엽니다(AI 없음)">변형</button></span></figcaption></figure>`).join('')}</div>`;
     if(typing){const n=body.querySelector('[data-cvpast="query"]');n.focus();n.setSelectionRange(n.value.length,n.value.length);}
   }
 
