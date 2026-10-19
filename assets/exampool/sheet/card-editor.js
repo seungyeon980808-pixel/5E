@@ -264,8 +264,11 @@ export function createCardEditor(root,api){
     const lists=await Promise.all(want.map(code=>(loadPast.cache[code]||=fetch(new URL(`../convert/data/${code}.json`,import.meta.url)).then(r=>{if(!r.ok)throw Error();return r.json();})).then(rows=>rows.map(r=>({code,label:pastIndex.subjects.find(v=>v[0]===code)?.[1]||code,row:r})))));
     pastItems=lists.flat().map(({code,label,row})=>({id:row[F.id],subject:code,subjectLabel:label,year:row[F.year],month:row[F.month],no:row[F.no],page:row[F.page],box:row[F.box],pdfFile:row[F.pdfFile],publicPath:pastIndex.files[row[F.pdfFile]],parts:row[F.parts]||[],tags:row[F.tags]||[],hasFigure:!!row[F.hasFigure],record:row[F.record],text:row[F.text]||'',
       title:`${row[F.year]}학년도 ${MONTH[row[F.month]]||row[F.month]+'월'} ${label} ${row[F.no]}번`,short:shortTitle(row[F.year],row[F.month],label,row[F.no])})).sort((a,b)=>b.year-a.year||String(a.month).localeCompare(String(b.month))||a.subject.localeCompare(b.subject)||(+a.no)-(+b.no));
-    pastItemsKey=key;return pastItems;
+    pastItemsKey=key;warmHay(pastItems);return pastItems;
   }
+  // 검색용 글(hay)을 쉬는 틈에 조금씩 미리 만든다 — 첫 글자를 칠 때 8천여 문항을 한꺼번에 만드느라 입력이 멈추지 않게.
+  function warmHay(list){let i=0;const idle=window.requestIdleCallback||(f=>setTimeout(()=>f({timeRemaining:()=>8}),30));
+    const step=d=>{if(pastItems!==list)return;while(i<list.length&&d.timeRemaining()>2){if(pastSyn)hay(list[i]);i++;}if(i<list.length)idle(step);};idle(step);}
   loadPast.cache={};
   const pastItem=id=>pastItems?.find(v=>v.id===id);
   // 검색 색인(5e.ai.kr/examlibrary 기출 탐색기와 같은 규칙): 단어를 치고 Enter → 검색 칸 안의 단어 조각(최대 3개).
@@ -298,7 +301,10 @@ export function createCardEditor(root,api){
   const bookPage=(b,n,thumb)=>new URL(`../../pdf-library/previews/${b.sha}/${n}${thumb?'-thumb':''}.webp`,import.meta.url).href;
   const searchHtml=(placeholder,n)=>`<label class="lp-search">${ICON.search}<span class="lp-tokens">${pastFilter.tokens.map(w=>`<button type="button" class="lp-token" data-cvtoken="${E(w)}" aria-label="${E(w)} 단어 삭제" title="${E(w)} 단어 삭제">${E(w)}<span aria-hidden="true">×</span></button>`).join('')}</span><input data-cvpast="query" value="${E(pastFilter.query)}" placeholder="${placeholder}" aria-label="검색할 단어 입력(Enter로 색인 추가, 최대 3개)">${n}</label>`;
   function fillHead(search,adv,count){
-    const s=root.querySelector('[data-cvslot="search"]');if(s)s.innerHTML=search;
+    // 검색창은 조각·안내 글이 그대로면 바꾸지 않고 문항 수만 고친다 — 치는 중에 입력칸을 새로 만들지 않게(초점·글자 유지, 다시 그리기 줄임).
+    const s=root.querySelector('[data-cvslot="search"]');
+    if(s){const sig=search.replace(/ value="[^"]*"/,'').replace(/<span class="lp-n"[^>]*>[^<]*<\/span>/,'');const n=s.querySelector('.lp-n'),m=search.match(/<span class="lp-n"[^>]*>([^<]*)<\/span>/);
+      const inp=s.querySelector('[data-cvpast="query"]');if(s.dataset.sig===sig&&inp){if(n&&m)n.textContent=m[1].replace(/&amp;/g,'&');const v=(search.match(/ value="([^"]*)"/)?.[1]||'').replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&');if(inp.value.trim()!==v)inp.value=v;}else{s.innerHTML=search;s.dataset.sig=sig;}}
     const pop=root.querySelector('[data-cvslot="adv"]'),was=pop?.contains(document.activeElement)?document.activeElement.dataset.cvpast:'';if(pop)pop.innerHTML=adv;
     if(was)pop.querySelector(`[data-cvpast="${was}"]`)?.focus({preventScroll:true});// 상세검색에서 고른 칸으로 커서를 돌려놓는다
     const n=root.querySelector('[data-cvslot="advn"]');if(n){n.textContent=count;n.hidden=!count;}
