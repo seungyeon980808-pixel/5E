@@ -9,7 +9,7 @@ import {buildQuestionHtml,verifyNativeQuestion,skeletonKey,decodeNativeText} fro
 import {questionFingerprint,typesetMatches,renderedContent,toBase64,fromBase64,materializeEquations,normalizeQuestionImport,applyQuestionIndent,applyReferenceBogiIndent,applyCellEquationLines,applyFloatingPictures,settleFloatingPictures,applyFloatingTable,LAYOUT_VERSION,centerCellPictures} from './typeset-model.js?v=1014-compact-panel';
 import {QUESTION_PAGE_MODE,questionPageProfile,fitQuestionPage,questionPageMetrics,validateQuestionPage,resizeQuestionDocument} from './question-page.js?v=1014-compact-panel';
 import {applyTableAlignment,applyHangingIndent} from '../../../js/rhwp-exam-table-controls.js?v=1014-compact-panel';
-import {nativeLayoutSignature,nativeImageSignature,openApprovedQuestion} from './native-transfer.js?v=1014-compact-panel';
+import {nativeLayoutSignature,nativeImageSignature} from './native-transfer.js?v=1014-compact-panel';
 import {exportLayoutHwpx} from './native-hwpx.js?v=1014-compact-panel';
 import {assertNativeLayout} from './native-layout-check.js?v=1014-compact-panel';
 import {attachTypesetView} from './typeset-view.js';
@@ -219,7 +219,7 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
   indent.onclick=()=>{try{if(!ready||loading)return;if(!applyHangingIndent(bridge))throw Error('본문에서 들여쓸 위치를 클릭하세요.');message('다음 줄이 커서 위치에 맞춰집니다 · 조판 저장을 누르세요.');bridge.input.textarea.focus();}catch(e){message(e.message,true);}};
   const contentKey=value=>JSON.stringify(renderedContent(value));
   async function buildExam(data,examSet){
-    await ensure();const Document=document().constructor,{document:exam}=await buildExamDocument(Document,data,examSet);
+    await ensure();const Document=document().constructor,{document:exam}=await buildExamDocument(Document,data,examSet,{between:pause});
     try{return exportLayoutHwpx(exam,XLSX.CFB);}finally{exam.free();}
   }
   // 한글 창에서 바꾼 것을 버린다(시트에 반영되지 않은 수정 포함). 다음 open이 시트 내용으로 다시 그린다.
@@ -229,28 +229,31 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
   // 쪽 전체: 문항마다 한글 문서를 구해(열린 문항은 지금 한글 창, 저장한 조판, 아니면 미리보기 칸과 같은 새 조판)
   // 시험지를 만들 때와 같은 방식으로 한 문서에 합친 뒤 쪽마다 SVG로 그린다. HTML로 흉내 내지 않는다.
   const fresh=new Map();
+  // 문항·쪽 하나마다 잠깐 쉬어 그사이 화면 그리기·입력을 받는다(문항 많은 시험지에서 화면이 통째로 멈추지 않게).
+  const pause=()=>new Promise(resolve=>setTimeout(resolve,0));
+  // 쉬는 사이 쪽 전체를 떠났으면(alive가 false) 남은 일을 하지 않는다.
+  const cancelled=()=>Object.assign(Error('쪽 전체 그리기를 멈췄습니다.'),{cancelled:true});
   async function sheetEntry(Document,value){
     const own={paper:value.paper||value.typeset?.profile?.paper||'A4',columns:2};
     if(ready&&!loading&&q?.id===value.id&&contentKey(q)===contentKey(value))
       return {bytes:exportLayoutHwpx(document(),XLSX.CFB),profile:profile(),height:questionPageMetrics(document(),profile()).usedHeightMm,saved:!dirty&&!!value.typeset?.verified&&await typesetMatches(value.typeset,value)};
-    if(value.typeset?.verified){
-      try{const source=await openApprovedQuestion(Document,value,value.typeset);source.free();
-        if(value.typeset.pageMode===QUESTION_PAGE_MODE&&value.typeset.profile.paper===own.paper)return {bytes:fromBase64(value.typeset.bytes),profile:value.typeset.profile,height:value.typeset.metrics?.usedHeightMm,saved:true};
-      }catch{}
-    }
+    // 보기 전용이라 저장한 조판이 지금 문항과 맞는지만 가볍게 본다(문서를 미리 열어 검사하지 않음). 시험지 HWPX를 만들 때는 openApprovedQuestion으로 엄격히 검사한다.
+    const t=value.typeset;
+    if(t?.verified&&t.layoutVersion===LAYOUT_VERSION&&t.pageMode===QUESTION_PAGE_MODE&&t.profile?.paper===own.paper&&await typesetMatches(t,value))return {bytes:fromBase64(t.bytes),profile:t.profile,height:t.metrics?.usedHeightMm,saved:true};
     const key=contentKey(value)+'|'+own.paper,hit=fresh.get(value.id);
     if(hit?.key!==key){const {bytes}=await generate(structuredClone(value),own,{quiet:true}),doc=new Document(bytes);
       try{fresh.set(value.id,{key,bytes,height:questionPageMetrics(doc,own).usedHeightMm});}finally{doc.free();}}
     const entry=fresh.get(value.id);return {bytes:entry.bytes,profile:own,height:entry.height,saved:false};
   }
-  async function pageSheets(data,exam,focusId){
+  async function pageSheets(data,exam,focusId,{alive=()=>true}={}){
+    const step=async()=>{await pause();if(!alive())throw cancelled();};
     await ensure();const Document=document().constructor,ids=exam?.items?.length?exam.items:[focusId],items=[];
-    for(const id of ids){const value=data.questions.find(x=>x.id===id);if(!value)continue;const e=await sheetEntry(Document,value);
+    for(const id of ids){const value=data.questions.find(x=>x.id===id);if(!value)continue;if(items.length)await step();const e=await sheetEntry(Document,value);
       items.push({id,q:value,bytes:e.bytes,profile:e.profile,height:Number.isFinite(e.height)?e.height:60,saved:e.saved});}
     if(!items.length)throw Error('쪽에 놓을 문항이 없습니다.');
     // 용지·쪽 나눔은 실제 시험지(exam-layout)와 같은 규칙: 모두 같은 용지로 조판했으면 그 용지 2단, 아니면 A4 2단.
     const sheet=examPage(items.map(x=>({q:{typeset:{profile:x.profile}}}))),pages=paginateQuestions(items,{height:sheet.heightMm,columns:sheet.columns,gap:sheet.gapMm});
-    const {document:target,ranges}=await assembleExamDocument(Document,{items,pages,sheet,open:item=>new Document(item.bytes)});
+    const {document:target,ranges}=await assembleExamDocument(Document,{items,pages,sheet,open:item=>new Document(item.bytes),between:step});
     try{
       const p=parse(target.getPageDef(0)),width=p.width/75,height=p.height/75,[start,end]=ranges.get(focusId)||[-1,-1],inside=r=>r.secIdx===0&&r.paraIdx>=start&&r.paraIdx<end;
       const out=[];
@@ -258,6 +261,7 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
         let box=null;
         for(const r of [...parse(target.getPageTextLayout(i)).runs,...parse(target.getPageControlLayout(i)).controls])if(inside(r)&&[r.x,r.y,r.w,r.h].every(Number.isFinite)){
           box=box?{x:Math.min(box.x,r.x),y:Math.min(box.y,r.y),r:Math.max(box.r,r.x+r.w),b:Math.max(box.b,r.y+r.h)}:{x:r.x,y:r.y,r:r.x+r.w,b:r.y+r.h};}
+        if(i)await step();
         out.push({svg:target.renderPageSvg(i),width,height,focus:box&&{x:box.x/width,y:box.y/height,w:(box.r-box.x)/width,h:(box.b-box.y)/height}});
       }
       const mix=paperMix(items.map(x=>({q:{number:x.q.number,typeset:{profile:x.profile}}})));

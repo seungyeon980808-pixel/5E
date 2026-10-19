@@ -8,7 +8,8 @@ const parse=v=>typeof v==='string'?JSON.parse(v):v;
 
 // 문항 문서들을 차례로 시험지 한 문서에 옮긴다. open(item)은 그 문항의 한글 문서를 연다(닫기는 여기서).
 // 돌려주는 ranges: 문항마다 시험지 문서 안의 문단 범위 [start,end).
-export async function assembleExamDocument(Document,{items,pages,sheet,open}){
+// between: 문항 하나를 넣을 때마다 기다릴 일(화면이 멈추지 않게 잠깐 쉬기). 없으면 쉬지 않는다.
+export async function assembleExamDocument(Document,{items,pages,sheet,open,between}){
   // 단이 시작되는 문항: 그 앞에 단 나누기를 넣는다(첫 문항 제외).
   const starts=new Set();for(const page of pages)for(const column of page.columns)if(column.length)starts.add(column[0]);
   const target=Document.createEmpty(),ranges=new Map();
@@ -28,16 +29,17 @@ export async function assembleExamDocument(Document,{items,pages,sheet,open}){
         if(!result?.operationResult?.result?.inserted&&result?.ok===false)throw Error(`${item.q.number}번 문항을 시험지에 넣지 못했습니다.`);
         ranges.set(item.id,[before,target.getParagraphCount(0)]);
       }finally{source.free();}
+      if(between&&i<items.length-1)await between();
     }
     return {document:target,ranges};
   }catch(e){target.free();throw e;}
 }
 
-export async function buildExamDocument(Document,data,exam=data.exams?.[0]){
+export async function buildExamDocument(Document,data,exam=data.exams?.[0],{between}={}){
   const {items,pages,page:sheet,missing,mixed}=examPlan(data,exam);
   if(!items.length)throw Error('시험지에 넣을 문항을 고르세요.');
   if(missing.length)throw Error(`조판을 저장하지 않은 문항이 있습니다: ${missing.map(x=>x.q.number+'번').join(', ')}. 각 문항의 조판을 저장한 뒤 다시 만드세요.`);
   if(mixed)throw Error(paperMixMessage(mixed));
-  const {document}=await assembleExamDocument(Document,{items,pages,sheet,open:item=>openApprovedQuestion(Document,item.q,item.q.typeset)});
+  const {document}=await assembleExamDocument(Document,{items,pages,sheet,open:item=>openApprovedQuestion(Document,item.q,item.q.typeset),between});
   return {document,pages,count:items.length};
 }

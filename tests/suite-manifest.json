@@ -2107,6 +2107,12 @@
       ]
     },
     {
+      "path": "tests/test-exampool-page-view-perf-browser.cjs",
+      "findingIds": [
+        "EXAMPOOL-PAGE-VIEW-NO-FREEZE"
+      ]
+    },
+    {
       "path": "tests/test-asset-library-browser.cjs",
       "findingIds": [
         "ASSET-LIBRARY-PORT"

@@ -239,7 +239,7 @@ export function createCardEditor(root,api){
   // 한글 엔진이 실제 시험지처럼 합친 문서를 쪽마다 SVG로 그린다(미리보기 칸·내려받는 HWPX와 같은 모양).
   let pageSeq=0;
   async function renderPage(){const x=q(),n=root.querySelector('#cv-page');if(!x||!n)return;const seq=++pageSeq;
-    let view;try{view=await api.pageSheets(x);}catch(e){if(seq===pageSeq&&n.isConnected)n.innerHTML=`<p class="pv-empty">쪽을 그리지 못했습니다: ${E(e.message)}</p>`;return;}
+    let view;try{view=await api.pageSheets(x,{alive:()=>seq===pageSeq&&n.isConnected&&q()===x});}catch(e){if(e.cancelled)return;if(seq===pageSeq&&n.isConnected)n.innerHTML=`<p class="pv-empty">쪽을 그리지 못했습니다: ${E(e.message)}</p>`;return;}
     if(seq!==pageSeq||q()!==x||!n.isConnected)return;
     const pct=v=>(v*100).toFixed(3)+'%',total=view.pages.length;
     n.innerHTML=`<div class="pg-head"><b>${E(view.title)}</b><span>${total}쪽 · 한글 조판 그대로(${E(view.paper)} ${view.columns}단)${view.unsaved.length?` · 조판 저장 전: ${E(view.unsaved.join(', '))}번`:''}</span><span class="sp"></span><button type="button" class="mini" data-cvview="card">문항 카드로</button></div>`+(view.warning?`<p class="pg-warn" role="alert" style="align-self:stretch;margin:0;font-size:var(--ds-text-meta);color:var(--ds-danger)">${E(view.warning)}</p>`:'')+
