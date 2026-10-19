@@ -15,7 +15,7 @@ import { circuitBodyPolygon, pendulumGeometry, pendulumBBox, springGeometry, spr
          chargeFieldBBox, fieldLinesBBox, standingWaveGeometry, standingWaveBBox,
          parabolaPoints, parabolaBBox, groundArcPoints, groundArcBBox,
          bracePathPoints, braceBBox, chromosomeBBox, bilayerBBox, neuronBBox,
-         legendBBox, pedigreeBBox } from "./render.js?v=1.7.0-four-session-integration";
+         legendBBox, pedigreeBBox, bubbleBBox, vesselBBox } from "./render.js?v=1.7.0-four-session-integration";
 // Labeler hit-test reuses the SAME label block the renderer trims the leader to
 // (render/annotations.js:renderLabeler): estimateLabelBlock for plain-text labels,
 // measureFormula for formula labels (확정 항목 ①) — so the clickable label area
@@ -23,6 +23,7 @@ import { circuitBodyPolygon, pendulumGeometry, pendulumBBox, springGeometry, spr
 import { estimateLabelBlock } from "./render/labels.js?v=1.7.0-four-session-integration";
 import { measureFormula } from "./formula.js?v=1.7.0-four-session-integration";
 import { hasLabelTypography, measureLabelTypography, nativeLabelBounds, nativeLabelPolygon } from "./ai-label-typography.js?v=1.7.0-four-session-integration";
+import { labelerTargetDots } from "./labeler-target.js?v=1.7.0-four-session-integration";
 import {
   segDist, pointInPolygon, pointInTriangle, triangleVertices,
   localPointForSizeObject, curveBezierSeg, curveBezierSegClosed, evalBezier,
@@ -32,6 +33,8 @@ import {
   OBJECT_TYPES, SIZE_TYPES, BOX_FACE_TYPES, LINE_TOL_TYPES,
   POINT_ARRAY_TYPES, TEXT_MEASURED_TYPES, zOrderObjects,
 } from "./object-types.js?v=1.7.0-four-session-integration";
+
+import { isLabApparatus, labBBox } from "./lab-apparatus.js?v=1.7.0-four-session-integration";
 
 const HIT_TOL_PX = 6; // CSS px of slop around an edge so thin strokes are clickable
 const LINE_HIT_TOL_PX = 20; // existing screen-space slop for line-family segments
@@ -433,8 +436,9 @@ function hitTest(objects, p, tol = 0, lineTol = tol) {
       // box == actual shape: outward-grown bbox containment (axes/coordplane/optics
       // select as one indivisible object via the bounding box; same as rect)
       const q = localPointForSizeObject(o, p);
-      if (q.x >= o.x - margin && q.x <= o.x + o.w + margin &&
-          q.y >= o.y - margin && q.y <= o.y + o.h + margin) {
+      const b = o.type === "apparatus" && isLabApparatus(o) ? labBBox(o) : o;
+      if (q.x >= b.x - margin && q.x <= b.x + b.w + margin &&
+          q.y >= b.y - margin && q.y <= b.y + b.h + margin) {
         // 잘려 나간(마스크로 지워진) 자리면 이 객체는 거기 없는 것으로 본다
         if ((o.type === "image" || o.type === "svgAsset") && isInsideCutoutPoly(o, p)) continue;
         return o.id;
@@ -461,6 +465,7 @@ function hitTest(objects, p, tol = 0, lineTol = tol) {
     if (o.type === "labeler") {
       const a = o.p1, b = o.p2;
       if (a && b) {
+        if (labelerTargetDots(o).some(dot => Math.hypot(p.x - dot.x, p.y - dot.y) <= dot.r + margin)) return o.id;
         const geometry = o.leaderRoutes?.length ? deriveLabelLeaderGeometry(o) : null;
         const joint = o.elbow || b;
         const segments = geometry ? geometry.routes.flatMap(r => { const points = sampleLeaderRoute(r); return points.slice(1).map((p,i) => [points[i],p]); }) : [[a, joint], ...(o.elbow ? [[joint, b]] : []), ...[o.p3, ...(o.extraAnchors || [])].filter(Boolean).map(point => [point, joint])];
@@ -510,6 +515,10 @@ function hitTest(objects, p, tol = 0, lineTol = tol) {
 /* ----- axis-aligned bounding box of any object (for marquee intersection) ----- */
 function getObjectBBox(o) {
   if (hasLabelTypography(o) && TEXT_MEASURED_TYPES.has(o.type)) return nativeLabelBounds(o);
+  if (o.type === "apparatus" && isLabApparatus(o)) return labBBox(o);
+  // 말풍선 꼬리는 몸통 상자 밖으로 나간다. '내용에 맞춤' 내보내기가 꼬리를 자르지 않도록 먼저 뺀다.
+  if (o.type === "bubble") return bubbleBBox(o);
+  if (o.type === "vessel") return vesselBBox(o);
   // was: rect|ellipse|triangle|image|svgAsset|axes|coordplane|optics|apparatus
   if (SIZE_TYPES.has(o.type)) {
     return { x: o.x, y: o.y, w: o.w, h: o.h };
@@ -552,6 +561,9 @@ function getObjectBBox(o) {
     const a = o.p1 || { x: 0, y: 0 }, b = o.p2 || a;
     const { hw, hh } = labelerBlockHalf(o);
     const points = [...leaderRoutePoints(o.leaderRoutes), a, o.elbow, o.p3, ...(o.extraAnchors || [])].filter(Boolean);
+    for (const dot of labelerTargetDots(o)) {
+      points.push({ x: dot.x - dot.r, y: dot.y - dot.r }, { x: dot.x + dot.r, y: dot.y + dot.r });
+    }
     const minX = Math.min(...points.map(p => p.x), b.x - hw), minY = Math.min(...points.map(p => p.y), b.y - hh);
     const maxX = Math.max(...points.map(p => p.x), b.x + hw), maxY = Math.max(...points.map(p => p.y), b.y + hh);
     return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };

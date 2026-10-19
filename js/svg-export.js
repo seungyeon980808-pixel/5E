@@ -24,6 +24,9 @@ import {
   FS_DIR_SUPPORTED, loadSavedDir, ensureDirPermission, writeToDir,
 } from "./export-dir.js?v=1.7.0-four-session-integration";
 import { getObjectBBox } from "./pick.js?v=1.7.0-four-session-integration";
+import { isLabApparatus } from "./lab-apparatus.js?v=1.7.0-four-session-integration";
+import { vesselLayout } from "./render/vessel.js?v=1.7.0-four-session-integration";
+import { bubbleLayout } from "./render/bubble.js?v=1.7.0-four-session-integration";
 import { zOrderObjects } from "./object-types.js?v=1.7.0-four-session-integration";
 
 const SVG_NS = "http://www.w3.org/2000/svg";
@@ -292,7 +295,11 @@ export function getContentBounds(s, options = {}, padding = 0) {
     catch (_) { bb = null; }
     if (!bb || !isFinite(bb.x) || !isFinite(bb.y) || !(bb.w >= 0) || !(bb.h >= 0)) continue;
     const rot = Number(obj.rotation) || 0;
-    if (rot) bb = rotatedBBox(bb, rot, bb.x + bb.w / 2, bb.y + bb.h / 2);
+    if (rot) {
+      // 말풍선 렌더러는 꼬리를 제외한 몸통 중심으로 회전한다.
+      const pivot = obj.type === "bubble" ? bubbleLayout(obj) : obj.type === "vessel" ? vesselLayout(obj) : isLabApparatus(obj) ? obj : bb;
+      bb = rotatedBBox(bb, rot, pivot.x + pivot.w / 2, pivot.y + pivot.h / 2);
+    }
     const rendered = graphBounds.get(obj);
     if (rendered) {
       const left = Math.min(bb.x, rendered.x), top = Math.min(bb.y, rendered.y);

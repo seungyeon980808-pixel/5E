@@ -13,6 +13,12 @@ import {
   hatchVLine,
   oDashV,
 } from "./core.js?v=1.7.0-four-session-integration";
+import { drawExamLabPart } from "./exam-lab-parts.js?v=1.7.0-four-session-integration";
+import { drawExamThermometer } from "./exam-illustration.js?v=1.7.0-four-session-integration";
+import { thermometerScale, scaleNumber } from "../science-geometry.js?v=1.7.0-four-session-integration";
+import { isLabApparatus, labBBox } from "../lab-apparatus.js?v=1.7.0-four-session-integration";
+import { drawLabApparatus } from "./lab-apparatus.js?v=1.7.0-four-session-integration";
+import { drawOpticalBench } from "./optical-bench.js?v=1.7.0-four-session-integration";
 import { resolveFill } from "./fill.js?v=1.7.0-four-session-integration";
 import { makeLabelEl } from "./labels.js?v=1.7.0-four-session-integration";
 import { DEFAULT_TEXT_SIZE_MM } from "../state.js?v=1.7.0-four-session-integration";
@@ -191,17 +197,21 @@ function renderApparatus(obj) {
   const g = document.createElementNS(SVG_NS, "g");
   if (obj.id) g.dataset.id = obj.id;
   const body = document.createElementNS(SVG_NS, "rect");
-  body.setAttribute("x", obj.x);
-  body.setAttribute("y", obj.y);
-  body.setAttribute("width", obj.w);
-  body.setAttribute("height", obj.h);
+  const bb = isLabApparatus(obj) ? labBBox(obj) : obj;
+  body.setAttribute("x", bb.x);
+  body.setAttribute("y", bb.y);
+  body.setAttribute("width", bb.w);
+  body.setAttribute("height", bb.h);
   body.setAttribute("fill", "transparent");
   g.appendChild(body);
 
   const color = grayHex(obj.strokeLevel);
   const sw = obj.strokeWidth || 0.2;
   const kind = obj.kind || "wire";
-  if (kind === "wire") drawWire(g, obj, sw, color);
+  if (kind === "optical_bench") drawOpticalBench(g, obj, sw, color);
+  else if (drawLabApparatus(g, obj, sw, color)) { /* Approved native apparatus. */ }
+  else if (drawExamLabPart(g, obj, sw, color)) { /* Native independent lab part. */ }
+  else if (kind === "wire") drawWire(g, obj, sw, color);
   else if (kind === "compass") drawCompass(g, obj, sw, color);
   else if (kind === "pulley") drawPulley(g, obj, sw, color);
   else if (kind === "clamp") drawClamp(g, obj, sw, color);
@@ -574,6 +584,7 @@ function drawSlit(g, obj, sw, color) {
 
 /* 온도계 — 구(수은 구) + 관 + 눈금. 기출 6회. level 0~1 = 수은 기둥 높이(기본 0.55). */
 function drawThermometer(g, obj, sw, color) {
+  if (obj.illustrationStyle === "exam") { drawExamThermometer(g, obj, sw, color); return; }
   const { x, y, w, h } = obj;
   const cx = x + w / 2;
   const bulbR = Math.min(w / 2, h * 0.12);
@@ -589,9 +600,26 @@ function drawThermometer(g, obj, sw, color) {
   b.setAttribute("cx", cx); b.setAttribute("cy", bulbY); b.setAttribute("r", bulbR);
   b.setAttribute("fill", color);
   g.appendChild(b);
-  const lv = Math.min(Math.max(obj.level ?? 0.55, 0), 1);
+  const calibrated = obj.temperatureMode === "value" || (obj.temperatureMode !== "height" && Number.isFinite(obj.temperature));
+  const scale = thermometerScale(obj);
+  const lv = calibrated ? scale.level : Math.min(Math.max(obj.level ?? 0.55, 0), 1);
   const topY = y + (h - bulbR * 2) * (1 - lv);
-  oLine(g, cx, bulbY - bulbR * 0.5, cx, topY, sw * 2, color);            // 수은 기둥
+  oLine(g, cx, bulbY - bulbR * 0.5, cx, topY, sw * 2, obj.thermometerColor || color);
+  if (calibrated) {
+    for (const value of scale.marks) {
+      const ty = y + (h - bulbR * 2) * (1 - (value - scale.min) / (scale.max - scale.min));
+      oLine(g, cx + stemW / 2, ty, cx + stemW / 2 + w * 0.12, ty, sw * 0.7, color);
+      if (obj.showTemperatureNumbers !== false) {
+        const text = document.createElementNS(SVG_NS, "text");
+        text.setAttribute("x", x + w - 0.15); text.setAttribute("y", ty);
+        text.setAttribute("font-size", Math.min(w * 0.12, h * 0.04, 1.6));
+        text.setAttribute("text-anchor", "end");
+        text.setAttribute("dominant-baseline", value === scale.max ? "hanging" : "middle");
+        text.setAttribute("fill", color); text.textContent = scaleNumber(value); g.appendChild(text);
+      }
+    }
+    return;
+  }            // 수은 기둥
   for (let i = 1; i <= 4; i++) {                                          // 눈금
     const ty = y + (h - bulbR * 2.4) * (i / 5);
     oLine(g, cx + stemW / 2, ty, cx + stemW / 2 + w * 0.18, ty, sw, color);

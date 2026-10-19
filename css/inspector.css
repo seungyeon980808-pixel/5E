@@ -90,6 +90,12 @@
 :root[data-mode="lite"][data-lite-inspector="none"] #inspector-content {
   display: none !important;
 }
+:root[data-mode="lite"][data-lite-inspector="lab-apparatus"] [data-lite-section]:not([data-lite-section="lab-apparatus"]) {
+  display: none !important;
+}
+:root[data-mode="lite"][data-lite-inspector="optical-bench"] [data-lite-section]:not([data-lite-section="optical-bench"]) {
+  display: none !important;
+}
 :root[data-mode="lite"][data-lite-inspector="none"] #inspector-empty {
   display: block !important;
 }

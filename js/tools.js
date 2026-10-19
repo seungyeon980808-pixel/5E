@@ -32,6 +32,8 @@ import { getSvgAsset } from "./svg-assets.js?v=1.7.0-four-session-integration";
 import { openPlaneModal } from "./function-graph/plane-modal.js?v=1.7.0-four-session-integration";
 import { openGraphModal } from "./graph/graph-modal.js?v=1.7.0-four-session-integration";
 import { nextObjectId } from "./tools/id.js?v=1.7.0-four-session-integration";
+import { LAB_APPARATUS, labSettings } from "./lab-apparatus.js?v=1.7.0-four-session-integration";
+import { OPTICAL_BENCH_DEFAULTS } from "./optical-bench.js?v=1.7.0-four-session-integration";
 import { setupFreeDraw } from "./tools/free-draw.js?v=1.7.0-four-session-integration";
 import { setupNodePlacement } from "./tools/node-placement.js?v=1.7.0-four-session-integration";
 import { setupClickDrawing, clearClickLocals } from "./tools/click-placement.js?v=1.7.0-four-session-integration";
@@ -126,7 +128,7 @@ const SYMBOL_TOOLS = new Set(["CIRCUIT", "OPTICS", "ARC", "APPARATUS", "SVGASSET
   "BRACE", "CHROMOSOME", "BILAYER", "NEURON", "LEGEND", "PEDIGREE",
   // 화학 부품 (2026-07-31) — docs/CHEM_PARTS_SPEC.md
   "VESSEL", "CHEMMODEL", "PARTICLEBOX", "ORBITAL", "BONDGROUP",
-  "CHEMCHART", "AXISBREAK", "CHEMGRAPH", "ELECTRODE", "PERIODIC"]);
+  "CHEMCHART", "AXISBREAK", "CHEMGRAPH", "ELECTRODE", "PERIODIC", "BUBBLE"]);
 const TOOL_CHOOSER_GROUPS = [
   { btn: "tool-text-merged", chooser: "chooser-text", persistent: true, tools: ["T", "LABELER"] },
   { btn: "tool-angle-merged", chooser: "chooser-angle", persistent: true, tools: ["ARC", "RIGHTANGLE"] },
@@ -445,7 +447,7 @@ const SHAPE_TYPE = { RECT: "rect", O: "ellipse", Y: "triangle", OPTICS: "optics"
   VESSEL: "vessel", CHEMMODEL: "chemmodel", PARTICLEBOX: "particlebox",
   ORBITAL: "orbital", BONDGROUP: "bondgroup", CHEMCHART: "chemchart",
   AXISBREAK: "axisbreak", CHEMGRAPH: "chemgraph", ELECTRODE: "electrode",
-  PERIODIC: "periodic" };
+  PERIODIC: "periodic", BUBBLE: "bubble" };
 // 자·각도기는 같은 오브젝트 타입("gauge")이라 도구코드로 kind를 구분한다(드래그 시작 시 캡처).
 const GAUGE_KIND = { RULER: "ruler", PROTRACTOR: "protractor" };
 let _drawKind = null; // 현재 드래그로 만드는 gauge의 kind
@@ -925,7 +927,13 @@ function makeShapeGeometry(type, a, b) {
     shape.templateId = APPARATUS_TEMPLATE_IDS[shape.kind] || null;
     shape.fillNone = true;
     shape.label = "";
-    if (shape.kind === "wire") {
+    if (shape.kind === "optical_bench") {
+      Object.assign(shape, OPTICAL_BENCH_DEFAULTS);
+      shape.lockAspect = true;
+    } else if (Object.hasOwn(LAB_APPARATUS, shape.kind)) {
+      Object.assign(shape, labSettings(shape));
+      shape.lockAspect = true;
+    } else if (shape.kind === "wire") {
       shape.length = Math.max(shape.w, 18);
       shape.thickness = 1.8;
       shape.gap = shape.thickness;
@@ -1430,6 +1438,11 @@ const CHEM_DEFAULTS = {
     showRatio: true, showTick: false,
   }],
   axisbreak: [30, 4, { dir: "horizontal", amp: 0.5, gap: 1.6, period: 3.0 }],
+  // 말풍선 — 몸통 상자를 끌어 만든다. 기본 크기는 기출 대화 그림의 말풍선(약 40×12 mm).
+  bubble: [40, 12, {
+    radius: 2.2, tailSide: "bottom", tailPos: 0.3, tailWidth: 3, tailLength: 3.2, tailSkew: -0.6,
+    fillLevel: 255, fillNone: false, dashLength: 0, dashGap: 0,
+  }],
   chemgraph: [44, 34, {
     kind: "energy", reactant: 0.42, product: 0.2, peak: 0.85,
     showCatalyst: false, showMarks: true,

@@ -35,6 +35,7 @@ export { orbitalBBox } from "./render/orbital.js?v=1.7.0-four-session-integratio
 export { bondGroupBBox, BOND_MOLECULES } from "./render/bondgroup.js?v=1.7.0-four-session-integration";
 export { chemChartBBox } from "./render/chemchart.js?v=1.7.0-four-session-integration";
 export { axisBreakBBox } from "./render/axisbreak.js?v=1.7.0-four-session-integration";
+export { bubbleLayout, bubblePath, bubbleBBox } from "./render/bubble.js?v=1.7.0-four-session-integration";
 export { chemGraphBBox } from "./render/chemgraph.js?v=1.7.0-four-session-integration";
 export { electrodeBBox } from "./render/electrode.js?v=1.7.0-four-session-integration";
 export { periodicBBox, PERIODIC_ELEMENTS } from "./render/periodic.js?v=1.7.0-four-session-integration";

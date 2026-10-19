@@ -24,6 +24,9 @@ import { buildImageSection } from "./inspector/section-image.js?v=1.7.0-four-ses
 import { buildPendulumSection } from "./inspector/section-pendulum.js?v=1.7.0-four-session-integration";
 import { buildSpringSection } from "./inspector/section-spring.js?v=1.7.0-four-session-integration";
 import { buildApparatusSection } from "./inspector/section-apparatus.js?v=1.7.0-four-session-integration";
+import { buildLabApparatusSection } from "./inspector/section-lab-apparatus.js?v=1.7.0-four-session-integration";
+import { isLabApparatus } from "./lab-apparatus.js?v=1.7.0-four-session-integration";
+import { buildOpticalBenchSection } from "./inspector/section-optical-bench.js?v=1.7.0-four-session-integration";
 import { buildChargeFieldSection, buildFieldLinesSection, buildStandingWaveSection } from "./inspector/section-field.js?v=1.7.0-four-session-integration";
 import { buildCoordplaneSection } from "./inspector/section-coordplane.js?v=1.7.0-four-session-integration";
 import { buildFuncgraphSection } from "./inspector/section-funcgraph.js?v=1.7.0-four-session-integration";
@@ -76,6 +79,7 @@ export function initInspector(state) {
     dimensionLabelRow, dimensionLabelInp, dimensionLabelTypeRow, dimensionLabelSizeRow,
     waveLengthRow, waveAmpRow, waveTailRow,
     lineLabelRow, lineLabelInp, leaderLabelRow, leaderLabelBtn, lineLabelTypeRow, lineLabelShowRow, lineLabelShowCb,
+    syncLabelerTargetControls,
     lineLabelFlipRow, lineLabelSizeRow,
     dashRow, _dashBtnEls, partialDashBtn, dashSliders, dashLenSlider, dashGapSlider,
     partialControls, ratioRange, ratioNum, flipBtn,
@@ -113,6 +117,8 @@ export function initInspector(state) {
           pendBobRow, pendBobInp } = buildPendulumSection(ctx);
   const { secSpring, syncSpring } = buildSpringSection(ctx);
   const { secApparatus, syncApparatus } = buildApparatusSection(ctx);
+  const { secLabApparatus, syncLabApparatus } = buildLabApparatusSection(ctx);
+  const { secOpticalBench, syncOpticalBench } = buildOpticalBenchSection(ctx);
   const { secChargeField, syncChargeField } = buildChargeFieldSection(ctx);
   const { secFieldLines, syncFieldLines } = buildFieldLinesSection(ctx);
   const { secStandingWave, syncStandingWave } = buildStandingWaveSection(ctx);
@@ -137,6 +143,8 @@ export function initInspector(state) {
   contentEl.appendChild(secPend);
   contentEl.appendChild(secSpring);
   contentEl.appendChild(secApparatus);
+  contentEl.appendChild(secOpticalBench);
+  contentEl.appendChild(secLabApparatus);
   contentEl.appendChild(secChargeField);
   contentEl.appendChild(secFieldLines);
   contentEl.appendChild(secStandingWave);
@@ -191,6 +199,7 @@ export function initInspector(state) {
     renderBgSection(s);
     renderLayerPanel(s);
     const ids = s.selectedIds || [];
+    syncLabelerTargetControls(ids.length === 1 ? s.objects.find(o => o.id === ids[0]) : null);
     const selectedObjects = ids.map((id) => s.objects.find((o) => o.id === id)).filter(Boolean);
     sec3.classList.toggle("insp-is-group", selectedObjects.length > 1 && !!selectedObjects[0].groupId
       && selectedObjects.every(o => o.groupId === selectedObjects[0].groupId));
@@ -199,7 +208,8 @@ export function initInspector(state) {
     const liteObject = selectedObjects.length === 1 ? selectedObjects[0] : null;
     document.documentElement.dataset.liteInspector = liteObject
       ? (["line", "polyline", "labeler"].includes(liteObject.type) ? "line"
-        : liteObject.type === "text" ? "text" : "none")
+        : liteObject.type === "text" ? "text"
+        : liteObject.type === "apparatus" && liteObject.kind === "optical_bench" ? "optical-bench" : isLabApparatus(liteObject) ? "lab-apparatus" : "none")
       : "empty";
 
     if (s.imageEditSession) {
@@ -245,6 +255,8 @@ export function initInspector(state) {
     secPend.style.display = "none"; // shown only for a single pendulum (set below)
     secSpring.style.display = "none"; // 용수철 하나를 골랐을 때만
     secApparatus.style.display = "none"; // 기구 하나를 골랐을 때만(갈래에 옵션이 있는 것만)
+    secOpticalBench.style.display = "none";
+    secLabApparatus.style.display = "none";
     secChargeField.style.display = "none";   // 전기력선 하나를 골랐을 때만
     secFieldLines.style.display = "none";    // 자기력선 하나를 골랐을 때만
     secStandingWave.style.display = "none";  // 정상파 하나를 골랐을 때만
@@ -697,6 +709,8 @@ export function initInspector(state) {
     // 기구 갈래별 옵션(슬릿 틈 개수·장치 상자 단자 …). 옵션이 없는 갈래는 sync가 숨긴다.
     if (obj.type === "apparatus") syncApparatus(obj);
     else secApparatus.style.display = "none";
+    syncOpticalBench(obj);
+    syncLabApparatus(obj);
     if (isSpring) syncSpring(obj);
 
     // 장(場)·정상파 section: 각 타입 하나를 골랐을 때만.

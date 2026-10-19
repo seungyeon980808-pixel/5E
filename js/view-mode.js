@@ -61,7 +61,7 @@ function applyMode(mode, persist = true, detail = {}) {
   const empty = document.getElementById("inspector-empty");
   if (empty) {
     empty.textContent = m === "lite"
-      ? "선·꺾은선·텍스트·지시선 라벨을 선택하면 필요한 속성만 표시됩니다."
+      ? "선·꺾은선·텍스트·지시선 라벨·광학대·실험장치를 선택하면 필요한 속성만 표시됩니다."
       : "";
   }
   // Lite에서는 레이어 1만 보이므로, 활성 레이어를 1로 고정한다.

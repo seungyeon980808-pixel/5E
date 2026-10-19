@@ -12,6 +12,7 @@ import {
 } from "./core.js?v=1.7.0-four-session-integration";
 import { makeUprightLabel } from "./labels.js?v=1.7.0-four-session-integration";
 import { renderLabelTypography } from "../ai-label-typography.js?v=1.7.0-four-session-integration";
+import { labelerTargetDots } from "../labeler-target.js?v=1.7.0-four-session-integration";
 // Formula labels (확정 항목 ①): a labeler whose content was committed as a formula
 // (contentMode:"formula") renders through the SAME projection formula objects use,
 // so the label, the editor preview, and SVG/PNG export can never diverge.
@@ -331,6 +332,16 @@ function renderLabeler(obj, { leadersOnly = false } = {}) {
     anchors.forEach(anchor => { if (drawLeader(anchor)) drawTargetArrow(anchor, b); });
   }
 
+  }
+  for (const dot of labelerTargetDots(obj)) {
+    const c = document.createElementNS(SVG_NS, "circle");
+    c.setAttribute("cx", dot.x);
+    c.setAttribute("cy", dot.y);
+    c.setAttribute("r", dot.r);
+    c.setAttribute("fill", color);
+    c.setAttribute("stroke", "none");
+    c.dataset.labelerTargetDot = "true";
+    g.appendChild(c);
   }
   if (leadersOnly) return g;
   // Upright (non-rotating) callout at p2.

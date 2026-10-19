@@ -31,6 +31,7 @@ async function drawLine(page, from, to) {
         localStorage.setItem("5e.preview:5e.tutorial.bannerSeen", "true");
         localStorage.setItem("5e.tutorial.bannerSeen", "true");
       });
+      await page.addInitScript(() => Object.defineProperty(window, "showSaveFilePicker", { configurable: true, value: undefined }));
       const errors = [];
       page.on("pageerror", error => errors.push(error.message));
       await page.goto(liteUrl());
@@ -93,13 +94,46 @@ async function drawLine(page, from, to) {
       await page.locator(".unified-text-input:visible").press("Enter");
       assert.deepEqual(await page.locator("#inspector [data-lite-control]:visible")
         .evaluateAll(controls => controls.map(control => control.dataset.liteControl)),
-      ["leader-label", "color", "stroke-width", "line-style"],
+      ["leader-label", "color", "stroke-width", "line-style", "leader-target-marker"],
       `${engine.name()} Lite leader must expose line controls and its existing editor`);
+      const targetMarker = page.getByRole("combobox", { name: "라벨러 대상 끝점", exact: true });
+      // 1.7.0 지시선은 클릭 영역(hit-twin)·선택 표시(labeler-selection)에도 같은 점 모양을 쓴다. 그려진 점만 센다.
+      const targetDot = page.locator('#scene > g:not([data-ui]) circle[data-labeler-target-dot="true"]');
+      assert.equal(await targetDot.count(), 0, "Existing labelers have no target dot by default");
+      await targetMarker.selectOption("dot");
+      assert.equal(await targetDot.count(), 1, "The dot belongs at the diagram anchor");
+      assert.equal(Number(await targetDot.getAttribute("r")), 0.5);
+      const dotSize = page.getByRole("spinbutton", { name: "라벨러 점 지름", exact: true });
+      await dotSize.fill("1.6");
+      await dotSize.press("Enter");
+      assert.equal(Number(await targetDot.getAttribute("r")), 0.8);
+      await page.locator("#undo-btn").click();
+      assert.equal(Number(await targetDot.getAttribute("r")), 0.5, "One undo restores the previous diameter");
+      await page.locator("#redo-btn").click();
+      assert.equal(Number(await targetDot.getAttribute("r")), 0.8);
+      await targetMarker.selectOption("none");
+      assert.equal(await targetDot.count(), 0);
+      await page.locator("#undo-btn").click();
+      assert.equal(Number(await targetDot.getAttribute("r")), 0.8, "Turning the marker off retains its diameter");
+      const anchors = await page.evaluate(async () => {
+        const { state } = await import('/js/state.js?v=1.7.0-four-session-integration');
+        const o = state.get().objects.find(o => o.id === state.get().selectedIds[0]);
+        return { p1: o.p1, p2: o.p2 };
+      });
+      assert.deepEqual(await targetDot.evaluate(c => ({ x: Number(c.getAttribute("cx")), y: Number(c.getAttribute("cy")) })), anchors.p1);
       await page.locator('[data-lite-control="leader-label"] button').click();
       await page.locator(".unified-text-input:visible").fill("지시선 후");
       await page.locator(".unified-text-input:visible").press("Enter");
       assert.match(await page.locator("#scene").textContent(), /지시선 후/,
         `${engine.name()} Lite leader label editor must update the selected label`);
+      assert.equal(Number(await targetDot.getAttribute("r")), 0.8, "Text editing must not change the dot diameter");
+      await page.keyboard.press("ArrowRight");
+      const movedAnchor = await page.evaluate(async () => {
+        const { state } = await import('/js/state.js?v=1.7.0-four-session-integration');
+        return state.get().objects.find(o => o.id === state.get().selectedIds[0]).p1;
+      });
+      assert.notDeepEqual(movedAnchor, anchors.p1, "Keyboard movement moves the whole labeler");
+      assert.deepEqual(await targetDot.evaluate(c => ({ x: Number(c.getAttribute("cx")), y: Number(c.getAttribute("cy")) })), movedAnchor);
       await page.screenshot({ path: path.join(evidence, `${engine.name()}-leader-label.png`) });
 
       await page.locator("#mode-toggle-btn").click();
@@ -114,15 +148,67 @@ async function drawLine(page, from, to) {
       await page.locator(".unified-text-input:visible").press("Enter");
       assert.match(await page.locator("#scene").textContent(), /Pro 지시선 후/,
         `${engine.name()} the shared Pro editor must update the same retained leader`);
+      assert.equal(await targetMarker.isVisible(), true, "Pro also exposes the target marker option");
+      assert.equal(await dotSize.isVisible(), true);
       await page.screenshot({ path: path.join(evidence, `${engine.name()}-pro-unaffected.png`) });
+
+      await page.locator("#file-menu-btn").click();
+      await page.locator("#project-save").click();
+      await page.locator('#project-save-filename:visible, .modal-overlay input.modal-input:visible').fill("점 라벨러 검증.5e");
+      let pendingDownload = page.waitForEvent("download");
+      if (await page.locator("#project-save-download").isVisible()) await page.locator("#project-save-download").click();
+      else await page.getByRole("button", { name: "저장", exact: true }).click();
+      const projectDownload = await pendingDownload;
+      const projectFile = path.join(evidence, `${engine.name()}-dot-labeler.5e`);
+      await projectDownload.saveAs(projectFile);
+      // 1.7.0 .5e 파일은 project.json을 담은 zip이다.
+      const savedProject = await page.evaluate(async bytes => {
+        const { unzipStore } = await import('/js/backup-zip.js?v=1.7.0-four-session-integration');
+        return JSON.parse(new TextDecoder().decode(unzipStore(new Uint8Array(bytes)).get('project.json')));
+      }, [...fs.readFileSync(projectFile)]);
+      const savedLabel = savedProject.drawing.pages.flatMap(p => p.objects).find(o => o.targetMarker === "dot");
+      assert.equal(savedLabel.targetDotDiameter, 1.6);
+      // 1.7.0은 파일 메뉴의 #project-open으로 연다. 현재 작업 대체 확인 창이 뜨면 '열기'.
+      if (await page.locator("#file-menu-btn").isVisible()) await page.locator("#file-menu-btn").click();
+      const chooser = page.waitForEvent("filechooser");
+      await page.locator("#project-open").click();
+      await (await chooser).setFiles(projectFile);
+      const replaceOpen = page.locator(".modal-overlay:not([hidden])").filter({ hasText: "프로젝트 파일로 대체" }).getByRole("button", { name: "열기", exact: true });
+      await replaceOpen.waitFor({ timeout: 5000 }).then(() => replaceOpen.click(), () => {});
+      await page.waitForFunction(() => document.querySelectorAll('#scene > g:not([data-ui]) circle[data-labeler-target-dot="true"]').length === 1);
+      assert.equal(Number(await targetDot.getAttribute("r")), 0.8, "Project reopening preserves the diameter");
+
+      pendingDownload = page.waitForEvent("download");
+      await page.evaluate(async () => {
+        const { state } = await import('/js/state.js?v=1.7.0-four-session-integration');
+        const { exportSvg } = await import('/js/svg-export.js?v=1.7.0-four-session-integration');
+        await exportSvg(state, 'dot-labeler.svg');
+      });
+      const svgDownload = await pendingDownload;
+      const svgFile = path.join(evidence, `${engine.name()}-dot-labeler.svg`);
+      await svgDownload.saveAs(svgFile);
+      const source = fs.readFileSync(svgFile, "utf8");
+      assert.match(source, /data-labeler-target-dot="true"/);
+      assert.match(source, /r="0\.8"/);
+      assert.match(source, /clip-path=/, "The export keeps artboard clipping");
+      pendingDownload = page.waitForEvent("download");
+      await page.evaluate(async () => {
+        const { state } = await import('/js/state.js?v=1.7.0-four-session-integration');
+        const { exportPng } = await import('/js/svg-export.js?v=1.7.0-four-session-integration');
+        await exportPng(state, 'dot-labeler.png', 300);
+      });
+      const pngDownload = await pendingDownload;
+      await pngDownload.saveAs(path.join(evidence, `${engine.name()}-dot-labeler.png`));
+      assert.equal(await pngDownload.failure(), null);
       assert.deepEqual(errors, []);
-      report.push({ engine: engine.name(), line: true, text: true, leader: true, proUnchanged: true });
+      report.push({ engine: engine.name(), line: true, text: true, leader: true, proUnchanged: true,
+        dotToggleAndSize: true, undoRedo: true, movesWithAnchor: true, projectSaveReopen: true, svgPngExport: true });
     } finally {
       await browser.close();
     }
   }
   fs.writeFileSync(path.join(evidence, "report.json"), JSON.stringify(report, null, 2));
-  console.log("Lite inspector controls: line/text/leader actions and Pro isolation PASS");
+  console.log("Lite/Pro inspector: dot size/toggle/undo/movement, project save/reopen and SVG/PNG export PASS");
 })().catch(error => {
   console.error(error);
   process.exitCode = 1;

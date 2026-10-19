@@ -22,6 +22,7 @@ import { escapeHtml } from "./html-escape.js?v=1.7.0-four-session-integration";
 //               geometry on canvas drag/click via makeShape()/makeCircuit()/the ARC
 //               tool. The registry only names which tool + variant to arm.
 
+import { LAB_APPARATUS } from "./lab-apparatus.js?v=1.7.0-four-session-integration";
 import { state } from "./state.js?v=1.7.0-four-session-integration";
 import { armSymbol } from "./tools.js?v=1.7.0-four-session-integration";
 import { renderObject } from "./render.js?v=1.7.0-four-session-integration";
@@ -136,6 +137,21 @@ export const TEMPLATES = {
     create: { tool: "LABELER" },
   },
 
+  projectile_motion: { kind: "shape", category: "역학", label: "포물선 운동", keywords: ["포물선", "투사체", "속력", "발사각", "중력"], create: { tool: "APPARATUS", kind: "projectile_motion", props: { strokeWidth: 0.22 } } },
+  circular_wave: { kind: "shape", category: "광학", label: "원형 물결파", keywords: ["물결파", "파원", "위상", "파장", "간섭"], create: { tool: "APPARATUS", kind: "circular_wave", props: { strokeWidth: 0.22 } } },
+  refraction_scene: { kind: "shape", category: "광학", label: "다중 매질 굴절", keywords: ["굴절", "굴절률", "전반사", "스넬", "매질"], create: { tool: "APPARATUS", kind: "refraction_scene", props: { strokeWidth: 0.22 } } },
+  lens_model: { kind: "shape", category: "광학", label: "렌즈와 물체·상", keywords: ["렌즈", "실상", "허상", "초점", "배율"], create: { tool: "APPARATUS", kind: "lens_model", props: { strokeWidth: 0.22 } } },
+  energy_levels: { kind: "shape", category: "현대물리학", label: "에너지 준위", keywords: ["에너지", "준위", "전이", "수소", "광자"], create: { tool: "APPARATUS", kind: "energy_levels", props: { strokeWidth: 0.22 } } },
+  spectrum: { kind: "shape", category: "현대물리학", label: "스펙트럼", keywords: ["스펙트럼", "방출", "흡수", "파장", "연속"], create: { tool: "APPARATUS", kind: "spectrum", props: { strokeWidth: 0.22 } } },
+
+  cart_track: { kind: "shape", category: "역학", label: "수레 실험대", keywords: ["수레", "레일", "포토게이트", "힘센서", "상자"], create: { tool: "APPARATUS", kind: "cart_track", props: { strokeWidth: 0.22 } } },
+  transformer: { kind: "shape", category: "전자기학", label: "변압기·상호 유도", keywords: ["변압기", "코일", "감은수", "철심", "상호유도"], create: { tool: "APPARATUS", kind: "transformer", props: { strokeWidth: 0.22 } } },
+  pendulum_rig: { kind: "shape", category: "역학", label: "스탠드 단진자", keywords: ["단진자", "실", "길이", "각도", "추", "스탠드"], create: { tool: "APPARATUS", kind: "pendulum_rig", props: { strokeWidth: 0.22 } } },
+  spring_balance: { kind: "shape", category: "역학", label: "용수철 저울", keywords: ["용수철", "저울", "추", "개수"], create: { tool: "APPARATUS", kind: "spring_balance", props: { strokeWidth: 0.22 } } },
+  piston_gas: { kind: "shape", category: "열역학", label: "기체 피스톤", keywords: ["피스톤", "기체", "입자", "운동", "방향", "실린더"], create: { tool: "APPARATUS", kind: "piston_gas", props: { strokeWidth: 0.22 } } },
+  metal_ring: { kind: "shape", category: "전자기학", label: "회전 금속고리", keywords: ["금속", "고리", "기준각도", "반지름", "반원", "부채꼴", "스냅"], create: { tool: "APPARATUS", kind: "metal_ring", props: { strokeWidth: 0.22 } } },
+  circular_motion: { kind: "shape", category: "역학", label: "구심력 실험", keywords: ["구심력", "원운동", "원뿔진자", "관", "질량", "반지름"], create: { tool: "APPARATUS", kind: "circular_motion", props: { strokeWidth: 0.22 } } },
+
   wire: { kind: "shape", category: "전자기학", label: "도선", keywords: ["도선", "전선", "wire", "conductor"], create: { tool: "APPARATUS", kind: "wire" } },
   compass: { kind: "shape", category: "전자기학", label: "나침반", keywords: ["나침반", "compass", "needle", "magnetic"], create: { tool: "APPARATUS", kind: "compass" } },
   clamp: { kind: "shape", category: "역학", label: "클램프", keywords: ["클램프", "스탠드", "clamp", "stand"], create: { tool: "APPARATUS", kind: "clamp" } },
@@ -143,9 +159,10 @@ export const TEMPLATES = {
   bar_magnet: { kind: "shape", category: "전자기학", label: "막대자석", keywords: ["자석", "막대자석", "N극", "S극", "magnet"], create: { tool: "APPARATUS", kind: "bar_magnet" } },
   electroscope: { kind: "shape", category: "전자기학", label: "검전기", keywords: ["검전기", "금속박", "정전기", "electroscope"], create: { tool: "APPARATUS", kind: "electroscope" } },
   speaker: { kind: "shape", category: "역학", label: "스피커", keywords: ["스피커", "음원", "소리", "음파", "speaker"], create: { tool: "APPARATUS", kind: "speaker" } },
-  thermometer: { kind: "shape", category: "열역학", label: "온도계", keywords: ["온도계", "온도", "thermometer"], create: { tool: "APPARATUS", kind: "thermometer" } },
+  thermometer: { kind: "shape", category: "열역학", label: "온도계", keywords: ["온도계", "온도", "thermometer"], create: { tool: "APPARATUS", kind: "thermometer", props: { illustrationStyle: "exam", temperatureMode: "value", temperature: 25, temperatureMin: 0, temperatureMax: 100 } } },
   phototube: { kind: "shape", category: "광학", label: "광전관", keywords: ["광전관", "광전 효과", "광전자", "phototube"], create: { tool: "APPARATUS", kind: "phototube" } },
   slit: { kind: "shape", category: "광학", label: "슬릿", keywords: ["슬릿", "단일 슬릿", "이중 슬릿", "간섭", "slit"], create: { tool: "APPARATUS", kind: "slit" } },
+  optical_bench: { kind: "shape", category: "광학", label: "광학대", keywords: ["광학대", "광학 레일", "레이저", "이중 슬릿", "스크린", "렌즈 실험", "조건 조절", "optical bench"], create: { tool: "APPARATUS", kind: "optical_bench", props: { strokeWidth: 0.22 } } },
   fringe_pattern: { kind: "shape", category: "광학", label: "간섭무늬", keywords: ["간섭무늬", "무늬", "밝은 무늬", "fringe"], create: { tool: "APPARATUS", kind: "fringe_pattern" } },
   transistor: { kind: "shape", category: "전자기학", label: "트랜지스터", keywords: ["트랜지스터", "transistor", "npn", "pnp", "증폭", "베이스", "컬렉터", "이미터"], create: { tool: "APPARATUS", kind: "transistor" } },
 
@@ -259,8 +276,8 @@ export const TEMPLATES = {
    * 카테고리 이름은 subject-objects.js 의 생명과학 아코디언 이름과 **글자까지 같아야**
    * 팔레트에 나온다(templates.js 위쪽 주석의 그 함정 — 지금도 axis_break 가 그래서 안 보인다). */
   bilayer:    { kind: "shape", category: "세포학", label: "인지질 이중층", keywords: ["인지질", "이중층", "세포막", "막", "지질", "bilayer", "membrane", "lipid"], create: { tool: "BILAYER" } },
-  neuron:     { kind: "shape", category: "동식물학", label: "뉴런", keywords: ["뉴런", "신경", "신경세포", "축삭", "가지돌기", "시냅스", "neuron", "axon"], create: { tool: "NEURON" } },
-  chromosome: { kind: "shape", category: "유전학", label: "염색체", keywords: ["염색체", "염색분체", "동원체", "상동", "대립유전자", "chromosome", "chromatid"], create: { tool: "CHROMOSOME" } },
+  neuron:     { kind: "shape", category: "동식물학", label: "뉴런", keywords: ["뉴런", "신경", "신경세포", "축삭", "가지돌기", "시냅스", "neuron", "axon"], create: { tool: "NEURON", props: { illustrationStyle: "exam", somaRadius: 1.1 } } },
+  chromosome: { kind: "shape", category: "유전학", label: "염색체", keywords: ["염색체", "염색분체", "동원체", "상동", "대립유전자", "chromosome", "chromatid"], create: { tool: "CHROMOSOME", props: { chromosomeForm: "spread", fillStyle: "black", spreadAngle: 22, chromatidWidth: 2.2 } } },
   pedigree:   { kind: "shape", category: "유전학", label: "가계도", keywords: ["가계도", "가계", "유전", "세대", "발현", "보인자", "pedigree"], create: { tool: "PEDIGREE" } },
   // 중괄호·범례는 생명 전용이 아니다(물리·화학·지구에서도 쓴다). 지금은 생명 패널에만
   // 노출하고, 다른 과목 패널을 손댈 때 같은 카테고리를 그쪽 cats 에도 넣으면 된다.
@@ -271,15 +288,23 @@ export const TEMPLATES = {
    * 기출 280장 전수 분해(docs/PART_FREQUENCY_CHEM.md)에서 나온 대기열을 부품으로 만든 것.
    * 카테고리 이름은 subject-objects.js 의 화학 아코디언 이름과 **글자까지 같아야** 팔레트에 나온다.
    * 용기는 대기열 1~5위를 한 타입으로 덮으므로(93장) kind 별로 버튼을 따로 낸다. */
-  vessel_beaker:   { kind: "shape", category: "실험 기구", label: "비커", keywords: ["비커", "beaker", "용기", "유리"], create: { tool: "VESSEL", props: { kind: "beaker", text: "", hasPiston: false, liquid: 0.45 } } },
-  vessel_flask:    { kind: "shape", category: "실험 기구", label: "삼각플라스크", keywords: ["삼각플라스크", "플라스크", "flask"], create: { tool: "VESSEL", props: { kind: "flask", text: "", hasPiston: false, liquid: 0.4 } } },
-  vessel_tube:     { kind: "shape", category: "실험 기구", label: "시험관", keywords: ["시험관", "test tube", "튜브"], create: { tool: "VESSEL", props: { kind: "test_tube", text: "", hasPiston: false, liquid: 0.45 } } },
-  vessel_cylinder: { kind: "shape", category: "실험 기구", label: "눈금실린더", keywords: ["눈금실린더", "메스실린더", "cylinder", "부피"], create: { tool: "VESSEL", props: { kind: "cylinder_graduated", text: "", hasPiston: false, liquid: 0.5, hasTicks: true } } },
+  lab_stopper: { kind: "shape", category: "실험 기구", label: "고무마개", keywords: ["고무마개", "마개", "구멍", "stopper"], create: { tool: "APPARATUS", kind: "rubber_stopper", props: { holeCount: 2, taper: 0.04, strokeWidth: 0.22 } } },
+  lab_drop_funnel: { kind: "shape", category: "실험 기구", label: "적하 깔때기", keywords: ["적하", "깔때기", "주입", "dropping funnel"], create: { tool: "APPARATUS", kind: "dropping_funnel", props: { liquid: 0, liquidColor: "#c6c6c6", valveAngle: 0, strokeWidth: 0.22 } } },
+  lab_glass_tube: { kind: "shape", category: "실험 기구", label: "꺾인 유리관", keywords: ["유리관", "연결관", "압력관", "glass tube", "elbow"], create: { tool: "APPARATUS", kind: "glass_tube", props: { bendAt: 0.23, tubeWidthRatio: 0.09, strokeWidth: 0.22 } } },
+  lab_plate_electrode: { kind: "shape", category: "실험 기구", label: "판형 금속 전극", keywords: ["금속판", "전극", "금속", "판", "electrode"], create: { tool: "APPARATUS", kind: "metal_electrode", props: { depthRatio: 0.12, strokeWidth: 0.22 } } },
+  lab_stirrer: { kind: "shape", category: "실험 기구", label: "고리형 교반기", keywords: ["교반기", "교반봉", "열량계", "고리", "stirrer"], create: { tool: "APPARATUS", kind: "stirrer", props: { loopRatio: 0.68, strokeWidth: 0.22 } } },
+  lab_pipe_valve: { kind: "shape", category: "해양학", label: "연결관 밸브", keywords: ["연결관", "밸브", "꼭지", "수조", "valve", "stopcock"], create: { tool: "APPARATUS", kind: "pipe_valve", props: { valveAngle: 0, strokeWidth: 0.22 } } },
+  vessel_beaker:   { kind: "shape", category: "실험 기구", label: "비커", keywords: ["비커", "beaker", "용기", "유리"], create: { tool: "VESSEL", props: { kind: "beaker", illustrationStyle: "exam", liquidColor: "#cecece", strokeWidth: 0.22, text: "", hasPiston: false, liquid: 0.45 } } },
+  vessel_flask:    { kind: "shape", category: "실험 기구", label: "삼각플라스크", keywords: ["삼각플라스크", "플라스크", "flask"], create: { tool: "VESSEL", props: { kind: "flask", illustrationStyle: "exam", liquidColor: "#cecece", strokeWidth: 0.22, text: "", hasPiston: false, liquid: 0.4 } } },
+  vessel_tube:     { kind: "shape", category: "실험 기구", label: "시험관", keywords: ["시험관", "test tube", "튜브"], create: { tool: "VESSEL", props: { kind: "test_tube", illustrationStyle: "exam", liquidColor: "#cecece", strokeWidth: 0.22, text: "", hasPiston: false, liquid: 0.45 } } },
+  vessel_cylinder: { kind: "shape", category: "실험 기구", label: "눈금실린더", keywords: ["눈금실린더", "메스실린더", "cylinder", "부피"], create: { tool: "VESSEL", props: { kind: "cylinder_graduated", illustrationStyle: "exam", liquidColor: "#cecece", strokeWidth: 0.22, text: "", hasPiston: false, liquid: 0.5, hasTicks: true } } },
   vessel_funnel:   { kind: "shape", category: "실험 기구", label: "깔때기", keywords: ["깔때기", "funnel", "거름", "여과"], create: { tool: "VESSEL", props: { kind: "funnel", text: "", hasPiston: false, liquid: 0 } } },
-  vessel_utube:    { kind: "shape", category: "실험 기구", label: "U자관", keywords: ["U자관", "유자관", "u tube", "수은"], create: { tool: "VESSEL", props: { kind: "u_tube", text: "", hasPiston: false, liquid: 0.4 } } },
-  vessel_burette:  { kind: "shape", category: "실험 기구", label: "뷰렛", keywords: ["뷰렛", "burette", "적정"], create: { tool: "VESSEL", props: { kind: "burette", text: "", hasPiston: false, liquid: 0.6, hasTicks: true } } },
+  vessel_utube:    { kind: "shape", category: "실험 기구", label: "U자관", keywords: ["U자관", "유자관", "u tube", "수은"], create: { tool: "VESSEL", props: { kind: "u_tube", illustrationStyle: "exam", liquidColor: "#cecece", strokeWidth: 0.22, text: "", hasPiston: false, liquid: 0.4 } } },
+  vessel_burette:  { kind: "shape", category: "실험 기구", label: "뷰렛", keywords: ["뷰렛", "burette", "적정"], create: { tool: "VESSEL", props: { kind: "burette", illustrationStyle: "exam", liquidColor: "#cecece", strokeWidth: 0.22, text: "", hasPiston: false, liquid: 0.6, hasTicks: true } } },
+  vessel_round_flask: { kind: "shape", category: "실험 기구", label: "둥근바닥 플라스크", keywords: ["둥근", "플라스크", "용량", "round flask"], create: { tool: "VESSEL", props: { kind: "round_flask", illustrationStyle: "exam", liquidColor: "#cecece", strokeWidth: 0.22, fillMode: "volume", capacityMl: 200, volumeMl: 80, liquid: 0.4, hasPiston: false } } },
+  vessel_tank: { kind: "shape", category: "해양학", label: "칸막이 수조", keywords: ["수조", "칸막이", "해수", "밀도", "tank"], create: { tool: "VESSEL", props: { kind: "tank", illustrationStyle: "exam", liquidColor: "#cecece", strokeWidth: 0.22, hasPartition: true, partitionAt: 0.5, liquid: 0.5, leftLiquid: 0.65, rightLiquid: 0.35, hasPiston: false } } },
   vessel_round:    { kind: "shape", category: "실험 기구", label: "강철 용기", keywords: ["강철 용기", "원형 용기", "구형", "기체"], create: { tool: "VESSEL", props: { kind: "round", hasPiston: false, liquid: 0 } } },
-  vessel_piston:   { kind: "shape", category: "실험 기구", label: "실린더+피스톤", keywords: ["실린더", "피스톤", "기체", "부피", "보일"], create: { tool: "VESSEL", props: { kind: "box", liquid: 0 } } },
+  vessel_piston:   { kind: "shape", category: "실험 기구", label: "실린더+피스톤", keywords: ["실린더", "피스톤", "기체", "부피", "보일"], create: { tool: "VESSEL", props: { kind: "box", liquid: 0, hasPiston: true, pistonAt: 0.66 } } },
   electrode:  { kind: "shape", category: "실험 기구", label: "전극·전지", keywords: ["전극", "전지", "갈바니", "전기분해", "염다리", "electrode"], create: { tool: "ELECTRODE" } },
 
   chem_atom:  { kind: "shape", category: "원자·주기율", label: "원자 구슬", keywords: ["원자", "구슬", "입자", "atom"], create: { tool: "CHEMMODEL", props: { kind: "atom" } } },
@@ -302,6 +327,7 @@ export const TEMPLATES = {
   graph_pha:  { kind: "shape", category: "반응·그래프", label: "상평형 그림", keywords: ["상평형", "삼중점", "임계점", "phase"], create: { tool: "CHEMGRAPH", props: { kind: "phase" } } },
 
   axisbreak:  { kind: "shape", category: "표시·주석", label: "축 생략", keywords: ["축 생략", "물결", "생략 기호", "break"], create: { tool: "AXISBREAK" } },
+  bubble:     { kind: "shape", category: "표시·주석", label: "말풍선", keywords: ["말풍선", "대화", "대사", "학생", "bubble", "speech"], create: { tool: "BUBBLE" } },
 
   /* ===== 지구과학 (2026-07-31) — 규격은 docs/EARTH_PARTS_SPEC.md =====
    * 전용 타입을 만들지 않았다. 전선·등치선·산점은 본질이 곡선·꺾은선이라
@@ -371,7 +397,7 @@ export function instantiate(symbolId, atCanvasPoint) {
 // Categories are rendered as collapsible sections (same markup as the hardcoded
 // 공통 도구 / 고급 기능 sections, so the existing collapse delegation works). Each
 // button carries data-symbol="<symbolId>" — a UNIQUE id, not a shared tool name.
-const CATEGORY_ORDER = ["공통", "함수", "회로", "전자기학", "광학", "역학", "열역학",
+const CATEGORY_ORDER = ["공통", "함수", "회로", "전자기학", "광학", "역학", "열역학", "현대물리학",
   // 생명과학 (2026-07-31)
   "세포학", "동식물학", "유전학",
   // 지구과학 (2026-07-31) — docs/EARTH_PARTS_SPEC.md
@@ -408,6 +434,14 @@ const OPTICS_ICON_BOX = {
 };
 
 const APPARATUS_ICON_BOX = {
+  ...Object.fromEntries(Object.entries(LAB_APPARATUS).map(([kind,def])=>[kind,{w:def.box[0],h:def.box[1]}])),
+  optical_bench: { w: 70, h: 22 },
+  rubber_stopper: { w: 18, h: 9 },
+  dropping_funnel: { w: 12, h: 28 },
+  glass_tube: { w: 16, h: 28 },
+  metal_electrode: { w: 8, h: 24 },
+  stirrer: { w: 9, h: 30 },
+  pipe_valve: { w: 24, h: 16 },
   wire: { w: 26, h: 6 },
   compass: { w: 18, h: 18 },
   pulley: { w: 18, h: 18 },
@@ -450,6 +484,7 @@ const CHEM_ICON_BOX = {
   BONDGROUP:   { type: "bondgroup", w: 24, h: 16, props: { molecule: "CO2", bondLength: 7 }, iconOnly: { showKoreanName: false } },
   CHEMCHART:   { type: "chemchart", w: 22, h: 20, props: { kind: "bar", values: "2,4,3", names: "" }, iconOnly: { xTitle: "", yTitle: "", showGuide: false, showRatio: false } },
   AXISBREAK:   { type: "axisbreak", w: 22, h: 6, props: { dir: "horizontal", amp: 0.8, gap: 2, period: 4 } },
+  BUBBLE:      { type: "bubble", w: 22, h: 12, props: { radius: 3, tailSide: "bottom", tailPos: 0.25, tailWidth: 4, tailLength: 5, tailSkew: -0.5 } },
   CHEMGRAPH:   { type: "chemgraph", w: 24, h: 20, props: { kind: "energy" }, iconOnly: { showMarks: false, showRegionNames: false, showEqPoint: false } },
   ELECTRODE:   { type: "electrode", w: 24, h: 20, props: {}, iconOnly: { solution: "", leftLabel: "", rightLabel: "", showElectronArrow: false } },
   PERIODIC:    { type: "periodic", w: 26, h: 13, props: { periods: 3 }, iconOnly: { showZ: false, metalShade: true } },
@@ -507,6 +542,7 @@ function iconSampleObject(id, def) {
     if (c.kind === "clamp") sample.flipped = false;
     if (c.kind === "scale") sample.displayText = "0.99 N";
     if (c.kind === "electroscope") sample.leafSpread = 0.55;
+    Object.assign(sample, c.props || {});
     return sample;
   }
   if (c.tool === "GROUNDARC") {

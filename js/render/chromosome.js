@@ -2,7 +2,8 @@
  *
  * 명세: docs/BIO_PARTS_SPEC.md §2.
  *
- * **X자가 아니다.** 기출(생명과학)의 염색체는 모서리가 둥근 막대(캡슐) 두 개가 나란히
+ * 캡슐 도식은 기존 프로젝트에 유지한다. 분열기/분절 막대 형태도 선택할 수 있다.
+ * 기존 캡슐 표현: 기출(생명과학)의 염색체는 모서리가 둥근 막대(캡슐) 두 개가 나란히
  * 붙어 있는 모양이고, 동원체는 두 캡슐 **각각의 같은 높이**에 찍힌 작은 검은 점이다.
  * 허리가 잘록해지는 선도, 두 갈래가 교차하는 선도 없다.
  *
@@ -22,6 +23,7 @@
  */
 
 import { SVG_NS, grayHex } from "./core.js?v=1.7.0-four-session-integration";
+import { chromosomeSpread, drawExamChromatids } from "./exam-illustration.js?v=1.7.0-four-session-integration";
 import { resolveFill, makeFillPattern } from "./fill.js?v=1.7.0-four-session-integration";
 import { makeUprightLabel } from "./labels.js?v=1.7.0-four-session-integration";
 import { DEFAULT_TEXT_SIZE_MM } from "../state.js?v=1.7.0-four-session-integration";
@@ -51,10 +53,12 @@ export function chromosomeGeometry(obj) {
 
   const w = Math.max(0.2, num(obj.chromatidWidth, DEF_WIDTH));
   const gap = Math.max(0, num(obj.chromatidGap, DEF_GAP));
-  const off = (gap + w) / 2;               // 캡슐 중심의 국소 x (±)
-  const half = off + w / 2;                // 한 벌의 국소 x 반폭
+  const replicated = obj.replicated !== false;
+  const off = replicated ? (gap + w) / 2 : 0;               // 캡슐 중심의 국소 x (±)
+  let half = off + w / 2;                // 한 벌의 국소 x 반폭
   const dotR = Math.min(0.62, w / 3.4);
   const c = Math.max(0, Math.min(1, num(obj.centromere, DEF_CENTRO)));
+  if (obj.chromosomeForm === "spread" && replicated) half = chromosomeSpread(obj, { len, w, centromere: c }).half;
   const centroY = -len / 2 + c * len;      // 동원체의 국소 y
 
   const pair = obj.homologPair === true;
@@ -68,7 +72,7 @@ export function chromosomeGeometry(obj) {
 
   return {
     p1, p2, mid, len, angleDeg, ux, uy, nx, ny,
-    w, gap, off, half, dotR, centromere: c, centroY,
+    w, gap, off, half, dotR, centromere: c, centroY, replicated,
     pair, pairGap, shifts, toWorld,
   };
 }
@@ -101,6 +105,7 @@ function fillProxy(obj) {
   if (style === "hatch" || style === "cross") {
     return { type: "rect", id, fillStyle: style, fillLevel: obj.strokeLevel ?? 0, fillTile: obj.fillTile };
   }
+  if (style === "black") return { type: "rect", id, fillStyle: "solid", fillLevel: 15 };
   if (style === "gray") return { type: "rect", id, fillStyle: "solid", fillLevel: GRAY_LEVEL };
   return { type: "rect", id, fillStyle: "solid", fillLevel: num(obj.fillLevel, 255) };
 }
@@ -126,8 +131,11 @@ export function renderChromosome(obj) {
   rot.setAttribute("transform", `translate(${geo.mid.x} ${geo.mid.y}) rotate(${geo.angleDeg})`);
   g.appendChild(rot);
 
+  if (obj.chromosomeForm === "spread" || obj.chromosomeForm === "segmented") {
+    drawExamChromatids(rot, obj, geo, fillVal, stroke, sw);
+  } else {
   for (const shift of geo.shifts) {
-    for (const sign of [-1, 1]) {
+    for (const sign of geo.replicated ? [-1, 1] : [0]) {
       const cx = shift + sign * geo.off;
       const r = document.createElementNS(SVG_NS, "rect");
       r.setAttribute("x", cx - geo.w / 2);
@@ -142,7 +150,7 @@ export function renderChromosome(obj) {
       rot.appendChild(r);
     }
     // 동원체: 두 캡슐 각각 같은 높이에 작은 점
-    for (const sign of [-1, 1]) {
+    for (const sign of geo.replicated ? [-1, 1] : [0]) {
       const d = document.createElementNS(SVG_NS, "circle");
       d.setAttribute("cx", shift + sign * geo.off);
       d.setAttribute("cy", geo.centroY);
@@ -150,6 +158,8 @@ export function renderChromosome(obj) {
       d.setAttribute("fill", stroke);
       rot.appendChild(d);
     }
+  }
+
   }
 
   // ----- 라벨: 기울기와 무관하게 가로로(회전 그룹 바깥에 붙인다), 이탤릭 -----

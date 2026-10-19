@@ -25,9 +25,14 @@ import {
   renderSvgAsset,
 } from "./shapes.js?v=1.7.0-four-session-integration";
 import { renderAxes, renderAngleArc, renderRightAngle, renderLabeler } from "./annotations.js?v=1.7.0-four-session-integration";
+import { labelerTargetDots } from "../labeler-target.js?v=1.7.0-four-session-integration";
 import { renderCoordplane, renderFuncgraph } from "./coordplane.js?v=1.7.0-four-session-integration";
 import { renderCircuit } from "./circuit.js?v=1.7.0-four-session-integration";
 import { renderOptics, renderApparatus } from "./optics-apparatus.js?v=1.7.0-four-session-integration";
+import { renderOpticalBenchHandles } from "./optical-bench.js?v=1.7.0-four-session-integration";
+import { isLabApparatus, labBBox, labWorldPoint } from "../lab-apparatus.js?v=1.7.0-four-session-integration";
+import { renderLabApparatusHandles } from "./lab-apparatus.js?v=1.7.0-four-session-integration";
+import { isOpticalBench } from "../optical-bench.js?v=1.7.0-four-session-integration";
 import { renderPendulum, pendulumBBox } from "./pendulum.js?v=1.7.0-four-session-integration";
 import { renderSpring, springBBox } from "./spring.js?v=1.7.0-four-session-integration";
 import { renderChargeField, chargeFieldBBox, renderFieldLines, fieldLinesBBox } from "./field.js?v=1.7.0-four-session-integration";
@@ -52,6 +57,7 @@ import { renderOrbital } from "./orbital.js?v=1.7.0-four-session-integration";
 import { renderBondGroup } from "./bondgroup.js?v=1.7.0-four-session-integration";
 import { renderChemChart } from "./chemchart.js?v=1.7.0-four-session-integration";
 import { renderAxisBreak } from "./axisbreak.js?v=1.7.0-four-session-integration";
+import { renderBubble } from "./bubble.js?v=1.7.0-four-session-integration";
 import { renderChemGraph } from "./chemgraph.js?v=1.7.0-four-session-integration";
 import { renderElectrode } from "./electrode.js?v=1.7.0-four-session-integration";
 import { renderPeriodic } from "./periodic.js?v=1.7.0-four-session-integration";
@@ -545,10 +551,11 @@ export function render(state, change) {
       }
     } else {
       const box = document.createElementNS(SVG_NS, "rect");
-      box.setAttribute("x", sel.x);
-      box.setAttribute("y", sel.y);
-      box.setAttribute("width", sel.w);
-      box.setAttribute("height", sel.h);
+      const frame = isLabApparatus(sel) ? labBBox(sel) : sel;
+      box.setAttribute("x", frame.x);
+      box.setAttribute("y", frame.y);
+      box.setAttribute("width", frame.w);
+      box.setAttribute("height", frame.h);
       box.setAttribute("fill", "none");
       box.setAttribute("stroke-width", "0.4"); // world units
       box.setAttribute("stroke-dasharray", "0.6 0.6");
@@ -568,7 +575,12 @@ export function render(state, change) {
     const _hLayer = handleSel && (state.layers || []).find(l => l.id === (handleSel.layerId ?? 1));
     const _hVisible = !(_hLayer && _hLayer.visible === false);
     if (handleSel && handleSel.id !== _editingId && _hVisible && !state.targetedId) {
-      renderHandles(handleSel, scene, selectionScale, state.activeTool);
+      if (isLabApparatus(handleSel)) {
+        if (["V","rotate"].includes(state.activeTool)) renderLabApparatusHandles(handleSel, scene, selectionScale, state.activeTool);
+      } else renderHandles(handleSel, scene, selectionScale, state.activeTool);
+      if (isOpticalBench(handleSel) && !handleSel.locked && state.activeTool === "V") {
+        renderOpticalBenchHandles(handleSel, scene, selectionScale);
+      }
     }
   } else if (_selIds.length > 1 && !state.targetedId) {
     const _members = _selIds.map((id) => state.objects.find((o) => o.id === id)).filter(Boolean);
@@ -820,10 +832,11 @@ function makeHitTwin(obj) {
              obj.type === "image" || obj.type === "svgAsset" || obj.type === "axes" || obj.type === "coordplane" || obj.type === "optics" ||
              obj.type === "apparatus") {
     twin = document.createElementNS(SVG_NS, "rect");
-    twin.setAttribute("x", obj.x);
-    twin.setAttribute("y", obj.y);
-    twin.setAttribute("width", obj.w);
-    twin.setAttribute("height", obj.h);
+    const bb = isLabApparatus(obj) ? labBBox(obj) : obj;
+    twin.setAttribute("x", bb.x);
+    twin.setAttribute("y", bb.y);
+    twin.setAttribute("width", bb.w);
+    twin.setAttribute("height", bb.h);
     if (obj.rotation) {
       const cx = obj.x + obj.w / 2, cy = obj.y + obj.h / 2;
       twin.setAttribute("transform", `rotate(${obj.rotation} ${cx} ${cy})`);
@@ -973,6 +986,8 @@ export function renderObject(obj, objects = []) {
       return renderChemChart(obj);
     case "axisbreak":
       return renderAxisBreak(obj);
+    case "bubble":
+      return renderBubble(obj);
     case "chemgraph":
       return renderChemGraph(obj);
     case "electrode":
@@ -986,6 +1001,11 @@ export function renderObject(obj, objects = []) {
 
 /* ----- bbox of one object in world space (text uses its rendered <text> box) ----- */
 export function singleObjBBox(o, scene) {
+  if (isLabApparatus(o)) {
+    const b = labBBox(o), points = [[b.x,b.y],[b.x+b.w,b.y],[b.x,b.y+b.h],[b.x+b.w,b.y+b.h]].map(([x,y])=>labWorldPoint(o,{x,y}));
+    const xs=points.map(p=>p.x), ys=points.map(p=>p.y);
+    return {x:Math.min(...xs),y:Math.min(...ys),w:Math.max(...xs)-Math.min(...xs),h:Math.max(...ys)-Math.min(...ys)};
+  }
   // was: rect|ellipse|triangle|image|svgAsset|axes|coordplane|optics|apparatus
   if (SIZE_TYPES.has(o.type)) {
     const deg = o.rotation || 0;
@@ -1041,6 +1061,9 @@ export function singleObjBBox(o, scene) {
     const typography = hasLabelTypography(o) ? measureLabelTypography(o) : null;
     const hw = typography ? typography.rotatedW / 2 : sz, hh = typography ? typography.rotatedH / 2 : sz;
     const points = [...leaderRoutePoints(o.leaderRoutes), a, o.elbow, o.p3, ...(o.extraAnchors || [])].filter(Boolean);
+    for (const dot of labelerTargetDots(o)) {
+      points.push({ x: dot.x - dot.r, y: dot.y - dot.r }, { x: dot.x + dot.r, y: dot.y + dot.r });
+    }
     const minX = Math.min(...points.map(p => p.x), b.x - hw), minY = Math.min(...points.map(p => p.y), b.y - hh);
     const maxX = Math.max(...points.map(p => p.x), b.x + hw), maxY = Math.max(...points.map(p => p.y), b.y + hh);
     return { x: minX, y: minY, w: maxX - minX, h: maxY - minY };
