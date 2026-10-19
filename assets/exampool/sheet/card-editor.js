@@ -249,7 +249,7 @@ export function createCardEditor(root,api){
   // 기출 카드 그림: 화면에 들어오는 것부터 문항 번호~선지 번호 줄로 잘라(past-crop.js) 넣는다. 그림 칸은 정사각 고정이라 읽혀도 칸이 움직이지 않는다(긴 문항은 아래만 잘림).
   function loadThumbs(body){
     const list=body.querySelector('.past-list');if(!list)return;
-    const show=img=>{if(img.dataset.loading)return;img.dataset.loading='1';croppedPastImage(img.dataset.card).then(src=>{if(img.isConnected)img.src=src;});};
+    const show=img=>{if(img.dataset.loading)return;img.dataset.loading='1';croppedPastImage(img.dataset.card).then(src=>{if(img.isConnected)img.src=src;else delete img.dataset.loading;});};
     if(!('IntersectionObserver' in window)){list.querySelectorAll('img[data-card]').forEach(show);return;}
     const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){io.unobserve(e.target);show(e.target);}}),{root:list,rootMargin:'400px 0px'});
     list.querySelectorAll('img[data-card]').forEach(img=>io.observe(img));
@@ -271,6 +271,7 @@ export function createCardEditor(root,api){
     if(was)pop.querySelector(`[data-cvpast="${was}"]`)?.focus({preventScroll:true});// 상세검색에서 고른 칸으로 커서를 돌려놓는다
     const n=root.querySelector('[data-cvslot="advn"]');if(n){n.textContent=count;n.hidden=!count;}
   }
+  let pastCache={html:'',node:null};
   async function renderPast(){
     const body=root.querySelector('[data-cvbody="past"]');if(!body)return;
     const typing=pastRefocus||document.activeElement?.dataset?.cvpast==='query',f=pastFilter;pastRefocus=false;
@@ -296,10 +297,14 @@ export function createCardEditor(root,api){
     const sel=(k,vals,label)=>`<label>${label}<select data-cvpast="${k}" aria-label="${label}"><option value="">전체</option>${vals.map(v=>`<option${String(f[k])===String(v)?' selected':''}>${E(v)}</option>`).join('')}</select></label>`;
     const thumb=i=>{const card=pastIndex.cards.replace('{id}',encodeURIComponent(i.id)),local=i.hasFigure?new URL(`../../exam-library/images/${encodeURIComponent(i.id)}.png`,import.meta.url).href:'';
       return `<div class="past-pic"><img alt="${E(i.title)}" data-past-thumb="${E(i.id)}" data-card="${E(card)}" data-fallback="${E(local)}"></div>`;};
-    fillHead(searchHtml(f.tokens.length?'단어 더하기':'단어 + Enter',`<span class="lp-n" title="기출 ${total.toLocaleString()}문항 중">${list.length.toLocaleString()}문항</span>`),
+    fillHead(searchHtml(f.tokens.length?'단어 더하기':'단어+Enter',`<span class="lp-n" title="기출 ${total.toLocaleString()}문항 중">${list.length.toLocaleString()}문항</span>`),
       sel('subject',subjects,'과목')+sel('part',parts,'단원')+sel('year',years,'연도')+`<div class="lp-adv-foot"><span>6월·9월 모평, 수능</span><button type="button" class="mini" data-cvadvclear>모두 지우기</button></div>`,
       ['subject','part','year'].filter(k=>f[k]).length);
-    body.innerHTML=`<div class="past-list">${picksHtml()}${list.slice(0,40).map(i=>`<figure class="past"${api.pastBusy?.()?.id===i.id?' data-busy':''}>${thumb(i)}${api.pastBusy?.()?.id===i.id?pastBusyHtml(api.pastBusy().stage):''}<figcaption><b title="${E([i.title,...i.parts,...i.tags.slice(0,3)].join(' · '))}">${E(i.short)}</b><span class="acts"><button type="button" class="mini" data-cvlink="${E(i.id)}">근거로 연결</button>${(busy=>`<button type="button" class="mini go-mini" data-cvconvert="${E(i.id)}" title="편집 가능한 한글 문항으로 바꿔 새 문항 카드로 엽니다(AI 없음)"${busy?' aria-busy="true"':''}>${busy?busyHtml(busy.stage):'변형'}</button>`)(api.pastBusy?.()?.id===i.id&&api.pastBusy())}</span></figcaption></figure>`).join('')}</div>`;
+    const html=`<div class="past-list">${picksHtml()}${list.slice(0,40).map(i=>`<figure class="past"${api.pastBusy?.()?.id===i.id?' data-busy':''}>${thumb(i)}${api.pastBusy?.()?.id===i.id?pastBusyHtml(api.pastBusy().stage):''}<figcaption><b title="${E([i.title,...i.parts,...i.tags.slice(0,3)].join(' · '))}">${E(i.short)}</b><span class="acts"><button type="button" class="mini" data-cvlink="${E(i.id)}">근거로 연결</button>${(busy=>`<button type="button" class="mini go-mini" data-cvconvert="${E(i.id)}" title="편집 가능한 한글 문항으로 바꿔 새 문항 카드로 엽니다(AI 없음)"${busy?' aria-busy="true"':''}>${busy?busyHtml(busy.stage):'변형'}</button>`)(api.pastBusy?.()?.id===i.id&&api.pastBusy())}</span></figcaption></figure>`).join('')}</div>`;
+    // 카드를 다시 그려도 기출 목록 내용이 같으면 그 전 목록(이미 받은 그림 포함)을 그대로 다시 붙인다 — 매번 새로 만들면
+    // 그림 40장을 다시 받고 레이아웃을 다시 계산해 「근거로 연결」 같은 작은 수정에도 화면이 60ms쯤 멈췄다.
+    if(html===pastCache.html&&pastCache.node){body.replaceChildren(pastCache.node);loadThumbs(body);refocus();reopenZoom();return;}
+    body.innerHTML=html;pastCache={html,node:body.firstElementChild};
     loadThumbs(body);refocus();reopenZoom();
   }
 
