@@ -624,6 +624,11 @@ button.q-status:hover{background:var(--ds-hover)}
 .lp-zoom-foot{justify-content:flex-end}.lp-zoom-foot .mini{height:28px;padding:0 10px;font-size:var(--cv-text-small,12.5px)}
 .lp-zoom-foot .go-mini{background:var(--go-bg,#152137);color:var(--ds-ink,#e6edf3);box-shadow:inset 0 0 0 1px var(--go-line,#6ba4f8)}
 .cv-left .past{cursor:zoom-in}.cv-left .past button{cursor:pointer}
+/* 라이브러리 칸을 좁히면(끌기 최소 240): 머리 줄이 칸 밖으로 밀리지 않게 상세검색은 아이콘만, 더 좁으면 범위 칸을 줄이고 카드는 한 줄에 1개(제목이 잘리지 않게). */
+.cv-left{container:lib/inline-size}
+@container lib (max-width:440px){.lp-adv>span{display:none}.lp-adv{padding:0 7px}}
+@container lib (max-width:380px){.lp-one{gap:4px;padding:0 6px}.lp-one .lp-scope{max-width:86px}.lp-one .lp-refs{padding:0 6px}.cv-left .past-list{grid-template-columns:minmax(0,1fr)}}
+@container lib (max-width:300px){.lp-one{gap:2px;padding:0 4px}.lp-one .lp-scope{max-width:70px;padding:0 18px 0 6px;background-position:right 2px center}.lp-one .lp-refs .ico{display:none}.lp-one .lp-refs{padding:0 6px}.lp-one .lp-search{padding:0 6px;gap:4px}.lp-one .lp-search .lp-n{display:none}}
 /* 자료(PDF): 위 한 줄(자료 고르기·파일 열기·원본) · 쪽은 남은 높이에 통째로 · 아래 한 줄(쪽 넘김·근거 문장·근거로 연결). 상태 문장은 아래 상태 막대로. */
 .lp-docked #sources[data-tab=references] .source-controls{display:none}
 .lp-docked #sources[data-tab=references] #source-content{flex:1;min-height:0;display:flex;flex-direction:column;gap:10px;padding:12px}

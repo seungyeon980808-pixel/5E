@@ -2464,11 +2464,14 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, sendTo
   function closeSendMenu({ focus = false } = {}) {
     if (sendMenu.hidden) return;
     sendMenu.hidden = true; sendButton.setAttribute("aria-expanded", "false");
+    if (sendButton.dataset.sendTitle !== undefined) { sendButton.title = sendButton.dataset.sendTitle; delete sendButton.dataset.sendTitle; }
     if (focus) sendButton.focus();
   }
   sendButton.addEventListener("click", () => {
     if (!sendMenu.hidden) { closeSendMenu(); return; }
     sendMenu.hidden = false; sendButton.setAttribute("aria-expanded", "true");
+    // 메뉴가 열린 동안 단추 설명 풍선이 메뉴 항목을 덮지 않게 설명을 잠시 뗀다(포커스만으로도 풍선이 뜸).
+    sendButton.dataset.sendTitle = sendButton.title; sendButton.removeAttribute("title"); document.querySelector(".app-tooltip")?.classList.remove("is-visible");
     if (lastInteractionWasKeyboard) sendMenu.querySelector("button")?.focus();
   });
   // 메뉴가 열려 있을 때 Esc는 메뉴만 닫는다(라이브러리 창은 그대로).
