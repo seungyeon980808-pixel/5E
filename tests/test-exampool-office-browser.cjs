@@ -313,6 +313,16 @@ h.withServer(async origin => {
       await smallSheet.click('#new-dialog .nq-opt[data-step="form"][data-k="essay"]');await smallSheet.click('#new-dialog .nq-opt[data-step="struct"][data-k="two"]');
       const narrow=await smallSheet.evaluate(()=>{const d=document.querySelector('#new-dialog'),c=d.querySelector('.nq-col'),f=d.querySelector('.nq-foot').getBoundingClientRect(),r=d.getBoundingClientRect();return {clipped:c.scrollHeight>c.clientHeight+1,struct:!!d.querySelector('.nq-opt[data-step="struct"][aria-pressed="true"]'),foot:f.bottom<=r.bottom+1&&f.top>=r.top};});
       assert.deepEqual(narrow,{clipped:false,struct:true,foot:true},'the narrow new-question dialog keeps every option reachable');
+      await smallSheet.click('#new-dialog [data-nq="close"]');
+      // 파일·엑셀에서 유형만 객관식으로 바꿔 들어온 문항에 글 든 보기가 남아 있으면(한글에는 찍힘) 카드에도 보이고, 줄을 다 지우면 보기 칸도 사라진다.
+      {const {questionFromShape}=await import('../assets/exampool/sheet/templates.js');const left=questionFromShape({form:'combo',struct:'none'},'90');
+        left.type='객관식';left.form='single';left.style='문장·수식';left.ask='보기가 남은 문항';left.blocks.find(b=>b.kind==='bogi').lines[0].text='남은 보기';
+        await smallSheet.setInputFiles('#excel-file',{name:'left-bogi.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify({format:'5e-question-sheet-v2',questions:[left],documents:[]}))});
+        await smallSheet.waitForSelector('#import-dialog[open]');await smallSheet.click('#apply-import');
+        await smallSheet.locator('[data-open-card]').first().click();await smallSheet.waitForFunction(()=>document.querySelector('#cv-ask')?.value==='보기가 남은 문항');
+        assert.equal(await smallSheet.locator('#card-view [data-cvline="bogi"]').count(),3,'a printed bogi stays visible on a non-combo card');
+        for(let i=0;i<3;i++){await smallSheet.locator('#card-view [data-cvline-remove="bogi"]').first().click();await smallSheet.waitForTimeout(150);}
+        await smallSheet.waitForFunction(()=>!document.querySelector('#card-view [data-cvline="bogi"]'));}
     } finally {await browser.close();}
   }
 }).catch(error => {console.error(error);process.exitCode = 1;});
