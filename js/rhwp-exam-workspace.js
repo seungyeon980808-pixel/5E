@@ -65,6 +65,7 @@ export function initRhwpExamWorkspace(state, services) {
           </div>
         </div>
 
+        <button type="button" class="structure-lock" data-exam-action="structure-lock" aria-pressed="false" title="구조 잠금 · 켜면 글만 고치고, 끄면 표·그림의 크기와 틀도 고칩니다"><svg class="lock-on" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="7" width="9" height="6.5" rx="1.2"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></svg><svg class="lock-off" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="7" width="9" height="6.5" rx="1.2"/><path d="M5.5 7V5a2.5 2.5 0 0 1 4.8-1"/></svg>구조 잠금</button>
       </nav></div>
       <input id="exam-name" value="새 시험지" maxlength="200" aria-label="시험지 이름">
       <div class="exam-placement" hidden><img alt="보낼 영역 미리보기"><div><strong>삽입할 위치를 선택하세요</strong><span data-placement-hint>본문이나 표 셀에서 위치를 클릭한 뒤 확인하세요.</span></div><button type="button" data-exam-action="cancel-placement">취소</button><button type="button" data-exam-action="confirm-placement" class="exam-primary" disabled>확인</button></div>
@@ -1020,6 +1021,7 @@ export function initRhwpExamWorkspace(state, services) {
     edit:() => { const ref=bridge.input.cursor.getSelectedPictureRef();if(ref?.type!=='image') throw new Error('시험지에서 그림을 선택해주세요.');return beginEdit(bridge.selectedFigureId(),ref); },
     labels:() => { const ref=bridge.input.cursor.getSelectedPictureRef();if(ref?.type!=='image') throw new Error('시험지에서 그림을 선택해주세요.');return beginInline(bridge.selectedFigureId(),ref); },
     save:async () => { const blob = await stableSave(); download(blob, `${safeName(nameInput.value)}.5e`); message('작업 파일 다운로드를 시작했습니다. 그림 원본도 함께 들어 있습니다.'); },
+    'structure-lock':() => { const locked=!bridge.tableLayoutLocked;bridge.setTableLayoutLocked(locked);panel.querySelector('[data-exam-action="structure-lock"]').setAttribute('aria-pressed',String(locked));message(locked?'구조 잠금 · 글만 고칠 수 있습니다. 표·그림의 크기나 틀은 잠금을 풀고 바꾸세요.':'구조 잠금 풀림 · 표·그림의 크기와 틀을 고칠 수 있습니다.'); },
     'open-hwp':() => panel.querySelector('#exam-hwp-file').click(),
     'open-project':() => panel.querySelector('#exam-project-file').click(),
     'export-hwpx':() => exportDocument('hwpx'),

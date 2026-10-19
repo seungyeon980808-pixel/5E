@@ -33,7 +33,7 @@ export function attachTypesetView(bridge,host){
     const char=context.querySelector('[data-native-format="char"]');
     char.disabled=!bridge.input?.getSelection();char.title='글자를 드래그하여 선택한 뒤 크기·자간·글꼴 조절';
     panel.querySelector('#typeset-table-tools').hidden=!inTable;
-    panel.querySelector('#typeset-resize').hidden=!inTable;
+
   }
   function setDetail(value){
     detailed=value;doc.body.toggleAttribute('data-question-compact',!value);

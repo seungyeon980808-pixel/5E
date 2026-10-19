@@ -110,7 +110,7 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
       }
       q=next;fingerprint=nextFingerprint;
       await bridge.load(bytes,`${q.number}번 문항.hwpx`);host.append(guideLayer);
-      bridge.setTableLayoutLocked(true);resize.setAttribute('aria-pressed','false');
+      bridge.setTableLayoutLocked(true);resize.setAttribute('aria-pressed','true');
       baselineText=normalized(parse(document().getTextFileText()));baselineEquations=await equationScripts(bytes);
       baselineImages=await nativeImageSignature(document());ready=true;host.dataset.ready='true';dirty=false;view.refresh();
       bridge.input.cursor.moveTo({sectionIndex:0,paragraphIndex:1,charOffset:0});
@@ -201,8 +201,8 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
     finally{loading=false;save.disabled=false;download.disabled=false;paper.disabled=false;columns.disabled=false;drawGuide();}
   };
   paper.onchange=()=>{changingProfile=changeProfile();};columns.onchange=()=>{changingProfile=changeProfile();};
-  const align=host.parentElement.querySelector('#typeset-table-align'),indent=host.parentElement.querySelector('#typeset-indent'),resize=host.parentElement.querySelector('#typeset-resize');
-  resize.onclick=()=>{if(!ready||loading)return;bridge.setTableLayoutLocked(!bridge.tableLayoutLocked);resize.setAttribute('aria-pressed',String(!bridge.tableLayoutLocked));message(bridge.tableLayoutLocked?'표 크기 잠금 · 마우스로 경계를 움직여도 크기는 유지됩니다.':'표 크기 조절 켜짐 · 표 경계를 드래그한 뒤 다시 끄세요.');};
+  const align=host.parentElement.querySelector('#typeset-table-align'),indent=host.parentElement.querySelector('#typeset-indent'),resize=host.parentElement.querySelector('#typeset-lock');
+  resize.onclick=()=>{if(!ready||loading)return;bridge.setTableLayoutLocked(!bridge.tableLayoutLocked);resize.setAttribute('aria-pressed',String(bridge.tableLayoutLocked));message(bridge.tableLayoutLocked?'구조 잠금 · 글만 고칠 수 있습니다. 표·그림의 크기나 틀은 잠금을 풀고 바꾸세요.':'구조 잠금 풀림 · 표·그림의 크기와 틀을 고칠 수 있습니다. 다 고치면 다시 잠그세요.');};
   align.onchange=()=>{try{if(!ready||loading)return;applyTableAlignment(bridge,align.value);message('표 위치 변경됨 · 조판 저장을 누르세요.');}catch(e){message(e.message,true);}finally{align.value='';}};
   indent.onclick=()=>{try{if(!ready||loading)return;if(!applyHangingIndent(bridge))throw Error('본문에서 들여쓸 위치를 클릭하세요.');message('다음 줄이 커서 위치에 맞춰집니다 · 조판 저장을 누르세요.');bridge.input.textarea.focus();}catch(e){message(e.message,true);}};
   const contentKey=value=>JSON.stringify(renderedContent(value));
