@@ -278,7 +278,8 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
       }
       html+='</tr>';
     }
-    return html+'</table>'+(t.note?p(t.note,width-12,10,{kind:'note',table:owner.id||owner.kind}):'');
+    // 표 아래 주석: 다른 칸 글처럼 실제 글자 폭으로 줄을 미리 나눈다. 칸 안 문단은 한글 엔진이 줄을 다시 나누지 않아, 나누지 않으면 두 줄 글이 한 줄에 눌려 그려진다.
+    return html+'</table>'+(t.note?`<p style="margin:4px 0;text-align:justify">${text(t.note,width-12,10,null,{kind:'note',table:owner.id||owner.kind})}</p>`:'');
   };
   // 어울림 그림: 바로 앞 맨 바깥 글 문단(없으면 번호가 붙는 첫 문단)의 맨 앞에 넣고, 한글로 들여온 뒤 떠 있는 그림으로 바꾼다
   // (applyFloatingPictures). 글자처럼 취급하지 않으므로 문단 글은 그대로 그림 옆·아래로 흐른다. 그림 폭은 크기(단 폭 대비 %).
@@ -318,6 +319,7 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
       else if(b.kind==='group'){
         const boxed=b.boxed===true||b.boxed===undefined&&b.label==='실험',children=q.blocks.filter(x=>x.parent===b.id);let body;
         const isBoxed=g=>g.boxed===true||g.boxed===undefined&&g.label==='실험',kidsOf=g=>q.blocks.filter(x=>x.parent===g.id);
+        const material=c=>(c.kind==='figure'||c.kind==='table')&&!q.blocks.some(x=>x.parent===c.id);
         const sideRow=g=>g.kind==='group'&&g.layout==='나란히'&&!isBoxed(g)&&kidsOf(g).length>1;
         const flatten=boxed&&(b.layout==='나란히'&&children.length>1||children.some(sideRow));
         const innerWidth=Math.max(35,width-(boxed?22:0)),boxSlot=boxed&&!flatten?reserveTable():null;
@@ -343,8 +345,10 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
             spans.forEach((span,i)=>{if(span>1)merges.push({r,c:i,rs:1,cs:span});});
             let tr='<tr>';
             for(const [i,inner] of row.inner.entries()){
+              // 글 칸은 위쪽, 그림·표만 든 자료 칸은 세로 가운데(옆 글이 길어도 자료는 칸 가운데).
+              const valign=!row.single&&material(row.cells[i])?'middle':'top';
               const edge=`${!titled&&ri===0?`border-top:${rule};`:''}${i===0?`border-left:${rule};`:''}${i===row.n-1?`border-right:${rule};`:''}${last?`border-bottom:${rule};`:''}`;
-              tr+=`<td${spans[i]>1?` colspan="${spans[i]}"`:''} style="border:none;${edge}padding:${row.single?'2px 8px':'5px 8px'}${last?` ${8+Math.round((b.pad||0)*96/25.4)}px`:''};vertical-align:top;width:${row.single?width:row.widths[i]}px">${inner}</td>`;
+              tr+=`<td${spans[i]>1?` colspan="${spans[i]}"`:''} style="border:none;${edge}padding:${row.single?'2px 8px':'5px 8px'}${last?` ${8+Math.round((b.pad||0)*96/25.4)}px`:''};vertical-align:${valign};width:${row.single?width:row.widths[i]}px">${inner}</td>`;
             }
             body+=tr+'</tr>';
           }
@@ -381,7 +385,7 @@ export async function buildQuestionHtml(value,prepareFigure=async f=>f,width=540
           const cells=[];
           nested++;try{for(const [i,child] of children.entries()){
             const inner=await walk(b.id,Math.max(35,widths[i]-16),child.id);cells.push(inner);
-            body+=`<td style="border:none;padding:5px;vertical-align:top;width:${widths[i]}px;height:__ROWH__">${inner}</td>`;
+            body+=`<td style="border:none;padding:5px;vertical-align:${material(child)?'middle':'top'};width:${widths[i]}px;height:__ROWH__">${inner}</td>`;
           }}finally{nested--;}
           body+='</tr></table>';
           // 그림만 나란한 칸: 칸 높이를 그림 + (가)·(나) 줄로 정해 둔다. 한글 엔진은 겹친 표의 칸 높이를 내용보다 2~3px 낮게 잡아 (가)가 칸 밖으로 나간다.

@@ -103,7 +103,11 @@ export function createCardEditor(root,api){
     const menu=shapeOpen?`<div class="cv-shape-menu" role="menu" aria-label="유형 바꾸기"><div class="m-head">유형 <span>보기·선지 칸만 바뀌고 쓴 글은 남습니다</span></div>${Object.entries(FORMS).map(([k,v])=>`<button type="button" role="menuitemradio" aria-checked="${k===f}" data-cvform="${k}">${shapeIco(k)}<span class="n">${E(v.name)}</span><span class="d">${E(v.desc)}</span>${k===f?CHECK:''}</button>`).join('')}</div>`:'';
     return `<div class="cv-shape-wrap"><button type="button" class="cv-shape" data-cv="shape" aria-haspopup="menu" aria-expanded="${shapeOpen}" title="새 문항 창에서 정한 틀 · 눌러서 유형 바꾸기">${shapeIco(f)}<b>${E(FORMS[f].name)}</b>${st?`<span class="st">${E(STRUCT_SHORT[st])}</span>`:''}${CHEV}</button>${menu}</div>`;
   }
-  function setShape(open){if(shapeOpen===open)return;shapeOpen=open;const w=root.querySelector('.cv-shape-wrap'),x=q();if(w&&x)w.outerHTML=shapeHtml(x);}
+  function setShape(open){if(shapeOpen===open)return;shapeOpen=open;const w=root.querySelector('.cv-shape-wrap'),x=q();if(w&&x)w.outerHTML=shapeHtml(x);if(open)fitShapeMenu();}
+  // 좁은 카드 칸에서 메뉴가 칸 밖으로 나가 잘리지 않게: 칸 폭에 맞추고, 넘치면 왼쪽으로 당긴다.
+  function fitShapeMenu(){const m=root.querySelector('.cv-shape-menu'),col=root.querySelector('.cv-writer')?.getBoundingClientRect();if(!m||!col)return;
+    const room=col.width-16;if(m.offsetWidth>room)m.style.width=room+'px';
+    const r=m.getBoundingClientRect(),over=r.right-(col.right-8);if(over>0)m.style.left=-Math.min(over,r.left-(col.left+8))+'px';}
   function formHtml(x){
     const bogi=bogiOf(x),steps=x.blocks.find(b=>b.kind==='steps'),talk=x.blocks.find(b=>b.kind==='dialogue');
     const passages=x.blocks.filter(b=>b.kind==='text');
@@ -122,7 +126,7 @@ export function createCardEditor(root,api){
           ${steps?`<div class="f-field"><label title="(가)·(나)는 자동으로 붙습니다">실험 과정</label>${linesHtml(steps,'steps','과정을 입력하세요')}</div>`:''}
           ${talk?`<div class="f-field"><label title="이름 칸에 학생 이름, 오른쪽에 말">대화</label>${linesHtml(talk,'dialogue','말을 입력하세요')}</div>`:''}
           <div class="f-field"><label for="cv-ask">발문</label><div class="with-tail"><textarea id="cv-ask" data-cvf="ask" rows="2" placeholder="학생에게 물을 문장">${E(x.ask)}</textarea><label class="toggle"><input type="checkbox" data-points3 ${x.points===3?'checked':''}> 3점</label></div></div>
-          ${isCombo(x)?`<div class="f-field"><label title="ㄱ·ㄴ·ㄷ은 자동으로 붙습니다">보기</label>${bogi?linesHtml(bogi,'bogi','보기 내용을 입력하세요'):'<button type="button" class="btn" data-cvline-add="bogi">+ 보기 만들기</button>'}</div>`:''}
+          ${isCombo(x)||bogi?`<div class="f-field"><label title="${isCombo(x)?'ㄱ·ㄴ·ㄷ은 자동으로 붙습니다':'합답형이 아니지만 한글에 찍히는 보기입니다(엑셀에서 유형만 바꾼 경우) · 필요 없으면 줄을 지우세요'}">보기</label>${bogi?linesHtml(bogi,'bogi','보기 내용을 입력하세요'):'<button type="button" class="btn" data-cvline-add="bogi">+ 보기 만들기</button>'}</div>`:''}
           ${choicesHtml(x)}
           <details class="f-more"${store.get('more',false)?' open':''}><summary>해설 · 단원 · 출처 · 배점</summary>
             <div class="f-row3"><div class="f-field"><label>대단원</label><input data-cvf="unitLarge" value="${E(x.unitLarge||'')}"></div><div class="f-field"><label>중단원</label><input data-cvf="unitMiddle" value="${E(x.unitMiddle||'')}"></div><div class="f-field"><label>배점</label><input data-cvf="points" value="${E(x.points)}" inputmode="decimal"></div></div>
@@ -238,7 +242,7 @@ export function createCardEditor(root,api){
     let view;try{view=await api.pageSheets(x);}catch(e){if(seq===pageSeq&&n.isConnected)n.innerHTML=`<p class="pv-empty">쪽을 그리지 못했습니다: ${E(e.message)}</p>`;return;}
     if(seq!==pageSeq||q()!==x||!n.isConnected)return;
     const pct=v=>(v*100).toFixed(3)+'%',total=view.pages.length;
-    n.innerHTML=`<div class="pg-head"><b>${E(view.title)}</b><span>${total}쪽 · 한글 조판 그대로(${E(view.paper)} ${view.columns}단)${view.unsaved.length?` · 조판 저장 전: ${E(view.unsaved.join(', '))}번`:''}</span><span class="sp"></span><button type="button" class="mini" data-cvview="card">문항 카드로</button></div>`+
+    n.innerHTML=`<div class="pg-head"><b>${E(view.title)}</b><span>${total}쪽 · 한글 조판 그대로(${E(view.paper)} ${view.columns}단)${view.unsaved.length?` · 조판 저장 전: ${E(view.unsaved.join(', '))}번`:''}</span><span class="sp"></span><button type="button" class="mini" data-cvview="card">문항 카드로</button></div>`+(view.warning?`<p class="pg-warn" role="alert" style="align-self:stretch;margin:0;font-size:var(--ds-text-meta);color:var(--ds-danger)">${E(view.warning)}</p>`:'')+
       view.pages.map((p,i)=>`<figure class="pg-sheet" data-native-page style="padding:0;aspect-ratio:${p.width}/${p.height}">${p.svg.replace('<svg ','<svg style="display:block;width:100%;height:auto" ')}${p.focus?`<i class="pg-now" aria-hidden="true" style="position:absolute;pointer-events:none;outline:2px solid var(--go-line,#6ba4f8);outline-offset:3px;left:${pct(p.focus.x)};top:${pct(p.focus.y)};width:${pct(p.focus.w)};height:${pct(p.focus.h)}"></i>`:''}<figcaption>${i+1} / ${total}</figcaption></figure>`).join('');
     n.querySelector('.pg-now')?.scrollIntoView({block:'center'});}
   function fitPage(){const n=root.querySelector('#cv-page');if(!n)return;for(const col of n.querySelectorAll('.pg-col')){const w=col.clientWidth;for(const q of col.querySelectorAll('.pg-q')){const inner=q.firstElementChild;inner.style.transform='none';const s=w/inner.offsetWidth;inner.style.transform=`scale(${s})`;q.style.height=inner.offsetHeight*s+'px';}}}
@@ -433,7 +437,7 @@ export function createCardEditor(root,api){
     if(d.cvstage){api.edit(()=>{x.workflow=d.cvstage;});return;}
     if(d.cvslotAct){api.slot(d.cvslotAct,x,d.cvslot);return;}
     if(d.cvlineAdd){const key=d.cvlineAdd;api.edit(()=>{let blk=x.blocks.find(v=>v.kind===key);if(!blk){writeField(x,key,'');blk=x.blocks.find(v=>v.kind===key);}const value=fieldValue(x,key);writeField(x,key,value?value+'\n':key==='dialogue'?'학생 A: ':'');});return;}
-    if(d.cvlineRemove){const key=d.cvlineRemove,i=Number(d.i);api.edit(()=>{const blk=x.blocks.find(v=>v.kind===key);blk.lines.splice(i,1);if(key==='bogi'){const L=['ㄱ','ㄴ','ㄷ','ㄹ','ㅁ','ㅂ','ㅅ','ㅇ'];blk.lines.forEach((l,j)=>l.label=L[j]||String(j+1));}else if(key==='steps'){const C=['(가)','(나)','(다)','(라)','(마)','(바)','(사)','(아)'];blk.lines.forEach((l,j)=>l.label=C[j]||`(${j+1})`);}});return;}
+    if(d.cvlineRemove){const key=d.cvlineRemove,i=Number(d.i);api.edit(()=>{const blk=x.blocks.find(v=>v.kind===key);blk.lines.splice(i,1);if(key==='bogi'&&!isCombo(x)&&!blk.lines.length){x.blocks=x.blocks.filter(v=>v!==blk);return;}if(key==='bogi'){const L=['ㄱ','ㄴ','ㄷ','ㄹ','ㅁ','ㅂ','ㅅ','ㅇ'];blk.lines.forEach((l,j)=>l.label=L[j]||String(j+1));}else if(key==='steps'){const C=['(가)','(나)','(다)','(라)','(마)','(바)','(사)','(아)'];blk.lines.forEach((l,j)=>l.label=C[j]||`(${j+1})`);}});return;}
     if(d.cvcombo!==undefined){const i=Number(d.cvcombo),letter=d.letter;api.edit(()=>{const set=new Set(x.choices[i].text.split(/\s*,\s*/).filter(Boolean));set.has(letter)?set.delete(letter):set.add(letter);const order=(bogiOf(x)?.lines||[]).map(l=>l.label);x.choices[i].text=normalizeCombo([...set].sort((a,b)=>order.indexOf(a)-order.indexOf(b)).join(', '));});return;}
     if(d.cv==='common-combos'){api.edit(()=>{x.choices.forEach((c,i)=>c.text=COMMON[i]);});return;}
     if(d.cvlayout!==undefined){api.edit(()=>{if(d.cvlayout)x.choiceLayout=d.cvlayout;else delete x.choiceLayout;});return;}

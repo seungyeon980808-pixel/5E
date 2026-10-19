@@ -60,7 +60,10 @@ async function waitForState(page,predicate,arg,{timeout=60000}={}) {
   }),{source:predicate.toString(),arg,timeout,stateUrl:runtimes.get(page)?.stateUrl});
 }
 
+const welcomeSeeded=new WeakSet();
 async function navigate(page,url,options={}) {
+  // 다른 검사들처럼 첫 방문 튜토리얼 환영 창을 본 것으로 둔다. 바쁠 때 환영 창이 ready 뒤 늦게 떠 단추를 가리는 흔들림을 막는다.
+  if(!welcomeSeeded.has(page)){welcomeSeeded.add(page);await page.addInitScript(()=>{for(const prefix of ['','5e.preview:'])try{localStorage.setItem(prefix+'5e.tutorial.bannerSeen','true');}catch{}});}
   const entry=new URL(url), root=path.resolve(__dirname,'../..');
   const config=entryConfiguration({...process.env,APP_ENTRY:entry.pathname});
   const html=fs.readFileSync(path.join(root,entry.pathname==='/'?'index.html':'preview/index.html'),'utf8');

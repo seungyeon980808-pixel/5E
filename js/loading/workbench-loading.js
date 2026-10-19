@@ -282,8 +282,13 @@ function renderDoneNotice({ title, detail = '', onOpen, anchor = document.getEle
     box.style.bottom = `${Math.round(innerHeight - rect.top + 12)}px`;
     box.style.setProperty('--ai-done-tail', `${Math.round(rect.left + rect.width / 2 - left)}px`);
   };
-  // 메인 화면이 아니게 되면(다른 창을 열면) 말풍선을 닫는다.
-  const watch = setInterval(() => { if (!box.isConnected || !onMainScreen()) close(); }, 500);
+  // AI 작업 창을 열어 결과를 보면 말풍선을 닫는다. 다른 창(라이브러리·설치형 안내 등)이 떠 있는 동안은 숨겼다가
+  // 메인 화면으로 돌아오면 다시 보인다 — 첫 변환 뒤 저절로 뜨는 설치형 안내가 말풍선을 지워 버리던 것.
+  const watch = setInterval(() => {
+    if (!box.isConnected || [...document.querySelectorAll(AI_WORKBENCHES)].some(shown)) { close(); return; }
+    const main = onMainScreen();
+    if (box.hidden === main) { box.hidden = !main; if (main) place(); }
+  }, 500);
   const close = () => { clearInterval(watch); removeEventListener('resize', place); anchor?.classList.remove('has-done-notice'); box.remove(); };
   box.addEventListener('ai-done-notice-close', close);
   dismiss.addEventListener('click', close);
