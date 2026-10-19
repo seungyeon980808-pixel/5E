@@ -1,3 +1,4 @@
+import { jsonClone } from "../json-clone.js?v=1.7.0-four-session-integration";
 import { makeSection } from "./widgets.js?v=1.7.0-four-session-integration";
 import { LAB_APPARATUS, isLabApparatus, labSettings, changeLabApparatus, physicsAction, physicsToolHint } from "../lab-apparatus.js?v=1.7.0-four-session-integration";
 
@@ -22,7 +23,7 @@ export function buildLabApparatusSection({state}){
         if(f.type==="number"&&!Number.isFinite(value))return;
         const next=changeLabApparatus(o,f.key,value),current=labSettings(o);
         if(next[f.key]!==current[f.key]){
-          const snapshot=JSON.parse(JSON.stringify(state.get().objects));
+          const snapshot=jsonClone(state.get().objects);
           state.update(s=>{const obj=s.objects.find(t=>t.id===o.id);if(!obj||obj.locked)return;s.undoStack.push(snapshot);s.redoStack=[];Object.assign(obj,next);});
         }
         sync(selected(),true);
@@ -39,7 +40,7 @@ export function buildLabApparatusSection({state}){
         const o=selected();if(o?.kind!==kind||o.locked)return;const result=physicsAction(o,key);if(!result)return;
         if(result.error){hint.textContent=result.error;return;}
         if(result.settings&&JSON.stringify(result.settings)===JSON.stringify(labSettings(o)))return;
-        const snapshot=JSON.parse(JSON.stringify(state.get().objects));
+        const snapshot=jsonClone(state.get().objects);
         state.update(s=>{const obj=s.objects.find(t=>t.id===o.id);if(!obj||obj.locked)return;s.undoStack.push(snapshot);s.redoStack=[];
           if(result.created){s.objects.push(result.created);s.selectedIds=[result.created.id];}else Object.assign(obj,result.settings);
         });sync(selected(),true);

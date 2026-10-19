@@ -13,6 +13,7 @@
 // × line width, so with the 0.2 mm default line width a new 점 is ≈ 1.0 mm Ø
 // (0.5 mm radius). Tune POINT_DIAMETER_PER_WIDTH to rescale every new 점.
 
+import { jsonClone } from "../json-clone.js?v=1.7.0-four-session-integration";
 import { screenToWorld, getRenderScale } from "../viewport.js?v=1.7.0-four-session-integration";
 import { resolveEndpointSnap } from "../snap.js?v=1.7.0-four-session-integration";
 import { setSnapPreview } from "../render.js?v=1.7.0-four-session-integration";
@@ -79,7 +80,7 @@ export function setupNodePlacement(svg, state) {
     const { place } = nodePlacementPoint(raw, e.shiftKey);
     const sz = NODE_DEFAULT_SIZE;
     _state.update((s) => {
-      const snap = JSON.parse(JSON.stringify(s.objects));
+      const snap = jsonClone(s.objects);
       const obj = {
         id: nextObjectId(),
         type: "optics", kind: "node",

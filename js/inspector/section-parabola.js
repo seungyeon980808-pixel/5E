@@ -10,6 +10,7 @@
  * 주면 원하는 모양을 얻을 때까지 숫자를 계속 고쳐야 한다.
  */
 
+import { jsonClone } from "../json-clone.js?v=1.7.0-four-session-integration";
 import { makeSection } from "./widgets.js?v=1.7.0-four-session-integration";
 
 const DEFAULT_APEX = 14;
@@ -80,7 +81,7 @@ export function initParabolaSection(state) {
     const s = state.get();
     const o = selected();
     if (!o || o.locked) return;
-    const snap = JSON.parse(JSON.stringify(s.objects));
+    const snap = jsonClone(s.objects);
     state.update((s2) => {
       const t = s2.objects.find((x) => x.id === o.id);
       if (!t || t.locked) return;

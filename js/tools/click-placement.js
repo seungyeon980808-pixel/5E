@@ -18,6 +18,7 @@
 // its getters/exports. clearClickLocals is exported back so setActiveTool (tools.js)
 // can discard an in-progress draft when another tool is armed. */
 
+import { jsonClone } from "../json-clone.js?v=1.7.0-four-session-integration";
 import { screenToWorld, getRenderScale } from "../viewport.js?v=1.7.0-four-session-integration";
 import { snapAngle, mathAngleDeg, snappedDeg, normalizeSweep } from "../geometry.js?v=1.7.0-four-session-integration";
 import { setSnapPreview } from "../render.js?v=1.7.0-four-session-integration";
@@ -404,7 +405,7 @@ function commitSeries() {
   const worldPts = mathPoints.map((m) => worldFromMath(plane, m.x, m.y));
 
   _state.update((st) => {
-    const snap = JSON.parse(JSON.stringify(st.objects));
+    const snap = jsonClone(st.objects);
     let planeId;
     if (newPlane) {
       newPlane.id = nextObjectId();
@@ -457,7 +458,7 @@ function commitClickShape(shape) {
   }
   _state.update((s) => {
     // Snapshot the pre-creation objects so a single Ctrl+Z removes this shape.
-    const snap = JSON.parse(JSON.stringify(s.objects));
+    const snap = jsonClone(s.objects);
     shape.id = nextObjectId();
     shape.order = s.objects.length;
     shape.layerId = s.activeLayerId;
