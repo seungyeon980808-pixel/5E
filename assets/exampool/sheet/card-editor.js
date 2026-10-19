@@ -164,13 +164,19 @@ export function createCardEditor(root,api){
   const splitHtml=k=>`<div class="cv-split" data-cvsplit="${k}" role="separator" aria-orientation="vertical" title="끌어서 폭 바꾸기 · 두 번 누르면 기본 폭"></div>`;
   // 기본 폭(시안 4): 화면 너비의 38%·28.5%(1440px 화면 → 545·410, 1920px → 730·547). 끈 폭은 기억한다.
   function widths(){const w=root.clientWidth||1440;return {lw:store.get('lw',Math.round(Math.min(760,Math.max(300,w*0.38)))),rw:store.get('rw',Math.round(Math.min(600,Math.max(340,w*0.285))))};}
+  // 창이 좁아지면 가운데 칸 최소 폭(300)을 남기도록 양쪽 칸을 비율대로 줄인다(저장한 폭은 그대로, 창이 넓어지면 되돌아감).
+  // 칸 폭을 열 때 한 번만 정해, 넓은 창에서 연 뒤 창을 줄이면 오른쪽 칸이 창 밖으로 밀려 잘렸다.
+  function applyWidths(){let {lw,rw}=widths();const cs=getComputedStyle(root),gut=parseFloat(cs.getPropertyValue('--cv-gutter'))||8;
+    const room=root.clientWidth-parseFloat(cs.paddingLeft||0)-parseFloat(cs.paddingRight||0)-gut*((panels.lib?1:0)+(panels.rightOpen?1:0))-300,l=panels.lib?lw:0,r=panels.rightOpen?rw:0;
+    if(room>0&&l+r>room){const k=room/(l+r);if(panels.lib)lw=Math.max(240,Math.round(lw*k));if(panels.rightOpen)rw=Math.max(300,Math.round(rw*k));}
+    root.style.setProperty('--cv-lw',lw+'px');root.style.setProperty('--cv-rw',rw+'px');}
   function render(){shapeOpen=false;
     const x=q();
     const keep=root.querySelector('.cv-writer')?.scrollTop||0,same=renderedFor===x?.id;
     api.dock?.(null);// 다시 그리기 전에 붙여 둔 자료 열람을 원래 자리로 돌려놓는다(같이 지워지지 않게).
     // 기준·자료는 검색어를 범위마다 따로 기억한다(한쪽 검색어가 다른 쪽 목록을 거르지 않게).
     if(['standards','references'].includes(panels.tab)){const src=document.querySelector('#source-search');if(src)src.value=srcQuery[panels.tab]||'';}
-    const {lw,rw}=widths();root.style.setProperty('--cv-lw',lw+'px');root.style.setProperty('--cv-rw',rw+'px');
+    applyWidths();
     const center=x?(panels.view==='page'?'<div class="cv-page" id="cv-page"><p class="pv-empty">쪽을 그리는 중…</p></div>':formHtml(x)):'<div class="cv-writer"><p class="pv-empty">위의 ＋로 새 문항을 만들거나 번호를 고르세요.</p></div>';
     root.innerHTML=libHtml()+(panels.lib?splitHtml('left'):'')+`<section class="cv-center">${barHtml()}${center}</section>`+(panels.rightOpen?splitHtml('right'):'')+rightHtml();
     if(same&&panels.view==='card')root.querySelector('.cv-writer').scrollTop=keep;
@@ -188,6 +194,17 @@ export function createCardEditor(root,api){
   // 한글 조판 창(5e_hwp)은 안에 편집기 프레임이 있어 DOM에서 옮기면 처음부터 다시 읽는다(문항 전환 15초).
   // 그래서 카드를 다시 그려도 지워지지 않는 층 하나에 한 번만 붙이고, 그 층을 미리보기 칸(#cv-hwp) 위에 겹쳐 둔다.
   const hwpLayer=document.createElement('div');hwpLayer.className='cv-hwp-layer';hwpLayer.hidden=true;document.body.append(hwpLayer);api.hwpDock?.(hwpLayer);// 편집기 프레임이 생기기 전에 붙여 둔다.
+  // 한글 창이 다시 그려지면 편집기가 스스로 초점을 가져가, 카드 칸에 이어 치던 글이 카드에 들어가지 않았다.
+  // 마우스가 한글 창 위에 없는데 초점이 그 안으로 가면 사용자가 누른 것이 아니므로, 직전에 쓰던 칸으로 돌려준다.
+  let overHwp=false,lastFocus=null;hwpLayer.addEventListener('pointerenter',()=>{overHwp=true;});hwpLayer.addEventListener('pointerleave',()=>{overHwp=false;});
+  // 편집기 안에서 스스로 잡는 초점은 이 문서에 focusin이 오지 않아, 창 blur·칸 focusout 뒤에 어디로 갔는지 본다.
+  document.addEventListener('focusin',e=>{if(!hwpLayer.contains(e.target))lastFocus=e.target;},true);
+  // 빈 곳을 누르면 쓰던 칸에서 나온 것이므로 돌려줄 칸을 잊는다.
+  document.addEventListener('pointerdown',e=>{if(!hwpLayer.contains(e.target)&&!e.target.closest?.('input,textarea,select,button,[contenteditable],[tabindex]'))lastFocus=null;},true);
+  root.tabIndex=-1;// 돌려줄 칸이 없을 때 초점을 받을 곳(Safari는 iframe.blur()로 초점이 빠지지 않는다)
+  const reclaim=()=>setTimeout(()=>{const a=document.activeElement;if(!a||!hwpLayer.contains(a)||overHwp||hwpLayer.hidden)return;
+    const back=lastFocus?.isConnected&&!lastFocus.closest('[hidden]')&&lastFocus!==document.body?lastFocus:root;back.focus({preventScroll:true});},0);
+  window.addEventListener('blur',reclaim);document.addEventListener('focusout',reclaim,true);
   let hwpSlotWatch=null,hwpWanted=false;
   function alignHwp(){const slot=root.querySelector('#cv-hwp');const show=hwpWanted&&slot&&!root.hidden&&!root.closest('[hidden]');hwpLayer.hidden=!show;if(!show)return;
     const r=slot.getBoundingClientRect();Object.assign(hwpLayer.style,{left:r.left+'px',top:r.top+'px',width:r.width+'px',height:r.height+'px'});}
@@ -211,7 +228,7 @@ export function createCardEditor(root,api){
     col.style.transform='none';const W=col.offsetWidth,H=col.offsetHeight,aw=n.clientWidth-24,ah=n.clientHeight-24;if(!W||!H||aw<=0)return;
     const s=Math.max(.2,Math.min(aw/W,ah>40?ah/H:aw/W));col.style.transform=`scale(${s})`;box.style.width=W*s+'px';box.style.height=H*s+'px';}
   // 크기를 바꾸는 일은 다음 그림 때 한 번에(관찰 콜백 안에서 크기를 바꾸면 Safari가 'ResizeObserver loop' 오류를 낸다).
-  let fitFrame=0;new ResizeObserver(()=>{cancelAnimationFrame(fitFrame);fitFrame=requestAnimationFrame(()=>{fitPaper();fitPage();alignHwp?.();});}).observe(root);
+  let fitFrame=0;new ResizeObserver(()=>{cancelAnimationFrame(fitFrame);fitFrame=requestAnimationFrame(()=>{if(!document.body.classList.contains('cv-dragging'))applyWidths();fitPaper();fitPage();alignHwp?.();});}).observe(root);
   // 쪽 전체: 시험지에 든 문항이면 그 시험지의 쪽 배치(2단)로, 보관함 문항이면 이 문항만 놓은 쪽으로 가운데에 크게 보여 준다.
   // 한글 엔진이 실제 시험지처럼 합친 문서를 쪽마다 SVG로 그린다(미리보기 칸·내려받는 HWPX와 같은 모양).
   let pageSeq=0;

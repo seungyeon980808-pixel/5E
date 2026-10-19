@@ -77,7 +77,9 @@ h.withServer(async origin => {
       await sheet.locator('#card-view [data-cvsplit="left"]').hover();await page.mouse.down();await page.mouse.move(split.x-60,split.y+split.height/2,{steps:4});await page.mouse.up();
       assert.ok(Math.abs(await sheet.evaluate(()=>document.querySelector('#card-view .cv-left').offsetWidth)-(lw-60))<=6,'dragging the left border resizes the library');
       // 좁은 창(1100): 칸이 이미 끌기 상한보다 넓어도 경계를 잡는 순간 줄어들지 않고, 끌면 움직인 만큼 줄어든다.
-      await page.setViewportSize({width:1100,height:800});await sheet.waitForTimeout(200);
+      await page.setViewportSize({width:1100,height:800});await sheet.waitForTimeout(400);
+      // 넓은 창에서 연 뒤 줄여도 오른쪽 칸이 창 밖으로 밀리지 않는다(칸 폭을 창에 다시 맞춤).
+      assert.ok(await sheet.evaluate(()=>document.querySelector('#card-view .cv-right').getBoundingClientRect().right<=document.querySelector('#card-view').getBoundingClientRect().right+0.5),'the right pane stays inside after the window shrinks');
       for(const k of ['left','right']){const pane=k==='left'?'.cv-left':'.cv-right',w0=await sheet.evaluate(s=>document.querySelector('#card-view '+s).getBoundingClientRect().width,pane),b=await sheet.locator(`#card-view [data-cvsplit="${k}"]`).boundingBox(),f=await (await page.$('#exampool-sheet-workspace iframe')).boundingBox();
         const x=f.x+b.x+b.width/2,y=f.y+b.y+b.height/2;await page.mouse.move(x,y);await page.mouse.down();await page.mouse.move(x+1,y);await page.mouse.move(x,y);
         assert.ok(Math.abs(await sheet.evaluate(s=>document.querySelector('#card-view '+s).getBoundingClientRect().width,pane)-w0)<=1,`grabbing the ${k} border in a narrow window does not jump`);
@@ -113,6 +115,12 @@ h.withServer(async origin => {
       const added=sheet.locator('#card-view .cv-tile.empty').last();
       assert.equal(await added.locator('[data-cvslot-act="pick"]').count(),1);assert.equal(await added.locator('[data-cvslot-act="to-table"]').count(),1);
       await added.locator('[data-cvslot-act="remove"]').click();await sheet.waitForFunction(n=>document.querySelectorAll('#card-view .cv-tile').length===n,tiles);
+      // 한글 창이 다시 그려져도 카드 칸에 이어 치는 글은 카드에 들어가고, ⌘Z는 카드 편집을 되돌린다(편집기가 초점을 가져가던 것).
+      await sheet.click('#card-view [data-cvright="paper"]');await sheet.waitForSelector('.cv-hwp-layer:not([hidden]) #preview-dialog:not([hidden])');await typesetReady(sheet);
+      await sheet.click('#cv-passage');await page.keyboard.type('가');await sheet.waitForTimeout(3500);await typesetReady(sheet);await page.keyboard.type('나');
+      assert.equal(await sheet.inputValue('#cv-passage'),'가나','typing continues in the card after the HWP window redraws');
+      assert.equal(await sheet.evaluate(()=>!!document.activeElement.closest('.cv-hwp-layer')),false,'the redraw does not move focus into the HWP window');
+      await sheet.fill('#cv-passage','');await sheet.locator('#cv-passage').press('Tab');await sheet.waitForTimeout(1500);await typesetReady(sheet);
       // AI 연결 안 됨: 안내 말풍선의 「ChatGPT 로그인」이 5E 연결 창을 연다(카드 화면에는 로그인 단추가 따로 없음).
       await sheet.click('#card-view [data-cvright="ai"]');await sheet.fill('#cv-ai-input','검토해 줘');await sheet.click('#card-view [data-cv="ai-send"]');
       await sheet.waitForSelector('#card-view .msg.ai.err [data-cv="ai-login"]',{timeout:20000});await sheet.click('#card-view [data-cv="ai-login"]');
@@ -324,7 +332,10 @@ h.withServer(async origin => {
       // 좁은 창(1180px 이하)에서 새 문항 창이 위아래로 쌓여도 자료 구조 선택지가 가려지지 않고, 「작성」 줄은 늘 보인다.
       // 창 크기를 도중에 바꾸면 WebKit이 ResizeObserver 경고를 오류로 내므로 처음부터 좁은 창으로 따로 연다.
       const small=await (await browser.newContext({viewport:{width:1100,height:800}})).newPage();
-      await h.navigate(small,origin+'/?mode=pro&mobile=0');await h.ready(small);await small.click('#exam-pool-open');
+      await h.navigate(small,origin+'/?mode=pro&mobile=0');await h.ready(small);
+      // 새 브라우저라 튜토리얼 환영 창이 ready 뒤에 늦게 뜰 수 있다 — 뜨면 닫고 누른다.
+      {const skip=small.getByRole('button',{name:'건너뛰기',exact:true});await skip.waitFor({state:'visible',timeout:3000}).then(()=>skip.click()).catch(()=>{});}
+      await small.click('#exam-pool-open');
       const smallSheet=await (await small.waitForSelector('#exampool-sheet-workspace iframe')).contentFrame();
       await smallSheet.waitForSelector('#side-new');await smallSheet.waitForFunction(()=>document.querySelector('#status').textContent!=='준비 중',null,{timeout:30000});
       await smallSheet.click('#side-new');await smallSheet.waitForSelector('#new-dialog[open]');
