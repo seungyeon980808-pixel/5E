@@ -3221,6 +3221,7 @@ body:has(#ai-image-panel:not([hidden])) .app-shell-header { visibility: hidden; 
 /* 작업 창을 닫아 둔 채 끝났을 때: AI 이미지/그래프 버튼 위 말풍선 (버튼이 안 보이면 오른쪽 아래) */
 .ai-done-notice { position: fixed; right: 16px; bottom: 16px; z-index: 2147483000; width: 280px; box-sizing: border-box; padding: 12px 12px 12px 14px; border-radius: 8px;
   background: var(--ds-raise, #161b22); box-shadow: 0 0 0 1px var(--ds-line-strong, #30363d), 0 12px 32px rgba(0, 0, 0, .55); color: var(--ds-ink-2, #b1bac4); font-size: 12.5px; }
+.ai-done-notice[hidden] { display: none; }
 .ai-done-notice-title { display: flex; align-items: center; gap: 8px; color: var(--ds-ink, #e6edf3); font-size: 13px; font-weight: 500; }
 .ai-done-notice-title svg { width: 16px; height: 16px; flex: none; fill: none; stroke: var(--ds-selected-icon, #58a6ff); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
 .ai-done-notice-detail { margin: 4px 0 10px 24px; color: var(--ds-ink-3, #7d8590); font-size: 11.5px; font-variant-numeric: tabular-nums; }
