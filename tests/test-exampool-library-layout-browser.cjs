@@ -57,7 +57,7 @@ h.withServer(async origin => {
       assert.equal(await sheet.locator('#card-view .lp-pick').getAttribute('aria-label'),'5E 라이브러리에서 고르기','the library icon keeps its name');
 
       // 3. 기출 문항 카드는 5E 라이브러리 「문항」 탭 카드 모양으로 한 줄에 2개(시안 library-two-col.html 안 C):
-      //    두 칸 폭이 같고 윗선이 같으며, 그림 칸은 최소 정사각(그림은 칸 폭에 맞춰 위에 붙고, 긴 문항은 칸이 늘어남), 같은 줄 제목 줄이 맞고, 한 화면에 4개 이상 온전히 보이고 줄 단위로 멈춘다.
+      //    두 칸 폭이 같고 윗선이 같으며, 그림 칸은 정사각(그림은 칸 폭에 맞춰 위에 붙고, 긴 문항은 아래만 잘림), 같은 줄 제목 줄이 맞고, 한 화면에 4개 이상 온전히 보이고 줄 단위로 멈춘다.
       const grid=await sheet.evaluate(()=>{const list=document.querySelector('#card-view .past-list'),cs=getComputedStyle(list),lr=list.getBoundingClientRect();
         const cards=[...list.querySelectorAll('figure.past')],rects=cards.map(c=>c.getBoundingClientRect()),img=cards[0].querySelector('img').getBoundingClientRect(),pic=cards[0].querySelector('.past-pic')?.getBoundingClientRect();
         const inner=list.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight);
@@ -66,8 +66,7 @@ h.withServer(async origin => {
           title:cards[0].querySelector('figcaption b').textContent,full_title:cards[0].querySelector('figcaption b').title,snap:cs.scrollSnapType,align:getComputedStyle(cards[0]).scrollSnapAlign};});
       assert.ok(grid.w.every(v=>Math.abs(v-grid.want)<=1),`two equal columns: ${grid.w} vs ${grid.want}`);
       assert.equal(Math.round(grid.tops[0]),Math.round(grid.tops[1]),'two cards share one row');assert.ok(grid.tops[2]>grid.tops[0],'the third card starts the next row');
-      assert.ok(grid.ratio<=1.02,'the picture box is at least square like the 5E library: '+grid.ratio);
-      assert.ok(grid.inside,'long questions grow the box so the choices line is never cut');
+      assert.ok(Math.abs(grid.ratio-1)<0.02,'the picture box is square like the 5E library: '+grid.ratio);
       assert.ok(grid.capRows.every(([a,b])=>a===b),'captions in one row line up: '+JSON.stringify(grid.capRows));
       assert.deepEqual([grid.imgTop,grid.imgW],[0,0],'the picture fills the box width from the top');
       assert.ok(grid.full>=2,'at least one full row of two question cards is visible: '+grid.full);
@@ -82,6 +81,33 @@ h.withServer(async origin => {
       // 「근거로 연결」·「변형」은 카드 아래 한 줄에 그대로.
       assert.equal(await sheet.locator('#card-view figure.past').first().locator('[data-cvlink]').count(),1);
       assert.equal(await sheet.locator('#card-view figure.past').first().locator('[data-cvconvert]').count(),1);
+
+      // 3b. 그림은 좌우가 잘리지 않는다: 그림 폭 = 그림 칸 폭 = 카드 안쪽 폭(긴 문항은 아래만 칸에서 잘림).
+      const wide=await sheet.evaluate(()=>[...document.querySelectorAll('#card-view figure.past')].slice(0,6).every(c=>{const p=c.querySelector('.past-pic').getBoundingClientRect(),i=c.querySelector('.past-pic img,.past-pic .past-text').getBoundingClientRect();return Math.abs(i.left-p.left)<=0.5&&Math.abs(i.width-p.width)<=0.5&&Math.abs(p.height-p.width)<=1;}));
+      assert.ok(wide,'pictures fill the square box width without horizontal cropping');
+      // 3c. 검색 색인(5e.ai.kr/examlibrary와 같은 규칙): 단어 + Enter → 조각, 최대 3개, ×·Backspace로 지움, 띄어쓰기 무시.
+      const query=sheet.locator('#card-view [data-cvpast="query"]'),tokens=()=>sheet.locator('#card-view .lp-token').allTextContents(),count=async()=>Number((await sheet.locator('#card-view .lp-search .lp-n').textContent()).replace(/[^0-9]/g,''));
+      const all=await count();
+      await query.click();await page.keyboard.type('자기장');await page.keyboard.press('Enter');
+      await sheet.waitForFunction(()=>document.querySelectorAll('#card-view .lp-token').length===1);
+      assert.deepEqual(await tokens(),['자기장×']);const one=await count();assert.ok(one>0&&one<all,'one index word narrows the list');
+      await query.click();await page.keyboard.type('유도 전류');await page.keyboard.press('Enter');
+      await sheet.waitForFunction(()=>document.querySelectorAll('#card-view .lp-token').length===3);
+      const three=await count();assert.ok(three<=one,'every index word must match');
+      await query.click();await page.keyboard.type('간섭');await page.keyboard.press('Enter');
+      assert.equal((await tokens()).length,3,'at most three index words');
+      await sheet.fill('#card-view [data-cvpast="query"]','');await query.click();await page.keyboard.press('Backspace');
+      await sheet.waitForFunction(()=>document.querySelectorAll('#card-view .lp-token').length===2);
+      await sheet.click('#card-view .lp-token');await sheet.waitForFunction(()=>document.querySelectorAll('#card-view .lp-token').length===1);
+      assert.equal(await sheet.evaluate(()=>document.activeElement?.dataset?.cvpast),'query','focus stays in the search box');
+      await sheet.click('#card-view .lp-token');await sheet.waitForFunction(()=>document.querySelectorAll('#card-view .lp-token').length===0);
+      assert.equal(await count(),all);
+      await query.click();await page.keyboard.type('자 기 장');await page.keyboard.press('Enter');
+      await sheet.waitForFunction(()=>document.querySelectorAll('#card-view .lp-token').length===3);
+      await sheet.click('#card-view .lp-token');await sheet.click('#card-view .lp-token');await sheet.click('#card-view .lp-token');
+      await query.click();await page.keyboard.type('자기 장');await sheet.waitForTimeout(400);
+      assert.equal(await sheet.evaluate(()=>document.querySelector('#card-view [data-cvpast="query"]').value),'자기 장');
+      await sheet.fill('#card-view [data-cvpast="query"]','');await sheet.waitForTimeout(400);
 
       // 4. 「근거 N」은 겹쳐 펼쳐진다(목록 높이는 그대로).
       const listH=await sheet.evaluate(()=>document.querySelector('#card-view .past-list').clientHeight);

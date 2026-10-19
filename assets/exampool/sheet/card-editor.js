@@ -6,7 +6,7 @@ import {normalizeCombo} from './choice-text.js';
 import {workflowOf,previewHtml,questionSubtitle} from './views.js';
 import {AXES,AXIS_LABEL,JUDGEMENT_LABEL} from '../authoring/schema.js';
 import {labelOf} from '../authoring/session.js';
-import {croppedPastImage,knownRatio} from './past-crop.js';
+import {croppedPastImage} from './past-crop.js';
 
 const E=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const NUM=['①','②','③','④','⑤'];
@@ -45,7 +45,8 @@ export function completeness(q){
 
 export function createCardEditor(root,api){
   const panels={nav:store.get('nav',true),lib:store.get('lib',true),tab:TABS.some(([k])=>k===store.get('tab','past'))?store.get('tab','past'):'past',right:store.get('right','paper'),rightOpen:store.get('rightOpen',true),view:'card'};
-  let pastIndex=null,pastIndexLoading=null,pastItems=null,pastItemsKey='',pastFilter=store.get('past',{subject:'',part:'',year:'',query:''}),renderedFor=null;
+  let pastIndex=null,pastIndexLoading=null,pastItems=null,pastItemsKey='',pastFilter=store.get('past',{subject:'',part:'',year:'',query:'',tokens:[]}),pastSyn=null,pastRefocus=false,renderedFor=null;
+  if(!Array.isArray(pastFilter.tokens))pastFilter.tokens=[];
   const q=()=>api.question();
 
   // 위쪽 번호 탭: 문항마다 완성도 고리·단계 색·검토 의견 표시. 접힌 목록 대신 번호가 늘 보인다.
@@ -199,11 +200,12 @@ export function createCardEditor(root,api){
   // 기출 목록: 과학탐구 전체 기출(조사 색인 assets/exampool/convert/data). 과목 파일은 고를 때 읽는다(과목을 안 고르면 전부).
   // 카드 모양·필터·핵심어는 예전 그대로이고, 핵심어는 문항 본문 글까지 찾는다. 「변형」은 이 기출을 편집 가능한 한글 문항(AI 없음)으로 바꿔 새 카드로 연다.
   const F={id:0,year:1,month:2,no:3,page:4,box:5,pdfFile:6,parts:7,tags:8,hasFigure:9,record:10,text:11};
-  const MONTH={'06':'6월 모평','09':'9월 모평','11':'수능'};
+  const MONTH={6:'6월 모평',9:'9월 모평',11:'수능'};// 색인의 월 값은 숫자(6·9·11)
   // 카드에 보이는 짧은 제목은 5E 라이브러리 「문항」 탭과 같은 꼴: 「물리2 27년 6평 2번」(수능은 「27년 수능」). 근거 이름에는 긴 제목을 쓴다.
-  const shortTitle=(year,month,label,no)=>`${label.replace('물리학','물리').replace('생명과학','생명').replace('지구과학','지구').replace('Ⅰ','1').replace('Ⅱ','2')} ${String(year).slice(2)}년 ${month==='11'?'수능':Number(month)+'평'} ${no}번`;
+  const shortTitle=(year,month,label,no)=>`${label.replace('물리학','물리').replace('생명과학','생명').replace('지구과학','지구').replace('Ⅰ','1').replace('Ⅱ','2')} ${String(year).slice(2)}년 ${Number(month)===11?'수능':Number(month)+'평'} ${no}번`;
   async function loadPast(subjects){
     pastIndex||=await(pastIndexLoading||=fetch(new URL('../convert/data/index.json',import.meta.url)).then(r=>{if(!r.ok)throw Error();return r.json();}));
+    pastSyn||=await fetch(new URL('../convert/data/synonyms.json',import.meta.url)).then(r=>r.ok?r.json():{}).then(d=>d.map||{}).catch(()=>({}));
     const want=subjects.length?subjects:pastIndex.subjects.map(v=>v[0]),key=want.join(',');if(pastItems&&pastItemsKey===key)return pastItems;
     const lists=await Promise.all(want.map(code=>(loadPast.cache[code]||=fetch(new URL(`../convert/data/${code}.json`,import.meta.url)).then(r=>{if(!r.ok)throw Error();return r.json();})).then(rows=>rows.map(r=>({code,label:pastIndex.subjects.find(v=>v[0]===code)?.[1]||code,row:r})))));
     pastItems=lists.flat().map(({code,label,row})=>({id:row[F.id],subject:code,subjectLabel:label,year:row[F.year],month:row[F.month],no:row[F.no],page:row[F.page],box:row[F.box],pdfFile:row[F.pdfFile],publicPath:pastIndex.files[row[F.pdfFile]],parts:row[F.parts]||[],tags:row[F.tags]||[],hasFigure:!!row[F.hasFigure],record:row[F.record],text:row[F.text]||'',
@@ -212,8 +214,19 @@ export function createCardEditor(root,api){
   }
   loadPast.cache={};
   const pastItem=id=>pastItems?.find(v=>v.id===id);
-  // 기출 카드 그림: 화면에 들어오는 것부터 문항 번호~선지 번호 줄로 잘라(past-crop.js) 넣는다. 긴 문항은 그림 칸이 늘어나 선지 줄까지 다 보인다.
-  // 한 번 본 그림은 비율을 기억해 칸 높이를 처음부터 맞춘다(처음 볼 때만 칸이 한 번 늘어남).
+  // 검색 색인(5e.ai.kr/examlibrary 기출 탐색기와 같은 규칙): 단어를 치고 Enter → 검색 칸 안의 단어 조각(최대 3개).
+  // 조각을 모두 포함하는 문항만 남기고(띄어쓰기·대소문자 무시, 태그·단원의 비슷한 말 사전 포함), 제목·태그에 걸린 문항을 앞에 둔다.
+  const norm=v=>String(v??'').normalize('NFKC').toLocaleLowerCase('ko');
+  const splitWords=v=>norm(v).trim().split(/[#，,\s]+/u).filter(Boolean);
+  const hay=i=>{if(i._hay===undefined){const rel=[...i.tags,...i.parts].flatMap(n=>pastSyn?.[n]||[]);i._hay=norm([i.id,i.title,i.short,i.text,...i.tags,...i.parts,...rel].join(' '));i._hayNs=i._hay.replace(/\s+/gu,'');}return i;};
+  const pastScore=(i,words)=>words.reduce((n,w)=>n+(norm(i.title+' '+i.short).includes(w)?8:0)+(norm(i.tags.join(' ')).includes(w)?5:0)+(norm(i.text).includes(w)?1:0),0);
+  function addPastWords(input){
+    const incoming=splitWords(input.value);if(!incoming.length)return;
+    const joined=[...new Set([...pastFilter.tokens,...incoming])];
+    if(joined.length>3){api.status?.('검색어는 최대 세 단어입니다. 단어를 줄여 주세요.',true);return;}
+    pastFilter.tokens=joined;pastFilter.query='';store.set('past',pastFilter);renderPast();
+  }
+  // 기출 카드 그림: 화면에 들어오는 것부터 문항 번호~선지 번호 줄로 잘라(past-crop.js) 넣는다. 그림 칸은 정사각 고정이라 읽혀도 칸이 움직이지 않는다(긴 문항은 아래만 잘림).
   function loadThumbs(body){
     const list=body.querySelector('.past-list');if(!list)return;
     const show=img=>{if(img.dataset.loading)return;img.dataset.loading='1';croppedPastImage(img.dataset.card).then(src=>{if(img.isConnected)img.src=src;});};
@@ -224,20 +237,20 @@ export function createCardEditor(root,api){
   async function renderPast(){
     const body=root.querySelector('[data-cvbody="past"]');if(!body)return;
     if(panels.tab==='textbooks'){const p=picksHtml();body.innerHTML=`<div class="lp-tools"><div class="lp-row"><span class="lp-n">${p?'가져온 자료':'교과서는 5E 라이브러리에서 쪽이나 영역을 골라 가져옵니다'}</span>${pickBtn('textbook')}</div></div><div class="past-list">${p}</div>`;return;}
-    const typing=document.activeElement?.dataset?.cvpast==='query',f=pastFilter;
+    const typing=pastRefocus||document.activeElement?.dataset?.cvpast==='query',f=pastFilter;pastRefocus=false;
     let items;try{if(!pastItems)body.innerHTML='<p class="lp-count">기출 목록을 불러오는 중…</p>';
       await loadPast([]);const code=pastIndex.subjects.find(v=>v[1]===f.subject)?.[0];items=await loadPast(code?[code]:[]);}
     catch{body.innerHTML='<p class="lp-count">기출 목록을 불러오지 못했습니다.</p>';pastIndexLoading=null;return;}
     if(!body.isConnected)return;
     const subjects=pastIndex.subjects.map(v=>v[1]),parts=[...new Set(items.flatMap(i=>i.parts))].sort(),years=[...new Set(items.map(i=>i.year))].sort((a,b)=>b-a);
-    const words=f.query?f.query.split(/\s+/).filter(Boolean):[];
-    const list=items.filter(i=>(!f.part||i.parts.includes(f.part))&&(!f.year||String(i.year)===String(f.year))&&(!words.length||words.every(w=>(i.title+' '+i.parts.join(' ')+' '+i.tags.join(' ')+' '+i.text).includes(w))));
+    const words=[...new Set([...f.tokens,...splitWords(f.query)])];
+    const list=items.filter(i=>(!f.part||i.parts.includes(f.part))&&(!f.year||String(i.year)===String(f.year))&&(!words.length||(hay(i),words.every(w=>i._hay.includes(w)||i._hayNs.includes(w)))));
+    if(words.length){const sc=new Map(list.map(i=>[i,pastScore(i,words)]));list.sort((a,b)=>sc.get(b)-sc.get(a));}
     const total=pastIndex.subjects.reduce((n,v)=>n+v[2],0);
     const sel=(k,vals,label)=>`<select data-cvpast="${k}" aria-label="${label}"><option value="">${label}</option>${vals.map(v=>`<option${String(f[k])===String(v)?' selected':''}>${E(v)}</option>`).join('')}</select>`;
     const thumb=i=>{const card=pastIndex.cards.replace('{id}',encodeURIComponent(i.id)),local=i.hasFigure?new URL(`../../exam-library/images/${encodeURIComponent(i.id)}.png`,import.meta.url).href:'';
-      const r=knownRatio(card);
-      return `<div class="past-pic"${r>1?` style="aspect-ratio:1/${r}"`:''}><img alt="${E(i.title)}" data-past-thumb="${E(i.id)}" data-card="${E(card)}" data-fallback="${E(local)}"></div>`;};
-    const search=`<label class="lp-search">${ICON.search}<input data-cvpast="query" value="${E(f.query)}" placeholder="핵심어·본문 단어"><span class="lp-n" title="기출 ${total.toLocaleString()}문항 중">${list.length.toLocaleString()}문항</span></label>`,filters=sel('subject',subjects,'과목')+sel('part',parts,'단원')+sel('year',years,'연도');
+      return `<div class="past-pic"><img alt="${E(i.title)}" data-past-thumb="${E(i.id)}" data-card="${E(card)}" data-fallback="${E(local)}"></div>`;};
+    const search=`<label class="lp-search">${ICON.search}<span class="lp-tokens">${f.tokens.map(w=>`<button type="button" class="lp-token" data-cvtoken="${E(w)}" aria-label="${E(w)} 단어 삭제" title="${E(w)} 단어 삭제">${E(w)}<span aria-hidden="true">×</span></button>`).join('')}</span><input data-cvpast="query" value="${E(f.query)}" placeholder="${f.tokens.length>=3?'':f.tokens.length?'단어 더하기':'단어 + Enter'}" aria-label="검색할 단어 입력(Enter로 색인 추가, 최대 3개)"><span class="lp-n" title="기출 ${total.toLocaleString()}문항 중">${list.length.toLocaleString()}문항</span></label>`,filters=sel('subject',subjects,'과목')+sel('part',parts,'단원')+sel('year',years,'연도');
     body.innerHTML=`<div class="lp-tools"><div class="lp-row">${search}${filters}${pickBtn('past')}</div></div>`+`<div class="past-list">${picksHtml()}${list.slice(0,40).map(i=>`<figure class="past">${thumb(i)}<figcaption><b title="${E([i.title,...i.parts,...i.tags.slice(0,3)].join(' · '))}">${E(i.short)}</b><span class="acts"><button type="button" class="mini" data-cvlink="${E(i.id)}">근거로 연결</button><button type="button" class="mini go-mini" data-cvconvert="${E(i.id)}" title="편집 가능한 한글 문항으로 바꿔 새 문항 카드로 엽니다(AI 없음)">변형</button></span></figcaption></figure>`).join('')}</div>`;
     loadThumbs(body);
     if(typing){const n=body.querySelector('[data-cvpast="query"]');n.focus();n.setSelectionRange(n.value.length,n.value.length);}
@@ -320,6 +333,7 @@ export function createCardEditor(root,api){
     if(d.cv==='toggle-lib'){setPanel('lib',!panels.lib);return;}
     if(d.cv==='toggle-right'){setPanel('rightOpen',!panels.rightOpen);return;}
     if(d.cv==='new'){api.newQuestion();return;}
+    if(d.cvtoken!==undefined){pastFilter.tokens=pastFilter.tokens.filter(w=>w!==d.cvtoken);store.set('past',pastFilter);pastRefocus=true;renderPast();return;}
     if(d.cvlinked!==undefined){const a=b.closest('.cv-lib');const on=!a.classList.contains('show-linked');a.classList.toggle('show-linked',on);b.setAttribute('aria-pressed',on);b.setAttribute('aria-expanded',on);return;}
     if(d.cvlib){api.pickLibrary?.(d.cvlib);return;}
     if(d.cvpickLink!==undefined){api.libraryAction?.('link',Number(d.cvpickLink));return;}
@@ -350,6 +364,9 @@ export function createCardEditor(root,api){
     if(d.cvgraphedit){api.editGraph?.(x,d.cvgraphedit);return;}
     if(d.aiApply!==undefined){const m=x.reviews?.[Number(d.aiApply)];if(m?.suggestion)api.applySuggestion(x,m.suggestion);return;}
   });
+  root.addEventListener('keydown',e=>{const t=e.target;if(t.dataset?.cvpast!=='query'||e.isComposing)return;
+    if(e.key==='Enter'){e.preventDefault();clearTimeout(t._timer);addPastWords(t);}
+    else if(e.key==='Backspace'&&!t.value&&pastFilter.tokens.length){e.preventDefault();pastFilter.tokens=pastFilter.tokens.slice(0,-1);store.set('past',pastFilter);renderPast();}});
   root.addEventListener('keydown',e=>{if(e.target.id==='cv-ai-input'&&e.key==='Enter'&&(e.metaKey||e.ctrlKey)){e.preventDefault();root.querySelector('[data-cv="ai-send"]')?.click();}});
   // 칸 경계 끌기: 왼쪽 경계는 라이브러리 폭, 오른쪽 경계는 미리보기·AI 폭. 두 번 누르면 기본 폭.
   root.addEventListener('pointerdown',e=>{const sp=e.target.closest('.cv-split');if(!sp)return;e.preventDefault();sp.setPointerCapture(e.pointerId);sp.classList.add('drag');document.body.classList.add('cv-dragging');

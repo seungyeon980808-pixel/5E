@@ -549,20 +549,25 @@ button.q-status:hover{background:var(--ds-hover)}
 .lp-row select{flex:0 1 88px;min-width:0;height:30px;border-radius:var(--cv-ctl-radius,6px);border:1px solid var(--ds-line);background:var(--ds-field);color:var(--ds-ink-2);padding:0 6px;font-size:var(--cv-text-small,12.5px)}
 .lp-tools .lp-search{flex:1;min-width:0;height:30px;border-radius:var(--cv-ctl-radius,6px);font-size:var(--cv-text-small,12.5px)}
 .lp-n{flex:none;font-size:var(--cv-text-meta,11px);color:var(--ds-ink-3);white-space:nowrap}
+/* 검색 색인: 검색 칸 안 단어 조각(Enter로 더함, ×로 지움, 최대 3개) — 5e.ai.kr/examlibrary와 같은 모양 */
+.lp-tokens{display:flex;gap:4px;flex:0 1 auto;min-width:0;overflow:hidden}.lp-tokens:empty{display:none}
+.lp-search .lp-token{flex:none;display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 6px 0 8px;border:0;border-radius:11px;background:var(--ds-selected);color:var(--ds-ink);font-size:var(--cv-text-small,12.5px);white-space:nowrap;cursor:pointer}
+.lp-search .lp-token:hover{background:var(--ds-selected)}.lp-search .lp-token span{color:var(--ds-ink-3)}.lp-search .lp-token:hover span{color:var(--ds-ink)}
+.lp-tools .lp-search input{flex:1 1 24px;min-width:24px}.lp-tools .lp-search .lp-n{flex:none}
 .lp-row>.lp-n{flex:1;overflow:hidden;text-overflow:ellipsis;font-size:var(--cv-text-small,12.5px)}
 .lp-pick{flex:none;display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;padding:0;border:0;border-radius:var(--cv-ctl-radius,6px);background:transparent;color:var(--ds-ink-2);cursor:pointer}
 .lp-pick:hover{background:var(--ds-hover);color:var(--ds-ink)}
 .lp-pick .ico{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
-/* 기출 문항 카드 = 5E 라이브러리 「문항」 탭 카드 그대로: 흰 그림 칸(최소 정사각)에 문항 번호~선지 번호 줄로 자른 그림을 칸 폭에 맞춰 위에 붙임 — 긴 문항은 칸이 늘어나 선지 줄까지 다 보이고, 같은 줄 두 카드는 제목 줄이 맞도록 짧은 쪽 그림 칸이 흰 종이로 늘어남, 짧은 제목, 한 줄에 2개, 줄 단위로 멈춤. */
+/* 기출 문항 카드 = 5E 라이브러리 「문항」 탭 카드 그대로: 정사각 흰 그림 칸에 문항 번호~선지 번호 줄로 자른 그림을 칸 폭에 맞춰 위에 붙임(좌우는 늘 온전, 긴 문항은 아래만 칸에서 잘림). 제목은 줄이지 않고, 자리가 모자라면 단추가 다음 줄로, 짧은 제목, 한 줄에 2개, 줄 단위로 멈춤. */
 .cv-left .past-list{flex:1;min-height:0;overflow:auto;padding:0 12px 12px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:max-content;gap:12px;align-content:start;scroll-snap-type:y mandatory}
-.cv-left .past{display:flex;flex-direction:column;min-width:0;padding:8px;background:transparent;box-shadow:none;border-radius:var(--cv-sec-radius,10px);scroll-snap-align:start}
+.cv-left .past{display:block;min-width:0;padding:8px;background:transparent;box-shadow:none;border-radius:var(--cv-sec-radius,10px);scroll-snap-align:start}
 .cv-left .past:hover{background:var(--ds-hover)}
-.cv-left .past-pic{flex:1 0 auto;aspect-ratio:1/1;background:#fff;border-radius:var(--cv-ctl-radius,6px)}
-.cv-left .past-pic img{display:block;width:100%;height:auto;max-height:none;border-radius:var(--cv-ctl-radius,6px)}.cv-left .past-pic img:not([src]){visibility:hidden}
+.cv-left .past-pic{width:100%;aspect-ratio:1/1;overflow:hidden;background:#fff;border-radius:var(--cv-ctl-radius,6px)}
+.cv-left .past-pic img{display:block;width:100%;height:auto;max-height:none}.cv-left .past-pic img:not([src]){visibility:hidden}
 .cv-left .past.pick img{display:block;width:100%;height:auto;max-height:none;aspect-ratio:1/1;object-fit:contain;object-position:top;background:#fff;border-radius:var(--cv-ctl-radius,6px)}
 .cv-left .past .past-text{max-height:none;height:100%;margin:0;border-radius:0}
-.cv-left .past figcaption{flex:none;display:flex;align-items:center;gap:6px;padding:10px 0 0;min-width:0}
-.cv-left .past figcaption b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:var(--cv-text-body,14px)}
+.cv-left .past figcaption{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;padding:10px 0 0;min-width:0}
+.cv-left .past figcaption b{flex:1 0 auto;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:var(--cv-text-body,14px)}
 .cv-left .past figcaption .acts{flex:none;margin-left:auto;gap:2px}
 .cv-left .past .mini{height:26px;padding:0 6px;font-size:var(--cv-text-small,12.5px);border-radius:var(--cv-ctl-radius,6px)}
 /* 가져온 자료: 제목 한 줄 · 단추(근거로 연결·그림 칸에 넣기)는 다음 줄 */
