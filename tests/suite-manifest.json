@@ -2119,6 +2119,12 @@
       ]
     },
     {
+      "path": "tests/test-exampool-page-view-perf-browser.cjs",
+      "findingIds": [
+        "EXAMPOOL-PAGE-VIEW-NO-FREEZE"
+      ]
+    },
+    {
       "path": "tests/test-exampool-card-typing-browser.cjs",
       "findingIds": [
         "EXAMPOOL-CARD-TYPING-PERF"
