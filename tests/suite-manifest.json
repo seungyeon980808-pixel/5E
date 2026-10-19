@@ -26,6 +26,12 @@
       ]
     },
     {
+      "path": "tests/test-exampool-past-crop.mjs",
+      "findingIds": [
+        "EXAMPOOL-PAST-CARD-CROP"
+      ]
+    },
+    {
       "path": "tests/test-exampool-authoring.mjs",
       "findingIds": [
         "EXAMPOOL-AUTHORING-CORE"

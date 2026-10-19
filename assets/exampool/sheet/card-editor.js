@@ -6,6 +6,7 @@ import {normalizeCombo} from './choice-text.js';
 import {workflowOf,previewHtml,questionSubtitle} from './views.js';
 import {AXES,AXIS_LABEL,JUDGEMENT_LABEL} from '../authoring/schema.js';
 import {labelOf} from '../authoring/session.js';
+import {croppedPastImage} from './past-crop.js';
 
 const E=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const NUM=['①','②','③','④','⑤'];
@@ -211,6 +212,14 @@ export function createCardEditor(root,api){
   }
   loadPast.cache={};
   const pastItem=id=>pastItems?.find(v=>v.id===id);
+  // 기출 카드 그림: 화면에 들어오는 것부터 문항 번호~선지 번호 줄로 잘라(past-crop.js) 넣는다. 그림 칸 크기는 고정이라 읽혀도 칸이 움직이지 않는다.
+  function loadThumbs(body){
+    const list=body.querySelector('.past-list');if(!list)return;
+    const show=img=>{if(img.dataset.loading)return;img.dataset.loading='1';croppedPastImage(img.dataset.card).then(src=>{if(img.isConnected)img.src=src;});};
+    if(!('IntersectionObserver' in window)){list.querySelectorAll('img[data-card]').forEach(show);return;}
+    const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){io.unobserve(e.target);show(e.target);}}),{root:list,rootMargin:'400px 0px'});
+    list.querySelectorAll('img[data-card]').forEach(img=>io.observe(img));
+  }
   async function renderPast(){
     const body=root.querySelector('[data-cvbody="past"]');if(!body)return;
     if(panels.tab==='textbooks'){const p=picksHtml();body.innerHTML=`<div class="lp-tools"><div class="lp-row"><span class="lp-n">${p?'가져온 자료':'교과서는 5E 라이브러리에서 쪽이나 영역을 골라 가져옵니다'}</span>${pickBtn('textbook')}</div></div><div class="past-list">${p}</div>`;return;}
@@ -225,9 +234,10 @@ export function createCardEditor(root,api){
     const total=pastIndex.subjects.reduce((n,v)=>n+v[2],0);
     const sel=(k,vals,label)=>`<select data-cvpast="${k}" aria-label="${label}"><option value="">${label}</option>${vals.map(v=>`<option${String(f[k])===String(v)?' selected':''}>${E(v)}</option>`).join('')}</select>`;
     const thumb=i=>{const card=pastIndex.cards.replace('{id}',encodeURIComponent(i.id)),local=i.hasFigure?new URL(`../../exam-library/images/${encodeURIComponent(i.id)}.png`,import.meta.url).href:'';
-      return `<img loading="lazy" src="${E(card)}" alt="${E(i.title)}" data-past-thumb="${E(i.id)}" data-fallback="${E(local)}">`;};
+      return `<div class="past-pic"><img alt="${E(i.title)}" data-past-thumb="${E(i.id)}" data-card="${E(card)}" data-fallback="${E(local)}"></div>`;};
     const search=`<label class="lp-search">${ICON.search}<input data-cvpast="query" value="${E(f.query)}" placeholder="핵심어·본문 단어"><span class="lp-n" title="기출 ${total.toLocaleString()}문항 중">${list.length.toLocaleString()}문항</span></label>`,filters=sel('subject',subjects,'과목')+sel('part',parts,'단원')+sel('year',years,'연도');
     body.innerHTML=`<div class="lp-tools"><div class="lp-row">${search}${filters}${pickBtn('past')}</div></div>`+`<div class="past-list">${picksHtml()}${list.slice(0,40).map(i=>`<figure class="past">${thumb(i)}<figcaption><b title="${E([i.title,...i.parts,...i.tags.slice(0,3)].join(' · '))}">${E(i.short)}</b><span class="acts"><button type="button" class="mini" data-cvlink="${E(i.id)}">근거로 연결</button><button type="button" class="mini go-mini" data-cvconvert="${E(i.id)}" title="편집 가능한 한글 문항으로 바꿔 새 문항 카드로 엽니다(AI 없음)">변형</button></span></figcaption></figure>`).join('')}</div>`;
+    loadThumbs(body);
     if(typing){const n=body.querySelector('[data-cvpast="query"]');n.focus();n.setSelectionRange(n.value.length,n.value.length);}
   }
 
