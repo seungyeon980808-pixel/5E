@@ -323,6 +323,10 @@ h.withServer(async origin => {
         assert.equal(await smallSheet.locator('#card-view [data-cvline="bogi"]').count(),3,'a printed bogi stays visible on a non-combo card');
         for(let i=0;i<3;i++){await smallSheet.locator('#card-view [data-cvline-remove="bogi"]').first().click();await smallSheet.waitForTimeout(150);}
         await smallSheet.waitForFunction(()=>!document.querySelector('#card-view [data-cvline="bogi"]'));}
+      // 좁은 카드 칸에서도 유형 메뉴가 칸 밖으로 나가 잘리지 않는다.
+      await smallSheet.click('#card-view .cv-shape');
+      const menuFit=await smallSheet.evaluate(()=>{const m=document.querySelector('.cv-shape-menu').getBoundingClientRect(),c=document.querySelector('#card-view .cv-writer').getBoundingClientRect();return m.left>=c.left&&m.right<=c.right;});
+      assert.equal(menuFit,true,'the type menu stays inside a narrow card column');
     } finally {await browser.close();}
   }
 }).catch(error => {console.error(error);process.exitCode = 1;});

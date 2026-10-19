@@ -103,7 +103,11 @@ export function createCardEditor(root,api){
     const menu=shapeOpen?`<div class="cv-shape-menu" role="menu" aria-label="유형 바꾸기"><div class="m-head">유형 <span>보기·선지 칸만 바뀌고 쓴 글은 남습니다</span></div>${Object.entries(FORMS).map(([k,v])=>`<button type="button" role="menuitemradio" aria-checked="${k===f}" data-cvform="${k}">${shapeIco(k)}<span class="n">${E(v.name)}</span><span class="d">${E(v.desc)}</span>${k===f?CHECK:''}</button>`).join('')}</div>`:'';
     return `<div class="cv-shape-wrap"><button type="button" class="cv-shape" data-cv="shape" aria-haspopup="menu" aria-expanded="${shapeOpen}" title="새 문항 창에서 정한 틀 · 눌러서 유형 바꾸기">${shapeIco(f)}<b>${E(FORMS[f].name)}</b>${st?`<span class="st">${E(STRUCT_SHORT[st])}</span>`:''}${CHEV}</button>${menu}</div>`;
   }
-  function setShape(open){if(shapeOpen===open)return;shapeOpen=open;const w=root.querySelector('.cv-shape-wrap'),x=q();if(w&&x)w.outerHTML=shapeHtml(x);}
+  function setShape(open){if(shapeOpen===open)return;shapeOpen=open;const w=root.querySelector('.cv-shape-wrap'),x=q();if(w&&x)w.outerHTML=shapeHtml(x);if(open)fitShapeMenu();}
+  // 좁은 카드 칸에서 메뉴가 칸 밖으로 나가 잘리지 않게: 칸 폭에 맞추고, 넘치면 왼쪽으로 당긴다.
+  function fitShapeMenu(){const m=root.querySelector('.cv-shape-menu'),col=root.querySelector('.cv-writer')?.getBoundingClientRect();if(!m||!col)return;
+    const room=col.width-16;if(m.offsetWidth>room)m.style.width=room+'px';
+    const r=m.getBoundingClientRect(),over=r.right-(col.right-8);if(over>0)m.style.left=-Math.min(over,r.left-(col.left+8))+'px';}
   function formHtml(x){
     const bogi=bogiOf(x),steps=x.blocks.find(b=>b.kind==='steps'),talk=x.blocks.find(b=>b.kind==='dialogue');
     const passages=x.blocks.filter(b=>b.kind==='text');
