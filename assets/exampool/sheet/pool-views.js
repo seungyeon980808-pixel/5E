@@ -47,7 +47,7 @@ export function renderLibrary(root,data,view){
       <button type="button" class="pv-thumb" data-open-card="${q.id}" aria-label="${E(questionTitle(q))} 열기"><div class="pv-doc" data-preview="${q.id}"></div></button>
       <div class="pv-meta"><b>${E(questionSubtitle(q))}</b><div class="pv-row"><span>${stage(q)}</span><span>· ${E(q.type)}${q.unitLarge?` · ${E(q.unitLarge)}`:''}</span></div>
         <div class="pv-row pv-actions">${exams.length?`<select data-to-exam="${q.id}" aria-label="시험지에 넣기"><option value="">시험지에 넣기…</option>${exams.map(e=>`<option value="${e.id}">${E(e.title)}</option>`).join('')}<option value="__new">+ 새 시험지</option></select>`:`<button type="button" class="mini" data-to-exam-new="${q.id}">새 시험지에 넣기</button>`}<button type="button" class="mini danger" data-delete="${q.id}" title="문항 삭제">삭제</button></div></div>
-    </article>`).join(''):`<p class="pv-empty">${all.length?'조건에 맞는 문항이 없습니다.':'보관함이 비어 있습니다. 「새 문항」으로 시험지에 넣지 않은 문항을 만들어 둘 수 있습니다.'}</p>`}</div>`;
+    </article>`).join(''):`<p class="pv-empty">${view.loadError?E(view.loadError):all.length?'조건에 맞는 문항이 없습니다.':'보관함이 비어 있습니다. 「새 문항」으로 시험지에 넣지 않은 문항을 만들어 둘 수 있습니다.'}</p>`}</div>`;
   fillPreviews(root,data);
 }
 

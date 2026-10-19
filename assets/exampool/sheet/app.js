@@ -32,8 +32,8 @@ let database=null,revision=0,saveQueue=Promise.resolve(),saveStamp=0,saveBlocked
 let data={format:FORMAT,questions:[],documents:[],exams:[]},current=null,standards=null;
 // 아래 상태 막대. 빨간 글(오류)은 6초 뒤 지운다 — 그 사이 다른 문장이 오면 그 문장을 둔다.
 let statusTimer=0;
-function status(message,error=false){clearTimeout(statusTimer);$('#status').textContent=message;$('#status').dataset.error=String(error);
-  if(error)statusTimer=setTimeout(()=>{if($('#status').textContent!==message)return;$('#status').textContent='';$('#status').dataset.error='false';},6000);}
+function status(message,error=false,{keep=false}={}){clearTimeout(statusTimer);$('#status').textContent=message;$('#status').dataset.error=String(error);
+  if(error&&!keep)statusTimer=setTimeout(()=>{if($('#status').textContent!==message)return;$('#status').textContent='';$('#status').dataset.error='false';},6000);}
 // 자료 열람 상태 문장: 라이브러리 칸에 붙어 있을 때는 칸 안 줄 대신 아래 상태 막대로 보낸다(오류는 빨간 글).
 function sourceSay(message,error=false){$('#source-status').textContent=message;if($('#sources').classList.contains('docked'))status(message,error);}
 function checkpoint(key=''){future=[];if(key&&editKey===key)return;history.push(copyTree(data));if(history.length>10)history.shift();editKey=key;$('#undo').disabled=false;$('#redo').disabled=true;}
@@ -64,7 +64,8 @@ async function boot(){try{
   if(raw){revision=copied?0:raw._revision||0;data=migrate(raw);if(copied||raw.format!==FORMAT){await new Promise((resolve,reject)=>{const tx=database.transaction('backups','readwrite');tx.objectStore('backups').put(raw,'before-structure-v2');tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});status('기존 입력을 보존하고 문항 구성으로 옮겼습니다.');remember();}}
   else if(demo){data=validate(await(await fetch(new URL('./examples.json',import.meta.url))).json());remember();}
   current=data.questions[0]||null;{const first=data.exams.find(e=>e.status==='drafting'),param=new URLSearchParams(location.search).get('view');if(param==='desk'){view.name='desk';view.examId=examOf(data,current?.id)?.id||null;}else if(first){view.name='exam';view.examId=first.id;}else view.name='library';}renderAll();if(raw)status('저장한 문항을 열었습니다.');if(!raw&&!demo)status('새 문항 또는 엑셀 올리기로 시작하세요.');
-}catch(e){saveBlocked=true;renderAll();status('저장된 입력을 열지 못했습니다. 기존 저장은 보존했습니다. '+e.message,true);}
+}catch(e){// 열지 못한 이유는 사라지지 않게 둔다 — 6초 뒤 지워지면 빈 보관함만 남아 저장이 없어진 것처럼 보인다.
+  saveBlocked=true;view.loadError='저장된 입력을 열지 못했습니다. 기존 저장은 보존했습니다. '+e.message;renderAll();status(view.loadError,true,{keep:true});}
   try{standards=await(await fetch(new URL('../standards.json',import.meta.url))).json();}catch{status('성취기준 자료를 불러오지 못했습니다. 자료 열람에서 다시 시도하세요.',true);}
 }
 // 전체 표(엑셀형): 시험지 안에서 열면 그 시험지 문항만 시험지 순서대로, 아니면 보관함 문항.
