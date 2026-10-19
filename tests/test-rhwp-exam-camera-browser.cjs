@@ -1,6 +1,7 @@
 const assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
 const {chromium,webkit}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
 const h=require('./helpers/rhwp-exam.cjs');
+const {timingCheck}=require('./helpers/performance-reference.cjs');
 const dir=path.resolve(process.env.EVIDENCE_DIR||'_work/rhwp/verification/picture-controls/camera');
 
 async function revealPicture(page){
@@ -52,7 +53,7 @@ h.withServer(async origin=>{
       const finalZooms=result.frames.filter(f=>!f.animating&&Math.abs(f.zoom-result.final)<.002).flatMap(f=>f.rendered);assert.ok(finalZooms.some(z=>Math.abs(z-result.final)<.002),'final view receives a raster at the final zoom');
       for(let i=1;i<animated.length;i++)assert.ok(animated[i].zoom>=animated[i-1].zoom-.0001,'zoom never reverses');
       const gaps=animated.slice(1).map((f,i)=>f.time-animated[i].time),maxFrameMs=Math.max(...gaps);
-      assert.ok(maxFrameMs<90,`animation has no long frame stalls: ${maxFrameMs}ms`);
+      timingCheck(maxFrameMs<90,`animation has no long frame stalls: ${maxFrameMs}ms`);
       const last=animated.at(-1),settled=result.frames.find(f=>f.time>last.time&&!f.animating);
       const settleJump=settled?Math.hypot(settled.cx-last.cx,settled.cy-last.cy):0;
       assert.ok(settleJump<5,`final raster does not jump away from camera preview: ${settleJump}px`);
