@@ -66,6 +66,11 @@ export function initQuestionSheet(state,services,examWorkspace){
   // 문항 창 안에서 대화 창이 뜨면 바깥 5E 상태 줄·튜토리얼 말풍선도 같이 흐린다(문항 창 안쪽은 스스로 흐린다).
   if(!document.getElementById('exampool-modal-style')){const style=document.createElement('style');style.id='exampool-modal-style';style.textContent='html.exampool-modal .app-footer,html.exampool-modal .tut-pointout,html.exampool-modal .tut-pointout-ring{filter:blur(8px);pointer-events:none}';document.head.append(style);}
   entry.addEventListener('click',open);
+  // 5E 라이브러리 창 「보내기 → ExamPool 문항 카드로」: 문항 창을 열고(처음이면 다 읽힐 때까지 기다림) 「가져온 자료」로 넘긴다.
+  window.addEventListener('5e:exampool-receive',e=>{const items=e.detail?.items;if(!Array.isArray(items)||!items.length||entry.disabled)return;e.detail.accepted=true;
+    setTimeout(async()=>{open();const until=Date.now()+30000;
+      while(Date.now()<until){const doc=frame.contentDocument,bar=doc?.querySelector('#status');if(doc?.readyState==='complete'&&bar&&bar.textContent!=='준비 중')break;await new Promise(r=>setTimeout(r,100));}
+      frame.contentWindow?.postMessage({channel:'5e-question-sheet',action:'library-picked',items,reveal:true},location.origin);},0);});
   window.addEventListener('message',async e=>{
     if(e.origin!==location.origin||e.source!==frame?.contentWindow||e.data?.channel!=='5e-question-sheet')return;
     const m=e.data,send=result=>frame.contentWindow.postMessage({channel:'5e-question-sheet',qid:m.qid,key:m.key,requestId:m.requestId,...result},location.origin);

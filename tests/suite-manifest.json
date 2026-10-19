@@ -26,6 +26,12 @@
       ]
     },
     {
+      "path": "tests/test-exampool-past-crop.mjs",
+      "findingIds": [
+        "EXAMPOOL-PAST-CARD-CROP"
+      ]
+    },
+    {
       "path": "tests/test-exampool-authoring.mjs",
       "findingIds": [
         "EXAMPOOL-AUTHORING-CORE"
@@ -887,6 +893,12 @@
       "findingIds": [
         "EXAMPOOL-REFERENCE-WORKSPACE",
         "EXAMPOOL-LEGACY-MIGRATION"
+      ]
+    },
+    {
+      "path": "tests/test-exampool-library-layout-browser.cjs",
+      "findingIds": [
+        "EXAMPOOL-LIBRARY-LAYOUT"
       ]
     },
     {
@@ -2026,6 +2038,12 @@
       "path": "tests/test-teacher-flow-pdf-library-browser.cjs",
       "findingIds": [
         "TEACHER-FLOW-PDF-LIBRARY-WORKBENCH"
+      ]
+    },
+    {
+      "path": "tests/test-teacher-flow-library-send-browser.cjs",
+      "findingIds": [
+        "TEACHER-FLOW-LIBRARY-SEND"
       ]
     },
     {

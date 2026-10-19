@@ -1265,6 +1265,8 @@ export function initRhwpExamWorkspace(state, services) {
   panel.querySelector('#exam-hwp-file').addEventListener('cancel',()=>{pendingDocumentInsertion=null;message('문서 열기를 취소했습니다.');});
   window.addEventListener('5e:exam-send-ai', event => void run(() => startSend(event.detail)));
   window.addEventListener('5e:exam-send-graph', event => void run(() => startSend(null,event.detail)));
+  // 5E 라이브러리 창 「보내기 → 한글 시험지로」: 그림을 작업대에 넣은 뒤 「현재 영역 삽입…」과 같은 길로 보낸다.
+  window.addEventListener('5e:exam-send-canvas', () => void run(() => startSend()));
   async function receiveSource(path) {
     const request = ++incomingRequest;
     const response = await fetch(path, {cache:'no-store'}); if (!response.ok) throw new Error('그림 열기 요청이 만료되었습니다.');

@@ -876,7 +876,7 @@ function buildShell() {
         <aside class="unilib-pane unilib-preview library-reader" data-unilib-preview aria-label="선택 자료 미리보기">
           <div class="unilib-pane-head unilib-preview-heading" hidden><div><h3 data-unilib-preview-title>미리보기</h3><p data-unilib-preview-kind>자료를 선택하세요</p><span class="unilib-example-note" data-unilib-preview-example hidden>목업 · 예시 자료</span></div></div>
           <div class="unilib-preview-scroll library-reader-main"><div class="unilib-representations" data-unilib-representations hidden role="group" aria-label="문항 표시 범위"></div><nav class="unilib-match-nav" data-unilib-match-nav hidden aria-label="PDF 일치 페이지"><button type="button" data-unilib-match-prev>이전 일치</button><output data-unilib-match-position></output><button type="button" data-unilib-match-next>다음 일치</button></nav><details class="unilib-highlight-legend" data-unilib-highlight-legend hidden><summary>검색어 강조</summary><ul></ul></details><div class="unilib-stage library-reader-preview" data-unilib-stage><span>검색 결과를 선택하세요.</span></div><div class="unilib-match-context" data-unilib-match-context hidden></div><div class="unilib-part-options" data-unilib-part-options hidden></div></div>
-          <div class="unilib-preview-foot library-reader-actions"><div class="unilib-source" hidden>${ICONS.file}<div class="unilib-source-inline"><strong data-unilib-source-name>—</strong><span data-unilib-source-meta>—</span></div><div class="unilib-source-actions" hidden><button type="button" data-unilib-source-open hidden>원문 페이지</button><button type="button" data-unilib-source-download hidden>컴퓨터에 저장</button></div></div><p data-unilib-ai-help hidden>PDF에서 필요한 영역을 자르고 작업대에 넣으면 AI 이미지 변환을 사용할 수 있습니다.</p><div class="unilib-actions"><button type="button" class="unilib-button" data-unilib-adjust hidden>PDF에서 자르기</button><button type="button" data-unilib-insert hidden disabled>캔버스에 삽입</button><button type="button" class="unilib-button" data-unilib-objectify disabled>이미지 객체화</button><button type="button" class="unilib-button" data-unilib-ai disabled>AI 이미지 변환</button></div></div>
+          <div class="unilib-preview-foot library-reader-actions"><div class="unilib-source" hidden>${ICONS.file}<div class="unilib-source-inline"><strong data-unilib-source-name>—</strong><span data-unilib-source-meta>—</span></div><div class="unilib-source-actions" hidden><button type="button" data-unilib-source-open hidden>원문 페이지</button><button type="button" data-unilib-source-download hidden>컴퓨터에 저장</button></div></div><p data-unilib-ai-help hidden>PDF에서 필요한 영역을 자르고 작업대에 넣으면 AI 이미지 변환을 사용할 수 있습니다.</p><div class="unilib-actions"><button type="button" class="unilib-button" data-unilib-adjust hidden>PDF에서 자르기</button><button type="button" data-unilib-insert hidden disabled>캔버스에 삽입</button><button type="button" class="unilib-button" data-unilib-send disabled aria-haspopup="menu" aria-expanded="false" aria-controls="unilib-send-menu" title="고른 그림을 한글 시험지나 ExamPool 문항 카드로 보냅니다">보내기</button><div class="unilib-send-menu" id="unilib-send-menu" role="menu" hidden><button type="button" role="menuitem" data-unilib-send-to="hwp">${SEND_ICONS.hwp}<span>한글 시험지로</span><small>5E_hwp</small></button><button type="button" role="menuitem" data-unilib-send-to="exampool">${SEND_ICONS.exampool}<span>ExamPool 문항 카드로</span><small>가져온 자료</small></button></div><button type="button" class="unilib-button" data-unilib-ai disabled>AI 이미지 변환</button></div></div>
         </aside>
         <button class="unilib-scrim" data-unilib-scrim type="button" aria-label="열린 패널 닫기"></button>
       </div>
@@ -912,7 +912,11 @@ function createPartOptions(host, onChange) {
   return () => ({ ...state });
 }
 
-export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openObjectify, openAi, openIndependentReferences, openGraph, pdfUi, pdfDetailsElement, onImportedImages, onDesktopSnapshot, desktopLibrary = globalThis.fiveEDesktop?.pdfLibrary, storage = channelStorage, initialSearchReadiness = "ready" }) {
+const SEND_ICONS = {
+  hwp: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3.5h10v17H7zM9.5 8h5M9.5 11h5M9.5 14h3"/></svg>',
+  exampool: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4zM8 9h8M8 13h8M8 17h5"/></svg>',
+};
+export function createUnifiedLibraryUi({ getProvider, insertMaterialized, sendTo, openAi, openIndependentReferences, openGraph, pdfUi, pdfDetailsElement, onImportedImages, onDesktopSnapshot, desktopLibrary = globalThis.fiveEDesktop?.pdfLibrary, storage = channelStorage, initialSearchReadiness = "ready" }) {
   const overlay = buildShell();
   const root = overlay.querySelector(".unilib");
   overlay.querySelector('.unilib-folder-loading-spinner').replaceWith(createLoadingDots());
@@ -1084,7 +1088,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       : activePdfPageResult(result, pdfMatchIndex);
   };
   const selectedVariantResult = () => resultForRepresentation(selectedResult(), activeRepresentation);
-  const actionButtons = () => [...overlay.querySelectorAll("[data-unilib-insert],[data-unilib-objectify],[data-unilib-ai],[data-unilib-graph]")];
+  const actionButtons = () => [...overlay.querySelectorAll("[data-unilib-insert],[data-unilib-send],[data-unilib-ai],[data-unilib-graph]")];
   const acceptedAssetsKey = () => [...acceptedAssets.keys()].join("\u0000");
   const invalidateAction = () => { actionRevision += 1; };
   const activePageNumber = () => continuousView && continuousView.resultId === selectedId ? continuousView.visiblePage : null;
@@ -1856,7 +1860,7 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       overlay.querySelector("[data-unilib-source-name]").textContent = result.sourceLabel || "PDF";
       overlay.querySelector("[data-unilib-source-meta]").textContent = resultSourceText(result);
       overlay.querySelector("[data-unilib-insert]").disabled = actionBusy;
-      overlay.querySelector("[data-unilib-objectify]").disabled = actionBusy || typeof openObjectify !== "function";
+      overlay.querySelector("[data-unilib-send]").disabled = actionBusy || typeof sendTo !== "function";
       overlay.querySelector("[data-unilib-adjust]").hidden = false;
       overlay.querySelector("[data-unilib-source-download]").hidden = !pdfUi?.canDownloadPdf?.(result);
       const sourceOpen = overlay.querySelector("[data-unilib-source-open]");
@@ -1953,7 +1957,8 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
     const actionAllowed = canInsertLibraryResult(result, insertRepresentation);
     insert.disabled = actionBusy || !actionAllowed;
     insert.title = result?.kind === "crop" && !insert.disabled ? "선택한 이미지만 캔버스에 삽입" : result?.kind === "crop" ? "이미지를 선택해야 삽입할 수 있습니다" : "";
-    overlay.querySelector("[data-unilib-objectify]").disabled = actionBusy || !actionAllowed || typeof openObjectify !== "function";
+    overlay.querySelector("[data-unilib-send]").disabled = actionBusy || !actionAllowed || typeof sendTo !== "function";
+    if (overlay.querySelector("[data-unilib-send]").disabled) closeSendMenu();
     updateAiActionAvailability();
     overlay.querySelector("[data-unilib-adjust]").hidden = result?.provenance?.provider !== "pdf";
     overlay.querySelector("[data-unilib-source-download]").hidden = !pdfUi?.canDownloadPdf?.(result);
@@ -2453,18 +2458,44 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, openOb
       if (isCurrent()) close();
     });
   });
-  overlay.querySelector("[data-unilib-objectify]").addEventListener("click", async () => {
+  // 보내기: 「이미지 객체화」 자리. 고른 그림(PDF에서 자른 영역·문항 그림)을 한글 시험지(작업대에 넣고 기존 「한글로 보내기」)나
+  // ExamPool 문항 카드(왼쪽 라이브러리 칸 「가져온 자료」)로 보낸다. 켜지는 조건은 예전 객체화와 같다.
+  const sendButton = overlay.querySelector("[data-unilib-send]"), sendMenu = overlay.querySelector(".unilib-send-menu");
+  function closeSendMenu({ focus = false } = {}) {
+    if (sendMenu.hidden) return;
+    sendMenu.hidden = true; sendButton.setAttribute("aria-expanded", "false");
+    if (focus) sendButton.focus();
+  }
+  sendButton.addEventListener("click", () => {
+    if (!sendMenu.hidden) { closeSendMenu(); return; }
+    sendMenu.hidden = false; sendButton.setAttribute("aria-expanded", "true");
+    if (lastInteractionWasKeyboard) sendMenu.querySelector("button")?.focus();
+  });
+  // 메뉴가 열려 있을 때 Esc는 메뉴만 닫는다(라이브러리 창은 그대로).
+  window.addEventListener("keydown", (event) => {
+    if (sendMenu.hidden || event.key !== "Escape") return;
+    event.preventDefault(); event.stopImmediatePropagation(); closeSendMenu({ focus: sendMenu.contains(document.activeElement) });
+  }, true);
+  sendMenu.addEventListener("keydown", (event) => {
+    const items = [...sendMenu.querySelectorAll("button")], at = items.indexOf(document.activeElement);
+    if (event.key === "ArrowDown" || event.key === "ArrowUp") { event.preventDefault(); items[(at + (event.key === "ArrowDown" ? 1 : items.length - 1)) % items.length]?.focus(); }
+  });
+  overlay.addEventListener("pointerdown", (event) => { if (!event.target.closest?.(".unilib-send-menu,[data-unilib-send]")) closeSendMenu(); }, true);
+  sendMenu.addEventListener("click", async (event) => {
+    const target = event.target.closest?.("[data-unilib-send-to]")?.dataset.unilibSendTo;
+    if (!target) return;
+    closeSendMenu();
     await runLibraryAction(async (snapshot, isCurrent) => {
       const result = resultForActionSnapshot(snapshot);
       const representation = selectedInsertRepresentation(result, snapshot.representation, snapshot.selectedFigure);
-      if (!result || !canInsertLibraryResult(result, representation) || typeof openObjectify !== "function") return;
+      if (!result || !canInsertLibraryResult(result, representation) || typeof sendTo !== "function") return;
       const effectiveResult = resultForRepresentation(result, representation);
       const activeProvider = await provider();
       if (!isCurrent()) return;
       const materialized = await materializeLibraryAction(effectiveResult, activeProvider, { ...snapshot.options, acceptedAssets, representation: materializationRepresentation(result, representation) });
       if (!isCurrent()) return;
-      await openObjectify(effectiveResult, materialized, { isCurrent });
-      if (isCurrent()) close();
+      const after = await sendTo(target, effectiveResult, materialized, snapshot.options, { isCurrent });
+      if (isCurrent()) { close({ restoreFocus: false }); if (typeof after === "function") after(); }
     });
   });
   async function deliverGraphReference(result, materialized, isCurrent) {

@@ -591,7 +591,14 @@
 .unified-library-overlay [data-unilib-source-open] { padding: var(--unilib-space-1) var(--unilib-space-3); border: 0; background: transparent; color: var(--unilib-accent-hover); font-size: var(--unilib-type-caption); cursor: pointer; }
 .unified-library-overlay .unilib-source-actions { display: flex; align-items: center; gap: var(--unilib-space-1); }
 .unified-library-overlay .unilib-source-actions button { padding: var(--unilib-space-1) var(--unilib-space-3); border: 0; background: transparent; color: var(--unilib-accent-hover); font-size: var(--unilib-type-caption); cursor: pointer; }
-.unified-library-overlay .unilib-actions { display: grid; grid-template-columns: 1fr 1fr; gap: var(--unilib-space-3); }
+.unified-library-overlay .unilib-actions { display: grid; grid-template-columns: 1fr 1fr; gap: var(--unilib-space-3); position: relative; }
+/* 「보내기」 메뉴: 단추 바로 위로 단추 폭만큼 뜬다(한글 시험지로 / ExamPool 문항 카드로). */
+.unified-library-overlay .unilib-send-menu { position: absolute; z-index: 20; right: 0; bottom: calc(100% + 6px); width: calc(50% - var(--unilib-space-3) / 2); display: flex; flex-direction: column; gap: 2px; padding: 4px; border-radius: 8px; background: var(--ds-raise, var(--unilib-surface)); box-shadow: 0 0 0 1px var(--ds-line, var(--unilib-border)), 0 8px 24px rgba(0, 0, 0, .35); }
+.unified-library-overlay .unilib-send-menu[hidden] { display: none; }
+.unified-library-overlay .unilib-send-menu button { display: flex; align-items: center; gap: 8px; height: 34px; padding: 0 10px; border: 0; border-radius: 6px; background: transparent; color: var(--ds-ink-2, var(--unilib-text)); font: inherit; font-size: 13px; text-align: left; cursor: pointer; white-space: nowrap; }
+.unified-library-overlay .unilib-send-menu button:hover, .unified-library-overlay .unilib-send-menu button:focus-visible { background: var(--ds-hover); color: var(--ds-ink, var(--unilib-text)); outline: none; }
+.unified-library-overlay .unilib-send-menu small { margin-left: auto; color: var(--ds-ink-3, var(--unilib-muted)); font-size: 11px; }
+.unified-library-overlay .unilib-send-menu svg { flex: none; width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
 .unified-library-overlay .unilib-actions > button { min-height: var(--unilib-control-height); }
 .unified-library-overlay .unilib-primary { padding: 0 var(--unilib-space-4); border-color: var(--unilib-accent); background: var(--control-selected-bg); color: var(--control-selected-text); font-weight: var(--unilib-font-weight-strong); }
 .unified-library-overlay .unilib-primary:hover { border-color: var(--unilib-accent-hover); background: var(--control-selected-bg); }
@@ -758,6 +765,7 @@
   .unified-library-overlay .unilib-match-context { margin-inline: var(--unilib-space-4); }
   .unified-library-overlay .unilib-part-options { margin: 0 var(--unilib-space-4) var(--unilib-space-4); }
   .unified-library-overlay .unilib-actions { grid-template-columns: 1fr; }
+  .unified-library-overlay .unilib-send-menu { width: 100%; }
   .unified-library-overlay .unilib-actions > button { min-height: var(--unilib-mobile-control-height); }
   .unified-library-overlay .unilib-source { grid-template-columns: var(--unilib-icon-size) minmax(0, 1fr); }
   .unified-library-overlay .unilib-source-actions { grid-column: 2; min-width: 0; flex-wrap: wrap; }
@@ -800,7 +808,8 @@
 .unified-library-overlay .unilib-exam-filters select { min-height: var(--unilib-control-height); color: var(--unilib-text); background: var(--unilib-input); border: var(--unilib-border-width) solid var(--unilib-border); border-radius: var(--unilib-control-radius); padding: 0 var(--unilib-space-2); }
 .unified-library-overlay .unilib-year-range { display: inline-flex; align-items: center; gap: var(--unilib-space-1); }
 .unified-library-overlay .unilib.consumer-mode [data-unilib-insert],
-.unified-library-overlay .unilib.consumer-mode [data-unilib-objectify],
+.unified-library-overlay .unilib.consumer-mode [data-unilib-send],
+.unified-library-overlay .unilib.consumer-mode .unilib-send-menu,
 .unified-library-overlay .unilib.consumer-mode [data-unilib-crop-insert],
 .unified-library-overlay .unilib.consumer-mode [data-unilib-crop-objectify],
 .unified-library-overlay .unilib.consumer-mode [data-unilib-crop-save-png] { display: none; }
