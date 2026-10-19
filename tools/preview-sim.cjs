@@ -51,6 +51,8 @@ async function check(origin,out){
     await sheet.waitForFunction(()=>{const p=document.querySelector('#preview-dialog');return p&&!p.hidden&&p.getAttribute('aria-busy')!=='true'&&document.querySelector('#native-editor')?.dataset.ready==='true';},null,{timeout:90000}).catch(()=>{});
     step('한글 조판: '+await sheet.evaluate(()=>document.querySelector('#typeset-title')?.textContent+' · '+(document.querySelector('#typeset-status')?.textContent||'')));
     await page.screenshot({path:path.join(out,'preview-exampool.png')});
+    report.storage=await sheet.evaluate(async()=>({indexedDB:(await indexedDB.databases()).map(d=>d.name).filter(n=>/exampool/i.test(n)),localStorage:Object.keys(localStorage).filter(k=>/exampool/i.test(k)).slice(0,8)}));
+    step('저장소 이름: '+JSON.stringify(report.storage));
   }catch(e){report.errors.push('검사 중단: '+String(e.message).split('\n')[0]);}
   finally{await browser.close();}
   report.leaks=[...new Set(leaks)];fs.writeFileSync(path.join(out,'report.json'),JSON.stringify(report,null,1));

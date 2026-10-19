@@ -25,6 +25,9 @@ const options=(values,value)=>values.map(v=>`<option ${v===value?'selected':''}>
 const demo=new URLSearchParams(location.search).has('example'),embedded=window.parent!==window;
 if(demo){$('.brand-page').textContent='문항 시트 · 구조 예제';$('.brand-page').title='실제 문항과 별도 공간에 저장하는 편집 연습 예제입니다.';}
 if(embedded)$('[data-change-summary]').hidden=true;
+// 공개 프리뷰(/preview/…)는 정식 사이트와 같은 원점이라 저장소 이름에 '5e.preview:'를 붙여 분리한다(js/preview-storage.js channelStore와 같은 규칙).
+// 루트(로컬 실행)는 지금까지 쓰던 이름 그대로 — 사용자가 로컬에 만든 문항이 그대로 보인다.
+const CHANNEL=/^\/preview(?:\/|$)/.test(location.pathname)?'5e.preview:':'';
 let database=null,revision=0,saveQueue=Promise.resolve(),saveStamp=0,saveBlocked=false,history=[],editKey='',cellNode=null,pending=null,imageTarget=null,selection=null,activeTab='composition',sourceTab='standards',sourceTarget='question',doc=null,page=1,sourceSeq=0,selectedStandard=null;
 let data={format:FORMAT,questions:[],documents:[],exams:[]},current=null,standards=null;
 function status(message,error=false){$('#status').textContent=message;$('#status').dataset.error=String(error);}
@@ -41,12 +44,12 @@ function remember(){
 }
 function mutate(fn,{render=true,key=''}={}){const selectedId=current?.id,historyBefore=history.slice(),added=!key||editKey!==key,before=added?null:clone(data),redoBefore=future;try{checkpoint(key);const completed=completeKeys();fn();demoteEdited(completed);validate(data);if(render)renderAll();else queueSync();remember();queueAuthoringSync();return true;}catch(e){const rollback=added?history.pop():before;if(rollback){data=rollback;current=data.questions.find(q=>q.id===selectedId)||data.questions[0]||null;}future=redoBefore;history=historyBefore;$('#undo').disabled=!history.length;$('#redo').disabled=!future.length;editKey='';if(render)renderAll();status(e.message,true);return false;}}
 async function boot(){try{
-  database=await new Promise((resolve,reject)=>{const r=indexedDB.open(demo?'5e-exampool-structure-demo':'5e-exampool-structure',2);r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains('state'))r.result.createObjectStore('state');if(!r.result.objectStoreNames.contains('backups'))r.result.createObjectStore('backups');};r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);r.onblocked=()=>reject(Error('다른 문항 창을 닫고 다시 열어주세요.'));});
+  database=await new Promise((resolve,reject)=>{const r=indexedDB.open(CHANNEL+(demo?'5e-exampool-structure-demo':'5e-exampool-structure'),2);r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains('state'))r.result.createObjectStore('state');if(!r.result.objectStoreNames.contains('backups'))r.result.createObjectStore('backups');};r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);r.onblocked=()=>reject(Error('다른 문항 창을 닫고 다시 열어주세요.'));});
   let raw=await new Promise((resolve,reject)=>{const r=database.transaction('state').objectStore('state').get('draft');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);}),copied=false;
   if(!raw&&!demo){
     const available=await indexedDB.databases?.()||[];
-    if(available.some(d=>d.name==='5e-exampool-sheet-concept')){const oldDB=await new Promise((resolve,reject)=>{const r=indexedDB.open('5e-exampool-sheet-concept');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});try{raw=await new Promise((resolve,reject)=>{const r=oldDB.transaction('state').objectStore('state').get('draft');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});copied=!!raw;}finally{oldDB.close();}}
-    if(!raw&&available.some(d=>d.name==='5e-exampool')){const {listQuestions,listResources}=await import('../../../js/exampool-store.js?v=1013-exampool'),qs=await listQuestions(),docs=await listResources();if(qs.length){raw={format:FORMAT,questions:qs.map(fromLegacy),documents:docs.map(d=>({id:d.id,name:d.title,kind:d.kind==='교과서'?'textbooks':'references',mime:d.mime,data:`data:${d.mime};base64,${d.base64}`,pages:d.pages}))};copied=true;}}
+    if(available.some(d=>d.name===CHANNEL+'5e-exampool-sheet-concept')){const oldDB=await new Promise((resolve,reject)=>{const r=indexedDB.open(CHANNEL+'5e-exampool-sheet-concept');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});try{raw=await new Promise((resolve,reject)=>{const r=oldDB.transaction('state').objectStore('state').get('draft');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});copied=!!raw;}finally{oldDB.close();}}
+    if(!raw&&available.some(d=>d.name===CHANNEL+'5e-exampool')){const {listQuestions,listResources}=await import('../../../js/exampool-store.js?v=1013-exampool'),qs=await listQuestions(),docs=await listResources();if(qs.length){raw={format:FORMAT,questions:qs.map(fromLegacy),documents:docs.map(d=>({id:d.id,name:d.title,kind:d.kind==='교과서'?'textbooks':'references',mime:d.mime,data:`data:${d.mime};base64,${d.base64}`,pages:d.pages}))};copied=true;}}
   }
   if(raw){revision=copied?0:raw._revision||0;data=migrate(raw);if(copied||raw.format!==FORMAT){await new Promise((resolve,reject)=>{const tx=database.transaction('backups','readwrite');tx.objectStore('backups').put(raw,'before-structure-v2');tx.oncomplete=resolve;tx.onerror=()=>reject(tx.error);});status('기존 입력을 보존하고 문항 구성으로 옮겼습니다.');remember();}}
   else if(demo){data=validate(await(await fetch(new URL('./examples.json',import.meta.url))).json());remember();}
@@ -164,8 +167,8 @@ function renderView(){
   if(view.name==='library')renderLibrary($('#library-view'),data,view);
   if(view.name==='exams')renderExams($('#exams-view'),data,view);
   if(view.name==='exam')renderExam($('#examd-view'),data,view.examId);
-  if(view.name==='card'){let pref=null;try{pref=localStorage.getItem('exampool-nav');}catch{}document.querySelector('.shell-body').classList.toggle('nav-off',pref===null||pref==='0');if(pref!=='1')$('#toggle-nav').setAttribute('aria-pressed','false');cardEditor.render();}
-  else{let pref=null;try{pref=localStorage.getItem('exampool-nav');}catch{}document.querySelector('.shell-body').classList.toggle('nav-off',pref==='0');}
+  if(view.name==='card'){let pref=null;try{pref=localStorage.getItem(CHANNEL+'exampool-nav');}catch{}document.querySelector('.shell-body').classList.toggle('nav-off',pref===null||pref==='0');if(pref!=='1')$('#toggle-nav').setAttribute('aria-pressed','false');cardEditor.render();}
+  else{let pref=null;try{pref=localStorage.getItem(CHANNEL+'exampool-nav');}catch{}document.querySelector('.shell-body').classList.toggle('nav-off',pref==='0');}
   $('#toggle-lib').hidden=true;
   // 위쪽 막대: 카드 화면에서는 단계 칩이 카드에 있으므로 상태 선택을 숨기고, 시험지 문항이면 5e_hwp로 보내기를 보인다.
   document.querySelector('.workflow-pick').hidden=view.name==='card';
@@ -680,8 +683,8 @@ window.addEventListener('message',e=>{if(e.origin!==location.origin||e.source!==
   if(m.requestId&&m.requestId===examRequest){examRequest=null;if(m.error){status(m.error,true);return;}const exam=examById(data,m.qid);if(exam)mutate(()=>{exam.sentAt=new Date().toISOString();});status('시험지를 5e_hwp에서 열었습니다 · 최종 검수 후 「출제 완료로 옮기기」를 누르세요.');}
 });
 // 왼쪽 메뉴·오른쪽 라이브러리 접기.
-$('#toggle-nav').onclick=()=>{const off=!document.querySelector('.shell-body').classList.contains('nav-off');document.querySelector('.shell-body').classList.toggle('nav-off',off);$('#toggle-nav').setAttribute('aria-pressed',String(!off));try{localStorage.setItem('exampool-nav',off?'0':'1');}catch{}};
-try{if(localStorage.getItem('exampool-nav')==='0'){document.querySelector('.shell-body').classList.add('nav-off');$('#toggle-nav').setAttribute('aria-pressed','false');}}catch{}
+$('#toggle-nav').onclick=()=>{const off=!document.querySelector('.shell-body').classList.contains('nav-off');document.querySelector('.shell-body').classList.toggle('nav-off',off);$('#toggle-nav').setAttribute('aria-pressed',String(!off));try{localStorage.setItem(CHANNEL+'exampool-nav',off?'0':'1');}catch{}};
+try{if(localStorage.getItem(CHANNEL+'exampool-nav')==='0'){document.querySelector('.shell-body').classList.add('nav-off');$('#toggle-nav').setAttribute('aria-pressed','false');}}catch{}
 $('#toggle-lib').onclick=()=>$('#card-view [data-cv="toggle-lib"]')?.click();
 
 await boot();

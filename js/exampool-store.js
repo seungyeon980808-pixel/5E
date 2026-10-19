@@ -2,7 +2,7 @@
 let connection;
 function open() {
   if (!connection) connection = new Promise((resolve,reject) => {
-    const request = indexedDB.open('5e-exampool', 2);
+    const request = indexedDB.open((/^\/preview(?:\/|$)/.test(location.pathname)?'5e.preview:':'')+'5e-exampool', 2);
     request.onupgradeneeded = () => {
       for (const name of ['questions','resources']) if (!request.result.objectStoreNames.contains(name)) request.result.createObjectStore(name, {keyPath:'id'});
     };

@@ -29,7 +29,8 @@ const TABS=[['past','기출'],['textbooks','교과서'],['standards','기준'],[
 const slotsOf=q=>{const out=[];const walk=p=>{for(const b of q.blocks.filter(x=>x.parent===p)){if(b.kind==='figure'||b.kind==='table')out.push(b);walk(b.id);}};walk(null);return out;};
 const bogiOf=q=>q.blocks.find(b=>b.kind==='bogi');
 const isCombo=q=>q.type==='합답형';
-const store={get(k,d){try{return JSON.parse(localStorage.getItem('exampool-card:'+k))??d;}catch{return d;}},set(k,v){try{localStorage.setItem('exampool-card:'+k,JSON.stringify(v));}catch{}}};
+const CHANNEL=/^\/preview(?:\/|$)/.test(location.pathname)?'5e.preview:':'';// 공개 프리뷰는 저장 이름을 분리
+const store={get(k,d){try{return JSON.parse(localStorage.getItem(CHANNEL+'exampool-card:'+k))??d;}catch{return d;}},set(k,v){try{localStorage.setItem(CHANNEL+'exampool-card:'+k,JSON.stringify(v));}catch{}}};
 
 // 완성 조건: 발문·자료(그림/표가 모두 찬 자리)·보기(합답형)·선지·정답. 모두 차면 AI 검토를 요청할 수 있다.
 export function completeness(q){
