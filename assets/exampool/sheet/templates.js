@@ -8,7 +8,8 @@ export const FORMS={
   combo:{name:'합답형',desc:'<보기> ㄱ·ㄴ·ㄷ 중 옳은 것을 모두 고른다'},
   single:{name:'일반 정답형',desc:'값·식·낱말·문장 중 하나를 고른다'},
   pair:{name:'대응·짝 고르기형',desc:'A·B·C에 들어갈 것을 짝지어 고른다'},
-  talk:{name:'학생 대화·발표형',desc:'옳게 말한 학생을 고른다'}
+  talk:{name:'학생 대화·발표형',desc:'옳게 말한 학생을 고른다'},
+  essay:{name:'서술형',desc:'선지 없이 모범 답안을 쓴다'}
 };
 export const STRUCTS={
   two:{name:'자료 2개 (가)·(나)',desc:'자료 두 칸. 칸마다 그림·그래프·표 중 하나'},
@@ -40,8 +41,8 @@ export function autoLayout(subject,form,struct){
   return best?best[0]:['two','many'].includes(struct)?'row':'below';
 }
 
-const TYPE={combo:'합답형',single:'객관식',pair:'객관식',talk:'객관식'};
-const STYLE={combo:'조합',single:'문장·수식',pair:'대응표',talk:'조합'};
+const TYPE={combo:'합답형',single:'객관식',pair:'객관식',talk:'객관식',essay:'서술형'};
+const STYLE={combo:'조합',single:'문장·수식',pair:'대응표',talk:'조합',essay:'문장·수식'};
 const PRESET={none:'글·수식',condition:'글·수식',big:'그림',small:'그림',two:'그림 비교',many:'그림 비교',experiment:'실험'};
 const CAPS=['(가)','(나)','(다)'];
 // 유형·자료 구조 → 문항 틀. 블록 순서가 한글 문서의 순서다(보기는 발문 뒤에 찍힌다).
@@ -84,5 +85,5 @@ export function sheetCells(form,struct){
   if(form==='single')c.push(['선지','값 다섯 개','type']);
   if(form==='pair')c.push(['선지 표','A·B·C 열 + 다섯 줄','type']);
   if(form==='talk')c.push(['학생 말','A·B·C 한 줄씩','type'],['선지','AB처럼 입력 → A, B','type']);
-  c.push(['정답','번호 하나','type']);return c;
+  if(form==='essay')c.push(['모범 답안','채점 기준이 되는 답','type']);else c.push(['정답','번호 하나','type']);return c;
 }

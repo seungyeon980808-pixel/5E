@@ -1,4 +1,4 @@
-import {TYPES,PRESETS,STYLES,KINDS,block,applyPreset,passageBlocks} from './model.js';
+import {TYPES,PRESETS,STYLES,KINDS,block,applyPreset,passageBlocks,syncForm} from './model.js';
 
 // text: 한글 문서에 글로 나오는 칸(흰색). 나머지(분류·모양 설정·정답·해설 등)는 옅은 회색으로 구분한다.
 // A row is a field; a column is one complete question. Compound material stays
@@ -40,7 +40,7 @@ export function writeField(q,key,value,{clear=false}={}){
   if(clear&&['type','preset','style'].includes(key))return;
   const row=ROWS.find(r=>r.key===key);if(!row)throw Error('입력 항목을 찾지 못했습니다.');
   if(row.options&&!row.options.includes(value))throw Error(`${row.label}은 셀의 목록에서 선택하세요.`);
-  if(key==='type'){q.type=value;if(value==='합답형'&&!q.blocks.some(b=>b.kind==='bogi'))q.blocks.push(block('bogi'));}
+  if(key==='type'){q.type=value;if(value==='합답형'&&!q.blocks.some(b=>b.kind==='bogi'))q.blocks.push(block('bogi'));syncForm(q);}
   else if(key==='preset'){if(q.preset!==value)applyPreset(q,value);}
   else if(key==='points'){const n=Number(value);if(!clear&&(value.trim()===''||!Number.isFinite(n)||n<0||n>10000))throw Error('배점은 0~10,000 사이 숫자로 입력하세요.');q.points=n;}
   else if(key==='answer'){if(q.type==='서술형')q.modelAnswer=value;else if(value===''||value==='—')q.answer=null;else{const n=labels.includes(value)?labels.indexOf(value):Number(value)-1;if(!Number.isInteger(n)||n<0||n>4)throw Error('정답은 ①~⑤ 또는 1~5로 입력하세요.');q.answer=n;}}
@@ -67,7 +67,7 @@ export function writeField(q,key,value,{clear=false}={}){
     b.lines=lines.map((line,i)=>{const old=b.lines[i]||{id:crypto.randomUUID(),label:key==='steps'?CAP[i]||`(${i+1})`:`학생 ${'ABCDEFGH'[i]||i+1}`};
       if(key==='steps')return {...old,text:line.replace(/^\s*\([가-힣]\)\s*/,'')};
       const m=line.match(/^\s*([^:：]{1,20})\s*[:：]\s*(.*)$/);return m?{...old,label:m[1].trim(),text:m[2]}:{...old,text:line};});
-  }else q[key]=value;
+  }else{q[key]=value;if(key==='style')syncForm(q);}
 }
 export function applyVerticalValues(data,ids,writes,options){
   for(const w of writes){const q=data.questions.find(q=>q.id===ids[w.c]);if(!q)throw Error('문항 열을 먼저 추가하세요.');const key=ROWS[w.r]?.key;if(options?.clear&&(key==='materials'||key==='choices'&&['대응표','그림·그래프'].includes(q.style)))continue;writeField(q,key,w.value,options);}

@@ -1,6 +1,8 @@
 // 문항 카드: 문항 하나를 인쇄 순서대로 쓰는 입력 화면(밝은 종이 위 상자). 왼쪽은 시험지·보관함 문항 목록,
 // 오른쪽은 라이브러리(기출·교과서·기준·자료·지면·AI). 엑셀형 표는 시험지의 '전체 표'로만 남긴다.
-import {WORKFLOWS,KINDS} from './model.js';
+import {WORKFLOWS,KINDS,formOf,formLosses,applyForm} from './model.js';
+import {FORMS,STRUCTS} from './templates.js';
+import {SHAPE_ICONS} from './new-question.js';
 import {fieldValue,writeField} from './vertical.js';
 import {normalizeCombo} from './choice-text.js';
 import {workflowOf,previewHtml,questionSubtitle} from './views.js';
@@ -27,6 +29,11 @@ const ICON={
 // 시안 4: 왼쪽 라이브러리(기출·교과서·기준·자료) · 가운데 문항 카드(쪽 전체로 바꿔 보기) · 오른쪽 미리보기|AI.
 const TABS=[['past','기출'],['textbooks','교과서'],['standards','기준'],['references','자료']];
 const slotsOf=q=>{const out=[];const walk=p=>{for(const b of q.blocks.filter(x=>x.parent===p)){if(b.kind==='figure'||b.kind==='table')out.push(b);walk(b.id);}};walk(null);return out;};
+// 유형·자료 구조는 새 문항 창에서 정한다. 카드 머리 줄에는 이름표로만 보이고, 눌렀을 때만 유형 바꾸기 메뉴가 열린다.
+const STRUCT_SHORT={two:'자료 2개',big:'큰 자료 1개',small:'작은 자료 1개',condition:'조건 상자',many:'자료 3개 이상',experiment:'실험 상자',none:'글만'};
+const shapeIco=k=>`<svg class="ico shape" viewBox="0 0 24 24" aria-hidden="true">${SHAPE_ICONS[k]||''}</svg>`;
+const CHEV='<svg class="ico chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg>';
+const CHECK='<svg class="ico tick" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>';
 const bogiOf=q=>q.blocks.find(b=>b.kind==='bogi');
 const isCombo=q=>q.type==='합답형';
 const CHANNEL=/^\/preview(?:\/|$)/.test(location.pathname)?'5e.preview:':'';// 공개 프리뷰는 저장 이름을 분리
@@ -59,7 +66,8 @@ export function createCardEditor(root,api){
       if(b.kind==='table'){const t=b.table;return `<div class="cv-tile"><div class="pic table-pic"><table>${t.cells.slice(0,4).map((row,r)=>`<tr>${row.slice(0,4).map(c=>`<${r<t.headerRows?'th':'td'}>${E(c.value).slice(0,8)}</${r<t.headerRows?'th':'td'}>`).join('')}</tr>`).join('')}</table></div><div class="cap"><b>${name}</b>표 ${t.rows}×${t.cols}<span class="sp"></span><button type="button" class="mini" data-cvslot-act="table" data-cvslot="${b.id}">표 편집</button></div></div>`;}
       return `<div class="cv-tile empty"><div class="pic"><button type="button" class="btn go" data-cvslot-act="pick" data-cvslot="${b.id}">${ICON.pic}5E에서 그림 가져오기</button><button type="button" class="btn" data-cvslot-act="to-table" data-cvslot="${b.id}">${ICON.table}표 만들기</button></div><div class="cap"><b>${name}</b>빈 자리<span class="sp"></span><button type="button" class="mini" data-cvslot-act="remove" data-cvslot="${b.id}" title="이 자리 지우기">지우기</button></div></div>`;
     }).join('');
-    return `<div class="cv-tiles">${tiles}<div class="cv-add-slot"><button type="button" class="cv-add-tile" data-cvslot-act="add-figure">${ICON.pic}그림 자리</button><button type="button" class="cv-add-tile" data-cvslot-act="add-table">${ICON.table}표 자리</button></div></div>`;
+    // 칸 더하기는 하나: 빈 칸이 생기고, 그림을 가져올지 표를 만들지는 그 칸 안에서 고른다.
+    return `${tiles?`<div class="cv-tiles">${tiles}</div>`:''}<button type="button" class="cv-add-row" data-cvslot-act="add-figure">${ICON.plus}자료 칸 추가<span>빈 칸이 생기고, 칸에서 그림을 가져오거나 표를 만듭니다</span></button>`;
   }
   function linesHtml(b,key,ph){
     return `<div class="rows">${b.lines.map((l,i)=>`<div class="ig"><span>${E(key==='bogi'?l.label:l.label)}</span><input data-cvline="${key}" data-i="${i}" value="${E(l.text)}" placeholder="${E(ph)}"><button type="button" class="ig-x" data-cvline-remove="${key}" data-i="${i}" title="이 줄 지우기" aria-label="이 줄 지우기">×</button></div>`).join('')}
@@ -83,12 +91,19 @@ export function createCardEditor(root,api){
     return `<div class="f-field"><label title="값·식·낱말·문장을 한 줄씩 · 동그라미로 정답">선지<span class="lay">${[['','자동'],['한 줄','한 줄'],['2열','2열'],['세로','세로']].map(([v,t])=>`<button type="button" class="link" data-cvlayout="${v}" aria-pressed="${lay===v}">${t}</button>`).join('')}</span></label>
       <div class="rows">${x.choices.map((c,i)=>`<label class="ig choice-row${x.answer===i?' on':''}"><input type="radio" name="cv-ans" data-cvans="${i}" ${x.answer===i?'checked':''}><span>${NUM[i]}</span><input data-cvchoice="${i}" value="${E(c.text)}" placeholder="${NUM[i]} 선지"></label>`).join('')}</div></div>`;
   }
+  let shapeOpen=false;
+  function shapeHtml(x){
+    const f=formOf(x),st=STRUCTS[x.structure]?x.structure:null;
+    const menu=shapeOpen?`<div class="cv-shape-menu" role="menu" aria-label="유형 바꾸기"><div class="m-head">유형 <span>보기·선지 칸만 바뀌고 쓴 글은 남습니다</span></div>${Object.entries(FORMS).map(([k,v])=>`<button type="button" role="menuitemradio" aria-checked="${k===f}" data-cvform="${k}">${shapeIco(k)}<span class="n">${E(v.name)}</span><span class="d">${E(v.desc)}</span>${k===f?CHECK:''}</button>`).join('')}</div>`:'';
+    return `<div class="cv-shape-wrap"><button type="button" class="cv-shape" data-cv="shape" aria-haspopup="menu" aria-expanded="${shapeOpen}" title="새 문항 창에서 정한 틀 · 눌러서 유형 바꾸기">${shapeIco(f)}<b>${E(FORMS[f].name)}</b>${st?`<span class="st">${E(STRUCT_SHORT[st])}</span>`:''}${CHEV}</button>${menu}</div>`;
+  }
+  function setShape(open){if(shapeOpen===open)return;shapeOpen=open;const w=root.querySelector('.cv-shape-wrap'),x=q();if(w&&x)w.outerHTML=shapeHtml(x);}
   function formHtml(x){
     const bogi=bogiOf(x),steps=x.blocks.find(b=>b.kind==='steps'),talk=x.blocks.find(b=>b.kind==='dialogue');
     const passages=x.blocks.filter(b=>b.kind==='text');
     const {items,done}=completeness(x);
     return `<div class="cv-writer"><div class="w-head"><span class="qno">${x.number?E(x.number)+'번':'번호 없음'} 문항</span>
-        <div class="typeseg" role="group" aria-label="문항 유형">${[['합답형','합답형'],['객관식','정답형'],['서술형','서술형']].map(([v,t])=>`<button type="button" data-cvtype="${v}" aria-pressed="${x.type===v}">${t}</button>`).join('')}</div>
+        ${shapeHtml(x)}
         <span class="sp"></span>
         <div class="stage" role="group" aria-label="문항 단계">${Object.entries(WORKFLOWS).map(([k,v])=>`<button type="button" data-cvstage="${k}" aria-pressed="${workflowOf(x)===k}"><i class="dot st-${k}"></i>${v}</button>`).join('')}</div></div>
       <form class="sheet-form" onsubmit="return false">
@@ -136,7 +151,7 @@ export function createCardEditor(root,api){
   const splitHtml=k=>`<div class="cv-split" data-cvsplit="${k}" role="separator" aria-orientation="vertical" title="끌어서 폭 바꾸기 · 두 번 누르면 기본 폭"></div>`;
   // 기본 폭(시안 4): 화면 너비의 38%·28.5%(1440px 화면 → 545·410, 1920px → 730·547). 끈 폭은 기억한다.
   function widths(){const w=root.clientWidth||1440;return {lw:store.get('lw',Math.round(Math.min(760,Math.max(300,w*0.38)))),rw:store.get('rw',Math.round(Math.min(600,Math.max(340,w*0.285))))};}
-  function render(){
+  function render(){shapeOpen=false;
     const x=q();
     const keep=root.querySelector('.cv-writer')?.scrollTop||0,same=renderedFor===x?.id;
     api.dock?.(null);// 다시 그리기 전에 붙여 둔 자료 열람을 원래 자리로 돌려놓는다(같이 지워지지 않게).
@@ -315,7 +330,10 @@ export function createCardEditor(root,api){
     if(d.cvconvert){const i=pastItem(d.cvconvert);if(i)api.convertPast?.(i);return;}
     if(d.cvlink){const i=pastItem(d.cvlink);if(i&&x)api.edit(()=>{x.references.push({target:'question',label:i.title,quote:[...i.parts,...i.tags].join(', ')});});api.status?.(`${i?.title} 을(를) 근거로 연결했습니다.`);return;}
     if(!x)return;
-    if(d.cvtype){if(d.cvtype===x.type)return;api.edit(()=>{writeField(x,'type',d.cvtype);if(d.cvtype==='합답형')x.style='조합';else if(x.style==='조합')x.style='문장·수식';});return;}
+    if(d.cv==='shape'){setShape(!shapeOpen);if(shapeOpen)root.querySelector('.cv-shape-menu [aria-checked="true"]')?.focus();return;}
+    if(d.cvform){const k=d.cvform;setShape(false);if(k===formOf(x))return;
+      const lost=formLosses(x,k);if(lost.length){const n=lost.reduce((s,b)=>s+b.lines.filter(l=>l.text.trim()).length,0);if(!confirm(`${FORMS[k].name}(으)로 바꾸면 ${lost[0].kind==='bogi'?'보기':'대화'} ${n}줄을 지웁니다. 바꿀까요?`))return;}
+      api.edit(()=>applyForm(x,k));api.status?.(`${FORMS[k].name}(으)로 바꿨습니다.`);return;}
     if(d.cvstage){api.edit(()=>{x.workflow=d.cvstage;});return;}
     if(d.cvslotAct){api.slot(d.cvslotAct,x,d.cvslot);return;}
     if(d.cvlineAdd){const key=d.cvlineAdd;api.edit(()=>{let blk=x.blocks.find(v=>v.kind===key);if(!blk){writeField(x,key,'');blk=x.blocks.find(v=>v.kind===key);}const value=fieldValue(x,key);writeField(x,key,value?value+'\n':key==='dialogue'?'학생 A: ':'');});return;}
@@ -338,6 +356,9 @@ export function createCardEditor(root,api){
     if(d.cvgraphedit){api.editGraph?.(x,d.cvgraphedit);return;}
     if(d.aiApply!==undefined){const m=x.reviews?.[Number(d.aiApply)];if(m?.suggestion)api.applySuggestion(x,m.suggestion);return;}
   });
+  // 유형 메뉴: 바깥을 누르거나 Esc면 닫는다.
+  document.addEventListener('pointerdown',e=>{if(shapeOpen&&!e.target.closest?.('.cv-shape-wrap'))setShape(false);});
+  root.addEventListener('keydown',e=>{if(shapeOpen&&e.key==='Escape'){e.preventDefault();setShape(false);root.querySelector('.cv-shape')?.focus();}});
   root.addEventListener('keydown',e=>{if(e.target.id==='cv-ai-input'&&e.key==='Enter'&&(e.metaKey||e.ctrlKey)){e.preventDefault();root.querySelector('[data-cv="ai-send"]')?.click();}});
   // 칸 경계 끌기: 왼쪽 경계는 라이브러리 폭, 오른쪽 경계는 미리보기·AI 폭. 두 번 누르면 기본 폭.
   root.addEventListener('pointerdown',e=>{const sp=e.target.closest('.cv-split');if(!sp)return;e.preventDefault();sp.setPointerCapture(e.pointerId);sp.classList.add('drag');document.body.classList.add('cv-dragging');

@@ -140,6 +140,7 @@
 #new-dialog .nq-pv .ch{display:grid;margin-top:10px;font-size:17.5px;row-gap:2px}
 #new-dialog .nq-pv .ch.r5{grid-template-columns:repeat(5,auto);justify-content:space-between}
 #new-dialog .nq-pv .ch div{white-space:nowrap}
+#new-dialog .nq-pv .essay-box{height:96px;margin-top:10px;border:.85px solid #111}
 #new-dialog .nq-pv .pair{display:grid;grid-template-columns:1fr 1fr;column-gap:20px;row-gap:2px;margin-top:10px;font-size:17.5px}
 #new-dialog .nq-pv .pair-row{display:grid;grid-template-columns:1.4em repeat(3,1fr);align-items:baseline;white-space:nowrap}
 #new-dialog .nq-pv .pair-row.headrow span{text-align:center}
