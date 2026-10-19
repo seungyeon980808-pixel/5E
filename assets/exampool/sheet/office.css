@@ -498,14 +498,14 @@ button.q-status:hover{background:var(--ds-hover)}
 .cv-tile.empty .btn{justify-content:center;width:100%;color:#2f343a;font-size:12px}.cv-tile.empty .btn:hover{background:#eef0f3;color:#1b1e23}
 .cv-tile.empty .btn.go{background:#eaf2fd;box-shadow:inset 0 0 0 1px #2f6fd6;color:#1a5fb4}
 .cv-tile .ico{width:16px;height:16px;flex:0 0 16px}
-.cv-add-row{display:flex;align-items:center;gap:6px;width:100%;height:32px;margin-top:10px;padding:0 12px;border:1px dashed #c9ced6;border-radius:var(--ds-radius,6px);background:transparent;color:#4a5059;font-size:12.5px}
+.cv-add-row{display:flex;align-items:center;gap:6px;width:100%;height:32px;margin-top:10px;padding:0 12px;border:1px dashed #c9ced6;border-radius:var(--cv-ctl-radius,6px);background:transparent;color:#4a5059;font-size:var(--cv-text-small,12.5px)}
 .cv-tiles+.cv-add-row{margin-top:10px}.f-field>label+.cv-add-row{margin-top:0}
-.cv-add-row .ico{width:16px;height:16px;flex:0 0 16px}.cv-add-row span{margin-left:8px;color:#80858d;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cv-add-row .ico{width:16px;height:16px;flex:0 0 16px}.cv-add-row span{margin-left:8px;color:#80858d;font-size:var(--cv-text-meta,11px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cv-add-row:hover{color:#1b1e23;border-color:#2f6fd6}
 /* 머리 줄 틀 이름표(새 문항 창에서 정한 유형·자료 구조) · 눌렀을 때만 유형 바꾸기 메뉴 */
 .w-head .qno{white-space:nowrap;flex:0 0 auto}.w-head .stage{flex:0 0 auto}
 .cv-shape-wrap{position:relative;min-width:0;flex:0 1 auto}
-.cv-shape{display:flex;align-items:center;gap:6px;max-width:100%;min-width:0;height:28px;padding:0 8px 0 6px;border:1px solid #d5d8dd;border-radius:var(--ds-radius,6px);background:#fff;color:#1b1e23;font-size:12.5px}
+.cv-shape{display:flex;align-items:center;gap:6px;max-width:100%;min-width:0;height:28px;padding:0 8px 0 6px;border:1px solid #d5d8dd;border-radius:var(--cv-ctl-radius,6px);background:#fff;color:#1b1e23;font-size:var(--cv-text-small,12.5px)}
 .cv-shape:hover,.cv-shape[aria-expanded=true]{background:#eef0f3}
 .cv-shape b{font-weight:600;white-space:nowrap}
 .cv-shape .st{min-width:0;color:#666b73;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
@@ -513,11 +513,11 @@ button.q-status:hover{background:var(--ds-hover)}
 .cv-shape .ico,.cv-shape-menu .ico{width:16px;height:16px;flex:0 0 16px}
 .cv-shape .ico.shape,.cv-shape-menu .ico.shape{width:20px;height:20px;flex-basis:20px;stroke-width:1.3;color:#4a5059}
 .cv-shape .chev{color:#666b73}
-.cv-shape-menu{position:absolute;top:32px;left:0;z-index:20;width:340px;padding:6px;background:#fff;border-radius:10px;box-shadow:0 0 0 1px #d5d8dd,0 8px 24px rgba(20,24,30,.14)}
-.cv-shape-menu .m-head{padding:6px 8px 4px;font-size:11px;font-weight:600;color:#666b73}.cv-shape-menu .m-head span{font-weight:400;margin-left:6px}
-.cv-shape-menu button{display:flex;align-items:center;justify-content:flex-start;gap:8px;width:100%;height:32px;padding:0 8px;border:0;border-radius:var(--ds-radius,6px);background:transparent;color:#1b1e23;font-size:12.5px;text-align:left}
+.cv-shape-menu{position:absolute;top:32px;left:0;z-index:20;width:340px;padding:6px;background:#fff;border-radius:var(--cv-sec-radius,10px);box-shadow:0 0 0 1px #d5d8dd,0 8px 24px rgba(20,24,30,.14)}
+.cv-shape-menu .m-head{padding:6px 8px 4px;font-size:var(--cv-text-meta,11px);font-weight:600;color:#666b73}.cv-shape-menu .m-head span{font-weight:400;margin-left:6px}
+.cv-shape-menu button{display:flex;align-items:center;justify-content:flex-start;gap:8px;width:100%;height:32px;padding:0 8px;border:0;border-radius:var(--cv-ctl-radius,6px);background:transparent;color:#1b1e23;font-size:var(--cv-text-small,12.5px);text-align:left}
 .cv-shape-menu button:hover,.cv-shape-menu button:focus-visible{background:#eef0f3;outline:none}.cv-shape-menu button[aria-checked=true]{background:#e9ecf0}
-.cv-shape-menu .n{flex:0 0 auto}.cv-shape-menu .d{flex:1;min-width:0;color:#80858d;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cv-shape-menu .n{flex:0 0 auto}.cv-shape-menu .d{flex:1;min-width:0;color:#80858d;font-size:var(--cv-text-meta,11px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .cv-shape-menu .tick{margin-left:auto;color:#1a5fb4}
 .f-more summary{cursor:pointer;font-size:13.5px;font-weight:600;color:#2f343a}
 .f-foot{display:flex;align-items:center;gap:10px;padding:4px 2px}
