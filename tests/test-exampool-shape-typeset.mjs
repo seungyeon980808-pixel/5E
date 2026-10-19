@@ -143,6 +143,16 @@ test('an Excel file whose 문항유형 was changed comes back with a matching fo
   assert.equal(got.questions[0].type,'서술형');assert.equal(got.questions[0].form,'essay');
 });
 
+test('validate(data,{only}) checks the edited question fully and the rest only for duplicate IDs',async()=>{
+  const {validate}=await import('../assets/exampool/sheet/model.js');
+  const a=shape('combo','two'),b=shape('single','none'),data={format:'5e-question-sheet-v2',questions:[a,b],documents:[]};
+  assert.doesNotThrow(()=>validate(data,{only:a}));
+  b.blocks[0].text=42;// 다른 문항의 잘못은 이 범위에서는 보지 않는다(전체 검사에서는 잡힌다)
+  assert.doesNotThrow(()=>validate(data,{only:a}));assert.throws(()=>validate(data),/구성/);b.blocks[0].text='';
+  a.ask='x'.repeat(40000);assert.throws(()=>validate(data,{only:a}),/너무 길거나/);a.ask='';
+  b.id=a.id;assert.throws(()=>validate(data,{only:a}),/ID/);
+});
+
 test('a space after a sub/superscript group keeps the native engine from extending the subscript',async()=>{
   const {normalizeEquationScript:n}=await import('../assets/exampool/sheet/typeset-model.js');
   assert.equal(n('T_{1}=\\frac{t_{1}}{10}'),'T_{1} =\\frac{t_{1}}{10}');assert.equal(n('T_{1}>T_{2}'),'T_{1} >T_{2}');

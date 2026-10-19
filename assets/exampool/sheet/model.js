@@ -111,17 +111,22 @@ export function fromLegacy(v) {
 }
 function normalizeReferences(q){for(const ref of q.references){const choice=ref.target.match(/^choice-([0-4])$/),bogi=ref.target.match(/^bogi-([0-2])$/);if(choice)ref.target=q.choices[Number(choice[1])].id;if(bogi)ref.target=q.blocks.find(b=>b.kind==='bogi')?.lines[Number(bogi[1])]?.id||'question';if(ref.target==='bogi')ref.target=q.blocks.find(b=>b.kind==='bogi')?.id||'question';if(ref.target==='passage')ref.target=q.blocks.find(b=>b.kind==='text')?.id||'question';}}
 export function targetDisplay(q,target){if(target==='question'||target==='ask')return '문항';const b=q.blocks.find(b=>b.id===target);if(b)return b.label;for(const b of q.blocks){const l=b.lines?.find(l=>l.id===target);if(l)return b.label+' '+l.label;}const at=q.choices.findIndex(c=>c.id===target);return at>=0?'선지 '+'①②③④⑤'[at]:'문항';}
-export function validate(data) {
+// 그림 data URL 검사(정규식)는 수십 KB 문자열을 훑어 문항이 많으면 입력마다 수십 ms가 든다.
+// 같은 문자열은 결과가 같으므로 통과한 것을 기억한다(문자열 해시는 엔진이 한 번 계산해 둔다). 너무 많아지면 비운다.
+const imageOk=new Set();
+function imageDataOk(v){if(imageOk.has(v))return true;if(!/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/]*={0,2}$/.test(v))return false;if(imageOk.size>2000)imageOk.clear();imageOk.add(v);return true;}
+// only: 이 문항만 자세히 검사(카드에서 한 문항의 글만 고칠 때). 다른 문항은 ID 중복만 본다.
+export function validate(data,{only=null}={}) {
   const str=(v,max=32767)=>typeof v==='string'&&v.length<=max;
   const id=v=>typeof v==='string'&&/^[a-zA-Z0-9_-]{1,80}$/.test(v);
-  const image=f=>!f||str(f.name,240)&&str(f.data,8*1024*1024)&&/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/]*={0,2}$/.test(f.data);
+  const image=f=>!f||str(f.name,240)&&str(f.data,8*1024*1024)&&imageDataOk(f.data);
   const table=t=>{if(!t||!Number.isInteger(t.rows)||t.rows<1||t.rows>30||!Number.isInteger(t.cols)||t.cols<1||t.cols>12||!Array.isArray(t.cells)||t.cells.length!==t.rows||!Number.isInteger(t.headerRows)||t.headerRows<0||t.headerRows>t.rows||!str(t.note)||!['자료표','선지표','과정표'].includes(t.role)||!Array.isArray(t.merges)||t.merges.length>360)throw Error('표 크기·머리글·내용을 확인하세요.');
     t.cells.forEach(row=>{if(!Array.isArray(row)||row.length!==t.cols)throw Error('표의 열 개수가 다릅니다.');row.forEach(c=>{if(!c||!(str(c.value)||typeof c.value==='number'&&Number.isFinite(c.value))||!image(c.figure)||c.raw!==undefined&&!str(c.raw))throw Error('표 셀의 값 또는 그림 형식이 올바르지 않습니다.');});});
     const covered=new Set();for(const m of t.merges){if(![m.r,m.c,m.rs,m.cs].every(Number.isInteger)||m.r<0||m.c<0||m.rs<1||m.cs<1||m.r+m.rs>t.rows||m.c+m.cs>t.cols)throw Error('병합 범위가 표를 벗어났습니다.');for(let r=m.r;r<m.r+m.rs;r++)for(let c=m.c;c<m.c+m.cs;c++){const k=`${r}:${c}`;if(covered.has(k))throw Error('병합 범위가 겹칩니다.');covered.add(k);if((r!==m.r||c!==m.c)&&(t.cells[r][c].value!==''||t.cells[r][c].figure||t.cells[r][c].raw))throw Error('병합 뒤에 숨은 셀 내용이 있습니다. 병합을 풀거나 숨은 셀을 비운 뒤 가져오세요.');}}
     if(t.diagonal&&(!str(t.diagonal.row,120)||!str(t.diagonal.col,120)))throw Error('대각선 머리글을 확인하세요.');
   };
   if(!data||data.format!==FORMAT||!Array.isArray(data.questions)||data.questions.length>500||!Array.isArray(data.documents)||data.documents.length>40)throw Error('문항 파일의 형식이나 개수를 확인하세요.');
-  const ids=new Set();for(const q of data.questions){if(!q||!id(q.id)||ids.has(q.id)||!TYPES.includes(q.type)||!PRESETS.includes(q.preset)||!STYLES.includes(q.style)||!Array.isArray(q.blocks)||q.blocks.length>80||!Array.isArray(q.choices)||q.choices.length!==5)throw Error('문항 유형·ID·구성을 확인하세요.');ids.add(q.id);
+  const ids=new Set();for(const q of data.questions){if(only&&q!==only&&q&&typeof q.id==='string'&&!ids.has(q.id)){ids.add(q.id);continue;}if(!q||!id(q.id)||ids.has(q.id)||!TYPES.includes(q.type)||!PRESETS.includes(q.preset)||!STYLES.includes(q.style)||!Array.isArray(q.blocks)||q.blocks.length>80||!Array.isArray(q.choices)||q.choices.length!==5)throw Error('문항 유형·ID·구성을 확인하세요.');ids.add(q.id);
     for(const k of ['number','standardCode','ask','modelAnswer','explanation','intent','source'])if(!str(q[k],k==='number'?40:k==='standardCode'?80:32767))throw Error('문항 입력 내용이 너무 길거나 형식이 다릅니다.');
     for(const k of ['unitLarge','unitMiddle','unitSmall','managementId','templateKey'])if(q[k]!==undefined&&!str(q[k],240))throw Error('단원·관리번호를 확인하세요.');
     if(q.form!==undefined&&!FORM_KEYS.includes(q.form)||q.structure!==undefined&&!['two','big','small','condition','many','experiment','none'].includes(q.structure))throw Error('새 문항 틀의 유형·자료 구조를 확인하세요.');
