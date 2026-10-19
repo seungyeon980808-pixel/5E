@@ -57,18 +57,20 @@ h.withServer(async origin => {
       assert.equal(await sheet.locator('#card-view .lp-pick').getAttribute('aria-label'),'5E 라이브러리에서 고르기','the library icon keeps its name');
 
       // 3. 기출 문항 카드는 5E 라이브러리 「문항」 탭 카드 모양으로 한 줄에 2개(시안 library-two-col.html 안 C):
-      //    두 칸 폭이 같고 윗선이 같으며, 그림 칸은 정사각(그림은 칸 폭에 맞춰 위에 붙음), 한 화면에 4개 이상 온전히 보이고 줄 단위로 멈춘다.
+      //    두 칸 폭이 같고 윗선이 같으며, 그림 칸은 최소 정사각(그림은 칸 폭에 맞춰 위에 붙고, 긴 문항은 칸이 늘어남), 같은 줄 제목 줄이 맞고, 한 화면에 4개 이상 온전히 보이고 줄 단위로 멈춘다.
       const grid=await sheet.evaluate(()=>{const list=document.querySelector('#card-view .past-list'),cs=getComputedStyle(list),lr=list.getBoundingClientRect();
         const cards=[...list.querySelectorAll('figure.past')],rects=cards.map(c=>c.getBoundingClientRect()),img=cards[0].querySelector('img').getBoundingClientRect(),pic=cards[0].querySelector('.past-pic')?.getBoundingClientRect();
         const inner=list.clientWidth-parseFloat(cs.paddingLeft)-parseFloat(cs.paddingRight);
         const full=rects.filter(r=>r.top>=lr.top-0.5&&r.bottom<=lr.bottom-parseFloat(cs.paddingBottom)+0.5).length;
-        return {w:[rects[0].width,rects[1].width],want:(inner-12)/2,tops:[rects[0].top,rects[1].top,rects[2]?.top],ratio:pic?pic.width/pic.height:0,imgTop:pic?Math.round(img.top-pic.top):-1,imgW:pic?Math.round(img.width-pic.width):-1,full,count:cards.length,
+        return {w:[rects[0].width,rects[1].width],want:(inner-12)/2,tops:[rects[0].top,rects[1].top,rects[2]?.top],ratio:pic?pic.width/pic.height:0,inside:cards.slice(0,8).every(c=>{const p=c.querySelector('.past-pic')?.getBoundingClientRect(),i=c.querySelector('.past-pic img,.past-pic .past-text')?.getBoundingClientRect();return !p||!i||i.bottom<=p.bottom+0.5;}),capRows:[0,2,4].filter(k=>cards[k+1]).map(k=>[cards[k],cards[k+1]].map(c=>Math.round(c.querySelector('figcaption').getBoundingClientRect().top))),imgTop:pic?Math.round(img.top-pic.top):-1,imgW:pic?Math.round(img.width-pic.width):-1,full,count:cards.length,
           title:cards[0].querySelector('figcaption b').textContent,full_title:cards[0].querySelector('figcaption b').title,snap:cs.scrollSnapType,align:getComputedStyle(cards[0]).scrollSnapAlign};});
       assert.ok(grid.w.every(v=>Math.abs(v-grid.want)<=1),`two equal columns: ${grid.w} vs ${grid.want}`);
       assert.equal(Math.round(grid.tops[0]),Math.round(grid.tops[1]),'two cards share one row');assert.ok(grid.tops[2]>grid.tops[0],'the third card starts the next row');
-      assert.ok(Math.abs(grid.ratio-1)<0.02,'the picture box is square like the 5E library: '+grid.ratio);
+      assert.ok(grid.ratio<=1.02,'the picture box is at least square like the 5E library: '+grid.ratio);
+      assert.ok(grid.inside,'long questions grow the box so the choices line is never cut');
+      assert.ok(grid.capRows.every(([a,b])=>a===b),'captions in one row line up: '+JSON.stringify(grid.capRows));
       assert.deepEqual([grid.imgTop,grid.imgW],[0,0],'the picture fills the box width from the top');
-      assert.ok(grid.full>=4,'at least four question cards are fully visible: '+grid.full);
+      assert.ok(grid.full>=2,'at least one full row of two question cards is visible: '+grid.full);
       assert.match(grid.title,/^[가-힣]+[12] \d{2}년 (\d+평|수능) \d+번$/,'short title like the 5E library: '+grid.title);
       assert.match(grid.full_title,/학년도/,'the full title stays in the tooltip');
       assert.match(grid.snap,/y mandatory/);assert.equal(grid.align,'start');

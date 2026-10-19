@@ -553,15 +553,15 @@ button.q-status:hover{background:var(--ds-hover)}
 .lp-pick{flex:none;display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;padding:0;border:0;border-radius:var(--cv-ctl-radius,6px);background:transparent;color:var(--ds-ink-2);cursor:pointer}
 .lp-pick:hover{background:var(--ds-hover);color:var(--ds-ink)}
 .lp-pick .ico{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
-/* 기출 문항 카드 = 5E 라이브러리 「문항」 탭 카드 그대로: 정사각 흰 그림 칸에 문항 번호~선지 번호 줄로 자른 그림을 칸 폭에 맞춰 위에 붙임(긴 문항은 아래가 칸에서 잘림), 짧은 제목, 한 줄에 2개, 줄 단위로 멈춤. */
+/* 기출 문항 카드 = 5E 라이브러리 「문항」 탭 카드 그대로: 흰 그림 칸(최소 정사각)에 문항 번호~선지 번호 줄로 자른 그림을 칸 폭에 맞춰 위에 붙임 — 긴 문항은 칸이 늘어나 선지 줄까지 다 보이고, 같은 줄 두 카드는 제목 줄이 맞도록 짧은 쪽 그림 칸이 흰 종이로 늘어남, 짧은 제목, 한 줄에 2개, 줄 단위로 멈춤. */
 .cv-left .past-list{flex:1;min-height:0;overflow:auto;padding:0 12px 12px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));grid-auto-rows:max-content;gap:12px;align-content:start;scroll-snap-type:y mandatory}
-.cv-left .past{display:block;min-width:0;padding:8px;background:transparent;box-shadow:none;border-radius:var(--cv-sec-radius,10px);scroll-snap-align:start}
+.cv-left .past{display:flex;flex-direction:column;min-width:0;padding:8px;background:transparent;box-shadow:none;border-radius:var(--cv-sec-radius,10px);scroll-snap-align:start}
 .cv-left .past:hover{background:var(--ds-hover)}
-.cv-left .past-pic{aspect-ratio:1/1;overflow:hidden;background:#fff;border-radius:var(--cv-ctl-radius,6px)}
-.cv-left .past-pic img{display:block;width:100%;height:auto;max-height:none}.cv-left .past-pic img:not([src]){visibility:hidden}
+.cv-left .past-pic{flex:1 0 auto;aspect-ratio:1/1;background:#fff;border-radius:var(--cv-ctl-radius,6px)}
+.cv-left .past-pic img{display:block;width:100%;height:auto;max-height:none;border-radius:var(--cv-ctl-radius,6px)}.cv-left .past-pic img:not([src]){visibility:hidden}
 .cv-left .past.pick img{display:block;width:100%;height:auto;max-height:none;aspect-ratio:1/1;object-fit:contain;object-position:top;background:#fff;border-radius:var(--cv-ctl-radius,6px)}
 .cv-left .past .past-text{max-height:none;height:100%;margin:0;border-radius:0}
-.cv-left .past figcaption{display:flex;align-items:center;gap:6px;padding:10px 0 0;min-width:0}
+.cv-left .past figcaption{flex:none;display:flex;align-items:center;gap:6px;padding:10px 0 0;min-width:0}
 .cv-left .past figcaption b{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:var(--cv-text-body,14px)}
 .cv-left .past figcaption .acts{flex:none;margin-left:auto;gap:2px}
 .cv-left .past .mini{height:26px;padding:0 6px;font-size:var(--cv-text-small,12.5px);border-radius:var(--cv-ctl-radius,6px)}

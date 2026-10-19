@@ -58,16 +58,26 @@ export function pastCropRect({ data, width: W, height: H }) {
 }
 
 // 브라우저: 그림을 읽어 잘라 낸 PNG 주소를 돌려준다(같은 그림은 한 번만).
-const cache = new Map();
+// 잘린 그림의 세로/가로 비율은 기억해 두고(이 브라우저 저장소), 다음에 목록을 그릴 때 그림 칸을 처음부터 그 높이로 잡는다 → 읽히면서 칸이 움직이지 않는다.
+const cache = new Map(), RATIO_KEY = 'exampool-past-crop-ratio:v1';
+let ratios = null;
+const ratioStore = () => { if (!ratios) { try { ratios = JSON.parse(localStorage.getItem(RATIO_KEY) || '{}'); } catch { ratios = {}; } } return ratios; };
+export function knownRatio(url) { return ratioStore()[url] || 0; }
+function rememberRatio(url, ratio) {
+  const all = ratioStore(); all[url] = Math.round(ratio * 1000) / 1000;
+  const keys = Object.keys(all); if (keys.length > 4000) for (const k of keys.slice(0, keys.length - 4000)) delete all[k];
+  try { localStorage.setItem(RATIO_KEY, JSON.stringify(all)); } catch {}
+}
 export function croppedPastImage(url) {
   if (!cache.has(url)) cache.set(url, (async () => {
     const img = new Image(); img.crossOrigin = 'anonymous'; img.src = url; await img.decode();
     const c = document.createElement('canvas'); c.width = img.naturalWidth; c.height = img.naturalHeight;
     const g = c.getContext('2d', { willReadFrequently: true }); g.drawImage(img, 0, 0);
     const r = pastCropRect(g.getImageData(0, 0, c.width, c.height));
-    if (!r) return url;
+    if (!r) { rememberRatio(url, c.height / c.width); return url; }
     const out = document.createElement('canvas'); out.width = r.width; out.height = r.height;
     out.getContext('2d').drawImage(c, r.x, r.y, r.width, r.height, 0, 0, r.width, r.height);
+    rememberRatio(url, r.height / r.width);
     return URL.createObjectURL(await new Promise(res => out.toBlob(res, 'image/png')));
   })().catch(() => url));
   return cache.get(url);
