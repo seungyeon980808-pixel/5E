@@ -104,6 +104,16 @@ h.withServer(async origin => {
       const added=sheet.locator('#card-view .cv-tile.empty').last();
       assert.equal(await added.locator('[data-cvslot-act="pick"]').count(),1);assert.equal(await added.locator('[data-cvslot-act="to-table"]').count(),1);
       await added.locator('[data-cvslot-act="remove"]').click();await sheet.waitForFunction(n=>document.querySelectorAll('#card-view .cv-tile').length===n,tiles);
+      // 완성한 문항을 고치면 단계 단추도 검토 중으로 바뀐다(다시 그리지 않는 입력에서도).
+      await sheet.click('#card-view [data-cvstage="complete"]');await sheet.click('#cv-ask');await page.keyboard.press('End');await page.keyboard.type('!');
+      await sheet.waitForFunction(()=>document.querySelector('#card-view [data-cvstage][aria-pressed="true"]')?.dataset.cvstage==='review');
+      // 미리보기(한글 창)가 다시 그려져도 초점을 가져가지 않아 ⌘Z·⇧⌘Z가 카드에 닿는다.
+      await sheet.locator('#card-view .w-head .qno').click();const askEdited=await sheet.locator('#cv-ask').inputValue();
+      await page.keyboard.press('ControlOrMeta+z');await sheet.waitForFunction(v=>document.querySelector('#cv-ask').value!==v,askEdited);
+      await sheet.waitForTimeout(800);await typesetReady(sheet);await sheet.waitForTimeout(500);
+      assert.notEqual(await sheet.evaluate(()=>document.activeElement?.tagName),'IFRAME','redrawing the HWP preview keeps focus out of the editor');
+      await page.keyboard.press('ControlOrMeta+Shift+z');await sheet.waitForFunction(v=>document.querySelector('#cv-ask').value===v,askEdited);
+      await sheet.fill('#cv-ask',askEdited.slice(0,-1));await sheet.click('#card-view [data-cvstage="draft"]');
       // 위쪽 막대: 이동 줄 끝은 문항 이름만(전체 발문은 풍선), 「문항 보관함」·로고는 눌러서 보관함으로 간다.
       assert.ok(!(await sheet.locator('#crumb-question').textContent()).includes(' · '),'the crumb shows only the question name');
       assert.match(await sheet.locator('#crumb-question').getAttribute('title'),/ · /,'the full ask is in the tooltip');
