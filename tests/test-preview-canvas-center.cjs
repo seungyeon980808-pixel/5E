@@ -51,13 +51,6 @@ function assertProjection(before, after, label) {
   assertNear(after.artboardMidpointX, before.artboardMidpointX, `${label} artboard midpoint`);
 }
 
-async function waitForProjection(page, expected) {
-  await page.waitForFunction(({ ctm, tolerance }) => {
-    const actual = document.querySelector('#canvas')?.getScreenCTM();
-    return actual && ['a', 'd', 'e', 'f'].every(key => Math.abs(actual[key] - ctm[key]) < tolerance);
-  }, { ctm: expected.ctm, tolerance });
-}
-
 function assertAligned(snapshotValue, expectedOffsetMm, rulersVisible, label) {
   const expectedProjectionX = snapshotValue.canvasMidpointX + expectedOffsetMm * snapshotValue.ctm.a;
   assertNear(snapshotValue.artboardMidpointX, expectedProjectionX, `${label} artboard midpoint`);
@@ -68,6 +61,16 @@ function assertAligned(snapshotValue, expectedOffsetMm, rulersVisible, label) {
   }
   assertNear(snapshotValue.pointerRoundTripError.x, 0, `${label} pointer round-trip X`);
   assertNear(snapshotValue.pointerRoundTripError.y, 0, `${label} pointer round-trip Y`);
+}
+
+async function assertLockedCenter(page, baseline, rulersVisible, label) {
+  await page.waitForFunction(tolerance => {
+    const svg = document.querySelector('#canvas'), rect = svg.getBoundingClientRect();
+    return Math.abs(svg.getScreenCTM().e - (rect.left + rect.width / 2)) < tolerance;
+  }, tolerance);
+  const value = await snapshot(page);
+  assertAligned(value, 0, rulersVisible, label);
+  assertNear(value.ctm.a, baseline.ctm.a, `${label} scale`);
 }
 
 async function togglePanel(page, side) {
@@ -86,37 +89,39 @@ async function togglePanel(page, side) {
       await page.goto(`${previewUrl}${separator}mode=pro`, { waitUntil: 'networkidle' });
       await dismissWelcome(page);
 
+      // 기본값은 자유 이동(2026-10-13 '기본 상태는 꺼진 모습' 결정). 기준 좌표 고정은 메뉴에서 고른다.
+      assert.equal(await page.locator('#center-view-btn').getAttribute('data-mode'), 'free');
+      await page.click('#center-view-btn');
+      await page.click('[data-canvas-lock-mode="coordinate"]');
+      assert.equal(await page.locator('#center-view-btn').getAttribute('data-mode'), 'coordinate');
+      await page.waitForTimeout(100);
       const baseline = await snapshot(page);
       assertAligned(baseline, 0, true, `${engine.name()} Pro coordinate lock centers the origin`);
-      assert.equal(await page.locator('#center-view-btn').getAttribute('data-mode'), 'coordinate');
       await page.locator('#canvas').hover();
       await page.mouse.wheel(0, 120);
       await page.waitForTimeout(100);
-      assertProjection(baseline, await snapshot(page), `${engine.name()} default lock blocks wheel panning`);
+      assertProjection(baseline, await snapshot(page), `${engine.name()} coordinate lock blocks wheel panning`);
 
       for (const preset of presets) {
         await page.evaluate(value => document.documentElement.setAttribute('data-screen', value), preset);
         await page.waitForTimeout(360);
-        await waitForProjection(page, baseline);
-        const afterPreset = await snapshot(page);
-        assertProjection(baseline, afterPreset, `${engine.name()} ${preset} preset`);
-        assertNear(afterPreset.pointerRoundTripError.x, 0, `${engine.name()} ${preset} pointer round-trip X`);
-        assertNear(afterPreset.pointerRoundTripError.y, 0, `${engine.name()} ${preset} pointer round-trip Y`);
+        // 화면 크기 단계는 패널 폭도 바꿔 캔버스 가운데가 옮겨진다. 기준 좌표 고정은 원점을 그 가운데에 둔다.
+        await assertLockedCenter(page, baseline, true, `${engine.name()} ${preset} preset`);
       }
       await page.evaluate(() => document.documentElement.setAttribute('data-screen', 'large'));
       await page.waitForTimeout(100);
 
-      const beforePanels = await snapshot(page);
+      // 패널을 접고 펴도 캔버스 폭이 바뀐다. 원점은 늘 바뀐 캔버스의 가운데에 있어야 한다.
       await togglePanel(page, 'right');
-      assertProjection(beforePanels, await snapshot(page), `${engine.name()} right collapse`);
+      await assertLockedCenter(page, baseline, true, `${engine.name()} right collapse`);
       await togglePanel(page, 'right');
       await togglePanel(page, 'left');
-      assertProjection(beforePanels, await snapshot(page), `${engine.name()} left collapse`);
+      await assertLockedCenter(page, baseline, true, `${engine.name()} left collapse`);
       await togglePanel(page, 'left');
 
       await page.evaluate(() => document.querySelector('#ruler-container').classList.add('rulers-hidden'));
       await page.waitForTimeout(100);
-      assertProjection(beforePanels, await snapshot(page), `${engine.name()} rulers hidden`);
+      await assertLockedCenter(page, baseline, false, `${engine.name()} rulers hidden`);
 
       await page.click('#center-view-btn');
       await page.click('[data-canvas-lock-mode="free"]');

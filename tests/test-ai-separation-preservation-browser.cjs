@@ -23,7 +23,7 @@ const fixture = new Function('require', 'root', 'fs', 'path', 'assert', 'chromiu
 const write = (name, value) => fs.writeFileSync(path.join(evidence, name), JSON.stringify(value, null, 2));
 test('separated request preserves layout and attachment framing at the production request boundary', { timeout: 90000 }, async t => {
   const { page } = await fixture(t, 1, evidence, { initialGeneration: true });
-  await page.click('#ai-image-panel [data-ai-send]');
+  await page.click('#ai-image-panel [data-ai-comments-apply]');
   await page.waitForFunction(() => window.__task2.generationSends.length === 1);
   const result = await page.evaluate(async () => {
     const generation = window.__task2.generationSends[0];

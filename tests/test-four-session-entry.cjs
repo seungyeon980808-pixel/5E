@@ -82,7 +82,7 @@ test("inventory keeps every real classified path and rejects duplicate missing o
   helper.assertCompleteInventory(reordered, root);
 });
 
-function runner({ env = {}, args = ["--only", "test-project-file-size-browser.cjs"], validationError, status = 0, startupError } = {}) {
+function runner({ env = {}, args = ["--only", "test-project-file-size-browser.cjs"], validationError, status = 0, startupError, suiteError, statuses } = {}) {
   const calls = [];
   const child = new EventEmitter();
   child.stdout = new EventEmitter();
@@ -115,7 +115,7 @@ function runner({ env = {}, args = ["--only", "test-project-file-size-browser.cj
         });
         return child;
       },
-      spawnSync: (command, args, options) => { calls.push({ kind: "suite", command, args, env: options.env }); return { status }; },
+      spawnSync: (command, args, options) => { calls.push({ kind: "suite", command, args, env: options.env }); return suiteError ? { status: null, signal: "SIGKILL", error: suiteError } : { status: statuses ? statuses.shift() : status }; },
     };
     if (name === "owned-test-playwright") return { chromium: engine("chromium"), webkit: engine("webkit") };
     if (name === "./helpers/four-session-entry.cjs") return { ...helper, inspectEntry: async (page, origin, config) => {
@@ -183,4 +183,51 @@ test("nonzero and signaled suites cannot become success even when they print suc
     assert.equal(instance.process.exitCode, 1);
     assert.equal(instance.calls.at(-1).kind, "kill");
   }
+});
+
+function knownList(suites) {
+  const file = path.join(fs.mkdtempSync(path.join(require("node:os").tmpdir(), "5e-known-")), "known.json");
+  fs.writeFileSync(file, JSON.stringify({ schemaVersion: 1, suites }));
+  return file;
+}
+const sampleSuite = "tests/test-project-file-size-browser.cjs";
+
+test("listed known failures do not fail the run, unlisted failures still do", async () => {
+  const listed = runner({ status: 1, args: ["--only", "test-project-file-size-browser.cjs", "--known-failures", knownList([{ path: sampleSuite, reason: "기준 실패" }])] });
+  await listed.run();
+  assert.notEqual(listed.process.exitCode, 1);
+  const unlisted = runner({ status: 1, args: ["--only", "test-project-file-size-browser.cjs", "--known-failures", knownList([])] });
+  await unlisted.run();
+  assert.equal(unlisted.process.exitCode, 1);
+});
+
+test("a timed-out suite counts as a failure instead of crashing the runner", async () => {
+  const error = Object.assign(new Error("spawnSync ETIMEDOUT"), { code: "ETIMEDOUT" });
+  const instance = runner({ suiteError: error, env: { BROWSER_SUITE_TIMEOUT_MS: "1000" } });
+  await instance.run();
+  assert.equal(instance.process.exitCode, 1);
+  assert.equal(instance.calls.at(-1).kind, "kill");
+});
+
+test("invalid known-failure lists are rejected before server or browser launch", async () => {
+  for (const suites of [[{ path: "tests/nope-browser.cjs", reason: "x" }], [{ path: sampleSuite, reason: "" }],
+    [{ path: sampleSuite, reason: "a" }, { path: sampleSuite, reason: "b" }]]) {
+    const instance = runner({ args: ["--only", "test-project-file-size-browser.cjs", "--known-failures", knownList(suites)] });
+    await assert.rejects(instance.run());
+    assert.equal(instance.calls.length, 0);
+  }
+});
+
+test("a failing suite that passes on retry is not a new failure, but repeated failure still is", async () => {
+  const flaky = runner({ statuses: [1, 0], env: { BROWSER_SUITE_RETRIES: "1" } });
+  await flaky.run();
+  assert.notEqual(flaky.process.exitCode, 1);
+  assert.equal(flaky.calls.filter(call => call.kind === "suite").length, 2);
+  const broken = runner({ statuses: [1, 1], env: { BROWSER_SUITE_RETRIES: "1" } });
+  await broken.run();
+  assert.equal(broken.process.exitCode, 1);
+  const noRetry = runner({ statuses: [1, 0] });
+  await noRetry.run();
+  assert.equal(noRetry.process.exitCode, 1);
+  assert.equal(noRetry.calls.filter(call => call.kind === "suite").length, 1);
 });

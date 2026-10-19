@@ -150,6 +150,12 @@
   --control-selected-text: var(--ds-selected-ink);
   --control-selected-border: transparent;
   color-scheme: dark;
+
+  /* 창 안쪽 컨트롤(라이브러리·그래프·설정·AI·한글) — 은은한 선택/실행 버튼 */
+  --ds-soft-bg: rgba(255, 255, 255, .08);
+  --ds-soft-line: rgba(255, 255, 255, .5);
+  --ds-field-raise: rgba(255, 255, 255, .05);
+  --ds-check: #dcdcdc;
 }
 
 /* =====================================================================
@@ -165,11 +171,12 @@
   --ds-line: #21262d;
   --ds-line-strong: #30363d;
   --ds-ink: #e6edf3;
-  --ds-ink-2: #c9d1d9;
-  --ds-ink-3: #8b949e;
+  --ds-ink-2: #b1bac4;          /* 시안: 대부분의 글자·도구 아이콘 */
+  --ds-ink-3: #7d8590;          /* 시안: 막대 아이콘·보조 글자 */
   --ds-hover: rgba(177, 186, 196, .08);
   --ds-selected: rgba(47, 129, 247, .15);
   --ds-selected-ink: #e6edf3;
+  --ds-selected-icon: #58a6ff;  /* 시안: 선택·켜짐 아이콘은 파란색 */
   --ds-selected-strong: rgba(47, 129, 247, .28);
   --ds-accent: #2f81f7;
   --ds-accent-ink: #ffffff;
@@ -184,6 +191,12 @@
   --ds-danger: #f85149;
   --bg-canvas: var(--ds-bench);
   --control-selected-border: transparent;
+
+  /* 창 안쪽 컨트롤 — 시안 controls.html: 남색 면 + 가는 파란 선 */
+  --ds-soft-bg: #152137;
+  --ds-soft-line: #6ba4f8;
+  --ds-field-raise: rgba(177, 186, 196, .06);
+  --ds-check: #2f81f7;
 }
 
 /* =====================================================================
@@ -236,6 +249,12 @@
   --control-selected-bg: var(--ds-selected);
   --control-selected-text: var(--ds-selected-ink);
   --control-selected-border: transparent;
+
+  /* 창 안쪽 컨트롤 */
+  --ds-soft-bg: rgba(43, 47, 53, .07);
+  --ds-soft-line: rgba(43, 47, 53, .5);
+  --ds-field-raise: #ffffff;
+  --ds-check: #2b2f35;
 }
 
 /* 패널 폭 — 기존 셸 변수에 규격을 연결 */

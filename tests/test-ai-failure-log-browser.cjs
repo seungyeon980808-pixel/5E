@@ -15,7 +15,7 @@ const harness = source.slice(start, end)
   .replace("message: 'late synthetic error'", "message: 'Provider rejected request: ' + 'Full diagnostic detail. '.repeat(80) + 'END-OF-ERROR Authorization: Bearer sk-test-secret image=data:image/png;base64,c2VjcmV0 api_key=private-key'");
 assert.notEqual(harness, source.slice(start,end), 'Long diagnostic and original-comment fixtures remain injected');
 const { fixture, currentPrimaryAction } = new Function('require', 'root', 'fs', 'path', 'assert', 'chromium', 'webkit', harness + '; return { fixture: requestBrowserFixture, currentPrimaryAction };')(require, root, fs, path, assert, chromium, webkit);
-test('model switch normalizes unsupported settings; full error is safe, copyable, task scoped and preserves inputs', { timeout: 90000 }, async t => {
+test('model switch normalizes unsupported settings; a failed request keeps inputs and source comments', { timeout: 90000 }, async t => {
  const { page, errors } = await fixture(t, 1, evidence);
  const panel = '#ai-image-panel';
  // Fixed medium/priority replaces the retired ultra/high chooser. The actual
@@ -31,33 +31,20 @@ test('model switch normalizes unsupported settings; full error is safe, copyable
  await (await currentPrimaryAction(page)).click();
  await page.waitForFunction(() => window.__task2.generationSends.length === 1);
  await page.evaluate(() => window.__task2.emitGeneration(0, 'error'));
- await page.click(`${panel} [data-ai-error-log-open]`);
- const turnId = await page.evaluate(()=>window.__task2.generationSends[0].turnId);
+ // 오류 기록 창은 2026-10-13(61bcd508)에 문제 신고 창으로 합쳐졌다(그 경로는 test-bug-report-browser가 본다).
+ // 여기서는 실패한 요청이 고른 모델·설정으로 나갔고, 입력과 원본 코멘트가 그대로 남는지만 본다.
  const request = await page.evaluate(()=>{const {model,effort,serviceTier}=window.__task2.generationSends[0].payload;return {model,effort,serviceTier};});
  assert.deepEqual(request,{model:'gpt-6-luna',effort:'medium',serviceTier:'priority'});
- const text = await page.locator(`${panel} [data-ai-error-log-text]`).inputValue();
- assert.match(text, /END-OF-ERROR/); assert.match(text, /gpt-6-luna/); assert.match(text, /task-0/); assert.ok(text.includes(turnId), 'Full log belongs to the actual correlated generation turn');
- assert.doesNotMatch(text, /sk-test-secret|c2VjcmV0|private-key/);
+ assert.doesNotMatch(await page.locator(`${panel}`).innerText(), /sk-test-secret|c2VjcmV0|private-key/);
  assert.equal(await input.inputValue(), beforeInput);
  const preserved = await page.evaluate(async () => {
   const db = await new Promise((resolve,reject) => {const scope=window.__task2Manager.activeExamTask().scope;const request=indexedDB.open('5e.preview:5e-ai-image-tasks'+(scope?'-'+scope:''),1);request.onupgradeneeded=()=>{request.transaction.abort();reject(new Error('Expected actual owner database is absent'));};request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);});
   try{return await new Promise((resolve,reject)=>{const req=db.transaction('tasks').objectStore('tasks').get('workspace');req.onsuccess=()=>{const tab=req.result.tabs.find(t=>t.id==='task-0');resolve(tab.attachments[0].comments);};req.onerror=()=>reject(req.error);});}finally{db.close();}
  });
  assert.equal(preserved[0].text, '원본 코멘트 보존');
- await page.evaluate(() => Object.defineProperty(navigator, 'clipboard', {configurable:true,value:{writeText:async value=>{window.__copiedLog=value;}}}));
- await page.click(`${panel} [data-ai-error-log-copy]`);
- assert.equal(await page.evaluate(() => window.__copiedLog), text);
- await page.screenshot({path:path.join(evidence,'full-log.png')});
- for(const width of [375,768,1280]) {
-  await page.setViewportSize({width,height:900});
-  const box=await page.locator(`${panel} [data-ai-error-log-dialog]`).boundingBox();
-  assert.ok(box.x>=0 && box.x+box.width<=width+1);
-  await page.screenshot({path:path.join(evidence,`log-${width}.png`)});
- }
- await page.keyboard.press('Escape');
- assert.equal(await page.locator(`${panel} [data-ai-error-log-dialog]`).isVisible(),false);
+ await page.screenshot({path:path.join(evidence,'failed-request.png')});
  assert.deepEqual(errors,[]);
- fs.writeFileSync(path.join(evidence,'result.json'),JSON.stringify({selected,safeLog:text,preservedComments:preserved,inputPreserved:true,copyMatches:true,errors},null,2));
+ fs.writeFileSync(path.join(evidence,'result.json'),JSON.stringify({selected,request,preservedComments:preserved,inputPreserved:true,errors},null,2));
 });
 test('only advertised models are selectable and refreshed catalog preserves explicit selection', {timeout:90000}, async t=>{
  const dir=path.join(evidence,'server-catalog');fs.mkdirSync(dir,{recursive:true});
@@ -79,14 +66,11 @@ test('only advertised models are selectable and refreshed catalog preserves expl
  assert.equal(await page.locator('#ai-image-panel [data-ai-model]').inputValue(),'gpt-6-luna');
  await page.locator('#ai-image-panel [data-ai-setting-key=model] [data-ai-model-choice=sol]').click();
  await page.locator('#ai-image-panel [data-ai-setting-key=model] [data-ai-model-choice=luna]').click();
- const reads=await page.evaluate(()=>window.__task2.catalogReads);
- await page.click('#ai-image-panel [data-ai-connection-open]');
- await page.click('#ai-image-panel [data-ai-connection-dialog][open] [data-ai-model-refresh]');
- await page.waitForFunction(reads=>window.__task2.catalogReads>reads,reads);
+ // 연결 정보 창(모델 목록 새로고침 단추)은 2026-10-12(24219c8a)부터 늘 숨겨져 있다.
+ // 목록 새로 읽기는 위의 '5e:web-ai-status' 신호 경로로 이미 확인했다.
  assert.equal(await page.locator('#ai-image-panel [data-ai-effort]').inputValue(),'medium');
  assert.equal(await page.locator('#ai-image-panel [data-ai-speed]').inputValue(),'priority');
  assert.equal(await page.locator('#ai-image-panel [data-ai-model-warning]').isVisible(),false);
- await page.click('#ai-image-panel [data-ai-connection-dialog][open] [data-ai-info-close]');
  await (await currentPrimaryAction(page)).click();
  await page.waitForFunction(()=>window.__task2.generationSends.length===1);
  const request=await page.evaluate(()=>{const {model,effort,serviceTier}=window.__task2.generationSends[0].payload;return {model,effort,serviceTier};});

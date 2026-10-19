@@ -36,7 +36,7 @@ fs.mkdirSync(evidence, {recursive:true});
       await open(page.locator('#ai-image-panel .bug-report-open'));
       await page.locator('[data-ai-empty-import]:visible').selectOption('library');
       const library = page.locator('.unified-library-overlay'); await library.waitFor();
-      await open(library.locator('.bug-report-open'));
+      await open(library.locator('.unilib-header-actions .bug-report-open'));
       assert.equal(await library.isVisible(), true, 'support navigation preserves the open library');
       assert.equal(await page.evaluate(() => __contextReads), 0);
       assert.deepEqual(uploads, [], 'a support link never uploads documents, images or logs');

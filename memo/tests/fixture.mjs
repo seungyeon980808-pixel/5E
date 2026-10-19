@@ -5,10 +5,10 @@ import {generateKeyPair,exportJWK,SignJWT} from 'jose';
 import fs from 'node:fs';
 import path from 'node:path';
 export const clientId='fixture.apps.googleusercontent.com',apiUrl='https://memo-test.workers.dev';
-export async function fixture(){
+export async function fixture(options={}){
   const {publicKey,privateKey}=await generateKeyPair('RS256'),jwk=await exportJWK(publicKey);jwk.kid='fixture';jwk.alg='RS256';jwk.use='sig';
   const script=(await build({entryPoints:[path.resolve(import.meta.dirname,'../worker/index.js')],bundle:true,write:false,format:'esm',platform:'browser'})).outputFiles[0].text;
-  const mf=new Miniflare(convertV4MiniflareOptions({modules:true,script,compatibilityDate:'2026-10-09',d1Databases:{DB:'memo-fixture'},bindings:{GOOGLE_CLIENT_ID:clientId,OWNER_EMAIL:'owner@example.com',ALLOWED_ORIGINS:'http://127.0.0.1,https://www.5e.ai.kr'},outboundService:request=>{
+  const mf=new Miniflare(convertV4MiniflareOptions({modules:true,script,compatibilityDate:'2026-10-09',d1Databases:{DB:'memo-fixture'},...(options.ratelimits&&{ratelimits:options.ratelimits}),bindings:{GOOGLE_CLIENT_ID:clientId,OWNER_EMAIL:'owner@example.com',ALLOWED_ORIGINS:'http://127.0.0.1,https://www.5e.ai.kr',...options.bindings},outboundService:request=>{
     if(request.url!=='https://www.googleapis.com/oauth2/v3/certs')throw Error('Unexpected external fixture request');
     return new Response(JSON.stringify({keys:[jwk]}),{headers:{'content-type':'application/json','cache-control':'public,max-age=3600'}});
   }}));

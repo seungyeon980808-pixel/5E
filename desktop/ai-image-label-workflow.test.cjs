@@ -39,3 +39,16 @@ test('verification mode distinguishes approved cache descriptors',async()=>{
  const draft=c({...input,outputOptions:{workflow:n({imageKind:'general',labelResult:'restore-editable',verificationMode:'draft-first'})}});
  assert.notDeepEqual(full,draft);
 });
+test('emphasis frames and magnifier marks are always removed regardless of guide-line and arrow choices',async()=>{
+ const {normalizeImageLabelWorkflow:n,buildImageLabelWorkflowContract:c,IMAGE_LABEL_WORKFLOW_VERSION:v}=await api;
+ const {buildMarkPolicyContract}=await import('../js/ai-mark-policy.js');
+ for(const auxiliaryMarks of ['keep','remove']) for(const scientificArrows of ['keep','remove']) {
+  const text=c(n({imageKind:'general',labelResult:'remove',auxiliaryMarks,scientificArrows},{requireExplicit:true}));
+  assert.match(text,/강조틀\(원·타원·사각형[^)]*\)·확대 연결선·확대 범위를 나타내는 회색 면은[^.]*항상 제거한다/);
+  assert.match(text,new RegExp(`기타 보조선: ${auxiliaryMarks}\\.`));
+  assert.doesNotMatch(text,/확대 연결선·강조틀: (keep|remove)/);
+ }
+ for(const leaders of ['keep','remove']) assert.match(buildMarkPolicyContract({leaders}),/강조틀[^.]*확대 연결선[^.]*항상 제거한다/);
+ // 1.1.0으로 저장된 작업은 계속 열리지만 새 버전으로 정규화되어 이전 캐시 결과를 쓰지 않는다.
+ assert.equal(v,'1.2.0');assert.equal(n({imageKind:'general',labelResult:'remove',version:'1.1.0'},{requireExplicit:true}).version,'1.2.0');
+});

@@ -29,7 +29,8 @@ test('one root runs automatic labels, native graph editing and the pinned RHWP d
   await choose(page,'general','restore-editable');
   await page.locator('[data-ai-setting-key="verification"] [data-ai-setting-value="full"]').click();
   await page.locator('#ai-image-panel [data-ai-input]').fill('원본 구조를 유지하고 라벨을 복원해 주세요');
-  await page.locator('#ai-image-panel [data-ai-send]').click();
+  // 이미지 작업의 실행 버튼은 아래 '변환하기' 하나다(2026-10-16, 83201a54). 그래프 작업만 준비 칸 버튼을 쓴다.
+  await page.locator('#ai-image-panel [data-ai-comments-apply]').click();
   await finish(page,{sourcePlan:verifiedPlan});
   const labeled=(await snapshot(page)).flatMap(tab=>tab.generated).at(-1);
   assert.equal(labeled.labelPlan.labels.length,1);

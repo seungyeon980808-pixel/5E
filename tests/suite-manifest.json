@@ -68,6 +68,18 @@
       ]
     },
     {
+      "path": "tests/test-bug-board-abuse-limits.mjs",
+      "findingIds": [
+        "SECURITY-BUG-BOARD-ABUSE-LIMITS"
+      ]
+    },
+    {
+      "path": "tests/test-visitor-stats-worker.mjs",
+      "findingIds": [
+        "VISITOR-STATS-WORKER"
+      ]
+    },
+    {
       "path": "tests/test-library-reference-destinations.mjs",
       "findingIds": [
         "LIBRARY-MIXED-DESTINATIONS"
@@ -777,6 +789,12 @@
       "path": "tests/test-bug-board-browser.cjs",
       "findingIds": [
         "BUG-BOARD-UI"
+      ]
+    },
+    {
+      "path": "tests/test-exam-preview-background-name-browser.cjs",
+      "findingIds": [
+        "SECURITY-M4-EXAM-PREVIEW-XSS"
       ]
     },
     {
@@ -1831,13 +1849,6 @@
       ]
     },
     {
-      "path": "tests/test-ai-collection-current-browser.cjs",
-      "findingIds": [
-        "UX-U14",
-        "AI-COLLECTIVE-WORKFLOW-OUTPUT"
-      ]
-    },
-    {
       "path": "tests/test-tool-defaults-browser.cjs",
       "findingIds": [
         "TOOL-DEFAULTS-CREATION"
@@ -1982,13 +1993,6 @@
       ]
     },
     {
-      "path": "tests/test-image-split-browser.cjs",
-      "findingIds": [
-        "USER-SAFARI-U13",
-        "MANUAL-IMAGE-SPLIT"
-      ]
-    },
-    {
       "path": "tests/test-user-screen-feedback-browser.cjs",
       "findingIds": [
         "USER-SCREEN-FEEDBACK"
@@ -2010,6 +2014,42 @@
       "path": "tests/test-library-preview-loading-browser.cjs",
       "findingIds": [
         "USER-LIBRARY-PREVIEW-LOADING"
+      ]
+    },
+    {
+      "path": "tests/test-teacher-flow-pdf-library-browser.cjs",
+      "findingIds": [
+        "TEACHER-FLOW-PDF-LIBRARY-WORKBENCH"
+      ]
+    },
+    {
+      "path": "tests/test-teacher-flow-ai-image-browser.cjs",
+      "findingIds": [
+        "TEACHER-FLOW-AI-IMAGE-CANVAS"
+      ]
+    },
+    {
+      "path": "tests/test-teacher-flow-label-export-browser.cjs",
+      "findingIds": [
+        "TEACHER-FLOW-LABEL-EXPORT"
+      ]
+    },
+    {
+      "path": "tests/test-teacher-flow-graph-browser.cjs",
+      "findingIds": [
+        "TEACHER-FLOW-GRAPH-SAVE-REEDIT"
+      ]
+    },
+    {
+      "path": "tests/test-teacher-flow-hwp-exam-browser.cjs",
+      "findingIds": [
+        "TEACHER-FLOW-HWP-EXAM-INSERT"
+      ]
+    },
+    {
+      "path": "tests/test-data-compat-1.6.3-browser.cjs",
+      "findingIds": [
+        "DATA-COMPAT-1.6.3-TO-1.7.0"
       ]
     }
   ],

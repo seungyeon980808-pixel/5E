@@ -1,3 +1,4 @@
+import { escapeHtml } from "./html-escape.js?v=1.7.0-four-session-integration";
 import { registerEscapeLayer } from "./escape-layers.js?v=1.7.0-four-session-integration";
 import { consumeConfirmationPress } from './ui-confirm-key.js?v=1.7.0-four-session-integration';
 
@@ -10,9 +11,6 @@ import { consumeConfirmationPress } from './ui-confirm-key.js?v=1.7.0-four-sessi
 // title/message에는 페이지·오브젝트·배경 이름 등 사용자가 자유 입력한 문자열이 그대로
 // 섞여 들어온다(예: pages.js의 삭제 확인 "'{이름}' 페이지를 삭제할까요?"). innerHTML에
 // 이스케이프 없이 꽂으면 그 이름에 담긴 HTML/스크립트가 그대로 실행된다 — 반드시 이스케이프.
-function escapeHtml(s) {
-  return String(s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-}
 
 let dialogSequence = 0;
 
@@ -96,8 +94,8 @@ export function showPrompt(message, { title = "입력", value = "", placeholder 
           <input type="text" class="modal-input" />
         </div>
         <div class="modal-actions">
-          <button type="button" class="modal-btn" data-act="cancel">${cancelText}</button>
-          <button type="button" class="modal-btn modal-btn-primary" data-act="ok">${okText}</button>
+          <button type="button" class="modal-btn" data-act="cancel">${escapeHtml(cancelText)}</button>
+          <button type="button" class="modal-btn modal-btn-primary" data-act="ok">${escapeHtml(okText)}</button>
         </div>
       </div>`;
     document.body.appendChild(overlay);

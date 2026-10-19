@@ -1,0 +1,636 @@
+{
+ "localStorage": {
+  "5e.aiParallelWorkspaces.v1": "[]",
+  "5e.preview:5e.objectBrowser.v1": "{\"subject\":\"c\",\"openParts\":{}}",
+  "5e.preview:phyDraw.defaults": "{\"strokeWidth\":0.35,\"strokeLevel\":0,\"fillLevel\":255,\"textSizeMm\":4,\"textFont\":\"\\\"돋움\\\", \\\"Dotum\\\", \\\"Apple SD Gothic Neo\\\", \\\"맑은 고딕\\\", \\\"Malgun Gothic\\\", sans-serif\",\"textWeight\":\"normal\",\"textStyle\":\"normal\",\"gridVisible\":false,\"gridOpacity\":3,\"gridInterval\":5,\"rulerTickMm\":10,\"protractorTickDeg\":10}",
+  "5e.preview:theme": "light",
+  "5e.preview:5e.toolSections.v1": "{\"subject-section\":false}",
+  "5e.preview:5e.shortcutPlatform": "windows",
+  "5e.preview:5e.tutorial.bannerSeen": "true",
+  "5e.unified-library.search-pane-open.v1": "true",
+  "5e.preview:5e.subject": "c",
+  "5e.preview:5e.screenSize": "wide",
+  "5e.unified-library.preview-pane-open.v1": "true"
+ },
+ "indexedDB": [
+  {
+   "name": "5e-preview-autosave",
+   "version": 1,
+   "stores": [
+    {
+     "name": "checkpoints",
+     "keyPath": "id",
+     "autoIncrement": true,
+     "indexes": [],
+     "records": []
+    },
+    {
+     "name": "snapshots",
+     "keyPath": "id",
+     "autoIncrement": true,
+     "indexes": [],
+     "records": [
+      {
+       "key": 1,
+       "value": {
+        "ts": 1792359430321,
+        "data": {
+         "version": "0.17",
+         "pages": [
+          {
+           "id": "page_mveciujw_1",
+           "name": "페이지 1",
+           "meta": {
+            "number": "",
+            "points": ""
+           },
+           "objects": [
+            {
+             "id": "obj_mveciver_1",
+             "type": "rect",
+             "x": -33.032257080078125,
+             "y": -20.139516830444336,
+             "w": 20.645160675048828,
+             "h": 14.451613426208496,
+             "rotation": 0,
+             "strokeLevel": 0,
+             "strokeWidth": 0.2,
+             "fillLevel": 255,
+             "fillNone": false,
+             "fillStyle": "solid",
+             "dashLength": 0,
+             "dashGap": 0,
+             "labelType": "quantity",
+             "locked": false,
+             "positionLocked": false,
+             "layerId": 1,
+             "order": 0
+            },
+            {
+             "id": "obj_mvecivj6_2",
+             "type": "ellipse",
+             "x": -2.064516067504883,
+             "y": -20.139516830444336,
+             "w": 18.580644607543945,
+             "h": 16.516129732131958,
+             "rotation": 0,
+             "strokeLevel": 0,
+             "strokeWidth": 0.2,
+             "fillLevel": 255,
+             "fillNone": false,
+             "fillStyle": "solid",
+             "dashLength": 0,
+             "dashGap": 0,
+             "labelType": "quantity",
+             "locked": false,
+             "positionLocked": false,
+             "layerId": 1,
+             "order": 1
+            },
+            {
+             "id": "obj_mvecivlg_3",
+             "type": "line",
+             "p1": {
+              "x": -33.032257080078125,
+              "y": 19.08629035949707
+             },
+             "p2": {
+              "x": -10.322580337524414,
+              "y": 25.27983856201172
+             },
+             "rotation": 0,
+             "strokeLevel": 0,
+             "strokeWidth": 0.2,
+             "lineMode": "solid",
+             "lineStyle": "solid",
+             "arrowVariant": "right",
+             "dimensionVariant": "basic",
+             "arrowHead": "none",
+             "dashLength": 0,
+             "dashGap": 0,
+             "locked": false,
+             "positionLocked": false,
+             "layerId": 1,
+             "order": 2
+            },
+            {
+             "id": "obj_mvecivp5_1",
+             "x": -30.967742919921875,
+             "y": 1.5379031896591187,
+             "fontSize": 3.7,
+             "fontFamily": "\"돋움\", \"Dotum\", \"Apple SD Gothic Neo\", \"맑은 고딕\", \"Malgun Gothic\", sans-serif",
+             "fontWeight": "normal",
+             "fontStyle": "normal",
+             "italic": false,
+             "letterSpacing": null,
+             "underline": false,
+             "strikeout": false,
+             "rotation": 0,
+             "locked": false,
+             "positionLocked": false,
+             "layerId": 1,
+             "order": 3,
+             "type": "text",
+             "text": "1.6.3 글자 F=ma",
+             "textRuns": [
+              {
+               "text": "1.6.3 글자 F=ma",
+               "style": {
+                "role": "normal",
+                "fontFamily": "\"돋움\", \"Dotum\", \"Apple SD Gothic Neo\", \"맑은 고딕\", \"Malgun Gothic\", sans-serif",
+                "fontSize": 3.7,
+                "fontWeight": "normal",
+                "italic": false,
+                "underline": false,
+                "strikeout": false,
+                "letterSpacing": 0
+               }
+              }
+             ]
+            },
+            {
+             "type": "coordplane",
+             "x": -22.82264150943396,
+             "y": -21.599999999999998,
+             "w": 45.64528301886792,
+             "h": 43.199999999999996,
+             "rotation": 0,
+             "lockAspect": false,
+             "axisVariant": "quadrant",
+             "xMin": 0,
+             "xMax": 5.6,
+             "yMin": 0,
+             "yMax": 5.3,
+             "gridStepX": 1,
+             "gridStepY": 1,
+             "showAxisLines": true,
+             "showGrid": true,
+             "showTicks": true,
+             "showTickLabels": false,
+             "tickLabelSize": 5.2,
+             "labelX": "x",
+             "labelY": "y",
+             "showAxisLabels": true,
+             "axisLabelSize": 6.2,
+             "showOrigin": true,
+             "labelOrigin": "0",
+             "labelType": "quantity",
+             "exportable": true,
+             "strokeLevel": 0,
+             "strokeWidth": 0.3,
+             "locked": false,
+             "positionLocked": false,
+             "richLabels": true,
+             "gridToData": true,
+             "padXPos": 1.6,
+             "padXNeg": 1.6,
+             "padYPos": 1.3,
+             "padYNeg": 1.3,
+             "tickStepX": 1,
+             "tickStepY": 1,
+             "gridCountX": 4,
+             "gridCountY": 4,
+             "gridCountXPos": 4,
+             "gridCountXNeg": 0,
+             "gridCountYPos": 4,
+             "gridCountYNeg": 0,
+             "gridOverXPos": 0.5,
+             "gridOverXNeg": 0.5,
+             "gridOverYPos": 0.5,
+             "gridOverYNeg": 0.5,
+             "gridOver": 0.5,
+             "graphTickMode": "none",
+             "tickBaseX": "",
+             "tickBaseY": "",
+             "tickLabelMode": "none",
+             "tickTextX": [],
+             "tickTextY": [],
+             "showAxisLabelX": true,
+             "showAxisLabelY": true,
+             "axisLabelScale": 1,
+             "tickLabelScale": 1,
+             "labelScale": 1,
+             "seriesLock": true,
+             "labelXOffset": {
+              "dx": 0,
+              "dy": 0
+             },
+             "labelYOffset": {
+              "dx": 0,
+              "dy": 0
+             },
+             "labelXPos": null,
+             "labelYPos": null,
+             "tickOffX": [],
+             "tickOffY": [],
+             "annMarkers": [],
+             "annGuides": [],
+             "annArrows": [],
+             "guideLines": [],
+             "legends": [],
+             "annLabelPoints": [],
+             "graphCfg": {
+              "xNeg": 0,
+              "xPos": 4,
+              "yNeg": 0,
+              "yPos": 4,
+              "tickStepX": 1,
+              "tickStepY": 1
+             },
+             "id": "obj_mveciw5t_4",
+             "order": 4,
+             "layerId": 1,
+             "groupId": "grp_obj_mveciw5t_4"
+            },
+            {
+             "type": "funcgraph",
+             "closed": false,
+             "strokeLevel": 0,
+             "strokeWidth": 0.4,
+             "dashLength": 0,
+             "dashGap": 0,
+             "endLabel": "A",
+             "endLabelSize": 5.2,
+             "label": "",
+             "labelShow": false,
+             "curveStyle": "smooth",
+             "curvature": 1,
+             "locked": false,
+             "positionLocked": false,
+             "axis": "y",
+             "expr": "x^2/4",
+             "domainMin": 0,
+             "domainMax": 4.5,
+             "domainAuto": true,
+             "points": [
+              {
+               "x": -22.82264150943396,
+               "y": 21.599999999999998
+              },
+              {
+               "x": -21.67641509433962,
+               "y": 21.559702977594338
+              },
+              {
+               "x": -20.53018867924528,
+               "y": 21.438811910377357
+              },
+              {
+               "x": -19.38396226415094,
+               "y": 21.237326798349056
+              },
+              {
+               "x": -18.2377358490566,
+               "y": 20.955247641509434
+              },
+              {
+               "x": -17.091509433962262,
+               "y": 20.592574439858492
+              },
+              {
+               "x": -15.945283018867922,
+               "y": 20.14930719339623
+              },
+              {
+               "x": -14.799056603773584,
+               "y": 19.62544590212264
+              },
+              {
+               "x": -13.652830188679244,
+               "y": 19.020990566037735
+              },
+              {
+               "x": -12.506603773584905,
+               "y": 18.33594118514151
+              },
+              {
+               "x": -11.360377358490565,
+               "y": 17.57029775943396
+              },
+              {
+               "x": -10.214150943396225,
+               "y": 16.724060288915094
+              },
+              {
+               "x": -9.067924528301885,
+               "y": 15.797228773584909
+              },
+              {
+               "x": -7.921698113207546,
+               "y": 14.789803213443395
+              },
+              {
+               "x": -6.775471698113208,
+               "y": 13.701783608490569
+              },
+              {
+               "x": -5.629245283018868,
+               "y": 12.533169958726415
+              },
+              {
+               "x": -4.483018867924528,
+               "y": 11.283962264150947
+              },
+              {
+               "x": -3.3367924528301884,
+               "y": 9.954160524764152
+              },
+              {
+               "x": -2.1905660377358487,
+               "y": 8.54376474056604
+              },
+              {
+               "x": -1.044339622641509,
+               "y": 7.052774911556604
+              },
+              {
+               "x": 0.10188679245283083,
+               "y": 5.481191037735851
+              },
+              {
+               "x": 1.2481132075471706,
+               "y": 3.8290131191037737
+              },
+              {
+               "x": 2.3943396226415103,
+               "y": 2.0962411556603797
+              },
+              {
+               "x": 3.54056603773585,
+               "y": 0.28287514740566166
+              },
+              {
+               "x": 4.68679245283019,
+               "y": -1.6110849056603769
+              },
+              {
+               "x": 6.979245283018869,
+               "y": -5.640787146226414
+              },
+              {
+               "x": 9.271698113207545,
+               "y": -9.992865566037736
+              },
+              {
+               "x": 11.564150943396225,
+               "y": -14.667320165094338
+              },
+              {
+               "x": 13.856603773584904,
+               "y": -19.664150943396226
+              }
+             ],
+             "breaks": [],
+             "offset": {
+              "dx": 0,
+              "dy": 0
+             },
+             "rangeMin": null,
+             "rangeMax": null,
+             "markers": [],
+             "guideSegs": [],
+             "arrowMarks": [],
+             "markerXs": [],
+             "guideXs": [],
+             "arrowSpecs": [],
+             "id": "obj_mveciw5t_5",
+             "planeId": "obj_mveciw5t_4",
+             "order": 5,
+             "layerId": 1,
+             "groupId": "grp_obj_mveciw5t_4"
+            }
+           ],
+           "guides": [],
+           "layers": [
+            {
+             "id": 1,
+             "name": "레이어 1",
+             "visible": true
+            },
+            {
+             "id": 2,
+             "name": "레이어 2",
+             "visible": true
+            },
+            {
+             "id": 3,
+             "name": "레이어 3",
+             "visible": true
+            }
+           ],
+           "artboard": {
+            "w": 95,
+            "h": 50
+           }
+          },
+          {
+           "id": "page_mveciwo5_2",
+           "name": "페이지 2",
+           "meta": {
+            "number": "",
+            "points": ""
+           },
+           "objects": [
+            {
+             "id": "obj_mveciwqy_6",
+             "type": "rect",
+             "x": -22.70967674255371,
+             "y": -16.01048469543457,
+             "w": 30.967741012573242,
+             "h": 20.645162105560303,
+             "rotation": 0,
+             "strokeLevel": 0,
+             "strokeWidth": 0.2,
+             "fillLevel": 255,
+             "fillNone": false,
+             "fillStyle": "solid",
+             "dashLength": 0,
+             "dashGap": 0,
+             "labelType": "quantity",
+             "locked": false,
+             "positionLocked": false,
+             "layerId": 1,
+             "order": 0
+            }
+           ],
+           "guides": [],
+           "layers": [
+            {
+             "id": 1,
+             "name": "레이어 1",
+             "visible": true
+            },
+            {
+             "id": 2,
+             "name": "레이어 2",
+             "visible": true
+            },
+            {
+             "id": 3,
+             "name": "레이어 3",
+             "visible": true
+            }
+           ],
+           "artboard": {
+            "w": 95,
+            "h": 50
+           }
+          }
+         ],
+         "activePageId": "page_mveciujw_1"
+        },
+        "id": 1
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "5e.preview:5e-ai-image-tasks",
+   "version": 1,
+   "stores": [
+    {
+     "name": "tasks",
+     "keyPath": "key",
+     "autoIncrement": false,
+     "indexes": [
+      {
+       "name": "expiresAt",
+       "keyPath": "expiresAt",
+       "unique": false,
+       "multiEntry": false
+      },
+      {
+       "name": "lastAccessedAt",
+       "keyPath": "lastAccessedAt",
+       "unique": false,
+       "multiEntry": false
+      }
+     ],
+     "records": [
+      {
+       "key": "workspace",
+       "value": {
+        "key": "workspace",
+        "tabs": [
+         {
+          "id": "task-1",
+          "title": "작업 1",
+          "attachments": [],
+          "generated": [],
+          "conversationMessages": [],
+          "uiMessages": [],
+          "input": "",
+          "generationTiming": null,
+          "conversationId": null,
+          "mode": "diagram",
+          "qualityMode": "standard",
+          "outputEngine": "raster",
+          "generationMode": "single",
+          "outputOptions": {
+           "backgroundPolicy": "preserve",
+           "examPalette": false,
+           "lineThickness": 0
+          },
+          "separationMode": "off",
+          "singleBackgroundPolicy": "preserve",
+          "referenceComposition": {
+           "orientation": "horizontal",
+           "sourceOrder": []
+          },
+          "workbenchViewState": {
+           "selectedCandidateId": "",
+           "selectedSourceId": "",
+           "zoom": {
+            "source": 1,
+            "result": 1
+           },
+           "layout": "result",
+           "tracking": true,
+           "scroll": {
+            "source": {
+             "left": 0,
+             "top": 0
+            },
+            "result": {
+             "left": 0,
+             "top": 0
+            }
+           }
+          },
+          "selectedCandidateId": null,
+          "commentViewState": {
+           "tool": "pan",
+           "selected": null,
+           "markersVisible": true,
+           "tab": "comments"
+          },
+          "markPolicy": {
+           "arrows": "structural",
+           "trendLines": "keep",
+           "leaders": "remove"
+          }
+         }
+        ],
+        "activeTaskTabId": "task-1",
+        "taskTabSerial": 1,
+        "imageSerial": 0,
+        "sharingMode": null
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "name": "5e.preview:5e-store",
+   "version": 1,
+   "stores": [
+    {
+     "name": "kv",
+     "keyPath": null,
+     "autoIncrement": false,
+     "indexes": [],
+     "records": [
+      {
+       "key": "5e.personalObjects",
+       "value": [
+        {
+         "name": "1.6.3 상자",
+         "category": "호환 검사",
+         "subject": "c",
+         "savedAt": "2026-10-18T21:37:06.409Z",
+         "objects": [
+          {
+           "id": "obj_mveciver_1",
+           "type": "rect",
+           "x": -33.032257080078125,
+           "y": -20.139516830444336,
+           "w": 20.645160675048828,
+           "h": 14.451613426208496,
+           "rotation": 0,
+           "strokeLevel": 0,
+           "strokeWidth": 0.2,
+           "fillLevel": 255,
+           "fillNone": false,
+           "fillStyle": "solid",
+           "dashLength": 0,
+           "dashGap": 0,
+           "labelType": "quantity",
+           "locked": false,
+           "positionLocked": false,
+           "layerId": 1,
+           "order": 0
+          }
+         ],
+         "id": "po_mveciwkp_0"
+        }
+       ]
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

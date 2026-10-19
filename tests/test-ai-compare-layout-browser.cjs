@@ -14,6 +14,8 @@ for (const engine of ['chromium', 'webkit']) {
     fs.mkdirSync(evidence, { recursive: true });
     const { page, errors } = await fixture(t, 2, evidence);
     const panel = '#ai-image-panel';
+    // 좌우 비교는 '비교 ▾' 메뉴 안에 있다.
+    await page.click(`${panel} .ai-compare-menu summary`);
     await page.click(`${panel} [data-ai-layout-mode="side-by-side"]`);
     async function geometry(name) {
       await page.waitForFunction(() => [...document.querySelectorAll('#ai-image-panel .ai-image-card:not([hidden]) .ai-preview-stage > img')].every(img => img.complete));
@@ -32,7 +34,13 @@ for (const engine of ['chromium', 'webkit']) {
     }
     await geometry('same-ratio');
     assert.equal(await page.locator(`${panel} [data-ai-capture]`).count(), 0);
-    assert.equal(await page.locator(`${panel} .ai-conversation [data-ai-comment-visibility]`).count(), 1);
+    // 코멘트 표시 단추는 코멘트 도구 줄(.ai-annotation-toolbar)에 한 개 있다.
+    assert.equal(await page.locator(`${panel} [data-ai-comment-visibility]`).count(), 1);
+    assert.equal(await page.locator(`${panel} .ai-annotation-toolbar [data-ai-comment-visibility]`).count(), 1);
+    // 코멘트 표시는 처음에 꺼져 있다. 단추는 켜고 끄기를 바꾼다.
+    assert.equal(await page.locator(panel).getAttribute('data-ai-comments-visible'), 'false');
+    await page.click(`${panel} [data-ai-comment-visibility]`);
+    assert.equal(await page.locator(panel).getAttribute('data-ai-comments-visible'), 'true');
     await page.click(`${panel} [data-ai-comment-visibility]`);
     assert.equal(await page.locator(panel).getAttribute('data-ai-comments-visible'), 'false');
     // Different aspect ratios share one frame, while each image keeps its own proportions.
@@ -89,8 +97,9 @@ for (const engine of ['chromium', 'webkit']) {
     assert.deepEqual(colors[0].image, ['255,255,255'], 'opaque original stays white');
     assert.ok(colors[1].image.includes('184,190,198') && colors[1].image.includes('159,167,178'), 'transparent output uses both medium gray tones');
     assert.ok(colors[1].image.every(value => [[184,190,198],[159,167,178]].some(expected => value.split(',').every((channel,i) => Math.abs(Number(channel)-expected[i])<=1))), 'only checker tones and one-level rendering rounding are present');
-    assert.equal(await page.locator(`${panel} [data-ai-comment-tool="point"]`).isVisible(), false,
-      'Scoped generated revisions intentionally expose area editing, not point creation');
+    // 2026-10-12(24219c8a)부터 수정본에서도 점 코멘트를 쓸 수 있다(숨김 규칙 삭제).
+    assert.equal(await page.locator(`${panel} [data-ai-comment-tool="point"]`).isVisible(), true,
+      'Scoped generated revisions expose point and area comments');
     await page.click(`${panel} [data-ai-comment-tool="area"]`);
     const imageBox = await page.locator(`${panel} .is-ai-active-candidate .ai-preview-stage > img`).boundingBox();
     // Same image-relative 60%,60% origin oracle; real area input also proves extent.

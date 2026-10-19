@@ -2672,6 +2672,7 @@ function syncSeriesEditor() {
       const on = b._axis === ax;
       b.style.background = on ? "color-mix(in srgb, var(--accent) 22%, var(--bg-input))" : "var(--bg-input)";
       b.style.borderColor = on ? "var(--accent)" : "var(--border)";
+      b.setAttribute("aria-pressed", String(on));
     });
   }
   if (s.kind === "bar") {
@@ -2683,6 +2684,7 @@ function syncSeriesEditor() {
       const on = b._fill === (s.fillStyle || "gray");
       b.style.background = on ? "color-mix(in srgb, var(--accent) 22%, var(--bg-input))" : "var(--bg-input)";
       b.style.borderColor = on ? "var(--accent)" : "var(--border)";
+      b.setAttribute("aria-pressed", String(on));
     });
   } else if (s.kind === "expr") {
     if (document.activeElement !== _els.expr) _els.expr.value = s.expr;
@@ -2708,6 +2710,7 @@ function syncSeriesEditor() {
     b.setAttribute('aria-pressed', String(on));
     b.style.background = on ? "color-mix(in srgb, var(--accent) 22%, var(--bg-input))" : "var(--bg-input)";
     b.style.borderColor = on ? "var(--accent)" : "var(--border)";
+    b.setAttribute("aria-pressed", String(on));
   });
   // 막대는 실선 외곽선 하나뿐이라 선 종류·끝 라벨·이동 행을 숨긴다(선 굵기 = 외곽선 굵기).
   const isBar = s.kind === "bar";
@@ -2720,6 +2723,7 @@ function syncSeriesEditor() {
     const on = b._curve === cs;
     b.style.background = on ? "color-mix(in srgb, var(--accent) 22%, var(--bg-input))" : "var(--bg-input)";
     b.style.borderColor = on ? "var(--accent)" : "var(--border)";
+    b.setAttribute("aria-pressed", String(on));
   });
   // 곡률 조절: 점 계열을 곡선으로 그릴 때만(꺾은선→곡선). 함수식은 식이 형태를 정하므로 숨김.
   const showCurv = s.kind === "points" && cs === "smooth";
@@ -3014,6 +3018,7 @@ function syncCfgControls() {
     const on = b._mode === c.tickMode;
     b.style.background = on ? "color-mix(in srgb, var(--accent) 22%, var(--bg-input))" : "var(--bg-input)";
     b.style.borderColor = on ? "var(--accent)" : "var(--border)";
+    b.setAttribute("aria-pressed", String(on));
   });
   _els.tickTextRows.style.display = c.tickMode === "text" ? "" : "none";
   if (document.activeElement !== _els.tickTextX) _els.tickTextX.value = c.tickTextX;

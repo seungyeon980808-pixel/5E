@@ -22,7 +22,8 @@ module.exports = async function verifyPreviewLoading(page, evidence, engine) {
   const ui = page.locator('.unified-library-overlay').last();
   const stage = ui.locator('[data-unilib-stage]');
   await ui.locator('[data-result-id="preview-a"]').click();
-  await stage.locator('.unilib-preview-image img').waitFor();
+  // 선명해지는 효과가 끝나기 전에는 같은 그림의 효과용 사본(.br-final)이 잠시 겹쳐 있으므로 실제 그림만 찾는다.
+  await stage.locator('.unilib-preview-image img:not(.br-final)').waitFor();
   await ui.locator('[data-result-id="preview-b"]').click();
   await stage.locator('.unilib-preview-loading').waitFor();
   assert.equal(await stage.locator('img').count(), 0, 'previous page is not retained during preview loading');
@@ -33,7 +34,7 @@ module.exports = async function verifyPreviewLoading(page, evidence, engine) {
   await page.evaluate(async () => { for (let i = 0; i < 4; i++) await new Promise(requestAnimationFrame); });
   assert.equal(await stage.getAttribute('aria-busy'), 'true', 'ordinary preview status includes decode');
   await page.evaluate(() => window.cropGates['decode-2'].release());
-  await stage.locator('.unilib-preview-image img').waitFor();
-  assert.equal(await stage.locator('img').evaluate(img => img.naturalWidth), 800);
+  await stage.locator('.unilib-preview-image img:not(.br-final)').waitFor();
+  assert.equal(await stage.locator('.unilib-preview-image img:not(.br-final)').evaluate(img => img.naturalWidth), 800);
   await page.evaluate(() => window.previewFixture.close());
 };

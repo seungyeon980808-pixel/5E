@@ -1,3 +1,4 @@
+import { escapeHtml } from "./html-escape.js?v=1.7.0-four-session-integration";
 import { previewStorage as localStorage } from './preview-storage.js?v=1.7.0-four-session-integration';
 /* ===== TUTORIAL ENGINE (따라하기) — 실제 화면 위에서 한 곳씩 짚어 주는 안내 =====
  *
@@ -1486,8 +1487,8 @@ export function openPicker({ justFinished = null } = {}) {
     row.innerHTML = `
       <span class="tut-course-mark" aria-hidden="true">${isDone ? "✓" : ""}</span>
       <span class="tut-course-body">
-        <span class="tut-course-title">${c.title}</span>
-        <span class="tut-course-desc">${c.desc}</span>
+        <span class="tut-course-title">${escapeHtml(c.title)}</span>
+        <span class="tut-course-desc">${escapeHtml(c.desc)}</span>
       </span>
       <span class="tut-course-meta">약 ${c.minutes}분</span>`;
     row.addEventListener("click", () => startCourse(c.id));   // 언제나 처음부터
@@ -1510,8 +1511,8 @@ export function openPicker({ justFinished = null } = {}) {
     });
     const t = tracks[i];
     pane.innerHTML = `<div class="tut-pane-head">
-        <span class="tut-pane-name">${t.name}${t.beta ? '<span class="beta-tag">베타</span>' : ""} — ${t.lead}</span>
-        <span class="tut-pane-note">${t.beta ? "아직 다듬는 중입니다 — " : ""}${t.note}</span>
+        <span class="tut-pane-name">${escapeHtml(t.name)}${t.beta ? '<span class="beta-tag">베타</span>' : ""} — ${escapeHtml(t.lead)}</span>
+        <span class="tut-pane-note">${t.beta ? "아직 다듬는 중입니다 — " : ""}${escapeHtml(t.note)}</span>
       </div>
       <div class="tut-picker-list"></div>`;
     const list = pane.querySelector(".tut-picker-list");
@@ -1524,8 +1525,8 @@ export function openPicker({ justFinished = null } = {}) {
     b.type = "button";
     b.className = "tut-track-btn" + (doneN === t.items.length ? " is-cleared" : "");
     b.setAttribute("role", "tab");
-    b.innerHTML = `<span class="tut-track-name">${t.name}${t.beta ? '<span class="beta-tag">베타</span>' : ""}</span>
-      <span class="tut-track-lead">${t.lead}</span>
+    b.innerHTML = `<span class="tut-track-name">${escapeHtml(t.name)}${t.beta ? '<span class="beta-tag">베타</span>' : ""}</span>
+      <span class="tut-track-lead">${escapeHtml(t.lead)}</span>
       <span class="tut-track-count">${doneN}/${t.items.length}</span>`;
     b.addEventListener("click", () => showTrack(i));
     nav.appendChild(b);

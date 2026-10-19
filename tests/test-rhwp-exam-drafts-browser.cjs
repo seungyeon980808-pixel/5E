@@ -14,7 +14,8 @@ h.withServer(async origin=>{fs.mkdirSync(path.resolve(process.env.EVIDENCE_DIR||
  const emptyWait=p.waitForEvent('download');await dialog.getByRole('button',{name:/^(저장|다운로드)$/}).click();const emptyDownload=await emptyWait;
  const empty=await p.evaluate(async bytes=>(await import('/js/fivee-project.js?v=1.7.0-four-session-integration')).parseFiveEProject(new Uint8Array(bytes)),[...fs.readFileSync(await emptyDownload.path())]);
  assert.equal(empty.kind,'exam');assert.equal(empty.figures.length,0);assert.ok(empty.documentBytes.length>0);
- await p.locator('#exam-send').click();await h.idle(p);
+ // 2026-10-12(b2f85a00)부터 한글 문서는 '5E_hwp'(#exam-send) 메뉴의 '한글 문서로 이동'으로 열고, 편집은 '문서에 반영'으로 되돌린다.
+ await p.locator('#exam-send').click();await p.locator('[data-exam-document-open]').click();await h.idle(p);
  // Use the fresh-image constructor, whose false recognition flag is omitted
  // until project loading. Insertion and acknowledgment must both be clean.
  await h.action(p,'close');
@@ -50,7 +51,7 @@ h.withServer(async origin=>{fs.mkdirSync(path.resolve(process.env.EVIDENCE_DIR||
  await p.locator('[data-source-recrop]').click();await p.locator('#capture-confirm').waitFor();
  const move=await p.locator('.capture-overlay [data-h="n"]').boundingBox(),south=await p.locator('.capture-overlay [data-h="s"]').boundingBox();
  await p.mouse.move(move.x+5,(move.y+south.y)/2);await p.mouse.down();await p.mouse.move(move.x+25,(move.y+south.y)/2+15);await p.mouse.up();
- await p.locator('#capture-confirm').click();await h.idle(p);await p.locator('#exam-send').click();await h.recrop(p);
+ await p.locator('#capture-confirm').click();await h.idle(p);await p.locator('[data-source-apply]').click();await h.recrop(p);
  const updated=(await h.pictures(p))[0];assert.equal(updated.props.width,before.props.width);assert.equal(updated.props.rotationAngle,before.props.rotationAngle);assert.equal(updated.props.cropLeft,0);assert.equal(updated.props.cropTop,0);assert.ok(updated.props.height>0);
  await h.originalEdit(p);await p.locator('#exam-edit-bar').waitFor({state:'visible'});assert.equal((await h.drawing(p,url)).objects[0].x,registered.objects[0].x+7);await p.locator('#exam-edit-bar .exam-region-actions button:last-child').click();await h.idle(p);
  // Restore in fresh storage: the document stays committed and the draft tab survives.

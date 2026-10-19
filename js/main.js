@@ -83,6 +83,7 @@ import { initPages, switchPage, resetPageHistory } from "./pages.js?v=1.7.0-four
 import { localizeShortcutLabels } from "./platform.js?v=1.7.0-four-session-integration";
 import { initModalDrag } from "./modal-drag.js?v=1.7.0-four-session-integration";
 import { initSteppers } from "./stepper.js?v=1.7.0-four-session-integration";
+import { initRangeFill } from "./range-fill.js?v=1.7.0-four-session-integration";
 import { initReferenceWindows } from "./reference-window.js?v=1.7.0-four-session-integration";
 import { initTutorial } from "./tutorial.js?v=1.7.0-four-session-integration";
 import { initAiInstallGuide } from "./ai-install-guide.js?v=1.7.0-four-session-integration";
@@ -459,6 +460,9 @@ initModalDrag();
 
 /* ----- .gm-step ▲▼ 스테퍼 (어느 화면에 놓이든 동작) ----- */
 initSteppers();
+
+/* ----- 슬라이더 채운 부분 표시 (모양만, 값은 그대로) ----- */
+initRangeFill();
 
 /* ----- 참고 문항 창(별도 브라우저 창) — 최소화 칩 막대 준비 ----- */
 initReferenceWindows(state);

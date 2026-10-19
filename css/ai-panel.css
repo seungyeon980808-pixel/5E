@@ -3177,8 +3177,35 @@ body:has(#ai-image-panel:not([hidden])) .app-shell-header { visibility: hidden; 
 #ai-image-panel .ai-loading-frame[data-loading-state="completed"] .br-focus-window,
 #ai-image-panel .ai-loading-frame[data-loading-state="failed"] .br-focus-window { display: none; }
 @keyframes ai-loading-dot { 0%, 70%, 100% { opacity: .3; transform: translateY(0); } 35% { opacity: 1; transform: translateY(-2px); } }
+/* 단계 막대: 실제 단계 신호에 맞춰 찬다. 글줄은 막대 위로 올라간다.
+   띠는 화면 색과 상관없이 늘 어두우므로 막대 색은 어두운 바탕용 값을 쓴다.
+   다크네이비는 시안의 파란 값, 그라파이트·화이트는 파란색이 없는 중립 값. */
+#ai-image-panel .ai-loading-caption { --load-fill: #58a6ff; }
+:root[data-theme="dark"]:not([data-palette="classic"]) #ai-image-panel .ai-loading-caption,
+:root[data-theme="light"] #ai-image-panel .ai-loading-caption { --load-fill: #f0f0f0; }
+#ai-image-panel .ai-loading-caption .ai-loading-stages { display: none; }
+#ai-image-panel .ai-loading-caption.has-stages .ai-loading-stages {
+  position: absolute; display: grid; gap: 4px;
+  left: clamp(16px, 4cqw, 32px); right: clamp(16px, 4cqw, 32px); bottom: clamp(12px, 3cqw, 22px);
+}
+#ai-image-panel .ai-loading-caption.has-stages .rs--band .rs-scrim { height: clamp(112px, 30cqw, 190px); }
+#ai-image-panel .ai-loading-caption.has-stages .rs--band .rs-label { bottom: calc(clamp(12px, 3cqw, 22px) + 30px); }
+#ai-image-panel .ai-loading-caption.has-stages .rs-activity,
+#ai-image-panel .ai-loading-caption.has-stages .rs-sep { display: none; }
+#ai-image-panel .ai-loading-stage { min-width: 0; }
+#ai-image-panel .ai-loading-stage i { position: relative; display: block; height: 4px; overflow: hidden; border-radius: 2px; background: rgba(230, 237, 243, .14); }
+#ai-image-panel .ai-loading-stage b { position: absolute; inset: 0; border-radius: 2px; background: var(--load-fill); transform: scaleX(0); transform-origin: left center; transition: transform .25s linear; }
+#ai-image-panel .ai-loading-stage[data-state="current"] b::after { content: ""; position: absolute; top: 0; right: 0; bottom: 0; width: 18px; background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .75)); animation: ai-loading-tip 1.6s ease-in-out infinite; }
+#ai-image-panel .ai-loading-stage span { display: block; margin-top: 6px; overflow: hidden; color: #7d8590; font-size: 11px; line-height: 1.3; white-space: nowrap; text-overflow: ellipsis; }
+#ai-image-panel .ai-loading-stage[data-state="done"] span { color: #b1bac4; }
+#ai-image-panel .ai-loading-stage[data-state="current"] span { color: #e6edf3; }
+#ai-image-panel .ai-loading-caption .ai-loading-meta { flex: none; color: #b1bac4; font-size: .62em; font-variant-numeric: tabular-nums; white-space: nowrap; }
+#ai-image-panel .ai-loading-caption .ai-loading-meta:empty { display: none; }
+@keyframes ai-loading-tip { 50% { opacity: .25; } }
 @media (prefers-reduced-motion: reduce) {
   #ai-image-panel .ai-loading-caption .rs-activity i { animation: none; opacity: .6; }
+  #ai-image-panel .ai-loading-stage b::after { animation: none !important; }
+  #ai-image-panel .ai-loading-stage b { transition: none; }
 }
 
 /* Description creation starts with the result; references remain optional. */
@@ -3190,3 +3217,21 @@ body:has(#ai-image-panel:not([hidden])) .app-shell-header { visibility: hidden; 
   #ai-image-panel .ai-title-line { min-width:0; }
   .ai-workflow-switch { max-width:100%; }
 }
+
+/* 작업 창을 닫아 둔 채 끝났을 때: AI 이미지/그래프 버튼 위 말풍선 (버튼이 안 보이면 오른쪽 아래) */
+.ai-done-notice { position: fixed; right: 16px; bottom: 16px; z-index: 2147483000; width: 280px; box-sizing: border-box; padding: 12px 12px 12px 14px; border-radius: 8px;
+  background: var(--ds-raise, #161b22); box-shadow: 0 0 0 1px var(--ds-line-strong, #30363d), 0 12px 32px rgba(0, 0, 0, .55); color: var(--ds-ink-2, #b1bac4); font-size: 12.5px; }
+.ai-done-notice-title { display: flex; align-items: center; gap: 8px; color: var(--ds-ink, #e6edf3); font-size: 13px; font-weight: 500; }
+.ai-done-notice-title svg { width: 16px; height: 16px; flex: none; fill: none; stroke: var(--ds-selected-icon, #58a6ff); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.ai-done-notice-detail { margin: 4px 0 10px 24px; color: var(--ds-ink-3, #7d8590); font-size: 11.5px; font-variant-numeric: tabular-nums; }
+.ai-done-notice-actions { display: flex; justify-content: flex-end; gap: 6px; }
+.ai-done-notice button { height: 28px; padding: 0 10px; border: 1px solid transparent; border-radius: 6px; background: transparent; color: inherit; font: inherit; font-size: 12px; cursor: pointer; }
+.ai-done-notice button:hover { background: var(--ds-hover, rgba(177, 186, 196, .08)); }
+.ai-done-notice .ai-done-notice-open { border-color: var(--ds-soft-line, #6ba4f8); background: var(--ds-soft-bg, #152137); color: var(--ds-ink, #e6edf3); }
+.ai-done-notice.is-anchored { right: auto; animation: ai-done-notice-in .32s cubic-bezier(.22, .61, .36, 1) both; }
+.ai-done-notice.is-anchored::after { content: ""; position: absolute; left: calc(var(--ai-done-tail, 40px) - 5px); bottom: -6px; width: 10px; height: 10px;
+  background: var(--ds-raise, #161b22); transform: rotate(45deg); box-shadow: 1px 1px 0 var(--ds-line-strong, #30363d); }
+/* 아래 기능 줄 버튼 규칙이 !important라 같은 강도로 덮는다 */
+#ai-image-install-open.has-done-notice { background: var(--ds-hover, rgba(177, 186, 196, .08)) !important; color: var(--ds-ink, #e6edf3) !important; }
+@keyframes ai-done-notice-in { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .ai-done-notice.is-anchored { animation: none; } }

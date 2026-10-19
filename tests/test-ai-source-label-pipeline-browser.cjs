@@ -54,7 +54,7 @@ for (const verdict of ['pass', 'fail']) test(`source label UI: observe, freeze, 
   const evidence = path.join(evidenceRoot, verdict);
   fs.mkdirSync(evidence, { recursive: true });
   const { page, errors } = await fixture(t, 1, evidence, { initialGeneration: true });
-  await page.locator('#ai-image-panel [data-ai-send]').click();
+  await page.locator('#ai-image-panel [data-ai-comments-apply]').click();
   await page.waitForFunction(() => window.__task2.sends.length === 1);
   assert.equal((await sends(page))[0].purpose, 'scene');
   assert.equal((await sends(page))[0].model, 'gpt-6-luna'); assert.equal((await sends(page))[0].effort, 'medium');
@@ -153,7 +153,7 @@ for (const verdict of ['pass', 'fail']) test(`source label UI: observe, freeze, 
 test('source label UI: cancellation during analysis sends no image request and ignores late observer result', { timeout: 30000 }, async t => {
   const evidence = path.join(evidenceRoot, 'cancel'); fs.mkdirSync(evidence, { recursive: true });
   const { page, errors } = await fixture(t, 1, evidence, { initialGeneration: true });
-  await page.locator('#ai-image-panel [data-ai-send]').click(); await page.waitForFunction(() => window.__task2.sends.length === 1);
+  await page.locator('#ai-image-panel [data-ai-comments-apply]').click(); await page.waitForFunction(() => window.__task2.sends.length === 1);
   await page.locator('#ai-image-panel [data-ai-interrupt]').click();
   await page.evaluate(plan => { window.__task2.emit(0, 'assistant', plan); window.__task2.emit(0, 'done'); }, plan);
   await page.waitForFunction(() => document.querySelector('#ai-image-panel').dataset.aiBusy === 'false');
@@ -176,7 +176,7 @@ for (const clearance of ['clear', 'overlap']) test(`two selected workspaces: ${c
   const { page, errors } = await batchFixture(t, 2, evidence, { initialGeneration: true });
   await page.click('#ai-image-panel [data-tab-id="task-1"] .ai-task-tab-select', { modifiers: ['Meta'] });
   assert.equal(await page.locator('#ai-image-panel [data-ai-selection-count]').textContent(), '2개 선택');
-  await page.click('#ai-image-panel [data-ai-send]');
+  await page.click('#ai-image-panel [data-ai-comments-apply]');
   await page.waitForFunction(() => window.__task2.sends.length === 2);
   assert.ok((await sends(page)).every(s => s.purpose === 'scene'));
   const batchPlan = JSON.stringify(clearance === 'clear' ? syntheticBatchPipelineObservation() : syntheticPipelineObservation());
@@ -219,7 +219,7 @@ for (const clearance of ['clear', 'overlap']) test(`two selected workspaces: ${c
 test('missing final overlay checks cannot promote a candidate to passed', {timeout:60000}, async t => {
   const evidence=path.join(evidenceRoot,'missing-composite-checks');fs.mkdirSync(evidence,{recursive:true});
   const {page,errors}=await fixture(t,1,evidence,{initialGeneration:true});
-  await page.locator('#ai-image-panel [data-ai-send]').click();await page.waitForFunction(()=>window.__task2.sends.length===1);
+  await page.locator('#ai-image-panel [data-ai-comments-apply]').click();await page.waitForFunction(()=>window.__task2.sends.length===1);
   await page.evaluate(plan=>{window.__task2.emit(0,'assistant',plan);window.__task2.emit(0,'done');},plan);
   await page.waitForFunction(()=>window.__task2.sends.length===2);await page.evaluate(()=>{window.__task2.emit(1,'image');window.__task2.emit(1,'done');});
   await page.waitForFunction(()=>window.__task2.sends.length===3);

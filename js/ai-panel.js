@@ -1,6 +1,6 @@
 import { AI_WORKFLOW_KINDS, normalizeAIWorkflowKind, isGraphWorkflow, isCreationWorkflow } from './ai-workflow-kinds.js?v=1.7.0-four-session-integration';
 import { graphDescriptionSource, prepareGraphDescriptionPlan } from './graph/description-contract.js?v=1.7.0-four-session-integration';
-import { createWorkbenchLoading, estimateLoadingMs } from './loading/workbench-loading.js?v=20261015';
+import { createWorkbenchLoading, estimateLoadingMs, showDoneNotice } from './loading/workbench-loading.js?v=20261018f';
 import { channelStorage, channelSessionStorage, optionalStorage } from './preview-storage.js?v=1.7.0-four-session-integration';
 import { snapshotImageItem, taskItemCopy } from './ai-candidate-snapshot.js?v=1.7.0-four-session-integration';
 import { EXAM_BRIEF_PROFILE, isExamBrief, prepareExamBriefRunInput, buildExamBriefPrompt } from './ai-exam-brief.js?v=1.7.0-exam-brief';
@@ -1461,8 +1461,13 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     if (batchRun) void batchRun.emit({type:'progress',progress:{phase}}).catch(batchRun.reject);
     if (requestStates.advance(requestToken, phase)) {
       panel.dataset.aiRequestPhase = phase;
-      if (phase === 'generating' && pendingLoading?.token === requestToken) loading.begin(pendingLoading);
-      if (phase === 'validating') loading.setPhase('결과 확인 중');
+      // 라벨 변환 작업은 단계 신호를 보낸다. 라벨 복원과 이미지만은 단계 구성이 다르다.
+      if (phase === 'generating' && pendingLoading?.token === requestToken) loading.begin(currentRunInput?.loadingPlan ? { ...pendingLoading, plan: currentRunInput.loadingPlan, phased: true } : pendingLoading);
+      if (phase === 'validating') { loading.setPhase('결과 확인 중'); loading.stage('validating'); }
+      if (phase === 'completed' && pendingLoading?.token === requestToken && (panel.hidden || panel.inert) && conversionKind !== 'graph') {
+        const tookMs = Date.now() - pendingLoading.startedAt;
+        showDoneNotice({ title: '그림 변환이 끝났어요', detail: `${Math.floor(tookMs / 60000)}:${String(Math.floor(tookMs / 1000) % 60).padStart(2, '0')} 걸림`, onOpen: () => showWorkbench() });
+      }
       if (['completed', 'failed', 'cancelled'].includes(phase)) {
         const candidate = currentTurnCandidate || generatedImages.at(-1);
         void loading.finish({ token: requestToken, outcome: phase, result: phase === 'completed' ? candidate?.data : null });
@@ -4790,13 +4795,13 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
     clearTimeout(requestTimeout); requestTimeout = null; // Every isolated stage owns its timeout.
     currentCancelRequested = false; currentTurnType = 'image'; currentEngine = IMAGE_ENGINE_IDS.RASTER;
     currentTurnStartedAt = Date.now(); currentTerminalOutcome = null; currentTurnDone = false;
-    currentRunInput = { ...runInput, approvedFirstPng: workflow.imageKind === 'general', preserveSourceLabels: workflow.labelResult === 'restore-editable', generationMode: 'single' };
+    currentRunInput = { ...runInput, approvedFirstPng: workflow.imageKind === 'general', preserveSourceLabels: workflow.labelResult === 'restore-editable', generationMode: 'single', loadingPlan: workflow.labelResult === 'restore-editable' ? 'label' : 'image' };
     currentTurnPerformance = null; currentCacheRequest = null; pendingCacheOutput = null;
     currentRequestSnapshot = { entered: request, request, renderRequest: request, discussionContext: options.discussionContextOverride || '', runInput: currentRunInput };
     providerRequestPersistable = true;
     setBusy(true); requestPhase('generating');
     const phaseNames = { sourceAnalysis: '원본 라벨·소속 확인 중', pixelProcessing: '기출 주석 국소 제거 중', generation: runInput.preciseRestore ? '선택한 그림 정밀 복원 중' : '일반 이미지 변환 중', targetMapping: '최종 연결 대상 확인 중', labelProposals: '편집 라벨 배치 준비 중', finalVerification: '그림·라벨 결과 확인 중', labelPlacement: '편집 라벨 배치 중', review: '그림·라벨 결과 확인 중', localRestore: '겹친 주석 영역 복원 중', localReview: '국소 복원 결과 확인 중' };
-    const onPhase = phase => { if (isCurrent()) { setStatus(phaseNames[phase] || '결과 준비 중', 'busy'); setGenerating(true, phaseNames[phase] || '결과 준비 중', '원본의 과학 구조와 라벨 소속을 확인합니다.', phase === 'generation' ? 'generate' : 'analyze'); loading.setPhase(phaseNames[phase] || '결과 준비 중'); panel.dataset.aiWorkflowPhase = phase; } };
+    const onPhase = phase => { if (isCurrent()) { setStatus(phaseNames[phase] || '결과 준비 중', 'busy'); setGenerating(true, phaseNames[phase] || '결과 준비 중', '원본의 과학 구조와 라벨 소속을 확인합니다.', phase === 'generation' ? 'generate' : 'analyze'); loading.setPhase(phaseNames[phase] || '결과 준비 중'); loading.stage(phase); panel.dataset.aiWorkflowPhase = phase; } };
     const observer = sourceLabelAnalysis;
     const selection = { model: runInput.model, effort: runInput.effort, serviceTier: runInput.serviceTier, models: runInput.modelCatalog || availableModels };
     let pendingRawCandidate = null;
@@ -4866,7 +4871,7 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
       } else {
         setTaskState('completed'); taskTabs.get(originatingTaskId).generationNotice = candidate.reviewState === 'needs-attention' ? 'review' : null; renderTaskTabs(); setGenerating(false); setBusy(false);
         setStatus(outOfScope ? outOfScopeMessage
-          : candidate.reviewState === 'passed' ? '처리 완료 · 편집 가능한 결과를 준비했습니다.'
+          : candidate.reviewState === 'passed' ? (candidate.reviewReport?.advisory?.length ? `처리 완료 · 참고 사항 ${candidate.reviewReport.advisory.length}개는 결과 확인에서 볼 수 있습니다.` : '처리 완료 · 편집 가능한 결과를 준비했습니다.')
           : draftReady ? candidate.editableDraft?.presentation === 'external-list'
             ? `원본 유지 · 편집 라벨 목록 ${candidate.editableDraft.labelIds.length}개를 준비했습니다. 원본 글자는 남아 있습니다.`
             : result.removalReport?.status === 'partial'

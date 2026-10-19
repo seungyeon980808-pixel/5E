@@ -200,7 +200,9 @@ async function currentPrimaryAction(page) {
   await page.waitForFunction(() => ['preparation', 'result'].includes(document.querySelector('#ai-image-panel')?.dataset.aiStage));
   const stage = await panel.getAttribute('data-ai-stage');
   assert.ok(['preparation', 'result'].includes(stage), 'Submission begins only in a real idle workbench stage: ' + stage);
-  const selector = stage === 'preparation' ? '[data-ai-send]' : '[data-ai-comments-apply]';
+  // 2026-10-16(83201a54)부터 이미지 작업은 준비 단계에서도 아래 '변환하기' 하나만 보인다. 그래프 작업만 준비 칸의 버튼을 쓴다.
+  const graph = await panel.getAttribute('data-ai-workflow') === 'graph';
+  const selector = stage === 'preparation' && graph ? '[data-ai-send]' : '[data-ai-comments-apply]';
   const button = page.locator('#ai-image-panel[data-ai-stage="' + stage + '"] ' + selector);
   assert.equal(await button.count(), 1, 'Exactly one canonical primary action bound to ' + stage);
   assert.equal(await button.isVisible(), true, 'The actual current primary action must be physically visible');
@@ -593,7 +595,7 @@ for (const engine of ['chromium','webkit']) test('source-free workspaces expose 
       assert.equal(observations.filter(button=>button.visible&&button.enabled).length,0,'Source-free empty stage has no available physical action: '+selector);
       actions.push({selector,count,observations});
     }
-    assert.equal(await page.locator('#ai-image-panel [data-ai-input]').isVisible(),false);
+    // 2026-10-16(83201a54)부터 빈 작업대도 준비 칸과 아래 버튼 줄을 그대로 보여 준다(화면이 움직이지 않게). 실행만 막혀 있으면 된다.
     assert.equal(await page.locator('#ai-image-panel').getAttribute('data-ai-stage'),'empty');
     assert.equal(await page.evaluate(()=>window.__task2.sends.length),0);
     assert.equal(await page.evaluate(()=>window.__task2Manager.workspaceBatchState().length),0);
@@ -603,6 +605,9 @@ for (const engine of ['chromium','webkit']) test('source-free workspaces expose 
     await selectImmediateSceneTask(page,id);
     // Pin a real user-chosen layout before deletion. Removing the source must
     // not change zoom/layout, unrelated owner fields, history or settings.
+    // 좌우 비교는 '비교 ▾' 메뉴 안에 있다.
+    const compareMenu=page.locator('#ai-image-panel .ai-compare-menu');
+    if(!await compareMenu.evaluate(node=>node.open)) await compareMenu.locator('summary').click();
     const compare=page.locator('#ai-image-panel [data-ai-layout-mode="side-by-side"]');
     assert.equal(await compare.count(),1); assert.equal(await compare.isVisible(),true); assert.equal(await compare.isEnabled(),true); await compare.click();
     const settings=page.locator('#ai-image-panel [data-ai-side-tab="comments"]');

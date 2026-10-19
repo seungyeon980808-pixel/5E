@@ -1,3 +1,4 @@
+import { escapeHtml } from "./html-escape.js?v=1.7.0-four-session-integration";
 /* ===== TEMPLATES (the SINGLE object registry — DESIGN 1-1) ===== */
 //
 // One registry is the source of truth for EVERY library object. The left panel is
@@ -905,7 +906,7 @@ function renderPanel() {
 
     const header = document.createElement("div");
     header.className = "tool-section-header";
-    header.innerHTML = `${cat} <span class="toggle-icon">▾</span>`;
+    header.innerHTML = `${escapeHtml(cat)} <span class="toggle-icon">▾</span>`;
 
     const body = document.createElement("div");
     body.className = "tool-section-body";   // 3-col icon grid (same as 공통 도구)

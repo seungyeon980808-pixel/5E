@@ -1,5 +1,5 @@
 import { buildSourceTracingPrompt, SOURCE_TRACING_CONTRACT_VERSION } from './ai-source-tracing-contract.js?v=1.7.0-four-session-integration';
-import { normalizeImageLabelWorkflow } from './ai-image-label-workflow.js?v=1.7.0-four-session-integration';
+import { normalizeImageLabelWorkflow, IMAGE_EMPHASIS_REMOVAL_CONTRACT } from './ai-image-label-workflow.js?v=1.7.0-four-session-integration';
 import { removeExamLabelsFromDataUrl } from './ai-exam-label-removal.js?v=1.7.0-four-session-integration';
 import { resolveGeneratedRaster } from './ai-raster-output.js?v=1.7.0-four-session-integration';
 import { createEditableLabelComposite } from './ai-label-composite.js?v=1.7.0-four-session-integration';
@@ -22,7 +22,8 @@ function selectedMarkInstructions(workflow) {
     workflow.scientificArrows === 'remove'
       ? '사용자가 화살표 제거를 켰습니다. 이번 작업의 기본 표시선 선택을 대체하여 과학적 힘·운동·혈류·전류 화살표도 제거하세요. 실제 관·혈관·도선·물체 윤곽·눈금은 보존하세요.' : '',
     workflow.auxiliaryMarks === 'keep'
-      ? '사용자가 보조선 제거를 껐습니다. 이번 작업의 기타 보조선·확대 연결선·강조틀은 유지하세요. 라벨 글자와 그 글자에 소속된 설명 지시선·끝점은 계속 함께 제거하세요.' : '',
+      ? '사용자가 보조선 제거를 껐습니다. 이번 작업의 기타 보조선은 유지하세요. 라벨 글자와 그 글자에 소속된 설명 지시선·끝점은 계속 함께 제거하세요.' : '',
+    IMAGE_EMPHASIS_REMOVAL_CONTRACT,
   ].filter(Boolean).join('\n');
 }
 const clone = value => structuredClone(value);
@@ -232,7 +233,7 @@ async function executeBoundImageLabelRun({ source, workflow: rawWorkflow, reques
     let valid = saved && saved.version === IMAGE_LABEL_RUN_VERSION && saved.accepted === true
       && saved.workflow?.version === workflow.version && JSON.stringify(saved.workflow) === JSON.stringify(workflow)
       && saved.sourceSha256 === sourceSha256 && saved.planSha256 === planSha256 && saved.candidateSha256 === await imageLabelDigest(saved.data)
-      && enforceImageLabelAcceptance(saved.report, { workflow, candidateSha256: saved.candidateSha256 }).accepted
+      && enforceImageLabelAcceptance(saved.report, { workflow, candidateSha256: saved.candidateSha256 }).strictAccepted
       && (workflow.imageKind === 'exam' || saved.report?.styleReview?.version === STYLE_CONTRACT_VERSION && saved.report.styleReview.candidateSha256 === saved.candidateSha256)
       && (workflow.labelResult !== 'restore-editable' || saved.targetPlacement && saved.labelPlan)
       && (!saved.targetPlacement || saved.targetPlacement.candidateSha256 === saved.candidateSha256 && saved.targetPlacement.planSha256 === planSha256);
@@ -449,7 +450,8 @@ async function executeBoundImageLabelRun({ source, workflow: rawWorkflow, reques
   const result = { version: IMAGE_LABEL_RUN_VERSION, accepted: acceptance.accepted, status: acceptance.accepted ? 'complete' : 'needs-attention', data, workflow, sourceSha256, sourceFrame, planSha256, candidateSha256, candidateFrame, sourceLabelPlan: clone(plan), targetPlacement,
     labelPlan, removalReport, report, rendererPrompt, labelVerificationPreview: jointPreview?.composite.attachment.data || null, labelProposals: jointPreview?.proposals || null, finalLabelComposite: composite?.attachment.data || null, metrics };
   cancelled(signal);
-  if (cache && acceptance.accepted) {
+  // 결과 저장(캐시)은 모든 검수 항목을 통과한 결과만. 화면 안내 완화와 무관하게 그대로 둔다.
+  if (cache && acceptance.strictAccepted) {
     const persistenceStarted = performance.now();
     const output = { imageLabelRun: clone(result) };
     // Count the complete persisted payload, including plans and composite PNGs.

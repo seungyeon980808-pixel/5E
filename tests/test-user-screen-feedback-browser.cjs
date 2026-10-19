@@ -1,6 +1,6 @@
 const assert = require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
 const {chromium,webkit}=require(process.env.PLAYWRIGHT_MODULE || 'playwright');
-const base=process.env.EXAM_URL || 'http://127.0.0.1:51819',version='?v=1.7.0-four-session-integration';
+const base=(process.env.EXAM_URL || 'http://127.0.0.1:51819').replace(/\/$/,''),version='?v=1.7.0-four-session-integration';
 const out=path.resolve(process.env.EVIDENCE_DIR || '_work/feedback/parts/screen-feedback-20261015');fs.mkdirSync(out,{recursive:true});
 (async()=>{for(const [name,engine] of Object.entries({chromium,webkit})){
  const browser=await engine.launch(),context=await browser.newContext({viewport:{width:1600,height:1050}}),page=await context.newPage(),errors=[];
@@ -62,7 +62,8 @@ const out=path.resolve(process.env.EVIDENCE_DIR || '_work/feedback/parts/screen-
   await page.evaluate(async version=>{const{state}=await import('/js/state.js'+version);const{addPage}=await import('/js/pages.js'+version);addPage(state);state.update(s=>{s.pages[0].name='아주 긴 이름을 가진 첫 번째 문서 탭 제목';s.pages[1].name='짧음';});},version);
   const tabs=await page.locator('.page-tab').evaluateAll(nodes=>nodes.map(node=>({width:node.getBoundingClientRect().width,align:getComputedStyle(node.querySelector('.page-tab-name')).textAlign,name:node.querySelector('.page-tab-name')&&getComputedStyle(node.querySelector('.page-tab-name')).textOverflow})));
   assert(tabs.length>=2);assert(tabs.every(tab=>tab.width===90&&tab.name==='ellipsis'&&tab.align==='center'));
-  for(const id of ['personal-object-save','image-objectify-open','bulk-edit-open']) assert.equal(await page.locator('#'+id).evaluate(n=>getComputedStyle(n).textAlign),'center');
+  // 2026-10-16(0a2db4a0): 고급 기능 줄은 다른 도구 줄과 같은 16px 시작선(왼쪽 정렬)으로 맞췄다.
+  for(const id of ['personal-object-save','image-objectify-open','bulk-edit-open']) assert.equal(await page.locator('#'+id).evaluate(n=>getComputedStyle(n).textAlign),'left');
   const link=page.locator('.footer-actions .bug-report-open');assert.equal(await link.getAttribute('href'),'https://5e.ai.kr/bug/');assert.equal(await link.getAttribute('target'),'_blank');assert.equal(await page.locator('#bug-report-dialog').count(),0);
   // Help stays in the headings even with every image classified.
   await page.evaluate(async version=>{const{chooseWorkbenchAssignment}=await import('/js/library/workbench-assignment.js'+version);const c=document.createElement('canvas');c.width=100;c.height=70;window.__assignment=chooseWorkbenchAssignment({references:[{name:'그림',data:c.toDataURL()},{name:'그래프',data:c.toDataURL()}]});},version);

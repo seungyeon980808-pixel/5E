@@ -64,7 +64,8 @@ for (const engine of ['chromium', 'webkit']) test(`${engine}: revision wipe, coo
     await page.focus('#open'); await page.keyboard.press('Enter'); await page.evaluate(() => window.compare.ready);
     await page.waitForFunction(() => document.querySelector('.ai-comparison-pane svg').getAttribute('viewBox').split(' ')[2] > 100);
     assert.deepEqual((await state()).states, ['ready','ready']);
-    assert.equal((await state()).rightRevisionId, 'r2'); assert.equal((await state()).leftRevisionId, 'r1');
+    // 2026-10-16(83201a54)부터 비교 기본값은 왼쪽=원본, 오른쪽=가장 최근 수정본이다.
+    assert.equal((await state()).rightRevisionId, 'r4'); assert.equal((await state()).leftRevisionId, 'original');
     await capture('center');
     const bar = page.getByRole('slider');
     const stage = page.locator('.ai-comparison-stage');

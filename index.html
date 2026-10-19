@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>5E 1.6.3 · 과학교사를 위한 시험용 이미지 제작기</title>
   <meta name="description" content="어떤 그림이든 가져와서 시험용 이미지로 변환합니다." />
-  <meta name="5e-visitor-stats-endpoint" content="/api/visitor-stats" />
+  <meta name="5e-visitor-stats-endpoint" content="https://5e-visitor-stats.5e-desktop.workers.dev/api/visitor-stats" />
 
   <!-- 파비콘 / 홈화면 아이콘 (PWA) -->
   <link rel="icon" type="image/svg+xml" href="assets/logo.svg" />
@@ -58,7 +58,7 @@
   <link rel="stylesheet" href="/css/loading/reveal-status.css?v=20261015" />
   <link rel="stylesheet" href="/css/loading/library-loading.css?v=20261015" />
   <link rel="stylesheet" href="/css/figure-studio.css?v=20261018" />
-  <link rel="stylesheet" href="/css/ai-panel.css?v=1.7.0-four-session-integration" />
+  <link rel="stylesheet" href="/css/ai-panel.css?v=20261019-prep" />
   <link rel="stylesheet" href="/css/ai-comparison.css?v=1.7.0-four-session-integration" />
   <link rel="stylesheet" href="/css/ai-composition-editor.css?v=1.7.0-four-session-integration" />
   <link rel="stylesheet" href="/css/ai-editable-assets.css?v=1.7.0-four-session-integration" />
@@ -71,7 +71,7 @@
   <link rel="stylesheet" href="/css/lite-shell.css?v=1.7.0-four-session-integration" />
   <link rel="stylesheet" href="/css/mode-transition.css?v=1.7.0-four-session-integration" />
   <link rel="stylesheet" href="/css/button-design.css?v=20261013-toolbar-states" />
-  <link rel="stylesheet" href="/css/graphite-shell.css?v=1.7.0-graphite" />
+  <link rel="stylesheet" href="/css/graphite-shell.css?v=1.7.0-graphite-20261018e" />
 </head>
 <body>
   <div class="desktop-titlebar" aria-hidden="true">
@@ -148,12 +148,12 @@
           <span id="grid-detail" class="grid-detail" hidden>
             <label>
               진하기
-              <input type="range" id="grid-opacity" min="1" max="10" value="3" />
+              <input type="range" id="grid-opacity" min="1" max="10" value="3" data-range-readout="fraction" /><output class="grid-opacity-value" for="grid-opacity" aria-hidden="true">3/10</output>
             </label>
             <label>
               간격
               <span class="gm-step"><input type="number" id="grid-interval" min="5" max="50" step="5" value="10" /><span class="gm-step-btns"><button type="button" data-step="1" tabindex="-1" aria-label="격자 간격 늘리기">▲</button><button type="button" data-step="-1" tabindex="-1" aria-label="격자 간격 줄이기">▼</button></span></span>
-              mm
+              <span class="grid-unit">mm</span>
             </label>
           </span>
           <div class="canvas-lock-control">
@@ -430,7 +430,10 @@
          target="_blank" rel="noopener" title="GNU AGPL v3 라이선스">AGPL-3.0</a>
       <a class="footer-badge" href="https://github.com/seungyeon980808-pixel/5E"
          target="_blank" rel="noopener" title="소스코드 (GitHub)"><span class="footer-code" aria-hidden="true">&lt;/&gt;</span> Source</a>
-      <span class="footer-change-badge" data-change-summary tabindex="0" data-change-short="10.19 07:40 기출 변형·복원 머지 · c4469ced" aria-label="2026-10-19 07:40 KST 반영(브랜치 feature/1.7.0/exampool, 기출 복원 브랜치 feature/1.7.0/kice-convert 머지 c4469ced): ExamPool 문항 카드 「기출」 탭 목록을 과학탐구 전체 기출 8,420문항으로 넓히고(과목·단원·연도·본문 단어 검색), 카드마다 「변형」 버튼 — 누르면 기출 PDF를 AI 없이 편집 가능한 한글 문항으로 바꿔 새 문항 카드와 한글 미리보기로 엽니다(원본은 근거로 연결). 그림·표는 무조건 가운데 정렬(상자 칸 안 그림 포함, 글 옆 어울림만 예외). 기출 복원 엔진: 2024~2026 과탐 1,440문항 복원 95.7%." title="2026-10-19 07:40 KST 반영(브랜치 feature/1.7.0/exampool, 기출 복원 브랜치 feature/1.7.0/kice-convert 머지 c4469ced): ExamPool 문항 카드 「기출」 탭 목록을 과학탐구 전체 기출 8,420문항으로 넓히고(과목·단원·연도·본문 단어 검색), 카드마다 「변형」 버튼 — 누르면 기출 PDF를 AI 없이 편집 가능한 한글 문항으로 바꿔 새 문항 카드와 한글 미리보기로 엽니다(원본은 근거로 연결). 그림·표는 무조건 가운데 정렬(상자 칸 안 그림 포함, 글 옆 어울림만 예외). 기출 복원 엔진: 2024~2026 과탐 1,440문항 복원 95.7%.">10.19 07:40 기출 변형·복원 머지 · c4469ced</span>
+      <span class="footer-change-badge" data-change-summary tabindex="0"
+            data-change-short="10.19 08:20 1.7.0 프리뷰 병합 준비"
+            aria-label="2026-10-19 08:20 KST 반영(준비 브랜치 prep/1.7.0/exampool-into-preview): 1.7.0 프리뷰(그라파이트 디자인·이미지 생성 대기 화면·방문자 집계·보안 점검 06:43)에 ExamPool(문항 카드·한글 조판 미리보기·기출 8,420문항 목록과 「변형」·AI 출제 대화·AI 그림/그래프)을 합친 준비본. 그림·표는 무조건 가운데. 기출 복원 엔진(AI 없음) 2024~2026 과탐 복원 95.7%."
+            title="2026-10-19 08:20 KST 반영(준비 브랜치 prep/1.7.0/exampool-into-preview): 1.7.0 프리뷰(그라파이트 디자인·이미지 생성 대기 화면·방문자 집계·보안 점검 06:43)에 ExamPool(문항 카드·한글 조판 미리보기·기출 8,420문항 목록과 「변형」·AI 출제 대화·AI 그림/그래프)을 합친 준비본. 그림·표는 무조건 가운데. 기출 복원 엔진(AI 없음) 2024~2026 과탐 복원 95.7%.">10.19 08:20 1.7.0 프리뷰 병합 준비</span>
       <span class="footer-visitor-stats" data-visitor-stats tabindex="0" title="이용자 집계 서버 연결 준비 중">누적 — · 오늘 —</span>
     </span>
     <span class="app-footer-credit app-footer-copyright">Copyright © 2026 <strong>박승연</strong> | SMOE</span>

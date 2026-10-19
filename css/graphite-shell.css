@@ -78,13 +78,9 @@
   :root:not([data-mode="lite"]) .app-shell-header :is(.topbar-btn, .shell-icon-button, .icon-btn, .auto-snap-btn, .grid-toggle-btn, [id="center-view-btn"], .panel-visibility-toggle) svg {
     width: var(--ds-icon-bar); height: var(--ds-icon-bar);
   }
-  /* 켜진 기능(격자·자동 정렬·고정·캡처): 아이콘 밝게 + 아래 작은 점 */
+  /* 켜진 기능(격자·자동 정렬·고정·캡처): 면과 아이콘 색으로만 표시(아래 점 없음) */
   :root:not([data-mode="lite"]) .app-shell-header :is(.auto-snap-btn, .grid-toggle-btn, [id="center-view-btn"], [id="quick-capture-btn"])[aria-pressed="true"] {
     background: var(--ds-selected); color: var(--ds-selected-ink);
-  }
-  :root:not([data-mode="lite"]) .app-shell-header :is(.auto-snap-btn, .grid-toggle-btn, [id="center-view-btn"], [id="quick-capture-btn"])[aria-pressed="true"]::after {
-    content: ""; position: absolute; left: 50%; bottom: 2px; width: 4px; height: 4px; margin-left: -2px;
-    border-radius: 50%; background: var(--ds-selected-ink);
   }
   :root:not([data-mode="lite"]) .app-shell-header .file-menu > .topbar-btn[aria-expanded="true"] { background: var(--ds-selected); color: var(--ds-selected-ink); }
 
@@ -615,3 +611,253 @@
 }
 /* 패널 버튼(편집기·AI 작업실 공통): 접히면 패널 쪽 채운 칸이 사라진다 */
 .panel-visibility-toggle[aria-expanded="false"] .ds-fillcol { opacity: 0; }
+
+/* =====================================================================
+   다크네이비(classic) 색감 — 시안(main.html "현재 색")과 같은 색 쓰임.
+   배치·크기·굵기는 그대로 두고 색만 맞춘다.
+     강조 글자 ink · 대부분의 글자/도구 아이콘 ink-2 · 막대 아이콘/보조 글자 ink-3
+     선택·켜짐 아이콘 selected-icon(파란색) · 워터마크 옅게
+   ===================================================================== */
+@media (min-width: 768px) {
+  :root[data-theme="dark"][data-palette="classic"]:not([data-mode="lite"]) :is(.panel-left .tool-section-header, .panel-right .insp-summary, .insp-layer-name, .insp-ab-preset) { color: var(--ds-ink-2); }
+  :root[data-theme="dark"][data-palette="classic"]:not([data-mode="lite"]) .insp-layer-row.is-active .insp-layer-name { color: var(--ds-ink); }
+  /* 위쪽 막대 아이콘은 왼쪽 도구 아이콘과 같은 밝기(ink-2) — 더 어두우면 꺼진 버튼처럼 보인다 */
+  :root[data-theme="dark"][data-palette="classic"]:not([data-mode="lite"]) .app-shell-header button svg { color: var(--ds-ink-2); }
+  :root[data-theme="dark"][data-palette="classic"]:not([data-mode="lite"]) .app-shell-header button:hover svg { color: var(--ds-ink); }
+  :root[data-theme="dark"][data-palette="classic"]:not([data-mode="lite"]) .image-workflow-hub .ui-core-action svg { color: var(--ds-ink-3); }
+  :root[data-theme="dark"][data-palette="classic"]:not([data-mode="lite"]) .image-workflow-hub .ui-core-action:hover svg { color: var(--ds-ink-2); }
+  :root[data-theme="dark"][data-palette="classic"]:not([data-mode="lite"]) .app-shell-header button:is([aria-pressed="true"], [aria-expanded="true"], .active, .is-active):not(.panel-visibility-toggle) svg,
+  :root[data-theme="dark"][data-palette="classic"]:not([data-mode="lite"]) #tool-list .tool-btn.is-active svg { color: var(--ds-selected-icon); }
+  :root[data-theme="dark"][data-palette="classic"]:not([data-mode="lite"]) #canvas { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='412' height='233'%3E%3Cg fill='%23e6edf3' fill-opacity='0.05' font-family='Georgia, serif' font-size='17.25' font-style='italic' font-weight='600' text-anchor='middle'%3E%3Ctext transform='rotate(-24 116 66)'%3E%3Ctspan x='116' y='58'%3EsciEnce Educational%3C/tspan%3E%3Ctspan x='116' y='80'%3EExam Easy Editor%3C/tspan%3E%3C/text%3E%3Ctext transform='rotate(-24 300 168)'%3E%3Ctspan x='300' y='160'%3EsciEnce Educational%3C/tspan%3E%3Ctspan x='300' y='182'%3EExam Easy Editor%3C/tspan%3E%3C/text%3E%3C/g%3E%3C/svg%3E"); }
+}
+
+/* =====================================================================
+   창 안쪽 컨트롤 — 시안 controls.html "바꿀 모습"
+   대상: 라이브러리 · 그래프 창 · 설정(환경 설정·도구 기본값·인쇄) · AI 작업대 · 한글 작업실 사이드바
+     · 버튼은 테두리 없음. 마우스를 올리면 옅은 면.
+     · 선택·실행은 은은한 버튼 하나: --ds-soft-bg 면 + --ds-soft-line 1px 선.
+     · 입력칸은 패널보다 한 단계 밝은 면 + 옅은 선. 입력 중에만 강조 선.
+   테두리 두께는 그대로 두고 색만 바꾼다(위치·크기가 움직이지 않게).
+   라이브러리 미리보기의 그림 선택 틀(.unilib-figure-choice)은 그림 위에 겹치는 투명한 틀이라 제외한다
+   (은은한 버튼 면이 칠해지면 그림을 가린다).
+   ===================================================================== */
+@media (min-width: 768px) {
+  /* 일반 버튼 */
+  :root:not([data-mode="lite"]) :is(.unified-library-overlay, #graph-modal-overlay, .settings-preferences-overlay, #defaults-overlay, .settings-print-overlay, #ai-image-panel, #rhwp-exam-workspace .exam-sidebar)
+    :is(button, summary, .unilib-icon-button, .bug-report-open):not(.unilib-result-card, .unilib-figure-choice, .unilib-header-panel-toggle, .unilib-actions > button, .workbench-assignment-card-actions button, [data-ai-side-tab], .ai-task-tab, .ai-task-tab *):not([style*="background: #"], [style*="background:#"], [style*="background: rgb"], [style*="background-color"]):not([class*="swatch"], [class*="color-chip"], [class*="danger"]):not(.on, .active, .is-active, .is-selected, [aria-pressed="true"], [aria-selected="true"], [aria-checked="true"], [aria-current="true"]) {
+    border-color: transparent !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+  :root:not([data-mode="lite"]) :is(.unified-library-overlay, #graph-modal-overlay, .settings-preferences-overlay, #defaults-overlay, .settings-print-overlay, #ai-image-panel, #rhwp-exam-workspace .exam-sidebar)
+    :is(button, summary, .unilib-icon-button, .bug-report-open):not(.unilib-result-card, .unilib-figure-choice, .unilib-header-panel-toggle, .unilib-actions > button, .workbench-assignment-card-actions button, [data-ai-side-tab], .ai-task-tab, .ai-task-tab *):not([style*="background: #"], [style*="background:#"], [style*="background: rgb"], [style*="background-color"]):not([class*="swatch"], [class*="color-chip"], [class*="danger"]):not(.on, .active, .is-active, .is-selected, [aria-pressed="true"], [aria-selected="true"], [aria-checked="true"], [aria-current="true"]):not(:disabled):hover {
+    background: var(--ds-hover) !important;
+  }
+  /* 선택된 칸 · 실행(주) 버튼 — 은은한 버튼 */
+  :root:not([data-mode="lite"]) :is(.unified-library-overlay, #graph-modal-overlay, .settings-preferences-overlay, #defaults-overlay, .settings-print-overlay, #ai-image-panel, #rhwp-exam-workspace .exam-sidebar)
+    :is(button, summary, [role="tab"]):not(.unilib-result-card, .unilib-figure-choice, .unilib-header-panel-toggle, .unilib-actions > button, .workbench-assignment-card-actions button, [data-ai-side-tab], .ai-task-tab, .ai-task-tab *):is(.on, .active, .is-active, .is-selected, [aria-pressed="true"], [aria-selected="true"], [aria-checked="true"], [aria-current="true"]),
+  :root:not([data-mode="lite"]) :is(.unified-library-overlay, #graph-modal-overlay, .settings-preferences-overlay, #defaults-overlay, .settings-print-overlay, #ai-image-panel, #rhwp-exam-workspace .exam-sidebar)
+    :is(.modal-btn-primary, .unilib-primary) {
+    border-color: transparent !important;
+    background: var(--ds-soft-bg) !important;
+    color: var(--ds-ink) !important;
+    outline: 1px solid var(--ds-soft-line) !important;
+    outline-offset: -1px !important;
+    box-shadow: none !important;
+  }
+  :root:not([data-mode="lite"]) :is(.unified-library-overlay, #graph-modal-overlay, .settings-preferences-overlay, #defaults-overlay, .settings-print-overlay, #ai-image-panel, #rhwp-exam-workspace .exam-sidebar)
+    :is(.modal-btn-primary, .unilib-primary) { font-weight: var(--ds-weight-medium); }
+  :root:not([data-mode="lite"]) :is(.unified-library-overlay, #graph-modal-overlay, .settings-preferences-overlay, #defaults-overlay, .settings-print-overlay, #ai-image-panel, #rhwp-exam-workspace .exam-sidebar)
+    :is(.modal-btn-primary, .unilib-primary):disabled { outline-color: var(--ds-line-strong); background: transparent !important; color: var(--ds-ink-3) !important; }
+  /* 입력칸 */
+  :root:not([data-mode="lite"]) :is(.unified-library-overlay, #graph-modal-overlay, .settings-preferences-overlay, #defaults-overlay, .settings-print-overlay, #ai-image-panel, #rhwp-exam-workspace .exam-sidebar)
+    :is(input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="file"]), select, textarea, .gm-step) {
+    border-color: var(--ds-line);
+    background-color: var(--ds-field-raise);
+    color: var(--ds-ink);
+  }
+  :root:not([data-mode="lite"]) :is(.unified-library-overlay, #graph-modal-overlay, .settings-preferences-overlay, #defaults-overlay, .settings-print-overlay, #ai-image-panel, #rhwp-exam-workspace .exam-sidebar)
+    :is(input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="file"]), select, textarea):focus,
+  :root:not([data-mode="lite"]) :is(.unified-library-overlay, #graph-modal-overlay, .settings-preferences-overlay, #defaults-overlay, .settings-print-overlay, #ai-image-panel, #rhwp-exam-workspace .exam-sidebar)
+    .gm-step:focus-within { border-color: var(--ds-soft-line); outline: none; }
+  :root:not([data-mode="lite"]) :is(.unified-library-overlay, #graph-modal-overlay, .settings-preferences-overlay, #defaults-overlay, .settings-print-overlay, #ai-image-panel, #rhwp-exam-workspace .exam-sidebar)
+    :is(input[type="checkbox"], input[type="radio"], input[type="range"]) { accent-color: var(--ds-check); }
+  /* 라이브러리 결과 카드: 굵은 파란 테두리 대신 은은한 면 + 가는 선 */
+  :root:not([data-mode="lite"]) .unified-library-overlay .unilib-result-card { border-color: transparent; }
+  :root:not([data-mode="lite"]) .unified-library-overlay .unilib-result-card:hover { background: var(--ds-hover); }
+  :root:not([data-mode="lite"]) .unified-library-overlay .unilib-result-card[aria-selected="true"] {
+    border-color: transparent; background: var(--ds-soft-bg); outline: 1px solid var(--ds-soft-line); outline-offset: -2px; box-shadow: none;
+  }
+}
+
+/* =====================================================================
+   숫자칸 · 슬라이더 · 격자 창 — 시안 controls.html 4번 "바꿀 모습"
+     · 슬라이더: 2px 가는 선(채운 부분 --ds-soft-line) + 6×16 세로 막대 손잡이
+       (시안 slider-vertical.html 안 B).
+       채운 위치(--ds-range-p)는 js/range-fill.js가 맞춘다.
+     · 숫자칸(.gm-step): ▲▼ 글자·칸 구분선 없이 위·아래 꺾쇠를 칸 안에,
+       마우스를 올리거나 입력 중일 때만 보인다. 동작은 js/stepper.js 그대로.
+       칸 바깥 크기는 그대로 둔다(격자 창만 시안 크기 28).
+     · 다른 숫자칸(오른쪽 패널 등)의 기본 화살표도 마우스를 올릴 때만.
+     · 격자 창: 높이 44, 글자 12.5/11, 테두리 대신 그림자 + 1px 선.
+       간격 칸은 44 폭 + 옆에 따로 붙은 작은 상하 버튼(늘 보임, 시안 interval-stepper.html 안 1).
+   ===================================================================== */
+@media (min-width: 768px) {
+  /* 슬라이더 */
+  :root:not([data-mode="lite"]) input[type="range"] {
+    -webkit-appearance: none; appearance: none;
+    height: 16px; background: transparent; cursor: pointer;
+  }
+  :root:not([data-mode="lite"]) input[type="range"]:focus { outline: none; }
+  :root:not([data-mode="lite"]) input[type="range"]::-webkit-slider-runnable-track {
+    height: 2px; border-radius: 2px;
+    background: linear-gradient(to right, var(--ds-soft-line) var(--ds-range-p, 0%), var(--ds-line-strong) var(--ds-range-p, 0%));
+  }
+  :root:not([data-mode="lite"]) input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 6px; height: 16px; margin-top: -7px; border: 0; border-radius: 3px;
+    background: var(--ds-ink); box-shadow: none;
+  }
+  :root:not([data-mode="lite"]) input[type="range"]:focus-visible::-webkit-slider-thumb { box-shadow: 0 0 0 3px var(--ds-soft-bg), 0 0 0 4px var(--ds-soft-line); }
+  :root:not([data-mode="lite"]) input[type="range"]::-moz-range-track { height: 2px; border-radius: 2px; background: var(--ds-line-strong); }
+  :root:not([data-mode="lite"]) input[type="range"]::-moz-range-progress { height: 2px; border-radius: 2px; background: var(--ds-soft-line); }
+  :root:not([data-mode="lite"]) input[type="range"]::-moz-range-thumb { width: 6px; height: 16px; border: 0; border-radius: 3px; background: var(--ds-ink); }
+  :root:not([data-mode="lite"]) input[type="range"]:disabled { opacity: .45; cursor: default; }
+
+  /* 숫자칸(.gm-step) — 면·선은 입력칸과 같게, 꺾쇠는 칸 안에 */
+  :root:not([data-mode="lite"]) .gm-step {
+    border-color: var(--ds-line); background-color: var(--ds-field-raise); outline: none;
+  }
+  :root:not([data-mode="lite"]) .gm-step:focus-within { border-color: var(--ds-soft-line); outline: none; }
+  /* 칸이 늘어나 있으면 숫자가 남는 폭을 채우고 꺾쇠는 오른쪽 끝에 붙는다(칸 바깥 크기는 그대로) */
+  :root:not([data-mode="lite"]) .gm-step input { flex: 1 1 auto; min-width: 0; background-color: transparent !important; color: var(--ds-ink); text-align: right; font-variant-numeric: tabular-nums; }
+  :root:not([data-mode="lite"]) .gm-step-btns { border-left-color: transparent; opacity: 0; }
+  :root:not([data-mode="lite"]) .gm-step:is(:hover, :focus-within) .gm-step-btns { opacity: 1; }
+  :root:not([data-mode="lite"]) .gm-step-btns button {
+    position: relative; border: 0 !important; background: transparent !important; box-shadow: none !important;
+    font-size: 0 !important; color: var(--ds-ink-3) !important;
+  }
+  :root:not([data-mode="lite"]) .gm-step-btns button + button { border-top: 0; }
+  :root:not([data-mode="lite"]) .gm-step-btns button::before {
+    content: ""; position: absolute; inset: 1px 3px; border-radius: 3px; background: transparent;
+  }
+  :root:not([data-mode="lite"]) .gm-step-btns button:not(:disabled):hover { color: var(--ds-ink-2) !important; }
+  :root:not([data-mode="lite"]) .gm-step-btns button:not(:disabled):hover::before { background: var(--ds-hover); }
+  :root:not([data-mode="lite"]) .gm-step-btns button::after {
+    content: ""; position: relative; width: 10px; height: 10px; background: currentColor;
+    -webkit-mask: var(--ds-chevron) center / 10px no-repeat; mask: var(--ds-chevron) center / 10px no-repeat;
+  }
+  :root:not([data-mode="lite"]) .gm-step-btns button[data-step="1"]::after { transform: rotate(180deg); }
+
+  /* 다른 숫자칸의 기본 화살표 — 마우스를 올리거나 입력 중일 때만 */
+  :root:not([data-mode="lite"]) input[type="number"]:not(.gm-spinnum)::-webkit-inner-spin-button { opacity: 0; }
+  :root:not([data-mode="lite"]) input[type="number"]:not(.gm-spinnum):is(:hover, :focus)::-webkit-inner-spin-button { opacity: 1; }
+
+  /* 격자 창(위쪽 막대 격자 버튼 아래) */
+  :root:not([data-mode="lite"]) .canvas-view-controls .grid-detail {
+    height: 44px; padding: 0 16px; gap: 16px; box-sizing: border-box;
+    border: 0; border-radius: 8px; background: var(--ds-raise); box-shadow: var(--ds-shadow-float);
+    font: 400 var(--ds-text-body)/1 var(--ds-font); color: var(--ds-ink-2);
+  }
+  :root:not([data-mode="lite"]) .canvas-view-controls .grid-detail > label { display: inline-flex; align-items: center; gap: 8px; }
+  :root:not([data-mode="lite"]) .canvas-view-controls .grid-detail input[type="range"] { width: 120px; margin: 0; }
+  :root:not([data-mode="lite"]) .canvas-view-controls .grid-detail :is(.grid-opacity-value, .grid-unit) {
+    font-size: var(--ds-text-meta); color: var(--ds-ink-3); font-variant-numeric: tabular-nums;
+  }
+  :root:not([data-mode="lite"]) .canvas-view-controls .grid-detail .grid-opacity-value { min-width: 34px; }
+  /* 간격 칸: 칸(44)과 상하 버튼(16×24)을 따로 — 칸 묶음 자체는 테두리·면 없이 */
+  :root:not([data-mode="lite"]) .canvas-view-controls .grid-detail .gm-step {
+    align-items: center; gap: 4px; height: 28px; border: 0; background: transparent; overflow: visible;
+  }
+  :root:not([data-mode="lite"]) .canvas-view-controls .grid-detail .gm-step input {
+    flex: none; width: 44px; height: 28px; box-sizing: border-box; padding: 0 8px;
+    border: 1px solid var(--ds-line); border-radius: var(--ds-radius); background-color: var(--ds-field-raise) !important;
+    font-size: var(--ds-text-body);
+  }
+  :root:not([data-mode="lite"]) .canvas-view-controls .grid-detail .gm-step input:focus { border-color: var(--ds-soft-line); }
+  :root:not([data-mode="lite"]) .canvas-view-controls .grid-detail .gm-step-btns {
+    opacity: 1; width: 16px; height: 24px; box-sizing: border-box;
+    border: 1px solid var(--ds-line-strong); border-radius: 5px; background: var(--ds-field-raise); overflow: hidden;
+  }
+  :root:not([data-mode="lite"]) .canvas-view-controls .grid-detail .gm-step-btns button { width: 14px; min-width: 0; }
+  :root:not([data-mode="lite"]) .canvas-view-controls .grid-detail .gm-step-btns button + button { border-top: 1px solid var(--ds-line) !important; }
+  :root:not([data-mode="lite"]) .canvas-view-controls .grid-detail .gm-step-btns button::before { inset: 0; border-radius: 0; }
+  :root:not([data-mode="lite"]) .canvas-view-controls .grid-detail .gm-step-btns button:not(:disabled):hover { color: var(--ds-ink) !important; }
+  :root:not([data-mode="lite"]) .canvas-view-controls .grid-detail .gm-step-btns button:not(:disabled):active::before { background: var(--ds-soft-bg); }
+}
+/* 터치 화면(마우스 올림 없음)에서는 꺾쇠·화살표를 늘 보인다 */
+@media (min-width: 768px) and (hover: none) {
+  :root:not([data-mode="lite"]) .gm-step-btns { opacity: 1; }
+  :root:not([data-mode="lite"]) input[type="number"]:not(.gm-spinnum)::-webkit-inner-spin-button { opacity: 1; }
+}
+
+/* =====================================================================
+   라이브러리 버튼 — 시안 5e-design-mockups/library-controls.html 안 1 (2026-10-18)
+   1. 위쪽 막대: 메인 위쪽 막대와 같게. 높이 41, 버튼 28×28, 패널 버튼은 눌림 면 없이 양 끝.
+      왼쪽: [왼쪽 패널] 라이브러리 · 오른쪽: [버그][닫기] | [오른쪽 패널]
+   2. 미리보기 아래 버튼: 1px 선 버튼 + 아이콘, AI 이미지 변환만 은은한 버튼.
+   3. 작업대 카드 이미지/그래프: 그림 위 어두운 묶음 + 아이콘(흰 그림 위에서도 또렷하게).
+   글자는 스크립트가 바꿔 쓰므로 아이콘은 ::before 마스크로 붙인다.
+   ===================================================================== */
+@media (min-width: 768px) {
+  :root:not([data-mode="lite"]) .unified-library-overlay { --unilib-header-height: 41px; }
+  :root:not([data-mode="lite"]) .unified-library-overlay .unilib-header { gap: 2px; padding: 0 12px; }
+  :root:not([data-mode="lite"]) .unified-library-overlay .unilib-brand { gap: 8px; }
+  :root:not([data-mode="lite"]) .unified-library-overlay .unilib-brand h2 { font-size: var(--ds-text-title); font-weight: var(--ds-weight-medium, 600); }
+  :root:not([data-mode="lite"]) .unified-library-overlay .unilib-header > .ll { order: 1; }
+  :root:not([data-mode="lite"]) .unified-library-overlay .unilib-header-actions { order: 2; margin-left: auto; gap: 2px; }
+  :root:not([data-mode="lite"]) .unified-library-overlay .unilib-header :is(.unilib-icon-button, .bug-report-open) {
+    display: grid; width: 28px; height: 28px; min-width: 28px; min-height: 28px; padding: 0; place-items: center;
+    border: 0 !important; border-radius: var(--ds-radius); background: transparent !important; box-shadow: none !important; color: var(--ds-ink-2) !important;
+  }
+  :root:not([data-mode="lite"]) .unified-library-overlay .unilib-header :is(.unilib-icon-button, .bug-report-open):hover { background: var(--ds-hover) !important; color: var(--ds-ink) !important; }
+  :root:not([data-mode="lite"]) .unified-library-overlay .unilib-header :is(.unilib-icon-button, .bug-report-open) svg { width: 18px; height: 18px; }
+  :root:not([data-mode="lite"]) .unified-library-overlay .unilib-header-actions .bug-report-open { order: 1; }
+  :root:not([data-mode="lite"]) .unified-library-overlay .unilib-header-actions [data-unilib-close] { order: 2; }
+  :root:not([data-mode="lite"]) .unified-library-overlay .unilib-header-actions [data-unilib-preview-toggle] { position: relative; order: 3; margin-left: 13px; }
+  :root:not([data-mode="lite"]) .unified-library-overlay .unilib-header-actions [data-unilib-preview-toggle]::before {
+    content: ""; position: absolute; left: -7px; top: 6px; width: 1px; height: 16px; background: var(--ds-line-strong);
+  }
+
+  :root:not([data-mode="lite"]) .unified-library-overlay .unilib-actions { gap: 8px; }
+  :root:not([data-mode="lite"]) .unified-library-overlay .unilib-actions > button {
+    display: flex; align-items: center; justify-content: center; gap: 6px; height: 36px; min-height: 36px; padding: 0 10px;
+    border: 1px solid var(--ds-line-strong) !important; border-radius: var(--ds-radius); background: transparent !important; box-shadow: none !important;
+    color: var(--ds-ink-2) !important; font: var(--ds-weight-medium, 500) var(--ds-text-body)/1 var(--ds-font);
+  }
+  :root:not([data-mode="lite"]) .unified-library-overlay .unilib-actions > button:not(:disabled):hover { background: var(--ds-hover) !important; color: var(--ds-ink) !important; }
+  :root:not([data-mode="lite"]) .unified-library-overlay .unilib-actions > [data-unilib-ai] {
+    border-color: var(--ds-soft-line) !important; background: var(--ds-soft-bg) !important; color: var(--ds-ink) !important;
+  }
+  :root:not([data-mode="lite"]) .unified-library-overlay .unilib-actions > [data-unilib-ai]:disabled { border-color: var(--ds-line-strong) !important; background: transparent !important; }
+  :root:not([data-mode="lite"]) .unified-library-overlay .unilib-actions > button::before {
+    content: ""; flex: none; width: 16px; height: 16px; background: currentColor; -webkit-mask: var(--lib-act-icon) center / contain no-repeat; mask: var(--lib-act-icon) center / contain no-repeat;
+  }
+  :root:not([data-mode="lite"]) .unified-library-overlay .unilib-actions > [data-unilib-adjust] { --lib-act-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 3v13h13M3 6h13v13'/%3E%3C/svg%3E"); }
+  :root:not([data-mode="lite"]) .unified-library-overlay .unilib-actions > [data-unilib-objectify] { --lib-act-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 4h7v7H4zM13 13h7v7h-7zM14 4l6 6M20 4l-6 6'/%3E%3C/svg%3E"); }
+  :root:not([data-mode="lite"]) .unified-library-overlay .unilib-actions > [data-unilib-ai] { --lib-act-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3l1.6 4.4L18 9l-4.4 1.6L12 15l-1.6-4.4L6 9l4.4-1.6zM18 15l.8 2.2L21 18l-2.2.8L18 21l-.8-2.2L15 18l2.2-.8z'/%3E%3C/svg%3E"); }
+  :root:not([data-mode="lite"]) .unified-library-overlay .unilib-actions > [data-unilib-graph] { --lib-act-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 3.5v16.5h16.5M6.5 17c3-1 4-9 7-9.5S18 9 20 6'/%3E%3C/svg%3E"); }
+  :root:not([data-mode="lite"]) .unified-library-overlay .unilib-actions > button:not([data-unilib-adjust], [data-unilib-objectify], [data-unilib-ai], [data-unilib-graph])::before { content: none; }
+
+  :root:not([data-mode="lite"]) .workbench-assignment-card-actions {
+    gap: 2px; padding: 2px; border-radius: 7px; background: rgba(13, 17, 23, .92); box-shadow: 0 0 0 1px #30363d, 0 4px 12px rgba(0, 0, 0, .35);
+  }
+  :root:not([data-mode="lite"]) .workbench-assignment .workbench-assignment-card-actions button {
+    display: flex; align-items: center; gap: 5px; height: 26px; min-height: 26px; padding: 0 9px;
+    border: 0 !important; border-radius: 5px; background: transparent !important; box-shadow: none !important; color: #e6edf3 !important; font-size: 12px;
+  }
+  :root:not([data-mode="lite"]) .workbench-assignment .workbench-assignment-card-actions button:hover { background: rgba(177, 186, 196, .14) !important; }
+  :root:not([data-mode="lite"]) .workbench-assignment .workbench-assignment-card-actions button::before {
+    content: ""; flex: none; width: 14px; height: 14px; background: currentColor; -webkit-mask: var(--lib-act-icon) center / contain no-repeat; mask: var(--lib-act-icon) center / contain no-repeat;
+  }
+  :root:not([data-mode="lite"]) .workbench-assignment-card-actions [data-conversion-kind="image"] { --lib-act-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 5h16v14H4zM4 15l5-5 4 4 3-3 4 4'/%3E%3C/svg%3E"); }
+  :root:not([data-mode="lite"]) .workbench-assignment-card-actions [data-conversion-kind="graph"] { --lib-act-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 3.5v16.5h16.5M6.5 17c3-1 4-9 7-9.5S18 9 20 6'/%3E%3C/svg%3E"); }
+  /* Space를 누르면 이미지 작업대로 가므로 "이미지"가 기본 선택처럼 보이게 한다 — 시안 assign-default.html 안 1 */
+  :root:not([data-mode="lite"]) .workbench-assignment .workbench-assignment-card-actions [data-conversion-kind="image"] {
+    background: #152137 !important; box-shadow: inset 0 0 0 1px #6ba4f8 !important;
+  }
+  /* 묶음 바탕은 화면 색과 상관없이 어두우므로 그라파이트·화이트는 파란색 없는 밝은 중립 표시 */
+  :root[data-theme="dark"]:not([data-palette="classic"], [data-mode="lite"]) .workbench-assignment .workbench-assignment-card-actions [data-conversion-kind="image"],
+  :root[data-theme="light"]:not([data-mode="lite"]) .workbench-assignment .workbench-assignment-card-actions [data-conversion-kind="image"] {
+    background: rgba(255, 255, 255, .1) !important; box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .55) !important;
+  }
+}
