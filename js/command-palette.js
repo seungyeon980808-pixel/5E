@@ -103,6 +103,7 @@ const COMMANDS = [
 ];
 
 export function initCommandPalette() {
+  const iconCache = new Map();
   const overlay = document.createElement("div");
   overlay.className = "modal-overlay";
   overlay.hidden = true;
@@ -234,6 +235,8 @@ export function initCommandPalette() {
     // ----- 오브젝트 그룹 (search.js와 동일한 카테고리 정렬) -----
     const objRows = matches.filter((m) => m.kind !== "command");
     const icons = [];
+    // 한 번 만들고 크기를 맞춘 아이콘은 다시 쓴다 — 열 때·글자 칠 때마다 139개를 새로 만들고
+    // getBBox로 재면 창이 뜨는 모션 중 한 프레임이 60ms 넘게 멈췄다.
     const categories = [...new Set([...exactCategories, ...CATEGORY_ORDER, ...objRows.map((m) => m.def.category)])];
     for (const category of categories) {
       const group = objRows.filter((m) => m.def.category === category);
@@ -263,8 +266,8 @@ export function initCommandPalette() {
           letter.style.cssText = "font-weight:700;font-size: 13px;";
           iconBox.appendChild(letter);
         } else {
-          icon = buildSymbolIcon(match.id, match.def);
-          iconBox.appendChild(icon);
+          const cached = iconCache.get(match.id);
+          iconBox.appendChild(cached || (icon = buildSymbolIcon(match.id, match.def)));
         }
 
         const label = document.createElement("span");
@@ -274,10 +277,11 @@ export function initCommandPalette() {
         badge.textContent = match.kind === "personal" ? "퍼스널" : (match.def.kind === "atomic" ? "즉시" : "드래그");
         row.append(iconBox, label, badge);
         results.appendChild(row);
-        if (icon) icons.push(icon);
+        if (icon) { icon.dataset.iconFor = match.id; icons.push(icon); }
       }
     }
     sizeIconViewBoxes(icons);
+    for (const svg of icons) if (svg.getAttribute("viewBox")) iconCache.set(svg.dataset.iconFor, svg);
     syncHighlight();
   }
 
