@@ -96,6 +96,7 @@ h.withServer(async origin => {
       assert.equal((await sheet.locator('#card-view .cv-shape').textContent()).trim(),'합답형실험 상자');
       await sheet.click('#card-view .cv-shape');
       assert.deepEqual(await sheet.locator('#card-view .cv-shape-menu [data-cvform] .n').allTextContents(),['합답형','일반 정답형','대응·짝 고르기형','학생 대화·발표형','서술형']);
+      for(const [k,want] of [['ArrowDown','single'],['ArrowDown','pair'],['ArrowUp','single'],['End','essay'],['Home','combo']]){await page.keyboard.press(k);assert.equal(await sheet.evaluate(()=>document.activeElement?.dataset?.cvform),want,'arrow keys move within the type menu');}
       await page.keyboard.press('Escape');assert.equal(await sheet.locator('#card-view .cv-shape-menu').count(),0,'Esc closes the menu');
       // 보기에 글이 있으면 지울지 묻고, 취소하면 그대로.
       await sheet.fill('#card-view [data-cvline="bogi"][data-i="0"]','운동량은 보존된다.');

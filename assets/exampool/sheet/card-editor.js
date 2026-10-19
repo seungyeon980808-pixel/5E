@@ -459,7 +459,11 @@ export function createCardEditor(root,api){
   });
   // 유형 메뉴: 바깥을 누르거나 Esc면 닫는다.
   document.addEventListener('pointerdown',e=>{if(shapeOpen&&!e.target.closest?.('.cv-shape-wrap'))setShape(false);});
-  root.addEventListener('keydown',e=>{if(shapeOpen&&e.key==='Escape'){e.preventDefault();setShape(false);root.querySelector('.cv-shape')?.focus();}});
+  root.addEventListener('keydown',e=>{if(!shapeOpen)return;if(e.key==='Escape'){e.preventDefault();setShape(false);root.querySelector('.cv-shape')?.focus();return;}
+    // 메뉴(role=menu) 안에서 ↑↓·Home·End로 항목을 옮긴다.
+    const items=[...root.querySelectorAll('.cv-shape-menu [data-cvform]')],i=items.indexOf(document.activeElement);
+    const to={ArrowDown:(i+1)%items.length,ArrowUp:(i-1+items.length)%items.length,Home:0,End:items.length-1}[e.key];
+    if(to!==undefined&&items.length){e.preventDefault();items[i<0&&e.key==='ArrowUp'?items.length-1:i<0&&e.key==='ArrowDown'?0:to].focus();}});
   // 한글 입력: 조합 중에는 목록을 다시 그리지 않고(입력 칸이 바뀌면 조합이 끊김), 조합 중 Enter는 마지막 글자가 확정된 뒤(compositionend) 조각으로 넣는다.
   // Safari는 조합 끝(compositionend)을 Enter보다 먼저 보내기도 한다 → 그때는 keyCode 229 Enter로 들어오므로 바로 넣는다.
   root.addEventListener('compositionstart',e=>{if(e.target.dataset?.cvpast==='query')pastComposing=true;});
