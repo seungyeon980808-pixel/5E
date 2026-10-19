@@ -366,6 +366,11 @@ h.withServer(async origin => {
       await smallSheet.click('#card-view .cv-shape');
       const menuFit=await smallSheet.evaluate(()=>{const m=document.querySelector('.cv-shape-menu').getBoundingClientRect(),c=document.querySelector('#card-view .cv-writer').getBoundingClientRect();return m.left>=c.left&&m.right<=c.right;});
       assert.equal(menuFit,true,'the type menu stays inside a narrow card column');
+      // 새 문항 창은 키보드만으로 끝까지 고를 수 있다: 고른 뒤에도 초점이 창 안에 남아 숫자·Backspace·Enter가 먹는다.
+      await small.keyboard.press('Escape');await smallSheet.click('#card-view [data-cv="new"]');await smallSheet.waitForSelector('#new-dialog[open] .nq-opt');
+      for(const k of ['5','Backspace','2','1'])await small.keyboard.press(k);
+      assert.equal(await smallSheet.evaluate(()=>!!document.activeElement?.closest('#new-dialog')),true,'focus stays in the new-question dialog');
+      await small.keyboard.press('Enter');await smallSheet.waitForFunction(()=>/^일반 정답형/.test(document.querySelector('#card-view .cv-shape')?.textContent||''));
     } finally {await browser.close();}
   }
 }).catch(error => {console.error(error);process.exitCode = 1;});

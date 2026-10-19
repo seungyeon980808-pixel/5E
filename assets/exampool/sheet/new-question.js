@@ -53,6 +53,8 @@ export function createNewQuestionDialog(dialog,{onCreate}){
       '<p class="nq-note">배치는 자동입니다(가장 많이 쓰인 배치). 바꾸려면 만든 뒤 한글 창에서 자료를 끌어 옮깁니다. 목록 밖 모양(본문 표 2개, 그림 선지, 선지 표 칸 그림)은 구성 편집에서 바꿉니다.</p>');
     part('steps').innerHTML=s1+s2;
     renderPreview();
+    // 단계 칸을 다시 그리면 눌렀던 단추가 사라져 초점이 창 밖으로 빠졌다(숫자·Backspace·Enter가 더 안 먹음). 다음에 고를 곳으로 옮긴다.
+    if(dialog.open&&!dialog.contains(document.activeElement)){const next=pick.form&&pick.struct?part('go'):dialog.querySelector(`.nq-opt[data-step="${pick.form?'struct':'form'}"]`);next?.focus({preventScroll:true});}
   }
   function current(){const s={type:pick.form,struct:pick.struct};if(hover)s[hover.step==='form'?'type':'struct']=hover.k;s.layout=autoLayout(subject,s.type,s.struct);return s;}
   function renderPreview(){
