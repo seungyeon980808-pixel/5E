@@ -2101,6 +2101,12 @@
       ]
     },
     {
+      "path": "tests/test-exampool-card-typing-browser.cjs",
+      "findingIds": [
+        "EXAMPOOL-CARD-TYPING-PERF"
+      ]
+    },
+    {
       "path": "tests/test-asset-library-browser.cjs",
       "findingIds": [
         "ASSET-LIBRARY-PORT"

@@ -37,17 +37,19 @@ function status(message,error=false){clearTimeout(statusTimer);$('#status').text
 // 자료 열람 상태 문장: 라이브러리 칸에 붙어 있을 때는 칸 안 줄 대신 아래 상태 막대로 보낸다(오류는 빨간 글).
 function sourceSay(message,error=false){$('#source-status').textContent=message;if($('#sources').classList.contains('docked'))status(message,error);}
 function checkpoint(key=''){future=[];if(key&&editKey===key)return;history.push(clone(data));if(history.length>10)history.shift();editKey=key;$('#undo').disabled=false;$('#redo').disabled=true;}
-function remember(){
-  try{validate(data);}catch(e){status(e.message,true);return;}
+// validated: 방금 validate(data)를 통과한 경우(mutate·불러오기) 다시 검사하지 않는다(문항이 많으면 입력마다 수십 ms).
+function remember({validated=false}={}){
+  if(!validated)try{validate(data);}catch(e){status(e.message,true);return;}
   const stamp=++saveStamp;status('저장 중…');saveQueue=saveQueue.catch(()=>{}).then(()=>new Promise((resolve,reject)=>{
-    if(stamp!==saveStamp){resolve();return;}const snapshot=clone(data);
+    if(stamp!==saveStamp){resolve();return;}
     if(!database||saveBlocked){reject(Error('자동 저장을 사용할 수 없습니다. 엑셀로 내려받아 보관하세요.'));return;}
     const tx=database.transaction('state','readwrite'),store=tx.objectStore('state'),r=store.get('draft');let failure;
-    r.onsuccess=()=>{if((r.result?._revision||0)!==revision){failure=Error('다른 창에서 수정했습니다. 이 창의 입력은 엑셀로 내려받아 보관하고 다시 열어주세요.');saveBlocked=true;tx.abort();return;}store.put({...snapshot,_revision:revision+1},'draft');};
+    r.onsuccess=()=>{if((r.result?._revision||0)!==revision){failure=Error('다른 창에서 수정했습니다. 이 창의 입력은 엑셀로 내려받아 보관하고 다시 열어주세요.');saveBlocked=true;tx.abort();return;}store.put({...data,_revision:revision+1},'draft');/* put이 그 자리에서 복사한다 — 따로 clone하면 전체 데이터를 두 번 복사 */};
     tx.oncomplete=()=>{revision++;resolve();};tx.onerror=tx.onabort=()=>reject(failure||tx.error||Error('저장 공간이 부족합니다. 엑셀로 내려받아 보관하세요.'));
   }));void saveQueue.then(()=>{if(stamp===saveStamp)status('저장됨 · '+new Date().toLocaleTimeString('ko-KR',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit'}));}).catch(e=>status(e.message,true));
 }
-function mutate(fn,{render=true,key=''}={}){const selectedId=current?.id,historyBefore=history.slice(),added=!key||editKey!==key,before=added?null:clone(data),redoBefore=future;try{checkpoint(key);const completed=completeKeys();fn();demoteEdited(completed);validate(data);if(render)renderAll();else queueSync();remember();queueAuthoringSync();return true;}catch(e){const rollback=added?history.pop():before;if(rollback){data=rollback;current=data.questions.find(q=>q.id===selectedId)||data.questions[0]||null;}future=redoBefore;history=historyBefore;$('#undo').disabled=!history.length;$('#redo').disabled=!future.length;editKey='';if(render)renderAll();status(e.message,true);return false;}}
+function mutate(fn,{render=true,key=''}={}){const only=key.startsWith('card:')?current:null;// 카드 입력은 그 문항만 바뀐다 → 그 문항만 검사
+  const selectedId=current?.id,historyBefore=history.slice(),added=!key||editKey!==key,before=added?null:only&&data.questions.includes(only)?{i:data.questions.indexOf(only),q:clone(only)}:clone(data),redoBefore=future;try{checkpoint(key);const completed=completeKeys(only&&data.questions.includes(only)?only:null);fn();demoteEdited(completed);validate(data,{only:only&&data.questions.includes(only)?only:null});if(render)renderAll();else queueSync();remember({validated:true});queueAuthoringSync();return true;}catch(e){const rollback=added?history.pop():before;if(rollback?.q){data.questions[rollback.i]=rollback.q;current=data.questions.find(q=>q.id===selectedId)||data.questions[0]||null;}else if(rollback){data=rollback;current=data.questions.find(q=>q.id===selectedId)||data.questions[0]||null;}future=redoBefore;history=historyBefore;$('#undo').disabled=!history.length;$('#redo').disabled=!future.length;editKey='';if(render)renderAll();status(e.message,true);return false;}}
 async function boot(){try{
   database=await new Promise((resolve,reject)=>{const r=indexedDB.open(CHANNEL+(demo?'5e-exampool-structure-demo':'5e-exampool-structure'),2);r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains('state'))r.result.createObjectStore('state');if(!r.result.objectStoreNames.contains('backups'))r.result.createObjectStore('backups');};r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);r.onblocked=()=>reject(Error('다른 문항 창을 닫고 다시 열어주세요.'));});
   let raw=await new Promise((resolve,reject)=>{const r=database.transaction('state').objectStore('state').get('draft');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);}),copied=false;
@@ -158,7 +160,7 @@ function renderTable(t,id,full){let html=`<div class="table-card" data-table="${
 function renderDetail(){if(!current)return;$('#question-title').textContent=`${current.number||'번호 미입력'}번 문항`;$('#structure-count').textContent=current.blocks.length+'개 구성';$('#ask').value=current.ask;renderBlocks();renderChoices();$('#tables').innerHTML=current.blocks.filter(b=>b.kind==='table').map(b=>renderTable(b.table,b.id,true)).join('')+(current.style==='대응표'?renderTable(current.choiceTable,'choices',true):'')||'<p class="muted">구성 추가에서 표를 추가하세요. 그림을 표 안의 셀에도 넣을 수 있습니다.</p>';renderEvidence();switchTab(activeTab);grid?.refresh();}
 // 완성한 문항의 내용이 바뀌면 점검으로 돌린다(상태는 내용이 아니다).
 const contentOf=q=>{const {typeset,references,workflow,reviews,authoring,...c}=q;return JSON.stringify(c);};
-function completeKeys(){const m=new Map();for(const q of data.questions)if(q.workflow==='complete')m.set(q.id,contentOf(q));return m;}
+function completeKeys(only=null){const m=new Map();for(const q of only?[only]:data.questions)if(q.workflow==='complete')m.set(q.id,contentOf(q));return m;}
 function demoteEdited(keys){let n=0;for(const [id,k] of keys){const q=data.questions.find(x=>x.id===id);if(q?.workflow==='complete'&&contentOf(q)!==k){q.workflow='review';n++;}}if(n)setTimeout(()=>status(`완성한 문항 ${n}개의 내용이 바뀌어 점검할 문항으로 옮겼습니다.`),0);}
 // 화면: cards(분류별 카드) · desk(5E_cell·5e_hwp 작업대) · exam(시험지 구성). 처음에는 문항이 있으면 카드로 연다.
 let view={name:'library',status:'drafting',query:'',type:'',stage:'all',examId:null};
@@ -574,7 +576,7 @@ function syncAuthoring(qid,opts={}){
     if(a.contentHash===c.contentHash&&a.revision===c.revision)return r;
     Object.assign(a,{revision:c.revision,contentHash:c.contentHash,hashes:c.hashes,stale:c.stale,history:c.history,bank:c.bank,sessionId:c.sessionId});a.review.axes=c.review.axes;
     for(const p of a.proposals)if(p.state==='current'&&p.baseRevision!==a.revision)p.state='stale';
-    try{validate(data);remember();}catch(e){status(e.message,true);}
+    try{validate(data);remember({validated:true});}catch(e){status(e.message,true);}
     if(view.name==='card'&&current?.id===qid)cardEditor.refreshAi?.();
     return r;
   }).catch(e=>{status('출제 기록: '+e.message,true);});
