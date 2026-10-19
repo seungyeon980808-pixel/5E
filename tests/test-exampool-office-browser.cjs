@@ -115,6 +115,12 @@ h.withServer(async origin => {
       const added=sheet.locator('#card-view .cv-tile.empty').last();
       assert.equal(await added.locator('[data-cvslot-act="pick"]').count(),1);assert.equal(await added.locator('[data-cvslot-act="to-table"]').count(),1);
       await added.locator('[data-cvslot-act="remove"]').click();await sheet.waitForFunction(n=>document.querySelectorAll('#card-view .cv-tile').length===n,tiles);
+      // 번호 줄이 넘쳐도 「+」는 줄 끝에 붙어 보이고, 마우스 휠로 가로로 넘어간다.
+      assert.equal(await sheet.evaluate(()=>getComputedStyle(document.querySelector('#card-view .cv-qtab.add')).position),'sticky','the add tab stays at the end of the number row');
+      await sheet.evaluate(()=>{const t=document.querySelector('#card-view .cv-qtabs');t.style.maxWidth='40px';});
+      await sheet.hover('#card-view .cv-qtabs');await page.mouse.wheel(0,120);await sheet.waitForTimeout(200);
+      assert.ok(await sheet.evaluate(()=>document.querySelector('#card-view .cv-qtabs').scrollLeft>0),'the wheel scrolls an overflowing number row sideways');
+      await sheet.evaluate(()=>{const t=document.querySelector('#card-view .cv-qtabs');t.style.maxWidth='';t.scrollLeft=0;});
       // 한글 창이 다시 그려져도 카드 칸에 이어 치는 글은 카드에 들어가고, ⌘Z는 카드 편집을 되돌린다(편집기가 초점을 가져가던 것).
       await sheet.click('#card-view [data-cvright="paper"]');await sheet.waitForSelector('.cv-hwp-layer:not([hidden]) #preview-dialog:not([hidden])');await typesetReady(sheet);
       await sheet.click('#cv-passage');await page.keyboard.type('가');await sheet.waitForTimeout(3500);await typesetReady(sheet);await page.keyboard.type('나');
