@@ -22,6 +22,7 @@ const ICON={
   out:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg>',
   panelL:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="1.5"/><path d="M9 4.5v15"/></svg>',
   panelR:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="1.5"/><path d="M15 4.5v15"/></svg>',
+  lib:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.5h3v15H5zM10 4.5h3v15h-3z"/><path d="m15.2 5.4 2.9-.8 3.6 14.4-2.9.8z"/></svg>',
   search:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="m20 20-4.5-4.5"/></svg>',
 };
 // 시안 4: 왼쪽 라이브러리(기출·교과서·기준·자료) · 가운데 문항 카드(쪽 전체로 바꿔 보기) · 오른쪽 미리보기|AI.
@@ -112,13 +113,15 @@ export function createCardEditor(root,api){
       </form></div>`;
   }
   const checksHtml=items=>items.map(([k,ok,n])=>`<span class="${ok?'ok':''}">${ok?'✓ ':''}${k}${n&&!ok?` ${n}`:''}</span>`).join('');
+  // 라이브러리 칸(시안 library-layout.html 안 B): 머리 줄 없이 탭 줄이 맨 위(44), 오른쪽 끝 「근거 N」을 누르면 이 문항의 근거가 위에 겹쳐 펼쳐진다.
   function libHtml(){
     const tabs=TABS.map(([k,t])=>`<button type="button" data-cvtab="${k}" aria-pressed="${panels.tab===k}">${t}</button>`).join('');
     const x=q(),refs=x?.references||[];
-    return `<aside class="cv-lib cv-left"${panels.lib?'':' hidden'} aria-label="라이브러리"><div class="cv-ph"><b>라이브러리</b><span>읽고 근거로 연결</span></div><div class="lp-tabs">${tabs}</div>
+    const linked=`<div class="lp-linked"><b>이 문항의 근거 ${refs.length}</b><span>${refs.slice(0,4).map(r=>E(r.label)).join(' · ')||'기출·교과서·기준에서 「근거로 연결」을 누르면 여기에 모입니다'}</span></div>`;
+    return `<aside class="cv-lib cv-left"${panels.lib?'':' hidden'} aria-label="라이브러리"><div class="lp-tabs">${tabs}<button type="button" class="lp-refs" data-cvlinked aria-pressed="false" aria-expanded="false" title="이 문항의 근거 보기">근거 ${refs.length}</button></div>
       <div class="lp-body" data-cvbody="past" ${['past','textbooks'].includes(panels.tab)?'':'hidden'}></div>
       <div class="lp-body lp-docked" data-cvbody="docked" ${['standards','references'].includes(panels.tab)?'':'hidden'}></div>
-      <div class="lp-linked"><b>이 문항의 근거 ${refs.length}</b><span>${refs.slice(0,4).map(r=>E(r.label)).join(' · ')||'기출·교과서·기준에서 「근거로 연결」을 누르면 여기에 모입니다'}</span></div></aside>`;
+      ${linked}</aside>`;
   }
   const unseenAi=x=>{const seen=store.get('aiSeen:'+x.id,0);return (x.reviews||[]).slice(seen).filter(m=>m.role==='ai').length;};
   function rightHtml(){
@@ -188,14 +191,10 @@ export function createCardEditor(root,api){
     fitPage();n.querySelector('.pg-q.now')?.scrollIntoView({block:'center'});}
   function fitPage(){const n=root.querySelector('#cv-page');if(!n)return;for(const col of n.querySelectorAll('.pg-col')){const w=col.clientWidth;for(const q of col.querySelectorAll('.pg-q')){const inner=q.firstElementChild;inner.style.transform='none';const s=w/inner.offsetWidth;inner.style.transform=`scale(${s})`;q.style.height=inner.offsetHeight*s+'px';}}}
 
-  // 기출: 5E 라이브러리(기출 그림 3,961문항)를 과목·단원·연도·핵심어로 걸러 본다.
-  // 5E 라이브러리 연결: 공유 폴더·자료팩·기출 PDF에서 쪽이나 영역을 골라 가져온다(5E 라이브러리 선택기).
-  function libraryHtml(){
-    const picks=api.libraryPicks?.()||[],textbook=panels.tab==='textbooks';
-    return `<div class="lib5e"><p>${textbook?'교과서는':'기출은'} 5E 라이브러리(공유 폴더·자료팩·PDF)에서 고릅니다. 쪽이나 영역을 고르면 여기로 돌아옵니다.</p>
-      <button type="button" class="btn go" data-cvlib="${textbook?'textbook':'past'}">${ICON.search}5E 라이브러리에서 고르기</button></div>
-      ${picks.length?`<h4 class="lib5e-h">가져온 자료 ${picks.length}</h4><div class="lib5e-picks">${picks.map((p,i)=>`<figure class="lib5e-pick"><img src="${E(p.data)}" alt="${E(p.name)}"><figcaption><b>${E(p.source?.documentTitle||p.name)}</b><span>${p.source?.pageNumber?p.source.pageNumber+'쪽':''}${p.source?.title&&p.source.title!==p.source?.documentTitle?' · '+E(p.source.title):''}</span><span class="acts"><button type="button" class="mini" data-cvpick-link="${i}">근거로 연결</button><button type="button" class="mini" data-cvpick-slot="${i}">그림 칸에 넣기</button></span></figcaption></figure>`).join('')}</div>`:''}`;
-  }
+  // 5E 라이브러리 연결: 공유 폴더·자료팩·기출 PDF에서 쪽이나 영역을 골라 가져온다(5E 라이브러리 선택기). 단추는 도구 줄 끝 아이콘 하나,
+  // 가져온 자료(5E 라이브러리 창 「보내기 → ExamPool」로 온 것 포함)는 목록 맨 위에 같은 카드로 놓는다.
+  const pickBtn=kind=>`<button type="button" class="lp-pick" data-cvlib="${kind}" aria-label="5E 라이브러리에서 고르기" title="5E 라이브러리에서 고르기 — 공유 폴더·자료팩·PDF에서 쪽이나 영역을 골라 가져옵니다">${ICON.lib}</button>`;
+  const picksHtml=()=>(api.libraryPicks?.()||[]).map((p,i)=>`<figure class="past pick"><img src="${E(p.data)}" alt="${E(p.name)}"><figcaption><b>${E(p.source?.documentTitle||p.name)}</b><span>${p.source?.pageNumber?p.source.pageNumber+'쪽':''}${p.source?.title&&p.source.title!==p.source?.documentTitle?' · '+E(p.source.title):''}</span><span class="acts"><button type="button" class="mini" data-cvpick-link="${i}">근거로 연결</button><button type="button" class="mini" data-cvpick-slot="${i}">그림 칸에 넣기</button></span></figcaption></figure>`).join('');
   // 기출 목록: 과학탐구 전체 기출(조사 색인 assets/exampool/convert/data). 과목 파일은 고를 때 읽는다(과목을 안 고르면 전부).
   // 카드 모양·필터·핵심어는 예전 그대로이고, 핵심어는 문항 본문 글까지 찾는다. 「변형」은 이 기출을 편집 가능한 한글 문항(AI 없음)으로 바꿔 새 카드로 연다.
   const F={id:0,year:1,month:2,no:3,page:4,box:5,pdfFile:6,parts:7,tags:8,hasFigure:9,record:10,text:11};
@@ -212,11 +211,11 @@ export function createCardEditor(root,api){
   const pastItem=id=>pastItems?.find(v=>v.id===id);
   async function renderPast(){
     const body=root.querySelector('[data-cvbody="past"]');if(!body)return;
-    if(panels.tab==='textbooks'){body.innerHTML=libraryHtml();return;}
+    if(panels.tab==='textbooks'){const p=picksHtml();body.innerHTML=`<div class="lp-tools"><div class="lp-row"><span class="lp-n">${p?'가져온 자료':'교과서는 5E 라이브러리에서 쪽이나 영역을 골라 가져옵니다'}</span>${pickBtn('textbook')}</div></div><div class="past-list">${p}</div>`;return;}
     const typing=document.activeElement?.dataset?.cvpast==='query',f=pastFilter;
     let items;try{if(!pastItems)body.innerHTML='<p class="lp-count">기출 목록을 불러오는 중…</p>';
       await loadPast([]);const code=pastIndex.subjects.find(v=>v[1]===f.subject)?.[0];items=await loadPast(code?[code]:[]);}
-    catch{body.innerHTML=libraryHtml()+'<p class="lp-count">기출 목록을 불러오지 못했습니다.</p>';pastIndexLoading=null;return;}
+    catch{body.innerHTML='<p class="lp-count">기출 목록을 불러오지 못했습니다.</p>';pastIndexLoading=null;return;}
     if(!body.isConnected)return;
     const subjects=pastIndex.subjects.map(v=>v[1]),parts=[...new Set(items.flatMap(i=>i.parts))].sort(),years=[...new Set(items.map(i=>i.year))].sort((a,b)=>b-a);
     const words=f.query?f.query.split(/\s+/).filter(Boolean):[];
@@ -225,10 +224,8 @@ export function createCardEditor(root,api){
     const sel=(k,vals,label)=>`<select data-cvpast="${k}" aria-label="${label}"><option value="">${label}</option>${vals.map(v=>`<option${String(f[k])===String(v)?' selected':''}>${E(v)}</option>`).join('')}</select>`;
     const thumb=i=>{const card=pastIndex.cards.replace('{id}',encodeURIComponent(i.id)),local=i.hasFigure?new URL(`../../exam-library/images/${encodeURIComponent(i.id)}.png`,import.meta.url).href:'';
       return `<img loading="lazy" src="${E(card)}" alt="${E(i.title)}" data-past-thumb="${E(i.id)}" data-fallback="${E(local)}">`;};
-    body.innerHTML=libraryHtml()+`<details class="lib-builtin"${store.get('builtinOpen',true)?' open':''}><summary>기출 문항 목록 · 과학탐구 ${total.toLocaleString()}문항</summary><div class="lp-filter">${sel('subject',subjects,'과목')}${sel('part',parts,'단원')}${sel('year',years,'연도')}</div>
-      <label class="lp-search">${ICON.search}<input data-cvpast="query" value="${E(f.query)}" placeholder="핵심어·본문 단어 (예: 자기장, 오비탈)"></label>
-      <p class="lp-count">기출 ${total.toLocaleString()}문항 중 <b>${list.length.toLocaleString()}</b>문항${list.length>40?' · 앞 40개':''}</p>
-      <div class="past-list">${list.slice(0,40).map(i=>`<figure class="past">${thumb(i)}<figcaption><b>${E(i.title)}</b><span>${E([...i.parts,...i.tags].slice(0,3).join(' · '))}</span><span class="acts"><button type="button" class="mini" data-cvlink="${E(i.id)}">근거로 연결</button><button type="button" class="mini go-mini" data-cvconvert="${E(i.id)}" title="편집 가능한 한글 문항으로 바꿔 새 문항 카드로 엽니다(AI 없음)">변형</button></span></figcaption></figure>`).join('')}</div></details>`;
+    const search=`<label class="lp-search">${ICON.search}<input data-cvpast="query" value="${E(f.query)}" placeholder="핵심어·본문 단어"><span class="lp-n" title="기출 ${total.toLocaleString()}문항 중">${list.length.toLocaleString()}문항</span></label>`,filters=sel('subject',subjects,'과목')+sel('part',parts,'단원')+sel('year',years,'연도');
+    body.innerHTML=`<div class="lp-tools"><div class="lp-row">${search}${filters}${pickBtn('past')}</div></div>`+`<div class="past-list">${picksHtml()}${list.slice(0,40).map(i=>`<figure class="past">${thumb(i)}<figcaption><b>${E(i.title)}</b><span>${E([...i.parts,...i.tags].slice(0,3).join(' · '))}</span><span class="acts"><button type="button" class="mini" data-cvlink="${E(i.id)}">근거로 연결</button><button type="button" class="mini go-mini" data-cvconvert="${E(i.id)}" title="편집 가능한 한글 문항으로 바꿔 새 문항 카드로 엽니다(AI 없음)">변형</button></span></figcaption></figure>`).join('')}</div>`;
     if(typing){const n=body.querySelector('[data-cvpast="query"]');n.focus();n.setSelectionRange(n.value.length,n.value.length);}
   }
 
@@ -298,7 +295,7 @@ export function createCardEditor(root,api){
   });
   root.addEventListener('error',e=>{const img=e.target;if(!img?.dataset?.pastThumb)return;const fb=img.dataset.fallback;
     if(fb&&!img.src.includes(fb)){img.src=fb;return;}const p=document.createElement('p');p.className='past-text';p.textContent=(pastItem(img.dataset.pastThumb)?.text||'').slice(0,160);img.replaceWith(p);},true);
-  root.addEventListener('toggle',e=>{if(e.target.matches?.('details.f-more'))store.set('more',e.target.open);if(e.target.matches?.('details.lib-builtin'))store.set('builtinOpen',e.target.open);},true);
+  root.addEventListener('toggle',e=>{if(e.target.matches?.('details.f-more'))store.set('more',e.target.open);},true);
   root.addEventListener('click',e=>{
     const b=e.target.closest('button');if(!b)return;const x=q(),d=b.dataset;
     if(d.cvOpen){api.open(d.cvOpen);return;}
@@ -309,6 +306,7 @@ export function createCardEditor(root,api){
     if(d.cv==='toggle-lib'){setPanel('lib',!panels.lib);return;}
     if(d.cv==='toggle-right'){setPanel('rightOpen',!panels.rightOpen);return;}
     if(d.cv==='new'){api.newQuestion();return;}
+    if(d.cvlinked!==undefined){const a=b.closest('.cv-lib');const on=!a.classList.contains('show-linked');a.classList.toggle('show-linked',on);b.setAttribute('aria-pressed',on);b.setAttribute('aria-expanded',on);return;}
     if(d.cvlib){api.pickLibrary?.(d.cvlib);return;}
     if(d.cvpickLink!==undefined){api.libraryAction?.('link',Number(d.cvpickLink));return;}
     if(d.cvpickSlot!==undefined){api.libraryAction?.('slot',Number(d.cvpickSlot));return;}
@@ -352,5 +350,7 @@ export function createCardEditor(root,api){
       const v=f==='passage'?(x.blocks.find(b=>b.kind==='text')?.text||''):f==='answer'?(x.modelAnswer||''):f==='points'?String(x.points??''):String(x[f]??'');
       if(t.value!==v){t.value=v;if(t.tagName==='TEXTAREA')fit(t);}}
     refreshLight();}
-  return {render,refreshLight,setView,syncFields,refreshLibrary(){if(panels.lib&&['past','textbooks'].includes(panels.tab))renderPast();},showHwp(){panels.rightOpen=true;panels.right='paper';store.set('rightOpen',true);store.set('right','paper');render();},refreshAi(){if(panels.rightOpen&&panels.right==='ai'){renderAi();markAiSeen();}else{const r=root.querySelector('.cv-rseg [data-cvright="ai"]');if(r&&q()){const n=unseenAi(q());r.querySelector('.badge')?.remove();if(n)r.insertAdjacentHTML('beforeend',`<i class="badge">${n}</i>`);}}},showAi(){panels.rightOpen=true;store.set('rightOpen',true);panels.right='ai';store.set('right','ai');render();},toggleNav(){setPanel('nav',!panels.nav);},get navOpen(){return panels.nav;},get tab(){return panels.tab;}};
+  return {render,refreshLight,setView,syncFields,refreshLibrary(){if(panels.lib&&['past','textbooks'].includes(panels.tab))renderPast();},
+    // 「보내기 → ExamPool」로 받은 자료가 보이게: 라이브러리 칸을 열고 기출·교과서 탭이 아니면 기출 탭으로(가져온 자료는 목록 맨 위).
+    showPicks(){panels.lib=true;store.set('lib',true);if(!['past','textbooks'].includes(panels.tab)){panels.tab='past';store.set('tab','past');}render();},showHwp(){panels.rightOpen=true;panels.right='paper';store.set('rightOpen',true);store.set('right','paper');render();},refreshAi(){if(panels.rightOpen&&panels.right==='ai'){renderAi();markAiSeen();}else{const r=root.querySelector('.cv-rseg [data-cvright="ai"]');if(r&&q()){const n=unseenAi(q());r.querySelector('.badge')?.remove();if(n)r.insertAdjacentHTML('beforeend',`<i class="badge">${n}</i>`);}}},showAi(){panels.rightOpen=true;store.set('rightOpen',true);panels.right='ai';store.set('right','ai');render();},toggleNav(){setPanel('nav',!panels.nav);},get navOpen(){return panels.nav;},get tab(){return panels.tab;}};
 }

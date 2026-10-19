@@ -1,6 +1,5 @@
 import { insertImageFromSrc } from "./image-paste.js?v=1.7.0-four-session-integration";
 import { openGraphModal } from './graph/graph-modal.js?v=1.7.0-four-session-integration';
-import { openObjectifyWithFile } from "./image-objectify.js?v=1.7.0-four-session-integration";
 
 import { createPdfLibraryUi } from "./pdf-library/pdf-library-ui.js?v=1.7.0-four-session-integration";
 import { createPdfRuntimeLoader } from "./pdf-library/runtime-loader.js?v=1.7.0-four-session-integration";
@@ -376,16 +375,20 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
     getProvider: getUnifiedProvider,
     initialSearchReadiness: isDesktopLibrary ? "ready" : "loading",
     insertMaterialized: insertUnifiedResult,
-    openObjectify: async (result, asset, context = {}) => {
+    // 「보내기」: 한글 시험지로 = 작업대에 넣은 뒤 기존 「한글로 보내기」(영역 확인 → 한글에서 놓을 자리 고르기),
+    // ExamPool로 = 문항 창을 열고 왼쪽 라이브러리 칸 「가져온 자료」에 넣는다(「5E 라이브러리에서 고르기」가 돌려받는 길과 같음).
+    sendTo: async (target, result, asset, options, context = {}) => {
+      if (target === "hwp") {
+        await insertUnifiedResult(result, asset, options, context);
+        return () => window.dispatchEvent(new CustomEvent("5e:exam-send-canvas"));
+      }
       const transfer = unifiedLibraryTransfer(result, asset);
-      const dataUrl = transfer.dataUrl;
-      if (!dataUrl) throw new Error("객체화할 이미지 데이터를 만들지 못했습니다.");
-      const response = await fetch(dataUrl);
-      if (context.isCurrent && !context.isCurrent()) return;
-      const blob = await response.blob();
-      if (context.isCurrent && !context.isCurrent()) return;
-      const safeName = `${String(result.title || "library-image").replace(/[\\/:*?"<>|]+/gu, "-")}.png`;
-      if (!openObjectifyWithFile(new File([blob], safeName, { type: blob.type || "image/png" }), { sourceMetadata: transfer.source })) throw new Error("이미지 객체화 모듈이 준비되지 않았습니다.");
+      if (!/^data:image\/(png|jpeg|webp);base64,/.test(transfer.dataUrl || "")) throw new Error("보낼 그림 데이터를 만들지 못했습니다.");
+      const item = { data: transfer.dataUrl, name: String(result.title || "라이브러리 자료").slice(0, 200), source: transfer.source ? { documentTitle: transfer.source.documentTitle || "", title: transfer.source.title || "", pageNumber: Number.isInteger(transfer.source.pageNumber) ? transfer.source.pageNumber : null } : null };
+      // 받는 쪽(exampool-sheet-workspace.js)이 accepted를 켜고, 라이브러리 창이 닫힌 뒤 문항 창을 연다. 없으면 이 창에 오류로 남긴다.
+      const request = { items: [item], accepted: false };
+      window.dispatchEvent(new CustomEvent("5e:exampool-receive", { detail: request }));
+      if (!request.accepted) throw new Error("ExamPool을 열 수 없습니다.");
     },
     openAi,
     openIndependentReferences,

@@ -533,6 +533,48 @@ button.q-status:hover{background:var(--ds-hover)}
 .cv-paper{background:#fff;color:#111;border-radius:2px;padding:14px;font-size:13px}
 .lp-actions{display:flex;flex-direction:column;gap:6px;align-items:flex-start}.lp-actions .note{font-size:var(--ds-text-meta);color:var(--ds-ink-3);line-height:1.6}
 .lp-linked{border-top:1px solid var(--ds-line);padding:10px 12px;font-size:var(--ds-text-meta);color:var(--ds-ink-3);display:flex;flex-direction:column;gap:2px}.lp-linked b{color:var(--ds-ink);font-size:12px}
+/* 라이브러리 칸 정리(2026-10-19, 시안 library-layout.html 안 B · 공통 값 design-tokens-proposal.md 6절):
+   탭 줄이 머리 줄(44) · 도구는 한 줄(30)로 위에 고정 · 목록만 스크롤 · 문항 카드는 목록 높이의 절반(늘 2개, 카드 단위로 멈춤). */
+.cv-left .lp-tabs{height:var(--cv-head-h,44px);gap:2px}
+.cv-left .lp-tabs button{height:30px;border-radius:var(--cv-ctl-radius,6px);font-size:var(--cv-text-small,12.5px)}
+.lp-refs{flex:none!important;margin-left:6px;padding:0 10px;border:0;background:transparent;color:var(--ds-ink-2);white-space:nowrap;cursor:pointer}
+.lp-refs:hover{background:var(--ds-hover)}.lp-refs[aria-pressed=true]{background:var(--ds-selected);color:var(--ds-ink)}
+.cv-left{position:relative}
+.cv-left .lp-linked{display:none}
+.cv-left.show-linked .lp-linked{display:flex;position:absolute;left:8px;right:8px;top:52px;z-index:3;padding:10px 12px;border-top:0;background:var(--ds-raise);border-radius:var(--cv-sec-radius,10px);box-shadow:0 0 0 1px var(--ds-line),0 8px 24px rgba(0,0,0,.35)}
+.cv-left .lp-linked b{font-size:var(--cv-text-small,12.5px)}.cv-left .lp-linked span{font-size:var(--cv-text-meta,11px)}
+.cv-left [data-cvbody="past"]{overflow:hidden;padding:0;gap:0}
+.lp-tools{flex:none;display:flex;flex-direction:column;gap:8px;padding:12px 12px 10px}
+.lp-row{display:flex;gap:8px;align-items:center;min-width:0}
+.lp-row select{flex:0 1 88px;min-width:0;height:30px;border-radius:var(--cv-ctl-radius,6px);border:1px solid var(--ds-line);background:var(--ds-field);color:var(--ds-ink-2);padding:0 6px;font-size:var(--cv-text-small,12.5px)}
+.lp-tools .lp-search{flex:1;min-width:0;height:30px;border-radius:var(--cv-ctl-radius,6px);font-size:var(--cv-text-small,12.5px)}
+.lp-n{flex:none;font-size:var(--cv-text-meta,11px);color:var(--ds-ink-3);white-space:nowrap}
+.lp-row>.lp-n{flex:1;overflow:hidden;text-overflow:ellipsis;font-size:var(--cv-text-small,12.5px)}
+.lp-pick{flex:none;display:inline-flex;align-items:center;justify-content:center;width:30px;height:30px;padding:0;border:0;border-radius:var(--cv-ctl-radius,6px);background:transparent;color:var(--ds-ink-2);cursor:pointer}
+.lp-pick:hover{background:var(--ds-hover);color:var(--ds-ink)}
+.lp-pick .ico{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.cv-left .past-list{flex:1;min-height:0;overflow:auto;padding:0 12px 12px;display:grid;grid-auto-rows:calc(50% - 6px);gap:12px;scroll-snap-type:y mandatory}
+.cv-left .past{display:grid;grid-template-rows:minmax(0,1fr) auto;min-height:0;border-radius:var(--cv-sec-radius,10px);scroll-snap-align:start}
+.cv-left .past img{width:100%;height:100%;max-height:none;object-fit:contain}
+.cv-left .past .past-text{max-height:none}
+.cv-left .past figcaption{display:flex;align-items:center;gap:8px;min-height:44px;padding:8px 8px 8px 12px;min-width:0}
+.cv-left .past figcaption b{flex:none;white-space:nowrap;font-size:var(--cv-text-body,14px)}
+.cv-left .past figcaption>span:not(.acts){flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:var(--cv-text-meta,11px)}
+.cv-left .past figcaption .acts{flex:none;margin-left:auto}
+.cv-left .past .mini{height:28px;padding:0 10px;font-size:var(--cv-text-small,12.5px);border-radius:var(--cv-ctl-radius,6px)}
+/* 자료(PDF): 위 한 줄(자료 고르기·파일 열기·원본) · 쪽은 남은 높이에 통째로 · 아래 한 줄(쪽 넘김·근거 문장·근거로 연결). 상태 문장은 아래 상태 막대로. */
+.lp-docked #sources[data-tab=references] .source-controls{display:none}
+.lp-docked #sources[data-tab=references] #source-content{flex:1;min-height:0;display:flex;flex-direction:column;gap:10px;padding:12px}
+.lp-docked #sources #source-status{display:none}
+.lp-docked .doc-bar,.lp-docked .doc-nav{flex:none;display:flex;gap:8px;align-items:center}
+.lp-docked #sources .doc-bar select{flex:1;min-width:0;height:30px;margin:0}
+.lp-docked #sources :is(.doc-bar,.doc-nav) :is(input,select,button){border-radius:var(--cv-ctl-radius,6px);font-size:var(--cv-text-small,12.5px)}
+.lp-docked #sources .doc-bar button,.lp-docked #sources .doc-nav button:not(.primary){box-shadow:none}
+.lp-docked #sources .doc-nav button{min-height:0;height:30px}
+.lp-docked #sources .doc-nav #doc-page{width:52px;height:30px;padding:0 6px;text-align:center}
+.lp-docked #sources .doc-nav #quote{flex:1;min-width:0;height:30px;margin:0}
+.lp-docked .doc-page{flex:1;min-height:0;display:flex;justify-content:center;align-items:flex-start;overflow:hidden}
+.lp-docked .doc-page img{display:block;max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;border-radius:var(--cv-ctl-radius,6px)}
 .ai-scope{font-size:var(--ds-text-meta);color:var(--ds-ink-3);background:var(--ds-raise);border-radius:var(--ds-radius);padding:8px 10px}.ai-scope b{color:var(--ds-ink)}
 .chat{display:flex;flex-direction:column;gap:10px;flex:1;overflow:auto;min-height:120px}
 .ai-empty{color:var(--ds-ink-3);font-size:12.5px;line-height:1.7}
@@ -585,7 +627,7 @@ button.q-status:hover{background:var(--ds-hover)}
 body.cv-dragging,body.cv-dragging *{user-select:none!important;-webkit-user-select:none!important;cursor:col-resize!important}
 .cv-ph{height:40px;flex-shrink:0;display:flex;align-items:center;gap:8px;padding:0 10px 0 12px;border-bottom:1px solid var(--ds-line)}
 .cv-ph b{font-size:13px;color:var(--ds-ink)}.cv-ph span,.cv-ph small{font-size:var(--ds-text-meta);color:var(--ds-ink-3)}.cv-ph .sp{flex:1}
-.cv-left .lp-tabs{padding:8px 10px}
+.cv-left .lp-tabs{padding:0 8px}
 /* 가운데 머리줄 */
 .cv-bar{height:44px;flex-shrink:0;display:flex;align-items:center;gap:6px;padding:0 6px;border-bottom:1px solid var(--ds-line);background:var(--ds-panel)}
 .cv-bar .btn.icon{width:30px;height:30px;padding:0;display:grid;place-items:center;border:0;border-radius:var(--ds-radius);background:transparent;color:var(--ds-icon,var(--ds-ink-3))}

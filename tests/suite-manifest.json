@@ -890,6 +890,12 @@
       ]
     },
     {
+      "path": "tests/test-exampool-library-layout-browser.cjs",
+      "findingIds": [
+        "EXAMPOOL-LIBRARY-LAYOUT"
+      ]
+    },
+    {
       "path": "tests/test-exampool-office-browser.cjs",
       "findingIds": [
         "EXAMPOOL-OFFICE-ENTRY",
@@ -2026,6 +2032,12 @@
       "path": "tests/test-teacher-flow-pdf-library-browser.cjs",
       "findingIds": [
         "TEACHER-FLOW-PDF-LIBRARY-WORKBENCH"
+      ]
+    },
+    {
+      "path": "tests/test-teacher-flow-library-send-browser.cjs",
+      "findingIds": [
+        "TEACHER-FLOW-LIBRARY-SEND"
       ]
     },
     {

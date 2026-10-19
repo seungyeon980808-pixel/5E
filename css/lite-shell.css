@@ -339,5 +339,5 @@
 :root[data-mode="lite"] .app[data-panel-layout]>.panel{box-shadow:none}
 @media(max-width:700px){:root[data-mode="lite"] #ai-image-panel .ai-comparison-grid{grid-template-columns:minmax(0,1fr)!important}}
 
-:root[data-mode="lite"] :is(.unilib-header-panel-toggle,[data-unilib-objectify]){display:none!important}
+:root[data-mode="lite"] :is(.unilib-header-panel-toggle,[data-unilib-send],.unilib-send-menu){display:none!important}
 :root[data-mode="lite"] #ai-image-panel :is(.panel-shell-toggles,.panel-collapse-close){display:none!important}
