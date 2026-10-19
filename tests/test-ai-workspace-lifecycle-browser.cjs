@@ -7,7 +7,7 @@ const playwrightPath = process.env.PLAYWRIGHT_MODULE
   || '/Users/parkseungyeon/.cache/codex-runtimes/codex-primary-runtime/dependencies/node/node_modules/playwright';
 const { chromium, webkit } = require(playwrightPath);
 const root = path.resolve(__dirname, '..');
-const { loadForHostedCi } = require('./helpers/performance-reference.cjs');
+const { loadForHostedCi, timingCheck } = require('./helpers/performance-reference.cjs');
 const physicalReference = loadForHostedCi(root);
 const { entryConfiguration, inspectEntry } = require('./helpers/four-session-entry.cjs');
 const { startServer, stopServer } = require('./run-browser-tests.cjs');
@@ -594,8 +594,8 @@ for (const count of [1, 10, 30]) {
       }, null, 2));
       console.log(`${scenario}: functional ownership/content assertions remain live; hosted VM timing is diagnostic; strict physical reference enforces <100ms samples and no >50ms long tasks.`);
     } else {
-      assert.equal(longTasks.filter(entry => entry.duration > 50).length, 0, 'Warm task switching has no long tasks over 50ms');
-      assert.ok(timings.every(value => value < 100), `Cached selection exceeded 100ms: ${timings}`);
+      timingCheck(longTasks.filter(entry => entry.duration > 50).length === 0, `Warm task switching has no long tasks over 50ms: ${longTasks.filter(entry => entry.duration > 50).length}`);
+      timingCheck(timings.every(value => value < 100), `Cached selection exceeded 100ms: ${timings}`);
     }
     assert.deepEqual(errors, []);
   });
