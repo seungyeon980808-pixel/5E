@@ -140,3 +140,4 @@ figure.past{position:relative}
 @media (prefers-reduced-motion:reduce){.busy-ring{animation-duration:2400ms}}
 /* 아래 상태 막대: 진행 중 문장이면 앞에 작은 고리(단추 고리와 같은 모양). */
 #status[data-busy=true]::before{content:"";display:inline-block;width:9px;height:9px;margin-right:6px;vertical-align:-1px;border:2px solid color-mix(in srgb,currentColor 22%,transparent);border-top-color:currentColor;border-radius:50%;animation:ep-spin 800ms linear infinite}
+.past-busy[data-error=true]{padding:0 14px;text-align:center;line-height:1.45;font-size:var(--cv-text-small,12.5px);color:#e6edf3;box-shadow:inset 0 0 0 1px var(--ds-danger,#f85149)}

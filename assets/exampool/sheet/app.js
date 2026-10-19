@@ -325,7 +325,9 @@ function pastStage(stage){if(!pastBusy)return;pastBusy.stage=stage;
     if(!b.hasAttribute('aria-busy')){b.style.minWidth=b.offsetWidth+'px';b.setAttribute('aria-busy','true');}b.innerHTML=busyHtml(stage);
     const f=b.closest('figure.past');if(f){f.toggleAttribute('data-busy',true);const o=f.querySelector('.past-busy');if(o)o.querySelector('span').textContent=stage;else f.querySelector('.past-pic')?.insertAdjacentHTML('afterend',pastBusyHtml(stage));}}
   status(`${pastBusy.title} · ${stage}… (AI 없음)`);}
-function pastIdle(){const id=pastBusy?.id;pastBusy=null;if(id)for(const b of document.querySelectorAll(`[data-cvconvert="${CSS.escape(id)}"]`)){b.removeAttribute('aria-busy');b.style.minWidth='';b.textContent='변형';const f=b.closest('figure.past');f?.removeAttribute('data-busy');f?.querySelector('.past-busy')?.remove();}}
+// 실패하면 그 그림 위에 짧은 이유를 4초 남긴다(맨 아래 상태 줄만으로는 놓치기 쉬움).
+function pastIdle(failure=''){const id=pastBusy?.id;pastBusy=null;if(id)for(const b of document.querySelectorAll(`[data-cvconvert="${CSS.escape(id)}"]`)){b.removeAttribute('aria-busy');b.style.minWidth='';b.textContent='변형';const f=b.closest('figure.past');f?.removeAttribute('data-busy');const o=f?.querySelector('.past-busy');
+    if(o&&failure){o.dataset.error='true';o.querySelector('.busy-ring')?.remove();o.querySelector('span').textContent=failure;setTimeout(()=>o.remove(),4000);}else o?.remove();}}
 async function convertPast(item){
   if(convertingPast){status(`${convertingPast} 을(를) 바꾸는 중입니다. 끝나면 다시 눌러 주세요.`);for(const b of document.querySelectorAll('[data-cvconvert][aria-busy]'))b.animate?.([{scale:1},{scale:1.08},{scale:1}],{duration:260,easing:'cubic-bezier(.2,.9,.25,1.06)'});return;}
   if(data.questions.length>=500){status('문항은 500개까지 만들 수 있습니다.',true);return;}
@@ -347,7 +349,7 @@ async function convertPast(item){
     const warn=(diag?.notes||[]).filter(n=>/못|확인|제외|원본 참고/.test(n));
     const done=`${item.title} → ${q.number}번 문항으로 가져왔습니다 · 원본은 근거로 연결${warn.length?' · 확인: '+warn[0]:''}`;
     status(done);setTimeout(()=>status(done),1500);// 자동 저장 표시가 덮지 않게 한 번 더
-  }catch(e){pastIdle();status(`${item.title} 변환 실패: ${e.message}`,true);}
+  }catch(e){pastIdle(`가져오지 못했습니다 · ${e.message}`);status(`${item.title} 변환 실패: ${e.message}`,true);}
   finally{convertingPast=null;pastIdle();}
 }
 const newDialog=createNewQuestionDialog($('#new-dialog'),{onCreate:shape=>mutate(()=>{if(data.questions.length>=500)throw Error('문항은 500개까지 만들 수 있습니다.');current=questionFromShape(shape,String(data.questions.length+1));data.questions.push(current);activeTab='composition';const exam=['exam','card','desk'].includes(view.name)&&view.examId&&examById(data,view.examId);if(exam){addToExam(data,exam.id,current.id);renumberExam(data,exam.id);}})&&(show('card'),true)});
