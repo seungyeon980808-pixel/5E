@@ -2,7 +2,6 @@
 // 오른쪽은 라이브러리(기출·교과서·기준·자료·지면·AI). 엑셀형 표는 시험지의 '전체 표'로만 남긴다.
 import {WORKFLOWS,KINDS,formOf,formLosses,applyForm} from './model.js';
 import {FORMS,STRUCTS} from './templates.js';
-import {SHAPE_ICONS} from './new-question.js';
 import {fieldValue,writeField} from './vertical.js';
 import {normalizeCombo} from './choice-text.js';
 import {workflowOf,previewHtml,questionSubtitle} from './views.js';
@@ -10,39 +9,8 @@ import {AXES,AXIS_LABEL,JUDGEMENT_LABEL} from '../authoring/schema.js';
 import {labelOf} from '../authoring/session.js';
 import {croppedPastImage} from './past-crop.js';
 
-const E=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-const NUM=['①','②','③','④','⑤'];
-const COMMON=['ㄱ','ㄷ','ㄱ, ㄴ','ㄴ, ㄷ','ㄱ, ㄴ, ㄷ'];
-const ICON={
-  pic:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 16l4-4 4 4 4-6 4 6"/><rect x="3.5" y="4.5" width="17" height="15" rx="1.5"/></svg>',
-  table:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="1.5"/><path d="M4 10h16M4 15h16M10 4v16"/></svg>',
-  plus:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>',
-  star:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.2 5.3L20 9l-4.4 3.8L17 18.5 12 15.6 7 18.5l1.4-5.7L4 9l5.8-.7z"/></svg>',
-  left:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg>',
-  right:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>',
-  page:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3.5h10v17H7z"/><path d="M9.5 8h5M9.5 11h5M9.5 14h3"/></svg>',
-  card:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="1.5"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>',
-  out:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg>',
-  panelL:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="1.5"/><path d="M9 4.5v15"/></svg>',
-  panelR:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="15" rx="1.5"/><path d="M15 4.5v15"/></svg>',
-  sliders:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"/></svg>',
-  link:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></svg>',
-  close:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>',
-  lib:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4.5h3v15H5zM10 4.5h3v15h-3z"/><path d="m15.2 5.4 2.9-.8 3.6 14.4-2.9.8z"/></svg>',
-  search:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="6"/><path d="m20 20-4.5-4.5"/></svg>',
-};
-// 시안 4: 왼쪽 라이브러리(기출·교과서·기준·자료) · 가운데 문항 카드(쪽 전체로 바꿔 보기) · 오른쪽 미리보기|AI.
-const TABS=[['past','기출문제'],['textbooks','교과서'],['standards','성취기준·교육과정'],['references','자료']];
-const slotsOf=q=>{const out=[];const walk=p=>{for(const b of q.blocks.filter(x=>x.parent===p)){if(b.kind==='figure'||b.kind==='table')out.push(b);walk(b.id);}};walk(null);return out;};
-// 유형·자료 구조는 새 문항 창에서 정한다. 카드 머리 줄에는 이름표로만 보이고, 눌렀을 때만 유형 바꾸기 메뉴가 열린다.
-const STRUCT_SHORT={two:'자료 2개',big:'큰 자료 1개',small:'작은 자료 1개',condition:'조건 상자',many:'자료 3개 이상',experiment:'실험 상자',none:'글만'};
-const shapeIco=k=>`<svg class="ico shape" viewBox="0 0 24 24" aria-hidden="true">${SHAPE_ICONS[k]||''}</svg>`;
-const CHEV='<svg class="ico chev" viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg>';
-const CHECK='<svg class="ico tick" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>';
-const bogiOf=q=>q.blocks.find(b=>b.kind==='bogi');
-const isCombo=q=>q.type==='합답형';
-const CHANNEL=/^\/preview(?:\/|$)/.test(location.pathname)?'5e.preview:':'';// 공개 프리뷰는 저장 이름을 분리
-const store={get(k,d){try{return JSON.parse(localStorage.getItem(CHANNEL+'exampool-card:'+k))??d;}catch{return d;}},set(k,v){try{localStorage.setItem(CHANNEL+'exampool-card:'+k,JSON.stringify(v));}catch{}}};
+import {F,MONTH,shortTitle,norm,splitWords,pastScore} from './past-search.js';
+import {E,NUM,COMMON,ICON,TABS,slotsOf,STRUCT_SHORT,shapeIco,CHEV,CHECK,bogiOf,isCombo,CHANNEL,store} from './card-shared.js';
 
 // 완성 조건: 발문·자료(그림/표가 모두 찬 자리)·보기(합답형)·선지·정답. 모두 차면 AI 검토를 요청할 수 있다.
 export function completeness(q){
@@ -253,10 +221,7 @@ export function createCardEditor(root,api){
   const picksHtml=()=>(api.libraryPicks?.()||[]).map((p,i)=>`<figure class="past pick"><img src="${E(p.data)}" alt="${E(p.name)}"><figcaption><b title="${E([p.source?.documentTitle||p.name,p.source?.pageNumber?p.source.pageNumber+'쪽':'',p.source?.title&&p.source.title!==p.source?.documentTitle?p.source.title:''].filter(Boolean).join(' · '))}">${E(p.source?.documentTitle||p.name)}${p.source?.pageNumber?' · '+p.source.pageNumber+'쪽':''}</b><span class="acts"><button type="button" class="mini" data-cvpick-link="${i}">근거로 연결</button><button type="button" class="mini" data-cvpick-slot="${i}">그림 칸에 넣기</button></span></figcaption></figure>`).join('');
   // 기출 목록: 과학탐구 전체 기출(조사 색인 assets/exampool/convert/data). 과목 파일은 고를 때 읽는다(과목을 안 고르면 전부).
   // 카드 모양·필터·핵심어는 예전 그대로이고, 핵심어는 문항 본문 글까지 찾는다. 「변형」은 이 기출을 편집 가능한 한글 문항(AI 없음)으로 바꿔 새 카드로 연다.
-  const F={id:0,year:1,month:2,no:3,page:4,box:5,pdfFile:6,parts:7,tags:8,hasFigure:9,record:10,text:11};
-  const MONTH={6:'6월 모평',9:'9월 모평',11:'수능'};// 색인의 월 값은 숫자(6·9·11)
   // 카드에 보이는 짧은 제목은 5E 라이브러리 「문항」 탭과 같은 꼴: 「물리2 27년 6평 2번」(수능은 「27년 수능」). 근거 이름에는 긴 제목을 쓴다.
-  const shortTitle=(year,month,label,no)=>`${label.replace('물리학','물리').replace('생명과학','생명').replace('지구과학','지구').replace('Ⅰ','1').replace('Ⅱ','2')} ${String(year).slice(2)}년 ${Number(month)===11?'수능':Number(month)+'평'} ${no}번`;
   async function loadPast(subjects){
     pastIndex||=await(pastIndexLoading||=fetch(new URL('../convert/data/index.json',import.meta.url)).then(r=>{if(!r.ok)throw Error();return r.json();}));
     pastSyn||=await fetch(new URL('../convert/data/synonyms.json',import.meta.url)).then(r=>r.ok?r.json():{}).then(d=>d.map||{}).catch(()=>({}));
@@ -273,10 +238,7 @@ export function createCardEditor(root,api){
   const pastItem=id=>pastItems?.find(v=>v.id===id);
   // 검색 색인(5e.ai.kr/examlibrary 기출 탐색기와 같은 규칙): 단어를 치고 Enter → 검색 칸 안의 단어 조각(최대 3개).
   // 조각을 모두 포함하는 문항만 남기고(띄어쓰기·대소문자 무시, 태그·단원의 비슷한 말 사전 포함), 제목·태그에 걸린 문항을 앞에 둔다.
-  const norm=v=>String(v??'').normalize('NFKC').toLocaleLowerCase('ko');
-  const splitWords=v=>norm(v).trim().split(/[#，,\s]+/u).filter(Boolean);
   const hay=i=>{if(i._hay===undefined){const rel=[...i.tags,...i.parts].flatMap(n=>pastSyn?.[n]||[]);i._hay=norm([i.id,i.title,i.short,i.text,...i.tags,...i.parts,...rel].join(' '));i._hayNs=i._hay.replace(/\s+/gu,'');}return i;};
-  const pastScore=(i,words)=>words.reduce((n,w)=>n+(norm(i.title+' '+i.short).includes(w)?8:0)+(norm(i.tags.join(' ')).includes(w)?5:0)+(norm(i.text).includes(w)?1:0),0);
   function addPastWords(input){
     if(panels.tab==='textbooks'){pastFilter.query=input.value.trim();store.set('past',pastFilter);pastRefocus=true;renderPast();return;}
     const incoming=splitWords(input.value);if(!incoming.length)return;

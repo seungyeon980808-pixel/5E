@@ -199,6 +199,12 @@
       ]
     },
     {
+      "path": "tests/test-exampool-past-search.mjs",
+      "findingIds": [
+        "EXAMPOOL-PAST-SEARCH"
+      ]
+    },
+    {
       "path": "tests/test-exampool-model.mjs",
       "findingIds": [
         "EXAMPOOL-CONFIRMED-HANDOFF",
