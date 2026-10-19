@@ -198,10 +198,10 @@ h.withServer(async origin => {
 
       // 라이브러리 칸을 끌기 최소(240)까지 줄여도 머리 줄이 칸 밖으로 넘치지 않고 검색창이 남는다.
       await sheet.selectOption('#card-view [data-cvscope]','past');await sheet.waitForSelector('#card-view .past-list figure.past',{timeout:30000});
-      for(const w of [240,300,380,545]){
+      for(const w of [240,300,320,340,380,420,545]){
         await sheet.evaluate(w=>document.querySelector('#card-view').style.setProperty('--cv-lw',w+'px'),w);await sheet.waitForTimeout(150);
-        const r=await sheet.evaluate(()=>{const l=document.querySelector('#card-view .cv-left').getBoundingClientRect(),s=document.querySelector('#card-view .lp-one .lp-search').getBoundingClientRect();return {over:[...document.querySelectorAll('#card-view .lp-one>*')].some(n=>n.getBoundingClientRect().right>l.right+0.5),sw:s.width,cut:[...document.querySelectorAll('#card-view figure.past b')].slice(0,4).some(b=>b.scrollWidth>b.clientWidth)};});
-        assert.ok(!r.over&&r.sw>=60&&!r.cut,`library pane ${w}px: ${JSON.stringify(r)}`);
+        const r=await sheet.evaluate(()=>{const l=document.querySelector('#card-view .cv-left').getBoundingClientRect(),s=document.querySelector('#card-view .lp-one .lp-search').getBoundingClientRect();return {iw:document.querySelector('#card-view .lp-one .lp-search input').getBoundingClientRect().width,over:[...document.querySelectorAll('#card-view .lp-one>*')].some(n=>n.getBoundingClientRect().right>l.right+0.5),sw:s.width,cut:[...document.querySelectorAll('#card-view figure.past b')].slice(0,4).some(b=>b.scrollWidth>b.clientWidth)};});
+        assert.ok(!r.over&&r.sw>=60&&!r.cut&&r.iw>=40,`library pane ${w}px: ${JSON.stringify(r)}`);
       }
       assert.deepEqual(errors,[],'no page errors');
       console.log(`${engineName}: ok`);
