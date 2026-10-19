@@ -77,7 +77,9 @@ h.withServer(async origin => {
       await sheet.locator('#card-view [data-cvsplit="left"]').hover();await page.mouse.down();await page.mouse.move(split.x-60,split.y+split.height/2,{steps:4});await page.mouse.up();
       assert.ok(Math.abs(await sheet.evaluate(()=>document.querySelector('#card-view .cv-left').offsetWidth)-(lw-60))<=6,'dragging the left border resizes the library');
       // 좁은 창(1100): 칸이 이미 끌기 상한보다 넓어도 경계를 잡는 순간 줄어들지 않고, 끌면 움직인 만큼 줄어든다.
-      await page.setViewportSize({width:1100,height:800});await sheet.waitForTimeout(200);
+      await page.setViewportSize({width:1100,height:800});await sheet.waitForTimeout(400);
+      // 넓은 창에서 연 뒤 줄여도 오른쪽 칸이 창 밖으로 밀리지 않는다(칸 폭을 창에 다시 맞춤).
+      assert.ok(await sheet.evaluate(()=>document.querySelector('#card-view .cv-right').getBoundingClientRect().right<=document.querySelector('#card-view').getBoundingClientRect().right+0.5),'the right pane stays inside after the window shrinks');
       for(const k of ['left','right']){const pane=k==='left'?'.cv-left':'.cv-right',w0=await sheet.evaluate(s=>document.querySelector('#card-view '+s).getBoundingClientRect().width,pane),b=await sheet.locator(`#card-view [data-cvsplit="${k}"]`).boundingBox(),f=await (await page.$('#exampool-sheet-workspace iframe')).boundingBox();
         const x=f.x+b.x+b.width/2,y=f.y+b.y+b.height/2;await page.mouse.move(x,y);await page.mouse.down();await page.mouse.move(x+1,y);await page.mouse.move(x,y);
         assert.ok(Math.abs(await sheet.evaluate(s=>document.querySelector('#card-view '+s).getBoundingClientRect().width,pane)-w0)<=1,`grabbing the ${k} border in a narrow window does not jump`);
