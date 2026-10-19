@@ -2135,6 +2135,13 @@
       "findingIds": [
         "AI-DONE-NOTICE-SURVIVES-DIALOG"
       ]
+    },
+    {
+      "path": "tests/test-main-canvas-perf-browser.cjs",
+      "findingIds": [
+        "MAIN-CANVAS-DRAG-LAYOUT-THRASH",
+        "OBJECT-SEARCH-ICON-LAYOUT-THRASH"
+      ]
     }
   ],
   "deferred": [

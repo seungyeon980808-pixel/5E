@@ -179,6 +179,9 @@ export function render(state, change) {
   const scene = document.getElementById("scene");
   if (!scene) return;
   const selectionScale = selectionScaleForSvg(scene.ownerSVGElement, state.viewBox);
+  // 배율은 한 번만 읽는다. getZoom()은 getScreenCTM()이라, 아래에서 장면을 고치는 도중에 부르면 매번 레이아웃을
+  // 다시 계산한다(오브젝트 120개면 끌기 한 걸음에 60ms+). 장면 안 자식을 바꿔도 배율은 그대로다.
+  const zoom = getZoom();
 
   // Simplest correct projection: wipe and rebuild. Fine at this scale; a
   // keyed/diffing pass can replace this once object counts grow.
@@ -261,7 +264,7 @@ export function render(state, change) {
     // The twin width is HIT_PX / getZoom(), so a zoom/viewBox change recomputes it via
     // the store subscribe → render path (main.js: state.subscribe(render)).
     if (_isActive && !isLockedTracingImage(obj)) {
-      const twin = makeHitTwin(obj);
+      const twin = makeHitTwin(obj, zoom);
       if (twin) {
         el.setAttribute("pointer-events", "none"); // only the twin receives events
         scene.appendChild(twin);
@@ -365,7 +368,7 @@ export function render(state, change) {
     if (!sel || sel.id === _editingId) continue;
     const _selLayer = (state.layers || []).find(l => l.id === (sel.layerId ?? 1));
     if (_selLayer && _selLayer.visible === false) continue;
-    if (sel.positionLocked) renderPositionLockMarker(sel, scene, getZoom());
+    if (sel.positionLocked) renderPositionLockMarker(sel, scene, zoom);
     const _selColor = state.targetedId === _sid ? "#e67700" : SELECTION_COLOR;
     const _frameKind = _selIds.length > 1 ? "multi-member" : "single";
     if (sel.type === 'labeler') {
@@ -596,8 +599,8 @@ export function render(state, change) {
   }
 
   /* ===== SNAP PREVIEW OVERLAY HOOK: same transient layer as selection handles ===== */
-  renderSmartGuides(scene, getZoom());
-  renderSnapPreview(scene, getZoom());
+  renderSmartGuides(scene, zoom);
+  renderSnapPreview(scene, zoom);
 
   // ----- live drag preview (ephemeral; not in state.objects yet) -----
   if (state.draft) {
@@ -810,7 +813,7 @@ function isLockedTracingImage(obj) {
   return !!obj && obj.type === "image" && (obj.imageSelectionLocked === true || (obj.mode === "background" && obj.locked === true));
 }
 
-function makeHitTwin(obj) {
+function makeHitTwin(obj, zoom = getZoom()) {
   let twin = null;
   if (obj.type === "line") {
     twin = document.createElementNS(SVG_NS, "line");
@@ -860,7 +863,7 @@ function makeHitTwin(obj) {
     for (const part of twin.querySelectorAll('line, path, polyline, circle')) {
       part.setAttribute('stroke', 'transparent');
       part.setAttribute('fill', 'none');
-      part.setAttribute('stroke-width', HIT_PX / getZoom());
+      part.setAttribute('stroke-width', HIT_PX / zoom);
       part.setAttribute('pointer-events', 'stroke');
     }
     // The glyph body remains clickable independently of the leader geometry.
@@ -888,7 +891,7 @@ function makeHitTwin(obj) {
   const isRectTwin = twin.tagName.toLowerCase() === "rect";
   twin.setAttribute("fill", isRectTwin ? "transparent" : "none");
   twin.setAttribute("stroke", "transparent");
-  twin.setAttribute("stroke-width", HIT_PX / getZoom()); // zoom-invariant screen px
+  twin.setAttribute("stroke-width", HIT_PX / zoom); // zoom-invariant screen px
   twin.setAttribute("stroke-linecap", "round");
   twin.setAttribute("stroke-linejoin", "round");
   twin.setAttribute("pointer-events", isRectTwin ? "all" : "stroke");
