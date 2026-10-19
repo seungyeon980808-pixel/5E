@@ -82,7 +82,20 @@ async function cropHere(url) {
   out.getContext('2d').drawImage(c, r.x, r.y, r.width, r.height, 0, 0, r.width, r.height);
   return await new Promise(res => out.toBlob(res, 'image/png'));
 }
+// 잘라 둔 그림(blob: 주소)은 많이 둘러볼수록 쌓인다. 240장을 넘으면 오래된 것부터, 지금 화면에 쓰이지 않는 것만 놓아준다.
+const KEEP = 240;
+function trim() {
+  if (cache.size <= KEEP || typeof document === 'undefined') return;
+  const used = new Set([...document.images].map(i => i.src));
+  let drop = cache.size - KEEP;
+  for (const [key, pending] of cache) {
+    if (drop-- <= 0) break;
+    pending.then(src => { if (src.startsWith('blob:') && !used.has(src) && cache.get(key) === pending) { cache.delete(key); URL.revokeObjectURL(src); } });
+  }
+}
 export function croppedPastImage(url) {
+  if (cache.has(url)) { const hit = cache.get(url); cache.delete(url); cache.set(url, hit); return hit; } // 최근에 쓴 것을 뒤로
+  trim();
   if (!cache.has(url)) cache.set(url, (async () => {
     let blob;
     const w = cropWorker();
