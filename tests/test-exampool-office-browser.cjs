@@ -293,6 +293,16 @@ h.withServer(async origin => {
       }
       assert.deepEqual(errors,[],'no page errors');
       console.log(`${engineName}: office workroom verified`);
+      // 좁은 창(1180px 이하)에서 새 문항 창이 위아래로 쌓여도 자료 구조 선택지가 가려지지 않고, 「작성」 줄은 늘 보인다.
+      // 창 크기를 도중에 바꾸면 WebKit이 ResizeObserver 경고를 오류로 내므로 처음부터 좁은 창으로 따로 연다.
+      const small=await (await browser.newContext({viewport:{width:1100,height:800}})).newPage();
+      await h.navigate(small,origin+'/?mode=pro&mobile=0');await h.ready(small);await small.click('#exam-pool-open');
+      const smallSheet=await (await small.waitForSelector('#exampool-sheet-workspace iframe')).contentFrame();
+      await smallSheet.waitForSelector('#side-new');await smallSheet.waitForFunction(()=>document.querySelector('#status').textContent!=='준비 중',null,{timeout:30000});
+      await smallSheet.click('#side-new');await smallSheet.waitForSelector('#new-dialog[open]');
+      await smallSheet.click('#new-dialog .nq-opt[data-step="form"][data-k="essay"]');await smallSheet.click('#new-dialog .nq-opt[data-step="struct"][data-k="two"]');
+      const narrow=await smallSheet.evaluate(()=>{const d=document.querySelector('#new-dialog'),c=d.querySelector('.nq-col'),f=d.querySelector('.nq-foot').getBoundingClientRect(),r=d.getBoundingClientRect();return {clipped:c.scrollHeight>c.clientHeight+1,struct:!!d.querySelector('.nq-opt[data-step="struct"][aria-pressed="true"]'),foot:f.bottom<=r.bottom+1&&f.top>=r.top};});
+      assert.deepEqual(narrow,{clipped:false,struct:true,foot:true},'the narrow new-question dialog keeps every option reachable');
     } finally {await browser.close();}
   }
 }).catch(error => {console.error(error);process.exitCode = 1;});
