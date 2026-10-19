@@ -36,6 +36,47 @@ function assertContains(actual, expected, where) {
   for (const key of Object.keys(expected)) assertContains(actual[key], expected[key], `${where}.${key}`);
 }
 
+// AI 작업대 기록은 1.7.0이 부팅 중 언제든 화면 상태로 탭을 다시 저장한다(js/ai-panel.js captureActiveTaskTab).
+// 느린 컴퓨터에서는 검사 도중에 다시 저장되므로, 원래 그대로이거나 1.7.0이 의도해 바꾼 모양이어야 한다.
+//  - 빈 선택은 ''·null·없음을 같은 "선택 없음"으로 본다(1.7.0은 selectedCandidateId ''→null로 저장, 복원 때 둘 다 falsy).
+//  - 보기 상태(workbenchViewState·commentViewState: 확대·스크롤·배치·주석 도구)는 화면에서 다시 읽으므로 선택값만 본다.
+//  - 표시선 선택(markPolicy)은 1.7.0이 복원 때 화살표 remove가 아니면 keep, 직접 고른 표시(markPolicyChosen)가 없으면
+//    지시선 keep으로 바꾼다(js/ai-panel.js restoreMarkPolicy). 사용자 선택이 바뀌는 점은 docs에 보고했다.
+//  - 1.7.0이 새로 더한 필드는 괜찮다.
+const VIEW_STATE_KEYS = new Set(['workbenchViewState', 'commentViewState']);
+const isEmpty = value => value === '' || value === null || value === undefined;
+function assertSameOrEmpty(actual, expected, where) {
+  if (isEmpty(expected) && isEmpty(actual)) return;
+  if (expected === null || typeof expected !== 'object') return assert.deepEqual(actual, expected, where);
+  assert.ok(actual && typeof actual === 'object', `${where}: 값이 사라졌다`);
+  if (Array.isArray(expected)) assert.equal(actual.length, expected.length, `${where}: 개수가 다르다`);
+  for (const key of Object.keys(expected)) assertSameOrEmpty(actual[key], expected[key], `${where}.${key}`);
+}
+function migratedMarkPolicy(tab) {
+  const policy = tab.markPolicy || {};
+  return { ...policy, arrows: policy.arrows === 'remove' ? 'remove' : 'keep', leaders: tab.markPolicyChosen ? policy.leaders : 'keep' };
+}
+function assertAiWorkspace(actual, expected, where) {
+  const { tabs, ...rest } = expected;
+  assertSameOrEmpty(actual, rest, where);
+  assert.equal(actual.tabs?.length, tabs.length, `${where}: 작업 탭 개수`);
+  tabs.forEach((tab, index) => {
+    const now = actual.tabs[index], at = `${where}.tabs.${index}`;
+    for (const [key, value] of Object.entries(tab)) {
+      if (VIEW_STATE_KEYS.has(key) || key === 'markPolicy') continue;
+      assertSameOrEmpty(now[key], value, `${at}.${key}`);
+    }
+    for (const key of ['selectedCandidateId', 'selectedSourceId']) {
+      assertSameOrEmpty(now.workbenchViewState?.[key], tab.workbenchViewState?.[key], `${at}.workbenchViewState.${key}`);
+    }
+    if (tab.markPolicy !== undefined) {
+      const options = [tab.markPolicy, migratedMarkPolicy(tab)];
+      assert.ok(options.some(policy => { try { assertSameOrEmpty(now.markPolicy, policy, ''); return true; } catch { return false; } }),
+        `${at}.markPolicy: ${JSON.stringify(now.markPolicy)}는 원래 값이나 1.7.0 변환 값(${JSON.stringify(options[1])})이어야 한다`);
+    }
+  });
+}
+
 // 1.6.3 그림(pages)을 1.7.0이 지금 들고 있는 그림과 비교한다. 1.7.0의 직렬화로 모든 쪽을 꺼낸다.
 async function assertDrawing(page, expected, where) {
   const actual = await page.evaluate(async () => {
@@ -113,7 +154,9 @@ async function storageUpdate(browser, origin, engine) {
         for (const record of store.records) {
           const match = current.records.find(entry => JSON.stringify(entry.key) === JSON.stringify(record.key));
           assert.ok(match, `${database.name}/${store.name}/${JSON.stringify(record.key)} 기록이 남아 있어야 한다`);
-          assertContains(match.value, record.value, `${database.name}/${store.name}/${JSON.stringify(record.key)}`);
+          const where = `${database.name}/${store.name}/${JSON.stringify(record.key)}`;
+          if (database.name === '5e.preview:5e-ai-image-tasks' && record.key === 'workspace') assertAiWorkspace(match.value, record.value, where);
+          else assertContains(match.value, record.value, where);
         }
       }
     }
@@ -161,7 +204,7 @@ async function storageUpdate(browser, origin, engine) {
       database.close();
       return value;
     });
-    assert.deepEqual(workspace.tabs.map(tab => tab.title), aiWorkspace.tabs.map(tab => tab.title), 'AI 작업 탭');
+    assertAiWorkspace(workspace, aiWorkspace, 'AI 작업대 기록');
     assert.deepEqual(errors, [], '페이지 오류가 없어야 한다');
     return { pages: restored.pages.map(p => p.objects.length), settings, personalObject: personalObjects[0].name, aiTabs: workspace.tabs.length };
   } finally { await context.close(); }

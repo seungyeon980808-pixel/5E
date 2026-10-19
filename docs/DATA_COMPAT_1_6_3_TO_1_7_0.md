@@ -33,7 +33,7 @@
 | --- | --- | --- | --- | --- |
 | 자동 저장 | IDB `5e-preview-autosave` v1 (`snapshots`, `checkpoints`, autoIncrement `id`), 옛 `5e-autosave` 읽기 | 같음(`js/autosave.js` 내용 동일, import 버전만 다름) | 없음 | 복구 확인창 → 두 쪽·7개 그림 필드 단위 일치 |
 | 키-값 저장소 | IDB `5e.preview:5e-store` v1 `kv` (내 오브젝트 `5e.personalObjects`, 내보내기 폴더, 공유 기록, AI 묶음) | 같음 + 1.7.0이 새 키 추가(AI 작업 기록 journal 등) | 새 키만 추가 | 내 오브젝트 표시·삽입, 기록 보존 |
-| AI 작업대 | IDB `5e.preview:5e-ai-image-tasks` v1 `tasks`(keyPath `key`) | 같음 | 없음 | `workspace` 기록·작업 탭 보존 |
+| AI 작업대 | IDB `5e.preview:5e-ai-image-tasks` v1 `tasks`(keyPath `key`) | 같은 저장소. 부팅 중 화면 상태로 탭을 다시 저장한다 | 다시 저장할 때 빈 선택 `''`→`null`, 보기 상태(확대·주석 도구 등) 새로 씀, 새 필드 추가, **표시선 선택(markPolicy) 바뀜**(아래) | 작업 탭 내용 보존, 빈 선택은 같은 것으로, 표시선은 원래 값이나 1.7.0 변환 값 |
 | AI 결과 캐시·묶음 | IDB `5e.preview:5e-ai-output-cache` v1, `5e.preview:5e-ai-batch-v1` v1 | 같음 | 없음 | (AI 호출이 필요해 자료 없음 — 이름·버전 코드 비교) |
 | PDF 자료집 | IDB `5e.preview:5e-pdf-packs` v1 (`packs`, `assets`) | 같음 | 없음 | (Drive 내려받기가 필요해 자료 없음 — 코드 비교) |
 | 1.7.0 새 저장소 | — | IDB `5e-rhwp-exam` v1 `drafts`, `5e.preview:5e-ai-label-background`, `5e.preview:5e-graph-reconstruction` | 새로 생김(1.6.3 데이터와 겹치지 않음) | — |
@@ -63,6 +63,14 @@ ZIP이 아니면 옛 JSON으로 읽는다. 검사는 이 경로들을 고정한�
 ## 발견한 점(편집기 코드는 고치지 않음)
 
 - 데이터가 깨지는 문제는 찾지 못했다.
+- **AI 표시선 선택이 업데이트 뒤 바뀐다**(2026-10-19 GitHub CI webkit 실패로 발견). 1.7.0은 AI 작업 탭을 되살릴 때
+  `restoreMarkPolicy`(js/ai-panel.js)가 화살표를 `remove`가 아니면 `keep`으로, 지시선을 `markPolicyChosen`(1.7.0에서 생긴 표시)이
+  없으면 `keep`으로 바꾸고 다시 저장한다. 1.6.3 기본값(화살표 "구조 표시만 유지", 지시선 "제거")이나 1.6.3에서 직접 고른 값이
+  "모두 유지/유지"가 되어, 다음 AI 변환에서 주석 화살표·지시선을 남기는 쪽으로 동작이 달라질 수 있다. 그림 데이터는 잃지 않는다.
+  1.7.0 화면에는 "구조 표시만 유지"가 그대로 있어 1.7.0 안에서 고른 값도 탭을 되살리면 `keep`이 된다(코드 기준).
+  의도한 기본값 변경인지 사용자 결정이 필요하다. 검사는 원래 값이나 이 변환 값만 허용해 다른 변화가 생기면 알린다.
+- AI 작업대 기록은 부팅 중 언제 다시 저장되는지가 컴퓨터 속도에 달려 있다. 로컬에서는 검사가 끝난 뒤, GitHub의 느린 webkit에서는
+  검사 도중에 다시 저장돼 `selectedCandidateId` `''`→`null`이 보였다. 둘 다 "선택 없음"이다(복원은 `tab.selectedCandidateId || 마지막 결과`).
 - 되돌아가기(1.7.0 → 1.6.3)는 보장되지 않는다: 1.7.0이 저장한 `.5e`는 ZIP이라 1.6.3에서는 "프로젝트 파일을 열 수 없습니다" 알림이 뜬다(1.6.3 `openProject`가 글자로 읽어 JSON으로 해석 — 코드 기준, 실행 확인은 안 함).
   출시 뒤 1.6.3으로 롤백(`docs/RELEASE_ROLLBACK.md`)하면 그 사이에 1.7.0에서 저장한 프로젝트 파일은 1.6.3에서 열리지 않는다.
   같은 브라우저 저장소(자동 저장)는 그림 스키마가 0.17 그대로라 영향이 적지만 검사하지 않았다.
