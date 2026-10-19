@@ -2,6 +2,7 @@ import {FORMAT,WORKFLOWS,TYPES,PRESETS,STYLES,KINDS,targetDisplay,uid,clone,copy
 import {workflowOf,questionTitle,questionSubtitle,TITLES,previewHtml,columnPreview} from './views.js';
 import {renderNav,renderLibrary,renderExams,renderExam} from './pool-views.js';
 import {createCardEditor} from './card-editor.js';
+import {busyHtml,pastBusyHtml} from './card-shared.js';
 import {newExam,examById,examOf,libraryQuestions,addToExam,removeFromExam,moveInExam,renumberExam} from './exams.js';
 import {applyTextEdit} from './text-sync.js';
 import {loadImage} from './image-load.js';
@@ -303,27 +304,38 @@ function imageHolder(q,key){const [kind,id,r,c]=key.split(':');return kind==='bl
 // 기출 「변형」: 기출 PDF를 편집 가능한 한글 문항으로 바꿔(AI 없음, 변환 엔진 assets/exampool/convert) 새 문항 카드로 연다.
 // 원본 PDF는 5E 공개 게이트웨이(공유 폴더 「기출문제」)에서 받는다. 원본 출처는 근거로 붙고, 기준 용지는 원본 비율(B4).
 let convertingPast=null;
+// 「변형」 진행 표시: 누른 단추 자리에 고리와 단계 글(준비 → 원본 받는 중 → 바꾸는 중 → 카드 여는 중)을 보인다.
+// 목록이 다시 그려져도 card-editor가 pastBusy()를 보고 같은 표시를 그린다.
+let pastBusy=null;
+function pastStage(stage){if(!pastBusy)return;pastBusy.stage=stage;
+  for(const b of document.querySelectorAll(`[data-cvconvert="${CSS.escape(pastBusy.id)}"]`)){
+    if(!b.hasAttribute('aria-busy')){b.style.minWidth=b.offsetWidth+'px';b.setAttribute('aria-busy','true');}b.innerHTML=busyHtml(stage);
+    const f=b.closest('figure.past');if(f){f.toggleAttribute('data-busy',true);const o=f.querySelector('.past-busy');if(o)o.querySelector('span').textContent=stage;else f.querySelector('.past-pic')?.insertAdjacentHTML('afterend',pastBusyHtml(stage));}}
+  status(`${pastBusy.title} · ${stage}… (AI 없음)`);}
+function pastIdle(){const id=pastBusy?.id;pastBusy=null;if(id)for(const b of document.querySelectorAll(`[data-cvconvert="${CSS.escape(id)}"]`)){b.removeAttribute('aria-busy');b.style.minWidth='';b.textContent='변형';const f=b.closest('figure.past');f?.removeAttribute('data-busy');f?.querySelector('.past-busy')?.remove();}}
 async function convertPast(item){
-  if(convertingPast){status(`${convertingPast} 을(를) 바꾸는 중입니다. 끝나면 다시 눌러 주세요.`);return;}
+  if(convertingPast){status(`${convertingPast} 을(를) 바꾸는 중입니다. 끝나면 다시 눌러 주세요.`);for(const b of document.querySelectorAll('[data-cvconvert][aria-busy]'))b.animate?.([{scale:1},{scale:1.08},{scale:1}],{duration:260,easing:'cubic-bezier(.2,.9,.25,1.06)'});return;}
   if(data.questions.length>=500){status('문항은 500개까지 만들 수 있습니다.',true);return;}
-  convertingPast=item.title;status(`${item.title} 을(를) 편집 가능한 한글 문항으로 바꾸는 중… (AI 없음)`);
+  convertingPast=item.title;pastBusy={id:item.id,title:item.title,stage:''};pastStage('준비 중');
   try{
     const engine=await import('../convert/kice-engine.js?v=1019-convert'),drive=await import('../convert/es/drive-source.mjs');
-    engine.setPdfSource(name=>{const path=name===item.pdfFile?item.publicPath:null;if(!path)throw Error('원본 PDF 경로를 찾지 못했습니다.');return drive.downloadDriveFile(path);});
+    engine.setPdfSource(name=>{const path=name===item.pdfFile?item.publicPath:null;if(!path)throw Error('원본 PDF 경로를 찾지 못했습니다.');pastStage('원본 받는 중');return Promise.resolve(drive.downloadDriveFile(path)).then(r=>{pastStage('한글 문항으로 바꾸는 중');return r;});});
+    pastStage('원본 받는 중');
     const r=item.record||[];
     const source={id:item.id,subject:item.subject,title:item.title,page:item.page,box:item.box,pdfFile:item.pdfFile,publicPath:item.publicPath,no:String(item.no),
       ...(r.length?{form:r[0],struct:r[1],layout:r[2],choiceShape:r[3],choiceArrange:r[4]}:{})};
     const {question:q,diag}=await engine.convertKice(source,{number:String(data.questions.length+1)});
     q.references=[{target:'question',label:`원본 기출 · ${item.title}`.slice(0,300),quote:'',page:item.page}];
     q.workflow='draft';
+    pastStage('카드 여는 중');
     const ok=mutate(()=>{current=q;data.questions.push(q);const exam=['exam','card','desk'].includes(view.name)&&view.examId&&examById(data,view.examId);if(exam){addToExam(data,exam.id,q.id);renumberExam(data,exam.id);}});
     if(!ok)return;
     openCard(q.id);cardEditor.showHwp?.();
     const warn=(diag?.notes||[]).filter(n=>/못|확인|제외|원본 참고/.test(n));
     const done=`${item.title} → ${q.number}번 문항으로 가져왔습니다 · 원본은 근거로 연결${warn.length?' · 확인: '+warn[0]:''}`;
     status(done);setTimeout(()=>status(done),1500);// 자동 저장 표시가 덮지 않게 한 번 더
-  }catch(e){status(`${item.title} 변환 실패: ${e.message}`,true);}
-  finally{convertingPast=null;}
+  }catch(e){pastIdle();status(`${item.title} 변환 실패: ${e.message}`,true);}
+  finally{convertingPast=null;pastIdle();}
 }
 const newDialog=createNewQuestionDialog($('#new-dialog'),{onCreate:shape=>mutate(()=>{if(data.questions.length>=500)throw Error('문항은 500개까지 만들 수 있습니다.');current=questionFromShape(shape,String(data.questions.length+1));data.questions.push(current);activeTab='composition';const exam=['exam','card','desk'].includes(view.name)&&view.examId&&examById(data,view.examId);if(exam){addToExam(data,exam.id,current.id);renumberExam(data,exam.id);}})&&(show('card'),true)});
 $('#new').onclick=()=>newDialog.open();
@@ -550,7 +562,7 @@ const cardEditor=createCardEditor($('#card-view'),{
   choiceTable:()=>{sheetView='tables';show('desk');renderSheetView();},
   typeset:()=>{cardEditor.showHwp?.();},
   libraryPicks:()=>libraryPicks,
-  convertPast:item=>void convertPast(item),
+  convertPast:item=>void convertPast(item),pastBusy:()=>pastBusy,
   pickLibrary:kind=>{if(!embedded){status('5E 안에서 열어야 5E 라이브러리를 쓸 수 있습니다.',true);return;}window.parent.postMessage({channel:'5e-question-sheet',action:'library-pick',requestId:uid(),qid:current?.id,kind},location.origin);status('5E 라이브러리에서 고르세요 · 다 고르면 자동으로 돌아옵니다.');},
   libraryAction:(act,i)=>{const p=libraryPicks[i],q=current;if(!p||!q)return;const where=[p.source?.documentTitle||p.name,p.source?.pageNumber?p.source.pageNumber+'쪽':''].filter(Boolean).join(' ');
     if(act==='link'){mutate(()=>{q.references.push({target:'question',label:('5E 라이브러리 · '+where).slice(0,300),quote:(p.source?.title&&p.source.title!==p.source.documentTitle?p.source.title:'').slice(0,2000)});},{render:false});cardEditor.render();status(`${where}을(를) 이 문항의 근거로 연결했습니다.`);return;}

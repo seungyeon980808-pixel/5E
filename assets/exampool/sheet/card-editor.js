@@ -10,7 +10,7 @@ import {labelOf} from '../authoring/session.js';
 import {croppedPastImage} from './past-crop.js';
 
 import {F,MONTH,shortTitle,norm,splitWords,pastScore} from './past-search.js';
-import {E,NUM,COMMON,ICON,TABS,slotsOf,STRUCT_SHORT,shapeIco,CHEV,CHECK,bogiOf,isCombo,CHANNEL,store} from './card-shared.js';
+import {busyHtml,pastBusyHtml,E,NUM,COMMON,ICON,TABS,slotsOf,STRUCT_SHORT,shapeIco,CHEV,CHECK,bogiOf,isCombo,CHANNEL,store} from './card-shared.js';
 
 // 완성 조건: 발문·자료(그림/표가 모두 찬 자리)·보기(합답형)·선지·정답. 모두 차면 AI 검토를 요청할 수 있다.
 export function completeness(q){
@@ -299,7 +299,7 @@ export function createCardEditor(root,api){
     fillHead(searchHtml(f.tokens.length?'단어 더하기':'단어 + Enter',`<span class="lp-n" title="기출 ${total.toLocaleString()}문항 중">${list.length.toLocaleString()}문항</span>`),
       sel('subject',subjects,'과목')+sel('part',parts,'단원')+sel('year',years,'연도')+`<div class="lp-adv-foot"><span>6월·9월 모평, 수능</span><button type="button" class="mini" data-cvadvclear>모두 지우기</button></div>`,
       ['subject','part','year'].filter(k=>f[k]).length);
-    body.innerHTML=`<div class="past-list">${picksHtml()}${list.slice(0,40).map(i=>`<figure class="past">${thumb(i)}<figcaption><b title="${E([i.title,...i.parts,...i.tags.slice(0,3)].join(' · '))}">${E(i.short)}</b><span class="acts"><button type="button" class="mini" data-cvlink="${E(i.id)}">근거로 연결</button><button type="button" class="mini go-mini" data-cvconvert="${E(i.id)}" title="편집 가능한 한글 문항으로 바꿔 새 문항 카드로 엽니다(AI 없음)">변형</button></span></figcaption></figure>`).join('')}</div>`;
+    body.innerHTML=`<div class="past-list">${picksHtml()}${list.slice(0,40).map(i=>`<figure class="past"${api.pastBusy?.()?.id===i.id?' data-busy':''}>${thumb(i)}${api.pastBusy?.()?.id===i.id?pastBusyHtml(api.pastBusy().stage):''}<figcaption><b title="${E([i.title,...i.parts,...i.tags.slice(0,3)].join(' · '))}">${E(i.short)}</b><span class="acts"><button type="button" class="mini" data-cvlink="${E(i.id)}">근거로 연결</button>${(busy=>`<button type="button" class="mini go-mini" data-cvconvert="${E(i.id)}" title="편집 가능한 한글 문항으로 바꿔 새 문항 카드로 엽니다(AI 없음)"${busy?' aria-busy="true"':''}>${busy?busyHtml(busy.stage):'변형'}</button>`)(api.pastBusy?.()?.id===i.id&&api.pastBusy())}</span></figcaption></figure>`).join('')}</div>`;
     loadThumbs(body);refocus();reopenZoom();
   }
 

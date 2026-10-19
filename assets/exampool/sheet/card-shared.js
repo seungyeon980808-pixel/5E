@@ -35,4 +35,8 @@ const isCombo=q=>q.type==='합답형';
 const CHANNEL=/^\/preview(?:\/|$)/.test(location.pathname)?'5e.preview:':'';// 공개 프리뷰는 저장 이름을 분리
 const store={get(k,d){try{return JSON.parse(localStorage.getItem(CHANNEL+'exampool-card:'+k))??d;}catch{return d;}},set(k,v){try{localStorage.setItem(CHANNEL+'exampool-card:'+k,JSON.stringify(v));}catch{}}};
 
-export {E,NUM,COMMON,ICON,TABS,slotsOf,STRUCT_SHORT,shapeIco,CHEV,CHECK,bogiOf,isCombo,CHANNEL,store};
+// 오래 걸리는 단추의 진행 표시: 단추는 폭을 그대로 두고 고리만(5E 라이브러리 로딩 고리와 같은 모양),
+// 지금 단계 글은 그 기출 그림 위에 크게 덮어 보인다(단추 글이 길어져 카드 줄이 바뀌지 않게).
+const busyHtml=stage=>`<i class="busy-ring" aria-hidden="true"></i><span class="sr-only">${E(stage)}</span>`;
+const pastBusyHtml=stage=>`<div class="past-busy" role="status"><i class="busy-ring" aria-hidden="true"></i><span>${E(stage)}</span></div>`;
+export {busyHtml,pastBusyHtml,E,NUM,COMMON,ICON,TABS,slotsOf,STRUCT_SHORT,shapeIco,CHEV,CHECK,bogiOf,isCombo,CHANNEL,store};

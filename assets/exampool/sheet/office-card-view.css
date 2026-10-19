@@ -126,3 +126,15 @@ body.cv-dragging,body.cv-dragging *{user-select:none!important;-webkit-user-sele
 .past img{background:#fff}
 .past-text{margin:0;padding:10px 12px;font-size:12px;line-height:1.6;color:var(--ds-ink-2);background:var(--ds-raise);max-height:120px;overflow:hidden}
 .structure-lock{display:inline-flex;align-items:center;gap:var(--ds-space-1)}.structure-lock .lock-off,.structure-lock[aria-pressed=false] .lock-on{display:none}.structure-lock[aria-pressed=false] .lock-off{display:block}
+/* 오래 걸리는 단추의 진행 표시(「변형」 등): 5E 라이브러리 로딩 고리와 같은 모양·속도(800ms). */
+.busy-ring{display:inline-block;width:11px;height:11px;margin-right:5px;vertical-align:-1px;border:2px solid color-mix(in srgb,currentColor 22%,transparent);border-top-color:currentColor;border-radius:50%;animation:ep-spin 800ms linear infinite}
+@keyframes ep-spin{to{transform:rotate(360deg)}}
+button[aria-busy=true]{cursor:progress}
+button[aria-busy=true] .busy-ring{margin:0}
+.sr-only{position:absolute;width:1px;height:1px;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+/* 「변형」 진행 중인 기출 그림: 그림 위를 어둡게 덮고 가운데에 고리와 단계 글. 다크 네이비 바탕(#0d1117)·글자 #e6edf3. */
+figure.past{position:relative}
+.past-busy{position:absolute;left:0;right:0;top:0;aspect-ratio:1/1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;border-radius:var(--cv-ctl-radius,6px);background:color-mix(in srgb,#0d1117 74%,transparent);color:#e6edf3;font-size:var(--cv-text-body,14px);font-weight:600;animation:ep-backdrop-fade 180ms ease-out}
+.cv-left .past .past-busy{left:8px;right:8px;top:8px}
+.past-busy .busy-ring{width:22px;height:22px;margin:0;border-width:3px;border-color:color-mix(in srgb,#58a6ff 22%,transparent);border-top-color:#58a6ff}
+@media (prefers-reduced-motion:reduce){.busy-ring{animation-duration:2400ms}}
