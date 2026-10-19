@@ -34,7 +34,7 @@ const LEAD='<p style="margin:0;font-size:1pt;line-height:100%"> </p>';
 const normalized=text=>String(text).replace(/\s+/g,' ').trim();
 export function createTypesetter({host,status,paper,columns,save,download,onSave,onPlacement,onTextEdit,onDiverge,onSlot}){
   let textMap=null,syncTimer=0,placer=null,owners=null,bridge=null,starting=null,q=null,fingerprint='',baselineText='',baselineEquations='',baselineImages='',opening=0,loading=false,ready=false,pictureSettings,fitting=false,fitFrame=0,lastProfile,metricsCache,view,dirty=false,patching=false,updating=Promise.resolve(),measurer=null,changingProfile=Promise.resolve();
-  const message=(text,error=false)=>{status.textContent=text;status.dataset.error=String(error);};
+  const message=(text,error=false)=>{status.textContent=text;status.title=text;status.dataset.error=String(error);};// 카드 미리보기 칸에서는 한 줄로 줄이므로 전체 글은 풍선으로
   const document=()=>bridge.wasm.borrowDocumentHandle();
   const profile=()=>({paper:paper.value,columns:Number(columns.value)});
   const metricsOutput=host.parentElement.querySelector('#typeset-metrics');

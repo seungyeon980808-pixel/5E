@@ -70,17 +70,17 @@ export function createCardEditor(root,api){
     if(x.style==='대응표'){
       // 대응표 선지: 카드에서 바로 채운다(맨 윗줄은 열 제목, 아래 다섯 줄이 ①~⑤). 열은 1~6개.
       const t=x.choiceTable;
-      return `<div class="f-field"><label>선지 <em>대응표 · 맨 윗줄은 열 제목, 동그라미로 정답</em><span class="lay"><button type="button" class="link" data-cvct-col="-1" ${t.cols<=1?'disabled':''}>− 열</button><button type="button" class="link" data-cvct-col="1" ${t.cols>=6?'disabled':''}>+ 열</button></span></label>
+      return `<div class="f-field"><label title="대응표 · 맨 윗줄은 열 제목, 동그라미로 정답">선지<span class="lay"><button type="button" class="link" data-cvct-col="-1" ${t.cols<=1?'disabled':''}>− 열</button><button type="button" class="link" data-cvct-col="1" ${t.cols>=6?'disabled':''}>+ 열</button></span></label>
         <table class="cv-ctable"><thead><tr><th></th>${t.cells[0].map((c,j)=>`<th><input data-cvct="0:${j}" value="${E(c.value)}" placeholder="열 ${j+1}" aria-label="열 제목 ${j+1}"></th>`).join('')}</tr></thead>
         <tbody>${t.cells.slice(1).map((row,i)=>`<tr class="${x.answer===i?'on':''}"><th><label><input type="radio" name="cv-ans" data-cvans="${i}" ${x.answer===i?'checked':''} aria-label="${NUM[i]} 정답">${NUM[i]}</label></th>${row.map((c,j)=>`<td><input data-cvct="${i+1}:${j}" value="${E(c.value)}" aria-label="${NUM[i]} ${j+1}열"></td>`).join('')}</tr>`).join('')}</tbody></table></div>`;
     }
     if(isCombo(x)){
       const letters=(bogiOf(x)?.lines||[]).map(l=>l.label).filter(Boolean),pool=letters.length?letters:['ㄱ','ㄴ','ㄷ'];
-      return `<div class="f-field"><label>선지 <em>보기 ${pool.join('·')}을 눌러 조합을 만들고, 동그라미로 정답을 고릅니다</em><button type="button" class="link" data-cv="common-combos" style="margin-left:auto">자주 쓰는 조합으로 채우기</button></label>
+      return `<div class="f-field"><label title="보기 ${pool.join('·')}을 눌러 조합을 만들고, 동그라미로 정답을 고릅니다">선지<button type="button" class="link" data-cv="common-combos" style="margin-left:auto">자주 쓰는 조합으로 채우기</button></label>
         <div class="rows">${x.choices.map((c,i)=>{const on=new Set(c.text.split(/\s*,\s*/).filter(Boolean));return `<div class="combo-row${x.answer===i?' on':''}"><input type="radio" name="cv-ans" data-cvans="${i}" ${x.answer===i?'checked':''} aria-label="${NUM[i]} 정답"><span class="no">${NUM[i]}</span><div class="pills">${pool.map(l=>`<button type="button" data-cvcombo="${i}" data-letter="${E(l)}" aria-pressed="${on.has(l)}">${E(l)}</button>`).join('')}</div><span class="read">${E(c.text)||'—'}</span>${x.answer===i?'<span class="ans">정답</span>':''}</div>`;}).join('')}</div></div>`;
     }
     const lay=x.choiceLayout||'';
-    return `<div class="f-field"><label>선지 <em>값·식·낱말·문장을 한 줄씩 · 동그라미로 정답</em><span class="lay">${[['','자동'],['한 줄','한 줄'],['2열','2열'],['세로','세로']].map(([v,t])=>`<button type="button" class="link" data-cvlayout="${v}" aria-pressed="${lay===v}">${t}</button>`).join('')}</span></label>
+    return `<div class="f-field"><label title="값·식·낱말·문장을 한 줄씩 · 동그라미로 정답">선지<span class="lay">${[['','자동'],['한 줄','한 줄'],['2열','2열'],['세로','세로']].map(([v,t])=>`<button type="button" class="link" data-cvlayout="${v}" aria-pressed="${lay===v}">${t}</button>`).join('')}</span></label>
       <div class="rows">${x.choices.map((c,i)=>`<label class="ig choice-row${x.answer===i?' on':''}"><input type="radio" name="cv-ans" data-cvans="${i}" ${x.answer===i?'checked':''}><span>${NUM[i]}</span><input data-cvchoice="${i}" value="${E(c.text)}" placeholder="${NUM[i]} 선지"></label>`).join('')}</div></div>`;
   }
   function formHtml(x){
@@ -92,16 +92,16 @@ export function createCardEditor(root,api){
         <span class="sp"></span>
         <div class="stage" role="group" aria-label="문항 단계">${Object.entries(WORKFLOWS).map(([k,v])=>`<button type="button" data-cvstage="${k}" aria-pressed="${workflowOf(x)===k}"><i class="dot st-${k}"></i>${v}</button>`).join('')}</div></div>
       <form class="sheet-form" onsubmit="return false">
-        <section class="f-sec plan"><div class="f-sec-head"><h3>출제 설계</h3><span>인쇄되지 않는 정보</span></div>
+        <section class="f-sec plan"><div class="f-sec-head"><h3 title="인쇄되지 않는 정보">출제 설계</h3></div>
           <div class="f-row2"><div class="f-field"><label>성취기준</label><div class="pick">${x.standardCode?`<b>${E(x.standardCode)}</b>`:'<span class="ph">오른쪽 \'기준\'에서 골라 연결합니다</span>'}<button type="button" class="link" data-cv="open-standards">${x.standardCode?'바꾸기':'찾기'}</button></div></div>
             <div class="f-field"><label for="cv-intent">출제 의도</label><input id="cv-intent" data-cvf="intent" value="${E(x.intent)}" placeholder="평가할 개념과 학생이 할 일"></div></div></section>
-        <section class="f-sec"><div class="f-sec-head"><h3>문항 내용</h3><span>인쇄 순서대로 채웁니다</span></div>
-          <div class="f-field"><label for="cv-passage">지문 <em>자료 앞에 오는 설명</em></label>${passages.length>1?`<p class="hint">지문이 ${passages.length}개인 문항입니다. 첫 지문만 여기서 고치고, 나머지는 구성 시트에서 고칩니다.</p>`:''}<textarea id="cv-passage" data-cvf="passage" rows="2" placeholder="자료 앞에 오는 설명 글 (없으면 비워 둡니다)">${E(passages[0]?.text||'')}</textarea></div>
-          <div class="f-field"><label>자료 <em>그림은 5E에서 잘라 가져오고, 표는 칸 수를 정해 만듭니다</em></label>${slotsHtml(x)}</div>
-          ${steps?`<div class="f-field"><label>실험 과정 <em>(가)·(나)는 자동으로 붙습니다</em></label>${linesHtml(steps,'steps','과정을 입력하세요')}</div>`:''}
-          ${talk?`<div class="f-field"><label>대화 <em>이름 칸에 학생 이름, 오른쪽에 말</em></label>${linesHtml(talk,'dialogue','말을 입력하세요')}</div>`:''}
+        <section class="f-sec"><div class="f-sec-head"><h3 title="인쇄 순서대로 채웁니다">문항 내용</h3></div>
+          <div class="f-field"><label for="cv-passage" title="자료 앞에 오는 설명">지문</label>${passages.length>1?`<p class="hint">지문이 ${passages.length}개인 문항입니다. 첫 지문만 여기서 고치고, 나머지는 구성 시트에서 고칩니다.</p>`:''}<textarea id="cv-passage" data-cvf="passage" rows="2" placeholder="자료 앞에 오는 설명 글 (없으면 비워 둡니다)">${E(passages[0]?.text||'')}</textarea></div>
+          <div class="f-field"><label title="그림은 5E에서 잘라 가져오고, 표는 칸 수를 정해 만듭니다">자료</label>${slotsHtml(x)}</div>
+          ${steps?`<div class="f-field"><label title="(가)·(나)는 자동으로 붙습니다">실험 과정</label>${linesHtml(steps,'steps','과정을 입력하세요')}</div>`:''}
+          ${talk?`<div class="f-field"><label title="이름 칸에 학생 이름, 오른쪽에 말">대화</label>${linesHtml(talk,'dialogue','말을 입력하세요')}</div>`:''}
           <div class="f-field"><label for="cv-ask">발문</label><div class="with-tail"><textarea id="cv-ask" data-cvf="ask" rows="2" placeholder="학생에게 물을 문장">${E(x.ask)}</textarea><label class="toggle"><input type="checkbox" data-points3 ${x.points===3?'checked':''}> 3점</label></div></div>
-          ${isCombo(x)?`<div class="f-field"><label>보기 <em>ㄱ·ㄴ·ㄷ은 자동으로 붙습니다</em></label>${bogi?linesHtml(bogi,'bogi','보기 내용을 입력하세요'):'<button type="button" class="btn" data-cvline-add="bogi">+ 보기 만들기</button>'}</div>`:''}
+          ${isCombo(x)?`<div class="f-field"><label title="ㄱ·ㄴ·ㄷ은 자동으로 붙습니다">보기</label>${bogi?linesHtml(bogi,'bogi','보기 내용을 입력하세요'):'<button type="button" class="btn" data-cvline-add="bogi">+ 보기 만들기</button>'}</div>`:''}
           ${choicesHtml(x)}
           <details class="f-more"${store.get('more',false)?' open':''}><summary>해설 · 단원 · 출처 · 배점</summary>
             <div class="f-row3"><div class="f-field"><label>대단원</label><input data-cvf="unitLarge" value="${E(x.unitLarge||'')}"></div><div class="f-field"><label>중단원</label><input data-cvf="unitMiddle" value="${E(x.unitMiddle||'')}"></div><div class="f-field"><label>배점</label><input data-cvf="points" value="${E(x.points)}" inputmode="decimal"></div></div>
@@ -266,7 +266,7 @@ export function createCardEditor(root,api){
   function renderAi(){
     const body=root.querySelector('[data-cvbody="ai"]'),x=q();if(!body||!x)return;
     const log=x.reviews||[],typing=document.activeElement?.id==='cv-ai-input',draft=root.querySelector('#cv-ai-input')?.value||'',pending=api.aiPending?.(x);
-    body.innerHTML=`<div class="ai-scope"><b>${E(x.number||'')}번 문항</b>과 함께 설계·수정·검토합니다 · 변경안은 「적용」을 눌러야 문항에 들어갑니다</div>
+    body.innerHTML=`<div class="ai-scope" title="${E(x.number||'')}번 문항과 함께 설계·수정·검토합니다 · 변경안은 「적용」을 눌러야 문항에 들어갑니다"><b>${E(x.number||'')}번 문항</b>과 함께 설계·수정·검토합니다 · 변경안은 「적용」을 눌러야 문항에 들어갑니다</div>
       ${authoringStrip(x)}
       <div class="chat">${log.length?log.map((m,i)=>aiMessage(x,m,i)).join(''):'<p class="ai-empty">만들 문항을 말하거나(예: 두 물체의 운동을 비교하는 수능형 문항, 속도–시간 그래프, 계산보다 조건 해석) 「검토해 줘」를 보내세요.</p>'}${pending?`<div class="msg ai pending">${E(pending.text||'AI가 답을 쓰는 중…')} <span class="au-elapsed" data-since="${E(pending.since||'')}"></span> <button type="button" class="mini" data-cv="ai-cancel">취소</button></div>`:''}</div>
       <div class="quick">${['새 문항 초안','검토해 줘','발문 다듬기','오답 선지 만들기'].map(t=>`<button type="button" class="mini" data-ai-quick="${t}"${pending?' disabled':''}>${t}</button>`).join('')}</div>
@@ -342,7 +342,9 @@ export function createCardEditor(root,api){
   // 칸 경계 끌기: 왼쪽 경계는 라이브러리 폭, 오른쪽 경계는 미리보기·AI 폭. 두 번 누르면 기본 폭.
   root.addEventListener('pointerdown',e=>{const sp=e.target.closest('.cv-split');if(!sp)return;e.preventDefault();sp.setPointerCapture(e.pointerId);sp.classList.add('drag');document.body.classList.add('cv-dragging');
     const k=sp.dataset.cvsplit,rect=root.getBoundingClientRect(),min=k==='left'?240:300,max=Math.max(min,rect.width-440-(k==='left'?(panels.rightOpen?root.querySelector('.cv-right').offsetWidth:0):(panels.lib?root.querySelector('.cv-left').offsetWidth:0)));
-    const move=ev=>{const w=Math.round(Math.max(min,Math.min(max,k==='left'?ev.clientX-rect.left:rect.right-ev.clientX)));root.style.setProperty(k==='left'?'--cv-lw':'--cv-rw',w+'px');fitPaper();};
+    // 잡은 곳에서 움직인 만큼만 폭을 바꾼다(바깥 여백이 있어도 잡는 순간 칸이 튀지 않음).
+    const x0=e.clientX,w0=root.querySelector(k==='left'?'.cv-left':'.cv-right').getBoundingClientRect().width;
+    const move=ev=>{const w=Math.round(Math.max(min,Math.min(max,k==='left'?w0+ev.clientX-x0:w0-(ev.clientX-x0))));root.style.setProperty(k==='left'?'--cv-lw':'--cv-rw',w+'px');fitPaper();};
     const up=ev=>{sp.classList.remove('drag');document.body.classList.remove('cv-dragging');sp.removeEventListener('pointermove',move);sp.removeEventListener('pointerup',up);store.set(k==='left'?'lw':'rw',parseInt(getComputedStyle(root).getPropertyValue(k==='left'?'--cv-lw':'--cv-rw')));fitPaper();fitPage();};
     sp.addEventListener('pointermove',move);sp.addEventListener('pointerup',up);});
   root.addEventListener('dblclick',e=>{const sp=e.target.closest('.cv-split');if(!sp)return;store.set(sp.dataset.cvsplit==='left'?'lw':'rw',null);render();});
