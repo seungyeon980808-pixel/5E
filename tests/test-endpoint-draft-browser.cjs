@@ -10,7 +10,7 @@ const endpointTools = [
   { type: "chargefield", query: "균일장" },
   { type: "fieldlines", query: "자기력선" },
   { type: "standingwave", query: "정상파(줄)" },
-  { type: "parabola", query: "포물선" },
+  { type: "parabola", query: "포물선 궤적" },
   { type: "groundarc", query: "평면 위 원호" },
   { type: "brace", query: "중괄호" },
   { type: "chromosome", query: "염색체" },

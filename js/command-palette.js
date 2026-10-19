@@ -172,8 +172,12 @@ export function initCommandPalette() {
       // def.hidden=true는 좌측 팔레트에서 의도적으로 숨긴 항목(예: graph) — 검색에도 노출하지 않는다.
       .filter(([, def]) => !def.hidden && [def.label, ...(def.keywords || [])]
         .some((value) => String(value).toLocaleLowerCase().includes(query)))
-      .map(([id, def]) => ({ kind: "template", id, def }))
-      .sort((a, b) => rank(a.def.category) - rank(b.def.category));
+      .map(([id, def]) => ({ kind: "template", id, def }));
+    // 이름이 검색어와 정확히 같은 오브젝트를 맨 위에(search.js와 같은 규칙)
+    const exact = (def) => String(def.label).toLocaleLowerCase() === query;
+    const exactCategories = new Set(objMatches.filter(({ def }) => exact(def)).map(({ def }) => def.category));
+    const groupRank = (c) => exactCategories.has(c) ? -1 : rank(c);
+    objMatches.sort((a, b) => groupRank(a.def.category) - groupRank(b.def.category) || exact(b.def) - exact(a.def));
     for (const it of listPersonalItems()) {
       if (![it.name, it.category].some((v) => String(v).toLocaleLowerCase().includes(query))) continue;
       objMatches.push({ kind: "personal", id: it.id,
@@ -229,7 +233,7 @@ export function initCommandPalette() {
 
     // ----- 오브젝트 그룹 (search.js와 동일한 카테고리 정렬) -----
     const objRows = matches.filter((m) => m.kind !== "command");
-    const categories = [...new Set([...CATEGORY_ORDER, ...objRows.map((m) => m.def.category)])];
+    const categories = [...new Set([...exactCategories, ...CATEGORY_ORDER, ...objRows.map((m) => m.def.category)])];
     for (const category of categories) {
       const group = objRows.filter((m) => m.def.category === category);
       if (!group.length) continue;

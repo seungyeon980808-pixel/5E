@@ -74,8 +74,12 @@ export function initObjectSearch() {
     matches = Object.entries(TEMPLATES)
       .filter(([, def]) => [def.label, ...(def.keywords || [])]
         .some((value) => String(value).toLocaleLowerCase().includes(query)))
-      .map(([id, def]) => ({ id, def }))
-      .sort((a, b) => rank(a.def.category) - rank(b.def.category));
+      .map(([id, def]) => ({ id, def }));
+    // 이름이 검색어와 정확히 같은 것을 맨 위에(그 묶음을 먼저, 묶음 안에서도 먼저). 예: '용수철' → 용수철, 그다음 용수철 저울
+    const exact = (def) => String(def.label).toLocaleLowerCase() === query;
+    const exactCategories = new Set(matches.filter(({ def }) => exact(def)).map(({ def }) => def.category));
+    const groupRank = (c) => exactCategories.has(c) ? -1 : rank(c);
+    matches.sort((a, b) => groupRank(a.def.category) - groupRank(b.def.category) || exact(b.def) - exact(a.def));
     for (const it of listPersonalItems()) {
       if (![it.name, it.category].some((v) => String(v).toLocaleLowerCase().includes(query))) continue;
       matches.push({ id: it.id, personal: true,
@@ -92,7 +96,7 @@ export function initObjectSearch() {
       return;
     }
 
-    const categories = [...CATEGORY_ORDER, ...new Set(matches.map(({ def }) => def.category))];
+    const categories = [...exactCategories, ...CATEGORY_ORDER, ...new Set(matches.map(({ def }) => def.category))];
     for (const category of [...new Set(categories)]) {
       const group = matches.filter(({ def }) => def.category === category);
       if (!group.length) continue;
