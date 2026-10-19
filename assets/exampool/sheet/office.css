@@ -135,6 +135,13 @@ dialog{border:0;border-radius:var(--ds-radius-lg);background:var(--ds-doc);color
 dialog::backdrop{background:#10141a66}
 /* 창이 뜨면 뒤 화면을 흐린다(5E 구성 편집기와 같은 8px). WebKit은 ::backdrop의 backdrop-filter를 그리지 않아 화면 쪽에 filter를 건다. */
 body:has(>dialog:modal)>:not(dialog){filter:blur(8px)}
+/* 창이 뜰 때 5E 창과 같은 모션(css/style.css modal-pop: 260ms, .94 → 1.012 → 1)으로 커지고, 뒤 흐림·어둡게는 180ms에 걸쳐 들어온다. */
+@keyframes ep-modal-pop{0%{opacity:0;scale:.94}62%{opacity:1;scale:1.012}100%{opacity:1;scale:1}}
+@keyframes ep-backdrop-fade{from{opacity:0}to{opacity:1}}
+dialog:modal{animation:ep-modal-pop 260ms cubic-bezier(.2,.9,.25,1.06)}
+dialog:modal::backdrop{animation:ep-backdrop-fade 180ms ease-out}
+body>:not(dialog){transition:filter 180ms ease-out}
+@media (prefers-reduced-motion:reduce){dialog:modal,dialog:modal::backdrop{animation:none}body>:not(dialog){transition:none}}
 .dialog-head h2{font-size:var(--ds-text-title);font-weight:var(--ds-weight-strong)}
 .add-options button,.doc-list,.standard-item,#delete-confirm{height:auto;min-height:var(--ds-h-control)}
 
