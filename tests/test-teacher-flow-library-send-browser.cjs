@@ -40,7 +40,7 @@ flow.runEngines('library-send', {
     // 문항 카드를 열면 기출 탭 목록 맨 위에 가져온 자료가 있다.
     await sheet.click('#side-new'); await sheet.click('#new-dialog .nq-opt[data-step="form"][data-k="combo"]'); await sheet.click('#new-dialog .nq-opt[data-step="struct"][data-k="experiment"]'); await sheet.click('#new-dialog [data-nq="go"]');
     await sheet.waitForSelector('#card-view:not([hidden]) .cv-writer');
-    await sheet.click('#card-view [data-cvtab="past"]');
+    await sheet.selectOption('#card-view [data-cvscope]','past');
     await sheet.waitForSelector('#card-view .past-list figure.past.pick', { timeout: 30_000 });
     assert.equal(await sheet.evaluate(() => document.querySelector('#card-view .past-list').firstElementChild.matches('figure.past.pick')), true, '보낸 그림이 첫 카드');
     await sheet.click('#card-view figure.past.pick [data-cvpick-slot]');

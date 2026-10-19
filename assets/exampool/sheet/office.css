@@ -572,6 +572,40 @@ button.q-status:hover{background:var(--ds-hover)}
 .cv-left .past .mini{height:26px;padding:0 6px;font-size:var(--cv-text-small,12.5px);border-radius:var(--cv-ctl-radius,6px)}
 /* 가져온 자료: 제목 한 줄 · 단추(근거로 연결·그림 칸에 넣기)는 다음 줄 */
 .cv-left .past.pick figcaption{flex-wrap:wrap}.cv-left .past.pick figcaption b{flex-basis:100%}.cv-left .past.pick figcaption .acts{margin-left:0}
+/* 머리 한 줄(시안 library-one-row.html): [검색 범위 ▾][검색창][상세검색][5E 라이브러리][근거 N] — 높이 44, 가운데·오른쪽 머리 줄과 일직선. 조작 높이 30. */
+.lp-one{flex:none;display:flex;align-items:center;gap:6px;height:var(--cv-head-h,44px);padding:0 8px;border-bottom:1px solid var(--ds-line)}
+.lp-one .lp-scope{flex:none;max-width:132px;height:30px;padding:0 22px 0 8px;border:0;border-radius:var(--cv-ctl-radius,6px);background:transparent url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23b1bac4' stroke-width='1.5' stroke-linecap='round'%3E%3Cpath d='m7 10 5 5 5-5'/%3E%3C/svg%3E") no-repeat right 4px center/16px;color:var(--ds-ink);font-size:var(--cv-text-small,12.5px);font-weight:600;-webkit-appearance:none;appearance:none;cursor:pointer;text-overflow:ellipsis}
+.lp-one .lp-scope:hover{background-color:var(--ds-hover)}
+.lp-one .lp-slot{flex:1;min-width:0;display:flex}
+.lp-one .lp-search{flex:1;min-width:0;height:30px;border-radius:var(--cv-ctl-radius,6px);font-size:var(--cv-text-small,12.5px)}
+.lp-one .lp-search input{flex:1 1 24px;min-width:24px}.lp-one .lp-search .lp-n{flex:none}
+.lp-one .lp-search .lp-token{height:20px;padding:0 4px 0 7px;gap:2px;font-size:12px;border-radius:10px}
+.lp-adv,.lp-one .lp-refs{flex:none;display:inline-flex;align-items:center;gap:4px;height:30px;margin:0;padding:0 8px;border:0;border-radius:var(--cv-ctl-radius,6px);background:transparent;color:var(--ds-ink-2);font-size:var(--cv-text-small,12.5px);white-space:nowrap;cursor:pointer}
+.lp-adv:hover,.lp-adv[aria-expanded=true],.lp-one .lp-refs:hover{background:var(--ds-hover);color:var(--ds-ink)}
+.lp-adv .ico,.lp-one .lp-refs .ico{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round}
+.lp-adv i{font-style:normal;min-width:16px;height:16px;padding:0 4px;border-radius:8px;background:var(--ds-selected);color:var(--ds-ink);font-size:11px;line-height:16px;text-align:center}
+.lp-adv i[hidden]{display:none}
+.lp-adv-pop{position:absolute;z-index:6;top:calc(var(--cv-head-h,44px) + 4px);right:44px;width:260px;display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:var(--cv-sec-radius,10px);background:var(--ds-raise);box-shadow:0 0 0 1px var(--ds-line),0 8px 24px rgba(0,0,0,.35)}
+.lp-adv-pop[hidden]{display:none}
+.lp-adv-pop label{display:grid;grid-template-columns:44px minmax(0,1fr);align-items:center;gap:8px;font-size:var(--cv-text-meta,11px);color:var(--ds-ink-3)}
+.lp-adv-pop select{min-width:0;height:30px;border-radius:var(--cv-ctl-radius,6px);border:1px solid var(--ds-line);background:var(--ds-field);color:var(--ds-ink-2);padding:0 6px;font-size:var(--cv-text-small,12.5px)}
+.lp-adv-foot{display:flex;justify-content:space-between;align-items:center;padding-top:6px;border-top:1px solid var(--ds-line);font-size:var(--cv-text-meta,11px);color:var(--ds-ink-3)}
+.lp-adv-note{margin:0;font-size:var(--cv-text-meta,11px);color:var(--ds-ink-3);line-height:1.6}
+.cv-left .past-list{padding-top:12px}
+.lp-docked #sources[data-tab] .source-controls{display:none}
+/* 더블클릭 크게 보기: 라이브러리 칸(머리 줄 아래)을 덮는다 */
+.lp-zoom{position:absolute;z-index:7;left:0;right:0;bottom:0;top:var(--cv-head-h,44px);display:flex;flex-direction:column;gap:8px;padding:10px 12px 12px;background:var(--ds-panel)}
+.lp-zoom-head,.lp-zoom-foot{flex:none;display:flex;align-items:center;gap:6px;min-width:0}
+.lp-zoom-head b{color:var(--ds-ink);font-size:var(--cv-text-body,14px);white-space:nowrap}
+.lp-zoom-head .meta{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ds-ink-3);font-size:var(--cv-text-meta,11px)}
+.lp-zoom-head .sp{flex:1}.lp-zoom-head .pos{color:var(--ds-ink-3);font-size:var(--cv-text-meta,11px);font-variant-numeric:tabular-nums}
+.lp-zoom-head .mini{width:28px;height:28px;padding:0;justify-content:center}.lp-zoom-head .mini .ico{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.5;stroke-linecap:round}
+.lp-zoom-head .mini:disabled{opacity:.35}
+.lp-zoom-pic{flex:1;min-height:0;overflow:auto;border-radius:var(--cv-ctl-radius,6px);background:#fff}
+.lp-zoom-pic img{display:block;width:100%;height:auto}
+.lp-zoom-foot{justify-content:flex-end}.lp-zoom-foot .mini{height:28px;padding:0 10px;font-size:var(--cv-text-small,12.5px)}
+.lp-zoom-foot .go-mini{background:var(--go-bg,#152137);color:var(--ds-ink,#e6edf3);box-shadow:inset 0 0 0 1px var(--go-line,#6ba4f8)}
+.cv-left .past{cursor:zoom-in}.cv-left .past button{cursor:pointer}
 /* 자료(PDF): 위 한 줄(자료 고르기·파일 열기·원본) · 쪽은 남은 높이에 통째로 · 아래 한 줄(쪽 넘김·근거 문장·근거로 연결). 상태 문장은 아래 상태 막대로. */
 .lp-docked #sources[data-tab=references] .source-controls{display:none}
 .lp-docked #sources[data-tab=references] #source-content{flex:1;min-height:0;display:flex;flex-direction:column;gap:10px;padding:12px}

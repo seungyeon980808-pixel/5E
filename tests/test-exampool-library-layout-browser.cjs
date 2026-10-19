@@ -39,22 +39,33 @@ h.withServer(async origin => {
       await sheet.click('#side-new');await sheet.click('#new-dialog .nq-opt[data-step="form"][data-k="combo"]');await sheet.click('#new-dialog .nq-opt[data-step="struct"][data-k="experiment"]');await sheet.click('#new-dialog [data-nq="go"]');
       await sheet.waitForSelector('#card-view:not([hidden]) .cv-writer');
 
-      // 1. 탭 줄이 머리 줄 — 「라이브러리 · 읽고 근거로 연결」 줄·안내 상자·접기 줄은 없다.
-      await sheet.click('#card-view [data-cvtab="past"]');
+      // 1. 머리 한 줄(시안 library-one-row.html): [검색 범위 ▾][검색창][상세검색][5E 라이브러리][근거 N] — 높이 44, 칸 맨 위, 가운데 머리 줄과 같은 줄.
+      await sheet.selectOption('#card-view [data-cvscope]','past');
       await sheet.waitForSelector('#card-view .past-list figure.past',{timeout:30000});
-      const head=await sheet.evaluate(()=>{const lib=document.querySelector('#card-view .cv-left'),tabs=lib.querySelector('.lp-tabs');
-        return {ph:!!lib.querySelector('.cv-ph'),guide:!!lib.querySelector('.lib5e,.lib-builtin'),tabsH:Math.round(tabs.getBoundingClientRect().height),tabsTop:Math.round(tabs.getBoundingClientRect().top-lib.getBoundingClientRect().top),
-          names:[...tabs.querySelectorAll('button')].map(b=>b.textContent.trim()),btnH:[...tabs.querySelectorAll('button')].map(b=>Math.round(b.getBoundingClientRect().height))};});
-      assert.equal(head.ph,false,'the left pane has no separate title row');assert.equal(head.guide,false,'the guide box and the fold row are gone');
-      assert.equal(head.tabsH,44,'the tab row is the 44px head row');assert.equal(head.tabsTop,0,'the tab row is at the top of the pane');
-      assert.deepEqual(head.names.slice(0,4),['기출','교과서','기준','자료']);assert.match(head.names[4],/^근거 \d+$/,'the evidence count sits at the right end of the tab row');
-      assert.ok(head.btnH.every(v=>v===30),'tab buttons are 30px: '+head.btnH);
-
-      // 2. 도구는 한 줄: 검색·과목·단원·연도·5E 라이브러리, 모두 30px이고 윗선이 같다.
-      const tools=await sheet.evaluate(()=>{const row=document.querySelector('#card-view .lp-tools .lp-row');return [...row.children].map(n=>{const r=n.getBoundingClientRect();return {k:n.matches('.lp-search')?'search':n.tagName==='SELECT'?n.getAttribute('aria-label'):n.dataset.cvlib?'lib':n.className,top:Math.round(r.top),h:Math.round(r.height)};});});
-      assert.deepEqual(tools.map(t=>t.k),['search','과목','단원','연도','lib'],'one tool row in this order');
-      assert.ok(tools.every(t=>t.h===30)&&new Set(tools.map(t=>t.top)).size===1,'all tools are 30px on one line: '+JSON.stringify(tools));
+      const head=await sheet.evaluate(()=>{const lib=document.querySelector('#card-view .cv-left'),row=lib.querySelector('.lp-one'),r=row.getBoundingClientRect(),bar=document.querySelector('#card-view .cv-center .cv-bar').getBoundingClientRect();
+        return {old:!!lib.querySelector('.cv-ph,.lp-tabs,.lp-tools,.lib5e,.lib-builtin'),h:Math.round(r.height),top:Math.round(r.top-lib.getBoundingClientRect().top),barTop:Math.round(bar.top-r.top),
+          kids:[...row.children].map(n=>{const k=n.matches('.lp-slot')?n.firstElementChild:n,b=k.getBoundingClientRect();return {k:n.matches('select')?'scope':n.matches('.lp-slot')?'search':n.dataset.cvadv!==undefined?'adv':n.dataset.cvlib?'lib':n.dataset.cvlinked!==undefined?'refs':n.className,top:Math.round(b.top),h:Math.round(b.height)};}),
+          scopes:[...row.querySelectorAll('[data-cvscope] option')].map(o=>o.textContent)};});
+      assert.equal(head.old,false,'no title row, tab row, second tool row or guide box');
+      assert.equal(head.h,44,'one 44px head row');assert.equal(head.top,0,'at the top of the pane');assert.equal(head.barTop,0,'on the same line as the card head row');
+      assert.deepEqual(head.kids.map(k=>k.k),['scope','search','adv','lib','refs'],'scope · search · detail search · library · evidence');
+      assert.ok(head.kids.every(k=>k.h===30)&&new Set(head.kids.map(k=>k.top)).size===1,'all 30px on one line: '+JSON.stringify(head.kids));
+      assert.deepEqual(head.scopes,['기출문제','교과서','성취기준·교육과정','자료']);
       assert.equal(await sheet.locator('#card-view .lp-pick').getAttribute('aria-label'),'5E 라이브러리에서 고르기','the library icon keeps its name');
+
+      // 2. 상세검색: 과목·단원·연도는 단추 아래 작은 창에서. 고른 개수는 단추 숫자, 바깥을 누르면 닫힘.
+      await sheet.click('#card-view [data-cvadv]');
+      assert.equal(await sheet.locator('#card-view .lp-adv-pop').isVisible(),true);
+      assert.deepEqual(await sheet.locator('#card-view .lp-adv-pop select').evaluateAll(l=>l.map(s=>s.getAttribute('aria-label'))),['과목','단원','연도']);
+      const allPast=Number((await sheet.locator('#card-view .lp-search .lp-n').textContent()).replace(/[^0-9]/g,''));
+      await sheet.selectOption('#card-view .lp-adv-pop [data-cvpast="subject"]','물리학Ⅰ');
+      await sheet.waitForFunction(()=>document.querySelector('#card-view [data-cvslot="advn"]').textContent==='1');
+      assert.equal(await sheet.locator('#card-view .lp-adv-pop').isVisible(),true,'stays open while choosing');
+      assert.ok(Number((await sheet.locator('#card-view .lp-search .lp-n').textContent()).replace(/[^0-9]/g,''))<allPast,'subject narrows the list');
+      await sheet.click('#card-view .lp-adv-pop [data-cvadvclear]');await sheet.waitForFunction(()=>document.querySelector('#card-view [data-cvslot="advn"]').hidden);
+      await sheet.click('#card-view .cv-center',{position:{x:200,y:300}});
+      assert.equal(await sheet.locator('#card-view .lp-adv-pop').isVisible(),false,'closes on outside click');
+      await sheet.waitForSelector('#card-view .past-list figure.past',{timeout:30000});
 
       // 3. 기출 문항 카드는 5E 라이브러리 「문항」 탭 카드 모양으로 한 줄에 2개(시안 library-two-col.html 안 C):
       //    두 칸 폭이 같고 윗선이 같으며, 그림 칸은 정사각(그림은 칸 폭에 맞춰 위에 붙고, 긴 문항은 아래만 잘림), 같은 줄 제목 줄이 맞고, 한 화면에 4개 이상 온전히 보이고 줄 단위로 멈춘다.
@@ -123,6 +134,14 @@ h.withServer(async origin => {
       }
       while(await sheet.locator('#card-view .lp-token').count())await sheet.click('#card-view .lp-token');
 
+      // 3e. 문항 더블클릭 → 라이브러리 칸 안(머리 줄 아래)에서 크게 보기, ← → 넘기기, Esc 닫기.
+      await sheet.dblclick('#card-view .past-list figure.past:nth-child(2) .past-pic');
+      const zoom=await sheet.evaluate(()=>{const z=document.querySelector('#card-view .lp-zoom'),l=document.querySelector('#card-view .cv-left').getBoundingClientRect(),r=z.getBoundingClientRect();
+        return {inLib:r.left>=l.left-0.5&&r.right<=l.right+0.5&&r.bottom<=l.bottom+0.5,top:Math.round(r.top-l.top),pos:z.querySelector('.pos').textContent,acts:z.querySelectorAll('.lp-zoom-foot [data-cvlink],.lp-zoom-foot [data-cvconvert]').length};});
+      assert.ok(zoom.inLib,'the zoom stays inside the library pane');assert.equal(zoom.top,44,'below the head row');assert.match(zoom.pos,/^2 \/ \d+$/);assert.equal(zoom.acts,2,'link and convert are available in the zoom');
+      await page.keyboard.press('ArrowRight');assert.match(await sheet.locator('#card-view .lp-zoom .pos').textContent(),/^3 \//);
+      await page.keyboard.press('Escape');assert.equal(await sheet.locator('#card-view .lp-zoom').count(),0);
+
       // 4. 「근거 N」은 겹쳐 펼쳐진다(목록 높이는 그대로).
       const listH=await sheet.evaluate(()=>document.querySelector('#card-view .past-list').clientHeight);
       await sheet.click('#card-view [data-cvlinked]');
@@ -131,14 +150,19 @@ h.withServer(async origin => {
       await sheet.click('#card-view [data-cvlinked]');assert.equal(await sheet.locator('#card-view .lp-linked').isVisible(),false);
 
       // 5. 교과서 탭도 같은 틀(도구 한 줄 + 5E 라이브러리 단추).
-      await sheet.click('#card-view [data-cvtab="textbooks"]');
-      assert.equal(await sheet.locator('#card-view [data-cvbody="past"] .lp-tools [data-cvlib="textbook"]').count(),1);
+      await sheet.selectOption('#card-view [data-cvscope]','textbooks');
+      await sheet.waitForSelector('#card-view .past-list figure.book',{timeout:30000});
+      assert.equal(await sheet.locator('#card-view .lp-one [data-cvlib="textbook"]').count(),1);
+      assert.equal(await sheet.locator('#card-view figure.book b').first().textContent(),'교과서_중2 1쪽','5E shared textbook pages are listed');
+      await sheet.fill('#card-view [data-cvpast="query"]','120');await sheet.press('#card-view [data-cvpast="query"]','Enter');
+      await sheet.waitForFunction(()=>document.querySelector('#card-view figure.book b')?.textContent==='교과서_중2 120쪽');
+      await sheet.fill('#card-view [data-cvpast="query"]','');await sheet.press('#card-view [data-cvpast="query"]','Enter');
       await page.screenshot({path:path.join(evidence,`${engineName}-past.png`)});
 
       // 6. 자료 PDF: 한 쪽이 통째로 보이고, 상태 문장은 아래 상태 막대로.
-      await sheet.click('#card-view [data-cvtab="references"]');
+      await sheet.selectOption('#card-view [data-cvscope]','references');
       await sheet.waitForSelector('#card-view #sources #add-doc');
-      assert.equal(await sheet.locator('#card-view #sources .source-controls').isVisible(),false,'the document search row is folded into the document picker');
+      assert.equal(await sheet.locator('#card-view #sources .source-controls').isVisible(),false,'the document search moves to the head row');
       await sheet.evaluate(()=>{window.__statusSeen=[];new MutationObserver(()=>window.__statusSeen.push(document.querySelector('#status').textContent)).observe(document.querySelector('#status'),{childList:true,characterData:true,subtree:true});});
       await sheet.setInputFiles('#source-file',pdfPath);
       await sheet.waitForSelector('#card-view #doc-view img',{timeout:60000});
