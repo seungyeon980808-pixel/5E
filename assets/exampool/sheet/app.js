@@ -40,10 +40,13 @@ function checkpoint(key=''){future=[];if(key&&editKey===key)return;history.push(
 function remember(){
   try{validate(data);}catch(e){status(e.message,true);return;}
   const stamp=++saveStamp;status('저장 중…');saveQueue=saveQueue.catch(()=>{}).then(()=>new Promise((resolve,reject)=>{
-    if(stamp!==saveStamp){resolve();return;}const snapshot=clone(data);
+    if(stamp!==saveStamp){resolve();return;}
     if(!database||saveBlocked){reject(Error('자동 저장을 사용할 수 없습니다. 엑셀로 내려받아 보관하세요.'));return;}
-    const tx=database.transaction('state','readwrite'),store=tx.objectStore('state'),r=store.get('draft');let failure;
-    r.onsuccess=()=>{if((r.result?._revision||0)!==revision){failure=Error('다른 창에서 수정했습니다. 이 창의 입력은 엑셀로 내려받아 보관하고 다시 열어주세요.');saveBlocked=true;tx.abort();return;}store.put({...snapshot,_revision:revision+1},'draft');};
+    // 다른 창 저장 확인은 작은 판 번호('rev')만 읽는다(예전엔 저장마다 문항 전체(그림 포함 수십 MB)를 읽어 풀었다). 'rev'가 없는 예전 저장은 문항에서 읽는다.
+    // 넣을 때 복제하지 않고 지금 데이터를 바로 넣는다(put이 그 자리에서 복사한다).
+    const tx=database.transaction('state','readwrite'),store=tx.objectStore('state'),r=store.get('rev');let failure;
+    const write=stored=>{if((stored||0)!==revision){failure=Error('다른 창에서 수정했습니다. 이 창의 입력은 엑셀로 내려받아 보관하고 다시 열어주세요.');saveBlocked=true;tx.abort();return;}store.put({...data,_revision:revision+1},'draft');store.put(revision+1,'rev');};
+    r.onsuccess=()=>{if(r.result!==undefined){write(r.result);return;}const d=store.get('draft');d.onsuccess=()=>write(d.result?._revision);};
     tx.oncomplete=()=>{revision++;resolve();};tx.onerror=tx.onabort=()=>reject(failure||tx.error||Error('저장 공간이 부족합니다. 엑셀로 내려받아 보관하세요.'));
   }));void saveQueue.then(()=>{if(stamp===saveStamp)status('저장됨 · '+new Date().toLocaleTimeString('ko-KR',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit'}));}).catch(e=>status(e.message,true));
 }

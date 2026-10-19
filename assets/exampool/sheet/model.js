@@ -111,10 +111,24 @@ export function fromLegacy(v) {
 }
 function normalizeReferences(q){for(const ref of q.references){const choice=ref.target.match(/^choice-([0-4])$/),bogi=ref.target.match(/^bogi-([0-2])$/);if(choice)ref.target=q.choices[Number(choice[1])].id;if(bogi)ref.target=q.blocks.find(b=>b.kind==='bogi')?.lines[Number(bogi[1])]?.id||'question';if(ref.target==='bogi')ref.target=q.blocks.find(b=>b.kind==='bogi')?.id||'question';if(ref.target==='passage')ref.target=q.blocks.find(b=>b.kind==='text')?.id||'question';}}
 export function targetDisplay(q,target){if(target==='question'||target==='ask')return '문항';const b=q.blocks.find(b=>b.id===target);if(b)return b.label;for(const b of q.blocks){const l=b.lines?.find(l=>l.id===target);if(l)return b.label+' '+l.label;}const at=q.choices.findIndex(c=>c.id===target);return at>=0?'선지 '+'①②③④⑤'[at]:'문항';}
+// 그림 data URL 형식 검사는 그림마다 한 번만(같은 그림 객체·같은 data면 통과로 기억). 키 입력마다 문항 전체를 검사하는데,
+// 그림 15개(약 18MB)면 이 정규식만 키 하나에 100ms 넘게 걸려 카드 입력이 버벅였다.
+const checkedImages=new WeakMap();
+// JSON.stringify(data).length와 같은 값을 문자열을 만들지 않고 센다(키마다 18MB 문자열을 새로 만들던 것).
+// 긴 글(4096자 넘음)은 그림·조판 base64라 이스케이프할 글자가 없으므로 길이+2로 센다.
+export function jsonSize(v){
+  if(v===null)return 4;const t=typeof v;
+  if(t==='string')return v.length>4096?v.length+2:JSON.stringify(v).length;
+  if(t==='number')return Number.isFinite(v)?String(v).length:4;if(t==='boolean')return v?4:5;
+  if(t!=='object')return 0;if(typeof v.toJSON==='function')return jsonSize(v.toJSON());
+  if(Array.isArray(v)){let n=2+Math.max(0,v.length-1);for(const x of v){const k=typeof x;n+=x===undefined||k==='function'||k==='symbol'?4:jsonSize(x);}return n;}
+  let n=2,first=true;for(const key of Object.keys(v)){const x=v[key],k=typeof x;if(x===undefined||k==='function'||k==='symbol')continue;n+=(first?0:1)+JSON.stringify(key).length+1+jsonSize(x);first=false;}return n;
+}
 export function validate(data) {
   const str=(v,max=32767)=>typeof v==='string'&&v.length<=max;
   const id=v=>typeof v==='string'&&/^[a-zA-Z0-9_-]{1,80}$/.test(v);
-  const image=f=>!f||str(f.name,240)&&str(f.data,8*1024*1024)&&/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/]*={0,2}$/.test(f.data);
+  const image=f=>{if(!f)return true;if(!str(f.name,240)||!str(f.data,8*1024*1024))return false;if(checkedImages.get(f)===f.data)return true;
+    const ok=/^data:image\/(png|jpeg|webp);base64,[A-Za-z0-9+/]*={0,2}$/.test(f.data);if(ok)checkedImages.set(f,f.data);return ok;};
   const table=t=>{if(!t||!Number.isInteger(t.rows)||t.rows<1||t.rows>30||!Number.isInteger(t.cols)||t.cols<1||t.cols>12||!Array.isArray(t.cells)||t.cells.length!==t.rows||!Number.isInteger(t.headerRows)||t.headerRows<0||t.headerRows>t.rows||!str(t.note)||!['자료표','선지표','과정표'].includes(t.role)||!Array.isArray(t.merges)||t.merges.length>360)throw Error('표 크기·머리글·내용을 확인하세요.');
     t.cells.forEach(row=>{if(!Array.isArray(row)||row.length!==t.cols)throw Error('표의 열 개수가 다릅니다.');row.forEach(c=>{if(!c||!(str(c.value)||typeof c.value==='number'&&Number.isFinite(c.value))||!image(c.figure)||c.raw!==undefined&&!str(c.raw))throw Error('표 셀의 값 또는 그림 형식이 올바르지 않습니다.');});});
     const covered=new Set();for(const m of t.merges){if(![m.r,m.c,m.rs,m.cs].every(Number.isInteger)||m.r<0||m.c<0||m.rs<1||m.cs<1||m.r+m.rs>t.rows||m.c+m.cs>t.cols)throw Error('병합 범위가 표를 벗어났습니다.');for(let r=m.r;r<m.r+m.rs;r++)for(let c=m.c;c<m.c+m.cs;c++){const k=`${r}:${c}`;if(covered.has(k))throw Error('병합 범위가 겹칩니다.');covered.add(k);if((r!==m.r||c!==m.c)&&(t.cells[r][c].value!==''||t.cells[r][c].figure||t.cells[r][c].raw))throw Error('병합 뒤에 숨은 셀 내용이 있습니다. 병합을 풀거나 숨은 셀을 비운 뒤 가져오세요.');}}
@@ -145,7 +159,7 @@ export function validate(data) {
   const dids=new Set();for(const d of data.documents){if(!d||!id(d.id)||dids.has(d.id)||!str(d.name,240)||!['textbooks','references','past'].includes(d.kind)||!['application/pdf','image/png','image/jpeg','image/webp','text/plain'].includes(d.mime)||!str(d.data,8*1024*1024)||!d.data.startsWith(`data:${d.mime};base64,`)||!/^data:[^;]+;base64,[A-Za-z0-9+/]*={0,2}$/.test(d.data)||!Array.isArray(d.pages)||!d.pages.length||d.pages.length>3000||!d.pages.every(p=>str(p,1000000)))throw Error('참고자료 파일이 올바르지 않습니다.');dids.add(d.id);}
   for(const q of data.questions)for(const ref of q.references)if(ref.documentId){const d=data.documents.find(x=>x.id===ref.documentId);if(!d||!Number.isInteger(ref.page)||ref.page>d.pages.length)throw Error('자료 원문 또는 쪽수 연결이 끊겼습니다.');}
   normalizeExams(data);validateExams(data);
-  if(JSON.stringify(data).length>24*1024*1024)throw Error('문항과 자료는 합쳐서 24 MB까지 저장할 수 있습니다.');
+  if(jsonSize(data)>24*1024*1024)throw Error('문항과 자료는 합쳐서 24 MB까지 저장할 수 있습니다.');
   return data;
 }
 export function duplicateQuestion(q) {
