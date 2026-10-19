@@ -138,3 +138,5 @@ figure.past{position:relative}
 .cv-left .past .past-busy{left:8px;right:8px;top:8px}
 .past-busy .busy-ring{width:22px;height:22px;margin:0;border-width:3px;border-color:color-mix(in srgb,#58a6ff 22%,transparent);border-top-color:#58a6ff}
 @media (prefers-reduced-motion:reduce){.busy-ring{animation-duration:2400ms}}
+/* 아래 상태 막대: 진행 중 문장이면 앞에 작은 고리(단추 고리와 같은 모양). */
+#status[data-busy=true]::before{content:"";display:inline-block;width:9px;height:9px;margin-right:6px;vertical-align:-1px;border:2px solid color-mix(in srgb,currentColor 22%,transparent);border-top-color:currentColor;border-radius:50%;animation:ep-spin 800ms linear infinite}

@@ -33,7 +33,19 @@ let database=null,revision=0,saveQueue=Promise.resolve(),saveStamp=0,saveBlocked
 let data={format:FORMAT,questions:[],documents:[],exams:[]},current=null,standards=null;
 // 아래 상태 막대. 빨간 글(오류)은 6초 뒤 지운다 — 그 사이 다른 문장이 오면 그 문장을 둔다.
 let statusTimer=0;
-function status(message,error=false,{keep=false}={}){clearTimeout(statusTimer);$('#status').textContent=message;$('#status').dataset.error=String(error);
+// 오래 걸리는 일의 진행 표시: '…'로 끝나는 진행 문장(자동 저장 「저장 중…」 제외)이 오면 방금 누른 단추를
+// 폭 그대로 고리로 바꾸고 상태 막대 앞에도 고리를 단다. 끝·실패 문장이 오면(또는 1분 뒤) 원래대로 돌린다.
+let pressed=null,pressedAt=0,busyButton=null,busyTimer=0;
+for(const type of ['pointerdown','keydown'])document.addEventListener(type,e=>{if(type==='keydown'&&e.key!=='Enter'&&e.key!==' ')return;const b=e.target.closest?.('button,label[for]');if(b){pressed=b;pressedAt=performance.now();}},true);
+function releaseBusy(){clearTimeout(busyTimer);if(!busyButton)return;const b=busyButton;busyButton=null;if(b.dataset.busyLabel!==undefined){b.innerHTML=b.dataset.busyLabel;delete b.dataset.busyLabel;}b.removeAttribute('aria-busy');b.style.minWidth='';}
+function markBusy(message){
+  const busy=/…$/.test(message)&&message!=='저장 중…';$('#status').dataset.busy=String(busy);
+  if(!busy){releaseBusy();return;}
+  const b=pressed&&performance.now()-pressedAt<1500&&pressed.isConnected?pressed:null;
+  if(!b||b===busyButton||b.hasAttribute('aria-busy'))return;
+  releaseBusy();busyButton=b;b.style.minWidth=b.offsetWidth+'px';b.dataset.busyLabel=b.innerHTML;b.setAttribute('aria-busy','true');b.innerHTML=busyHtml(message.replace(/…$/,''));
+  busyTimer=setTimeout(releaseBusy,60000);}
+function status(message,error=false,{keep=false}={}){clearTimeout(statusTimer);$('#status').textContent=message;$('#status').dataset.error=String(error);markBusy(error?'':message);
   if(error&&!keep)statusTimer=setTimeout(()=>{if($('#status').textContent!==message)return;$('#status').textContent='';$('#status').dataset.error='false';},6000);}
 // 자료 열람 상태 문장: 라이브러리 칸에 붙어 있을 때는 칸 안 줄 대신 아래 상태 막대로 보낸다(오류는 빨간 글).
 function sourceSay(message,error=false){$('#source-status').textContent=message;if($('#sources').classList.contains('docked'))status(message,error);}
@@ -183,8 +195,9 @@ function renderView(){
   else{let pref=null;try{pref=localStorage.getItem(CHANNEL+'exampool-nav');}catch{}document.querySelector('.shell-body').classList.toggle('nav-off',pref==='0');}
   $('#toggle-lib').hidden=true;
   // 위쪽 막대: 카드 화면에서는 단계 칩이 카드에 있으므로 상태 선택을 숨기고, 시험지 문항이면 5e_hwp로 보내기를 보인다.
+  // 시험지 화면에는 머리 줄에 같은 단추가 있으므로 위쪽 막대에는 두지 않는다(같은 단추 두 개).
   document.querySelector('.workflow-pick').hidden=view.name==='card';
-  {const ex=view.name==='card'&&current?examOf(data,current.id):view.name==='exam'?examById(data,view.examId):null;$('#send-hwp').hidden=!embedded||!ex;$('#send-hwp').dataset.exam=ex?.id||'';}
+  {const ex=view.name==='card'&&current?examOf(data,current.id):null;$('#send-hwp').hidden=!embedded||!ex;$('#send-hwp').dataset.exam=ex?.id||'';}
   const exam=view.examId&&examById(data,view.examId),list=sheetScope(),at=current?list.indexOf(current):-1;
   $('#crumb-view').textContent=view.name==='library'||(view.name==='card'&&!exam)?'문항 보관함':view.name==='exams'?'시험지':exam?`${exam.status==='done'?'출제 완료':'출제 중'} · ${exam.title}`:'문항 시트';
   {const q=['desk','card'].includes(view.name)&&current;$('#crumb-question').textContent=q?questionTitle(current):'';$('#crumb-question').title=q?`${questionTitle(current)} · ${questionSubtitle(current)}`:'';document.querySelector('.crumb-sep').hidden=!q;}
