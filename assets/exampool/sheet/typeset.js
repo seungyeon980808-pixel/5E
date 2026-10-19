@@ -1,5 +1,6 @@
 import {RhwpExamBridge} from '../../../js/rhwp-exam-bridge.js?v=1014-compact-panel';
-import {buildExamDocument} from './exam-build.js';
+import {buildExamDocument,assembleExamDocument} from './exam-build.js';
+import {examPage,paginateQuestions} from './exam-layout.js';
 import {buildTextMap,mapTextEdit,applyTextEdit} from './text-sync.js';
 import {loadImage} from './image-load.js';
 import {attachPlacementLayer} from './placement-layer.js';
@@ -8,7 +9,7 @@ import {buildQuestionHtml,verifyNativeQuestion,skeletonKey,decodeNativeText} fro
 import {questionFingerprint,typesetMatches,renderedContent,toBase64,fromBase64,materializeEquations,normalizeQuestionImport,applyQuestionIndent,applyReferenceBogiIndent,applyCellEquationLines,applyFloatingPictures,settleFloatingPictures,applyFloatingTable,LAYOUT_VERSION,centerCellPictures} from './typeset-model.js?v=1014-compact-panel';
 import {QUESTION_PAGE_MODE,questionPageProfile,fitQuestionPage,questionPageMetrics,validateQuestionPage,resizeQuestionDocument} from './question-page.js?v=1014-compact-panel';
 import {applyTableAlignment,applyHangingIndent} from '../../../js/rhwp-exam-table-controls.js?v=1014-compact-panel';
-import {nativeLayoutSignature,nativeImageSignature} from './native-transfer.js?v=1014-compact-panel';
+import {nativeLayoutSignature,nativeImageSignature,openApprovedQuestion} from './native-transfer.js?v=1014-compact-panel';
 import {exportLayoutHwpx} from './native-hwpx.js?v=1014-compact-panel';
 import {assertNativeLayout} from './native-layout-check.js?v=1014-compact-panel';
 import {attachTypesetView} from './typeset-view.js';
@@ -75,17 +76,17 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
   // 저장된 조판을 열 때도 그림·표의 주인을 알아야 한다. 그림을 실제로 읽지 않는 가벼운 계획으로 순서만 얻는다.
   const BLANK='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=';
   async function planOwners(value){const plan=await buildQuestionHtml(value,async f=>({...f,data:BLANK,width:f.width||100,height:f.height||100}),questionPageProfile(profile()).width,SKELETON);return {images:plan.imageOwners,tables:plan.tableOwners,shapes:plan.tables,texts:plan.textSegments};}
-  async function generate(value){
-    const Document=document().constructor,d=Document.createEmpty();let bytes;
-    try{d.createBlankDocument();const config=questionPageProfile(profile());d.setPageDef(0,JSON.stringify(config.page));d.setColumnDef(0,1,0,true,0);
+  async function generate(value,prof=profile(),{quiet=false}={}){
+    const Document=document().constructor,d=Document.createEmpty();let bytes,owners;
+    try{d.createBlankDocument();const config=questionPageProfile(prof);d.setPageDef(0,JSON.stringify(config.page));d.setColumnDef(0,1,0,true,0);
       const plan=await buildQuestionHtml(value,prepareFigure,config.width,{native:true,measureText:createNativeTextMeasurer(Document),...SKELETON});owners={images:plan.imageOwners,tables:plan.tableOwners,shapes:plan.tables,texts:plan.textSegments};const result=parse(d.pasteHtml(0,0,0,LEAD+plan.html));if(!result.ok)throw Error('문항 조판을 만들지 못했습니다.');
       bytes=await materializeEquations(Document,JSZip,await normalizeQuestionImport(d.exportHwpx(),JSZip),plan.equations);
       const checked=new Document(bytes);try{const styled=new Document(await applyReferenceBogiIndent(checked,JSZip));try{styled.reflowLinesegs();centerCellPictures(styled);applyQuestionIndent(styled,value.number,{body:true,askLead:plan.askLead,askIndent:plan.askIndent});
         // 어울림은 내어쓰기 뒤에 건다. 문단 모양을 나중에 바꾸면 한글 엔진이 그림 옆 줄 폭을 잘못 잡는다.
-        if(plan.floats.length||plan.floatTable){applyFloatingPictures(styled,plan.floats);applyFloatingTable(styled,plan.floatTable,value.number);styled.reflowLinesegs();settleFloatingPictures(styled);}fitQuestionPage(styled,profile());verifyNativeQuestion(styled,plan);bytes=await applyCellEquationLines(exportLayoutHwpx(styled,XLSX.CFB),JSZip);}finally{styled.free();}}finally{checked.free();}
-      if(plan.warnings.length)message(plan.warnings.join(' '));
+        if(plan.floats.length||plan.floatTable){applyFloatingPictures(styled,plan.floats);applyFloatingTable(styled,plan.floatTable,value.number);styled.reflowLinesegs();settleFloatingPictures(styled);}fitQuestionPage(styled,prof);verifyNativeQuestion(styled,plan);bytes=await applyCellEquationLines(exportLayoutHwpx(styled,XLSX.CFB),JSZip);}finally{styled.free();}}finally{checked.free();}
+      if(plan.warnings.length&&!quiet)message(plan.warnings.join(' '));
     }finally{d.free();}
-    return bytes;
+    return {bytes,owners};
   }
   async function open(value){
     const seq=++opening;loading=true;ready=false;host.dataset.ready='false';metricsCache=null;guide.hidden=true;metricsOutput.textContent='';cancelAnimationFrame(fitFrame);fitFrame=0;save.disabled=true;download.disabled=true;paper.disabled=true;columns.disabled=true;message('실제 한글 문서로 조판하는 중…');placer?.clear();owners=null;textMap=null;clearTimeout(syncTimer);
@@ -93,7 +94,7 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
       const saved=await typesetMatches(next.typeset,next)&&[9,10,LAYOUT_VERSION].includes(next.typeset.layoutVersion)?next.typeset:null;
       // 기준 용지: 문항에 정한 용지(q.paper) → 저장한 조판의 용지 → A4. 저장한 조판과 다르면 같은 단 폭 문서를 새 용지로 옮긴다.
       paper.value=next.paper||saved?.profile.paper||'A4';columns.value=String(saved?.profile.columns||2);
-      let bytes=saved?fromBase64(saved.bytes):await generate(next);
+      let bytes;if(saved)bytes=fromBase64(saved.bytes);else({bytes,owners}=await generate(next));
       if(saved)owners=await planOwners(next);
       if(saved&&(saved.pageMode!==QUESTION_PAGE_MODE||saved.profile.paper!==paper.value)){
         // Retain the user's approved native formatting while moving the same
@@ -214,5 +215,42 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
   function discard(){clearTimeout(syncTimer);dirty=false;ready=false;onDiverge?.(false);}
   // 틀(회색 안내)만 달라지는 변경: 빈 칸에 처음 쓰거나 다 지울 때. 문단 글 바꾸기로는 안 되고(안내는 회색) 다시 그려야 한다.
   const skeletonOnly=value=>!!q&&value?.id===q.id&&layoutKey(q)===layoutKey(value)&&skeletonKey(q)!==skeletonKey(value);
-  return {open,update,commit,buildExam,discard,skeletonOnly,get questionId(){return q?.id;},matches:value=>ready&&!!q&&contentKey(q)===contentKey(value),get dirty(){return dirty;},refreshView:()=>view?.fit()};
+  // 쪽 전체: 문항마다 한글 문서를 구해(열린 문항은 지금 한글 창, 저장한 조판, 아니면 미리보기 칸과 같은 새 조판)
+  // 시험지를 만들 때와 같은 방식으로 한 문서에 합친 뒤 쪽마다 SVG로 그린다. HTML로 흉내 내지 않는다.
+  const fresh=new Map();
+  async function sheetEntry(Document,value){
+    const own={paper:value.paper||value.typeset?.profile?.paper||'A4',columns:2};
+    if(ready&&!loading&&q?.id===value.id&&contentKey(q)===contentKey(value))
+      return {bytes:exportLayoutHwpx(document(),XLSX.CFB),profile:profile(),height:questionPageMetrics(document(),profile()).usedHeightMm,saved:!dirty&&!!value.typeset?.verified&&await typesetMatches(value.typeset,value)};
+    if(value.typeset?.verified){
+      try{const source=await openApprovedQuestion(Document,value,value.typeset);source.free();
+        if(value.typeset.pageMode===QUESTION_PAGE_MODE&&value.typeset.profile.paper===own.paper)return {bytes:fromBase64(value.typeset.bytes),profile:value.typeset.profile,height:value.typeset.metrics?.usedHeightMm,saved:true};
+      }catch{}
+    }
+    const key=contentKey(value)+'|'+own.paper,hit=fresh.get(value.id);
+    if(hit?.key!==key){const {bytes}=await generate(structuredClone(value),own,{quiet:true}),doc=new Document(bytes);
+      try{fresh.set(value.id,{key,bytes,height:questionPageMetrics(doc,own).usedHeightMm});}finally{doc.free();}}
+    const entry=fresh.get(value.id);return {bytes:entry.bytes,profile:own,height:entry.height,saved:false};
+  }
+  async function pageSheets(data,exam,focusId){
+    await ensure();const Document=document().constructor,ids=exam?.items?.length?exam.items:[focusId],items=[];
+    for(const id of ids){const value=data.questions.find(x=>x.id===id);if(!value)continue;const e=await sheetEntry(Document,value);
+      items.push({id,q:value,bytes:e.bytes,profile:e.profile,height:Number.isFinite(e.height)?e.height:60,saved:e.saved});}
+    if(!items.length)throw Error('쪽에 놓을 문항이 없습니다.');
+    // 용지·쪽 나눔은 실제 시험지(exam-layout)와 같은 규칙: 모두 같은 용지로 조판했으면 그 용지 2단, 아니면 A4 2단.
+    const sheet=examPage(items.map(x=>({q:{typeset:{profile:x.profile}}}))),pages=paginateQuestions(items,{height:sheet.heightMm,columns:sheet.columns,gap:sheet.gapMm});
+    const {document:target,ranges}=await assembleExamDocument(Document,{items,pages,sheet,open:item=>new Document(item.bytes)});
+    try{
+      const p=parse(target.getPageDef(0)),width=p.width/75,height=p.height/75,[start,end]=ranges.get(focusId)||[-1,-1],inside=r=>r.secIdx===0&&r.paraIdx>=start&&r.paraIdx<end;
+      const out=[];
+      for(let i=0;i<target.pageCount();i++){
+        let box=null;
+        for(const r of [...parse(target.getPageTextLayout(i)).runs,...parse(target.getPageControlLayout(i)).controls])if(inside(r)&&[r.x,r.y,r.w,r.h].every(Number.isFinite)){
+          box=box?{x:Math.min(box.x,r.x),y:Math.min(box.y,r.y),r:Math.max(box.r,r.x+r.w),b:Math.max(box.b,r.y+r.h)}:{x:r.x,y:r.y,r:r.x+r.w,b:r.y+r.h};}
+        out.push({svg:target.renderPageSvg(i),width,height,focus:box&&{x:box.x/width,y:box.y/height,w:(box.r-box.x)/width,h:(box.b-box.y)/height}});
+      }
+      return {pages:out,paper:sheet.paper,columns:sheet.columns,unsaved:items.filter(x=>!x.saved).map(x=>x.q.number)};
+    }finally{target.free();}
+  }
+  return {open,update,commit,buildExam,pageSheets,discard,skeletonOnly,get questionId(){return q?.id;},matches:value=>ready&&!!q&&contentKey(q)===contentKey(value),get dirty(){return dirty;},refreshView:()=>view?.fit()};
 }

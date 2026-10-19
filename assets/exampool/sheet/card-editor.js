@@ -207,13 +207,15 @@ export function createCardEditor(root,api){
     const s=Math.max(.2,Math.min(aw/W,ah>40?ah/H:aw/W));col.style.transform=`scale(${s})`;box.style.width=W*s+'px';box.style.height=H*s+'px';}
   new ResizeObserver(()=>{fitPaper();fitPage();alignHwp?.();}).observe(root);
   // 쪽 전체: 시험지에 든 문항이면 그 시험지의 쪽 배치(2단)로, 보관함 문항이면 이 문항만 놓은 쪽으로 가운데에 크게 보여 준다.
-  async function renderPage(){const x=q(),n=root.querySelector('#cv-page');if(!x||!n)return;
-    const plan=await api.pagePlan(x);if(q()!==x||!n.isConnected)return;
-    const cells=await Promise.all(plan.pages.map(async page=>Promise.all(page.columns.map(async col=>Promise.all(col.map(async id=>{const qq=api.find(id);if(!qq)return '';const {html,width}=await api.columnPreview(qq);return `<div class="pg-q${id===x.id?' now':''}" data-pgq="${id}"><div class="pg-qi" style="width:${width}px">${html}</div></div>`;}))))));
-    if(q()!==x||!n.isConnected)return;
-    n.innerHTML=`<div class="pg-head"><b>${E(plan.title)}</b><span>${plan.pages.length}쪽 · 실제 조판 비율(A4 2단) · 쪽 나눔은 조판 높이로 추정</span><span class="sp"></span><button type="button" class="mini" data-cvview="card">문항 카드로</button></div>`+
-      plan.pages.map((page,p)=>`<figure class="pg-sheet"><div class="pg-cols">${cells[p].map(col=>`<div class="pg-col">${col.join('')}</div>`).join('')}</div><figcaption>${p+1} / ${plan.pages.length}</figcaption></figure>`).join('');
-    fitPage();n.querySelector('.pg-q.now')?.scrollIntoView({block:'center'});}
+  // 한글 엔진이 실제 시험지처럼 합친 문서를 쪽마다 SVG로 그린다(미리보기 칸·내려받는 HWPX와 같은 모양).
+  let pageSeq=0;
+  async function renderPage(){const x=q(),n=root.querySelector('#cv-page');if(!x||!n)return;const seq=++pageSeq;
+    let view;try{view=await api.pageSheets(x);}catch(e){if(seq===pageSeq&&n.isConnected)n.innerHTML=`<p class="pv-empty">쪽을 그리지 못했습니다: ${E(e.message)}</p>`;return;}
+    if(seq!==pageSeq||q()!==x||!n.isConnected)return;
+    const pct=v=>(v*100).toFixed(3)+'%',total=view.pages.length;
+    n.innerHTML=`<div class="pg-head"><b>${E(view.title)}</b><span>${total}쪽 · 한글 조판 그대로(${E(view.paper)} ${view.columns}단)${view.unsaved.length?` · 조판 저장 전: ${E(view.unsaved.join(', '))}번`:''}</span><span class="sp"></span><button type="button" class="mini" data-cvview="card">문항 카드로</button></div>`+
+      view.pages.map((p,i)=>`<figure class="pg-sheet" data-native-page style="padding:0;aspect-ratio:${p.width}/${p.height}">${p.svg.replace('<svg ','<svg style="display:block;width:100%;height:auto" ')}${p.focus?`<i class="pg-now" aria-hidden="true" style="position:absolute;pointer-events:none;outline:2px solid var(--go-line,#6ba4f8);outline-offset:3px;left:${pct(p.focus.x)};top:${pct(p.focus.y)};width:${pct(p.focus.w)};height:${pct(p.focus.h)}"></i>`:''}<figcaption>${i+1} / ${total}</figcaption></figure>`).join('');
+    n.querySelector('.pg-now')?.scrollIntoView({block:'center'});}
   function fitPage(){const n=root.querySelector('#cv-page');if(!n)return;for(const col of n.querySelectorAll('.pg-col')){const w=col.clientWidth;for(const q of col.querySelectorAll('.pg-q')){const inner=q.firstElementChild;inner.style.transform='none';const s=w/inner.offsetWidth;inner.style.transform=`scale(${s})`;q.style.height=inner.offsetHeight*s+'px';}}}
 
   // 5E 라이브러리 연결: 공유 폴더·자료팩·기출 PDF에서 쪽이나 영역을 골라 가져온다(5E 라이브러리 선택기). 단추는 도구 줄 끝 아이콘 하나,

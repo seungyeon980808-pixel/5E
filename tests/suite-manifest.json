@@ -2089,6 +2089,18 @@
       ]
     },
     {
+      "path": "tests/test-exampool-page-view-browser.cjs",
+      "findingIds": [
+        "EXAMPOOL-PAGE-VIEW-NATIVE"
+      ]
+    },
+    {
+      "path": "tests/test-exampool-side-materials-browser.cjs",
+      "findingIds": [
+        "EXAMPOOL-SIDE-MATERIALS-CENTER"
+      ]
+    },
+    {
       "path": "tests/test-asset-library-browser.cjs",
       "findingIds": [
         "ASSET-LIBRARY-PORT"
