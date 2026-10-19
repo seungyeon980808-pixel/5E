@@ -5,7 +5,7 @@ const asData=bytes=>{let s='';for(let i=0;i<bytes.length;i+=32768)s+=String.from
 let harnessPromise,enginesPromise;
 const engines=()=>enginesPromise||=(window.fiveEFigureEngines?Promise.resolve(window.fiveEFigureEngines):import('./exampool-figure-engines.js?v=1018-authoring').then(x=>x.createFigureEngines()));
 // 시험에서 대역 하네스를 넣을 수 있게 window.fiveEAuthoringHarness를 먼저 본다.
-const authoring=()=>harnessPromise||=(window.fiveEAuthoringHarness?Promise.resolve(window.fiveEAuthoringHarness):import('./exampool-authoring-harness.js?v=1018-authoring').then(x=>x.createAuthoringHarness()));
+const authoring=()=>window.fiveEAuthoringHarness?Promise.resolve(window.fiveEAuthoringHarness):harnessPromise||=(import('./exampool-authoring-harness.js?v=1018-authoring').then(x=>x.createAuthoringHarness()));
 export function initQuestionSheet(state,services,examWorkspace){
   // 5E_ExamPool 버튼(button-design.js가 만든 자리)이 문항 시트를 연다. 없으면 같은 자리에 만든다.
   let entry=document.getElementById('exam-pool-open');
@@ -78,6 +78,7 @@ export function initQuestionSheet(state,services,examWorkspace){
     if(m.action==='close'){close();return;}
     // 출제 대화: 시간이 오래 걸리므로 다른 전송 작업을 막지 않는다. 문항별 작업 범위로 따로 실행한다.
     if(m.action==='author'){authoring().then(h=>h.request(m.packet,{requestId:m.requestId,onProgress:progress=>send({action:'author-progress',progress})})).then(result=>send({action:'author-ready',result}),error=>send({action:'author-ready',error:error.message||String(error),cancelled:!!error.cancelled}));return;}
+    if(m.action==='login'){window.dispatchEvent(new Event('5e:web-login-request'));return;}
     if(m.action==='author-cancel'){void authoring().then(h=>h.cancel(m.cancelId));return;}
     // 문항의 그림·그래프 만들기·그래프 세부 편집도 오래 걸리므로 전송 잠금 밖에서 실행한다.
     // 5E 라이브러리(공유 폴더·자료팩·기출 PDF)에서 고르기: 문항 창을 잠시 내리고 5E 라이브러리 선택기를 연다.

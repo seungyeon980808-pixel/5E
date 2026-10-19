@@ -34,9 +34,16 @@ export function examPage(items){
   const paper=papers.size===1?[...papers][0]:'A4',[,h]={A4:[210,297],B4:[257,364],A3:[297,420]}[paper]||[210,297];
   return paper===EXAM_PAGE.paper?EXAM_PAGE:{...EXAM_PAGE,paper,heightMm:h-30};
 }
+// 용지가 섞인 시험지: 저장한 조판은 그 용지의 단 폭으로 줄바꿈·표 폭이 정해져 있어 다른 용지 단에 넣으면 표가 단 밖으로 나간다.
+// 섞였으면 용지마다 문항 번호를 돌려준다(하나면 null).
+export function paperMix(items){
+  const by=new Map();for(const x of items){const paper=x.q.typeset?.profile?.paper||x.q.paper||'A4';if(!by.has(paper))by.set(paper,[]);by.get(paper).push(x.q.number);}
+  return by.size>1?[...by].map(([paper,numbers])=>({paper,numbers})):null;
+}
+export const paperMixMessage=mix=>`용지가 섞여 있습니다(${mix.map(m=>`${m.paper} ${m.numbers.map(n=>n+'번').join('·')}`).join(' / ')}). 문항 카드의 「상세 조판」에서 용지를 하나로 맞추고 조판 저장한 뒤 만드세요.`;
 export function examPlan(data,exam=data.exams?.[0]){
   const items=examItems(data,exam),page=examPage(items);
   const pages=paginateQuestions(items,{height:page.heightMm,columns:page.columns,gap:page.gapMm});
-  return {items,pages,page,missing:items.filter(x=>!x.ready)};
+  return {items,pages,page,missing:items.filter(x=>!x.ready),mixed:paperMix(items)};
 }
 

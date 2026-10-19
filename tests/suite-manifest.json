@@ -2101,6 +2101,12 @@
       ]
     },
     {
+      "path": "tests/test-exampool-paper-mix-browser.cjs",
+      "findingIds": [
+        "EXAMPOOL-EXAM-PAPER-MIX"
+      ]
+    },
+    {
       "path": "tests/test-exampool-card-typing-browser.cjs",
       "findingIds": [
         "EXAMPOOL-CARD-TYPING-PERF"
@@ -2110,6 +2116,18 @@
       "path": "tests/test-asset-library-browser.cjs",
       "findingIds": [
         "ASSET-LIBRARY-PORT"
+      ]
+    },
+    {
+      "path": "tests/test-science-objects-palette-inspector-browser.cjs",
+      "findingIds": [
+        "SCIENCE-OBJECTS-PALETTE-INSPECTOR-FIT"
+      ]
+    },
+    {
+      "path": "tests/test-ai-done-notice-browser.cjs",
+      "findingIds": [
+        "AI-DONE-NOTICE-SURVIVES-DIALOG"
       ]
     }
   ],

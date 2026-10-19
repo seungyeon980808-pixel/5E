@@ -64,7 +64,7 @@ test('generated HWP uses ratios, sizes, alignment and the chosen choice columns'
   group.layout='나란히';const kids=q.blocks.filter(b=>b.parent===group.id);kids.forEach((k,i)=>k.ratio=i?1:3);q.choiceLayout='세로';
   const before=await buildQuestionHtml(data().questions[0]),after=await buildQuestionHtml(q);
   assert.notEqual(before.html,after.html);
-  const widths=[...after.html.matchAll(/vertical-align:top;width:([\d.]+)px">/g)].map(m=>Number(m[1]));
+  const widths=[...after.html.matchAll(/vertical-align:(?:top|middle);width:([\d.]+)px">/g)].map(m=>Number(m[1]));
   assert.ok(widths.length>=2&&Math.abs(widths[0]/widths[1]-3)<.01,`ratio widths ${widths}`);
   // Vertical choices: one choice per row.
   assert.equal(after.tables.at(-1).cols,1);assert.equal(after.tables.at(-1).rows,5);
