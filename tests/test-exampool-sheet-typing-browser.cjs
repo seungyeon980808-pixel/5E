@@ -18,7 +18,7 @@ for(const [name,engine] of Object.entries({chromium,webkit})) test(`${name}: typ
   if(await sheet.locator('.side').isHidden())await sheet.click('#toggle-nav');
   await sheet.click('.side [data-nav="new-exam"]');await sheet.waitForSelector('#examd-view:not([hidden]) #exam-from-library');
   await sheet.selectOption('#exam-from-library',await sheet.locator('#exam-from-library option').nth(1).getAttribute('value'));
-  await sheet.click('[data-exam-act="sheet"]');await sheet.waitForSelector('.workspace:not([hidden]) #registry');
+  await sheet.click('[data-exam-more]');await sheet.click('.pv-more [data-exam-act="sheet"]');await sheet.waitForSelector('.workspace:not([hidden]) #registry');
   const typed='실험 결과로 옳은 것만을 <보기>에서 있는 대로 고른 것은?';
   await sheet.locator('#rows tr:has(th.field-label:text-is("발문")) td').first().click();await page.keyboard.type(typed);
   await sheet.waitForFunction(()=>document.querySelector('#preview-dialog')?.getAttribute('aria-busy')!=='true');await sheet.waitForTimeout(500);
