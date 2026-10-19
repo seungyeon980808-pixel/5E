@@ -1,6 +1,6 @@
 import {RhwpExamBridge} from '../../../js/rhwp-exam-bridge.js?v=1014-compact-panel';
 import {buildExamDocument,assembleExamDocument} from './exam-build.js';
-import {examPage,paginateQuestions} from './exam-layout.js';
+import {examPage,paginateQuestions,paperMix,paperMixMessage} from './exam-layout.js';
 import {buildTextMap,mapTextEdit,applyTextEdit} from './text-sync.js';
 import {loadImage} from './image-load.js';
 import {attachPlacementLayer} from './placement-layer.js';
@@ -249,7 +249,8 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
           box=box?{x:Math.min(box.x,r.x),y:Math.min(box.y,r.y),r:Math.max(box.r,r.x+r.w),b:Math.max(box.b,r.y+r.h)}:{x:r.x,y:r.y,r:r.x+r.w,b:r.y+r.h};}
         out.push({svg:target.renderPageSvg(i),width,height,focus:box&&{x:box.x/width,y:box.y/height,w:(box.r-box.x)/width,h:(box.b-box.y)/height}});
       }
-      return {pages:out,paper:sheet.paper,columns:sheet.columns,unsaved:items.filter(x=>!x.saved).map(x=>x.q.number)};
+      const mix=paperMix(items.map(x=>({q:{number:x.q.number,typeset:{profile:x.profile}}})));
+      return {pages:out,paper:sheet.paper,columns:sheet.columns,unsaved:items.filter(x=>!x.saved).map(x=>x.q.number),warning:mix?paperMixMessage(mix):''};
     }finally{target.free();}
   }
   return {open,update,commit,buildExam,pageSheets,discard,skeletonOnly,get questionId(){return q?.id;},matches:value=>ready&&!!q&&contentKey(q)===contentKey(value),get dirty(){return dirty;},refreshView:()=>view?.fit()};

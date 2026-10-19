@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import {validate} from '../assets/exampool/sheet/model.js';
 import {questionFingerprint} from '../assets/exampool/sheet/typeset-model.js';
-import {paginateQuestions,examPlan} from '../assets/exampool/sheet/exam-layout.js';
+import {paginateQuestions,examPlan,paperMix,paperMixMessage} from '../assets/exampool/sheet/exam-layout.js';
 import {newExam,addToExam,removeFromExam,moveInExam,libraryQuestions,examOf,normalizeExams} from '../assets/exampool/sheet/exams.js';
 import {filteredQuestions,workflowOf} from '../assets/exampool/sheet/views.js';
 const examples=JSON.parse(await fs.readFile(new URL('../assets/exampool/sheet/examples.json',import.meta.url),'utf8'));
@@ -60,4 +60,14 @@ test('question paper is optional and limited to A4, B4 and A3',async()=>{
   const {validate,newQuestion,FORMAT}=await import('../assets/exampool/sheet/model.js');
   const q=newQuestion('1');q.paper='B4';validate({format:FORMAT,questions:[q],documents:[]});
   q.paper='Letter';assert.throws(()=>validate({format:FORMAT,questions:[q],documents:[]}),/기준 용지/);
+});
+
+test('an exam whose questions were typeset on different papers is reported as mixed',()=>{
+  const d=data(),exam=newExam('섞인 시험지');d.exams=[exam];for(const q of d.questions)addToExam(d,exam.id,q.id);
+  d.questions[0].typeset={profile:{paper:'B4',columns:2},verified:true,metrics:{usedHeightMm:100}};d.questions[1].paper='A4';
+  const {mixed}=examPlan(d,exam);
+  assert.deepEqual(mixed,[{paper:'B4',numbers:[d.questions[0].number]},{paper:'A4',numbers:[d.questions[1].number,d.questions[2].number]}]);
+  assert.match(paperMixMessage(mixed),/용지가 섞여 있습니다\(B4 1번 \/ A4 2번·3번\)/);
+  for(const q of d.questions)q.typeset={profile:{paper:'B4',columns:2},verified:true};
+  assert.equal(paperMix(examPlan(d,exam).items),null,'one paper is not mixed');
 });
