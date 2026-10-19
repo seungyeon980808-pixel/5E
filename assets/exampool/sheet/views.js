@@ -28,19 +28,26 @@ async function previewFigure(f){
   return {...f,data,width:image.naturalWidth,height:image.naturalHeight};
 }
 const previews=new Map();
+// 발문이 비어 있으면 조판 HTML 만들기가 「발문을 입력한 뒤…」로 멈춘다. 그때는 틀(skeleton)로 한 번 더 만들어
+// 이미 쓴 지문·그림은 보이고 빈 자리만 흐린 안내로 둔다(예전에는 미리보기 전체가 안내 한 줄로 바뀌었다).
+async function safeQuestionHtml(q,width){
+  try{return (await buildQuestionHtml(q,previewFigure,width)).html;}catch{}
+  try{return (await buildQuestionHtml(q,previewFigure,width,{skeleton:true})).html;}catch{}
+  return `<p>${E(q.ask||'발문을 입력하면 미리보기가 보입니다.')}</p>`;
+}
 export async function previewHtml(q){return preview(q);}
 // 실제 시험지 단 폭(A4 2단, 여백 15mm, 단 간격 8mm → 86mm)으로 만든 문항 HTML. 화면에서는 확대·축소만 한다.
 const columns=new Map();
 export async function columnPreview(q){
   const width=pageProfile({paper:'A4',columns:2}).width,{typeset,references,workflow,reviews,authoring,...content}=q,key=JSON.stringify(content);
   const hit=columns.get(q.id);if(hit?.key===key)return {html:hit.html,width};
-  let html;try{html=(await buildQuestionHtml(q,previewFigure,width)).html;}catch{html=`<p>${E(q.ask||'발문을 입력하면 미리보기가 보입니다.')}</p>`;}
+  const html=await safeQuestionHtml(q,width);
   columns.set(q.id,{key,html});return {html,width};
 }
 async function preview(q){
   const {typeset,references,workflow,reviews,authoring,...content}=q,key=JSON.stringify(content);
   const hit=previews.get(q.id);if(hit?.key===key)return hit.html;
-  let html;try{html=(await buildQuestionHtml(q,previewFigure)).html;}catch{html=`<p>${E(q.ask||'발문을 입력하면 미리보기가 보입니다.')}</p>`;}
+  const html=await safeQuestionHtml(q);
   previews.set(q.id,{key,html});return html;
 }
 
