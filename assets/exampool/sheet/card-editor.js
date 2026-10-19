@@ -281,7 +281,7 @@ export function createCardEditor(root,api){
     if(panels.tab==='textbooks'){pastFilter.query=input.value.trim();store.set('past',pastFilter);pastRefocus=true;renderPast();return;}
     const incoming=splitWords(input.value);if(!incoming.length)return;
     const joined=[...new Set([...pastFilter.tokens,...incoming])];
-    if(joined.length>3){api.status?.('검색어는 최대 세 단어입니다. 단어를 줄여 주세요.',true);return;}
+    if(joined.length>3){api.status?.('검색어는 최대 세 단어입니다. 단어를 줄여 주세요.',true);return false;}
     pastFilter.tokens=joined;pastFilter.query='';store.set('past',pastFilter);renderPast();
   }
   // 기출 카드 그림: 화면에 들어오는 것부터 문항 번호~선지 번호 줄로 잘라(past-crop.js) 넣는다. 그림 칸은 정사각 고정이라 읽혀도 칸이 움직이지 않는다(긴 문항은 아래만 잘림).
@@ -465,16 +465,21 @@ export function createCardEditor(root,api){
   });
   // 유형 메뉴: 바깥을 누르거나 Esc면 닫는다.
   document.addEventListener('pointerdown',e=>{if(shapeOpen&&!e.target.closest?.('.cv-shape-wrap'))setShape(false);});
-  root.addEventListener('keydown',e=>{if(shapeOpen&&e.key==='Escape'){e.preventDefault();setShape(false);root.querySelector('.cv-shape')?.focus();}});
+  root.addEventListener('keydown',e=>{if(!shapeOpen)return;if(e.key==='Escape'){e.preventDefault();setShape(false);root.querySelector('.cv-shape')?.focus();return;}
+    // 메뉴(role=menu) 안에서 ↑↓·Home·End로 항목을 옮긴다.
+    const items=[...root.querySelectorAll('.cv-shape-menu [data-cvform]')],i=items.indexOf(document.activeElement);
+    const to={ArrowDown:(i+1)%items.length,ArrowUp:(i-1+items.length)%items.length,Home:0,End:items.length-1}[e.key];
+    if(to!==undefined&&items.length){e.preventDefault();items[i<0&&e.key==='ArrowUp'?items.length-1:i<0&&e.key==='ArrowDown'?0:to].focus();}});
   // 한글 입력: 조합 중에는 목록을 다시 그리지 않고(입력 칸이 바뀌면 조합이 끊김), 조합 중 Enter는 마지막 글자가 확정된 뒤(compositionend) 조각으로 넣는다.
   // Safari는 조합 끝(compositionend)을 Enter보다 먼저 보내기도 한다 → 그때는 keyCode 229 Enter로 들어오므로 바로 넣는다.
   root.addEventListener('compositionstart',e=>{if(e.target.dataset?.cvpast==='query')pastComposing=true;});
   root.addEventListener('compositionend',e=>{const t=e.target;if(t.dataset?.cvpast!=='query')return;pastComposing=false;
-    if(pastEnterPending){pastEnterPending=false;setTimeout(()=>{clearTimeout(t._timer);addPastWords(t);},0);}
+    if(pastEnterPending){pastEnterPending=false;clearTimeout(t._timer);const v=t.value;t.value='';if(addPastWords({value:v})===false)t.value=v;}
     else{pastFilter.query=t.value.trim();store.set('past',pastFilter);clearTimeout(t._timer);t._timer=setTimeout(renderPast,250);}});
   root.addEventListener('keydown',e=>{const t=e.target;if(t.dataset?.cvpast!=='query')return;
     if(e.key==='Enter'&&(e.isComposing||pastComposing)){e.preventDefault();pastEnterPending=true;return;}
-    if(e.key==='Enter'){e.preventDefault();clearTimeout(t._timer);setTimeout(()=>addPastWords(t),0);}
+    // Enter 순간의 글을 바로 떼어 낸다(미루면 빠르게 이어 친 다음 단어가 같은 조각에 붙음: 「자석」 Enter 「질량」 → 「자석질량」).
+    if(e.key==='Enter'){e.preventDefault();clearTimeout(t._timer);const v=t.value;t.value='';if(addPastWords({value:v})===false)t.value=v;}
     else if(e.key==='Backspace'&&!t.value&&pastFilter.tokens.length){e.preventDefault();pastFilter.tokens=pastFilter.tokens.slice(0,-1);store.set('past',pastFilter);renderPast();}});
   root.addEventListener('keydown',e=>{if(e.target.id==='cv-ai-input'&&e.key==='Enter'&&(e.metaKey||e.ctrlKey)){e.preventDefault();root.querySelector('[data-cv="ai-send"]')?.click();}});
   // 칸 경계 끌기: 왼쪽 경계는 라이브러리 폭, 오른쪽 경계는 미리보기·AI 폭. 두 번 누르면 기본 폭.

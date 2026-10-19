@@ -26,6 +26,12 @@
       ]
     },
     {
+      "path": "tests/test-library-style-invalidation.mjs",
+      "findingIds": [
+        "LIBRARY-SCROLL-STYLE-INVALIDATION"
+      ]
+    },
+    {
       "path": "tests/test-exampool-past-crop.mjs",
       "findingIds": [
         "EXAMPOOL-PAST-CARD-CROP"
@@ -2116,6 +2122,12 @@
       "path": "tests/test-exampool-card-typing-browser.cjs",
       "findingIds": [
         "EXAMPOOL-CARD-TYPING-PERF"
+      ]
+    },
+    {
+      "path": "tests/test-exampool-sheet-typing-browser.cjs",
+      "findingIds": [
+        "EXAMPOOL-SHEET-TYPING-NO-LOSS"
       ]
     },
     {
