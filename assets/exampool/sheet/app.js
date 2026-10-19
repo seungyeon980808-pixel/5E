@@ -23,7 +23,7 @@ import {createPdfRuntimeLoader} from '../../../js/pdf-library/runtime-loader.js?
 const $=s=>document.querySelector(s),E=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),labels=['①','②','③','④','⑤'];
 const options=(values,value)=>values.map(v=>`<option ${v===value?'selected':''}>${E(v)}</option>`).join('');
 const demo=new URLSearchParams(location.search).has('example'),embedded=window.parent!==window;
-if(demo){$('.brand-page').textContent='문항 시트 · 구조 예제';$('.brand-page').title='실제 문항과 별도 공간에 저장하는 편집 연습 예제입니다.';}
+if(demo){$('.brand-page').hidden=false;$('.brand-page').textContent='구조 예제';$('.brand-page').title='실제 문항과 별도 공간에 저장하는 편집 연습 예제입니다.';}
 if(embedded)$('[data-change-summary]').hidden=true;
 // 공개 프리뷰(/preview/…)는 정식 사이트와 같은 원점이라 저장소 이름에 '5e.preview:'를 붙여 분리한다(js/preview-storage.js channelStore와 같은 규칙).
 // 루트(로컬 실행)는 지금까지 쓰던 이름 그대로 — 사용자가 로컬에 만든 문항이 그대로 보인다.
@@ -175,7 +175,9 @@ function renderView(){
   {const ex=view.name==='card'&&current?examOf(data,current.id):view.name==='exam'?examById(data,view.examId):null;$('#send-hwp').hidden=!embedded||!ex;$('#send-hwp').dataset.exam=ex?.id||'';}
   const exam=view.examId&&examById(data,view.examId),list=sheetScope(),at=current?list.indexOf(current):-1;
   $('#crumb-view').textContent=view.name==='library'||(view.name==='card'&&!exam)?'문항 보관함':view.name==='exams'?'시험지':exam?`${exam.status==='done'?'출제 완료':'출제 중'} · ${exam.title}`:'문항 시트';
-  $('#crumb-question').textContent=['desk','card'].includes(view.name)&&current?`${questionTitle(current)} · ${questionSubtitle(current)}`:'';
+  {const q=['desk','card'].includes(view.name)&&current;$('#crumb-question').textContent=q?questionTitle(current):'';$('#crumb-question').title=q?`${questionTitle(current)} · ${questionSubtitle(current)}`:'';}
+  // 이동 줄 앞 단계는 그 화면으로 가는 단추: 시험지 문항이면 그 시험지, 아니면 문항 보관함(보관함·시험지 목록 화면에서는 지금 화면이라 누를 일 없음).
+  $('#crumb-view').disabled=!['card','desk'].includes(view.name);$('#crumb-view').title=$('#crumb-view').disabled?'':exam?'이 시험지 열기':'문항 보관함 열기';
   $('#question-position').textContent=list.length?`${at+1} / ${list.length}`:'0 / 0';
   $('#question-prev').disabled=at<=0;$('#question-next').disabled=at<0||at>=list.length-1;
   document.querySelector('.crumb-step').hidden=view.name!=='desk';
@@ -682,6 +684,9 @@ window.addEventListener('message',e=>{if(e.origin!==location.origin||e.data?.cha
 window.addEventListener('message',e=>{if(e.origin!==location.origin||e.source!==window.parent||e.data?.channel!=='5e-question-sheet')return;const m=e.data;
   if(m.requestId&&m.requestId===examRequest){examRequest=null;if(m.error){status(m.error,true);return;}const exam=examById(data,m.qid);if(exam)mutate(()=>{exam.sentAt=new Date().toISOString();});status('시험지를 5e_hwp에서 열었습니다 · 최종 검수 후 「출제 완료로 옮기기」를 누르세요.');}
 });
+// 위쪽 막대: 로고는 문항 보관함(홈), 이동 줄 앞 단계는 보관함 또는 지금 문항이 든 시험지.
+$('#brand-home').onclick=()=>{view.examId=null;show('library');};
+$('#crumb-view').onclick=()=>{if(view.examId&&examById(data,view.examId)&&view.name!=='exam')show('exam');else{view.examId=null;show('library');}};
 // 왼쪽 메뉴·오른쪽 라이브러리 접기.
 $('#toggle-nav').onclick=()=>{const off=!document.querySelector('.shell-body').classList.contains('nav-off');document.querySelector('.shell-body').classList.toggle('nav-off',off);$('#toggle-nav').setAttribute('aria-pressed',String(!off));try{localStorage.setItem(CHANNEL+'exampool-nav',off?'0':'1');}catch{}};
 try{if(localStorage.getItem(CHANNEL+'exampool-nav')==='0'){document.querySelector('.shell-body').classList.add('nav-off');$('#toggle-nav').setAttribute('aria-pressed','false');}}catch{}

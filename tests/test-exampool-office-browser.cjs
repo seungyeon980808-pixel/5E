@@ -80,6 +80,13 @@ h.withServer(async origin => {
       await sheet.click('#card-view [data-cvview="page"]');await sheet.waitForSelector('#card-view .pg-sheet .pg-q.now');await sheet.click('#card-view .pg-head [data-cvview="card"]');await sheet.waitForSelector('#card-view .cv-writer');
       // 문항 카드에는 표(엑셀식) 진입이 없다. 표는 시험지의 「표로 한꺼번에 고치기」로만 연다.
       assert.equal(await sheet.locator('#card-view [data-cv="sheet"]').count(),0,'the card has no sheet entry');
+      // 위쪽 막대: 이동 줄 끝은 문항 이름만(전체 발문은 풍선), 「문항 보관함」·로고는 눌러서 보관함으로 간다.
+      assert.ok(!(await sheet.locator('#crumb-question').textContent()).includes(' · '),'the crumb shows only the question name');
+      assert.match(await sheet.locator('#crumb-question').getAttribute('title'),/ · /,'the full ask is in the tooltip');
+      await sheet.click('#crumb-view');await sheet.waitForSelector('#library-view:not([hidden])');
+      assert.equal(await sheet.locator('#crumb-view').isDisabled(),true,'the crumb is plain text where you already are');
+      await sheet.locator('#library-view [data-open-card]').first().click();await sheet.waitForSelector('#card-view:not([hidden]) .cv-writer');
+      await sheet.click('#brand-home');await sheet.waitForSelector('#library-view:not([hidden])');
       if(await sheet.locator('.side').isHidden())await sheet.click('#toggle-nav');
       await sheet.click('.side [data-nav="new-exam"]');await sheet.waitForSelector('#examd-view:not([hidden]) #exam-from-library');
       await sheet.selectOption('#exam-from-library',await sheet.locator('#exam-from-library option').nth(1).getAttribute('value'));

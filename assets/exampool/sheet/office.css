@@ -699,3 +699,69 @@ body.cv-dragging,body.cv-dragging *{user-select:none!important;-webkit-user-sele
 .past img{background:#fff}
 .past-text{margin:0;padding:10px 12px;font-size:12px;line-height:1.6;color:var(--ds-ink-2);background:var(--ds-raise);max-height:120px;overflow:hidden}
 .structure-lock{display:inline-flex;align-items:center;gap:var(--ds-space-1)}.structure-lock .lock-off,.structure-lock[aria-pressed=false] .lock-on{display:none}.structure-lock[aria-pressed=false] .lock-off{display:block}
+
+/* ===== 문항 카드 화면 공통 값(2026-10-19 사용자 승인 안 A) — 이 변수들은 카드 화면 분위기 세션이 정의한다.
+   라이브러리 칸·카드 구조 쪽은 정의하지 말고 가져다 쓴다(review/feedback-1.7.0-20261019/design-tokens-proposal.md). */
+:root{
+  --cv-gutter:8px;          /* 카드 화면 바깥 여백·칸 사이 */
+  --cv-pane-radius:12px;    /* 세 칸 판 모서리 */
+  --cv-sec-radius:10px;     /* 묶음·자료 칸·말풍선 */
+  --cv-ctl-radius:6px;      /* 버튼·입력칸 */
+  --cv-head-h:44px;         /* 세 칸 머리 줄 높이 */
+  --cv-text-meta:11px;--cv-text-small:12.5px;--cv-text-body:14px;--cv-text-title:15px;--cv-text-qno:17px;
+  /* 은은한 버튼: 화면 색별 토큰을 따른다(정의가 없어 모든 화면 색에서 남색 #152137이던 고장) */
+  --go-bg:var(--ds-soft-bg);--go-line:var(--ds-soft-line);--go-ink:var(--ds-ink);
+}
+/* 세 칸 = 작업대 위 판 */
+#card-view{background:var(--ds-bench);padding:var(--cv-gutter)!important;box-sizing:border-box}
+#card-view .cv-left,#card-view .cv-center,#card-view .cv-right{border:0;border-radius:var(--cv-pane-radius);overflow:hidden;box-shadow:0 0 0 1px var(--ds-line)}
+#card-view .cv-left,#card-view .cv-right{background:var(--ds-panel)}
+#card-view .cv-split{flex-basis:var(--cv-gutter);background:transparent}
+#card-view .cv-split::after{background:transparent}
+#card-view .cv-split::before{left:2px}
+.cv-hwp-layer{border-radius:0 0 var(--cv-pane-radius) var(--cv-pane-radius);overflow:hidden}
+/* 머리 줄 하나의 높이(세 칸 아래 경계 일직선) */
+#card-view .cv-ph{height:var(--cv-head-h)}
+#card-view .cv-bar{height:var(--cv-head-h);padding:0 8px}
+#card-view .cv-right .cv-ph>small{display:none}
+/* 가운데 카드 */
+#card-view .w-head{padding:10px 16px;flex-wrap:wrap;row-gap:8px}
+#card-view .w-head .qno{white-space:nowrap}
+#card-view .cv-center .sheet-form{margin:16px 0 32px;padding:0 16px;gap:16px}
+#card-view .cv-center .f-sec{padding:18px 16px;gap:18px;border-radius:var(--cv-sec-radius)}
+#card-view .f-field{gap:8px}
+#card-view .f-row2{gap:16px}
+#card-view .f-sec-head h3[title],#card-view .f-field>label[title]{cursor:help}
+/* 글자 5단계 */
+#card-view .cv-ph b,#card-view .f-field>label,#card-view .pick,#card-view .toggle{font-size:var(--cv-text-body)}
+#card-view .typeseg button,#card-view .stage button,#card-view .seg button,#card-view .hint,#card-view .cv-tile .cap,
+#card-view .cv-center .btn,#card-view .cv-add-tile,#card-view .cv-tile.empty .btn{font-size:var(--cv-text-small)}
+#card-view .cv-tile .cap b{font-size:var(--cv-text-body)}
+#card-view .cv-qtab .num{font-size:var(--cv-text-meta)}
+/* 둥글기 */
+#card-view .typeseg,#card-view .stage{border-radius:8px}
+#card-view .typeseg button,#card-view .stage button{border-radius:var(--cv-ctl-radius)}
+#card-view .cv-tile,#card-view .msg{border-radius:var(--cv-sec-radius)}
+#card-view .combo-row,#card-view .au-fig,#card-view .suggest,#card-view .mini,#card-view .cv-center .btn{border-radius:var(--cv-ctl-radius)}
+/* AI 대화: 바탕은 그대로, 글자만 밝고 크게, 안내 한 줄(전체는 풍선) */
+#card-view .ai-body{padding:12px 14px;gap:12px}
+#card-view .ai-scope{background:transparent;padding:0 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#card-view .msg{font-size:var(--cv-text-body);line-height:1.7;padding:12px 14px}
+#card-view .msg li,#card-view .msg b,#card-view .msg p,#card-view .proposal .chg{font-size:inherit}
+#card-view .msg.ai{color:var(--ds-ink)}
+#card-view .msg.ai .au-notes{font-size:var(--cv-text-small)}
+#card-view .ax{background:transparent;box-shadow:none;padding:0 4px 0 0}
+#card-view .composer textarea{font-size:var(--cv-text-body)}
+/* 미리보기 칸의 5e_hwp 안내: 한 줄(긴 글은 풍선). 오류 안내는 줄이지 않는다 */
+.cv-hwp-layer #preview-dialog.docked .typeset-info{flex-direction:row;align-items:baseline;gap:8px}
+.cv-hwp-layer #preview-dialog.docked #typeset-status{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cv-hwp-layer #preview-dialog.docked #typeset-status[data-error=true]{white-space:normal}
+.cv-hwp-layer #preview-dialog.docked #typeset-metrics{flex:none;white-space:nowrap}
+/* 위쪽 막대: 로고(홈)와 이동 줄 앞 단계는 누를 수 있는 모양, 글자 위치는 그대로 */
+.top .brand{height:var(--ds-h-control);display:inline-flex;align-items:baseline;padding:0 var(--ds-space-4);padding-top:5px;margin-left:calc(-1 * var(--ds-space-4));border-radius:var(--ds-radius);cursor:pointer}
+.top .crumbs{margin-left:var(--ds-space-2);gap:var(--ds-space-1)}
+.top #crumb-view{height:var(--ds-h-control);display:inline-flex;align-items:center;padding:0 var(--ds-space-4);border-radius:var(--ds-radius);font:inherit;color:var(--ds-ink-2);cursor:pointer}
+.top #crumb-view:hover:not(:disabled){color:var(--ds-ink)}
+.top #crumb-view:disabled{opacity:1;cursor:default;color:var(--ds-ink-3)}
+.top .crumb-sep{color:var(--ds-ink-3)}
+.top #crumb-question{padding:0 var(--ds-space-4);max-width:240px}
