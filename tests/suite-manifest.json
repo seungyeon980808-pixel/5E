@@ -2071,6 +2071,12 @@
       ]
     },
     {
+      "path": "tests/test-exampool-page-view-browser.cjs",
+      "findingIds": [
+        "EXAMPOOL-PAGE-VIEW-NATIVE"
+      ]
+    },
+    {
       "path": "tests/test-asset-library-browser.cjs",
       "findingIds": [
         "ASSET-LIBRARY-PORT"
