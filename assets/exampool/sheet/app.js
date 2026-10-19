@@ -180,7 +180,7 @@ function renderView(){
   {const ex=view.name==='card'&&current?examOf(data,current.id):view.name==='exam'?examById(data,view.examId):null;$('#send-hwp').hidden=!embedded||!ex;$('#send-hwp').dataset.exam=ex?.id||'';}
   const exam=view.examId&&examById(data,view.examId),list=sheetScope(),at=current?list.indexOf(current):-1;
   $('#crumb-view').textContent=view.name==='library'||(view.name==='card'&&!exam)?'문항 보관함':view.name==='exams'?'시험지':exam?`${exam.status==='done'?'출제 완료':'출제 중'} · ${exam.title}`:'문항 시트';
-  {const q=['desk','card'].includes(view.name)&&current;$('#crumb-question').textContent=q?questionTitle(current):'';$('#crumb-question').title=q?`${questionTitle(current)} · ${questionSubtitle(current)}`:'';}
+  {const q=['desk','card'].includes(view.name)&&current;$('#crumb-question').textContent=q?questionTitle(current):'';$('#crumb-question').title=q?`${questionTitle(current)} · ${questionSubtitle(current)}`:'';document.querySelector('.crumb-sep').hidden=!q;}
   // 이동 줄 앞 단계는 그 화면으로 가는 단추: 시험지 문항이면 그 시험지, 아니면 문항 보관함(보관함·시험지 목록 화면에서는 지금 화면이라 누를 일 없음).
   $('#crumb-view').disabled=!['card','desk'].includes(view.name);$('#crumb-view').title=$('#crumb-view').disabled?'':exam?'이 시험지 열기':'문항 보관함 열기';
   $('#question-position').textContent=list.length?`${at+1} / ${list.length}`:'0 / 0';
@@ -549,7 +549,7 @@ const cardEditor=createCardEditor($('#card-view'),{
   columnPreview:q=>columnPreview(q),find:id=>data.questions.find(x=>x.id===id)||null,
   pageSheets:async q=>{typesetter||=makeTypesetter();const exam=examOf(data,q.id);return {title:exam?exam.title:'문항 보관함 · 이 문항만',...await typesetter.pageSheets(data,exam,q.id)};},
   pagePlan:async q=>{const exam=examOf(data,q.id);if(!exam)return {title:'문항 보관함 · 이 문항만',pages:[{columns:[[q.id],[]]}]};const {examPlan}=await import('./exam-layout.js');const {pages}=examPlan(data,exam);return {title:exam.title,pages:pages.length?pages:[{columns:[[q.id],[]]}]};},
-  cancelAi:q=>cancelAi(q),aiPending:q=>aiPending(q),figure:(q,spec)=>createFigure(q,spec),remakeFigure:(q,id,req)=>remakeFigure(q,id,req),editGraph:(q,id)=>editGraphFigure(q,id),figurePending:q=>figurePending(q),proposal:(q,id,action)=>decideProposal(q,id,action),revert:(q,rev)=>revertAuthoring(q,rev),
+  cancelAi:q=>cancelAi(q),aiPending:q=>aiPending(q),login:()=>window.parent.postMessage({channel:'5e-question-sheet',action:'login'},location.origin),figure:(q,spec)=>createFigure(q,spec),remakeFigure:(q,id,req)=>remakeFigure(q,id,req),editGraph:(q,id)=>editGraphFigure(q,id),figurePending:q=>figurePending(q),proposal:(q,id,action)=>decideProposal(q,id,action),revert:(q,rev)=>revertAuthoring(q,rev),
   applySuggestion:(q,sg)=>{const map={발문:'ask',지문:'passage',보기:'bogi',선지:'choices',해설:'explanation'};const key=map[sg.field]||sg.key;if(!key){status('이 제안은 직접 칸에 옮겨 주세요.',true);return;}mutate(()=>{if(sg.line!==undefined&&key==='bogi'){const b=q.blocks.find(x=>x.kind==='bogi');if(b?.lines[sg.line])b.lines[sg.line].text=sg.text;else writeField(q,'bogi',[fieldValue(q,'bogi'),sg.text].filter(Boolean).join('\n'));}else writeField(q,key,sg.text);});status(`AI 제안을 ${sg.field}에 넣었습니다.`);},
 });
 // ── 출제 대화(대화형 출제·검토) ──

@@ -190,7 +190,7 @@ export function createCardEditor(root,api){
   function alignHwp(){const slot=root.querySelector('#cv-hwp');const show=hwpWanted&&slot&&!root.hidden&&!root.closest('[hidden]');hwpLayer.hidden=!show;if(!show)return;
     const r=slot.getBoundingClientRect();Object.assign(hwpLayer.style,{left:r.left+'px',top:r.top+'px',width:r.width+'px',height:r.height+'px'});}
   function placeHwp(show){hwpWanted=show;hwpSlotWatch?.disconnect();
-    const slot=root.querySelector('#cv-hwp');if(show&&slot){hwpSlotWatch=new ResizeObserver(alignHwp);hwpSlotWatch.observe(slot);api.hwpDock?.(hwpLayer);api.hwpOpen?.();}else api.hwpClose?.();
+    const slot=root.querySelector('#cv-hwp');if(show&&slot){hwpSlotWatch=new ResizeObserver(()=>requestAnimationFrame(alignHwp));hwpSlotWatch.observe(slot);api.hwpDock?.(hwpLayer);api.hwpOpen?.();}else api.hwpClose?.();
     alignHwp();}
   new MutationObserver(alignHwp).observe(root,{attributes:true,attributeFilter:['hidden']});window.addEventListener('resize',alignHwp);
   function markAiSeen(){const x=q();if(x)store.set('aiSeen:'+x.id,(x.reviews||[]).length);}
@@ -205,7 +205,8 @@ export function createCardEditor(root,api){
   function fitPaper(){const n=root.querySelector('#cv-paper'),box=n?.querySelector('.cv-fitbox'),col=box?.firstElementChild;if(!col)return;
     col.style.transform='none';const W=col.offsetWidth,H=col.offsetHeight,aw=n.clientWidth-24,ah=n.clientHeight-24;if(!W||!H||aw<=0)return;
     const s=Math.max(.2,Math.min(aw/W,ah>40?ah/H:aw/W));col.style.transform=`scale(${s})`;box.style.width=W*s+'px';box.style.height=H*s+'px';}
-  new ResizeObserver(()=>{fitPaper();fitPage();alignHwp?.();}).observe(root);
+  // 크기를 바꾸는 일은 다음 그림 때 한 번에(관찰 콜백 안에서 크기를 바꾸면 Safari가 'ResizeObserver loop' 오류를 낸다).
+  let fitFrame=0;new ResizeObserver(()=>{cancelAnimationFrame(fitFrame);fitFrame=requestAnimationFrame(()=>{fitPaper();fitPage();alignHwp?.();});}).observe(root);
   // 쪽 전체: 시험지에 든 문항이면 그 시험지의 쪽 배치(2단)로, 보관함 문항이면 이 문항만 놓은 쪽으로 가운데에 크게 보여 준다.
   // 한글 엔진이 실제 시험지처럼 합친 문서를 쪽마다 SVG로 그린다(미리보기 칸·내려받는 HWPX와 같은 모양).
   let pageSeq=0;
@@ -335,7 +336,9 @@ export function createCardEditor(root,api){
     const figs=m.figures?.length?`<div class="au-figs">${m.figures.map((f,j)=>`<div class="au-fig"><b>${f.kind==='graph'?'그래프':'그림'} · ${E(f.slot)}</b><p>${E(f.description)}</p><button type="button" class="mini go-mini" data-cvfig="${i}:${j}">${f.kind==='graph'?'그래프 만들기':'그림 만들기'}</button></div>`).join('')}</div>`:'';
     const meta=m.meta?.model?`<span class="au-meta">${E(m.meta.model)} · ${Math.round((m.meta.ms||0)/1000)}초${m.meta.live?'':' · 대역 응답'}</span>`:'';
     const legacy=m.suggestion?`<div class="suggest"><div class="sg-head">${E(m.suggestion.field)} · 제안</div><p>${E(m.suggestion.text)}</p><div class="sg-act"><button type="button" class="mini go-mini" data-ai-apply="${i}">적용</button></div></div>`:'';
-    return `<div class="msg ai${m.error?' err':''}${m.stale?' old':''}">${E(m.text)}${questions}${items}${notes}${proposal}${legacy}${figs}${ev}${meta}</div>`;
+    // 연결 안 됨 안내에는 5E의 ChatGPT 연결 창을 여는 단추를 붙인다(카드 화면에는 로그인 단추가 따로 없음).
+    const login=m.error&&/ChatGPT 로그인/.test(m.text||'')?`<div class="sg-act ai-login"><button type="button" class="mini go-mini" data-cv="ai-login">ChatGPT 로그인</button></div>`:'';
+    return `<div class="msg ai${m.error?' err':''}${m.stale?' old':''}">${E(m.text)}${login}${questions}${items}${notes}${proposal}${legacy}${figs}${ev}${meta}</div>`;
   }
   function renderAi(){
     const body=root.querySelector('[data-cvbody="ai"]'),x=q();if(!body||!x)return;
@@ -417,6 +420,7 @@ export function createCardEditor(root,api){
     if(d.aiQuick){const kind=d.aiQuick==='검토해 줘'?'review':d.aiQuick==='새 문항 초안'?'draft':'chat';api.ai(x,{kind,text:d.aiQuick==='새 문항 초안'?'지금까지 정한 요구사항으로 새 문항 초안을 만들어 줘. 정하지 않은 것은 가정으로 남겨 줘.':d.aiQuick});return;}
     if(d.cv==='ai-send'){const input=root.querySelector('#cv-ai-input'),text=input?.value.trim();if(!text)return;input.value='';api.ai(x,{kind:/^검토/.test(text)?'review':'chat',text});return;}
     if(d.cv==='ai-cancel'){api.cancelAi?.(x);return;}
+    if(d.cv==='ai-login'){api.login?.();return;}
     if(d.cvprop){api.proposal?.(x,d.cvprop,d.act);return;}
     if(d.cvrevert!==undefined){api.revert?.(x,Number(d.cvrevert));return;}
     if(d.cvfig){const [i,j]=d.cvfig.split(':').map(Number),f=x.reviews?.[i]?.figures?.[j];if(f)api.figure?.(x,f);return;}
@@ -443,7 +447,8 @@ export function createCardEditor(root,api){
     const k=sp.dataset.cvsplit,rect=root.getBoundingClientRect(),min=k==='left'?240:300,max=Math.max(min,rect.width-440-(k==='left'?(panels.rightOpen?root.querySelector('.cv-right').offsetWidth:0):(panels.lib?root.querySelector('.cv-left').offsetWidth:0)));
     // 잡은 곳에서 움직인 만큼만 폭을 바꾼다(바깥 여백이 있어도 잡는 순간 칸이 튀지 않음).
     const x0=e.clientX,w0=root.querySelector(k==='left'?'.cv-left':'.cv-right').getBoundingClientRect().width;
-    const move=ev=>{const w=Math.round(Math.max(min,Math.min(max,k==='left'?w0+ev.clientX-x0:w0-(ev.clientX-x0))));root.style.setProperty(k==='left'?'--cv-lw':'--cv-rw',w+'px');fitPaper();};
+    // 창이 좁아 지금 폭이 이미 상한보다 넓으면, 상한을 지금 폭으로 둔다(잡는 순간 줄어들지 않고 줄이는 쪽으로만 움직임).
+    const move=ev=>{const w=Math.round(Math.max(min,Math.min(Math.max(max,w0),k==='left'?w0+ev.clientX-x0:w0-(ev.clientX-x0))));root.style.setProperty(k==='left'?'--cv-lw':'--cv-rw',w+'px');fitPaper();};
     const up=ev=>{sp.classList.remove('drag');document.body.classList.remove('cv-dragging');sp.removeEventListener('pointermove',move);sp.removeEventListener('pointerup',up);store.set(k==='left'?'lw':'rw',parseInt(getComputedStyle(root).getPropertyValue(k==='left'?'--cv-lw':'--cv-rw')));fitPaper();fitPage();};
     sp.addEventListener('pointermove',move);sp.addEventListener('pointerup',up);});
   // 상세검색 창: 바깥을 누르면 닫힌다.

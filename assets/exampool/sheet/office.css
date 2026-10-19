@@ -408,6 +408,8 @@ button.q-status:hover{background:var(--ds-hover)}
 .pv-orow .n{font-weight:700;font-size:15px;font-variant-numeric:tabular-nums}
 .pv-mini-thumb{height:46px;padding:0;border:0;background:#fff;border-radius:2px;overflow:hidden;cursor:pointer}
 .pv-mini-thumb .pv-doc{transform:scale(.13);width:770%}
+/* 미리보기 그림은 단추라서 내용이 세로 가운데로 가 큰 문항은 윗부분(지문)이 잘렸다 → 위에서부터 */
+.pv-thumb,.pv-mini-thumb{display:flex;flex-direction:column;justify-content:flex-start;align-items:flex-start}.pv-thumb>.pv-doc,.pv-mini-thumb>.pv-doc{flex:none}
 .pv-orow .t{min-width:0}.pv-orow .t b{display:block;font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pv-orow .t span{font-size:var(--ds-text-meta);color:var(--ds-ink-3)}
 .pv-orow .p{font-size:var(--ds-text-meta);color:var(--ds-ink-3);display:inline-flex;gap:5px;align-items:center;white-space:nowrap}
 .pv-row-tools{display:flex;gap:2px}
@@ -836,6 +838,8 @@ body.cv-dragging,body.cv-dragging *{user-select:none!important;-webkit-user-sele
 #card-view .f-field{gap:8px}
 #card-view .f-row2{gap:16px}
 #card-view .f-sec-head h3[title],#card-view .f-field>label[title]{cursor:help}
+/* 가운데 카드는 밝은 면이라 그 안의 체크·동그라미도 밝은 모양(그라파이트에서 빈 「3점」 칸이 검게 칠해져 켜진 것처럼 보였다) */
+#card-view .cv-writer{color-scheme:light}
 /* 글자 5단계 */
 #card-view .cv-ph b,#card-view .f-field>label,#card-view .pick,#card-view .toggle{font-size:var(--cv-text-body)}
 #card-view .typeseg button,#card-view .stage button,#card-view .seg button,#card-view .hint,#card-view .cv-tile .cap,
@@ -856,6 +860,7 @@ body.cv-dragging,body.cv-dragging *{user-select:none!important;-webkit-user-sele
 #card-view .msg.ai .au-notes{font-size:var(--cv-text-small)}
 #card-view .ax{background:transparent;box-shadow:none;padding:0 4px 0 0}
 #card-view .composer textarea{font-size:var(--cv-text-body)}
+#card-view .msg .ai-login{margin-top:8px}#card-view .msg .ai-login .go-mini{background:var(--go-bg);color:var(--go-ink);box-shadow:inset 0 0 0 1px var(--go-line)}
 /* 미리보기 칸의 5e_hwp 안내: 한 줄(긴 글은 풍선). 오류 안내는 줄이지 않는다 */
 .cv-hwp-layer #preview-dialog.docked .typeset-info{flex-direction:row;align-items:baseline;gap:8px}
 .cv-hwp-layer #preview-dialog.docked #typeset-status{flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}

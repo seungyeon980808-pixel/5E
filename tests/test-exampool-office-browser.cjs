@@ -76,6 +76,15 @@ h.withServer(async origin => {
       const lw=await sheet.evaluate(()=>document.querySelector('#card-view .cv-left').offsetWidth),split=await sheet.locator('#card-view [data-cvsplit="left"]').boundingBox();
       await sheet.locator('#card-view [data-cvsplit="left"]').hover();await page.mouse.down();await page.mouse.move(split.x-60,split.y+split.height/2,{steps:4});await page.mouse.up();
       assert.ok(Math.abs(await sheet.evaluate(()=>document.querySelector('#card-view .cv-left').offsetWidth)-(lw-60))<=6,'dragging the left border resizes the library');
+      // 좁은 창(1100): 칸이 이미 끌기 상한보다 넓어도 경계를 잡는 순간 줄어들지 않고, 끌면 움직인 만큼 줄어든다.
+      await page.setViewportSize({width:1100,height:800});await sheet.waitForTimeout(200);
+      for(const k of ['left','right']){const pane=k==='left'?'.cv-left':'.cv-right',w0=await sheet.evaluate(s=>document.querySelector('#card-view '+s).getBoundingClientRect().width,pane),b=await sheet.locator(`#card-view [data-cvsplit="${k}"]`).boundingBox(),f=await (await page.$('#exampool-sheet-workspace iframe')).boundingBox();
+        const x=f.x+b.x+b.width/2,y=f.y+b.y+b.height/2;await page.mouse.move(x,y);await page.mouse.down();await page.mouse.move(x+1,y);await page.mouse.move(x,y);
+        assert.ok(Math.abs(await sheet.evaluate(s=>document.querySelector('#card-view '+s).getBoundingClientRect().width,pane)-w0)<=1,`grabbing the ${k} border in a narrow window does not jump`);
+        await page.mouse.move(k==='left'?x-30:x+30,y,{steps:3});await page.mouse.up();
+        assert.ok(Math.abs(await sheet.evaluate(s=>document.querySelector('#card-view '+s).getBoundingClientRect().width,pane)-(w0-30))<=2,`dragging the ${k} border in a narrow window shrinks it by the drag`);
+        await sheet.locator(`#card-view [data-cvsplit="${k}"]`).dblclick();}
+      await page.setViewportSize({width:1440,height:960});await sheet.waitForTimeout(200);
       await sheet.click('#card-view [data-cv="toggle-right"]');assert.equal(await sheet.locator('#card-view .cv-right').isHidden(),true);await sheet.click('#card-view [data-cv="toggle-right"]');
       await sheet.click('#card-view [data-cvview="page"]');await sheet.waitForSelector('#card-view .pg-sheet[data-native-page] svg');await sheet.waitForSelector('#card-view .pg-sheet .pg-now');await sheet.click('#card-view .pg-head [data-cvview="card"]');await sheet.waitForSelector('#card-view .cv-writer');
       // 문항 카드에는 표(엑셀식) 진입이 없다. 표는 시험지의 「표로 한꺼번에 고치기」로만 연다.
@@ -104,6 +113,11 @@ h.withServer(async origin => {
       const added=sheet.locator('#card-view .cv-tile.empty').last();
       assert.equal(await added.locator('[data-cvslot-act="pick"]').count(),1);assert.equal(await added.locator('[data-cvslot-act="to-table"]').count(),1);
       await added.locator('[data-cvslot-act="remove"]').click();await sheet.waitForFunction(n=>document.querySelectorAll('#card-view .cv-tile').length===n,tiles);
+      // AI 연결 안 됨: 안내 말풍선의 「ChatGPT 로그인」이 5E 연결 창을 연다(카드 화면에는 로그인 단추가 따로 없음).
+      await sheet.click('#card-view [data-cvright="ai"]');await sheet.fill('#cv-ai-input','검토해 줘');await sheet.click('#card-view [data-cv="ai-send"]');
+      await sheet.waitForSelector('#card-view .msg.ai.err [data-cv="ai-login"]',{timeout:20000});await sheet.click('#card-view [data-cv="ai-login"]');
+      await page.waitForSelector('.web-login-dialog[open]',{timeout:5000});await page.locator('.web-login-dialog .web-login-close').click();
+      await sheet.click('#card-view [data-cvright="paper"]');
       // 위쪽 막대: 이동 줄 끝은 문항 이름만(전체 발문은 풍선), 「문항 보관함」·로고는 눌러서 보관함으로 간다.
       assert.ok(!(await sheet.locator('#crumb-question').textContent()).includes(' · '),'the crumb shows only the question name');
       assert.match(await sheet.locator('#crumb-question').getAttribute('title'),/ · /,'the full ask is in the tooltip');
@@ -111,6 +125,10 @@ h.withServer(async origin => {
       assert.equal(await sheet.locator('#crumb-view').isDisabled(),true,'the crumb is plain text where you already are');
       await sheet.locator('#library-view [data-open-card]').first().click();await sheet.waitForSelector('#card-view:not([hidden]) .cv-writer');
       await sheet.click('#brand-home');await sheet.waitForSelector('#library-view:not([hidden])');
+      assert.equal(await sheet.locator('.crumb-sep').isHidden(),true,'no dangling separator when no question is open');
+      // 보관함 미리보기 그림은 문항 맨 위(지문)부터 보인다(단추가 내용을 세로 가운데로 두어 윗부분이 잘리던 것).
+      await sheet.waitForFunction(()=>document.querySelector('#library-view .pv-doc')?.textContent.trim(),null,{timeout:10000});
+      assert.ok(await sheet.evaluate(()=>{const t=document.querySelector('#library-view .pv-thumb').getBoundingClientRect(),d=document.querySelector('#library-view .pv-doc').getBoundingClientRect();return d.top>=t.top-0.5&&d.top<=t.top+1;}),'the library thumbnail starts at the top of the question');
       if(await sheet.locator('.side').isHidden())await sheet.click('#toggle-nav');
       await sheet.click('.side [data-nav="new-exam"]');await sheet.waitForSelector('#examd-view:not([hidden]) #exam-from-library');
       await sheet.selectOption('#exam-from-library',await sheet.locator('#exam-from-library option').nth(1).getAttribute('value'));
