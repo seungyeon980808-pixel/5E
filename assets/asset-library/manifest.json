@@ -1,0 +1,15 @@
+{
+ "version": 1,
+ "generated": "2026-09-30",
+ "subjects": {
+  "p": "물리",
+  "c": "화학",
+  "b": "생명",
+  "e": "지구"
+ },
+ "note": "AI가 기출 도판을 참고해 새로 그린 투명 PNG. 기출 원본 그림이 아니다.",
+ "parts": [
+  "manifest-p.json",
+  "manifest-cbe.json"
+ ]
+}

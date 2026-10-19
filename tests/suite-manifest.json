@@ -2063,6 +2063,12 @@
       "findingIds": [
         "RHWP-EXAM-HANCOM-SHORTCUTS"
       ]
+    },
+    {
+      "path": "tests/test-asset-library-browser.cjs",
+      "findingIds": [
+        "ASSET-LIBRARY-PORT"
+      ]
     }
   ],
   "deferred": [
