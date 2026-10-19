@@ -162,6 +162,15 @@ test('copyTree snapshots for undo copy every object but share immutable strings'
   const u8=new Uint8Array([1,2]),c2=copyTree({u8});assert.notEqual(c2.u8,u8);assert.deepEqual([...c2.u8],[1,2]);
 });
 
+test('an Excel download over the 20 MB re-upload limit says so instead of asking to pick a file',async()=>{
+  const {createRequire}=await import('node:module'),require=createRequire(import.meta.url),fs=await import('node:fs');
+  const XLSX=require('../assets/exampool/sheet/vendor/xlsx.full.min.js'),JSZip=require('../assets/exampool/sheet/vendor/jszip.min.js');
+  const {exportExcel}=await import('../assets/exampool/sheet/excel.js');
+  const png='data:image/png;base64,'+fs.readFileSync(new URL('../assets/exam-library/images/b1_2007_11_05.png',import.meta.url)).toString('base64');
+  const questions=[];for(let i=0;i<110;i++){const q=shape('combo','two');q.number=String(i+1);q.blocks.filter(b=>b.kind==='figure').forEach(b=>b.figure={name:'f.png',data:png,width:600,height:300});questions.push(q);}
+  await assert.rejects(exportExcel(XLSX,JSZip,{format:'5e-question-sheet-v2',questions,documents:[]}),/내려받을 엑셀이 [\d.]+ MB라 다시 올릴 수 있는 20 MB를 넘습니다/);
+});
+
 test('a space after a sub/superscript group keeps the native engine from extending the subscript',async()=>{
   const {normalizeEquationScript:n}=await import('../assets/exampool/sheet/typeset-model.js');
   assert.equal(n('T_{1}=\\frac{t_{1}}{10}'),'T_{1} =\\frac{t_{1}}{10}');assert.equal(n('T_{1}>T_{2}'),'T_{1} >T_{2}');
