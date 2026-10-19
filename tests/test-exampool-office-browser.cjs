@@ -113,6 +113,12 @@ h.withServer(async origin => {
       const added=sheet.locator('#card-view .cv-tile.empty').last();
       assert.equal(await added.locator('[data-cvslot-act="pick"]').count(),1);assert.equal(await added.locator('[data-cvslot-act="to-table"]').count(),1);
       await added.locator('[data-cvslot-act="remove"]').click();await sheet.waitForFunction(n=>document.querySelectorAll('#card-view .cv-tile').length===n,tiles);
+      // 한글 창이 다시 그려져도 카드 칸에 이어 치는 글은 카드에 들어가고, ⌘Z는 카드 편집을 되돌린다(편집기가 초점을 가져가던 것).
+      await sheet.click('#card-view [data-cvright="paper"]');await sheet.waitForSelector('.cv-hwp-layer:not([hidden]) #preview-dialog:not([hidden])');await typesetReady(sheet);
+      await sheet.click('#cv-passage');await page.keyboard.type('가');await sheet.waitForTimeout(3500);await typesetReady(sheet);await page.keyboard.type('나');
+      assert.equal(await sheet.inputValue('#cv-passage'),'가나','typing continues in the card after the HWP window redraws');
+      assert.equal(await sheet.evaluate(()=>!!document.activeElement.closest('.cv-hwp-layer')),false,'the redraw does not move focus into the HWP window');
+      await sheet.fill('#cv-passage','');await sheet.locator('#cv-passage').press('Tab');await sheet.waitForTimeout(1500);await typesetReady(sheet);
       // AI 연결 안 됨: 안내 말풍선의 「ChatGPT 로그인」이 5E 연결 창을 연다(카드 화면에는 로그인 단추가 따로 없음).
       await sheet.click('#card-view [data-cvright="ai"]');await sheet.fill('#cv-ai-input','검토해 줘');await sheet.click('#card-view [data-cv="ai-send"]');
       await sheet.waitForSelector('#card-view .msg.ai.err [data-cv="ai-login"]',{timeout:20000});await sheet.click('#card-view [data-cv="ai-login"]');
