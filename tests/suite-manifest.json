@@ -2125,6 +2125,12 @@
       ]
     },
     {
+      "path": "tests/test-exampool-sheet-typing-browser.cjs",
+      "findingIds": [
+        "EXAMPOOL-SHEET-TYPING-NO-LOSS"
+      ]
+    },
+    {
       "path": "tests/test-asset-library-browser.cjs",
       "findingIds": [
         "ASSET-LIBRARY-PORT"

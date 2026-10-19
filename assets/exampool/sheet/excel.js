@@ -66,7 +66,10 @@ export function project(XLSX,data) {
 export async function exportExcel(XLSX,JSZip,data) {
   const {wb,pack,images}=project(XLSX,data),zip=await JSZip.loadAsync(XLSX.write(wb,{bookType:'xlsx',type:'array',cellStyles:true}));
   await enhanceZip(zip,wb.SheetNames,images,pack.excel.indices);
-  const bytes=await zip.generateAsync({type:'uint8array',compression:'DEFLATE'});checkXlsxSize(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength));return bytes;
+  const bytes=await zip.generateAsync({type:'uint8array',compression:'DEFLATE'});
+  // 다시 올릴 수 있는 크기(20 MB)를 넘으면 내려받지 않는다. 올리기용 문구(「…파일을 선택하세요」)가 나오면 무엇이 문제인지 알 수 없었다.
+  if(bytes.byteLength>20*1024*1024)throw new Error(`내려받을 엑셀이 ${(bytes.byteLength/1048576).toFixed(1)} MB라 다시 올릴 수 있는 20 MB를 넘습니다. 그림이 든 문항 수나 그림 크기를 줄여 주세요.`);
+  checkXlsxSize(bytes.buffer.slice(bytes.byteOffset,bytes.byteOffset+bytes.byteLength));return bytes;
 }
 export async function enhanceZip(zip,names,images,indices=[]) {
   let types=await zip.file('[Content_Types].xml').async('string');

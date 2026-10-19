@@ -96,6 +96,7 @@ h.withServer(async origin => {
       assert.equal((await sheet.locator('#card-view .cv-shape').textContent()).trim(),'합답형실험 상자');
       await sheet.click('#card-view .cv-shape');
       assert.deepEqual(await sheet.locator('#card-view .cv-shape-menu [data-cvform] .n').allTextContents(),['합답형','일반 정답형','대응·짝 고르기형','학생 대화·발표형','서술형']);
+      for(const [k,want] of [['ArrowDown','single'],['ArrowDown','pair'],['ArrowUp','single'],['End','essay'],['Home','combo']]){await page.keyboard.press(k);assert.equal(await sheet.evaluate(()=>document.activeElement?.dataset?.cvform),want,'arrow keys move within the type menu');}
       await page.keyboard.press('Escape');assert.equal(await sheet.locator('#card-view .cv-shape-menu').count(),0,'Esc closes the menu');
       // 보기에 글이 있으면 지울지 묻고, 취소하면 그대로.
       await sheet.fill('#card-view [data-cvline="bogi"][data-i="0"]','운동량은 보존된다.');
@@ -358,10 +359,19 @@ h.withServer(async origin => {
         assert.equal(await smallSheet.locator('#card-view [data-cvline="bogi"]').count(),3,'a printed bogi stays visible on a non-combo card');
         for(let i=0;i<3;i++){await smallSheet.locator('#card-view [data-cvline-remove="bogi"]').first().click();await smallSheet.waitForTimeout(150);}
         await smallSheet.waitForFunction(()=>!document.querySelector('#card-view [data-cvline="bogi"]'));}
+      // 자료 칸을 여럿 더해도 이름은 (가)·(나)… 순서로 겹치지 않는다((아) 다음은 (자)·(차)).
+      await smallSheet.click('#card-view [data-cv="new"]');await smallSheet.click('#new-dialog .nq-opt[data-step="form"][data-k="combo"]');await smallSheet.click('#new-dialog .nq-opt[data-step="struct"][data-k="two"]');await smallSheet.click('#new-dialog [data-nq="go"]');
+      for(let i=0;i<8;i++){const n=await smallSheet.locator('#card-view .cv-tile').count();await smallSheet.click('#card-view .cv-add-row');await smallSheet.waitForFunction(n=>document.querySelectorAll('#card-view .cv-tile').length===n+1,n);}
+      assert.deepEqual(await smallSheet.locator('#card-view .cv-tile .cap b').allTextContents(),['(가)','(나)','(다)','(라)','(마)','(바)','(사)','(아)','(자)','(차)']);
       // 좁은 카드 칸에서도 유형 메뉴가 칸 밖으로 나가 잘리지 않는다.
       await smallSheet.click('#card-view .cv-shape');
       const menuFit=await smallSheet.evaluate(()=>{const m=document.querySelector('.cv-shape-menu').getBoundingClientRect(),c=document.querySelector('#card-view .cv-writer').getBoundingClientRect();return m.left>=c.left&&m.right<=c.right;});
       assert.equal(menuFit,true,'the type menu stays inside a narrow card column');
+      // 새 문항 창은 키보드만으로 끝까지 고를 수 있다: 고른 뒤에도 초점이 창 안에 남아 숫자·Backspace·Enter가 먹는다.
+      await small.keyboard.press('Escape');await smallSheet.click('#card-view [data-cv="new"]');await smallSheet.waitForSelector('#new-dialog[open] .nq-opt');
+      for(const k of ['5','Backspace','2','1'])await small.keyboard.press(k);
+      assert.equal(await smallSheet.evaluate(()=>!!document.activeElement?.closest('#new-dialog')),true,'focus stays in the new-question dialog');
+      await small.keyboard.press('Enter');await smallSheet.waitForFunction(()=>/^일반 정답형/.test(document.querySelector('#card-view .cv-shape')?.textContent||''));
     } finally {await browser.close();}
   }
 }).catch(error => {console.error(error);process.exitCode = 1;});
