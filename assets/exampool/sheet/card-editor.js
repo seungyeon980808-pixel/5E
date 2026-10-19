@@ -281,7 +281,7 @@ export function createCardEditor(root,api){
     if(panels.tab==='textbooks'){pastFilter.query=input.value.trim();store.set('past',pastFilter);pastRefocus=true;renderPast();return;}
     const incoming=splitWords(input.value);if(!incoming.length)return;
     const joined=[...new Set([...pastFilter.tokens,...incoming])];
-    if(joined.length>3){api.status?.('검색어는 최대 세 단어입니다. 단어를 줄여 주세요.',true);return;}
+    if(joined.length>3){api.status?.('검색어는 최대 세 단어입니다. 단어를 줄여 주세요.',true);return false;}
     pastFilter.tokens=joined;pastFilter.query='';store.set('past',pastFilter);renderPast();
   }
   // 기출 카드 그림: 화면에 들어오는 것부터 문항 번호~선지 번호 줄로 잘라(past-crop.js) 넣는다. 그림 칸은 정사각 고정이라 읽혀도 칸이 움직이지 않는다(긴 문항은 아래만 잘림).
@@ -470,11 +470,12 @@ export function createCardEditor(root,api){
   // Safari는 조합 끝(compositionend)을 Enter보다 먼저 보내기도 한다 → 그때는 keyCode 229 Enter로 들어오므로 바로 넣는다.
   root.addEventListener('compositionstart',e=>{if(e.target.dataset?.cvpast==='query')pastComposing=true;});
   root.addEventListener('compositionend',e=>{const t=e.target;if(t.dataset?.cvpast!=='query')return;pastComposing=false;
-    if(pastEnterPending){pastEnterPending=false;setTimeout(()=>{clearTimeout(t._timer);addPastWords(t);},0);}
+    if(pastEnterPending){pastEnterPending=false;clearTimeout(t._timer);const v=t.value;t.value='';if(addPastWords({value:v})===false)t.value=v;}
     else{pastFilter.query=t.value.trim();store.set('past',pastFilter);clearTimeout(t._timer);t._timer=setTimeout(renderPast,250);}});
   root.addEventListener('keydown',e=>{const t=e.target;if(t.dataset?.cvpast!=='query')return;
     if(e.key==='Enter'&&(e.isComposing||pastComposing)){e.preventDefault();pastEnterPending=true;return;}
-    if(e.key==='Enter'){e.preventDefault();clearTimeout(t._timer);setTimeout(()=>addPastWords(t),0);}
+    // Enter 순간의 글을 바로 떼어 낸다(미루면 빠르게 이어 친 다음 단어가 같은 조각에 붙음: 「자석」 Enter 「질량」 → 「자석질량」).
+    if(e.key==='Enter'){e.preventDefault();clearTimeout(t._timer);const v=t.value;t.value='';if(addPastWords({value:v})===false)t.value=v;}
     else if(e.key==='Backspace'&&!t.value&&pastFilter.tokens.length){e.preventDefault();pastFilter.tokens=pastFilter.tokens.slice(0,-1);store.set('past',pastFilter);renderPast();}});
   root.addEventListener('keydown',e=>{if(e.target.id==='cv-ai-input'&&e.key==='Enter'&&(e.metaKey||e.ctrlKey)){e.preventDefault();root.querySelector('[data-cv="ai-send"]')?.click();}});
   // 칸 경계 끌기: 왼쪽 경계는 라이브러리 폭, 오른쪽 경계는 미리보기·AI 폭. 두 번 누르면 기본 폭.

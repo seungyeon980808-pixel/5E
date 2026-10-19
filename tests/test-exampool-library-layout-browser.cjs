@@ -132,6 +132,12 @@ h.withServer(async origin => {
       // 그림 자르기 작업자 모듈이 이 브라우저에서 읽힌다(바깥 그림은 검사에서 막혀 실제 자르기는 점검 스크립트로 확인).
       assert.equal(await sheet.evaluate(async()=>{const w=new Worker(new URL('../sheet/past-crop-worker.js',location.href),{type:'module'});const r=await new Promise(res=>{w.onmessage=e=>res(e.data);w.onerror=()=>res('load-error');w.postMessage({id:1,url:location.origin+'/missing.webp'});});w.terminate();return typeof r==='object'&&r.id===1;}),true,'the crop worker loads and answers');
 
+      // 3c-3. 빠르게 이어 치기: 「자석」 Enter 「질량」 Enter를 쉬지 않고 쳐도 조각이 따로 생긴다(한 조각에 붙지 않음).
+      await query.click();await page.keyboard.type('자석',{delay:0});await page.keyboard.press('Enter');await page.keyboard.type('질량',{delay:0});await page.keyboard.press('Enter');
+      await sheet.waitForFunction(()=>document.querySelectorAll('#card-view .lp-token').length===2,null,{timeout:5000}).catch(()=>{});
+      assert.deepEqual((await tokens()).map(t=>t.replace('×','')),['자석','질량'],'fast typing keeps index words apart');
+      while(await sheet.locator('#card-view .lp-token').count())await sheet.click('#card-view .lp-token');
+
       // 3d. 한글 입력: 조합 중에는 입력 칸을 다시 그리지 않고, 조합 중 Enter는 마지막 글자까지 확정된 단어로 조각을 만든다(두 순서 모두).
       for(const [word,order] of [['질량','keydown-first'],['자석','compositionend-first']]){
         const r=await sheet.evaluate(async([word,order])=>{const sleep=ms=>new Promise(r=>setTimeout(r,ms));const n=document.querySelector('#card-view [data-cvpast="query"]');n.focus();
