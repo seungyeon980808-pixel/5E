@@ -21,7 +21,10 @@ const strip=s=>s.replace(/^import\s[\s\S]*?from\s*["'][^"']+["'];\s*/gm,'').repl
 function read(file) { const p=path.join(root,'js',file);return fs.readFileSync(fs.existsSync(p)?p:path.join(base,'js',file),'utf8'); }
 // 1.7.0 라벨 지시선 경로·라벨 글꼴은 이 검사 대상(과학 오브젝트)이 쓰지 않으므로 '기능 꺼짐' 값으로 채운다.
 const LABEL_OFF={deriveLabelLeaderGeometry:()=>null,pointInLabelerBlock:()=>false,leaderRoutePoints:()=>[],sampleLeaderRoute:()=>[],renderLeaderRoutes:()=>{},hasLabelTypography:()=>false,measureLabelTypography:()=>null,nativeLabelBounds:()=>null,nativeLabelPolygon:()=>null,renderLabelTypography:()=>null,renderNativeLabelTypography:()=>null};
-function load(file,names,deps={}) {const context=vm.createContext({document,console,Blob,URL,window:{},...(['templates.js','pick.js','render/scene.js','svg-export.js','render/annotations.js'].includes(file)?{...LABEL_OFF,...lab}:{}),...deps});vm.runInContext(strip(read(file)).replace(/\bimport\.meta\.url\b/g,JSON.stringify(require('node:url').pathToFileURL(path.join(root,'js',file)).href))+`\nglobalThis.result={${names.join(',')}};`,context,{filename:file,timeout:2000});return context.result;}
+// 앱 코드가 쓰는 공용 도구(되돌리기 기록용 jsonClone)는 import를 지운 대신 여기서 넣어 준다.
+let jsonClone;
+function load(file,names,deps={}) {const context=vm.createContext({document,console,Blob,URL,window:{},jsonClone,...(['templates.js','pick.js','render/scene.js','svg-export.js','render/annotations.js'].includes(file)?{...LABEL_OFF,...lab}:{}),...deps});vm.runInContext(strip(read(file)).replace(/\bimport\.meta\.url\b/g,JSON.stringify(require('node:url').pathToFileURL(path.join(root,'js',file)).href))+`\nglobalThis.result={${names.join(',')}};`,context,{filename:file,timeout:2000});return context.result;}
+jsonClone=load('json-clone.js',['jsonClone']).jsonClone;
 const geometry=load('science-geometry.js',['endpointSettings','setEndpointSettings','vesselFill','VOLUME_KINDS','volumeFractionAtHeight','heightAtVolumeFraction','vesselWidthAtHeight','scaleMarks','scaleNumber','thermometerScale']);
 const core=load('render/core.js',['SVG_NS','grayHex','applyDash','oLine','oQuad','oDot','quadPt','cText','hatchVLine','oDashV','makeArrowHead'],{fillSvgTextWithRomanRuns:(n,t)=>{n.textContent=t;}});
 const styles=load('style-mode.js',['resolveObjectStyle']);

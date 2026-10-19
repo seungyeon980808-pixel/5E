@@ -1,3 +1,4 @@
+import { jsonClone } from "../json-clone.js?v=1.7.0-four-session-integration";
 import { endpointSettings, setEndpointSettings } from "../science-geometry.js?v=1.7.0-four-session-integration";
 
 // Endpoints remain the only saved geometry. Numeric edits and handle drags
@@ -20,7 +21,7 @@ export function addEndpointControls(body, state, type, vertical = false) {
       const s = state.get(), ids = s.selectedIds || [];
       if (ids.length !== 1 || s.targetedId) return;
       const o = s.objects.find(x => x.id === ids[0]); if (!o || o.type !== type || o.locked) return;
-      const snap = JSON.parse(JSON.stringify(s.objects));
+      const snap = jsonClone(s.objects);
       state.update(s2 => {
         const t = s2.objects.find(x => x.id === o.id); if (!t || t.locked) return;
         setEndpointSettings(t, { [key]: value }, vertical);

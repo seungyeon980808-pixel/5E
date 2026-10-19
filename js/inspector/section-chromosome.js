@@ -7,6 +7,7 @@
  * 명세: docs/BIO_PARTS_SPEC.md §2 — 필드 이름·기본값은 거기서만 가져온다.
  */
 
+import { jsonClone } from "../json-clone.js?v=1.7.0-four-session-integration";
 import { makeSection } from "./widgets.js?v=1.7.0-four-session-integration";
 
 function row(labelText) {
@@ -158,7 +159,7 @@ export function initChromosomeSection(state) {
     const s = state.get();
     const o = selected();
     if (!o || o.locked) return;
-    const snap = JSON.parse(JSON.stringify(s.objects));
+    const snap = jsonClone(s.objects);
     state.update((s2) => {
       const t = s2.objects.find((x) => x.id === o.id);
       if (!t || t.locked) return;

@@ -12,6 +12,7 @@
  * 필드 이름·기본값의 뜻은 docs/CHEM_PARTS_SPEC.md §8 을 따른다.
  */
 
+import { jsonClone } from "../json-clone.js?v=1.7.0-four-session-integration";
 import { makeSection } from "./widgets.js?v=1.7.0-four-session-integration";
 import { CHEMGRAPH_KINDS, CHEMGRAPH_ACID_TYPES } from "../render/chemgraph.js?v=1.7.0-four-session-integration";
 
@@ -157,7 +158,7 @@ export function initChemGraphSection(state) {
     const s = state.get();
     const o = selected();
     if (!o || o.locked) return;
-    const snap = JSON.parse(JSON.stringify(s.objects));
+    const snap = jsonClone(s.objects);
     state.update((s2) => {
       const t = s2.objects.find((x) => x.id === o.id);
       if (!t || t.locked) return;

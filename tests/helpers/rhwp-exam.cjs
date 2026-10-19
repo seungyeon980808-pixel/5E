@@ -265,7 +265,13 @@ async function originalEdit(page,index=0) {
     },expected);
     await capture('actual-picture-owner-and-controls-settled');
     await action(page,'edit');
-    await page.locator('#exam-edit-bar').waitFor({state:'visible'});
+    // AI로 만든 그림은 AI 작업대가 열리고, 그동안 편집 막대(문서에 반영·돌아가기)는 숨는다(2026-10-16 c07dc737).
+    // AI 창을 닫으면 막대가 보인다. 그 밖의 그림은 막대가 바로 보여야 한다.
+    try{await page.locator('#exam-edit-bar').waitFor({state:'visible',timeout:15000});}
+    catch(error){
+      const ai=await page.evaluate(()=>document.body.classList.contains('exam-editing')&&!!document.querySelector('#ai-image-panel:not([hidden])')?.getClientRects().length);
+      if(!ai)throw error;
+    }
     await capture('original-edit-completed');
     if(process.env.EVIDENCE_DIR){
       const target=path.resolve(process.env.EVIDENCE_DIR),stem='original-edit-success-'+Date.now()+'-'+(++originalEditDiagnosticSequence);

@@ -26,6 +26,12 @@
       ]
     },
     {
+      "path": "tests/test-library-style-invalidation.mjs",
+      "findingIds": [
+        "LIBRARY-SCROLL-STYLE-INVALIDATION"
+      ]
+    },
+    {
       "path": "tests/test-exampool-past-crop.mjs",
       "findingIds": [
         "EXAMPOOL-PAST-CARD-CROP"
@@ -910,6 +916,12 @@
         "EXAMPOOL-DRAG-PLACEMENT",
         "EXAMPOOL-HWP-TO-SHEET-TEXT",
         "EXAMPOOL-EXAM-ASSEMBLY"
+      ]
+    },
+    {
+      "path": "tests/test-exampool-card-typing-perf-browser.cjs",
+      "findingIds": [
+        "EXAMPOOL-CARD-TYPING-PERF"
       ]
     },
     {
@@ -2113,6 +2125,18 @@
       ]
     },
     {
+      "path": "tests/test-exampool-card-typing-browser.cjs",
+      "findingIds": [
+        "EXAMPOOL-CARD-TYPING-PERF"
+      ]
+    },
+    {
+      "path": "tests/test-exampool-sheet-typing-browser.cjs",
+      "findingIds": [
+        "EXAMPOOL-SHEET-TYPING-NO-LOSS"
+      ]
+    },
+    {
       "path": "tests/test-asset-library-browser.cjs",
       "findingIds": [
         "ASSET-LIBRARY-PORT"
@@ -2128,6 +2152,13 @@
       "path": "tests/test-ai-done-notice-browser.cjs",
       "findingIds": [
         "AI-DONE-NOTICE-SURVIVES-DIALOG"
+      ]
+    },
+    {
+      "path": "tests/test-main-canvas-perf-browser.cjs",
+      "findingIds": [
+        "MAIN-CANVAS-DRAG-LAYOUT-THRASH",
+        "OBJECT-SEARCH-ICON-LAYOUT-THRASH"
       ]
     }
   ],

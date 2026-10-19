@@ -5,13 +5,14 @@
  * 렌더러도 같은 장(場) 엔진을 쓴다. 갈래(kind)만 다르다.
  */
 
+import { jsonClone } from "../json-clone.js?v=1.7.0-four-session-integration";
 import { makeSection } from "./widgets.js?v=1.7.0-four-session-integration";
 
 function commitTo(state, type, prop, value) {
   const s = state.get();
   const ids = s.selectedIds || [];
   if (ids.length !== 1) return;
-  const snap = JSON.parse(JSON.stringify(s.objects));
+  const snap = jsonClone(s.objects);
   state.update((s2) => {
     const o = s2.objects.find((it) => it.id === ids[0]);
     if (!o || o.type !== type || o.locked) return;

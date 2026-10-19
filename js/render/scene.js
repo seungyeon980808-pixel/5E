@@ -23,6 +23,7 @@ import {
   renderCurve,
   renderImage,
   renderSvgAsset,
+  setImageHrefResolver,
 } from "./shapes.js?v=1.7.0-four-session-integration";
 import { renderAxes, renderAngleArc, renderRightAngle, renderLabeler } from "./annotations.js?v=1.7.0-four-session-integration";
 import { labelerTargetDots } from "../labeler-target.js?v=1.7.0-four-session-integration";
@@ -173,13 +174,46 @@ function renderSnapPreview(scene, zoom) {
   scene.appendChild(group);
 }
 
+/* ----- 편집 화면의 그림: data URL → blob URL 재사용 -----
+ * 장면을 매번 지우고 다시 그리므로 <image>도 매번 새로 생긴다. Safari(WebKit)는 data: 그림을 새 <image>마다 다시
+ * 풀어(디코드) 큰 그림 8장이면 끌기 한 걸음에 1초 넘게 멈췄다. 같은 data URL에는 같은 blob URL을 주면 브라우저가
+ * 풀어 둔 그림을 다시 쓴다. 편집 화면(#scene)에만 쓴다 — 내보내기·저장은 renderObject/obj.src를 그대로 쓴다. */
+const imageUrlCache = new Map(); // data URL -> { url, generation }
+let imageUrlGeneration = 0;
+function cachedImageUrl(src) {
+  if (typeof src !== "string" || src.length < 2048 || !/^data:image\/[\w.+-]+;base64,/.test(src)) return src;
+  let entry = imageUrlCache.get(src);
+  if (!entry) {
+    try {
+      const comma = src.indexOf(","), binary = atob(src.slice(comma + 1)), bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      entry = { url: URL.createObjectURL(new Blob([bytes], { type: src.slice(5, src.indexOf(";")) })) };
+    } catch { return src; }
+    imageUrlCache.set(src, entry);
+  }
+  entry.generation = imageUrlGeneration;
+  return entry.url;
+}
+// 장면에서 빠진 그림의 blob URL은 몇 번의 그리기 뒤에 놓아 준다(되돌리기로 금방 다시 쓰일 수 있어 바로 놓지 않음).
+function releaseUnusedImageUrls() {
+  if (imageUrlCache.size <= 24) return;
+  for (const [src, entry] of imageUrlCache) {
+    if (imageUrlGeneration - entry.generation > 50) { URL.revokeObjectURL(entry.url); imageUrlCache.delete(src); }
+  }
+}
+
 /* ----- main draw: clear the scene group, repaint from state ----- */
 export function render(state, change) {
   if (change === 'native-text-input' && state.draftText?.nativeEditor) return;
   const scene = document.getElementById("scene");
   if (!scene) return;
   const selectionScale = selectionScaleForSvg(scene.ownerSVGElement, state.viewBox);
+  // 배율은 한 번만 읽는다. getZoom()은 getScreenCTM()이라, 아래에서 장면을 고치는 도중에 부르면 매번 레이아웃을
+  // 다시 계산한다(오브젝트 120개면 끌기 한 걸음에 60ms+). 장면 안 자식을 바꿔도 배율은 그대로다.
+  const zoom = getZoom();
 
+  imageUrlGeneration += 1;
+  releaseUnusedImageUrls();
   // Simplest correct projection: wipe and rebuild. Fine at this scale; a
   // keyed/diffing pass can replace this once object counts grow.
   scene.replaceChildren();
@@ -231,6 +265,8 @@ export function render(state, change) {
   // 단, text/formula는 항상 최상단(zOrderObjects) — 픽(pick.js hitTest)도 같은
   // view를 쓰므로 보이는 순서와 클릭 순서가 일치한다.
   const _editingId = state.draftText && state.draftText.editingId;
+  setImageHrefResolver(cachedImageUrl);
+  try {
   for (const obj of zOrderObjects(state.objects)) {
     // The object being re-edited is drawn by the draftText preview instead, so
     // skip its committed render to avoid double text while editing.
@@ -261,7 +297,7 @@ export function render(state, change) {
     // The twin width is HIT_PX / getZoom(), so a zoom/viewBox change recomputes it via
     // the store subscribe → render path (main.js: state.subscribe(render)).
     if (_isActive && !isLockedTracingImage(obj)) {
-      const twin = makeHitTwin(obj);
+      const twin = makeHitTwin(obj, zoom);
       if (twin) {
         el.setAttribute("pointer-events", "none"); // only the twin receives events
         scene.appendChild(twin);
@@ -277,6 +313,10 @@ export function render(state, change) {
       temp.dataset.ui = "image-edit-session";
       scene.appendChild(temp);
     }
+  }
+
+  } finally {
+    setImageHrefResolver(null);
   }
 
   // ----- ruler guides: editing aids only; export builds from objects separately -----
@@ -365,7 +405,7 @@ export function render(state, change) {
     if (!sel || sel.id === _editingId) continue;
     const _selLayer = (state.layers || []).find(l => l.id === (sel.layerId ?? 1));
     if (_selLayer && _selLayer.visible === false) continue;
-    if (sel.positionLocked) renderPositionLockMarker(sel, scene, getZoom());
+    if (sel.positionLocked) renderPositionLockMarker(sel, scene, zoom);
     const _selColor = state.targetedId === _sid ? "#e67700" : SELECTION_COLOR;
     const _frameKind = _selIds.length > 1 ? "multi-member" : "single";
     if (sel.type === 'labeler') {
@@ -596,8 +636,8 @@ export function render(state, change) {
   }
 
   /* ===== SNAP PREVIEW OVERLAY HOOK: same transient layer as selection handles ===== */
-  renderSmartGuides(scene, getZoom());
-  renderSnapPreview(scene, getZoom());
+  renderSmartGuides(scene, zoom);
+  renderSnapPreview(scene, zoom);
 
   // ----- live drag preview (ephemeral; not in state.objects yet) -----
   if (state.draft) {
@@ -810,7 +850,7 @@ function isLockedTracingImage(obj) {
   return !!obj && obj.type === "image" && (obj.imageSelectionLocked === true || (obj.mode === "background" && obj.locked === true));
 }
 
-function makeHitTwin(obj) {
+function makeHitTwin(obj, zoom = getZoom()) {
   let twin = null;
   if (obj.type === "line") {
     twin = document.createElementNS(SVG_NS, "line");
@@ -860,7 +900,7 @@ function makeHitTwin(obj) {
     for (const part of twin.querySelectorAll('line, path, polyline, circle')) {
       part.setAttribute('stroke', 'transparent');
       part.setAttribute('fill', 'none');
-      part.setAttribute('stroke-width', HIT_PX / getZoom());
+      part.setAttribute('stroke-width', HIT_PX / zoom);
       part.setAttribute('pointer-events', 'stroke');
     }
     // The glyph body remains clickable independently of the leader geometry.
@@ -888,7 +928,7 @@ function makeHitTwin(obj) {
   const isRectTwin = twin.tagName.toLowerCase() === "rect";
   twin.setAttribute("fill", isRectTwin ? "transparent" : "none");
   twin.setAttribute("stroke", "transparent");
-  twin.setAttribute("stroke-width", HIT_PX / getZoom()); // zoom-invariant screen px
+  twin.setAttribute("stroke-width", HIT_PX / zoom); // zoom-invariant screen px
   twin.setAttribute("stroke-linecap", "round");
   twin.setAttribute("stroke-linejoin", "round");
   twin.setAttribute("pointer-events", isRectTwin ? "all" : "stroke");

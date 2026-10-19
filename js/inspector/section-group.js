@@ -1,3 +1,4 @@
+import { jsonClone } from "../json-clone.js?v=1.7.0-four-session-integration";
 /* ===== INSPECTOR SECTION — 그룹 (개체 풀기 / 묶기 buttons) =====
  * Extracted verbatim from initInspector() in js/inspector.js (v0.44.0
  * split). Builds the section DOM and wires its events; mounting into the
@@ -20,7 +21,7 @@ export function buildGroupSection(ctx) {
     const refObj = s.objects.find((o) => o.id === refId);
     if (!refObj || !refObj.groupId) return;
     const groupId = refObj.groupId;
-    const snap = JSON.parse(JSON.stringify(s.objects));
+    const snap = jsonClone(s.objects);
     state.update((s2) => {
       const grp = s2.groups.find((g) => g.id === groupId);
       if (grp) grp.memberIds.forEach(id => {
@@ -47,7 +48,7 @@ export function buildGroupSection(ctx) {
   groupBtn.addEventListener("click", () => {
     // Mirrors the G-key group-creation logic in transform.js.
     const s = state.get();
-    const snap = JSON.parse(JSON.stringify(s.objects));
+    const snap = jsonClone(s.objects);
     state.update((s2) => {
       const groupId = Date.now().toString();
       // locked objects are excluded; need ≥2 mutable members left to form a group

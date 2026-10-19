@@ -3,6 +3,7 @@
  * split). Builds the section DOM and wires its events; mounting into the
  * inspector panel happens in js/inspector.js (the orchestrator). */
 
+import { jsonClone } from "../json-clone.js?v=1.7.0-four-session-integration";
 import { makeColorPicker, makeSection, makeTextDetailButton, supportsDash, DASH_PRESETS } from "./widgets.js?v=1.7.0-four-session-integration";
 // 패턴 유효성 판정은 렌더러(applyDash)와 같은 함수를 써야 인스펙터 표시와 실제 그림이 안 어긋난다.
 import { normalizeDashPattern } from "../render/core.js?v=1.7.0-four-session-integration";
@@ -113,7 +114,7 @@ export function buildLineSection(ctx) {
     const s = state.get();
     const ids = s.selectedIds || [];
     if (ids.length !== 1) return;
-    const snap = JSON.parse(JSON.stringify(s.objects));
+    const snap = jsonClone(s.objects);
     state.update((s2) => {
       const o = s2.objects.find((o) => o.id === ids[0]);
       if (o && o.locked) return; // 잠긴 객체는 화살표 변경 금지
@@ -164,7 +165,7 @@ export function buildLineSection(ctx) {
       const s = state.get();
       const ids = s.selectedIds || [];
       if (ids.length !== 1) return;
-      const snap = JSON.parse(JSON.stringify(s.objects));
+      const snap = jsonClone(s.objects);
       state.update((s2) => {
         const o = s2.objects.find((item) => item.id === ids[0]);
         if (!o || o.type !== "line" || o.locked) return; // 잠긴 객체는 선 모드 변경 금지
@@ -223,7 +224,7 @@ export function buildLineSection(ctx) {
   dimensionLabelInp.addEventListener("change", () => {
     const s = state.get();
     const id = (s.selectedIds || [])[0];
-    const snap = JSON.parse(JSON.stringify(s.objects));
+    const snap = jsonClone(s.objects);
     state.update((s2) => {
       const o = s2.objects.find((item) => item.id === id);
       if (!o || o.type !== "line") return;
@@ -260,7 +261,7 @@ export function buildLineSection(ctx) {
       if (!Number.isFinite(v)) return;
       const s = state.get();
       const id = (s.selectedIds || [])[0];
-      const snap = JSON.parse(JSON.stringify(s.objects));
+      const snap = jsonClone(s.objects);
       state.update((s2) => {
         const o = s2.objects.find((item) => item.id === id);
         if (!o || o.type !== "line" || o.locked) return;
@@ -296,7 +297,7 @@ export function buildLineSection(ctx) {
   lineLabelInp.addEventListener("change", () => {
     const s = state.get();
     const id = (s.selectedIds || [])[0];
-    const snap = JSON.parse(JSON.stringify(s.objects));
+    const snap = jsonClone(s.objects);
     state.update((s2) => {
       const o = s2.objects.find((item) => item.id === id);
       if (!o || o.type !== "line" || o.locked) return;
@@ -328,7 +329,7 @@ export function buildLineSection(ctx) {
     const s = state.get();
     const id = (s.selectedIds || [])[0];
     if (!id) return;
-    const snap = JSON.parse(JSON.stringify(s.objects));
+    const snap = jsonClone(s.objects);
     const val = lineLabelShowCb.checked;
     state.update((s2) => {
       const o = s2.objects.find((item) => item.id === id);
@@ -355,7 +356,7 @@ export function buildLineSection(ctx) {
     const s = state.get();
     const id = (s.selectedIds || [])[0];
     if (!id) return;
-    const snap = JSON.parse(JSON.stringify(s.objects));
+    const snap = jsonClone(s.objects);
     state.update((s2) => {
       const o = s2.objects.find((item) => item.id === id);
       if (!o || o.type !== "line" || o.locked) return;
@@ -401,7 +402,7 @@ export function buildLineSection(ctx) {
       const s = state.get();
       const ids = s.selectedIds || [];
       if (ids.length !== 1) return;
-      const snap = JSON.parse(JSON.stringify(s.objects));
+      const snap = jsonClone(s.objects);
       state.update((s2) => {
         const o = s2.objects.find((o) => o.id === ids[0]);
         if (supportsLineStyle(o)) {
@@ -438,7 +439,7 @@ export function buildLineSection(ctx) {
     const s = state.get();
     const ids = s.selectedIds || [];
     if (ids.length !== 1) return;
-    const snap = JSON.parse(JSON.stringify(s.objects));
+    const snap = jsonClone(s.objects);
     state.update((s2) => {
       const o = s2.objects.find((o) => o.id === ids[0]);
       if (o && o.type === "line") {
@@ -527,7 +528,7 @@ export function buildLineSection(ctx) {
       const o = s.objects.find(it => it.id === dotEditedId);
       if (!o || o.type !== "labeler" || o.locked || o.targetMarker !== "dot" || o.targetDotDiameter === diameter) return;
       if (!dotUndoRecorded) {
-        s.undoStack.push(JSON.parse(JSON.stringify(s.objects)));
+        s.undoStack.push(jsonClone(s.objects));
         s.redoStack = [];
         dotUndoRecorded = true;
       }
@@ -690,7 +691,7 @@ export function buildLineSection(ctx) {
     const s = state.get();
     const ids = s.selectedIds || [];
     if (ids.length !== 1) return;
-    const snap = JSON.parse(JSON.stringify(s.objects));
+    const snap = jsonClone(s.objects);
     state.update((s2) => {
       const o = s2.objects.find((o) => o.id === ids[0]);
       if (o && o.type === "line" && !o.locked) {
@@ -928,7 +929,7 @@ export function buildLineSection(ctx) {
     const s = state.get();
     const ids = s.selectedIds || [];
     if (ids.length !== 1) return;
-    const snap = JSON.parse(JSON.stringify(s.objects));
+    const snap = jsonClone(s.objects);
     state.update((s2) => {
       const o = s2.objects.find((o) => o.id === ids[0]);
       if (!o || o.type !== "polyline" || o.locked) return;
@@ -1045,7 +1046,7 @@ export function buildLineSection(ctx) {
     const s = state.get();
     const ids = s.selectedIds || [];
     if (ids.length !== 1) return;
-    const snap = JSON.parse(JSON.stringify(s.objects));
+    const snap = jsonClone(s.objects);
     state.update((s2) => {
       const o = s2.objects.find((o) => o.id === ids[0]);
       if (!o || o.type !== "line" || o.locked) return;

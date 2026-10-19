@@ -10,6 +10,7 @@
  * 구조는 section-legend.js 의 selected() / commit() / sync() 3함수 패턴 그대로다.
  */
 
+import { jsonClone } from "../json-clone.js?v=1.7.0-four-session-integration";
 import { makeSection } from "./widgets.js?v=1.7.0-four-session-integration";
 import { PARTICLE_STATES, PARTICLE_MOTIONS, PARTICLE_SHAPES } from "../render/particlebox.js?v=1.7.0-four-session-integration";
 
@@ -116,7 +117,7 @@ export function initParticleBoxSection(state) {
     const s = state.get();
     const o = selected();
     if (!o || o.locked) return;
-    const snap = JSON.parse(JSON.stringify(s.objects));
+    const snap = jsonClone(s.objects);
     state.update((s2) => {
       const t = s2.objects.find((x) => x.id === o.id);
       if (!t || t.locked) return;

@@ -1,3 +1,4 @@
+import { jsonClone } from "../json-clone.js?v=1.7.0-four-session-integration";
 import { screenToWorld } from "../viewport.js?v=1.7.0-four-session-integration";
 import { isOpticalBench, opticalBenchSettings, changeOpticalBench, opticalBenchLayout, opticalBenchLocalPoint } from "../optical-bench.js?v=1.7.0-four-session-integration";
 
@@ -10,7 +11,7 @@ export function initOpticalBenchEditing(svg,state) {
     if(!prop||e.button!==0||!allowed(o))return;
     e.preventDefault();e.stopImmediatePropagation();
     const p=screenToWorld(svg,state.get().viewBox,e.clientX,e.clientY);
-    drag={id,prop,pointerId:e.pointerId,start:opticalBenchLocalPoint(o,p),value:opticalBenchSettings(o)[prop],original:JSON.parse(JSON.stringify(o)),snapshot:JSON.parse(JSON.stringify(state.get().objects)),changed:false};
+    drag={id,prop,pointerId:e.pointerId,start:opticalBenchLocalPoint(o,p),value:opticalBenchSettings(o)[prop],original:JSON.parse(JSON.stringify(o)),snapshot:jsonClone(state.get().objects),changed:false};
     svg.setPointerCapture?.(e.pointerId);
   },true);
   window.addEventListener("pointermove",e=>{
@@ -43,7 +44,7 @@ export function initOpticalBenchEditing(svg,state) {
     e.preventDefault();e.stopPropagation();const settings=opticalBenchSettings(o);
     const value=e.key==="Home"?0:e.key==="End"?settings.railLength:settings[prop]+(e.key==="ArrowLeft"?-1:1)*(e.shiftKey?.1:.01);
     const next=changeOpticalBench(o,prop,value);if(next[prop]===settings[prop])return;
-    const snapshot=JSON.parse(JSON.stringify(state.get().objects));
+    const snapshot=jsonClone(state.get().objects);
     state.update(s=>{s.undoStack.push(snapshot);s.redoStack=[];Object.assign(s.objects.find(x=>x.id===id),next);});
     svg.querySelector(`[data-bench-handle="${prop}"][tabindex]`)?.focus();
   });

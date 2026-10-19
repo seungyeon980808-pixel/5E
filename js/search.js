@@ -7,7 +7,7 @@ import {
   TEMPLATES,
   activateTemplate,
   buildSymbolIcon,
-  sizeIconViewBox,
+  sizeIconViewBoxes,
 } from "./templates.js?v=1.7.0-four-session-integration";
 import { listPersonalItems, insertPersonalItem } from "./personal-objects.js?v=1.7.0-four-session-integration";
 
@@ -96,6 +96,7 @@ export function initObjectSearch() {
       return;
     }
 
+    const icons = [];
     const categories = [...exactCategories, ...CATEGORY_ORDER, ...new Set(matches.map(({ def }) => def.category))];
     for (const category of [...new Set(categories)]) {
       const group = matches.filter(({ def }) => def.category === category);
@@ -136,9 +137,10 @@ export function initObjectSearch() {
         badge.textContent = match.personal ? "내 오브젝트" : (match.def.kind === "atomic" ? "즉시" : "드래그");
         row.append(iconBox, label, badge);
         results.appendChild(row);
-        if (icon) sizeIconViewBox(icon);
+        if (icon) icons.push(icon);
       }
     }
+    sizeIconViewBoxes(icons);
     syncHighlight();
   }
 
