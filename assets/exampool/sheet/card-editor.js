@@ -264,8 +264,11 @@ export function createCardEditor(root,api){
     const lists=await Promise.all(want.map(code=>(loadPast.cache[code]||=fetch(new URL(`../convert/data/${code}.json`,import.meta.url)).then(r=>{if(!r.ok)throw Error();return r.json();})).then(rows=>rows.map(r=>({code,label:pastIndex.subjects.find(v=>v[0]===code)?.[1]||code,row:r})))));
     pastItems=lists.flat().map(({code,label,row})=>({id:row[F.id],subject:code,subjectLabel:label,year:row[F.year],month:row[F.month],no:row[F.no],page:row[F.page],box:row[F.box],pdfFile:row[F.pdfFile],publicPath:pastIndex.files[row[F.pdfFile]],parts:row[F.parts]||[],tags:row[F.tags]||[],hasFigure:!!row[F.hasFigure],record:row[F.record],text:row[F.text]||'',
       title:`${row[F.year]}학년도 ${MONTH[row[F.month]]||row[F.month]+'월'} ${label} ${row[F.no]}번`,short:shortTitle(row[F.year],row[F.month],label,row[F.no])})).sort((a,b)=>b.year-a.year||String(a.month).localeCompare(String(b.month))||a.subject.localeCompare(b.subject)||(+a.no)-(+b.no));
-    pastItemsKey=key;return pastItems;
+    pastItemsKey=key;warmHay(pastItems);return pastItems;
   }
+  // 검색용 글(hay)을 쉬는 틈에 조금씩 미리 만든다 — 첫 글자를 칠 때 8천여 문항을 한꺼번에 만드느라 입력이 멈추지 않게.
+  function warmHay(list){let i=0;const idle=window.requestIdleCallback||(f=>setTimeout(()=>f({timeRemaining:()=>8}),30));
+    const step=d=>{if(pastItems!==list)return;while(i<list.length&&d.timeRemaining()>2){if(pastSyn)hay(list[i]);i++;}if(i<list.length)idle(step);};idle(step);}
   loadPast.cache={};
   const pastItem=id=>pastItems?.find(v=>v.id===id);
   // 검색 색인(5e.ai.kr/examlibrary 기출 탐색기와 같은 규칙): 단어를 치고 Enter → 검색 칸 안의 단어 조각(최대 3개).
@@ -278,7 +281,7 @@ export function createCardEditor(root,api){
     if(panels.tab==='textbooks'){pastFilter.query=input.value.trim();store.set('past',pastFilter);pastRefocus=true;renderPast();return;}
     const incoming=splitWords(input.value);if(!incoming.length)return;
     const joined=[...new Set([...pastFilter.tokens,...incoming])];
-    if(joined.length>3){api.status?.('검색어는 최대 세 단어입니다. 단어를 줄여 주세요.',true);return;}
+    if(joined.length>3){api.status?.('검색어는 최대 세 단어입니다. 단어를 줄여 주세요.',true);return false;}
     pastFilter.tokens=joined;pastFilter.query='';store.set('past',pastFilter);renderPast();
   }
   // 기출 카드 그림: 화면에 들어오는 것부터 문항 번호~선지 번호 줄로 잘라(past-crop.js) 넣는다. 그림 칸은 정사각 고정이라 읽혀도 칸이 움직이지 않는다(긴 문항은 아래만 잘림).
@@ -298,7 +301,10 @@ export function createCardEditor(root,api){
   const bookPage=(b,n,thumb)=>new URL(`../../pdf-library/previews/${b.sha}/${n}${thumb?'-thumb':''}.webp`,import.meta.url).href;
   const searchHtml=(placeholder,n)=>`<label class="lp-search">${ICON.search}<span class="lp-tokens">${pastFilter.tokens.map(w=>`<button type="button" class="lp-token" data-cvtoken="${E(w)}" aria-label="${E(w)} 단어 삭제" title="${E(w)} 단어 삭제">${E(w)}<span aria-hidden="true">×</span></button>`).join('')}</span><input data-cvpast="query" value="${E(pastFilter.query)}" placeholder="${placeholder}" aria-label="검색할 단어 입력(Enter로 색인 추가, 최대 3개)">${n}</label>`;
   function fillHead(search,adv,count){
-    const s=root.querySelector('[data-cvslot="search"]');if(s)s.innerHTML=search;
+    // 검색창은 조각·안내 글이 그대로면 바꾸지 않고 문항 수만 고친다 — 치는 중에 입력칸을 새로 만들지 않게(초점·글자 유지, 다시 그리기 줄임).
+    const s=root.querySelector('[data-cvslot="search"]');
+    if(s){const sig=search.replace(/ value="[^"]*"/,'').replace(/<span class="lp-n"[^>]*>[^<]*<\/span>/,'');const n=s.querySelector('.lp-n'),m=search.match(/<span class="lp-n"[^>]*>([^<]*)<\/span>/);
+      const inp=s.querySelector('[data-cvpast="query"]');if(s.dataset.sig===sig&&inp){if(n&&m)n.textContent=m[1].replace(/&amp;/g,'&');const v=(search.match(/ value="([^"]*)"/)?.[1]||'').replace(/&quot;/g,'"').replace(/&#39;/g,"'").replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&amp;/g,'&');if(inp.value.trim()!==v)inp.value=v;}else{s.innerHTML=search;s.dataset.sig=sig;}}
     const pop=root.querySelector('[data-cvslot="adv"]'),was=pop?.contains(document.activeElement)?document.activeElement.dataset.cvpast:'';if(pop)pop.innerHTML=adv;
     if(was)pop.querySelector(`[data-cvpast="${was}"]`)?.focus({preventScroll:true});// 상세검색에서 고른 칸으로 커서를 돌려놓는다
     const n=root.querySelector('[data-cvslot="advn"]');if(n){n.textContent=count;n.hidden=!count;}
@@ -468,11 +474,12 @@ export function createCardEditor(root,api){
   // Safari는 조합 끝(compositionend)을 Enter보다 먼저 보내기도 한다 → 그때는 keyCode 229 Enter로 들어오므로 바로 넣는다.
   root.addEventListener('compositionstart',e=>{if(e.target.dataset?.cvpast==='query')pastComposing=true;});
   root.addEventListener('compositionend',e=>{const t=e.target;if(t.dataset?.cvpast!=='query')return;pastComposing=false;
-    if(pastEnterPending){pastEnterPending=false;setTimeout(()=>{clearTimeout(t._timer);addPastWords(t);},0);}
+    if(pastEnterPending){pastEnterPending=false;clearTimeout(t._timer);const v=t.value;t.value='';if(addPastWords({value:v})===false)t.value=v;}
     else{pastFilter.query=t.value.trim();store.set('past',pastFilter);clearTimeout(t._timer);t._timer=setTimeout(renderPast,250);}});
   root.addEventListener('keydown',e=>{const t=e.target;if(t.dataset?.cvpast!=='query')return;
     if(e.key==='Enter'&&(e.isComposing||pastComposing)){e.preventDefault();pastEnterPending=true;return;}
-    if(e.key==='Enter'){e.preventDefault();clearTimeout(t._timer);setTimeout(()=>addPastWords(t),0);}
+    // Enter 순간의 글을 바로 떼어 낸다(미루면 빠르게 이어 친 다음 단어가 같은 조각에 붙음: 「자석」 Enter 「질량」 → 「자석질량」).
+    if(e.key==='Enter'){e.preventDefault();clearTimeout(t._timer);const v=t.value;t.value='';if(addPastWords({value:v})===false)t.value=v;}
     else if(e.key==='Backspace'&&!t.value&&pastFilter.tokens.length){e.preventDefault();pastFilter.tokens=pastFilter.tokens.slice(0,-1);store.set('past',pastFilter);renderPast();}});
   root.addEventListener('keydown',e=>{if(e.target.id==='cv-ai-input'&&e.key==='Enter'&&(e.metaKey||e.ctrlKey)){e.preventDefault();root.querySelector('[data-cv="ai-send"]')?.click();}});
   // 칸 경계 끌기: 왼쪽 경계는 라이브러리 폭, 오른쪽 경계는 미리보기·AI 폭. 두 번 누르면 기본 폭.

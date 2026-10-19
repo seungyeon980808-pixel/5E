@@ -57,18 +57,51 @@ export function pastCropRect({ data, width: W, height: H }) {
   return { x, y, width: Math.min(W - x, Math.max(right + PAD + 1 - x, COLUMN)), height: Math.min(H, bottom + PAD + 1) - y };
 }
 
-// 브라우저: 그림을 읽어 잘라 낸 PNG 주소를 돌려준다(같은 그림은 한 번만).
+// 브라우저: 그림을 읽어 잘라 낸 그림 주소를 돌려준다(같은 그림은 한 번만). 되도록 작업자 스레드(past-crop-worker.js)에서 자르고,
+// 작업자·OffscreenCanvas가 없거나 실패하면 이 창에서 자른다. 그래도 안 되면 원본 주소.
 const cache = new Map();
+let worker = null, seq = 0;
+const waits = new Map();
+function cropWorker() {
+  if (worker !== null) return worker;
+  try {
+    if (typeof Worker !== 'function' || typeof OffscreenCanvas !== 'function') throw Error('no worker');
+    worker = new Worker(new URL('./past-crop-worker.js', import.meta.url), { type: 'module' });
+    worker.onmessage = ({ data }) => { const w = waits.get(data.id); if (!w) return; waits.delete(data.id); data.error ? w.reject(Error(data.error)) : w.resolve(data.blob); };
+    worker.onerror = () => { for (const w of waits.values()) w.reject(Error('worker')); waits.clear(); worker = false; };
+  } catch { worker = false; }
+  return worker;
+}
+async function cropHere(url) {
+  const img = new Image(); img.crossOrigin = 'anonymous'; img.src = url; await img.decode();
+  const c = document.createElement('canvas'); c.width = img.naturalWidth; c.height = img.naturalHeight;
+  const g = c.getContext('2d', { willReadFrequently: true }); g.drawImage(img, 0, 0);
+  const r = pastCropRect(g.getImageData(0, 0, c.width, c.height));
+  if (!r) return null;
+  const out = document.createElement('canvas'); out.width = r.width; out.height = r.height;
+  out.getContext('2d').drawImage(c, r.x, r.y, r.width, r.height, 0, 0, r.width, r.height);
+  return await new Promise(res => out.toBlob(res, 'image/png'));
+}
+// 잘라 둔 그림(blob: 주소)은 많이 둘러볼수록 쌓인다. 240장을 넘으면 오래된 것부터, 지금 화면에 쓰이지 않는 것만 놓아준다.
+const KEEP = 240;
+function trim() {
+  if (cache.size <= KEEP || typeof document === 'undefined') return;
+  const used = new Set([...document.images].map(i => i.src));
+  let drop = cache.size - KEEP;
+  for (const [key, pending] of cache) {
+    if (drop-- <= 0) break;
+    pending.then(src => { if (src.startsWith('blob:') && !used.has(src) && cache.get(key) === pending) { cache.delete(key); URL.revokeObjectURL(src); } });
+  }
+}
 export function croppedPastImage(url) {
+  if (cache.has(url)) { const hit = cache.get(url); cache.delete(url); cache.set(url, hit); return hit; } // 최근에 쓴 것을 뒤로
+  trim();
   if (!cache.has(url)) cache.set(url, (async () => {
-    const img = new Image(); img.crossOrigin = 'anonymous'; img.src = url; await img.decode();
-    const c = document.createElement('canvas'); c.width = img.naturalWidth; c.height = img.naturalHeight;
-    const g = c.getContext('2d', { willReadFrequently: true }); g.drawImage(img, 0, 0);
-    const r = pastCropRect(g.getImageData(0, 0, c.width, c.height));
-    if (!r) return url;
-    const out = document.createElement('canvas'); out.width = r.width; out.height = r.height;
-    out.getContext('2d').drawImage(c, r.x, r.y, r.width, r.height, 0, 0, r.width, r.height);
-    return URL.createObjectURL(await new Promise(res => out.toBlob(res, 'image/png')));
+    let blob;
+    const w = cropWorker();
+    if (w) { try { const id = ++seq; blob = await new Promise((resolve, reject) => { waits.set(id, { resolve, reject }); w.postMessage({ id, url }); }); } catch { blob = undefined; } }
+    if (blob === undefined) blob = await cropHere(url);
+    return blob ? URL.createObjectURL(blob) : url;
   })().catch(() => url));
   return cache.get(url);
 }

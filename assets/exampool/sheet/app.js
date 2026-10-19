@@ -43,8 +43,11 @@ function remember({validated=false}={}){
   const stamp=++saveStamp;status('저장 중…');saveQueue=saveQueue.catch(()=>{}).then(()=>new Promise((resolve,reject)=>{
     if(stamp!==saveStamp){resolve();return;}
     if(!database||saveBlocked){reject(Error('자동 저장을 사용할 수 없습니다. 엑셀로 내려받아 보관하세요.'));return;}
-    const tx=database.transaction('state','readwrite'),store=tx.objectStore('state'),r=store.get('draft');let failure;
-    r.onsuccess=()=>{if((r.result?._revision||0)!==revision){failure=Error('다른 창에서 수정했습니다. 이 창의 입력은 엑셀로 내려받아 보관하고 다시 열어주세요.');saveBlocked=true;tx.abort();return;}store.put({...data,_revision:revision+1},'draft');/* put이 그 자리에서 복사한다 — 따로 clone하면 전체 데이터를 두 번 복사 */};
+    // 다른 창 저장 확인은 작은 판 번호('rev')만 읽는다(예전엔 저장마다 문항 전체(그림 포함 수십 MB)를 읽어 풀었다). 'rev'가 없는 예전 저장은 문항에서 읽는다.
+    // 넣을 때 복제하지 않고 지금 데이터를 바로 넣는다(put이 그 자리에서 복사한다).
+    const tx=database.transaction('state','readwrite'),store=tx.objectStore('state'),r=store.get('rev');let failure;
+    const write=stored=>{if((stored||0)!==revision){failure=Error('다른 창에서 수정했습니다. 이 창의 입력은 엑셀로 내려받아 보관하고 다시 열어주세요.');saveBlocked=true;tx.abort();return;}store.put({...data,_revision:revision+1},'draft');store.put(revision+1,'rev');};
+    r.onsuccess=()=>{if(r.result!==undefined){write(r.result);return;}const d=store.get('draft');d.onsuccess=()=>write(d.result?._revision);};
     tx.oncomplete=()=>{revision++;resolve();};tx.onerror=tx.onabort=()=>reject(failure||tx.error||Error('저장 공간이 부족합니다. 엑셀로 내려받아 보관하세요.'));
   }));void saveQueue.then(()=>{if(stamp===saveStamp)status('저장됨 · '+new Date().toLocaleTimeString('ko-KR',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit'}));}).catch(e=>status(e.message,true));
 }
@@ -425,7 +428,9 @@ async function requestTypeset(value){
         if(shown&&typesetter.matches(shown))await typesetter.commit();
         else if(typesetter?.dirty){typesetter.discard();lostFormat=true;}
         if(typesetRequest!==undefined)continue;
-        if(next===null){panel.hidden=true;panel.dataset.expanded='false';$('#typeset-expand').setAttribute('aria-pressed','false');$('#typeset-expand').textContent='크게 보기';$('#preview').setAttribute('aria-expanded','false');/* 초점이 닫히는 창 안에 있을 때만 단추로 돌려준다. 닫기는 늦게 끝나므로 그새 시트·카드에서 치던 칸의 초점을 빼앗아 앞 글자가 사라졌다. */if(panel.contains(document.activeElement))$('#preview').focus();continue;}
+        if(next===null){// 닫을 때 초점은 창 안에 있었을 때만 「미리보기」 단추로 돌린다. 저장을 기다린 뒤 늦게 닫히므로, 그새 다른 칸에 치기 시작했으면 그대로 둔다(앞부분이 지워지던 원인).
+          const focusWasInside=panel.contains(document.activeElement)||document.activeElement===document.body||!document.activeElement;
+          panel.hidden=true;panel.dataset.expanded='false';$('#typeset-expand').setAttribute('aria-pressed','false');$('#typeset-expand').textContent='크게 보기';$('#preview').setAttribute('aria-expanded','false');if(focusWasInside)$('#preview').focus();continue;}
         next=data.questions.find(q=>q.id===next.id);if(!next)throw Error('문항이 삭제되었습니다. 다른 문항을 선택하세요.');
         closeSources();panel.hidden=false;$('#preview').setAttribute('aria-expanded','true');
         typesetter ||= makeTypesetter();

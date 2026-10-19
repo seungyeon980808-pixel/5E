@@ -26,6 +26,12 @@
       ]
     },
     {
+      "path": "tests/test-library-style-invalidation.mjs",
+      "findingIds": [
+        "LIBRARY-SCROLL-STYLE-INVALIDATION"
+      ]
+    },
+    {
       "path": "tests/test-exampool-past-crop.mjs",
       "findingIds": [
         "EXAMPOOL-PAST-CARD-CROP"
@@ -910,6 +916,12 @@
         "EXAMPOOL-DRAG-PLACEMENT",
         "EXAMPOOL-HWP-TO-SHEET-TEXT",
         "EXAMPOOL-EXAM-ASSEMBLY"
+      ]
+    },
+    {
+      "path": "tests/test-exampool-card-typing-perf-browser.cjs",
+      "findingIds": [
+        "EXAMPOOL-CARD-TYPING-PERF"
       ]
     },
     {
