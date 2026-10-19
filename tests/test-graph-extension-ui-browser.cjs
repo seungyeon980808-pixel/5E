@@ -77,7 +77,7 @@ async function install(page, logarithmic = false) {
       // Capture the unchanged baseline with the very same native graph and viewport.
       if (name === 'chromium') {
         for (const file of ['preview/js/graph/graph-modal.js', 'preview/js/graph/graph-engine-controls.js', 'preview/css/style.css']) {
-          const originalBody = execFileSync('git', ['show', `b1846e849656076b1c0c5da2f82abffff3813eb1:${file}`], { cwd: "/Users/parkseungyeon/.codex/worktrees/analyable-function/5E", encoding: 'utf8' });
+          const originalBody = execFileSync('git', ['show', `b1846e849656076b1c0c5da2f82abffff3813eb1:${file}`], { cwd: path.resolve(__dirname, '..'), encoding: 'utf8' });
           const body = originalBody.replace(/\?v=[^'"\s]+/g, "?v=1.7.0-four-session-integration");
           await page.route(`**/${file.replace(/^preview\//, '')}*`, route => route.fulfill({ body, contentType: file.endsWith('.css') ? 'text/css' : 'text/javascript' }));
         }
