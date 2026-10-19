@@ -118,6 +118,16 @@ h.withServer(async origin => {
       await sheet.waitForSelector('#card-view .msg.ai.err [data-cv="ai-login"]',{timeout:20000});await sheet.click('#card-view [data-cv="ai-login"]');
       await page.waitForSelector('.web-login-dialog[open]',{timeout:5000});await page.locator('.web-login-dialog .web-login-close').click();
       await sheet.click('#card-view [data-cvright="paper"]');
+      // 완성한 문항을 고치면 단계 단추도 검토 중으로 바뀐다(다시 그리지 않는 입력에서도).
+      await sheet.click('#card-view [data-cvstage="complete"]');await sheet.click('#cv-ask');await page.keyboard.press('End');await page.keyboard.type('!');
+      await sheet.waitForFunction(()=>document.querySelector('#card-view [data-cvstage][aria-pressed="true"]')?.dataset.cvstage==='review');
+      // 미리보기(한글 창)가 다시 그려져도 초점을 가져가지 않아 ⌘Z·⇧⌘Z가 카드에 닿는다.
+      await sheet.locator('#card-view .w-head .qno').click();const askEdited=await sheet.locator('#cv-ask').inputValue();
+      await page.keyboard.press('ControlOrMeta+z');await sheet.waitForFunction(v=>document.querySelector('#cv-ask').value!==v,askEdited);
+      await sheet.waitForTimeout(800);await typesetReady(sheet);await sheet.waitForTimeout(500);
+      assert.notEqual(await sheet.evaluate(()=>document.activeElement?.tagName),'IFRAME','redrawing the HWP preview keeps focus out of the editor');
+      await page.keyboard.press('ControlOrMeta+Shift+z');await sheet.waitForFunction(v=>document.querySelector('#cv-ask').value===v,askEdited);
+      await sheet.fill('#cv-ask',askEdited.slice(0,-1));await sheet.click('#card-view [data-cvstage="draft"]');
       // 위쪽 막대: 이동 줄 끝은 문항 이름만(전체 발문은 풍선), 「문항 보관함」·로고는 눌러서 보관함으로 간다.
       assert.ok(!(await sheet.locator('#crumb-question').textContent()).includes(' · '),'the crumb shows only the question name');
       assert.match(await sheet.locator('#crumb-question').getAttribute('title'),/ · /,'the full ask is in the tooltip');
@@ -311,6 +321,16 @@ h.withServer(async origin => {
       }
       assert.deepEqual(errors,[],'no page errors');
       console.log(`${engineName}: office workroom verified`);
+      // 좁은 창(1180px 이하)에서 새 문항 창이 위아래로 쌓여도 자료 구조 선택지가 가려지지 않고, 「작성」 줄은 늘 보인다.
+      // 창 크기를 도중에 바꾸면 WebKit이 ResizeObserver 경고를 오류로 내므로 처음부터 좁은 창으로 따로 연다.
+      const small=await (await browser.newContext({viewport:{width:1100,height:800}})).newPage();
+      await h.navigate(small,origin+'/?mode=pro&mobile=0');await h.ready(small);await small.click('#exam-pool-open');
+      const smallSheet=await (await small.waitForSelector('#exampool-sheet-workspace iframe')).contentFrame();
+      await smallSheet.waitForSelector('#side-new');await smallSheet.waitForFunction(()=>document.querySelector('#status').textContent!=='준비 중',null,{timeout:30000});
+      await smallSheet.click('#side-new');await smallSheet.waitForSelector('#new-dialog[open]');
+      await smallSheet.click('#new-dialog .nq-opt[data-step="form"][data-k="essay"]');await smallSheet.click('#new-dialog .nq-opt[data-step="struct"][data-k="two"]');
+      const narrow=await smallSheet.evaluate(()=>{const d=document.querySelector('#new-dialog'),c=d.querySelector('.nq-col'),f=d.querySelector('.nq-foot').getBoundingClientRect(),r=d.getBoundingClientRect();return {clipped:c.scrollHeight>c.clientHeight+1,struct:!!d.querySelector('.nq-opt[data-step="struct"][aria-pressed="true"]'),foot:f.bottom<=r.bottom+1&&f.top>=r.top};});
+      assert.deepEqual(narrow,{clipped:false,struct:true,foot:true},'the narrow new-question dialog keeps every option reachable');
     } finally {await browser.close();}
   }
 }).catch(error => {console.error(error);process.exitCode = 1;});

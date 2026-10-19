@@ -197,7 +197,10 @@ export function createCardEditor(root,api){
   new MutationObserver(alignHwp).observe(root,{attributes:true,attributeFilter:['hidden']});window.addEventListener('resize',alignHwp);
   function markAiSeen(){const x=q();if(x)store.set('aiSeen:'+x.id,(x.reviews||[]).length);}
   const fit=t=>{t.style.height='auto';t.style.height=Math.max(t.scrollHeight+2,44)+'px';};
-  function refreshLight(){const x=q();if(!x)return;const c=root.querySelector('#cv-checks');if(c)c.innerHTML=checksHtml(completeness(x).items);if(panels.rightOpen&&panels.right==='paper')schedulePaper();
+  function refreshLight(){const x=q();if(!x)return;
+    // 완성한 문항의 내용을 고치면 검토 중으로 돌아간다(app.js demoteEdited). 다시 그리지 않는 입력에서도 단계 단추를 맞춘다.
+    for(const b of root.querySelectorAll('[data-cvstage]'))b.setAttribute('aria-pressed',String(b.dataset.cvstage===workflowOf(x)));
+    const c=root.querySelector('#cv-checks');if(c)c.innerHTML=checksHtml(completeness(x).items);if(panels.rightOpen&&panels.right==='paper')schedulePaper();
     const tabs=root.querySelector('.cv-qtabs');if(tabs){const sc=tabs.scrollLeft;tabs.outerHTML=tabsHtml();root.querySelector('.cv-qtabs').scrollLeft=sc;}}
   let paperTimer=0;const schedulePaper=()=>{clearTimeout(paperTimer);paperTimer=setTimeout(renderPaper,250);};
   // 미리보기: 실제 단 폭(86mm)으로 한 번 조판한 모양을 칸에 맞춰 확대·축소만 한다(폭이 바뀌어도 줄바꿈 그대로). 문항 하나를 스크롤 없이.
