@@ -35,7 +35,7 @@ export function renderNav(root,data,view){
     ${drafting.map(examItem).join('')}
     <button type="button" class="nav" data-nav="exams" data-status="done" aria-current="${view.name==='exams'&&view.status==='done'?'true':'false'}">${ICON.done}<span>출제 완료</span><b>${done.length}</b></button>
     ${done.slice(0,5).map(examItem).join('')}
-    <p class="side-foot">문항 하나는 카드로 쓰고,<br>시험지에서 모아 5e_hwp로 보냅니다</p>`;
+    <p class="side-foot">문항 하나는 카드로 쓰고,<br>시험지에서 모아 5E_hwp로 보냅니다</p>`;
 }
 
 // 빈 문항(발문·지문·자료·보기·선지에 글도 그림도 없음)은 큰 흰 미리보기 대신 낮은 점선 자리로 보인다.
@@ -68,7 +68,7 @@ export function renderLibrary(root,data,view){
 // 시험지 목록: 출제 중 / 출제 완료.
 export function renderExams(root,data,view){
   const row=e=>{const qs=e.items.map(id=>data.questions.find(q=>q.id===id)).filter(Boolean),n=k=>qs.filter(q=>workflowOf(q)===k).length,total=qs.length||1;
-    return `<article class="pv-exam" data-exam-row="${e.id}"><div><b>${E(e.title)}</b><span>${qs.length}문항 · 배점 ${qs.reduce((a,q)=>a+(Number(q.points)||0),0)} · ${e.status==='done'&&e.sentAt?`5e_hwp로 보낸 날 ${when(e.sentAt)}`:`고친 날 ${when(e.updatedAt)}`}</span></div>
+    return `<article class="pv-exam" data-exam-row="${e.id}"><div><b>${E(e.title)}</b><span>${qs.length}문항 · 배점 ${qs.reduce((a,q)=>a+(Number(q.points)||0),0)} · ${e.status==='done'&&e.sentAt?`5E_hwp로 보낸 날 ${when(e.sentAt)}`:`고친 날 ${when(e.updatedAt)}`}</span></div>
       <div class="bar3" title="완성 ${n('complete')} · 검토 중 ${n('review')} · 초안 ${n('draft')}"><i style="width:${n('complete')/total*100}%;background:var(--st-complete)"></i><i style="width:${n('review')/total*100}%;background:var(--st-review)"></i><i style="width:${n('draft')/total*100}%;background:var(--st-draft)"></i></div>
       ${e.status==='done'?'<span class="badge done">출제 완료</span>':'<span class="badge">출제 중</span>'}<button type="button" class="btn" data-nav="exam" data-exam="${e.id}">열기</button></article>`;};
   const drafting=data.exams.filter(e=>e.status==='drafting'),done=data.exams.filter(e=>e.status==='done');
@@ -77,7 +77,7 @@ export function renderExams(root,data,view){
     <h2 class="pv-sub">출제 완료</h2>${done.map(row).join('')||'<p class="pv-empty">아직 출제 완료한 시험지가 없습니다.</p>'}`;
 }
 
-// 시험지 안: 문항 순서(= 시험지 구성), 한눈에 보기, 쪽 배치, 5e_hwp로 보내기.
+// 시험지 안: 문항 순서(= 시험지 구성), 한눈에 보기, 쪽 배치, 5E_hwp로 보내기.
 export function renderExam(root,data,examId){
   const exam=examById(data,examId);if(!exam){root.innerHTML='<p class="pv-empty">시험지를 찾지 못했습니다.</p>';return;}
   const {items,pages,missing}=examPlan(data,exam),qs=items.map(x=>x.q),count=k=>qs.filter(q=>workflowOf(q)===k).length;
@@ -85,7 +85,7 @@ export function renderExam(root,data,examId){
   root.innerHTML=`<div class="pv-head"><div class="pv-title"><input id="exam-title" value="${E(exam.title)}" maxlength="200" aria-label="시험지 이름">${exam.status==='done'?'<span class="badge done">출제 완료</span>':'<span class="badge">출제 중</span>'}</div>
       <div class="pv-tools"><div class="pv-more"><button type="button" class="btn pv-more-btn" data-exam-more aria-haspopup="menu" aria-expanded="false" aria-label="시험지 메뉴" title="시험지 메뉴">${ICON.more}</button>
         <div class="top-menu" role="menu" hidden><button type="button" role="menuitem" data-exam-act="cards">문항 카드로 보기</button><button type="button" role="menuitem" data-exam-act="sheet" title="여러 문항을 표 한 장에서 한꺼번에 고칩니다">표로 한꺼번에 고치기</button><button type="button" role="menuitem" data-exam-act="download">HWPX로 내려받기</button><button type="button" role="menuitem" data-exam-act="status">${exam.status==='done'?'출제 중으로 되돌리기':'출제 완료로 옮기기'}</button></div></div>
-      <button type="button" class="btn go" data-exam-act="send">${ICON.out}5e_hwp로 보내기</button></div></div>
+      <button type="button" class="btn go" data-exam-act="send">${ICON.out}5E_hwp로 보내기</button></div></div>
     <div class="pv-exam-body"><div class="pv-order" id="exam-order">
       ${items.map((x,i)=>`<div class="pv-orow" draggable="true" data-order="${x.id}"><span class="grip" title="끌어서 순서 바꾸기">${ICON.grip}</span><span class="n">${i+1}</span>
         <button type="button" class="pv-mini-thumb" data-open-card="${x.id}" aria-label="${i+1}번 카드 열기"><div class="pv-doc" data-preview="${x.id}"></div></button>
@@ -98,7 +98,7 @@ export function renderExam(root,data,examId){
       <div class="stat"><span>문항</span><b>${qs.length}</b><span>배점 합</span><b>${qs.reduce((a,q)=>a+(Number(q.points)||0),0)}</b><span>완성</span><b>${count('complete')}</b><span>검토 중</span><b>${count('review')}</b><span>초안</span><b>${count('draft')}</b></div>
       <h3>쪽 배치 (A4 2단)</h3>
       <div class="pv-pages">${pages.map(p=>`<div class="pv-page">${p.columns.map(col=>`<div>${col.map(id=>{const x=items.find(v=>v.id===id);return `<i style="height:${Math.min(100,x.height/267*100)}%" title="${items.indexOf(x)+1}번"><b>${items.indexOf(x)+1}</b></i>`;}).join('')}</div>`).join('')}</div>`).join('')||'<p class="pv-empty">문항을 넣으면 보입니다.</p>'}</div>
-      <p class="note">${count('draft')+count('review')?`완성이 아닌 문항(초안 ${count('draft')}, 검토 중 ${count('review')})도 함께 보낼 수 있습니다. `:''}${missing.length?`조판을 저장하지 않은 문항 ${missing.length}개(${missing.map(x=>items.indexOf(x)+1+'번').join(', ')})는 보내기 전에 한글 조판을 저장해야 합니다.`:'보내면 5e_hwp에서 시험지 한 부로 열려 최종 검수를 합니다.'}</p>
+      <p class="note">${count('draft')+count('review')?`완성이 아닌 문항(초안 ${count('draft')}, 검토 중 ${count('review')})도 함께 보낼 수 있습니다. `:''}${missing.length?`조판을 저장하지 않은 문항 ${missing.length}개(${missing.map(x=>items.indexOf(x)+1+'번').join(', ')})는 보내기 전에 한글 조판을 저장해야 합니다.`:'보내면 5E_hwp에서 시험지 한 부로 열려 최종 검수를 합니다.'}</p>
     </aside></div>`;
   fillPreviews(root,data);
 }

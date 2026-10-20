@@ -1,4 +1,4 @@
-// 5e_hwp 창 위의 배치 층: 그림을 끌어 다른 그림·표의 옆/위/아래에 놓고, 손잡이로 크기와 폭 비율을 바꾼다.
+// 5E_hwp 창 위의 배치 층: 그림을 끌어 다른 그림·표의 옆/위/아래에 놓고, 손잡이로 크기와 폭 비율을 바꾼다.
 // 문서는 직접 고치지 않는다. 결과를 순서·묶음·폭 비율·크기 데이터로 넘기면 한글 창은 그 데이터로 다시 그려진다.
 import {placeBeside,placeAround,resizeTo,setPairRatio,ratioPair} from './placement-edit.js';
 import {snapSize} from './placement.js';
