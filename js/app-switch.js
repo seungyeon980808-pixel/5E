@@ -71,10 +71,12 @@ export function initAppSwitch(doc = document) {
     el.classList.remove('app-leaving');
     return closed;
   };
-  let switching = false;
+  // 전환 중(약 0.4초)에 다른 이름을 누르면 버리지 않고 마지막으로 누른 것을 기억했다가, 지금 전환이 끝나면 이어서 간다.
+  let switching = false, queued = null;
   const go = async target => {
+    if (switching) { queued = target; return; }
     const from = currentApp(doc);
-    if (!target || target === from || switching) return;
+    if (!target || target === from) return;
     switching = true;
     try {
       // 조판은 자기 닫기 동작이 흐려지며 사라지므로 여기서는 출제 칸만 흐리게 한다.
@@ -92,7 +94,11 @@ export function initAppSwitch(doc = document) {
         const app = doc.querySelector('body>.app'); if (app) app.inert = true;
         surface('exam')?.querySelector('iframe')?.contentWindow?.focus?.();
       }
-    } finally { switching = false; }
+    } finally {
+      switching = false;
+      const next = queued; queued = null;
+      if (next) void go(next);
+    }
   };
   doc.addEventListener('click', event => {
     const button = event.target.closest?.('button[data-app-switch]');
