@@ -133,6 +133,13 @@ export function initRhwpExamWorkspace(state, services) {
     if(!value){if(editing)syncSourceControls();if(!pictureSettings.root.hidden)pictureSettings.refresh();}
     updatePlacement(); renderFigures();
   }
+  // 닫을 때 휙 사라지지 않게 0.16초 흐려지며 사라진다(app-switch.css의 .app-leaving). 움직임 줄이기 설정이면 바로 닫는다.
+  async function fadeOut(element) {
+    if (element.hidden || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+    element.classList.add('app-leaving');
+    await new Promise(resolve => setTimeout(resolve, 160));
+    element.classList.remove('app-leaving');
+  }
   async function run(task) {
     if (busy) return;
     setBusy(true);
@@ -1015,7 +1022,7 @@ export function initRhwpExamWorkspace(state, services) {
   }
   nativeRegion.root.addEventListener('click',e=>{const b=e.target.closest('[data-exam-action]');if(b&&!b.disabled){nativeRegion.closeMenu();void run(()=>actions[b.dataset.examAction]?.());}});
   const actions = {
-    close:async () => {await flushInline(true);await closeInline();if (window.fiveEExam) return window.fiveEExam.returnToSource(); panel.hidden = true; syncBackground(); await resumeLinkedPage();document.querySelector('#exam-send')?.focus(); },
+    close:async () => {await flushInline(true);await closeInline();if (window.fiveEExam) return window.fiveEExam.returnToSource(); await fadeOut(panel); panel.hidden = true; syncBackground(); await resumeLinkedPage();document.querySelector('#exam-send')?.focus(); },
     new:async () => { cancelPlacement();await stableSave();await closeInline(); initializing=true;await bridge.newDocument();initializing=false;documentGeneration=bridge.generation;projectId=crypto.randomUUID();figures = new Map(); nameInput.value = '새 시험지'; changed(); },
     insert:() => startSend(),
     'cancel-placement':() => {cancelPlacement();message('그림 보내기를 취소했습니다.');},

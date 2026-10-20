@@ -77,7 +77,8 @@ export function initAppSwitch(doc = document) {
     if (!target || target === from || switching) return;
     switching = true;
     try {
-      if (target === 'image') { await closeApp(from, true); return; }
+      // 조판은 자기 닫기 동작이 흐려지며 사라지므로 여기서는 출제 칸만 흐리게 한다.
+      if (target === 'image') { await closeApp(from, from === 'exam'); return; }
       if (from === 'image') { await openApp(target); return; }
       // 두 프로그램 사이: 새 프로그램을 먼저 연 뒤 옛 프로그램을 닫아, 그 사이에 그림 화면이 번쩍 비치지 않게 한다.
       if (!await openApp(target)) return;
