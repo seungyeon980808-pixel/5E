@@ -74,7 +74,7 @@ h.withServer(async origin => {
         return {over:[L.left-S.left,L.top-S.top,L.width-S.width,L.height-S.height].every(v=>Math.abs(v)<1),pageInside:!!c&&c.width<=L.width};});
       assert.ok(fit.over,'the HWP window sits exactly over the preview slot');assert.ok(fit.pageInside,'the page fits the preview width');
       const lw=await sheet.evaluate(()=>document.querySelector('#card-view .cv-left').offsetWidth),split=await sheet.locator('#card-view [data-cvsplit="left"]').boundingBox();
-      await sheet.locator('#card-view [data-cvsplit="left"]').hover();await page.mouse.down();await page.mouse.move(split.x-60,split.y+split.height/2,{steps:4});await page.mouse.up();
+      await sheet.locator('#card-view [data-cvsplit="left"]').hover();await page.mouse.down();await page.mouse.move(split.x+split.width/2-60,split.y+split.height/2,{steps:4});await page.mouse.up();
       assert.ok(Math.abs(await sheet.evaluate(()=>document.querySelector('#card-view .cv-left').offsetWidth)-(lw-60))<=6,'dragging the left border resizes the library');
       // 좁은 창(1100): 칸이 이미 끌기 상한보다 넓어도 경계를 잡는 순간 줄어들지 않고, 끌면 움직인 만큼 줄어든다.
       await page.setViewportSize({width:1100,height:800});await sheet.waitForTimeout(400);

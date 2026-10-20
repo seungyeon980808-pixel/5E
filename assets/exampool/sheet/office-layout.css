@@ -33,8 +33,12 @@
 #card-view .pane-rail:focus-visible{outline:2px solid var(--go-line,#6ba4f8);outline-offset:-2px}
 
 /* 3. 칸 경계 손잡이: 4×36 막대가 늘 보이고, 올리거나 끌면 파란색 */
-#card-view .cv-split::before{left:calc(50% - 2px);width:4px;height:36px;margin-top:-18px;border-radius:2px;background:var(--ds-ink-3);opacity:.55;transition:opacity .15s,background-color .15s}
-#card-view .cv-split:hover::before,#card-view .cv-split.drag::before{opacity:1;background:var(--go-line,#6ba4f8)}
+/* 10-20 보강: 칸 사이 14px·바깥 10px, 막대 5×56 진하게, 올리면 위아래 안내선 */
+#card-view{--cv-gutter:14px;padding:10px!important}
+#card-view .cv-split::before{left:calc(50% - 2.5px);width:5px;height:56px;margin-top:-28px;border-radius:3px;background:var(--ds-ink-3);opacity:.9;transition:opacity .15s,background-color .15s,height .18s ease-out,margin-top .18s ease-out}
+#card-view .cv-split::after{left:calc(50% - .5px);width:1px;top:12px;bottom:12px;background:var(--go-line,#6ba4f8);opacity:0;transition:opacity .15s}
+#card-view .cv-split:hover::before,#card-view .cv-split.drag::before{opacity:1;height:72px;margin-top:-36px;background:var(--go-line,#6ba4f8)}
+#card-view .cv-split:hover::after,#card-view .cv-split.drag::after{opacity:.45;background:var(--go-line,#6ba4f8)}
 
 /* 4. 둥글기 3단계 */
 #card-view .cv-writer section,#card-view .cv-add-row,#card-view .cv-tile,#card-view .lp-linked,#card-view .past,#card-view .msg{border-radius:var(--cv-sec-radius,10px)}
@@ -96,4 +100,15 @@
 /* 카드가 좁으면(제목이 잘릴 폭) 단추를 둘째 줄로 내려 제목을 온전히 보인다 */
 #card-view .cv-left .past{container:pastcard/inline-size}
 @container pastcard (max-width:310px){#card-view .cv-left .past figcaption .acts :is([data-cvlink],[data-cvbooklink]) span{display:none}#card-view .cv-left .past figcaption .acts :is([data-cvlink],[data-cvbooklink]){padding:0 7px}}
-@container pastcard (max-width:225px){#card-view .cv-left .past figcaption{flex-wrap:wrap!important}#card-view .cv-left .past figcaption b{flex-basis:100%!important}}
+/* 10-20: 어떤 폭에서도 한 줄 — 좁아지면 글자·단추를 줄이고, 끝까지 좁으면 제목만 「…」(전체 제목은 마우스 올림) */
+#card-view .cv-left .past figcaption b{flex:1 1 0!important;max-width:none;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@container pastcard (max-width:250px){#card-view .cv-left .past figcaption{gap:4px!important}#card-view .cv-left .past figcaption b{font-size:12.5px}#card-view .cv-left .past figcaption .acts{gap:4px!important}#card-view .cv-left .past figcaption .acts button{height:24px!important;min-height:24px;padding:0 6px!important;font-size:12px}#card-view .cv-left .past figcaption .acts :is([data-cvlink],[data-cvbooklink]) .ico{width:13px;height:13px}}
+@container pastcard (max-width:190px){#card-view .cv-left .past figcaption b{font-size:12px;letter-spacing:-.2px}#card-view .cv-left .past figcaption .acts{gap:3px!important}#card-view .cv-left .past figcaption .acts button{padding:0 5px!important}}
+
+/* 조판 칸이 위아래로 밀리지 않게: 도구 줄은 늘 자리를 두고(고르기 전에는 흐리게), 오류·기준 넘음 안내는
+   흐름에서 빼 칸 아래쪽에 떠 있는 알림으로 보인다(종이 위치는 그대로). */
+.cv-hwp-layer #preview-dialog.docked{position:relative}
+.cv-hwp-layer #preview-dialog.docked #typeset-context[hidden]{display:flex!important}
+.cv-hwp-layer #preview-dialog.docked #typeset-context[data-idle] :is(button,select,label){opacity:.4;pointer-events:none}
+.cv-hwp-layer #preview-dialog.docked .typeset-info:has(#typeset-status[data-error=true]),
+.cv-hwp-layer #preview-dialog.docked .typeset-info:has(#typeset-metrics[data-exceeded=true]){position:absolute;z-index:20;left:10px;right:10px;bottom:10px;border:0;border-radius:8px;background:var(--ds-doc,#fff);box-shadow:0 8px 24px rgba(16,20,26,.22),0 0 0 1px var(--ds-danger,#cf222e);animation:ep-backdrop-fade 180ms ease-out}

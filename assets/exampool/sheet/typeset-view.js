@@ -61,7 +61,8 @@ export function attachTypesetView(bridge,host){
   const schedule=()=>{if(!frame)frame=requestAnimationFrame(fit);};
   function selection(){
     const cursor=bridge.input?.cursor,inTable=!!(cursor?.isInCell()||cursor?.isInTableObjectSelection());
-    context.hidden=!interacted;
+    // 도구 줄이 나타났다 사라지면 종이가 위아래로 밀렸다 — 칸에 붙은 미리보기에서는 자리를 늘 두고, 고르기 전에는 흐리게만.
+    context.hidden=!interacted&&!panel.classList.contains('docked');context.toggleAttribute('data-idle',!interacted);
     const char=context.querySelector('[data-native-format="char"]');
     char.disabled=!bridge.input?.getSelection();char.title='글자를 드래그하여 선택한 뒤 크기·자간·글꼴 조절';
     panel.querySelector('#typeset-table-tools').hidden=!inTable;
@@ -88,5 +89,5 @@ export function attachTypesetView(bridge,host){
   // 종이가 다 읽힌 뒤에도 한 번 더 맞춘다(읽히기 전에 맞춘 폭이 남지 않게).
   for(const name of ['document-view-loaded','document-layout-refreshed'])bridge.deps?.eventBus?.on?.(name,schedule);
   setDetail(false);
-  return {refresh(){interacted=false;context.hidden=true;fitted=null;schedule();},fit:schedule};
+  return {refresh(){interacted=false;context.hidden=!panel.classList.contains('docked');context.toggleAttribute('data-idle',true);fitted=null;schedule();},fit:schedule};
 }
