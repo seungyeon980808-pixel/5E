@@ -344,7 +344,7 @@ export function createCardEditor(root,api){
   // 쪽 종이(시안 30·31): 원본 PDF 쪽 + 검색어 형광펜 + 이미 건 근거 자리(주황) + 끌어서 고를 수 있는 글자 층.
   function mountPaper(paper,o,alive=()=>true){
     const width=Math.max(240,paper.clientWidth||300),saved=(q()?.references||[]).filter(r=>r.source?.path===o.path&&r.source.page===o.page).flatMap(r=>r.source.rects||[]);
-    return renderPdfPage(o.path,o.page,o.words||[],width,{byUrl:o.kind==='textbook',saved}).then(r=>{if(!alive()||!paper.isConnected)return null;
+    return renderPdfPage(o.path,o.page,o.words||[],width,{sha:o.kind==='textbook'?o.sha:'',saved}).then(r=>{if(!alive()||!paper.isConnected)return null;
       const sheet=document.createElement('div');sheet.className='lp-sheet';sheet.append(r.canvas,r.layer);paper.replaceChildren(sheet);paper.dataset.marked=r.count;
       paper._src={...o,sha:o.sha||r.sha,fp:r.fp};paper.dataset.selectable=r.textItems?'1':'0';
       if(!r.textItems)paper.insertAdjacentHTML('beforeend','<span class="lp-paper-note">이 쪽은 PDF에 글자 정보가 없어 글을 끌어 고를 수 없습니다 · 「이 쪽을 근거로」는 쓸 수 있습니다</span>');

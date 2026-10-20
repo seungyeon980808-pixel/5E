@@ -13,16 +13,24 @@ const OPTIONS={cMapUrl:new URL('../convert/es/vendor/pdfjs/cmaps/',import.meta.u
 // 검색어 조각마다 다른 색(시안 18): 노랑·초록·하늘.
 export const MARK_COLORS=['rgba(255,214,0,.55)','rgba(120,220,90,.5)','rgba(90,190,255,.5)'];
 
+// 받은 PDF는 브라우저 저장소(Cache Storage)에 남긴다 — 5E 라이브러리와 같은 저장소·같은 열쇠(주소 + 체크섬)라
+// 라이브러리에서 한 번 연 교과서는 ExamPool에서도 서버 없이 바로 열리고, 시험지 서버가 잠시 멈춰도 이미 본 PDF는 계속 열린다.
+// 서버에는 한 번에 둘까지만 받으러 간다(여러 카드가 한꺼번에 형광펜·크롭을 요청해도 서버에 몰리지 않게).
+const CACHE='5e-pdf-library-v1';
+const cacheKey=(path,sha)=>{let u;try{u=new URL(driveLink(path));}catch{return '';}u.searchParams.set('__5e_sha256',sha||'exampool-past-v1');return u.href;};
+async function cachedBytes(path,sha){try{const r=await (await caches.open(CACHE)).match(cacheKey(path,sha));return r?.ok?await r.arrayBuffer():null;}catch{return null;}}
+async function keepBytes(path,sha,bytes){try{await (await caches.open(CACHE)).put(cacheKey(path,sha),new Response(bytes,{status:200,headers:{'content-type':'application/pdf','content-length':String(bytes.byteLength)}}));}catch{}}
+const waiting=[];let active=0;
+function queued(job){return new Promise((res,rej)=>{waiting.push({job,res,rej});pump();});}
+function pump(){while(active<2&&waiting.length){const w=waiting.shift();active++;Promise.resolve().then(w.job).then(w.res,w.rej).finally(()=>{active--;pump();});}}
+async function fileBytes(path,sha){const hit=await cachedBytes(path,sha);if(hit)return hit;const bytes=await queued(()=>downloadDriveFile(path));await keepBytes(path,sha,bytes.slice(0));return bytes;}
 // 받은 PDF는 최근 6개만 열어 둔다. 원본 지문(SHA-256 앞 16자리)은 근거에 함께 남겨 「어느 판」인지 증명한다.
-// 기출(한 개 약 1MB)은 통째로 받고(재시도 포함), 큰 교과서는 필요한 쪽만 받도록 주소로 연다(서버가 나눠 받기를 지원하면).
 const docs=new Map();
 async function hex(bytes){try{const d=await crypto.subtle.digest('SHA-256',bytes);return [...new Uint8Array(d)].slice(0,8).map(b=>b.toString(16).padStart(2,'0')).join('');}catch{return '';}}
-function openFile(path,{byUrl=false}={}){
+function openFile(path,{sha=''}={}){
   let p=docs.get(path);
   if(p){docs.delete(path);docs.set(path,p);return p;}
-  p=byUrl?pdfjs.getDocument({url:driveLink(path),disableAutoFetch:true,disableStream:true,rangeChunkSize:262144,...OPTIONS}).promise.then(doc=>({doc,sha:'',fp:doc.fingerprints?.[0]||''}))// 나눠 받으면 전체 해시를 못 내므로 PDF 고유 지문(fingerprint)을 쓴다
-    :Promise.resolve(downloadDriveFile(path)).then(async bytes=>{const sha=await hex(bytes.slice(0));return {doc:await pdfjs.getDocument({data:new Uint8Array(bytes),...OPTIONS}).promise,sha,fp:''};});
-  p=p.then(r=>({...r,fp:r.fp||r.doc.fingerprints?.[0]||''}));
+  p=fileBytes(path,sha).then(async bytes=>{const own=sha?sha.slice(0,16):await hex(bytes.slice(0));const doc=await pdfjs.getDocument({data:new Uint8Array(bytes),...OPTIONS}).promise;return {doc,sha:own,fp:doc.fingerprints?.[0]||''};});
   docs.set(path,p);p.catch(()=>{if(docs.get(path)===p)docs.delete(path);});
   while(docs.size>6){const [k,v]=docs.entries().next().value;docs.delete(k);v.then(r=>r.doc.destroy()).catch(()=>{});}
   return p;
@@ -96,8 +104,8 @@ export function croppedQuestion(item,words=[]){return cached(JSON.stringify([ite
 
 // 쪽 한 장(폭 cssWidth에 맞춤, 화면 배율 반영) + 형광펜 + 끌어서 고를 수 있는 글자 층(시안 31).
 // marks: 다시 열 때 칠할 근거 자리 [{x,y,w,h}](쪽 비율 0~1). 돌려주는 sha·fp는 근거에 남길 원본 지문.
-export async function renderPage(path,pageNo,words,cssWidth,{byUrl=false,saved=[]}={}){
-  const {doc,sha,fp}=await openFile(path,{byUrl}),page=await doc.getPage(pageNo),base=page.getViewport({scale:1});
+export async function renderPage(path,pageNo,words,cssWidth,{sha:known='',saved=[]}={}){
+  const {doc,sha,fp}=await openFile(path,{sha:known}),page=await doc.getPage(pageNo),base=page.getViewport({scale:1});
   const scale=Math.min(4,cssWidth/base.width*Math.min(window.devicePixelRatio||1,2)),vp=page.getViewport({scale});
   const c=document.createElement('canvas');c.width=Math.ceil(vp.width);c.height=Math.ceil(vp.height);
   const g=c.getContext('2d',{alpha:false});g.fillStyle='#fff';g.fillRect(0,0,c.width,c.height);
