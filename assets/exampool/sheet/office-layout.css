@@ -345,3 +345,55 @@ button:active:not(:disabled):not([aria-busy=true]):not(.pane-rail),.lp-pdf:activ
   #card-view .lp-one .lp-adv i::before{content:""}
   #card-view .lp-one .lp-slot:has(+ .lp-adv i:not([hidden])) .lp-search{padding-right:40px}
 }
+
+/* 33. 이름표 세로 칸(묶음 E 시안): 두 글자는 세로(지/문), 네 글자는 두 줄(성취/기준). ? 단추 없이 이름표에 올리면 안내. */
+#card-view .cv-grid .f-sec-head{display:none}
+#card-view .cv-grid .cv-row{grid-template-columns:36px minmax(0,1fr);min-height:34px}
+#card-view .cv-grid .cv-row>label{position:relative;flex-direction:column;align-items:center;justify-content:center;gap:4px;padding:6px 0;font-size:12px;line-height:1.2;text-align:center;cursor:help}
+#card-view .cv-grid .cv-row>label .vt{writing-mode:vertical-rl;text-orientation:upright;letter-spacing:1px}
+#card-view .cv-grid .cv-row>label .hz{white-space:nowrap;font-size:11.5px;letter-spacing:-.3px}
+#card-view .cv-grid .cv-row>label[data-tip]::after{content:attr(data-tip);position:absolute;left:40px;top:4px;z-index:30;width:250px;padding:8px 10px;border-radius:8px;background:#1f2328;color:#fff;font-size:12px;font-weight:400;line-height:1.5;text-align:left;white-space:normal;box-shadow:0 8px 24px #0004;opacity:0;pointer-events:none;transform:translateY(-2px);transition:opacity 140ms var(--ep-ease),transform 140ms var(--ep-ease)}
+#card-view .cv-grid .cv-row>label[data-tip]:hover::after,#card-view .cv-grid .cv-row>label[data-tip]:focus-visible::after{opacity:1;transform:none}
+#card-view .cv-grid .f-sec:first-child .cv-row:first-child>label{border-top-left-radius:var(--cv-sec-radius,10px)}
+#card-view .cv-grid .f-sec{overflow:visible}
+#card-view .cv-grid .cv-v{padding:3px 6px}
+/* 34. 근거 표시: 칸 옆 🔗N(올리면 출처·인용문), 근거 없음, 카드 맨 아래 근거 표 */
+#card-view .ev-chip{position:relative;flex:none;display:inline-flex;align-items:center;gap:2px;height:20px;min-height:0;padding:0 6px;border:0;border-radius:10px;background:#eaf2fd;color:#1a5fb4;font:600 11px/1 inherit;cursor:pointer;white-space:nowrap}
+#card-view .ev-chip .ico{width:11px;height:11px;fill:none;stroke:currentColor;stroke-width:2}
+#card-view .ev-chip:hover{background:#d5e6fb}
+#card-view .ev-tip{position:absolute;z-index:40;right:0;top:24px;width:300px;padding:10px 12px;border-radius:10px;background:#1f2328;color:#e6edf3;font-size:12px;font-weight:400;line-height:1.55;text-align:left;white-space:normal;box-shadow:0 12px 30px #0006;opacity:0;pointer-events:none;transform:translateY(-3px);transition:opacity 140ms var(--ep-ease),transform 140ms var(--ep-ease)}
+#card-view .ev-chip:hover .ev-tip,#card-view .ev-chip:focus-visible .ev-tip{opacity:1;transform:none}
+#card-view .ev-tip b{display:block;color:#fff;margin-top:4px}#card-view .ev-tip b:first-child{margin-top:0}
+#card-view .ev-tip q{display:block;margin:4px 0;padding:5px 8px;border-left:3px solid #6ba4f8;border-radius:3px;background:#ffffff12;quotes:none}
+#card-view .ev-tip small{display:block;color:#9aa4ae}#card-view .ev-tip em{display:block;margin-top:4px;font-style:normal;color:#9cc3ff}
+#card-view .cv-row>label .ev-chip{padding:0 4px;height:18px}
+#card-view .cv-row>label .ev-chip .ev-tip{left:30px;right:auto;top:0}
+#card-view .ev-miss{flex:none;display:inline-flex;align-items:center;height:20px;padding:0 6px;border-radius:10px;background:#fff8c5;color:#9a6700;font:600 11px/1 inherit;white-space:nowrap}
+#card-view .cv-grid .ig.ev-need{background:linear-gradient(90deg,#fff8c5,transparent 60%)}
+#card-view .cv-combos .combo-row,#card-view .cv-grid .choice-row{position:relative}
+#card-view .cv-combos .combo-row :is(.ev-chip,.ev-miss){position:absolute;right:3px;top:-9px;height:16px;padding:0 5px;font-size:10.5px;box-shadow:0 0 0 2px #fff}
+#card-view .cv-combos .combo-row:has(.ev-miss){box-shadow:inset 0 0 0 1.5px #d4a72c}
+#card-view .cv-grid .cv-combos{padding-top:8px}
+#card-view .cv-evtab{width:100%;border-collapse:collapse;font-size:12px}
+#card-view .cv-evtab td{padding:4px 6px;border-bottom:1px dashed var(--ds-doc-line,#e6e9ed);vertical-align:top}
+#card-view .cv-evtab tr:last-child td{border-bottom:0}
+#card-view .cv-evtab .who{white-space:nowrap}
+#card-view .cv-evtab .who span{display:inline-block;padding:0 7px;border-radius:9px;background:#eaf2fd;color:#1a5fb4;font-weight:600}
+#card-view .cv-evtab .src{white-space:nowrap;color:var(--ds-doc-ink-2,#57606a)}
+#card-view .cv-evtab .src .link{padding:0;height:auto;min-height:0;font-size:12px}
+#card-view .cv-evtab .q q{quotes:none;color:var(--ds-doc-ink,#1f2328)}#card-view .cv-evtab .q small{display:block;color:var(--ds-doc-ink-3,#8c959f)}
+#card-view .cv-evtab .x{width:28px}#card-view .cv-evtab .lp-ref-x{margin:0;color:#8c959f}
+#card-view .cv-evtab tr.miss td{color:#9a6700;background:#fffbe6;font-weight:600}
+#card-view .cv-evrow .ph,#card-view .cv-evtab .ph{color:var(--ds-doc-ink-3,#8c959f);font-size:12px}
+@container (max-width:460px){#card-view .cv-evtab .src{white-space:normal}}
+/* 근거 표: 한 근거 = [대상][출처 ···][×] / 아래 줄에 인용문 전체 폭 */
+#card-view .cv-evtab,#card-view .cv-evtab tbody{display:block}
+#card-view .cv-evtab tr{display:grid;grid-template-columns:auto minmax(0,1fr) 26px;align-items:center;column-gap:6px;padding:5px 2px;border-bottom:1px dashed var(--ds-doc-line,#e6e9ed)}
+#card-view .cv-evtab tr:last-child{border-bottom:0}
+#card-view .cv-evtab td{display:block;padding:0;border:0!important;background:transparent}
+#card-view .cv-evtab td.src{white-space:normal;overflow:hidden;text-overflow:ellipsis}
+#card-view .cv-evtab td.q{grid-column:1/-1;grid-row:2;padding:3px 0 0 2px;line-height:1.5}
+#card-view .cv-evtab td.q:has(.ph){display:none}
+#card-view .cv-evtab td.x{grid-column:3;grid-row:1}
+#card-view .cv-evtab tr.miss{grid-template-columns:auto minmax(0,1fr);padding:6px;border-radius:6px;background:#fffbe6}
+#card-view .cv-evtab tr.miss td{background:transparent}

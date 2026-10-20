@@ -46,7 +46,8 @@ export function createCardEditor(root,api){
   }
   function linesHtml(b,key,ph){
     const ox=(l,i)=>key!=='bogi'?'':`<span class="ox" role="group" aria-label="${E(l.label)} 옳음·틀림"><button type="button" class="o" data-cvtruth="${i}" data-v="1" aria-pressed="${l.truth===true}" title="옳은 보기">○</button><button type="button" class="x" data-cvtruth="${i}" data-v="0" aria-pressed="${l.truth===false}" title="틀린 보기">×</button></span>`;
-    return `<div class="rows">${b.lines.map((l,i)=>`<div class="ig${key==='bogi'&&l.truth!==undefined?(l.truth?' t-o':' t-x'):''}"><span>${E(key==='bogi'?l.label:l.label)}</span><input data-cvline="${key}" data-i="${i}" value="${E(l.text)}" placeholder="${E(ph)}">${ox(l,i)}<button type="button" class="ig-x" data-cvline-remove="${key}" data-i="${i}" title="이 줄 지우기" aria-label="이 줄 지우기">×</button></div>`).join('')}
+    const x=q(),ev=l=>key!=='bogi'||!x?'':evChip(x,l.id)||(l.truth===true?evMiss():'');
+    return `<div class="rows">${b.lines.map((l,i)=>`<div class="ig${key==='bogi'&&l.truth!==undefined?(l.truth?' t-o':' t-x'):''}${key==='bogi'&&l.truth===true&&x&&!refsOf(x,l.id).length?' ev-need':''}"><span>${E(key==='bogi'?l.label:l.label)}</span><input data-cvline="${key}" data-i="${i}" value="${E(l.text)}" placeholder="${E(ph)}">${ev(l)}${ox(l,i)}<button type="button" class="ig-x" data-cvline-remove="${key}" data-i="${i}" title="이 줄 지우기" aria-label="이 줄 지우기">×</button></div>`).join('')}
       <button type="button" class="link add" data-cvline-add="${key}">+ ${key==='bogi'?'보기':key==='steps'?'과정':'대화'} 추가</button></div>`;
   }
   function choicesHtml(x){
@@ -63,14 +64,21 @@ export function createCardEditor(root,api){
       const right=comboRight(x),ri=right?x.choices.findIndex(c=>normalizeCombo(c.text)===right):-1;
       const sugg=COMBO_STATS.top.map(([set,pct],k)=>`<button type="button" class="cv-sugg" data-cvcombofill="${k}" title="평가원 과학탐구 기출 〈보기〉 문항 ${COMBO_STATS.n.toLocaleString()}개 중 ${pct}%가 이 조합">${set.map(v=>E(v.replace(/,\s*/g,''))).join('/')}<em>${pct}%</em></button>`).join('');
       const note=right===null?'':ri>=0?`<p class="cv-autoans ok">옳은 보기 ${E(right)} → 정답 ${NUM[ri]}${x.answer===ri?'':' (동그라미를 맞춰 주세요)'}</p>`:`<p class="cv-autoans bad">${right?`옳은 보기 조합 「${E(right)}」이 선지에 없습니다`:'옳은 보기가 하나도 없습니다'}</p>`;
-      return `<div class="f-field cv-row"><label>선지<button type="button" class="help" aria-label="선지 도움말" data-tip="자주 쓰는 조합은 평가원 과학탐구 기출 〈보기〉 문항 ${COMBO_STATS.n.toLocaleString()}개에서 센 비율입니다. 보기의 ○·×를 다 정하면 정답 선지가 자동으로 표시됩니다.">?</button></label><div class="cv-v">
+      return `<div class="f-field cv-row"><label data-tip="자주 쓰는 조합은 평가원 과학탐구 기출 〈보기〉 문항 ${COMBO_STATS.n.toLocaleString()}개에서 센 비율입니다. 보기의 ○·×를 다 정하면 정답 선지가 자동으로 표시됩니다." tabindex="0" aria-label="선지"><span class="vt">선지</span></label><div class="cv-v">
         <div class="cv-suggs"><span>추천</span>${sugg}</div>
-        <div class="cv-combos">${x.choices.map((c,i)=>`<label class="combo-row${x.answer===i?' on':''}${ri===i?' right':''}"><input type="radio" name="cv-ans" data-cvans="${i}" ${x.answer===i?'checked':''} aria-label="${NUM[i]} 정답"><span class="no">${NUM[i]}</span><input data-cvchoice="${i}" value="${E(c.text)}" placeholder="—" aria-label="${NUM[i]} 조합"></label>`).join('')}</div>${note}</div></div>`;
+        <div class="cv-combos">${x.choices.map((c,i)=>`<label class="combo-row${x.answer===i?' on':''}${ri===i?' right':''}"><input type="radio" name="cv-ans" data-cvans="${i}" ${x.answer===i?'checked':''} aria-label="${NUM[i]} 정답"><span class="no">${NUM[i]}</span><input data-cvchoice="${i}" value="${E(c.text)}" placeholder="—" aria-label="${NUM[i]} 조합">${evChip(x,c.id)||(x.answer===i?evMiss():'')}</label>`).join('')}</div>${note}</div></div>`;
     }
     const lay=x.choiceLayout||'';
     return `<div class="f-field"><label title="값·식·낱말·문장을 한 줄씩 · 동그라미로 정답">선지<span class="lay">${[['','자동'],['한 줄','한 줄'],['2열','2열'],['세로','세로']].map(([v,t])=>`<button type="button" class="link" data-cvlayout="${v}" aria-pressed="${lay===v}">${t}</button>`).join('')}</span></label>
-      <div class="rows">${x.choices.map((c,i)=>`<label class="ig choice-row${x.answer===i?' on':''}"><input type="radio" name="cv-ans" data-cvans="${i}" ${x.answer===i?'checked':''}><span>${NUM[i]}</span><input data-cvchoice="${i}" value="${E(c.text)}" placeholder="${NUM[i]} 선지"></label>`).join('')}</div></div>`;
+      <div class="rows">${x.choices.map((c,i)=>`<label class="ig choice-row${x.answer===i?' on':''}"><input type="radio" name="cv-ans" data-cvans="${i}" ${x.answer===i?'checked':''}><span>${NUM[i]}</span><input data-cvchoice="${i}" value="${E(c.text)}" placeholder="${NUM[i]} 선지">${evChip(x,c.id)||(x.answer===i?evMiss():'')}</label>`).join('')}</div></div>`;
   }
+  // 근거 표시(시안 34): 근거가 걸린 칸 옆 🔗N(올리면 출처·인용문, 누르면 그 쪽), 옳은 보기·정답 선지에 근거가 없으면 「근거 없음」.
+  const refsOf=(x,t)=>(x.references||[]).map((r,i)=>[r,i]).filter(([r])=>r.target===t);
+  function evChip(x,t){const rs=refsOf(x,t);if(!rs.length)return '';
+    return `<button type="button" class="ev-chip" data-cvref="${rs[0][1]}" aria-label="근거 ${rs.length}개 · 눌러서 그 쪽 열기">${ICON.link}${rs.length}<span class="ev-tip" aria-hidden="true">${rs.map(([r])=>`<b>${E(r.label)}</b>${r.quote?`<q>${E(r.quote.slice(0,160))}${r.quote.length>160?'…':''}</q>`:''}${r.note?`<small>메모: ${E(r.note)}</small>`:''}`).join('')}<em>${rs[0][0].source?.path?'눌러서 그 쪽 열기 ›':''}</em></span></button>`;}
+  const evMiss=()=>'<span class="ev-miss" title="옳은 보기·정답 선지에는 근거를 걸어 두세요 — 교과서·기출 쪽에서 글을 끌어 고르면 됩니다">근거 없음</span>';
+  function evMissing(x){const out=[];(bogiOf(x)?.lines||[]).forEach(l=>{if(l.truth===true&&!refsOf(x,l.id).length)out.push('보기 '+l.label+'(옳음)');});
+    if(Number.isInteger(x.answer)&&x.choices?.[x.answer]&&!refsOf(x,x.choices[x.answer].id).length)out.push('정답 '+NUM[x.answer]);return out;}
   // 보기 ○×가 모두 정해졌으면 옳은 것만 모은 조합(「ㄱ, ㄷ」), 하나라도 비었으면 null.
   function comboRight(x){const ls=bogiOf(x)?.lines||[];if(!ls.length||ls.some(l=>l.truth!==true&&l.truth!==false))return null;return normalizeCombo(ls.filter(l=>l.truth).map(l=>l.label).join(', '));}
   let shapeOpen=false;
@@ -90,24 +98,29 @@ export function createCardEditor(root,api){
     const bogi=bogiOf(x),steps=x.blocks.find(b=>b.kind==='steps'),talk=x.blocks.find(b=>b.kind==='dialogue');
     const passages=x.blocks.filter(b=>b.kind==='text');
     const {items,done}=completeness(x);
-    const row=(name,body,tip='',cls='')=>`<div class="f-field cv-row${cls?' '+cls:''}"><label>${name}${tip?help(tip,name+' 도움말'):''}</label><div class="cv-v">${body}</div></div>`;
+    // 이름표(시안 33): 두 글자는 세로로(지/문), 네 글자는 두 글자씩 두 줄(성취/기준). 안내는 이름표에 마우스를 올리면.
+    const tag=n=>{const t=n.replace(/\s+/g,'');return t.length<=2?`<span class="vt">${E(t)}</span>`:`<span class="hz">${E(t.slice(0,2))}<br>${E(t.slice(2))}</span>`;};
+    const row=(name,body,tip='',cls='',target='')=>`<div class="f-field cv-row${cls?' '+cls:''}"><label${tip?` data-tip="${E(tip)}" tabindex="0"`:''} aria-label="${E(name)}">${tag(name)}${target?evChip(x,target):''}</label><div class="cv-v">${body}</div></div>`;
+    const missing=evMissing(x),refs=x.references||[];
+    const evTable=refs.length||missing.length?`<table class="cv-evtab">${refs.map((r,i)=>`<tr data-cvrefrow="${i}"><td class="who"><span>${E(evTargetName(x,r.target))}</span></td><td class="src">${r.source?.path?`<button type="button" class="link" data-cvref="${i}" title="그 쪽 열기">${E(r.label)}</button>`:E(r.label)}</td><td class="q">${r.quote?`<q>${E(r.quote.slice(0,200))}${r.quote.length>200?'…':''}</q>`:'<span class="ph">쪽 전체</span>'}${r.note?`<small>${E(r.note)}</small>`:''}</td><td class="x"><button type="button" class="lp-ref-x" data-cvrefdel="${i}" title="이 근거 지우기" aria-label="이 근거 지우기">×</button></td></tr>`).join('')}${missing.length?`<tr class="miss"><td class="who">근거 없음</td><td colspan="3">${E(missing.join(' · '))} — 교과서·기출 쪽에서 글을 끌어 고르면 채워집니다</td></tr>`:''}</table>`:'<span class="ph">아직 없음 · 교과서·기출 쪽에서 글을 끌어 고르거나, 크게 보기에서 「근거로 연결」</span>';
     return `<div class="cv-writer"><div class="w-head"><span class="qno">${x.number?E(x.number)+'번':'번호 없음'} 문항</span>
         ${shapeHtml(x)}
         <span class="cv-pts" role="group" aria-label="배점">${[2,3].map(n=>`<button type="button" data-cvpoints="${n}" aria-pressed="${Number(x.points)===n}">${n}점</button>`).join('')}</span>
         <span class="sp"></span>
         <div class="stage" role="group" aria-label="문항 단계">${Object.entries(WORKFLOWS).map(([k,v])=>`<button type="button" data-cvstage="${k}" aria-pressed="${workflowOf(x)===k}" title="${v}"><i class="dot st-${k}"></i>${v}</button>`).join('')}</div></div>
       <form class="sheet-form cv-grid" onsubmit="return false">
-        <section class="f-sec plan"><div class="f-sec-head"><h3 title="인쇄되지 않는 정보">출제 설계</h3></div>
+        <section class="f-sec plan" aria-label="출제 설계">
           ${row('성취기준',`<div class="pick">${x.standardCode?`<b>${E(x.standardCode)}</b>`:'<span class="ph">고르지 않음</span>'}<button type="button" class="link" data-cv="open-standards">${x.standardCode?'바꾸기':'찾기'}</button></div>`,'왼쪽 참고 자료 칸을 「성취기준·교육과정」으로 바꿔 골라 연결합니다. 「찾기」를 눌러도 열립니다.')}
-          ${row('<span>출제 의도</span>',`<input id="cv-intent" data-cvf="intent" value="${E(x.intent)}" placeholder="평가할 개념 · 학생이 할 일">`,'평가할 개념과 학생이 할 일을 한 줄로 적습니다. 예: 물질대사와 에너지 전환을 연결해 판단')}</section>
-        <section class="f-sec"><div class="f-sec-head"><h3 title="인쇄 순서대로 채웁니다">문항 내용</h3></div>
-          ${row('지문',`<textarea id="cv-passage" data-cvf="passage" rows="1" placeholder="자료 앞 설명 (없으면 비움)">${E(passages[0]?.text||'')}</textarea>`,passages.length>1?`지문이 ${passages.length}개인 문항입니다. 첫 지문만 여기서 고치고, 나머지는 구성 시트에서 고칩니다.`:'자료 앞에 오는 설명 글입니다. 없으면 비워 둡니다.',passages.length>1?'multi':'')}
+          ${row('출제의도',`<input id="cv-intent" data-cvf="intent" value="${E(x.intent)}" placeholder="평가할 개념 · 학생이 할 일">`,'평가할 개념과 학생이 할 일을 한 줄로 적습니다. 예: 물질대사와 에너지 전환을 연결해 판단')}</section>
+        <section class="f-sec" aria-label="문항 내용">
+          ${row('지문',`<textarea id="cv-passage" data-cvf="passage" rows="1" placeholder="자료 앞 설명 (없으면 비움)">${E(passages[0]?.text||'')}</textarea>`,passages.length>1?`지문이 ${passages.length}개인 문항입니다. 첫 지문만 여기서 고치고, 나머지는 구성 시트에서 고칩니다.`:'자료 앞에 오는 설명 글입니다. 없으면 비워 둡니다.',passages.length>1?'multi':'','passage')}
           ${row('자료',slotsHtml(x),'그림은 5E에서 잘라 가져오고, 표는 칸 수를 정해 만듭니다. 칸에 마우스를 올리면 바꾸기·지우기 단추가 보입니다.')}
-          ${steps?row('실험 과정',linesHtml(steps,'steps','과정을 입력하세요'),'(가)·(나)는 자동으로 붙습니다.'):''}
+          ${steps?row('실험과정',linesHtml(steps,'steps','과정을 입력하세요'),'(가)·(나)는 자동으로 붙습니다.'):''}
           ${talk?row('대화',linesHtml(talk,'dialogue','말을 입력하세요'),'이름 칸에 학생 이름, 오른쪽에 말'):''}
-          ${row('발문',`<textarea id="cv-ask" data-cvf="ask" rows="1" placeholder="학생에게 물을 문장">${E(x.ask)}</textarea>`)}
+          ${row('발문',`<textarea id="cv-ask" data-cvf="ask" rows="1" placeholder="학생에게 물을 문장">${E(x.ask)}</textarea>`,'학생에게 묻는 문장','','ask')}
           ${isCombo(x)||bogi?row('보기',bogi?linesHtml(bogi,'bogi','보기 내용'):'<button type="button" class="btn" data-cvline-add="bogi">+ 보기 만들기</button>',isCombo(x)?'ㄱ·ㄴ·ㄷ은 자동으로 붙습니다. 오른쪽 ○(옳음)·×(틀림)를 정하면 정답 선지가 자동으로 표시됩니다.':'합답형이 아니지만 한글에 찍히는 보기입니다(엑셀에서 유형만 바꾼 경우). 필요 없으면 줄을 지우세요.'):''}
           ${choicesHtml(x)}
+          ${row('근거',evTable,'이 문항의 근거: 교과서·기출 쪽에서 글을 끌어 고르거나 「이 쪽을 근거로」, 기출 크게 보기의 「근거로 연결」. 줄을 누르면 그 쪽이 열립니다. 한글 조판에는 찍히지 않습니다.','cv-evrow')}
           <details class="f-more"${store.get('more',false)?' open':''}><summary>해설 · 단원 · 출처</summary>
             <div class="f-row3"><div class="f-field"><label>대단원</label><input data-cvf="unitLarge" value="${E(x.unitLarge||'')}"></div><div class="f-field"><label>중단원</label><input data-cvf="unitMiddle" value="${E(x.unitMiddle||'')}"></div><div class="f-field"><label>배점</label><input data-cvf="points" value="${E(x.points)}" inputmode="decimal"></div></div>
             <div class="f-row2"><div class="f-field"><label>출처</label><input data-cvf="source" value="${E(x.source)}" placeholder="자체 제작 · 교과서 · 기출 변형"></div><div class="f-field"><label>문항관리번호</label><input data-cvf="managementId" value="${E(x.managementId||'')}"></div></div>
@@ -125,14 +138,14 @@ export function createCardEditor(root,api){
     const scope=`<select class="lp-scope" data-cvscope aria-label="검색 범위">${TABS.map(([k,t])=>`<option value="${k}"${panels.tab===k?' selected':''}>${t}</option>`).join('')}<option disabled>──────────</option><option value="__lib">5E 라이브러리에서 가져오기…</option></select>`;
     const unit=panels.tab==='past'?['pastview',pastFilter.view==='page','문항별로 보기','시험지 쪽으로 보기']:panels.tab==='textbooks'?['bookview',pastFilter.bookview==='page','쪽 목록','한 쪽 크게 보기']:null;
     const seg=unit?`<span class="lp-seg lp-headseg" role="group" aria-label="보기 단위"><button type="button" data-cv${unit[0]}="q" aria-pressed="${!unit[1]}" title="${unit[2]}" aria-label="${unit[2]}">${ICON.grid}</button><button type="button" data-cv${unit[0]}="page" aria-pressed="${unit[1]}" title="${unit[3]}" aria-label="${unit[3]}">${ICON.page}</button></span>`:'';
-    const linked=`<button type="button" class="lp-linked" data-cvlinked aria-expanded="false" title="이 문항의 근거 펼치기">${ICON.link}<b>이 문항의 근거 ${refs.length}</b><span>${refs.slice(0,4).map(r=>E(r.label)).join(' · ')||'크게 보기·쪽 보기에서 「근거로 연결」, 쪽의 글을 끌어 고르면 여기에 모입니다'}</span></button>`;
+    const linked='';// 근거는 문항 카드 맨 아래 「근거」 표로 옮겼다(시안 34).
     const search=docked?`<label class="lp-search">${ICON.search}<input data-cvsrc value="${E(root.querySelector('#source-search')?.value||document.querySelector('#source-search')?.value||'')}" placeholder="${panels.tab==='standards'?'코드·핵심어':'자료 이름·본문'}" aria-label="검색"></label>`:'';
     return `<aside class="cv-lib cv-left"${panels.lib?'':' hidden'} aria-label="참고 자료"><div class="lp-one">${panels.lib?`<button type="button" class="btn icon pt pane-close" data-cv="toggle-lib" aria-pressed="true" title="참고 자료 닫기" aria-label="참고 자료 닫기">${ICON.panelL}</button>`:''}${scope}<div class="lp-slot" data-cvslot="search">${search}</div>
       ${docked||panels.tab==='textbooks'?'':`<button type="button" class="lp-adv" data-cvadv aria-expanded="${pastAdvOpen}" title="상세검색: 과목·단원·연도">${ICON.sliders}<span>상세검색</span><i data-cvslot="advn" hidden></i></button>`}${seg}</div>
       <div class="lp-adv-pop" data-cvslot="adv"${pastAdvOpen&&!docked?'':' hidden'}></div>
       <div class="lp-body" data-cvbody="past" ${['past','textbooks'].includes(panels.tab)?'':'hidden'}></div>
       <div class="lp-body lp-docked" data-cvbody="docked" ${docked?'':'hidden'}></div>
-      ${linked}<div class="lp-reflist">${refs.map((r,i)=>`<div class="lp-ref"><button type="button" data-cvref="${i}" title="${r.source?.path?'이 근거의 쪽 열기':''}"${r.source?.path?'':' disabled'}><b>${E(r.label)}</b><span class="who">${E(evTargetName(x,r.target))}</span>${r.quote?`<q>${E(r.quote.slice(0,140))}${r.quote.length>140?'…':''}</q>`:''}${r.note?`<small>${E(r.note)}</small>`:''}</button><button type="button" class="lp-ref-x" data-cvrefdel="${i}" title="이 근거 지우기" aria-label="이 근거 지우기">×</button></div>`).join('')}</div></aside>`;
+      ${linked}</aside>`;
   }
   const unseenAi=x=>{const seen=store.get('aiSeen:'+x.id,0);return (x.reviews||[]).slice(seen).filter(m=>m.role==='ai').length;};
   function rightHtml(){
@@ -490,7 +503,7 @@ export function createCardEditor(root,api){
     if(d.cvtab){setPanel('tab',d.cvtab);return;}
     if(d.cvright){panels.rightOpen=true;store.set('rightOpen',true);setPanel('right',d.cvright);return;}
     if(d.cvview){setView(d.cvview);return;}
-    if(d.cvbookview){pastFilter.bookview=d.cvbookview;store.set('past',pastFilter);b.parentElement.querySelectorAll('button').forEach(n=>n.setAttribute('aria-pressed',n===b));renderPast().then(()=>anim(root.querySelector('[data-cvbody="past"]>.past-list'),'ep-swap'));return;}
+    if(d.cvbookview){root.querySelector('.lp-zoom')?.remove();pastZoom=-1;pastZoomKey='';pastFilter.bookview=d.cvbookview;store.set('past',pastFilter);b.parentElement.querySelectorAll('button').forEach(n=>n.setAttribute('aria-pressed',n===b));renderPast().then(()=>anim(root.querySelector('[data-cvbody="past"]>.past-list'),'ep-swap'));return;}
     if(d.cvbookstep){const n=Number(root.querySelector('[data-cvslot="pageno"]')?.textContent.match(/\d+/)?.[0])||1;Object.assign(pastFilter,{bookpage:Math.max(1,n+Number(d.cvbookstep)),query:''});store.set('past',pastFilter);renderPast();return;}
     if(d.cvpageref!==undefined){const paper=root.querySelector('[data-cvpaper]');if(paper?._src)evOpen({src:paper._src,text:'',rects:[],anchor:null});return;}
     if(d.evcancel!==undefined){root.querySelector('.ev-pop')?.remove();evPending=null;getSelection()?.removeAllRanges();return;}
@@ -500,10 +513,10 @@ export function createCardEditor(root,api){
       pop?.remove();evPending=null;getSelection()?.removeAllRanges();return;}
     if(d.cvref!==undefined){const r=x?.references[Number(d.cvref)],s=r?.source;if(!s?.path)return;
       if(s.kind==='textbook')Object.assign(pastFilter,{bookview:'page',bookpage:s.page,book:s.bookId||pastFilter.book,query:''});else Object.assign(pastFilter,{view:'page',pagefile:s.path.split('/').pop(),pageno:s.page});
-      store.set('past',pastFilter);root.querySelector('.cv-left')?.classList.remove('show-linked');if(panels.tab===(s.kind==='textbook'?'textbooks':'past'))renderPast();else setPanel('tab',s.kind==='textbook'?'textbooks':'past');return;}
+      store.set('past',pastFilter);panels.lib=true;store.set('lib',true);panels.tab=s.kind==='textbook'?'textbooks':'past';store.set('tab',panels.tab);render();return;}
     if(d.cvrefdel!==undefined){const i=Number(d.cvrefdel);if(x?.references[i])api.edit(()=>{x.references.splice(i,1);});return;}
     if(d.cvtopage){const i=pastItem(d.cvtopage);if(i){root.querySelector('.lp-zoom')?.remove();pastZoom=-1;pastZoomKey='';Object.assign(pastFilter,{view:'page',pagefile:i.pdfFile,pageno:Number(i.page)});store.set('past',pastFilter);render();}return;}
-    if(d.cvpastview){pastFilter.view=d.cvpastview;store.set('past',pastFilter);b.parentElement.querySelectorAll('button').forEach(n=>n.setAttribute('aria-pressed',n===b));renderPast().then(()=>anim(root.querySelector('[data-cvbody="past"]>.past-list'),'ep-swap'));return;}
+    if(d.cvpastview){root.querySelector('.lp-zoom')?.remove();pastZoom=-1;pastZoomKey='';pastFilter.view=d.cvpastview;store.set('past',pastFilter);b.parentElement.querySelectorAll('button').forEach(n=>n.setAttribute('aria-pressed',n===b));renderPast().then(()=>anim(root.querySelector('[data-cvbody="past"]>.past-list'),'ep-swap'));return;}
     if(d.cv==='to-page'){setView('page');return;}
     if(d.cv==='toggle-lib'){setPanel('lib',!panels.lib);return;}
     if(d.cv==='toggle-right'){setPanel('rightOpen',!panels.rightOpen);return;}

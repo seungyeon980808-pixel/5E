@@ -169,13 +169,9 @@ h.withServer(async origin => {
       await page.evaluate(()=>{document.documentElement.setAttribute('data-theme','dark');document.documentElement.setAttribute('data-palette','classic');});await sheet.waitForTimeout(300);
       await page.keyboard.press('Escape');assert.equal(await sheet.locator('#card-view .lp-zoom').count(),0);
 
-      // 4. 근거는 칸 맨 아래 한 줄(늘 보임), 누르면 목록이 겹쳐 펼쳐진다(목록 높이는 그대로).
-      assert.equal(await sheet.locator('#card-view .lp-linked').isVisible(),true,'the evidence line is always at the bottom');
-      const listH=await sheet.evaluate(()=>document.querySelector('#card-view .past-list').clientHeight);
-      await sheet.click('#card-view [data-cvlinked]');
-      assert.equal(await sheet.locator('#card-view .lp-reflist').isVisible(),true,'evidence list opens');
-      assert.equal(await sheet.evaluate(()=>document.querySelector('#card-view .past-list').clientHeight),listH,'opening the evidence list does not move the cards');
-      await sheet.click('#card-view [data-cvlinked]');assert.equal(await sheet.locator('#card-view .lp-reflist').isVisible(),false);
+      // 4. 근거는 왼쪽 칸이 아니라 문항 카드 맨 아래 「근거」 줄(묶음 E 시안 34) — 왼쪽 칸에는 근거 줄이 없다.
+      assert.equal(await sheet.locator('#card-view .cv-left .lp-linked').count(),0,'no evidence bar in the library pane');
+      assert.equal(await sheet.locator('#card-view .cv-center .cv-evrow').count(),1,'the evidence row lives in the question card');
 
       // 5. 교과서 탭도 같은 틀(도구 한 줄 + 5E 라이브러리 단추).
       await sheet.selectOption('#card-view [data-cvscope]','textbooks');
