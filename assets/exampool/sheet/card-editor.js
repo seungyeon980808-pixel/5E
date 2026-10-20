@@ -3,6 +3,7 @@
 import {WORKFLOWS,KINDS,formOf,formLosses,applyForm} from './model.js';
 import {FORMS,STRUCTS} from './templates.js';
 import {fieldValue,writeField} from './vertical.js';
+import {loadStandards} from './standards-data.js';
 import {normalizeCombo} from './choice-text.js';
 import {workflowOf,previewHtml,questionSubtitle} from './views.js';
 import {AXES,AXIS_LABEL,JUDGEMENT_LABEL} from '../authoring/schema.js';
@@ -73,7 +74,7 @@ export function createCardEditor(root,api){
       <div class="rows">${x.choices.map((c,i)=>`<label class="ig choice-row${x.answer===i?' on':''}"><input type="radio" name="cv-ans" data-cvans="${i}" ${x.answer===i?'checked':''}><span>${NUM[i]}</span><input data-cvchoice="${i}" value="${E(c.text)}" placeholder="${NUM[i]} 선지">${evChip(x,c.id)||(x.answer===i?evMiss():'')}</label>`).join('')}</div></div>`;
   }
   // 단원 자동(시안 35): 성취기준 코드 → 교육과정 자료의 대단원(「과목 › 대단원」). 자료에 중단원은 없어 중단원은 선택 입력.
-  let stdData=null;fetch(new URL('../standards.json',import.meta.url)).then(r=>r.ok?r.json():null).then(d=>{stdData=d;if(q()?.standardCode&&!q()?.unitLarge)render();}).catch(()=>{});
+  let stdData=null;loadStandards().then(d=>{stdData=d;if(q()?.standardCode&&!q()?.unitLarge)render();}).catch(()=>{});
   function unitOf(code){const s=stdData?.standards?.find(v=>v.code===code),u=s&&stdData.units?.find(v=>v.unit_no===s.unit_no);return u?`${s.subject} › ${u.name}`:'';}
   const SOURCES=['자체 제작','교과서','기출 변형','기타'];
   function sourceKind(x){const s=String(x.source||'');const k=SOURCES.find(v=>s.startsWith(v));if(k)return k;const orig=(x.references||[]).find(r=>/^원본 기출 · /.test(r.label));if(orig&&(!s||orig.label.endsWith(s)))return '기출 변형';return s?'기타':'';}

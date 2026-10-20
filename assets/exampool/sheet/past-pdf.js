@@ -3,11 +3,14 @@
 // 형광펜·경계는 PDF 글자 좌표(getTextContent)로 정하고 같은 캔버스에 함께 그린다 — 그림과 어긋날 수 없다.
 // 「변형」(pdf-viewer.mjs)은 PDF 출처를 한 문항용으로 바꿔 두므로 그 모듈과 섞지 않고 여기서 따로 연다(같은 pdf.js).
 import '../convert/es/stream-iterator-polyfill.mjs';
-import * as pdfjs from '../convert/es/vendor/pdfjs/pdf.mjs';
 import {downloadDriveFile,driveLink} from '../convert/es/drive-source.mjs';
 import {norm} from './past-search.js';
 
-pdfjs.GlobalWorkerOptions.workerSrc||=new URL('../convert/es/pdf-worker.mjs',import.meta.url).href;
+// pdf.js(약 1MB)는 처음 PDF를 열 때만 받는다 — 출제 칸을 여는 것만으로 받지 않게. 아래 글자 좌표 계산(findMarks·questionRect)은
+// 늘 열린 PDF의 내용으로만 부르므로 그때는 이미 받아 둔 상태다.
+let pdfjs=null,pdfjsLoading=null;
+const loadPdfjs=()=>pdfjsLoading||=import('../convert/es/vendor/pdfjs/pdf.mjs').then(module=>{
+  module.GlobalWorkerOptions.workerSrc||=new URL('../convert/es/pdf-worker.mjs',import.meta.url).href;pdfjs=module;return module;}).catch(error=>{pdfjsLoading=null;throw error;});// 받지 못했으면 다음에 다시 받는다
 const OPTIONS={cMapUrl:new URL('../convert/es/vendor/pdfjs/cmaps/',import.meta.url).href,cMapPacked:true,
   standardFontDataUrl:new URL('../convert/es/vendor/pdfjs/standard_fonts/',import.meta.url).href,wasmUrl:new URL('../../../vendor/pdfjs/wasm/',import.meta.url).href};
 // 검색어 조각마다 다른 색(시안 18): 노랑·초록·하늘.
@@ -30,7 +33,7 @@ async function hex(bytes){try{const d=await crypto.subtle.digest('SHA-256',bytes
 function openFile(path,{sha=''}={}){
   let p=docs.get(path);
   if(p){docs.delete(path);docs.set(path,p);return p;}
-  p=fileBytes(path,sha).then(async bytes=>{const own=sha?sha.slice(0,16):await hex(bytes.slice(0));const doc=await pdfjs.getDocument({data:new Uint8Array(bytes),...OPTIONS}).promise;return {doc,sha:own,fp:doc.fingerprints?.[0]||''};});
+  p=fileBytes(path,sha).then(async bytes=>{const own=sha?sha.slice(0,16):await hex(bytes.slice(0));const doc=await (await loadPdfjs()).getDocument({data:new Uint8Array(bytes),...OPTIONS}).promise;return {doc,sha:own,fp:doc.fingerprints?.[0]||''};});
   docs.set(path,p);p.catch(()=>{if(docs.get(path)===p)docs.delete(path);});
   while(docs.size>3){// 메모리: 열어 둔 PDF는 3개까지(교과서 하나가 130MB를 넘는다 — Safari가 메모리 부족으로 창을 다시 읽던 것)
 const [k,v]=docs.entries().next().value;docs.delete(k);v.then(r=>r.doc.destroy()).catch(()=>{});}

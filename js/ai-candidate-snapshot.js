@@ -1,5 +1,5 @@
 import { normalizeMarkPolicy } from './ai-mark-policy.js?v=1.7.0-four-session-integration';
-import { validateWorkbenchGraph } from './graph/workbench-result.js?v=1.7.0-four-session-integration';
+import { validateWorkbenchGraph } from './graph/workbench-validate.js?v=1.7.0-four-session-integration';
 import { isExamBrief } from './ai-exam-brief.js?v=1.7.0-exam-brief';
 
 // Snapshotting retains data, never grants label/source verification authority.

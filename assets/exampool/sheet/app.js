@@ -18,6 +18,7 @@ import {questionFromShape} from './templates.js';
 import {createNewQuestionDialog} from './new-question.js';
 import {createTypesetter} from './typeset.js?v=1018-card';
 import {renderParts,applyPartChange,movePart} from './parts-view.js';
+import {loadStandards} from './standards-data.js';
 let grid=null,future=[];
 let handoffRequest=null;
 import {createPdfRuntimeLoader} from '../../../js/pdf-library/runtime-loader.js?v=1.7.0-four-session-integration';
@@ -95,7 +96,7 @@ async function boot(){try{
   current=data.questions[0]||null;{const first=data.exams.find(e=>e.status==='drafting'),param=new URLSearchParams(location.search).get('view');if(param==='desk'){view.name='desk';view.examId=examOf(data,current?.id)?.id||null;}else if(first){view.name='exam';view.examId=first.id;}else view.name='library';}renderAll();if(raw)status('저장한 문항을 열었습니다.');if(!raw&&!demo)status('새 문항 또는 엑셀 올리기로 시작하세요.');
 }catch(e){// 열지 못한 이유는 사라지지 않게 둔다 — 6초 뒤 지워지면 빈 보관함만 남아 저장이 없어진 것처럼 보인다.
   saveBlocked=true;view.loadError='저장된 입력을 열지 못했습니다. 기존 저장은 보존했습니다. '+e.message;renderAll();status(view.loadError,true,{keep:true});}
-  try{standards=await(await fetch(new URL('../standards.json',import.meta.url))).json();}catch{status('성취기준 자료를 불러오지 못했습니다. 자료 열람에서 다시 시도하세요.',true);}
+  try{standards=await loadStandards();}catch{status('성취기준 자료를 불러오지 못했습니다. 자료 열람에서 다시 시도하세요.',true);}
 }
 // 전체 표(엑셀형): 시험지 안에서 열면 그 시험지 문항만 시험지 순서대로, 아니면 보관함 문항.
 const sheetScope=()=>{const exam=view.examId&&examById(data,view.examId);return exam?exam.items.map(id=>data.questions.find(q=>q.id===id)).filter(Boolean):libraryQuestions(data);};

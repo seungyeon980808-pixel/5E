@@ -3,6 +3,7 @@ import {WORKFLOWS} from './model.js';
 import {EXAM_STATUS,libraryQuestions,examById} from './exams.js';
 import {examPlan} from './exam-layout.js';
 import {questionTitle,questionSubtitle,workflowOf,previewHtml} from './views.js';
+import {loadStandards} from './standards-data.js';
 
 const E=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const ICON={
@@ -46,7 +47,7 @@ function isBlank(q){
   return !(q.choices||[]).some(c=>filled(c.text)||c.figure);
 }
 // 성취기준 글(카드에 한 줄로): 교육과정 자료를 한 번만 읽어 둔다. 다 읽으면 보관함 카드의 그 줄만 다시 채운다.
-let stdText=null;const stdWait=fetch(new URL('../standards.json',import.meta.url)).then(r=>r.ok?r.json():null).then(d=>{stdText=new Map((d?.standards||[]).map(s=>[s.code,s.text]));}).catch(()=>{stdText=new Map();});
+let stdText=null;const stdWait=loadStandards().then(d=>{stdText=new Map((d?.standards||[]).map(s=>[s.code,s.text]));}).catch(()=>{stdText=new Map();});
 const stdLine=q=>q.standardCode?`<code>${E(q.standardCode)}</code>${E(stdText?.get(q.standardCode)||'')}`:'<i>성취기준 없음</i>';
 // 문항 보관함: 시험지에 넣지 않은 문항 카드.
 export function renderLibrary(root,data,view){
