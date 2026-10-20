@@ -4,7 +4,7 @@ const WORKFLOW_SURFACES = {
   'exam-library-open':'.unified-library-overlay',
   'ai-image-install-open':'#ai-image-panel',
   'graph-tool-open':'#graph-modal-overlay',
-  'exam-send':'#exam-document-menu, #rhwp-exam-workspace',
+  'exam-send':'#rhwp-exam-workspace',
 };
 
 export function initButtonDesign(doc = document) {
@@ -31,7 +31,7 @@ export function initButtonDesign(doc = document) {
       });
       const open = surfaces.some(surface => !surface.hidden);
       if (button.dataset.workflowOpen !== String(open)) button.dataset.workflowOpen = String(open);
-      // Hwp's menu owns aria-expanded; its document view has a separate lifecycle.
+      // 「한글에 넣기」는 메뉴가 없는 바로 실행 단추라 aria-expanded를 달지 않는다(10-20 입구 통일).
       if (id !== 'exam-send' && button.getAttribute('aria-expanded') !== String(open)) button.setAttribute('aria-expanded', String(open));
     }
   };
