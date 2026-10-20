@@ -47,7 +47,17 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
     if(!inner.__fiveEQuiet){inner.__fiveEQuiet=true;for(const type of ['pointerdown','keydown'])inner.addEventListener(type,unquiet,true);}
     if(quietLoads++===0){quietProto=view.HTMLElement.prototype;quietFocus=quietProto.focus;quietProto.focus=function(){};}
     try{return await task();}finally{if(--quietLoads===0)unquiet();}};
-  const loadKeepingFocus=(bytes,name)=>keepingFocus(()=>bridge.load(bytes,name));
+  // 문서를 다시 여는 동안(그림 크기·배치처럼 글자만 고칠 수 없는 변경) 한글 창이 잠깐 비어 깜빡였다.
+  // 다시 열기 직전에 보이는 쪽을 한 장으로 떠서 그 자리에 덮어 두고, 새 쪽이 그려지면 살짝 흐려지며 걷는다.
+  function freeze(){try{const frame=host.querySelector('iframe'),inner=frame?.contentDocument,sc=inner?.querySelector('#scroll-container');if(!sc||!sc.querySelector('canvas'))return null;
+    const fr=frame.getBoundingClientRect(),hr=host.getBoundingClientRect(),dpr=Math.min(2,globalThis.devicePixelRatio||1),c=globalThis.document.createElement('canvas');
+    c.width=Math.round(fr.width*dpr);c.height=Math.round(fr.height*dpr);c.className='typeset-freeze';c.setAttribute('aria-hidden','true');
+    c.style.cssText=`position:absolute;left:${fr.left-hr.left}px;top:${fr.top-hr.top}px;width:${fr.width}px;height:${fr.height}px;z-index:15;pointer-events:none;transition:opacity 140ms ease-out`;
+    const g=c.getContext('2d');g.scale(dpr,dpr);g.fillStyle=getComputedStyle(sc).backgroundColor||'#fff';g.fillRect(0,0,fr.width,fr.height);
+    for(const cv of sc.querySelectorAll('canvas')){const r=cv.getBoundingClientRect();if(r.bottom<0||r.top>fr.height||!r.width)continue;try{g.drawImage(cv,r.left,r.top,r.width,r.height);}catch{}}
+    if(getComputedStyle(host).position==='static')host.style.position='relative';host.append(c);return c;}catch{return null;}}
+  const thaw=c=>{if(!c)return;setTimeout(()=>requestAnimationFrame(()=>{c.style.opacity='0';setTimeout(()=>c.remove(),160);}),160);};
+  const loadKeepingFocus=async(bytes,name)=>{const snap=freeze();try{return await keepingFocus(()=>bridge.load(bytes,name));}finally{thaw(snap);}};
   const profile=()=>({paper:paper.value,columns:Number(columns.value)});
   const metricsOutput=host.parentElement.querySelector('#typeset-metrics');
   const guideLayer=window.document.createElement('div');guideLayer.className='question-guide-layer';guideLayer.setAttribute('aria-hidden','true');

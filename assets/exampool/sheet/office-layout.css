@@ -445,3 +445,14 @@ button:active:not(:disabled):not([aria-busy=true]):not(.pane-rail),.lp-pdf:activ
 .pv-thumb.is-blank{display:flex;align-items:center;justify-content:center}
 #card-view .cv-center .w-head{flex-wrap:wrap;row-gap:6px}
 #card-view .cv-center .w-head .cv-shape-wrap{min-width:0}
+/* 보기 ○×: 보기 이름표 모양(.ig>span 회색 상자 44px)이 ○× 묶음에도 붙어 찌그러지던 것 */
+#card-view .cv-grid .ig>.ox{width:auto;display:inline-flex;place-items:normal;padding:0;border:0;border-radius:6px;background:transparent;font-size:inherit;gap:2px}
+#card-view .cv-grid .ig>:is(.ev-chip,.ev-miss){width:auto;border:0;padding:0 6px;display:inline-flex}
+
+/* 쪽 보기 시험지 고르기: [연도][시험][과목] 세 칸, 어두운 칸 디자인(흰 기본 고르기 상자 대신) */
+#card-view .lp-exam-pick{flex:1 1 0;min-width:0;display:flex;gap:4px}
+#card-view .lp-viewbar select,#card-view .lp-exam-pick select{-webkit-appearance:none;appearance:none;min-width:0;height:28px;padding:0 20px 0 8px;border:0;border-radius:var(--cv-ctl-radius,6px);background:var(--ds-bench) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23b1bac4' stroke-width='1.5' stroke-linecap='round'%3E%3Cpath d='m7 10 5 5 5-5'/%3E%3C/svg%3E") no-repeat right 4px center/14px;color:var(--ds-ink);box-shadow:inset 0 0 0 1px var(--ds-line);font-size:12.5px;cursor:pointer}
+#card-view .lp-exam-pick select{flex:0 1 auto}
+#card-view .lp-exam-pick select:last-child{flex:1 1 0}
+#card-view .lp-viewbar select:hover,#card-view .lp-exam-pick select:hover{box-shadow:inset 0 0 0 1px var(--ds-ink-3)}
+#card-view .lp-viewbar select:focus-visible{outline:2px solid var(--go-line,#6ba4f8);outline-offset:-2px}

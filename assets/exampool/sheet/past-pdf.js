@@ -32,7 +32,8 @@ function openFile(path,{sha=''}={}){
   if(p){docs.delete(path);docs.set(path,p);return p;}
   p=fileBytes(path,sha).then(async bytes=>{const own=sha?sha.slice(0,16):await hex(bytes.slice(0));const doc=await pdfjs.getDocument({data:new Uint8Array(bytes),...OPTIONS}).promise;return {doc,sha:own,fp:doc.fingerprints?.[0]||''};});
   docs.set(path,p);p.catch(()=>{if(docs.get(path)===p)docs.delete(path);});
-  while(docs.size>6){const [k,v]=docs.entries().next().value;docs.delete(k);v.then(r=>r.doc.destroy()).catch(()=>{});}
+  while(docs.size>3){// 메모리: 열어 둔 PDF는 3개까지(교과서 하나가 130MB를 넘는다 — Safari가 메모리 부족으로 창을 다시 읽던 것)
+const [k,v]=docs.entries().next().value;docs.delete(k);v.then(r=>r.doc.destroy()).catch(()=>{});}
   return p;
 }
 const openDoc=path=>openFile(path).then(r=>r.doc);
@@ -63,7 +64,8 @@ function paint(ctx,marks,dx=0,dy=0,color){
   for(const m of marks){ctx.fillStyle=color||MARK_COLORS[m.term];const r=Math.min(3,m.h/5);ctx.beginPath();ctx.roundRect?ctx.roundRect(m.x-dx-1,m.y-dy,m.w+2,m.h,r):ctx.rect(m.x-dx-1,m.y-dy,m.w+2,m.h);ctx.fill();}
   ctx.restore();
 }
-const toUrl=canvas=>new Promise((res,rej)=>canvas.toBlob(b=>b?res(URL.createObjectURL(b)):rej(Error('그림을 만들지 못했습니다.')),'image/png'));
+// 문항 그림은 JPEG(흰 바탕이라 깨짐이 거의 없고 PNG의 1/4~1/6 크기)로 — 많이 둘러볼수록 쌓이던 메모리를 줄인다.
+const toUrl=canvas=>new Promise((res,rej)=>canvas.toBlob(b=>b?res(URL.createObjectURL(b)):rej(Error('그림을 만들지 못했습니다.')),'image/jpeg',.9));
 
 // 문항 경계(시안 28): 픽셀 추측 대신 PDF 글자 좌표로. 위 = 문항 번호 줄, 아래 = ①~⑤ 선지 줄(없으면 쪽 번호·저작권 줄 위),
 // 좌우 = 그 단에서 글자가 있는 폭(〈보기〉 테두리가 잘리지 않게 오른쪽은 조금 넉넉히). 쪽 번호·저작권·확인 사항은 경계 밖.
@@ -95,7 +97,7 @@ const qCache=new Map();
 function cached(key,make){
   if(qCache.has(key)){const hit=qCache.get(key);qCache.delete(key);qCache.set(key,hit);return hit;}
   const job=make();qCache.set(key,job);job.catch(()=>qCache.delete(key));
-  while(qCache.size>120){const [k,v]=qCache.entries().next().value;qCache.delete(k);v.then(x=>x&&URL.revokeObjectURL(x.url)).catch(()=>{});}
+  while(qCache.size>40){const [k,v]=qCache.entries().next().value;qCache.delete(k);v.then(x=>x&&URL.revokeObjectURL(x.url)).catch(()=>{});}
   return job;
 }
 export function markedQuestion(item,words){return cached(JSON.stringify([item.id,words]),()=>drawQuestion(item,words,true));}

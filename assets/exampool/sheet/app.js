@@ -242,7 +242,7 @@ function syncTypeset(value){
 }
 function scheduleRedraw(){clearTimeout(redrawTimer);redrawTimer=setTimeout(()=>{if(current&&typesetter&&!$('#preview-dialog').hidden&&!typesetter.matches(current))void requestTypeset(current);},450);}
 // 구성 편집 창처럼 화면을 다시 그리지 않는 입력도 잠시 뒤 한글 창에 넣는다.
-function queueSync(){clearTimeout(draftTimer);draftTimer=setTimeout(()=>syncTypeset(current),350);}// 조판은 클릭·입력이 멈춘 뒤 0.35초에 — 누르는 순간의 화면 움직임을 막지 않게
+function queueSync(){clearTimeout(draftTimer);draftTimer=setTimeout(()=>syncTypeset(current),100);}// 카드 입력이 멈춘 뒤 0.1초에 조판(거의 실시간)
 // 시트 칸에 입력하는 동안: 확정 전 값으로 만든 문항을 한글 창에 바로 넣는다(다시 그려야 하는 변경은 확정 때).
 let draftTimer=0;
 function previewDraft(d,value){

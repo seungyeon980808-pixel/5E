@@ -83,7 +83,7 @@ async function cropHere(url) {
   return await new Promise(res => out.toBlob(res, 'image/png'));
 }
 // 잘라 둔 그림(blob: 주소)은 많이 둘러볼수록 쌓인다. 240장을 넘으면 오래된 것부터, 지금 화면에 쓰이지 않는 것만 놓아준다.
-const KEEP = 240;
+const KEEP = 120;// 메모리: 잘라 둔 카드 그림은 120장까지(Safari 메모리 부족 다시 읽기 방지)
 function trim() {
   if (cache.size <= KEEP || typeof document === 'undefined') return;
   const used = new Set([...document.images].map(i => i.src));

@@ -56,7 +56,7 @@ export function attachTypesetView(bridge,host){
     const next=Math.min(1.4,Math.max(.25,(view-44)/(page.width/75)));
     const content=doc.querySelector('#scroll-content'),stale=!!content&&content.offsetWidth>view+1;
     if(Math.abs(manager.getZoom()-next)>.002||stale){if(stale&&Math.abs(manager.getZoom()-next)<=.002)manager.setZoom(next+.01,{x:.5,y:0},'none');manager.setZoom(next,{x:.5,y:0},'none');}
-    fitted=manager.getZoom();
+    fitted=manager.getZoom();shownWidth=view;
   }
   const schedule=()=>{if(!frame)frame=requestAnimationFrame(fit);};
   function selection(){
@@ -85,7 +85,16 @@ export function attachTypesetView(bridge,host){
   doc.addEventListener('pointerup',()=>{interacted=true;selection();});
   doc.addEventListener('keyup',()=>{interacted=true;selection();});
   for(const event of ['cursor-cell-changed','cursor-para-changed','table-object-selection-changed','picture-object-selection-changed'])bridge.deps.eventBus.on(event,selection);
-  const observer=new ResizeObserver(schedule);observer.observe(host);
+  // 칸 크기를 바꾸는 동안(경계 끌기·칸 열고 닫기)에는 배율을 매 프레임 바꾸면 쪽을 다시 그리느라 깜빡였다.
+  // 바꾸는 동안은 지금 그림을 CSS로만 늘이거나 줄이고, 폭이 0.15초 그대로면 그때 한 번 배율을 맞춘다.
+  let settle=0,shownWidth=0;
+  function resized(){
+    const view=doc.querySelector('#scroll-container')?.clientWidth||host.clientWidth,content=doc.querySelector('#scroll-content');
+    if(!shownWidth||!content||fitted===null){shownWidth=view;schedule();return;}
+    const k=view/shownWidth;content.style.transformOrigin='top center';content.style.transform=Math.abs(k-1)>.002?`scale(${k.toFixed(4)})`:'';
+    clearTimeout(settle);settle=setTimeout(()=>{content.style.transform='';shownWidth=0;fit();shownWidth=doc.querySelector('#scroll-container')?.clientWidth||host.clientWidth;},150);
+  }
+  const observer=new ResizeObserver(resized);observer.observe(host);
   // 종이가 다 읽힌 뒤에도 한 번 더 맞춘다(읽히기 전에 맞춘 폭이 남지 않게).
   for(const name of ['document-view-loaded','document-layout-refreshed'])bridge.deps?.eventBus?.on?.(name,schedule);
   setDetail(false);

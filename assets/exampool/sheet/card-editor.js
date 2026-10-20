@@ -23,7 +23,7 @@ export function completeness(q){
 }
 
 export function createCardEditor(root,api){
-  const panels={nav:store.get('nav',true),lib:store.get('lib',true),tab:TABS.some(([k])=>k===store.get('tab','past'))?store.get('tab','past'):'past',right:store.get('right','paper'),rightOpen:store.get('rightOpen',true),view:'card'};
+  const panels={nav:store.get('nav',true),lib:true/* 참고 자료 칸은 ExamPool을 열 때마다 열린 채로 시작(쓰는 동안 접는 것은 그대로) */,tab:TABS.some(([k])=>k===store.get('tab','past'))?store.get('tab','past'):'past',right:store.get('right','paper'),rightOpen:store.get('rightOpen',true),view:'card'};
   let pastIndex=null,pastIndexLoading=null,pastItems=null,pastItemsKey='',pastFilter=store.get('past',{subject:'',part:'',year:'',query:'',tokens:[]}),pastSyn=null,pastRefocus=false,pastAdvOpen=false,pastZoom=-1,pastZoomKey='',books=null,srcQuery=store.get('srcq',{standards:'',references:''}),pastComposing=false,pastEnterPending=false,renderedFor=null;
   if(!Array.isArray(pastFilter.tokens))pastFilter.tokens=[];
   const q=()=>api.question();
@@ -428,14 +428,17 @@ export function createCardEditor(root,api){
   // 아래에는 그 쪽에 있는 문항이 나와 「근거·변형」을 바로 쓴다. 「PDF」는 시험지 원본을 새 창에서 연다.
   let pastPageSeq=0;
   function renderPastPage(body,items,list,seg){
-    const f=pastFilter,exams=[];for(const i of list){if(i.publicPath&&!exams.some(x=>x.pdfFile===i.pdfFile))exams.push(i);if(exams.length>=60)break;}
+    const f=pastFilter,exams=[];for(const i of list){if(i.publicPath&&!exams.some(x=>x.pdfFile===i.pdfFile))exams.push(i);}
+    // 시험지 고르기: 최신 연도부터, 같은 해는 수능 → 9월 → 6월, 과목 이름순. [연도 ▾][시험 ▾][과목 ▾] 세 칸으로 나눠 고른다(한 목록에 다 늘어놓으면 찾기 어려움).
+    exams.sort((a,b)=>b.year-a.year||Number(b.month)-Number(a.month)||String(a.subjectLabel).localeCompare(String(b.subjectLabel),'ko'));
     pastCache={html:'',node:null};
     if(!exams.length){body.innerHTML=`<div class="past-list"><div class="lp-viewbar">${seg}</div><p class="lp-count">볼 시험지가 없습니다. 검색어나 상세검색을 바꿔 보세요.</p></div>`;return;}
     const ex=exams.find(x=>x.pdfFile===f.pagefile)||exams[0],first=list.find(i=>i.pdfFile===ex.pdfFile),pageNo=Math.max(1,(ex.pdfFile===f.pagefile&&Number(f.pageno))||first?.page||1);if(f.pagefile!==ex.pdfFile||f.pageno!==pageNo){f.pagefile=ex.pdfFile;f.pageno=pageNo;store.set('past',f);}
     const examName=i=>`${i.year}학년도 ${MONTH[i.month]||i.month+'월'} ${i.subjectLabel}`;
     const onPage=items.filter(i=>i.pdfFile===ex.pdfFile&&Number(i.page)===pageNo).sort((a,b)=>(+a.no)-(+b.no)),hits=new Set(list.map(i=>i.id));
     const busy=api.pastBusy?.();
-    body.innerHTML=`<div class="past-list lp-pageview"><div class="lp-viewbar">${seg}<select data-cvpast="pagefile" aria-label="시험지 고르기">${exams.map(x=>`<option value="${E(x.pdfFile)}"${x===ex?' selected':''}>${E(examName(x))}</option>`).join('')}</select>
+    body.innerHTML=`<div class="past-list lp-pageview"><div class="lp-viewbar">${seg}${(()=>{const firstOf=fn=>exams.find(fn)?.pdfFile,years=[...new Set(exams.map(x=>x.year))],months=[...new Set(exams.filter(x=>x.year===ex.year).map(x=>String(x.month)))],subs=exams.filter(x=>x.year===ex.year&&String(x.month)===String(ex.month));
+        return `<span class="lp-exam-pick"><select data-cvpast="pagefile" aria-label="연도">${years.map(y=>`<option value="${E(firstOf(x=>x.year===y))}"${y===ex.year?' selected':''}>${y}학년도</option>`).join('')}</select><select data-cvpast="pagefile" aria-label="시험">${months.map(m=>`<option value="${E(firstOf(x=>x.year===ex.year&&String(x.month)===m))}"${m===String(ex.month)?' selected':''}>${E(MONTH[m]||m+'월')}</option>`).join('')}</select><select data-cvpast="pagefile" aria-label="과목">${subs.map(x=>`<option value="${E(x.pdfFile)}"${x===ex?' selected':''}>${E(x.subjectLabel)}</option>`).join('')}</select></span>`;})()}
       <span class="lp-pnav"><button type="button" data-cvpagestep="-1" aria-label="이전 쪽"${pageNo<=1?' disabled':''}>‹</button><span data-cvslot="pageno">${pageNo}쪽</span><button type="button" data-cvpagestep="1" aria-label="다음 쪽">›</button></span>
       <button type="button" class="lp-pageref" data-cvpageref title="이 쪽 전체를 근거로 연결">이 쪽을 근거로</button><a class="lp-pdf" href="${E(pdfHref(ex.publicPath,pageNo))}" target="_blank" rel="noopener" title="시험지 PDF 원본을 새 창에서 열기">PDF</a></div>
       <div class="lp-paper" data-cvpaper><span class="lp-paper-wait"><i aria-hidden="true"></i>원본 시험지 받는 중…</span></div>
