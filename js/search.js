@@ -211,7 +211,8 @@ export function initObjectSearch() {
   // the search still works if the button markup is ever absent.
   document.getElementById("object-search-trigger")?.addEventListener("click", open);
 
-  // 첫 열기도 매끄럽게: 앱이 한가할 때 아이콘을 20개씩 미리 만들어 크기를 재 둔다(보이지 않는 자리에서).
+  // 첫 열기도 매끄럽게: 앱이 한가할 때 아이콘을 8개씩 미리 만들어 크기를 재 둔다(보이지 않는 자리에서).
+  // 20개씩이면 한 묶음이 약 50ms라 첫 화면 직후 멈춤(긴 작업)이 되었다 — 8개면 한 묶음 20ms 안쪽.
   // 한 번에 다 하면 그 자체가 긴 작업이 되므로 한가한 틈마다 조금씩. 창이 먼저 열리면 거기서 이어 만든다.
   const idle = window.requestIdleCallback || ((fn) => setTimeout(() => fn({ timeRemaining: () => 8 }), 200));
   const pending = Object.entries(TEMPLATES).filter(([, def]) => !def.hidden);
@@ -222,7 +223,7 @@ export function initObjectSearch() {
     holder.style.cssText = "position:fixed;left:-10000px;top:0;visibility:hidden;pointer-events:none";
     document.body.appendChild(holder);
     const built = [];
-    for (const [id, def] of pending.splice(0, 20)) {
+    for (const [id, def] of pending.splice(0, 8)) {
       if (iconCache.has(id)) continue;
       const svg = buildSymbolIcon(id, def); svg.dataset.iconFor = id;
       const box = document.createElement("span"); box.className = "object-search-icon"; box.appendChild(svg);
