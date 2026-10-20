@@ -3,7 +3,7 @@ import {WORKFLOWS} from './model.js';
 import {buildQuestionHtml} from './handoff.js';
 import {examPlan} from './exam-layout.js';
 import {loadImage} from './image-load.js';
-import {pageProfile} from './typeset-model.js';
+import {pageProfile} from './typeset-model.js?v=1014-compact-panel';
 
 const E=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export const workflowOf=q=>q.workflow||'draft';

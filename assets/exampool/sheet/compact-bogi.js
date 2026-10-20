@@ -1,5 +1,5 @@
 import {wrapHangingText} from './handoff.js';
-import {exportLayoutHwpx} from './native-hwpx.js';
+import {exportLayoutHwpx} from './native-hwpx.js?v=1014-compact-panel';
 
 const decode=text=>text.replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/&quot;/g,'"').replace(/&apos;/g,"'").replace(/&amp;/g,'&');
 const escape=text=>text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');

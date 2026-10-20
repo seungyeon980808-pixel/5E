@@ -1,5 +1,5 @@
 import {FORMAT,clone,validate,tableCovered,openingSideText,isWrapped} from './model.js';
-import {mathParts,TEXT_WIDTH} from './typeset-model.js';
+import {mathParts,TEXT_WIDTH} from './typeset-model.js?v=1014-compact-panel';
 import {splitWidths,sizedWidth,gapPx,choiceColumns} from './placement.js';
 
 const E=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));

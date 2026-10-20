@@ -1,6 +1,6 @@
 // 저장한 문항 조판(한 단 폭 문항 용지)을 2단 시험지 한 문서로 모은다(문항들이 모두 B4로 조판됐으면 B4, 아니면 A4).
 // 문항 용지의 본문 폭은 시험지 한 단과 같아서, 문단을 그대로 옮기면 줄바꿈이 유지된다. HTML로 다시 만들지 않는다.
-import {pageProfile} from './typeset-model.js';
+import {pageProfile} from './typeset-model.js?v=1014-compact-panel';
 import {openApprovedQuestion,nativeInsertOptions} from './native-transfer.js?v=1014-compact-panel';
 import {examPlan,paperMixMessage} from './exam-layout.js';
 
