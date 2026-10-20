@@ -65,7 +65,11 @@ function checkpoint(key=''){future=[];if(key&&editKey===key)return;history.push(
 // validated: 방금 validate(data)를 통과한 경우(mutate·불러오기) 다시 검사하지 않는다(문항이 많으면 입력마다 수십 ms).
 function remember({validated=false}={}){
   if(!validated)try{validate(data);}catch(e){status(e.message,true);return;}
-  const stamp=++saveStamp;status('저장 중…');saveQueue=saveQueue.catch(()=>{}).then(()=>new Promise((resolve,reject)=>{
+  // 저장은 입력이 멈춘 뒤 0.3초에 한 번(클릭·입력하는 순간 문항 전체를 저장소에 쓰느라 화면이 멈추지 않게). 창을 닫으면 바로 저장.
+  if($('#status').dataset.error!=='true')status('저장 중…');clearTimeout(saveTimer);saveTimer=setTimeout(flushSave,300);}// 빨간 오류 안내는 저장 안내가 덮지 않는다
+let saveTimer=0;window.addEventListener('pagehide',()=>{if(saveTimer){clearTimeout(saveTimer);flushSave();}});
+function flushSave(){saveTimer=0;
+  const stamp=++saveStamp;saveQueue=saveQueue.catch(()=>{}).then(()=>new Promise((resolve,reject)=>{
     if(stamp!==saveStamp){resolve();return;}
     if(!database||saveBlocked){reject(Error('자동 저장을 사용할 수 없습니다. 엑셀로 내려받아 보관하세요.'));return;}
     // 다른 창 저장 확인은 작은 판 번호('rev')만 읽는다(예전엔 저장마다 문항 전체(그림 포함 수십 MB)를 읽어 풀었다). 'rev'가 없는 예전 저장은 문항에서 읽는다.
@@ -74,7 +78,7 @@ function remember({validated=false}={}){
     const write=stored=>{if((stored||0)!==revision){failure=Error('다른 창에서 수정했습니다. 이 창의 입력은 엑셀로 내려받아 보관하고 다시 열어주세요.');saveBlocked=true;tx.abort();return;}store.put({...data,_revision:revision+1},'draft');store.put(revision+1,'rev');};
     r.onsuccess=()=>{if(r.result!==undefined){write(r.result);return;}const d=store.get('draft');d.onsuccess=()=>write(d.result?._revision);};
     tx.oncomplete=()=>{revision++;resolve();};tx.onerror=tx.onabort=()=>reject(failure||tx.error||Error('저장 공간이 부족합니다. 엑셀로 내려받아 보관하세요.'));
-  }));void saveQueue.then(()=>{if(stamp===saveStamp)status('저장됨 · '+new Date().toLocaleTimeString('ko-KR',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit'}));}).catch(e=>status(e.message,true));
+  }));void saveQueue.then(()=>{if(stamp===saveStamp&&$('#status').dataset.error!=='true')status('저장됨 · '+new Date().toLocaleTimeString('ko-KR',{timeZone:'Asia/Seoul',hour:'2-digit',minute:'2-digit'}));}).catch(e=>status(e.message,true));
 }
 function mutate(fn,{render=true,key=''}={}){const only=key.startsWith('card:')?current:null;// 카드 입력은 그 문항만 바뀐다 → 그 문항만 검사
   const selectedId=current?.id,historyBefore=history.slice(),added=!key||editKey!==key,before=added?null:only&&data.questions.includes(only)?{i:data.questions.indexOf(only),q:clone(only)}:copyTree(data),redoBefore=future;try{checkpoint(key);const completed=completeKeys(only&&data.questions.includes(only)?only:null);fn();demoteEdited(completed);validate(data,{only:only&&data.questions.includes(only)?only:null});if(render)renderAll();else queueSync();remember({validated:true});queueAuthoringSync();return true;}catch(e){const rollback=added?history.pop():before;if(rollback?.q){data.questions[rollback.i]=rollback.q;current=data.questions.find(q=>q.id===selectedId)||data.questions[0]||null;}else if(rollback){data=rollback;current=data.questions.find(q=>q.id===selectedId)||data.questions[0]||null;}future=redoBefore;history=historyBefore;$('#undo').disabled=!history.length;$('#redo').disabled=!future.length;editKey='';if(render)renderAll();status(e.message,true);return false;}}
@@ -238,7 +242,7 @@ function syncTypeset(value){
 }
 function scheduleRedraw(){clearTimeout(redrawTimer);redrawTimer=setTimeout(()=>{if(current&&typesetter&&!$('#preview-dialog').hidden&&!typesetter.matches(current))void requestTypeset(current);},450);}
 // 구성 편집 창처럼 화면을 다시 그리지 않는 입력도 잠시 뒤 한글 창에 넣는다.
-function queueSync(){clearTimeout(draftTimer);draftTimer=setTimeout(()=>syncTypeset(current),120);}
+function queueSync(){clearTimeout(draftTimer);draftTimer=setTimeout(()=>syncTypeset(current),350);}// 조판은 클릭·입력이 멈춘 뒤 0.35초에 — 누르는 순간의 화면 움직임을 막지 않게
 // 시트 칸에 입력하는 동안: 확정 전 값으로 만든 문항을 한글 창에 바로 넣는다(다시 그려야 하는 변경은 확정 때).
 let draftTimer=0;
 function previewDraft(d,value){

@@ -152,8 +152,9 @@ h.withServer(async origin => {
       await sheet.click('#brand-home');await sheet.waitForSelector('#library-view:not([hidden])');
       assert.equal(await sheet.locator('.crumb-sep').isHidden(),true,'no dangling separator when no question is open');
       // 보관함 미리보기 그림은 문항 맨 위(지문)부터 보인다(단추가 내용을 세로 가운데로 두어 윗부분이 잘리던 것).
-      // 빈 문항은 큰 흰 미리보기 대신 낮은 점선 자리(「아직 내용이 없습니다」)로 보인다.
-      if(await sheet.locator('#library-view .pv-thumb.is-empty').count())assert.match(await sheet.locator('#library-view .pv-thumb.is-empty').first().textContent(),/아직 내용이 없습니다/,'an empty question shows a short placeholder');
+      // 빈 문항도 같은 크기의 흰 자리(「빈 문항 · 눌러서 쓰기」)로 보인다(10-20: 카드 크기를 맞춤).
+      if(await sheet.locator('#library-view .pv-thumb.is-blank').count()){assert.match(await sheet.locator('#library-view .pv-thumb.is-blank').first().textContent(),/빈 문항/,'an empty question shows a placeholder');
+        assert.equal(await sheet.evaluate(()=>Math.round(document.querySelector('#library-view .pv-thumb.is-blank').getBoundingClientRect().height)),170,'the same height as a filled thumbnail');}
       else{await sheet.waitForFunction(()=>document.querySelector('#library-view .pv-doc')?.textContent.trim(),null,{timeout:10000});
       assert.ok(await sheet.evaluate(()=>{const t=document.querySelector('#library-view .pv-thumb').getBoundingClientRect(),d=document.querySelector('#library-view .pv-doc').getBoundingClientRect();return d.top>=t.top-0.5&&d.top<=t.top+1;}),'the library thumbnail starts at the top of the question');}
       if(await sheet.locator('.side').isHidden())await sheet.click('#toggle-nav');

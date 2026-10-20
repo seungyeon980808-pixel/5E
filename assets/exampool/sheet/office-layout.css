@@ -327,7 +327,6 @@ button:active:not(:disabled):not([aria-busy=true]):not(.pane-rail),.lp-pdf:activ
 #card-view .cv-combos .combo-row.right:not(.on){box-shadow:inset 0 0 0 1.5px #1a7f37}
 #card-view .cv-autoans{margin:4px 2px 2px;font-size:12px}
 #card-view .cv-autoans.ok{color:#1a7f37}#card-view .cv-autoans.bad{color:#cf222e}
-@container (max-width:460px){#card-view .cv-combos{grid-template-columns:repeat(3,minmax(0,1fr))}}
 #card-view .cv-grid .ig{display:flex;align-items:center;gap:2px}
 #card-view .cv-grid .ig>input{flex:1;min-width:0}
 #card-view .cv-grid .ig .ig-x{position:static;flex:none;width:24px;height:24px;min-height:0;padding:0;opacity:0;transform:none}
@@ -416,3 +415,33 @@ button:active:not(:disabled):not([aria-busy=true]):not(.pane-rail),.lp-pdf:activ
 #card-view .cv-meta input{width:150px;height:24px;padding:0 6px;border:0;border-radius:5px;background:transparent;box-shadow:none;font:12px ui-monospace,Menlo,monospace;color:var(--ds-doc-ink-2,#57606a)}
 #card-view .cv-meta input:hover{background:var(--ds-doc-hover,#f6f8fa)}
 #card-view .cv-meta input:focus{background:#f6f9ff;box-shadow:inset 0 0 0 1px #2f6fd6;outline:0}
+
+/* 좁아져도 잘리지 않게: 보기 줄은 늘어나는 글 칸, 선지 칸은 폭에 맞춰 줄 수가 바뀜 */
+#card-view .cv-grid .ig{align-items:flex-start}
+#card-view .cv-grid .ig>span:first-child{padding-top:5px}
+#card-view .cv-grid .ig>textarea{flex:1;min-width:0;min-height:28px;padding:4px 6px;border:0;border-radius:5px;background:transparent;box-shadow:none;line-height:1.55;resize:none;overflow:hidden}
+#card-view .cv-grid .ig>textarea:hover{background:var(--ds-doc-hover,#f6f8fa)}
+#card-view .cv-grid .ig>textarea:focus{background:#f6f9ff;box-shadow:inset 0 0 0 1px var(--go-line,#2f6fd6);outline:0}
+#card-view .cv-grid .ig>:is(.ox,.ev-chip,.ev-miss,.ig-x){margin-top:3px}
+#card-view .cv-combos{grid-template-columns:repeat(auto-fill,minmax(96px,1fr))}
+#card-view .cv-combos .combo-row input:not([type]){text-overflow:clip}
+#card-view .cv-suggs{gap:4px}
+
+/* 문항 보관함 카드: 빈 문항도 같은 크기(흰 자리), 아래는 성취기준 한 줄 · 출제의도 한 줄 · [상태·유형 ··· 넣기 삭제] 한 줄 */
+.pv-thumb.is-blank{display:grid;place-items:center;height:170px;margin:0;padding:0;border:0;background:#fff}
+.pv-thumb.is-blank::after{display:none}
+.pv-thumb.is-blank span{display:flex;flex-direction:column;align-items:center;gap:2px;padding:14px 22px;border:1px dashed #c9ced6;border-radius:10px;color:#8c959f;font-size:12px}
+.pv-thumb.is-blank b{color:#57606a;font-size:13px}
+.pv-thumb.is-blank:hover span{border-color:#6ba4f8;color:#1a5fb4}
+.pv-meta{gap:4px;padding:9px 12px 10px}
+.pv-plan{display:flex;align-items:baseline;gap:6px;margin:0;min-width:0;font-size:12.5px;line-height:1.45}
+.pv-plan .pv-k{flex:none;padding:0 5px;border-radius:4px;background:var(--ds-hover);color:var(--ds-ink-3);font-size:11px}
+.pv-plan .pv-v{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ds-ink)}
+.pv-plan code{margin-right:5px;color:var(--go-line,#6ba4f8);font:600 11.5px ui-monospace,Menlo,monospace}
+.pv-plan i{font-style:normal;color:var(--ds-ink-3)}
+.pv-row.pv-actions{flex-wrap:nowrap;margin-top:2px}
+.pv-st{display:inline-flex;align-items:center;gap:4px;min-width:0;margin-right:auto;overflow:hidden;white-space:nowrap;color:var(--ds-ink-3)}
+/* 빈 문항 자리 가운데, 좁은 카드에서 머리 줄은 다음 줄로 넘김(겹치지 않게) */
+.pv-thumb.is-blank{display:flex;align-items:center;justify-content:center}
+#card-view .cv-center .w-head{flex-wrap:wrap;row-gap:6px}
+#card-view .cv-center .w-head .cv-shape-wrap{min-width:0}

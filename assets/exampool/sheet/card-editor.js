@@ -47,7 +47,7 @@ export function createCardEditor(root,api){
   function linesHtml(b,key,ph){
     const ox=(l,i)=>key!=='bogi'?'':`<span class="ox" role="group" aria-label="${E(l.label)} 옳음·틀림"><button type="button" class="o" data-cvtruth="${i}" data-v="1" aria-pressed="${l.truth===true}" title="옳은 보기">○</button><button type="button" class="x" data-cvtruth="${i}" data-v="0" aria-pressed="${l.truth===false}" title="틀린 보기">×</button></span>`;
     const x=q(),ev=l=>key!=='bogi'||!x?'':evChip(x,l.id)||(l.truth===true?evMiss():'');
-    return `<div class="rows">${b.lines.map((l,i)=>`<div class="ig${key==='bogi'&&l.truth!==undefined?(l.truth?' t-o':' t-x'):''}${key==='bogi'&&l.truth===true&&x&&!refsOf(x,l.id).length?' ev-need':''}"><span>${E(key==='bogi'?l.label:l.label)}</span><input data-cvline="${key}" data-i="${i}" value="${E(l.text)}" placeholder="${E(ph)}">${ev(l)}${ox(l,i)}<button type="button" class="ig-x" data-cvline-remove="${key}" data-i="${i}" title="이 줄 지우기" aria-label="이 줄 지우기">×</button></div>`).join('')}
+    return `<div class="rows">${b.lines.map((l,i)=>`<div class="ig${key==='bogi'&&l.truth!==undefined?(l.truth?' t-o':' t-x'):''}${key==='bogi'&&l.truth===true&&x&&!refsOf(x,l.id).length?' ev-need':''}"><span>${E(key==='bogi'?l.label:l.label)}</span><textarea data-cvline="${key}" data-i="${i}" rows="1" placeholder="${E(ph)}" aria-label="${E(l.label)}">${E(l.text)}</textarea>${ev(l)}${ox(l,i)}<button type="button" class="ig-x" data-cvline-remove="${key}" data-i="${i}" title="이 줄 지우기" aria-label="이 줄 지우기">×</button></div>`).join('')}
       <button type="button" class="link add" data-cvline-add="${key}">+ ${key==='bogi'?'보기':key==='steps'?'과정':'대화'} 추가</button></div>`;
   }
   function choicesHtml(x){
@@ -122,7 +122,7 @@ export function createCardEditor(root,api){
       <form class="sheet-form cv-grid" onsubmit="return false">
         <section class="f-sec plan" aria-label="출제 설계">
           ${row('성취기준',`<div class="pick">${x.standardCode?`<b>${E(x.standardCode)}</b>`:'<span class="ph">고르지 않음</span>'}<button type="button" class="link" data-cv="open-standards">${x.standardCode?'바꾸기':'찾기'}</button></div>`,'왼쪽 참고 자료 칸을 「성취기준·교육과정」으로 바꿔 골라 연결합니다. 「찾기」를 눌러도 열립니다.')}
-          ${row('출제의도',`<input id="cv-intent" data-cvf="intent" value="${E(x.intent)}" placeholder="평가할 개념 · 학생이 할 일">`,'평가할 개념과 학생이 할 일을 한 줄로 적습니다. 예: 물질대사와 에너지 전환을 연결해 판단')}
+          ${row('출제의도',`<textarea id="cv-intent" data-cvf="intent" rows="1" placeholder="평가할 개념 · 학생이 할 일">${E(x.intent)}</textarea>`,'평가할 개념과 학생이 할 일을 한 줄로 적습니다. 예: 물질대사와 에너지 전환을 연결해 판단')}
           ${row('단원',(()=>{const auto=unitOf(x.standardCode);return `<div class="cv-unit">${!x.unitLarge&&auto?`<span class="cv-auto">성취기준에서 자동</span><b>${E(auto)}</b><button type="button" class="link" data-cvunit="${E(auto)}">넣기</button>`:`<input data-cvf="unitLarge" value="${E(x.unitLarge||'')}" placeholder="${auto?E(auto):'대단원 (성취기준을 고르면 자동)'}" aria-label="대단원">`}<input class="cv-mid" data-cvf="unitMiddle" value="${E(x.unitMiddle||'')}" placeholder="중단원(선택)" aria-label="중단원"></div>`;})(),'성취기준을 고르면 교육과정 자료의 「과목 › 대단원」이 채워집니다. 중단원은 필요하면 적습니다.')}</section>
         <section class="f-sec" aria-label="문항 내용">
           ${row('지문',`<textarea id="cv-passage" data-cvf="passage" rows="1" placeholder="자료 앞 설명 (없으면 비움)">${E(passages[0]?.text||'')}</textarea>`,passages.length>1?`지문이 ${passages.length}개인 문항입니다. 첫 지문만 여기서 고치고, 나머지는 구성 시트에서 고칩니다.`:'자료 앞에 오는 설명 글입니다. 없으면 비워 둡니다.',passages.length>1?'multi':'','passage')}
@@ -187,7 +187,12 @@ export function createCardEditor(root,api){
   function applyWidths(){let {lw,rw}=widths();const cs=getComputedStyle(root),gut=parseFloat(cs.getPropertyValue('--cv-gutter'))||8;
     const room=root.clientWidth-parseFloat(cs.paddingLeft||0)-parseFloat(cs.paddingRight||0)-gut*((panels.lib?1:0)+(panels.rightOpen?1:0))-300,l=panels.lib?lw:0,r=panels.rightOpen?rw:0;
     if(room>0&&l+r>room){const k=room/(l+r);if(panels.lib)lw=Math.max(240,Math.round(lw*k));if(panels.rightOpen)rw=Math.max(300,Math.round(rw*k));}
+    // 한쪽 칸을 접으면 남은 두 칸이 비워진 자리를 지금 비율 그대로 나눠 갖는다(저장한 폭은 세 칸이 다 열렸을 때의 기준값).
+    scaleL=scaleR=1;
+    if(panels.lib!==panels.rightOpen){const inner=root.clientWidth-parseFloat(cs.paddingLeft||0)-parseFloat(cs.paddingRight||0),rail=30+gut,c0=Math.max(300,inner-2*gut-lw-rw),avail=inner-gut-rail;
+      if(panels.rightOpen){const n=Math.max(300,Math.round(avail*rw/(c0+rw)));scaleR=rw/n;rw=n;}else{const n=Math.max(240,Math.round(avail*lw/(c0+lw)));scaleL=lw/n;lw=n;}}
     root.style.setProperty('--cv-lw',lw+'px');root.style.setProperty('--cv-rw',rw+'px');}
+  let scaleL=1,scaleR=1;
   function render(){shapeOpen=false;
     const x=q();
     const keep=root.querySelector('.cv-writer')?.scrollTop||0,same=renderedFor===x?.id;
@@ -204,7 +209,7 @@ export function createCardEditor(root,api){
     placeHwp(panels.rightOpen&&panels.right==='paper'&&!!x);syncHwpActs();
     if(panels.rightOpen&&panels.right==='ai'){renderAi();markAiSeen();}
     if(panels.view==='page')void renderPage();
-    fitAll();
+    fitAll();taWatch();
     root.querySelector('.cv-qtab[aria-current="true"]')?.scrollIntoView?.({block:'nearest',inline:'nearest'});
     root.querySelectorAll('.cv-writer textarea').forEach(fit);
   }
@@ -240,7 +245,15 @@ export function createCardEditor(root,api){
   function fit(t){t.style.height='auto';t.style.height=Math.max(t.scrollHeight+2,30)+'px';}
   // 글 칸 높이는 칠 때만 맞추면, 처음 그릴 때와 칸 폭이 줄어 줄이 늘 때 글이 아래로 잘렸다. 그때도 맞춘다(폭이 바뀔 때만, 한 프레임에 한 번).
   function fitAll(){for(const n of root.querySelectorAll('.cv-writer textarea'))fit(n);}
+  // 글 칸 폭 감시: 가운데 칸이 좁아지면 줄이 늘어난 만큼 칸도 아래로 늘어난다(잘려 보이지 않게). 높이만 바뀐 것은 무시.
+  const taRO=new ResizeObserver(es=>{for(const e of es){const w=Math.round(e.contentRect.width);if(e.target._w!==w){e.target._w=w;fit(e.target);}}});
+  function taWatch(){taRO.disconnect();root.querySelectorAll('.cv-writer textarea').forEach(t=>{t._w=Math.round(t.clientWidth);taRO.observe(t);});}
   {let lastW=0,raf=0;new ResizeObserver(es=>{const w=Math.round(es[0].contentRect.width);if(w===lastW)return;lastW=w;cancelAnimationFrame(raf);raf=requestAnimationFrame(fitAll);}).observe(root);}
+  // 작은 클릭(배점·보기 ○×·추천 조합·단원·출처·해설 뼈대·근거 지우기)은 문항 카드 내용만 다시 그린다 — 참고 자료 칸·한글 창·AI 칸은 그대로라 화면이 멈추지 않는다.
+  function cardEdit(field,fn){const x=q();if(!x)return;api.edit(fn,{key:`card:${x.id}:${field}`,light:true});renderCard();}
+  function renderCard(){const x=q(),w=root.querySelector('.cv-writer');if(!x||!w||panels.view!=='card'){render();return;}
+    const keep=w.scrollTop,focus=document.activeElement?.closest?.('.cv-writer')?document.activeElement.dataset:null;w.outerHTML=formHtml(x);const n=root.querySelector('.cv-writer');n.scrollTop=keep;
+    fitAll();taWatch();refreshLight();if(focus?.cvf)n.querySelector(`[data-cvf="${focus.cvf}"]`)?.focus({preventScroll:true});}
   function refreshLight(){const x=q();if(!x)return;
     // 완성한 문항의 내용을 고치면 검토 중으로 돌아간다(app.js demoteEdited). 다시 그리지 않는 입력에서도 단계 단추를 맞춘다.
     for(const b of root.querySelectorAll('[data-cvstage]'))b.setAttribute('aria-pressed',String(b.dataset.cvstage===workflowOf(x)));
@@ -302,12 +315,18 @@ export function createCardEditor(root,api){
   // 기출 카드 그림: 화면에 들어오는 것부터 문항 번호~선지 번호 줄로 잘라(past-crop.js) 넣는다. 그림 칸은 정사각 고정이라 읽혀도 칸이 움직이지 않는다(긴 문항은 아래만 잘림).
   function loadThumbs(body){
     const list=body.querySelector('.past-list');if(!list)return;
-    const words=pastFilter.tokens.slice();
-    const mark=img=>{const i=words.length&&pastItem(img.dataset.pastThumb);if(!i?.publicPath||!Array.isArray(i.box))return;const pic=img.closest('.past-pic');pic?.setAttribute('data-marking','');
-      markedQuestion(i,words).then(r=>{if(r&&img.isConnected){img.src=r.url;pic?.setAttribute('data-marked',r.count);}}).catch(()=>{}).finally(()=>pic?.removeAttribute('data-marking'));};
+    const words=pastFilter.tokens.slice(),key=words.join('\u0001');
+    // 형광펜은 검색어가 바뀔 때마다 다시 칠한다 — 결과 목록이 같아 카드를 그대로 다시 붙여도(pastCache) 예전 검색어 그림이 남지 않게.
+    // 원래 카드 그림(data-base)으로 돌아간 뒤 새 검색어로 칠하고, 칠할 자리가 없으면 원래 그림 그대로.
+    const mark=img=>{if(img.dataset.words===key)return;img.dataset.words=key;const pic=img.closest('.past-pic');pic?.removeAttribute('data-marked');
+      if(img.dataset.base&&img.src!==img.dataset.base&&!img.dataset.fixed)img.src=img.dataset.base;else if(img.dataset.fixed)img.src=img.dataset.fixed;
+      const i=words.length&&pastItem(img.dataset.pastThumb);if(!i?.publicPath||!Array.isArray(i.box))return;pic?.setAttribute('data-marking','');
+      markedQuestion(i,words).then(r=>{if(r&&img.isConnected&&img.dataset.words===key){img.src=r.url;pic?.setAttribute('data-marked',r.count);}}).catch(()=>{}).finally(()=>{if(img.dataset.words===key)pic?.removeAttribute('data-marking');});};
     // 그림 픽셀로 자르기가 실패하면(쪽 번호·저작권까지 남은 원본) 원본 PDF 글자 위치로 문항만 다시 자른다(시안 28).
-    const fix=img=>{const i=pastItem(img.dataset.pastThumb);if(!i?.publicPath||!Array.isArray(i.box))return;croppedQuestion(i).then(r=>{if(r&&img.isConnected&&!img.closest('[data-marked]'))img.src=r.url;}).catch(()=>{});};
-    const show=img=>{if(img.dataset.loading)return;img.dataset.loading='1';croppedPastImage(img.dataset.card).then(src=>{if(img.isConnected){img.src=src;if(src===img.dataset.card)fix(img);mark(img);}else delete img.dataset.loading;});};
+    const fix=img=>{const i=pastItem(img.dataset.pastThumb);if(!i?.publicPath||!Array.isArray(i.box))return;croppedQuestion(i).then(r=>{if(!r||!img.isConnected)return;img.dataset.fixed=r.url;if(!img.closest('[data-marked]'))img.src=r.url;}).catch(()=>{});};
+    const show=img=>{if(img.dataset.loading)return;img.dataset.loading='1';croppedPastImage(img.dataset.card).then(src=>{if(img.isConnected){img.src=src;img.dataset.base=src;if(src===img.dataset.card)fix(img);mark(img);}else delete img.dataset.loading;});};
+    // 이미 그림이 있는 카드(다시 붙인 목록)는 검색어만 다시 칠한다.
+    list.querySelectorAll('img[data-card][data-base]').forEach(mark);
     if(!('IntersectionObserver' in window)){list.querySelectorAll('img[data-card]').forEach(show);return;}
     const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){io.unobserve(e.target);show(e.target);}}),{root:list,rootMargin:'400px 0px'});
     list.querySelectorAll('img[data-card]').forEach(img=>io.observe(img));
@@ -527,7 +546,7 @@ export function createCardEditor(root,api){
     if(d.cvref!==undefined){const r=x?.references[Number(d.cvref)],s=r?.source;if(!s?.path)return;
       if(s.kind==='textbook')Object.assign(pastFilter,{bookview:'page',bookpage:s.page,book:s.bookId||pastFilter.book,query:''});else Object.assign(pastFilter,{view:'page',pagefile:s.path.split('/').pop(),pageno:s.page});
       store.set('past',pastFilter);panels.lib=true;store.set('lib',true);panels.tab=s.kind==='textbook'?'textbooks':'past';store.set('tab',panels.tab);render();return;}
-    if(d.cvrefdel!==undefined){const i=Number(d.cvrefdel);if(x?.references[i])api.edit(()=>{x.references.splice(i,1);});return;}
+    if(d.cvrefdel!==undefined){const i=Number(d.cvrefdel);if(x?.references[i])cardEdit('references',()=>{x.references.splice(i,1);});return;}
     if(d.cvtopage){const i=pastItem(d.cvtopage);if(i){root.querySelector('.lp-zoom')?.remove();pastZoom=-1;pastZoomKey='';Object.assign(pastFilter,{view:'page',pagefile:i.pdfFile,pageno:Number(i.page)});store.set('past',pastFilter);render();}return;}
     if(d.cvpastview){root.querySelector('.lp-zoom')?.remove();pastZoom=-1;pastZoomKey='';pastFilter.view=d.cvpastview;store.set('past',pastFilter);b.parentElement.querySelectorAll('button').forEach(n=>n.setAttribute('aria-pressed',n===b));renderPast().then(()=>anim(root.querySelector('[data-cvbody="past"]>.past-list'),'ep-swap'));return;}
     if(d.cv==='to-page'){setView('page');return;}
@@ -558,12 +577,12 @@ export function createCardEditor(root,api){
     if(d.cvlineAdd){const key=d.cvlineAdd;api.edit(()=>{let blk=x.blocks.find(v=>v.kind===key);if(!blk){writeField(x,key,'');blk=x.blocks.find(v=>v.kind===key);}const value=fieldValue(x,key);writeField(x,key,value?value+'\n':key==='dialogue'?'학생 A: ':'');});return;}
     if(d.cvlineRemove){const key=d.cvlineRemove,i=Number(d.i);api.edit(()=>{const blk=x.blocks.find(v=>v.kind===key);blk.lines.splice(i,1);if(key==='bogi'&&!isCombo(x)&&!blk.lines.length){x.blocks=x.blocks.filter(v=>v!==blk);return;}if(key==='bogi'){const L=['ㄱ','ㄴ','ㄷ','ㄹ','ㅁ','ㅂ','ㅅ','ㅇ'];blk.lines.forEach((l,j)=>l.label=L[j]||String(j+1));}else if(key==='steps'){const C=['(가)','(나)','(다)','(라)','(마)','(바)','(사)','(아)'];blk.lines.forEach((l,j)=>l.label=C[j]||`(${j+1})`);}});return;}
     if(d.cvcombo!==undefined){const i=Number(d.cvcombo),letter=d.letter;api.edit(()=>{const set=new Set(x.choices[i].text.split(/\s*,\s*/).filter(Boolean));set.has(letter)?set.delete(letter):set.add(letter);const order=(bogiOf(x)?.lines||[]).map(l=>l.label);x.choices[i].text=normalizeCombo([...set].sort((a,b)=>order.indexOf(a)-order.indexOf(b)).join(', '));});return;}
-    if(d.cvunit){api.edit(()=>{x.unitLarge=d.cvunit;});return;}
-    if(d.cvsource){const k=d.cvsource,orig=(x.references||[]).find(r=>/^원본 기출 · /.test(r.label));api.edit(()=>{x.source=k==='기출 변형'&&orig?`기출 변형 · ${orig.label.replace(/^원본 기출 · /,'')}`:k==='기타'?(sourceKind(x)==='기타'?x.source:''):k;});if(k==='기타')setTimeout(()=>root.querySelector('[data-cvf="source"]')?.focus(),0);return;}
-    if(d.cv==='exp-skeleton'){const sk=explanationSkeleton(x);if(sk)api.edit(()=>{x.explanation=x.explanation?.trim()?`${x.explanation.trimEnd()}\n\n${sk}`:sk;});setTimeout(()=>{const t=root.querySelector('[data-cvf="explanation"]');if(t){t.focus();t.setSelectionRange(t.value.length,t.value.length);}},0);return;}
-    if(d.cvpoints){api.edit(()=>{x.points=Number(d.cvpoints);});return;}
-    if(d.cvtruth!==undefined){const l=bogiOf(x)?.lines?.[Number(d.cvtruth)];if(!l)return;const v=d.v==='1';api.edit(()=>{if(l.truth===v)delete l.truth;else l.truth=v;const right=comboRight(x);if(right!==null){const i=x.choices.findIndex(c=>normalizeCombo(c.text)===right);if(i>=0)x.answer=i;}});return;}
-    if(d.cvcombofill!==undefined){const set=COMBO_STATS.top[Number(d.cvcombofill)]?.[0];if(set)api.edit(()=>{x.choices.forEach((c,i)=>c.text=set[i]);const right=comboRight(x);if(right!==null){const i=x.choices.findIndex(c=>normalizeCombo(c.text)===right);if(i>=0)x.answer=i;}});return;}
+    if(d.cvunit){cardEdit('unit',()=>{x.unitLarge=d.cvunit;});return;}
+    if(d.cvsource){const k=d.cvsource,orig=(x.references||[]).find(r=>/^원본 기출 · /.test(r.label));cardEdit('source',()=>{x.source=k==='기출 변형'&&orig?`기출 변형 · ${orig.label.replace(/^원본 기출 · /,'')}`:k==='기타'?(sourceKind(x)==='기타'?x.source:''):k;});if(k==='기타')setTimeout(()=>root.querySelector('[data-cvf="source"]')?.focus(),0);return;}
+    if(d.cv==='exp-skeleton'){const sk=explanationSkeleton(x);if(sk)cardEdit('explanation',()=>{x.explanation=x.explanation?.trim()?`${x.explanation.trimEnd()}\n\n${sk}`:sk;});setTimeout(()=>{const t=root.querySelector('[data-cvf="explanation"]');if(t){t.focus();t.setSelectionRange(t.value.length,t.value.length);}},0);return;}
+    if(d.cvpoints){cardEdit('points',()=>{x.points=Number(d.cvpoints);});return;}
+    if(d.cvtruth!==undefined){const l=bogiOf(x)?.lines?.[Number(d.cvtruth)];if(!l)return;const v=d.v==='1';cardEdit('truth',()=>{if(l.truth===v)delete l.truth;else l.truth=v;const right=comboRight(x);if(right!==null){const i=x.choices.findIndex(c=>normalizeCombo(c.text)===right);if(i>=0)x.answer=i;}});return;}
+    if(d.cvcombofill!==undefined){const set=COMBO_STATS.top[Number(d.cvcombofill)]?.[0];if(set)cardEdit('choices',()=>{x.choices.forEach((c,i)=>c.text=set[i]);const right=comboRight(x);if(right!==null){const i=x.choices.findIndex(c=>normalizeCombo(c.text)===right);if(i>=0)x.answer=i;}});return;}
     if(d.cv==='common-combos'){api.edit(()=>{x.choices.forEach((c,i)=>c.text=COMMON[i]);});return;}
     if(d.cvlayout!==undefined){api.edit(()=>{if(d.cvlayout)x.choiceLayout=d.cvlayout;else delete x.choiceLayout;});return;}
     if(d.cv==='open-standards'){panels.lib=true;store.set('lib',true);setPanel('tab','standards');return;}
@@ -600,6 +619,7 @@ export function createCardEditor(root,api){
     // Enter 순간의 글을 바로 떼어 낸다(미루면 빠르게 이어 친 다음 단어가 같은 조각에 붙음: 「자석」 Enter 「질량」 → 「자석질량」).
     if(e.key==='Enter'){e.preventDefault();clearTimeout(t._timer);const v=t.value;t.value='';if(addPastWords({value:v})===false)t.value=v;}
     else if(e.key==='Backspace'&&!t.value&&pastFilter.tokens.length){e.preventDefault();pastFilter.tokens=pastFilter.tokens.slice(0,-1);store.set('past',pastFilter);renderPast();}});
+  root.addEventListener('keydown',e=>{const t=e.target;if(t.dataset?.cvline&&e.key==='Enter'&&!e.isComposing&&!e.shiftKey){e.preventDefault();const all=[...root.querySelectorAll(`[data-cvline="${t.dataset.cvline}"]`)],n=all[all.indexOf(t)+1];n?.focus();}});
   root.addEventListener('keydown',e=>{if(e.target.id==='cv-ai-input'&&e.key==='Enter'&&(e.metaKey||e.ctrlKey)){e.preventDefault();root.querySelector('[data-cv="ai-send"]')?.click();}});
   // 칸 경계 끌기: 왼쪽 경계는 라이브러리 폭, 오른쪽 경계는 미리보기·AI 폭. 두 번 누르면 기본 폭.
   root.addEventListener('pointerdown',e=>{const sp=e.target.closest('.cv-split');if(!sp)return;e.preventDefault();sp.setPointerCapture(e.pointerId);sp.classList.add('drag');document.body.classList.add('cv-dragging');
@@ -608,7 +628,7 @@ export function createCardEditor(root,api){
     const x0=e.clientX,w0=root.querySelector(k==='left'?'.cv-left':'.cv-right').getBoundingClientRect().width;
     // 창이 좁아 지금 폭이 이미 상한보다 넓으면, 상한을 지금 폭으로 둔다(잡는 순간 줄어들지 않고 줄이는 쪽으로만 움직임).
     const move=ev=>{const w=Math.round(Math.max(min,Math.min(Math.max(max,w0),k==='left'?w0+ev.clientX-x0:w0-(ev.clientX-x0))));root.style.setProperty(k==='left'?'--cv-lw':'--cv-rw',w+'px');fitPaper();};
-    const up=ev=>{sp.classList.remove('drag');document.body.classList.remove('cv-dragging');sp.removeEventListener('pointermove',move);sp.removeEventListener('pointerup',up);store.set(k==='left'?'lw':'rw',parseInt(getComputedStyle(root).getPropertyValue(k==='left'?'--cv-lw':'--cv-rw')));fitPaper();fitPage();};
+    const up=ev=>{sp.classList.remove('drag');document.body.classList.remove('cv-dragging');sp.removeEventListener('pointermove',move);sp.removeEventListener('pointerup',up);store.set(k==='left'?'lw':'rw',Math.round(parseInt(getComputedStyle(root).getPropertyValue(k==='left'?'--cv-lw':'--cv-rw'))*(k==='left'?scaleL:scaleR)));fitPaper();fitPage();};
     sp.addEventListener('pointermove',move);sp.addEventListener('pointerup',up);});
   // 상세검색 창: 바깥을 누르면 닫힌다.
   root.addEventListener('pointerdown',e=>{if(!pastAdvOpen||e.target.closest?.('.lp-adv-pop,[data-cvadv]'))return;pastAdvOpen=false;const pop=root.querySelector('[data-cvslot="adv"]');if(pop)pop.hidden=true;root.querySelector('[data-cvadv]')?.setAttribute('aria-expanded','false');},true);
