@@ -28,6 +28,8 @@ h.withServer(async origin => {
       for (const theme of ['light', 'dark']) for (const width of [1440, 720, 390]) {
         await page.setViewportSize({ width, height:1000 });
         await page.evaluate(theme => document.documentElement.dataset.theme = theme, theme);
+        // 너비를 바꾼 바로 그 프레임에는 위 줄이 다시 배치되는 중이라 단추가 잠깐 겹칠 수 있다 — 두 프레임 기다린 뒤 잰다.
+        await page.evaluate(() => new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve))));
         // 10-20 입구 하나로: 아래 막대 「한글에 넣기」(#exam-send)는 메뉴 없이 바로 영역 고르기, 한글 문서는 맨 위 줄 「hwp」로 연다.
         const result = await page.evaluate(() => {
           const pick = sel => { const n=document.querySelector(sel),b=n.getBoundingClientRect(),hit=document.elementFromPoint(b.x+b.width/2,b.y+b.height/2);

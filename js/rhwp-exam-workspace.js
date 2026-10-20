@@ -1,5 +1,5 @@
 import { parseFiveEProject } from './fivee-project.js?v=1.7.0-four-session-integration';
-import { appSwitchHtml } from './app-switch.js?v=1020-apps';
+import { appSwitchHtml } from './app-switch.js?v=1020-fade';
 import {buildQuestionHtml,verifyNativeQuestion} from '../assets/exampool/sheet/handoff.js?v=1014-hwp-sheet';
 import {openApprovedQuestion,nativeInsertOptions,sameColumnGeometry} from '../assets/exampool/sheet/native-transfer.js?v=1014-compact-panel';
 
@@ -1259,7 +1259,8 @@ export function initRhwpExamWorkspace(state, services) {
   const syncSend=()=>{send.disabled=busy || !state.get().objects.length;};syncSend();state.subscribe?.(syncSend);
   send.addEventListener('click',()=>void run(()=>startSend()));
   // 맨 위 줄 「hwp」(app-switch.js)가 한글 문서를 연다.
-  window.addEventListener('5e:hwp-open',()=>void run(open));
+  // 맨 위 전환 줄의 「hwp」. 다른 작업으로 바쁘면 받지 않고, 받았는지는 detail.accepted로 알려 전환 쪽이 잠시 뒤 다시 부탁하게 한다.
+  window.addEventListener('5e:hwp-open',event=>{if(busy)return;if(event.detail)event.detail.accepted=true;void run(open);});
   panel.querySelector('#exam-hwp-file').addEventListener('cancel',()=>{pendingDocumentInsertion=null;message('문서 열기를 취소했습니다.');});
   window.addEventListener('5e:exam-send-ai', event => void run(() => startSend(event.detail)));
   window.addEventListener('5e:exam-send-graph', event => void run(() => startSend(null,event.detail)));

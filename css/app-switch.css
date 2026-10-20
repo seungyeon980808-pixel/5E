@@ -57,3 +57,12 @@
 #exam-pool-open { display: none !important; }
 /* 좁은 창에서도 이름 단추는 남긴다(유일한 입구) — 글자만 조금 작게 */
 @media (max-width: 760px) { .app-switch-btn { width: 46px !important; font-size: 14px !important; } }
+
+/* 프로그램 전환이 휙 바뀌지 않게: 출제·조판 칸은 나타날 때 0.18초 흐려졌다 또렷해지고, 전환 줄로 닫을 때 0.16초 흐려지며 사라진다. */
+@keyframes app-surface-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes app-surface-out { from { opacity: 1; } to { opacity: 0; } }
+#exampool-sheet-workspace:not([hidden]), #rhwp-exam-workspace:not([hidden]) { animation: app-surface-in 180ms cubic-bezier(.2, 0, 0, 1); }
+#exampool-sheet-workspace.app-leaving, #rhwp-exam-workspace.app-leaving { animation: app-surface-out 160ms cubic-bezier(.4, 0, 1, 1) forwards; pointer-events: none; }
+@media (prefers-reduced-motion: reduce) {
+  #exampool-sheet-workspace:not([hidden]), #rhwp-exam-workspace:not([hidden]), #exampool-sheet-workspace.app-leaving, #rhwp-exam-workspace.app-leaving { animation: none; }
+}

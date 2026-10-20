@@ -3,7 +3,7 @@ import { listQuestions, saveQuestion, importQuestions, listResources } from './e
 import { initPoolReferences } from './exampool-references.js?v=1013-exampool';
 import { embedEditablePng, readEditablePng } from './editable-png.js?v=1.7.0-four-session-integration';
 import { getContentBounds } from './svg-export.js?v=1.7.0-four-session-integration';
-import { initQuestionSheet } from './exampool-sheet-workspace.js?v=1018-lib';
+import { initQuestionSheet } from './exampool-sheet-workspace.js?v=1020-fade';
 
 const copy = value => structuredClone(value);
 const letters = ['ㄱ','ㄴ','ㄷ','ㄹ','ㅁ','ㅂ','ㅅ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
