@@ -153,7 +153,7 @@ export function initPoolReferences(panel,{getQuestion,onStandard,onReference,onE
     resources=await listResources();renderResources();
     if(!seedPromise)seedPromise=fetch(new URL('../assets/exampool/standards.json',import.meta.url)).then(response=>{if(!response.ok)throw new Error('성취기준을 불러오지 못했습니다. 다시 열어주세요.');return response.json();}).catch(error=>{seedPromise=null;throw error;});
     const first=!seed;seed=await seedPromise;
-    if(first) {$('#pool-subject').replaceChildren(...seed.subjects.map(subject=>new Option(`${subject.name} · ${subject.grade_band}`,subject.name)));units();$('#pool-standard-source').textContent=`출처: ${seed.source} · ExamPool 수록본`;}
+    if(first) {$('#pool-subject').replaceChildren(...seed.subjects.map(subject=>new Option(`${subject.name} · ${subject.grade_band}`,subject.name)));units();$('#pool-standard-source').textContent=`출처: ${seed.source} · 5E_exam 수록본`;}
     renderStandards();pageControls();
   }
   function questionChanged() {

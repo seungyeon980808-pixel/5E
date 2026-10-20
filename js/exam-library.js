@@ -388,7 +388,7 @@ export function initExamLibrary(state, { openAi, openIndependentReferences } = {
       // 받는 쪽(exampool-sheet-workspace.js)이 accepted를 켜고, 라이브러리 창이 닫힌 뒤 문항 창을 연다. 없으면 이 창에 오류로 남긴다.
       const request = { items: [item], accepted: false };
       window.dispatchEvent(new CustomEvent("5e:exampool-receive", { detail: request }));
-      if (!request.accepted) throw new Error("ExamPool을 열 수 없습니다.");
+      if (!request.accepted) throw new Error("5E_exam을 열 수 없습니다.");
     },
     openAi,
     openIndependentReferences,

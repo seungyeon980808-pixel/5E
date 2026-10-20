@@ -55,7 +55,7 @@ export function initButtonDesign(doc = document) {
     const examPool = doc.createElement('button');
     examPool.id = 'exam-pool-open'; examPool.type = 'button';
     examPool.className = 'object-search-trigger'; examPool.disabled = true;
-    examPool.textContent = '5E_ExamPool'; examPool.title = '5E_ExamPool · 준비 중';
+    examPool.textContent = '5E_ExamPool'; examPool.title = '5E_exam · 준비 중';
     hub.append(examPool);
   }
   const clickAnimations = new WeakMap();

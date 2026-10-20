@@ -24,7 +24,7 @@ export function initExamPoolWorkspace(state, services, examWorkspace) {
   panel.setAttribute('aria-label','문항 설계');panel.dataset.mobileView='editor';
   panel.setAttribute('role','dialog');panel.setAttribute('aria-modal','true');
   panel.innerHTML = `
-    <header class="pool-header"><div><strong>ExamPool</strong><h1>문항 설계</h1></div>
+    <header class="pool-header"><div><strong>5E_exam</strong><h1>문항 설계</h1></div>
       <div class="pool-actions"><button type="button" data-pool-action="import">문항 파일 열기</button><button type="button" data-pool-action="export">문항 파일 저장</button><button type="button" data-pool-action="close">그림 편집기로 돌아가기</button></div></header>
     <div class="pool-mobile-switch" aria-label="작업 영역"><button type="button" data-pool-view="editor" aria-pressed="true">문항 작성</button><button type="button" data-pool-view="references" aria-pressed="false">자료 열람</button></div>
     <div class="pool-body"><aside class="pool-sidebar" aria-label="문항 목록"><button type="button" data-pool-action="new" class="pool-primary">새 문항</button><div id="pool-list"></div><p class="pool-storage">입력 내용은 자동 저장됩니다.<br>문항 파일로 자료와 원본까지 함께 보관하세요.</p></aside>

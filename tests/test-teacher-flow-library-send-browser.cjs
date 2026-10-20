@@ -18,7 +18,7 @@ async function openSend(page, ui) {
       left: Math.round(mr.left - br.left), right: Math.round(mr.right - br.right), gap: Math.round(br.top - mr.bottom), height: Math.round(br.height) };
   });
   assert.equal(menu.hidden, false); assert.equal(menu.expanded, 'true');
-  assert.deepEqual(menu.items, ['hwp:한글 시험지로', 'exampool:ExamPool 문항 카드로']);
+  assert.deepEqual(menu.items, ['hwp:한글 시험지로', 'exampool:5E_exam 문항 카드로']);
   assert.deepEqual([menu.left, menu.right, menu.gap, menu.height], [0, 0, 6, 36], '메뉴는 단추 바로 위 6px, 단추와 같은 폭');
   // 메뉴가 열린 동안 단추 설명 풍선(포커스로도 뜸)이 메뉴 항목을 덮지 않는다.
   await page.waitForTimeout(900);
