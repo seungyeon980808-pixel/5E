@@ -184,3 +184,164 @@ button:active:not(:disabled):not([aria-busy=true]):not(.pane-rail),.lp-pdf:activ
   button:active,.lp-pdf:active{transform:none!important}
   .top-menu,#card-view .lp-adv-pop,#card-view .cv-shape-menu,#card-view .ep-pane-in,.cv-hwp-layer.ep-pane-in,#card-view .ep-reflow,.ep-swap{animation:none!important}
 }
+
+/* 25. 참고 자료 머리 줄(묶음 D 시안): [닫기][범위▾][검색 … 조건 N][문항|쪽]. 칸 이름표·라이브러리·근거 수 단추 없음. */
+#card-view .lp-one .lp-slot{flex:1 1 0;min-width:0}
+#card-view .lp-one .lp-slot .lp-search{padding-right:40px}
+#card-view .lp-one .lp-adv{flex:none;position:relative;z-index:2;margin-left:-44px;height:24px;padding:0 6px;border:0;border-radius:5px;background:transparent;color:var(--ds-ink-3);gap:3px;font-size:11.5px}
+#card-view .lp-one .lp-adv>span{display:none}
+#card-view .lp-one .lp-adv:hover{background:var(--ds-hover);color:var(--ds-ink)}
+#card-view .lp-one .lp-adv:has(i:not([hidden])){margin-left:-66px;color:var(--go-ink,#e6edf3);background:var(--go-bg,#152137)}
+#card-view .lp-one .lp-slot:has(+ .lp-adv i:not([hidden])) .lp-search{padding-right:64px}
+#card-view .lp-one .lp-adv i{min-width:0;height:auto;padding:0;background:transparent;font-size:11.5px;line-height:1;color:inherit}
+#card-view .lp-one .lp-adv i::before{content:"조건 "}
+#card-view .lp-headseg{flex:none;height:30px;align-items:center}
+#card-view .lp-headseg button{display:inline-grid;place-items:center;width:28px;height:26px;padding:0}
+#card-view .lp-headseg .ico{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+/* 근거 줄: 칸 맨 아래 한 줄, 누르면 펼쳐 전부 보임 */
+#card-view .cv-left .lp-linked{display:flex;flex-direction:row;align-items:center;gap:6px;width:100%;min-height:36px;margin:0;padding:6px 12px;border:0;border-top:1px solid var(--ds-line);border-radius:0;background:transparent;color:var(--ds-ink-3);font-size:12px;text-align:left;cursor:pointer}
+#card-view .cv-left .lp-linked:hover{background:var(--ds-hover)}
+#card-view .cv-left .lp-linked .ico{width:14px;height:14px;flex:none;fill:none;stroke:currentColor;stroke-width:1.6}
+#card-view .cv-left .lp-linked b{flex:none;color:var(--ds-ink);font-size:12.5px}
+#card-view .cv-left .lp-linked span{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#card-view .cv-left.show-linked .lp-linked{position:static;box-shadow:none;background:var(--ds-raise)}
+/* 26. 기출 카드: 아래 줄은 제목만(근거·변형은 크게 보기에서). 마우스를 올리면 안내. */
+#card-view .past-list .past:not(.pick) figcaption .acts{display:none!important}
+#card-view .past-list .past:not(.book):not(.pick) .past-pic::before{content:"더블클릭: 크게 보기 · 근거 · 변형";position:absolute;z-index:2;left:8px;right:8px;bottom:8px;padding:5px 8px;border-radius:7px;background:#0d1117e6;color:#e6edf3;font-size:11.5px;line-height:1.4;opacity:0;transform:translateY(4px);transition:opacity 140ms var(--ep-ease),transform 140ms var(--ep-ease);pointer-events:none}
+#card-view .past-list .past.book .past-pic::before{content:"더블클릭: 크게 보기 · 근거";position:absolute;z-index:2;left:8px;right:8px;bottom:8px;padding:5px 8px;border-radius:7px;background:#0d1117e6;color:#e6edf3;font-size:11.5px;opacity:0;transition:opacity 140ms;pointer-events:none}
+#card-view .past-list .past:hover .past-pic::before{opacity:1;transform:none}
+/* 27. 크게 보기: 그림 높이만큼만(아래 빈 흰 공간 없음), 아래 줄 단추에 글자 */
+#card-view .lp-zoom-pic{flex:0 1 auto}
+#card-view .lp-zoom-foot{flex-wrap:wrap}
+#card-view .lp-zoom-foot .sp{flex:1}
+#card-view .lp-zoom-foot .mini{display:inline-flex;align-items:center;gap:4px;height:28px;padding:0 10px;border-radius:6px;font-size:12.5px;text-decoration:none;color:var(--ds-ink-2);box-shadow:inset 0 0 0 1px var(--ds-line)}
+#card-view .lp-zoom-foot .mini:hover{background:var(--ds-hover);color:var(--ds-ink)}
+#card-view .lp-zoom-foot .mini .ico{width:14px;height:14px}
+#card-view .lp-zoom-foot .go-mini{color:var(--go-ink,#e6edf3);background:var(--go-bg,#152137);box-shadow:inset 0 0 0 1px var(--go-line,#6ba4f8)}
+#card-view .lp-zoom-pic{position:relative}
+#card-view .lp-zoom-pic[data-marking]::after{content:"";position:absolute;top:8px;right:8px;width:14px;height:14px;border-radius:50%;border:2px solid #6ba4f855;border-top-color:#6ba4f8;background:#fffc;animation:ep-spin .7s linear infinite}
+
+/* 30·31. 쪽 종이: 캔버스 위에 pdf.js 글자 층(투명 글자, 끌면 파란 바탕으로 골라짐) */
+#card-view .lp-paper{display:block}
+#card-view .lp-sheet{position:relative;width:100%}
+#card-view .lp-sheet canvas{display:block;width:100%;height:auto}
+#card-view .textLayer{position:absolute;text-align:initial;inset:0;overflow:clip;opacity:1;line-height:1;text-size-adjust:none;forced-color-adjust:none;transform-origin:0 0;caret-color:#1f2328;z-index:0;
+  --min-font-size:1;--text-scale-factor:calc(var(--total-scale-factor) * var(--min-font-size));--min-font-size-inv:calc(1 / var(--min-font-size))}
+#card-view .textLayer :is(span,br){color:transparent;position:absolute;white-space:pre;cursor:text;transform-origin:0% 0%}
+#card-view .textLayer > :not(.markedContent),#card-view .textLayer .markedContent span:not(.markedContent){z-index:1;--font-height:0;font-size:calc(var(--text-scale-factor) * var(--font-height));--scale-x:1;--rotate:0deg;transform:rotate(var(--rotate)) scaleX(var(--scale-x)) scale(var(--min-font-size-inv))}
+#card-view .textLayer .markedContent{display:contents}
+#card-view .textLayer ::selection{background:rgba(47,111,214,.32);color:transparent}
+#card-view .textLayer br::selection{background:transparent}
+#card-view .textLayer .endOfContent{display:block;position:absolute;inset:100% 0 0;z-index:0;cursor:default;user-select:none}
+#card-view .lp-paper .lp-fallback{display:block;width:100%;height:auto}
+#card-view .lp-paper-wait.over{position:absolute;left:10px;right:10px;bottom:10px;justify-content:center;padding:6px 10px;border-radius:8px;background:#ffffffe6;box-shadow:0 2px 10px #0002}
+#card-view .lp-paper-note{display:block;padding:6px 10px;background:#fff8e1;color:#7a5a00;font-size:12px}
+#card-view .lp-pageref{flex:none;height:26px;padding:0 9px;border:0;border-radius:6px;background:transparent;color:var(--ds-ink-2);box-shadow:inset 0 0 0 1px var(--ds-line);font-size:12px;white-space:nowrap}
+#card-view .lp-pageref:hover{background:var(--ds-hover);color:var(--ds-ink)}
+@container lib (max-width:420px){#card-view .lp-pageref{padding:0 6px;font-size:11.5px}}
+/* 근거로 추가 창 */
+#card-view .ev-pop{position:absolute;z-index:9;left:12px;right:12px;display:flex;flex-direction:column;gap:8px;padding:12px;border-radius:12px;background:var(--ds-raise);box-shadow:0 0 0 1px var(--ds-line),0 14px 34px #0009;color:var(--ds-ink-2);font-size:12.5px;animation:ep-menu-in 160ms cubic-bezier(.2,.9,.25,1.06)}
+#card-view .ev-pop .ev-h{display:flex;align-items:baseline;gap:8px}#card-view .ev-pop .ev-h b{color:var(--ds-ink);font-size:13px}#card-view .ev-pop .ev-h span{color:var(--ds-ink-3);font-size:12px}
+#card-view .ev-pop q{display:block;max-height:96px;overflow:auto;padding:8px 10px;border-left:3px solid var(--go-line,#6ba4f8);border-radius:4px;background:var(--ds-bench);color:var(--ds-ink);quotes:none;line-height:1.55}
+#card-view .ev-pop label{display:flex;align-items:center;gap:8px;white-space:nowrap}
+#card-view .ev-pop select{flex:1;min-width:0;height:28px}
+#card-view .ev-pop input{height:28px;padding:0 8px;border:0;border-radius:6px;background:var(--ds-bench);color:var(--ds-ink);box-shadow:inset 0 0 0 1px var(--ds-line)}
+#card-view .ev-pop .acts{display:flex;justify-content:flex-end;gap:6px}
+#card-view .ev-pop .mini{height:28px;padding:0 12px;border-radius:6px;box-shadow:inset 0 0 0 1px var(--ds-line)}
+#card-view .ev-pop .go-mini{color:var(--go-ink,#e6edf3);background:var(--go-bg,#152137);box-shadow:inset 0 0 0 1px var(--go-line,#6ba4f8)}
+/* 근거 목록(근거 줄을 누르면 펼침) */
+#card-view .cv-left .lp-reflist{display:none}
+#card-view .cv-left.show-linked .lp-reflist{display:flex;flex-direction:column;gap:4px;position:absolute;z-index:8;left:8px;right:8px;bottom:44px;max-height:55%;overflow:auto;padding:8px;border-radius:12px;background:var(--ds-raise);box-shadow:0 0 0 1px var(--ds-line),0 -10px 28px #0006;animation:ep-menu-in 160ms cubic-bezier(.2,.9,.25,1.06)}
+#card-view .cv-left.show-linked .lp-reflist:empty::before{content:"아직 근거가 없습니다 · 크게 보기의 「근거로 연결」이나 쪽 보기에서 글을 끌어 고르세요";padding:6px;color:var(--ds-ink-3);font-size:12px}
+#card-view .lp-ref{display:flex;align-items:flex-start;gap:4px;border-radius:8px;background:var(--ds-bench);box-shadow:inset 0 0 0 1px var(--ds-line)}
+#card-view .lp-ref>[data-cvref]{flex:1;min-width:0;display:flex;flex-wrap:wrap;align-items:baseline;gap:2px 8px;height:auto;padding:7px 9px;border:0;border-radius:8px;background:transparent;color:var(--ds-ink-2);font-size:12px;text-align:left}
+#card-view .lp-ref>[data-cvref]:hover:not(:disabled){background:var(--ds-hover)}
+#card-view .lp-ref>[data-cvref]:disabled{opacity:1;cursor:default}
+#card-view .lp-ref b{color:var(--ds-ink)}
+#card-view .lp-ref .who{padding:0 7px;border-radius:9px;background:var(--go-bg,#152137);color:var(--go-ink,#e6edf3);font-size:11px}
+#card-view .lp-ref q{flex-basis:100%;color:var(--ds-ink-2);quotes:none;border-left:2px solid var(--ds-line);padding-left:6px}
+#card-view .lp-ref small{flex-basis:100%;color:var(--ds-ink-3)}
+#card-view .lp-ref-x{flex:none;width:26px;height:26px;margin:4px;padding:0;border:0;border-radius:6px;background:transparent;color:var(--ds-ink-3)}
+#card-view .lp-ref-x:hover{background:var(--ds-hover);color:var(--ds-ink)}
+#card-view .cv-left .lp-linked,#card-view .lp-ref>[data-cvref]{justify-content:flex-start}
+
+/* 32. 문항 카드(묶음 D 시안): 엑셀처럼 왼쪽 이름표 칸 + 오른쪽 내용, 빈 줄 없이, 안내 글은 ? 안 */
+#card-view .cv-grid{gap:10px}
+#card-view .cv-grid .f-sec{padding:0;gap:0;overflow:hidden}
+#card-view .cv-grid .f-sec-head{padding:6px 12px;background:var(--ds-doc-head,#f6f8fa);border-bottom:1px solid var(--ds-doc-line,#e6e9ed)}
+#card-view .cv-grid .f-sec-head h3{margin:0;font-size:12px;color:var(--ds-doc-ink-2,#57606a)}
+#card-view .cv-grid .cv-row{display:grid;grid-template-columns:84px minmax(0,1fr);gap:0;min-height:38px;border-bottom:1px solid var(--ds-doc-line,#e6e9ed)}
+#card-view .cv-grid .f-sec>.cv-row:last-of-type{border-bottom:0}
+#card-view .cv-grid .cv-row>label{display:flex;align-items:flex-start;gap:4px;margin:0;padding:10px 6px 0 12px;background:var(--ds-doc-head,#fafbfc);border-right:1px solid var(--ds-doc-line,#e6e9ed);color:var(--ds-doc-ink-2,#57606a);font-size:12.5px;font-weight:600;white-space:nowrap}
+#card-view .cv-grid .cv-v{min-width:0;padding:4px 6px}
+#card-view .cv-grid .cv-v>:is(input,textarea){display:block;width:100%;min-height:30px;padding:4px 6px;border:0;border-radius:5px;background:transparent;box-shadow:none;line-height:1.6;resize:none}
+#card-view .cv-grid .cv-v>:is(input,textarea):hover{background:var(--ds-doc-hover,#f6f8fa)}
+#card-view .cv-grid .cv-v>:is(input,textarea):focus{background:#f6f9ff;box-shadow:inset 0 0 0 1px var(--go-line,#2f6fd6);outline:0}
+#card-view .cv-grid .cv-v .pick{display:flex;align-items:center;gap:8px;min-height:30px;padding:0 6px;border:0;background:transparent}
+#card-view .cv-grid .cv-v .pick .ph{color:var(--ds-doc-ink-3,#8c959f)}
+#card-view .cv-grid .f-more{margin:0;padding:8px 12px;border-top:1px solid var(--ds-doc-line,#e6e9ed)}
+/* ? 도움말: 마우스를 올리거나 누르면 안내 */
+#card-view .help{position:relative;display:inline-grid;place-items:center;width:15px;height:15px;min-height:0;margin-top:1px;padding:0;border:0;border-radius:50%;background:var(--ds-doc-line,#e6e9ed);color:var(--ds-doc-ink-2,#57606a);font:700 10px/1 inherit;cursor:help}
+#card-view .help:hover,#card-view .help:focus-visible{background:#eaf2fd;color:#1a5fb4}
+#card-view .help::after{content:attr(data-tip);position:absolute;left:20px;top:-6px;z-index:30;width:240px;padding:8px 10px;border-radius:8px;background:#1f2328;color:#fff;font-size:12px;font-weight:400;line-height:1.5;white-space:normal;text-align:left;box-shadow:0 8px 24px #0004;opacity:0;pointer-events:none;transform:translateY(-2px);transition:opacity 140ms var(--ep-ease),transform 140ms var(--ep-ease)}
+#card-view .help:hover::after,#card-view .help:focus::after{opacity:1;transform:none}
+/* 배점: 맨 위 2점|3점 */
+#card-view .cv-pts{flex:none;display:inline-flex;gap:2px;padding:2px;border-radius:7px;box-shadow:inset 0 0 0 1px var(--ds-doc-line,#d0d7de);background:var(--ds-doc,#fff)}
+#card-view .cv-pts button{height:24px;padding:0 9px;border:0;border-radius:5px;background:transparent;color:var(--ds-doc-ink-2,#57606a);font-size:12.5px}
+#card-view .cv-pts button[aria-pressed=true]{background:#eaf2fd;color:#1a5fb4;box-shadow:inset 0 0 0 1px #2f6fd6;font-weight:600}
+/* 자료: 칸을 꽉 채우고 이름·단추는 마우스를 올릴 때만 */
+#card-view .cv-grid .cv-tiles{gap:6px}
+#card-view .cv-grid .cv-tile{position:relative;max-width:none;box-shadow:inset 0 0 0 1px var(--ds-doc-line,#e6e9ed);background:var(--ds-doc,#fff)}
+#card-view .cv-grid .cv-tile .pic{aspect-ratio:auto;min-height:150px;max-height:280px;padding:4px}
+#card-view .cv-grid .cv-tile .pic img{width:auto;max-width:100%;max-height:270px}
+#card-view .cv-grid .cv-tile:not(.empty) .cap{position:absolute;left:4px;right:4px;bottom:4px;padding:4px 6px;border-radius:6px;background:#1f2328d9;color:#fff;opacity:0;transition:opacity 140ms var(--ep-ease)}
+#card-view .cv-grid .cv-tile:not(.empty) .cap b{color:#fff}
+#card-view .cv-grid .cv-tile:not(.empty) .cap .mini{color:#fff;background:#ffffff22}
+#card-view .cv-grid .cv-tile:hover .cap,#card-view .cv-grid .cv-tile:focus-within .cap{opacity:1}
+#card-view .cv-grid .cv-tile.empty .pic{min-height:96px}
+#card-view .cv-grid .cv-add-row{margin-top:4px;min-height:30px;padding:4px 8px}
+#card-view .cv-grid .cv-add-row span{display:none}
+/* 보기: 한 줄씩 + ○ 옳음 / × 틀림 */
+#card-view .cv-grid .rows{gap:0}
+#card-view .cv-grid .ig{min-height:32px;border-bottom:1px dashed var(--ds-doc-line,#e6e9ed);border-radius:0;box-shadow:none;background:transparent}
+#card-view .cv-grid .ig:last-of-type{border-bottom:0}
+#card-view .cv-grid .ig>span:first-child{background:transparent;border:0;min-width:22px}
+#card-view .cv-grid .ig>input{border:0;background:transparent;box-shadow:none}
+#card-view .ox{flex:none;display:inline-flex;gap:2px;margin:0 2px}
+#card-view .ox button{width:26px;height:24px;min-height:0;padding:0;border:0;border-radius:5px;background:transparent;color:#b1b8c0;font:700 13px/1 inherit}
+#card-view .ox button:hover{background:var(--ds-doc-hover,#f0f2f4)}
+#card-view .ox .o[aria-pressed=true]{background:#e6f4ea;color:#1a7f37}
+#card-view .ox .x[aria-pressed=true]{background:#fdeceb;color:#cf222e}
+#card-view .cv-grid .link.add{margin:2px 0 2px 4px}
+/* 선지: 추천 조합 + 한 줄 5칸 */
+#card-view .cv-suggs{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:4px 2px 6px;color:var(--ds-doc-ink-3,#8c959f);font-size:12px}
+#card-view .cv-sugg{display:inline-flex;align-items:center;gap:6px;height:24px;min-height:0;padding:0 8px;border:0;border-radius:12px;background:var(--ds-doc-hover,#f6f8fa);box-shadow:inset 0 0 0 1px var(--ds-doc-line,#d0d7de);color:var(--ds-doc-ink,#1f2328);font-size:12px}
+#card-view .cv-sugg:hover{background:#eaf2fd;box-shadow:inset 0 0 0 1px #2f6fd6}
+#card-view .cv-sugg em{font-style:normal;color:#1a5fb4;font-weight:600}
+#card-view .cv-combos{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}
+#card-view .cv-combos .combo-row{display:flex;align-items:center;gap:3px;height:32px;min-height:0;padding:0 6px;border-radius:6px;box-shadow:inset 0 0 0 1px var(--ds-doc-line,#e6e9ed);background:transparent;cursor:pointer}
+#card-view .cv-combos .combo-row input[type=radio]{margin:0;flex:none}
+#card-view .cv-combos .combo-row .no{flex:none;color:var(--ds-doc-ink-2,#57606a);font-weight:600}
+#card-view .cv-combos .combo-row input:not([type]){flex:1;min-width:0;height:28px;padding:0 2px;border:0;background:transparent;box-shadow:none}
+#card-view .cv-combos .combo-row.on{background:#e6f4ea;box-shadow:inset 0 0 0 1.5px #1a7f37}
+#card-view .cv-combos .combo-row.right:not(.on){box-shadow:inset 0 0 0 1.5px #1a7f37}
+#card-view .cv-autoans{margin:4px 2px 2px;font-size:12px}
+#card-view .cv-autoans.ok{color:#1a7f37}#card-view .cv-autoans.bad{color:#cf222e}
+@container (max-width:460px){#card-view .cv-combos{grid-template-columns:repeat(3,minmax(0,1fr))}}
+#card-view .cv-grid .ig{display:flex;align-items:center;gap:2px}
+#card-view .cv-grid .ig>input{flex:1;min-width:0}
+#card-view .cv-grid .ig .ig-x{position:static;flex:none;width:24px;height:24px;min-height:0;padding:0;opacity:0;transform:none}
+#card-view .cv-grid .ig:hover .ig-x,#card-view .cv-grid .ig:focus-within .ig-x{opacity:1}
+#card-view .ox button{flex:none;min-width:26px}
+#card-view .cv-grid .cv-row{grid-template-columns:92px minmax(0,1fr)}
+#card-view .cv-grid .cv-row>label{padding-left:10px}
+#card-view .cv-sugg{gap:4px;padding:0 7px;letter-spacing:-.2px}
+@container lib (max-width:320px){
+  #card-view .lp-one .lp-scope{max-width:64px}
+  #card-view .lp-headseg button{width:22px}
+  #card-view .lp-one .lp-search>svg{display:none}
+  #card-view .lp-one .lp-slot .lp-search{padding-left:6px;padding-right:28px}
+  #card-view .lp-one .lp-adv,#card-view .lp-one .lp-adv:has(i:not([hidden])){margin-left:-30px;padding:0 4px}
+  #card-view .lp-one .lp-adv i::before{content:""}
+  #card-view .lp-one .lp-slot:has(+ .lp-adv i:not([hidden])) .lp-search{padding-right:40px}
+}

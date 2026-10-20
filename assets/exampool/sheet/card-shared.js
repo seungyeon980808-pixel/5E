@@ -4,6 +4,8 @@ import {SHAPE_ICONS} from './new-question.js';
 const E=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const NUM=['①','②','③','④','⑤'];
 const COMMON=['ㄱ','ㄷ','ㄱ, ㄴ','ㄴ, ㄷ','ㄱ, ㄴ, ㄷ'];
+// 선지 조합 기출 통계(10-20): 평가원 과학탐구 8과목 8,420문항 중 〈보기〉 ㄱ·ㄴ·ㄷ로 답하는 5,958문항의 ①~⑤ 조합 빈도 상위 3개(합 72.5%).
+const COMBO_STATS={n:5958,top:[[['ㄱ','ㄴ','ㄱ, ㄷ','ㄴ, ㄷ','ㄱ, ㄴ, ㄷ'],30.4],[['ㄱ','ㄷ','ㄱ, ㄴ','ㄴ, ㄷ','ㄱ, ㄴ, ㄷ'],29.4],[['ㄱ','ㄴ','ㄷ','ㄱ, ㄴ','ㄴ, ㄷ'],12.7]]};
 const ICON={
   pic:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 16l4-4 4 4 4-6 4 6"/><rect x="3.5" y="4.5" width="17" height="15" rx="1.5"/></svg>',
   table:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="1.5"/><path d="M4 10h16M4 15h16M10 4v16"/></svg>',
@@ -11,6 +13,7 @@ const ICON={
   star:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3l2.2 5.3L20 9l-4.4 3.8L17 18.5 12 15.6 7 18.5l1.4-5.7L4 9l5.8-.7z"/></svg>',
   left:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m15 6-6 6 6 6"/></svg>',
   right:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>',
+  grid:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="7" height="7" rx="1.5"/><rect x="13" y="4" width="7" height="7" rx="1.5"/><rect x="4" y="13" width="7" height="7" rx="1.5"/><rect x="13" y="13" width="7" height="7" rx="1.5"/></svg>',
   page:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 3.5h10v17H7z"/><path d="M9.5 8h5M9.5 11h5M9.5 14h3"/></svg>',
   card:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="1.5"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>',
   out:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17 17 7M9 7h8v8"/></svg>',
@@ -39,4 +42,4 @@ const store={get(k,d){try{return JSON.parse(localStorage.getItem(CHANNEL+'exampo
 // 지금 단계 글은 그 기출 그림 위에 크게 덮어 보인다(단추 글이 길어져 카드 줄이 바뀌지 않게).
 const busyHtml=stage=>`<i class="busy-ring" aria-hidden="true"></i><span class="sr-only">${E(stage)}</span>`;
 const pastBusyHtml=stage=>`<div class="past-busy" role="status"><i class="busy-ring" aria-hidden="true"></i><span>${E(stage)}</span></div>`;
-export {busyHtml,pastBusyHtml,E,NUM,COMMON,ICON,TABS,slotsOf,STRUCT_SHORT,shapeIco,CHEV,CHECK,bogiOf,isCombo,CHANNEL,store};
+export {busyHtml,pastBusyHtml,E,NUM,COMMON,COMBO_STATS,ICON,TABS,slotsOf,STRUCT_SHORT,shapeIco,CHEV,CHECK,bogiOf,isCombo,CHANNEL,store};

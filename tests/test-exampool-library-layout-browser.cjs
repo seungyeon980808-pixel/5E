@@ -49,10 +49,11 @@ h.withServer(async origin => {
       assert.equal(head.old,false,'no title row, tab row, second tool row or guide box');
       assert.equal(head.h,44,'one 44px head row');assert.equal(head.top,0,'at the top of the pane');assert.equal(head.barTop,0,'on the same line as the card head row');
       // 10-20 화면 정리: 머리 줄 맨 앞에 칸 닫기(바깥쪽 끝)와 칸 이름 「참고 자료」.
-      assert.deepEqual(head.kids.map(k=>k.k),['btn icon pt pane-close','pane-role','scope','search','adv','lib','refs'],'close · pane name · scope · search · detail search · library · evidence');
-      assert.ok(head.kids.every(k=>k.h===30)&&new Set(head.kids.map(k=>k.top)).size===1,'all 30px on one line: '+JSON.stringify(head.kids));
-      assert.deepEqual(head.scopes,['기출문제','교과서','성취기준·교육과정','자료']);
-      assert.equal(await sheet.locator('#card-view .lp-pick').getAttribute('aria-label'),'5E 라이브러리에서 고르기','the library icon keeps its name');
+      // 10-20 묶음 D: [닫기][범위▾][검색(안에 상세검색)][문항|쪽]. 칸 이름표·라이브러리 아이콘·근거 수 단추는 없다(라이브러리는 범위 목록 맨 아래, 근거는 칸 맨 아래 줄).
+      assert.deepEqual(head.kids.map(k=>k.k),['btn icon pt pane-close','scope','search','adv','lp-seg lp-headseg'],'close · scope · search · detail search · item|page');
+      assert.ok(head.kids.filter(k=>k.k!=='adv').every(k=>k.h===30)&&new Set(head.kids.filter(k=>k.k!=='adv').map(k=>k.top)).size===1,'all 30px on one line: '+JSON.stringify(head.kids));
+      assert.deepEqual(head.scopes.slice(0,4),['기출문제','교과서','성취기준·교육과정','자료']);
+      assert.equal(head.scopes.at(-1),'5E 라이브러리에서 가져오기…','the 5E library lives at the bottom of the scope list');
 
       // 2. 상세검색: 과목·단원·연도는 단추 아래 작은 창에서. 고른 개수는 단추 숫자, 바깥을 누르면 닫힘.
       await sheet.click('#card-view [data-cvadv]');
@@ -168,17 +169,18 @@ h.withServer(async origin => {
       await page.evaluate(()=>{document.documentElement.setAttribute('data-theme','dark');document.documentElement.setAttribute('data-palette','classic');});await sheet.waitForTimeout(300);
       await page.keyboard.press('Escape');assert.equal(await sheet.locator('#card-view .lp-zoom').count(),0);
 
-      // 4. 「근거 N」은 겹쳐 펼쳐진다(목록 높이는 그대로).
+      // 4. 근거는 칸 맨 아래 한 줄(늘 보임), 누르면 목록이 겹쳐 펼쳐진다(목록 높이는 그대로).
+      assert.equal(await sheet.locator('#card-view .lp-linked').isVisible(),true,'the evidence line is always at the bottom');
       const listH=await sheet.evaluate(()=>document.querySelector('#card-view .past-list').clientHeight);
       await sheet.click('#card-view [data-cvlinked]');
-      assert.equal(await sheet.locator('#card-view .lp-linked').isVisible(),true,'evidence list opens');
+      assert.equal(await sheet.locator('#card-view .lp-reflist').isVisible(),true,'evidence list opens');
       assert.equal(await sheet.evaluate(()=>document.querySelector('#card-view .past-list').clientHeight),listH,'opening the evidence list does not move the cards');
-      await sheet.click('#card-view [data-cvlinked]');assert.equal(await sheet.locator('#card-view .lp-linked').isVisible(),false);
+      await sheet.click('#card-view [data-cvlinked]');assert.equal(await sheet.locator('#card-view .lp-reflist').isVisible(),false);
 
       // 5. 교과서 탭도 같은 틀(도구 한 줄 + 5E 라이브러리 단추).
       await sheet.selectOption('#card-view [data-cvscope]','textbooks');
       await sheet.waitForSelector('#card-view .past-list figure.book',{timeout:30000});
-      assert.equal(await sheet.locator('#card-view .lp-one [data-cvlib="textbook"]').count(),1);
+      assert.equal(await sheet.locator('#card-view .lp-one [data-cvbookview]').count(),2,'textbook: page list | one page');
       assert.equal(await sheet.locator('#card-view figure.book b').first().textContent(),'교과서_중2 1쪽','5E shared textbook pages are listed');
       await sheet.fill('#card-view [data-cvpast="query"]','120');await sheet.press('#card-view [data-cvpast="query"]','Enter');
       await sheet.waitForFunction(()=>document.querySelector('#card-view figure.book b')?.textContent==='교과서_중2 120쪽');

@@ -65,7 +65,7 @@ h.withServer(async origin => {
       await sheet.waitForSelector('#card-view:not([hidden]) .cv-writer');
       assert.ok(await sheet.locator('#card-view .combo-row').count()===5,'combo choices are composed from bogi letters');
       // 시안 4: 왼쪽 라이브러리(검색 범위: 기출문제·교과서·성취기준·교육과정·자료) · 가운데 문항 카드(번호 탭) · 오른쪽 미리보기|AI.
-      assert.deepEqual(await sheet.locator('#card-view [data-cvscope] option').allTextContents(),['기출문제','교과서','성취기준·교육과정','자료']);
+      assert.deepEqual((await sheet.locator('#card-view [data-cvscope] option').allTextContents()).slice(0,4),['기출문제','교과서','성취기준·교육과정','자료']);
       assert.deepEqual(await sheet.locator('#card-view .cv-rseg [data-cvright]').evaluateAll(b=>b.map(x=>x.textContent.trim())),['미리보기','AI']);
       assert.ok(await sheet.locator('#card-view .cv-qtab[aria-current="true"]').count()===1,'the current question is marked in the number tabs');
       // 미리보기 칸 = 한글 조판 창(5e_hwp). 카드를 다시 그려도 지워지지 않는 층에 붙어 미리보기 칸 위에 정확히 겹친다.
