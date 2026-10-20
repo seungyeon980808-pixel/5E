@@ -15,7 +15,6 @@ export function attachTypesetView(bridge,host){
     body[data-question-compact] #ruler-corner{display:none!important}
     body[data-question-compact] #editor-area{grid-template-rows:minmax(0,1fr);grid-template-columns:minmax(0,1fr)}
     body[data-question-compact] #scroll-container{grid-area:1 / 1;background:#edf0ed}
-    #scroll-container{overflow-x:hidden!important}
     /* 미리보기 칸 안 한글 창(수식 편집 등)도 ExamPool 팝업 규칙: 창 12px·단추 6px 모서리, 「확인」은 카드의 은은한 파란 단추와 같은 색 */
     .dialog-wrap{border-radius:12px!important;overflow:hidden;border-color:#d8dde3!important;box-shadow:0 12px 32px rgba(16,20,26,.22)!important}
     .dialog-title{border-radius:12px 12px 0 0}
@@ -25,16 +24,25 @@ export function attachTypesetView(bridge,host){
     .dialog-wrap{max-width:calc(100vw - 16px);max-height:calc(100dvh - 16px);overflow:auto}
   `;
   doc.head.append(style);
+  // 확대하지 않은 동안은 종이를 칸 폭에 맞춰 좌우로 움직일 것이 없게 한다(「상세 조판」에서도).
+  // - 칸 폭은 세로 스크롤 막대를 뺀 실제 보이는 폭(#scroll-container clientWidth).
+  // - 한글 엔진은 한 쪽 보기에서 내용 폭을 「종이 폭 + 40px」로 잡으므로 44px을 남기고 맞춘다.
+  // - 엔진은 배율이 바뀔 때만 내용 폭을 다시 재므로, 종이가 다 읽히기 전에 맞춘 배율이 그대로면 옛 폭이 남아
+  //   좌우로 밀렸다. 내용 폭이 칸보다 넓으면 배율을 한 번 흔들어 다시 재게 한다.
+  // - 사용자가 직접 확대·축소하면(마지막으로 맞춘 배율과 다르면) 그 배율을 지키고, 그때는 좌우로 움직일 수 있다.
+  //   새 문항을 열면(refresh) 다시 폭 맞춤.
+  let fitted=null;
   function fit(){
-    // 미리보기 칸에서는 「상세 조판」을 열어도 종이를 칸 폭에 맞춘다 — 맞추지 않으면 종이가 칸보다 넓어 좌우로 밀렸다.
-    // 칸 폭은 세로 스크롤 막대를 뺀 실제 보이는 폭(#scroll-container clientWidth)으로 잰다.
     frame=0;if(panel.hidden||!bridge.wasm.doc||!host.clientWidth)return;
     const raw=bridge.wasm.borrowDocumentHandle().getPageDef(0),page=typeof raw==='string'?JSON.parse(raw):raw;
     const manager=bridge.input?.viewportManager;if(!manager)return;
     // Keep the native zoom coordinate system, caret and hit testing together.
+    if(fitted!==null&&Math.abs(manager.getZoom()-fitted)>.002)return;// 사용자가 직접 바꾼 배율은 지킨다
     const view=doc.querySelector('#scroll-container')?.clientWidth||host.clientWidth;
-    const next=Math.min(1.4,Math.max(.25,(view-28)/(page.width/75)));
-    if(Math.abs(manager.getZoom()-next)>.002)manager.setZoom(next,{x:.5,y:0},'none');
+    const next=Math.min(1.4,Math.max(.25,(view-44)/(page.width/75)));
+    const content=doc.querySelector('#scroll-content'),stale=!!content&&content.offsetWidth>view+1;
+    if(Math.abs(manager.getZoom()-next)>.002||stale){if(stale&&Math.abs(manager.getZoom()-next)<=.002)manager.setZoom(next+.01,{x:.5,y:0},'none');manager.setZoom(next,{x:.5,y:0},'none');}
+    fitted=manager.getZoom();
   }
   const schedule=()=>{if(!frame)frame=requestAnimationFrame(fit);};
   function selection(){
@@ -63,6 +71,8 @@ export function attachTypesetView(bridge,host){
   doc.addEventListener('keyup',()=>{interacted=true;selection();});
   for(const event of ['cursor-cell-changed','cursor-para-changed','table-object-selection-changed','picture-object-selection-changed'])bridge.deps.eventBus.on(event,selection);
   const observer=new ResizeObserver(schedule);observer.observe(host);
+  // 종이가 다 읽힌 뒤에도 한 번 더 맞춘다(읽히기 전에 맞춘 폭이 남지 않게).
+  for(const name of ['document-view-loaded','document-layout-refreshed'])bridge.deps?.eventBus?.on?.(name,schedule);
   setDetail(false);
-  return {refresh(){interacted=false;context.hidden=true;schedule();},fit:schedule};
+  return {refresh(){interacted=false;context.hidden=true;fitted=null;schedule();},fit:schedule};
 }
