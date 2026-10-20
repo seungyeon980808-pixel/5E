@@ -496,6 +496,14 @@
 :root:not([data-mode="lite"]) #ai-image-panel :is(.ai-rail-actions, .ai-setting-pair, .ai-result-tools, .ai-label-view) > :is(.is-on, [aria-pressed="true"], [aria-checked="true"], [aria-selected="true"]) {
   background: var(--ds-selected-strong) !important; color: var(--ds-selected-ink) !important; font-weight: 600;
 }
+/* 모바일(768px 미만)은 아래 「은은한 버튼」 묶음(@media min-width:768px) 밖이라 고른 칸이 진한 파란 면으로 보였다.
+   데스크톱과 같이 은은한 면(--ds-soft-bg) + 1px 선(--ds-soft-line)으로 맞춘다. */
+@media (max-width: 767px) {
+  :root:not([data-mode="lite"]) #ai-image-panel :is(.ai-rail-actions, .ai-setting-pair, .ai-result-tools, .ai-label-view) > :is(.is-on, [aria-pressed="true"], [aria-checked="true"], [aria-selected="true"]) {
+    background: var(--ds-soft-bg) !important; color: var(--ds-ink) !important;
+    outline: 1px solid var(--ds-soft-line) !important; outline-offset: -1px !important;
+  }
+}
 :root:not([data-mode="lite"]) #ai-image-panel .ai-setting-help { color: var(--ds-ink-3); }
 
 /* ---------- 11. 튜토리얼 — 떠 있는 면 규격, 버튼·칸 테두리 없음 ---------- */
