@@ -1,7 +1,6 @@
 import { worldFromMath, mathFromWorld, planeAsY2 } from '../function-graph/coords.js?v=1.7.0-four-session-integration';
 import { sampleShapeSegment } from '../function-graph/shape-preserving.js?v=1.7.0-four-session-integration';
 
-export const GRAPH_FEATURE_DEFAULTS = Object.freeze({ markerShape:'none', markerSize:0.8, lineVisible:true, regionFillLevel:220, regionOpacity:1 });
 export function normalizedToMath(plane, q) {
   return mathFromWorld(plane,plane.x+q.x*plane.w,plane.y+(1-q.y)*plane.h);
 }

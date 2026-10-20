@@ -34,7 +34,6 @@ export function shapePreservingHandles(points, segmentModes = [], breaks = []) {
   }
   return h;
 }
-export const handlesOffsets = shapePreservingHandles;
 
 // Position and unnormalised tangent at t on an editable span.
 export function sampleShapeSegment(points, handles, segmentIndex, t, segmentModes = []) {

@@ -304,12 +304,6 @@ export function measureLabelTypography(obj, size = obj.fontSize || obj.labelSize
     rotatedH: Math.abs(Math.sin(angle)) * w + Math.abs(Math.cos(angle)) * h };
 }
 
-export function fitLabelTypography(obj, bounds, image) {
-  if (!bounds) return DEFAULT_TEXT_SIZE_MM;
-  const m = measureLabelTypography(obj, 1);
-  // Bounds describe the original glyph block, including line breaks and rotation.
-  return Math.max(0.6, Math.min(15, bounds.w * image.w / m.rotatedW, bounds.h * image.h / m.rotatedH));
-}
 
 export function renderLabelTypography(obj, center, color = '#0d1117') {
   const size = obj.fontSize || obj.labelSize || DEFAULT_TEXT_SIZE_MM;

@@ -3,23 +3,6 @@ export const COLUMNS=['번호','유형','성취기준','발문','정답','배점
 const META_FORMAT='5e-exampool-sheet-concept-v1';
 const idPattern=/^[a-zA-Z0-9_-]{1,80}$/;
 export const blankQuestion=(number,type='객관식')=>({id:crypto.randomUUID(),number:String(number),title:'',type,standardCode:'',points:3,answer:null,passage:'',ask:'',bogi:['','',''],bogiVisible:type==='합답형',choices:['','','','',''],modelAnswer:'',explanation:'',intent:'',figure:null,references:[]});
-export function questionRow(q){return [q.number,q.type,q.standardCode||'',q.ask,q.type==='서술형'?q.modelAnswer:(q.answer===null?'':q.answer+1),Number(q.points),q.passage,...q.bogi.slice(0,3),...q.choices,q.explanation,q.intent,q.id];}
-export function makeWorkbook(XLSX,data){
-  validatePackage(data);
-  const matrix=[COLUMNS,...data.questions.map(questionRow)];
-  for(const [r,row] of matrix.entries())for(const [c,value] of row.entries())if(typeof value==='string'&&value.length>32767)throw new Error(`${COLUMNS[c]}의 ${r}번 문항 내용이 엑셀 한 셀의 최대 길이(32,767자)를 초과합니다.`);
-  const wb=XLSX.utils.book_new(),sheet=XLSX.utils.aoa_to_sheet(matrix);
-  sheet['!cols']=[8,12,19,52,22,8,52,34,34,34,30,30,30,30,30,52,42,40].map((wch,i)=>({wch,...(i===17?{hidden:true}:{})}));
-  sheet['!rows']=matrix.map((_,i)=>({hpt:i?32:24}));sheet['!autofilter']={ref:`A1:Q${matrix.length}`};
-  for(const address of Object.keys(sheet))if(address[0]!=='!'&&sheet[address].t==='s')sheet[address].z='@';
-  XLSX.utils.book_append_sheet(wb,sheet,'문항');
-  const payload=JSON.stringify({format:META_FORMAT,questions:data.questions,documents:data.documents});
-  if(payload.length>24*1024*1024)throw new Error('그림과 자료가 커서 엑셀로 저장할 수 없습니다. 자료 파일을 줄여주세요.');
-  const chunks=[];for(let i=0;i<payload.length;){let end=Math.min(i+30000,payload.length);const last=payload.charCodeAt(end-1);if(end<payload.length&&last>=0xd800&&last<=0xdbff)end--;chunks.push([payload.slice(i,end)]);i=end;}
-  XLSX.utils.book_append_sheet(wb,XLSX.utils.aoa_to_sheet([[META_FORMAT],...chunks]),'연결자료');
-  wb.Workbook={Sheets:[{name:'문항',Hidden:0},{name:'연결자료',Hidden:1}]};
-  return wb;
-}
 function text(value,label,max=32767){if(value===null||value===undefined)return '';if(!['string','number'].includes(typeof value))throw new Error(`${label} 값이 올바르지 않습니다.`);const result=String(value);if(result.length>max)throw new Error(`${label} 내용이 너무 깁니다.`);return result;}
 export function validatePackage(data){
   if(!data||!Array.isArray(data.questions)||data.questions.length>500||!Array.isArray(data.documents)||data.documents.length>40)throw new Error('문항 또는 연결자료의 형식이 올바르지 않습니다.');

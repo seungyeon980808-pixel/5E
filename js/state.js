@@ -19,7 +19,6 @@ export const EQUATION_FONT_STYLE = "italic";
 export const EQUATION_LETTER_SPACING = "-0.04em";
 export const TOOL_LABEL_FONT_FAMILY = EQUATION_FONT_FAMILY;
 export const VARIABLE_LABEL_FONT_STYLE = "italic";
-export const CALLOUT_LABEL_FONT_STYLE = "normal";
 export const OBJECT_LABEL_TYPES = ["quantity", "label"];
 // 물리량(quantity) 객체 라벨 = 텍스트 도구의 "수식" 글꼴(EQUATION_FONT_FAMILY)과 동일.
 // 단일 출처: 수식 글꼴을 그대로 재사용하므로 자동 라벨링과 텍스트 "수식"이 항상 일치한다
@@ -73,11 +72,6 @@ export function splitRomanRuns(text) {
   }
   if (last < s.length) push(s.slice(last), false);
   return runs;
-}
-
-// 텍스트에 세리프 처리가 필요한 로마 숫자가 하나라도 있는지.
-export function hasRomanNumeral(text) {
-  return splitRomanRuns(text).some((r) => r.roman);
 }
 
 function normalizeFontFamily(value) {
