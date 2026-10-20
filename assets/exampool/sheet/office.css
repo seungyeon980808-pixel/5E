@@ -355,3 +355,6 @@ button.q-status:hover{background:var(--ds-hover)}
 #ctx-menu button{display:block;width:100%;text-align:left;height:var(--ds-h-row);padding:0 10px;border:0;border-radius:var(--ds-radius);background:transparent;color:var(--ds-ink)}
 #ctx-menu button:hover,#ctx-menu button:focus-visible{background:var(--ds-hover)}
 #ctx-menu .danger{color:var(--ds-danger,#d06a5f)}
+/* 상태 줄 오른쪽: 자동 저장 · 5E 버전 · 문제 신고(5E 아래 막대와 같은 글자 크기·색). */
+.footer-right{display:flex;align-items:center;gap:14px}
+#host-bug{color:var(--ds-ink-2);text-decoration:underline;text-underline-offset:2px}#host-bug:hover{color:var(--ds-ink)}

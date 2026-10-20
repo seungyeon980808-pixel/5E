@@ -24,6 +24,8 @@ import {createPdfRuntimeLoader} from '../../../js/pdf-library/runtime-loader.js?
 const $=s=>document.querySelector(s),E=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),labels=['①','②','③','④','⑤'];
 const options=(values,value)=>values.map(v=>`<option ${v===value?'selected':''}>${E(v)}</option>`).join('');
 const demo=new URLSearchParams(location.search).has('example'),embedded=window.parent!==window;
+// 5E 안에서 열리면 5E 아래 막대를 덮으므로, 이 상태 줄 오른쪽에 5E 버전과 「문제 신고」를 같이 둔다.
+if(embedded)try{const v=window.parent.document.querySelector('[data-release-version]')?.textContent.trim();const n=document.getElementById('host-version');if(v&&n){n.textContent='5E '+v;n.hidden=false;}document.getElementById('host-bug').hidden=false;}catch{}
 if(demo){$('.brand-page').hidden=false;$('.brand-page').textContent='구조 예제';$('.brand-page').title='실제 문항과 별도 공간에 저장하는 편집 연습 예제입니다.';}
 if(embedded)$('[data-change-summary]').hidden=true;
 // 공개 프리뷰(/preview/…)는 정식 사이트와 같은 원점이라 저장소 이름에 '5e.preview:'를 붙여 분리한다(js/preview-storage.js channelStore와 같은 규칙).
