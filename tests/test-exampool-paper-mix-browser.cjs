@@ -34,12 +34,12 @@ for(const [name,engine] of Object.entries({chromium,webkit})) test(`${name}: an 
   await sheet.click('.side [data-nav="new-exam"]');await sheet.waitForSelector('#examd-view:not([hidden]) #exam-from-library');
   for(const q of qs){await sheet.selectOption('#exam-from-library',q.id);await sheet.waitForFunction(id=>![...document.querySelectorAll('#exam-from-library option')].some(o=>o.value===id),q.id);}
   let downloaded=false;page.on('download',()=>{downloaded=true;});
-  await sheet.click('[data-exam-act="download"]');
+  await sheet.click('[data-exam-more]');await sheet.click('.pv-more [data-exam-act="download"]');
   await sheet.waitForFunction(()=>document.querySelector('#status').dataset.error==='true');
   assert.match(await sheet.locator('#status').textContent(),/용지가 섞여 있습니다\(A4 1번 \/ B4 2번\)/);
   await sheet.waitForTimeout(500);assert.equal(downloaded,false,'no broken exam HWPX is downloaded');
   // 쪽 전체에도 경고
-  await sheet.click('[data-exam-act="cards"]');await sheet.click('[data-cvview="page"]');await sheet.waitForSelector('#cv-page [data-native-page] svg');
+  await sheet.click('[data-exam-more]');await sheet.click('.pv-more [data-exam-act="cards"]');await sheet.click('[data-cvview="page"]');await sheet.waitForSelector('#cv-page [data-native-page] svg');
   assert.match(await sheet.locator('#cv-page .pg-warn').textContent(),/용지가 섞여 있습니다/);
   const pg=await sheet.locator('#cv-page').boundingBox(),fr=await frame.boundingBox();
   await page.screenshot({path:path.join(out,name+'-page-view-mixed.png'),clip:{x:fr.x+pg.x,y:fr.y+pg.y,width:pg.width,height:pg.height}});

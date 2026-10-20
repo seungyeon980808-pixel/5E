@@ -45,7 +45,17 @@ function markBusy(message){
   if(!b||b===busyButton||b.hasAttribute('aria-busy'))return;
   releaseBusy();busyButton=b;b.style.minWidth=b.offsetWidth+'px';b.dataset.busyLabel=b.innerHTML;b.setAttribute('aria-busy','true');b.innerHTML=busyHtml(message.replace(/…$/,''));
   busyTimer=setTimeout(releaseBusy,60000);}
-function status(message,error=false,{keep=false}={}){clearTimeout(statusTimer);$('#status').textContent=message;$('#status').dataset.error=String(error);markBusy(error?'':message);
+// 끝·실패 알림 카드(오른쪽 아래, 5E 「AI 완료」 알림과 같은 자리·모양): 진행 표시가 끝났을 때와 오류일 때 띄운다.
+// 끝은 4초, 실패는 7초 뒤 사라진다. 카드는 누르기를 막지 않는다(밑의 단추를 그대로 누를 수 있게). 아래 상태 줄 문장은 그대로 남긴다.
+let noticeTimer=0;
+function notice(message,error=false){
+  let n=document.getElementById('ep-notice');
+  if(!n){n=document.createElement('div');n.id='ep-notice';n.setAttribute('role','status');n.setAttribute('aria-live','polite');n.innerHTML='<i aria-hidden="true"></i><p></p>';document.body.append(n);}
+  clearTimeout(noticeTimer);n.dataset.error=String(error);n.querySelector('i').textContent=error?'!':'✓';n.querySelector('p').textContent=message;n.hidden=false;n.classList.remove('in');void n.offsetWidth;n.classList.add('in');
+  noticeTimer=setTimeout(()=>{n.hidden=true;},error?7000:4000);}
+let lastProgress=false;
+function status(message,error=false,{keep=false}={}){clearTimeout(statusTimer);const progress=/…$/.test(message)&&message!=='저장 중…',finishing=lastProgress&&!progress&&!/^저장됨/.test(message);lastProgress=progress;$('#status').textContent=message;$('#status').dataset.error=String(error);markBusy(error?'':message);
+  if(error||finishing)notice(message,error);
   if(error&&!keep)statusTimer=setTimeout(()=>{if($('#status').textContent!==message)return;$('#status').textContent='';$('#status').dataset.error='false';},6000);}
 // 자료 열람 상태 문장: 라이브러리 칸에 붙어 있을 때는 칸 안 줄 대신 아래 상태 막대로 보낸다(오류는 빨간 글).
 function sourceSay(message,error=false){$('#source-status').textContent=message;if($('#sources').classList.contains('docked'))status(message,error);}
@@ -348,7 +358,7 @@ async function convertPast(item){
     openCard(q.id);cardEditor.showHwp?.();
     const warn=(diag?.notes||[]).filter(n=>/못|확인|제외|원본 참고/.test(n));
     const done=`${item.title} → ${q.number}번 문항으로 가져왔습니다 · 원본은 근거로 연결${warn.length?' · 확인: '+warn[0]:''}`;
-    status(done);setTimeout(()=>status(done),1500);// 자동 저장 표시가 덮지 않게 한 번 더
+    status(done);notice(done);setTimeout(()=>status(done),1500);// 자동 저장 표시가 덮지 않게 한 번 더
   }catch(e){pastIdle(`가져오지 못했습니다 · ${e.message}`);status(`${item.title} 변환 실패: ${e.message}`,true);}
   finally{convertingPast=null;pastIdle();}
 }
@@ -526,6 +536,8 @@ $('#examd-view').addEventListener('change',e=>{const exam=examNow();if(!exam)ret
   if(e.target.id==='exam-from-library'&&e.target.value){const qid=e.target.value;mutate(()=>{addToExam(data,exam.id,qid);renumberExam(data,exam.id);});}
 });
 $('#examd-view').addEventListener('click',e=>{const exam=examNow(),b=e.target.closest('button');if(!exam||!b)return;const row=b.closest('[data-order]');
+  if(b.matches('[data-exam-more]')){const menu=b.nextElementSibling,open=menu.hidden;menu.hidden=!open;b.setAttribute('aria-expanded',String(open));if(open)menu.querySelector('button')?.focus();return;}
+  if(b.closest('.pv-more .top-menu')){const m=b.closest('.top-menu');m.hidden=true;m.previousElementSibling.setAttribute('aria-expanded','false');}
   if(b.dataset.openCard){openCard(b.dataset.openCard);return;}
   if(b.dataset.move&&row){const at=exam.items.indexOf(row.dataset.order);mutate(()=>{if(!moveInExam(data,exam.id,row.dataset.order,at+(b.dataset.move==='up'?-1:1)))throw Error('더 옮길 수 없습니다.');renumberExam(data,exam.id);});return;}
   if(b.dataset.out){mutate(()=>{removeFromExam(data,b.dataset.out);renumberExam(data,exam.id);});status('문항을 보관함으로 옮겼습니다.');return;}
@@ -537,6 +549,10 @@ $('#examd-view').addEventListener('click',e=>{const exam=examNow(),b=e.target.cl
   else if(act==='send')void sendExam(exam);
   else if(act==='download')void sendExam(exam,{download:true});
 });
+// 시험지 ⋯ 메뉴: 바깥을 누르거나 Esc면 닫는다.
+const closeExamMenu=(focus=false)=>{for(const m of document.querySelectorAll('.pv-more .top-menu:not([hidden])')){m.hidden=true;const b=m.previousElementSibling;b.setAttribute('aria-expanded','false');if(focus)b.focus();}};
+document.addEventListener('pointerdown',e=>{if(!e.target.closest?.('.pv-more'))closeExamMenu();},true);
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&document.querySelector('.pv-more .top-menu:not([hidden])')){e.preventDefault();closeExamMenu(true);}},true);
 // 끌어서 순서 바꾸기.
 let dragId=null;
 $('#examd-view').addEventListener('dragstart',e=>{const row=e.target.closest('[data-order]');if(!row)return;dragId=row.dataset.order;e.dataTransfer.effectAllowed='move';row.classList.add('dragging');});

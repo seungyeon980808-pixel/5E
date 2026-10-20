@@ -35,9 +35,9 @@ for(const [name,engine] of Object.entries({chromium,webkit})) test(`${name}: a $
   await sheet.click('.side [data-nav="new-exam"]');await sheet.waitForSelector('#examd-view:not([hidden]) #exam-from-library');
   for(const q of qs){await sheet.selectOption('#exam-from-library',q.id);await sheet.waitForFunction(id=>![...document.querySelectorAll('#exam-from-library option')].some(o=>o.value===id),q.id);}
   // 시험지 HWPX
-  await watch(sheet);const downloading=page.waitForEvent('download');await sheet.click('[data-exam-act="download"]');await downloading;const hwpxGap=await stop(sheet);
+  await watch(sheet);const downloading=page.waitForEvent('download');await sheet.click('[data-exam-more]');await sheet.click('.pv-more [data-exam-act="download"]');await downloading;const hwpxGap=await stop(sheet);
   // 쪽 전체
-  await sheet.click('[data-exam-act="cards"]');await sheet.waitForTimeout(300);await ready('*');await sheet.waitForTimeout(500);
+  await sheet.click('[data-exam-more]');await sheet.click('.pv-more [data-exam-act="cards"]');await sheet.waitForTimeout(300);await ready('*');await sheet.waitForTimeout(500);
   await watch(sheet);await sheet.click('[data-cvview="page"]');await sheet.waitForFunction(()=>document.querySelectorAll('#cv-page [data-native-page] svg').length>0);await sheet.waitForTimeout(100);const pageGap=await stop(sheet);
   const pages=await sheet.locator('#cv-page [data-native-page]').count();assert.ok(pages>=2,`the exam spans pages (${pages})`);
   await page.screenshot({path:path.join(out,name+'-page-view.png')});

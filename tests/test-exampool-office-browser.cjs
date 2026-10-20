@@ -152,12 +152,14 @@ h.withServer(async origin => {
       await sheet.click('#brand-home');await sheet.waitForSelector('#library-view:not([hidden])');
       assert.equal(await sheet.locator('.crumb-sep').isHidden(),true,'no dangling separator when no question is open');
       // 보관함 미리보기 그림은 문항 맨 위(지문)부터 보인다(단추가 내용을 세로 가운데로 두어 윗부분이 잘리던 것).
-      await sheet.waitForFunction(()=>document.querySelector('#library-view .pv-doc')?.textContent.trim(),null,{timeout:10000});
-      assert.ok(await sheet.evaluate(()=>{const t=document.querySelector('#library-view .pv-thumb').getBoundingClientRect(),d=document.querySelector('#library-view .pv-doc').getBoundingClientRect();return d.top>=t.top-0.5&&d.top<=t.top+1;}),'the library thumbnail starts at the top of the question');
+      // 빈 문항은 큰 흰 미리보기 대신 낮은 점선 자리(「아직 내용이 없습니다」)로 보인다.
+      if(await sheet.locator('#library-view .pv-thumb.is-empty').count())assert.match(await sheet.locator('#library-view .pv-thumb.is-empty').first().textContent(),/아직 내용이 없습니다/,'an empty question shows a short placeholder');
+      else{await sheet.waitForFunction(()=>document.querySelector('#library-view .pv-doc')?.textContent.trim(),null,{timeout:10000});
+      assert.ok(await sheet.evaluate(()=>{const t=document.querySelector('#library-view .pv-thumb').getBoundingClientRect(),d=document.querySelector('#library-view .pv-doc').getBoundingClientRect();return d.top>=t.top-0.5&&d.top<=t.top+1;}),'the library thumbnail starts at the top of the question');}
       if(await sheet.locator('.side').isHidden())await sheet.click('#toggle-nav');
       await sheet.click('.side [data-nav="new-exam"]');await sheet.waitForSelector('#examd-view:not([hidden]) #exam-from-library');
       await sheet.selectOption('#exam-from-library',await sheet.locator('#exam-from-library option').nth(1).getAttribute('value'));
-      await sheet.click('[data-exam-act="sheet"]');
+      await sheet.click('[data-exam-more]');await sheet.click('.pv-more [data-exam-act="sheet"]');
       await sheet.waitForSelector('.workspace:not([hidden]) #registry');
       const ask=sheet.locator('#rows tr:has(th.field-label:text-is("발문")) td').first();
       await ask.click();await page.keyboard.type('실험 결과로 옳은 것만을 <보기>에서 있는 대로 고른 것은?');
@@ -201,7 +203,7 @@ h.withServer(async origin => {
       // 표 화면의 「문항 조판」은 문항 카드로 가서 오른쪽 미리보기에 한글 조판(5e_hwp)을 연다.
       const toCardHwp=async()=>{await sheet.click('#preview');await sheet.waitForSelector('#card-view:not([hidden])');await sheet.waitForSelector('.cv-hwp-layer:not([hidden]) #preview-dialog:not([hidden])');await typesetReady(sheet);};
       // 표로 돌아가기: 시험지의 「표로 한꺼번에 고치기」.
-      const toSheet=async()=>{if(await sheet.locator('.side').isHidden())await sheet.click('#toggle-nav');await sheet.click('.side [data-nav="exam"]');await sheet.click('[data-exam-act="sheet"]');await sheet.waitForSelector('.workspace:not([hidden]) #registry');};
+      const toSheet=async()=>{if(await sheet.locator('.side').isHidden())await sheet.click('#toggle-nav');await sheet.click('.side [data-nav="exam"]');await sheet.click('[data-exam-more]');await sheet.click('.pv-more [data-exam-act="sheet"]');await sheet.waitForSelector('.workspace:not([hidden]) #registry');};
       await toCardHwp();
       assert.equal(await sheet.evaluate(()=>document.querySelector('.workspace').hidden),true,'the sheet is not shown beside the HWP window');
       assert.equal(await sheet.locator('#card-view [data-cvright="paper"]').getAttribute('aria-pressed'),'true','the HWP window is the preview tab');
@@ -285,8 +287,8 @@ h.withServer(async origin => {
       assert.match(await sheet.locator('#typeset-status').textContent(),/조판 저장됨/);
       // 앞에서 만든 시험지(이 문항이 든)를 HWPX로 받는다.
       if(await sheet.locator('.side').isHidden())await sheet.click('#toggle-nav');
-      await sheet.click('.side [data-nav="exam"]');await sheet.waitForSelector('#examd-view:not([hidden]) [data-exam-act="download"]');
-      const downloading=page.waitForEvent('download');await sheet.click('[data-exam-act="download"]');const download=await downloading;
+      await sheet.click('.side [data-nav="exam"]');await sheet.waitForSelector('#examd-view:not([hidden]) [data-exam-more]');
+      const downloading=page.waitForEvent('download');await sheet.click('[data-exam-more]');await sheet.click('.pv-more [data-exam-act="download"]');const download=await downloading;
       const file=path.join(evidence,`${engineName}-exam.hwpx`);await download.saveAs(file);
       const zip=await JSZip.loadAsync(fs.readFileSync(file)),xml=await zip.file('Contents/section0.xml').async('string');
       assert.match(xml,/colCount="2"/);assert.match(xml,/width="59528" height="84189"/);assert.ok(xml.includes('OK'),'the text typed in the HWP window is in the exam');
