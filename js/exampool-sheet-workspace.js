@@ -14,6 +14,8 @@ export function initQuestionSheet(state,services,examWorkspace){
   let host,frame,focusReturn,busy=false;
   function open(){if(!host){host=document.createElement('section');host.id='exampool-sheet-workspace';host.setAttribute('aria-label','문항 시트');host.setAttribute('role','dialog');host.setAttribute('aria-modal','true');host.style.cssText='position:fixed;inset:0;z-index:1250;background:var(--ds-app);';frame=document.createElement('iframe');frame.setAttribute('aria-label','5E_exam 문항 시트');/* title이면 Safari가 화면 위에 말풍선으로 띄운다 */frame.src=new URL('../assets/exampool/sheet/index.html',import.meta.url).href+(new URLSearchParams(location.search).get('sheet-example')==='1'?'?example=1':'');frame.style.cssText='width:100%;height:100%;border:0;display:block;opacity:0;transition:opacity 200ms cubic-bezier(.2,0,0,1)';/* 첫 열기: 안 문서가 다 그려진 뒤 흐려졌다 또렷해지게(빈 칸 → 내용이 휙 뜨지 않게), 1.5초가 지나면 그냥 보인다 */frame.addEventListener('load',()=>{const start=performance.now(),show=()=>{if(frame.contentDocument?.querySelector('#side-new')||performance.now()-start>1500)frame.style.opacity='1';else requestAnimationFrame(show);};show();},{once:true});host.append(frame);document.body.append(host);}
     focusReturn=document.activeElement;host.hidden=false;host.style.bottom='0';/* ExamPool 상태 줄 하나에 5E 버전·문제 신고를 함께 두므로 5E 아래 막대는 덮는다(아래 막대 두 줄 → 한 줄). */const app=document.querySelector('body>.app');if(app)app.inert=true;}
+  // 사용자가 출제 칸을 닫거나(✕) 한글로 보낼 때: 휙 사라지지 않게 0.16초 흐려지며 닫는다(app-switch.css의 .app-leaving). 움직임 줄이기 설정이면 바로.
+  function fadeClose(){if(!host||host.hidden)return;if(matchMedia('(prefers-reduced-motion: reduce)').matches){close();return;}host.classList.add('app-leaving');setTimeout(()=>{host.classList.remove('app-leaving');close();},160);}
   function close(){if(!host)return;host.hidden=true;document.documentElement.classList.remove('exampool-modal');const app=document.querySelector('body>.app');if(app)app.inert=!document.querySelector('#rhwp-exam-workspace')?.hidden||!document.querySelector('#exampool-workspace')?.hidden;focusReturn?.focus();}
   // 5E 그림을 ExamPool 문항의 그림 칸으로 보낸다. region(mm)이 있으면 그 영역만, 없으면 그림 전체.
   async function captureFigure(m,send,region=null){
@@ -77,7 +79,7 @@ export function initQuestionSheet(state,services,examWorkspace){
     if(e.origin!==location.origin||e.source!==frame?.contentWindow||e.data?.channel!=='5e-question-sheet')return;
     const m=e.data,send=result=>frame.contentWindow.postMessage({channel:'5e-question-sheet',qid:m.qid,key:m.key,requestId:m.requestId,...result},location.origin);
     if(m.action==='modal'){document.documentElement.classList.toggle('exampool-modal',!!m.open&&!host.hidden);return;}
-    if(m.action==='close'){close();return;}
+    if(m.action==='close'){fadeClose();return;}
     // 출제 대화: 시간이 오래 걸리므로 다른 전송 작업을 막지 않는다. 문항별 작업 범위로 따로 실행한다.
     if(m.action==='author'){authoring().then(h=>h.request(m.packet,{requestId:m.requestId,onProgress:progress=>send({action:'author-progress',progress})})).then(result=>send({action:'author-ready',result}),error=>send({action:'author-ready',error:error.message||String(error),cancelled:!!error.cancelled}));return;}
     if(m.action==='login'){window.dispatchEvent(new Event('5e:web-login-request'));return;}
@@ -90,7 +92,7 @@ export function initQuestionSheet(state,services,examWorkspace){
     if(busy){send({error:'전송 작업을 마친 뒤 다시 시도하세요.'});return;}busy=true;
     try {
       if(m.action==='exam-handoff'){
-        await examWorkspace.receiveExamDocument(m.bytes,m.title);send({action:'exam-handoff-ready',requestId:m.requestId});close();return;
+        await examWorkspace.receiveExamDocument(m.bytes,m.title);send({action:'exam-handoff-ready',requestId:m.requestId});fadeClose();return;
       }
       // AI 검토·대화: 검토 하네스가 window.fiveEReviewHarness.request(묶음)로 붙는다. 아직 없으면 알린다.
       if(m.action==='review'){
@@ -99,7 +101,7 @@ export function initQuestionSheet(state,services,examWorkspace){
       }
       if(m.action==='handoff'){
         const result=await examWorkspace.receiveStructuredQuestion(m.packet);
-        send({action:'handoff-ready',requestId:m.requestId,warnings:result.warnings});close();return;
+        send({action:'handoff-ready',requestId:m.requestId,warnings:result.warnings});fadeClose();return;
       }
       if(m.action==='capture'){await captureFigure(m,send);}
       if(m.action==='pick-figure'){await pickFigure(m,send);return;}
