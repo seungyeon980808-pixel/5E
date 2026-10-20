@@ -40,9 +40,11 @@ h.withServer(async origin => {
       const context = await browser.newContext({viewport:{width:1440,height:960},acceptDownloads:true});
       const page = await context.newPage(), errors = [];page.on('pageerror',error => errors.push(error.message));
       await h.navigate(page,origin+'/?mode=pro&mobile=0');await h.ready(page);
-      const entry=page.locator('#exam-pool-open');
-      assert.equal(await entry.isEnabled(),true,'5E_ExamPool is enabled');
+      // 10-20 입구 하나로: 출제는 맨 위 줄 「exam」. 아래 막대의 옛 「5E_ExamPool」 단추는 보이지 않는다(준비됨 상태만 가짐).
+      assert.equal(await page.locator('#exam-pool-open').isEnabled(),true,'5E_ExamPool is ready');
+      assert.equal(await page.locator('#exam-pool-open').isVisible(),false,'one entry: the footer button is hidden');
       assert.equal(await page.locator('#exampool-open').isVisible(),false,'one entry: the legacy design button is hidden');
+      const entry=page.locator('.app-switch-image [data-app-switch="exam"]');
       await entry.click();
       const frameHandle=await page.waitForSelector('#exampool-sheet-workspace iframe');const sheet=await frameHandle.contentFrame();
       sheet.on?.('pageerror',e=>errors.push(e.message));
@@ -298,7 +300,7 @@ h.withServer(async origin => {
       await sheet.click('[data-exam-act="send"]');
       await page.waitForFunction(()=>document.querySelector('#exampool-sheet-workspace')?.hidden===true&&!document.querySelector('#rhwp-exam-workspace')?.hidden,null,{timeout:60000});
       assert.match(await page.locator('#exam-name').inputValue(),/새 시험지/,'the exam opens under its own name');
-      await page.click('[data-exam-action="close"]');await page.locator('#exam-pool-open').click();await sheet.waitForSelector('#examd-view:not([hidden])');
+      await page.click('[data-exam-action="close"]');await page.locator('.app-switch-image [data-app-switch="exam"]').click();await sheet.waitForSelector('#examd-view:not([hidden])');
 
       // 출제 대화(대역 하네스 · 실제 AI 아님): 요청 묶음 → 변경안 보관 → 「적용」→ 버전 기록, 대기 중 직접 수정한 응답은 지난 변경안.
       await page.evaluate(()=>{window.__authorPackets=[];window.__authorHold=null;window.fiveEAuthoringHarness={cancel(){return true;},request:async packet=>{window.__authorPackets.push(packet);if(window.__authorHold)await window.__authorHold;
@@ -345,7 +347,7 @@ h.withServer(async origin => {
       await h.navigate(small,origin+'/?mode=pro&mobile=0');await h.ready(small);
       // 새 브라우저라 튜토리얼 환영 창이 ready 뒤에 늦게 뜰 수 있다 — 뜨면 닫고 누른다.
       {const skip=small.getByRole('button',{name:'건너뛰기',exact:true});await skip.waitFor({state:'visible',timeout:3000}).then(()=>skip.click()).catch(()=>{});}
-      await small.click('#exam-pool-open');
+      await small.click('.app-switch-image [data-app-switch="exam"]');
       const smallSheet=await (await small.waitForSelector('#exampool-sheet-workspace iframe')).contentFrame();
       await smallSheet.waitForSelector('#side-new');await smallSheet.waitForFunction(()=>document.querySelector('#status').textContent!=='준비 중',null,{timeout:30000});
       await smallSheet.click('#side-new');await smallSheet.waitForSelector('#new-dialog[open]');

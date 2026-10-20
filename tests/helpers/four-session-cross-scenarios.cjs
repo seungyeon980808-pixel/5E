@@ -1308,8 +1308,7 @@ async function openExamDocument(page) {
   const h = require('./rhwp-exam.cjs');
   await closeAI(page);
   if (!await page.locator('#rhwp-exam-workspace').isVisible()) {
-    await page.locator('#exam-send').click();
-    await page.locator('[data-exam-document-open]').click();
+    await page.locator('.app-switch-image [data-app-switch="hwp"]').click();
     await page.locator('#rhwp-exam-workspace').waitFor({state:'visible'});
   }
   await h.idle(page);

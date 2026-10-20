@@ -5,11 +5,9 @@
   transition: color 160ms cubic-bezier(.2,.8,.2,1), background-color 160ms cubic-bezier(.2,.8,.2,1); }
 .app-switch-btn:hover { color: var(--ds-ink, #e6edf3) !important; background: var(--ds-hover, #1f2630) !important; }
 .app-switch-btn:focus-visible { outline: 2px solid var(--go-line, #6ba4f8); outline-offset: -2px; }
-:root:not([data-mode="lite"]) .app-shell-header .app-brand .app-brand-name { color: var(--ds-ink, #e6edf3); font-weight: 600; }
 :root[data-mode="lite"] .app-switch { display: none; }
 .app-switch.app-switch-image { margin-left: 4px; padding-left: 0; border-left: 0; }
 .tb-sep.ds-sep-apps { margin: 0 6px; }
-@media (max-width: 760px) { .app-switch { display: none; } }
 @media (prefers-reduced-motion: reduce) { .app-switch-btn { transition: none; } }
 
 /* 조판(5E_hwp) 맨 위 줄: 전체 폭 44px, 노란 「5E」 로고 대신 다른 화면과 같은 「5E_hwp」 */
@@ -17,7 +15,7 @@
 #rhwp-exam-workspace .exam-topbar .exam-heading { flex: 1; min-width: 0; height: 30px; gap: 2px; }
 #rhwp-exam-workspace .exam-topbar .exam-brand { display: inline-flex; align-items: baseline; padding: 0 4px; color: var(--ds-ink, #e6edf3); font-size: inherit; }
 #rhwp-exam-workspace .exam-topbar .exam-brand .app-brand-mark { font: italic 700 21px/1 var(--ds-font-brand, Georgia, "Times New Roman", serif); letter-spacing: -.6px; color: var(--ds-ink, #e6edf3); }
-#rhwp-exam-workspace .exam-topbar .exam-brand .app-brand-name { font: 600 15px/1 var(--ds-font, -apple-system, sans-serif); margin-left: 1px; color: var(--ds-ink, #e6edf3); }
+#rhwp-exam-workspace .exam-topbar .exam-brand .app-brand-name { font: 500 15px/1 var(--ds-font, -apple-system, sans-serif); margin-left: 1px; color: var(--ds-ink-2, #b1bac4); }
 #rhwp-exam-workspace .exam-top-sep { width: 1px; height: 20px; margin: 0 6px; background: var(--ds-line, #30363d); flex: none; }
 #rhwp-exam-workspace .exam-topbar .exam-history { display: inline-grid; place-items: center; width: 30px; height: 30px; min-height: 0; padding: 0; border: 0; background: transparent; color: var(--ds-ink-2, #b1bac4); }
 #rhwp-exam-workspace .exam-topbar .exam-history:hover { background: var(--ds-hover, #1f2630); color: var(--ds-ink, #e6edf3); }
@@ -54,3 +52,8 @@
   #rhwp-exam-workspace .exam-topbar .structure-lock { font-size: 0 !important; gap: 0 !important; }
   #rhwp-exam-workspace .exam-top-sep { margin: 0 4px !important; }
 }
+
+/* 입구 하나로(10-20): 그림 화면 아래 막대의 「5E_ExamPool」 단추는 숨긴다(출제는 맨 위 「exam」으로). 요소는 「준비됨」 상태를 갖고 있어 남겨 둔다. */
+#exam-pool-open { display: none !important; }
+/* 좁은 창에서도 이름 단추는 남긴다(유일한 입구) — 글자만 조금 작게 */
+@media (max-width: 760px) { .app-switch-btn { width: 46px !important; font-size: 14px !important; } }

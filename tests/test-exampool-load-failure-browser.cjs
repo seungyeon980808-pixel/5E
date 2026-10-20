@@ -6,7 +6,7 @@ const h = require('./helpers/rhwp-exam.cjs');
 
 async function openPool(page,origin){
   await h.navigate(page,origin+'/?mode=pro&mobile=0');await h.ready(page);
-  await page.locator('#exam-pool-open').click();const sheet=await (await page.waitForSelector('#exampool-sheet-workspace iframe')).contentFrame();
+  await page.locator('.app-switch-image [data-app-switch="exam"]').click();const sheet=await (await page.waitForSelector('#exampool-sheet-workspace iframe')).contentFrame();
   await sheet.waitForSelector('#side-new');await sheet.waitForFunction(()=>document.querySelector('#status').textContent!=='준비 중',null,{timeout:60000});
   return sheet;
 }

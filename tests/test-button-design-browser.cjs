@@ -160,19 +160,10 @@ for (const engine of [chromium,webkit]) test(`canonical button design and unread
   // 그라파이트: 마우스를 올려도 도는 장식 테두리가 없다.
   assert.equal(await page.locator('#exam-send').evaluate(el=>getComputedStyle(el,'::before').animationName),'none');
   await page.screenshot({path:path.join(evidence,'main-hwp-hover.png')});
-  await page.locator('#exam-send').click();
-  assert.equal(await page.locator('#exam-document-menu').isVisible(),true);
-  await assertWorkflowState(page,'exam-send',true,selected);
-  await assertOriginalAppearance(page,'#exam-document-menu button');
-  await page.locator('#exam-send').evaluate(async el=>{await Promise.all(el.getAnimations().filter(a=>a.effect?.getKeyframes().some(frame=>frame.scale)).map(a=>a.finished));});
-  const menuAlignment=await page.evaluate(()=>{
-    const button=document.getElementById('exam-send').getBoundingClientRect(),menu=document.getElementById('exam-document-menu').getBoundingClientRect();
-    return {leftGap:menu.left-button.left,verticalGap:button.top-menu.bottom};
-  });
-  assert.ok(Math.abs(menuAlignment.leftGap)<1 && Math.abs(menuAlignment.verticalGap-3)<1,JSON.stringify(menuAlignment));
-  await page.screenshot({path:path.join(evidence,'hwp-menu-aligned.png')});
-  await page.keyboard.press('Escape');
-  await assertWorkflowState(page,'exam-send',false,selected);
+  // 진입점 통일(10-20): 아래 「한글에 넣기」는 메뉴 없이 바로 넣는 단추 — 빈 그림에서는 꺼져 있고, 한글 문서는 맨 위 이름 줄로만 연다.
+  assert.equal(await page.locator('#exam-send').isDisabled(),true);
+  assert.equal(await page.locator('#exam-document-menu').count(),0);
+  assert.equal(await page.locator('.app-switch-image [data-app-switch="hwp"]').isVisible(),true);
   await page.locator('#graph-tool-open').click();await page.locator('#graph-modal-overlay').waitFor({state:'visible'});
   await assertWorkflowState(page,'graph-tool-open',true,selected);
   await assertOriginalAppearance(page,'#graph-modal-overlay button');
@@ -258,11 +249,6 @@ for (const engine of [chromium,webkit]) test(`canonical button design and unread
   await page.screenshot({path:path.join(evidence,'main-320.png')});
   const mobile=await page.evaluate(ids=>ids.map(id=>{const r=document.getElementById(id).getBoundingClientRect();return{id,left:r.left,right:r.right,top:r.top,bottom:r.bottom,width:r.width,height:r.height};}),core);
   assert.ok(mobile.every(r=>r.width>0 && r.left>=0 && r.right<=320 && r.bottom<=780),JSON.stringify(mobile));
-  await page.locator('#exam-send').click();
-  await page.locator('#exam-document-menu').evaluate(async el=>{await Promise.all(el.getAnimations().filter(a=>a.effect?.getTiming().iterations!==Infinity).map(a=>a.finished));});
-  const narrowMenu=await page.locator('#exam-document-menu').boundingBox();
-  assert.ok(narrowMenu.x>=7 && narrowMenu.x+narrowMenu.width<=313,JSON.stringify(narrowMenu));
-  await page.keyboard.press('Escape');
   const touch=await browser.newContext({viewport:{width:320,height:780},hasTouch:true});
   const touchPage=await touch.newPage();
   await touchPage.addInitScript({content:seed+`\nseedRequestWorkspaces(2,false,false,'pro',false,false,false,${JSON.stringify({runtime:runtimeInit})});`});
@@ -274,5 +260,5 @@ for (const engine of [chromium,webkit]) test(`canonical button design and unread
   assert.ok(coarse.every(x=>x.height===27),JSON.stringify(coarse));
   await touchPage.screenshot({path:path.join(evidence,'main-touch-320.png')});await touch.close();
   assert.deepEqual(errors,[]);
-  fs.writeFileSync(path.join(evidence,'receipt.json'),JSON.stringify({engine:engine.name(),layout,idle,toolbar,selected,tools,eyes,menuAlignment,libraryMotion,mobile,narrowGaps,narrowMenu,coarse,pulse,workflowStateLifecycle:true,panelStateLifecycle:true,unreadPersisted:true,acknowledgmentPreservesResults:true,providerCalls:0,fixtureTransportOnly:true,errors},null,2));
+  fs.writeFileSync(path.join(evidence,'receipt.json'),JSON.stringify({engine:engine.name(),layout,idle,toolbar,selected,tools,eyes,libraryMotion,mobile,narrowGaps,coarse,pulse,workflowStateLifecycle:true,panelStateLifecycle:true,unreadPersisted:true,acknowledgmentPreservesResults:true,providerCalls:0,fixtureTransportOnly:true,errors},null,2));
 });

@@ -7,7 +7,7 @@ const commentBox=async page=>{const show=page.locator('#ai-image-panel [data-ai-
  // 루트 화면은 표시 옆 작은 창, /preview/ 진입 화면(옛 표식)은 오른쪽 칸 목록에 편집 칸이 있다.
  const box=page.locator('#ai-image-panel [data-ai-comment-popover] textarea:visible, #ai-image-panel [data-ai-comments-panel] textarea:visible').first();await box.waitFor({state:'visible'});return box;};
 // AI 작업대가 열려 있으면 닫고(그림 편집은 계속), 아래 「5E_hwp」 메뉴의 '한글 문서로 이동'으로 돌아간다.
-const toDocument=async page=>{const ai=page.locator('#ai-image-panel');await page.waitForFunction(()=>{const e=document.querySelector('#ai-image-panel');return !e||e.hidden||!e.dataset.modalMotionState||['open','closed'].includes(e.dataset.modalMotionState);});if(await ai.isVisible())await ai.locator('[data-ai-close]').click();await page.locator('#exam-send').click();await page.locator('[data-exam-document-open]').click();};
+const toDocument=async page=>{const ai=page.locator('#ai-image-panel');await page.waitForFunction(()=>{const e=document.querySelector('#ai-image-panel');return !e||e.hidden||!e.dataset.modalMotionState||['open','closed'].includes(e.dataset.modalMotionState);});if(await ai.isVisible())await ai.locator('[data-ai-close]').click();await page.locator('.app-switch-image [data-app-switch=\"hwp\"]').click();};
 const evidence=path.resolve(process.env.EVIDENCE_DIR||'_work/rhwp/verification/ai');
 const data='data:image/png;base64,'+fs.readFileSync(path.resolve('tests/fixtures/rights-clear-smoke.png')).toString('base64');
 async function seed(page){await page.addInitScript(({data})=>{

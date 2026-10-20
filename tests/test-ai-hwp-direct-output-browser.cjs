@@ -60,7 +60,7 @@ h.withServer(async origin => {
       const originalDrawing = await page.evaluate(() => structuredClone(__directState.get().objects));
       assert.equal(originalDrawing.filter(o => o.type === 'image').length, 2, 'Ordinary canvas insertion preserves composition');
       // Existing figure ownership must not be silently overwritten by task 1.
-      await page.locator('#exam-send').click(); await page.locator('[data-exam-document-insert]').click(); await h.idle(page);
+      await page.locator('#exam-send').click(); await h.idle(page);
       assert.equal(await page.locator('.capture-overlay').count(), 0);
       assert.match(await page.locator('#exam-status').textContent(), /다른 그림에 연결/);
       await page.getByRole('button', { name:'확인', exact:true }).filter({ visible:true }).click().catch(() => {});
@@ -117,7 +117,7 @@ h.withServer(async origin => {
       assert.equal(linkState.filter(p => p.link).length, 2);
       assert.equal(linkState.filter(p => p.pending).length, 1, 'Pending independent canvas is kept as an uncommitted draft');
       await ai.locator('[data-ai-close]').click(); await ai.waitFor({state:'hidden'});
-      await page.locator('#exam-send').click(); await page.locator('[data-exam-document-open]').click(); await h.idle(page);
+      await page.locator('.app-switch-image [data-app-switch=\"hwp\"]').click(); await h.idle(page);
       const waiting=page.waitForEvent('download'); await h.action(page,'save');
       const file=path.join(evidence,engineName+'-pending.5e'); await (await waiting).saveAs(file); await h.idle(page);
       const portable=await browser.newContext({viewport:{width:1440,height:1000}});

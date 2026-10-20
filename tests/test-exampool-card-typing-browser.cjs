@@ -14,7 +14,7 @@ for(const [name,engine] of Object.entries({chromium,webkit})) test(`${name}: car
   const browser=await engine.launch();t.after(()=>browser.close());
   const page=await browser.newPage({viewport:{width:1440,height:900}}),errors=[];page.setDefaultTimeout(60000);page.on('pageerror',e=>errors.push(e.message));
   await h.navigate(page,origin+'/?mode=pro&mobile=0');await h.ready(page);
-  await page.click('#exam-pool-open');const sheet=await (await page.waitForSelector('#exampool-sheet-workspace iframe')).contentFrame();
+  await page.click('.app-switch-image [data-app-switch="exam"]');const sheet=await (await page.waitForSelector('#exampool-sheet-workspace iframe')).contentFrame();
   await sheet.waitForSelector('#side-new');await sheet.waitForFunction(()=>document.querySelector('#status').textContent!=='준비 중');
   await sheet.setInputFiles('#excel-file',{name:'many.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify({format:'5e-question-sheet-v2',questions,documents:[]}))});
   await sheet.waitForSelector('#import-dialog[open]');await sheet.check('input[name="import-mode"][value="update"]');await sheet.click('#apply-import');// 같은 ID로 들여온다

@@ -21,7 +21,7 @@ h.withServer(async origin=>{
           image:async({description})=>{window.__figureCalls.push(['image',description]);return {data:PNG,width:1,height:1,engine:'ai-image',ms:5};},
           editGraph:async()=>null};
       },PNG);
-      await page.locator('#exam-pool-open').click();
+      await page.locator('.app-switch-image [data-app-switch="exam"]').click();
       const sheet=await (await page.waitForSelector('#exampool-sheet-workspace iframe')).contentFrame();
       await sheet.waitForSelector('#side-new');await sheet.waitForFunction(()=>document.querySelector('#status').textContent!=='준비 중',null,{timeout:30000});
       await sheet.click('#side-new');await sheet.click('#new-dialog .nq-opt[data-step="form"][data-k="combo"]');await sheet.click('#new-dialog .nq-opt[data-step="struct"][data-k="big"]');await sheet.click('#new-dialog [data-nq="go"]');

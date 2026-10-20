@@ -54,7 +54,6 @@ flow.runEngines('hwp-exam', {
 
     // 5E_hwp → 한글 문서로 보내기 → 그림 전체를 영역으로 지정 → 확인.
     await page.locator('#exam-send').click();
-    await page.locator('[data-exam-document-insert]').click();
     await page.locator('.capture-overlay').waitFor();
     if (!await page.locator('#capture-confirm').isVisible()) {
       const from = await screen(page, image.x - 1, image.y - 1), to = await screen(page, image.x + image.w + 1, image.y + image.h + 1);

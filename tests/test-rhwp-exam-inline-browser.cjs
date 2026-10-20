@@ -53,7 +53,7 @@ async function openInline(page, index = 0) {
 }
 
 async function returnToExistingExam(page) {
-  await page.locator('#exam-send').click();await page.locator('[data-exam-document-open]').click();await h.idle(page);
+  await page.locator('.app-switch-image [data-app-switch=\"hwp\"]').click();await h.idle(page);
 }
 
 // Use the actual SVG matrix, including its placement over the iframe picture.

@@ -28,36 +28,26 @@ h.withServer(async origin => {
       for (const theme of ['light', 'dark']) for (const width of [1440, 720, 390]) {
         await page.setViewportSize({ width, height:1000 });
         await page.evaluate(theme => document.documentElement.dataset.theme = theme, theme);
-        const barBefore = await page.locator('.canvas-bottom-bar').boundingBox();
-        await page.locator('#exam-send').click();
-        await page.evaluate(() => Promise.allSettled(document.getAnimations().map(animation => animation.finished)));
-        const result = await page.locator('#exam-document-menu').evaluate(menu => {
-          const r = menu.getBoundingClientRect();
-          return { rect:{left:r.left,top:r.top,right:r.right,bottom:r.bottom}, viewport:{width:innerWidth,height:innerHeight},
-            items:[...menu.querySelectorAll('[role="menuitem"]')].map(item => {
-              const bounds=item.getBoundingClientRect(), hit=document.elementFromPoint(bounds.x+bounds.width/2,bounds.y+bounds.height/2);
-              return {disabled:item.disabled,topmost:item.contains(hit),hit:hit?.id || hit?.className};
-            }) };
+        // 10-20 입구 하나로: 아래 막대 「한글에 넣기」(#exam-send)는 메뉴 없이 바로 영역 고르기, 한글 문서는 맨 위 줄 「hwp」로 연다.
+        const result = await page.evaluate(() => {
+          const pick = sel => { const n=document.querySelector(sel),b=n.getBoundingClientRect(),hit=document.elementFromPoint(b.x+b.width/2,b.y+b.height/2);
+            return {rect:{left:b.left,right:b.right,top:b.top,bottom:b.bottom},topmost:n.contains(hit),disabled:n.disabled,hit:hit?.id||hit?.className}; };
+          return { send:pick('#exam-send'), hwp:pick('.app-switch-image [data-app-switch="hwp"]'), viewport:{width:innerWidth,height:innerHeight}, legacy:!!document.querySelector('#exam-document-menu,[data-exam-document-open]'), pool:getComputedStyle(document.getElementById('exam-pool-open')).display };
         });
         observations.push({ theme, width, ...result });
         fs.writeFileSync(path.join(evidence, name+'-controls.json'), JSON.stringify(observations,null,2));
-        assert.ok(result.items.every(item=>item.topmost && !item.disabled), `Both real menu items receive pointer input at ${width}/${theme}: ${JSON.stringify(result)}`);
-        assert.ok(result.rect.left >= 0 && result.rect.right <= result.viewport.width && result.rect.top >= 0 && result.rect.bottom <= result.viewport.height, 'Entire menu stays in the viewport');
-        assert.deepEqual(await page.locator('.canvas-bottom-bar').boundingBox(), barBefore, 'Opening a menu does not reserve space or change the footer layout');
+        assert.ok(result.send.topmost && !result.send.disabled && result.hwp.topmost, `「한글에 넣기」와 맨 위 「hwp」가 실제로 눌린다 at ${width}/${theme}: ${JSON.stringify(result)}`);
+        assert.ok(result.send.rect.right <= result.viewport.width && result.hwp.rect.right <= result.viewport.width, 'both stay in the viewport');
+        assert.equal(result.legacy,false,'no footer 5E_hwp menu (one entry: the top bar)');assert.equal(result.pool,'none','no footer 5E_ExamPool entry');
         await page.screenshot({ path:path.join(evidence, `${name}-${width}-${theme}.png`) });
-        await page.locator('[data-exam-document-open]').click();
+        await page.locator('.app-switch-image [data-app-switch="hwp"]').click();
         await page.locator('#rhwp-exam-workspace').waitFor({state:'visible'}); await h.idle(page);
         await h.action(page,'close');
-        await page.locator('#exam-send').click(); await page.locator('[data-exam-document-insert]').click();
+        await page.locator('#exam-send').click();
         await page.locator('.capture-overlay').waitFor({state:'visible'});
         await page.keyboard.press('Escape'); await page.locator('.capture-overlay').waitFor({state:'detached'});
-        await page.locator('#exam-send').focus(); await page.keyboard.press('ArrowDown');
-        assert.equal(await page.locator('[data-exam-document-open]').evaluate(n=>document.activeElement===n),true);
-        await page.keyboard.press('Escape');
-        assert.equal(await page.locator('#exam-document-menu').isVisible(),false);
-        assert.equal(await page.locator('#exam-send').evaluate(n=>document.activeElement===n),true);
       }
-      assert.deepEqual(errors,[]); console.log(`PASS HWP footer menu ${name}: both actions, pointer/keyboard, three widths and two themes`);
+      assert.deepEqual(errors,[]); console.log(`PASS HWP footer action ${name}: 한글에 넣기 + top-bar hwp, three widths and two themes`);
     } finally { await browser.close(); }
   }
 }).catch(error=>{console.error(error);process.exitCode=1;});

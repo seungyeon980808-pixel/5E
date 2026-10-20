@@ -30,8 +30,13 @@ export function initAppSwitch(doc = document) {
     // 닫히기를 기다린다(조판은 저장을 마친 뒤 닫힘). 2초 안에 안 닫히면(저장 확인 창 등) 그대로 둔다.
     for (let waited = 0; from !== 'image' && currentApp(doc) === from && waited < 2000; waited += 50) await new Promise(resolve => setTimeout(resolve, 50));
     if (from !== 'image' && currentApp(doc) === from) return;
-    if (target === 'exam') doc.getElementById('exam-pool-open')?.click();
-    if (target === 'hwp') doc.querySelector('[data-exam-document-open]')?.click();
+    // 출제: 숨겨 둔 원래 입구(#exam-pool-open — 준비가 끝나면 켜짐)를 누른다. 아직 준비 중이면 5초까지 기다린다.
+    if (target === 'exam') {
+      const entry = doc.getElementById('exam-pool-open');
+      for (let waited = 0; entry?.disabled && waited < 5000; waited += 100) await new Promise(resolve => setTimeout(resolve, 100));
+      entry?.click();
+    }
+    if (target === 'hwp') doc.defaultView.dispatchEvent(new CustomEvent('5e:hwp-open'));
   };
   doc.addEventListener('click', event => {
     const button = event.target.closest?.('button[data-app-switch]');

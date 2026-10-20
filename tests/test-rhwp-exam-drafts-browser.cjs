@@ -15,7 +15,7 @@ h.withServer(async origin=>{fs.mkdirSync(path.resolve(process.env.EVIDENCE_DIR||
  const empty=await p.evaluate(async bytes=>(await import('/js/fivee-project.js?v=1.7.0-four-session-integration')).parseFiveEProject(new Uint8Array(bytes)),[...fs.readFileSync(await emptyDownload.path())]);
  assert.equal(empty.kind,'exam');assert.equal(empty.figures.length,0);assert.ok(empty.documentBytes.length>0);
  // 2026-10-12(b2f85a00)부터 한글 문서는 '5E_hwp'(#exam-send) 메뉴의 '한글 문서로 이동'으로 열고, 편집은 '문서에 반영'으로 되돌린다.
- await p.locator('#exam-send').click();await p.locator('[data-exam-document-open]').click();await h.idle(p);
+ await p.locator('.app-switch-image [data-app-switch=\"hwp\"]').click();await h.idle(p);
  // Use the fresh-image constructor, whose false recognition flag is omitted
  // until project loading. Insertion and acknowledgment must both be clean.
  await h.action(p,'close');

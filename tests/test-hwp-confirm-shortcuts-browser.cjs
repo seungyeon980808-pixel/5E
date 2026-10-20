@@ -6,7 +6,7 @@ for(const [name,engine] of Object.entries({chromium,webkit}))for(const key of ['
   await page.addInitScript(()=>{localStorage.setItem('5e.tutorial.bannerSeen','true');localStorage.setItem('5e.preview:5e.tutorial.bannerSeen','true');});
   await h.navigate(page,origin+'/?mode=pro&mobile=0&exam=0');await h.ready(page);
   await page.evaluate(async()=>{const {state}=await import('/js/state.js?v=1.7.0-four-session-integration');state.update(s=>{s.objects=[{id:'confirm-line',type:'line',p1:{x:-15,y:-10},p2:{x:15,y:10},layerId:1,order:0,rotation:0,strokeWidth:.3,strokeLevel:0,lineMode:'solid',arrowHead:'none'}];s.selectedIds=[];});});
-  await page.locator('#exam-send').click();await page.locator('[data-exam-document-insert]').click();await page.locator('.capture-overlay').waitFor();
+  await page.locator('#exam-send').click();await page.locator('.capture-overlay').waitFor();
   await page.keyboard.press(key);assert.equal(await page.locator('.capture-overlay').isVisible(),true,'an empty crop cannot be confirmed');
   const box=await page.locator('#canvas').boundingBox();await page.mouse.move(box.x+box.width*.35,box.y+box.height*.35);await page.mouse.down();await page.mouse.move(box.x+box.width*.65,box.y+box.height*.65);await page.mouse.up();
   const size=page.locator('.capture-size-input').first();await size.focus();await page.keyboard.press('Space');assert.equal(await page.locator('.capture-overlay').isVisible(),true,'Space edits the dimension input');await size.fill('30');await size.blur();

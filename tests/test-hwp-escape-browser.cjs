@@ -1,7 +1,7 @@
 const test=require('node:test');const assert=require('node:assert/strict');
 const {chromium,webkit}=require(process.env.PLAYWRIGHT_MODULE||'playwright');
 const h=require('./helpers/rhwp-exam.cjs');
-async function open(page){await page.locator('#exam-send').click();await page.locator('[data-exam-document-open]').click();await h.idle(page);await page.locator('#rhwp-exam-workspace').waitFor();}
+async function open(page){await page.locator('.app-switch-image [data-app-switch=\"hwp\"]').click();await h.idle(page);await page.locator('#rhwp-exam-workspace').waitFor();}
 for(const [engineName,engine] of Object.entries({chromium,webkit}))test(`${engineName}: compact HWP actions and Escape return preserve the document and respect inner actions`,async t=>{
  await h.withServer(async origin=>{
   const browser=await engine.launch({headless:true});t.after(()=>browser.close());

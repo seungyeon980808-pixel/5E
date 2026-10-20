@@ -32,7 +32,7 @@ h.withServer(async origin => {
       const page = await context.newPage(), errors = [];page.on('pageerror',error => errors.push(error.message));
       await h.navigate(page,origin+'/?mode=pro&mobile=0');await h.ready(page);
       await page.addStyleTag({content:'.tut-pointout,.tut-pointout-ring{display:none!important}'});
-      await page.locator('#exam-pool-open').click();
+      await page.locator('.app-switch-image [data-app-switch="exam"]').click();
       const frameHandle=await page.waitForSelector('#exampool-sheet-workspace iframe');const sheet=await frameHandle.contentFrame();
       sheet.on?.('pageerror',e=>errors.push(e.message));
       await sheet.waitForSelector('#side-new');await sheet.waitForFunction(()=>document.querySelector('#status').textContent!=='준비 중',null,{timeout:30000});

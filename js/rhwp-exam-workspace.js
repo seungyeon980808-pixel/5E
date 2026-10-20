@@ -1248,29 +1248,18 @@ export function initRhwpExamWorkspace(state, services) {
   window.addEventListener('beforeunload', event => {
     if (editing || (bridge?.input && savedToken !== token())) { event.preventDefault(); event.returnValue = ''; }
   });
+  // 입구는 맨 위 줄 「hwp」 하나로(10-20). 그림 화면 아래 막대의 이 단추는 「입구」가 아니라 「지금 그림 영역을 한글 문서에 넣기」 동작이다.
   const send = document.createElement('button'); send.type = 'button'; send.id = 'exam-send'; send.className = 'object-search-trigger exam-document-trigger';
-  send.setAttribute('aria-label','5E_hwp');send.title='5E_hwp';
-  send.setAttribute('aria-haspopup','menu');send.setAttribute('aria-expanded','false');send.setAttribute('aria-controls','exam-document-menu');
+  send.setAttribute('aria-label','한글에 넣기');send.title='한글에 넣기 · 지금 그림에서 영역을 골라 한글 문서(5E_hwp)에 넣습니다';
   // An authored ㅎ + arae-a mark shares the shell's icon stroke and size.
-  send.innerHTML='<svg class="ds-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 3.5h7M3 6h10"/><ellipse cx="8" cy="10.5" rx="4" ry="2.8"/><circle cx="8" cy="16.5" r="1" fill="currentColor" stroke="none"/></svg><span>5E_hwp</span>';
-  const documentEntry=document.createElement('div');documentEntry.className='file-menu exam-document-entry';
-  const documentMenu=document.createElement('div');documentMenu.id='exam-document-menu';documentMenu.className='file-menu-list';documentMenu.setAttribute('role','menu');documentMenu.hidden=true;
-  documentMenu.innerHTML='<button type="button" class="file-menu-item" role="menuitem" data-exam-document-open>한글 문서로 이동</button><button type="button" class="file-menu-item" role="menuitem" data-exam-document-insert>현재 영역 삽입…</button>';
-  documentEntry.append(send,documentMenu);const workflowHub = document.querySelector('.image-workflow-hub');
+  send.innerHTML='<svg class="ds-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 3.5h7M3 6h10"/><ellipse cx="8" cy="10.5" rx="4" ry="2.8"/><circle cx="8" cy="16.5" r="1" fill="currentColor" stroke="none"/></svg><span>한글에 넣기</span>';
+  const documentEntry=document.createElement('div');documentEntry.className='exam-document-entry';
+  documentEntry.append(send);const workflowHub = document.querySelector('.image-workflow-hub');
   workflowHub?.insertBefore(documentEntry, document.getElementById('exam-pool-open'));
-  registerTopMenu('exam-document',send,documentMenu,{onOpen:()=>{
-    documentMenu.querySelector('[data-exam-document-insert]').disabled=busy || !state.get().objects.length;
-    // Align with the trigger, shifting only when a narrow viewport clips the menu.
-    documentMenu.style.translate='none';
-    const bounds=documentEntry.getBoundingClientRect();
-    const displayScale=bounds.width / documentEntry.offsetWidth;
-    // Use layout width: the existing menu-pop animation starts at scale(.96).
-    const right=bounds.left + documentMenu.offsetWidth * displayScale;
-    const shift=Math.max(8-bounds.left, Math.min(0,innerWidth-8-right));
-    if(shift) documentMenu.style.translate=`${shift / displayScale}px 0`;
-  }});
-  documentMenu.querySelector('[data-exam-document-open]').addEventListener('click',()=>void run(open));
-  documentMenu.querySelector('[data-exam-document-insert]').addEventListener('click',()=>void run(()=>startSend()));
+  const syncSend=()=>{send.disabled=busy || !state.get().objects.length;};syncSend();state.subscribe?.(syncSend);
+  send.addEventListener('click',()=>void run(()=>startSend()));
+  // 맨 위 줄 「hwp」(app-switch.js)가 한글 문서를 연다.
+  window.addEventListener('5e:hwp-open',()=>void run(open));
   panel.querySelector('#exam-hwp-file').addEventListener('cancel',()=>{pendingDocumentInsertion=null;message('문서 열기를 취소했습니다.');});
   window.addEventListener('5e:exam-send-ai', event => void run(() => startSend(event.detail)));
   window.addEventListener('5e:exam-send-graph', event => void run(() => startSend(null,event.detail)));
