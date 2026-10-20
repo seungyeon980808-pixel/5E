@@ -7,6 +7,9 @@
 :root { --popup-scrim: #10141a66; --popup-blur: 8px; }
 
 dialog:modal:not(.web-login-dialog) { animation: modal-pop 260ms cubic-bezier(.2, .9, .25, 1.06); }
+/* 마우스 위치로 작업하는 창(자르기·그림 스튜디오·구성 편집기)은 커지는 모션 없이 흐리게만 나타난다 —
+   열리자마자 좌표를 재는 창이 0.94배로 줄어든 상태를 재면 자르기 영역이 어긋났다(WebKit). */
+dialog:modal:is(#exam-inline-crop-dialog, .figure-studio, .ai-composition-editor, .aea-dialog) { animation: modal-overlay-fade 180ms ease-out; }
 dialog:modal:not(.mobile-crop-dialog)::backdrop {
   background: var(--popup-scrim);
   -webkit-backdrop-filter: blur(var(--popup-blur));
