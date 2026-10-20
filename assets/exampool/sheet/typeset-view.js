@@ -4,6 +4,20 @@ export function attachTypesetView(bridge,host){
   const detail=panel.querySelector('#typeset-detail'),expand=panel.querySelector('#typeset-expand');
   const context=panel.querySelector('#typeset-context'),options=panel.querySelector('#typeset-options');
   let detailed=false,interacted=false,frame=0;
+  // 조판 안내 줄(용지 높이 자동 조절·본문 폭·문항 길이)은 늘 펼쳐 둘 필요가 없어 ⓘ 단추에 마우스를 올리거나 누르면 보인다.
+  // 오류(조판 저장 막힘 등)나 출력 기준을 넘었을 때만 줄을 그대로 보인다(office-layout.css).
+  {const controls=panel.querySelector('.typeset-view-controls'),status=panel.querySelector('#typeset-status'),metrics=panel.querySelector('#typeset-metrics');
+   if(controls&&status&&!controls.querySelector('#typeset-info-btn')){
+     const wrap=document.createElement('span');wrap.className='typeset-info-wrap';
+     wrap.innerHTML='<button type="button" id="typeset-info-btn" aria-label="조판 정보" aria-expanded="false" aria-describedby="typeset-info-pop">i</button><span id="typeset-info-pop" role="tooltip" hidden></span>';
+     controls.append(wrap);const btn=wrap.firstChild,pop=wrap.lastChild;
+     const fill=()=>{pop.replaceChildren();for(const n of [status,metrics]){const s=(n?.textContent||'').trim();if(!s)continue;const line=document.createElement('span');line.textContent=s;if(n.dataset.error==='true'||n.dataset.exceeded==='true')line.className='warn';pop.append(line);}
+       btn.dataset.warn=String(status.dataset.error==='true'||metrics?.dataset.exceeded==='true');};
+     const show=v=>{fill();pop.hidden=!v;btn.setAttribute('aria-expanded',String(v));};
+     btn.addEventListener('mouseenter',()=>show(true));btn.addEventListener('mouseleave',()=>show(false));
+     btn.addEventListener('focus',()=>show(true));btn.addEventListener('blur',()=>show(false));
+     btn.addEventListener('click',()=>show(pop.hidden));
+     new MutationObserver(()=>{fill();}).observe(panel.querySelector('.typeset-info'),{subtree:true,childList:true,characterData:true,attributes:true});fill();}}
   const style=doc.createElement('style');
   style.textContent=`
     body[data-question-compact] #menu-bar,

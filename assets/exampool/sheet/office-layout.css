@@ -59,3 +59,17 @@
 @container (max-width:560px){#card-view .w-head .stage button:not([aria-pressed=true]){font-size:0;gap:0;padding:0 9px}#card-view .w-head .stage button:not([aria-pressed=true]) .dot{margin:0}}
 #card-view .pane-role>span{font-size:inherit!important;color:inherit!important;font-weight:inherit!important}
 #card-view .pane-rail{height:auto!important;background:var(--ds-panel)!important;padding:10px 0!important;justify-content:flex-start!important}#card-view .pane-rail:hover{background:var(--ds-hover)!important}
+
+/* 조판 안내 줄 → ⓘ 단추(올리거나 누르면 보임). 오류·출력 기준 넘음일 때만 줄을 보인다. */
+.cv-hwp-layer #preview-dialog.docked .typeset-info{display:none}
+.cv-hwp-layer #preview-dialog.docked .typeset-info:has(#typeset-status[data-error=true]),
+.cv-hwp-layer #preview-dialog.docked .typeset-info:has(#typeset-metrics[data-exceeded=true]){display:flex}
+.cv-hwp-layer #preview-dialog.docked .typeset-info:has(#typeset-status[data-error=true]) #typeset-metrics{display:none}
+.cv-hwp-layer .typeset-view-controls{position:relative}
+.typeset-info-wrap{position:static;display:inline-flex;margin-left:2px}
+#typeset-info-btn{width:22px;height:22px;min-width:0;padding:0;display:grid;place-items:center;border:0;border-radius:50%;background:transparent;color:var(--ds-doc-ink-2,#5c6670);box-shadow:inset 0 0 0 1.5px currentColor;font:600 12px/1 Georgia,serif;font-style:italic;cursor:help}
+#typeset-info-btn:hover,#typeset-info-btn[aria-expanded=true]{color:var(--ds-hwp,#1a5fb4)}
+#typeset-info-btn[data-warn=true]{color:var(--ds-warning,#b07100)}
+#typeset-info-pop{position:absolute;z-index:30;top:calc(100% + 4px);left:8px;right:8px;width:auto;display:grid;gap:4px;padding:8px 10px;border-radius:8px;background:var(--ds-doc,#fff);color:var(--ds-doc-ink,#1b1e23);box-shadow:0 8px 24px rgba(16,20,26,.22),0 0 0 1px var(--ds-doc-line,#e3e6ea);font-size:var(--ds-text-meta,12px);line-height:1.5}
+#typeset-info-pop[hidden]{display:none}
+#typeset-info-pop .warn{color:var(--ds-danger,#cf222e)}
