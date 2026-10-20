@@ -1,6 +1,11 @@
-/* 5E 세 프로그램 전환(시안 41): 로고 「5E_단어」 + 나머지 두 이름(어두운 글자, 밑줄 없이 단어만). 그림·조판 화면 공통. 출제(ExamPool)는 office-layout.css. */
+/* 5E 세 프로그램 공통 맨 위 줄(시안 41, 10-20): 로고 「5E_단어」 + 나머지 두 이름(밑줄 없이 단어만) + 공통 ↶ ↷.
+   그림(맨 바깥 문서)·조판(#rhwp-exam-workspace) 공통. 출제(ExamPool) 칸은 iframe이라 office-layout.css에 같은 수치로 따로 둔다.
+   세 화면 모두 접기 x12 · 「5E」 x60 · 이름 x172 · ↶ x311이 같아야 한다(바꾸면 세 곳을 같이). */
+
+/* ---- 전환 이름(exam · image · hwp) ---- */
 .app-switch { display: inline-flex; align-items: center; gap: 2px; flex: none; height: 20px; margin-left: 8px; padding-left: 10px; border-left: 1px solid var(--ds-line, #30363d); }
-.app-switch-btn { height: 30px !important; min-width: 0 !important; padding: 0 7px !important; border: 0 !important; border-radius: 6px !important; background: transparent !important; box-shadow: none !important;
+/* 폭 고정: 이름 길이가 달라도 ↶ ↷ 자리가 그대로 */
+.app-switch-btn { width: 58px !important; height: 30px !important; min-width: 0 !important; padding: 0 !important; border: 0 !important; border-radius: 6px !important; background: transparent !important; box-shadow: none !important;
   color: #5b6470 !important; font: italic 700 15px/1 var(--ds-font-brand, Georgia, "Times New Roman", serif) !important; letter-spacing: -.1px; cursor: pointer;
   transition: color 160ms cubic-bezier(.2,.8,.2,1), background-color 160ms cubic-bezier(.2,.8,.2,1); }
 .app-switch-btn:hover { color: var(--ds-ink, #e6edf3) !important; background: var(--ds-hover, #1f2630) !important; }
@@ -8,41 +13,41 @@
 :root[data-mode="lite"] .app-switch { display: none; }
 .app-switch.app-switch-image { margin-left: 4px; padding-left: 0; border-left: 0; }
 .tb-sep.ds-sep-apps { margin: 0 6px; }
+/* 좁은 창에서도 이름 단추는 남긴다(유일한 입구) — 글자만 조금 작게 */
+@media (max-width: 760px) { .app-switch-btn { width: 46px !important; font-size: 14px !important; } }
 @media (prefers-reduced-motion: reduce) { .app-switch-btn { transition: none; } }
 
-/* 조판(5E_hwp) 맨 위 줄: 전체 폭 44px, 노란 「5E」 로고 대신 다른 화면과 같은 「5E_hwp」 */
-#rhwp-exam-workspace .exam-topbar { flex: none; display: flex; align-items: center; height: 44px; padding: 0 10px; background: var(--ds-bar, #0d1117); border-bottom: 1px solid var(--ds-line, #30363d); }
-#rhwp-exam-workspace .exam-topbar .exam-heading { flex: 1; min-width: 0; height: 30px; gap: 2px; }
-#rhwp-exam-workspace .exam-topbar .exam-brand { display: inline-flex; align-items: baseline; padding: 0 4px; color: var(--ds-ink, #e6edf3); font-size: inherit; }
-#rhwp-exam-workspace .exam-topbar .exam-brand .app-brand-mark { font: italic 700 21px/1 var(--ds-font-brand, Georgia, "Times New Roman", serif); letter-spacing: -.6px; color: var(--ds-ink, #e6edf3); }
-#rhwp-exam-workspace .exam-topbar .exam-brand .app-brand-name { font: italic 700 16px/1 var(--ds-font-brand, Georgia, "Times New Roman", serif); letter-spacing: -.2px; margin-left: 1px; color: var(--ds-ink-2, #b1bac4); }
-#rhwp-exam-workspace .exam-top-sep { width: 1px; height: 20px; margin: 0 6px; background: var(--ds-line, #30363d); flex: none; }
-#rhwp-exam-workspace .exam-topbar .exam-history { display: inline-grid; place-items: center; width: 30px; height: 30px; min-height: 0; padding: 0; border: 0; background: transparent; color: var(--ds-ink-2, #b1bac4); }
-#rhwp-exam-workspace .exam-topbar .exam-history:hover { background: var(--ds-hover, #1f2630); color: var(--ds-ink, #e6edf3); }
-#rhwp-exam-workspace .exam-topbar .exam-history svg { width: 18px; height: 18px; }
-#rhwp-exam-workspace .exam-topbar .exam-actions button { border-color: var(--ds-line, #30363d); background: transparent; }
-#rhwp-exam-workspace .exam-topbar .exam-actions .structure-lock[aria-pressed="true"] { color: #9cc3ff; background: var(--go-bg, #152137); border-color: #2f4a73; }
-#rhwp-exam-workspace .exam-sidebar .exam-header { padding-top: 0; }
-@media (max-width: 760px) { #rhwp-exam-workspace .exam-topbar .exam-top-sep:first-of-type { display: none; } }
-/* 이름 단추 폭 고정(exam·image·hwp 길이가 달라도 ↶ ↷ 자리가 그대로) */
-.app-switch-btn { width: 58px !important; padding: 0 !important; }
-/* 조판 맨 위 줄을 5E_image와 같은 수치로(10-20): 높이 40, 160 칸(접기 x12 · 5E x60 · 오른쪽 선), 이름 x172, ↶ x311, 왼쪽 칸 폭 160 */
-#rhwp-exam-workspace .exam-topbar { height: 40px; padding: 0 10px 0 0; font-family: var(--ds-font, -apple-system, sans-serif); }
+/* 입구 하나로(10-20): 그림 화면 아래 막대의 「5E_ExamPool」 단추는 숨긴다(출제는 맨 위 「exam」으로). 요소는 「준비됨」 상태를 갖고 있어 남겨 둔다. */
+#exam-pool-open { display: none !important; }
+
+/* ---- 조판(5E_hwp) 맨 위 줄: 그림 화면과 같은 수치 — 높이 40, 왼쪽 160 칸(접기 · 5E · 오른쪽 선), 왼쪽 칸 폭 160 ---- */
+#rhwp-exam-workspace .exam-topbar { flex: none; display: flex; align-items: center; height: 40px; padding: 0 10px 0 0; background: var(--ds-bar, #0d1117); border-bottom: 1px solid var(--ds-line, #30363d); font-family: var(--ds-font, -apple-system, sans-serif); }
 #rhwp-exam-workspace .exam-top-cell { position: relative; flex: none; box-sizing: border-box; display: flex; align-items: center; width: 160px; height: 100%; padding-left: 41px; border-right: 1px solid var(--ds-line, #21262d); }
 #rhwp-exam-workspace .exam-panel-toggle { position: absolute; left: 12px; top: 50%; width: 28px; height: 28px; margin-top: -14px; padding: 0; display: grid; place-items: center; border: 0; border-radius: 6px; background: transparent; color: var(--ds-ink-2, #b1bac4); }
 #rhwp-exam-workspace .exam-panel-toggle:hover { background: var(--ds-hover, #1f2630); color: var(--ds-ink, #e6edf3); }
 #rhwp-exam-workspace .exam-panel-toggle svg { width: 18px; height: 18px; }
 #rhwp-exam-workspace .exam-panel-toggle .exam-panel-fill { fill: currentColor; stroke: none; opacity: .35; }
 #rhwp-exam-workspace.exam-left-collapsed .exam-panel-toggle .exam-panel-fill { opacity: 0; }
+#rhwp-exam-workspace .exam-topbar .exam-brand { display: inline-flex; align-items: baseline; padding: 0 4px; color: var(--ds-ink, #e6edf3); font-size: inherit; }
 #rhwp-exam-workspace .exam-top-cell .exam-brand { margin-left: 15px; height: 28px; align-items: baseline; line-height: 28px; }
 #rhwp-exam-workspace .exam-top-cell .exam-brand > * { position: relative; top: 2px; }
+#rhwp-exam-workspace .exam-topbar .exam-brand .app-brand-mark { font: italic 700 21px/1 var(--ds-font-brand, Georgia, "Times New Roman", serif); letter-spacing: -.6px; color: var(--ds-ink, #e6edf3); }
+#rhwp-exam-workspace .exam-topbar .exam-brand .app-brand-name { font: italic 700 16px/1 var(--ds-font-brand, Georgia, "Times New Roman", serif); letter-spacing: -.2px; margin-left: 1px; color: var(--ds-ink-2, #b1bac4); }
+#rhwp-exam-workspace .exam-topbar .exam-heading { flex: 1; min-width: 0; height: 30px; gap: 2px; }
 #rhwp-exam-workspace .exam-topbar .exam-heading .app-switch { margin-left: 12px; padding-left: 0; border-left: 0; height: auto; }
-#rhwp-exam-workspace .exam-top-sep { margin: 0 10px; }
-#rhwp-exam-workspace .exam-topbar .exam-history { width: 28px; height: 28px; }
-#rhwp-exam-workspace .exam-sidebar { width: 160px; }
-#rhwp-exam-workspace.exam-left-collapsed .exam-sidebar { display: none; }
-@media (max-width: 900px) { #rhwp-exam-workspace .exam-sidebar { width: 160px; } }
+#rhwp-exam-workspace .exam-top-sep { width: 1px; height: 20px; margin: 0 10px; background: var(--ds-line, #30363d); flex: none; }
 #rhwp-exam-workspace .exam-top-sep:first-of-type { margin: 0 9px 0 7px; }
+#rhwp-exam-workspace .exam-topbar .exam-history { display: inline-grid; place-items: center; width: 28px; height: 28px; min-height: 0; padding: 0; border: 0; background: transparent; color: var(--ds-ink-2, #b1bac4); }
+#rhwp-exam-workspace .exam-topbar .exam-history:hover { background: var(--ds-hover, #1f2630); color: var(--ds-ink, #e6edf3); }
+#rhwp-exam-workspace .exam-topbar .exam-history svg { width: 18px; height: 18px; }
+#rhwp-exam-workspace .exam-topbar .exam-actions button { border-color: var(--ds-line, #30363d); background: transparent; }
+#rhwp-exam-workspace .exam-topbar .exam-actions .structure-lock[aria-pressed="true"] { color: #9cc3ff; background: var(--go-bg, #152137); border-color: #2f4a73; }
+#rhwp-exam-workspace .exam-sidebar { width: 160px; }
+#rhwp-exam-workspace .exam-sidebar .exam-header { padding-top: 0; }
+#rhwp-exam-workspace.exam-left-collapsed .exam-sidebar { display: none; }
+/* rhwp-exam-workspace.css의 좁은 창 폭보다 앞서게 같은 조건으로 다시 160 */
+@media (max-width: 900px) { #rhwp-exam-workspace .exam-sidebar { width: 160px; } }
+@media (max-width: 760px) { #rhwp-exam-workspace .exam-topbar .exam-top-sep:first-of-type { display: none; } }
 /* 좁은 창(640px 이하): 맨 위 줄이 화면을 넘지 않게 로고 칸을 줄이고 「_hwp」·「구조 잠금」 글자를 접는다 */
 @media (max-width: 640px) {
   #rhwp-exam-workspace .exam-top-cell { width: auto; padding-right: 6px; }
@@ -53,12 +58,7 @@
   #rhwp-exam-workspace .exam-top-sep { margin: 0 4px !important; }
 }
 
-/* 입구 하나로(10-20): 그림 화면 아래 막대의 「5E_ExamPool」 단추는 숨긴다(출제는 맨 위 「exam」으로). 요소는 「준비됨」 상태를 갖고 있어 남겨 둔다. */
-#exam-pool-open { display: none !important; }
-/* 좁은 창에서도 이름 단추는 남긴다(유일한 입구) — 글자만 조금 작게 */
-@media (max-width: 760px) { .app-switch-btn { width: 46px !important; font-size: 14px !important; } }
-
-/* 프로그램 전환이 휙 바뀌지 않게: 출제·조판 칸은 나타날 때 0.18초 흐려졌다 또렷해지고, 전환 줄로 닫을 때 0.16초 흐려지며 사라진다. */
+/* ---- 프로그램 전환이 휙 바뀌지 않게: 출제·조판 칸은 나타날 때 0.18초 흐려졌다 또렷해지고, 전환 줄로 닫을 때 0.16초 흐려지며 사라진다 ---- */
 @keyframes app-surface-in { from { opacity: 0; } to { opacity: 1; } }
 @keyframes app-surface-out { from { opacity: 1; } to { opacity: 0; } }
 #exampool-sheet-workspace:not([hidden]), #rhwp-exam-workspace:not([hidden]) { animation: app-surface-in 180ms cubic-bezier(.2, 0, 0, 1); }
