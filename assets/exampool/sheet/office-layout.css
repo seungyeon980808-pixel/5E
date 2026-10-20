@@ -473,3 +473,5 @@ button:active:not(:disabled):not([aria-busy=true]):not(.pane-rail),.lp-pdf:activ
 .top #top-undo:disabled,.top #top-redo:disabled{opacity:.35}
 /* 좁은 창: 그림·조판 화면과 같이 이름 단추 46px·14px(전에는 뒤의 58px 규칙에 덮여 출제 칸만 넓었다) */
 @media (max-width:760px){.top .app-switch-btn{width:46px;font-size:14px}}
+/* 아주 좁은 창(640px 이하): 조판 화면처럼 로고 칸을 줄이고 「_exam」·위치 표시를 접어 오른쪽 단추(도움말·더 보기·닫기)가 화면 안에 남게 */
+@media (max-width:640px){.top .top-cell{width:auto;padding-right:6px}.top .top-cell .brand{margin-left:0}.top .top-cell .brand strong{display:none}.top .top-sep{margin:0 4px}.top .crumbs{display:none}}
