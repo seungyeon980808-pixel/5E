@@ -15,15 +15,25 @@ export function attachTypesetView(bridge,host){
     body[data-question-compact] #ruler-corner{display:none!important}
     body[data-question-compact] #editor-area{grid-template-rows:minmax(0,1fr);grid-template-columns:minmax(0,1fr)}
     body[data-question-compact] #scroll-container{grid-area:1 / 1;background:#edf0ed}
+    #scroll-container{overflow-x:hidden!important}
+    /* 미리보기 칸 안 한글 창(수식 편집 등)도 ExamPool 팝업 규칙: 창 12px·단추 6px 모서리, 「확인」은 카드의 은은한 파란 단추와 같은 색 */
+    .dialog-wrap{border-radius:12px!important;overflow:hidden;border-color:#d8dde3!important;box-shadow:0 12px 32px rgba(16,20,26,.22)!important}
+    .dialog-title{border-radius:12px 12px 0 0}
+    .dialog-btn{border-radius:6px!important;min-height:30px}
+    .dialog-btn-primary{background:#eaf2fd!important;color:#1a5fb4!important;border-color:transparent!important;box-shadow:inset 0 0 0 1px #2f6fd6!important}
+    .dialog-btn-primary:hover{background:#dde9fb!important}
     .dialog-wrap{max-width:calc(100vw - 16px);max-height:calc(100dvh - 16px);overflow:auto}
   `;
   doc.head.append(style);
   function fit(){
-    frame=0;if(detailed||panel.hidden||!bridge.wasm.doc||!host.clientWidth)return;
+    // 미리보기 칸에서는 「상세 조판」을 열어도 종이를 칸 폭에 맞춘다 — 맞추지 않으면 종이가 칸보다 넓어 좌우로 밀렸다.
+    // 칸 폭은 세로 스크롤 막대를 뺀 실제 보이는 폭(#scroll-container clientWidth)으로 잰다.
+    frame=0;if(panel.hidden||!bridge.wasm.doc||!host.clientWidth)return;
     const raw=bridge.wasm.borrowDocumentHandle().getPageDef(0),page=typeof raw==='string'?JSON.parse(raw):raw;
     const manager=bridge.input?.viewportManager;if(!manager)return;
     // Keep the native zoom coordinate system, caret and hit testing together.
-    const next=Math.min(1.4,Math.max(.25,(host.clientWidth-24)/(page.width/75)));
+    const view=doc.querySelector('#scroll-container')?.clientWidth||host.clientWidth;
+    const next=Math.min(1.4,Math.max(.25,(view-28)/(page.width/75)));
     if(Math.abs(manager.getZoom()-next)>.002)manager.setZoom(next,{x:.5,y:0},'none');
   }
   const schedule=()=>{if(!frame)frame=requestAnimationFrame(fit);};

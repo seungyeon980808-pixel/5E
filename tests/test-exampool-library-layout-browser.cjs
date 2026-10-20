@@ -48,7 +48,8 @@ h.withServer(async origin => {
           scopes:[...row.querySelectorAll('[data-cvscope] option')].map(o=>o.textContent)};});
       assert.equal(head.old,false,'no title row, tab row, second tool row or guide box');
       assert.equal(head.h,44,'one 44px head row');assert.equal(head.top,0,'at the top of the pane');assert.equal(head.barTop,0,'on the same line as the card head row');
-      assert.deepEqual(head.kids.map(k=>k.k),['scope','search','adv','lib','refs'],'scope · search · detail search · library · evidence');
+      // 10-20 화면 정리: 머리 줄 맨 앞에 칸 닫기(바깥쪽 끝)와 칸 이름 「참고 자료」.
+      assert.deepEqual(head.kids.map(k=>k.k),['btn icon pt pane-close','pane-role','scope','search','adv','lib','refs'],'close · pane name · scope · search · detail search · library · evidence');
       assert.ok(head.kids.every(k=>k.h===30)&&new Set(head.kids.map(k=>k.top)).size===1,'all 30px on one line: '+JSON.stringify(head.kids));
       assert.deepEqual(head.scopes,['기출문제','교과서','성취기준·교육과정','자료']);
       assert.equal(await sheet.locator('#card-view .lp-pick').getAttribute('aria-label'),'5E 라이브러리에서 고르기','the library icon keeps its name');

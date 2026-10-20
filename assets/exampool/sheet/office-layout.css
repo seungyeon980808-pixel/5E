@@ -1,0 +1,61 @@
+/* ExamPool 카드 화면 정리(10-20 승인 시안 exampool-layout.html)
+ * 1. 세 칸 머리 줄 맨 앞에 칸 이름(참고 자료 · 문항 카드 · AI · 조판) — 같은 높이·글씨
+ * 2. 좌우 칸 닫기는 그 칸 머리 줄의 바깥쪽 끝, 닫힌 칸은 가장자리 세로 띠
+ * 3. 칸 경계 손잡이가 늘 보이게
+ * 4. 둥글기 3단계(칸 12 · 카드/상자 10 · 단추/입력칸 6)
+ * 5. 자료: 1개면 가운데, 여러 개면 한 줄로 카드 폭에 맞춰 비율대로
+ * 6. 단계 칩은 좁아도 한 줄
+ */
+
+/* 1. 칸 이름 */
+#card-view .pane-role{display:inline-flex;align-items:center;gap:6px;flex:none;height:30px;padding:0 10px 0 4px;color:var(--ds-ink);font-size:var(--cv-text-body,13px);font-weight:var(--ds-weight-strong,600);white-space:nowrap}
+#card-view .pane-role .ico{width:16px;height:16px;flex:none;color:var(--ds-ink-3)}
+#card-view .cv-ph .pane-role{padding-left:0}
+#card-view .cv-ph .pane-role,#card-view .cv-bar .pane-role,#card-view .lp-one .pane-role{font-size:var(--cv-text-body,13px)!important;color:var(--ds-ink)!important;font-weight:var(--ds-weight-strong,600)!important;opacity:1!important}
+.cv-right{container:rpane/inline-size}
+@container lib (max-width:600px){#card-view .lp-adv span{display:none}}
+@container lib (max-width:560px){#card-view .lp-one .lp-search .lp-n{display:none}#card-view .lp-one .lp-search{min-width:96px}}
+@container lib (max-width:440px){#card-view .cv-left .pane-role span{display:none}#card-view .cv-left .pane-role{padding-right:4px}}
+@container (max-width:380px){#card-view .cv-bar .pane-role span{display:none}#card-view .cv-bar .pane-role{padding-right:4px}}
+@container rpane (max-width:360px){#card-view .cv-ph .pane-role span{display:none}}
+
+/* 2. 닫기 단추(바깥쪽 끝)와 닫힌 칸 띠 */
+#card-view .pane-close{flex:none;width:30px;height:30px;padding:0;display:grid;place-items:center;border:0;border-radius:var(--cv-ctl-radius,6px);background:transparent;color:var(--ds-ink-3);cursor:pointer}
+#card-view .pane-close:hover{background:var(--ds-hover);color:var(--ds-ink)}
+#card-view .pane-close .ico{width:17px;height:17px}
+#card-view .lp-one .pane-close{margin-left:-2px}
+#card-view .pane-rail{flex:0 0 32px;align-self:stretch;min-height:0;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;gap:10px;padding:10px 0;border:0;border-radius:var(--cv-pane-radius,12px);background:var(--ds-panel);box-shadow:0 0 0 1px var(--ds-line);color:var(--ds-ink-2);font:inherit;font-size:var(--cv-text-small,12.5px);cursor:pointer}
+#card-view .pane-rail.left{margin-right:var(--cv-gutter,8px)}
+#card-view .pane-rail.right{margin-left:var(--cv-gutter,8px)}
+#card-view .pane-rail .ico{width:17px;height:17px;color:var(--ds-ink-3)}
+#card-view .pane-rail span{writing-mode:vertical-rl;letter-spacing:2px;white-space:nowrap}
+#card-view .pane-rail:hover{background:var(--ds-hover);color:var(--ds-ink)}
+#card-view .pane-rail:focus-visible{outline:2px solid var(--go-line,#6ba4f8);outline-offset:-2px}
+
+/* 3. 칸 경계 손잡이: 4×36 막대가 늘 보이고, 올리거나 끌면 파란색 */
+#card-view .cv-split::before{left:calc(50% - 2px);width:4px;height:36px;margin-top:-18px;border-radius:2px;background:var(--ds-ink-3);opacity:.55;transition:opacity .15s,background-color .15s}
+#card-view .cv-split:hover::before,#card-view .cv-split.drag::before{opacity:1;background:var(--go-line,#6ba4f8)}
+
+/* 4. 둥글기 3단계 */
+#card-view .cv-writer section,#card-view .cv-add-row,#card-view .cv-tile,#card-view .lp-linked,#card-view .past,#card-view .msg{border-radius:var(--cv-sec-radius,10px)}
+#card-view .cv-writer :is(input,textarea,select),#card-view .lp-search,#card-view .lp-scope,#card-view .cv-shape{border-radius:var(--cv-ctl-radius,6px)}
+
+/* 5. 자료: 1개면 가운데, 여러 개면 한 줄로 카드 폭에 맞춰 비율대로(칸당 최대 420px), 2단으로 꺾지 않는다 */
+#card-view .cv-tiles{flex-wrap:nowrap;justify-content:center}
+#card-view .cv-tile{flex:1 1 0;width:auto;min-width:0;max-width:420px}
+#card-view .cv-tile .pic{height:auto;aspect-ratio:16/10}
+#card-view .cv-tile .pic img{max-height:100%}
+#card-view .cv-tile.empty .pic{gap:8px;padding:10px;align-content:center}
+#card-view .cv-tile.empty .pic .btn{max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#card-view .cv-tile .cap{min-width:0}
+#card-view .cv-tile .cap>*{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@container (max-width:520px){#card-view .cv-tile .cap .mini{padding:0 4px}#card-view .cv-tile.empty .pic .btn .ico{display:none}}
+
+/* 6. 단계 칩: 좁아도 한 줄(글은 점과 짧게) */
+#card-view .w-head{flex-wrap:nowrap}
+#card-view .w-head .stage{flex:none}
+/* 좁으면 지금 단계만 글로, 나머지는 점만(눌러 바꾸기·이름은 title) */
+@container (max-width:620px){#card-view .w-head .stage button{padding:0 8px}}
+@container (max-width:560px){#card-view .w-head .stage button:not([aria-pressed=true]){font-size:0;gap:0;padding:0 9px}#card-view .w-head .stage button:not([aria-pressed=true]) .dot{margin:0}}
+#card-view .pane-role>span{font-size:inherit!important;color:inherit!important;font-weight:inherit!important}
+#card-view .pane-rail{height:auto!important;background:var(--ds-panel)!important;padding:10px 0!important;justify-content:flex-start!important}#card-view .pane-rail:hover{background:var(--ds-hover)!important}

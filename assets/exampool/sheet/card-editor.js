@@ -83,7 +83,7 @@ export function createCardEditor(root,api){
     return `<div class="cv-writer"><div class="w-head"><span class="qno">${x.number?E(x.number)+'번':'번호 없음'} 문항</span>
         ${shapeHtml(x)}
         <span class="sp"></span>
-        <div class="stage" role="group" aria-label="문항 단계">${Object.entries(WORKFLOWS).map(([k,v])=>`<button type="button" data-cvstage="${k}" aria-pressed="${workflowOf(x)===k}"><i class="dot st-${k}"></i>${v}</button>`).join('')}</div></div>
+        <div class="stage" role="group" aria-label="문항 단계">${Object.entries(WORKFLOWS).map(([k,v])=>`<button type="button" data-cvstage="${k}" aria-pressed="${workflowOf(x)===k}" title="${v}"><i class="dot st-${k}"></i>${v}</button>`).join('')}</div></div>
       <form class="sheet-form" onsubmit="return false">
         <section class="f-sec plan"><div class="f-sec-head"><h3 title="인쇄되지 않는 정보">출제 설계</h3></div>
           <div class="f-row2"><div class="f-field"><label>성취기준</label><div class="pick">${x.standardCode?`<b>${E(x.standardCode)}</b>`:'<span class="ph">오른쪽 \'기준\'에서 골라 연결합니다</span>'}<button type="button" class="link" data-cv="open-standards">${x.standardCode?'바꾸기':'찾기'}</button></div></div>
@@ -112,7 +112,7 @@ export function createCardEditor(root,api){
     const scope=`<select class="lp-scope" data-cvscope aria-label="검색 범위">${TABS.map(([k,t])=>`<option value="${k}"${panels.tab===k?' selected':''}>${t}</option>`).join('')}</select>`;
     const linked=`<div class="lp-linked"><b>이 문항의 근거 ${refs.length}</b><span>${refs.slice(0,4).map(r=>E(r.label)).join(' · ')||'기출·교과서·기준에서 「근거로 연결」을 누르면 여기에 모입니다'}</span></div>`;
     const search=docked?`<label class="lp-search">${ICON.search}<input data-cvsrc value="${E(root.querySelector('#source-search')?.value||document.querySelector('#source-search')?.value||'')}" placeholder="${panels.tab==='standards'?'코드·핵심어':'자료 이름·본문'}" aria-label="검색"></label>`:'';
-    return `<aside class="cv-lib cv-left"${panels.lib?'':' hidden'} aria-label="라이브러리"><div class="lp-one">${scope}<div class="lp-slot" data-cvslot="search">${search}</div>
+    return `<aside class="cv-lib cv-left"${panels.lib?'':' hidden'} aria-label="참고 자료"><div class="lp-one">${panels.lib?`<button type="button" class="btn icon pt pane-close" data-cv="toggle-lib" aria-pressed="true" title="참고 자료 닫기" aria-label="참고 자료 닫기">${ICON.panelL}</button>`:''}${paneRole('lib','참고 자료')}${scope}<div class="lp-slot" data-cvslot="search">${search}</div>
       ${docked?'':`<button type="button" class="lp-adv" data-cvadv aria-expanded="${pastAdvOpen}" title="상세검색">${ICON.sliders}<span>상세검색</span><i data-cvslot="advn" hidden></i></button>${pickBtn(panels.tab==='textbooks'?'textbook':'past')}`}
       <button type="button" class="lp-refs" data-cvlinked aria-pressed="false" aria-expanded="false" title="이 문항의 근거 보기">${ICON.link}${refs.length}</button></div>
       <div class="lp-adv-pop" data-cvslot="adv"${pastAdvOpen&&!docked?'':' hidden'}></div>
@@ -123,15 +123,21 @@ export function createCardEditor(root,api){
   const unseenAi=x=>{const seen=store.get('aiSeen:'+x.id,0);return (x.reviews||[]).slice(seen).filter(m=>m.role==='ai').length;};
   function rightHtml(){
     const x=q(),badge=x&&panels.right!=='ai'?unseenAi(x):0;
-    return `<aside class="cv-right"${panels.rightOpen?'':' hidden'} aria-label="미리보기와 AI"><div class="cv-ph"><div class="seg cv-rseg" role="group" aria-label="오른쪽 칸"><button type="button" data-cvright="paper" aria-pressed="${panels.right==='paper'}">${ICON.page}미리보기</button><button type="button" data-cvright="ai" aria-pressed="${panels.right==='ai'}">${ICON.star}AI${badge?`<i class="badge">${badge}</i>`:''}</button></div><span class="sp"></span><small>${x?E(x.number||'')+'번 문항':''}</small></div>
+    return `<aside class="cv-right"${panels.rightOpen?'':' hidden'} aria-label="AI · 조판"><div class="cv-ph">${paneRole('ai','AI · 조판')}<div class="seg cv-rseg" role="group" aria-label="오른쪽 칸"><button type="button" data-cvright="paper" aria-pressed="${panels.right==='paper'}">${ICON.page}미리보기</button><button type="button" data-cvright="ai" aria-pressed="${panels.right==='ai'}">${ICON.star}AI${badge?`<i class="badge">${badge}</i>`:''}</button></div><span class="sp"></span>${panels.rightOpen?`<button type="button" class="btn icon pt pane-close" data-cv="toggle-right" aria-pressed="true" title="AI · 조판 닫기" aria-label="AI · 조판 닫기">${ICON.panelR}</button>`:''}</div>
       <div class="cv-rbody" data-cvbody="paper" ${panels.right==='paper'?'':'hidden'}><div class="cv-hwp" id="cv-hwp">${x?'':'<p class="pv-empty">문항을 고르면 한글 조판이 보입니다.</p>'}</div></div>
       <div class="cv-rbody ai-body" data-cvbody="ai" ${panels.right==='ai'?'':'hidden'}></div></aside>`;
   }
-  // 가운데 머리줄: 왼쪽 끝 라이브러리 버튼, 번호 탭, 문항 카드|쪽 전체, 한글에서 손보기, 오른쪽 끝 미리보기·AI 버튼.
+  // 세 칸의 머리 줄은 맨 앞에 칸 이름(참고 자료 · 문항 카드 · AI · 조판)을 같은 모양으로 둔다. 좌우 칸을 닫는 단추는 그 칸 머리 줄의
+  // 바깥쪽 끝에 있고, 닫힌 칸은 화면 가장자리 세로 띠(railHtml)로 남아 누르면 다시 열린다.
+  // 오른쪽 칸 이름 아이콘은 AI 탭(☆)과 겹치지 않게 「문서 + 반짝」 모양을 따로 쓴다.
+  const PANE_ICON={lib:ICON.lib,card:ICON.card,ai:'<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3.5h8l4 4v13H6z"/><path d="M14 3.5v4h4"/><path d="M10 11.5l.9 2.1 2.1.9-2.1.9-.9 2.1-.9-2.1-2.1-.9 2.1-.9z"/></svg>'};
+  const paneRole=(k,name)=>`<span class="pane-role" title="${name}">${PANE_ICON[k]}<span>${name}</span></span>`;
+  const railHtml=(side,name)=>`<button type="button" class="pane-rail ${side}" data-cv="${side==='left'?'toggle-lib':'toggle-right'}" aria-pressed="false" title="${name} 열기" aria-label="${name} 열기">${side==='left'?ICON.panelL:ICON.panelR}<span>${name}</span></button>`;
+  // 가운데 머리줄: 칸 이름, 번호 탭, 문항 카드|쪽 전체.
   function barHtml(){
-    return `<div class="cv-bar"><button type="button" class="btn icon pt" data-cv="toggle-lib" aria-pressed="${panels.lib}" title="라이브러리 열기/닫기">${ICON.panelL}</button>${tabsHtml()}
+    return `<div class="cv-bar">${paneRole('card','문항 카드')}${tabsHtml()}
       <div class="seg cv-vseg" role="group" aria-label="가운데 보기"><button type="button" data-cvview="card" aria-pressed="${panels.view==='card'}" title="문항 카드">${ICON.card}<span>문항 카드</span></button><button type="button" data-cvview="page" aria-pressed="${panels.view==='page'}" title="쪽 전체">${ICON.page}<span>쪽 전체</span></button></div>
-      <span class="vsep"></span><button type="button" class="btn icon pt" data-cv="toggle-right" aria-pressed="${panels.rightOpen}" title="미리보기·AI 열기/닫기">${ICON.panelR}</button></div>`;
+</div>`;
   }
   const splitHtml=k=>`<div class="cv-split" data-cvsplit="${k}" role="separator" aria-orientation="vertical" title="끌어서 폭 바꾸기 · 두 번 누르면 기본 폭"></div>`;
   // 기본 폭(시안 4): 화면 너비의 38%·28.5%(1440px 화면 → 545·410, 1920px → 730·547). 끈 폭은 기억한다.
@@ -150,7 +156,7 @@ export function createCardEditor(root,api){
     if(['standards','references'].includes(panels.tab)){const src=document.querySelector('#source-search');if(src)src.value=srcQuery[panels.tab]||'';}
     applyWidths();
     const center=x?(panels.view==='page'?'<div class="cv-page" id="cv-page"><p class="pv-empty">쪽을 그리는 중…</p></div>':formHtml(x)):'<div class="cv-writer"><p class="pv-empty">위의 ＋로 새 문항을 만들거나 번호를 고르세요.</p></div>';
-    root.innerHTML=libHtml()+(panels.lib?splitHtml('left'):'')+`<section class="cv-center">${barHtml()}${center}</section>`+(panels.rightOpen?splitHtml('right'):'')+rightHtml();
+    root.innerHTML=(panels.lib?'':railHtml('left','참고 자료'))+libHtml()+(panels.lib?splitHtml('left'):'')+`<section class="cv-center">${barHtml()}${center}</section>`+(panels.rightOpen?splitHtml('right'):'')+rightHtml()+(panels.rightOpen?'':railHtml('right','AI · 조판'));
     if(same&&panels.view==='card')root.querySelector('.cv-writer').scrollTop=keep;
     renderedFor=x?.id;
     if(panels.lib)api.dock?.(['standards','references'].includes(panels.tab)?panels.tab:null,root.querySelector('[data-cvbody="docked"]'));
@@ -158,6 +164,7 @@ export function createCardEditor(root,api){
     placeHwp(panels.rightOpen&&panels.right==='paper'&&!!x);
     if(panels.rightOpen&&panels.right==='ai'){renderAi();markAiSeen();}
     if(panels.view==='page')void renderPage();
+    fitAll();
     root.querySelector('.cv-qtab[aria-current="true"]')?.scrollIntoView?.({block:'nearest',inline:'nearest'});
     root.querySelectorAll('.cv-writer textarea').forEach(fit);
   }
@@ -187,7 +194,10 @@ export function createCardEditor(root,api){
     alignHwp();}
   new MutationObserver(alignHwp).observe(root,{attributes:true,attributeFilter:['hidden']});window.addEventListener('resize',alignHwp);
   function markAiSeen(){const x=q();if(x)store.set('aiSeen:'+x.id,(x.reviews||[]).length);}
-  const fit=t=>{t.style.height='auto';t.style.height=Math.max(t.scrollHeight+2,44)+'px';};
+  function fit(t){t.style.height='auto';t.style.height=Math.max(t.scrollHeight+2,44)+'px';}
+  // 글 칸 높이는 칠 때만 맞추면, 처음 그릴 때와 칸 폭이 줄어 줄이 늘 때 글이 아래로 잘렸다. 그때도 맞춘다(폭이 바뀔 때만, 한 프레임에 한 번).
+  function fitAll(){for(const n of root.querySelectorAll('.cv-writer textarea'))fit(n);}
+  {let lastW=0,raf=0;new ResizeObserver(es=>{const w=Math.round(es[0].contentRect.width);if(w===lastW)return;lastW=w;cancelAnimationFrame(raf);raf=requestAnimationFrame(fitAll);}).observe(root);}
   function refreshLight(){const x=q();if(!x)return;
     // 완성한 문항의 내용을 고치면 검토 중으로 돌아간다(app.js demoteEdited). 다시 그리지 않는 입력에서도 단계 단추를 맞춘다.
     for(const b of root.querySelectorAll('[data-cvstage]'))b.setAttribute('aria-pressed',String(b.dataset.cvstage===workflowOf(x)));
