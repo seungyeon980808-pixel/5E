@@ -29,19 +29,19 @@
     height: var(--ds-h-bar);
     gap: 0;
     padding: 0 0 0 calc(var(--ds-edge) + var(--ds-h-control) + 1px);
-    justify-content: center;
+    justify-content: flex-start; /* 세 프로그램 로고 「5E」를 같은 자리(x60)에 — 이름 길이가 달라도 안 움직이게 */
     align-items: center;
     border-right: 1px solid var(--ds-line);
   }
   :root:not([data-mode="lite"]) .app[data-left-collapsed="true"] .app-shell-header .toolbar-history { border-right-color: transparent; }
   :root:not([data-mode="lite"]) .app-shell-header .app-brand {
     display: inline-flex; align-items: baseline; gap: 0;
-    height: var(--ds-h-control); padding: 0 4px; border-radius: var(--ds-radius);
+    height: var(--ds-h-control); padding: 0 4px; margin-left: 15px; border-radius: var(--ds-radius);
     color: var(--ds-ink); text-decoration: none; line-height: var(--ds-h-control);
   }
   :root:not([data-mode="lite"]) .app-shell-header .app-brand:hover { background: var(--ds-hover); }
   .app-brand .app-brand-mark { font: italic 700 21px/1 var(--ds-font-brand); letter-spacing: -.6px; }
-  .app-brand .app-brand-name { font: 500 15px/1 var(--ds-font); color: var(--ds-ink-2); margin-left: 1px; }
+  .app-brand .app-brand-name { font: italic 700 16px/1 var(--ds-font-brand); letter-spacing: -.2px; color: var(--ds-ink-2); margin-left: 1px; }
   /* 5E 글자 몸통이 막대 가운데보다 4px 위에 떠 보여서 글자만 2px 내린다(버튼 면은 그대로) */
   :root:not([data-mode="lite"]) .app-shell-header .app-brand > :is(.app-brand-mark, .app-brand-name) { position: relative; top: 2px; }
   :root[data-mode="lite"] .app-brand .app-brand-name { display: none; }
