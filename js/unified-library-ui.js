@@ -2216,6 +2216,17 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, sendTo
     if (cardBounds.top < scrollBounds.top) scroller.scrollTop += cardBounds.top - scrollBounds.top;
     else if (cardBounds.bottom > scrollBounds.bottom) scroller.scrollTop += cardBounds.bottom - scrollBounds.bottom;
   };
+  // 카드를 고르면 미리보기 칸이 열리며 결과 칸 높이가 줄어든다(예: 714→241px). 고른 카드를 칸 안으로 맞춘 뒤에 줄어들어
+  // 카드가 칸 밖에 남던 것 — 미리보기를 그린 뒤(와 그 다음 프레임) 고른 카드가 칸 밖이면 가장 가까운 쪽으로 다시 맞춘다(초점은 그대로).
+  const keepSelectedInView = (id) => {
+    if (id !== selectedId || overlay.hidden || restoringResultViewport) return;
+    const card = list.querySelector(`[data-result-id="${CSS.escape(id)}"]`);
+    if (!card) return;
+    const scroller = overlay.querySelector(".unilib-result-scroll");
+    const cardBounds = card.getBoundingClientRect(), scrollBounds = scroller.getBoundingClientRect();
+    if (cardBounds.bottom > scrollBounds.bottom) scroller.scrollTop += cardBounds.bottom - scrollBounds.bottom;
+    else if (cardBounds.top < scrollBounds.top) scroller.scrollTop += cardBounds.top - scrollBounds.top;
+  };
   list.addEventListener("click", (event) => {
     cancelSpacePress();
     const card = event.target.closest("[data-result-id]");
@@ -2228,7 +2239,11 @@ export function createUnifiedLibraryUi({ getProvider, insertMaterialized, sendTo
     activeFigureRepresentation = "figure:0";
     updateResultSelection();
     focusResultCard(selectedId);
-    void renderPreview();
+    const id = selectedId;
+    void Promise.resolve(renderPreview()).finally(() => {
+      keepSelectedInView(id);
+      requestAnimationFrame(() => keepSelectedInView(id));
+    });
   });
   list.addEventListener('dblclick', event => {
     if (!event.target.closest('[data-result-id]')) return;

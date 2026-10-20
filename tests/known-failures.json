@@ -110,7 +110,7 @@
     },
     {
       "path": "tests/test-library-reopen-scroll-browser.cjs",
-      "reason": "버그 후보: 라이브러리 '이미지' 보기에서 다시 열면 카드 높이(176→128px)가 달라진 채 위치를 맞춰 고른 카드가 화면 밖으로 나감"
+      "reason": "카드를 고른 직후(미리보기 칸이 열려 결과 칸이 줄 때) 카드가 칸 밖으로 밀리던 것은 고침(10-21). 남은 것: '이미지' 보기에서 닫았다 다시 열면 카드 높이(176→128px)가 달리 그려져 위치 복원이 어긋남"
     },
     {
       "path": "tests/test-screen-loading-motion-browser.cjs",
