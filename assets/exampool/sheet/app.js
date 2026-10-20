@@ -352,7 +352,7 @@ async function convertPast(item){
     const source={id:item.id,subject:item.subject,title:item.title,page:item.page,box:item.box,pdfFile:item.pdfFile,publicPath:item.publicPath,no:String(item.no),
       ...(r.length?{form:r[0],struct:r[1],layout:r[2],choiceShape:r[3],choiceArrange:r[4]}:{})};
     const {question:q,diag}=await engine.convertKice(source,{number:String(data.questions.length+1)});
-    q.references=[{target:'question',label:`원본 기출 · ${item.title}`.slice(0,300),quote:'',page:item.page}];
+    q.references=[{target:'question',label:`원본 기출 · ${item.title}`.slice(0,300),quote:'',page:item.page}];if(!q.source||q.source===item.title)q.source=`기출 변형 · ${item.title}`.slice(0,300);
     q.workflow='draft';
     pastStage('카드 여는 중');
     const ok=mutate(()=>{current=q;data.questions.push(q);const exam=['exam','card','desk'].includes(view.name)&&view.examId&&examById(data,view.examId);if(exam){addToExam(data,exam.id,q.id);renumberExam(data,exam.id);}});
@@ -416,7 +416,7 @@ let stdPick=(()=>{try{return JSON.parse(localStorage.getItem('5e.exampool.stdPic
 function renderSources(){const query=$('#source-search').value.toLowerCase(),seq=++sourceSeq;$('#sources').dataset.tab=sourceTab;document.querySelectorAll('[data-source]').forEach(n=>n.setAttribute('aria-selected',String(n.dataset.source===sourceTab)));
   if(sourceTab==='standards'){
     if(!standards){$('#source-content').innerHTML='<p class="muted">성취기준 자료를 불러오는 중입니다.</p>';return;}const all=standards.standards||standards.items||[];
-    if(selectedStandard){const s=selectedStandard;$('#source-content').innerHTML=`<button id="standard-back">목록으로</button><article class="standard-detail"><h3>${E(s.code)}</h3><p>${E(s.text)}</p>${s.explain?`<details open><summary>성취기준 해설</summary><p>${E(s.explain)}</p></details>`:''}<button id="use-standard" class="primary" ${!current?'disabled':''}>문항 성취기준으로 선택</button><p class="muted">${E(standards.source)}</p></article>`;$('#standard-back').onclick=()=>{selectedStandard=null;renderSources();};$('#use-standard').onclick=()=>{mutate(()=>{current.standardCode=s.code;current.references.push({target:sourceTarget,label:s.code,quote:s.text,standardCode:s.code});});renderSources();};return;}
+    if(selectedStandard){const s=selectedStandard;$('#source-content').innerHTML=`<button id="standard-back">목록으로</button><article class="standard-detail"><h3>${E(s.code)}</h3><p>${E(s.text)}</p>${s.explain?`<details open><summary>성취기준 해설</summary><p>${E(s.explain)}</p></details>`:''}<button id="use-standard" class="primary" ${!current?'disabled':''}>문항 성취기준으로 선택</button><p class="muted">${E(standards.source)}</p></article>`;$('#standard-back').onclick=()=>{selectedStandard=null;renderSources();};$('#use-standard').onclick=()=>{mutate(()=>{current.standardCode=s.code;{const u=standards.units?.find(u=>u.unit_no===s.unit_no);if(u&&!current.unitLarge)current.unitLarge=`${s.subject} › ${u.name}`;}current.references.push({target:sourceTarget,label:s.code,quote:s.text,standardCode:s.code});});renderSources();};return;}
     // 과목 고르기 두 단계(10-20 시안 16): ① 과목 성격 → ② 그 안의 과목. 마지막에 고른 것은 기억한다.
     const kinds=STD_KINDS.map(([k,subs])=>[k,k==='전체'?[]:subs.filter(n=>all.some(s=>s.subject===n))]),kind=kinds.find(([k])=>k===stdPick.kind)||kinds[0],subs=kind[1],sub=subs.includes(stdPick.subject)?stdPick.subject:'';
     const inKind=s=>kind[0]==='전체'||(sub?s.subject===sub:subs.includes(s.subject)),matches=all.filter(s=>inKind(s)&&[s.code,s.text,s.subject,s.explain].join(' ').toLowerCase().includes(query));

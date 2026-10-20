@@ -72,6 +72,17 @@ export function createCardEditor(root,api){
     return `<div class="f-field"><label title="값·식·낱말·문장을 한 줄씩 · 동그라미로 정답">선지<span class="lay">${[['','자동'],['한 줄','한 줄'],['2열','2열'],['세로','세로']].map(([v,t])=>`<button type="button" class="link" data-cvlayout="${v}" aria-pressed="${lay===v}">${t}</button>`).join('')}</span></label>
       <div class="rows">${x.choices.map((c,i)=>`<label class="ig choice-row${x.answer===i?' on':''}"><input type="radio" name="cv-ans" data-cvans="${i}" ${x.answer===i?'checked':''}><span>${NUM[i]}</span><input data-cvchoice="${i}" value="${E(c.text)}" placeholder="${NUM[i]} 선지">${evChip(x,c.id)||(x.answer===i?evMiss():'')}</label>`).join('')}</div></div>`;
   }
+  // 단원 자동(시안 35): 성취기준 코드 → 교육과정 자료의 대단원(「과목 › 대단원」). 자료에 중단원은 없어 중단원은 선택 입력.
+  let stdData=null;fetch(new URL('../standards.json',import.meta.url)).then(r=>r.ok?r.json():null).then(d=>{stdData=d;if(q()?.standardCode&&!q()?.unitLarge)render();}).catch(()=>{});
+  function unitOf(code){const s=stdData?.standards?.find(v=>v.code===code),u=s&&stdData.units?.find(v=>v.unit_no===s.unit_no);return u?`${s.subject} › ${u.name}`:'';}
+  const SOURCES=['자체 제작','교과서','기출 변형','기타'];
+  function sourceKind(x){const s=String(x.source||'');const k=SOURCES.find(v=>s.startsWith(v));if(k)return k;const orig=(x.references||[]).find(r=>/^원본 기출 · /.test(r.label));if(orig&&(!s||orig.label.endsWith(s)))return '기출 변형';return s?'기타':'';}
+  // 문항관리번호(비어 있으면 「연도-과목-번호」로 제안): 과목은 단원 앞 글자, 없으면 「과학」.
+  const autoManage=x=>`${new Date().getFullYear()}-${(x.unitLarge||unitOf(x.standardCode)||'과학').split(' › ')[0].replace(/\s+/g,'').slice(0,4)}-${String(x.number||'').padStart(2,'0')}`;
+  // 해설 뼈대: 정답 + 보기마다 옳음·틀림과 연결한 근거 인용문. 이미 쓴 해설이 있으면 그 아래에 붙인다.
+  function explanationSkeleton(x){const lines=[];if(Number.isInteger(x.answer)&&x.choices?.[x.answer])lines.push(`정답 ${NUM[x.answer]} ${x.choices[x.answer].text||''}`.trim());
+    for(const l of bogiOf(x)?.lines||[]){const r=refsOf(x,l.id)[0]?.[0];lines.push(`${l.label}. ${l.truth===true?'(옳음) ':l.truth===false?'(틀림) ':''}${r?.quote?r.quote+' — '+r.label:''}`.trimEnd());}
+    return lines.join('\n');}
   // 근거 표시(시안 34): 근거가 걸린 칸 옆 🔗N(올리면 출처·인용문, 누르면 그 쪽), 옳은 보기·정답 선지에 근거가 없으면 「근거 없음」.
   const refsOf=(x,t)=>(x.references||[]).map((r,i)=>[r,i]).filter(([r])=>r.target===t);
   function evChip(x,t){const rs=refsOf(x,t);if(!rs.length)return '';
@@ -111,7 +122,8 @@ export function createCardEditor(root,api){
       <form class="sheet-form cv-grid" onsubmit="return false">
         <section class="f-sec plan" aria-label="출제 설계">
           ${row('성취기준',`<div class="pick">${x.standardCode?`<b>${E(x.standardCode)}</b>`:'<span class="ph">고르지 않음</span>'}<button type="button" class="link" data-cv="open-standards">${x.standardCode?'바꾸기':'찾기'}</button></div>`,'왼쪽 참고 자료 칸을 「성취기준·교육과정」으로 바꿔 골라 연결합니다. 「찾기」를 눌러도 열립니다.')}
-          ${row('출제의도',`<input id="cv-intent" data-cvf="intent" value="${E(x.intent)}" placeholder="평가할 개념 · 학생이 할 일">`,'평가할 개념과 학생이 할 일을 한 줄로 적습니다. 예: 물질대사와 에너지 전환을 연결해 판단')}</section>
+          ${row('출제의도',`<input id="cv-intent" data-cvf="intent" value="${E(x.intent)}" placeholder="평가할 개념 · 학생이 할 일">`,'평가할 개념과 학생이 할 일을 한 줄로 적습니다. 예: 물질대사와 에너지 전환을 연결해 판단')}
+          ${row('단원',(()=>{const auto=unitOf(x.standardCode);return `<div class="cv-unit">${!x.unitLarge&&auto?`<span class="cv-auto">성취기준에서 자동</span><b>${E(auto)}</b><button type="button" class="link" data-cvunit="${E(auto)}">넣기</button>`:`<input data-cvf="unitLarge" value="${E(x.unitLarge||'')}" placeholder="${auto?E(auto):'대단원 (성취기준을 고르면 자동)'}" aria-label="대단원">`}<input class="cv-mid" data-cvf="unitMiddle" value="${E(x.unitMiddle||'')}" placeholder="중단원(선택)" aria-label="중단원"></div>`;})(),'성취기준을 고르면 교육과정 자료의 「과목 › 대단원」이 채워집니다. 중단원은 필요하면 적습니다.')}</section>
         <section class="f-sec" aria-label="문항 내용">
           ${row('지문',`<textarea id="cv-passage" data-cvf="passage" rows="1" placeholder="자료 앞 설명 (없으면 비움)">${E(passages[0]?.text||'')}</textarea>`,passages.length>1?`지문이 ${passages.length}개인 문항입니다. 첫 지문만 여기서 고치고, 나머지는 구성 시트에서 고칩니다.`:'자료 앞에 오는 설명 글입니다. 없으면 비워 둡니다.',passages.length>1?'multi':'','passage')}
           ${row('자료',slotsHtml(x),'그림은 5E에서 잘라 가져오고, 표는 칸 수를 정해 만듭니다. 칸에 마우스를 올리면 바꾸기·지우기 단추가 보입니다.')}
@@ -120,12 +132,13 @@ export function createCardEditor(root,api){
           ${row('발문',`<textarea id="cv-ask" data-cvf="ask" rows="1" placeholder="학생에게 물을 문장">${E(x.ask)}</textarea>`,'학생에게 묻는 문장','','ask')}
           ${isCombo(x)||bogi?row('보기',bogi?linesHtml(bogi,'bogi','보기 내용'):'<button type="button" class="btn" data-cvline-add="bogi">+ 보기 만들기</button>',isCombo(x)?'ㄱ·ㄴ·ㄷ은 자동으로 붙습니다. 오른쪽 ○(옳음)·×(틀림)를 정하면 정답 선지가 자동으로 표시됩니다.':'합답형이 아니지만 한글에 찍히는 보기입니다(엑셀에서 유형만 바꾼 경우). 필요 없으면 줄을 지우세요.'):''}
           ${choicesHtml(x)}
+          ${row('해설',`<div class="cv-exp-tools"><button type="button" class="mini" data-cv="exp-skeleton" title="정답과 보기 ○×, 연결한 근거 인용문으로 해설 줄을 만듭니다">${ICON.star}보기 ○×·근거로 해설 뼈대 만들기</button></div><textarea data-cvf="explanation" rows="1" placeholder="정답 근거와 풀이">${E(x.explanation)}</textarea>`,'정답 근거와 풀이. 「뼈대 만들기」는 보기 ○×와 근거 인용문으로 줄을 만들고, 이미 쓴 해설이 있으면 그 아래에 붙입니다.')}
           ${row('근거',evTable,'이 문항의 근거: 교과서·기출 쪽에서 글을 끌어 고르거나 「이 쪽을 근거로」, 기출 크게 보기의 「근거로 연결」. 줄을 누르면 그 쪽이 열립니다. 한글 조판에는 찍히지 않습니다.','cv-evrow')}
-          <details class="f-more"${store.get('more',false)?' open':''}><summary>해설 · 단원 · 출처</summary>
-            <div class="f-row3"><div class="f-field"><label>대단원</label><input data-cvf="unitLarge" value="${E(x.unitLarge||'')}"></div><div class="f-field"><label>중단원</label><input data-cvf="unitMiddle" value="${E(x.unitMiddle||'')}"></div><div class="f-field"><label>배점</label><input data-cvf="points" value="${E(x.points)}" inputmode="decimal"></div></div>
-            <div class="f-row2"><div class="f-field"><label>출처</label><input data-cvf="source" value="${E(x.source)}" placeholder="자체 제작 · 교과서 · 기출 변형"></div><div class="f-field"><label>문항관리번호</label><input data-cvf="managementId" value="${E(x.managementId||'')}"></div></div>
-            <div class="f-field"><label>해설</label><textarea data-cvf="explanation" rows="2" placeholder="정답 근거">${E(x.explanation)}</textarea></div></details>
+          ${row('출처',(()=>{const k=sourceKind(x),orig=(x.references||[]).find(r=>/^원본 기출 · /.test(r.label)),books=[...new Set((x.references||[]).filter(r=>r.source?.kind==='textbook').map(r=>r.label))];
+            const note=k==='기출 변형'?(String(x.source).replace(/^기출 변형\s*·?\s*/,'')||orig?.label.replace(/^원본 기출 · /,'')||''):k==='교과서'?(String(x.source).replace(/^교과서\s*·?\s*/,'')||books.join(' · ')):'';
+            return `<div class="cv-src"><span class="cv-pts cv-srcseg" role="group" aria-label="출처">${SOURCES.map(v=>`<button type="button" data-cvsource="${v}" aria-pressed="${k===v}">${v}</button>`).join('')}</span>${k==='기타'?`<input data-cvf="source" value="${E(x.source)}" placeholder="출처 직접 입력" aria-label="출처">`:note?`<span class="cv-srcnote">${!String(x.source).includes(note)?'<span class="cv-auto">자동</span>':''}${E(note)}</span>`:''}</div>`;})(),'자체 제작·교과서·기출 변형·기타. 「변형」으로 가져온 문항은 원본 기출이, 교과서는 연결한 근거 쪽이 자동으로 적힙니다.')}
         </section>
+        <div class="cv-meta">관리번호 <input data-cvf="managementId" value="${E(x.managementId||'')}" placeholder="${E(autoManage(x))}" aria-label="문항관리번호"><span>· 배점은 맨 위 2점|3점에서</span></div>
         <footer class="f-foot"><div class="checks" id="cv-checks">${checksHtml(items)}</div><span class="sp"></span><button type="button" class="btn go" data-cv="review" ${done?'':'title="발문·자료·보기·선지·정답을 채우면 검토가 정확해집니다"'}>${ICON.star}AI 검토 요청</button></footer>
       </form></div>`;
   }
@@ -545,6 +558,9 @@ export function createCardEditor(root,api){
     if(d.cvlineAdd){const key=d.cvlineAdd;api.edit(()=>{let blk=x.blocks.find(v=>v.kind===key);if(!blk){writeField(x,key,'');blk=x.blocks.find(v=>v.kind===key);}const value=fieldValue(x,key);writeField(x,key,value?value+'\n':key==='dialogue'?'학생 A: ':'');});return;}
     if(d.cvlineRemove){const key=d.cvlineRemove,i=Number(d.i);api.edit(()=>{const blk=x.blocks.find(v=>v.kind===key);blk.lines.splice(i,1);if(key==='bogi'&&!isCombo(x)&&!blk.lines.length){x.blocks=x.blocks.filter(v=>v!==blk);return;}if(key==='bogi'){const L=['ㄱ','ㄴ','ㄷ','ㄹ','ㅁ','ㅂ','ㅅ','ㅇ'];blk.lines.forEach((l,j)=>l.label=L[j]||String(j+1));}else if(key==='steps'){const C=['(가)','(나)','(다)','(라)','(마)','(바)','(사)','(아)'];blk.lines.forEach((l,j)=>l.label=C[j]||`(${j+1})`);}});return;}
     if(d.cvcombo!==undefined){const i=Number(d.cvcombo),letter=d.letter;api.edit(()=>{const set=new Set(x.choices[i].text.split(/\s*,\s*/).filter(Boolean));set.has(letter)?set.delete(letter):set.add(letter);const order=(bogiOf(x)?.lines||[]).map(l=>l.label);x.choices[i].text=normalizeCombo([...set].sort((a,b)=>order.indexOf(a)-order.indexOf(b)).join(', '));});return;}
+    if(d.cvunit){api.edit(()=>{x.unitLarge=d.cvunit;});return;}
+    if(d.cvsource){const k=d.cvsource,orig=(x.references||[]).find(r=>/^원본 기출 · /.test(r.label));api.edit(()=>{x.source=k==='기출 변형'&&orig?`기출 변형 · ${orig.label.replace(/^원본 기출 · /,'')}`:k==='기타'?(sourceKind(x)==='기타'?x.source:''):k;});if(k==='기타')setTimeout(()=>root.querySelector('[data-cvf="source"]')?.focus(),0);return;}
+    if(d.cv==='exp-skeleton'){const sk=explanationSkeleton(x);if(sk)api.edit(()=>{x.explanation=x.explanation?.trim()?`${x.explanation.trimEnd()}\n\n${sk}`:sk;});setTimeout(()=>{const t=root.querySelector('[data-cvf="explanation"]');if(t){t.focus();t.setSelectionRange(t.value.length,t.value.length);}},0);return;}
     if(d.cvpoints){api.edit(()=>{x.points=Number(d.cvpoints);});return;}
     if(d.cvtruth!==undefined){const l=bogiOf(x)?.lines?.[Number(d.cvtruth)];if(!l)return;const v=d.v==='1';api.edit(()=>{if(l.truth===v)delete l.truth;else l.truth=v;const right=comboRight(x);if(right!==null){const i=x.choices.findIndex(c=>normalizeCombo(c.text)===right);if(i>=0)x.answer=i;}});return;}
     if(d.cvcombofill!==undefined){const set=COMBO_STATS.top[Number(d.cvcombofill)]?.[0];if(set)api.edit(()=>{x.choices.forEach((c,i)=>c.text=set[i]);const right=comboRight(x);if(right!==null){const i=x.choices.findIndex(c=>normalizeCombo(c.text)===right);if(i>=0)x.answer=i;}});return;}

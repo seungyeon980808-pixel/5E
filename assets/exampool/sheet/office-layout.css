@@ -397,3 +397,22 @@ button:active:not(:disabled):not([aria-busy=true]):not(.pane-rail),.lp-pdf:activ
 #card-view .cv-evtab td.x{grid-column:3;grid-row:1}
 #card-view .cv-evtab tr.miss{grid-template-columns:auto minmax(0,1fr);padding:6px;border-radius:6px;background:#fffbe6}
 #card-view .cv-evtab tr.miss td{background:transparent}
+
+/* 35. 단원·해설·출처(묶음 F 시안): 접는 상자 대신 카드의 줄. 배점은 맨 위 하나. */
+#card-view .cv-unit,#card-view .cv-src{display:flex;align-items:center;gap:8px;min-height:28px;padding:0 6px;flex-wrap:wrap}
+#card-view .cv-unit>input,#card-view .cv-src>input{flex:1 1 140px;min-width:0;height:26px;padding:0 6px;border:0;border-radius:5px;background:transparent;box-shadow:none;font-size:13px}
+#card-view .cv-unit>input:hover,#card-view .cv-src>input:hover{background:var(--ds-doc-hover,#f6f8fa)}
+#card-view .cv-unit>input:focus,#card-view .cv-src>input:focus{background:#f6f9ff;box-shadow:inset 0 0 0 1px var(--go-line,#2f6fd6);outline:0}
+#card-view .cv-unit>.cv-mid{flex:0 1 150px;background:var(--ds-doc-hover,#f6f8fa)}
+#card-view .cv-unit b{font-weight:600}
+#card-view .cv-unit .link{padding:0;height:auto;min-height:0;font-size:12.5px}
+#card-view .cv-auto{display:inline-flex;align-items:center;height:18px;padding:0 6px;border-radius:9px;background:#e6f4ea;color:#1a7f37;font-size:11px;font-weight:600;white-space:nowrap}
+#card-view .cv-srcseg button{white-space:nowrap}
+#card-view .cv-srcnote{display:inline-flex;align-items:center;gap:6px;color:var(--ds-doc-ink-2,#57606a);font-size:12.5px}
+#card-view .cv-exp-tools{display:flex;align-items:center;gap:6px;padding:2px 6px 2px}
+#card-view .cv-exp-tools .mini{display:inline-flex;align-items:center;gap:4px;height:24px;padding:0 9px;border:0;border-radius:6px;background:#eaf2fd;color:#1a5fb4;box-shadow:inset 0 0 0 1px #2f6fd6;font-size:12px}
+#card-view .cv-exp-tools .mini .ico{width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:1.7}
+#card-view .cv-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:2px 6px;color:var(--ds-doc-ink-3,#8c959f);font-size:12px}
+#card-view .cv-meta input{width:150px;height:24px;padding:0 6px;border:0;border-radius:5px;background:transparent;box-shadow:none;font:12px ui-monospace,Menlo,monospace;color:var(--ds-doc-ink-2,#57606a)}
+#card-view .cv-meta input:hover{background:var(--ds-doc-hover,#f6f8fa)}
+#card-view .cv-meta input:focus{background:#f6f9ff;box-shadow:inset 0 0 0 1px #2f6fd6;outline:0}
