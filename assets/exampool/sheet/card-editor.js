@@ -8,6 +8,7 @@ import {workflowOf,previewHtml,questionSubtitle} from './views.js';
 import {AXES,AXIS_LABEL,JUDGEMENT_LABEL} from '../authoring/schema.js';
 import {labelOf} from '../authoring/session.js';
 import {croppedPastImage} from './past-crop.js';
+import {markedQuestion,renderPage as renderPdfPage,pdfHref} from './past-pdf.js';
 
 import {F,MONTH,shortTitle,norm,splitWords,pastScore} from './past-search.js';
 import {busyHtml,pastBusyHtml,E,NUM,COMMON,ICON,TABS,slotsOf,STRUCT_SHORT,shapeIco,CHEV,CHECK,bogiOf,isCombo,CHANNEL,store} from './card-shared.js';
@@ -169,7 +170,7 @@ export function createCardEditor(root,api){
     root.querySelectorAll('.cv-writer textarea').forEach(fit);
   }
   // 가운데 보기 전환: 한글 조판에서 나가면 한글 창을 닫는다(조판 저장은 창의 「조판 저장」으로).
-  function setView(v){panels.view=v==='hwp'?'card':v;render();}
+  function setView(v){panels.view=v==='hwp'?'card':v;render();anim(root.querySelector('.cv-center .cv-page,.cv-center .cv-writer'),'ep-swap');}
   // 한글 조판 창(5e_hwp)은 안에 편집기 프레임이 있어 DOM에서 옮기면 처음부터 다시 읽는다(문항 전환 15초).
   // 그래서 카드를 다시 그려도 지워지지 않는 층 하나에 한 번만 붙이고, 그 층을 미리보기 칸(#cv-hwp) 위에 겹쳐 둔다.
   const hwpLayer=document.createElement('div');hwpLayer.className='cv-hwp-layer';hwpLayer.hidden=true;document.body.append(hwpLayer);api.hwpDock?.(hwpLayer);// 편집기 프레임이 생기기 전에 붙여 둔다.
@@ -262,7 +263,10 @@ export function createCardEditor(root,api){
   // 기출 카드 그림: 화면에 들어오는 것부터 문항 번호~선지 번호 줄로 잘라(past-crop.js) 넣는다. 그림 칸은 정사각 고정이라 읽혀도 칸이 움직이지 않는다(긴 문항은 아래만 잘림).
   function loadThumbs(body){
     const list=body.querySelector('.past-list');if(!list)return;
-    const show=img=>{if(img.dataset.loading)return;img.dataset.loading='1';croppedPastImage(img.dataset.card).then(src=>{if(img.isConnected)img.src=src;else delete img.dataset.loading;});};
+    const words=pastFilter.tokens.slice();
+    const mark=img=>{const i=words.length&&pastItem(img.dataset.pastThumb);if(!i?.publicPath||!Array.isArray(i.box))return;const pic=img.closest('.past-pic');pic?.setAttribute('data-marking','');
+      markedQuestion(i,words).then(r=>{if(r&&img.isConnected){img.src=r.url;pic?.setAttribute('data-marked',r.count);}}).catch(()=>{}).finally(()=>pic?.removeAttribute('data-marking'));};
+    const show=img=>{if(img.dataset.loading)return;img.dataset.loading='1';croppedPastImage(img.dataset.card).then(src=>{if(img.isConnected){img.src=src;mark(img);}else delete img.dataset.loading;});};
     if(!('IntersectionObserver' in window)){list.querySelectorAll('img[data-card]').forEach(show);return;}
     const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){io.unobserve(e.target);show(e.target);}}),{root:list,rootMargin:'400px 0px'});
     list.querySelectorAll('img[data-card]').forEach(img=>io.observe(img));
@@ -313,12 +317,37 @@ export function createCardEditor(root,api){
     fillHead(searchHtml(f.tokens.length?'단어 더하기':'단어+Enter',`<span class="lp-n" title="기출 ${total.toLocaleString()}문항 중">${list.length.toLocaleString()}문항</span>`),
       sel('subject',subjects,'과목')+sel('part',parts,'단원')+sel('year',years,'연도')+`<div class="lp-adv-foot"><span>6월·9월 모평, 수능</span><button type="button" class="mini" data-cvadvclear>모두 지우기</button></div>`,
       ['subject','part','year'].filter(k=>f[k]).length);
-    const html=`<div class="past-list">${picksHtml()}${list.slice(0,40).map(i=>`<figure class="past"${api.pastBusy?.()?.id===i.id?' data-busy':''}>${thumb(i)}${api.pastBusy?.()?.id===i.id?pastBusyHtml(api.pastBusy().stage):''}<figcaption><b title="${E([i.title,...i.parts,...i.tags.slice(0,3)].join(' · '))}">${E(i.short)}</b><span class="acts"><button type="button" class="mini" data-cvlink="${E(i.id)}" title="이 문항의 근거로 연결">${ICON.link}<span>근거</span></button>${(busy=>`<button type="button" class="mini go-mini" data-cvconvert="${E(i.id)}" title="편집 가능한 한글 문항으로 바꿔 새 문항 카드로 엽니다(AI 없음)"${busy?' aria-busy="true"':''}>${busy?busyHtml(busy.stage):'변형'}</button>`)(api.pastBusy?.()?.id===i.id&&api.pastBusy())}</span></figcaption></figure>`).join('')}</div>`;
+    const seg=`<span class="lp-seg" role="group" aria-label="보기 단위"><button type="button" data-cvpastview="q" aria-pressed="${f.view!=='page'}">문항</button><button type="button" data-cvpastview="page" aria-pressed="${f.view==='page'}">쪽</button></span>`;
+    if(f.view==='page'){renderPastPage(body,items,list,seg);return;}
+    const html=`<div class="past-list"><div class="lp-viewbar">${seg}<span class="lp-vb-note">${f.tokens.length?'검색어는 형광펜으로 표시':'더블클릭하면 크게 보기'}</span></div>${picksHtml()}${list.slice(0,40).map(i=>`<figure class="past"${api.pastBusy?.()?.id===i.id?' data-busy':''}>${thumb(i)}${api.pastBusy?.()?.id===i.id?pastBusyHtml(api.pastBusy().stage):''}<figcaption><b title="${E([i.title,...i.parts,...i.tags.slice(0,3)].join(' · '))}">${E(i.short)}</b><span class="acts"><button type="button" class="mini" data-cvlink="${E(i.id)}" title="이 문항의 근거로 연결">${ICON.link}<span>근거</span></button>${(busy=>`<button type="button" class="mini go-mini" data-cvconvert="${E(i.id)}" title="편집 가능한 한글 문항으로 바꿔 새 문항 카드로 엽니다(AI 없음)"${busy?' aria-busy="true"':''}>${busy?busyHtml(busy.stage):'변형'}</button>`)(api.pastBusy?.()?.id===i.id&&api.pastBusy())}</span></figcaption></figure>`).join('')}</div>`;
     // 카드를 다시 그려도 기출 목록 내용이 같으면 그 전 목록(이미 받은 그림 포함)을 그대로 다시 붙인다 — 매번 새로 만들면
     // 그림 40장을 다시 받고 레이아웃을 다시 계산해 「근거로 연결」 같은 작은 수정에도 화면이 60ms쯤 멈췄다.
     if(html===pastCache.html&&pastCache.node){body.replaceChildren(pastCache.node);loadThumbs(body);refocus();reopenZoom();return;}
     body.innerHTML=html;pastCache={html,node:body.firstElementChild};
     loadThumbs(body);refocus();reopenZoom();
+  }
+  // 쪽 보기(시안 17): 검색 결과에 나온 시험지를 원본 쪽 그대로 보고 넘긴다(공개 게이트웨이, 로그인 없음). 검색어는 형광펜(18).
+  // 아래에는 그 쪽에 있는 문항이 나와 「근거·변형」을 바로 쓴다. 「PDF」는 시험지 원본을 새 창에서 연다.
+  let pastPageSeq=0;
+  function renderPastPage(body,items,list,seg){
+    const f=pastFilter,exams=[];for(const i of list){if(i.publicPath&&!exams.some(x=>x.pdfFile===i.pdfFile))exams.push(i);if(exams.length>=60)break;}
+    pastCache={html:'',node:null};
+    if(!exams.length){body.innerHTML=`<div class="past-list"><div class="lp-viewbar">${seg}</div><p class="lp-count">볼 시험지가 없습니다. 검색어나 상세검색을 바꿔 보세요.</p></div>`;return;}
+    const ex=exams.find(x=>x.pdfFile===f.pagefile)||exams[0],first=list.find(i=>i.pdfFile===ex.pdfFile),pageNo=Math.max(1,(ex.pdfFile===f.pagefile&&Number(f.pageno))||first?.page||1);if(f.pagefile!==ex.pdfFile||f.pageno!==pageNo){f.pagefile=ex.pdfFile;f.pageno=pageNo;store.set('past',f);}
+    const examName=i=>`${i.year}학년도 ${MONTH[i.month]||i.month+'월'} ${i.subjectLabel}`;
+    const onPage=items.filter(i=>i.pdfFile===ex.pdfFile&&Number(i.page)===pageNo).sort((a,b)=>(+a.no)-(+b.no)),hits=new Set(list.map(i=>i.id));
+    const busy=api.pastBusy?.();
+    body.innerHTML=`<div class="past-list lp-pageview"><div class="lp-viewbar">${seg}<select data-cvpast="pagefile" aria-label="시험지 고르기">${exams.map(x=>`<option value="${E(x.pdfFile)}"${x===ex?' selected':''}>${E(examName(x))}</option>`).join('')}</select>
+      <span class="lp-pnav"><button type="button" data-cvpagestep="-1" aria-label="이전 쪽"${pageNo<=1?' disabled':''}>‹</button><span data-cvslot="pageno">${pageNo}쪽</span><button type="button" data-cvpagestep="1" aria-label="다음 쪽">›</button></span>
+      <a class="lp-pdf" href="${E(pdfHref(ex.publicPath,pageNo))}" target="_blank" rel="noopener" title="시험지 PDF 원본을 새 창에서 열기">PDF</a></div>
+      <div class="lp-paper" data-cvpaper><span class="lp-paper-wait"><i aria-hidden="true"></i>원본 시험지 받는 중…</span></div>
+      <div class="lp-qchips">${onPage.length?`<span class="lp-qnote">이 쪽의 문항</span>${onPage.map(i=>`<span class="lp-q${hits.has(i.id)?' on':''}" title="${E(i.title)}"><b>${E(i.no)}번</b><button type="button" class="mini" data-cvlink="${E(i.id)}" title="이 문항의 근거로 연결">${ICON.link}<span>근거</span></button><button type="button" class="mini go-mini" data-cvconvert="${E(i.id)}" title="편집 가능한 한글 문항으로 바꿔 새 문항 카드로 엽니다(AI 없음)"${busy?.id===i.id?' aria-busy="true"':''}>${busy?.id===i.id?busyHtml(busy.stage):'변형'}</button></span>`).join('')}`:'<span class="lp-qnote">이 쪽에는 색인된 문항이 없습니다</span>'}</div></div>`;
+    const paper=body.querySelector('[data-cvpaper]'),seq=++pastPageSeq,width=Math.max(240,paper.clientWidth||body.clientWidth-24);
+    renderPdfPage(ex.publicPath,pageNo,f.tokens.slice(),width).then(r=>{if(seq!==pastPageSeq||!paper.isConnected)return;
+      if(pageNo>r.pages){pastFilter.pageno=r.pages;store.set('past',pastFilter);renderPast();return;}
+      paper.replaceChildren(r.canvas);paper.dataset.marked=r.count;const n=body.querySelector('[data-cvslot="pageno"]');if(n)n.textContent=`${pageNo} / ${r.pages}쪽`;
+      const next=body.querySelector('[data-cvpagestep="1"]');if(next)next.disabled=pageNo>=r.pages;})
+      .catch(()=>{if(seq===pastPageSeq&&paper.isConnected)paper.innerHTML='<span class="lp-paper-wait err">원본 시험지를 받지 못했습니다. 잠시 뒤 다시 누르거나 「PDF」로 열어 보세요.</span>';});
   }
 
 
@@ -369,7 +398,16 @@ export function createCardEditor(root,api){
     if(typing){const n=body.querySelector('#cv-ai-input');n.focus();n.setSelectionRange(n.value.length,n.value.length);}
   }
 
-  function setPanel(k,v){panels[k]=v;store.set(k,v);render();}
+  function setPanel(k,v){panels[k]=v;store.set(k,v);render();motion(k,v);}
+  // 움직임(시안 exampool-motion.html): 칸을 열면 옆에서 0.22초 떠오르고, 닫으면 가운데가 부드럽게 다시 자리 잡는다. 보기를 바꾸면 새 내용만 0.2초 떠오른다.
+  // 화면 구조는 바로 바뀌고(검사·키보드 그대로) 모양만 움직인다. 「동작 줄이기」 설정이면 CSS에서 모두 끈다.
+  function anim(el,c){if(!el)return;el.classList.remove(c);void el.offsetWidth;el.classList.add(c);el.addEventListener('animationend',()=>el.classList.remove(c),{once:true});}
+  function motion(k,v){
+    if(k==='lib')anim(root.querySelector(v?'.cv-left':'.cv-center'),v?'ep-pane-in':'ep-reflow');
+    if(k==='rightOpen'){anim(root.querySelector(v?'.cv-right':'.cv-center'),v?'ep-pane-in':'ep-reflow');if(v)anim(hwpLayer,'ep-pane-in');}
+    if(k==='right')anim(panels.right==='paper'?hwpLayer:root.querySelector('.cv-rbody'),'ep-swap');
+    if(k==='tab')anim(root.querySelector('.cv-left .lp-body:not([hidden])'),'ep-swap');
+  }
   function edit(field,fn,light=true){api.edit(fn,{key:`card:${q()?.id}:${field}`,light});if(light)refreshLight();}
 
   root.addEventListener('input',e=>{
@@ -385,6 +423,7 @@ export function createCardEditor(root,api){
   root.addEventListener('change',e=>{
     const t=e.target,x=q();
     if(t.dataset.cvscope!==undefined){setPanel('tab',t.value);return;}
+    if(t.dataset.cvpast==='pagefile')pastFilter.pageno=0;
     if(t.dataset.cvpast&&t.dataset.cvpast!=='query'){pastFilter[t.dataset.cvpast]=t.value;if(t.dataset.cvpast==='book')pastFilter.query='';store.set('past',pastFilter);renderPast();return;}
     if(!x)return;
     if(t.dataset.cvans!==undefined){api.edit(()=>{x.answer=Number(t.dataset.cvans);});return;}
@@ -399,12 +438,14 @@ export function createCardEditor(root,api){
     if(d.cvtab){setPanel('tab',d.cvtab);return;}
     if(d.cvright){panels.rightOpen=true;store.set('rightOpen',true);setPanel('right',d.cvright);return;}
     if(d.cvview){setView(d.cvview);return;}
+    if(d.cvpastview){pastFilter.view=d.cvpastview;store.set('past',pastFilter);renderPast().then(()=>anim(root.querySelector('[data-cvbody="past"]>.past-list'),'ep-swap'));return;}
     if(d.cv==='to-page'){setView('page');return;}
     if(d.cv==='toggle-lib'){setPanel('lib',!panels.lib);return;}
     if(d.cv==='toggle-right'){setPanel('rightOpen',!panels.rightOpen);return;}
     if(d.cv==='hwp-download'||d.cv==='hwp-save'){hwpLayer.querySelector(d.cv==='hwp-save'?'#typeset-save':'#typeset-download')?.click();return;}
     if(d.cv==='new'){api.newQuestion();return;}
     if(d.cvadv!==undefined){pastAdvOpen=!pastAdvOpen;b.setAttribute('aria-expanded',pastAdvOpen);const pop=root.querySelector('[data-cvslot="adv"]');if(pop)pop.hidden=!pastAdvOpen;return;}
+    if(d.cvpagestep){const n=root.querySelector('[data-cvslot="pageno"]')?.textContent.match(/\d+/);pastFilter.pageno=Math.max(1,(Number(n?.[0])||1)+Number(d.cvpagestep));store.set('past',pastFilter);renderPast();return;}
     if(d.cvadvclear!==undefined){Object.assign(pastFilter,{subject:'',part:'',year:''});store.set('past',pastFilter);renderPast();return;}
     if(d.cvbooklink!==undefined){const bk=books?.find(v=>v.id===(pastFilter.book||books[0]?.id))||books?.[0];if(bk&&x){api.edit(()=>{x.references.push({target:'question',label:`${bk.title} ${d.cvbooklink}쪽`,quote:''});});api.status?.(`${bk.title} ${d.cvbooklink}쪽을 근거로 연결했습니다.`);}return;}
     if(d.cvzoomnav!==undefined){zoomTo(pastZoom+Number(d.cvzoomnav));return;}

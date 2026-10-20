@@ -154,7 +154,7 @@ h.withServer(async origin => {
       while(await sheet.locator('#card-view .lp-token').count())await sheet.click('#card-view .lp-token');
 
       // 3e. 문항 더블클릭 → 라이브러리 칸 안(머리 줄 아래)에서 크게 보기, ← → 넘기기, Esc 닫기.
-      await sheet.dblclick('#card-view .past-list figure.past:nth-child(2) .past-pic');
+      await sheet.dblclick('#card-view .past-list figure.past:nth-of-type(2) .past-pic');
       const zoom=await sheet.evaluate(()=>{const z=document.querySelector('#card-view .lp-zoom'),l=document.querySelector('#card-view .cv-left').getBoundingClientRect(),r=z.getBoundingClientRect();
         return {inLib:r.left>=l.left-0.5&&r.right<=l.right+0.5&&r.bottom<=l.bottom+0.5,top:Math.round(r.top-l.top),pos:z.querySelector('.pos').textContent,acts:z.querySelectorAll('.lp-zoom-foot [data-cvlink],.lp-zoom-foot [data-cvconvert]').length};});
       assert.ok(zoom.inLib,'the zoom stays inside the library pane');assert.equal(zoom.top,44,'below the head row');assert.match(zoom.pos,/^2 \/ \d+$/);assert.equal(zoom.acts,2,'link and convert are available in the zoom');
