@@ -30,7 +30,7 @@ for(const [name,engine] of Object.entries({chromium,webkit})) test(`${name}: a $
   const open=async q=>{await sheet.waitForFunction(id=>[...document.querySelectorAll(`[data-cv-open="${id}"],[data-open-card="${id}"]`)].some(n=>n.getClientRects().length),q.id);
     await sheet.evaluate(id=>[...document.querySelectorAll(`[data-cv-open="${id}"],[data-open-card="${id}"]`)].find(n=>n.getClientRects().length).click(),q.id);await ready(q.number);};
   for(const q of qs){await open(q);
-    for(let i=0;i<3;i++){await sheet.click('#typeset-save');await sheet.waitForFunction(()=>{const n=document.querySelector('#typeset-status');return /조판 저장됨|다시 누르세요/.test(n.textContent)||n.dataset.error==='true';});if(/조판 저장됨/.test(await sheet.locator('#typeset-status').textContent()))break;assert.notEqual(await sheet.locator('#typeset-status').getAttribute('data-error'),'true');}}
+    for(let i=0;i<3;i++){await sheet.locator('#typeset-save:visible, #card-view [data-cv="hwp-save"]:visible').first().click();await sheet.waitForFunction(()=>{const n=document.querySelector('#typeset-status');return /조판 저장됨|다시 누르세요/.test(n.textContent)||n.dataset.error==='true';});if(/조판 저장됨/.test(await sheet.locator('#typeset-status').textContent()))break;assert.notEqual(await sheet.locator('#typeset-status').getAttribute('data-error'),'true');}}
   if(await sheet.locator('.side').isHidden())await sheet.click('#toggle-nav');
   await sheet.click('.side [data-nav="new-exam"]');await sheet.waitForSelector('#examd-view:not([hidden]) #exam-from-library');
   for(const q of qs){await sheet.selectOption('#exam-from-library',q.id);await sheet.waitForFunction(id=>![...document.querySelectorAll('#exam-from-library option')].some(o=>o.value===id),q.id);}

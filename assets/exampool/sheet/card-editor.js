@@ -123,7 +123,7 @@ export function createCardEditor(root,api){
   const unseenAi=x=>{const seen=store.get('aiSeen:'+x.id,0);return (x.reviews||[]).slice(seen).filter(m=>m.role==='ai').length;};
   function rightHtml(){
     const x=q(),badge=x&&panels.right!=='ai'?unseenAi(x):0;
-    return `<aside class="cv-right"${panels.rightOpen?'':' hidden'} aria-label="AI · 조판"><div class="cv-ph">${paneRole('ai','AI · 조판')}<div class="seg cv-rseg" role="group" aria-label="오른쪽 칸"><button type="button" data-cvright="paper" aria-pressed="${panels.right==='paper'}">${ICON.page}미리보기</button><button type="button" data-cvright="ai" aria-pressed="${panels.right==='ai'}">${ICON.star}AI${badge?`<i class="badge">${badge}</i>`:''}</button></div><span class="sp"></span>${panels.rightOpen?`<button type="button" class="btn icon pt pane-close" data-cv="toggle-right" aria-pressed="true" title="AI · 조판 닫기" aria-label="AI · 조판 닫기">${ICON.panelR}</button>`:''}</div>
+    return `<aside class="cv-right"${panels.rightOpen?'':' hidden'} aria-label="AI · 조판"><div class="cv-ph">${paneRole('ai','AI · 조판')}<div class="seg cv-rseg" role="group" aria-label="오른쪽 칸"><button type="button" data-cvright="paper" aria-pressed="${panels.right==='paper'}">${ICON.page}미리보기</button><button type="button" data-cvright="ai" aria-pressed="${panels.right==='ai'}">${ICON.star}AI${badge?`<i class="badge">${badge}</i>`:''}</button></div><span class="sp"></span>${panels.right==='paper'&&x?`<span class="pane-acts"><button type="button" class="pane-act" data-cv="hwp-download" title="편집 가능한 HWPX 내려받기">HWPX</button><button type="button" class="pane-act go" data-cv="hwp-save" title="이 문항의 조판 저장">조판 저장</button></span>`:''}${panels.rightOpen?`<button type="button" class="btn icon pt pane-close" data-cv="toggle-right" aria-pressed="true" title="AI · 조판 닫기" aria-label="AI · 조판 닫기">${ICON.panelR}</button>`:''}</div>
       <div class="cv-rbody" data-cvbody="paper" ${panels.right==='paper'?'':'hidden'}><div class="cv-hwp" id="cv-hwp">${x?'':'<p class="pv-empty">문항을 고르면 한글 조판이 보입니다.</p>'}</div></div>
       <div class="cv-rbody ai-body" data-cvbody="ai" ${panels.right==='ai'?'':'hidden'}></div></aside>`;
   }
@@ -161,7 +161,7 @@ export function createCardEditor(root,api){
     renderedFor=x?.id;
     if(panels.lib)api.dock?.(['standards','references'].includes(panels.tab)?panels.tab:null,root.querySelector('[data-cvbody="docked"]'));
     if(panels.lib&&['past','textbooks'].includes(panels.tab))renderPast();
-    placeHwp(panels.rightOpen&&panels.right==='paper'&&!!x);
+    placeHwp(panels.rightOpen&&panels.right==='paper'&&!!x);syncHwpActs();
     if(panels.rightOpen&&panels.right==='ai'){renderAi();markAiSeen();}
     if(panels.view==='page')void renderPage();
     fitAll();
@@ -175,6 +175,9 @@ export function createCardEditor(root,api){
   const hwpLayer=document.createElement('div');hwpLayer.className='cv-hwp-layer';hwpLayer.hidden=true;document.body.append(hwpLayer);api.hwpDock?.(hwpLayer);// 편집기 프레임이 생기기 전에 붙여 둔다.
   // 한글 창이 다시 그려지면 편집기가 스스로 초점을 가져가, 카드 칸에 이어 치던 글이 카드에 들어가지 않았다.
   // 마우스가 한글 창 위에 없는데 초점이 그 안으로 가면 사용자가 누른 것이 아니므로, 직전에 쓰던 칸으로 돌려준다.
+  // 칸 머리 줄의 「HWPX · 조판 저장」은 숨긴 한글 창 머리 줄의 진짜 단추를 누른다. 쓸 수 있는지(disabled)도 따라간다.
+  function syncHwpActs(){for(const [k,id] of [['hwp-download','#typeset-download'],['hwp-save','#typeset-save']]){const real=hwpLayer.querySelector(id),b=root.querySelector(`[data-cv="${k}"]`);if(b)b.disabled=!real||real.disabled;}}
+  new MutationObserver(syncHwpActs).observe(hwpLayer,{subtree:true,attributes:true,attributeFilter:['disabled'],childList:true});
   let overHwp=false,lastFocus=null;hwpLayer.addEventListener('pointerenter',()=>{overHwp=true;});hwpLayer.addEventListener('pointerleave',()=>{overHwp=false;});
   // 편집기 안에서 스스로 잡는 초점은 이 문서에 focusin이 오지 않아, 창 blur·칸 focusout 뒤에 어디로 갔는지 본다.
   document.addEventListener('focusin',e=>{if(!hwpLayer.contains(e.target))lastFocus=e.target;},true);
@@ -292,7 +295,7 @@ export function createCardEditor(root,api){
       fillHead(`<label class="lp-search">${ICON.search}<input data-cvpast="query" value="${E(f.query)}" placeholder="쪽 번호" inputmode="numeric" aria-label="쪽 번호로 가기"><span class="lp-n">${b?b.pages+'쪽':''}</span></label>`,
         `<label>교과서<select data-cvpast="book" aria-label="교과서">${list.map(v=>`<option value="${E(v.id)}"${v===b?' selected':''}>${E(v.title)} · ${v.pages}쪽</option>`).join('')}</select></label><p class="lp-adv-note">5E 공유 자료의 교과서입니다. 쪽 번호를 치면 그 쪽부터 보입니다.</p>`,0);
       const pages=b?Array.from({length:Math.min(60,b.pages-from+1)},(_,k)=>from+k):[];
-      body.innerHTML=`<div class="past-list">${p}${pages.map(n=>`<figure class="past book" data-book="${E(b.id)}" data-page="${n}"><div class="past-pic"><img loading="lazy" src="${E(bookPage(b,n,true))}" data-full="${E(bookPage(b,n))}" alt="${E(b.title)} ${n}쪽"></div><figcaption><b>${E(b.title)} ${n}쪽</b><span class="acts"><button type="button" class="mini" data-cvbooklink="${n}">근거로 연결</button></span></figcaption></figure>`).join('')}${!p&&!pages.length?'<p class="lp-count">교과서를 찾지 못했습니다. 「5E 라이브러리」에서 쪽이나 영역을 골라 가져올 수 있습니다.</p>':''}</div>`;
+      body.innerHTML=`<div class="past-list">${p}${pages.map(n=>`<figure class="past book" data-book="${E(b.id)}" data-page="${n}"><div class="past-pic"><img loading="lazy" src="${E(bookPage(b,n,true))}" data-full="${E(bookPage(b,n))}" alt="${E(b.title)} ${n}쪽"></div><figcaption><b>${E(b.title)} ${n}쪽</b><span class="acts"><button type="button" class="mini" data-cvbooklink="${n}" title="이 쪽을 근거로 연결">${ICON.link}<span>근거</span></button></span></figcaption></figure>`).join('')}${!p&&!pages.length?'<p class="lp-count">교과서를 찾지 못했습니다. 「5E 라이브러리」에서 쪽이나 영역을 골라 가져올 수 있습니다.</p>':''}</div>`;
       refocus();reopenZoom();return;
     }
     let items;try{if(!pastItems)body.innerHTML='<p class="lp-count">기출 목록을 불러오는 중…</p>';
@@ -310,7 +313,7 @@ export function createCardEditor(root,api){
     fillHead(searchHtml(f.tokens.length?'단어 더하기':'단어+Enter',`<span class="lp-n" title="기출 ${total.toLocaleString()}문항 중">${list.length.toLocaleString()}문항</span>`),
       sel('subject',subjects,'과목')+sel('part',parts,'단원')+sel('year',years,'연도')+`<div class="lp-adv-foot"><span>6월·9월 모평, 수능</span><button type="button" class="mini" data-cvadvclear>모두 지우기</button></div>`,
       ['subject','part','year'].filter(k=>f[k]).length);
-    const html=`<div class="past-list">${picksHtml()}${list.slice(0,40).map(i=>`<figure class="past"${api.pastBusy?.()?.id===i.id?' data-busy':''}>${thumb(i)}${api.pastBusy?.()?.id===i.id?pastBusyHtml(api.pastBusy().stage):''}<figcaption><b title="${E([i.title,...i.parts,...i.tags.slice(0,3)].join(' · '))}">${E(i.short)}</b><span class="acts"><button type="button" class="mini" data-cvlink="${E(i.id)}">근거로 연결</button>${(busy=>`<button type="button" class="mini go-mini" data-cvconvert="${E(i.id)}" title="편집 가능한 한글 문항으로 바꿔 새 문항 카드로 엽니다(AI 없음)"${busy?' aria-busy="true"':''}>${busy?busyHtml(busy.stage):'변형'}</button>`)(api.pastBusy?.()?.id===i.id&&api.pastBusy())}</span></figcaption></figure>`).join('')}</div>`;
+    const html=`<div class="past-list">${picksHtml()}${list.slice(0,40).map(i=>`<figure class="past"${api.pastBusy?.()?.id===i.id?' data-busy':''}>${thumb(i)}${api.pastBusy?.()?.id===i.id?pastBusyHtml(api.pastBusy().stage):''}<figcaption><b title="${E([i.title,...i.parts,...i.tags.slice(0,3)].join(' · '))}">${E(i.short)}</b><span class="acts"><button type="button" class="mini" data-cvlink="${E(i.id)}" title="이 문항의 근거로 연결">${ICON.link}<span>근거</span></button>${(busy=>`<button type="button" class="mini go-mini" data-cvconvert="${E(i.id)}" title="편집 가능한 한글 문항으로 바꿔 새 문항 카드로 엽니다(AI 없음)"${busy?' aria-busy="true"':''}>${busy?busyHtml(busy.stage):'변형'}</button>`)(api.pastBusy?.()?.id===i.id&&api.pastBusy())}</span></figcaption></figure>`).join('')}</div>`;
     // 카드를 다시 그려도 기출 목록 내용이 같으면 그 전 목록(이미 받은 그림 포함)을 그대로 다시 붙인다 — 매번 새로 만들면
     // 그림 40장을 다시 받고 레이아웃을 다시 계산해 「근거로 연결」 같은 작은 수정에도 화면이 60ms쯤 멈췄다.
     if(html===pastCache.html&&pastCache.node){body.replaceChildren(pastCache.node);loadThumbs(body);refocus();reopenZoom();return;}
@@ -399,6 +402,7 @@ export function createCardEditor(root,api){
     if(d.cv==='to-page'){setView('page');return;}
     if(d.cv==='toggle-lib'){setPanel('lib',!panels.lib);return;}
     if(d.cv==='toggle-right'){setPanel('rightOpen',!panels.rightOpen);return;}
+    if(d.cv==='hwp-download'||d.cv==='hwp-save'){hwpLayer.querySelector(d.cv==='hwp-save'?'#typeset-save':'#typeset-download')?.click();return;}
     if(d.cv==='new'){api.newQuestion();return;}
     if(d.cvadv!==undefined){pastAdvOpen=!pastAdvOpen;b.setAttribute('aria-expanded',pastAdvOpen);const pop=root.querySelector('[data-cvslot="adv"]');if(pop)pop.hidden=!pastAdvOpen;return;}
     if(d.cvadvclear!==undefined){Object.assign(pastFilter,{subject:'',part:'',year:''});store.set('past',pastFilter);renderPast();return;}

@@ -17,7 +17,7 @@
 @container lib (max-width:560px){#card-view .lp-one .lp-search .lp-n{display:none}#card-view .lp-one .lp-search{min-width:96px}}
 @container lib (max-width:440px){#card-view .cv-left .pane-role span{display:none}#card-view .cv-left .pane-role{padding-right:4px}}
 @container (max-width:380px){#card-view .cv-bar .pane-role span{display:none}#card-view .cv-bar .pane-role{padding-right:4px}}
-@container rpane (max-width:360px){#card-view .cv-ph .pane-role span{display:none}}
+@container rpane (max-width:470px){#card-view .cv-ph .pane-role span{display:none}#card-view .cv-ph .pane-role{padding-right:2px}}
 
 /* 2. 닫기 단추(바깥쪽 끝)와 닫힌 칸 띠 */
 #card-view .pane-close{flex:none;width:30px;height:30px;padding:0;display:grid;place-items:center;border:0;border-radius:var(--cv-ctl-radius,6px);background:transparent;color:var(--ds-ink-3);cursor:pointer}
@@ -73,3 +73,27 @@
 #typeset-info-pop{position:absolute;z-index:30;top:calc(100% + 4px);left:8px;right:8px;width:auto;display:grid;gap:4px;padding:8px 10px;border-radius:8px;background:var(--ds-doc,#fff);color:var(--ds-doc-ink,#1b1e23);box-shadow:0 8px 24px rgba(16,20,26,.22),0 0 0 1px var(--ds-doc-line,#e3e6ea);font-size:var(--ds-text-meta,12px);line-height:1.5}
 #typeset-info-pop[hidden]{display:none}
 #typeset-info-pop .warn{color:var(--ds-danger,#cf222e)}
+
+/* 13. 조판 칸: 칸 안의 또 하나의 창(둥근 테두리·그림자·어두운 「5e_hwp」 머리 줄)을 없애고 칸 바탕 위에 바로.
+   「HWPX · 조판 저장」은 칸 머리 줄로(card-editor pane-acts, 진짜 단추를 대신 누름). */
+.cv-hwp-layer{padding:0!important;background:var(--ds-doc,#fff)!important}
+.cv-hwp-layer #preview-dialog.docked{border-radius:0!important;box-shadow:none!important;margin:0!important;border:0!important}
+.cv-hwp-layer #preview-dialog.docked .typeset-head{display:none!important}
+.cv-hwp-layer #preview-dialog.docked .typeset-view-controls{border-bottom:1px solid var(--ds-doc-line,#e3e6ea)}
+#card-view .pane-acts{display:inline-flex;align-items:center;gap:6px;margin-right:2px}
+#card-view .pane-act{height:28px;padding:0 10px;border:0;border-radius:var(--cv-ctl-radius,6px);background:transparent;color:var(--ds-ink-2);font:inherit;font-size:var(--cv-text-small,12.5px);cursor:pointer;white-space:nowrap}
+#card-view .pane-act:hover:not(:disabled){background:var(--ds-hover);color:var(--ds-ink)}
+#card-view .pane-act.go{background:var(--go-bg,#152137);color:var(--go-ink,#e6edf3);box-shadow:inset 0 0 0 1px var(--go-line,#6ba4f8)}
+#card-view .pane-act:disabled{opacity:.45;cursor:default}
+
+/* 15. 기출·교과서 카드 아래 줄: 「제목 ··· [🔗 근거] [변형]」 한 줄, 근거도 변형과 같은 은은한 단추 */
+#card-view .cv-left .past figcaption{flex-wrap:nowrap!important;align-items:center}
+#card-view .cv-left .past figcaption b{flex:1 1 auto!important;min-width:0}
+#card-view .cv-left .past figcaption .acts{flex:none;display:inline-flex;gap:6px!important;margin-left:auto}
+#card-view .cv-left .past figcaption .acts :is([data-cvlink],[data-cvbooklink]){display:inline-flex;align-items:center;gap:4px;height:28px;padding:0 9px;border-radius:var(--cv-ctl-radius,6px);background:var(--go-bg,#152137);color:var(--go-ink,#e6edf3);box-shadow:inset 0 0 0 1px var(--go-line,#6ba4f8)}
+#card-view .cv-left .past figcaption .acts :is([data-cvlink],[data-cvbooklink]) .ico{width:14px;height:14px}
+@container lib (max-width:440px){#card-view .cv-left .past figcaption .acts :is([data-cvlink],[data-cvbooklink]) span{display:none}#card-view .cv-left .past figcaption .acts :is([data-cvlink],[data-cvbooklink]){padding:0 7px}}
+/* 카드가 좁으면(제목이 잘릴 폭) 단추를 둘째 줄로 내려 제목을 온전히 보인다 */
+#card-view .cv-left .past{container:pastcard/inline-size}
+@container pastcard (max-width:310px){#card-view .cv-left .past figcaption .acts :is([data-cvlink],[data-cvbooklink]) span{display:none}#card-view .cv-left .past figcaption .acts :is([data-cvlink],[data-cvbooklink]){padding:0 7px}}
+@container pastcard (max-width:225px){#card-view .cv-left .past figcaption{flex-wrap:wrap!important}#card-view .cv-left .past figcaption b{flex-basis:100%!important}}

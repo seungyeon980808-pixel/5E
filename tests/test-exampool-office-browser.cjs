@@ -258,7 +258,7 @@ h.withServer(async origin => {
       assert.equal(await sheet.locator('#typeset-discard').isHidden(),true);
       assert.match(await passageCard(),/ OK/,'the synced text survives discarding');
       // 틀의 '실험 장치' 그림 칸은 아직 비어 있다. 빈 칸은 한글 창에 틀(회색 자리)로만 보이고 조판 저장을 막는다.
-      await sheet.click('#typeset-save');
+      await sheet.locator('#typeset-save:visible, #card-view [data-cv="hwp-save"]:visible').first().click();
       await sheet.waitForFunction(()=>document.querySelector('#typeset-status').dataset.error==='true',null,{timeout:15000});
       assert.match(await sheet.locator('#typeset-status').textContent(),/비어 있는 칸\(그림 1곳\)/);
       // 표로 가서 가로 묶음이 기록됐는지 보고, 빈 그림 칸을 채운 뒤 다시 카드 미리보기로.
@@ -279,7 +279,7 @@ h.withServer(async origin => {
       // 조판 저장 → 시험지 HWPX.
       // 첫 저장은 최종 저장 모양으로 갱신하고 확인을 요청할 수 있다(기존 설계). 그때는 한 번 더 저장한다.
       for(let attempt=0;attempt<2;attempt++){
-        await sheet.click('#typeset-save');
+        await sheet.locator('#typeset-save:visible, #card-view [data-cv="hwp-save"]:visible').first().click();
         await sheet.waitForFunction(()=>{const n=document.querySelector('#typeset-status');return /조판 저장됨|다시 누르세요/.test(n.textContent)||n.dataset.error==='true';},null,{timeout:60000});
         if(/조판 저장됨/.test(await sheet.locator('#typeset-status').textContent()))break;
         await typesetReady(sheet);
