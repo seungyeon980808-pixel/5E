@@ -2172,6 +2172,14 @@
         "MAIN-CANVAS-DRAG-LAYOUT-THRASH",
         "OBJECT-SEARCH-ICON-LAYOUT-THRASH"
       ]
+    },
+    {
+      "path": "tests/test-app-switch-browser.cjs",
+      "findingIds": [
+        "APP-SWITCH-NO-FLASH",
+        "APP-SWITCH-BUSY-HWP",
+        "APP-SWITCH-QUEUE"
+      ]
     }
   ],
   "deferred": [
