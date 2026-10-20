@@ -456,3 +456,29 @@ button:active:not(:disabled):not([aria-busy=true]):not(.pane-rail),.lp-pdf:activ
 #card-view .lp-exam-pick select:last-child{flex:1 1 0}
 #card-view .lp-viewbar select:hover,#card-view .lp-exam-pick select:hover{box-shadow:inset 0 0 0 1px var(--ds-ink-3)}
 #card-view .lp-viewbar select:focus-visible{outline:2px solid var(--go-line,#6ba4f8);outline-offset:-2px}
+
+/* 맨 위 줄: 로고 「5E_exam」 + 다른 두 이름(image · hwp) + ↶ ↷ (5E 세 프로그램 공통, app-switch.css와 같은 모양) */
+.top .brand strong{color:var(--ds-ink)}
+.top .app-switch{display:inline-flex;align-items:center;gap:2px;flex:none;height:20px;margin-left:4px;padding-left:10px;border-left:1px solid var(--ds-line)}
+.top .app-switch-btn{height:30px;min-width:0;padding:0 7px;border:0;border-radius:6px;background:transparent;box-shadow:none;color:#5b6470;font:500 15px/1 var(--ds-font,-apple-system,sans-serif);letter-spacing:-.1px;cursor:pointer;transition:color 160ms var(--ep-ease),background-color 160ms var(--ep-ease)}
+.top .app-switch-btn:hover{color:var(--ds-ink);background:var(--ds-hover)}
+.top .top-sep{width:1px;height:20px;margin:0 6px;background:var(--ds-line);flex:none}
+.top #top-undo:disabled,.top #top-redo:disabled{opacity:.35}
+@media (max-width:760px){.top .app-switch,.top .app-switch+.top-sep{display:none}}
+
+/* 맨 위 줄을 5E_image와 똑같이(10-20): 높이 40, 왼쪽 칸 폭(160) 칸 — 접기 아이콘 x12, 로고는 칸 가운데(5E Georgia 21px·이름 15px),
+   칸 오른쪽 선, 그 뒤 이름 단추 폭 고정(누를 때마다 아이콘 위치가 안 바뀌게), ↶ ↷. */
+.top{gap:0!important;padding-left:0!important;font-family:var(--ds-font)}
+.top .top-cell{position:relative;flex:none;box-sizing:border-box;display:flex;align-items:center;justify-content:center;width:160px;height:100%;padding-left:41px;border-right:1px solid var(--ds-line,#21262d)}
+.top .top-cell #toggle-nav{position:absolute;left:12px;top:50%;margin:-14px 0 0;width:28px;height:28px}
+.top .top-cell .brand{height:28px;margin:0;padding:0 4px;align-items:baseline;line-height:28px}
+.top .top-cell .brand-mark{font:italic 700 21px/1 var(--ds-font-brand);letter-spacing:-.6px;position:relative;top:2px}
+.top .top-cell .brand strong{font:600 15px/1 var(--ds-font);margin-left:1px;position:relative;top:2px}
+.top .app-switch{margin-left:4px;padding-left:0;border-left:0;height:auto}
+.top .app-switch-btn{width:58px;padding:0}
+.top .top-sep{margin:0 8px}
+/* 「5E」는 이름 길이와 관계없이 그림 화면과 같은 x60에 고정(가운데 정렬이면 _exam이 짧아 3px 밀림), 이름 단추 x172, ↶ x311 */
+.top .top-cell{justify-content:flex-start}
+.top .top-cell .brand{margin-left:15px}
+.top .app-switch{margin-left:12px}
+.top .top-sep{margin:0 10px}

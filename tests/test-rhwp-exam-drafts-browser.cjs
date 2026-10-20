@@ -6,7 +6,7 @@ h.withServer(async origin=>{fs.mkdirSync(path.resolve(process.env.EVIDENCE_DIR||
  await p.addInitScript(()=>{Object.defineProperty(window,'showSaveFilePicker',{configurable:true,value:undefined});Object.defineProperty(window,'showDirectoryPicker',{configurable:true,value:undefined});});
  const url='/js/state.js?v=1.7.0-four-session-integration';
  await h.navigate(p,new URL(surface,origin).href+'?mode=pro&mobile=0&exam=1',{waitUntil:'domcontentloaded'});await h.ready(p);
- assert.equal((await p.locator('#exam-studio').boundingBox()).y,0);
+ {const bar=await p.locator('#rhwp-exam-workspace .exam-topbar').boundingBox();assert.equal((await p.locator('#exam-studio').boundingBox()).y,bar.y+bar.height);}// 10-20: 공통 맨 위 줄 바로 아래
  assert.equal(await p.locator('[data-exam-action="open-document"]').count(),0);
  // Normal drawing-window save retains an opened document before any picture is linked.
  await h.action(p,'close');await p.locator('#file-menu-btn').click();await p.locator('#project-save').click();

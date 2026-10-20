@@ -11,7 +11,14 @@ function placeModeToggle() {
   if (!button || !documentGroup) return false;
   // Lite는 이 버튼을 자기 칸으로 옮겼다가 원래 자리로 되돌린다. Lite 중에는 손대지 않는다.
   if (document.documentElement.dataset.mode === 'lite' || button.closest('.lite-brand-slot')) return true;
-  if (button.parentElement !== documentGroup || documentGroup.firstElementChild !== button) {
+  // 10-20 세 프로그램 탭: 맨 앞은 로고·이름 → 되돌리기·다시 실행(세 프로그램 공통 자리) → Pro|Lite.
+  const redo = document.getElementById('redo-btn');
+  if (redo && redo.parentElement === documentGroup) {
+    let sep = documentGroup.querySelector('.tb-sep.ds-sep-apps');
+    if (!sep) { sep = document.createElement('span'); sep.className = 'tb-sep ds-sep-apps'; sep.setAttribute('aria-hidden', 'true'); }
+    if (redo.nextElementSibling !== sep) redo.after(sep);
+    if (sep.nextElementSibling !== button) sep.after(button);
+  } else if (button.parentElement !== documentGroup || documentGroup.firstElementChild !== button) {
     documentGroup.prepend(button);
   }
   return true;

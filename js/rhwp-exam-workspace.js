@@ -1,4 +1,5 @@
 import { parseFiveEProject } from './fivee-project.js?v=1.7.0-four-session-integration';
+import { appSwitchHtml } from './app-switch.js?v=1020-apps';
 import {buildQuestionHtml,verifyNativeQuestion} from '../assets/exampool/sheet/handoff.js?v=1014-hwp-sheet';
 import {openApprovedQuestion,nativeInsertOptions,sameColumnGeometry} from '../assets/exampool/sheet/native-transfer.js?v=1014-compact-panel';
 
@@ -43,8 +44,8 @@ export function initRhwpExamWorkspace(state, services) {
   panel.setAttribute('aria-label', '시험지 작업 공간');
   panel.setAttribute('role', 'dialog');
   panel.innerHTML = `
-    <div class="exam-body"><aside class="exam-sidebar"><header class="exam-header">
-      <div class="exam-heading"><span class="exam-brand app-brand">5E</span>
+    <div class="exam-topbar"><div class="exam-top-cell"><button type="button" class="exam-panel-toggle" data-exam-panel aria-pressed="true" aria-label="왼쪽 칸 접기" title="왼쪽 칸 접기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><path class="exam-panel-fill" d="M3.8 4.8h5.2v14.4H3.8z"/><path d="M9 4v16"/></svg></button><span class="exam-brand app-brand" title="5E_hwp · 조판"><b class="app-brand-mark">5E</b><span class="app-brand-name">_hwp</span></span></div><div class="exam-heading"><nav class="app-switch" aria-label="5E 프로그램">${appSwitchHtml('hwp')}</nav>
+      <span class="exam-top-sep" aria-hidden="true"></span><button type="button" class="exam-history" data-exam-action="undo" title="되돌리기 (⌘Z)" aria-label="되돌리기"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h11a5 5 0 0 1 0 10h-3"/></svg></button><button type="button" class="exam-history" data-exam-action="redo" title="다시 실행 (⇧⌘Z)" aria-label="다시 실행"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 14 5-5-5-5"/><path d="M20 9H9a5 5 0 0 0 0 10h3"/></svg></button><span class="exam-top-sep" aria-hidden="true"></span>
       <nav class="exam-actions" aria-label="시험지 작업">
         <button type="button" data-exam-action="close" title="그림 편집기로 돌아가기 (Esc)" aria-label="그림 편집기로 돌아가기">←</button>
         <div class="exam-menu">
@@ -66,7 +67,8 @@ export function initRhwpExamWorkspace(state, services) {
         </div>
 
         <button type="button" class="structure-lock" data-exam-action="structure-lock" aria-pressed="false" title="구조 잠금 · 켜면 글만 고치고, 끄면 표·그림의 크기와 틀도 고칩니다"><svg class="lock-on" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="7" width="9" height="6.5" rx="1.2"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></svg><svg class="lock-off" viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="7" width="9" height="6.5" rx="1.2"/><path d="M5.5 7V5a2.5 2.5 0 0 1 4.8-1"/></svg>구조 잠금</button>
-      </nav></div>
+      </nav></div></div>
+    <div class="exam-body"><aside class="exam-sidebar"><header class="exam-header">
       <input id="exam-name" value="새 시험지" maxlength="200" aria-label="시험지 이름">
       <div class="exam-placement" hidden><img alt="보낼 영역 미리보기"><div><strong>삽입할 위치를 선택하세요</strong><span data-placement-hint>본문이나 표 셀에서 위치를 클릭한 뒤 확인하세요.</span></div><button type="button" data-exam-action="cancel-placement">취소</button><button type="button" data-exam-action="confirm-placement" class="exam-primary" disabled>확인</button></div>
     </header>
@@ -1021,6 +1023,9 @@ export function initRhwpExamWorkspace(state, services) {
     edit:() => { const ref=bridge.input.cursor.getSelectedPictureRef();if(ref?.type!=='image') throw new Error('시험지에서 그림을 선택해주세요.');return beginEdit(bridge.selectedFigureId(),ref); },
     labels:() => { const ref=bridge.input.cursor.getSelectedPictureRef();if(ref?.type!=='image') throw new Error('시험지에서 그림을 선택해주세요.');return beginInline(bridge.selectedFigureId(),ref); },
     save:async () => { const blob = await stableSave(); download(blob, `${safeName(nameInput.value)}.5e`); message('작업 파일 다운로드를 시작했습니다. 그림 원본도 함께 들어 있습니다.'); },
+    // 맨 위 줄 공통 되돌리기·다시 실행(세 프로그램 같은 자리): 한글 편집 기록을 되돌린다.
+    undo:() => { bridge.input?.performUndo?.(); renderFigures(); },
+    redo:() => { bridge.input?.performRedo?.(); renderFigures(); },
     'structure-lock':() => { const locked=!bridge.tableLayoutLocked;bridge.setTableLayoutLocked(locked);panel.querySelector('[data-exam-action="structure-lock"]').setAttribute('aria-pressed',String(locked));message(locked?'구조 잠금 · 글만 고칠 수 있습니다. 표·그림의 크기나 틀은 잠금을 풀고 바꾸세요.':'구조 잠금 풀림 · 표·그림의 크기와 틀을 고칠 수 있습니다.'); },
     'open-hwp':() => panel.querySelector('#exam-hwp-file').click(),
     'open-project':() => panel.querySelector('#exam-project-file').click(),
@@ -1116,6 +1121,10 @@ export function initRhwpExamWorkspace(state, services) {
     const file=event.dataTransfer?.files?.[0];if(!file) return;event.preventDefault();
     if(/\.(5e|5exam|json|hwp|hwpx)$/i.test(file.name)) void run(()=>importFile(file));
   });
+  // 왼쪽 칸 접기(5E_image·5E_exam과 같은 자리·모양, 10-20): 상태는 기억한다.
+  const leftKey='5e.hwp.leftCollapsed';const setLeft=collapsed=>{panel.classList.toggle('exam-left-collapsed',collapsed);const t=panel.querySelector('[data-exam-panel]');t?.setAttribute('aria-pressed',String(!collapsed));t?.setAttribute('title',collapsed?'왼쪽 칸 펴기':'왼쪽 칸 접기');t?.setAttribute('aria-label',collapsed?'왼쪽 칸 펴기':'왼쪽 칸 접기');try{localStorage.setItem(leftKey,collapsed?'1':'0');}catch{}};
+  try{setLeft(localStorage.getItem(leftKey)==='1');}catch{setLeft(false);}
+  panel.querySelector('[data-exam-panel]')?.addEventListener('click',()=>setLeft(!panel.classList.contains('exam-left-collapsed')));
   panel.addEventListener('click', event => {
     const menu = event.target.closest('[data-exam-menu]');
     if (menu && !menu.disabled) {if (menu.getAttribute('aria-expanded') === 'true') closeMenus(); else openMenu(menu);return;}

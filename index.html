@@ -46,6 +46,7 @@
   <link rel="stylesheet" href="/css/style.css?v=1.7.0-four-session-integration-footer-20261011" />
   <link rel="stylesheet" href="/css/design-tokens.css?v=1.7.0-graphite" />
   <link rel="stylesheet" href="/css/rhwp-exam-workspace.css?v=1.7.0-four-session-integration" />
+  <link rel="stylesheet" href="/css/app-switch.css?v=1020-apps" />
   <link rel="stylesheet" href="/css/exampool-workspace.css?v=1013-exampool" />
   <link rel="stylesheet" href="/css/inspector.css?v=1.7.0-four-session-integration" />
   <link rel="stylesheet" href="/css/exam-library.css?v=1.7.0-four-session-integration" />
@@ -87,7 +88,7 @@
 <div class="toolbar-history" role="group" aria-label="작업 기록"><a class="app-brand" href="https://seungyeon980808-pixel.github.io/personal_site/projects/physics-draw.html"
            target="_blank" rel="noopener" title="5E_image (sciEnceEducationalExamEasyEditor) · 기능 안내 페이지"><b class="app-brand-mark">5E</b><span class="app-brand-name">_image</span></a></div>
 <div class="toolbar-canvas"><div class="toolbar-document">
-        <span class="tb-sep ds-sep-mode" aria-hidden="true"></span><button id="undo-btn" class="topbar-btn icon-btn" type="button"
+        <nav class="app-switch app-switch-image" aria-label="5E 프로그램"><button type="button" class="app-switch-btn" data-app-switch="exam" title="출제 — 문항 만들기">exam</button><button type="button" class="app-switch-btn" data-app-switch="hwp" title="조판 — 시험지 인쇄 전 마무리">hwp</button></nav><span class="tb-sep ds-sep-mode" aria-hidden="true"></span><button id="undo-btn" class="topbar-btn icon-btn" type="button"
                 title="되돌리기 (Ctrl+Z)" aria-label="되돌리기" disabled><svg class="ds-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 14 4 9l5-5"/><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11"/></svg></button><button id="redo-btn" class="topbar-btn icon-btn" type="button"
                 title="다시 실행 (Ctrl+Shift+Z)" aria-label="다시 실행" disabled><svg class="ds-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 14 5-5-5-5"/><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13"/></svg></button><span class="tb-sep" aria-hidden="true"></span>
         <!-- 설정 dropdown: 기본값 설정 (localStorage) + 단축키 설정 (준비 중) -->

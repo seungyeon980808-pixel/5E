@@ -18,9 +18,10 @@ h.withServer(async origin=>{
     await page.setViewportSize({width,height:950});
     const layout = await page.evaluate(() => {
       const panel=document.querySelector('#rhwp-exam-workspace'),header=panel.querySelector('.exam-header'),body=panel.querySelector('.exam-body');
-      return {height:header.getBoundingClientRect().height,bodyTop:body.getBoundingClientRect().top,bottom:header.getBoundingClientRect().bottom,overflow:panel.scrollWidth>innerWidth};
+      return {height:header.getBoundingClientRect().height,bodyTop:body.getBoundingClientRect().top,barBottom:panel.querySelector('.exam-topbar').getBoundingClientRect().bottom,bottom:header.getBoundingClientRect().bottom,overflow:panel.scrollWidth>innerWidth};
     });
-    assert.equal(layout.bodyTop,0,'editor body reaches top at '+width);assert.equal(layout.overflow,false,'no outer horizontal overflow');
+    // 10-20: 5E 세 프로그램 공통 맨 위 줄(40px) 바로 아래에서 편집 본문이 시작한다.
+    assert.equal(layout.bodyTop,layout.barBottom,'editor body starts right under the shared top bar at '+width);assert.ok(layout.barBottom<=41.5,'top bar is 40px + line');assert.equal(layout.overflow,false,'no outer horizontal overflow');
    }
    await page.setViewportSize({width:1440,height:950});
    await page.locator('[data-exam-menu="file"]').focus();await page.keyboard.press('ArrowDown');
@@ -30,7 +31,7 @@ h.withServer(async origin=>{
    await page.evaluate(async url=>{const{state}=await import(url);state.update(s=>{s.objects=[{id:'line',type:'line',p1:{x:-15,y:-10},p2:{x:15,y:10},layerId:1,order:0,rotation:0,strokeWidth:.3,strokeLevel:0,lineMode:'solid',arrowHead:'none'}];s.undoStack=[[]];});},stateUrl);
    const original=await h.drawing(page,stateUrl);
    await h.crop(page);await page.locator('.exam-placement:not([hidden])').waitFor();await h.idle(page);
-   assert.equal((await page.locator('#exam-studio').boundingBox()).y,0,'placement leaves editor at the top');
+   assert.equal((await page.locator('#exam-studio').boundingBox()).y,(await page.locator('#rhwp-exam-workspace .exam-topbar').boundingBox()).y+(await page.locator('#rhwp-exam-workspace .exam-topbar').boundingBox()).height,'placement leaves editor right under the shared top bar');
    assert.equal((await h.pictures(page)).length,0,'crop confirmation does not insert');
    assert.equal(await page.locator('[data-exam-action="confirm-placement"]').isDisabled(),true,'fresh document position is required');
    await page.screenshot({path:path.join(evidence,name+'-placement.png')});

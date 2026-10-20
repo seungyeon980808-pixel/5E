@@ -5,6 +5,7 @@ import { initBugReporter } from './bug-report.js?v=1.7.0-four-session-integratio
 import { initLiteShell } from "./lite-shell.js?v=1.7.0-four-session-integration";
 import { getColorMode, nextColorMode, setColorMode, syncThemeButton } from './color-mode.js?v=1.7.0-graphite';
 import { initButtonDesign } from './button-design.js?v=20261013-buttons';
+import { initAppSwitch } from './app-switch.js?v=1020-apps';
 import { previewStorage as localStorage } from './preview-storage.js?v=1.7.0-four-session-integration';
 import { initWebLoginUi } from './web-login-ui.js?v=1.7.0-four-session-integration';
 import { createAiLoginHandoff, LOGIN_INTENT_SESSION_KEY } from './ai-login-handoff.js?v=1.7.0-four-session-integration';
@@ -98,6 +99,7 @@ import { commitActiveText } from "./text-editor.js?v=1.7.0-four-session-integrat
 
 const svg = document.getElementById("canvas");
 initButtonDesign();
+initAppSwitch();
 initVisitorStats();
 initBugReporter(state);
 // Canvas interaction transfers keyboard ownership away from the last toolbar button.

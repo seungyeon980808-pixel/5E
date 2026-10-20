@@ -345,7 +345,7 @@ async function inlineRoundtrip(exam,main,app,profile) {
  assert.equal(await exam.evaluate(()=>typeof window.fiveEDesktop),'undefined','auxiliary window cannot access AI/general native IPC');assert.equal(await exam.evaluate(()=>typeof window.fiveEExam),'object','auxiliary window has only the exam bridge');
  await main.evaluate(async url=>{const {state}=await import(url);state.update(s=>{s.pages.find(p=>p.id===s.activePageId).name='데스크톱 탭 이름';});},stateUrl);
  await h.waitForState(exam,()=>document.querySelector('.exam-figure strong')?.textContent==='데스크톱 탭 이름');
- assert.equal((await exam.locator('#exam-studio').boundingBox()).y,0);
+ {const bar=await exam.locator('#rhwp-exam-workspace .exam-topbar').boundingBox();assert.equal((await exam.locator('#exam-studio').boundingBox()).y,bar.y+bar.height);}// 10-20: 공통 맨 위 줄 바로 아래
  if(process.argv.includes('--inline-only')){await inlineRoundtrip(exam,main,app,profile);completed=true;return;}
  await originalEdit(exam,main);assert.equal(await app.evaluate(({BrowserWindow})=>BrowserWindow.getAllWindows().find(w=>w.webContents.getURL().endsWith('/index.html')).isFocused()),true,'full original editing keeps its primary-window focus behavior');assert.equal((await h.drawing(main,stateUrl)).activePageId,before.activePageId);assert.equal((await h.drawing(main,stateUrl)).undo,1,'native return preserves original history');
  await main.evaluate(async url=>{const{state}=await import(url);state.update(s=>s.objects[0].p2.y=5);},stateUrl);const draftFile=path.join(profile,'미반영 수정.5e');

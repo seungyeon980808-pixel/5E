@@ -767,6 +767,9 @@ window.addEventListener('message',e=>{if(e.origin!==location.origin||e.source!==
 });
 // 위쪽 막대: 로고는 문항 보관함(홈), 이동 줄 앞 단계는 보관함 또는 지금 문항이 든 시험지.
 $('#brand-home').onclick=()=>{view.examId=null;show('library');};
+// 맨 위 줄(5E 세 프로그램 공통): 다른 프로그램 이름을 누르면 5E에 전환을 부탁하고(app-switch.js), ↶ ↷는 시트의 되돌리기·다시 실행을 그대로 누른다(기록 하나).
+document.addEventListener('click',e=>{const b=e.target.closest?.('button[data-app-switch]');if(!b)return;e.preventDefault();if(window.parent!==window)window.parent.postMessage({channel:'5e-app-switch',app:b.dataset.appSwitch},location.origin);});
+for(const [top,src] of [['#top-undo','#undo'],['#top-redo','#redo']]){const t=$(top),o=$(src);if(!t||!o)continue;t.onclick=()=>o.click();const sync=()=>{t.disabled=o.disabled;};sync();new MutationObserver(sync).observe(o,{attributes:true,attributeFilter:['disabled']});}
 $('#crumb-view').onclick=()=>{if(view.examId&&examById(data,view.examId)&&view.name!=='exam')show('exam');else{view.examId=null;show('library');}};
 // 왼쪽 메뉴·오른쪽 라이브러리 접기.
 $('#toggle-nav').onclick=()=>{const off=!document.querySelector('.shell-body').classList.contains('nav-off');document.querySelector('.shell-body').classList.toggle('nav-off',off);$('#toggle-nav').setAttribute('aria-pressed',String(!off));try{localStorage.setItem(CHANNEL+'exampool-nav',off?'0':'1');}catch{}};
