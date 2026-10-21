@@ -396,16 +396,9 @@ const localIndex = (all, index) => all.slice(0, index).filter(b => b.sec === all
 
 // 문항 순서 바꾸기: index번째 문항을 위(-1)·아래(+1) 문항과 바꾼 뒤 번호를 다시 매긴다. 서식·표·그림은 내부 복사로 그대로 옮긴다.
 export function moveQuestion(bridge, index, direction) {
-  const { doc } = requireDocument(bridge), all = allQuestionBlocks(doc);
-  const a = direction < 0 ? index - 1 : index;
-  if (!all[a] || !all[a + 1]) throw new Error(direction < 0 ? '맨 위 문항입니다.' : '맨 아래 문항입니다.');
-  if (all[a].sec !== all[a + 1].sec) throw new Error('구역(쪽 설정)이 다른 문항끼리는 순서를 바꿀 수 없습니다.');
-  if (!!all[a].essay !== !!all[a + 1].essay) throw new Error('선택형과 서술형 문항끼리는 순서를 바꿀 수 없습니다.');
-  if (all[a].group || all[a + 1].group) throw new Error('묶음 문항([1~2] 같은)은 지문과 함께 있어야 해서 순서를 바꿀 수 없습니다.');
-  const sec = all[a].sec, blocks = questionBlocks(doc, sec), local = localIndex(all, a);
-  bridge.transaction('move-question', () => swapAdjacentQuestions(doc, sec, blocks, local));
-  try { renumberQuestions(bridge); } catch {}
-  return a + (direction < 0 ? 0 : 1);
+  const { doc } = requireDocument(bridge), all = allQuestionBlocks(doc), to = index + (direction < 0 ? -1 : 1);
+  if (!all[to]) throw new Error(direction < 0 ? '맨 위 문항입니다.' : '맨 아래 문항입니다.');
+  return moveQuestionTo(bridge, index, to);
 }
 // 문항을 from번째에서 to번째 자리로(문서 전체 순서). 이웃 바꾸기를 이어 하고 번호를 다시 매기는 것까지 한 번에(되돌리기 한 번).
 // 같은 구역·같은 종류(선택형/서술형)·묶음 아닌 문항 사이에서만.
@@ -492,9 +485,9 @@ export function duplicateQuestion(bridge, index) {
     checkedResult(doc.copySelection(sec, q.head, 0, end, 0));
     checkedResult(doc.pasteInternal(sec, end, 0));
     if (last) { const n = doc.getParagraphCount(sec); if (n > 1 && !doc.getParagraphLength(sec, n - 1)) doc.mergeParagraph(sec, n - 1); }
+    renumberDocument(doc); // 번호 다시 매기기까지 한 묶음(되돌리기 한 번)
     return true;
   });
-  try { renumberQuestions(bridge); } catch {}
   return index + 1;
 }
 // 문항 지우기: index번째 문항 묶음을 통째로 지우고 번호를 다시 매긴다.
@@ -507,9 +500,9 @@ export function deleteQuestion(bridge, index) {
     if (q.end < doc.getParagraphCount(sec)) checkedResult(doc.deleteRange(sec, from, 0, q.end, 0));
     else if (from > 0) checkedResult(doc.deleteRange(sec, from - 1, doc.getParagraphLength(sec, from - 1), q.end - 1, doc.getParagraphLength(sec, q.end - 1)));
     else checkedResult(doc.deleteRange(sec, 0, 0, q.end - 1, doc.getParagraphLength(sec, q.end - 1)));
+    renumberDocument(doc); // 번호 다시 매기기까지 한 묶음(되돌리기 한 번)
     return true;
   });
-  try { renumberQuestions(bridge); } catch {}
   return q.number;
 }
 // 넓은 그림·표 모두 단 폭에 맞추기(본문 그림은 비율 유지, 표는 칸 비율 유지). 고친 수를 돌려준다.
