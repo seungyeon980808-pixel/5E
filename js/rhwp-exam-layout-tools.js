@@ -437,3 +437,55 @@ function keepSectionWhole(doc, sec) {
   const first = splitQuestions(doc, sec).some(issue => issue.at.paragraphIndex === 0);
   return { moved, left: skipped.size + (first ? 1 : 0) };
 }
+
+// 단 채우기: 단마다 마지막 문항 아래 남는 빈 공간을 그 단의 문항 사이에 고르게 나눠 준다(풀이 공간이 문항마다 비슷해진다).
+// 다시 눌러도 같은 결과가 나오게, 먼저 문항 위 간격을 0으로 되돌린 뒤 잰다(「문항 간격」으로 맞춘 값은 이 고른 간격으로 바뀐다).
+// 단을 넘긴 문항이 있는 단은 건드리지 않는다. 문단 위 간격 값은 1pt=200, 화면 1px=0.75pt=150.
+export function fillColumns(bridge) {
+  const { doc } = requireDocument(bridge);
+  const all = allQuestionBlocks(doc);
+  if (all.length < 2) throw new Error('번호가 붙은 문항이 둘 이상 있어야 단을 채울 수 있습니다.');
+  let changed = 0, columnsFilled = 0;
+  bridge.transaction('fill-columns', () => {
+    for (let sec = 0; sec < doc.getSectionCount(); sec++) {
+      const blocks = all.filter(b => b.sec === sec); if (blocks.length < 2) continue;
+      const base = 0;
+      for (const b of blocks.slice(1)) doc.applyParaFormat(sec, b.start, JSON.stringify({ spacingBefore: base }));
+      try { doc.flushDeferredPagination?.(); } catch {}
+      const before = new Set(splitQuestions(doc, sec).map(i => i.at.paragraphIndex));
+      // 단마다: 그 단에서 시작하는 문항, 그 단의 맨 아래 글·개체 위치.
+      const spots = new Map(), firstSpot = new Map();
+      for (let pg = 0; pg < doc.pageCount(); pg++) {
+        const info = parse(doc.getPageInfo(pg)); if (info.sectionIndex !== sec && !(parse(doc.getPageTextLayout(pg)).runs || []).some(r => r.secIdx === sec)) continue;
+        const cols = info.columns?.length ? info.columns : [{ x: info.bodyLeft, width: info.bodyRight - info.bodyLeft }];
+        const colOf = x => { let i = cols.findIndex(c => x < c.x + c.width + 4); return i < 0 ? cols.length - 1 : i; };
+        const bottom = info.footerArea?.y ?? (info.height - info.marginBottom - info.marginFooter);
+        const add = (paraIdx, x, y, hgt) => {
+          const key = `${pg}:${colOf(x)}`; if (!spots.has(key)) spots.set(key, { bottom, low: 0, paras: new Set() });
+          const s = spots.get(key); s.low = Math.max(s.low, y + hgt); s.paras.add(paraIdx);
+          if (!firstSpot.has(paraIdx)) firstSpot.set(paraIdx, key);
+        };
+        for (const r of parse(doc.getPageTextLayout(pg)).runs || []) if (r.secIdx === sec && !r.cellPath?.length) add(r.paraIdx, r.x, r.y, r.h);
+        for (const c of parse(doc.getPageControlLayout(pg)).controls || []) if ((c.secIdx ?? sec) === sec && !c.cellPath?.length && Number.isFinite(c.y) && Number.isFinite(c.h)) add(c.paraIdx, c.x, c.y, c.h);
+      }
+      const plans = [];
+      for (const [key, s] of spots) {
+        const starts = blocks.filter(b => firstSpot.get(b.start) === key);
+        if (starts.length < 2) continue;
+        // 단 끝 문항이 다음 단으로 이어지면(나뉜 문항) 이 단은 이미 꽉 찼다.
+        if (starts.some(b => before.has(b.start))) continue;
+        const leftover = s.bottom - s.low - 6; if (leftover < 8) continue;
+        const extra = Math.floor(leftover / starts.length * 150 / 100) * 100; if (extra <= 0) continue;
+        plans.push({ starts: starts.slice(1), extra });
+      }
+      for (const p of plans) for (const b of p.starts) { doc.applyParaFormat(sec, b.start, JSON.stringify({ spacingBefore: base + p.extra })); changed++; }
+      try { doc.flushDeferredPagination?.(); } catch {}
+      // 늘린 간격 때문에 새로 나뉜 문항이 생기면 이 구역은 기준 간격으로 되돌린다.
+      if (splitQuestions(doc, sec).some(i => !before.has(i.at.paragraphIndex))) {
+        for (const p of plans) for (const b of p.starts) { doc.applyParaFormat(sec, b.start, JSON.stringify({ spacingBefore: base })); changed--; }
+      } else columnsFilled += plans.length;
+    }
+    return true;
+  });
+  return { changed, columns: columnsFilled };
+}

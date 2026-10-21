@@ -232,6 +232,22 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
     assert.deepEqual(await inPage(page, `return text();`), beforeWhole, 'no text or empty line added');
     assert.deepEqual(await inPage(page, `const {splitQuestions}=await import('/js/rhwp-exam-layout-tools.js');return splitQuestions(d).map(x=>x.text);`), []);
 
+    // 16) 단 채우기: 한 단의 문항 3개 사이에 남는 공간을 고르게 나누고(글은 그대로), 다시 눌러도 같은 간격.
+    await page.locator('[data-exam-qmove]').first().waitFor();
+    await inPage(page, `reset('1. 가\\n가가\\n2. 나\\n3. 다\\n다다');d.setColumnDef(0,2,0,true,2268);
+      for(let p=0;p<d.getParagraphCount(0);p++){d.applyParaFormat(0,p,JSON.stringify({lineSpacing:160,spacingBefore:0,spacingAfter:0}));d.applyCharFormat(0,p,0,d.getParagraphLength(0,p),JSON.stringify({fontSize:1000,bold:false,spacings:[0,0,0,0,0,0,0]}));}b.deps.eventBus.emit('document-changed');`);
+    const beforeFill = await inPage(page, `return text();`);
+    const gaps = `const runs=JSON.parse(d.getPageTextLayout(0)).runs.filter(r=>r.secIdx===0),top=p=>Math.min(...runs.filter(r=>r.paraIdx===p).map(r=>r.y)),low=Math.max(...runs.map(r=>r.y+r.h)),info=JSON.parse(d.getPageInfo(0));
+      return {sp:[2,3].map(p=>Math.round(w.getParaPropertiesAt(0,p).spacingBefore*75)),q2:top(2)-top(1),q3:top(3)-top(2),room:info.footerArea.y-low,pages:d.pageCount()};`;
+    await page.locator('[data-exam-ftab="layout"]').click(); await button(page, '단마다 남는 빈 공간').click(); await h.idle(page);
+    const filled = await inPage(page, gaps);
+    assert.match(await page.locator('#exam-status').textContent(), /단 1곳/);
+    assert.deepEqual(await inPage(page, `return text();`), beforeFill);
+    assert.ok(filled.sp[0] > 0 && filled.sp[0] === filled.sp[1], JSON.stringify(filled));
+    assert.ok(filled.q2 > 200 && filled.room > 150 && filled.room < filled.q2, JSON.stringify(filled));
+    assert.equal(filled.pages, 1);
+    await button(page, '단마다 남는 빈 공간').click(); await h.idle(page);
+    assert.deepEqual((await inPage(page, gaps)).sp, filled.sp, 'same result when pressed again');
     // 15) 구역이 둘인 시험지(0구역=머리·1번, 1구역=2단 본문): 문항 목록이 두 구역을 다 보이고, 구역을 넘는 ↑↓는 막고, 1구역 안 이동·복제·나뉜 문항 점검은 된다.
     const twoSections = await inPage(page, `const {unzipSync,zipSync}=await import('/vendor/fflate/index.js');
       reset('시험 머리\\n1. 가');const first=unzipSync(d.exportHwpx());reset('2. 나\\n나나\\n3. 다');const second=unzipSync(d.exportHwpx());
@@ -248,7 +264,7 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
     const allText = `const all=[];for(let s=0;s<d.getSectionCount();s++)for(let p=0;p<d.getParagraphCount(s);p++)all.push(s+':'+d.getTextRange(s,p,0,d.getParagraphLength(s,p)));return all;`;
     assert.deepEqual(await inPage(page, allText), ['0:시험 머리', '0:1. 가', '1:2. 나', '1:나나', '1:3. 다']);
     await inPage(page, `d.setColumnDef(1,2,0,true,2268);b.deps.eventBus.emit('document-changed');`);
-    await page.waitForFunction(() => document.querySelectorAll('.exam-q').length === 3);
+    await page.waitForFunction(() => document.querySelectorAll('.exam-q').length === 3 && document.querySelector('[data-exam-qmove="0:1"]')?.disabled, null, { timeout: 5000 }).catch(() => {});
     assert.equal(await page.locator('[data-exam-qmove="0:1"]').isDisabled(), true, 'no move across sections');
     assert.equal(await page.locator('[data-exam-qmove="1:-1"]').isDisabled(), true);
     await page.locator('[data-exam-qmove="1:1"]').click(); await h.idle(page);
@@ -258,6 +274,7 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
     await page.locator('[data-exam-qdup="2"]').click(); await h.idle(page);
     assert.deepEqual(await inPage(page, allText), ['0:시험 머리', '0:1. 가', '1:2. 다', '1:3. 나', '1:나나', '1:4. 나', '1:나나']);
     assert.deepEqual(await inPage(page, `const {splitQuestions}=await import('/js/rhwp-exam-layout-tools.js');return splitQuestions(d).map(x=>x.text);`), []);
+
     assert.equal(await page.locator('#exam-status').getAttribute('data-error'), 'false', await page.locator('#exam-status').textContent());
     assert.deepEqual(errors, []);
   });

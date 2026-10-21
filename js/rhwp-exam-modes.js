@@ -2,7 +2,7 @@
 // 시안 5e-design-mockups/hwp-modes.html. 집중 도구 줄의 단추는 단축키와 같은 명령(runDocumentAction)·팔레트·5E 조판 기능을 부른다.
 import { runDocumentAction } from './rhwp-exam-shortcuts.js?v=1014-compact-panel';
 import { applyTableAlignment, applyHangingIndent } from './rhwp-exam-table-controls.js?v=1014-compact-panel';
-import { fitCellPicture, centerPicturesInCells, picturesToGrid, fitTableToColumn, renumberQuestions, relayoutChoices, checkLayout, questionBlocks, moveQuestion, splitQuestions, duplicateQuestion, deleteQuestion, fitWideObjects, keepQuestionsWhole, allQuestionBlocks } from './rhwp-exam-layout-tools.js';
+import { fitCellPicture, centerPicturesInCells, picturesToGrid, fitTableToColumn, renumberQuestions, relayoutChoices, checkLayout, questionBlocks, moveQuestion, splitQuestions, duplicateQuestion, deleteQuestion, fitWideObjects, keepQuestionsWhole, allQuestionBlocks, fillColumns } from './rhwp-exam-layout-tools.js';
 import { showConfirm } from './ui-dialogs.js?v=1.7.0-four-session-integration';
 import { listExamPoolExams, buildExamPoolHwpx } from './rhwp-exam-exampool-open.js';
 import { markBlank, studentCopy, appendBlankAnswers, insertExamHeader, insertAnswerGrid, setQuestionSpacing, extraChecks, BOX_PRESETS, insertBox, insertAnswerLines, insertRubric, setColumns, setPaper, makeVariant, appendVariantMapping, answerKeyCopy, STEMS, shadeHeaderRow, insertWorksheetFrame } from './rhwp-exam-worksheet.js';
@@ -86,7 +86,8 @@ function focusTabs(ctx) {
     layout: [
       ['시험지 머리', '문서 맨 앞에 제목 줄과 학년·반·번호·이름 칸 넣기', (_, button) => ctx.openHeaderForm(button)],
       ['정답표 칸', '찾은 문항 번호로 「번호/정답」 표를 문서 끝에 넣기(정답은 비워 둠)', doc(b => ctx.message(`문항 ${insertAnswerGrid(b)}개의 정답표 칸을 넣었습니다.`))],
-      ['문항 간격', '두 번째 문항부터 문항 위 간격을 한꺼번에 맞추기', (_, button) => ctx.openSpacingForm(button)], '|',
+      ['문항 간격', '두 번째 문항부터 문항 위 간격을 한꺼번에 맞추기', (_, button) => ctx.openSpacingForm(button)],
+      ['단 채우기', '단마다 남는 빈 공간을 그 단 문항 사이에 고르게 나누기(풀이 공간 맞추기, 다시 눌러도 같음)', doc(b => { const r = fillColumns(b); ctx.message(r.columns ? `단 ${r.columns}곳의 문항 사이 빈 공간을 고르게 나눴습니다.` : '나눌 빈 공간이 있는 단이 없습니다(단마다 문항이 둘 이상이어야 합니다).'); })], '|',
       ['1단', '모든 쪽을 1단으로', doc(b => ctx.message(`${setColumns(b, 1)}단으로 바꿨습니다.`))], ['2단', '모든 쪽을 2단으로(단 사이 8mm) — 시험지 기본', doc(b => ctx.message(`${setColumns(b, 2)}단으로 바꿨습니다.`))],
       ['용지', '용지 크기 A4·B4·A3 (여백·방향은 그대로)', (_, button) => ctx.openPicker(button, 'paper')],
       ['가·나형', '문항 순서를 섞은 나형 사본 내려받기(번호 다시 매김) + 교사용 문서 끝에 대응표', doc(b => ctx.variant(b))], '|',
