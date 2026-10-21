@@ -6,7 +6,7 @@ import {busyHtml,pastBusyHtml} from './card-shared.js';
 import {newExam,examById,examOf,libraryQuestions,addToExam,removeFromExam,moveInExam,dropBeforeIndex,renumberExam} from './exams.js';
 import {applyTextEdit} from './text-sync.js';
 import {loadImage} from './image-load.js';
-import {exportExcel,importExcel} from './excel.js';
+import {exportExcel,importExcel,keepAppOnly} from './excel.js';
 import {handoffQuestion} from './handoff.js';
 import {createSheetGrid} from './grid.js';
 import {applyGridValues,columnName} from './grid-model.js';
@@ -403,7 +403,7 @@ $('#import').onclick=()=>$('#excel-file').click();$('#excel-file').onchange=asyn
   const matches=pending.questions.filter(q=>data.questions.some(x=>x.id===q.id)).length;$('#import-count').textContent=`${pending.questions.length}문항 · ${pending.documents.length}자료${pending.exams?.length?` · 시험지 ${pending.exams.length}개`:''} · 기존 문항과 일치 ${matches}개${pending.warnings?.length?' · '+pending.warnings.join(' '):''}`;$('#import-preview').innerHTML='<table><thead><tr><th>번호</th><th>답안형</th><th>구성</th><th>발문</th></tr></thead><tbody>'+pending.questions.slice(0,20).map(q=>`<tr><td>${E(q.number)}</td><td>${E(q.type)}</td><td>${q.blocks.length}개</td><td>${E(q.ask)}</td></tr>`).join('')+'</tbody></table>';$('#import-dialog').showModal();status('불러올 내용을 확인하세요. 적용 전에는 기존 입력이 바뀌지 않습니다.');
 }catch(e){pending=null;status(e.message,true);}finally{$('#excel-file').value='';}};
 $('#apply-import').onclick=()=>{if(!pending)return;const applied=mutate(()=>{const update=$('input[name="import-mode"]:checked').value==='update',docMap=new Map();for(const incoming of pending.documents){const existing=data.documents.find(d=>d.id===incoming.id);if(existing&&JSON.stringify(existing)!==JSON.stringify(incoming)){const d=clone(incoming);d.id=uid();data.documents.push(d);docMap.set(incoming.id,d.id);}else if(!existing)data.documents.push(clone(incoming));}
-  const qidMap=new Map();for(const incoming of pending.questions){const q=update?clone(incoming):duplicateQuestion(incoming);qidMap.set(incoming.id,q.id);q.references.forEach(r=>{if(docMap.has(r.documentId))r.documentId=docMap.get(r.documentId);});const at=data.questions.findIndex(v=>v.id===q.id);if(update&&at>=0)data.questions[at]=q;else data.questions.push(q);current=q;}
+  const qidMap=new Map();for(const incoming of pending.questions){const q=update?clone(incoming):duplicateQuestion(incoming);qidMap.set(incoming.id,q.id);q.references.forEach(r=>{if(docMap.has(r.documentId))r.documentId=docMap.get(r.documentId);});const at=data.questions.findIndex(v=>v.id===q.id);if(update&&at>=0)data.questions[at]=keepAppOnly(q,data.questions[at]);else data.questions.push(q);current=data.questions[update&&at>=0?at:data.questions.length-1];}
   // 시험지도 함께 들여온다(H5): 문항 ID가 새로 매겨졌으면(복사본) 새 ID로 옮기고, 한 문항은 한 시험지에만 있게 다른 시험지에서는 뺀다.
   for(const incoming of pending.exams||[]){const items=incoming.items.map(id=>qidMap.get(id)).filter(Boolean);if(!items.length)continue;
     for(const e of data.exams)e.items=e.items.filter(id=>!items.includes(id));
