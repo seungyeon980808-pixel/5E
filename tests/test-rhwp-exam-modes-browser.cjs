@@ -604,6 +604,9 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
     assert.deepEqual(await inPage(page, footers), ['- \u0015 / \u0016 -', '- \u0015 / \u0016 -']);
     const drawn = await inPage(page, `const n=d.pageCount(),svg=String(d.renderPageSvg(n-1));return [n,[...svg.matchAll(/<text[^>]*>([^<]*)<\\/text>/g)].map(m=>m[1]).slice(-5).join('')];`);
     assert.equal(drawn[1], `-${drawn[0]}/${drawn[0]}-`);
+    await button(page, '모든 쪽 아래 가운데에 쪽 번호').click(); await page.locator('[data-exam-runhead]').fill('2026 1학기 중간 통합과학'); await page.locator('[data-exam-runhead-submit]').click(); await h.idle(page);
+    assert.deepEqual(await inPage(page, `return [...Array(d.getSectionCount()).keys()].map(s=>JSON.parse(d.getHeaderFooter(s,true,0)).text);`), ['2026 1학기 중간 통합과학', '2026 1학기 중간 통합과학']);
+    assert.match(await inPage(page, `return [...String(d.renderPageSvg(0)).matchAll(/<text[^>]*>([^<]*)<\\/text>/g)].map(m=>m[1]).join('');`), /2026.*통합과학/);
     for (const format of ['exportHwpx', 'exportHwp']) assert.equal(await inPage(page, `const c=new d.constructor(d[arg]());try{c.convertToEditable?.();const n=c.pageCount();return [...String(c.renderPageSvg(n-1)).matchAll(/<text[^>]*>([^<]*)<\\/text>/g)].map(m=>m[1]).slice(-5).join('')===\`-\${n}/\${n}-\`;}finally{c.free();}`, format), true, `page numbers kept after ${format}`);
     assert.equal(await page.locator('#exam-status').getAttribute('data-error'), 'false', await page.locator('#exam-status').textContent());
     assert.deepEqual(errors, []);

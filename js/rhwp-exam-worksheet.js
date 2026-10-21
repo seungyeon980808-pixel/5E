@@ -664,6 +664,22 @@ export function insertPageNumbers(bridge, style = 'dash') {
   });
   return PAGE_NUMBER_STYLES[style];
 }
+// 머리말: 모든 구역 머리말(양 쪽)을 가운데 맞춘 한 줄(시험 이름 등)로 다시 만든다. 빈 글이면 머리말 글을 지운다.
+export function insertRunningHeader(bridge, text) {
+  requireInput(bridge);
+  const doc = bridge.wasm.borrowDocumentHandle(), line = String(text || '').trim();
+  const ok = value => { const r = parse(value); if (r?.ok === false) throw new Error(r.error || '머리말을 만들지 못했습니다.'); return r; };
+  bridge.transaction('running-header', () => {
+    for (let sec = 0; sec < doc.getSectionCount(); sec++) {
+      ok(doc.applyHfTemplate(sec, true, 0, 0));
+      if (!line) continue;
+      ok(doc.insertTextInHeaderFooter(sec, true, 0, 0, 0, line));
+      try { doc.applyParaFormatInHf(sec, true, 0, 0, JSON.stringify({ alignment: 'center' })); } catch {}
+    }
+    return true;
+  });
+  return line;
+}
 // 나형 만들기: 문항 순서를 섞은 사본(번호 다시 매김)과 「나형 번호 → 가형 번호」 대응. 지금 문서는 그대로.
 export function makeVariant(bridge, random = Math.random, { choices = false } = {}) {
   requireInput(bridge);
