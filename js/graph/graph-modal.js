@@ -3162,11 +3162,21 @@ function graphTextTarget(target) {
   if (el.hasAttribute('data-tick')) {
     const [axis, ord] = el.getAttribute('data-tick').split(':'), index = Number(ord);
     if (!['x','y'].includes(axis) || !Number.isInteger(index)) return null;
-    const upper = axis.toUpperCase();
-    const ticks = structuredClone(_previewPlane[`explicitTicks${upper}`] || generatedTicks(_previewPlane,axis,_cfg.tickMode,_cfg[`tickBase${upper}`]));
-    if (!ticks[index]) return null;
-    return make(`${axis}축 눈금`, ticks[index].label, 'coord', value => {
-      ticks[index].label = value; delete ticks[index].displayText; delete ticks[index].displayMath;
+    const upper = axis.toUpperCase(), explicit = _previewPlane[`explicitTicks${upper}`];
+    const ticks = structuredClone(explicit || generatedTicks(_previewPlane,axis,_cfg.tickMode,_cfg[`tickBase${upper}`]));
+    // 자동 눈금은 그린 쪽의 순번(원점·축 팔 기준)과 이 목록의 순번이 다를 수 있다. 십자·ㅏ자 축에서 눈금 숫자를 고치면
+    // 옆 눈금이 바뀌고 나머지가 한 칸씩 밀렸다(M34). 그린 숫자의 값으로 자리를 찾고, 숫자별 이동량도 새 순번으로 옮긴다.
+    const near = (a, b) => Math.abs(a - b) <= 1e-9 * Math.max(1, Math.abs(a));
+    const shownValue = Number(el.getAttribute('data-tick-value'));
+    const at = !explicit && Number.isFinite(shownValue) ? ticks.findIndex(tick => near(tick.value, shownValue)) : index;
+    if (!ticks[at]) return null;
+    return make(`${axis}축 눈금`, ticks[at].label, 'coord', value => {
+      ticks[at].label = value; delete ticks[at].displayText; delete ticks[at].displayMath;
+      if (!explicit) {
+        const svg = el.closest('svg'), offKey = `tickOff${upper}`, oldOffs = _cfg[offKey] || [], ordOf = new Map();
+        for (const node of svg?.querySelectorAll(`[data-tick^="${axis}:"][data-tick-value]`) || []) ordOf.set(Number(node.getAttribute('data-tick-value')), Number(node.getAttribute('data-tick').split(':')[1]));
+        _cfg[offKey] = ticks.map(tick => { for (const [v, ord] of ordOf) if (near(v, tick.value)) return oldOffs[ord] || null; return null; });
+      }
       _cfg[`explicitTicks${upper}`] = ticks;
       _cfg[`tickText${upper}`] = ticks.map(tick => tick.label || '').join(', ');
       _cfg.tickMode = 'text';

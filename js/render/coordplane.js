@@ -407,7 +407,7 @@ function renderCoordplane(obj) {
   const descriptionXTicks = [];
   // 눈금 숫자 이동(요구 ②): 숫자마다 {dx,dy} 오프셋을 적용하고, data-tick으로 태깅한다
   // (모달 미리보기가 그 태그를 잡아 드래그로 오프셋을 조정). tag=`${axis}:${ord}`.
-  const addNumber = (text, nx, ny, anchor, baseline, tag) => {
+  const addNumber = (text, nx, ny, anchor, baseline, tag, tickValue) => {
     let node;
     if (rich) {
       // 눈금 숫자도 halo를 켠다 — 예전엔 흰 사각형 블록이 대신 가려 줬는데 그 블록을
@@ -428,6 +428,8 @@ function renderCoordplane(obj) {
       g.appendChild(node);
     }
     if (node && tag) node.setAttribute("data-tick", tag);
+    // 눈금 값도 단다. 자동 눈금의 순번(tickOrd)은 편집기의 눈금 목록 순번과 축 모양에 따라 달라, 값으로 맞춰야 한다(M34).
+    if (node && Number.isFinite(tickValue)) node.setAttribute("data-tick-value", String(tickValue));
     if (node && tag?.startsWith('x:') && obj.graphStyle?.descriptionLayout) {
       const metric = measureGraphLabel(text,EXAM_STYLE.label,false,obj.labelWeight ?? 400,true,{parenthesesAreUnits:false});
       const off = obj.tickOffX?.[Number(tag.slice(2))];
@@ -468,7 +470,7 @@ function renderCoordplane(obj) {
         const vx = worldXFromMathX(P, k * kx.step);
         // 눈금 라벨을 눈금선보다 살짝 왼쪽으로(요구): 아래첨자(t₀의 ₀) 때문에 우측으로
         // 치우쳐 보이는 걸 보정.
-        addNumber(txt, vx - numSize * 0.14 + offX.dx, tickAxisY + tickGap + offX.dy, "middle", "hanging", "x:" + ordX);
+        addNumber(txt, vx - numSize * 0.14 + offX.dx, tickAxisY + tickGap + offX.dy, "middle", "hanging", "x:" + ordX, Number((k * kx.step).toPrecision(12)));
       }
     }
     if (hasYArm && yAxisVisible && !logY && !Array.isArray(obj.explicitTicksY)) {
@@ -479,7 +481,7 @@ function renderCoordplane(obj) {
         const ordY = tickOrd(k, ky.kStart);
         const offY = tickOffOf(obj.tickOffY, ordY);
         const vy = worldYFromMathY(P, k * ky.step);
-        addNumber(txt, tickAxisX - tickGap + offY.dx, vy + offY.dy, "end", "middle", "y:" + ordY);
+        addNumber(txt, tickAxisX - tickGap + offY.dx, vy + offY.dy, "end", "middle", "y:" + ordY, Number((k * ky.step).toPrecision(12)));
       }
     }
   }
