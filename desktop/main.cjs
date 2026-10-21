@@ -1080,6 +1080,13 @@ function createWindow() {
   });
   win.webContents.on('did-start-navigation',(_event,_url,inPlace,isMainFrame)=>{if(isMainFrame && !inPlace)cancelExamAnnotations('5E 작업 창을 다시 열었습니다.');});
   win.webContents.on('render-process-gone',()=>cancelExamAnnotations('5E 작업 창의 연결이 끊겼습니다.'));
+  // 화면이 닫기를 막으면(저장 안 한 지우개·라벨 초안, 출제·조판 변경) Electron은 알림 없이 닫기를 취소한다.
+  // 주 창에는 묻는 창이 없어, 작업을 지운 뒤에는 강제 종료밖에 없었다(M40). 시험지 창과 같이 묻는다.
+  win.webContents.on('will-prevent-unload', event => {
+    const answer = dialog.showMessageBoxSync(win,{type:'question',buttons:['계속 편집','닫기'],defaultId:0,cancelId:0,
+      title:'저장하지 않은 편집',message:'저장하지 않은 편집이 있습니다. 창을 닫을까요?'});
+    if (answer === 1) event.preventDefault();
+  });
   const entryUrl = pathToFileURL(path.join(__dirname, "..", "index.html")).href;
   win.webContents.on("will-navigate", (event, url) => {
     if (String(url).split(/[?#]/, 1)[0] !== entryUrl) event.preventDefault();
