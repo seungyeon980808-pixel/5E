@@ -1,5 +1,6 @@
 import {embedEditablePng,readEditablePng} from './editable-png.js?v=1.7.0-four-session-integration';
 import {getContentBounds} from './svg-export.js?v=1.7.0-four-session-integration';
+import {syncAppLock} from './app-lock.js?v=1021-lock';
 const copy=v=>structuredClone(v);
 const asData=bytes=>{let s='';for(let i=0;i<bytes.length;i+=32768)s+=String.fromCharCode(...bytes.subarray(i,i+32768));return 'data:image/png;base64,'+btoa(s);};
 let harnessPromise,enginesPromise;
@@ -13,10 +14,10 @@ export function initQuestionSheet(state,services,examWorkspace){
   entry.disabled=false;entry.title='5E_exam · 문항 만들기';
   let host,frame,focusReturn,busy=false;
   function open(){if(!host){host=document.createElement('section');host.id='exampool-sheet-workspace';host.setAttribute('aria-label','문항 시트');host.setAttribute('role','dialog');host.setAttribute('aria-modal','true');host.style.cssText='position:fixed;inset:0;z-index:1250;background:var(--ds-app);';frame=document.createElement('iframe');frame.setAttribute('aria-label','5E_exam 문항 시트');/* title이면 Safari가 화면 위에 말풍선으로 띄운다 */frame.src=new URL('../assets/exampool/sheet/index.html',import.meta.url).href+(new URLSearchParams(location.search).get('sheet-example')==='1'?'?example=1':'');frame.style.cssText='width:100%;height:100%;border:0;display:block;opacity:0;transition:opacity 200ms cubic-bezier(.2,0,0,1)';/* 첫 열기: 안 문서가 다 그려진 뒤 흐려졌다 또렷해지게(빈 칸 → 내용이 휙 뜨지 않게), 1.5초가 지나면 그냥 보인다 */frame.addEventListener('load',()=>{const start=performance.now(),show=()=>{if(frame.contentDocument?.querySelector('#side-new')||performance.now()-start>1500)frame.style.opacity='1';else requestAnimationFrame(show);};show();},{once:true});host.append(frame);document.body.append(host);}
-    focusReturn=document.activeElement;host.hidden=false;host.style.bottom='0';/* ExamPool 상태 줄 하나에 5E 버전·문제 신고를 함께 두므로 5E 아래 막대는 덮는다(아래 막대 두 줄 → 한 줄). */const app=document.querySelector('body>.app');if(app)app.inert=true;}
+    focusReturn=document.activeElement;host.hidden=false;host.style.bottom='0';/* ExamPool 상태 줄 하나에 5E 버전·문제 신고를 함께 두므로 5E 아래 막대는 덮는다(아래 막대 두 줄 → 한 줄). */syncAppLock();}
   // 사용자가 출제 칸을 닫거나(✕) 한글로 보낼 때: 휙 사라지지 않게 0.16초 흐려지며 닫는다(app-switch.css의 .app-leaving). 움직임 줄이기 설정이면 바로.
   function fadeClose(){if(!host||host.hidden)return;if(matchMedia('(prefers-reduced-motion: reduce)').matches){close();return;}host.classList.add('app-leaving');setTimeout(()=>{host.classList.remove('app-leaving');close();},160);}
-  function close(){if(!host)return;host.hidden=true;document.documentElement.classList.remove('exampool-modal');const app=document.querySelector('body>.app');if(app)app.inert=!document.querySelector('#rhwp-exam-workspace')?.hidden||!document.querySelector('#exampool-workspace')?.hidden;focusReturn?.focus();}
+  function close(){if(!host)return;host.hidden=true;document.documentElement.classList.remove('exampool-modal');syncAppLock();focusReturn?.focus();}
   // 5E 그림을 ExamPool 문항의 그림 칸으로 보낸다. region(mm)이 있으면 그 영역만, 없으면 그림 전체.
   async function captureFigure(m,send,region=null){
         services.commitActiveText?.();const source=copy(services.serialize(state.get()));source.pages=source.pages.filter(p=>p.id===source.activePageId);const {active}=services.prepareLoadedProject(copy(source));if(!active.objects.length)throw Error('5E에서 그림을 만든 뒤 가져오세요.');const bounds=region||getContentBounds({...state.get(),...active});if(!bounds||bounds.w<=0||bounds.h<=0||(bounds.w/25.4*300)*(bounds.h/25.4*300)>40000000)throw Error('그림 영역을 줄인 뒤 가져오세요.');
@@ -29,7 +30,7 @@ export function initQuestionSheet(state,services,examWorkspace){
   let picking=null;
   async function pickFromLibrary(m,send){
     const {openPdfReferencePicker}=await import('./pdf-library/reference-picker.js?v=1.7.0-four-session-integration');
-    const app=document.querySelector('body>.app');host.hidden=true;if(app)app.inert=false;
+    const app=document.querySelector('body>.app');host.hidden=true;syncAppLock();
     const back=document.createElement('button');back.type='button';back.className='exampool-library-back';back.textContent='5E_exam으로 돌아가기';
     back.style.cssText='position:fixed;z-index:2147483000;left:50%;bottom:64px;transform:translateX(-50%);height:38px;padding:0 18px;border:0;border-radius:19px;background:var(--go-bg,#152137);color:var(--go-ink,#cfe1ff);box-shadow:inset 0 0 0 1px var(--go-line,#6ba4f8),0 6px 20px rgba(0,0,0,.4);font:inherit;font-size:13px;cursor:pointer';
     let done=false,closeLibrary=null;const finish=items=>{if(done)return;done=true;back.remove();closeLibrary?.();open();send({action:'library-picked',items});};
@@ -44,7 +45,7 @@ export function initQuestionSheet(state,services,examWorkspace){
     const first=page();if(!first.objects.length){send({error:'5E 그림 화면에서 그림을 만든 뒤 다시 더블클릭하세요.'});return;}
     let bounds=copy(options.bounds||getContentBounds({...state.get(),...first}));if(!bounds||bounds.w<=0||bounds.h<=0){send({error:'5E 그림의 영역을 찾지 못했습니다.'});return;}
     const {ExamRegionSurface}=await import('./rhwp-exam-picture-controls.js?v=1.7.0-four-session-integration');
-    host.hidden=true;const app=document.querySelector('body>.app');if(app)app.inert=false;
+    host.hidden=true;const app=document.querySelector('body>.app');syncAppLock();
     const canvasRect=()=>{const c=document.querySelector('#canvas');return c?.getScreenCTM()&&c;};
     const geometry=()=>{const c=canvasRect(),mx=c?.getScreenCTM();if(!mx)return null;const p=new DOMPoint(bounds.x,bounds.y).matrixTransform(mx);return {x:p.x,y:p.y,w:bounds.w*mx.a,h:bounds.h*mx.d};};
     const viewport=()=>{const r=document.querySelector('#canvas')?.getBoundingClientRect();return r&&{x:r.x,y:r.y,w:r.width,h:r.height};};
@@ -56,7 +57,7 @@ export function initQuestionSheet(state,services,examWorkspace){
     const button=(text,primary)=>{const b=document.createElement('button');b.type='button';b.textContent=text;if(primary)b.className='exam-primary';actions.append(b);return b;};
     const cancel=button(options.cancel||'취소'),apply=button(options.apply||'이 자리에 넣기',true);
     let raf=0;const follow=()=>{region.position();raf=requestAnimationFrame(follow);};
-    const finish=()=>{cancelAnimationFrame(raf);region.hide();region.root.remove();picking=null;host.hidden=false;if(app)app.inert=true;frame?.contentWindow?.focus?.();};
+    const finish=()=>{cancelAnimationFrame(raf);region.hide();region.root.remove();picking=null;host.hidden=false;syncAppLock();frame?.contentWindow?.focus?.();};
     return new Promise(resolve=>{
       picking={cancel:()=>{finish();send({action:'pick-cancelled'});resolve();}};
       cancel.onclick=()=>picking.cancel();

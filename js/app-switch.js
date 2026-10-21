@@ -1,3 +1,4 @@
+import { syncAppLock } from './app-lock.js?v=1021-lock';
 // 5E 세 프로그램 전환(시안 41, 10-20 승인): 맨 위 줄 로고 「5E_단어」 옆에 나머지 두 프로그램 이름(exam · image · hwp)을 두고,
 // 누르면 그 프로그램을 연 뒤 지금 프로그램을 닫는다(사이에 그림 화면이 비치지 않게). 지금은 세 프로그램이 한 페이지 안에서 열리므로(그림 화면 위 덧창)
 // 각 프로그램의 원래 열기·닫기 단추를 그대로 눌러 전환한다 — 저장·확인 창 같은 원래 동작을 거치게.
@@ -90,9 +91,9 @@ export function initAppSwitch(doc = document) {
       // 출제 칸이 위(z 1250), 조판이 아래(z 800) — 출제 칸을 닫을 때만 흐려지는 모습이 보인다.
       await closeApp(from, from === 'exam');
       if (target === 'exam') {
-        // 조판 닫기가 그림 화면 잠금을 풀어 버리므로 출제 칸이 열린 동안의 잠금을 되돌리고, 입력 자리를 출제 칸으로.
-        const app = doc.querySelector('body>.app'); if (app) app.inert = true;
-        surface('exam')?.querySelector('iframe')?.contentWindow?.focus?.();
+        // 그림 화면 잠금은 app-lock.js가 「보이는 칸」만 보고 정한다(전환 중 ✕로 출제 칸이 이미 닫혔으면 잠그지 않음 — H1).
+        syncAppLock(doc);
+        if (shown('exam')) surface('exam').querySelector('iframe')?.contentWindow?.focus?.();
       }
     } finally {
       switching = false;

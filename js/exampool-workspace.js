@@ -3,7 +3,8 @@ import { listQuestions, saveQuestion, importQuestions, listResources } from './e
 import { initPoolReferences } from './exampool-references.js?v=1013-exampool';
 import { embedEditablePng, readEditablePng } from './editable-png.js?v=1.7.0-four-session-integration';
 import { getContentBounds } from './svg-export.js?v=1.7.0-four-session-integration';
-import { initQuestionSheet } from './exampool-sheet-workspace.js?v=1021-fadeclose';
+import { syncAppLock } from './app-lock.js?v=1021-lock';
+import { initQuestionSheet } from './exampool-sheet-workspace.js?v=1021-lock';
 
 const copy = value => structuredClone(value);
 const letters = ['ㄱ','ㄴ','ㄷ','ㄹ','ㅁ','ㅂ','ㅅ','ㅇ','ㅈ','ㅊ','ㅋ','ㅌ','ㅍ','ㅎ'];
@@ -143,11 +144,11 @@ export function initExamPoolWorkspace(state, services, examWorkspace) {
     try {await task();}catch(error) {message(error.message || '작업을 마치지 못했습니다. 다시 시도하세요.',true);}
     finally {busy = false;panel.setAttribute('aria-busy','false');panel.querySelectorAll('button,input,textarea,select').forEach(node => {node.disabled = false;});renderFigure();references.updateState();}
   }
-  function close() {panel.hidden = true;document.body.classList.remove('pool-open');const app = document.querySelector('body>.app');if (app) app.inert = !document.querySelector('#rhwp-exam-workspace')?.hidden;focusReturn?.focus();}
+  function close() {panel.hidden = true;document.body.classList.remove('pool-open');syncAppLock();focusReturn?.focus();}
   async function open() {
     focusReturn = document.activeElement;panel.hidden = false;document.body.classList.add('pool-open');
     panel.style.bottom = `${document.querySelector('.app-footer')?.getBoundingClientRect().height || 24}px`;
-    const app = document.querySelector('body>.app');if (app) app.inert = true;
+    syncAppLock();
     await run(async () => {items = await listQuestions();if (!current) current = items[0] ? copy(items[0]) : null;render();message(items.length ? '저장한 문항을 열었습니다.' : '새 문항을 만들어 시작하세요.');});
     await references.refresh().catch(error=>message(error.message,true));references.questionChanged();
     (current ? $('#pool-number') : $('[data-pool-action="new"]')).focus();

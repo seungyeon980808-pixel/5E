@@ -4,6 +4,7 @@
 // 1) exam↔hwp 사이에 그림 화면이 비치는 프레임이 없다(새 프로그램을 먼저 열고 다 나타난 뒤 옛 것을 닫음).
 // 2) 조판이 바쁜 순간(「한글에 넣기」 영역 고르기 중)에 누른 hwp도 바쁜 일이 끝나면 열린다.
 // 3) 전환 도중에 누른 이름은 버리지 않고 이어서 간다(빠르게 눌러도 마지막 것으로).
+// 4) 전환 도중 출제 칸 ✕를 눌러도 그림 화면이 잠긴 채 남지 않는다(H1, 10-21).
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -69,9 +70,20 @@ h.withServer(async origin => {
         return hwp.hidden && exam && exam.hidden && !document.querySelector('.app-leaving');
       }, null, { timeout: 10000 });
       assert.equal(await page.evaluate(() => document.querySelector('body>.app').inert), false, `${name}: the image screen is usable again`);
+      // 4) H1: hwp → exam 전환 도중(0.15초)에 출제 칸 ✕(5E로 돌아가기)를 누르면, 아무 칸도 없는데 그림 화면이 잠긴 채 남던 것.
+      await page.locator('.app-switch-image [data-app-switch="hwp"]').click();
+      await page.locator('#rhwp-exam-workspace').waitFor({ state: 'visible' }); await h.idle(page);
+      await page.locator('.exam-topbar [data-app-switch="exam"]').click();
+      await page.waitForTimeout(150);
+      await (await sheet()).evaluate(() => document.getElementById('return').click());
+      await page.waitForFunction(() => document.getElementById('exampool-sheet-workspace').hidden && document.getElementById('rhwp-exam-workspace').hidden && !document.querySelector('.app-leaving'), null, { timeout: 10000 });
+      await page.waitForTimeout(400);
+      assert.equal(await page.evaluate(() => document.querySelector('body>.app').inert), false, `${name}: closing the sheet mid-switch never leaves the image screen locked`);
+      await page.locator('.app-switch-image [data-app-switch="hwp"]').click({ timeout: 5000 });
+      await page.locator('#rhwp-exam-workspace').waitFor({ state: 'visible' });
       await page.screenshot({ path: path.join(evidence, `${name}-end.png`) });
       assert.deepEqual(errors, []);
-      console.log(`PASS app switch ${name}: no flash between programs, busy hwp opens, queued switch`);
+      console.log(`PASS app switch ${name}: no flash between programs, busy hwp opens, queued switch, no stuck lock`);
     } finally { await browser.close(); }
   }
 }).catch(error => { console.error(error); process.exitCode = 1; });

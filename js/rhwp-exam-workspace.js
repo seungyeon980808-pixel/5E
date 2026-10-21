@@ -1,5 +1,5 @@
 import { parseFiveEProject } from './fivee-project.js?v=1.7.0-four-session-integration';
-import { appSwitchHtml } from './app-switch.js?v=1020-fade';
+import { appSwitchHtml } from './app-switch.js?v=1021-lock';
 import {buildQuestionHtml,verifyNativeQuestion} from '../assets/exampool/sheet/handoff.js?v=1014-hwp-sheet';
 import {openApprovedQuestion,nativeInsertOptions,sameColumnGeometry} from '../assets/exampool/sheet/native-transfer.js?v=1014-compact-panel';
 
@@ -16,6 +16,7 @@ import { getContentBounds } from './svg-export.js?v=1.7.0-four-session-integrati
 import { registerTopMenu } from './top-menu.js?v=1.7.0-four-session-integration';
 import { showExamDocumentChoice } from './ui-dialogs.js?v=1.7.0-four-session-integration';
 import { consumeConfirmationPress } from './ui-confirm-key.js?v=1.7.0-four-session-integration';
+import { syncAppLock } from './app-lock.js?v=1021-lock';
 
 const clone = value => JSON.parse(JSON.stringify(value));
 const safeName = name => (name.trim() || '새 시험지').replace(/[\\/:*?"<>|]/g, '_').slice(0, 120);
@@ -114,10 +115,11 @@ export function initRhwpExamWorkspace(state, services) {
     onAction:name => run(() => inlineAction(name)),
     onError:error => message(error.message,true),
   });
-  const background = [...document.querySelectorAll('body>.app, body>.app-footer')];
   function syncBackground() {
     const modal = !panel.hidden && !editing;
-    background.forEach(element => { element.inert = modal; });
+    // 그림 화면·아래 막대 잠금은 app-lock.js가 출제 칸까지 함께 보고 정한다(여기서 직접 켜고 끄면 출제 칸 잠금을 풀어 버렸다).
+    panel.dataset.modal = String(modal);
+    syncAppLock();
     panel.setAttribute('aria-modal', String(modal));
     if (bridge?.editor.element) bridge.editor.element.inert = !!editing?.remote;
   }
@@ -1062,7 +1064,7 @@ export function initRhwpExamWorkspace(state, services) {
     const page=state.get().pages.find(p=>p.id===state.get().activePageId),link=page?.meta?.examLink;
     if (!link) return;
     if (editing?.figure.link.tabId===link.tabId && editing?.figure.link.assetId===link.assetId) return;
-    if(editing) {const wasHidden=panel.hidden;endEdit();panel.hidden=wasHidden;}
+    if(editing) {const wasHidden=panel.hidden;endEdit();panel.hidden=wasHidden;syncBackground();}
     const figure=[...figures.values()].reverse().find(f=>f.link.tabId===link.tabId && f.link.assetId===link.assetId && bridge.findFigure(f.id));
     if (figure) await beginEdit(figure.id,bridge.findFigure(figure.id));
   }
