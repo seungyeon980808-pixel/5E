@@ -379,6 +379,35 @@ export function addExplanationLine(bridge) {
   return q.label;
 }
 
+// 수식 크기: 본문 수식은 그 문단 글자 크기(가장 흔한 크기), 표 칸 수식은 문서 본문 글자 크기(문항 첫 줄에서 가장 흔한 크기)에 맞춘다.
+// [{sec, para, ci, cell, cp, size, target}] — 0.5pt 넘게 다른 것만.
+function paragraphFontSize(doc, sec, para) {
+  const len = doc.getParagraphLength(sec, para), counts = new Map();
+  for (let o = 0; o < Math.min(len, 40); o++) { const size = parse(doc.getCharPropertiesAt(sec, para, o)).fontSize; counts.set(size, (counts.get(size) || 0) + 1); }
+  return [...counts].sort((a, b) => b[1] - a[1])[0]?.[0] || null;
+}
+export function equationSizeIssues(doc) {
+  const body = new Map();
+  for (let sec = 0; sec < doc.getSectionCount(); sec++) for (const q of questionBlocks(doc, sec)) { const size = paragraphFontSize(doc, sec, q.head); if (size) body.set(size, (body.get(size) || 0) + 1); }
+  const bodySize = [...body].sort((a, b) => b[1] - a[1])[0]?.[0] || 1000, out = [], seen = new Set();
+  for (let pg = 0; pg < doc.pageCount(); pg++) for (const c of parse(doc.getPageControlLayout(pg)).controls || []) {
+    if (c.type !== 'equation') continue;
+    const sec = c.secIdx ?? 0, ci = c.controlIdx ?? c.ci, inCell = Number.isInteger(c.cellIdx), cell = inCell ? c.cellIdx : -1, cp = inCell ? c.cellParaIdx : -1, key = `${sec}:${c.paraIdx}:${ci}:${cell}:${cp}`;
+    if (seen.has(key)) continue; seen.add(key);
+    let size; try { size = parse(doc.getEquationProperties(sec, c.paraIdx, ci, cell, cp)).fontSize; } catch { continue; }
+    const target = inCell ? bodySize : (paragraphFontSize(doc, sec, c.paraIdx) || bodySize);
+    if (Math.abs(size - target) > 50) out.push({ sec, para: c.paraIdx, ci, cell, cp, size, target });
+  }
+  return out;
+}
+export function fitEquationSizes(bridge) {
+  requireInput(bridge);
+  const doc = bridge.wasm.borrowDocumentHandle(), list = equationSizeIssues(doc);
+  if (!list.length) return 0;
+  bridge.transaction('fit-equation-sizes', () => { for (const e of list) parse(doc.setEquationProperties(e.sec, e.para, e.ci, e.cell, e.cp, JSON.stringify({ fontSize: e.target }))); return true; });
+  return list.length;
+}
+
 // 점검 더하기: 배점 합계·글꼴 섞임. [{text, at}]
 export function extraChecks(doc) {
   const issues = [], scores = [], fonts = new Map();
@@ -418,6 +447,8 @@ export function extraChecks(doc) {
       from = i;
     }
   }
+  const equations = equationSizeIssues(doc);
+  if (equations.length) issues.push({ text: `수식 ${equations.length}개의 크기가 둘레 글자와 다릅니다(예: ${equations[0].size / 100}pt → ${equations[0].target / 100}pt).`, at: { sectionIndex: equations[0].sec, paragraphIndex: equations[0].para, charOffset: 0 } });
   if (fonts.size > 1) {
     const [major] = [...fonts].sort((a, b) => b[1].length - a[1].length);
     for (const [key, ats] of fonts) if (key !== major[0]) issues.push({ text: `문항 첫 줄 글꼴이 다릅니다(${key} · 대부분은 ${major[0]}).`, at: ats[0] });

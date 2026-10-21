@@ -460,6 +460,20 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
     await page.locator('[data-exam-guide-kind="sheet"]').click(); await page.locator('[data-exam-guide="2"]').click();
     assert.equal(await page.locator('[data-exam-ftab="sheet"]').getAttribute('aria-selected'), 'true');
     assert.equal(await button(page, '문서의 굵은 낱말을').evaluate(el => el.classList.contains('is-hint')), true);
+    // 39) 점검 「수식 크기 맞추기」: 본문 수식은 그 문단 글자 크기, 표 칸 수식은 본문 크기로.
+    await inPage(page, `reset('1. 식은');for(let p=0;p<d.getParagraphCount(0);p++)d.applyCharFormat(0,p,0,d.getParagraphLength(0,p),JSON.stringify({fontSize:1000}));
+      d.insertEquation(0,0,d.getParagraphLength(0,0),'a over b',1600,0);const N=await import('/js/hwp-palette/native.js');
+      d.splitParagraph(0,0,d.getParagraphLength(0,0));const t=JSON.parse(d.createTable(0,1,0,1,1));
+      N.insertValue(d,{sectionIndex:0,paragraphIndex:t.paraIdx,charOffset:0,parentParaIndex:t.paraIdx,controlIndex:t.controlIdx,cellIndex:0,cellParaIndex:0,cellPath:[{controlIndex:t.controlIdx,cellIndex:0,cellParaIndex:0}]},[{formula:'x^2'}],new Map());
+      const ce=JSON.parse(d.getPageControlLayout(0)).controls.find(c=>c.type==='equation'&&Number.isInteger(c.cellIdx));d.setEquationProperties(0,ce.paraIdx,ce.controlIdx,ce.cellIdx,ce.cellParaIdx,JSON.stringify({fontSize:1800}));b.deps.eventBus.emit('document-changed');`);
+    const eqSizes = `const {equationSizeIssues}=await import('/js/rhwp-exam-worksheet.js');return JSON.parse(d.getPageControlLayout(0)).controls.filter(c=>c.type==='equation').map(c=>JSON.parse(d.getEquationProperties(0,c.paraIdx,c.controlIdx,Number.isInteger(c.cellIdx)?c.cellIdx:-1,Number.isInteger(c.cellIdx)?c.cellParaIdx:-1)).fontSize);`;
+    const eqBefore = await inPage(page, eqSizes);
+    assert.ok(eqBefore.length === 2 && eqBefore.every(s => s !== 1000), JSON.stringify(eqBefore));
+    await page.locator('[data-exam-fx="check"]').click();
+    assert.match(await page.locator('.exam-checklist').textContent(), /수식 2개의 크기가/);
+    await page.locator('[data-exam-fixeq]').click(); await h.idle(page);
+    assert.match(await page.locator('#exam-status').textContent(), /수식 2개의 크기를/);
+    assert.deepEqual(await inPage(page, eqSizes), [1000, 1000]);
     // 15) 구역이 둘인 시험지(0구역=머리·1번, 1구역=2단 본문): 문항 목록이 두 구역을 다 보이고, 구역을 넘는 ↑↓는 막고, 1구역 안 이동·복제·나뉜 문항 점검은 된다.
     const twoSections = await inPage(page, `const {unzipSync,zipSync}=await import('/vendor/fflate/index.js');
       reset('시험 머리\\n1. 가');const first=unzipSync(d.exportHwpx());reset('2. 나\\n나나\\n3. 다');const second=unzipSync(d.exportHwpx());
