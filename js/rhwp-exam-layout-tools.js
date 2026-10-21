@@ -123,13 +123,60 @@ const paragraphText = (doc, sec, para) => {
   return len ? String(doc.getTextRange(sec, para, 0, len) ?? '') : '';
 };
 
+// 본문 표(한 겹) 자리: Map(「구역:문단」 → [표 번호…]). 문항이 표 하나로 된 학교 시험 틀(첫 칸 「1.」)을 찾을 때 쓴다.
+export function topTables(doc) {
+  const map = new Map();
+  for (let pg = 0; pg < doc.pageCount(); pg++) for (const c of parse(doc.getPageControlLayout(pg)).controls || []) {
+    if (c.type !== 'table' || c.cellPath?.length) continue;
+    const key = `${c.secIdx ?? 0}:${c.paraIdx}`, ci = c.controlIdx ?? c.ci, list = map.get(key) || [];
+    if (!list.includes(ci)) { list.push(ci); list.sort((a, b) => a - b); }
+    map.set(key, list);
+  }
+  return map;
+}
+const cellText = (doc, sec, para, ci, cell, cp) => { const len = doc.getCellParagraphLength(sec, para, ci, cell, cp); return len ? String(doc.getTextInCell(sec, para, ci, cell, cp, 0, len) ?? '') : ''; };
+// 표 문항 머리: 문단에 글이 없고 첫 표의 첫 칸이 「1.」이나 「[서술형 1]」뿐이면 그 표가 문항 하나다(팔레트 학교 시험 틀).
+function tableHead(doc, sec, para, tables) {
+  const ci = tables?.get(`${sec}:${para}`)?.[0]; if (ci === undefined || paragraphText(doc, sec, para).trim()) return null;
+  let t; try { t = cellText(doc, sec, para, ci, 0, 0); } catch { return null; }
+  const e = /^(\s*\[?\s*서술형\s*)(\d{1,2})\s*[\].)]?\s*$/.exec(t);
+  if (e) return { essay: true, number: Number(e[2]), offset: e[1].length, digits: e[2], cell: { ci, cell: 0, cp: 0 } };
+  const m = /^(\s*)(\d{1,3})\.\s*$/.exec(t);
+  return m ? { essay: false, number: Number(m[2]), offset: m[1].length, digits: m[2], cell: { ci, cell: 0, cp: 0 } } : null;
+}
+// 문항 안의 줄: 본문 문단과 그 문단에 든 표(한 겹) 칸의 문단. [{text, where:{kind:'body',sec,p}|{kind:'cell',sec,p,ci,cell,cp}}]
+export function blockLines(doc, sec, q, tables = topTables(doc)) {
+  const out = [];
+  for (let p = q.head; p < q.end; p++) {
+    out.push({ text: paragraphText(doc, sec, p), where: { kind: 'body', sec, p } });
+    for (const ci of tables.get(`${sec}:${p}`) || []) {
+      let cells = 0; try { cells = parse(doc.getTableDimensions(sec, p, ci)).cellCount; } catch {}
+      for (let cell = 0; cell < cells; cell++) for (let cp = 0; cp < doc.getCellParagraphCount(sec, p, ci, cell); cp++)
+        out.push({ text: cellText(doc, sec, p, ci, cell, cp), where: { kind: 'cell', sec, p, ci, cell, cp } });
+    }
+  }
+  return out;
+}
+// 줄 하나 고치기(본문·표 칸 공통)
+export function editLine(doc, where, start, removeLength, insert = '') {
+  if (where.kind === 'body') { if (removeLength) doc.deleteText(where.sec, where.p, start, removeLength); if (insert) doc.insertText(where.sec, where.p, start, insert); }
+  else { if (removeLength) doc.deleteTextInCell(where.sec, where.p, where.ci, where.cell, where.cp, start, removeLength); if (insert) doc.insertTextInCell(where.sec, where.p, where.ci, where.cell, where.cp, start, insert); }
+}
+export function formatLine(doc, where, start, end, props) {
+  if (where.kind === 'body') doc.applyCharFormat(where.sec, where.p, start, end, JSON.stringify(props));
+  else doc.applyCharFormatInCell(where.sec, where.p, where.ci, where.cell, where.cp, start, end, JSON.stringify(props));
+}
+export function lineCharProps(doc, where, offset) {
+  return parse(where.kind === 'body' ? doc.getCharPropertiesAt(where.sec, where.p, offset) : doc.getCellCharPropertiesAt(where.sec, where.p, where.ci, where.cell, where.cp, offset));
+}
+
 // 본문 문단 머리의 「3.」 같은 문항 번호를 1부터 차례로 다시 매긴다(표·머리말 안은 건드리지 않음).
 // 번호 다시 매기기 계획: 문단 머리 「n.」 번호와, 묶음 문항 머리 「[a~b]」의 범위(뒤따르는 첫 문항 번호부터 같은 개수).
 export const GROUP_HEAD = /^(\s*)\[(\d{1,3})\s*([~～∼\-–])\s*(\d{1,3})\]/;
 // 서술형 문항 머리: 「[서술형 1]」「서술형 2.」「서술형 3)」 — 선택형과 따로 번호를 매긴다.
 export const ESSAY_HEAD = /^(\s*\[?\s*서술형\s*)(\d{1,2})(?=\s*[\].)]|\s)/;
 function numberingPlan(doc) {
-  const found = [], groups = [];
+  const found = [], groups = [], tables = topTables(doc);
   let pending = null, n = 0, essay = 0;
   for (let sec = 0; sec < doc.getSectionCount(); sec++)
     for (let para = 0; para < doc.getParagraphCount(sec); para++) {
@@ -137,14 +184,21 @@ function numberingPlan(doc) {
       if (g) { pending = { sec, para, offset: g[1].length, length: g[0].length - g[1].length, sep: g[3], count: Math.max(1, Number(g[4]) - Number(g[2]) + 1), old: g[0].slice(g[1].length) }; continue; }
       const e = ESSAY_HEAD.exec(text);
       if (e) { const next = String(++essay); found.push({ sec, para, offset: e[1].length, digits: e[2], next, essay: true }); continue; }
-      const m = /^(\s*)(\d{1,3})\.(?=\s|\S)/.exec(text); if (!m) continue;
-      found.push({ sec, para, offset: m[1].length, digits: m[2], next: String(++n) });
+      const m = /^(\s*)(\d{1,3})\.(?=\s|\S)/.exec(text);
+      if (!m) {
+        const th = tableHead(doc, sec, para, tables); if (!th) continue;
+        found.push({ sec, para, offset: th.offset, digits: th.digits, next: String(th.essay ? ++essay : ++n), essay: th.essay, cell: th.cell });
+        if (th.essay) continue;
+      } else found.push({ sec, para, offset: m[1].length, digits: m[2], next: String(++n) });
       if (pending) { const want = `[${n}${pending.sep}${n + pending.count - 1}]`; if (want !== pending.old) groups.push({ ...pending, want }); pending = null; }
     }
   return { found, changes: found.filter(f => f.next !== f.digits), groups };
 }
 function applyNumbering(doc, plan) {
-  for (const f of plan.changes) { doc.deleteText(f.sec, f.para, f.offset, f.digits.length); doc.insertText(f.sec, f.para, f.offset, f.next); }
+  for (const f of plan.changes) {
+    if (f.cell) { doc.deleteTextInCell(f.sec, f.para, f.cell.ci, f.cell.cell, f.cell.cp, f.offset, f.digits.length); doc.insertTextInCell(f.sec, f.para, f.cell.ci, f.cell.cell, f.cell.cp, f.offset, f.next); }
+    else { doc.deleteText(f.sec, f.para, f.offset, f.digits.length); doc.insertText(f.sec, f.para, f.offset, f.next); }
+  }
   for (const g of plan.groups) { doc.deleteText(g.sec, g.para, g.offset, g.length); doc.insertText(g.sec, g.para, g.offset, g.want); }
 }
 export function renumberQuestions(bridge) {
@@ -294,27 +348,36 @@ export { mm, read };
 // ── 문항 묶음: 「1.」로 시작하는 본문 문단부터 다음 번호 문단 앞까지 ──
 // 묶음 문항: 「[1~2] 다음 글을 읽고 …」 머리와 지문은 앞 문항이 아니라 묶음 첫 문항 쪽에 붙인다(start=머리, head=번호 문단).
 // 묶음에 든 문항은 group={head, from, to}를 가진다 — 순서 바꾸기는 묶음을 깨므로 막는다.
-export function questionBlocks(doc, sec = 0) {
+export function questionBlocks(doc, sec = 0, tables = topTables(doc)) {
   const count = doc.getParagraphCount(sec), starts = [];
   let pending = null, group = null;
   for (let p = 0; p < count; p++) {
     const text = paragraphText(doc, sec, p), g = GROUP_HEAD.exec(text);
     if (g) { pending = { head: p, from: Number(g[2]), to: Number(g[4]) }; continue; }
-    const e = ESSAY_HEAD.exec(text);
-    if (e) { group = null; pending = null; starts.push({ start: p, head: p, number: Number(e[2]), essay: true }); continue; }
-    const m = /^\s*(\d{1,3})\./.exec(text); if (!m) continue;
-    const number = Number(m[1]);
-    if (pending) { group = { ...pending, to: number + (pending.to - pending.from) }; starts.push({ start: pending.head, head: p, number, group }); pending = null; continue; }
+    let head = null;
+    const e = ESSAY_HEAD.exec(text), m = e ? null : /^\s*(\d{1,3})\./.exec(text);
+    if (e) head = { essay: true, number: Number(e[2]) };
+    else if (m) head = { essay: false, number: Number(m[1]) };
+    else { const th = tableHead(doc, sec, p, tables); if (th) head = { essay: th.essay, number: th.number, cell: th.cell }; }
+    if (!head) continue;
+    const extra = head.cell ? { cell: head.cell } : {};
+    if (head.essay) { group = null; pending = null; starts.push({ start: p, head: p, number: head.number, essay: true, ...extra }); continue; }
+    const number = head.number;
+    if (pending) { group = { ...pending, to: number + (pending.to - pending.from) }; starts.push({ start: pending.head, head: p, number, group, ...extra }); pending = null; continue; }
     if (group && number > group.to) group = null;
-    starts.push({ start: p, head: p, number, ...(group ? { group } : {}) });
+    starts.push({ start: p, head: p, number, ...(group ? { group } : {}), ...extra });
   }
-  return starts.map((s, i) => ({ ...s, label: s.essay ? `서술형 ${s.number}` : `${s.number}번`, end: i + 1 < starts.length ? starts[i + 1].start : count, preview: paragraphText(doc, sec, s.head).replace(s.essay ? /^\s*\[?\s*서술형\s*\d{1,2}\s*[\].)]?\s*/ : /^\s*\d{1,3}\.\s*/, '').slice(0, 40) }));
+  const preview = s => {
+    if (s.cell) { try { for (let cell = 1; cell < 4; cell++) { const t = cellText(doc, sec, s.head, s.cell.ci, cell, 0).trim(); if (t) return t; } } catch {} return ''; }
+    return paragraphText(doc, sec, s.head).replace(s.essay ? /^\s*\[?\s*서술형\s*\d{1,2}\s*[\].)]?\s*/ : /^\s*\d{1,3}\.\s*/, '');
+  };
+  return starts.map((s, i) => ({ ...s, label: s.essay ? `서술형 ${s.number}` : `${s.number}번`, end: i + 1 < starts.length ? starts[i + 1].start : count, preview: preview(s).slice(0, 40) }));
 }
 
 // 모든 구역의 문항(학교 시험지는 보통 1쪽 머리 구역 + 2단 본문 구역). index는 문서 전체 순서.
 export function allQuestionBlocks(doc) {
-  const out = [];
-  for (let sec = 0; sec < doc.getSectionCount(); sec++) for (const b of questionBlocks(doc, sec)) out.push({ ...b, sec });
+  const out = [], tables = topTables(doc);
+  for (let sec = 0; sec < doc.getSectionCount(); sec++) for (const b of questionBlocks(doc, sec, tables)) out.push({ ...b, sec });
   return out;
 }
 // 문서 전체 index → 그 구역 안 순서

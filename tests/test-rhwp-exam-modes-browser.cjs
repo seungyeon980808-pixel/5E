@@ -524,6 +524,27 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
     await page.locator('[data-exam-fx="check"]').click();
     assert.deepEqual((await page.locator('.exam-checklist li').allTextContents()).filter(t => t.includes('〈보기〉')), ['1번 〈보기〉 항목이 차례대로가 아닙니다(ㄱㄷ).']);
     await page.keyboard.press('Escape');
+    // 45) 표 하나로 된 학교 시험 문항(첫 칸 「1.」, 둘째 칸 발문 「(3점)」, 아래 칸 선지): 목록·번호 다시·배점·부정 표현·정답·요약이 모두 칸 글을 읽는다.
+    await inPage(page, `reset('\\n');d.setColumnDef(0,1,0,true,0);const T=[];for(const [p,n,stem] of [[0,'1.','다음 중 옳지 않은 것은? (3점)'],[1,'5.','옳은 것은? (4점)']]){const t=JSON.parse(d.createTable(0,p,0,2,2));T.push(t);
+        d.insertTextInCell(0,t.paraIdx,t.controlIdx,0,0,0,n);d.insertTextInCell(0,t.paraIdx,t.controlIdx,1,0,0,stem);d.insertTextInCell(0,t.paraIdx,t.controlIdx,3,0,0,'① 가 ② 나 ③ 다 ④ 라 ⑤ 마');}
+      b.deps.eventBus.emit('document-changed');window.__qt=T;return T;`);
+    await page.waitForFunction(() => document.querySelectorAll('.exam-q').length === 2 && /옳지 않은/.test(document.querySelector('.exam-q')?.textContent || ''), null, { timeout: 5000 }).catch(() => {});
+    assert.deepEqual(await page.locator('.exam-q').allTextContents(), ['1. 다음 중 옳지 않은 것은? (3점)', '5. 옳은 것은? (4점)']);
+    const cellOf = (q, cell) => `(()=>{const t=window.__qt[${q}],c=JSON.parse(d.getPageControlLayout(0)).controls.filter(x=>x.type==='table'&&!x.cellPath?.length)[${q}];return d.getTextInCell(0,c.paraIdx,c.controlIdx,${cell},0,0,d.getCellParagraphLength(0,c.paraIdx,c.controlIdx,${cell},0));})()`;
+    await page.locator('[data-exam-ftab="item"]').click(); await button(page, '문항 번호 1부터').click(); await h.idle(page);
+    assert.equal(await inPage(page, `return ${cellOf(1, 0)};`), '2.');
+    await inPage(page, `const c=JSON.parse(d.getPageControlLayout(0)).controls.filter(x=>x.type==='table'&&!x.cellPath?.length)[0];b.input.cursor.moveTo({sectionIndex:0,paragraphIndex:c.paraIdx,charOffset:0,parentParaIndex:c.paraIdx,controlIndex:c.controlIdx,cellIndex:1,cellParaIndex:0,cellPath:[{controlIndex:c.controlIdx,cellIndex:1,cellParaIndex:0}]});`);
+    await button(page, '커서가 있는 문항의 배점').click(); await page.locator('[data-exam-score="5"]').click(); await h.idle(page);
+    assert.equal(await inPage(page, `return ${cellOf(0, 1)};`), '다음 중 옳지 않은 것은? (5점)');
+    assert.match(await page.locator('#exam-status').textContent(), /1번 5점 — 배점 2곳 합계 9점/);
+    await page.locator('[data-exam-fx="check"]').click();
+    assert.equal(await page.locator('.exam-check-summary').textContent(), '문항 2 · 1쪽 · 배점 9점');
+    assert.ok((await page.locator('.exam-checklist li').allTextContents()).includes('1번 발문의 부정 표현 「않은」에 밑줄이 없습니다(평가원 발문 규칙).'));
+    await page.locator('[data-exam-fixneg]').click(); await h.idle(page);
+    assert.equal(await inPage(page, `const c=JSON.parse(d.getPageControlLayout(0)).controls.filter(x=>x.type==='table'&&!x.cellPath?.length)[0];return JSON.parse(d.getCellCharPropertiesAt(0,c.paraIdx,c.controlIdx,1,0,8)).underline;`), true);
+    await page.waitForFunction(() => document.querySelectorAll('.exam-q').length === 2);
+    await page.locator('[data-exam-qmove="1:-1"]').click(); await h.idle(page);
+    assert.deepEqual([await inPage(page, `return ${cellOf(0, 0)}+' '+${cellOf(0, 1)};`), await inPage(page, `return ${cellOf(1, 0)}+' '+${cellOf(1, 1)};`)], ['1. 옳은 것은? (4점)', '2. 다음 중 옳지 않은 것은? (5점)']);
     // 15) 구역이 둘인 시험지(0구역=머리·1번, 1구역=2단 본문): 문항 목록이 두 구역을 다 보이고, 구역을 넘는 ↑↓는 막고, 1구역 안 이동·복제·나뉜 문항 점검은 된다.
     const twoSections = await inPage(page, `const {unzipSync,zipSync}=await import('/vendor/fflate/index.js');
       reset('시험 머리\\n1. 가');const first=unzipSync(d.exportHwpx());reset('2. 나\\n나나\\n3. 다');const second=unzipSync(d.exportHwpx());

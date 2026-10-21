@@ -3,7 +3,7 @@
 import { insertTable } from './hwp-palette/native.js';
 import { qrPng } from './qr-encode.js';
 import { unitGapIssues } from './rhwp-exam-science-text.js';
-import { columnWidth, questionBlocks, swapAdjacentQuestions, renumberDocument, allQuestionBlocks, splitQuestions, keepQuestionsWholeDoc, fillColumnsDoc, looksColumnFilled } from './rhwp-exam-layout-tools.js';
+import { columnWidth, questionBlocks, swapAdjacentQuestions, renumberDocument, allQuestionBlocks, splitQuestions, keepQuestionsWholeDoc, fillColumnsDoc, looksColumnFilled, topTables, blockLines, editLine, formatLine, lineCharProps } from './rhwp-exam-layout-tools.js';
 
 const parse = value => typeof value === 'string' ? JSON.parse(value) : value;
 // 빈칸 표시: 연한 파랑 바탕 + 밑줄. 교사용 문서에서 눈에 띄고, 학생용에서는 빈칸으로 바뀐다.
@@ -223,15 +223,20 @@ export function insertExamHeader(bridge, { title = '', subject = '', grade = '' 
 }
 
 // 정답표 칸: 문서에서 찾은 문항 번호(1., 2., …)로 「번호/정답」 두 줄 표를 문서 끝에 넣는다. 정답은 비워 둔다.
+// 문항과 그 안의 줄(본문·표 칸) — 표 하나로 된 학교 시험 문항도 칸 글을 읽는다.
+function blocksWithLines(doc) {
+  const tables = topTables(doc), out = [];
+  for (let sec = 0; sec < doc.getSectionCount(); sec++) for (const q of questionBlocks(doc, sec, tables)) out.push({ ...q, sec, lines: blockLines(doc, sec, q, tables) });
+  return out;
+}
 // 문항마다 적어 둔 정답: 문항 안의 「[정답] ③」「정답: ③」 줄. Map(번호 → 정답 글).
 const ANSWER_LINE = /^\s*(?:[\[【]\s*정답\s*[\]】]|정답\s*[:：])\s*(\S.*)$/;
 export function questionAnswers(doc) {
   const out = new Map();
-  for (let sec = 0; sec < doc.getSectionCount(); sec++) for (const q of questionBlocks(doc, sec).filter(b => !b.essay))
-    for (let p = q.head; p < q.end; p++) {
-      const m = ANSWER_LINE.exec(String(doc.getTextRange(sec, p, 0, doc.getParagraphLength(sec, p))));
-      if (m) { out.set(q.number, m[1].trim()); break; }
-    }
+  for (const q of blocksWithLines(doc)) {
+    if (q.essay) continue;
+    for (const { text } of q.lines) { const m = ANSWER_LINE.exec(text); if (m) { out.set(q.number, m[1].trim()); break; } }
+  }
   return out;
 }
 export function insertAnswerGrid(bridge) {
@@ -289,30 +294,32 @@ const SCORE_VALUES = new RegExp(SCORE_VALUE.source, 'g');
 export function setQuestionScore(bridge, score) {
   const input = requireInput(bridge), doc = bridge.wasm.borrowDocumentHandle();
   const at = input.cursor.getPosition(), sec = at.sectionIndex ?? 0, para = at.cellPath?.length ? (at.parentParaIndex ?? at.paragraphIndex) : at.paragraphIndex;
-  const q = questionBlocks(doc, sec).find(b => b.start <= para && para < b.end);
+  const tables = topTables(doc), q = questionBlocks(doc, sec, tables).find(b => b.start <= para && para < b.end);
   if (!q) throw new Error('배점을 넣을 문항 안(「1.」로 시작하는 문항)에 커서를 두세요.');
-  const textOf = p => String(doc.getTextRange(sec, p, 0, doc.getParagraphLength(sec, p)));
+  const lines = blockLines(doc, sec, q, tables).filter(l => !TEACHER_ONLY.test(l.text));
   // 괄호 모양: 이 문항에 있던 모양, 없으면 문서에서 더 많이 쓴 모양(평가원 [3점] / 학교 (3점)).
   let paren = null, round = 0, square = 0;
-  for (let p = q.head; p < q.end && paren === null; p++) { const m = SCORE_VALUE.exec(textOf(p)); if (m) paren = m[0][0] === '('; }
+  for (const l of lines) { const m = SCORE_VALUE.exec(l.text); if (m) { paren = m[0][0] === '('; break; } }
   if (paren === null) {
-    for (let s2 = 0; s2 < doc.getSectionCount(); s2++) for (let p = 0; p < doc.getParagraphCount(s2); p++) for (const m of String(doc.getTextRange(s2, p, 0, doc.getParagraphLength(s2, p))).matchAll(SCORE_VALUES)) m[0][0] === '(' ? round++ : square++;
+    for (const b of blocksWithLines(doc)) for (const l of b.lines) for (const m of l.text.matchAll(SCORE_VALUES)) m[0][0] === '(' ? round++ : square++;
     paren = round > square;
   }
+  // 넣을 자리: 「?」로 끝나는 마지막 줄(배점 표시를 뺀 글 기준), 없으면 표 문항은 발문 칸(둘째 칸), 글 문항은 번호 줄.
+  const bare = t => t.replace(SCORE_MARK, '');
+  let target = lines.filter(l => /\?\s*$/.test(bare(l.text))).at(-1)?.where;
+  if (!target) target = q.cell ? { kind: 'cell', sec, p: q.head, ci: q.cell.ci, cell: 1, cp: 0 } : { kind: 'body', sec, p: q.head };
+  const lineText = w => (w.kind === 'body' ? String(doc.getTextRange(sec, w.p, 0, doc.getParagraphLength(sec, w.p))) : String(doc.getTextInCell(sec, w.p, w.ci, w.cell, w.cp, 0, doc.getCellParagraphLength(sec, w.p, w.ci, w.cell, w.cp))));
   bridge.transaction('question-score', () => {
-    for (let p = q.head; p < q.end; p++) for (const m of [...textOf(p).matchAll(SCORE_MARK)].reverse()) doc.deleteText(sec, p, m.index, m[0].length);
+    for (const l of lines) for (const m of [...lineText(l.where).matchAll(SCORE_MARK)].reverse()) editLine(doc, l.where, m.index, m[0].length);
     if (score != null) {
-      let target = q.head;
-      for (let p = q.head; p < q.end; p++) if (/\?\s*$/.test(textOf(p))) target = p;
-      const text = textOf(target), trimmed = text.replace(/\s+$/, '');
-      if (trimmed.length < text.length) doc.deleteText(sec, target, trimmed.length, text.length - trimmed.length);
-      doc.insertText(sec, target, trimmed.length, paren ? ` (${score}점)` : ` [${score}점]`);
+      const text = lineText(target), trimmed = text.replace(/\s+$/, '');
+      if (trimmed.length < text.length) editLine(doc, target, trimmed.length, text.length - trimmed.length);
+      editLine(doc, target, trimmed.length, 0, paren ? ` (${score}점)` : ` [${score}점]`);
     }
     return true;
   });
   let total = 0, count = 0;
-  for (let s = 0; s < doc.getSectionCount(); s++) for (let p = 0; p < doc.getParagraphCount(s); p++)
-    for (const m of String(doc.getTextRange(s, p, 0, doc.getParagraphLength(s, p))).matchAll(SCORE_VALUES)) { total += Number(m[1]); count++; }
+  for (const b of blocksWithLines(doc)) for (const l of b.lines) for (const m of l.text.matchAll(SCORE_VALUES)) { total += Number(m[1]); count++; }
   return { number: q.number, label: q.label, total: Math.round(total * 10) / 10, count };
 }
 
@@ -429,30 +436,28 @@ export function fitEquationSizes(bridge) {
 const NEGATIVE = /(않은|아닌|없는|틀린)(?=\s*것)/g;
 export function negativeWordIssues(doc) {
   const out = [];
-  for (let sec = 0; sec < doc.getSectionCount(); sec++) for (const q of questionBlocks(doc, sec))
-    for (let p = q.head; p < q.end; p++) {
-      const t = String(doc.getTextRange(sec, p, 0, doc.getParagraphLength(sec, p)));
-      if (!/\?\s*(?:[\[(]\d+(?:\.\d+)?\s*점[\])])?\s*$/.test(t) || TEACHER_ONLY.test(t)) continue;
-      for (const m of t.matchAll(NEGATIVE)) {
-        let all = true; for (let o = m.index; o < m.index + m[0].length && all; o++) all = parse(doc.getCharPropertiesAt(sec, p, o)).underline === true;
-        if (!all) out.push({ sec, para: p, start: m.index, end: m.index + m[0].length, word: m[0], label: q.label });
-      }
+  for (const q of blocksWithLines(doc)) for (const { text: t, where } of q.lines) {
+    if (!/\?\s*(?:[\[(]\d+(?:\.\d+)?\s*점[\])])?\s*$/.test(t) || TEACHER_ONLY.test(t)) continue;
+    for (const m of t.matchAll(NEGATIVE)) {
+      let all = true; for (let o = m.index; o < m.index + m[0].length && all; o++) all = lineCharProps(doc, where, o).underline === true;
+      if (!all) out.push({ sec: q.sec, para: where.p, where, start: m.index, end: m.index + m[0].length, word: m[0], label: q.label });
     }
+  }
   return out;
 }
 export function underlineNegativeWords(bridge) {
   requireInput(bridge);
   const doc = bridge.wasm.borrowDocumentHandle(), list = negativeWordIssues(doc);
   if (!list.length) return 0;
-  bridge.transaction('negative-underline', () => { for (const w of list) doc.applyCharFormat(w.sec, w.para, w.start, w.end, JSON.stringify({ underline: true })); return true; });
+  bridge.transaction('negative-underline', () => { for (const w of list) formatLine(doc, w.where, w.start, w.end, { underline: true }); return true; });
   return list.length;
 }
 
 // 문서 요약(점검 창 맨 위 한 줄): 문항 수(선택형·서술형), 쪽 수, 배점 합계, 정답 분포.
 export function examSummary(doc) {
-  const blocks = allQuestionBlocks(doc), essay = blocks.filter(b => b.essay).length;
+  const blocks = blocksWithLines(doc), essay = blocks.filter(b => b.essay).length;
   let total = 0, scored = 0;
-  for (const q of blocks) for (let p = q.head; p < q.end; p++) { const m = SCORE_VALUE.exec(String(doc.getTextRange(q.sec, p, 0, doc.getParagraphLength(q.sec, p)))); if (m) { total += Number(m[1]); scored++; break; } }
+  for (const q of blocks) { const m = q.lines.map(l => SCORE_VALUE.exec(l.text)).find(Boolean); if (m) { total += Number(m[1]); scored++; } }
   const counts = [0, 0, 0, 0, 0]; let answered = 0;
   for (const [, a] of questionAnswers(doc)) { const i = MARKS.indexOf(a.trim()[0]); if (i >= 0) { counts[i]++; answered++; } }
   const parts = [`문항 ${blocks.length}${essay ? `(선택형 ${blocks.length - essay}·서술형 ${essay})` : ''}`, `${doc.pageCount()}쪽`];
@@ -463,12 +468,11 @@ export function examSummary(doc) {
 
 // 점검 더하기: 배점 합계·글꼴 섞임. [{text, at}]
 export function extraChecks(doc) {
-  const issues = [], scores = [], fonts = new Map();
+  const issues = [], fonts = new Map(), blocks = blocksWithLines(doc);
   for (let sec = 0; sec < doc.getSectionCount(); sec++)
     for (let p = 0; p < doc.getParagraphCount(sec); p++) {
       const len = doc.getParagraphLength(sec, p); if (!len) continue;
       const text = String(doc.getTextRange(sec, p, 0, len)), at = { sectionIndex: sec, paragraphIndex: p, charOffset: 0 };
-      for (const m of text.matchAll(SCORE_VALUES)) scores.push(Number(m[1]));
       if (/^\s*\d{1,3}\./.test(text)) {
         const c = parse(doc.getCharPropertiesAt(sec, p, Math.min(len - 1, 3)));
         const key = `${c.fontFamily} ${c.fontSize / 100}pt`;
@@ -476,16 +480,14 @@ export function extraChecks(doc) {
         fonts.get(key).push(at);
       }
     }
+  // 배점: 문항 안(본문·표 칸) 「[3점]」「(3점)」.
+  const scores = blocks.flatMap(q => q.lines.flatMap(l => [...l.text.matchAll(SCORE_VALUES)].map(m => Number(m[1]))));
   if (scores.length) {
     const total = Math.round(scores.reduce((a, b) => a + b, 0) * 10) / 10;
     if (total !== 100) issues.push({ text: `배점 합계가 ${total}점입니다(배점 표시 ${scores.length}곳 · 100점이 아님).`, at: null });
   }
   // 배점 빠진 문항: 배점을 단 문항이 있는데 안 단 선택형·서술형 문항이 있으면 알린다.
-  if (scores.length) for (let sec = 0; sec < doc.getSectionCount(); sec++) for (const q of questionBlocks(doc, sec)) {
-    let has = false;
-    for (let p = q.head; p < q.end && !has; p++) has = SCORE_VALUE.test(String(doc.getTextRange(sec, p, 0, doc.getParagraphLength(sec, p))));
-    if (!has) issues.push({ text: `${q.label} 문항에 배점(n점)이 없습니다.`, at: { sectionIndex: sec, paragraphIndex: q.head, charOffset: 0 } });
-  }
+  if (scores.length) for (const q of blocks) if (!q.lines.some(l => SCORE_VALUE.test(l.text))) issues.push({ text: `${q.label} 문항에 배점(n점)이 없습니다.`, at: { sectionIndex: q.sec, paragraphIndex: q.head, charOffset: 0 } });
   // 정답 분포: 문항 안 「[정답] ③」이 다섯 개 이상이면 번호별 개수와 같은 정답 연속을 본다.
   const answers = [...questionAnswers(doc)].sort((a, b) => a[0] - b[0]).map(([n, a]) => [n, MARKS.indexOf(a.trim()[0])]).filter(([, i]) => i >= 0);
   if (answers.length >= 5) {
@@ -500,24 +502,9 @@ export function extraChecks(doc) {
       from = i;
     }
   }
-  // 문항마다 본문 줄과 그 줄에 든 표(한 겹) 칸의 줄. 선지 번호·〈보기〉 점검에 쓴다.
-  const cellLines = new Map();
-  for (let pg = 0; pg < doc.pageCount(); pg++) for (const c of parse(doc.getPageControlLayout(pg)).controls || []) {
-    if (c.type !== 'table' || c.cellPath?.length) continue;
-    const sec = c.secIdx ?? 0, ci = c.controlIdx ?? c.ci, key = `${sec}:${c.paraIdx}`, done = `${key}:${ci}`;
-    if (cellLines.has(done)) continue; cellLines.set(done, true);
-    const lines = cellLines.get(key) || [], cells = parse(doc.getTableDimensions(sec, c.paraIdx, ci)).cellCount;
-    for (let cell = 0; cell < cells; cell++) for (let cp = 0; cp < doc.getCellParagraphCount(sec, c.paraIdx, ci, cell); cp++) lines.push(String(doc.getTextInCell(sec, c.paraIdx, ci, cell, cp, 0, doc.getCellParagraphLength(sec, c.paraIdx, ci, cell, cp))));
-    cellLines.set(key, lines);
-  }
-  for (let sec = 0; sec < doc.getSectionCount(); sec++) for (const q of questionBlocks(doc, sec)) {
+  for (const q of blocks) {
     if (q.essay) continue;
-    const lines = [];
-    for (let p = q.head; p < q.end; p++) {
-      const t = String(doc.getTextRange(sec, p, 0, doc.getParagraphLength(sec, p)));
-      if (!TEACHER_ONLY.test(t)) lines.push(t);
-      const inTable = cellLines.get(`${sec}:${p}`); if (Array.isArray(inTable)) lines.push(...inTable);
-    }
+    const sec = q.sec, lines = q.lines.map(l => l.text).filter(t => !TEACHER_ONLY.test(t));
     // 선지 번호: ①~⑤가 차례대로 한 번씩인지(교사용 줄은 빼고).
     const marks = lines.map(t => (t.match(/[①-⑤]/g) || []).join('')).join('');
     if (marks && marks !== MARKS) issues.push({ text: `${q.label} 선지 번호가 차례대로가 아닙니다(${marks}).`, at: { sectionIndex: sec, paragraphIndex: q.head, charOffset: 0 } });
@@ -840,17 +827,16 @@ export const BLUEPRINT_HEAD = ['문항', '내용 영역', '성취기준', '난�
 const BLUEPRINT_RATIO = [8, 18, 40, 9, 8, 8, 9];
 export function blueprintCopy(bridge, title = '시험') {
   requireInput(bridge);
-  const doc = bridge.wasm.borrowDocumentHandle(), blocks = allQuestionBlocks(doc);
+  const doc = bridge.wasm.borrowDocumentHandle(), blocks = blocksWithLines(doc);
   if (!blocks.length) throw new Error('문단 머리에 「1.」처럼 번호가 붙은 문항을 찾지 못했습니다.');
   const answers = questionAnswers(doc), rows = [BLUEPRINT_HEAD];
   let total = 0;
   for (const q of blocks) {
-    let score = '';
-    for (let p = q.head; p < q.end && !score; p++) { const m = SCORE_VALUE.exec(String(doc.getTextRange(q.sec, p, 0, doc.getParagraphLength(q.sec, p)))); if (m) score = m[1]; }
+    const sm = q.lines.map(l => SCORE_VALUE.exec(l.text)).find(Boolean), score = sm ? sm[1] : '';
     total += Number(score) || 0;
     // 문항 안 「[내용 영역] …」「[성취기준] …」「[난이도] 상·중·하」 줄이 있으면 채운다(학생용에서는 빠지는 교사용 줄).
     const meta = {};
-    for (let p = q.head; p < q.end; p++) { const m = /^\s*[\[【]\s*(내용\s*영역|성취기준|난이도)\s*[\]】]\s*(.*)$/.exec(String(doc.getTextRange(q.sec, p, 0, doc.getParagraphLength(q.sec, p)))); if (m) meta[m[1].replace(/\s+/g, '')] = m[2].trim(); }
+    for (const { text } of q.lines) { const m = /^\s*[\[【]\s*(내용\s*영역|성취기준|난이도)\s*[\]】]\s*(.*)$/.exec(text); if (m) meta[m[1].replace(/\s+/g, '')] = m[2].trim(); }
     rows.push([q.essay ? q.label : String(q.number), meta['내용영역'] || '', meta['성취기준'] || '', meta['난이도'] || '', score, q.essay ? '' : (answers.get(q.number) || ''), '']);
   }
   rows.push(['합계', '', '', '', String(Math.round(total * 10) / 10), '', '']);
@@ -887,10 +873,10 @@ export function blueprintCopy(bridge, title = '시험') {
 const EXPLAIN_LINE = /^\s*(?:[\[【]\s*(?:해설|풀이)\s*[\]】]|(?:해설|풀이)\s*[:：])\s*/;
 export function explanationCopy(bridge, title = '시험') {
   requireInput(bridge);
-  const doc = bridge.wasm.borrowDocumentHandle(), blocks = allQuestionBlocks(doc), answers = questionAnswers(doc), items = [];
+  const doc = bridge.wasm.borrowDocumentHandle(), blocks = blocksWithLines(doc), answers = questionAnswers(doc), items = [];
   for (const q of blocks) {
     const notes = [];
-    for (let p = q.head; p < q.end; p++) { const t = String(doc.getTextRange(q.sec, p, 0, doc.getParagraphLength(q.sec, p))), m = EXPLAIN_LINE.exec(t); if (m) notes.push(t.slice(m[0].length).trim()); }
+    for (const { text: t } of q.lines) { const m = EXPLAIN_LINE.exec(t); if (m) notes.push(t.slice(m[0].length).trim()); }
     items.push({ head: q.essay ? q.label : `${q.number}. ${answers.get(q.number) || '(정답 없음)'}`, notes });
   }
   if (!items.length) throw new Error('문단 머리에 「1.」처럼 번호가 붙은 문항을 찾지 못했습니다.');
