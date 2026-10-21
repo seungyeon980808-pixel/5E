@@ -64,16 +64,61 @@ export function collectBlanks(doc) {
 // 빈칸 너비: 낱말 길이에 맞춰 전각 빈칸(최소 4칸). 학생이 손으로 쓸 자리.
 export const blankText = word => `(${'　'.repeat(Math.max(4, Math.min(16, Math.round([...word.trim()].length * 1.6))))})`;
 
-function replaceRange(doc, w, start, end, text) {
+function replaceRange(doc, w, start, end, text, format = BLANK_CLEAR) {
   if (w.kind === 'body') {
     doc.deleteText(w.sec, w.para, start, end - start);
     doc.insertText(w.sec, w.para, start, text);
-    doc.applyCharFormat(w.sec, w.para, start, start + [...text].length, JSON.stringify(BLANK_CLEAR));
+    doc.applyCharFormat(w.sec, w.para, start, start + [...text].length, JSON.stringify(format));
   } else {
     doc.deleteTextInCell(w.sec, w.para, w.ci, w.cell, w.cp, start, end - start);
     doc.insertTextInCell(w.sec, w.para, w.ci, w.cell, w.cp, start, text);
-    doc.applyCharFormatInCell(w.sec, w.para, w.ci, w.cell, w.cp, start, start + [...text].length, JSON.stringify(BLANK_CLEAR));
+    doc.applyCharFormatInCell(w.sec, w.para, w.ci, w.cell, w.cp, start, start + [...text].length, JSON.stringify(format));
   }
+}
+// 정답지 사본: 빈칸 자리에 「( 정답 )」을 빨간 굵은 글씨로. 지금 문서는 그대로.
+export function answerKeyCopy(bridge) {
+  requireInput(bridge);
+  const doc = bridge.wasm.borrowDocumentHandle(), blanks = collectBlanks(doc);
+  if (!blanks.length) throw new Error('빈칸으로 표시한 낱말이 없습니다. 낱말을 고르고 「빈칸 표시」를 누르세요.');
+  const Document = doc.constructor, copy = new Document(doc.exportHwpx());
+  try {
+    for (const blank of [...blanks].reverse()) replaceRange(copy, blank.where, blank.start, blank.end, `( ${blank.text.trim()} )`, { ...BLANK_CLEAR, textColor: '#d0021b', bold: true });
+    return { bytes: copy.exportHwpx(), count: blanks.length };
+  } finally { copy.free(); }
+}
+
+// 자주 쓰는 발문(평가원 과학탐구에서 많이 쓰는 꼴).
+export const STEMS = [
+  '이에 대한 설명으로 옳은 것만을 〈보기〉에서 있는 대로 고른 것은?',
+  '이에 대한 설명으로 옳은 것은?', '이에 대한 설명으로 옳지 않은 것은?',
+  '이에 대한 옳은 설명만을 〈보기〉에서 있는 대로 고른 것은?',
+  '제시한 내용이 옳은 학생만을 있는 대로 고른 것은?',
+  '다음은 이에 대한 학생 A, B, C의 대화이다.',
+  '(가)와 (나)에 들어갈 내용으로 가장 적절한 것은?',
+  '다음은 ○○에 대한 실험이다.', '이 실험에 대한 설명으로 옳은 것만을 〈보기〉에서 있는 대로 고른 것은?',
+  '[3점]', '(단, 다른 조건은 동일하다.)',
+];
+
+// 표 머리 줄 음영: 커서가 있는 표의 첫 줄 칸에 음영과 굵게.
+export function shadeHeaderRow(bridge, color = '#eef2f7') {
+  const input = requireInput(bridge);
+  if (!input.cursor.isInCell?.()) throw new Error('음영을 넣을 표의 칸을 먼저 누르세요.');
+  const pos = input.getCursorPosition();
+  if ((pos.cellPath?.length || 1) > 1) throw new Error('표 안의 표는 아직 머리 줄을 칠할 수 없습니다.');
+  const doc = bridge.wasm.borrowDocumentHandle(), sec = pos.sectionIndex, para = pos.parentParaIndex, ci = pos.controlIndex;
+  const count = parse(doc.getTableDimensions(sec, para, ci)).cellCount, heads = [];
+  for (let cell = 0; cell < count; cell++) { const info = parse(doc.getCellInfo(sec, para, ci, cell)); if (info.row === 0) heads.push(cell); }
+  bridge.transaction('shade-header', () => {
+    for (const cell of heads) {
+      doc.setCellProperties(sec, para, ci, cell, JSON.stringify({ fillType: 'solid', fillColor: color }));
+      for (let cp = 0; cp < doc.getCellParagraphCount(sec, para, ci, cell); cp++) {
+        const len = doc.getCellParagraphLength(sec, para, ci, cell, cp);
+        if (len) doc.applyCharFormatInCell(sec, para, ci, cell, cp, 0, len, JSON.stringify({ bold: true }));
+      }
+    }
+    return true;
+  });
+  return heads.length;
 }
 
 // 학생용 사본: 지금 문서를 복사해 빈칸 표시 낱말을 「(　　　)」로 바꾼 HWPX 바이트. 지금 문서는 그대로다.

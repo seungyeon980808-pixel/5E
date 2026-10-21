@@ -3,7 +3,7 @@
 import { runDocumentAction } from './rhwp-exam-shortcuts.js?v=1014-compact-panel';
 import { applyTableAlignment, applyHangingIndent } from './rhwp-exam-table-controls.js?v=1014-compact-panel';
 import { fitCellPicture, centerPicturesInCells, picturesToGrid, fitTableToColumn, renumberQuestions, relayoutChoices, checkLayout, questionBlocks, moveQuestion, splitQuestions } from './rhwp-exam-layout-tools.js';
-import { markBlank, studentCopy, appendBlankAnswers, insertExamHeader, insertAnswerGrid, setQuestionSpacing, extraChecks, BOX_PRESETS, insertBox, insertAnswerLines, insertRubric, setColumns, setPaper, makeVariant, appendVariantMapping } from './rhwp-exam-worksheet.js';
+import { markBlank, studentCopy, appendBlankAnswers, insertExamHeader, insertAnswerGrid, setQuestionSpacing, extraChecks, BOX_PRESETS, insertBox, insertAnswerLines, insertRubric, setColumns, setPaper, makeVariant, appendVariantMapping, answerKeyCopy, STEMS, shadeHeaderRow } from './rhwp-exam-worksheet.js';
 import { SYMBOL_ROW, SYMBOL_TABS, SYMBOL_CHUNKS, symbolCells, recentSymbols, rememberSymbol } from './rhwp-exam-symbols.js';
 
 const MODE_KEY = '5e.hwp.toolMode';
@@ -40,6 +40,7 @@ function focusTabs(ctx) {
       ['+칸', '오른쪽에 칸 넣기', cmd('table:insert-col-right')], ['−칸', '칸 지우기', cmd('table:delete-col')], '|',
       ['합치기', '셀 합치기 (셀 고르고 M)', cmd('table:cell-merge')], ['나누기', '셀 나누기 (셀 고르고 S)', cmd('table:cell-split')],
       ['높이 같게', '고른 셀 높이 같게 (H)', cmd('equal-height')], ['너비 같게', '고른 셀 너비 같게 (W)', cmd('equal-width')], '|',
+      ['머리 줄 음영', '커서가 있는 표의 첫 줄에 음영·굵게', doc(b => ctx.message(`머리 줄 ${shadeHeaderRow(b)}칸에 음영을 넣었습니다.`))],
       ['표 가운데', '표를 가운데로', doc(b => applyTableAlignment(b, 'center'))],
       ['단 폭 맞춤', '표를 단 폭에 맞추기(칸 비율 그대로)', doc(b => { if (!fitTableToColumn(b)) ctx.message('이미 단 폭에 맞습니다.'); })],
       ['셀 테두리·칠', '셀 테두리·배경', cmd('table:cell-props')],
@@ -57,6 +58,7 @@ function focusTabs(ctx) {
     ],
     item: [
       ['문항 틀', '문항 틀 넣기 — 수능·학교 양식 (팔레트)', tool('manager', '템플릿')],
+      ['발문', '자주 쓰는 발문 넣기(평가원 과학탐구 꼴)', (_, button) => ctx.openPicker(button, 'stem')],
       ['〈보기〉', '〈보기〉 상자 넣기(마크다운 창에 틀을 채워 둠)', tool('markdown', '보기:\nㄱ: \nㄴ: \nㄷ: ')],
       ['보기 내어쓰기', '「ㄱ. 」 뒤에 커서를 두고 누르면 둘째 줄을 글자에 맞춰 내어 씀', doc(b => { if (!applyHangingIndent(b)) throw new Error('「ㄱ. 」 바로 뒤에 커서를 두고 누르세요.'); })], '|',
       ['선지 1열', '선지를 한 줄에 하나씩', doc(b => relayoutChoices(b, 1))], ['3열', '선지 3열(①②③ / ④⑤)', doc(b => relayoutChoices(b, 3))], ['5열', '선지 5열(한 줄)', doc(b => relayoutChoices(b, 5))], '|',
@@ -70,6 +72,7 @@ function focusTabs(ctx) {
       ['빈칸 표시', '고른 낱말을 빈칸으로 표시(연한 파랑·밑줄) — 학생용에서 「(　　　)」로 바뀜', doc(b => markBlank(b, true))],
       ['표시 지우기', '고른 부분의 빈칸 표시 지우기', doc(b => markBlank(b, false))],
       ['학생용 내려받기', '빈칸을 「(　　　)」로 바꾼 학생용 HWPX 사본 내려받기(지금 문서는 그대로)', doc(b => ctx.studentCopy(b))],
+      ['정답지 내려받기', '빈칸 자리에 정답을 빨간 굵은 글씨로 채운 정답지 HWPX 사본 내려받기', doc(b => ctx.answerKey(b))],
       ['정답 모아 넣기', '빈칸 정답을 문서 끝에 「[빈칸 정답] 1. … 2. …」로 넣기', doc(b => ctx.message(`빈칸 정답 ${appendBlankAnswers(b)}개를 문서 끝에 넣었습니다.`))], '|',
       ['시험지 머리', '문서 맨 앞에 제목 줄과 학년·반·번호·이름 칸 넣기', (_, button) => ctx.openHeaderForm(button)],
       ['정답표 칸', '찾은 문항 번호로 「번호/정답」 표를 문서 끝에 넣기(정답은 비워 둠)', doc(b => ctx.message(`문항 ${insertAnswerGrid(b)}개의 정답표 칸을 넣었습니다.`))],
@@ -172,6 +175,11 @@ export function installExamModes(panel, services) {
       const { bytes, count } = studentCopy(b), name = `${(services.documentName?.() || '학습지').replace(/[\\/:*?"<>|]/g, '_')}-학생용.hwpx`;
       services.download(new Blob([bytes], { type: 'application/vnd.hancom.hwpx' }), name);
       message(`빈칸 ${count}개를 비운 학생용 사본을 내려받습니다(${name}). 지금 문서는 그대로입니다.`);
+    },
+    answerKey(b) {
+      const { bytes, count } = answerKeyCopy(b), name = `${(services.documentName?.() || '학습지').replace(/[\\/:*?"<>|]/g, '_')}-정답지.hwpx`;
+      services.download(new Blob([bytes], { type: 'application/vnd.hancom.hwpx' }), name);
+      message(`빈칸 ${count}개에 정답을 채운 정답지를 내려받습니다(${name}).`);
     },
     variant(b) {
       const { bytes, mapping } = makeVariant(b), name = `${(services.documentName?.() || '시험지').replace(/[\\/:*?"<>|]/g, '_')}-나형.hwpx`;
@@ -332,6 +340,9 @@ export function installExamModes(panel, services) {
     } else if (kind === 'box') {
       pop.innerHTML = `<div class="exam-pop-head">상자 <small>커서 문단 뒤에 넣음</small></div>
         <div class="exam-morelist">${BOX_PRESETS.map(([title]) => `<button type="button" data-exam-box="${esc(title)}">${esc(title)}</button>`).join('')}</div>`;
+    } else if (kind === 'stem') {
+      pop.innerHTML = `<div class="exam-pop-head">자주 쓰는 발문 <small>누르면 커서 자리에 넣음</small></div>
+        <div class="exam-stemlist">${STEMS.map((t, i) => `<button type="button" data-exam-stem="${i}">${esc(t)}</button>`).join('')}</div>`;
     } else if (kind === 'paper') {
       pop.innerHTML = `<div class="exam-pop-head">용지 <small>여백·방향은 그대로</small></div>
         <div class="exam-morelist">${['A4', 'B4', 'A3'].map(n => `<button type="button" data-exam-paper="${n}">${n}</button>`).join('')}</div>`;
@@ -346,6 +357,8 @@ export function installExamModes(panel, services) {
     pop.querySelector('input')?.focus();
   }
   pop.addEventListener('click', event => {
+    const stem = event.target.closest('[data-exam-stem]');
+    if (stem) { const text = STEMS[Number(stem.dataset.examStem)]; closePop(); void run(async () => { await ctx.insertText(text); refocus(); }); return; }
     const paper = event.target.closest('[data-exam-paper]');
     if (paper) { const name = paper.dataset.examPaper; closePop(); void run(async () => message(`용지를 ${setPaper(bridgeOrThrow(), name)}로 바꿨습니다.`)); return; }
     const box = event.target.closest('[data-exam-box]'), lineCount = event.target.closest('[data-exam-lines]');

@@ -181,6 +181,21 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
     const pairs = mapping[1].split(/\s+/).map(x => /^나(\d+)=가(\d+)$/.exec(x).slice(1).map(Number));
     assert.deepEqual(pairs.map(p => p[0]), [1, 2, 3, 4]); assert.deepEqual([...pairs.map(p => p[1])].sort(), [1, 2, 3, 4]);
     assert.ok(pairs.some(([v, o]) => v !== o), 'order actually changes');
+
+    // 12) 정답지(빈칸 자리에 빨간 정답)·자주 쓰는 발문·표 머리 줄 음영.
+    await inPage(page, `reset('1. 식물은 광합성으로 포도당을 만든다.');b.input.cursor.selectRange({sectionIndex:0,paragraphIndex:0,charOffset:7},{sectionIndex:0,paragraphIndex:0,charOffset:10});`);
+    await button(page, '고른 낱말을 빈칸으로').click(); await h.idle(page);
+    const keyDownload = page.waitForEvent('download'); await button(page, '빈칸 자리에 정답을').click(); await keyDownload;
+    const key = await inPage(page, `const {answerKeyCopy}=await import('/js/rhwp-exam-worksheet.js');const D=d.constructor,x=new D(answerKeyCopy(b).bytes);try{return [x.getTextRange(0,0,0,x.getParagraphLength(0,0)),JSON.parse(x.getCharPropertiesAt(0,0,9)).textColor];}finally{x.free();}`);
+    assert.deepEqual(key, ['1. 식물은 ( 광합성 )으로 포도당을 만든다.', '#d0021b']);
+    await inPage(page, `reset('2. ');b.input.cursor.moveTo({sectionIndex:0,paragraphIndex:0,charOffset:3});`);
+    await page.locator('[data-exam-ftab="item"]').click(); await button(page, '자주 쓰는 발문').click();
+    await page.locator('[data-exam-stem="0"]').click(); await h.idle(page);
+    assert.equal((await inPage(page, `return text();`))[0], '2. 이에 대한 설명으로 옳은 것만을 〈보기〉에서 있는 대로 고른 것은?');
+    await inPage(page, `reset('');const r=JSON.parse(d.createTable(0,0,0,2,2));b.deps.eventBus.emit('document-changed');b.input.cursor.moveTo({sectionIndex:0,paragraphIndex:r.paraIdx,charOffset:0,parentParaIndex:r.paraIdx,controlIndex:r.controlIdx,cellIndex:3,cellParaIndex:0,cellPath:[{controlIndex:r.controlIdx,cellIndex:3,cellParaIndex:0}]});window.__t=r;`);
+    await page.locator('[data-exam-ftab="table"]').click(); await button(page, '커서가 있는 표의 첫 줄').click(); await h.idle(page);
+    const fills = await inPage(page, `const r=window.__t;return [0,1,2,3].map(c=>JSON.parse(d.getCellProperties(0,r.paraIdx,r.controlIdx,c)).fillType);`);
+    assert.deepEqual(fills, ['solid', 'solid', 'none', 'none']);
     assert.equal(await page.locator('#exam-status').getAttribute('data-error'), 'false', await page.locator('#exam-status').textContent());
     assert.deepEqual(errors, []);
   });
