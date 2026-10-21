@@ -85,3 +85,14 @@ test('그림이 남은 선지를 시트에서 고쳐도 「 [그림]」이 글�
   assert.equal(q.choices[1].text, '나');
   assert.equal(fieldValue(q, 'choices').split('\n')[1], '나 [그림]');
 });
+
+test('그림 300장이 든 문항 묶음도 엑셀로 내려받고 다시 올린다(M13)', async () => {
+  const png = 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==';
+  const questions = Array.from({length: 60}, (_, i) => { const q = newQuestion(String(i + 1)); q.ask = '발문' + i; q.choices.forEach((c, k) => { c.text = '선지' + k; c.figure = {name: `q${i}-${k}.png`, data: png}; }); return q; });
+  const data = {format: FORMAT, questions, documents: [], exams: []};
+  validate(data);
+  const bytes = await exportExcel(XLSX, JSZip, data);
+  const back = await importExcel(XLSX, JSZip, bytes.buffer.slice(bytes.byteOffset, bytes.byteOffset + bytes.byteLength));
+  assert.equal(back.questions.length, 60);
+  assert.equal(back.questions.flatMap(q => q.choices).filter(c => c.figure).length, 300);
+});

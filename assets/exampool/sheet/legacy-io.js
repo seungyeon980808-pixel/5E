@@ -48,9 +48,12 @@ export function parseWorkbook(XLSX,wb){
   if(!questions.length)throw new Error('입력된 문항이 없습니다. 발문 또는 선지 내용을 입력한 뒤 불러오세요.');
   return {...validatePackage({questions,documents:metadata.documents}),backedIds:[...old.keys()]};
 }
+// 압축 폭탄 막기용 항목 수 한도. 256이던 때는 그림 약 234장(그래프 선지 47문항쯤)에서 내려받기가 막혔다(M13).
+// 풀린 크기 합 48 MB 한도가 따로 있어 항목 수만 늘려도 안전하다.
+const MAX_XLSX_ENTRIES=2048;
 export function checkXlsxSize(buffer){
   if(buffer.byteLength>20*1024*1024)throw new Error('20 MB 이하의 엑셀 파일을 선택하세요.');
   const view=new DataView(buffer);let end=-1;for(let i=view.byteLength-22;i>=Math.max(0,view.byteLength-65557);i--)if(view.getUint32(i,true)===0x06054b50){end=i;break;}
-  if(end<0)throw new Error('.xlsx 엑셀 파일을 선택하세요.');const count=view.getUint16(end+10,true),offset=view.getUint32(end+16,true);if(count>256||offset>=view.byteLength)throw new Error('엑셀 파일의 시트 또는 첨부 항목이 너무 많습니다.');
+  if(end<0)throw new Error('.xlsx 엑셀 파일을 선택하세요.');const count=view.getUint16(end+10,true),offset=view.getUint32(end+16,true);if(count>MAX_XLSX_ENTRIES||offset>=view.byteLength)throw new Error(`엑셀 파일 안의 항목(시트·그림)이 ${count.toLocaleString()}개라 한도 ${MAX_XLSX_ENTRIES.toLocaleString()}개를 넘습니다.`);
   let p=offset,total=0;for(let i=0;i<count;i++){if(p+46>view.byteLength||view.getUint32(p,true)!==0x02014b50)throw new Error('엑셀 파일이 손상되었습니다.');total+=view.getUint32(p+24,true);if(total>48*1024*1024)throw new Error('압축을 푼 엑셀 내용이 너무 큽니다.');p+=46+view.getUint16(p+28,true)+view.getUint16(p+30,true)+view.getUint16(p+32,true);}
 }
