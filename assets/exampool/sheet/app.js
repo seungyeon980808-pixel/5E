@@ -602,6 +602,9 @@ async function sendExam(exam,{download:asFile=false}={}){
   if(!exam.items.length){status('시험지에 문항을 넣은 뒤 보내세요.',true);return;}
   const {examPlan}=await import('./exam-layout.js');const {missing}=examPlan(data,exam);
   if(missing.length){const first=missing[0].q;status(`조판을 저장하지 않은 문항이 있습니다: ${missing.map(x=>x.q.number+'번').join(', ')}. ${first.number}번 한글 조판을 엽니다 · 확인하고 「조판 저장」을 누르세요.`,true);current=first;openCard(first.id);cardEditor.showHwp?.();return;}
+  // 순서를 바꾸면 문항 번호가 바뀌어 저장한 조판과 맞지 않게 된다. 예전에는 만드는 도중 번호 없는 오류로 실패했다(M9). 먼저 모두 확인해 알린다.
+  {const {typesetMatches}=await import('./typeset-model.js?v=1014-compact-panel'),stale=[];for(const id of exam.items){const q=data.questions.find(x=>x.id===id);if(q?.typeset&&!await typesetMatches(q.typeset,q))stale.push(q);}
+    if(stale.length){const first=stale[0];status(`문항 번호나 내용이 바뀌어 조판을 다시 저장해야 하는 문항이 있습니다: ${stale.map(q=>q.number+'번').join(', ')}. ${first.number}번 한글 조판을 엽니다 · 확인하고 「조판 저장」을 누르세요.`,true);current=first;openCard(first.id);cardEditor.showHwp?.();return;}}
   status('시험지를 만드는 중…');
   try{const bytes=await buildExamBytes(exam);
     if(asFile||!embedded){download(bytes,`${exam.title}.hwpx`,'application/vnd.hancom.hwpx');status(asFile?'시험지 HWPX를 내려받았습니다.':'5E 밖에서는 HWPX로 내려받았습니다.');return;}

@@ -40,6 +40,6 @@ export async function buildExamDocument(Document,data,exam=data.exams?.[0],{betw
   if(!items.length)throw Error('시험지에 넣을 문항을 고르세요.');
   if(missing.length)throw Error(`조판을 저장하지 않은 문항이 있습니다: ${missing.map(x=>x.q.number+'번').join(', ')}. 각 문항의 조판을 저장한 뒤 다시 만드세요.`);
   if(mixed)throw Error(paperMixMessage(mixed));
-  const {document}=await assembleExamDocument(Document,{items,pages,sheet,open:item=>openApprovedQuestion(Document,item.q,item.q.typeset),between});
+  const {document}=await assembleExamDocument(Document,{items,pages,sheet,open:item=>openApprovedQuestion(Document,item.q,item.q.typeset).catch(e=>{throw Error(`${item.q.number}번 문항: ${e.message}`);}),between});
   return {document,pages,count:items.length};
 }
