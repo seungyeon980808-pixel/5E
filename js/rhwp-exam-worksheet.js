@@ -332,6 +332,34 @@ export function unifyQuestionFonts(bridge) {
   return odd.length;
 }
 
+// 정답 넣기: 커서가 있는 선택형 문항 끝에 「[정답] ③」 줄을 넣거나 바꾼다(mark=null이면 그 줄을 지움). 빨간 글씨, 학생용에서는 빠진다.
+export function setQuestionAnswer(bridge, mark) {
+  const input = requireInput(bridge), doc = bridge.wasm.borrowDocumentHandle();
+  const at = input.cursor.getPosition(), sec = at.sectionIndex ?? 0, para = at.cellPath?.length ? (at.parentParaIndex ?? at.paragraphIndex) : at.paragraphIndex;
+  const q = questionBlocks(doc, sec).find(b => b.start <= para && para < b.end);
+  if (!q) throw new Error('정답을 넣을 문항 안에 커서를 두세요.');
+  if (q.essay) throw new Error('서술형은 「[정답]」 대신 「[채점 기준]」 상자나 평가 기준표를 쓰세요.');
+  const textOf = p => String(doc.getTextRange(sec, p, 0, doc.getParagraphLength(sec, p)));
+  let line = -1; for (let p = q.head; p < q.end; p++) if (ANSWER_LINE.test(textOf(p))) { line = p; break; }
+  const text = mark ? `[정답] ${mark}` : '';
+  bridge.transaction('question-answer', () => {
+    if (line >= 0 && !mark) {
+      if (line > 0) parse(doc.deleteParagraph(sec, line)); else doc.deleteText(sec, 0, 0, doc.getParagraphLength(sec, 0));
+    } else if (line >= 0) {
+      doc.deleteText(sec, line, 0, doc.getParagraphLength(sec, line)); doc.insertText(sec, line, 0, text);
+      doc.applyCharFormat(sec, line, 0, [...text].length, JSON.stringify({ textColor: '#d0021b', bold: true }));
+    } else if (mark) {
+      // 문항 마지막 문단 뒤에 새 줄(빈 줄이 끝에 있으면 그 줄을 쓴다).
+      let p = q.end - 1;
+      if (doc.getParagraphLength(sec, p) || p === q.head) { parse(doc.splitParagraph(sec, p, doc.getParagraphLength(sec, p))); p++; }
+      doc.insertText(sec, p, 0, text);
+      doc.applyCharFormat(sec, p, 0, [...text].length, JSON.stringify({ textColor: '#d0021b', bold: true }));
+    }
+    return true;
+  });
+  return { label: q.label, mark };
+}
+
 // 점검 더하기: 배점 합계·글꼴 섞임. [{text, at}]
 export function extraChecks(doc) {
   const issues = [], scores = [], fonts = new Map();

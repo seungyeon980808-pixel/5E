@@ -6,7 +6,7 @@ import { fitCellPicture, centerPicturesInCells, picturesToGrid, fitTableToColumn
 import { showConfirm } from './ui-dialogs.js?v=1.7.0-four-session-integration';
 import { listExamPoolExams, buildExamPoolHwpx } from './rhwp-exam-exampool-open.js';
 import { applyScienceScripts } from './rhwp-exam-science-text.js';
-import { markBlank, studentCopy, appendBlankAnswers, insertExamHeader, insertAnswerGrid, setQuestionSpacing, extraChecks, BOX_PRESETS, insertBox, insertAnswerLines, insertRubric, setColumns, setPaper, makeVariant, appendVariantMapping, answerKeyCopy, STEMS, shadeHeaderRow, insertWorksheetFrame, PAGE_NUMBER_STYLES, insertPageNumbers, SCORE_CHOICES, setQuestionScore, insertQrCode, unifyQuestionFonts, boldToBlanks, WORKSHEET_FRAMES, blueprintCopy } from './rhwp-exam-worksheet.js';
+import { markBlank, studentCopy, appendBlankAnswers, insertExamHeader, insertAnswerGrid, setQuestionSpacing, extraChecks, BOX_PRESETS, insertBox, insertAnswerLines, insertRubric, setColumns, setPaper, makeVariant, appendVariantMapping, answerKeyCopy, STEMS, shadeHeaderRow, insertWorksheetFrame, PAGE_NUMBER_STYLES, insertPageNumbers, SCORE_CHOICES, setQuestionScore, insertQrCode, unifyQuestionFonts, boldToBlanks, WORKSHEET_FRAMES, blueprintCopy, setQuestionAnswer, questionAnswers } from './rhwp-exam-worksheet.js';
 import { SYMBOL_ROW, SYMBOL_TABS, SYMBOL_CHUNKS, symbolCells, recentSymbols, rememberSymbol } from './rhwp-exam-symbols.js';
 
 const MODE_KEY = '5e.hwp.toolMode';
@@ -65,9 +65,10 @@ function focusTabs(ctx) {
       ['문항 틀', '문항 틀 넣기 — 수능·학교 양식 (팔레트)', tool('manager', '템플릿')],
       ['발문', '자주 쓰는 발문 넣기(평가원 과학탐구 꼴)', (_, button) => ctx.openPicker(button, 'stem')],
       ['〈보기〉', '〈보기〉 상자 넣기(마크다운 창에 틀을 채워 둠)', tool('markdown', '보기:\nㄱ: \nㄴ: \nㄷ: ')],
-      ['보기 내어쓰기', '「ㄱ. 」 뒤에 커서를 두고 누르면 둘째 줄을 글자에 맞춰 내어 씀', doc(b => { if (!applyHangingIndent(b)) throw new Error('「ㄱ. 」 바로 뒤에 커서를 두고 누르세요.'); })], '|',
+      ['내어쓰기', '〈보기〉 「ㄱ. 」 뒤에 커서를 두고 누르면 둘째 줄을 글자에 맞춰 내어 씀', doc(b => { if (!applyHangingIndent(b)) throw new Error('「ㄱ. 」 바로 뒤에 커서를 두고 누르세요.'); })], '|',
       ['ㄱㄴㄷ 선지', '〈보기〉 ㄱㄴㄷ·학생 A B C 조합 선지 다섯 개를 커서 줄 뒤에 5열로 넣기', (_, button) => ctx.openPicker(button, 'combo')], ['선지 1열', '선지를 한 줄에 하나씩', doc(b => relayoutChoices(b, 1))], ['3열', '선지 3열(①②③ / ④⑤)', doc(b => relayoutChoices(b, 3))], ['5열', '선지 5열(한 줄)', doc(b => relayoutChoices(b, 5))], '|',
       ['번호 다시', '문항 번호 1부터 다시 매기기', doc(b => ctx.message(`문항 번호 ${renumberQuestions(b)}곳을 고쳤습니다.`))],
+      ['정답', '커서가 있는 문항 끝에 「[정답] ③」 줄 넣기·바꾸기(학생용에서는 빠짐, 정답표·나형 정답·정답 분포 점검에 쓰임)', (_, button) => ctx.openPicker(button, 'answer')],
       ['배점', '커서가 있는 문항의 배점 [n점] 넣기·바꾸기(발문 끝) — 합계를 바로 알려 줌', (_, button) => ctx.openPicker(button, 'score')],
       ['쪽 나누기', '쪽 나누기 (Ctrl+Enter)', cmd('page:break')],
       ['수식', '수식 넣기 (Ctrl+N, M)', cmd('insert:equation')],
@@ -393,6 +394,9 @@ export function installExamModes(panel, services) {
     } else if (kind === 'variant') {
       pop.innerHTML = `<div class="exam-pop-head">가·나형 <small>나형 사본 내려받기 · 지금 문서는 대응표만 붙음</small></div>
         <div class="exam-morelist"><button type="button" data-exam-variant="order">문항 순서만 섞기</button><button type="button" data-exam-variant="choices" title="선지가 한 줄에 하나씩인 문항만 선지 순서도 섞고, 문항 안 「[정답] ③」을 따라 고침">문항+선지 순서 섞기</button></div>`;
+    } else if (kind === 'answer') {
+      pop.innerHTML = `<div class="exam-pop-head">정답 <small>커서가 있는 문항 끝 · 학생용에서는 빠짐</small></div>
+        <div class="exam-morelist">${[...'①②③④⑤'].map(m => `<button type="button" data-exam-answer="${m}">${m}</button>`).join('')}<button type="button" data-exam-answer="">지우기</button></div>`;
     } else if (kind === 'score') {
       pop.innerHTML = `<div class="exam-pop-head">배점 <small>커서가 있는 문항 · 발문 끝</small></div>
         <div class="exam-morelist">${SCORE_CHOICES.map(n => `<button type="button" data-exam-score="${n}">${n}점</button>`).join('')}<button type="button" data-exam-score="">지우기</button></div>`;
@@ -427,6 +431,8 @@ export function installExamModes(panel, services) {
       if (!form.url.trim()) { pop.querySelector('[data-exam-qr="url"]')?.focus(); message('QR 코드에 넣을 주소를 쓰세요.', true); return; }
       closePop(); void run(async () => { const r = await insertQrCode(bridgeOrThrow(), form); message(`QR 코드(「${r.title}」)를 넣었습니다. 휴대폰 카메라로 비춰 확인해 보세요.`); }); return;
     }
+    const answer = event.target.closest('[data-exam-answer]');
+    if (answer) { const mark = answer.dataset.examAnswer || null; closePop(); void run(async () => { const r = setQuestionAnswer(bridgeOrThrow(), mark); renderOutline(); message(`${r.label} 정답${mark ? `을 ${mark}로 적었습니다` : ' 줄을 지웠습니다'}.`); refocus(); }); return; }
     const score = event.target.closest('[data-exam-score]');
     if (score) { const value = score.dataset.examScore === '' ? null : Number(score.dataset.examScore); closePop(); void run(async () => { const r = setQuestionScore(bridgeOrThrow(), value); message(`${r.label} ${value == null ? '배점을 지웠습니다' : `${value}점`} — 배점 ${r.count}곳 합계 ${r.total}점${r.count && r.total !== 100 ? ' (100점 아님)' : ''}`); refocus(); }); return; }
     const pagenum = event.target.closest('[data-exam-pagenum]');
@@ -485,9 +491,10 @@ export function installExamModes(panel, services) {
   function renderOutline() {
     const b = getBridge(); if (!b?.input || panel.hidden) return;
     let blocks = [];
-    try { blocks = allQuestionBlocks(b.wasm.borrowDocumentHandle()); } catch { return; }
+    let answers = new Map();
+    try { const d = b.wasm.borrowDocumentHandle(); blocks = allQuestionBlocks(d); answers = questionAnswers(d); } catch { return; }
     outline.hidden = !blocks.length;
-    outline.innerHTML = `<h2>문항 <small>${blocks.length}</small></h2><ol class="exam-qlist">${blocks.map((q, i) => `<li><button type="button" class="exam-q" data-exam-q="${i}" title="${esc(`${q.label} ${q.preview}`)}">${q.group && q.start !== q.head ? `<small class="exam-qgroup" title="묶음 문항 — 지문과 함께라 순서는 그대로">[${q.group.from}~${q.group.to}]</small> ` : ''}<b>${q.essay ? `서술형 ${q.number}` : `${q.number}.`}</b> ${esc(q.preview || '(빈 문항)')}</button><button type="button" class="exam-qmove" data-exam-qmove="${i}:-1" title="위로" aria-label="${q.label} 위로" ${i && blocks[i - 1].sec === q.sec && !q.group && !blocks[i - 1].group && !!blocks[i - 1].essay === !!q.essay ? '' : 'disabled'}>↑</button><button type="button" class="exam-qmove" data-exam-qmove="${i}:1" title="아래로" aria-label="${q.label} 아래로" ${i < blocks.length - 1 && blocks[i + 1].sec === q.sec && !q.group && !blocks[i + 1].group && !!blocks[i + 1].essay === !!q.essay ? '' : 'disabled'}>↓</button><button type="button" class="exam-qmove" data-exam-qdup="${i}" title="복제(바로 뒤에 한 벌 더)" aria-label="${q.label} 복제">⧉</button><button type="button" class="exam-qmove" data-exam-qdel="${i}" title="지우기" aria-label="${q.label} 지우기">×</button></li>`).join('')}</ol>`;
+    outline.innerHTML = `<h2>문항 <small>${blocks.length}</small></h2><ol class="exam-qlist">${blocks.map((q, i) => `<li><button type="button" class="exam-q" data-exam-q="${i}" title="${esc(`${q.label} ${q.preview}`)}">${q.group && q.start !== q.head ? `<small class="exam-qgroup" title="묶음 문항 — 지문과 함께라 순서는 그대로">[${q.group.from}~${q.group.to}]</small> ` : ''}<b>${q.essay ? `서술형 ${q.number}` : `${q.number}.`}</b> ${esc(q.preview || '(빈 문항)')}</button>${!q.essay && answers.get(q.number) ? `<span class="exam-qans" title="정답">${esc(answers.get(q.number).slice(0, 2))}</span>` : ''}<button type="button" class="exam-qmove" data-exam-qmove="${i}:-1" title="위로" aria-label="${q.label} 위로" ${i && blocks[i - 1].sec === q.sec && !q.group && !blocks[i - 1].group && !!blocks[i - 1].essay === !!q.essay ? '' : 'disabled'}>↑</button><button type="button" class="exam-qmove" data-exam-qmove="${i}:1" title="아래로" aria-label="${q.label} 아래로" ${i < blocks.length - 1 && blocks[i + 1].sec === q.sec && !q.group && !blocks[i + 1].group && !!blocks[i + 1].essay === !!q.essay ? '' : 'disabled'}>↓</button><button type="button" class="exam-qmove" data-exam-qdup="${i}" title="복제(바로 뒤에 한 벌 더)" aria-label="${q.label} 복제">⧉</button><button type="button" class="exam-qmove" data-exam-qdel="${i}" title="지우기" aria-label="${q.label} 지우기">×</button></li>`).join('')}</ol>`;
   }
   const scheduleOutline = () => { clearTimeout(outlineTimer); outlineTimer = setTimeout(renderOutline, 450); };
   outline.addEventListener('click', event => {

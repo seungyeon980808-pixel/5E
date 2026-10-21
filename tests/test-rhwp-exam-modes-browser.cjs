@@ -391,6 +391,21 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
     assert.ok(checks.includes('같은 정답 ③이 1~4번에 잇달아 나옵니다.'), checks.join(' / '));
     assert.ok(checks.some(t => t.startsWith('정답 분포가 고르지 않습니다(①1 ②0 ③5 ④0 ⑤0)')), checks.join(' / '));
     await page.keyboard.press('Escape');
+    // 33) 정답 넣기: 커서 문항 끝에 「[정답] ③」, 다시 고르면 바꾸고, 지우기로 뺀다. 목록에 정답이 보인다.
+    await inPage(page, `reset('1. 가\\n① 가 ② 나\\n2. 나');b.input.cursor.moveTo({sectionIndex:0,paragraphIndex:1,charOffset:0});`);
+    await page.locator('[data-exam-ftab="item"]').click();
+    await button(page, '커서가 있는 문항 끝에 「[정답]').click(); await page.locator('[data-exam-answer="③"]').click(); await h.idle(page);
+    assert.deepEqual(await inPage(page, `return text();`), ['1. 가', '① 가 ② 나', '[정답] ③', '2. 나']);
+    await page.waitForFunction(() => document.querySelector('.exam-qans')?.textContent === '③');
+    await inPage(page, `b.input.cursor.moveTo({sectionIndex:0,paragraphIndex:0,charOffset:0});`);
+    await button(page, '커서가 있는 문항 끝에 「[정답]').click(); await page.locator('[data-exam-answer="⑤"]').click(); await h.idle(page);
+    assert.deepEqual(await inPage(page, `return text();`), ['1. 가', '① 가 ② 나', '[정답] ⑤', '2. 나']);
+    await inPage(page, `b.input.cursor.moveTo({sectionIndex:0,paragraphIndex:3,charOffset:0});`);
+    await button(page, '커서가 있는 문항 끝에 「[정답]').click(); await page.locator('[data-exam-answer="①"]').click(); await h.idle(page);
+    assert.deepEqual(await inPage(page, `return text();`), ['1. 가', '① 가 ② 나', '[정답] ⑤', '2. 나', '[정답] ①']);
+    await inPage(page, `b.input.cursor.moveTo({sectionIndex:0,paragraphIndex:0,charOffset:0});`);
+    await button(page, '커서가 있는 문항 끝에 「[정답]').click(); await page.locator('[data-exam-answer=""]').click(); await h.idle(page);
+    assert.deepEqual(await inPage(page, `return text();`), ['1. 가', '① 가 ② 나', '2. 나', '[정답] ①']);
     // 15) 구역이 둘인 시험지(0구역=머리·1번, 1구역=2단 본문): 문항 목록이 두 구역을 다 보이고, 구역을 넘는 ↑↓는 막고, 1구역 안 이동·복제·나뉜 문항 점검은 된다.
     const twoSections = await inPage(page, `const {unzipSync,zipSync}=await import('/vendor/fflate/index.js');
       reset('시험 머리\\n1. 가');const first=unzipSync(d.exportHwpx());reset('2. 나\\n나나\\n3. 다');const second=unzipSync(d.exportHwpx());
