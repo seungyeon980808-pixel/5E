@@ -6,7 +6,7 @@ import { fitCellPicture, centerPicturesInCells, picturesToGrid, fitTableToColumn
 import { showConfirm } from './ui-dialogs.js?v=1.7.0-four-session-integration';
 import { listExamPoolExams, buildExamPoolHwpx } from './rhwp-exam-exampool-open.js';
 import { applyScienceScripts, fixUnitGaps } from './rhwp-exam-science-text.js';
-import { markBlank, studentCopy, appendBlankAnswers, insertExamHeader, insertAnswerGrid, setQuestionSpacing, extraChecks, BOX_PRESETS, insertBox, insertAnswerLines, insertRubric, setColumns, setPaper, makeVariant, appendVariantMapping, answerKeyCopy, STEMS, shadeHeaderRow, insertWorksheetFrame, PAGE_NUMBER_STYLES, insertPageNumbers, SCORE_CHOICES, setQuestionScore, insertQrCode, unifyQuestionFonts, boldToBlanks, WORKSHEET_FRAMES, blueprintCopy, setQuestionAnswer, questionAnswers, explanationCopy, addExplanationLine, fitEquationSizes, underlineNegativeWords, examSummary, insertRunningHeader, balanceAnswers } from './rhwp-exam-worksheet.js';
+import { markBlank, studentCopy, appendBlankAnswers, insertExamHeader, insertAnswerGrid, setQuestionSpacing, extraChecks, BOX_PRESETS, insertBox, insertAnswerLines, insertRubric, setColumns, setPaper, makeVariant, appendVariantMapping, answerKeyCopy, STEMS, shadeHeaderRow, insertWorksheetFrame, PAGE_NUMBER_STYLES, insertPageNumbers, SCORE_CHOICES, setQuestionScore, insertQrCode, unifyQuestionFonts, boldToBlanks, WORKSHEET_FRAMES, blueprintCopy, setQuestionAnswer, questionAnswers, explanationCopy, addExplanationLine, fitEquationSizes, underlineNegativeWords, examSummary, insertRunningHeader, balanceAnswers, setQuestionMeta, cursorQuestion, questionMeta } from './rhwp-exam-worksheet.js';
 import { SYMBOL_ROW, SYMBOL_TABS, SYMBOL_CHUNKS, symbolCells, recentSymbols, rememberSymbol } from './rhwp-exam-symbols.js';
 
 const MODE_KEY = '5e.hwp.toolMode';
@@ -70,6 +70,7 @@ function focusTabs(ctx) {
       ['번호 다시', '문항 번호 1부터 다시 매기기', doc(b => ctx.message(`문항 번호 ${renumberQuestions(b)}곳을 고쳤습니다.`))],
       ['정답', '커서가 있는 문항 끝에 「[정답] ③」 줄 넣기·바꾸기(학생용에서는 빠짐, 정답표·나형 정답·정답 분포 점검에 쓰임)', (_, button) => ctx.openPicker(button, 'answer')],
       ['해설', '커서 문항 끝에 「[해설] 」 줄을 만들고 커서를 그 끝에(학생용에서 빠지고 정답·해설지에 모임)', doc(b => { ctx.message(`${addExplanationLine(b)} 해설 줄에 쓰세요.`); ctx.refocus(); })],
+      ['분류', '커서 문항의 내용 영역·성취기준·난이도(상·중·하) 줄 넣기·바꾸기 — 분류표가 채워 씀(학생용에서는 빠짐)', (_, button) => ctx.openPicker(button, 'meta')],
       ['배점', '커서가 있는 문항의 배점 넣기·바꾸기(발문 끝, [3점]·(3점) 중 문서가 쓰는 모양) — 합계를 바로 알려 줌', (_, button) => ctx.openPicker(button, 'score')],
       ['쪽 나누기', '쪽 나누기 (Ctrl+Enter)', cmd('page:break')],
       ['수식', '수식 넣기 (Ctrl+N, M)', cmd('insert:equation')],
@@ -436,6 +437,15 @@ export function installExamModes(panel, services) {
     } else if (kind === 'variant') {
       pop.innerHTML = `<div class="exam-pop-head">가·나형 <small>나형 사본 내려받기 · 지금 문서는 대응표만 붙음</small></div>
         <div class="exam-morelist"><button type="button" data-exam-variant="order">문항 순서만 섞기</button><button type="button" data-exam-variant="choices" title="선지가 한 줄에 하나씩인 문항만 선지 순서도 섞고, 문항 안 「[정답] ③」을 따라 고침">문항+선지 순서 섞기</button></div>`;
+    } else if (kind === 'meta') {
+      let now = {}, last = {}; try { last = JSON.parse(localStorage.getItem('5e.hwp.questionMeta') || '{}'); } catch {}
+      try { const f = cursorQuestion(bridgeOrThrow()); if (f) now = Object.fromEntries(Object.entries(questionMeta(f.doc, f.sec, f.q)).map(([k, v]) => [k, v.value])); } catch {}
+      const val = k => esc(now[k] ?? last[k] ?? '');
+      pop.innerHTML = `<div class="exam-pop-head">분류 정보 <small>커서 문항 · 분류표에 채워짐 · 학생용에서는 빠짐</small></div>
+        <label class="exam-field"><span>내용 영역</span><input data-exam-meta="area" value="${val('area')}" placeholder="예: 물질과 규칙성"></label>
+        <label class="exam-field"><span>성취기준</span><input data-exam-meta="standard" value="${val('standard')}" placeholder="예: [10통과1-01]"></label>
+        <div class="exam-morelist" role="group" aria-label="난이도">${['상', '중', '하'].map(l => `<button type="button" data-exam-meta-level="${l}" aria-pressed="${(now.level ?? '') === l}">${l}</button>`).join('')}</div>
+        <div class="exam-form-actions"><button type="button" data-exam-meta-submit>넣기</button></div>`;
     } else if (kind === 'answer') {
       pop.innerHTML = `<div class="exam-pop-head">정답 <small>커서가 있는 문항 끝 · 학생용에서는 빠짐</small></div>
         <div class="exam-morelist">${[...'①②③④⑤'].map(m => `<button type="button" data-exam-answer="${m}">${m}</button>`).join('')}<button type="button" data-exam-answer="">지우기</button></div>`;
@@ -488,6 +498,13 @@ export function installExamModes(panel, services) {
       const value = name => pop.querySelector(`[data-exam-qr="${name}"]`)?.value || '', form = { url: value('url'), label: value('label'), sizeMm: Number(qrSize.dataset.examQrSize) };
       if (!form.url.trim()) { pop.querySelector('[data-exam-qr="url"]')?.focus(); message('QR 코드에 넣을 주소를 쓰세요.', true); return; }
       closePop(); void run(async () => { const r = await insertQrCode(bridgeOrThrow(), form); message(`QR 코드(「${r.title}」)를 넣었습니다. 휴대폰 카메라로 비춰 확인해 보세요.`); }); return;
+    }
+    const level = event.target.closest('[data-exam-meta-level]');
+    if (level) { for (const b of pop.querySelectorAll('[data-exam-meta-level]')) b.setAttribute('aria-pressed', String(b === level && b.getAttribute('aria-pressed') !== 'true')); return; }
+    if (event.target.closest('[data-exam-meta-submit]')) {
+      const get = k => pop.querySelector(`[data-exam-meta="${k}"]`)?.value || '', values = { area: get('area'), standard: get('standard'), level: pop.querySelector('[data-exam-meta-level][aria-pressed="true"]')?.dataset.examMetaLevel || '' };
+      try { localStorage.setItem('5e.hwp.questionMeta', JSON.stringify({ area: values.area, standard: values.standard })); } catch {}
+      closePop(); void run(async () => { message(`${setQuestionMeta(bridgeOrThrow(), values)} 분류 정보를 적었습니다.`); refocus(); }); return;
     }
     const answer = event.target.closest('[data-exam-answer]');
     if (answer) { const mark = answer.dataset.examAnswer || null; closePop(); void run(async () => { const r = setQuestionAnswer(bridgeOrThrow(), mark); renderOutline(); message(`${r.label} 정답${mark ? `을 ${mark}로 적었습니다` : ' 줄을 지웠습니다'}.`); refocus(); }); return; }

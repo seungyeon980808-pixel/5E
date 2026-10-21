@@ -466,6 +466,43 @@ export function examSummary(doc) {
   return blocks.length ? parts.join(' · ') : '';
 }
 
+// 분류 정보: 커서 문항 끝에 「[내용 영역] …」「[성취기준] …」「[난이도] 상·중·하」 줄을 넣거나 바꾼다(빈 값이면 그 줄을 뺌). 학생용에서 빠진다.
+const META_KEYS = [['area', '내용 영역'], ['standard', '성취기준'], ['level', '난이도']];
+export function questionMeta(doc, sec, q) {
+  const out = {};
+  for (let p = q.head; p < q.end; p++) {
+    const m = /^\s*[\[【]\s*(내용\s*영역|성취기준|난이도)\s*[\]】]\s*(.*)$/.exec(String(doc.getTextRange(sec, p, 0, doc.getParagraphLength(sec, p))));
+    if (m) out[META_KEYS.find(([, name]) => name.replace(/\s/g, '') === m[1].replace(/\s/g, ''))[0]] = { p, value: m[2].trim() };
+  }
+  return out;
+}
+export function cursorQuestion(bridge) {
+  const input = requireInput(bridge), doc = bridge.wasm.borrowDocumentHandle(), at = input.cursor.getPosition();
+  const sec = at.sectionIndex ?? 0, para = at.cellPath?.length ? (at.parentParaIndex ?? at.paragraphIndex) : at.paragraphIndex;
+  const q = questionBlocks(doc, sec).find(b => b.start <= para && para < b.end);
+  return q ? { doc, sec, q } : null;
+}
+export function setQuestionMeta(bridge, values) {
+  const found = cursorQuestion(bridge); if (!found) throw new Error('분류 정보를 넣을 문항 안에 커서를 두세요.');
+  const { doc, sec, q } = found;
+  bridge.transaction('question-meta', () => {
+    for (const [key, name] of META_KEYS) {
+      if (!(key in values)) continue;
+      const value = String(values[key] || '').trim(), block = questionBlocks(doc, sec).find(b => b.head === q.head) || q, now = questionMeta(doc, sec, block)[key];
+      const text = `[${name}] ${value}`;
+      if (now && !value) { parse(doc.deleteParagraph(sec, now.p)); continue; }
+      if (!value) continue;
+      let p = now?.p;
+      if (p === undefined) { p = block.end - 1; if (doc.getParagraphLength(sec, p) || p === block.head) { parse(doc.splitParagraph(sec, p, doc.getParagraphLength(sec, p))); p++; } }
+      else doc.deleteText(sec, p, 0, doc.getParagraphLength(sec, p));
+      doc.insertText(sec, p, 0, text);
+      doc.applyCharFormat(sec, p, 0, [...text].length, JSON.stringify({ textColor: '#3a5a8c', bold: false }));
+    }
+    return true;
+  });
+  return q.label;
+}
+
 // 점검 더하기: 배점 합계·글꼴 섞임. [{text, at}]
 export function extraChecks(doc) {
   const issues = [], fonts = new Map(), blocks = blocksWithLines(doc);

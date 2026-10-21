@@ -578,6 +578,18 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
     const marks = balanced.map(([m]) => m);
     assert.ok(new Set(marks).size >= 4, marks.join(''));
     assert.ok(!marks.some((m, i) => i >= 2 && m === marks[i - 1] && m === marks[i - 2]), marks.join(''));
+    // 48) 분류 정보: 커서 문항에 [내용 영역]·[성취기준]·[난이도] 줄을 넣고, 다시 열면 지금 값이 채워져 있고, 비우면 그 줄을 뺀다.
+    await inPage(page, `reset('1. 가\\n[정답] ③\\n2. 나');b.input.cursor.moveTo({sectionIndex:0,paragraphIndex:0,charOffset:0});`);
+    await page.locator('[data-exam-ftab="item"]').click(); await button(page, '커서 문항의 내용 영역').click();
+    await page.locator('[data-exam-meta="area"]').fill('물질과 규칙성'); await page.locator('[data-exam-meta="standard"]').fill('[10통과1-01]');
+    await page.locator('[data-exam-meta-level="중"]').click(); await page.locator('[data-exam-meta-submit]').click(); await h.idle(page);
+    assert.deepEqual(await inPage(page, `return text();`), ['1. 가', '[정답] ③', '[내용 영역] 물질과 규칙성', '[성취기준] [10통과1-01]', '[난이도] 중', '2. 나']);
+    await inPage(page, `b.input.cursor.moveTo({sectionIndex:0,paragraphIndex:0,charOffset:0});`);
+    await button(page, '커서 문항의 내용 영역').click();
+    assert.equal(await page.locator('[data-exam-meta="standard"]').inputValue(), '[10통과1-01]');
+    assert.equal(await page.locator('[data-exam-meta-level="중"]').getAttribute('aria-pressed'), 'true');
+    await page.locator('[data-exam-meta="area"]').fill(''); await page.locator('[data-exam-meta-level="상"]').click(); await page.locator('[data-exam-meta-submit]').click(); await h.idle(page);
+    assert.deepEqual(await inPage(page, `return text();`), ['1. 가', '[정답] ③', '[성취기준] [10통과1-01]', '[난이도] 상', '2. 나']);
     // 15) 구역이 둘인 시험지(0구역=머리·1번, 1구역=2단 본문): 문항 목록이 두 구역을 다 보이고, 구역을 넘는 ↑↓는 막고, 1구역 안 이동·복제·나뉜 문항 점검은 된다.
     const twoSections = await inPage(page, `const {unzipSync,zipSync}=await import('/vendor/fflate/index.js');
       reset('시험 머리\\n1. 가');const first=unzipSync(d.exportHwpx());reset('2. 나\\n나나\\n3. 다');const second=unzipSync(d.exportHwpx());
