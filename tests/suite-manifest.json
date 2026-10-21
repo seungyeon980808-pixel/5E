@@ -806,6 +806,12 @@
       "findingIds": [
         "H13-DESKTOP-IMAGE-INTERRUPTED"
       ]
+    },
+    {
+      "path": "tests/test-ai-exam-label-order.mjs",
+      "findingIds": [
+        "H12-EXAM-LABEL-ORDER"
+      ]
     }
   ],
   "browser": [

@@ -353,6 +353,9 @@ export async function restoreExamLabelPixels({data,width,height,plan,workflow,si
       const restoredIds=new Set(result.pending.filter(r=>(r.owner||'label')==='label').map(r=>r.labelId));
       result.appliedRegions.push(...result.pending.map(r=>({...r,method:'local-restore'})));
       result.removedLabelIds.push(...restoredIds);
+      // 저장 검사는 지운 라벨 순서가 원본 계획 순서와 같아야 통과한다. 맨 뒤에 붙인 채 두면 저장마다 예외가 나 작업대가 멈췄다(H12).
+      const order=new Map(plan.labels.map((label,i)=>[label.id,i]));
+      result.removedLabelIds.sort((a,b)=>(order.get(a)??Infinity)-(order.get(b)??Infinity));
       result.deferredLabels=result.deferredLabels.filter(l=>!restoredIds.has(l.labelId));
       result.pending=[];
     } catch(error) {
