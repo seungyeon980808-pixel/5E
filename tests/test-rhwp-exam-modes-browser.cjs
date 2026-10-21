@@ -367,6 +367,17 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
     assert.ok(bp[3][1] > bp[3][0] * 3, 'standard column is wide');
     assert.equal((await inPage(page, `return text();`)).length, 6);
     assert.deepEqual(await inPage(page, `const {studentCopy}=await import('/js/rhwp-exam-worksheet.js');const x=new d.constructor(studentCopy(b).bytes);try{return [...Array(x.getParagraphCount(0)).keys()].map(p=>x.getTextRange(0,p,0,x.getParagraphLength(0,p)));}finally{x.free();}`), ['1. 가는? [2점]', '2. 나는? [3점]', '3. 다는?']);
+    // 30) 서술형: 「[서술형 3]」「서술형 5.」를 따로 문항으로 보고(앞 선택형에 붙지 않음), 번호를 따로 매기고, 선택형과는 순서를 바꾸지 않는다.
+    await inPage(page, `reset('1. 가\\n2. 나\\n[서술형 3] 서술 하나\\n답란\\n서술형 5. 서술 둘');`);
+    await page.waitForFunction(() => document.querySelectorAll('.exam-q b')[3]?.textContent === '서술형 5', null, { timeout: 5000 }).catch(() => {});
+    assert.deepEqual(await page.locator('.exam-q b').allTextContents(), ['1.', '2.', '서술형 3', '서술형 5']);
+    assert.equal(await page.locator('[data-exam-qmove="1:1"]').isDisabled(), true);
+    assert.equal(await page.locator('[data-exam-qmove="2:1"]').isDisabled(), false);
+    await page.locator('[data-exam-ftab="item"]').click(); await button(page, '문항 번호 1부터').click(); await h.idle(page);
+    assert.deepEqual(await inPage(page, `return text();`), ['1. 가', '2. 나', '[서술형 1] 서술 하나', '답란', '서술형 2. 서술 둘']);
+    await page.waitForFunction(() => document.querySelectorAll('.exam-q b')[2]?.textContent === '서술형 1');
+    await page.locator('[data-exam-qmove="2:1"]').click(); await h.idle(page);
+    assert.deepEqual(await inPage(page, `return text();`), ['1. 가', '2. 나', '서술형 1. 서술 둘', '[서술형 2] 서술 하나', '답란']);
     // 15) 구역이 둘인 시험지(0구역=머리·1번, 1구역=2단 본문): 문항 목록이 두 구역을 다 보이고, 구역을 넘는 ↑↓는 막고, 1구역 안 이동·복제·나뉜 문항 점검은 된다.
     const twoSections = await inPage(page, `const {unzipSync,zipSync}=await import('/vendor/fflate/index.js');
       reset('시험 머리\\n1. 가');const first=unzipSync(d.exportHwpx());reset('2. 나\\n나나\\n3. 다');const second=unzipSync(d.exportHwpx());

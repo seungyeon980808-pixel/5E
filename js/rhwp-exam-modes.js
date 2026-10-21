@@ -428,7 +428,7 @@ export function installExamModes(panel, services) {
       closePop(); void run(async () => { const r = await insertQrCode(bridgeOrThrow(), form); message(`QR 코드(「${r.title}」)를 넣었습니다. 휴대폰 카메라로 비춰 확인해 보세요.`); }); return;
     }
     const score = event.target.closest('[data-exam-score]');
-    if (score) { const value = score.dataset.examScore === '' ? null : Number(score.dataset.examScore); closePop(); void run(async () => { const r = setQuestionScore(bridgeOrThrow(), value); message(`${r.number}번 ${value == null ? '배점을 지웠습니다' : `${value}점`} — 배점 ${r.count}곳 합계 ${r.total}점${r.count && r.total !== 100 ? ' (100점 아님)' : ''}`); refocus(); }); return; }
+    if (score) { const value = score.dataset.examScore === '' ? null : Number(score.dataset.examScore); closePop(); void run(async () => { const r = setQuestionScore(bridgeOrThrow(), value); message(`${r.label} ${value == null ? '배점을 지웠습니다' : `${value}점`} — 배점 ${r.count}곳 합계 ${r.total}점${r.count && r.total !== 100 ? ' (100점 아님)' : ''}`); refocus(); }); return; }
     const pagenum = event.target.closest('[data-exam-pagenum]');
     if (pagenum) { const style = pagenum.dataset.examPagenum; closePop(); void run(async () => message(`모든 쪽 아래에 쪽 번호(${insertPageNumbers(bridgeOrThrow(), style)})를 넣었습니다.`)); return; }
     const paper = event.target.closest('[data-exam-paper]');
@@ -487,7 +487,7 @@ export function installExamModes(panel, services) {
     let blocks = [];
     try { blocks = allQuestionBlocks(b.wasm.borrowDocumentHandle()); } catch { return; }
     outline.hidden = !blocks.length;
-    outline.innerHTML = `<h2>문항 <small>${blocks.length}</small></h2><ol class="exam-qlist">${blocks.map((q, i) => `<li><button type="button" class="exam-q" data-exam-q="${i}" title="${esc(`${q.number}. ${q.preview}`)}">${q.group && q.start !== q.head ? `<small class="exam-qgroup" title="묶음 문항 — 지문과 함께라 순서는 그대로">[${q.group.from}~${q.group.to}]</small> ` : ''}<b>${q.number}.</b> ${esc(q.preview || '(빈 문항)')}</button><button type="button" class="exam-qmove" data-exam-qmove="${i}:-1" title="위로" aria-label="${q.number}번 위로" ${i && blocks[i - 1].sec === q.sec && !q.group && !blocks[i - 1].group ? '' : 'disabled'}>↑</button><button type="button" class="exam-qmove" data-exam-qmove="${i}:1" title="아래로" aria-label="${q.number}번 아래로" ${i < blocks.length - 1 && blocks[i + 1].sec === q.sec && !q.group && !blocks[i + 1].group ? '' : 'disabled'}>↓</button><button type="button" class="exam-qmove" data-exam-qdup="${i}" title="복제(바로 뒤에 한 벌 더)" aria-label="${q.number}번 복제">⧉</button><button type="button" class="exam-qmove" data-exam-qdel="${i}" title="지우기" aria-label="${q.number}번 지우기">×</button></li>`).join('')}</ol>`;
+    outline.innerHTML = `<h2>문항 <small>${blocks.length}</small></h2><ol class="exam-qlist">${blocks.map((q, i) => `<li><button type="button" class="exam-q" data-exam-q="${i}" title="${esc(`${q.label} ${q.preview}`)}">${q.group && q.start !== q.head ? `<small class="exam-qgroup" title="묶음 문항 — 지문과 함께라 순서는 그대로">[${q.group.from}~${q.group.to}]</small> ` : ''}<b>${q.essay ? `서술형 ${q.number}` : `${q.number}.`}</b> ${esc(q.preview || '(빈 문항)')}</button><button type="button" class="exam-qmove" data-exam-qmove="${i}:-1" title="위로" aria-label="${q.label} 위로" ${i && blocks[i - 1].sec === q.sec && !q.group && !blocks[i - 1].group && !!blocks[i - 1].essay === !!q.essay ? '' : 'disabled'}>↑</button><button type="button" class="exam-qmove" data-exam-qmove="${i}:1" title="아래로" aria-label="${q.label} 아래로" ${i < blocks.length - 1 && blocks[i + 1].sec === q.sec && !q.group && !blocks[i + 1].group && !!blocks[i + 1].essay === !!q.essay ? '' : 'disabled'}>↓</button><button type="button" class="exam-qmove" data-exam-qdup="${i}" title="복제(바로 뒤에 한 벌 더)" aria-label="${q.label} 복제">⧉</button><button type="button" class="exam-qmove" data-exam-qdel="${i}" title="지우기" aria-label="${q.label} 지우기">×</button></li>`).join('')}</ol>`;
   }
   const scheduleOutline = () => { clearTimeout(outlineTimer); outlineTimer = setTimeout(renderOutline, 450); };
   outline.addEventListener('click', event => {
@@ -496,8 +496,8 @@ export function installExamModes(panel, services) {
     if (del) {
       const i = Number(del.dataset.examQdel), q = allQuestionBlocks(bridgeOrThrow().wasm.borrowDocumentHandle())[i];
       void (async () => {
-        if (!q || !await showConfirm(`${q.number}번 문항을 통째로 지울까요?\n되돌리기(⌘Z)로 되살릴 수 있습니다.`, { title: '문항 지우기', okText: '지우기', cancelText: '그대로 두기' })) return;
-        await run(async () => { deleteQuestion(bridgeOrThrow(), i); renderOutline(); message(`${q.number}번 문항을 지우고 번호를 다시 매겼습니다.`); });
+        if (!q || !await showConfirm(`${q.label} 문항을 통째로 지울까요?\n되돌리기(⌘Z)로 되살릴 수 있습니다.`, { title: '문항 지우기', okText: '지우기', cancelText: '그대로 두기' })) return;
+        await run(async () => { deleteQuestion(bridgeOrThrow(), i); renderOutline(); message(`${q.label} 문항을 지우고 번호를 다시 매겼습니다.`); });
       })();
       return;
     }

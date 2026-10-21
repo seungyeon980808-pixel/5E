@@ -126,13 +126,17 @@ const paragraphText = (doc, sec, para) => {
 // 본문 문단 머리의 「3.」 같은 문항 번호를 1부터 차례로 다시 매긴다(표·머리말 안은 건드리지 않음).
 // 번호 다시 매기기 계획: 문단 머리 「n.」 번호와, 묶음 문항 머리 「[a~b]」의 범위(뒤따르는 첫 문항 번호부터 같은 개수).
 export const GROUP_HEAD = /^(\s*)\[(\d{1,3})\s*([~～∼\-–])\s*(\d{1,3})\]/;
+// 서술형 문항 머리: 「[서술형 1]」「서술형 2.」「서술형 3)」 — 선택형과 따로 번호를 매긴다.
+export const ESSAY_HEAD = /^(\s*\[?\s*서술형\s*)(\d{1,2})(?=\s*[\].)]|\s)/;
 function numberingPlan(doc) {
   const found = [], groups = [];
-  let pending = null, n = 0;
+  let pending = null, n = 0, essay = 0;
   for (let sec = 0; sec < doc.getSectionCount(); sec++)
     for (let para = 0; para < doc.getParagraphCount(sec); para++) {
       const text = paragraphText(doc, sec, para), g = GROUP_HEAD.exec(text);
       if (g) { pending = { sec, para, offset: g[1].length, length: g[0].length - g[1].length, sep: g[3], count: Math.max(1, Number(g[4]) - Number(g[2]) + 1), old: g[0].slice(g[1].length) }; continue; }
+      const e = ESSAY_HEAD.exec(text);
+      if (e) { const next = String(++essay); found.push({ sec, para, offset: e[1].length, digits: e[2], next, essay: true }); continue; }
       const m = /^(\s*)(\d{1,3})\.(?=\s|\S)/.exec(text); if (!m) continue;
       found.push({ sec, para, offset: m[1].length, digits: m[2], next: String(++n) });
       if (pending) { const want = `[${n}${pending.sep}${n + pending.count - 1}]`; if (want !== pending.old) groups.push({ ...pending, want }); pending = null; }
@@ -284,13 +288,15 @@ export function questionBlocks(doc, sec = 0) {
   for (let p = 0; p < count; p++) {
     const text = paragraphText(doc, sec, p), g = GROUP_HEAD.exec(text);
     if (g) { pending = { head: p, from: Number(g[2]), to: Number(g[4]) }; continue; }
+    const e = ESSAY_HEAD.exec(text);
+    if (e) { group = null; pending = null; starts.push({ start: p, head: p, number: Number(e[2]), essay: true }); continue; }
     const m = /^\s*(\d{1,3})\./.exec(text); if (!m) continue;
     const number = Number(m[1]);
     if (pending) { group = { ...pending, to: number + (pending.to - pending.from) }; starts.push({ start: pending.head, head: p, number, group }); pending = null; continue; }
     if (group && number > group.to) group = null;
     starts.push({ start: p, head: p, number, ...(group ? { group } : {}) });
   }
-  return starts.map((s, i) => ({ ...s, end: i + 1 < starts.length ? starts[i + 1].start : count, preview: paragraphText(doc, sec, s.head).replace(/^\s*\d{1,3}\.\s*/, '').slice(0, 40) }));
+  return starts.map((s, i) => ({ ...s, label: s.essay ? `서술형 ${s.number}` : `${s.number}번`, end: i + 1 < starts.length ? starts[i + 1].start : count, preview: paragraphText(doc, sec, s.head).replace(s.essay ? /^\s*\[?\s*서술형\s*\d{1,2}\s*[\].)]?\s*/ : /^\s*\d{1,3}\.\s*/, '').slice(0, 40) }));
 }
 
 // 모든 구역의 문항(학교 시험지는 보통 1쪽 머리 구역 + 2단 본문 구역). index는 문서 전체 순서.
@@ -308,6 +314,7 @@ export function moveQuestion(bridge, index, direction) {
   const a = direction < 0 ? index - 1 : index;
   if (!all[a] || !all[a + 1]) throw new Error(direction < 0 ? '맨 위 문항입니다.' : '맨 아래 문항입니다.');
   if (all[a].sec !== all[a + 1].sec) throw new Error('구역(쪽 설정)이 다른 문항끼리는 순서를 바꿀 수 없습니다.');
+  if (!!all[a].essay !== !!all[a + 1].essay) throw new Error('선택형과 서술형 문항끼리는 순서를 바꿀 수 없습니다.');
   if (all[a].group || all[a + 1].group) throw new Error('묶음 문항([1~2] 같은)은 지문과 함께 있어야 해서 순서를 바꿀 수 없습니다.');
   const sec = all[a].sec, blocks = questionBlocks(doc, sec), local = localIndex(all, a);
   bridge.transaction('move-question', () => swapAdjacentQuestions(doc, sec, blocks, local));
@@ -362,7 +369,7 @@ export function splitQuestions(doc, sec = null) {
   for (const b of blocks) {
     const spots = new Set();
     for (let p = b.start; p < b.end; p++) for (const s of where.get(p) || []) spots.add(s);
-    if (spots.size > 1) issues.push({ text: `${b.number}번 문항이 ${columns > 1 ? '쪽·단' : '쪽'} 경계에서 나뉩니다(${[...spots].map(s => { const [pg, c] = s.split(':'); return columns > 1 ? `${+pg + 1}쪽 ${+c + 1}단` : `${+pg + 1}쪽`; }).join(' → ')}).`, at: { sectionIndex: sec, paragraphIndex: b.start, charOffset: 0 } });
+    if (spots.size > 1) issues.push({ text: `${b.label} 문항이 ${columns > 1 ? '쪽·단' : '쪽'} 경계에서 나뉩니다(${[...spots].map(s => { const [pg, c] = s.split(':'); return columns > 1 ? `${+pg + 1}쪽 ${+c + 1}단` : `${+pg + 1}쪽`; }).join(' → ')}).`, at: { sectionIndex: sec, paragraphIndex: b.start, charOffset: 0 } });
   }
   return issues;
 }

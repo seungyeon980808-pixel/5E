@@ -220,7 +220,7 @@ export function insertExamHeader(bridge, { title = '', subject = '', grade = '' 
 const ANSWER_LINE = /^\s*(?:[\[【]\s*정답\s*[\]】]|정답\s*[:：])\s*(\S.*)$/;
 export function questionAnswers(doc) {
   const out = new Map();
-  for (let sec = 0; sec < doc.getSectionCount(); sec++) for (const q of questionBlocks(doc, sec))
+  for (let sec = 0; sec < doc.getSectionCount(); sec++) for (const q of questionBlocks(doc, sec).filter(b => !b.essay))
     for (let p = q.head; p < q.end; p++) {
       const m = ANSWER_LINE.exec(String(doc.getTextRange(sec, p, 0, doc.getParagraphLength(sec, p))));
       if (m) { out.set(q.number, m[1].trim()); break; }
@@ -296,7 +296,7 @@ export function setQuestionScore(bridge, score) {
   let total = 0, count = 0;
   for (let s = 0; s < doc.getSectionCount(); s++) for (let p = 0; p < doc.getParagraphCount(s); p++)
     for (const m of String(doc.getTextRange(s, p, 0, doc.getParagraphLength(s, p))).matchAll(/\[(\d+(?:\.\d+)?)\s*점\]/g)) { total += Number(m[1]); count++; }
-  return { number: q.number, total: Math.round(total * 10) / 10, count };
+  return { number: q.number, label: q.label, total: Math.round(total * 10) / 10, count };
 }
 
 // 글꼴 맞추기: 문항 첫 줄 글꼴·크기가 대부분과 다른 문항(다른 곳에서 복사해 온 문항)을 대부분 쪽으로 맞춘다.
@@ -497,9 +497,9 @@ export function makeVariant(bridge, random = Math.random, { choices = false } = 
   // 문항이 가장 많은 구역(보통 2단 본문)만 섞는다 — 머리 구역의 안내문은 그대로.
   let mainSec = 0; for (let s = 1; s < doc.getSectionCount(); s++) if (questionBlocks(doc, s).length > questionBlocks(doc, mainSec).length) mainSec = s;
   const first = questionBlocks(doc, mainSec);
-  // 묶음 문항([1~2])은 제자리에 두고, 그 사이사이 이어진 낱개 문항끼리만 섞는다.
+  // 묶음 문항([1~2])·서술형은 제자리에 두고, 그 사이사이 이어진 낱개 선택형 문항끼리만 섞는다.
   const segments = []; let run = [];
-  first.forEach((b, i) => { if (b.group) { if (run.length) segments.push(run); run = []; } else run.push(i); });
+  first.forEach((b, i) => { if (b.group || b.essay) { if (run.length) segments.push(run); run = []; } else run.push(i); });
   if (run.length) segments.push(run);
   if (!segments.some(seg => seg.length > 1)) throw new Error('섞을 수 있는 낱개 문항이 둘 이상 이어져 있어야 합니다(묶음 문항은 제자리).');
   // 원래 자리와 다른 순서가 나올 때까지 섞는다(문항이 둘이면 서로 바꾼다).
@@ -621,7 +621,7 @@ export function blueprintCopy(bridge, title = '시험') {
     let score = '';
     for (let p = q.head; p < q.end && !score; p++) { const m = /\[(\d+(?:\.\d+)?)\s*점\]/.exec(String(doc.getTextRange(q.sec, p, 0, doc.getParagraphLength(q.sec, p)))); if (m) score = m[1]; }
     total += Number(score) || 0;
-    rows.push([String(q.number), '', '', '', score, answers.get(q.number) || '', '']);
+    rows.push([q.essay ? q.label : String(q.number), '', '', '', score, q.essay ? '' : (answers.get(q.number) || ''), '']);
   }
   rows.push(['합계', '', '', '', String(Math.round(total * 10) / 10), '', '']);
   const Document = doc.constructor, out = Document.createEmpty();
