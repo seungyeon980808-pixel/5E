@@ -62,5 +62,12 @@ h.withServer(async origin=>{fs.mkdirSync(path.resolve(process.env.EVIDENCE_DIR||
  await q.locator('#exam-edit-bar .exam-region-actions button:last-child').click();await h.idle(q);await h.action(q,'new');await h.idle(q);await q.locator('#exam-name').fill('두 번째 시험지');
  const second=q.waitForEvent('download');await h.action(q,'save');await second;await h.idle(q);
  const drafts=await q.evaluate(async()=>{const{listExamDrafts}=await import('/js/rhwp-exam-project.js?v=1.7.0-four-session-integration');return listExamDrafts();});assert.ok(drafts.length>=2);assert.ok(drafts.some(d=>d.projectId===saved.projectId));
+ // M4: 초안은 최근 20개만 남고, meta: 줄이 없던 옛 초안도 목록에 나온 뒤 정리된다.
+ const pruned=await q.evaluate(async()=>{const m=await import('/js/rhwp-exam-project.js?v=1.7.0-four-session-integration');
+  await new Promise((res,rej)=>{const r=indexedDB.open('5e-rhwp-exam',1);r.onsuccess=()=>{const tx=r.result.transaction('drafts','readwrite');tx.objectStore('drafts').put({bytes:new ArrayBuffer(4),projectId:'old-legacy',name:'옛 초안',updatedAt:1},'project:old-legacy');tx.oncomplete=()=>{r.result.close();res();};tx.onerror=()=>rej(tx.error);};r.onerror=()=>rej(r.error);});
+  const legacySeen=(await m.listExamDrafts()).some(d=>d.projectId==='old-legacy');
+  for(let i=0;i<25;i++)await m.writeExamDraft(new Blob([String(i)]),'bulk-'+i,'묶음 '+i);
+  const list=await m.listExamDrafts();return {legacySeen,count:list.length,hasNewest:list.some(d=>d.projectId==='bulk-24'),hasLegacy:list.some(d=>d.projectId==='old-legacy'),readBack:!!await m.readExamDraft('bulk-24')};});
+ assert.deepEqual(pruned,{legacySeen:true,count:20,hasNewest:true,hasLegacy:false,readBack:true});
  await fresh.close();assert.deepEqual(errors,[]);await ctx.close();console.log(name+(surface?'-preview':'')+': foreign registration, crop adjustment/cancel, draft save/reopen, geometry and separate autosaves passed');
  }}finally{await b.close();}}}).catch(e=>{console.error(e);process.exitCode=1;});

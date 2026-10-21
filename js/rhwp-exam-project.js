@@ -111,13 +111,32 @@ function draftStore(mode, operation) {
     };
   });
 }
+// 자동 저장 초안은 프로젝트마다 한 줄씩 쌓인다(페이지를 열 때·새 시험지·파일 열기마다 새 projectId). 예전에는 지우는 코드가 없고,
+// 목록을 열 때 모든 초안 바이트(하나에 수~수십 MB)를 한꺼번에 읽었다(M4). 이름·시각만 담은 meta: 줄로 목록을 만들고,
+// 최근 DRAFT_KEEP개만 남긴다.
+const DRAFT_KEEP=20;
+const META_RANGE=()=>IDBKeyRange.bound('meta:','meta:\uffff');
+const PROJECT_RANGE=()=>IDBKeyRange.bound('project:','project:\uffff');
 export async function writeExamDraft(blob, projectId='legacy', name='새 시험지') {
-  const bytes=await blob.arrayBuffer();
-  return draftStore('readwrite',store=>{store.put({bytes,projectId,name,updatedAt:Date.now()},`project:${projectId}`);store.put(projectId,'latest');});
+  const bytes=await blob.arrayBuffer(),updatedAt=Date.now();
+  return draftStore('readwrite',store=>{
+    store.put({bytes,projectId,name,updatedAt},`project:${projectId}`);store.put({projectId,name,updatedAt},`meta:${projectId}`);store.put(projectId,'latest');
+    const rows=store.getAll(META_RANGE());
+    rows.onsuccess=()=>{for(const row of rows.result.filter(row=>row.projectId!==projectId).sort((a,b)=>b.updatedAt-a.updatedAt).slice(DRAFT_KEEP-1)){
+      store.delete(`project:${row.projectId}`);store.delete(`meta:${row.projectId}`);}};
+  });
 }
 export async function listExamDrafts() {
-  const rows=await draftStore('readonly',store=>store.getAll());
-  return rows.filter(row=>row?.bytes instanceof ArrayBuffer && typeof row.projectId==='string').map(({bytes,...row})=>row).sort((a,b)=>b.updatedAt-a.updatedAt);
+  const [metas,keys]=await Promise.all([draftStore('readonly',store=>store.getAll(META_RANGE())),draftStore('readonly',store=>store.getAllKeys(PROJECT_RANGE()))]);
+  const known=new Set(metas.map(row=>row.projectId)),rows=metas.filter(row=>typeof row?.projectId==='string'&&keys.includes(`project:${row.projectId}`));
+  // meta: 줄이 생기기 전에 저장된 초안은 한 번만 바이트째 읽어 meta: 줄을 만든다.
+  for(const key of keys.filter(key=>!known.has(key.slice(8)))){
+    const row=await draftStore('readonly',store=>store.get(key));
+    if(!(row?.bytes instanceof ArrayBuffer)||typeof row.projectId!=='string')continue;
+    const meta={projectId:row.projectId,name:row.name,updatedAt:row.updatedAt};rows.push(meta);
+    await draftStore('readwrite',store=>{store.put(meta,`meta:${row.projectId}`);}).catch(()=>{});
+  }
+  return rows.sort((a,b)=>b.updatedAt-a.updatedAt);
 }
 export async function readExamDraft(projectId=null) {
   const id=projectId || await draftStore('readonly',store=>store.get('latest'));
