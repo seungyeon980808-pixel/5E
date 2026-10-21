@@ -373,8 +373,9 @@ function openPreferencesDialog({ focusShortcut = false } = {}) {
   };
   colorButtons.forEach((btn) => btn.addEventListener("click", () => setColorMode(btn.dataset.colorModeChoice)));
   window.addEventListener("5e:color-mode-change", syncColorButtons);
-  new MutationObserver(() => { if (!overlay.isConnected) window.removeEventListener("5e:color-mode-change", syncColorButtons); })
-    .observe(document.body, { childList: true });
+  // 창이 닫히면 듣기와 관찰을 함께 끝낸다. 예전에는 관찰자가 남아 설정 창을 열 때마다 쌓였다(점검 하).
+  const colorWatch = new MutationObserver(() => { if (!overlay.isConnected) { window.removeEventListener("5e:color-mode-change", syncColorButtons); colorWatch.disconnect(); } });
+  colorWatch.observe(document.body, { childList: true });
   syncColorButtons();
 
   const gridVisible = overlay.querySelector("#pref-grid-visible");

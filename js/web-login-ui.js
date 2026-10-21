@@ -185,7 +185,8 @@ export function initWebLoginUi({ openAi }) {
     } catch { if (phase === 'waiting') message.textContent = '코드를 직접 선택해 복사하거나 인증 창에 그대로 입력해 주세요.'; }
   });
   start.addEventListener('click', () => {
-    if (connected) { if (pendingAiAction) void runPendingAiAction(); else dismiss(); return; }
+    // 연결된 뒤 「닫기」는 1.6.3처럼 AI 단추로 초점을 돌려준다(키보드 사용자가 길을 잃지 않게, 점검 하).
+    if (connected) { if (pendingAiAction) void runPendingAiAction(); else { dismiss(); aiButton?.focus(); } return; }
     if (phase === 'waiting') { window.fiveEWebContinueLogin?.(); return; }
     userCode = ''; authenticating = false; resetCopyStage();
     render('starting', '인증 코드를 요청하고 있습니다. 편집 내용은 그대로 유지됩니다.');

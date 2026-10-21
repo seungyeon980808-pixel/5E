@@ -1,6 +1,7 @@
 import { BlurReveal } from './blur-reveal.js';
 import { RevealStatus } from './reveal-status.js';
 import { trackLoadingMotion } from './activity-visibility.js';
+import { coveringApp } from '../app-lock.js?v=1021-lock';
 
 const COPY = Object.freeze({
   image: { start: '시험지 스타일로 다시 그리고 있어요', slow: '평소보다 조금 더 걸리고 있어요', verySlow: '아직 작업 중이에요 · 원본은 그대로 있어요', done: '시험지 스타일로 바꿨어요', failed: '변환하지 못했어요 · 원본은 그대로예요' },
@@ -243,7 +244,8 @@ export function createWorkbenchLoading({ host, legacy, panel }) {
 const OVERLAYS = '.modal-overlay, .unified-library-overlay, .workbench-assignment-overlay';
 const AI_WORKBENCHES = '#ai-image-panel, [id^="ai-workspace-"]';
 const shown = el => !el.hidden && !el.inert && el.getClientRects().length > 0 && getComputedStyle(el).visibility !== 'hidden';
-const onMainScreen = () => ![...document.querySelectorAll(OVERLAYS)].some(shown);
+// 출제·조판 칸이 덮고 있어도 메인 화면이 아니다. 예전에는 AI 완료 말풍선이 그 칸 위에 떴다(점검 하).
+const onMainScreen = () => !coveringApp() && ![...document.querySelectorAll(OVERLAYS)].some(shown);
 let pendingNotice = null;
 
 // 작업 창을 닫아 둔 채 끝나면 메인 편집 화면의 AI 버튼 바로 위에 뜨는 말풍선.
