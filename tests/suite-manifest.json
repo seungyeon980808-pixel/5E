@@ -824,6 +824,12 @@
       "findingIds": [
         "M39-SHARED-CANCEL"
       ]
+    },
+    {
+      "path": "tests/test-rhwp-exam-draft-export.mjs",
+      "findingIds": [
+        "M2-DRAFT-EXPORT-FALLBACK"
+      ]
     }
   ],
   "browser": [

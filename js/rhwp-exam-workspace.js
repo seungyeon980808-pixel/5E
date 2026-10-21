@@ -312,7 +312,7 @@ export function initRhwpExamWorkspace(state, services) {
       const workspace = await captureWorkspace();latestWorkspace=workspace;renderedFigures="";renderFigures();
       const sources = clone([...figures.values()]);
       const title = nameInput.value.trim() || '새 시험지';
-      const documentBytes = new Uint8Array(await bridge.exportHwpx());
+      const documentBytes = new Uint8Array(await bridge.exportDraftHwpx());
       if (start !== token()) { scheduleSave(); return null; }
       const blob = buildExamProject({ projectId, name:title, documentBytes, figures:sources, workspace });
       await writeExamDraft(blob,projectId,title);
@@ -895,7 +895,7 @@ export function initRhwpExamWorkspace(state, services) {
     if (modern?.kind==='drawing') {await restoreWorkspace(modern.workspace || {drawing:modern.drawing});await actions.close();return;}
     const project = parseExamProject(bytes, prepareLoadedProject);
     validateWorkspace(project.workspace);
-    const previous = {bytes:new Uint8Array(await bridge.exportHwpx()),generation:bridge.generation,figures,projectId,name:nameInput.value,workspace:await captureWorkspace()};
+    const previous = {bytes:new Uint8Array(await bridge.exportDraftHwpx()),generation:bridge.generation,figures,projectId,name:nameInput.value,workspace:await captureWorkspace()};
     initializing = true;
     try {
       await bridge.load(project.documentBytes,'document.hwpx');
@@ -916,7 +916,7 @@ export function initRhwpExamWorkspace(state, services) {
     if (!/\.(hwp|hwpx)$/i.test(filename)) throw new Error('한글 파일(.hwp 또는 .hwpx)을 선택해주세요.');
     if (!bytes.length) throw new Error('빈 한글 파일입니다. 다른 파일을 선택해주세요.');
     await flushInline(true);await closeInline();
-    const previous={bytes:new Uint8Array(await bridge.exportHwpx()),generation:bridge.generation,figures,projectId,name:nameInput.value,recoveries:new Map(inlineRecoveries)};
+    const previous={bytes:new Uint8Array(await bridge.exportDraftHwpx()),generation:bridge.generation,figures,projectId,name:nameInput.value,recoveries:new Map(inlineRecoveries)};
     initializing=true;
     try {
       await bridge.load(bytes,filename);
@@ -1446,9 +1446,11 @@ export function initRhwpExamWorkspace(state, services) {
         try{
           const empty=target.getSectionCount()===1&&target.getParagraphCount(0)===1&&target.getParagraphLength(0,0)===0;
           if(!empty&&!sameColumnGeometry(source,target,cursor.sectionIndex))throw Error(packet.typeset.pageMode==='question-column'?'문항 전용 용지와 현재 문서의 규격이 다릅니다. 문항 HWPX를 열어 작업하세요. 전체 시험지 조립은 추후 지원합니다.':`조판과 시험지의 용지·여백·단 너비가 다릅니다. 시험지를 ${packet.typeset.profile.paper}·${packet.typeset.profile.columns}단과 저장한 조판의 여백·단 간격으로 맞추거나 문항 HWPX를 열어 작업하세요.`);
+          // 넣기가 실패하면 문서는 되돌아가므로 엄격 내보내기도 넣기 전 상태로 되돌린다(M2).
+          const approvedBefore=bridge.approvedQuestionGeneration;
           await bridge.enableApprovedQuestionExport();
           let recovered;
-          bridge.transaction('approved-question',()=>{
+          try{bridge.transaction('approved-question',()=>{
             if(empty){target.setPageDef(0,source.getPageDef(0));const col=JSON.parse(source.getColumnDef(0));target.setColumnDef(0,col.columnCount,col.columnType,col.sameWidth,col.spacing);}
             // Insert at a paragraph boundary; never split a native table or
             // replace the approved document with another HTML conversion.
@@ -1461,7 +1463,7 @@ export function initRhwpExamWorkspace(state, services) {
             recovered=bridge.recoverFigures(prepareLoadedProject);
             if(new Set([...figures.keys(),...recovered.keys()]).size>500)throw Error('시험지의 5E 그림은 500개까지 보관할 수 있습니다.');
             return true;
-          });
+          });}catch(error){bridge.approvedQuestionGeneration=approvedBefore;throw error;}
           for(const [id,figure] of recovered)figures.set(id,figure);
           changed();renderFigures();message('저장한 조판을 넣었습니다. 글·표·수식·그림을 각각 편집할 수 있습니다.');
           return {warnings:[]};

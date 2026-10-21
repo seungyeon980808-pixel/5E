@@ -118,8 +118,17 @@ export class RhwpExamBridge {
     if(this.approvedExportInstalled)return;
     this.approvedExportInstalled=true;const original=this.wasm.exportHwp.bind(this.wasm),originalHwpx=this.wasm.exportHwpx.bind(this.wasm);
     this.wasm.exportHwp=(...args)=>this.approvedQuestionGeneration===this.generation?exportCompatibleHwp(this.wasm.borrowDocumentHandle(),window.XLSX.CFB):original(...args);
-    this.wasm.exportHwpx=(...args)=>this.approvedQuestionGeneration===this.generation?exportVerifiedHwpx(this.wasm.borrowDocumentHandle(),window.XLSX.CFB):originalHwpx(...args);
+    this.wasm.exportHwpx=(...args)=>{
+      if(this.approvedQuestionGeneration!==this.generation)return originalHwpx(...args);
+      if(!this.draftExport)return exportVerifiedHwpx(this.wasm.borrowDocumentHandle(),window.XLSX.CFB);
+      // 자동 저장·바꾸기 전 백업은 5E 안에서 다시 여는 보관본이라 엄격 검사가 실패해도 막지 않는다. 문항을 한 번 넣은 뒤 그림을 옮기거나
+      // 표를 넓혀 검사에 걸리면 「자동 저장 실패」가 계속되고 저장 경로가 막혔다(M2). 파일로 저장할 때는 그대로 엄격 검사한다.
+      const fallback=error=>{this.lastDraftExportError=error;return originalHwpx(...args);};
+      try{const result=exportVerifiedHwpx(this.wasm.borrowDocumentHandle(),window.XLSX.CFB);return result?.then?result.catch(fallback):result;}
+      catch(error){return fallback(error);}
+    };
   }
+  async exportDraftHwpx(){this.draftExport=true;try{return await this.exportHwpx();}finally{this.draftExport=false;}}
 
   watchView(callback) {
     let frame=0;const schedule=()=>{if(!frame)frame=requestAnimationFrame(()=>{frame=0;callback();});};
