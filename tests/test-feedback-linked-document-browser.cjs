@@ -9,7 +9,7 @@ h.withServer(async origin=>{
    await page.addInitScript(()=>{localStorage.setItem('5e.tutorial.bannerSeen','true');localStorage.setItem('5e.preview:5e.tutorial.bannerSeen','true');});
    await h.navigate(page,origin+'/?mode=pro&mobile=0&exam=1');await h.ready(page);await h.action(page,'close');
    await page.evaluate(async()=>{const {state}=await import('/js/state.js?v=1.7.0-four-session-integration');state.update(s=>{s.objects=[{id:'link-line',type:'line',p1:{x:-15,y:-10},p2:{x:15,y:10},layerId:1,order:0,rotation:0,strokeWidth:.3,strokeLevel:0,lineMode:'solid',arrowHead:'none'}];s.selectedIds=[];});});
-   await page.locator('#exam-send').click();await page.locator('.capture-overlay').waitFor();await page.keyboard.press('Escape');await page.locator('.capture-overlay').waitFor({state:'hidden'});
+   await h.sendCanvas(page);await page.locator('.capture-overlay').waitFor();await page.keyboard.press('Escape');await page.locator('.capture-overlay').waitFor({state:'hidden'});
    const metadata=()=>page.evaluate(async()=>{const {state}=await import('/js/state.js?v=1.7.0-four-session-integration');return structuredClone(state.get().pages.find(p=>p.id===state.get().activePageId).meta);});
    assert.equal((await metadata()).examLink,undefined);assert.equal(await page.locator('.page-tab.is-exam-linked').count(),0);
    await h.crop(page);await h.idle(page);assert.equal((await metadata()).examLink,undefined);assert.equal(await page.locator('.page-tab.is-exam-linked').count(),0);
@@ -31,7 +31,7 @@ h.withServer(async origin=>{
     await h.action(page,'close');
     await page.locator('#exam-edit-bar').waitFor({state:'visible'});
    }
-   const committed=await metadata();await page.locator('#exam-send').click();await page.locator('.capture-overlay').waitFor();await page.keyboard.press('Escape');await page.locator('.capture-overlay').waitFor({state:'hidden'});
+   const committed=await metadata();await h.sendCanvas(page);await page.locator('.capture-overlay').waitFor();await page.keyboard.press('Escape');await page.locator('.capture-overlay').waitFor({state:'hidden'});
    assert.deepEqual((await metadata()).examLink,committed.examLink);assert.equal((await metadata()).examRevisionId,committed.examRevisionId);assert.equal(await page.locator('.page-tab.is-exam-linked').count(),1);
    await page.locator('.page-tab.is-exam-linked.is-active').click({button:'right'});
    await page.getByText('문서 그림 연결 해제',{exact:true}).click();

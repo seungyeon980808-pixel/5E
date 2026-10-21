@@ -54,7 +54,7 @@ h.withServer(async origin => {
       await page.mouse.click(canvas.x + canvas.width * .35, canvas.y + canvas.height * .45);
       await page.mouse.click(canvas.x + canvas.width * .65, canvas.y + canvas.height * .55);
       await page.keyboard.press('Escape');
-      await page.locator('#exam-send').click();
+      await h.sendCanvas(page);
       await page.locator('.capture-overlay').waitFor({ state: 'visible' });
       await page.evaluate(() => document.querySelector('.app-switch-image [data-app-switch="hwp"]').click());
       await page.keyboard.press('Escape');

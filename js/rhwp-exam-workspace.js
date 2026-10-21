@@ -1,4 +1,5 @@
 import { initPaletteWorkspace } from './hwp-palette/ui.js?v=1.7.0-hwppalette-rhwp';
+import { installExamModes } from './rhwp-exam-modes.js';
 import { parseFiveEProject } from './fivee-project.js?v=1.7.0-four-session-integration';
 import { appSwitchHtml } from './app-switch.js?v=1021-fix';
 import {buildQuestionHtml,verifyNativeQuestion} from '../assets/exampool/sheet/handoff.js?v=1014-hwp-sheet';
@@ -94,6 +95,9 @@ export function initRhwpExamWorkspace(state, services) {
   // A small public capability surface also makes standalone port regressions
   // exercise the same instances the user operates.
   window.fiveEHwpPalette = palette; // 화면 색(graphite-shell)의 window.fiveEPalette와 이름이 겹쳐 덮어쓰이던 것을 피함
+  // 도구 모드 3개(기본·집중·없음)와 집중 도구 줄. 동작(actions)·그림 설정은 아래에서 정의되므로 누를 때 찾는다.
+  const toolModes = installExamModes(panel, { getBridge:() => bridge, palette, message:(...args) => message(...args), run:task => run(task),
+    actions:{ edit:() => actions.edit(), insertFromImage:() => actions['insert-from-image']() }, openPictureSettings:anchor => openPictureSettings(anchor) });
   const nativeRegion = new ExamRegionSurface(document.body, {
     onSettings:anchor => openPictureSettings(anchor),onUndo:redo=>run(()=>{if(redo)bridge.input.performRedo();else bridge.input.performUndo();renderFigures();}), onError:error=>message(error.message,true),
   });
@@ -141,7 +145,6 @@ export function initRhwpExamWorkspace(state, services) {
     nameInput.disabled = value || !!editing;
     panel.querySelectorAll('select').forEach(select => { select.disabled = value || !!editing; });
     [nativeRegion.root,sourceRegion.root,regionInspector,pictureSettings.root].forEach(root=>root.querySelectorAll('button,input,select').forEach(button=>{button.disabled=value;}));
-    document.querySelectorAll('#exam-send').forEach(button=>{button.disabled=value;});
     if(!value){if(editing)syncSourceControls();if(!pictureSettings.root.hidden)pictureSettings.refresh();}
     updatePlacement(); renderFigures();
   }
@@ -1008,6 +1011,7 @@ export function initRhwpExamWorkspace(state, services) {
     bridge.deps.eventBus.on('picture-object-selection-changed',scheduleFigures);
     await bridge.newDocument();documentGeneration=bridge.generation;
     await palette.attach();
+    toolModes.attach();
     restoredDraft = await readExamDraft().catch(() => null);
     initializing = false;
     savedToken = token();
@@ -1038,9 +1042,11 @@ export function initRhwpExamWorkspace(state, services) {
   }
   nativeRegion.root.addEventListener('click',e=>{const b=e.target.closest('[data-exam-action]');if(b&&!b.disabled){nativeRegion.closeMenu();void run(()=>actions[b.dataset.examAction]?.());}});
   const actions = {
-    close:async () => {await flushInline(true);await closeInline();if (window.fiveEExam) return window.fiveEExam.returnToSource(); await fadeOut(panel); panel.hidden = true; syncBackground(); await resumeLinkedPage();document.querySelector('#exam-send')?.focus(); },
+    close:async () => {await flushInline(true);await closeInline();if (window.fiveEExam) return window.fiveEExam.returnToSource(); await fadeOut(panel); panel.hidden = true; syncBackground(); await resumeLinkedPage();document.querySelector('.app-switch-image [data-app-switch="hwp"]')?.focus(); },
     new:async () => { cancelPlacement();await stableSave();await closeInline(); initializing=true;await bridge.newDocument();initializing=false;documentGeneration=bridge.generation;projectId=crypto.randomUUID();figures = new Map(); nameInput.value = '새 시험지'; changed(); },
     insert:() => startSend(),
+    // 집중 도구 줄 「그림 화면에서 넣기」: 그림 화면이 비었으면 안내만 한다(예전 아래 막대 단추의 동작).
+    'insert-from-image':() => { if (!state.get().objects.length) throw new Error('그림 화면에 넣을 그림이 없습니다. 맨 위 「image」에서 그림을 만든 뒤 누르세요.'); return startSend(); },
     'cancel-placement':() => {cancelPlacement();message('그림 보내기를 취소했습니다.');},
     'confirm-placement':confirmPlacement,
     edit:() => { const ref=bridge.input.cursor.getSelectedPictureRef();if(ref?.type!=='image') throw new Error('시험지에서 그림을 선택해주세요.');return beginEdit(bridge.selectedFigureId(),ref); },
@@ -1161,7 +1167,7 @@ export function initRhwpExamWorkspace(state, services) {
       closeMenus();
       void run(() => actions[action]?.()).then(()=>{
         // The opener becomes focusable after run releases its busy state.
-        if(action==='close' && panel.hidden && !window.fiveEExam)document.querySelector('#exam-send')?.focus();
+        if(action==='close' && panel.hidden && !window.fiveEExam)document.querySelector('.app-switch-image [data-app-switch="hwp"]')?.focus();
       });
     }
   });
@@ -1194,7 +1200,7 @@ export function initRhwpExamWorkspace(state, services) {
     event.preventDefault(); event.stopImmediatePropagation();
     if (placement) { cancelPlacement(); message('그림 보내기를 취소했습니다.'); return; }
     void run(actions.close).then(() => {
-      if (panel.hidden && !window.fiveEExam) document.querySelector('#exam-send')?.focus();
+      if (panel.hidden && !window.fiveEExam) document.querySelector('.app-switch-image [data-app-switch="hwp"]')?.focus();
     });
   }
   document.addEventListener('keydown',closeWorkspaceWithEscape);
@@ -1275,16 +1281,8 @@ export function initRhwpExamWorkspace(state, services) {
   window.addEventListener('beforeunload', event => {
     if (editing || (bridge?.input && savedToken !== token())) { event.preventDefault(); event.returnValue = ''; }
   });
-  // 입구는 맨 위 줄 「hwp」 하나로(10-20). 그림 화면 아래 막대의 이 단추는 「입구」가 아니라 「지금 그림 영역을 한글 문서에 넣기」 동작이다.
-  const send = document.createElement('button'); send.type = 'button'; send.id = 'exam-send'; send.className = 'object-search-trigger exam-document-trigger';
-  send.setAttribute('aria-label','한글에 넣기');send.title='한글에 넣기 · 지금 그림에서 영역을 골라 한글 문서(5E_hwp)에 넣습니다';
-  // An authored ㅎ + arae-a mark shares the shell's icon stroke and size.
-  send.innerHTML='<svg class="ds-ico" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="1.55" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4.5 3.5h7M3 6h10"/><ellipse cx="8" cy="10.5" rx="4" ry="2.8"/><circle cx="8" cy="16.5" r="1" fill="currentColor" stroke="none"/></svg><span>한글에 넣기</span>';
-  const documentEntry=document.createElement('div');documentEntry.className='exam-document-entry';
-  documentEntry.append(send);const workflowHub = document.querySelector('.image-workflow-hub');
-  workflowHub?.insertBefore(documentEntry, document.getElementById('exam-pool-open'));
-  const syncSend=()=>{send.disabled=busy || !state.get().objects.length;};syncSend();state.subscribe?.(syncSend);
-  send.addEventListener('click',()=>void run(()=>startSend()));
+  // 그림 화면 아래 막대의 「한글에 넣기」 단추는 10-21 사용자 결정으로 없앴다(입구는 맨 위 줄 「hwp」 하나).
+  // 지금 그림에서 영역을 골라 넣는 동작은 5E_hwp 집중 도구 줄 「그림 → 그림 화면에서 넣기」와 다른 창의 보내기 요청(5e:exam-send-canvas)으로 한다.
   // 맨 위 줄 「hwp」(app-switch.js)가 한글 문서를 연다.
   // 맨 위 전환 줄의 「hwp」. 다른 작업으로 바쁘면 받지 않고, 받았는지는 detail.accepted로 알려 전환 쪽이 잠시 뒤 다시 부탁하게 한다.
   window.addEventListener('5e:hwp-open',event=>{if(busy)return;if(event.detail)event.detail.accepted=true;void run(open);});

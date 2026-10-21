@@ -85,7 +85,7 @@ h.withServer(async origin=>{
    // Hold the real PNG export to exercise the asynchronous transition boundary.
    await page.evaluate(()=>{window.examExportEntered=Promise.withResolvers();window.savedToBlob=HTMLCanvasElement.prototype.toBlob;HTMLCanvasElement.prototype.toBlob=function(callback,...args){const canvas=this;window.resumeExamExport=()=>window.savedToBlob.call(canvas,callback,...args);HTMLCanvasElement.prototype.toBlob=window.savedToBlob;window.examExportEntered.resolve();};document.querySelector('[data-source-apply]').click();});
    await page.evaluate(()=>window.examExportEntered.promise);
-   for(const selector of ['#exam-send','[data-source-apply]'])assert.equal(await page.locator(selector).isDisabled(),true,'navigation is locked during replacement');
+   for(const selector of ['[data-source-apply]'])assert.equal(await page.locator(selector).isDisabled(),true,'navigation is locked during replacement');
    await page.evaluate(()=>window.resumeExamExport());await h.idle(page);
    const applied=(await h.pictures(page))[0];assert.notEqual(applied.figure.id,initial.figure.id);
    assert.equal(applied.figure.source.pages[0].objects[0].text,'보내기로 확정한 라벨','send commits the live text editor before capture');

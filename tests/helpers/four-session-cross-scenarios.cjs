@@ -1675,11 +1675,12 @@ scenarios.QA6 = async ctx => {
     });
     await page.evaluate(() => __cross.deadline(__cross.exportEntered.promise, 'source rasterization entered'));
     await ctx.check('actual source Apply, Return and HWP entry disabled during held rasterization', async () => {
-      for (const selector of ['#exam-send', '[data-source-apply]']) assert.equal(await page.locator(selector).isDisabled(), true);
+      // 10-21: 아래 막대 「한글에 넣기」는 없어졌다 — 넣기 요청은 아래에서 바쁜 동안 거절되는지로 본다.
+      for (const selector of ['[data-source-apply]']) assert.equal(await page.locator(selector).isDisabled(), true);
       assert.equal(await page.locator('#exam-edit-bar').getByRole('button',{name:'돌아가기',exact:true}).isDisabled(),true);
     });
     const pendingBefore = await h.pictures(page);
-    await page.evaluate(() => document.querySelector('#exam-send').click());
+    await page.evaluate(() => window.dispatchEvent(new CustomEvent('5e:exam-send-canvas')));
     await ctx.check('disabled HWP entry click cannot change picture/document or source ownership', async () => assert.deepEqual(await h.pictures(page), pendingBefore)); ctx.cover('pending-buttons-lock');
     await ctx.act('release explicitly held source PNG export', () => page.evaluate(() => __cross.resumeExport()), page); await h.idle(page);
     const applied = (await h.pictures(page))[0];
@@ -3134,7 +3135,7 @@ async function browserZoomDriver(ctx, page) {
 async function zoomMetrics(page) {
   return page.evaluate(() => {
     const rect = node => { if (!node) return null; const r = node.getBoundingClientRect(); return { x: r.x, y: r.y, width: r.width, height: r.height, right: r.right, bottom: r.bottom }; };
-    const controls = Object.fromEntries(['#exam-send', '#exam-workspace-open', '#ai-image-panel', '#canvas', '#gm-confirm', '#gm-cancel'].map(selector => {
+    const controls = Object.fromEntries(['.app-switch-image [data-app-switch=\"hwp\"]', '#exam-workspace-open', '#ai-image-panel', '#canvas', '#gm-confirm', '#gm-cancel'].map(selector => {
       const node = document.querySelector(selector), style = node && getComputedStyle(node);
       return [selector, { rect: rect(node), display: style?.display, visibility: style?.visibility, fontSize: style?.fontSize, zoom: style?.zoom }];
     }));
@@ -3177,7 +3178,7 @@ async function zoomDialogDiagnostics(ctx, page, phase) {
         zIndex: s.zIndex, pointerEvents: s.pointerEvents, position: s.position, top: s.top, height: s.height,
         minHeight: s.minHeight, maxHeight: s.maxHeight, overflow: s.overflow, alignItems: s.alignItems };
     };
-    const selectors = ['#exam-send', '#exam-workspace-open', '#ai-image-panel [data-ai-close]', '#ai-image-panel [data-ai-graph-edit]', '#gm-confirm', '#gm-cancel'];
+    const selectors = ['.app-switch-image [data-app-switch=\"hwp\"]', '#exam-workspace-open', '#ai-image-panel [data-ai-close]', '#ai-image-panel [data-ai-graph-edit]', '#gm-confirm', '#gm-cancel'];
     return { diagnosticOnly: true, bodyClass: document.body.className,
       sourceToolbarBottom: getComputedStyle(document.body).getPropertyValue('--exam-source-toolbar-bottom'),
       panelComputedTop: document.querySelector('#ai-image-panel') ? getComputedStyle(document.querySelector('#ai-image-panel')).top : null,
@@ -3348,7 +3349,7 @@ async function realBrowserZoom(ctx) {
       await ctx.shot(page, 'QA8-zoom-200-send-document');
       await ctx.act('200% actual document close', () => h.action(page, 'close'), page);
       await closeAI(page);
-      await onScreen(ctx, page, '#exam-send', '200% current document entry remains accessible');
+      await onScreen(ctx, page, '.app-switch-image [data-app-switch=\"hwp\"]', '200% current document entry remains accessible');
       await ctx.act('200% actual Exam opens the retained document', () => openExamDocument(page), page);
       await page.locator('#rhwp-exam-workspace').waitFor({ state: 'visible' }); await h.idle(page);
       await ctx.check('200% actual Exam reopened the same native figure', async () => assert.ok((await h.pictures(page)).some(p => p.figure?.link?.assetId === picture.figure.link.assetId)));
@@ -3357,7 +3358,7 @@ async function realBrowserZoom(ctx) {
       // close deliberately returned to the source canvas. Reopen through the
       // actual Exam control before selecting its retained native figure.
       await closeAI(page);
-      await onScreen(ctx, page, '#exam-send', '200% current document entry accessible before original editing');
+      await onScreen(ctx, page, '.app-switch-image [data-app-switch=\"hwp\"]', '200% current document entry accessible before original editing');
       await ctx.act('200% actual Exam reopens the retained document before original editing', () => openExamDocument(page), page);
       await page.locator('#rhwp-exam-workspace').waitFor({ state: 'visible' }); await h.idle(page);
       await h.originalEdit(page, 0); await page.locator(panel).waitFor({ state: 'visible' }); await selectTask(ctx, page, 'cross-graph-task');
@@ -3415,7 +3416,7 @@ async function probeActualZoomAPI(ctx) {
         assert.equal(revision.graphResult.objects.find(o => o.type === 'coordplane').labelX, '확대 API probe');
       });
       await ctx.act('API probe 200% actual AI close', () => closeAI(page), page);
-      for (const selector of ['#exam-send', '#ai-image-install-open'])
+      for (const selector of ['.app-switch-image [data-app-switch=\"hwp\"]', '#ai-image-install-open'])
         await onScreen(ctx, page, selector, 'API probe ordinary root control after actual modal close: ' + selector);
       await ctx.act('API probe 200% actual AI reopen', () => page.locator('#ai-image-install-open').click(), page);
       await page.locator(panel).waitFor({ state: 'visible' });

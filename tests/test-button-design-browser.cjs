@@ -72,10 +72,10 @@ for (const engine of [chromium,webkit]) test(`canonical button design and unread
   await page.addInitScript({content:seed+`\nseedRequestWorkspaces(2,true,false,'pro',false,false,false,${JSON.stringify({runtime:runtimeInit})});`});
   await installAiMain(page,root,{},evidence);
   await page.goto(new URL('/?mode=pro&mobile=0&exam=0',origin).href,{waitUntil:'domcontentloaded'});
-  await page.waitForFunction(()=>window.__task2Manager && document.getElementById('exam-send')?.classList.contains('ui-core-action'));
+  await page.waitForFunction(()=>window.__task2Manager && document.getElementById('graph-tool-open')?.classList.contains('ui-core-action'));
   await page.evaluate(()=>window.__task2Manager.sharingSnapshot());
   const welcome=page.locator('.tut-welcome-overlay .tut-banner-no');if(await welcome.isVisible())await welcome.click();
-  const core=['exam-library-open','ai-image-install-open','graph-tool-open','exam-send'];
+  const core=['exam-library-open','ai-image-install-open','graph-tool-open']; // 10-21: 아래 막대 「한글에 넣기」(exam-send)는 없앴다
   await page.evaluate(()=>document.fonts.ready);
   const layout=await page.evaluate(ids=>ids.map(id=>{
     const el=document.getElementById(id),rect=el.getBoundingClientRect(),style=getComputedStyle(el);
@@ -87,7 +87,7 @@ for (const engine of [chromium,webkit]) test(`canonical button design and unread
     const s=getComputedStyle(el),icon=getComputedStyle(el.querySelector('svg'));
     return {background:s.backgroundColor,border:s.borderTopColor,color:s.color,padding:s.padding,weight:s.fontWeight,gap:s.gap,iconWidth:icon.width,iconHeight:icon.height};
   }));
-  assert.equal(idle.length,4);
+  assert.equal(idle.length,3); // 10-21: 아래 막대 「한글에 넣기」를 없애 핵심 단추는 셋
   assert.ok(idle.every(s=>JSON.stringify(s)===JSON.stringify(idle[0])),JSON.stringify(idle));
   assert.equal(await page.locator('.image-workflow-divider').count(),0);
   assert.equal(idle[0].background,'rgba(0, 0, 0, 0)');
@@ -156,12 +156,8 @@ for (const engine of [chromium,webkit]) test(`canonical button design and unread
   assert.deepEqual(await readStateStyle(page,'#center-view-btn'),await readStateStyle(page,'#settings-menu-btn'));
   assert.equal(await page.locator('#auto-snap-btn svg').count(),1);
   await page.mouse.move(1000,400);await page.screenshot({path:path.join(evidence,'main-idle.png')});
-  await page.locator('#exam-send').hover();
-  // 그라파이트: 마우스를 올려도 도는 장식 테두리가 없다.
-  assert.equal(await page.locator('#exam-send').evaluate(el=>getComputedStyle(el,'::before').animationName),'none');
-  await page.screenshot({path:path.join(evidence,'main-hwp-hover.png')});
-  // 진입점 통일(10-20): 아래 「한글에 넣기」는 메뉴 없이 바로 넣는 단추 — 빈 그림에서는 꺼져 있고, 한글 문서는 맨 위 이름 줄로만 연다.
-  assert.equal(await page.locator('#exam-send').isDisabled(),true);
+  // 10-21: 아래 막대 「한글에 넣기」(#exam-send)는 없앴다 — 한글 문서는 맨 위 이름 줄 「hwp」로만 열고, 그림 넣기는 5E_hwp 안 「그림 화면에서 넣기」로.
+  assert.equal(await page.locator('#exam-send').count(),0);
   assert.equal(await page.locator('#exam-document-menu').count(),0);
   assert.equal(await page.locator('.app-switch-image [data-app-switch="hwp"]').isVisible(),true);
   await page.locator('#graph-tool-open').click();await page.locator('#graph-modal-overlay').waitFor({state:'visible'});
@@ -254,7 +250,7 @@ for (const engine of [chromium,webkit]) test(`canonical button design and unread
   await touchPage.addInitScript({content:seed+`\nseedRequestWorkspaces(2,false,false,'pro',false,false,false,${JSON.stringify({runtime:runtimeInit})});`});
   await installAiMain(touchPage,root,{},path.join(evidence,'touch'));
   await touchPage.goto(new URL('/?mode=pro&mobile=0&exam=0',origin).href,{waitUntil:'domcontentloaded'});
-  await touchPage.waitForFunction(()=>document.getElementById('exam-send')?.classList.contains('ui-core-action'));
+  await touchPage.waitForFunction(()=>document.getElementById('graph-tool-open')?.classList.contains('ui-core-action'));
   const touchWelcome=touchPage.locator('.tut-welcome-overlay .tut-banner-no');if(await touchWelcome.isVisible())await touchWelcome.click();
   const coarse=await touchPage.evaluate(ids=>ids.map(id=>({id,height:document.getElementById(id).getBoundingClientRect().height})),core);
   assert.ok(coarse.every(x=>x.height===27),JSON.stringify(coarse));

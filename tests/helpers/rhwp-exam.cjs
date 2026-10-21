@@ -124,7 +124,8 @@ async function withServer(run, { isolated = false } = {}) {
   }
 }
 async function ready(page) {
-  await page.waitForSelector('#exam-send',{timeout:60000});
+  // 10-21: 그림 화면 아래 막대 「한글에 넣기」(#exam-send)를 없앴다. 조판 창이 만들어지면 준비된 것.
+  await page.waitForSelector('#rhwp-exam-workspace',{state:'attached',timeout:60000});
   const skip=page.getByRole('button',{name:'건너뛰기',exact:true});if(await skip.isVisible())await skip.click();
   if(await page.locator('#rhwp-exam-workspace').isVisible())await idle(page);
   assertLoadedRuntime(runtimes.get(page),resources.get(page));
@@ -146,8 +147,14 @@ async function action(page,name) {
     await page.locator('#rhwp-exam-workspace').waitFor({state:'hidden'});
   }
 }
-async function crop(page,button='#exam-send') {
-  await page.locator(button).click();
+// 「지금 그림 영역을 한글에 넣기」. 예전 아래 막대 단추를 누르던 자리 — 지금은 5E_hwp 「그림 화면에서 넣기」와 같은 요청을 보낸다.
+// 단추가 바쁜 동안 눌리지 않던 것처럼, 조판 창이 한가해질 때까지 기다린 뒤 보낸다.
+async function sendCanvas(page) {
+  await waitForState(page,()=>document.querySelector('#rhwp-exam-workspace')?.getAttribute('aria-busy')!=='true');
+  await page.evaluate(()=>window.dispatchEvent(new CustomEvent('5e:exam-send-canvas')));
+}
+async function crop(page,button=null) {
+  if(button)await page.locator(button).click();else await sendCanvas(page);
   await page.locator('.capture-overlay').waitFor();
   if(await page.locator('#capture-confirm').isVisible()){await page.locator('#capture-confirm').click();return;}
   const box=await page.locator('#canvas').boundingBox();
@@ -287,7 +294,7 @@ async function originalEdit(page,index=0) {
   }
 }
 async function drawing(page,stateUrl) {return page.evaluate(async url=>{const {state}=await import(url);const s=state.get();return{activePageId:s.activePageId,objects:JSON.parse(JSON.stringify(s.objects)),pages:JSON.parse(JSON.stringify(s.pages)),undo:s.undoStack.length,viewBox:s.viewBox};},stateUrl);}
-module.exports={navigate,ready,idle,action,crop,point,place,pictures,doubleClick,originalEdit,drawing,withServer,waitForState,runtime:page=>runtimes.get(page)};
+module.exports={navigate,ready,idle,action,crop,sendCanvas,point,place,pictures,doubleClick,originalEdit,drawing,withServer,waitForState,runtime:page=>runtimes.get(page)};
 
 module.exports.recrop=async function(page){await module.exports.idle(page);assert.equal(await page.locator('.capture-overlay').count(),0,'Apply uses the continuously editable export region');assert.equal(await page.locator('#exam-status').getAttribute('data-error'),'false',await page.locator('#exam-status').textContent());};
 module.exports.openFile=async function(page,action,file){

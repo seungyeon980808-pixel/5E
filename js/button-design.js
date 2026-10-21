@@ -1,10 +1,9 @@
 // Effects belong to workflow entries, never to arbitrary HTML buttons or overlays.
-const CORE_IDS = new Set(['exam-library-open', 'ai-image-install-open', 'graph-tool-open', 'exam-send']);
+const CORE_IDS = new Set(['exam-library-open', 'ai-image-install-open', 'graph-tool-open']);
 const WORKFLOW_SURFACES = {
   'exam-library-open':'.unified-library-overlay',
   'ai-image-install-open':'#ai-image-panel',
   'graph-tool-open':'#graph-modal-overlay',
-  'exam-send':'#rhwp-exam-workspace',
 };
 
 export function initButtonDesign(doc = document) {

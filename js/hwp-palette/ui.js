@@ -1955,5 +1955,13 @@ export function initPaletteWorkspace(panel, services) {
       return !!restoreContent;
     },
     snapshot: () => clone(store.state),
+    // 5E_hwp 집중 도구 줄(rhwp-exam-modes.js)이 팔레트 기능을 부르는 입구.
+    // convert(마크다운)·spacing_fit(한 줄 맞춤)·photo·special·form_fill·exam_excel·search, capture(고른 부분을 양식으로 저장), manager(창고 탭)
+    tool(key, arg) {
+      if (key === "capture") return perform(() => editItem("템플릿"));
+      if (key === "manager") return openManager(arg || "전체");
+      if (key === "markdown") return openMarkdown(native.capture(), arg || "");
+      return perform(() => execute({ type: "builtin", key }));
+    },
   };
 }

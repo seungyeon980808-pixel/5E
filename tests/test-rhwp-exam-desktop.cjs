@@ -76,7 +76,7 @@ async function ready(page) {
  const runtime={mainUrl,stateUrl:entry.protocol==='file:'?stateUrl:new URL('/js/state.js'+moduleQuery,entry).href};
  const scripts=await page.locator('script[src]').evaluateAll(nodes=>nodes.map(node=>node.src).filter(url=>new URL(url).pathname.endsWith('/main.js')));
  assert.deepEqual(scripts,[mainUrl],'native entry must load the canonical main from this candidate');
- await page.locator('#exam-send').waitFor({state:'attached',timeout:60000});
+ await page.locator('#rhwp-exam-workspace').waitFor({state:'attached',timeout:60000});
  const skip=page.getByRole('button',{name:'건너뛰기',exact:true});if(await skip.isVisible())await skip.click();
  if(await page.locator('#rhwp-exam-workspace').isVisible())await h.idle(page);
  const parsed=entry.protocol==='file:'?await parsedFileRuntime(page,runtime):null;
@@ -362,7 +362,7 @@ async function inlineRoundtrip(exam,main,app,profile) {
  });
  const full=await parseProject(exam,fullBytes,true);
  assert.equal(full.kind,'exam','normal primary-window save includes the linked exam');assert.equal(full.workspace.drawing.pages.find(p=>p.id===before.activePageId).objects[0].p2.y,5);
- await main.locator('#exam-send').click();await h.recrop(main);await main.locator('#exam-edit-bar').waitFor({state:'hidden'});await h.idle(exam);assert.equal((await pictures(exam))[0].figure.source.pages[0].objects[0].p2.y,5);
+ await h.sendCanvas(main);await h.recrop(main);await main.locator('#exam-edit-bar').waitFor({state:'hidden'});await h.idle(exam);assert.equal((await pictures(exam))[0].figure.source.pages[0].objects[0].p2.y,5);
  const after=await h.drawing(main,stateUrl);assert.equal(after.undo,1);assert.equal(after.pages[0].meta.examRevisionId,(await pictures(exam))[0].figure.id,'native commit receipt keeps the original tab attached to the current revision');
  await originalEdit(exam,main);assert.equal((await h.drawing(main,stateUrl)).undo,1,'second original edit preserves original live controller');await main.locator('#exam-workspace-open').click();await main.locator('#exam-edit-bar').waitFor({state:'hidden'});
  await h.crop(main);await h.idle(exam);await exam.locator('.exam-placement:not([hidden])').waitFor();await exam.locator('[data-exam-action="confirm-placement"]').click();await h.idle(exam);assert.equal((await pictures(exam)).length,1,'same native tab sends update one image');assert.equal(app.windows().filter(p=>p.url().startsWith('http:')).length,1,'exam window is reused');

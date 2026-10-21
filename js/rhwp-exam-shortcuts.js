@@ -303,45 +303,59 @@ export function installDocumentShortcuts(bridge) {
     if (!action) return;
     consume(event);
     if (event.repeat && ['extend-cells','exit-table'].includes(action)) return;
-    try {
-      if (['table:insert-row-below','table:delete-row','table:cell-merge','table:cell-split'].includes(action)) {
-        const at = input.getCursorPosition();
-        if ((at.cellPath?.length || 0) > 1) { notify('중첩 표의 줄·셀 구조는 현재 단축키로 변경할 수 없습니다.'); return; }
-        const w = bridge.wasm, count = w.getTableDimensions(at.sectionIndex, at.parentParaIndex, at.controlIndex).cellCount;
-        const anchor = w.getCellInfo(at.sectionIndex, at.parentParaIndex, at.controlIndex, at.cellIndex);
-        const selected = ['table:cell-merge','table:cell-split'].includes(action) ? input.getSelectedCellBlock()?.cellIndices : null;
-        for (let cellIdx = 0; cellIdx < count; cellIdx++) {
-          const info = w.getCellInfo(at.sectionIndex, at.parentParaIndex, at.controlIndex, cellIdx);
-          const affected = selected ? selected.includes(cellIdx) : info.row <= anchor.row && info.row + info.rowSpan > anchor.row;
-          if (affected && w.getCellProperties(at.sectionIndex, at.parentParaIndex, at.controlIndex, cellIdx).cellProtect) {
-            notify('보호된 셀이 포함된 줄·셀은 변경할 수 없습니다.'); return;
-          }
+    runDocumentAction(bridge, action, { notify, context });
+  }, true);
+}
+
+// 단축키와 5E_hwp 집중 도구 줄이 같은 동작을 쓰도록, 단축키 이름(action) 하나를 실행하는 부분을 따로 둔다.
+export function runDocumentAction(bridge, action, { notify = message => bridge.onChange?.(new Error(message)), context } = {}) {
+  const input = bridge.input, cursor = input?.cursor;
+  if (!cursor) { notify('먼저 시험지를 여세요.'); return false; }
+  context ||= { inCell:cursor.isInCell() && !cursor.isInTextBox(), cellSelection:cursor.isInCellSelectionMode() };
+  const structureLocked = () => {
+    if (!input.examTableLayoutLocked) return false;
+    if (input.examStructureNotice) input.examStructureNotice('구조 잠금 중 · 표·그림의 크기나 틀은 구조 잠금을 풀고 바꾸세요. 글은 그대로 고칠 수 있습니다.');
+    return true;
+  };
+  try {
+    if (['table:insert-row-below','table:delete-row','table:cell-merge','table:cell-split'].includes(action)) {
+      const at = input.getCursorPosition();
+      if ((at.cellPath?.length || 0) > 1) { notify('중첩 표의 줄·셀 구조는 현재 단축키로 변경할 수 없습니다.'); return; }
+      const w = bridge.wasm, count = w.getTableDimensions(at.sectionIndex, at.parentParaIndex, at.controlIndex).cellCount;
+      const anchor = w.getCellInfo(at.sectionIndex, at.parentParaIndex, at.controlIndex, at.cellIndex);
+      const selected = ['table:cell-merge','table:cell-split'].includes(action) ? input.getSelectedCellBlock()?.cellIndices : null;
+      for (let cellIdx = 0; cellIdx < count; cellIdx++) {
+        const info = w.getCellInfo(at.sectionIndex, at.parentParaIndex, at.controlIndex, cellIdx);
+        const affected = selected ? selected.includes(cellIdx) : info.row <= anchor.row && info.row + info.rowSpan > anchor.row;
+        if (affected && w.getCellProperties(at.sectionIndex, at.parentParaIndex, at.controlIndex, cellIdx).cellProtect) {
+          notify('보호된 셀이 포함된 줄·셀은 변경할 수 없습니다.'); return;
         }
       }
-      if (action.startsWith('equal-')) {
-        if (structureLocked()) return;
-        if (!resizeSelected(bridge, action === 'equal-width' ? 'width' : 'height', 'equal'))
-          notify('크기를 맞출 여러 셀을 선택하세요. 보호된 셀은 변경할 수 없습니다.');
-      } else if (action === 'extend-cells') {
-        if (!context.cellSelection) cursor.enterCellSelectionMode();
-        if (cursor.getCellSelectionPhase() === 1) cursor.advanceCellSelectionPhase();
-        input.caret.hide(); input.selectionRenderer.clear(); input.updateCellSelection();
-      } else if (action === 'exit-table') {
-        input.exitCellSelectionMode(); cursor.exitTable(1); input.updateCaret(); input.focus();
-      } else if (paragraphSteps[action]) {
-        if (!stepParagraph(bridge, input, paragraphSteps[action])) notify('여백을 더 줄일 수 없습니다.');
-      } else if (action === 'level-increase' || action === 'level-decrease') {
-        if (!stepLevel(input, action)) notify('개요나 문단 번호가 있는 문단에서 수준을 바꿀 수 있습니다.');
-      } else if (action === 'hanging-indent') {
-        if (!input.applyHangingIndentAtCursor()) notify('이 위치에서는 빠른 내어쓰기를 사용할 수 없습니다.');
-      } else if (!input.dispatcher?.isEnabled(action)) {
-        notify('이 위치에서는 해당 단축키를 사용할 수 없습니다. 본문이나 편집 가능한 셀을 선택하세요.');
-      } else if (action === 'format:char-shape' && !input.getSelection() && !context.cellSelection) {
-        openCaretCharShape(bridge, input);
-      } else {
-        const result = input.dispatcher.dispatchWithResult(action);
-        if (!result.ok) notify(result.message || '단축키를 실행하지 못했습니다.');
-      }
-    } catch (error) { notify(error.message); }
-  }, true);
+    }
+    if (action.startsWith('equal-')) {
+      if (structureLocked()) return;
+      if (!resizeSelected(bridge, action === 'equal-width' ? 'width' : 'height', 'equal'))
+        notify('크기를 맞출 여러 셀을 선택하세요. 보호된 셀은 변경할 수 없습니다.');
+    } else if (action === 'extend-cells') {
+      if (!context.cellSelection) cursor.enterCellSelectionMode();
+      if (cursor.getCellSelectionPhase() === 1) cursor.advanceCellSelectionPhase();
+      input.caret.hide(); input.selectionRenderer.clear(); input.updateCellSelection();
+    } else if (action === 'exit-table') {
+      input.exitCellSelectionMode(); cursor.exitTable(1); input.updateCaret(); input.focus();
+    } else if (paragraphSteps[action]) {
+      if (!stepParagraph(bridge, input, paragraphSteps[action])) notify('여백을 더 줄일 수 없습니다.');
+    } else if (action === 'level-increase' || action === 'level-decrease') {
+      if (!stepLevel(input, action)) notify('개요나 문단 번호가 있는 문단에서 수준을 바꿀 수 있습니다.');
+    } else if (action === 'hanging-indent') {
+      if (!input.applyHangingIndentAtCursor()) notify('이 위치에서는 빠른 내어쓰기를 사용할 수 없습니다.');
+    } else if (!input.dispatcher?.isEnabled(action)) {
+      notify('이 위치에서는 해당 단축키를 사용할 수 없습니다. 본문이나 편집 가능한 셀을 선택하세요.');
+    } else if (action === 'format:char-shape' && !input.getSelection() && !context.cellSelection) {
+      openCaretCharShape(bridge, input);
+    } else {
+      const result = input.dispatcher.dispatchWithResult(action);
+      if (!result.ok) notify(result.message || '단축키를 실행하지 못했습니다.');
+    }
+  } catch (error) { notify(error.message); }
+  return true;
 }

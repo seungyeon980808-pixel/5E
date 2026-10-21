@@ -4353,7 +4353,7 @@ function build() {
   };
   _els.confirm.addEventListener("click", commitValidated);
   overlay.querySelector('#gm-send-exam').addEventListener('click', () => {
-    if (_overlay.hidden || _editingContext || !document.querySelector('#exam-send')) return;
+    if (_overlay.hidden || _editingContext || !document.querySelector('#rhwp-exam-workspace')) return;
     const result = commitValidated();
     if (result) window.dispatchEvent(new CustomEvent('5e:exam-send-graph',{detail:result}));
   });
@@ -4773,7 +4773,7 @@ export function openGraphModal(planeId = null, startTab = "coord", editingContex
   _els.title.textContent = _mode === "edit" ? "그래프 편집" : "그래프 만들기";
   _els.confirm.textContent = _mode === "edit" ? "적용" : "캔버스로 내보내기";
   _els.confirm.classList.add('modal-btn-primary');
-  _overlay.querySelector('#gm-send-exam').hidden=!!editingContext || !document.querySelector('#exam-send');
+  _overlay.querySelector('#gm-send-exam').hidden=!!editingContext || !document.querySelector('#rhwp-exam-workspace');
   _els.error.textContent = "";
   _overlay.querySelectorAll("input, textarea, select").forEach(input => input.setCustomValidity(""));
   _overlay.hidden = false;

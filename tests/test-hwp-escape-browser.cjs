@@ -29,7 +29,7 @@ for(const [engineName,engine] of Object.entries({chromium,webkit}))test(`${engin
   await page.evaluate(async()=>{const {state}=await import('/js/state.js?v=1.7.0-four-session-integration');state.update(s=>{s.objects=[{id:'escape-line',type:'line',p1:{x:-10,y:-5},p2:{x:10,y:5},strokeWidth:.2,layerId:1}];});});
   await h.crop(page);await page.locator('.exam-placement:not([hidden])').waitFor();await h.idle(page);assert.equal((await h.pictures(page)).length,0);
   await page.locator('#exam-name').focus();await page.keyboard.press('Escape');assert.equal(await page.locator('.exam-placement').isVisible(),false);assert.equal(await page.locator('#rhwp-exam-workspace').isVisible(),true);assert.equal((await h.pictures(page)).length,0);
-  await page.keyboard.press('Escape');await page.locator('#rhwp-exam-workspace').waitFor({state:'hidden'});await h.waitForState(page,()=>document.querySelector('#exam-send')===document.activeElement);
+  await page.keyboard.press('Escape');await page.locator('#rhwp-exam-workspace').waitFor({state:'hidden'});await h.waitForState(page,()=>document.querySelector('.app-switch-image [data-app-switch="hwp"]')===document.activeElement); // 10-21: 아래 막대 단추가 없어져 초점은 맨 위 「hwp」로
   await open(page);await h.action(page,'close');await h.crop(page);await h.place(page);
   const point=await h.point(page,'image',0);
   await page.mouse.click(point.x,point.y);

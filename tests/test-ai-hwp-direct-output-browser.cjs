@@ -60,7 +60,7 @@ h.withServer(async origin => {
       const originalDrawing = await page.evaluate(() => structuredClone(__directState.get().objects));
       assert.equal(originalDrawing.filter(o => o.type === 'image').length, 2, 'Ordinary canvas insertion preserves composition');
       // Existing figure ownership must not be silently overwritten by task 1.
-      await page.locator('#exam-send').click(); await h.idle(page);
+      await h.sendCanvas(page); await h.idle(page);
       assert.equal(await page.locator('.capture-overlay').count(), 0);
       assert.match(await page.locator('#exam-status').textContent(), /다른 그림에 연결/);
       await page.getByRole('button', { name:'확인', exact:true }).filter({ visible:true }).click().catch(() => {});
