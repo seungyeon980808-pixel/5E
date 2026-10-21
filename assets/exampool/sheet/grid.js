@@ -66,7 +66,14 @@ export function createSheetGrid({root=document,formula,nameBox,onSelect,onWrite,
     if(cancel){draft.input.value=draft.original;onDraft?.(null);paint();return true;}
     if(text===draft.text){paint();return true;}
     const selected={...draft.description,range:[draft.description.r,draft.description.c,draft.description.r,draft.description.c]};
-    const ok=onWrite(selected,[{r:selected.r,c:selected.c,value:text}]);if(ok===false)draft.input.value=draft.original;onDraft?.(null);refresh();return ok;
+    const ok=onWrite(selected,[{r:selected.r,c:selected.c,value:text}]);onDraft?.(null);refresh();
+    // 검사에 걸리면 예전에는 친 글 전체가 편집 전 값으로 돌아갔다(M10). 같은 칸을 친 글 그대로 다시 열어 고칠 수 있게 둔다.
+    // 다른 입력란으로 초점이 이미 옮겨 갔으면 초점을 빼앗지 않는다(그때는 전처럼 칸 값이 남는다).
+    if(ok===false&&draft.input.tagName!=='SELECT'){
+      const focus=document.activeElement,away=focus&&focus!==document.body&&focus!==draft.input&&focus!==formula&&!isGrid(focus);
+      const table=[...root.querySelectorAll('table[data-grid]')].find(n=>identity(n)===draft.description.key),cell=table&&find(table,draft.description.r,draft.description.c);
+      if(cell&&!away){active=cell;begin(text);}}
+    return ok;
   }
   function begin(replace){
     if(!active||editing)return;if(active.dataset.open){onOpen?.(describe(),active.dataset.open);return;}const input=inputFor(active);editing={cell:active,input,original:input.value,text:value(active),description:describe()};active.classList.add('grid-editing');

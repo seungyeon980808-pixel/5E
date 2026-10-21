@@ -50,7 +50,7 @@ export function writeField(q,key,value,{clear=false}={}){
     let b=existing[0];if(!b){b=block('text',null,'지문');q.blocks.unshift(b);}b.text=value;
   }else if(key==='choices'){
     if(q.style==='대응표'||q.style==='그림·그래프')throw Error('표·그림 선지는 구성 편집에서 수정하세요.');
-    const lines=value.split(/\r?\n/);if(lines.length>5)throw Error('선지는 다섯 줄로 입력하세요. 여러 문단·그림 선지는 구성 편집에서 수정하세요.');
+    const lines=value.replace(/(\r?\n)+$/,'').split(/\r?\n/);if(lines.length>5)throw Error('선지는 다섯 줄로 입력하세요. 여러 문단·그림 선지는 구성 편집에서 수정하세요.');
     q.choices.forEach((c,i)=>c.text=stripChoiceLabel(lines[i]||''));
     if(q.style==='조합'){q.choices.forEach(c=>c.text=normalizeCombo(c.text));const o=orderCombos(q.choices,q.answer);q.choices=o.choices;q.answer=o.answer;}
   }else if(key==='bogi'){

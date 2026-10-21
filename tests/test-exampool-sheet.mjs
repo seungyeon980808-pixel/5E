@@ -67,3 +67,11 @@ test('excel round trip keeps exams (H5): titles, order, status and only question
   assert.equal(back.exams.length,1,'the exam survives the excel round trip');
   assert.equal(back.exams[0].title,'중간고사');assert.deepEqual(back.exams[0].items,[b,a]);assert.equal(back.exams[0].status,'drafting');
 });
+
+test('선지 다섯 줄 끝의 줄바꿈은 여섯째 줄로 세지 않는다(M10)', async () => {
+  const {writeField} = await import('../assets/exampool/sheet/vertical.js');
+  const q = newQuestion('1', '단답형', '글·수식');
+  writeField(q, 'choices', '가\n나\n다\n라\n마\n');
+  assert.deepEqual(q.choices.map(c => c.text), ['가', '나', '다', '라', '마']);
+  assert.throws(() => writeField(q, 'choices', '가\n나\n다\n라\n마\n바'), /다섯 줄/);
+});

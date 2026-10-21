@@ -25,6 +25,15 @@ for(const [name,engine] of Object.entries({chromium,webkit})) test(`${name}: typ
   assert.notEqual(await sheet.evaluate(()=>document.activeElement?.id),'preview','closing the HWP preview never pulls focus out of the sheet');
   await sheet.locator('#rows tr:has(th.field-label:text-is("지문")) td').first().click();
   assert.equal(await sheet.locator('#rows tr:has(th.field-label:text-is("발문")) textarea').first().inputValue(),typed,'the first character and every later one land in the cell');
+  // M10: 검사에 걸린 입력은 지워지지 않고, 같은 칸이 친 글 그대로 다시 열린다.
+  const choiceCell=sheet.locator('#rows tr:has(th.field-label:text-is("선지")) td').first();
+  assert.ok(await choiceCell.count(),'선지 row exists');{
+   await choiceCell.click();await page.keyboard.type('x');const six='ㄱ\nㄴ\nㄷ\nㄱ, ㄴ\nㄴ, ㄷ\nㄱ, ㄴ, ㄷ';
+   const box=sheet.locator('#rows tr:has(th.field-label:text-is("선지")) textarea').first();await box.fill(six);await page.keyboard.press('Tab');
+   await sheet.waitForFunction(()=>document.querySelector('td.grid-editing'));
+   assert.equal(await sheet.locator('#rows tr:has(th.field-label:text-is("선지")) textarea').first().inputValue(),six,'rejected text stays in the reopened cell');
+   await page.keyboard.press('Escape');
+  }
   assert.deepEqual(errors,[]);
  });
 });
