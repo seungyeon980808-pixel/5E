@@ -383,6 +383,14 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
     await page.locator('[data-exam-ftab="sheet"]').click(); await button(page, '개념 정리·탐구 활동').click(); await page.locator('[data-exam-box="유의 사항"]').click(); await h.idle(page);
     assert.deepEqual(await inPage(page, `const t=JSON.parse(d.getPageControlLayout(0)).controls.find(c=>c.type==='table'&&!c.cellPath?.length),ci=t.controlIdx??t.ci;
       return [0,1].map(c=>[...Array(d.getCellParagraphCount(0,t.paraIdx,ci,c)).keys()].map(p=>d.getTextInCell(0,t.paraIdx,ci,c,p,0,d.getCellParagraphLength(0,t.paraIdx,ci,c,p)).slice(0,6)));`), [['유의 사항'], ['1. 답안지', '2. 선택형', '3. 서술형', '4. 문항에']]);
+    // 32) 점검: 배점 빠진 문항, 같은 정답 세 번 연속, 정답 분포 치우침.
+    await inPage(page, `reset(['1. 가 [2점]','[정답] ③','2. 나 [2점]','[정답] ③','3. 다 [2점]','[정답] ③','4. 라','[정답] ③','5. 마 [2점]','[정답] ①','6. 바 [2점]','[정답] ③'].join('\\n'));`);
+    await page.locator('[data-exam-fx="check"]').click();
+    const checks = await page.locator('.exam-checklist li').allTextContents();
+    assert.ok(checks.includes('4번 문항에 배점 [n점]이 없습니다.'), checks.join(' / '));
+    assert.ok(checks.includes('같은 정답 ③이 1~4번에 잇달아 나옵니다.'), checks.join(' / '));
+    assert.ok(checks.some(t => t.startsWith('정답 분포가 고르지 않습니다(①1 ②0 ③5 ④0 ⑤0)')), checks.join(' / '));
+    await page.keyboard.press('Escape');
     // 15) 구역이 둘인 시험지(0구역=머리·1번, 1구역=2단 본문): 문항 목록이 두 구역을 다 보이고, 구역을 넘는 ↑↓는 막고, 1구역 안 이동·복제·나뉜 문항 점검은 된다.
     const twoSections = await inPage(page, `const {unzipSync,zipSync}=await import('/vendor/fflate/index.js');
       reset('시험 머리\\n1. 가');const first=unzipSync(d.exportHwpx());reset('2. 나\\n나나\\n3. 다');const second=unzipSync(d.exportHwpx());

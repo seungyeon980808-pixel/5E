@@ -351,6 +351,26 @@ export function extraChecks(doc) {
     const total = Math.round(scores.reduce((a, b) => a + b, 0) * 10) / 10;
     if (total !== 100) issues.push({ text: `배점 합계가 ${total}점입니다(배점 표시 ${scores.length}곳 · 100점이 아님).`, at: null });
   }
+  // 배점 빠진 문항: 배점을 단 문항이 있는데 안 단 선택형·서술형 문항이 있으면 알린다.
+  if (scores.length) for (let sec = 0; sec < doc.getSectionCount(); sec++) for (const q of questionBlocks(doc, sec)) {
+    let has = false;
+    for (let p = q.head; p < q.end && !has; p++) has = /\[\d+(?:\.\d+)?\s*점\]/.test(String(doc.getTextRange(sec, p, 0, doc.getParagraphLength(sec, p))));
+    if (!has) issues.push({ text: `${q.label} 문항에 배점 [n점]이 없습니다.`, at: { sectionIndex: sec, paragraphIndex: q.head, charOffset: 0 } });
+  }
+  // 정답 분포: 문항 안 「[정답] ③」이 다섯 개 이상이면 번호별 개수와 같은 정답 연속을 본다.
+  const answers = [...questionAnswers(doc)].sort((a, b) => a[0] - b[0]).map(([n, a]) => [n, MARKS.indexOf(a.trim()[0])]).filter(([, i]) => i >= 0);
+  if (answers.length >= 5) {
+    const counts = [0, 0, 0, 0, 0]; for (const [, i] of answers) counts[i]++;
+    const mean = answers.length / 5, line = counts.map((c, i) => `${MARKS[i]}${c}`).join(' ');
+    if (counts.some(c => Math.abs(c - mean) > Math.max(2, mean * 0.5))) issues.push({ text: `정답 분포가 고르지 않습니다(${line}).`, at: null });
+    // 같은 정답이 세 문항 이상 잇달아 나오면 그 범위 전체를 알린다.
+    for (let i = 0, from = 0; i <= answers.length; i++) {
+      const same = i < answers.length && i > from && answers[i][1] === answers[i - 1][1] && answers[i][0] === answers[i - 1][0] + 1;
+      if (same) continue;
+      if (i - from >= 3) issues.push({ text: `같은 정답 ${MARKS[answers[from][1]]}이 ${answers[from][0]}~${answers[i - 1][0]}번에 잇달아 나옵니다.`, at: null });
+      from = i;
+    }
+  }
   if (fonts.size > 1) {
     const [major] = [...fonts].sort((a, b) => b[1].length - a[1].length);
     for (const [key, ats] of fonts) if (key !== major[0]) issues.push({ text: `문항 첫 줄 글꼴이 다릅니다(${key} · 대부분은 ${major[0]}).`, at: ats[0] });
