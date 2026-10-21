@@ -37,6 +37,7 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
     await button(page, '굵게').click(); await button(page, '고른 글자에 형광펜').click(); await button(page, '자간 줄이기').click(); await h.idle(page);
     const chars = await inPage(page, `return w.getCharPropertiesAt(0,0,1);`);
     assert.equal(chars.bold, true); assert.equal(chars.shadeColor, '#fff176'); assert.ok(chars.spacings[0] < 0);
+    await page.locator('[data-exam-ftab="para"]').click();
     await page.locator('[data-exam-fctl="spacing"]').selectOption('200');
     await inPage(page, `b.input.cursor.moveTo({sectionIndex:0,paragraphIndex:0,charOffset:1});`);
     await button(page, '문단 위 간격 2pt 늘리기').click(); await h.idle(page);
@@ -44,6 +45,7 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
     assert.equal(para.lineSpacing, 200); assert.equal(Math.round(para.spacingBefore * 75 / 100) * 100, 400, '2pt = 400 (엔진은 소수 한 자리로 돌려줌)');
 
     // 2-1) 더 보기: 리본 없이 닿는 기능 — 오른쪽 정렬.
+    await page.locator('[data-exam-ftab="text"]').click();
     await button(page, '자주 쓰지 않는 기능').click(); await page.locator('.exam-morepop').waitFor();
     await page.locator('.exam-morelist button', { hasText: '오른쪽 정렬' }).click(); await h.idle(page);
     assert.equal((await inPage(page, `return w.getParaPropertiesAt(0,0);`)).alignment, 'right');
@@ -124,6 +126,7 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
     assert.deepEqual((await inPage(page, `return text();`)).slice(0, 2), ['1. 식물은 광합성으로 포도당을 만든다. [3점]', '2. 엽록체에서 일어난다. [4점]'], 'teacher copy keeps answers');
     await button(page, '빈칸 정답을').click(); await h.idle(page);
     assert.equal((await inPage(page, `return text();`)).at(-1), '[빈칸 정답] 1. 광합성   2. 엽록체');
+    await page.locator('[data-exam-ftab="layout"]').click();
     await button(page, '문서 맨 앞에 제목').click();
     await page.locator('[data-exam-form="subject"]').fill('통합과학'); await page.locator('[data-exam-form="grade"]').fill('1');
     await page.locator('[data-exam-form-submit]').click(); await h.idle(page);
@@ -168,6 +171,7 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
 
     // 11) 판짜기: 2단·B4, 가·나형(나형 사본은 문항째 섞이고 번호 다시 매김, 교사용 끝에 대응표).
     await inPage(page, `reset('1. 가\\n가가\\n2. 나\\n3. 다\\n다다\\n4. 라');`);
+    await page.locator('[data-exam-ftab="layout"]').click();
     await button(page, '모든 쪽을 2단').click(); await h.idle(page);
     assert.equal((await inPage(page, `return JSON.parse(d.getColumnDef(0));`)).columnCount, 2);
     await button(page, '용지 크기').click(); await page.locator('[data-exam-paper="B4"]').click(); await h.idle(page);
@@ -184,6 +188,7 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
 
     // 12) 정답지(빈칸 자리에 빨간 정답)·자주 쓰는 발문·표 머리 줄 음영.
     await inPage(page, `reset('1. 식물은 광합성으로 포도당을 만든다.');b.input.cursor.selectRange({sectionIndex:0,paragraphIndex:0,charOffset:7},{sectionIndex:0,paragraphIndex:0,charOffset:10});`);
+    await page.locator('[data-exam-ftab="sheet"]').click();
     await button(page, '고른 낱말을 빈칸으로').click(); await h.idle(page);
     const keyDownload = page.waitForEvent('download'); await button(page, '빈칸 자리에 정답을').click(); await keyDownload;
     const key = await inPage(page, `const {answerKeyCopy}=await import('/js/rhwp-exam-worksheet.js');const D=d.constructor,x=new D(answerKeyCopy(b).bytes);try{return [x.getTextRange(0,0,0,x.getParagraphLength(0,0)),JSON.parse(x.getCharPropertiesAt(0,0,9)).textColor];}finally{x.free();}`);

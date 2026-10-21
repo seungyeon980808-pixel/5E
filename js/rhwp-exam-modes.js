@@ -28,7 +28,9 @@ function focusTabs(ctx) {
       ['장평<span class="t">−</span>', '장평 줄이기 (Alt+Shift+J)', cmd('format:char-ratio-decrease')], ['장평<span class="t">+</span>', '장평 늘리기 (Alt+Shift+K)', cmd('format:char-ratio-increase')],
       ['⇥| 한 줄', '한 줄 맞춤: 줄 끝에 넘친 한두 글자를 자간으로 줄 안에 넣기 (팔레트 자간 맞춤)', tool('spacing_fit')], '|',
       ['형광펜', '고른 글자에 형광펜', () => ctx.highlight(HIGHLIGHT)], ['형광펜<span class="t">×</span>', '형광펜 지우기', () => ctx.highlight('#ffffff')],
-      ['모양 복사', '모양 복사·적용 (Alt+C)', cmd('edit:format-copy')], '|',
+      ['모양 복사', '모양 복사·적용 (Alt+C)', cmd('edit:format-copy')],
+    ],
+    para: [
       ['왼쪽', '왼쪽 정렬', cmd('format:align-left')], ['가운데', '가운데 정렬', cmd('format:align-center')], ['양쪽', '양쪽 정렬', cmd('format:align-justify')],
       ['spacing'],
       ['문단↑<span class="t">+</span>', '문단 위 간격 2pt 늘리기', () => ctx.paraSpacing('spacingBefore', 2)], ['문단↑<span class="t">−</span>', '문단 위 간격 2pt 줄이기', () => ctx.paraSpacing('spacingBefore', -2)],
@@ -45,8 +47,8 @@ function focusTabs(ctx) {
       ['머리 줄 음영', '커서가 있는 표의 첫 줄에 음영·굵게', doc(b => ctx.message(`머리 줄 ${shadeHeaderRow(b)}칸에 음영을 넣었습니다.`))],
       ['표 가운데', '표를 가운데로', doc(b => applyTableAlignment(b, 'center'))],
       ['단 폭 맞춤', '표를 단 폭에 맞추기(칸 비율 그대로)', doc(b => { if (!fitTableToColumn(b)) ctx.message('이미 단 폭에 맞습니다.'); })],
-      ['셀 테두리·칠', '셀 테두리·배경', cmd('table:cell-props')],
-      ['엑셀 표 붙이기', '엑셀에서 복사한 표를 마크다운 창에 붙여 넣으면 한글 표로 바뀝니다 (팔레트)', tool('convert')],
+      ['셀 칠', '셀 테두리·배경', cmd('table:cell-props')],
+      ['엑셀 표', '엑셀에서 복사한 표를 마크다운 창에 붙여 넣으면 한글 표로 바뀝니다 (팔레트)', tool('convert')],
     ],
     pic: [
       ['그림 화면에서 넣기', '그림 화면(5E_image)에서 영역을 골라 지금 커서 자리에 넣기 — 예전 아래 막대 「한글에 넣기」', () => ctx.actions.insertFromImage()],
@@ -77,12 +79,14 @@ function focusTabs(ctx) {
       ['정답지 내려받기', '빈칸 자리에 정답을 빨간 굵은 글씨로 채운 정답지 HWPX 사본 내려받기', doc(b => ctx.answerKey(b))],
       ['정답 모아 넣기', '빈칸 정답을 문서 끝에 「[빈칸 정답] 1. … 2. …」로 넣기', doc(b => ctx.message(`빈칸 정답 ${appendBlankAnswers(b)}개를 문서 끝에 넣었습니다.`))], '|',
       ['학습지 틀', '제목·이름 칸·학습 목표·활동 1·활동 2·정리 상자를 문서 끝에 한 번에 넣기', doc(b => ctx.message(`학습지 틀(상자 ${insertWorksheetFrame(b, ctx.documentTitle())}개)을 넣었습니다. 칸마다 내용을 쓰세요.`))],
+      ['상자', '개념 정리·탐구 활동·생각해 보기·주의 상자(제목 줄 음영)를 커서 문단 뒤에 넣기', (_, button) => ctx.openPicker(button, 'box')],
+      ['답란', '서술형 답을 쓰는 줄(3·5·8줄)을 커서 문단 뒤에 넣기', (_, button) => ctx.openPicker(button, 'lines')],
+      ['평가 기준표', '평가 요소 | 상 | 중 | 하 표를 커서 문단 뒤에 넣기', doc(b => ctx.message(`평가 기준표(${insertRubric(b)}줄)를 넣었습니다.`))],
+    ],
+    layout: [
       ['시험지 머리', '문서 맨 앞에 제목 줄과 학년·반·번호·이름 칸 넣기', (_, button) => ctx.openHeaderForm(button)],
       ['정답표 칸', '찾은 문항 번호로 「번호/정답」 표를 문서 끝에 넣기(정답은 비워 둠)', doc(b => ctx.message(`문항 ${insertAnswerGrid(b)}개의 정답표 칸을 넣었습니다.`))],
       ['문항 간격', '두 번째 문항부터 문항 위 간격을 한꺼번에 맞추기', (_, button) => ctx.openSpacingForm(button)], '|',
-      ['상자', '개념 정리·탐구 활동·생각해 보기·주의 상자(제목 줄 음영)를 커서 문단 뒤에 넣기', (_, button) => ctx.openPicker(button, 'box')],
-      ['답란', '서술형 답을 쓰는 줄(3·5·8줄)을 커서 문단 뒤에 넣기', (_, button) => ctx.openPicker(button, 'lines')],
-      ['평가 기준표', '평가 요소 | 상 | 중 | 하 표를 커서 문단 뒤에 넣기', doc(b => ctx.message(`평가 기준표(${insertRubric(b)}줄)를 넣었습니다.`))], '|',
       ['1단', '모든 쪽을 1단으로', doc(b => ctx.message(`${setColumns(b, 1)}단으로 바꿨습니다.`))], ['2단', '모든 쪽을 2단으로(단 사이 8mm) — 시험지 기본', doc(b => ctx.message(`${setColumns(b, 2)}단으로 바꿨습니다.`))],
       ['용지', '용지 크기 A4·B4·A3 (여백·방향은 그대로)', (_, button) => ctx.openPicker(button, 'paper')],
       ['가·나형', '문항 순서를 섞은 나형 사본 내려받기(번호 다시 매김) + 교사용 문서 끝에 대응표', doc(b => ctx.variant(b))], '|',
@@ -93,6 +97,7 @@ function focusTabs(ctx) {
 
 // 「⋯ 더 보기」: 자주 쓰지 않지만 한글 리본을 켜지 않고도 닿아야 하는 것(기능 목록의 ○ 항목).
 const MORE = {
+  sheet: [['찾아 바꾸기', '찾아 바꾸기 (Ctrl+H)', 'edit:find-replace'], ['문자표 전체', '한글 문자표 창', 'insert:symbols'], ['글상자', '글상자 넣기', 'insert:textbox'], ['각주', '각주 넣기', 'insert:footnote']],
   text: [['글자 모양 창', '글자 모양 전체 설정(글자색·테두리 등) (Alt+L)', 'format:char-shape'], ['문단 모양 창', '문단 모양 전체 설정 (Alt+T)', 'format:para-shape'],
     ['문단 번호', '문단 번호 켜기·끄기', 'format:toggle-numbering'], ['글머리표', '글머리표 켜기·끄기', 'format:toggle-bullet'],
     ['왼쪽 여백 +1pt', '왼쪽 여백 늘이기 (Ctrl+Alt+F6)', 'para:left-increase'], ['왼쪽 여백 −1pt', '왼쪽 여백 줄이기 (Ctrl+Alt+F5)', 'para:left-decrease'],
@@ -109,7 +114,7 @@ const MORE = {
     ['쪽 번호 넣기', '지금 자리에 쪽 번호 넣기', 'page:insert-field-pagenum'], ['전체 쪽 수', '지금 자리에 전체 쪽 수 넣기', 'page:insert-field-totalpage'],
     ['각주', '각주 넣기', 'insert:footnote'], ['미주', '미주 넣기', 'insert:endnote'], ['글상자', '글상자 넣기', 'insert:textbox'],
     ['단 설정', '단 수·간격 설정', 'page:col-settings'], ['쪽 설정', '용지·여백 설정', 'page:setup'], ['문자표 전체', '한글 문자표 창', 'insert:symbols']],
-  sheet: [['쪽 테두리', '쪽 테두리·배경', 'page:page-border'], ['쪽 설정', '용지·여백 설정', 'page:setup'], ['단 설정', '단 수·간격 설정', 'page:col-settings'],
+  layout: [['쪽 테두리', '쪽 테두리·배경', 'page:page-border'], ['쪽 설정', '용지·여백 설정', 'page:setup'], ['단 설정', '단 수·간격 설정', 'page:col-settings'],
     ['머리말', '머리말 만들기·고치기', 'page:header-create'], ['꼬리말', '꼬리말 만들기·고치기', 'page:footer-create'], ['쪽 번호 넣기', '지금 자리에 쪽 번호 넣기', 'page:insert-field-pagenum']],
 };
 
@@ -130,7 +135,7 @@ export function installExamModes(panel, services) {
   // ── 집중 도구 줄 ──
   const bar = document.createElement('div');
   bar.className = 'exam-focusbar'; bar.setAttribute('role', 'toolbar'); bar.setAttribute('aria-label', '집중 편집 도구');
-  bar.innerHTML = `<span class="exam-ftabs" role="tablist">${[['text', '글자·문단'], ['table', '표'], ['pic', '그림'], ['item', '문항'], ['sheet', '학습지']].map(([k, l]) => `<button type="button" role="tab" data-exam-ftab="${k}" aria-selected="false">${l}</button>`).join('')}</span>
+  bar.innerHTML = `<span class="exam-ftabs" role="tablist">${[['text', '글자'], ['para', '문단'], ['table', '표'], ['pic', '그림'], ['item', '문항'], ['sheet', '학습지'], ['layout', '판짜기']].map(([k, l]) => `<button type="button" role="tab" data-exam-ftab="${k}" aria-selected="false">${l}</button>`).join('')}</span>
     <span class="exam-fdiv"></span><div class="exam-fgroup"></div>
     <div class="exam-fright"><span class="exam-fdiv"></span>
       <button type="button" class="exam-fx big" data-exam-fx="symbols" title="특수기호 창: 기출 3년 빈도로 고른 첫 줄 16칸 + 묶음 탭">Ω 기호</button>
@@ -214,6 +219,7 @@ export function installExamModes(panel, services) {
       return `<button type="button" class="exam-fx" data-exam-fi="${i}" title="${esc(it[1])}">${it[0]}</button>`;
     }).join('');
     bar.querySelectorAll('[data-exam-ftab]').forEach(b => b.setAttribute('aria-selected', String(b.dataset.examFtab === tab)));
+    group.scrollLeft = 0; requestAnimationFrame(() => syncOverflow());
     syncControls(true);
   }
   group.addEventListener('click', event => {
@@ -221,6 +227,18 @@ export function installExamModes(panel, services) {
     const item = [...focusTabs(ctx)[tab], '|', ['⋯', '', (_, b) => openMore(b)]][Number(button.dataset.examFi)];
     void run(async () => { await item[2](ctx, button); });
   });
+  // 좁은 화면: 세로 휠로도 도구 줄을 옆으로 넘기고, 넘치면 가장자리를 흐리게 보여 더 있다는 것을 알린다.
+  group.addEventListener('wheel', event => {
+    if (group.scrollWidth <= group.clientWidth + 1 || Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
+    group.scrollLeft += event.deltaY; event.preventDefault();
+  }, { passive: false });
+  const syncOverflow = () => {
+    const over = group.scrollWidth > group.clientWidth + 1;
+    group.classList.toggle('is-over-start', over && group.scrollLeft > 2);
+    group.classList.toggle('is-over-end', over && group.scrollLeft + group.clientWidth < group.scrollWidth - 2);
+  };
+  group.addEventListener('scroll', syncOverflow, { passive: true });
+  new ResizeObserver(() => syncOverflow()).observe(group);
   bar.querySelector('.exam-ftabs').addEventListener('click', event => {
     const b = event.target.closest('[data-exam-ftab]'); if (!b) return;
     tab = b.dataset.examFtab; renderTab();
@@ -304,7 +322,7 @@ export function installExamModes(panel, services) {
     const sym = event.target.closest('[data-exam-sym]');
     if (sym) { void run(() => insertSymbol(sym.dataset.examSym)); return; }
     const more = event.target.closest('[data-exam-more]');
-    if (more) { const [, , action] = MORE[tab][Number(more.dataset.examMore)]; closePop(); void run(async () => runMore(action)); return; }
+    if (more) { const [, , action] = (MORE[tab] || MORE[tab === 'para' ? 'text' : 'sheet'])[Number(more.dataset.examMore)]; closePop(); void run(async () => runMore(action)); return; }
     const jump = event.target.closest('[data-exam-jump]');
     if (jump) {
       const issue = lastIssues[Number(jump.dataset.examJump)];
@@ -319,7 +337,7 @@ export function installExamModes(panel, services) {
     pop.dataset.kind = 'more';
     pop.className = 'exam-pop exam-morepop';
     pop.innerHTML = `<div class="exam-pop-head">더 보기 <small>${esc(bar.querySelector(`[data-exam-ftab="${tab}"]`)?.textContent || '')}</small></div>
-      <div class="exam-morelist">${MORE[tab].map(([label, tip], i) => `<button type="button" data-exam-more="${i}" title="${esc(tip)}">${esc(label)}</button>`).join('')}</div>
+      <div class="exam-morelist">${(MORE[tab] || MORE[tab === 'para' ? 'text' : 'sheet']).map(([label, tip], i) => `<button type="button" data-exam-more="${i}" title="${esc(tip)}">${esc(label)}</button>`).join('')}</div>
       <div class="exam-pop-foot">모든 기능은 「기본」 모드의 한글 리본에도 있습니다 · Esc로 닫기</div>`;
     place(anchor);
   }

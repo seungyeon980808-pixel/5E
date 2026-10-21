@@ -14,7 +14,7 @@
 #rhwp-exam-workspace .exam-fgroup::-webkit-scrollbar { display: none; }
 #rhwp-exam-workspace .exam-fright { display: flex; align-items: center; gap: 4px; margin-left: auto; flex: none; }
 #rhwp-exam-workspace .exam-fdiv { width: 1px; height: 20px; margin: 0 5px; background: var(--ds-line-strong, #30363d); flex: none; }
-#rhwp-exam-workspace .exam-fx { display: inline-flex; align-items: center; justify-content: center; gap: 3px; height: 30px; min-width: 30px; padding: 0 7px; border: 0; border-radius: 6px; background: transparent; color: var(--ds-ink-2, #b1bac4); font: inherit; font-size: 12.5px; white-space: nowrap; cursor: pointer; flex: none; transition: background-color 120ms var(--ds-motion, ease), color 120ms var(--ds-motion, ease); }
+#rhwp-exam-workspace .exam-fx { display: inline-flex; align-items: center; justify-content: center; gap: 3px; height: 30px; min-width: 28px; padding: 0 6px; border: 0; border-radius: 6px; background: transparent; color: var(--ds-ink-2, #b1bac4); font: inherit; font-size: 12.5px; white-space: nowrap; cursor: pointer; flex: none; transition: background-color 120ms var(--ds-motion, ease), color 120ms var(--ds-motion, ease); }
 #rhwp-exam-workspace .exam-fx:hover { background: var(--ds-hover, rgba(177,186,196,.08)); color: var(--ds-ink, #e6edf3); }
 #rhwp-exam-workspace .exam-fx:focus-visible, #rhwp-exam-workspace .exam-modes button:focus-visible, #rhwp-exam-workspace .exam-ftabs button:focus-visible { outline: 2px solid var(--ds-focus, #6ba4f8); outline-offset: 1px; }
 #rhwp-exam-workspace .exam-fx .t { font-size: 11.5px; color: var(--ds-ink-3, #7d8590); }
@@ -103,3 +103,8 @@
 #rhwp-exam-workspace .exam-stemlist button { min-height: 30px; padding: 5px 10px; border: 0; border-radius: 6px; background: var(--ds-panel, #161b22); box-shadow: inset 0 0 0 1px var(--ds-line-strong, #30363d); color: var(--ds-ink-2, #b1bac4); font: inherit; font-size: 12.5px; text-align: left; cursor: pointer; }
 #rhwp-exam-workspace .exam-stemlist button:hover { color: var(--ds-ink, #e6edf3); box-shadow: inset 0 0 0 1px var(--ds-soft-line, #6ba4f8); }
 #rhwp-exam-workspace .exam-form-actions { gap: 6px; flex-wrap: wrap; }
+
+/* 도구 줄이 넘칠 때 가장자리 흐림(더 있음 표시) */
+#rhwp-exam-workspace .exam-fgroup.is-over-end { -webkit-mask-image: linear-gradient(to right, #000 calc(100% - 36px), transparent); mask-image: linear-gradient(to right, #000 calc(100% - 36px), transparent); }
+#rhwp-exam-workspace .exam-fgroup.is-over-start { -webkit-mask-image: linear-gradient(to left, #000 calc(100% - 36px), transparent); mask-image: linear-gradient(to left, #000 calc(100% - 36px), transparent); }
+#rhwp-exam-workspace .exam-fgroup.is-over-start.is-over-end { -webkit-mask-image: linear-gradient(to right, transparent, #000 36px, #000 calc(100% - 36px), transparent); mask-image: linear-gradient(to right, transparent, #000 36px, #000 calc(100% - 36px), transparent); }
