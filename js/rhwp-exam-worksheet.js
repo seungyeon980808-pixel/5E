@@ -713,7 +713,7 @@ export function makeVariant(bridge, random = Math.random, { choices = false } = 
 // 선지 섞기(나형 사본에만): 한 문단에 하나씩인 선지는 문단째(서식 그대로), 3열·5열 선지 표는 칸 글을 섞고 ①부터 다시 붙인다.
 // 문항 안 「[정답] ③」도 바뀐 자리로 고친다. ㄱㄴㄷ·A B C 조합 선지(차례가 관례)와 첨자 등 서식이 섞인 표 칸은 그대로 둔다. 섞은 문항 수.
 const MARKS = '①②③④⑤';
-function shuffleChoices(doc, sec, random) {
+function shuffleChoices(doc, sec, random, choose = null) {
   const textOf = p => String(doc.getTextRange(sec, p, 0, doc.getParagraphLength(sec, p)));
   const markAt = p => { const t = textOf(p), i = t.search(/\S/); return i < 0 ? null : { i, mark: t[i], rest: t.slice(i + 1) }; };
   const randomPerm = n => {
@@ -721,6 +721,13 @@ function shuffleChoices(doc, sec, random) {
     for (let tries = 0; tries < 20 && perm.every((v, i) => v === i); tries++) for (let i = n - 1; i > 0; i--) { const j = Math.floor(random() * (i + 1)); [perm[i], perm[j]] = [perm[j], perm[i]]; }
     return perm.every((v, i) => v === i) ? null : perm;
   };
+  // k번째 문항의 정답 자리(0~4, 없으면 -1)
+  const answerIndex = k => {
+    const q = questionBlocks(doc, sec)[k];
+    for (let p = q.head; p < q.end; p++) { const m = ANSWER_LINE.exec(textOf(p)); if (m) return MARKS.indexOf(m[1].trim()[0]); }
+    return -1;
+  };
+  const pick = (k, n) => (choose ? choose(k, n, answerIndex(k)) : randomPerm(n));
   // 문항 안 「[정답] ③」을 섞인 자리로 고친다.
   const fixAnswer = (k, perm, n) => {
     const after = questionBlocks(doc, sec)[k];
@@ -761,7 +768,7 @@ function shuffleChoices(doc, sec, random) {
       while (n < MARKS.length && from + n < b.end) { const m = markAt(from + n); if (m?.mark !== MARKS[n] || /[①-⑤]/.test(m.rest)) break; n++; }
       if (n < 3 || (from + n < b.end && /^[①-⑤]/.test(markAt(from + n)?.mark || ''))) continue;
       if ([...Array(n).keys()].every(i => COMBO.test(markAt(from + i).rest.trim()))) continue;
-      const perm = randomPerm(n); if (!perm) continue;
+      const perm = pick(k, n); if (!perm) continue;
       const current = [...Array(n).keys()];
       for (let target = 0; target < n; target++) {
         let at = current.indexOf(perm[target]);
@@ -775,7 +782,7 @@ function shuffleChoices(doc, sec, random) {
     let found = null;
     for (let p = b.head; p < b.end && !found; p++) for (const ci of tablesAt.get(p) || []) { const c = tableChoices(p, ci); if (c) { found = { p, ci, choice: c }; break; } }
     if (!found) continue;
-    const n = found.choice.length, perm = randomPerm(n); if (!perm) continue;
+    const n = found.choice.length, perm = pick(k, n); if (!perm) continue;
     found.choice.forEach((c, i) => {
       const text = `${MARKS[i]} ${found.choice[perm[i]].content}`;
       doc.deleteTextInCell(sec, found.p, found.ci, c.cell, 0, 0, c.len);
@@ -784,6 +791,27 @@ function shuffleChoices(doc, sec, random) {
     fixAnswer(k, perm, n); count++;
   }
   return count;
+}
+// 정답 분포 고르게: 정답이 몰린 번호의 문항에서 선지 두 개(정답 ↔ 가장 덜 쓰인 번호)만 맞바꾸고 [정답]을 따라 고친다.
+// 선지를 옮길 수 있는 문항(한 줄에 하나씩·3/5열 표, ㄱㄴㄷ 조합 제외)만. 같은 정답이 세 번 잇달지 않게 고른다. {changed, counts}
+export function balanceAnswers(bridge) {
+  requireInput(bridge);
+  const doc = bridge.wasm.borrowDocumentHandle(), counts = [0, 0, 0, 0, 0];
+  for (const [, a] of questionAnswers(doc)) { const i = MARKS.indexOf(a.trim()[0]); if (i >= 0) counts[i]++; }
+  if (counts.reduce((a, b) => a + b, 0) < 5) throw new Error('문항 안 「[정답] ③」이 다섯 개 이상 있어야 분포를 맞출 수 있습니다.');
+  const recent = []; let changed = 0;
+  const choose = (k, n, a) => {
+    if (a < 0 || a >= n) return null;
+    const blocked = recent.length >= 2 && recent.at(-1) === recent.at(-2) ? recent.at(-1) : -1;
+    let target = a;
+    for (let t = 0; t < n; t++) if (t !== blocked && (counts[t] < counts[target] - 1 || (target === blocked && t !== blocked))) target = t;
+    if (target === a) { recent.push(a); return null; }
+    const perm = [...Array(n).keys()]; perm[target] = a; perm[a] = target;
+    counts[a]--; counts[target]++; recent.push(target); changed++;
+    return perm;
+  };
+  bridge.transaction('balance-answers', () => { for (let sec = 0; sec < doc.getSectionCount(); sec++) shuffleChoices(doc, sec, Math.random, choose); return true; });
+  return { changed, counts };
 }
 // 교사용 문서 끝에 「[나형 대응] 나1=가3 …」을 붙인다.
 export function appendVariantMapping(bridge, mapping) {

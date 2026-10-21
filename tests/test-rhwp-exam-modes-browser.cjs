@@ -568,6 +568,16 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
     assert.match(zipFile.suggestedFilename().normalize('NFC'), /문항그림\.zip$/);
     const zipNames = await page.evaluate(async b64 => { const { unzipSync } = await import('/vendor/fflate/index.js'); return Object.keys(unzipSync(Uint8Array.from(atob(b64), c => c.charCodeAt(0)))); }, require('node:fs').readFileSync(await zipFile.path()).toString('base64'));
     assert.deepEqual(zipNames.map(n => n.normalize('NFC')), ['01-1번.png', '02-2번.png']);
+    // 47) 점검 「정답 분포 고르게」: 정답이 모두 ③인 6문항 → 선지 두 개씩 맞바꿔 고르게, [정답]은 원래 정답 내용을 계속 가리킨다.
+    await inPage(page, `const L=[];for(let q=1;q<=6;q++){L.push(q+'. 문항'+q,'① 가'+q,'② 나'+q,'③ 정답'+q,'④ 라'+q,'⑤ 마'+q,'[정답] ③');}reset(L.join('\\n'));`);
+    await page.locator('[data-exam-fx="check"]').click();
+    await page.locator('[data-exam-fixanswers]').click(); await h.idle(page);
+    assert.match(await page.locator('#exam-status').textContent(), /선지를 맞바꿔 정답 분포를/);
+    const balanced = await inPage(page, `const t=text(),out=[];for(let i=0;i<t.length;i++){const m=/^\\[정답\\] (.)$/.exec(t[i]);if(!m)continue;const choice=t.slice(i-5,i).find(x=>x[0]===m[1]);out.push([m[1],choice.slice(2)]);}return out;`);
+    assert.deepEqual(balanced.map(([, c]) => c), ['정답1', '정답2', '정답3', '정답4', '정답5', '정답6']);
+    const marks = balanced.map(([m]) => m);
+    assert.ok(new Set(marks).size >= 4, marks.join(''));
+    assert.ok(!marks.some((m, i) => i >= 2 && m === marks[i - 1] && m === marks[i - 2]), marks.join(''));
     // 15) 구역이 둘인 시험지(0구역=머리·1번, 1구역=2단 본문): 문항 목록이 두 구역을 다 보이고, 구역을 넘는 ↑↓는 막고, 1구역 안 이동·복제·나뉜 문항 점검은 된다.
     const twoSections = await inPage(page, `const {unzipSync,zipSync}=await import('/vendor/fflate/index.js');
       reset('시험 머리\\n1. 가');const first=unzipSync(d.exportHwpx());reset('2. 나\\n나나\\n3. 다');const second=unzipSync(d.exportHwpx());

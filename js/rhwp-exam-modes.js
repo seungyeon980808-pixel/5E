@@ -6,7 +6,7 @@ import { fitCellPicture, centerPicturesInCells, picturesToGrid, fitTableToColumn
 import { showConfirm } from './ui-dialogs.js?v=1.7.0-four-session-integration';
 import { listExamPoolExams, buildExamPoolHwpx } from './rhwp-exam-exampool-open.js';
 import { applyScienceScripts, fixUnitGaps } from './rhwp-exam-science-text.js';
-import { markBlank, studentCopy, appendBlankAnswers, insertExamHeader, insertAnswerGrid, setQuestionSpacing, extraChecks, BOX_PRESETS, insertBox, insertAnswerLines, insertRubric, setColumns, setPaper, makeVariant, appendVariantMapping, answerKeyCopy, STEMS, shadeHeaderRow, insertWorksheetFrame, PAGE_NUMBER_STYLES, insertPageNumbers, SCORE_CHOICES, setQuestionScore, insertQrCode, unifyQuestionFonts, boldToBlanks, WORKSHEET_FRAMES, blueprintCopy, setQuestionAnswer, questionAnswers, explanationCopy, addExplanationLine, fitEquationSizes, underlineNegativeWords, examSummary, insertRunningHeader } from './rhwp-exam-worksheet.js';
+import { markBlank, studentCopy, appendBlankAnswers, insertExamHeader, insertAnswerGrid, setQuestionSpacing, extraChecks, BOX_PRESETS, insertBox, insertAnswerLines, insertRubric, setColumns, setPaper, makeVariant, appendVariantMapping, answerKeyCopy, STEMS, shadeHeaderRow, insertWorksheetFrame, PAGE_NUMBER_STYLES, insertPageNumbers, SCORE_CHOICES, setQuestionScore, insertQrCode, unifyQuestionFonts, boldToBlanks, WORKSHEET_FRAMES, blueprintCopy, setQuestionAnswer, questionAnswers, explanationCopy, addExplanationLine, fitEquationSizes, underlineNegativeWords, examSummary, insertRunningHeader, balanceAnswers } from './rhwp-exam-worksheet.js';
 import { SYMBOL_ROW, SYMBOL_TABS, SYMBOL_CHUNKS, symbolCells, recentSymbols, rememberSymbol } from './rhwp-exam-symbols.js';
 
 const MODE_KEY = '5e.hwp.toolMode';
@@ -461,6 +461,7 @@ export function installExamModes(panel, services) {
   }
   pop.addEventListener('click', event => {
     if (event.target.closest('[data-exam-keepwhole]')) { closePop(); void run(async () => { const { moved, left } = keepQuestionsWhole(bridgeOrThrow()); message(`문항 ${moved}개를 다음 단(쪽)으로 넘겼습니다.${left ? ` 단보다 긴 문항 ${left}개는 그대로 두었습니다.` : ''}`); }); return; }
+    if (event.target.closest('[data-exam-fixanswers]')) { closePop(); void run(async () => { const r = balanceAnswers(bridgeOrThrow()); renderOutline(); message(r.changed ? `${r.changed}문항의 선지를 맞바꿔 정답 분포를 ${r.counts.map((c, i) => `${'①②③④⑤'[i]}${c}`).join(' ')}로 맞췄습니다(되돌리기 ⌘Z).` : '선지를 옮길 수 있는 문항으로는 더 고르게 할 수 없습니다.'); }); return; }
     if (event.target.closest('[data-exam-fixneg]')) { closePop(); void run(async () => message(`발문의 부정 표현 ${underlineNegativeWords(bridgeOrThrow())}곳에 밑줄을 그었습니다.`)); return; }
     if (event.target.closest('[data-exam-fixunit]')) { closePop(); void run(async () => message(`숫자와 단위 사이 ${fixUnitGaps(bridgeOrThrow())}곳을 띄어 썼습니다(되돌리기 ⌘Z).`)); return; }
     if (event.target.closest('[data-exam-fixeq]')) { closePop(); void run(async () => message(`수식 ${fitEquationSizes(bridgeOrThrow())}개의 크기를 둘레 글자에 맞췄습니다.`)); return; }
@@ -521,6 +522,7 @@ export function installExamModes(panel, services) {
     [/수식 \d+개의 크기가/, '<button type="button" data-exam-fixeq>수식 크기 맞추기</button>'],
     [/단위 사이 띄어쓰기가 빠진/, '<button type="button" data-exam-fixunit>숫자·단위 띄어 쓰기</button>'],
     [/부정 표현 .*밑줄이 없습니다/, '<button type="button" data-exam-fixneg>부정 표현에 밑줄</button>'],
+    [/정답 분포가 고르지|같은 정답 .*잇달아/, '<button type="button" data-exam-fixanswers title="정답이 몰린 문항의 선지 두 개(정답 ↔ 덜 쓰인 번호)를 맞바꾸고 [정답]을 따라 고침">정답 분포 고르게</button>'],
   ];
   const fixButtons = issues => { const html = FIXES.filter(([re]) => issues.some(issue => re.test(issue.text))).map(([, button]) => button).join(''); return html ? `<div class="exam-form-actions">${html}</div>` : ''; };
   function openCheck(anchor) {
