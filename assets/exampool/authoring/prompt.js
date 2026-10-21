@@ -17,7 +17,9 @@ export function describeQuestion(q){
   }
   lines.push(`발문: ${q.ask||'(비어 있음)'}`);
   const bogi=q.blocks.find(b=>b.kind==='bogi');if(bogi)lines.push('<보기>\n'+bogi.lines.map(l=>`  ${l.label}. ${l.text||'(비어 있음)'}`).join('\n'));
-  if(q.type!=='서술형')lines.push('선지\n'+q.choices.map((c,i)=>`  ${CIRCLED[i]} ${c.text||'(비어 있음)'}`).join('\n'));
+  // 대응표 선지는 표에, 그림 선지는 그림에 내용이 있다. 글만 보내면 AI가 빈 선지를 보고도 정답 축을 기록했다(M23).
+  if(q.type!=='서술형'&&q.style==='대응표'&&q.choiceTable?.cells)lines.push('선지(대응표, 첫 열이 선지 번호)\n'+q.choiceTable.cells.map(r=>'  | '+r.map(c=>String(c.value??'')).join(' | ')+' |').join('\n'));
+  else if(q.type!=='서술형')lines.push('선지\n'+q.choices.map((c,i)=>`  ${CIRCLED[i]} ${[c.text||(c.figure?.data?'':'(비어 있음)'),c.figure?.data?`[그림 선지 · 첨부 「선지 ${CIRCLED[i]}」]`:''].filter(Boolean).join(' ')}`).join('\n'));
   lines.push(q.type==='서술형'?`모범 답안: ${q.modelAnswer||'(비어 있음)'}`:`정답(교사 입력): ${q.answer===null?'(비어 있음)':CIRCLED[q.answer]}`);
   lines.push(`해설: ${q.explanation||'(비어 있음)'}`);
   return lines.join('\n');

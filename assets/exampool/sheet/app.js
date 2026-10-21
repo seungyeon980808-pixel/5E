@@ -692,7 +692,7 @@ async function askAi(q,{kind,text}){
   const req=makeRequest(live,kind),{typeset,reviews,authoring,...question}=clone(live);req.contentHash=(await reviewVersion(live)).version;authorRequests.set(req.requestId,req);
   const packet={format:'exampool-authoring-request-v1',kind,text,question,previewHtml:await previewHtml(live).catch(()=>''),authoring:authoringSummary(live),teacherEdits:teacherEditsSince(live),
     conversation:(live.reviews||[]).slice(-13,-1).map(({role,text})=>({role,text})),contentHash:req.contentHash,
-    figureCount:live.blocks.filter(b=>b.kind==='figure'&&b.figure?.data).length,figures:live.blocks.filter(b=>b.kind==='figure'&&b.figure?.data&&b.figure.data.length<6e6).map(b=>({blockId:b.id,label:b.label||'그림',data:b.figure.data}))};
+    figureCount:live.blocks.filter(b=>b.kind==='figure'&&b.figure?.data).length+live.choices.filter(c=>c.figure?.data).length,figures:[...live.blocks.filter(b=>b.kind==='figure'&&b.figure?.data&&b.figure.data.length<6e6).map(b=>({blockId:b.id,label:b.label||'그림',data:b.figure.data})),...live.choices.map((c,i)=>c.figure?.data&&c.figure.data.length<6e6?{choiceId:c.id,label:'선지 '+'①②③④⑤'[i],data:c.figure.data}:null).filter(Boolean)]};// 그림 선지도 첨부한다(M23)
   if(view.name==='card')cardEditor.refreshAi?.();
   window.parent.postMessage({channel:'5e-question-sheet',action:'author',requestId:req.requestId,qid,packet},location.origin);
 }

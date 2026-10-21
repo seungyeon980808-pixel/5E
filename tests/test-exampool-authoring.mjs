@@ -160,3 +160,11 @@ test('history keeps one copy of a large figure even with editable png/source (H8
   const back=q.blocks.find(b=>b.kind==='figure').figure;
   assert.equal(back.data,png);assert.equal(back.editable.png,png);assert.equal(back.editable.source.pages[0].objects[0].href,png);
 });
+
+test('요청문에 대응표 선지와 그림 선지가 들어간다(M23)', async () => {
+  const {describeQuestion} = await import('../assets/exampool/authoring/prompt.js');
+  const t = newQuestion('1'); t.style = '대응표'; t.choiceTable.cells[1][1].value = '증가';
+  assert.match(describeQuestion(t), /선지\(대응표[^\n]*\n[\s\S]*증가/);
+  const f = newQuestion('2'); f.choices[2].figure = {name: 'c.png', data: 'data:image/png;base64,AAAA'};
+  assert.match(describeQuestion(f), /③ \[그림 선지 · 첨부 「선지 ③」\]/);
+});
