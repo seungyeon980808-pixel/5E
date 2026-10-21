@@ -6,7 +6,7 @@ import { fitCellPicture, centerPicturesInCells, picturesToGrid, fitTableToColumn
 import { showConfirm } from './ui-dialogs.js?v=1.7.0-four-session-integration';
 import { listExamPoolExams, buildExamPoolHwpx } from './rhwp-exam-exampool-open.js';
 import { applyScienceScripts } from './rhwp-exam-science-text.js';
-import { markBlank, studentCopy, appendBlankAnswers, insertExamHeader, insertAnswerGrid, setQuestionSpacing, extraChecks, BOX_PRESETS, insertBox, insertAnswerLines, insertRubric, setColumns, setPaper, makeVariant, appendVariantMapping, answerKeyCopy, STEMS, shadeHeaderRow, insertWorksheetFrame, PAGE_NUMBER_STYLES, insertPageNumbers, SCORE_CHOICES, setQuestionScore, insertQrCode, unifyQuestionFonts, boldToBlanks, WORKSHEET_FRAMES, blueprintCopy, setQuestionAnswer, questionAnswers, explanationCopy } from './rhwp-exam-worksheet.js';
+import { markBlank, studentCopy, appendBlankAnswers, insertExamHeader, insertAnswerGrid, setQuestionSpacing, extraChecks, BOX_PRESETS, insertBox, insertAnswerLines, insertRubric, setColumns, setPaper, makeVariant, appendVariantMapping, answerKeyCopy, STEMS, shadeHeaderRow, insertWorksheetFrame, PAGE_NUMBER_STYLES, insertPageNumbers, SCORE_CHOICES, setQuestionScore, insertQrCode, unifyQuestionFonts, boldToBlanks, WORKSHEET_FRAMES, blueprintCopy, setQuestionAnswer, questionAnswers, explanationCopy, addExplanationLine } from './rhwp-exam-worksheet.js';
 import { SYMBOL_ROW, SYMBOL_TABS, SYMBOL_CHUNKS, symbolCells, recentSymbols, rememberSymbol } from './rhwp-exam-symbols.js';
 
 const MODE_KEY = '5e.hwp.toolMode';
@@ -69,6 +69,7 @@ function focusTabs(ctx) {
       ['ㄱㄴㄷ 선지', '〈보기〉 ㄱㄴㄷ·학생 A B C 조합 선지 다섯 개를 커서 줄 뒤에 5열로 넣기', (_, button) => ctx.openPicker(button, 'combo')], ['선지 자동', '선지 길이를 보고 5열·3열·1열 중 한 줄에 들어가는 배열로', doc(b => ctx.message(`선지를 ${relayoutChoices(b, 'auto')}열로 놓았습니다.`))], ['선지 1열', '선지를 한 줄에 하나씩', doc(b => relayoutChoices(b, 1))], ['3열', '선지 3열(①②③ / ④⑤)', doc(b => relayoutChoices(b, 3))], ['5열', '선지 5열(한 줄)', doc(b => relayoutChoices(b, 5))], '|',
       ['번호 다시', '문항 번호 1부터 다시 매기기', doc(b => ctx.message(`문항 번호 ${renumberQuestions(b)}곳을 고쳤습니다.`))],
       ['정답', '커서가 있는 문항 끝에 「[정답] ③」 줄 넣기·바꾸기(학생용에서는 빠짐, 정답표·나형 정답·정답 분포 점검에 쓰임)', (_, button) => ctx.openPicker(button, 'answer')],
+      ['해설', '커서 문항 끝에 「[해설] 」 줄을 만들고 커서를 그 끝에(학생용에서 빠지고 정답·해설지에 모임)', doc(b => { ctx.message(`${addExplanationLine(b)} 해설 줄에 쓰세요.`); ctx.refocus(); })],
       ['배점', '커서가 있는 문항의 배점 [n점] 넣기·바꾸기(발문 끝) — 합계를 바로 알려 줌', (_, button) => ctx.openPicker(button, 'score')],
       ['쪽 나누기', '쪽 나누기 (Ctrl+Enter)', cmd('page:break')],
       ['수식', '수식 넣기 (Ctrl+N, M)', cmd('insert:equation')],
@@ -166,7 +167,7 @@ export function installExamModes(panel, services) {
   const studio = () => getBridge()?.editor?.element?.contentDocument || null;
   const refocus = () => { try { getBridge()?.input?.focus?.(); } catch {} };
   const ctx = {
-    palette: services.palette, actions: services.actions, message,
+    palette: services.palette, actions: services.actions, message, refocus,
     openPictureSettings: anchor => services.openPictureSettings(anchor),
     withBridge: fn => fn(bridgeOrThrow()),
     command(action) {

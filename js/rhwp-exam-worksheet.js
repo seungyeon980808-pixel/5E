@@ -360,6 +360,25 @@ export function setQuestionAnswer(bridge, mark) {
   return { label: q.label, mark };
 }
 
+// 해설 줄: 커서 문항 끝에 「[해설] 」 줄을 만들고(이미 있으면 그 줄로) 커서를 그 끝에 둔다. 학생용에서 빠지고 정답·해설지에 모인다.
+export function addExplanationLine(bridge) {
+  const input = requireInput(bridge), doc = bridge.wasm.borrowDocumentHandle();
+  const at = input.cursor.getPosition(), sec = at.sectionIndex ?? 0, para = at.cellPath?.length ? (at.parentParaIndex ?? at.paragraphIndex) : at.paragraphIndex;
+  const q = questionBlocks(doc, sec).find(b => b.start <= para && para < b.end);
+  if (!q) throw new Error('해설을 달 문항 안에 커서를 두세요.');
+  const textOf = p => String(doc.getTextRange(sec, p, 0, doc.getParagraphLength(sec, p)));
+  let line = -1; for (let p = q.head; p < q.end; p++) if (/^\s*(?:[\[【]\s*(?:해설|풀이)\s*[\]】]|(?:해설|풀이)\s*[:：])/.test(textOf(p))) { line = p; break; }
+  if (line < 0) bridge.transaction('explanation-line', () => {
+    let p = q.end - 1;
+    if (doc.getParagraphLength(sec, p) || p === q.head) { parse(doc.splitParagraph(sec, p, doc.getParagraphLength(sec, p))); p++; }
+    doc.insertText(sec, p, 0, '[해설] ');
+    doc.applyCharFormat(sec, p, 0, 5, JSON.stringify({ textColor: '#3a5a8c', bold: false }));
+    line = p; return true;
+  });
+  input.cursor.moveTo({ sectionIndex: sec, paragraphIndex: line, charOffset: doc.getParagraphLength(sec, line) }); input.updateCaret?.();
+  return q.label;
+}
+
 // 점검 더하기: 배점 합계·글꼴 섞임. [{text, at}]
 export function extraChecks(doc) {
   const issues = [], scores = [], fonts = new Map();

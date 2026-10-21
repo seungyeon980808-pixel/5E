@@ -425,6 +425,15 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
     assert.match(await page.locator('#exam-status').textContent(), /문항 3개\(해설 2개\)/);
     assert.deepEqual(await inPage(page, `const {explanationCopy}=await import('/js/rhwp-exam-worksheet.js');const x=new d.constructor(explanationCopy(b,'중간').bytes);try{x.convertToEditable?.();return [...Array(x.getParagraphCount(0)).keys()].map(p=>x.getTextRange(0,p,0,x.getParagraphLength(0,p)));}finally{x.free();}`),
       ['중간 정답과 해설', '1. ③', '셋째가 맞다.', '2. ①', '첫째.', '서술형 1']);
+    // 36) 해설 줄: 커서 문항 끝에 「[해설] 」을 만들고 커서를 그 끝에 둔다(이미 있으면 그 줄로).
+    await inPage(page, `reset('1. 가\\n[정답] ③\\n2. 나');b.input.cursor.moveTo({sectionIndex:0,paragraphIndex:0,charOffset:0});`);
+    await page.locator('[data-exam-ftab="item"]').click(); await button(page, '커서 문항 끝에 「[해설]').click(); await h.idle(page);
+    await page.keyboard.type('셋째'); await h.idle(page);
+    assert.deepEqual(await inPage(page, `return text();`), ['1. 가', '[정답] ③', '[해설] 셋째', '2. 나']);
+    await inPage(page, `b.input.cursor.moveTo({sectionIndex:0,paragraphIndex:0,charOffset:0});`);
+    await button(page, '커서 문항 끝에 「[해설]').click(); await h.idle(page);
+    assert.equal((await inPage(page, `return text();`)).length, 4, 'no second line');
+    assert.deepEqual(await inPage(page, `const p=b.input.cursor.getPosition();return [p.paragraphIndex,p.charOffset];`), [2, 7]);
     // 15) 구역이 둘인 시험지(0구역=머리·1번, 1구역=2단 본문): 문항 목록이 두 구역을 다 보이고, 구역을 넘는 ↑↓는 막고, 1구역 안 이동·복제·나뉜 문항 점검은 된다.
     const twoSections = await inPage(page, `const {unzipSync,zipSync}=await import('/vendor/fflate/index.js');
       reset('시험 머리\\n1. 가');const first=unzipSync(d.exportHwpx());reset('2. 나\\n나나\\n3. 다');const second=unzipSync(d.exportHwpx());
