@@ -313,6 +313,8 @@ function checkedResult(value) { const r = parse(value); if (r?.ok === false) thr
 // 쪽·단 경계에서 나뉜 문항 찾기: 문항 묶음의 글이 두 쪽(또는 두 단)에 걸치면 알린다.
 export function splitQuestions(doc, sec = 0) {
   const blocks = questionBlocks(doc, sec); if (!blocks.length) return [];
+  // 편집 묶음 안에서는 쪽 배치가 미뤄진다 — 재기 전에 마저 한다(없으면 아무 일 없음).
+  try { doc.flushDeferredPagination?.(); } catch {}
   const columns = Math.max(1, parse(doc.getColumnDef(sec))?.columnCount || 1), page = parse(doc.getPageDef(sec));
   const where = new Map();
   // 글자 위치(x, px)는 쪽 원점 기준이 아니다 — 쪽마다 가장 왼쪽 글자를 첫 단 시작으로 보고 단 폭(px = HWPUNIT/75)으로 나눈다.
@@ -389,4 +391,30 @@ export function fitWideObjects(bridge) {
     return true;
   });
   return pictures.length + tables.length;
+}
+
+// 쪽·단 경계에서 나뉜 문항을 통째로 다음 단(1단이면 다음 쪽)으로 넘긴다. 단 하나보다 긴 문항은 넘겨도 나뉘므로 그대로 둔다.
+// 앞에서부터 하나씩 넘기고 다시 잰다(앞 문항을 넘기면 뒤 문항 자리가 바뀐다). {moved, left}를 돌려준다.
+export function keepQuestionsWhole(bridge) {
+  const { doc } = requireDocument(bridge), sec = 0;
+  const columns = Math.max(1, parse(doc.getColumnDef(sec))?.columnCount || 1);
+  let moved = 0;
+  const skipped = new Set();
+  bridge.transaction('keep-questions-whole', () => {
+    for (let guard = 0; guard < 60; guard++) {
+      // 맨 앞 문단(0번)은 구역·단 설정을 품고 있어 앞에 나누기를 넣거나 지우면 안 된다 — 문서 첫 문항은 넘기지 않는다.
+      const next = splitQuestions(doc, sec).find(issue => issue.at.paragraphIndex > 0 && !skipped.has(issue.at.paragraphIndex));
+      if (!next) break;
+      const start = next.at.paragraphIndex, count = doc.getParagraphCount(sec);
+      checkedResult(columns > 1 ? doc.insertColumnBreak(sec, start, 0) : doc.insertPageBreak(sec, start, 0));
+      // 나누기를 넣으면 앞에 빈 문단이 하나 생긴다 — 지워서 앞 단 끝에 빈 줄이 남지 않게 한다.
+      let first = start;
+      if (doc.getParagraphCount(sec) > count && !doc.getParagraphLength(sec, start)) checkedResult(doc.deleteParagraph(sec, start));
+      const still = splitQuestions(doc, sec).some(issue => issue.at.paragraphIndex === first);
+      if (still) skipped.add(first); else moved++;
+    }
+    return true;
+  });
+  const first = splitQuestions(doc, sec).some(issue => issue.at.paragraphIndex === 0);
+  return { moved, left: skipped.size + (first ? 1 : 0) };
 }

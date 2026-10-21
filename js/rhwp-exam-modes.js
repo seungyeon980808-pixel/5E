@@ -2,7 +2,7 @@
 // 시안 5e-design-mockups/hwp-modes.html. 집중 도구 줄의 단추는 단축키와 같은 명령(runDocumentAction)·팔레트·5E 조판 기능을 부른다.
 import { runDocumentAction } from './rhwp-exam-shortcuts.js?v=1014-compact-panel';
 import { applyTableAlignment, applyHangingIndent } from './rhwp-exam-table-controls.js?v=1014-compact-panel';
-import { fitCellPicture, centerPicturesInCells, picturesToGrid, fitTableToColumn, renumberQuestions, relayoutChoices, checkLayout, questionBlocks, moveQuestion, splitQuestions, duplicateQuestion, deleteQuestion, fitWideObjects } from './rhwp-exam-layout-tools.js';
+import { fitCellPicture, centerPicturesInCells, picturesToGrid, fitTableToColumn, renumberQuestions, relayoutChoices, checkLayout, questionBlocks, moveQuestion, splitQuestions, duplicateQuestion, deleteQuestion, fitWideObjects, keepQuestionsWhole } from './rhwp-exam-layout-tools.js';
 import { showConfirm } from './ui-dialogs.js?v=1.7.0-four-session-integration';
 import { listExamPoolExams, buildExamPoolHwpx } from './rhwp-exam-exampool-open.js';
 import { markBlank, studentCopy, appendBlankAnswers, insertExamHeader, insertAnswerGrid, setQuestionSpacing, extraChecks, BOX_PRESETS, insertBox, insertAnswerLines, insertRubric, setColumns, setPaper, makeVariant, appendVariantMapping, answerKeyCopy, STEMS, shadeHeaderRow, insertWorksheetFrame } from './rhwp-exam-worksheet.js';
@@ -361,6 +361,7 @@ export function installExamModes(panel, services) {
     pop.querySelector('input')?.focus();
   }
   pop.addEventListener('click', event => {
+    if (event.target.closest('[data-exam-keepwhole]')) { closePop(); void run(async () => { const { moved, left } = keepQuestionsWhole(bridgeOrThrow()); message(`문항 ${moved}개를 다음 단(쪽)으로 넘겼습니다.${left ? ` 단보다 긴 문항 ${left}개는 그대로 두었습니다.` : ''}`); }); return; }
     if (event.target.closest('[data-exam-fixwide]')) { closePop(); void run(async () => message(`넓은 그림·표 ${fitWideObjects(bridgeOrThrow())}개를 단 폭에 맞췄습니다.`)); return; }
     const stem = event.target.closest('[data-exam-stem]');
     if (stem) { const text = STEMS[Number(stem.dataset.examStem)]; closePop(); void run(async () => { await ctx.insertText(text); refocus(); }); return; }
@@ -387,7 +388,7 @@ export function installExamModes(panel, services) {
     pop.className = 'exam-pop exam-checkpop';
     pop.innerHTML = `<div class="exam-pop-head">조판 점검 <small>${lastIssues.length ? `${lastIssues.length}곳 · 누르면 그 자리로` : '고칠 곳이 없습니다'}</small></div>
       ${lastIssues.length ? `<ol class="exam-checklist">${lastIssues.map((issue, i) => `<li><button type="button" data-exam-jump="${i}" ${issue.at ? '' : 'disabled'}>${esc(issue.text)}</button></li>`).join('')}</ol>` : '<p class="exam-pop-empty">넓은 그림·표, 흐린 그림, 채우지 않은 빈칸, 문항 번호 빠짐·겹침을 살폈습니다.</p>'}
-      ${lastIssues.some(issue => /단 폭보다 넓습니다/.test(issue.text)) ? '<div class="exam-form-actions"><button type="button" data-exam-fixwide>넓은 그림·표 모두 단 폭에 맞추기</button></div>' : ''}
+      ${lastIssues.some(issue => /단 폭보다 넓습니다/.test(issue.text) || /경계에서 나뉩니다/.test(issue.text)) ? `<div class="exam-form-actions">${lastIssues.some(issue => /단 폭보다 넓습니다/.test(issue.text)) ? '<button type="button" data-exam-fixwide>넓은 그림·표 모두 단 폭에 맞추기</button>' : ''}${lastIssues.some(issue => /경계에서 나뉩니다/.test(issue.text)) ? '<button type="button" data-exam-keepwhole>나뉜 문항 다음 단으로 넘기기</button>' : ''}</div>` : ''}
       <div class="exam-pop-foot">Esc로 닫기</div>`;
     place(anchor);
   }

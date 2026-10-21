@@ -217,6 +217,15 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
     await page.locator('[data-exam-ftab="sheet"]').click(); await button(page, '제목·이름 칸·학습 목표').click(); await h.idle(page);
     const frame = await tables();
     assert.deepEqual(frame.map(t => [t.dims.rowCount, t.dims.colCount]), [[1, 4], [2, 1], [2, 1], [2, 1], [2, 1]]);
+
+    // 14) 2단에서 단 경계에 걸린 문항을 점검 창에서 다음 단으로 넘긴다(빈 줄 없이, 글은 그대로).
+    await inPage(page, `reset(['1. 짧은', ...Array.from({length:30},(_,i)=>'가 '+i), '2. 긴 문항', ...Array.from({length:30},(_,i)=>'나 '+i)].join('\\n'));d.setColumnDef(0,2,0,true,2268);
+      for(let p=0;p<d.getParagraphCount(0);p++){d.applyParaFormat(0,p,JSON.stringify({lineSpacing:160,spacingBefore:0,spacingAfter:0}));d.applyCharFormat(0,p,0,d.getParagraphLength(0,p),JSON.stringify({fontSize:1000,bold:false,spacings:[0,0,0,0,0,0,0]}));}b.deps.eventBus.emit('document-changed');`);
+    const beforeWhole = await inPage(page, `return text();`);
+    await page.locator('[data-exam-fx="check"]').click(); await page.locator('[data-exam-keepwhole]').click(); await h.idle(page);
+    assert.match(await page.locator('#exam-status').textContent(), /문항 1개를 다음 단/);
+    assert.deepEqual(await inPage(page, `return text();`), beforeWhole, 'no text or empty line added');
+    assert.deepEqual(await inPage(page, `const {splitQuestions}=await import('/js/rhwp-exam-layout-tools.js');return splitQuestions(d).map(x=>x.text);`), []);
     assert.equal(await page.locator('#exam-status').getAttribute('data-error'), 'false', await page.locator('#exam-status').textContent());
     assert.deepEqual(errors, []);
   });
