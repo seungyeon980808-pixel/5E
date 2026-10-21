@@ -438,6 +438,19 @@ export function underlineNegativeWords(bridge) {
   return list.length;
 }
 
+// 문서 요약(점검 창 맨 위 한 줄): 문항 수(선택형·서술형), 쪽 수, 배점 합계, 정답 분포.
+export function examSummary(doc) {
+  const blocks = allQuestionBlocks(doc), essay = blocks.filter(b => b.essay).length;
+  let total = 0, scored = 0;
+  for (const q of blocks) for (let p = q.head; p < q.end; p++) { const m = /\[(\d+(?:\.\d+)?)\s*점\]/.exec(String(doc.getTextRange(q.sec, p, 0, doc.getParagraphLength(q.sec, p)))); if (m) { total += Number(m[1]); scored++; break; } }
+  const counts = [0, 0, 0, 0, 0]; let answered = 0;
+  for (const [, a] of questionAnswers(doc)) { const i = MARKS.indexOf(a.trim()[0]); if (i >= 0) { counts[i]++; answered++; } }
+  const parts = [`문항 ${blocks.length}${essay ? `(선택형 ${blocks.length - essay}·서술형 ${essay})` : ''}`, `${doc.pageCount()}쪽`];
+  if (scored) parts.push(`배점 ${Math.round(total * 10) / 10}점`);
+  if (answered) parts.push(`정답 ${counts.map((c, i) => `${MARKS[i]}${c}`).join(' ')}`);
+  return blocks.length ? parts.join(' · ') : '';
+}
+
 // 점검 더하기: 배점 합계·글꼴 섞임. [{text, at}]
 export function extraChecks(doc) {
   const issues = [], scores = [], fonts = new Map();

@@ -6,7 +6,7 @@ import { fitCellPicture, centerPicturesInCells, picturesToGrid, fitTableToColumn
 import { showConfirm } from './ui-dialogs.js?v=1.7.0-four-session-integration';
 import { listExamPoolExams, buildExamPoolHwpx } from './rhwp-exam-exampool-open.js';
 import { applyScienceScripts, fixUnitGaps } from './rhwp-exam-science-text.js';
-import { markBlank, studentCopy, appendBlankAnswers, insertExamHeader, insertAnswerGrid, setQuestionSpacing, extraChecks, BOX_PRESETS, insertBox, insertAnswerLines, insertRubric, setColumns, setPaper, makeVariant, appendVariantMapping, answerKeyCopy, STEMS, shadeHeaderRow, insertWorksheetFrame, PAGE_NUMBER_STYLES, insertPageNumbers, SCORE_CHOICES, setQuestionScore, insertQrCode, unifyQuestionFonts, boldToBlanks, WORKSHEET_FRAMES, blueprintCopy, setQuestionAnswer, questionAnswers, explanationCopy, addExplanationLine, fitEquationSizes, underlineNegativeWords } from './rhwp-exam-worksheet.js';
+import { markBlank, studentCopy, appendBlankAnswers, insertExamHeader, insertAnswerGrid, setQuestionSpacing, extraChecks, BOX_PRESETS, insertBox, insertAnswerLines, insertRubric, setColumns, setPaper, makeVariant, appendVariantMapping, answerKeyCopy, STEMS, shadeHeaderRow, insertWorksheetFrame, PAGE_NUMBER_STYLES, insertPageNumbers, SCORE_CHOICES, setQuestionScore, insertQrCode, unifyQuestionFonts, boldToBlanks, WORKSHEET_FRAMES, blueprintCopy, setQuestionAnswer, questionAnswers, explanationCopy, addExplanationLine, fitEquationSizes, underlineNegativeWords, examSummary } from './rhwp-exam-worksheet.js';
 import { SYMBOL_ROW, SYMBOL_TABS, SYMBOL_CHUNKS, symbolCells, recentSymbols, rememberSymbol } from './rhwp-exam-symbols.js';
 
 const MODE_KEY = '5e.hwp.toolMode';
@@ -476,9 +476,11 @@ export function installExamModes(panel, services) {
   ];
   const fixButtons = issues => { const html = FIXES.filter(([re]) => issues.some(issue => re.test(issue.text))).map(([, button]) => button).join(''); return html ? `<div class="exam-form-actions">${html}</div>` : ''; };
   function openCheck(anchor) {
-    { const b = bridgeOrThrow(), d = b.wasm.borrowDocumentHandle(); lastIssues = [...checkLayout(b), ...extraChecks(d), ...splitQuestions(d)]; }
+    let summary = '';
+    { const b = bridgeOrThrow(), d = b.wasm.borrowDocumentHandle(); lastIssues = [...checkLayout(b), ...extraChecks(d), ...splitQuestions(d)]; summary = examSummary(d); }
     pop.className = 'exam-pop exam-checkpop';
     pop.innerHTML = `<div class="exam-pop-head">조판 점검 <small>${lastIssues.length ? `${lastIssues.length}곳 · 누르면 그 자리로` : '고칠 곳이 없습니다'}</small></div>
+      ${summary ? `<p class="exam-check-summary">${esc(summary)}</p>` : ''}
       ${lastIssues.length ? `<ol class="exam-checklist">${lastIssues.map((issue, i) => `<li><button type="button" data-exam-jump="${i}" ${issue.at ? '' : 'disabled'}>${esc(issue.text)}</button></li>`).join('')}</ol>` : '<p class="exam-pop-empty">넓은 그림·표, 흐린 그림, 채우지 않은 빈칸, 문항 번호 빠짐·겹침을 살폈습니다.</p>'}
       ${fixButtons(lastIssues)}
       <div class="exam-pop-foot">Esc로 닫기</div>`;

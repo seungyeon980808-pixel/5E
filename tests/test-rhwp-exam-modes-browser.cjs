@@ -388,6 +388,7 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
     await page.locator('[data-exam-fx="check"]').click();
     const checks = await page.locator('.exam-checklist li').allTextContents();
     assert.ok(checks.includes('4번 문항에 배점 [n점]이 없습니다.'), checks.join(' / '));
+    assert.equal(await page.locator('.exam-check-summary').textContent(), '문항 6 · 1쪽 · 배점 10점 · 정답 ①1 ②0 ③5 ④0 ⑤0');
     assert.ok(checks.includes('같은 정답 ③이 1~4번에 잇달아 나옵니다.'), checks.join(' / '));
     assert.ok(checks.some(t => t.startsWith('정답 분포가 고르지 않습니다(①1 ②0 ③5 ④0 ⑤0)')), checks.join(' / '));
     await page.keyboard.press('Escape');
