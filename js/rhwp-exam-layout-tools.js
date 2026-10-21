@@ -407,6 +407,26 @@ export function moveQuestion(bridge, index, direction) {
   try { renumberQuestions(bridge); } catch {}
   return a + (direction < 0 ? 0 : 1);
 }
+// 문항을 from번째에서 to번째 자리로(문서 전체 순서). 이웃 바꾸기를 이어 하고 번호를 다시 매기는 것까지 한 번에(되돌리기 한 번).
+// 같은 구역·같은 종류(선택형/서술형)·묶음 아닌 문항 사이에서만.
+export function moveQuestionTo(bridge, from, to) {
+  const { doc } = requireDocument(bridge), all = allQuestionBlocks(doc);
+  if (!all[from] || !all[to]) throw new Error('문항을 찾지 못했습니다.');
+  if (from === to) return to;
+  const lo = Math.min(from, to), hi = Math.max(from, to), span = all.slice(lo, hi + 1);
+  if (span.some(q => q.sec !== all[from].sec)) throw new Error('구역(쪽 설정)이 다른 문항끼리는 순서를 바꿀 수 없습니다.');
+  if (span.some(q => !!q.essay !== !!all[from].essay)) throw new Error('선택형과 서술형 문항끼리는 순서를 바꿀 수 없습니다.');
+  if (span.some(q => q.group)) throw new Error('묶음 문항([1~2] 같은)은 지문과 함께 있어야 해서 순서를 바꿀 수 없습니다.');
+  const sec = all[from].sec, base = localIndex(all, lo), steps = [];
+  if (to > from) for (let a = 0; a < to - from; a++) steps.push(base + a);
+  else for (let a = from - to - 1; a >= 0; a--) steps.push(base + a);
+  bridge.transaction('move-question-to', () => {
+    for (const a of steps) swapAdjacentQuestions(doc, sec, questionBlocks(doc, sec), a);
+    renumberDocument(doc);
+    return true;
+  });
+  return to;
+}
 // a번째와 a+1번째 문항 묶음을 바꾼다(문서 손잡이만 씀 — 복사본에도 쓴다).
 export function swapAdjacentQuestions(doc, sec, blocks, a) {
   {

@@ -2,7 +2,7 @@
 // 시안 5e-design-mockups/hwp-modes.html. 집중 도구 줄의 단추는 단축키와 같은 명령(runDocumentAction)·팔레트·5E 조판 기능을 부른다.
 import { runDocumentAction } from './rhwp-exam-shortcuts.js?v=1014-compact-panel';
 import { applyTableAlignment, applyHangingIndent } from './rhwp-exam-table-controls.js?v=1014-compact-panel';
-import { fitCellPicture, centerPicturesInCells, picturesToGrid, fitTableToColumn, renumberQuestions, relayoutChoices, checkLayout, questionBlocks, moveQuestion, splitQuestions, duplicateQuestion, deleteQuestion, fitWideObjects, keepQuestionsWhole, allQuestionBlocks, fillColumns, CHOICE_COMBOS, insertChoiceCombo, questionRegion } from './rhwp-exam-layout-tools.js';
+import { fitCellPicture, centerPicturesInCells, picturesToGrid, fitTableToColumn, renumberQuestions, relayoutChoices, checkLayout, questionBlocks, moveQuestion, splitQuestions, duplicateQuestion, deleteQuestion, fitWideObjects, keepQuestionsWhole, allQuestionBlocks, fillColumns, CHOICE_COMBOS, insertChoiceCombo, questionRegion, moveQuestionTo } from './rhwp-exam-layout-tools.js';
 import { showConfirm } from './ui-dialogs.js?v=1.7.0-four-session-integration';
 // ExamPool 조판 엔진은 무거워서(exam-build·native-hwpx) 「ExamPool 시험지 열기」를 누를 때만 불러온다.
 const examPoolOpen = () => import('./rhwp-exam-exampool-open.js');
@@ -637,7 +637,7 @@ export function installExamModes(panel, services) {
     let answers = new Map();
     try { const d = b.wasm.borrowDocumentHandle(); blocks = allQuestionBlocks(d); answers = questionAnswers(d); } catch { return; }
     outline.hidden = !blocks.length;
-    outline.innerHTML = `<h2>문항 <small>${blocks.length}</small></h2><ol class="exam-qlist">${blocks.map((q, i) => `<li><button type="button" class="exam-q" data-exam-q="${i}" title="${esc(`${q.label} ${q.preview}`)}">${q.group && q.start !== q.head ? `<small class="exam-qgroup" title="묶음 문항 — 지문과 함께라 순서는 그대로">[${q.group.from}~${q.group.to}]</small> ` : ''}<b>${q.essay ? `서술형 ${q.number}` : `${q.number}.`}</b> ${esc(q.preview || '(빈 문항)')}</button>${!q.essay && answers.get(q.number) ? `<span class="exam-qans" title="정답">${esc(answers.get(q.number).slice(0, 2))}</span>` : ''}<button type="button" class="exam-qmove" data-exam-qmove="${i}:-1" title="위로" aria-label="${q.label} 위로" ${i && blocks[i - 1].sec === q.sec && !q.group && !blocks[i - 1].group && !!blocks[i - 1].essay === !!q.essay ? '' : 'disabled'}>↑</button><button type="button" class="exam-qmove" data-exam-qmove="${i}:1" title="아래로" aria-label="${q.label} 아래로" ${i < blocks.length - 1 && blocks[i + 1].sec === q.sec && !q.group && !blocks[i + 1].group && !!blocks[i + 1].essay === !!q.essay ? '' : 'disabled'}>↓</button><button type="button" class="exam-qmove" data-exam-qdup="${i}" title="복제(바로 뒤에 한 벌 더)" aria-label="${q.label} 복제">⧉</button><button type="button" class="exam-qmove" data-exam-qdel="${i}" title="지우기" aria-label="${q.label} 지우기">×</button></li>`).join('')}</ol>`;
+    outline.innerHTML = `<h2>문항 <small>${blocks.length}</small></h2><ol class="exam-qlist">${blocks.map((q, i) => `<li><button type="button" class="exam-q" data-exam-q="${i}" draggable="${q.group ? 'false' : 'true'}" title="${esc(`${q.label} ${q.preview} — 끌어서 다른 자리로 옮기기`)}">${q.group && q.start !== q.head ? `<small class="exam-qgroup" title="묶음 문항 — 지문과 함께라 순서는 그대로">[${q.group.from}~${q.group.to}]</small> ` : ''}<b>${q.essay ? `서술형 ${q.number}` : `${q.number}.`}</b> ${esc(q.preview || '(빈 문항)')}</button>${!q.essay && answers.get(q.number) ? `<span class="exam-qans" title="정답">${esc(answers.get(q.number).slice(0, 2))}</span>` : ''}<button type="button" class="exam-qmove" data-exam-qmove="${i}:-1" title="위로" aria-label="${q.label} 위로" ${i && blocks[i - 1].sec === q.sec && !q.group && !blocks[i - 1].group && !!blocks[i - 1].essay === !!q.essay ? '' : 'disabled'}>↑</button><button type="button" class="exam-qmove" data-exam-qmove="${i}:1" title="아래로" aria-label="${q.label} 아래로" ${i < blocks.length - 1 && blocks[i + 1].sec === q.sec && !q.group && !blocks[i + 1].group && !!blocks[i + 1].essay === !!q.essay ? '' : 'disabled'}>↓</button><button type="button" class="exam-qmove" data-exam-qdup="${i}" title="복제(바로 뒤에 한 벌 더)" aria-label="${q.label} 복제">⧉</button><button type="button" class="exam-qmove" data-exam-qdel="${i}" title="지우기" aria-label="${q.label} 지우기">×</button></li>`).join('')}</ol>`;
   }
   const scheduleOutline = () => { clearTimeout(outlineTimer); outlineTimer = setTimeout(renderOutline, 450); };
   outline.addEventListener('click', event => {
@@ -662,6 +662,28 @@ export function installExamModes(panel, services) {
       outline.querySelector(`[data-exam-qmove="${at}:${dir}"]`)?.focus();
       message(`문항 순서를 바꾸고 번호를 다시 매겼습니다.`);
     });
+  });
+
+  // 문항 목록 끌어 옮기기: 문항 줄을 끌어 다른 문항 줄에 놓으면 그 자리로(번호 다시, 되돌리기 한 번).
+  let dragFrom = -1;
+  outline.addEventListener('dragstart', event => {
+    const item = event.target.closest?.('[data-exam-q]'); if (!item) return;
+    dragFrom = Number(item.dataset.examQ); event.dataTransfer?.setData('text/plain', `5e-question:${dragFrom}`); if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
+  });
+  const dropRow = event => event.target.closest?.('.exam-qlist li');
+  outline.addEventListener('dragover', event => {
+    const li = dropRow(event); if (dragFrom < 0 || !li) return;
+    event.preventDefault(); if (event.dataTransfer) event.dataTransfer.dropEffect = 'move';
+    outline.querySelectorAll('.is-drop-target').forEach(x => x !== li && x.classList.remove('is-drop-target')); li.classList.add('is-drop-target');
+  });
+  outline.addEventListener('dragleave', event => { const li = dropRow(event); if (li && !li.contains(event.relatedTarget)) li.classList.remove('is-drop-target'); });
+  outline.addEventListener('dragend', () => { dragFrom = -1; outline.querySelectorAll('.is-drop-target').forEach(x => x.classList.remove('is-drop-target')); });
+  outline.addEventListener('drop', event => {
+    const li = dropRow(event), to = Number(li?.querySelector('[data-exam-q]')?.dataset.examQ), from = dragFrom;
+    dragFrom = -1; outline.querySelectorAll('.is-drop-target').forEach(x => x.classList.remove('is-drop-target'));
+    if (!li || from < 0 || !Number.isInteger(to) || to === from) return;
+    event.preventDefault();
+    void run(async () => { moveQuestionTo(bridgeOrThrow(), from, to); renderOutline(); message(`문항을 ${to + 1}번째 자리로 옮기고 번호를 다시 매겼습니다.`); });
   });
 
   // ── 모드 적용 ──

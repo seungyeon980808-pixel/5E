@@ -661,6 +661,19 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
     await page.locator('[data-exam-allscores]').fill('2 3.5 4'); await page.locator('[data-exam-allscores]').press('Enter'); await h.idle(page);
     assert.match(await page.locator('#exam-status').textContent(), /3문항 중 3문항에 배점.*합계 9\.5점/);
     assert.deepEqual(await inPage(page, `return text();`), ['1. 가는? (2점)', '2. 나는? (3.5점)', '[서술형 1] 쓰시오. (4점)']);
+    // 56) 문항 목록 끌어 옮기기: 1번을 3번 자리에 놓으면 한 번에 옮기고 번호를 다시 매기며, 되돌리기 한 번으로 돌아온다.
+    await inPage(page, `reset('1. 가\\n가가\\n2. 나\\n3. 다\\n4. 라');`);
+    await page.waitForFunction(() => document.querySelectorAll('.exam-q').length === 4 && document.querySelector('.exam-q')?.textContent.includes('가'));
+    await page.evaluate(() => {
+      const src = document.querySelector('[data-exam-q="0"]'), dst = document.querySelector('[data-exam-q="2"]').closest('li'), dt = new DataTransfer();
+      src.dispatchEvent(new DragEvent('dragstart', { bubbles: true, dataTransfer: dt }));
+      dst.dispatchEvent(new DragEvent('dragover', { bubbles: true, cancelable: true, dataTransfer: dt }));
+      dst.dispatchEvent(new DragEvent('drop', { bubbles: true, cancelable: true, dataTransfer: dt }));
+    });
+    await h.idle(page);
+    assert.deepEqual(await inPage(page, `return text();`), ['1. 나', '2. 다', '3. 가', '가가', '4. 라']);
+    await inPage(page, `b.input.performUndo();b.deps.eventBus.emit('document-changed');`); await h.idle(page);
+    assert.deepEqual(await inPage(page, `return text();`), ['1. 가', '가가', '2. 나', '3. 다', '4. 라']);
     // 15) 구역이 둘인 시험지(0구역=머리·1번, 1구역=2단 본문): 문항 목록이 두 구역을 다 보이고, 구역을 넘는 ↑↓는 막고, 1구역 안 이동·복제·나뉜 문항 점검은 된다.
     const twoSections = await inPage(page, `const {unzipSync,zipSync}=await import('/vendor/fflate/index.js');
       reset('시험 머리\\n1. 가');const first=unzipSync(d.exportHwpx());reset('2. 나\\n나나\\n3. 다');const second=unzipSync(d.exportHwpx());
