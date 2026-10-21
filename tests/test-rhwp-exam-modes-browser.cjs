@@ -506,6 +506,18 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
     await page.locator('[data-exam-fixneg]').click(); await h.idle(page);
     assert.match(await page.locator('#exam-status').textContent(), /부정 표현 2곳에 밑줄/);
     assert.deepEqual(await inPage(page, `const u=(p,o)=>w.getCharPropertiesAt(0,p,o).underline?'_':'.';return [[16,17,18,19].map(o=>u(0,o)).join(''),[5,6].map(o=>u(1,o)).join(''),[5,6,7,8].map(o=>u(2,o)).join('')];`), ['.__.', '..', '.__.']);
+    // 44) 점검 〈보기〉: 항목 차례(ㄱ ㄷ ㄷ), 선지에 〈보기〉에 없는 ㄹ. 표 칸 안 〈보기〉도 본다.
+    await inPage(page, `reset('1. 옳은 것만을 〈보기〉에서 있는 대로 고른 것은?\\n① ㄱ ② ㄷ ③ ㄱ, ㄴ ④ ㄴ, ㄹ ⑤ ㄱ, ㄴ, ㄷ');const t=JSON.parse(d.createTable(0,0,0,1,1));
+      d.insertTextInCell(0,t.paraIdx,t.controlIdx,0,0,0,'ㄱ. 첫째');d.splitParagraphInCell?d.splitParagraphInCell(0,t.paraIdx,t.controlIdx,0,0,d.getCellParagraphLength(0,t.paraIdx,t.controlIdx,0,0)):0;
+      b.deps.eventBus.emit('document-changed');return d.getCellParagraphCount(0,t.paraIdx,t.controlIdx,0);`);
+    await page.locator('[data-exam-fx="check"]').click();
+    const bogi = (await page.locator('.exam-checklist li').allTextContents()).filter(t => t.includes('〈보기〉'));
+    assert.deepEqual(bogi, ['1번 선지에 〈보기〉에 없는 ㄴ·ㄷ·ㄹ이 있습니다.']);
+    await page.keyboard.press('Escape');
+    await inPage(page, `reset('1. 고른 것은?\\nㄱ. 가\\nㄷ. 나\\n① ㄱ ② ㄷ ③ ㄱ, ㄷ ④ ㄱ ⑤ ㄷ');`);
+    await page.locator('[data-exam-fx="check"]').click();
+    assert.deepEqual((await page.locator('.exam-checklist li').allTextContents()).filter(t => t.includes('〈보기〉')), ['1번 〈보기〉 항목이 차례대로가 아닙니다(ㄱㄷ).']);
+    await page.keyboard.press('Escape');
     // 15) 구역이 둘인 시험지(0구역=머리·1번, 1구역=2단 본문): 문항 목록이 두 구역을 다 보이고, 구역을 넘는 ↑↓는 막고, 1구역 안 이동·복제·나뉜 문항 점검은 된다.
     const twoSections = await inPage(page, `const {unzipSync,zipSync}=await import('/vendor/fflate/index.js');
       reset('시험 머리\\n1. 가');const first=unzipSync(d.exportHwpx());reset('2. 나\\n나나\\n3. 다');const second=unzipSync(d.exportHwpx());

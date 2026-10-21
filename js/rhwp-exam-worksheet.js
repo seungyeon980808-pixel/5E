@@ -477,25 +477,36 @@ export function extraChecks(doc) {
       from = i;
     }
   }
-  // 선지 번호: 선택형 문항의 ①~⑤가 차례대로 한 번씩인지(본문 줄과 선지 표 칸, 교사용 줄은 빼고).
-  const tableTexts = new Map();
+  // 문항마다 본문 줄과 그 줄에 든 표(한 겹) 칸의 줄. 선지 번호·〈보기〉 점검에 쓴다.
+  const cellLines = new Map();
   for (let pg = 0; pg < doc.pageCount(); pg++) for (const c of parse(doc.getPageControlLayout(pg)).controls || []) {
     if (c.type !== 'table' || c.cellPath?.length) continue;
     const sec = c.secIdx ?? 0, ci = c.controlIdx ?? c.ci, key = `${sec}:${c.paraIdx}`, done = `${key}:${ci}`;
-    if (tableTexts.has(done)) continue; tableTexts.set(done, true);
-    let text = ''; const cells = parse(doc.getTableDimensions(sec, c.paraIdx, ci)).cellCount;
-    for (let cell = 0; cell < cells; cell++) for (let cp = 0; cp < doc.getCellParagraphCount(sec, c.paraIdx, ci, cell); cp++) text += String(doc.getTextInCell(sec, c.paraIdx, ci, cell, cp, 0, doc.getCellParagraphLength(sec, c.paraIdx, ci, cell, cp)));
-    tableTexts.set(key, (tableTexts.get(key) || '') + text);
+    if (cellLines.has(done)) continue; cellLines.set(done, true);
+    const lines = cellLines.get(key) || [], cells = parse(doc.getTableDimensions(sec, c.paraIdx, ci)).cellCount;
+    for (let cell = 0; cell < cells; cell++) for (let cp = 0; cp < doc.getCellParagraphCount(sec, c.paraIdx, ci, cell); cp++) lines.push(String(doc.getTextInCell(sec, c.paraIdx, ci, cell, cp, 0, doc.getCellParagraphLength(sec, c.paraIdx, ci, cell, cp))));
+    cellLines.set(key, lines);
   }
   for (let sec = 0; sec < doc.getSectionCount(); sec++) for (const q of questionBlocks(doc, sec)) {
     if (q.essay) continue;
-    let marks = '';
+    const lines = [];
     for (let p = q.head; p < q.end; p++) {
       const t = String(doc.getTextRange(sec, p, 0, doc.getParagraphLength(sec, p)));
-      if (!TEACHER_ONLY.test(t)) marks += (t.match(/[①-⑤]/g) || []).join('');
-      const inTable = tableTexts.get(`${sec}:${p}`); if (typeof inTable === 'string') marks += (inTable.match(/[①-⑤]/g) || []).join('');
+      if (!TEACHER_ONLY.test(t)) lines.push(t);
+      const inTable = cellLines.get(`${sec}:${p}`); if (Array.isArray(inTable)) lines.push(...inTable);
     }
+    // 선지 번호: ①~⑤가 차례대로 한 번씩인지(교사용 줄은 빼고).
+    const marks = lines.map(t => (t.match(/[①-⑤]/g) || []).join('')).join('');
     if (marks && marks !== MARKS) issues.push({ text: `${q.label} 선지 번호가 차례대로가 아닙니다(${marks}).`, at: { sectionIndex: sec, paragraphIndex: q.head, charOffset: 0 } });
+    // 〈보기〉: 「ㄱ.」「ㄴ.」… 항목이 차례대로인지, 선지에 〈보기〉에 없는 기호가 있는지.
+    const items = lines.map(t => /^\s*([ㄱ-ㅎ])\s*[.．]/.exec(t)?.[1]).filter(Boolean);
+    if (items.length) {
+      const want = 'ㄱㄴㄷㄹㅁㅂㅅ'.slice(0, items.length);
+      if (items.join('') !== want) issues.push({ text: `${q.label} 〈보기〉 항목이 차례대로가 아닙니다(${items.join('')}).`, at: { sectionIndex: sec, paragraphIndex: q.head, charOffset: 0 } });
+      const used = new Set(lines.filter(t => /[①-⑤]/.test(t)).flatMap(t => t.split(/[①-⑤]/).slice(1)).flatMap(part => /^\s*[ㄱ-ㅎ](?:\s*,\s*[ㄱ-ㅎ])*\s*$/.test(part) ? part.match(/[ㄱ-ㅎ]/g) : []));
+      const extra = [...used].filter(c => !items.includes(c)).sort();
+      if (extra.length) issues.push({ text: `${q.label} 선지에 〈보기〉에 없는 ${extra.join('·')}이 있습니다.`, at: { sectionIndex: sec, paragraphIndex: q.head, charOffset: 0 } });
+    }
   }
   for (const w of negativeWordIssues(doc)) issues.push({ text: `${w.label} 발문의 부정 표현 「${w.word}」에 밑줄이 없습니다(평가원 발문 규칙).`, at: { sectionIndex: w.sec, paragraphIndex: w.para, charOffset: w.start } });
   const gaps = unitGapIssues(doc), gapCount = gaps.reduce((n, g) => n + g.at.length, 0);
