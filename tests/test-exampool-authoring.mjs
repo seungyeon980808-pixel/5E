@@ -139,3 +139,17 @@ test('그래프·자료 조건이 바뀌면 연결한 그림은 다시 확인 �
   assert.ok(q.authoring.stale.some(s=>s.target==='answer'),'그림이 더해지면 정답은 다시 확인한다');
   assert.ok(proposalChanges(q,{draft:{ask:'x'},changes:[{path:'answer',value:2}]}).length===2);
 });
+
+test('history keeps one copy of a large figure even with editable png/source (H8): 25 edits stay far below the 24 MB limit and revert restores it', async () => {
+  const q=newQuestion('1');const fig=block('figure');
+  const png='data:image/png;base64,'+'A'.repeat(1_000_000);
+  fig.figure={name:'그림',data:png,editable:{png,source:{pages:[{objects:[{type:'image',href:png}]}]}}};
+  q.blocks.push(fig);await syncRevision(q,{by:'import'});
+  for(let i=0;i<25;i++){q.ask=`발문 ${i}`;await syncRevision(q,{by:'teacher'});}
+  const bytes=JSON.stringify(q.authoring).length;
+  assert.ok(bytes<4_000_000,`history stays small (${bytes} bytes), not 25 copies of a 1 MB figure`);
+  validateAuthoring(q.authoring);
+  const first=q.authoring.history[0].revision;q.blocks.find(b=>b.kind==='figure').figure=null;restoreRevision(q,first);
+  const back=q.blocks.find(b=>b.kind==='figure').figure;
+  assert.equal(back.data,png);assert.equal(back.editable.png,png);assert.equal(back.editable.source.pages[0].objects[0].href,png);
+});

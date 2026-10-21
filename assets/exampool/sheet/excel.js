@@ -167,7 +167,11 @@ export async function importExcel(XLSX,JSZip,buffer) {
   if(unassigned.length)throw Error(`구성·표의 지정 셀 밖에 그림 ${unassigned.length}개가 있습니다. 그림을 원래 구성의 그림 칸 또는 표 셀에 배치한 뒤 다시 올려주세요. 기존 입력은 보존했습니다.`);
   for(const {q,key,value} of overrides)writeField(q,key,value);
   for(const q of questions)syncForm(q);
-  return {...validate({format:FORMAT,questions,documents}),backedIds:[...old.keys()],warnings:[]};
+  // 숨긴 _구조에 든 시험지(exams)도 돌려준다 — 예전에는 문항·자료만 돌려줘 엑셀로 불러오면 시험지 목록이 통째로 사라졌다(H5).
+  // 시트에서 지운 문항은 시험지 구성에서도 뺀다.
+  const qids=new Set(questions.map(q=>q.id));
+  const exams=(Array.isArray(pack.exams)?pack.exams:[]).map(e=>({...e,items:(e.items||[]).filter(id=>qids.has(id))}));
+  return {...validate({format:FORMAT,questions,documents}),exams,backedIds:[...old.keys()],warnings:[]};
 }
 export async function readPictures(zip,names) {
   const pics=[],attrs=tag=>Object.fromEntries([...tag.matchAll(/([\w:]+)="([^"]*)"/g)].map(m=>[m[1],unesc(m[2])]));

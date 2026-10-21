@@ -9,20 +9,27 @@ export const CONTENT_KEYS=['type','form','structure','preset','style','ask','poi
 const HISTORY_LIMIT=30,PROPOSAL_LIMIT=20;
 const now=()=>new Date().toISOString();
 export function ensureAuthoring(q){if(!q.authoring)q.authoring=emptyAuthoring(uid());return q.authoring;}
-// 스냅숏의 그림 바이트는 해시로 바꿔 bank에 한 번만 둔다(같은 그림이 이력마다 쌓이지 않게).
+// 스냅숏의 큰 글자 덩어리(그림 data·편집 가능 PNG·원본 그림 자료·표 칸 그림 등)는 해시로 바꿔 bank에 한 번만 둔다.
+// 예전에는 블록·선지 그림의 data만 바꿔서 editable.png(같은 PNG)·editable.source·표 칸 그림이 이력마다 통째로 복사되어,
+// 그림 든 문항을 스무 번쯤 고치면 24MB 한도에 닿아 모든 편집·저장이 막혔다(H8). 예전 이력(figure.data='bank:…')도 그대로 읽힌다.
+const STASH_MIN=2048,BANK_REF=/^bank:[a-f0-9]{64}$/;
+async function stashDeep(v,bank){
+  if(typeof v==='string'){if(v.length<STASH_MIN||v.length>8*1024*1024||BANK_REF.test(v))return v;const h=await sha256(v);bank[h]={data:v};return 'bank:'+h;}
+  if(Array.isArray(v)){for(let i=0;i<v.length;i++)v[i]=await stashDeep(v[i],bank);return v;}
+  if(v&&typeof v==='object'){for(const k of Object.keys(v))v[k]=await stashDeep(v[k],bank);return v;}
+  return v;
+}
+function unstashDeep(v,bank){
+  if(typeof v==='string')return BANK_REF.test(v)?bank[v.slice(5)]?.data??'':v;
+  if(Array.isArray(v))return v.map(x=>unstashDeep(x,bank));
+  if(v&&typeof v==='object'){const o={};for(const k of Object.keys(v))o[k]=unstashDeep(v[k],bank);return o;}
+  return v;
+}
 async function snapshotOf(q,bank){
   const snap={};for(const k of CONTENT_KEYS)if(q[k]!==undefined)snap[k]=clone(q[k]);
-  const stash=async f=>{if(!f?.data)return f;const h=await sha256(f.data);bank[h]={data:f.data};return {...f,data:'bank:'+h};};
-  for(const b of snap.blocks||[])if(b.figure)b.figure=await stash(b.figure);
-  for(const c of snap.choices||[])if(c.figure)c.figure=await stash(c.figure);
-  return snap;
+  return stashDeep(snap,bank);
 }
-function unstash(snap,bank){
-  const s=clone(snap),open=f=>f?.data?.startsWith?.('bank:')?{...f,data:bank[f.data.slice(5)]?.data||''}:f;
-  for(const b of s.blocks||[])if(b.figure)b.figure=open(b.figure);
-  for(const c of s.choices||[])if(c.figure)c.figure=open(c.figure);
-  return s;
-}
+function unstash(snap,bank){return unstashDeep(snap,bank);}
 function pruneBank(a){
   const used=new Set(JSON.stringify(a.history).match(/bank:[a-f0-9]{64}/g)?.map(x=>x.slice(5))||[]);
   for(const h of Object.keys(a.bank))if(!used.has(h))delete a.bank[h];

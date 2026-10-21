@@ -578,7 +578,13 @@ export function createCardEditor(root,api){
       api.edit(()=>applyForm(x,k));api.status?.(`${FORMS[k].name}(으)로 바꿨습니다.`);return;}
     if(d.cvstage){api.edit(()=>{x.workflow=d.cvstage;});return;}
     if(d.cvslotAct){api.slot(d.cvslotAct,x,d.cvslot);return;}
-    if(d.cvlineAdd){const key=d.cvlineAdd;api.edit(()=>{let blk=x.blocks.find(v=>v.kind===key);if(!blk){writeField(x,key,'');blk=x.blocks.find(v=>v.kind===key);}const value=fieldValue(x,key);writeField(x,key,value?value+'\n':key==='dialogue'?'학생 A: ':'');});return;}
+    if(d.cvlineAdd){const key=d.cvlineAdd;api.edit(()=>{let blk=x.blocks.find(v=>v.kind===key);if(!blk){writeField(x,key,'');blk=x.blocks.find(v=>v.kind===key);}
+      // 새 줄 하나만 끝에 덧붙인다(H7). 예전에는 모든 줄 글을 이어 붙였다가 줄바꿈으로 다시 나눠서, 한 줄 안에 줄바꿈이 있으면
+      // 줄이 늘어나며 ○×·근거·id가 줄 순서대로 다른 문장에 다시 씌워졌다.
+      if(blk.lines.length>=30)throw Error('30줄까지 입력하세요.');
+      const i=blk.lines.length,BOGI=['ㄱ','ㄴ','ㄷ','ㄹ','ㅁ','ㅂ','ㅅ','ㅇ','ㅈ','ㅊ'],CAP=['(가)','(나)','(다)','(라)','(마)','(바)','(사)','(아)'];
+      const label=key==='bogi'?BOGI[i]||String(i+1):key==='steps'?CAP[i]||`(${i+1})`:`학생 ${'ABCDEFGH'[i]||i+1}`;
+      blk.lines.push({id:crypto.randomUUID(),label,text:''});});return;}
     if(d.cvlineRemove){const key=d.cvlineRemove,i=Number(d.i);api.edit(()=>{const blk=x.blocks.find(v=>v.kind===key);blk.lines.splice(i,1);if(key==='bogi'&&!isCombo(x)&&!blk.lines.length){x.blocks=x.blocks.filter(v=>v!==blk);return;}if(key==='bogi'){const L=['ㄱ','ㄴ','ㄷ','ㄹ','ㅁ','ㅂ','ㅅ','ㅇ'];blk.lines.forEach((l,j)=>l.label=L[j]||String(j+1));}else if(key==='steps'){const C=['(가)','(나)','(다)','(라)','(마)','(바)','(사)','(아)'];blk.lines.forEach((l,j)=>l.label=C[j]||`(${j+1})`);}});return;}
     if(d.cvcombo!==undefined){const i=Number(d.cvcombo),letter=d.letter;api.edit(()=>{const set=new Set(x.choices[i].text.split(/\s*,\s*/).filter(Boolean));set.has(letter)?set.delete(letter):set.add(letter);const order=(bogiOf(x)?.lines||[]).map(l=>l.label);x.choices[i].text=normalizeCombo([...set].sort((a,b)=>order.indexOf(a)-order.indexOf(b)).join(', '));});return;}
     if(d.cvunit){cardEdit('unit',()=>{x.unitLarge=d.cvunit;});return;}

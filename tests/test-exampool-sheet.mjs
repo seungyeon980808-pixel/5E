@@ -59,3 +59,11 @@ test('validate checks a figure data URL once, but still rejects a changed bad on
   assert.ok(again<first,'a figure already checked is not re-scanned');
   f.data='data:image/png;base64,@@not-base64';assert.throws(()=>validate(data));
 });
+
+test('excel round trip keeps exams (H5): titles, order, status and only questions still in the sheet', async () => {
+  const d=data(),[a,b]=d.questions.map(q=>q.id);
+  d.exams=[{id:'exam_h5',title:'중간고사',status:'drafting',items:[b,a],createdAt:'2026-10-21T00:00:00.000Z',updatedAt:'2026-10-21T00:00:00.000Z'}];
+  const back=await roundtrip(d);
+  assert.equal(back.exams.length,1,'the exam survives the excel round trip');
+  assert.equal(back.exams[0].title,'중간고사');assert.deepEqual(back.exams[0].items,[b,a]);assert.equal(back.exams[0].status,'drafting');
+});

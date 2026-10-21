@@ -34,6 +34,7 @@ const SKELETON={skeleton:true,ghostFigure};
 const LEAD='<p style="margin:0;font-size:1pt;line-height:100%"> </p>';
 const normalized=text=>String(text).replace(/\s+/g,' ').trim();
 export function createTypesetter({host,status,paper,columns,save,download,onSave,onPlacement,onTextEdit,onDiverge,onSlot}){
+  let userDirty=false,patchDirty=false;
   let textMap=null,syncTimer=0,placer=null,owners=null,bridge=null,starting=null,q=null,fingerprint='',baselineText='',baselineEquations='',baselineImages='',opening=0,loading=false,ready=false,pictureSettings,fitting=false,fitFrame=0,lastProfile,metricsCache,view,dirty=false,patching=false,updating=Promise.resolve(),measurer=null,changingProfile=Promise.resolve();
   const message=(text,error=false)=>{status.textContent=text;status.title=text;status.dataset.error=String(error);};// 카드 미리보기 칸에서는 한 줄로 줄이므로 전체 글은 풍선으로
   const document=()=>bridge.wasm.borrowDocumentHandle();
@@ -88,7 +89,7 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
   function scheduleFit(){if(fitting||fitFrame||!ready)return;fitFrame=requestAnimationFrame(()=>{fitFrame=0;try{fitLive();}catch(e){message(e.message,true);}});}
   const equationScripts=async bytes=>{const zip=await JSZip.loadAsync(new Uint8Array(bytes)),xml=await zip.file('Contents/section0.xml').async('string');return [...xml.matchAll(/<hp:script>([\s\S]*?)<\/hp:script>/g)].map(m=>m[1]).join('\n');};
   async function ensure(){
-    if(!starting)starting=RhwpExamBridge.create(host,{showEditingBorders:true,tableLayoutLocked:true,onChange:error=>{if(patching&&!error){scheduleFit();return;}if(ready&&!loading&&!fitting){dirty=true;message(error?error.message:'조판 수정 중 · 완료하면 조판 저장을 누르세요.',!!error);scheduleFit();scheduleTextSync();}},onEdit:(_id,ref)=>{
+    if(!starting)starting=RhwpExamBridge.create(host,{showEditingBorders:true,tableLayoutLocked:true,onChange:error=>{if(patching&&!error){scheduleFit();return;}if(ready&&!loading&&!fitting){dirty=true;userDirty=true;patchDirty=false;message(error?error.message:'조판 수정 중 · 완료하면 조판 저장을 누르세요.',!!error);scheduleFit();scheduleTextSync();}},onEdit:(_id,ref)=>{
       bridge.selectPicture(ref);pictureSettings.open(bridge.pictureLayout(ref),save,{ref,generation:bridge.generation,inlineAlignment:!!bridge.paragraphTarget(ref)});
     }}).then(async b=>{bridge=b;await keepingFocus(()=>bridge.newDocument());bridge.watchView(drawGuide);view=attachTypesetView(bridge,host);placer=attachPlacementLayer({bridge,host,hint:host.parentElement.querySelector('#placement-hint-text'),onActivate:(action,block,ref)=>{if(action==='settings'){bridge.selectPicture(ref);pictureSettings.open(bridge.pictureLayout(ref),save,{ref,generation:bridge.generation,inlineAlignment:!!bridge.paragraphTarget(ref)});return;}onSlot?.(action,block,q?.id);},onApply:(fn,text)=>onPlacement?.(fn,text,q?.id),canEdit:()=>{if(!ready||loading)return false;if(dirty){message('한글 창에 저장 전 수정이 있어 배치를 바꿀 수 없습니다. 조판 저장 후 다시 끌어 주세요.',true);return false;}return true;}});pictureSettings=new PictureSettings(host.parentElement,{onApply:(value,context)=>{if(context.generation!==bridge.generation)throw Error('다시 그림을 선택하세요.');bridge.applyPictureLayout(context.ref,value);},onError:e=>message(e.message,true)});return b;}).catch(e=>{starting=null;throw e;});
     return starting;
@@ -134,7 +135,7 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
       await loadKeepingFocus(bytes,`${q.number}번 문항.hwpx`);host.append(guideLayer);
       bridge.setTableLayoutLocked(true);resize.setAttribute('aria-pressed','true');
       baselineText=normalized(parse(document().getTextFileText()));baselineEquations=await equationScripts(bytes);
-      baselineImages=await nativeImageSignature(document());ready=true;host.dataset.ready='true';dirty=false;view.refresh();
+      baselineImages=await nativeImageSignature(document());ready=true;host.dataset.ready='true';dirty=false;userDirty=false;patchDirty=false;view.refresh();
       bridge.input.cursor.moveTo({sectionIndex:0,paragraphIndex:1,charOffset:0});
       validateQuestionPage(document(),profile());lastProfile=profile();message('문항 길이에 맞춰 용지 높이 자동 조절 · 구조 잠금(글만 고침) · 내어쓰기 Shift+Tab(표 칸 안 Ctrl+Shift+Tab)');
       try{assertNativeLayout(document());}catch(e){message(e.message,true);}
@@ -174,6 +175,9 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
       patching=true;
       try{bridge.transaction('sheet-text',()=>{applyPatches(bridge.wasm,patches);return true;});}
       finally{requestAnimationFrame(()=>{patching=false;});}
+      // 저장해 둔 조판이 있는 문항이면 바뀐 글로 다시 저장되게 표시한다 — 예전에는 표시하지 않아 저장본이 옛 글 기준으로 남고,
+      // 다른 문항에 갔다 오면 「내용이 다름」으로 시트에서 새로 조판되어 서식 조정이 모두 사라졌다(H14).
+      if(value.typeset){dirty=true;if(!userDirty)patchDirty=true;}
       message('시트에서 고친 글을 한글 창에 바로 넣었습니다.');
     }
     q=next;owners={images:plan.imageOwners,tables:plan.tableOwners,shapes:plan.tables,texts:plan.textSegments};
@@ -208,12 +212,13 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
     await changingProfile;
     if(bridge&&[...bridge.editor.element.contentDocument.querySelectorAll('.modal-overlay')].some(n=>n.getClientRects().length))throw Error('열려 있는 조판 설정을 적용하거나 취소한 뒤 문항을 전환하세요.');
     if(!ready||!dirty)return;
-    if(skeletonKey(q)){dirty=false;return;}
-    const s=await snapshot();if(!s)throw Error('저장될 모양을 확인하고 조판 저장을 누르세요.');
-    await onSave(s,q.id);dirty=false;
+    if(skeletonKey(q)){dirty=false;userDirty=false;patchDirty=false;return;}
+    // 바로 넣기(H14)로만 켜진 저장은 모양 확인이 필요하면 조용히 넘긴다 — 오타 하나 고쳤다고 문항 전환이 막히지 않게.
+    const s=await snapshot();if(!s){if(patchDirty){dirty=false;userDirty=false;patchDirty=false;return;}throw Error('저장될 모양을 확인하고 조판 저장을 누르세요.');}
+    await onSave(s,q.id);dirty=false;userDirty=false;patchDirty=false;
   }
-  save.onclick=async()=>{save.disabled=true;try{const s=await snapshot();if(!s)return;await onSave(s,q.id);dirty=false;message('조판 저장됨 · HWPX 재열기 후 모양 검수 완료');}catch(e){message(e.message,true);}finally{save.disabled=!ready;}};
-  download.onclick=async()=>{download.disabled=true;try{const s=await snapshot();if(!s)return;await onSave(s,q.id);dirty=false;const a=window.document.createElement('a'),url=URL.createObjectURL(new Blob([fromBase64(s.bytes)],{type:'application/vnd.hancom.hwpx'}));a.href=url;a.download=`${q.managementId||q.number}번 문항.hwpx`;a.click();setTimeout(()=>URL.revokeObjectURL(url),30000);message('편집 가능한 HWPX를 내려받았습니다.');}catch(e){message(e.message,true);}finally{download.disabled=!ready;}};
+  save.onclick=async()=>{save.disabled=true;try{const s=await snapshot();if(!s)return;await onSave(s,q.id);dirty=false;userDirty=false;patchDirty=false;message('조판 저장됨 · HWPX 재열기 후 모양 검수 완료');}catch(e){message(e.message,true);}finally{save.disabled=!ready;}};
+  download.onclick=async()=>{download.disabled=true;try{const s=await snapshot();if(!s)return;await onSave(s,q.id);dirty=false;userDirty=false;patchDirty=false;const a=window.document.createElement('a'),url=URL.createObjectURL(new Blob([fromBase64(s.bytes)],{type:'application/vnd.hancom.hwpx'}));a.href=url;a.download=`${q.managementId||q.number}번 문항.hwpx`;a.click();setTimeout(()=>URL.revokeObjectURL(url),30000);message('편집 가능한 HWPX를 내려받았습니다.');}catch(e){message(e.message,true);}finally{download.disabled=!ready;}};
   const changeProfile=async()=>{
     if(!bridge||loading||!ready)return;loading=true;save.disabled=true;download.disabled=true;paper.disabled=true;columns.disabled=true;guide.hidden=true;
     try{const next=profile(),bytes=resizeQuestionDocument(document(),next,XLSX.CFB),cursor=bridge.input.getCursorPosition();
@@ -233,7 +238,7 @@ export function createTypesetter({host,status,paper,columns,save,download,onSave
     try{return exportLayoutHwpx(exam,XLSX.CFB);}finally{exam.free();}
   }
   // 한글 창에서 바꾼 것을 버린다(시트에 반영되지 않은 수정 포함). 다음 open이 시트 내용으로 다시 그린다.
-  function discard(){clearTimeout(syncTimer);dirty=false;ready=false;onDiverge?.(false);}
+  function discard(){clearTimeout(syncTimer);dirty=false;userDirty=false;patchDirty=false;ready=false;onDiverge?.(false);}
   // 틀(회색 안내)만 달라지는 변경: 빈 칸에 처음 쓰거나 다 지울 때. 문단 글 바꾸기로는 안 되고(안내는 회색) 다시 그려야 한다.
   const skeletonOnly=value=>!!q&&value?.id===q.id&&layoutKey(q)===layoutKey(value)&&skeletonKey(q)!==skeletonKey(value);
   // 쪽 전체: 문항마다 한글 문서를 구해(열린 문항은 지금 한글 창, 저장한 조판, 아니면 미리보기 칸과 같은 새 조판)
