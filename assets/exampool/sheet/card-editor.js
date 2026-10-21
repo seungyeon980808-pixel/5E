@@ -370,6 +370,8 @@ export function createCardEditor(root,api){
     if(!body.isConnected||panels.tab!=='past')return;
     const subjects=pastIndex.subjects.map(v=>v[1]),parts=[...new Set(items.flatMap(i=>i.parts))].sort(),years=[...new Set(items.map(i=>i.year))].sort((a,b)=>b-a);
     const words=[...new Set([...f.tokens,...splitWords(f.query)])];
+    // 단원 칸은 지금 과목의 단원만 보여 준다. 과목이 바뀌어 없는 단원이 남아 있으면 칸은 「전체」인데 0문항이 나왔다(M19).
+    if(f.part&&!parts.includes(f.part)){f.part='';store.set('past',pastFilter);}
     const list=items.filter(i=>(!f.part||i.parts.includes(f.part))&&(!f.year||String(i.year)===String(f.year))&&(!words.length||(hay(i),words.every(w=>i._hay.includes(w)||i._hayNs.includes(w)))));
     if(words.length){const sc=new Map(list.map(i=>[i,pastScore(i,words)]));list.sort((a,b)=>sc.get(b)-sc.get(a));}
     const total=pastIndex.subjects.reduce((n,v)=>n+v[2],0);
@@ -525,7 +527,7 @@ export function createCardEditor(root,api){
     const t=e.target,x=q();
     if(t.dataset.cvscope!==undefined){if(t.value==='__lib'){t.value=panels.tab;api.pickLibrary?.(panels.tab==='textbooks'?'textbook':'past');return;}setPanel('tab',t.value);return;}
     if(t.dataset.cvpast==='pagefile')pastFilter.pageno=0;
-    if(t.dataset.cvpast&&t.dataset.cvpast!=='query'){pastFilter[t.dataset.cvpast]=t.value;if(t.dataset.cvpast==='book')Object.assign(pastFilter,{query:'',bookpage:1});store.set('past',pastFilter);renderPast();return;}
+    if(t.dataset.cvpast&&t.dataset.cvpast!=='query'){pastFilter[t.dataset.cvpast]=t.value;if(t.dataset.cvpast==='subject')pastFilter.part='';if(t.dataset.cvpast==='book')Object.assign(pastFilter,{query:'',bookpage:1});store.set('past',pastFilter);renderPast();return;}
     if(!x)return;
     if(t.dataset.cvans!==undefined){api.edit(()=>{x.answer=Number(t.dataset.cvans);});return;}
     if(t.matches('[data-points3]')){api.edit(()=>{x.points=t.checked?3:2;});return;}
