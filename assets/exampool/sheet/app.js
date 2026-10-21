@@ -737,14 +737,15 @@ async function receiveAuthor(m){
 const figureRequests=new Map();
 function figureSlot(q,spec){
   const figs=q.blocks.filter(b=>b.kind==='figure');
-  return figs.find(b=>b.id===spec.slot||b.label===spec.slot)||figs.find(b=>!b.figure?.data)||null;
+  // 이름만 같은 칸은 비어 있을 때만 쓴다. 예전에는 이름이 같은 첫 칸(교사 그림이 든 칸)을 덮어썼다(M27).
+  return figs.find(b=>b.id===spec.slot)||figs.find(b=>b.label===spec.slot&&!b.figure?.data)||figs.find(b=>!b.figure?.data)||null;
 }
 function createFigure(q,spec,{prior=null,blockId=null}={}){
   if(!embedded){status('5E 안에서 열어야 그림·그래프를 만들 수 있습니다.',true);return;}
   if([...figureRequests.values()].some(r=>r.qid===q.id)){status('이 문항의 그림·그래프를 만드는 중입니다.',true);return;}
   let slot=blockId?q.blocks.find(b=>b.id===blockId):figureSlot(q,spec);
   if(!slot){mutate(()=>{slot=block('figure',null,spec.kind==='graph'?'그래프':'그림');q.blocks.push(slot);});if(!slot)return;}
-  const requestId=uid();figureRequests.set(requestId,{qid:q.id,blockId:slot.id,kind:spec.kind,description:spec.description,mustNot:spec.mustNot||[],at:nowIso()});
+  const requestId=uid();figureRequests.set(requestId,{qid:q.id,blockId:slot.id,kind:spec.kind,description:spec.description,mustNot:spec.mustNot||[],at:nowIso(),before:slot.figure?.data||null});
   status(`${spec.kind==='graph'?'그래프를':'그림을'} 만드는 중입니다(${slot.label||'그림 칸'})…`);cardEditor.refreshAi?.();
   window.parent.postMessage({channel:'5e-question-sheet',action:'figure-create',requestId,qid:q.id,kind:spec.kind,description:spec.description,mustNot:spec.mustNot||[],prior},location.origin);
 }
@@ -759,9 +760,13 @@ async function receiveFigure(m){
   const q=data.questions.find(x=>x.id===req.qid);if(!q){status('그림이 왔지만 그 문항이 없어 넣지 않았습니다.',true);return;}
   if(m.cancelled){cardEditor.refreshAi?.();return;}
   if(m.error||!m.result?.data){status((req.kind==='graph'?'그래프':'그림')+' 만들기 실패: '+(m.error||'결과 없음'),true);mutate(()=>{(q.reviews ||= []).push({role:'ai',text:`${req.kind==='graph'?'그래프':'그림'} 만들기에 실패했습니다: ${m.error||'결과 없음'} · 문항의 그림 칸은 그대로입니다.`,at:nowIso(),error:true});},{render:false});cardEditor.refreshAi?.();return;}
-  const r=m.result,hash=await sha256Text(r.data),b=q.blocks.find(x=>x.id===req.blockId);
-  if(!b){status('그림 칸이 사라져 넣지 않았습니다.',true);return;}
+  const r=m.result,hash=await sha256Text(r.data),asked=q.blocks.find(x=>x.id===req.blockId);
+  if(!asked){status('그림 칸이 사라져 넣지 않았습니다.',true);return;}
+  // 만드는 동안 그 칸을 표 등으로 바꿨거나 교사가 다른 그림을 넣었으면, 그 칸을 덮지 않고 새 그림 칸에 넣는다(M27).
+  // 예전에는 표로 바뀐 칸에 그림을 넣어 보이지 않는 채 저장했다.
+  const reuse=asked.kind==='figure'&&(asked.figure?.data||null)===req.before;let b=asked;
   const ok=mutate(()=>{
+    if(!reuse){b=block('figure',null,req.kind==='graph'?'그래프':'그림');q.blocks.push(b);}
     b.figure={name:`${req.kind==='graph'?'그래프':'그림'} · ${(b.label||'').slice(0,40)}.png`,data:r.data,...(r.width?{width:r.width,height:r.height}:{})};
     const a=ensureAuthoring(q),link={blockId:b.id,kind:req.kind,description:req.description.slice(0,4000),mustNot:req.mustNot,resultHash:hash,editable:req.kind==='graph',engine:r.engine||null,model:r.model||null,ms:r.ms||null,revision:a.revision,at:nowIso(),...(r.graph?{graph:r.graph}:{}),...(r.issues?.length?{issues:r.issues}:{})};
     a.figures=a.figures.filter(f=>f.blockId!==b.id);a.figures.push(link);
