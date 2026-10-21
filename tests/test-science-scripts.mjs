@@ -1,7 +1,7 @@
 // 과학 글 첨자 자동(js/rhwp-exam-science-text.js): 어디에 아래·위 첨자를 입힐지 글만 보고 찾는다.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { scriptRanges } from '../js/rhwp-exam-science-text.js';
+import { scriptRanges, unitGapPositions } from '../js/rhwp-exam-science-text.js';
 
 const show = text => { const marks = [...text].map(c => c); for (const r of scriptRanges(text)) for (let i = r.start; i < r.end; i++) marks[i] = (r.kind === 'sub' ? '_' : '^') + text[i]; return marks.join(''); };
 
@@ -19,4 +19,10 @@ test('chemical formulas, ions, units and physics labels get scripts', () => {
 test('ordinary words, Korean labels, question numbers and mass labels stay plain', () => {
   for (const text of ['1. 다음 중 옳은 것은? [3점]', 'Hello World', 'A4 용지', 'm1과 m2의 질량', '(가)와 (나)', 'CO와 NO', 'DNA 2개', 'ㄱ, ㄴ, ㄷ', 'pH 7'])
     assert.deepEqual(scriptRanges(text), [], text);
+});
+
+test('number-unit gaps are found, orbitals and formulas are left alone', () => {
+  const gaps = text => { let out = text; for (const at of [...unitGapPositions(text)].reverse()) out = out.slice(0, at) + ' ' + out.slice(at); return out; };
+  assert.equal(gaps('높이 10m에서 2kg 물체를 3N의 힘으로, 25℃, 1.5L, 300K'), '높이 10 m에서 2 kg 물체를 3 N의 힘으로, 25 ℃, 1.5 L, 300 K');
+  for (const text of ['2s 오비탈과 2p 오비탈', '2NaCl', '2N2 + 3H2', 'C6H12O6', 'H2O', '10 m', 'A4 용지', '1. 다음', 'x2']) assert.deepEqual(unitGapPositions(text), [], text);
 });

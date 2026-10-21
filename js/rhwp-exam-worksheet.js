@@ -2,6 +2,7 @@
 // 문서를 고치는 것은 모두 한 번의 되돌리기 단계(bridge.transaction). 학생용 사본은 지금 문서를 건드리지 않고 복사본에서 만든다.
 import { insertTable } from './hwp-palette/native.js';
 import { qrPng } from './qr-encode.js';
+import { unitGapIssues } from './rhwp-exam-science-text.js';
 import { columnWidth, questionBlocks, swapAdjacentQuestions, renumberDocument, allQuestionBlocks } from './rhwp-exam-layout-tools.js';
 
 const parse = value => typeof value === 'string' ? JSON.parse(value) : value;
@@ -447,6 +448,8 @@ export function extraChecks(doc) {
       from = i;
     }
   }
+  const gaps = unitGapIssues(doc), gapCount = gaps.reduce((n, g) => n + g.at.length, 0);
+  if (gapCount) { const g = gaps[0], at = g.at[0], sample = g.text.slice(Math.max(0, at - 3), at + 3).trim(); issues.push({ text: `숫자와 단위 사이 띄어쓰기가 빠진 곳이 ${gapCount}곳 있습니다(예: ${sample} → 평가원 표기는 「10 m」).`, at: g.where.kind === 'body' ? { sectionIndex: g.where.sec, paragraphIndex: g.where.p, charOffset: at } : null }); }
   const equations = equationSizeIssues(doc);
   if (equations.length) issues.push({ text: `수식 ${equations.length}개의 크기가 둘레 글자와 다릅니다(예: ${equations[0].size / 100}pt → ${equations[0].target / 100}pt).`, at: { sectionIndex: equations[0].sec, paragraphIndex: equations[0].para, charOffset: 0 } });
   if (fonts.size > 1) {

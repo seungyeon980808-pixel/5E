@@ -474,6 +474,14 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
     await page.locator('[data-exam-fixeq]').click(); await h.idle(page);
     assert.match(await page.locator('#exam-status').textContent(), /수식 2개의 크기를/);
     assert.deepEqual(await inPage(page, eqSizes), [1000, 1000]);
+    // 40) 점검 「숫자·단위 띄어 쓰기」: 본문·표 칸의 10m → 10 m, 오비탈 2s는 그대로.
+    await inPage(page, `reset('1. 높이 10m에서 2kg 물체, 2s 오비탈');const t=JSON.parse(d.createTable(0,0,0,1,1));d.insertTextInCell(0,t.paraIdx,t.controlIdx,0,0,0,'질량 5g');b.deps.eventBus.emit('document-changed');window.__u=t;`);
+    await page.locator('[data-exam-fx="check"]').click();
+    assert.match(await page.locator('.exam-checklist').textContent(), /띄어쓰기가 빠진 곳이 3곳/);
+    await page.locator('[data-exam-fixunit]').click(); await h.idle(page);
+    assert.match(await page.locator('#exam-status').textContent(), /3곳을 띄어 썼습니다/);
+    assert.ok((await inPage(page, `return text();`)).includes('1. 높이 10 m에서 2 kg 물체, 2s 오비탈'));
+    assert.equal(await inPage(page, `const t=window.__u;return d.getTextInCell(0,t.paraIdx,t.controlIdx,0,0,0,d.getCellParagraphLength(0,t.paraIdx,t.controlIdx,0,0));`), '질량 5 g');
     // 15) 구역이 둘인 시험지(0구역=머리·1번, 1구역=2단 본문): 문항 목록이 두 구역을 다 보이고, 구역을 넘는 ↑↓는 막고, 1구역 안 이동·복제·나뉜 문항 점검은 된다.
     const twoSections = await inPage(page, `const {unzipSync,zipSync}=await import('/vendor/fflate/index.js');
       reset('시험 머리\\n1. 가');const first=unzipSync(d.exportHwpx());reset('2. 나\\n나나\\n3. 다');const second=unzipSync(d.exportHwpx());

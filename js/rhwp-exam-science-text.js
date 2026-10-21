@@ -85,3 +85,44 @@ export function applyScienceScripts(bridge) {
   bridge.transaction('science-scripts', () => { for (const run of work) run(); return true; });
   return work.length;
 }
+
+// 숫자와 단위 사이 띄어쓰기(평가원 표기 「10 m」「2 kg」): 띄어 쓸 자리(글자 위치)를 돌려준다.
+// s(초)는 오비탈(2s)과 겹쳐 빼고, 단위 뒤에 글자·숫자가 이어지면(2NaCl, 2N2) 화학식으로 보고 건드리지 않는다.
+const UNIT_GAP = /(?<![A-Za-z])(\d)(km|cm|mm|nm|μm|kg|mg|mL|mol|Pa|Hz|kPa|kJ|m|g|L|N|J|W|V|A|K|℃)(?![A-Za-z0-9])/g;
+export function unitGapPositions(text) {
+  return [...String(text).matchAll(UNIT_GAP)].map(m => m.index + 1);
+}
+function forEachTextRun(doc, visit) {
+  for (let sec = 0; sec < doc.getSectionCount(); sec++)
+    for (let p = 0; p < doc.getParagraphCount(sec); p++) visit({ kind: 'body', sec, p }, String(doc.getTextRange(sec, p, 0, doc.getParagraphLength(sec, p))));
+  const seen = new Set();
+  for (let pg = 0; pg < doc.pageCount(); pg++) for (const c of parse(doc.getPageControlLayout(pg)).controls || []) {
+    if (c.type !== 'table' || c.cellPath?.length) continue;
+    const sec = c.secIdx ?? 0, ci = c.controlIdx ?? c.ci, key = `${sec}:${c.paraIdx}:${ci}`;
+    if (seen.has(key)) continue; seen.add(key);
+    const cells = parse(doc.getTableDimensions(sec, c.paraIdx, ci)).cellCount;
+    for (let cell = 0; cell < cells; cell++) for (let cp = 0; cp < doc.getCellParagraphCount(sec, c.paraIdx, ci, cell); cp++)
+      visit({ kind: 'cell', sec, para: c.paraIdx, ci, cell, cp }, String(doc.getTextInCell(sec, c.paraIdx, ci, cell, cp, 0, doc.getCellParagraphLength(sec, c.paraIdx, ci, cell, cp))));
+  }
+}
+// [{where, text, at:[…]}] — 띄어쓰기가 빠진 곳이 있는 문단
+export function unitGapIssues(doc) {
+  const out = [];
+  forEachTextRun(doc, (where, text) => { const at = unitGapPositions(text); if (at.length) out.push({ where, text, at }); });
+  return out;
+}
+export function fixUnitGaps(bridge) {
+  if (!bridge?.input?.cursor) throw new Error('먼저 시험지를 여세요.');
+  const doc = bridge.wasm.borrowDocumentHandle(), list = unitGapIssues(doc);
+  let count = 0;
+  if (!list.length) return 0;
+  bridge.transaction('unit-gaps', () => {
+    for (const { where: w, at } of list) for (const o of [...at].reverse()) {
+      if (w.kind === 'body') doc.insertText(w.sec, w.p, o, ' ');
+      else doc.insertTextInCell(w.sec, w.para, w.ci, w.cell, w.cp, o, ' ');
+      count++;
+    }
+    return true;
+  });
+  return count;
+}
