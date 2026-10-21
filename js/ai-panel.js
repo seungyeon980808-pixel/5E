@@ -3792,7 +3792,9 @@ function initAiTaskPanel(state, { panel, desktop, clientScope, newWorkspace, swi
   const createTaskTab = ({ activate = true, kind = conversionKind } = {}) => {
     if (busy) return null;
     captureActiveTaskTab();
-    const id = `${clientScope ? clientScope + ":" : ""}task-${++taskTabSerial}`;
+    // 다시 연 프로젝트의 작업 번호가 되돌아가 있으면 새 탭이 같은 id로 기존 탭을 덮어썼다(M41). 비어 있는 번호까지 넘긴다.
+    let id;
+    do id = `${clientScope ? clientScope + ":" : ""}task-${++taskTabSerial}`; while (taskTabs.has(id));
     taskTabs.set(id, {
       id,
       title: `작업 ${taskTabSerial}`,
