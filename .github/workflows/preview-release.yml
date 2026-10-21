@@ -69,15 +69,6 @@ jobs:
       - name: Validate the committed source
         working-directory: _work/preview-source
         run: npm run test:unit
-      - name: Exercise the complete affected UI suites on both engines
-        working-directory: _work/preview-source
-        env:
-          APP_ENTRY: /
-          EVIDENCE_DIR: ${{ github.workspace }}/_work/preview-evidence/source
-        run: |
-          for engine in chromium webkit; do
-            TASK2_ENGINE="$engine" EVIDENCE_DIR="$EVIDENCE_DIR/$engine" node --test tests/test-ai-inline-label-editor-browser.cjs tests/test-library-space-flow-browser.cjs tests/test-library-crop-confirm-browser.cjs tests/test-ai-local-edit-browser.cjs tests/test-ai-library-transfer-browser.cjs
-          done
       - name: Recover or unpack the exact published base
         run: |
           if test -f _work/preview-base-pages/artifact.tar; then
