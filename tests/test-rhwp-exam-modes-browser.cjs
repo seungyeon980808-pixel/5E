@@ -303,6 +303,13 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
     await page.locator('[data-exam-fixfont]').click(); await h.idle(page);
     assert.match(await page.locator('#exam-status').textContent(), /문항 1개의 글꼴/);
     assert.deepEqual(await inPage(page, `return [2,3].map(p=>{const c=w.getCharPropertiesAt(0,p,1);return [c.fontFamily,c.fontSize];});`), [['함초롬바탕', 1000], ['함초롬바탕', 900]]);
+    // 23) 학생용 사본은 교사용 줄([정답]·해설:·[빈칸 정답])을 문단째 빼고, 「정답은 …」 같은 본문은 그대로 둔다. 빈칸이 없어도 된다.
+    await inPage(page, `reset('1. 문항\\n[정답] ③\\n해설: 설명\\n2. 문항\\n정답은 ③이다\\n【풀이】 끝');`);
+    await page.locator('[data-exam-ftab="sheet"]').click();
+    const studentDownload = page.waitForEvent('download'); await button(page, '빈칸을 「').click(); await studentDownload; await h.idle(page);
+    assert.match(await page.locator('#exam-status').textContent(), /\[정답\]·\[해설\] 줄 3개를 뺀 학생용/);
+    assert.deepEqual(await inPage(page, `const {studentCopy}=await import('/js/rhwp-exam-worksheet.js');const x=new d.constructor(studentCopy(b).bytes);try{return [...Array(x.getParagraphCount(0)).keys()].map(p=>x.getTextRange(0,p,0,x.getParagraphLength(0,p)));}finally{x.free();}`), ['1. 문항', '2. 문항', '정답은 ③이다']);
+    assert.equal((await inPage(page, `return text();`)).length, 6, 'teacher document unchanged');
     // 15) 구역이 둘인 시험지(0구역=머리·1번, 1구역=2단 본문): 문항 목록이 두 구역을 다 보이고, 구역을 넘는 ↑↓는 막고, 1구역 안 이동·복제·나뉜 문항 점검은 된다.
     const twoSections = await inPage(page, `const {unzipSync,zipSync}=await import('/vendor/fflate/index.js');
       reset('시험 머리\\n1. 가');const first=unzipSync(d.exportHwpx());reset('2. 나\\n나나\\n3. 다');const second=unzipSync(d.exportHwpx());

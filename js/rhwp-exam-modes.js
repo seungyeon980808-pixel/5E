@@ -77,7 +77,7 @@ function focusTabs(ctx) {
     sheet: [
       ['빈칸 표시', '고른 낱말을 빈칸으로 표시(연한 파랑·밑줄) — 학생용에서 「(　　　)」로 바뀜', doc(b => markBlank(b, true))],
       ['표시 지우기', '고른 부분의 빈칸 표시 지우기', doc(b => markBlank(b, false))],
-      ['학생용 내려받기', '빈칸을 「(　　　)」로 바꾼 학생용 HWPX 사본 내려받기(지금 문서는 그대로)', doc(b => ctx.studentCopy(b))],
+      ['학생용 내려받기', '빈칸을 「(　　　)」로 바꾸고 「[정답]·[해설]·정답:」 줄을 뺀 학생용 HWPX 사본 내려받기(지금 문서는 그대로)', doc(b => ctx.studentCopy(b))],
       ['정답지 내려받기', '빈칸 자리에 정답을 빨간 굵은 글씨로 채운 정답지 HWPX 사본 내려받기', doc(b => ctx.answerKey(b))],
       ['정답 모아 넣기', '빈칸 정답을 문서 끝에 「[빈칸 정답] 1. … 2. …」로 넣기', doc(b => ctx.message(`빈칸 정답 ${appendBlankAnswers(b)}개를 문서 끝에 넣었습니다.`))], '|',
       ['학습지 틀', '제목·이름 칸·학습 목표·활동 1·활동 2·정리 상자를 문서 끝에 한 번에 넣기', doc(b => ctx.message(`학습지 틀(상자 ${insertWorksheetFrame(b, ctx.documentTitle())}개)을 넣었습니다. 칸마다 내용을 쓰세요.`))],
@@ -185,9 +185,9 @@ export function installExamModes(panel, services) {
       refocus();
     },
     studentCopy(b) {
-      const { bytes, count } = studentCopy(b), name = `${(services.documentName?.() || '학습지').replace(/[\\/:*?"<>|]/g, '_')}-학생용.hwpx`;
+      const { bytes, count, removed } = studentCopy(b), name = `${(services.documentName?.() || '학습지').replace(/[\\/:*?"<>|]/g, '_')}-학생용.hwpx`;
       services.download(new Blob([bytes], { type: 'application/vnd.hancom.hwpx' }), name);
-      message(`빈칸 ${count}개를 비운 학생용 사본을 내려받습니다(${name}). 지금 문서는 그대로입니다.`);
+      message(`${[count ? `빈칸 ${count}개를 비우고` : '', removed ? `[정답]·[해설] 줄 ${removed}개를 뺀` : ''].filter(Boolean).join(' ').replace(/비우고$/, '비운')} 학생용 사본을 내려받습니다(${name}). 지금 문서는 그대로입니다.`);
     },
     answerKey(b) {
       const { bytes, count } = answerKeyCopy(b), name = `${(services.documentName?.() || '학습지').replace(/[\\/:*?"<>|]/g, '_')}-정답지.hwpx`;

@@ -123,15 +123,24 @@ export function shadeHeaderRow(bridge, color = '#eef2f7') {
 }
 
 // 학생용 사본: 지금 문서를 복사해 빈칸 표시 낱말을 「(　　　)」로 바꾼 HWPX 바이트. 지금 문서는 그대로다.
+// 교사만 보는 줄: 「[정답] …」「정답: …」「[해설]」「[풀이]」「[채점 기준]」「[교사용]」, 이 도구가 붙인 「[빈칸 정답]」「[나형 대응]」.
+export const TEACHER_ONLY = /^\s*(?:[\[【〈<(]\s*(?:정답|해설|풀이|채점\s*기준|교사용|빈칸 정답|나형 대응)\s*[\]】〉>)]|(?:정답|해설|풀이)\s*[:：])/;
 export function studentCopy(bridge) {
   requireInput(bridge);
-  const doc = bridge.wasm.borrowDocumentHandle(), blanks = collectBlanks(doc);
-  if (!blanks.length) throw new Error('빈칸으로 표시한 낱말이 없습니다. 낱말을 고르고 「빈칸 표시」를 누르세요.');
+  const doc = bridge.wasm.borrowDocumentHandle(), blanks = collectBlanks(doc), teacher = [];
+  for (let sec = 0; sec < doc.getSectionCount(); sec++)
+    for (let p = 0; p < doc.getParagraphCount(sec); p++) if (TEACHER_ONLY.test(String(doc.getTextRange(sec, p, 0, doc.getParagraphLength(sec, p))))) teacher.push({ sec, p });
+  if (!blanks.length && !teacher.length) throw new Error('빈칸으로 표시한 낱말이나 「[정답]·[해설]」 줄이 없습니다. 낱말을 고르고 「빈칸 표시」를 누르세요.');
   const Document = doc.constructor, copy = new Document(doc.exportHwpx());
   try {
     // 같은 문단 안에서는 뒤에서부터 바꿔야 앞 구간 위치가 그대로다.
     for (const blank of [...blanks].reverse()) replaceRange(copy, blank.where, blank.start, blank.end, blankText(blank.text));
-    return { bytes: copy.exportHwpx(), count: blanks.length, answers: blanks.map(b => b.text) };
+    // 교사용 줄은 뒤에서부터 문단째 뺀다(0번 문단은 구역 설정을 품어 글만 지운다).
+    for (const { sec, p } of [...teacher].reverse()) {
+      if (p > 0) parse(copy.deleteParagraph(sec, p));
+      else { const n = copy.getParagraphLength(sec, 0); if (n) copy.deleteText(sec, 0, 0, n); }
+    }
+    return { bytes: copy.exportHwpx(), count: blanks.length, removed: teacher.length, answers: blanks.map(b => b.text) };
   } finally { copy.free(); }
 }
 
