@@ -980,3 +980,35 @@ export function explanationCopy(bridge, title = '시험') {
     return { bytes: out.exportHwpx(), count: items.length, explained: items.filter(i => i.notes.length).length };
   } finally { out.free(); }
 }
+
+// 고른 문항만 새 파일로: 「3, 5, 7-9」처럼 고른 번호의 문항만 남긴 사본(번호 다시 매김). 지금 문서는 그대로. {bytes, count, numbers}
+export function parseNumberList(text) {
+  const out = new Set();
+  for (const part of String(text || '').split(/[,\s]+/).filter(Boolean)) {
+    const m = /^(\d{1,3})(?:\s*[-~～]\s*(\d{1,3}))?$/.exec(part); if (!m) throw new Error(`「${part}」를 번호로 읽지 못했습니다. 예: 3, 5, 7-9`);
+    const a = Number(m[1]), b = Number(m[2] || m[1]); for (let n = Math.min(a, b); n <= Math.max(a, b); n++) out.add(n);
+  }
+  return [...out].sort((a, b) => a - b);
+}
+export function pickQuestionsCopy(bridge, text) {
+  requireInput(bridge);
+  const numbers = parseNumberList(text); if (!numbers.length) throw new Error('뽑을 문항 번호를 쓰세요. 예: 3, 5, 7-9');
+  const doc = bridge.wasm.borrowDocumentHandle(), keep = new Set(numbers);
+  const chosen = allQuestionBlocks(doc).filter(q => !q.essay && keep.has(q.number));
+  if (!chosen.length) throw new Error('그 번호의 선택형 문항을 찾지 못했습니다.');
+  const Document = doc.constructor, copy = new Document(doc.exportHwpx());
+  try {
+    // 뒤에서부터 남기지 않을 문항(묶음 머리·지문 포함 범위)을 지운다. 첫 문항 앞 머리(시험지 머리 등)는 남긴다.
+    for (let sec = copy.getSectionCount() - 1; sec >= 0; sec--) {
+      const blocks = questionBlocks(copy, sec);
+      for (let i = blocks.length - 1; i >= 0; i--) {
+        const q = blocks[i]; if (!q.essay && keep.has(q.number)) continue;
+        if (q.end < copy.getParagraphCount(sec)) parse(copy.deleteRange(sec, q.start, 0, q.end, 0));
+        else if (q.start > 0) parse(copy.deleteRange(sec, q.start - 1, copy.getParagraphLength(sec, q.start - 1), q.end - 1, copy.getParagraphLength(sec, q.end - 1)));
+        else parse(copy.deleteRange(sec, 0, 0, q.end - 1, copy.getParagraphLength(sec, q.end - 1)));
+      }
+    }
+    renumberDocument(copy);
+    return { bytes: copy.exportHwpx(), count: chosen.length, numbers: chosen.map(q => q.number) };
+  } finally { copy.free(); }
+}

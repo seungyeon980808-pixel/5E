@@ -6,7 +6,7 @@ import { fitCellPicture, centerPicturesInCells, picturesToGrid, fitTableToColumn
 import { showConfirm } from './ui-dialogs.js?v=1.7.0-four-session-integration';
 import { listExamPoolExams, buildExamPoolHwpx } from './rhwp-exam-exampool-open.js';
 import { applyScienceScripts, fixUnitGaps } from './rhwp-exam-science-text.js';
-import { markBlank, studentCopy, appendBlankAnswers, insertExamHeader, insertAnswerGrid, setQuestionSpacing, extraChecks, BOX_PRESETS, insertBox, insertAnswerLines, insertRubric, setColumns, setPaper, makeVariant, appendVariantMapping, answerKeyCopy, STEMS, shadeHeaderRow, insertWorksheetFrame, PAGE_NUMBER_STYLES, insertPageNumbers, SCORE_CHOICES, setQuestionScore, insertQrCode, unifyQuestionFonts, boldToBlanks, WORKSHEET_FRAMES, blueprintCopy, setQuestionAnswer, questionAnswers, explanationCopy, addExplanationLine, fitEquationSizes, underlineNegativeWords, examSummary, insertRunningHeader, balanceAnswers, setQuestionMeta, cursorQuestion, questionMeta } from './rhwp-exam-worksheet.js';
+import { markBlank, studentCopy, appendBlankAnswers, insertExamHeader, insertAnswerGrid, setQuestionSpacing, extraChecks, BOX_PRESETS, insertBox, insertAnswerLines, insertRubric, setColumns, setPaper, makeVariant, appendVariantMapping, answerKeyCopy, STEMS, shadeHeaderRow, insertWorksheetFrame, PAGE_NUMBER_STYLES, insertPageNumbers, SCORE_CHOICES, setQuestionScore, insertQrCode, unifyQuestionFonts, boldToBlanks, WORKSHEET_FRAMES, blueprintCopy, setQuestionAnswer, questionAnswers, explanationCopy, addExplanationLine, fitEquationSizes, underlineNegativeWords, examSummary, insertRunningHeader, balanceAnswers, setQuestionMeta, cursorQuestion, questionMeta, pickQuestionsCopy } from './rhwp-exam-worksheet.js';
 import { SYMBOL_ROW, SYMBOL_TABS, SYMBOL_CHUNKS, symbolCells, recentSymbols, rememberSymbol } from './rhwp-exam-symbols.js';
 
 const MODE_KEY = '5e.hwp.toolMode';
@@ -119,7 +119,7 @@ const MORE = {
     ['표 왼쪽으로', '표를 왼쪽으로', 'table-align-left'], ['표 오른쪽으로', '표를 오른쪽으로', 'table-align-right']],
   pic: [['캡션 넣기', '그림 아래 캡션 넣기', 'insert:caption-bottom'], ['캡션 없애기', '캡션 없애기', 'insert:caption-none'],
     ['그림 지우기', '고른 그림 지우기', 'insert:picture-delete'], ['좌우 뒤집기', '그림 좌우 뒤집기', 'insert:flip-horz'], ['오른쪽으로 90°', '그림 오른쪽으로 돌리기', 'insert:rotate-cw']],
-  item: [['문항을 그림으로', '커서가 있는 문항을 고해상도 PNG로 내려받기(PPT·학습 앱에 붙이기, [정답]·[해설] 줄은 빼고)', 'x:question-image'], ['모든 문항 그림(zip)', '문항마다 PNG 한 장씩 zip으로 내려받기(복습 PPT·문제 은행용)', 'x:all-question-images'], ['마크다운 → 문항', '마크다운 → 한글 문항 (팔레트)', 'tool:convert'], ['엑셀 문항', '엑셀 문항 목록 → 한글 (팔레트)', 'tool:exam_excel'], ['단 나누기', '단 나누기 (Ctrl+Shift+Enter)', 'page:column-break'], ['머리말', '머리말 만들기·고치기', 'page:header-create'], ['꼬리말', '꼬리말 만들기·고치기', 'page:footer-create'], ['머리말·꼬리말 닫기', '머리말·꼬리말 편집 마치기', 'page:headerfooter-close'],
+  item: [['문항을 그림으로', '커서가 있는 문항을 고해상도 PNG로 내려받기(PPT·학습 앱에 붙이기, [정답]·[해설] 줄은 빼고)', 'x:question-image'], ['모든 문항 그림(zip)', '문항마다 PNG 한 장씩 zip으로 내려받기(복습 PPT·문제 은행용)', 'x:all-question-images'], ['고른 문항만 새 파일로', '「3, 5, 7-9」처럼 고른 번호의 문항만 남긴 사본(번호 다시) — 오답·보충 학습지', 'x:pick-questions'], ['마크다운 → 문항', '마크다운 → 한글 문항 (팔레트)', 'tool:convert'], ['엑셀 문항', '엑셀 문항 목록 → 한글 (팔레트)', 'tool:exam_excel'], ['단 나누기', '단 나누기 (Ctrl+Shift+Enter)', 'page:column-break'], ['머리말', '머리말 만들기·고치기', 'page:header-create'], ['꼬리말', '꼬리말 만들기·고치기', 'page:footer-create'], ['머리말·꼬리말 닫기', '머리말·꼬리말 편집 마치기', 'page:headerfooter-close'],
     ['쪽 번호 넣기', '지금 자리에 쪽 번호 넣기', 'page:insert-field-pagenum'], ['전체 쪽 수', '지금 자리에 전체 쪽 수 넣기', 'page:insert-field-totalpage'],
     ['각주', '각주 넣기', 'insert:footnote'], ['미주', '미주 넣기', 'insert:endnote'], ['글상자', '글상자 넣기', 'insert:textbox'],
     ['단 설정', '단 수·간격 설정', 'page:col-settings'], ['쪽 설정', '용지·여백 설정', 'page:setup'], ['문자표 전체', '한글 문자표 창', 'insert:symbols']],
@@ -395,6 +395,7 @@ export function installExamModes(panel, services) {
     if (action.startsWith('tool:')) return services.palette?.tool(action.slice(5));
     if (action === 'x:question-image') return ctx.questionImage(bridgeOrThrow());
     if (action === 'x:all-question-images') return ctx.allQuestionImages(bridgeOrThrow());
+    if (action === 'x:pick-questions') return openForm(bar.querySelector('.exam-fgroup [data-exam-fi]:last-child') || bar, 'pick');
     if (action === 'table-align-left' || action === 'table-align-right') return ctx.withBridge(b => applyTableAlignment(b, action.slice(12)));
     return ctx.command(action);
   }
@@ -437,6 +438,10 @@ export function installExamModes(panel, services) {
     } else if (kind === 'variant') {
       pop.innerHTML = `<div class="exam-pop-head">가·나형 <small>나형 사본 내려받기 · 지금 문서는 대응표만 붙음</small></div>
         <div class="exam-morelist"><button type="button" data-exam-variant="order">문항 순서만 섞기</button><button type="button" data-exam-variant="choices" title="선지가 한 줄에 하나씩인 문항만 선지 순서도 섞고, 문항 안 「[정답] ③」을 따라 고침">문항+선지 순서 섞기</button></div>`;
+    } else if (kind === 'pick') {
+      pop.innerHTML = `<div class="exam-pop-head">고른 문항만 새 파일로 <small>오답·보충 학습지 · 지금 문서는 그대로</small></div>
+        <label class="exam-field"><span>문항 번호</span><input data-exam-pick placeholder="예: 3, 5, 7-9" inputmode="numeric" autocomplete="off"></label>
+        <div class="exam-form-actions"><button type="button" data-exam-pick-submit>내려받기</button></div>`;
     } else if (kind === 'meta') {
       let now = {}, last = {}; try { last = JSON.parse(localStorage.getItem('5e.hwp.questionMeta') || '{}'); } catch {}
       try { const f = cursorQuestion(bridgeOrThrow()); if (f) now = Object.fromEntries(Object.entries(questionMeta(f.doc, f.sec, f.q)).map(([k, v]) => [k, v.value])); } catch {}
@@ -499,6 +504,10 @@ export function installExamModes(panel, services) {
       if (!form.url.trim()) { pop.querySelector('[data-exam-qr="url"]')?.focus(); message('QR 코드에 넣을 주소를 쓰세요.', true); return; }
       closePop(); void run(async () => { const r = await insertQrCode(bridgeOrThrow(), form); message(`QR 코드(「${r.title}」)를 넣었습니다. 휴대폰 카메라로 비춰 확인해 보세요.`); }); return;
     }
+    if (event.target.closest('[data-exam-pick-submit]')) {
+      const text = pop.querySelector('[data-exam-pick]')?.value || '';
+      closePop(); void run(async () => { const r = pickQuestionsCopy(bridgeOrThrow(), text); services.download(new Blob([r.bytes], { type: 'application/vnd.hancom.hwpx' }), `${documentBase()}-${r.numbers.length}문항.hwpx`); message(`${r.numbers.join(', ')}번 문항 ${r.count}개만 남긴 사본을 내려받습니다(번호는 1부터 다시).`); }); return;
+    }
     const level = event.target.closest('[data-exam-meta-level]');
     if (level) { for (const b of pop.querySelectorAll('[data-exam-meta-level]')) b.setAttribute('aria-pressed', String(b === level && b.getAttribute('aria-pressed') !== 'true')); return; }
     if (event.target.closest('[data-exam-meta-submit]')) {
@@ -527,7 +536,12 @@ export function installExamModes(panel, services) {
       closePop(); void run(async () => message(`시험지 머리 「${insertExamHeader(bridgeOrThrow(), form)}」를 넣었습니다.`));
     }
   });
-  pop.addEventListener('keydown', event => { if (event.key === 'Enter' && event.target.matches('[data-exam-form]') && !event.isComposing) { event.preventDefault(); pop.querySelector('[data-exam-form-submit]')?.click(); } });
+  // 입력 칸에서 Enter = 그 창의 넣기 단추(한글 조합 중에는 무시).
+  pop.addEventListener('keydown', event => {
+    if (event.key !== 'Enter' || event.isComposing || event.target.tagName !== 'INPUT') return;
+    const submit = pop.querySelector('[data-exam-form-submit],[data-exam-pick-submit],[data-exam-meta-submit],[data-exam-runhead-submit],[data-exam-qr-size="25"]');
+    if (submit) { event.preventDefault(); submit.click(); }
+  });
 
   // ── 점검 창 ──
   let lastIssues = [];

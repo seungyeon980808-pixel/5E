@@ -590,6 +590,16 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
     assert.equal(await page.locator('[data-exam-meta-level="중"]').getAttribute('aria-pressed'), 'true');
     await page.locator('[data-exam-meta="area"]').fill(''); await page.locator('[data-exam-meta-level="상"]').click(); await page.locator('[data-exam-meta-submit]').click(); await h.idle(page);
     assert.deepEqual(await inPage(page, `return text();`), ['1. 가', '[정답] ③', '[성취기준] [10통과1-01]', '[난이도] 상', '2. 나']);
+    // 49) 고른 문항만 새 파일로(더 보기): 「2, 4-5」 → 그 문항만 남긴 사본(번호 다시), 지금 문서는 그대로. Enter로도 내려받는다.
+    await inPage(page, `reset('시험 머리\\n1. 가\\n[정답] ①\\n2. 나\\n3. 다\\n4. 라\\n5. 마');`);
+    await page.locator('[data-exam-ftab="item"]').click();
+    await button(page, '자주 쓰지 않는 기능').click(); await page.locator('.exam-morelist button', { hasText: '고른 문항만 새 파일로' }).click();
+    await page.locator('[data-exam-pick]').fill('2, 4-5');
+    const pickDownload = page.waitForEvent('download'); await page.locator('[data-exam-pick]').press('Enter'); const pickFile = await pickDownload; await h.idle(page);
+    assert.match(pickFile.suggestedFilename().normalize('NFC'), /3문항\.hwpx$/);
+    const picked = await page.evaluate(async b64 => { const b = window.fiveEHwpPalette.native.bridge(), d = b.wasm.borrowDocumentHandle(), x = new d.constructor(Uint8Array.from(atob(b64), c => c.charCodeAt(0))); try { x.convertToEditable?.(); return [...Array(x.getParagraphCount(0)).keys()].map(p => x.getTextRange(0, p, 0, x.getParagraphLength(0, p))); } finally { x.free(); } }, require('node:fs').readFileSync(await pickFile.path()).toString('base64'));
+    assert.deepEqual(picked, ['시험 머리', '1. 나', '2. 라', '3. 마']);
+    assert.equal((await inPage(page, `return text();`)).length, 7);
     // 15) 구역이 둘인 시험지(0구역=머리·1번, 1구역=2단 본문): 문항 목록이 두 구역을 다 보이고, 구역을 넘는 ↑↓는 막고, 1구역 안 이동·복제·나뉜 문항 점검은 된다.
     const twoSections = await inPage(page, `const {unzipSync,zipSync}=await import('/vendor/fflate/index.js');
       reset('시험 머리\\n1. 가');const first=unzipSync(d.exportHwpx());reset('2. 나\\n나나\\n3. 다');const second=unzipSync(d.exportHwpx());
