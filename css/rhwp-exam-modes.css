@@ -129,3 +129,6 @@
 @keyframes exam-hint { 0%, 60% { background: var(--ds-hover, rgba(177,186,196,.08)); color: var(--ds-ink, #e6edf3); } }
 @media (prefers-reduced-motion: reduce) { #rhwp-exam-workspace .is-hint { animation: none; } }
 #rhwp-exam-workspace .exam-pop-sub { margin-top: 10px; }
+#rhwp-exam-workspace .exam-morelist.exam-levels { grid-template-columns: repeat(3, 1fr); flex: 1; margin: 0; }
+#rhwp-exam-workspace .exam-morelist.exam-three { grid-template-columns: repeat(3, 1fr); }
+#rhwp-exam-workspace .exam-morelist.exam-four { grid-template-columns: repeat(4, 1fr); }

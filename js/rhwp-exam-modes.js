@@ -425,12 +425,12 @@ export function installExamModes(panel, services) {
         <div class="exam-stemlist">${STEMS.map((t, i) => `<button type="button" data-exam-stem="${i}">${esc(t)}</button>`).join('')}</div>`;
     } else if (kind === 'paper') {
       pop.innerHTML = `<div class="exam-pop-head">용지 <small>여백·방향은 그대로</small></div>
-        <div class="exam-morelist">${['A4', 'B4', 'A3'].map(n => `<button type="button" data-exam-paper="${n}">${n}</button>`).join('')}</div>`;
+        <div class="exam-morelist exam-three">${['A4', 'B4', 'A3'].map(n => `<button type="button" data-exam-paper="${n}">${n}</button>`).join('')}</div>`;
     } else if (kind === 'qr') {
       pop.innerHTML = `<div class="exam-pop-head">QR 코드 <small>커서 문단 뒤에 넣음</small></div>
         <label class="exam-field"><span>주소</span><input data-exam-qr="url" placeholder="https://" inputmode="url" autocomplete="off" spellcheck="false"></label>
         <label class="exam-field"><span>안내 글</span><input data-exam-qr="label" placeholder="예: 실험 영상 보기"></label>
-        <div class="exam-morelist">${[20, 25, 30].map(n => `<button type="button" data-exam-qr-size="${n}">${n}mm로 넣기</button>`).join('')}</div>
+        <div class="exam-morelist exam-three">${[20, 25, 30].map(n => `<button type="button" data-exam-qr-size="${n}">${n}mm로 넣기</button>`).join('')}</div>
         <div class="exam-pop-head exam-pop-sub">정답 QR <small>문항 안 [정답]을 「1-③ 2-①」로 담아 학생이 스스로 채점</small></div>
         <div class="exam-morelist"><button type="button" data-exam-qr-answers>정답을 QR로 넣기</button></div>`;
     } else if (kind === 'frame') {
@@ -453,24 +453,24 @@ export function installExamModes(panel, services) {
       pop.innerHTML = `<div class="exam-pop-head">분류 정보 <small>커서 문항 · 분류표에 채워짐 · 학생용에서는 빠짐</small></div>
         <label class="exam-field"><span>내용 영역</span><input data-exam-meta="area" value="${val('area')}" placeholder="예: 물질과 규칙성"></label>
         <label class="exam-field"><span>성취기준</span><input data-exam-meta="standard" value="${val('standard')}" placeholder="예: [10통과1-01]"></label>
-        <div class="exam-morelist" role="group" aria-label="난이도">${['상', '중', '하'].map(l => `<button type="button" data-exam-meta-level="${l}" aria-pressed="${(now.level ?? '') === l}">${l}</button>`).join('')}</div>
+        <div class="exam-field"><span>난이도</span><div class="exam-morelist exam-levels" role="group" aria-label="난이도">${['상', '중', '하'].map(l => `<button type="button" data-exam-meta-level="${l}" aria-pressed="${(now.level ?? '') === l}">${l}</button>`).join('')}</div></div>
         <div class="exam-form-actions"><button type="button" data-exam-meta-submit>넣기</button></div>`;
     } else if (kind === 'answer') {
       pop.innerHTML = `<div class="exam-pop-head">정답 <small>커서가 있는 문항 끝 · 학생용에서는 빠짐</small></div>
-        <div class="exam-morelist">${[...'①②③④⑤'].map(m => `<button type="button" data-exam-answer="${m}">${m}</button>`).join('')}<button type="button" data-exam-answer="">지우기</button></div>`;
+        <div class="exam-morelist exam-three">${[...'①②③④⑤'].map(m => `<button type="button" data-exam-answer="${m}">${m}</button>`).join('')}<button type="button" data-exam-answer="">지우기</button></div>`;
     } else if (kind === 'score') {
       pop.innerHTML = `<div class="exam-pop-head">배점 <small>커서가 있는 문항 · 발문 끝</small></div>
-        <div class="exam-morelist">${SCORE_CHOICES.map(n => `<button type="button" data-exam-score="${n}">${n}점</button>`).join('')}<button type="button" data-exam-score="">지우기</button></div>`;
+        <div class="exam-morelist exam-four">${SCORE_CHOICES.map(n => `<button type="button" data-exam-score="${n}">${n}점</button>`).join('')}<button type="button" data-exam-score="">지우기</button></div>`;
     } else if (kind === 'pagenum') {
       let savedHeader = {}; try { savedHeader = JSON.parse(localStorage.getItem(HEADER_KEY) || '{}'); } catch {}
       pop.innerHTML = `<div class="exam-pop-head">쪽 번호 <small>모든 쪽 아래 가운데</small></div>
-        <div class="exam-morelist">${Object.entries(PAGE_NUMBER_STYLES).map(([k, t]) => `<button type="button" data-exam-pagenum="${k}">${esc(t)}</button>`).join('')}</div>
+        <div class="exam-morelist exam-three">${Object.entries(PAGE_NUMBER_STYLES).map(([k, t]) => `<button type="button" data-exam-pagenum="${k}">${esc(t)}</button>`).join('')}</div>
         <div class="exam-pop-head exam-pop-sub">머리말 <small>모든 쪽 위 가운데 한 줄(시험 이름 등) · 비우면 지움</small></div>
         <label class="exam-field"><span>머리말</span><input data-exam-runhead value="${esc([savedHeader.title, savedHeader.subject].filter(Boolean).join(' '))}"></label>
         <div class="exam-form-actions"><button type="button" data-exam-runhead-submit>머리말 넣기</button></div>`;
     } else if (kind === 'lines') {
       pop.innerHTML = `<div class="exam-pop-head">서술형 답란 <small>줄 수</small></div>
-        <div class="exam-morelist">${[3, 5, 8].map(n => `<button type="button" data-exam-lines="${n}">${n}줄</button>`).join('')}</div>`;
+        <div class="exam-morelist exam-three">${[3, 5, 8].map(n => `<button type="button" data-exam-lines="${n}">${n}줄</button>`).join('')}</div>`;
     } else {
       pop.innerHTML = `<div class="exam-pop-head">문항 간격 <small>두 번째 문항부터 문항 위 간격</small></div>
         <div class="exam-morelist">${[6, 10, 14, 20, 28].map(pt => `<button type="button" data-exam-spacing="${pt}">${pt}pt</button>`).join('')}</div>`;
