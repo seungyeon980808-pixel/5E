@@ -854,6 +854,12 @@
       "findingIds": [
         "HWP-QR-ENCODE"
       ]
+    },
+    {
+      "path": "tests/test-science-scripts.mjs",
+      "findingIds": [
+        "HWP-SCIENCE-SCRIPTS"
+      ]
     }
   ],
   "browser": [

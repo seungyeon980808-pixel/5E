@@ -5,6 +5,7 @@ import { applyTableAlignment, applyHangingIndent } from './rhwp-exam-table-contr
 import { fitCellPicture, centerPicturesInCells, picturesToGrid, fitTableToColumn, renumberQuestions, relayoutChoices, checkLayout, questionBlocks, moveQuestion, splitQuestions, duplicateQuestion, deleteQuestion, fitWideObjects, keepQuestionsWhole, allQuestionBlocks, fillColumns } from './rhwp-exam-layout-tools.js';
 import { showConfirm } from './ui-dialogs.js?v=1.7.0-four-session-integration';
 import { listExamPoolExams, buildExamPoolHwpx } from './rhwp-exam-exampool-open.js';
+import { applyScienceScripts } from './rhwp-exam-science-text.js';
 import { markBlank, studentCopy, appendBlankAnswers, insertExamHeader, insertAnswerGrid, setQuestionSpacing, extraChecks, BOX_PRESETS, insertBox, insertAnswerLines, insertRubric, setColumns, setPaper, makeVariant, appendVariantMapping, answerKeyCopy, STEMS, shadeHeaderRow, insertWorksheetFrame, PAGE_NUMBER_STYLES, insertPageNumbers, SCORE_CHOICES, setQuestionScore, insertQrCode } from './rhwp-exam-worksheet.js';
 import { SYMBOL_ROW, SYMBOL_TABS, SYMBOL_CHUNKS, symbolCells, recentSymbols, rememberSymbol } from './rhwp-exam-symbols.js';
 
@@ -23,7 +24,8 @@ function focusTabs(ctx) {
     text: [
       ['font'], ['size'], '|',
       ['<b>가</b>', '굵게 (⌘B)', cmd('format:bold')], ['<i>가</i>', '기울임 (⌘I)', cmd('format:italic')], ['<u>가</u>', '밑줄 (⌘U)', cmd('format:underline')],
-      ['x<sup>2</sup>', '위 첨자 (Alt+Shift+P)', cmd('format:superscript')], ['x<sub>2</sub>', '아래 첨자 (Alt+Shift+S)', cmd('format:subscript')], '|',
+      ['x<sup>2</sup>', '위 첨자 (Alt+Shift+P)', cmd('format:superscript')], ['x<sub>2</sub>', '아래 첨자 (Alt+Shift+S)', cmd('format:subscript')],
+      ['H₂O 첨자', '문서 전체 화학식·이온·단위에 첨자 자동(H2O→H₂O, Fe3+→Fe³⁺, m/s2→m/s², S1→S₁) — 글자는 그대로', doc(b => { const n = applyScienceScripts(b); ctx.message(n ? `첨자 ${n}곳을 입혔습니다(되돌리기 ⌘Z).` : '첨자를 입힐 화학식·단위를 찾지 못했습니다.'); })], '|',
       ['자간<span class="t">−</span>', '자간 줄이기 (Alt+Shift+N)', cmd('format:char-spacing-decrease')], ['자간<span class="t">+</span>', '자간 늘리기 (Alt+Shift+W)', cmd('format:char-spacing-increase')],
       ['장평<span class="t">−</span>', '장평 줄이기 (Alt+Shift+J)', cmd('format:char-ratio-decrease')], ['장평<span class="t">+</span>', '장평 늘리기 (Alt+Shift+K)', cmd('format:char-ratio-increase')],
       ['⇥| 한 줄', '한 줄 맞춤: 줄 끝에 넘친 한두 글자를 자간으로 줄 안에 넣기 (팔레트 자간 맞춤)', tool('spacing_fit')], '|',

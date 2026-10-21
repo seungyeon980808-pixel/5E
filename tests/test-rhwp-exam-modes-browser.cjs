@@ -286,6 +286,15 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
       return {img:img&&[img.cellPath[0].cellIndex,Math.round(img.w/96*25.4)],border:JSON.parse(d.getCellProperties(0,t.paraIdx,ci,0)).borderLeft.type,
         text:[...Array(d.getCellParagraphCount(0,t.paraIdx,ci,1)).keys()].map(p=>d.getTextInCell(0,t.paraIdx,ci,1,p,0,d.getCellParagraphLength(0,t.paraIdx,ci,1,p)))};`);
     assert.deepEqual(qrCell.img, [0, 25]); assert.equal(qrCell.border, 0); assert.deepEqual(qrCell.text, ['실험 영상 보기', 'https://youtu.be/5e-science']);
+    // 21) 첨자 자동: 본문과 표 칸의 화학식·이온·단위에 첨자 모양만 입히고 글자는 그대로.
+    await inPage(page, `reset('반응식 2H2 + O2 → 2H2O\\n이온 Fe3+ 와 SO42-');const r=JSON.parse(d.createTable(0,1,0,1,1));d.insertTextInCell(0,r.paraIdx,r.controlIdx,0,0,0,'가속도 2 m/s2');b.deps.eventBus.emit('document-changed');window.__t=r;`);
+    const plain = await inPage(page, `return text();`);
+    await page.locator('[data-exam-ftab="text"]').click(); await button(page, '문서 전체 화학식').click(); await h.idle(page);
+    assert.match(await page.locator('#exam-status').textContent(), /첨자 7곳/);
+    assert.deepEqual(await inPage(page, `return text();`), plain);
+    const scripted = await inPage(page, `const at=(p,o)=>{const c=w.getCharPropertiesAt(0,p,o);return c.subscript?'_':c.superscript?'^':'.';};
+      const ion=text().findIndex(t=>t.startsWith('이온'));return [[5,6,7,8,9].map(o=>at(0,o)).join(''),[3,4,5,6,7].map(o=>at(ion,o)).join('')];`);
+    assert.deepEqual(scripted, ['._...', '..^^.']);
     // 15) 구역이 둘인 시험지(0구역=머리·1번, 1구역=2단 본문): 문항 목록이 두 구역을 다 보이고, 구역을 넘는 ↑↓는 막고, 1구역 안 이동·복제·나뉜 문항 점검은 된다.
     const twoSections = await inPage(page, `const {unzipSync,zipSync}=await import('/vendor/fflate/index.js');
       reset('시험 머리\\n1. 가');const first=unzipSync(d.exportHwpx());reset('2. 나\\n나나\\n3. 다');const second=unzipSync(d.exportHwpx());
