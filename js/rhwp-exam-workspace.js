@@ -1273,10 +1273,15 @@ export function initRhwpExamWorkspace(state, services) {
   // 맨 위 전환 줄의 「hwp」. 다른 작업으로 바쁘면 받지 않고, 받았는지는 detail.accepted로 알려 전환 쪽이 잠시 뒤 다시 부탁하게 한다.
   window.addEventListener('5e:hwp-open',event=>{if(busy)return;if(event.detail)event.detail.accepted=true;void run(open);});
   panel.querySelector('#exam-hwp-file').addEventListener('cancel',()=>{pendingDocumentInsertion=null;message('문서 열기를 취소했습니다.');});
-  window.addEventListener('5e:exam-send-ai', event => void run(() => startSend(event.detail)));
-  window.addEventListener('5e:exam-send-graph', event => void run(() => startSend(null,event.detail)));
+  // 다른 창에서 보내 온 요청은 조판 창이 바쁘면 예전에는 알림 없이 버려졌다(점검 하). 버리는 대신 이유를 알린다.
+  const sendFromElsewhere = task => {
+    if (busy) {const text='한글 시험지 창이 다른 작업 중이라 보내지 못했습니다. 작업이 끝난 뒤 다시 보내세요.';message(text,true);if(panel.hidden)void services.reportError?.(text);return;}
+    void run(task);
+  };
+  window.addEventListener('5e:exam-send-ai', event => sendFromElsewhere(() => startSend(event.detail)));
+  window.addEventListener('5e:exam-send-graph', event => sendFromElsewhere(() => startSend(null,event.detail)));
   // 5E 라이브러리 창 「보내기 → 한글 시험지로」: 그림을 작업대에 넣은 뒤 「현재 영역 삽입…」과 같은 길로 보낸다.
-  window.addEventListener('5e:exam-send-canvas', () => void run(() => startSend()));
+  window.addEventListener('5e:exam-send-canvas', () => sendFromElsewhere(() => startSend()));
   async function receiveSource(path) {
     const request = ++incomingRequest;
     const response = await fetch(path, {cache:'no-store'}); if (!response.ok) throw new Error('그림 열기 요청이 만료되었습니다.');
