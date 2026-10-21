@@ -151,6 +151,20 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
     await page.locator('[data-exam-fx="check"]').click(); await page.locator('.exam-checkpop').waitFor();
     assert.ok((await page.locator('.exam-checklist button').allTextContents()).some(s => /2번 문항이 쪽.*경계에서 나뉩니다/.test(s)));
     await page.keyboard.press('Escape');
+
+    // 10) 수업 자료 틀: 상자(제목 음영)·답란 3줄·평가 기준표를 커서 문단 뒤에 넣는다.
+    await inPage(page, `reset('광합성 학습지');b.input.cursor.moveTo({sectionIndex:0,paragraphIndex:0,charOffset:3});`);
+    await page.locator('[data-exam-ftab="sheet"]').click();
+    await button(page, '개념 정리').click(); await page.locator('[data-exam-box="탐구 활동"]').click(); await h.idle(page);
+    await inPage(page, `b.input.cursor.moveTo({sectionIndex:0,paragraphIndex:0,charOffset:0});`);
+    await button(page, '서술형 답을').click(); await page.locator('[data-exam-lines="3"]').click(); await h.idle(page);
+    await inPage(page, `b.input.cursor.moveTo({sectionIndex:0,paragraphIndex:0,charOffset:0});`);
+    await button(page, '평가 요소').click(); await h.idle(page);
+    const shapes = await tables();
+    assert.deepEqual(shapes.map(t => [t.dims.rowCount, t.dims.colCount]), [[4, 4], [3, 1], [2, 1]]);
+    const boxCell = await inPage(page, `const c=JSON.parse(d.getCellProperties(0,arg.p,arg.ci,0));return [c.fillType,c.fillColor,d.getTextInCell(0,arg.p,arg.ci,0,0,0,5)];`, shapes[2]);
+    assert.deepEqual(boxCell, ['solid', '#eef6ee', '탐구 활동']);
+    assert.equal((await inPage(page, `return text();`))[0], '광합성 학습지', 'the cursor paragraph is not split');
     assert.equal(await page.locator('#exam-status').getAttribute('data-error'), 'false', await page.locator('#exam-status').textContent());
     assert.deepEqual(errors, []);
   });

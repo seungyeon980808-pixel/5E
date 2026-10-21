@@ -193,3 +193,62 @@ export function extraChecks(doc) {
   }
   return issues;
 }
+
+// ── 수업 자료 틀: 상자·답란·평가 기준표 ──
+const LINE = { type: 1, width: 1, color: '#000000' }, NO_LINE = { type: 0, width: 0, color: '#000000' };
+const mmUnits = mm => Math.round(mm * 7200 / 25.4);
+// 커서 문단 뒤에 새 문단을 만들고 그 자리에 표를 넣는다(지금 글을 가르지 않게). 만든 표의 {para, ci}를 돌려준다.
+function tableAfterCursor(bridge, doc, rows, cols, grid, options) {
+  const pos = bridge.input.getCursorPosition();
+  if (pos.cellPath?.length || bridge.input.cursor.isInCell?.()) throw new Error('표 밖 본문에 커서를 두고 누르세요.');
+  const sec = pos.sectionIndex, para = pos.paragraphIndex;
+  parse(doc.splitParagraph(sec, para, doc.getParagraphLength(sec, para)));
+  const before = new Set();
+  const tablesIn = p => { const out = []; for (let pg = 0; pg < doc.pageCount(); pg++) for (const c of parse(doc.getPageControlLayout(pg)).controls || []) if (c.type === 'table' && c.secIdx === sec && c.paraIdx === p && !(c.cellPath || []).length) out.push(c.controlIdx ?? c.ci); return out; };
+  insertTable(doc, { sectionIndex: sec, paragraphIndex: para + 1, charOffset: 0 }, rows, cols, grid, new Map(), options);
+  for (let p = para + 1; p < doc.getParagraphCount(sec); p++) { const found = tablesIn(p).filter(ci => !before.has(`${p}:${ci}`)); if (found.length) return { sec, para: p, ci: found[0] }; }
+  throw new Error('표를 넣었지만 위치를 찾지 못했습니다.');
+}
+const setCell = (doc, t, cell, props) => doc.setCellProperties(t.sec, t.para, t.ci, cell, JSON.stringify(props));
+
+export const BOX_PRESETS = [['개념 정리', '#eef2f7'], ['탐구 활동', '#eef6ee'], ['생각해 보기', '#fbf3e4'], ['주의', '#fbeaea']];
+// 제목 줄(음영·굵게)과 내용 칸 하나로 된 상자.
+export function insertBox(bridge, title = '개념 정리') {
+  requireInput(bridge);
+  const doc = bridge.wasm.borrowDocumentHandle(), shade = (BOX_PRESETS.find(([t]) => t === title) || BOX_PRESETS[0])[1];
+  bridge.transaction('insert-box', () => {
+    const t = tableAfterCursor(bridge, doc, 2, 1, [[title], ['']], { width: columnWidth(doc), border: 'Solid', heights: [mmUnits(7), mmUnits(30)] });
+    setCell(doc, t, 0, { fillType: 'solid', fillColor: shade });
+    doc.applyCharFormatInCell(t.sec, t.para, t.ci, 0, 0, 0, [...title].length, JSON.stringify({ bold: true }));
+    return true;
+  });
+  return title;
+}
+// 서술형 답란: 아래 줄만 있는 칸 n줄(줄 간격 10mm).
+export function insertAnswerLines(bridge, lines = 5) {
+  requireInput(bridge);
+  if (!(lines >= 1 && lines <= 20)) throw new Error('답란은 1~20줄로 고르세요.');
+  const doc = bridge.wasm.borrowDocumentHandle();
+  bridge.transaction('answer-lines', () => {
+    const t = tableAfterCursor(bridge, doc, lines, 1, Array.from({ length: lines }, () => ['']), { width: columnWidth(doc), border: 'None', heights: Array(lines).fill(mmUnits(10)) });
+    for (let cell = 0; cell < lines; cell++) setCell(doc, t, cell, { borderBottom: { type: 1, width: 1, color: '#8a8f98' }, borderTop: NO_LINE, borderLeft: NO_LINE, borderRight: NO_LINE });
+    return true;
+  });
+  return lines;
+}
+// 평가 기준표: 평가 요소 | 상 | 중 | 하, 머리 줄 음영.
+export function insertRubric(bridge, items = 3) {
+  requireInput(bridge);
+  const doc = bridge.wasm.borrowDocumentHandle(), rows = items + 1;
+  bridge.transaction('rubric', () => {
+    const t = tableAfterCursor(bridge, doc, rows, 4, [['평가 요소', '상', '중', '하'], ...Array.from({ length: items }, () => ['', '', '', ''])], { width: columnWidth(doc), border: 'Solid', heights: [mmUnits(7), ...Array(items).fill(mmUnits(14))] });
+    for (let cell = 0; cell < 4; cell++) {
+      setCell(doc, t, cell, { fillType: 'solid', fillColor: '#eef2f7' });
+      const label = ['평가 요소', '상', '중', '하'][cell];
+      doc.applyCharFormatInCell(t.sec, t.para, t.ci, cell, 0, 0, [...label].length, JSON.stringify({ bold: true }));
+      doc.applyParaFormatInCell(t.sec, t.para, t.ci, cell, 0, JSON.stringify({ alignment: 'center' }));
+    }
+    return true;
+  });
+  return items;
+}
