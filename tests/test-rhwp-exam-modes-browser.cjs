@@ -627,6 +627,20 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
     assert.deepEqual(formatted.cells.map(t => t.slice(2)).sort(), ['H2O', '가', '나', '다', '마']);
     assert.equal(formatted.sub, true, 'subscript kept');
     assert.equal(formatted.cells.find(t => t[0] === formatted.answer).slice(2), 'H2O', 'answer follows H2O');
+    // 52) 선지 섞기 — 한 줄에 탭으로 늘어선 선지(3+2 두 줄, 평가원 틀 꼴)도 서식째 섞고 [정답]을 따라 고친다.
+    const inline = await inPage(page, `reset('1. 첫째\\n① 가\\t② 나\\t③ 다\\n④ H2O\\t⑤ 마\\n[정답] ④\\n2. 둘째\\n① 바\\t② 사\\t③ 아\\t④ 자\\t⑤ 차');
+      for(let p=0;p<d.getParagraphCount(0);p++)d.applyCharFormat(0,p,0,d.getParagraphLength(0,p),JSON.stringify({subscript:false,superscript:false}));
+      d.applyCharFormat(0,2,3,4,JSON.stringify({subscript:true}));
+      const W=await import('/js/rhwp-exam-worksheet.js');const seq=[.1,.9,.3,.7,.5,.2,.8,.4];let k=0;const r=W.makeVariant(b,()=>seq[k++%seq.length],{choices:true});
+      const c=new d.constructor(r.bytes);try{c.convertToEditable?.();const t=[...Array(c.getParagraphCount(0)).keys()].map(p=>c.getTextRange(0,p,0,c.getParagraphLength(0,p)));
+        const q=t.findIndex(x=>x==='2. 첫째'),lines=[t[q+1],t[q+2]],hp=q+1+lines.findIndex(x=>x.includes('H2O')),ho=t[hp].indexOf('H2O')+1;
+        return {shuffled:r.shuffled,lines,ans:t[q+3],sub:JSON.parse(c.getCharPropertiesAt(0,hp,ho)).subscript,other:[t[1],t[2]]};}finally{c.free();}`);
+    assert.equal(inline.shuffled, 2, JSON.stringify(inline));
+    const items = inline.lines.join('\t').split('\t');
+    assert.deepEqual(items.map(x => x[0]), ['①', '②', '③', '④', '⑤'], JSON.stringify(inline));
+    assert.deepEqual(items.map(x => x.slice(2)).sort(), ['H2O', '가', '나', '다', '마']);
+    assert.equal(inline.sub, true, 'subscript kept');
+    assert.equal(items.find(x => x[0] === inline.ans.slice(-1)).slice(2), 'H2O', 'answer follows H2O');
     // 15) 구역이 둘인 시험지(0구역=머리·1번, 1구역=2단 본문): 문항 목록이 두 구역을 다 보이고, 구역을 넘는 ↑↓는 막고, 1구역 안 이동·복제·나뉜 문항 점검은 된다.
     const twoSections = await inPage(page, `const {unzipSync,zipSync}=await import('/vendor/fflate/index.js');
       reset('시험 머리\\n1. 가');const first=unzipSync(d.exportHwpx());reset('2. 나\\n나나\\n3. 다');const second=unzipSync(d.exportHwpx());

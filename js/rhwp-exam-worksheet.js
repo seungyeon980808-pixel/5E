@@ -825,6 +825,41 @@ function shuffleChoices(doc, sec, random, choose = null) {
     const b = questionBlocks(doc, sec)[k];
     let from = -1;
     for (let p = b.head + 1; p < b.end; p++) if (markAt(p)?.mark === MARKS[0]) { from = p; break; }
+    if (from >= 0 && /[①-⑤]/.test(markAt(from).rest)) {
+      // 한 줄에 여러 선지(① …⇥② …⇥③ …, 3+2 두 줄 포함): 선지 내용을 서식째 맞바꾼다.
+      const paras = [from]; if (from + 1 < b.end && /^\s*[①-⑤]/.test(textOf(from + 1))) paras.push(from + 1);
+      const segments = () => {
+        const out = [];
+        for (const p of paras) {
+          const t = textOf(p), marks = [...t.matchAll(/[①-⑤]/g)];
+          marks.forEach((m, i) => {
+            let start = m.index + 1; while (/[ \u3000]/.test(t[start] || '')) start++;
+            let end = i + 1 < marks.length ? marks[i + 1].index : t.length; while (end > start && /\s/.test(t[end - 1])) end--;
+            out.push({ p, mark: m[0], start, end });
+          });
+        }
+        return out;
+      };
+      const first = segments(), n = first.length;
+      if (n < 3 || first.some((sg, i) => sg.mark !== MARKS[i])) continue;
+      if (first.every(sg => COMBO.test(textOf(sg.p).slice(sg.start, sg.end).trim()))) continue;
+      const perm = pick(k, n); if (!perm) continue;
+      const swap = (a, b) => {
+        let sg = segments(); const A = sg[a], B = sg[b], aLen = A.end - A.start, bLen = B.end - B.start;
+        if (aLen > 0) { checkedCopy(doc.copySelection(sec, A.p, A.start, A.p, A.end)); checkedCopy(doc.pasteInternal(sec, B.p, B.end)); }
+        sg = segments();
+        if (bLen > 0) { const B2 = sg[b]; checkedCopy(doc.copySelection(sec, B2.p, B2.start, B2.p, B2.start + bLen)); checkedCopy(doc.pasteInternal(sec, sg[a].p, sg[a].end)); }
+        sg = segments(); if (aLen > 0) doc.deleteText(sec, sg[a].p, sg[a].start, aLen);
+        sg = segments(); if (bLen > 0) doc.deleteText(sec, sg[b].p, sg[b].start, bLen);
+      };
+      const current = [...Array(n).keys()];
+      for (let target = 0; target < n; target++) {
+        const at = current.indexOf(perm[target]); if (at === target) continue;
+        swap(target, at); [current[target], current[at]] = [current[at], current[target]];
+      }
+      fixAnswer(k, perm, n); count++;
+      continue;
+    }
     if (from >= 0) {
       // 한 문단에 선지 하나씩: 문단째 옮긴다(서식 그대로).
       let n = 0;
