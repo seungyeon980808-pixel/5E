@@ -49,7 +49,8 @@ export function createFigureEngines({base=()=>window.fiveEDesktop||window.fiveEW
       const handle=async ev=>{if(turnId&&ev.turnId&&ev.turnId!==turnId)return;
         if(ev.kind==='image'&&ev.src)src=ev.src;
         else if(ev.kind==='error')finish(Error(ev.text));
-        else if(ev.kind==='done'){if(ev.status!=='completed')return finish(Error(ev.error||'그림 만들기가 끝나지 못했습니다.'));if(!src)return finish(Error('그림 결과를 받지 못했습니다.'));
+        // 데스크톱 앱은 그림이 나오면 「interrupted」나 끝 확인(finalization)만 보낸다 — 그림을 받았으면 성공으로 받는다(H13, ai-panel과 같은 규칙).
+        else if(ev.kind==='done'||(ev.kind==='finalization'&&['confirmed','recovered'].includes(ev.state)&&src)){if(ev.kind==='done'&&!(ev.status==='completed'||ev.status==='interrupted'&&src))return finish(Error(ev.error||'그림 만들기가 끝나지 못했습니다.'));if(!src)return finish(Error('그림 결과를 받지 못했습니다.'));
           if(!/^data:image\/png;base64,/.test(src))return finish(Error('PNG가 아닌 결과는 문항에 넣지 않습니다.'));
           finish(null,{data:src,...await sizeOf(src),engine:'ai-image',model:selection.model,ms:Date.now()-t0});}};
       const off=b.onEvent?.(m=>{const ev=parseAiEvent(m);if(ev.kind==='ignore')return;if(!turnId){queue.push(ev);return;}void handle(ev);});

@@ -71,7 +71,10 @@ export function createImageLabelRasterController({ transport, timeoutMs = 600000
       r.failureMessage = '이미지 생성이 계정 사용량 제한으로 거절되었습니다. 크레딧 잔여 여부와 별도로 이미지 생성 이용 상태를 확인해 주세요.';
     }
     if (e.kind === 'error') finish(r, new Error(e.text || '이미지 처리 오류'));
-    if (e.kind === 'done') finish(r, e.status !== 'completed' || e.error || !r.src ? new Error(e.error || r.failureMessage || '이미지 처리 완료를 확인하지 못했습니다.') : null);
+    // 데스크톱 앱은 그림이 나오면 차례를 스스로 끊고 「interrupted」를 보내거나 끝 확인(finalization)만 보낸다 — 그림을 받았으면 성공(H13).
+    // 사용자가 취소한 경우는 cancel()이 먼저 끝내므로 여기까지 오지 않는다(ai-panel.resolveAiTerminalOutcome과 같은 규칙).
+    if (e.kind === 'finalization' && ['confirmed', 'recovered'].includes(e.state) && r.src) finish(r, null);
+    if (e.kind === 'done') finish(r, !['completed', 'interrupted'].includes(e.status) || e.error || !r.src ? new Error(e.error || r.failureMessage || '이미지 처리 완료를 확인하지 못했습니다.') : null);
   };
   const matches = (r, e) => Boolean((e.turnId || e.threadId) && (!e.turnId || e.turnId === r.turnId) && (!e.threadId || e.threadId === r.threadId));
   return {

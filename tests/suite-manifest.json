@@ -800,6 +800,12 @@
       "findingIds": [
         "RHWP-EXAM-HANCOM-SHORTCUTS"
       ]
+    },
+    {
+      "path": "tests/test-ai-image-label-run-interrupted.mjs",
+      "findingIds": [
+        "H13-DESKTOP-IMAGE-INTERRUPTED"
+      ]
     }
   ],
   "browser": [
