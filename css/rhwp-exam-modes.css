@@ -77,3 +77,5 @@
 #rhwp-exam-workspace .exam-morelist { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
 #rhwp-exam-workspace .exam-morelist button { height: 32px; padding: 0 10px; border: 0; border-radius: 6px; background: var(--ds-panel, #161b22); box-shadow: inset 0 0 0 1px var(--ds-line-strong, #30363d); color: var(--ds-ink-2, #b1bac4); font: inherit; font-size: 12.5px; text-align: left; cursor: pointer; }
 #rhwp-exam-workspace .exam-morelist button:hover { color: var(--ds-ink, #e6edf3); box-shadow: inset 0 0 0 1px var(--ds-soft-line, #6ba4f8); }
+/* 집중 모드: 왼쪽 칸에 팔레트(문항 틀·물감)가 들어가므로 팔레트 설계 폭 232px로 넓힌다. 좁은 화면은 그대로 */
+@media (min-width: 901px) { #rhwp-exam-workspace[data-tool-mode="focus"] .exam-sidebar { width: 232px; } }
