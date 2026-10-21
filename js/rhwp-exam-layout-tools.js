@@ -510,3 +510,27 @@ export function fillColumns(bridge) {
   });
   return { changed, columns: columnsFilled };
 }
+
+// 조합 선지: 〈보기〉 ㄱㄴㄷ·학생 A B C를 「있는 대로 고른」 문항에서 흔히 쓰는 다섯 조합. 커서 문단 뒤에 넣고 5열로 놓는다.
+export const CHOICE_COMBOS = [
+  ['ㄱ', 'ㄷ', 'ㄱ, ㄴ', 'ㄴ, ㄷ', 'ㄱ, ㄴ, ㄷ'],
+  ['ㄱ', 'ㄴ', 'ㄱ, ㄷ', 'ㄴ, ㄷ', 'ㄱ, ㄴ, ㄷ'],
+  ['ㄴ', 'ㄷ', 'ㄱ, ㄴ', 'ㄱ, ㄷ', 'ㄱ, ㄴ, ㄷ'],
+  ['ㄱ', 'ㄴ', 'ㄷ', 'ㄱ, ㄷ', 'ㄴ, ㄷ'],
+  ['A', 'C', 'A, B', 'B, C', 'A, B, C'],
+  ['A', 'B', 'A, C', 'B, C', 'A, B, C'],
+];
+export function insertChoiceCombo(bridge, index) {
+  const combo = CHOICE_COMBOS[index]; if (!combo) throw new Error('조합을 다시 고르세요.');
+  const { input, doc } = requireDocument(bridge), pos = input.getCursorPosition();
+  if (pos.cellPath?.length || input.cursor.isInCell?.()) throw new Error('표 밖 본문(발문 줄)에 커서를 두고 누르세요.');
+  const sec = pos.sectionIndex, para = pos.paragraphIndex, line = combo.map((c, i) => `${CIRCLED[i]} ${c}`).join(' ');
+  bridge.transaction('choice-combo', () => {
+    parse(doc.splitParagraph(sec, para, doc.getParagraphLength(sec, para)));
+    doc.insertText(sec, para + 1, 0, line);
+    return true;
+  });
+  input.cursor.moveTo({ sectionIndex: sec, paragraphIndex: para + 1, charOffset: 0 });
+  relayoutChoices(bridge, 5);
+  return line;
+}

@@ -341,6 +341,12 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
     await page.locator('[data-exam-ftab="sheet"]').click(); await button(page, '문서의 굵은 낱말을').click(); await h.idle(page);
     assert.match(await page.locator('#exam-status').textContent(), /굵은 낱말 2개/);
     assert.deepEqual(await inPage(page, `const {collectBlanks}=await import('/js/rhwp-exam-worksheet.js');return collectBlanks(d).map(x=>[x.where.para,x.start,x.text]);`), [[1, 3, '수소'], [1, 7, '산소']]);
+    // 27) ㄱㄴㄷ 조합 선지: 발문 줄 뒤에 다섯 조합을 5열 선지 표로.
+    await inPage(page, `reset('1. 옳은 것만을 〈보기〉에서 있는 대로 고른 것은?');b.input.cursor.moveTo({sectionIndex:0,paragraphIndex:0,charOffset:3});`);
+    await page.locator('[data-exam-ftab="item"]').click(); await button(page, '〈보기〉 ㄱㄴㄷ').click(); await page.locator('[data-exam-combo="0"]').click(); await h.idle(page);
+    const combo = await inPage(page, `const t=JSON.parse(d.getPageControlLayout(0)).controls.find(c=>c.type==='table'&&!c.cellPath?.length),ci=t.controlIdx??t.ci,n=JSON.parse(d.getTableDimensions(0,t.paraIdx,ci)).cellCount;
+      return [text()[0],[...Array(n).keys()].map(c=>d.getTextInCell(0,t.paraIdx,ci,c,0,0,d.getCellParagraphLength(0,t.paraIdx,ci,c,0)))];`);
+    assert.deepEqual(combo, ['1. 옳은 것만을 〈보기〉에서 있는 대로 고른 것은?', ['① ㄱ', '② ㄷ', '③ ㄱ, ㄴ', '④ ㄴ, ㄷ', '⑤ ㄱ, ㄴ, ㄷ']]);
     // 15) 구역이 둘인 시험지(0구역=머리·1번, 1구역=2단 본문): 문항 목록이 두 구역을 다 보이고, 구역을 넘는 ↑↓는 막고, 1구역 안 이동·복제·나뉜 문항 점검은 된다.
     const twoSections = await inPage(page, `const {unzipSync,zipSync}=await import('/vendor/fflate/index.js');
       reset('시험 머리\\n1. 가');const first=unzipSync(d.exportHwpx());reset('2. 나\\n나나\\n3. 다');const second=unzipSync(d.exportHwpx());
