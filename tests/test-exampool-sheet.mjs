@@ -75,3 +75,13 @@ test('선지 다섯 줄 끝의 줄바꿈은 여섯째 줄로 세지 않는다(M1
   assert.deepEqual(q.choices.map(c => c.text), ['가', '나', '다', '라', '마']);
   assert.throws(() => writeField(q, 'choices', '가\n나\n다\n라\n마\n바'), /다섯 줄/);
 });
+
+test('그림이 남은 선지를 시트에서 고쳐도 「 [그림]」이 글에 쌓이지 않는다(M15)', async () => {
+  const {writeField, fieldValue} = await import('../assets/exampool/sheet/vertical.js');
+  const q = newQuestion('1', '단답형', '글·수식');
+  writeField(q, 'choices', '가\n나\n다\n라\n마');
+  q.choices[1].figure = {name: 'f.png', mime: 'image/png', data: 'data:image/png;base64,AAAA'};
+  for (let i = 0; i < 3; i++) writeField(q, 'choices', fieldValue(q, 'choices'));
+  assert.equal(q.choices[1].text, '나');
+  assert.equal(fieldValue(q, 'choices').split('\n')[1], '나 [그림]');
+});
