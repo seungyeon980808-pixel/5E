@@ -6,7 +6,7 @@ import { fitCellPicture, centerPicturesInCells, picturesToGrid, fitTableToColumn
 import { showConfirm } from './ui-dialogs.js?v=1.7.0-four-session-integration';
 import { listExamPoolExams, buildExamPoolHwpx } from './rhwp-exam-exampool-open.js';
 import { applyScienceScripts } from './rhwp-exam-science-text.js';
-import { markBlank, studentCopy, appendBlankAnswers, insertExamHeader, insertAnswerGrid, setQuestionSpacing, extraChecks, BOX_PRESETS, insertBox, insertAnswerLines, insertRubric, setColumns, setPaper, makeVariant, appendVariantMapping, answerKeyCopy, STEMS, shadeHeaderRow, insertWorksheetFrame, PAGE_NUMBER_STYLES, insertPageNumbers, SCORE_CHOICES, setQuestionScore, insertQrCode, unifyQuestionFonts, boldToBlanks, WORKSHEET_FRAMES, blueprintCopy, setQuestionAnswer, questionAnswers } from './rhwp-exam-worksheet.js';
+import { markBlank, studentCopy, appendBlankAnswers, insertExamHeader, insertAnswerGrid, setQuestionSpacing, extraChecks, BOX_PRESETS, insertBox, insertAnswerLines, insertRubric, setColumns, setPaper, makeVariant, appendVariantMapping, answerKeyCopy, STEMS, shadeHeaderRow, insertWorksheetFrame, PAGE_NUMBER_STYLES, insertPageNumbers, SCORE_CHOICES, setQuestionScore, insertQrCode, unifyQuestionFonts, boldToBlanks, WORKSHEET_FRAMES, blueprintCopy, setQuestionAnswer, questionAnswers, explanationCopy } from './rhwp-exam-worksheet.js';
 import { SYMBOL_ROW, SYMBOL_TABS, SYMBOL_CHUNKS, symbolCells, recentSymbols, rememberSymbol } from './rhwp-exam-symbols.js';
 
 const MODE_KEY = '5e.hwp.toolMode';
@@ -88,6 +88,7 @@ function focusTabs(ctx) {
     ],
     layout: [
       ['시험지 머리', '문서 맨 앞에 제목 줄과 학년·반·번호·이름 칸 넣기', (_, button) => ctx.openHeaderForm(button)],
+      ['정답·해설지', '문항마다 「번호. 정답」과 [해설] 줄을 모은 정답·해설지를 새 한글 파일로 내려받기', doc(b => ctx.explanations(b))],
       ['이원목적분류표', '문항 번호·배점·정답을 채운 이원목적분류표를 새 한글 파일로 내려받기(성취기준·난이도 칸은 비워 둠)', doc(b => ctx.blueprint(b))],
       ['정답표 칸', '찾은 문항 번호로 「번호/정답」 표를 문서 끝에 넣기(정답은 비워 둠)', doc(b => ctx.message(`문항 ${insertAnswerGrid(b)}개의 정답표 칸을 넣었습니다.`))],
       ['문항 간격', '두 번째 문항부터 문항 위 간격을 한꺼번에 맞추기', (_, button) => ctx.openSpacingForm(button)],
@@ -194,6 +195,11 @@ export function installExamModes(panel, services) {
       const { bytes, count } = answerKeyCopy(b), name = `${(services.documentName?.() || '학습지').replace(/[\\/:*?"<>|]/g, '_')}-정답지.hwpx`;
       services.download(new Blob([bytes], { type: 'application/vnd.hancom.hwpx' }), name);
       message(`빈칸 ${count}개에 정답을 채운 정답지를 내려받습니다(${name}).`);
+    },
+    explanations(b) {
+      const base = (services.documentName?.() || '시험').replace(/[\\/:*?"<>|]/g, '_'), { bytes, count, explained } = explanationCopy(b, base === '새 시험지' ? '시험' : base);
+      services.download(new Blob([bytes], { type: 'application/vnd.hancom.hwpx' }), `${base}-정답과해설.hwpx`);
+      message(`문항 ${count}개(해설 ${explained}개)의 정답·해설지를 내려받습니다.`);
     },
     blueprint(b) {
       const base = (services.documentName?.() || '시험').replace(/[\\/:*?"<>|]/g, '_'), { bytes, count, total } = blueprintCopy(b, base === '새 시험지' ? '시험' : base);

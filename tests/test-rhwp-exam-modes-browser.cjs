@@ -417,6 +417,14 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
     await page.locator('.exam-fgroup [data-exam-fi]').last().click();
     await page.locator('.exam-morelist button', { hasText: '마크다운 → 문항' }).click(); await h.idle(page);
     assert.equal(await page.locator('#exam-status').getAttribute('data-error'), 'false', await page.locator('#exam-status').textContent());
+    // 35) 정답·해설지: 「번호. 정답」과 [해설]·풀이: 줄을 모은 새 한글 파일. 서술형은 이름만.
+    await inPage(page, `reset('1. 가\\n[정답] ③\\n[해설] 셋째가 맞다.\\n2. 나\\n정답: ①\\n풀이: 첫째.\\n[서술형 1] 쓰시오');`);
+    await page.locator('[data-exam-ftab="layout"]').click();
+    const exDownload = page.waitForEvent('download'); await button(page, '문항마다 「번호. 정답」').click(); const exFile = await exDownload; await h.idle(page);
+    assert.match(exFile.suggestedFilename().normalize('NFC'), /정답과해설\.hwpx$/);
+    assert.match(await page.locator('#exam-status').textContent(), /문항 3개\(해설 2개\)/);
+    assert.deepEqual(await inPage(page, `const {explanationCopy}=await import('/js/rhwp-exam-worksheet.js');const x=new d.constructor(explanationCopy(b,'중간').bytes);try{x.convertToEditable?.();return [...Array(x.getParagraphCount(0)).keys()].map(p=>x.getTextRange(0,p,0,x.getParagraphLength(0,p)));}finally{x.free();}`),
+      ['중간 정답과 해설', '1. ③', '셋째가 맞다.', '2. ①', '첫째.', '서술형 1']);
     // 15) 구역이 둘인 시험지(0구역=머리·1번, 1구역=2단 본문): 문항 목록이 두 구역을 다 보이고, 구역을 넘는 ↑↓는 막고, 1구역 안 이동·복제·나뉜 문항 점검은 된다.
     const twoSections = await inPage(page, `const {unzipSync,zipSync}=await import('/vendor/fflate/index.js');
       reset('시험 머리\\n1. 가');const first=unzipSync(d.exportHwpx());reset('2. 나\\n나나\\n3. 다');const second=unzipSync(d.exportHwpx());

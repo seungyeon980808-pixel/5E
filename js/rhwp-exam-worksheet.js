@@ -702,3 +702,34 @@ export function blueprintCopy(bridge, title = '시험') {
     return { bytes: out.exportHwpx(), count: blocks.length, total: Math.round(total * 10) / 10 };
   } finally { out.free(); }
 }
+
+// 정답·해설지: 문항마다 「번호. 정답」과 문항 안 [해설]·[풀이]·해설: 줄을 모은 새 한글 문서(글만). 지금 문서는 그대로.
+const EXPLAIN_LINE = /^\s*(?:[\[【]\s*(?:해설|풀이)\s*[\]】]|(?:해설|풀이)\s*[:：])\s*/;
+export function explanationCopy(bridge, title = '시험') {
+  requireInput(bridge);
+  const doc = bridge.wasm.borrowDocumentHandle(), blocks = allQuestionBlocks(doc), answers = questionAnswers(doc), items = [];
+  for (const q of blocks) {
+    const notes = [];
+    for (let p = q.head; p < q.end; p++) { const t = String(doc.getTextRange(q.sec, p, 0, doc.getParagraphLength(q.sec, p))), m = EXPLAIN_LINE.exec(t); if (m) notes.push(t.slice(m[0].length).trim()); }
+    items.push({ head: q.essay ? q.label : `${q.number}. ${answers.get(q.number) || '(정답 없음)'}`, notes });
+  }
+  if (!items.length) throw new Error('문단 머리에 「1.」처럼 번호가 붙은 문항을 찾지 못했습니다.');
+  if (!items.some(i => i.notes.length) && !answers.size) throw new Error('문항 안에 「[정답] ③」이나 「[해설] …」 줄이 없습니다. 문항 → 정답으로 먼저 적으세요.');
+  const Document = doc.constructor, out = Document.createEmpty();
+  try {
+    out.createBlankDocument();
+    const lines = [{ text: `${String(title || '시험').trim()} 정답과 해설`, style: { bold: true, fontSize: 1500 }, center: true }];
+    for (const it of items) {
+      lines.push({ text: it.head, style: { bold: true } });
+      for (const n of it.notes) lines.push({ text: n, style: null });
+    }
+    lines.forEach((line, i) => {
+      if (i) parse(out.splitParagraph(0, i - 1, out.getParagraphLength(0, i - 1)));
+      out.insertText(0, i, 0, line.text);
+      const len = [...line.text].length;
+      out.applyCharFormat(0, i, 0, len, JSON.stringify(line.style || { bold: false, fontSize: 1000 }));
+      if (line.center) out.applyParaFormat(0, i, JSON.stringify({ alignment: 'center' }));
+    });
+    return { bytes: out.exportHwpx(), count: items.length, explained: items.filter(i => i.notes.length).length };
+  } finally { out.free(); }
+}
