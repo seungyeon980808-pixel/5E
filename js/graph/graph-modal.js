@@ -560,7 +560,18 @@ function remapPointIndices(s, index, delta) {
     else if(index >= s.pts.length-1) s.segmentModes.pop();
     else { const merged = s.segmentModes[index-1] === 'smooth' && s.segmentModes[index] === 'smooth' ? 'smooth' : 'line'; s.segmentModes.splice(index-1,2,merged); }
   }
-  s.breaks = (s.breaks || []).map(i => i >= index ? i + delta : i).filter(i => i > 0 && i < s.pts.length + delta);
+  // 끊긴 구간 시작(i)은 그 앞에 틈이 있다는 뜻이다. 지운 점이 구간의 첫 점이면 다음 점이 그 자리로 와 틈은 그대로다
+  // (예전에는 한 칸 당겨져 끊긴 구간이 이어졌다, M32).
+  s.breaks = (s.breaks || []).map(i => delta > 0 ? (i >= index ? i + 1 : i) : (i > index ? i - 1 : i)).filter(i => i > 0 && i < s.pts.length + delta);
+  // 점 번호로 붙은 표기(보조선·점·지시선)와 편집 시작 때의 점 목록도 같은 만큼 옮긴다. 옮기지 않으면 다시 붙일 때
+  // 다른 점의 이동량을 받아 표기가 엉뚱한 점으로 갔다(M32). 지운 점에 붙은 표기는 점 번호 연결만 끊는다(자리는 그대로).
+  const sid = s.reconstruction?.seriesId;
+  if (sid) for (const a of _cfg?.graphAnnotations || []) {
+    if (a.seriesId !== sid || !Number.isInteger(a.pointIndex)) continue;
+    if (delta < 0 && a.pointIndex === index) delete a.pointIndex;
+    else if (a.pointIndex >= index) a.pointIndex += delta;
+  }
+  if (Array.isArray(s.editStartPoints)) { if (delta > 0) s.editStartPoints.splice(index, 0, null); else s.editStartPoints.splice(index, 1); }
   s.endpointMarkers = (s.endpointMarkers || []).filter(e => delta > 0 || e.index !== index).map(e => ({ ...e, index: e.index >= index ? e.index + delta : e.index }));
 }
 function syncHandlesToStructure(s) {
