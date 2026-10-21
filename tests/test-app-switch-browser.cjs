@@ -5,6 +5,7 @@
 // 2) 조판이 바쁜 순간(「한글에 넣기」 영역 고르기 중)에 누른 hwp도 바쁜 일이 끝나면 열린다.
 // 3) 전환 도중에 누른 이름은 버리지 않고 이어서 간다(빠르게 눌러도 마지막 것으로).
 // 4) 전환 도중 출제 칸 ✕를 눌러도 그림 화면이 잠긴 채 남지 않는다(H1, 10-21).
+// 5) 이름을 빠르게 두 번 눌러도 원래 화면으로 튕겨 돌아가지 않는다(M8, 10-21).
 const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const path = require('node:path');
@@ -81,6 +82,18 @@ h.withServer(async origin => {
       assert.equal(await page.evaluate(() => document.querySelector('body>.app').inert), false, `${name}: closing the sheet mid-switch never leaves the image screen locked`);
       await page.locator('.app-switch-image [data-app-switch="hwp"]').click({ timeout: 5000 });
       await page.locator('#rhwp-exam-workspace').waitFor({ state: 'visible' });
+      // 5) M8: 이름을 빠르게 두 번 누르면 둘째 클릭이 새 화면의 같은 자리(방금 떠나온 프로그램)를 눌러 튕겨 돌아가던 것.
+      await page.waitForTimeout(500);
+      await page.locator('.exam-topbar [data-app-switch="image"]').click();
+      await page.waitForFunction(() => document.getElementById('rhwp-exam-workspace').hidden && !document.querySelector('.app-leaving'));
+      const examName = page.locator('.app-switch-image [data-app-switch="exam"]'), box = await examName.boundingBox();
+      await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+      await page.waitForTimeout(200);
+      await page.mouse.click(box.x + box.width / 2, box.y + box.height / 2);
+      await page.waitForTimeout(1500);
+      assert.equal(await page.evaluate(() => document.getElementById('exampool-sheet-workspace').hidden), false, `${name}: a quick second click does not bounce back to the image screen`);
+      await (await sheet()).locator('.top [data-app-switch="image"]').click();
+      await page.waitForFunction(() => document.getElementById('exampool-sheet-workspace').hidden && !document.querySelector('.app-leaving'));
       await page.screenshot({ path: path.join(evidence, `${name}-end.png`) });
       assert.deepEqual(errors, []);
       console.log(`PASS app switch ${name}: no flash between programs, busy hwp opens, queued switch, no stuck lock`);

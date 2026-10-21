@@ -45,6 +45,8 @@
 #rhwp-exam-workspace .exam-sidebar { width: 160px; }
 #rhwp-exam-workspace .exam-sidebar .exam-header { padding-top: 0; }
 #rhwp-exam-workspace.exam-left-collapsed .exam-sidebar { display: none; }
+/* 「한글에 넣기」 위치 고르기 중에는 접어 둔 왼쪽 칸도 잠깐 편다 — 확인·취소·안내 줄이 그 칸 안에 있다(M7) */
+#rhwp-exam-workspace.exam-left-collapsed[data-placing] .exam-sidebar { display: flex; }
 /* rhwp-exam-workspace.css의 좁은 창 폭보다 앞서게 같은 조건으로 다시 160 */
 @media (max-width: 900px) { #rhwp-exam-workspace .exam-sidebar { width: 160px; } }
 @media (max-width: 760px) { #rhwp-exam-workspace .exam-topbar .exam-top-sep:first-of-type { display: none; } }

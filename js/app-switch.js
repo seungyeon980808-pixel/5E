@@ -73,10 +73,15 @@ export function initAppSwitch(doc = document) {
     return closed;
   };
   // 전환 중(약 0.4초)에 다른 이름을 누르면 버리지 않고 마지막으로 누른 것을 기억했다가, 지금 전환이 끝나면 이어서 간다.
-  let switching = false, queued = null;
+  let switching = false, queued = null, last = { from: null, at: 0 };
+  // 두 번 누름 막기(M8): 세 맨 위 줄은 같은 자리에 다른 이름이 있어서(그림 [exam|hwp], 출제 [image|hwp], 조판 [exam|image])
+  // 이름을 빠르게 두 번 누르면 둘째 클릭이 새 화면에서 「방금 떠나온 프로그램」을 눌러 원래 화면으로 튕겨 돌아갔다.
+  const bounce = target => target === last.from && performance.now() - last.at < 350;
   const go = async target => {
+    if (bounce(target)) return;
     if (switching) { queued = target; return; }
     const from = currentApp(doc);
+    if (target && target !== from) last = { from, at: performance.now() };
     if (!target || target === from) return;
     switching = true;
     try {
@@ -105,6 +110,7 @@ export function initAppSwitch(doc = document) {
     const button = event.target.closest?.('button[data-app-switch]');
     if (!button) return;
     event.preventDefault();
+    if (event.detail > 1) return;
     void go(button.dataset.appSwitch);
   });
   win.addEventListener('message', event => {

@@ -10,12 +10,26 @@ export const STRUCTURE_LOCK_MESSAGE='구조 잠금 중 · 표·그림의 크기�
 const TEXT_TABLE_COMMANDS=new Set(['table:block-sum','table:block-avg','table:block-product','table:block-formula','table:decimal-add','table:decimal-remove','table:thousand-sep','table:transpose-copy']);
 export function isStructureCommand(id){
   id=String(id||'');
+  if(id==='format:object-properties')return true;// 그림·표 크기·회전 대화상자(P)
   if(id.startsWith('table:'))return !TEXT_TABLE_COMMANDS.has(id);
   return /^insert:(image|shape|textbox|picture-|rotate-|flip-|caption-)/.test(id);
 }
+// 엔진의 모든 편집은 input.executeOperation을 지난다. 명령 전달기만 막으면 표 마지막 칸 Tab(줄 추가를 직접 실행),
+// 그림을 고른 뒤 P(개체 속성)·Delete·⌘X, 그림 붙여넣기·끌어 놓기, 셀 테두리 복사(Alt+C)가 잠금을 뚫었다(M1).
+// 표·그림의 틀을 바꾸는 작업 종류만 막고, 글 붙여넣기(HTML 포함)·수식·쪽 설정은 글 편집으로 보고 그대로 둔다.
+export const STRUCTURE_OPERATIONS=new Set(['objectProps','insertTableRow','insertTableColumn','deleteTableRow','deleteTableColumn','deleteTable','cutTable','createTable',
+  'splitTable','splitTableCell','mergeTableCells','mergeTableWithNext','resizeTableProportional','resizeTableCells','pasteTableCellsTransposed','formatCopyCellProps',
+  'insertPicture','assignPictureImage','pasteImage','pasteControl','cutObject','deleteObject','setColumnDef']);
 function installStructureGuard(input){
   if(structureGuards.has(input))return;structureGuards.add(input);
   const notice=()=>input.examStructureNotice?.(STRUCTURE_LOCK_MESSAGE);
+  if(typeof input.executeOperation==='function'){
+    const execute=input.executeOperation.bind(input);
+    input.executeOperation=(operation,...args)=>{
+      if(input.examTableLayoutLocked&&STRUCTURE_OPERATIONS.has(operation?.operationType)){notice();return undefined;}
+      return execute(operation,...args);
+    };
+  }
   const dispatcher=input.dispatcher;
   if(dispatcher&&typeof dispatcher.dispatchWithResult==='function'){
     const run=dispatcher.dispatchWithResult.bind(dispatcher);

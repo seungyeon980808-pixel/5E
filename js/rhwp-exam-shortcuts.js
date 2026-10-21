@@ -71,7 +71,8 @@ export function documentShortcut(event, { inCell = false, cellSelection = false 
     if (key === 'h') return 'edit:find-replace';
     if (key === 'f10') return 'insert:symbols';
     if (key === 'enter') return inCell ? 'table:insert-row-below' : 'page:break';
-    if (key === 'backspace' && inCell) return 'table:delete-row';
+    // Mac의 ⌘Backspace는 「줄 앞까지 지우기」 — 표 줄 지우기는 Ctrl+Backspace만(M3)
+    if (key === 'backspace' && inCell && event.ctrlKey) return 'table:delete-row';
   }
   if (!control && !event.altKey && !event.shiftKey) {
     if (cellSelection && key === 'h') return 'equal-height';

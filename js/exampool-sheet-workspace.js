@@ -13,7 +13,9 @@ export function initQuestionSheet(state,services,examWorkspace){
   if(!entry){entry=document.createElement('button');entry.id='exam-pool-open';entry.type='button';entry.className='object-search-trigger';entry.textContent='5E_ExamPool';document.querySelector('.image-workflow-hub')?.append(entry);}
   entry.disabled=false;entry.title='5E_exam · 문항 만들기';
   let host,frame,focusReturn,busy=false;
-  function open(){if(!host){host=document.createElement('section');host.id='exampool-sheet-workspace';host.setAttribute('aria-label','문항 시트');host.setAttribute('role','dialog');host.setAttribute('aria-modal','true');host.style.cssText='position:fixed;inset:0;z-index:1250;background:var(--ds-app);';frame=document.createElement('iframe');frame.setAttribute('aria-label','5E_exam 문항 시트');/* title이면 Safari가 화면 위에 말풍선으로 띄운다 */frame.src=new URL('../assets/exampool/sheet/index.html',import.meta.url).href+(new URLSearchParams(location.search).get('sheet-example')==='1'?'?example=1':'');frame.style.cssText='width:100%;height:100%;border:0;display:block;opacity:0;transition:opacity 200ms cubic-bezier(.2,0,0,1)';/* 첫 열기: 안 문서가 다 그려진 뒤 흐려졌다 또렷해지게(빈 칸 → 내용이 휙 뜨지 않게), 1.5초가 지나면 그냥 보인다 */frame.addEventListener('load',()=>{const start=performance.now(),show=()=>{if(frame.contentDocument?.querySelector('#side-new')||performance.now()-start>1500)frame.style.opacity='1';else requestAnimationFrame(show);};show();},{once:true});host.append(frame);document.body.append(host);}
+  // 그림 고르기 중(「5E에서 잘라 넣기」)에 출제 칸을 다시 열면 고르기를 취소하고 연다 — 예전엔 고르기 상자가 가려지고 전송 잠금이 안 풀려
+  // 「한글로 보내기」·그림 가져오기가 모두 막혔다(M6).
+  function open(){if(picking){picking.cancel();return;}if(!host){host=document.createElement('section');host.id='exampool-sheet-workspace';host.setAttribute('aria-label','문항 시트');host.setAttribute('role','dialog');host.setAttribute('aria-modal','true');host.style.cssText='position:fixed;inset:0;z-index:1250;background:var(--ds-app);';frame=document.createElement('iframe');frame.setAttribute('aria-label','5E_exam 문항 시트');/* title이면 Safari가 화면 위에 말풍선으로 띄운다 */frame.src=new URL('../assets/exampool/sheet/index.html',import.meta.url).href+(new URLSearchParams(location.search).get('sheet-example')==='1'?'?example=1':'');frame.style.cssText='width:100%;height:100%;border:0;display:block;opacity:0;transition:opacity 200ms cubic-bezier(.2,0,0,1)';/* 첫 열기: 안 문서가 다 그려진 뒤 흐려졌다 또렷해지게(빈 칸 → 내용이 휙 뜨지 않게), 1.5초가 지나면 그냥 보인다 */frame.addEventListener('load',()=>{const start=performance.now(),show=()=>{if(frame.contentDocument?.querySelector('#side-new')||performance.now()-start>1500)frame.style.opacity='1';else requestAnimationFrame(show);};show();},{once:true});host.append(frame);document.body.append(host);}
     focusReturn=document.activeElement;host.hidden=false;host.style.bottom='0';/* ExamPool 상태 줄 하나에 5E 버전·문제 신고를 함께 두므로 5E 아래 막대는 덮는다(아래 막대 두 줄 → 한 줄). */syncAppLock();}
   // 사용자가 출제 칸을 닫거나(✕) 한글로 보낼 때: 휙 사라지지 않게 0.16초 흐려지며 닫는다(app-switch.css의 .app-leaving). 움직임 줄이기 설정이면 바로.
   function fadeClose(){if(!host||host.hidden)return;if(matchMedia('(prefers-reduced-motion: reduce)').matches){close();return;}host.classList.add('app-leaving');setTimeout(()=>{host.classList.remove('app-leaving');close();},160);}
@@ -57,12 +59,14 @@ export function initQuestionSheet(state,services,examWorkspace){
     const button=(text,primary)=>{const b=document.createElement('button');b.type='button';b.textContent=text;if(primary)b.className='exam-primary';actions.append(b);return b;};
     const cancel=button(options.cancel||'취소'),apply=button(options.apply||'이 자리에 넣기',true);
     let raf=0;const follow=()=>{region.position();raf=requestAnimationFrame(follow);};
-    const finish=()=>{cancelAnimationFrame(raf);region.hide();region.root.remove();picking=null;host.hidden=false;syncAppLock();frame?.contentWindow?.focus?.();};
+    let esc=null;
+    const finish=()=>{cancelAnimationFrame(raf);region.hide();region.root.remove();picking=null;if(esc)document.removeEventListener('keydown',esc,true);host.hidden=false;syncAppLock();frame?.contentWindow?.focus?.();};
     return new Promise(resolve=>{
       picking={cancel:()=>{finish();send({action:'pick-cancelled'});resolve();}};
       cancel.onclick=()=>picking.cancel();
       apply.onclick=async()=>{apply.disabled=true;try{await captureFigure(m,send,copy(bounds));finish();resolve();}catch(error){apply.disabled=false;say(error.message);}};
-      document.addEventListener('keydown',function esc(e){if(e.key==='Escape'&&picking){e.preventDefault();document.removeEventListener('keydown',esc,true);picking.cancel();}},true);
+      // 적용·취소로 끝나도 Esc 감시를 떼도록 finish에서 지운다(예전엔 쌓였다 — M6 덧붙임).
+      esc=e=>{if(e.key==='Escape'&&picking){e.preventDefault();picking.cancel();}};document.addEventListener('keydown',esc,true);
       region.show(session());follow();
     });
   }

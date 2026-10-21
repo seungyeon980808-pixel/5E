@@ -15,6 +15,8 @@ for(const [name,engine] of Object.entries({chromium,webkit})) test(`${name}: str
   await run(()=>{const b=window.lockBridge(),w=b.wasm,t=w.createTable(0,0,0,2,3);window.lockTable=t;
    w.resizeTableCells(0,t.paraIdx,t.controlIdx,[0,1,2,3,4,5].map(cellIdx=>({cellIdx,heightDelta:4000,widthDelta:cellIdx%3*600})));b.deps.eventBus.emit('document-changed');});
   const focusCell=()=>run(()=>{const b=window.lockBridge(),t=window.lockTable;b.input.cursor.exitCellSelectionMode();b.input.cursor.moveTo({sectionIndex:0,paragraphIndex:0,charOffset:0,parentParaIndex:t.paraIdx,controlIndex:t.controlIdx,cellIndex:0,cellParaIndex:0});b.input.updateCaret();b.input.focus();});
+  // 표 마지막 칸(2×3의 여섯째)으로 커서를 옮긴다 — 여기서 Tab은 엔진이 줄 추가를 직접 실행한다(M1).
+  const focusLast=()=>run(()=>{const b=window.lockBridge(),t=window.lockTable;b.input.cursor.exitCellSelectionMode();b.input.cursor.moveTo({sectionIndex:0,paragraphIndex:0,charOffset:0,parentParaIndex:t.paraIdx,controlIndex:t.controlIdx,cellIndex:5,cellParaIndex:0});b.input.updateCaret();b.input.focus();});
   const sizes=()=>run(()=>{const w=window.lockBridge().wasm,t=window.lockTable;return Array.from({length:w.getTableDimensions(0,t.paraIdx,t.controlIdx).cellCount},(_,i)=>{const p=w.getCellProperties(0,t.paraIdx,t.controlIdx,i);return [p.width,p.height];});});
   const dims=()=>run(()=>{const w=window.lockBridge().wasm,t=window.lockTable;return w.getTableDimensions(0,t.paraIdx,t.controlIdx);});
   const cellText=()=>run(()=>{const w=window.lockBridge().wasm,t=window.lockTable;return w.getTextInCell(0,t.paraIdx,t.controlIdx,0,0,0,100);});
@@ -30,11 +32,13 @@ for(const [name,engine] of Object.entries({chromium,webkit})) test(`${name}: str
   // 표 칸 안 Shift+Tab: 이전 칸
   await focusCell();await page.keyboard.press('Tab');assert.equal(await run(()=>window.lockBridge().input.getCursorPosition().cellIndex),1);
   await page.keyboard.press('Shift+Tab');assert.equal(await run(()=>window.lockBridge().input.getCursorPosition().cellIndex),0,'Shift+Tab moves to the previous cell');
+  {await focusLast();const before=await dims();await page.keyboard.press('Tab');assert.deepEqual(await dims(),before,'locked: Tab in the last cell adds no row (M1)');}
   await page.screenshot({path:path.join(out,name+'-locked.png')});
   // 풀면 같은 키가 동작한다
   await lockButton.click();assert.equal(await lockButton.getAttribute('aria-pressed'),'false');
   {await focusCell();await page.keyboard.press('F5');const before=await sizes();await page.keyboard.press('Shift+ArrowRight');assert.equal((await sizes())[0][0],before[0][0]+300,'unlocked: cell width grows');await page.keyboard.press('Control+z');}
   {await focusCell();const before=await dims();await page.keyboard.press('Control+Enter');assert.equal((await dims()).rowCount,before.rowCount+1,'unlocked: row insert');await page.keyboard.press('Control+z');}
+  {await focusLast();const before=await dims();await page.keyboard.press('Tab');assert.equal((await dims()).rowCount,before.rowCount+1,'unlocked: Tab in the last cell still adds a row');await page.keyboard.press('Control+z');}
   assert.deepEqual(errors,[]);
  });
 });

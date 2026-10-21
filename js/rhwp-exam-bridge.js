@@ -4,7 +4,7 @@ import { DEFAULT_PICTURE_LAYOUT, validatePictureLayout, regionGeometry } from '.
 import { installPictureResize } from './rhwp-exam-picture-resize.js?v=1.7.0-four-session-integration';
 import { installTableShortcuts } from './rhwp-exam-table-controls.js?v=1014-compact-panel';
 import { installDocumentShortcuts } from './rhwp-exam-shortcuts.js?v=1014-compact-panel';
-import { setTableLayoutLocked } from './rhwp-exam-layout-lock.js?v=1014-compact-panel';
+import { setTableLayoutLocked } from './rhwp-exam-layout-lock.js?v=1021-fix';
 import {exportCompatibleHwp,exportVerifiedHwpx} from '../assets/exampool/sheet/native-transfer.js?v=1014-compact-panel';
 
 export const FIGURE_PREFIX = '5e-exam:';

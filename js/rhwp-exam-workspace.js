@@ -1,5 +1,5 @@
 import { parseFiveEProject } from './fivee-project.js?v=1.7.0-four-session-integration';
-import { appSwitchHtml } from './app-switch.js?v=1021-lock';
+import { appSwitchHtml } from './app-switch.js?v=1021-fix';
 import {buildQuestionHtml,verifyNativeQuestion} from '../assets/exampool/sheet/handoff.js?v=1014-hwp-sheet';
 import {openApprovedQuestion,nativeInsertOptions,sameColumnGeometry} from '../assets/exampool/sheet/native-transfer.js?v=1014-compact-panel';
 
