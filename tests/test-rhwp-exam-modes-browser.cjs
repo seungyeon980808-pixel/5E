@@ -165,6 +165,22 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
     const boxCell = await inPage(page, `const c=JSON.parse(d.getCellProperties(0,arg.p,arg.ci,0));return [c.fillType,c.fillColor,d.getTextInCell(0,arg.p,arg.ci,0,0,0,5)];`, shapes[2]);
     assert.deepEqual(boxCell, ['solid', '#eef6ee', '탐구 활동']);
     assert.equal((await inPage(page, `return text();`))[0], '광합성 학습지', 'the cursor paragraph is not split');
+
+    // 11) 판짜기: 2단·B4, 가·나형(나형 사본은 문항째 섞이고 번호 다시 매김, 교사용 끝에 대응표).
+    await inPage(page, `reset('1. 가\\n가가\\n2. 나\\n3. 다\\n다다\\n4. 라');`);
+    await button(page, '모든 쪽을 2단').click(); await h.idle(page);
+    assert.equal((await inPage(page, `return JSON.parse(d.getColumnDef(0));`)).columnCount, 2);
+    await button(page, '용지 크기').click(); await page.locator('[data-exam-paper="B4"]').click(); await h.idle(page);
+    assert.equal((await inPage(page, `return JSON.parse(d.getPageDef(0));`)).width, Math.round(257 * 7200 / 25.4));
+    const variantDownload = page.waitForEvent('download');
+    await button(page, '문항 순서를 섞은').click(); const variantFile = await variantDownload; await h.idle(page);
+    assert.match(variantFile.suggestedFilename().normalize('NFC'), /나형\.hwpx$/);
+    const teacher = await inPage(page, `return text();`);
+    assert.deepEqual(teacher.slice(0, 6), ['1. 가', '가가', '2. 나', '3. 다', '다다', '4. 라'], 'teacher order is unchanged');
+    const mapping = /^\[나형 대응\] (.+)$/.exec(teacher.at(-1)); assert.ok(mapping, teacher.at(-1));
+    const pairs = mapping[1].split(/\s+/).map(x => /^나(\d+)=가(\d+)$/.exec(x).slice(1).map(Number));
+    assert.deepEqual(pairs.map(p => p[0]), [1, 2, 3, 4]); assert.deepEqual([...pairs.map(p => p[1])].sort(), [1, 2, 3, 4]);
+    assert.ok(pairs.some(([v, o]) => v !== o), 'order actually changes');
     assert.equal(await page.locator('#exam-status').getAttribute('data-error'), 'false', await page.locator('#exam-status').textContent());
     assert.deepEqual(errors, []);
   });

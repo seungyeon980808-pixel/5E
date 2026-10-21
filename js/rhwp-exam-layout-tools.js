@@ -276,7 +276,13 @@ export function moveQuestion(bridge, index, direction) {
   const { doc } = requireDocument(bridge), sec = 0, blocks = questionBlocks(doc, sec);
   const a = direction < 0 ? index - 1 : index;
   if (!blocks[a] || !blocks[a + 1]) throw new Error(direction < 0 ? '맨 위 문항입니다.' : '맨 아래 문항입니다.');
-  bridge.transaction('move-question', () => {
+  bridge.transaction('move-question', () => swapAdjacentQuestions(doc, sec, blocks, a));
+  try { renumberQuestions(bridge); } catch {}
+  return a + (direction < 0 ? 0 : 1);
+}
+// a번째와 a+1번째 문항 묶음을 바꾼다(문서 손잡이만 씀 — 복사본에도 쓴다).
+export function swapAdjacentQuestions(doc, sec, blocks, a) {
+  {
     let { start: bs, end: be } = blocks[a + 1];
     const last = be === doc.getParagraphCount(sec);
     // 마지막 문항은 뒤에 문단 나눔이 없어 붙여 넣으면 앞 문항 첫 줄과 합쳐진다 — 빈 문단을 하나 덧대 옮긴 뒤 지운다.
@@ -289,9 +295,18 @@ export function moveQuestion(bridge, index, direction) {
       if (n > 1 && !doc.getParagraphLength(sec, n - 1)) doc.mergeParagraph(sec, n - 1);
     }
     return true;
-  });
-  try { renumberQuestions(bridge); } catch {}
-  return a + (direction < 0 ? 0 : 1);
+  }
+}
+// 문서 손잡이만으로 번호 다시 매기기(복사본용).
+export function renumberDocument(doc) {
+  let n = 0;
+  for (let sec = 0; sec < doc.getSectionCount(); sec++)
+    for (let para = 0; para < doc.getParagraphCount(sec); para++) {
+      const m = /^(\s*)(\d{1,3})\.(?=\s|\S)/.exec(paragraphText(doc, sec, para)); if (!m) continue;
+      const next = String(++n); if (next === m[2]) continue;
+      doc.deleteText(sec, para, m[1].length, m[2].length); doc.insertText(sec, para, m[1].length, next);
+    }
+  return n;
 }
 function checkedResult(value) { const r = parse(value); if (r?.ok === false) throw new Error(r.error || '문항을 옮기지 못했습니다.'); return r; }
 

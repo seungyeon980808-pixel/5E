@@ -3,7 +3,7 @@
 import { runDocumentAction } from './rhwp-exam-shortcuts.js?v=1014-compact-panel';
 import { applyTableAlignment, applyHangingIndent } from './rhwp-exam-table-controls.js?v=1014-compact-panel';
 import { fitCellPicture, centerPicturesInCells, picturesToGrid, fitTableToColumn, renumberQuestions, relayoutChoices, checkLayout, questionBlocks, moveQuestion, splitQuestions } from './rhwp-exam-layout-tools.js';
-import { markBlank, studentCopy, appendBlankAnswers, insertExamHeader, insertAnswerGrid, setQuestionSpacing, extraChecks, BOX_PRESETS, insertBox, insertAnswerLines, insertRubric } from './rhwp-exam-worksheet.js';
+import { markBlank, studentCopy, appendBlankAnswers, insertExamHeader, insertAnswerGrid, setQuestionSpacing, extraChecks, BOX_PRESETS, insertBox, insertAnswerLines, insertRubric, setColumns, setPaper, makeVariant, appendVariantMapping } from './rhwp-exam-worksheet.js';
 import { SYMBOL_ROW, SYMBOL_TABS, SYMBOL_CHUNKS, symbolCells, recentSymbols, rememberSymbol } from './rhwp-exam-symbols.js';
 
 const MODE_KEY = '5e.hwp.toolMode';
@@ -77,6 +77,9 @@ function focusTabs(ctx) {
       ['상자', '개념 정리·탐구 활동·생각해 보기·주의 상자(제목 줄 음영)를 커서 문단 뒤에 넣기', (_, button) => ctx.openPicker(button, 'box')],
       ['답란', '서술형 답을 쓰는 줄(3·5·8줄)을 커서 문단 뒤에 넣기', (_, button) => ctx.openPicker(button, 'lines')],
       ['평가 기준표', '평가 요소 | 상 | 중 | 하 표를 커서 문단 뒤에 넣기', doc(b => ctx.message(`평가 기준표(${insertRubric(b)}줄)를 넣었습니다.`))], '|',
+      ['1단', '모든 쪽을 1단으로', doc(b => ctx.message(`${setColumns(b, 1)}단으로 바꿨습니다.`))], ['2단', '모든 쪽을 2단으로(단 사이 8mm) — 시험지 기본', doc(b => ctx.message(`${setColumns(b, 2)}단으로 바꿨습니다.`))],
+      ['용지', '용지 크기 A4·B4·A3 (여백·방향은 그대로)', (_, button) => ctx.openPicker(button, 'paper')],
+      ['가·나형', '문항 순서를 섞은 나형 사본 내려받기(번호 다시 매김) + 교사용 문서 끝에 대응표', doc(b => ctx.variant(b))], '|',
       ['인쇄', '인쇄 창 열기', cmd('file:print')], ['PDF로 저장', 'PDF로 저장', cmd('file:print-to-pdf')],
     ],
   };
@@ -169,6 +172,11 @@ export function installExamModes(panel, services) {
       const { bytes, count } = studentCopy(b), name = `${(services.documentName?.() || '학습지').replace(/[\\/:*?"<>|]/g, '_')}-학생용.hwpx`;
       services.download(new Blob([bytes], { type: 'application/vnd.hancom.hwpx' }), name);
       message(`빈칸 ${count}개를 비운 학생용 사본을 내려받습니다(${name}). 지금 문서는 그대로입니다.`);
+    },
+    variant(b) {
+      const { bytes, mapping } = makeVariant(b), name = `${(services.documentName?.() || '시험지').replace(/[\\/:*?"<>|]/g, '_')}-나형.hwpx`;
+      services.download(new Blob([bytes], { type: 'application/vnd.hancom.hwpx' }), name);
+      message(`나형을 내려받습니다(${name}). 교사용 문서 끝에 대응표를 넣었습니다: ${appendVariantMapping(b, mapping)}`);
     },
     openHeaderForm: anchor => openForm(anchor, 'header'),
     openSpacingForm: anchor => openForm(anchor, 'spacing'),
@@ -324,6 +332,9 @@ export function installExamModes(panel, services) {
     } else if (kind === 'box') {
       pop.innerHTML = `<div class="exam-pop-head">상자 <small>커서 문단 뒤에 넣음</small></div>
         <div class="exam-morelist">${BOX_PRESETS.map(([title]) => `<button type="button" data-exam-box="${esc(title)}">${esc(title)}</button>`).join('')}</div>`;
+    } else if (kind === 'paper') {
+      pop.innerHTML = `<div class="exam-pop-head">용지 <small>여백·방향은 그대로</small></div>
+        <div class="exam-morelist">${['A4', 'B4', 'A3'].map(n => `<button type="button" data-exam-paper="${n}">${n}</button>`).join('')}</div>`;
     } else if (kind === 'lines') {
       pop.innerHTML = `<div class="exam-pop-head">서술형 답란 <small>줄 수</small></div>
         <div class="exam-morelist">${[3, 5, 8].map(n => `<button type="button" data-exam-lines="${n}">${n}줄</button>`).join('')}</div>`;
@@ -335,6 +346,8 @@ export function installExamModes(panel, services) {
     pop.querySelector('input')?.focus();
   }
   pop.addEventListener('click', event => {
+    const paper = event.target.closest('[data-exam-paper]');
+    if (paper) { const name = paper.dataset.examPaper; closePop(); void run(async () => message(`용지를 ${setPaper(bridgeOrThrow(), name)}로 바꿨습니다.`)); return; }
     const box = event.target.closest('[data-exam-box]'), lineCount = event.target.closest('[data-exam-lines]');
     if (box) { const title = box.dataset.examBox; closePop(); void run(async () => message(`「${insertBox(bridgeOrThrow(), title)}」 상자를 넣었습니다. 아래 칸에 내용을 쓰세요.`)); return; }
     if (lineCount) { const n = Number(lineCount.dataset.examLines); closePop(); void run(async () => message(`서술형 답란 ${insertAnswerLines(bridgeOrThrow(), n)}줄을 넣었습니다.`)); return; }

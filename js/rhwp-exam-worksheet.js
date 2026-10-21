@@ -1,7 +1,7 @@
 // 학습지·시험지 만들기 도구(10-21 밤). 빈칸 학습지(표시 → 학생용 사본·정답 모음), 시험지 머리 양식, 정답표 칸, 문항 간격 일괄.
 // 문서를 고치는 것은 모두 한 번의 되돌리기 단계(bridge.transaction). 학생용 사본은 지금 문서를 건드리지 않고 복사본에서 만든다.
 import { insertTable } from './hwp-palette/native.js';
-import { columnWidth } from './rhwp-exam-layout-tools.js';
+import { columnWidth, questionBlocks, swapAdjacentQuestions, renumberDocument } from './rhwp-exam-layout-tools.js';
 
 const parse = value => typeof value === 'string' ? JSON.parse(value) : value;
 // 빈칸 표시: 연한 파랑 바탕 + 밑줄. 교사용 문서에서 눈에 띄고, 학생용에서는 빈칸으로 바뀐다.
@@ -251,4 +251,67 @@ export function insertRubric(bridge, items = 3) {
     return true;
   });
   return items;
+}
+
+// ── 판짜기: 단·용지·가나형 ──
+function refuseWhenLocked(bridge) {
+  if (bridge.tableLayoutLocked) throw new Error('구조 잠금 중입니다. 단·용지는 구조 잠금을 풀고 바꾸세요.');
+}
+// 모든 구역을 n단으로(2단이면 단 사이 8mm).
+export function setColumns(bridge, count) {
+  requireInput(bridge); refuseWhenLocked(bridge);
+  if (![1, 2, 3].includes(count)) throw new Error('단은 1~3단으로 고르세요.');
+  const doc = bridge.wasm.borrowDocumentHandle();
+  bridge.transaction('set-columns', () => {
+    for (let sec = 0; sec < doc.getSectionCount(); sec++) doc.setColumnDef(sec, count, 0, true, count > 1 ? mmUnits(8) : 0);
+    return true;
+  });
+  return count;
+}
+export const PAPERS = { A4: [210, 297], B4: [257, 364], A3: [297, 420] };
+// 용지 크기만 바꾸고 여백·방향은 그대로.
+export function setPaper(bridge, name) {
+  requireInput(bridge); refuseWhenLocked(bridge);
+  const size = PAPERS[name]; if (!size) throw new Error('용지는 A4·B4·A3 중에서 고르세요.');
+  const doc = bridge.wasm.borrowDocumentHandle();
+  bridge.transaction('set-paper', () => {
+    for (let sec = 0; sec < doc.getSectionCount(); sec++) {
+      const page = parse(doc.getPageDef(sec)), [w, h] = page.landscape ? [size[1], size[0]] : size;
+      doc.setPageDef(sec, JSON.stringify({ ...page, width: mmUnits(w), height: mmUnits(h) }));
+    }
+    return true;
+  });
+  return name;
+}
+// 나형 만들기: 문항 순서를 섞은 사본(번호 다시 매김)과 「나형 번호 → 가형 번호」 대응. 지금 문서는 그대로.
+export function makeVariant(bridge, random = Math.random) {
+  requireInput(bridge);
+  const doc = bridge.wasm.borrowDocumentHandle(), first = questionBlocks(doc);
+  if (first.length < 2) throw new Error('번호가 붙은 문항이 둘 이상 있어야 섞을 수 있습니다.');
+  // 원래 자리와 다른 순서가 나올 때까지 섞는다(문항이 둘이면 서로 바꾼다).
+  const order = first.map((_, i) => i);
+  for (let tries = 0; tries < 20 && order.every((v, i) => v === i); tries++)
+    for (let i = order.length - 1; i > 0; i--) { const j = Math.floor(random() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
+  const Document = doc.constructor, copy = new Document(doc.exportHwpx());
+  try {
+    // 인접 바꾸기로 목표 순서를 만든다(선택 정렬). current[k] = 지금 k번째 자리에 있는 원래 문항.
+    const current = first.map((_, i) => i);
+    for (let target = 0; target < order.length; target++) {
+      let at = current.indexOf(order[target]);
+      while (at > target) { swapAdjacentQuestions(copy, 0, questionBlocks(copy), at - 1); [current[at - 1], current[at]] = [current[at], current[at - 1]]; at--; }
+    }
+    renumberDocument(copy);
+    return { bytes: copy.exportHwpx(), mapping: order.map((orig, i) => ({ variant: i + 1, original: first[orig].number })) };
+  } finally { copy.free(); }
+}
+// 교사용 문서 끝에 「[나형 대응] 나1=가3 …」을 붙인다.
+export function appendVariantMapping(bridge, mapping) {
+  const doc = bridge.wasm.borrowDocumentHandle(), sec = doc.getSectionCount() - 1, last = doc.getParagraphCount(sec) - 1;
+  const line = `[나형 대응] ${mapping.map(m => `나${m.variant}=가${m.original}`).join('  ')}`;
+  bridge.transaction('variant-mapping', () => {
+    parse(doc.splitParagraph(sec, last, doc.getParagraphLength(sec, last)));
+    doc.insertText(sec, last + 1, 0, line);
+    return true;
+  });
+  return line;
 }
