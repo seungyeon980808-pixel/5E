@@ -282,13 +282,23 @@ export function setQuestionSpacing(bridge, pt) {
 // 배점: 커서가 있는 문항의 [n점]을 넣거나 바꾼다(score=null이면 지움). 자리는 발문 끝(「?」로 끝나는 마지막 문단), 없으면 문항 첫 문단 끝.
 // {number, total, count} — total은 문서 전체 배점 합계.
 export const SCORE_CHOICES = [2, 2.5, 3, 3.5, 4, 5];
-const SCORE_MARK = /\s?\[\d+(?:\.\d+)?\s*점\]/g;
+// 배점 표시: 평가원 「[3점]」과 학교 시험 「(3점)」 둘 다.
+const SCORE_MARK = /\s?[\[(]\d+(?:\.\d+)?\s*점[\])]/g;
+export const SCORE_VALUE = /[\[(](\d+(?:\.\d+)?)\s*점[\])]/;
+const SCORE_VALUES = new RegExp(SCORE_VALUE.source, 'g');
 export function setQuestionScore(bridge, score) {
   const input = requireInput(bridge), doc = bridge.wasm.borrowDocumentHandle();
   const at = input.cursor.getPosition(), sec = at.sectionIndex ?? 0, para = at.cellPath?.length ? (at.parentParaIndex ?? at.paragraphIndex) : at.paragraphIndex;
   const q = questionBlocks(doc, sec).find(b => b.start <= para && para < b.end);
   if (!q) throw new Error('배점을 넣을 문항 안(「1.」로 시작하는 문항)에 커서를 두세요.');
   const textOf = p => String(doc.getTextRange(sec, p, 0, doc.getParagraphLength(sec, p)));
+  // 괄호 모양: 이 문항에 있던 모양, 없으면 문서에서 더 많이 쓴 모양(평가원 [3점] / 학교 (3점)).
+  let paren = null, round = 0, square = 0;
+  for (let p = q.head; p < q.end && paren === null; p++) { const m = SCORE_VALUE.exec(textOf(p)); if (m) paren = m[0][0] === '('; }
+  if (paren === null) {
+    for (let s2 = 0; s2 < doc.getSectionCount(); s2++) for (let p = 0; p < doc.getParagraphCount(s2); p++) for (const m of String(doc.getTextRange(s2, p, 0, doc.getParagraphLength(s2, p))).matchAll(SCORE_VALUES)) m[0][0] === '(' ? round++ : square++;
+    paren = round > square;
+  }
   bridge.transaction('question-score', () => {
     for (let p = q.head; p < q.end; p++) for (const m of [...textOf(p).matchAll(SCORE_MARK)].reverse()) doc.deleteText(sec, p, m.index, m[0].length);
     if (score != null) {
@@ -296,13 +306,13 @@ export function setQuestionScore(bridge, score) {
       for (let p = q.head; p < q.end; p++) if (/\?\s*$/.test(textOf(p))) target = p;
       const text = textOf(target), trimmed = text.replace(/\s+$/, '');
       if (trimmed.length < text.length) doc.deleteText(sec, target, trimmed.length, text.length - trimmed.length);
-      doc.insertText(sec, target, trimmed.length, ` [${score}점]`);
+      doc.insertText(sec, target, trimmed.length, paren ? ` (${score}점)` : ` [${score}점]`);
     }
     return true;
   });
   let total = 0, count = 0;
   for (let s = 0; s < doc.getSectionCount(); s++) for (let p = 0; p < doc.getParagraphCount(s); p++)
-    for (const m of String(doc.getTextRange(s, p, 0, doc.getParagraphLength(s, p))).matchAll(/\[(\d+(?:\.\d+)?)\s*점\]/g)) { total += Number(m[1]); count++; }
+    for (const m of String(doc.getTextRange(s, p, 0, doc.getParagraphLength(s, p))).matchAll(SCORE_VALUES)) { total += Number(m[1]); count++; }
   return { number: q.number, label: q.label, total: Math.round(total * 10) / 10, count };
 }
 
@@ -422,7 +432,7 @@ export function negativeWordIssues(doc) {
   for (let sec = 0; sec < doc.getSectionCount(); sec++) for (const q of questionBlocks(doc, sec))
     for (let p = q.head; p < q.end; p++) {
       const t = String(doc.getTextRange(sec, p, 0, doc.getParagraphLength(sec, p)));
-      if (!/\?\s*(?:\[\d+(?:\.\d+)?\s*점\])?\s*$/.test(t) || TEACHER_ONLY.test(t)) continue;
+      if (!/\?\s*(?:[\[(]\d+(?:\.\d+)?\s*점[\])])?\s*$/.test(t) || TEACHER_ONLY.test(t)) continue;
       for (const m of t.matchAll(NEGATIVE)) {
         let all = true; for (let o = m.index; o < m.index + m[0].length && all; o++) all = parse(doc.getCharPropertiesAt(sec, p, o)).underline === true;
         if (!all) out.push({ sec, para: p, start: m.index, end: m.index + m[0].length, word: m[0], label: q.label });
@@ -442,7 +452,7 @@ export function underlineNegativeWords(bridge) {
 export function examSummary(doc) {
   const blocks = allQuestionBlocks(doc), essay = blocks.filter(b => b.essay).length;
   let total = 0, scored = 0;
-  for (const q of blocks) for (let p = q.head; p < q.end; p++) { const m = /\[(\d+(?:\.\d+)?)\s*점\]/.exec(String(doc.getTextRange(q.sec, p, 0, doc.getParagraphLength(q.sec, p)))); if (m) { total += Number(m[1]); scored++; break; } }
+  for (const q of blocks) for (let p = q.head; p < q.end; p++) { const m = SCORE_VALUE.exec(String(doc.getTextRange(q.sec, p, 0, doc.getParagraphLength(q.sec, p)))); if (m) { total += Number(m[1]); scored++; break; } }
   const counts = [0, 0, 0, 0, 0]; let answered = 0;
   for (const [, a] of questionAnswers(doc)) { const i = MARKS.indexOf(a.trim()[0]); if (i >= 0) { counts[i]++; answered++; } }
   const parts = [`문항 ${blocks.length}${essay ? `(선택형 ${blocks.length - essay}·서술형 ${essay})` : ''}`, `${doc.pageCount()}쪽`];
@@ -458,7 +468,7 @@ export function extraChecks(doc) {
     for (let p = 0; p < doc.getParagraphCount(sec); p++) {
       const len = doc.getParagraphLength(sec, p); if (!len) continue;
       const text = String(doc.getTextRange(sec, p, 0, len)), at = { sectionIndex: sec, paragraphIndex: p, charOffset: 0 };
-      for (const m of text.matchAll(/\[(\d+(?:\.\d+)?)\s*점\]/g)) scores.push(Number(m[1]));
+      for (const m of text.matchAll(SCORE_VALUES)) scores.push(Number(m[1]));
       if (/^\s*\d{1,3}\./.test(text)) {
         const c = parse(doc.getCharPropertiesAt(sec, p, Math.min(len - 1, 3)));
         const key = `${c.fontFamily} ${c.fontSize / 100}pt`;
@@ -473,8 +483,8 @@ export function extraChecks(doc) {
   // 배점 빠진 문항: 배점을 단 문항이 있는데 안 단 선택형·서술형 문항이 있으면 알린다.
   if (scores.length) for (let sec = 0; sec < doc.getSectionCount(); sec++) for (const q of questionBlocks(doc, sec)) {
     let has = false;
-    for (let p = q.head; p < q.end && !has; p++) has = /\[\d+(?:\.\d+)?\s*점\]/.test(String(doc.getTextRange(sec, p, 0, doc.getParagraphLength(sec, p))));
-    if (!has) issues.push({ text: `${q.label} 문항에 배점 [n점]이 없습니다.`, at: { sectionIndex: sec, paragraphIndex: q.head, charOffset: 0 } });
+    for (let p = q.head; p < q.end && !has; p++) has = SCORE_VALUE.test(String(doc.getTextRange(sec, p, 0, doc.getParagraphLength(sec, p))));
+    if (!has) issues.push({ text: `${q.label} 문항에 배점(n점)이 없습니다.`, at: { sectionIndex: sec, paragraphIndex: q.head, charOffset: 0 } });
   }
   // 정답 분포: 문항 안 「[정답] ③」이 다섯 개 이상이면 번호별 개수와 같은 정답 연속을 본다.
   const answers = [...questionAnswers(doc)].sort((a, b) => a[0] - b[0]).map(([n, a]) => [n, MARKS.indexOf(a.trim()[0])]).filter(([, i]) => i >= 0);
@@ -836,7 +846,7 @@ export function blueprintCopy(bridge, title = '시험') {
   let total = 0;
   for (const q of blocks) {
     let score = '';
-    for (let p = q.head; p < q.end && !score; p++) { const m = /\[(\d+(?:\.\d+)?)\s*점\]/.exec(String(doc.getTextRange(q.sec, p, 0, doc.getParagraphLength(q.sec, p)))); if (m) score = m[1]; }
+    for (let p = q.head; p < q.end && !score; p++) { const m = SCORE_VALUE.exec(String(doc.getTextRange(q.sec, p, 0, doc.getParagraphLength(q.sec, p)))); if (m) score = m[1]; }
     total += Number(score) || 0;
     // 문항 안 「[내용 영역] …」「[성취기준] …」「[난이도] 상·중·하」 줄이 있으면 채운다(학생용에서는 빠지는 교사용 줄).
     const meta = {};

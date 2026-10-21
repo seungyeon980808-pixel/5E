@@ -260,6 +260,11 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
     await inPage(page, `b.input.cursor.moveTo({sectionIndex:0,paragraphIndex:3,charOffset:0});`);
     await button(page, '커서가 있는 문항의 배점').click(); await page.locator('[data-exam-score=""]').click(); await h.idle(page);
     assert.equal((await inPage(page, `return text();`))[3], '2. 다음 중 옳은 것은?');
+    // 학교 시험 「(3점)」: 그 모양을 알아보고, 새로 넣을 때도 문서가 쓰는 둥근 괄호로.
+    await inPage(page, `reset('1. 옳은 것은? (3점)\\n2. 다른 것은?');b.input.cursor.moveTo({sectionIndex:0,paragraphIndex:1,charOffset:0});`);
+    await button(page, '커서가 있는 문항의 배점').click(); await page.locator('[data-exam-score="4"]').click(); await h.idle(page);
+    assert.deepEqual(await inPage(page, `return text();`), ['1. 옳은 것은? (3점)', '2. 다른 것은? (4점)']);
+    assert.match(await page.locator('#exam-status').textContent(), /배점 2곳 합계 7점/);
     // 19) 묶음 문항 [1~2]: 머리·지문은 묶음 첫 문항에 붙고(앞 문항과 바꿔도 따라가지 않음), 묶음 문항은 ↑↓가 막히고, 번호를 다시 매기면 [a~b] 범위도 따라간다.
     await inPage(page, `reset('1. 첫 문항\\n[2~3] 다음 글을 읽고 물음에 답하시오.\\n지문\\n2. 둘째\\n3. 셋째\\n4. 넷째\\n5. 다섯째');`);
     await page.waitForFunction(() => document.querySelectorAll('.exam-q').length === 5 && document.querySelector('.exam-qgroup'));
@@ -387,7 +392,7 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
     await inPage(page, `reset(['1. 가 [2점]','[정답] ③','2. 나 [2점]','[정답] ③','3. 다 [2점]','[정답] ③','4. 라','[정답] ③','5. 마 [2점]','[정답] ①','6. 바 [2점]','[정답] ③'].join('\\n'));`);
     await page.locator('[data-exam-fx="check"]').click();
     const checks = await page.locator('.exam-checklist li').allTextContents();
-    assert.ok(checks.includes('4번 문항에 배점 [n점]이 없습니다.'), checks.join(' / '));
+    assert.ok(checks.includes('4번 문항에 배점(n점)이 없습니다.'), checks.join(' / '));
     assert.equal(await page.locator('.exam-check-summary').textContent(), '문항 6 · 1쪽 · 배점 10점 · 정답 ①1 ②0 ③5 ④0 ⑤0');
     assert.ok(checks.includes('같은 정답 ③이 1~4번에 잇달아 나옵니다.'), checks.join(' / '));
     assert.ok(checks.some(t => t.startsWith('정답 분포가 고르지 않습니다(①1 ②0 ③5 ④0 ⑤0)')), checks.join(' / '));

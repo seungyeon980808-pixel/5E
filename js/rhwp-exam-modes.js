@@ -70,7 +70,7 @@ function focusTabs(ctx) {
       ['번호 다시', '문항 번호 1부터 다시 매기기', doc(b => ctx.message(`문항 번호 ${renumberQuestions(b)}곳을 고쳤습니다.`))],
       ['정답', '커서가 있는 문항 끝에 「[정답] ③」 줄 넣기·바꾸기(학생용에서는 빠짐, 정답표·나형 정답·정답 분포 점검에 쓰임)', (_, button) => ctx.openPicker(button, 'answer')],
       ['해설', '커서 문항 끝에 「[해설] 」 줄을 만들고 커서를 그 끝에(학생용에서 빠지고 정답·해설지에 모임)', doc(b => { ctx.message(`${addExplanationLine(b)} 해설 줄에 쓰세요.`); ctx.refocus(); })],
-      ['배점', '커서가 있는 문항의 배점 [n점] 넣기·바꾸기(발문 끝) — 합계를 바로 알려 줌', (_, button) => ctx.openPicker(button, 'score')],
+      ['배점', '커서가 있는 문항의 배점 넣기·바꾸기(발문 끝, [3점]·(3점) 중 문서가 쓰는 모양) — 합계를 바로 알려 줌', (_, button) => ctx.openPicker(button, 'score')],
       ['쪽 나누기', '쪽 나누기 (Ctrl+Enter)', cmd('page:break')],
       ['수식', '수식 넣기 (Ctrl+N, M)', cmd('insert:equation')],
     ],
