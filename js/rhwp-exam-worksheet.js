@@ -26,15 +26,16 @@ export function markBlank(bridge, on = true) {
 
 const isBlank = props => String(parse(props)?.shadeColor || '').toLowerCase() === BLANK_SHADE;
 
-// 본문 문단과 본문 표(한 겹) 칸에서 빈칸 표시 구간을 문서 순서로 모은다. [{where, start, end, text}]
-export function collectBlanks(doc) {
+// 본문 문단과 본문 표(한 겹) 칸에서 글자 속성이 test를 만족하는 구간을 문서 순서로 모은다. [{where, start, end, text, whole}]
+// whole = 그 문단 글 전체가 구간인지(제목·머리 칸처럼 통째로 굵은 줄을 가릴 때 쓴다).
+function collectRuns(doc, test) {
   const out = [];
   const scan = (length, propsAt, textOf, where) => {
     let start = -1;
     for (let i = 0; i <= length; i++) {
-      const marked = i < length && isBlank(propsAt(i));
+      const marked = i < length && test(propsAt(i));
       if (marked && start < 0) start = i;
-      if (!marked && start >= 0) { out.push({ where, start, end: i, text: textOf(start, i) }); start = -1; }
+      if (!marked && start >= 0) { out.push({ where, start, end: i, text: textOf(start, i), whole: textOf(0, length).trim() === textOf(start, i).trim() }); start = -1; }
     }
   };
   for (let sec = 0; sec < doc.getSectionCount(); sec++) {
@@ -60,6 +61,26 @@ export function collectBlanks(doc) {
     }
   }
   return out;
+}
+export const collectBlanks = doc => collectRuns(doc, isBlank).map(({ whole, ...run }) => run);
+
+// 굵은 글씨 → 빈칸: 개념 정리에서 굵게 한 핵심어를 한 번에 빈칸 표시로. 줄 전체가 굵은 제목·머리 칸과
+// 문항 번호(「1.」), 기호·숫자뿐인 구간은 건너뛴다. 앞뒤 띄어쓰기는 빼고 표시한다. 표시한 낱말 수.
+export function boldToBlanks(bridge) {
+  requireInput(bridge);
+  const doc = bridge.wasm.borrowDocumentHandle();
+  const runs = collectRuns(doc, props => parse(props)?.bold === true && !isBlank(props))
+    .filter(r => !r.whole && /[가-힣A-Za-z]/.test(r.text) && !/^\s*\d{1,3}\.\s*$/.test(r.text))
+    .map(r => { const lead = r.text.length - r.text.trimStart().length, tail = r.text.length - r.text.trimEnd().length; return { ...r, start: r.start + lead, end: r.end - tail }; });
+  if (!runs.length) throw new Error('빈칸으로 바꿀 굵은 낱말이 없습니다(줄 전체가 굵은 제목은 건너뜁니다).');
+  bridge.transaction('bold-to-blanks', () => {
+    for (const { where: w, start, end } of runs) {
+      if (w.kind === 'body') doc.applyCharFormat(w.sec, w.para, start, end, JSON.stringify(BLANK_MARK));
+      else doc.applyCharFormatInCell(w.sec, w.para, w.ci, w.cell, w.cp, start, end, JSON.stringify(BLANK_MARK));
+    }
+    return true;
+  });
+  return runs.length;
 }
 
 // 빈칸 너비: 낱말 길이에 맞춰 전각 빈칸(최소 4칸). 학생이 손으로 쓸 자리.

@@ -335,6 +335,12 @@ for (const [name, engine] of Object.entries({ chromium, webkit })) test(`${name}
       return [0,1,10,11,12].map(c=>d.getTextInCell(0,t.paraIdx,ci,c,0,0,d.getCellParagraphLength(0,t.paraIdx,ci,c,0)));`);
     assert.deepEqual(filledGrid, ['1', '2', '③', '①', '']);
     assert.deepEqual(await inPage(page, `const {studentCopy}=await import('/js/rhwp-exam-worksheet.js');const x=new d.constructor(studentCopy(b).bytes);try{return [[...Array(x.getParagraphCount(0)).keys()].map(p=>x.getTextRange(0,p,0,x.getParagraphLength(0,p))),JSON.parse(x.getPageControlLayout(0)).controls.filter(c=>c.type==='table').length];}finally{x.free();}`), [['1. 가', '2. 나'], 0]);
+    // 26) 굵은 글씨 → 빈칸: 굵은 낱말만(앞 띄어쓰기 빼고) 빈칸 표시, 줄 전체가 굵은 제목은 그대로.
+    await inPage(page, `reset('개념 정리\\n물은 수소와 산소로 이루어진 화합물이다.');for(let p=0;p<2;p++)d.applyCharFormat(0,p,0,d.getParagraphLength(0,p),JSON.stringify({bold:false,shadeColor:'#ffffff',underline:false}));
+      d.applyCharFormat(0,0,0,d.getParagraphLength(0,0),JSON.stringify({bold:true}));d.applyCharFormat(0,1,3,5,JSON.stringify({bold:true}));d.applyCharFormat(0,1,6,9,JSON.stringify({bold:true}));b.deps.eventBus.emit('document-changed');`);
+    await page.locator('[data-exam-ftab="sheet"]').click(); await button(page, '문서의 굵은 낱말을').click(); await h.idle(page);
+    assert.match(await page.locator('#exam-status').textContent(), /굵은 낱말 2개/);
+    assert.deepEqual(await inPage(page, `const {collectBlanks}=await import('/js/rhwp-exam-worksheet.js');return collectBlanks(d).map(x=>[x.where.para,x.start,x.text]);`), [[1, 3, '수소'], [1, 7, '산소']]);
     // 15) 구역이 둘인 시험지(0구역=머리·1번, 1구역=2단 본문): 문항 목록이 두 구역을 다 보이고, 구역을 넘는 ↑↓는 막고, 1구역 안 이동·복제·나뉜 문항 점검은 된다.
     const twoSections = await inPage(page, `const {unzipSync,zipSync}=await import('/vendor/fflate/index.js');
       reset('시험 머리\\n1. 가');const first=unzipSync(d.exportHwpx());reset('2. 나\\n나나\\n3. 다');const second=unzipSync(d.exportHwpx());
