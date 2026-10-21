@@ -447,7 +447,9 @@ export function rasterizeExportCanvas(s, { dpi = 300, bounds = null, options = {
  * 성공 시 true. (SVG는 클립보드 규격상 지원되지 않아 PNG만) */
 export async function copyPngToClipboard(state, dpi = 300, bounds = null, options = {}) {
   if (!navigator.clipboard?.write || typeof ClipboardItem === "undefined") return false;
-  const snapshot = structuredClone(state.get());
+  // 그림 그리기에 쓰지 않는 되돌리기 기록은 복사하지 않는다. 함께 깊은 복사하면 3MB 그림·60단계에서 한 번에 약 186MB를 잡았다(M45).
+  const { undoStack, redoStack, ...drawable } = state.get();
+  const snapshot = structuredClone(drawable);
   // Safari requires write() inside the original gesture. Give ClipboardItem
   // the pending PNG, then embed fonts/rasterize without losing that gesture.
   const png = (async () => {
