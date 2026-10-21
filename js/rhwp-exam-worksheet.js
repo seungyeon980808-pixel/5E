@@ -571,10 +571,18 @@ export function appendVariantMapping(bridge, mapping) {
 }
 
 // 학습지 틀: 제목·「학년 반 번 이름」 칸·학습 목표·활동 1·활동 2·정리를 문서 끝에 한 번에.
-export function insertWorksheetFrame(bridge, title = '학습지') {
+// 틀 종류: [제목 기본값, [칸 이름, 머리 음영, 칸 높이(mm)]…]
+export const WORKSHEET_FRAMES = {
+  lesson: ['학습지', '수업 학습지', [['학습 목표', '#eef2f7', 14], ['활동 1', '#eef6ee', 45], ['활동 2', '#eef6ee', 45], ['정리', '#fbf3e4', 30]]],
+  lab: ['실험 보고서', '실험 보고서', [['탐구 주제', '#eef2f7', 10], ['가설', '#eef2f7', 14], ['준비물', '#eef6ee', 14], ['실험 과정', '#eef6ee', 40], ['결과', '#fbf3e4', 35], ['결론 및 토의', '#fbf3e4', 30]]],
+  check: ['형성 평가', '형성 평가', [['확인 문제', '#eef2f7', 90], ['스스로 평가 (잘함 · 보통 · 노력)', '#fbf3e4', 14]]],
+};
+export function insertWorksheetFrame(bridge, title = '', kind = 'lesson') {
   requireInput(bridge);
+  const frame = WORKSHEET_FRAMES[kind]; if (!frame) throw new Error('학습지 틀 종류를 다시 고르세요.');
+  title = title || frame[0];
   const doc = bridge.wasm.borrowDocumentHandle(), sec = doc.getSectionCount() - 1, width = columnWidth(doc, sec);
-  const sections = [['학습 목표', '#eef2f7', 14], ['활동 1', '#eef6ee', 45], ['활동 2', '#eef6ee', 45], ['정리', '#fbf3e4', 30]];
+  const sections = frame[2];
   bridge.transaction('worksheet-frame', () => {
     const last = doc.getParagraphCount(sec) - 1, startEmpty = doc.getParagraphCount(sec) === 1 && !doc.getParagraphLength(sec, 0);
     let p = startEmpty ? 0 : (parse(doc.splitParagraph(sec, last, doc.getParagraphLength(sec, last))), last + 1);

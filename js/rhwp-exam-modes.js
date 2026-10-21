@@ -6,7 +6,7 @@ import { fitCellPicture, centerPicturesInCells, picturesToGrid, fitTableToColumn
 import { showConfirm } from './ui-dialogs.js?v=1.7.0-four-session-integration';
 import { listExamPoolExams, buildExamPoolHwpx } from './rhwp-exam-exampool-open.js';
 import { applyScienceScripts } from './rhwp-exam-science-text.js';
-import { markBlank, studentCopy, appendBlankAnswers, insertExamHeader, insertAnswerGrid, setQuestionSpacing, extraChecks, BOX_PRESETS, insertBox, insertAnswerLines, insertRubric, setColumns, setPaper, makeVariant, appendVariantMapping, answerKeyCopy, STEMS, shadeHeaderRow, insertWorksheetFrame, PAGE_NUMBER_STYLES, insertPageNumbers, SCORE_CHOICES, setQuestionScore, insertQrCode, unifyQuestionFonts, boldToBlanks } from './rhwp-exam-worksheet.js';
+import { markBlank, studentCopy, appendBlankAnswers, insertExamHeader, insertAnswerGrid, setQuestionSpacing, extraChecks, BOX_PRESETS, insertBox, insertAnswerLines, insertRubric, setColumns, setPaper, makeVariant, appendVariantMapping, answerKeyCopy, STEMS, shadeHeaderRow, insertWorksheetFrame, PAGE_NUMBER_STYLES, insertPageNumbers, SCORE_CHOICES, setQuestionScore, insertQrCode, unifyQuestionFonts, boldToBlanks, WORKSHEET_FRAMES } from './rhwp-exam-worksheet.js';
 import { SYMBOL_ROW, SYMBOL_TABS, SYMBOL_CHUNKS, symbolCells, recentSymbols, rememberSymbol } from './rhwp-exam-symbols.js';
 
 const MODE_KEY = '5e.hwp.toolMode';
@@ -81,7 +81,7 @@ function focusTabs(ctx) {
       ['학생용 내려받기', '빈칸을 「(　　　)」로 바꾸고 「[정답]·[해설]·정답:」 줄을 뺀 학생용 HWPX 사본 내려받기(지금 문서는 그대로)', doc(b => ctx.studentCopy(b))],
       ['정답지 내려받기', '빈칸 자리에 정답을 빨간 굵은 글씨로 채운 정답지 HWPX 사본 내려받기', doc(b => ctx.answerKey(b))],
       ['정답 모아 넣기', '빈칸 정답을 문서 끝에 「[빈칸 정답] 1. … 2. …」로 넣기', doc(b => ctx.message(`빈칸 정답 ${appendBlankAnswers(b)}개를 문서 끝에 넣었습니다.`))], '|',
-      ['학습지 틀', '제목·이름 칸·학습 목표·활동 1·활동 2·정리 상자를 문서 끝에 한 번에 넣기', doc(b => ctx.message(`학습지 틀(상자 ${insertWorksheetFrame(b, ctx.documentTitle())}개)을 넣었습니다. 칸마다 내용을 쓰세요.`))],
+      ['학습지 틀', '제목·이름 칸과 상자를 문서 끝에 한 번에 — 수업 학습지·실험 보고서·형성 평가', (_, button) => ctx.openPicker(button, 'frame')],
       ['상자', '개념 정리·탐구 활동·생각해 보기·주의 상자(제목 줄 음영)를 커서 문단 뒤에 넣기', (_, button) => ctx.openPicker(button, 'box')],
       ['답란', '서술형 답을 쓰는 줄(3·5·8줄)을 커서 문단 뒤에 넣기', (_, button) => ctx.openPicker(button, 'lines')],
       ['QR 코드', '영상·자료 주소를 QR 코드로 커서 문단 뒤에 넣기(왼쪽 QR, 오른쪽 안내 글)', (_, button) => ctx.openPicker(button, 'qr')],
@@ -200,7 +200,7 @@ export function installExamModes(panel, services) {
       services.download(new Blob([bytes], { type: 'application/vnd.hancom.hwpx' }), name);
       message(`나형을 내려받습니다(${name})${choices ? ` — 선지도 섞은 문항 ${shuffled}개` : ''}. 교사용 문서 끝에 대응표를 넣었습니다: ${appendVariantMapping(b, mapping)}`);
     },
-    documentTitle: () => { const n = services.documentName?.() || ''; return n && n !== '새 시험지' ? n : '학습지'; },
+    documentTitle: kind => { const n = services.documentName?.() || ''; return n && n !== '새 시험지' ? n : (WORKSHEET_FRAMES[kind]?.[0] || '학습지'); },
     openHeaderForm: anchor => openForm(anchor, 'header'),
     openSpacingForm: anchor => openForm(anchor, 'spacing'),
     openPicker: (anchor, kind) => openForm(anchor, kind),
@@ -379,6 +379,9 @@ export function installExamModes(panel, services) {
         <label class="exam-field"><span>주소</span><input data-exam-qr="url" placeholder="https://" inputmode="url" autocomplete="off" spellcheck="false"></label>
         <label class="exam-field"><span>안내 글</span><input data-exam-qr="label" placeholder="예: 실험 영상 보기"></label>
         <div class="exam-morelist">${[20, 25, 30].map(n => `<button type="button" data-exam-qr-size="${n}">${n}mm로 넣기</button>`).join('')}</div>`;
+    } else if (kind === 'frame') {
+      pop.innerHTML = `<div class="exam-pop-head">학습지 틀 <small>문서 끝에 넣음 · 제목은 문서 이름</small></div>
+        <div class="exam-stemlist">${Object.entries(WORKSHEET_FRAMES).map(([k, [, name, parts]]) => `<button type="button" data-exam-frame="${k}"><b>${esc(name)}</b> — ${esc(parts.map(x => x[0].replace(/ \(.*\)$/, '')).join(' · '))}</button>`).join('')}</div>`;
     } else if (kind === 'combo') {
       pop.innerHTML = `<div class="exam-pop-head">조합 선지 <small>커서 줄 뒤에 5열로</small></div>
         <div class="exam-stemlist">${CHOICE_COMBOS.map((c, i) => `<button type="button" data-exam-combo="${i}">${c.map((t, k) => `${'①②③④⑤'[k]} ${esc(t)}`).join('&nbsp;&nbsp;')}</button>`).join('')}</div>`;
@@ -407,6 +410,8 @@ export function installExamModes(panel, services) {
     if (event.target.closest('[data-exam-fixwide]')) { closePop(); void run(async () => message(`넓은 그림·표 ${fitWideObjects(bridgeOrThrow())}개를 단 폭에 맞췄습니다.`)); return; }
     const stem = event.target.closest('[data-exam-stem]');
     if (stem) { const text = STEMS[Number(stem.dataset.examStem)]; closePop(); void run(async () => { await ctx.insertText(text); refocus(); }); return; }
+    const frameKind = event.target.closest('[data-exam-frame]');
+    if (frameKind) { const kind = frameKind.dataset.examFrame; closePop(); void run(async () => message(`${WORKSHEET_FRAMES[kind][1]} 틀(상자 ${insertWorksheetFrame(bridgeOrThrow(), ctx.documentTitle(kind), kind)}개)을 넣었습니다. 칸 안에 내용을 쓰세요.`)); return; }
     const combo = event.target.closest('[data-exam-combo]');
     if (combo) { const i = Number(combo.dataset.examCombo); closePop(); void run(async () => { insertChoiceCombo(bridgeOrThrow(), i); refocus(); }); return; }
     const variant = event.target.closest('[data-exam-variant]');
